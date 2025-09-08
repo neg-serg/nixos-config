@@ -32,18 +32,21 @@
     # Boot-specific options only; no activation scripts touching /boot
     initrd = lib.mkMerge [
       {
-        availableKernelModules = [
-          "nvme"
-          "sd_mod"
-          "usb_storage"
-          "usbhid"
-          "xhci_hcd"
-          "xhci_pci"
-          # TPM modules for early-boot (TPM2 auto-unlock, etc.)
-          "tpm"
-          "tpm_crb"
-          "tpm_tis"
-        ];
+        availableKernelModules =
+          [
+            "nvme"
+            "sd_mod"
+            "usb_storage"
+            "usbhid"
+            "xhci_hcd"
+            "xhci_pci"
+          ]
+          # Load TPM modules in initrd only when TPM2 support is enabled
+          ++ lib.optionals (config.security.tpm2.enable or false) [
+            "tpm"
+            "tpm_crb"
+            "tpm_tis"
+          ];
         kernelModules = [];
       }
       (lib.mkIf (config.profiles.performance.optimizeInitrdCompression or false) {
