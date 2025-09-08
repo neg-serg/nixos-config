@@ -49,6 +49,9 @@
   boot.initrd.systemd.enable = true;
   boot.initrd.verbose = lib.mkForce false;
 
+  # Lower console log level during/after boot; messages stay in journalctl
+  boot.consoleLogLevel = 3;
+
   # Skip boot menu by default (can hold a key to show menu)
   boot.loader.timeout = 0; # seconds
   # Allow editing kernel cmdline from the loader (useful for recovery)
