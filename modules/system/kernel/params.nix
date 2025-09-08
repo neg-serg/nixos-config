@@ -16,8 +16,12 @@
   mitigations_settings = ["mitigations=off"]; # full mitigations disable
   silence = [
     "quiet"
-    "rd.systemd.show_status=auto"
+    # Hide status in initrd completely for minimal output
+    "rd.systemd.show_status=false"
     "rd.udev.log_priority=3"
+    # Lower kernel and userspace verbosity on the console
+    "loglevel=3"
+    "udev.log_priority=3"
     "splash"
     "systemd.show_status=false"
     "vt.global_cursor_default=0"
@@ -118,8 +122,8 @@ in {
       ++ lib.optionals (config.profiles.security.enable or false) ["page_poison=1"];
 
     extraModulePackages = [pkgs.linuxPackages_cachyos.amneziawg];
-    # Increase kernel console verbosity on TTY
-    consoleLogLevel = 7;
+    # Default kernel console verbosity; hosts may override
+    consoleLogLevel = lib.mkDefault 7;
     kernelPackages = pkgs.linuxPackages_cachyos.cachyOverride {mArch = "GENERIC_V4";};
   };
 
