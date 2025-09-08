@@ -14,6 +14,8 @@
     performance.zswap.enable = lib.mkForce false;
     # Optimize initrd compression (smaller image, slower rebuilds)
     performance.optimizeInitrdCompression = true;
+    # Reduce boot verbosity to speed kernel + userspace stage slightly
+    performance.quietBoot = true;
   };
 
   # Performance profile comes from the workstation role
@@ -30,22 +32,37 @@
     "irqaffinity=0-13,16-29"
     "lru_gen=1"
     "lru_gen.min_ttl_ms=1000"
+    # Avoid probing dozens of legacy UARTs; speeds up device coldplug
+    "8250.nr_uarts=1"
+    # Ensure kernel console verbosity stays low despite global defaults
+    "loglevel=4"
   ];
 
   # Load heavy GPU driver early in initrd to reduce userspace module-load time
   boot.initrd.kernelModules = ["amdgpu"];
 
-  # Enable systemd in initrd and verbose logging for detailed early-boot profiling
+  # Enable systemd in initrd; keep logs quiet for faster boot now
   boot.initrd.systemd.enable = true;
-  boot.initrd.verbose = true;
+  boot.initrd.verbose = lib.mkForce false;
 
-  # Make boot menu accessible during experiments: wait 1 second
-  boot.loader.timeout = 1; # seconds
+  # Skip boot menu by default (can hold a key to show menu)
+  boot.loader.timeout = 0; # seconds
   # Allow editing kernel cmdline from the loader (useful for recovery)
   boot.loader.systemd-boot.editor = true;
 
   # Avoid double compression for swap
   zramSwap.enable = lib.mkForce false;
+
+  # Disable TPM entirely on this host to remove tpmrm device wait
+  security.tpm2.enable = lib.mkForce false;
+  boot.blacklistedKernelModules = [
+    "tpm"
+    "tpm_crb"
+    "tpm_tis"
+    "tpm_tis_core"
+  ];
+  # No separate initrd blacklist option; TPM modules are excluded from initrd
+  # via modules/system/boot.nix when security.tpm2.enable = false
 
   # Keep services on housekeeping CPUs by default
   systemd.settings.Manager.CPUAffinity = ["0-13" "16-29"];
