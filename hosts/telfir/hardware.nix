@@ -32,6 +32,10 @@
     "irqaffinity=0-13,16-29"
     "lru_gen=1"
     "lru_gen.min_ttl_ms=1000"
+    # Keep boot output quiet on console but retain full logs in journal
+    "quiet"
+    "systemd.show_status=false"
+    "rd.systemd.show_status=auto"
     # Avoid probing dozens of legacy UARTs; speeds up device coldplug
     "8250.nr_uarts=1"
     # Ensure kernel console verbosity stays low despite global defaults
