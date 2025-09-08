@@ -40,6 +40,9 @@
     jellyfin.enable = false;
   };
 
+  # Disable Netdata on this host (keep other monitoring like sysstat)
+  monitoring.netdata.enable = lib.mkForce false;
+
   # Nextcloud via Caddy on LAN, served as "telfir"
   services = {
     nextcloud = {
