@@ -35,6 +35,15 @@
   # Load heavy GPU driver early in initrd to reduce userspace module-load time
   boot.initrd.kernelModules = ["amdgpu"];
 
+  # Enable systemd in initrd and verbose logging for detailed early-boot profiling
+  boot.initrd.systemd.enable = true;
+  boot.initrd.verbose = true;
+
+  # Make boot menu accessible during experiments: wait 1 second
+  boot.loader.timeout = 1; # seconds
+  # Allow editing kernel cmdline from the loader (useful for recovery)
+  boot.loader.systemd-boot.editor = true;
+
   # Avoid double compression for swap
   zramSwap.enable = lib.mkForce false;
 
