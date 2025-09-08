@@ -18,6 +18,13 @@ in {
 
   # Defer heavier services to post-boot when enabled.
   systemd.services = {
+    # Network: move iwd out of critical path (starts after graphical)
+    iwd = lib.mkIf (config.networking.wireless.iwd.enable or false) (mkPostBoot "iwd");
+
+    # Libvirt stack after graphical
+    libvirtd = lib.mkIf (config.virtualisation.libvirtd.enable or false) (mkPostBoot "libvirtd");
+    "libvirt-guests" = lib.mkIf (config.virtualisation.libvirtd.enable or false) (mkPostBoot "libvirt-guests");
+
     # Syncthing init helper (created by upstream module)
     "syncthing-init" = lib.mkIf (config.services.syncthing.enable or false) (mkPostBoot "syncthing-init");
 
