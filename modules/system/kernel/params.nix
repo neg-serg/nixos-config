@@ -124,7 +124,7 @@ in {
     extraModulePackages = [pkgs.linuxPackages_cachyos.amneziawg];
     # Default kernel console verbosity; hosts may override
     consoleLogLevel = lib.mkDefault 7;
-    kernelPackages = pkgs.linuxPackages_cachyos.cachyOverride {mArch = "GENERIC_V4";};
+    kernelPackages = lib.mkDefault (pkgs.linuxPackages_cachyos.cachyOverride { mArch = "GENERIC_V4"; });
   };
 
   security.protectKernelImage = !kexec_enabled;
