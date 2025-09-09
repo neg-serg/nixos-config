@@ -11,7 +11,7 @@
     kernelPatches = lib.mkForce [];
     extraModulePackages = lib.mkForce [];
     # Prefer upstream latest kernel in VM
-    kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
+    kernelPackages = pkgs.linuxPackages_latest;
   };
 
   virtualisation = {
