@@ -108,6 +108,10 @@
         pkgs = nixpkgs.legacyPackages.${system};
         # Use nixpkgs.lib to access nixosOptionsDoc if available
         inherit (nixpkgs) lib;
+        mkArgs = {
+          inherit lib;
+          specialArgs = mkArgs.specialArgs;
+        };
         evalBase = lib.evalModules {
           inherit lib;
           modules = [
@@ -126,10 +130,7 @@
         evalRoles = lib.evalModules {
           inherit lib;
           modules = [./modules/roles];
-          specialArgs = {
-            inherit self inputs;
-            inherit pkgs;
-          };
+          specialArgs = mkArgs.specialArgs;
         };
 
         # Additional modules to surface their options in the generated docs
@@ -138,7 +139,7 @@
           modules = [
             ./modules/user/games/default.nix
           ];
-          specialArgs = {inherit self inputs pkgs;};
+          specialArgs = mkArgs.specialArgs;
         };
 
         evalUsers = lib.evalModules {
@@ -146,7 +147,7 @@
           modules = [
             ./modules/system/users.nix
           ];
-          specialArgs = {inherit self inputs pkgs;};
+          specialArgs = mkArgs.specialArgs;
         };
 
         evalFlakePreflight = lib.evalModules {
@@ -154,7 +155,7 @@
           modules = [
             ./modules/flake-preflight.nix
           ];
-          specialArgs = {inherit self inputs pkgs;};
+          specialArgs = mkArgs.specialArgs;
         };
 
         evalHwAmd = lib.evalModules {
@@ -162,7 +163,7 @@
           modules = [
             ./modules/hardware/video/amd/default.nix
           ];
-          specialArgs = {inherit self inputs pkgs;};
+          specialArgs = mkArgs.specialArgs;
         };
 
         hasOptionsDoc = lib ? nixosOptionsDoc;
@@ -174,6 +175,21 @@
           if hasOptionsDoc
           then lib.nixosOptionsDoc {inherit (evalRoles) options;}
           else null;
+        # Additional grouped docs
+        evalAll = lib.evalModules (mkArgs // { modules = [ ./modules ]; });
+        evalProfiles = lib.evalModules (mkArgs // {
+          modules = [
+            ./modules/profiles/services.nix
+            ./modules/system/profiles/security.nix
+            ./modules/system/profiles/performance.nix
+            ./modules/system/profiles/vm.nix
+            ./modules/system/profiles/aliases.nix
+            ./modules/user/games/default.nix
+          ];
+        });
+        evalServers = lib.evalModules (mkArgs // { modules = [ ./modules/servers ]; });
+        evalHardware = lib.evalModules (mkArgs // { modules = [ ./modules/hardware ]; });
+
         docsGames =
           if hasOptionsDoc
           then lib.nixosOptionsDoc {inherit (evalGames) options;}
@@ -190,6 +206,22 @@
           if hasOptionsDoc
           then lib.nixosOptionsDoc {inherit (evalHwAmd) options;}
           else null;
+        docsAll =
+          if hasOptionsDoc
+          then lib.nixosOptionsDoc {inherit (evalAll) options;}
+          else null;
+        docsProfiles =
+          if hasOptionsDoc
+          then lib.nixosOptionsDoc {inherit (evalProfiles) options;}
+          else null;
+        docsServers =
+          if hasOptionsDoc
+          then lib.nixosOptionsDoc {inherit (evalServers) options;}
+          else null;
+        docsHardware =
+          if hasOptionsDoc
+          then lib.nixosOptionsDoc {inherit (evalHardware) options;}
+          else null;
       in
         {
           default = pkgs.zsh;
@@ -201,6 +233,33 @@
           options-users-md = docsUsers.optionsCommonMark;
           options-flake-preflight-md = docsFlakePreflight.optionsCommonMark;
           options-hw-amd-md = docsHwAmd.optionsCommonMark;
+          options-all-md = docsAll.optionsCommonMark;
+          options-profiles-md = docsProfiles.optionsCommonMark;
+          options-servers-md = docsServers.optionsCommonMark;
+          options-hardware-md = docsHardware.optionsCommonMark;
+
+          options-md = pkgs.runCommand "options.md" {
+            base = docsBase.optionsCommonMark;
+            roles = docsRoles.optionsCommonMark;
+            profiles = docsProfiles.optionsCommonMark;
+            servers = docsServers.optionsCommonMark;
+            hardware = docsHardware.optionsCommonMark;
+            users = docsUsers.optionsCommonMark;
+            games = docsGames.optionsCommonMark;
+            flakePreflight = docsFlakePreflight.optionsCommonMark;
+          } ''
+            {
+              echo "# Options (Aggregated)";
+              echo;
+              echo "## Profiles (base)"; cat "$profiles" || true; echo;
+              echo "## Roles"; cat "$roles" || true; echo;
+              echo "## Servers"; cat "$servers" || true; echo;
+              echo "## Hardware"; cat "$hardware" || true; echo;
+              echo "## Users"; cat "$users" || true; echo;
+              echo "## Games"; cat "$games" || true; echo;
+              echo "## Flake Preflight"; cat "$flakePreflight" || true; echo;
+            } > $out
+          '';
         };
 
       # Make `nix fmt` behave like in home-manager: format repo with alejandra
