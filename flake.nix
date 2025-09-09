@@ -46,6 +46,7 @@
   };
 
   # Make Cachix caches available to all `nix {build,develop,run}` commands
+  # Note: nixConfig must be a literal attrset (cannot import).
   nixConfig = {
     substituters = [
       "https://cache.nixos.org/"

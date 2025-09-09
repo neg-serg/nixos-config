@@ -3,7 +3,9 @@
   pkgs,
   config,
   ...
-}: {
+}: let
+  caches = import ../../nix/caches.nix;
+in {
   sops.age = {
     generateKey = true;
     keyFile = "/var/lib/sops-nix/key.txt";
@@ -19,7 +21,7 @@
   nix = {
     package = pkgs.lix;
     nixPath = ["nixpkgs=${inputs.nixpkgs}"];
-    settings = {
+    settings = ({
       accept-flake-config = true;
       show-trace = false;
       netrc-file = config.sops.secrets."github-netrc".path;
@@ -77,7 +79,7 @@
       warn-dirty = false; # Disable annoying dirty warn
       # Deduplicate the Nix store on writes
       auto-optimise-store = true;
-    };
+    }) // caches;
     gc = {
       automatic = true;
       dates = "weekly";
