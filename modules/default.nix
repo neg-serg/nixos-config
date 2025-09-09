@@ -11,7 +11,7 @@
     ./llm
     ./monitoring
     ./nix
-    ./nixos
+    ./tools
     ./profiles/services.nix
     ./roles
     ./secrets
