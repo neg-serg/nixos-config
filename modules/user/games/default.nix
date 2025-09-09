@@ -670,6 +670,11 @@
     '');
 in {
   options.profiles.games = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true; # preserve current behavior (enabled by default)
+      description = "Enable the gaming stack (Steam, Gamescope wrappers, MangoHud, hardware rules).";
+    };
     autoscaleDefault = lib.mkEnableOption "Enable autoscale heuristics by default for gamescope-targetfps.";
     targetFps = lib.mkOption {
       type = lib.types.int;
@@ -685,7 +690,7 @@ in {
     };
   };
 
-  config = {
+  config = lib.mkIf (cfg.enable or true) {
     programs = {
       steam = {
         enable = true;
