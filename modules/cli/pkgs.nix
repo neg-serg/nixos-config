@@ -1,4 +1,14 @@
-{pkgs, ...}: {
+{ pkgs, lib, ... }:
+let
+  # Wrap ugrep/ug to always load the system-wide /etc/ugrep.conf
+  ugrepWithConfig = pkgs.ugrep.overrideAttrs (old: {
+    nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ pkgs.makeWrapper ];
+    postInstall = (old.postInstall or "") + ''
+      wrapProgram "$out/bin/ugrep" --add-flags "--config=/etc/ugrep.conf"
+      wrapProgram "$out/bin/ug" --add-flags "--config=/etc/ugrep.conf"
+    '';
+  });
+in {
   environment.systemPackages = with pkgs; [
     abduco # CLI session detach
     ast-grep # AST-aware grep
@@ -34,6 +44,6 @@
     rmlint # remove duplicates
     stow # manage farms of symlinks
     tig # git TUI
-    ugrep # better grep, rg alternative
+    ugrepWithConfig # better grep, rg alternative (wrapped with global config)
   ];
 }
