@@ -1,5 +1,6 @@
 {pkgs, ...}: {
   environment.systemPackages = with pkgs; [
+    just # command runner for project tasks
     bacon # background rust code checker
     bpftrace # add tool to trace events via bpf
     cutter # Free and Open Source Reverse Engineering Platform powered by rizin

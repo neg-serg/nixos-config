@@ -1,4 +1,4 @@
-# Run utilities for development (requires `nix develop` to get `just`)
+# Run utilities for development
 
 set shell := ["bash", "-cu"]
 
