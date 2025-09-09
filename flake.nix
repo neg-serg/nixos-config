@@ -103,7 +103,7 @@
       # Nilla raw-loader compatibility: synthetic type for each input (harmless for normal flakes)
       nillaInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) inputs;
     }; {
-      # Option docs (markdown) for base profiles and roles
+      # Option docs (markdown) for base profiles, roles, and selected feature modules
       packages.${system} = let
         pkgs = nixpkgs.legacyPackages.${system};
         # Use nixpkgs.lib to access nixosOptionsDoc if available
@@ -132,6 +132,39 @@
           };
         };
 
+        # Additional modules to surface their options in the generated docs
+        evalGames = lib.evalModules {
+          inherit lib;
+          modules = [
+            ./modules/user/games/default.nix
+          ];
+          specialArgs = {inherit self inputs pkgs;};
+        };
+
+        evalUsers = lib.evalModules {
+          inherit lib;
+          modules = [
+            ./modules/system/users.nix
+          ];
+          specialArgs = {inherit self inputs pkgs;};
+        };
+
+        evalFlakePreflight = lib.evalModules {
+          inherit lib;
+          modules = [
+            ./modules/flake-preflight.nix
+          ];
+          specialArgs = {inherit self inputs pkgs;};
+        };
+
+        evalHwAmd = lib.evalModules {
+          inherit lib;
+          modules = [
+            ./modules/hardware/video/amd/default.nix
+          ];
+          specialArgs = {inherit self inputs pkgs;};
+        };
+
         hasOptionsDoc = lib ? nixosOptionsDoc;
         docsBase =
           if hasOptionsDoc
@@ -141,6 +174,22 @@
           if hasOptionsDoc
           then lib.nixosOptionsDoc {inherit (evalRoles) options;}
           else null;
+        docsGames =
+          if hasOptionsDoc
+          then lib.nixosOptionsDoc {inherit (evalGames) options;}
+          else null;
+        docsUsers =
+          if hasOptionsDoc
+          then lib.nixosOptionsDoc {inherit (evalUsers) options;}
+          else null;
+        docsFlakePreflight =
+          if hasOptionsDoc
+          then lib.nixosOptionsDoc {inherit (evalFlakePreflight) options;}
+          else null;
+        docsHwAmd =
+          if hasOptionsDoc
+          then lib.nixosOptionsDoc {inherit (evalHwAmd) options;}
+          else null;
       in
         {
           default = pkgs.zsh;
@@ -148,6 +197,10 @@
         // lib.optionalAttrs hasOptionsDoc {
           options-base-md = docsBase.optionsCommonMark;
           options-roles-md = docsRoles.optionsCommonMark;
+          options-games-md = docsGames.optionsCommonMark;
+          options-users-md = docsUsers.optionsCommonMark;
+          options-flake-preflight-md = docsFlakePreflight.optionsCommonMark;
+          options-hw-amd-md = docsHwAmd.optionsCommonMark;
         };
 
       # Make `nix fmt` behave like in home-manager: format repo with alejandra
