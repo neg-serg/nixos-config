@@ -322,7 +322,7 @@
               # VM-specific adjustments
               ({lib, ...}: {
                 # Avoid secure boot integration in quick VM builds
-                boot.lanzaboote.enable = lib.mkForce false;
+                boot.lanzaboote.enable = false;
               })
             ];
         };

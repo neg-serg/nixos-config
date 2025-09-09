@@ -11,7 +11,7 @@
   imports = [./boot/pkgs.nix];
   boot = {
     lanzaboote = {
-      enable = true;
+      enable = lib.mkDefault true;
       pkiBundle = "/etc/secureboot";
     };
     loader = {
