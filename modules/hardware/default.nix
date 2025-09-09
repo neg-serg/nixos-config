@@ -3,7 +3,7 @@
   config,
   ...
 }: let
-  auto = config.hardware.storage.autoMount.enable or null;
+  cfg = config.hardware.storage.autoMount;
 in {
   options.hardware.storage.autoMount.enable = lib.mkOption {
     type = lib.types.nullOr lib.types.bool;
@@ -29,9 +29,9 @@ in {
       upower.enable = true;
       # Default to enabled, but allow per-host override via hardware.storage.autoMount.enable
       devmon.enable =
-        if auto == null
+        if (cfg.enable or null) == null
         then lib.mkDefault true
-        else auto;
+        else cfg.enable;
       fwupd.enable = true;
     };
 
