@@ -79,11 +79,17 @@
   # Ban isolated CPUs from IRQ balancing (Zen3 mask example)
   systemd.services.irqbalance.environment.IRQBALANCE_BANNED_CPUS = "0xC000C000";
 
-  # Rename NICs to stable names specific to this host
-  services.udev.extraRules = ''
-    KERNEL=="eth*", ATTR{address}=="fc:34:97:b7:16:0e", NAME="net0"
-    KERNEL=="eth*", ATTR{address}=="fc:34:97:b7:16:0f", NAME="net1"
-  '';
+  # Rename NICs to stable names via systemd-networkd link files
+  systemd.network.links = {
+    "10-net0" = {
+      matchConfig.MACAddress = "fc:34:97:b7:16:0e";
+      linkConfig.Name = "net0";
+    };
+    "10-net1" = {
+      matchConfig.MACAddress = "fc:34:97:b7:16:0f";
+      linkConfig.Name = "net1";
+    };
+  };
 
   # Host-specific hardware tools
   environment.systemPackages = with pkgs; [
