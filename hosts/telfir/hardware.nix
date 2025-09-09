@@ -32,17 +32,8 @@
     "irqaffinity=0-13,16-29"
     "lru_gen=1"
     "lru_gen.min_ttl_ms=1000"
-    # Keep boot output minimal on console; full logs remain in journal
-    "quiet"
-    "systemd.show_status=false"
-    "rd.systemd.show_status=false"
-    # Reduce udev chatter in both initrd and real root
-    "rd.udev.log_priority=3"
-    "udev.log_priority=3"
     # Avoid probing dozens of legacy UARTs; speeds up device coldplug
     "8250.nr_uarts=1"
-    # Ensure kernel console verbosity stays minimal
-    "loglevel=3"
   ];
 
   # Load heavy GPU driver early in initrd to reduce userspace module-load time
