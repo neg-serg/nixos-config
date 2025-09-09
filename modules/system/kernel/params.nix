@@ -106,26 +106,34 @@
       "zswap.zpool=${config.profiles.performance.zswap.zpool}"
     ];
 in {
-  boot = {
-    # Keep core modules here; amdgpu is moved to initrd on AMD host to avoid userspace load delays
-    kernelModules = ["kvm-amd" "tcp_bbr" "ntsync"];
-    blacklistedKernelModules =
-      ["sp5100_tco"]
-      ++ obscure_network_protocols
-      ++ intel_hda_modules
-      ++ old_rare_insufficiently_audited_fs;
+  # Use mkMerge to contribute to boot.kernelParams in two phases:
+  # 1) base_params go first (mkBefore) to guarantee ordering
+  # 2) the rest of params are appended normally and can be overridden/extended by hosts
+  config = lib.mkMerge [
+    {
+      boot = {
+        # Keep core modules here; amdgpu is moved to initrd on AMD host to avoid userspace load delays
+        kernelModules = ["kvm-amd" "tcp_bbr" "ntsync"];
+        blacklistedKernelModules =
+          ["sp5100_tco"]
+          ++ obscure_network_protocols
+          ++ intel_hda_modules
+          ++ old_rare_insufficiently_audited_fs;
 
-    kernelParams =
-      base_params
-      ++ lib.optionals perfEnabled perf_params
-      ++ extra_security
-      ++ lib.optionals (config.profiles.security.enable or false) ["page_poison=1"];
+        kernelParams = lib.mkBefore base_params;
 
-    extraModulePackages = [pkgs.linuxPackages_cachyos.amneziawg];
-    # Default kernel console verbosity; hosts may override
-    consoleLogLevel = lib.mkDefault 7;
-    kernelPackages = lib.mkDefault (pkgs.linuxPackages_cachyos.cachyOverride { mArch = "GENERIC_V4"; });
-  };
-
-  security.protectKernelImage = !kexec_enabled;
+        extraModulePackages = [pkgs.linuxPackages_cachyos.amneziawg];
+        # Default kernel console verbosity; hosts may override
+        consoleLogLevel = lib.mkDefault 7;
+        kernelPackages = lib.mkDefault (pkgs.linuxPackages_cachyos.cachyOverride { mArch = "GENERIC_V4"; });
+      };
+    }
+    {
+      boot.kernelParams =
+        lib.optionals perfEnabled perf_params
+        ++ extra_security
+        ++ lib.optionals (config.profiles.security.enable or false) ["page_poison=1"];
+      security.protectKernelImage = !kexec_enabled;
+    }
+  ];
 }
