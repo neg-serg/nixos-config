@@ -11,7 +11,7 @@
     # the virtue of using NixOS.
     chrony.enable = lib.mkDefault false;
     timesyncd = {
-      enable = true;
+      enable = lib.mkDefault true;
       servers = config.networking.timeServers; # default value
       extraConfig = ''
         # poll every 128s as opposed to default 32s
