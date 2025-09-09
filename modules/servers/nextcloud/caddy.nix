@@ -3,8 +3,9 @@
   config,
   ...
 }: let
-  cfg = config.services.nextcloud;
-  domain = cfg.hostName or "localhost";
+  nc = config.services.nextcloud;
+  cfg = config.services.nextcloud.caddyProxy;
+  domain = nc.hostName or "localhost";
 in {
   options.services.nextcloud.caddyProxy.enable = lib.mkOption {
     type = lib.types.bool;
@@ -15,7 +16,7 @@ in {
     '';
   };
 
-  config = lib.mkIf config.services.nextcloud.caddyProxy.enable {
+  config = lib.mkIf cfg.enable {
     assertions = [
       {
         assertion = domain != "localhost";
