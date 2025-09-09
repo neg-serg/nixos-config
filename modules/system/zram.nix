@@ -1,6 +1,6 @@
-_: {
+{ lib, ... }: {
   zramSwap = {
-    enable = true;
+    enable = lib.mkDefault true;
     memoryPercent = 50;
   };
 }
