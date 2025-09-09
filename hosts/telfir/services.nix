@@ -16,11 +16,11 @@
   # Flake preflight checks disabled
 
   # Host-specific system policy
-  system.autoUpgrade.enable = lib.mkForce false;
+  system.autoUpgrade.enable = false;
   nix = {
-    gc.automatic = lib.mkForce false;
-    optimise.automatic = lib.mkForce false;
-    settings.auto-optimise-store = lib.mkForce false;
+    gc.automatic = false;
+    optimise.automatic = false;
+    settings.auto-optimise-store = false;
   };
 
   # Service profiles toggles for this host
@@ -41,7 +41,7 @@
   };
 
   # Disable Netdata on this host (keep other monitoring like sysstat)
-  monitoring.netdata.enable = lib.mkForce false;
+  monitoring.netdata.enable = false;
 
   # Nextcloud via Caddy on LAN, served as "telfir"
   services = {

@@ -11,7 +11,7 @@
   profiles = {
     kernel.amd.enable = true;
     # Avoid double compression
-    performance.zswap.enable = lib.mkForce false;
+    performance.zswap.enable = false;
     # Optimize initrd compression (smaller image, slower rebuilds)
     performance.optimizeInitrdCompression = true;
     # Reduce boot verbosity to speed kernel + userspace stage slightly
@@ -41,7 +41,7 @@
 
   # Enable systemd in initrd; keep logs quiet for faster boot now
   boot.initrd.systemd.enable = true;
-  boot.initrd.verbose = lib.mkForce false;
+  boot.initrd.verbose = false;
 
   # Lower console log level during/after boot; messages stay in journalctl
   boot.consoleLogLevel = 3;
@@ -52,10 +52,10 @@
   boot.loader.systemd-boot.editor = true;
 
   # Avoid double compression for swap
-  zramSwap.enable = lib.mkForce false;
+  zramSwap.enable = false;
 
   # Disable TPM entirely on this host to remove tpmrm device wait
-  security.tpm2.enable = lib.mkForce false;
+  security.tpm2.enable = false;
   boot.blacklistedKernelModules = [
     "tpm"
     "tpm_crb"
