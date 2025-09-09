@@ -335,6 +335,8 @@
             pkgs.deadnix
             pkgs.statix
             pkgs.nil
+            pkgs.just
+            pkgs.jq
           ];
         };
 
