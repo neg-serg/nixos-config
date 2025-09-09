@@ -33,7 +33,7 @@ in {
       debug = lib.mkDefault false;
     };
     tpm2 = {
-      enable = true; # enable Trusted Platform Module 2 support
+      enable = lib.mkDefault true; # enable Trusted Platform Module 2 support
       abrmd.enable = lib.mkDefault false; # enable Trusted Platform 2 userspace resource manager daemon
       # The TCTI is the "Transmission Interface" that is used to communicate with a
       # TPM. this option sets TCTI environment variables to the specified values if enabled
