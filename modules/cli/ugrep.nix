@@ -1,0 +1,26 @@
+{ lib, ... }: {
+  # System-wide configuration for ugrep/ug
+  environment.etc."ugrep.conf".text = lib.concatStringsSep "\n" [
+    "colors='cx=00;38;5;110:fn=01;38;5;249:ln=01;38;5;4:cn=01;38;5;24:bn=1;32:se=36;ms=01;04;38;5;25'"
+    ""
+    "color"
+    "confirm"
+    "view"
+    "no-pager"
+    "no-pretty"
+    "no-heading"
+    ""
+    "no-ignore-case"
+    "no-smart-case"
+    "no-empty"
+    "# default: no-hidden"
+    "hidden"
+    "no-ignore-binary"
+    "no-decompress"
+    "zmax=1"
+    "no-ignore-files"
+    "no-sort"
+    ""
+  ];
+}
+
