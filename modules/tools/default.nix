@@ -48,8 +48,6 @@ in {
               sed -i 's/┌/╭/' lib/NOM/Print/Tree.hs
               sed -i 's/import NOM\\.Print\\.Table (blue, markup)/import NOM.Print.Table (grey, markup)/' lib/NOM/Print/Tree.hs
               sed -i 's/markup blue/markup grey/g' lib/NOM/Print/Tree.hs
-              # Make grey darker by switching Vivid Black -> Dull Black
-              sed -i 's/grey = addCode \$ SetColor Foreground Vivid Black/grey = addCode \$ SetColor Foreground Dull Black/' lib/NOM/Print/Table.hs
             '';
         });
     })
