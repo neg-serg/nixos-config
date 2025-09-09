@@ -3,10 +3,20 @@
 set shell := ["bash", "-cu"]
 
 # Generate aggregated options docs into docs/*.md
-options:
+gen-options:
     scripts/gen-options.sh
+
+# Generate and commit options docs if there are changes
+gen-options-commit:
+    set -euo pipefail
+    just gen-options
+    if git -C . diff --quiet -- docs; then \
+      echo "No changes in docs"; \
+    else \
+      git add docs; \
+      git commit -m "[docs/options] Regenerate options docs"; \
+    fi
 
 # Format the repo via flake formatter
 fmt:
     nix fmt
-
