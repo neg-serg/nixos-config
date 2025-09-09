@@ -47,7 +47,7 @@ Auto‑update (optional): if `system.autoUpgrade` with flakes is enabled, you ca
 - Profiles: feature flags under `modules/system/profiles/`:
   - `profiles.performance.enable` and `profiles.security.enable` are toggled by roles; override per host if needed.
 - Service profiles: toggle per‑service via `profiles.services.<name>.enable` (alias to `servicesProfiles.<name>.enable`).
-  - Roles set `mkDefault true`; hosts can disable with `lib.mkForce false`.
+  - Roles set `mkDefault true`; hosts can disable with plain `false` (no mkForce needed).
 - Host‑specific config: keep concrete settings under `hosts/<host>/*.nix`.
   - Examples: Syncthing devices/folders, Nextcloud domain/proxy, NIC names, local DNS rewrites.
 
@@ -62,8 +62,8 @@ Example (host):
 
   # Disable heavy services for VMs or minimal builds
   profiles.services = {
-    nextcloud.enable = lib.mkForce false;
-    adguardhome.enable = lib.mkForce false;
+    nextcloud.enable = false;
+    adguardhome.enable = false;
   };
 
   # Host‑specific Syncthing (devices/folders)
@@ -83,7 +83,7 @@ Example (media role):
 
   # This role enables Jellyfin, Navidrome, MPD, Avahi, SSH by default.
   # Per-host overrides (e.g., disable Jellyfin on this machine):
-  profiles.services.jellyfin.enable = lib.mkForce false;
+  profiles.services.jellyfin.enable = false;
 
   # Media server host-specific tweaks can live here as well (paths, ports, etc.).
 }
@@ -124,29 +124,30 @@ Service override examples
 - patches-amd: `boot.kernelPatches` with `structuredExtraConfig` for AMD in `modules/system/kernel/patches-amd.nix`.
 - Feature toggles: tune via `profiles.performance.*` and `profiles.security.*`; params derive from these.
 
-## mkForce Policy
+## Defaults, Overrides и mkForce Policy
 
-- Use `lib.mkForce` only in host/VM overlays (files under `hosts/<host>/*`).
-  - Examples: force-disable heavy services in VMs, set `boot.kernelPackages` for a test host.
-- In shared modules, avoid `mkForce`:
-  - Prefer `mkDefault` for defaults that hosts can override.
-  - Define options and gate config via `mkIf` (e.g., `options.servicesProfiles.<svc>.enable` + `config = lib.mkIf cfg.enable { ... };`).
-- For services managed by roles, toggle with `profiles.services.<name>.enable`.
-  - Hosts can hard-disable via `lib.mkForce false` when needed (e.g., on VMs).
+- Модули задают значения через `mkDefault` (их легко переопределить на хосте простым присваиванием):
+  - Примеры: `services.timesyncd.enable`, `zramSwap.enable`, `boot.lanzaboote.enable`, `nix.gc.automatic`, `nix.optimise.automatic`, `nix.settings.auto-optimise-store`, `boot.kernelPackages` (как `mkDefault`).
+- На хостах предпочитайте обычные присваивания:
+  - Булевы флаги: `foo.enable = false;`
+  - Уникальные опции (например, `boot.kernelPackages`): просто `boot.kernelPackages = pkgs.linuxPackages_latest;`
+- Используйте `lib.mkForce` только когда нужно зачистить/перебить слияния или спорные уникальные значения:
+  - Списки: чтобы явно очистить ранее добавленные элементы — `someListOption = lib.mkForce [];`
+  - Редкие конфликты уникальных опций от разных модулей.
 
-Examples
+Примеры
 
 ```nix
 # VM: force-disable heavy services provided by roles
 { lib, ... }: {
   profiles.services = {
-    nextcloud.enable = lib.mkForce false;
-    adguardhome.enable = lib.mkForce false;
-    unbound.enable = lib.mkForce false;
+    nextcloud.enable = false;
+    adguardhome.enable = false;
+    unbound.enable = false;
   };
 
-  # VM: force a simpler kernel set
-  boot.kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
+  # VM: set a simpler kernel set
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 }
 
 # Module pattern (no mkForce):
@@ -198,7 +199,45 @@ git config core.hooksPath .githooks
 
 The hook rejects commit messages that contain non‑ASCII characters or do not start with a bracketed scope.
 
+## Module Pattern & Option Helpers
+
+- Единый паттерн модулей:
+  - `options.<path>.*` объявляет опции;
+  - `let cfg = config.<path>; in` — локальная ссылка;
+  - `config = lib.mkIf cfg.enable { … }` включает конфиг по флагу.
+- В репозитории добавлен набор хелперов `lib/opts.nix`:
+  - Примитивы: `mkBoolOpt`, `mkStrOpt`, `mkIntOpt`, `mkPathOpt`;
+  - Составные: `mkListOpt elemType`, `mkEnumOpt values`;
+  - Унифицированные описания через `mkDoc`.
+
+Пример использования в модуле:
+
+```nix
+{ lib, config, ... }: let
+  opts = (import ../lib { inherit lib; }).opts;
+  cfg = config.example.feature;
+in {
+  options.example.feature = {
+    enable = lib.mkEnableOption "Enable example feature";
+    mode = opts.mkEnumOpt ["fast" "safe"] {
+      description = "Operating mode";
+      default = "fast";
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    services.example.enable = true;
+  };
+}
+```
+
 ## Gaming: Per‑Game CPU Isolation & Launchers
+
+### Games Stack Toggle
+
+- Toggle the whole gaming stack:
+  - `profiles.games.enable = false;` to disable Steam/Gamescope wrappers/MangoHud system‑wide.
+  - Defaults to `true` to preserve current behavior.
 
 - Isolated CPUs: host `telfir` reserves cores `14,15,30,31` for low‑latency gaming. System services are kept on housekeeping CPUs.
 - Transient scope runner: `game-run` launches any command in a user systemd scope and pins it to the isolated CPUs via `game-affinity-exec`.
