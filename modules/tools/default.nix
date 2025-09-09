@@ -44,10 +44,7 @@ in {
                 concatStringsSep "\n" (zipListsWith (a: b: "s/${a}/\\\\x${b}/") oldIcons newIcons)
               )} lib/NOM/Print.hs
 
-              # Round the top-left tree border and darken border color
               sed -i 's/┌/╭/' lib/NOM/Print/Tree.hs
-              sed -i 's/import NOM\\.Print\\.Table (blue, markup)/import NOM.Print.Table (grey, markup)/' lib/NOM/Print/Tree.hs
-              sed -i 's/markup blue/markup grey/g' lib/NOM/Print/Tree.hs
             '';
         });
     })
