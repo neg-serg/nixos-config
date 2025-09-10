@@ -5,6 +5,7 @@
     amneziawg-tools # tools for configuring AmneziaWG
     netbird # WireGuard-based mesh network with SSO/MFA
     openconnect # Cisco AnyConnect (open source)
+    wireguard-tools # tools for the WireGuard secure network tunnel
     (openvpn.override {
       pkcs11Support = true;
       inherit (pkgs) pkcs11helper;
