@@ -3,15 +3,24 @@
 # Purpose: Base networking config (iwd, networkd, CLI tools).
 # Key options: none (hostName/udev/bridges live under hosts/*).
 # Dependencies: Imports submodules nscd/pkgs/proxy/ssh/vpn.
-{...}: {
-  imports = [
-    ./nscd.nix
-    ./pkgs.nix
-    ./proxy.nix
-    ./ssh.nix
-    ./bridge.nix
-    ./vpn
-  ];
+{lib, ...}: let
+  here = ./.;
+  entries = builtins.readDir here;
+  importables =
+    lib.mapAttrsToList (
+      name: type: let
+        path = here + "/${name}";
+      in
+        if type == "regular" && lib.hasSuffix ".nix" name && name != "default.nix"
+        then path
+        else if type == "directory" && builtins.pathExists (path + "/default.nix")
+        then path
+        else null
+    )
+    entries;
+  imports = lib.filter (p: p != null) importables;
+in {
+  inherit imports;
   # Base network services; host-specific NIC rules are moved under hosts/*
   services = {};
   networking = {

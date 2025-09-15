@@ -4,24 +4,29 @@
   ...
 }: let
   cfg = config.hardware.storage.autoMount;
+  here = ./.;
+  entries = builtins.readDir here;
+  importables =
+    lib.mapAttrsToList (
+      name: type: let
+        path = here + "/${name}";
+      in
+        if type == "regular" && lib.hasSuffix ".nix" name && name != "default.nix"
+        then path
+        else if type == "directory" && builtins.pathExists (path + "/default.nix")
+        then path
+        else null
+    )
+    entries;
+  imports = lib.filter (p: p != null) importables;
 in {
+  inherit imports;
   options.hardware.storage.autoMount.enable = lib.mkOption {
     type = lib.types.nullOr lib.types.bool;
     default = null;
     description = "Force enable/disable devmon (removable-media auto-mount). Null keeps module default (enabled).";
     example = true;
   };
-
-  imports = [
-    ./audio
-    ./cpu
-    ./io
-    ./qmk
-    ./udev-rules
-    ./video
-    ./webcam
-    ./pkgs.nix
-  ];
 
   config = {
     services = {
