@@ -7,7 +7,8 @@
     btop # even more fancy top
     dool # example use: dool -cdnpmgs --top-bio --top-cpu --top-mem (dstat is not supported as standalone tool anymore)
     iotop # top for iops
-    iperf iperf2 # IP bandwidth measurement
+    iperf
+    iperf2 # IP bandwidth measurement
     perf # linux profile tools
     linuxPackages_latest.turbostat # cpu monitor
     nethogs # network traffic per process

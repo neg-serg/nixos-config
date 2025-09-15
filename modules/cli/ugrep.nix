@@ -1,4 +1,4 @@
-{ lib, ... }: {
+{lib, ...}: {
   # System-wide configuration for ugrep/ug
   environment.etc."ugrep.conf".text = lib.concatStringsSep "\n" [
     "colors='cx=00;38;5;110:fn=01;38;5;249:ln=01;38;5;4:cn=01;38;5;24:bn=1;32:se=36;ms=01;04;38;5;25'"
@@ -23,4 +23,3 @@
     ""
   ];
 }
-

@@ -4,7 +4,7 @@
   config,
   ...
 }: let
-  cfg = (config.profiles.vm or {enable = false;});
+  cfg = config.profiles.vm or {enable = false;};
   mainUser = config.users.main.name or "neg";
 in {
   # Keep imports at top-level; guard heavy config below
