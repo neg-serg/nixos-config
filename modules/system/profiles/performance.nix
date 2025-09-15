@@ -10,82 +10,68 @@
 # WARNING: These options may reduce security and/or stability.
 # Enable only what you need and understand.
 let
-  inherit (lib) mkEnableOption mkOption types;
+  opts = import ../../../lib/opts.nix {inherit lib;};
 in {
-  options.profiles.performance = {
+  options.profiles.performance = with opts; {
     enable = mkEnableOption "Performance-oriented kernel/boot tweaks (reduces security; use with care).";
 
     # Optimize initrd compression (trade build time for smaller image).
-    optimizeInitrdCompression = mkOption {
-      type = types.bool;
+    optimizeInitrdCompression = mkBoolOpt {
       default = false;
       description = "Use zstd -19 -T0 for initrd compression (slower builds, smaller initrd).";
     };
 
     # Granular toggles (all default to true to preserve legacy behavior when
     # profiles.performance.enable = true)
-    disableMitigations = mkOption {
-      type = types.bool;
+    disableMitigations = mkBoolOpt {
       default = true;
       description = "Add mitigations=off (disables CPU vulnerability mitigations).";
     };
-    quietBoot = mkOption {
-      type = types.bool;
+    quietBoot = mkBoolOpt {
       default = false;
       description = "Reduce boot verbosity (quiet, splash, hide systemd status).";
     };
-    disableWatchdogs = mkOption {
-      type = types.bool;
+    disableWatchdogs = mkBoolOpt {
       default = true;
       description = "Disable watchdogs (nowatchdog, kernel.nmi_watchdog=0).";
     };
-    lowLatencyScheduling = mkOption {
-      type = types.bool;
+    lowLatencyScheduling = mkBoolOpt {
       default = true;
       description = "Favor latency: preempt=full and threadirqs.";
     };
-    fastRCU = mkOption {
-      type = types.bool;
+    fastRCU = mkBoolOpt {
       default = true;
       description = "Faster RCU grace periods: rcupdate.rcu_expedited=1.";
     };
-    pciePerformance = mkOption {
-      type = types.bool;
+    pciePerformance = mkBoolOpt {
       default = true;
       description = "Prefer PCIe performance: pcie_aspm=performance.";
     };
-    trustTSC = mkOption {
-      type = types.bool;
+    trustTSC = mkBoolOpt {
       default = true;
       description = "Trust TSC clocksource: tsc=reliable.";
     };
-    skipCryptoSelftests = mkOption {
-      type = types.bool;
+    skipCryptoSelftests = mkBoolOpt {
       default = true;
       description = "Skip crypto self-tests: cryptomgr.notests (faster boot).";
     };
-    disableAudit = mkOption {
-      type = types.bool;
+    disableAudit = mkBoolOpt {
       default = true;
       description = "Disable audit subsystem: audit=0 (lower syscall overhead).";
     };
-    noreplaceSmp = mkOption {
-      type = types.bool;
+    noreplaceSmp = mkBoolOpt {
       default = true;
       description = "Do not replace SMP alternatives at runtime: noreplace-smp.";
     };
-    idleNoMwait = mkOption {
-      type = types.bool;
+    idleNoMwait = mkBoolOpt {
       default = true;
       description = "Avoid MWAIT C-states: idle=nomwait (lower latency).";
     };
-    disableUsbAutosuspend = mkOption {
-      type = types.bool;
+    disableUsbAutosuspend = mkBoolOpt {
       default = true;
       description = "Disable USB autosuspend: usbcore.autosuspend=-1.";
     };
-    disableSplitLockDetect = mkOption {
-      type = types.bool;
+    disableSplitLockDetect = mkBoolOpt {
       default = true;
       description = "Disable split lock detection: split_lock_detect=off.";
     };
@@ -93,20 +79,17 @@ in {
     # Fancy zswap toggle and tuning
     zswap = {
       enable = mkEnableOption "Enable zswap compressed swap cache in RAM.";
-      compressor = mkOption {
-        type = types.str;
+      compressor = mkStrOpt {
         default = "zstd";
         description = "zswap compressor (e.g., zstd, lz4, lzo).";
         example = "zstd";
       };
-      maxPoolPercent = mkOption {
-        type = types.int;
+      maxPoolPercent = mkIntOpt {
         default = 25;
         description = "Maximum percentage of RAM used by zswap pool.";
         example = 25;
       };
-      zpool = mkOption {
-        type = types.str;
+      zpool = mkStrOpt {
         default = "zsmalloc";
         description = "zswap zpool implementation (e.g., zsmalloc, zbud).";
         example = "zsmalloc";

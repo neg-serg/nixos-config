@@ -1,6 +1,5 @@
-{ lib }:
-let
-  inherit (lib) types mkOption mkEnableOption concatStringsSep optional;
+{lib}: let
+  inherit (lib) types mkOption mkEnableOption concatStringsSep;
 
   # Build description/example/defaultText fields in a uniform way
   mkDoc = {
@@ -11,14 +10,24 @@ let
   }:
     {
       description =
-        if notes == null then description else concatStringsSep "\n" [ description notes ];
+        if notes == null
+        then description
+        else concatStringsSep "\n" [description notes];
     }
-    // (if example == null then {} else { inherit example; })
-    // (if defaultText == null then {} else { inherit defaultText; });
+    // (
+      if example == null
+      then {}
+      else {inherit example;}
+    )
+    // (
+      if defaultText == null
+      then {}
+      else {inherit defaultText;}
+    );
 
   # Base option constructor
   mkOpt = type: default: docAttrs:
-    mkOption ({ inherit type default; } // docAttrs);
+    mkOption ({inherit type default;} // docAttrs);
 
   # Primitive helpers
   mkBoolOpt = {
@@ -28,7 +37,7 @@ let
     example ? null,
     defaultText ? null,
   }:
-    mkOpt types.bool default (mkDoc { inherit description notes example defaultText; });
+    mkOpt types.bool default (mkDoc {inherit description notes example defaultText;});
 
   mkStrOpt = {
     default ? "",
@@ -37,7 +46,7 @@ let
     example ? null,
     defaultText ? null,
   }:
-    mkOpt types.str default (mkDoc { inherit description notes example defaultText; });
+    mkOpt types.str default (mkDoc {inherit description notes example defaultText;});
 
   mkIntOpt = {
     default ? 0,
@@ -46,7 +55,7 @@ let
     example ? null,
     defaultText ? null,
   }:
-    mkOpt types.int default (mkDoc { inherit description notes example defaultText; });
+    mkOpt types.int default (mkDoc {inherit description notes example defaultText;});
 
   mkPathOpt = {
     default ? null,
@@ -55,12 +64,17 @@ let
     example ? null,
     defaultText ? null,
     nullable ? true,
-  }:
-    let
-      t = if nullable then types.nullOr types.path else types.path;
-      d = if default == null && !nullable then "" else default;
-    in
-      mkOpt t d (mkDoc { inherit description notes example defaultText; });
+  }: let
+    t =
+      if nullable
+      then types.nullOr types.path
+      else types.path;
+    d =
+      if default == null && !nullable
+      then ""
+      else default;
+  in
+    mkOpt t d (mkDoc {inherit description notes example defaultText;});
 
   # Higher-level helpers
   mkListOpt = elemType: {
@@ -70,7 +84,7 @@ let
     example ? null,
     defaultText ? null,
   }:
-    mkOpt (types.listOf elemType) default (mkDoc { inherit description notes example defaultText; });
+    mkOpt (types.listOf elemType) default (mkDoc {inherit description notes example defaultText;});
 
   mkEnumOpt = values: {
     default ? null,
@@ -78,11 +92,13 @@ let
     notes ? null,
     example ? null,
     defaultText ? null,
-  }:
-    let
-      def = if default == null then builtins.head values else default;
-    in
-      mkOpt (types.enum values) def (mkDoc { inherit description notes example defaultText; });
+  }: let
+    def =
+      if default == null
+      then builtins.head values
+      else default;
+  in
+    mkOpt (types.enum values) def (mkDoc {inherit description notes example defaultText;});
 in {
   inherit
     mkDoc
@@ -93,6 +109,6 @@ in {
     mkPathOpt
     mkListOpt
     mkEnumOpt
-    mkEnableOption;
+    mkEnableOption
+    ;
 }
-

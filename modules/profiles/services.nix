@@ -8,45 +8,38 @@
   pkgs,
   ...
 }: let
-  inherit (lib) mkEnableOption mkOption types;
+  inherit (lib) types;
+  opts = import ../../lib/opts.nix {inherit lib;};
 in {
   options.servicesProfiles = {
     adguardhome = {
-      enable = mkEnableOption "AdGuard Home DNS with rewrites/profile wiring.";
-      rewrites = mkOption {
-        type = types.listOf (types.submodule (_: {
+      enable = opts.mkEnableOption "AdGuard Home DNS with rewrites/profile wiring.";
+      rewrites =
+        opts.mkListOpt (types.submodule (_: {
           options = {
-            domain = mkOption {
-              type = types.str;
-              description = "Domain to rewrite";
-            };
-            answer = mkOption {
-              type = types.str;
-              description = "Rewrite answer (IP or hostname)";
-            };
+            domain = opts.mkStrOpt {description = "Domain to rewrite";};
+            answer = opts.mkStrOpt {description = "Rewrite answer (IP or hostname)";};
           };
-        }));
-        default = [];
-        description = "List of DNS rewrite rules for AdGuard Home.";
-        example = [
-          {
-            domain = "nas.local";
-            answer = "192.168.1.10";
-          }
-        ];
-      };
+        })) {
+          default = [];
+          description = "List of DNS rewrite rules for AdGuard Home.";
+          example = [
+            {
+              domain = "nas.local";
+              answer = "192.168.1.10";
+            }
+          ];
+        };
     };
-    unbound.enable = mkEnableOption "Unbound DNS resolver profile.";
-    openssh.enable = mkEnableOption "OpenSSH (and mosh) profile.";
-    syncthing.enable = mkEnableOption "Syncthing device sync profile.";
-    mpd.enable = mkEnableOption "MPD (Music Player Daemon) profile.";
-    navidrome.enable = mkEnableOption "Navidrome music server profile.";
-    wakapi.enable = mkEnableOption "Wakapi CLI tools profile.";
+    unbound.enable = opts.mkEnableOption "Unbound DNS resolver profile.";
+    openssh.enable = opts.mkEnableOption "OpenSSH (and mosh) profile.";
+    syncthing.enable = opts.mkEnableOption "Syncthing device sync profile.";
+    mpd.enable = opts.mkEnableOption "MPD (Music Player Daemon) profile.";
+    navidrome.enable = opts.mkEnableOption "Navidrome music server profile.";
+    wakapi.enable = opts.mkEnableOption "Wakapi CLI tools profile.";
     nextcloud = {
-      enable = mkEnableOption "Nextcloud server profile (with optional Caddy proxy).";
-      package = mkOption {
-        type = types.nullOr types.package;
-        default = null; # If null, module will default to a pinned Nextcloud in nixpkgs
+      enable = opts.mkEnableOption "Nextcloud server profile (with optional Caddy proxy).";
+      package = opts.mkOpt (types.nullOr types.package) null {
         description = ''
           Nextcloud package derivation to use for the service.
           Set to a specific `pkgs.nextcloudXX` or a flake-provided package to pin the major version.
@@ -55,7 +48,7 @@ in {
         example = pkgs.nextcloud31;
       };
     };
-    avahi.enable = mkEnableOption "Avahi (mDNS) profile.";
-    jellyfin.enable = mkEnableOption "Jellyfin media server profile.";
+    avahi.enable = opts.mkEnableOption "Avahi (mDNS) profile.";
+    jellyfin.enable = opts.mkEnableOption "Jellyfin media server profile.";
   };
 }
