@@ -41,7 +41,7 @@
     inetutils # common network programs
     ipcalc # calculate ip addr stuff
     iputils # set of small useful utilities for Linux networking
-    magic-wormhole # secure transfer between computers
+    # magic-wormhole # secure transfer between computers
     netcat-openbsd # openbsd netcat variant
     netdiscover # another network scan
     nmap # port scanner
