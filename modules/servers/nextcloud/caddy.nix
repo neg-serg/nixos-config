@@ -34,13 +34,6 @@ in {
     services.caddy = {
       enable = true;
       email = lib.mkDefault "change-me@example.com";
-      # Prevent Caddy from attempting to install the internal CA
-      # into the host trust store (not permitted under NixOS service user)
-      globalConfig = ''
-        pki {
-          install_trust false
-        }
-      '';
       virtualHosts.${domain}.extraConfig = ''
         # Nextcloud on Caddy v2
         encode zstd gzip
@@ -111,7 +104,8 @@ in {
       description = "Export Caddy internal CA root to /var/lib/caddy/ca.crt";
       after = ["caddy.service"];
       requires = ["caddy.service"];
-      wantedBy = ["multi-user.target"];
+      # Defer alongside other heavy services to avoid ordering cycle with graphical.target
+      wantedBy = ["post-boot.target"];
       serviceConfig.Type = "oneshot";
       script = ''
         set -euo pipefail
