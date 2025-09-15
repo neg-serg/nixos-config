@@ -2,7 +2,7 @@
   description = "Neg-Serg configuration";
   inputs = {
     chaotic = {
-      url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
+      url = "git+https://github.com/chaotic-cx/nyx?ref=nyxpkgs-unstable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland = {
