@@ -1,4 +1,4 @@
-{lib, ...}: {
+_: {
   # Align with qemu-vm module: disable timesyncd to avoid conflicts
   services.timesyncd.enable = false;
 

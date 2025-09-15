@@ -1,4 +1,4 @@
-{lib, ...}: {
+_: {
   # Primary user (single source of truth for name/ids)
   users.main = {
     name = "neg";
@@ -44,7 +44,52 @@
   monitoring.netdata.enable = false;
 
   # Nextcloud via Caddy on LAN, served as "telfir"
-  services = {
+  services = let
+    devicesList = [
+      {
+        name = "telfir";
+        id = "EZG57BT-TANWJ2R-QDVLV5X-4DKP7GU-HQENUT7-MA43GUU-AV3IN6P-7KKGZA3";
+      }
+      {
+        name = "Pixel 7 Pro";
+        id = "OWGOTRT-Q4LV2MR-QLVIFZH-LPWZ4DP-TANYCAM-SXC2W2A-BL4VSHS-KWXLVAB";
+      }
+      {
+        name = "DX180";
+        id = "NKSYBIH-G5BV2FK-ZHHL27B-MWZT3OJ-DPTF7TH-O6HE5CM-3CARZ5K-6CIUSQI";
+      }
+      {
+        name = "OPPO X7 Ultra";
+        id = "JHDQEDC-YN67IMD-B7WFZTI-Y4CPKMY-MUPRBYK-OAFOMPC-IJVDVOV-AOBILAX";
+      }
+    ];
+    devices = builtins.listToAttrs (
+      map (d: {
+        inherit (d) name;
+        value = {inherit (d) id;};
+      })
+      devicesList
+    );
+    foldersList = [
+      {
+        name = "music-upload";
+        path = "/zero/syncthing/music-upload";
+        devices = ["telfir" "Pixel 7 Pro" "DX180" "OPPO X7 Ultra"];
+      }
+      {
+        name = "picture-upload";
+        path = "/zero/syncthing/picture-upload";
+        devices = ["Pixel 7 Pro" "DX180"];
+      }
+    ];
+    folders = builtins.listToAttrs (
+      map (f: {
+        inherit (f) name;
+        value = {inherit (f) path devices;};
+      })
+      foldersList
+    );
+  in {
     nextcloud = {
       hostName = "telfir";
       caddyProxy.enable = true;
@@ -56,30 +101,7 @@
       overrideDevices = true;
       overrideFolders = true;
       settings = {
-        devices = {
-          "telfir" = {id = "EZG57BT-TANWJ2R-QDVLV5X-4DKP7GU-HQENUT7-MA43GUU-AV3IN6P-7KKGZA3";};
-          "Pixel 7 Pro" = {id = "OWGOTRT-Q4LV2MR-QLVIFZH-LPWZ4DP-TANYCAM-SXC2W2A-BL4VSHS-KWXLVAB";};
-          "DX180" = {id = "NKSYBIH-G5BV2FK-ZHHL27B-MWZT3OJ-DPTF7TH-O6HE5CM-3CARZ5K-6CIUSQI";};
-          "OPPO X7 Ultra" = {id = "JHDQEDC-YN67IMD-B7WFZTI-Y4CPKMY-MUPRBYK-OAFOMPC-IJVDVOV-AOBILAX";};
-        };
-        folders = {
-          "music-upload" = {
-            path = "/zero/syncthing/music-upload";
-            devices = [
-              "telfir"
-              "Pixel 7 Pro"
-              "DX180"
-              "OPPO X7 Ultra"
-            ];
-          };
-          "picture-upload" = {
-            path = "/zero/syncthing/picture-upload";
-            devices = [
-              "Pixel 7 Pro"
-              "DX180"
-            ];
-          };
-        };
+        inherit devices folders;
       };
     };
   };
