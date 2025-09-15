@@ -102,83 +102,46 @@
       diffClosures = import ./modules/diff-closures.nix;
       # Nilla raw-loader compatibility: synthetic type for each input (harmless for normal flakes)
       nillaInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) inputs;
-    }; {
+    }; let
+      # Shared pre-commit hooks runner for checks and devShell
+      preCommit = inputs.pre-commit-hooks.lib.${system}.run {
+        src = self;
+        hooks = {
+          alejandra.enable = true;
+          statix.enable = true;
+          deadnix.enable = true;
+        };
+      };
+    in {
       # Option docs (markdown) for base profiles, roles, and selected feature modules
       packages.${system} = let
         pkgs = nixpkgs.legacyPackages.${system};
-        # Use nixpkgs.lib to access nixosOptionsDoc if available
         inherit (nixpkgs) lib;
-        mkArgs = {
-          inherit lib;
-          specialArgs = mkArgs.specialArgs;
+        # DRY: evaluate module groups and generate option docs programmatically
+        mkSpecialArgs = {
+          inherit self inputs locale timeZone kexec_enabled pkgs;
         };
-        evalBase = lib.evalModules {
-          inherit lib;
-          modules = [
+        evalMods = mods:
+          lib.evalModules {
+            inherit lib;
+            modules = mods;
+            specialArgs = mkSpecialArgs;
+          };
+        groups = {
+          base = [
             ./modules/profiles/services.nix
             ./modules/system/profiles/security.nix
             ./modules/system/profiles/performance.nix
             ./modules/system/profiles/vm.nix
             ./modules/system/net/bridge.nix
           ];
-          specialArgs = {
-            inherit self inputs locale timeZone kexec_enabled;
-            inherit pkgs;
-          };
-        };
-
-        evalRoles = lib.evalModules {
-          inherit lib;
-          modules = [./modules/roles];
-          specialArgs = mkArgs.specialArgs;
-        };
-
-        # Additional modules to surface their options in the generated docs
-        evalGames = lib.evalModules {
-          inherit lib;
-          modules = [
-            ./modules/user/games/default.nix
-          ];
-          specialArgs = mkArgs.specialArgs;
-        };
-
-        evalUsers = lib.evalModules {
-          inherit lib;
-          modules = [
-            ./modules/system/users.nix
-          ];
-          specialArgs = mkArgs.specialArgs;
-        };
-
-        evalFlakePreflight = lib.evalModules {
-          inherit lib;
-          modules = [
-            ./modules/flake-preflight.nix
-          ];
-          specialArgs = mkArgs.specialArgs;
-        };
-
-        evalHwAmd = lib.evalModules {
-          inherit lib;
-          modules = [
-            ./modules/hardware/video/amd/default.nix
-          ];
-          specialArgs = mkArgs.specialArgs;
-        };
-
-        hasOptionsDoc = lib ? nixosOptionsDoc;
-        docsBase =
-          if hasOptionsDoc
-          then lib.nixosOptionsDoc {inherit (evalBase) options;}
-          else null;
-        docsRoles =
-          if hasOptionsDoc
-          then lib.nixosOptionsDoc {inherit (evalRoles) options;}
-          else null;
-        # Additional grouped docs
-        evalAll = lib.evalModules (mkArgs // { modules = [ ./modules ]; });
-        evalProfiles = lib.evalModules (mkArgs // {
-          modules = [
+          roles = [./modules/roles];
+          games = [./modules/user/games/default.nix];
+          users = [./modules/system/users.nix];
+          flakePreflight = [./modules/flake-preflight.nix];
+          hwAmd = [./modules/hardware/video/amd/default.nix];
+          all = [./modules];
+          profiles = [
             ./modules/profiles/services.nix
             ./modules/system/profiles/security.nix
             ./modules/system/profiles/performance.nix
@@ -186,80 +149,81 @@
             ./modules/system/profiles/aliases.nix
             ./modules/user/games/default.nix
           ];
-        });
-        evalServers = lib.evalModules (mkArgs // { modules = [ ./modules/servers ]; });
-        evalHardware = lib.evalModules (mkArgs // { modules = [ ./modules/hardware ]; });
-
-        docsGames =
-          if hasOptionsDoc
-          then lib.nixosOptionsDoc {inherit (evalGames) options;}
-          else null;
-        docsUsers =
-          if hasOptionsDoc
-          then lib.nixosOptionsDoc {inherit (evalUsers) options;}
-          else null;
-        docsFlakePreflight =
-          if hasOptionsDoc
-          then lib.nixosOptionsDoc {inherit (evalFlakePreflight) options;}
-          else null;
-        docsHwAmd =
-          if hasOptionsDoc
-          then lib.nixosOptionsDoc {inherit (evalHwAmd) options;}
-          else null;
-        docsAll =
-          if hasOptionsDoc
-          then lib.nixosOptionsDoc {inherit (evalAll) options;}
-          else null;
-        docsProfiles =
-          if hasOptionsDoc
-          then lib.nixosOptionsDoc {inherit (evalProfiles) options;}
-          else null;
-        docsServers =
-          if hasOptionsDoc
-          then lib.nixosOptionsDoc {inherit (evalServers) options;}
-          else null;
-        docsHardware =
-          if hasOptionsDoc
-          then lib.nixosOptionsDoc {inherit (evalHardware) options;}
-          else null;
+          servers = [./modules/servers];
+          hardware = [./modules/hardware];
+        };
+        evals = lib.mapAttrs (_: evalMods) groups;
+        hasOptionsDoc = lib ? nixosOptionsDoc;
+        docs = lib.optionalAttrs hasOptionsDoc (
+          lib.mapAttrs (_: eval: lib.nixosOptionsDoc {inherit (eval) options;}) evals
+        );
+        get = name: (builtins.getAttr name docs).optionsCommonMark;
       in
         {
           default = pkgs.zsh;
         }
         // lib.optionalAttrs hasOptionsDoc {
-          options-base-md = docsBase.optionsCommonMark;
-          options-roles-md = docsRoles.optionsCommonMark;
-          options-games-md = docsGames.optionsCommonMark;
-          options-users-md = docsUsers.optionsCommonMark;
-          options-flake-preflight-md = docsFlakePreflight.optionsCommonMark;
-          options-hw-amd-md = docsHwAmd.optionsCommonMark;
-          options-all-md = docsAll.optionsCommonMark;
-          options-profiles-md = docsProfiles.optionsCommonMark;
-          options-servers-md = docsServers.optionsCommonMark;
-          options-hardware-md = docsHardware.optionsCommonMark;
+          # Preserve existing output names for compatibility
+          options-base-md = get "base";
+          options-roles-md = get "roles";
+          options-games-md = get "games";
+          options-users-md = get "users";
+          options-flake-preflight-md = get "flakePreflight";
+          options-hw-amd-md = get "hwAmd";
+          options-all-md = get "all";
+          options-profiles-md = get "profiles";
+          options-servers-md = get "servers";
+          options-hardware-md = get "hardware";
 
-          options-md = pkgs.runCommand "options.md" {
-            base = docsBase.optionsCommonMark;
-            roles = docsRoles.optionsCommonMark;
-            profiles = docsProfiles.optionsCommonMark;
-            servers = docsServers.optionsCommonMark;
-            hardware = docsHardware.optionsCommonMark;
-            users = docsUsers.optionsCommonMark;
-            games = docsGames.optionsCommonMark;
-            flakePreflight = docsFlakePreflight.optionsCommonMark;
-          } ''
-            {
-              echo "# Options (Aggregated)";
-              echo;
-              echo "## Profiles (base)"; cat "$profiles" || true; echo;
-              echo "## Roles"; cat "$roles" || true; echo;
-              echo "## Servers"; cat "$servers" || true; echo;
-              echo "## Hardware"; cat "$hardware" || true; echo;
-              echo "## Users"; cat "$users" || true; echo;
-              echo "## Games"; cat "$games" || true; echo;
-              echo "## Flake Preflight"; cat "$flakePreflight" || true; echo;
-            } > $out
-          '';
+          options-md = let
+            sections = [
+              {
+                title = "Profiles (base)";
+                path = get "profiles";
+              }
+              {
+                title = "Roles";
+                path = get "roles";
+              }
+              {
+                title = "Servers";
+                path = get "servers";
+              }
+              {
+                title = "Hardware";
+                path = get "hardware";
+              }
+              {
+                title = "Users";
+                path = get "users";
+              }
+              {
+                title = "Games";
+                path = get "games";
+              }
+              {
+                title = "Flake Preflight";
+                path = get "flakePreflight";
+              }
+            ];
+            body = builtins.concatStringsSep "\n" (
+              [
+                "echo \"# Options (Aggregated)\""
+                "echo"
+              ]
+              ++ (map (s: ''
+                  echo "## ${s.title}"
+                  cat ${s.path} || true
+                  echo
+                '')
+                sections)
+            );
+          in
+            pkgs.runCommand "options.md" {} ''
+              {
+                ${body}
+              } > $out
+            '';
         };
 
       # Make `nix fmt` behave like in home-manager: format repo with alejandra
@@ -278,14 +242,6 @@
       # Lightweight repo checks for `nix flake check`
       checks.${system} = let
         pkgs = nixpkgs.legacyPackages.${system};
-        preCommit = inputs.pre-commit-hooks.lib.${system}.run {
-          src = self;
-          hooks = {
-            alejandra.enable = true;
-            statix.enable = true;
-            deadnix.enable = true;
-          };
-        };
       in {
         fmt-alejandra =
           pkgs.runCommand "fmt-alejandra" {
@@ -319,14 +275,6 @@
       # Developer shell
       devShells.${system}.default = let
         pkgs = nixpkgs.legacyPackages.${system};
-        preCommit = inputs.pre-commit-hooks.lib.${system}.run {
-          src = self;
-          hooks = {
-            alejandra.enable = true;
-            statix.enable = true;
-            deadnix.enable = true;
-          };
-        };
       in
         pkgs.mkShell {
           inherit (preCommit) shellHook;
@@ -348,45 +296,29 @@
           chaotic.nixosModules.default
           sops-nix.nixosModules.sops
         ];
+        mkHost = name: extraModules:
+          nixpkgs.lib.nixosSystem {
+            inherit system;
+            specialArgs = {
+              inherit locale timeZone kexec_enabled self;
+              # Pass Nilla-friendly inputs (workaround for nilla-nix/nilla#14)
+              inputs = nillaInputs;
+            };
+            modules = commonModules ++ [./hosts/${name}] ++ extraModules;
+          };
       in {
-        telfir = nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = {
-            inherit locale;
-            inherit timeZone;
-            inherit kexec_enabled;
-            inherit self;
-            # Pass Nilla-friendly inputs (workaround for nilla-nix/nilla#14)
-            inputs = nillaInputs;
-          };
-          modules =
-            commonModules
-            ++ [
-              ./hosts/telfir
-              diffClosures
-              {diffClosures.enable = true;}
-            ];
-        };
-        telfir-vm = nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = {
-            inherit locale;
-            inherit timeZone;
-            inherit kexec_enabled;
-            inherit self;
-            inputs = nillaInputs;
-          };
-          modules =
-            commonModules
-            ++ [
-              ./hosts/telfir-vm
-              # VM-specific adjustments
-              ({lib, ...}: {
-                # Avoid secure boot integration in quick VM builds
-                boot.lanzaboote.enable = false;
-              })
-            ];
-        };
+        telfir = mkHost "telfir" [
+          diffClosures
+          {diffClosures.enable = true;}
+        ];
+
+        telfir-vm = mkHost "telfir-vm" [
+          # VM-specific adjustments
+          (_: {
+            # Avoid secure boot integration in quick VM builds
+            boot.lanzaboote.enable = false;
+          })
+        ];
       };
     };
 }
