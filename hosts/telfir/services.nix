@@ -90,6 +90,8 @@ _: {
       foldersList
     );
   in {
+    # Avoid port conflicts: ensure nginx is disabled when using Caddy
+    nginx.enable = false;
     nextcloud = {
       hostName = "telfir";
       caddyProxy.enable = true;
