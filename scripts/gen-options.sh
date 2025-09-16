@@ -19,9 +19,6 @@ if [[ ! -f "$root_dir/flake.nix" ]]; then
   exit 1
 fi
 
-attr_list=(options-md options-servers-md options-profiles-md options-hardware-md options-all-md)
-out_files=(options.md options-servers.md options-profiles.md options-hardware.md options-all.md)
-
 # Determine available systems by inspecting flake packages
 systems=$(nix eval --json "$flake_path#packages" | jq -r 'keys[]')
 if [[ -z "$systems" ]]; then
@@ -29,40 +26,46 @@ if [[ -z "$systems" ]]; then
   exit 1
 fi
 
-found_system=""
-for sys in $systems; do
-  if nix eval --json "$flake_path#packages.${sys}" >/dev/null 2>&1; then
-    if nix eval --json "$flake_path#packages.${sys}" | jq -e '."options-md"' >/dev/null 2>&1; then
-      found_system="$sys"
-      break
-    fi
-  fi
-done
-
+found_system=$(echo "$systems" | head -n1)
 if [[ -z "$found_system" ]]; then
-  echo "error: options-md package not available; ensure nixosOptionsDoc is supported in your nixpkgs" >&2
+  echo "error: failed to detect a system under packages" >&2
   exit 2
 fi
 
 echo "Using system: $found_system" >&2
 
-for i in "${!attr_list[@]}"; do
-  attr=${attr_list[$i]}
-  out=${out_files[$i]}
-  if nix eval --json "$flake_path#packages.${found_system}" | jq -e ".\"${attr}\"" >/dev/null 2>&1; then
-    tmp_link="${root_dir}/.result-${attr}"
-    rm -f "$tmp_link"
-    echo "Building $attr ..." >&2
-    nix build "$flake_path#packages.${found_system}.${attr}" -o "$tmp_link" >/dev/null
-    # Resolve symlink and copy
-    real=$(readlink -f "$tmp_link")
-    cp -f "$real" "$docs_dir/$out"
-    echo "Wrote $docs_dir/$out" >&2
-    rm -f "$tmp_link"
-  else
-    echo "skip: $attr not present for $found_system" >&2
-  fi
+# Discover available options-* docs dynamically
+all_keys=$(nix eval --json "$flake_path#packages.${found_system}" | jq -r 'keys[]')
+mapfile -t option_keys < <(echo "$all_keys" | awk '/^options-.*-md$|^options-md$/')
+
+# Stable order: index -> aggregated -> the rest sorted
+attrs=()
+if printf '%s\n' "${option_keys[@]}" | grep -qx 'options-index-md'; then attrs+=(options-index-md); fi
+if printf '%s\n' "${option_keys[@]}" | grep -qx 'options-md'; then attrs+=(options-md); fi
+rest=$(printf '%s\n' "${option_keys[@]}" | grep -v -E '^options-(index-)?md$' | sort || true)
+if [[ -n "$rest" ]]; then
+  while IFS= read -r k; do attrs+=("$k"); done <<< "$rest"
+fi
+
+if [[ ${#attrs[@]} -eq 0 ]]; then
+  echo "error: no options-*-md artifacts found in packages.${found_system}" >&2
+  exit 3
+fi
+
+for attr in "${attrs[@]}"; do
+  case "$attr" in
+    options-index-md) out="index.md";;
+    options-md) out="options.md";;
+    *) out="${attr%-md}.md";;
+  esac
+  tmp_link="${root_dir}/.result-${attr}"
+  rm -f "$tmp_link"
+  echo "Building $attr -> $out ..." >&2
+  nix build "$flake_path#packages.${found_system}.${attr}" -o "$tmp_link" >/dev/null
+  real=$(readlink -f "$tmp_link")
+  cp -f "$real" "$docs_dir/$out"
+  echo "Wrote $docs_dir/$out" >&2
+  rm -f "$tmp_link"
 done
 
 echo "Done." >&2
-
