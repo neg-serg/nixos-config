@@ -42,5 +42,12 @@ in {
           adminpassFile = config.sops.secrets."nextcloud/admin-pass".path;
         });
     };
+
+    # Explicitly override PHP-FPM pool settings for Nextcloud
+    services.phpfpm.pools.nextcloud.settings = {
+      "listen.owner" = "nextcloud";
+      "listen.group" = "nextcloud";
+      "listen.mode" = "0660";
+    };
   };
 }

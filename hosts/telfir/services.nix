@@ -108,6 +108,16 @@ _: {
     };
   };
 
+  # Provide nginx system user/group so PHP-FPM pool configs referencing
+  # nginx for socket ownership won't fail even when nginx service is off.
+  users = {
+    users.nginx = {
+      isSystemUser = true;
+      group = "nginx";
+    };
+    groups.nginx = {};
+  };
+
   # Games autoscale defaults for this host
   profiles.games = {
     autoscaleDefault = false;
