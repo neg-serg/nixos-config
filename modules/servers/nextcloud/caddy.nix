@@ -118,10 +118,11 @@ in {
         done
         if [ -s "$src" ]; then
           install -D -m0644 -o caddy -g caddy "$src" "$dst"
-        else
-          echo "Caddy internal CA root not found at $src" >&2
-          exit 1
+          exit 0
         fi
+        # Do not fail the unit if CA is not present yet; Caddy will create it lazily.
+        echo "note: Caddy internal CA root not found at $src (skipping export)" >&2
+        exit 0
       '';
     };
   };

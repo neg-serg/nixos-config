@@ -6,7 +6,9 @@
   mkPostBoot = _:
     lib.mkIf true {
       wantedBy = lib.mkForce ["post-boot.target"];
-      after = ["graphical.target" "post-boot.target"];
+      # Start after graphical session is reached; do NOT depend on post-boot.target itself
+      # to avoid ordering cycles (post-boot wants the service; the service shouldn't wait on post-boot)
+      after = ["graphical.target"];
     };
 in {
   # Define a target for non-critical background services that can start after desktop is up.
