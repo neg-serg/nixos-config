@@ -50,5 +50,6 @@ in {
     };
     avahi.enable = opts.mkEnableOption "Avahi (mDNS) profile.";
     jellyfin.enable = opts.mkEnableOption "Jellyfin media server profile.";
+    samba.enable = opts.mkEnableOption "Samba (SMB/CIFS) fileshare profile.";
   };
 }

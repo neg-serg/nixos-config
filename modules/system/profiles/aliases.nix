@@ -18,6 +18,7 @@
     "nextcloud"
     "avahi"
     "jellyfin"
+    "samba"
   ];
 in {
   imports = (map mk services) ++ [mkExtra];

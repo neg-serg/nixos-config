@@ -38,6 +38,8 @@ _: {
     ];
     # Explicitly override media role to keep Jellyfin off on this host
     jellyfin.enable = false;
+    # Enable Samba profile on this host
+    samba.enable = true;
   };
 
   # Disable Netdata on this host (keep other monitoring like sysstat)
