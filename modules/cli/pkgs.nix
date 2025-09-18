@@ -10,41 +10,41 @@
       '';
   });
 in {
-  environment.systemPackages = with pkgs; [
-    abduco # CLI session detach
-    ast-grep # AST-aware grep
-    delta # better diff tool
-    difftastic # syntax-aware diff
-    diffutils # classic diff utils
-    doggo # DNS client for humans
-    dos2unix # file conversion
-    du-dust # better du
-    duf # better df
-    eza # modern 'ls' replacement
-    fd # better find
-    file # detect file type by content
-    goaccess # realtime log analyzer
-    grc # generic text colorizer
-    inotify-tools # shell inotify bindings
-    kmon # kernel activity monitor
-    lnav # fancy log viewer
-    lsof # list open files
-    moreutils # assorted unix utils (sponge, etc.)
-    ncdu # interactive du
-    nnn # CLI file manager
-    parallel # parallel xargs
-    procps # /proc tools
-    progress # show progress for coreutils
-    psmisc # killall and friends
-    pueue # queue manager
-    pv # pipe viewer
-    readline # readline library
-    reptyr # move app to another pty
-    ripgrep # better grep
-    rlwrap # readline wrapper for everything
-    rmlint # remove duplicates
-    stow # manage farms of symlinks
-    tig # git TUI
+  environment.systemPackages = [
+    pkgs.abduco # CLI session detach
+    pkgs.ast-grep # AST-aware grep
+    pkgs.delta # better diff tool
+    pkgs.difftastic # syntax-aware diff
+    pkgs.diffutils # classic diff utils
+    pkgs.doggo # DNS client for humans
+    pkgs.dos2unix # file conversion
+    pkgs.du-dust # better du
+    pkgs.duf # better df
+    pkgs.eza # modern 'ls' replacement
+    pkgs.fd # better find
+    pkgs.file # detect file type by content
+    pkgs.goaccess # realtime log analyzer
+    pkgs.grc # generic text colorizer
+    pkgs.inotify-tools # shell inotify bindings
+    pkgs.kmon # kernel activity monitor
+    pkgs.lnav # fancy log viewer
+    pkgs.lsof # list open files
+    pkgs.moreutils # assorted unix utils (sponge, etc.)
+    pkgs.ncdu # interactive du
+    pkgs.nnn # CLI file manager
+    pkgs.parallel # parallel xargs
+    pkgs.procps # /proc tools
+    pkgs.progress # show progress for coreutils
+    pkgs.psmisc # killall and friends
+    pkgs.pueue # queue manager
+    pkgs.pv # pipe viewer
+    pkgs.readline # readline library
+    pkgs.reptyr # move app to another pty
+    pkgs.ripgrep # better grep
+    pkgs.rlwrap # readline wrapper for everything
+    pkgs.rmlint # remove duplicates
+    pkgs.stow # manage farms of symlinks
+    pkgs.tig # git TUI
     ugrepWithConfig # better grep, rg alternative (wrapped with global config)
   ];
 }

@@ -1,7 +1,7 @@
 {pkgs, ...}: {
   systemd.services.nixindex = {
     serviceConfig.Type = "oneshot";
-    path = with pkgs; [nix-index];
+    path = [pkgs.nix-index];
     script = ''
       #!/bin/sh
       ${pkgs.nix-index}/bin/nix-index

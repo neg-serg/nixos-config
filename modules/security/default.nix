@@ -24,7 +24,7 @@ in {
     apparmor = {
       enable = true;
       killUnconfinedConfinables = false;
-      packages = with pkgs; [apparmor-utils apparmor-profiles];
+      packages = [pkgs.apparmor-utils pkgs.apparmor-profiles];
     };
     pki.useCompatibleBundle = true;
     lockKernelModules = false;

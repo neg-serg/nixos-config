@@ -1,5 +1,5 @@
 {pkgs, ...}: {
-  environment.systemPackages = with pkgs; [
-    overskride # bluetooth and obex client
+  environment.systemPackages = [
+    pkgs.overskride # bluetooth and obex client
   ];
 }

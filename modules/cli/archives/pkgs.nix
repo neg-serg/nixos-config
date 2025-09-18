@@ -1,12 +1,12 @@
 {pkgs, ...}: {
-  environment.systemPackages = with pkgs; [
-    lbzip2 # parallel bzip2
-    p7zip # 7z x
-    pzip # parallel zip archiver
-    rapidgzip # fast gzip unarchiver
-    unrar-wrapper # unrar
-    unzip # zip archive operations
-    xz # xz archiver
-    zip # zip archiver
+  environment.systemPackages = [
+    pkgs.lbzip2 # parallel bzip2
+    pkgs.p7zip # 7z x
+    pkgs.pzip # parallel zip archiver
+    pkgs.rapidgzip # fast gzip unarchiver
+    pkgs.unrar-wrapper # unrar
+    pkgs.unzip # zip archive operations
+    pkgs.xz # xz archiver
+    pkgs.zip # zip archiver
   ];
 }

@@ -1,9 +1,9 @@
 {pkgs, ...}: {
-  environment.systemPackages = with pkgs; [
-    chrpath # adjust rpath for ELF
-    debugedit # debug info rewrite
-    dump_syms # parse debugging information
-    elfutils # utilities to handle ELF objects
-    patchelf # fix up binaries in Nix store
+  environment.systemPackages = [
+    pkgs.chrpath # adjust rpath for ELF
+    pkgs.debugedit # debug info rewrite
+    pkgs.dump_syms # parse debugging information
+    pkgs.elfutils # utilities to handle ELF objects
+    pkgs.patchelf # fix up binaries in Nix store
   ];
 }

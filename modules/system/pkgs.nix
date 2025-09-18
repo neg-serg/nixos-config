@@ -1,12 +1,12 @@
 {pkgs, ...}: {
-  environment.systemPackages = with pkgs; [
-    cryptsetup # stuff for LUKS
-    dmidecode # extract system/memory/bios info
-    hw-probe # tool to get information about system
-    kexec-tools # tools related to the kexec Linux feature
-    lm_sensors # sensors
-    pciutils # manipulate pci devices
-    schedtool # CPU scheduling
-    usbutils # lsusb
+  environment.systemPackages = [
+    pkgs.cryptsetup # stuff for LUKS
+    pkgs.dmidecode # extract system/memory/bios info
+    pkgs.hw-probe # tool to get information about system
+    pkgs.kexec-tools # tools related to the kexec Linux feature
+    pkgs.lm_sensors # sensors
+    pkgs.pciutils # manipulate pci devices
+    pkgs.schedtool # CPU scheduling
+    pkgs.usbutils # lsusb
   ];
 }

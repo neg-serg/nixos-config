@@ -3,10 +3,10 @@
     enable = true; # better screen
     keyMode = "vi";
     clock24 = true;
-    plugins = with pkgs.tmuxPlugins; [
-      better-mouse-mode # better mouse support for tmux
-      fuzzback # search with fzf prefix + / (fzf search backwards)
-      resurrect # restore tmux environment after system restart
+    plugins = [
+      pkgs.tmuxPlugins.better-mouse-mode # better mouse support for tmux
+      pkgs.tmuxPlugins.fuzzback # search with fzf prefix + / (fzf search backwards)
+      pkgs.tmuxPlugins.resurrect # restore tmux environment after system restart
     ];
     shortcut = "s";
     secureSocket = false; # survive user logout

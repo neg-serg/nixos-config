@@ -1,5 +1,5 @@
 {pkgs, ...}: {
-  environment.systemPackages = with pkgs; [
-    droidcam # Linux client for DroidCam app
+  environment.systemPackages = [
+    pkgs.droidcam # Linux client for DroidCam app
   ];
 }

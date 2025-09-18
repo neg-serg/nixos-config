@@ -1,7 +1,7 @@
 {pkgs, ...}: {
-  environment.systemPackages = with pkgs; [
-    dosbox # DOS emulator
-    dosbox-staging # dosbox-staging
-    dosbox-x # dosbox-x
+  environment.systemPackages = [
+    pkgs.dosbox # DOS emulator
+    pkgs.dosbox-staging # dosbox-staging
+    pkgs.dosbox-x # dosbox-x
   ];
 }

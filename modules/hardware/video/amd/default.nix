@@ -18,10 +18,10 @@ in {
         graphics = {
           enable = true;
           enable32Bit = true; # 32-bit userspace for Steam/Wine
-          extraPackages = with pkgs; [
-            rocmPackages.clr.icd
-            vaapiVdpau
-            libvdpau-va-gl
+          extraPackages = [
+            pkgs.rocmPackages.clr.icd
+            pkgs.vaapiVdpau
+            pkgs.libvdpau-va-gl
           ];
         };
         amdgpu.opencl.enable = true;
@@ -29,18 +29,18 @@ in {
       };
       environment = {
         variables.AMD_VULKAN_ICD = "RADV";
-        systemPackages = with pkgs; [
-          clinfo # show info about opencl
-          rocmPackages.rocminfo
-          rocmPackages.rocm-smi
-          glxinfo # show info about glx
-          libva-utils # vainfo, encode/decode probing
-          vdpauinfo
-          lact # linux amdgpu controller
-          (nvtopPackages.amd.override {intel = true;})
-          vulkan-extension-layer
-          vulkan-tools
-          vulkan-validation-layers
+        systemPackages = [
+          pkgs.clinfo # show info about opencl
+          pkgs.rocmPackages.rocminfo
+          pkgs.rocmPackages.rocm-smi
+          pkgs.glxinfo # show info about glx
+          pkgs.libva-utils # vainfo, encode/decode probing
+          pkgs.vdpauinfo
+          pkgs.lact # linux amdgpu controller
+          (pkgs.nvtopPackages.amd.override {intel = true;})
+          pkgs.vulkan-extension-layer
+          pkgs.vulkan-tools
+          pkgs.vulkan-validation-layers
         ];
       };
     }

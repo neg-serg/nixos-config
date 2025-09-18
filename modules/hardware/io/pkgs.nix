@@ -1,17 +1,17 @@
 {pkgs, ...}: {
-  environment.systemPackages = with pkgs; [
-    blktrace # block layer tracing tools
-    dmraid # old-style RAID config utility
-    exfat # exFAT libs
-    exfatprogs # exFAT utilities
-    fio # disk benchmark
-    gptfdisk # sgdisk and friends
-    ioping # IO latency measuring tool
-    mtools # MS-DOS disk utilities
-    multipath-tools # kpartx, etc. for images
-    nvme-cli # NVMe management tools
-    ostree # Git for OS binaries
-    parted # CLI disk manager
-    smartmontools # smartctl
+  environment.systemPackages = [
+    pkgs.blktrace # block layer tracing tools
+    pkgs.dmraid # old-style RAID config utility
+    pkgs.exfat # exFAT libs
+    pkgs.exfatprogs # exFAT utilities
+    pkgs.fio # disk benchmark
+    pkgs.gptfdisk # sgdisk and friends
+    pkgs.ioping # IO latency measuring tool
+    pkgs.mtools # MS-DOS disk utilities
+    pkgs.multipath-tools # kpartx, etc. for images
+    pkgs.nvme-cli # NVMe management tools
+    pkgs.ostree # Git for OS binaries
+    pkgs.parted # CLI disk manager
+    pkgs.smartmontools # smartctl
   ];
 }

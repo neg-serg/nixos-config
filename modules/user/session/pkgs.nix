@@ -4,13 +4,13 @@
   ...
 }: {
   # Wayland/Hyprland tools and small utilities
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages = [
     inputs.raise.defaultPackage.${pkgs.stdenv.hostPlatform.system} # run-or-raise for Hyprland
-    xorg.xeyes # track eyes for your cursor
-    swaybg # simple wallpaper setter
-    grimblast # Hyprland-friendly screenshots (grim+slurp+wl-copy)
-    wl-clipboard # wl-copy / wl-paste
-    swappy # screenshot editor (optional)
-    hyprpicker # color picker for Wayland/Hyprland
+    pkgs.xorg.xeyes # track eyes for your cursor
+    pkgs.swaybg # simple wallpaper setter
+    pkgs.grimblast # Hyprland-friendly screenshots (grim+slurp+wl-copy)
+    pkgs.wl-clipboard # wl-copy / wl-paste
+    pkgs.swappy # screenshot editor (optional)
+    pkgs.hyprpicker # color picker for Wayland/Hyprland
   ];
 }

@@ -723,9 +723,9 @@ in {
     };
 
     environment = {
-      systemPackages = with pkgs; [
-        protontricks
-        mangohud
+      systemPackages = [
+        pkgs.protontricks
+        pkgs.mangohud
         gamescopePinned
         gamePinned
         gamescopePerf

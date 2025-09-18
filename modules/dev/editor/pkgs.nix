@@ -1,7 +1,7 @@
 {pkgs, ...}: {
-  environment.systemPackages = with pkgs; [
-    neovim
-    emacs
-    # zeal
+  environment.systemPackages = [
+    pkgs.neovim
+    pkgs.emacs
+    # pkgs.zeal
   ];
 }

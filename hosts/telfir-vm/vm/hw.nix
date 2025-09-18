@@ -21,7 +21,7 @@
     qemu.options = ["-bios" "${pkgs.OVMF.fd}/FV/OVMF.fd"];
   };
 
-  environment.systemPackages = with pkgs; [
-    nemu # qemu TUI interface
+  environment.systemPackages = [
+    pkgs.nemu # qemu TUI interface
   ];
 }

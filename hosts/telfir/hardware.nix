@@ -86,7 +86,7 @@
   };
 
   # Host-specific hardware tools
-  environment.systemPackages = with pkgs; [
-    bazecor # Dygma keyboard configurator
+  environment.systemPackages = [
+    pkgs.bazecor # Dygma keyboard configurator
   ];
 }

@@ -6,7 +6,7 @@ _: {
     "vm.max_map_count" = 16777216; # need for some games
     "vm.swappiness" = 10; # avoid swapping under load on 64GB RAM
   };
-  # environment.systemPackages = with pkgs; [
+  # environment.systemPackages = [
   #   (inputs.nix-gaming.packages.${hostPlatform.system}.star-citizen.override {
   #     location = "$HOME/games/star-citizen";
   #   })

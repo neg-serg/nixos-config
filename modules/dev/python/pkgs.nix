@@ -1,5 +1,5 @@
 {pkgs, ...}: {
-  environment.systemPackages = with pkgs; [
-    python3-lto # optimized Python 3 build (LTO, PGO)
+  environment.systemPackages = [
+    pkgs.python3-lto # optimized Python 3 build (LTO, PGO)
   ];
 }
