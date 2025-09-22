@@ -30,7 +30,8 @@
       url = "github:fufexan/nix-gaming";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nixpkgs = {url = "github:NixOS/nixpkgs";};
+    # Pin nixpkgs to nixos-unstable so we get Hydra cache hits
+    nixpkgs = {url = "github:NixOS/nixpkgs/nixos-unstable";};
     raise = {
       url = "github:knarkzel/raise";
       inputs.nixpkgs.follows = "nixpkgs";
