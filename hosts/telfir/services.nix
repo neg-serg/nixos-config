@@ -1,4 +1,6 @@
-_: {
+{lib, config, ...}: let
+  bitcoindProfile = config.servicesProfiles.bitcoind;
+in {
   # Primary user (single source of truth for name/ids)
   users.main = {
     name = "neg";
@@ -40,6 +42,11 @@ _: {
     jellyfin.enable = false;
     # Enable Samba profile on this host
     samba.enable = true;
+    # Run a Bitcoin Core node with data stored under /zero/bitcoin-node
+    bitcoind = {
+      enable = true;
+      dataDir = "/zero/bitcoin-node";
+    };
   };
 
   # Disable Netdata on this host (keep other monitoring like sysstat)
@@ -108,7 +115,20 @@ _: {
         inherit devices folders;
       };
     };
+    # Bitcoin Core node (mainnet) data under /zero/bitcoin-node
+    bitcoind =
+      if bitcoindProfile.enable
+      then {
+        main = {
+          enable = true;
+          dataDir = bitcoindProfile.dataDir;
+        };
+      }
+      else {};
   };
+
+  networking.firewall.allowedTCPPorts =
+    lib.mkAfter (lib.optional bitcoindProfile.enable bitcoindProfile.p2pPort);
 
   # Provide nginx system user/group so PHP-FPM pool configs referencing
   # nginx for socket ownership won't fail even when nginx service is off.

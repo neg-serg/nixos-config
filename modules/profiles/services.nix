@@ -31,6 +31,27 @@ in {
           ];
         };
     };
+    bitcoind = {
+      enable = opts.mkEnableOption "Bitcoin Core node profile with a custom data directory.";
+      instance =
+        opts.mkStrOpt {
+          default = "main";
+          description = "Instance name used under services.bitcoind.<name>.";
+          notes = "The resulting systemd unit runs as bitcoind-<name>.";
+        };
+      dataDir =
+        opts.mkStrOpt {
+          default = "/zero/bitcoin-node";
+          description = "Filesystem path for the Bitcoin Core data directory.";
+          notes = "The directory is created automatically with the correct ownership when the profile is enabled.";
+        };
+      p2pPort =
+        opts.mkIntOpt {
+          default = 8333;
+          description = "TCP port to expose for Bitcoin peer-to-peer traffic.";
+          notes = "Set this to 18333 for testnet or another value if you override the service port.";
+        };
+    };
     unbound.enable = opts.mkEnableOption "Unbound DNS resolver profile.";
     openssh.enable = opts.mkEnableOption "OpenSSH (and mosh) profile.";
     syncthing.enable = opts.mkEnableOption "Syncthing device sync profile.";

@@ -9,6 +9,7 @@
   mkExtra = lib.mkAliasOptionModule ["profiles" "services" "adguardhome" "rewrites"] ["servicesProfiles" "adguardhome" "rewrites"];
   services = [
     "adguardhome"
+    "bitcoind"
     "unbound"
     "openssh"
     "syncthing"
