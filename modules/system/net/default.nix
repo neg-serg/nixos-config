@@ -24,7 +24,7 @@ in {
   # Base network services; host-specific NIC rules are moved under hosts/*
   services = {};
   networking = {
-    wireless.iwd.enable = true; # iwctl to manage wifi
+    wireless.iwd.enable = false; # disable iwd auto-start; hosts can override if needed
     wireless.iwd.settings = {
       Settings = {AutoConnect = false;};
     };

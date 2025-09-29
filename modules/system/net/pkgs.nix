@@ -27,6 +27,7 @@
 
   environment.systemPackages = [
     pkgs.impala # tui for wifi management
+    pkgs.iwd # install iwd without enabling the service
     pkgs.bandwhich # display network utilization per process
     pkgs.cacert # for curl certificate verification
     pkgs.curlie # feature-rich httpie
@@ -70,4 +71,10 @@
     pkgs.tshark # sniffer tui
     pkgs.wireshark # sniffer gui
   ];
+
+  # Expose iwd's systemd unit so it can be started manually when required
+  systemd.packages = [pkgs.iwd];
+
+  # Provide D-Bus service definition for manual activation of iwd
+  services.dbus.packages = [pkgs.iwd];
 }
