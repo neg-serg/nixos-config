@@ -130,6 +130,12 @@ in {
   networking.firewall.allowedTCPPorts =
     lib.mkAfter (lib.optional bitcoindProfile.enable bitcoindProfile.p2pPort);
 
+  # Disable AppArmor PAM integration for sudo since the kernel lacks AppArmor hats
+  security.pam.services = {
+    sudo.enableAppArmor = lib.mkForce false;
+    "sudo-rs".enableAppArmor = lib.mkForce false;
+  };
+
   # Provide nginx system user/group so PHP-FPM pool configs referencing
   # nginx for socket ownership won't fail even when nginx service is off.
   users = {
