@@ -45,6 +45,9 @@
     pkgs.netcat-openbsd # openbsd netcat variant
     pkgs.netdiscover # another network scan
     pkgs.nmap # port scanner
+    pkgs.rustscan # fast port scanner companion to nmap
+    pkgs.zmap # internet-scale network scanner
+    pkgs.masscan # asynchronous port scanner like nmap
     pkgs.rclone # rsync for cloud storage
     pkgs.socat # multipurpose relay
     pkgs.sshfs # ssh mount
