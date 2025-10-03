@@ -25,7 +25,6 @@ in {
           ];
         };
         amdgpu.opencl.enable = true;
-        amdgpu.amdvlk.enable = true;
       };
       environment = {
         variables.AMD_VULKAN_ICD = "RADV";
