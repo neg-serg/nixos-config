@@ -14,7 +14,6 @@
     pkgs.hyperfine # command-line benchmarking tool
     pkgs.imhex # gui hex editor
     pkgs.license-generator # cli tool for generating license files
-    pkgs.ltrace # trace functions
     pkgs.lzbench # compression benchmark
     pkgs.pkgconf # package compiler and linker metadata toolkit (wrapper script)
     pkgs.plow # high performance http benchmarking tool
