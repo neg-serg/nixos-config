@@ -10,8 +10,7 @@ in {
 
   config = lib.mkMerge [
     (lib.mkIf cfg.useMesaGit {
-      # Use mesa-git only when explicitly enabled (per-host opt-in)
-      chaotic.mesa-git.enable = true;
+      chaotic.mesa-git.enable = false; # Use mesa-git only when explicitly enabled (per-host opt-in)
     })
     {
       hardware = {
@@ -20,8 +19,6 @@ in {
           enable32Bit = true; # 32-bit userspace for Steam/Wine
           extraPackages = [
             pkgs.rocmPackages.clr.icd
-            pkgs.vaapiVdpau
-            pkgs.libvdpau-va-gl
           ];
         };
         amdgpu.opencl.enable = true;
@@ -34,7 +31,6 @@ in {
           pkgs.rocmPackages.rocm-smi
           pkgs.glxinfo # show info about glx
           pkgs.libva-utils # vainfo, encode/decode probing
-          pkgs.vdpauinfo
           pkgs.lact # linux amdgpu controller
           (pkgs.nvtopPackages.amd.override {intel = true;})
           pkgs.vulkan-extension-layer
