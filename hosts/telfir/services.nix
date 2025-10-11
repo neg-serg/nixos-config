@@ -99,6 +99,8 @@ in {
       foldersList
     );
   in {
+    # Temporarily disable Ollama on this host
+    ollama.enable = false;
     # Avoid port conflicts: ensure nginx is disabled when using Caddy
     nginx.enable = false;
     nextcloud = {
