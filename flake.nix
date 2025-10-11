@@ -33,7 +33,7 @@
     # Pin nixpkgs to nixos-unstable so we get Hydra cache hits
     nixpkgs = {url = "github:NixOS/nixpkgs/nixos-unstable";};
     raise = {
-      url = "github:knarkzel/raise";
+      url = "github:neg-serg/raise";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     sops-nix = {
