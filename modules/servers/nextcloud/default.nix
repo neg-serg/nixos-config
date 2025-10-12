@@ -14,7 +14,7 @@
   chosenPackage =
     if (cfg ? package) && cfg.package != null
     then cfg.package
-    else pkgs.nextcloud31;
+    else pkgs.nextcloud32;
 in {
   # Optional: nginx reverse proxy + ACME integration (guarded by an enable flag)
   imports = [./nginx.nix ./caddy.nix];
