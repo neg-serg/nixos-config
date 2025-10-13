@@ -4,6 +4,12 @@
   hardware.video.amd.useMesaGit = true;
   hardware.vr.valveIndex.enable = true;
 
+  # Ensure Mesa stack and 32-bit userspace for Steam/VR
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+  };
+
   # Enable AMD-oriented kernel structured config for this host and tune performance
   profiles = {
     kernel.amd.enable = true;

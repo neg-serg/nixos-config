@@ -138,12 +138,8 @@ in {
     "sudo-rs".enableAppArmor = lib.mkForce false;
   };
 
-  security.wrappers.pkexec = {
-    source = "${pkgs.polkit}/bin/pkexec";
-    owner = "root";
-    group = "root";
-    setuid = true;
-  };
+  # Avoid forcing pkexec as setuid; Steam/SteamVR misbehaves when invoked with elevated EUID.
+  # Use polkit rules if specific privileges are required instead of global setuid pkexec.
 
   # Provide nginx system user/group so PHP-FPM pool configs referencing
   # nginx for socket ownership won't fail even when nginx service is off.
