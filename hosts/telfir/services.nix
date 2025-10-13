@@ -25,6 +25,9 @@ in {
     settings.auto-optimise-store = false;
   };
 
+  # Enable experimental mpv OpenVR overlay (builds mpv with extra OpenVR tool)
+  nix.mpvOpenvr.enable = true;
+
   # Service profiles toggles for this host
   servicesProfiles = {
     # Local DNS rewrites for LAN names (service enable comes from roles)
