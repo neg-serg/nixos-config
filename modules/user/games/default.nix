@@ -592,6 +592,22 @@
     categories = ["Game" "Utility"];
   };
 
+  deovrSteamCli = pkgs.writeShellApplication {
+    name = "deovr";
+    text = ''
+      exec steam steam://rungameid/837380 "$@"
+    '';
+  };
+
+  deovrSteamDesktop = pkgs.makeDesktopItem {
+    name = "deovr";
+    desktopName = "DeoVR Video Player (Steam)";
+    comment = "Launch DeoVR via Steam (AppID 837380)";
+    exec = "steam steam://rungameid/837380";
+    terminal = false;
+    categories = ["Game" "AudioVideo"];
+  };
+
   # Helper: set affinity inside the scope to avoid shell escaping issues
   gameAffinityExec =
     pkgs.writers.writePython3Bin "game-affinity-exec" {}
@@ -694,6 +710,38 @@ in {
     programs = {
       steam = {
         enable = true;
+        package = pkgs.steam.override {
+          extraPkgs = pkgs':
+            let
+              mkDeps =
+                pkgsSet:
+                with pkgsSet;
+                [
+                  xorg.libX11
+                  xorg.libXext
+                  xorg.libXrender
+                  xorg.libXi
+                  xorg.libXinerama
+                  xorg.libXcursor
+                  xorg.libXScrnSaver
+                  xorg.libSM
+                  xorg.libICE
+                  xorg.libxcb
+                  libxkbcommon
+                  freetype
+                  fontconfig
+                  glib
+                  libglvnd
+                  libpng
+                  libpulseaudio
+                  libvorbis
+                  libkrb5
+                  keyutils
+                  (lib.getLib stdenv.cc.cc)
+                ];
+            in
+            mkDeps pkgs' ++ mkDeps pkgs'.pkgsi686Linux;
+        };
         dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
         gamescopeSession.enable = true;
         remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
@@ -737,6 +785,8 @@ in {
         gamescopeHDRDesktop
         gameRun
         gameAffinityExec
+        deovrSteamCli
+        deovrSteamDesktop
       ];
 
       # Global defaults for target-fps wrapper (opt-in switch)
