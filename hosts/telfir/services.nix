@@ -1,4 +1,4 @@
-{lib, config, ...}: let
+{lib, config, pkgs, ...}: let
   bitcoindProfile = config.servicesProfiles.bitcoind;
 in {
   # Primary user (single source of truth for name/ids)
@@ -136,6 +136,13 @@ in {
   security.pam.services = {
     sudo.enableAppArmor = lib.mkForce false;
     "sudo-rs".enableAppArmor = lib.mkForce false;
+  };
+
+  security.wrappers.pkexec = {
+    source = "${pkgs.polkit}/bin/pkexec";
+    owner = "root";
+    group = "root";
+    setuid = true;
   };
 
   # Provide nginx system user/group so PHP-FPM pool configs referencing
