@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  pkgs,
   ...
 }: let
   cfg = config.hardware.storage.autoMount;
@@ -18,7 +19,82 @@
         else null
     )
     entries;
-  imports = lib.filter (p: p != null) importables;
+  valveIndexModule = {lib, pkgs, config, ...}: let
+    vrCfg = config.hardware.vr.valveIndex;
+    monadoRuntime = "${pkgs.monado}/share/openxr/1/openxr_monado.json";
+  in {
+    options.hardware.vr.valveIndex.enable =
+      lib.mkEnableOption "Enable the Valve Index VR stack (Monado/OpenXR, SteamVR helpers, udev rules).";
+
+    config = lib.mkIf vrCfg.enable {
+      assertions = [
+        {
+          assertion = config.hardware.graphics.enable or false;
+          message = "Valve Index VR requires hardware.graphics.enable = true.";
+        }
+        {
+          assertion = config.hardware.graphics.enable32Bit or false;
+          message = "Valve Index VR requires hardware.graphics.enable32Bit = true for 32-bit VR dependencies.";
+        }
+      ];
+
+      hardware.steam-hardware.enable = lib.mkDefault true;
+
+      services.udev.packages = lib.mkAfter [pkgs.xr-hardware];
+
+      environment = {
+        systemPackages = lib.mkAfter (with pkgs; [
+          monado
+          opencomposite
+          openvr
+          openxr-loader
+          steam
+          steamcmd
+          vulkan-tools
+          vulkan-validation-layers
+          wlx-overlay-s
+        ]);
+
+        sessionVariables = {
+          XR_RUNTIME_JSON = monadoRuntime;
+          OPENXR_RUNTIME = monadoRuntime;
+        };
+
+        etc."openxr/1/active_runtime.json".source = monadoRuntime;
+        etc."xdg/openxr/1/active_runtime.json".source = monadoRuntime;
+      };
+
+      systemd.user = {
+        services.monado = {
+          description = "Monado OpenXR runtime service";
+          partOf = ["graphical-session.target"];
+          wantedBy = ["default.target"];
+          after = ["graphical-session-pre.target"];
+          serviceConfig = {
+            ExecStart = "${pkgs.monado}/bin/monado-service";
+            Environment = [
+              "XRT_COMPOSITOR_LOG=info"
+              "XRT_PRINT_OPTIONS=on"
+              "IPC_EXIT_ON_DISCONNECT=OFF"
+            ];
+            Restart = "on-failure";
+            RestartSec = 2;
+          };
+        };
+
+        sockets.monado = {
+          description = "Monado OpenXR runtime socket";
+          wantedBy = ["sockets.target"];
+          socketConfig = {
+            ListenStream = "%t/monado_comp_ipc";
+            RemoveOnStop = true;
+            FlushPending = true;
+          };
+        };
+      };
+    };
+  };
+  imports = lib.filter (p: p != null) importables ++ [valveIndexModule];
 in {
   inherit imports;
   options.hardware.storage.autoMount.enable = lib.mkOption {

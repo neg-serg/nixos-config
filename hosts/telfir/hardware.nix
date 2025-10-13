@@ -2,6 +2,7 @@
   # Hardware and performance tuning specific to host 'telfir'
   hardware.storage.autoMount.enable = true;
   hardware.video.amd.useMesaGit = true;
+  hardware.vr.valveIndex.enable = true;
 
   # Enable AMD-oriented kernel structured config for this host and tune performance
   profiles = {
