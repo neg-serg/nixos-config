@@ -40,7 +40,8 @@
 
       hardware.steam-hardware.enable = lib.mkDefault true;
 
-      services.udev.packages = lib.mkAfter [pkgs.xr-hardware];
+      # Provide udev rules for XR devices (Monado + generic XR rules)
+      services.udev.packages = lib.mkAfter [pkgs.xr-hardware pkgs.monado];
 
       environment = {
         systemPackages = lib.mkAfter (with pkgs; [
