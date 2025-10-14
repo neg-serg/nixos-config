@@ -16,7 +16,6 @@ in {
       hardware = {
         graphics = {
           enable = true;
-          enable32Bit = true; # 32-bit userspace for Steam/Wine
           extraPackages = [
             pkgs.rocmPackages.clr.icd
           ];

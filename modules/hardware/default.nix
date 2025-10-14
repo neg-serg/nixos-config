@@ -32,10 +32,6 @@
           assertion = config.hardware.graphics.enable or false;
           message = "Valve Index VR requires hardware.graphics.enable = true.";
         }
-        {
-          assertion = config.hardware.graphics.enable32Bit or false;
-          message = "Valve Index VR requires hardware.graphics.enable32Bit = true for 32-bit VR dependencies.";
-        }
       ];
 
       hardware.steam-hardware.enable = lib.mkDefault true;
