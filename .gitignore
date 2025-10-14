@@ -6,3 +6,4 @@ result-man
 
 .tmp_py
 .tmp_py_dedented
+.tmp_build.log
