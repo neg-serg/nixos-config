@@ -608,6 +608,49 @@
     categories = ["Game" "AudioVideo"];
   };
 
+  # SteamVR launcher for Wayland/Hyprland: stops Monado, launches SteamVR, restores Monado after exit
+  steamvrCli = pkgs.writeShellApplication {
+    name = "steamvr";
+    text = ''
+      set -euo pipefail
+      # Stop Monado so SteamVR can claim USB/HID interfaces
+      systemctl --user stop monado.service monado.socket || true
+
+      # Hint: SteamVR AppID is 250820
+      steam -applaunch 250820 &
+      STEAM_PID=$!
+
+      # Wait for VRCompositor to come up (up to 60s), then for it to exit
+      tries=60
+      while ! pgrep -f -u "$USER" -x vrcompositor >/dev/null 2>&1; do
+        sleep 1
+        tries=$((tries-1))
+        if [ "$tries" -le 0 ]; then
+          break
+        fi
+      done
+
+      # Poll until VR compositor fully exits
+      while pgrep -f -u "$USER" -x vrcompositor >/dev/null 2>&1; do
+        sleep 2
+      done
+
+      # Give Steam a moment to settle, then restart Monado socket (socket-activation will spawn service on demand)
+      sleep 1
+      systemctl --user start monado.socket || true
+      wait "$STEAM_PID" || true
+    '';
+  };
+
+  steamvrDesktop = pkgs.makeDesktopItem {
+    name = "steamvr-hypr";
+    desktopName = "SteamVR (Hyprland)";
+    comment = "Launch SteamVR under Hyprland (stops Monado while active)";
+    exec = "steamvr";
+    terminal = false;
+    categories = ["Game" "Utility"];
+  };
+
   # Helper: set affinity inside the scope to avoid shell escaping issues
   gameAffinityExec =
     pkgs.writers.writePython3Bin "game-affinity-exec" {}
@@ -785,6 +828,8 @@ in {
         gamescopeHDRDesktop
         gameRun
         gameAffinityExec
+        steamvrCli
+        steamvrDesktop
         deovrSteamCli
         deovrSteamDesktop
       ];
