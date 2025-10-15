@@ -102,6 +102,10 @@ in {
       foldersList
     );
   in {
+    # Add KDE Plasma 6 Wayland session with SDDM display manager
+    displayManager.sddm.enable = true;
+    displayManager.sddm.wayland.enable = true;
+    desktopManager.plasma6.enable = true;
     # Temporarily disable Ollama on this host
     ollama.enable = false;
     # Avoid port conflicts: ensure nginx is disabled when using Caddy
