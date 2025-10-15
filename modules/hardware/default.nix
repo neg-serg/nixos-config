@@ -23,7 +23,7 @@
     vrCfg = config.hardware.vr.valveIndex;
   in {
     options.hardware.vr.valveIndex.enable =
-      lib.mkEnableOption "Enable the Valve Index VR stack (Monado/OpenXR, SteamVR helpers, udev rules).";
+      lib.mkEnableOption "Enable the Valve Index VR stack (OpenXR/SteamVR helpers, udev rules).";
 
     config = lib.mkIf vrCfg.enable {
       assertions = [
@@ -53,7 +53,7 @@
         # No default OpenXR runtime enforced; user/SteamVR may set it explicitly if desired.
         sessionVariables = {};
      };
-      # No Monado user services; SteamVR runtime is expected to be used directly.
+      # No extra user services; SteamVR runtime is expected to be used directly.
     };
   };
   imports = lib.filter (p: p != null) importables ++ [valveIndexModule];

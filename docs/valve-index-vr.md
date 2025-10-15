@@ -4,14 +4,9 @@
 - Run `sudo nixos-rebuild switch --flake /etc/nixos#telfir` to apply the new VR stack.
 - Reboot once so the kernel parameters, udev rules, and user services pick up cleanly.
 
-## Confirm Monado runtime
-- After logging in, run `systemctl --user status monado.service` and ensure it reports `active (running)` or `listening` via socket activation.
-- Check that the OpenXR runtime points at Monado: `echo $XR_RUNTIME_JSON` should resolve to the Monado store path.
-- Validate device discovery with `monado-cli probe` (should list the Valve Index HMD, controllers, and lighthouse base stations when powered).
-
 ## SteamVR sanity tests
 - Launch Steam and install the SteamVR package (if not already present).
-- In SteamVR settings → Developer → Set Current OpenXR Runtime, verify it reports “Monado”.
+- In SteamVR settings → Developer → Set Current OpenXR Runtime, set it to “SteamVR”.
 - Start SteamVR; confirm the compositor opens and shows the home space without error popups.
 
 ## Optional diagnostics

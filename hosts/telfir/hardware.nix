@@ -77,10 +77,6 @@
     "tpm_crb"
     "tpm_tis"
     "tpm_tis_core"
-    # Prevent Steam's HID driver from grabbing Valve Index devices;
-    # needed so Monado can claim USB interfaces.
-    "hid_steam"
-    "hid-steam"
   ];
   # No separate initrd blacklist option; TPM modules are excluded from initrd
   # via modules/system/boot.nix when security.tpm2.enable = false
