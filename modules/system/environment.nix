@@ -12,9 +12,8 @@
     # This is using a rec (recursive) expression to set and access XDG_BIN_HOME within the expression
     # For more on rec expressions see https://nix.dev/tutorials/first-steps/nix-language#recursive-attribute-set-rec
     sessionVariables = {
-      NIXOS_OZONE_WL = "1"; # Optional, hint Electron apps to use Wayland:
-      XDG_CURRENT_DESKTOP = "Hyprland";
-      XDG_SESSION_DESKTOP = "Hyprland";
+      NIXOS_OZONE_WL = "1"; # Optional, hint Electron apps to use Wayland
+      # Do not force a specific desktop globally; let the session define it
       XDG_SESSION_TYPE = "wayland";
       # Prefer Mesa VAAPI on AMD (radeonsi)
       LIBVA_DRIVER_NAME = "radeonsi";
