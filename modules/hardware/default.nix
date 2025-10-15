@@ -21,7 +21,6 @@
     entries;
   valveIndexModule = {lib, pkgs, config, ...}: let
     vrCfg = config.hardware.vr.valveIndex;
-    monadoRuntime = "${pkgs.monado}/share/openxr/1/openxr_monado.json";
   in {
     options.hardware.vr.valveIndex.enable =
       lib.mkEnableOption "Enable the Valve Index VR stack (Monado/OpenXR, SteamVR helpers, udev rules).";
@@ -36,12 +35,11 @@
 
       hardware.steam-hardware.enable = lib.mkDefault true;
 
-      # Provide udev rules for XR devices (Monado + generic XR rules)
-      services.udev.packages = lib.mkAfter [pkgs.xr-hardware pkgs.monado];
+      # Provide udev rules for XR devices (generic XR rules)
+      services.udev.packages = lib.mkAfter [pkgs.xr-hardware];
 
       environment = {
         systemPackages = lib.mkAfter (with pkgs; [
-          monado
           opencomposite
           openvr
           openxr-loader
@@ -52,43 +50,10 @@
           wlx-overlay-s
         ]);
 
-        sessionVariables = {
-          XR_RUNTIME_JSON = monadoRuntime;
-          OPENXR_RUNTIME = monadoRuntime;
-        };
-
-        etc."openxr/1/active_runtime.json".source = monadoRuntime;
-        etc."xdg/openxr/1/active_runtime.json".source = monadoRuntime;
-      };
-
-      systemd.user = {
-        services.monado = {
-          description = "Monado OpenXR runtime service";
-          partOf = ["graphical-session.target"];
-          wantedBy = ["default.target"];
-          after = ["graphical-session-pre.target"];
-          serviceConfig = {
-            ExecStart = "${pkgs.monado}/bin/monado-service";
-            Environment = [
-              "XRT_COMPOSITOR_LOG=info"
-              "XRT_PRINT_OPTIONS=on"
-              "IPC_EXIT_ON_DISCONNECT=OFF"
-            ];
-            Restart = "on-failure";
-            RestartSec = 2;
-          };
-        };
-
-        sockets.monado = {
-          description = "Monado OpenXR runtime socket";
-          wantedBy = ["sockets.target"];
-          socketConfig = {
-            ListenStream = "%t/monado_comp_ipc";
-            RemoveOnStop = true;
-            FlushPending = true;
-          };
-        };
-      };
+        # No default OpenXR runtime enforced; user/SteamVR may set it explicitly if desired.
+        sessionVariables = {};
+     };
+      # No Monado user services; SteamVR runtime is expected to be used directly.
     };
   };
   imports = lib.filter (p: p != null) importables ++ [valveIndexModule];
