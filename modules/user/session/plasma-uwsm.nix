@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
   cfg = config.user.session.plasma;
 in
@@ -12,6 +12,8 @@ in
     (lib.mkIf cfg.enableX11 {
       # Provide X11 stack and Plasma desktop (no DM enabled here)
       services.xserver.enable = true;
+      # Ensure the Xorg session uses the AMDGPU driver
+      services.xserver.videoDrivers = [ "amdgpu" ];
       services.desktopManager.plasma6.enable = true;
 
       # Useful extras for a more complete Plasma experience when launched manually
