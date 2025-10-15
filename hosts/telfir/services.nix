@@ -15,6 +15,12 @@ in {
     media.enable = true;
     monitoring.enable = true;
   };
+  
+  # Plasma X11 available; optional Plasma (Wayland) via UWSM, Hyprland untouched
+  user.session.plasma = {
+    enableX11 = true;
+    uwsmOption = true;
+  };
   # Flake preflight checks disabled
 
   # Host-specific system policy
@@ -25,8 +31,7 @@ in {
     settings.auto-optimise-store = false;
   };
 
-  # Enable experimental mpv OpenVR overlay (builds mpv with extra OpenVR tool)
-  nix.mpvOpenvr.enable = true;
+  # Remove experimental mpv OpenVR overlay
 
   # Service profiles toggles for this host
   servicesProfiles = {
@@ -102,10 +107,7 @@ in {
       foldersList
     );
   in {
-    # Add KDE Plasma 6 Wayland session with SDDM display manager
-    displayManager.sddm.enable = true;
-    displayManager.sddm.wayland.enable = true;
-    desktopManager.plasma6.enable = true;
+    # Remove SDDM/Plasma additions; keep Hyprland-only setup
     # Temporarily disable Ollama on this host
     ollama.enable = false;
     # Avoid port conflicts: ensure nginx is disabled when using Caddy
