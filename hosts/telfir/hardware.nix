@@ -63,6 +63,13 @@
   # Avoid double compression for swap
   zramSwap.enable = false;
 
+  # Ensure the on-disk swapfile exists if missing (80G on /zero)
+  system.swapfile = {
+    enable = true;
+    path = "/zero/swapfile";
+    sizeGiB = 80;
+  };
+
   # Disable TPM entirely on this host to remove tpmrm device wait
   security.tpm2.enable = false;
   boot.blacklistedKernelModules = [

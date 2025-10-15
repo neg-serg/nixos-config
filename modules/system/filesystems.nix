@@ -86,7 +86,15 @@ in {
     };
   };
 
-  swapDevices = [];
+  # Ensure swap is activated automatically at boot.
+  # The file already exists at /zero/swapfile (XFS on /dev/mapper/argon-zero).
+  # Systemd will order the swap unit after the mount via RequiresMountsFor=/zero.
+  swapDevices = [
+    {
+      device = "/zero/swapfile";
+      priority = -2; # match current runtime priority
+    }
+  ];
 
   # Prefer periodic TRIM over online discard for XFS on NVMe
   services.fstrim.enable = true;
