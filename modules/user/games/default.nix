@@ -756,6 +756,7 @@ in {
                 pkgsSet:
                 with pkgsSet;
                 [
+                  # Core X11 libs required by many titles
                   xorg.libX11
                   xorg.libXext
                   xorg.libXrender
@@ -766,16 +767,25 @@ in {
                   xorg.libSM
                   xorg.libICE
                   xorg.libxcb
+                  xorg.libXrandr
+
+                  # Common multimedia/system libs
                   libxkbcommon
                   freetype
                   fontconfig
                   glib
-                  libglvnd
                   libpng
                   libpulseaudio
                   libvorbis
                   libkrb5
                   keyutils
+
+                  # GL/Vulkan plumbing for AMD on X11 (host RADV)
+                  libglvnd
+                  libdrm
+                  vulkan-loader
+
+                  # libstdc++ for the runtime
                   (lib.getLib stdenv.cc.cc)
                 ];
             in
