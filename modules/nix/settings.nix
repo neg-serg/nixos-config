@@ -40,6 +40,7 @@ in {
           (config.users.main.name or "neg")
         ];
         connect-timeout = 5; # Bail early on missing cache hits (thx to nyx)
+        http-connections = 3; # Limit parallel HTTP connections (replaces obsolete binary-caches-parallel-connections)
         cores = 0; # Use all available cores per build
         max-jobs = "auto"; # Use all available cores
         use-xdg-base-directories = true;
