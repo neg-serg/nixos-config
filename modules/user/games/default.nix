@@ -608,14 +608,11 @@
     categories = ["Game" "AudioVideo"];
   };
 
-  # SteamVR launcher for Wayland/Hyprland: stops Monado, launches SteamVR, restores Monado after exit
+  # SteamVR launcher for Wayland/Hyprland
   steamvrCli = pkgs.writeShellApplication {
     name = "steamvr";
     text = ''
       set -euo pipefail
-      # Stop Monado so SteamVR can claim USB/HID interfaces
-      systemctl --user stop monado.service monado.socket || true
-
       # Hint: SteamVR AppID is 250820
       steam -applaunch 250820 &
       STEAM_PID=$!
@@ -635,9 +632,8 @@
         sleep 2
       done
 
-      # Give Steam a moment to settle, then restart Monado socket (socket-activation will spawn service on demand)
+      # Give Steam a moment to settle
       sleep 1
-      systemctl --user start monado.socket || true
       wait "$STEAM_PID" || true
     '';
   };
@@ -645,7 +641,7 @@
   steamvrDesktop = pkgs.makeDesktopItem {
     name = "steamvr-hypr";
     desktopName = "SteamVR (Hyprland)";
-    comment = "Launch SteamVR under Hyprland (stops Monado while active)";
+    comment = "Launch SteamVR under Hyprland";
     exec = "steamvr";
     terminal = false;
     categories = ["Game" "Utility"];
