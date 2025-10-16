@@ -16,11 +16,13 @@ in {
     monitoring.enable = true;
   };
   
-  # Plasma X11 available; optional Plasma (Wayland) via UWSM, Hyprland untouched
+  # Hyprland only (no display manager / no Plasma sessions)
+  # Keep Plasma disabled so Hyprland is started manually from TTY as before.
   user.session.plasma = {
-    enableX11 = true;
-    uwsmOption = true;
+    enableX11 = false;
+    uwsmOption = false;
   };
+  # Hard-disable Plasma/X11 stack at the host level to avoid accidental pulls
   # Flake preflight checks disabled
 
   # Host-specific system policy
@@ -107,6 +109,9 @@ in {
       foldersList
     );
   in {
+    # Keep Plasma/X11 off for this host
+    desktopManager.plasma6.enable = lib.mkForce false;
+    xserver.enable = lib.mkForce false;
     # Remove SDDM/Plasma additions; keep Hyprland-only setup
     # Temporarily disable Ollama on this host
     ollama.enable = false;
