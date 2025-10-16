@@ -17,11 +17,7 @@ in {
   };
   
   # Hyprland only (no display manager / no Plasma sessions)
-  # Keep Plasma disabled so Hyprland is started manually from TTY as before.
-  user.session.plasma = {
-    enableX11 = false;
-    uwsmOption = false;
-  };
+  # Plasma session module removed; keep host-level hard disables below.
   # Hard-disable Plasma/X11 stack at the host level to avoid accidental pulls
   # Flake preflight checks disabled
 
