@@ -9,7 +9,6 @@
     ./locate.nix
     ./psd # profile sync daemon
     ./session
-    ./session/plasma-uwsm.nix
     ./session/hypr-bindings.nix
     ./session/pkgs.nix
     ./xdg.nix
