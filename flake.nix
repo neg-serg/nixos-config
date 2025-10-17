@@ -263,10 +263,6 @@
               ++ lines ++ [""]);
           in
             pkgs.writeText "options-index.md" content;
-        }
-        // {
-          hosts-index = pkgs.writeText "hosts-index.json" (builtins.toJSON hostNames);
-          hosts-entries = pkgs.writeText "hosts-entries.json" (builtins.toJSON hostEntries);
         };
 
       # Make `nix fmt` behave like in home-manager: format repo with alejandra
