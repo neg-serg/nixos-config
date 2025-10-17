@@ -272,6 +272,15 @@
       # Lightweight repo checks for `nix flake check`
       checks.${system} = let
         pkgs = nixpkgs.legacyPackages.${system};
+        hostsDir = ./hosts;
+        entries = builtins.readDir hostsDir;
+        hostNames = builtins.attrNames (nixpkgs.lib.filterAttrs (name: type:
+          type == "directory" && builtins.pathExists (hostsDir + "/" + name + "/default.nix")
+        ) entries);
+        hostBuildChecks = nixpkgs.lib.listToAttrs (map (name: {
+          name = "build-" + name;
+          value = self.nixosConfigurations.${name}.config.system.build.toplevel;
+        }) hostNames);
       in {
         fmt-alejandra =
           pkgs.runCommand "fmt-alejandra" {
@@ -300,7 +309,7 @@
             touch "$out"
           '';
         pre-commit = preCommit;
-      };
+      } // hostBuildChecks;
 
       # Developer shell
       devShells.${system}.default = let
@@ -318,7 +327,31 @@
           ];
         };
 
+      apps.${system} = let
+        pkgs = nixpkgs.legacyPackages.${system};
+        genOptions = pkgs.writeShellApplication {
+          name = "gen-options";
+          runtimeInputs = [ pkgs.git pkgs.jq pkgs.nix ];
+          text = ''
+            set -euo pipefail
+            exec "${self}/scripts/gen-options.sh" "$@"
+          '';
+        };
+        fmtApp = self.formatter.${system};
+      in {
+        gen-options = {
+          type = "app";
+          program = "${genOptions}/bin/gen-options";
+        };
+        fmt = {
+          type = "app";
+          program = "${fmtApp}/bin/fmt";
+        };
+      };
+
       nixosConfigurations = let
+        lib' = nixpkgs.lib;
+        pkgs = nixpkgs.legacyPackages.${system};
         commonModules = [
           ./init.nix
           nix-flatpak.nixosModules.nix-flatpak
@@ -326,7 +359,15 @@
           chaotic.nixosModules.default
           sops-nix.nixosModules.sops
         ];
-        mkHost = name: extraModules:
+        hostsDir = ./hosts;
+        entries = builtins.readDir hostsDir;
+        hostNames = builtins.attrNames (lib'.filterAttrs (name: type:
+          type == "directory" && builtins.pathExists (hostsDir + "/" + name + "/default.nix")
+        ) entries);
+        hostExtras = name:
+          let extraPath = hostsDir + "/" + name + "/extra.nix"; in
+          lib'.optional (builtins.pathExists extraPath) extraPath;
+        mkHost = name:
           nixpkgs.lib.nixosSystem {
             inherit system;
             specialArgs = {
@@ -334,21 +375,8 @@
               # Pass Nilla-friendly inputs (workaround for nilla-nix/nilla#14)
               inputs = nillaInputs;
             };
-            modules = commonModules ++ [./hosts/${name}] ++ extraModules;
+            modules = commonModules ++ [ (hostsDir + "/" + name) ] ++ (hostExtras name);
           };
-      in {
-        telfir = mkHost "telfir" [
-          diffClosures
-          {diffClosures.enable = true;}
-        ];
-
-        telfir-vm = mkHost "telfir-vm" [
-          # VM-specific adjustments
-          (_: {
-            # Avoid secure boot integration in quick VM builds
-            boot.lanzaboote.enable = false;
-          })
-        ];
-      };
+      in lib'.genAttrs hostNames mkHost;
     };
 }
