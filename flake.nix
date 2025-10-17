@@ -159,6 +159,15 @@
           lib.mapAttrs (_: eval: lib.nixosOptionsDoc {inherit (eval) options;}) evals
         );
         get = name: (builtins.getAttr name docs).optionsCommonMark;
+        # Discover hosts (for debugging autogen)
+        hostsDir = ./hosts;
+        entries = builtins.readDir hostsDir;
+        hostEntries = builtins.readDir hostsDir;
+        hostNames = builtins.attrNames (lib.filterAttrs (name: type:
+          type == "directory" && (
+            builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
+          )
+        ) hostEntries);
       in
         {
           default = pkgs.zsh;
@@ -254,6 +263,10 @@
               ++ lines ++ [""]);
           in
             pkgs.writeText "options-index.md" content;
+        }
+        // {
+          hosts-index = pkgs.writeText "hosts-index.json" (builtins.toJSON hostNames);
+          hosts-entries = pkgs.writeText "hosts-entries.json" (builtins.toJSON hostEntries);
         };
 
       # Make `nix fmt` behave like in home-manager: format repo with alejandra
@@ -275,7 +288,9 @@
         hostsDir = ./hosts;
         entries = builtins.readDir hostsDir;
         hostNames = builtins.attrNames (nixpkgs.lib.filterAttrs (name: type:
-          type == "directory" && builtins.pathExists (hostsDir + "/" + name + "/default.nix")
+          type == "directory" && (
+            builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
+          )
         ) entries);
         hostBuildChecks = nixpkgs.lib.listToAttrs (map (name: {
           name = "build-" + name;
@@ -362,11 +377,13 @@
         hostsDir = ./hosts;
         entries = builtins.readDir hostsDir;
         hostNames = builtins.attrNames (lib'.filterAttrs (name: type:
-          type == "directory" && builtins.pathExists (hostsDir + "/" + name + "/default.nix")
+          type == "directory" && (
+            builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
+          )
         ) entries);
         hostExtras = name:
-          let extraPath = hostsDir + "/" + name + "/extra.nix"; in
-          lib'.optional (builtins.pathExists extraPath) extraPath;
+          let extraPath = (builtins.toString hostsDir) + "/" + name + "/extra.nix"; in
+          lib'.optional (builtins.pathExists extraPath) (/. + extraPath);
         mkHost = name:
           nixpkgs.lib.nixosSystem {
             inherit system;
@@ -375,7 +392,7 @@
               # Pass Nilla-friendly inputs (workaround for nilla-nix/nilla#14)
               inputs = nillaInputs;
             };
-            modules = commonModules ++ [ (hostsDir + "/" + name) ] ++ (hostExtras name);
+            modules = commonModules ++ [ (import (((builtins.toString hostsDir) + "/" + name))) ] ++ (hostExtras name);
           };
       in lib'.genAttrs hostNames mkHost;
     };
