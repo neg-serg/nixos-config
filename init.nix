@@ -3,6 +3,7 @@
 {
   self,
   lib,
+  config,
   ...
 }: {
   imports = [./modules];
@@ -12,7 +13,7 @@
       enable = lib.mkDefault true;
       allowReboot = true;
       # Track this flake and update nixpkgs on upgrades
-      flake = "${self}#telfir";
+      flake = "${self}#${config.networking.hostName}";
       flags = [
         "--update-input"
         "nixpkgs"

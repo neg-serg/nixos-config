@@ -647,6 +647,11 @@
     categories = ["Game" "Utility"];
   };
 
+  # Default CPU pin set for affinity wrappers (comes from profiles.performance.gamingCpuSet)
+  pinDefault =
+    let v = config.profiles.performance.gamingCpuSet or ""; in
+    if v != "" then v else "14,15,30,31";
+
   # Helper: set affinity inside the scope to avoid shell escaping issues
   gameAffinityExec =
     pkgs.writers.writePython3Bin "game-affinity-exec" {}
@@ -673,7 +678,7 @@
       ap = argparse.ArgumentParser()
       ap.add_argument(
           '--cpus',
-          default=os.environ.get('GAME_PIN_CPUSET', '14,15,30,31'),
+          default=os.environ.get('GAME_PIN_CPUSET', '${pinDefault}'),
       )
       ap.add_argument('cmd', nargs=argparse.REMAINDER)
       args = ap.parse_args()
@@ -709,7 +714,7 @@
       import subprocess
       import sys
 
-      CPUSET = os.environ.get('GAME_PIN_CPUSET', '14,15,30,31')
+      CPUSET = os.environ.get('GAME_PIN_CPUSET', '${pinDefault}')
       if len(sys.argv) <= 1:
           print('Usage: game-run <command> [args...]', file=sys.stderr)
           sys.exit(1)
@@ -745,7 +750,7 @@ in {
     };
   };
 
-  config = lib.mkIf (cfg.enable or true) {
+  config = lib.mkIf cfg.enable {
     programs = {
       steam = {
         enable = true;
@@ -840,12 +845,19 @@ in {
         deovrSteamDesktop
       ];
 
-      # Global defaults for target-fps wrapper (opt-in switch)
-      variables = lib.mkIf (cfg.autoscaleDefault or false) {
-        GAMESCOPE_AUTOSCALE = "1";
-        TARGET_FPS = builtins.toString (cfg.targetFps or 120);
-        NATIVE_BASE_FPS = builtins.toString (cfg.nativeBaseFps or 60);
-      };
+      # Global defaults for wrappers
+      variables = lib.mkMerge [
+        # target-fps wrapper (opt-in switch)
+        (lib.mkIf (cfg.autoscaleDefault or false) {
+          GAMESCOPE_AUTOSCALE = "1";
+          TARGET_FPS = builtins.toString (cfg.targetFps or 120);
+          NATIVE_BASE_FPS = builtins.toString (cfg.nativeBaseFps or 60);
+        })
+        # default CPU pin set for game-run / game-affinity-exec if configured
+        (lib.mkIf ((config.profiles.performance.gamingCpuSet or "") != "") {
+          GAME_PIN_CPUSET = config.profiles.performance.gamingCpuSet;
+        })
+      ];
 
       # System-wide MangoHud defaults
       etc."xdg/MangoHud/MangoHud.conf".text = ''
@@ -874,6 +886,8 @@ in {
       # No static games.slice unit file: we rely on transient scope created
       # by systemd-run with -p Slice=games.slice and per-scope properties.
     };
+
+    # environment.variables merged above
 
     security.wrappers.gamemode = {
       owner = "root";

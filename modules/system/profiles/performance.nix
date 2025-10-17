@@ -95,5 +95,12 @@ in {
         example = "zsmalloc";
       };
     };
+
+    # CPU set for game pinning (used by modules/user/games game-run wrapper)
+    gamingCpuSet = mkStrOpt {
+      default = "";
+      description = "Comma-separated CPU list for pinning game processes (e.g., 14,15,30,31). Empty disables default pinning.";
+      example = "14,15,30,31";
+    };
   };
 }

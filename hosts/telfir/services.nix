@@ -1,6 +1,4 @@
-{lib, config, pkgs, ...}: let
-  bitcoindProfile = config.servicesProfiles.bitcoind;
-in {
+{lib, config, pkgs, ...}: {
   # Primary user (single source of truth for name/ids)
   users.main = {
     name = "neg";
@@ -127,20 +125,10 @@ in {
         inherit devices folders;
       };
     };
-    # Bitcoin Core node (mainnet) data under /zero/bitcoin-node
-    bitcoind =
-      if bitcoindProfile.enable
-      then {
-        main = {
-          enable = true;
-          dataDir = bitcoindProfile.dataDir;
-        };
-      }
-      else {};
+    # Bitcoind instance is now managed by modules/servers/bitcoind
   };
 
-  networking.firewall.allowedTCPPorts =
-    lib.mkAfter (lib.optional bitcoindProfile.enable bitcoindProfile.p2pPort);
+  # Firewall port for bitcoind is opened by the bitcoind server module
 
   # Disable AppArmor PAM integration for sudo since the kernel lacks AppArmor hats
   security.pam.services = {
