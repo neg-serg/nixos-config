@@ -163,11 +163,15 @@
         hostsDir = ./hosts;
         entries = builtins.readDir hostsDir;
         hostEntries = builtins.readDir hostsDir;
-        hostNames = builtins.attrNames (lib.filterAttrs (name: type:
-          type == "directory" && (
-            builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
+        hostNames = builtins.attrNames (lib.filterAttrs (
+            name: type:
+              type
+              == "directory"
+              && (
+                builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
+              )
           )
-        ) hostEntries);
+          hostEntries);
       in
         {
           default = pkgs.zsh;
@@ -283,44 +287,51 @@
         pkgs = nixpkgs.legacyPackages.${system};
         hostsDir = ./hosts;
         entries = builtins.readDir hostsDir;
-        hostNames = builtins.attrNames (nixpkgs.lib.filterAttrs (name: type:
-          type == "directory" && (
-            builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
+        hostNames = builtins.attrNames (nixpkgs.lib.filterAttrs (
+            name: type:
+              type
+              == "directory"
+              && (
+                builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
+              )
           )
-        ) entries);
+          entries);
         hostBuildChecks = nixpkgs.lib.listToAttrs (map (name: {
-          name = "build-" + name;
-          value = self.nixosConfigurations.${name}.config.system.build.toplevel;
-        }) hostNames);
-      in {
-        fmt-alejandra =
-          pkgs.runCommand "fmt-alejandra" {
-            nativeBuildInputs = [pkgs.alejandra];
-          } ''
-            cd ${self}
-            alejandra -q --check .
-            touch "$out"
-          '';
+            name = "build-" + name;
+            value = self.nixosConfigurations.${name}.config.system.build.toplevel;
+          })
+          hostNames);
+      in
+        {
+          fmt-alejandra =
+            pkgs.runCommand "fmt-alejandra" {
+              nativeBuildInputs = [pkgs.alejandra];
+            } ''
+              cd ${self}
+              alejandra -q --check .
+              touch "$out"
+            '';
 
-        lint-deadnix =
-          pkgs.runCommand "lint-deadnix" {
-            nativeBuildInputs = [pkgs.deadnix];
-          } ''
-            cd ${self}
-            deadnix --fail .
-            touch "$out"
-          '';
+          lint-deadnix =
+            pkgs.runCommand "lint-deadnix" {
+              nativeBuildInputs = [pkgs.deadnix];
+            } ''
+              cd ${self}
+              deadnix --fail .
+              touch "$out"
+            '';
 
-        lint-statix =
-          pkgs.runCommand "lint-statix" {
-            nativeBuildInputs = [pkgs.statix];
-          } ''
-            cd ${self}
-            statix check .
-            touch "$out"
-          '';
-        pre-commit = preCommit;
-      } // hostBuildChecks;
+          lint-statix =
+            pkgs.runCommand "lint-statix" {
+              nativeBuildInputs = [pkgs.statix];
+            } ''
+              cd ${self}
+              statix check .
+              touch "$out"
+            '';
+          pre-commit = preCommit;
+        }
+        // hostBuildChecks;
 
       # Developer shell
       devShells.${system}.default = let
@@ -342,7 +353,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
         genOptions = pkgs.writeShellApplication {
           name = "gen-options";
-          runtimeInputs = [ pkgs.git pkgs.jq pkgs.nix ];
+          runtimeInputs = [pkgs.git pkgs.jq pkgs.nix];
           text = ''
             set -euo pipefail
             exec "${self}/scripts/gen-options.sh" "$@"
@@ -372,13 +383,18 @@
         ];
         hostsDir = ./hosts;
         entries = builtins.readDir hostsDir;
-        hostNames = builtins.attrNames (lib'.filterAttrs (name: type:
-          type == "directory" && (
-            builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
+        hostNames = builtins.attrNames (lib'.filterAttrs (
+            name: type:
+              type
+              == "directory"
+              && (
+                builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
+              )
           )
-        ) entries);
-        hostExtras = name:
-          let extraPath = (builtins.toString hostsDir) + "/" + name + "/extra.nix"; in
+          entries);
+        hostExtras = name: let
+          extraPath = (builtins.toString hostsDir) + "/" + name + "/extra.nix";
+        in
           lib'.optional (builtins.pathExists extraPath) (/. + extraPath);
         mkHost = name:
           nixpkgs.lib.nixosSystem {
@@ -388,8 +404,9 @@
               # Pass Nilla-friendly inputs (workaround for nilla-nix/nilla#14)
               inputs = nillaInputs;
             };
-            modules = commonModules ++ [ (import (((builtins.toString hostsDir) + "/" + name))) ] ++ (hostExtras name);
+            modules = commonModules ++ [(import ((builtins.toString hostsDir) + "/" + name))] ++ (hostExtras name);
           };
-      in lib'.genAttrs hostNames mkHost;
+      in
+        lib'.genAttrs hostNames mkHost;
     };
 }
