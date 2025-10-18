@@ -19,7 +19,12 @@
         else null
     )
     entries;
-  valveIndexModule = {lib, pkgs, config, ...}: let
+  valveIndexModule = {
+    lib,
+    pkgs,
+    config,
+    ...
+  }: let
     vrCfg = config.hardware.vr.valveIndex;
   in {
     options.hardware.vr.valveIndex.enable =
@@ -52,7 +57,7 @@
 
         # No default OpenXR runtime enforced; user/SteamVR may set it explicitly if desired.
         sessionVariables = {};
-     };
+      };
       # No extra user services; SteamVR runtime is expected to be used directly.
     };
   };
