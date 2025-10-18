@@ -648,9 +648,12 @@
   };
 
   # Default CPU pin set for affinity wrappers (comes from profiles.performance.gamingCpuSet)
-  pinDefault =
-    let v = config.profiles.performance.gamingCpuSet or ""; in
-    if v != "" then v else "14,15,30,31";
+  pinDefault = let
+    v = config.profiles.performance.gamingCpuSet or "";
+  in
+    if v != ""
+    then v
+    else "14,15,30,31";
 
   # Helper: set affinity inside the scope to avoid shell escaping issues
   gameAffinityExec =
@@ -755,45 +758,42 @@ in {
       steam = {
         enable = true;
         package = pkgs.steam.override {
-          extraPkgs = pkgs':
-            let
-              mkDeps =
-                pkgsSet:
-                with pkgsSet;
-                [
-                  # Core X11 libs required by many titles
-                  xorg.libX11
-                  xorg.libXext
-                  xorg.libXrender
-                  xorg.libXi
-                  xorg.libXinerama
-                  xorg.libXcursor
-                  xorg.libXScrnSaver
-                  xorg.libSM
-                  xorg.libICE
-                  xorg.libxcb
-                  xorg.libXrandr
+          extraPkgs = pkgs': let
+            mkDeps = pkgsSet:
+              with pkgsSet; [
+                # Core X11 libs required by many titles
+                xorg.libX11
+                xorg.libXext
+                xorg.libXrender
+                xorg.libXi
+                xorg.libXinerama
+                xorg.libXcursor
+                xorg.libXScrnSaver
+                xorg.libSM
+                xorg.libICE
+                xorg.libxcb
+                xorg.libXrandr
 
-                  # Common multimedia/system libs
-                  libxkbcommon
-                  freetype
-                  fontconfig
-                  glib
-                  libpng
-                  libpulseaudio
-                  libvorbis
-                  libkrb5
-                  keyutils
+                # Common multimedia/system libs
+                libxkbcommon
+                freetype
+                fontconfig
+                glib
+                libpng
+                libpulseaudio
+                libvorbis
+                libkrb5
+                keyutils
 
-                  # GL/Vulkan plumbing for AMD on X11 (host RADV)
-                  libglvnd
-                  libdrm
-                  vulkan-loader
+                # GL/Vulkan plumbing for AMD on X11 (host RADV)
+                libglvnd
+                libdrm
+                vulkan-loader
 
-                  # libstdc++ for the runtime
-                  (lib.getLib stdenv.cc.cc)
-                ];
-            in
+                # libstdc++ for the runtime
+                (lib.getLib stdenv.cc.cc)
+              ];
+          in
             mkDeps pkgs';
         };
         dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
