@@ -1,4 +1,9 @@
-{lib, config, pkgs, ...}: {
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: {
   # Primary user (single source of truth for name/ids)
   users.main = {
     name = "neg";
@@ -13,7 +18,7 @@
     media.enable = true;
     monitoring.enable = true;
   };
-  
+
   # Hyprland only (no display manager / no Plasma sessions)
   # Plasma session module removed; keep host-level hard disables below.
   # Hard-disable Plasma/X11 stack at the host level to avoid accidental pulls

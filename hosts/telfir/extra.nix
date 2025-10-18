@@ -1,5 +1,4 @@
-{ ... }: {
-  imports = [ ../../modules/diff-closures.nix ];
+{...}: {
+  imports = [../../modules/diff-closures.nix];
   diffClosures.enable = true;
 }
-
