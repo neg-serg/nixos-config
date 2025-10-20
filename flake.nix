@@ -79,6 +79,15 @@
       # Nilla raw-loader compatibility: synthetic type for each input (harmless for normal flakes)
       nillaInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) inputs;
     }; let
+      # Hosts discovery shared across sections
+      hostsDir = ./hosts;
+      entries = builtins.readDir hostsDir;
+      hostNames = builtins.attrNames (nixpkgs.lib.filterAttrs (
+        name: type:
+          type == "directory"
+          && builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
+      ) entries);
+
       # Shared pre-commit hooks runner for checks and devShell
       preCommit = inputs.pre-commit-hooks.lib.${system}.run { src = self; hooks = { alejandra.enable = true; statix.enable = true; deadnix.enable = true; }; };
     in {
@@ -211,17 +220,6 @@
       # Lightweight repo checks for `nix flake check`
       checks.${system} = let
         pkgs = nixpkgs.legacyPackages.${system};
-        hostsDir = ./hosts;
-        entries = builtins.readDir hostsDir;
-        hostNames = builtins.attrNames (nixpkgs.lib.filterAttrs (
-            name: type:
-              type
-              == "directory"
-              && (
-                builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
-              )
-          )
-          entries);
         hostBuildChecks = nixpkgs.lib.listToAttrs (map (name: {
             name = "build-" + name;
             value = self.nixosConfigurations.${name}.config.system.build.toplevel;
@@ -307,17 +305,6 @@
           chaotic.nixosModules.default
           sops-nix.nixosModules.sops
         ];
-        hostsDir = ./hosts;
-        entries = builtins.readDir hostsDir;
-        hostNames = builtins.attrNames (lib'.filterAttrs (
-            name: type:
-              type
-              == "directory"
-              && (
-                builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
-              )
-          )
-          entries);
         hostExtras = name: let
           extraPath = (builtins.toString hostsDir) + "/" + name + "/extra.nix";
         in
