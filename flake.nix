@@ -81,14 +81,7 @@
       nillaInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) inputs;
     }; let
       # Shared pre-commit hooks runner for checks and devShell
-      preCommit = inputs.pre-commit-hooks.lib.${system}.run {
-        src = self;
-        hooks = {
-          alejandra.enable = true;
-          statix.enable = true;
-          deadnix.enable = true;
-        };
-      };
+      preCommit = inputs.pre-commit-hooks.lib.${system}.run { src = self; hooks = { alejandra.enable = true; statix.enable = true; deadnix.enable = true; }; };
     in {
       # Option docs (markdown) for base profiles, roles, and selected feature modules
       packages.${system} = let
@@ -135,19 +128,7 @@
           lib.mapAttrs (_: eval: lib.nixosOptionsDoc {inherit (eval) options;}) evals
         );
         get = name: (builtins.getAttr name docs).optionsCommonMark;
-        # Discover hosts (for debugging autogen)
-        hostsDir = ./hosts;
-        entries = builtins.readDir hostsDir;
-        hostEntries = builtins.readDir hostsDir;
-        hostNames = builtins.attrNames (lib.filterAttrs (
-            name: type:
-              type
-              == "directory"
-              && (
-                builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
-              )
-          )
-          hostEntries);
+        # (removed stale host discovery: not used in docs)
       in
         {
           default = pkgs.zsh;
