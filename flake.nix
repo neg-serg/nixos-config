@@ -1,15 +1,9 @@
 {
   description = "Neg-Serg configuration";
   inputs = {
-    chaotic = {
-      url = "git+https://github.com/chaotic-cx/nyx?ref=nyxpkgs-unstable";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    hyprland = {
-      # Pin Hyprland to a known-stable tag compatible with hy3
-      url = "github:hyprwm/Hyprland?ref=v0.50.1";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    chaotic = {url = "git+https://github.com/chaotic-cx/nyx?ref=nyxpkgs-unstable"; inputs.nixpkgs.follows = "nixpkgs";};
+    # Pin Hyprland to a known-stable tag compatible with hy3
+    hyprland = {url = "github:hyprwm/Hyprland?ref=v0.50.1"; inputs.nixpkgs.follows = "nixpkgs";};
     # Keep Hyprland-related inputs in lockstep with the pinned Hyprland flake
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
     hyprland-qtutils.follows = "hyprland/hyprland-qtutils";
@@ -17,33 +11,15 @@
     hyprland-qt-support.follows = "hyprland/hyprland-qtutils/hyprland-qt-support";
     # xdg-desktop-portal-hyprland is named 'xdph' in Hyprland's flake inputs
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
-    lanzaboote = {
-      url = "github:nix-community/lanzaboote";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    nh = {
-      url = "github:viperML/nh";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    lanzaboote = {url = "github:nix-community/lanzaboote"; inputs.nixpkgs.follows = "nixpkgs";};
+    nh = {url = "github:viperML/nh"; inputs.nixpkgs.follows = "nixpkgs";};
     nix-flatpak = {url = "github:gmodena/nix-flatpak";}; # unstable branch. Use github:gmodena/nix-flatpak/?ref=<tag> to pin releases.
-    nix-gaming = {
-      url = "github:fufexan/nix-gaming";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    nix-gaming = {url = "github:fufexan/nix-gaming"; inputs.nixpkgs.follows = "nixpkgs";};
     # Pin nixpkgs to nixos-unstable so we get Hydra cache hits
     nixpkgs = {url = "github:NixOS/nixpkgs/nixos-unstable";};
-    raise = {
-      url = "github:neg-serg/raise";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    sops-nix = {
-      url = "github:Mic92/sops-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    pre-commit-hooks = {
-      url = "github:cachix/git-hooks.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    raise = {url = "github:neg-serg/raise"; inputs.nixpkgs.follows = "nixpkgs";};
+    sops-nix = {url = "github:Mic92/sops-nix"; inputs.nixpkgs.follows = "nixpkgs";};
+    pre-commit-hooks = {url = "github:cachix/git-hooks.nix"; inputs.nixpkgs.follows = "nixpkgs";};
   };
 
   # Make Cachix caches available to all `nix {build,develop,run}` commands
