@@ -299,3 +299,4 @@
       in
         lib.genAttrs hostNames mkHost;
     };
+}
