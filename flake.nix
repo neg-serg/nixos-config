@@ -25,7 +25,8 @@
   # Make Cachix caches available to all `nix {build,develop,run}` commands
   # Note: nixConfig must be a literal attrset (cannot import).
   nixConfig = {
-    extra-substituters = [
+    substituters = [
+      "https://cache.nixos.org/"
       "https://0uptime.cachix.org"
       "https://chaotic-nyx.cachix.org"
       "https://cuda-maintainers.cachix.org"
@@ -41,7 +42,9 @@
       "https://nixpkgs-wayland.cachix.org"
       "https://numtide.cachix.org"
     ];
-    extra-trusted-public-keys = [
+    trusted-public-keys = [
+      # Official NixOS cache (required for cache.nixos.org)
+      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
       "0uptime.cachix.org-1:ctw8yknBLg9cZBdqss+5krAem0sHYdISkw/IFdRbYdE="
       "chaotic-nyx.cachix.org-1:HfnXSw4pj95iI/n17rIDy40agHj12WfF+Gqk6SonIT8="
       "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
@@ -73,27 +76,24 @@
       system = "x86_64-linux";
       timeZone = "Europe/Moscow";
       kexec_enabled = true;
+      diffClosures = import ./modules/diff-closures.nix;
       # Nilla raw-loader compatibility: synthetic type for each input (harmless for normal flakes)
       nillaInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) inputs;
     }; let
-      # Common libs/pkgs and hosts discovery
-      pkgs = nixpkgs.legacyPackages.${system};
-      lib = nixpkgs.lib;
-      hostsDir = ./hosts;
-      entries = builtins.readDir hostsDir;
-      hostNames = builtins.attrNames (lib.filterAttrs (
-        name: type:
-          type == "directory" && builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
-      ) entries);
-
       # Shared pre-commit hooks runner for checks and devShell
       preCommit = inputs.pre-commit-hooks.lib.${system}.run {
         src = self;
-        hooks = {alejandra.enable = true; statix.enable = true; deadnix.enable = true;};
+        hooks = {
+          alejandra.enable = true;
+          statix.enable = true;
+          deadnix.enable = true;
+        };
       };
     in {
       # Option docs (markdown) for base profiles, roles, and selected feature modules
       packages.${system} = let
+        pkgs = nixpkgs.legacyPackages.${system};
+        inherit (nixpkgs) lib;
         # DRY: evaluate module groups and generate option docs programmatically
         mkSpecialArgs = {
           inherit self inputs locale timeZone kexec_enabled pkgs;
@@ -135,82 +135,121 @@
           lib.mapAttrs (_: eval: lib.nixosOptionsDoc {inherit (eval) options;}) evals
         );
         get = name: (builtins.getAttr name docs).optionsCommonMark;
-        # Mapping for per-doc outputs: key in `groups` -> slug used in output name
-        docNames = [
-          { key = "base";           slug = "base"; }
-          { key = "roles";          slug = "roles"; }
-          { key = "games";          slug = "games"; }
-          { key = "users";          slug = "users"; }
-          { key = "flakePreflight"; slug = "flake-preflight"; }
-          { key = "hwAmd";          slug = "hw-amd"; }
-          { key = "all";            slug = "all"; }
-          { key = "profiles";       slug = "profiles"; }
-          { key = "servers";        slug = "servers"; }
-          { key = "hardware";       slug = "hardware"; }
-        ];
-        perDocOutputs = lib.listToAttrs (map (d: {
-          name = "options-${d.slug}-md";
-          value = get d.key;
-        }) docNames);
-        # Aggregated sections with custom titles and order
-        sections = [
-          { title = "Profiles (base)"; name = "profiles"; }
-          { title = "Roles";           name = "roles"; }
-          { title = "Servers";         name = "servers"; }
-          { title = "Hardware";        name = "hardware"; }
-          { title = "Users";           name = "users"; }
-          { title = "Games";           name = "games"; }
-          { title = "Flake Preflight"; name = "flakePreflight"; }
-        ];
+        # Discover hosts (for debugging autogen)
+        hostsDir = ./hosts;
+        entries = builtins.readDir hostsDir;
+        hostEntries = builtins.readDir hostsDir;
+        hostNames = builtins.attrNames (lib.filterAttrs (
+            name: type:
+              type
+              == "directory"
+              && (
+                builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
+              )
+          )
+          hostEntries);
       in
         {
           default = pkgs.zsh;
         }
-        // lib.optionalAttrs hasOptionsDoc (
-          perDocOutputs
-          // {
-            options-md = let
-              body = builtins.concatStringsSep "\n" (
-                [
-                  "echo \"# Options (Aggregated)\""
-                  "echo"
-                ]
-                ++ (map (s: ''
-                    echo "## ${s.title}"
-                    cat ${get s.name} || true
-                    echo
-                  '')
-                  sections)
-              );
-            in
-              pkgs.runCommand "options.md" {} ''
-                {
-                  ${body}
-                } > $out
-              '';
-            # Simple index page linking to generated docs (relative names expected by scripts/gen-options.sh)
-            options-index-md = let
-              names = ["options-md"] ++ (map (d: "options-${d.slug}-md") docNames);
-              toFile = n:
-                if n == "options-md"
-                then "options.md"
-                else builtins.replaceStrings ["-md"] [".md"] n;
-              lines = map (n: "- [" + n + "](./" + toFile n + ")") names;
-              content = builtins.concatStringsSep "\n" ([
-                  "# Options Docs"
-                  ""
-                  "Index of generated option documentation artifacts:"
-                  ""
-                ]
-                ++ lines ++ [""]);
-            in
-              pkgs.writeText "options-index.md" content;
-          }
-        );
+        // lib.optionalAttrs hasOptionsDoc {
+          # Preserve existing output names for compatibility
+          options-base-md = get "base";
+          options-roles-md = get "roles";
+          options-games-md = get "games";
+          options-users-md = get "users";
+          options-flake-preflight-md = get "flakePreflight";
+          options-hw-amd-md = get "hwAmd";
+          options-all-md = get "all";
+          options-profiles-md = get "profiles";
+          options-servers-md = get "servers";
+          options-hardware-md = get "hardware";
+
+          options-md = let
+            sections = [
+              {
+                title = "Profiles (base)";
+                path = get "profiles";
+              }
+              {
+                title = "Roles";
+                path = get "roles";
+              }
+              {
+                title = "Servers";
+                path = get "servers";
+              }
+              {
+                title = "Hardware";
+                path = get "hardware";
+              }
+              {
+                title = "Users";
+                path = get "users";
+              }
+              {
+                title = "Games";
+                path = get "games";
+              }
+              {
+                title = "Flake Preflight";
+                path = get "flakePreflight";
+              }
+            ];
+            body = builtins.concatStringsSep "\n" (
+              [
+                "echo \"# Options (Aggregated)\""
+                "echo"
+              ]
+              ++ (map (s: ''
+                  echo "## ${s.title}"
+                  cat ${s.path} || true
+                  echo
+                '')
+                sections)
+            );
+          in
+            pkgs.runCommand "options.md" {} ''
+              {
+                ${body}
+              } > $out
+            '';
+          # Simple index page linking to generated docs (relative names expected by scripts/gen-options.sh)
+          options-index-md = let
+            names = [
+              "options-md"
+              "options-profiles-md"
+              "options-roles-md"
+              "options-servers-md"
+              "options-hardware-md"
+              "options-users-md"
+              "options-games-md"
+              "options-hw-amd-md"
+              "options-all-md"
+              "options-base-md"
+              "options-flake-preflight-md"
+            ];
+            toFile = n:
+              if n == "options-md"
+              then "options.md"
+              else builtins.replaceStrings ["-md"] [".md"] n;
+            lines = map (n: "- [" + n + "](./" + toFile n + ")") names;
+            content = builtins.concatStringsSep "\n" ([
+                "# Options Docs"
+                ""
+                "Index of generated option documentation artifacts:"
+                ""
+              ]
+              ++ lines ++ [""]);
+          in
+            pkgs.writeText "options-index.md" content;
         };
 
       # Make `nix fmt` behave like in home-manager: format repo with alejandra
-      formatter.${system} = pkgs.writeShellApplication {
+      formatter.${system} = let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in
+        pkgs.writeShellApplication {
           name = "fmt";
           runtimeInputs = [pkgs.alejandra];
           text = ''
@@ -221,26 +260,47 @@
 
       # Lightweight repo checks for `nix flake check`
       checks.${system} = let
-        hostBuildChecks = lib.listToAttrs (map (name: {
+        pkgs = nixpkgs.legacyPackages.${system};
+        hostsDir = ./hosts;
+        entries = builtins.readDir hostsDir;
+        hostNames = builtins.attrNames (nixpkgs.lib.filterAttrs (
+            name: type:
+              type
+              == "directory"
+              && (
+                builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
+              )
+          )
+          entries);
+        hostBuildChecks = nixpkgs.lib.listToAttrs (map (name: {
             name = "build-" + name;
             value = self.nixosConfigurations.${name}.config.system.build.toplevel;
           })
           hostNames);
       in
         {
-          fmt-alejandra = pkgs.runCommand "fmt-alejandra" { nativeBuildInputs = [pkgs.alejandra]; } ''
+          fmt-alejandra =
+            pkgs.runCommand "fmt-alejandra" {
+              nativeBuildInputs = [pkgs.alejandra];
+            } ''
               cd ${self}
               alejandra -q --check .
               touch "$out"
             '';
 
-          lint-deadnix = pkgs.runCommand "lint-deadnix" { nativeBuildInputs = [pkgs.deadnix]; } ''
+          lint-deadnix =
+            pkgs.runCommand "lint-deadnix" {
+              nativeBuildInputs = [pkgs.deadnix];
+            } ''
               cd ${self}
               deadnix --fail .
               touch "$out"
             '';
 
-          lint-statix = pkgs.runCommand "lint-statix" { nativeBuildInputs = [pkgs.statix]; } ''
+          lint-statix =
+            pkgs.runCommand "lint-statix" {
+              nativeBuildInputs = [pkgs.statix];
+            } ''
               cd ${self}
               statix check .
               touch "$out"
@@ -250,20 +310,32 @@
         // hostBuildChecks;
 
       # Developer shell
-      devShells.${system}.default = pkgs.mkShell {
+      devShells.${system}.default = let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in
+        pkgs.mkShell {
           inherit (preCommit) shellHook;
-          packages = with pkgs; [alejandra deadnix statix nil just jq];
+          packages = [
+            pkgs.alejandra
+            pkgs.deadnix
+            pkgs.statix
+            pkgs.nil
+            pkgs.just
+            pkgs.jq
+          ];
         };
 
       apps.${system} = let
+        pkgs = nixpkgs.legacyPackages.${system};
         genOptions = pkgs.writeShellApplication {
           name = "gen-options";
-          runtimeInputs = with pkgs; [git jq nix];
+          runtimeInputs = [pkgs.git pkgs.jq pkgs.nix];
           text = ''
             set -euo pipefail
             exec "${self}/scripts/gen-options.sh" "$@"
           '';
         };
+        fmtApp = self.formatter.${system};
       in {
         gen-options = {
           type = "app";
@@ -271,11 +343,13 @@
         };
         fmt = {
           type = "app";
-          program = "${self.formatter.${system}}/bin/fmt";
+          program = "${fmtApp}/bin/fmt";
         };
       };
 
       nixosConfigurations = let
+        lib' = nixpkgs.lib;
+        pkgs = nixpkgs.legacyPackages.${system};
         commonModules = [
           ./init.nix
           nix-flatpak.nixosModules.nix-flatpak
@@ -283,11 +357,23 @@
           chaotic.nixosModules.default
           sops-nix.nixosModules.sops
         ];
+        hostsDir = ./hosts;
+        entries = builtins.readDir hostsDir;
+        hostNames = builtins.attrNames (lib'.filterAttrs (
+            name: type:
+              type
+              == "directory"
+              && (
+                builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
+              )
+          )
+          entries);
         hostExtras = name: let
           extraPath = (builtins.toString hostsDir) + "/" + name + "/extra.nix";
         in
-          lib.optional (builtins.pathExists extraPath) (/. + extraPath);
-        mkHost = name: lib.nixosSystem {
+          lib'.optional (builtins.pathExists extraPath) (/. + extraPath);
+        mkHost = name:
+          nixpkgs.lib.nixosSystem {
             inherit system;
             specialArgs = {
               inherit locale timeZone kexec_enabled self;
@@ -297,6 +383,6 @@
             modules = commonModules ++ [(import ((builtins.toString hostsDir) + "/" + name))] ++ (hostExtras name);
           };
       in
-        lib.genAttrs hostNames mkHost;
-    }
+        lib'.genAttrs hostNames mkHost;
+    };
 }
