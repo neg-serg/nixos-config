@@ -76,7 +76,6 @@
       system = "x86_64-linux";
       timeZone = "Europe/Moscow";
       kexec_enabled = true;
-      diffClosures = import ./modules/diff-closures.nix;
       # Nilla raw-loader compatibility: synthetic type for each input (harmless for normal flakes)
       nillaInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) inputs;
     }; let
