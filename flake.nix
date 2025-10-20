@@ -68,14 +68,15 @@
     sops-nix,
     ...
   }:
-    with {
+    let
+      # Base parameters
       locale = "en_US.UTF-8"; # select locale
       system = "x86_64-linux";
       timeZone = "Europe/Moscow";
       kexec_enabled = true;
       # Nilla raw-loader compatibility: synthetic type for each input (harmless for normal flakes)
       nillaInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) inputs;
-    }; let
+
       # Common libs/pkgs and hosts discovery
       pkgs = nixpkgs.legacyPackages.${system};
       lib = nixpkgs.lib;
