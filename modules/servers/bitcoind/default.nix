@@ -12,11 +12,6 @@
 in {
   config = lib.mkIf cfg.enable (lib.mkMerge [
     {
-      warnings = [
-        "servers/bitcoind: enabling instance '${cfg.instance}' on port ${toString cfg.p2pPort}"
-      ];
-    }
-    {
       services.bitcoind = lib.genAttrs [cfg.instance] (_: {
         enable = true;
         dataDir = cfg.dataDir;
