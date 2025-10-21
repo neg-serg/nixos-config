@@ -162,24 +162,25 @@
           perDocOutputs
           // {
             options-md = let
-              sections = [
-                { title = "Profiles (base)"; name = "profiles"; }
-                { title = "Roles";           name = "roles"; }
-                { title = "Servers";         name = "servers"; }
-                { title = "Hardware";        name = "hardware"; }
-                { title = "Users";           name = "users"; }
-                { title = "Games";           name = "games"; }
-                { title = "Flake Preflight"; name = "flakePreflight"; }
-              ];
+              titlesByKey = {
+                profiles = "Profiles (base)";
+                roles = "Roles";
+                servers = "Servers";
+                hardware = "Hardware";
+                users = "Users";
+                games = "Games";
+                flakePreflight = "Flake Preflight";
+              };
+              aggregateKeys = ["profiles" "roles" "servers" "hardware" "users" "games" "flakePreflight"];
               body = builtins.concatStringsSep "\n" (
                 [
                   "echo \"# Options (Aggregated)\""
                   "echo"
-                ] ++ (map (s: ''
-                  echo "## ${s.title}"
-                  cat ${get s.name} || true
+                ] ++ (map (name: ''
+                  echo "## ${builtins.getAttr name titlesByKey}"
+                  cat ${get name} || true
                   echo
-                '') sections)
+                '') aggregateKeys)
               );
             in pkgs.runCommand "options.md" {} ''
               {
