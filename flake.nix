@@ -88,13 +88,15 @@
           && builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
       ) entries);
 
+      # Common pkgs/lib
+      pkgs = nixpkgs.legacyPackages.${system};
+      lib = nixpkgs.lib;
+
       # Shared pre-commit hooks runner for checks and devShell
       preCommit = inputs.pre-commit-hooks.lib.${system}.run { src = self; hooks = { alejandra.enable = true; statix.enable = true; deadnix.enable = true; }; };
     in {
       # Option docs (markdown) for base profiles, roles, and selected feature modules
       packages.${system} = let
-        pkgs = nixpkgs.legacyPackages.${system};
-        inherit (nixpkgs) lib;
         # DRY: evaluate module groups and generate option docs programmatically
         mkSpecialArgs = {
           inherit self inputs locale timeZone kexec_enabled pkgs;
@@ -206,12 +208,10 @@
         );
 
       # Make `nix fmt` behave like in home-manager: format repo with alejandra
-      formatter.${system} = let
-        pkgs = nixpkgs.legacyPackages.${system};
-      in
+      formatter.${system} =
         pkgs.writeShellApplication {
           name = "fmt";
-          runtimeInputs = [pkgs.alejandra];
+          runtimeInputs = with pkgs; [ alejandra ];
           text = ''
             set -euo pipefail
             alejandra -q .
@@ -220,8 +220,7 @@
 
       # Lightweight repo checks for `nix flake check`
       checks.${system} = let
-        pkgs = nixpkgs.legacyPackages.${system};
-        hostBuildChecks = nixpkgs.lib.listToAttrs (map (name: {
+        hostBuildChecks = lib.listToAttrs (map (name: {
             name = "build-" + name;
             value = self.nixosConfigurations.${name}.config.system.build.toplevel;
           })
@@ -236,15 +235,12 @@
         // hostBuildChecks;
 
       # Developer shell
-      devShells.${system}.default = let
-        pkgs = nixpkgs.legacyPackages.${system};
-      in pkgs.mkShell {
+      devShells.${system}.default = pkgs.mkShell {
         inherit (preCommit) shellHook;
         packages = with pkgs; [ alejandra deadnix statix nil just jq ];
       };
 
       apps.${system} = let
-        pkgs = nixpkgs.legacyPackages.${system};
         genOptions = pkgs.writeShellApplication {
           name = "gen-options";
           runtimeInputs = with pkgs; [ git jq nix ];
@@ -266,8 +262,6 @@
       };
 
       nixosConfigurations = let
-        lib' = nixpkgs.lib;
-        pkgs = nixpkgs.legacyPackages.${system};
         commonModules = [
           ./init.nix
           nix-flatpak.nixosModules.nix-flatpak
@@ -278,9 +272,8 @@
         hostExtras = name: let
           extraPath = (builtins.toString hostsDir) + "/" + name + "/extra.nix";
         in
-          lib'.optional (builtins.pathExists extraPath) (/. + extraPath);
-        mkHost = name:
-          nixpkgs.lib.nixosSystem {
+          lib.optional (builtins.pathExists extraPath) (/. + extraPath);
+        mkHost = name: lib.nixosSystem {
             inherit system;
             specialArgs = {
               inherit locale timeZone kexec_enabled self;
@@ -290,6 +283,6 @@
             modules = commonModules ++ [(import ((builtins.toString hostsDir) + "/" + name))] ++ (hostExtras name);
           };
       in
-        lib'.genAttrs hostNames mkHost;
+        lib.genAttrs hostNames mkHost;
     };
 }
