@@ -3,6 +3,10 @@
 - Enable a server profile via `profiles.services.<name>.enable` (alias: `servicesProfiles.<name>.enable`).
 - Configure service‑specific settings under `services.<name>.*` as usual.
 
+Policy: no eval warnings
+- Modules in this repo must not emit evaluation‑time warnings or traces.
+- Avoid `warnings = [ .. ]`, `builtins.trace`, `lib.warn`. Prefer docs and clear option descriptions.
+
 Examples and ports
 - openssh: `profiles.services.openssh.enable = true;`
   - Ports: 22/TCP (opened automatically by the module)
@@ -27,4 +31,3 @@ Examples and ports
 Docs
 - See per‑service options in aggregated file: flake output `packages.${system}."options-md"` (when available).
 - Each module also exposes standard NixOS options under `services.*`.
-

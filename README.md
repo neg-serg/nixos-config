@@ -17,6 +17,13 @@ nixtheplanet.url = "github:matthewcroughan/NixThePlanet";
 nixos-generators
 ```
 
+## Evaluation Noise Policy
+
+- No evaluation-time warnings or traces. Keep builds and switches quiet.
+- Do not use `warnings = [ ... ]`, `builtins.trace`, or `lib.warn` in modules.
+- If a package/feature is unavailable, silently skip or guard with a flag. Document behavior in module docs/README instead of emitting warnings.
+- Use assertions only for truly fatal misconfigurations that would break the system, and phrase them concisely.
+
 ## Hyprland: Single Source of Truth and Updates
 
 - Source of truth: `inputs.hyprland` is pinned to a stable tag (see `flake.nix`).
