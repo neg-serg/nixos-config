@@ -277,7 +277,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
         genOptions = pkgs.writeShellApplication {
           name = "gen-options";
-          runtimeInputs = [pkgs.git pkgs.jq pkgs.nix];
+          runtimeInputs = with pkgs; [ git jq nix ];
           text = ''
             set -euo pipefail
             exec "${self}/scripts/gen-options.sh" "$@"
