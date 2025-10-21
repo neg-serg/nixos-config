@@ -36,14 +36,9 @@ in {
     (lib.mkIf cfg.enable (let
       hasAutofdo = pkgs ? autofdo;
     in {
-      # Install AutoFDO tools only if available in the pinned nixpkgs
+      # Install AutoFDO tools only if available in the pinned nixpkgs.
+      # If unavailable, silently skip to keep evaluation noise-free.
       environment.systemPackages = lib.optionals hasAutofdo [pkgs.autofdo];
-      # Provide a friendly warning when the package is missing
-      warnings = lib.optional (!hasAutofdo) ''        AutoFDO package "pkgs.autofdo" is not available in the current nixpkgs pin.
-                  Skipping installation. You can:
-                  - Pin a nixpkgs revision that contains autofdo, or
-                  - Disable dev.gcc.autofdo.enable, or
-                  - Add an overlay providing the package (google/autofdo).'';
     }))
 
     (lib.mkIf (cfg.gccProfile != null) {
