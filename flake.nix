@@ -2,8 +2,8 @@
   description = "Neg-Serg configuration";
   inputs = {
     chaotic = {url = "git+https://github.com/chaotic-cx/nyx?ref=nyxpkgs-unstable"; inputs.nixpkgs.follows = "nixpkgs";};
-    # Pin Hyprland to a known-stable tag compatible with hy3
-    hyprland = {url = "github:hyprwm/Hyprland?ref=v0.50.1"; inputs.nixpkgs.follows = "nixpkgs";};
+    # Pin Hyprland to v0.51 using Git fetch to avoid GitHub API rate limits
+    hyprland = {url = "git+https://github.com/hyprwm/Hyprland?ref=v0.51.0"; inputs.nixpkgs.follows = "nixpkgs";};
     # Keep Hyprland-related inputs in lockstep with the pinned Hyprland flake
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
     hyprland-qtutils.follows = "hyprland/hyprland-qtutils";
