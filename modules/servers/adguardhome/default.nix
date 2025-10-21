@@ -23,11 +23,18 @@ in {
       port = 3000;
       settings = {
         dns = {
+          # Bind locally and serve on default DNS port.
+          bind_host = "127.0.0.1";
+          port = 53;
           upstream_dns = ["127.0.0.1:5353"];
           bootstrap_dns = ["1.1.1.1" "8.8.8.8"];
           inherit (cfg) rewrites;
         };
       };
     };
+
+    # Make systemd-resolved use AdGuard as upstream.
+    networking.nameservers = ["127.0.0.1"];
+    services.resolved.domains = ["~."];
   };
 }
