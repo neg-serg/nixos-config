@@ -228,32 +228,9 @@
           hostNames);
       in
         {
-          fmt-alejandra =
-            pkgs.runCommand "fmt-alejandra" {
-              nativeBuildInputs = [pkgs.alejandra];
-            } ''
-              cd ${self}
-              alejandra -q --check .
-              touch "$out"
-            '';
-
-          lint-deadnix =
-            pkgs.runCommand "lint-deadnix" {
-              nativeBuildInputs = [pkgs.deadnix];
-            } ''
-              cd ${self}
-              deadnix --fail .
-              touch "$out"
-            '';
-
-          lint-statix =
-            pkgs.runCommand "lint-statix" {
-              nativeBuildInputs = [pkgs.statix];
-            } ''
-              cd ${self}
-              statix check .
-              touch "$out"
-            '';
+          fmt-alejandra = pkgs.runCommand "fmt-alejandra" { nativeBuildInputs = with pkgs; [ alejandra ]; } ''cd ${self}; alejandra -q --check .; touch "$out"'';
+          lint-deadnix = pkgs.runCommand "lint-deadnix" { nativeBuildInputs = with pkgs; [ deadnix ]; } ''cd ${self}; deadnix --fail .; touch "$out"'';
+          lint-statix = pkgs.runCommand "lint-statix" { nativeBuildInputs = with pkgs; [ statix ]; } ''cd ${self}; statix check .; touch "$out"'';
           pre-commit = preCommit;
         }
         // hostBuildChecks;
