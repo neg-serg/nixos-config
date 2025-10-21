@@ -238,18 +238,10 @@
       # Developer shell
       devShells.${system}.default = let
         pkgs = nixpkgs.legacyPackages.${system};
-      in
-        pkgs.mkShell {
-          inherit (preCommit) shellHook;
-          packages = [
-            pkgs.alejandra
-            pkgs.deadnix
-            pkgs.statix
-            pkgs.nil
-            pkgs.just
-            pkgs.jq
-          ];
-        };
+      in pkgs.mkShell {
+        inherit (preCommit) shellHook;
+        packages = with pkgs; [ alejandra deadnix statix nil just jq ];
+      };
 
       apps.${system} = let
         pkgs = nixpkgs.legacyPackages.${system};
