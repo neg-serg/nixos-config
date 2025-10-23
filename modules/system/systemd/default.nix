@@ -53,5 +53,11 @@ in {
       IOWeight = 200;
     };
     packages = [pkgs.packagekit];
+
+    # Ensure Navidrome waits for the music mount to exist before applying its
+    # private mount namespace with BindReadOnlyPaths=/one/music
+    services.navidrome.serviceConfig = {
+      RequiresMountsFor = [ "/one/music" ];
+    };
   };
 }
