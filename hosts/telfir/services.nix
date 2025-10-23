@@ -97,6 +97,26 @@
   # Disable RNNoise virtual mic for this host by default
   hardware.audio.rnnoise.enable = false;
 
+  # Quiet fan profile: load nct6775 and autogenerate a conservative fancontrol config
+  hardware.cooling = {
+    enable = true;
+    autoFancontrol.enable = true;
+    gpuFancontrol.enable = true;
+    # Optional tuning (defaults are quiet and safe); uncomment to adjust
+    # autoFancontrol.minTemp = 35;  # start ramping at 35°C
+    # autoFancontrol.maxTemp = 75;  # full speed by 75°C
+    # autoFancontrol.minPwm  = 70;  # ~27% duty to avoid stall
+    # autoFancontrol.maxPwm  = 255; # 100%
+    # autoFancontrol.hysteresis = 3;
+    # autoFancontrol.interval  = 2; # seconds
+    # GPU curve (quiet): starts gentle at 50°C, full by 85°C
+    # gpuFancontrol.minTemp = 50;
+    # gpuFancontrol.maxTemp = 85;
+    # gpuFancontrol.minPwm  = 70;
+    # gpuFancontrol.maxPwm  = 255;
+    # gpuFancontrol.hysteresis = 3;
+  };
+
   # Nextcloud via Caddy on LAN, served as "telfir"
   services = let
     devicesList = [
