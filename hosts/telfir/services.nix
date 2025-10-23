@@ -19,6 +19,10 @@
     monitoring.enable = true;
   };
 
+  # Reduce microphone background noise system-wide (PipeWire RNNoise filter)
+  # Enabled via modules/hardware/audio/noise by default for this host
+  # (If you prefer toggling via an option, we can expose one later.)
+
   # Hyprland only (no display manager / no Plasma sessions)
   # Plasma session module removed; keep host-level hard disables below.
   # Hard-disable Plasma/X11 stack at the host level to avoid accidental pulls
@@ -49,8 +53,8 @@
     ];
     # Explicitly override media role to keep Jellyfin off on this host
     jellyfin.enable = false;
-    # Enable Samba profile on this host
-    samba.enable = true;
+    # Disable Samba profile on this host
+    samba.enable = false;
     # Run a Bitcoin Core node with data stored under /zero/bitcoin-node
     bitcoind = {
       enable = true;
@@ -60,6 +64,9 @@
 
   # Disable Netdata on this host (keep other monitoring like sysstat)
   monitoring.netdata.enable = false;
+
+  # Disable RNNoise virtual mic for this host by default
+  hardware.audio.rnnoise.enable = false;
 
   # Nextcloud via Caddy on LAN, served as "telfir"
   services = let
