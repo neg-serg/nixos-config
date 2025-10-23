@@ -7,6 +7,7 @@
     ./kernel/params.nix
     ./kernel/sysctl.nix
     ./kernel/sysctl-writeback.nix
+    ./kernel/sysctl-net-extras.nix
     ./kernel/patches-amd.nix
     ./profiles/security.nix
     ./profiles/performance.nix
