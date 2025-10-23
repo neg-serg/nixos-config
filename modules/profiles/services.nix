@@ -14,6 +14,24 @@ in {
   options.servicesProfiles = {
     adguardhome = {
       enable = opts.mkEnableOption "AdGuard Home DNS with rewrites/profile wiring.";
+      # Optional filter list catalog to be written into AdGuardHome.yaml
+      filterLists =
+        opts.mkListOpt (types.submodule (_: {
+          options = {
+            name = opts.mkStrOpt { description = "Human-friendly filter list name"; };
+            url = opts.mkStrOpt { description = "URL to the filter list"; };
+            enabled = opts.mkBoolOpt { default = true; description = "Enable this list"; };
+          };
+        })) {
+          default = [];
+          description = "List of upstream filter lists for AdGuardHome.";
+          example = [
+            {
+              name = "AdGuard DNS filter";
+              url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt";
+            }
+          ];
+        };
       rewrites =
         opts.mkListOpt (types.submodule (_: {
           options = {
@@ -49,7 +67,25 @@ in {
         notes = "Set this to 18333 for testnet or another value if you override the service port.";
       };
     };
-    unbound.enable = opts.mkEnableOption "Unbound DNS resolver profile.";
+    unbound = {
+      enable = opts.mkEnableOption "Unbound DNS resolver profile.";
+      mode = opts.mkEnumOpt ["recursive" "dot" "doh"] {
+        default = "dot";
+        description = "How Unbound fetches upstream DNS: direct recursion, DNS-over-TLS, or via DoH proxy.";
+      };
+      dnssec = {
+        enable = opts.mkBoolOpt { default = true; description = "Enable DNSSEC validation in Unbound."; };
+      };
+      dotUpstreams = opts.mkListOpt types.str {
+        default = [
+          "1.1.1.1@853#cloudflare-dns.com"
+          "1.0.0.1@853#cloudflare-dns.com"
+          "9.9.9.9@853#dns.quad9.net"
+          "149.112.112.112@853#dns.quad9.net"
+        ];
+        description = "List of DoT forwarders in host@port#SNI format.";
+      };
+    };
     openssh.enable = opts.mkEnableOption "OpenSSH (and mosh) profile.";
     syncthing.enable = opts.mkEnableOption "Syncthing device sync profile.";
     mpd.enable = opts.mkEnableOption "MPD (Music Player Daemon) profile.";

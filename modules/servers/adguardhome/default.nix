@@ -12,6 +12,7 @@
     config.servicesProfiles.adguardhome or {
       enable = false;
       rewrites = [];
+      filterLists = [];
     };
 in {
   config = lib.mkIf cfg.enable {
@@ -24,6 +25,15 @@ in {
       # Make sure our Nix settings are honored strictly to avoid stale state conflicts
       mutableSettings = false;
       settings = {
+        filtering = {
+          protection_enabled = true;
+          filtering_enabled = true;
+          parental_enabled = false;
+          safebrowsing_enabled = false;
+          safe_search = { enabled = false; };
+        };
+        # Subscribe to upstream lists (if provided)
+        filters = map (f: { inherit (f) name url enabled; }) cfg.filterLists;
         dns = {
           # Bind locally and serve on default DNS port.
           bind_host = "127.0.0.1";
