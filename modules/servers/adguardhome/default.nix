@@ -37,8 +37,17 @@ in {
       };
     };
 
-    # Make systemd-resolved use AdGuard as upstream.
+    # Make systemd-resolved act as a stub resolver and forward to AdGuardHome
+    # - dns = ["127.0.0.1"] forces forwarding to AdGuardHome on localhost:53
+    # - fallbackDns = [] avoids bypassing AdGuard via system defaults
+    # - domains = ["~."] ensures all lookups go through the configured DNS
+    services.resolved = {
+      enable = lib.mkDefault true;
+      dns = ["127.0.0.1"];
+      fallbackDns = [];
+      domains = ["~."];
+    };
+    # Keep resolv.conf compatibility for tools that read networking.nameservers directly
     networking.nameservers = ["127.0.0.1"];
-    services.resolved.domains = ["~."];
   };
 }
