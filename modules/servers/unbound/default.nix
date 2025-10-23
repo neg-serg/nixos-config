@@ -59,14 +59,12 @@ in {
       services.dnscrypt-proxy2 = lib.mkIf (cfg.mode == "doh") {
         enable = true;
         settings = {
-          listen_addresses = ["127.0.0.1:5053"];
-          # Stick to known-good DoH servers; require DNSSEC-capable upstreams
-          require_dnssec = true;
-          ipv6_servers = false;
-          # Use a curated shortlist; can be expanded in host overrides
-          server_names = ["cloudflare" "quad9-doh" ];
-          # Use the public-resolvers list from the package
-          # (dnscrypt-proxy2 ships stamp lists; no extra setup required)
+          listen_addresses = [ cfg.doh.listenAddress ];
+          require_dnssec = cfg.doh.requireDnssec;
+          ipv6_servers = cfg.doh.ipv6Servers;
+          server_names = cfg.doh.serverNames;
+        } // lib.optionalAttrs (cfg.doh.sources != {}) {
+          sources = cfg.doh.sources;
         };
       };
     }

@@ -85,6 +85,36 @@ in {
         ];
         description = "List of DoT forwarders in host@port#SNI format.";
       };
+      doh = {
+        listenAddress = opts.mkStrOpt {
+          default = "127.0.0.1:5053";
+          description = "Local address where dnscrypt-proxy2 (DoH proxy) listens.";
+        };
+        serverNames = opts.mkListOpt types.str {
+          default = ["cloudflare" "quad9-doh"];
+          description = "dnscrypt-proxy2 server_names to use for DoH.";
+        };
+        ipv6Servers = opts.mkBoolOpt {
+          default = false;
+          description = "Allow IPv6 upstream servers in dnscrypt-proxy2.";
+        };
+        requireDnssec = opts.mkBoolOpt {
+          default = true;
+          description = "Require DNSSEC-capable upstreams in dnscrypt-proxy2.";
+        };
+        sources = opts.mkOpt types.attrs {} {
+          description = "Optional dnscrypt-proxy2 sources object to override default public-resolvers.";
+          example = {
+            public-resolvers = {
+              urls = [
+                "https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/public-resolvers.md"
+                "https://download.dnscrypt.info/resolvers-list/v3/public-resolvers.md"
+              ];
+              cache_file = "/var/lib/dnscrypt-proxy2/public-resolvers.md";
+            };
+          };
+        };
+      };
     };
     openssh.enable = opts.mkEnableOption "OpenSSH (and mosh) profile.";
     syncthing.enable = opts.mkEnableOption "Syncthing device sync profile.";

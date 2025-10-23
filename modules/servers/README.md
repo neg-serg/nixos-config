@@ -22,8 +22,17 @@ Examples and ports
 - adguardhome: `profiles.services.adguardhome.enable = true;`
   - DNS on 53/UDP+TCP (configure upstreams/rewrites via `servicesProfiles.adguardhome.rewrites`)
   - Admin UI default in module: 3000/TCP bound to 127.0.0.1
+  - Filter lists: `servicesProfiles.adguardhome.filterLists = [ { name, url, enabled ? true } ... ]`
+  - Integration path (recommended): apps → systemd-resolved (127.0.0.53) → AdGuardHome (127.0.0.1:53) → Unbound (127.0.0.1:5353).
 - unbound: `profiles.services.unbound.enable = true;`
-  - Example here: 5353/TCP on localhost (as upstream for AdGuardHome)
+  - Listens on 127.0.0.1:5353 and is used as upstream for AdGuardHome.
+  - Modes (select via `servicesProfiles.unbound.mode`):
+    - `recursive` — pure recursion (no forwarders); DNSSEC validation can be toggled via `dnssec.enable`.
+    - `dot` (default) — DNS-over-TLS forwarders from `dotUpstreams` (format: `host@port#SNI`).
+    - `doh` — DNS-over-HTTPS via local `dnscrypt-proxy2` (listens at `doh.listenAddress`, default 127.0.0.1:5053).
+      - Configure DoH upstreams with `doh.serverNames` (e.g., `["cloudflare" "quad9-doh"]`).
+      - Optional `doh.sources` overrides the default resolver list used by dnscrypt-proxy2.
+  - DNSSEC: `servicesProfiles.unbound.dnssec.enable = true;` (enabled by default).
 - nextcloud: `profiles.services.nextcloud.enable = true;`
   - Reverse proxy: enable `services.nextcloud.{caddyProxy|nginxProxy}.enable = true;`
   - Open HTTP/HTTPS (80/443) when using proxy modules; internal PHP‑FPM socket is configured by the module.
