@@ -51,6 +51,12 @@
         answer = "192.168.2.240";
       }
     ];
+    # Enable curated AdGuardHome filter lists
+    adguardhome.filterLists = [
+      { name = "AdGuard DNS filter"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt"; }
+      { name = "OISD full"; url = "https://big.oisd.nl/"; }
+      { name = "AdAway"; url = "https://raw.githubusercontent.com/AdAway/adaway.github.io/master/hosts.txt"; }
+    ];
     # Explicitly override media role to keep Jellyfin off on this host
     jellyfin.enable = false;
     # Disable Samba profile on this host
