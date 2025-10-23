@@ -1,4 +1,4 @@
-{pkgs, ...}: {
+{ pkgs, lib, ... }: {
   # Hardware and performance tuning specific to host 'telfir'
   hardware.storage.autoMount.enable = true;
   hardware.video.amd.useMesaGit = true;
