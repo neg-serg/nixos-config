@@ -19,10 +19,15 @@
       optimizeInitrdCompression = true;
       # Reduce boot verbosity to speed kernel + userspace stage slightly
       quietBoot = true;
+      # Prefer THP on madvise only to reduce jitter
+      thpMode = "madvise";
     };
   };
 
   # Performance profile comes from the workstation role
+
+  # Writeback tuning: reduce IO bursts during gameplay/builds
+  profiles.performance.writeback.enable = true;
 
   # Host-specific kernel parameters and boot tuning
   boot = {
