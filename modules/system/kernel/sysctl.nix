@@ -26,9 +26,8 @@ _: {
 
     # TCP optimization
     "net.ipv4.tcp_fastopen" = 3;
-    "net.ipv4.tcp_congestion_control" = "bbr";
-    "net.core.default_qdisc" = "fq";
     "net.ipv4.tcp_mtu_probing" = 1;
+    "net.ipv4.tcp_max_syn_backlog" = 8192;
 
     # Socket and queue sizes
     "net.core.rmem_max" = 4194304;
