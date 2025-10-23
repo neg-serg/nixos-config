@@ -1,69 +1,8 @@
-{ lib, config, ... }:
+{ lib, config, pkgs, ... }:
 let
   inherit (lib) mkIf mkMerge types;
-  s = lib.strings;
-  l = lib.lists;
-
   cfg = config.profiles.performance.irqbalance;
-
-  # Extract a comma-joined value of a kernel parameter (may appear multiple times)
-  getKParam = name:
-    lib.concatStringsSep ","
-      (lib.concatMap (p: if s.hasPrefix ("${name}=") p then [ (s.removePrefix ("${name}=") p) ] else [ ])
-        (config.boot.kernelParams or [ ]));
-
-  # Parse CPU set expressions like "1,2,4-7" ignoring non-numeric tokens
-  parseCpuSet = (txt:
-    let
-      toks = lib.splitString "," txt;
-      isInt = t: builtins.match "^[0-9]+$" t != null;
-      isRange = t: builtins.match "^[0-9]+-[0-9]+$" t != null;
-      toInt = t: builtins.fromJSON t;
-      parseTok = t:
-        let tt = s.trim t; in
-        if tt == "" then [ ]
-        else if isRange tt then
-          let parts = lib.splitString "-" tt;
-              a = toInt (builtins.elemAt parts 0);
-              b = toInt (builtins.elemAt parts 1);
-          in lib.range a b
-        else if isInt tt then [ toInt tt ]
-        else [ ];
-    in lib.concatMap parseTok toks);
-
-  # Collect isolated CPUs from nohz_full and isolcpus arguments
-  isolatedCpus =
-    let
-      nohz = parseCpuSet (getKParam "nohz_full");
-      isol = parseCpuSet (getKParam "isolcpus");
-      all = nohz ++ isol;
-    in lib.unique (lib.sort (a: b: a < b) all);
-
-  # Convert a list of CPU indices to an uppercase hexadecimal mask string (e.g. 0xC000C000)
-  toHexMask = (cpus:
-    let
-      has = i: lib.elem i cpus;
-      maxCpu = if cpus == [ ] then 0 else builtins.elemAt cpus ((builtins.length cpus) - 1);
-      lastNib = builtins.floor (maxCpu / 4);
-      hexDigit = n: builtins.elemAt [
-        "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "A" "B" "C" "D" "E" "F"
-      ] n;
-      # Build nibbles from most-significant to least-significant
-      nibbles = l.reverseList (builtins.genList (i:
-        let base = i * 4; in
-        (if has (base + 0) then 1 else 0)
-        + (if has (base + 1) then 2 else 0)
-        + (if has (base + 2) then 4 else 0)
-        + (if has (base + 3) then 8 else 0)
-      ) (lastNib + 1));
-      hexStr = lib.concatStringsSep "" (map hexDigit nibbles);
-      # Trim leading zeros; leave single zero if empty
-      trimmed =
-        let m = builtins.match "0*([0-9A-F]+)" hexStr; in
-        if m == null then "0" else builtins.elemAt m 0;
-    in "0x" + trimmed);
-in
-{
+in {
   options.profiles.performance.irqbalance.autoBannedFromIsolated = lib.mkOption {
     type = types.bool;
     default = true;
@@ -79,10 +18,41 @@ in
       # Balance hardware interrupts across CPU cores to reduce spikes on a single core
       services.irqbalance.enable = true;
     }
-    (mkIf (cfg.autoBannedFromIsolated && isolatedCpus != [ ]) {
-      # Allow hosts to override with a concrete mask via mkForce if desired
-      systemd.services.irqbalance.environment.IRQBALANCE_BANNED_CPUS = lib.mkDefault (toHexMask isolatedCpus);
+    (mkIf cfg.autoBannedFromIsolated {
+      # Compute banned CPU mask at runtime from /proc/cmdline and expose via EnvironmentFile
+      systemd.services.irqbalance = {
+        preStart = ''
+          set -euo pipefail
+          CMDLINE=$(cat /proc/cmdline)
+          get_param() {
+            printf '%s' "$CMDLINE" | tr ' ' '\n' | sed -n "s/^$1=//p" | head -n1
+          }
+          NOHZ=$(get_param nohz_full || true)
+          ISOL=$(get_param isolcpus || true)
+          RAW=''${NOHZ}''${NOHZ:+,}''${ISOL}
+          tmpdir=/run/irqbalance
+          install -d -m 0755 "$tmpdir"
+          # Expand CPU list (e.g., 14-15,30-31) to individual indices
+          cpus=$(printf '%s' "$RAW" | tr ',' '\n' | while read -r tok; do
+            [ -n "$tok" ] || continue
+            if ! printf '%s' "$tok" | grep -Eq '^[0-9]+(-[0-9]+)?$'; then continue; fi
+            if printf '%s' "$tok" | grep -q -- '-'; then
+              a=''${tok%-*}; b=''${tok#*-}; seq "$a" "$b"
+            else
+              printf '%s\n' "$tok"
+            fi
+          done | sort -n | uniq)
+          # Build hex mask using gawk bitwise ops
+          mask=$(printf '%s\n' $cpus | awk 'NF{ for (i=1;i<=NF;i++) { cpu=$i; m = or(m, lshift(1, cpu)); } } END{ printf "0x%X\n", m+0 }')
+          # Fallback to 0x0 if none parsed
+          [ -n "$mask" ] || mask=0x0
+          printf 'IRQBALANCE_BANNED_CPUS=%s\n' "$mask" > "$tmpdir/irqbalance.env"
+        '';
+        serviceConfig = {
+          RuntimeDirectory = "irqbalance";
+          EnvironmentFile = [ "/run/irqbalance/irqbalance.env" ];
+        };
+      };
     })
   ];
 }
-
