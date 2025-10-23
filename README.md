@@ -180,43 +180,30 @@ Example:
 }
 ```
 
+## RNNoise Virtual Mic (PipeWire)
 
-## Defaults, Overrides и mkForce Policy
+- Provides a virtual microphone with RNNoise noise suppression via PipeWire filter-chain.
+- Global default is enabled; per-host you can disable it explicitly.
 
-- Модули задают значения через `mkDefault` (их легко переопределить на хосте простым присваиванием):
-  - Примеры: `services.timesyncd.enable`, `zramSwap.enable`, `boot.lanzaboote.enable`, `nix.gc.automatic`, `nix.optimise.automatic`, `nix.settings.auto-optimise-store`, `boot.kernelPackages` (как `mkDefault`).
-- На хостах предпочитайте обычные присваивания:
-  - Булевы флаги: `foo.enable = false;`
-  - Уникальные опции (например, `boot.kernelPackages`): просто `boot.kernelPackages = pkgs.linuxPackages_latest;`
-- Используйте `lib.mkForce` только когда нужно зачистить/перебить слияния или спорные уникальные значения:
-  - Списки: чтобы явно очистить ранее добавленные элементы — `someListOption = lib.mkForce [];`
-  - Редкие конфликты уникальных опций от разных модулей.
-
-Примеры
+Example:
 
 ```nix
-# VM: force-disable heavy services provided by roles
-{ lib, ... }: {
-  profiles.services = {
-    nextcloud.enable = false;
-    adguardhome.enable = false;
-    unbound.enable = false;
-  };
+{
+  # Globally (module default is true)
+  hardware.audio.rnnoise.enable = true;
 
-  # VM: set a simpler kernel set
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-}
-
-# Module pattern (no mkForce):
-{ lib, config, ... }: let
-  cfg = config.servicesProfiles.example;
-in {
-  options.servicesProfiles.example.enable = lib.mkEnableOption "Example service profile";
-  config = lib.mkIf cfg.enable {
-    services.example.enable = lib.mkDefault true; # host can override
-  };
+  # Per-host override (e.g., hosts/telfir/services.nix)
+  hardware.audio.rnnoise.enable = false;
 }
 ```
+
+Notes:
+- A user service auto-selects the RNNoise source as the default input on login when enabled.
+- You can still manually choose sources in your desktop environment if you prefer.
+
+Russian version: see README.ru.md.
+
+
 
 ## AutoFDO (sample-based PGO)
 
@@ -256,37 +243,15 @@ git config core.hooksPath .githooks
 
 The hook rejects commit messages that contain non‑ASCII characters or do not start with a bracketed scope.
 
+Additionally, a Markdown language policy is enforced:
+- English docs live in `*.md`.
+- Russian docs must live in `*.ru.md`.
+The pre-commit hook and CI check `lint-md-lang` will fail if Cyrillic is present in non-`*.ru.md` files.
+
 ## Module Pattern & Option Helpers
 
-- Единый паттерн модулей:
-  - `options.<path>.*` объявляет опции;
-  - `let cfg = config.<path>; in` — локальная ссылка;
-  - `config = lib.mkIf cfg.enable { … }` включает конфиг по флагу.
-- В репозитории добавлен набор хелперов `lib/opts.nix`:
-  - Примитивы: `mkBoolOpt`, `mkStrOpt`, `mkIntOpt`, `mkPathOpt`;
-  - Составные: `mkListOpt elemType`, `mkEnumOpt values`;
-  - Унифицированные описания через `mkDoc`.
-
-Пример использования в модуле:
-
-```nix
-{ lib, config, ... }: let
-  opts = (import ../lib { inherit lib; }).opts;
-  cfg = config.example.feature;
-in {
-  options.example.feature = {
-    enable = lib.mkEnableOption "Enable example feature";
-    mode = opts.mkEnumOpt ["fast" "safe"] {
-      description = "Operating mode";
-      default = "fast";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
-    services.example.enable = true;
-  };
-}
-```
+- This repo favors a consistent module pattern and provides helpers in `lib/opts.nix`.
+- See aggregated options and module examples in generated docs under flake outputs.
 
 ## Gaming: Per‑Game CPU Isolation & Launchers
 
@@ -364,25 +329,23 @@ Notes:
 
 - Proton settings (per‑game, in Steam > Properties > Compatibility):
   - Proton‑GE often improves performance/compat (already installed). Switch back to Valve Proton if regressions.
-  - Esync/fsync обычно включены; при странных крашах можно временно отключить: `PROTON_NO_FSYNC=1` или `PROTON_NO_ESYNC=1` в Launch Options.
 
 - MangoHud overlay:
   - Toggle with `MANGOHUD=1`. FPS limit example: `MANGOHUD=1 MANGOHUD_CONFIG=fps_limit=237 game-run %command%`.
-  - Конфиг по умолчанию лежит в `etc/xdg/MangoHud/MangoHud.conf` (см. модуль).
 
 - Mesa/AMD specifics:
-  - Vulkan ICD по умолчанию RADV (см. `AMD_VULKAN_ICD=RADV` в конфиге). Для редких кейсов можно явно указывать.
-  - Для OpenGL в старых тайтлах иногда помогает `MESA_GLTHREAD=true`.
+  - Default Vulkan ICD is RADV (`AMD_VULKAN_ICD=RADV`). Override only for specific edge cases.
+  - For some older GL titles, `MESA_GLTHREAD=true` may help.
 
-- Troubleshooting стуттеров:
-  - Убедиться, что VRR активен (OSD монитора/`gamescope --verbose`).
-  - Проверить, что игра действительно в Gamescope (не встраиваемый лаунчер вне VRR).
-  - Прогреть шейдер‑кеш (Steam Shader Pre‑Caching включён) — первые минуты возможны микрофризы.
-  - Если подвисания при автосохранениях/дисковом I/O — проверьте, что игра не установлена на перегруженный диск и что нет фонового индексирования.
+- Troubleshooting stutter:
+  - Ensure VRR is active (monitor OSD or `gamescope --verbose`).
+  - Verify the game actually runs inside Gamescope (not an external launcher window).
+  - Shader cache warm‑up can cause micro‑stutters during the first minutes.
+  - If autosaves cause hitching, check disk load and disable background indexing.
 
-- Полезные команды:
-  - Показать текущий CPU‑набор процесса: `grep Cpus_allowed_list /proc/<pid>/status`.
-  - Скопировать пер‑игровой запуск: `game-run %command%` (Steam), `game-run <path>` (вне Steam).
+- Useful commands:
+  - Show current process CPU set: `grep Cpus_allowed_list /proc/<pid>/status`.
+  - Reuse per‑game launch: `game-run %command%` (Steam), `game-run <path>` (outside Steam).
 
 ### Opinionated Presets (my own picks)
 
@@ -391,7 +354,7 @@ These presets are subjective and experimental — I came up with them myself. Us
 - Competitive FPS (lowest latency, 240 Hz VRR):
   - Steam Launch Options:
     - `GAME_PIN_CPUSET=14,15,30,31 MANGOHUD=1 MANGOHUD_CONFIG=fps_limit=237 game-run gamescope -f --adaptive-sync -r 240 -- %command%`
-  - Notes: cap below max refresh (237/240) for steadier frametimes; try adding `--rt` to Gamescope if стабильность OK; turn off in‑game V‑Sync.
+  - Notes: cap below max refresh (237/240) for steadier frametimes; try adding `--rt` to Gamescope if stability is OK; turn off in‑game V‑Sync.
 
 - Cinematic Single‑Player (quality first, steady 120 FPS feel):
   - If native 4K sustainable: `game-run gamescope -f --adaptive-sync -r 120 -- %command%`

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Enforce Markdown language policy locally before commit
+repo_root="$(git rev-parse --show-toplevel)"
+"$repo_root/scripts/check-markdown-language.sh"
