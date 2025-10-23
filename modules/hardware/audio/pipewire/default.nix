@@ -75,31 +75,29 @@ in {
     systemd.user.services.pipewire.wantedBy = ["default.target"];
 
     # Try to make RNNoise the default source automatically once WirePlumber is up
-    systemd.user.services."wp-rnnoise-default" = lib.mkIf (cfg.enable or false) {
-      Unit = {
-        Description = "Set RNNoise virtual source as default (wpctl)";
-        After = [ "wireplumber.service" "pipewire.service" ];
-        PartOf = [ "wireplumber.service" ];
-      };
-      Service = {
-        Type = "oneshot";
-        ExecStart = let
-          script = pkgs.writeShellScript "wpctl-set-rnnoise-default" ''
-            set -euo pipefail
-            for i in $(seq 1 60); do
-              if wpctl status | grep -q "rnnoise_source"; then
-                wpctl set-default rnnoise_source || true
-                exit 0
-              fi
-              sleep 0.25
-            done
-            exit 0
-          '';
-        in "${script}";
-      };
-      Install = {
-        WantedBy = [ "default.target" ];
-      };
-    };
+    systemd.user.services."wp-rnnoise-default" = lib.mkIf (cfg.enable or false) (
+      let
+        script = pkgs.writeShellScript "wpctl-set-rnnoise-default" ''
+          set -euo pipefail
+          for i in $(seq 1 60); do
+            if wpctl status | grep -q "rnnoise_source"; then
+              wpctl set-default rnnoise_source || true
+              exit 0
+            fi
+            sleep 0.25
+          done
+          exit 0
+        '';
+      in {
+        description = "Set RNNoise virtual source as default (wpctl)";
+        after = [ "wireplumber.service" "pipewire.service" ];
+        partOf = [ "wireplumber.service" ];
+        wantedBy = [ "default.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${script}";
+        };
+      }
+    );
   };
 }

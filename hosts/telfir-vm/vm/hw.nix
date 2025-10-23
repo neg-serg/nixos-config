@@ -21,7 +21,14 @@
     qemu.options = ["-bios" "${pkgs.OVMF.fd}/FV/OVMF.fd"];
   };
 
-  environment.systemPackages = [
-    pkgs.nemu # qemu TUI interface
-  ];
+  # Keep VM base lean; omit extra packages that may fail to build with newer toolchains
+  environment.systemPackages = [];
+
+  # Prefer compressed in-RAM swap for VM workloads to avoid disk thrashing
+  profiles.performance.zswap = {
+    enable = true;
+    compressor = "zstd";
+    maxPoolPercent = 15; # 15% RAM pool cap
+    zpool = "zsmalloc";
+  };
 }
