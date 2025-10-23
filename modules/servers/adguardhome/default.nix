@@ -53,8 +53,6 @@ in {
     # - domains = ["~."] ensures all lookups go through the configured DNS
     services.resolved = {
       enable = lib.mkDefault true;
-      dns = ["127.0.0.1"];
-      fallbackDns = [];
       domains = ["~."];
     };
     # Keep resolv.conf compatibility for tools that read networking.nameservers directly
