@@ -54,6 +54,13 @@ in {
     services.resolved = {
       enable = lib.mkDefault true;
       domains = ["~."];
+      # Keep local resolver deterministic: disable LLMNR and mDNS broadcast resolution
+      # (some NixOS releases expose these as explicit options; if not, extraConfig below handles it)
+      llmnr = lib.mkDefault "false";
+      extraConfig = lib.mkDefault ''
+        LLMNR=no
+        MulticastDNS=no
+      '';
     };
     # Keep resolv.conf compatibility for tools that read networking.nameservers directly
     networking.nameservers = ["127.0.0.1"];
