@@ -25,7 +25,13 @@ in {
       fsType = "vfat";
       # Mount /boot on-demand to avoid fsck and mount in the critical boot path
       # Tighten permissions for systemd-boot random seed (umask=0077 -> files 600, dirs 700)
-      options = ["x-systemd.automount" "nofail" "umask=0077"];
+      options = [
+        "x-systemd.automount"
+        "nofail"
+        # Enforce secure perms on FAT: files 600, dirs 700
+        "fmask=0177"
+        "dmask=0077"
+      ];
     };
 
     "/zero" = {

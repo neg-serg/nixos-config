@@ -36,6 +36,9 @@ in {
     IdleAction = "ignore";
   };
 
+  # Replace ad-hoc nixindex units with native module
+  programs.nix-index.enable = true;
+
   systemd = {
     coredump.enable = true;
     settings = {
@@ -60,8 +63,6 @@ in {
 
     # Ensure Navidrome waits for the music mount to exist before applying its
     # private mount namespace with BindReadOnlyPaths=/one/music
-    services.navidrome.serviceConfig = {
-      RequiresMountsFor = [ "/one/music" ];
-    };
+    services.navidrome.unitConfig.RequiresMountsFor = [ "/one/music" ];
   };
-}
+} 

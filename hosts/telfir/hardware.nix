@@ -89,7 +89,6 @@
   # Keep services on housekeeping CPUs by default; IRQ balancing mask; NIC link renames
   systemd = {
     settings.Manager.CPUAffinity = ["0-13" "16-29"];
-    services.irqbalance.environment.IRQBALANCE_BANNED_CPUS = "0xC000C000";
     # Rename NICs to stable names via systemd-networkd link files
     network.links = {
       "10-net0" = {
