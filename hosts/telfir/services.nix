@@ -77,8 +77,8 @@
       { name = "1Hosts Xtra"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_70.txt"; enabled = false; }
 
       # Regional (RU) — Adblock syntax lists; optional at DNS level
-      { name = "AdGuard Russian filter"; url = "https://filters.adtidy.org/extension/ublock/filters/2.txt"; enabled = false; }
-      { name = "RU AdList + EasyList"; url = "https://easylist-downloads.adblockplus.org/ruadlist+easylist.txt"; enabled = false; }
+      { name = "AdGuard Russian filter"; url = "https://filters.adtidy.org/extension/ublock/filters/2.txt"; enabled = true; }
+      { name = "RU AdList + EasyList"; url = "https://easylist-downloads.adblockplus.org/ruadlist+easylist.txt"; enabled = true; }
     ];
     # Explicitly override media role to keep Jellyfin off on this host
     jellyfin.enable = false;
