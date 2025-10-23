@@ -163,6 +163,23 @@ Example (quiet, safe defaults):
 - GPU fans remain managed by the GPU driver; only motherboard PWM headers are targeted.
   - Exception: when `gpuFancontrol.enable = true`, we switch `pwm1_enable` to manual and fancontrol takes over.
 
+## GPU CoreCtrl (Undervolt/Power‑Limit)
+
+- Optional capability (disabled by default): `hardware.gpu.corectrl.enable = false;`
+- When enabled, installs CoreCtrl and a polkit rule allowing members of a chosen group (default `wheel`) to use the CoreCtrl helper.
+- Optional: set `hardware.gpu.corectrl.ppfeaturemask = "0xffffffff";` to unlock extended OC/UV controls on some AMD GPUs.
+
+Example:
+```nix
+{
+  hardware.gpu.corectrl = {
+    enable = true;            # off by default
+    group = "wheel";          # who can tune
+    # ppfeaturemask = "0xffffffff"; # optional, only if needed for your GPU
+  };
+}
+```
+
 
 ## Defaults, Overrides и mkForce Policy
 
