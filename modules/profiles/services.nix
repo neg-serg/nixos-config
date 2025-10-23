@@ -76,6 +76,71 @@ in {
       dnssec = {
         enable = opts.mkBoolOpt { default = true; description = "Enable DNSSEC validation in Unbound."; };
       };
+      tuning = {
+        # Response/validation behavior
+        minimalResponses = opts.mkBoolOpt {
+          default = true;
+          description = "Prefer minimal responses to reduce packet sizes (Unbound: minimal-responses).";
+        };
+        prefetch = opts.mkBoolOpt {
+          default = true;
+          description = "Enable prefetch of expiring records (Unbound: prefetch).";
+        };
+        prefetchKey = opts.mkBoolOpt {
+          default = true;
+          description = "Prefetch DNSKEY/DS (Unbound: prefetch-key).";
+        };
+        aggressiveNsec = opts.mkBoolOpt {
+          default = true;
+          description = "Synthesize NXDOMAIN/NOERROR/NODATA from NSEC/NSEC3 (Unbound: aggressive-nsec).";
+        };
+        serveExpired = {
+          enable = opts.mkBoolOpt {
+            default = true;
+            description = "Serve expired records while refreshing in background (Unbound: serve-expired).";
+          };
+          # Max seconds since expiration to serve stale answers
+          maxTtl = opts.mkIntOpt {
+            default = 3600;
+            description = "Maximum seconds to serve expired data (Unbound: serve-expired-ttl).";
+          };
+          # TTL of the served expired reply
+          replyTtl = opts.mkIntOpt {
+            default = 30;
+            description = "TTL in seconds used on served-expired replies (Unbound: serve-expired-reply-ttl).";
+          };
+        };
+        # Cache TTL guards (null = do not set)
+        cacheMinTtl = opts.mkOpt (types.nullOr types.int) null {
+          description = "Minimum TTL to apply to cache entries (Unbound: cache-min-ttl).";
+          defaultText = "null (use Unbound default)";
+        };
+        cacheMaxTtl = opts.mkOpt (types.nullOr types.int) null {
+          description = "Maximum TTL to apply to cache entries (Unbound: cache-max-ttl).";
+          defaultText = "null (use Unbound default)";
+        };
+        # Logging
+        verbosity = opts.mkIntOpt {
+          default = 1;
+          description = "Unbound log verbosity (0–5).";
+        };
+        logQueries = opts.mkBoolOpt {
+          default = false;
+          description = "Enable query logging (Unbound: log-queries). Heavy; keep off by default.";
+        };
+        logReplies = opts.mkBoolOpt {
+          default = false;
+          description = "Enable reply logging (Unbound: log-replies).";
+        };
+        logLocalActions = opts.mkBoolOpt {
+          default = false;
+          description = "Log local actions (cache, validation) (Unbound: log-local-actions).";
+        };
+        logServfail = opts.mkBoolOpt {
+          default = false;
+          description = "Log SERVFAIL responses (Unbound: log-servfail).";
+        };
+      };
       dotUpstreams = opts.mkListOpt types.str {
         default = [
           "1.1.1.1@853#cloudflare-dns.com"
