@@ -95,6 +95,9 @@
     ++ lib.optionals config.profiles.performance.disableWatchdogs no_watchdog
     ++ lib.optionals config.profiles.performance.idleNoMwait idle_nomwait
     ++ lib.optionals config.profiles.performance.disableUsbAutosuspend usb_noautosuspend
+    ++ lib.optionals ((config.profiles.performance.thpMode or null) != null) [
+      "transparent_hugepage=${config.profiles.performance.thpMode}"
+    ]
     ++ [
       "amd_pstate=active"
       "nvme_core.default_ps_max_latency_us=0"

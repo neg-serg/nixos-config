@@ -81,6 +81,8 @@ in {
         then lib.mkDefault true
         else cfg.enable;
       fwupd.enable = true;
+      # Trim SSDs weekly (non-destructive), better than mount-time discard for sustained perf
+      fstrim.enable = lib.mkDefault true;
     };
 
     hardware = {

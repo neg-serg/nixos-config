@@ -6,6 +6,7 @@
     ./swapfile.nix
     ./kernel/params.nix
     ./kernel/sysctl.nix
+    ./kernel/sysctl-writeback.nix
     ./kernel/patches-amd.nix
     ./profiles/security.nix
     ./profiles/performance.nix

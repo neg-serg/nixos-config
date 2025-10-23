@@ -104,3 +104,9 @@ in {
     };
   };
 }
+    # Transparent Huge Pages policy
+    thpMode = mkOpt (lib.types.nullOr (lib.types.enum ["always" "madvise" "never"])) null {
+      description = "Transparent Huge Pages policy (kernel param transparent_hugepage). Null leaves kernel default.";
+      example = "madvise";
+      defaultText = "kernel default";
+    };
