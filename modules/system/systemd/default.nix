@@ -24,6 +24,10 @@ in {
   # Journald: keep logs across reboots to inspect boot output
   services.journald.extraConfig = ''
     Storage=persistent
+    # Limit log write bursts to reduce IO spikes
+    RateLimitIntervalSec=30s
+    RateLimitBurst=2000
+    # Keep total journal size reasonable
     SystemMaxFileSize=300M
     SystemMaxFiles=50
   '';
