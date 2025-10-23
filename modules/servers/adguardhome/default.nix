@@ -21,10 +21,14 @@ in {
       # Bind the admin web UI away from :80 so Caddy can use it
       host = "127.0.0.1";
       port = 3000;
+      # Make sure our Nix settings are honored strictly to avoid stale state conflicts
+      mutableSettings = false;
       settings = {
         dns = {
           # Bind locally and serve on default DNS port.
           bind_host = "127.0.0.1";
+          bind_hosts = ["127.0.0.1"]; # restrict to IPv4 localhost to avoid conflicts with libvirt/systemd-resolved
+          ipv6 = false;
           port = 53;
           upstream_dns = ["127.0.0.1:5353"];
           bootstrap_dns = ["1.1.1.1" "8.8.8.8"];
