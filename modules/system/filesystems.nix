@@ -24,7 +24,8 @@ in {
       device = "/dev/disk/by-uuid/C6FE-B058";
       fsType = "vfat";
       # Mount /boot on-demand to avoid fsck and mount in the critical boot path
-      options = ["x-systemd.automount" "nofail"];
+      # Tighten permissions for systemd-boot random seed (umask=0077 -> files 600, dirs 700)
+      options = ["x-systemd.automount" "nofail" "umask=0077"];
     };
 
     "/zero" = {
@@ -98,4 +99,9 @@ in {
 
   # Prefer periodic TRIM over online discard for XFS on NVMe
   services.fstrim.enable = true;
+
+  # Ensure the bare mount point has restrictive permissions even before automount
+  systemd.tmpfiles.rules = [
+    "d /boot 0700 root root - -"
+  ];
 }
