@@ -229,6 +229,12 @@
           lint-deadnix = pkgs.runCommand "lint-deadnix" { nativeBuildInputs = with pkgs; [ deadnix ]; } ''cd ${self}; deadnix --fail .; touch "$out"'';
           lint-statix = pkgs.runCommand "lint-statix" { nativeBuildInputs = with pkgs; [ statix ]; } ''cd ${self}; statix check .; touch "$out"'';
           pre-commit = preCommit;
+          lint-md-lang = pkgs.runCommand "lint-md-lang" { nativeBuildInputs = with pkgs; [ bash coreutils findutils gnugrep gitMinimal ]; } ''
+            set -euo pipefail
+            cd ${self}
+            bash scripts/check-markdown-language.sh
+            : > "$out"
+          '';
         }
         // hostBuildChecks;
 
