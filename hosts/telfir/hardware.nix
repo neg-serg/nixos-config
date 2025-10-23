@@ -14,7 +14,7 @@
     kernel.amd.enable = true;
     performance = {
       # Avoid double compression
-      zswap.enable = false;
+      zswap.enable = lib.mkDefault false;
       # Optimize initrd compression (smaller image, slower rebuilds)
       optimizeInitrdCompression = true;
       # Reduce boot verbosity to speed kernel + userspace stage slightly
