@@ -112,32 +112,8 @@
             modules = docCommonModules ++ mods;
             specialArgs = mkSpecialArgs;
           };
-        groups = {
-          base = [
-            ./modules/profiles/services.nix
-            ./modules/system/profiles/security.nix
-            ./modules/system/profiles/performance.nix
-            ./modules/system/profiles/vm.nix
-            ./modules/system/net/bridge.nix
-          ];
-          roles = [./modules/roles];
-          games = [./modules/user/games/default.nix];
-          users = [./modules/system/users.nix];
-          flakePreflight = [./modules/flake-preflight.nix];
-          hwAmd = [./modules/hardware/video/amd/default.nix];
-          all = [./modules];
-          profiles = [
-            ./modules/profiles/services.nix
-            ./modules/system/profiles/security.nix
-            ./modules/system/profiles/performance.nix
-            ./modules/system/profiles/vm.nix
-            ./modules/system/profiles/aliases.nix
-            ./modules/user/games/default.nix
-          ];
-          servers = [./modules/servers];
-          hardware = [./modules/hardware];
-        };
-        evals = lib.mapAttrs (_: evalMods) groups;
+        # Evaluate the full module tree once for docs
+        evalAll = evalMods [ ./modules ];
         # Prefer NixOS lib (has nixosOptionsDoc) from the pinned nixpkgs path
         nixosLib = import (pkgs.path + "/nixos/lib") {};
         docLib = if nixosLib ? nixosOptionsDoc then nixosLib else (if lib ? nixosOptionsDoc then lib else pkgs.lib);
@@ -156,28 +132,13 @@
           lines = map (i: "- " + i.name + (if i.desc != "" then ": " + i.desc else "")) items;
           body = lib.concatStringsSep "\n" ([ "# Options" "" ] ++ lines ++ [ "" ]);
         in pkgs.writeText "options-simple.md" body;
-        docDrivers = lib.mapAttrs (_: eval:
-          if hasOptionsDoc then docLib.nixosOptionsDoc { inherit (eval) options; }
-          else { optionsCommonMark = simpleRender eval.options; }
-        ) evals;
-        get = name: (builtins.getAttr name docDrivers).optionsCommonMark;
-        # Map group keys to output slugs and generate per-doc outputs
-        docNames = [
-          { key = "base";           slug = "base"; }
-          { key = "roles";          slug = "roles"; }
-          { key = "games";          slug = "games"; }
-          { key = "users";          slug = "users"; }
-          { key = "flakePreflight"; slug = "flake-preflight"; }
-          { key = "hwAmd";          slug = "hw-amd"; }
-          { key = "all";            slug = "all"; }
-          { key = "profiles";       slug = "profiles"; }
-          { key = "servers";        slug = "servers"; }
-          { key = "hardware";       slug = "hardware"; }
-        ];
-        perDocOutputs = lib.listToAttrs (map (d: {
-          name = "options-${d.slug}-md";
-          value = get d.key;
-        }) docNames);
+        docDriverAll = if hasOptionsDoc
+          then docLib.nixosOptionsDoc { inherit (evalAll) options; }
+          else { optionsCommonMark = simpleRender evalAll.options; };
+        # Per-doc outputs trimmed to aggregated one
+        perDocOutputs = {
+          options-all-md = docDriverAll.optionsCommonMark;
+        };
         # (removed stale host discovery: not used in docs)
       in
         {
@@ -185,35 +146,10 @@
         }
         // perDocOutputs
         // {
-          options-md = let
-            titlesByKey = {
-              profiles = "Profiles (base)";
-              roles = "Roles";
-              servers = "Servers";
-              hardware = "Hardware";
-              users = "Users";
-              games = "Games";
-              flakePreflight = "Flake Preflight";
-            };
-            aggregateKeys = ["profiles" "roles" "servers" "hardware" "users" "games" "flakePreflight"];
-            body = builtins.concatStringsSep "\n" (
-              [
-                "echo \"# Options (Aggregated)\""
-                "echo"
-              ] ++ (map (name: ''
-                echo "## ${builtins.getAttr name titlesByKey}"
-                cat ${get name} || true
-                echo
-              '') aggregateKeys)
-            );
-          in pkgs.runCommand "options.md" {} ''
-            {
-              ${body}
-            } > $out
-          '';
+          options-md = docDriverAll.optionsCommonMark;
           # Simple index page linking to generated docs (relative names expected by scripts/gen-options.sh)
           options-index-md = let
-            names = ["options-md"] ++ (map (d: "options-${d.slug}-md") docNames);
+            names = ["options-md"];
             toFile = n:
               if n == "options-md"
               then "options.md"
