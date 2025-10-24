@@ -101,7 +101,6 @@
         };
         evalMods = mods:
           lib.evalModules {
-            inherit lib;
             modules = mods;
             specialArgs = mkSpecialArgs;
           };
