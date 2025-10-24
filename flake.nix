@@ -135,10 +135,25 @@
         nixosLib = import (pkgs.path + "/nixos/lib") {};
         docLib = if nixosLib ? nixosOptionsDoc then nixosLib else (if lib ? nixosOptionsDoc then lib else pkgs.lib);
         hasOptionsDoc = docLib ? nixosOptionsDoc;
-        docs = lib.optionalAttrs hasOptionsDoc (
-          lib.mapAttrs (_: eval: docLib.nixosOptionsDoc {inherit (eval) options;}) evals
-        );
-        get = name: (builtins.getAttr name docs).optionsCommonMark;
+        # Build per-group docs using nixosOptionsDoc when available,
+        # otherwise render a simple Markdown fallback from the evaluated options.
+        simpleRender = opts: let
+          # Flatten nested options attrset into a list of {name, desc}
+          flatten = prefix: as: lib.concatLists (lib.mapAttrsToList (n: v:
+            let path = prefix ++ [ n ];
+            in if builtins.isAttrs v && (builtins.hasAttr "type" v)
+               then [ { name = lib.concatStringsSep "." path; desc = (v.description or ""); } ]
+               else if builtins.isAttrs v then flatten path v else []
+          ) as);
+          items = flatten [] opts;
+          lines = map (i: "- " + i.name + (if i.desc != "" then ": " + i.desc else "")) items;
+          body = lib.concatStringsSep "\n" ([ "# Options" "" ] ++ lines ++ [ "" ]);
+        in pkgs.writeText "options-simple.md" body;
+        docDrivers = lib.mapAttrs (_: eval:
+          if hasOptionsDoc then docLib.nixosOptionsDoc { inherit (eval) options; }
+          else { optionsCommonMark = simpleRender eval.options; }
+        ) evals;
+        get = name: (builtins.getAttr name docDrivers).optionsCommonMark;
         # Map group keys to output slugs and generate per-doc outputs
         docNames = [
           { key = "base";           slug = "base"; }
@@ -161,52 +176,50 @@
         {
           default = pkgs.zsh;
         }
-        // lib.optionalAttrs hasOptionsDoc (
-          perDocOutputs
-          // {
-            options-md = let
-              titlesByKey = {
-                profiles = "Profiles (base)";
-                roles = "Roles";
-                servers = "Servers";
-                hardware = "Hardware";
-                users = "Users";
-                games = "Games";
-                flakePreflight = "Flake Preflight";
-              };
-              aggregateKeys = ["profiles" "roles" "servers" "hardware" "users" "games" "flakePreflight"];
-              body = builtins.concatStringsSep "\n" (
-                [
-                  "echo \"# Options (Aggregated)\""
-                  "echo"
-                ] ++ (map (name: ''
-                  echo "## ${builtins.getAttr name titlesByKey}"
-                  cat ${get name} || true
-                  echo
-                '') aggregateKeys)
-              );
-            in pkgs.runCommand "options.md" {} ''
-              {
-                ${body}
-              } > $out
-            '';
-            # Simple index page linking to generated docs (relative names expected by scripts/gen-options.sh)
-            options-index-md = let
-              names = ["options-md"] ++ (map (d: "options-${d.slug}-md") docNames);
-              toFile = n:
-                if n == "options-md"
-                then "options.md"
-                else builtins.replaceStrings ["-md"] [".md"] n;
-              lines = map (n: "- [" + n + "](./" + toFile n + ")") names;
-              content = builtins.concatStringsSep "\n" ([
-                "# Options Docs"
-                ""
-                "Index of generated option documentation artifacts:"
-                ""
-              ] ++ lines ++ [""]);
-            in pkgs.writeText "options-index.md" content;
-          }
-        );
+        // perDocOutputs
+        // {
+          options-md = let
+            titlesByKey = {
+              profiles = "Profiles (base)";
+              roles = "Roles";
+              servers = "Servers";
+              hardware = "Hardware";
+              users = "Users";
+              games = "Games";
+              flakePreflight = "Flake Preflight";
+            };
+            aggregateKeys = ["profiles" "roles" "servers" "hardware" "users" "games" "flakePreflight"];
+            body = builtins.concatStringsSep "\n" (
+              [
+                "echo \"# Options (Aggregated)\""
+                "echo"
+              ] ++ (map (name: ''
+                echo "## ${builtins.getAttr name titlesByKey}"
+                cat ${get name} || true
+                echo
+              '') aggregateKeys)
+            );
+          in pkgs.runCommand "options.md" {} ''
+            {
+              ${body}
+            } > $out
+          '';
+          # Simple index page linking to generated docs (relative names expected by scripts/gen-options.sh)
+          options-index-md = let
+            names = ["options-md"] ++ (map (d: "options-${d.slug}-md") docNames);
+            toFile = n:
+              if n == "options-md"
+              then "options.md"
+              else builtins.replaceStrings ["-md"] [".md"] n;
+            lines = map (n: "- [" + n + "](./" + toFile n + ")") names;
+            content = builtins.concatStringsSep "\n" ([
+              "# Options Docs"
+              ""
+              "Index of generated option documentation artifacts:"
+              ""
+            ] ++ lines ++ [""]);
+          in pkgs.writeText "options-index.md" content;
+        };
 
       # Make `nix fmt` behave like in home-manager: format repo with alejandra
       formatter.${system} =
