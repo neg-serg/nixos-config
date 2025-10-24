@@ -131,8 +131,9 @@
           hardware = [./modules/hardware];
         };
         evals = lib.mapAttrs (_: evalMods) groups;
-        # Some lib exports expose nixosOptionsDoc under pkgs.lib rather than nixpkgs.lib
-        docLib = if lib ? nixosOptionsDoc then lib else pkgs.lib;
+        # Prefer NixOS lib (has nixosOptionsDoc) from the pinned nixpkgs path
+        nixosLib = import (pkgs.path + "/nixos/lib") {};
+        docLib = if nixosLib ? nixosOptionsDoc then nixosLib else (if lib ? nixosOptionsDoc then lib else pkgs.lib);
         hasOptionsDoc = docLib ? nixosOptionsDoc;
         docs = lib.optionalAttrs hasOptionsDoc (
           lib.mapAttrs (_: eval: docLib.nixosOptionsDoc {inherit (eval) options;}) evals
