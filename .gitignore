@@ -7,3 +7,5 @@ result-man
 .tmp_py
 .tmp_py_dedented
 .tmp_build.log
+docs/options.md
+docs/options-all.md
