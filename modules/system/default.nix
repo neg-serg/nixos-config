@@ -12,6 +12,7 @@
     ./kernel/patches-amd.nix
     ./profiles/security.nix
     ./profiles/performance.nix
+    ./profiles/debug.nix
     ../hardware/uinput.nix
     ./profiles/work.nix
     ./profiles/vm.nix
