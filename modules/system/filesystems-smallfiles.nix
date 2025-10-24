@@ -4,24 +4,8 @@
 # Key options: profiles.performance.fs.smallFiles.* (disabled by default)
 { lib, config, ... }:
 let
-  cfg = config.profiles.performance.fs.smallFiles;
   types = lib.types;
   toStr = builtins.toString;
-  mkForXfs = m: {
-    fileSystems."${m}".options = lib.mkAfter (
-      lib.optional (cfg.xfs.noatime or false) "noatime"
-    );
-  };
-  mkForExt4 = m: {
-    fileSystems."${m}".options = lib.mkAfter (
-      (lib.optional (cfg.ext4.noatime or false) "noatime")
-      ++ (lib.optional (cfg.ext4.commitSec != null) ("commit=" + toStr cfg.ext4.commitSec))
-    );
-  };
-  rendered =
-    lib.mergeAttrs
-      (lib.foldl' lib.mergeAttrs { } (map mkForXfs cfg.xfs.mounts))
-      (lib.foldl' lib.mergeAttrs { } (map mkForExt4 cfg.ext4.mounts));
 in {
   options.profiles.performance.fs.smallFiles = {
     enable = lib.mkEnableOption "Enable optional XFS/EXT4 mount tweaks for many small files.";
@@ -61,5 +45,22 @@ in {
     };
   };
 
-  config = lib.mkIf (cfg.enable or false) rendered;
+  config = let cfg = config.profiles.performance.fs.smallFiles; in lib.mkIf (cfg.enable or false) (
+    let
+      mkForXfs = m: {
+        fileSystems."${m}".options = lib.mkAfter (
+          lib.optional (cfg.xfs.noatime or false) "noatime"
+        );
+      };
+      mkForExt4 = m: {
+        fileSystems."${m}".options = lib.mkAfter (
+          (lib.optional (cfg.ext4.noatime or false) "noatime")
+          ++ (lib.optional (cfg.ext4.commitSec != null) ("commit=" + toStr cfg.ext4.commitSec))
+        );
+      };
+    in
+      lib.mergeAttrs
+        (lib.foldl' lib.mergeAttrs { } (map mkForXfs cfg.xfs.mounts))
+        (lib.foldl' lib.mergeAttrs { } (map mkForExt4 cfg.ext4.mounts))
+  );
 }
