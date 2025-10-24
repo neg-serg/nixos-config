@@ -12,6 +12,8 @@
 }: let
   # Toggles from profiles/performance.nix
   perfEnabled = config.profiles.performance.enable or false;
+  kver = config.boot.kernelPackages.kernel.version or "";
+  haveAtLeast = v: (kver != "") && lib.versionAtLeast kver v;
 
   mitigations_settings = ["mitigations=off"]; # full mitigations disable
   silence = [
@@ -132,6 +134,17 @@ in {
       };
     }
     {
+      # PREEMPT_RT (only on kernels where it's available in-tree)
+      boot.kernelPatches = lib.mkIf (perfEnabled && (config.profiles.performance.preemptRt.enable or false) && haveAtLeast "6.12") [
+        {
+          name = "enable-preempt-rt";
+          patch = null;
+          extraStructuredConfig = with lib.kernel; {
+            PREEMPT_RT = yes;
+          };
+        }
+      ];
+
       # Enable CONFIG_SCHED_DEADLINE when the performance profile is active
       # and the toggle is on. This will rebuild the kernel if not already set.
       boot.kernelPatches = lib.mkIf (perfEnabled && (config.profiles.performance.schedDeadline.enable or false)) [
@@ -149,6 +162,9 @@ in {
         ++ extra_security
         ++ lib.optionals (config.profiles.security.enable or false) ["page_poison=1"];
       security.protectKernelImage = !kexec_enabled;
+      warnings = lib.optionals (perfEnabled && (config.profiles.performance.preemptRt.enable or false) && !haveAtLeast "6.12") [
+        "profiles.performance.preemptRt requires kernel >= 6.12 or switching to an RT kernel package. Current: ${kver}"
+      ];
     }
   ];
 }

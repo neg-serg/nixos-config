@@ -119,5 +119,15 @@ in {
         description = "Ensure CONFIG_SCHED_DEADLINE=y (enables SCHED_DEADLINE class in kernel).";
       };
     };
+
+    # PREEMPT_RT: enable realtime preemption in the kernel. Requires kernel >= 6.12
+    # or using an RT-enabled kernel package. This may reduce throughput; use for
+    # low-latency desktop/audio workloads.
+    preemptRt = {
+      enable = mkBoolOpt {
+        default = false;
+        description = "Enable PREEMPT_RT (CONFIG_PREEMPT_RT). Requires kernel >= 6.12 or RT kernel.";
+      };
+    };
   };
 }
