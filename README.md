@@ -128,7 +128,7 @@ Service override examples
 
 - params: kernel cmdline and packaging (modules/params) in `modules/system/kernel/params.nix`.
 - sysctl: network/security sysctls in `modules/system/kernel/sysctl.nix`.
-- patches-amd: `boot.kernelPatches` with `structuredExtraConfig` for AMD in `modules/system/kernel/patches-amd.nix`.
+- patches-amd: `boot.kernelPatches` with `extraStructuredConfig` for AMD in `modules/system/kernel/patches-amd.nix`.
 - Feature toggles: tune via `profiles.performance.*` and `profiles.security.*`; params derive from these.
 
 ### PREEMPT_RT
