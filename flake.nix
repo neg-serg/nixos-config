@@ -100,8 +100,9 @@
           inherit self inputs locale timeZone kexec_enabled pkgs;
         };
         evalMods = mods:
-          lib.evalModules {
-            modules = [ (import (pkgs.path + "/nixos/modules/misc/assertions.nix")) ] ++ mods;
+          lib.nixosSystem {
+            inherit system;
+            modules = mods;
             specialArgs = mkSpecialArgs;
           };
         groups = {
