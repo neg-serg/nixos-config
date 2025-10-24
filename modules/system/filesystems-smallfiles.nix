@@ -7,37 +7,32 @@ let
   cfg = config.profiles.performance.fs.smallFiles;
   types = lib.types;
   toStr = builtins.toString;
-  mounts = cfg.mounts or [ ];
-  fs = config.fileSystems;
-
-  mkFor = m:
-    let t = (fs.${m}.fsType or ""); in
-    {
-      fileSystems."${m}".options =
-        lib.mkAfter (
-          lib.optionals (t == "xfs" && (cfg.xfs.noatime or false)) [ "noatime" ]
-          ++ lib.optionals (t == "ext4") (
-            (lib.optional (cfg.ext4.noatime or false) "noatime")
-            ++ (lib.optional (cfg.ext4.commitSec != null) ("commit=" + toStr cfg.ext4.commitSec))
-          )
-        );
-    };
-
-  rendered = lib.foldl' lib.mergeAttrs { } (map mkFor mounts);
-
+  mkForXfs = m: {
+    fileSystems."${m}".options = lib.mkAfter (
+      lib.optional (cfg.xfs.noatime or false) "noatime"
+    );
+  };
+  mkForExt4 = m: {
+    fileSystems."${m}".options = lib.mkAfter (
+      (lib.optional (cfg.ext4.noatime or false) "noatime")
+      ++ (lib.optional (cfg.ext4.commitSec != null) ("commit=" + toStr cfg.ext4.commitSec))
+    );
+  };
+  rendered =
+    lib.mergeAttrs
+      (lib.foldl' lib.mergeAttrs { } (map mkForXfs cfg.xfs.mounts))
+      (lib.foldl' lib.mergeAttrs { } (map mkForExt4 cfg.ext4.mounts));
 in {
   options.profiles.performance.fs.smallFiles = {
     enable = lib.mkEnableOption "Enable optional XFS/EXT4 mount tweaks for many small files.";
 
-    # Target mount points to which tweaks will be applied. Example: [ "/" "/one" "/zero" ]
-    mounts = lib.mkOption {
-      type = types.listOf types.str;
-      default = [ ];
-      description = "List of mount points to apply small-files options (only if their fsType matches).";
-      example = [ "/" "/one" "/zero" ];
-    };
-
     xfs = {
+      mounts = lib.mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        description = "Mount points with XFS where to apply tweaks (e.g., noatime).";
+        example = [ "/" "/one" "/zero" ];
+      };
       noatime = lib.mkOption {
         type = types.bool;
         default = true;
@@ -46,6 +41,12 @@ in {
     };
 
     ext4 = {
+      mounts = lib.mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        description = "Mount points with EXT4 where to apply tweaks (noatime, commit=).";
+        example = [ "/data" ];
+      };
       noatime = lib.mkOption {
         type = types.bool;
         default = true;
