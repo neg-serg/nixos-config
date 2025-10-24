@@ -131,6 +131,23 @@ Service override examples
 - patches-amd: `boot.kernelPatches` with `structuredExtraConfig` for AMD in `modules/system/kernel/patches-amd.nix`.
 - Feature toggles: tune via `profiles.performance.*` and `profiles.security.*`; params derive from these.
 
+### PREEMPT_RT
+
+- Toggle: `profiles.performance.preemptRt.enable = true;`
+- Mode: `profiles.performance.preemptRt.mode = "auto" | "in-tree" | "rt";`
+  - `auto`: use in-tree `CONFIG_PREEMPT_RT` on kernels >= 6.12, otherwise switch to `linuxPackages_rt`.
+  - `in-tree`: force enabling `CONFIG_PREEMPT_RT` on the current kernel package (no package switch).
+  - `rt`: switch kernel package to `pkgs.linuxPackages_rt` explicitly.
+
+Note: extra out-of-tree modules (e.g., `amneziawg`) are pulled from the selected `boot.kernelPackages` when available.
+
+### Debug/Profiling (optional)
+
+- Memory allocation profiling (6.10+): `profiles.debug.memAllocProfiling.{enable,compileSupport,enabledByDefault,debugChecks}`.
+- perf data-type profiling (6.8+): `profiles.debug.perfDataType.{enable,installTools,enableKernelBtf}`.
+- sched_ext (6.12+): `profiles.debug.schedExt.{enable,installTools,enableKernelBtf}`.
+  - These options may rebuild the kernel when enabling related `CONFIG_*` symbols.
+
 ## Cooling / Fan Control (quiet profile)
 
 - Enable sensors and a quiet fan curve via `hardware.cooling.*` (module: `modules/hardware/cooling.nix`).
