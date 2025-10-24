@@ -132,6 +132,18 @@ in {
       };
     }
     {
+      # Enable CONFIG_SCHED_DEADLINE when the performance profile is active
+      # and the toggle is on. This will rebuild the kernel if not already set.
+      boot.kernelPatches = lib.mkIf (perfEnabled && (config.profiles.performance.schedDeadline.enable or false)) [
+        {
+          name = "enable-sched-deadline";
+          patch = null;
+          extraStructuredConfig = with lib.kernel; {
+            SCHED_DEADLINE = yes;
+          };
+        }
+      ];
+
       boot.kernelParams =
         lib.optionals perfEnabled perf_params
         ++ extra_security

@@ -109,5 +109,15 @@ in {
       description = "Comma-separated CPU list for pinning game processes (e.g., 14,15,30,31). Empty disables default pinning.";
       example = "14,15,30,31";
     };
+
+    # Enable CONFIG_SCHED_DEADLINE in the kernel (requires rebuild).
+    # Helpful for desktop/workloads that benefit from SCHED_DEADLINE and
+    # 6.8+ deadline-server improvements.
+    schedDeadline = {
+      enable = mkBoolOpt {
+        default = true;
+        description = "Ensure CONFIG_SCHED_DEADLINE=y (enables SCHED_DEADLINE class in kernel).";
+      };
+    };
   };
 }
