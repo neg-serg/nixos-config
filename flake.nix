@@ -96,13 +96,20 @@
       # Option docs (markdown) for base profiles, roles, and selected feature modules
       packages.${system} = let
         # DRY: evaluate module groups and generate option docs programmatically
+        docCommonModules = [
+          ./init.nix
+          nix-flatpak.nixosModules.nix-flatpak
+          lanzaboote.nixosModules.lanzaboote
+          chaotic.nixosModules.default
+          sops-nix.nixosModules.sops
+        ];
         mkSpecialArgs = {
           inherit self inputs locale timeZone kexec_enabled pkgs;
         };
         evalMods = mods:
           lib.nixosSystem {
             inherit system;
-            modules = mods;
+            modules = docCommonModules ++ mods;
             specialArgs = mkSpecialArgs;
           };
         groups = {
