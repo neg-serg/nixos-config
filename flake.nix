@@ -101,7 +101,7 @@
         };
         evalMods = mods:
           lib.evalModules {
-            modules = mods;
+            modules = [ (import (pkgs.path + "/nixos/modules/misc/assertions.nix")) ] ++ mods;
             specialArgs = mkSpecialArgs;
           };
         groups = {
