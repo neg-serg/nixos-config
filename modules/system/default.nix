@@ -3,7 +3,7 @@
     ./boot.nix
     ./environment.nix
     ./filesystems.nix
-    ./filesystems-smallfiles.nix
+    # ./filesystems-smallfiles.nix  # temporarily disabled pending validation
     ./swapfile.nix
     ./kernel/params.nix
     ./kernel/sysctl.nix
