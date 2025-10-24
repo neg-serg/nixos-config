@@ -138,32 +138,30 @@ in {
       };
     }
     {
-      # PREEMPT_RT (only on kernels where it's available in-tree)
-      # Apply when the feature toggle is enabled, regardless of perf profile.
-      boot.kernelPatches = lib.mkIf (prtEnable && !useRtKernel && haveAtLeast "6.12") [
-        {
-          name = "enable-preempt-rt";
-          patch = null;
-          extraStructuredConfig = with lib.kernel; {
-            PREEMPT_RT = yes;
-          };
-        }
+      # PREEMPT_RT + SCHED_DEADLINE kernel config toggles
+      boot.kernelPatches = lib.mkMerge [
+        (lib.mkIf (prtEnable && !useRtKernel && haveAtLeast "6.12") [
+          {
+            name = "enable-preempt-rt";
+            patch = null;
+            extraStructuredConfig = with lib.kernel; {
+              PREEMPT_RT = yes;
+            };
+          }
+        ])
+        (lib.mkIf (perfEnabled && (config.profiles.performance.schedDeadline.enable or false)) [
+          {
+            name = "enable-sched-deadline";
+            patch = null;
+            extraStructuredConfig = with lib.kernel; {
+              SCHED_DEADLINE = yes;
+            };
+          }
+        ])
       ];
 
       # Optionally switch to RT kernel package when requested or on auto (< 6.12)
       boot.kernelPackages = lib.mkIf useRtKernel (lib.mkForce pkgs.linuxPackages_rt);
-
-      # Enable CONFIG_SCHED_DEADLINE when the performance profile is active
-      # and the toggle is on. This will rebuild the kernel if not already set.
-      boot.kernelPatches = lib.mkIf (perfEnabled && (config.profiles.performance.schedDeadline.enable or false)) [
-        {
-          name = "enable-sched-deadline";
-          patch = null;
-          extraStructuredConfig = with lib.kernel; {
-            SCHED_DEADLINE = yes;
-          };
-        }
-      ];
 
       boot.kernelParams =
         lib.optionals perfEnabled perf_params
