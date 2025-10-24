@@ -13,6 +13,7 @@
   profiles = {
     kernel.amd.enable = true;
     performance = {
+      enable = true;
       # Avoid double compression
       zswap.enable = lib.mkDefault false;
       # Optimize initrd compression (smaller image, slower rebuilds)
