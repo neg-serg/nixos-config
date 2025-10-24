@@ -48,8 +48,21 @@ if [[ -n "$rest" ]]; then
 fi
 
 if [[ ${#attrs[@]} -eq 0 ]]; then
-  echo "error: no options-*-md artifacts found in packages.${found_system}" >&2
-  exit 3
+  echo "warning: no options-*-md artifacts found in packages.${found_system}; writing fallback docs" >&2
+  {
+    echo "# Options Docs"
+    echo
+    echo "Options documentation artifacts are not available in this flake's packages for ${found_system}."
+    echo "This likely means nixosOptionsDoc is not exported by the current lib;"
+    echo "consider updating nixpkgs or using pkgs.lib.nixosOptionsDoc."
+  } >"$docs_dir/options.md"
+  {
+    echo "# Options Docs"
+    echo
+    echo "- [options-md](./options.md)"
+  } >"$docs_dir/index.md"
+  echo "Wrote fallback $docs_dir/index.md and options.md" >&2
+  exit 0
 fi
 
 for attr in "${attrs[@]}"; do
