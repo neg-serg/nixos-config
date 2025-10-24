@@ -101,6 +101,7 @@
           lanzaboote.nixosModules.lanzaboote
           chaotic.nixosModules.default
           sops-nix.nixosModules.sops
+          ./modules/monitoring
         ];
         mkSpecialArgs = {
           inherit self inputs locale timeZone kexec_enabled pkgs;
