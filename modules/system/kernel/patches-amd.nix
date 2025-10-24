@@ -1,6 +1,6 @@
 ##
 # Module: system/kernel/patches-amd
-# Purpose: structuredExtraConfig for AMD-oriented kernel settings.
+# Purpose: extraStructuredConfig for AMD-oriented kernel settings.
 # Key options: profiles.kernel.amd.enable
 # Dependencies: Affects boot.kernelPatches.
 {
