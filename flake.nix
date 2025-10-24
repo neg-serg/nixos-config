@@ -97,7 +97,6 @@
       packages.${system} = let
         # DRY: evaluate module groups and generate option docs programmatically
         docCommonModules = [
-          ./init.nix
           nix-flatpak.nixosModules.nix-flatpak
           lanzaboote.nixosModules.lanzaboote
           chaotic.nixosModules.default
