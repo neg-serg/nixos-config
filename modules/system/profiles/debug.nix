@@ -58,6 +58,22 @@ in {
         description = "Install perf and dwarves (pahole) into the system when perfDataType.enable is true.";
       };
     };
+
+    # sched_ext: BPF-based extensible scheduler (6.12+)
+    schedExt = {
+      enable = opts.mkBoolOpt {
+        default = false;
+        description = "Enable kernel support for sched_ext (CONFIG_SCHED_CLASS_EXT) and install BPF tooling.";
+      };
+      installTools = opts.mkBoolOpt {
+        default = true;
+        description = "Install bpftools and clang for building/loading sched_ext examples.";
+      };
+      enableKernelBtf = opts.mkBoolOpt {
+        default = false;
+        description = "Force CONFIG_DEBUG_INFO_BTF=y to improve BPF/sched_ext introspection (rebuilds kernel).";
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable (
@@ -108,6 +124,37 @@ in {
         ];
       })
 
+      # sched_ext kernel support and tooling (6.12+)
+      (lib.mkIf (cfg.schedExt.enable or false) {
+        boot.kernelPatches = [
+          {
+            name = "enable-sched-ext";
+            patch = null;
+            extraStructuredConfig = with lib.kernel; {
+              SCHED_CLASS_EXT = yes;
+              BPF = yes;
+              BPF_SYSCALL = yes;
+              BPF_JIT = yes;
+              BPF_JIT_DEFAULT_ON = yes;
+            };
+          }
+        ]
+        ++ lib.optionals (cfg.schedExt.enableKernelBtf or false) [
+          {
+            name = "enable-kernel-btf-for-sched-ext";
+            patch = null;
+            extraStructuredConfig = with lib.kernel; {
+              DEBUG_INFO_BTF = yes;
+            };
+          }
+        ];
+
+        environment.systemPackages = lib.mkIf (cfg.schedExt.installTools or false) [
+          pkgs.bpftools
+          pkgs.clang
+        ];
+      })
+
       # Friendly warnings about kernel version expectations
       {
         warnings =
@@ -121,8 +168,12 @@ in {
             # BTF is widely usable on modern kernels; note only for very old
             "profiles.debug.perfDataType.enableKernelBtf may not be supported on very old kernels (current: ${kver})"
           ]);
+          # sched_ext baseline
+        warnings = warnings
+          ++ (lib.optionals (cfg.schedExt.enable && !haveAtLeast "6.12") [
+            "profiles.debug.schedExt requires kernel >= 6.12 (current: ${kver})"
+          ]);
       }
     ]
   );
 }
-

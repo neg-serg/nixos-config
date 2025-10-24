@@ -22,6 +22,11 @@
       # Prefer THP on madvise only to reduce jitter
       thpMode = "madvise";
     };
+    # Enable debug profile features on this host
+    debug = {
+      enable = true;
+      schedExt.enable = true;
+    };
   };
 
   # Performance profile comes from the workstation role
