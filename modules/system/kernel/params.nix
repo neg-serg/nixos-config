@@ -135,7 +135,8 @@ in {
     }
     {
       # PREEMPT_RT (only on kernels where it's available in-tree)
-      boot.kernelPatches = lib.mkIf (perfEnabled && (config.profiles.performance.preemptRt.enable or false) && haveAtLeast "6.12") [
+      # Apply when the feature toggle is enabled, regardless of perf profile.
+      boot.kernelPatches = lib.mkIf ((config.profiles.performance.preemptRt.enable or false) && haveAtLeast "6.12") [
         {
           name = "enable-preempt-rt";
           patch = null;
@@ -162,7 +163,7 @@ in {
         ++ extra_security
         ++ lib.optionals (config.profiles.security.enable or false) ["page_poison=1"];
       security.protectKernelImage = !kexec_enabled;
-      warnings = lib.optionals (perfEnabled && (config.profiles.performance.preemptRt.enable or false) && !haveAtLeast "6.12") [
+      warnings = lib.optionals ((config.profiles.performance.preemptRt.enable or false) && !haveAtLeast "6.12") [
         "profiles.performance.preemptRt requires kernel >= 6.12 or switching to an RT kernel package. Current: ${kver}"
       ];
     }

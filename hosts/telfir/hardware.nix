@@ -24,6 +24,8 @@
     };
     # Enable only sched_ext on this host (without global debug enable)
     debug.schedExt.enable = true;
+    # Enable PREEMPT_RT for low-latency desktop
+    performance.preemptRt.enable = true;
   };
 
   # Performance profile comes from the workstation role
