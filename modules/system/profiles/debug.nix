@@ -76,7 +76,16 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.enable (
+  # Apply when the global toggle is on OR any sub-feature is explicitly enabled.
+  config = lib.mkIf (
+    (cfg.enable or false)
+    || (cfg.memAllocProfiling.compileSupport or false)
+    || (cfg.memAllocProfiling.enable or false)
+    || (cfg.perfDataType.enable or false)
+    || (cfg.perfDataType.enableKernelBtf or false)
+    || (cfg.schedExt.enable or false)
+    || (cfg.schedExt.enableKernelBtf or false)
+  ) (
     lib.mkMerge [
       # Memory allocation profiling (6.10+)
       (lib.mkIf (cfg.memAllocProfiling.compileSupport or false) {
@@ -165,11 +174,8 @@ in {
             "profiles.debug.perfDataType is most effective with kernel >= 6.8 (current: ${kver})"
           ])
           ++ (lib.optionals (cfg.perfDataType.enableKernelBtf && kver != "" && !haveAtLeast "5.18") [
-            # BTF is widely usable on modern kernels; note only for very old
             "profiles.debug.perfDataType.enableKernelBtf may not be supported on very old kernels (current: ${kver})"
-          ]);
-          # sched_ext baseline
-        warnings = warnings
+          ])
           ++ (lib.optionals (cfg.schedExt.enable && !haveAtLeast "6.12") [
             "profiles.debug.schedExt requires kernel >= 6.12 (current: ${kver})"
           ]);
