@@ -3,6 +3,7 @@
     ./boot.nix
     ./environment.nix
     ./filesystems.nix
+    ./filesystems-smallfiles.nix
     ./swapfile.nix
     ./kernel/params.nix
     ./kernel/sysctl.nix
