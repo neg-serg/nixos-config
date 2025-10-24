@@ -3,7 +3,7 @@
 # Purpose: Network and security sysctls.
 # Key options: none (static values).
 # Dependencies: Applies to boot.kernel.sysctl.
-_: {
+{ lib, ... }: {
   boot.kernel.sysctl = {
     "kernel.sysrq" = 0;
 
@@ -27,7 +27,10 @@ _: {
     # TCP optimization
     "net.ipv4.tcp_fastopen" = 3;
     "net.ipv4.tcp_mtu_probing" = 1;
-    "net.ipv4.tcp_max_syn_backlog" = 8192;
+    # Provide sensible defaults that can be overridden by optional modules
+    "net.ipv4.tcp_congestion_control" = lib.mkDefault "bbr";
+    "net.core.default_qdisc" = lib.mkDefault "fq";
+    "net.ipv4.tcp_max_syn_backlog" = lib.mkDefault 8192;
 
     # Socket and queue sizes
     "net.core.rmem_max" = 4194304;
