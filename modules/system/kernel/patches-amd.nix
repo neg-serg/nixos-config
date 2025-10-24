@@ -21,7 +21,7 @@ in {
       {
         name = "amd-platform-patches";
         patch = null; # no external patch; apply structured config below
-        structuredExtraConfig = mapAttrs (_: lib.id) {
+        extraStructuredConfig = mapAttrs (_: lib.id) {
           X86_AMD_PSTATE = yes;
           X86_EXTENDED_PLATFORM = no;
           X86_MCE_INTEL = no;

@@ -128,6 +128,11 @@ in {
         default = false;
         description = "Enable PREEMPT_RT (CONFIG_PREEMPT_RT). Requires kernel >= 6.12 or RT kernel.";
       };
+      mode = mkEnumOpt ["auto" "in-tree" "rt"] {
+        default = "auto";
+        description = "How to provide PREEMPT_RT: 'in-tree' toggles CONFIG_PREEMPT_RT in current kernel; 'rt' switches to linuxPackages_rt; 'auto' tries in-tree on >=6.12, else uses RT kernel.";
+        example = "auto";
+      };
     };
   };
 }

@@ -22,6 +22,12 @@
       quietBoot = true;
       # Prefer THP on madvise only to reduce jitter
       thpMode = "madvise";
+      # Dial back aggressive defaults for desktop security/stability
+      disableMitigations = false;
+      disableAudit = false;
+      skipCryptoSelftests = false;
+      # With PREEMPT_RT enabled, drop extra low-latency cmdline toggles
+      lowLatencyScheduling = false;
     };
     # Enable only sched_ext on this host (without global debug enable)
     debug.schedExt.enable = true;

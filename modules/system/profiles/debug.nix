@@ -164,22 +164,7 @@ in {
         ];
       })
 
-      # Friendly warnings about kernel version expectations
-      {
-        warnings =
-          (lib.optionals (cfg.memAllocProfiling.enable && !haveAtLeast "6.10") [
-            "profiles.debug.memAllocProfiling requires kernel >= 6.10 (current: ${kver})"
-          ])
-          ++ (lib.optionals (cfg.perfDataType.enable && !haveAtLeast "6.8") [
-            "profiles.debug.perfDataType is most effective with kernel >= 6.8 (current: ${kver})"
-          ])
-          ++ (lib.optionals (cfg.perfDataType.enableKernelBtf && kver != "" && !haveAtLeast "5.18") [
-            "profiles.debug.perfDataType.enableKernelBtf may not be supported on very old kernels (current: ${kver})"
-          ])
-          ++ (lib.optionals (cfg.schedExt.enable && !haveAtLeast "6.12") [
-            "profiles.debug.schedExt requires kernel >= 6.12 (current: ${kver})"
-          ]);
-      }
+      # Evaluation Noise Policy: avoid warnings during evaluation; document expectations in option descriptions.
     ]
   );
 }

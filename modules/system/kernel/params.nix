@@ -14,6 +14,9 @@
   perfEnabled = config.profiles.performance.enable or false;
   kver = config.boot.kernelPackages.kernel.version or "";
   haveAtLeast = v: (kver != "") && lib.versionAtLeast kver v;
+  prtEnable = config.profiles.performance.preemptRt.enable or false;
+  prtMode = (config.profiles.performance.preemptRt.mode or "auto");
+  useRtKernel = prtEnable && (prtMode == "rt" || (prtMode == "auto" && !haveAtLeast "6.12"));
 
   mitigations_settings = ["mitigations=off"]; # full mitigations disable
   silence = [
@@ -127,7 +130,8 @@ in {
 
         kernelParams = lib.mkBefore base_params;
 
-        extraModulePackages = [pkgs.linuxPackages_cachyos.amneziawg];
+        # Use amneziawg from the selected kernelPackages when available
+        extraModulePackages = let kp = config.boot.kernelPackages; in lib.optionals (kp ? amneziawg) [ kp.amneziawg ];
         # Default kernel console verbosity; hosts may override
         consoleLogLevel = lib.mkDefault 7;
         kernelPackages = lib.mkDefault (pkgs.linuxPackages_cachyos.cachyOverride {mArch = "GENERIC_V4";});
@@ -136,7 +140,7 @@ in {
     {
       # PREEMPT_RT (only on kernels where it's available in-tree)
       # Apply when the feature toggle is enabled, regardless of perf profile.
-      boot.kernelPatches = lib.mkIf ((config.profiles.performance.preemptRt.enable or false) && haveAtLeast "6.12") [
+      boot.kernelPatches = lib.mkIf (prtEnable && !useRtKernel && haveAtLeast "6.12") [
         {
           name = "enable-preempt-rt";
           patch = null;
@@ -145,6 +149,9 @@ in {
           };
         }
       ];
+
+      # Optionally switch to RT kernel package when requested or on auto (< 6.12)
+      boot.kernelPackages = lib.mkIf useRtKernel (lib.mkForce pkgs.linuxPackages_rt);
 
       # Enable CONFIG_SCHED_DEADLINE when the performance profile is active
       # and the toggle is on. This will rebuild the kernel if not already set.
@@ -163,9 +170,6 @@ in {
         ++ extra_security
         ++ lib.optionals (config.profiles.security.enable or false) ["page_poison=1"];
       security.protectKernelImage = !kexec_enabled;
-      warnings = lib.optionals ((config.profiles.performance.preemptRt.enable or false) && !haveAtLeast "6.12") [
-        "profiles.performance.preemptRt requires kernel >= 6.12 or switching to an RT kernel package. Current: ${kver}"
-      ];
     }
   ];
 }
