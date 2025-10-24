@@ -135,16 +135,11 @@
         docDriverAll = if hasOptionsDoc
           then docLib.nixosOptionsDoc { inherit (evalAll) options; }
           else { optionsCommonMark = simpleRender evalAll.options; };
-        # Per-doc outputs trimmed to aggregated one
-        perDocOutputs = {
-          options-all-md = docDriverAll.optionsCommonMark;
-        };
         # (removed stale host discovery: not used in docs)
       in
         {
           default = pkgs.zsh;
         }
-        // perDocOutputs
         // {
           options-md = docDriverAll.optionsCommonMark;
           # Simple index page linking to generated docs (relative names expected by scripts/gen-options.sh)
