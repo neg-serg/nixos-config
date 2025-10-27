@@ -152,15 +152,6 @@ in {
             };
           }
         ])
-        (lib.mkIf (perfEnabled && (config.profiles.performance.schedDeadline.enable or false)) [
-          {
-            name = "enable-sched-deadline";
-            patch = null;
-            structuredExtraConfig = with lib.kernel; {
-              SCHED_DEADLINE = yes;
-            };
-          }
-        ])
       ];
 
       # Optionally switch to RT kernel package when requested or on auto (< 6.12)
