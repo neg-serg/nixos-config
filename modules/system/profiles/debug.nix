@@ -93,7 +93,7 @@ in {
           {
             name = "enable-mem-alloc-profiling";
             patch = null; # config-only change
-            extraStructuredConfig = with lib.kernel; {
+            structuredExtraConfig = with lib.kernel; {
               MEM_ALLOC_PROFILING = yes;
             }
             // (lib.optionalAttrs (cfg.memAllocProfiling.enabledByDefault or false) (
@@ -126,7 +126,7 @@ in {
           {
             name = "enable-kernel-btf";
             patch = null;
-            extraStructuredConfig = with lib.kernel; {
+            structuredExtraConfig = with lib.kernel; {
               DEBUG_INFO_BTF = yes;
             };
           }
@@ -139,7 +139,7 @@ in {
           {
             name = "enable-sched-ext";
             patch = null;
-            extraStructuredConfig = with lib.kernel; {
+            structuredExtraConfig = with lib.kernel; {
               SCHED_CLASS_EXT = yes;
               BPF = yes;
               BPF_SYSCALL = yes;
@@ -152,7 +152,7 @@ in {
           {
             name = "enable-kernel-btf-for-sched-ext";
             patch = null;
-            extraStructuredConfig = with lib.kernel; {
+            structuredExtraConfig = with lib.kernel; {
               DEBUG_INFO_BTF = yes;
             };
           }
