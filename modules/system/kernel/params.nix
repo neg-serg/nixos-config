@@ -136,7 +136,8 @@ in {
         extraModulePackages = let kp = config.boot.kernelPackages; in lib.optionals (kp ? amneziawg) [ kp.amneziawg ];
         # Default kernel console verbosity; hosts may override
         consoleLogLevel = lib.mkDefault 7;
-        kernelPackages = lib.mkDefault (pkgs.linuxPackages_cachyos.cachyOverride {mArch = "GENERIC_V4";});
+        # Prefer mainstream kernel with Hydra substitutes to avoid local builds
+        kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
       };
     }
     {
