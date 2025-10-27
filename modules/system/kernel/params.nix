@@ -12,7 +12,9 @@
 }: let
   # Toggles from profiles/performance.nix
   perfEnabled = config.profiles.performance.enable or false;
-  kver = config.boot.kernelPackages.kernel.version or "";
+  # Avoid self-referencing config.boot.kernelPackages when deciding RT mode.
+  # Using pkgs.linuxPackages breaks the evaluation cycle with boot.kernelPackages overrides.
+  kver = pkgs.linuxPackages.kernel.version or "";
   haveAtLeast = v: (kver != "") && lib.versionAtLeast kver v;
   prtEnable = config.profiles.performance.preemptRt.enable or false;
   prtMode = (config.profiles.performance.preemptRt.mode or "auto");
