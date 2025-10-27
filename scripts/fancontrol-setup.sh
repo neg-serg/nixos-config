@@ -55,15 +55,26 @@ fi
 devs=""; names=""; idx=1
 add_dev() {
   local path="$1"
+  local base=$(basename "$path")   # actual hwmonN symlink name
   local name=$(cat "$path/name")
-  # Prefer devices/... tail for DEVPATH; otherwise full path
-  local full=$(readlink -f "$path")
-  local devpath=$(printf '%s\n' "$full" | sed -n 's#^.*/\(devices/.*\)$#\1#p')
-  [ -n "$devpath" ] || devpath="$full"
-  devs="$devs hwmon$idx=$devpath"
-  names="$names hwmon$idx=$name"
-  idx=$((idx+1))
+  # Align with fancontrol's expected DEVPATH: the real device target of $hwmon/device
+  local devtarget=$(readlink -f "$path/device" 2>/dev/null || true)
+  if [ -n "$devtarget" ]; then
+    # Strip leading /sys/
+    devtarget=${devtarget#/sys/}
+  else
+    # Fallback to full path without /sys/
+    local full=$(readlink -f "$path")
+    devtarget=${full#/sys/}
+  fi
+  devs="$devs $base=$devtarget"
+  names="$names $base=$name"
 }
+# Record actual hwmon symlink basenames for later use
+nct_base=$(basename "$nct_path")
+cpu_base=$(basename "$cpu_path")
+[ -n "$gpu_path" ] && gpu_base=$(basename "$gpu_path") || gpu_base=""
+
 add_dev "$nct_path"
 add_dev "$cpu_path"
 [ -n "$gpu_path" ] && add_dev "$gpu_path"
@@ -76,7 +87,20 @@ MAX_PWM=${MAX_PWM:-255}
 HYST=${HYST:-3}
 INTERVAL=${INTERVAL:-2}
 
-fcfans=""; fctemps=""; mintemp=""; maxtemp=""; minpwm=""; maxpwm=""; hyst=""
+# Derive safe start/stop PWM thresholds used by fancontrol
+# MINSTART should be high enough to reliably spin up a stopped fan.
+# MINSTOP is the minimum PWM during regulation. Keep <= MINSTART.
+# Choose a conservative default: start slightly above MIN_PWM.
+START_DELTA=${START_DELTA:-20}
+calc_minstart() {
+  local v=$((MIN_PWM + START_DELTA))
+  [ "$v" -gt "$MAX_PWM" ] && v=$MAX_PWM
+  echo "$v"
+}
+MIN_START_DEFAULT=$(calc_minstart)
+MIN_STOP_DEFAULT=$MIN_PWM
+
+fcfans=""; fctemps=""; mintemp=""; maxtemp=""; minpwm=""; maxpwm=""; minstart=""; minstop=""; hyst=""
 found_pwm=0
 for pwm in "$nct_path"/pwm[1-9]; do
   [ -e "$pwm" ] || continue
@@ -86,14 +110,16 @@ for pwm in "$nct_path"/pwm[1-9]; do
   [ -e "$fan" ] || continue
   found_pwm=1
 
-  fcfans="$fcfans hwmon1/$base=hwmon1/fan${n}_input"
+  fcfans="$fcfans $nct_base/$base=$nct_base/fan${n}_input"
   # Use CPU temp for control (quiet and safe)
-  fctemps="$fctemps hwmon1/$base=hwmon2/temp1_input"
-  mintemp="$mintemp hwmon1/$base=$MIN_TEMP"
-  maxtemp="$maxtemp hwmon1/$base=$MAX_TEMP"
-  minpwm="$minpwm hwmon1/$base=$MIN_PWM"
-  maxpwm="$maxpwm hwmon1/$base=$MAX_PWM"
-  hyst="$hyst hwmon1/$base=$HYST"
+  fctemps="$fctemps $nct_base/$base=$cpu_base/temp1_input"
+  mintemp="$mintemp $nct_base/$base=$MIN_TEMP"
+  maxtemp="$maxtemp $nct_base/$base=$MAX_TEMP"
+  minpwm="$minpwm $nct_base/$base=$MIN_PWM"
+  maxpwm="$maxpwm $nct_base/$base=$MAX_PWM"
+  minstart="$minstart $nct_base/$base=$MIN_START_DEFAULT"
+  minstop="$minstop $nct_base/$base=$MIN_STOP_DEFAULT"
+  hyst="$hyst $nct_base/$base=$HYST"
 
   # Switch to manual control so fancontrol can drive it
   if [ -w "${pwm}_enable" ]; then
@@ -112,20 +138,29 @@ if [ -n "$gpu_path" ] && [ -e "$gpu_path/pwm1" ]; then
   gtemp="$gpu_path/temp2_input"
   [ -e "$gtemp" ] || gtemp="$gpu_path/temp1_input"
   if [ -e "$gtemp" ] && [ -e "$gpu_path/fan1_input" ]; then
-    fcfans="$fcfans hwmon3/pwm1=hwmon3/fan1_input"
-    fctemps="$fctemps hwmon3/pwm1=hwmon3/$(basename "$gtemp")"
+    # Try to switch GPU fan to manual control first; skip if not allowed
+    if [ -w "$gpu_path/pwm1_enable" ]; then echo 1 > "$gpu_path/pwm1_enable" 2>/dev/null || true; fi
+    if [ ! -r "$gpu_path/pwm1_enable" ] || [ "$(cat "$gpu_path/pwm1_enable" 2>/dev/null)" != "1" ]; then
+      echo "fancontrol-setup: GPU pwm1 manual control not available; skipping GPU" >&2
+    else
+      fcfans="$fcfans $gpu_base/pwm1=$gpu_base/fan1_input"
+      fctemps="$fctemps $gpu_base/pwm1=$gpu_base/$(basename "$gtemp")"
     GPU_MIN_TEMP=${GPU_MIN_TEMP:-50}
     GPU_MAX_TEMP=${GPU_MAX_TEMP:-85}
     GPU_MIN_PWM=${GPU_MIN_PWM:-70}
     GPU_MAX_PWM=${GPU_MAX_PWM:-255}
     GPU_HYST=${GPU_HYST:-3}
-    mintemp="$mintemp hwmon3/pwm1=$GPU_MIN_TEMP"
-    maxtemp="$maxtemp hwmon3/pwm1=$GPU_MAX_TEMP"
-    minpwm="$minpwm hwmon3/pwm1=$GPU_MIN_PWM"
-    maxpwm="$maxpwm hwmon3/pwm1=$GPU_MAX_PWM"
-    hyst="$hyst hwmon3/pwm1=$GPU_HYST"
-    # Switch GPU fan to manual control
-    if [ -w "$gpu_path/pwm1_enable" ]; then echo 1 > "$gpu_path/pwm1_enable" || true; fi
+    mintemp="$mintemp $gpu_base/pwm1=$GPU_MIN_TEMP"
+    maxtemp="$maxtemp $gpu_base/pwm1=$GPU_MAX_TEMP"
+    minpwm="$minpwm $gpu_base/pwm1=$GPU_MIN_PWM"
+    maxpwm="$maxpwm $gpu_base/pwm1=$GPU_MAX_PWM"
+      # Derive GPU MINSTART/MINSTOP similarly
+      gstart=$((GPU_MIN_PWM + START_DELTA))
+      [ "$gstart" -gt "$GPU_MAX_PWM" ] && gstart=$GPU_MAX_PWM
+      minstart="$minstart $gpu_base/pwm1=$gstart"
+      minstop="$minstop $gpu_base/pwm1=$GPU_MIN_PWM"
+      hyst="$hyst $gpu_base/pwm1=$GPU_HYST"
+    fi
   fi
 fi
 
@@ -140,6 +175,8 @@ MINTEMP=${mintemp# }
 MAXTEMP=${maxtemp# }
 MINPWM=${minpwm# }
 MAXPWM=${maxpwm# }
+MINSTART=${minstart# }
+MINSTOP=${minstop# }
 HYSTERESIS=${hyst# }
 EOF
 
@@ -149,4 +186,3 @@ if [ ! -L /etc/fancontrol ] && [ -f /etc/fancontrol ]; then
 fi
 ln -sf /etc/fancontrol.auto /etc/fancontrol
 echo "fancontrol-setup: wrote /etc/fancontrol.auto and symlinked /etc/fancontrol" >&2
-
