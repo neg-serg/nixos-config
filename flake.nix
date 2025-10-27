@@ -71,31 +71,43 @@
   }:
     with {
       locale = "en_US.UTF-8"; # select locale
-      system = "x86_64-linux";
       timeZone = "Europe/Moscow";
       kexec_enabled = true;
       # Nilla raw-loader compatibility: synthetic type for each input (harmless for normal flakes)
-      nillaInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) inputs;
-    }; let
+      nillaInputs = builtins.mapAttrs (_: input: input // { type = "derivation"; }) inputs;
+    };
+    let
+      # Supported systems for generic flake outputs
+      supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
+      # Linux system for NixOS configurations and docs evaluation
+      linuxSystem = "x86_64-linux";
+
+      # Common lib
+      lib = nixpkgs.lib;
+
       # Hosts discovery shared across sections
       hostsDir = ./hosts;
       entries = builtins.readDir hostsDir;
-      hostNames = builtins.attrNames (nixpkgs.lib.filterAttrs (
+      hostNames = builtins.attrNames (lib.filterAttrs (
         name: type:
           type == "directory"
           && builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
       ) entries);
 
-      # Common pkgs/lib
-      pkgs = nixpkgs.legacyPackages.${system};
-      lib = nixpkgs.lib;
+      # Per-system outputs factory
+      perSystem = system: let
+        pkgs = nixpkgs.legacyPackages.${system};
+        # Pre-commit utility per system
+        preCommit = inputs.pre-commit-hooks.lib.${system}.run {
+          src = self;
+          hooks = { alejandra.enable = true; statix.enable = true; deadnix.enable = true; };
+        };
 
-      # Shared pre-commit hooks runner for checks and devShell
-      preCommit = inputs.pre-commit-hooks.lib.${system}.run { src = self; hooks = { alejandra.enable = true; statix.enable = true; deadnix.enable = true; }; };
-    in {
-      # Option docs (markdown) for base profiles, roles, and selected feature modules
-      packages.${system} = let
-        # DRY: evaluate module groups and generate option docs programmatically
+        # Documentation driver evaluated against linuxSystem to be host-agnostic
+        docPkgs = nixpkgs.legacyPackages.${linuxSystem};
+        nixosLib = import (docPkgs.path + "/nixos/lib") {};
+        docLib = if nixosLib ? nixosOptionsDoc then nixosLib else lib;
+
         docCommonModules = [
           nix-flatpak.nixosModules.nix-flatpak
           lanzaboote.nixosModules.lanzaboote
@@ -106,22 +118,14 @@
         mkSpecialArgs = {
           inherit self inputs locale timeZone kexec_enabled pkgs;
         };
-        evalMods = mods:
-          lib.nixosSystem {
-            inherit system;
-            modules = docCommonModules ++ mods;
-            specialArgs = mkSpecialArgs;
-          };
-        # Evaluate the full module tree once for docs
+        evalMods = mods: lib.nixosSystem {
+          system = linuxSystem;
+          modules = docCommonModules ++ mods;
+          specialArgs = mkSpecialArgs;
+        };
         evalAll = evalMods [ ./modules ];
-        # Prefer NixOS lib (has nixosOptionsDoc) from the pinned nixpkgs path
-        nixosLib = import (pkgs.path + "/nixos/lib") {};
-        docLib = if nixosLib ? nixosOptionsDoc then nixosLib else (if lib ? nixosOptionsDoc then lib else pkgs.lib);
         hasOptionsDoc = docLib ? nixosOptionsDoc;
-        # Build per-group docs using nixosOptionsDoc when available,
-        # otherwise render a simple Markdown fallback from the evaluated options.
         simpleRender = opts: let
-          # Flatten nested options attrset into a list of {name, desc}
           flatten = prefix: as: lib.concatLists (lib.mapAttrsToList (n: v:
             let path = prefix ++ [ n ];
             in if builtins.isAttrs v && (builtins.hasAttr "type" v)
@@ -135,33 +139,39 @@
         docDriverAll = if hasOptionsDoc
           then docLib.nixosOptionsDoc { inherit (evalAll) options; }
           else { optionsCommonMark = simpleRender evalAll.options; };
-        # (removed stale host discovery: not used in docs)
-      in
-        {
-          default = pkgs.zsh;
-        }
-        // {
-          options-md = docDriverAll.optionsCommonMark;
-          # Simple index page linking to generated docs (relative names expected by scripts/gen-options.sh)
-          options-index-md = let
-            names = ["options-md"];
-            toFile = n:
-              if n == "options-md"
-              then "options.md"
-              else builtins.replaceStrings ["-md"] [".md"] n;
-            lines = map (n: "- [" + n + "](./" + toFile n + ")") names;
-            content = builtins.concatStringsSep "\n" ([
-              "# Options Docs"
-              ""
-              "Index of generated option documentation artifacts:"
-              ""
-            ] ++ lines ++ [""]);
-          in pkgs.writeText "options-index.md" content;
-        };
 
-      # Make `nix fmt` behave like in home-manager: format repo with alejandra
-      formatter.${system} =
-        pkgs.writeShellApplication {
+        # Host build checks only for linuxSystem
+        hostBuildChecks = lib.optionalAttrs (system == linuxSystem)
+          (lib.listToAttrs (map (name: {
+            name = "build-" + name;
+            value = self.nixosConfigurations.${name}.config.system.build.toplevel;
+          }) hostNames));
+      in {
+        packages =
+          (
+            # Expose NixOS host closures as packages on linuxSystem
+            (lib.optionalAttrs (system == linuxSystem)
+              (lib.listToAttrs (map (name: {
+                name = name;
+                value = self.nixosConfigurations.${name}.config.system.build.toplevel;
+              }) hostNames)))
+          // {
+            default = pkgs.zsh;
+            options-md = docDriverAll.optionsCommonMark;
+            options-index-md = let
+              names = [ "options-md" ];
+              toFile = n: if n == "options-md" then "options.md" else builtins.replaceStrings ["-md"] [".md"] n;
+              lines = map (n: "- [" + n + "](./" + toFile n + ")") names;
+              content = builtins.concatStringsSep "\n" ([
+                "# Options Docs"
+                ""
+                "Index of generated option documentation artifacts:"
+                ""
+              ] ++ lines ++ [""]);
+            in pkgs.writeText "options-index.md" content;
+          });
+
+        formatter = pkgs.writeShellApplication {
           name = "fmt";
           runtimeInputs = with pkgs; [ alejandra ];
           text = ''
@@ -170,55 +180,51 @@
           '';
         };
 
-      # Lightweight repo checks for `nix flake check`
-      checks.${system} = let
-        hostBuildChecks = lib.listToAttrs (map (name: {
-            name = "build-" + name;
-            value = self.nixosConfigurations.${name}.config.system.build.toplevel;
-          })
-          hostNames);
-      in
-        {
-          fmt-alejandra = pkgs.runCommand "fmt-alejandra" { nativeBuildInputs = with pkgs; [ alejandra ]; } ''cd ${self}; alejandra -q --check .; touch "$out"'';
-          lint-deadnix = pkgs.runCommand "lint-deadnix" { nativeBuildInputs = with pkgs; [ deadnix ]; } ''cd ${self}; deadnix --fail .; touch "$out"'';
-          lint-statix = pkgs.runCommand "lint-statix" { nativeBuildInputs = with pkgs; [ statix ]; } ''cd ${self}; statix check .; touch "$out"'';
-          pre-commit = preCommit;
-          lint-md-lang = pkgs.runCommand "lint-md-lang" { nativeBuildInputs = with pkgs; [ bash coreutils findutils gnugrep gitMinimal ]; } ''
-            set -euo pipefail
-            cd ${self}
-            bash scripts/check-markdown-language.sh
-            : > "$out"
-          '';
-        }
-        // hostBuildChecks;
+        checks =
+          {
+            fmt-alejandra = pkgs.runCommand "fmt-alejandra" { nativeBuildInputs = with pkgs; [ alejandra ]; } ''cd ${self}; alejandra -q --check .; touch "$out"'';
+            lint-deadnix = pkgs.runCommand "lint-deadnix" { nativeBuildInputs = with pkgs; [ deadnix ]; } ''cd ${self}; deadnix --fail .; touch "$out"'';
+            lint-statix = pkgs.runCommand "lint-statix" { nativeBuildInputs = with pkgs; [ statix ]; } ''cd ${self}; statix check .; touch "$out"'';
+            pre-commit = preCommit;
+            lint-md-lang = pkgs.runCommand "lint-md-lang" { nativeBuildInputs = with pkgs; [ bash coreutils findutils gnugrep gitMinimal ]; } ''
+              set -euo pipefail
+              cd ${self}
+              bash scripts/check-markdown-language.sh
+              : > "$out"
+            '';
+          } // hostBuildChecks;
 
-      # Developer shell
-      devShells.${system}.default = pkgs.mkShell {
-        inherit (preCommit) shellHook;
-        packages = with pkgs; [ alejandra deadnix statix nil just jq ];
-      };
+        devShells = {
+          default = pkgs.mkShell {
+            inherit (preCommit) shellHook;
+            packages = with pkgs; [ alejandra deadnix statix nil just jq ];
+          };
+        };
 
-      apps.${system} = let
-        genOptions = pkgs.writeShellApplication {
-          name = "gen-options";
-          runtimeInputs = with pkgs; [ git jq nix ];
-          text = ''
-            set -euo pipefail
-            exec "${self}/scripts/gen-options.sh" "$@"
-          '';
-        };
-        fmtApp = self.formatter.${system};
-      in {
-        gen-options = {
-          type = "app";
-          program = "${genOptions}/bin/gen-options";
-        };
-        fmt = {
-          type = "app";
-          program = "${fmtApp}/bin/fmt";
+        apps = let
+          genOptions = pkgs.writeShellApplication {
+            name = "gen-options";
+            runtimeInputs = with pkgs; [ git jq nix ];
+            text = ''
+              set -euo pipefail
+              exec "${self}/scripts/gen-options.sh" "$@"
+            '';
+          };
+          fmtApp = self.formatter.${system};
+        in {
+          gen-options = { type = "app"; program = "${genOptions}/bin/gen-options"; };
+          fmt = { type = "app"; program = "${fmtApp}/bin/fmt"; };
         };
       };
+    in {
+      # Per-system outputs: packages, formatter, checks, devShells, apps
+      packages = lib.genAttrs supportedSystems (s: (perSystem s).packages);
+      formatter = lib.genAttrs supportedSystems (s: (perSystem s).formatter);
+      checks = lib.genAttrs supportedSystems (s: (perSystem s).checks);
+      devShells = lib.genAttrs supportedSystems (s: (perSystem s).devShells);
+      apps = lib.genAttrs supportedSystems (s: (perSystem s).apps);
 
+      # NixOS configurations (linuxSystem only)
       nixosConfigurations = let
         commonModules = [
           ./init.nix
@@ -229,18 +235,16 @@
         ];
         hostExtras = name: let
           extraPath = (builtins.toString hostsDir) + "/" + name + "/extra.nix";
-        in
-          lib.optional (builtins.pathExists extraPath) (/. + extraPath);
+        in lib.optional (builtins.pathExists extraPath) (/. + extraPath);
         mkHost = name: lib.nixosSystem {
-            inherit system;
-            specialArgs = {
-              inherit locale timeZone kexec_enabled self;
-              # Pass Nilla-friendly inputs (workaround for nilla-nix/nilla#14)
-              inputs = nillaInputs;
-            };
-            modules = commonModules ++ [(import ((builtins.toString hostsDir) + "/" + name))] ++ (hostExtras name);
+          system = linuxSystem;
+          specialArgs = {
+            inherit locale timeZone kexec_enabled self;
+            # Pass Nilla-friendly inputs (workaround for nilla-nix/nilla#14)
+            inputs = nillaInputs;
           };
-      in
-        lib.genAttrs hostNames mkHost;
+          modules = commonModules ++ [ (import ((builtins.toString hostsDir) + "/" + name)) ] ++ (hostExtras name);
+        };
+      in lib.genAttrs hostNames mkHost;
     };
 }
