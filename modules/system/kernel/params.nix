@@ -147,7 +147,7 @@ in {
           {
             name = "enable-preempt-rt";
             patch = null;
-            extraStructuredConfig = with lib.kernel; {
+            structuredExtraConfig = with lib.kernel; {
               PREEMPT_RT = yes;
             };
           }
@@ -156,7 +156,7 @@ in {
           {
             name = "enable-sched-deadline";
             patch = null;
-            extraStructuredConfig = with lib.kernel; {
+            structuredExtraConfig = with lib.kernel; {
               SCHED_DEADLINE = yes;
             };
           }
