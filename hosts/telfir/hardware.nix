@@ -11,7 +11,7 @@
 
   # Enable AMD-oriented kernel structured config for this host and tune performance
   profiles = {
-    kernel.amd.enable = true;
+    kernel.amd.enable = false;
     performance = {
       enable = true;
       # Avoid double compression
@@ -29,8 +29,8 @@
       # With PREEMPT_RT enabled, drop extra low-latency cmdline toggles
       lowLatencyScheduling = false;
     };
-    # Enable only sched_ext on this host (without global debug enable)
-    debug.schedExt.enable = true;
+    # Disable sched_ext to avoid kernel rebuilds
+    debug.schedExt.enable = false;
     # Do not enable PREEMPT_RT on this host
     performance.preemptRt.enable = false;
   };
