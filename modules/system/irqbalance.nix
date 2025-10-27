@@ -21,6 +21,8 @@ in {
     (mkIf cfg.autoBannedFromIsolated {
       # Compute banned CPU mask at runtime from /proc/cmdline and expose via EnvironmentFile
       systemd.services.irqbalance = {
+        # Ensure tools used in preStart are available
+        path = [ pkgs.gawk ];
         preStart = ''
           set -euo pipefail
           CMDLINE=$(cat /proc/cmdline)
@@ -50,7 +52,7 @@ in {
         '';
         serviceConfig = {
           RuntimeDirectory = "irqbalance";
-          EnvironmentFile = [ "/run/irqbalance/irqbalance.env" ];
+          EnvironmentFile = [ "-/run/irqbalance/irqbalance.env" ];
         };
       };
     })
