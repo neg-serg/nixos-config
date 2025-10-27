@@ -84,7 +84,7 @@ in {
     # Autogenerate a quiet fan profile if requested
     systemd.services.fancontrol-setup = lib.mkIf (cfg.autoFancontrol.enable or false) {
       description = "Generate quiet /etc/fancontrol from detected hwmon devices";
-      after = [ "multi-user.target" ];
+      # Avoid boot ordering cycle: do not depend on multi-user.target.
       before = [ "fancontrol.service" ];
       wantedBy = [ "fancontrol.service" ];
       serviceConfig = {
@@ -115,13 +115,15 @@ in {
       description = "Software fan speed control (fancontrol)";
       requires = [ "fancontrol-setup.service" ];
       after = [ "fancontrol-setup.service" ];
+      unitConfig = {
+        # Only start if config exists
+        ConditionPathExists = "/etc/fancontrol";
+      };
       serviceConfig = {
         Type = "simple";
         ExecStart = "${pkgs.lm_sensors}/bin/fancontrol";
         Restart = "on-failure";
         RestartSec = 5;
-        # Only start if config exists
-        ConditionPathExists = "/etc/fancontrol";
       };
       wantedBy = [ "multi-user.target" ];
     };
