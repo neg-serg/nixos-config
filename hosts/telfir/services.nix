@@ -210,7 +210,7 @@
       port = 9115;
       openFirewall = true;
       firewallFilter = "-i br0 -p tcp -m tcp --dport 9115";
-      # Minimal modules: HTTP 2xx, TCP connect, ICMP ping (IPv4), DNS A lookup for example.com
+      # Modules: HTTP 2xx (strict + insecure TLS variant), TCP connect, ICMP ping (IPv4), DNS A lookup
       configFile = pkgs.writeText "blackbox.yml" ''
         modules:
           http_2xx:
@@ -219,6 +219,15 @@
             http:
               method: GET
               valid_http_versions: ["HTTP/1.1", "HTTP/2"]
+
+          http_2xx_insecure:
+            prober: http
+            timeout: 5s
+            http:
+              method: GET
+              valid_http_versions: ["HTTP/1.1", "HTTP/2"]
+              tls_config:
+                insecure_skip_verify: true
 
           tcp_connect:
             prober: tcp
@@ -240,6 +249,72 @@
               query_type: A
               query_name: example.com
       '';
+    };
+
+    # Example Prometheus scrape configs for Blackbox probes (Prometheus server can be enabled later)
+    prometheus = {
+      # enable = true; # Uncomment to run a local Prometheus instance
+      scrapeConfigs = [
+        # HTTP checks: Nextcloud status and AdGuard UI (2xx expected)
+        {
+          job_name = "blackbox-http";
+          metrics_path = "/probe";
+          params.module = [ "http_2xx" ];
+          static_configs = [ { targets = [
+            "http://telfir/status.php"
+            "http://127.0.0.1:3000/"
+          ]; } ];
+          relabel_configs = [
+            { source_labels = [ "__address__" ]; target_label = "__param_target"; }
+            { source_labels = [ "__param_target" ]; target_label = "instance"; }
+            { target_label = "__address__"; replacement = "127.0.0.1:9115"; }
+          ];
+        }
+        # HTTPS checks that may use self-signed certs on LAN
+        {
+          job_name = "blackbox-https-insecure";
+          metrics_path = "/probe";
+          params.module = [ "http_2xx_insecure" ];
+          static_configs = [ { targets = [
+            "https://telfir/status.php"
+          ]; } ];
+          relabel_configs = [
+            { source_labels = [ "__address__" ]; target_label = "__param_target"; }
+            { source_labels = [ "__param_target" ]; target_label = "instance"; }
+            { target_label = "__address__"; replacement = "127.0.0.1:9115"; }
+          ];
+        }
+        # ICMP reachability to public resolvers (basic external connectivity)
+        {
+          job_name = "blackbox-icmp";
+          metrics_path = "/probe";
+          params.module = [ "icmp" ];
+          static_configs = [ { targets = [
+            "1.1.1.1"
+            "8.8.8.8"
+          ]; } ];
+          relabel_configs = [
+            { source_labels = [ "__address__" ]; target_label = "__param_target"; }
+            { source_labels = [ "__param_target" ]; target_label = "instance"; }
+            { target_label = "__address__"; replacement = "127.0.0.1:9115"; }
+          ];
+        }
+        # DNS A lookups via blackbox (targets are DNS servers; module queries example.com)
+        {
+          job_name = "blackbox-dns";
+          metrics_path = "/probe";
+          params.module = [ "dns" ];
+          static_configs = [ { targets = [
+            "127.0.0.1:53"
+            "1.1.1.1:53"
+          ]; } ];
+          relabel_configs = [
+            { source_labels = [ "__address__" ]; target_label = "__param_target"; }
+            { source_labels = [ "__param_target" ]; target_label = "instance"; }
+            { target_label = "__address__"; replacement = "127.0.0.1:9115"; }
+          ];
+        }
+      ];
     };
 
     # Syncthing host-specific devices and folders
