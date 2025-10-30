@@ -74,7 +74,7 @@ in {
         };
         analytics.reporting_enabled = false;
         limits_config = {
-          allow_structured_metadata = true;
+          allow_structured_metadata = false;
           retention_period = "${toString cfg.retentionDays}d";
         };
         table_manager = {
@@ -85,4 +85,3 @@ in {
     };
   };
 }
-
