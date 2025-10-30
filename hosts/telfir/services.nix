@@ -577,6 +577,30 @@ groups:
         inherit devices folders;
       };
     };
+    # Add Prometheus datasource to Grafana so Unbound/Nextcloud metrics are browsable out-of-the-box
+    grafana.provision.datasources.settings.datasources = lib.mkAfter [
+      {
+        uid = "prometheus";
+        name = "Prometheus";
+        type = "prometheus";
+        access = "proxy";
+        url = "http://127.0.0.1:${toString config.services.prometheus.port}";
+        isDefault = false;
+      }
+    ];
+
+    # Provision local dashboards (Unbound, Nextcloud)
+    grafana.provision.dashboards.settings.providers = lib.mkAfter [
+      {
+        name = "local-json";
+        orgId = 1;
+        type = "file";
+        disableDeletion = false;
+        editable = true;
+        options.path = ../../dashboards;
+      }
+    ];
+
     # Bitcoind instance is now managed by modules/servers/bitcoind
   };
 
@@ -589,29 +613,6 @@ groups:
     format = "binary"; # do not parse; pass through as plaintext env file
   };
 
-  # Add Prometheus datasource to Grafana so Unbound metrics are browsable out-of-the-box
-  services.grafana.provision.datasources.settings.datasources = lib.mkAfter [
-    {
-      uid = "prometheus";
-      name = "Prometheus";
-      type = "prometheus";
-      access = "proxy";
-      url = "http://127.0.0.1:${toString config.services.prometheus.port}";
-      isDefault = false;
-    }
-  ];
-
-  # Provision local dashboards (Unbound, Nextcloud)
-  services.grafana.provision.dashboards.settings.providers = lib.mkAfter [
-    {
-      name = "local-json";
-      orgId = 1;
-      type = "file";
-      disableDeletion = false;
-      editable = true;
-      options.path = ../../dashboards;
-    }
-  ];
 
   # SOPS secret for Grafana admin password
   sops.secrets."grafana/admin_password" = let
