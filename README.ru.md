@@ -115,3 +115,7 @@ in {
 ## Мониторинг DNS‑резолвера
 
 - Unbound + Prometheus + Grafana для оценивания качества DNS (задержки, DNSSEC‑валидация, кэш‑хиты): см. `docs/unbound-metrics.ru.md`.
+
+## Мониторинг Nextcloud
+
+- Blackbox‑проба `https://telfir/status.php` и график задержки; опционально — экспортер PHP‑FPM для состояния пула: см. `docs/nextcloud-monitoring.ru.md`.

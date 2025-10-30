@@ -422,3 +422,7 @@ Tuning tips:
 ## DNS Resolver Monitoring
 
 - Unbound + Prometheus + Grafana dashboard for DNS quality (latency, DNSSEC validation, cache hits): see `docs/unbound-metrics.md`.
+
+## Nextcloud Monitoring
+
+- Blackbox probe to `https://telfir/status.php` and latency chart; optional PHP‑FPM exporter for pool health: see `docs/nextcloud-monitoring.md`.

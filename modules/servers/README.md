@@ -54,6 +54,7 @@ Examples and ports
 - nextcloud: `profiles.services.nextcloud.enable = true;`
   - Reverse proxy: enable `services.nextcloud.{caddyProxy|nginxProxy}.enable = true;`
   - Open HTTP/HTTPS (80/443) when using proxy modules; internal PHP‑FPM socket is configured by the module.
+  - Monitoring: Blackbox probe on `https://<host>/status.php` and optional PHP‑FPM exporter — see `docs/nextcloud-monitoring.md`.
 
 Docs
 - See per‑service options in aggregated file: flake output `packages.${system}."options-md"` (when available).
