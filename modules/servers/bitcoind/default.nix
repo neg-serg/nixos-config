@@ -31,7 +31,6 @@ in {
     {
       # Rotate bitcoind debug.log if it is written despite printtoconsole
       services.logrotate.settings."${cfg.dataDir}/debug.log" = {
-        files = [ "${cfg.dataDir}/debug.log" ];
         frequency = "weekly";
         rotate = 8;
         missingok = true;
