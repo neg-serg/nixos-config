@@ -45,6 +45,10 @@
         domain = "telfir.local";
         answer = "192.168.2.240";
       }
+      {
+        domain = "grafana.telfir";
+        answer = "192.168.2.240";
+      }
     ];
     # Enable curated AdGuardHome filter lists
     adguardhome.filterLists = [
@@ -102,6 +106,18 @@
     listenAddress = "0.0.0.0";
     openFirewall = true;
     firewallInterfaces = [ "br0" ];
+    # Admin via SOPS secret (if present)
+    adminUser = "admin";
+    # Point to the SOPS-managed file below
+    adminPasswordFile = lib.mkIf (builtins.pathExists (../../.. + "/secrets/grafana-admin-password.sops")) (
+      config.sops.secrets."grafana/admin_password".path
+    );
+    # HTTPS via Caddy on grafana.telfir
+    caddyProxy.enable = true;
+    caddyProxy.domain = "grafana.telfir";
+    caddyProxy.tlsInternal = true;
+    caddyProxy.openFirewall = true;
+    caddyProxy.firewallInterfaces = [ "br0" ];
   };
 
   # Disable RNNoise virtual mic for this host by default
@@ -524,6 +540,11 @@ groups:
   sops.secrets."alertmanager/env" = lib.mkIf (builtins.pathExists (../../.. + "/secrets/alertmanager.env.sops")) {
     sopsFile = ../../../secrets/alertmanager.env.sops;
     format = "binary"; # do not parse; pass through as plaintext env file
+  };
+
+  # SOPS secret for Grafana admin password
+  sops.secrets."grafana/admin_password" = lib.mkIf (builtins.pathExists (../../.. + "/secrets/grafana-admin-password.sops")) {
+    sopsFile = ../../../secrets/grafana-admin-password.sops;
   };
 
   # Firewall port for bitcoind is opened by the bitcoind server module
