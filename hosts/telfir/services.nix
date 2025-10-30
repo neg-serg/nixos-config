@@ -235,7 +235,10 @@
       enable = true;
       port = 9100;
       # Add extra collectors on top of defaults
-      enabledCollectors = [ "systemd" "processes" "logind" "hwmon" ];
+      enabledCollectors = [ "systemd" "processes" "logind" "hwmon" "textfile" ];
+      extraFlags = [
+        "--collector.textfile.directory=/var/lib/node_exporter/textfile_collector"
+      ];
       # Open firewall specifically for br0 interface via exporter module
       openFirewall = true;
       firewallFilter = "-i br0 -p tcp -m tcp --dport 9100";
@@ -617,6 +620,98 @@ groups:
   in lib.mkIf (builtins.pathExists yaml || builtins.pathExists bin) {
     sopsFile = if builtins.pathExists yaml then yaml else bin;
     format = "binary"; # provide plain string to $__file provider
+  };
+
+  # Bitcoind minimal metrics → node_exporter textfile collector
+  # Exposes:
+  #   bitcoin_block_height{instance="main",chain="<chain>"} <n>
+  #   bitcoin_headers{instance="main",chain="<chain>"} <n>
+  #   bitcoin_time_since_last_block_seconds{instance} <seconds>
+  #   bitcoin_peers_connected{instance} <n>
+  # Directory for textfile collector; writable by bitcoind user, readable by node-exporter
+  systemd.tmpfiles.rules = lib.mkAfter [
+    (let
+       bitcoindInstance = config.servicesProfiles.bitcoind.instance or "main";
+       bitcoindUser = "bitcoind-${bitcoindInstance}";
+       textfileDir = "/var/lib/node_exporter/textfile_collector";
+     in "d ${textfileDir} 0755 ${bitcoindUser} ${bitcoindUser} -")
+  ];
+
+  # Periodic metric collection service + timer
+  systemd.services."bitcoind-textfile-metrics" = let
+    bitcoindInstance = config.servicesProfiles.bitcoind.instance or "main";
+    bitcoindUser = "bitcoind-${bitcoindInstance}";
+    dataDir = config.servicesProfiles.bitcoind.dataDir or "/var/lib/bitcoind/${bitcoindInstance}";
+    textfileDir = "/var/lib/node_exporter/textfile_collector";
+    metricsFile = "${textfileDir}/bitcoind_${bitcoindInstance}.prom";
+    metricsScript = pkgs.writeShellScript "bitcoind-textfile-metrics.sh" ''
+      set -euo pipefail
+      DATADIR=${dataDir@Q}
+      TMPFILE=$(mktemp)
+      ts() { date +%s; }
+
+      cli='${pkgs.bitcoind}/bin/bitcoin-cli -datadir='"$DATADIR"''
+
+      # Basic info (avoid heavy calls)
+      blocks=$($cli getblockcount || echo 0)
+      # headers and chain via blockchaininfo
+      headers=$($cli getblockchaininfo | ${pkgs.jq}/bin/jq -r '.headers' 2>/dev/null || echo 0)
+      chain=$($cli getblockchaininfo | ${pkgs.jq}/bin/jq -r '.chain' 2>/dev/null || echo unknown)
+
+      # Determine best block time for staleness metric
+      besthash=$($cli getbestblockhash 2>/dev/null || echo)
+      if [ -n ""$besthash"" ]; then
+        block_time=$($cli getblockheader "$besthash" 2>/dev/null | ${pkgs.jq}/bin/jq -r '.time' 2>/dev/null || echo 0)
+      else
+        block_time=0
+      fi
+      now=$(ts)
+      if [ "${block_time}" -gt 0 ] 2>/dev/null; then
+        since=$(( now - block_time ))
+      else
+        since=0
+      fi
+
+      # Peer connections
+      peers=$($cli getnetworkinfo | ${pkgs.jq}/bin/jq -r '.connections' 2>/dev/null || echo 0)
+
+      cat > "$TMPFILE" <<EOF
+      # HELP bitcoin_block_height Current block height as reported by bitcoind
+      # TYPE bitcoin_block_height gauge
+      bitcoin_block_height{instance="${bitcoindInstance}",chain="${chain}"} $blocks
+      # HELP bitcoin_headers Current header height as reported by bitcoind
+      # TYPE bitcoin_headers gauge
+      bitcoin_headers{instance="${bitcoindInstance}",chain="${chain}"} $headers
+      # HELP bitcoin_time_since_last_block_seconds Seconds since the best block time
+      # TYPE bitcoin_time_since_last_block_seconds gauge
+      bitcoin_time_since_last_block_seconds{instance="${bitcoindInstance}"} $since
+      # HELP bitcoin_peers_connected Number of peer connections
+      # TYPE bitcoin_peers_connected gauge
+      bitcoin_peers_connected{instance="${bitcoindInstance}"} $peers
+      EOF
+
+      install -m 0644 -D "$TMPFILE" ${metricsFile@Q}
+      rm -f "$TMPFILE"
+    '';
+  in {
+    description = "Export bitcoind minimal metrics to node_exporter textfile collector";
+    serviceConfig = {
+      Type = "oneshot";
+      User = bitcoindUser;
+      Group = bitcoindUser;
+      ExecStart = metricsScript;
+    };
+    wants = [ "bitcoind-${bitcoindInstance}.service" ];
+    after = [ "bitcoind-${bitcoindInstance}.service" ];
+  };
+  systemd.timers."bitcoind-textfile-metrics" = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "2m";
+      OnUnitActiveSec = "30s";
+      AccuracySec = "5s";
+      Unit = "bitcoind-textfile-metrics.service";
+    };
   };
 
   # Firewall port for bitcoind is opened by the bitcoind server module
