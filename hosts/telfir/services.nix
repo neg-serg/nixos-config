@@ -265,6 +265,17 @@
             ];
           } ];
         }
+        # AdGuard Home Prometheus metrics (local admin UI)
+        {
+          job_name = "adguardhome";
+          metrics_path = "/control/metrics";
+          static_configs = [ {
+            targets = [ "127.0.0.1:3000" ];
+          } ];
+          # To protect metrics with API token later, set:
+          # bearer_token_file = "/run/secrets/adguard_metrics_token";
+          # and manage the secret via sops: sops.secrets."adguard/metrics-token".
+        }
         # Node exporter metrics from this host
         {
           job_name = "node";
