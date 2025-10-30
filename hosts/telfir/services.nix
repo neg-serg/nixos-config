@@ -253,7 +253,7 @@
 
     # Example Prometheus scrape configs for Blackbox probes (Prometheus server can be enabled later)
     prometheus = {
-      # enable = true; # Uncomment to run a local Prometheus instance
+      enable = true;
       scrapeConfigs = [
         # HTTP checks: Nextcloud status and AdGuard UI (2xx expected)
         {
