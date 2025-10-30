@@ -193,6 +193,13 @@
     };
     caddy.email = "serg.zorg@gmail.com";
 
+    # Prometheus Node Exporter (OS metrics)
+    prometheus.exporters.node = {
+      enable = true;
+      port = 9100;
+      enabledCollectors = [ "systemd" "processes" "logind" "textfile" ];
+    };
+
     # Syncthing host-specific devices and folders
     syncthing = {
       overrideDevices = true;
