@@ -193,6 +193,9 @@
       foldersList
     );
   in {
+    # AdGuard Home: enable Prometheus metrics endpoint at /control/metrics
+    adguardhome.settings.prometheus.enabled = true;
+
     smartd = {
       enable = true;
       # Full monitoring, enable automatic offline tests, persist attributes,
