@@ -333,6 +333,96 @@
           ];
         }
       ];
+      alertmanagers = [
+        {
+          static_configs = [ { targets = [ "127.0.0.1:9093" ]; } ];
+        }
+      ];
+      rules = [ ''
+groups:
+- name: base.alerts
+  rules:
+  - alert: InstanceDown
+    expr: up == 0
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Instance {{ $labels.instance }} down"
+      description: "Job {{ $labels.job }} on {{ $labels.instance }} is down for 2m."
+
+  - alert: HighCPULoad
+    expr: avg by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[5m])) > 0.9
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU load on {{ $labels.instance }}"
+      description: ">90% average CPU usage in 5m."
+
+  - alert: HighMemoryUsage
+    expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory usage on {{ $labels.instance }}"
+      description: ">90% memory used for 10m."
+
+  - alert: DiskSpaceLow
+    expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|overlay",mountpoint!~"/(proc|sys|run)($|/)",device!~"^ram|^loop"} / node_filesystem_size_bytes{fstype!~"tmpfs|ramfs|overlay",mountpoint!~"/(proc|sys|run)($|/)",device!~"^ram|^loop"}) < 0.10
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Low disk space on {{ $labels.instance }} {{ $labels.mountpoint }}"
+      description: "Free space <10% for 10m."
+
+  - alert: BlackboxHttpProbeFail
+    expr: probe_success{job=~"blackbox-http|blackbox-https-insecure"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "HTTP probe failing: {{ $labels.instance }}"
+      description: "Blackbox HTTP probe returns failure."
+
+  - alert: BlackboxIcmpProbeFail
+    expr: probe_success{job="blackbox-icmp"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "ICMP probe failing: {{ $labels.instance }}"
+      description: "Blackbox ICMP probe returns failure."
+
+  - alert: BlackboxDnsProbeFail
+    expr: probe_success{job="blackbox-dns"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "DNS probe failing: {{ $labels.instance }}"
+      description: "Blackbox DNS probe returns failure."
+
+  - alert: HighHttpLatency
+    expr: probe_duration_seconds{job=~"blackbox-http|blackbox-https-insecure"} > 2
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High HTTP latency: {{ $labels.instance }}"
+      description: ">2s average probe duration for 5m."
+
+  - alert: HighDnsLatency
+    expr: probe_duration_seconds{job="blackbox-dns"} > 2
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High DNS latency: {{ $labels.instance }}"
+      description: ">2s average DNS probe duration for 5m."
+'' ];
       # Expose Prometheus UI only on br0 (module has no openFirewall option)
       # so we open firewall per-interface next to the service for clarity.
       # Port follows services.prometheus.port (default 9090).
@@ -343,6 +433,28 @@
     };
 
     # (firewall rule for Prometheus UI is defined at top-level below)
+
+    # Alertmanager service (exposed via firewall on br0 only)
+    prometheus.alertmanager = {
+      enable = true;
+      configuration = {
+        route = {
+          receiver = "default";
+          group_by = [ "alertname" "job" "instance" ];
+          group_wait = "30s";
+          group_interval = "5m";
+          repeat_interval = "3h";
+        };
+        receivers = [ { name = "default"; } ];
+        inhibit_rules = [
+          {
+            source_matchers = [ "severity = critical" ];
+            target_matchers = [ "severity = warning" ];
+            equal = [ "alertname" "instance" "job" ];
+          }
+        ];
+      };
+    };
 
     # Syncthing host-specific devices and folders
     syncthing = {
@@ -355,8 +467,8 @@
     # Bitcoind instance is now managed by modules/servers/bitcoind
   };
 
-  # Firewall: allow Prometheus UI on br0 only (service lacks openFirewall option)
-  networking.firewall.interfaces.br0.allowedTCPPorts = [ 9090 ];
+  # Firewall: allow Prometheus UI and Alertmanager on br0 only
+  networking.firewall.interfaces.br0.allowedTCPPorts = [ 9090 9093 ];
 
   # Firewall port for bitcoind is opened by the bitcoind server module
 
