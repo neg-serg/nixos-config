@@ -41,6 +41,7 @@ Examples and ports
     - `serveExpired.enable` (default true), `serveExpired.maxTtl` (default 3600), `serveExpired.replyTtl` (default 30)
     - `cacheMinTtl` / `cacheMaxTtl` (null by default = leave Unbound defaults)
     - Logging: `verbosity` (default 1), and toggles `logQueries`, `logReplies`, `logLocalActions`, `logServfail` (all default false)
+  - Monitoring: Prometheus exporter + Grafana dashboard for DNS latency, DNSSEC validation and cache hits — see `docs/unbound-metrics.md`.
 
 ## DNS Healthcheck
 

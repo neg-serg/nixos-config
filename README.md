@@ -419,3 +419,6 @@ Tuning tips:
   - Suggested stack: `vmagent -> VictoriaMetrics single -> vmui`.
   - Very low RAM/CPU at 10–15 s scrape and 7–14 days retention.
   - Not enabled here by default; can be added later as a separate module if desired.
+## DNS Resolver Monitoring
+
+- Unbound + Prometheus + Grafana dashboard for DNS quality (latency, DNSSEC validation, cache hits): see `docs/unbound-metrics.md`.

@@ -112,3 +112,6 @@ in {
 - Показать текущий CPU‑набор процесса: `grep Cpus_allowed_list /proc/<pid>/status`.
 - Скопировать пер‑игровой запуск: `game-run %command%` (Steam), `game-run <path>` (вне Steam).
 
+## Мониторинг DNS‑резолвера
+
+- Unbound + Prometheus + Grafana для оценивания качества DNS (задержки, DNSSEC‑валидация, кэш‑хиты): см. `docs/unbound-metrics.ru.md`.
