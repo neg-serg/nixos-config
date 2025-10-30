@@ -168,6 +168,17 @@
       # Polling interval for smartd (seconds). Default is ~30 minutes; set to 1 hour.
       extraOptions = [ "--interval=3600" ];
     };
+
+    # Persistent journald logs with retention and rate limiting
+    journald = {
+      storage = "persistent";
+      extraConfig = ''
+        SystemMaxUse=1G
+        MaxRetentionSec=1month
+        RateLimitIntervalSec=30s
+        RateLimitBurst=1000
+      '';
+    };
     # Keep Plasma/X11 off for this host
     desktopManager.plasma6.enable = lib.mkForce false;
     xserver.enable = lib.mkForce false;
