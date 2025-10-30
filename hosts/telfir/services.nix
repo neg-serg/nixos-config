@@ -241,6 +241,15 @@
       firewallFilter = "-i br0 -p tcp -m tcp --dport 9100";
     };
 
+    # Prometheus Unbound Exporter (DNS resolver metrics)
+    # Exposes metrics gathered via local unbound-control on 127.0.0.1:8953
+    # Default exporter port is 9167; keep it localhost-only (no openFirewall)
+    prometheus.exporters.unbound = {
+      enable = true;
+      port = 9167;
+      openFirewall = false;
+    };
+
     # Prometheus Blackbox Exporter (HTTP/DNS/ICMP probes)
     prometheus.exporters.blackbox = {
       enable = true;
@@ -299,6 +308,15 @@
           static_configs = [ {
             targets = [
               "127.0.0.1:${toString config.services.prometheus.port}"
+            ];
+          } ];
+        }
+        # Unbound exporter metrics
+        {
+          job_name = "unbound";
+          static_configs = [ {
+            targets = [
+              "127.0.0.1:${toString config.services.prometheus.exporters.unbound.port}"
             ];
           } ];
         }
@@ -547,6 +565,17 @@ groups:
     sopsFile = ../../../secrets/alertmanager.env.sops;
     format = "binary"; # do not parse; pass through as plaintext env file
   };
+
+  # Add Prometheus datasource to Grafana so Unbound metrics are browsable out-of-the-box
+  services.grafana.provision.datasources.settings.datasources = [
+    {
+      name = "Prometheus";
+      type = "prometheus";
+      access = "proxy";
+      url = "http://127.0.0.1:${toString config.services.prometheus.port}";
+      isDefault = false;
+    }
+  ];
 
   # SOPS secret for Grafana admin password
   sops.secrets."grafana/admin_password" = let
