@@ -5,17 +5,20 @@
 }: let
   mkPostBoot = _:
     lib.mkIf true {
+      # Defer the unit under the post-boot target without introducing
+      # ordering cycles. Do not add After=graphical.target here because
+      # these units are indirectly wanted by graphical.target via the
+      # post-boot target itself.
       wantedBy = lib.mkForce ["post-boot.target"];
-      # Start after graphical session is reached; do NOT depend on post-boot.target itself
-      # to avoid ordering cycles (post-boot wants the service; the service shouldn't wait on post-boot)
-      after = ["graphical.target"];
     };
 in {
   # Define a target for non-critical background services that can start after desktop is up.
   systemd.targets.post-boot = {
     description = "Post-boot background services";
+    # Have graphical.target pull this target in; do NOT set After=graphical.target here,
+    # otherwise graphical.target → post-boot.target and post-boot.target → After=graphical.target
+    # creates an ordering cycle. Individual services added to post-boot are ordered After=graphical.target.
     wantedBy = ["graphical.target"]; # reached along with graphical session
-    after = ["graphical.target"]; # order to start after reaching graphical
   };
 
   # Defer heavier services to post-boot when enabled.
@@ -48,8 +51,7 @@ in {
     adguardhome = lib.mkIf (config.services.adguardhome.enable or false) (
       (mkPostBoot "adguardhome") // {
         # Ensure DNS chain is ready before AdGuard binds on 53
-        after = ["graphical.target"]
-          ++ lib.optional (config.services.unbound.enable or false) "unbound.service"
+        after = lib.optional (config.services.unbound.enable or false) "unbound.service"
           ++ lib.optional (config.services.resolved.enable or false) "systemd-resolved.service";
         wants = lib.optional (config.services.unbound.enable or false) "unbound.service";
       }
