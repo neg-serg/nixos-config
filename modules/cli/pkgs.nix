@@ -18,7 +18,7 @@ in {
     pkgs.diffutils # classic diff utils
     pkgs.doggo # DNS client for humans
     pkgs.dos2unix # file conversion
-    pkgs.du-dust # better du
+    pkgs.dust # better du
     pkgs.duf # better df
     pkgs.eza # modern 'ls' replacement
     pkgs.fd # better find
