@@ -315,7 +315,16 @@
           ];
         }
       ];
+      # Expose Prometheus UI only on br0 (module has no openFirewall option)
+      # so we open firewall per-interface next to the service for clarity.
+      # Port follows services.prometheus.port (default 9090).
+      # If you change the port, update this list accordingly.
+      # Note: this is interface-scoped, not global.
+      #
+      # If you prefer nftables rules string, we can switch to extraRules.
     };
+
+    # (firewall rule for Prometheus UI is defined at top-level below)
 
     # Syncthing host-specific devices and folders
     syncthing = {
@@ -327,6 +336,9 @@
     };
     # Bitcoind instance is now managed by modules/servers/bitcoind
   };
+
+  # Firewall: allow Prometheus UI on br0 only (service lacks openFirewall option)
+  networking.firewall.interfaces.br0.allowedTCPPorts = [ 9090 ];
 
   # Firewall port for bitcoind is opened by the bitcoind server module
 
