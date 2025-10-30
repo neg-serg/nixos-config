@@ -255,6 +255,24 @@
     prometheus = {
       enable = true;
       scrapeConfigs = [
+        # Prometheus self-scrape (UI/metrics)
+        {
+          job_name = "prometheus";
+          static_configs = [ {
+            targets = [
+              "127.0.0.1:${toString config.services.prometheus.port}"
+            ];
+          } ];
+        }
+        # Node exporter metrics from this host
+        {
+          job_name = "node";
+          static_configs = [ {
+            targets = [
+              "127.0.0.1:${toString config.services.prometheus.exporters.node.port}"
+            ];
+          } ];
+        }
         # HTTP checks: Nextcloud status and AdGuard UI (2xx expected)
         {
           job_name = "blackbox-http";
