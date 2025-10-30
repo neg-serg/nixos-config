@@ -438,12 +438,13 @@ groups:
     prometheus.alertmanager = {
       enable = true;
       configuration = {
-        # SMTP settings: deliver via local MTA on 127.0.0.1:25.
-        # For external SMTP (e.g., Gmail), set up a relay and update these fields accordingly.
+        # SMTP via Gmail (use app password via environment file below)
         global = {
-          smtp_smarthost = "127.0.0.1:25";
-          smtp_from = "prometheus@telfir";
-          smtp_require_tls = false;
+          smtp_smarthost = "smtp.gmail.com:587";
+          smtp_from = "serg.zorg@gmail.com";
+          smtp_auth_username = "$ALERT_SMTP_USER";
+          smtp_auth_password = "$ALERT_SMTP_PASS";
+          smtp_require_tls = true;
         };
         route = {
           receiver = "email-serg";
@@ -472,6 +473,10 @@ groups:
           }
         ];
       };
+      # Load credentials from SOPS-managed dotenv if present
+      environmentFile = lib.mkIf (builtins.pathExists (../../.. + "/secrets/alertmanager.env.sops")) (
+        config.sops.secrets."alertmanager/env".path
+      );
     };
 
     # Syncthing host-specific devices and folders
@@ -487,6 +492,12 @@ groups:
 
   # Firewall: allow Prometheus UI and Alertmanager on br0 only
   networking.firewall.interfaces.br0.allowedTCPPorts = [ 9090 9093 ];
+
+  # SOPS secret for Alertmanager SMTP credentials (dotenv with ALERT_SMTP_USER/PASS)
+  sops.secrets."alertmanager/env" = lib.mkIf (builtins.pathExists (../../.. + "/secrets/alertmanager.env.sops")) {
+    sopsFile = ../../../secrets/alertmanager.env.sops;
+    format = "binary"; # do not parse; pass through as plaintext env file
+  };
 
   # Firewall port for bitcoind is opened by the bitcoind server module
 
