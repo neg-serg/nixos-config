@@ -250,6 +250,17 @@
       openFirewall = false;
     };
 
+    # Prometheus PHP-FPM Exporter (Nextcloud PHP pool)
+    # Scrapes php-fpm status via unix socket of the 'nextcloud' pool
+    prometheus.exporters."php-fpm" = {
+      enable = true;
+      # Default port is 9253; keep local-only
+      openFirewall = false;
+      extraFlags = [
+        "--phpfpm.scrape-uri=unix:///run/phpfpm/nextcloud.sock;/status"
+      ];
+    };
+
     # Prometheus Blackbox Exporter (HTTP/DNS/ICMP probes)
     prometheus.exporters.blackbox = {
       enable = true;
@@ -337,6 +348,15 @@
           static_configs = [ {
             targets = [
               "127.0.0.1:${toString config.services.prometheus.exporters.node.port}"
+            ];
+          } ];
+        }
+        # PHP-FPM exporter (Nextcloud pool)
+        {
+          job_name = "phpfpm";
+          static_configs = [ {
+            targets = [
+              "127.0.0.1:${toString config.services.prometheus.exporters."php-fpm".port}"
             ];
           } ];
         }

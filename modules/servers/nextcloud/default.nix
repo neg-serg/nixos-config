@@ -48,6 +48,8 @@ in {
       "listen.owner" = "nextcloud";
       "listen.group" = "nextcloud";
       "listen.mode" = "0660";
+      # Enable status endpoint so php-fpm exporter can scrape via unix socket
+      "pm.status_path" = "/status";
     };
   };
 }
