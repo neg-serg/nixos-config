@@ -633,6 +633,18 @@ groups:
   systemd.services."prometheus-php-fpm-exporter" = {
     after = lib.mkAfter [ "phpfpm-nextcloud.service" "phpfpm.service" "nextcloud-setup.service" ];
     wants = lib.mkAfter [ "phpfpm-nextcloud.service" ];
+    serviceConfig = {
+      # Run under the Prometheus user instead of a dynamic sandbox user
+      DynamicUser = lib.mkForce false;
+      User = lib.mkForce "prometheus";
+      Group = lib.mkForce "prometheus";
+      # Ensure access to the php-fpm socket group
+      SupplementaryGroups = [ "nginx" ];
+      # Allow connecting to the php-fpm unix socket
+      RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
+      Restart = "on-failure";
+      RestartSec = 5;
+    };
   };
 
   # Bitcoind minimal metrics → node_exporter textfile collector
@@ -749,6 +761,9 @@ groups:
       isSystemUser = true;
       group = "nginx";
     };
+    # Allow Caddy and Prometheus exporter to access php-fpm socket via shared group
+    users.caddy.extraGroups = [ "nginx" ];
+    users.prometheus.extraGroups = [ "nginx" ];
     groups.nginx = {};
   };
 
