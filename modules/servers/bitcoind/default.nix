@@ -38,6 +38,8 @@ in {
         delaycompress = true;
         copytruncate = true;
         size = "50M";
+        # Rotate using bitcoind instance user/group to allow non-root-owned paths
+        su = "bitcoind-${cfg.instance} bitcoind-${cfg.instance}";
       };
     }
   ]);
