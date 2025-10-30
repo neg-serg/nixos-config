@@ -103,10 +103,15 @@ in {
       };
     };
 
-    # Per-interface firewall opening if requested
-    networking.firewall.interfaces = mkIf cfg.openFirewall (
-      lib.genAttrs cfg.firewallInterfaces (iface: { allowedTCPPorts = [ cfg.port ]; })
-    );
+    # Per-interface firewall openings (Grafana port and, optionally, Caddy proxy ports)
+    networking.firewall.interfaces = lib.mkMerge [
+      (mkIf cfg.openFirewall (
+        lib.genAttrs cfg.firewallInterfaces (iface: { allowedTCPPorts = [ cfg.port ]; })
+      ))
+      (mkIf (cfg.caddyProxy.enable && cfg.caddyProxy.openFirewall) (
+        lib.genAttrs cfg.caddyProxy.firewallInterfaces (iface: { allowedTCPPorts = [ 80 443 ]; })
+      ))
+    ];
 
     # Optional: Caddy reverse proxy with HTTPS
     # Opens 80/443 per-interface and sets up a vhost that proxies to Grafana
@@ -131,8 +136,6 @@ in {
       '';
     };
 
-    networking.firewall.interfaces = mkIf (cfg.caddyProxy.enable && cfg.caddyProxy.openFirewall) (
-      lib.genAttrs cfg.caddyProxy.firewallInterfaces (iface: { allowedTCPPorts = [ 80 443 ]; })
-    );
+    # nothing else
   };
 }

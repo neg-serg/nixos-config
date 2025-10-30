@@ -109,7 +109,10 @@
     # Admin via SOPS secret (if present)
     adminUser = "admin";
     # Point to the SOPS-managed file below
-    adminPasswordFile = lib.mkIf (builtins.pathExists (../../.. + "/secrets/grafana-admin-password.sops")) (
+    adminPasswordFile = let
+      yaml = ../../.. + "/secrets/grafana-admin-password.sops.yaml";
+      bin = ../../.. + "/secrets/grafana-admin-password.sops";
+    in lib.mkIf (builtins.pathExists yaml || builtins.pathExists bin) (
       config.sops.secrets."grafana/admin_password".path
     );
     # HTTPS via Caddy on grafana.telfir
@@ -543,8 +546,12 @@ groups:
   };
 
   # SOPS secret for Grafana admin password
-  sops.secrets."grafana/admin_password" = lib.mkIf (builtins.pathExists (../../.. + "/secrets/grafana-admin-password.sops")) {
-    sopsFile = ../../../secrets/grafana-admin-password.sops;
+  sops.secrets."grafana/admin_password" = let
+    yaml = ../../../secrets/grafana-admin-password.sops.yaml;
+    bin = ../../../secrets/grafana-admin-password.sops;
+  in lib.mkIf (builtins.pathExists yaml || builtins.pathExists bin) {
+    sopsFile = if builtins.pathExists yaml then yaml else bin;
+    format = "binary"; # provide plain string to $__file provider
   };
 
   # Firewall port for bitcoind is opened by the bitcoind server module
