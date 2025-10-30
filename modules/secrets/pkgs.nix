@@ -3,7 +3,7 @@
     pkgs.age
     pkgs.opensc
     pkgs.p11-kit
-    pkgs.pcsctools
+    pkgs.pcsc-tools
     pkgs.sops
     pkgs.ssh-to-age
   ];
