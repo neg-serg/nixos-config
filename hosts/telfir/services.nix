@@ -679,10 +679,10 @@ groups:
       cat > "$TMPFILE" <<EOF
       # HELP bitcoin_block_height Current block height as reported by bitcoind
       # TYPE bitcoin_block_height gauge
-      bitcoin_block_height{instance="${bitcoindInstance}",chain="${chain}"} $blocks
+      bitcoin_block_height{instance="${bitcoindInstance}",chain="$chain"} $blocks
       # HELP bitcoin_headers Current header height as reported by bitcoind
       # TYPE bitcoin_headers gauge
-      bitcoin_headers{instance="${bitcoindInstance}",chain="${chain}"} $headers
+      bitcoin_headers{instance="${bitcoindInstance}",chain="$chain"} $headers
       # HELP bitcoin_time_since_last_block_seconds Seconds since the best block time
       # TYPE bitcoin_time_since_last_block_seconds gauge
       bitcoin_time_since_last_block_seconds{instance="${bitcoindInstance}"} $since
