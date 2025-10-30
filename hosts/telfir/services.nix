@@ -112,9 +112,9 @@
     adminPasswordFile = let
       yaml = ../../.. + "/secrets/grafana-admin-password.sops.yaml";
       bin = ../../.. + "/secrets/grafana-admin-password.sops";
-    in lib.mkIf (builtins.pathExists yaml || builtins.pathExists bin) (
-      config.sops.secrets."grafana/admin_password".path
-    );
+    in if (builtins.pathExists yaml || builtins.pathExists bin)
+       then config.sops.secrets."grafana/admin_password".path
+       else null;
     # HTTPS via Caddy on grafana.telfir
     caddyProxy.enable = true;
     caddyProxy.domain = "grafana.telfir";
@@ -621,6 +621,18 @@ groups:
   in lib.mkIf (builtins.pathExists yaml || builtins.pathExists bin) {
     sopsFile = if builtins.pathExists yaml then yaml else bin;
     format = "binary"; # provide plain string to $__file provider
+    # Ensure grafana can read the secret when referenced via $__file{}
+    owner = "grafana";
+    group = "grafana";
+    mode = "0400";
+    # Restart Grafana if the secret changes
+    restartUnits = [ "grafana.service" ];
+  };
+
+  # Start php-fpm exporter after the Nextcloud PHP-FPM pool is up to avoid startup failures
+  systemd.services."prometheus-php-fpm-exporter" = {
+    after = lib.mkAfter [ "phpfpm-nextcloud.service" "phpfpm.service" "nextcloud-setup.service" ];
+    wants = lib.mkAfter [ "phpfpm-nextcloud.service" ];
   };
 
   # Bitcoind minimal metrics → node_exporter textfile collector
