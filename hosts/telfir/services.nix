@@ -646,34 +646,34 @@ groups:
     metricsFile = "${textfileDir}/bitcoind_${bitcoindInstance}.prom";
     metricsScript = pkgs.writeShellScript "bitcoind-textfile-metrics.sh" ''
       set -euo pipefail
-      DATADIR=${dataDir@Q}
-      TMPFILE=$(mktemp)
+      TMPFILE="$(mktemp)"
       ts() { date +%s; }
 
-      cli='${pkgs.bitcoind}/bin/bitcoin-cli -datadir='"$DATADIR"''
+      CLI="${pkgs.bitcoind}/bin/bitcoin-cli -datadir ${lib.escapeShellArg dataDir}"
 
       # Basic info (avoid heavy calls)
-      blocks=$($cli getblockcount || echo 0)
+      blocks=$($CLI getblockcount 2>/dev/null || echo 0)
       # headers and chain via blockchaininfo
-      headers=$($cli getblockchaininfo | ${pkgs.jq}/bin/jq -r '.headers' 2>/dev/null || echo 0)
-      chain=$($cli getblockchaininfo | ${pkgs.jq}/bin/jq -r '.chain' 2>/dev/null || echo unknown)
+      info=$($CLI getblockchaininfo 2>/dev/null || echo '{}')
+      headers=$(printf '%s\n' "$info" | ${pkgs.jq}/bin/jq -r '.headers // 0' 2>/dev/null || echo 0)
+      chain=$(printf '%s\n' "$info" | ${pkgs.jq}/bin/jq -r '.chain // "unknown"' 2>/dev/null || echo unknown)
 
       # Determine best block time for staleness metric
-      besthash=$($cli getbestblockhash 2>/dev/null || echo)
-      if [ -n ""$besthash"" ]; then
-        block_time=$($cli getblockheader "$besthash" 2>/dev/null | ${pkgs.jq}/bin/jq -r '.time' 2>/dev/null || echo 0)
+      besthash=$($CLI getbestblockhash 2>/dev/null || echo)
+      if [ -n "$besthash" ]; then
+        block_time=$($CLI getblockheader "$besthash" 2>/dev/null | ${pkgs.jq}/bin/jq -r '.time // 0' 2>/dev/null || echo 0)
       else
         block_time=0
       fi
       now=$(ts)
-      if [ "${block_time}" -gt 0 ] 2>/dev/null; then
+      if [ "$block_time" -gt 0 ] 2>/dev/null; then
         since=$(( now - block_time ))
       else
         since=0
       fi
 
       # Peer connections
-      peers=$($cli getnetworkinfo | ${pkgs.jq}/bin/jq -r '.connections' 2>/dev/null || echo 0)
+      peers=$($CLI getnetworkinfo 2>/dev/null | ${pkgs.jq}/bin/jq -r '.connections // 0' 2>/dev/null || echo 0)
 
       cat > "$TMPFILE" <<EOF
       # HELP bitcoin_block_height Current block height as reported by bitcoind
@@ -690,7 +690,7 @@ groups:
       bitcoin_peers_connected{instance="${bitcoindInstance}"} $peers
       EOF
 
-      install -m 0644 -D "$TMPFILE" ${metricsFile@Q}
+      install -m 0644 -D "$TMPFILE" ${lib.escapeShellArg metricsFile}
       rm -f "$TMPFILE"
     '';
   in {
