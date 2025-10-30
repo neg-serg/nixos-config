@@ -23,11 +23,6 @@
   # Enabled via modules/hardware/audio/noise by default for this host
   # (If you prefer toggling via an option, we can expose one later.)
 
-  # Hyprland only (no display manager / no Plasma sessions)
-  # Plasma session module removed; keep host-level hard disables below.
-  # Hard-disable Plasma/X11 stack at the host level to avoid accidental pulls
-  # Flake preflight checks disabled
-
   # Host-specific system policy
   system.autoUpgrade.enable = false;
   nix = {
@@ -164,6 +159,15 @@
       foldersList
     );
   in {
+    smartd = {
+      enable = true;
+      # Full monitoring, enable automatic offline tests, persist attributes,
+      # temperature thresholds for NVMe, and schedule self-tests:
+      # - Short test daily at 02:00; long test weekly on Sunday at 04:00
+      defaults.monitored = "-a -o on -S on -W 5,70,80 -s (S/../.././02|L/../../7/04)";
+      # Polling interval for smartd (seconds). Default is ~30 minutes; set to 1 hour.
+      extraOptions = [ "--interval=3600" ];
+    };
     # Keep Plasma/X11 off for this host
     desktopManager.plasma6.enable = lib.mkForce false;
     xserver.enable = lib.mkForce false;
