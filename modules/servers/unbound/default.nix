@@ -40,34 +40,33 @@ let
 in {
   config = lib.mkIf cfg.enable (
     let
-      yn = b: if b then "yes" else "no";
       baseServer = {
         interface = ["127.0.0.1"];
         port = 5353;
-        "do-tcp" = "yes";
-        "do-udp" = "yes";
-        "so-reuseport" = "yes";
+        "do-tcp" = true;
+        "do-udp" = true;
+        "so-reuseport" = true;
         "edns-buffer-size" = 1232;
         # Enable detailed runtime statistics for exporters (histograms, counters)
-        "extended-statistics" = "yes";
+        "extended-statistics" = true;
         "statistics-interval" = 0; # disable periodic logging; exporter pulls on demand
-        "statistics-cumulative" = "yes";
-        "minimal-responses" = yn cfg.tuning.minimalResponses;
-        "prefetch" = yn cfg.tuning.prefetch;
-        "prefetch-key" = yn cfg.tuning.prefetchKey;
-        "aggressive-nsec" = yn cfg.tuning.aggressiveNsec;
-        "qname-minimisation" = "yes";
-        "harden-dnssec-stripped" = "yes";
-        "harden-glue" = "yes";
-        "harden-below-nxdomain" = "yes";
+        "statistics-cumulative" = true;
+        "minimal-responses" = cfg.tuning.minimalResponses;
+        "prefetch" = cfg.tuning.prefetch;
+        "prefetch-key" = cfg.tuning.prefetchKey;
+        "aggressive-nsec" = cfg.tuning.aggressiveNsec;
+        "qname-minimisation" = true;
+        "harden-dnssec-stripped" = true;
+        "harden-glue" = true;
+        "harden-below-nxdomain" = true;
         verbosity = cfg.tuning.verbosity;
       } // lib.optionalAttrs cfg.dnssec.enable {
         "auto-trust-anchor-file" = "/var/lib/unbound/root.key";
-        "val-permissive-mode" = "no";
+        "val-permissive-mode" = false;
       } // lib.optionalAttrs (cfg.mode == "dot") {
         "tls-cert-bundle" = "/etc/ssl/certs/ca-bundle.crt";
       } // lib.optionalAttrs (cfg.tuning.serveExpired.enable) {
-        "serve-expired" = "yes";
+        "serve-expired" = true;
         "serve-expired-ttl" = cfg.tuning.serveExpired.maxTtl;
         "serve-expired-reply-ttl" = cfg.tuning.serveExpired.replyTtl;
       } // lib.optionalAttrs (cfg.tuning.cacheMinTtl != null) {
@@ -75,10 +74,10 @@ in {
       } // lib.optionalAttrs (cfg.tuning.cacheMaxTtl != null) {
         "cache-max-ttl" = cfg.tuning.cacheMaxTtl;
       } // {
-        "log-queries" = yn cfg.tuning.logQueries;
-        "log-replies" = yn cfg.tuning.logReplies;
-        "log-local-actions" = yn cfg.tuning.logLocalActions;
-        "log-servfail" = yn cfg.tuning.logServfail;
+        "log-queries" = cfg.tuning.logQueries;
+        "log-replies" = cfg.tuning.logReplies;
+        "log-local-actions" = cfg.tuning.logLocalActions;
+        "log-servfail" = cfg.tuning.logServfail;
       };
     in {
       services.unbound = {
@@ -87,10 +86,10 @@ in {
           server = baseServer;
           # Allow local unbound-control for Prometheus exporter without TLS certs
           "remote-control" = {
-            "control-enable" = "yes";
+            "control-enable" = true;
             "control-interface" = "127.0.0.1";
             "control-port" = 8953;
-            "control-use-cert" = "no";
+            "control-use-cert" = false;
           };
         } // lib.optionalAttrs (mkForwardZone != null) {
           "forward-zone" = [ mkForwardZone ];
