@@ -92,6 +92,7 @@ in {
         enable = true;
         datasources.settings.datasources = [
           {
+            uid = "loki";
             name = "Loki";
             type = "loki";
             access = "proxy";

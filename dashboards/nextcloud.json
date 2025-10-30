@@ -1,0 +1,68 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 1,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Nextcloud HTTPS latency (status.php)",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "probe_duration_seconds{job=\"blackbox-https-insecure\", instance=\"https://telfir/status.php\"}", "refId": "A"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "PHP-FPM active vs idle (by pool)",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "sum by (pool) (php_fpm_active_processes)", "refId": "A"},
+        {"expr": "sum by (pool) (php_fpm_idle_processes)", "refId": "B"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "PHP-FPM listen queue",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "max by (pool) (php_fpm_listen_queue)", "refId": "A"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Max children reached",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "increase(php_fpm_max_children_reached[1h])", "refId": "A"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Accepted connections (rate)",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 24},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "sum by (pool) (rate(php_fpm_accepted_connections_total[5m]))", "refId": "A"}
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["nextcloud", "php-fpm"],
+  "templating": {"list": []},
+  "time": {"from": "now-24h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Nextcloud",
+  "uid": "nextcloud-monitoring",
+  "version": 1,
+  "weekStart": ""
+}
