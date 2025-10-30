@@ -438,14 +438,32 @@ groups:
     prometheus.alertmanager = {
       enable = true;
       configuration = {
+        # SMTP settings: deliver via local MTA on 127.0.0.1:25.
+        # For external SMTP (e.g., Gmail), set up a relay and update these fields accordingly.
+        global = {
+          smtp_smarthost = "127.0.0.1:25";
+          smtp_from = "prometheus@telfir";
+          smtp_require_tls = false;
+        };
         route = {
-          receiver = "default";
+          receiver = "email-serg";
           group_by = [ "alertname" "job" "instance" ];
           group_wait = "30s";
           group_interval = "5m";
           repeat_interval = "3h";
         };
-        receivers = [ { name = "default"; } ];
+        receivers = [
+          {
+            name = "email-serg";
+            email_configs = [
+              {
+                to = "serg.zorg@gmail.com";
+                send_resolved = true;
+              }
+            ];
+          }
+          { name = "default"; }
+        ];
         inhibit_rules = [
           {
             source_matchers = [ "severity = critical" ];
