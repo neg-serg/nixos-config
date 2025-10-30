@@ -48,6 +48,10 @@ in {
         "do-udp" = "yes";
         "so-reuseport" = "yes";
         "edns-buffer-size" = 1232;
+        # Enable detailed runtime statistics for exporters (histograms, counters)
+        "extended-statistics" = "yes";
+        "statistics-interval" = 0; # disable periodic logging; exporter pulls on demand
+        "statistics-cumulative" = "yes";
         "minimal-responses" = yn cfg.tuning.minimalResponses;
         "prefetch" = yn cfg.tuning.prefetch;
         "prefetch-key" = yn cfg.tuning.prefetchKey;
@@ -81,6 +85,13 @@ in {
         enable = true;
         settings = {
           server = baseServer;
+          # Allow local unbound-control for Prometheus exporter without TLS certs
+          "remote-control" = {
+            "control-enable" = "yes";
+            "control-interface" = "127.0.0.1";
+            "control-port" = 8953;
+            "control-use-cert" = "no";
+          };
         } // lib.optionalAttrs (mkForwardZone != null) {
           "forward-zone" = [ mkForwardZone ];
         };
