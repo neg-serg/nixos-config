@@ -556,6 +556,10 @@ groups:
 
   # Firewall port for bitcoind is opened by the bitcoind server module
 
+  # Disable runtime logrotate check (build-time check remains). Avoids false negatives
+  # when rotating files under non-standard paths or missing until first run.
+  systemd.services.logrotate-checkconf.enable = false;
+
   # Disable AppArmor PAM integration for sudo since the kernel lacks AppArmor hats
   security.pam.services = {
     sudo.enableAppArmor = lib.mkForce false;
