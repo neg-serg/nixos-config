@@ -88,6 +88,8 @@
 
   # Disable Netdata on this host (keep other monitoring like sysstat)
   monitoring.netdata.enable = false;
+  # Enable centralized logs (Loki + Promtail)
+  monitoring.logs.enable = true;
 
   # Disable RNNoise virtual mic for this host by default
   hardware.audio.rnnoise.enable = false;
