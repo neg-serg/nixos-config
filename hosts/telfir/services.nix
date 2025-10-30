@@ -203,6 +203,45 @@
       firewallFilter = "-i br0 -p tcp -m tcp --dport 9100";
     };
 
+    # Prometheus Blackbox Exporter (HTTP/DNS/ICMP probes)
+    prometheus.exporters.blackbox = {
+      enable = true;
+      # Expose on default port and open only on br0
+      port = 9115;
+      openFirewall = true;
+      firewallFilter = "-i br0 -p tcp -m tcp --dport 9115";
+      # Minimal modules: HTTP 2xx, TCP connect, ICMP ping (IPv4), DNS A lookup for example.com
+      configFile = pkgs.writeText "blackbox.yml" ''
+        modules:
+          http_2xx:
+            prober: http
+            timeout: 5s
+            http:
+              method: GET
+              valid_http_versions: ["HTTP/1.1", "HTTP/2"]
+
+          tcp_connect:
+            prober: tcp
+            timeout: 5s
+
+          icmp:
+            prober: icmp
+            timeout: 5s
+            icmp:
+              preferred_ip_protocol: ip4
+
+          dns:
+            prober: dns
+            timeout: 5s
+            dns:
+              transport_protocol: udp
+              preferred_ip_protocol: ip4
+              query_class: IN
+              query_type: A
+              query_name: example.com
+      '';
+    };
+
     # Syncthing host-specific devices and folders
     syncthing = {
       overrideDevices = true;
