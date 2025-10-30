@@ -197,7 +197,8 @@
     prometheus.exporters.node = {
       enable = true;
       port = 9100;
-      enabledCollectors = [ "systemd" "processes" "logind" "textfile" ];
+      # Add extra collectors on top of defaults
+      enabledCollectors = [ "systemd" "processes" "logind" "hwmon" ];
       # Open firewall specifically for br0 interface via exporter module
       openFirewall = true;
       firewallFilter = "-i br0 -p tcp -m tcp --dport 9100";
