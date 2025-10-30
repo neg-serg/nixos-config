@@ -90,6 +90,19 @@
   monitoring.netdata.enable = false;
   # Enable centralized logs (Loki + Promtail)
   monitoring.logs.enable = true;
+  # Expose Loki on LAN (br0) and enable Grafana with Loki datasource
+  monitoring.loki = {
+    listenAddress = "0.0.0.0";
+    openFirewall = true;
+    firewallInterfaces = [ "br0" ];
+  };
+  monitoring.grafana = {
+    enable = true;
+    port = 3030;
+    listenAddress = "0.0.0.0";
+    openFirewall = true;
+    firewallInterfaces = [ "br0" ];
+  };
 
   # Disable RNNoise virtual mic for this host by default
   hardware.audio.rnnoise.enable = false;

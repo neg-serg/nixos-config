@@ -31,6 +31,18 @@ in {
       default = 30;
       description = "Log retention period in days (filesystem storage).";
     };
+
+    openFirewall = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Open firewall for Loki HTTP port.";
+    };
+
+    firewallInterfaces = mkOption {
+      type = types.listOf types.str;
+      default = [ "br0" ];
+      description = "Interfaces to allow Loki port on when openFirewall is true.";
+    };
   };
 
   config = mkIf (cfg.enable or false) {
@@ -83,5 +95,10 @@ in {
         };
       };
     };
+
+    # Per-interface firewall opening if requested
+    networking.firewall.interfaces = mkIf cfg.openFirewall (
+      lib.genAttrs cfg.firewallInterfaces (iface: { allowedTCPPorts = [ cfg.port ]; })
+    );
   };
 }
