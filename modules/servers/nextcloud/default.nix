@@ -46,7 +46,8 @@ in {
     # Explicitly override PHP-FPM pool settings for Nextcloud
     services.phpfpm.pools.nextcloud.settings = {
       "listen.owner" = "nextcloud";
-      "listen.group" = "nextcloud";
+      # Use a shared web group so both Caddy and Prometheus exporter can access the socket
+      "listen.group" = "nginx";
       "listen.mode" = "0660";
       # Enable status endpoint so php-fpm exporter can scrape via unix socket
       "pm.status_path" = "/status";
