@@ -567,7 +567,7 @@ groups:
   };
 
   # Add Prometheus datasource to Grafana so Unbound metrics are browsable out-of-the-box
-  services.grafana.provision.datasources.settings.datasources = [
+  services.grafana.provision.datasources.settings.datasources = lib.mkAfter [
     {
       name = "Prometheus";
       type = "prometheus";
