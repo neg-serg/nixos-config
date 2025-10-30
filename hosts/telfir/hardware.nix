@@ -1,7 +1,7 @@
 { pkgs, lib, ... }: {
   # Hardware and performance tuning specific to host 'telfir'
   hardware.storage.autoMount.enable = true;
-  hardware.video.amd.useMesaGit = true;
+  hardware.video.amd.useMesaGit = false;
   hardware.vr.valveIndex.enable = true;
 
   # Ensure Mesa stack for Steam/VR (64-bit only)
