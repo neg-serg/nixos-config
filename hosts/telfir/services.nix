@@ -584,6 +584,10 @@ groups:
         reporting_enabled = false;
         check_for_updates = false;
       };
+      users = {
+        # Do not fetch avatars from Gravatar (external egress from clients/Server)
+        allow_gravatar = false;
+      };
       news.news_feed_enabled = false;
       dashboards.min_refresh_interval = "10s";
       snapshots.external_enabled = false;
@@ -629,6 +633,14 @@ groups:
   # Disable preinstall/auto-update feature toggle explicitly via env (Grafana 10/11/12)
   systemd.services.grafana.environment = {
     GF_FEATURE_TOGGLES_DISABLE = "preinstallAutoUpdate";
+  };
+
+  # Restrict Grafana network egress to loopback only.
+  # Caddy proxies from LAN to 127.0.0.1, and datasources (Loki/Prometheus) are local.
+  # This blocks accidental outbound calls (updates, gravatar, external plugins, etc.).
+  systemd.services.grafana.serviceConfig = {
+    IPAddressDeny = "any";
+    IPAddressAllow = [ "127.0.0.0/8" "::1/128" ];
   };
 
   # Ensure plugins directory is clean on activation and ensure node_exporter textfile dir
