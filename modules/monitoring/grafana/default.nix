@@ -121,6 +121,15 @@ in {
       enable = true;
       virtualHosts."${cfg.caddyProxy.domain}".extraConfig = ''
         encode zstd gzip
+        # Access log for troubleshooting traffic to Grafana
+        log {
+          output file /var/lib/caddy/logs/grafana_access.log {
+            roll_size 50mb
+            roll_keep 3
+            roll_keep_for 48h
+          }
+          format json
+        }
         header {
           Strict-Transport-Security "max-age=15768000; includeSubDomains; preload"
           X-Content-Type-Options "nosniff"
@@ -136,6 +145,11 @@ in {
         }
       '';
     };
+
+    # Ensure Caddy can write access logs directory
+    systemd.tmpfiles.rules = lib.mkAfter [
+      "d /var/lib/caddy/logs 0750 caddy caddy - -"
+    ];
 
     # nothing else
   };
