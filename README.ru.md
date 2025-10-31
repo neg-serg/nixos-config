@@ -119,3 +119,7 @@ in {
 ## Мониторинг Nextcloud
 
 - Blackbox‑проба `https://telfir/status.php` и график задержки; опционально — экспортер PHP‑FPM для состояния пула: см. `docs/nextcloud-monitoring.ru.md`.
+
+## Grafana: egress и жёсткое ограничение (TODO)
+
+- Возможные источники внешнего трафика и политика его блокировки/разрешения: см. `docs/grafana-egress-todo.ru.md`.
