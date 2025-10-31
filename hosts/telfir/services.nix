@@ -103,8 +103,9 @@
   monitoring.grafana = {
     enable = true;
     port = 3030;
-    listenAddress = "0.0.0.0";
-    openFirewall = true;
+    # Serve Grafana only via Caddy: bind to localhost and do not open the port
+    listenAddress = "127.0.0.1";
+    openFirewall = false;
     firewallInterfaces = [ "br0" ];
     # Admin via SOPS secret (if present)
     adminUser = "admin";
@@ -577,6 +578,24 @@ groups:
         inherit devices folders;
       };
     };
+    # Harden Grafana: avoid external calls and too-frequent refreshes
+    grafana.settings = {
+      analytics = {
+        reporting_enabled = false;
+        check_for_updates = false;
+      };
+      news.news_feed_enabled = false;
+      dashboards.min_refresh_interval = "10s";
+      snapshots.external_enabled = false;
+      # Conservative plugin settings (no alpha, keep install API default)
+      plugins = {
+        enable_alpha = false;
+        disable_install_api = true;
+      };
+    };
+
+    # (Grafana env + tmpfiles rules are defined at top-level below)
+
     # Add Prometheus datasource to Grafana so Unbound/Nextcloud metrics are browsable out-of-the-box
     grafana.provision.datasources.settings.datasources = lib.mkAfter [
       {
@@ -606,6 +625,22 @@ groups:
 
   # Firewall: allow Prometheus UI and Alertmanager on br0 only
   networking.firewall.interfaces.br0.allowedTCPPorts = [ 9090 9093 ];
+
+  # Disable preinstall/auto-update feature toggle explicitly via env (Grafana 10/11/12)
+  systemd.services.grafana.environment = {
+    GF_FEATURE_TOGGLES_DISABLE = "preinstallAutoUpdate";
+  };
+
+  # Ensure plugins directory is clean on activation and ensure node_exporter textfile dir
+  systemd.tmpfiles.rules = lib.mkAfter [
+    "R /var/lib/grafana/plugins - - - - -"
+    "d /var/lib/grafana/plugins 0750 grafana grafana - -"
+    (let
+       bitcoindInstance = config.servicesProfiles.bitcoind.instance or "main";
+       bitcoindUser = "bitcoind-${bitcoindInstance}";
+       textfileDir = "/var/lib/node_exporter/textfile_collector";
+     in "d ${textfileDir} 0755 ${bitcoindUser} ${bitcoindUser} -")
+  ];
 
   # SOPS secret for Alertmanager SMTP credentials (dotenv with ALERT_SMTP_USER/PASS)
   sops.secrets."alertmanager/env" = lib.mkIf (builtins.pathExists (../../.. + "/secrets/alertmanager.env.sops")) {
@@ -653,14 +688,7 @@ groups:
   #   bitcoin_headers{instance="main",chain="<chain>"} <n>
   #   bitcoin_time_since_last_block_seconds{instance} <seconds>
   #   bitcoin_peers_connected{instance} <n>
-  # Directory for textfile collector; writable by bitcoind user, readable by node-exporter
-  systemd.tmpfiles.rules = lib.mkAfter [
-    (let
-       bitcoindInstance = config.servicesProfiles.bitcoind.instance or "main";
-       bitcoindUser = "bitcoind-${bitcoindInstance}";
-       textfileDir = "/var/lib/node_exporter/textfile_collector";
-     in "d ${textfileDir} 0755 ${bitcoindUser} ${bitcoindUser} -")
-  ];
+  # Directory for textfile collector is ensured above via tmpfiles rules
 
   # Periodic metric collection service + timer
   systemd.services."bitcoind-textfile-metrics" = let
