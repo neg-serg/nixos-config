@@ -4,6 +4,7 @@
   - `roles.workstation.enable = true;` — desktop defaults (performance profile, SSH, Avahi, Syncthing).
   - `roles.homelab.enable = true;` — self‑hosting defaults (security profile, DNS, SSH, Syncthing, MPD, Navidrome, Wakapi, Nextcloud).
   - `roles.media.enable = true;` — media servers (Jellyfin, Navidrome, MPD, Avahi, SSH).
+  - `roles.server.enable = true;` — headless/server defaults (enables smartd by default).
 
 - Override per‑service toggles via `profiles.services.<name>.enable` (alias: `servicesProfiles.<name>.enable`).
   - Example: `profiles.services.jellyfin.enable = false;`
@@ -14,4 +15,3 @@
   - Media: set media paths/ports for MPD/Navidrome; Jellyfin ports are opened by the module when enabled.
 
 - Docs: see aggregated options under flake output `packages.${system}."options-md"` when available.
-
