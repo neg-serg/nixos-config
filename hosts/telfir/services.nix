@@ -197,15 +197,7 @@
     # AdGuard Home: enable Prometheus metrics endpoint at /control/metrics
     adguardhome.settings.prometheus.enabled = true;
 
-    smartd = {
-      enable = true;
-      # Full monitoring, enable automatic offline tests, persist attributes,
-      # temperature thresholds for NVMe, and schedule self-tests:
-      # - Short test daily at 02:00; long test weekly on Sunday at 04:00
-      defaults.monitored = "-a -o on -S on -W 5,70,80 -s (S/../.././02|L/../../7/04)";
-      # Polling interval for smartd (seconds). Default is ~30 minutes; set to 1 hour.
-      extraOptions = [ "--interval=3600" ];
-    };
+    smartd.enable = false;
 
     # Persistent journald logs with retention and rate limiting
     journald = {
