@@ -52,5 +52,12 @@ in {
       # Enable status endpoint so php-fpm exporter can scrape via unix socket
       "pm.status_path" = "/status";
     };
+
+    # Shared web group and memberships for socket access
+    # - Provide the nginx group even when nginx service is disabled
+    # - Add caddy and prometheus users to the group so they can read the php-fpm socket
+    users.groups.nginx = lib.mkDefault {};
+    users.users.caddy.extraGroups = (config.users.users.caddy.extraGroups or []) ++ [ "nginx" ];
+    users.users.prometheus.extraGroups = (config.users.users.prometheus.extraGroups or []) ++ [ "nginx" ];
   };
 }
