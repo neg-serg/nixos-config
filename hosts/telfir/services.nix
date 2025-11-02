@@ -84,8 +84,9 @@
     # Disable Samba profile on this host
     samba.enable = false;
     # Run a Bitcoin Core node with data stored under /zero/bitcoin-node
+    # Temporarily disabled
     bitcoind = {
-      enable = true;
+      enable = false;
       dataDir = "/zero/bitcoin-node";
     };
   };
@@ -800,6 +801,8 @@ groups:
       Unit = "bitcoind-textfile-metrics.service";
     };
   };
+
+
 
   # Firewall port for bitcoind is opened by the bitcoind server module
 
