@@ -629,11 +629,29 @@ groups:
     mode = "0400";
   };
 
-  systemd.services.syncthing = lib.mkIf (config.services.syncthing.enable or false) {
+  # Set Syncthing GUI user/password only after config is generated, before service starts
+  systemd.services."syncthing-set-gui-pass" = lib.mkIf (config.services.syncthing.enable or false) {
+    description = "Set Syncthing GUI credentials from SOPS secret";
+    after = [ "syncthing-init.service" "sops-nix.service" ];
+    requires = [ "syncthing-init.service" ];
+    before = [ "syncthing.service" ];
+    wantedBy = [ "syncthing.service" ];
     serviceConfig = {
-      # Before starting Syncthing, set GUI user and password from secret if present
-      ExecStartPre = lib.mkBefore [
-        ''${pkgs.bash}/bin/bash -lc "PASS_FILE='${config.sops.secrets."syncthing/gui-pass".path}'; HOME_DIR='${config.services.syncthing.configDir}'; if [ -r \"$PASS_FILE\" ]; then PASS=\$(tr -d '\\n' < \"$PASS_FILE\"); if [ -n \"$PASS\" ]; then ${pkgs.syncthing}/bin/syncthing -home \"$HOME_DIR\" cli config gui user \"${config.users.main.name}\"; ${pkgs.syncthing}/bin/syncthing -home \"$HOME_DIR\" cli config gui password \"$PASS\"; fi; fi"''
+      Type = "oneshot";
+      User = config.users.main.name;
+      Group = config.users.main.name;
+      ExecStart = [
+        ''${pkgs.bash}/bin/bash -euc '
+          PASS_FILE="${config.sops.secrets."syncthing/gui-pass".path}"
+          HOME_DIR="${config.services.syncthing.configDir}"
+          if [ -r "$PASS_FILE" ]; then
+            PASS="$(tr -d '\n' < "$PASS_FILE")"
+            if [ -n "$PASS" ]; then
+              ${pkgs.syncthing}/bin/syncthing -home "$HOME_DIR" cli config gui user "${config.users.main.name}"
+              ${pkgs.syncthing}/bin/syncthing -home "$HOME_DIR" cli config gui password "$PASS"
+            fi
+          fi
+        ''''
       ];
     };
   };
