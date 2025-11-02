@@ -785,6 +785,7 @@ groups:
       rm -f "$TMPFILE"
     '';
   in {
+    enable = false;
     description = "Export bitcoind minimal metrics to node_exporter textfile collector";
     serviceConfig = {
       Type = "oneshot";
@@ -796,6 +797,7 @@ groups:
     after = [ "bitcoind-${bitcoindInstance}.service" ];
   };
   systemd.timers."bitcoind-textfile-metrics" = {
+    enable = false;
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "2m";
@@ -804,10 +806,6 @@ groups:
       Unit = "bitcoind-textfile-metrics.service";
     };
   };
-
-  # Disable bitcoind-related metrics service and timer while bitcoind is off
-  systemd.services."bitcoind-textfile-metrics".enable = false;
-  systemd.timers."bitcoind-textfile-metrics".enable = false;
 
 
 
