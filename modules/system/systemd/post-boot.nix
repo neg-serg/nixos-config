@@ -18,7 +18,9 @@ in {
     # Have graphical.target pull this target in; do NOT set After=graphical.target here,
     # otherwise graphical.target → post-boot.target and post-boot.target → After=graphical.target
     # creates an ordering cycle. Individual services added to post-boot are ordered After=graphical.target.
-    wantedBy = ["graphical.target"]; # reached along with graphical session
+    # Also pull in post-boot on headless systems where multi-user.target is the default.
+    # This ensures deferred services like syncthing-init run even without a graphical session.
+    wantedBy = ["graphical.target" "multi-user.target"]; # reached with graphical or headless boot
   };
 
   # Defer heavier services to post-boot when enabled.
