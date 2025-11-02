@@ -667,15 +667,18 @@ groups:
   };
 
   # Ensure plugins directory is clean on activation and ensure node_exporter textfile dir
-  systemd.tmpfiles.rules = lib.mkAfter [
-    "R /var/lib/grafana/plugins - - - - -"
-    "d /var/lib/grafana/plugins 0750 grafana grafana - -"
-    (let
-       bitcoindInstance = config.servicesProfiles.bitcoind.instance or "main";
-       bitcoindUser = "bitcoind-${bitcoindInstance}";
-       textfileDir = "/var/lib/node_exporter/textfile_collector";
-     in "d ${textfileDir} 0755 ${bitcoindUser} ${bitcoindUser} -")
-  ];
+  systemd.tmpfiles.rules = lib.mkAfter (
+    [
+      "R /var/lib/grafana/plugins - - - - -"
+      "d /var/lib/grafana/plugins 0750 grafana grafana - -"
+    ]
+    ++ (let
+          bitcoindEnabled = config.servicesProfiles.bitcoind.enable or false;
+          bitcoindInstance = config.servicesProfiles.bitcoind.instance or "main";
+          bitcoindUser = "bitcoind-${bitcoindInstance}";
+          textfileDir = "/var/lib/node_exporter/textfile_collector";
+        in lib.optional bitcoindEnabled "d ${textfileDir} 0755 ${bitcoindUser} ${bitcoindUser} -")
+  );
 
   # SOPS secret for Alertmanager SMTP credentials (dotenv with ALERT_SMTP_USER/PASS)
   sops.secrets."alertmanager/env" = lib.mkIf (builtins.pathExists (../../.. + "/secrets/alertmanager.env.sops")) {
@@ -801,6 +804,10 @@ groups:
       Unit = "bitcoind-textfile-metrics.service";
     };
   };
+
+  # Disable bitcoind-related metrics service and timer while bitcoind is off
+  systemd.services."bitcoind-textfile-metrics".enable = false;
+  systemd.timers."bitcoind-textfile-metrics".enable = false;
 
 
 
