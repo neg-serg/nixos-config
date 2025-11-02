@@ -13,7 +13,7 @@ in {
   config = mkIf exporterEnabled {
     # Ensure the shared web group exists and prometheus joins it for socket access
     users.groups.nginx = lib.mkDefault {};
-    users.users.prometheus.extraGroups = (config.users.users.prometheus.extraGroups or []) ++ [ "nginx" ];
+    users.users.prometheus.extraGroups = [ "nginx" ];
 
     # Systemd unit adjustments for php-fpm exporter
     systemd.services."prometheus-php-fpm-exporter" = {
@@ -38,4 +38,3 @@ in {
     };
   };
 }
-

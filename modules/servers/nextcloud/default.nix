@@ -57,7 +57,7 @@ in {
     # - Provide the nginx group even when nginx service is disabled
     # - Add caddy and prometheus users to the group so they can read the php-fpm socket
     users.groups.nginx = lib.mkDefault {};
-    users.users.caddy.extraGroups = (config.users.users.caddy.extraGroups or []) ++ [ "nginx" ];
-    users.users.prometheus.extraGroups = (config.users.users.prometheus.extraGroups or []) ++ [ "nginx" ];
+    users.users.caddy.extraGroups = [ "nginx" ];
+    users.users.prometheus.extraGroups = [ "nginx" ];
   };
 }
