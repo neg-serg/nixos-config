@@ -568,6 +568,8 @@ groups:
       overrideFolders = true;
       settings = {
         inherit devices folders;
+        # Expose Syncthing GUI on all interfaces (port 8384)
+        gui.address = "0.0.0.0:8384";
       };
     };
     # Harden Grafana: avoid external calls and too-frequent refreshes
