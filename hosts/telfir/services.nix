@@ -621,6 +621,23 @@ groups:
     # Bitcoind instance is now managed by modules/servers/bitcoind
   };
 
+  # Provide GUI password to Syncthing from SOPS secret and set it at service start
+  # - Secret file: secrets/syncthing.sops.yaml (key: syncthing/gui-pass)
+  # - Make it readable by the Syncthing user and apply via ExecStartPre
+  sops.secrets."syncthing/gui-pass" = lib.mkIf (builtins.pathExists (../../.. + "/secrets/syncthing.sops.yaml")) {
+    owner = config.users.main.name;
+    mode = "0400";
+  };
+
+  systemd.services.syncthing = lib.mkIf (config.services.syncthing.enable or false) {
+    serviceConfig = {
+      # Before starting Syncthing, set GUI user and password from secret if present
+      ExecStartPre = lib.mkBefore [
+        ''${pkgs.bash}/bin/bash -lc "PASS_FILE='${config.sops.secrets."syncthing/gui-pass".path}'; HOME_DIR='${config.services.syncthing.configDir}'; if [ -r \"$PASS_FILE\" ]; then PASS=\$(tr -d '\\n' < \"$PASS_FILE\"); if [ -n \"$PASS\" ]; then ${pkgs.syncthing}/bin/syncthing -home \"$HOME_DIR\" cli config gui user \"${config.users.main.name}\"; ${pkgs.syncthing}/bin/syncthing -home \"$HOME_DIR\" cli config gui password \"$PASS\"; fi; fi"''
+      ];
+    };
+  };
+
   # Firewall: allow Prometheus UI and Alertmanager on br0 only
   networking.firewall.interfaces.br0.allowedTCPPorts = [ 9090 9093 ];
 
