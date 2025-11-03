@@ -45,38 +45,32 @@ in {
       ];
     };
 
-    "/one" = {
-      device = "/dev/mapper/xenon-one";
-      fsType = "xfs";
-      options = ["x-systemd.automount" "relatime" "lazytime" "rw"];
-    };
-
     "${homeDir}/music" = {
-      device = "/one/music";
+      device = "/zero/music";
       options = ["bind" "nofail" "x-systemd.automount"];
     };
     "${homeDir}/torrent" = {
-      device = "/one/torrent";
+      device = "/zero/torrent";
       options = ["bind" "nofail" "x-systemd.automount"];
     };
     "${homeDir}/vid" = {
-      device = "/one/vid";
+      device = "/zero/vid";
       options = ["bind" "nofail" "x-systemd.automount"];
     };
     "${homeDir}/games" = {
-      device = "/one/games";
+      device = "/zero/games";
       options = ["bind" "nofail" "x-systemd.automount"];
     };
     "${homeDir}/doc" = {
-      device = "/one/doc";
+      device = "/zero/doc";
       options = ["bind" "nofail" "x-systemd.automount"];
     };
     "/var/lib/flatpak" = {
-      device = "/one/flatpak";
+      device = "/zero/flatpak";
       options = ["bind" "nofail" "x-systemd.automount"];
     };
     "${homeDir}/.local/mail" = {
-      device = "/one/mail";
+      device = "/zero/mail";
       options = ["bind" "nofail" "x-systemd.automount"];
     };
     "${homeDir}/.local/share/Steam/userdata" = {
