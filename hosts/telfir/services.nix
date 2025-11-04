@@ -141,16 +141,31 @@
       hysteresis = 6; # больше гистерезиса — меньше переключений
       interval  = 4;  # реже опрос — меньше мелких колебаний ШИМ
       allowStop = true; # позволяем полностью останавливать вентиляторы ниже порога
+      minStartOverride = 120; # более сильный «пинок» для уверенного старта с 0
+      gpuPwmChannels = [ 2 3 ]; # корпусные вентиляторы по температуре GPU
     };
     gpuFancontrol = {
       enable = true;
       # Тише по GPU++: ещё позже старт, мягче верх
-      minTemp = 65;   # °C — позже включаем вентилятор
+      minTemp = 70;   # °C — ещё позже включаем вентилятор (ZeroRPM шире)
       maxTemp = 90;   # °C — полная скорость позже (ограничена капом)
       # minPwm  = 70;  # безопасный минимум
-      maxPwm  = 190;  # ниже максимум оборотов для тишины
+      maxPwm  = 180;  # ниже максимум оборотов для тишины
       hysteresis = 6; # сглаживаем переключения
     };
+  };
+
+  # Энергосбережение по умолчанию для меньшего тепла/шума
+  services.power-profiles-daemon.enable = true;
+  systemd.services."power-profiles-default" = {
+    description = "Set default power profile to power-saver";
+    after = [ "power-profiles-daemon.service" ];
+    wants = [ "power-profiles-daemon.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "/run/current-system/sw/bin/powerprofilesctl set power-saver";
+    };
+    wantedBy = [ "multi-user.target" ];
   };
 
   # Nextcloud via Caddy on LAN, served as "telfir"
