@@ -50,12 +50,12 @@ in {
     # Ensure the user systemd manager has a sane PATH so TryExec checks
     # for Wayland sessions (e.g., UWSM) do not fail. Include system profile,
     # per-user profile, and the user's state profile where Home Manager installs.
-    user.sessionVariables = let
+    user.extraConfig = let
       user = config.users.main.name or "neg";
       home = "/home/${user}";
-    in {
-      PATH = "/run/current-system/sw/bin:/etc/profiles/per-user/${user}/bin:${home}/.local/state/nix/profile/bin";
-    };
+    in ''
+      DefaultEnvironment=PATH=/run/current-system/sw/bin:/etc/profiles/per-user/${user}/bin:${home}/.local/state/nix/profile/bin
+    '';
     # Favor user responsiveness; de-prioritize nix-daemon slightly
     slices."user.slice".sliceConfig = {
       CPUWeight = 10000;
