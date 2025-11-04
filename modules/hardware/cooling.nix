@@ -120,24 +120,25 @@ in {
         ExecStart = let
           script = pkgs.writeShellScript "fancontrol-setup" (builtins.readFile ../../scripts/fancontrol-setup.sh);
         in "${script}";
-        Environment = [
-          "MIN_TEMP=${builtins.toString cfg.autoFancontrol.minTemp}"
-          "MAX_TEMP=${builtins.toString cfg.autoFancontrol.maxTemp}"
-          "MIN_PWM=${builtins.toString cfg.autoFancontrol.minPwm}"
-          "MAX_PWM=${builtins.toString cfg.autoFancontrol.maxPwm}"
-          "HYST=${builtins.toString cfg.autoFancontrol.hysteresis}"
-          "INTERVAL=${builtins.toString cfg.autoFancontrol.interval}"
-          "ALLOW_STOP=${lib.boolToString (cfg.autoFancontrol.allowStop or false)}"
-          ${lib.optionalString (cfg.autoFancontrol.minStartOverride != null)
-            ("\"MIN_START_OVERRIDE=" + builtins.toString cfg.autoFancontrol.minStartOverride + "\"")}
-          "GPU_PWM_CHANNELS=${builtins.concatStringsSep "," (map builtins.toString (cfg.autoFancontrol.gpuPwmChannels or []))}"
-          "GPU_ENABLE=${lib.boolToString (cfg.gpuFancontrol.enable or false)}"
-          "GPU_MIN_TEMP=${builtins.toString cfg.gpuFancontrol.minTemp}"
-          "GPU_MAX_TEMP=${builtins.toString cfg.gpuFancontrol.maxTemp}"
-          "GPU_MIN_PWM=${builtins.toString cfg.gpuFancontrol.minPwm}"
-          "GPU_MAX_PWM=${builtins.toString cfg.gpuFancontrol.maxPwm}"
-          "GPU_HYST=${builtins.toString cfg.gpuFancontrol.hysteresis}"
-        ];
+        Environment =
+          [
+            "MIN_TEMP=${builtins.toString cfg.autoFancontrol.minTemp}"
+            "MAX_TEMP=${builtins.toString cfg.autoFancontrol.maxTemp}"
+            "MIN_PWM=${builtins.toString cfg.autoFancontrol.minPwm}"
+            "MAX_PWM=${builtins.toString cfg.autoFancontrol.maxPwm}"
+            "HYST=${builtins.toString cfg.autoFancontrol.hysteresis}"
+            "INTERVAL=${builtins.toString cfg.autoFancontrol.interval}"
+            "ALLOW_STOP=${lib.boolToString (cfg.autoFancontrol.allowStop or false)}"
+            "GPU_PWM_CHANNELS=${builtins.concatStringsSep "," (map builtins.toString (cfg.autoFancontrol.gpuPwmChannels or []))}"
+            "GPU_ENABLE=${lib.boolToString (cfg.gpuFancontrol.enable or false)}"
+            "GPU_MIN_TEMP=${builtins.toString cfg.gpuFancontrol.minTemp}"
+            "GPU_MAX_TEMP=${builtins.toString cfg.gpuFancontrol.maxTemp}"
+            "GPU_MIN_PWM=${builtins.toString cfg.gpuFancontrol.minPwm}"
+            "GPU_MAX_PWM=${builtins.toString cfg.gpuFancontrol.maxPwm}"
+            "GPU_HYST=${builtins.toString cfg.gpuFancontrol.hysteresis}"
+          ]
+          ++ lib.optional (cfg.autoFancontrol.minStartOverride != null)
+            ("MIN_START_OVERRIDE=" + builtins.toString cfg.autoFancontrol.minStartOverride);
         RemainAfterExit = true;
       };
     };
