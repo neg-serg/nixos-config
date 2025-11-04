@@ -93,14 +93,8 @@
 
   # Disable Netdata on this host (keep other monitoring like sysstat)
   monitoring.netdata.enable = false;
-  # Enable centralized logs (Loki + Promtail)
-  monitoring.logs.enable = true;
-  # Expose Loki on LAN (br0) and enable Grafana with Loki datasource
-  monitoring.loki = {
-    listenAddress = "0.0.0.0";
-    openFirewall = true;
-    firewallInterfaces = [ "br0" ];
-  };
+  # Disable centralized logs (Loki + Promtail) for this host
+  monitoring.logs.enable = false;
   monitoring.grafana = {
     enable = true;
     port = 3030;
@@ -213,8 +207,8 @@
     );
   in {
     power-profiles-daemon.enable = true;
-    # AdGuard Home: enable Prometheus metrics endpoint at /control/metrics
-    adguardhome.settings.prometheus.enabled = true;
+    # Do not expose AdGuard Home Prometheus metrics on this host
+    adguardhome.settings.prometheus.enabled = false;
 
     smartd.enable = false;
 
@@ -242,344 +236,7 @@
     };
     caddy.email = "serg.zorg@gmail.com";
 
-    # Prometheus Node Exporter (OS metrics)
-    prometheus.exporters.node = {
-      enable = true;
-      port = 9100;
-      # Add extra collectors on top of defaults
-      enabledCollectors = [ "systemd" "processes" "logind" "hwmon" "textfile" ];
-      extraFlags = [
-        "--collector.textfile.directory=/var/lib/node_exporter/textfile_collector"
-      ];
-      # Open firewall specifically for br0 interface via exporter module
-      openFirewall = true;
-      firewallFilter = "-i br0 -p tcp -m tcp --dport 9100";
-    };
-
-    # Prometheus Unbound Exporter (DNS resolver metrics)
-    # Exposes metrics gathered via local unbound-control on 127.0.0.1:8953
-    # Default exporter port is 9167; keep it localhost-only (no openFirewall)
-    prometheus.exporters.unbound = {
-      enable = true;
-      port = 9167;
-      openFirewall = false;
-    };
-
-    # Prometheus PHP-FPM Exporter (Nextcloud PHP pool)
-    # Scrapes php-fpm status via unix socket of the 'nextcloud' pool
-    prometheus.exporters."php-fpm" = {
-      enable = true;
-      # Default port is 9253; keep local-only
-      openFirewall = false;
-      extraFlags = [
-        "--phpfpm.scrape-uri=unix:///run/phpfpm/nextcloud.sock;/status"
-      ];
-    };
-
-    # Prometheus Blackbox Exporter (HTTP/DNS/ICMP probes)
-    prometheus.exporters.blackbox = {
-      enable = true;
-      # Expose on default port and open only on br0
-      port = 9115;
-      openFirewall = true;
-      firewallFilter = "-i br0 -p tcp -m tcp --dport 9115";
-      # Modules: HTTP 2xx (strict + insecure TLS variant), TCP connect, ICMP ping (IPv4), DNS A lookup
-      configFile = pkgs.writeText "blackbox.yml" ''
-        modules:
-          http_2xx:
-            prober: http
-            timeout: 5s
-            http:
-              method: GET
-              valid_http_versions: ["HTTP/1.1", "HTTP/2"]
-
-          http_2xx_insecure:
-            prober: http
-            timeout: 5s
-            http:
-              method: GET
-              valid_http_versions: ["HTTP/1.1", "HTTP/2"]
-              tls_config:
-                insecure_skip_verify: true
-
-          tcp_connect:
-            prober: tcp
-            timeout: 5s
-
-          icmp:
-            prober: icmp
-            timeout: 5s
-            icmp:
-              preferred_ip_protocol: ip4
-
-          dns:
-            prober: dns
-            timeout: 5s
-            dns:
-              transport_protocol: udp
-              preferred_ip_protocol: ip4
-              query_class: IN
-              query_type: A
-              query_name: example.com
-      '';
-    };
-
-    # Example Prometheus scrape configs for Blackbox probes (Prometheus server can be enabled later)
-    prometheus = {
-      enable = true;
-      scrapeConfigs = [
-        # Prometheus self-scrape (UI/metrics)
-        {
-          job_name = "prometheus";
-          static_configs = [ {
-            targets = [
-              "127.0.0.1:${toString config.services.prometheus.port}"
-            ];
-          } ];
-        }
-        # Unbound exporter metrics
-        {
-          job_name = "unbound";
-          static_configs = [ {
-            targets = [
-              "127.0.0.1:${toString config.services.prometheus.exporters.unbound.port}"
-            ];
-          } ];
-        }
-        # AdGuard Home Prometheus metrics (local admin UI)
-        {
-          job_name = "adguardhome";
-          metrics_path = "/control/metrics";
-          static_configs = [ {
-            targets = [ "127.0.0.1:3000" ];
-          } ];
-          # To protect metrics with API token later, set:
-          # bearer_token_file = "/run/secrets/adguard_metrics_token";
-          # and manage the secret via sops: sops.secrets."adguard/metrics-token".
-        }
-        # Node exporter metrics from this host
-        {
-          job_name = "node";
-          static_configs = [ {
-            targets = [
-              "127.0.0.1:${toString config.services.prometheus.exporters.node.port}"
-            ];
-          } ];
-        }
-        # PHP-FPM exporter (Nextcloud pool)
-        {
-          job_name = "phpfpm";
-          static_configs = [ {
-            targets = [
-              "127.0.0.1:${toString config.services.prometheus.exporters."php-fpm".port}"
-            ];
-          } ];
-        }
-        # HTTP checks: Nextcloud status and AdGuard UI (2xx expected)
-        {
-          job_name = "blackbox-http";
-          metrics_path = "/probe";
-          params.module = [ "http_2xx" ];
-          static_configs = [ { targets = [
-            "http://telfir/status.php"
-            "http://127.0.0.1:3000/"
-          ]; } ];
-          relabel_configs = [
-            { source_labels = [ "__address__" ]; target_label = "__param_target"; }
-            { source_labels = [ "__param_target" ]; target_label = "instance"; }
-            { target_label = "__address__"; replacement = "127.0.0.1:9115"; }
-          ];
-        }
-        # HTTPS checks that may use self-signed certs on LAN
-        {
-          job_name = "blackbox-https-insecure";
-          metrics_path = "/probe";
-          params.module = [ "http_2xx_insecure" ];
-          static_configs = [ { targets = [
-            "https://telfir/status.php"
-          ]; } ];
-          relabel_configs = [
-            { source_labels = [ "__address__" ]; target_label = "__param_target"; }
-            { source_labels = [ "__param_target" ]; target_label = "instance"; }
-            { target_label = "__address__"; replacement = "127.0.0.1:9115"; }
-          ];
-        }
-        # ICMP reachability to public resolvers (basic external connectivity)
-        {
-          job_name = "blackbox-icmp";
-          metrics_path = "/probe";
-          params.module = [ "icmp" ];
-          static_configs = [ { targets = [
-            "1.1.1.1"
-            "8.8.8.8"
-          ]; } ];
-          relabel_configs = [
-            { source_labels = [ "__address__" ]; target_label = "__param_target"; }
-            { source_labels = [ "__param_target" ]; target_label = "instance"; }
-            { target_label = "__address__"; replacement = "127.0.0.1:9115"; }
-          ];
-        }
-        # DNS A lookups via blackbox (targets are DNS servers; module queries example.com)
-        {
-          job_name = "blackbox-dns";
-          metrics_path = "/probe";
-          params.module = [ "dns" ];
-          static_configs = [ { targets = [
-            "127.0.0.1:53"
-            "1.1.1.1:53"
-          ]; } ];
-          relabel_configs = [
-            { source_labels = [ "__address__" ]; target_label = "__param_target"; }
-            { source_labels = [ "__param_target" ]; target_label = "instance"; }
-            { target_label = "__address__"; replacement = "127.0.0.1:9115"; }
-          ];
-        }
-      ];
-      alertmanagers = [
-        {
-          static_configs = [ { targets = [ "127.0.0.1:9093" ]; } ];
-        }
-      ];
-      rules = [ ''
-groups:
-- name: base.alerts
-  rules:
-  - alert: InstanceDown
-    expr: up == 0
-    for: 2m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Instance {{ $labels.instance }} down"
-      description: "Job {{ $labels.job }} on {{ $labels.instance }} is down for 2m."
-
-  - alert: HighCPULoad
-    expr: avg by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[5m])) > 0.9
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High CPU load on {{ $labels.instance }}"
-      description: ">90% average CPU usage in 5m."
-
-  - alert: HighMemoryUsage
-    expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
-    for: 10m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High memory usage on {{ $labels.instance }}"
-      description: ">90% memory used for 10m."
-
-  - alert: DiskSpaceLow
-    expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|overlay",mountpoint!~"/(proc|sys|run)($|/)",device!~"^ram|^loop"} / node_filesystem_size_bytes{fstype!~"tmpfs|ramfs|overlay",mountpoint!~"/(proc|sys|run)($|/)",device!~"^ram|^loop"}) < 0.10
-    for: 10m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Low disk space on {{ $labels.instance }} {{ $labels.mountpoint }}"
-      description: "Free space <10% for 10m."
-
-  - alert: BlackboxHttpProbeFail
-    expr: probe_success{job=~"blackbox-http|blackbox-https-insecure"} == 0
-    for: 1m
-    labels:
-      severity: critical
-    annotations:
-      summary: "HTTP probe failing: {{ $labels.instance }}"
-      description: "Blackbox HTTP probe returns failure."
-
-  - alert: BlackboxIcmpProbeFail
-    expr: probe_success{job="blackbox-icmp"} == 0
-    for: 1m
-    labels:
-      severity: critical
-    annotations:
-      summary: "ICMP probe failing: {{ $labels.instance }}"
-      description: "Blackbox ICMP probe returns failure."
-
-  - alert: BlackboxDnsProbeFail
-    expr: probe_success{job="blackbox-dns"} == 0
-    for: 1m
-    labels:
-      severity: critical
-    annotations:
-      summary: "DNS probe failing: {{ $labels.instance }}"
-      description: "Blackbox DNS probe returns failure."
-
-  - alert: HighHttpLatency
-    expr: probe_duration_seconds{job=~"blackbox-http|blackbox-https-insecure"} > 2
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High HTTP latency: {{ $labels.instance }}"
-      description: ">2s average probe duration for 5m."
-
-  - alert: HighDnsLatency
-    expr: probe_duration_seconds{job="blackbox-dns"} > 2
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High DNS latency: {{ $labels.instance }}"
-      description: ">2s average DNS probe duration for 5m."
-'' ];
-      # Expose Prometheus UI only on br0 (module has no openFirewall option)
-      # so we open firewall per-interface next to the service for clarity.
-      # Port follows services.prometheus.port (default 9090).
-      # If you change the port, update this list accordingly.
-      # Note: this is interface-scoped, not global.
-      #
-      # If you prefer nftables rules string, we can switch to extraRules.
-    };
-
-    # (firewall rule for Prometheus UI is defined at top-level below)
-
-    # Alertmanager service (exposed via firewall on br0 only)
-    prometheus.alertmanager = {
-      enable = true;
-      configuration = {
-        # SMTP via Gmail (use app password via environment file below)
-        global = {
-          smtp_smarthost = "smtp.gmail.com:587";
-          smtp_from = "serg.zorg@gmail.com";
-          smtp_auth_username = "$ALERT_SMTP_USER";
-          smtp_auth_password = "$ALERT_SMTP_PASS";
-          smtp_require_tls = true;
-        };
-        route = {
-          receiver = "email-serg";
-          group_by = [ "alertname" "job" "instance" ];
-          group_wait = "30s";
-          group_interval = "5m";
-          repeat_interval = "3h";
-        };
-        receivers = [
-          {
-            name = "email-serg";
-            email_configs = [
-              {
-                to = "serg.zorg@gmail.com";
-                send_resolved = true;
-              }
-            ];
-          }
-          { name = "default"; }
-        ];
-        inhibit_rules = [
-          {
-            source_matchers = [ "severity = critical" ];
-            target_matchers = [ "severity = warning" ];
-            equal = [ "alertname" "instance" "job" ];
-          }
-        ];
-      };
-      # Load credentials from SOPS-managed dotenv if present
-      environmentFile = lib.mkIf (builtins.pathExists (../../.. + "/secrets/alertmanager.env.sops")) (
-        config.sops.secrets."alertmanager/env".path
-      );
-    };
+    # Prometheus stack removed on this host (server, exporters, alertmanager)
 
     # Syncthing host-specific devices and folders
     syncthing = {
@@ -612,18 +269,6 @@ groups:
     };
 
     # (Grafana env + tmpfiles rules are defined at top-level below)
-
-    # Add Prometheus datasource to Grafana so Unbound/Nextcloud metrics are browsable out-of-the-box
-    grafana.provision.datasources.settings.datasources = lib.mkAfter [
-      {
-        uid = "prometheus";
-        name = "Prometheus";
-        type = "prometheus";
-        access = "proxy";
-        url = "http://127.0.0.1:${toString config.services.prometheus.port}";
-        isDefault = false;
-      }
-    ];
 
     # Provision local dashboards (Unbound, Nextcloud)
     grafana.provision.dashboards.settings.providers = lib.mkAfter [
@@ -676,8 +321,7 @@ groups:
     };
   });
 
-  # Firewall: allow Prometheus UI and Alertmanager on br0 only
-  networking.firewall.interfaces.br0.allowedTCPPorts = [ 9090 9093 ];
+  # (Prometheus/Alertmanager firewall openings removed for this host)
 
   # Disable preinstall/auto-update feature toggle explicitly via env (Grafana 10/11/12)
   systemd.services.grafana.environment = {
@@ -692,25 +336,13 @@ groups:
     IPAddressAllow = [ "127.0.0.0/8" "::1/128" ];
   };
 
-  # Ensure plugins directory is clean on activation and ensure node_exporter textfile dir
-  systemd.tmpfiles.rules = lib.mkAfter (
-    [
-      "R /var/lib/grafana/plugins - - - - -"
-      "d /var/lib/grafana/plugins 0750 grafana grafana - -"
-    ]
-    ++ (let
-          bitcoindEnabled = config.servicesProfiles.bitcoind.enable or false;
-          bitcoindInstance = config.servicesProfiles.bitcoind.instance or "main";
-          bitcoindUser = "bitcoind-${bitcoindInstance}";
-          textfileDir = "/var/lib/node_exporter/textfile_collector";
-        in lib.optional bitcoindEnabled "d ${textfileDir} 0755 ${bitcoindUser} ${bitcoindUser} -")
-  );
+  # Ensure plugins directory is clean on activation
+  systemd.tmpfiles.rules = lib.mkAfter [
+    "R /var/lib/grafana/plugins - - - - -"
+    "d /var/lib/grafana/plugins 0750 grafana grafana - -"
+  ];
 
-  # SOPS secret for Alertmanager SMTP credentials (dotenv with ALERT_SMTP_USER/PASS)
-  sops.secrets."alertmanager/env" = lib.mkIf (builtins.pathExists (../../.. + "/secrets/alertmanager.env.sops")) {
-    sopsFile = ../../../secrets/alertmanager.env.sops;
-    format = "binary"; # do not parse; pass through as plaintext env file
-  };
+  # Alertmanager removed; no SMTP credentials needed
 
 
   # SOPS secret for Grafana admin password
@@ -728,23 +360,7 @@ groups:
     restartUnits = [ "grafana.service" ];
   };
 
-  # Start php-fpm exporter after the Nextcloud PHP-FPM pool is up to avoid startup failures
-  systemd.services."prometheus-php-fpm-exporter" = {
-    after = lib.mkAfter [ "phpfpm-nextcloud.service" "phpfpm.service" "nextcloud-setup.service" ];
-    wants = lib.mkAfter [ "phpfpm-nextcloud.service" ];
-    serviceConfig = {
-      # Run under the Prometheus user instead of a dynamic sandbox user
-      DynamicUser = lib.mkForce false;
-      User = lib.mkForce "prometheus";
-      Group = lib.mkForce "prometheus";
-      # Ensure access to the php-fpm socket group
-      SupplementaryGroups = [ "nginx" ];
-      # Allow connecting to the php-fpm unix socket
-      RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
-      Restart = "on-failure";
-      RestartSec = 5;
-    };
-  };
+  # PHP-FPM exporter removed on this host
 
   # Bitcoind minimal metrics → node_exporter textfile collector
   # Exposes:
@@ -857,9 +473,8 @@ groups:
       isSystemUser = true;
       group = "nginx";
     };
-    # Allow Caddy and Prometheus exporter to access php-fpm socket via shared group
+    # Allow Caddy to access php-fpm socket via shared group
     users.caddy.extraGroups = [ "nginx" ];
-    users.prometheus.extraGroups = [ "nginx" ];
     groups.nginx = {};
   };
 

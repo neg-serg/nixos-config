@@ -55,9 +55,9 @@ in {
 
     # Shared web group and memberships for socket access
     # - Provide the nginx group even when nginx service is disabled
-    # - Add caddy and prometheus users to the group so they can read the php-fpm socket
+    # - Add caddy to the group so it can read the php-fpm socket
+    # - Prometheus user membership is managed by the php-fpm exporter module when that exporter is enabled
     users.groups.nginx = lib.mkDefault {};
     users.users.caddy.extraGroups = [ "nginx" ];
-    users.users.prometheus.extraGroups = [ "nginx" ];
   };
 }
