@@ -128,9 +128,11 @@ if [ "$ALLOW_STOP" = "true" ]; then
   # Allow fans to stop: keep MINSTOP=0 and use a higher MINSTART to ensure reliable spin-up
   MIN_START_DEFAULT=${MIN_START_OVERRIDE:-100}
   MIN_STOP_DEFAULT=0
+  EFF_MIN_PWM=0
 else
   MIN_START_DEFAULT=$(calc_minstart)
   MIN_STOP_DEFAULT=$MIN_PWM
+  EFF_MIN_PWM=$MIN_PWM
 fi
 
 fcfans=""; fctemps=""; mintemp=""; maxtemp=""; minpwm=""; maxpwm=""; minstart=""; minstop=""; hyst=""
@@ -188,7 +190,7 @@ for pwm in "$nct_path"/pwm[1-9]; do
   fi
   mintemp="$mintemp $nct_base/$base=$MIN_TEMP"
   maxtemp="$maxtemp $nct_base/$base=$MAX_TEMP"
-  minpwm="$minpwm $nct_base/$base=$MIN_PWM"
+  minpwm="$minpwm $nct_base/$base=$EFF_MIN_PWM"
   maxpwm="$maxpwm $nct_base/$base=$MAX_PWM"
   minstart="$minstart $nct_base/$base=$MIN_START_DEFAULT"
   minstop="$minstop $nct_base/$base=$MIN_STOP_DEFAULT"
@@ -247,7 +249,11 @@ if [ -n "$gpu_path" ] && [ -e "$gpu_path/pwm1" ]; then
     GPU_HYST=${GPU_HYST:-3}
     mintemp="$mintemp $gpu_base/pwm1=$GPU_MIN_TEMP"
     maxtemp="$maxtemp $gpu_base/pwm1=$GPU_MAX_TEMP"
-    minpwm="$minpwm $gpu_base/pwm1=$GPU_MIN_PWM"
+    if [ "$ALLOW_STOP" = "true" ]; then
+      minpwm="$minpwm $gpu_base/pwm1=0"
+    else
+      minpwm="$minpwm $gpu_base/pwm1=$GPU_MIN_PWM"
+    fi
     maxpwm="$maxpwm $gpu_base/pwm1=$GPU_MAX_PWM"
       # Derive GPU MINSTART/MINSTOP similarly; respect allow-stop for GPU if global ALLOW_STOP is set
       if [ "$ALLOW_STOP" = "true" ]; then
