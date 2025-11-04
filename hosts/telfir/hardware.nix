@@ -40,6 +40,12 @@
 
   # Writeback tuning: reduce IO bursts during gameplay/builds
   profiles.performance.writeback.enable = true;
+  # Safe memory extras: lower swappiness and raise max_map_count for heavy apps/games
+  profiles.performance.memExtras = {
+    enable = true;
+    swappiness = { enable = true; value = 20; };
+    maxMapCount = { enable = true; value = 1048576; };
+  };
 
   # Host-specific kernel parameters and boot tuning
   boot = {
@@ -47,11 +53,6 @@
       "acpi_osi=!"
       "acpi_osi=Linux"
       "video=3840x2160@240"
-      # CPU isolation for gaming/low-latency (adjust to your topology)
-      "nohz_full=14,15,30,31"
-      "rcu_nocbs=14,15,30,31"
-      "isolcpus=managed,domain,14-15,30-31"
-      "irqaffinity=0-13,16-29"
       "lru_gen=1"
       "lru_gen.min_ttl_ms=1000"
       # Avoid probing dozens of legacy UARTs; speeds up device coldplug
@@ -98,9 +99,8 @@
   # No separate initrd blacklist option; TPM modules are excluded from initrd
   # via modules/system/boot.nix when security.tpm2.enable = false
 
-  # Keep services on housekeeping CPUs by default; IRQ balancing mask; NIC link renames
+  # NIC link renames
   systemd = {
-    settings.Manager.CPUAffinity = ["0-13" "16-29"];
     # Rename NICs to stable names via systemd-networkd link files
     network.links = {
       "10-net0" = {
@@ -118,4 +118,10 @@
   environment.systemPackages = [
     pkgs.bazecor # Dygma keyboard configurator
   ];
+
+  # Enable CoreCtrl with polkit rule for wheel
+  hardware.gpu.corectrl = {
+    enable = true;
+    group = "wheel";
+  };
 }
