@@ -648,12 +648,13 @@
   };
 
   # Default CPU pin set for affinity wrappers (comes from profiles.performance.gamingCpuSet)
+  # Fallback is 'auto' to detect the V-Cache CCD via L3 size at runtime.
   pinDefault = let
     v = config.profiles.performance.gamingCpuSet or "";
   in
     if v != ""
     then v
-    else "14,15,30,31";
+    else "auto";
 
   # Helper: set affinity inside the scope to avoid shell escaping issues
   gameAffinityExec =
@@ -662,6 +663,7 @@
       import argparse
       import os
       import sys
+      from typing import List, Tuple
 
 
       def parse_cpuset(s: str):
@@ -678,6 +680,79 @@
           return sorted(cpus)
 
 
+      def parse_size(sz: str) -> int:
+          sz = sz.strip().upper()
+          if not sz:
+              return 0
+          try:
+              if sz.endswith('K'):
+                  return int(float(sz[:-1]) * 1024)
+              if sz.endswith('M'):
+                  return int(float(sz[:-1]) * 1024 * 1024)
+              if sz.endswith('G'):
+                  return int(float(sz[:-1]) * 1024 * 1024 * 1024)
+              return int(sz)
+          except Exception:
+              return 0
+
+
+      def l3_groups() -> List[Tuple[int, List[int]]]:
+          """Return list of (size_bytes, cpus[]) unique L3 groups."""
+          groups = {}
+          sysfs = '/sys/devices/system/cpu'
+          try:
+              for name in os.listdir(sysfs):
+                  if not name.startswith('cpu'):
+                      continue
+                  try:
+                      idx = int(name[3:])
+                  except ValueError:
+                      continue
+                  base = os.path.join(sysfs, name, 'cache', 'index3')
+                  size_p = os.path.join(base, 'size')
+                  share_p = os.path.join(base, 'shared_cpu_list')
+                  try:
+                      with open(size_p, 'r') as f:
+                          size = parse_size(f.read())
+                      with open(share_p, 'r') as f:
+                          shared = f.read().strip()
+                  except Exception:
+                      continue
+                  cpus = tuple(parse_cpuset(shared))
+                  if not cpus:
+                      continue
+                  # Use the CPU set as the key to dedupe
+                  if cpus not in groups:
+                      groups[cpus] = size
+          except Exception:
+              pass
+          # Return as list of (size, cpus_list)
+          return [(sz, list(cps)) for cps, sz in groups.items()]
+
+
+      def auto_cpuset() -> List[int]:
+          """Pick CPUs from the largest L3 group (V-Cache CCD on X3D)."""
+          groups = l3_groups()
+          if not groups:
+              # Fallback to all online CPUs
+              try:
+                  with open('/sys/devices/system/cpu/online', 'r') as f:
+                      return parse_cpuset(f.read().strip())
+              except Exception:
+                  return []
+          # Choose group with max size, break ties by more CPUs, then by higher min CPU index
+          groups.sort(key=lambda g: (g[0], len(g[1]), min(g[1]) if g[1] else -1))
+          size, cpus = groups[-1]
+          # Optional limit via env var (e.g., 8)
+          try:
+              lim = int(os.environ.get('GAME_PIN_AUTO_LIMIT', '0'))
+          except Exception:
+              lim = 0
+          if lim and lim > 0:
+              return cpus[:lim]
+          return cpus
+
+
       ap = argparse.ArgumentParser()
       ap.add_argument(
           '--cpus',
@@ -688,15 +763,20 @@
 
       if not args.cmd or args.cmd[0] != '--':
           print(
-              'Usage: game-affinity-exec --cpus 14,15,30,31 -- <command> [args...]',
+              'Usage: game-affinity-exec --cpus <set|auto> -- <command> [args...]',
               file=sys.stderr,
           )
           sys.exit(2)
       cmd = args.cmd[1:]
 
-      cpus = parse_cpuset(args.cpus)
+      if str(args.cpus).strip().lower() == 'auto':
+          cpus = auto_cpuset()
+      else:
+          cpus = parse_cpuset(args.cpus)
+
       try:
-          os.sched_setaffinity(0, cpus)
+          if cpus:
+              os.sched_setaffinity(0, cpus)
       except Exception as e:
           print(f'Warning: failed to set CPU affinity: {e}', file=sys.stderr)
 
