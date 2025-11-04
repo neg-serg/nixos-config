@@ -14,12 +14,14 @@ _: {
         networkConfig.DHCP = "ipv4";
         dhcpV4Config.UseDNS = true;
         dhcpV4Config.UseRoutes = true;
+        dhcpV4Config.RouteMetric = 50; # prefer net1 (10G) over net0 (1G)
       };
       "11-lan" = {
         matchConfig.Name = "net1";
         networkConfig.DHCP = "ipv4";
         dhcpV4Config.UseDNS = true;
         dhcpV4Config.UseRoutes = true;
+        dhcpV4Config.RouteMetric = 10; # lowest metric wins → default route via 10G
       };
     };
   };

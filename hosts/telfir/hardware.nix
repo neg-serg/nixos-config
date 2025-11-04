@@ -104,11 +104,11 @@
     # Rename NICs to stable names via systemd-networkd link files
     network.links = {
       "10-net0" = {
-        matchConfig.MACAddress = "fc:34:97:b7:16:0e";
+        matchConfig.MACAddress = "a0:ad:9f:7e:4b:4e";
         linkConfig.Name = "net0";
       };
       "10-net1" = {
-        matchConfig.MACAddress = "fc:34:97:b7:16:0f";
+        matchConfig.MACAddress = "a0:ad:9f:7e:4b:4f";
         linkConfig.Name = "net1";
       };
     };
