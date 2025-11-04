@@ -155,6 +155,11 @@
     };
   };
 
+  # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
+  environment.systemPackages = lib.mkAfter [
+    (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile ../../scripts/cpu-boost.sh))
+  ];
+
   # Энергосбережение по умолчанию для меньшего тепла/шума
   systemd.services."power-profiles-default" = {
     description = "Set default power profile to power-saver";
@@ -207,10 +212,6 @@
       foldersList
     );
   in {
-    # Helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
-    environment.systemPackages = (config.environment.systemPackages or []) ++ [
-      (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile ../../scripts/cpu-boost.sh))
-    ];
     power-profiles-daemon.enable = true;
     # AdGuard Home: enable Prometheus metrics endpoint at /control/metrics
     adguardhome.settings.prometheus.enabled = true;
