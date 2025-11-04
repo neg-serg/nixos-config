@@ -41,6 +41,31 @@ if [ -z "$cpu_path" ]; then
   exit 0
 fi
 
+# Choose the most suitable CPU temperature input:
+#  - Prefer Tdie when available (actual die temperature)
+#  - Else fall back to Tctl (control temperature, may include offset)
+#  - Else use temp1_input
+cpu_temp_name="temp1_input"
+if ls "$cpu_path"/temp*_label >/dev/null 2>&1; then
+  tdie=""; tctl=""
+  for lab in "$cpu_path"/temp*_label; do
+    [ -e "$lab" ] || continue
+    name=$(<"$lab")
+    n=${lab##*/}; n=${n%_label};
+    if echo "$name" | grep -Eiq '^tdie$'; then
+      tdie="${n}_input"; break
+    fi
+    if echo "$name" | grep -Eiq '^tctl$'; then
+      tctl="${n}_input"
+    fi
+  done
+  if [ -n "$tdie" ]; then
+    cpu_temp_name="$tdie"
+  elif [ -n "$tctl" ]; then
+    cpu_temp_name="$tctl"
+  fi
+fi
+
 # Optional AMDGPU hwmon for GPU fan control
 gpu_path=""
 if [ "${GPU_ENABLE:-false}" = "true" ]; then
@@ -112,7 +137,7 @@ for pwm in "$nct_path"/pwm[1-9]; do
 
   fcfans="$fcfans $nct_base/$base=$nct_base/fan${n}_input"
   # Use CPU temp for control (quiet and safe)
-  fctemps="$fctemps $nct_base/$base=$cpu_base/temp1_input"
+  fctemps="$fctemps $nct_base/$base=$cpu_base/$cpu_temp_name"
   mintemp="$mintemp $nct_base/$base=$MIN_TEMP"
   maxtemp="$maxtemp $nct_base/$base=$MAX_TEMP"
   minpwm="$minpwm $nct_base/$base=$MIN_PWM"
@@ -132,11 +157,33 @@ if [ "$found_pwm" -ne 1 ]; then
   exit 0
 fi
 
-# Optionally add AMDGPU fan (pwm1) controlled by GPU temp (prefer junction temp2 if exists)
+# Optionally add AMDGPU fan (pwm1) controlled by GPU temp (prefer Junction when labeled)
 if [ -n "$gpu_path" ] && [ -e "$gpu_path/pwm1" ]; then
-  # Choose temperature input: temp2_input (junction) preferred, else temp1_input (edge)
+  # Choose temperature input by label when available (junction preferred)
   gtemp="$gpu_path/temp2_input"
-  [ -e "$gtemp" ] || gtemp="$gpu_path/temp1_input"
+  if ls "$gpu_path"/temp*_label >/dev/null 2>&1; then
+    gjunc=""; gedge=""
+    for lab in "$gpu_path"/temp*_label; do
+      [ -e "$lab" ] || continue
+      name=$(<"$lab")
+      n=${lab##*/}; n=${n%_label}
+      if echo "$name" | grep -Eiq 'junction'; then
+        gjunc="${n}_input"; break
+      fi
+      if echo "$name" | grep -Eiq 'edge'; then
+        gedge="${n}_input"
+      fi
+    done
+    if [ -n "$gjunc" ]; then
+      gtemp="$gpu_path/$gjunc"
+    elif [ -n "$gedge" ]; then
+      gtemp="$gpu_path/$gedge"
+    else
+      [ -e "$gtemp" ] || gtemp="$gpu_path/temp1_input"
+    fi
+  else
+    [ -e "$gtemp" ] || gtemp="$gpu_path/temp1_input"
+  fi
   if [ -e "$gtemp" ] && [ -e "$gpu_path/fan1_input" ]; then
     # Try to switch GPU fan to manual control first; skip if not allowed
     if [ -w "$gpu_path/pwm1_enable" ]; then echo 1 > "$gpu_path/pwm1_enable" 2>/dev/null || true; fi
