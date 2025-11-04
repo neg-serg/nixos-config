@@ -54,6 +54,15 @@ in {
         '';
       };
 
+      minStartOverride = lib.mkOption {
+        type = with lib.types; nullOr int;
+        default = null;
+        description = ''
+          Optional absolute MINSTART value (0–255) used when allowStop = true
+          to guarantee spin-up from a stopped fan. If null, defaults to 100.
+        '';
+      };
+
       gpuPwmChannels = lib.mkOption {
         type = lib.types.listOf lib.types.int;
         default = [ ];
@@ -119,6 +128,8 @@ in {
           "HYST=${builtins.toString cfg.autoFancontrol.hysteresis}"
           "INTERVAL=${builtins.toString cfg.autoFancontrol.interval}"
           "ALLOW_STOP=${lib.boolToString (cfg.autoFancontrol.allowStop or false)}"
+          ${lib.optionalString (cfg.autoFancontrol.minStartOverride != null)
+            ("\"MIN_START_OVERRIDE=" + builtins.toString cfg.autoFancontrol.minStartOverride + "\"")}
           "GPU_PWM_CHANNELS=${builtins.concatStringsSep "," (map builtins.toString (cfg.autoFancontrol.gpuPwmChannels or []))}"
           "GPU_ENABLE=${lib.boolToString (cfg.gpuFancontrol.enable or false)}"
           "GPU_MIN_TEMP=${builtins.toString cfg.gpuFancontrol.minTemp}"
