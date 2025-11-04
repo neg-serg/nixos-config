@@ -7,6 +7,7 @@
   # Ensure Mesa stack for Steam/VR (64-bit only)
   hardware.graphics = {
     enable = true;
+    enable32Bit = true; # required for Proton/32-bit games (GL/Vulkan i686)
   };
 
   # Enable AMD-oriented kernel structured config for this host and tune performance
