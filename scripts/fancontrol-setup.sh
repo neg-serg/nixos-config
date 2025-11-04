@@ -111,6 +111,8 @@ MIN_PWM=${MIN_PWM:-70}
 MAX_PWM=${MAX_PWM:-255}
 HYST=${HYST:-3}
 INTERVAL=${INTERVAL:-2}
+ALLOW_STOP=${ALLOW_STOP:-false}
+GPU_PWM_CHANNELS=${GPU_PWM_CHANNELS:-}
 
 # Derive safe start/stop PWM thresholds used by fancontrol
 # MINSTART should be high enough to reliably spin up a stopped fan.
@@ -122,11 +124,48 @@ calc_minstart() {
   [ "$v" -gt "$MAX_PWM" ] && v=$MAX_PWM
   echo "$v"
 }
-MIN_START_DEFAULT=$(calc_minstart)
-MIN_STOP_DEFAULT=$MIN_PWM
+if [ "$ALLOW_STOP" = "true" ]; then
+  # Allow fans to stop: keep MINSTOP=0 and use a higher MINSTART to ensure reliable spin-up
+  MIN_START_DEFAULT=${MIN_START_OVERRIDE:-100}
+  MIN_STOP_DEFAULT=0
+else
+  MIN_START_DEFAULT=$(calc_minstart)
+  MIN_STOP_DEFAULT=$MIN_PWM
+fi
 
 fcfans=""; fctemps=""; mintemp=""; maxtemp=""; minpwm=""; maxpwm=""; minstart=""; minstop=""; hyst=""
 found_pwm=0
+
+# Prepare optional GPU temperature name for case-fan control mapping
+gpu_temp_name=""
+if [ -n "$gpu_path" ]; then
+  gtemp="$gpu_path/temp2_input"
+  if ls "$gpu_path"/temp*_label >/dev/null 2>&1; then
+    gjunc=""; gedge=""
+    for lab in "$gpu_path"/temp*_label; do
+      [ -e "$lab" ] || continue
+      name=$(<"$lab")
+      n=${lab##*/}; n=${n%_label}
+      if echo "$name" | grep -Eiq 'junction'; then
+        gjunc="${n}_input"; break
+      fi
+      if echo "$name" | grep -Eiq 'edge'; then
+        gedge="${n}_input"
+      fi
+    done
+    if [ -n "$gjunc" ]; then
+      gpu_temp_name="$gjunc"
+    elif [ -n "$gedge" ]; then
+      gpu_temp_name="$gedge"
+    fi
+  fi
+  if [ -z "$gpu_temp_name" ]; then
+    [ -e "$gtemp" ] && gpu_temp_name=$(basename "$gtemp") || gpu_temp_name=""
+  fi
+fi
+
+# Parse list of motherboard PWM channels that should follow GPU temperature
+IFS=',' read -r -a gpu_pwm_arr <<< "$GPU_PWM_CHANNELS"
 for pwm in "$nct_path"/pwm[1-9]; do
   [ -e "$pwm" ] || continue
   base=$(basename "$pwm")      # pwmN
@@ -136,8 +175,17 @@ for pwm in "$nct_path"/pwm[1-9]; do
   found_pwm=1
 
   fcfans="$fcfans $nct_base/$base=$nct_base/fan${n}_input"
-  # Use CPU temp for control (quiet and safe)
-  fctemps="$fctemps $nct_base/$base=$cpu_base/$cpu_temp_name"
+  # Use GPU temp for selected channels, else CPU temp
+  use_gpu_temp=false
+  for ch in "${gpu_pwm_arr[@]}"; do
+    [ -n "$ch" ] || continue
+    if [ "$ch" = "$n" ]; then use_gpu_temp=true; break; fi
+  done
+  if [ "$use_gpu_temp" = true ] && [ -n "$gpu_path" ] && [ -n "$gpu_temp_name" ]; then
+    fctemps="$fctemps $nct_base/$base=$gpu_base/$gpu_temp_name"
+  else
+    fctemps="$fctemps $nct_base/$base=$cpu_base/$cpu_temp_name"
+  fi
   mintemp="$mintemp $nct_base/$base=$MIN_TEMP"
   maxtemp="$maxtemp $nct_base/$base=$MAX_TEMP"
   minpwm="$minpwm $nct_base/$base=$MIN_PWM"
@@ -201,11 +249,17 @@ if [ -n "$gpu_path" ] && [ -e "$gpu_path/pwm1" ]; then
     maxtemp="$maxtemp $gpu_base/pwm1=$GPU_MAX_TEMP"
     minpwm="$minpwm $gpu_base/pwm1=$GPU_MIN_PWM"
     maxpwm="$maxpwm $gpu_base/pwm1=$GPU_MAX_PWM"
-      # Derive GPU MINSTART/MINSTOP similarly
-      gstart=$((GPU_MIN_PWM + START_DELTA))
-      [ "$gstart" -gt "$GPU_MAX_PWM" ] && gstart=$GPU_MAX_PWM
-      minstart="$minstart $gpu_base/pwm1=$gstart"
-      minstop="$minstop $gpu_base/pwm1=$GPU_MIN_PWM"
+      # Derive GPU MINSTART/MINSTOP similarly; respect allow-stop for GPU if global ALLOW_STOP is set
+      if [ "$ALLOW_STOP" = "true" ]; then
+        gstart=${MIN_START_OVERRIDE:-100}
+        minstart="$minstart $gpu_base/pwm1=$gstart"
+        minstop="$minstop $gpu_base/pwm1=0"
+      else
+        gstart=$((GPU_MIN_PWM + START_DELTA))
+        [ "$gstart" -gt "$GPU_MAX_PWM" ] && gstart=$GPU_MAX_PWM
+        minstart="$minstart $gpu_base/pwm1=$gstart"
+        minstop="$minstop $gpu_base/pwm1=$GPU_MIN_PWM"
+      fi
       hyst="$hyst $gpu_base/pwm1=$GPU_HYST"
     fi
   fi

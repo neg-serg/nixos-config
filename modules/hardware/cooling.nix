@@ -44,6 +44,25 @@ in {
         default = 2;
         description = "Polling interval (seconds).";
       };
+
+      allowStop = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = ''
+          Allow PWM-controlled fans to fully stop below the minimum temperature.
+          Uses a higher spin-up threshold to avoid stall when ramping from 0.
+        '';
+      };
+
+      gpuPwmChannels = lib.mkOption {
+        type = lib.types.listOf lib.types.int;
+        default = [ ];
+        description = ''
+          Motherboard PWM channel numbers (e.g., [ 2 3 ]) that should follow GPU
+          temperature instead of CPU temperature for case airflow near the GPU.
+          Other channels will follow CPU temperature as before.
+        '';
+      };
     };
 
     gpuFancontrol = {
@@ -99,6 +118,8 @@ in {
           "MAX_PWM=${builtins.toString cfg.autoFancontrol.maxPwm}"
           "HYST=${builtins.toString cfg.autoFancontrol.hysteresis}"
           "INTERVAL=${builtins.toString cfg.autoFancontrol.interval}"
+          "ALLOW_STOP=${lib.boolToString (cfg.autoFancontrol.allowStop or false)}"
+          "GPU_PWM_CHANNELS=${builtins.concatStringsSep "," (map builtins.toString (cfg.autoFancontrol.gpuPwmChannels or []))}"
           "GPU_ENABLE=${lib.boolToString (cfg.gpuFancontrol.enable or false)}"
           "GPU_MIN_TEMP=${builtins.toString cfg.gpuFancontrol.minTemp}"
           "GPU_MAX_TEMP=${builtins.toString cfg.gpuFancontrol.maxTemp}"
