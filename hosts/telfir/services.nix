@@ -164,7 +164,8 @@
       Type = "oneshot";
       ExecStart = "/run/current-system/sw/bin/powerprofilesctl set power-saver";
     };
-    wantedBy = [ "multi-user.target" ];
+    # Defer to post-boot to avoid interfering with activation and to follow repo policy
+    wantedBy = [ "post-boot.target" ];
   };
 
   # Nextcloud via Caddy on LAN, served as "telfir"
