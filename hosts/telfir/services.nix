@@ -485,6 +485,9 @@
     nativeBaseFps = 240;
   };
 
+  # Limit auto-picked V-Cache CPU set size for game-run pinning
+  environment.variables.GAME_PIN_AUTO_LIMIT = "8";
+
   # AutoFDO tooling disabled on this host (module kept)
   dev.gcc.autofdo.enable = false;
 
