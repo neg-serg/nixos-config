@@ -162,7 +162,7 @@
     wants = [ "power-profiles-daemon.service" ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "/run/current-system/sw/bin/powerprofilesctl set balanced";
+      ExecStart = "/run/current-system/sw/bin/powerprofilesctl set performance";
     };
     # Defer to post-boot to avoid interfering with activation and to follow repo policy
     wantedBy = [ "post-boot.target" ];
