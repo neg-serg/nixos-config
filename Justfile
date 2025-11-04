@@ -20,3 +20,7 @@ gen-options-commit:
 # Format the repo via flake formatter
 fmt:
     nix fmt
+
+# Detect V-Cache CPU set and print recommended kernel masks
+cpu-masks:
+    scripts/cpu-recommend-masks.sh
