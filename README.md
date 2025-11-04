@@ -169,6 +169,8 @@ Example (quiet, safe defaults):
     # autoFancontrol.maxPwm  = 255; # 0–255
     # autoFancontrol.hysteresis = 3;  # °C
     # autoFancontrol.interval  = 2;   # seconds
+    # autoFancontrol.allowStop = false;      # allow fans to fully stop below minTemp
+    # autoFancontrol.gpuPwmChannels = [ ];   # PWM channels (e.g., [2 3]) to follow GPU temp
   };
 }
 ```
