@@ -133,25 +133,22 @@
     enable = true;
     autoFancontrol = {
       enable = true;
-      # More aggressive CPU curve aimed at stable, quiet ramps:
-      # - Start earlier to prevent sudden spikes
-      # - Reach higher speeds sooner but cap max PWM for noise
-      minTemp = 35;   # °C to start ramping (earlier)
-      maxTemp = 68;   # °C for max speed (earlier full-speed point)
-      # Keep safe stall threshold; cap peak PWM for quieter top end
-      # minPwm  = 70;  # default safe minimum (0–255)
-      maxPwm  = 230;  # cap absolute speed to reduce noise
-      hysteresis = 4; # larger hysteresis to avoid hunting
-      # interval  = 2; # keep default polling interval
+      # Quieter bias: allow higher temps before ramp, cap max PWM
+      minTemp = 45;   # °C — позже начнём крутить, тише в простое
+      maxTemp = 82;   # °C — растягиваем диапазон, меньше оборотов при средней нагрузке
+      # minPwm  = 70;  # оставим безопасный минимум (0–255), чтоб не глохли вентиляторы
+      maxPwm  = 200;  # сильнее режем пик оборотов для тишины
+      hysteresis = 5; # побольше гистерезис — меньше «охоты» и скачков
+      interval  = 3;  # реже опрос — меньше мелких колебаний ШИМ
     };
     gpuFancontrol = {
       enable = true;
-      # More aggressive GPU curve with quiet cap:
-      minTemp = 50;   # °C (earlier start)
-      maxTemp = 78;   # °C (earlier full-speed point)
-      # minPwm  = 70;  # default safe minimum
-      maxPwm  = 230;  # cap peak noise
-      hysteresis = 4; # smoother behavior
+      # Тише по GPU: позже старт, ниже максимум оборотов
+      minTemp = 60;   # °C — позже включаем вентилятор
+      maxTemp = 88;   # °C — полная скорость позже (но она ограничена)
+      # minPwm  = 70;  # безопасный минимум
+      maxPwm  = 210;  # ограничиваем пик шума
+      hysteresis = 5; # сглаживаем переключения
     };
   };
 
