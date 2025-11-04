@@ -131,21 +131,26 @@
   # Quiet fan profile: load nct6775 and autogenerate a conservative fancontrol config
   hardware.cooling = {
     enable = true;
-    autoFancontrol.enable = true;
-    gpuFancontrol.enable = true;
-    # Optional tuning (defaults are quiet and safe); uncomment to adjust
-    # autoFancontrol.minTemp = 35;  # start ramping at 35°C
-    # autoFancontrol.maxTemp = 75;  # full speed by 75°C
-    # autoFancontrol.minPwm  = 70;  # ~27% duty to avoid stall
-    # autoFancontrol.maxPwm  = 255; # 100%
-    # autoFancontrol.hysteresis = 3;
-    # autoFancontrol.interval  = 2; # seconds
-    # GPU curve (quiet): starts gentle at 50°C, full by 85°C
-    # gpuFancontrol.minTemp = 50;
-    # gpuFancontrol.maxTemp = 85;
-    # gpuFancontrol.minPwm  = 70;
-    # gpuFancontrol.maxPwm  = 255;
-    # gpuFancontrol.hysteresis = 3;
+    autoFancontrol = {
+      enable = true;
+      # Softer CPU curve for Zen 5 X3D: start later, cap lower
+      minTemp = 40;  # °C to start ramping
+      maxTemp = 70;  # °C for max speed
+      # Keep default PWM/hysteresis/interval unless tuning proves stable
+      # minPwm  = 70;
+      # maxPwm  = 255;
+      # hysteresis = 3;
+      # interval  = 2;
+    };
+    gpuFancontrol = {
+      enable = true;
+      # Softer GPU curve: later start, lower full-speed point
+      minTemp = 55;  # °C
+      maxTemp = 80;  # °C
+      # minPwm  = 70;
+      # maxPwm  = 255;
+      # hysteresis = 3;
+    };
   };
 
   # Nextcloud via Caddy on LAN, served as "telfir"
