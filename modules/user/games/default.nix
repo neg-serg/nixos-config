@@ -704,9 +704,8 @@
               for name in os.listdir(sysfs):
                   if not name.startswith('cpu'):
                       continue
-                  try:
-                      idx = int(name[3:])
-                  except ValueError:
+                  # Ensure the suffix after 'cpu' is numeric
+                  if not name[3:].isdigit():
                       continue
                   base = os.path.join(sysfs, name, 'cache', 'index3')
                   size_p = os.path.join(base, 'size')
@@ -740,7 +739,7 @@
                       return parse_cpuset(f.read().strip())
               except Exception:
                   return []
-          # Choose group with max size, break ties by more CPUs, then by higher min CPU index
+          # Choose the group with max size. Tie-breakers: more CPUs, then higher min index.
           groups.sort(key=lambda g: (g[0], len(g[1]), min(g[1]) if g[1] else -1))
           size, cpus = groups[-1]
           # Optional limit via env var (e.g., 8)
