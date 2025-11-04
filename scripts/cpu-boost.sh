@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<EOF
-cpu-boost: toggle CPU turbo/boost on Linux
+cpu-boost: toggle CPU turbo/boost (cpufreq)
 
 Usage:
   cpu-boost status      # print current boost state
@@ -11,9 +11,8 @@ Usage:
   cpu-boost off         # disable boost/turbo
   cpu-boost toggle      # toggle boost state
 
-Supports common sysfs interfaces:
-  - /sys/devices/system/cpu/intel_pstate/no_turbo (Intel)
-  - /sys/devices/system/cpu/cpufreq/boost (Intel/AMD cpufreq)
+Controls via sysfs:
+  - /sys/devices/system/cpu/cpufreq/boost (AMD/Intel cpufreq)
 
 Note: Requires root to change state.
 EOF
@@ -26,27 +25,11 @@ require_root() {
   fi
 }
 
-# Detect control file
-detect_iface() {
-  if [[ -e /sys/devices/system/cpu/intel_pstate/no_turbo ]]; then
-    echo intel
-    return 0
-  fi
-  if [[ -e /sys/devices/system/cpu/cpufreq/boost ]]; then
-    echo cpufreq
-    return 0
-  fi
-  echo none
-}
+detect_iface() { [[ -e /sys/devices/system/cpu/cpufreq/boost ]] && echo cpufreq || echo none; }
 
 get_status() {
   local iface=$1
   case "$iface" in
-    intel)
-      local v; v=$(< /sys/devices/system/cpu/intel_pstate/no_turbo)
-      # no_turbo: 1 = boost OFF, 0 = boost ON
-      if [[ "$v" == "1" ]]; then echo off; else echo on; fi
-      ;;
     cpufreq)
       local v; v=$(< /sys/devices/system/cpu/cpufreq/boost)
       # boost: 1 = ON, 0 = OFF
@@ -61,10 +44,6 @@ get_status() {
 set_status() {
   local iface=$1 want=$2
   case "$iface" in
-    intel)
-      # no_turbo: 1 = disable boost, 0 = enable
-      if [[ "$want" == on ]]; then echo 0 > /sys/devices/system/cpu/intel_pstate/no_turbo; else echo 1 > /sys/devices/system/cpu/intel_pstate/no_turbo; fi
-      ;;
     cpufreq)
       # boost: 1 = enable, 0 = disable
       if [[ "$want" == on ]]; then echo 1 > /sys/devices/system/cpu/cpufreq/boost; else echo 0 > /sys/devices/system/cpu/cpufreq/boost; fi
@@ -99,4 +78,3 @@ else
 fi
 set_status "$iface" "$want"
 echo "boost: $curr -> $want"
-
