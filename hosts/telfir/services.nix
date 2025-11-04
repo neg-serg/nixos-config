@@ -128,28 +128,30 @@
   # Disable RNNoise virtual mic for this host by default
   hardware.audio.rnnoise.enable = false;
 
-  # Quiet fan profile: load nct6775 and autogenerate a conservative fancontrol config
+  # Quiet fan profile: load nct6775 and autogenerate fancontrol config
   hardware.cooling = {
     enable = true;
     autoFancontrol = {
       enable = true;
-      # Softer CPU curve for Zen 5 X3D: start later, cap lower
-      minTemp = 40;  # °C to start ramping
-      maxTemp = 70;  # °C for max speed
-      # Keep default PWM/hysteresis/interval unless tuning proves stable
-      # minPwm  = 70;
-      # maxPwm  = 255;
-      # hysteresis = 3;
-      # interval  = 2;
+      # More aggressive CPU curve aimed at stable, quiet ramps:
+      # - Start earlier to prevent sudden spikes
+      # - Reach higher speeds sooner but cap max PWM for noise
+      minTemp = 35;   # °C to start ramping (earlier)
+      maxTemp = 68;   # °C for max speed (earlier full-speed point)
+      # Keep safe stall threshold; cap peak PWM for quieter top end
+      # minPwm  = 70;  # default safe minimum (0–255)
+      maxPwm  = 230;  # cap absolute speed to reduce noise
+      hysteresis = 4; # larger hysteresis to avoid hunting
+      # interval  = 2; # keep default polling interval
     };
     gpuFancontrol = {
       enable = true;
-      # Softer GPU curve: later start, lower full-speed point
-      minTemp = 55;  # °C
-      maxTemp = 80;  # °C
-      # minPwm  = 70;
-      # maxPwm  = 255;
-      # hysteresis = 3;
+      # More aggressive GPU curve with quiet cap:
+      minTemp = 50;   # °C (earlier start)
+      maxTemp = 78;   # °C (earlier full-speed point)
+      # minPwm  = 70;  # default safe minimum
+      maxPwm  = 230;  # cap peak noise
+      hysteresis = 4; # smoother behavior
     };
   };
 
