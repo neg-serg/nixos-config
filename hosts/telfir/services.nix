@@ -156,7 +156,6 @@
   };
 
   # Энергосбережение по умолчанию для меньшего тепла/шума
-  services.power-profiles-daemon.enable = true;
   systemd.services."power-profiles-default" = {
     description = "Set default power profile to power-saver";
     after = [ "power-profiles-daemon.service" ];
@@ -207,6 +206,7 @@
       foldersList
     );
   in {
+    power-profiles-daemon.enable = true;
     # AdGuard Home: enable Prometheus metrics endpoint at /control/metrics
     adguardhome.settings.prometheus.enabled = true;
 
