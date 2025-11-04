@@ -739,7 +739,8 @@
                       return parse_cpuset(f.read().strip())
               except Exception:
                   return []
-          # Choose the group with max size. Tie-breakers: more CPUs, then higher min index.
+          # Pick group with largest L3.
+          # Tie: prefer more CPUs, then higher min index.
           groups.sort(key=lambda g: (g[0], len(g[1]), min(g[1]) if g[1] else -1))
           size, cpus = groups[-1]
           # Optional limit via env var (e.g., 8)
