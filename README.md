@@ -182,6 +182,17 @@ Example (quiet, safe defaults):
 - GPU fans remain managed by the GPU driver; only motherboard PWM headers are targeted.
   - Exception: when `gpuFancontrol.enable = true`, we switch `pwm1_enable` to manual and fancontrol takes over.
 
+### Fan stop capability test
+
+- Utility: `fan-stop-capability-test` checks which motherboard PWM channels can fully stop at 0%.
+- Safe by default: skips CPU/PUMP/AIO headers; restores original settings after probing.
+- Usage examples:
+  - List channels only: `sudo fan-stop-capability-test --list`
+  - Test chassis fans: `sudo fan-stop-capability-test`
+  - Include CPU/PUMP (at your own risk): `sudo fan-stop-capability-test --include-cpu`
+- Options: `--device <hwmonN|nct6798>`, `--wait <sec>` (default 6), `--threshold <rpm>` (default 50).
+- Note: stop `fancontrol` during the test for accurate results: `sudo systemctl stop fancontrol`.
+
 ## GPU CoreCtrl (Undervolt/Power‑Limit)
 
 - Optional capability (disabled by default): `hardware.gpu.corectrl.enable = false;`

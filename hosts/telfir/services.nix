@@ -152,6 +152,7 @@
   # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
   environment.systemPackages = lib.mkAfter [
     (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile ../../scripts/cpu-boost.sh))
+    (pkgs.writeShellScriptBin "fan-stop-capability-test" (builtins.readFile ../../scripts/fan-stop-capability-test.sh))
   ];
 
   # Энергосбережение по умолчанию для меньшего тепла/шума
