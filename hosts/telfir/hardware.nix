@@ -43,8 +43,9 @@
   # Safe memory extras: lower swappiness and raise max_map_count for heavy apps/games
   profiles.performance.memExtras = {
     enable = true;
-    swappiness = { enable = true; value = 20; };
-    maxMapCount = { enable = true; value = 1048576; };
+    # Align with gaming sysctl in modules/games to avoid conflicts
+    swappiness = { enable = true; value = 10; };
+    maxMapCount = { enable = true; value = 16777216; };
   };
 
   # Host-specific kernel parameters and boot tuning
