@@ -6,8 +6,7 @@
   programs.hyprland = {
     enable = true;
     withUWSM = true;
-    # Use nixpkgs-packaged Hyprland and portal to avoid building
-    # upstream flake packages (qtutils) that currently fail on unstable Qt.
+    # Use pkgs.* here; an overlay pins them to Hyprland 0.52
     package = pkgs.hyprland;
     portalPackage = pkgs.xdg-desktop-portal-hyprland;
   };

@@ -27,10 +27,8 @@ nixos-generators
 ## Hyprland: Single Source of Truth and Updates
 
 - Source of truth: `inputs.hyprland` is pinned to a stable tag (see `flake.nix`).
-- Dependencies are kept in lockstep via `follows`:
+- Dependencies are kept in lockstep via `follows` (v0.52 layout):
   - `hyprland-protocols` → `hyprland/hyprland-protocols`
-  - `hyprland-qtutils` → `hyprland/hyprland-qtutils`
-  - `hyprland-qt-support` → `hyprland/hyprland-qtutils/hyprland-qt-support`
   - `xdg-desktop-portal-hyprland` → `hyprland/xdph`
 - Usage in modules:
   - `programs.hyprland.package = inputs.hyprland.packages.<system>.hyprland`

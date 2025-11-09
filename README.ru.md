@@ -134,10 +134,8 @@ in {
 ## Hyprland: единый источник и обновления
 
 - Источник истины: `inputs.hyprland` закреплён на стабильном теге (см. `flake.nix`).
-- Зависимости синхронизируются через `follows`:
+- Зависимости синхронизируются через `follows` (раскладка v0.52):
   - `hyprland-protocols` → `hyprland/hyprland-protocols`
-  - `hyprland-qtutils` → `hyprland/hyprland-qtutils`
-  - `hyprland-qt-support` → `hyprland/hyprland-qtutils/hyprland-qt-support`
   - `xdg-desktop-portal-hyprland` → `hyprland/xdph`
 - Использование в модулях:
   - `programs.hyprland.package = inputs.hyprland.packages.<system>.hyprland`
