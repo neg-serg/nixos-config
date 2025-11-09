@@ -6,14 +6,20 @@
 #  - Start after Nextcloud PHP-FPM pool to avoid early failures
 { lib, config, ... }:
 let
-  inherit (lib) mkIf mkForce optionals;
+  inherit (lib) mkAfter mkDefault mkIf mkForce optionals;
   exporterEnabled = (config.services.prometheus.exporters."php-fpm".enable or false);
   nextcloudEnabled = (config.services.nextcloud.enable or false);
 in {
   config = mkIf exporterEnabled {
     # Ensure the shared web group exists and prometheus joins it for socket access
-    users.groups.nginx = lib.mkDefault {};
-    users.users.prometheus.extraGroups = [ "nginx" ];
+    users.groups.nginx = mkDefault {};
+    users.groups.prometheus = mkDefault {};
+    users.users.prometheus = {
+      isSystemUser = mkDefault true;
+      group = mkDefault "prometheus";
+      home = mkDefault "/var/lib/prometheus";
+      extraGroups = mkAfter ["nginx"];
+    };
 
     # Systemd unit adjustments for php-fpm exporter
     systemd.services."prometheus-php-fpm-exporter" = {
