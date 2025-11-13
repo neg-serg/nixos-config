@@ -6,6 +6,10 @@ Post‑Boot Systemd Target
 - Не добавляйте `After=graphical.target` в сам `post-boot.target`; `graphical.target` уже хочет `post-boot.target`. Добавление `After=graphical.target` на target создаёт цикл упорядочивания.
 - Перенося сервисы на post‑boot, избегайте безусловного `After=graphical.target` в хелпере, который цепляет юниты к `post-boot.target`. Пусть target будет wanted графическим таргетом, а конкретные `After=` добавляйте только по необходимости (никогда не на сам target).
 
+Профиль Wi‑Fi (iwd)
+- Базовый сетевой модуль ставит тулзы iwd, но держит `networking.wireless.iwd.enable = false`, чтобы проводные хосты не поднимали сервис.
+- Если на хосте нужен Wi‑Fi, включите `profiles.network.wifi.enable = true;` (например, в `hosts/<имя>/networking.nix`) вместо ручного `lib.mkForce`.
+
 Prometheus PHP‑FPM Exporter + пул Nextcloud
 - Доступ к сокету: экспортер читает `unix:///run/phpfpm/nextcloud.sock;/status`. Убедитесь, что сокет пула PHP‑FPM доступен на чтение группе общего веб‑пула, и экспортер входит в неё:
   - `services.phpfpm.pools.nextcloud.settings`: `"listen.group" = "nginx";`, `"listen.mode" = "0660"`.
@@ -25,4 +29,3 @@ Prometheus PHP‑FPM Exporter + пул Nextcloud
 Типовые ошибки
 - Неправильное место для extraGroups: внутри `users = { ... }` задавайте `users.caddy.extraGroups = [ "nginx" ];` и `users.prometheus.extraGroups = [ "nginx" ];` (это маппится на `users.users.<name>.extraGroups`). Не пишите повторно `users.users.caddy` внутри `users = { ... }` — получится `users.users.users.caddy` и сломает оценку.
 - Двойное включение прокси: не включайте одновременно `nextcloud.nginxProxy` и `nextcloud.caddyProxy` (есть assertion, но помнить полезно).
-
