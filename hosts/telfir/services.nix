@@ -3,7 +3,11 @@
   config,
   pkgs,
   ...
-}: {
+}: let
+  grafanaEnabled = config.services.grafana.enable or false;
+in
+lib.mkMerge [
+  {
   # Primary user (single source of truth for name/ids)
   users.main = {
     name = "neg";
@@ -43,10 +47,6 @@
       }
       {
         domain = "telfir.local";
-        answer = "192.168.2.240";
-      }
-      {
-        domain = "grafana.telfir";
         answer = "192.168.2.240";
       }
     ];
@@ -95,8 +95,9 @@
   monitoring.netdata.enable = false;
   # Disable centralized logs (Loki + Promtail) for this host
   monitoring.logs.enable = false;
+  # Keep Grafana wiring available but disabled on this host
   monitoring.grafana = {
-    enable = true;
+    enable = false;
     port = 3030;
     # Serve Grafana only via Caddy: bind to localhost and do not open the port
     listenAddress = "127.0.0.1";
@@ -104,13 +105,12 @@
     firewallInterfaces = [ "br0" ];
     # Admin via SOPS secret (if present)
     adminUser = "admin";
-    # Point to the SOPS-managed file below
-    adminPasswordFile = let
-      yaml = ../../.. + "/secrets/grafana-admin-password.sops.yaml";
-      bin = ../../.. + "/secrets/grafana-admin-password.sops";
-    in if (builtins.pathExists yaml || builtins.pathExists bin)
-       then config.sops.secrets."grafana/admin_password".path
-       else null;
+    # Point to the SOPS-managed file below (only when the secret is defined)
+    adminPasswordFile =
+      lib.attrByPath
+        [ "sops" "secrets" "grafana/admin_password" "path" ]
+        null
+        config;
     # HTTPS via Caddy on grafana.telfir
     caddyProxy.enable = true;
     caddyProxy.domain = "grafana.telfir";
@@ -206,7 +206,10 @@
       })
       foldersList
     );
-  in {
+  in
+    (
+      lib.mkMerge [
+      {
     power-profiles-daemon.enable = true;
     # Do not expose AdGuard Home Prometheus metrics on this host
     adguardhome.settings.prometheus.enabled = false;
@@ -249,42 +252,45 @@
         gui.address = "0.0.0.0:8384";
       };
     };
-    # Harden Grafana: avoid external calls and too-frequent refreshes
-    grafana.settings = {
-      analytics = {
-        reporting_enabled = false;
-        check_for_updates = false;
-      };
-      users = {
-        # Do not fetch avatars from Gravatar (external egress from clients/Server)
-        allow_gravatar = false;
-      };
-      news.news_feed_enabled = false;
-      dashboards.min_refresh_interval = "10s";
-      snapshots.external_enabled = false;
-      # Conservative plugin settings (no alpha, keep install API default)
-      plugins = {
-        enable_alpha = false;
-        disable_install_api = true;
-      };
-    };
-
-    # (Grafana env + tmpfiles rules are defined at top-level below)
-
-    # Provision local dashboards (Unbound, Nextcloud)
-    grafana.provision.dashboards.settings.providers = lib.mkAfter [
-      {
-        name = "local-json";
-        orgId = 1;
-        type = "file";
-        disableDeletion = false;
-        editable = true;
-        options.path = ../../dashboards;
-      }
-    ];
-
     # Bitcoind instance is now managed by modules/servers/bitcoind
-  };
+      }
+      (lib.mkIf grafanaEnabled {
+        # Harden Grafana: avoid external calls and too-frequent refreshes
+        grafana.settings = {
+          analytics = {
+            reporting_enabled = false;
+            check_for_updates = false;
+          };
+          users = {
+            # Do not fetch avatars from Gravatar (external egress from clients/Server)
+            allow_gravatar = false;
+          };
+          news.news_feed_enabled = false;
+          dashboards.min_refresh_interval = "10s";
+          snapshots.external_enabled = false;
+          # Conservative plugin settings (no alpha, keep install API default)
+          plugins = {
+            enable_alpha = false;
+            disable_install_api = true;
+          };
+        };
+
+        # (Grafana env + tmpfiles rules are defined at top-level below)
+
+        # Provision local dashboards (Unbound, Nextcloud)
+        grafana.provision.dashboards.settings.providers = lib.mkAfter [
+          {
+            name = "local-json";
+            orgId = 1;
+            type = "file";
+            disableDeletion = false;
+            editable = true;
+            options.path = ../../dashboards;
+          }
+        ];
+      })
+    ]
+    );
 
   # Provide GUI password to Syncthing from SOPS secret and set it at service start
   # - Secret file: secrets/syncthing.sops.yaml (key: syncthing/gui-pass)
@@ -324,42 +330,8 @@
 
   # (Prometheus/Alertmanager firewall openings removed for this host)
 
-  # Disable preinstall/auto-update feature toggle explicitly via env (Grafana 10/11/12)
-  systemd.services.grafana.environment = {
-    GF_FEATURE_TOGGLES_DISABLE = "preinstallAutoUpdate";
-  };
-
-  # Restrict Grafana network egress to loopback only.
-  # Caddy proxies from LAN to 127.0.0.1, and datasources (Loki/Prometheus) are local.
-  # This blocks accidental outbound calls (updates, gravatar, external plugins, etc.).
-  systemd.services.grafana.serviceConfig = {
-    IPAddressDeny = "any";
-    IPAddressAllow = [ "127.0.0.0/8" "::1/128" ];
-  };
-
-  # Ensure plugins directory is clean on activation
-  systemd.tmpfiles.rules = lib.mkAfter [
-    "R /var/lib/grafana/plugins - - - - -"
-    "d /var/lib/grafana/plugins 0750 grafana grafana - -"
-  ];
-
   # Alertmanager removed; no SMTP credentials needed
 
-
-  # SOPS secret for Grafana admin password
-  sops.secrets."grafana/admin_password" = let
-    yaml = ../../../secrets/grafana-admin-password.sops.yaml;
-    bin = ../../../secrets/grafana-admin-password.sops;
-  in lib.mkIf (builtins.pathExists yaml || builtins.pathExists bin) {
-    sopsFile = if builtins.pathExists yaml then yaml else bin;
-    format = "binary"; # provide plain string to $__file provider
-    # Ensure grafana can read the secret when referenced via $__file{}
-    owner = "grafana";
-    group = "grafana";
-    mode = "0400";
-    # Restart Grafana if the secret changes
-    restartUnits = [ "grafana.service" ];
-  };
 
   # PHP-FPM exporter removed on this host
 
@@ -494,4 +466,40 @@
 
   # Monitoring (role enables Netdata + sysstat + atop with light config)
   # Netdata UI: http://127.0.0.1:19999
-}
+  }
+  (lib.mkIf grafanaEnabled {
+    # Disable preinstall/auto-update feature toggle explicitly via env (Grafana 10/11/12)
+    systemd.services.grafana.environment = {
+      GF_FEATURE_TOGGLES_DISABLE = "preinstallAutoUpdate";
+    };
+
+    # Restrict Grafana network egress to loopback only.
+    # Caddy proxies from LAN to 127.0.0.1, and datasources (Loki/Prometheus) are local.
+    # This blocks accidental outbound calls (updates, gravatar, external plugins, etc.).
+    systemd.services.grafana.serviceConfig = {
+      IPAddressDeny = "any";
+      IPAddressAllow = [ "127.0.0.0/8" "::1/128" ];
+    };
+
+    # Ensure plugins directory is clean on activation
+    systemd.tmpfiles.rules = lib.mkAfter [
+      "R /var/lib/grafana/plugins - - - - -"
+      "d /var/lib/grafana/plugins 0750 grafana grafana - -"
+    ];
+
+    # SOPS secret for Grafana admin password
+    sops.secrets."grafana/admin_password" = let
+      yaml = ../../../secrets/grafana-admin-password.sops.yaml;
+      bin = ../../../secrets/grafana-admin-password.sops;
+    in lib.mkIf (builtins.pathExists yaml || builtins.pathExists bin) {
+      sopsFile = if builtins.pathExists yaml then yaml else bin;
+      format = "binary"; # provide plain string to $__file provider
+      # Ensure grafana can read the secret when referenced via $__file{}
+      owner = "grafana";
+      group = "grafana";
+      mode = "0400";
+      # Restart Grafana if the secret changes
+      restartUnits = [ "grafana.service" ];
+    };
+  })
+]
