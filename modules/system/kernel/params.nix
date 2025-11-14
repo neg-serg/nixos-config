@@ -33,12 +33,6 @@
     "systemd.show_status=false"
     "vt.global_cursor_default=0"
   ];
-  intel_hda_modules = [
-    "snd_hda_codec"
-    "snd_hda_codec_hdmi"
-    "snd_hda_core"
-    "snd_hda_intel"
-  ];
   extra_security = ["page_alloc.shuffle=1"];
   idle_nomwait = ["idle=nomwait"]; # latency over power
   usb_noautosuspend = ["usbcore.autosuspend=-1"]; # avoid hiccups
@@ -127,7 +121,6 @@ in {
         blacklistedKernelModules =
           ["sp5100_tco"]
           ++ obscure_network_protocols
-          ++ intel_hda_modules
           ++ old_rare_insufficiently_audited_fs;
 
         kernelParams = lib.mkBefore base_params;
