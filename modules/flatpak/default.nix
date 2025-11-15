@@ -17,6 +17,10 @@
         origin = "flathub";
       }
       {
+        appId = "net.sapples.LiveCaptions";
+        origin = "flathub";
+      }
+      {
         appId = "md.obsidian.Obsidian";
         origin = "flathub";
       }
