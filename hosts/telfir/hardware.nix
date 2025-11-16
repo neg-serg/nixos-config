@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }: {
+{ pkgs, lib, config, ... }: {
   # Hardware and performance tuning specific to host 'telfir'
   hardware.storage.autoMount.enable = true;
   hardware.video.amd.useMesaGit = false;
@@ -59,6 +59,17 @@
       # Avoid probing dozens of legacy UARTs; speeds up device coldplug
       "8250.nr_uarts=1"
     ];
+
+    # Load ASUS EC sensor driver for detailed telemetry + OpenRGB access
+    kernelModules = lib.mkAfter [
+      "ec_sys"
+      "asus_ec_sensors"
+    ];
+    extraModulePackages =
+      lib.mkAfter (
+        lib.optional (builtins.hasAttr "asus-ec-sensors" config.boot.kernelPackages)
+          config.boot.kernelPackages."asus-ec-sensors"
+      );
 
     # Load heavy GPU driver early in initrd to reduce userspace module-load time
     initrd = {

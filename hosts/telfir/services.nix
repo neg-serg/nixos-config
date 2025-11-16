@@ -151,9 +151,13 @@ lib.mkMerge [
 
   # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
   environment.systemPackages = lib.mkAfter [
+    pkgs.openrgb
     (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile ../../scripts/cpu-boost.sh))
     (pkgs.writeShellScriptBin "fan-stop-capability-test" (builtins.readFile ../../scripts/fan-stop-capability-test.sh))
   ];
+
+  # Install OpenRGB udev rules so the GUI works without sudo
+  services.udev.packages = lib.mkAfter [ pkgs.openrgb ];
 
   # Энергосбережение по умолчанию для меньшего тепла/шума
   systemd.services."power-profiles-default" = {
