@@ -156,9 +156,6 @@ lib.mkMerge [
     (pkgs.writeShellScriptBin "fan-stop-capability-test" (builtins.readFile ../../scripts/fan-stop-capability-test.sh))
   ];
 
-  # Install OpenRGB udev rules so the GUI works without sudo
-  services.udev.packages = lib.mkAfter [ pkgs.openrgb ];
-
   # Энергосбережение по умолчанию для меньшего тепла/шума
   systemd.services."power-profiles-default" = {
     description = "Set default power profile to power-saver";
@@ -213,8 +210,9 @@ lib.mkMerge [
   in
     (
       lib.mkMerge [
-      {
-    power-profiles-daemon.enable = true;
+        {
+          udev.packages = lib.mkAfter [ pkgs.openrgb ];
+          power-profiles-daemon.enable = true;
     # Do not expose AdGuard Home Prometheus metrics on this host
     adguardhome.settings.prometheus.enabled = false;
 
