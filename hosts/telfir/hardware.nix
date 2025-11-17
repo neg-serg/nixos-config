@@ -1,13 +1,26 @@
-{ pkgs, lib, config, ... }: {
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}: {
   # Hardware and performance tuning specific to host 'telfir'
-  hardware.storage.autoMount.enable = true;
-  hardware.video.amd.useMesaGit = false;
-  hardware.vr.valveIndex.enable = true;
+  hardware = {
+    storage.autoMount.enable = true;
+    video.amd.useMesaGit = false;
+    vr.valveIndex.enable = true;
 
-  # Ensure Mesa stack for Steam/VR (64-bit only)
-  hardware.graphics = {
-    enable = true;
-    enable32Bit = true; # required for Proton/32-bit games (GL/Vulkan i686)
+    # Ensure Mesa stack for Steam/VR (64-bit only)
+    graphics = {
+      enable = true;
+      enable32Bit = true; # required for Proton/32-bit games (GL/Vulkan i686)
+    };
+
+    # Enable CoreCtrl with polkit rule for wheel
+    gpu.corectrl = {
+      enable = true;
+      group = "wheel";
+    };
   };
 
   # Enable AMD-oriented kernel structured config for this host and tune performance
@@ -44,8 +57,14 @@
   profiles.performance.memExtras = {
     enable = true;
     # Align with gaming sysctl in modules/games to avoid conflicts
-    swappiness = { enable = true; value = 10; };
-    maxMapCount = { enable = true; value = 16777216; };
+    swappiness = {
+      enable = true;
+      value = 10;
+    };
+    maxMapCount = {
+      enable = true;
+      value = 16777216;
+    };
   };
 
   # Host-specific kernel parameters and boot tuning
@@ -65,11 +84,10 @@
       "ec_sys"
       "asus_ec_sensors"
     ];
-    extraModulePackages =
-      lib.mkAfter (
-        lib.optional (builtins.hasAttr "asus-ec-sensors" config.boot.kernelPackages)
-          config.boot.kernelPackages."asus-ec-sensors"
-      );
+    extraModulePackages = lib.mkAfter (
+      lib.optional (builtins.hasAttr "asus-ec-sensors" config.boot.kernelPackages)
+      config.boot.kernelPackages."asus-ec-sensors"
+    );
 
     # Load heavy GPU driver early in initrd to reduce userspace module-load time
     initrd = {
@@ -131,9 +149,4 @@
     pkgs.bazecor # Dygma keyboard configurator
   ];
 
-  # Enable CoreCtrl with polkit rule for wheel
-  hardware.gpu.corectrl = {
-    enable = true;
-    group = "wheel";
-  };
 }
