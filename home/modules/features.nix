@@ -299,29 +299,28 @@ in {
     })
     # Consistency assertions for nested flags
     {
-      assertions =
-        [
-          {
-            assertion = cfg.gui.enable || (! cfg.gui.qt.enable);
-            message = "features.gui.qt.enable requires features.gui.enable = true";
-          }
-          {
-            assertion = cfg.gui.enable || (! cfg.gui.quickshell.enable);
-            message = "features.gui.quickshell.enable requires features.gui.enable = true";
-          }
-          {
-            assertion = cfg.web.enable || (! cfg.web.tools.enable && ! cfg.web.floorp.enable && ! cfg.web.yandex.enable && ! cfg.web.firefox.enable && ! cfg.web.librewolf.enable && ! cfg.web.nyxt.enable);
-            message = "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)";
-          }
-          {
-            assertion = ! (cfg.web.firefox.enable && cfg.web.librewolf.enable);
-            message = "Only one of features.web.firefox.enable or features.web.librewolf.enable can be true";
-          }
-          {
-            assertion = cfg.dev.enable || (! cfg.dev.ai.enable);
-            message = "features.dev.ai.enable requires features.dev.enable = true";
-          }
-        ];
+      assertions = [
+        {
+          assertion = cfg.gui.enable || (! cfg.gui.qt.enable);
+          message = "features.gui.qt.enable requires features.gui.enable = true";
+        }
+        {
+          assertion = cfg.gui.enable || (! cfg.gui.quickshell.enable);
+          message = "features.gui.quickshell.enable requires features.gui.enable = true";
+        }
+        {
+          assertion = cfg.web.enable || (! cfg.web.tools.enable && ! cfg.web.floorp.enable && ! cfg.web.yandex.enable && ! cfg.web.firefox.enable && ! cfg.web.librewolf.enable && ! cfg.web.nyxt.enable);
+          message = "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)";
+        }
+        {
+          assertion = ! (cfg.web.firefox.enable && cfg.web.librewolf.enable);
+          message = "Only one of features.web.firefox.enable or features.web.librewolf.enable can be true";
+        }
+        {
+          assertion = cfg.dev.enable || (! cfg.dev.ai.enable);
+          message = "features.dev.ai.enable requires features.dev.enable = true";
+        }
+      ];
     }
     # Auto-enable dev-speed by env var
     (mkIf devSpeedEnv {features.devSpeed.enable = mkDefault true;})
