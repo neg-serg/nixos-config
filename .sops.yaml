@@ -4,3 +4,8 @@ creation_rules:
     - age:
       - age1eggdzmjp2h4a68kn0j5zay72s7s6tc7qzak6cy9zp3dj0rwxxetsmz4t52 # from ~/.config/sops/age/keys.txt
       - age1lnkpac97m7drx3k2ej5jwccfa99z4n2sxlezwzjfcevwqtvw9chs8knmtc # from ssh-to-age
+  - path_regex: home/secrets/.*
+    key_groups:
+    - age:
+      - age1eggdzmjp2h4a68kn0j5zay72s7s6tc7qzak6cy9zp3dj0rwxxetsmz4t52 # from ~/.config/sops/age/keys.txt
+      - age1lnkpac97m7drx3k2ej5jwccfa99z4n2sxlezwzjfcevwqtvw9chs8knmtc # from ssh-to-age
