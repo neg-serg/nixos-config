@@ -17,7 +17,7 @@
   kver = pkgs.linuxPackages.kernel.version or "";
   haveAtLeast = v: (kver != "") && lib.versionAtLeast kver v;
   prtEnable = config.profiles.performance.preemptRt.enable or false;
-  prtMode = (config.profiles.performance.preemptRt.mode or "auto");
+  prtMode = config.profiles.performance.preemptRt.mode or "auto";
   useRtKernel = prtEnable && (prtMode == "rt" || (prtMode == "auto" && !haveAtLeast "6.12"));
 
   mitigations_settings = ["mitigations=off"]; # full mitigations disable
@@ -126,7 +126,7 @@ in {
         kernelParams = lib.mkBefore base_params;
 
         # Use amneziawg from the selected kernelPackages when available
-        extraModulePackages = let kp = config.boot.kernelPackages; in lib.optionals (kp ? amneziawg) [ kp.amneziawg ];
+        extraModulePackages = let kp = config.boot.kernelPackages; in lib.optionals (kp ? amneziawg) [kp.amneziawg];
         # Default kernel console verbosity; hosts may override
         consoleLogLevel = lib.mkDefault 7;
         # Prefer mainstream kernel with Hydra substitutes to avoid local builds
@@ -134,26 +134,28 @@ in {
       };
     }
     {
-      # PREEMPT_RT + SCHED_DEADLINE kernel config toggles
-      boot.kernelPatches = lib.mkMerge [
-        (lib.mkIf (prtEnable && !useRtKernel && haveAtLeast "6.12") [
-          {
-            name = "enable-preempt-rt";
-            patch = null;
-            structuredExtraConfig = with lib.kernel; {
-              PREEMPT_RT = yes;
-            };
-          }
-        ])
-      ];
+      boot = {
+        # PREEMPT_RT + SCHED_DEADLINE kernel config toggles
+        kernelPatches = lib.mkMerge [
+          (lib.mkIf (prtEnable && !useRtKernel && haveAtLeast "6.12") [
+            {
+              name = "enable-preempt-rt";
+              patch = null;
+              structuredExtraConfig = with lib.kernel; {
+                PREEMPT_RT = yes;
+              };
+            }
+          ])
+        ];
 
-      # Optionally switch to RT kernel package when requested or on auto (< 6.12)
-      boot.kernelPackages = lib.mkIf useRtKernel (lib.mkForce pkgs.linuxPackages_rt);
+        # Optionally switch to RT kernel package when requested or on auto (< 6.12)
+        kernelPackages = lib.mkIf useRtKernel (lib.mkForce pkgs.linuxPackages_rt);
 
-      boot.kernelParams =
-        lib.optionals perfEnabled perf_params
-        ++ extra_security
-        ++ lib.optionals (config.profiles.security.enable or false) ["page_poison=1"];
+        kernelParams =
+          lib.optionals perfEnabled perf_params
+          ++ extra_security
+          ++ lib.optionals (config.profiles.security.enable or false) ["page_poison=1"];
+      };
       security.protectKernelImage = !kexec_enabled;
     }
   ];

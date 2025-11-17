@@ -61,18 +61,20 @@ in {
       CPUWeight = 10000;
       IOWeight = 10000;
     };
-    services.nix-daemon.serviceConfig = {
-      CPUWeight = 200;
-      IOWeight = 200;
+    services = {
+      nix-daemon.serviceConfig = {
+        CPUWeight = 200;
+        IOWeight = 200;
+      };
+
+      # Silence failing ad-hoc nixindex timer/service; prefer proper modules
+      nixindex.enable = lib.mkForce false;
+
+      # Ensure Navidrome waits for the music mount to exist before applying its
+      # private mount namespace with BindReadOnlyPaths=/one/music
+      navidrome.unitConfig.RequiresMountsFor = ["/one/music"];
     };
     packages = [pkgs.packagekit];
-
-    # Silence failing ad-hoc nixindex timer/service; prefer proper modules
-    services.nixindex.enable = lib.mkForce false;
     timers.nixindex.enable = lib.mkForce false;
-
-    # Ensure Navidrome waits for the music mount to exist before applying its
-    # private mount namespace with BindReadOnlyPaths=/one/music
-    services.navidrome.unitConfig.RequiresMountsFor = [ "/one/music" ];
   };
-} 
+}

@@ -1,4 +1,4 @@
-{...}: {
+_: {
   nixpkgs.overlays = [
     (_: prev: {
       bpftrace = prev.bpftrace.override {

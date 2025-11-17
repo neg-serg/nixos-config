@@ -1,23 +1,95 @@
 {
   description = "Neg-Serg configuration";
   inputs = {
-    chaotic = {url = "git+https://github.com/chaotic-cx/nyx?ref=nyxpkgs-unstable"; inputs.nixpkgs.follows = "nixpkgs";};
+    bzmenu = {
+      url = "github:e-tho/bzmenu";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    chaotic = {
+      url = "git+https://github.com/chaotic-cx/nyx?ref=nyxpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    emacs-overlay = {
+      url = "github:nix-community/emacs-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs-stable.follows = "nixpkgs";
+    };
     # Pin Hyprland to v0.52 using Git fetch to avoid GitHub API rate limits
-    hyprland = {url = "git+https://github.com/hyprwm/Hyprland?ref=v0.52.0"; inputs.nixpkgs.follows = "nixpkgs";};
+    hyprland = {
+      url = "git+https://github.com/hyprwm/Hyprland?ref=v0.52.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # Keep selected Hyprland-related inputs in lockstep with the pinned Hyprland flake
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
     # xdg-desktop-portal-hyprland is named 'xdph' in Hyprland's flake inputs (Hyprland v0.52)
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
-    lanzaboote = {url = "github:nix-community/lanzaboote"; inputs.nixpkgs.follows = "nixpkgs";};
-    nh = {url = "github:viperML/nh"; inputs.nixpkgs.follows = "nixpkgs";};
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    iosevka-neg = {
+      url = "git+ssh://git@github.com/neg-serg/iosevka-neg";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    iwmenu = {
+      url = "github:e-tho/iwmenu";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nh = {
+      url = "github:viperML/nh";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-qml-support = {
+      url = "git+https://git.outfoxxed.me/outfoxxed/nix-qml-support";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nix-flatpak = {url = "github:gmodena/nix-flatpak";}; # unstable branch. Use github:gmodena/nix-flatpak/?ref=<tag> to pin releases.
-    nix-gaming = {url = "github:fufexan/nix-gaming"; inputs.nixpkgs.follows = "nixpkgs";};
+    nix-gaming = {
+      url = "github:fufexan/nix-gaming";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # Pin nixpkgs to nixos-unstable so we get Hydra cache hits
     nixpkgs = {url = "github:NixOS/nixpkgs/nixos-unstable";};
-    raise = {url = "github:neg-serg/raise"; inputs.nixpkgs.follows = "nixpkgs";};
-    sops-nix = {url = "github:Mic92/sops-nix"; inputs.nixpkgs.follows = "nixpkgs";};
-    pre-commit-hooks = {url = "github:cachix/git-hooks.nix"; inputs.nixpkgs.follows = "nixpkgs";};
-    
+    nupm = {
+      url = "github:nushell/nupm";
+      flake = false;
+    };
+    nur = {
+      url = "github:nix-community/NUR";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    quickshell = {
+      url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    raise = {
+      url = "github:neg-serg/raise";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    rsmetrx = {
+      url = "github:neg-serg/rsmetrx";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    stylix = {
+      url = "github:danth/stylix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    pre-commit-hooks = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    yandex-browser = {
+      url = "github:miuirussia/yandex-browser.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   # Make Cachix caches available to all `nix {build,develop,run}` commands
@@ -59,7 +131,9 @@
   };
   outputs = inputs @ {
     self,
+    bzmenu,
     chaotic,
+    home-manager,
     lanzaboote,
     nix-flatpak,
     nixpkgs,
@@ -71,25 +145,26 @@
       timeZone = "Europe/Moscow";
       kexec_enabled = true;
       # Nilla raw-loader compatibility: synthetic type for each input (harmless for normal flakes)
-      nillaInputs = builtins.mapAttrs (_: input: input // { type = "derivation"; }) inputs;
-    };
-    let
+      nillaInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) inputs;
+    }; let
       # Supported systems for generic flake outputs
-      supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
+      supportedSystems = ["x86_64-linux" "aarch64-linux"];
       # Linux system for NixOS configurations and docs evaluation
       linuxSystem = "x86_64-linux";
 
       # Common lib
-      lib = nixpkgs.lib;
+      inherit (nixpkgs) lib;
 
       # Hosts discovery shared across sections
       hostsDir = ./hosts;
       entries = builtins.readDir hostsDir;
       hostNames = builtins.attrNames (lib.filterAttrs (
-        name: type:
-          type == "directory"
-          && builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
-      ) entries);
+          name: type:
+            type
+            == "directory"
+            && builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
+        )
+        entries);
 
       # Per-system outputs factory
       perSystem = system: let
@@ -97,111 +172,160 @@
         # Pre-commit utility per system
         preCommit = inputs.pre-commit-hooks.lib.${system}.run {
           src = self;
-          hooks = { alejandra.enable = true; statix.enable = true; deadnix.enable = true; };
+          hooks = {
+            alejandra.enable = true;
+            statix.enable = true;
+            deadnix.enable = true;
+          };
         };
 
         # Documentation driver evaluated against linuxSystem to be host-agnostic
         docPkgs = nixpkgs.legacyPackages.${linuxSystem};
         nixosLib = import (docPkgs.path + "/nixos/lib") {};
-        docLib = if nixosLib ? nixosOptionsDoc then nixosLib else lib;
+        docLib =
+          if nixosLib ? nixosOptionsDoc
+          then nixosLib
+          else lib;
 
         docCommonModules = [
           nix-flatpak.nixosModules.nix-flatpak
           lanzaboote.nixosModules.lanzaboote
           chaotic.nixosModules.default
           sops-nix.nixosModules.sops
+          home-manager.nixosModules.home-manager
           ./modules/monitoring
         ];
         mkSpecialArgs = {
           inherit self inputs locale timeZone kexec_enabled pkgs;
         };
-        evalMods = mods: lib.nixosSystem {
-          system = linuxSystem;
-          modules = docCommonModules ++ mods;
-          specialArgs = mkSpecialArgs;
-        };
-        evalAll = evalMods [ ./modules ];
+        evalMods = mods:
+          lib.nixosSystem {
+            system = linuxSystem;
+            modules = docCommonModules ++ mods;
+            specialArgs = mkSpecialArgs;
+          };
+        evalAll = evalMods [./modules];
         hasOptionsDoc = docLib ? nixosOptionsDoc;
         simpleRender = opts: let
-          flatten = prefix: as: lib.concatLists (lib.mapAttrsToList (n: v:
-            let path = prefix ++ [ n ];
-            in if builtins.isAttrs v && (builtins.hasAttr "type" v)
-               then [ { name = lib.concatStringsSep "." path; desc = (v.description or ""); } ]
-               else if builtins.isAttrs v then flatten path v else []
-          ) as);
+          flatten = prefix: as:
+            lib.concatLists (lib.mapAttrsToList (
+                n: v: let
+                  path = prefix ++ [n];
+                in
+                  if builtins.isAttrs v && (builtins.hasAttr "type" v)
+                  then [
+                    {
+                      name = lib.concatStringsSep "." path;
+                      desc = v.description or "";
+                    }
+                  ]
+                  else if builtins.isAttrs v
+                  then flatten path v
+                  else []
+              )
+              as);
           items = flatten [] opts;
-          lines = map (i: "- " + i.name + (if i.desc != "" then ": " + i.desc else "")) items;
-          body = lib.concatStringsSep "\n" ([ "# Options" "" ] ++ lines ++ [ "" ]);
-        in pkgs.writeText "options-simple.md" body;
-        docDriverAll = if hasOptionsDoc
-          then docLib.nixosOptionsDoc { inherit (evalAll) options; }
-          else { optionsCommonMark = simpleRender evalAll.options; };
+          lines = map (i:
+            "- "
+            + i.name
+            + (
+              if i.desc != ""
+              then ": " + i.desc
+              else ""
+            ))
+          items;
+          body = lib.concatStringsSep "\n" (["# Options" ""] ++ lines ++ [""]);
+        in
+          pkgs.writeText "options-simple.md" body;
+        docDriverAll =
+          if hasOptionsDoc
+          then docLib.nixosOptionsDoc {inherit (evalAll) options;}
+          else {optionsCommonMark = simpleRender evalAll.options;};
 
         # Host build checks only for linuxSystem
-        hostBuildChecks = lib.optionalAttrs (system == linuxSystem)
+        hostBuildChecks =
+          lib.optionalAttrs (system == linuxSystem)
           (lib.listToAttrs (map (name: {
-            name = "build-" + name;
-            value = self.nixosConfigurations.${name}.config.system.build.toplevel;
-          }) hostNames));
+              name = "build-" + name;
+              value = self.nixosConfigurations.${name}.config.system.build.toplevel;
+            })
+            hostNames));
       in {
         packages =
-          (
-            # Expose NixOS host closures as packages on linuxSystem
-            (lib.optionalAttrs (system == linuxSystem)
-              (lib.listToAttrs (map (name: {
-                name = name;
+          # Expose NixOS host closures as packages on linuxSystem
+          (lib.optionalAttrs (system == linuxSystem)
+            (lib.listToAttrs (map (name: {
+                inherit name;
                 value = self.nixosConfigurations.${name}.config.system.build.toplevel;
-              }) hostNames)))
+              })
+              hostNames)))
           // {
             default = pkgs.zsh;
             options-md = docDriverAll.optionsCommonMark;
             options-index-md = let
-              names = [ "options-md" ];
-              toFile = n: if n == "options-md" then "options.md" else builtins.replaceStrings ["-md"] [".md"] n;
+              names = ["options-md"];
+              toFile = n:
+                if n == "options-md"
+                then "options.md"
+                else builtins.replaceStrings ["-md"] [".md"] n;
               lines = map (n: "- [" + n + "](./" + toFile n + ")") names;
               content = builtins.concatStringsSep "\n" ([
-                "# Options Docs"
-                ""
-                "Index of generated option documentation artifacts:"
-                ""
-              ] ++ lines ++ [""]);
-            in pkgs.writeText "options-index.md" content;
-          });
+                  "# Options Docs"
+                  ""
+                  "Index of generated option documentation artifacts:"
+                  ""
+                ]
+                ++ lines ++ [""]);
+            in
+              pkgs.writeText "options-index.md" content;
+          }
+        ;
 
         formatter = pkgs.writeShellApplication {
           name = "fmt";
-          runtimeInputs = with pkgs; [ alejandra ];
+          runtimeInputs = with pkgs; [alejandra];
           text = ''
             set -euo pipefail
-            alejandra -q .
+            cd ${self}
+            alejandra -q --exclude ./home .
           '';
         };
 
         checks =
           {
-            fmt-alejandra = pkgs.runCommand "fmt-alejandra" { nativeBuildInputs = with pkgs; [ alejandra ]; } ''cd ${self}; alejandra -q --check .; touch "$out"'';
-            lint-deadnix = pkgs.runCommand "lint-deadnix" { nativeBuildInputs = with pkgs; [ deadnix ]; } ''cd ${self}; deadnix --fail .; touch "$out"'';
-            lint-statix = pkgs.runCommand "lint-statix" { nativeBuildInputs = with pkgs; [ statix ]; } ''cd ${self}; statix check .; touch "$out"'';
+            fmt-alejandra = pkgs.runCommand "fmt-alejandra" {nativeBuildInputs = with pkgs; [alejandra];} ''
+              set -euo pipefail
+              cd ${self}
+              alejandra -q --exclude ./home --check .
+              touch "$out"
+            '';
+            lint-deadnix = pkgs.runCommand "lint-deadnix" {nativeBuildInputs = with pkgs; [deadnix];} ''
+              cd ${self}
+              deadnix --fail --exclude home .
+              touch "$out"
+            '';
+            lint-statix = pkgs.runCommand "lint-statix" {nativeBuildInputs = with pkgs; [statix];} ''cd ${self}; statix check .; touch "$out"'';
             pre-commit = preCommit;
-            lint-md-lang = pkgs.runCommand "lint-md-lang" { nativeBuildInputs = with pkgs; [ bash coreutils findutils gnugrep gitMinimal ]; } ''
+            lint-md-lang = pkgs.runCommand "lint-md-lang" {nativeBuildInputs = with pkgs; [bash coreutils findutils gnugrep gitMinimal];} ''
               set -euo pipefail
               cd ${self}
               bash scripts/check-markdown-language.sh
               : > "$out"
             '';
-          } // hostBuildChecks;
+          }
+          // hostBuildChecks;
 
         devShells = {
           default = pkgs.mkShell {
             inherit (preCommit) shellHook;
-            packages = with pkgs; [ alejandra deadnix statix nil just jq ];
+            packages = with pkgs; [alejandra deadnix statix nil just jq];
           };
         };
 
         apps = let
           genOptions = pkgs.writeShellApplication {
             name = "gen-options";
-            runtimeInputs = with pkgs; [ git jq nix ];
+            runtimeInputs = with pkgs; [git jq nix];
             text = ''
               set -euo pipefail
               exec "${self}/scripts/gen-options.sh" "$@"
@@ -209,8 +333,14 @@
           };
           fmtApp = self.formatter.${system};
         in {
-          gen-options = { type = "app"; program = "${genOptions}/bin/gen-options"; };
-          fmt = { type = "app"; program = "${fmtApp}/bin/fmt"; };
+          gen-options = {
+            type = "app";
+            program = "${genOptions}/bin/gen-options";
+          };
+          fmt = {
+            type = "app";
+            program = "${fmtApp}/bin/fmt";
+          };
         };
       };
     in {
@@ -229,19 +359,23 @@
           lanzaboote.nixosModules.lanzaboote
           chaotic.nixosModules.default
           sops-nix.nixosModules.sops
+          home-manager.nixosModules.home-manager
         ];
         hostExtras = name: let
           extraPath = (builtins.toString hostsDir) + "/" + name + "/extra.nix";
-        in lib.optional (builtins.pathExists extraPath) (/. + extraPath);
-        mkHost = name: lib.nixosSystem {
-          system = linuxSystem;
-          specialArgs = {
-            inherit locale timeZone kexec_enabled self;
-            # Pass Nilla-friendly inputs (workaround for nilla-nix/nilla#14)
-            inputs = nillaInputs;
+        in
+          lib.optional (builtins.pathExists extraPath) (/. + extraPath);
+        mkHost = name:
+          lib.nixosSystem {
+            system = linuxSystem;
+            specialArgs = {
+              inherit locale timeZone kexec_enabled self;
+              # Pass Nilla-friendly inputs (workaround for nilla-nix/nilla#14)
+              inputs = nillaInputs;
+            };
+            modules = commonModules ++ [(import ((builtins.toString hostsDir) + "/" + name))] ++ (hostExtras name);
           };
-          modules = commonModules ++ [ (import ((builtins.toString hostsDir) + "/" + name)) ] ++ (hostExtras name);
-        };
-      in lib.genAttrs hostNames mkHost;
+      in
+        lib.genAttrs hostNames mkHost;
     };
 }

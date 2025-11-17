@@ -1,4 +1,4 @@
-{...}: {
+_: {
   nixpkgs.overlays = [
     (_: prev: {
       wb32-dfu-updater = prev.wb32-dfu-updater.overrideAttrs (old: {

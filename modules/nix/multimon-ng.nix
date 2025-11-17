@@ -1,4 +1,4 @@
-{...}: {
+_: {
   nixpkgs.overlays = [
     (_: prev: {
       multimon-ng = prev.multimon-ng.overrideAttrs (old: {

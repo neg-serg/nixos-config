@@ -1,4 +1,4 @@
-{...}: {
+_: {
   nixpkgs.overlays = [
     (_: prev: {
       imhex = prev.imhex.overrideAttrs (old: let
