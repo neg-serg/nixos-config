@@ -103,7 +103,7 @@ in {
   # Local AI (Ollama) as a user service
   systemd.user.services."local-ai" = lib.mkMerge [
     {
-      Unit = { Description = "Local AI (Ollama)"; };
+      Unit = {Description = "Local AI (Ollama)";};
       Service = {
         ExecStart = "${pkgs.ollama}/bin/ollama serve";
         Environment = [
@@ -117,7 +117,7 @@ in {
         RestartSec = "2s";
       };
     }
-    (systemdUser.mkUnitFromPresets { presets = ["defaultWanted"]; })
+    (systemdUser.mkUnitFromPresets {presets = ["defaultWanted"];})
   ];
   xdg.stateHome = "${config.home.homeDirectory}/.local/state";
   home = {
