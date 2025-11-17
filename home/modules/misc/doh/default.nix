@@ -17,9 +17,9 @@ with lib; let
     else options ? networking;
   warningMessages =
     lib.optional (dohEnabled && !dnscryptAvailable)
-      "features.network.doh.enable is set, but services.dnscrypt-proxy2 is unavailable in this evaluation. Import this module from a NixOS system configuration."
+    "features.network.doh.enable is set, but services.dnscrypt-proxy2 is unavailable in this evaluation. Import this module from a NixOS system configuration."
     ++ lib.optional (dohEnabled && !networkingAvailable)
-      "features.network.doh.enable is set, but networking options are unavailable in this evaluation.";
+    "features.network.doh.enable is set, but networking options are unavailable in this evaluation.";
 in {
   config = mkMerge [
     (mkIf (dohEnabled && dnscryptAvailable) {
