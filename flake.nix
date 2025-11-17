@@ -297,7 +297,10 @@
               repo_root="${self}"
             fi
             cd "$repo_root"
-            exec treefmt --config-file ${./treefmt.toml} "$@"
+            tmp_conf=$(mktemp)
+            trap 'rm -f "$tmp_conf"' EXIT
+            cp ${./treefmt.toml} "$tmp_conf"
+            exec treefmt --config-file "$tmp_conf" --tree-root "$repo_root" "$@"
           '';
         };
 
@@ -321,7 +324,8 @@
                 cd ./src
                 export XDG_CACHE_HOME="$PWD/.cache"
                 mkdir -p "$XDG_CACHE_HOME"
-                treefmt --config-file ${./treefmt.toml} --fail-on-change .
+                cp ${./treefmt.toml} ./.treefmt.toml
+                treefmt --config-file ./.treefmt.toml --tree-root . --fail-on-change .
                 touch "$out"
               '';
             lint-deadnix = pkgs.runCommand "lint-deadnix" {nativeBuildInputs = with pkgs; [deadnix];} ''

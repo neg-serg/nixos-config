@@ -16,9 +16,9 @@ shopt -s nullglob
 fail=0
 while IFS= read -r -d '' file; do
   case "$file" in
-    *.ru.md) continue;;
+    *.ru.md) continue ;;
   esac
-  if LC_ALL=C.UTF-8 grep -P "[\x{0400}-\x{04FF}]" -n -- "$file" >/dev/null 2>&1; then
+  if LC_ALL=C.UTF-8 grep -P "[\x{0400}-\x{04FF}]" -n -- "$file" > /dev/null 2>&1; then
     echo "Markdown language policy violation: Cyrillic found in $file" >&2
     # Show offending lines (up to first 5 for brevity)
     LC_ALL=C.UTF-8 grep -P "[\x{0400}-\x{04FF}]" -n -- "$file" | head -n 5 >&2
