@@ -1,0 +1,8 @@
+# https://github.com/Mic92/dotfiles/blob/master/nixos/.sops.yaml
+keys:
+  - &admin_neg age1eggdzmjp2h4a68kn0j5zay72s7s6tc7qzak6cy9zp3dj0rwxxetsmz4t52
+creation_rules:
+  - path_regex: secrets/
+    key_groups:
+    - age:
+      - *admin_neg

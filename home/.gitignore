@@ -1,0 +1,5 @@
+**/result
+**/__pycache__/
+*.pyc
+.ruff_cache/
+modules/cli/nushell-conf/history.sqlite3*
