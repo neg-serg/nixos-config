@@ -174,7 +174,7 @@ consistent and activation quiet. This page shows what to use and how to validate
     }
     ```
 
-- Commit messages *(RU: «Коммит‑месседжи»)*:
+- Commit messages *(RU transliteration: "Kommit-messidzhi")*:
 
   - Keep the format `[scope] brief summary`. Scope is a short noun/phrase wrapped in brackets (e.g.
     `[mcp] add foo server`, `[quickshell] reuse capsule row`) so changes stay easy to grep by area.
