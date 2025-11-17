@@ -1,0 +1,52 @@
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}: let
+  core = ps:
+    with ps; [
+      colored # terminal colors utilities
+      docopt # simple CLI argument parser
+      beautifulsoup4 # HTML/XML parser (bs4)
+      numpy # numerical computing
+      annoy # approximate nearest neighbors
+      orjson # fast JSON parser/serializer
+      mutagen # audio metadata tagging utilities
+      pillow # Python Imaging Library fork
+      psutil # process and system utilities
+      requests # HTTP client
+      tabulate # pretty tables for text/CLI
+      fonttools # font asset tooling (svg export, subsetting)
+    ];
+  tools = ps:
+    with ps; [
+      dbus-python # DBus bindings (needed for some scripts)
+      fontforge # font tools (for monospacifier)
+      pynvim # Python client for Neovim
+    ];
+  pyPackages = ps: let
+    groups = {
+      core = core ps;
+      tools = tools ps;
+    };
+  in
+    config.lib.neg.mkEnabledList config.features.dev.python groups;
+in
+  lib.mkIf config.features.dev.enable {
+    nixpkgs = {
+      config.packageOverrides = super: {
+        python3-lto = super.python3.override {
+          packageOverrides = _: _: {
+            enableOptimizations = true;
+            enableLTO = true;
+            reproducibleBuild = false;
+          };
+        };
+      };
+    };
+    home.packages = config.lib.neg.pkgsList [
+      pkgs.pipx # isolated Python apps installer
+      (pkgs.python3-lto.withPackages pyPackages) # optimized Python with selected libs
+    ];
+  }
