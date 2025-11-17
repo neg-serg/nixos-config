@@ -278,27 +278,52 @@
                 ++ lines ++ [""]);
             in
               pkgs.writeText "options-index.md" content;
-          }
-        ;
+          };
 
         formatter = pkgs.writeShellApplication {
           name = "fmt";
-          runtimeInputs = with pkgs; [alejandra];
+          runtimeInputs = with pkgs; [
+            alejandra
+            black
+            python3Packages.mdformat
+            shfmt
+            treefmt
+          ];
           text = ''
             set -euo pipefail
-            cd ${self}
-            alejandra -q --exclude ./home .
+            if git rev-parse --show-toplevel >/dev/null 2>&1; then
+              repo_root="$(git rev-parse --show-toplevel)"
+            else
+              repo_root="${self}"
+            fi
+            cd "$repo_root"
+            exec treefmt --config-file ${./treefmt.toml} "$@"
           '';
         };
 
         checks =
           {
-            fmt-alejandra = pkgs.runCommand "fmt-alejandra" {nativeBuildInputs = with pkgs; [alejandra];} ''
-              set -euo pipefail
-              cd ${self}
-              alejandra -q --exclude ./home --check .
-              touch "$out"
-            '';
+            fmt-treefmt =
+              pkgs.runCommand "fmt-treefmt" {
+                nativeBuildInputs = with pkgs; [
+                  alejandra
+                  black
+                  python3Packages.mdformat
+                  shfmt
+                  treefmt
+                  findutils
+                ];
+                src = ./.;
+              } ''
+                set -euo pipefail
+                cp -r "$src" ./src
+                chmod -R u+w ./src
+                cd ./src
+                export XDG_CACHE_HOME="$PWD/.cache"
+                mkdir -p "$XDG_CACHE_HOME"
+                treefmt --config-file ${./treefmt.toml} --fail-on-change .
+                touch "$out"
+              '';
             lint-deadnix = pkgs.runCommand "lint-deadnix" {nativeBuildInputs = with pkgs; [deadnix];} ''
               cd ${self}
               deadnix --fail --exclude home .

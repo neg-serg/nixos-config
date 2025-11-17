@@ -1,0 +1,43 @@
+# Unified formatter config for this flake
+
+[global]
+# Keep noise down and avoid rewriting encrypted or VCS-managed files
+excludes = [
+  "flake.lock",
+  ".git/*",
+  "secrets/crypted/*",
+  "shell/.config/tmux/plugins/tpm/**",
+  "home/modules/misc/fun-art/*.sh",
+  "home/modules/user/local-bin/scripts/mpd-add.sh",
+  "home/modules/user/local-bin/scripts/pl.sh",
+  "home/modules/user/local-bin/scripts/swayimg-actions.sh",
+]
+
+# Nix files: format with alejandra
+[formatter.nix]
+command = "alejandra"
+options = ["-q"]
+includes = ["*.nix"]
+
+# Remove unused attributes from Nix files in-place
+## Nix linters (deadnix/statix) run in flake checks; keep only formatters here.
+
+# Shell: format POSIX/Bash scripts (exclude zsh)
+[formatter.shfmt]
+command = "shfmt"
+options = ["-w", "-i", "2", "-ci", "-bn", "-sr"]
+includes = ["**/*.sh", "**/*.bash"]
+
+## Shellcheck runs in 'just lint' (opt-in by shebang).
+
+# Python: auto-fix with ruff, then format with black
+[formatter.black]
+command = "black"
+options = ["--quiet", "--line-length", "100", "--config", "home/pyproject.toml"]
+includes = ["**/*.py"]
+
+# Markdown: format via mdformat (wrap at 100 cols)
+[formatter.mdformat]
+command = "mdformat"
+options = ["--wrap", "100"]
+includes = ["**/*.md", "**/*.mdown", "**/*.markdown", "**/*.mdx"]

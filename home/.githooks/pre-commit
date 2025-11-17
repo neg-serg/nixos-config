@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ "${SKIP_NIX_FMT:-0}" = "1" ]; then
+  exit 0
+fi
+
+if ! command -v nix >/dev/null 2>&1; then
+  echo "[pre-commit] nix not found in PATH; skipping nix fmt" >&2
+  exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+echo "[pre-commit] nix fmt (treefmt)" >&2
+(cd "$repo_root" && nix fmt >/dev/null)
+
+changed_nix=$(git diff --name-only -- '*.nix')
+if [ -n "${changed_nix}" ]; then
+  # shellcheck disable=SC2086
+  git add ${changed_nix}
+fi
+
+exit 0
