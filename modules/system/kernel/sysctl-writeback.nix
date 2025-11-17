@@ -2,9 +2,12 @@
 # Module: system/kernel/sysctl-writeback
 # Purpose: Tune kernel writeback to reduce IO burst latency.
 # Key options: profiles.performance.writeback.*
-{ lib, config, ... }:
-let
-  opts = import ../../../lib/opts.nix { inherit lib; };
+{
+  lib,
+  config,
+  ...
+}: let
+  opts = import ../../../lib/opts.nix {inherit lib;};
 in {
   options.profiles.performance.writeback = rec {
     enable = opts.mkEnableOption "Apply writeback sysctl tuning (reduces IO bursts).";

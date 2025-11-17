@@ -22,7 +22,7 @@ in {
       #  - Short test daily at 02:00; long test weekly on Sunday at 04:00
       defaults.monitored = lib.mkDefault "-a -o on -S on -W 5,70,80 -s (S/../.././02|L/../../7/04)";
       # Polling interval for smartd (seconds). Default is ~30 minutes; set to 1 hour.
-      extraOptions = lib.mkDefault [ "--interval=3600" ];
+      extraOptions = lib.mkDefault ["--interval=3600"];
     };
   };
 }

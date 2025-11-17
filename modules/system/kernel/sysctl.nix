@@ -3,7 +3,7 @@
 # Purpose: Network and security sysctls.
 # Key options: none (static values).
 # Dependencies: Applies to boot.kernel.sysctl.
-{ lib, ... }: {
+{lib, ...}: {
   boot.kernel.sysctl = {
     "kernel.sysrq" = 0;
 

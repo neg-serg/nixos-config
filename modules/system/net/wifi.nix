@@ -20,4 +20,3 @@ in {
     networking.wireless.iwd.enable = lib.mkForce true;
   };
 }
-

@@ -40,7 +40,7 @@ in {
 
     firewallInterfaces = mkOption {
       type = types.listOf types.str;
-      default = [ "br0" ];
+      default = ["br0"];
       description = "Interfaces to allow Loki port on when openFirewall is true.";
     };
   };
@@ -76,12 +76,18 @@ in {
             store = "boltdb-shipper";
             object_store = "filesystem";
             schema = "v13";
-            index = { prefix = "index_"; period = "24h"; };
+            index = {
+              prefix = "index_";
+              period = "24h";
+            };
           }
         ];
         ruler = {
           rule_path = "/var/lib/loki/rules-temp";
-          storage = { type = "local"; local.directory = "/var/lib/loki/rules"; };
+          storage = {
+            type = "local";
+            local.directory = "/var/lib/loki/rules";
+          };
           alertmanager_url = "http://127.0.0.1:9093";
         };
         analytics.reporting_enabled = false;
@@ -98,7 +104,7 @@ in {
 
     # Per-interface firewall opening if requested
     networking.firewall.interfaces = mkIf cfg.openFirewall (
-      lib.genAttrs cfg.firewallInterfaces (iface: { allowedTCPPorts = [ cfg.port ]; })
+      lib.genAttrs cfg.firewallInterfaces (iface: {allowedTCPPorts = [cfg.port];})
     );
   };
 }

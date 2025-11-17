@@ -3,9 +3,12 @@
 # Purpose: Optional memory sysctl tweaks (desktop/work)
 # Key options: profiles.performance.memExtras.* (all disabled by default)
 # Dependencies: Applies to boot.kernel.sysctl.
-{ lib, config, ... }:
-let
-  opts = import ../../../lib/opts.nix { inherit lib; };
+{
+  lib,
+  config,
+  ...
+}: let
+  opts = import ../../../lib/opts.nix {inherit lib;};
   cfg = config.profiles.performance.memExtras;
 in {
   options.profiles.performance.memExtras = {

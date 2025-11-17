@@ -18,9 +18,12 @@ in {
       filterLists =
         opts.mkListOpt (types.submodule (_: {
           options = {
-            name = opts.mkStrOpt { description = "Human-friendly filter list name"; };
-            url = opts.mkStrOpt { description = "URL to the filter list"; };
-            enabled = opts.mkBoolOpt { default = true; description = "Enable this list"; };
+            name = opts.mkStrOpt {description = "Human-friendly filter list name";};
+            url = opts.mkStrOpt {description = "URL to the filter list";};
+            enabled = opts.mkBoolOpt {
+              default = true;
+              description = "Enable this list";
+            };
           };
         })) {
           default = [];
@@ -74,7 +77,10 @@ in {
         description = "How Unbound fetches upstream DNS: direct recursion, DNS-over-TLS, or via DoH proxy.";
       };
       dnssec = {
-        enable = opts.mkBoolOpt { default = true; description = "Enable DNSSEC validation in Unbound."; };
+        enable = opts.mkBoolOpt {
+          default = true;
+          description = "Enable DNSSEC validation in Unbound.";
+        };
       };
       tuning = {
         # Response/validation behavior
