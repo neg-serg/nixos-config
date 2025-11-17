@@ -1,0 +1,40 @@
+@import "theme.rasi"
+@import "win/center_btm.rasi"
+@import "common.rasi"
+
+* {
+    /* Ensure same font size as other rofi themes */
+    font: "Iosevka Medium 12";
+}
+
+#listview {
+    lines: 12;
+    columns: 2;
+    /* For multi-row, use vertical layout + horizontal flow (row-major) */
+    layout: vertical;
+    flow: horizontal;
+    /* Force multiple rows; avoid single super‑wide row */
+    fixed-height: true;
+    /* remove default dashed separator line from base theme */
+    border: 0px;
+}
+
+#element { border-color: var(blackdarkest); }
+
+#window {
+    location: south;
+    anchor: south;
+    y-offset: 0;
+    width: 96%;
+    padding: 5px;
+    /* no border */
+    border: 0px;
+    background-color: var(blackdarkest);
+}
+
+#mainbox {
+    orientation: vertical;
+    children: [ listview, inputbar ];
+    spacing: 0px;
+    background-color: var(blackdarkest);
+}

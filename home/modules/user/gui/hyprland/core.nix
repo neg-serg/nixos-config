@@ -68,14 +68,14 @@ in
     (let
       mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;};
     in
-      mkLocalBin "hypr-reload" ''#!/usr/bin/env bash
-        set -euo pipefail
-        # Reload Hyprland config (ignore failure to avoid spurious errors)
-        hyprctl reload >/dev/null 2>&1 || true
-        # Give Hypr a brief moment to settle before (re)starting quickshell
-        sleep 0.15
-        # Start quickshell only if not already active; 'start' is idempotent.
-        systemctl --user start quickshell.service >/dev/null 2>&1 || true
+      mkLocalBin "hypr-reload" ''        #!/usr/bin/env bash
+                set -euo pipefail
+                # Reload Hyprland config (ignore failure to avoid spurious errors)
+                hyprctl reload >/dev/null 2>&1 || true
+                # Give Hypr a brief moment to settle before (re)starting quickshell
+                sleep 0.15
+                # Start quickshell only if not already active; 'start' is idempotent.
+                systemctl --user start quickshell.service >/dev/null 2>&1 || true
       '')
     # Removed custom kb-layout-next wrapper; rely on Hyprland dispatcher and XKB options
     {
@@ -83,7 +83,9 @@ in
         enable = true;
         package = pkgs.hyprland;
         portalPackage = null;
-        settings = let hy3Enabled = config.features.gui.hy3.enable or false; in {
+        settings = let
+          hy3Enabled = config.features.gui.hy3.enable or false;
+        in {
           source =
             [
               # Apply permissions first so plugin load is allowed (even without hy3)
@@ -93,24 +95,25 @@ in
               # Load plugins (hy3) before the rest of the config
               "${config.xdg.configHome}/hypr/plugins.conf"
             ]
-            ++ [ "${config.xdg.configHome}/hypr/init.conf" ];
+            ++ ["${config.xdg.configHome}/hypr/init.conf"];
         };
         systemd.variables = ["--all"];
       };
       home.packages = config.lib.neg.pkgsList (
         let
           groups = {
-            core = [
-              pkgs.hyprcursor # modern cursor theme format (replaces xcursor)
-              pkgs.hypridle # idle daemon
-              pkgs.hyprpicker # color picker
-              pkgs.hyprpolkitagent # polkit agent
-              pkgs.hyprprop # xprop-like tool for Hyprland
-              pkgs.hyprutils # core utils for Hyprland
-              pkgs.pyprland # Hyprland plugin system
-              pkgs.upower # power management daemon
-            ]
-            ++ lib.optional (raiseProvider != null) (raiseProvider pkgs);
+            core =
+              [
+                pkgs.hyprcursor # modern cursor theme format (replaces xcursor)
+                pkgs.hypridle # idle daemon
+                pkgs.hyprpicker # color picker
+                pkgs.hyprpolkitagent # polkit agent
+                pkgs.hyprprop # xprop-like tool for Hyprland
+                pkgs.hyprutils # core utils for Hyprland
+                pkgs.pyprland # Hyprland plugin system
+                pkgs.upower # power management daemon
+              ]
+              ++ lib.optional (raiseProvider != null) (raiseProvider pkgs);
             qt = [
               pkgs.hyprland-qt-support # Qt integration fixes
               pkgs.hyprland-qtutils # Qt helper binaries (hyprland-qt-helper)
@@ -145,7 +148,7 @@ in
             RestartSec = "2s";
           };
         }
-        (systemdUser.mkUnitFromPresets { presets = ["graphical"]; })
+        (systemdUser.mkUnitFromPresets {presets = ["graphical"];})
       ];
     }
     # Core config files from repo
@@ -179,8 +182,8 @@ in
             # Hyprland plugins
             ${pluginLines}
           '')
-          { xdg.configFile."hypr/plugins.conf".force = true; }
-          { home.packages = pluginPkgs; }
+          {xdg.configFile."hypr/plugins.conf".force = true;}
+          {home.packages = pluginPkgs;}
         ]
     ))
     (mkIf (vrrEnabled && hyprVrrPkg == null) {
