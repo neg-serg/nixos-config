@@ -266,7 +266,8 @@ in
           })
           foldersList
         );
-      in lib.mkMerge [
+      in
+        lib.mkMerge [
           {
             udev.packages = lib.mkAfter [pkgs.openrgb];
             power-profiles-daemon.enable = true;
@@ -428,33 +429,32 @@ in
           };
 
           # Set Syncthing GUI user/password only after config is generated, before service starts
-          "syncthing-set-gui-pass" =
-            lib.mkIf (config.services.syncthing.enable or false) (let
-              setPassScript = pkgs.writeShellScript "syncthing-set-gui-pass.sh" ''
-                set -euo pipefail
-                PASS_FILE="${config.sops.secrets."syncthing/gui-pass".path}"
-                HOME_DIR="${config.services.syncthing.configDir}"
-                if [ -r "$PASS_FILE" ]; then
-                  PASS="$(tr -d '\n' < "$PASS_FILE")"
-                  if [ -n "$PASS" ]; then
-                    ${pkgs.syncthing}/bin/syncthing -home "$HOME_DIR" cli config gui user "${config.users.main.name}"
-                    ${pkgs.syncthing}/bin/syncthing -home "$HOME_DIR" cli config gui password "$PASS"
-                  fi
+          "syncthing-set-gui-pass" = lib.mkIf (config.services.syncthing.enable or false) (let
+            setPassScript = pkgs.writeShellScript "syncthing-set-gui-pass.sh" ''
+              set -euo pipefail
+              PASS_FILE="${config.sops.secrets."syncthing/gui-pass".path}"
+              HOME_DIR="${config.services.syncthing.configDir}"
+              if [ -r "$PASS_FILE" ]; then
+                PASS="$(tr -d '\n' < "$PASS_FILE")"
+                if [ -n "$PASS" ]; then
+                  ${pkgs.syncthing}/bin/syncthing -home "$HOME_DIR" cli config gui user "${config.users.main.name}"
+                  ${pkgs.syncthing}/bin/syncthing -home "$HOME_DIR" cli config gui password "$PASS"
                 fi
-              '';
-            in {
-              description = "Set Syncthing GUI credentials from SOPS secret";
-              after = ["syncthing-init.service" "sops-nix.service"];
-              requires = ["syncthing-init.service"];
-              before = ["syncthing.service"];
-              wantedBy = ["syncthing.service"];
-              serviceConfig = {
-                Type = "oneshot";
-                User = config.users.main.name;
-                Group = config.users.main.name;
-                ExecStart = [setPassScript];
-              };
-            });
+              fi
+            '';
+          in {
+            description = "Set Syncthing GUI credentials from SOPS secret";
+            after = ["syncthing-init.service" "sops-nix.service"];
+            requires = ["syncthing-init.service"];
+            before = ["syncthing.service"];
+            wantedBy = ["syncthing.service"];
+            serviceConfig = {
+              Type = "oneshot";
+              User = config.users.main.name;
+              Group = config.users.main.name;
+              ExecStart = [setPassScript];
+            };
+          });
 
           # Periodic metric collection service + timer
           "bitcoind-textfile-metrics" = let

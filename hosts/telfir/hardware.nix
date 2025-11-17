@@ -148,5 +148,4 @@
   environment.systemPackages = [
     pkgs.bazecor # Dygma keyboard configurator
   ];
-
 }
