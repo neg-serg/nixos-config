@@ -1,0 +1,51 @@
+@import "theme.rasi"
+@import "win/left_btm.rasi"
+@import "common.rasi"
+
+#window {
+    location: south;
+    anchor: south;
+    y-offset: 0;
+    padding: 5px;
+    border: 1px;
+    border-color: #0d141d;
+    background-color: var(blackdarkest);
+}
+
+element-icon {
+    size: 1.8ch;
+    background-color: transparent;
+}
+
+#horibox {
+    children: [ prompt, entry, listview ];
+    orientation: horizontal;
+}
+
+#listview {
+    fixed-columns: false;
+    /* slightly tighter vertical gap */
+    padding: 1px 3px 1px 3px;
+    scrollbar: false;
+}
+
+entry {
+    expand: true;
+    width: 6em;
+}
+
+#button {
+    text-color: var(darkgray);
+}
+
+#button.selected {
+    text-color: @maincolor;
+}
+
+#prompt { text-color: var(fgwhite); }
+#case-indicator { text-color: var(fgwhite); }
+
+element-text {
+    background-color: inherit;
+    text-color: inherit;
+}
