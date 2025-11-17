@@ -328,7 +328,8 @@ in {
     userChromeInjected =
       if vanillaChrome
       then userChromeExtra
-      else userChrome
+      else
+        userChrome
         + (optionalString bottomNavbar bottomNavbarChrome)
         + hideSearchModeChip
         + hideUrlbarOneOffs
@@ -359,7 +360,11 @@ in {
     };
     warnings = lib.optional needsMigration (
       "Browser downloads directory moved to XDG Downloads. "
-      + "Consider migrating from " + oldDownloadsDir + " to " + dlDir + "."
+      + "Consider migrating from "
+      + oldDownloadsDir
+      + " to "
+      + dlDir
+      + "."
     );
   };
 }

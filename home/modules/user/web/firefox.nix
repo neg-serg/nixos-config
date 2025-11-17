@@ -4,8 +4,7 @@
   config,
   faProvider ? null,
   ...
-}:
-let
+}: let
   firefoxEnabled = (config.features.web.enable or false) && (config.features.web.firefox.enable or false);
 in {
   config = lib.mkIf firefoxEnabled (
@@ -36,13 +35,22 @@ in {
           '';
         };
 
-      remoteXpiAddon = {pname, version, addonId, url, sha256}:
+      remoteXpiAddon = {
+        pname,
+        version,
+        addonId,
+        url,
+        sha256,
+      }:
         buildFirefoxXpiAddon {
           inherit pname version addonId;
           src = pkgs.fetchurl {inherit url sha256;};
         };
 
-      themeAddon = {name, theme}:
+      themeAddon = {
+        name,
+        theme,
+      }:
         buildFirefoxXpiAddon {
           pname = "firefox-theme-xpi-${name}";
           version = "1.0";
@@ -134,7 +142,13 @@ in {
         ${builtins.readFile ./firefox/hide_content_borders.css}
       '';
 
-      mkProfile = {id, name, settings, extensions ? [], userChrome ? sharedUserChrome}: {
+      mkProfile = {
+        id,
+        name,
+        settings,
+        extensions ? [],
+        userChrome ? sharedUserChrome,
+      }: {
         inherit id name;
         path = name;
         isDefault = false;
@@ -258,43 +272,50 @@ in {
           };
         };
         desktopItems = builtins.attrValues (
-          builtins.mapAttrs (n: entry:
-            pkg.desktopItem.override (item: {
-              name = n;
-              desktopName = entry.name;
-              mimeTypes =
-                if (entry.nomime or false)
-                then []
-                else item.mimeTypes;
-              actions = {};
-              exec =
-                "${item.exec} ${if (entry.noremote or false) then "-no-remote" else ""} -P ${entry.profile}";
-            })
-          ) entries
+          builtins.mapAttrs (
+            n: entry:
+              pkg.desktopItem.override (item: {
+                name = n;
+                desktopName = entry.name;
+                mimeTypes =
+                  if (entry.nomime or false)
+                  then []
+                  else item.mimeTypes;
+                actions = {};
+                exec = "${item.exec} ${
+                  if (entry.noremote or false)
+                  then "-no-remote"
+                  else ""
+                } -P ${entry.profile}";
+              })
+          )
+          entries
         );
       in {
-        buildCommand = ''
-          ${pkg.buildCommand}
-          rm $out/share/applications/*
-          cat <<EOF > $out/share/applications/firefox.desktop
-          [Desktop Entry]
-          Version=1.4
-          Type=Application
-          Name=Firefox
-          Icon=firefox-devedition
-          NoDisplay=true
-          EOF
-        '' + lib.concatMapStrings (item: ''
-          cp ${item}/share/applications/* $out/share/applications
-        '') desktopItems;
+        buildCommand =
+          ''
+            ${pkg.buildCommand}
+            rm $out/share/applications/*
+            cat <<EOF > $out/share/applications/firefox.desktop
+            [Desktop Entry]
+            Version=1.4
+            Type=Application
+            Name=Firefox
+            Icon=firefox-devedition
+            NoDisplay=true
+            EOF
+          ''
+          + lib.concatMapStrings (item: ''
+            cp ${item}/share/applications/* $out/share/applications
+          '')
+          desktopItems;
       });
 
-      baseModule =
-        common.mkBrowser {
-          name = "firefox";
-          package = firefoxPackage;
-          profileId = "default-release";
-        };
+      baseModule = common.mkBrowser {
+        name = "firefox";
+        package = firefoxPackage;
+        profileId = "default-release";
+      };
 
       firefoxBase = baseModule.programs.firefox or {};
     in
