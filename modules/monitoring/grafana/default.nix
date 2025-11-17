@@ -3,8 +3,12 @@
 # Purpose: Grafana with a preprovisioned Loki datasource. LAN-exposed with per-interface firewall.
 # Key options: monitoring.grafana.enable, monitoring.grafana.port, monitoring.grafana.listenAddress,
 #              monitoring.grafana.openFirewall, monitoring.grafana.firewallInterfaces
-{ lib, config, pkgs, ... }:
-let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   inherit (lib) mkEnableOption mkIf mkOption types;
   cfg = config.monitoring.grafana or {};
   lokiPort = config.monitoring.loki.port or 3100;
@@ -45,7 +49,7 @@ in {
 
     firewallInterfaces = mkOption {
       type = types.listOf types.str;
-      default = [ "br0" ];
+      default = ["br0"];
       description = "Interfaces where Grafana port is allowed when openFirewall is true.";
     };
 
@@ -68,7 +72,7 @@ in {
       };
       firewallInterfaces = mkOption {
         type = types.listOf types.str;
-        default = [ "br0" ];
+        default = ["br0"];
         description = "Interfaces where 80/443 are allowed when openFirewall is true.";
       };
     };
@@ -82,11 +86,13 @@ in {
         http_addr = cfg.listenAddress;
         domain = config.networking.hostName or "grafana.local";
       };
-      settings.security = {
-        admin_user = cfg.adminUser;
-      } // (lib.optionalAttrs (cfg.adminPasswordFile != null) {
-        admin_password = "${"$"}__file{${cfg.adminPasswordFile}}";
-      });
+      settings.security =
+        {
+          admin_user = cfg.adminUser;
+        }
+        // (lib.optionalAttrs (cfg.adminPasswordFile != null) {
+          admin_password = "${"$"}__file{${cfg.adminPasswordFile}}";
+        });
       # Provision a Loki datasource so Explore works out of the box
       provision = {
         enable = true;
@@ -98,7 +104,7 @@ in {
             access = "proxy";
             url = lokiUrl;
             isDefault = true;
-            jsonData = { }; # keep minimal
+            jsonData = {}; # keep minimal
           }
         ];
       };
@@ -107,10 +113,10 @@ in {
     # Per-interface firewall openings (Grafana port and, optionally, Caddy proxy ports)
     networking.firewall.interfaces = lib.mkMerge [
       (mkIf cfg.openFirewall (
-        lib.genAttrs cfg.firewallInterfaces (iface: { allowedTCPPorts = [ cfg.port ]; })
+        lib.genAttrs cfg.firewallInterfaces (iface: {allowedTCPPorts = [cfg.port];})
       ))
       (mkIf (cfg.caddyProxy.enable && cfg.caddyProxy.openFirewall) (
-        lib.genAttrs cfg.caddyProxy.firewallInterfaces (iface: { allowedTCPPorts = [ 80 443 ]; })
+        lib.genAttrs cfg.caddyProxy.firewallInterfaces (iface: {allowedTCPPorts = [80 443];})
       ))
     ];
 

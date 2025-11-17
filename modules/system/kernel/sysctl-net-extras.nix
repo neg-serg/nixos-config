@@ -5,9 +5,12 @@
 # - net.ipv4.tcp_tw_reuse = 1
 # - net.ipv4.tcp_fin_timeout = <finTimeoutSeconds> (default: 30s)
 # Dependencies: Applies to boot.kernel.sysctl.
-{ lib, config, ... }:
-let
-  opts = import ../../../lib/opts.nix { inherit lib; };
+{
+  lib,
+  config,
+  ...
+}: let
+  opts = import ../../../lib/opts.nix {inherit lib;};
   cfg = config.profiles.performance.netExtras;
 in {
   options.profiles.performance.netExtras = {

@@ -33,10 +33,10 @@ in {
             journal = {
               path = "/var/log/journal";
               max_age = "12h";
-                labels = {
-                  job = "systemd-journal";
-                  inherit host;
-                };
+              labels = {
+                job = "systemd-journal";
+                inherit host;
+              };
             };
             relabel_configs = [
               {

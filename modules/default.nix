@@ -8,6 +8,7 @@
     ./flatpak
     ./games
     ./hardware
+    ./home-manager
     ./llm
     ./monitoring
     ./nix

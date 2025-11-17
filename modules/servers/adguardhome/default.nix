@@ -30,10 +30,10 @@ in {
           filtering_enabled = true;
           parental_enabled = false;
           safebrowsing_enabled = false;
-          safe_search = { enabled = false; };
+          safe_search = {enabled = false;};
         };
         # Subscribe to upstream lists (if provided)
-        filters = map (f: { inherit (f) name url enabled; }) cfg.filterLists;
+        filters = map (f: {inherit (f) name url enabled;}) cfg.filterLists;
         dns = {
           # Bind locally and serve on default DNS port.
           bind_host = "127.0.0.1";

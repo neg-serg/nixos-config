@@ -1,5 +1,9 @@
-{ lib, pkgs, config, ... }:
-let
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}: let
   cfg = config.hardware.audio.rnnoise or {};
 in {
   options.hardware.audio.rnnoise.enable = lib.mkEnableOption "Enable RNNoise-based virtual microphone (PipeWire filter-chain).";
@@ -15,48 +19,49 @@ in {
       alsa.support32Bit = true;
       pulse.enable = true;
       jack.enable = true;
-    # Base low-latency tuning + optional RNNoise virtual mic
-    extraConfig.pipewire =
-      { "92-low-latency" = {
-          "context.properties" = {
-            "default.clock.rate" = 48000;
-            "default.clock.quantum" = 128;
-            "default.clock.min-quantum" = 32;
-            "default.clock.max-quantum" = 2048;
+      # Base low-latency tuning + optional RNNoise virtual mic
+      extraConfig.pipewire =
+        {
+          "92-low-latency" = {
+            "context.properties" = {
+              "default.clock.rate" = 48000;
+              "default.clock.quantum" = 128;
+              "default.clock.min-quantum" = 32;
+              "default.clock.max-quantum" = 2048;
+            };
+          };
+        }
+        // lib.optionalAttrs (cfg.enable or false) {
+          "95-rnnoise-filter-chain" = {
+            "context.modules" = [
+              {
+                name = "libpipewire-module-filter-chain";
+                args = {
+                  "node.name" = "rnnoise_source";
+                  "node.description" = "Noise Canceling (RNNoise)";
+                  "media.class" = "Audio/Source";
+                  "filter.graph" = {
+                    nodes = [
+                      {
+                        type = "ladspa";
+                        name = "rnnoise";
+                        plugin = "${pkgs.rnnoise-plugin}/lib/ladspa/rnnoise_ladspa.so";
+                        label = "noise_suppressor_stereo";
+                      }
+                    ];
+                  };
+                  "capture.props" = {
+                    "node.passive" = true;
+                    "node.description" = "RNNoise Input";
+                  };
+                  "playback.props" = {
+                    "node.description" = "RNNoise Source";
+                  };
+                };
+              }
+            ];
           };
         };
-      }
-      // lib.optionalAttrs (cfg.enable or false) {
-        "95-rnnoise-filter-chain" = {
-          "context.modules" = [
-            {
-              name = "libpipewire-module-filter-chain";
-              args = {
-                "node.name" = "rnnoise_source";
-                "node.description" = "Noise Canceling (RNNoise)";
-                "media.class" = "Audio/Source";
-                "filter.graph" = {
-                  nodes = [
-                    {
-                      type = "ladspa";
-                      name = "rnnoise";
-                      plugin = "${pkgs.rnnoise-plugin}/lib/ladspa/rnnoise_ladspa.so";
-                      label = "noise_suppressor_stereo";
-                    }
-                  ];
-                };
-                "capture.props" = {
-                  "node.passive" = true;
-                  "node.description" = "RNNoise Input";
-                };
-                "playback.props" = {
-                  "node.description" = "RNNoise Source";
-                };
-              };
-            }
-          ];
-        };
-      };
       wireplumber = {
         package = pkgs.wireplumber;
         extraConfig = {
@@ -90,9 +95,9 @@ in {
         '';
       in {
         description = "Set RNNoise virtual source as default (wpctl)";
-        after = [ "wireplumber.service" "pipewire.service" ];
-        partOf = [ "wireplumber.service" ];
-        wantedBy = [ "default.target" ];
+        after = ["wireplumber.service" "pipewire.service"];
+        partOf = ["wireplumber.service"];
+        wantedBy = ["default.target"];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${script}";

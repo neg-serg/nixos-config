@@ -1,5 +1,9 @@
-{ lib, pkgs, config, ... }:
-let
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}: let
   cfg = config.hardware.gpu.corectrl or {};
 in {
   options.hardware.gpu.corectrl = {
@@ -21,7 +25,7 @@ in {
   };
 
   config = lib.mkIf (cfg.enable or false) {
-    environment.systemPackages = [ pkgs.corectrl ];
+    environment.systemPackages = [pkgs.corectrl];
 
     # Polkit rule to allow the helper for selected group
     environment.etc."polkit-1/rules.d/60-corectrl.rules".text = ''
@@ -36,4 +40,3 @@ in {
     boot.kernelParams = lib.optionals (cfg.ppfeaturemask != null) ["amdgpu.ppfeaturemask=${cfg.ppfeaturemask}"];
   };
 }
-

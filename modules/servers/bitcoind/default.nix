@@ -14,7 +14,7 @@ in {
     {
       services.bitcoind = lib.genAttrs [cfg.instance] (_: {
         enable = true;
-        dataDir = cfg.dataDir;
+        inherit (cfg) dataDir;
         port = cfg.p2pPort;
         # Route logs to journald and keep the on-disk debug.log from growing unbounded
         # - printtoconsole=1 ensures logs go to stdout/stderr (systemd → journald → Loki/Promtail)

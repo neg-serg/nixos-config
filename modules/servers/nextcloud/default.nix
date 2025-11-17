@@ -58,6 +58,6 @@ in {
     # - Add caddy to the group so it can read the php-fpm socket
     # - Prometheus user membership is managed by the php-fpm exporter module when that exporter is enabled
     users.groups.nginx = lib.mkDefault {};
-    users.users.caddy.extraGroups = [ "nginx" ];
+    users.users.caddy.extraGroups = ["nginx"];
   };
 }

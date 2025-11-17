@@ -51,9 +51,11 @@ in {
     # Local DNS stack
     unbound = lib.mkIf (config.services.unbound.enable or false) (mkPostBoot "unbound");
     adguardhome = lib.mkIf (config.services.adguardhome.enable or false) (
-      (mkPostBoot "adguardhome") // {
+      (mkPostBoot "adguardhome")
+      // {
         # Ensure DNS chain is ready before AdGuard binds on 53
-        after = lib.optional (config.services.unbound.enable or false) "unbound.service"
+        after =
+          lib.optional (config.services.unbound.enable or false) "unbound.service"
           ++ lib.optional (config.services.resolved.enable or false) "systemd-resolved.service";
         wants = lib.optional (config.services.unbound.enable or false) "unbound.service";
       }
