@@ -1,11 +1,14 @@
 # Мониторинг Nextcloud: Blackbox + метрики PHP-FPM
 
-Цель: наблюдать доступность и задержку Nextcloud через Blackbox, а также состояние пула PHP‑FPM через экспортер Prometheus. Дополняет существующие логи Loki и системные метрики.
+Цель: наблюдать доступность и задержку Nextcloud через Blackbox, а также состояние пула PHP‑FPM
+через экспортер Prometheus. Дополняет существующие логи Loki и системные метрики.
 
 ## Что уже настроено в этом репо
 
-- Blackbox‑проба HTTPS к `https://telfir/status.php` с разрешением самоподписанных сертификатов (LAN). Джоб `blackbox-https-insecure` указывает на локальный Blackbox exporter.
-- Опциональный экспортер PHP‑FPM настроен на чтение статуса пула Nextcloud через unix‑сокет со статус‑путём `/status`.
+- Blackbox‑проба HTTPS к `https://telfir/status.php` с разрешением самоподписанных сертификатов
+  (LAN). Джоб `blackbox-https-insecure` указывает на локальный Blackbox exporter.
+- Опциональный экспортер PHP‑FPM настроен на чтение статуса пула Nextcloud через unix‑сокет со
+  статус‑путём `/status`.
 - В Prometheus добавлен джоб `phpfpm` для экспортера.
 
 Все эндпоинты по умолчанию доступны только на localhost; наружу ничего не публикуется.
@@ -64,17 +67,21 @@ Blackbox (уже в конфиге хоста):
 
 ## Проверка
 
-- Blackbox: в Prometheus → Targets найдите `blackbox-https-insecure` с `instance="https://telfir/status.php"`.
+- Blackbox: в Prometheus → Targets найдите `blackbox-https-insecure` с
+  `instance="https://telfir/status.php"`.
 - Экспортер PHP‑FPM: `curl -s http://127.0.0.1:9253/metrics | head`.
 
 ## Grafana: полезные запросы
 
-Используйте автодополнение по префиксам `probe_` и `php_fpm_` — названия метрик могут отличаться в зависимости от версии экспортера.
+Используйте автодополнение по префиксам `probe_` и `php_fpm_` — названия метрик могут отличаться в
+зависимости от версии экспортера.
 
 - Задержка Nextcloud (панель/алерт):
+
   - `probe_duration_seconds{job="blackbox-https-insecure", instance="https://telfir/status.php"}`
 
 - Состояние пула PHP‑FPM:
+
   - Активные процессы: `php_fpm_processes{state="active"}` или `php_fpm_active_processes`
   - Праздные процессы: `php_fpm_processes{state="idle"}` или `php_fpm_idle_processes`
   - Очередь слушателя: `php_fpm_listen_queue`
@@ -84,10 +91,12 @@ Blackbox (уже в конфиге хоста):
 ## Алерты (примеры)
 
 - Отказ пробы (уже присутствует в репо для всех HTTP blackbox‑джобов):
+
   - `probe_success{job=~"blackbox-http|blackbox-https-insecure"} == 0` в течение 1m
 
 - Высокая задержка Nextcloud (пример):
-  - `probe_duration_seconds{job="blackbox-https-insecure", instance="https://telfir/status.php"} > 2` в течение 5m
+
+  - `probe_duration_seconds{job="blackbox-https-insecure", instance="https://telfir/status.php"} > 2`
+    в течение 5m
 
 Пороговые значения подбирайте под вашу среду.
-
