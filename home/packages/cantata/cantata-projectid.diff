@@ -1,0 +1,41 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 11fd7d06..5892d19f 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -10,8 +10,8 @@ project(
+ 
+ #  NOTE: If PROJECT_URL, or PROJECT_REV_URL, are changed, then cantata-dynamic, README, and
+ #        dbus/mpd.cantata.xml will need renaming/updating.
+-set(PROJECT_ID "Cantata.cantata.unix.dog")
+-set(PROJECT_REV_ID "dog.unix.cantata.Cantata")
++set(PROJECT_ID "cantata.mpd")
++set(PROJECT_REV_ID "mpd.cantata")
+ set(EXECUTABLE_NAME "cantata")
+ 
+ message(STATUS "Configuring ${PROJECT_NAME} v${PROJECT_VERSION}")
+diff --git a/cantata.desktop.cmake b/cantata.desktop.cmake
+index b6c63f86..72f541e8 100644
+--- a/cantata.desktop.cmake
++++ b/cantata.desktop.cmake
+@@ -29,7 +29,7 @@ GenericName[sq]=Clienti player muzike
+ GenericName[tr]=Muzik Çalıcı İstemcisi
+ 
+ 
+-Icon=@PROJECT_REV_ID@
++Icon=cantata
+ Exec=@EXECUTABLE_NAME@
+ Terminal=false
+ 
+diff --git a/gui/trayitem.cpp b/gui/trayitem.cpp
+index 8514ba00..2ca34468 100644
+--- a/gui/trayitem.cpp
++++ b/gui/trayitem.cpp
+@@ -145,7 +145,7 @@ void TrayItem::setup()
+ 	QIcon icon;
+ 	icon.addFile(CANTATA_SYS_ICONS_DIR + PROJECT_REV_ID ".png");
+ #else
+-	QIcon icon = QIcon::fromTheme(Utils::Gnome == Utils::currentDe() ? PROJECT_REV_ID "-symbolic" : PROJECT_REV_ID);
++	QIcon icon = QIcon::fromTheme(Utils::Gnome == Utils::currentDe() ? "cantata-symbolic" : "cantata");
+ 	// Bug: 660 If installed to non-standard folder, QIcon::fromTheme does not seem to find icon. Therefore
+ 	// add icon files here...
+ 	if (icon.isNull()) {

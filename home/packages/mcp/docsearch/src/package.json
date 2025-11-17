@@ -1,0 +1,108 @@
+{
+  "name": "docsearch-mcp",
+  "version": "0.0.6",
+  "description": "MCP server and CLI tool for local document search with hybrid semantic+keyword search across PDFs, files, and Confluence",
+  "keywords": [
+    "mcp",
+    "search",
+    "indexing",
+    "documents",
+    "pdf",
+    "confluence",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/patrickkoss/docsearch-mcp.git"
+  },
+  "author": "Patrick Koss <pati.koss@gmx.de>",
+  "license": "Apache License Version 2.0",
+  "main": "dist/server/mcp.js",
+  "bin": {
+    "docsearch-mcp": "dist/src/cli/main.js"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && cp package.json dist/",
+    "dev:ingest": "tsx src/ingest/cli.ts",
+    "dev:mcp": "tsx src/server/mcp.ts",
+    "dev:cli": "tsx src/cli/main.ts",
+    "start:mcp": "node dist/server/mcp.js",
+    "start:ingest": "node dist/ingest/cli.js",
+    "start:cli": "node dist/src/cli/main.js",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:unit": "vitest run --exclude test/integrations",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write '**/*.{ts,tsx,js,jsx,json,md}'",
+    "format:check": "prettier --check '**/*.{ts,tsx,js,jsx,json,md}'",
+    "typecheck": "tsc --noEmit",
+    "typecheck:src": "tsc --noEmit --project tsconfig.src.json",
+    "prepare": "command -v husky >/dev/null 2>&1 && husky || true",
+    "prepublishOnly": "npm run build",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.5",
+    "@types/pg": "^8.15.5",
+    "better-sqlite3": "12.2.0",
+    "chokidar": "^4.0.3",
+    "commander": "^14.0.0",
+    "dotenv": "^17.2.2",
+    "fast-glob": "^3.3.3",
+    "js-yaml": "^4.1.0",
+    "openai": "^5.19.1",
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.16.3",
+    "pgvector": "^0.2.1",
+    "sqlite-vec": "0.1.7-alpha.2",
+    "turndown": "^7.2.1",
+    "undici": "^7.16.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "@testcontainers/postgresql": "^11.5.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^24.3.1",
+    "@types/pdf-parse": "^1.1.5",
+    "@typescript-eslint/eslint-plugin": "^8.42.0",
+    "@typescript-eslint/parser": "^8.42.0",
+    "@vitest/ui": "^3.2.4",
+    "eslint": "^9.34.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^5.5.4",
+    "husky": "^9.1.7",
+    "prettier": "^3.6.2",
+    "testcontainers": "^11.5.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "pnpm": {
+    "patchedDependencies": {},
+    "ignoredBuiltDependencies": [
+      "better-sqlite3",
+      "cpu-features",
+      "esbuild",
+      "protobufjs",
+      "ssh2"
+    ]
+  }
+}

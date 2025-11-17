@@ -1,0 +1,74 @@
+diff --git a/config.py b/config.py
+index fa33eca..d8c21dc 100644
+--- a/config.py
++++ b/config.py
+@@ -1,8 +1,17 @@
+-MAIL_SERVER = "smtp.office365.com"  # Your SMTP server address, i used Office 365 & Zoho SMTP - M$ Graph works too.
+-MAIL_PORT = 587  # Port for the SMTP server (587 for TLS)
+-MAIL_USE_TLS = True  # Use TLS for secure connection
+-MAIL_USE_SSL = False  # Use SSL for secure connection
+-MAIL_DEFAULT_SENDER = "" # Use your preferred default sender
+-MAIL_USERNAME = "" # your logon
+-MAIL_PASSWORD = "" #your logon Pass
+-MCP_BEARER_TOKEN = "" #If you're not using a token management system (like OAuth2/JWT), you can define your own static token in here and validate it manually! (probably dont do that in prod)
++import os
++
++
++def _as_bool(value: str | None, default: bool) -> bool:
++    if value is None:
++        return default
++    return value.strip().lower() in ("1", "true", "yes", "on")
++
++
++MAIL_SERVER = os.getenv("SMTP_HOST", "smtp.office365.com")
++MAIL_PORT = int(os.getenv("SMTP_PORT", "587"))
++MAIL_USE_TLS = _as_bool(os.getenv("SMTP_USE_TLS"), True)
++MAIL_USE_SSL = _as_bool(os.getenv("SMTP_USE_SSL"), False)
++MAIL_DEFAULT_SENDER = os.getenv("SMTP_FROM_ADDRESS", "")
++MAIL_USERNAME = os.getenv("SMTP_USERNAME", "")
++MAIL_PASSWORD = os.getenv("SMTP_PASSWORD", "")
++MCP_BEARER_TOKEN = os.getenv("SMTP_BEARER_TOKEN", "")
+diff --git a/mcp_email.py b/mcp_email.py
+index 8854b0f..a65781e 100644
+--- a/mcp_email.py
++++ b/mcp_email.py
+@@ -9,10 +9,12 @@ from config import *
+ 
+ # Email settings
+ SMTP_SERVER = MAIL_SERVER
+-SMTP_PORT = 587
++SMTP_PORT = MAIL_PORT
+ SMTP_USERNAME = MAIL_USERNAME
+ SMTP_PASSWORD = MAIL_PASSWORD
+-FROM_ADDRESS = SMTP_USERNAME
++FROM_ADDRESS = MAIL_DEFAULT_SENDER or SMTP_USERNAME
++USE_TLS = MAIL_USE_TLS
++USE_SSL = MAIL_USE_SSL
+ 
+ #class for simple send
+ class EmailInput(BaseModel):
+@@ -75,8 +77,10 @@ def send_simple_email_tool(mcp: FastMCP):
+             msg["Subject"] = data.subject
+             msg.set_content(data.body)
+ 
+-            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+-                server.starttls()
++            smtp_cls = smtplib.SMTP_SSL if USE_SSL else smtplib.SMTP
++            with smtp_cls(SMTP_SERVER, SMTP_PORT) as server:
++                if USE_TLS and not USE_SSL:
++                    server.starttls()
+                 server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                 server.send_message(msg)
+ 
+@@ -112,8 +116,10 @@ def send_email_with_attachments_tool(mcp: FastMCP): #multiple attachments
+                     filename=attachment.filename,
+                 )
+ 
+-            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+-                server.starttls()
++            smtp_cls = smtplib.SMTP_SSL if USE_SSL else smtplib.SMTP
++            with smtp_cls(SMTP_SERVER, SMTP_PORT) as server:
++                if USE_TLS and not USE_SSL:
++                    server.starttls()
+                 server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                 server.send_message(msg)

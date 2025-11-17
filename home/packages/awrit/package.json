@@ -1,0 +1,49 @@
+{
+  "name": "awrit",
+  "version": "2.0.3",
+  "description": "A full graphical web browser for Kitty terminal with mouse and keyboard support",
+  "main": "index.js",
+  "author": "Chase Colman",
+  "license": "BSD-3-Clause",
+  "homepage": "https://github.com/chase/awrit",
+  "engines": {
+    "node": ">=22.11.0"
+  },
+  "workspaces": [
+    "src/runner"
+  ],
+  "scripts": {
+    "format": "biome format --write .",
+    "lint": "biome lint ./src",
+    "lint-fix": "biome lint --write ./src",
+    "lint-fix-unsafe": "biome lint --write --unsafe ./src",
+    "start": "echo 'You should run using `./awrit` or use the installer to install awrit' && exit 1",
+    "input-test": "bun run ./src/tty/inputTest.ts",
+    "gfx-test": "bun run ./src/tty/graphicsTest.ts",
+    "bump-crossterm": "git subtree pull --prefix=awrit-native-rs/crates/crossterm --squash https://github.com/crossterm-rs/crossterm master",
+    "typecheck": "tsc --noEmit --skipLibCheck"
+  },
+  "dependencies": {
+    "awrit-native-rs": "./awrit-native-rs",
+    "electron-chrome-context-menu": "^1.1.0",
+    "electron-chrome-extensions": "^4.9.0",
+    "electron-chrome-web-store": "^0.13.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.2.2",
+    "@sinonjs/fake-timers": "^14.0.0",
+    "@types/node": "^24.3.0",
+    "@types/sinonjs__fake-timers": "^8.1.5",
+    "typescript": "^5.9.2"
+  },
+  "trustedDependencies": [
+    "@biomejs/biome",
+    "@tailwindcss/oxide",
+    "awrit-native-rs",
+    "core-js",
+    "esbuild"
+  ],
+  "patchedDependencies": {
+    "lru-cache@5.1.1": "patches/lru-cache@5.1.1.patch"
+  }
+}

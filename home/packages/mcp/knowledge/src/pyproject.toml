@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "knowledge-mcp"
+version = "0.1.0"
+description = "Vector knowledge-base MCP server"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "neg" }]
+dependencies = [
+  "mcp>=1.2.0",
+  "pydantic>=2.7.0",
+  "sentence-transformers>=3.0.0",
+  "numpy>=1.26.0",
+  "pdfminer.six>=20221105",
+]
+
+[project.scripts]
+knowledge-mcp = "knowledge_mcp:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/knowledge_mcp"]

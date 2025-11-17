@@ -1,0 +1,63 @@
+diff --git a/src/auth.ts b/src/auth.ts
+index 6aa7144..8606b3b 100644
+--- a/src/auth.ts
++++ b/src/auth.ts
+@@ -12,6 +12,11 @@ const SCOPES = ['https://www.googleapis.com/auth/calendar'];
+ const TOKEN_PATH = path.join(__dirname, '..', 'token.json');
+ const CREDENTIALS_PATH = path.join(__dirname, '..', 'credentials.json');
+ 
++const ENV_CLIENT_ID = process.env.GCAL_CLIENT_ID;
++const ENV_CLIENT_SECRET = process.env.GCAL_CLIENT_SECRET;
++const ENV_REFRESH_TOKEN = process.env.GCAL_REFRESH_TOKEN;
++const ENV_ACCESS_TOKEN = process.env.GCAL_ACCESS_TOKEN;
++
+ interface Credentials {
+   installed?: {
+     client_secret: string;
+@@ -26,6 +31,15 @@ interface Credentials {
+ }
+ 
+ async function loadSavedCredentialsIfExist(): Promise<OAuth2Client | null> {
++  if (ENV_CLIENT_ID && ENV_CLIENT_SECRET && ENV_REFRESH_TOKEN) {
++    const client = new google.auth.OAuth2(ENV_CLIENT_ID, ENV_CLIENT_SECRET);
++    client.setCredentials({
++      refresh_token: ENV_REFRESH_TOKEN,
++      access_token: ENV_ACCESS_TOKEN || undefined,
++    });
++    return client;
++  }
++
+   try {
+     const content = await fs.readFile(TOKEN_PATH, 'utf-8');
+     const credentials = JSON.parse(content);
+
+diff --git a/src/calendar.ts b/src/calendar.ts
+index fcb5fd2..8f78ea2 100644
+--- a/src/calendar.ts
++++ b/src/calendar.ts
+@@ -13,6 +13,7 @@ import type {
+ } from './types.js';
+ 
+ const SINGAPORE_TZ = 'Asia/Singapore';
++const DEFAULT_CALENDAR_ID = process.env.GCAL_CALENDAR_ID || 'primary';
+ 
+ export class CalendarService {
+   private calendar: calendar_v3.Calendar;
+@@ -31,7 +32,7 @@ export class CalendarService {
+   }
+   
+   async listEvents(params: EventListParams) {
+-    const { calendarId = 'primary', ...rest } = params;
++    const { calendarId = DEFAULT_CALENDAR_ID, ...rest } = params;
+     
+     // Default to next 7 days if no time range specified
+     const now = new Date();
+@@ -67,7 +68,7 @@ export class CalendarService {
+   }
+   
+   async searchEvents(params: EventSearchParams) {
+-    const { calendarId = 'primary', query, ...rest } = params;
++    const { calendarId = DEFAULT_CALENDAR_ID, query, ...rest } = params;
+     
+     return this.listEvents({
+       calendarId,

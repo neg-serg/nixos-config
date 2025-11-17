@@ -107,16 +107,17 @@ with lib;
             wineprefix = build_prefix;
           };
           umount_prefix = pkgs.callPackage ./plumbing/umount_prefix.nix {};
-        in lib.recursiveUpdate {
-          Unit.Description = "Mount yabridge prefix";
-          Service = {
-            RuntimeDirectory = "yabridgemgr";
-            ExecStart = let exe = "${mount_prefix}/bin/mount_prefix"; in "${exe}";
-            ExecStop = let exe = "${umount_prefix}/bin/umount_prefix"; in "${exe}";
-            RemainAfterExit = "yes";
-          };
-          Unit.ConditionUser = "${cfg.user}";
-        } (mkUnitFromPresets {presets = ["tmpfiles" "defaultWanted"];});
+        in
+          lib.recursiveUpdate {
+            Unit.Description = "Mount yabridge prefix";
+            Service = {
+              RuntimeDirectory = "yabridgemgr";
+              ExecStart = let exe = "${mount_prefix}/bin/mount_prefix"; in "${exe}";
+              ExecStop = let exe = "${umount_prefix}/bin/umount_prefix"; in "${exe}";
+              RemainAfterExit = "yes";
+            };
+            Unit.ConditionUser = "${cfg.user}";
+          } (mkUnitFromPresets {presets = ["tmpfiles" "defaultWanted"];});
         yabridgemgr_sync =
           lib.recursiveUpdate {
             Unit.Description = "yabridgectl sync";

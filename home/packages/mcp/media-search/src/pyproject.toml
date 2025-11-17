@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "media-search-mcp"
+version = "0.1.0"
+description = "Local media/notes OCR and snippet MCP server"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "neg" }]
+dependencies = [
+  "mcp>=1.2.0",
+  "pydantic>=2.7.0",
+  "pytesseract>=0.3.11",
+  "pillow>=10.0.0",
+  "rapidfuzz>=3.0.0",
+  "pdfminer.six>=20221105",
+]
+
+[project.scripts]
+media-search-mcp = "media_search:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/media_search"]

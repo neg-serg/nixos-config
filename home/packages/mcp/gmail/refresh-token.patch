@@ -1,0 +1,43 @@
+diff --git a/main.go b/main.go
+index e695434..02ee098 100644
+--- a/main.go
++++ b/main.go
+@@ -60,7 +60,7 @@ func NewGmailServer() (*GmailServer, error) {
+ 	}
+ 
+ 	// Get token from file or perform OAuth flow
+-	token, err := getToken(config)
++	token, err := getToken(ctx, config)
+ 	if err != nil {
+ 		return nil, fmt.Errorf("unable to get token: %v", err)
+ 	}
+@@ -79,8 +79,27 @@ func NewGmailServer() (*GmailServer, error) {
+ }
+ 
+ // getToken retrieves a token from a local file or initiates OAuth flow
+-func getToken(config *oauth2.Config) (*oauth2.Token, error) {
++func getToken(ctx context.Context, config *oauth2.Config) (*oauth2.Token, error) {
+ 	tokenFile := getAppFilePath("token.json")
++
++	// Support headless deployments via explicit refresh token
++	if refreshToken := strings.TrimSpace(os.Getenv("GMAIL_REFRESH_TOKEN")); refreshToken != "" {
++		log.Println("Using refresh token from GMAIL_REFRESH_TOKEN")
++		initial := &oauth2.Token{RefreshToken: refreshToken}
++		ts := config.TokenSource(ctx, initial)
++
++		refreshed, err := ts.Token()
++		if err != nil {
++			return nil, fmt.Errorf("unable to refresh token from env: %w", err)
++		}
++
++		if refreshed.RefreshToken == "" {
++			refreshed.RefreshToken = refreshToken
++		}
++
++		saveToken(tokenFile, refreshed)
++		return refreshed, nil
++	}
+ 	
+ 	// Try to load existing token
+ 	token, err := tokenFromFile(tokenFile)
+*** End Patch
