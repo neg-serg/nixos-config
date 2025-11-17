@@ -63,8 +63,8 @@ Mozilla browsers
 
   - Use the `*Extra` fields to extend settings/policies/addons per browser.
 
-  - `bottomNavbar` controls optional CSS that переносит панель навигации вниз. По умолчанию `true`;
-    для Floorp выставлено `false`.
+  - `bottomNavbar` toggles optional CSS that moves the navigation bar to the bottom. Defaults to
+    `true`; Floorp overrides it to `false`.
 
 ## Audio Stack (`modules/media/audio`)
 
