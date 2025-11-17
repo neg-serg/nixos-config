@@ -15,21 +15,6 @@
     (with emacsOverlay.overlays; [
       emacs
       package
-      (final: prev: {
-        tree-sitter = prev.tree-sitter.override {
-          extraGrammars = {
-            tree-sitter-astro = {
-              version = "master";
-              src = pkgs.fetchFromGitHub {
-                owner = "virchau13";
-                repo = "tree-sitter-astro";
-                rev = "0ad33e32ae9726e151d16ca20ba3e507ff65e01f";
-                sha256 = "LhehKOhCDPExEgEiOj3TiuFk8/DohzYhy/9GmUSxaIg=";
-              };
-            };
-          };
-        };
-      })
     ]);
 
   tree-sitter-parsers = grammars:
@@ -68,7 +53,6 @@
       tree-sitter-toml
       tree-sitter-tsx
       tree-sitter-typescript
-      tree-sitter-astro
       tree-sitter-vim
       tree-sitter-yaml
       tree-sitter-zig
@@ -108,7 +92,6 @@
         reformatter
         projectile
         nixQmlSupport.packages.${pkgs.stdenv.system}.qml-ts-mode
-        astro-ts-mode
         rainbow-mode
         string-inflection
         (treesit-grammars.with-grammars tree-sitter-parsers)
