@@ -1,0 +1,22 @@
+{
+  imports = [
+    ./files/bin.nix
+    ./local-bin
+    ./files/nixpkgs-config.nix
+    ./envs
+    ./fonts
+    ./fun
+    ./games
+    ./autoclick.nix
+    ./gui
+    ./im
+    ./mail
+    ./systemd
+    ./terminal
+    ./theme
+    ./torrent
+    ./web
+    ./x11
+    ./xdg
+  ];
+}
