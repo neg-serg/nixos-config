@@ -1,0 +1,204 @@
+#!/usr/bin/env python3
+"""Extract Essentia highlevel classifications via streaming_extractor_music.
+
+Usage:
+  music-highlevel [options] [PATH ...]
+
+Description:
+  Runs Essentia's streaming_extractor_music over provided audio files or
+  directories and emits the highlevel classifier outputs (genre, moods, etc.).
+  Results can be printed in a human-readable form or as JSON per track.
+"""
+import argparse
+import json
+import subprocess as sp
+import sys
+import tempfile
+from pathlib import Path
+from typing import Any, Dict, Iterable, List
+
+try:  # optional faster JSON
+    import orjson  # type: ignore
+except Exception:  # pragma: no cover
+    orjson = None
+
+AUDIO_EXTS = {
+    ".mp3",
+    ".flac",
+    ".wav",
+    ".ogg",
+    ".m4a",
+    ".opus",
+    ".aac",
+    ".wma",
+    ".aiff",
+    ".aif",
+}
+
+# Commonly useful highlevel taxonomies Essentia ships models for.
+DEFAULT_TAXONOMIES = [
+    "genre_dortmund",
+    "genre_tzanetakis",
+    "genre_rosamerica",
+    "danceability",
+    "moods_mirex",
+    "moods_happiness",
+    "moods_sadness",
+    "moods_relaxed",
+    "moods_aggressive",
+    "tonal_atonal",
+]
+
+
+def walk_inputs(paths: Iterable[Path]) -> List[Path]:
+    files: List[Path] = []
+    for p in paths:
+        if p.is_dir():
+            for child in sorted(p.rglob("*")):
+                if child.is_file() and child.suffix.lower() in AUDIO_EXTS:
+                    files.append(child)
+        elif p.is_file():
+            files.append(p)
+    return files
+
+
+def run_extractor(audio: Path) -> Dict[str, Any] | None:
+    with tempfile.TemporaryDirectory() as td:
+        out_json = Path(td) / "highlevel.json"
+        cmd = ["streaming_extractor_music", str(audio), str(out_json)]
+        try:
+            sp.run(cmd, check=True, stdout=sp.DEVNULL, stderr=sp.DEVNULL)
+        except sp.CalledProcessError:
+            print(f"[music-highlevel] extractor failed: {audio}", file=sys.stderr)
+            return None
+        try:
+            data = out_json.read_bytes()
+            if orjson:
+                return orjson.loads(data)
+            return json.loads(data.decode("utf-8"))
+        except Exception as exc:
+            print(f"[music-highlevel] failed reading output for {audio}: {exc}", file=sys.stderr)
+            return None
+
+
+def truncate_probs(prob_dict: Dict[str, Any], top: int) -> List[Dict[str, float | str]]:
+    try:
+        items = [(label, float(score)) for label, score in prob_dict.items()]
+    except Exception:
+        return []
+    items.sort(key=lambda x: x[1], reverse=True)
+    if top > 0:
+        items = items[:top]
+    return [{"label": label, "score": score} for label, score in items]
+
+
+def extract_highlevel(highlevel: Dict[str, Any], selected: List[str], top: int) -> Dict[str, Any]:
+    result: Dict[str, Any] = {}
+    for name, payload in highlevel.items():
+        if selected and name not in selected:
+            continue
+        if not isinstance(payload, dict):
+            continue
+        entry: Dict[str, Any] = {}
+        probs = payload.get("probability")
+        if isinstance(probs, dict):
+            vals = truncate_probs(probs, top)
+            if vals:
+                entry["candidates"] = vals
+        elif isinstance(probs, (int, float)):
+            entry["score"] = float(probs)
+        value = payload.get("value")
+        if isinstance(value, str):
+            entry["value"] = value
+        elif isinstance(value, (int, float)):
+            entry["value"] = float(value)
+        if entry:
+            result[name] = entry
+    return result
+
+
+def emit(result: Dict[str, Any], json_output: bool) -> None:
+    if json_output:
+        payload = orjson.dumps(result).decode("utf-8") if orjson else json.dumps(result, ensure_ascii=False)
+        print(payload)
+        return
+    path = result.get("path", "<unknown>")
+    print(path)
+    highlevel = result.get("highlevel", {})
+    if not highlevel:
+        print("  (no highlevel data)")
+        return
+    for name, data in highlevel.items():
+        value = data.get("value")
+        candidates = data.get("candidates")
+        score = data.get("score")
+        line = f"  {name}:"
+        if value is not None:
+            line += f" value={value}"
+        if score is not None:
+            line += f" score={score:.3f}"
+        print(line)
+        if isinstance(candidates, list):
+            for item in candidates:
+                print(f"    {item['score']:.3f}\t{item['label']}")
+
+
+def parse_args() -> argparse.Namespace:
+    ap = argparse.ArgumentParser(description="Inspect Essentia highlevel classifiers for audio files")
+    ap.add_argument("paths", nargs="*", help="audio files or directories; defaults to current track via playerctl")
+    ap.add_argument("--top", type=int, default=3, help="top probabilities per taxonomy to display")
+    ap.add_argument(
+        "--taxonomies",
+        nargs="*",
+        default=[],
+        help="specific highlevel taxonomies to include (defaults to a common subset)",
+    )
+    ap.add_argument("--json", action="store_true", help="emit JSON per track")
+    return ap.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    if args.taxonomies:
+        selected = args.taxonomies
+    else:
+        selected = DEFAULT_TAXONOMIES
+
+    inputs = [Path(p).expanduser() for p in args.paths]
+    if not inputs:
+        # Fall back to current track via playerctl if available.
+        try:
+            current = sp.check_output(["playerctl", "metadata", "xesam:url"], text=True).strip()
+        except Exception:
+            current = ""
+        if current.startswith("file://"):
+            from urllib.parse import urlparse, unquote
+
+            parsed = urlparse(current)
+            if parsed.path:
+                inputs = [Path(unquote(parsed.path))]
+    if not inputs:
+        print("[music-highlevel] no inputs provided", file=sys.stderr)
+        return 1
+
+    files = walk_inputs(inputs)
+    if not files:
+        print("[music-highlevel] no audio files found", file=sys.stderr)
+        return 1
+
+    for audio in files:
+        data = run_extractor(audio)
+        if data is None:
+            continue
+        highlevel = data.get("highlevel")
+        if not isinstance(highlevel, dict):
+            print(f"[music-highlevel] missing highlevel section: {audio}", file=sys.stderr)
+            continue
+        extracted = extract_highlevel(highlevel, selected, args.top)
+        result = {"path": str(audio), "highlevel": extracted}
+        emit(result, args.json)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

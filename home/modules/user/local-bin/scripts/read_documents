@@ -1,0 +1,35 @@
+#!/usr/bin/env zsh
+# read_documents: pick and open a document from ~/dw (rofi -> zathura)
+# Usage: read_documents [extra rofi args]
+
+IFS=$'\n\t'
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  sed -n '2,3p' "$0" | sed 's/^# \{0,1\}//'; exit 0
+fi
+
+command -v rofi >/dev/null 2>&1 || { print -u2 'read_documents: rofi not found'; :; }
+command -v fd >/dev/null 2>&1 || { print -u2 'read_documents: fd not found'; :; }
+command -v zathura >/dev/null 2>&1 || { print -u2 'read_documents: zathura not found'; :; }
+
+dir="${HOME}/dw"; dir="${~dir}"
+# Build decorated list: icon + filename and grey size tail
+list=$(fd . "$dir" -d 1 -t f -0 -e pdf -e djvu -e epub \
+  | xargs -0 -n1 -I {} sh -c '
+      f="$1"; bn="${f##*/}"; ext="${bn##*.}"; icon=""
+      case "$ext" in pdf|PDF) icon="" ;; djvu|DJVU) icon="" ;; epub|EPUB) icon="" ;; esac
+      # escape markup special chars in name
+      bn_esc=$(printf "%s" "$bn" | sed "s/&/\\&amp;/g; s/</\\&lt;/g; s/>/\\&gt;/g")
+      sz=$(stat -c %s -- "$f" 2>/dev/null || echo 0)
+      mib=$(awk -v b="$sz" "BEGIN{printf \"%.1f\", (b/1048576)}")
+      printf "%s %s  <span foreground=\"#7a8a9a\">(%s MiB)</span>\n" "$icon" "$bn_esc" "$mib"
+    ' sh {} )
+
+cnt=$(printf '%s\n' "$list" | grep -c . || true)
+dir_label=${dir/#$HOME/~}
+sel=$(printf '%s\n' "$list" \
+  | rofi -auto-select -dmenu -p 'docs ❯>' -markup-rows -theme menu)
+[ -z "$sel" ] && exit 0
+# Strip tail markup and icon prefix to recover filename
+name=$(printf '%s' "$sel" \
+  | sed -E 's/[[:space:]]*<span.*$//; s/^[^[:space:]]+[[:space:]]+//')
+exec zathura -- "$dir/$name"

@@ -1,0 +1,314 @@
+#!/usr/bin/env zsh
+# MPD Playlist Manager with Artist-Album pairing and Year
+# Requirements: fzf, mpc, awk
+
+# Help
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+  print "Usage: $(basename "$0") [-c] [-a|-d|-b|-n] [--no-cache]"
+  print "  -c, --clear        Clear playlist before adding"
+  print "  -a, --artist       Select by artists"
+  print "  -d, --directory    Select by directories"
+  print "  -b, --artist-album Select by artist-album pairs"
+  print "  -n, --new          Select from 'new' directory"
+  print "  --no-cache         Disable caching"
+  exit 0
+fi
+
+CLEAR_PLAYLIST=0
+MODE=""
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/mpd_manager"
+CACHE_TTL=86400 # 24 hours in seconds
+LAST_SELECTION=""
+DEFAULT_MODE="artist-album"
+NEW_DIR="new" # Base directory for new groups
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -c|--clear) CLEAR_PLAYLIST=1; shift ;;
+        -a|--artist) MODE="artist"; shift ;;
+        -d|--directory) MODE="directory"; shift ;;
+        -b|--artist-album) MODE="artist-album"; shift ;;
+        -n|--new) MODE="new"; shift ;; # New option for 'new' directory
+        -v|--verbose) VERBOSE=1; shift ;;
+        --no-cache) NO_CACHE=1; shift ;;
+        *)
+            print "Usage: $(basename "$0") [-c] [-a|-d|-b|-n] [--no-cache]"
+            print "  -c, --clear        Clear playlist before adding"
+            print "  -a, --artist       Select by artists"
+            print "  -d, --directory    Select by directories"
+            print "  -b, --artist-album Select by artist-album pairs"
+            print "  -n, --new          Select from '$NEW_DIR' directory"
+            print "  --no-cache         Disable caching"
+            exit 1
+            ;;
+    esac
+done
+
+mkdir -p "$CACHE_DIR" # Create cache directory if needed
+get_mpd_conf_path() {
+    if command -v systemctl >/dev/null && systemctl --user is-active mpd.service &>/dev/null; then
+        local exec_start=$(systemctl --user show mpd.service --property=ExecStart --value --no-pager)
+        local args=(${(s: :)exec_start})
+        local conf_path=""
+        local skip_next=false
+        for line in "${args[@]}"; do
+            if [[ "$line" == "argv[]="* ]]; then
+                in_argv=1
+                argv_str="${line#argv[]=}"
+            elif [[ $in_argv -eq 1 ]]; then
+                if [[ "$line" == *";" ]]; then
+                    in_argv=0
+                    line="${line%%;}"
+                    [[ -n "$line" ]] && argv_str+=" $line"
+                    for arg in ${=argv_str}; do
+                        if [[ "$arg" == *mpd.conf ]]; then
+                            print -r -- "$arg"
+                        fi
+                    done
+                    argv_str=""
+                else
+                    argv_str+=" $line"
+                fi
+            fi
+        done
+        if [[ -n "$conf_path" && -f "$conf_path" ]]; then
+            echo "$conf_path"
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
+# Function to get MPD database path
+get_mpd_db_path() {
+    conf=$(get_mpd_conf_path)
+    if [[ -f $conf ]]; then
+        # Look for database setting
+        db_path=$(grep -E '^[ \t]*(database|db_file)[ \t]+' "$conf" | head -n1 | awk '{print $2}' | tr -d '"')
+        if [[ -n "$db_path" ]]; then
+            # Expand tilde if present
+            if [[ "$db_path" == "~/"* ]]; then
+                db_path="${HOME}/${db_path#"~/"}"
+            fi
+            echo "$db_path"
+            return
+        fi
+    fi
+}
+
+# Automatic cache update when MPD database changes
+mpd_db_file=$(get_mpd_db_path)
+if [[ -z "$NO_CACHE" && -f "$mpd_db_file" ]]; then
+    # Check if MPD database is newer than cache
+    for cache_file in "$CACHE_DIR"/*.cache; do
+        if [[ -f "$cache_file" && "$mpd_db_file" -nt "$cache_file" ]]; then
+            rm -f "$cache_file"
+            echo "♻️  Cache cleared due to updated MPD database"
+        fi
+    done
+fi
+
+# Interactive mode selection if not specified
+if [[ -z "$MODE" ]]; then
+    # Default to artist-album mode if no selection
+    MODE=$DEFAULT_MODE
+fi
+
+# Function to get data with caching
+get_data() {
+    local mode=$1
+    local cache_file="$CACHE_DIR/${mode}.cache"
+
+    # Use cache if valid
+    if [[ -z "$NO_CACHE" && -f "$cache_file" ]]; then
+        local now=$(date +%s)
+        local mtime=$(stat -c %Y "$cache_file")
+
+        if (( now - mtime < CACHE_TTL )); then
+            cat "$cache_file"
+            return 0
+        fi
+    fi
+
+    # Generate fresh data
+    case $mode in
+        artist)
+            # Case-insensitive sorting with special characters handling
+            mpc list artist | LC_ALL=C sort -f | uniq | tee "$cache_file"
+            ;;
+        directory|new)
+            # Natural sorting for directories
+            local base_dir=""
+            [[ $mode == "new" ]] && base_dir="$NEW_DIR/"
+
+            # Get directories with proper base path
+            mpc listall | awk -F/ -v base="$base_dir" '{
+                path = ""
+                for (i=1; i<NF; i++) {
+                    path = (path ? path "/" : "") $i
+                    # Only include paths that start with base directory
+                    if (base == "" || index(path, base) == 1) {
+                        # For new mode, only include immediate subdirectories of 'new'
+                        if (mode == "new" && i == 2) {
+                            print path
+                        }
+                        # For regular directory mode, include all leaf directories
+                        else if (mode == "directory" && i == NF-1) {
+                            print path
+                        }
+                    }
+                }
+            }' mode="$mode" | LC_ALL=C sort -f | uniq | tee "$cache_file"
+            ;;
+        artist-album)
+            # Generate unique artist-album pairs with year
+            if [[ -n $VERBOSE ]]; then
+                echo "🔍 Generating artist-album-year pairs..."
+            fi
+
+            # Efficient method to get all artist-album pairs
+            mpc list album | while read -r album; do
+                # Get all artists for the album
+                artists=$(mpc list artist album "$album")
+                if [[ -n "$artists" ]]; then
+                    # Handle multiple artists
+                    while read -r artist; do
+                        # Get release year (first 4-digit year found)
+                        year=$(mpc list date album "$album" artist "$artist" 2>/dev/null |
+                               grep -oE '\\b[0-9]{4}\\b' | head -n1)
+                        [[ -n "$year" ]] && year_str=" [$year]" || year_str=""
+                        print "$artist - $album$year_str"
+                    done <<< "$artists"
+                fi
+            done | LC_ALL=C sort -f | uniq | tee "$cache_file"
+            ;;
+    esac
+}
+
+# Get data for selected mode
+data=$(get_data "$MODE")
+if [[ -z "$data" ]]; then
+    print "Error: No data available for mode: $MODE"
+    exit 1
+fi
+
+case $MODE in
+    artist) header="🎤 ARTIST SELECTION" ;;
+    directory) header="📁 DIRECTORY SELECTION" ;;
+    new) header="🆕 NEW GROUP SELECTION ($NEW_DIR/)" ;; # Special header for new groups
+    artist-album) header="🎤💿 ARTIST-ALBUM-YEAR SELECTION" ;;
+    *) print "Error: Invalid mode '$MODE'"; exit 1 ;;
+esac
+
+# Interactive selection with fzf
+selected=$(echo "$data" | fzf \
+    --multi \
+    --prompt="Select ($MODE): " \
+    --header="$header
+[Enter] Add | [Esc] Cancel
+[Ctrl+e] Switch mode | [Ctrl+r] Refresh | [Ctrl+l] Clear cache" \
+    --bind "ctrl-e:execute(echo switch > /tmp/mpd_switch)+abort" \
+    --bind "ctrl-r:reload($0 --$MODE)" \
+    --bind "ctrl-l:execute(rm -f $CACHE_DIR/*.cache)+reload($0 --$MODE)" \
+    --ansi \
+    --height=100% \
+    --reverse \
+    --color='header:italic,fg:cyan')
+
+# Handle mode switching
+if [[ -f /tmp/mpd_switch ]]; then
+    rm -f /tmp/mpd_switch
+    if [[ $MODE == "artist" ]]; then
+        new_mode="directory"
+    elif [[ $MODE == "directory" ]]; then
+        new_mode="artist-album"
+    elif [[ $MODE == "artist-album" ]]; then
+        new_mode="new"
+    else
+        new_mode="artist"
+    fi
+    exec "$0" "--$new_mode" "${CLEAR_PLAYLIST:+-c}" "$@" # Restart with new mode
+fi
+
+if [[ -n "$selected" ]]; then # Process selected items
+    if [[ $CLEAR_PLAYLIST -eq 1 ]]; then
+        mpc clear >/dev/null # Clear playlist if requested
+    fi
+
+    total_added=0
+    start_time=$EPOCHSECONDS
+    # Add selected items to playlist
+    while IFS= read -r item; do
+        if [[ -n "$item" ]]; then
+            # Get current playlist count
+            before_count=$(mpc playlist | wc -l)
+
+            # Handle different modes
+            case $MODE in
+                artist)
+                    mpc findadd artist "$item" >/dev/null
+                    after_count=$(mpc playlist | wc -l)
+                    count=$((after_count - before_count))
+                    echo "🎤 Adding $item... $count tracks"
+                    total_added=$((total_added + count))
+                    ;;
+
+                directory|new) # Both directory modes use the same adding method
+                    mpc add "$item" >/dev/null
+                    after_count=$(mpc playlist | wc -l)
+                    count=$((after_count - before_count))
+                    # Special message for new groups
+                    if [[ $MODE == "new" ]]; then
+                        echo "🆕 Adding new group: ${item#$NEW_DIR/}... $count tracks"
+                    else
+                        echo "📁 Adding $item... $count tracks"
+                    fi
+                    total_added=$((total_added + count))
+                    ;;
+
+                artist-album)
+                    # Reliable parsing of artist, album, and year
+                    if [[ "$item" =~ "(.*) - (.*) \\[([0-9]{4})\\]" ]]; then
+                        artist=$match[1]; album=$match[2]; year=$match[3] # Format: Artist - Album [Year]
+                    elif [[ "$item" =~ "(.*) - (.*)" ]]; then
+                        artist=$match[1]; album=$match[2]; year=""; # Format: Artist - Album (without year)
+                    else
+
+                        artist="${item%% - *}"; album="${item#* - }"; year=""; # Fallback: simple splitting
+                    fi
+
+                    # Clean up any extra spaces
+                    artist=$(echo "$artist" | sed 's/ *$//')
+                    album=$(echo "$album" | sed 's/ *$//')
+                    # Add items
+                    mpc findadd artist "$artist" album "$album" >/dev/null
+                    # Calculate added tracks
+                    after_count=$(mpc playlist | wc -l)
+                    count=$((after_count - before_count))
+
+                    # Print with year if available
+                    if [[ -n "$year" ]]; then
+                        echo "🎤💿 Adding $artist - $album [$year]... $count tracks"
+                    else
+                        echo "🎤💿 Adding $artist - $album... $count tracks"
+                    fi
+                    total_added=$((total_added + count))
+                    ;;
+            esac
+        fi
+    done <<< "$selected"
+
+    # Start playback and show status
+    mpc play >/dev/null
+    end_time=$EPOCHSECONDS
+    duration=$((end_time - start_time))
+    playlist_count=$(mpc playlist | wc -l)
+
+    # Simple summary output
+    echo ""
+    echo "🎵 Updated in $duration seconds"
+    echo "🚀 Tracks added: $total_added"
+    echo "📋 Total in playlist: $playlist_count tracks"
+fi

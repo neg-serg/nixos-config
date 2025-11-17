@@ -1,0 +1,44 @@
+#!/usr/bin/env zsh
+# iommu-info: list or reset IOMMU groups
+# Usage: iommu-info [r|reset]
+#   Without args: list IOMMU groups and devices. With 'r' or 'reset':
+#   show groups highlighting devices supporting reset.
+
+setopt nullglob
+IFS=$'\n\t'
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  sed -n '2,5p' "$0" | sed 's/^# \{0,1\}//'; exit 0
+fi
+
+command -v lspci >/dev/null 2>&1 || { print -u2 'iommu-info: lspci not found'; :; }
+[[ -d /sys/kernel/iommu_groups ]] || { print -u2 'iommu-info: no /sys/kernel/iommu_groups'; exit 0 }
+
+valid_groups(){
+    for d in /sys/kernel/iommu_groups/*/devices/*; do
+        [[ -e "$d" ]] || continue
+        n=${d#*/iommu_groups/*}; n=${n%%/*}
+        printf 'IOMMU Group %s ' "$n"
+        lspci -nns "${d##*/}"
+    done
+}
+
+reset_groups(){
+    for iommu_group in /sys/kernel/iommu_groups/*; do
+        [[ -d "$iommu_group" ]] || continue
+        echo "IOMMU group $(basename -- "$iommu_group")"
+        for devpath in "$iommu_group"/devices/*; do
+            [[ -e "$devpath" ]] || continue
+            device="${devpath##*/}"
+            if [[ -e "$devpath/reset" ]]; then
+                echo -n "[RESET]"
+            fi
+            echo -n $'\t'; lspci -nns "$device"
+        done
+    done
+}
+
+case "$1" in
+    r*) reset_groups ;;
+    *) valid_groups ;;
+esac
+

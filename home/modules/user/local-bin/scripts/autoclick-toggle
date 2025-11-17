@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/autoclick.pid"
+DELAY_MS="${1:-16}"
+
+stop() {
+  if [[ -f "$PIDFILE" ]]; then
+    local pid
+    pid=$(cat "$PIDFILE" 2>/dev/null || true)
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+      kill "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+    fi
+    rm -f "$PIDFILE"
+    command -v notify-send >/dev/null 2>&1 && notify-send 'Autoclicker' 'Stopped'
+  fi
+  exit 0
+}
+
+if [[ -f "$PIDFILE" ]]; then
+  stop
+fi
+
+if ! command -v ydotool >/dev/null 2>&1; then
+  echo "autoclick-toggle: ydotool not found in PATH" >&2
+  exit 1
+fi
+
+if ! [[ "$DELAY_MS" =~ ^[0-9]+$ ]]; then
+  echo "autoclick-toggle: delay must be an integer number of milliseconds" >&2
+  exit 1
+fi
+
+DELAY_S=$(awk "BEGIN { printf \"%.4f\", $DELAY_MS / 1000 }")
+
+(
+  trap stop INT TERM
+  while true; do
+    ydotool click 0xC0
+    sleep "$DELAY_S"
+  done
+) &
+daemon_pid=$!
+echo "$daemon_pid" >"$PIDFILE"
+
+if command -v notify-send >/dev/null 2>&1; then
+  notify-send 'Autoclicker' "Started (${DELAY_MS} ms)"
+fi
+
+disown "$daemon_pid"

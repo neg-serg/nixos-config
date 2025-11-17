@@ -1,0 +1,271 @@
+#!/usr/bin/env python
+
+"""2.3.0 John Eikenberry <jae@zhar.net> GPL-3+ http://zhar.net/projects/
+Copyright
+    Copyright (C) 2010-2015 John Eikenberry <jae@zhar.net>
+License
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <http://www.gnu.org/licenses/>.
+Description
+    My goal in writing this script was to provide all the functionality of all
+    the various perl/sh scripts found around the web in one place with some
+    additional bells and whistles.
+    It automatically detects 8, 16, 88, 256 color capabilities (via ncurses)
+    and displays the appropriate color charts. It can display the colors as
+    blocks or (2d) cubes optionally with color values overlaid in int or hex
+    values.  It can show the full rgb text string as well. It can also show the
+    display with a vertical (default) or horizontal orientation. It has the
+    option of additional padding and supports -h --help as well.
+    It also works as a utility for converting between 256 and 88 color values.
+Development
+    A note on coding style. I was playing around with using classes as simple
+    module-esque namespaces; i.e. having classes that have all staticmethods
+    and never get instatiated. As a side effect of this it makes calls at the
+    module level thus this script is not really importable, thus limiting
+    reuse.
+Contributors
+    Isaac Cammann <icammann@gmail.com> - cube display bugfix
+    Jan Larres <jan@majutsushi.net> - submitted patches for..
+        - compact rgb display
+        - use of color intensity to determine foreground contrast color
+        - 16 color SGR ANSI chart
+        - 88 color rgb display bugfix
+"""
+from __future__ import print_function
+
+__version__ = __doc__.split('\n')[0]
+
+import sys
+import curses
+from optparse import OptionParser, OptionGroup, make_option
+from math import ceil, sqrt
+from inspect import getdoc
+from functools import wraps
+
+# output constants
+fg_escape = "\x1b[38;5;%dm"
+bg_escape = "\x1b[48;5;%dm"
+clear = "\x1b[0m"
+
+def _get_options(args):
+    """ Setup and parse options.
+    """
+    option_list = [
+        make_option("-b", "--block", action="store_true", dest="block",
+            default=True, help="Display as block format (vs cube) [default]."),
+        make_option("-c", "--cube-slice", action="store_true", dest="cube",
+            default=False, help="Display as cube slices (vs block)."),
+        make_option("-f", "--foreground", action="store_true",
+            dest="foreground", default=False,
+            help="Use color for foreground text."),
+        make_option("-l", "--rgb", action="store_true", dest="rgb",
+            default=False, help="Long format. RGB values as text."),
+        make_option("-n", "--numbers", action="store_true", dest="numbers",
+            default=False, help="Include color escape numbers on chart."),
+        make_option("-o", "--ansicodes", action="store_true",
+            dest="ansicodes", default=False,
+            help="Display 16 color chart with SGR ANSI escape codes."),
+        make_option("-p", "--padding", action="store_true", dest="padding",
+            default=False, help="Add extra padding (helps discern colors)."),
+        make_option("-t", "--test", action="store_true", dest="test",
+            default=False, help="Run tests."),
+        make_option("-v", "--vertical", action="store_true", dest="vertical",
+            default=True, help="Display with vertical orientation [default]."),
+        make_option("-x", "--hex", action="store_true", dest="hex",
+            default=False, help="Include hex color numbers on chart."),
+        make_option("-z", "--horizontal", action="store_true",
+            dest="horizontal", default=False,
+            help="Display with horizontal orientation."),
+        ]
+
+    parser = OptionParser(version=__version__, option_list=option_list)
+
+    convert_option_list = [
+        make_option("-r", "--256to88", action="store", dest="reduce",
+            metavar="N", type="int",
+            help="Convert (reduce) 256 color value N to an 88 color value."),
+        make_option("-e", "--88to256", action="store", dest="expand",
+            metavar="N", type="int",
+            help="Convert (expand) 88 color value N to an 256 color value."),
+        ]
+    group = OptionGroup(parser, "Conversion options")
+    group.add_options(option_list=convert_option_list)
+    parser.add_option_group(group)
+
+    (opts, args) = parser.parse_args(args)
+    return opts
+
+# instantiate global options based on command arguments
+options = _get_options(sys.argv[1:])
+options.foreground
+# Don’t let someone do -f alone. It relates only to rendering numbers.
+if options.foreground:
+    # thus prevent using both -f and -n or -x.
+    options.foreground = options.numbers or options.hex
+
+def fg(number):
+    return fg_escape % number
+
+def bg(number):
+    return bg_escape % number
+
+def swrap(func):
+    """ Takes a function that outputs the display body and decorates it with
+        a function that prints the header and border. The decorated function
+        expects its arguments to be a sequence of rows of color values.
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        contrast = options.foreground
+        if not options.numbers and not options.hex and not options.rgb:
+            col_len = 12 if contrast else 13
+            if options.padding: col_len += 2
+        elif options.numbers:
+            col_len = 4 if contrast else 8
+            if options.padding: col_len += 2
+        elif options.hex:
+            col_len = 3 if contrast else 7
+            if options.padding: col_len += 2
+        elif options.rgb:
+            col_len = 22 if contrast else 26
+        print(" + ", end='')
+        print("-" * (col_len*int(sqrt(len(args[0]))) - 1), end='')
+        print(" +")
+        func(*args, **kwargs)
+        print(" + ", end='')
+        print("-" * (col_len*int(sqrt(len(args[0]))) - 1), end='')
+        print(" +")
+    return wrapper
+
+def rgb(number):
+    if number < 16:
+        return term16.rgb(number)
+    elif number > 231:
+        return (0, 0, ((number - 232) * 11) + 8)
+    else:
+        number -= 16
+        base = 95
+        step = 40
+        r = base + (number / 36) * step
+        g = base + ((number / 6) % 6) * step
+        b = base + (number % 6) * step
+        return (r, g, b)
+
+def hexr(number):
+    return "%02X" % number
+
+def hex(number):
+    return '#' + (''.join([hexr(n) for n in rgb(number)]))
+
+class term16(object):
+    @staticmethod
+    def rgb(number):
+        # Extended color mapping. The values used by the linux console are
+        #  analogous to the low 16 colors of rxvt-unicode.
+        #   See: http://www.calmar.ws/vim/256-xterm-24bit-rgb-color-chart.html
+        # Originally used a VGALib color mapping
+        # http://tldp.org/HOWTO/Color-ls-6.html#ss6.1
+        color_map = (
+            (0, 0, 0), (128, 0, 0), (0, 128, 0), (128, 128, 0),
+            (0, 0, 128), (128, 0, 128), (0, 128, 128), (192, 192, 192),
+            (128, 128, 128), (255, 0, 0), (0, 255, 0), (255, 255, 0),
+            (0, 0, 255), (255, 0, 255), (0, 255, 255), (255, 255, 255),
+            )
+        return color_map[number]
+
+    @staticmethod
+    @swrap
+    def display(*args, **kwargs):
+        """ display a 16 color cube
+        """
+        contrast = options.foreground
+        fmt = " %s " if options.padding else "%s"
+        for rows in args:
+            row_strs = []
+            for row in rows:
+                row_strs.append([bg(c) +
+                    str(fg(c)if contrast else '') +
+                    (fmt % ("%02d" % c if options.numbers
+                        else "%s" % hex(c) if options.hex
+                        else "%s" % (" "% if c > 7 else "x"))) +
+                    clear for c in row])
+            for index in range(len(row_strs[0])):
+                print(' ' + ' '.join([row_strs[0][index], row_strs[1][index]]) + ' ')
+
+    @staticmethod
+    def ansicodes_display():
+        import itertools
+        header = [0, 1, 2, 3, 4, 5, 7, 8]  # 7 = italics, 8 = inverse
+        rows = [30, 90]
+        blocks = [range(0, 8), range(8, 16)]
+        print("Codes: \t"+(''.join([" %-9s" % (str(''+str(i))
+                if i not in [1,4,5] else
+                str("1;%s" % (str(i)))
+                ) for i in header])))
+        for (color, block) in itertools.product(rows, blocks):
+            print("\t\t"+(''.join([fg_escape % c +
+                "%-9s" % (str(''+str(c-30)) if c not in [1,4,5] else
+                str("1;%s" % (str(c-30))))
+                + clear for c in header])))
+            for i in block:
+                print("%3d: ".rjust(10) % i, end='')
+                for c in range(color, color + 8):
+                    cmd = fg_escape % c
+                    s = "%-9s" % (str(''+str(c-30)) if c not in [1,4,5] else
+                        str("1;%s" % (str(c-30))))
+                    print(bg_escape % i + cmd + s + clear, end='')
+                print()
+
+class term88(object):
+    @staticmethod
+    def rows():
+        rows = [list(range(x, x+4)) for x in range(16, 32, 4)]
+        rows += [list(range(x, x+4)) for x in range(32, 48, 4)]
+        rows += [list(range(x, x+4)) for x in range(48, 64, 4)]
+        rows += [list(range(x, x+4)) for x in range(64, 80, 4)]
+        rows += [list(range(x, x+2)) for x in (80, 82, 84, 86)]
+        rows += [list(range(x, x+2)) for x in (88, 90, 92, 94)]
+        rows += [list(range(x, x+2)) for x in (96, 98, 100, 102)]
+        rows += [list(range(x, x+2)) for x in (104, 106, 108, 110)]
+        return rows
+
+    @staticmethod
+    @swrap
+    def display():
+        rows = term88.rows()
+        rows = [list(zip(*[iter(row)]*4)) for row in rows]
+        return _block_display(rows)
+
+    @staticmethod
+    @swrap
+    def cube():
+        rows = term88.rows()
+        rows = [list(zip(*[iter(row)]*2)) for row in rows]
+        return _cube_display(rows)
+
+    @staticmethod
+    def rgb(number):
+        """ 0-15 / RGB cube with separate luminances on x, y axis
+        """
+        if number < 16:
+            return term16.rgb(number)
+        elif number > 79:
+            return (0, 0, ((number - 80) * 23) + 8)
+        else:
+            number -= 16
+            base = 205 // 3
+            step = 205 // 9
+            r = base + (number / 16) * step
+            g = base + ((number / 4) % 4) * step
+            b = base + (number % 4) * step
+            return (r, g, b)
+
+[...snip...]
