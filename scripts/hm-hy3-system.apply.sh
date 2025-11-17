@@ -7,7 +7,10 @@ set -euo pipefail
 
 repo="${1:-$HOME/.dotfiles/nix/.config/home-manager}"
 
-fail() { echo "[ERR] $*" >&2; exit 1; }
+fail() {
+  echo "[ERR] $*" >&2
+  exit 1
+}
 msg() { echo "[OK ] $*"; }
 
 [ -d "$repo" ] || fail "Repo not found: $repo"
@@ -67,7 +70,7 @@ perl -0777 -i -pe '
 ' "$(fn modules/user/gui/hyprland/core.nix)"
 msg "Patched modules/user/gui/hyprland/core.nix"
 
-cat <<EOF
+cat << EOF
 
 Done.
 Next steps:
@@ -83,4 +86,3 @@ If something looks off, your originals are backed up under:
   $backup_dir
 
 EOF
-

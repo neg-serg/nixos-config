@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  cat <<EOF
+  cat << EOF
 cpu-boost: toggle CPU turbo/boost (cpufreq)
 
 Usage:
@@ -31,7 +31,8 @@ get_status() {
   local iface=$1
   case "$iface" in
     cpufreq)
-      local v; v=$(< /sys/devices/system/cpu/cpufreq/boost)
+      local v
+      v=$(< /sys/devices/system/cpu/cpufreq/boost)
       # boost: 1 = ON, 0 = OFF
       if [[ "$v" == "1" ]]; then echo on; else echo off; fi
       ;;
@@ -57,9 +58,16 @@ set_status() {
 
 cmd=${1:-}
 case "$cmd" in
-  status|on|off|toggle) ;;
-  -h|--help|help|"") usage; exit 0 ;;
-  *) echo "error: unknown command: $cmd" >&2; usage; exit 1 ;;
+  status | on | off | toggle) ;;
+  -h | --help | help | "")
+    usage
+    exit 0
+    ;;
+  *)
+    echo "error: unknown command: $cmd" >&2
+    usage
+    exit 1
+    ;;
 esac
 
 iface=$(detect_iface)

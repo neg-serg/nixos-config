@@ -3,7 +3,7 @@ set -euo pipefail
 
 root_dir=${1:-}
 if [[ -z "${root_dir}" ]]; then
-  if git_root=$(git rev-parse --show-toplevel 2>/dev/null); then
+  if git_root=$(git rev-parse --show-toplevel 2> /dev/null); then
     root_dir="$git_root"
   else
     root_dir="$(pwd)"
@@ -55,26 +55,26 @@ if [[ ${#attrs[@]} -eq 0 ]]; then
     echo "Options documentation artifacts are not available in this flake's packages for ${found_system}."
     echo "This likely means nixosOptionsDoc is not exported by the current lib;"
     echo "consider updating nixpkgs or using pkgs.lib.nixosOptionsDoc."
-  } >"$docs_dir/options.md"
+  } > "$docs_dir/options.md"
   {
     echo "# Options Docs"
     echo
     echo "- [options-md](./options.md)"
-  } >"$docs_dir/index.md"
+  } > "$docs_dir/index.md"
   echo "Wrote fallback $docs_dir/index.md and options.md" >&2
   exit 0
 fi
 
 for attr in "${attrs[@]}"; do
   case "$attr" in
-    options-index-md) out="index.md";;
-    options-md) out="options.md";;
-    *) out="${attr%-md}.md";;
+    options-index-md) out="index.md" ;;
+    options-md) out="options.md" ;;
+    *) out="${attr%-md}.md" ;;
   esac
   tmp_link="${root_dir}/.result-${attr}"
   rm -f "$tmp_link"
   echo "Building $attr -> $out ..." >&2
-  nix build "$flake_path#packages.${found_system}.${attr}" -o "$tmp_link" >/dev/null
+  nix build "$flake_path#packages.${found_system}.${attr}" -o "$tmp_link" > /dev/null
   real=$(readlink -f "$tmp_link")
   cp -f "$real" "$docs_dir/$out"
   echo "Wrote $docs_dir/$out" >&2

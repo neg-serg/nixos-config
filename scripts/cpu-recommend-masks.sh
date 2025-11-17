@@ -51,8 +51,8 @@ pick_l3_vcache() {
     local size_f="$base/size" share_f="$base/shared_cpu_list"
     [[ -r "$size_f" && -r "$share_f" ]] || continue
     local size shared
-    size=$(<"$size_f")
-    shared=$(<"$share_f")
+    size=$(< "$size_f")
+    shared=$(< "$share_f")
     # Normalize size to bytes
     local bytes
     case "${size^^}" in
@@ -66,7 +66,7 @@ pick_l3_vcache() {
     [[ -n "$key" ]] || continue
     if [[ -z "${seen[$key]:-}" ]]; then
       seen[$key]=$bytes
-      if (( bytes > best_size )); then
+      if ((bytes > best_size)); then
         best_size=$bytes
         best_cpus="$key"
       fi
@@ -75,7 +75,7 @@ pick_l3_vcache() {
   if [[ -z "$best_cpus" ]]; then
     # Fallback to online CPUs
     if [[ -r "$sysfs_base/online" ]]; then
-      best_cpus=$(parse_cpuset "$(<"$sysfs_base/online")" | paste -sd, -)
+      best_cpus=$(parse_cpuset "$(< "$sysfs_base/online")" | paste -sd, -)
     fi
   fi
   printf "%s\n" "$best_cpus"
@@ -89,7 +89,7 @@ main() {
     exit 1
   fi
   if [[ -r "$sysfs_base/online" ]]; then
-    cpus_all=$(parse_cpuset "$(<"$sysfs_base/online")")
+    cpus_all=$(parse_cpuset "$(< "$sysfs_base/online")")
   else
     cpus_all=$(parse_cpuset "$vcache")
   fi
@@ -111,4 +111,3 @@ main() {
 }
 
 main "$@"
-

@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Allow skipping in CI or when committing legacy upstream docs
+if [[ "${SKIP_MARKDOWN_CHECK:-}" == "1" ]]; then
+  exit 0
+fi
+
 # Policy:
 # - English docs live in *.md
 # - Russian docs must live in *.ru.md
