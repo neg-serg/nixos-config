@@ -27,8 +27,6 @@
   perSystem = lib.genAttrs [system] (_: {inherit pkgs iosevkaNeg;});
   hmInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) {
     inherit (inputs) nupm;
-    emacsOverlay = inputs."emacs-overlay";
-    nixQmlSupport = inputs."nix-qml-support";
   };
   mkHMArgs = import ../../home/flake/mkHMArgs.nix {
     inherit lib perSystem hmInputs extraSubstituters extraTrustedKeys inputs;

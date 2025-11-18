@@ -9,11 +9,6 @@
       url = "git+https://github.com/chaotic-cx/nyx?ref=nyxpkgs-unstable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    emacs-overlay = {
-      url = "github:nix-community/emacs-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nixpkgs-stable.follows = "nixpkgs";
-    };
     # Pin Hyprland to v0.52 using Git fetch to avoid GitHub API rate limits
     hyprland = {
       url = "git+https://github.com/hyprwm/Hyprland?ref=v0.52.0";
@@ -41,10 +36,6 @@
     };
     nh = {
       url = "github:viperML/nh";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    nix-qml-support = {
-      url = "git+https://git.outfoxxed.me/outfoxxed/nix-qml-support";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-flatpak = {url = "github:gmodena/nix-flatpak";}; # unstable branch. Use github:gmodena/nix-flatpak/?ref=<tag> to pin releases.
@@ -101,7 +92,6 @@
       "https://cuda-maintainers.cachix.org"
       "https://devenv.cachix.org"
       "https://ezkea.cachix.org"
-      "https://cache.garnix.io"
       "https://hercules-ci.cachix.org"
       "https://hyprland.cachix.org"
       "https://neg-serg.cachix.org"
@@ -117,8 +107,6 @@
       "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
       "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
       "ezkea.cachix.org-1:ioBmUbJTZIKsHmWWXPe1FSFbeVe+afhfgqgTSNd34eI="
-      # Garnix cache (correct public key)
-      "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQKDXiAKk0B0="
       "hercules-ci.cachix.org-1:ZZeDl9Va+xe9j+KqdzoBZMFJHVQ42Uu/c/1/KMC5Lw0="
       "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
       "neg-serg.cachix.org-1:MZ+xYOrDj1Uhq8GTJAg//KrS4fAPpnIvaWU/w3Qz/wo="

@@ -64,7 +64,6 @@ with lib;
         pkgs.yt-dlp # video downloader
         pkgs.aria2 # segmented downloader (yt-dlp --downloader)
         pkgs.cliphist # Wayland clipboard history
-        pkgs.clipcat # alternative clipboard history (clipcat-menu)
         pkgs.neg.bpf_host_latency # trace DNS lookup latency via BCC/eBPF (root)
         pkgs.neg.albumdetails # album metadata extractor for music-rename
       ];

@@ -1,16 +1,12 @@
 #!/bin/sh
-# clip: clipboard helper (cliphist/clipcat + extras)
+# clip: clipboard helper (cliphist + extras)
 # Usage:
-#   clip                       # open clipboard menu (cliphist/clipcat)
+#   clip                       # open clipboard menu (cliphist)
 #   clip pipe [-p|--paste] [-c|--command CMD] [--]
 #   clip youtube-dw-list       # pick video URL from history and download
 #   clip youtube-dw            # download URL currently in clipboard
 #   clip youtube-view          # open yt scratchpad and paste selection
 #   clip -h|--help|help        # this help
-# Env:
-#   USE_CLIPCAT=true           # use clipcat instead of cliphist
-[ -z "${USE_CLIPCAT-}" ] && USE_CLIPCAT=false
-
 IFS=' 	
 '
 
@@ -92,37 +88,32 @@ clipboard_pipe() {
 }
 
 clip_main() {
-  if [ "$USE_CLIPCAT" = true ]; then
-    clipcat-menu -c "$HOME/.config/clipcat/clipcat-menu.toml"
-  else
-    # cliphist: show history -> decode -> copy
-    sel=$(cliphist list | rofi -dmenu -lines 10 -i -matching glob -p 'clip ❯>' \
-      -kb-accept-alt 'Alt+Return' -kb-custom-1 'Alt+1' -kb-custom-2 'Alt+2' -theme menu)
-    rc=$?
-    [ -z "$sel" ] && exit 0
-    idx="$(printf '%s' "$sel" | awk -F ':' '{print $1}')"
-    case "$rc" in
-      10)
-        # paste now
-        cliphist decode "$idx" | wl-copy
-        sleep 0.05
-        send_key 'Control_L+v'
-        ;;
-      11)
-        # confirm delete (two-step rofi with red label)
-        conf=$(printf '%s\n%s\n' \
-          "<span foreground='#d75f5f'> Delete</span>" \
-          "Cancel" \
-          | rofi -dmenu -markup-rows -p 'confirm ❯>' -theme menu)
-        if printf '%s' "$conf" | grep -q 'Delete'; then
-          cliphist delete "$idx" > /dev/null 2>&1 || true
-        fi
-        ;;
-      *)
-        cliphist decode "$idx" | wl-copy
-        ;;
-    esac
-  fi
+  sel=$(cliphist list | rofi -dmenu -lines 10 -i -matching glob -p 'clip ❯>' \
+    -kb-accept-alt 'Alt+Return' -kb-custom-1 'Alt+1' -kb-custom-2 'Alt+2' -theme menu)
+  rc=$?
+  [ -z "$sel" ] && exit 0
+  idx="$(printf '%s' "$sel" | awk -F ':' '{print $1}')"
+  case "$rc" in
+    10)
+      # paste now
+      cliphist decode "$idx" | wl-copy
+      sleep 0.05
+      send_key 'Control_L+v'
+      ;;
+    11)
+      # confirm delete (two-step rofi with red label)
+      conf=$(printf '%s\n%s\n' \
+        "<span foreground='#d75f5f'> Delete</span>" \
+        "Cancel" \
+        | rofi -dmenu -markup-rows -p 'confirm ❯>' -theme menu)
+      if printf '%s' "$conf" | grep -q 'Delete'; then
+        cliphist delete "$idx" > /dev/null 2>&1 || true
+      fi
+      ;;
+    *)
+      cliphist decode "$idx" | wl-copy
+      ;;
+  esac
 }
 
 yr() {
