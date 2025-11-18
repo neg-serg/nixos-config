@@ -65,6 +65,7 @@ in {
       nix-daemon.serviceConfig = {
         CPUWeight = 200;
         IOWeight = 200;
+        LimitNOFILE = 1048576;
       };
 
       # Silence failing ad-hoc nixindex timer/service; prefer proper modules

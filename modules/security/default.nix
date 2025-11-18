@@ -45,6 +45,18 @@ in {
     pam = {
       loginLimits = [
         {
+          domain = "*";
+          item = "nofile";
+          type = "soft";
+          value = "65536";
+        }
+        {
+          domain = "*";
+          item = "nofile";
+          type = "hard";
+          value = "1048576";
+        }
+        {
           domain = "@gamemode";
           item = "nice";
           type = "-";
