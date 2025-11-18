@@ -31,6 +31,7 @@ in
 
     buildInputs = [
       ffmpeg
+      ffmpeg.dev
       llvmPackages.libclang
       stdenv.cc.cc.lib
       sqlite
@@ -44,6 +45,7 @@ in
         "-isystem ${stdenv.cc}/include"
         "-isystem ${stdenv.cc.libc.dev}/include"
         "-isystem ${clang}/lib/clang/${clang.version}/include"
+        "-isystem ${ffmpeg.dev}/include"
       ];
     };
 
