@@ -24,6 +24,7 @@ in {
     pkgs.eza # modern 'ls' replacement
     pkgs.fd # better find
     pkgs.file # detect file type by content
+    pkgs.gum # TUIs for shell prompts/menus
     pkgs.goaccess # realtime log analyzer
     pkgs.grc # generic text colorizer
     pkgs.inotify-tools # shell inotify bindings
@@ -36,6 +37,7 @@ in {
     pkgs.ncdu # interactive du
     pkgs.nnn # CLI file manager
     pkgs.parallel # parallel xargs
+    pkgs.peaclock # animated TUI clock (used in panels)
     pkgs.exiftool # EXIF inspector for screenshot helpers
     pkgs.procps # /proc tools
     pkgs.progress # show progress for coreutils
