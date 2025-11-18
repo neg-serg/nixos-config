@@ -34,9 +34,6 @@ in {
     mcp_server_time = call ../mcp/time {};
     "mcp-server-time" = mcp_server_time;
 
-    docsearch_mcp = call ../mcp/docsearch {};
-    "docsearch-mcp" = docsearch_mcp;
-
     firecrawl_mcp = call ../mcp/firecrawl {};
     "firecrawl-mcp" = firecrawl_mcp;
 
