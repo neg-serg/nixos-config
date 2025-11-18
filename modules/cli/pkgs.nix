@@ -21,6 +21,7 @@ in {
     pkgs.dos2unix # file conversion
     pkgs.dust # better du
     pkgs.duf # better df
+    pkgs.blesh # bluetooth shell helpers
     pkgs.eza # modern 'ls' replacement
     pkgs.fd # better find
     pkgs.file # detect file type by content
@@ -46,6 +47,7 @@ in {
     pkgs.psmisc # killall and friends
     pkgs.pueue # queue manager
     pkgs.pv # pipe viewer
+    pkgs.pwgen # password generator
     pkgs.chafa # terminal graphics renderer
     pkgs.gallery-dl # download image galleries
     pkgs.monolith # single-file webpage archiver
