@@ -6,15 +6,6 @@
   ...
 }:
 lib.mkIf (config.features.gui.enable or false) (lib.mkMerge [
-  {
-    home.packages = config.lib.neg.pkgsList [
-      pkgs.gum
-      pkgs.peaclock
-      pkgs.cava
-      pkgs.brightnessctl
-      pkgs.wirelesstools
-    ];
-  }
   (let mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;}; in mkLocalBin "kitty-panel" (builtins.readFile ./kitty/panel))
   # Robust kitty-scrollback-nvim kitten wrapper (local-bin) and env hint
   (let
