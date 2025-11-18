@@ -36,15 +36,9 @@ with lib; let
       force = true;
     };
   hyprsplitEnabled = config.features.gui.hyprsplit.enable or false;
-  vrrEnabled = config.features.gui.vrr.enable or false;
-  hyprVrrPkg =
-    if vrrEnabled
-    then lib.attrByPath ["hyprlandPlugins" "hyprland-vrr"] null pkgs
-    else null;
   pluginLines =
     ["plugin = /etc/hypr/libhy3.so"]
-    ++ lib.optional hyprsplitEnabled "plugin = /etc/hypr/libhyprsplit.so"
-    ++ lib.optional (vrrEnabled && hyprVrrPkg != null) "plugin = /etc/hypr/libhyprland-vrr.so";
+    ++ lib.optional hyprsplitEnabled "plugin = /etc/hypr/libhyprsplit.so";
 in
   mkIf config.features.gui.enable (lib.mkMerge [
     # Local helper: safe Hyprland reload that ensures Quickshell is started if absent
@@ -126,9 +120,4 @@ in
       '')
       {xdg.configFile."hypr/plugins.conf".force = true;}
     ])
-    (mkIf (vrrEnabled && hyprVrrPkg == null) {
-      warnings = [
-        "hyprland-vrr plugin requested, but `pkgs.hyprlandPlugins.hyprland-vrr` is missing in the current nixpkgs revision; skipping plugin load."
-      ];
-    })
   ])
