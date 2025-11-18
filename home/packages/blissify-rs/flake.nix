@@ -41,6 +41,7 @@
 
         buildInputs = [
           pkgs.ffmpeg # audio decoding
+          pkgs.ffmpeg.dev # headers for bindgen
           pkgs.llvmPackages.libclang # headers for bindgen
           pkgs.stdenv.cc.cc.lib # libstdc++ (or platform libc++)
           pkgs.sqlite # embedded DB
@@ -55,6 +56,7 @@
             "-isystem ${pkgs.stdenv.cc.cc}/include"
             "-isystem ${pkgs.stdenv.cc.libc.dev}/include"
             "-isystem ${clang}/lib/clang/${clang.version}/include"
+            "-isystem ${pkgs.ffmpeg.dev}/include"
           ];
         };
 
@@ -100,7 +102,8 @@
           export BINDGEN_EXTRA_CLANG_ARGS="\
             -isystem ${pkgs.stdenv.cc.cc}/include \
             -isystem ${pkgs.stdenv.cc.libc.dev}/include \
-            -isystem ${clang}/lib/clang/${clang.version}/include"
+            -isystem ${clang}/lib/clang/${clang.version}/include \
+            -isystem ${pkgs.ffmpeg.dev}/include"
 
           echo
           echo "✅ Rust devShell for blissify-rs ready."
