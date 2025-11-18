@@ -52,7 +52,6 @@
     else lib.concatStringsSep ":" knowledgePathsList;
   knowledgeCacheDir = "${config.xdg.cacheHome}/mcp/knowledge";
   hmRepoRoot = "${config.neg.hmConfigRoot}";
-  gitRepoRoot = config.neg.dotfilesRoot;
   openAiKeyEnv = builtins.getEnv "OPENAI_API_KEY";
   teiEndpointEnv = builtins.getEnv "TEI_ENDPOINT";
   embeddingsProviderEnv = builtins.getEnv "EMBEDDINGS_PROVIDER";
@@ -109,7 +108,8 @@ in
       in {
         enable = true;
         servers =
-          {
+          (
+            {
             # Kitchen‑sink demo server with many tools; runs via npx
             everything = {
               command = "npx";
@@ -374,6 +374,7 @@ in
               };
             };
           }
+          );
       };
 
       home.packages =
