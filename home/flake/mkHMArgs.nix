@@ -9,28 +9,8 @@
   extraTrustedKeys,
 }: system: let
   pkgsForSystem = perSystem.${system}.pkgs or null;
-  hy3Pkg =
-    if pkgsForSystem == null
-    then null
-    else if lib.hasAttrByPath ["hyprlandPlugins" "hy3"] pkgsForSystem
-    then lib.getAttrFromPath ["hyprlandPlugins" "hy3"] pkgsForSystem
-    else null;
-  hy3Args =
-    if hy3Pkg == null
-    then {}
-    else {
-      rev = lib.attrByPath ["src" "rev"] null hy3Pkg;
-      version = lib.attrByPath ["version"] null hy3Pkg;
-      packages = lib.listToAttrs [
-        {
-          name = system;
-          value = {hy3 = hy3Pkg;};
-        }
-      ];
-    };
 in {
   inputs = hmInputs;
-  hy3 = hy3Args;
   inherit (perSystem.${system}) iosevkaNeg;
   # Prefer Nyxt 4 / QtWebEngine variant when available from chaotic
   nyxt4 = let

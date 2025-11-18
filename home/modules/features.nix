@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  hy3,
   ...
 }:
 with lib; let
@@ -29,7 +28,6 @@ in {
 
     gui = {
       enable = mkBool "enable GUI stack (wayland/hyprland, quickshell, etc.)" true;
-      hy3.enable = mkBool "enable hy3 plugin and hy3-specific Hyprland config" false;
       hyprsplit.enable = mkBool "enable hyprsplit layout plugin for Hyprland" false;
       vrr.enable = mkBool "enable hyprland-vrr plugin for adaptive refresh" false;
       qt.enable = mkBool "enable Qt integrations for GUI (qt6ct, hyprland-qt-*)" true;
@@ -282,7 +280,6 @@ in {
       features = {
         gui = {
           qt.enable = mkForce false;
-          hy3.enable = mkForce false;
           # Ensure nested GUI components are disabled when GUI is off
           quickshell.enable = mkForce false;
         };
