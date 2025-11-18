@@ -26,22 +26,17 @@ nixos-generators
 
 ## Hyprland: Single Source of Truth and Updates
 
-- Source of truth: `inputs.hyprland` is pinned to a stable tag (see `flake.nix`).
-- Dependencies are kept in lockstep via `follows` (v0.52 layout):
-  - `hyprland-protocols` → `hyprland/hyprland-protocols`
-  - `xdg-desktop-portal-hyprland` → `hyprland/xdph`
-- Usage in modules:
-  - `programs.hyprland.package = inputs.hyprland.packages.<system>.hyprland`
-  - `programs.hyprland.portalPackage = inputs.xdg-desktop-portal-hyprland.packages.<system>.xdg-desktop-portal-hyprland`
-  - Do not add `xdg-desktop-portal-hyprland` to `xdg.portal.extraPortals` (to avoid duplicate unit) — it comes via `portalPackage`.
+- Source of truth: `inputs.hyprland` (compositor) and `inputs.hy3` (plugin) both track upstream master; `flake.lock` pins the exact commits.
+- The NixOS overlay routes `pkgs.hyprland`, `pkgs.xdg-desktop-portal-hyprland`, and `pkgs.hyprlandPlugins.hy3` to those inputs, so Home‑Manager modules can just use `pkgs.*`.
+- Supporting inputs stay in lockstep via `follows` (`hyprland-protocols`, `xdg-desktop-portal-hyprland`, etc.); no manual portal wiring beyond `programs.hyprland.portalPackage = pkgs.xdg-desktop-portal-hyprland`.
+- Do not add `xdg-desktop-portal-hyprland` to `xdg.portal.extraPortals` — the package already provides the portal service when set as `portalPackage`.
 
-How to update Hyprland (and related deps):
+How to update Hyprland (and hy3):
 
-1) Change `inputs.hyprland.url` in `flake.nix` (e.g., to a new release tag).
-2) Update the lock: `nix flake lock --update-input hyprland`.
-3) Rebuild the system: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.
+1) Refresh the pins: `nix flake update hyprland hy3` (other Hyprland inputs follow automatically).
+2) Rebuild the system: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.
 
-Auto‑update (optional): if `system.autoUpgrade` with flakes is enabled, you can add `--update-input hyprland` to automatically pull newer Hyprland. We typically update it manually to keep compatibility under control.
+Auto‑update (optional): if `system.autoUpgrade` with flakes is enabled, add `--update-input hyprland --update-input hy3` so scheduled upgrades follow upstream master. We usually bump manually to keep ABI changes under control.
 
 ## Roles & Profiles
 
