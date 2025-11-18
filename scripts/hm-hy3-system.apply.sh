@@ -3,9 +3,14 @@ set -euo pipefail
 
 # Switch Home‑Manager to use the system hy3 plugin and remove the hy3 flake input.
 # Usage: scripts/hm-hy3-system.apply.sh [PATH_TO_HM_REPO]
-# Default path: ~/.dotfiles/nix/.config/home-manager
+# Default path: /etc/nixos/home (falls back to ~/.dotfiles/nix/.config/home-manager)
 
-repo="${1:-$HOME/.dotfiles/nix/.config/home-manager}"
+default_repo="/etc/nixos/home"
+fallback_repo="$HOME/.dotfiles/nix/.config/home-manager"
+if [ ! -d "$default_repo" ]; then
+  default_repo="$fallback_repo"
+fi
+repo="${1:-$default_repo}"
 
 fail() {
   echo "[ERR] $*" >&2

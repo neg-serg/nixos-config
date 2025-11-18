@@ -14,6 +14,8 @@
 - Только линт: `just lint`
 - Переключить HM: `just hm-neg` или `just hm-lite`
 
+> На системах с объединённым репозиторием (`/etc/nixos`) используйте `nh os switch /etc/nixos` или `sudo nixos-rebuild switch --flake /etc/nixos#<host>`. Таргеты `just hm-*` оставлены для standalone/dev‑сценариев (WSL, удалённые хосты).
+
 ## Заметки
 
 - Автоперезагрузка Hyprland отключена; перезагружайте вручную хоткеем.
@@ -84,12 +86,14 @@
 
 - Клонирование и переключение
 
-  - Клонируйте в путь ваших dotfiles (по умолчанию `~/.dotfiles`):
-    - `git clone git@github.com:neg-serg/nixos-home.git ~/.dotfiles`
-  - Переключитесь на основной профиль:
-    - `home-manager switch --flake ~/.dotfiles/nix/.config/home-manager#neg`
-  - Минимальный профиль “lite”:
-    - `home-manager switch --flake ~/.dotfiles/nix/.config/home-manager#neg-lite`
+  - **Единый репозиторий `/etc/nixos`.** Home Manager теперь живёт внутри системного репо.
+    Отдельный клон для `~/.dotfiles` не нужен. Основная команда применения:
+    - `nh os switch /etc/nixos` либо `sudo nixos-rebuild switch --flake /etc/nixos#<host>`
+    - Проверка без переключения: `nix build .#nixosConfigurations.<host>.config.home-manager.users.<user>.activationPackage`
+  - **Стэндэлон/не‑NixOS режим.** Если нужен отдельный HM (WSL, macOS и т.п.), допустим локальный клон:
+    - `git clone --recursive git@github.com:neg-serg/nixos-home.git ~/.dotfiles`
+    - Полный профиль: `home-manager switch --flake ~/.dotfiles/nix/.config/home-manager#neg`
+    - Lite‑профиль: `home-manager switch --flake ~/.dotfiles/nix/.config/home-manager#neg-lite`
 
 - Профили и фичи
 
