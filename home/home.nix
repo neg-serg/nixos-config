@@ -43,14 +43,8 @@ in {
     # Enable GPG stack (gpg + gpg-agent)
     gpg.enable = true;
 
-    gui = {
-      # Enable hy3 plugin/config for Hyprland
-      hy3.enable = true;
-      # Enable hyprsplit layout plugin for Hyprland
-      hyprsplit.enable = true;
-      # Enable hyprland-vrr plugin
-      vrr.enable = true;
-    };
+    gui.hyprsplit.enable = true;
+    gui.vrr.enable = true;
 
     dev = {
       # Enable Unreal Engine tooling (ue5-sync/build/editor wrappers)
@@ -58,7 +52,6 @@ in {
 
       # Enable OpenXR dev stack (installs Envision UI)
       openxr.enable = true;
-
     };
 
     # Enable AI upscaling features (realtime + offline tools)
