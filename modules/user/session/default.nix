@@ -6,7 +6,7 @@
   programs.hyprland = {
     enable = true;
     withUWSM = true;
-    # Use pkgs.* here; an overlay pins them to Hyprland 0.52
+    # Use pkgs.* here; an overlay routes them to inputs.hyprland master
     package = pkgs.hyprland;
     portalPackage = pkgs.xdg-desktop-portal-hyprland;
   };
