@@ -4,7 +4,11 @@
   config,
   systemdUser ? import ./systemd-user.nix {inherit lib;},
   ...
-}: {
+}: let
+  hmRepoPath = ../..;
+  hmRepoStr = builtins.toString hmRepoPath;
+  repoHasDotfilesTree = lib.pathExists (hmRepoPath + "/shell");
+in {
   # Project-specific helpers under lib.neg
   config.lib.neg = rec {
     # Configurable root of your dotfiles repository (see options.neg.dotfilesRoot)
@@ -218,14 +222,20 @@
     # Provide a typed option for dotfiles root
     dotfilesRoot = lib.mkOption {
       type = lib.types.str;
-      default = "${config.home.homeDirectory}/.dotfiles";
+      default =
+        if repoHasDotfilesTree
+        then hmRepoStr
+        else "${config.home.homeDirectory}/.dotfiles";
       description = "Path to the root of the user's dotfiles repository.";
       example = "/home/neg/.cfg";
     };
 
     hmConfigRoot = lib.mkOption {
       type = lib.types.str;
-      default = "${config.neg.dotfilesRoot}/nix/.config/home-manager";
+      default =
+        if lib.pathExists hmRepoPath
+        then hmRepoStr
+        else "${config.neg.dotfilesRoot}/nix/.config/home-manager";
       description = "Absolute path to the Home Manager configuration tree (used for linking config assets).";
       example = "/etc/nixos/home";
     };
