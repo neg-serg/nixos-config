@@ -32,6 +32,8 @@ in {
       "veil"
       "webacoo"
       "weevely"
+      # Temporarily disable blissify-rs install until issues are resolved
+      "blissify-rs"
       # OpenMW now uses upstream packaging; not excluded
     ];
 
