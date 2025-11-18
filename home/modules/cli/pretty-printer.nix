@@ -7,12 +7,6 @@
 with lib;
   lib.mkMerge [
     {
-      # Install the library + CLI (ppinfo)
-      home.packages = config.lib.neg.pkgsList [
-        pkgs.neg.pretty_printer # pretty-printer library + ppinfo CLI
-      ];
-    }
-    {
       # Make pretty_printer visible to generic Python invocations (e.g. /usr/bin/env python3)
       # by setting PYTHONPATH to include the packaged library paths.
       home.sessionVariables.PYTHONPATH = let
