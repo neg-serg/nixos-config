@@ -65,7 +65,7 @@
     # Ensure every zsh instance (login or interactive) loads the Home Manager session variables
     # before sourcing the actual config under $ZDOTDIR. This keeps env exports like FZF_* in sync
     # regardless of how the shell is spawned.
-    file.".zshenv" = {
+    file.".config/zsh/.zshenv" = {
       force = true;
       text = let
         username = config.home.username;
