@@ -24,6 +24,7 @@ in {
     pkgs.eza # modern 'ls' replacement
     pkgs.fd # better find
     pkgs.file # detect file type by content
+    pkgs.asciinema-agg # render asciinema casts to GIF/APNG
     pkgs.gum # TUIs for shell prompts/menus
     pkgs.goaccess # realtime log analyzer
     pkgs.grc # generic text colorizer
@@ -45,6 +46,7 @@ in {
     pkgs.psmisc # killall and friends
     pkgs.pueue # queue manager
     pkgs.pv # pipe viewer
+    pkgs.chafa # terminal graphics renderer
     pkgs.gallery-dl # download image galleries
     pkgs.monolith # single-file webpage archiver
     pkgs.pipe-viewer # terminal YouTube client
