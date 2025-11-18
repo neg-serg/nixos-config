@@ -37,24 +37,14 @@ with lib; let
     };
   hyprsplitEnabled = config.features.gui.hyprsplit.enable or false;
   vrrEnabled = config.features.gui.vrr.enable or false;
-  hyprsplitPkg = pkgs.hyprlandPlugins.hyprsplit;
   hyprVrrPkg =
     if vrrEnabled
     then lib.attrByPath ["hyprlandPlugins" "hyprland-vrr"] null pkgs
     else null;
-  optionalPlugins =
-    (lib.optional hyprsplitEnabled {
-      path = "${hyprsplitPkg}/lib/libhyprsplit.so";
-      pkg = hyprsplitPkg;
-    })
-    ++ (lib.optional (vrrEnabled && hyprVrrPkg != null) {
-      path = "${hyprVrrPkg}/lib/libhyprland-vrr.so";
-      pkg = hyprVrrPkg;
-    });
   pluginLines =
     ["plugin = /etc/hypr/libhy3.so"]
-    ++ map (entry: "plugin = ${entry.path}") optionalPlugins;
-  pluginPkgs = map (entry: entry.pkg) optionalPlugins;
+    ++ lib.optional hyprsplitEnabled "plugin = /etc/hypr/libhyprsplit.so"
+    ++ lib.optional (vrrEnabled && hyprVrrPkg != null) "plugin = /etc/hypr/libhyprland-vrr.so";
 in
   mkIf config.features.gui.enable (lib.mkMerge [
     # Local helper: safe Hyprland reload that ensures Quickshell is started if absent
@@ -72,24 +62,6 @@ in
       '')
     # Removed custom kb-layout-next wrapper; rely on Hyprland dispatcher and XKB options
     {
-      wayland.windowManager.hyprland = {
-        enable = true;
-        package = pkgs.hyprland;
-        portalPackage = null;
-        settings = {
-          source =
-            [
-              # Apply permissions first so plugin load is allowed (even without hy3)
-              "${config.xdg.configHome}/hypr/permissions.conf"
-            ]
-            ++ [
-              # Load plugins (hy3 and extras) before the rest of the config
-              "${config.xdg.configHome}/hypr/plugins.conf"
-              "${config.xdg.configHome}/hypr/init.conf"
-            ];
-        };
-        systemd.variables = ["--all"];
-      };
       home.packages = config.lib.neg.pkgsList (
         let
           groups = {
@@ -153,7 +125,6 @@ in
         ${lib.concatStringsSep "\n" pluginLines}
       '')
       {xdg.configFile."hypr/plugins.conf".force = true;}
-      {home.packages = pluginPkgs;}
     ])
     (mkIf (vrrEnabled && hyprVrrPkg == null) {
       warnings = [
