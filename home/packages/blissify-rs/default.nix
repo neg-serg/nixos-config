@@ -47,6 +47,9 @@ in
         "-isystem ${clang}/lib/clang/${clang.version}/include"
         "-isystem ${ffmpeg.dev}/include"
       ];
+      PKG_CONFIG_PATH =
+        builtins.concatStringsSep ":" (map (drv: "${drv}/lib/pkgconfig") [ffmpeg ffmpeg.dev]);
+      FFMPEG_DIR = "${ffmpeg.dev}";
     };
 
     cargoLock = {
