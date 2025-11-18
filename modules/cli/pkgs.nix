@@ -38,12 +38,19 @@ in {
     pkgs.nnn # CLI file manager
     pkgs.parallel # parallel xargs
     pkgs.peaclock # animated TUI clock (used in panels)
+    pkgs.neg.awrit # render web pages inside Kitty
     pkgs.exiftool # EXIF inspector for screenshot helpers
     pkgs.procps # /proc tools
     pkgs.progress # show progress for coreutils
     pkgs.psmisc # killall and friends
     pkgs.pueue # queue manager
     pkgs.pv # pipe viewer
+    pkgs.gallery-dl # download image galleries
+    pkgs.monolith # single-file webpage archiver
+    pkgs.pipe-viewer # terminal YouTube client
+    pkgs.prettyping # fancy ping output
+    pkgs.whois # domain info lookup
+    pkgs.xidel # extract webpage segments
     pkgs.qrencode # QR generator for clipboard helpers
     pkgs.readline # readline library
     pkgs.reptyr # move app to another pty
