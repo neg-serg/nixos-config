@@ -199,25 +199,25 @@ in
         enable = true;
         autoFancontrol = {
           enable = true;
-          # Quieter bias++: allow even higher temps before ramp, cap PWM further
-          minTemp = 50; # °C — ещё позже старт, тише в простое
-          maxTemp = 86; # °C — растягиваем диапазон под тишину (X3D <~89°C)
-          # minPwm  = 70;  # безопасный минимум (0–255), чтоб не глохли вентиляторы
-          maxPwm = 180; # сильнее ограничиваем пик шума
-          hysteresis = 6; # больше гистерезиса — меньше переключений
-          interval = 4; # реже опрос — меньше мелких колебаний ШИМ
-          allowStop = true; # позволяем полностью останавливать вентиляторы ниже порога
-          minStartOverride = 120; # более сильный «пинок» для уверенного старта с 0
-          gpuPwmChannels = [2 3]; # корпусные вентиляторы по температуре GPU
+          # Late start for quieter idle while still letting fans reach near-max PWM quickly.
+          minTemp = 55; # °C — fans begin speeding up only after meaningful CPU heat
+          maxTemp = 84; # °C — reach full sweep near high 80s to tame load spikes
+          minPwm = 95; # 0–255, maintains a light baseline without stopping
+          maxPwm = 250; # almost full PWM; bump to 255 if needed
+          hysteresis = 4; # moderate hysteresis for stability
+          interval = 2; # poll sensors more frequently during ramp-up
+          allowStop = false; # CPU/case fans never idle below minPwm
+          minStartOverride = 150; # ensures a confident spin-up from idle
+          gpuPwmChannels = [2 3]; # case fans follow GPU temperature
         };
         gpuFancontrol = {
           enable = true;
-          # Тише по GPU++: ещё позже старт, мягче верх
-          minTemp = 70; # °C — ещё позже включаем вентилятор (ZeroRPM шире)
-          maxTemp = 90; # °C — полная скорость позже (ограничена капом)
-          # minPwm  = 70;  # безопасный минимум
-          maxPwm = 180; # ниже максимум оборотов для тишины
-          hysteresis = 6; # сглаживаем переключения
+          # GPU fan starts later but retains headroom at the top end.
+          minTemp = 65; # °C — GPU fan stays low until substantial heat
+          maxTemp = 90; # °C — push close to the limit once it reaches 90
+          minPwm = 85; # 0–255, baseline spin to avoid stops
+          maxPwm = 245; # near-maximum; raise to 255 if you want all-in cooling
+          hysteresis = 4; # reduce chatter between steps
         };
       };
 
