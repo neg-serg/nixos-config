@@ -23,13 +23,6 @@ with lib;
             permission = ^/nix/store/[^/]+-hyprsplit-[^/]+/lib/[^/]*hyprsplit[^/]*\.so$, plugin, allow
           ''
           else "";
-        hyprVrrPerms =
-          if (config.features.gui.vrr.enable or false)
-          then ''
-            # Allow loading hyprland-vrr plugin
-            permission = ^/nix/store/[^/]+-hyprland-vrr-[^/]+/lib/[^/]*hyprland-vrr[^/]*\.so$, plugin, allow
-          ''
-          else "";
       in
         xdg.mkXdgText "hypr/permissions.conf" (''
             ecosystem {
@@ -40,7 +33,7 @@ with lib;
           ''
           + hy3Perms
           + hyprsplitPerms
-          + hyprVrrPerms)
+          )
     )
     # Ensure the generated file replaces any pre-existing file
     {xdg.configFile."hypr/permissions.conf".force = true;}

@@ -4,7 +4,6 @@
   inputs,
   ...
 }: let
-  hyprVrrPkg = lib.attrByPath ["hyprlandPlugins" "hyprland-vrr"] null pkgs;
 in {
   # Wayland/Hyprland tools and small utilities
   environment.systemPackages =
@@ -18,6 +17,5 @@ in {
       pkgs.hyprpicker # color picker for Wayland/Hyprland
       pkgs.hyprlandPlugins.hy3
       pkgs.hyprlandPlugins.hyprsplit
-    ]
-    ++ lib.optional (hyprVrrPkg != null) hyprVrrPkg;
+    ];
 }

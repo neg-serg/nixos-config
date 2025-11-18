@@ -44,7 +44,6 @@ in {
     gpg.enable = true;
 
     gui.hyprsplit.enable = true;
-    gui.vrr.enable = true;
 
     dev = {
       # Enable Unreal Engine tooling (ue5-sync/build/editor wrappers)
