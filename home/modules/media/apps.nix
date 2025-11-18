@@ -14,6 +14,5 @@ lib.mkIf (config.features.media.audio.apps.enable or false) {
     pkgs.media-player-info # repository of data files describing media player capabilities
     pkgs.neg.mkvcleaner # clean mkv files from useless data
     pkgs.mpvc # CLI controller for mpv
-    pkgs.playerctl # media controller for everything
   ];
 }

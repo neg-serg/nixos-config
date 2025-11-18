@@ -17,16 +17,13 @@ with lib;
             pkgs.dragon-drop # drag-n-drop from console
             pkgs.gowall # generate palette from wallpaper
             pkgs.grimblast # Hyprland screenshot helper
-            pkgs.grim # take Wayland screenshots
-            pkgs.slurp # select region in Wayland compositor
+            # Base screenshot/input helpers (grim, slurp, wtype, wl-clipboard) now provided system-wide.
             pkgs.swww # Wayland wallpaper daemon
             pkgs.waybar # Wayland status bar
             pkgs.waypipe # Wayland remoting (ssh -X like)
             pkgs.wev # xev for Wayland
             pkgs.wf-recorder # screen recording
-            pkgs.wl-clipboard # copy/paste for Wayland
             pkgs.wl-clip-persist # persist clipboard across app exits
-            pkgs.wtype # fake typing for Wayland
           ]
           ++ lib.optionals (pkgs ? uwsm) [pkgs.uwsm];
         extras = lib.optionals (! devSpeed && (iwmenuProvider != null)) [
