@@ -1,3 +1,6 @@
+: "${ZSHENV_DEBUG:=1}"
+export ZSHENV_DEBUG
+
 zshenv_debug() {
   if [[ -n "${ZSHENV_DEBUG:-}" ]]; then
     printf '[zshenv] %s\n' "$@" >&2
