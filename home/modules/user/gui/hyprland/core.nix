@@ -57,34 +57,8 @@ in
     # Removed custom kb-layout-next wrapper; rely on Hyprland dispatcher and XKB options
     {
       home.packages = config.lib.neg.pkgsList (
-        let
-          groups = {
-            core =
-              [
-                pkgs.hyprcursor # modern cursor theme format (replaces xcursor)
-                pkgs.hypridle # idle daemon
-                pkgs.hyprpicker # color picker
-                pkgs.hyprpolkitagent # polkit agent
-                pkgs.hyprprop # xprop-like tool for Hyprland
-                pkgs.hyprutils # core utils for Hyprland
-                pkgs.pyprland # Hyprland plugin system
-                pkgs.upower # power management daemon
-              ]
-              ++ lib.optional (raiseProvider != null) (raiseProvider pkgs);
-            qt = [
-              pkgs.hyprland-qt-support # Qt integration fixes
-              pkgs.hyprland-qtutils # Qt helper binaries (hyprland-qt-helper)
-              pkgs.kdePackages.qt6ct # Qt6 config tool
-            ];
-            tools = [hyprWinList]; # helper: list windows from Hyprctl JSON
-          };
-          flags = {
-            core = true;
-            tools = true;
-            qt = config.features.gui.qt.enable;
-          };
-        in
-          config.lib.neg.mkEnabledList flags groups
+        [hyprWinList]
+        ++ lib.optionals (raiseProvider != null) [(raiseProvider pkgs)]
       );
       programs.hyprlock.enable = true;
     }

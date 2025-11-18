@@ -7,57 +7,25 @@
 with lib;
   mkIf (config.features.gui.enable or false) (lib.mkMerge [
     {
-      # Runtime dependencies for local-bin scripts
+      # Runtime dependencies for local-bin scripts (everything else now installed system-wide)
       home.packages = config.lib.neg.pkgsList [
-        # core tools
-        pkgs.fd # fast file finder used by pl/read_documents
-        pkgs.jq # JSON processor for various helpers
-        pkgs.curl # HTTP client for pb/swd
-        pkgs.git # used by nb (notes repo updates)
         pkgs.imagemagick # convert/mogrify for screenshot/swayimg-actions
-        pkgs.libnotify # notify-send for pic-notify/qr/screenshot
-        pkgs.socat # UNIX sockets (swayimg/Hyprland IPC)
         # fasd removed; use zoxide for ranking
-        pkgs.usbutils # lsusb (unlock Yubikey detection)
         # audio/video + helpers (mpv comes from media stack)
         # playerctl/mpc now come from the global system package list.
         pkgs.wireplumber # wpctl for vol/pl volume control
         # wayland utils now provided system-wide
-        # archive helpers shared across scripts (clip/punzip/etc.)
-        pkgs.unar # extract .rar archives
-        pkgs.p7zip # 7z extraction
-        pkgs.lbzip2 # fast bzip2 backend for tar
-        pkgs.rapidgzip # parallel gzip backend for tar/raw gz
-        pkgs.xz # xz backend for tar/unxz
-        pkgs.unzip # unzip (used via punzip helper)
-        # image/qr/info
-        pkgs.qrencode # generate QR codes (qr gen)
-        pkgs.zbar # scan QR from image (qr)
-        pkgs.exiftool # EXIF metadata (pic-notify)
         # audio features extractor for music-index/music-similar
         pkgs.essentia-extractor # streaming_extractor_music binary
         pkgs.neg.music_clap # CLAP embeddings CLI (PyTorch + laion_clap)
         # pkgs.neg.blissify_rs # playlist generation via audio descriptors (temporarily disabled)
-        # shell utils for menus and translations
-        pkgs.translate-shell # trans CLI (main-menu translate)
         # ALSA fallback for volume control
         pkgs.alsa-utils # amixer (vol fallback)
-        # audio tools
-        pkgs.sox # spectrograms (flacspec)
         # Note: Xvfb (xorg.xvfb) conflicts with newer xwayland in the
         # Home Manager buildEnv (both ship lib/xorg/protocol.txt).
         # Do not include by default to avoid closure collisions when
         # Hyprland pulls in xwayland. The exorg script will work if
         # Xvfb is available on PATH (install xorg.xvfb when needed).
-        # document viewer for read_documents
-        pkgs.zathura # PDF/DJVU/EPUB viewer (rofi file-browser)
-        # notify daemon (dunstify) provided by dunst service; ensure package present
-        pkgs.dunst # desktop notifications backend
-        # inotify for shot-optimizer and pic-dirs-list
-        pkgs.inotify-tools # inotifywait monitor for folders
-        # downloaders for clip (YouTube DL + aria2 backend)
-        pkgs.yt-dlp # video downloader
-        pkgs.aria2 # segmented downloader (yt-dlp --downloader)
         pkgs.neg.bpf_host_latency # trace DNS lookup latency via BCC/eBPF (root)
         pkgs.neg.albumdetails # album metadata extractor for music-rename
       ];
