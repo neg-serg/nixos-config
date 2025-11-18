@@ -18,6 +18,7 @@ in {
   environment.systemPackages =
     [
       pkgs.abduco # CLI session detach
+      pkgs.amfora # Gemini/Gopher terminal client for text browsing
       pkgs.aria2 # segmented downloader (used by clip/yt-dlp wrappers)
       pkgs.asciinema-agg # render asciinema casts to GIF/APNG
       pkgs.ast-grep # AST-aware grep
@@ -29,6 +30,7 @@ in {
       pkgs.choose # yet another cut/awk alternative
       pkgs.convmv # convert filename encodings
       pkgs.cpufetch # CPU info fetch
+      pkgs.fastfetch # modern ASCII system summary
       pkgs.czkawka # find duplicate/similar files
       pkgs.dcfldd # dd with progress/hash
       pkgs.delta # better diff tool
@@ -48,6 +50,7 @@ in {
       pkgs.fd # better find
       pkgs.file # detect file type by content
       pkgs.fish # alternative shell
+      pkgs.nushell # structured shell for scripts and exploration
       pkgs.gallery-dl # download image galleries
       pkgs.goaccess # realtime log analyzer
       pkgs.grex # generate regexes from examples
@@ -70,8 +73,10 @@ in {
       pkgs.ncdu # interactive du
       pkgs.neg.awrit # render web pages inside Kitty
       pkgs.neg.comma # run commands from nixpkgs by name (\",\") - local overlay helper
+      pkgs.neg.pretty_printer # ppinfo CLI + Python module for scripts
       pkgs.newsraft # terminal RSS/Atom feed reader
       pkgs.nnn # CLI file manager
+      pkgs.onefetch # pretty git repo summaries (used in fetch scripts)
       pkgs.ouch # archive extractor/creator
       pkgs.parallel # parallel xargs
       pkgs.par # paragraph reformatter
