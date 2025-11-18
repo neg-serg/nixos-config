@@ -1,10 +1,4 @@
-{
-  config,
-  pkgs,
-  ...
-}: {
-  home.packages = config.lib.neg.pkgsList [
-    pkgs.blesh # bluetooth shell
-    pkgs.pwgen # generate passwords
-  ];
+_: {
+  # Previously installed CLI helpers (blesh, pwgen) now come from
+  # modules/cli/pkgs.nix so they are available system-wide.
 }
