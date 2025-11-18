@@ -50,6 +50,8 @@ in
       PKG_CONFIG_PATH =
         builtins.concatStringsSep ":" (map (drv: "${drv}/lib/pkgconfig") [ffmpeg ffmpeg.dev]);
       FFMPEG_DIR = "${ffmpeg.dev}";
+      FFMPEG_INCLUDE_DIR = "${ffmpeg.dev}/include";
+      FFMPEG_LIB_DIR = "${ffmpeg}/lib";
     };
 
     cargoLock = {
