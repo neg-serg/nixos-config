@@ -71,13 +71,20 @@
         username = config.home.username;
       in ''
         # shellcheck disable=SC1090
+        skip_global_compinit=1
         if [ -r "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
           . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
         elif [ -r "/etc/profiles/per-user/${username}/etc/profile.d/hm-session-vars.sh" ]; then
           . "/etc/profiles/per-user/${username}/etc/profile.d/hm-session-vars.sh"
         fi
-        if [ -n "''${ZDOTDIR:-}" ] && [ "$ZDOTDIR" != "$HOME" ] && [ -r "$ZDOTDIR/.zshenv" ]; then
-          . "$ZDOTDIR/.zshenv"
+        export WORDCHARS='*/?_-.[]~&;!#$%^(){}<>~` '
+        export KEYTIMEOUT=10
+        export REPORTTIME=60
+        export ESCDELAY=1
+        [[ $(readlink -e ~/tmp) == "" ]] && rm -f ~/tmp
+        [[ ! -L ${HOME}/tmp ]] && { rm -f ~/tmp && tmp_loc=$(mktemp -d) && ln -fs "${tmp_loc}" ${HOME}/tmp }
+        if command -v uwsm > /dev/null && uwsm check may-start; then
+            exec uwsm start default
         fi
     '';
     };
