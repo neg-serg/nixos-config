@@ -12,6 +12,7 @@
 in {
   environment.systemPackages = [
     pkgs.abduco # CLI session detach
+    pkgs.aria2 # segmented downloader (used by clip/yt-dlp wrappers)
     pkgs.ast-grep # AST-aware grep
     pkgs.delta # better diff tool
     pkgs.difftastic # syntax-aware diff
@@ -26,25 +27,33 @@ in {
     pkgs.goaccess # realtime log analyzer
     pkgs.grc # generic text colorizer
     pkgs.inotify-tools # shell inotify bindings
+    pkgs.jq # ubiquitous JSON processor for scripts
     pkgs.kmon # kernel activity monitor
+    pkgs.libnotify # notify-send helper used by CLI scripts
     pkgs.lnav # fancy log viewer
     pkgs.lsof # list open files
     pkgs.moreutils # assorted unix utils (sponge, etc.)
     pkgs.ncdu # interactive du
     pkgs.nnn # CLI file manager
     pkgs.parallel # parallel xargs
+    pkgs.exiftool # EXIF inspector for screenshot helpers
     pkgs.procps # /proc tools
     pkgs.progress # show progress for coreutils
     pkgs.psmisc # killall and friends
     pkgs.pueue # queue manager
     pkgs.pv # pipe viewer
+    pkgs.qrencode # QR generator for clipboard helpers
     pkgs.readline # readline library
     pkgs.reptyr # move app to another pty
     pkgs.ripgrep # better grep
     pkgs.rlwrap # readline wrapper for everything
     pkgs.rmlint # remove duplicates
+    pkgs.sox # audio swiss-army knife for CLI helpers
     pkgs.stow # manage farms of symlinks
     pkgs.tig # git TUI
+    pkgs.translate-shell # translate CLI used inside menus
+    pkgs.yt-dlp # video downloader used across scripts
+    pkgs.zbar # QR/barcode scanner
     ugrepWithConfig # better grep, rg alternative (wrapped with global config)
   ];
 }
