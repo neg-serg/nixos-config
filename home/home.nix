@@ -57,8 +57,6 @@ in {
       # Enable OpenXR dev stack (installs Envision UI)
       openxr.enable = true;
 
-      # Disable the heavyweight Emacs profile unless explicitly requested
-      emacs.enable = false;
     };
 
     # Enable AI upscaling features (realtime + offline tools)

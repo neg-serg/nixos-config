@@ -40,9 +40,6 @@ in {
     hack.enable = mkBool "enable Hack/security tooling stack" true;
     dev = {
       enable = mkBool "enable Dev stack (toolchains, editors, hack tooling)" true;
-      emacs = {
-        enable = mkBool "enable custom Emacs stack (emacs-overlay build + user service)" true;
-      };
       ai = {
         enable = mkBool "enable AI tools (e.g., LM Studio)" true;
       };

@@ -107,15 +107,6 @@ in {
       url = "github:neg-serg/raise";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    emacs-overlay = {
-      url = "github:nix-community/emacs-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nixpkgs-stable.follows = "nixpkgs";
-    };
-    nix-qml-support = {
-      url = "git+https://git.outfoxxed.me/outfoxxed/nix-qml-support";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs = inputs @ {
@@ -153,14 +144,10 @@ in {
 
     # Pass only minimal inputs required by HM modules (nupm for Nushell).
     # Nilla raw-loader compatibility: add a synthetic type to each selected input.
-    hmInputs = let
-      selected = {
+    hmInputs =
+      builtins.mapAttrs (_: input: input // {type = "derivation";}) {
         inherit (inputs) nupm;
-        emacsOverlay = inputs."emacs-overlay";
-        nixQmlSupport = inputs."nix-qml-support";
       };
-    in
-      builtins.mapAttrs (_: input: input // {type = "derivation";}) selected;
 
     # Common Home Manager building blocks
     hmHelpers = import ./flake/hm-helpers.nix {

@@ -102,8 +102,6 @@
   - Браузер по умолчанию: `features.web.default` = `floorp | firefox | librewolf | nyxt | yandex`.
     - Выбранный браузер доступен как `config.lib.neg.web.defaultBrowser`.
     - Полная таблица — `config.lib.neg.web.browsers`.
-  - Редакторы: `features.dev.emacs.enable` собирает кастомный `emacs30-pgtk` (emacs-overlay, доп.
-    tree-sitter/QML-грамматики) и запускает `services.emacs`.
   - Аудио: `features.media.audio.core/apps/creation/mpd.enable` — ставит TUI‑клиент `rmpc`,
     Qt‑клиент `pkgs.neg.cantata`, экспортирует `MPD_HOST`/`MPD_PORT` и при желании автозапускает
     Cantata (`media.audio.mpd.cantata.autostart = true;`).

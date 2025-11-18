@@ -163,29 +163,6 @@
         "type": "github"
       }
     },
-    "emacs-overlay": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "nixpkgs-stable": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1763342865,
-        "narHash": "sha256-uB7R7dKZ23N4dh7Yfo2zVUcG4VMt1ZOeNjwotBqaefs=",
-        "owner": "nix-community",
-        "repo": "emacs-overlay",
-        "rev": "e96325f8f9f3a1d29e6979e1733426b66fe3f974",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "emacs-overlay",
-        "type": "github"
-      }
-    },
     "fenix": {
       "inputs": {
         "nixpkgs": [
@@ -1119,26 +1096,6 @@
         "type": "github"
       }
     },
-    "nix-qml-support": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1730724501,
-        "narHash": "sha256-zvNdomPM86fUf0iAwJV1RQC8yAqDCKbCDJKIs4iIPy0=",
-        "ref": "refs/heads/master",
-        "rev": "8f897ffb4a1575252c536c63db8be72f22b6a494",
-        "revCount": 1,
-        "type": "git",
-        "url": "https://git.outfoxxed.me/outfoxxed/nix-qml-support"
-      },
-      "original": {
-        "type": "git",
-        "url": "https://git.outfoxxed.me/outfoxxed/nix-qml-support"
-      }
-    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1744536153,
@@ -1381,7 +1338,6 @@
       "inputs": {
         "bzmenu": "bzmenu",
         "chaotic": "chaotic",
-        "emacs-overlay": "emacs-overlay",
         "home-manager": "home-manager_2",
         "hyprland": "hyprland",
         "hyprland-protocols": [
@@ -1394,7 +1350,6 @@
         "nh": "nh",
         "nix-flatpak": "nix-flatpak",
         "nix-gaming": "nix-gaming",
-        "nix-qml-support": "nix-qml-support",
         "nixpkgs": "nixpkgs_3",
         "nupm": "nupm",
         "nur": "nur",
