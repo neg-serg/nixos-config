@@ -19,9 +19,6 @@ in {
     mcp_ripgrep = call ../mcp/ripgrep {};
     "mcp-ripgrep" = mcp_ripgrep;
 
-    mcp_server_git = call ../mcp/git {};
-    "mcp-server-git" = mcp_server_git;
-
     mcp_server_memory = call ../mcp/memory {};
     "mcp-server-memory" = mcp_server_memory;
 
@@ -48,9 +45,6 @@ in {
 
     smtp_mcp = call ../mcp/smtp {};
     "smtp-mcp" = smtp_mcp;
-
-    brave_search_mcp = call ../mcp/brave-search {};
-    "brave-search-mcp" = brave_search_mcp;
 
     elasticsearch_mcp = call ../mcp/elasticsearch {};
     "elasticsearch-mcp" = elasticsearch_mcp;
@@ -84,18 +78,6 @@ in {
 
     knowledge_mcp = call ../mcp/knowledge {};
     "knowledge-mcp" = knowledge_mcp;
-
-    mcp_server_browserbase = call ../mcp/browserbase {};
-    "mcp-server-browserbase" = mcp_server_browserbase;
-
-    postgres_mcp = call ../mcp/postgres {};
-    "postgres-mcp" = postgres_mcp;
-
-    redis_mcp = call ../mcp/redis {};
-    "redis-mcp" = redis_mcp;
-
-    exa_mcp = call ../mcp/exa {};
-    "exa-mcp" = exa_mcp;
 
     sentry_mcp = call ../mcp/sentry {};
     "sentry-mcp" = sentry_mcp;

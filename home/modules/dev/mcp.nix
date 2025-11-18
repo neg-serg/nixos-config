@@ -53,7 +53,6 @@
   knowledgeCacheDir = "${config.xdg.cacheHome}/mcp/knowledge";
   hmRepoRoot = "${config.neg.hmConfigRoot}";
   gitRepoRoot = config.neg.dotfilesRoot;
-  postgresDsn = builtins.getEnv "POSTGRES_DSN";
   openAiKeyEnv = builtins.getEnv "OPENAI_API_KEY";
   teiEndpointEnv = builtins.getEnv "TEI_ENDPOINT";
   embeddingsProviderEnv = builtins.getEnv "EMBEDDINGS_PROVIDER";
@@ -69,12 +68,8 @@
   elasticsearchEnabled = hasEnv "ES_URL" && elasticAuthProvided;
   sentryEnabled = hasEnv "SENTRY_TOKEN";
   slackEnabled = hasEnv "SLACK_BOT_TOKEN";
-  braveSearchEnabled = hasEnv "BRAVE_API_KEY";
-  browserbaseEnabled = hasEnv "BROWSERBASE_API_KEY";
-  exaEnabled = hasEnv "EXA_API_KEY";
   githubEnabled = hasEnv "GITHUB_TOKEN";
   gitlabEnabled = hasEnv "GITLAB_TOKEN";
-  redisEnabled = hasEnv "REDIS_URL";
   discordEnabled = hasEnv "DISCORD_BOT_TOKEN";
   telegramEnabled = hasAllEnv ["TG_APP_ID" "TG_API_HASH"];
   telegramBotEnabled = hasEnv "TELEGRAM_BOT_TOKEN";
@@ -86,7 +81,6 @@ in
         repoRoot = hmRepoRoot;
         fsBinary = "${pkgs.neg.mcp_server_filesystem}/bin/mcp-server-filesystem";
         rgBinary = "${pkgs.neg.mcp_ripgrep}/bin/mcp-ripgrep";
-        gitBinary = "${pkgs.neg.mcp_server_git}/bin/mcp-server-git";
         memoryBinary = "${pkgs.neg.mcp_server_memory}/bin/mcp-server-memory";
         fetchBinary = "${pkgs.neg.mcp_server_fetch}/bin/mcp-server-fetch";
         seqBinary = "${pkgs.neg.mcp_server_sequential_thinking}/bin/mcp-server-sequential-thinking";
@@ -95,16 +89,11 @@ in
         gcalBinary = "${pkgs.neg.gcal_mcp}/bin/gcal-mcp";
         imapBinary = "${pkgs.neg.imap_mcp}/bin/imap-mcp";
         smtpBinary = "${pkgs.neg.smtp_mcp}/bin/smtp-mcp";
-        braveBinary = "${pkgs.neg.brave_search_mcp}/bin/brave-search-mcp-server";
         firecrawlBinary = "${pkgs.neg.firecrawl_mcp}/bin/firecrawl-mcp";
-        browserBinary = "${pkgs.neg.mcp_server_browserbase}/bin/mcp-server-browserbase";
         elasticBinary = "${pkgs.neg.elasticsearch_mcp}/bin/elasticsearch-core-mcp-server";
         sentryBinary = "${pkgs.neg.sentry_mcp}/bin/mcp-server-sentry";
         slackBinary = "${pkgs.neg.slack_mcp}/bin/mcp-server-slack";
         sqliteBinary = "${pkgs.neg.sqlite_mcp}/bin/mcp-server-sqlite";
-        postgresBinary = "${pkgs.neg.postgres_mcp}/bin/mcp-server-postgres";
-        redisBinary = "${pkgs.neg.redis_mcp}/bin/mcp-server-redis";
-        exaBinary = "${pkgs.neg.exa_mcp}/bin/exa-mcp-server";
         githubBinary = "${pkgs.neg.github_mcp}/bin/github-mcp-server";
         gitlabBinary = "${pkgs.neg.gitlab_mcp}/bin/gitlab-mcp";
         discordBinary = "${pkgs.neg.discord_mcp}/bin/discordmcp";
@@ -138,14 +127,6 @@ in
             rg-index = {
               command = rgBinary;
               env = {MCP_RIPGREP_ROOT = repoRoot;};
-            };
-
-            git-local = {
-              command = gitBinary;
-              args = [
-                "--repository"
-                gitRepoRoot
-              ];
             };
 
             memory-local = {
@@ -337,31 +318,6 @@ in
               };
             };
           }
-          // lib.optionalAttrs braveSearchEnabled {
-            brave-search = {
-              command = braveBinary;
-              env = {
-                BRAVE_API_KEY = "{env:BRAVE_API_KEY}";
-              };
-            };
-          }
-          // lib.optionalAttrs browserbaseEnabled {
-            browserbase = {
-              command = browserBinary;
-              env = {
-                BROWSERBASE_API_KEY = "{env:BROWSERBASE_API_KEY}";
-                STAGEHAND_API_KEY = "{env:STAGEHAND_API_KEY}";
-              };
-            };
-          }
-          // lib.optionalAttrs exaEnabled {
-            exa-search = {
-              command = exaBinary;
-              env = {
-                EXA_API_KEY = "{env:EXA_API_KEY}";
-              };
-            };
-          }
           // lib.optionalAttrs githubEnabled {
             github = {
               command = githubBinary;
@@ -388,14 +344,6 @@ in
                 USE_GITLAB_WIKI = "{env:USE_GITLAB_WIKI}";
                 USE_MILESTONE = "{env:USE_MILESTONE}";
                 USE_PIPELINE = "{env:USE_PIPELINE}";
-              };
-            };
-          }
-          // lib.optionalAttrs redisEnabled {
-            redis-local = {
-              command = redisBinary;
-              env = {
-                REDIS_URL = "{env:REDIS_URL}";
               };
             };
           }
@@ -426,22 +374,12 @@ in
               };
             };
           }
-          // lib.optionalAttrs (postgresDsn != "") {
-            postgres-local = {
-              command = postgresBinary;
-              env = {
-                POSTGRES_DSN = "{env:POSTGRES_DSN}";
-                POSTGRES_READ_ONLY = "{env:POSTGRES_READ_ONLY}";
-              };
-            };
-          };
       };
 
       home.packages =
         [
           pkgs.neg.mcp_server_filesystem
           pkgs.neg.mcp_ripgrep
-          pkgs.neg.mcp_server_git
           pkgs.neg.mcp_server_memory
           pkgs.neg.mcp_server_fetch
           pkgs.neg.mcp_server_sequential_thinking
@@ -463,16 +401,11 @@ in
         ++ lib.optional elasticsearchEnabled pkgs.neg.elasticsearch_mcp
         ++ lib.optional sentryEnabled pkgs.neg.sentry_mcp
         ++ lib.optional slackEnabled pkgs.neg.slack_mcp
-        ++ lib.optional braveSearchEnabled pkgs.neg.brave_search_mcp
-        ++ lib.optional browserbaseEnabled pkgs.neg.mcp_server_browserbase
-        ++ lib.optional exaEnabled pkgs.neg.exa_mcp
         ++ lib.optional githubEnabled pkgs.neg.github_mcp
         ++ lib.optional gitlabEnabled pkgs.neg.gitlab_mcp
-        ++ lib.optional redisEnabled pkgs.neg.redis_mcp
         ++ lib.optional discordEnabled pkgs.neg.discord_mcp
         ++ lib.optional telegramEnabled pkgs.neg.telegram_mcp
-        ++ lib.optional telegramBotEnabled pkgs.neg.telegram_bot_mcp
-        ++ lib.optional (postgresDsn != "") pkgs.neg.postgres_mcp;
+        ++ lib.optional telegramBotEnabled pkgs.neg.telegram_bot_mcp;
 
       home.activation.ensureMcpStateDirs = config.lib.neg.mkEnsureRealDirsMany (
         [
