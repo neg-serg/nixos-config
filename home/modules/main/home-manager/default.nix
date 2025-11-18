@@ -1,6 +1,11 @@
-{lib, ...}: let
+{
+  lib,
+  config,
+  ...
+}: let
   # Avoid referencing config.lib.neg here to prevent HM eval recursion
   mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;};
+  hmFlakePath = lib.escapeShellArg config.neg.hmConfigRoot;
 in
   lib.mkMerge [
     {
@@ -39,6 +44,6 @@ in
        backup_ext="''${HOME_MANAGER_BACKUP_EXT:-bck}"
 
        # Switch using this repo's flake; pass through any extra args
-       exec home-manager -b "''${backup_ext}" switch -j 32 --cores 32 --flake "$HOME/.dotfiles/nix/.config/home-manager" "$@"
+       exec home-manager -b "''${backup_ext}" switch -j 32 --cores 32 --flake ${hmFlakePath} "$@"
     '')
   ]
