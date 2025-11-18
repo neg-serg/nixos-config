@@ -20,14 +20,9 @@ with lib;
         # fasd removed; use zoxide for ranking
         pkgs.usbutils # lsusb (unlock Yubikey detection)
         # audio/video + helpers (mpv comes from media stack)
-        pkgs.playerctl # media control for pl bindings
+        # playerctl/mpc now come from the global system package list.
         pkgs.wireplumber # wpctl for vol/pl volume control
-        pkgs.mpc # mpc for MPD helpers (mpd-add/mpd_del_album)
-        # wayland utils
-        pkgs.wl-clipboard # wl-copy/wl-paste used across many scripts
-        pkgs.grim # screenshots (qr/screenshot)
-        pkgs.slurp # region selection (qr/screenshot)
-        pkgs.wtype # fake keypress (clip pipe/paste)
+        # wayland utils now provided system-wide
         # archive helpers shared across scripts (clip/punzip/etc.)
         pkgs.unar # extract .rar archives
         pkgs.p7zip # 7z extraction
@@ -63,7 +58,6 @@ with lib;
         # downloaders for clip (YouTube DL + aria2 backend)
         pkgs.yt-dlp # video downloader
         pkgs.aria2 # segmented downloader (yt-dlp --downloader)
-        pkgs.cliphist # Wayland clipboard history
         pkgs.neg.bpf_host_latency # trace DNS lookup latency via BCC/eBPF (root)
         pkgs.neg.albumdetails # album metadata extractor for music-rename
       ];

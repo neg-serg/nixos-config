@@ -11,8 +11,6 @@ with lib; let
 in
   mkIf (config.features.gui.enable or false) (lib.mkMerge [
     {
-      home.packages = config.lib.neg.pkgsList [pkgs.ydotool];
-
       systemd.user.services.ydotoold = lib.mkMerge [
         {
           Unit.Description = "ydotool virtual input daemon";
