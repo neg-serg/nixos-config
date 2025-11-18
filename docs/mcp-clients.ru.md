@@ -5,7 +5,6 @@
 ## Всегда включенные серверы
 - `filesystem-local` — файловый сервер MCP с корнем в директории home-manager dotfiles, используемый для большинства локальных поисковых задач.
 - `rg-index` — `mcp-ripgrep`, привязанный к `config.neg.dotfilesRoot`, чтобы выполнять запросы ripgrep по репозиторию через MCP.
-- `git-local` — предоставляет метаданные Git из того же репозитория (сейчас не стартует; см. раздел ниже).
 - `memory-local` — временное хранилище `mcp-server-memory` для краткосрочной памяти и истории.
 - `fetch-http` — вспомогательный сервер `mcp-server-fetch`, который позволяет MCP-клиентам совершать HTTP-запросы через доверенный стек.
 - `sequential-thinking` — сервер последовательного мышления для построенных задач и анализа.
@@ -30,26 +29,20 @@
 - `elasticsearch` — прокси Elasticsearch с `ES_URL`, учётными данными и `ES_SSL_SKIP_VERIFY` при необходимости.
 - `sentry` — доступ к логам Sentry, требует `SENTRY_TOKEN`.
 - `slack` — Slack-помощник с `SLACK_BOT_TOKEN`, `SLACK_TEAM_ID` и `SLACK_CHANNEL_IDS`.
-- `brave-search` — Brave Search по ключу `BRAVE_API_KEY`.
-- `browserbase` — поиск BrowserBase (`BROWSERBASE_API_KEY`, `STAGEHAND_API_KEY`).
-- `exa-search` — EXA Search, нуждающийся в `EXA_API_KEY`.
 - `github` — MCP-клиент GitHub с токеном `GITHUB_TOKEN` и опциональными настройками хоста/наборов инструментов.
 - `gitlab` — MCP-клиент GitLab с `GITLAB_TOKEN`, `GITLAB_API_URL` и вспомогательными флагами проект/режим.
-- `redis-local` — подключение к `REDIS_URL` для кэшей и служебных данных.
 - `discord` — сборщик из Discord на основе `DISCORD_BOT_TOKEN` и идентификаторов каналов.
 - `telegram` — Telegram-клиент, сохраняющий сессию в `$XDG_DATA_HOME/mcp/telegram/session.json` при наличии `TG_APP_ID`/`TG_API_HASH`.
 - `telegram-bot` — бот Telegram на `TELEGRAM_BOT_TOKEN`.
-- `docsearch-local` — локальный поиск документов: нужен `OPENAI_API_KEY` _или_ `EMBEDDINGS_PROVIDER=tei` и `TEI_ENDPOINT`, а также прочие настройки загрузки документов.
-- `postgres-local` — PostgreSQL-клиент, ожидающий `POSTGRES_DSN` (и `POSTGRES_READ_ONLY`, если нужно).
 
-## Клиенты, требующие дополнительной настройки
-Следующие MCP-клиенты не стартуют сейчас и нуждаются в дополнительной конфигурации.
-- `exa-search` — `MCP client for exa failed to start: No such file or directory (os error 2)`
-- `redis-local` — `MCP client for redis-local failed to start: No such file or directory (os error 2)`
-- `git-local` — `MCP client for git-local failed to start: handshaking with MCP server failed: connection closed: initialize response`
-- `docsearch-local` — `MCP client for docsearch-local failed to start: No such file or directory (os error 2)`
-- `browserbase` — `MCP client for browserbase failed to start: No such file or directory (os error 2)`
-- `postgres-local` — `MCP client for postgres-local failed to start: handshaking with MCP server failed: connection closed: initialize response`
-- `brave-search` — `MCP client for brave-search failed to start: No such file or directory (os error 2)`
+## Удалённые клиенты
+Следующие MCP-клиенты исключены из системной и Codex-конфигурации, чтобы не получать постоянные ошибки запуска, пока не появятся рабочие пакеты:
+- `brave-search`
+- `browserbase`
+- `exa` / `exa-search`
+- `git-local`
+- `redis-local`
+- `docsearch-local`
+- `postgres-local`
 
 Остальные перечисленные выше MCP-клиенты запускаются с конфигурацией по умолчанию (`modules/dev/mcp.nix`) и не требуют дополнительной ручной настройки при включённой `config.features.dev.enable`.
