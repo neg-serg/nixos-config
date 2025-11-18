@@ -6,7 +6,6 @@
 }: let
   cfgDev = config.features.dev.enable or false;
   sqliteDbPath = "${config.xdg.dataHome}/mcp/sqlite/mcp.db";
-  docsearchDbPath = "${config.xdg.dataHome}/mcp/docsearch/index.db";
   telegramSessionPath = "${config.xdg.dataHome}/mcp/telegram/session.json";
   gmailStateDir = "${config.home.homeDirectory}/.auto-gmail";
   meetingNotesDir = "${config.home.homeDirectory}/.claude/session-notes";
@@ -52,11 +51,6 @@
     then docDir
     else lib.concatStringsSep ":" knowledgePathsList;
   knowledgeCacheDir = "${config.xdg.cacheHome}/mcp/knowledge";
-  docsearchFileRoots =
-    if mediaSearchPathsList == []
-    then docDir
-    else lib.concatStringsSep "," mediaSearchPathsList;
-  docsearchDbDir = builtins.dirOf docsearchDbPath;
   hmRepoRoot = "${config.neg.hmConfigRoot}";
   gitRepoRoot = config.neg.dotfilesRoot;
   postgresDsn = builtins.getEnv "POSTGRES_DSN";
@@ -65,9 +59,6 @@
   embeddingsProviderEnv = builtins.getEnv "EMBEDDINGS_PROVIDER";
   hasEnv = name: builtins.getEnv name != "";
   hasAllEnv = names: lib.all hasEnv names;
-  docsearchEnabled =
-    (openAiKeyEnv != "")
-    || (teiEndpointEnv != "" && embeddingsProviderEnv == "tei");
   context7Enabled = hasEnv "CONTEXT7_API_KEY";
   gmailEnabled = hasAllEnv ["GMAIL_CLIENT_ID" "GMAIL_CLIENT_SECRET" "GMAIL_REFRESH_TOKEN"] && hasEnv "OPENAI_API_KEY";
   gcalEnabled = hasAllEnv ["GCAL_CLIENT_ID" "GCAL_CLIENT_SECRET" "GCAL_REFRESH_TOKEN"];
@@ -100,7 +91,6 @@ in
         fetchBinary = "${pkgs.neg.mcp_server_fetch}/bin/mcp-server-fetch";
         seqBinary = "${pkgs.neg.mcp_server_sequential_thinking}/bin/mcp-server-sequential-thinking";
         timeBinary = "${pkgs.neg.mcp_server_time}/bin/mcp-server-time";
-        docsearchBinary = "${pkgs.neg.docsearch_mcp}/bin/docsearch-mcp";
         gmailBinary = "${pkgs.neg.gmail_mcp}/bin/gmail-mcp-server";
         gcalBinary = "${pkgs.neg.gcal_mcp}/bin/gcal-mcp";
         imapBinary = "${pkgs.neg.imap_mcp}/bin/imap-mcp";
@@ -436,26 +426,6 @@ in
               };
             };
           }
-          // lib.optionalAttrs docsearchEnabled {
-            docsearch-local = {
-              command = docsearchBinary;
-              args = ["start"];
-              env = {
-                FILE_ROOTS = docsearchFileRoots;
-                DB_TYPE = "sqlite";
-                DB_PATH = docsearchDbPath;
-                EMBEDDINGS_PROVIDER = "{env:EMBEDDINGS_PROVIDER}";
-                OPENAI_API_KEY = "{env:OPENAI_API_KEY}";
-                OPENAI_BASE_URL = "{env:OPENAI_BASE_URL}";
-                OPENAI_EMBED_MODEL = "{env:OPENAI_EMBED_MODEL}";
-                OPENAI_EMBED_DIM = "{env:OPENAI_EMBED_DIM}";
-                TEI_ENDPOINT = "{env:TEI_ENDPOINT}";
-                ENABLE_IMAGE_TO_TEXT = "{env:ENABLE_IMAGE_TO_TEXT}";
-                IMAGE_TO_TEXT_PROVIDER = "{env:IMAGE_TO_TEXT_PROVIDER}";
-                IMAGE_TO_TEXT_MODEL = "{env:IMAGE_TO_TEXT_MODEL}";
-              };
-            };
-          }
           // lib.optionalAttrs (postgresDsn != "") {
             postgres-local = {
               command = postgresBinary;
@@ -502,7 +472,6 @@ in
         ++ lib.optional discordEnabled pkgs.neg.discord_mcp
         ++ lib.optional telegramEnabled pkgs.neg.telegram_mcp
         ++ lib.optional telegramBotEnabled pkgs.neg.telegram_bot_mcp
-        ++ lib.optional docsearchEnabled pkgs.neg.docsearch_mcp
         ++ lib.optional (postgresDsn != "") pkgs.neg.postgres_mcp;
 
       home.activation.ensureMcpStateDirs = config.lib.neg.mkEnsureRealDirsMany (
@@ -519,7 +488,6 @@ in
           agendaNotesDir
           knowledgeCacheDir
         ]
-        ++ lib.optional docsearchEnabled docsearchDbDir
       );
     }
 
