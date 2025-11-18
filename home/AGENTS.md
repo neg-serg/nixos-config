@@ -371,8 +371,6 @@ consistent and activation quiet. This page shows what to use and how to validate
 
 - Autoreload is disabled to avoid inotify races during activation (`disable_autoreload = 1`).
 - No activation‑time `hyprctl reload`; keep manual reload only (hotkey in `bindings.conf`).
-- hy3/Hyprland pins have a compatibility assert in `features.nix`; update the matrix if bumping
-  pins.
 
 ## Commit Messages
 
@@ -419,9 +417,3 @@ consistent and activation quiet. This page shows what to use and how to validate
 - Local eval: `nix flake check -L` (may build small docs/checks)
 - Fast feature view (no build): build `checks.x86_64-linux.hm-eval-neg-retro-off` and inspect JSON
 - HM switch (live): `home-manager switch --flake .#neg`
-
-## When updating hy3/Hyprland
-
-- Update pins in `flake.nix` and extend the matrix in `modules/features.nix`:
-  - Add `{ hv = "<hyprland version>"; rev = "<hy3 commit>"; }` to `compatible`.
-  - Keep Hyprland and hy3 in lock‑step to avoid API breaks.
