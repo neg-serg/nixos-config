@@ -12,7 +12,6 @@
     pkgs.gdb # gnu debugger
     pkgs.hexyl # command-line hex editor
     pkgs.hyperfine # command-line benchmarking tool
-    pkgs.imhex # gui hex editor
     pkgs.license-generator # cli tool for generating license files
     pkgs.lzbench # compression benchmark
     pkgs.pkgconf # package compiler and linker metadata toolkit (wrapper script)
