@@ -30,6 +30,7 @@ in {
         system-features = [
           "big-parallel"
         ];
+        fallback = true;
         experimental-features = [
           "auto-allocate-uids" # allow nix to automatically pick UIDs, rather than creating nixbld* user accounts
           "flakes" # flakes for reprodusability
@@ -45,6 +46,7 @@ in {
         max-jobs = "auto"; # Use all available cores
         use-xdg-base-directories = true;
         warn-dirty = false; # Disable annoying dirty warn
+        download-attempts = 2;
         # Deduplicate the Nix store on writes
         auto-optimise-store = lib.mkDefault true;
       }
