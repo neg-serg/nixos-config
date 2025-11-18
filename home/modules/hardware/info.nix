@@ -1,12 +1,3 @@
-{
-  pkgs,
-  config,
-  ...
-}: {
-  home.packages = config.lib.neg.pkgsList [
-    pkgs.acpi # acpi stuff
-    pkgs.hwinfo # suse hardware info
-    pkgs.inxi # show hardware
-    pkgs.lshw # Linux hardware lister
-  ];
+_: {
+  # Packages moved to system-wide hardware profile (modules/hardware/pkgs.nix).
 }
