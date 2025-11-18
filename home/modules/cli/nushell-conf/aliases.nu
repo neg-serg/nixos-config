@@ -144,7 +144,9 @@ def seh [...args: string] {
   }
   home-manager -b bck switch -j 32 --cores 32 --flake $repo ...$args
 }
-def ser [] { nh os switch /etc/nixos }
+def ser [...args: string] {
+  sudo nixos-rebuild switch --flake /etc/nixos ...$args
+}
 def nixify [] { nix-shell -p nur.repos.kampka.nixify }
 def S [...args: string] { nix shell ...$args }
 def nbuild [] { nix-build -E 'with import <nixpkgs> {}; callPackage ./default.nix {}' }

@@ -6,7 +6,6 @@
     pkgs.dconf2nix # convert dconf to nix config
     pkgs.deadnix # scan for dead nix code
     pkgs.manix # nixos documentation
-    pkgs.nh # nice nix commands
     pkgs.niv # pin dependencies
     pkgs.nix-diff # show what makes derivations differ
     pkgs.nix-index # index for nix-locate
