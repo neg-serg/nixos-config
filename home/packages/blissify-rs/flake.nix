@@ -58,6 +58,9 @@
             "-isystem ${clang}/lib/clang/${clang.version}/include"
             "-isystem ${pkgs.ffmpeg.dev}/include"
           ];
+          PKG_CONFIG_PATH =
+            builtins.concatStringsSep ":" (map (drv: "${drv}/lib/pkgconfig") [pkgs.ffmpeg pkgs.ffmpeg.dev]);
+          FFMPEG_DIR = "${pkgs.ffmpeg.dev}";
         };
 
         cargoLock = {
@@ -104,6 +107,8 @@
             -isystem ${pkgs.stdenv.cc.libc.dev}/include \
             -isystem ${clang}/lib/clang/${clang.version}/include \
             -isystem ${pkgs.ffmpeg.dev}/include"
+          export PKG_CONFIG_PATH="$(printf '%s:%s' ${pkgs.ffmpeg}/lib/pkgconfig ${pkgs.ffmpeg.dev}/lib/pkgconfig)"
+          export FFMPEG_DIR=${pkgs.ffmpeg.dev}
 
           echo
           echo "✅ Rust devShell for blissify-rs ready."
