@@ -9,12 +9,17 @@
       url = "git+https://github.com/chaotic-cx/nyx?ref=nyxpkgs-unstable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Pin Hyprland to v0.52 using Git fetch to avoid GitHub API rate limits
+    # Track hy3 master so plugin builds follow Hyprland's latest ABI
+    hy3 = {
+      url = "git+https://github.com/outfoxxed/hy3";
+      inputs.hyprland.follows = "hyprland";
+    };
+    # Track Hyprland master to avoid ABI mismatches across plugins
     hyprland = {
-      url = "git+https://github.com/hyprwm/Hyprland?ref=v0.52.0";
+      url = "git+https://github.com/hyprwm/Hyprland";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Keep selected Hyprland-related inputs in lockstep with the pinned Hyprland flake
+    # Keep selected Hyprland-related inputs in lockstep with the tracked Hyprland flake
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
     # xdg-desktop-portal-hyprland is named 'xdph' in Hyprland's flake inputs (Hyprland v0.52)
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
