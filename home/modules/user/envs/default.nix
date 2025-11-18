@@ -62,12 +62,20 @@
       ZDOTDIR = "${config.xdg.configHome}/zsh";
     };
 
-    # Ensure login shells source Home Manager session variables
-    # so exported values like ZDOTDIR and SSH_AUTH_SOCK propagate.
-    file.".zprofile".text = ''
-      # Load Home Manager session variables if available
+    # Ensure every zsh instance (login or interactive) loads the Home Manager session variables
+    # before sourcing the actual config under $ZDOTDIR. This keeps env exports like FZF_* in sync
+    # regardless of how the shell is spawned.
+    file.".zshenv".text = let
+      username = config.home.username;
+    in ''
+      # shellcheck disable=SC1090
       if [ -r "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
         . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+      elif [ -r "/etc/profiles/per-user/${username}/etc/profile.d/hm-session-vars.sh" ]; then
+        . "/etc/profiles/per-user/${username}/etc/profile.d/hm-session-vars.sh"
+      fi
+      if [ -n "''${ZDOTDIR:-}" ] && [ "$ZDOTDIR" != "$HOME" ] && [ -r "$ZDOTDIR/.zshenv" ]; then
+        . "$ZDOTDIR/.zshenv"
       fi
     '';
   };
