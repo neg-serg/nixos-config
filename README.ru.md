@@ -146,7 +146,7 @@ in {
 
 1) Изменить `inputs.hyprland.url` в `flake.nix` (например, на новый релиз).
 2) Обновить лок: `nix flake lock --update-input hyprland`.
-3) Пересобрать систему: `nh os switch /etc/nixos`.
+3) Пересобрать систему: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.
 
 Опционально: при включённом `system.autoUpgrade` можно добавлять `--update-input hyprland` для авто‑подтягивания обновлений, но чаще обновляем вручную ради совместимости.
 

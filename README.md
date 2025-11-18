@@ -39,7 +39,7 @@ How to update Hyprland (and related deps):
 
 1) Change `inputs.hyprland.url` in `flake.nix` (e.g., to a new release tag).
 2) Update the lock: `nix flake lock --update-input hyprland`.
-3) Rebuild the system: `nh os switch /etc/nixos`.
+3) Rebuild the system: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.
 
 Auto‑update (optional): if `system.autoUpgrade` with flakes is enabled, you can add `--update-input hyprland` to automatically pull newer Hyprland. We typically update it manually to keep compatibility under control.
 

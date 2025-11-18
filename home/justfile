@@ -1,6 +1,6 @@
 # NOTE:
 #   When this tree is consumed via /etc/nixos (home-manager as a module),
-#   use `nh os switch /etc/nixos` or `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.
+#   use `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.
 #   The recipes below remain only for standalone/dev Home Manager runs.
 
 fmt:

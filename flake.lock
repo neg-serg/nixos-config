@@ -1039,26 +1039,6 @@
         "type": "github"
       }
     },
-    "nh": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1763419950,
-        "narHash": "sha256-3LG2BYu2vTUz6VGIgVdxXlVWEzinavCZgak2hO3DqIs=",
-        "owner": "viperML",
-        "repo": "nh",
-        "rev": "f5f343456fcf42e28b9fdaa116e95b60097446e1",
-        "type": "github"
-      },
-      "original": {
-        "owner": "viperML",
-        "repo": "nh",
-        "type": "github"
-      }
-    },
     "nix-flatpak": {
       "locked": {
         "lastModified": 1754777568,
@@ -1369,7 +1349,6 @@
         "iosevka-neg": "iosevka-neg",
         "iwmenu": "iwmenu",
         "lanzaboote": "lanzaboote",
-        "nh": "nh",
         "nix-flatpak": "nix-flatpak",
         "nix-gaming": "nix-gaming",
         "nixpkgs": "nixpkgs_3",
