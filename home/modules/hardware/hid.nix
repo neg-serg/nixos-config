@@ -1,10 +1,3 @@
-{
-  pkgs,
-  config,
-  ...
-}: {
-  home.packages = config.lib.neg.pkgsList [
-    pkgs.evhz # show mouse refresh rate
-    pkgs.openrgb # control motherboard/peripheral RGB lighting
-  ];
+_: {
+  # Packages moved to system-wide hardware profile (modules/hardware/pkgs.nix).
 }
