@@ -4,11 +4,17 @@
   inputs,
   ...
 }: let
+  mkQuickshellWrapper = import ../../../lib/quickshell-wrapper.nix {
+    inherit lib pkgs;
+  };
+  quickshellPkg = inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  quickshellWrapped = mkQuickshellWrapper {qsPkg = quickshellPkg;};
 in {
   # Wayland/Hyprland tools and small utilities
   environment.systemPackages =
     [
       inputs.raise.defaultPackage.${pkgs.stdenv.hostPlatform.system} # run-or-raise for Hyprland
+      quickshellWrapped # wrapped quickshell binary with required envs
       pkgs.xorg.xeyes # track eyes for your cursor
       pkgs.swaybg # simple wallpaper setter
       pkgs.dragon-drop # drag-n-drop from console
@@ -62,7 +68,6 @@ in {
       pkgs.kdePackages.syntax-highlighting # KSyntaxHighlighting for QML
       pkgs.libxml2 # xmllint for SVG validation
       pkgs.librsvg # rsvg-convert for assets
-      pkgs.material-symbols # Material Symbols font
       pkgs.networkmanager # CLI nmcli helper for panels
       pkgs.qt6.qtimageformats # supplemental Qt6 image formats
       pkgs.qt6.qtsvg # supplemental Qt6 SVG support

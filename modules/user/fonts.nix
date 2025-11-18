@@ -6,5 +6,6 @@
     pkgs.proggyfonts # yet another fonts for coding
     pkgs.symbola # Basic Latin, Greek, Cyrillic and many Symbol blocks of Unicode
     pkgs.texlivePackages.opensans # The Open Sans font family, and LaTeX support
+    pkgs.material-symbols # Material Design icon font for panels/quickshell
   ];
 }
