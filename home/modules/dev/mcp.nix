@@ -72,6 +72,16 @@
   discordEnabled = hasEnv "DISCORD_BOT_TOKEN";
   telegramEnabled = hasAllEnv ["TG_APP_ID" "TG_API_HASH"];
   telegramBotEnabled = hasEnv "TELEGRAM_BOT_TOKEN";
+  disabledServers = [
+    "browserbase"
+    "brave-search"
+    "docsearch-local"
+    "exa"
+    "exa-search"
+    "git-local"
+    "postgres-local"
+    "redis-local"
+  ];
 in
   lib.mkIf cfgDev (lib.mkMerge [
     # Central MCP servers config written to $XDG_CONFIG_HOME/mcp/mcp.json
@@ -108,7 +118,7 @@ in
       in {
         enable = true;
         servers =
-          (
+          lib.filterAttrs (name: _: !(lib.elem name disabledServers)) (
             {
             # Kitchen‑sink demo server with many tools; runs via npx
             everything = {
