@@ -1,18 +1,19 @@
 {
-  pkgs,
+  lib,
   config,
+  pkgs,
   ...
-}: {
-  home.packages = config.lib.neg.pkgsList [
-    (pkgs.qutebrowser.overrideAttrs (oldAttrs: {
-      # Qutebrowser with Wayland/Vulkan flags
+}: let
+  webEnabled = config.features.web.enable or false;
+  package =
+    pkgs.qutebrowser.overrideAttrs (oldAttrs: {
       qtWrapperArgs =
         (oldAttrs.qtWrapperArgs or [])
         ++ [
           "--set QT_ENABLE_VULKAN 1"
           "--set QT_QUICK_BACKEND vulkan"
           "--set QT_QPA_PLATFORM wayland"
-        ]; # prefer Wayland + Vulkan
+        ];
       preFixup =
         (oldAttrs.preFixup or "")
         + ''
@@ -21,6 +22,9 @@
             --add-flags "--qt-flag enable-features=VaapiVideoDecoder,VaapiVideoEncoder" \
             --add-flags "--qt-flag disable-features=UseChromeOSDirectVideoDecoder"
         '';
-    }))
-  ];
+    });
+in {
+  config = lib.mkIf webEnabled {
+    environment.systemPackages = lib.mkAfter [package];
+  };
 }
