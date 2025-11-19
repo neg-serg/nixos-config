@@ -5,5 +5,7 @@
     pkgs.himalaya
     pkgs.kyotocabinet
     pkgs.neomutt
+    pkgs.isync
+    pkgs.vdirsyncer
   ];
 }
