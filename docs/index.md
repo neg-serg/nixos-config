@@ -1,7 +1,7 @@
 # Documentation
 
-- Repository manual (EN): [manual/en.md](./manual/en.md)
-- Repository manual (RU): [manual/ru.md](./manual/ru.md)
+- Repository manual (EN): [manual/manual.en.md](./manual/manual.en.md)
+- Repository manual (RU): [manual/manual.ru.md](./manual/manual.ru.md)
 
 ## Options Docs
 
