@@ -17,7 +17,6 @@ in {
         pkgs.bacon # background rust code checker
         pkgs.bpftrace # trace events via eBPF
         pkgs.cutter # Rizin-powered reverse engineering UI
-        pkgs.ddrescue # data recovery tool
         pkgs.evcxr # Rust REPL
         pkgs.foremost # recover files from raw disk data
         pkgs.freeze # render source files to images
