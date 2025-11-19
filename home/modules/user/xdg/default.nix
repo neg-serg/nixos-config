@@ -61,11 +61,6 @@ with rec {
     };
 }; {
   home = {
-    packages = config.lib.neg.pkgsList [
-      pkgs.handlr # xdg-open replacement with per-handler rules
-      pkgs.xdg-utils # provides xdg-open for apps that still call it directly
-      pkgs.xdg-ninja # detect mislocated files in $HOME
-    ];
     # Replace ad-hoc ensure/clean steps with lib.neg helpers
     # Ensure common runtime/config dirs exist as real directories
     activation.ensureCommonDirs = config.lib.neg.mkEnsureRealDirsMany [
