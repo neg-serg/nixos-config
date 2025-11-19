@@ -6,9 +6,6 @@
     in {
       inherit (inputs.hyprland.packages.${system}) hyprland;
       inherit (inputs.xdg-desktop-portal-hyprland.packages.${system}) xdg-desktop-portal-hyprland;
-      hyprlandPlugins = prev.hyprlandPlugins // {
-        hy3 = inputs.hy3.packages.${system}.hy3;
-      };
     })
   ];
 }

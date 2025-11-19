@@ -77,8 +77,6 @@ in {
       pkgs.tdl # Telegram CLI uploader/downloader
       pkgs.vesktop # Discord (Vencord) desktop client
       pkgs.nchat # terminal-first Telegram client
-      pkgs.hyprlandPlugins.hy3
-      pkgs.hyprlandPlugins.hyprsplit
     ]
     ++ lib.optionals (pkgs ? uwsm) [pkgs.uwsm];
 }

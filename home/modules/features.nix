@@ -28,7 +28,6 @@ in {
 
     gui = {
       enable = mkBool "enable GUI stack (wayland/hyprland, quickshell, etc.)" true;
-      hyprsplit.enable = mkBool "enable hyprsplit layout plugin for Hyprland" false;
       qt.enable = mkBool "enable Qt integrations for GUI (qt6ct, hyprland-qt-*)" true;
       quickshell.enable = mkBool "enable Quickshell (panel) at login" true;
     };
