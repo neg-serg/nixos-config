@@ -16,7 +16,7 @@ with lib; let
   quickshellWrapped =
     if qsPkg == null
     then null
-    else mkQuickshellWrapper {qsPkg = qsPkg;};
+    else mkQuickshellWrapper {inherit qsPkg;};
 in
   mkIf (config.features.gui.enable && (config.features.gui.qt.enable or false) && (config.features.gui.quickshell.enable or false) && (! (config.features.devSpeed.enable or false))) {
     # Expose the wrapped package for other modules (e.g., systemd service ExecStart)
