@@ -26,10 +26,6 @@ in {
 
   config = lib.mkIf featureEnabled (lib.mkMerge [
     {
-      home.packages = config.lib.neg.pkgsList [
-        pkgs.rmpc # alternative tui client with album cover
-      ];
-
       home.sessionVariables = {
         MPD_HOST = cfg.host;
         MPD_PORT = toString cfg.port;

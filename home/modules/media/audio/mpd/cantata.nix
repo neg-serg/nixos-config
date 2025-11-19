@@ -19,12 +19,6 @@ in {
 
   config = lib.mkIf featureEnabled (
     lib.mkMerge [
-      {
-        home.packages = config.lib.neg.pkgsList [
-          cantataPkg
-        ];
-      }
-
       (lib.mkIf (cantataCfg.autostart && guiEnabled) (
         systemdUser.mkSimpleService {
           name = "cantata";
