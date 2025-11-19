@@ -16,7 +16,7 @@ with {
 in
   lib.mkMerge [
     {
-      home = lib.mkIf (config.features.gui.enable or false) {
+      home = {
         pointerCursor = {
           gtk.enable = true;
           x11.enable = lib.mkForce false;
@@ -43,11 +43,11 @@ in
         };
       };
 
-      qt = lib.mkIf (config.features.gui.qt.enable or false) {
+      qt = {
         platformTheme = "qt6ct";
       };
 
-      gtk = lib.mkIf (config.features.gui.enable or false) {
+      gtk = {
         enable = true;
 
         font = {
@@ -82,7 +82,7 @@ in
         };
       };
 
-      dconf = lib.mkIf (config.features.gui.enable or false) {
+      dconf = {
         enable = true;
         settings = {
           "org/gnome/desktop/interface" = {
@@ -116,7 +116,7 @@ in
       };
 
       stylix = {
-        enable = lib.mkIf ((config.features.gui.enable or false) && (! (config.features.devSpeed.enable or false))) true;
+        enable = ! (config.features.devSpeed.enable or false);
         autoEnable = false;
         targets = {
           bemenu.enable = true;
@@ -174,5 +174,5 @@ in
         };
       };
     }
-    (lib.mkIf (config.features.gui.qt.enable or false) kvantumAltConfig)
+    kvantumAltConfig
   ]
