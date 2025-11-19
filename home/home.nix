@@ -43,8 +43,6 @@ in {
     # Enable GPG stack (gpg + gpg-agent)
     gpg.enable = true;
 
-    gui.hyprsplit.enable = true;
-
     dev = {
       # Enable Unreal Engine tooling (ue5-sync/build/editor wrappers)
       unreal.enable = true;
