@@ -168,6 +168,59 @@ side-by-side so the patterns apply to both configurations.
   `[quickshell/gui] improve keyboard indicator`.
 - Scopes can be combined via `/` (e.g. `[cli/gui] …`) when touching multiple areas.
 
+## Coding Style
+
+- Formatting: run `nix fmt`/`just fmt` (treefmt) before committing. It runs `alejandra -q` for Nix
+  and `mdformat --wrap 100` for Markdown. Enable git hooks via `just hooks-enable` to auto-run
+  formatters (`SKIP_NIX_FMT=1` to skip).
+- Indent with 2 spaces; let alejandra control wrapping/spacing. Avoid manual column alignment.
+- Lists with complex elements expand one per line; attribute sets become multi-line once they hold
+  more than one entry.
+- Keep prose/strings around ~100 columns; move long comments above the expression they describe.
+- Avoid `with pkgs;` around lists—refer to `pkgs.foo` explicitly. Using `with` inside local
+  attrsets or helper scopes is fine.
+- Always declare feature options centrally (see `home/modules/features.nix`) and gate module
+  fragments via the relevant `features.*` flags.
+- Structure modules with `lib.mkMerge [ … ]` and the helper sugar above. Factor package groups into
+  local `groups = { … };` sets and flatten with `config.lib.neg.mkEnabledList`.
+- Systemd user units/paths/sockets should reuse `config.lib.neg.systemdUser.mkUnitFromPresets`.
+- For xdg-managed files prefer the helpers from `modules/lib/xdg-helpers.nix` (text/source/data/
+  cache, JSON/TOML). They ensure parent directories exist as real dirs and remove conflicting paths
+  before linking.
+- Use `config.lib.neg.mkLocalBin` for scripts under `~/.local/bin`.
+- Keep warnings actionable via `warnings = lib.optional cond "…";` and ensure the condition is
+  cheap (avoid referencing `config.lib.neg` while declaring the warning).
+- Commit messages must follow `[scope] subject` unless performing `Merge`, `Revert`, `fixup!`,
+  `squash!`, or `WIP`.
+
+## Third-Party Components
+
+Keep this manifest updated whenever vendored sources change so that licensing remains clear.
+
+| Component | Source | Revision | License | Notes |
+|-----------|--------|----------|---------|-------|
+| awrit | [github.com/chase/awrit](https://github.com/chase/awrit) | tag `awrit-native-rs-2.0.3` | BSD-3-Clause | Terminal Chromium renderer (`pkgs.neg.awrit`). |
+| cantata | [github.com/nullobsi/cantata](https://github.com/nullobsi/cantata) | `a19efdf9649c50320f8592f07d82734c352ace9c` | GPL-3.0-only | MPD Qt client with extra patches (`pkgs.neg.cantata`). |
+| kitty-kitten-search | [github.com/trygveaa/kitty-kitten-search](https://github.com/trygveaa/kitty-kitten-search) | `992c1f3d220dc3e1ae18a24b15fcaf47f4e61ff8` | *No license declared upstream* | Provides `search.py` / `scroll_mark.py` kittens for Kitty. Verify licensing before distributing binaries. |
+
+## Open Tasks
+
+- Teach `nix flake check` (or a dedicated `hm-extras` job) to build `pkgs.neg.cantata` so the Qt
+  patches stay tested automatically.
+- Document the Firefox multi-profile stack (profiles, desktop entries, addon requirements) once the
+  layout stabilises.
+- Populate secrets/env vars for the new MCP stack so `seh` can finish without placeholders. Needed
+  providers: Gmail (`GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`,
+  `OPENAI_API_KEY`), Google Calendar (`GCAL_CLIENT_ID`, `GCAL_CLIENT_SECRET`, `GCAL_REFRESH_TOKEN`,
+  optional `GCAL_ACCESS_TOKEN`, `GCAL_CALENDAR_ID`), IMAP (`IMAP_HOST`, `IMAP_PORT`,
+  `IMAP_USERNAME`, `IMAP_PASSWORD`, `IMAP_USE_SSL`), SMTP (`SMTP_HOST`, `SMTP_PORT`,
+  `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_ADDRESS`, `SMTP_USE_TLS`, `SMTP_USE_SSL`, optional
+  `SMTP_BEARER_TOKEN`), GitHub (`GITHUB_TOKEN`, optional `GITHUB_HOST`, `GITHUB_TOOLSETS`,
+  `GITHUB_DYNAMIC_TOOLSETS`, `GITHUB_READ_ONLY`, `GITHUB_LOCKDOWN_MODE`), GitLab (`GITLAB_TOKEN`,
+  `GITLAB_API_URL`, optional `GITLAB_PROJECT_ID`, `GITLAB_ALLOWED_PROJECT_IDS`,
+  `GITLAB_READ_ONLY_MODE`, `USE_GITLAB_WIKI`, `USE_MILESTONE`, `USE_PIPELINE`), Discord
+  (`DISCORD_BOT_TOKEN`, optional `DISCORD_CHANNEL_IDS`).
+
 ## Evaluation Noise Policy
 
 - No evaluation-time warnings or traces. Keep builds and switches quiet.
