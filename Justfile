@@ -283,15 +283,3 @@ hm-bench-fast:
       NIX_SHOW_STATS=1 nix build --no-link ".#checks.${sys}.${name}" -L || true; \
       echo; \
     done
-
-steamvr-fix:
-    repo_root="$(git rev-parse --show-toplevel)"
-    just --justfile "$repo_root/steamvr.just" --working-directory "$repo_root" steamvr-fix
-
-steamvr-restore-launcher:
-    repo_root="$(git rev-parse --show-toplevel)"
-    just --justfile "$repo_root/steamvr.just" --working-directory "$repo_root" steamvr-restore-launcher
-
-steamvr-run:
-    repo_root="$(git rev-parse --show-toplevel)"
-    just --justfile "$repo_root/steamvr.just" --working-directory "$repo_root" steamvr-run
