@@ -4,7 +4,7 @@
   ...
 }: let
   # Avoid referencing config.lib.neg here to prevent HM eval recursion
-  mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;};
+  mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;};
   hmFlakePath = lib.escapeShellArg config.neg.hmConfigRoot;
 in
   lib.mkMerge [

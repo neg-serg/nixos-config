@@ -6,10 +6,10 @@
   ...
 }:
 lib.mkIf (config.features.gui.enable or false) (lib.mkMerge [
-  (let mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;}; in mkLocalBin "kitty-panel" (builtins.readFile ./kitty/panel))
+  (let mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;}; in mkLocalBin "kitty-panel" (builtins.readFile ./kitty/panel))
   # Robust kitty-scrollback-nvim kitten wrapper (local-bin) and env hint
   (let
-    mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;};
+    mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;};
     nixKsbPath =
       if pkgs.vimPlugins ? kitty-scrollback-nvim
       then "${pkgs.vimPlugins.kitty-scrollback-nvim}/python/kitty_scrollback_nvim.py"

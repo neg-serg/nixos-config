@@ -49,6 +49,18 @@ in {
       url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Pin hy3 to release compatible with Hyprland v0.51.x
+    hy3 = {
+      url = "git+https://github.com/outfoxxed/hy3?ref=hl0.51.0";
+      inputs.hyprland.follows = "hyprland";
+    };
+    # Pin Hyprland to the same release train used by the system flake
+    hyprland = {
+      url = "git+https://github.com/hyprwm/Hyprland?ref=v0.51.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    hyprland-protocols.follows = "hyprland/hyprland-protocols";
+    xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -167,7 +179,18 @@ in {
         pkgs = import nixpkgs {
           inherit system;
           overlays = [
-            (import ./packages/overlay.nix)
+            (import ../packages/overlay.nix)
+            (_: prev: let
+              inherit (prev.stdenv.hostPlatform) system;
+            in {
+              inherit (inputs.hyprland.packages.${system}) hyprland;
+              inherit (inputs.xdg-desktop-portal-hyprland.packages.${system}) xdg-desktop-portal-hyprland;
+              hyprlandPlugins =
+                prev.hyprlandPlugins
+                // {
+                  hy3 = inputs.hy3.packages.${system}.hy3;
+                };
+            })
           ]; # local packages overlay under pkgs.neg.* (no global NUR overlay)
           config = {
             allowAliases = false;
@@ -230,7 +253,6 @@ in {
             slack-mcp = pkgs.neg.slack_mcp;
             sqlite-mcp = pkgs.neg.sqlite_mcp;
             telegram-mcp = pkgs.neg.telegram_mcp;
-            telegram-bot-mcp = pkgs.neg.telegram_bot_mcp;
             github-mcp = pkgs.neg.github_mcp;
             gitlab-mcp = pkgs.neg.gitlab_mcp;
             discord-mcp = pkgs.neg.discord_mcp;

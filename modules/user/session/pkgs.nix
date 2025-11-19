@@ -45,6 +45,7 @@ in {
       pkgs.hyprpolkitagent # Wayland-friendly polkit agent
       pkgs.hyprprop # Hyprland property helper (xprop-like)
       pkgs.hyprutils # assorted Hyprland utilities
+      pkgs.hyprlandPlugins.hy3 # tiling plugin for Hyprland
       pkgs.pyprland # Hyprland plugin/runtime helper
       pkgs.upower # power management daemon for laptops/desktops
       pkgs.hyprland-qt-support # Qt integration helpers for Hyprland

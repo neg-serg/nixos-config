@@ -51,7 +51,7 @@ with lib;
         }
         # Replace ad-hoc ~/.local/bin files with guarded wrappers
         (let
-          mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;};
+          mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;};
         in
           lib.mkMerge [
             (mkLocalBin "swayimg" ''              #!/usr/bin/env bash

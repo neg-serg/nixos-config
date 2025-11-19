@@ -28,6 +28,7 @@ in {
 
     gui = {
       enable = mkBool "enable GUI stack (wayland/hyprland, quickshell, etc.)" true;
+      hy3.enable = mkBool "enable the hy3 tiling plugin for Hyprland" true;
       qt.enable = mkBool "enable Qt integrations for GUI (qt6ct, hyprland-qt-*)" true;
       quickshell.enable = mkBool "enable Quickshell (panel) at login" true;
     };
@@ -280,6 +281,7 @@ in {
           qt.enable = mkForce false;
           # Ensure nested GUI components are disabled when GUI is off
           quickshell.enable = mkForce false;
+          hy3.enable = mkForce false;
         };
       };
     })
@@ -295,6 +297,10 @@ in {
         {
           assertion = cfg.gui.enable || (! cfg.gui.qt.enable);
           message = "features.gui.qt.enable requires features.gui.enable = true";
+        }
+        {
+          assertion = cfg.gui.enable || (! cfg.gui.hy3.enable);
+          message = "features.gui.hy3.enable requires features.gui.enable = true";
         }
         {
           assertion = cfg.gui.enable || (! cfg.gui.quickshell.enable);

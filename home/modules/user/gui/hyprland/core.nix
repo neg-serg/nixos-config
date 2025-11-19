@@ -35,11 +35,12 @@ with lib; let
       # Ensure repo-managed Hypr files replace any existing files
       force = true;
     };
+  hy3Enabled = config.features.gui.hy3.enable or false;
 in
   mkIf config.features.gui.enable (lib.mkMerge [
     # Local helper: safe Hyprland reload that ensures Quickshell is started if absent
     (let
-      mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;};
+      mkLocalBin = import ../../../../../packages/lib/local-bin.nix {inherit lib;};
     in
       mkLocalBin "hypr-reload" ''        #!/usr/bin/env bash
                 set -euo pipefail
@@ -55,6 +56,7 @@ in
       home.packages = config.lib.neg.pkgsList (
         [hyprWinList]
         ++ lib.optionals (raiseProvider != null) [(raiseProvider pkgs)]
+        ++ lib.optionals hy3Enabled [pkgs.hyprlandPlugins.hy3]
       );
       programs.hyprlock.enable = true;
     }
@@ -93,4 +95,16 @@ in
       '')
       {xdg.configFile."hypr/hyprland.conf".force = true;}
     ])
+    (mkIf hy3Enabled (
+      let
+        pluginPath = "${pkgs.hyprlandPlugins.hy3}/lib/libhy3.so";
+      in
+        lib.mkMerge [
+          (xdg.mkXdgText "hypr/plugins.conf" ''
+            # Hyprland plugins
+            plugin = ${pluginPath}
+          '')
+          {xdg.configFile."hypr/plugins.conf".force = true;}
+        ]
+    ))
   ])

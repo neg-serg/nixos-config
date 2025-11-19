@@ -6,7 +6,7 @@
 }:
 with lib; let
   pySite = pkgs.python3.sitePackages;
-  mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;};
+  mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;};
 in
   mkIf (config.features.gui.enable or false) (
     mkIf (config.features.media.aiUpscale.enable or false) (

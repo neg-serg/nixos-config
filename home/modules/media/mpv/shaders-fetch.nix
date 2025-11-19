@@ -5,7 +5,7 @@
 }:
 with lib; let
   cfg = config.features.media.aiUpscale or {};
-  mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;};
+  mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;};
   script = mkLocalBin "mpv-shaders-fetch" ''    #!/usr/bin/env bash
         set -euo pipefail
 
