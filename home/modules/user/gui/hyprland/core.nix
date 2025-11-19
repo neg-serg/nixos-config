@@ -41,6 +41,10 @@ with lib; let
   pluginLines =
     ["plugin = ${hy3PluginPath}"]
     ++ lib.optional hyprsplitEnabled "plugin = ${hyprsplitPluginPath}";
+  hyprsplitPermissionLine =
+    lib.optionalString hyprsplitEnabled ''
+      permission = ${hyprsplitPluginPath}, plugin, allow
+    '';
 in
   mkIf config.features.gui.enable (lib.mkMerge [
     # Local helper: safe Hyprland reload that ensures Quickshell is started if absent
@@ -95,5 +99,19 @@ in
         ${lib.concatStringsSep "\n" pluginLines}
       '')
       {xdg.configFile."hypr/plugins.conf".force = true;}
+    ])
+    (lib.mkMerge [
+      (xdg.mkXdgText "hypr/hyprland.conf" ''
+        exec-once = /run/current-system/sw/bin/dbus-update-activation-environment --systemd --all && systemctl --user stop hyprland-session.target && systemctl --user start hyprland-session.target
+        exec-once = hyprctl plugin load ${hy3PluginPath}
+
+        source = ~/.config/hypr/init.conf
+
+        permission = ${hy3PluginPath}, plugin, allow
+        ${hyprsplitPermissionLine}
+        permission = ${lib.getExe pkgs.grim}, screencopy, allow
+        permission = ${lib.getExe pkgs.hyprlock}, screencopy, allow
+      '')
+      {xdg.configFile."hypr/hyprland.conf".force = true;}
     ])
   ])
