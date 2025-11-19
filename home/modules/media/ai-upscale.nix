@@ -4,7 +4,7 @@
   config,
   ...
 }: let
-  mkLocalBin = import ../../packages/lib/local-bin.nix {inherit lib;};
+  mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;};
 in
   with lib; let
     cfg = config.features.media.aiUpscale or {};

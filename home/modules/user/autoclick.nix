@@ -7,7 +7,7 @@
 }:
 with lib; let
   scriptText = builtins.readFile ./local-bin/scripts/autoclick-toggle;
-  mkLocalBin = import ../../packages/lib/local-bin.nix {inherit lib;};
+  mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;};
 in
   mkIf (config.features.gui.enable or false) (lib.mkMerge [
     {

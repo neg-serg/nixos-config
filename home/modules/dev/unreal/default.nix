@@ -289,7 +289,7 @@ in {
         }
         (
           let
-            mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;};
+            mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;};
           in
             lib.mkMerge [
               (mkLocalBin "ue5-editor" editorScript)

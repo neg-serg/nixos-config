@@ -208,7 +208,7 @@ in {
 
     # Create a local wrapper script under ~/.local/bin with activation-time guard.
     # See packages/lib/local-bin.nix for implementation details.
-    mkLocalBin = import ../../packages/lib/local-bin.nix {inherit lib;};
+    mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;};
 
     # XDG file helpers were split into a dedicated pure helper module
     # to avoid config/lib coupling in regular modules. Prefer importing

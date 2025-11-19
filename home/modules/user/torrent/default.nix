@@ -88,7 +88,7 @@ in
     }
     # Local bin wrapper installed to ~/.local/bin (avoid config.* to prevent recursion)
     (let
-      mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;};
+      mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;};
     in
       mkLocalBin "transmission-add-trackers" ''        #!/usr/bin/env bash
             set -euo pipefail
