@@ -1,4 +1,7 @@
 {...}: {
   programs.nano = {enable = false;};
-  imports = [./pkgs.nix];
+  imports = [
+    ./pkgs.nix
+    ./neovim/pkgs.nix
+  ];
 }
