@@ -120,10 +120,4 @@ in {
     username = "neg";
   };
 
-  # Auto-push built store paths to Cachix
-  services.cachix.watchStore = {
-    enable = false;
-    cacheName = "neg-serg";
-    authTokenFile = config.sops.secrets."cachix_env".path;
-  };
 }

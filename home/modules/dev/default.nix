@@ -41,7 +41,6 @@ in {
   imports = [
     ./android
     ./benchmarks
-    ./cachix
     ./ansible
     ./editor
     ./mcp.nix
