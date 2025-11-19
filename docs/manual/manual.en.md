@@ -93,6 +93,81 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
 - Hyprland plugins and portals are pinned through the system flake inputs; see the sections below
   for update policies.
 
+## Agent Guide & Conventions
+
+Use the same expectations regardless of whether you work under `modules/` or `home/`; helpers live
+side-by-side so the patterns apply to both configurations.
+
+### Key Locations
+
+- Core helpers: `modules/lib/neg.nix`
+- XDG helpers: `modules/lib/xdg-helpers.nix`
+- Feature definitions/options: `home/modules/features.nix`
+
+### Package Availability Checks
+
+- Before adding any `pkgs.*`/`nodePackages_*`, confirm the attribute exists using
+  `nix search` (or any flake evaluation) against this repo. Only wire packages that exist in the
+  currently pinned channel.
+
+### QML / Quickshell Touches
+
+- Stick to upstream Qt 6 best practices: small declarative components, property bindings over the
+  imperative approach, no binding loops or global JS helpers, explicit signal handlers.
+- Assume Qt 6+ APIs; review the latest Hyprland/Quickshell release notes before suggesting changes.
+- Automated QML linters are currently unavailable, so rely on these conventions.
+
+### XDG Helpers (Preferred)
+
+- Use `xdg.mkXdgText`, `xdg.mkXdgSource`, `xdg.mkXdgDataText`, `xdg.mkXdgDataSource`,
+  `xdg.mkXdgCacheText`, and `xdg.mkXdgCacheSource` instead of ad‑hoc `home.file` or shell commands.
+- JSON/TOML shortcuts: `xdg.mkXdgConfigJson`, `xdg.mkXdgDataJson`, `xdg.mkXdgConfigToml`,
+  `xdg.mkXdgDataToml`.
+
+### Conditional Sugar
+
+- `config.lib.neg.mkWhen` / `mkUnless` wrap `lib.mkIf`. Prefer them for readability when enabling
+  chunks under feature flags.
+
+### Activation Helpers
+
+- `mkEnsureRealDir` / `mkEnsureRealDirsMany` for directories before `linkGeneration`.
+- `mkEnsureAbsent` / `mkEnsureAbsentMany` to delete conflicting paths pre‑activation.
+- `mkEnsureDirsAfterWrite` and `mkEnsureMaildirs` for post‑writeBoundary directory creation.
+- Use per-file `force = true` instead of re‑adding global XDG cleanup.
+- Local scripts: `config.lib.neg.mkLocalBin name text` removes conflicts and marks the file
+  executable before linking.
+
+### Systemd (User) Pattern
+
+- Always combine `lib.mkMerge` with `config.lib.neg.systemdUser.mkUnitFromPresets` for consistent
+  `After=/WantedBy=` wiring; avoid the legacy `mkSimple*` helpers (they have recursion edge cases).
+- Examples:
+  - Service: preset `["defaultWanted"]`
+  - Timer: preset `["timers"]`
+
+### Rofi Wrapper Notes
+
+- `~/.local/bin/rofi` injects safe defaults: `-no-config`, `-auto-select`, Ctrl+C cancel bindings,
+  theme resolution relative to XDG paths, Hyprland/Quickshell offset detection.
+- Keep per-call options minimal; if you need custom keybindings pass them explicitly (the wrapper
+  will respect overrides).
+
+### Editor Shim
+
+- Use `v` (Neovim shim at `~/.local/bin/v`) in bindings/scripts that expect a short editor name.
+
+### Soft Migrations / Warnings
+
+- Emit guidance with `warnings = lib.optional cond "message";` instead of `builtins.trace`.
+- Keep warning conditions cheap and avoid referencing `config.lib.neg` while evaluating options.
+
+### Commit Messages
+
+- Stick to `[scope] summary`. Examples: `[mcp] add docsearch server`,
+  `[quickshell/gui] improve keyboard indicator`.
+- Scopes can be combined via `/` (e.g. `[cli/gui] …`) when touching multiple areas.
+
 ## Evaluation Noise Policy
 
 - No evaluation-time warnings or traces. Keep builds and switches quiet.
