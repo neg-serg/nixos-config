@@ -14,7 +14,7 @@ with lib;
           # and possible library filename variants (e.g., libhyprland-hy3.so).
           # RE2 full-match is used; keep anchors.
           permission = ^/nix/store/[^/]+-hy3-[^/]+/lib/[^/]*hy3[^/]*\.so$, plugin, allow
-          permission = /etc/hypr/libhy3.so, plugin, allow
+          permission = /etc/static/hypr/libhy3.so, plugin, allow
         '';
         hyprsplitPerms =
           if (config.features.gui.hyprsplit.enable or false)

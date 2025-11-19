@@ -111,7 +111,7 @@ diff --git a/modules/user/gui/hyprland/core.nix b/modules/user/gui/hyprland/core
        xdg.mkXdgText "hypr/plugins.conf" ''
          # Hyprland plugins
 -        plugin = ${pluginPath}
-+        plugin = /etc/hypr/libhy3.so
++        plugin = /etc/static/hypr/libhy3.so
        ''
      ))
      # Overwrite existing generated plugin config file if present
