@@ -22,7 +22,6 @@ in {
         pkgs.foremost # recover files from raw disk data
         pkgs.freeze # render source files to images
         pkgs.gcc # GNU compiler collection
-        pkgs.gdb # GNU debugger
         pkgs.hexyl # hexdump viewer
         pkgs.hyperfine # benchmarking tool
         pkgs.license-generator # CLI license boilerplates
