@@ -123,5 +123,6 @@ in {
       pkgs.zoxide # smarter cd with ranking
       ugrepWithConfig # better grep, rg alternative (wrapped with global config)
     ]
+    ++ lib.optional (pkgs ? icedtea-web) pkgs.icedtea-web
     ++ lib.optional (hishtoryPkg != null) hishtoryPkg;
 }
