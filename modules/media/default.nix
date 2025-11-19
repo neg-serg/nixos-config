@@ -6,5 +6,6 @@
     ./audio/mpd-packages.nix
     ./multimedia-packages.nix
     ./images/packages.nix
+    ./ai-upscale-packages.nix
   ];
 }

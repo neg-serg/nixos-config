@@ -72,7 +72,6 @@ in
       in
         lib.mkMerge [
           (lib.mkIf (haveRE && haveFF) {
-            home.packages = [pkgs.realesrgan-ncnn-vulkan pkgs.ffmpeg-full];
             # Optional: quick launcher from mpv (Alt+U) to kick off offline upscale of current file
             programs.mpv.bindings = {
               "Alt+U" = lib.concatStringsSep "" [
@@ -84,8 +83,5 @@ in
             };
           })
           (lib.mkIf (haveRE && haveFF) upscaleScript)
-          (lib.mkIf (!haveRE) {
-            warnings = ["realesrgan-ncnn-vulkan is not available on this nixpkgs pin; AI upscale wrapper not installed."];
-          })
         ]
     )
