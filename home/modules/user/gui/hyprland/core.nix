@@ -3,7 +3,6 @@
   config,
   pkgs,
   xdg,
-  raiseProvider ? null,
   systemdUser,
   ...
 }:
