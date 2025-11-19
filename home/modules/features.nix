@@ -4,7 +4,40 @@
   ...
 }:
 with lib; let
-  cfg = config.features;
+  defaults = {
+    profile = "full";
+    devSpeed.enable = false;
+    gui = {
+      enable = true;
+      hy3.enable = true;
+      qt.enable = true;
+      quickshell.enable = true;
+    };
+    web = {
+      enable = true;
+      tools.enable = true;
+      addonsFromNUR.enable = true;
+      floorp.enable = true;
+      firefox.enable = false;
+      librewolf.enable = false;
+      nyxt.enable = true;
+      yandex.enable = true;
+      prefs.fastfox.enable = true;
+    };
+    dev = {
+      enable = true;
+      ai.enable = true;
+      rust.enable = true;
+      cpp.enable = true;
+      haskell.enable = true;
+    };
+    mail.enable = true;
+    hack.enable = true;
+    fun.enable = true;
+    torrent.enable = true;
+    apps.obsidian.autostart.enable = false;
+  };
+  cfg = lib.recursiveUpdate defaults (config.features or {});
   # Use a local mkBool to avoid early dependency on config.lib.neg during option evaluation
   mkBool = desc: default: (lib.mkEnableOption desc) // {inherit default;};
   # Read dev-speed mode from environment (HM_DEV_SPEED=1|true|yes)
