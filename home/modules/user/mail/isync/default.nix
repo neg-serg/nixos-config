@@ -6,8 +6,11 @@
   systemdUser,
   ...
 }:
-with lib;
-  mkIf config.features.mail.enable (lib.mkMerge [
+let
+  mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;};
+in
+  with lib;
+    mkIf config.features.mail.enable (lib.mkMerge [
     {
       # Install isync/mbsync and keep using the XDG config at ~/.config/isync/mbsyncrc
       programs.mbsync.enable = true;
@@ -44,7 +47,7 @@ with lib;
         (systemdUser.mkUnitFromPresets {presets = ["timers"];})
       ];
     }
-    (config.lib.neg.mkLocalBin "sync-mail" ''
+    (mkLocalBin "sync-mail" ''
       #!/usr/bin/env bash
       set -euo pipefail
       exec systemctl --user start --no-block mbsync-gmail.service
