@@ -1,20 +1,10 @@
 {
+  lib,
   config,
   pkgs,
   ...
-}: {
-  # Consolidate minor activation tasks via shared key in other modules
-
-  home.packages = config.lib.neg.pkgsList [
-    pkgs.amfora # terminal browser for gemini
-    pkgs.antiword # convert ms word to text or ps
-    pkgs.epr # cli epub reader
-    pkgs.glow # markdown viewer
-    pkgs.lowdown # cat for markdown
-    pkgs.recoll # full-text search tool
-    pkgs.sioyek # nice zathura alternative
-    pkgs.tesseract # ocr
-  ];
+}:
+lib.mkIf (config.features.text.read.enable or false) {
   programs.zathura = {
     enable = true;
     options = {
