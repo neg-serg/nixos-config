@@ -26,13 +26,7 @@ in {
 
   config = lib.mkIf cfg.enable (
     let
-      packages = lib.concatLists [
-        (lib.optionals (cfg.envision.enable or false) [pkgs.envision])
-        (lib.optionals (cfg.runtime.enable or false) [pkgs.monado])
-        (lib.optionals (cfg.runtime.vulkanLayers.enable or false) [pkgs."monado-vulkan-layers"])
-        (lib.optionals (cfg.tools.motoc.enable or false) [pkgs.motoc])
-        (lib.optionals (cfg.tools.basaltMonado.enable or false) [pkgs."basalt-monado"])
-      ];
+      # Runtime/tool packages now handled via modules/dev/openxr/default.nix.
       configExample = ''
         // Monado user configuration (example).
         // Rename to config.json to activate and adjust per your hardware.
@@ -65,7 +59,6 @@ in {
       '';
     in
       lib.mkMerge [
-        {home.packages = config.lib.neg.pkgsList packages;}
         (xdg.mkXdgText "monado/config.example.jsonc" configExample)
         (xdg.mkXdgText "monado/basalt.config.example.jsonc" basaltExample)
         (lib.mkIf (cfg.runtime.service.enable or false) {
