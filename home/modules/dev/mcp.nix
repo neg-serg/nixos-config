@@ -71,11 +71,14 @@
   gitlabEnabled = hasEnv "GITLAB_TOKEN";
   discordEnabled = hasEnv "DISCORD_BOT_TOKEN";
   telegramEnabled = hasAllEnv ["TG_APP_ID" "TG_API_HASH"];
+  braveSearchEnabled = hasEnv "BRAVE_API_KEY";
+  exaEnabled = hasEnv "EXA_API_KEY";
+  postgresEnabled = hasEnv "MCP_POSTGRES_URL";
+  telegramBotEnabled = hasEnv "TELEGRAM_BOT_TOKEN";
+  tsgramEnabled = (hasEnv "TELEGRAM_BOT_TOKEN") && hasEnv "TSGRAM_AUTHORIZED_CHAT_ID";
   disabledServers = [
     "browserbase"
-    "brave-search"
     "docsearch-local"
-    "exa"
     "exa-search"
     "git-local"
     "postgres-local"
@@ -113,6 +116,11 @@ in
         chromiumBinary = "${pkgs.neg.chromium_mcp}/bin/mcp-chromium-cdp";
         meetingNotesBinary = "${pkgs.neg.meeting_notes_mcp}/bin/meeting-notes-mcp";
         telegramBinary = "${pkgs.neg.telegram_mcp}/bin/telegram-mcp";
+        braveBinary = "${pkgs.neg.brave_search_mcp}/bin/brave-search-mcp-server";
+        exaBinary = "${pkgs.neg.exa_mcp}/bin/exa-mcp-server";
+        postgresBinary = "${pkgs.neg.postgres_mcp}/bin/mcp-server-postgres";
+        telegramBotBinary = "${pkgs.neg.telegram_bot_mcp}/bin/telegram-bot-mcp";
+        tsgramBinary = "${pkgs.neg.tsgram_mcp}/bin/telegram-mcp";
       in {
         enable = true;
         servers =
@@ -228,6 +236,54 @@ in
               command = meetingNotesBinary;
               env = {
                 CLAUDE_SESSION_NOTES_DIR = meetingNotesDir;
+              };
+            };
+          }
+          // lib.optionalAttrs braveSearchEnabled {
+            brave-search = {
+              command = braveBinary;
+              args = [
+                "--transport"
+                "stdio"
+              ];
+              env = {
+                BRAVE_API_KEY = "{env:BRAVE_API_KEY}";
+                BRAVE_MCP_ENABLED_TOOLS = "{env:BRAVE_MCP_ENABLED_TOOLS}";
+                BRAVE_MCP_DISABLED_TOOLS = "{env:BRAVE_MCP_DISABLED_TOOLS}";
+                BRAVE_MCP_LOG_LEVEL = "{env:BRAVE_MCP_LOG_LEVEL}";
+              };
+            };
+          }
+          // lib.optionalAttrs exaEnabled {
+            exa = {
+              command = exaBinary;
+              env = {
+                EXA_API_KEY = "{env:EXA_API_KEY}";
+              };
+            };
+          }
+          // lib.optionalAttrs postgresEnabled {
+            postgres = {
+              command = postgresBinary;
+              args = [
+                "{env:MCP_POSTGRES_URL}"
+              ];
+            };
+          }
+          // lib.optionalAttrs telegramBotEnabled {
+            telegram-bot = {
+              command = telegramBotBinary;
+              env = {
+                TELEGRAM_BOT_TOKEN = "{env:TELEGRAM_BOT_TOKEN}";
+              };
+            };
+          }
+          // lib.optionalAttrs tsgramEnabled {
+            tsgram = {
+              command = tsgramBinary;
+              env = {
+                TELEGRAM_BOT_TOKEN = "{env:TELEGRAM_BOT_TOKEN}";
+                AUTHORIZED_CHAT_ID = "{env:TSGRAM_AUTHORIZED_CHAT_ID}";
               };
             };
           }
@@ -405,7 +461,12 @@ in
         ++ lib.optional githubEnabled pkgs.neg.github_mcp
         ++ lib.optional gitlabEnabled pkgs.neg.gitlab_mcp
         ++ lib.optional discordEnabled pkgs.neg.discord_mcp
-        ++ lib.optional telegramEnabled pkgs.neg.telegram_mcp;
+        ++ lib.optional telegramEnabled pkgs.neg.telegram_mcp
+        ++ lib.optional braveSearchEnabled pkgs.neg.brave_search_mcp
+        ++ lib.optional exaEnabled pkgs.neg.exa_mcp
+        ++ lib.optional postgresEnabled pkgs.neg.postgres_mcp
+        ++ lib.optional telegramBotEnabled pkgs.neg.telegram_bot_mcp
+        ++ lib.optional tsgramEnabled pkgs.neg.tsgram_mcp;
 
       home.activation.ensureMcpStateDirs = config.lib.neg.mkEnsureRealDirsMany (
         [

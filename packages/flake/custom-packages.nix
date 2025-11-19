@@ -25,4 +25,9 @@
   media-search-mcp = pkgs.neg.media_search_mcp;
   agenda-mcp = pkgs.neg.agenda_mcp;
   knowledge-mcp = pkgs.neg.knowledge_mcp;
+  brave-search-mcp = pkgs.neg.brave_search_mcp;
+  exa-mcp = pkgs.neg.exa_mcp;
+  postgres-mcp = pkgs.neg.postgres_mcp;
+  telegram-bot-mcp = pkgs.neg.telegram_bot_mcp;
+  tsgram-mcp = pkgs.neg.tsgram_mcp;
 }
