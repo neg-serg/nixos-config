@@ -133,7 +133,7 @@ in {
 
 ## Hyprland: единый источник и обновления
 
-- Источник истины: `inputs.hyprland` (композитор) и `inputs.hy3` (плагин) обе тянутся с ветки master; конкретные коммиты фиксирует `flake.lock`.
+- Источник истины: `inputs.hyprland` (композитор) и `inputs.hy3` (плагин) закреплены на релизной ветке Hyprland v0.51.x; конкретные коммиты фиксирует `flake.lock`.
 - Оверлей NixOS переназначает `pkgs.hyprland`, `pkgs.xdg-desktop-portal-hyprland` и `pkgs.hyprlandPlugins.hy3` на эти инпуты, так что в модулях достаточно использовать `pkgs.*`.
 - Связанные инпуты синхронизируются через `follows` (`hyprland-protocols`, `xdg-desktop-portal-hyprland` и др.), дополнительных ручных подключений портала не нужно.
 - Не добавляйте `xdg-desktop-portal-hyprland` в `xdg.portal.extraPortals` — сервис уже приезжает через `portalPackage`.
@@ -143,7 +143,7 @@ in {
 1) Обновить пины: `nix flake update hyprland hy3` (остальные hyprland‑инпуты подтянутся автоматически).
 2) Пересобрать систему: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.
 
-Опционально: при включённом `system.autoUpgrade` добавьте `--update-input hyprland --update-input hy3`, чтобы плановые апдейты следовали за master. Обычно обновляем вручную, чтобы контролировать ABI.
+Опционально: при включённом `system.autoUpgrade` добавьте `--update-input hyprland --update-input hy3` при осознанном переходе на следующий релиз Hyprland. Обычно обновляем вручную, чтобы контролировать ABI.
 
 ## Роли и профили
 
