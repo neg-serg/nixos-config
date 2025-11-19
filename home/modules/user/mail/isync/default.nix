@@ -7,7 +7,7 @@
   ...
 }:
 let
-  mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;};
+  mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;};
 in
   with lib;
     mkIf config.features.mail.enable (lib.mkMerge [
