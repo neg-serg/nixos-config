@@ -1,7 +1,7 @@
 ##
 # Module: monitoring/php-fpm-exporter
 # Purpose: Harden and order the Prometheus PHP-FPM exporter to work with Nextcloud's unix socket.
-# Implements AGENTS tips:
+# Implements docs/manual/en.md (AGENTS section) tips:
 #  - Allow AF_UNIX in sandbox, add nginx group, run as prometheus (not DynamicUser)
 #  - Start after Nextcloud PHP-FPM pool to avoid early failures
 {
