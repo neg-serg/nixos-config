@@ -31,18 +31,7 @@ in
         "${confDirNew}/blocklists"
       ];
 
-      # Core torrent tools (migration helpers removed)
-      home.packages = config.lib.neg.pkgsList [
-        transmissionPkg # Transmission 4 BitTorrent client
-        pkgs.bitmagnet # BitTorrent DHT crawler/search (CLI)
-        pkgs.neg.bt_migrate # migrate legacy torrent data/config
-        pkgs.rustmission # transmission-remote replacement (Rust CLI)
-        pkgs.curl # required by trackers update helper
-        pkgs.jq # required by trackers update helper
-        pkgs.jackett # torrent indexer/aggregator with Torznab/JSON API
-      ];
-
-      # No additional activation cleanup for Transmission config; rely on XDG helpers.
+      # Core torrent tooling now ships system-wide (modules/torrent/default.nix).
     }
     {
       # Jackett service (systemd user)
