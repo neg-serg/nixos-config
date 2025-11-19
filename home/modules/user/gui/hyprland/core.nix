@@ -35,16 +35,6 @@ with lib; let
       # Ensure repo-managed Hypr files replace any existing files
       force = true;
     };
-  hyprsplitEnabled = config.features.gui.hyprsplit.enable or false;
-  hy3PluginPath = "${pkgs.hyprlandPlugins.hy3}/lib/libhy3.so";
-  hyprsplitPluginPath = "${pkgs.hyprlandPlugins.hyprsplit}/lib/libhyprsplit.so";
-  pluginLines =
-    ["plugin = ${hy3PluginPath}"]
-    ++ lib.optional hyprsplitEnabled "plugin = ${hyprsplitPluginPath}";
-  hyprsplitPermissionLine =
-    lib.optionalString hyprsplitEnabled ''
-      permission = ${hyprsplitPluginPath}, plugin, allow
-    '';
 in
   mkIf config.features.gui.enable (lib.mkMerge [
     # Local helper: safe Hyprland reload that ensures Quickshell is started if absent
@@ -92,23 +82,12 @@ in
     (lib.mkMerge (map mkHyprSource coreFiles))
     (mkHyprSource "init.conf")
     (mkHyprSource "bindings.conf")
-    # Dynamically generated plugin loader
-    (lib.mkMerge [
-      (xdg.mkXdgText "hypr/plugins.conf" ''
-        # Hyprland plugins
-        ${lib.concatStringsSep "\n" pluginLines}
-      '')
-      {xdg.configFile."hypr/plugins.conf".force = true;}
-    ])
     (lib.mkMerge [
       (xdg.mkXdgText "hypr/hyprland.conf" ''
-        source = ~/.config/hypr/plugins.conf
         exec-once = /run/current-system/sw/bin/dbus-update-activation-environment --systemd --all && systemctl --user stop hyprland-session.target && systemctl --user start hyprland-session.target
 
         source = ~/.config/hypr/init.conf
 
-        permission = ${hy3PluginPath}, plugin, allow
-        ${hyprsplitPermissionLine}
         permission = ${lib.getExe pkgs.grim}, screencopy, allow
         permission = ${lib.getExe pkgs.hyprlock}, screencopy, allow
       '')
