@@ -21,6 +21,6 @@
   ];
 in {
   config = lib.mkIf guiEnabled {
-    environment.systemPackages = lib.mkAfter packages;
+    fonts.packages = lib.mkAfter packages;
   };
 }
