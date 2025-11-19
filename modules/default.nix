@@ -7,6 +7,7 @@
     ./emulators
     ./flatpak
     ./games
+    ./fun
     ./hardware
     ./home-manager
     ./llm
