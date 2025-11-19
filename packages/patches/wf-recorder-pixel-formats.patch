@@ -1,0 +1,21 @@
+diff --git a/src/frame-writer.cpp b/src/frame-writer.cpp
+index 6173a65..a1b61c4 100644
+--- a/src/frame-writer.cpp
++++ b/src/frame-writer.cpp
+@@ -294,8 +294,14 @@ void FrameWriter::init_filter_graph(AVCodecContext *codec)
+         AV_PIX_FMT_NONE
+     };
+ 
+-    err = av_opt_set_int_list(this->videoFilterSinkCtx, "pix_fmts",
+-        picked_pix_fmt, AV_PIX_FMT_NONE, AV_OPT_SEARCH_CHILDREN);
++    err = av_opt_set(this->videoFilterSinkCtx, "pixel_formats",
++        av_get_pix_fmt_name(picked_pix_fmt[0]), AV_OPT_SEARCH_CHILDREN);
++
++    if (err == AVERROR_OPTION_NOT_FOUND || err == AVERROR(EINVAL)) {
++        err = av_opt_set_int_list(this->videoFilterSinkCtx, "pix_fmts",
++            picked_pix_fmt, AV_PIX_FMT_NONE, AV_OPT_SEARCH_CHILDREN);
++    }
++
+ 
+     if (err < 0) {
+         std::cerr << "Failed to set pix_fmts: " << averr(err) << std::endl;;
