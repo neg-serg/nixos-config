@@ -4,7 +4,7 @@ This note pulls together every moving part related to the `hy3` plugin so we can
 
 ## Source of Truth and Pinning
 
-- The flake pins Hyprland and the `hy3` plugin to the Hyprland v0.51.x release series so the plugin ABI always matches the compositor (`flake.nix`:12-39). The lock file pins the exact commits under that release.
+- The flake pins Hyprland to v0.52.1 while `hy3` stays on tag `hl0.51.0`, the last stable ABI for the plugin (`flake.nix`:12-39). The lock file pins the exact commits under that release.
 - Supporting inputs (`hyprland-protocols`, `xdg-desktop-portal-hyprland`) follow Hyprland's inputs, so once the Hyprland pin is bumped the portal + protocol packages move in lockstep (`flake.nix`:22-25).
 
 ## nixpkgs Overlay

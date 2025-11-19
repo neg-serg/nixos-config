@@ -24,9 +24,16 @@ nixos-generators
 - If a package/feature is unavailable, silently skip or guard with a flag. Document behavior in module docs/README instead of emitting warnings.
 - Use assertions only for truly fatal misconfigurations that would break the system, and phrase them concisely.
 
+## Custom Packages Overlay
+
+- All local derivations (`pkgs.neg.*`, CLI wrappers, MCP servers, etc.) now live under the top-level `packages/` directory instead of `home/packages/`.
+- The system modules add this overlay via `modules/nix/home-overlay.nix`; the Home Manager flake reuses it through `../packages/overlay.nix` so both sides see the same package set.
+- When working inside `home/`, remember paths now need one more `../` to reach the shared `packages/` tree.
+- Flake outputs for the custom servers are exposed at the repository root (e.g. `nix build .#mcp-server-filesystem`), so you no longer need to enter `home/` to package or publish them.
+
 ## Hyprland: Single Source of Truth and Updates
 
-- Source of truth: `inputs.hyprland` (compositor) and `inputs.hy3` (plugin) are pinned to the Hyprland v0.51.x release train; `flake.lock` still captures the exact commits.
+- Source of truth: `inputs.hyprland` (compositor) tracks Hyprland v0.52.1 while `inputs.hy3` stays pinned to `hl0.51.0` (last stable plugin tag); `flake.lock` still captures the exact commits.
 - The NixOS overlay routes `pkgs.hyprland`, `pkgs.xdg-desktop-portal-hyprland`, and `pkgs.hyprlandPlugins.hy3` to those inputs, so Home‑Manager modules can just use `pkgs.*`.
 - Supporting inputs stay in lockstep via `follows` (`hyprland-protocols`, `xdg-desktop-portal-hyprland`, etc.); no manual portal wiring beyond `programs.hyprland.portalPackage = pkgs.xdg-desktop-portal-hyprland`.
 - Do not add `xdg-desktop-portal-hyprland` to `xdg.portal.extraPortals` — the package already provides the portal service when set as `portalPackage`.
