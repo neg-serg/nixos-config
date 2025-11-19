@@ -10,6 +10,7 @@
     ./fun
     ./hardware
     ./home-manager
+    ./text
     ./llm
     ./monitoring
     ./nix
