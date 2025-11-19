@@ -1,21 +1,97 @@
-# Interesting stuff
+# Repository Overview
 
-```
+This repository contains the system-wide NixOS configuration together with the legacy Home Manager
+flake (under `home/`). The NixOS modules are the single source of truth: all packages and services
+are wired from `modules/`, while the Home Manager tree stays available for standalone/remote setups
+and development. The documentation below replaces the duplicated READMEs from both projects so that
+every workflow points to the same manual.
 
-# Nextcloud: pin major version (package)
-{ pkgs, ... }: {
-  # Use a specific Nextcloud derivation (e.g., 31)
-  servicesProfiles.nextcloud.package = pkgs.nextcloud31;
-  # Or point to a flake-provided package
-  # servicesProfiles.nextcloud.package = inputs.my-nextcloud.packages.${system}.nextcloud;
-}
-```
-nixtheplanet.url = "github:matthewcroughan/NixThePlanet";
-```
+## Working Tree Layout
 
-```
-nixos-generators
-```
+- `modules/`, `packages/`, `docs/`, `hosts/`, … — system configuration and documentation.
+- `home/` — legacy Home Manager flake; still useful for experiments or WSL-only setups.
+- `templates/` — developer scaffolding (Rust crane, Python CLI, shell app).
+- `docs/manual/manual.*.md` — canonical guides (this file).
+
+## Quick Start (System)
+
+- Rebuild: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`
+- Flake options: `nix run .#gen-options`
+- Formatting/lint: `just fmt`, `just lint`, `just check`
+- Hooks (optional): `just hooks-enable`
+
+## Quick Start (Home Manager)
+
+### Prerequisites
+
+1. Install Nix with flakes enabled (`experimental-features = nix-command flakes`).
+2. Bootstrap Home Manager via flakes:
+   `nix run home-manager/master -- init --switch`
+3. Optional helper: `nix profile install nixpkgs#just`
+
+### Clone & Switch Profiles
+
+- Clone standalone repo (for laptops/WSL) or reuse `/etc/nixos/home` in unified setups.
+- Switch Home Manager profiles:
+  - Full: `just hm-neg` (alias for `home-manager switch --flake .#neg`)
+  - Lite: `just hm-lite` (alias for `home-manager switch --flake .#neg-lite`)
+- Build without switching: `just hm-build`
+- Unified repo reminder: prefer `sudo nixos-rebuild switch --flake /etc/nixos#<host>`; the `hm-*`
+  targets remain for standalone/dev workflows.
+
+### Profiles & Feature Flags
+
+- Primary toggle: `features.profile = "full" | "lite"` (lite disables GUI/media/dev stacks).
+- Feature definitions live in `home/modules/features.nix`; documentation: `home/OPTIONS.md`.
+- Key flags:
+  - GUI (`features.gui.*`), Web (`features.web.*`), Secrets (`features.secrets.enable`)
+  - Dev stacks (`features.dev.*`, `features.dev.openxr.*`, `features.dev.unreal.*`)
+  - Media/Torrent (`features.media.*`, `features.torrent.enable`)
+  - Finance (`features.finance.tws.enable`), Fun extras (`features.fun.enable`)
+  - Package exclusions by pname via `features.excludePkgs`
+
+Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false` values).
+
+### Everyday Commands
+
+- Formatting: `just fmt`
+- Checks: `just check`
+- Lint only: `just lint`
+- Switch HM profiles: `just hm-neg` / `just hm-lite`
+- Status/logs helper: `just hm-status` (`systemctl --user --failed` + journal tail)
+
+### Secrets (sops-nix / vaultix)
+
+- Secrets live under `secrets/` and are wired via sops-nix; vaultix migration docs now live in
+  `docs/vaultix-migration.{md,ru.md}`.
+- Age keys should reside in `~/.config/sops/age/keys.txt`.
+- Cachix token is tracked via `secrets/cachix.env` (sops file).
+
+### Systemd (User) Services
+
+- Prefer `config.lib.neg.systemdUser.mkUnitFromPresets` to attach the correct targets:
+  `graphical`, `netOnline`, `defaultWanted`, `timers`, `dbusSocket`, `socketsTarget`.
+- Manage services via `systemctl --user start|stop|status <unit>`, logs via
+  `journalctl --user -u <unit>`.
+
+### Hyprland & GUI Notes
+
+- Hyprland autoreload stays off; reload manually via the keybinding.
+- Hypr config is split under `modules/user/gui/hypr/conf/*` and linked via Home Manager.
+- `~/.local/bin/rofi` wrapper enforces consistent flags, auto-select, and theme lookup in XDG
+  paths; disable auto-select per call with `-no-auto-select`.
+- Quickshell keyboard layout indicator listens to Hyprland `keyboard-layout` events, prefers the
+  `main: true` device, and uses `hyprctl switchxkblayout current next` on click.
+- Floorp customizations keep the nav bar on top and strip telemetry/Activity Stream noise by
+  default; toggle advanced tweaks in `modules/user/web/floorp.nix` if needed.
+- Swayimg wrappers (`swayimg-first`) land in `~/.local/bin/swayimg` and are tuned via Hyprland
+  window rules.
+
+### Miscellaneous Developer Notes
+
+- Commit format: `[scope] message` (enforced by `.githooks/commit-msg` if enabled).
+- Hyprland plugins and portals are pinned through the system flake inputs; see the sections below
+  for update policies.
 
 ## Evaluation Noise Policy
 
