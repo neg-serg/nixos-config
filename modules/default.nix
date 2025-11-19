@@ -9,6 +9,7 @@
     ./db
     ./games
     ./fun
+    ./fonts
     ./torrent
     ./hardware
     ./home-manager
