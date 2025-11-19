@@ -11,7 +11,6 @@ with lib; {
     ./lib/neg.nix
     ./features.nix
     ./cli
-    ./db
     ./dev
     ./distros
     ./flatpak
