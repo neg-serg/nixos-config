@@ -8,20 +8,6 @@
   ...
 }:
 with lib; let
-  hyprWinList = pkgs.writeShellApplication {
-    name = "hypr-win-list";
-    runtimeInputs = [
-      pkgs.python3
-      pkgs.wl-clipboard
-    ];
-    text = let
-      tpl = builtins.readFile ../hypr/hypr-win-list.py;
-    in ''
-                   exec python3 <<'PY'
-      ${tpl}
-      PY
-    '';
-  };
   coreFiles = [
     "vars.conf"
     "classes.conf"
@@ -52,14 +38,7 @@ in
                 systemctl --user start quickshell.service >/dev/null 2>&1 || true
       '')
     # Removed custom kb-layout-next wrapper; rely on Hyprland dispatcher and XKB options
-    {
-      home.packages = config.lib.neg.pkgsList (
-        [hyprWinList]
-        ++ lib.optionals (raiseProvider != null) [(raiseProvider pkgs)]
-        ++ lib.optionals hy3Enabled [pkgs.hyprlandPlugins.hy3]
-      );
-      programs.hyprlock.enable = true;
-    }
+    {programs.hyprlock.enable = true;}
     # Ensure polkit agent starts in a Wayland session and uses the graphical preset.
     {
       systemd.user.services.hyprpolkitagent = lib.mkMerge [

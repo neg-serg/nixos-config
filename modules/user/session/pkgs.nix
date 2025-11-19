@@ -9,6 +9,20 @@
   };
   quickshellPkg = inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default;
   quickshellWrapped = mkQuickshellWrapper {qsPkg = quickshellPkg;};
+  hyprWinList = pkgs.writeShellApplication {
+    name = "hypr-win-list";
+    runtimeInputs = [
+      pkgs.python3
+      pkgs.wl-clipboard
+    ];
+    text = let
+      tpl = builtins.readFile ../../../home/modules/user/gui/hypr/hypr-win-list.py;
+    in ''
+                   exec python3 <<'PY'
+      ${tpl}
+      PY
+    '';
+  };
 in {
   # Wayland/Hyprland tools and small utilities
   environment.systemPackages =
@@ -78,6 +92,7 @@ in {
       pkgs.tdl # Telegram CLI uploader/downloader
       pkgs.vesktop # Discord (Vencord) desktop client
       pkgs.nchat # terminal-first Telegram client
+      hyprWinList
     ]
     ++ lib.optionals (pkgs ? uwsm) [pkgs.uwsm];
 }
