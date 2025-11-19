@@ -6,6 +6,7 @@
     ./documentation
     ./emulators
     ./flatpak
+    ./db
     ./games
     ./fun
     ./hardware
