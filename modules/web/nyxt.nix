@@ -45,10 +45,7 @@
     if fromCustom != null
     then fromCustom
     else fromChaotic;
-  fallback =
-    if pkgs ? nyxt4-bin
-    then pkgs.nyxt4-bin
-    else pkgs.nyxt;
+  fallback = pkgs.nyxt4-bin or pkgs.nyxt;
   package =
     if nyxtCandidate != null
     then nyxtCandidate
