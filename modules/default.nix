@@ -10,6 +10,7 @@
     ./games
     ./fun
     ./fonts
+    ./web
     ./torrent
     ./hardware
     ./home-manager
