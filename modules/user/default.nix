@@ -3,6 +3,7 @@
     ./bash.nix
     ./dbus.nix
     ./fonts.nix
+    ./theme-packages.nix
     ./gui-packages.nix
     ./games
     ./mail.nix

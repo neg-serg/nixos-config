@@ -17,16 +17,6 @@ in
   lib.mkMerge [
     {
       home = lib.mkIf (config.features.gui.enable or false) {
-        packages =
-          [
-            pkgs.adw-gtk3 # adwaita port to gtk3
-            pkgs.dconf # gnome registry
-            iosevkaNeg.nerd-font # install my custom iosevka build
-          ]
-          ++ lib.optionals (config.features.gui.qt.enable or false) [
-            pkgs.kdePackages.qtstyleplugin-kvantum # nice qt6 themes
-            pkgs.libsForQt5.qtstyleplugin-kvantum # nice qt5 themes
-          ];
         pointerCursor = {
           gtk.enable = true;
           x11.enable = lib.mkForce false;
