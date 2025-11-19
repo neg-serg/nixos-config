@@ -1,3 +1,7 @@
 {...}: {
-  imports = [./pkgs.nix];
+  imports = [
+    ./pass
+    ./yubikey
+    ./pkgs.nix
+  ];
 }

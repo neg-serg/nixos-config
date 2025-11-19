@@ -130,6 +130,10 @@ in {
     # GPG stack (gpg, gpg-agent, pinentry)
     gpg.enable = mkBool "enable GPG and gpg-agent (creates ~/.gnupg)" true;
 
+    secrets = {
+      enable = mkBool "enable secrets tooling (pass, YubiKey helpers)" true;
+    };
+
     # Development-speed mode: aggressively trim heavy features/inputs for faster local iteration
     devSpeed.enable = mkBool "enable dev-speed mode (trim heavy features for faster eval)" false;
 
