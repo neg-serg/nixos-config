@@ -2,6 +2,7 @@
   lib,
   pkgs,
   inputs,
+  config,
   ...
 }: let
   mkQuickshellWrapper = import ../../../lib/quickshell-wrapper.nix {
@@ -9,6 +10,16 @@
   };
   quickshellPkg = inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default;
   quickshellWrapped = mkQuickshellWrapper {qsPkg = quickshellPkg;};
+  hostSystem = pkgs.stdenv.hostPlatform.system;
+  devSpeed = config.features.devSpeed.enable or false;
+  guiEnabled = config.features.gui.enable or false;
+  getInputPackage = input: lib.attrByPath ["packages" hostSystem "default"] null input;
+  bzmenuPkg = getInputPackage inputs.bzmenu;
+  iwmenuPkg = getInputPackage inputs.iwmenu;
+  menuPkgs =
+    if guiEnabled && !devSpeed
+    then lib.filter (pkg: pkg != null) [bzmenuPkg iwmenuPkg]
+    else [];
   hyprWinList = pkgs.writeShellApplication {
     name = "hypr-win-list";
     runtimeInputs = [
@@ -94,5 +105,6 @@ in {
       pkgs.nchat # terminal-first Telegram client
       hyprWinList
     ]
-    ++ lib.optionals (pkgs ? uwsm) [pkgs.uwsm];
+    ++ lib.optionals (pkgs ? uwsm) [pkgs.uwsm]
+    ++ menuPkgs;
 }
