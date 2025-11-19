@@ -1,5 +1,8 @@
 {
   imports = [
+    ./args.nix
+    ./features.nix
+    ./neg.nix
     ./appimage
     ./cli
     ./dev
