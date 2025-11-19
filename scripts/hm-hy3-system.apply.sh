@@ -63,7 +63,7 @@ perl -0777 -i -pe '
 ' "$(fn flake/pkgs-extras.nix)"
 msg "Patched flake/pkgs-extras.nix"
 
-# 4) modules/user/gui/hyprland/core.nix — load plugin from /etc/hypr/libhy3.so and stop using hy3 input
+# 4) modules/user/gui/hyprland/core.nix — load plugin from /etc/static/hypr/libhy3.so and stop using hy3 input
 perl -0777 -i -pe '
   # Drop hy3 from arg list (keep spacing tidy)
   s/\n\s*hy3,\s*# flake input \(passed via mkHMArgs\) to locate hy3 plugin path\n/\n/;
@@ -83,8 +83,8 @@ Next steps:
   2) Apply HM:      (cd "$repo" && seh)   # or: home-manager switch --flake "$repo"
 
 Verification:
-  - ~/.config/hypr/plugins.conf should contain:  plugin = /etc/hypr/libhy3.so
-  - /etc/hypr/libhy3.so should exist (provided by NixOS config)
+  - ~/.config/hypr/plugins.conf should contain:  plugin = /etc/static/hypr/libhy3.so
+  - /etc/static/hypr/libhy3.so should exist (provided by NixOS config)
   - Hyprland version: Hyprland --version
 
 If something looks off, your originals are backed up under:

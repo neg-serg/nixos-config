@@ -37,8 +37,8 @@ with lib; let
     };
   hyprsplitEnabled = config.features.gui.hyprsplit.enable or false;
   pluginLines =
-    ["plugin = /etc/hypr/libhy3.so"]
-    ++ lib.optional hyprsplitEnabled "plugin = /etc/hypr/libhyprsplit.so";
+    ["plugin = /etc/static/hypr/libhy3.so"]
+    ++ lib.optional hyprsplitEnabled "plugin = /etc/static/hypr/libhyprsplit.so";
 in
   mkIf config.features.gui.enable (lib.mkMerge [
     # Local helper: safe Hyprland reload that ensures Quickshell is started if absent
