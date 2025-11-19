@@ -240,12 +240,8 @@ consistent and activation quiet. This page shows what to use and how to validate
       `$XDG_DATA_HOME/mcp/telegram/session.json` (autoprovisioned by HM).
     - Full access to personal dialogs, drafts, and read states — only use when policy allows sharing
       the entire account context.
-  - `telegram-bot` (Bot API only):
-    - Env: `TELEGRAM_BOT_TOKEN` from `@BotFather`; no phone login or session files.
-    - Limited tools (`get_bot_info`, `send_message`, `get_updates`, `forward_message`) for
-      alerting/automation in bot chats; cannot read private user dialogs.
-  - Choose the bridge that matches the required scope: bot token for channel/automation work, full
-    account for inbox assistants.
+  - Use this bridge only when full account context is acceptable; it exposes personal dialogs,
+    drafts, and read states to MCP tools.
 
 - MCP: Gmail/Calendars/Mail/DevTools
 

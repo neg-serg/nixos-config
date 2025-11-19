@@ -33,7 +33,6 @@
 - `gitlab` — MCP-клиент GitLab с `GITLAB_TOKEN`, `GITLAB_API_URL` и вспомогательными флагами проект/режим.
 - `discord` — сборщик из Discord на основе `DISCORD_BOT_TOKEN` и идентификаторов каналов.
 - `telegram` — Telegram-клиент, сохраняющий сессию в `$XDG_DATA_HOME/mcp/telegram/session.json` при наличии `TG_APP_ID`/`TG_API_HASH`.
-- `telegram-bot` — бот Telegram на `TELEGRAM_BOT_TOKEN`.
 
 ## Удалённые клиенты
 Следующие MCP-клиенты исключены из системной и Codex-конфигурации, чтобы не получать постоянные ошибки запуска, пока не появятся рабочие пакеты:

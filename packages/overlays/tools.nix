@@ -91,9 +91,6 @@ in {
     telegram_mcp = call ../mcp/telegram {};
     "telegram-mcp" = telegram_mcp;
 
-    telegram_bot_mcp = call ../mcp/telegram-bot {};
-    "telegram-bot-mcp" = telegram_bot_mcp;
-
     # Music album metadata CLI (used by music-rename script)
     albumdetails = prev.stdenv.mkDerivation rec {
       pname = "albumdetails";

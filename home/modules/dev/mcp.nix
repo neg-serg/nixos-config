@@ -71,7 +71,6 @@
   gitlabEnabled = hasEnv "GITLAB_TOKEN";
   discordEnabled = hasEnv "DISCORD_BOT_TOKEN";
   telegramEnabled = hasAllEnv ["TG_APP_ID" "TG_API_HASH"];
-  telegramBotEnabled = hasEnv "TELEGRAM_BOT_TOKEN";
   disabledServers = [
     "browserbase"
     "brave-search"
@@ -114,7 +113,6 @@ in
         chromiumBinary = "${pkgs.neg.chromium_mcp}/bin/mcp-chromium-cdp";
         meetingNotesBinary = "${pkgs.neg.meeting_notes_mcp}/bin/meeting-notes-mcp";
         telegramBinary = "${pkgs.neg.telegram_mcp}/bin/telegram-mcp";
-        telegramBotBinary = "${pkgs.neg.telegram_bot_mcp}/bin/tg-mcp";
       in {
         enable = true;
         servers =
@@ -376,14 +374,6 @@ in
               };
             };
           }
-          // lib.optionalAttrs telegramBotEnabled {
-            telegram-bot = {
-              command = telegramBotBinary;
-              env = {
-                TELEGRAM_BOT_TOKEN = "{env:TELEGRAM_BOT_TOKEN}";
-              };
-            };
-          }
           );
       };
 
@@ -416,7 +406,6 @@ in
         ++ lib.optional gitlabEnabled pkgs.neg.gitlab_mcp
         ++ lib.optional discordEnabled pkgs.neg.discord_mcp
         ++ lib.optional telegramEnabled pkgs.neg.telegram_mcp
-        ++ lib.optional telegramBotEnabled pkgs.neg.telegram_bot_mcp;
 
       home.activation.ensureMcpStateDirs = config.lib.neg.mkEnsureRealDirsMany (
         [
