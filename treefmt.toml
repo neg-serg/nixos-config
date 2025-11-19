@@ -33,7 +33,7 @@ includes = ["**/*.sh", "**/*.bash"]
 # Python: auto-fix with ruff, then format with black
 [formatter.black]
 command = "black"
-options = ["--quiet", "--line-length", "100", "--config", "home/pyproject.toml"]
+options = ["--quiet", "--line-length", "100", "--config", "pyproject.toml"]
 includes = ["**/*.py"]
 
 # Markdown: format via mdformat (wrap at 100 cols)

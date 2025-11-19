@@ -42,7 +42,7 @@ every workflow points to the same manual.
 ### Profiles & Feature Flags
 
 - Primary toggle: `features.profile = "full" | "lite"` (lite disables GUI/media/dev stacks).
-- Feature definitions live in `home/modules/features.nix`; documentation: `home/OPTIONS.md`.
+- Feature definitions live in `home/modules/features.nix`; documentation: `OPTIONS.md`.
 - Key flags:
   - GUI (`features.gui.*`), Web (`features.web.*`), Secrets (`features.secrets.enable`)
   - Dev stacks (`features.dev.*`, `features.dev.openxr.*`, `features.dev.unreal.*`)
