@@ -40,14 +40,12 @@ in {
 
   imports = [
     ./android
-    ./benchmarks
     ./ansible
     ./editor
     ./mcp.nix
     ./git
     ./gdb
     ./hack
-    ./pkgs
     ./python
     ./openxr
     ./unreal
