@@ -56,7 +56,7 @@ in {
     };
     # Pin Hyprland to the same release train used by the system flake
     hyprland = {
-      url = "git+https://github.com/hyprwm/Hyprland?ref=v0.51.0";
+      url = "git+https://github.com/hyprwm/Hyprland?ref=v0.52.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
@@ -231,39 +231,10 @@ in {
 
         packages = let
           extrasFlag = boolEnv "HM_EXTRAS";
-          extrasSet = import ./flake/pkgs-extras.nix {
-            inherit pkgs system;
-          };
+          extrasSet = import ../packages/flake/extras.nix {inherit pkgs;};
+          customPkgs = import ../packages/flake/custom-packages.nix {inherit pkgs;};
         in
-          {
-            default = pkgs.zsh;
-            mcp-server-filesystem = pkgs.neg.mcp_server_filesystem;
-            mcp-ripgrep = pkgs.neg.mcp_ripgrep;
-            mcp-server-memory = pkgs.neg.mcp_server_memory;
-            mcp-server-fetch = pkgs.neg.mcp_server_fetch;
-            mcp-server-sequential-thinking = pkgs.neg.mcp_server_sequential_thinking;
-            mcp-server-time = pkgs.neg.mcp_server_time;
-            firecrawl-mcp = pkgs.neg.firecrawl_mcp;
-            gmail-mcp = pkgs.neg.gmail_mcp;
-            gcal-mcp = pkgs.neg.gcal_mcp;
-            imap-mcp = pkgs.neg.imap_mcp;
-            smtp-mcp = pkgs.neg.smtp_mcp;
-            elasticsearch-mcp = pkgs.neg.elasticsearch_mcp;
-            sentry-mcp = pkgs.neg.sentry_mcp;
-            slack-mcp = pkgs.neg.slack_mcp;
-            sqlite-mcp = pkgs.neg.sqlite_mcp;
-            telegram-mcp = pkgs.neg.telegram_mcp;
-            github-mcp = pkgs.neg.github_mcp;
-            gitlab-mcp = pkgs.neg.gitlab_mcp;
-            discord-mcp = pkgs.neg.discord_mcp;
-            playwright-mcp = pkgs.neg.playwright_mcp;
-            chromium-mcp = pkgs.neg.chromium_mcp;
-            meeting-notes-mcp = pkgs.neg.meeting_notes_mcp;
-            media-mcp = pkgs.neg.media_mcp;
-            media-search-mcp = pkgs.neg.media_search_mcp;
-            agenda-mcp = pkgs.neg.agenda_mcp;
-            knowledge-mcp = pkgs.neg.knowledge_mcp;
-          }
+          ({default = pkgs.zsh;} // customPkgs)
           // lib.optionalAttrs extrasFlag extrasSet;
 
         # Checks: fail if formatting or linters would change files

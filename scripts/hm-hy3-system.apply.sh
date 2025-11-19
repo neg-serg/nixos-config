@@ -25,7 +25,7 @@ fn() { printf '%s' "$repo/$1"; }
 req_files=(
   flake.nix
   flake/mkHMArgs.nix
-  flake/pkgs-extras.nix
+  packages/flake/extras.nix
   modules/user/gui/hyprland/core.nix
 )
 
@@ -56,12 +56,12 @@ perl -0777 -i -pe '
 ' "$(fn flake/mkHMArgs.nix)"
 msg "Patched flake/mkHMArgs.nix"
 
-# 3) flake/pkgs-extras.nix — use system plugin package instead of hy3 input
+# 3) packages/flake/extras.nix — use system plugin package instead of hy3 input
 perl -0777 -i -pe '
   s/\n\s*hy3,\n/\n/;
   s/hy3\.packages\.\$\{system\}\.hy3/pkgs.hyprlandPlugins.hy3/;
-' "$(fn flake/pkgs-extras.nix)"
-msg "Patched flake/pkgs-extras.nix"
+' "$(fn packages/flake/extras.nix)"
+msg "Patched packages/flake/extras.nix"
 
 # 4) modules/user/gui/hyprland/core.nix — load plugin from /etc/static/hypr/libhy3.so and stop using hy3 input
 perl -0777 -i -pe '

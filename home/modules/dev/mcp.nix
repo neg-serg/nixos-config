@@ -405,7 +405,7 @@ in
         ++ lib.optional githubEnabled pkgs.neg.github_mcp
         ++ lib.optional gitlabEnabled pkgs.neg.gitlab_mcp
         ++ lib.optional discordEnabled pkgs.neg.discord_mcp
-        ++ lib.optional telegramEnabled pkgs.neg.telegram_mcp
+        ++ lib.optional telegramEnabled pkgs.neg.telegram_mcp;
 
       home.activation.ensureMcpStateDirs = config.lib.neg.mkEnsureRealDirsMany (
         [

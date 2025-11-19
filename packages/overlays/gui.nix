@@ -1,23 +1,12 @@
 _final: prev: let
   call = prev.callPackage;
 in {
-  # Force hyprland-qtutils to a known-good version (0.1.5)
-  hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: let
-    version = "0.1.5";
-  in {
-    inherit version;
-    src = prev.fetchFromGitHub {
-      owner = "hyprwm";
-      repo = "hyprland-qtutils";
-      tag = "v${version}";
-      hash = "sha256-bTYedtQFqqVBAh42scgX7+S3O6XKLnT6FTC6rpmyCCc=";
-    };
-    # Work around CMake error: Qt6::WaylandClientPrivate target not found
-    prePatch =
-      (old.prePatch or "")
+  hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
+    postPatch =
+      (old.postPatch or "")
       + ''
-        for f in $(grep -RIl "Qt6::WaylandClientPrivate" utils || true); do
-          sed -i 's/Qt6::WaylandClientPrivate/Qt6::WaylandClient/g' "$f"
+        for f in $(grep -RIl "Qt6::WaylandClientPrivate" . || true); do
+          substituteInPlace "$f" --replace "Qt6::WaylandClientPrivate" "Qt6::WaylandClient"
         done
       '';
   });

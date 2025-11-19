@@ -14,9 +14,9 @@
       url = "git+https://github.com/outfoxxed/hy3?ref=hl0.51.0";
       inputs.hyprland.follows = "hyprland";
     };
-    # Pin Hyprland to v0.51.x to align with the current desktop stack
+    # Pin Hyprland to v0.52.x to align with the current desktop stack
     hyprland = {
-      url = "git+https://github.com/hyprwm/Hyprland?ref=v0.51.0";
+      url = "git+https://github.com/hyprwm/Hyprland?ref=v0.52.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     # Keep selected Hyprland-related inputs in lockstep with the tracked Hyprland flake
@@ -144,6 +144,11 @@
       # Common lib
       inherit (nixpkgs) lib;
 
+      boolEnv = name: let
+        v = builtins.getEnv name;
+      in
+        v == "1" || v == "true" || v == "yes";
+
       # Hosts discovery shared across sections
       hostsDir = ./hosts;
       entries = builtins.readDir hostsDir;
@@ -157,7 +162,15 @@
 
       # Per-system outputs factory
       perSystem = system: let
-        pkgs = nixpkgs.legacyPackages.${system};
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [
+            (import ./packages/overlay.nix)
+          ];
+          config = {
+            allowAliases = false;
+          };
+        };
         # Pre-commit utility per system
         preCommit = inputs.pre-commit-hooks.lib.${system}.run {
           src = self;
@@ -240,14 +253,21 @@
             })
             hostNames));
       in {
-        packages =
-          # Expose NixOS host closures as packages on linuxSystem
-          (lib.optionalAttrs (system == linuxSystem)
+        packages = let
+          hostClosures =
+            lib.optionalAttrs (system == linuxSystem)
             (lib.listToAttrs (map (name: {
                 inherit name;
                 value = self.nixosConfigurations.${name}.config.system.build.toplevel;
               })
-              hostNames)))
+              hostNames));
+          extrasFlag = boolEnv "HM_EXTRAS";
+          extrasSet = import ./packages/flake/extras.nix {inherit pkgs;};
+          customPkgs = import ./packages/flake/custom-packages.nix {inherit pkgs;};
+        in
+          hostClosures
+          // customPkgs
+          // lib.optionalAttrs extrasFlag extrasSet
           // {
             default = pkgs.zsh;
             options-md = docDriverAll.optionsCommonMark;
