@@ -10,6 +10,7 @@
     ./games
     ./fun
     ./fonts
+    ./finance
     ./web
     ./torrent
     ./hardware

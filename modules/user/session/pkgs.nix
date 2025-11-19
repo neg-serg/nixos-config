@@ -34,6 +34,15 @@
       PY
     '';
   };
+  localBinPackages = [
+    pkgs.imagemagick
+    pkgs.wireplumber
+    pkgs.essentia-extractor
+    pkgs.neg.music_clap
+    pkgs.alsa-utils
+    pkgs.neg.bpf_host_latency
+    pkgs.neg.albumdetails
+  ];
 in {
   # Wayland/Hyprland tools and small utilities
   environment.systemPackages =
@@ -106,5 +115,6 @@ in {
       hyprWinList
     ]
     ++ lib.optionals (pkgs ? uwsm) [pkgs.uwsm]
-    ++ menuPkgs;
+    ++ menuPkgs
+    ++ lib.optionals guiEnabled localBinPackages;
 }

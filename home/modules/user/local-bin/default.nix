@@ -6,30 +6,6 @@
 }:
 with lib;
   mkIf (config.features.gui.enable or false) (lib.mkMerge [
-    {
-      # Runtime dependencies for local-bin scripts (everything else now installed system-wide)
-      home.packages = config.lib.neg.pkgsList [
-        pkgs.imagemagick # convert/mogrify for screenshot/swayimg-actions
-        # fasd removed; use zoxide for ranking
-        # audio/video + helpers (mpv comes from media stack)
-        # playerctl/mpc now come from the global system package list.
-        pkgs.wireplumber # wpctl for vol/pl volume control
-        # wayland utils now provided system-wide
-        # audio features extractor for music-index/music-similar
-        pkgs.essentia-extractor # streaming_extractor_music binary
-        pkgs.neg.music_clap # CLAP embeddings CLI (PyTorch + laion_clap)
-        # pkgs.neg.blissify_rs # playlist generation via audio descriptors (temporarily disabled)
-        # ALSA fallback for volume control
-        pkgs.alsa-utils # amixer (vol fallback)
-        # Note: Xvfb (xorg.xvfb) conflicts with newer xwayland in the
-        # Home Manager buildEnv (both ship lib/xorg/protocol.txt).
-        # Do not include by default to avoid closure collisions when
-        # Hyprland pulls in xwayland. The exorg script will work if
-        # Xvfb is available on PATH (install xorg.xvfb when needed).
-        pkgs.neg.bpf_host_latency # trace DNS lookup latency via BCC/eBPF (root)
-        pkgs.neg.albumdetails # album metadata extractor for music-rename
-      ];
-    }
     # Generate ~/.local/bin scripts using mkLocalBin (pre-clean + exec + force)
     {
       home.file = let
