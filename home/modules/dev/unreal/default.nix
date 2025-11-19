@@ -17,7 +17,6 @@
     optionals
     getName
     mkAfter
-    lowPrio
     makeBinPath
     ;
   defaultRoot = "${config.home.homeDirectory}/games/UnrealEngine";
@@ -60,16 +59,15 @@ in {
       editorBinary = "${root}/Engine/Binaries/Linux/UnrealEditor";
       editorEsc = escapeShellArg editorBinary;
       steamRunExe = getExe pkgs.steam-run;
+      packagesInfo = import ../../../../modules/dev/unreal/packages.nix {
+        inherit lib pkgs useSteamRun;
+      };
+      clangSuite = packagesInfo.clangSuite;
       icuLibPath = "${lib.getLib pkgs.icu}/lib";
       opensslLibPath = "${lib.getLib pkgs.openssl}/lib";
       zlibLibPath = "${lib.getLib pkgs.zlib}/lib";
       libPaths = lib.concatStringsSep ":" [icuLibPath opensslLibPath zlibLibPath];
       icuDataPath = "${pkgs.icu}/share/icu";
-      clangSuite = pkgs.buildEnv {
-        name = "ue-clang-suite";
-        paths = [pkgs.llvmPackages_20.clang pkgs.llvmPackages_20.clang-tools];
-        ignoreCollisions = true;
-      };
       cacheRoot = config.xdg.cacheHome or "${config.home.homeDirectory}/.cache";
       toolchainCacheRoot = "${cacheRoot}/ue-toolchain";
 
@@ -239,27 +237,6 @@ in {
         git -C "$root" lfs pull
       '';
 
-      packagesCore =
-        [
-          pkgs.git
-          pkgs.git-lfs
-          pkgs.mono
-          pkgs.cmake
-          pkgs.ninja
-          (lowPrio pkgs.python3)
-          clangSuite
-          pkgs.llvmPackages_20.llvm
-          pkgs.llvmPackages_20.lld
-          pkgs.llvmPackages_20.libclang.lib
-          pkgs.dotnet-sdk_8
-          pkgs.protobuf
-          pkgs.grpc
-          pkgs.unzip
-          pkgs.p7zip
-          pkgs.rsync
-          pkgs.which
-        ]
-        ++ optionals useSteamRun [pkgs.steam-run];
     in
       mkMerge [
         {
@@ -273,8 +250,7 @@ in {
           home.sessionVariables = {
             UE5_ROOT = root;
           };
-
-          home.packages = config.lib.neg.pkgsList packagesCore;
+          # Toolchain packages now install via modules/dev/unreal/default.nix.
 
           features.allowUnfree.extra =
             [(getName pkgs.dotnet-sdk_8)]
