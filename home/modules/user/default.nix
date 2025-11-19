@@ -4,12 +4,10 @@
     ./local-bin
     ./files/nixpkgs-config.nix
     ./envs
-    ./fonts
     ./fun
     ./games
     ./autoclick.nix
     ./gui
-    ./im
     ./mail
     ./systemd
     ./terminal

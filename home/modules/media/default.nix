@@ -1,6 +1,5 @@
 {...}: {
   imports = [
-    ./apps.nix
     ./audio
     ./ai-upscale.nix
     ./ai-upscale-rt.nix
