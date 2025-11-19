@@ -2,6 +2,10 @@
 
 - Repository manual (EN): [manual/manual.en.md](./manual/manual.en.md)
 - Repository manual (RU): [manual/manual.ru.md](./manual/manual.ru.md)
+- Swayimg hotkeys (EN/RU): [swayimg-hotkeys.md](./swayimg-hotkeys.md),
+  [swayimg-hotkeys.ru.md](./swayimg-hotkeys.ru.md)
+- Vaultix migration guide: [vaultix-migration.md](./vaultix-migration.md),
+  [vaultix-migration.ru.md](./vaultix-migration.ru.md)
 
 ## Options Docs
 

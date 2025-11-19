@@ -1,6 +1,94 @@
-# Документация (русская версия)
+# Обзор репозитория
 
-Этот файл содержит русские разделы основной документации. Англоязычная основная версия: `README.md`.
+Репозиторий объединяет конфигурацию NixOS и историческую конфигурацию Home Manager (каталог
+`home/`). Системные модули — единственный источник истины: пакеты и сервисы подключаются через
+`modules/`, а Home Manager остаётся доступным для автономных/WSL‑сценариев и разработки. Все
+инструкции сведены в этом файле, чтобы больше не держать отдельные README для системной и
+пользовательской частей.
+
+## Структура дерева
+
+- `modules/`, `packages/`, `docs/`, `hosts/` — системные модули, оверлеи и документация.
+- `home/` — flake Home Manager для автономной работы.
+- `templates/` — заготовки проектов (Rust crane, Python CLI, shell app).
+- `docs/manual/manual.*.md` — канонические руководства.
+
+## Быстрый старт (система)
+
+- Переключение: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`
+- Генерация опций: `nix run .#gen-options`
+- Форматирование/линт/проверки: `just fmt`, `just lint`, `just check`
+- Опционально: `just hooks-enable` для включения git-hooks
+
+## Быстрый старт (Home Manager)
+
+### Предпосылки
+
+1. Установите Nix и включите flakes (`experimental-features = nix-command flakes`).
+2. Инициализируйте Home Manager через flakes:
+   `nix run home-manager/master -- init --switch`
+3. Рекомендуемый helper: `nix profile install nixpkgs#just`
+
+### Клонирование и переключение профилей
+
+- Для автономных сценариев клонируйте `~/.dotfiles` (или используйте `/etc/nixos/home` в объединённом дереве).
+- Переключение профилей:
+  - Полный: `just hm-neg` (`home-manager switch --flake .#neg`)
+  - Lite: `just hm-lite` (`home-manager switch --flake .#neg-lite`)
+- Сборка без переключения: `just hm-build`
+- На хостах с общим репозиторием используйте `sudo nixos-rebuild switch --flake /etc/nixos#<host>`;
+  `hm-*` оставлены для standalone/dev окружений.
+
+### Профили и feature flags
+
+- Главный переключатель: `features.profile = "full" | "lite"` (lite отключает GUI/media/dev по умолчанию).
+- Опции описаны в `home/modules/features.nix`; краткая сводка — в `home/OPTIONS.md`.
+- Ключевые флаги:
+  - GUI (`features.gui.*`), Web (`features.web.*`), Secrets (`features.secrets.enable`)
+  - Dev стеки (`features.dev.*`, `features.dev.openxr.*`, `features.dev.unreal.*`)
+  - Media/Torrent (`features.media.*`, `features.torrent.enable`)
+  - Finance (`features.finance.tws.enable`), Fun (`features.fun.enable`)
+  - Исключение пакетов по pname: `features.excludePkgs`
+
+Показать плоский список фич: `just show-features` (с `ONLY_TRUE=1` выводит только `true`).
+
+### Повседневные команды
+
+- Форматирование: `just fmt`
+- Проверки: `just check`
+- Линт: `just lint`
+- Переключение HM: `just hm-neg` / `just hm-lite`
+- Статус/логи: `just hm-status` (`systemctl --user --failed` + хвост журнала)
+
+### Секреты (sops-nix / vaultix)
+
+- Секреты лежат в `secrets/` и подключаются через sops-nix; гайд по переходу на vaultix:
+  `docs/vaultix-migration.ru.md`.
+- Age-ключи: `~/.config/sops/age/keys.txt`.
+- Токен Cachix находится в `secrets/cachix.env` (sops).
+
+### Сервисы systemd (user)
+
+- Используйте `config.lib.neg.systemdUser.mkUnitFromPresets` для назначения таргетов
+  (`graphical`, `netOnline`, `defaultWanted`, `timers`, `dbusSocket`, `socketsTarget`).
+- Управление: `systemctl --user start|stop|status <unit>`, логи:
+  `journalctl --user -u <unit>`.
+
+### Hyprland и GUI
+
+- Автоперезагрузка Hyprland отключена; перезапускайте хоткеем.
+- Конфиги Hypr разбиты на файлы в `modules/user/gui/hypr/conf/*` и линкуются HM.
+- `~/.local/bin/rofi` задаёт дефолтные флаги, автопринятие и поиск тем в XDG путях; отключайте
+  автопринятие флагом `-no-auto-select`.
+- Индикатор раскладки в Quickshell слушает `keyboard-layout` Hyprland, предпочитает устройство с
+  `main: true` и переключает `hyprctl switchxkblayout current next`.
+- Floorp: навбар оставлен сверху, отключены телеметрия и мусор на вкладке «Новая».
+- `swayimg-first` ставится как `~/.local/bin/swayimg`, а правила Hyprland задают float/позицию.
+
+### Заметки для разработчиков
+
+- Формат коммитов: `[scope] message` (хуки `.githooks/commit-msg` могут проверять автоматически).
+- Hyprland/порталы закреплены через flake inputs; см. разделы ниже для политики обновлений.
 
 ## RNNoise виртуальный микрофон (PipeWire)
 
