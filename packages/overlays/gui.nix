@@ -11,6 +11,17 @@ in {
       '';
   });
 
+  wf-recorder = prev.wf-recorder.overrideAttrs (old: {
+    version = "0.6.0";
+    src = prev.fetchFromGitHub {
+      owner = "ammen99";
+      repo = "wf-recorder";
+      rev = "refs/tags/v0.6.0";
+      hash = "sha256-CY0pci2LNeQiojyeES5323tN3cYfS3m4pECK85fpn5I=";
+    };
+    patches = [];
+  });
+
   # Avoid pulling hyprland-qtutils into Hyprland runtime closure
   # Some downstream overlays add qtutils to PATH wrapping; disable that.
   hyprland = prev.hyprland.override {wrapRuntimeDeps = false;};
