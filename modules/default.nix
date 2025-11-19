@@ -13,6 +13,7 @@
     ./games
     ./fun
     ./fonts
+    ./media
     ./finance
     ./web
     ./torrent
