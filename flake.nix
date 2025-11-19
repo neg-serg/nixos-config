@@ -9,14 +9,14 @@
       url = "git+https://github.com/chaotic-cx/nyx?ref=nyxpkgs-unstable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Track hy3 master so plugin builds follow Hyprland's latest ABI
+    # Pin hy3 to release compatible with Hyprland v0.51.x
     hy3 = {
-      url = "git+https://github.com/outfoxxed/hy3";
+      url = "git+https://github.com/outfoxxed/hy3?ref=hl0.51.0";
       inputs.hyprland.follows = "hyprland";
     };
-    # Track Hyprland master to avoid ABI mismatches across plugins
+    # Pin Hyprland to v0.51.x to align with the current desktop stack
     hyprland = {
-      url = "git+https://github.com/hyprwm/Hyprland";
+      url = "git+https://github.com/hyprwm/Hyprland?ref=v0.51.0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     # Keep selected Hyprland-related inputs in lockstep with the tracked Hyprland flake

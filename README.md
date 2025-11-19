@@ -26,7 +26,7 @@ nixos-generators
 
 ## Hyprland: Single Source of Truth and Updates
 
-- Source of truth: `inputs.hyprland` (compositor) and `inputs.hy3` (plugin) both track upstream master; `flake.lock` pins the exact commits.
+- Source of truth: `inputs.hyprland` (compositor) and `inputs.hy3` (plugin) are pinned to the Hyprland v0.51.x release train; `flake.lock` still captures the exact commits.
 - The NixOS overlay routes `pkgs.hyprland`, `pkgs.xdg-desktop-portal-hyprland`, and `pkgs.hyprlandPlugins.hy3` to those inputs, so Home‑Manager modules can just use `pkgs.*`.
 - Supporting inputs stay in lockstep via `follows` (`hyprland-protocols`, `xdg-desktop-portal-hyprland`, etc.); no manual portal wiring beyond `programs.hyprland.portalPackage = pkgs.xdg-desktop-portal-hyprland`.
 - Do not add `xdg-desktop-portal-hyprland` to `xdg.portal.extraPortals` — the package already provides the portal service when set as `portalPackage`.
@@ -36,7 +36,7 @@ How to update Hyprland (and hy3):
 1) Refresh the pins: `nix flake update hyprland hy3` (other Hyprland inputs follow automatically).
 2) Rebuild the system: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.
 
-Auto‑update (optional): if `system.autoUpgrade` with flakes is enabled, add `--update-input hyprland --update-input hy3` so scheduled upgrades follow upstream master. We usually bump manually to keep ABI changes under control.
+Auto‑update (optional): if `system.autoUpgrade` with flakes is enabled, add `--update-input hyprland --update-input hy3` when you deliberately move to the next Hyprland release. We usually bump manually to keep ABI changes under control.
 
 ## Roles & Profiles
 
