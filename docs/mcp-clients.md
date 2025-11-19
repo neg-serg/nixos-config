@@ -33,7 +33,6 @@ The following servers are enabled only when the corresponding environment variab
 - `gitlab` — GitLab client requiring `GITLAB_TOKEN`, `GITLAB_API_URL`, and related project/mode flags.
 - `discord` — Discord scraper that uses `DISCORD_BOT_TOKEN` and channel IDs.
 - `telegram` — Telegram client that writes its session to `$XDG_DATA_HOME/mcp/telegram/session.json` with `TG_APP_ID`/`TG_API_HASH`.
-- `telegram-bot` — bot access using `TELEGRAM_BOT_TOKEN`.
 
 ## Retired clients
 The following MCP clients were removed from both the system configuration and the Codex config to stop repeated startup failures until upstream tooling is packaged again:
