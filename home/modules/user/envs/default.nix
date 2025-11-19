@@ -1,4 +1,6 @@
-{config, ...}: {
+{config, lib, ...}: let
+  profileTarget = config.home.profileDirectory;
+in {
   home = {
     sessionPath = [
       # Ensure local wrappers take precedence over legacy ~/bin
@@ -88,5 +90,16 @@
         ${zshenvExtras}
     '';
     };
+
+    # Keep modern nix profile paths in sync with the Home Manager profile so
+    # shells sourcing ~/.local/state/nix/profile (or legacy ~/.nix-profile)
+    # find hm-session-vars and package bins.
+    activation.ensureHomeManagerProfileLinks = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      set -eu
+      mkdir -p "$HOME/.local/state/nix/profiles"
+      ln -sfn ${profileTarget} "$HOME/.local/state/nix/profiles/profile"
+      ln -sfn "$HOME/.local/state/nix/profiles/profile" "$HOME/.local/state/nix/profile"
+      ln -sfn "$HOME/.local/state/nix/profiles/profile" "$HOME/.nix-profile"
+    '';
   };
 }
