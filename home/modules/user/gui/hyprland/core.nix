@@ -102,8 +102,8 @@ in
     ])
     (lib.mkMerge [
       (xdg.mkXdgText "hypr/hyprland.conf" ''
+        source = ~/.config/hypr/plugins.conf
         exec-once = /run/current-system/sw/bin/dbus-update-activation-environment --systemd --all && systemctl --user stop hyprland-session.target && systemctl --user start hyprland-session.target
-        exec-once = hyprctl plugin load ${hy3PluginPath}
 
         source = ~/.config/hypr/init.conf
 
