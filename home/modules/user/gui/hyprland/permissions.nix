@@ -9,18 +9,16 @@ with lib;
   mkIf config.features.gui.enable (lib.mkMerge [
     (
       let
+        hyprsplitEnabled = config.features.gui.hyprsplit.enable or false;
+        hy3PluginPath = "${pkgs.hyprlandPlugins.hy3}/lib/libhy3.so";
+        hyprsplitPluginPath = "${pkgs.hyprlandPlugins.hyprsplit}/lib/libhyprsplit.so";
         hy3Perms = ''
-          # Allow loading hy3 plugin. Use a regex to survive path hash/version changes
-          # and possible library filename variants (e.g., libhyprland-hy3.so).
-          # RE2 full-match is used; keep anchors.
-          permission = ^/nix/store/[^/]+-hy3-[^/]+/lib/[^/]*hy3[^/]*\.so$, plugin, allow
-          permission = /etc/static/hypr/libhy3.so, plugin, allow
+          permission = ${hy3PluginPath}, plugin, allow
         '';
         hyprsplitPerms =
-          if (config.features.gui.hyprsplit.enable or false)
+          if hyprsplitEnabled
           then ''
-            # Allow loading hyprsplit plugin
-            permission = ^/nix/store/[^/]+-hyprsplit-[^/]+/lib/[^/]*hyprsplit[^/]*\.so$, plugin, allow
+            permission = ${hyprsplitPluginPath}, plugin, allow
           ''
           else "";
       in
