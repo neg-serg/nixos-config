@@ -1,0 +1,3 @@
+# Ignore all runtime scratchpads; documented in README.md
+libpod/
+tmp/

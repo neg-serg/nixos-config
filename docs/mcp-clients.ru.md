@@ -33,12 +33,16 @@
 - `gitlab` — MCP-клиент GitLab с `GITLAB_TOKEN`, `GITLAB_API_URL` и вспомогательными флагами проект/режим.
 - `discord` — сборщик из Discord на основе `DISCORD_BOT_TOKEN` и идентификаторов каналов.
 - `telegram` — Telegram-клиент, сохраняющий сессию в `$XDG_DATA_HOME/mcp/telegram/session.json` при наличии `TG_APP_ID`/`TG_API_HASH`.
+- `brave-search` — интеграция Brave Search (`BRAVE_API_KEY`, опционально `BRAVE_MCP_ENABLED_TOOLS` / `BRAVE_MCP_DISABLED_TOOLS`).
+- `exa` — поиск Exa Labs (`EXA_API_KEY`).
+- `postgres` — read-only доступ к PostgreSQL при наличии `MCP_POSTGRES_URL`.
+- `telegram-bot` — минимальный Telegram bot MCP с токеном `TELEGRAM_BOT_TOKEN`.
+- `tsgram` — мост TSGram между Claude Code и Telegram (`TELEGRAM_BOT_TOKEN` + `TSGRAM_AUTHORIZED_CHAT_ID`).
 
 ## Удалённые клиенты
 Следующие MCP-клиенты исключены из системной и Codex-конфигурации, чтобы не получать постоянные ошибки запуска, пока не появятся рабочие пакеты:
-- `brave-search`
 - `browserbase`
-- `exa` / `exa-search`
+- `exa-search`
 - `git-local`
 - `redis-local`
 - `docsearch-local`
