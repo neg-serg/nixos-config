@@ -1,7 +1,7 @@
 # Документация
 
-- Основное руководство (RU): [manual/ru.md](./manual/ru.md)
-- English manual: [manual/en.md](./manual/en.md)
+- Основное руководство (RU): [manual/manual.ru.md](./manual/manual.ru.md)
+- English manual: [manual/manual.en.md](./manual/manual.en.md)
 
 ## Документация опций
 

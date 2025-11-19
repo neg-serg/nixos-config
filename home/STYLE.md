@@ -1,6 +1,6 @@
 # Coding Style (Nix / Home Manager)
 
-See also: ../docs/manual/en.md for a short guide on helpers, activation aggregators, systemd presets, commit
+See also: ../docs/manual/manual.en.md for a short guide on helpers, activation aggregators, systemd presets, commit
 message format, and quick `just` commands.
 
 ## Formatting (alejandra)

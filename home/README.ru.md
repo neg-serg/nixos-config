@@ -3,7 +3,7 @@
 Этот репозиторий содержит конфигурацию Home Manager (flakes) для пользовательской среды. Включает
 модульную настройку GUI (Hyprland), CLI‑инструментов, мультимедиа, почты, секретов и др.
 
-- Гайд для агента (как работать в репо): см. `../docs/manual/ru.md`
+- Гайд для агента (как работать в репо): см. `../docs/manual/manual.ru.md`
 - Правила код‑стайла для Nix‑модулей: `STYLE.md`
 - Флаги и опции: `modules/features.nix`
 
@@ -133,7 +133,7 @@
 
 - Перезагрузка Hyprland — только вручную (см. hotkey в `modules/user/gui/hypr/conf/bindings.conf`).
 - Юниты systemd (user) используют пресеты через `lib.neg.systemdUser.mkUnitFromPresets`.
-- См. `../docs/manual/ru.md` для API‑хелперов и соглашений; `STYLE.md` — для стиля и коммит‑месседжей.
+- См. `../docs/manual/manual.ru.md` для API‑хелперов и соглашений; `STYLE.md` — для стиля и коммит‑месседжей.
 
 ## Просмотрщики и лаунчеры
 
