@@ -1,5 +1,13 @@
 inputs: final: prev: let
-  call = prev.callPackage;
+  callPkg = path: extraArgs: let
+    f = import path;
+    wantsInputs = builtins.hasAttr "inputs" (builtins.functionArgs f);
+    autoArgs =
+      if wantsInputs
+      then {inherit inputs;}
+      else {};
+  in
+    prev.callPackage path (autoArgs // extraArgs);
   packagesRoot = inputs.self + "/packages";
 in {
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
@@ -64,5 +72,5 @@ in {
     };
   };
 
-  flight-gtk-theme = call (packagesRoot + "/flight-gtk-theme") {};
+  flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") {};
 }

@@ -1,4 +1,4 @@
-_final: prev: {
+_inputs: _final: prev: {
   # CMake policy floor for projects expecting pre-3.30 behavior
   # HackRF fails with: "Compatibility with CMake < 3.5 has been removed"
   hackrf = prev.hackrf.overrideAttrs (old: {

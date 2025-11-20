@@ -5,7 +5,7 @@
   config,
   ...
 }: let
-  repoRoot = inputs.self.outPath;
+  repoRoot = inputs.self;
   caches = import (repoRoot + "/nix/caches.nix");
 in {
   sops.age = {

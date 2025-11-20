@@ -1,111 +1,118 @@
 inputs: final: prev: let
-  repoRoot = inputs.self;
-  packagesRoot = repoRoot + "/packages";
-  call = prev.callPackage;
+  packagesRoot = inputs.self + "/packages";
+  callPkg = path: extraArgs: let
+    f = import path;
+    wantsInputs = builtins.hasAttr "inputs" (builtins.functionArgs f);
+    autoArgs =
+      if wantsInputs
+      then {inherit inputs;}
+      else {};
+  in
+    prev.callPackage path (autoArgs // extraArgs);
 in {
   neg = rec {
     # eBPF/BCC tools
-    bpf_host_latency = call (packagesRoot + "/bpf-host-latency") {};
+    bpf_host_latency = callPkg (packagesRoot + "/bpf-host-latency") {};
     "bpf-host-latency" = bpf_host_latency;
     # CLI/util packages
-    a2ln = call (packagesRoot + "/a2ln") {};
-    awrit = call (packagesRoot + "/awrit") {};
-    bt_migrate = call (packagesRoot + "/bt-migrate") {};
+    a2ln = callPkg (packagesRoot + "/a2ln") {};
+    awrit = callPkg (packagesRoot + "/awrit") {};
+    bt_migrate = callPkg (packagesRoot + "/bt-migrate") {};
     "bt-migrate" = bt_migrate;
-    cxxmatrix = call (packagesRoot + "/cxxmatrix") {};
-    comma = call (packagesRoot + "/comma") {};
+    cxxmatrix = callPkg (packagesRoot + "/cxxmatrix") {};
+    comma = callPkg (packagesRoot + "/comma") {};
 
-    mcp_server_filesystem = call (packagesRoot + "/mcp/server-filesystem") {};
+    mcp_server_filesystem = callPkg (packagesRoot + "/mcp/server-filesystem") {};
     "mcp-server-filesystem" = mcp_server_filesystem;
 
-    mcp_ripgrep = call (packagesRoot + "/mcp/ripgrep") {};
+    mcp_ripgrep = callPkg (packagesRoot + "/mcp/ripgrep") {};
     "mcp-ripgrep" = mcp_ripgrep;
 
-    mcp_server_memory = call (packagesRoot + "/mcp/memory") {};
+    mcp_server_memory = callPkg (packagesRoot + "/mcp/memory") {};
     "mcp-server-memory" = mcp_server_memory;
 
-    mcp_server_fetch = call (packagesRoot + "/mcp/fetch") {};
+    mcp_server_fetch = callPkg (packagesRoot + "/mcp/fetch") {};
     "mcp-server-fetch" = mcp_server_fetch;
 
-    mcp_server_sequential_thinking = call (packagesRoot + "/mcp/sequentialthinking") {};
+    mcp_server_sequential_thinking = callPkg (packagesRoot + "/mcp/sequentialthinking") {};
     "mcp-server-sequential-thinking" = mcp_server_sequential_thinking;
 
-    mcp_server_time = call (packagesRoot + "/mcp/time") {};
+    mcp_server_time = callPkg (packagesRoot + "/mcp/time") {};
     "mcp-server-time" = mcp_server_time;
 
-    firecrawl_mcp = call (packagesRoot + "/mcp/firecrawl") {};
+    firecrawl_mcp = callPkg (packagesRoot + "/mcp/firecrawl") {};
     "firecrawl-mcp" = firecrawl_mcp;
 
-    gmail_mcp = call (packagesRoot + "/mcp/gmail") {};
+    gmail_mcp = callPkg (packagesRoot + "/mcp/gmail") {};
     "gmail-mcp" = gmail_mcp;
 
-    gcal_mcp = call (packagesRoot + "/mcp/gcal") {};
+    gcal_mcp = callPkg (packagesRoot + "/mcp/gcal") {};
     "gcal-mcp" = gcal_mcp;
 
-    imap_mcp = call (packagesRoot + "/mcp/imap") {};
+    imap_mcp = callPkg (packagesRoot + "/mcp/imap") {};
     "imap-mcp" = imap_mcp;
 
-    smtp_mcp = call (packagesRoot + "/mcp/smtp") {};
+    smtp_mcp = callPkg (packagesRoot + "/mcp/smtp") {};
     "smtp-mcp" = smtp_mcp;
 
-    elasticsearch_mcp = call (packagesRoot + "/mcp/elasticsearch") {};
+    elasticsearch_mcp = callPkg (packagesRoot + "/mcp/elasticsearch") {};
     "elasticsearch-mcp" = elasticsearch_mcp;
 
-    github_mcp = call (packagesRoot + "/mcp/github") {};
+    github_mcp = callPkg (packagesRoot + "/mcp/github") {};
     "github-mcp" = github_mcp;
 
-    gitlab_mcp = call (packagesRoot + "/mcp/gitlab") {};
+    gitlab_mcp = callPkg (packagesRoot + "/mcp/gitlab") {};
     "gitlab-mcp" = gitlab_mcp;
 
-    discord_mcp = call (packagesRoot + "/mcp/discord") {};
+    discord_mcp = callPkg (packagesRoot + "/mcp/discord") {};
     "discord-mcp" = discord_mcp;
 
-    playwright_mcp = call (packagesRoot + "/mcp/playwright") {};
+    playwright_mcp = callPkg (packagesRoot + "/mcp/playwright") {};
     "playwright-mcp" = playwright_mcp;
 
-    chromium_mcp = call (packagesRoot + "/mcp/chromium") {};
+    chromium_mcp = callPkg (packagesRoot + "/mcp/chromium") {};
     "chromium-mcp" = chromium_mcp;
 
-    meeting_notes_mcp = call (packagesRoot + "/mcp/meeting-notes") {};
+    meeting_notes_mcp = callPkg (packagesRoot + "/mcp/meeting-notes") {};
     "meeting-notes-mcp" = meeting_notes_mcp;
 
-    media_mcp = call (packagesRoot + "/mcp/media-control") {};
+    media_mcp = callPkg (packagesRoot + "/mcp/media-control") {};
     "media-mcp" = media_mcp;
 
-    media_search_mcp = call (packagesRoot + "/mcp/media-search") {};
+    media_search_mcp = callPkg (packagesRoot + "/mcp/media-search") {};
     "media-search-mcp" = media_search_mcp;
 
-    agenda_mcp = call (packagesRoot + "/mcp/agenda") {};
+    agenda_mcp = callPkg (packagesRoot + "/mcp/agenda") {};
     "agenda-mcp" = agenda_mcp;
 
-    knowledge_mcp = call (packagesRoot + "/mcp/knowledge") {};
+    knowledge_mcp = callPkg (packagesRoot + "/mcp/knowledge") {};
     "knowledge-mcp" = knowledge_mcp;
 
-    sentry_mcp = call (packagesRoot + "/mcp/sentry") {};
+    sentry_mcp = callPkg (packagesRoot + "/mcp/sentry") {};
     "sentry-mcp" = sentry_mcp;
 
-    slack_mcp = call (packagesRoot + "/mcp/slack") {};
+    slack_mcp = callPkg (packagesRoot + "/mcp/slack") {};
     "slack-mcp" = slack_mcp;
 
-    sqlite_mcp = call (packagesRoot + "/mcp/sqlite") {};
+    sqlite_mcp = callPkg (packagesRoot + "/mcp/sqlite") {};
     "sqlite-mcp" = sqlite_mcp;
 
-    telegram_mcp = call (packagesRoot + "/mcp/telegram") {};
+    telegram_mcp = callPkg (packagesRoot + "/mcp/telegram") {};
     "telegram-mcp" = telegram_mcp;
 
-    brave_search_mcp = call (packagesRoot + "/mcp/brave-search") {};
+    brave_search_mcp = callPkg (packagesRoot + "/mcp/brave-search") {};
     "brave-search-mcp" = brave_search_mcp;
 
-    exa_mcp = call (packagesRoot + "/mcp/exa") {};
+    exa_mcp = callPkg (packagesRoot + "/mcp/exa") {};
     "exa-mcp" = exa_mcp;
 
-    postgres_mcp = call (packagesRoot + "/mcp/postgres") {};
+    postgres_mcp = callPkg (packagesRoot + "/mcp/postgres") {};
     "postgres-mcp" = postgres_mcp;
 
-    telegram_bot_mcp = call (packagesRoot + "/mcp/telegram-bot") {};
+    telegram_bot_mcp = callPkg (packagesRoot + "/mcp/telegram-bot") {};
     "telegram-bot-mcp" = telegram_bot_mcp;
 
-    tsgram_mcp = call (packagesRoot + "/mcp/tsgram") {};
+    tsgram_mcp = callPkg (packagesRoot + "/mcp/tsgram") {};
     "tsgram-mcp" = tsgram_mcp;
 
     # Music album metadata CLI (used by music-rename script)
@@ -143,14 +150,14 @@ in {
     };
 
     # Pretty-printer library + CLI (ppinfo)
-    pretty_printer = call (packagesRoot + "/pretty-printer") {};
+    pretty_printer = callPkg (packagesRoot + "/pretty-printer") {};
     "pretty-printer" = pretty_printer;
 
     # Rofi plugins / desktop helpers
-    rofi_games = call (packagesRoot + "/rofi-games") {};
+    rofi_games = callPkg (packagesRoot + "/rofi-games") {};
     "rofi-games" = rofi_games;
 
     # Trader Workstation (IBKR) packaged from upstream installer
-    tws = call (packagesRoot + "/tws") {};
+    tws = callPkg (packagesRoot + "/tws") {};
   };
 }

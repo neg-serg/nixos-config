@@ -170,7 +170,7 @@
         import nixpkgs {
           inherit system;
           overlays = [
-            (import ./packages/overlay.nix)
+            ((import ./packages/overlay.nix) inputs)
             (hyprlandOverlay system)
           ];
           config = {
