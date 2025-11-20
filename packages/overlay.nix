@@ -1,5 +1,5 @@
-_final: prev: let
-  importOv = path: import path _final prev;
+inputs: final: prev: let
+  importOv = path: import path inputs final prev;
   functions = importOv ./overlays/functions.nix;
   tools = importOv ./overlays/tools.nix;
   media = importOv ./overlays/media.nix;

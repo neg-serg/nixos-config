@@ -35,7 +35,9 @@
   sqlite,
   gcc11Stdenv,
   webkitgtk,
+  inputs,
 }: let
+  manualPath = inputs.self + "/Manual/ChowTapeManual.pdf";
   # JUCE version in submodules is incompatible with GCC12
   # See here: https://forum.juce.com/t/build-fails-on-fedora-wrong-c-version/50902/2
   stdenv = gcc11Stdenv;
@@ -105,12 +107,13 @@ in
 
     installPhase = ''
       mkdir -p $out/lib/lv2 $out/lib/vst3 $out/bin $out/share/doc/CHOWTapeModel/
-      cd CHOWTapeModel_artefacts/${cmakeBuildType}
+      artefactsDir="$PWD/CHOWTapeModel_artefacts/${cmakeBuildType}"
+      cd "$artefactsDir"
       cp libCHOWTapeModel_SharedCode.a  $out/lib
       cp -r LV2/CHOWTapeModel.lv2 $out/lib/lv2
       cp -r VST3/CHOWTapeModel.vst3 $out/lib/vst3
       cp Standalone/CHOWTapeModel  $out/bin
-      cp ../../../../Manual/ChowTapeManual.pdf $out/share/doc/CHOWTapeModel/
+      cp ${manualPath} $out/share/doc/CHOWTapeModel/ChowTapeManual.pdf
     '';
 
     # JUCE dlopens these, make sure they are in rpath

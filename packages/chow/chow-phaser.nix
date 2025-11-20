@@ -85,11 +85,13 @@ stdenv.mkDerivation rec {
 
   installPhase = ''
     mkdir -p $out/lib/lv2 $out/lib/vst3 $out/bin $out/share/doc/ChowPhaser/
-    cd ChowPhaserMono_artefacts/Release
+    monoDir="$PWD/ChowPhaserMono_artefacts/Release"
+    stereoDir="$PWD/ChowPhaserStereo_artefacts/Release"
+    cd "$monoDir"
     cp libChowPhaserMono_SharedCode.a  $out/lib
     cp -r VST3/ChowPhaserMono.vst3 $out/lib/vst3
     cp Standalone/ChowPhaserMono  $out/bin
-    cd ../../ChowPhaserStereo_artefacts/Release
+    cd "$stereoDir"
     cp libChowPhaserStereo_SharedCode.a  $out/lib
     cp -r VST3/ChowPhaserStereo.vst3 $out/lib/vst3
     cp Standalone/ChowPhaserStereo  $out/bin

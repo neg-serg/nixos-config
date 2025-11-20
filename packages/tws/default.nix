@@ -31,6 +31,7 @@
   pango,
   xorg,
   zlib,
+  inputs,
 }: let
   libPath = lib.makeLibraryPath [
     alsa-lib
@@ -127,17 +128,20 @@ in
 
     installPhase = ''
       install4j_installer=$(sed -nE 's/.*$INSTALL4J_JAVA_PREFIX.*install4j\.Installer([0-9]+).*/\1/p' "$src" | head -n 1)
+      buildRoot="$PWD"
+      install4jDir="$buildRoot/install4j"
+      jreDir="$buildRoot/jre"
 
-      (cd install4j && \
+      (cd "$install4jDir" && \
         LD_LIBRARY_PATH='${libPath}:$LD_LIBRARY_PATH' \
         FONTCONFIG_FILE='${makeFontsCache {fontDirectories = [];}}' \
-        INSTALL4J_JAVA_HOME='../jre' \
-        ../jre/bin/java \
+        INSTALL4J_JAVA_HOME="$jreDir" \
+        "$jreDir/bin/java" \
           -DjtsConfigDir='/home/jts' \
           -classpath 'i4jruntime.jar:launcher0.jar' \
           "install4j.Installer$install4j_installer" '-q' '-dir' "$out")
 
-      mv jre "$out/jre"
+      mv "$jreDir" "$out/jre"
 
       mkdir "$out/bin"
       cat <<EOF > "$out/bin/tws"
