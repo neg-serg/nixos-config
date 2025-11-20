@@ -174,15 +174,6 @@ def ipmi_two [] {
   echo "xdg-open localhost:8080" | wl-copy
 }
 
-# Cryptsetup-based
-def horny [] {
-  sudo cryptsetup luksOpen $"($env.XDG_VIDEOS_DIR)/1st_level/.nd/hiddenfs" cryptroot --key-file /one/hdd.key
-}
-def unhorny [] {
-  sudo umount /dev/mapper/cryptroot
-  sudo cryptsetup close cryptroot
-}
-
 # Flatpak-based
 def bottles [] { flatpak run com.usebottles.bottles }
 def obs [] { flatpak run com.obsproject.Studio }
