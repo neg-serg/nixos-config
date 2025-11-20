@@ -1,0 +1,4 @@
+@import "menu.rasi"
+
+/* Minimal alias so scripts can refer to `-theme sxiv`.
+   Inherit the default menu styling without further overrides. */
