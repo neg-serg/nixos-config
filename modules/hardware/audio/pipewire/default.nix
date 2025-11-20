@@ -5,6 +5,40 @@
   ...
 }: let
   cfg = config.hardware.audio.rnnoise or {};
+  rmeSinkName = "alsa_output.usb-RME_ADI-2_4_Pro_SE__53011083__B992903C2BD8DC8-00.analog-stereo";
+  rmeSourceName = "alsa_input.usb-RME_ADI-2_4_Pro_SE__53011083__B992903C2BD8DC8-00.analog-stereo";
+  rmeDefaultScript = pkgs.writeShellScript "wpctl-set-rme-default" ''
+    set -euo pipefail
+    jq_bin=${pkgs.jq}/bin/jq
+    tries=60
+    for i in $(seq 1 "$tries"); do
+      dump="$(pw-dump || true)"
+      if [ -z "$dump" ]; then
+        sleep 0.5
+        continue
+      fi
+      sink_id="$("$jq_bin" -r --arg name "${rmeSinkName}" '
+        .[] | select(.type=="PipeWire:Interface:Node" and .info.props["node.name"]==$name) | .id
+      ' <<<"$dump" | head -n1 | tr -d '\n')"
+      source_id="$("$jq_bin" -r --arg name "${rmeSourceName}" '
+        .[] | select(.type=="PipeWire:Interface:Node" and .info.props["node.name"]==$name) | .id
+      ' <<<"$dump" | head -n1 | tr -d '\n')"
+      done=0
+      if [ -n "$sink_id" ]; then
+        wpctl set-default "$sink_id" || true
+        done=$((done + 1))
+      fi
+      if [ -n "$source_id" ]; then
+        wpctl set-default "$source_id" || true
+        done=$((done + 1))
+      fi
+      if [ "$done" -gt 0 ]; then
+        exit 0
+      fi
+      sleep 0.5
+    done
+    exit 0
+  '';
 in {
   options.hardware.audio.rnnoise.enable = lib.mkEnableOption "Enable RNNoise-based virtual microphone (PipeWire filter-chain).";
 
@@ -104,5 +138,15 @@ in {
         };
       }
     );
+    systemd.user.services."wp-rme-default" = {
+      description = "Ensure RME ADI-2/4 analog nodes are default (wpctl)";
+      after = ["wireplumber.service" "pipewire.service"];
+      partOf = ["wireplumber.service"];
+      wantedBy = ["default.target"];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${rmeDefaultScript}";
+      };
+    };
   };
 }
