@@ -16,7 +16,6 @@ with lib; {
     ./distros
     ./flatpak
     ./hardware
-    ./main
     ./media
     ./misc
     ./secrets
