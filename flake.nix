@@ -449,19 +449,14 @@
         systems = hmSystems;
         perSystem = hmPerSystem;
       };
-      hmHomeConfigurations = lib.genAttrs ["neg" "neg-lite"] (
-        n:
+      hmHomeConfigurations = {
+        neg =
           inputs.home-manager.lib.homeManagerConfiguration {
             inherit (hmPerSystem.${hmDefaultSystem}) pkgs;
             extraSpecialArgs = mkHMArgs hmDefaultSystem;
-            modules =
-              hmBaseModules (
-                lib.optionalAttrs (n == "neg-lite") {
-                  profile = "lite";
-                }
-              );
-          }
-      );
+            modules = hmBaseModules {};
+          };
+      };
       hmTemplates = import ./flake/home/templates.nix;
     in {
       # Per-system outputs: packages, formatter, checks, devShells, apps

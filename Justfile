@@ -123,7 +123,8 @@ hm-neg:
     home-manager switch --flake .#neg
 
 hm-lite:
-    home-manager switch --flake .#neg-lite
+    @echo "hm-lite target is deprecated; use hm-neg" >&2
+    @exit 1
 
 hm-build:
     # Build activation package without switching
