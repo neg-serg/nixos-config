@@ -190,6 +190,7 @@
             && builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
         )
         entries);
+      hostNamesEnabled = lib.filter (name: name != "telfir-vm") hostNames;
       # Per-system outputs factory
       perSystem = system: let
         pkgs = mkPkgs system;
@@ -220,7 +221,7 @@
           ./modules/monitoring
         ];
         mkSpecialArgs = {
-          inherit self inputs locale timeZone kexec_enabled pkgs;
+          inherit inputs locale timeZone kexec_enabled pkgs;
         };
         evalMods = mods:
           lib.nixosSystem {
@@ -266,30 +267,10 @@
           then docLib.nixosOptionsDoc {inherit (evalAll) options;}
           else {optionsCommonMark = simpleRender evalAll.options;};
 
-        # Host build checks only for linuxSystem
-        hostBuildChecks =
-          lib.optionalAttrs (system == linuxSystem)
-          (lib.listToAttrs (map (name: {
-              name = "build-" + name;
-              value = self.nixosConfigurations.${name}.config.system.build.toplevel;
-            })
-            hostNames));
       in {
-        packages = let
-          hostClosures =
-            lib.optionalAttrs (system == linuxSystem)
-            (lib.listToAttrs (map (name: {
-                inherit name;
-                value = self.nixosConfigurations.${name}.config.system.build.toplevel;
-              })
-              hostNames));
-          customPkgs = mkCustomPkgs pkgs;
-        in
-          hostClosures
-          // customPkgs
-          // {
-            default = pkgs.zsh;
-          };
+        packages =
+          (mkCustomPkgs pkgs)
+          // {default = pkgs.zsh;};
 
         formatter = pkgs.writeShellApplication {
           name = "fmt";
@@ -315,8 +296,7 @@
           '';
         };
 
-        checks =
-          {
+        checks = {
             fmt-treefmt =
               pkgs.runCommand "fmt-treefmt" {
                 nativeBuildInputs = with pkgs; [
@@ -352,8 +332,7 @@
               bash scripts/check-markdown-language.sh
               : > "$out"
             '';
-          }
-          // hostBuildChecks;
+          };
 
         devShells = {
           default = pkgs.mkShell {
@@ -421,11 +400,10 @@
           };
       };
       hmDocs = import ./flake/home/docs.nix {
-        inherit lib mkHMArgs self;
+        inherit lib mkHMArgs self hmBaseModules;
         perSystem = hmPerSystem;
         systems = hmSystems;
         homeManagerInput = inputs.home-manager;
-        hmBaseModules = hmBaseModules;
       };
       hmChecks = import ./flake/home/checks-outputs.nix {
         inherit lib;
@@ -467,18 +445,16 @@
           lib.nixosSystem {
             system = linuxSystem;
             specialArgs = {
-              inherit locale timeZone kexec_enabled self;
+              inherit locale timeZone kexec_enabled;
               # Pass Nilla-friendly inputs (workaround for nilla-nix/nilla#14)
               inputs = nillaInputs;
             };
             modules = commonModules ++ [(import ((builtins.toString hostsDir) + "/" + name))] ++ (hostExtras name);
           };
       in
-        lib.genAttrs hostNames mkHost;
+        lib.genAttrs hostNamesEnabled mkHost;
       homeConfigurations = hmHomeConfigurations;
       hm = hmPerSystem;
-      hmChecks = hmChecks;
-      docs = hmDocs;
-      templates = hmTemplates;
+      inherit hmChecks hmDocs hmTemplates;
     };
 }
