@@ -1,10 +1,10 @@
 configuration {
-    terminal:                      "kitty";
+    terminal:                      "${env:TERMINAL}";
     run-command:                   "{cmd}";
-    
+    run-shell-command:             "${env:TERMINAL} {cmd}";
     sort:                          true;
     parse-hosts:                   false;
-    auto-select:                   true;
+    auto-select:                   false;
     show-icons:                    false;
     matching:                      "fuzzy";
     tokenize:                      true;
@@ -38,7 +38,7 @@ configuration {
     kb-row-last:                   "End,KP_End";
     kb-row-select:                 "Control+space";
     kb-secondary-copy:             "";
-    kb-cancel:                     "Control+c,Escape";
+    kb-cancel:                     "Control-c,Escape";
 }
 
-@import "neg.rasi"
+@theme "neg"
