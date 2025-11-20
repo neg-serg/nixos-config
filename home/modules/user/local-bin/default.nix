@@ -13,7 +13,7 @@ with lib;
         binDir = filesRoot + "/bin";
         binFiles =
           if builtins.pathExists binDir
-          then builtins.filterAttrs (_: v: v == "regular") (builtins.readDir binDir)
+          then lib.filterAttrs (_: v: v == "regular") (builtins.readDir binDir)
           else {};
         autoSkip = ["ren"];
         mkAuto = name: {
