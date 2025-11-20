@@ -8,9 +8,6 @@
 }: let
   cfg = config.features.cli.nixIndexDB;
 in {
-  options.features.cli.nixIndexDB.enable =
-    (lib.mkEnableOption "keep nix-index prebuilt DB fresh") // {default = true;};
-
   config = lib.mkIf cfg.enable (lib.mkMerge [
     # Ensure cache dir exists post-write; keeps activation quiet/clean
     {

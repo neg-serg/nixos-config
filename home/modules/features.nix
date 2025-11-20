@@ -4,6 +4,7 @@
   ...
 }:
 with lib; let
+  presets = import ./misc/unfree-presets.nix;
   defaults = {
     profile = "full";
     devSpeed.enable = false;
@@ -54,6 +55,24 @@ in {
       description = "Profile preset that adjusts feature defaults: full or lite.";
     };
 
+    allowUnfree = {
+      preset = mkOption {
+        type = types.enum (builtins.attrNames presets);
+        default = "desktop";
+        description = "Preset allowlist for unfree packages.";
+      };
+      extra = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        description = "Extra unfree package names to allow (in addition to preset).";
+      };
+      allowed = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        description = "Final allowlist of unfree package names (overrides preset if explicitly set).";
+      };
+    };
+
     gui = {
       enable = mkBool "enable GUI stack (wayland/hyprland, quickshell, etc.)" true;
       hy3.enable = mkBool "enable the hy3 tiling plugin for Hyprland" true;
@@ -62,11 +81,45 @@ in {
     };
     mail.enable = mkBool "enable Mail stack (notmuch, isync, vdirsyncer, etc.)" true;
     mail.vdirsyncer.enable = mkBool "enable Vdirsyncer sync service/timer" true;
+    cli = {
+      fastCnf.enable = mkBool "enable fast zsh command-not-found handler powered by nix-index" true;
+      nixIndexDB.enable = mkBool "enable scheduled nix-index DB refresh (prebuilt cache)" true;
+      icedteaWeb.enable = mkBool "enable IcedTea Web (netx) integration" false;
+    };
     hack.enable = mkBool "enable Hack/security tooling stack" true;
     dev = {
       enable = mkBool "enable Dev stack (toolchains, editors, hack tooling)" true;
       ai = {
         enable = mkBool "enable AI tools (e.g., LM Studio)" true;
+      };
+      iac = {
+        backend = mkOption {
+          type = types.enum ["terraform" "tofu"];
+          default = "terraform";
+          description = "Choose IaC backend: HashiCorp Terraform or OpenTofu (tofu).";
+        };
+      };
+      pkgs = {
+        formatters = mkBool "enable CLI/code formatters" true;
+        codecount = mkBool "enable code counting tools" true;
+        analyzers = mkBool "enable analyzers/linters" true;
+        iac = mkBool "enable infrastructure-as-code tooling (Terraform, etc.)" true;
+        radicle = mkBool "enable radicle tooling" true;
+        runtime = mkBool "enable general dev runtimes (node etc.)" true;
+        misc = mkBool "enable misc dev helpers" true;
+      };
+      hack = {
+        core = {
+          secrets = mkBool "enable git secret scanners" true;
+          reverse = mkBool "enable reverse/disasm helpers" true;
+          crawl = mkBool "enable web crawling tools" true;
+        };
+        forensics = {
+          fs = mkBool "enable filesystem/disk forensics tools" true;
+          stego = mkBool "enable steganography tools" true;
+          analysis = mkBool "enable reverse/binary analysis tools" true;
+          network = mkBool "enable network forensics tools" true;
+        };
       };
       rust = {
         enable = mkBool "enable Rust tooling (rustup, rust-analyzer)" true;
@@ -77,11 +130,58 @@ in {
       haskell = {
         enable = mkBool "enable Haskell tooling (ghc, cabal, stack, HLS)" true;
       };
+      python = {
+        core = mkBool "enable core Python development packages" true;
+        tools = mkBool "enable Python tooling (LSP, utilities)" true;
+      };
+      unreal = {
+        enable = mkBool "enable Unreal Engine 5 tooling" false;
+        root = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = ''Checkout directory for Unreal Engine sources. Defaults to "~/games/UnrealEngine".'';
+          example = "/mnt/storage/UnrealEngine";
+        };
+        repo = mkOption {
+          type = types.str;
+          default = "git@github.com:EpicGames/UnrealEngine.git";
+          description = "Git URL used by ue5-sync (requires EpicGames/UnrealEngine access).";
+        };
+        branch = mkOption {
+          type = types.str;
+          default = "5.4";
+          description = "Branch or tag to sync from the Unreal Engine repository.";
+        };
+        useSteamRun = mkOption {
+          type = types.bool;
+          default = true;
+          description = "Wrap Unreal Editor launch via steam-run to provide FHS runtime libraries.";
+        };
+      };
+      openxr = {
+        enable = mkBool "enable OpenXR development stack" false;
+        envision.enable = mkBool "install Envision UI for Monado" true;
+        runtime = {
+          enable = mkBool "install Monado OpenXR runtime" true;
+          vulkanLayers.enable = mkBool "install Monado Vulkan layers" true;
+          service.enable = mkBool "run monado-service as a user systemd service (graphical preset)" false;
+        };
+        tools = {
+          motoc.enable = mkBool "install motoc (Monado Tracking Origin Calibration)" true;
+          basaltMonado.enable = mkBool "install optional basalt-monado tools" false;
+        };
+      };
     };
 
     web = {
       enable = mkBool "enable Web stack (browsers + tools)" true;
+      default = mkOption {
+        type = types.enum ["floorp" "firefox" "librewolf" "nyxt" "yandex"];
+        default = "floorp";
+        description = "Default browser used for XDG handlers, $BROWSER, and integrations.";
+      };
       tools.enable = mkBool "enable web tools (aria2, yt-dlp, misc)" true;
+      aria2.service.enable = mkBool "run aria2 download manager as a user service (graphical preset)" false;
       addonsFromNUR.enable = mkBool "install Mozilla addons from NUR packages (heavier eval)" true;
       floorp.enable = mkBool "enable Floorp browser" true;
       firefox.enable = mkBool "enable Firefox browser" false;

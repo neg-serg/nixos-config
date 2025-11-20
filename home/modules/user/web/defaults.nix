@@ -16,13 +16,6 @@ with lib; let
   browsers = import ./browsers-table.nix {inherit lib pkgs yandexBrowser nyxt4;};
   browser = let key = cfg.default or "floorp"; in lib.attrByPath [key] browsers browsers.floorp;
 in {
-  # Choose the default browser for system-wide handlers and $BROWSER
-  options.features.web.default = mkOption {
-    type = types.enum ["floorp" "firefox" "librewolf" "nyxt" "yandex"];
-    default = "floorp";
-    description = "Default browser used for XDG handlers, $BROWSER, and integrations.";
-  };
-
   config = {
     # Expose derived default browser under lib.neg for reuse
     lib.neg.web = mkIf cfg.enable {

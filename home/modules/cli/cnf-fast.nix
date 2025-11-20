@@ -7,9 +7,6 @@
 }: let
   cfg = config.features.cli.fastCnf;
 in {
-  options.features.cli.fastCnf.enable =
-    (lib.mkEnableOption "fast zsh command-not-found via nix-index") // {default = true;};
-
   config = lib.mkIf cfg.enable (lib.mkMerge [
     (xdg.mkXdgText "zsh-nix/20-cnf-nix-index.zsh" ''
       # Fast command_not_found_handler using nix-index (prebuilt DB)

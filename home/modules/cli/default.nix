@@ -1,17 +1,7 @@
-{
-  lib,
-  config,
-  pkgs,
-  negLib,
-  ...
-}:
+{lib, config, pkgs, negLib, ...}:
 with lib; let
   hasHishtory = pkgs ? hishtory;
-  mkBool = desc: default: (lib.mkEnableOption desc) // {inherit default;};
 in {
-  options.features.cli = {
-    icedteaWeb.enable = mkBool "enable IcedTea Web (netx) and user config" false;
-  };
   imports = [
     ./core-tools.nix # fd, ripgrep, direnv, shell helpers
     ./bat.nix # better cat

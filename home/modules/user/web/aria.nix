@@ -11,9 +11,6 @@
   aria2Bin = getExe' pkgs.aria2 "aria2c";
   sessionFile = "${dataHome}/aria2/session";
 in {
-  options.features.web.aria2.service.enable =
-    (lib.mkEnableOption "run aria2 as a user systemd service (graphical preset)") // {default = false;};
-
   config = lib.mkIf (config.features.web.enable && config.features.web.tools.enable) (lib.mkMerge [
     {
       # Minimal, robust aria2 configuration through Home Manager
