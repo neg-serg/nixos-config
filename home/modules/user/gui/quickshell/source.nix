@@ -9,21 +9,9 @@ with lib; let
   filesRoot = "${config.neg.hmConfigRoot}/files";
 in
   mkIf (config.features.gui.enable && (config.features.gui.qt.enable or false) && (config.features.gui.quickshell.enable or false)) {
-    home.activation.backupLegacyQuickshell = lib.hm.dag.entryBefore ["linkGeneration"] ''
-      set -euo pipefail
-      target="${config.xdg.configHome}/quickshell"
-      if [ -e "$target" ] && [ ! -L "$target" ]; then
-        backupRoot="${config.xdg.configHome}/hm-backup"
-        mkdir -p "$backupRoot"
-        dest="$backupRoot/quickshell.$(date +%s)"
-        mv "$target" "$dest"
-      fi
-    '';
-    home.activation.ensureQuickshellDir = config.lib.neg.mkEnsureRealDir "${config.xdg.configHome}/quickshell";
     home.file.".config/quickshell" = {
       recursive = true;
       source = filesRoot + "/quickshell/quickshell";
-      force = true;
     };
 
     # After linking the updated config, restart quickshell if it is running.

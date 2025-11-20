@@ -6,7 +6,6 @@
   ...
 }:
 lib.mkIf (config.features.gui.enable or false) (lib.mkMerge [
-  {home.activation.ensureKittyDir = config.lib.neg.mkEnsureRealDir "${config.xdg.configHome}/kitty";}
   (let mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;}; in mkLocalBin "kitty-panel" (builtins.readFile ./kitty/panel))
   # Robust kitty-scrollback-nvim kitten wrapper (local-bin) and env hint
   (let
@@ -61,18 +60,5 @@ lib.mkIf (config.features.gui.enable or false) (lib.mkMerge [
   (xdg.mkXdgSource "kitty" {
     source = config.lib.file.mkOutOfStoreSymlink "${config.neg.hmConfigRoot}/modules/user/gui/kitty/conf";
     recursive = true;
-    force = true;
   })
-  {
-    home.activation.backupLegacyKitty = lib.hm.dag.entryBefore ["linkGeneration"] ''
-      set -euo pipefail
-      target="${config.xdg.configHome}/kitty"
-      if [ -e "$target" ] && [ ! -L "$target" ]; then
-        backupRoot="${config.xdg.configHome}/hm-backup"
-        mkdir -p "$backupRoot"
-        dest="$backupRoot/kitty.$(date +%s)"
-        mv "$target" "$dest"
-      fi
-    '';
-  }
 ])
