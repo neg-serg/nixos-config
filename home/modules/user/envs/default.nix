@@ -64,33 +64,6 @@ in {
       ZDOTDIR = "${config.xdg.configHome}/zsh";
     };
 
-    # Ensure every zsh instance (login or interactive) loads the Home Manager session variables
-    # before sourcing the actual config under $ZDOTDIR. This keeps env exports like FZF_* in sync
-    # regardless of how the shell is spawned.
-    file.".config/zsh/.zshenv" = {
-      force = true;
-      text = let
-        username = config.home.username;
-        zshenvExtras = builtins.readFile ./zshenv-extra.sh;
-      in ''
-        # shellcheck disable=SC1090
-        skip_global_compinit=1
-        hm_session_vars="$HOME/.local/state/home-manager/gcroots/current-home/home-path/etc/profile.d/hm-session-vars.sh"
-        if [ -r "$hm_session_vars" ]; then
-          . "$hm_session_vars"
-        elif [ -r "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
-          . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
-        elif [ -r "/etc/profiles/per-user/${username}/etc/profile.d/hm-session-vars.sh" ]; then
-          . "/etc/profiles/per-user/${username}/etc/profile.d/hm-session-vars.sh"
-        fi
-        export WORDCHARS='*/?_-.[]~&;!#$%^(){}<>~` '
-        export KEYTIMEOUT=10
-        export REPORTTIME=60
-        export ESCDELAY=1
-        ${zshenvExtras}
-    '';
-    };
-
     # Keep modern nix profile paths in sync with the Home Manager profile so
     # shells sourcing ~/.local/state/nix/profile (or legacy ~/.nix-profile)
     # find hm-session-vars and package bins.
