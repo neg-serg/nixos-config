@@ -148,6 +148,43 @@
         v = builtins.getEnv name;
       in
         v == "1" || v == "true" || v == "yes";
+      splitEnvList = name: let
+        v = builtins.getEnv name;
+      in
+        if v == ""
+        then []
+        else lib.filter (s: s != "") (lib.splitString "," v);
+
+      hmDefaultSystem = "x86_64-linux";
+      hmSystems = let
+        fromEnv = splitEnvList "HM_SYSTEMS";
+        cleaned = lib.unique fromEnv;
+      in
+        if cleaned == []
+        then [hmDefaultSystem]
+        else cleaned;
+      hmExtraSubstituters = [
+        "https://nix-community.cachix.org"
+        "https://hyprland.cachix.org"
+        # Additional popular caches
+        "https://numtide.cachix.org"
+        "https://nixpkgs-wayland.cachix.org"
+        "https://hercules-ci.cachix.org"
+        "https://cuda-maintainers.cachix.org"
+        "https://nix-gaming.cachix.org"
+        # Personal cache
+        "https://neg-serg.cachix.org"
+      ];
+      hmExtraTrustedKeys = [
+        "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+        "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
+        "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE="
+        "nixpkgs-wayland.cachix.org-1:3lwxaILxMRkVhehr5StQprHdEo4IrE8sRho9R9HOLYA="
+        "hercules-ci.cachix.org-1:ZZeDl9Va+xe9j+KqdzoBZMFJHVQ42Uu/c/1/KMC5Lw0="
+        "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
+        "nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4="
+        "neg-serg.cachix.org-1:MZ+xYOrDj1Uhq8GTJAg//KrS4fAPpnIvaWU/w3Qz/wo="
+      ];
 
       # Hosts discovery shared across sections
       hostsDir = ./hosts;
@@ -159,6 +196,10 @@
             && builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
         )
         entries);
+      hmInputs =
+        builtins.mapAttrs (_: input: input // {type = "derivation";}) {
+          inherit (inputs) nupm;
+        };
 
       # Per-system outputs factory
       perSystem = system: let
@@ -381,6 +422,107 @@
           };
         };
       };
+      hmPerSystem = lib.genAttrs hmSystems (
+        system: let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [
+              (import ./packages/overlay.nix)
+              (_: prev: {
+                inherit (inputs.hyprland.packages.${system}) hyprland;
+                inherit (inputs.xdg-desktop-portal-hyprland.packages.${system}) xdg-desktop-portal-hyprland;
+                hyprlandPlugins =
+                  prev.hyprlandPlugins
+                  // {
+                    hy3 = inputs.hy3.packages.${system}.hy3;
+                  };
+              })
+            ];
+            config = {
+              allowAliases = false;
+            };
+          };
+          hmUse = boolEnv "HM_USE_IOSEVKA_NEG";
+          g = builtins.getEnv;
+          isCI = (g "CI" != "") || (g "GITHUB_ACTIONS" != "") || (g "GARNIX" != "") || (g "GARNIX_CI" != "");
+          usePrivate =
+            if hmUse
+            then true
+            else if isCI
+            then false
+            else true;
+          iosevkaNeg =
+            if usePrivate
+            then inputs."iosevka-neg".packages.${system}
+            else {nerd-font = pkgs.nerd-fonts.iosevka;};
+          devTools = import ./home/flake/devtools.nix {inherit lib pkgs;};
+          inherit (devTools) devNixTools rustBaseTools rustExtraTools;
+          extrasFlag = boolEnv "HM_EXTRAS";
+          extrasSet = import ./packages/flake/extras.nix {inherit pkgs;};
+          customPkgs = import ./packages/flake/custom-packages.nix {inherit pkgs;};
+        in {
+          inherit pkgs iosevkaNeg;
+          devShells = import ./home/flake/devshells.nix {
+            inherit pkgs rustBaseTools rustExtraTools devNixTools;
+          };
+          packages =
+            ({default = pkgs.zsh;} // customPkgs)
+            // lib.optionalAttrs extrasFlag extrasSet;
+          checks = import ./home/flake/checks.nix {
+            inherit pkgs self system;
+          };
+        }
+      );
+      hmHelpers = import ./home/flake/hm-helpers.nix {
+        inherit lib;
+        stylixInput = inputs.stylix;
+        chaotic = inputs.chaotic;
+        sopsNixInput = inputs."sops-nix";
+      };
+      inherit (hmHelpers) hmBaseModules;
+      mkHMArgs = import ./home/flake/mkHMArgs.nix {
+        inherit lib hmInputs inputs;
+        perSystem = hmPerSystem;
+        yandexBrowserInput = inputs."yandex-browser";
+        nur = inputs.nur;
+        extraSubstituters = hmExtraSubstituters;
+        extraTrustedKeys = hmExtraTrustedKeys;
+      };
+      hmDevShells = let
+        extras = boolEnv "HM_EXTRAS";
+        sysList =
+          if extras
+          then hmSystems
+          else [hmDefaultSystem];
+      in
+        lib.genAttrs sysList (s: hmPerSystem.${s}.devShells);
+      hmPackages = lib.genAttrs hmSystems (s: hmPerSystem.${s}.packages);
+      hmDocs = import ./home/flake/docs.nix {
+        inherit lib mkHMArgs boolEnv;
+        perSystem = hmPerSystem;
+        systems = hmSystems;
+        homeManagerInput = inputs.home-manager;
+        hmBaseModules = hmBaseModules;
+      };
+      hmChecks = import ./home/flake/checks-outputs.nix {
+        inherit lib;
+        systems = hmSystems;
+        perSystem = hmPerSystem;
+      };
+      hmHomeConfigurations = lib.genAttrs ["neg" "neg-lite"] (
+        n:
+          inputs.home-manager.lib.homeManagerConfiguration {
+            inherit (hmPerSystem.${hmDefaultSystem}) pkgs;
+            extraSpecialArgs = mkHMArgs hmDefaultSystem;
+            modules =
+              hmBaseModules (
+                lib.optionalAttrs (n == "neg-lite") {
+                  profile = "lite";
+                }
+              );
+          }
+      );
+      hmTemplates = import ./home/flake/templates.nix;
     in {
       # Per-system outputs: packages, formatter, checks, devShells, apps
       packages = lib.genAttrs supportedSystems (s: (perSystem s).packages);
@@ -415,5 +557,13 @@
           };
       in
         lib.genAttrs hostNames mkHost;
+      homeConfigurations = hmHomeConfigurations;
+      homeDevShells = hmDevShells;
+      homePackages = hmPackages;
+      homeChecks = hmChecks;
+      docs = hmDocs;
+      homeDocs = hmDocs;
+      templates = hmTemplates;
+      homeTemplates = hmTemplates;
     };
 }
