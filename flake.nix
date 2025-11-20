@@ -289,23 +289,6 @@
           // customPkgs
           // {
             default = pkgs.zsh;
-            options-md = docDriverAll.optionsCommonMark;
-            options-index-md = let
-              names = ["options-md"];
-              toFile = n:
-                if n == "options-md"
-                then "options.md"
-                else builtins.replaceStrings ["-md"] [".md"] n;
-              lines = map (n: "- [" + n + "](./" + toFile n + ")") names;
-              content = builtins.concatStringsSep "\n" ([
-                  "# Options Docs"
-                  ""
-                  "Index of generated option documentation artifacts:"
-                  ""
-                ]
-                ++ lines ++ [""]);
-            in
-              pkgs.writeText "options-index.md" content;
           };
 
         formatter = pkgs.writeShellApplication {
