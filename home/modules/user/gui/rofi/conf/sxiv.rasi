@@ -6,7 +6,7 @@
 #window {
     location: north;
     anchor: north;
-    width: 100%;
+    width: 96%;
     border: 0px;
     border-radius: 0px;
     padding: 8px 32px 12px 32px;
@@ -39,7 +39,6 @@ entry {
 }
 
 listview {
-    width: 100%;
     padding: 4px 8px 0px 8px;
     columns: 1;
     lines: 14;
