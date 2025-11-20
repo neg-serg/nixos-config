@@ -8,9 +8,10 @@
 {
   lib,
   config,
+  inputs,
   ...
 }: let
-  opts = import ../../../lib/opts.nix {inherit lib;};
+  opts = import (inputs.self + "/lib/opts.nix") {inherit lib;};
   cfg = config.profiles.performance.netExtras;
 in {
   options.profiles.performance.netExtras = {

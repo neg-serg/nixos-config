@@ -5,7 +5,7 @@
   config,
   ...
 }: let
-  mkQuickshellWrapper = import ../../../lib/quickshell-wrapper.nix {
+  mkQuickshellWrapper = import (inputs.self + "/lib/quickshell-wrapper.nix") {
     inherit lib pkgs;
   };
   quickshellPkg = inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default;
@@ -27,7 +27,7 @@
       pkgs.wl-clipboard
     ];
     text = let
-      tpl = builtins.readFile ../../../home/modules/user/gui/hypr/hypr-win-list.py;
+      tpl = builtins.readFile (inputs.self + "/home/modules/user/gui/hypr/hypr-win-list.py");
     in ''
                    exec python3 <<'PY'
       ${tpl}

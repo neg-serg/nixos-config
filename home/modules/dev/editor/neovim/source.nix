@@ -1,9 +1,9 @@
 {
   lib,
   config,
+  xdg,
   ...
 }: let
-  xdg = import ../../../lib/xdg-helpers.nix {inherit lib;};
   filesRoot = "${config.neg.hmConfigRoot}/files";
 in
   # Live-editable config and tiny init for kitty-scrollback.nvim kitten

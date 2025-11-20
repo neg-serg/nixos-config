@@ -1,4 +1,4 @@
-{
+{inputs, ...}: {
   imports = [
     ./boot.nix
     ./environment.nix
@@ -13,7 +13,7 @@
     ./profiles/security.nix
     ./profiles/performance.nix
     ./profiles/debug.nix
-    ../hardware/uinput.nix
+    (inputs.self + "/modules/hardware/uinput.nix")
     ./profiles/work.nix
     ./profiles/vm.nix
     ./profiles/aliases.nix

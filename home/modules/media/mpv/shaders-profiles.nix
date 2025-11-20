@@ -2,10 +2,10 @@
   lib,
   config,
   pkgs,
+  xdg,
   ...
 }:
 with lib; let
-  xdg = import ../../lib/xdg-helpers.nix {inherit lib pkgs;};
   shadersDir = "mpv/shaders";
   note = ''
     FSRCNNX / SSimSuperRes / Anime4K shaders

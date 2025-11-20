@@ -2,10 +2,10 @@
   lib,
   pkgs,
   config,
+  xdg,
   ...
 }:
 with lib; let
-  xdg = import ../lib/xdg-helpers.nix {inherit lib pkgs;};
   cfg = config.features.media.aiUpscale or {};
   scale = builtins.toString (cfg.scale or 2);
   content = cfg.content or "general";
