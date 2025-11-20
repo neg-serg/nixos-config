@@ -19,6 +19,7 @@ in
           mv "$target" "$dest"
         fi
       '';
+      home.activation.ensureNvimDir = config.lib.neg.mkEnsureRealDir "${config.xdg.configHome}/nvim";
     }
     (xdg.mkXdgSource "nvim" {
       source = filesRoot + "/nvim";
