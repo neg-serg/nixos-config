@@ -6,16 +6,17 @@
 {
   lib,
   config,
+  inputs,
   ...
 }: let
-  hasSynSecret = builtins.pathExists (../../.. + "/secrets/syncthing.sops.yaml");
+  hasSynSecret = builtins.pathExists (inputs.self + "/secrets/syncthing.sops.yaml");
   cfg = config.servicesProfiles.syncthing or {enable = false;};
   mainUser = config.users.main.name or "neg";
 in {
   config = lib.mkIf cfg.enable {
     # Register secret only if present to keep evaluation robust without secrets
     sops.secrets."syncthing/gui-pass" = lib.mkIf hasSynSecret {
-      sopsFile = ../../../secrets/syncthing.sops.yaml;
+      sopsFile = inputs.self + "/secrets/syncthing.sops.yaml";
     };
 
     services.syncthing = {
