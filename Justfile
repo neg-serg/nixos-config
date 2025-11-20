@@ -125,21 +125,13 @@ hm-neg:
 hm-lite:
     home-manager switch --flake .#neg-lite
 
-hm-dev-speed:
-    # Enable dev-speed mode (env + feature defaults) and switch full profile
-    HM_DEV_SPEED=1 home-manager switch --flake .#neg
-
-hm-lite-speed:
-    # Enable dev-speed mode (env + feature defaults) and switch lite profile
-    HM_DEV_SPEED=1 home-manager switch --flake .#neg-lite
-
 hm-build:
     # Build activation package without switching
     home-manager build --flake .#neg
 
 docs:
     # Generate docs packages (OPTIONS.md, features-options.{md,json})
-    HM_DOCS=1 nix build --no-link -L .#docs.${SYSTEM:-x86_64-linux}.options-md
+    nix build --no-link -L .#docs.${SYSTEM:-x86_64-linux}.options-md
 
 hooks-enable:
     git config core.hooksPath .githooks

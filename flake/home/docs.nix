@@ -5,17 +5,14 @@
   homeManagerInput,
   mkHMArgs,
   hmBaseModules,
-  boolEnv,
 }: let
   docsLib = import ./features-docs.nix {inherit lib;};
 in
   lib.genAttrs systems (
     s: let
       inherit (perSystem.${s}) pkgs;
-      docsEnabled = boolEnv "HM_DOCS";
     in
-      if docsEnabled
-      then let
+      let
         featureOptionsItems = docsLib.getFeatureOptionsItems ../../home/modules/features.nix;
       in {
         options-md = pkgs.writeText "OPTIONS.md" (
@@ -55,11 +52,5 @@ in
         );
         features-options-md = pkgs.writeText "features-options.md" (docsLib.renderFeaturesOptionsMd featureOptionsItems);
         features-options-json = pkgs.writeText "features-options.json" (docsLib.renderFeaturesOptionsJson featureOptionsItems);
-      }
-      else {
-        options-md = pkgs.writeText "OPTIONS.md" ''
-          Docs generation is disabled.
-          Set HM_DOCS=1 to enable heavy docs evaluation.
-        '';
       }
   )

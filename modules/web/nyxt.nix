@@ -7,7 +7,6 @@
 }: let
   webEnabled = config.features.web.enable or false;
   nyxtEnabled = webEnabled && (config.features.web.nyxt.enable or false);
-  boolEnv = name: let v = builtins.getEnv name; in v == "1" || v == "true" || v == "yes";
   customPkgs =
     if inputs ? nyxtQt
     then inputs.nyxtQt.packages.${pkgs.stdenv.hostPlatform.system}
@@ -28,7 +27,7 @@
         else pick (builtins.tail names) provider;
   fromCustom = pick ["nyxt-qtwebengine" "nyxt-qt" "nyxt4" "nyxt"] customPkgs;
   chaoticPkgs =
-    if boolEnv "HM_USE_CHAOTIC_NYXT" && inputs ? chaotic
+    if inputs ? chaotic
     then (inputs.chaotic.packages.${pkgs.stdenv.hostPlatform.system} or null)
     else null;
   fromChaotic =

@@ -40,11 +40,6 @@ with lib; let
   cfg = lib.recursiveUpdate defaults (config.features or {});
   # Use a local mkBool to avoid early dependency on config.lib.neg during option evaluation
   mkBool = desc: default: (lib.mkEnableOption desc) // {inherit default;};
-  # Read dev-speed mode from environment (HM_DEV_SPEED=1|true|yes)
-  devSpeedEnv = let
-    v = builtins.getEnv "HM_DEV_SPEED";
-  in
-    v == "1" || v == "true" || v == "yes";
 in {
   options.features = {
     # Global package exclusions for curated lists in modules that adopt this filter.
@@ -356,7 +351,6 @@ in {
       ];
     }
     # Auto-enable dev-speed by env var
-    (mkIf devSpeedEnv {features.devSpeed.enable = mkDefault true;})
     # Dependency assertions for new app flags
     {
       assertions = [
