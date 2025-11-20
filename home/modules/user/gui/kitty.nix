@@ -60,6 +60,7 @@ lib.mkIf (config.features.gui.enable or false) (lib.mkMerge [
   (xdg.mkXdgSource "kitty" {
     source = config.lib.file.mkOutOfStoreSymlink "${config.neg.hmConfigRoot}/modules/user/gui/kitty/conf";
     recursive = true;
+    force = true;
   })
   {
     home.activation.backupLegacyKitty = lib.hm.dag.entryBefore ["linkGeneration"] ''
