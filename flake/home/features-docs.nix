@@ -32,15 +32,19 @@
       optSet
     );
 in rec {
-  # Evaluate modules/features.nix options and return flat items list
-  getFeatureOptionsItems = featuresModule: let
+  # Evaluate module-provided feature options and return a flat list
+  getFeatureOptionsItems = {
+    module,
+    specialArgs ? {},
+  }: let
     eval = lib.evalModules {
+      inherit specialArgs;
       modules = [
         ({lib, ...}: {
           config._module.check = false; # silence deprecation: pass via module instead of evalModules.check
           config.lib.neg.mkBool = desc: default: (lib.mkEnableOption desc) // {inherit default;};
         })
-        featuresModule
+        module
         ({lib, ...}: {
           options.assertions = lib.mkOption {
             type = lib.types.anything;
@@ -54,6 +58,21 @@ in rec {
     items = toList opts "";
   in
     lib.filter (o: !(lib.hasPrefix "assertions" o.path)) items;
+
+  # Merge feature option listings, preferring system-defined entries on conflicts
+  mergeFeatureItems = {home, system}: let
+    toAttr = items:
+      lib.listToAttrs (map (o: {
+          name = o.path;
+          value = o;
+        })
+        items);
+    homeMap = toAttr home;
+    systemMap = toAttr system;
+    combined = homeMap // systemMap;
+    ordered = lib.sort (a: b: a < b) (builtins.attrNames combined);
+  in
+    map (name: combined.${name}) ordered;
 
   renderFeaturesOptionsMd = items: let
     esc = s: lib.replaceStrings ["\n" "|"] [" " "\\|"] (toString s);
