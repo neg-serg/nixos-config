@@ -108,11 +108,6 @@ lint:
     git ls-files -z -- '*.sh' '*.bash' 2>/dev/null \
       | xargs -0 -r grep -lZ -m1 -E '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh' \
       | xargs -0 -r shellcheck -S warning -x
-    # Optional guard: ensure each pkgs.* item in lists has an inline comment
-    # Enable with: COMMENTS_GUARD=1 just lint
-    if [ "${COMMENTS_GUARD:-}" = "1" ]; then \
-      python3 scripts/comments_guard.py; \
-    fi
 
 lint-md *ARGS:
     set -eu
