@@ -22,7 +22,6 @@ inputbar {
     background-color: var(blackdarkest);
     padding: 6px 10px;
     border: 0px;
-    border-bottom: 1px solid var(selectcolor);
     children: [ prompt, entry ];
 }
 
