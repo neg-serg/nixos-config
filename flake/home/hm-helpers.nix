@@ -3,13 +3,15 @@
   stylixInput,
   chaotic,
   sopsNixInput,
+  self,
 }: {
   hmBaseModules = {
     profile ? null,
     extra ? [],
   }: let
+    homeModule = self + "/home/home.nix";
     base = [
-      ../../home/home.nix
+      homeModule
       stylixInput.homeModules.stylix
       chaotic.homeManagerModules.default
       sopsNixInput.homeManagerModules.sops

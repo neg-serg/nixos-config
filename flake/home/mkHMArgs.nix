@@ -9,6 +9,7 @@
   extraTrustedKeys,
 }: system: let
   pkgsForSystem = perSystem.${system}.pkgs or null;
+  homeRoot = inputs.self + "/home";
 in {
   inputs = hmInputs;
   inherit (perSystem.${system}) iosevkaNeg;
@@ -70,9 +71,9 @@ in {
   qsProvider = pkgs: inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default;
   rsmetrxProvider = pkgs: inputs.rsmetrx.packages.${pkgs.stdenv.hostPlatform.system}.default;
   # Provide xdg helpers directly to avoid _module.args fallback recursion
-  xdg = import ../../home/modules/lib/xdg-helpers.nix {
+  xdg = import (homeRoot + "/modules/lib/xdg-helpers.nix") {
     inherit lib;
     inherit (perSystem.${system}) pkgs;
   };
-  systemdUser = import ../../home/modules/lib/systemd-user.nix {inherit lib;};
+  systemdUser = import (homeRoot + "/modules/lib/systemd-user.nix") {inherit lib;};
 }

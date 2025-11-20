@@ -2,6 +2,7 @@
   lib,
   pkgs,
   config,
+  inputs,
   ...
 }: let
   cfg = config.hardware.cooling or {};
@@ -122,7 +123,7 @@ in {
       serviceConfig = {
         Type = "oneshot";
         ExecStart = let
-          script = pkgs.writeShellScript "fancontrol-setup" (builtins.readFile ../../scripts/fancontrol-setup.sh);
+          script = pkgs.writeShellScript "fancontrol-setup" (builtins.readFile (inputs.self + "/scripts/fancontrol-setup.sh"));
         in "${script}";
         Environment =
           [
@@ -171,7 +172,7 @@ in {
       source = let
         txt =
           builtins.replaceStrings ["@GPU_ENABLE@"] [(lib.boolToString (cfg.gpuFancontrol.enable or false))]
-          (builtins.readFile ../../scripts/fancontrol-reapply.sh);
+          (builtins.readFile (inputs.self + "/scripts/fancontrol-reapply.sh"));
       in
         pkgs.writeShellScript "fancontrol-reapply" txt;
       mode = "0755";

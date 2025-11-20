@@ -1,5 +1,5 @@
-{lib, ...}: {
-  imports = [../../modules/diff-closures.nix];
+{lib, inputs, ...}: {
+  imports = [(inputs.self + "/modules/diff-closures.nix")];
   diffClosures.enable = true;
 
   # Workaround Rust packaging issue in lanzaboote by disabling it on this host
