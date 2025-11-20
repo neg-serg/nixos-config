@@ -7,7 +7,16 @@
 }:
 lib.mkMerge [
   {
-    home.activation.removeLegacyNushell = config.lib.neg.mkEnsureAbsent "${config.xdg.configHome}/nushell";
+    home.activation.backupLegacyNushell = lib.hm.dag.entryBefore ["linkGeneration"] ''
+      set -euo pipefail
+      target="${config.xdg.configHome}/nushell"
+      if [ -e "$target" ] && [ ! -L "$target" ]; then
+        backupRoot="${config.xdg.configHome}/hm-backup"
+        mkdir -p "$backupRoot"
+        dest="$backupRoot/nushell.$(date +%s)"
+        mv "$target" "$dest"
+      fi
+    '';
   }
   # Live-editable config via helper (guards parent dir and target)
   (xdg.mkXdgSource "nushell" {

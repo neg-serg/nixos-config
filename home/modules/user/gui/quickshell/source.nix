@@ -9,7 +9,16 @@ with lib; let
   filesRoot = "${config.neg.hmConfigRoot}/files";
 in
   mkIf (config.features.gui.enable && (config.features.gui.qt.enable or false) && (config.features.gui.quickshell.enable or false)) {
-    home.activation.removeLegacyQuickshell = config.lib.neg.mkEnsureAbsent "${config.xdg.configHome}/quickshell";
+    home.activation.backupLegacyQuickshell = lib.hm.dag.entryBefore ["linkGeneration"] ''
+      set -euo pipefail
+      target="${config.xdg.configHome}/quickshell"
+      if [ -e "$target" ] && [ ! -L "$target" ]; then
+        backupRoot="${config.xdg.configHome}/hm-backup"
+        mkdir -p "$backupRoot"
+        dest="$backupRoot/quickshell.$(date +%s)"
+        mv "$target" "$dest"
+      fi
+    '';
     home.file.".config/quickshell" = {
       recursive = true;
       source = filesRoot + "/quickshell/quickshell";
