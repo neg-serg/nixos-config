@@ -8,6 +8,9 @@
 in
   # Live-editable config and tiny init for kitty-scrollback.nvim kitten
   lib.mkMerge [
+    {
+      home.activation.removeLegacyNvim = config.lib.neg.mkEnsureAbsent "${config.xdg.configHome}/nvim";
+    }
     (xdg.mkXdgSource "nvim" {
       source = filesRoot + "/nvim";
       recursive = true;
