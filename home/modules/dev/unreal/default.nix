@@ -2,6 +2,7 @@
   lib,
   pkgs,
   config,
+  negLib,
   ...
 }: let
   cfg = config.features.dev.unreal;
@@ -59,7 +60,7 @@ in {
       editorBinary = "${root}/Engine/Binaries/Linux/UnrealEditor";
       editorEsc = escapeShellArg editorBinary;
       steamRunExe = getExe pkgs.steam-run;
-      packagesInfo = import ../../../../modules/dev/unreal/packages.nix {
+      packagesInfo = import (negLib.repoRoot + "/modules/dev/unreal/packages.nix") {
         inherit lib pkgs useSteamRun;
       };
       clangSuite = packagesInfo.clangSuite;
@@ -265,7 +266,7 @@ in {
         }
         (
           let
-            mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;};
+            mkLocalBin = negLib.mkLocalBin;
           in
             lib.mkMerge [
               (mkLocalBin "ue5-editor" editorScript)

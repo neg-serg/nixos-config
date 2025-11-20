@@ -2,6 +2,7 @@
   lib,
   pkgs,
   config,
+  negLib,
   faProvider ? null,
   ...
 }: let
@@ -9,7 +10,7 @@
 in {
   config = lib.mkIf firefoxEnabled (
     let
-      common = import ./mozilla-common-lib.nix {inherit lib pkgs config faProvider;};
+      common = import ./mozilla-common-lib.nix {inherit lib pkgs config faProvider negLib;};
       inherit (import ./firefox/prefgroups.nix {inherit lib;}) modules prefgroups;
 
       firefoxAddons =

@@ -6,7 +6,7 @@
   ...
 }: let
   inherit (pkgs.stdenv.hostPlatform) system;
-  repoRoot = inputs.self.outPath;
+  repoRoot = inputs.self;
   caches = import (repoRoot + "/nix/caches.nix");
   dropCache = url: url != "https://cache.nixos.org/";
   dropKey = key: key != "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=";
@@ -32,8 +32,11 @@
   ];
   cfgPath = repoRoot + "/home";
   userConfig = {
+    _module.args.negPaths = extraArgs.negPaths;
     imports = hmModules;
     neg.hmConfigRoot = cfgPath;
+    neg.repoRoot = repoRoot;
+    neg.packagesRoot = repoRoot + "/packages";
   };
   extraSpecialArgs = extraArgs;
 in {

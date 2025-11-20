@@ -2,9 +2,10 @@
   lib,
   pkgs,
   config,
+  negLib,
   ...
 }: let
-  db = config.lib.neg.web.defaultBrowser or {};
+  db = negLib.web.defaultBrowser or {};
   browserBin = db.bin or "${lib.getExe' pkgs.xdg-utils "xdg-open"}";
   browserArg = db.newTabArg or "";
 in

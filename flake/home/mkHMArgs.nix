@@ -9,9 +9,28 @@
   extraTrustedKeys,
 }: system: let
   pkgsForSystem = perSystem.${system}.pkgs or null;
-  homeRoot = inputs.self + "/home";
+  repoRoot = inputs.self;
+  homeRoot = repoRoot + "/home";
+  packagesRoot = repoRoot + "/packages";
+  hmLib = lib // {hm = inputs.home-manager.lib.hm;};
+  systemdUserLib = import (homeRoot + "/modules/lib/systemd-user.nix") {lib = hmLib;};
+  negHelpers = import (homeRoot + "/modules/lib/helpers.nix") {
+    lib = hmLib;
+    pkgs =
+      if pkgsForSystem != null
+      then pkgsForSystem
+      else perSystem.${system}.pkgs;
+    systemdUser = systemdUserLib;
+    inherit packagesRoot;
+  };
+  negPaths = {
+    hmConfigRoot = homeRoot;
+    inherit repoRoot packagesRoot;
+  };
+  negLib = negHelpers // negPaths;
 in {
   inputs = hmInputs;
+  inherit negPaths negLib;
   inherit (perSystem.${system}) iosevkaNeg;
   # Prefer Nyxt 4 / QtWebEngine variant when available from chaotic
   nyxt4 = let
@@ -71,9 +90,9 @@ in {
   qsProvider = pkgs: inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default;
   rsmetrxProvider = pkgs: inputs.rsmetrx.packages.${pkgs.stdenv.hostPlatform.system}.default;
   # Provide xdg helpers directly to avoid _module.args fallback recursion
-  xdg = import (homeRoot + "/modules/lib/xdg-helpers.nix") {
+  xdg = import (inputs.self + "/home/modules/lib/xdg-helpers.nix") {
     inherit lib;
     inherit (perSystem.${system}) pkgs;
   };
-  systemdUser = import (homeRoot + "/modules/lib/systemd-user.nix") {inherit lib;};
+  systemdUser = import (inputs.self + "/home/modules/lib/systemd-user.nix") {inherit lib;};
 }

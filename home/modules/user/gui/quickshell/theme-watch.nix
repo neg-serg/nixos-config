@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  negLib,
   ...
 }:
 with lib; let
@@ -46,6 +47,6 @@ in
           RestartSec = "2";
         };
       }
-      (config.lib.neg.systemdUser.mkUnitFromPresets {presets = ["graphical"];})
+      (negLib.systemdUser.mkUnitFromPresets {presets = ["graphical"];})
     ];
   }

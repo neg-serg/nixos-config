@@ -8,6 +8,7 @@ with lib; {
   _module.args.xdg = import ./lib/xdg-helpers.nix {inherit lib pkgs;};
 
   imports = [
+    ./lib/paths.nix
     ./lib/neg.nix
     ./features.nix
     ./cli

@@ -2,6 +2,7 @@
   lib,
   config,
   xdg,
+  negLib,
   ...
 }:
 with lib;
@@ -19,7 +20,7 @@ with lib;
     in
       lib.mkMerge [
         # Ensure ~/.config/tridactyl is a real dir (not a previous symlink)
-        {home.activation.fixTridactylDir = config.lib.neg.mkEnsureRealDir "${config.xdg.configHome}/tridactyl";}
+        {home.activation.fixTridactylDir = negLib.mkEnsureRealDir "${config.xdg.configHome}/tridactyl";}
         # Write rc overlay that sources user's file and then applies small fixups
         (xdg.mkXdgText "tridactyl/tridactylrc" rcText)
         # Link supplemental files/dirs from misc assets tracked in the repo

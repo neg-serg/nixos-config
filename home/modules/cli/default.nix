@@ -2,6 +2,7 @@
   lib,
   config,
   pkgs,
+  negLib,
   ...
 }:
 with lib; let
@@ -50,7 +51,7 @@ in {
     (lib.mkIf hasHishtory {
       home.sessionVariables.HISHTORY_ZSH_CONFIG = "${pkgs.hishtory}/share/hishtory/config.zsh";
       home.activation.ensureHishtoryDir =
-        config.lib.neg.mkEnsureRealDir "${config.home.homeDirectory}/.hishtory";
+        negLib.mkEnsureRealDir "${config.home.homeDirectory}/.hishtory";
     })
     (lib.mkIf (! hasHishtory) {
       warnings = [

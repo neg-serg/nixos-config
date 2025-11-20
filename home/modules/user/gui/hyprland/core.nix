@@ -4,6 +4,7 @@
   pkgs,
   xdg,
   systemdUser,
+  negLib,
   ...
 }:
 with lib; let
@@ -24,10 +25,7 @@ with lib; let
 in
   mkIf config.features.gui.enable (lib.mkMerge [
     # Local helper: safe Hyprland reload that ensures Quickshell is started if absent
-    (let
-      mkLocalBin = import ../../../../../packages/lib/local-bin.nix {inherit lib;};
-    in
-      mkLocalBin "hypr-reload" ''        #!/usr/bin/env bash
+    (negLib.mkLocalBin "hypr-reload" ''        #!/usr/bin/env bash
                 set -euo pipefail
                 # Reload Hyprland config (ignore failure to avoid spurious errors)
                 hyprctl reload >/dev/null 2>&1 || true

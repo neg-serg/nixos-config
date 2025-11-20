@@ -2,6 +2,7 @@
   lib,
   xdg,
   config,
+  negLib,
   ...
 }:
 with lib; let
@@ -33,7 +34,7 @@ in {
       # Remove a pre-existing gnome-keyring env drop-in that overrides SSH_AUTH_SOCK.
       # This avoids clients picking up %t/keyring/ssh when ssh-agent.service is active.
       home.activation.rmGnomeKeyringSSHEnv =
-        config.lib.neg.mkEnsureAbsent "${config.xdg.configHome}/environment.d/10-gnome-keyring.conf";
+        negLib.mkEnsureAbsent "${config.xdg.configHome}/environment.d/10-gnome-keyring.conf";
     }
   ];
 }

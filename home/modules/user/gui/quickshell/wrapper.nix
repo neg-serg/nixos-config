@@ -2,11 +2,12 @@
   lib,
   pkgs,
   config,
+  negLib,
   qsProvider ? null,
   ...
 }:
 with lib; let
-  mkQuickshellWrapper = import ../../../../../lib/quickshell-wrapper.nix {
+  mkQuickshellWrapper = import (negLib.repoRoot + "/lib/quickshell-wrapper.nix") {
     inherit lib pkgs;
   };
   qsPkg =

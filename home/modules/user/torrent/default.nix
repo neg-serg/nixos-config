@@ -3,6 +3,7 @@
   lib,
   config,
   systemdUser,
+  negLib,
   ...
 }: let
   transmissionPkg = pkgs.transmission_4;
@@ -25,7 +26,7 @@ in
       # Ensure runtime subdirectories exist even if the config dir is a symlink
       # to an external location. This avoids "resume: No such file or directory"
       # on first start after activation.
-      home.activation.ensureTransmissionDirs = config.lib.neg.mkEnsureDirsAfterWrite [
+      home.activation.ensureTransmissionDirs = negLib.mkEnsureDirsAfterWrite [
         "${confDirNew}/resume"
         "${confDirNew}/torrents"
         "${confDirNew}/blocklists"
@@ -76,10 +77,7 @@ in
       ];
     }
     # Local bin wrapper installed to ~/.local/bin (avoid config.* to prevent recursion)
-    (let
-      mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;};
-    in
-      mkLocalBin "transmission-add-trackers" ''        #!/usr/bin/env bash
+    (negLib.mkLocalBin "transmission-add-trackers" ''        #!/usr/bin/env bash
             set -euo pipefail
 
             # Fetch trackers list directly (no local checkout required)

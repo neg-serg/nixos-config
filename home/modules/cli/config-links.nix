@@ -2,6 +2,7 @@
   lib,
   config,
   xdg,
+  negLib,
   ...
 }: let
   filesRoot = "${config.neg.hmConfigRoot}/files";
@@ -100,7 +101,7 @@ in
   in
     lib.mkMerge [
       # Ensure ~/.config/powershell exists as a real directory before writing the profile
-      {home.activation.ensurePwshDir = config.lib.neg.mkEnsureRealParent "${config.xdg.configHome}/powershell/Microsoft.PowerShell_profile.ps1";}
+      {home.activation.ensurePwshDir = negLib.mkEnsureRealParent "${config.xdg.configHome}/powershell/Microsoft.PowerShell_profile.ps1";}
       (xdg.mkXdgText "powershell/Microsoft.PowerShell_profile.ps1" profileText)
     ])
   # Fish config (conf.d drop-ins)

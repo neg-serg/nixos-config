@@ -2,6 +2,7 @@
   lib,
   pkgs,
   config,
+  negLib,
   faProvider ? null,
   ...
 }:
@@ -15,7 +16,7 @@ with lib; let
     else null;
   addons =
     if fa != null
-    then config.lib.neg.browserAddons fa
+    then negLib.browserAddons fa
     else {common = [];};
   nativeMessagingHosts = [
     pkgs.pywalfox-native # native host for Pywalfox (theme colors)
