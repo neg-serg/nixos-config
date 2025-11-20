@@ -37,6 +37,12 @@
     neg.hmConfigRoot = cfgPath;
     neg.repoRoot = repoRoot;
     neg.packagesRoot = repoRoot + "/packages";
+    programs.home-manager.enable = true;
+    manual = {
+      html.enable = false;
+      json.enable = false;
+      manpages.enable = true;
+    };
   };
   extraSpecialArgs = extraArgs;
 in {
