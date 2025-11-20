@@ -190,20 +190,7 @@
         };
       mkCustomPkgs = pkgs: import ./packages/flake/custom-packages.nix {inherit pkgs;};
       mkExtrasSet = pkgs: import ./packages/flake/extras.nix {inherit pkgs;};
-      mkIosevkaNeg = system: pkgs: let
-        hmUse = boolEnv "HM_USE_IOSEVKA_NEG";
-        g = builtins.getEnv;
-        isCI = (g "CI" != "") || (g "GITHUB_ACTIONS" != "") || (g "GARNIX" != "") || (g "GARNIX_CI" != "");
-        usePrivate =
-          if hmUse
-          then true
-          else if isCI
-          then false
-          else true;
-      in
-        if usePrivate
-        then inputs."iosevka-neg".packages.${system}
-        else {nerd-font = pkgs.nerd-fonts.iosevka;};
+      mkIosevkaNeg = system: inputs."iosevka-neg".packages.${system};
 
       # Hosts discovery shared across sections
       hostsDir = ./hosts;
@@ -431,7 +418,7 @@
       hmPerSystem = lib.genAttrs hmSystems (
         system: let
           pkgs = mkPkgs system;
-          iosevkaNeg = mkIosevkaNeg system pkgs;
+          iosevkaNeg = mkIosevkaNeg system;
           devTools = import ./flake/home/devtools.nix {inherit lib pkgs;};
           inherit (devTools) devNixTools rustBaseTools rustExtraTools;
           extrasFlag = boolEnv "HM_EXTRAS";
