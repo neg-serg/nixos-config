@@ -19,6 +19,7 @@ in
         mv "$target" "$dest"
       fi
     '';
+    home.activation.ensureQuickshellDir = config.lib.neg.mkEnsureRealDir "${config.xdg.configHome}/quickshell";
     home.file.".config/quickshell" = {
       recursive = true;
       source = filesRoot + "/quickshell/quickshell";
