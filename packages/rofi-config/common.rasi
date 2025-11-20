@@ -1,0 +1,156 @@
+/* shared styles; theme variables come from the parent file */
+
+#mainbox {
+    orientation: vertical;
+    children: [ listview, inputbar ];
+    spacing: 0px;
+    background-color: var(blackdarkest);
+}
+
+#message {
+    padding: 6px 6px;
+    background-color: var(blackwidget);
+    /* hide default dashed separator line when message is shown */
+    border: 0px;
+}
+
+#textbox {
+    text-color: var(fgwhite);
+    background-color: var(blackwidget);
+}
+
+/* Remove hint text and style its color (rofi 2.0 supports placeholder + placeholder-color) */
+entry {
+    placeholder: "";
+    placeholder-color: #78808d; /* ~35% darker than fg */
+}
+
+#listview {
+    fixed-height: false;
+    dynamic: true;
+    scrollbar: true;
+    spacing: 1px;
+    /* tighter vertical gap between list and inputbar */
+    padding: 1px 4px;
+    margin: 0px 0px 0px 0px;
+    background-color: var(blackdarkest);
+    /* remove default dashed separator from base theme */
+    border: 0px;
+    columns: 1;
+    lines: 12;
+}
+
+#element {
+    padding: 0px;
+    border: 0px;
+}
+
+#element.normal.normal {
+    padding: 0px 0px;
+    background-color: var(mainbg);
+    text-color: var(fgwhite);
+}
+
+#element.alternate.normal {
+    background-color: var(mainbg);
+    text-color: var(fgwhite);
+}
+
+#element.normal.urgent {
+    background-color: var(mainbg);
+    text-color: var(urgentcolor);
+}
+
+#element.normal.active {
+    background-color: var(mainbg);
+    text-color: var(fgwhite);
+}
+
+#element.selected.normal {
+    background-color: var(selectcolor);
+    text-color: var(fgwhite);
+    border-radius: 4px;
+    padding: 2px 8px;
+}
+
+#element.selected.urgent {
+    background-color: var(urgentcolor);
+    text-color: var(blackdarkest);
+    border-radius: 4px;
+    padding: 2px 8px;
+}
+
+#element.selected.active {
+    background-color: var(selectcolor);
+    text-color: var(fgwhite);
+    border-radius: 4px;
+    padding: 2px 8px;
+}
+
+#element.alternate.urgent {
+    background-color: var(mainbg);
+    text-color: var(urgentcolor);
+}
+
+#element.alternate.active {
+    background-color: var(mainbg);
+    text-color: var(maincolor);
+}
+
+#scrollbar {
+    background-color: var(blackwidget);
+    handle-color: var(darkgray);
+    handle-width: 2px;
+}
+
+#sidebar {
+    background-color: var(blackwidget);
+    /* no dashed separator */
+    border: 0px;
+}
+
+#button {
+    background-color: var(blackwidget);
+    text-color: var(fgwhite);
+}
+
+#button.selected {
+    text-color: var(fgwhite);
+}
+
+#inputbar {
+    background-color: var(blackdarkest);
+    spacing: 0px;
+    margin: 0px;
+    orientation: horizontal;
+    children: [ prompt, entry, case-indicator ];
+}
+
+#prompt {
+    spacing: 0px;
+    margin: 0px;
+    padding: 1px 5px;
+    background-color: var(blackwidget);
+    text-color: var(maincolor);
+    border-radius: 2px;
+}
+
+#entry {
+    margin: 0px;
+    padding: 2px 4px;
+    background-color: var(blackwidget);
+    text-color: var(fgwhite);
+    expand: true;
+}
+
+#case-indicator {
+    padding: 4px 4px;
+    text-color: var(maincolor);
+    background-color: var(blackwidget);
+}
+
+element-text {
+    background-color: inherit;
+    text-color:       inherit;
+    /* Some rofi versions don't support horizontal-align here; relying on columns=1 ensures left alignment */
+}

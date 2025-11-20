@@ -1,0 +1,16 @@
+@import "theme.rasi"
+@import "common.rasi"
+
+#window {
+    padding: 5px 5px 0px 5px;
+    border: 1px;
+    border-color: #0d141d;
+    border-radius: 0px;
+    background-color: var(blackdarkest);
+}
+
+#mainbox {
+    margin: 0px;
+    padding: 0px;
+    background-color: var(blackdarkest);
+}
