@@ -2,6 +2,7 @@
   lib,
   config,
   pkgs,
+  negLib,
   ...
 }: let
   cfgDev = config.features.dev.enable or false;
@@ -433,7 +434,7 @@ in
           );
       };
 
-      home.activation.ensureMcpStateDirs = config.lib.neg.mkEnsureRealDirsMany (
+      home.activation.ensureMcpStateDirs = negLib.mkEnsureRealDirsMany (
         [
           (builtins.dirOf sqliteDbPath)
           (builtins.dirOf telegramSessionPath)

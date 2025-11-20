@@ -44,7 +44,7 @@
 
   # Convenience: write TOML to an XDG config file using nixpkgs' TOML formatter.
   # Requires passing `pkgs` when importing this helper module:
-  #   let xdg = import ../../lib/xdg-helpers.nix { inherit lib pkgs; };
+  #   let xdg = import (config.neg.hmConfigRoot + "/modules/lib/xdg-helpers.nix") { inherit lib pkgs; };
   mkXdgConfigToml = relPath: attrs: {
     xdg.configFile."${relPath}".source = (pkgs.formats.toml {}).generate relPath attrs;
   };

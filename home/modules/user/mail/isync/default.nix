@@ -4,10 +4,11 @@
   config,
   xdg,
   systemdUser,
+  negLib,
   ...
 }:
 let
-  mkLocalBin = import ../../../../../packages/lib/local-bin.nix {inherit lib;};
+  mkLocalBin = negLib.mkLocalBin;
 in
   with lib;
     mkIf config.features.mail.enable (lib.mkMerge [

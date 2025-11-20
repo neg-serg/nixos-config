@@ -2,9 +2,10 @@
   lib,
   pkgs,
   config,
+  negLib,
   ...
 }: let
-  mkLocalBin = import ../../../packages/lib/local-bin.nix {inherit lib;};
+  mkLocalBin = negLib.mkLocalBin;
 in
   with lib; let
     cfg = config.features.media.aiUpscale or {};

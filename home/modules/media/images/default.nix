@@ -2,12 +2,13 @@
   lib,
   config,
   xdg,
+  negLib,
   ...
 }:
 with lib;
   mkIf (config.features.gui.enable or false) (
     let
-      mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;};
+      mkLocalBin = negLib.mkLocalBin;
       wrapperScript = ''
         #!/usr/bin/env bash
         set -euo pipefail

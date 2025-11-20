@@ -2,10 +2,11 @@
   lib,
   config,
   pkgs,
+  negLib,
   ...
 }:
 with rec {
-  db = config.lib.neg.web.defaultBrowser or {};
+  db = negLib.web.defaultBrowser or {};
   browserRec = {
     bin = db.bin or "${lib.getExe' pkgs.xdg-utils "xdg-open"}";
     desktop = db.desktop or "floorp.desktop";
@@ -63,14 +64,14 @@ with rec {
   home = {
     # Replace ad-hoc ensure/clean steps with lib.neg helpers
     # Ensure common runtime/config dirs exist as real directories
-    activation.ensureCommonDirs = config.lib.neg.mkEnsureRealDirsMany [
+    activation.ensureCommonDirs = negLib.mkEnsureRealDirsMany [
       "${config.xdg.configHome}/mpv"
       "${config.xdg.stateHome}/zsh"
       "${config.home.homeDirectory}/.local/bin"
     ];
 
     # Ensure Gmail Maildir tree exists (INBOX, Sent, Drafts, All Mail)
-    activation.ensureGmailMaildirs = config.lib.neg.mkEnsureMaildirs "${config.home.homeDirectory}/.local/mail/gmail" [
+    activation.ensureGmailMaildirs = negLib.mkEnsureMaildirs "${config.home.homeDirectory}/.local/mail/gmail" [
       "INBOX"
       "[Gmail]/Sent Mail"
       "[Gmail]/Drafts"

@@ -3,6 +3,7 @@
   config,
   pkgs,
   systemdUser,
+  negLib,
   ...
 }: let
   cfg = config.features.cli.nixIndexDB;
@@ -13,7 +14,7 @@ in {
   config = lib.mkIf cfg.enable (lib.mkMerge [
     # Ensure cache dir exists post-write; keeps activation quiet/clean
     {
-      home.activation.ensureNixIndexCache = config.lib.neg.mkEnsureDirsAfterWrite [
+      home.activation.ensureNixIndexCache = negLib.mkEnsureDirsAfterWrite [
         "${config.xdg.cacheHome}/nix-index"
       ];
     }
