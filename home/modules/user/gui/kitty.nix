@@ -61,4 +61,7 @@ lib.mkIf (config.features.gui.enable or false) (lib.mkMerge [
     source = config.lib.file.mkOutOfStoreSymlink "${config.neg.hmConfigRoot}/modules/user/gui/kitty/conf";
     recursive = true;
   })
+  {
+    home.activation.removeLegacyKitty = config.lib.neg.mkEnsureAbsent "${config.xdg.configHome}/kitty";
+  }
 ])

@@ -6,6 +6,9 @@
   ...
 }:
 lib.mkMerge [
+  {
+    home.activation.removeLegacyNushell = config.lib.neg.mkEnsureAbsent "${config.xdg.configHome}/nushell";
+  }
   # Live-editable config via helper (guards parent dir and target)
   (xdg.mkXdgSource "nushell" {
     source = config.lib.file.mkOutOfStoreSymlink "${config.neg.hmConfigRoot}/modules/cli/nushell-conf";
