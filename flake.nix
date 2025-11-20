@@ -455,32 +455,32 @@
             if usePrivate
             then inputs."iosevka-neg".packages.${system}
             else {nerd-font = pkgs.nerd-fonts.iosevka;};
-          devTools = import ./home/flake/devtools.nix {inherit lib pkgs;};
+          devTools = import ./flake/home/devtools.nix {inherit lib pkgs;};
           inherit (devTools) devNixTools rustBaseTools rustExtraTools;
           extrasFlag = boolEnv "HM_EXTRAS";
           extrasSet = import ./packages/flake/extras.nix {inherit pkgs;};
           customPkgs = import ./packages/flake/custom-packages.nix {inherit pkgs;};
         in {
           inherit pkgs iosevkaNeg;
-          devShells = import ./home/flake/devshells.nix {
+          devShells = import ./flake/home/devshells.nix {
             inherit pkgs rustBaseTools rustExtraTools devNixTools;
           };
           packages =
             ({default = pkgs.zsh;} // customPkgs)
             // lib.optionalAttrs extrasFlag extrasSet;
-          checks = import ./home/flake/checks.nix {
+          checks = import ./flake/home/checks.nix {
             inherit pkgs self system;
           };
         }
       );
-      hmHelpers = import ./home/flake/hm-helpers.nix {
+      hmHelpers = import ./flake/home/hm-helpers.nix {
         inherit lib;
         stylixInput = inputs.stylix;
         chaotic = inputs.chaotic;
         sopsNixInput = inputs."sops-nix";
       };
       inherit (hmHelpers) hmBaseModules;
-      mkHMArgs = import ./home/flake/mkHMArgs.nix {
+      mkHMArgs = import ./flake/home/mkHMArgs.nix {
         inherit lib hmInputs inputs;
         perSystem = hmPerSystem;
         yandexBrowserInput = inputs."yandex-browser";
@@ -497,14 +497,14 @@
       in
         lib.genAttrs sysList (s: hmPerSystem.${s}.devShells);
       hmPackages = lib.genAttrs hmSystems (s: hmPerSystem.${s}.packages);
-      hmDocs = import ./home/flake/docs.nix {
+      hmDocs = import ./flake/home/docs.nix {
         inherit lib mkHMArgs boolEnv;
         perSystem = hmPerSystem;
         systems = hmSystems;
         homeManagerInput = inputs.home-manager;
         hmBaseModules = hmBaseModules;
       };
-      hmChecks = import ./home/flake/checks-outputs.nix {
+      hmChecks = import ./flake/home/checks-outputs.nix {
         inherit lib;
         systems = hmSystems;
         perSystem = hmPerSystem;
@@ -522,7 +522,7 @@
               );
           }
       );
-      hmTemplates = import ./home/flake/templates.nix;
+      hmTemplates = import ./flake/home/templates.nix;
     in {
       # Per-system outputs: packages, formatter, checks, devShells, apps
       packages = lib.genAttrs supportedSystems (s: (perSystem s).packages);
