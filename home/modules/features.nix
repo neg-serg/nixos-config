@@ -141,14 +141,6 @@ in {
       enable = mkBool "enable Torrent stack (Transmission, tools, services)" true;
     };
 
-    zapret = {
-      enable = mkBool "enable zapret DPI bypass service (NixOS-only)" false;
-    };
-
-    network = {
-      doh.enable = mkBool "enable dnscrypt-proxy (DoH) stack (NixOS-only)" false;
-    };
-
     text = {
       read.enable = mkBool "enable reading stack (CLI/GUI viewers, OCR, Recoll)" true;
       manipulate.enable = mkBool "enable text/markup manipulation CLI tools (jq/yq/htmlq)" true;
