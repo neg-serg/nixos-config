@@ -1,0 +1,9 @@
+{
+  "weatherCity": "Moscow",
+  "showWeatherInBar": true,
+  "showMediaInBar": true,
+  "use12HourClock": false,
+  "reverseDayMonth": true,
+  "fontSizeMultiplier": 1.1
+}
+

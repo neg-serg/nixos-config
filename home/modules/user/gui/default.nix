@@ -10,5 +10,6 @@
     ./rofi.nix
     ./wayland.nix
     ./quickshell.nix
+    ./walker.nix
   ];
 }

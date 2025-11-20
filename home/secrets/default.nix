@@ -5,6 +5,7 @@
 }: let
   hasGitHubToken = builtins.pathExists ./github-token.sops.yaml;
   hasCachixEnv = builtins.pathExists ./cachix.env;
+  hasVdirsyncerGoogle = builtins.pathExists ./vdirsyncer/google.sops.yaml;
 in {
   sops = {
     age.keyFile = "${config.xdg.configHome}/sops/age/keys.txt";
@@ -49,6 +50,18 @@ in {
           sopsFile = ./github-token.sops.yaml;
           key = "token";
           mode = "0400";
+        };
+      }
+      // lib.optionalAttrs hasVdirsyncerGoogle {
+        "vdirsyncer/google-client-id" = {
+          format = "yaml";
+          sopsFile = ./vdirsyncer/google.sops.yaml;
+          key = "client_id";
+        };
+        "vdirsyncer/google-client-secret" = {
+          format = "yaml";
+          sopsFile = ./vdirsyncer/google.sops.yaml;
+          key = "client_secret";
         };
       };
   };

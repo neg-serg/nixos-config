@@ -7,5 +7,6 @@ in {
     ./unfree-auto.nix
     ./fun-art.nix
     ./rustmission.nix
+    ./dosemu.nix
   ];
 }
