@@ -20,7 +20,6 @@ with lib;
           name = ".local/bin/${name}";
           value = {
             executable = true;
-            force = true;
             text = builtins.readFile (binDir + "/${name}");
           };
         };
@@ -32,7 +31,6 @@ with lib;
           name = ".local/bin/${e.name}";
           value = {
             executable = true;
-            force = true;
             text = builtins.readFile e.src;
           };
         };
@@ -78,12 +76,10 @@ with lib;
         // {
           ".local/bin/vid-info" = {
             executable = true;
-            force = true;
             text = vidInfoText;
           };
           ".local/bin/ren" = {
             executable = true;
-            force = true;
             text = renText;
           };
           # Provide a stable wrapper for Pyprland CLI with absolute path,
@@ -91,7 +87,6 @@ with lib;
           # to preserve existing config and muscle memory.
           ".local/bin/pypr-client" = {
             executable = true;
-            force = true;
             text = let
               exe = lib.getExe' pkgs.pyprland "pypr";
             in ''
@@ -105,7 +100,6 @@ with lib;
           # of Hyprland don't leave pyprland bound to a stale socket.
           ".local/bin/pypr-run" = {
             executable = true;
-            force = true;
             text = let
               exe = lib.getExe' pkgs.pyprland "pypr";
             in ''

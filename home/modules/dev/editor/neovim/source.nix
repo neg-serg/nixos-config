@@ -8,23 +8,9 @@
 in
   # Live-editable config and tiny init for kitty-scrollback.nvim kitten
   lib.mkMerge [
-    {
-      home.activation.backupLegacyNvim = lib.hm.dag.entryBefore ["linkGeneration"] ''
-        set -euo pipefail
-        target="${config.xdg.configHome}/nvim"
-        if [ -e "$target" ] && [ ! -L "$target" ]; then
-          backupRoot="${config.xdg.configHome}/hm-backup"
-          mkdir -p "$backupRoot"
-          dest="$backupRoot/nvim.$(date +%s)"
-          mv "$target" "$dest"
-        fi
-      '';
-      home.activation.ensureNvimDir = config.lib.neg.mkEnsureRealDir "${config.xdg.configHome}/nvim";
-    }
     (xdg.mkXdgSource "nvim" {
       source = filesRoot + "/nvim";
       recursive = true;
-      force = true;
     })
     (xdg.mkXdgText "ksb-nvim/init.lua" ''
       -- Minimal init for kitty-scrollback.nvim kitten: fast and isolated
