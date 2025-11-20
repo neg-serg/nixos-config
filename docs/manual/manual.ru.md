@@ -282,7 +282,6 @@ in {
 
 - Профилирование аллокаций памяти (6.10+): `profiles.debug.memAllocProfiling.{enable,compileSupport,enabledByDefault,debugChecks}`.
 - perf data‑type профайлинг (6.8+): `profiles.debug.perfDataType.{enable,installTools,enableKernelBtf}`.
-- sched_ext (6.12+): `profiles.debug.schedExt.{enable,installTools,enableKernelBtf}`.
   - Включение некоторых опций может пересобирать ядро (требуются `CONFIG_*`).
 
 ## Охлаждение / Fan Control (тихий профиль)
