@@ -1,5 +1,6 @@
-_final: prev: let
+inputs: final: prev: let
   call = prev.callPackage;
+  packagesRoot = inputs.self + "/packages";
 in {
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
     postPatch =
@@ -63,5 +64,5 @@ in {
     };
   };
 
-  flight-gtk-theme = call ../flight-gtk-theme {};
+  flight-gtk-theme = call (packagesRoot + "/flight-gtk-theme") {};
 }
