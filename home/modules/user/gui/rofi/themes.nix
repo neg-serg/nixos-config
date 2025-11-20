@@ -22,20 +22,14 @@ with lib;
         "win/center_btm.rasi"
         "win/no_gap.rasi"
       ];
-      themeLinks =
-        map (rel: {
-          dst = "rofi/themes/${rel}";
-          src = "conf/${rel}";
-        })
-        themeFiles;
       # no extra activation/cleanup needed anymore
     in
       lib.mkMerge (
-        map (e:
-          xdg.mkXdgDataSource e.dst {
-            source = config.lib.file.mkOutOfStoreSymlink "${config.neg.hmConfigRoot}/modules/user/gui/rofi/${e.src}";
+        map (rel:
+          xdg.mkXdgDataSource "rofi/themes/${rel}" {
+            source = config.lib.file.mkOutOfStoreSymlink "${config.neg.repoRoot}/packages/rofi-config/${rel}";
             recursive = false;
           })
-        themeLinks
+        themeFiles
       )
   )

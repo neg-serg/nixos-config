@@ -10,7 +10,7 @@ with lib;
     lib.mkMerge [
       # Live-editable config via helper (guards parent dir and target)
       (xdg.mkXdgSource "rofi" {
-        source = config.lib.file.mkOutOfStoreSymlink "${config.neg.hmConfigRoot}/modules/user/gui/rofi/conf";
+        source = config.neg.repoRoot + "/packages/rofi-config";
         recursive = true;
       })
     ]
