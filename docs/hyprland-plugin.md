@@ -30,9 +30,8 @@ This note pulls together every moving part related to the `hy3` plugin so we can
 
 Because the overlay flows through `pkgs`, no Home-Manager changes are needed when updating; the new plugin propagates automatically once the system rebuild succeeds.
 
-## Migration / Verification Helpers
+## Verification Checklist
 
-- `scripts/hm-hy3-system.apply.sh` rewrites a standalone Home-Manager checkout so it consumes the system-managed plugin and drops any lingering hy3 flake inputs. It backs up the touched files, patches flake args, and points `plugins.conf` at `/etc/static/hypr/libhy3.so`, then prints post-run checks (plugin file present, Hyprland reports expected version) (`scripts/hm-hy3-system.apply.sh`:1-93).
 - Quick health checks after any update:
   - `nix path-info .#legacyPackages.<system>.hyprlandPlugins.hy3` should print the store path that backs the plugin for that host's build (replace `<system>` with `x86_64-linux`, etc.).
   - `grep plugin ~/.config/hypr/plugins.conf` should show the expected `libhy3.so` path exported by `pkgs.hyprlandPlugins.hy3`.
