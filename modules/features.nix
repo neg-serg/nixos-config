@@ -1,12 +1,13 @@
 {
   lib,
   config,
+  inputs,
   ...
 } @ args:
 with lib; let
   mainUser = config.users.main.name or "neg";
   defaultRoot = "/home/${mainUser}/games/UnrealEngine";
-  hmFeatures = import ../home/modules/features.nix args;
+  hmFeatures = import (inputs.self + "/home/modules/features.nix") args;
   unrealOption = {
     enable = (mkEnableOption "enable Unreal Engine 5 tooling") // {default = false;};
     root = mkOption {

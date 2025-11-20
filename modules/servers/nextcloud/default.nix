@@ -6,10 +6,11 @@
 {
   lib,
   config,
+  inputs,
   pkgs,
   ...
 }: let
-  hasNcSecret = builtins.pathExists (../../.. + "/secrets/nextcloud.sops.yaml");
+  hasNcSecret = builtins.pathExists (inputs.self + "/secrets/nextcloud.sops.yaml");
   cfg = config.servicesProfiles.nextcloud or {enable = false;};
   chosenPackage =
     if (cfg ? package) && cfg.package != null
@@ -22,7 +23,7 @@ in {
   config = lib.mkIf cfg.enable {
     # Register SOPS secret only if the file exists to avoid eval errors
     sops.secrets."nextcloud/admin-pass" = lib.mkIf hasNcSecret {
-      sopsFile = ../../../secrets/nextcloud.sops.yaml;
+      sopsFile = inputs.self + "/secrets/nextcloud.sops.yaml";
     };
 
     services.nextcloud = {

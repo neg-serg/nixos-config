@@ -2,6 +2,7 @@
   lib,
   config,
   pkgs,
+  inputs,
   ...
 }: let
   grafanaEnabled = config.services.grafana.enable or false;
@@ -224,8 +225,8 @@ in
       # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
       environment.systemPackages = lib.mkAfter [
         pkgs.openrgb
-        (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile ../../scripts/cpu-boost.sh))
-        (pkgs.writeShellScriptBin "fan-stop-capability-test" (builtins.readFile ../../scripts/fan-stop-capability-test.sh))
+        (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile (inputs.self + "/scripts/cpu-boost.sh")))
+        (pkgs.writeShellScriptBin "fan-stop-capability-test" (builtins.readFile (inputs.self + "/scripts/fan-stop-capability-test.sh")))
       ];
 
       # Nextcloud via Caddy on LAN, served as "telfir"
@@ -345,7 +346,7 @@ in
                 type = "file";
                 disableDeletion = false;
                 editable = true;
-                options.path = ../../dashboards;
+                options.path = inputs.self + "/dashboards";
               }
             ];
           })
@@ -354,7 +355,7 @@ in
       # Provide GUI password to Syncthing from SOPS secret and set it at service start
       # - Secret file: secrets/syncthing.sops.yaml (key: syncthing/gui-pass)
       # - Make it readable by the Syncthing user and apply via ExecStartPre
-      sops.secrets."syncthing/gui-pass" = lib.mkIf (builtins.pathExists (../../.. + "/secrets/syncthing.sops.yaml")) {
+      sops.secrets."syncthing/gui-pass" = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/syncthing.sops.yaml")) {
         owner = config.users.main.name;
         mode = "0400";
       };
@@ -571,8 +572,8 @@ in
 
       # SOPS secret for Grafana admin password
       sops.secrets."grafana/admin_password" = let
-        yaml = ../../../secrets/grafana-admin-password.sops.yaml;
-        bin = ../../../secrets/grafana-admin-password.sops;
+        yaml = inputs.self + "/secrets/grafana-admin-password.sops.yaml";
+        bin = inputs.self + "/secrets/grafana-admin-password.sops";
       in
         lib.mkIf (builtins.pathExists yaml || builtins.pathExists bin) {
           sopsFile =
