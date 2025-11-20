@@ -84,15 +84,39 @@
     };
   };
 
-  # Make Cachix caches available to all `nix {build,develop,run}` commands.
-  # Значения берём из единого источника nix/caches.nix.
-  nixConfig = let
-    caches = import ./nix/caches.nix;
-    dropDefault = url: url != "https://cache.nixos.org/";
-    dropDefaultKey = key: key != "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=";
-  in {
-    extra-substituters = builtins.filter dropDefault caches.substituters;
-    extra-trusted-public-keys = builtins.filter dropDefaultKey caches."trusted-public-keys";
+  # Make Cachix caches available to all `nix {build,develop,run}` commands
+  # Note: nixConfig must stay a literal attrset (no imports/lets).
+  nixConfig = {
+    extra-substituters = [
+      "https://0uptime.cachix.org"
+      "https://chaotic-nyx.cachix.org"
+      "https://cuda-maintainers.cachix.org"
+      "https://devenv.cachix.org"
+      "https://ezkea.cachix.org"
+      "https://hercules-ci.cachix.org"
+      "https://hyprland.cachix.org"
+      "https://neg-serg.cachix.org"
+      "https://nix-community.cachix.org"
+      "https://nix-gaming.cachix.org"
+      "https://nixpkgs-unfree.cachix.org"
+      "https://nixpkgs-wayland.cachix.org"
+      "https://numtide.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "0uptime.cachix.org-1:ctw8yknBLg9cZBdqss+5krAem0sHYdISkw/IFdRbYdE="
+      "chaotic-nyx.cachix.org-1:HfnXSw4pj95iI/n17rIDy40agHj12WfF+Gqk6SonIT8="
+      "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
+      "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
+      "ezkea.cachix.org-1:ioBmUbJTZIKsHmWWXPe1FSFbeVe+afhfgqgTSNd34eI="
+      "hercules-ci.cachix.org-1:ZZeDl9Va+xe9j+KqdzoBZMFJHVQ42Uu/c/1/KMC5Lw0="
+      "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
+      "neg-serg.cachix.org-1:MZ+xYOrDj1Uhq8GTJAg//KrS4fAPpnIvaWU/w3Qz/wo="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      "nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4="
+      "nixpkgs-unfree.cachix.org-1:hqvoInulhbV4nJ9yJOEr+4wxhDV4xq2d1DK7S6Nj6rs="
+      "nixpkgs-wayland.cachix.org-1:3lwxaILxMRkVhehr5StQprHdEo4IrE8sRho9R9HOLYA"
+      "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE="
+    ];
   };
   outputs = inputs @ {
     self,
@@ -144,6 +168,42 @@
       dropDefaultKey = key: key != "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=";
       hmExtraSubstituters = builtins.filter dropDefault caches.substituters;
       hmExtraTrustedKeys = builtins.filter dropDefaultKey caches."trusted-public-keys";
+      hyprlandOverlay = system: (_: prev: {
+        inherit (inputs.hyprland.packages.${system}) hyprland;
+        inherit (inputs.xdg-desktop-portal-hyprland.packages.${system}) xdg-desktop-portal-hyprland;
+        hyprlandPlugins =
+          prev.hyprlandPlugins
+          // {
+            hy3 = inputs.hy3.packages.${system}.hy3;
+          };
+      });
+      mkPkgs = system:
+        import nixpkgs {
+          inherit system;
+          overlays = [
+            (import ./packages/overlay.nix)
+            (hyprlandOverlay system)
+          ];
+          config = {
+            allowAliases = false;
+          };
+        };
+      mkCustomPkgs = pkgs: import ./packages/flake/custom-packages.nix {inherit pkgs;};
+      mkExtrasSet = pkgs: import ./packages/flake/extras.nix {inherit pkgs;};
+      mkIosevkaNeg = system: pkgs: let
+        hmUse = boolEnv "HM_USE_IOSEVKA_NEG";
+        g = builtins.getEnv;
+        isCI = (g "CI" != "") || (g "GITHUB_ACTIONS" != "") || (g "GARNIX" != "") || (g "GARNIX_CI" != "");
+        usePrivate =
+          if hmUse
+          then true
+          else if isCI
+          then false
+          else true;
+      in
+        if usePrivate
+        then inputs."iosevka-neg".packages.${system}
+        else {nerd-font = pkgs.nerd-fonts.iosevka;};
 
       # Hosts discovery shared across sections
       hostsDir = ./hosts;
@@ -162,15 +222,7 @@
 
       # Per-system outputs factory
       perSystem = system: let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [
-            (import ./packages/overlay.nix)
-          ];
-          config = {
-            allowAliases = false;
-          };
-        };
+        pkgs = mkPkgs system;
         # Pre-commit utility per system
         preCommit = inputs.pre-commit-hooks.lib.${system}.run {
           src = self;
@@ -262,8 +314,8 @@
               })
               hostNames));
           extrasFlag = boolEnv "HM_EXTRAS";
-          extrasSet = import ./packages/flake/extras.nix {inherit pkgs;};
-          customPkgs = import ./packages/flake/custom-packages.nix {inherit pkgs;};
+          extrasSet = mkExtrasSet pkgs;
+          customPkgs = mkCustomPkgs pkgs;
         in
           hostClosures
           // customPkgs
@@ -383,42 +435,13 @@
       };
       hmPerSystem = lib.genAttrs hmSystems (
         system: let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [
-              (import ./packages/overlay.nix)
-              (_: prev: {
-                inherit (inputs.hyprland.packages.${system}) hyprland;
-                inherit (inputs.xdg-desktop-portal-hyprland.packages.${system}) xdg-desktop-portal-hyprland;
-                hyprlandPlugins =
-                  prev.hyprlandPlugins
-                  // {
-                    hy3 = inputs.hy3.packages.${system}.hy3;
-                  };
-              })
-            ];
-            config = {
-              allowAliases = false;
-            };
-          };
-          hmUse = boolEnv "HM_USE_IOSEVKA_NEG";
-          g = builtins.getEnv;
-          isCI = (g "CI" != "") || (g "GITHUB_ACTIONS" != "") || (g "GARNIX" != "") || (g "GARNIX_CI" != "");
-          usePrivate =
-            if hmUse
-            then true
-            else if isCI
-            then false
-            else true;
-          iosevkaNeg =
-            if usePrivate
-            then inputs."iosevka-neg".packages.${system}
-            else {nerd-font = pkgs.nerd-fonts.iosevka;};
+          pkgs = mkPkgs system;
+          iosevkaNeg = mkIosevkaNeg system pkgs;
           devTools = import ./flake/home/devtools.nix {inherit lib pkgs;};
           inherit (devTools) devNixTools rustBaseTools rustExtraTools;
           extrasFlag = boolEnv "HM_EXTRAS";
-          extrasSet = import ./packages/flake/extras.nix {inherit pkgs;};
-          customPkgs = import ./packages/flake/custom-packages.nix {inherit pkgs;};
+          extrasSet = mkExtrasSet pkgs;
+          customPkgs = mkCustomPkgs pkgs;
         in {
           inherit pkgs iosevkaNeg;
           devShells = import ./flake/home/devshells.nix {
@@ -447,15 +470,6 @@
         extraSubstituters = hmExtraSubstituters;
         extraTrustedKeys = hmExtraTrustedKeys;
       };
-      hmDevShells = let
-        extras = boolEnv "HM_EXTRAS";
-        sysList =
-          if extras
-          then hmSystems
-          else [hmDefaultSystem];
-      in
-        lib.genAttrs sysList (s: hmPerSystem.${s}.devShells);
-      hmPackages = lib.genAttrs hmSystems (s: hmPerSystem.${s}.packages);
       hmDocs = import ./flake/home/docs.nix {
         inherit lib mkHMArgs boolEnv;
         perSystem = hmPerSystem;
@@ -517,12 +531,9 @@
       in
         lib.genAttrs hostNames mkHost;
       homeConfigurations = hmHomeConfigurations;
-      homeDevShells = hmDevShells;
-      homePackages = hmPackages;
-      homeChecks = hmChecks;
+      hm = hmPerSystem;
+      hmChecks = hmChecks;
       docs = hmDocs;
-      homeDocs = hmDocs;
       templates = hmTemplates;
-      homeTemplates = hmTemplates;
     };
 }
