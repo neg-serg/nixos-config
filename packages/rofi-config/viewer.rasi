@@ -1,0 +1,37 @@
+@import "theme.rasi"
+@import "common.rasi"
+
+#message {
+    padding: 6px 6px;
+    background-color: var(blackwidget);
+}
+
+#textbox {
+    text-color: var(darkgray);
+    background-color: var(blackwidget);
+}
+
+#listview { lines: 12; }
+
+#mainbox {
+    orientation: vertical;
+    children: [ inputbar, listview ];
+    spacing: 0px;
+    background-color: var(blackdarkest);
+}
+mainbox {
+    background-color: var(blackdarkest);
+}
+
+ 
+
+#window {
+    width: 96%;
+    y-offset: 20;
+    location: north;
+    anchor: north;
+    padding: 5px;
+    border: 1px;
+    border-color: #0d141d;
+    background-color: var(blackdarkest);
+}
