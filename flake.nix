@@ -143,11 +143,6 @@
 
       # Common lib
       inherit (nixpkgs) lib;
-
-      boolEnv = name: let
-        v = builtins.getEnv name;
-      in
-        v == "1" || v == "true" || v == "yes";
       splitEnvList = name: let
         v = builtins.getEnv name;
       in
@@ -155,14 +150,8 @@
         then []
         else lib.filter (s: s != "") (lib.splitString "," v);
 
-      hmDefaultSystem = "x86_64-linux";
-      hmSystems = let
-        fromEnv = splitEnvList "HM_SYSTEMS";
-        cleaned = lib.unique fromEnv;
-      in
-        if cleaned == []
-        then [hmDefaultSystem]
-        else cleaned;
+      hmDefaultSystem = linuxSystem;
+      hmSystems = [hmDefaultSystem];
       caches = import ./nix/caches.nix;
       dropDefault = url: url != "https://cache.nixos.org/";
       dropDefaultKey = key: key != "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=";
@@ -189,7 +178,6 @@
           };
         };
       mkCustomPkgs = pkgs: import ./packages/flake/custom-packages.nix {inherit pkgs;};
-      mkExtrasSet = pkgs: import ./packages/flake/extras.nix {inherit pkgs;};
       mkIosevkaNeg = system: inputs."iosevka-neg".packages.${system};
 
       # Hosts discovery shared across sections
@@ -295,13 +283,10 @@
                 value = self.nixosConfigurations.${name}.config.system.build.toplevel;
               })
               hostNames));
-          extrasFlag = boolEnv "HM_EXTRAS";
-          extrasSet = mkExtrasSet pkgs;
           customPkgs = mkCustomPkgs pkgs;
         in
           hostClosures
           // customPkgs
-          // lib.optionalAttrs extrasFlag extrasSet
           // {
             default = pkgs.zsh;
             options-md = docDriverAll.optionsCommonMark;
@@ -421,17 +406,13 @@
           iosevkaNeg = mkIosevkaNeg system;
           devTools = import ./flake/home/devtools.nix {inherit lib pkgs;};
           inherit (devTools) devNixTools rustBaseTools rustExtraTools;
-          extrasFlag = boolEnv "HM_EXTRAS";
-          extrasSet = mkExtrasSet pkgs;
           customPkgs = mkCustomPkgs pkgs;
         in {
           inherit pkgs iosevkaNeg;
           devShells = import ./flake/home/devshells.nix {
             inherit pkgs rustBaseTools rustExtraTools devNixTools;
           };
-          packages =
-            ({default = pkgs.zsh;} // customPkgs)
-            // lib.optionalAttrs extrasFlag extrasSet;
+          packages = ({default = pkgs.zsh;} // customPkgs);
           checks = import ./flake/home/checks.nix {
             inherit pkgs self system;
           };
@@ -457,7 +438,7 @@
           };
       };
       hmDocs = import ./flake/home/docs.nix {
-        inherit lib mkHMArgs boolEnv;
+        inherit lib mkHMArgs;
         perSystem = hmPerSystem;
         systems = hmSystems;
         homeManagerInput = inputs.home-manager;
