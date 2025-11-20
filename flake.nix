@@ -215,11 +215,6 @@
             && builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
         )
         entries);
-      hmInputs =
-        builtins.mapAttrs (_: input: input // {type = "derivation";}) {
-          inherit (inputs) nupm;
-        };
-
       # Per-system outputs factory
       perSystem = system: let
         pkgs = mkPkgs system;
@@ -463,12 +458,16 @@
       };
       inherit (hmHelpers) hmBaseModules;
       mkHMArgs = import ./flake/home/mkHMArgs.nix {
-        inherit lib hmInputs inputs;
+        inherit lib inputs;
         perSystem = hmPerSystem;
         yandexBrowserInput = inputs."yandex-browser";
         nur = inputs.nur;
         extraSubstituters = hmExtraSubstituters;
         extraTrustedKeys = hmExtraTrustedKeys;
+        hmInputs =
+          builtins.mapAttrs (_: input: input // {type = "derivation";}) {
+            inherit (inputs) nupm;
+          };
       };
       hmDocs = import ./flake/home/docs.nix {
         inherit lib mkHMArgs boolEnv;
