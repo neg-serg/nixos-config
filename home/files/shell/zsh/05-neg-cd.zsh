@@ -1,7 +1,7 @@
 # --- Alt-<digit> quick cd with instant p10k refresh ---
 # 1) Directories for Alt-1..9 (edit to taste)
 typeset -ga NEGCD_DIRS=(
-  "$HOME/1st_level"
+  "$HOME/notes"
   "$HOME/dw"
   "${XDG_CONFIG_HOME:-$HOME/.config}/home-manager"
   "/etc/nixos"
