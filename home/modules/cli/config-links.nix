@@ -1,11 +1,40 @@
 {
   lib,
+  pkgs,
   config,
   xdg,
   negLib,
   ...
 }: let
   filesRoot = "${config.neg.hmConfigRoot}/files";
+  zshenvText = let
+    username = config.home.username;
+    zshenvExtras = builtins.readFile (config.neg.hmConfigRoot + "/modules/user/envs/zshenv-extra.sh");
+  in ''
+    # shellcheck disable=SC1090
+    skip_global_compinit=1
+    hm_session_vars="$HOME/.local/state/home-manager/gcroots/current-home/home-path/etc/profile.d/hm-session-vars.sh"
+    if [ -r "$hm_session_vars" ]; then
+      . "$hm_session_vars"
+    elif [ -r "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
+      . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+    elif [ -r "/etc/profiles/per-user/${username}/etc/profile.d/hm-session-vars.sh" ]; then
+      . "/etc/profiles/per-user/${username}/etc/profile.d/hm-session-vars.sh"
+    fi
+    export WORDCHARS='*/?_-.[]~&;!#$%^(){}<>~` '
+    export KEYTIMEOUT=10
+    export REPORTTIME=60
+    export ESCDELAY=1
+    ${zshenvExtras}
+  '';
+  zshConfigSource = pkgs.runCommandLocal "neg-zsh-config" {} ''
+    mkdir -p "$out"
+    cp -R ${filesRoot + "/shell/zsh"}/. "$out"/
+    chmod -R u+w "$out"
+    cat > "$out/.zshenv" <<'EOF'
+${zshenvText}
+EOF
+  '';
 in
   lib.mkMerge [
   # dircolors, f-sy-h, zsh from dotfiles; inputrc inline
@@ -19,8 +48,9 @@ in
   })
   (xdg.mkXdgText "inputrc" (builtins.readFile ./inputrc))
   (xdg.mkXdgSource "zsh" {
-    source = filesRoot + "/shell/zsh";
+    source = zshConfigSource;
     recursive = true;
+    force = true;
   })
   # PowerShell (pwsh) profile under XDG — inline with global functions for eza
   (let
