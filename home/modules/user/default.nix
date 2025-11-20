@@ -1,6 +1,5 @@
 {
   imports = [
-    ./files/bin.nix
     ./local-bin
     ./files/nixpkgs-config.nix
     ./envs

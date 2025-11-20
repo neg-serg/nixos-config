@@ -9,6 +9,25 @@ with lib;
     # Generate ~/.local/bin scripts using mkLocalBin (pre-clean + exec + force)
     {
       home.file = let
+        filesRoot = "${config.neg.hmConfigRoot}/files";
+        binDir = filesRoot + "/bin";
+        binFiles =
+          if builtins.pathExists binDir
+          then builtins.filterAttrs (_: v: v == "regular") (builtins.readDir binDir)
+          else {};
+        autoSkip = ["ren"];
+        mkAuto = name: {
+          name = ".local/bin/${name}";
+          value = {
+            executable = true;
+            force = true;
+            text = builtins.readFile (binDir + "/${name}");
+          };
+        };
+        autoEntries =
+          builtins.listToAttrs (
+            map mkAuto (lib.filter (n: !(lib.elem n autoSkip)) (builtins.attrNames binFiles))
+          );
         mkEnt = e: {
           name = ".local/bin/${e.name}";
           value = {
@@ -17,167 +36,33 @@ with lib;
             text = builtins.readFile e.src;
           };
         };
-        scripts = [
+        specialScripts = [
           {
-            name = "color";
-            src = ./scripts/color;
-          }
-          {
-            name = "browser_profile_migrate.py";
-            src = ./scripts/browser_profile_migrate.py;
-          }
-          {
-            name = "main-menu";
-            src = ./scripts/main-menu.sh;
+            name = "autoclick-toggle";
+            src = ./scripts/autoclick-toggle;
           }
           {
             name = "hypr-shortcuts";
             src = ./scripts/hypr-shortcuts.sh;
           }
           {
-            name = "mpd-add";
-            src = ./scripts/mpd-add.sh;
-          }
-          {
-            name = "swayimg-actions.sh";
-            src = ./scripts/swayimg-actions.sh;
-          }
-          {
-            name = "clip";
-            src = ./scripts/clip.sh;
-          }
-          {
-            name = "pl";
-            src = ./scripts/pl.sh;
-          }
-          {
-            name = "wl";
-            src = ./scripts/wl.sh;
-          }
-          {
-            name = "music-rename";
-            src = ./scripts/music-rename.sh;
-          }
-          {
-            name = "unlock";
-            src = ./scripts/unlock.sh;
-          }
-          {
-            name = "pic-notify";
-            src = ./scripts/pic-notify.sh;
-          }
-          {
-            name = "pic-dirs-list";
-            src = ./scripts/pic-dirs-list.sh;
-          }
-          {
-            name = "any";
-            src = ./scripts/any;
-          }
-          {
-            name = "beet-update";
-            src = ./scripts/beet-update;
-          }
-          # Legacy image wrapper removed (sxivnc); use swayimg-first directly
-          {
-            name = "flacspec";
-            src = ./scripts/flacspec;
-          }
-          {
-            name = "iommu-info";
-            src = ./scripts/iommu-info;
-          }
-          {
-            name = "nb";
-            src = ./scripts/nb;
-          }
-          {
-            name = "neovim-autocd.py";
-            src = ./scripts/neovim-autocd.py;
-          }
-          {
-            name = "nix-updates";
-            src = ./scripts/nix-updates;
-          }
-          {
-            name = "pb";
-            src = ./scripts/pb;
-          }
-          {
-            name = "pngoptim";
-            src = ./scripts/pngoptim;
-          }
-          {
-            name = "pass-2col";
-            src = ./scripts/pass-2col;
-          }
-          {
-            name = "qr";
-            src = ./scripts/qr;
-          }
-          {
-            name = "read_documents";
-            src = ./scripts/read_documents;
-          }
-          {
-            name = "ren";
-            src = ./scripts/ren;
-          }
-          {
-            name = "screenshot";
-            src = ./scripts/screenshot;
-          }
-          {
-            name = "shot-optimizer";
-            src = ./scripts/shot-optimizer;
-          }
-          {
-            name = "swd";
-            src = ./scripts/swd;
-          }
-          {
-            name = "vol";
-            src = ./scripts/vol;
-          }
-          {
-            name = "mp";
-            src = ./scripts/mp;
-          }
-          {
-            name = "mpd_del_album";
-            src = ./scripts/mpd_del_album;
-          }
-          {
-            name = "music-index";
-            src = ./scripts/music-index;
-          }
-          {
-            name = "music-similar";
-            src = ./scripts/music-similar;
+            name = "journal-clean";
+            src = ./scripts/journal-clean.sh;
           }
           {
             name = "music-highlevel";
             src = ./scripts/music-highlevel;
           }
           {
-            name = "cidr";
-            src = ./scripts/cidr;
+            name = "pass-2col";
+            src = ./scripts/pass-2col;
           }
           {
             name = "punzip";
             src = ./scripts/punzip;
           }
-
-          {
-            name = "v";
-            src = ./scripts/v.sh;
-          }
-          {
-            name = "journal-clean";
-            src = ./scripts/journal-clean.sh;
-          }
         ];
-        base = builtins.listToAttrs (map mkEnt scripts);
+        base = builtins.listToAttrs (map mkEnt specialScripts);
         # Special case: vid-info needs path substitution for libs
         sp = pkgs.python3.sitePackages;
         libpp = "${pkgs.neg.pretty_printer}/${sp}";
@@ -187,9 +72,9 @@ with lib;
         # Special case: ren needs path substitution for libs as well
         renTpl = builtins.readFile ./scripts/ren;
         renText = lib.replaceStrings ["@LIBPP@" "@LIBCOLORED@"] [libpp libcolored] renTpl;
-        picInfoText = builtins.readFile ./scripts/pic-info;
       in
-        base
+        autoEntries
+        // base
         // {
           ".local/bin/vid-info" = {
             executable = true;
@@ -200,11 +85,6 @@ with lib;
             executable = true;
             force = true;
             text = renText;
-          };
-          ".local/bin/pic-info" = {
-            executable = true;
-            force = true;
-            text = picInfoText;
           };
           # Provide a stable wrapper for Pyprland CLI with absolute path,
           # so Hypr bindings don't rely on PATH. Kept at ~/.local/bin/pypr-client
