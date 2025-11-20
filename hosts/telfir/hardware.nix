@@ -43,8 +43,6 @@
       # With PREEMPT_RT enabled, drop extra low-latency cmdline toggles
       lowLatencyScheduling = false;
     };
-    # Disable sched_ext to avoid kernel rebuilds
-    debug.schedExt.enable = false;
     # Do not enable PREEMPT_RT on this host
     performance.preemptRt.enable = false;
   };

@@ -348,7 +348,6 @@ Note: extra out-of-tree modules (e.g., `amneziawg`) are pulled from the selected
 
 - Memory allocation profiling (6.10+): `profiles.debug.memAllocProfiling.{enable,compileSupport,enabledByDefault,debugChecks}`.
 - perf data-type profiling (6.8+): `profiles.debug.perfDataType.{enable,installTools,enableKernelBtf}`.
-- sched_ext (6.12+): `profiles.debug.schedExt.{enable,installTools,enableKernelBtf}`.
   - These options may rebuild the kernel when enabling related `CONFIG_*` symbols.
 
 ## Cooling / Fan Control (quiet profile)
