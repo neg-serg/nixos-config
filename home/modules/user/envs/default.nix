@@ -41,6 +41,9 @@ in {
       PARALLEL_HOME = "${config.xdg.configHome}/parallel";
       PASSWORD_STORE_DIR = "${config.xdg.dataHome}/pass";
       PASSWORD_STORE_ENABLE_EXTENSIONS_DEFAULT = "true";
+      DISPLAY = "$REMOTEHOST:0";
+      MANWIDTH = "80";
+      NOTMUCH_CONFIG = lib.mkForce "${config.xdg.configHome}/notmuch/notmuchrc";
       PIPEWIRE_DEBUG = 0;
       PIPEWIRE_LOG_SYSTEMD = "true";
       PYLINTHOME = "${config.xdg.configHome}/pylint";

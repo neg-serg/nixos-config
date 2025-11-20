@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.local/quickshell/Settings.schema.json",
+  "title": "Quickshell Settings",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "weatherCity": { "type": "string", "default": "Moscow", "description": "City for weather widget" },
+    "userAgent": { "type": "string", "default": "NegPanel", "description": "HTTP User-Agent string" },
+
+    "debugLogs": { "type": "boolean", "default": false, "description": "Enable low-importance debug logs" },
+    "debugNetwork": { "type": "boolean", "default": false, "description": "Enable extra network debug logs" },
+    "strictThemeTokens": { "type": "boolean", "default": false, "description": "Warn on missing/deprecated Theme tokens" },
+
+    "useFahrenheit": { "type": "boolean", "default": false, "description": "Use Fahrenheit temperatures" },
+    "showMediaInBar": { "type": "boolean", "default": false, "description": "Show media block in bar" },
+    "showWeatherInBar": { "type": "boolean", "default": false, "description": "Show weather button in bar" },
+    
+    "reverseDayMonth": { "type": "boolean", "default": false, "description": "Flip day and month order" },
+    "use12HourClock": { "type": "boolean", "default": false, "description": "12-hour time format" },
+    "dimPanels": { "type": "boolean", "default": true, "description": "Dim panel appearance" },
+    "fontSizeMultiplier": { "type": "number", "default": 1.0, "minimum": 0.5, "maximum": 2.5, "description": "Global font size multiplier" },
+
+    "cavaBars": { "type": "integer", "default": 86, "minimum": 8, "maximum": 512, "description": "CAVA bars count" },
+    "cavaFramerate": { "type": "integer", "default": 24, "minimum": 1, "description": "CAVA framerate (FPS)" },
+    "cavaMonstercat": { "type": "boolean", "default": false },
+    "cavaGravity": { "type": "integer", "default": 150000, "description": "CAVA decay/gravity constant" },
+    "cavaNoiseReduction": { "type": "integer", "default": 12, "description": "CAVA noise reduction level" },
+    "spectrumUseGradient": { "type": "boolean", "default": false, "description": "Use gradient fill" },
+    "spectrumMirror": { "type": "boolean", "default": false, "description": "Mirror spectrum bars" },
+    "showSpectrumTopHalf": { "type": "boolean", "default": false, "description": "Render top half only" },
+    "spectrumFillOpacity": { "type": "number", "default": 0.35, "minimum": 0, "maximum": 1, "description": "Fill opacity" },
+    "spectrumHeightFactor": { "type": "number", "default": 1.2, "minimum": 0.1, "maximum": 5, "description": "Height relative to text size" },
+    "spectrumOverlapFactor": { "type": "number", "default": 0.2, "minimum": 0, "maximum": 1, "description": "Overlap with text area" },
+    "spectrumBarGap": { "type": "number", "default": 1.0, "minimum": 0, "maximum": 10, "description": "Gap between bars (logical px)" },
+    "spectrumVerticalRaise": { "type": "number", "default": 0.75, "description": "Vertical offset" },
+
+    "activeVisualizerProfile": { "type": "string", "default": "classic" },
+    "visualizerProfiles": {
+      "type": "object",
+      "default": { "classic": {} },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "cavaBars": { "type": "integer", "minimum": 2 },
+          "cavaFramerate": { "type": "integer", "minimum": 1 },
+          "cavaMonstercat": { "type": "boolean" },
+          "cavaGravity": { "type": "integer" },
+          "cavaNoiseReduction": { "type": "integer" },
+          "spectrumFillOpacity": { "type": "number", "minimum": 0, "maximum": 1 },
+          "spectrumHeightFactor": { "type": "number", "minimum": 0.1, "maximum": 5 },
+          "spectrumOverlapFactor": { "type": "number", "minimum": 0, "maximum": 1 },
+          "spectrumBarGap": { "type": "number", "minimum": 0 },
+          "spectrumVerticalRaise": { "type": "number" },
+          "spectrumMirror": { "type": "boolean" }
+        }
+      },
+      "description": "Named set of visualizer profiles"
+    },
+
+    "timeBracketStyle": {
+      "type": "string",
+      "default": "round",
+      "enum": ["round","square","lenticular","lenticular_black","angle","tortoise"],
+      "description": "Bracket style used in RichText"
+    },
+
+    "barMonitors": { "type": "array", "items": { "type": "string" }, "default": [] },
+    
+    "monitorScaleOverrides": {
+      "type": "object",
+      "default": {},
+      "additionalProperties": { "type": "number", "minimum": 0.25, "maximum": 4 },
+      "description": "Per-screen UI scale keyed by Screen.name"
+    },
+
+    "collapseSystemTray": { "type": "boolean", "default": true },
+    "collapsedTrayIcon": { "type": "string", "default": "expand_more" },
+    "trayFallbackIcon": { "type": "string", "default": "broken_image" },
+
+    "contrastThreshold": { "type": "number", "default": 0.5, "minimum": 0, "maximum": 1, "description": "Threshold for light/dark text selection" },
+    "contrastWarnRatio": { "type": "number", "default": 4.5, "minimum": 1, "description": "Target contrast ratio for warnings" },
+
+    "pinnedPlayers": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "ignoredPlayers": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "lastActivePlayers": { "type": "array", "items": { "type": "string" }, "default": [] },
+    
+
+    "showMediaVisualizer": { "type": "boolean", "default": false },
+
+    "playerSelectionPriority": {
+      "type": "array",
+      "default": ["mpdPlaying","anyPlaying","mpdRecent","recent","manual","first"],
+      "uniqueItems": true,
+      "items": { "type": "string", "enum": ["mpdPlaying","anyPlaying","mpdRecent","recent","manual","first"] }
+    },
+    "playerSelectionPreset": { "type": "string", "default": "default" },
+
+    "musicPopupWidth": { "type": "integer", "default": 840, "minimum": 200, "description": "Media popup width (logical px)" },
+    "musicPopupHeight": { "type": "integer", "default": 250, "minimum": 120, "description": "Media popup height (logical px)" },
+    "musicPopupPadding": { "type": "integer", "default": 12, "minimum": 0, "description": "Media popup inner padding" },
+    "musicPopupEdgeMargin": { "type": "integer", "default": 4, "minimum": 0, "description": "Horizontal margin between popup and screen edge (logical px)" },
+
+    "networkPingIntervalMs": { "type": "integer", "default": 30000, "minimum": 1000, "maximum": 600000, "description": "Network ping interval (ms)" },
+    "networkNoInternetColor": { "type": "string", "default": "#FF6E00", "description": "No-internet status color" },
+    "networkNoLinkColor": { "type": "string", "default": "#D81B60", "description": "No-link status color" }
+  }
+}

@@ -1,4 +1,11 @@
 {
+  lib,
+  config,
+  xdg,
+  ...
+}: let
+  brootRoot = config.neg.hmConfigRoot + "/files/shell/broot";
+in {
   programs.broot = {
     enable = true;
     settings = {
@@ -22,5 +29,12 @@
       show_selection_mark = true;
       verbs = [];
     };
+  };
+
+  xdg.configFile = lib.mkIf (builtins.pathExists brootRoot) {
+    "broot/conf.hjson".source = brootRoot + "/conf.hjson";
+    "broot/conf.toml".source = brootRoot + "/conf.toml";
+    "broot/to_stdout.hjson".source = brootRoot + "/to_stdout.hjson";
+    "broot/launcher".source = brootRoot + "/launcher";
   };
 }
