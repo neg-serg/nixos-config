@@ -68,29 +68,4 @@ in rec {
 
   renderFeaturesOptionsJson = items: builtins.toJSON items;
 
-  renderDeltasMd = {
-    flatNeg,
-    flatLite,
-  }: let
-    keys = lib.unique ((builtins.attrNames flatNeg) ++ (builtins.attrNames flatLite));
-    rows = lib.concatStringsSep "\n" (
-      map (
-        k: let
-          a = flatNeg.${k} or null;
-          b = flatLite.${k} or null;
-        in
-          if a != b
-          then "| ${k} | ${toString a} | ${toString b} |"
-          else ""
-      )
-      keys
-    );
-    body = lib.concatStringsSep "\n" (lib.filter (x: x != "") (lib.splitString "\n" rows));
-  in ''
-    ## Full vs Lite (feature deltas)
-
-    | Option | neg (full) | neg-lite |
-    |---|---|---|
-    ${body}
-  '';
 }

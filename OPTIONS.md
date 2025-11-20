@@ -123,12 +123,10 @@ These are passed from `flake.nix` into modules for convenience (camelCase):
 ## Ready‑Made Configurations
 
 - Full: `.#homeConfigurations.neg.activationPackage`
-- Lite: `.#homeConfigurations.neg-lite.activationPackage`
 
 Switch examples:
 
 - `home-manager switch --flake .#neg` (full)
-- `home-manager switch --flake .#neg-lite` (lite)
 
 ## Developer Notes
 

@@ -34,7 +34,6 @@ every workflow points to the same manual.
 - Clone standalone repo (for laptops/WSL) or reuse `/etc/nixos/home` in unified setups.
 - Switch Home Manager profiles:
   - Full: `just hm-neg` (alias for `home-manager switch --flake .#neg`)
-  - Lite: `just hm-lite` (alias for `home-manager switch --flake .#neg-lite`)
 - Build without switching: `just hm-build`
 - Unified repo reminder: prefer `sudo nixos-rebuild switch --flake /etc/nixos#<host>`; the `hm-*`
   targets remain for standalone/dev workflows.

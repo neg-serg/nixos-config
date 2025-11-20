@@ -34,7 +34,6 @@
 - Для автономных сценариев клонируйте `~/.dotfiles` (или используйте `/etc/nixos/home` в объединённом дереве).
 - Переключение профилей:
   - Полный: `just hm-neg` (`home-manager switch --flake .#neg`)
-  - Lite: `just hm-lite` (`home-manager switch --flake .#neg-lite`)
 - Сборка без переключения: `just hm-build`
 - На хостах с общим репозиторием используйте `sudo nixos-rebuild switch --flake /etc/nixos#<host>`;
   `hm-*` оставлены для standalone/dev окружений.
