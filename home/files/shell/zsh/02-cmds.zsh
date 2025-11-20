@@ -324,11 +324,6 @@ _exists docker && {
     ipmi_two(){ docker run -p 8080:8080 solarkennedy/ipmi-kvm-docker; echo xdg-open localhost:8080|wl-copy }
 }
 
-_exists cryptsetup && {
-    horny(){ sudo cryptsetup luksOpen "$XDG_VIDEOS_DIR/1st_level/.nd/hiddenfs" cryptroot --key-file /one/hdd.key }
-    unhorny(){ sudo umount /dev/mapper/cryptroot && sudo cryptsetup close cryptroot }
-}
-
 _exists flatpak && {
     alias bottles='flatpak run com.usebottles.bottles'
     alias obs='flatpak run com.obsproject.Studio'
