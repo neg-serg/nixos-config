@@ -2,14 +2,11 @@
   lib,
   pkgs,
   config,
+  xdg,
   ...
 }:
 with lib;
   mkIf config.features.gui.enable (
-    let
-      # Import XDG helpers from repo root modules/lib
-      xdg = import ../../../lib/xdg-helpers.nix {inherit pkgs;};
-    in
       lib.mkMerge [
         # Note: Do not manage UWSM default-id here; allow uwsm to own
         # ~/.config/uwsm/default-id so it can be changed at runtime.

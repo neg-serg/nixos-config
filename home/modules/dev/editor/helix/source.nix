@@ -1,9 +1,9 @@
 {
   lib,
   config,
+  xdg,
   ...
 }: let
-  xdg = import ../../../lib/xdg-helpers.nix {inherit lib;};
   filesRoot = "${config.neg.hmConfigRoot}/files";
 in
   lib.mkIf (config.features.dev.enable or false)

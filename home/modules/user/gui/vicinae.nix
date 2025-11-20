@@ -2,9 +2,9 @@
   lib,
   config,
   pkgs,
+  xdg,
   ...
 }: let
-  xdg = import ../../lib/xdg-helpers.nix {inherit lib pkgs;};
   vicinaeThemeNeg = import ./vicinae/themes/neg.nix;
   vicinaeFont =
     lib.attrByPath ["gtk" "font"] {

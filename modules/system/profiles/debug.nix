@@ -10,9 +10,10 @@
   lib,
   pkgs,
   config,
+  inputs,
   ...
 }: let
-  opts = import ../../../lib/opts.nix {inherit lib;};
+  opts = import (inputs.self + "/lib/opts.nix") {inherit lib;};
   cfg = config.profiles.debug or {enable = false;};
 
   # Minimal helper to check kernel version strings like "6.11" etc.

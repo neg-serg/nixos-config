@@ -3,14 +3,14 @@
 # Purpose: Performance toggles influencing boot.kernelParams and related behavior.
 # Key options: cfg = config.profiles.performance.*
 # Dependencies: Consumed by kernel/params.nix.
-{lib, ...}:
+{lib, inputs, ...}:
 # This module defines a feature flag and granular toggles to apply
 # performance-oriented kernel/boot tweaks system-wide.
 #
 # WARNING: These options may reduce security and/or stability.
 # Enable only what you need and understand.
 let
-  opts = import ../../../lib/opts.nix {inherit lib;};
+  opts = import (inputs.self + "/lib/opts.nix") {inherit lib;};
 in {
   options.profiles.performance = with opts; {
     enable = mkEnableOption "Performance-oriented kernel/boot tweaks (reduces security; use with care).";

@@ -5,9 +5,10 @@
 {
   lib,
   config,
+  inputs,
   ...
 }: let
-  opts = import ../../../lib/opts.nix {inherit lib;};
+  opts = import (inputs.self + "/lib/opts.nix") {inherit lib;};
 in {
   options.profiles.performance.writeback = rec {
     enable = opts.mkEnableOption "Apply writeback sysctl tuning (reduces IO bursts).";
