@@ -5,7 +5,8 @@
   config,
   ...
 }: let
-  caches = import ../../nix/caches.nix;
+  repoRoot = inputs.self.outPath;
+  caches = import (repoRoot + "/nix/caches.nix");
 in {
   sops.age = {
     generateKey = true;
@@ -14,7 +15,7 @@ in {
   };
 
   sops.secrets."github-netrc" = {
-    sopsFile = ../../secrets/github-netrc.sops.yaml;
+    sopsFile = repoRoot + "/secrets/github-netrc.sops.yaml";
     owner = "root";
     mode = "0600";
   };

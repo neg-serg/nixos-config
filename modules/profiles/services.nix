@@ -6,10 +6,11 @@
 {
   lib,
   pkgs,
+  inputs,
   ...
 }: let
   inherit (lib) types;
-  opts = import ../../lib/opts.nix {inherit lib;};
+  opts = import (inputs.self + "/lib/opts.nix") {inherit lib;};
 in {
   options.servicesProfiles = {
     adguardhome = {

@@ -402,7 +402,7 @@
         }
       );
       hmHelpers = import ./flake/home/hm-helpers.nix {
-        inherit lib;
+        inherit lib self;
         stylixInput = inputs.stylix;
         chaotic = inputs.chaotic;
         sopsNixInput = inputs."sops-nix";
@@ -421,7 +421,7 @@
           };
       };
       hmDocs = import ./flake/home/docs.nix {
-        inherit lib mkHMArgs;
+        inherit lib mkHMArgs self;
         perSystem = hmPerSystem;
         systems = hmSystems;
         homeManagerInput = inputs.home-manager;
@@ -440,7 +440,7 @@
             modules = hmBaseModules {};
           };
       };
-      hmTemplates = import ./flake/home/templates.nix;
+      hmTemplates = import ./flake/home/templates.nix self;
     in {
       # Per-system outputs: packages, formatter, checks, devShells, apps
       packages = lib.genAttrs supportedSystems (s: (perSystem s).packages);

@@ -1,5 +1,5 @@
-_: {
+{inputs, ...}: {
   nixpkgs.overlays = [
-    (import ../../packages/overlay.nix)
+    (import (inputs.self + "/packages/overlay.nix"))
   ];
 }
