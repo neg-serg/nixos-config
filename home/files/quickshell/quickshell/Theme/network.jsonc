@@ -1,0 +1,12 @@
+{
+  "network": {
+    "vpnPollMs": 2500,
+    "restartBackoffMs": 1500,
+    "linkPollMs": 4000,
+    "capsule": {
+      "iconPadding": 0,
+      "gapTightenPx": 8,
+      "iconHorizontalMargin": 0
+    }
+  }
+}

@@ -1,0 +1,160 @@
+import QtQuick
+import QtQuick.Controls
+import qs.Settings
+import "../Helpers/Utils.js" as Utils
+import "../Helpers/Color.js" as ColorHelpers
+
+Item {
+    id: revealPill
+
+    // External properties
+    property string icon: ""
+    property string text: ""
+    property color pillColor: Theme.panelPillColor
+    property color textColor: Theme.textPrimary
+    property color iconCircleColor: Theme.accentPrimary
+    property color iconTextColor: Theme.background
+    property color collapsedIconColor: Theme.textPrimary
+    property int pillHeight: Math.round(Theme.panelPillHeight * Theme.scale(Screen))
+    property int iconSize: Math.round(Theme.panelPillIconSize * Theme.scale(Screen))
+    property int pillPaddingHorizontal: Theme.panelPillPaddingH
+    property bool autoHide: false
+    property int pillCornerRadius: Math.max(0, Math.round(Theme.cornerRadiusSmall * Theme.scale(Screen)))
+    // Optional override for how long the pill stays visible before auto-hiding
+    property int autoHidePauseMs: Theme.panelPillAutoHidePauseMs
+    // Optional override for how long to wait before showing the pill
+    property int showDelayMs: Theme.panelPillShowDelayMs
+
+    // Internal state
+    property bool showPill: false
+    property bool shouldAnimateHide: false
+
+    // Exposed width logic
+    readonly property int pillOverlap: iconSize / 2
+    readonly property int maxPillWidth: Utils.clamp(textItem.implicitWidth + pillPaddingHorizontal * 2 + pillOverlap, 1, textItem.implicitWidth + pillPaddingHorizontal * 2 + pillOverlap)
+
+    signal shown
+    signal hidden
+
+    width: iconSize + (showPill ? maxPillWidth - pillOverlap : 0)
+    height: pillHeight
+
+    Rectangle {
+        id: pill
+        width: showPill ? maxPillWidth : 1
+        height: pillHeight
+        x: (iconCircle.x + iconCircle.width / 2) - width
+        opacity: showPill ? 1 : 0
+        color: pillColor
+        topLeftRadius: pillCornerRadius
+        bottomLeftRadius: pillCornerRadius
+        anchors.verticalCenter: parent.verticalCenter
+
+        Text {
+            id: textItem
+            anchors.centerIn: parent
+            text: revealPill.text
+            font.pixelSize: Theme.fontSizeSmall * Theme.scale(Screen)
+            font.family: Theme.fontFamily
+            font.weight: Font.Bold
+            color: textColor
+            visible: showPill
+        }
+
+        Behavior on width { enabled: showAnim.running || hideAnim.running; NumberStdOutBehavior {} }
+        Behavior on opacity { enabled: showAnim.running || hideAnim.running; NumberStdOutBehavior {} }
+    }
+
+    Rectangle {
+        id: iconCircle
+        width: iconSize
+        height: iconSize
+        radius: width / 2
+        color: showPill ? iconCircleColor : "transparent"
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.right: parent.right
+
+        Behavior on color { ColorFastInOutBehavior {} }
+
+        MaterialIcon {
+            anchors.centerIn: parent
+            rounded: showPill
+            size: Theme.fontSizeSmall * Theme.scale(Screen)
+            icon: revealPill.icon
+            color: showPill ? iconTextColor : collapsedIconColor
+        }
+    }
+
+    ParallelAnimation {
+        id: showAnim
+        running: false
+        NumberStdOutBehavior { target: pill; property: "width";   from: 1;            to: maxPillWidth }
+        NumberStdOutBehavior { target: pill; property: "opacity"; from: 0;            to: 1 }
+        onStarted: {
+            showPill = true;
+        }
+        onStopped: {
+            delayedHideAnim.start();
+            shown();
+        }
+    }
+
+    SequentialAnimation {
+        id: delayedHideAnim
+        running: false
+        PauseAnimation { duration: autoHidePauseMs }
+        ScriptAction {
+            script: if (shouldAnimateHide)
+                hideAnim.start()
+        }
+    }
+
+    ParallelAnimation {
+        id: hideAnim
+        running: false
+        NumberStdInBehavior { target: pill; property: "width";   from: maxPillWidth; to: 1 }
+        NumberStdInBehavior { target: pill; property: "opacity"; from: 1;            to: 0 }
+        onStopped: {
+            showPill = false;
+            shouldAnimateHide = false;
+            hidden();
+        }
+    }
+
+    function show() {
+        if (!showPill) {
+            shouldAnimateHide = autoHide;
+            showAnim.start();
+        } else {
+            hideAnim.stop();
+            delayedHideAnim.restart();
+        }
+    }
+
+    function hide() {
+        if (showPill) {
+            hideAnim.start();
+        }
+        showTimer.stop();
+    }
+
+    function showDelayed() {
+        if (!showPill) {
+            shouldAnimateHide = autoHide;
+            showTimer.start();
+        } else {
+            hideAnim.stop();
+            delayedHideAnim.restart();
+        }
+    }
+
+    Timer {
+        id: showTimer
+        interval: showDelayMs
+        onTriggered: {
+            if (!showPill) {
+                showAnim.start();
+            }
+        }
+    }
+}

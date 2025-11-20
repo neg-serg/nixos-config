@@ -1,0 +1,287 @@
+reloaddead
+colors neg
+
+" Quick theme switchers
+command theme-dark colors neg
+command theme-light colors neg-light
+command theme-contrast colors neg-contrast
+command theme-midnight colors neg-midnight
+
+" Cycle through available themes
+command theme-next jsb const list=["neg","neg-midnight","neg-contrast","neg-light"]; const cur=(tri.config.get("colorscheme")||"neg").toString(); let i=list.indexOf(cur); i=(i+1)%list.length; tri.excmds.colors(list[i])
+command theme-prev jsb const list=["neg","neg-midnight","neg-contrast","neg-light"]; const cur=(tri.config.get("colorscheme")||"neg").toString(); let i=list.indexOf(cur); i=(i-1+list.length)%list.length; tri.excmds.colors(list[i])
+
+set newtab about:newtab
+set home about:home
+
+set searchengine @google
+set allowautofocus false
+set visualenterauto false
+set wordpattern [^\s\/]+
+set tabopencontaineraware false
+set tabopenpos last
+set statusstylepretty true
+set incsearch true
+set modeindicator false
+set modeindicatorshowkeys false
+set findresults 40
+set downloadsskiphistory true
+set minincsearchlen 1
+set hintdelay 80
+set hintfiltermode vimperator-reflow
+set hintnames short
+set hintshift true
+set hintchars wersdfa
+set hintuppercase true
+set completionfuzziness 1
+set keytranslatemodes.nmaps true
+set keytranslatemodes.imaps true
+set keytranslatemodes.inputmaps true
+set keytranslatemodes.exmaps true
+set keytranslatemodes.ignoremaps true
+
+set searchurls.bandcamp https://bandcamp.com/search?q=%s
+set searchurls.g https://google.com/search?q=%s
+set searchurls.gi https://google.com/search?q=%s&tbm=isch
+set searchurls.gmaps https://google.com/maps/search/%s
+set searchurls.imdb https://imdb.com/find?q=%s
+set searchurls.osm https://openstreetmap.org/search?query=%s
+set searchurls.pydoc https://docs.python.org/3/search.html?q=%s
+set searchurls.rustdoc https://doc.rust-lang.org/std/index.html?search=%s
+set searchurls.steam https://store.steampowered.com/search/?term=%s
+set searchurls.w https://en.wikipedia.org/w/index.php?search=%s&title=Special%3ASearch
+set searchurls.y https://youtube.com/results?search_query=%s
+jsb Object.keys(tri.config.get("searchurls")).reduce((prev, u) => prev.catch(()=>{}).then(_ => tri.excmds.setnull("searchurls." + u)), Promise.resolve())
+
+blacklistadd 192.168.0.1
+blacklistadd 192.168.1.1
+blacklistadd 192.168.88.1
+blacklistadd calendar.google.com
+blacklistadd docs.google.com
+blacklistadd drive.google.com
+blacklistadd e.mail.ru
+blacklistadd keep.google.com
+
+bind --mode=normal u undo tab
+unbind --mode=normal U
+bind --mode=normal U fillcmdline undo
+unbind J
+unbind K
+
+set auconcreatecontainer true
+autocontain vk.com vk
+autocontain youtube.com youtube
+
+unbind <F1><C-q><SA-ArrowUp><SA-ArrowUp><SA-ArrowDown><SA-ArrowDown><SA-ArrowLeft><SA-ArrowRight><SA-ArrowLeft><SA-ArrowRight>ba
+
+" Comment toggler for Reddit, Hacker News and Lobste.rs
+bind ;c hint -Jc [class*="expand"],[class="togg"],[class="comment_folder"]
+bindurl reddit.com gu urlparent 3
+bindurl news\.ycombinator\.com/item gu urlparent 2
+bindurl youtu((\.be)|(be\.com)) f hint -J
+bindurl google(\.[a-zA-Z0-9]+){1,2}/search f hint -Jc #top_nav a, #search a, .card-section a, a.fl, #pnnext, #pnprev
+bindurl google(\.[a-zA-Z0-9]+){1,2}/search F hint -Jbc #top_nav a, #search a, .card-section a, a.fl, #pnnext, #pnprev
+bindurl google(\.[a-zA-Z0-9]+){1,2}/search gF hint -Jqbc #top_nav a, #search a, .card-section a, a.fl, #pnnext, #pnprev
+" Domain-specific focused hints on ;f / ;F
+bindurl next\.duckduckgo\.com ;f hint -Jc  a.result__a
+bindurl next\.duckduckgo\.com ;F hint -Jbc a.result__a
+
+bindurl google(\.[a-zA-Z0-9]+){1,2}/search ;f hint -Jc .rc > .yuRUbf > a
+bindurl google(\.[a-zA-Z0-9]+){1,2}/search ;F hint -Jbc .rc > .yuRUbf > a
+
+bindurl news\.ycombinator\.com/news ;f hint -Jc .age > a
+bindurl news\.ycombinator\.com/news ;F hint -Jbc .age > a
+bindurl news\.ycombinator\.com/item ;f hint -Jc .comment .commtext a
+bindurl news\.ycombinator\.com/item ;F hint -Jbc .comment .commtext a
+
+bindurl github\.com/search ;f hint -Jc a.Link--primary, .f4.text-normal a
+bindurl github\.com/search ;F hint -Jbc a.Link--primary, .f4.text-normal a
+bindurl github\.com/.*/.*/issues ;f hint -Jc a.h4
+bindurl github\.com/.*/.*/issues ;F hint -Jbc a.h4
+bindurl github\.com/.*/.*/commits ;f hint -Jc a.message
+bindurl github\.com/.*/.*/commits ;F hint -Jbc a.message
+
+" GitHub: dashboards for issues and PRs
+bindurl github\.com/issues ;f hint -Jc a.Link--primary
+bindurl github\.com/issues ;F hint -Jbc a.Link--primary
+bindurl github\.com/pulls ;f hint -Jc a.Link--primary
+bindurl github\.com/pulls ;F hint -Jbc a.Link--primary
+
+bindurl git\.sr\.ht/.*/.*/tree ;f hint -Jc .name > a
+bindurl git\.sr\.ht/.*/.*/tree ;F hint -Jbc .name > a
+bindurl git\.sr\.ht/.*/.*/log ;f hint -Jc .event > div > a:nth-of-type(1)
+bindurl git\.sr\.ht/.*/.*/log ;F hint -Jbc .event > div > a:nth-of-type(1)
+
+bindurl searx\.semipvt\.com ;f hint -Jc .result_header > a
+bindurl searx\.semipvt\.com ;F hint -Jbc .result_header > a
+
+" Stack Overflow: search and list pages
+bindurl stackoverflow\.com/search ;f hint -Jc .s-post-summary h3 a, .question-summary h3 a, a.question-hyperlink
+bindurl stackoverflow\.com/search ;F hint -Jbc .s-post-summary h3 a, .question-summary h3 a, a.question-hyperlink
+bindurl stackoverflow\.com/questions ;f hint -Jc .s-post-summary h3 a, .question-summary h3 a, a.question-hyperlink
+bindurl stackoverflow\.com/questions ;F hint -Jbc .s-post-summary h3 a, .question-summary h3 a, a.question-hyperlink
+
+" Wikipedia: search (Special:Search and non-JS search form)
+bindurl [A-Za-z\.-]*wikipedia\.org/w/index\.php\?search ;f hint -Jc .mw-search-result-heading > a
+bindurl [A-Za-z\.-]*wikipedia\.org/w/index\.php\?search ;F hint -Jbc .mw-search-result-heading > a
+bindurl [A-Za-z\.-]*wikipedia\.org/wiki/Special:Search ;f hint -Jc .mw-search-result-heading > a
+bindurl [A-Za-z\.-]*wikipedia\.org/wiki/Special:Search ;F hint -Jbc .mw-search-result-heading > a
+
+" YouTube: results, subscriptions, and channels
+bindurl (www\.)?youtube\.com/results ;f hint -Jc a#video-title
+bindurl (www\.)?youtube\.com/results ;F hint -Jbc a#video-title
+bindurl (www\.)?youtube\.com/feed/subscriptions ;f hint -Jc a#video-title
+bindurl (www\.)?youtube\.com/feed/subscriptions ;F hint -Jbc a#video-title
+bindurl (www\.)?youtube\.com/@.* ;f hint -Jc a#video-title
+bindurl (www\.)?youtube\.com/@.* ;F hint -Jbc a#video-title
+
+" Old Reddit: posts, search results, and comment links
+bindurl old\.reddit\.com ;f hint -Jc a.title, a.search-title, .flat-list a.comments
+bindurl old\.reddit\.com ;F hint -Jbc a.title, a.search-title, .flat-list a.comments
+
+" HN newest page
+bindurl news\.ycombinator\.com/newest ;f hint -Jc .age > a
+bindurl news\.ycombinator\.com/newest ;F hint -Jbc .age > a
+
+" Reverse image search and image copy
+bind ;M composite hint -Jpipe img src | tabopen https://images.google.com/searchbyimage?image_url=
+bind ;m composite hint -Jpipe img src | open https://images.google.com/searchbyimage?image_url=
+bind ;Y hint -cF img i => tri.excmds.yankimage(tri.urlutils.getAbsoluteURL(i.src))
+
+" GitLab: issues / MRs / commits / search
+bindurl gitlab\.com/search ;f hint -Jc a.search-result-row, a.search-result-link, a[data-qa-selector="result_title"], .results a
+bindurl gitlab\.com/search ;F hint -Jbc a.search-result-row, a.search-result-link, a[data-qa-selector="result_title"], .results a
+
+bindurl gitlab\.com/.*/.*/-/issues ;f hint -Jc a[data-qa-selector="title_link"], a[data-qa-selector="issuable_title_link"]
+bindurl gitlab\.com/.*/.*/-/issues ;F hint -Jbc a[data-qa-selector="title_link"], a[data-qa-selector="issuable_title_link"]
+
+bindurl gitlab\.com/.*/.*/-/merge_requests ;f hint -Jc a[data-qa-selector="title_link"], a[data-qa-selector="issuable_title_link"]
+bindurl gitlab\.com/.*/.*/-/merge_requests ;F hint -Jbc a[data-qa-selector="title_link"], a[data-qa-selector="issuable_title_link"]
+
+bindurl gitlab\.com/.*/.*/-/commits ;f hint -Jc a.commit-row-message, a.commit-title
+bindurl gitlab\.com/.*/.*/-/commits ;F hint -Jbc a.commit-row-message, a.commit-title
+bindurl lkml.org/lkml gl js let lis = Array.from(document.querySelectorAll(".threadlist:nth-of-type(1)")[0].querySelectorAll("li")); document.location.href = lis[lis.findIndex(li => li.className.match("origin")) + 1].querySelector("a").href
+bindurl lkml.org/lkml gh js let lis = Array.from(document.querySelectorAll(".threadlist:nth-of-type(1)")[0].querySelectorAll("li")); document.location.href = lis[lis.findIndex(li => li.className.match("origin")) - 1].querySelector("a").href
+alias translate js let googleTranslateCallback = document.createElement('script'); googleTranslateCallback.innerHTML = "function googleTranslateElementInit(){ new google.translate.TranslateElement(); }"; document.body.insertBefore(googleTranslateCallback, document.body.firstChild); let googleTranslateScript = document.createElement('script'); googleTranslateScript.charset="UTF-8"; googleTranslateScript.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit&tl=&sl=&hl="; document.body.insertBefore(googleTranslateScript, document.body.firstChild);
+alias translate-page js tri.excmds.tabopen("https://translate.google.com/translate?sl=auto&tl=ru&u=" + encodeURIComponent(window.location.href))
+
+" thx to: https://github.com/vishes-shell/dotfiles/blob/master/.config/tridactyl/tridactylrc
+" Disable Tridactyl's search keybindings to rely on native find UI.
+unbind --mode=normal /
+unbind --mode=normal ?
+unbind --mode=normal n
+unbind --mode=normal N
+unbind --mode=normal <C-f>
+bind zg composite js "git clone " + document.location.href.replace(/https?:\/\//,"git@").replace("/",":").replace(/$/,".git") | clipboard yank
+bind zG js let uri = document.location.href.replace(/https?:\/\//,"git@").replace("/",":").replace(/$/,".git"); tri.native.run("cd ~/projects; git clone " + uri + "; cd \"$(basename \"" + uri + "\" .git)\"; st")
+
+setpref accessibility.typeaheadfind.flashBar 0
+setpref browser.bookmarks.addedImportButton = false
+setpref browser.bookmarks.restore_default_bookmarks = false
+setpref browser.contentblocking.category = "standard"
+setpref browser.download.dir "~/dw"
+setpref browser.newtabpage.activity-stream.telemetry = false
+setpref browser.ping-centre.telemetry = false
+setpref browser.region.update.region = "US"
+setpref browser.search.isUS = true
+setpref browser.search.region = "US"
+setpref distribution.searchplugins.defaultLocale = "en-US"
+setpref extensions.webextensions.restrictedDomains ""
+setpref general.useragent.locale = "en-US"
+setpref general.warnOnAboutConfig false
+setpref gfx.color_management.enabled true
+setpref gfx.color_management.enablev4 true
+setpref gfx.color_management.mode 1
+setpref network.trr.confirmation_telemetry_enabled = false
+setpref pdfjs.disabled true
+setpref permissions.default.desktop-notification 2
+setpref privacy.resistFingerprinting.block_mozAddonManager true
+setpref toolkit.telemetry.reportingpolicy.firstRun = false
+setpref xpinstall.signatures.required false
+
+unbindurl mail\.google\.com j
+unbindurl mail\.google\.com k
+unbindurl mail\.google\.com x
+unbindurl mail\.google\.com e
+unbindurl youtube.com/watch f
+
+" Restore Ctrl+C behavior in ex-mode
+bind --mode=ex <C-c> ex.hide_and_clear
+unbind --mode=ex <C-w>
+unbind <C-o>
+
+bind --mode=input <C-c> composite unfocus | mode normal
+bind --mode=insert <C-c> composite unfocus | mode normal
+bind --mode=input <C-[> composite unfocus | mode normal
+bind --mode=insert <C-[> composite unfocus | mode normal
+bind --mode=normal <C-c> composite unfocus | mode normal
+bind --mode=normal <C-[> composite unfocus | mode normal
+
+" thx to: https://github.com/glacambre/%2Edotfiles/blob/master/default/.config/tridactyl/tridactylrc
+unbind --mode=ex <C-a>
+bind --mode=insert <C-a> text.beginning_of_line
+bind --mode=input <C-a> text.beginning_of_line
+bind --mode=ex <C-e> text.end_of_line
+bind --mode=insert <C-e> text.end_of_line
+bind --mode=input <C-e> text.end_of_line
+bind --mode=ex <C-f> text.forward_word
+bind --mode=insert <C-f> text.forward_word
+bind --mode=input <C-f> text.forward_word
+bind --mode=ex <C-k> text.kill_line
+bind --mode=insert <C-k> text.kill_line
+bind --mode=input <C-k> text.kill_line
+bind --mode=ex <C-u> text.backward_kill_line
+bind --mode=insert <C-u> text.backward_kill_line
+bind --mode=input <C-u> text.backward_kill_line
+bind --mode=ex <C-w> text.backward_kill_word
+bind --mode=insert <C-w> text.backward_kill_word
+bind --mode=input <C-w> text.backward_kill_word
+
+bind --mode=ex <C-n> ex.next_completion
+bind --mode=ex <C-p> ex.prev_completion
+bind --mode=ex <C-y> ex.insert_completion
+bind --mode=ex <C-e> ex.deselect_completion
+bind --mode=ex <C-g> composite text.beginning_of_line ; text.forward_word ; text.kill_word
+
+bind --mode=normal <C-P> winopen -private
+
+bind w fillcmdline tab
+bind e tabnext_gt
+bind E tabprev
+bind f hint -c input:not([type=hidden]):not([disabled]), a, area, iframe, textarea, button, select, summary, [onclick], [onmouseover], [onmousedown], [onmouseup], [oncommand], [role='link'], [role='button'], [role='checkbox'], [role='combobox'], [role='listbox'], [role='listitem'], [role='menuitem'], [role='menuitemcheckbox'], [role='menuitemradio'], [role='option'], [role='radio'], [role='scrollbar'], [role='slider'], [role='spinbutton'], [role='tab'], [role='textbox'], [role='treeitem'], [class*='button'], [tabindex]
+bind F hint -tc  input:not([type=hidden]):not([disabled]), a, area, iframe, textarea, button, select, summary, [onclick], [onmouseover], [onmousedown], [onmouseup], [oncommand], [role='link'], [role='button'], [role='checkbox'], [role='combobox'], [role='listbox'], [role='listitem'], [role='menuitem'], [role='menuitemcheckbox'], [role='menuitemradio'], [role='option'], [role='radio'], [role='scrollbar'], [role='slider'], [role='spinbutton'], [role='tab'], [role='textbox'], [role='treeitem'], [class*='button'], [tabindex]
+bind j scrollline 2
+bind k scrollline -2
+bind --mode=normal Y clipboard yankcanon
+bind --mode=normal y composite get_current_url | yank
+bind D tabclose
+bind s hint -S
+bind ;S hint -s
+command hint_focus hint -;
+
+quickmark A magazine.artstation.com/
+quickmark E projecteuler.net/
+quickmark L libgen.li
+quickmark S uso.kkx.one
+quickmark c twitch.tv/cooller
+quickmark e ektoplazm.com/
+quickmark g gmail.com
+quickmark h sci-hub.hkvisa.net/
+quickmark k reddit.com/r/MechanicalKeyboards/
+quickmark l last.fm/user/e7z0x1
+quickmark s store.steampowered.com
+quickmark u reddit.com/r/unixporn
+quickmark v vk.com
+quickmark y youtube.com/
+quickmark z z-lib.is
+
+" Sometimes the status bar in the bottom left corner overlaps the Tridactyl
+" command line, so set an option to move the status bar to the right.
+guiset_quiet hoverlink right
+guiset_quiet statuspanel left
+guiset_quiet tabcounters show
+
+set keyboardlayoutforce true
+set keyboatlayoutbase us
+" For syntax highlighting see https://github.com/tridactyl/vim-tridactyl
+" vim: set filetype=tridactyl

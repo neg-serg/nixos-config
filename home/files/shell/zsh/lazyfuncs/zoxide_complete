@@ -1,0 +1,110 @@
+# zoxide_complete: interactive directory completion widget for zoxide + zle
+# Inspired by previous fasd-complete bindings.
+zoxide_complete() {
+  emulate -L zsh -o no_aliases
+
+  if (( ! $+commands[zoxide] )); then
+    zle -M 'zoxide: command not found'
+    return 0
+  fi
+
+  local orig_lbuffer=$LBUFFER
+  local orig_rbuffer=$RBUFFER
+  local orig_cursor=$CURSOR
+  local query=""
+  local prefix
+  local word_removed=0
+  local -a match mbegin mend
+
+  if [[ -n $LBUFFER && $LBUFFER =~ '([^[:space:]]+)$' ]]; then
+    query=$match[1]
+    local start=$mbegin[1]
+    prefix=$LBUFFER[1,start-1]
+    if [[ $LBUFFER == *[[:space:]]* ]]; then
+      LBUFFER=$prefix
+      word_removed=1
+    else
+      local first_word=$orig_lbuffer
+      if [[ $first_word != (cd|z|zi) ]]; then
+        LBUFFER=$prefix
+        word_removed=1
+      else
+        query=""
+      fi
+    fi
+  fi
+
+  local dir
+  local auto_dir=""
+  local auto_pick=0
+  local listing
+
+  if [[ -n $query ]]; then
+    listing=$(command zoxide query -ls -- "$query" 2>/dev/null)
+  else
+    listing=$(command zoxide query -ls 2>/dev/null)
+  fi
+
+  if [[ -n $listing ]]; then
+    local -a lines
+    lines=(${(f)listing})
+
+    if (( ${#lines} >= 1 )); then
+      local first_line=${lines[1]}
+      first_line=${first_line#"${first_line%%[![:space:]]*}"}
+      local first_score=${first_line%%[[:space:]]*}
+      auto_dir=${first_line#${first_score}}
+      auto_dir=${auto_dir#"${auto_dir%%[![:space:]]*}"}
+
+      if (( ${#lines} == 1 )); then
+        auto_pick=1
+      else
+        local second_line=${lines[2]}
+        second_line=${second_line#"${second_line%%[![:space:]]*}"}
+        local second_score=${second_line%%[[:space:]]*}
+
+        if [[ -z $second_score ]]; then
+          auto_pick=1
+        elif (( second_score == 0 )); then
+          auto_pick=1
+        elif (( first_score >= 10 * second_score )); then
+          auto_pick=1
+        fi
+      fi
+    fi
+  fi
+
+  if (( auto_pick )) && [[ -n $auto_dir ]]; then
+    dir=$auto_dir
+  else
+    if [[ -n $query ]]; then
+      dir=$(command zoxide query -i -- "$query" 2>/dev/null)
+    else
+      dir=$(command zoxide query -i 2>/dev/null)
+    fi
+  fi
+
+  if [[ -z $dir ]]; then
+    LBUFFER=$orig_lbuffer
+    CURSOR=$orig_cursor
+    zle redisplay
+    return 0
+  fi
+
+  local insert=${(q)dir}
+  if [[ -n $LBUFFER && ${LBUFFER[-1]} != ' ' ]]; then
+    LBUFFER+=' '
+  elif [[ -z $LBUFFER && $orig_lbuffer == (cd|z|zi) ]]; then
+    LBUFFER=$orig_lbuffer' '
+  fi
+
+  LBUFFER+=$insert
+
+  if [[ -z $orig_rbuffer || ${orig_rbuffer[1]} != ' ' ]]; then
+    LBUFFER+=' '
+  fi
+
+  CURSOR=${#LBUFFER}+1
+  zle redisplay
+  return 0
+}

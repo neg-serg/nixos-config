@@ -1,0 +1,20 @@
+{
+  "ws": {
+    "icon": {
+      "svgScale": 0.52
+    },
+    "submap": {
+      "icon": {
+        "color": "#006FCC",
+        "overrides": {}
+      }
+    },
+    "label": {
+      "padding": 0,
+      "leftPadding": {
+        "normal": 2,
+        "terminal": -2
+      }
+    }
+  }
+}

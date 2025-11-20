@@ -1,0 +1,14 @@
+[Unit]
+Description=Quickshell panel session
+Documentation=https://github.com/neg/quickshell-config
+After=graphical-session.target tray.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.config/quickshell
+ExecStart=/bin/sh -c 'cd %h/.config/quickshell && exec qs'
+Restart=on-failure
+RestartSec=2
+[Install]
+WantedBy=default.target

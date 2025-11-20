@@ -6,11 +6,12 @@
 }:
 with lib; let
   systemctl = lib.getExe' pkgs.systemd "systemctl";
+  filesRoot = "${config.neg.hmConfigRoot}/files";
 in
   mkIf (config.features.gui.enable && (config.features.gui.qt.enable or false) && (config.features.gui.quickshell.enable or false)) {
     home.file.".config/quickshell" = {
       recursive = true;
-      source = config.lib.file.mkOutOfStoreSymlink "${config.neg.dotfilesRoot}/quickshell/.config/quickshell";
+      source = filesRoot + "/quickshell/quickshell";
     };
 
     # After linking the updated config, restart quickshell if it is running.

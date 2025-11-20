@@ -1,0 +1,9 @@
+{
+  "timers": {
+    "timeTickMs": 1000,
+    "wsRefreshDebounceMs": 120,
+    "musicPositionPollMs": 1000,
+    "musicPlayersPollMs": 5000,
+    "musicMetaRecalcDebounceMs": 80
+  }
+}

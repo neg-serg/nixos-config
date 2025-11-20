@@ -1,0 +1,24 @@
+{
+  // Base palette tuned for dark Quickshell surfaces; override here to adjust visuals.
+  "colors": {
+    "accent": {
+      // Primary accent color for highlights across panels and tooltips.
+      "primary": "#006FCC"
+    },
+    "background": "#ff000000",
+    "surface": "#181C25",
+    "surfaceVariant": "#242A35",
+    "outline": "#3B4C5C",
+    "text": {
+      "primary": "#CBD6E5",
+      "secondary": "#AEB9C8",
+      "disabled": "#6B718A"
+    },
+    "shadow": "#000000",
+    "status": {
+      "error": "#FF6B81"
+    },
+    "highlight": "#94E1F9",
+    "onAccent": "#FFFFFF"
+  }
+}

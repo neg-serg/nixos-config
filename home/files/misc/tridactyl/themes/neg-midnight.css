@@ -1,0 +1,190 @@
+/* neg-midnight: same as neg, but a custom, deeper menu palette */
+
+/* Base tokens */
+:root {
+  --accent: #89cdd2;
+  --border_color: #0a3749;
+  --color_black: #020202;
+  --foreground: #f0f1ff;
+  --line_highlight: #13384f;
+  --mono: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Tridactyl tokens */
+  --tridactyl-bg: var(--color_black);
+  --tridactyl-fg: var(--foreground);
+
+  /* Hint tokens */
+  --tridactyl-hint-active-bg: var(--tridactyl-hintspan-bg);
+  --tridactyl-hint-active-fg: var(--foreground);
+  --tridactyl-hint-active-outline: none;
+  --tridactyl-hint-bg: none;
+  --tridactyl-hint-outline: none;
+
+  /* Hintspan tokens */
+  --tridactyl-hintspan-bg: #001742 !important;
+  --tridactyl-hintspan-fg: var(--accent) !important;
+  --tridactyl-hintspan-font-family: var(--mono) !important;
+  --tridactyl-hintspan-font-size: 0.875rem !important;
+  --tridactyl-hintspan-font-weight: 600 !important;
+  --tridactyl-hintspan-border-width: 1px !important;
+
+  /* URL tokens */
+  --tridactyl-url-bg: var(--color_black);
+  --tridactyl-url-fg: var(--url_highlight);
+  --url_highlight: #243f55;
+
+  /* Midnight menu tokens (specific to this theme) */
+  --midnight-bg: #0a0f18;
+  --midnight-row: #0f1a28;
+  --midnight-row-focus: #172a3b;
+  --midnight-divider: #0e2a38;
+}
+
+/* Command line holder: keep as neg (square, no accent rounding) */
+#command-line-holder {
+  background: var(--tridactyl-bg);
+  border: 1px solid var(--border_color);
+  color: var(--tridactyl-fg);
+  order: 1;
+  border-radius: 0;
+}
+
+#tridactyl-input {
+  background: var(--tridactyl-bg);
+  color: var(--tridactyl-fg);
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  caret-color: var(--foreground);
+}
+
+#tridactyl-input::placeholder {
+  color: color-mix(in oklab, var(--tridactyl-fg) 60%, transparent);
+}
+#tridactyl-input::-moz-placeholder {
+  color: color-mix(in oklab, var(--tridactyl-fg) 60%, transparent);
+}
+
+/* MENU: midnight variant (only difference vs neg) */
+#completions {
+  background: var(--midnight-bg);
+  color: var(--tridactyl-fg);
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  /* Align row sizing with other themes (relative to font-size) */
+  --option-height: 1.2em;
+  /* Keep parent non-scrollable; scroll only inner container */
+  overflow: hidden;
+  padding: 0;
+  width: 100%;
+  border: 1px solid var(--border_color);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border_color) transparent;
+}
+
+#completions > div {
+  overflow-y: auto;
+  /* Hard cap in lines: at most 8 rows visible */
+  max-height: calc(8 * var(--option-height));
+  min-height: calc(2 * var(--option-height));
+}
+
+#completions table {
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0;
+  border-spacing: 0;
+  table-layout: fixed;
+  width: 100%;
+}
+
+#completions table tr {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: transparent;
+}
+
+#completions table td {
+  border-bottom: 1px solid var(--midnight-divider);
+}
+
+#completions table tr .title {
+  width: 70%;
+}
+
+#completions .sectionHeader {
+  background: var(--midnight-row);
+  border-bottom: 1px solid var(--midnight-divider);
+  padding-left: 0;
+}
+
+#completions .focused {
+  background: var(--midnight-row-focus);
+  color: var(--foreground);
+  padding: 0;
+}
+
+#completions .focused .url {
+  background: var(--midnight-row-focus);
+  color: var(--url_highlight);
+  padding: 0;
+}
+
+/* Make buffers (tabs/windows) list longer */
+#completions .BufferCompletionSource {
+  /* Defer to container cap; do not override per-source */
+  max-height: unset;
+}
+
+/* Match per-source sizing/table behavior from base theme to avoid jumps */
+#completions .HistoryCompletionSource {
+  max-height: unset;
+  min-height: unset;
+}
+
+#completions .HistoryCompletionSource table {
+  border-spacing: 0;
+  font-size: 0.875rem;
+  table-layout: fixed;
+  width: 100%;
+}
+
+#completions .BmarkCompletionSource {
+  max-height: unset;
+  min-height: unset;
+}
+
+#completions .BufferCompletionSource table {
+  border-spacing: 0;
+  font-size: 0.875rem;
+  table-layout: fixed;
+  width: unset;
+}
+
+/* Other parts (hints, etc.) are identical to neg */
+span.TridactylHint {
+  background-color: var(--tridactyl-hintspan-bg) !important;
+  border-radius: 0 !important;
+  border-style: var(--tridactyl-hintspan-border-style, solid) !important;
+  border-width: var(--tridactyl-hintspan-border-width, 1px) !important;
+  border-color: var(--border_color) !important;
+  color: var(--tridactyl-hintspan-fg) !important;
+  font-family: var(--tridactyl-hintspan-font-family) !important;
+  font-size: var(--tridactyl-hintspan-font-size) !important;
+  font-style: var(--tridactyl-hintspan-font-style) !important;
+  font-weight: var(--tridactyl-hintspan-font-weight, 600) !important;
+  min-width: 0.75em !important;
+  padding: 2px !important;
+  position: absolute !important;
+  z-index: 2147483646 !important;
+}
+
+span.TridactylHint.ActiveHint {
+  background-color: color-mix(in oklab, var(--line_highlight) 80%, transparent);
+  outline: 1px solid var(--border_color);
+}

@@ -1,0 +1,267 @@
+[language-server.hyprls]
+command = "hyprls"
+
+[language-server.emmet-lsp]
+command = "emmet-language-server"
+args = ["--stdio"]
+
+[language-server."typescript-language-server"]
+command = "typescript-language-server"
+args = ["--stdio"]
+
+[language-server."vscode-html-language-server"]
+command = "vscode-html-language-server"
+args = ["--stdio"]
+
+[language-server.taplo]
+command = "taplo"
+args = ["lsp", "stdio"]
+
+[language-server."vscode-css-language-server"]
+command = "vscode-css-language-server"
+args = ["--stdio"]
+
+[language-server."vscode-json-language-server"]
+command = "vscode-json-language-server"
+args = ["--stdio"]
+
+[language-server.lemminx]
+command = "lemminx"
+
+[language-server."awk-language-server"]
+command = "awk-language-server"
+args = ["--stdio"]
+
+[language-server."cmake-language-server"]
+command = "cmake-language-server"
+
+[language-server."dhall-lsp-server"]
+command = "dhall-lsp-server"
+
+[language-server."docker-compose-language-service"]
+command = "docker-compose-langserver"
+
+[language-server."dot-language-server"]
+command = "dot-language-server"
+
+[language-server."autotools-language-server"]
+command = "autotools-language-server"
+
+[language-server.gopls]
+command = "gopls"
+
+[language-server.sqls]
+command = "sqls"
+
+[language-server."asm-lsp"]
+command = "asm-lsp"
+
+[language-server."systemd-language-server"]
+command = "systemd-language-server"
+
+[language-server."nginx-language-server"]
+command = "nginx-language-server"
+
+[language-server.svls]
+command = "svls"
+
+[language-server."vhdl-ls"]
+command = "vhdl_ls"
+
+[language-server.zls]
+command = "zls"
+
+[language-server.qmlls]
+command = "qmlls"
+
+[language-server.just-lsp]
+command = "just-lsp"
+
+[language-server.rust-analyzer.config]
+checkOnSave = { command = "clippy" }
+
+[[language]]
+name = "hyprlang"
+scope = "source.hyprlang"
+comment-token = "#"
+indent = { tab-width = 4, unit = "    " }
+
+# Match common Hyprland configuration locations
+file-types = [
+  { glob = "**/hypr/*.conf" },
+  { glob = "hypr.*.conf" },
+  { glob = "hypr.conf" }
+]
+language-servers = ["hyprls"]
+
+[[language]]
+name = "rust"
+auto-format = true
+language-servers = ["rust-analyzer"]
+
+[[language]]
+name = "html"
+auto-format = true
+language-servers = ["emmet-lsp", "vscode-html-language-server"]
+
+[[language]]
+name = "javascript"
+auto-format = true
+indent = { tab-width = 4, unit = "    " }
+file-types = ["js", "mjs", "cjs", "jsx"]
+language-servers = ["typescript-language-server"]
+
+[[language]]
+name = "jsx"
+auto-format = true
+indent = { tab-width = 4, unit = "    " }
+language-servers = ["typescript-language-server"]
+
+[[language]]
+name = "typescript"
+auto-format = true
+indent = { tab-width = 4, unit = "    " }
+language-servers = ["typescript-language-server"]
+
+[[language]]
+name = "tsx"
+auto-format = true
+indent = { tab-width = 4, unit = "    " }
+language-servers = ["typescript-language-server"]
+
+[[language]]
+name = "config"
+scope = "source.conf"
+file-types = ["conf"]
+comment-token = "#"
+roots = []
+indent = { tab-width = 4, unit = "    " }
+
+[[language]]
+name = "toml"
+auto-format = true
+language-servers = ["taplo"]
+
+[[language]]
+name = "css"
+auto-format = true
+language-servers = ["vscode-css-language-server"]
+
+[[language]]
+name = "json"
+auto-format = true
+file-types = ["json", "jsonc"]
+language-servers = ["vscode-json-language-server"]
+
+[[language]]
+name = "json5"
+auto-format = true
+file-types = ["json5"]
+language-servers = ["vscode-json-language-server"]
+
+[[language]]
+name = "xml"
+auto-format = true
+language-servers = ["lemminx"]
+
+[[language]]
+name = "awk"
+language-servers = ["awk-language-server"]
+
+[[language]]
+name = "autoconf"
+file-types = ["ac", "in"]
+language-servers = ["autotools-language-server"]
+
+[[language]]
+name = "make"
+language-servers = ["autotools-language-server"]
+
+[[language]]
+name = "go"
+auto-format = true
+file-types = ["go"]
+language-servers = ["gopls"]
+
+[[language]]
+name = "sql"
+auto-format = true
+file-types = ["sql"]
+language-servers = ["sqls"]
+
+[[language]]
+name = "cmake"
+file-types = ["cmake", "CMakeLists.txt"]
+language-servers = ["cmake-language-server"]
+
+[[language]]
+name = "dhall"
+file-types = ["dhall"]
+language-servers = ["dhall-lsp-server"]
+
+[[language]]
+name = "docker-compose"
+file-types = ["docker-compose.yml", "docker-compose.yaml"]
+language-servers = ["docker-compose-language-service"]
+
+[[language]]
+name = "dot"
+file-types = ["dot"]
+language-servers = ["dot-language-server"]
+
+[[language]]
+name = "asm"
+scope = "source.asm"
+file-types = ["asm", "s", "S"]
+language-servers = ["asm-lsp"]
+
+[[language]]
+name = "systemd"
+scope = "source.systemd"
+file-types = [
+  "service",
+  "socket",
+  "timer",
+  "target",
+  "path",
+  "mount",
+  "automount",
+  "swap",
+  "slice",
+  "scope"
+]
+language-servers = ["systemd-language-server"]
+
+[[language]]
+name = "nginx"
+scope = "source.nginx"
+file-types = ["nginx", "nginx.conf"]
+language-servers = ["nginx-language-server"]
+
+[[language]]
+name = "verilog"
+scope = "source.verilog"
+file-types = ["v", "sv", "svh", "vh"]
+language-servers = ["svls"]
+
+[[language]]
+name = "vhdl"
+scope = "source.vhdl"
+file-types = ["vhd", "vhdl"]
+language-servers = ["vhdl-ls"]
+
+[[language]]
+name = "zig"
+auto-format = true
+file-types = ["zig"]
+language-servers = ["zls"]
+
+[[language]]
+name = "qml"
+auto-format = true
+language-servers = ["qmlls"]
+
+[[language]]
+name = "just"
+file-types = ["justfile", { glob = "*.just" }, { glob = "*.justfile" }]
+language-servers = ["just-lsp"]

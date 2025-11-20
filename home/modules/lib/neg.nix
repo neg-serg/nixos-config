@@ -6,13 +6,9 @@
   ...
 }: let
   hmRepoPath = ../..;
-  hmRepoStr = builtins.toString hmRepoPath;
-  repoHasDotfilesTree = lib.pathExists (hmRepoPath + "/shell");
 in {
   # Project-specific helpers under lib.neg
   config.lib.neg = rec {
-    # Configurable root of your dotfiles repository (see options.neg.dotfilesRoot)
-
     # mkEnabledList flags groups -> concatenated list of groups
     # flags: { a = true; b = false; }
     # groups: { a = [pkg1]; b = [pkg2]; }
@@ -220,22 +216,9 @@ in {
 
   options.neg = {
     # Provide a typed option for dotfiles root
-    dotfilesRoot = lib.mkOption {
-      type = lib.types.str;
-      default =
-        if repoHasDotfilesTree
-        then hmRepoStr
-        else "${config.home.homeDirectory}/.dotfiles";
-      description = "Path to the root of the user's dotfiles repository.";
-      example = "/home/neg/.cfg";
-    };
-
     hmConfigRoot = lib.mkOption {
-      type = lib.types.str;
-      default =
-        if lib.pathExists hmRepoPath
-        then hmRepoStr
-        else "${config.neg.dotfilesRoot}/nix/.config/home-manager";
+      type = lib.types.path;
+      default = hmRepoPath;
       description = "Absolute path to the Home Manager configuration tree (used for linking config assets).";
       example = "/etc/nixos/home";
     };

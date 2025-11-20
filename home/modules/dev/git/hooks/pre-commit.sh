@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Repo root configured in HM (dotfilesRoot)
+# Repo root configured in HM (defaults to /etc/nixos/home)
 if [ -n "${config_repo:-}" ]; then
   repo="$config_repo"
 else
-  if [ -d /etc/nixos/home ]; then
-    repo="/etc/nixos/home"
-  else
-    repo="$HOME/.dotfiles/nix/.config/home-manager"
-  fi
+  repo="/etc/nixos/home"
+fi
+if [ ! -d "$repo" ]; then
+  echo "Home Manager repo '$repo' is missing" >&2
+  exit 1
 fi
 # Run flake checks for HM (format docs, evals, etc.)
 (cd "$repo" && nix flake check -L)

@@ -1,0 +1,40 @@
+name: Validate Configs
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate Settings.json
+        run: |
+          node quickshell/.config/quickshell/Tools/validate-settings.mjs \
+            --settings quickshell/.config/quickshell/Settings.json \
+            --schema quickshell/.config/quickshell/Docs/SettingsSchema.json
+
+      - name: Validate generated theme
+        run: |
+          node quickshell/.config/quickshell/Tools/validate-theme.mjs \
+            --theme quickshell/.config/quickshell/Theme/.theme.json \
+            --schema quickshell/.config/quickshell/Docs/ThemeHierarchical.json \
+            --constraints quickshell/.config/quickshell/Docs/ThemeConstraints.json \
+            --strict
+
+      - name: Lint Settings keys (unknown fails)
+        run: |
+          node quickshell/.config/quickshell/Tools/lint-settings.mjs
+
+      - name: Lint Theme tokens (informational)
+        continue-on-error: true
+        run: |
+          node quickshell/.config/quickshell/Tools/lint-theme-tokens.mjs || true
