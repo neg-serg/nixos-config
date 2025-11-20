@@ -1,4 +1,47 @@
-@import "menu.rasi"
+@import "theme.rasi"
+@import "common.rasi"
 
-/* Minimal alias so scripts can refer to `-theme sxiv`.
-   Inherit the default menu styling without further overrides. */
+/* Wide top-aligned layout for swayimg actions (replacement for legacy sxiv style). */
+
+#window {
+    location: north;
+    anchor: north;
+    width: 100%;
+    border: 0px;
+    border-radius: 0px;
+    padding: 8px 32px 12px 32px;
+    background-color: transparent;
+}
+
+#mainbox {
+    background-color: transparent;
+    padding: 0px;
+}
+
+inputbar {
+    background-color: var(blackdarkest);
+    padding: 6px 10px;
+    border: 0px;
+    border-bottom: 1px solid var(selectcolor);
+    children: [ prompt, entry ];
+}
+
+prompt {
+    padding: 0px 10px 0px 0px;
+    text-color: var(selectcolor);
+    font: "Iosevka Medium 12";
+}
+
+entry {
+    expand: true;
+    padding: 0px;
+    background-color: var(blackdarkest);
+}
+
+listview {
+    width: 100%;
+    padding: 4px 8px 0px 8px;
+    columns: 1;
+    lines: 14;
+    background-color: var(blackdarkest);
+}
