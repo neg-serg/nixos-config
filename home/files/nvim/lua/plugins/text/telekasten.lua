@@ -3,7 +3,7 @@
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {'renerocksai/telekasten.nvim', ft='markdown', -- better md wiki stuff
         config=function()
-            local home=vim.fn.expand("~/1st_level")
+            local home=vim.fn.expand("~/notes")
             local status, telekasten = pcall(require, 'telekasten')
             if (not status) then return end
 

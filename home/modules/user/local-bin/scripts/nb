@@ -1,6 +1,6 @@
 #!/bin/sh
 # POSIX safety
-# nb: update personal notes repo (1st_level) and music list, auto-commit if changed
+# nb: update personal notes repo (~/notes) and music list, auto-commit if changed
 # Usage: nb [-h|--help]
 
 IFS=' \t\n'
@@ -10,7 +10,7 @@ if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
   exit 0
 fi
 
-repo="$HOME/1st_level"
+repo="$HOME/notes"
 need() { command -v "$1" >/dev/null 2>&1 || { printf 'nb: missing %s\n' "$1" >&2; :; }; }
 need git
 
@@ -27,4 +27,3 @@ if [ "${changed_lines:-0}" -ge 2 ]; then
     git -C "$repo" commit -am "update notes $(date '+%d-%m-%Y %H:%M:%S')" || true
     git -C "$repo" push || true
 fi
-
