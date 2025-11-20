@@ -62,6 +62,15 @@ lib.mkIf (config.features.gui.enable or false) (lib.mkMerge [
     recursive = true;
   })
   {
-    home.activation.removeLegacyKitty = config.lib.neg.mkEnsureAbsent "${config.xdg.configHome}/kitty";
+    home.activation.backupLegacyKitty = lib.hm.dag.entryBefore ["linkGeneration"] ''
+      set -euo pipefail
+      target="${config.xdg.configHome}/kitty"
+      if [ -e "$target" ] && [ ! -L "$target" ]; then
+        backupRoot="${config.xdg.configHome}/hm-backup"
+        mkdir -p "$backupRoot"
+        dest="$backupRoot/kitty.$(date +%s)"
+        mv "$target" "$dest"
+      fi
+    '';
   }
 ])
