@@ -9,7 +9,7 @@
     extra ? [],
   }: let
     base = [
-      ../home.nix
+      ../../home/home.nix
       stylixInput.homeModules.stylix
       chaotic.homeManagerModules.default
       sopsNixInput.homeManagerModules.sops

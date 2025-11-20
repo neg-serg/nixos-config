@@ -16,7 +16,7 @@ in
     in
       if docsEnabled
       then let
-        featureOptionsItems = docsLib.getFeatureOptionsItems ../modules/features.nix;
+        featureOptionsItems = docsLib.getFeatureOptionsItems ../../home/modules/features.nix;
       in {
         options-md = pkgs.writeText "OPTIONS.md" (
           let
@@ -49,7 +49,7 @@ in
             flatLite = toFlat fLite "features";
             deltas = docsLib.renderDeltasMd {inherit flatNeg flatLite;};
           in
-            (builtins.readFile ../OPTIONS.md)
+            (builtins.readFile ../../OPTIONS.md)
             + "\n\n"
             + deltas
         );

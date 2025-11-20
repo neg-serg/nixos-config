@@ -28,7 +28,7 @@
   hmInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) {
     inherit (inputs) nupm;
   };
-  mkHMArgs = import ../../home/flake/mkHMArgs.nix {
+  mkHMArgs = import ../../flake/home/mkHMArgs.nix {
     inherit lib perSystem hmInputs extraSubstituters extraTrustedKeys inputs;
     yandexBrowserInput = inputs."yandex-browser";
     inherit (inputs) nur;

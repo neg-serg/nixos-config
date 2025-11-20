@@ -72,9 +72,9 @@ in {
   qsProvider = pkgs: inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default;
   rsmetrxProvider = pkgs: inputs.rsmetrx.packages.${pkgs.stdenv.hostPlatform.system}.default;
   # Provide xdg helpers directly to avoid _module.args fallback recursion
-  xdg = import ../modules/lib/xdg-helpers.nix {
+  xdg = import ../../home/modules/lib/xdg-helpers.nix {
     inherit lib;
     inherit (perSystem.${system}) pkgs;
   };
-  systemdUser = import ../modules/lib/systemd-user.nix {inherit lib;};
+  systemdUser = import ../../home/modules/lib/systemd-user.nix {inherit lib;};
 }
