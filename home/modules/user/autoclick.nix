@@ -7,7 +7,8 @@
   ...
 }:
 with lib; let
-  scriptText = builtins.readFile ./local-bin/scripts/autoclick-toggle;
+  scriptRoot = config.neg.repoRoot + "/packages/local-bin/scripts";
+  scriptText = builtins.readFile (scriptRoot + "/autoclick-toggle");
   mkLocalBin = negLib.mkLocalBin;
 in
   mkIf (config.features.gui.enable or false) (lib.mkMerge [

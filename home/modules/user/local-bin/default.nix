@@ -9,8 +9,7 @@ with lib;
     # Generate ~/.local/bin scripts using mkLocalBin (pre-clean + exec + force)
     {
       home.file = let
-        filesRoot = "${config.neg.hmConfigRoot}/files";
-        binDir = filesRoot + "/bin";
+        binDir = config.neg.repoRoot + "/packages/local-bin/bin";
         binFiles =
           if builtins.pathExists binDir
           then lib.filterAttrs (_: v: v == "regular") (builtins.readDir binDir)
@@ -34,30 +33,31 @@ with lib;
             text = builtins.readFile e.src;
           };
         };
+        scriptRoot = config.neg.repoRoot + "/packages/local-bin/scripts";
         specialScripts = [
           {
             name = "autoclick-toggle";
-            src = ./scripts/autoclick-toggle;
+            src = scriptRoot + "/autoclick-toggle";
           }
           {
             name = "hypr-shortcuts";
-            src = ./scripts/hypr-shortcuts.sh;
+            src = scriptRoot + "/hypr-shortcuts.sh";
           }
           {
             name = "journal-clean";
-            src = ./scripts/journal-clean.sh;
+            src = scriptRoot + "/journal-clean.sh";
           }
           {
             name = "music-highlevel";
-            src = ./scripts/music-highlevel;
+            src = scriptRoot + "/music-highlevel";
           }
           {
             name = "pass-2col";
-            src = ./scripts/pass-2col;
+            src = scriptRoot + "/pass-2col";
           }
           {
             name = "punzip";
-            src = ./scripts/punzip;
+            src = scriptRoot + "/punzip";
           }
         ];
         base = builtins.listToAttrs (map mkEnt specialScripts);
@@ -65,10 +65,10 @@ with lib;
         sp = pkgs.python3.sitePackages;
         libpp = "${pkgs.neg.pretty_printer}/${sp}";
         libcolored = "${pkgs.python3Packages.colored}/${sp}";
-        tpl = builtins.readFile ./scripts/vid-info.py;
+        tpl = builtins.readFile (scriptRoot + "/vid-info.py");
         vidInfoText = lib.replaceStrings ["@LIBPP@" "@LIBCOLORED@"] [libpp libcolored] tpl;
         # Special case: ren needs path substitution for libs as well
-        renTpl = builtins.readFile ./scripts/ren;
+        renTpl = builtins.readFile (scriptRoot + "/ren");
         renText = lib.replaceStrings ["@LIBPP@" "@LIBCOLORED@"] [libpp libcolored] renTpl;
       in
         autoEntries
