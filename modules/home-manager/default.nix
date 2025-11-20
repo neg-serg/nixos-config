@@ -11,19 +11,7 @@
   dropKey = key: key != "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=";
   extraSubstituters = lib.filter dropCache caches.substituters;
   extraTrustedKeys = lib.filter dropKey caches."trusted-public-keys";
-  boolEnv = name: let v = builtins.getEnv name; in v == "1" || v == "true" || v == "yes";
-  g = builtins.getEnv;
-  isCI = (g "CI" != "") || (g "GITHUB_ACTIONS" != "") || (g "GARNIX" != "") || (g "GARNIX_CI" != "");
-  usePrivateIosevka =
-    if boolEnv "HM_USE_IOSEVKA_NEG"
-    then true
-    else if isCI
-    then false
-    else true;
-  iosevkaNeg =
-    if usePrivateIosevka
-    then inputs."iosevka-neg".packages.${system}
-    else {nerd-font = pkgs.nerd-fonts.iosevka;};
+  iosevkaNeg = inputs."iosevka-neg".packages.${system};
   perSystem = lib.genAttrs [system] (_: {inherit pkgs iosevkaNeg;});
   hmInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) {
     inherit (inputs) nupm;
