@@ -23,6 +23,7 @@ in
     (xdg.mkXdgSource "nvim" {
       source = filesRoot + "/nvim";
       recursive = true;
+      force = true;
     })
     (xdg.mkXdgText "ksb-nvim/init.lua" ''
       -- Minimal init for kitty-scrollback.nvim kitten: fast and isolated

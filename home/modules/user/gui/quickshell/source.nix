@@ -22,6 +22,7 @@ in
     home.file.".config/quickshell" = {
       recursive = true;
       source = filesRoot + "/quickshell/quickshell";
+      force = true;
     };
 
     # After linking the updated config, restart quickshell if it is running.
