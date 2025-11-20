@@ -15,7 +15,6 @@ in
       let
         featureOptionsItems = docsLib.getFeatureOptionsItems ../../home/modules/features.nix;
       in {
-        options-md = pkgs.writeText "OPTIONS.md" (builtins.readFile ../../OPTIONS.md);
         features-options-md = pkgs.writeText "features-options.md" (docsLib.renderFeaturesOptionsMd featureOptionsItems);
         features-options-json = pkgs.writeText "features-options.json" (docsLib.renderFeaturesOptionsJson featureOptionsItems);
       }
