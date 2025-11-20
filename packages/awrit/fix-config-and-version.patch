@@ -1,0 +1,49 @@
+diff --git a/src/index.ts b/src/index.ts
+index 696df05..6068844 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@
+-const CONFIG_PATH = '../config.js';
++const CONFIG_PATH = (() => {
++  const cfg = process.env.AWRIT_CONFIG_PATH;
++  if (!cfg) {
++    throw new Error('AWRIT_CONFIG_PATH must be set');
++  }
++  return cfg;
++})();
+ const CONFIG_PATH_RESOLVED = path.resolve(__dirname, CONFIG_PATH);
+ loadConfig(require(CONFIG_PATH_RESOLVED));
+diff --git a/src/runner/index.ts b/src/runner/index.ts
+index 5255585..f9549b2 100644
+--- a/src/runner/index.ts
++++ b/src/runner/index.ts
+@@
+-if (options.version) {
+-  const version = (await $`git rev-parse --short HEAD`.quiet()).text().trim();
+-  if (stdout.isTTY) {
+-    stdout.write(`${BOLD_GREEN}awrit${RESET} ${version}\n`);
+-  } else {
+-    stdout.write(version);
+-  }
+-  process.exit(0);
+-}
++if (options.version) {
++  let version = '';
++  try {
++    version = (await $`git rev-parse --short HEAD`.quiet()).text().trim();
++  } catch {
++    try {
++      const pkg = await Bun.file(new URL('../package.json', import.meta.url)).json();
++      version = (pkg?.version as string | undefined) ?? 'unknown';
++    } catch {
++      version = 'unknown';
++    }
++  }
++  const message = BOLD_GREEN + 'awrit' + RESET + ' ' + version;
++  if (stdout.isTTY) {
++    stdout.write(message + '\n');
++  } else {
++    stdout.write(version);
++  }
++  process.exit(0);
++}
