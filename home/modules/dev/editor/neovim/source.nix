@@ -4,11 +4,12 @@
   ...
 }: let
   xdg = import ../../../lib/xdg-helpers.nix {inherit lib;};
+  filesRoot = "${config.neg.hmConfigRoot}/files";
 in
   # Live-editable config and tiny init for kitty-scrollback.nvim kitten
   lib.mkMerge [
     (xdg.mkXdgSource "nvim" {
-      source = config.lib.file.mkOutOfStoreSymlink "${config.neg.dotfilesRoot}/nvim/.config/nvim";
+      source = filesRoot + "/nvim";
       recursive = true;
     })
     (xdg.mkXdgText "ksb-nvim/init.lua" ''

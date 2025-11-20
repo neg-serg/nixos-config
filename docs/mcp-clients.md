@@ -3,8 +3,8 @@
 `modules/dev/mcp.nix` writes the `programs.mcp.servers` attrset whenever `config.features.dev.enable = true`. The resulting MCP client list is the source of truth for the local command-and-control endpoints (`programs.opencode`, Claude Desktop, etc.) and is the list we reference for troubleshooting.
 
 ## Always-on servers
-- `filesystem-local` — the filesystem-backed MCP server rooted at the home-manager dotfiles repository, used by most local searches.
-- `rg-index` — `mcp-ripgrep` rooted at `config.neg.dotfilesRoot`, so the repo can be searched with ripgrep queries via MCP.
+- `filesystem-local` — the filesystem-backed MCP server rooted at `/etc/nixos/home`, used by most local searches.
+- `rg-index` — `mcp-ripgrep` rooted at `config.neg.hmConfigRoot`, so the repo can be searched with ripgrep queries via MCP.
 - `memory-local` — the ephemeral `mcp-server-memory` store for short-lived context and historical entries.
 - `fetch-http` — the `mcp-server-fetch` helper that allows MCP clients to make HTTP requests through the trusted stack.
 - `sequential-thinking` — the sequential-thinking server used for structured problem-solving workflows.

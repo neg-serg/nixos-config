@@ -1,0 +1,126 @@
+{
+  "fontPattern": "Font Awesome 6 Pro",
+  "viewBox": 1024,
+  "padding": 48,
+  "icons": {
+    "term": {
+      "codepoints": [
+        "U+E236",
+        "U+FE01"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    },
+    "web": {
+      "codepoints": [
+        "U+F269"
+      ],
+      "fontPattern": "FiraCode Nerd Font Mono"
+    },
+    "dev": {
+      "codepoints": [
+        "U+E267"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    },
+    "games": {
+      "codepoints": [
+        "U+F1B7"
+      ],
+      "fontPattern": "FiraCode Nerd Font Mono"
+    },
+    "doc": {
+      "codepoints": [
+        "U+F15C"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    },
+    "draw": {
+      "codepoints": [
+        "U+F03E"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    },
+    "vid": {
+      "codepoints": [
+        "U+F008"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    },
+    "obs": {
+      "codepoints": [
+        "U+273D"
+      ],
+      "fontPattern": "Iosevka"
+    },
+    "pic": {
+      "codepoints": [
+        "U+F03E"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    },
+    "sys": {
+      "codepoints": [
+        "U+F0AD"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    },
+    "vm": {
+      "codepoints": [
+        "U+F1CD"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    },
+    "wine": {
+      "codepoints": [
+        "U+F1CB"
+      ],
+      "fontPattern": "FiraCode Nerd Font Mono"
+    },
+    "patchbay": {
+      "codepoints": [
+        "U+F001"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    },
+    "daw": {
+      "codepoints": [
+        "U+F001"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    },
+    "dw": {
+      "codepoints": [
+        "U+F0ED"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    },
+    "keyboard": {
+      "codepoints": [
+        "U+F11C"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    },
+    "im": {
+      "codepoints": [
+        "U+F4B6"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    },
+    "remote": {
+      "codepoints": [
+        "U+E1C6"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    },
+    "notes": {
+      "codepoints": [
+        "U+E202"
+      ],
+      "fontPattern": "Font Awesome 6 Pro"
+    }
+  },
+  "fontFallbacks": [
+    "FiraCode Nerd Font Mono",
+    "Iosevka"
+  ]
+}

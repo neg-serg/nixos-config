@@ -137,11 +137,7 @@ def linux-kernel [] {
   '
 }
 def seh [...args: string] {
-  let repo = if ("/etc/nixos/home" | path exists) {
-    "/etc/nixos/home"
-  } else {
-    $"($env.HOME)/.dotfiles/nix/.config/home-manager"
-  }
+  let repo = "/etc/nixos/home"
   home-manager -b bck switch -j 32 --cores 32 --flake $repo ...$args
 }
 def ser [...args: string] {

@@ -30,7 +30,7 @@
     inputs."sops-nix".homeManagerModules.sops
   ];
   hmRoot = ../../home;
-  cfgPath = builtins.toString hmRoot;
+  cfgPath = hmRoot;
   userConfig = {
     imports = hmModules;
     neg.hmConfigRoot = cfgPath;

@@ -1,0 +1,74 @@
+{
+  "panel": {
+    // Layout primitives for the top bar; keep values even to avoid pixel jitter.
+    "height": 22,
+    "scale": 1.15,
+    "sideMargin": 0,
+    "widgetSpacing": 0,
+    "separatorWidthFactor": 1,
+    "separatorOpacity": 0.88,
+    "hotzone": {
+      "width": 16,
+      "height": 9,
+      "rightShift": 1.15
+    },
+    "moduleHeight": 22,
+    "menuYOffset": 20,
+    "pill": {
+      // Hover pill controls consolidated menu/tooltip popups triggered from the bar.
+      "height": 28,
+      "iconSize": 22,
+      "paddingH": 14,
+      "showDelayMs": 500,
+      "autoHidePauseMs": 2500,
+      "color": "#000000"
+    },
+    "animations": {
+      "stdMs": 250,
+      "fastMs": 200
+    },
+    "tray": {
+      "longHoldMs": 2500,
+      "shortHoldMs": 1500,
+      "guardMs": 120,
+      "overlayDismissDelayMs": 5000,
+      "inlinePadding": 8
+    },
+    "rowSpacing": 8,
+    "rowSpacingSmall": 4,
+    "volume": {
+      "fullHideMs": 800,
+      "lowColor": "#D62E6E",
+      "highColor": "#0E6B4D"
+    },
+    "hover": {
+      "fadeMs": 120
+    },
+    "menu": {
+      "width": 180,
+      "submenuWidth": 180,
+      "padding": 4,
+      "itemSpacing": 2,
+      "itemHeight": 26,
+      "itemRadius": 0,
+      "radius": 0,
+      "heightExtra": 12,
+      "anchorYOffset": 4,
+      "submenuGap": 12,
+      "chevronSize": 15,
+      "iconSize": 16,
+      "itemFontScale": 0.9
+    },
+    "overlayRadius": 20,
+    "netCluster": {
+      "spacing": 6
+    },
+    "capsule": {
+      "borderInset": -1,
+      "borderWidth": 0,
+      "borderOpacity": 0.08,
+      "borderColor": "#000000"
+    },
+    "computedFontScale": 0.6
+  }
+}

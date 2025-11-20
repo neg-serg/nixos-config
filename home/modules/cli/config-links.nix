@@ -3,20 +3,22 @@
   config,
   xdg,
   ...
-}:
-lib.mkMerge [
+}: let
+  filesRoot = "${config.neg.hmConfigRoot}/files";
+in
+  lib.mkMerge [
   # dircolors, f-sy-h, zsh from dotfiles; inputrc inline
   (xdg.mkXdgSource "dircolors" {
-    source = config.lib.file.mkOutOfStoreSymlink "${config.neg.dotfilesRoot}/shell/.config/dircolors";
+    source = filesRoot + "/shell/dircolors";
     recursive = true;
   })
   (xdg.mkXdgSource "f-sy-h" {
-    source = config.lib.file.mkOutOfStoreSymlink "${config.neg.dotfilesRoot}/shell/.config/f-sy-h";
+    source = filesRoot + "/shell/f-sy-h";
     recursive = true;
   })
   (xdg.mkXdgText "inputrc" (builtins.readFile ./inputrc))
   (xdg.mkXdgSource "zsh" {
-    source = config.lib.file.mkOutOfStoreSymlink "${config.neg.dotfilesRoot}/shell/.config/zsh";
+    source = filesRoot + "/shell/zsh";
     recursive = true;
   })
   # PowerShell (pwsh) profile under XDG — inline with global functions for eza
@@ -103,12 +105,12 @@ lib.mkMerge [
     ])
   # Fish config (conf.d drop-ins)
   (xdg.mkXdgSource "fish" {
-    source = config.lib.file.mkOutOfStoreSymlink "${config.neg.dotfilesRoot}/shell/.config/fish";
+    source = filesRoot + "/shell/fish";
     recursive = true;
   })
   # Bash XDG config directory
   (xdg.mkXdgSource "bash" {
-    source = config.lib.file.mkOutOfStoreSymlink "${config.neg.dotfilesRoot}/shell/.config/bash";
+    source = filesRoot + "/shell/bash";
     recursive = true;
   })
   # Ensure classic ~/.bashrc sources XDG bashrc

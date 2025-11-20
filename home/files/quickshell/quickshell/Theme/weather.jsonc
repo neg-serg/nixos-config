@@ -1,0 +1,9 @@
+{
+  "weather": {
+    "headerScale": 0.75,
+    "card": {
+      "opacity": 0.85
+    },
+    "centerOffset": -2
+  }
+}

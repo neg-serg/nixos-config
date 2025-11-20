@@ -1,0 +1,19 @@
+[
+  "colors.jsonc",
+  "panel.jsonc",
+  "shape.jsonc",
+  "tooltip.jsonc",
+  "sidePanel.jsonc",
+  "ui.jsonc",
+  "ws.jsonc",
+  "keyboard.jsonc",
+  "timers.jsonc",
+  "network.jsonc",
+  "media.jsonc",
+  "spectrum.jsonc",
+  "calendar.jsonc",
+  "weather.jsonc",
+  "vpn.jsonc",
+  "time.jsonc",
+  "volume.jsonc"
+]

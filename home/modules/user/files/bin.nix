@@ -1,6 +1,8 @@
-{config, ...}: {
+{config, ...}: let
+  filesRoot = "${config.neg.hmConfigRoot}/files";
+in {
   home.file."bin" = {
-    source = config.lib.file.mkOutOfStoreSymlink "${config.neg.dotfilesRoot}/bin";
-    recursive = false;
+    source = filesRoot + "/bin";
+    recursive = true;
   };
 }

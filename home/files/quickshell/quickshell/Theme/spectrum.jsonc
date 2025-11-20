@@ -1,0 +1,11 @@
+{
+  "spectrum": {
+    "peakDecayIntervalMs": 50,
+    "barAnimMs": 100,
+    "barGap": 2,
+    "minBarWidth": 2,
+    "peakOpacity": 0.7,
+    "fillOpacity": 0.35,
+    "peakThickness": 2
+  }
+}

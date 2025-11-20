@@ -1,0 +1,26 @@
+#!/usr/bin/env nu
+# wl: set a random wallpaper from ~/pic/wl or ~/pic/black using swww
+# Usage: wl
+
+# best-effort ensure swww daemon is running (newer CLI ships it separately)
+if ((ps | where name == "swww-daemon" | length) == 0) {
+  ^sh -c 'swww-daemon --quiet >/dev/null 2>&1 &' | ignore
+  sleep 200ms
+}
+
+# Collect candidate images; shuffle and pick the first
+let allowed_ext = [bmp gif hdr ico jpg jpeg png tif tiff webp]
+let pics = (
+  ls ...(glob ~/pic/{wl,black}/**/*)
+  | where type == file
+  | where {|row|
+      let ext = (try { $row.name | path parse | get extension } catch { "" } | str downcase)
+      $ext != "" and ($allowed_ext | any {|e| $e == $ext})
+    }
+  | get name
+)
+if ($pics | length) == 0 { exit 1 }
+let pick = ($pics | shuffle | first)
+
+# Apply wallpaper with a smooth transition
+^swww img --transition-fps 240 $pick
