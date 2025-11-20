@@ -13,10 +13,11 @@ lib.mkMerge [
       if [ -e "$target" ] && [ ! -L "$target" ]; then
         backupRoot="${config.xdg.configHome}/hm-backup"
         mkdir -p "$backupRoot"
-        dest="$backupRoot/nushell.$(date +%s)"
-        mv "$target" "$dest"
-      fi
-    '';
+      dest="$backupRoot/nushell.$(date +%s)"
+      mv "$target" "$dest"
+    fi
+  '';
+    home.activation.ensureNuDir = config.lib.neg.mkEnsureRealDir "${config.xdg.configHome}/nushell";
   }
   # Live-editable config via helper (guards parent dir and target)
   (xdg.mkXdgSource "nushell" {

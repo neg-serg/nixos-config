@@ -6,6 +6,7 @@
   ...
 }:
 lib.mkIf (config.features.gui.enable or false) (lib.mkMerge [
+  {home.activation.ensureKittyDir = config.lib.neg.mkEnsureRealDir "${config.xdg.configHome}/kitty";}
   (let mkLocalBin = import ../../../../packages/lib/local-bin.nix {inherit lib;}; in mkLocalBin "kitty-panel" (builtins.readFile ./kitty/panel))
   # Robust kitty-scrollback-nvim kitten wrapper (local-bin) and env hint
   (let
