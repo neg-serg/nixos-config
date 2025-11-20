@@ -6,7 +6,6 @@
   bun,
   coreutils,
   pkg-config,
-  python3,
   cargo,
   rustc,
   electron,
@@ -28,6 +27,10 @@ in
 
     npmDepsHash = "sha256-MyBqVdKseKbNfet/b+1TU7YJtHaQbTRY4xYgaqVM3ys=";
 
+    patches = [
+      ./fix-config-and-version.patch
+    ];
+
     npmInstallFlags = ["--ignore-scripts"];
     dontNpmBuild = true;
 
@@ -41,47 +44,23 @@ in
       bun
       coreutils
       pkg-config
-      python3
       cargo
       rustc
     ];
 
     postPatch = ''
-          cp ${./package.json} package.json
-          cp ${./package-lock.json} package-lock.json
-          if [ -f src/index.ts ]; then
-            substituteInPlace src/index.ts \
-              --replace-quiet "const CONFIG_PATH = '../config.js';" "const CONFIG_PATH = process.env.AWRIT_CONFIG_PATH ?? '../config.js';"
-          fi
-          if [ -f src/runner/index.ts ] && command -v python3 >/dev/null 2>&1; then
-            substituteInPlace src/runner/index.ts \
-              --replace-quiet "const CONFIG_PATH = '../config.js';" "const CONFIG_PATH = process.env.AWRIT_CONFIG_PATH ?? '../config.js';"
-            python3 <<'PY'
-      from pathlib import Path
-      import base64
-
-      path = Path("src/runner/index.ts")
-      text = path.read_text()
-      old = base64.b64decode(
-          "aWYgKG9wdGlvbnMudmVyc2lvbikgewogIGNvbnN0IHZlcnNpb24gPSAoYXdhaXQgJGBnaXQgcmV2LXBhcnNlIC0tc2hvcnQgSEVBRGAucXVpZXQoKSkudGV4dCgpLnRyaW0oKTsKICBpZiAoc3Rkb3V0LmlzVFRZKSB7CiAgICBzdGRvdXQud3JpdGUoYCR7Qk9MRF9HUkVFTn1hd3JpdCR7UkVTRVR9ICR7dmVyc2lvbn1cbltgKTsKICB9IGVsc2UgewogICAgc3Rkb3V0LndyaXRlKHZlcnNpb24pOwogIH0KICBwcm9jZXNzLmV4aXQoMCk7Cn0KCg=="
-      ).decode()
-      new = base64.b64decode(
-          "aWYgKG9wdGlvbnMudmVyc2lvbikgewogIGxldCB2ZXJzaW9uID0gJyc7CiAgdHJ5IHsKICAgIHZlcnNpb24gPSAoYXdhaXQgJGBnaXQgcmV2LXBhcnNlIC0tc2hvcnQgSEVBRGAucXVpZXQoKSkudGV4dCgpLnRyaW0oKTsKICB9IGNhdGNoIHsKICAgIHRyeSB7CiAgICAgIGNvbnN0IHBrZyA9IGF3YWl0IEJ1bi5maWxlKG5ldyBVUkwoJy4uL3BhY2thZ2UuanNvbicsIGltcG9ydC5tZXRhLnVybCkpLmpzb24oKTsKICAgICAgdmVyc2lvbiA9IChwa2c/LnZlcnNpb24gYXMgc3RyaW5nIHwgdW5kZWZpbmVkKSA/PyAndW5rbm93bic7CiAgICB9IGNhdGNoIHsKICAgICAgdmVyc2lvbiA9ICd1bmtub3duJzsKICAgIH0KICB9CiAgY29uc3QgbWVzc2FnZSA9IEJPTERfR1JFRU4gKyAnYXdyaXQnICsgUkVTRVQgKyAnICcgKyB2ZXJzaW9uOwogIGlmIChzdGRvdXQuaXNUVFkpIHsKICAgIHN0ZG91dC53cml0ZShtZXNzYWdlICsgIlxuIik7CiAgfSBlbHNlIHsKICAgIHN0ZG91dC53cml0ZSh2ZXJzaW9uKTsKICB9CiAgcHJvY2Vzcy5leGl0KDApOwp9Cgo="
-      ).decode()
-
-      if old not in text:
-          raise SystemExit(0)
-      path.write_text(text.replace(old, new, 1))
-      PY
-          fi
-          cp ${./awrit-native-rs.package.json} awrit-native-rs/package.json
+      cp ${./package.json} package.json
+      cp ${./package-lock.json} package-lock.json
+      cp ${./awrit-native-rs.package.json} awrit-native-rs/package.json
     '';
 
     postNpmInstall = ''
       export HOME="$TMPDIR/home"
       mkdir -p "$HOME"
+      rootDir="$PWD"
       pushd awrit-native-rs >/dev/null
-        ../node_modules/.bin/napi build --platform --release
+        napiBin="$rootDir/node_modules/.bin/napi"
+        "$napiBin" build --platform --release
         node scripts/fix-types.js
         rm -rf target
       popd >/dev/null
