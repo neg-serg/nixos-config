@@ -3,46 +3,4 @@
 if command -v aliae >/dev/null 2>&1; then
   cfg="${XDG_CONFIG_HOME:-$HOME/.config}/aliae/config.yaml"
   eval "$(aliae init bash --config "$cfg" --print)"
-else
-  # Fallback aliases (direct) to ensure minimal parity when Aliae is unavailable.
-  # eza-based ls
-  if command -v eza >/dev/null 2>&1; then
-    alias l='eza --icons=auto --hyperlink'
-    alias ll='eza --icons=auto --hyperlink -l'
-    alias lsd='eza --icons=auto --hyperlink -alD --sort=created --color=always'
-  fi
-  # git shortcuts
-  alias gs='git status -sb'
-  # open helper
-  command -v handlr >/dev/null 2>&1 && alias e='handlr open'
-  # cat via bat
-  command -v bat >/dev/null 2>&1 && alias cat='bat -pp'
-  # grep family via ugrep
-  if command -v ug >/dev/null 2>&1; then
-    alias grep='ug -G'
-    alias egrep='ug -E'
-    alias epgrep='ug -P'
-    alias fgrep='ug -F'
-    alias xgrep='ug -W'
-    alias zgrep='ug -zG'
-    alias zegrep='ug -zE'
-    alias zfgrep='ug -zF'
-    alias zpgrep='ug -zP'
-    alias zxgrep='ug -zW'
-  fi
-  # tree
-  command -v erd >/dev/null 2>&1 && alias tree='erd'
-  # compression/locate
-  command -v pigz   >/dev/null 2>&1 && alias gzip='pigz'
-  command -v pbzip2 >/dev/null 2>&1 && alias bzip2='pbzip2'
-  command -v plocate>/dev/null 2>&1 && alias locate='plocate'
-  # network/disk helpers
-  command -v prettyping >/dev/null 2>&1 && alias ping='prettyping'
-  # threads
-  command -v xz   >/dev/null 2>&1 && alias xz='xz --threads=0'
-  command -v zstd >/dev/null 2>&1 && alias zstd='zstd --threads=0'
-  # mpv controller
-  command -v mpvc >/dev/null 2>&1 && alias mpvc='mpvc -S "$XDG_CONFIG_HOME/mpv/socket"'
-  # wget2 HSTS path
-  command -v wget2 >/dev/null 2>&1 && alias wget='wget2 --hsts-file "$XDG_DATA_HOME/wget-hsts"'
 fi
