@@ -8,7 +8,6 @@
   hasRg = pkgs ? ripgrep;
   hasNmap = pkgs ? nmap;
   hasCurl = pkgs ? curl;
-  hasGit = pkgs ? git;
 in
   lib.mkMerge [
     # Enable Aliae when available in current nixpkgs
@@ -59,7 +58,7 @@ in
             "  cat: \"bat -pp\"\n"
             "  g:   \"git\"\n"
             "  gs:  \"git status -sb\"\n"
-            (lib.optionalString hasGit "  qe:  qe\n")
+            "  qe:  qe\n"
             "  add: git add\n"
             "  checkout: git checkout\n"
             "  commit: git commit\n"
