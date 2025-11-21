@@ -32,7 +32,7 @@
       # 1) Strict Nix formatting check (alejandra only)
       cat > ./.treefmt-check.toml <<'EOF'
       [global]
-      excludes = ["flake.lock", ".git/*", "secrets/crypted/*"]
+      excludes = ["flake.lock", ".git/*", "secrets/home/crypted/*"]
       [formatter.nix]
       command = "alejandra"
       options = ["-q"]
