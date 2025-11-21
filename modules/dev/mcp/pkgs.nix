@@ -59,7 +59,8 @@
     ++ lib.optional exaEnabled pkgs.neg.exa_mcp # EXA semantic search API connector
     ++ lib.optional postgresEnabled pkgs.neg.postgres_mcp # Postgres query executor MCP
     ++ lib.optional telegramBotEnabled pkgs.neg.telegram_bot_mcp # Telegram Bot API command MCP
-    ++ lib.optional tsgramEnabled pkgs.neg.tsgram_mcp # TSGram short-link relay for bots;
+    ++ lib.optional tsgramEnabled pkgs.neg.tsgram_mcp # TSGram short-link relay for bots
+    ;
 in {
   config = lib.mkIf devEnabled {
     environment.systemPackages = lib.mkAfter packages;
