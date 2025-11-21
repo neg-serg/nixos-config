@@ -1,3 +1,0 @@
-[
-  "lmstudio" # local LLM app
-]
