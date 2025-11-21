@@ -3,12 +3,12 @@
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {'renerocksai/telekasten.nvim', ft='markdown', -- better md wiki stuff
         config=function()
-            local home=vim.fn.expand("~/notes")
+            local notes_home=vim.fn.expand("~/notes")
             local status, telekasten = pcall(require, 'telekasten')
             if (not status) then return end
 
             telekasten.setup({
-                home=home,
+                home=notes_home,
                 take_over_my_home=true, -- if true, telekasten will be enabled when opening a note within the configured home
                 auto_set_filetype=false,
                 dailies='',
@@ -20,8 +20,8 @@ return {'renerocksai/telekasten.nvim', ft='markdown', -- better md wiki stuff
                 uuid_type="%Y%m%d%H%M",
                 uuid_sep="-",
                 follow_creates_nonexisting=true,
-                dailies_create_nonexisting=true,
-                weeklies_create_nonexisting=true,
+                dailies_create_nonexisting=false,
+                weeklies_create_nonexisting=false,
                 journal_auto_open=false,
                 image_link_style="markdown",
                 sort="filename",
@@ -34,6 +34,11 @@ return {'renerocksai/telekasten.nvim', ft='markdown', -- better md wiki stuff
                 template_handling="always_ask",
                 rename_update_links=true, -- should all links be updated when a file is renamed
                 media_previewer="telescope-media-files",
+                vaults={
+                    notes={
+                        path=notes_home,
+                    },
+                },
             })
 
             local opts={silent=true, noremap=true, buffer=true}
