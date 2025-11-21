@@ -19,8 +19,8 @@ in {
     xdgOpenUsePortal = true;
     extraPortals = [
       # Hyprland portal is provided via programs.hyprland.portalPackage
-      pkgs.xdg-desktop-portal-termfilechooser
-      pkgs.xdg-desktop-portal-gtk
+      pkgs.xdg-desktop-portal-termfilechooser # TUI file picker portal used in rofi/CLI tools
+      pkgs.xdg-desktop-portal-gtk # fallback portal for apps expecting GTK implementation
     ];
     config = {
       common.default = ["hyprland" "gtk"];

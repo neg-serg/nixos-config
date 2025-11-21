@@ -14,11 +14,13 @@
     then lib.attrByPath ["packages" hostSystem "default"] null inputs.rsmetrx
     else null;
   rofiPackages = [
-    config.neg.rofi.package
-    pkgs.rofi-pass-wayland
-    pkgs.rofi-systemd
+    config.neg.rofi.package # main themed rofi build for this profile
+    pkgs.rofi-pass-wayland # Wayland-friendly pass launcher backend
+    pkgs.rofi-systemd # systemd unit picker for rofi
   ];
-  quickshellExtras = lib.optionals (rsmetrxPkg != null) [rsmetrxPkg];
+  quickshellExtras = lib.optionals (rsmetrxPkg != null) [
+    rsmetrxPkg # rsmetrx shader pack for Quickshell HUDs
+  ];
 in {
   config = lib.mkMerge [
     (lib.mkIf guiEnabled {
