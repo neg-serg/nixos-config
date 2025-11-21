@@ -36,22 +36,11 @@ _exists mpc && {
         dirname="$XDG_MUSIC_DIR/$(dirname "$(mpc -f '%file%'|head -1)")"
         cd "$dirname"
     }
-    }
-    local rlwrap_list=(bb fennel guile irb)
-for c in ${nocorrect_list[@]}; {_exists "$c" && alias "$c=nocorrect $c"}
-    for c in ${dev_null_list[@]}; {_exists "$c" && alias "$c=$c 2>/dev/null"}
+}
 _exists curl && {
     geoip(){ curl ipinfo.io/$1; }
     sprunge(){ curl -F "sprunge=<-" http://sprunge.us <"$1" ;}
 }
-_exists fzf && {
-    logs() {
-        local cmd log_file
-        cmd="command find /var/log/ -type f -name '*log' 2>/dev/null"
-        log_file=$(eval "$cmd" | fzf --height 40% --min-height 25 --tac --tiebreak=length,begin,index --reverse --inline-info) && $PAGER "$log_file"
-    }
-}
-
 if [[ -e /etc/NIXOS ]]; then
     # thx to @oni: https://discourse.nixos.org/t/nvd-simple-nix-nixos-version-diff-tool/12397/3
     hash -d nix-now="/run/current-system"
