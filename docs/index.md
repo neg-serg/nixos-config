@@ -2,6 +2,8 @@
 
 - Repository manual (EN): [manual/manual.en.md](./manual/manual.en.md)
 - Repository manual (RU): [manual/manual.ru.md](./manual/manual.ru.md)
+- /nix dedup benchmark (EN/RU): [nix-dedup-vdo.en.md](./nix-dedup-vdo.en.md),
+  [nix-dedup-vdo.ru.md](./nix-dedup-vdo.ru.md)
 - Swayimg hotkeys (EN/RU): [swayimg-hotkeys.md](./swayimg-hotkeys.md),
   [swayimg-hotkeys.ru.md](./swayimg-hotkeys.ru.md)
 - Vaultix migration guide: [vaultix-migration.md](./vaultix-migration.md),
