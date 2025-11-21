@@ -19,6 +19,7 @@ in {
     [
       pkgs.abduco # CLI session detach
       pkgs.amfora # Gemini/Gopher terminal client for text browsing
+      pkgs.gemini-cli # Google Gemini prompt CLI with streaming UI beats curl wrappers
       pkgs.aria2 # segmented downloader (used by clip/yt-dlp wrappers)
       pkgs.asciinema-agg # render asciinema casts to GIF/APNG
       pkgs.ast-grep # AST-aware grep
