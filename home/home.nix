@@ -20,6 +20,8 @@ in {
     gpg.enable = true;
 
     dev = {
+      enable = true; # keep dev tooling (editors/toolchains) present on this profile
+      ai.enable = true; # ensure AI Studio/LM Studio stays installed for local LLM work
       unreal.enable = true; # Enable Unreal Engine tooling (ue5-sync/build/editor wrappers)
       openxr.enable = true; # Enable OpenXR dev stack (installs Envision UI)
     };
