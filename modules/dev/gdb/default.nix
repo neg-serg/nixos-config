@@ -6,7 +6,7 @@
 }: let
   devEnabled = config.features.dev.enable or false;
   packages = [
-    pkgs.gdb
+    pkgs.gdb # GNU debugger core with python pretty printers
   ];
 in {
   config = lib.mkIf devEnabled {

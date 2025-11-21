@@ -6,11 +6,11 @@
 }: let
   devEnabled = config.features.dev.enable or false;
   packages = [
-    pkgs.memtester
-    pkgs.rewrk
-    pkgs.stress-ng
-    pkgs.vrrtest
-    pkgs.wrk2
+    pkgs.memtester # user-space memory stress test for bad DIMMs
+    pkgs.rewrk # HTTP benchmarking tool with low jitter
+    pkgs.stress-ng # multi-subsystem stress tester
+    pkgs.vrrtest # validate VRR timings on Wayland
+    pkgs.wrk2 # latency-focused HTTP benchmark
   ];
 in {
   config = lib.mkIf devEnabled {

@@ -10,25 +10,27 @@
   };
   packages =
     [
-      pkgs.git
-      pkgs.git-lfs
-      pkgs.mono
-      pkgs.cmake
-      pkgs.ninja
-      (lib.lowPrio pkgs.python3)
-      clangSuite
-      pkgs.llvmPackages_20.llvm
-      pkgs.llvmPackages_20.lld
-      pkgs.llvmPackages_20.libclang.lib
-      pkgs.dotnet-sdk_8
-      pkgs.protobuf
-      pkgs.grpc
-      pkgs.unzip
-      pkgs.p7zip
-      pkgs.rsync
-      pkgs.which
+      pkgs.git # UE sources pull from GitHub; CLI required
+      pkgs.git-lfs # handle LFS assets in Epic repos
+      pkgs.mono # Mono runtime for Unreal build tools
+      pkgs.cmake # configure helper for ancillary libs
+      pkgs.ninja # build tool favored by UE's generated projects
+      (lib.lowPrio pkgs.python3) # scripts rely on python3 (low prio to avoid conflicts)
+      clangSuite # bundled clang/clang-tools pinned to UE version
+      pkgs.llvmPackages_20.llvm # LLVM libs for backend compatibility
+      pkgs.llvmPackages_20.lld # LLD linker required by UE build chain
+      pkgs.llvmPackages_20.libclang.lib # libclang for bindings/plugins
+      pkgs.dotnet-sdk_8 # UnrealBuildTool requires modern dotnet SDK
+      pkgs.protobuf # protoplugin build dependency
+      pkgs.grpc # gRPC headers/libs for remote control modules
+      pkgs.unzip # unzip helper for marketplace archives
+      pkgs.p7zip # extract 7z-packed marketplace assets
+      pkgs.rsync # sync intermediate files to sandboxes
+      pkgs.which # ensure /usr/bin/which exists during scripts
     ]
-    ++ lib.optionals useSteamRun [pkgs.steam-run];
+    ++ lib.optionals useSteamRun [
+      pkgs.steam-run # run UE editor with Steam runtime libs
+    ];
 in {
   inherit clangSuite packages;
 }
