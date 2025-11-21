@@ -6,10 +6,14 @@
 }: let
   devEnabled = config.features.dev.enable or false;
   aiEnabled = config.features.dev.ai.enable or false;
+  aiStudioPkg =
+    if pkgs ? ai-studio
+    then pkgs.ai-studio # rebranded LM Studio build (preferred)
+    else pkgs.lmstudio; # fallback for channels without ai-studio yet
   devPackages =
     [pkgs.code-cursor-fhs # Cursor IDE packaged via FHS env
     ]
-    ++ lib.optionals aiEnabled [pkgs.lmstudio # local LLM IDE (LM Studio)
+    ++ lib.optionals aiEnabled [aiStudioPkg # local LLM IDE (AI Studio / LM Studio)
     ];
 in {
   config = lib.mkMerge [

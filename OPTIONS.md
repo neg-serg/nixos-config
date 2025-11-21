@@ -91,7 +91,7 @@ The central unfree policy and presets live in:
 - `modules/features-data/unfree-presets.nix` (presets)
   - Preset `desktop` currently includes: `abuse`, `ocenaudio`, `reaper`, `vcv-rack`, `vital`,
     `roomeqwizard`, `stegsolve`, `volatility3`, `cursor`, `claude-code`, `yandex-browser-stable`,
-    `lmstudio`, `code-cursor-fhs`.
+    `ai-studio` (or `lmstudio` on older nixpkgs), `code-cursor-fhs`.
 
 Libretro allowlist (gated by RetroArch mode) lives in:
 
