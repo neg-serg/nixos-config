@@ -7,13 +7,13 @@
 in {
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter [
-      pkgs.alsa-utils
-      pkgs.coppwr
-      pkgs.pw-volume
-      pkgs.pwvucontrol
-      pkgs.helvum
-      pkgs.qpwgraph
-      pkgs.open-music-kontrollers.patchmatrix
+      pkgs.alsa-utils # amixer/alsamixer fallback when PipeWire fails
+      pkgs.coppwr # PipeWire CLI to copy/paste complex graphs
+      pkgs.pw-volume # minimal PipeWire volume controller for scripts
+      pkgs.pwvucontrol # PipeWire patchbay GUI (JACK-like)
+      pkgs.helvum # GTK patchbay for PipeWire nodes
+      pkgs.qpwgraph # Qt patchbay, best for big graphs
+      pkgs.open-music-kontrollers.patchmatrix # advanced patch matrix for LV2/JACK bridging
     ];
   };
 }

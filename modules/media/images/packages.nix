@@ -14,26 +14,26 @@
       lib.replaceStrings ["@SWAYIMG_BIN@" "@SOCAT_BIN@"] replacements tpl
   );
   packages = [
-    pkgs.exiftool
-    pkgs.exiv2
-    pkgs.mediainfo
-    pkgs.testdisk-qt
-    pkgs.gimp
-    pkgs.darktable
-    pkgs.rawtherapee
-    pkgs.graphviz
-    pkgs.jpegoptim
-    pkgs.optipng
-    pkgs.pngquant
-    pkgs.advancecomp
-    pkgs.scour
-    pkgs.pastel
-    pkgs.lutgen
-    pkgs.qrencode
-    pkgs.zbar
-    pkgs.swayimg
-    swayimgFirst
-    pkgs.viu
+    pkgs.exiftool # swiss-army EXIF inspector used in scripts
+    pkgs.exiv2 # CLI for editing EXIF/IPTC/XMP metadata
+    pkgs.mediainfo # dump container/codec metadata for photos/videos
+    pkgs.testdisk-qt # photorec GUI for image recovery
+    pkgs.gimp # full-featured raster editor
+    pkgs.darktable # RAW editor/dam tailored to photographers
+    pkgs.rawtherapee # alternative RAW developer (non-destructive)
+    pkgs.graphviz # render contact sheets / graph exports via dot
+    pkgs.jpegoptim # lossy JPEG optimizer better than jpegtran
+    pkgs.optipng # lossless PNG optimizer
+    pkgs.pngquant # perceptual PNG quantizer for quicksharing
+    pkgs.advancecomp # recompress ZIP/PNG aggressively
+    pkgs.scour # SVG minifier to shrink UI assets
+    pkgs.pastel # extract palettes / simulate colorblindness
+    pkgs.lutgen # procedurally render LUTs for stylizing
+    pkgs.qrencode # generate QR codes for wallpaper/text overlays
+    pkgs.zbar # CLI barcode/QR scanner for verification
+    pkgs.swayimg # primary image viewer with IPC hooks
+    swayimgFirst # wrapper that ensures swayimg session state
+    pkgs.viu # terminal image preview helper for scripts
   ];
 in {
   config = lib.mkIf enabled {

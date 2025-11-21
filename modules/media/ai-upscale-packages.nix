@@ -10,8 +10,8 @@ in {
   config = lib.mkIf enabled (lib.mkMerge [
     (lib.mkIf (haveRealesrgan && haveFfmpeg) {
       environment.systemPackages = lib.mkAfter [
-        pkgs.realesrgan-ncnn-vulkan
-        pkgs.ffmpeg-full
+        pkgs.realesrgan-ncnn-vulkan # GPU-accelerated ESRGAN upscaler (ncnn)
+        pkgs.ffmpeg-full # ffmpeg build with Vulkan/CUDA needed for upscale scripts
       ];
     })
     (lib.mkIf (!(haveRealesrgan && haveFfmpeg)) {
