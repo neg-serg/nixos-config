@@ -2,14 +2,9 @@
   lib,
   config,
   pkgs,
-  caches,
   systemdUser,
   ...
-}: let
-  # Reuse flake-provided caches passed via mkHMArgs (single source of truth)
-  cachixSubstituters = caches.substituters or [];
-  cachixTrustedKeys = caches.trustedPublicKeys or [];
-in {
+}: {
   features = {
     # Profile presets (full | lite). Full is default; set to "lite" for headless/minimal.
     profile = lib.mkDefault "full";
@@ -32,30 +27,6 @@ in {
       mode = "realtime"; # toggle live in mpv via Alt+I
       content = "general"; # or "anime"
       scale = 2; # 2 or 4 for realtime path
-    };
-  };
-
-  nix = {
-    package = lib.mkDefault pkgs.nix;
-    # Per-user Nix settings
-    settings = {
-      # Trust flake-provided nixConfig (substituters, keys, features)
-      accept-flake-config = true;
-      # Use XDG paths so Home Manager uses modern v2 profile (nix profile)
-      use-xdg-base-directories = true;
-      # Speed + safety: keep eval cache on and forbid IFD during eval
-      eval-cache = true;
-      allow-import-from-derivation = false;
-      # Use the sops-managed GitHub netrc for authenticated fetches
-      netrc-file = config.sops.secrets."github-netrc".path;
-      # Ensure features are available; caches and keys come from flake nixConfig (via mkHMArgs)
-      experimental-features = ["nix-command" "flakes"];
-      # Make caches visible in `nix show-config` via flake-provided lists
-      # Keep cache.nixos.org first to retain the official cache
-      substituters = ["https://cache.nixos.org/"] ++ cachixSubstituters;
-      trusted-public-keys =
-        ["cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="]
-        ++ cachixTrustedKeys;
     };
   };
 
