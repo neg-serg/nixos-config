@@ -250,6 +250,7 @@ in
             (lib.optionalString hasKhal "  cal:  \"khal calendar\"\n")
             (lib.optionalString hasHxd "  hexdump: \"hxd\"\n")
             (lib.optionalString hasOuch "  se: \"ouch decompress --threads 0\"\n")
+            (lib.optionalString hasOuch "  pk: \"ouch compress --threads 0\"\n")
             (lib.optionalString hasPigz "  gzip: \"pigz\"\n")
             (lib.optionalString hasPbzip2 "  bzip2: \"pbzip2\"\n")
             (lib.optionalString hasPlocate "  locate: \"plocate\"\n")

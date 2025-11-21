@@ -51,7 +51,7 @@ in
 
     # 2. Manually create the config file using the flake's own helper function.
     # This was the original (and correct) way of creating the file.
-    (xdg.mkXdgText "isync/mbsyncrc" mbsyncrcContent)
+    (xdg.mkXdgText "mbsync/mbsyncrc" mbsyncrcContent)
 
     {
       # 3. Define the periodic sync timer/service
@@ -62,7 +62,7 @@ in
             Type = "simple";
             TimeoutStartSec = "30min";
             # We must explicitly specify the config file path now that we are not using the HM module.
-            ExecStart = "${lib.getExe pkgs.isync} -c ${config.xdg.configHome}/isync/mbsyncrc -a";
+            ExecStart = "${lib.getExe pkgs.isync} -c ${config.xdg.configHome}/mbsync/mbsyncrc -a";
           };
         }
         (systemdUser.mkUnitFromPresets {presets = ["netOnline"];})
