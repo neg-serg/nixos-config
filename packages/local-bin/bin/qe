@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# qe: print the root of the current Git repo (or the first parent with .git).
+# Usage:
+#   qe            # prints repo root for $PWD
+#   qe /path/dir  # prints repo root for given directory
+
+start="${1:-.}"
+
+# Try git first for accuracy and speed.
+if command -v git >/dev/null 2>&1; then
+  if root_dir="$(cd "$start" 2>/dev/null && git rev-parse --show-toplevel 2>/dev/null)"; then
+    printf '%s\n' "$root_dir"
+    exit 0
+  fi
+fi
+
+# Fallback: walk up the directory tree looking for a .git directory.
+dir="$(cd "$start" 2>/dev/null && pwd)"
+while [ "$dir" != "/" ]; do
+  if [ -d "$dir/.git" ]; then
+    printf '%s\n' "$dir"
+    exit 0
+  fi
+  dir="${dir%/*}"
+done
+
+# No repo detected: return the starting directory.
+cd "$start" 2>/dev/null || true
+pwd
+
