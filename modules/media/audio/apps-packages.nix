@@ -6,28 +6,28 @@
   enabled = config.roles.workstation.enable or false;
   packages = [
     # codecs / ripping / players
-    pkgs.ape
-    pkgs.cdparanoia
-    pkgs.cider
+    pkgs.ape # Monkey's Audio encoder/decoder for archival rips
+    pkgs.cdparanoia # secure CD ripper w/ jitter correction
+    pkgs.cider # Apple Music client w/ Discord presence and EQ
     # analysis
-    pkgs.dr14_tmeter
-    pkgs.essentia-extractor
-    pkgs.opensoundmeter
-    pkgs.sonic-visualiser
-    pkgs.roomeqwizard
+    pkgs.dr14_tmeter # measure dynamic range DR14 style
+    pkgs.essentia-extractor # bulk audio feature extractor (HQ descriptors)
+    pkgs.opensoundmeter # FFT/RT60 analysis for calibration
+    pkgs.sonic-visualiser # annotate spectra/sonograms
+    pkgs.roomeqwizard # REW acoustic measurement suite
     # tagging
-    pkgs.id3v2
-    pkgs.picard
-    pkgs.unflac
+    pkgs.id3v2 # low-level ID3 tag editor
+    pkgs.picard # MusicBrainz tagging GUI
+    pkgs.unflac # convert FLAC cuesheets quickly
     # cli
-    pkgs.ncpamixer
-    pkgs.sox
+    pkgs.ncpamixer # ncurses PulseAudio mixer (fallback)
+    pkgs.sox # swiss-army audio CLI for conversions/effects
     # net
-    pkgs.nicotine-plus
-    pkgs.scdl
-    pkgs.streamlink
+    pkgs.nicotine-plus # Soulseek client
+    pkgs.scdl # SoundCloud downloader
+    pkgs.streamlink # stream extractor (Twitch/YT) for mpv feeding
     # misc
-    pkgs.screenkey
+    pkgs.screenkey # show keystrokes when recording tutorials
   ];
 in {
   config = lib.mkIf enabled {
