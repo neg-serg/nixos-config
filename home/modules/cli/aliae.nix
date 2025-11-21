@@ -29,6 +29,20 @@ in
           hasMpvc = pkgs ? mpvc;
           hasYtDlp = pkgs ? yt-dlp;
           hasKhal = pkgs ? khal;
+          hasBtm = pkgs ? btm;
+          hasIotop = pkgs ? iotop;
+          hasLsof = pkgs ? lsof;
+          hasKmon = pkgs ? kmon;
+          hasReflector = pkgs ? reflector;
+          hasFd = pkgs ? fd;
+          hasMpc = pkgs ? mpc;
+          hasNixify = pkgs ? nixify; # Assuming nixify is a package
+          hasNixIndexDb = pkgs ? nix-index-database; # Assuming nix-index-database is a package
+          hasFlatpak = pkgs ? flatpak;
+          hasBottles = pkgs ? bottles;
+          hasObs = pkgs ? obs-studio; # Assuming obs-studio is the package name
+          hasOnlyoffice = pkgs ? onlyoffice; # Assuming onlyoffice is the package name
+          hasZoom = pkgs ? zoom-us; # Assuming zoom-us is the package name
           content = lib.concatStrings [
             "# Aliae aliases (cross-shell)\n"
             "# Edit and reload your shell to apply changes.\n"
@@ -40,6 +54,33 @@ in
             "  g:   \"git\"\n"
             "  gs:  \"git status -sb\"\n"
             "  mp:  \"mpv\"\n"
+            "  cp:  \"cp --reflink=auto\"\n"
+            "  mv:  \"mv -i\"\n"
+            "  mk:  \"mkdir -p\"\n"
+            "  rd:  \"rmdir\"\n"
+            "  x:   \"xargs\"\n"
+            "  sort: \"sort --parallel 8 -S 16M\"\n"
+            "  :q: \"exit\"\n"
+            "  s:   \"sudo \"\n"
+            "  dig: \"dig +noall +answer\"\n"
+            "  rsync: \"rsync -az --compress-choice=zstd --info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS\"\n"
+            "  nrb: \"sudo nixos-rebuild\"\n"
+            "  j:   \"journalctl\"\n"
+            (lib.optionalString hasBtm "  htop: \"btm -b -T --mem_as_value\"\n")
+            (lib.optionalString hasIotop "  iotop: \"sudo iotop -oPa\"\n")
+            (lib.optionalString hasLsof "  ports: \"sudo lsof -Pni\"\n")
+            (lib.optionalString hasKmon "  kmon: \"sudo kmon -u --color 19683a\"\n")
+            (lib.optionalString hasFd "  fd: \"fd -H --ignore-vcs\"\n")
+            (lib.optionalString hasFd "  fda: \"fd -Hu\"\n")
+            (lib.optionalString hasMpc "  love: \"mpc sendmessage mpdas love\"\n")
+            (lib.optionalString hasMpc "  unlove: \"mpc sendmessage mpdas unlove\"\n")
+            (lib.optionalString hasYtDlp "  yta: \"yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all --write-info-json\"\n")
+            (lib.optionalString hasNixify "  nixify: \"nix-shell -p nur.repos.kampka.nixify\"\n")
+            (lib.optionalString hasNixIndexDb "  nlocate: \"nix run github:nix-community/nix-index-database\"\n")
+            (lib.optionalString hasFlatpak "  bottles: \"flatpak run com.usebottles.bottles\"\n")
+            (lib.optionalString hasFlatpak "  obs: \"flatpak run com.obsproject.Studio\"\n")
+            (lib.optionalString hasFlatpak "  onlyoffice: \"QT_QPA_PLATFORM=xcb flatpak run org.onlyoffice.desktopeditors\"\n")
+            (lib.optionalString hasFlatpak "  zoom: \"flatpak run us.zoom.Zoom\"\n")
             (lib.optionalString hasHandlr "  e:    \"handlr open\"\n")
             (lib.optionalString hasUg (
               "  grep:  \"ug -G\"\n"
