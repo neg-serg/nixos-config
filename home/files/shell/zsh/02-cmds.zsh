@@ -1,39 +1,15 @@
 _exists() { (( $+commands[$1] )) }
 alias qe='cd ^.git*(/om[1]D)'
 alias ls="${aliases[ls]:-ls} --time-style=+\"%d.%m.%Y %H:%M\" --color=auto --hyperlink=auto"
-alias l="${aliases[ls]:-ls}"
 _exists eza && {
     alias eza="eza --icons=auto --hyperlink"
-    alias ll="${aliases[eza]:-eza} -l"
-    alias {l,ls}="${aliases[eza]:-eza}"
+    alias ls="${aliases[eza]:-eza}"
     lcr(){eval "${aliases[eza]:-eza} -al --sort=created --color=always" "$@" | tail -14 }
     lsd(){eval "${aliases[eza]:-eza} -alD --sort=created --color=always" "$@" | tail -14 }
 }
 alias fc="fc -liE 100"
-alias cp='cp --reflink=auto'
-alias ll='ls -lah'
-alias mv='mv -i'
-alias mk='mkdir -p'
-alias rd='rmdir'
-if _exists ugrep; then
-    # ------------------------------------------------------------------
-    alias egrep='ug -E' # search with extended regular expressions (ERE)
-    alias epgrep='ug -P' # search with Perl regular expressions
-    alias fgrep='ug -F' # find string(s)
-    alias grep='ug -G' # search with basic regular expressions (BRE)
-    alias xgrep='ug -W' # search (ERE) and output text or hex for binary
-    # ------------------------------------------------------------------
-    alias zegrep='ug -zE' # search compressed files and archives with ERE
-    alias zfgrep='ug -zF' # find string(s) in compressed files and/or archives
-    alias zgrep='ug -zG' # search compressed files and archives with BRE
-    alias zpgrep='ug -zP' # search compressed files and archives with Perl regular expressions
-    alias zxgrep='ug -zW' # search (ERE) compressed files/archives and output text or hex for binary
-    # ----------------------------------------------------------------------------------------------
-    alias xdump='ug -X ""' # hexdump files without searching
-    alias ugit='ug -R --ignore-files'
-else
-    alias grep='grep --color=auto'
-fi
+
+alias grep='grep --color=auto'
 _exists rg && {
     local rg_options=(
         --max-columns=0
@@ -57,48 +33,21 @@ _exists nmap && {
     alias nmap-vulners="nmap -sV --script=vulners/vulners.nse"
     alias nmap-vulscan="nmap -sV --script=vulscan/vulscan.nse"
 }
-_exists xargs && alias x='xargs'
-_exists erd && alias tree='erd'
-_exists bat && alias cat='bat --paging=never'
-alias sort='sort --parallel 8 -S 16M'
-alias :q="exit"
+
 alias emptydir='ls -ld **/*(/^F)'
 _exists sudo && {
-    alias {sudo,s}='sudo '
+    alias sudo='sudo '
     local sudo_list=(chmod chown modprobe umount)
     local logind_sudo_list=(reboot halt poweroff)
-    _exists iotop && alias iotop='sudo iotop -oPa'
-    _exists lsof && alias ports='sudo lsof -Pni'
-    _exists kmon && alias kmon='sudo kmon -u --color 19683a'
     for c in ${sudo_list[@]}; {_exists "$c" && alias "$c=sudo $c"}
-    for i in ${logind_sudo_list[@]}; alias "${i}=sudo ${sysctl_pref} ${i}"
-    unset sudo_list noglob_list rlwrap_list nocorrect_list logind_sudo_list
-    _exists reflector && alias mirrors='sudo /usr/bin/reflector --score 100 --fastest 10 --number 10 --verbose --save /etc/pacman.d/mirrorlist'
 }
-_exists btm && alias htop='btm -b -T --mem_as_value'
-_exists dd && alias dd='dd status=progress'
-_exists dig && alias dig='dig +noall +answer'
 _exists dosbox && alias dosbox=dosbox -conf "$XDG_CONFIG_HOME"/dosbox/dosbox.conf
-_exists duf && alias df="duf -theme ansi -hide 'special' -hide-mp $HOME/'*',/nix/store,/var/lib/'*'" || alias df='df -hT'
-_exists dust && alias sp='dust -r' || alias sp='du -shc ./*|sort -h'
 _exists fd && {alias fd='fd -H --ignore-vcs' && alias fda='fd -Hu'}
 _exists gdb && alias gdb="gdb -nh -x ${XDG_CONFIG_HOME}/gdb/gdbinit"
-_exists readelf && alias readelf='readelf -W'
-_exists strace && alias strace="strace -yy"
-_exists handlr && alias e='handlr open'
-_exists hxd && alias hexdump='hxd'
 _exists iostat && alias iostat='iostat --compact -p -h -s'
-_exists ip && alias ip='ip -c'
 _exists journalctl && journalctl() {command journalctl "${@:--b}";}
-_exists khal && alias cal='khal calendar'
 _exists mtr && alias mtrr='mtr -wzbe'
 _exists nvidia-settings && alias nvidia-settings="nvidia-settings --config=$XDG_CONFIG_HOME/nvidia/settings"
-_exists objdump && alias objdump='objdump -M intel -d'
-_exists pbzip2 && alias bzip2='pbzip2'
-_exists pigz && alias gzip='pigz'
-_exists plocate && alias locate='plocate'
-_exists prettyping && alias ping='prettyping'
-_exists rsync && alias rsync='rsync -az --compress-choice=zstd --info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS'
 _exists ssh && alias ssh="TERM=xterm-256color ${aliases[ssh]:-ssh}"
 _exists umimatrix && alias matrix='unimatrix -l Aang -s 95'
 _exists xz && alias xz='xz --threads=0'
@@ -119,14 +68,9 @@ _exists mpc && {
     }
 }
 _exists yt-dlp && {
-    alias yt='yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all'
     alias yta='yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all --write-info-json'
 }
-if _exists wget2; then
-    alias wget="wget2 --hsts-file=$XDG_DATA_HOME/wget-hsts"
-else
-    alias wget='wget --continue --show-progress --progress=bar:force:noscroll'
-fi
+alias wget='wget --continue --show-progress --progress=bar:force:noscroll'
 local rlwrap_list=(bb fennel guile irb)
 local noglob_list=(fc find ftp history lftp links2 locate lynx nix nixos-remote nixos-rebuild rake rsync sftp you-get yt wget wget2)
 _exists scp && alias scp="noglob scp -r"
@@ -225,7 +169,6 @@ _exists git && {
     alias grm='git rm'
     alias grs='git restore'
     alias grup='git remote update'
-    alias gs='git status --short -b'
     alias gsh='git show'
     alias gsi='git submodule init'
     alias gsps='git show --pretty=short --show-signature'
@@ -270,23 +213,13 @@ _exists fzf && {
         log_file=$(eval "$cmd" | fzf --height 40% --min-height 25 --tac --tiebreak=length,begin,index --reverse --inline-info) && $PAGER "$log_file"
     }
 }
-_exists systemctl && {
-    alias ctl='systemctl'
-    alias dn='sudo systemctl stop'
-    alias j='journalctl'
-    alias stl='sudo systemctl'
-    alias un='systemctl --user stop'
-    alias up='sudo systemctl start'
-    alias utl='systemctl --user'
-    alias ut='systemctl --user start'
-}
 
 if [[ -e /etc/NIXOS ]]; then
     # thx to @oni: https://discourse.nixos.org/t/nvd-simple-nix-nixos-version-diff-tool/12397/3
     hash -d nix-now="/run/current-system"
     hash -d nix-boot="/nix/var/nix/profiles/system"
     _exists nixos-rebuild && {
-        alias nrb='sudo nixos-rebuild'
+        
     }
     foobar(){nix run github:emmanuelrosa/erosanix#foobar2000}
     flake-checker(){nix run github:DeterminateSystems/flake-checker}
@@ -297,11 +230,10 @@ if [[ -e /etc/NIXOS ]]; then
         # unpackPhase && cd linux-*; patchPhase; make nconfig
     }
     _exists nh && {
-        alias seh="home-manager -b bck switch -j 32 --cores 32 --flake /etc/nixos/home"
-        alias ser="nh os switch /etc/nixos"
+        
+        
     }
     alias nixify='nix-shell -p nur.repos.kampka.nixify'
-    alias S="nix shell"
     nbuild(){ nix-build -E 'with import <nixpkgs> {}; callPackage ./default.nix {}'}
     nlocate(){ nix run github:nix-community/nix-index-database "$@" }
     qi(){ NIXPKGS_ALLOW_UNFREE=1 nix shell --impure 'nixpkgs#'$1 }

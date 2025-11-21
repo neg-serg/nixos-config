@@ -4,10 +4,7 @@ def _exists [name: string] {
 
 # def cp [] { ^cp --reflink=auto }
 # alias ls = eza --icons=auto --hyperlink
-alias l = eza --icons=auto --hyperlink
 alias lcr = eza --icons=auto --hyperlink -al --sort=created --color=always
-alias ll = eza --icons=auto --hyperlink -l
-alias lsd = eza --icons=auto --hyperlink -alD --sort=created --color=always
 alias acp = builtin cp
 alias als = builtin ls
 def qe [] { cd (als -a | where name =~ '^.git.*' | where type == dir | sort-by modified | last | get name) }
@@ -26,20 +23,6 @@ alias rd = rmdir
 def sort [] { ^sort --parallel 8 -S 16M }
 def ":q" [] { exit }
 def x [] { xargs }
-def tree [] { erd }
-def cat [] { bat --paging=never }
-def grep [] { ug -G }
-def egrep [] { ug -E }
-def epgrep [] { ug -P }
-def fgrep [] { ug -F }
-def xgrep [] { ug -W }
-def zegrep [] { ug -zE }
-def zfgrep [] { ug -zF }
-def zgrep [] { ug -zG }
-def zpgrep [] { ug -zP }
-def zxgrep [] { ug -zW }
-def xdump [] { ug -X "" }
-def ugit [] { ug -R --ignore-files }
 
 def rg [...args] {
   let base_opts = [
@@ -66,42 +49,24 @@ def zrg [...args] {
 def iotop [] { sudo iotop -oPa }
 def ports [] { sudo lsof -Pni }
 def kmon [] { sudo kmon -u --color 19683a }
-def mirrors [] { sudo /usr/bin/reflector --score 100 --fastest 10 --number 10 --verbose --save /etc/pacman.d/mirrorlist }
 def htop [] { btm -b -T --mem_as_value }
 def dd [] { ^dd status=progress }
 def dig [] { ^dig +noall +answer }
 # def dosbox [] { dosbox -conf $"($env.XDG_CONFIG_HOME)/dosbox/dosbox.conf" }
-def df [] { duf -theme ansi -hide 'special' -hide-mp $"($env.HOME)/*" /nix/store /var/lib/* }
-def sp [] { dust -r }
 def fd [] { ^fd -H --ignore-vcs }
 def fda [] { ^fd -Hu }
 def gdb [] { ^gdb -nh -x $"($env.XDG_CONFIG_HOME)/gdb/gdbinit" }
-def readelf [] { ^readelf -W }
-def strace [] { ^strace -yy }
-def e [] { ^handlr open }
-def hexdump [] { hxd }
 def iostat [] { ^iostat --compact -p -h -s }
-def ip [] { ^ip -c }
-def cal [] { khal calendar }
 def mtrr [] { mtr -wzbe }
-def objdump [] { ^objdump -M intel -d }
-def bzip2 [] { pbzip2 }
-def gzip [] { pigz }
-def locate [] { plocate }
-def ping [] { prettyping }
 def rsync [] { ^rsync -az --compress-choice=zstd --info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS }
 def ssh [] { TERM=xterm-256color ssh }
 def matrix [] { unimatrix -l Aang -s 95 }
-def xz [] { ^xz --threads=0 }
-def zstd [] { ^zstd --threads=0 }
-alias mp = mpv
 def mpa [...args: string] {
   ^mpv -mute ...$args | save -f $"($env.HOME)/tmp/mpv.log"
 }
 def mpi [...args: string] {
   ^mpv --interpolation=yes --tscale=oversample --video-sync=display-resample ...$args | save -f $"($env.HOME)/tmp/mpv.log"
 }
-def mpvc [] { ^mpvc -S $"($env.XDG_CONFIG_HOME)/mpv/socket" }
 def love [] { mpc sendmessage mpdas love }
 def unlove [] { mpc sendmessage mpdas unlove }
 def cdm [] {
@@ -109,19 +74,6 @@ def cdm [] {
   let full_path = $"($env.XDG_MUSIC_DIR)/($rel_path)"
   cd $full_path
 }
-
-def yt [...args] {
-  let base_opts = [
-      --downloader aria2c
-      --embed-metadata
-      --embed-thumbnail
-      --embed-subs
-      --sub-langs=all
-  ]
-  yt-dlp ...$base_opts ...$args
-}
-
-def wget [] { wget2 --hsts-file $"($env.XDG_DATA_HOME)/wget-hsts" }
 
 # NixOS-related
 
@@ -135,13 +87,6 @@ def linux-kernel [] {
       .packages.x86_64-linux.linuxPackages_cachyos.kernel.overrideAttrs
       (o: { nativeBuildInputs = o.nativeBuildInputs ++ [ pkg-config ncurses ]; })
   '
-}
-def seh [...args: string] {
-  let repo = "/etc/nixos/home"
-  home-manager -b bck switch -j 32 --cores 32 --flake $repo ...$args
-}
-def ser [...args: string] {
-  sudo nixos-rebuild switch --flake /etc/nixos ...$args
 }
 def nixify [] { nix-shell -p nur.repos.kampka.nixify }
 def S [...args: string] { nix shell ...$args }
@@ -192,14 +137,6 @@ def cht [...args: string] {
   curl -s $"cheat.sh/($query)"
 }
 
-# Systemd
-def ctl [...args: string] { systemctl ...$args }
-def stl [...args: string] { sudo systemctl ...$args }
-def utl [...args: string] { systemctl --user ...$args }
-def ut [unit: string] { systemctl --user start $unit }
-def un [unit: string] { systemctl --user stop $unit }
-def up [unit: string] { sudo systemctl start $unit }
-def dn [unit: string] { sudo systemctl stop $unit }
 def j [...args: string] {
   if ($args | is-empty) {
     ^journalctl -b
