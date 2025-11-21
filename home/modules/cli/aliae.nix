@@ -8,6 +8,7 @@
   hasRg = pkgs ? ripgrep;
   hasNmap = pkgs ? nmap;
   hasCurl = pkgs ? curl;
+  hasGit = pkgs ? git;
 in
   lib.mkMerge [
     # Enable Aliae when available in current nixpkgs
@@ -30,6 +31,7 @@ in
           hasPbzip2 = pkgs ? pbzip2;
           hasHxd = pkgs ? hexyl || pkgs ? hxd;
           hasMpvc = pkgs ? mpvc;
+          hasMpv = pkgs ? mpv;
           hasYtDlp = pkgs ? yt-dlp;
           hasKhal = pkgs ? khal;
           hasBtm = pkgs ? btm;
@@ -57,6 +59,7 @@ in
             "  cat: \"bat -pp\"\n"
             "  g:   \"git\"\n"
             "  gs:  \"git status -sb\"\n"
+            (lib.optionalString hasGit "  qe:  qe\n")
             "  add: git add\n"
             "  checkout: git checkout\n"
             "  commit: git commit\n"
@@ -168,14 +171,14 @@ in
             "  gupav: git pull --rebase --autostash -v\n"
             "  gupv: git pull --rebase -v\n"
             "  gwch: git whatchanged -p --abbrev-commit --pretty=medium\n"
-            "  mpv: mpv\n"
+            (lib.optionalString hasMpv "  mpv: mpv\n")
             "  pull: git pull\n"
             "  push: git push\n"
             "  resolve: git mergetool --tool=nwim\n"
             "  stash: git stash\n"
             "  status: git status\n"
             "  sudo: sudo \n"
-            "  mp:  \"mpv\"\n"
+            (lib.optionalString hasMpv "  mp:  \"mpv\"\n")
             "  cp:  \"cp --reflink=auto\"\n"
             "  mv:  \"mv -i\"\n"
             "  mk:  \"mkdir -p\"\n"

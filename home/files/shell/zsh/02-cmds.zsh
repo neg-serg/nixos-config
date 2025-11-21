@@ -1,5 +1,4 @@
 _exists() { (( $+commands[$1] )) }
-alias qe='cd ^.git*(/om[1]D)'
 _exists eza && {
     lcr(){ eza -al --sort=created --color=always "$@" | tail -14 }
     lsd(){ eza -alD --sort=created --color=always "$@" | tail -14 }
