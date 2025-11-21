@@ -4,26 +4,11 @@ def _exists [name: string] {
 
 # def cp [] { ^cp --reflink=auto }
 # alias ls = eza --icons=auto --hyperlink
-alias lcr = eza --icons=auto --hyperlink -al --sort=created --color=always
-alias acp = builtin cp
-alias als = builtin ls
 def qe [] { cd (als -a | where name =~ '^.git.*' | where type == dir | sort-by modified | last | get name) }
 def fc [] {
   let path = $env.HISTORY_PATH
   ^$env.EDITOR $path
 }
-alias mv = ^mv -i
-alias mk = mkdir
-alias rd = rmdir
-
-# def emptydir [] {
-#   ls ** | where type == dir | where {|it| (ls $it.name | is-empty) }
-# }
-
-def sort [] { ^sort --parallel 8 -S 16M }
-def ":q" [] { exit }
-def x [] { xargs }
-
 def rg [...args] {
   let base_opts = [
     --max-columns=0
