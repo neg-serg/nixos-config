@@ -13,29 +13,6 @@ in {
   features = {
     # Profile presets (full | lite). Full is default; set to "lite" for headless/minimal.
     profile = lib.mkDefault "full";
-    # Exclude problematic packages from curated lists without editing modules
-    excludePkgs = [
-      # Network sniffing/passwords
-      "dsniff"
-      "crowbar"
-      # Backdoor/tunneling tool candidates kept off by default
-      "dns2tcp"
-      "exe2hexbat"
-      "laudanum"
-      "mimikatz"
-      "nishang"
-      "powersploit"
-      "ptunnel"
-      "sbd"
-      "shellter"
-      "stunnel4"
-      "veil"
-      "webacoo"
-      "weevely"
-      # Temporarily disable blissify-rs install until issues are resolved
-      "blissify-rs"
-    ];
-
     # Temporarily disable Vdirsyncer units/timer until credentials are configured
     mail.vdirsyncer.enable = false;
 
