@@ -82,7 +82,7 @@ For music I am using local storage with MPD Music Player Daemon, ncmpcpp mpd
 client, managing library with picard and beets. Also using mpdas as last.fm
 scrobbler mpd-notification script for fancy MPD Notification with help of
 dunst. For video I am using **mpv** minimalistic, fast and customizable video
-player. For images I am using my fork of **sxiv**. I do not using it a lot,
+player. For images I am using my fork of **swayimg**. I do not using it a lot,
 but like picture preview feature(in terminal, based on w3m).
 
 ## Web and network stuff
