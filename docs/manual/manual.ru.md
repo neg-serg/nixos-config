@@ -41,7 +41,7 @@
 ### Профили и feature flags
 
 - Главный переключатель: `features.profile = "full" | "lite"` (lite отключает GUI/media/dev по умолчанию).
-- Опции описаны в `home/modules/features.nix`; краткая сводка — в `OPTIONS.md`.
+- Опции описаны в `modules/features.nix`; краткая сводка — в `OPTIONS.md`.
 - Ключевые флаги:
   - GUI (`features.gui.*`), Web (`features.web.*`), Secrets (`features.secrets.enable`)
   - Dev стеки (`features.dev.*`, `features.dev.openxr.*`, `features.dev.unreal.*`)

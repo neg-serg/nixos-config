@@ -88,7 +88,7 @@ Mozilla browsers
 The central unfree policy and presets live in:
 
 - `modules/misc/unfree.nix` (wires `nixpkgs.config.allowUnfreePredicate`)
-- `modules/misc/unfree-presets.nix` (presets)
+- `modules/features-data/unfree-presets.nix` (presets)
   - Preset `desktop` currently includes: `abuse`, `ocenaudio`, `reaper`, `vcv-rack`, `vital`,
     `roomeqwizard`, `stegsolve`, `volatility3`, `cursor`, `claude-code`, `yandex-browser-stable`,
     `lmstudio`, `code-cursor-fhs`.

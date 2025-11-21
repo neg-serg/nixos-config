@@ -3,13 +3,14 @@
   config,
   ...
 }: let
-  audio = import ./unfree/categories/audio.nix;
-  editors = import ./unfree/categories/editors.nix;
-  ai = import ./unfree/categories/ai-tools.nix;
-  browsers = import ./unfree/categories/browsers.nix;
-  forensicsStego = import ./unfree/categories/forensics-stego.nix;
-  forensicsAnalysis = import ./unfree/categories/forensics-analysis.nix;
-  iac = import ./unfree/categories/iac.nix;
+  categories = ../../../modules/features-data/unfree/categories;
+  audio = import (categories + "/audio.nix");
+  editors = import (categories + "/editors.nix");
+  ai = import (categories + "/ai-tools.nix");
+  browsers = import (categories + "/browsers.nix");
+  forensicsStego = import (categories + "/forensics-stego.nix");
+  forensicsAnalysis = import (categories + "/forensics-analysis.nix");
+  iac = import (categories + "/iac.nix");
 in {
   config = lib.mkMerge [
     # Audio: allow when audio apps or creation enabled
