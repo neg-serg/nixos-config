@@ -8,6 +8,7 @@
   hasRg = pkgs ? ripgrep;
   hasNmap = pkgs ? nmap;
   hasCurl = pkgs ? curl;
+  hasJq = pkgs ? jq;
 in
   lib.mkMerge [
     # Enable Aliae when available in current nixpkgs
@@ -31,6 +32,7 @@ in
           hasHxd = pkgs ? hexyl || pkgs ? hxd;
           hasMpvc = pkgs ? mpvc;
           hasMpv = pkgs ? mpv;
+          hasRlwrap = pkgs ? rlwrap;
           hasYtDlp = pkgs ? yt-dlp;
           hasKhal = pkgs ? khal;
           hasBtm = pkgs ? btm;
@@ -171,6 +173,8 @@ in
             "  gupv: git pull --rebase -v\n"
             "  gwch: git whatchanged -p --abbrev-commit --pretty=medium\n"
             (lib.optionalString hasMpv "  mpv: mpv\n")
+            (lib.optionalString hasMpv "  mpa: \"mpa\"\n")
+            (lib.optionalString hasMpv "  mpi: \"mpi\"\n")
             "  pull: git pull\n"
             "  push: git push\n"
             "  resolve: git mergetool --tool=nwim\n"
@@ -191,6 +195,7 @@ in
             "  rsync: \"rsync -az --compress-choice=zstd --info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS\"\n"
             "  nrb: \"sudo nixos-rebuild\"\n"
             "  j:   \"journalctl\"\n"
+            "  emptydir: emptydir\n"
             "  dosbox: dosbox -conf $XDG_CONFIG_HOME/dosbox/dosbox.conf\n"
             "  gdb: gdb -nh -x $XDG_CONFIG_HOME/gdb/gdbinit\n"
             "  iostat: iostat --compact -p -h -s\n"
@@ -208,6 +213,7 @@ in
             (lib.optionalString hasMpc "  love: \"mpc sendmessage mpdas love\"\n")
             (lib.optionalString hasMpc "  unlove: \"mpc sendmessage mpdas unlove\"\n")
             (lib.optionalString hasYtDlp "  yta: \"yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all --write-info-json\"\n")
+            "  scp: \"scp -r\"\n"
             (lib.optionalString hasNixify "  nixify: \"nix-shell -p nur.repos.kampka.nixify\"\n")
             (lib.optionalString hasNixIndexDb "  nlocate: \"nix run github:nix-community/nix-index-database\"\n")
             (lib.optionalString hasFlatpak "  bottles: \"flatpak run com.usebottles.bottles\"\n")
@@ -252,6 +258,11 @@ in
             (lib.optionalString hasCurl "  moon: \"curl wttr.in/Moon\"\n")
             (lib.optionalString hasCurl "  we: \"curl 'wttr.in/?T'\"\n")
             (lib.optionalString hasCurl "  wem: \"curl wttr.in/Moscow?lang=ru\"\n")
+            (lib.optionalString (hasCurl && hasJq) "  cht: \"cht\"\n")
+            (lib.optionalString hasRlwrap "  bb: \"rlwrap bb\"\n")
+            (lib.optionalString hasRlwrap "  fennel: \"rlwrap fennel\"\n")
+            (lib.optionalString hasRlwrap "  guile: \"rlwrap guile\"\n")
+            (lib.optionalString hasRlwrap "  irb: \"rlwrap irb\"\n")
             "  ctl: \"systemctl\"\n"
             "  stl: \"sudo systemctl\"\n"
             "  utl: \"systemctl --user\"\n"

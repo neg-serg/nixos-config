@@ -23,7 +23,6 @@ _exists rg && {
     alias -g zrg="rg $rg_options -z"
 }
 
-alias emptydir='ls -ld **/*(/^F)'
 _exists sudo && {
     local sudo_list=(chmod chown modprobe umount)
     local logind_sudo_list=(reboot halt poweroff)
@@ -31,8 +30,6 @@ _exists sudo && {
     }
     _exists journalctl && journalctl() {command journalctl "${@:--b}";}
 _exists mpv && {
-    alias mpa='mpv -mute "$@" > "$HOME/tmp/mpv.log"'
-    alias mpi='mpv --interpolation=yes --tscale=oversample --video-sync=display-resample "$@" > "$HOME/tmp/mpv.log"'
 }
 _exists mpc && {
     cdm(){
@@ -41,12 +38,9 @@ _exists mpc && {
     }
     }
     local rlwrap_list=(bb fennel guile irb)
-    _exists scp && alias scp="scp -r"
-    for c in ${rlwrap_list[@]}; {_exists "$c" && alias "$c=rlwrap $c"}
 for c in ${nocorrect_list[@]}; {_exists "$c" && alias "$c=nocorrect $c"}
     for c in ${dev_null_list[@]}; {_exists "$c" && alias "$c=$c 2>/dev/null"}
 _exists curl && {
-    alias cht='f(){ curl -s "cheat.sh/$(echo -n "$*"|jq -sRr @uri)";};f'
     geoip(){ curl ipinfo.io/$1; }
     sprunge(){ curl -F "sprunge=<-" http://sprunge.us <"$1" ;}
 }

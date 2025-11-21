@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# mpi: mpv with interpolation and display-resample, with logging.
+# Usage:
+#   mpi [mpv-args...] file
+
+log_dir="${HOME}/tmp"
+mkdir -p "${log_dir}"
+
+exec mpv \
+  --interpolation=yes \
+  --tscale=oversample \
+  --video-sync=display-resample \
+  "$@" >"${log_dir}/mpv.log" 2>&1
+
