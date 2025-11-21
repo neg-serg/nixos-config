@@ -2,36 +2,67 @@
   lib,
   pkgs,
   config,
-  xdg,
   systemdUser,
   negLib,
   ...
 }:
 let
+  inherit (lib) mkIf;
   mkLocalBin = negLib.mkLocalBin;
+  # The custom helper from this flake. We need to import it to use it.
+  xdg = import ../../../lib/xdg-helpers.nix { inherit pkgs; };
+
+  # Dynamically generate the mbsyncrc content from the accounts configuration
+  mbsyncrcContent = lib.concatStringsSep "\n\n" (lib.mapAttrsToList (name: account: ''
+    #-- ${name}
+    IMAPAccount ${name}
+    Host ${account.imap.host}
+    User ${account.userName}
+    PassCmd "${lib.head account.passwordCommand}"
+    AuthMechs LOGIN
+    SSLType IMAPS
+    CertificateFile /etc/ssl/certs/ca-bundle.crt
+
+    IMAPStore ${name}-remote
+    Account ${name}
+
+    MaildirStore ${name}-local
+    Subfolders Verbatim
+    Path ${config.xdg.dataHome}/mail/${name}/
+    Inbox ${config.xdg.dataHome}/mail/${name}/INBOX/
+
+    Channel ${name}
+    Far :${name}-remote:
+    Near :${name}-local:
+    Patterns "INBOX" "[Gmail]/Sent Mail" "[Gmail]/Drafts" "[Gmail]/All Mail" "[Gmail]/Trash" "[Gmail]/Spam"
+    Sync Pull
+    Create Near
+    Expunge Near
+    SyncState *
+  '') config.accounts.email.accounts);
 in
-  with lib;
-    mkIf config.features.mail.enable (lib.mkMerge [
+  # This is a list of attribute sets that will be merged.
+  # We are NOT using the programs.mbsync module anymore to avoid conflicts.
+  mkIf config.features.mail.enable (lib.mkMerge [
     {
-      # Install isync/mbsync and keep using the XDG config at ~/.config/isync/mbsyncrc
-      programs.mbsync.enable = true;
+      # 1. Install the package directly
+      home.packages = [ pkgs.isync ];
+    }
 
-      # Inline mbsyncrc under XDG with helper (guards parent and target)
+    # 2. Manually create the config file using the flake's own helper function.
+    # This was the original (and correct) way of creating the file.
+    (xdg.mkXdgText "isync/mbsyncrc" mbsyncrcContent)
 
-      # Create base maildir on activation (mbsync can also create, but this avoids first-run hiccups)
-      # Maildir creation handled by global prepareUserPaths action
-
-      # Periodic sync in addition to imapnotify (fallback / catch-up)
+    {
+      # 3. Define the periodic sync timer/service
       systemd.user.services."mbsync-gmail" = lib.mkMerge [
         {
           Unit.Description = "Sync mail via mbsync (gmail)";
           Service = {
             Type = "simple";
             TimeoutStartSec = "30min";
-            ExecStart = let
-              exe = lib.getExe pkgs.isync;
-              args = ["-Va" "-c" "${config.xdg.configHome}/isync/mbsyncrc"];
-            in "${exe} ${lib.escapeShellArgs args}";
+            # We must explicitly specify the config file path now that we are not using the HM module.
+            ExecStart = "${lib.getExe pkgs.isync} -c ${config.xdg.configHome}/isync/mbsyncrc -a";
           };
         }
         (systemdUser.mkUnitFromPresets {presets = ["netOnline"];})
@@ -48,10 +79,11 @@ in
         (systemdUser.mkUnitFromPresets {presets = ["timers"];})
       ];
     }
+
+    # 4. Local bin helper to trigger a sync manually
     (mkLocalBin "sync-mail" ''
       #!/usr/bin/env bash
       set -euo pipefail
       exec systemctl --user start --no-block mbsync-gmail.service
     '')
-    (xdg.mkXdgText "isync/mbsyncrc" (builtins.readFile ./mbsyncrc))
   ])
