@@ -128,7 +128,6 @@ in
             flatpakSupport.enable = true;
           };
           helix.enable = true;
-          swayimg.enable = false;
         };
         base16Scheme = {
           base00 = "#020202"; # Background
