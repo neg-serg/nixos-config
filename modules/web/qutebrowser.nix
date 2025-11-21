@@ -6,7 +6,7 @@
 }: let
   webEnabled = config.features.web.enable or false;
   package =
-    pkgs.qutebrowser.overrideAttrs (oldAttrs: {
+    pkgs.qutebrowser.overrideAttrs (oldAttrs: { # Wayland/Vulkan wrapped qutebrowser build
       qtWrapperArgs =
         (oldAttrs.qtWrapperArgs or [])
         ++ [

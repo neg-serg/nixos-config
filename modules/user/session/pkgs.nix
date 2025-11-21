@@ -8,9 +8,9 @@
   mkQuickshellWrapper = import (inputs.self + "/lib/quickshell-wrapper.nix") {
     inherit lib pkgs;
   };
-  quickshellPkg = inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  quickshellPkg = inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default; # exact quickshell build for host cpu
   quickshellWrapped = mkQuickshellWrapper {qsPkg = quickshellPkg;};
-  hostSystem = pkgs.stdenv.hostPlatform.system;
+  hostSystem = pkgs.stdenv.hostPlatform.system; # shorthand for current architecture
   devSpeed = config.features.devSpeed.enable or false;
   guiEnabled = config.features.gui.enable or false;
   getInputPackage = input: lib.attrByPath ["packages" hostSystem "default"] null input;
@@ -20,11 +20,11 @@
     if guiEnabled && !devSpeed
     then lib.filter (pkg: pkg != null) [bzmenuPkg iwmenuPkg]
     else [];
-  hyprWinList = pkgs.writeShellApplication {
+  hyprWinList = pkgs.writeShellApplication { # helper to list Hypr windows through rofi
     name = "hypr-win-list";
     runtimeInputs = [
-      pkgs.python3
-      pkgs.wl-clipboard
+      pkgs.python3 # embed interpreter so the script ships zero deps
+      pkgs.wl-clipboard # pipe clipboard ops without relying on system PATH
     ];
     text = let
       tpl = builtins.readFile (inputs.self + "/home/modules/user/gui/hypr/hypr-win-list.py");
@@ -35,13 +35,13 @@
     '';
   };
   localBinPackages = [
-    pkgs.imagemagick
-    pkgs.wireplumber
-    pkgs.essentia-extractor
-    pkgs.neg.music_clap
-    pkgs.alsa-utils
-    pkgs.neg.bpf_host_latency
-    pkgs.neg.albumdetails
+    pkgs.imagemagick # convert/mogrify workhorse; handles odd formats better than feh
+    pkgs.wireplumber # Lua PipeWire session mgr; more tweakable than media-session
+    pkgs.essentia-extractor # Essentia CLI; pro audio descriptors far beyond ffmpeg
+    pkgs.neg.music_clap # LAION-CLAP embeddings CLI; offline tagging faster than cloud AI
+    pkgs.alsa-utils # alsamixer/amixer fallback; direct ALSA control when PipeWire drifts
+    pkgs.neg.bpf_host_latency # BCC DNS latency tracer; deeper insight than dig/tcpdump
+    pkgs.neg.albumdetails # TagLib album metadata CLI; richer dump than mediainfo
   ];
 in {
   # Wayland/Hyprland tools and small utilities
@@ -112,9 +112,9 @@ in {
       pkgs.tdl # Telegram CLI uploader/downloader
       pkgs.vesktop # Discord (Vencord) desktop client
       pkgs.nchat # terminal-first Telegram client
-      hyprWinList
+      hyprWinList # injects rust-based win switcher bound in Hypr
     ]
-    ++ lib.optionals (pkgs ? uwsm) [pkgs.uwsm]
+    ++ lib.optionals (pkgs ? uwsm) [pkgs.uwsm # UWSM desktop files for proper session entries]
     ++ menuPkgs
     ++ lib.optionals guiEnabled localBinPackages;
 }

@@ -33,7 +33,7 @@
     lib.concatStringsSep "\n" (map stripN lines);
   # Python wrappers to avoid shell/Nix escaping pitfalls
   gamescopePinned =
-    pkgs.writers.writePython3Bin "gamescope-pinned" {}
+    pkgs.writers.writePython3Bin "gamescope-pinned" {} # wrapper forcing pinned gamescope binary
     (dedentPy ''
       import os
       import shlex
@@ -55,7 +55,7 @@
     '');
 
   gamePinned =
-    pkgs.writers.writePython3Bin "game-pinned" {}
+    pkgs.writers.writePython3Bin "game-pinned" {} # launcher pinning Proton/runtime per title
     (dedentPy ''
       import subprocess
       import sys
@@ -69,7 +69,7 @@
   # (no-op placeholder removed)
 
   gamescopePerf =
-    pkgs.writers.writePython3Bin "gamescope-perf" {}
+    pkgs.writers.writePython3Bin "gamescope-perf" {} # preset focusing on latency tuned flags
     (dedentPy ''
       import json
       import os
@@ -198,7 +198,7 @@
     '');
 
   gamescopeQuality =
-    pkgs.writers.writePython3Bin "gamescope-quality" {}
+    pkgs.writers.writePython3Bin "gamescope-quality" {} # preset prioritizing image quality
     (dedentPy ''
       import json
       import os
@@ -313,7 +313,7 @@
     '');
 
   gamescopeHDR =
-    pkgs.writers.writePython3Bin "gamescope-hdr" {}
+    pkgs.writers.writePython3Bin "gamescope-hdr" {} # HDR-focused launch helper
     (dedentPy ''
       import json
       import os
@@ -428,7 +428,7 @@
     '');
 
   gamescopeTargetFPS =
-    pkgs.writers.writePython3Bin "gamescope-targetfps" {}
+    pkgs.writers.writePython3Bin "gamescope-targetfps" {} # wrapper enforcing per-game FPS caps
     (dedentPy ''
       import json
       import math
@@ -658,7 +658,7 @@
 
   # Helper: set affinity inside the scope to avoid shell escaping issues
   gameAffinityExec =
-    pkgs.writers.writePython3Bin "game-affinity-exec" {}
+    pkgs.writers.writePython3Bin "game-affinity-exec" {} # set CPU affinity masks via python, not bash
     (dedentPy ''
       import argparse
       import os
@@ -791,7 +791,7 @@
 
   # Helper: run any command in a user cgroup scope with CPU affinity to gaming cores
   gameRun =
-    pkgs.writers.writePython3Bin "game-run" {}
+    pkgs.writers.writePython3Bin "game-run" {} # master wrapper orchestrating env vars, MangoHud, gamemode
     (dedentPy ''
       import os
       import subprocess
@@ -906,23 +906,23 @@ in {
 
     environment = {
       systemPackages = [
-        pkgs.protontricks
-        pkgs.mangohud
-        gamescopePinned
-        gamePinned
-        gamescopePerf
-        gamescopeQuality
-        gamescopeHDR
-        gamescopeTargetFPS
-        gamescopePerfDesktop
-        gamescopeQualityDesktop
-        gamescopeHDRDesktop
-        gameRun
-        gameAffinityExec
-        steamvrCli
-        steamvrDesktop
-        deovrSteamCli
-        deovrSteamDesktop
+        pkgs.protontricks # winetricks-like helper tailored for Steam Proton
+        pkgs.mangohud # Vulkan/OpenGL overlay for FPS/frametime telemetry
+        gamescopePinned # CLI wrapper forcing pinned gamescope build
+        gamePinned # wrapper to launch a Steam title w/ pinned Proton version
+        gamescopePerf # helper to start gamescope with perf-friendly flags
+        gamescopeQuality # helper to start gamescope with max fidelity settings
+        gamescopeHDR # gamescope launcher enabling HDR pipeline tweaks
+        gamescopeTargetFPS # wrapper that enforces FPS cap logic per title
+        gamescopePerfDesktop # desktop entry for the perf preset
+        gamescopeQualityDesktop # desktop entry for the quality preset
+        gamescopeHDRDesktop # desktop entry for the HDR preset
+        gameRun # wrapper orchestrating MangoHud, Gamescope, Gamemode
+        gameAffinityExec # CLI forcing CPU affinity for stubborn games
+        steamvrCli # script launching SteamVR under Wayland/Hypr tweaks
+        steamvrDesktop # desktop entry for that SteamVR script
+        deovrSteamCli # CLI wrapper to start DeoVR via Steam with env fixes
+        deovrSteamDesktop # desktop entry for DeoVR launcher
       ];
 
       # Global defaults for wrappers
