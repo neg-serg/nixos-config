@@ -1,13 +1,9 @@
 _exists() { (( $+commands[$1] )) }
 alias qe='cd ^.git*(/om[1]D)'
-alias ls="${aliases[ls]:-ls} --time-style=+\"%d.%m.%Y %H:%M\" --color=auto --hyperlink=auto"
 _exists eza && {
-    alias eza="eza --icons=auto --hyperlink"
-    alias ls="${aliases[eza]:-eza}"
-    lcr(){eval "${aliases[eza]:-eza} -al --sort=created --color=always" "$@" | tail -14 }
-    lsd(){eval "${aliases[eza]:-eza} -alD --sort=created --color=always" "$@" | tail -14 }
+    lcr(){ eza -al --sort=created --color=always "$@" | tail -14 }
+    lsd(){ eza -alD --sort=created --color=always "$@" | tail -14 }
 }
-alias fc="fc -liE 100"
 
 _exists rg && {
     local rg_options=(
@@ -30,24 +26,14 @@ _exists rg && {
 
 alias emptydir='ls -ld **/*(/^F)'
 _exists sudo && {
-    alias sudo='sudo '
     local sudo_list=(chmod chown modprobe umount)
     local logind_sudo_list=(reboot halt poweroff)
     for c in ${sudo_list[@]}; {_exists "$c" && alias "$c=sudo $c"}
-}
-_exists dosbox && alias dosbox=dosbox -conf "$XDG_CONFIG_HOME"/dosbox/dosbox.conf
-_exists gdb && alias gdb="gdb -nh -x ${XDG_CONFIG_HOME}/gdb/gdbinit"
-_exists iostat && alias iostat='iostat --compact -p -h -s'
-_exists journalctl && journalctl() {command journalctl "${@:--b}";}
-_exists mtr && alias mtrr='mtr -wzbe'
-_exists nvidia-settings && alias nvidia-settings="nvidia-settings --config=$XDG_CONFIG_HOME/nvidia/settings"
-_exists ssh && alias ssh="TERM=xterm-256color ${aliases[ssh]:-ssh}"
-_exists umimatrix && alias matrix='unimatrix -l Aang -s 95'
+    }
+    _exists journalctl && journalctl() {command journalctl "${@:--b}";}
 _exists mpv && {
-    alias mpv="mpv"
-    alias mpa="${aliases[mpv]:-mpv} -mute "$@" > ${HOME}/tmp/mpv.log"
-    alias mpi="${aliases[mpv]:-mpv} --interpolation=yes --tscale='oversample' \
-        --video-sync='display-resample' "$@" > ${HOME}/tmp/mpv.log"
+    alias mpa='mpv -mute "$@" > "$HOME/tmp/mpv.log"'
+    alias mpi='mpv --interpolation=yes --tscale=oversample --video-sync=display-resample "$@" > "$HOME/tmp/mpv.log"'
 }
 _exists mpc && {
     cdm(){
@@ -61,8 +47,7 @@ _exists scp && alias scp="noglob scp -r"
 for c in ${noglob_list[@]}; {_exists "$c" && alias "$c=noglob $c"}
 for c in ${rlwrap_list[@]}; {_exists "$c" && alias "$c=rlwrap $c"}
 for c in ${nocorrect_list[@]}; {_exists "$c" && alias "$c=nocorrect $c"}
-for c in ${dev_null_list[@]}; {_exists "$c" && alias "$c=$c 2>/dev/null"}
-_exists svn && alias svn="svn --config-dir $XDG_CONFIG_HOME/subversion"
+    for c in ${dev_null_list[@]}; {_exists "$c" && alias "$c=$c 2>/dev/null"}
 _exists curl && {
     alias cht='f(){ curl -s "cheat.sh/$(echo -n "$*"|jq -sRr @uri)";};f'
     geoip(){ curl ipinfo.io/$1; }
