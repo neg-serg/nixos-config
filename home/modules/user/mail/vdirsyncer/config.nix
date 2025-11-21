@@ -18,7 +18,7 @@ with lib;
           assertion = haveSecrets;
           message = ''
             Missing Google OAuth secrets for vdirsyncer.
-            Create home/secrets/vdirsyncer/google.sops.yaml with client_id + client_secret.
+            Create secrets/home/vdirsyncer/google.sops.yaml with client_id + client_secret.
           '';
         }
       ];

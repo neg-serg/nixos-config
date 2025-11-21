@@ -90,7 +90,7 @@ in {
     };
   };
   imports = [
-    ./secrets
+    ../secrets/home
     ./modules
   ];
   # Local AI (Ollama) as a user service
