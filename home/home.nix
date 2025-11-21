@@ -34,7 +34,6 @@ in {
       "weevely"
       # Temporarily disable blissify-rs install until issues are resolved
       "blissify-rs"
-      # OpenMW now uses upstream packaging; not excluded
     ];
 
     # Temporarily disable Vdirsyncer units/timer until credentials are configured
@@ -44,11 +43,8 @@ in {
     gpg.enable = true;
 
     dev = {
-      # Enable Unreal Engine tooling (ue5-sync/build/editor wrappers)
-      unreal.enable = true;
-
-      # Enable OpenXR dev stack (installs Envision UI)
-      openxr.enable = true;
+      unreal.enable = true; # Enable Unreal Engine tooling (ue5-sync/build/editor wrappers)
+      openxr.enable = true; # Enable OpenXR dev stack (installs Envision UI)
     };
 
     # Enable AI upscaling features (realtime + offline tools)
@@ -59,12 +55,6 @@ in {
       scale = 2; # 2 or 4 for realtime path
     };
   };
-
-  # Prewarm removed: persistent launcher services are disabled
-
-  # XDG aggregated fixups were removed; rely on per‑file `force = true` when needed.
-
-  # Unfree policy centralized in modules/misc/unfree.nix (features.allowUnfree.allowed)
 
   nix = {
     package = lib.mkDefault pkgs.nix;
@@ -89,10 +79,12 @@ in {
         ++ cachixTrustedKeys;
     };
   };
+
   imports = [
     ../secrets/home
     ./modules
   ];
+
   # Local AI (Ollama) as a user service
   systemd.user.services."local-ai" = lib.mkMerge [
     {
@@ -112,7 +104,9 @@ in {
     }
     (systemdUser.mkUnitFromPresets {presets = ["defaultWanted"];})
   ];
+
   xdg.stateHome = "${config.home.homeDirectory}/.local/state";
+
   home = {
     homeDirectory = "/home/neg";
     stateVersion = "23.11"; # Please read the comment before changing.
