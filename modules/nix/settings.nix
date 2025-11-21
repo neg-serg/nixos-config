@@ -37,6 +37,8 @@ in {
           "flakes" # flakes for reprodusability
           "nix-command" # new nix interface
         ];
+        eval-cache = true;
+        allow-import-from-derivation = false;
         trusted-users = [
           "root"
           (config.users.main.name or "neg")
