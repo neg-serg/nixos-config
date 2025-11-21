@@ -1,7 +1,6 @@
 {
   imports = [
     ./local-bin
-    ./files/nixpkgs-config.nix
     ./envs
     ./fun
     ./games
