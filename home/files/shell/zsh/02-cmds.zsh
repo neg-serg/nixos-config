@@ -40,12 +40,10 @@ _exists mpc && {
         dirname="$XDG_MUSIC_DIR/$(dirname "$(mpc -f '%file%'|head -1)")"
         cd "$dirname"
     }
-}
-local rlwrap_list=(bb fennel guile irb)
-local noglob_list=(fc find ftp history lftp links2 locate lynx nix nixos-remote nixos-rebuild rake rsync sftp you-get yt wget wget2)
-_exists scp && alias scp="noglob scp -r"
-for c in ${noglob_list[@]}; {_exists "$c" && alias "$c=noglob $c"}
-for c in ${rlwrap_list[@]}; {_exists "$c" && alias "$c=rlwrap $c"}
+    }
+    local rlwrap_list=(bb fennel guile irb)
+    _exists scp && alias scp="scp -r"
+    for c in ${rlwrap_list[@]}; {_exists "$c" && alias "$c=rlwrap $c"}
 for c in ${nocorrect_list[@]}; {_exists "$c" && alias "$c=nocorrect $c"}
     for c in ${dev_null_list[@]}; {_exists "$c" && alias "$c=$c 2>/dev/null"}
 _exists curl && {
