@@ -8,7 +8,7 @@
     pkgs.btop # even more fancy top
     pkgs.dool # example use: dool -cdnpmgs --top-bio --top-cpu --top-mem (dstat is not supported as standalone tool anymore)
     pkgs.iotop # top for iops
-    pkgs.iperf
+    pkgs.iperf # modern iperf3 bandwidth tester
     pkgs.iperf2 # IP bandwidth measurement
     pkgs.perf # linux profile tools
     pkgs.linuxPackages_latest.turbostat # cpu monitor

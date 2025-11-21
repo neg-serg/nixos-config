@@ -17,7 +17,7 @@ in {
         graphics = {
           enable = true;
           extraPackages = [
-            pkgs.rocmPackages.clr.icd
+            pkgs.rocmPackages.clr.icd # OpenCL runtime for ROCm cards
           ];
         };
         amdgpu.opencl.enable = true;
@@ -26,15 +26,15 @@ in {
         variables.AMD_VULKAN_ICD = "RADV";
         systemPackages = [
           pkgs.clinfo # show info about opencl
-          pkgs.rocmPackages.rocminfo
-          pkgs.rocmPackages.rocm-smi
+          pkgs.rocmPackages.rocminfo # query ROCm driver for GPU topology
+          pkgs.rocmPackages.rocm-smi # AMD SMI CLI (clocks, fans)
           pkgs.mesa-demos # contains glxinfo/glxgears
           pkgs.libva-utils # vainfo, encode/decode probing
           pkgs.lact # linux amdgpu controller
-          (pkgs.nvtopPackages.amd.override {intel = true;})
-          pkgs.vulkan-extension-layer
-          pkgs.vulkan-tools
-          pkgs.vulkan-validation-layers
+          (pkgs.nvtopPackages.amd.override {intel = true;}) # GPU monitor showing AMD + Intel iGPU
+          pkgs.vulkan-extension-layer # inspect layers/extensions
+          pkgs.vulkan-tools # vulkaninfo etc.
+          pkgs.vulkan-validation-layers # debug validation for Vulkan apps
         ];
       };
     }

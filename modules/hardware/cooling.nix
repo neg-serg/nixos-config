@@ -174,7 +174,7 @@ in {
           builtins.replaceStrings ["@GPU_ENABLE@"] [(lib.boolToString (cfg.gpuFancontrol.enable or false))]
           (builtins.readFile (inputs.self + "/scripts/fancontrol-reapply.sh"));
       in
-        pkgs.writeShellScript "fancontrol-reapply" txt;
+        pkgs.writeShellScript "fancontrol-reapply" txt; # shell helper to reapply fan curves
       mode = "0755";
     };
 

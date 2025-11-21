@@ -112,7 +112,7 @@ in {
         # perf data-type tooling (6.8+)
         (lib.mkIf (cfg.perfDataType.enable or false) {
           environment.systemPackages = lib.mkIf (cfg.perfDataType.installTools or false) [
-            pkgs.perf
+            pkgs.perf # Linux perf tooling with bpftrace integration
             pkgs.dwarves # provides pahole for BTF/DWARF work
           ];
         })

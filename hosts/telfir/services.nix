@@ -224,9 +224,9 @@ in
 
       # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
       environment.systemPackages = lib.mkAfter [
-        pkgs.openrgb
-        (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile (inputs.self + "/scripts/cpu-boost.sh")))
-        (pkgs.writeShellScriptBin "fan-stop-capability-test" (builtins.readFile (inputs.self + "/scripts/fan-stop-capability-test.sh")))
+        pkgs.openrgb # per-device RGB controller UI
+        (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile (inputs.self + "/scripts/cpu-boost.sh"))) # CLI toggle for AMD Precision Boost
+        (pkgs.writeShellScriptBin "fan-stop-capability-test" (builtins.readFile (inputs.self + "/scripts/fan-stop-capability-test.sh"))) # helper to test fan stop thresholds
       ];
 
       # Nextcloud via Caddy on LAN, served as "telfir"

@@ -16,8 +16,8 @@
     then iosevkaInput.nerd-font
     else pkgs.nerd-fonts.iosevka;
   packages = [
-    pkgs.pango
-    iosevkaFont
+    pkgs.pango # ensure fontconfig has Pango shaping libs for GTK
+    iosevkaFont # patched Iosevka Nerd Font for terminal/UI monospace
   ];
 in {
   config = lib.mkIf guiEnabled {
