@@ -33,16 +33,7 @@ in {
 
   # Avoid pulling hyprland-qtutils into Hyprland runtime closure
   # Some downstream overlays add qtutils to PATH wrapping; disable that.
-  # Also drop the pre-generated version header shipped in release tarballs so the
-  # build-time generateVersion.sh script runs with Nix-provided metadata.
-  hyprland =
-    (prev.hyprland.override {wrapRuntimeDeps = false;}).overrideAttrs (old: {
-      postPatch =
-        (old.postPatch or "")
-        + ''
-          rm -f src/version.h
-        '';
-    });
+  hyprland = prev.hyprland.override {wrapRuntimeDeps = false;};
 
   # Nyxt 4 pre-release binary (Electron/Blink backend). Upstream provides a single self-contained
   # ELF binary for Linux. Package it as a convenience while no QtWebEngine build is available.
