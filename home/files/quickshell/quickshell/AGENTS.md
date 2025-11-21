@@ -5,6 +5,7 @@ Scope
 - Prefer using the docs and helper scripts in this tree when they exist.
 
 Relevant docs and scripts
+- Docs/HyprlandPlugin.md — how the hy3 plugin is integrated with Hyprland.
 - Docs/SHADERS.md — wedge clip shader design, build, debug, troubleshooting (RU/EN).
 - Docs/PANELS.md — panel background transparency controls (RU/EN).
 - scripts/compile_shaders.sh — compile all `shaders/*.frag` to `.qsb` using Qt 6 Shader Tools.
