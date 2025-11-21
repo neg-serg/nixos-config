@@ -1,3 +1,0 @@
-[
-  "stegsolve" # image stego analyzer
-]
