@@ -33,7 +33,50 @@ in {
 
   # Avoid pulling hyprland-qtutils into Hyprland runtime closure
   # Some downstream overlays add qtutils to PATH wrapping; disable that.
-  hyprland = prev.hyprland.override {wrapRuntimeDeps = false;};
+  # Additionally, inject VCS metadata so hyprctl reports the pinned tag/commit even
+  # though the flake-provided source lacks a .git directory during the build.
+  hyprland = let
+    hyprlandBase = prev.hyprland.override {wrapRuntimeDeps = false;};
+    hyprInfo = inputs.hyprland.sourceInfo or {};
+    hyprRev = hyprInfo.rev or "unknown";
+    hyprRef = hyprInfo.ref or "";
+    hyprTag =
+      if (builtins.match "^v[0-9].*" hyprRef) != null
+      then hyprRef
+      else "";
+    hyprBranch =
+      if hyprRef != ""
+      then hyprRef
+      else hyprRev;
+    hyprCommits = builtins.toString (hyprInfo.revCount or 0);
+    hyprDate =
+      let
+        ts = hyprInfo.lastModified or 0;
+      in
+        if ts == 0
+        then "unknown"
+        else "unix:${builtins.toString ts}";
+    hyprMessage =
+      if hyprTag != ""
+      then "Release ${hyprTag}"
+      else "Flake build ${builtins.substring 0 7 hyprRev}";
+  in
+    hyprlandBase.overrideAttrs (old: {
+      env =
+        (old.env or {})
+        // {
+          HASH = hyprRev;
+          BRANCH = hyprBranch;
+          MESSAGE = hyprMessage;
+          DATE = hyprDate;
+          DIRTY = "";
+          TAG =
+            if hyprTag != ""
+            then hyprTag
+            else hyprBranch;
+          COMMITS = hyprCommits;
+        };
+    });
 
   # Nyxt 4 pre-release binary (Electron/Blink backend). Upstream provides a single self-contained
   # ELF binary for Linux. Package it as a convenience while no QtWebEngine build is available.
