@@ -9,11 +9,11 @@
   packages =
     [
       pkgs.dosbox # DOS emulator
-      pkgs.dosbox-staging
-      pkgs.dosbox-x
+      pkgs.dosbox-staging # modernized DOSBox fork with better latency
+      pkgs.dosbox-x # DOSBox fork focused on historical accuracy
       pkgs.pcem # IBM PC emulator
       pkgs.pcsx2 # PS2 emulator
-      retroarchPkg
+      retroarchPkg # RetroArch frontend (full build when available)
     ];
 in {
   config = lib.mkMerge [

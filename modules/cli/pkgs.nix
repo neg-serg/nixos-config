@@ -125,6 +125,6 @@ in {
       pkgs.zoxide # smarter cd with ranking
       ugrepWithConfig # better grep, rg alternative (wrapped with global config)
     ]
-    ++ lib.optional (pkgs ? icedtea-web) pkgs.icedtea-web
-    ++ lib.optional (hishtoryPkg != null) hishtoryPkg;
+    ++ lib.optional (pkgs ? icedtea-web) pkgs.icedtea-web # Java WebStart fallback for legacy consoles
+    ++ lib.optional (hishtoryPkg != null) hishtoryPkg; # sync shell history w/ encryption, better than zsh-histdb
 }

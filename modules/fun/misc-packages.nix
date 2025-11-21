@@ -4,11 +4,11 @@
 {lib, config, pkgs, ...}: let
   enabled = config.features.fun.enable or false;
   alureFixed =
-    pkgs.alure.overrideAttrs (prev: {
+    pkgs.alure.overrideAttrs (prev: { # patched to build with new CMake policy
       cmakeFlags = (prev.cmakeFlags or []) ++ ["-DCMAKE_POLICY_VERSION_MINIMUM=3.5"];
     });
   bucklespringFixed =
-    pkgs.bucklespring.overrideAttrs (prev: {
+    pkgs.bucklespring.overrideAttrs (prev: { # rewire Bucklespring to use fixed alure
       buildInputs =
         let
           bi = prev.buildInputs or [];
