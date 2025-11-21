@@ -114,7 +114,7 @@ in {
       pkgs.nchat # terminal-first Telegram client
       hyprWinList # injects rust-based win switcher bound in Hypr
     ]
-    ++ lib.optionals (pkgs ? uwsm) [pkgs.uwsm # UWSM desktop files for proper session entries]
+    ++ lib.optionals (pkgs ? uwsm) [pkgs.uwsm] # UWSM desktop files for proper session entries
     ++ menuPkgs
     ++ lib.optionals guiEnabled localBinPackages;
 }
