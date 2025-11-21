@@ -76,7 +76,7 @@ lint:
     fi
     if git ls-files -- '*.py' >/dev/null 2>&1; then \
       ruff check -- .; \
-      black --check --line-length 100 --extend-exclude '(secrets/crypted|modules/user/gui/kitty/conf/tab_bar.py)' .; \
+      black --check --line-length 100 --extend-exclude '(secrets/home/crypted|modules/user/gui/kitty/conf/tab_bar.py)' .; \
     fi
     # Optional guard: prefer `let exe = lib.getExe' pkgs.pkg "bin"; in "${exe} …" over direct ${pkgs.*}/bin paths
     # Enable with: EXECSTART_GUARD=1 just lint

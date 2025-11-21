@@ -5,7 +5,7 @@
 excludes = [
   "flake.lock",
   ".git/*",
-  "secrets/crypted/*",
+  "secrets/home/crypted/*",
   "shell/.config/tmux/plugins/tpm/**",
   "home/modules/misc/fun-art/*.sh",
   "home/modules/user/local-bin/scripts/mpd-add.sh",

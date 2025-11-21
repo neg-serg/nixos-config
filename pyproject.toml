@@ -3,7 +3,7 @@ line-length = 100
 target-version = "py310"
 exclude = [
   ".git",
-  "secrets/crypted/*",
+  "secrets/home/crypted/*",
   "modules/user/gui/kitty/conf/tab_bar.py",
 ]
 
@@ -13,8 +13,7 @@ target-version = ['py310']
 exclude = '''
 /(\
   \.git\
- | secrets/crypted\
+ | secrets/home/crypted\
  | modules/user/gui/kitty/conf/tab_bar.py\
 )/
 '''
-
