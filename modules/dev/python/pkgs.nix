@@ -37,8 +37,8 @@
     );
   pythonEnv = pkgs.python3-lto.withPackages mkPythonPackages;
   packages = [
-    pkgs.pipx
-    pythonEnv
+    pkgs.pipx # isolate Python CLI apps outside nix shell envs
+    pythonEnv # composable python3-lto env w/ requested libs
   ];
 in {
   config = lib.mkIf devEnabled {

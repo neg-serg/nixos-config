@@ -8,14 +8,14 @@
   flags = config.features.dev.hack.core or {};
   groups = {
     secrets = [
-      pkgs.gitleaks
-      pkgs.git-secrets
+      pkgs.gitleaks # scan repos/binaries for leaked secrets
+      pkgs.git-secrets # server-side hook toolkit preventing commits w/ secrets
     ];
     reverse = [
-      pkgs.capstone
+      pkgs.capstone # multi-arch disassembly engine + CLI
     ];
     crawl = [
-      pkgs.katana
+      pkgs.katana # fast web crawler for recon
     ];
   };
   packages = hackLib.filterPackages (hackLib.mkGroupPackages flags groups);
