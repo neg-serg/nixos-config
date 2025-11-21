@@ -79,6 +79,7 @@ in {
       pkgs.onefetch # pretty git repo summaries (used in fetch scripts)
       pkgs.ouch # archive extractor/creator
       pkgs.parallel # parallel xargs
+      pkgs.borgbackup # deduplicating backup utility
       pkgs.par # paragraph reformatter
       pkgs.patool # universal archive unpacker (python)
       pkgs.pbzip2 # parallel bzip2 backend
@@ -98,6 +99,7 @@ in {
       pkgs.ranger # curses file manager needed by termfilechooser
       pkgs.readline # readline library
       pkgs.reptyr # move app to another pty
+      pkgs.restic # deduplicating backup CLI
       pkgs.rhash # hash sums calculator
       pkgs.ripgrep # better grep
       pkgs.rlwrap # readline wrapper for everything
