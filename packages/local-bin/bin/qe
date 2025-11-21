@@ -1,32 +1,44 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# qe: print the root of the current Git repo (or the first parent with .git).
+# qe: print the most recently modified subdirectory of the given directory.
+# Semantics are similar to the original zsh glob:
+#   ^.git*(/om[1]D)
+# i.e.:
+#   - look only at direct children (depth 1)
+#   - pick directories (including dot-dirs), excluding .git*
+#   - choose the one with the newest mtime
+#
 # Usage:
-#   qe            # prints repo root for $PWD
-#   qe /path/dir  # prints repo root for given directory
+#   qe            # last modified subdir of $PWD
+#   qe /path/dir  # last modified subdir of the given directory
 
 start="${1:-.}"
 
-# Try git first for accuracy and speed.
-if command -v git >/dev/null 2>&1; then
-  if root_dir="$(cd "$start" 2>/dev/null && git rev-parse --show-toplevel 2>/dev/null)"; then
-    printf '%s\n' "$root_dir"
-    exit 0
-  fi
+# Move to the starting directory; on failure just print it and exit.
+if ! cd "$start" 2>/dev/null; then
+  printf '%s\n' "$start"
+  exit 0
 fi
 
-# Fallback: walk up the directory tree looking for a .git directory.
-dir="$(cd "$start" 2>/dev/null && pwd)"
-while [ "$dir" != "/" ]; do
-  if [ -d "$dir/.git" ]; then
-    printf '%s\n' "$dir"
+# Find immediate subdirectories (excluding .git*), sorted by mtime (newest first).
+# Requires GNU find (available on NixOS via coreutils/findutils).
+latest="$(
+  find . -mindepth 1 -maxdepth 1 -type d ! -name '.git*' -printf '%T@ %P\n' 2>/dev/null \
+    | sort -nr \
+    | head -n1 \
+    | cut -d' ' -f2-
+)"
+
+if [ -n "${latest:-}" ]; then
+  # Print an absolute path for robustness.
+  cd "$latest" 2>/dev/null || {
+    # If cd fails for some reason, fall back to echoing the relative name.
+    printf '%s\n' "$latest"
     exit 0
-  fi
-  dir="${dir%/*}"
-done
-
-# No repo detected: return the starting directory.
-cd "$start" 2>/dev/null || true
-pwd
-
+  }
+  pwd
+else
+  # No subdirectories found; fall back to the starting directory.
+  pwd
+fi
