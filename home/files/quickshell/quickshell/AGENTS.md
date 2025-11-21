@@ -35,6 +35,7 @@ Style / contribution
 - Keep changes minimal and focused; follow existing QML/JS style.
 - Do not introduce unrelated changes; mention known unrelated issues separately.
 - Update Docs when behavior or workflow changes; the docs are considered part of the contract for this config.
+- `nix build` is allowed without sudo to sanity-check flakes; feel free to run it after changes (counts as a test).
 
 Commit style
 - Use bracketed scope prefix consistent with this repo’s history, for example: `[gui/quickshell] Bar: …`, `[gui/quickshell] Settings: …`, `[gui/quickshell] Docs: …`.
