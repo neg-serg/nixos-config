@@ -4,7 +4,7 @@
   ...
 }:
 with lib; let
-  presets = import ./unfree-presets.nix;
+  presets = import ../../../modules/features-data/unfree-presets.nix;
   cfg = config.features.allowUnfree or {};
 in {
   config = {

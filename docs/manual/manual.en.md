@@ -41,7 +41,7 @@ every workflow points to the same manual.
 ### Profiles & Feature Flags
 
 - Primary toggle: `features.profile = "full" | "lite"` (lite disables GUI/media/dev stacks).
-- Feature definitions live in `home/modules/features.nix`; documentation: `OPTIONS.md`.
+- Feature definitions live in `modules/features.nix`; documentation: `OPTIONS.md`.
 - Key flags:
   - GUI (`features.gui.*`), Web (`features.web.*`), Secrets (`features.secrets.enable`)
   - Dev stacks (`features.dev.*`, `features.dev.openxr.*`, `features.dev.unreal.*`)
@@ -101,7 +101,7 @@ side-by-side so the patterns apply to both configurations.
 
 - Core helpers: `modules/lib/neg.nix`
 - XDG helpers: `modules/lib/xdg-helpers.nix`
-- Feature definitions/options: `home/modules/features.nix`
+- Feature definitions/options: `modules/features.nix`
 
 ### Package Availability Checks
 
@@ -178,7 +178,7 @@ side-by-side so the patterns apply to both configurations.
 - Keep prose/strings around ~100 columns; move long comments above the expression they describe.
 - Avoid `with pkgs;` around lists—refer to `pkgs.foo` explicitly. Using `with` inside local
   attrsets or helper scopes is fine.
-- Always declare feature options centrally (see `home/modules/features.nix`) and gate module
+- Always declare feature options centrally (see `modules/features.nix`) and gate module
   fragments via the relevant `features.*` flags.
 - Structure modules with `lib.mkMerge [ … ]` and the helper sugar above. Factor package groups into
   local `groups = { … };` sets and flatten with `config.lib.neg.mkEnabledList`.
