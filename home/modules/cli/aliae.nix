@@ -5,6 +5,9 @@
   ...
 }: let
   hasAliae = pkgs ? aliae;
+  hasRg = pkgs ? ripgrep;
+  hasNmap = pkgs ? nmap;
+  hasCurl = pkgs ? curl;
 in
   lib.mkMerge [
     # Enable Aliae when available in current nixpkgs
@@ -97,6 +100,8 @@ in
             (lib.optionalString hasErd "  tree: \"erd\"\n")
             "  dd:   \"dd status=progress\"\n"
             "  ip:   \"ip -c\"\n"
+            (lib.optionalString hasNmap "  nmap-vulners: \"nmap -sV --script=vulners/vulners.nse\"\n")
+            (lib.optionalString hasNmap "  nmap-vulscan: \"nmap -sV --script=vulscan/vulscan.nse\"\n")
             "  readelf: \"readelf -W\"\n"
             "  objdump: \"objdump -M intel -d\"\n"
             "  strace:  \"strace -yy\"\n"
@@ -114,6 +119,9 @@ in
             (lib.optionalString hasMpvc "  mpvc: \"mpvc -S \$XDG_CONFIG_HOME/mpv/socket\"\n")
             (lib.optionalString hasWget2 "  wget: \"wget2 --hsts-file \$XDG_DATA_HOME/wget-hsts\"\n")
             (lib.optionalString hasYtDlp "  yt:   \"yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all\"\n")
+            (lib.optionalString hasCurl "  moon: \"curl wttr.in/Moon\"\n")
+            (lib.optionalString hasCurl "  we: \"curl 'wttr.in/?T'\"\n")
+            (lib.optionalString hasCurl "  wem: \"curl wttr.in/Moscow?lang=ru\"\n")
             "  ctl: \"systemctl\"\n"
             "  stl: \"sudo systemctl\"\n"
             "  utl: \"systemctl --user\"\n"
@@ -134,3 +142,38 @@ in
       ];
     })
   ]
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
+            (lib.optionalString hasRg "  rg: \"rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden\"\n")
