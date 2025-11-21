@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# mpa: mpv audio-only (muted) with logging.
+# Usage:
+#   mpa [mpv-args...] file
+
+log_dir="${HOME}/tmp"
+mkdir -p "${log_dir}"
+
+exec mpv -mute "$@" >"${log_dir}/mpv.log" 2>&1
+

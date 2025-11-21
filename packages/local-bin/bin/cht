@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# cht: query cheat.sh with proper URL encoding.
+# Usage:
+#   cht topic [subtopic...]
+
+if ! command -v curl >/dev/null 2>&1; then
+  echo "cht: curl not found in PATH" >&2
+  exit 1
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "cht: jq not found in PATH" >&2
+  exit 1
+fi
+
+if [ "$#" -eq 0 ]; then
+  query="."
+else
+  query="$*"
+fi
+
+encoded="$(printf '%s' "$query" | jq -sRr @uri)"
+exec curl -s "https://cheat.sh/${encoded}"
+
