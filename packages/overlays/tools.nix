@@ -22,6 +22,15 @@ in {
     cxxmatrix = callPkg (packagesRoot + "/cxxmatrix") {};
     comma = callPkg (packagesRoot + "/comma") {};
 
+    antigravity = prev.writeShellApplication {
+      name = "antigravity";
+      runtimeInputs = [prev.python3];
+      text = ''
+        exec python3 -m antigravity "$@"
+      '';
+    };
+    "antigravity" = antigravity;
+
     mcp_server_filesystem = callPkg (packagesRoot + "/mcp/server-filesystem") {};
     "mcp-server-filesystem" = mcp_server_filesystem;
 
