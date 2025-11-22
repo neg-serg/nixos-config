@@ -16,7 +16,6 @@ in
         gid = 1000;
         description = "Neg";
       };
-      users.users."neg".extraGroups = lib.mkAfter ["docker"];
       # Host-specific feature toggles
       features.apps.winapps.enable = true;
       # Roles enabled for this host
