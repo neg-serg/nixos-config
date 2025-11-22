@@ -38,6 +38,7 @@ Style / contribution
 - Update Docs when behavior or workflow changes; the docs are considered part of the contract for this config.
 - `nix build` is allowed without sudo to sanity-check flakes; feel free to run it after changes (counts as a test).
 - Running any available linters/formatters (treefmt, statix, deadnix, etc.) is welcome when touching relevant files; fix their findings before committing.
+- All code comments must be written in English.
 
 Commit style
 - Use bracketed scope prefix consistent with this repo’s history, for example: `[gui/quickshell] Bar: …`, `[gui/quickshell] Settings: …`, `[gui/quickshell] Docs: …`.
