@@ -1,7 +1,7 @@
 ##
 # Module: system/virt/macos-vm
-# Purpose: Declarative macOS VM using a dedicated QEMU systemd service.
-# Key options: cfg = config.virtualisation.macosVm.*
+# Purpose: Declarative single QEMU VM using a dedicated systemd service.
+# Key options: cfg = config.virtualisation.vm.*
 # Dependencies: Relies on qemu-system-x86_64 from pkgs.qemu_kvm by default.
 {
   lib,
@@ -11,8 +11,8 @@
 }: let
   inherit (lib) mkEnableOption mkOption mkIf types;
 in {
-  options.virtualisation.macosVm = {
-    enable = mkEnableOption "macOS VM managed by a QEMU systemd service";
+  options.virtualisation.vm = {
+    enable = mkEnableOption "single QEMU VM managed by a systemd service";
 
     name = mkOption {
       type = types.str;
@@ -175,18 +175,18 @@ in {
   };
 
   config = let
-    cfg = config.virtualisation.macosVm or {enable = false;};
+    cfg = config.virtualisation.vm or {enable = false;};
   in
     mkIf cfg.enable {
       assertions = [
         {
           assertion = cfg.diskImage != "";
-          message = "virtualisation.macosVm.enable = true requires virtualisation.macosVm.diskImage to be set.";
+          message = "virtualisation.vm.enable = true requires virtualisation.vm.diskImage to be set.";
         }
       ];
 
-      # Dedicated systemd service for the macOS VM.
-      systemd.services."macos-vm" = let
+      # Dedicated systemd service for the VM.
+      systemd.services."qemu-vm-${cfg.name}" = let
         qemuBin =
           lib.getExe'
           (cfg.qemuPackage or pkgs.qemu_kvm)
@@ -246,7 +246,7 @@ in {
           + " "
           + lib.concatStringsSep " " baseArgs;
       in {
-        description = "macOS VM (QEMU)";
+        description = "QEMU VM (${cfg.name})";
         wantedBy =
           if cfg.autoStart
           then ["multi-user.target"]
@@ -257,7 +257,7 @@ in {
           Type = "simple";
           ExecStart = cmd;
           Restart = "on-failure";
-          SyslogIdentifier = "macos-vm";
+          SyslogIdentifier = "qemu-vm-${cfg.name}";
           # Optional CPU pinning handled via systemd.
           CPUAffinity = mkIf (cfg.hostCPUAffinity != []) cfg.hostCPUAffinity;
           MemoryMax = mkIf (cfg.memoryMax != null) cfg.memoryMax;
@@ -266,14 +266,14 @@ in {
       };
 
       # Optional snapshot helper: copies the disk image into snapshotPath with a timestamp.
-      systemd.services."macos-vm-snapshot" = mkIf (cfg.snapshotPath != null) {
-        description = "Create a snapshot copy of the macOS VM disk image";
+      systemd.services."qemu-vm-${cfg.name}-snapshot" = mkIf (cfg.snapshotPath != null) {
+        description = "Create a snapshot copy of the VM disk image";
         wantedBy = [];
         after = [];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = let
-            snapshotScript = pkgs.writeShellScript "macos-vm-snapshot" ''
+            snapshotScript = pkgs.writeShellScript "qemu-vm-snapshot" ''
               set -eu
               target_dir='${cfg.snapshotPath}'
               src='${cfg.diskImage}'
