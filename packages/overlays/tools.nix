@@ -29,7 +29,6 @@ in {
         exec python3 -m antigravity "$@"
       '';
     };
-    "antigravity" = antigravity;
 
     mcp_server_filesystem = callPkg (packagesRoot + "/mcp/server-filesystem") {};
     "mcp-server-filesystem" = mcp_server_filesystem;
