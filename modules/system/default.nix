@@ -25,6 +25,6 @@
     ./systemd
     ./users.nix
     ./virt.nix
-    ./winboat.nix
+    ./winapps.nix
   ];
 }
