@@ -16,6 +16,7 @@ in
         gid = 1000;
         description = "Neg";
       };
+      users.users."neg".extraGroups = lib.mkAfter ["docker"];
       # Host-specific feature toggles
       features.apps.winapps.enable = true;
       # Roles enabled for this host
@@ -36,6 +37,15 @@ in
         gc.automatic = false;
         optimise.automatic = false;
         settings.auto-optimise-store = false;
+      };
+
+      # Enable Docker engine for WinBoat and use real docker socket
+      virtualisation = {
+        docker.enable = true;
+        podman = {
+          dockerCompat = lib.mkForce false;
+          dockerSocket.enable = lib.mkForce false;
+        };
       };
 
       # Remove experimental mpv OpenVR overlay
@@ -227,6 +237,7 @@ in
       # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
       environment.systemPackages = lib.mkAfter [
         pkgs.winboat
+        pkgs.docker-compose
         pkgs.openrgb # per-device RGB controller UI
         (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile (inputs.self + "/scripts/cpu-boost.sh"))) # CLI toggle for AMD Precision Boost
         (pkgs.writeShellScriptBin "fan-stop-capability-test" (builtins.readFile (inputs.self + "/scripts/fan-stop-capability-test.sh"))) # helper to test fan stop thresholds
