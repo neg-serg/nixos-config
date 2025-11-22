@@ -54,6 +54,11 @@ in
     (xdg.mkXdgText "mbsync/mbsyncrc" mbsyncrcContent)
 
     {
+      # Ensure plain `mbsync -a` uses the same config file.
+      home.sessionVariables.MBSYNCRC = "${config.xdg.configHome}/mbsync/mbsyncrc";
+    }
+
+    {
       # 3. Define the periodic sync timer/service
       systemd.user.services."mbsync-gmail" = lib.mkMerge [
         {
