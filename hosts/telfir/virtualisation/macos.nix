@@ -1,65 +1,51 @@
-# /etc/nixos/hosts/telfir/virtualisation/macos.nix
-{ pkgs, ... }:
-
 {
-  # Enable libvirtd if it's not already enabled
-  virtualisation.libvirtd.enable = true;
-
-  virtualisation.qemu.domain."macos" = {
+  pkgs,
+  ...
+}: {
+  # Host-specific macOS VM description. The actual VM is managed by the
+  # system-wide virtualisation.macosVm module via a dedicated QEMU service.
+  #
+  # To start the VM after rebuilding, use:
+  #   systemctl start macos-vm.service
+  virtualisation.macosVm = {
     enable = true;
-    # Basic settings
-    memory = 8192; # 8 GB RAM
-    vcpu = 4;
-    cpu = "host-passthrough"; # Passthrough host CPU model
+    name = "macos";
+    memoryMiB = 8192;
+    vcpus = 4;
+    cpuModel = "host-passthrough";
 
-    # CPU Pinning for lower latency.
-    # Ensure these cores are not used by other critical tasks.
-    # Check topology with `lscpu -e`.
-    vcpuPin = [
-      { vcpu = 0; hostcpu = 4; }
-      { vcpu = 1; hostcpu = 5; }
-      { vcpu = 2; hostcpu = 6; }
-      { vcpu = 3; hostcpu = 7; }
+    # Firmware paths (OVMF code and NVRAM)
+    ovmfCodePath = "${pkgs.OVMF.fd}/FV/OVMF_CODE.fd";
+    ovmfVarsPath = "/var/lib/libvirt/qemu/nvram/macos_VARS.fd";
+
+    # Primary disk image and optional boot ISO (for example, OpenCore)
+    diskImage = "/zero/macos-ventura.raw";
+    bootIsoPath = "/path/to/your/opencore.iso";
+
+    # VRAM for virtio-vga in MiB
+    videoVRAMMiB = 256;
+
+    # Pin the VM process to a set of host CPUs.
+    # This uses systemd CPUAffinity and does not attempt fine-grained
+    # vCPU/iothread pinning inside QEMU.
+    hostCPUAffinity = [4 5 6 7 8 9];
+
+    # Extra QEMU arguments for better macOS ergonomics.
+    # These stay generic (no Apple-specific secrets) and can
+    # be further tuned or extended later.
+    extraQemuArgs = [
+      # Keep guest RTC in localtime; helps some desktop OSes.
+      "-rtc"
+      "base=localtime,clock=host,driftfix=slew"
+
+      # Basic audio device (Intel HDA) so the guest has sound.
+      "-device"
+      "ich9-intel-hda"
+      "-device"
+      "hda-output"
     ];
-    iothreads = 2;
-    iothreadPin = [
-      { iothread = 1; hostcpu = 8; }
-      { iothread = 2; hostcpu = 9; }
-    ];
 
-    # UEFI bootloader
-    boot.loader = "${pkgs.OVMF.fd}/FV/OVMF_CODE.fd";
-    boot.loaderReadonly = true;
-    # NVRAM will be created automatically
-    boot.nvram = "/var/lib/libvirt/qemu/nvram/macos_VARS.fd";
-
-    # Disks
-    disk = {
-      "macos-disk" = {
-        # Path to the image on a separate, non-Nix managed partition
-        path = "/zero/macos-ventura.raw";
-        driver = "virtio-blk";
-        cache = "none";
-        aio = "native";
-      };
-      "clover" = {
-        # Specify the path to your OpenCore or Clover ISO here
-        path = "/path/to/your/opencore.iso";
-        driver = "ide";
-        cdrom = true;
-        boot.index = 1; # Boot from this disk
-      };
-    };
-
-    # Network
-    nic.model = "virtio-net-pci";
-
-    # Graphics (no passthrough)
-    # Use VirtIO VGA for better emulated graphics performance
-    video.model = "virtio-vga";
-    video.vram = 256; # Increase VRAM
-
-    # Enable tablet for correct mouse behavior without grabbing
-    tablet.enable = true;
+    # Set to true if you want the VM to start automatically at boot.
+    autoStart = false;
   };
 }
