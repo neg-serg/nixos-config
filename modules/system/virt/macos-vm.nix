@@ -56,6 +56,12 @@ in {
       example = "/zero/macos-ventura.raw";
     };
 
+    diskFormat = mkOption {
+      type = types.str;
+      default = "raw";
+      description = "Format of the primary macOS disk image (for example, raw or qcow2).";
+    };
+
     bootIsoPath = mkOption {
       type = types.nullOr types.str;
       default = null;
@@ -72,6 +78,18 @@ in {
       type = types.str;
       default = "native";
       description = "Asynchronous I/O mode for the primary disk (QEMU aio= setting).";
+    };
+
+    machineType = mkOption {
+      type = types.str;
+      default = "q35";
+      description = "QEMU machine type for the macOS VM (for example, q35).";
+    };
+
+    accel = mkOption {
+      type = types.str;
+      default = "kvm";
+      description = "QEMU accelerator to use for the macOS VM (for example, kvm).";
     };
 
     networkBackend = mkOption {
@@ -94,6 +112,12 @@ in {
       type = types.ints.positive;
       default = 256;
       description = "Amount of VRAM for virtio-vga in MiB.";
+    };
+
+    videoDevice = mkOption {
+      type = types.str;
+      default = "virtio-vga";
+      description = "QEMU video device model used for the macOS VM (for example, virtio-vga).";
     };
 
     hostCPUAffinity = mkOption {
@@ -190,7 +214,7 @@ in {
             "-name"
             "${cfg.name},process=${cfg.name}"
             "-machine"
-            "q35,accel=kvm"
+            "${cfg.machineType},accel=${cfg.accel}"
             "-m"
             (builtins.toString cfg.memoryMiB)
             "-smp"
@@ -202,12 +226,12 @@ in {
             "-drive"
             "if=pflash,format=raw,file=${cfg.ovmfVarsPath}"
             "-drive"
-            "file=${cfg.diskImage},if=virtio,cache=${cfg.diskCache},aio=${cfg.diskAio},format=raw"
+            "file=${cfg.diskImage},if=virtio,cache=${cfg.diskCache},aio=${cfg.diskAio},format=${cfg.diskFormat}"
           ]
           ++ netArgs
           ++ [
             "-device"
-            "virtio-vga,vrambytes=${builtins.toString vramBytes}"
+            "${cfg.videoDevice},vrambytes=${builtins.toString vramBytes}"
             "-device"
             "usb-tablet"
           ]
