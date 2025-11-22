@@ -24,8 +24,8 @@ in {
 
       podman = {
         enable = true;
-        dockerCompat = true; # Create a `docker` alias for podman, to use it as a drop-in replacement
-        dockerSocket.enable = true; # Create docker alias for compatibility
+        dockerCompat = lib.mkDefault true; # Create a `docker` alias for podman, to use it as a drop-in replacement
+        dockerSocket.enable = lib.mkDefault true; # Create docker alias for compatibility
         defaultNetwork.settings.dns_enabled = true; # Required for containers under podman-compose to be able to talk to each other.
       };
 
