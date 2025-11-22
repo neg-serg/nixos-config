@@ -150,6 +150,7 @@ GAME_PIN_CPUSET=14,15,30,31 MANGOHUD=1 game-run gamescope -f --adaptive-sync -- 
 *   **Custom Library**: Use helpers from `config.lib.neg.*` for conditional logic (`mkWhen`), managing XDG files (`mkXdgText`), and creating local scripts (`mkLocalBin`).
 *   **Systemd User Services**: Use `config.lib.neg.systemdUser.mkUnitFromPresets` to create systemd user units with consistent dependencies.
 *   **Commit Messages**: Must follow the `[scope] summary` format.
+*   **Comments**: All code comments must be written in English.
 
 ## Custom Packages
 
