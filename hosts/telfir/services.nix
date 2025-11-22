@@ -16,6 +16,8 @@ in
         gid = 1000;
         description = "Neg";
       };
+      # Host-specific feature toggles
+      features.apps.winboat.enable = true;
       # Roles enabled for this host
       roles = {
         workstation.enable = true;

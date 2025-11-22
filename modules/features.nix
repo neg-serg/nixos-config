@@ -36,7 +36,10 @@ with lib; let
     hack.enable = true;
     fun.enable = true;
     torrent.enable = true;
-    apps.obsidian.autostart.enable = false;
+    apps = {
+      obsidian.autostart.enable = false;
+      winboat.enable = false;
+    };
   };
   cfg = lib.recursiveUpdate defaults (config.features or {});
   # Use a local mkBool to avoid early dependency on config.lib.neg during option evaluation
@@ -261,6 +264,8 @@ in {
     apps = {
       obsidian.autostart.enable =
         mkBool "autostart Obsidian at GUI login (systemd user service)" false;
+      winboat.enable =
+        mkBool "enable WinBoat integration (Docker, Docker Compose v2, FreeRDP)" false;
     };
   };
 
@@ -448,15 +453,13 @@ in {
           assertion = cfg.dev.enable || (! cfg.dev.ai.enable);
           message = "features.dev.ai.enable requires features.dev.enable = true";
         }
-      ];
-    }
-    # Auto-enable dev-speed by env var
-    # Dependency assertions for new app flags
-    {
-      assertions = [
         {
           assertion = cfg.gui.enable || (! cfg.apps.obsidian.autostart.enable);
           message = "features.apps.obsidian.autostart.enable requires features.gui.enable = true";
+        }
+        {
+          assertion = cfg.gui.enable || (! cfg.apps.winboat.enable);
+          message = "features.apps.winboat.enable requires features.gui.enable = true";
         }
       ];
     }

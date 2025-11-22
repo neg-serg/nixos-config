@@ -32,7 +32,7 @@ in {
       oci-containers.backend = "podman";
 
       docker = {
-        enable = false;
+        enable = lib.mkDefault false;
         autoPrune = {
           enable = true;
           dates = "weekly";
