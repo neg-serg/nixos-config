@@ -20,7 +20,7 @@ let
     User ${account.userName}
     PassCmd "${lib.head account.passwordCommand}"
     AuthMechs LOGIN
-    SSLType IMAPS
+    TLSType IMAPS
     CertificateFile /etc/ssl/certs/ca-bundle.crt
 
     IMAPStore ${name}-remote
@@ -28,8 +28,8 @@ let
 
     MaildirStore ${name}-local
     Subfolders Verbatim
-    Path ${config.xdg.dataHome}/mail/${name}/
-    Inbox ${config.xdg.dataHome}/mail/${name}/INBOX/
+    Path ${config.home.homeDirectory}/.local/mail/${name}/
+    Inbox ${config.home.homeDirectory}/.local/mail/${name}/INBOX/
 
     Channel ${name}
     Far :${name}-remote:
