@@ -9,8 +9,15 @@
   mainUser = config.users.main.name or "neg";
 in {
   config = lib.mkIf enabled {
-    # Enable Docker engine when WinBoat integration is on.
-    virtualisation.docker.enable = true;
+    # Enable Docker engine when WinBoat integration is on and disable Podman
+    # Docker compatibility so sockets do not conflict.
+    virtualisation = {
+      docker.enable = true;
+      podman = {
+        dockerCompat = lib.mkForce false;
+        dockerSocket.enable = lib.mkForce false;
+      };
+    };
 
     # WinBoat runtime dependencies:
     # - docker-compose v2 (docker-compose command)
@@ -24,4 +31,3 @@ in {
     users.users.${mainUser}.extraGroups = lib.mkAfter ["docker"];
   };
 }
-
