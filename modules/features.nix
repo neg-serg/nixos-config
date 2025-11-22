@@ -38,7 +38,7 @@ with lib; let
     torrent.enable = true;
     apps = {
       obsidian.autostart.enable = false;
-      winboat.enable = false;
+      winapps.enable = false;
     };
   };
   cfg = lib.recursiveUpdate defaults (config.features or {});
@@ -264,8 +264,8 @@ in {
     apps = {
       obsidian.autostart.enable =
         mkBool "autostart Obsidian at GUI login (systemd user service)" false;
-      winboat.enable =
-        mkBool "enable WinBoat integration (Docker, Docker Compose v2, FreeRDP)" false;
+      winapps.enable =
+        mkBool "enable WinApps integration (KVM/libvirt Windows VM, RDP bridge)" false;
     };
   };
 
@@ -458,8 +458,8 @@ in {
           message = "features.apps.obsidian.autostart.enable requires features.gui.enable = true";
         }
         {
-          assertion = cfg.gui.enable || (! cfg.apps.winboat.enable);
-          message = "features.apps.winboat.enable requires features.gui.enable = true";
+          assertion = cfg.gui.enable || (! cfg.apps.winapps.enable);
+          message = "features.apps.winapps.enable requires features.gui.enable = true";
         }
       ];
     }

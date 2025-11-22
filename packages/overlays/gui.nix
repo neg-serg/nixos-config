@@ -35,6 +35,11 @@ in {
   # Some downstream overlays add qtutils to PATH wrapping; disable that.
   hyprland = prev.hyprland.override {wrapRuntimeDeps = false;};
 
+  # WinBoat: relax npm peer dependency resolution to avoid npm ci failures
+  winboat = prev.winboat.overrideAttrs (old: {
+    npmFlags = (old.npmFlags or []) ++ ["--legacy-peer-deps"];
+  });
+
   # Nyxt 4 pre-release binary (Electron/Blink backend). Upstream provides a single self-contained
   # ELF binary for Linux. Package it as a convenience while no QtWebEngine build is available.
   nyxt4-bin = prev.stdenvNoCC.mkDerivation rec {
