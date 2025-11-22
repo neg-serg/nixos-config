@@ -47,5 +47,9 @@
 
     # Set to true if you want the VM to start automatically at boot.
     autoStart = false;
+
+    # Store snapshots under /zero; snapshot helper will keep
+    # at most snapshotRetention copies per disk image.
+    snapshotPath = "/zero/macos-snapshots";
   };
 }
