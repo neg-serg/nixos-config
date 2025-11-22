@@ -8,7 +8,10 @@
   mainUser = config.users.main.name or "neg";
 in {
   # Keep imports at top-level; guard heavy config below
-  imports = [./virt/pkgs.nix];
+  imports = [
+    ./virt/pkgs.nix
+    ./virt/macos-vm.nix
+  ];
 
   config = lib.mkIf (!cfg.enable) {
     users.users = {
