@@ -6,7 +6,8 @@ export NMBGIT="$XDG_DATA_HOME"/notmuch/nmbug
 # Default to only gmail; override by exporting MDIRS if needed
 MDIRS=${MDIRS:-gmail}
 
-mbsync -a -c "$XDG_CONFIG_HOME"/isync/mbsyncrc
+# Use the config path exported via MBSYNCRC from Home Manager.
+mbsync -a
 notmuch new
 
 for mdir in $MDIRS; do
