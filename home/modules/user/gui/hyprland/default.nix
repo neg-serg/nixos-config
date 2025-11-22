@@ -5,6 +5,5 @@
     ./pyprland.nix
     ./workspaces.nix
     ./bindings.nix
-    ./portal.nix
   ];
 }
