@@ -108,6 +108,18 @@ in {
       description = "Additional QEMU CLI arguments appended as-is.";
     };
 
+    memoryMax = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "Optional MemoryMax limit for the macOS VM systemd service (for example, \"16G\").";
+    };
+
+    cpuWeight = mkOption {
+      type = types.nullOr types.ints.positive;
+      default = null;
+      description = "Optional CPUWeight for the macOS VM systemd service to adjust CPU scheduling priority.";
+    };
+
     autoStart = mkOption {
       type = types.bool;
       default = false;
@@ -122,6 +134,12 @@ in {
         macos-vm-snapshot systemd service. Snapshotting is implemented as a simple
         copy with reflink support where available and must be triggered manually.
       '';
+    };
+
+    snapshotRetention = mkOption {
+      type = types.ints.positive;
+      default = 5;
+      description = "Maximum number of snapshots to keep per disk image when using the macos-vm-snapshot helper.";
     };
 
     qemuPackage = mkOption {
@@ -215,8 +233,11 @@ in {
           Type = "simple";
           ExecStart = cmd;
           Restart = "on-failure";
+          SyslogIdentifier = "macos-vm";
           # Optional CPU pinning handled via systemd.
           CPUAffinity = mkIf (cfg.hostCPUAffinity != []) cfg.hostCPUAffinity;
+          MemoryMax = mkIf (cfg.memoryMax != null) cfg.memoryMax;
+          CPUWeight = mkIf (cfg.cpuWeight != null) cfg.cpuWeight;
         };
       };
 
@@ -238,6 +259,14 @@ in {
 
               mkdir -p "$target_dir"
               cp --reflink=auto --sparse=always "$src" "$dest"
+              keep=${toString cfg.snapshotRetention}
+              if [ "$keep" -gt 0 ] 2>/dev/null; then
+                cd "$target_dir"
+                snaps=$(ls -1t "$base."* 2>/dev/null || true)
+                if [ -n "$snaps" ]; then
+                  echo "$snaps" | tail -n +$((keep + 1)) | xargs -r rm --
+                fi
+              fi
             '';
           in
             snapshotScript;
