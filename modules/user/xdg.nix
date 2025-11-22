@@ -30,4 +30,9 @@ in {
       # Plasma-specific portal defaults removed to restore Hyprland-only setup
     };
   };
+
+  # Ensure Hyprland portal starts reliably by dropping the ConditionEnvironment
+  # check from the user unit. Hyprland already imports the necessary env vars
+  # into the systemd user manager at session start.
+  systemd.user.services.xdg-desktop-portal-hyprland.unitConfig.ConditionEnvironment = lib.mkForce "";
 }
