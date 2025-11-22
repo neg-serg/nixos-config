@@ -1,4 +1,6 @@
 {pkgs, ...}: {
+  antigravity = pkgs.neg.antigravity;
+
   mcp-server-filesystem = pkgs.neg.mcp_server_filesystem;
   mcp-ripgrep = pkgs.neg.mcp_ripgrep;
   mcp-server-memory = pkgs.neg.mcp_server_memory;
