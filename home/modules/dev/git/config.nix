@@ -93,6 +93,7 @@ with lib;
               hub = "!gh";
               patch = "!git --no-pager diff --no-color";
               subpull = "submodule foreach git pull";
+              grbi = "!GIT_SEQUENCE_EDITOR=true git rebase -i";
               undo = "reset --soft @~";
             };
             interactive.diffFilter = "delta --color-only";
