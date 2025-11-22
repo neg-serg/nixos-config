@@ -3,13 +3,12 @@
   ...
 }: {
   # Host-specific macOS VM description. The actual VM is managed by the
-  # system-wide virtualisation.vm module via a dedicated QEMU service.
+  # system-wide virtualisation.vms module via a dedicated QEMU service.
   #
   # To start the VM after rebuilding, use:
   #   systemctl start qemu-vm-macos.service
-  virtualisation.vm = {
+  virtualisation.vms."macos" = {
     enable = true;
-    name = "macos";
     memoryMiB = 8192;
     vcpus = 4;
     cpuModel = "host-passthrough";
