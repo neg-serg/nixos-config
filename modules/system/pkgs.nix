@@ -8,5 +8,6 @@
     pkgs.pciutils # manipulate pci devices
     pkgs.schedtool # CPU scheduling
     pkgs.usbutils # lsusb
+    pkgs.btrfs-progs # manage and check btrfs filesystems
   ];
 }

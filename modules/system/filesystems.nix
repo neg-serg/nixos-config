@@ -4,6 +4,7 @@
   homeDir = "/home/${mainUser}";
 in {
   boot.supportedFilesystems = [
+    "btrfs"
     "exfat"
     "xfs"
     "udf"
