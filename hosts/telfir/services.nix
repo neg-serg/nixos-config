@@ -258,15 +258,16 @@ in
           devicesList
         );
         foldersList = [
+          # Former Syncthing upload folders retained as plain data paths
           {
             name = "music-upload";
-            path = "/zero/syncthing/music-upload";
-            devices = ["telfir"];
+            path = "/zero/sync-archive/music-upload";
+            devices = [];
           }
           {
             name = "picture-upload";
-            path = "/zero/syncthing/picture-upload";
-            devices = ["telfir"];
+            path = "/zero/sync-archive/picture-upload";
+            devices = [];
           }
         ];
         folders = builtins.listToAttrs (
@@ -321,16 +322,6 @@ in
 
             # Prometheus stack removed on this host (server, exporters, alertmanager)
 
-            # Syncthing host-specific devices and folders
-            syncthing = {
-              overrideDevices = true;
-              overrideFolders = true;
-              settings = {
-                inherit devices folders;
-                # Expose Syncthing GUI on all interfaces (port 8384)
-                gui.address = "0.0.0.0:8384";
-              };
-            };
             # Bitcoind instance is now managed by modules/servers/bitcoind
           }
           (lib.mkIf grafanaEnabled {
@@ -369,14 +360,6 @@ in
             ];
           })
         ];
-
-      # Provide GUI password to Syncthing from SOPS secret and set it at service start
-      # - Secret file: secrets/syncthing.sops.yaml (key: syncthing/gui-pass)
-      # - Make it readable by the Syncthing user and apply via ExecStartPre
-      sops.secrets."syncthing/gui-pass" = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/syncthing.sops.yaml")) {
-        owner = config.users.main.name;
-        mode = "0400";
-      };
 
       # (Prometheus/Alertmanager firewall openings removed for this host)
 
@@ -445,34 +428,6 @@ in
             # Defer to post-boot to avoid interfering with activation and to follow repo policy
             wantedBy = ["post-boot.target"];
           };
-
-          # Set Syncthing GUI user/password only after config is generated, before service starts
-          "syncthing-set-gui-pass" = lib.mkIf (config.services.syncthing.enable or false) (let
-            setPassScript = pkgs.writeShellScript "syncthing-set-gui-pass.sh" ''
-              set -euo pipefail
-              PASS_FILE="${config.sops.secrets."syncthing/gui-pass".path}"
-              HOME_DIR="${config.services.syncthing.configDir}"
-              if [ -r "$PASS_FILE" ]; then
-                PASS="$(tr -d '\n' < "$PASS_FILE")"
-                if [ -n "$PASS" ]; then
-                  ${pkgs.syncthing}/bin/syncthing -home "$HOME_DIR" cli config gui user "${config.users.main.name}"
-                  ${pkgs.syncthing}/bin/syncthing -home "$HOME_DIR" cli config gui password "$PASS"
-                fi
-              fi
-            '';
-          in {
-            description = "Set Syncthing GUI credentials from SOPS secret";
-            after = ["syncthing-init.service" "sops-nix.service"];
-            requires = ["syncthing-init.service"];
-            before = ["syncthing.service"];
-            wantedBy = ["syncthing.service"];
-            serviceConfig = {
-              Type = "oneshot";
-              User = config.users.main.name;
-              Group = config.users.main.name;
-              ExecStart = [setPassScript];
-            };
-          });
 
           # Periodic metric collection service + timer
           "bitcoind-textfile-metrics" = let

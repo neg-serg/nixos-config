@@ -14,9 +14,6 @@ Examples and ports
 
 - openssh: `profiles.services.openssh.enable = true;`
   - Ports: 22/TCP (opened automatically by the module)
-- syncthing: `profiles.services.syncthing.enable = true;`
-  - Ports: 8384/TCP (GUI), 22000/TCP+UDP (sync), 21027/UDP (discovery)
-  - Host devices/folders go under `hosts/<host>/services.nix`.
 - mpd: `profiles.services.mpd.enable = true;`
   - Ports: 6600/TCP (opened by module)
 - navidrome: `profiles.services.navidrome.enable = true;`

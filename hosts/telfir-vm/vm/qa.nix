@@ -3,7 +3,6 @@
   profiles.services = {
     nextcloud.enable = false;
     adguardhome.enable = false;
-    syncthing.enable = false;
     unbound.enable = false;
     jellyfin.enable = false;
     navidrome.enable = false;

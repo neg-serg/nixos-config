@@ -189,7 +189,6 @@ in {
       };
     };
     openssh.enable = opts.mkEnableOption "OpenSSH (and mosh) profile.";
-    syncthing.enable = opts.mkEnableOption "Syncthing device sync profile.";
     mpd.enable = opts.mkEnableOption "MPD (Music Player Daemon) profile.";
     navidrome.enable = opts.mkEnableOption "Navidrome music server profile.";
     wakapi.enable = opts.mkEnableOption "Wakapi CLI tools profile.";

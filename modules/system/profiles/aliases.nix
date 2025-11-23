@@ -13,7 +13,6 @@
     "bitcoind"
     "unbound"
     "openssh"
-    "syncthing"
     "mpd"
     "navidrome"
     "wakapi"

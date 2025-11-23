@@ -2,10 +2,9 @@
 
 - Enable a role in your host config:
 
-  - `roles.workstation.enable = true;` — desktop defaults (performance profile, SSH, Avahi,
-    Syncthing).
-  - `roles.homelab.enable = true;` — self‑hosting defaults (security profile, DNS, SSH, Syncthing,
-    MPD, Navidrome, Wakapi, Nextcloud).
+  - `roles.workstation.enable = true;` — desktop defaults (performance profile, SSH, Avahi).
+  - `roles.homelab.enable = true;` — self‑hosting defaults (security profile, DNS, SSH, MPD,
+    Navidrome, Wakapi, Nextcloud).
   - `roles.media.enable = true;` — media servers (Jellyfin, Navidrome, MPD, Avahi, SSH).
   - `roles.server.enable = true;` — headless/server defaults (enables smartd by default).
 
@@ -17,8 +16,8 @@
 - Typical next steps per role:
 
   - Workstation: adjust games stack in `profiles.games.*` and `modules/user/games`.
-  - Homelab: set DNS rewrites under `servicesProfiles.adguardhome.rewrites`, define Syncthing
-    devices/folders in `hosts/<host>/services.nix`.
+  - Homelab: set DNS rewrites under `servicesProfiles.adguardhome.rewrites` and host-specific
+    media/backup paths in `hosts/<host>/services.nix`.
   - Media: set media paths/ports for MPD/Navidrome; Jellyfin ports are opened by the module when
     enabled.
 
