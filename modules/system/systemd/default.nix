@@ -70,10 +70,6 @@ in {
 
       # Silence failing ad-hoc nixindex timer/service; prefer proper modules
       nixindex.enable = lib.mkForce false;
-
-      # Ensure Navidrome waits for the music mount to exist before applying its
-      # private mount namespace with BindReadOnlyPaths=/one/music
-      navidrome.unitConfig.RequiresMountsFor = ["/one/music"];
     };
     packages = [pkgs.packagekit];
     timers.nixindex.enable = lib.mkForce false;

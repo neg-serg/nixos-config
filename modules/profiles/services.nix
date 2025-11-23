@@ -190,8 +190,6 @@ in {
     };
     openssh.enable = opts.mkEnableOption "OpenSSH (and mosh) profile.";
     mpd.enable = opts.mkEnableOption "MPD (Music Player Daemon) profile.";
-    navidrome.enable = opts.mkEnableOption "Navidrome music server profile.";
-    wakapi.enable = opts.mkEnableOption "Wakapi CLI tools profile.";
     nextcloud = {
       enable = opts.mkEnableOption "Nextcloud server profile (with optional Caddy proxy).";
       package = opts.mkOpt (types.nullOr types.package) null {
