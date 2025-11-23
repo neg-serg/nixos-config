@@ -33,11 +33,14 @@ in {
       hostName = lib.mkDefault "localhost";
       database.createLocally = true;
       configureRedis = true;
-      datadir = "/nextcloud";
+      # Use a fresh data directory and database name to effectively reset Nextcloud
+      # while keeping the old instance data untouched under /nextcloud.
+      datadir = "/nextcloud-reset";
       config =
         {
           adminuser = "init";
           dbtype = "mysql";
+          dbname = "nextcloud_reset";
         }
         // (lib.optionalAttrs hasNcSecret {
           adminpassFile = config.sops.secrets."nextcloud/admin-pass".path;
