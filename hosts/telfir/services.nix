@@ -378,38 +378,16 @@ in
               package = pkgs.nextcloud32;
               hostName = "telfir";
               https = true;
-              datadir = "/zero/sync/nextcloud";
+              datadir = "/var/lib/nextcloud-clean";
               config = {
-                # fresh PostgreSQL-backed instance managed by the module
-                dbtype = "pgsql";
+                dbtype = "mysql";
+                dbname = "nextcloud_clean";
+                dbuser = "nextcloud_clean";
                 adminuser = "admin";
-                adminpassFile = "/zero/sync/nextcloud/adminpass";
+                adminpassFile = "/var/lib/nextcloud-clean/adminpass";
               };
               database = {
-                # create local PostgreSQL DB/user "nextcloud" using socket auth
                 createLocally = true;
-              };
-            };
-
-            postgresql = {
-              # Nextcloud uses a single DB/user; keep settings conservative but sane
-              settings = {
-                # Memory tuning (safe defaults for a homelab box)
-                shared_buffers = "512MB";
-                effective_cache_size = "2GB";
-                work_mem = "16MB";
-                maintenance_work_mem = "256MB";
-
-                # Connection / WAL settings suitable for OLTP web workload
-                max_connections = 100;
-                wal_level = "replica";
-                synchronous_commit = "on";
-                checkpoint_timeout = "10min";
-                max_wal_size = "2GB";
-                min_wal_size = "512MB";
-
-                # Assume mostly SSD and good filesystem cache
-                random_page_cost = 1.1;
               };
             };
 
