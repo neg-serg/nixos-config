@@ -258,7 +258,7 @@ in
           devicesList
         );
         foldersList = [
-          # Former Syncthing upload folders retained as plain data paths
+          # Former phone upload folders retained as plain data paths
           {
             name = "music-upload";
             path = "/zero/sync-archive/music-upload";

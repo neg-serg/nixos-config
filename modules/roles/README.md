@@ -4,7 +4,7 @@
 
   - `roles.workstation.enable = true;` — desktop defaults (performance profile, SSH, Avahi).
   - `roles.homelab.enable = true;` — self‑hosting defaults (security profile, DNS, SSH, MPD,
-    Navidrome, Wakapi, Nextcloud).
+    Navidrome, Nextcloud).
   - `roles.media.enable = true;` — media servers (Jellyfin, Navidrome, MPD, Avahi, SSH).
   - `roles.server.enable = true;` — headless/server defaults (enables smartd by default).
 
