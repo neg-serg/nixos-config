@@ -8,5 +8,6 @@
     ./images/packages.nix
     ./ai-upscale-packages.nix
     ./vapoursynth-packages.nix
+    ./deepfacelab-docker.nix
   ];
 }
