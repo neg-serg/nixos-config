@@ -161,6 +161,8 @@ in
         ];
         # Explicitly override media role to keep Jellyfin off on this host
         jellyfin.enable = false;
+        # Enable Avahi (mDNS) so iOS/macOS can resolve *.local and discover SMB shares
+        avahi.enable = true;
         # Enable Samba profile on this host (guest-access share under /zero/sync/smb)
         samba.enable = true;
         # Run a Bitcoin Core node with data stored under /zero/bitcoin-node
@@ -243,6 +245,91 @@ in
         (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile (inputs.self + "/scripts/cpu-boost.sh"))) # CLI toggle for AMD Precision Boost
         (pkgs.writeShellScriptBin "fan-stop-capability-test" (builtins.readFile (inputs.self + "/scripts/fan-stop-capability-test.sh"))) # helper to test fan stop thresholds
       ];
+      environment.etc = {
+        "avahi/services/smb.service".text = ''
+          <?xml version="1.0" standalone='no'?>
+          <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+          <service-group>
+            <name replace-wildcards="yes">%h SMB share</name>
+            <service>
+              <type>_smb._tcp</type>
+              <port>445</port>
+              <txt-record>path=/zero/sync/smb</txt-record>
+              <txt-record>share=shared</txt-record>
+            </service>
+          </service-group>
+        '';
+        "avahi/services/afp.service".text = ''
+          <?xml version="1.0" standalone='no'?>
+          <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+          <service-group>
+            <name replace-wildcards="yes">%h AFP share</name>
+            <service>
+              <type>_afpovertcp._tcp</type>
+              <port>548</port>
+              <txt-record>path=/zero/sync/smb</txt-record>
+            </service>
+          </service-group>
+        '';
+        "avahi/services/nfs.service".text = ''
+          <?xml version="1.0" standalone='no'?>
+          <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+          <service-group>
+            <name replace-wildcards="yes">%h NFS export</name>
+            <service>
+              <type>_nfs._tcp</type>
+              <port>2049</port>
+              <txt-record>path=/zero/sync/smb</txt-record>
+            </service>
+          </service-group>
+        '';
+        "avahi/services/ssh.service".text = ''
+          <?xml version="1.0" standalone='no'?>
+          <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+          <service-group>
+            <name replace-wildcards="yes">%h SSH</name>
+            <service>
+              <type>_ssh._tcp</type>
+              <port>22</port>
+            </service>
+          </service-group>
+        '';
+        "avahi/services/sftp.service".text = ''
+          <?xml version="1.0" standalone='no'?>
+          <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+          <service-group>
+            <name replace-wildcards="yes">%h SFTP</name>
+            <service>
+              <type>_sftp-ssh._tcp</type>
+              <port>22</port>
+            </service>
+          </service-group>
+        '';
+        "avahi/services/airplay.service".text = ''
+          <?xml version="1.0" standalone='no'?>
+          <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+          <service-group>
+            <name replace-wildcards="yes">%h AirPlay</name>
+            <service>
+              <type>_airplay._tcp</type>
+              <port>7000</port>
+              <txt-record>device=shairport-sync</txt-record>
+            </service>
+          </service-group>
+        '';
+        "avahi/services/raop.service".text = ''
+          <?xml version="1.0" standalone='no'?>
+          <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+          <service-group>
+            <name replace-wildcards="yes">%h RAOP</name>
+            <service>
+              <type>_raop._tcp</type>
+              <port>5000</port>
+              <txt-record>device=shairport-sync</txt-record>
+            </service>
+          </service-group>
+        '';
+      };
 
       services = let
         devicesList = [
@@ -291,16 +378,38 @@ in
               package = pkgs.nextcloud32;
               hostName = "telfir";
               https = true;
-              datadir = "/var/lib/nextcloud-clean";
+              datadir = "/zero/sync/nextcloud";
               config = {
-                dbtype = "mysql";
-                dbuser = "nextcloud_clean";
-                dbname = "nextcloud_clean";
+                # fresh PostgreSQL-backed instance managed by the module
+                dbtype = "pgsql";
                 adminuser = "admin";
-                adminpassFile = "/var/lib/nextcloud-clean/adminpass";
+                adminpassFile = "/zero/sync/nextcloud/adminpass";
               };
               database = {
+                # create local PostgreSQL DB/user "nextcloud" using socket auth
                 createLocally = true;
+              };
+            };
+
+            postgresql = {
+              # Nextcloud uses a single DB/user; keep settings conservative but sane
+              settings = {
+                # Memory tuning (safe defaults for a homelab box)
+                shared_buffers = "512MB";
+                effective_cache_size = "2GB";
+                work_mem = "16MB";
+                maintenance_work_mem = "256MB";
+
+                # Connection / WAL settings suitable for OLTP web workload
+                max_connections = 100;
+                wal_level = "replica";
+                synchronous_commit = "on";
+                checkpoint_timeout = "10min";
+                max_wal_size = "2GB";
+                min_wal_size = "512MB";
+
+                # Assume mostly SSD and good filesystem cache
+                random_page_cost = 1.1;
               };
             };
 
