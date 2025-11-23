@@ -8,17 +8,19 @@
   # Optional extra aliases for service-specific options
   mkAdguardRewrites = lib.mkAliasOptionModule ["profiles" "services" "adguardhome" "rewrites"] ["servicesProfiles" "adguardhome" "rewrites"];
   mkNextcloudPackage = lib.mkAliasOptionModule ["profiles" "services" "nextcloud" "package"] ["servicesProfiles" "nextcloud" "package"];
-  services = [
-    "adguardhome"
-    "bitcoind"
-    "unbound"
-    "openssh"
-    "mpd"
-    "nextcloud"
-    "avahi"
-    "jellyfin"
-    "samba"
-  ];
+  services =
+    [
+      "adguardhome"
+      "bitcoind"
+      "unbound"
+      "openssh"
+      "mpd"
+      "nextcloud"
+      "avahi"
+      "jellyfin"
+      "samba"
+      "seafile"
+    ];
 in {
   imports = (map mk services) ++ [mkAdguardRewrites mkNextcloudPackage];
 }
