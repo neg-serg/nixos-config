@@ -400,5 +400,5 @@ Prometheus PHP‑FPM Exporter
 Nextcloud на telfir (чистая установка)
 - Хост `telfir` использует стандартный модуль `services.nextcloud` без кастомных profiles; веб‑фронтенд — Caddy (`services.caddy`) поверх пула PHP‑FPM Nextcloud.
 - Nextcloud доступен по `https://telfir`, начальный логин: пользователь `admin`, пароль `Admin123!ChangeMe` (см. `hosts/telfir/services.nix:services.nextcloud.config`).
-- Директория данных отделена от старых установок (`/var/lib/nextcloud-clean`), база создаётся локально под новым пользователем `nextcloud_clean` (`database.createLocally = true;`).
-- Для сброса пароля админа используйте `sudo -u nextcloud /run/current-system/sw/bin/nextcloud-occ user:resetpassword admin`.
+- Директория данных отделена от старых установок (`/zero/sync/nextcloud`), база MariaDB/MySQL создаётся локально под пользователем БД `nextcloud` (`database.createLocally = true;`).
+- Для сброса пароля админа используйте `sudo -u nextcloud /run/current-system/sw/bin/nextcloud-occ user:resetpassword admin`. Текущий пароль (`Admin123!ChangeMe` по умолчанию) хранится в SOPS‑секрете `secrets/nextcloud-admin-password.sops.yaml`.

@@ -651,5 +651,5 @@ Prometheus PHP‑FPM Exporter
 Nextcloud on telfir (clean install)
 - Host `telfir` uses the stock `services.nextcloud` module without custom profiles; the web frontend is Caddy (`services.caddy`) in front of the Nextcloud PHP‑FPM pool.
 - Nextcloud is served at `https://telfir` with initial credentials: user `admin`, password `Admin123!ChangeMe` (see `hosts/telfir/services.nix:services.nextcloud.config`).
-- The data directory is isolated from any previous installs (`/var/lib/nextcloud-clean`), and the database is created locally under a fresh user `nextcloud_clean` (`database.createLocally = true;`).
-- To reset the admin password, use `sudo -u nextcloud /run/current-system/sw/bin/nextcloud-occ user:resetpassword admin`.
+- The data directory is isolated from any previous installs (`/zero/sync/nextcloud`), and the MariaDB/MySQL database is created locally under the default user `nextcloud` (`database.createLocally = true;`).
+- To reset the admin password, use `sudo -u nextcloud /run/current-system/sw/bin/nextcloud-occ user:resetpassword admin`. The current password (`Admin123!ChangeMe` by default) is tracked via the SOPS secret `secrets/nextcloud-admin-password.sops.yaml`.
