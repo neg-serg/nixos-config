@@ -4,7 +4,7 @@
 
   - `roles.workstation.enable = true;` — рабочая станция (профиль производительности, SSH, Avahi).
   - `roles.homelab.enable = true;` — селф‑хостинг (профиль безопасности, DNS, SSH, MPD, Navidrome,
-    Wakapi, Nextcloud).
+    Nextcloud).
   - `roles.media.enable = true;` — медиа‑серверы (Jellyfin, Navidrome, MPD, Avahi, SSH).
   - `roles.server.enable = true;` — headless/сервер по умолчанию (включает smartd по умолчанию).
 

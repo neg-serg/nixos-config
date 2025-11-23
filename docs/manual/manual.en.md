@@ -252,7 +252,7 @@ Auto‑update (optional): if `system.autoUpgrade` with flakes is enabled, add `-
 
 - Roles: enable bundles via `modules/roles/{workstation,homelab,media}.nix`.
   - `roles.workstation.enable = true;` → desktop defaults (performance profile, SSH, Avahi).
-  - `roles.homelab.enable = true;` → self‑hosting defaults (security profile, DNS, SSH, MPD, Navidrome, Wakapi, Nextcloud).
+  - `roles.homelab.enable = true;` → self‑hosting defaults (security profile, DNS, SSH, MPD, Navidrome, Nextcloud).
   - `roles.media.enable = true;` → media servers (Jellyfin, Navidrome, MPD, Avahi, SSH).
 - Profiles: feature flags under `modules/system/profiles/`:
   - `profiles.performance.enable` and `profiles.security.enable` are toggled by roles; override per host if needed.
