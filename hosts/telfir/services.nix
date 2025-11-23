@@ -242,6 +242,7 @@ in
         pkgs.winboat
         pkgs.docker-compose
         pkgs.openrgb # per-device RGB controller UI
+        pkgs.nextcloud-client # Nextcloud desktop sync client
         (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile (inputs.self + "/scripts/cpu-boost.sh"))) # CLI toggle for AMD Precision Boost
         (pkgs.writeShellScriptBin "fan-stop-capability-test" (builtins.readFile (inputs.self + "/scripts/fan-stop-capability-test.sh"))) # helper to test fan stop thresholds
       ];
@@ -382,12 +383,8 @@ in
               config = {
                 dbtype = "mysql";
                 adminuser = "admin";
-                # Prefer SOPS-managed admin password if available; otherwise fall back to legacy file path
-                adminpassFile =
-                  lib.attrByPath
-                  ["sops" "secrets" "nextcloud/admin_password" "path"]
-                  "/zero/sync/nextcloud/adminpass"
-                  config;
+                # Admin password is materialized from SOPS into a safe host path
+                adminpassFile = "/var/lib/nextcloud/adminpass";
               };
               database = {
                 createLocally = true;
@@ -548,12 +545,20 @@ in
       dev.gcc.autofdo.enable = false;
 
       systemd = {
+        # Ensure auxiliary data directories exist with correct ownership
+        tmpfiles.rules = lib.mkAfter [
+          "d /zero/sync/upload-next 0755 neg neg - -"
+        ];
         services = {
           # NOTE: podman-seafile-db currently fails to start due to a Podman OCI runtime issue.
           # Temporarily disable the DB unit so nixos-rebuild switch does not fail on this host.
           "podman-seafile-db" = {
             enable = false;
           };
+
+          # Disable automatic Nextcloud setup/update units; manage via occ/scripts instead.
+          "nextcloud-setup".enable = false;
+          "nextcloud-update-db".enable = false;
 
           # Энергосбережение по умолчанию для меньшего тепла/шума
           "power-profiles-default" = {
@@ -640,6 +645,25 @@ in
           # Disable runtime logrotate check (build-time check remains). Avoids false negatives
           # when rotating files under non-standard paths or missing until first run.
           logrotate-checkconf.enable = false;
+
+          # Materialize Nextcloud admin password from SOPS into /var/lib/nextcloud/adminpass
+          "nextcloud-adminpass-from-sops" = {
+            description = "Materialize Nextcloud admin password from SOPS";
+            wantedBy = ["multi-user.target"];
+            after = ["local-fs.target"];
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = ''
+                ${pkgs.bash}/bin/bash -euo pipefail -c '
+                  umask 077
+                  install -d -m 0700 -o nextcloud -g nextcloud /var/lib/nextcloud
+                  ${pkgs.sops}/bin/sops -d --extract "[\"data\"]" ${inputs.self + "/secrets/nextcloud-admin-password.sops.yaml"} > /var/lib/nextcloud/adminpass
+                  chown nextcloud:nextcloud /var/lib/nextcloud/adminpass
+                  chmod 0400 /var/lib/nextcloud/adminpass
+                '
+              '';
+            };
+          };
         };
 
         timers."bitcoind-textfile-metrics" = {
@@ -698,14 +722,6 @@ in
           restartUnits = ["grafana.service"];
         };
 
-      # SOPS secret for Nextcloud admin password (plain text, single-line, binary SOPS)
-      sops.secrets."nextcloud/admin_password" = {
-        sopsFile = inputs.self + "/secrets/nextcloud-admin-password.sops.yaml";
-        format = "binary";
-        owner = "nextcloud";
-        group = "nextcloud";
-        mode = "0400";
-      };
     })
     (lib.mkIf (builtins.pathExists wireguardSopsFile) {
       # On-demand WireGuard VPN for telfir, configured via wg-quick config stored in sops.
