@@ -236,8 +236,8 @@ in {
 
 - Роли: включают наборы через `modules/roles/{workstation,homelab,media}.nix`.
   - `roles.workstation.enable = true;` → рабочая станция (профиль производительности, SSH, Avahi).
-  - `roles.homelab.enable = true;` → селф‑хостинг (профиль безопасности, DNS, SSH, MPD, Navidrome, Wakapi, Nextcloud).
-  - `roles.media.enable = true;` → медиа‑серверы (Jellyfin, Navidrome, MPD, Avahi, SSH).
+  - `roles.homelab.enable = true;` → селф‑хостинг (профиль безопасности, DNS, SSH, MPD, Nextcloud).
+  - `roles.media.enable = true;` → медиа‑серверы (Jellyfin, MPD, Avahi, SSH).
 - Профили: фичи под `modules/system/profiles/`.
   - `profiles.performance.enable` и `profiles.security.enable` переключаются ролями; можно переопределять на хосте.
 - Профили сервисов: `profiles.services.<name>.enable` (алиас к `servicesProfiles.<name>.enable`).

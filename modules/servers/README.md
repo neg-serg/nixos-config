@@ -16,8 +16,6 @@ Examples and ports
   - Ports: 22/TCP (opened automatically by the module)
 - mpd: `profiles.services.mpd.enable = true;`
   - Ports: 6600/TCP (opened by module)
-- navidrome: `profiles.services.navidrome.enable = true;`
-  - Typical port: 4533/TCP (configure via `services.navidrome.settings.Port`)
 - jellyfin: `profiles.services.jellyfin.enable = true;`
   - Typical port: 8096/TCP (change in service config as needed)
 - adguardhome: `profiles.services.adguardhome.enable = true;`

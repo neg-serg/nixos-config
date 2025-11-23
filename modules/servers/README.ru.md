@@ -16,8 +16,6 @@
   - Порты: 22/TCP (открывается модулем автоматически)
 - mpd: `profiles.services.mpd.enable = true;`
   - Порты: 6600/TCP (открывается модулем)
-- navidrome: `profiles.services.navidrome.enable = true;`
-  - Типичный порт: 4533/TCP (см. `services.navidrome.settings.Port`)
 - jellyfin: `profiles.services.jellyfin.enable = true;`
   - Типичный порт: 8096/TCP (меняйте в конфиге сервиса при необходимости)
 - adguardhome: `profiles.services.adguardhome.enable = true;`

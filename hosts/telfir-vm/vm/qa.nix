@@ -5,8 +5,6 @@
     adguardhome.enable = false;
     unbound.enable = false;
     jellyfin.enable = false;
-    navidrome.enable = false;
-    wakapi.enable = false;
   };
 
   # Lighten system for VM builds (docs off)

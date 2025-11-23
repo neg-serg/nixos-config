@@ -14,8 +14,6 @@
     "unbound"
     "openssh"
     "mpd"
-    "navidrome"
-    "wakapi"
     "nextcloud"
     "avahi"
     "jellyfin"

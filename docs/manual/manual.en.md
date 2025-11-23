@@ -252,8 +252,8 @@ Auto‑update (optional): if `system.autoUpgrade` with flakes is enabled, add `-
 
 - Roles: enable bundles via `modules/roles/{workstation,homelab,media}.nix`.
   - `roles.workstation.enable = true;` → desktop defaults (performance profile, SSH, Avahi).
-  - `roles.homelab.enable = true;` → self‑hosting defaults (security profile, DNS, SSH, MPD, Navidrome, Nextcloud).
-  - `roles.media.enable = true;` → media servers (Jellyfin, Navidrome, MPD, Avahi, SSH).
+  - `roles.homelab.enable = true;` → self‑hosting defaults (security profile, DNS, SSH, MPD, Nextcloud).
+  - `roles.media.enable = true;` → media servers (Jellyfin, MPD, Avahi, SSH).
 - Profiles: feature flags under `modules/system/profiles/`:
   - `profiles.performance.enable` and `profiles.security.enable` are toggled by roles; override per host if needed.
 - Service profiles: toggle per‑service via `profiles.services.<name>.enable` (alias to `servicesProfiles.<name>.enable`).
@@ -286,7 +286,7 @@ Example (media role):
 { lib, ... }: {
   roles.media.enable = true;
 
-  # This role enables Jellyfin, Navidrome, MPD, Avahi, SSH by default.
+  # This role enables Jellyfin, MPD, Avahi, SSH by default.
   # Per-host overrides (e.g., disable Jellyfin on this machine):
   profiles.services.jellyfin.enable = false;
 
@@ -297,14 +297,6 @@ Example (media role):
 Service override examples
 
 ```nix
-# Navidrome: change library path and port
-{
-  services.navidrome.settings = {
-    MusicFolder = "/srv/media/music";
-    Port = 4533;
-  };
-}
-
 # MPD: change music dir/port and append an extra output
 { lib, ... }: {
   services.mpd = {
