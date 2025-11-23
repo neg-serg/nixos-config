@@ -6,6 +6,7 @@
   ...
 }: let
   grafanaEnabled = config.services.grafana.enable or false;
+  wireguardSopsFile = inputs.self + "/secrets/telfir-wireguard-wg-quick.sops";
 in
   lib.mkMerge [
     {
@@ -160,8 +161,8 @@ in
         ];
         # Explicitly override media role to keep Jellyfin off on this host
         jellyfin.enable = false;
-        # Disable Samba profile on this host
-        samba.enable = false;
+        # Enable Samba profile on this host (guest-access share under /zero/sync/smb)
+        samba.enable = true;
         # Run a Bitcoin Core node with data stored under /zero/bitcoin-node
         # Temporarily disabled
         bitcoind = {
@@ -232,6 +233,8 @@ in
         };
       };
 
+      networking.firewall.interfaces.br0.allowedTCPPorts = lib.mkAfter [80 443];
+
       # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
       environment.systemPackages = lib.mkAfter [
         pkgs.winboat
@@ -241,7 +244,6 @@ in
         (pkgs.writeShellScriptBin "fan-stop-capability-test" (builtins.readFile (inputs.self + "/scripts/fan-stop-capability-test.sh"))) # helper to test fan stop thresholds
       ];
 
-      # Nextcloud via Caddy on LAN, served as "telfir"
       services = let
         devicesList = [
           {
@@ -284,6 +286,53 @@ in
             # Do not expose AdGuard Home Prometheus metrics on this host
             adguardhome.settings.prometheus.enabled = false;
 
+            nextcloud = {
+              enable = true;
+              package = pkgs.nextcloud32;
+              hostName = "telfir";
+              https = true;
+              datadir = "/var/lib/nextcloud-clean";
+              config = {
+                dbtype = "mysql";
+                dbuser = "nextcloud_clean";
+                dbname = "nextcloud_clean";
+                adminuser = "admin";
+                adminpassFile = "/var/lib/nextcloud-clean/adminpass";
+              };
+              database = {
+                createLocally = true;
+              };
+            };
+
+            caddy = {
+              enable = true;
+              virtualHosts."telfir".extraConfig = ''
+                encode zstd gzip
+
+                log {
+                  output file /var/lib/caddy/logs/nextcloud_access.log {
+                    roll_size 50mb
+                    roll_keep 3
+                    roll_keep_for 48h
+                  }
+                  format json
+                }
+
+                header {
+                  Strict-Transport-Security "max-age=15768000; includeSubDomains; preload"
+                  X-Content-Type-Options "nosniff"
+                  X-Frame-Options "SAMEORIGIN"
+                  Referrer-Policy "no-referrer"
+                  Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=(), fullscreen=(self), picture-in-picture=(self)"
+                }
+
+                root * ${config.services.nextcloud.package}
+                php_fastcgi unix//run/phpfpm/nextcloud.sock
+                file_server
+                tls internal
+              '';
+            };
+
             "shairport-sync" = {
               enable = true;
               openFirewall = true;
@@ -313,11 +362,6 @@ in
             ollama.enable = false;
             # Avoid port conflicts: ensure nginx is disabled when using Caddy
             nginx.enable = false;
-            nextcloud = {
-              hostName = "telfir";
-              caddyProxy.enable = true;
-            };
-            caddy.email = "serg.zorg@gmail.com";
 
             # Prometheus stack removed on this host (server, exporters, alertmanager)
 
@@ -346,7 +390,7 @@ in
 
             # (Grafana env + tmpfiles rules are defined at top-level below)
 
-            # Provision local dashboards (Unbound, Nextcloud)
+            # Provision local dashboards (Unbound)
             grafana.provision.dashboards.settings.providers = lib.mkAfter [
               {
                 name = "local-json";
@@ -520,8 +564,6 @@ in
         };
       };
 
-      # Monitoring (role enables Netdata + sysstat + atop with light config)
-      # Netdata UI: http://127.0.0.1:19999
     }
     (lib.mkIf grafanaEnabled {
       systemd = {
@@ -565,5 +607,29 @@ in
           # Restart Grafana if the secret changes
           restartUnits = ["grafana.service"];
         };
+    })
+    (lib.mkIf (builtins.pathExists wireguardSopsFile) {
+      # On-demand WireGuard VPN for telfir, configured via wg-quick config stored in sops.
+      # The tunnel is not started automatically; use systemctl start/stop to control it.
+      sops.secrets."wireguard/telfir-wg-quick" = {
+        sopsFile = wireguardSopsFile;
+        format = "binary"; # keep original wg-quick config format
+        owner = "root";
+        group = "root";
+        mode = "0600";
+      };
+
+      systemd.services."wg-quick-vpn-telfir" = {
+        description = "On-demand WireGuard VPN (telfir, wg-quick)";
+        wants = ["network-online.target"];
+        after = ["network-online.target"];
+        wantedBy = []; # do not autostart; manual systemctl only
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${pkgs.wireguard-tools}/bin/wg-quick up ${config.sops.secrets."wireguard/telfir-wg-quick".path}";
+          ExecStop = "${pkgs.wireguard-tools}/bin/wg-quick down ${config.sops.secrets."wireguard/telfir-wg-quick".path}";
+        };
+      };
     })
   ]
