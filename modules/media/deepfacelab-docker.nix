@@ -12,9 +12,9 @@ let
     #!${pkgs.bash}/bin/bash
     set -euo pipefail
 
-    IMAGE="${DFL_DOCKER_IMAGE:-ubuntu}"
-    REPO_DIR="${DFL_REPO_DIR:-${repoDir}}"
-    DATA_DIR="${DFL_DATA_DIR:-${dataDir}}"
+    IMAGE="${"$"}{DFL_DOCKER_IMAGE:-ubuntu}"
+    REPO_DIR="${"$"}{DFL_REPO_DIR:-${repoDir}}"
+    DATA_DIR="${"$"}{DFL_DATA_DIR:-${dataDir}}"
 
     if ! command -v docker >/dev/null 2>&1; then
       echo "deepfacelab-docker: docker not found in PATH" >&2
@@ -23,7 +23,7 @@ let
 
     mkdir -p "$REPO_DIR" "$DATA_DIR"
 
-    if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
       cat <<'EOF'
 Usage: deepfacelab-docker [docker-args...] [-- command]
 
