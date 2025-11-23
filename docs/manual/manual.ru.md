@@ -402,3 +402,6 @@ Nextcloud на telfir (чистая установка)
 - Nextcloud доступен по `https://telfir`, начальный логин: пользователь `admin`, пароль `Admin123!ChangeMe` (см. `hosts/telfir/services.nix:services.nextcloud.config`).
 - Директория данных отделена от старых установок (`/zero/sync/nextcloud`), база MariaDB/MySQL создаётся локально под пользователем БД `nextcloud` (`database.createLocally = true;`).
 - Для сброса пароля админа используйте `sudo -u nextcloud /run/current-system/sw/bin/nextcloud-occ user:resetpassword admin`. Текущий пароль (`Admin123!ChangeMe` по умолчанию) хранится в SOPS‑секрете `secrets/nextcloud-admin-password.sops.yaml`.
+  - Пароль подхватывается в систему через юнит `nextcloud-adminpass-from-sops`, который разворачивает секрет в `/var/lib/nextcloud/adminpass` (владелец `nextcloud`, права `0400`).
+  - Автоматические юниты `nextcloud-setup` и `nextcloud-update-db` отключены; обновление выполняется вручную через `sudo -u nextcloud nextcloud-occ upgrade` после смены версии Nextcloud в конфиге.
+  - Для редкого “чистого” сброса предусмотрены скрипты `scripts/nextcloud-reset-mysql.sh` / `scripts/nextcloud-reset-pg.sh` (см. комментарии внутри; запускать строго через `sudo`).
