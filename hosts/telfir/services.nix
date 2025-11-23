@@ -378,13 +378,16 @@ in
               package = pkgs.nextcloud32;
               hostName = "telfir";
               https = true;
-              datadir = "/var/lib/nextcloud-clean";
+              datadir = "/zero/sync/nextcloud";
               config = {
                 dbtype = "mysql";
-                dbname = "nextcloud_clean";
-                dbuser = "nextcloud_clean";
                 adminuser = "admin";
-                adminpassFile = "/var/lib/nextcloud-clean/adminpass";
+                # Prefer SOPS-managed admin password if available; otherwise fall back to legacy file path
+                adminpassFile =
+                  lib.attrByPath
+                  ["sops" "secrets" "nextcloud/admin_password" "path"]
+                  "/zero/sync/nextcloud/adminpass"
+                  config;
               };
               database = {
                 createLocally = true;
@@ -694,6 +697,15 @@ in
           # Restart Grafana if the secret changes
           restartUnits = ["grafana.service"];
         };
+
+      # SOPS secret for Nextcloud admin password (plain text, single-line, binary SOPS)
+      sops.secrets."nextcloud/admin_password" = {
+        sopsFile = inputs.self + "/secrets/nextcloud-admin-password.sops.yaml";
+        format = "binary";
+        owner = "nextcloud";
+        group = "nextcloud";
+        mode = "0400";
+      };
     })
     (lib.mkIf (builtins.pathExists wireguardSopsFile) {
       # On-demand WireGuard VPN for telfir, configured via wg-quick config stored in sops.
