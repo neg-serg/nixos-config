@@ -288,6 +288,15 @@ in
             # Do not expose AdGuard Home Prometheus metrics on this host
             adguardhome.settings.prometheus.enabled = false;
 
+            "shairport-sync" = {
+              enable = true;
+              openFirewall = true;
+              settings.general = {
+                name = "Telfir AirPlay";
+                output_backend = "pw";
+              };
+            };
+
             smartd.enable = false;
 
             # Persistent journald logs with retention and rate limiting
