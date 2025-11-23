@@ -19,10 +19,10 @@
     pkgs.vital # spectral wavetable synth
 
     # Live-coding stack: TidalCycles + SuperCollider
-    pkgs.haskellPackages.tidal
-    tidalGhci
-    pkgs.supercollider
-    pkgs.supercolliderPlugins.sc3-plugins
+    pkgs.haskellPackages.tidal # TidalCycles live-coding library
+    tidalGhci # GHCi wrapper with Tidal preloaded
+    pkgs.supercollider # SuperCollider IDE and audio engine
+    pkgs.supercolliderPlugins.sc3-plugins # extra SuperCollider plugins (UGens)
   ];
 in {
   config = lib.mkIf enabled {
