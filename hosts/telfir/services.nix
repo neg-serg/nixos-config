@@ -6,6 +6,41 @@
   ...
 }: let
   grafanaEnabled = config.services.grafana.enable or false;
+  hasResilioSecret = builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml");
+  resilioAuthScript = pkgs.writeShellScript "resilio-set-webui-auth" ''
+    set -euo pipefail
+    CONFIG="/run/rslsync/config.json"
+    USER_FILE="${config.sops.secrets."resilio/http-login".path}"
+    PASS_FILE="${config.sops.secrets."resilio/http-pass".path}"
+
+    if [ ! -r "$USER_FILE" ] || [ ! -r "$PASS_FILE" ]; then
+      echo "resilio-set-webui-auth: secret files not readable, skipping" >&2
+      exit 0
+    fi
+
+    USER="$(tr -d '\n' < "$USER_FILE")"
+    PASS="$(tr -d '\n' < "$PASS_FILE")"
+
+    if [ -z "$USER" ] || [ -z "$PASS" ]; then
+      echo "resilio-set-webui-auth: empty user/pass, skipping" >&2
+      exit 0
+    fi
+
+    if [ ! -f "$CONFIG" ]; then
+      echo "resilio-set-webui-auth: $CONFIG not found, skipping" >&2
+      exit 0
+    fi
+
+    tmp="$(mktemp)"
+    ${pkgs.jq}/bin/jq \
+      --arg user "$USER" \
+      --arg pass "$PASS" \
+      ' .webui = (.webui // {}) 
+        | .webui.login = $user
+        | .webui.password = $pass ' \
+      "$CONFIG" > "$tmp"
+    mv "$tmp" "$CONFIG"
+  '';
 in
   lib.mkMerge [
     {
@@ -331,6 +366,27 @@ in
                 gui.address = "0.0.0.0:8384";
               };
             };
+            # Resilio Sync (interactive Web UI, auth via SOPS)
+            resilio = lib.mkIf hasResilioSecret {
+              enable = true;
+
+              # state / DB
+              storagePath = "/zero/sync/.state";
+
+              # data root (folders will live under this)
+              directoryRoot = "/zero/sync";
+
+              enableWebUI = true;
+              httpListenAddr = "127.0.0.1";
+              httpListenPort = 9000;
+
+              # Actual credentials come from SOPS and are injected into config.json
+              httpLogin = "placeholder";
+              httpPass = "placeholder";
+
+              listeningPort = 41111;
+              useUpnp = false;
+            };
             # Bitcoind instance is now managed by modules/servers/bitcoind
           }
           (lib.mkIf grafanaEnabled {
@@ -475,6 +531,11 @@ in
             };
           });
 
+          # Inject Resilio Web UI credentials from SOPS into generated config.json
+          resilio = lib.mkIf hasResilioSecret {
+            serviceConfig.ExecStartPre = lib.mkAfter [resilioAuthScript];
+          };
+
           # Periodic metric collection service + timer
           "bitcoind-textfile-metrics" = let
             bitcoindInstance = config.servicesProfiles.bitcoind.instance or "main";
@@ -559,6 +620,18 @@ in
             Unit = "bitcoind-textfile-metrics.service";
           };
         };
+      };
+
+      # Resilio Sync: Web UI auth via SOPS, data under /zero/sync
+      sops.secrets."resilio/http-login" = lib.mkIf hasResilioSecret {
+        sopsFile = inputs.self + "/secrets/resilio.sops.yaml";
+        owner = "rslsync";
+        mode = "0400";
+      };
+      sops.secrets."resilio/http-pass" = lib.mkIf hasResilioSecret {
+        sopsFile = inputs.self + "/secrets/resilio.sops.yaml";
+        owner = "rslsync";
+        mode = "0400";
       };
 
       # Monitoring (role enables Netdata + sysstat + atop with light config)
