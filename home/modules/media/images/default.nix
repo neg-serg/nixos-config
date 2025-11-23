@@ -17,7 +17,6 @@ with lib;
     in
       lib.mkMerge [
         (mkLocalBin "swayimg" wrapperScript)
-        (mkLocalBin "sx" wrapperScript)
         # Live-editable Swayimg config via helper (guards parent dir and target)
         (xdg.mkXdgSource "swayimg" {
           source = config.lib.file.mkOutOfStoreSymlink "${config.neg.hmConfigRoot}/modules/media/images/swayimg/conf";
