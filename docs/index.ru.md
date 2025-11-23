@@ -8,6 +8,7 @@
   [swayimg-hotkeys.md](./swayimg-hotkeys.md)
 - Гайд по миграции на Vaultix: [vaultix-migration.ru.md](./vaultix-migration.ru.md),
   [vaultix-migration.md](./vaultix-migration.md)
+- DeepFaceLab_Linux через Docker: [deepfacelab-docker.ru.md](./deepfacelab-docker.ru.md)
 
 ## Документация опций
 

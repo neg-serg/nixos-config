@@ -12,7 +12,7 @@ let
     #!${pkgs.bash}/bin/bash
     set -euo pipefail
 
-    IMAGE="${DFL_DOCKER_IMAGE:-ubuntu:20.04}"
+    IMAGE="${DFL_DOCKER_IMAGE:-ubuntu}"
     REPO_DIR="${DFL_REPO_DIR:-${repoDir}}"
     DATA_DIR="${DFL_DATA_DIR:-${dataDir}}"
 
@@ -30,7 +30,7 @@ Usage: deepfacelab-docker [docker-args...] [-- command]
 This helper starts an Ubuntu container for DeepFaceLab_Linux.
 
 Defaults (override via env vars):
-  DFL_DOCKER_IMAGE  - Docker image (default: ubuntu:20.04)
+  DFL_DOCKER_IMAGE  - Docker image (default: ubuntu)
   DFL_REPO_DIR      - host path for repo (default: ~/vid/deepfacelab/repo)
   DFL_DATA_DIR      - host path for data (default: ~/vid/deepfacelab/data)
 
@@ -44,7 +44,7 @@ Examples:
     # open bash inside the container in /workspace
 
   DFL_DOCKER_IMAGE=ubuntu:22.04 deepfacelab-docker
-    # override base image
+    # override base image (example with explicit tag)
 EOF
       exit 0
     fi
@@ -75,4 +75,3 @@ in {
     ];
   };
 }
-
