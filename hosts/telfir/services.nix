@@ -7,6 +7,23 @@
 }: let
   grafanaEnabled = config.services.grafana.enable or false;
   hasResilioSecret = builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml");
+  resilioFsSetupScript = pkgs.writeShellScript "resilio-fs-setup" ''
+    set -euo pipefail
+    DATA_ROOT="/zero/sync"
+    STATE_DIR="/zero/sync/.state"
+
+    # Ensure data and state directories exist with correct owner/group and setgid on data root
+    mkdir -p "$DATA_ROOT" "$STATE_DIR"
+    chown rslsync:rslsync "$DATA_ROOT" "$STATE_DIR"
+    chmod 2770 "$DATA_ROOT"
+    chmod 700 "$STATE_DIR"
+
+    # Best-effort ACLs to keep group rslsync rwx regardless of umask
+    if command -v ${pkgs.acl}/bin/setfacl >/dev/null 2>&1; then
+      ${pkgs.acl}/bin/setfacl -d -m group:rslsync:rwx "$DATA_ROOT" || true
+      ${pkgs.acl}/bin/setfacl -m group:rslsync:rwx "$DATA_ROOT" || true
+    fi
+  '';
   resilioAuthScript = pkgs.writeShellScript "resilio-set-webui-auth" ''
     set -euo pipefail
     CONFIG="/run/rslsync/config.json"
@@ -474,6 +491,8 @@ in
         users.caddy.extraGroups = ["nginx"];
         groups.nginx = {};
       };
+      # Allow main user to collaborate with Resilio data owned by rslsync
+      users.users.${config.users.main.name}.extraGroups = lib.mkAfter ["rslsync"];
 
       # Games autoscale defaults for this host
       profiles.games = {
@@ -533,7 +552,7 @@ in
 
           # Inject Resilio Web UI credentials from SOPS into generated config.json
           resilio = lib.mkIf hasResilioSecret {
-            serviceConfig.ExecStartPre = lib.mkAfter [resilioAuthScript];
+            serviceConfig.ExecStartPre = lib.mkAfter [resilioFsSetupScript resilioAuthScript];
           };
 
           # Periodic metric collection service + timer
