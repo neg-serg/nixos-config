@@ -422,6 +422,12 @@ in
 
       systemd = {
         services = {
+          # NOTE: podman-seafile-db currently fails to start due to a Podman OCI runtime issue.
+          # Temporarily disable the DB unit so nixos-rebuild switch does not fail on this host.
+          "podman-seafile-db" = {
+            enable = false;
+          };
+
           # Энергосбережение по умолчанию для меньшего тепла/шума
           "power-profiles-default" = {
             description = "Set default power profile to power-saver";
