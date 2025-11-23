@@ -18,10 +18,23 @@
     chmod 2770 "$DATA_ROOT"
     chmod 700 "$STATE_DIR"
 
+    # Ensure existing share directories under /zero/sync (except .state) are group-writable
+    for d in "$DATA_ROOT"/*; do
+      [ -d "$d" ] || continue
+      [ "$d" = "$STATE_DIR" ] && continue
+      chgrp rslsync "$d" || true
+      chmod 2770 "$d" || true
+    done
+
     # Best-effort ACLs to keep group rslsync rwx regardless of umask
     if command -v ${pkgs.acl}/bin/setfacl >/dev/null 2>&1; then
       ${pkgs.acl}/bin/setfacl -d -m group:rslsync:rwx "$DATA_ROOT" || true
       ${pkgs.acl}/bin/setfacl -m group:rslsync:rwx "$DATA_ROOT" || true
+      for d in "$DATA_ROOT"/*; do
+        [ -d "$d" ] || continue
+        [ "$d" = "$STATE_DIR" ] && continue
+        ${pkgs.acl}/bin/setfacl -m group:rslsync:rwx "$d" || true
+      done
     fi
   '';
   resilioAuthScript = pkgs.writeShellScript "resilio-set-webui-auth" ''
@@ -550,9 +563,20 @@ in
             };
           });
 
+          "resilio-fs-setup" = lib.mkIf hasResilioSecret {
+            description = "Prepare Resilio data directory /zero/sync";
+            after = ["local-fs.target"];
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = [resilioFsSetupScript];
+            };
+          };
+
           # Inject Resilio Web UI credentials from SOPS into generated config.json
           resilio = lib.mkIf hasResilioSecret {
-            serviceConfig.ExecStartPre = lib.mkAfter [resilioFsSetupScript resilioAuthScript];
+            requires = lib.mkAfter ["resilio-fs-setup.service"];
+            after = lib.mkAfter ["resilio-fs-setup.service"];
+            serviceConfig.ExecStartPre = lib.mkAfter [resilioAuthScript];
           };
 
           # Periodic metric collection service + timer
