@@ -25,9 +25,6 @@ in
         media.enable = true;
         monitoring.enable = true;
       };
-      # Enable Seafile profile on this host
-      profiles.services.seafile.enable = true;
-
       # Reduce microphone background noise system-wide (PipeWire RNNoise filter)
       # Enabled via modules/hardware/audio/noise by default for this host
       # (If you prefer toggling via an option, we can expose one later.)
@@ -170,10 +167,6 @@ in
         bitcoind = {
           enable = false;
           dataDir = "/zero/bitcoin-node";
-        };
-        seafile = {
-          hostName = "seafile.telfir";
-          dataDir = "/zero/seafile";
         };
       };
 
