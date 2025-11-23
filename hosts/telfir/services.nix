@@ -249,10 +249,6 @@ in
             name = "telfir";
             id = "EZG57BT-TANWJ2R-QDVLV5X-4DKP7GU-HQENUT7-MA43GUU-AV3IN6P-7KKGZA3";
           }
-          {
-            name = "OPPO X7 Ultra";
-            id = "JHDQEDC-YN67IMD-B7WFZTI-Y4CPKMY-MUPRBYK-OAFOMPC-IJVDVOV-AOBILAX";
-          }
         ];
         devices = builtins.listToAttrs (
           map (d: {
@@ -265,12 +261,12 @@ in
           {
             name = "music-upload";
             path = "/zero/syncthing/music-upload";
-            devices = ["telfir" "OPPO X7 Ultra"];
+            devices = ["telfir"];
           }
           {
             name = "picture-upload";
             path = "/zero/syncthing/picture-upload";
-            devices = ["OPPO X7 Ultra"];
+            devices = ["telfir"];
           }
         ];
         folders = builtins.listToAttrs (
