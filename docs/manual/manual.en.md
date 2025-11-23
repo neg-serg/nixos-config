@@ -252,14 +252,14 @@ Auto‑update (optional): if `system.autoUpgrade` with flakes is enabled, add `-
 
 - Roles: enable bundles via `modules/roles/{workstation,homelab,media}.nix`.
   - `roles.workstation.enable = true;` → desktop defaults (performance profile, SSH, Avahi).
-  - `roles.homelab.enable = true;` → self‑hosting defaults (security profile, DNS, SSH, MPD, Nextcloud).
+  - `roles.homelab.enable = true;` → self‑hosting defaults (security profile, DNS, SSH, MPD).
   - `roles.media.enable = true;` → media servers (Jellyfin, MPD, Avahi, SSH).
 - Profiles: feature flags under `modules/system/profiles/`:
   - `profiles.performance.enable` and `profiles.security.enable` are toggled by roles; override per host if needed.
 - Service profiles: toggle per‑service via `profiles.services.<name>.enable` (alias to `servicesProfiles.<name>.enable`).
   - Roles set `mkDefault true`; hosts can disable with plain `false` (no mkForce needed).
 - Host‑specific config: keep concrete settings under `hosts/<host>/*.nix`.
-  - Examples: Nextcloud domain/proxy, NIC names, local DNS rewrites.
+  - Examples: NIC names, local DNS rewrites.
 
 Example (host):
 
@@ -272,11 +272,8 @@ Example (host):
 
   # Disable heavy services for VMs or minimal builds
   profiles.services = {
-    nextcloud.enable = false;
     adguardhome.enable = false;
   };
-
-/* Host‑specific sync tools (if used) can be configured here, e.g. per-host Nextcloud paths or custom backup units. */
 }
 ```
 
@@ -624,16 +621,10 @@ Tuning tips:
 
 - Unbound + Prometheus + Grafana dashboard for DNS quality (latency, DNSSEC validation, cache hits): see `docs/unbound-metrics.md`.
 
-## Nextcloud Monitoring
-
-- Blackbox probe to `https://telfir/status.php` and latency chart; optional PHP‑FPM exporter for pool health: see `docs/nextcloud-monitoring.md`.
-
 
 ---
 
-# AGENTS: Tips and pitfalls found while wiring monitoring and Nextcloud
-
-This repo uses a custom `post-boot.target`, Nextcloud via PHP‑FPM behind Caddy, and Prometheus exporters. Below are the key gotchas we hit and the fixes that worked, so we don’t step on the same rakes again.
+# AGENTS: Tips and pitfalls found while wiring monitoring and post-boot
 
 Post‑Boot Systemd Target
 - Don’t add `After=graphical.target` to the `post-boot.target` itself; `graphical.target` already wants `post-boot.target`. Adding `After=graphical.target` on the target creates an ordering cycle.
@@ -643,22 +634,22 @@ Wi‑Fi via iwd profile
 - The base network module installs iwd tooling but sets `networking.wireless.iwd.enable = false` so wired hosts don’t start it needlessly.
 - To give a host Wi‑Fi controls, toggle `profiles.network.wifi.enable = true;` (e.g. inside `hosts/<name>/networking.nix`) instead of hand-written `lib.mkForce` overrides.
 
-Prometheus PHP‑FPM Exporter + Nextcloud pool
-- Socket access: the exporter scrapes `unix:///run/phpfpm/nextcloud.sock;/status`. Ensure the PHP‑FPM pool socket is group‑readable by a shared web group and the exporter joins it:
-  - `services.phpfpm.pools.nextcloud.settings`: set `"listen.group" = "nginx";` and `"listen.mode" = "0660"`.
+Prometheus PHP‑FPM Exporter
+- Socket access: the exporter scrapes a PHP‑FPM unix socket (for example, `unix:///run/phpfpm/app.sock;/status`). Ensure the PHP‑FPM pool socket is group‑readable by a shared web group and the exporter joins it:
+  - Configure the PHP‑FPM pool: set `"listen.group" = "nginx";` and `"listen.mode" = "0660"`.
   - Add both `caddy` and `prometheus` users to the `nginx` group via `users.users.<name>.extraGroups = [ "nginx" ];`.
 - Unit sandboxing: the upstream exporter unit can prohibit UNIX sockets with `RestrictAddressFamilies`.
   - Allow AF_UNIX: set `RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];`.
   - Ensure the unit has access to the socket group: `SupplementaryGroups = [ "nginx" ];`.
 - DynamicUser vs. real user: the upstream module may use `DynamicUser=true` and `Group=php-fpm-exporter`. If you need the exporter to inherit static group membership, override with higher priority:
   - `DynamicUser = lib.mkForce false; User = lib.mkForce "prometheus"; Group = lib.mkForce "prometheus";`.
-- Startup order: start the exporter after the Nextcloud PHP‑FPM pool is up to avoid initial connection failures:
-  - `after = [ "phpfpm-nextcloud.service" "phpfpm.service" "nextcloud-setup.service" ];`
-  - `wants = [ "phpfpm-nextcloud.service" ];`
+- Emergency switch safety: if activation is blocked by the exporter while debugging, temporarily disable it to unblock a `switch`: set `services.prometheus.exporters."php-fpm".enable = false;` and re‑enable after fixing permissions/ordering.
+- Common mistakes to avoid:
+  - Misplacing user group options: within the `users = { ... }` attrset, set `users.caddy.extraGroups = [ "nginx" ];` and `users.prometheus.extraGroups = [ "nginx" ];` (this maps to `users.users.<name>.extraGroups`). Don’t write `users.users.caddy` again inside `users = { ... }` — that becomes `users.users.users.caddy` and fails evaluation.
+  - Enabling multiple proxies: don’t enable multiple reverse proxies for the same backend (such as both nginx and Caddy for the same socket/port); pick a single proxy per backend.
 
-Emergency switch safety
-- If activation is blocked by the exporter while debugging, temporarily disable it to unblock a `switch`: set `services.prometheus.exporters."php-fpm".enable = false;` and re‑enable after fixing permissions/ordering.
-
-Common mistakes to avoid
-- Misplacing user group options: within the `users = { ... }` attrset, set `users.caddy.extraGroups = [ "nginx" ];` and `users.prometheus.extraGroups = [ "nginx" ];` (this maps to `users.users.<name>.extraGroups`). Don’t write `users.users.caddy` again inside `users = { ... }` — that becomes `users.users.users.caddy` and fails evaluation.
-- Enabling multiple proxies: don’t enable both `nextcloud.nginxProxy` and `nextcloud.caddyProxy` together (there’s an assertion protecting this, but worth remembering).
+Nextcloud on telfir (clean install)
+- Host `telfir` uses the stock `services.nextcloud` module without custom profiles; the web frontend is Caddy (`services.caddy`) in front of the Nextcloud PHP‑FPM pool.
+- Nextcloud is served at `https://telfir` with initial credentials: user `admin`, password `Admin123!ChangeMe` (see `hosts/telfir/services.nix:services.nextcloud.config`).
+- The data directory is isolated from any previous installs (`/var/lib/nextcloud-clean`), and the database is created locally under a fresh user `nextcloud_clean` (`database.createLocally = true;`).
+- To reset the admin password, use `sudo -u nextcloud /run/current-system/sw/bin/nextcloud-occ user:resetpassword admin`.

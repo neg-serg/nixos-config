@@ -190,17 +190,6 @@ in {
     };
     openssh.enable = opts.mkEnableOption "OpenSSH (and mosh) profile.";
     mpd.enable = opts.mkEnableOption "MPD (Music Player Daemon) profile.";
-    nextcloud = {
-      enable = opts.mkEnableOption "Nextcloud server profile (with optional Caddy proxy).";
-      package = opts.mkOpt (types.nullOr types.package) null {
-        description = ''
-          Nextcloud package derivation to use for the service.
-          Set to a specific `pkgs.nextcloudXX` or a flake-provided package to pin the major version.
-          When unset, the module uses a sensible default from `pkgs` (currently Nextcloud 31).
-        '';
-        example = pkgs.nextcloud31;
-      };
-    };
     avahi.enable = opts.mkEnableOption "Avahi (mDNS) profile.";
     jellyfin.enable = opts.mkEnableOption "Jellyfin media server profile.";
     samba.enable = opts.mkEnableOption "Samba (SMB/CIFS) fileshare profile.";

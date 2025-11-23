@@ -36,12 +36,6 @@ in {
     # Ollama model server
     ollama = lib.mkIf (config.services.ollama.enable or false) (mkPostBoot "ollama");
 
-    # Nextcloud stack pieces
-    mysql = lib.mkIf (config.services.nextcloud.enable or false) (mkPostBoot "mysql");
-    "redis-nextcloud" = lib.mkIf (config.services.nextcloud.enable or false) (mkPostBoot "redis-nextcloud");
-    "phpfpm-nextcloud" = lib.mkIf (config.services.nextcloud.enable or false) (mkPostBoot "phpfpm-nextcloud");
-    "nextcloud-setup" = lib.mkIf (config.services.nextcloud.enable or false) (mkPostBoot "nextcloud-setup");
-
     # Proxies (if enabled)
     caddy = lib.mkIf (config.services.caddy.enable or false) (mkPostBoot "caddy");
     nginx = lib.mkIf (config.services.nginx.enable or false) (mkPostBoot "nginx");
