@@ -3,8 +3,7 @@
 - Enable a role in your host config:
 
   - `roles.workstation.enable = true;` — desktop defaults (performance profile, SSH, Avahi).
-  - `roles.homelab.enable = true;` — self‑hosting defaults (security profile, DNS, SSH, MPD,
-    Nextcloud).
+  - `roles.homelab.enable = true;` — self‑hosting defaults (security profile, DNS, SSH, MPD).
   - `roles.media.enable = true;` — media servers (Jellyfin, MPD, Avahi, SSH).
   - `roles.server.enable = true;` — headless/server defaults (enables smartd by default).
 

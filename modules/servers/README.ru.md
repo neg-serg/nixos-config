@@ -58,13 +58,6 @@
 - Маршрутизация DNS: `resolvectl status` → `DNS Servers: 127.0.0.1`, `Domains: ~.`
 - Фильтры AGH: `journalctl -u adguardhome -b | rg -i 'filter|download|update|enabled'`
 - Быстрый запрос: `resolvectl query example.com` (должно идти через цепочку)
-- nextcloud: `profiles.services.nextcloud.enable = true;`
-  - Reverse proxy: включите `services.nextcloud.{caddyProxy|nginxProxy}.enable = true;`
-  - Откроются HTTP/HTTPS (80/443) при использовании прокси; внутренний PHP‑FPM сокет настраивается
-    модулем.
-  - Мониторинг: Blackbox‑проба `https://<host>/status.php` и опциональный PHP‑FPM экспортер — см.
-    `docs/nextcloud-monitoring.ru.md`.
-
 Документация
 
 - Опции по сервисам в агрегированном файле: flake‑артефакт `packages.${system}."options-md"` (когда

@@ -2,7 +2,7 @@
 # Module: roles/homelab
 # Purpose: Homelab role (self-hosting defaults).
 # Key options: cfg = config.roles.homelab.enable
-# Dependencies: Enables profiles.security and profiles.services.* (adguardhome, unbound, openssh, mpd, nextcloud).
+# Dependencies: Enables profiles.security and profiles.services.* (adguardhome, unbound, openssh, mpd).
 {
   lib,
   config,
@@ -22,7 +22,6 @@ in {
       unbound.enable = lib.mkDefault true;
       openssh.enable = lib.mkDefault true;
       mpd.enable = lib.mkDefault true;
-      nextcloud.enable = lib.mkDefault true;
     };
   };
 }

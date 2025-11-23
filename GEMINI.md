@@ -84,7 +84,7 @@ Adding a new host involves creating a new directory and defining its specific co
 3.  **Define host-specifics** in the imported files. The primary way to configure a host is by enabling `roles` and `profiles`.
     *   **Roles** (`roles.*`): Enable broad configuration bundles like `workstation` or `homelab`.
     *   **Profiles** (`profiles.*`): Enable more granular feature sets like `performance` or `security`.
-    *   **Services** (`profiles.services.*`): Toggle specific major services like `nextcloud` or `adguardhome`.
+    *   **Services** (`profiles.services.*`): Toggle specific major services like `adguardhome` or `jellyfin`.
 
     **Example `services.nix` for a new host:**
     ```nix
@@ -95,10 +95,7 @@ Adding a new host involves creating a new directory and defining its specific co
         homelab.enable = true;
       };
 
-      # Disable a specific service from a role for this host
-      profiles.services.nextcloud.enable = false;
-
-      # Add host-specific settings (e.g., Nextcloud paths, DNS rewrites)
+      # Add host-specific settings (e.g., DNS rewrites)
     }
     ```
 4.  **Add the host to `flake.nix`**: In the `nixosConfigurations` output, add an entry for `new-machine` that points to its `default.nix`.

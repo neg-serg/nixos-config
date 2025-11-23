@@ -3,7 +3,7 @@
 - Включайте роль в конфиге хоста:
 
   - `roles.workstation.enable = true;` — рабочая станция (профиль производительности, SSH, Avahi).
-  - `roles.homelab.enable = true;` — селф‑хостинг (профиль безопасности, DNS, SSH, MPD, Nextcloud).
+  - `roles.homelab.enable = true;` — селф‑хостинг (профиль безопасности, DNS, SSH, MPD).
   - `roles.media.enable = true;` — медиа‑серверы (Jellyfin, MPD, Avahi, SSH).
   - `roles.server.enable = true;` — headless/сервер по умолчанию (включает smartd по умолчанию).
 
