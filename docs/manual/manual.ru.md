@@ -73,6 +73,44 @@
 - Управление: `systemctl --user start|stop|status <unit>`, логи:
   `journalctl --user -u <unit>`.
 
+## WireGuard VPN (host / user)
+
+- Хостовый on-demand WireGuard‑туннель для `telfir` настроен в `hosts/telfir/services.nix` как
+  `systemd.services."wg-quick-vpn-telfir"`, который использует wg‑quick‑конфиг из sops‑секрета
+  `sops.secrets."wireguard/telfir-wg-quick"`.
+- Секретный файл ожидается в репозитории как `secrets/telfir-wireguard-wg-quick.sops` (формат
+  `binary`, содержимое — обычный wg‑quick конфиг с `[Interface]/[Peer]`, DNS и MTU).
+- Туннель не поднимается по умолчанию; включение/выключение:
+  `sudo systemctl start wg-quick-vpn-telfir` / `sudo systemctl stop wg-quick-vpn-telfir`.
+- DNS из секции `DNS = …` применяется только при активном туннеле за счёт wg‑quick; убедитесь,
+  что на хосте установлены необходимые утилиты (`wireguard-tools` уже добавлен в
+  `modules/system/net/vpn/pkgs.nix`).
+
+### Создание sops‑секрета для WireGuard
+
+- Подготовьте временный plaintext‑файл (НЕ коммитить в git), например
+  `secrets/telfir-wireguard-wg-quick.conf` с содержимым:
+  `[Interface]`, `PrivateKey = …`, `Address = 10.0.0.2/32`, `DNS = 1.1.1.1, 1.0.0.1`, `MTU = 1420`
+  и соответствующим `[Peer]` блоком.
+- Зашифруйте его через sops в бинарный файл, привязанный к age‑ключам из
+  `~/.config/sops/age/keys.txt`:
+  `sops -e secrets/telfir-wireguard-wg-quick.conf > secrets/telfir-wireguard-wg-quick.sops`.
+- Удалите plaintext:
+  `rm -f secrets/telfir-wireguard-wg-quick.conf`.
+- После этого `nixos-rebuild switch --flake .#telfir` подхватит секрет, создаст файл в `/run/secrets`
+  и системный юнит `wg-quick-vpn-telfir.service`.
+
+### Идеи для user-level WireGuard
+
+- Для туннелей только для одного пользователя можно применять тот же подход, но через Home Manager и
+  `systemd.user.services`, где sops‑секреты хранятся в `secrets/home` и монтируются в
+  `/run/user/$UID/secrets/...`.
+- Примерный паттерн:
+  `systemd.user.services.wg-quick-myuser = { serviceConfig.ExecStart = "wg-quick up /run/user/$UID/secrets/wg.conf"; ... };`
+  и управление через `systemctl --user start|stop wg-quick-myuser`.
+- Такой подход позволяет изолировать VPN только для сессии пользователя, не меняя глобальный
+  routing/DNS для всего хоста и не требуя root‑прав для включения/выключения туннеля.
+
 ### Hyprland и GUI
 
 - Автоперезагрузка Hyprland отключена; перезапускайте хоткеем.
@@ -124,18 +162,6 @@
 Примеры
 
 ```nix
-# VM: принудительно отключить тяжёлые сервисы из ролей
-{ lib, ... }: {
-  profiles.services = {
-    nextcloud.enable = false;
-    adguardhome.enable = false;
-    unbound.enable = false;
-  };
-
-  # VM: упростить набор ядра
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-}
-
 # Паттерн модуля (без mkForce):
 { lib, config, ... }: let
   cfg = config.servicesProfiles.example;
@@ -203,10 +229,6 @@ in {
 
 - Unbound + Prometheus + Grafana для оценивания качества DNS (задержки, DNSSEC‑валидация, кэш‑хиты): см. `docs/unbound-metrics.ru.md`.
 
-## Мониторинг Nextcloud
-
-- Blackbox‑проба `https://telfir/status.php` и график задержки; опционально — экспортер PHP‑FPM для состояния пула: см. `docs/nextcloud-monitoring.ru.md`.
-
 ## Grafana: egress и жёсткое ограничение (TODO)
 
 - Возможные источники внешнего трафика и политика его блокировки/разрешения: см. `docs/grafana-egress-todo.ru.md`.
@@ -236,13 +258,13 @@ in {
 
 - Роли: включают наборы через `modules/roles/{workstation,homelab,media}.nix`.
   - `roles.workstation.enable = true;` → рабочая станция (профиль производительности, SSH, Avahi).
-  - `roles.homelab.enable = true;` → селф‑хостинг (профиль безопасности, DNS, SSH, MPD, Nextcloud).
+  - `roles.homelab.enable = true;` → селф‑хостинг (профиль безопасности, DNS, SSH, MPD).
   - `roles.media.enable = true;` → медиа‑серверы (Jellyfin, MPD, Avahi, SSH).
 - Профили: фичи под `modules/system/profiles/`.
   - `profiles.performance.enable` и `profiles.security.enable` переключаются ролями; можно переопределять на хосте.
 - Профили сервисов: `profiles.services.<name>.enable` (алиас к `servicesProfiles.<name>.enable`).
   - Роли ставят `mkDefault true`; на хосте можно просто выключить `false` (без mkForce).
-- Хост‑специфика: храните конкретные настройки под `hosts/<host>/*.nix` (например, домен/прокси Nextcloud, имена интерфейсов, локальные DNS‑переписи).
+- Хост‑специфика: храните конкретные настройки под `hosts/<host>/*.nix` (например, имена интерфейсов, локальные DNS‑переписи).
 
 ## Ядро: PREEMPT_RT
 
@@ -350,9 +372,7 @@ in {
 
 ---
 
-# AGENTS: советы и грабли при интеграции мониторинга и Nextcloud
-
-В репозитории используется кастомная цель `post-boot.target`, Nextcloud через PHP‑FPM за Caddy, и экспортеры Prometheus. Ниже — основные грабли и рабочие фиксы, чтобы не наступать повторно.
+# AGENTS: советы и грабли при интеграции мониторинга и post-boot
 
 Post‑Boot Systemd Target
 - Не добавляйте `After=graphical.target` в сам `post-boot.target`; `graphical.target` уже хочет `post-boot.target`. Добавление `After=graphical.target` на target создаёт цикл упорядочивания.
@@ -362,22 +382,23 @@ Post‑Boot Systemd Target
 - Базовый сетевой модуль ставит тулзы iwd, но держит `networking.wireless.iwd.enable = false`, чтобы проводные хосты не поднимали сервис.
 - Если на хосте нужен Wi‑Fi, включите `profiles.network.wifi.enable = true;` (например, в `hosts/<имя>/networking.nix`) вместо ручного `lib.mkForce`.
 
-Prometheus PHP‑FPM Exporter + пул Nextcloud
-- Доступ к сокету: экспортер читает `unix:///run/phpfpm/nextcloud.sock;/status`. Убедитесь, что сокет пула PHP‑FPM доступен на чтение группе общего веб‑пула, и экспортер входит в неё:
-  - `services.phpfpm.pools.nextcloud.settings`: `"listen.group" = "nginx";`, `"listen.mode" = "0660"`.
+Prometheus PHP‑FPM Exporter
+- Доступ к сокету: экспортер читает unix‑сокет PHP‑FPM (например, `/run/phpfpm/app.sock;/status`). Убедитесь, что сокет пула PHP‑FPM доступен на чтение группе общего веб‑пула, и экспортер входит в неё:
+  - Настройте пул PHP‑FPM: `"listen.group" = "nginx";`, `"listen.mode" = "0660"`.
   - Добавьте пользователей `caddy` и `prometheus` в группу `nginx` через `users.users.<name>.extraGroups = [ "nginx" ];`.
 - Песочница юнита: апстрим‑юнит экспортера может запрещать UNIX‑сокеты через `RestrictAddressFamilies`.
   - Разрешите AF_UNIX: `RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];`.
   - Дайте юниту доступ к группе сокета: `SupplementaryGroups = [ "nginx" ];`.
 - DynamicUser vs. постоянный пользователь: апстрим может использовать `DynamicUser=true` и `Group=php-fpm-exporter`. Чтобы экспортер наследовал статическое членство в группах, переопределите с большим приоритетом:
   - `DynamicUser = lib.mkForce false; User = lib.mkForce "prometheus"; Group = lib.mkForce "prometheus";`.
-- Порядок запуска: стартовать экспортер после того, как поднят пул Nextcloud PHP‑FPM, чтобы избежать начальных ошибок подключения:
-  - `after = [ "phpfpm-nextcloud.service" "phpfpm.service" "nextcloud-setup.service" ];`
-  - `wants = [ "phpfpm-nextcloud.service" ];`
-
-Экстренная безопасность switch
-- Если при отладке экспортер блокирует активацию, временно отключите его, чтобы разблокировать `switch`: `services.prometheus.exporters."php-fpm".enable = false;` и включите обратно после фикса прав/порядка.
+- Экстренная безопасность switch: если при отладке экспортер блокирует активацию, временно отключите его, чтобы разблокировать `switch`: `services.prometheus.exporters."php-fpm".enable = false;` и включите обратно после фикса прав/порядка.
 
 Типовые ошибки
 - Неправильное место для extraGroups: внутри `users = { ... }` задавайте `users.caddy.extraGroups = [ "nginx" ];` и `users.prometheus.extraGroups = [ "nginx" ];` (это маппится на `users.users.<name>.extraGroups`). Не пишите повторно `users.users.caddy` внутри `users = { ... }` — получится `users.users.users.caddy` и сломает оценку.
-- Двойное включение прокси: не включайте одновременно `nextcloud.nginxProxy` и `nextcloud.caddyProxy` (есть assertion, но помнить полезно).
+Типовые ошибки с прокси: не включайте одновременно разные reverse‑proxy для одного и того же бекенда (например, nginx и Caddy на один и тот же сокет/порт) — удобнее придерживаться одного прокси на хост.
+
+Nextcloud на telfir (чистая установка)
+- Хост `telfir` использует стандартный модуль `services.nextcloud` без кастомных profiles; веб‑фронтенд — Caddy (`services.caddy`) поверх пула PHP‑FPM Nextcloud.
+- Nextcloud доступен по `https://telfir`, начальный логин: пользователь `admin`, пароль `Admin123!ChangeMe` (см. `hosts/telfir/services.nix:services.nextcloud.config`).
+- Директория данных отделена от старых установок (`/var/lib/nextcloud-clean`), база создаётся локально под новым пользователем `nextcloud_clean` (`database.createLocally = true;`).
+- Для сброса пароля админа используйте `sudo -u nextcloud /run/current-system/sw/bin/nextcloud-occ user:resetpassword admin`.

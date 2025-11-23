@@ -14,6 +14,7 @@ General guidance
 - Keep changes minimal and focused on the feature you are touching.
 - Avoid drive-by refactors; mention unrelated issues separately instead of fixing them silently.
 - When changing behavior, prefer updating relevant docs under `docs/` or `docs/manual/` as needed.
+- For WireGuard/VPN host vs user-level setup, see `docs/manual/manual.ru.md` (section “WireGuard VPN (host / user)”) for prior research and patterns.
 
 Commit style
 - Use a bracketed scope prefix consistent with existing history, for example: `[media/audio] …`, `[hosts/telfir] …`, `[dev/pkgs] …`, `[docs] …`.
@@ -22,4 +23,3 @@ Commit style
   - `[media/audio] Add TidalCycles live-coding stack`
   - `[hosts/telfir] Tune cooling profile`
   - `[docs] Document audio creation stack`
-
