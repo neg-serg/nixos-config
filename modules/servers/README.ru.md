@@ -14,9 +14,6 @@
 
 - openssh: `profiles.services.openssh.enable = true;`
   - Порты: 22/TCP (открывается модулем автоматически)
-- syncthing: `profiles.services.syncthing.enable = true;`
-  - Порты: 8384/TCP (GUI), 22000/TCP+UDP (sync), 21027/UDP (discovery)
-  - Устройства/папки настраиваются под `hosts/<host>/services.nix`.
 - mpd: `profiles.services.mpd.enable = true;`
   - Порты: 6600/TCP (открывается модулем)
 - navidrome: `profiles.services.navidrome.enable = true;`

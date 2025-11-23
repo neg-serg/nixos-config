@@ -98,8 +98,7 @@ Adding a new host involves creating a new directory and defining its specific co
       # Disable a specific service from a role for this host
       profiles.services.nextcloud.enable = false;
 
-      # Add host-specific settings
-      services.syncthing.settings.devices."my-phone" = { id = "AAAA-BBBB-..."; };
+      # Add host-specific settings (e.g., Nextcloud paths, DNS rewrites)
     }
     ```
 4.  **Add the host to `flake.nix`**: In the `nixosConfigurations` output, add an entry for `new-machine` that points to its `default.nix`.

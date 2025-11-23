@@ -235,38 +235,14 @@ in {
 ## Роли и профили
 
 - Роли: включают наборы через `modules/roles/{workstation,homelab,media}.nix`.
-  - `roles.workstation.enable = true;` → рабочая станция (профиль производительности, SSH, Avahi, Syncthing).
-  - `roles.homelab.enable = true;` → селф‑хостинг (профиль безопасности, DNS, SSH, Syncthing, MPD, Navidrome, Wakapi, Nextcloud).
+  - `roles.workstation.enable = true;` → рабочая станция (профиль производительности, SSH, Avahi).
+  - `roles.homelab.enable = true;` → селф‑хостинг (профиль безопасности, DNS, SSH, MPD, Navidrome, Wakapi, Nextcloud).
   - `roles.media.enable = true;` → медиа‑серверы (Jellyfin, Navidrome, MPD, Avahi, SSH).
 - Профили: фичи под `modules/system/profiles/`.
   - `profiles.performance.enable` и `profiles.security.enable` переключаются ролями; можно переопределять на хосте.
 - Профили сервисов: `profiles.services.<name>.enable` (алиас к `servicesProfiles.<name>.enable`).
   - Роли ставят `mkDefault true`; на хосте можно просто выключить `false` (без mkForce).
-- Хост‑специфика: храните конкретные настройки под `hosts/<host>/*.nix`.
-
-Пример (хост):
-
-```nix
-{ lib, ... }: {
-  roles = {
-    workstation.enable = true;
-    homelab.enable = true;
-  };
-
-  # Отключаем тяжёлые сервисы для VM/минимальных сборок
-  profiles.services = {
-    nextcloud.enable = false;
-    adguardhome.enable = false;
-  };
-
-  # Хост‑специфичный Syncthing
-  services.syncthing = {
-    overrideDevices = true;
-    overrideFolders = true;
-    settings.devices."phone" = { id = "AAAA-BBBB-..."; };
-  };
-}
-```
+- Хост‑специфика: храните конкретные настройки под `hosts/<host>/*.nix` (например, домен/прокси Nextcloud, имена интерфейсов, локальные DNS‑переписи).
 
 ## Ядро: PREEMPT_RT
 

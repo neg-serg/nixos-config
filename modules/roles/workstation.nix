@@ -2,7 +2,7 @@
 # Module: roles/workstation
 # Purpose: Workstation role (desktop defaults).
 # Key options: cfg = config.roles.workstation.enable
-# Dependencies: Enables profiles.performance, profiles.services.* (openssh, avahi, syncthing), kdeconnect.
+# Dependencies: Enables profiles.performance, profiles.services.* (openssh, avahi), kdeconnect.
 {
   lib,
   config,
@@ -20,7 +20,6 @@ in {
     profiles.services = {
       openssh.enable = lib.mkDefault true;
       avahi.enable = lib.mkDefault true;
-      syncthing.enable = lib.mkDefault true;
     };
 
     # Desktop integrations

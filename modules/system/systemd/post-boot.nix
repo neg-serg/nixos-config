@@ -19,7 +19,7 @@ in {
     # otherwise graphical.target → post-boot.target and post-boot.target → After=graphical.target
     # creates an ordering cycle. Individual services added to post-boot are ordered After=graphical.target.
     # Also pull in post-boot on headless systems where multi-user.target is the default.
-    # This ensures deferred services like syncthing-init run even without a graphical session.
+    # This ensures deferred services run even without a graphical session.
     wantedBy = ["graphical.target" "multi-user.target"]; # reached with graphical or headless boot
   };
 
@@ -32,8 +32,6 @@ in {
     libvirtd = lib.mkIf (config.virtualisation.libvirtd.enable or false) (mkPostBoot "libvirtd");
     "libvirt-guests" = lib.mkIf (config.virtualisation.libvirtd.enable or false) (mkPostBoot "libvirt-guests");
 
-    # Syncthing init helper (created by upstream module)
-    "syncthing-init" = lib.mkIf (config.services.syncthing.enable or false) (mkPostBoot "syncthing-init");
 
     # Ollama model server
     ollama = lib.mkIf (config.services.ollama.enable or false) (mkPostBoot "ollama");

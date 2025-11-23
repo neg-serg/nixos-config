@@ -251,15 +251,15 @@ Auto‑update (optional): if `system.autoUpgrade` with flakes is enabled, add `-
 ## Roles & Profiles
 
 - Roles: enable bundles via `modules/roles/{workstation,homelab,media}.nix`.
-  - `roles.workstation.enable = true;` → desktop defaults (performance profile, SSH, Avahi, Syncthing).
-  - `roles.homelab.enable = true;` → self‑hosting defaults (security profile, DNS, SSH, Syncthing, MPD, Navidrome, Wakapi, Nextcloud).
+  - `roles.workstation.enable = true;` → desktop defaults (performance profile, SSH, Avahi).
+  - `roles.homelab.enable = true;` → self‑hosting defaults (security profile, DNS, SSH, MPD, Navidrome, Wakapi, Nextcloud).
   - `roles.media.enable = true;` → media servers (Jellyfin, Navidrome, MPD, Avahi, SSH).
 - Profiles: feature flags under `modules/system/profiles/`:
   - `profiles.performance.enable` and `profiles.security.enable` are toggled by roles; override per host if needed.
 - Service profiles: toggle per‑service via `profiles.services.<name>.enable` (alias to `servicesProfiles.<name>.enable`).
   - Roles set `mkDefault true`; hosts can disable with plain `false` (no mkForce needed).
 - Host‑specific config: keep concrete settings under `hosts/<host>/*.nix`.
-  - Examples: Syncthing devices/folders, Nextcloud domain/proxy, NIC names, local DNS rewrites.
+  - Examples: Nextcloud domain/proxy, NIC names, local DNS rewrites.
 
 Example (host):
 
@@ -276,12 +276,7 @@ Example (host):
     adguardhome.enable = false;
   };
 
-  # Host‑specific Syncthing (devices/folders)
-  services.syncthing = {
-    overrideDevices = true;
-    overrideFolders = true;
-    settings.devices."phone" = { id = "AAAA-BBBB-..."; };
-  };
+/* Host‑specific sync tools (if used) can be configured here, e.g. per-host Nextcloud paths or custom backup units. */
 }
 ```
 
@@ -535,7 +530,6 @@ The pre-commit hook and CI check `lint-md-lang` will fail if Cyrillic is present
   - `users.main.description`, `users.main.opensshAuthorizedKeys`, `users.main.hashedPassword`.
 - Modules use this instead of hardcoded names/IDs:
   - MPD runs as `users.main.name` and sets `XDG_RUNTIME_DIR` from `users.main.uid`.
-  - Syncthing runs as `users.main.name`.
   - Filesystem bind mounts under the main home instead of `/home/neg/...`.
   - Extra groups and PAM limits reference the main user/group.
 - Inspect transient scope: `systemctl --user list-units 'app-*scope' --no-pager`
