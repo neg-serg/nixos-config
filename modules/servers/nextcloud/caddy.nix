@@ -6,6 +6,8 @@
   nc = config.services.nextcloud;
   cfg = config.services.nextcloud.caddyProxy;
   domain = nc.hostName or "localhost";
+  # Serve PHP entrypoints and static assets from the Nextcloud package store path
+  ncRoot = nc.package;
 in {
   options.services.nextcloud.caddyProxy.enable = lib.mkOption {
     type = lib.types.bool;
@@ -83,7 +85,7 @@ in {
         respond @forbidden 403
 
         # Serve Nextcloud via PHP-FPM socket provided by NixOS nextcloud module
-        root * /var/lib/nextcloud
+        root * ${ncRoot}
         php_fastcgi unix//run/phpfpm/nextcloud.sock
         file_server
 
