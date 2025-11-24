@@ -5,7 +5,7 @@
   ...
 }: let
   cfg = config.hardware.audio.rnnoise or {};
-  rmeSinkName = "alsa_output.usb-RME_ADI-2_4_Pro_SE__53011083__B992903C2BD8DC8-00.analog-stereo";
+  rmeSinkName = "alsa_output.usb-RME_ADI-2_4_Pro_SE__53011083__B992903C2BD8DC8-00.iec958-stereo";
   rmeSourceName = "alsa_input.usb-RME_ADI-2_4_Pro_SE__53011083__B992903C2BD8DC8-00.analog-stereo";
   rmeDefaultScript = pkgs.writeShellScript "wpctl-set-rme-default" ''
     set -euo pipefail
