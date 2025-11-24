@@ -52,7 +52,7 @@ in
           content = lib.concatStrings [
             "# Aliae aliases (cross-shell)\n"
             "# Edit and reload your shell to apply changes.\n"
-            "aliases:\n"
+            "alias:\n"
             "  l:   \"eza --icons=auto --hyperlink\"\n"
             "  ll:  \"eza --icons=auto --hyperlink -l\"\n"
             "  lsd: \"eza --icons=auto --hyperlink -alD --sort=created --color=always\"\n"
