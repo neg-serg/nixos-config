@@ -40,6 +40,14 @@ in {
     npmFlags = (old.npmFlags or []) ++ ["--legacy-peer-deps"];
   });
 
+  # Floorp: upstream binary tarball hash drifted; override with refreshed hash
+  floorp-bin = prev.floorp-bin.overrideAttrs (old: {
+    src = prev.fetchurl {
+      url = "https://github.com/Floorp-Projects/Floorp/releases/download/v${old.version}/floorp-linux-x86_64.tar.xz";
+      hash = "sha256-51tgjjklC8B0g7wnNS3HhnXg08MZRXTmuWfFXy9EZ6E=";
+    };
+  });
+
   # Nyxt 4 pre-release binary (Electron/Blink backend). Upstream provides a single self-contained
   # ELF binary for Linux. Package it as a convenience while no QtWebEngine build is available.
   nyxt4-bin = prev.stdenvNoCC.mkDerivation rec {
