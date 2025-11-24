@@ -120,6 +120,7 @@ in {
       pkgs.viddy # modern watch with history
       pkgs.whois # domain info lookup
       pkgs.xidel # extract webpage segments
+      pkgs.xxh # SSH wrapper for jumping into remote shells
       pkgs.nh # declarative nix-profile helper with git-aware workflows
       pkgs.yt-dlp # video downloader used across scripts
       pkgs.zbar # QR/barcode scanner
