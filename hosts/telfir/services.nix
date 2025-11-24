@@ -620,6 +620,8 @@ in
       systemd = {
         # Ensure auxiliary data directories exist with correct ownership
         tmpfiles.rules = lib.mkAfter [
+          # Resilio state / license storage (service runs as rslsync)
+          "d /zero/sync/.state 0700 rslsync rslsync - -"
           "d /zero/sync/upload-next 0755 neg neg - -"
         ];
         services = {
