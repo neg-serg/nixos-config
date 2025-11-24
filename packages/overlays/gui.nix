@@ -40,8 +40,8 @@ in {
     npmFlags = (old.npmFlags or []) ++ ["--legacy-peer-deps"];
   });
 
-  # Floorp: upstream binary tarball hash drifted; override with refreshed hash
-  floorp-bin = prev.floorp-bin.overrideAttrs (old: {
+  # Floorp: upstream binary tarball hash drifted; override unwrapped binary with refreshed hash
+  floorp-bin-unwrapped = prev.floorp-bin-unwrapped.overrideAttrs (old: {
     src = prev.fetchurl {
       url = "https://github.com/Floorp-Projects/Floorp/releases/download/v${old.version}/floorp-linux-x86_64.tar.xz";
       hash = "sha256-51tgjjklC8B0g7wnNS3HhnXg08MZRXTmuWfFXy9EZ6E=";
