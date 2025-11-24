@@ -369,6 +369,10 @@ in
       in
         lib.mkMerge [
           {
+            gnome = {
+              localsearch.enable = true;
+              tinysparql.enable = true;
+            };
             udev.packages = lib.mkAfter [pkgs.openrgb];
             power-profiles-daemon.enable = true;
             # Do not expose AdGuard Home Prometheus metrics on this host
