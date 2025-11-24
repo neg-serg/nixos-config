@@ -52,6 +52,7 @@ in {
       pkgs.xorg.xeyes # track eyes for your cursor
       pkgs.swaybg # simple wallpaper setter
       pkgs.dragon-drop # drag-n-drop from console
+      pkgs.localsend # AirDrop-like local file sharing
       pkgs.gowall # generate palette from wallpaper
       pkgs.grimblast # Hyprland-friendly screenshots (grim+slurp+wl-copy)
       pkgs.grim # raw screenshot helper for clip wrappers
