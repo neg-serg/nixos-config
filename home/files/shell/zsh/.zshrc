@@ -23,7 +23,7 @@ zi light romkatv/powerlevel10k
 zi ice depth'1' lucid wait'0'
 zi light QuarticCat/zsh-smartcache
 source "${ZDOTDIR}/01-init.zsh"
-for file in {02-cmds,03-completion,04-fzf,04-bindings,05-neg-cd,07-hishtory}; do
+for file in {02-cmds,03-completion,04-fzf,04-bindings,05-neg-cd,06-aliae-fallback,07-hishtory}; do
   zsh-defer source "${ZDOTDIR}/$file.zsh"
 done
 ## Load Aliae aliases after base command aliases to allow Aliae to override them
