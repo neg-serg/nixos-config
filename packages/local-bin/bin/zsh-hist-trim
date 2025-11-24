@@ -1,0 +1,101 @@
+#!/usr/bin/env zsh
+# zsh-hist-trim: remove multi-line Zsh history entries longer than 3 lines.
+# Default target is $HISTFILE (or ~/.zsh_history). Creates a timestamped backup.
+
+emulate -L zsh
+set -o errexit -o nounset -o pipefail
+IFS=$'\n\t'
+
+max_lines=3
+
+usage() {
+  cat <<EOF
+Usage: ${0:t} [HISTFILE]
+
+Removes Zsh extended-history entries whose command body spans more than ${max_lines} lines.
+
+If HISTFILE is not given, uses \$HISTFILE or \$HOME/.zsh_history.
+Creates a backup alongside the original file before rewriting.
+EOF
+}
+
+if [[ ${1:-} == "-h" || ${1:-} == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+histfile=${1:-${HISTFILE:-$HOME/.zsh_history}}
+
+if [[ ! -f $histfile ]]; then
+  print -u2 "zsh-hist-trim: history file not found: $histfile"
+  exit 1
+fi
+
+# Detect extended_history format: lines starting with ': <epoch>:<duration>;'
+integer extended=0
+{
+  local line
+  while IFS= read -r line; do
+    [[ -z $line ]] && continue
+    if [[ $line == ': '* && $line =~ '^: [0-9]+:[0-9]+;' ]]; then
+      extended=1
+    fi
+    break
+  done
+} < "$histfile"
+
+if (( ! extended )); then
+  print -u2 "zsh-hist-trim: $histfile does not look like extended_history; nothing to trim."
+  exit 0
+fi
+
+backup="${histfile}.bak.$(date +%Y%m%d%H%M%S)"
+cp "$histfile" "$backup" || {
+  print -u2 "zsh-hist-trim: failed to create backup at $backup"
+  exit 1
+}
+
+tmp=$(mktemp "${histfile:t}.trimmed.XXXXXX") || {
+  print -u2 "zsh-hist-trim: mktemp failed"
+  exit 1
+}
+
+typeset -a entry_lines=()
+integer total=0 retained=0 dropped=0 cmd_lines=0
+
+flush_entry() {
+  if (( ${#entry_lines} == 0 )); then
+    return
+  fi
+
+  (( total++ ))
+  cmd_lines=$(( ${#entry_lines} - 1 )) # header line + command body
+
+  if (( cmd_lines > max_lines )); then
+    (( dropped++ ))
+  else
+    (( retained++ ))
+    printf '%s\n' "${entry_lines[@]}" >> "$tmp"
+  fi
+
+  entry_lines=()
+}
+
+{
+  local line
+  while IFS= read -r line; do
+    if [[ $line == ': '* && $line =~ '^: [0-9]+:[0-9]+;' ]]; then
+      flush_entry
+      entry_lines=("$line")
+    else
+      entry_lines+="$line"
+    fi
+  done
+  flush_entry
+} < "$histfile"
+
+mv "$tmp" "$histfile"
+
+print "zsh-hist-trim: processed $total entries, dropped $dropped with >$max_lines lines, kept $retained."
+print "zsh-hist-trim: backup saved as $backup"
+
