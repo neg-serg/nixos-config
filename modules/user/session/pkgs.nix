@@ -109,6 +109,7 @@ in {
       pkgs.qt6.qtsvg # supplemental Qt6 SVG support
       pkgs.kitty # primary GUI terminal emulator
       pkgs.kitty-img # inline image helper for Kitty
+      pkgs.warp-terminal # Warp GPU-accelerated terminal with modern UI
       pkgs.telegram-desktop # Telegram GUI client
       pkgs.tdl # Telegram CLI uploader/downloader
       pkgs.vesktop # Discord (Vencord) desktop client
