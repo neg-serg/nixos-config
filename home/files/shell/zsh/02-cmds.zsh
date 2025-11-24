@@ -27,10 +27,8 @@ _exists sudo && {
     local sudo_list=(chmod chown modprobe umount)
     local logind_sudo_list=(reboot halt poweroff)
     for c in ${sudo_list[@]}; {_exists "$c" && alias "$c=sudo $c"}
-    }
-    _exists journalctl && journalctl() {command journalctl "${@:--b}";}
-_exists mpv && {
 }
+_exists journalctl && journalctl() {command journalctl "${@:--b}";}
 _exists mpc && {
     cdm(){
         dirname="$XDG_MUSIC_DIR/$(dirname "$(mpc -f '%file%'|head -1)")"
