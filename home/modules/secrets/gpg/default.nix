@@ -8,6 +8,9 @@ with {
   pinentryRofi = pkgs.writeShellApplication {
     name = "pinentry-rofi-with-env";
     text = ''
+      # Default to the custom askpass theme unless the caller overrides.
+      PINENTRY_ROFI_ARGS=${PINENTRY_ROFI_ARGS:--theme askpass}
+      export PINENTRY_ROFI_ARGS
       PATH="$PATH:${pkgs.coreutils}/bin:${config.neg.rofi.package}/bin"
       "${lib.getExe pkgs.pinentry-rofi}" "$@"
     '';
