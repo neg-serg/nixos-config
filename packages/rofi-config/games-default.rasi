@@ -9,10 +9,6 @@
     important:                      #BF616A;
 }
 
-configuration {
-    font:                           "Roboto 14";
-}
-
 element-text {
     text-color: @text-color;
 }
