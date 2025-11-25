@@ -26,7 +26,6 @@
     ./tools
     ./profiles/services.nix
     ./roles
-    ./servers/bitcoind/default.nix
     ./secrets
     ./security
     ./servers
