@@ -10,7 +10,7 @@
 }
 
 configuration {
-    font:                           "Roboto 17";
+    font:                           "Roboto 12";
 }
 
 element-text {
