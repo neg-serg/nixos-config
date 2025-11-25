@@ -12,7 +12,7 @@ with lib; let
     && (config.features.gui.qt.enable or false)
     && (config.features.gui.quickshell.enable or false)
     && (! (config.features.devSpeed.enable or false));
-  themeRoot = filesRoot + "/quickshell/quickshell";
+  themeRoot = filesRoot + "/quickshell";
   buildTheme = pkgs.writeShellApplication {
     name = "quickshell-build-theme";
     runtimeInputs = [pkgs.coreutils pkgs.nodejs_24 pkgs.systemd];

@@ -11,7 +11,7 @@ in
   mkIf (config.features.gui.enable && (config.features.gui.qt.enable or false) && (config.features.gui.quickshell.enable or false)) {
     home.file.".config/quickshell" = {
       recursive = true;
-      source = filesRoot + "/quickshell/quickshell";
+      source = filesRoot + "/quickshell";
     };
 
     # After linking the updated config, restart quickshell if it is running.
