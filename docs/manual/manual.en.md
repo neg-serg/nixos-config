@@ -9,7 +9,7 @@ every workflow points to the same manual.
 ## Working Tree Layout
 
 - `modules/`, `packages/`, `docs/`, `hosts/`, … — system configuration and documentation.
-- `home/` — legacy Home Manager flake; still useful for experiments or WSL-only setups.
+- `home/` — legacy Home Manager modules (not a standalone flake); reused by the root flake.
 - `templates/` — developer scaffolding (Rust crane, Python CLI, shell app).
 - `docs/manual/manual.*.md` — canonical guides (this file).
 
@@ -31,12 +31,11 @@ every workflow points to the same manual.
 
 ### Clone & Switch Profiles
 
-- Clone standalone repo (for laptops/WSL) or reuse `/etc/nixos/home` in unified setups.
-- Switch Home Manager profiles:
-  - Full: `just hm-neg` (alias for `home-manager switch --flake .#neg`)
-- Build without switching: `just hm-build`
+- Clone the repo root (there is no `home/flake.nix`); run Home Manager via the root flake:
+  `home-manager switch --flake .#neg` (or `just hm-neg`).
+- Build without switching: `just hm-build`.
 - Unified repo reminder: prefer `sudo nixos-rebuild switch --flake /etc/nixos#<host>`; the `hm-*`
-  targets remain for standalone/dev workflows.
+  targets remain for standalone/dev workflows (same root flake).
 
 ### Profiles & Feature Flags
 
