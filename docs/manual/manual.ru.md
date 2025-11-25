@@ -114,6 +114,8 @@
 - Конфиги Hypr разбиты на файлы в `modules/user/gui/hypr/conf/*` и линкуются HM.
 - `~/.local/bin/rofi` задаёт дефолтные флаги, автопринятие и поиск тем в XDG путях; отключайте
   автопринятие флагом `-no-auto-select`.
+- `pinentry-rofi` по умолчанию запускается с темой `askpass`; переопределяйте флагами через
+  переменную `PINENTRY_ROFI_ARGS` при необходимости.
 - Индикатор раскладки в Quickshell слушает `keyboard-layout` Hyprland, предпочитает устройство с
   `main: true` и переключает `hyprctl switchxkblayout current next`.
 - Floorp: навбар оставлен сверху, отключены телеметрия и мусор на вкладке «Новая».

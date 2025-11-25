@@ -150,6 +150,8 @@ side-by-side so the patterns apply to both configurations.
   theme resolution relative to XDG paths, Hyprland/Quickshell offset detection.
 - Keep per-call options minimal; if you need custom keybindings pass them explicitly (the wrapper
   will respect overrides).
+- Pinentry uses `pinentry-rofi` with the `askpass` theme by default; override via
+  `PINENTRY_ROFI_ARGS` if you need custom flags.
 
 ### Editor Shim
 

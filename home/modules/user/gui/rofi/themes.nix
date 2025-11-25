@@ -11,6 +11,7 @@ with lib;
         # Base + shared
         "theme.rasi"
         "common.rasi"
+        "askpass.rasi"
         # Named themes used in scripts/tools
         "menu.rasi"
         "menu-columns.rasi"
