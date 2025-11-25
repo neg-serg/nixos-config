@@ -245,7 +245,7 @@ in
             "  objdump: \"objdump -M intel -d\"\n"
             "  strace:  \"strace -yy\"\n"
             (lib.optionalString hasPrettyping "  ping: \"prettyping\"\n")
-            (lib.optionalString hasDuf "  df:   \"duf -theme ansi -hide special -hide-mp \$HOME/* /nix/store /var/lib/*\"\n")
+            (lib.optionalString hasDuf "  df:   \"duf -theme ansi -hide special -hide-mp \$HOME/* /nix/store\"\n")
             (lib.optionalString hasDust "  sp:   \"dust -r\"\n")
             (lib.optionalString hasKhal "  cal:  \"khal calendar\"\n")
             (lib.optionalString hasHxd "  hexdump: \"hxd\"\n")
