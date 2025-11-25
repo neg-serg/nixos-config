@@ -9,7 +9,7 @@
 ## Структура дерева
 
 - `modules/`, `packages/`, `docs/`, `hosts/` — системные модули, оверлеи и документация.
-- `home/` — flake Home Manager для автономной работы.
+- `home/` — модули Home Manager (не отдельный flake), переиспользуются корневым флейком.
 - `templates/` — заготовки проектов (Rust crane, Python CLI, shell app).
 - `docs/manual/manual.*.md` — канонические руководства.
 
@@ -31,12 +31,9 @@
 
 ### Клонирование и переключение профилей
 
-- Для автономных сценариев используйте репозиторий `/etc/nixos/home` (он входит в общее дерево `/etc/nixos`).
-- Переключение профилей:
-  - Полный: `just hm-neg` (`home-manager switch --flake .#neg`)
-- Сборка без переключения: `just hm-build`
-- На хостах с общим репозиторием используйте `sudo nixos-rebuild switch --flake /etc/nixos#<host>`;
-  `hm-*` оставлены для standalone/dev окружений.
+- Клонируйте корень репозитория (в `home/` нет собственного `flake.nix`); Home Manager запускается через корневой flake: `home-manager switch --flake .#neg` (или `just hm-neg`).
+- Сборка без переключения: `just hm-build`.
+- На хостах с общим репозиторием используйте `sudo nixos-rebuild switch --flake /etc/nixos#<host>`; `hm-*` оставлены для standalone/dev окружений и используют тот же корневой flейк.
 
 ### Профили и feature flags
 
