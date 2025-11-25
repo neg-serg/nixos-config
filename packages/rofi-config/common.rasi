@@ -69,21 +69,21 @@ entry {
 #element.selected.normal {
     background-color: var(selectcolor);
     text-color: var(fgwhite);
-    border-radius: 4px;
+    border-radius: 2px;
     padding: 2px 8px;
 }
 
 #element.selected.urgent {
     background-color: var(urgentcolor);
     text-color: var(blackdarkest);
-    border-radius: 4px;
+    border-radius: 2px;
     padding: 2px 8px;
 }
 
 #element.selected.active {
     background-color: var(selectcolor);
     text-color: var(fgwhite);
-    border-radius: 4px;
+    border-radius: 2px;
     padding: 2px 8px;
 }
 
@@ -132,7 +132,7 @@ entry {
     padding: 1px 5px;
     background-color: var(blackwidget);
     text-color: var(maincolor);
-    border-radius: 2px;
+    border-radius: 1px;
 }
 
 #entry {

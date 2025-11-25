@@ -57,7 +57,7 @@ inputbar {
     background-color:               @primary;
     border:                         4px;
     border-color:                   @primary;
-    border-radius:                  8px;
+    border-radius:                  4px;
 }
 
 textbox-prompt {
@@ -76,7 +76,7 @@ entry {
     background-color:               @background;
     border:                         6px;
     border-color:                   @primary;
-    border-radius:                  8px;
+    border-radius:                  4px;
     cursor:                         text;
 }
 
@@ -86,7 +86,7 @@ element {
     orientation:                    vertical;
     border:                         0px 4px solid 0px 4px;
     border-color:                   transparent;
-    border-radius:                  16;
+    border-radius:                  8;
 }
 
 element selected {

@@ -29,7 +29,7 @@
 #element {
     padding: 0 4mm;
     border-color: @blackdarkest;
-    border-radius: 8px 8px 8px 8px;
+    border-radius: 4px 4px 4px 4px;
     border: 2px 0px 2px 0px;
 }
 
