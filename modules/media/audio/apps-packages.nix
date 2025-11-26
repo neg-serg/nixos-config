@@ -24,6 +24,7 @@
     pkgs.sox # swiss-army audio CLI for conversions/effects
     # net
     pkgs.nicotine-plus # Soulseek client
+    pkgs.slskd # Soulseek daemon with web UI
     pkgs.scdl # SoundCloud downloader
     pkgs.streamlink # stream extractor (Twitch/YT) for mpv feeding
     # misc
