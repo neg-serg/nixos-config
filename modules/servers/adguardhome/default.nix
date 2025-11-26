@@ -16,6 +16,27 @@
     };
 in {
   config = lib.mkIf cfg.enable {
+    users.groups.adguardhome = {};
+    users.users.adguardhome = {
+      isSystemUser = true;
+      group = "adguardhome";
+      home = "/var/lib/AdGuardHome";
+      description = "AdGuard Home service account";
+    };
+
+    # Migrate away from systemd DynamicUser state dir so ownership is readable
+    system.activationScripts.adguardhome-state = ''
+      old=/var/lib/private/AdGuardHome
+      new=/var/lib/AdGuardHome
+      if [ -d "$old" ] && [ ! -e "$new" ]; then
+        mkdir -p "$new"
+        cp -a "$old"/. "$new"/
+      fi
+      if [ -d "$new" ]; then
+        chown -R adguardhome:adguardhome "$new"
+      fi
+    '';
+
     services.adguardhome = {
       enable = true;
       openFirewall = true;
@@ -45,6 +66,12 @@ in {
           inherit (cfg) rewrites;
         };
       };
+    };
+
+    systemd.services.adguardhome.serviceConfig = {
+      DynamicUser = lib.mkForce false;
+      User = "adguardhome";
+      Group = "adguardhome";
     };
 
     # Make systemd-resolved act as a stub resolver and forward to AdGuardHome
