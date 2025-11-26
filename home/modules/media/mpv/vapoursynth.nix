@@ -14,6 +14,6 @@ in
       mkLocalBin "mpv" ''          #!/usr/bin/env bash
                 set -eo pipefail
                 export PYTHONPATH="${pkgs.python3Packages.vapoursynth}/${pySite}:${pkgs.python3}/${pySite}:$PYTHONPATH"
-                exec ${pkgs.mpv}/bin/mpv "$@"''
+                exec ${config.programs.mpv.finalPackage}/bin/mpv "$@"''
     )
   )
