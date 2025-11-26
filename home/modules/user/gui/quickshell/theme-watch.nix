@@ -26,7 +26,7 @@ with lib; let
     '';
   };
 in
-  mkIf quickshellEnabled {
+  mkIf (quickshellEnabled && builtins.pathExists themeRoot) {
     systemd.user.services.quickshell-theme-watch = lib.mkMerge [
       {
         Unit.Description = "Watch Quickshell theme tokens";
