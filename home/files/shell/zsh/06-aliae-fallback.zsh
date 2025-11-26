@@ -185,7 +185,7 @@ if command -v prettyping >/dev/null 2>&1; then
 fi
 
 if command -v duf >/dev/null 2>&1; then
-alias df='duf -theme ansi -hide special -hide-mp $HOME/* /nix/store'
+alias df='duf -theme ansi -hide special'
 fi
 
 if command -v dust >/dev/null 2>&1; then
