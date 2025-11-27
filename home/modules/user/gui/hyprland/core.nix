@@ -25,15 +25,15 @@ with lib; let
 in
   mkIf config.features.gui.enable (lib.mkMerge [
     # Local helper: safe Hyprland reload that ensures Quickshell is started if absent
-    (negLib.mkLocalBin "hypr-reload" ''        #!/usr/bin/env bash
-                set -euo pipefail
-                # Reload Hyprland config (ignore failure to avoid spurious errors)
-                hyprctl reload >/dev/null 2>&1 || true
-                # Give Hypr a brief moment to settle before (re)starting quickshell
-                sleep 0.15
-                # Start quickshell only if not already active; 'start' is idempotent.
-                systemctl --user start quickshell.service >/dev/null 2>&1 || true
-      '')
+    (negLib.mkLocalBin "hypr-reload" ''      #!/usr/bin/env bash
+              set -euo pipefail
+              # Reload Hyprland config (ignore failure to avoid spurious errors)
+              hyprctl reload >/dev/null 2>&1 || true
+              # Give Hypr a brief moment to settle before (re)starting quickshell
+              sleep 0.15
+              # Start quickshell only if not already active; 'start' is idempotent.
+              systemctl --user start quickshell.service >/dev/null 2>&1 || true
+    '')
     # Removed custom kb-layout-next wrapper; rely on Hyprland dispatcher and XKB options
     {programs.hyprlock.enable = true;}
     # Ensure polkit agent starts in a Wayland session and uses the graphical preset.
@@ -68,6 +68,9 @@ in
 
         permission = ${lib.getExe pkgs.grim}, screencopy, allow
         permission = ${lib.getExe pkgs.hyprlock}, screencopy, allow
+
+        # User overrides live in ~/.config/hypr/local.d/*.conf (not managed by Nix)
+        source = ~/.config/hypr/local.d/*.conf
       '')
       {xdg.configFile."hypr/hyprland.conf".force = true;}
     ])
@@ -83,4 +86,11 @@ in
           {xdg.configFile."hypr/plugins.conf".force = true;}
         ]
     ))
+    {
+      # Ensure the user-managed overrides directory exists (content is user-controlled)
+      home.activation.ensureHyprLocalDir = lib.hm.dag.entryAfter ["writeBoundary"] ''
+        local_dir="${config.xdg.configHome}/hypr/local.d"
+        mkdir -p "$local_dir"
+      '';
+    }
   ])
