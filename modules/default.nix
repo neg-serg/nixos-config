@@ -3,34 +3,6 @@
     ./args.nix
     ./features.nix
     ./neg.nix
-    ./appimage
-    ./cli
-    ./dev
-    ./documentation
-    ./emulators
-    ./flatpak
-    ./db
-    ./games
-    ./fun
-    ./fonts
-    ./media
-    ./finance
-    ./web
-    ./torrent
-    ./hardware
-    ./home-manager
-    ./text
-    ./llm
-    ./monitoring
-    ./nix
-    ./tools
     ./profiles/services.nix
-    ./roles
-    ./secrets
-    ./security
-    ./servers
-    ./shell
-    ./system
-    ./user
   ];
 }
