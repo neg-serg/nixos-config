@@ -2,7 +2,12 @@
   imports = [
     ./systemd
     ./net
-    ./profiles
+    ./profiles/security.nix
+    ./profiles/performance.nix
+    ./profiles/debug.nix
+    ./profiles/work.nix
+    ./profiles/vm.nix
+    ./profiles/aliases.nix
     ./kernel
     ./boot
     ./virt
