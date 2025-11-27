@@ -15,9 +15,11 @@ with {
       export PINENTRY_ROFI_ARGS
       # Best-effort to provide display/session env when gpg-agent is started early (no GUI vars).
       if [ -z "$WAYLAND_DISPLAY" ] && [ -n "$XDG_RUNTIME_DIR" ]; then
-        wayland_socket=$(ls "$XDG_RUNTIME_DIR"/wayland-* 2>/dev/null | head -n1 || true)
+        wayland_socket=""
+        wayland_socket=$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -name 'wayland-*' -print -quit 2>/dev/null || true)
         if [ -n "$wayland_socket" ]; then
-          export WAYLAND_DISPLAY="$(basename "$wayland_socket")"
+          wayland_base=$(basename "$wayland_socket")
+          export WAYLAND_DISPLAY="$wayland_base"
         fi
       fi
       if [ -z "$DISPLAY" ] && [ -n "$WAYLAND_DISPLAY" ]; then
