@@ -1,5 +1,6 @@
 {
   imports = [
+    ../modules/default.nix
     ../modules/cli
     ../modules/dev
     ../modules/distros
