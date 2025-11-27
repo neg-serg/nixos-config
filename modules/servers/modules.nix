@@ -4,8 +4,6 @@
     ./jellyfin
     ./adguardhome
     ./avahi
-    ./nextcloud
-    ./navidrome
     ./unbound
     ./mpd
     ./samba
