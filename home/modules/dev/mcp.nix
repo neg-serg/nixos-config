@@ -53,6 +53,7 @@
     else lib.concatStringsSep ":" knowledgePathsList;
   knowledgeCacheDir = "${config.xdg.cacheHome}/mcp/knowledge";
   hmRepoRoot = "${config.neg.hmConfigRoot}";
+  gitRepoRoot = config.neg.dotfilesRoot;
   openAiKeyEnv = builtins.getEnv "OPENAI_API_KEY";
   teiEndpointEnv = builtins.getEnv "TEI_ENDPOINT";
   embeddingsProviderEnv = builtins.getEnv "EMBEDDINGS_PROVIDER";
@@ -81,7 +82,6 @@
     "browserbase"
     "docsearch-local"
     "exa-search"
-    "git-local"
     "postgres-local"
     "redis-local"
   ];
@@ -93,6 +93,7 @@ in
         repoRoot = hmRepoRoot;
         fsBinary = "${pkgs.neg.mcp_server_filesystem}/bin/mcp-server-filesystem";
         rgBinary = "${pkgs.neg.mcp_ripgrep}/bin/mcp-ripgrep";
+        gitBinary = "${pkgs.neg.mcp_server_git}/bin/mcp-server-git";
         memoryBinary = "${pkgs.neg.mcp_server_memory}/bin/mcp-server-memory";
         fetchBinary = "${pkgs.neg.mcp_server_fetch}/bin/mcp-server-fetch";
         seqBinary = "${pkgs.neg.mcp_server_sequential_thinking}/bin/mcp-server-sequential-thinking";
@@ -144,6 +145,14 @@ in
             rg-index = {
               command = rgBinary;
               env = {MCP_RIPGREP_ROOT = repoRoot;};
+            };
+
+            git-local = {
+              command = gitBinary;
+              args = [
+                "--repository"
+                gitRepoRoot
+              ];
             };
 
             memory-local = {
