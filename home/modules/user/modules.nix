@@ -1,25 +1,18 @@
 {
   imports = [
+    ./local-bin
     ./envs
     ./fun
     ./games
+    ./autoclick.nix
     ./gui
     ./mail
-    ./session
-    ./config.nix
-    ./fonts.nix
-    ./mpd.nix
-    ./nix-index.nix
-    ./shell/default.nix
-    ./xdg.nix
-    ./browser.nix
-    ./file-managers.nix
-    ./flatpak.nix
-    ./gtk.nix
-    ./notifications.nix
-    ./telemetry.nix
-    ./vscode.nix
-    ./wezterm.nix
-    ./zellij.nix
+    ./systemd
+    ./terminal
+    ./theme
+    ./torrent
+    ./web
+    ./x11
+    ./xdg
   ];
 }
