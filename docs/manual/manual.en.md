@@ -656,4 +656,3 @@ Nextcloud on telfir (clean install)
 - To reset the admin password, use `sudo -u nextcloud /run/current-system/sw/bin/nextcloud-occ user:resetpassword admin`. The current password (`Admin123!ChangeMe` by default) is tracked via the SOPS secret `secrets/nextcloud-admin-password.sops.yaml`.
   - The password is materialized into `/var/lib/nextcloud/adminpass` (owned by `nextcloud`, mode `0400`) via the `nextcloud-adminpass-from-sops` unit.
   - The automatic `nextcloud-setup` and `nextcloud-update-db` units are disabled; upgrades are performed manually with `sudo -u nextcloud nextcloud-occ upgrade` after bumping the Nextcloud package version.
-  - For rare “clean reset” operations, use `scripts/nextcloud-reset-mysql.sh` / `scripts/nextcloud-reset-pg.sh` (see inline comments; always run via `sudo`).
