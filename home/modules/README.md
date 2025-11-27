@@ -12,7 +12,6 @@ and gate most imports/config via `config.features.*`.
 - Subdirectories (map)
 
   - `cli/` — command‑line tools, shells, and per‑program configs (fzf, tmux, zsh, direnv, etc.).
-  - `db/` — database clients and related tooling.
   - `dev/` — development stacks, language toolchains, cachix, and security/hacking helpers.
   - `distros/` — distribution‑specific adjustments and compatibility shims.
   - `flatpak/` — Flatpak configuration and overrides.
