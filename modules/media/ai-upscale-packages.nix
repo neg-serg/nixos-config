@@ -1,7 +1,12 @@
 ##
 # Module: media/ai-upscale-packages
 # Purpose: Provide AI upscaling dependencies system-wide when the feature is enabled.
-{lib, config, pkgs, ...}: let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   cfg = config.features.media.aiUpscale or {};
   enabled = (config.features.gui.enable or false) && (cfg.enable or false);
   haveRealesrgan = pkgs ? realesrgan-ncnn-vulkan;

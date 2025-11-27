@@ -2,7 +2,12 @@
 # Module: media/audio/apps-packages
 # Purpose: Install audio application helpers (players, analyzers, tagging tools) at the system level.
 # Trigger: Enabled automatically for workstation role hosts.
-{lib, config, pkgs, ...}: let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   enabled = config.roles.workstation.enable or false;
   packages = [
     # codecs / ripping / players

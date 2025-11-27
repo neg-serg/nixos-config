@@ -1,4 +1,9 @@
-{lib, config, pkgs, ...}: let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   enabled = config.features.torrent.enable or false;
   packages = [
     pkgs.transmission_4 # primary BitTorrent client/daemon

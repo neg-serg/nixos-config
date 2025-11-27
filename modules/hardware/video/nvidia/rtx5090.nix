@@ -58,7 +58,8 @@ in {
     };
 
     # Provide VA-API shim for NVDEC on Wayland and useful tooling
-    hardware.graphics.extraPackages = [pkgs.nvidia-vaapi-driver # NVENC/NVDEC VA-API shim for NVIDIA
+    hardware.graphics.extraPackages = [
+      pkgs.nvidia-vaapi-driver # NVENC/NVDEC VA-API shim for NVIDIA
     ];
     environment.systemPackages = lib.mkAfter [
       pkgs.vulkan-tools # vulkaninfo / debugging CLIs

@@ -15,7 +15,9 @@
     then inputs."yandex-browser".packages.${pkgs.stdenv.hostPlatform.system}
     else null;
   yandexPkg =
-    if yandexInput != null then yandexInput.yandex-browser-stable else null;
+    if yandexInput != null
+    then yandexInput.yandex-browser-stable
+    else null;
   packages =
     lib.optionals webEnabled [pkgs.passff-host]
     ++ lib.optionals (yandexEnabled && yandexPkg != null) [yandexPkg];

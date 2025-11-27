@@ -1,7 +1,12 @@
 ##
 # Module: text/read-packages
 # Purpose: Provide reading/preview/OCR utilities system-wide (migrated from Home Manager).
-{lib, config, pkgs, ...}: let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   enabled = config.features.text.read.enable or false;
   packages = [
     pkgs.amfora # Gemini/Gopher terminal client

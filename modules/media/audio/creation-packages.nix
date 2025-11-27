@@ -1,10 +1,15 @@
 ##
 # Module: media/audio/creation-packages
 # Purpose: Provide the creative audio stack (DAWs, synths, editors) system-wide for workstation hosts.
-{lib, config, pkgs, ...}: let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   enabled = config.roles.workstation.enable or false;
   tidalGhci = pkgs.writeShellScriptBin "tidal-ghci" ''
-    exec ${pkgs.ghc.withPackages (ps: [ ps.tidal ])}/bin/ghci "$@"
+    exec ${pkgs.ghc.withPackages (ps: [ps.tidal])}/bin/ghci "$@"
   '';
   packages = [
     pkgs.bespokesynth # modular DAW for live coding / patching

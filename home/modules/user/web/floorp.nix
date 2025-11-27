@@ -5,7 +5,7 @@
   negLib,
   faProvider ? null,
   ...
-}: 
+}:
 lib.mkIf (config.features.web.enable && config.features.web.floorp.enable) (let
   common = import ./mozilla-common-lib.nix {inherit lib pkgs config faProvider negLib;};
   # Floorp upstream source package is deprecated in nixpkgs >= 12.x; always use floorp-bin.

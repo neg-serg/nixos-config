@@ -1,20 +1,24 @@
 ##
 # Module: fun/misc-packages
 # Purpose: Provide novelty/entertainment utilities (matrix rain, fortunes, astronomy apps, etc.).
-{lib, config, pkgs, ...}: let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   enabled = config.features.fun.enable or false;
-  alureFixed =
-    pkgs.alure.overrideAttrs (prev: { # patched to build with new CMake policy
-      cmakeFlags = (prev.cmakeFlags or []) ++ ["-DCMAKE_POLICY_VERSION_MINIMUM=3.5"];
-    });
-  bucklespringFixed =
-    pkgs.bucklespring.overrideAttrs (prev: { # rewire Bucklespring to use fixed alure
-      buildInputs =
-        let
-          bi = prev.buildInputs or [];
-        in
-          lib.unique ((lib.remove pkgs.alure bi) ++ [alureFixed]);
-    });
+  alureFixed = pkgs.alure.overrideAttrs (prev: {
+    # patched to build with new CMake policy
+    cmakeFlags = (prev.cmakeFlags or []) ++ ["-DCMAKE_POLICY_VERSION_MINIMUM=3.5"];
+  });
+  bucklespringFixed = pkgs.bucklespring.overrideAttrs (prev: {
+    # rewire Bucklespring to use fixed alure
+    buildInputs = let
+      bi = prev.buildInputs or [];
+    in
+      lib.unique ((lib.remove pkgs.alure bi) ++ [alureFixed]);
+  });
   packages = [
     pkgs.almonds # TUI fractal viewer
     bucklespringFixed # keyboard click sound daemon

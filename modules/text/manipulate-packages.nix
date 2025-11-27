@@ -1,7 +1,12 @@
 ##
 # Module: text/manipulate-packages
 # Purpose: Provide JSON/HTML/YAML manipulation CLIs system-wide.
-{lib, config, pkgs, ...}: let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   enabled = config.features.text.manipulate.enable or false;
   packages = [
     pkgs.gron # flatten JSON for grep

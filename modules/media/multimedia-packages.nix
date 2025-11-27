@@ -1,7 +1,12 @@
 ##
 # Module: media/multimedia-packages
 # Purpose: Provide general multimedia tooling (FFmpeg, metadata helpers, mpvc) system-wide.
-{lib, config, pkgs, ...}: let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   enabled = config.features.media.audio.apps.enable or false;
   packages = [
     pkgs.ffmpeg-full # everything-enabled ffmpeg build for transcoding

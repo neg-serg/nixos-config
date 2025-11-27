@@ -20,7 +20,8 @@
     if guiEnabled && !devSpeed
     then lib.filter (pkg: pkg != null) [bzmenuPkg iwmenuPkg]
     else [];
-  hyprWinList = pkgs.writeShellApplication { # helper to list Hypr windows through rofi
+  hyprWinList = pkgs.writeShellApplication {
+    # helper to list Hypr windows through rofi
     name = "hypr-win-list";
     runtimeInputs = [
       pkgs.python3 # embed interpreter so the script ships zero deps

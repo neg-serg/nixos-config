@@ -15,10 +15,6 @@
 }: let
   opts = import (inputs.self + "/lib/opts.nix") {inherit lib;};
   cfg = config.profiles.debug or {enable = false;};
-
-  # Minimal helper to check kernel version strings like "6.11" etc.
-  kver = config.boot.kernelPackages.kernel.version or "";
-  haveAtLeast = v: (kver != "") && lib.versionAtLeast kver v;
 in {
   options.profiles.debug = {
     enable = opts.mkEnableOption "Enable debug/profiling helpers (kernel memory allocation profiling, perf data-type tooling).";
@@ -63,7 +59,6 @@ in {
         description = "Install perf and dwarves (pahole) into the system when perfDataType.enable is true.";
       };
     };
-
   };
 
   # Apply when the global toggle is on OR any sub-feature is explicitly enabled.
