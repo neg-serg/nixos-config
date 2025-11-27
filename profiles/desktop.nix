@@ -3,7 +3,10 @@
     # system/user modules already structured under modules/
     ../modules/cli
     ../modules/dev
+    ../modules/db
     ../modules/documentation
+    ../modules/appimage
+    ../modules/emulators
     ../modules/flatpak
     ../modules/games
     ../modules/fun
