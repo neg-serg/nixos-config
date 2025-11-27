@@ -1,5 +1,6 @@
 {
   lib,
+  pkgs,
   python3Packages,
 }:
 python3Packages.buildPythonApplication rec {
@@ -7,7 +8,7 @@ python3Packages.buildPythonApplication rec {
   version = "0.6.2";
   pyproject = true;
 
-  src = python3Packages.fetchPypi {
+  src = pkgs.fetchPypi {
     pname = "mcp_server_git";
     inherit version;
     hash = "sha256-Rf7Ooi3qKSJFr9qR2GEIcjOEqYEtE5jmcGvx6q796uA=";
