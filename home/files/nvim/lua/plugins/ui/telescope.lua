@@ -246,7 +246,7 @@ return {
             ['<C-v>'] = act('select_vertical'),
             ['<C-t>'] = act('select_tab'),
             -- send to qf + open
-            ['<A-q>'] = function(...) local a=require('telescope.actions'); a.smart_send_to_qflist(...); return a.open_qflist(...) end,
+            ['<S-q>'] = function(...) local a=require('telescope.actions'); a.smart_send_to_qflist(...); return a.open_qflist(...) end,
             -- add to qf (keep picker)
             ['<C-q>'] = function(...) local a=require('telescope.actions'); a.smart_send_to_qflist(...); a.open_qflist(...) end,
             -- copy path variations
