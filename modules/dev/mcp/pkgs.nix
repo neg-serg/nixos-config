@@ -20,7 +20,6 @@
   gitlabEnabled = hasEnv "GITLAB_TOKEN";
   discordEnabled = hasEnv "DISCORD_BOT_TOKEN";
   telegramEnabled = hasAll ["TG_APP_ID" "TG_API_HASH"];
-  braveSearchEnabled = hasEnv "BRAVE_API_KEY";
   exaEnabled = hasEnv "EXA_API_KEY";
   postgresEnabled = hasEnv "MCP_POSTGRES_URL";
   telegramBotEnabled = hasEnv "TELEGRAM_BOT_TOKEN";
@@ -54,7 +53,6 @@
     ++ lib.optional gitlabEnabled pkgs.neg.gitlab_mcp # GitLab counterpart to GitHub MCP
     ++ lib.optional discordEnabled pkgs.neg.discord_mcp # Discord bot interface for LLM agents
     ++ lib.optional telegramEnabled pkgs.neg.telegram_mcp # Telegram client API bridge
-    ++ lib.optional braveSearchEnabled pkgs.neg.brave_search_mcp # Brave Search API wrapper
     ++ lib.optional exaEnabled pkgs.neg.exa_mcp # EXA semantic search API connector
     ++ lib.optional postgresEnabled pkgs.neg.postgres_mcp # Postgres query executor MCP
     ++ lib.optional telegramBotEnabled pkgs.neg.telegram_bot_mcp # Telegram Bot API command MCP

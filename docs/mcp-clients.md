@@ -33,7 +33,6 @@ The following servers are enabled only when the corresponding environment variab
 - `gitlab` — GitLab client requiring `GITLAB_TOKEN`, `GITLAB_API_URL`, and related project/mode flags.
 - `discord` — Discord scraper that uses `DISCORD_BOT_TOKEN` and channel IDs.
 - `telegram` — Telegram client that writes its session to `$XDG_DATA_HOME/mcp/telegram/session.json` with `TG_APP_ID`/`TG_API_HASH`.
-- `brave-search` — Brave Search API integration (`BRAVE_API_KEY`, optional `BRAVE_MCP_ENABLED_TOOLS` / `BRAVE_MCP_DISABLED_TOOLS`).
 - `exa` — Exa Labs web/code search (`EXA_API_KEY`).
 - `postgres` — PostgreSQL read-only proxy that expects `MCP_POSTGRES_URL` to point at the target database.
 - `telegram-bot` — Minimal Telegram bot driver wired via `TELEGRAM_BOT_TOKEN`.
