@@ -1,7 +1,12 @@
 ##
 # Module: media/images/packages
 # Purpose: Provide image editing/recovery/metadata tooling and swayimg wrappers system-wide.
-{lib, config, pkgs, ...}: let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   enabled = config.features.gui.enable or false;
   swayimgFirst = pkgs.writeShellScriptBin "swayimg-first" (
     let

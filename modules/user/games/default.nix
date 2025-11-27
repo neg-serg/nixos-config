@@ -34,6 +34,7 @@
   # Python wrappers to avoid shell/Nix escaping pitfalls
   gamescopePinned =
     pkgs.writers.writePython3Bin "gamescope-pinned" {} # wrapper forcing pinned gamescope binary
+    
     (dedentPy ''
       import os
       import shlex
@@ -56,6 +57,7 @@
 
   gamePinned =
     pkgs.writers.writePython3Bin "game-pinned" {} # launcher pinning Proton/runtime per title
+    
     (dedentPy ''
       import subprocess
       import sys
@@ -70,6 +72,7 @@
 
   gamescopePerf =
     pkgs.writers.writePython3Bin "gamescope-perf" {} # preset focusing on latency tuned flags
+    
     (dedentPy ''
       import json
       import os
@@ -199,6 +202,7 @@
 
   gamescopeQuality =
     pkgs.writers.writePython3Bin "gamescope-quality" {} # preset prioritizing image quality
+    
     (dedentPy ''
       import json
       import os
@@ -314,6 +318,7 @@
 
   gamescopeHDR =
     pkgs.writers.writePython3Bin "gamescope-hdr" {} # HDR-focused launch helper
+    
     (dedentPy ''
       import json
       import os
@@ -429,6 +434,7 @@
 
   gamescopeTargetFPS =
     pkgs.writers.writePython3Bin "gamescope-targetfps" {} # wrapper enforcing per-game FPS caps
+    
     (dedentPy ''
       import json
       import math
@@ -659,6 +665,7 @@
   # Helper: set affinity inside the scope to avoid shell escaping issues
   gameAffinityExec =
     pkgs.writers.writePython3Bin "game-affinity-exec" {} # set CPU affinity masks via python, not bash
+    
     (dedentPy ''
       import argparse
       import os
@@ -792,6 +799,7 @@
   # Helper: run any command in a user cgroup scope with CPU affinity to gaming cores
   gameRun =
     pkgs.writers.writePython3Bin "game-run" {} # master wrapper orchestrating env vars, MangoHud, gamemode
+    
     (dedentPy ''
       import os
       import subprocess

@@ -1,4 +1,7 @@
-{ lib, buildNpmPackage, inputs,
+{
+  lib,
+  buildNpmPackage,
+  inputs,
 }:
 buildNpmPackage rec {
   pname = "mcp-server-memory";

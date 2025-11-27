@@ -8,16 +8,17 @@
   config,
   ...
 }: let
-  cfg = config.servicesProfiles.seafile or {
-    enable = false;
-    hostName = "localhost";
-    dataDir = "/seafile";
-    adminEmail = "admin@example.com";
-    adminPassword = "change-me";
-    dbRootPassword = "change-me";
-    httpPort = 8082;
-    useCaddy = true;
-  };
+  cfg =
+    config.servicesProfiles.seafile or {
+      enable = false;
+      hostName = "localhost";
+      dataDir = "/seafile";
+      adminEmail = "admin@example.com";
+      adminPassword = "change-me";
+      dbRootPassword = "change-me";
+      httpPort = 8082;
+      useCaddy = true;
+    };
   hostName = cfg.hostName;
   httpPort = cfg.httpPort;
 in {
@@ -59,7 +60,10 @@ in {
           SEAFILE_ADMIN_EMAIL = cfg.adminEmail;
           SEAFILE_ADMIN_PASSWORD = cfg.adminPassword;
           SEAFILE_SERVER_HOSTNAME = hostName;
-          SEAFILE_SERVER_LETSENCRYPT = if cfg.useCaddy then "false" else "true";
+          SEAFILE_SERVER_LETSENCRYPT =
+            if cfg.useCaddy
+            then "false"
+            else "true";
         };
       };
     };
@@ -79,4 +83,3 @@ in {
     };
   };
 }
-

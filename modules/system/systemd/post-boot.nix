@@ -32,7 +32,6 @@ in {
     libvirtd = lib.mkIf (config.virtualisation.libvirtd.enable or false) (mkPostBoot "libvirtd");
     "libvirt-guests" = lib.mkIf (config.virtualisation.libvirtd.enable or false) (mkPostBoot "libvirt-guests");
 
-
     # Ollama model server
     ollama = lib.mkIf (config.services.ollama.enable or false) (mkPostBoot "ollama");
 

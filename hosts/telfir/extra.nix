@@ -1,4 +1,8 @@
-{lib, inputs, ...}: {
+{
+  lib,
+  inputs,
+  ...
+}: {
   imports = [(inputs.self + "/modules/diff-closures.nix")];
   diffClosures.enable = true;
 

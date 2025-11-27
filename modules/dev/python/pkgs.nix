@@ -1,4 +1,9 @@
-{lib, config, pkgs, ...}: let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   devEnabled = config.features.dev.enable or false;
   pyCfg = config.features.dev.python or {};
   boolFlag = name: lib.attrByPath [name] true pyCfg;

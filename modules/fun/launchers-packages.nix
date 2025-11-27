@@ -1,7 +1,12 @@
 ##
 # Module: fun/launchers-packages
 # Purpose: Ship Proton/Wine helper utilities system-wide for game launchers.
-{lib, config, pkgs, ...}: let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   enabled =
     (config.features.fun.enable or false)
     && (config.features.gui.enable or false);

@@ -20,7 +20,6 @@
   gitlabEnabled = hasEnv "GITLAB_TOKEN";
   discordEnabled = hasEnv "DISCORD_BOT_TOKEN";
   telegramEnabled = hasAll ["TG_APP_ID" "TG_API_HASH"];
-  exaEnabled = hasEnv "EXA_API_KEY";
   postgresEnabled = hasEnv "MCP_POSTGRES_URL";
   telegramBotEnabled = hasEnv "TELEGRAM_BOT_TOKEN";
   tsgramEnabled = (hasEnv "TELEGRAM_BOT_TOKEN") && hasEnv "TSGRAM_AUTHORIZED_CHAT_ID";
@@ -55,7 +54,8 @@
     ++ lib.optional telegramEnabled pkgs.neg.telegram_mcp # Telegram client API bridge
     ++ lib.optional postgresEnabled pkgs.neg.postgres_mcp # Postgres query executor MCP
     ++ lib.optional telegramBotEnabled pkgs.neg.telegram_bot_mcp # Telegram Bot API command MCP
-    ++ lib.optional tsgramEnabled pkgs.neg.tsgram_mcp # TSGram short-link relay for bots
+    ++ lib.optional tsgramEnabled pkgs.neg.tsgram_mcp
+    # TSGram short-link relay for bots
     ;
 in {
   config = lib.mkIf devEnabled {

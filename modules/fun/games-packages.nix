@@ -1,7 +1,12 @@
 ##
 # Module: fun/games-packages
 # Purpose: Provide casual/retro games that used to be installed via Home Manager.
-{lib, config, pkgs, ...}: let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
   enabled = config.features.fun.enable or false;
   packages = [
     pkgs.abuse # classic side-scrolling shooter customizable with LISP
