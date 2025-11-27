@@ -1,5 +1,11 @@
 {lib, ...}: let
-  optionalPath = path: lib.optional (builtins.pathExists path) path;
+  hasModule = path:
+    builtins.pathExists path
+    && (
+      lib.hasSuffix ".nix" (toString path)
+      || builtins.pathExists (toString path + "/default.nix")
+    );
+  optionalPath = path: lib.optional (hasModule path) path;
 in {
   imports =
     ./modules.nix
