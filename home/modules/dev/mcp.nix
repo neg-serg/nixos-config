@@ -88,7 +88,6 @@ in
     {
       programs.mcp = let
         repoRoot = hmRepoRoot;
-        fsBinary = "${pkgs.neg.mcp_server_filesystem}/bin/mcp-server-filesystem";
         rgBinary = "${pkgs.neg.mcp_ripgrep}/bin/mcp-ripgrep";
         gitBinary = "${pkgs.neg.mcp_server_git}/bin/mcp-server-git";
         memoryBinary = "${pkgs.neg.mcp_server_memory}/bin/mcp-server-memory";
@@ -132,11 +131,6 @@ in
                 "-y"
                 "@modelcontextprotocol/server-everything"
               ];
-            };
-
-            filesystem-local = {
-              command = fsBinary;
-              args = [repoRoot];
             };
 
             rg-index = {

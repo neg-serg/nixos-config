@@ -26,7 +26,6 @@
   telegramBotEnabled = hasEnv "TELEGRAM_BOT_TOKEN";
   tsgramEnabled = (hasEnv "TELEGRAM_BOT_TOKEN") && hasEnv "TSGRAM_AUTHORIZED_CHAT_ID";
   basePackages = [
-    pkgs.neg.mcp_server_filesystem # expose repo tree to MCP clients safely
     pkgs.neg.mcp_ripgrep # remote ripgrep search endpoint for agents
     pkgs.neg.mcp_server_memory # ephemeral key/value store for LLM chains
     pkgs.neg.mcp_server_fetch # HTTP fetch proxy with policy enforcement

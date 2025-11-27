@@ -3,7 +3,6 @@
 `modules/dev/mcp.nix` записывает аттрибут `programs.mcp.servers`, когда `config.features.dev.enable = true`. Полученный набор MCP-клиентов служит источником правды для локальных эндпоинтов (`programs.opencode`, Claude Desktop и других) и помогает ориентироваться при отладке.
 
 ## Всегда включенные серверы
-- `filesystem-local` — файловый сервер MCP с корнем в `/etc/nixos/home`, используемый для большинства локальных поисковых задач.
 - `rg-index` — `mcp-ripgrep`, привязанный к `config.neg.hmConfigRoot`, чтобы выполнять запросы ripgrep по репозиторию через MCP.
 - `git-local` — `mcp-server-git`, привязанный к `config.neg.hmConfigRoot` для локальных git-операций (status/diff/commit).
 - `memory-local` — временное хранилище `mcp-server-memory` для краткосрочной памяти и истории.
