@@ -11,15 +11,5 @@ with lib; {
     ./lib/paths.nix
     ./lib/neg.nix
     ./features.nix
-    ./cli
-    ./dev
-    ./distros
-    ./flatpak
-    ./hardware
-    ./media
-    ./misc
-    ./secrets
-    ./text
-    ./user
   ];
 }

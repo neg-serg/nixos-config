@@ -1,0 +1,29 @@
+{
+  imports = [
+    # system/user modules already structured under modules/
+    ../modules/cli
+    ../modules/dev
+    ../modules/documentation
+    ../modules/flatpak
+    ../modules/games
+    ../modules/fun
+    ../modules/fonts
+    ../modules/media
+    ../modules/web
+    ../modules/torrent
+    ../modules/hardware
+    ../modules/home-manager
+    ../modules/text
+    ../modules/llm
+    ../modules/monitoring
+    ../modules/nix
+    ../modules/tools
+    ../modules/roles
+    ../modules/secrets
+    ../modules/security
+    ../modules/servers
+    ../modules/shell
+    ../modules/system
+    ../modules/user
+  ];
+}

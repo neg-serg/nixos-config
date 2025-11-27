@@ -1,5 +1,6 @@
 {
   imports = [
+    ../../profiles/desktop.nix
     ./hardware.nix
     ./networking.nix
     ./services.nix

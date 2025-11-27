@@ -1,8 +1,6 @@
 {
   lib,
   config,
-  pkgs,
-  systemdUser,
   ...
 }: {
   features = {
@@ -35,7 +33,7 @@
 
   imports = [
     ../secrets/home
-    ./modules
+    ./profiles/desktop.nix
   ];
 
   xdg.stateHome = "${config.home.homeDirectory}/.local/state";
@@ -46,5 +44,4 @@
     preferXdgDirectories = true;
     username = "neg";
   };
-
 }

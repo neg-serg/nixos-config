@@ -6,7 +6,10 @@
   config,
   ...
 }: {
-  imports = [./modules];
+  imports = [
+    ./modules
+    ./profiles/desktop.nix
+  ];
   system = {
     stateVersion = "23.11"; # (man configuration.nix or on https://nixos.org/nixos/options.html).
     autoUpgrade = {
