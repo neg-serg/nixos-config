@@ -8,7 +8,7 @@
   optionalPath = path: lib.optional (hasModule path) path;
 in {
   imports =
-    ./modules.nix
+    (import ./modules.nix).imports
     ++ optionalPath ./doh
     ++ optionalPath ./fun-art
     ++ optionalPath ./rustmission
