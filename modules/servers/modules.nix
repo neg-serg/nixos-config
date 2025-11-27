@@ -1,7 +1,6 @@
 {
   imports = [
     ./openssh
-    ./wakapi
     ./jellyfin
     ./adguardhome
     ./avahi
