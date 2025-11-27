@@ -9,3 +9,5 @@ result-man
 .tmp_build.log
 docs/options.md
 docs/options-all.md
+.direnv/
+.pre-commit-config.yaml

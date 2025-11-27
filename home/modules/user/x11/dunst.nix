@@ -38,7 +38,7 @@ in
           indicate_hidden = true;
           line_height = 0;
           markup = "full";
-          max_icon_size = 250;
+          max_icon_size = 96;
           monitor = 0;
           notification_limit = 2;
           offset = "(0,54)";
