@@ -33,6 +33,7 @@ in {
       pkgs.cpufetch # CPU info fetch
       pkgs.fastfetch # modern ASCII system summary
       pkgs.czkawka # find duplicate/similar files
+      pkgs.fclones # fast content-based duplicate finder
       pkgs.dcfldd # dd with progress/hash
       pkgs.delta # better diff tool
       pkgs.diff-so-fancy # human-friendly git diff pager
