@@ -73,7 +73,6 @@
   gitlabEnabled = hasEnv "GITLAB_TOKEN";
   discordEnabled = hasEnv "DISCORD_BOT_TOKEN";
   telegramEnabled = hasAllEnv ["TG_APP_ID" "TG_API_HASH"];
-  braveSearchEnabled = hasEnv "BRAVE_API_KEY";
   exaEnabled = hasEnv "EXA_API_KEY";
   postgresEnabled = hasEnv "MCP_POSTGRES_URL";
   telegramBotEnabled = hasEnv "TELEGRAM_BOT_TOKEN";
@@ -114,7 +113,6 @@ in
         chromiumBinary = "${pkgs.neg.chromium_mcp}/bin/mcp-chromium-cdp";
         meetingNotesBinary = "${pkgs.neg.meeting_notes_mcp}/bin/meeting-notes-mcp";
         telegramBinary = "${pkgs.neg.telegram_mcp}/bin/telegram-mcp";
-        braveBinary = "${pkgs.neg.brave_search_mcp}/bin/brave-search-mcp-server";
         exaBinary = "${pkgs.neg.exa_mcp}/bin/exa-mcp-server";
         postgresBinary = "${pkgs.neg.postgres_mcp}/bin/mcp-server-postgres";
         telegramBotBinary = "${pkgs.neg.telegram_bot_mcp}/bin/telegram-bot-mcp";
@@ -237,21 +235,6 @@ in
               command = meetingNotesBinary;
               env = {
                 CLAUDE_SESSION_NOTES_DIR = meetingNotesDir;
-              };
-            };
-          }
-          // lib.optionalAttrs braveSearchEnabled {
-            brave-search = {
-              command = braveBinary;
-              args = [
-                "--transport"
-                "stdio"
-              ];
-              env = {
-                BRAVE_API_KEY = "{env:BRAVE_API_KEY}";
-                BRAVE_MCP_ENABLED_TOOLS = "{env:BRAVE_MCP_ENABLED_TOOLS}";
-                BRAVE_MCP_DISABLED_TOOLS = "{env:BRAVE_MCP_DISABLED_TOOLS}";
-                BRAVE_MCP_LOG_LEVEL = "{env:BRAVE_MCP_LOG_LEVEL}";
               };
             };
           }
