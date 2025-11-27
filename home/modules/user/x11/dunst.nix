@@ -60,7 +60,7 @@ in
           transparency = 14;
           vertical_alignment = "center";
           width = "(800, 1120)";
-          word_wrap = false;
+          word_wrap = true;
         };
 
         urgency_low = {
