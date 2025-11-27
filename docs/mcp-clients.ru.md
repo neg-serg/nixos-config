@@ -5,7 +5,7 @@
 ## Всегда включенные серверы
 - `filesystem-local` — файловый сервер MCP с корнем в `/etc/nixos/home`, используемый для большинства локальных поисковых задач.
 - `rg-index` — `mcp-ripgrep`, привязанный к `config.neg.hmConfigRoot`, чтобы выполнять запросы ripgrep по репозиторию через MCP.
-- `git-local` — `mcp-server-git`, привязанный к `config.neg.dotfilesRoot` для локальных git-операций (status/diff/commit).
+- `git-local` — `mcp-server-git`, привязанный к `config.neg.hmConfigRoot` для локальных git-операций (status/diff/commit).
 - `memory-local` — временное хранилище `mcp-server-memory` для краткосрочной памяти и истории.
 - `fetch-http` — вспомогательный сервер `mcp-server-fetch`, который позволяет MCP-клиентам совершать HTTP-запросы через доверенный стек.
 - `sequential-thinking` — сервер последовательного мышления для построенных задач и анализа.
