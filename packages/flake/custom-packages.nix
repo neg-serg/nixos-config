@@ -3,6 +3,7 @@
 
   mcp-server-filesystem = pkgs.neg.mcp_server_filesystem;
   mcp-ripgrep = pkgs.neg.mcp_ripgrep;
+  mcp-server-git = pkgs.neg.mcp_server_git;
   mcp-server-memory = pkgs.neg.mcp_server_memory;
   mcp-server-fetch = pkgs.neg.mcp_server_fetch;
   mcp-server-sequential-thinking = pkgs.neg.mcp_server_sequential_thinking;

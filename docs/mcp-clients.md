@@ -5,6 +5,7 @@
 ## Always-on servers
 - `filesystem-local` — the filesystem-backed MCP server rooted at `/etc/nixos/home`, used by most local searches.
 - `rg-index` — `mcp-ripgrep` rooted at `config.neg.hmConfigRoot`, so the repo can be searched with ripgrep queries via MCP.
+- `git-local` — `mcp-server-git` bound to `config.neg.dotfilesRoot` for local Git status/diff/commit helpers.
 - `memory-local` — the ephemeral `mcp-server-memory` store for short-lived context and historical entries.
 - `fetch-http` — the `mcp-server-fetch` helper that allows MCP clients to make HTTP requests through the trusted stack.
 - `sequential-thinking` — the sequential-thinking server used for structured problem-solving workflows.
@@ -43,7 +44,6 @@ The following servers are enabled only when the corresponding environment variab
 The following MCP clients were removed from both the system configuration and the Codex config to stop repeated startup failures until upstream tooling is packaged again:
 - `browserbase`
 - `exa-search`
-- `git-local`
 - `redis-local`
 - `docsearch-local`
 - `postgres-local`

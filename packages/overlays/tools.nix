@@ -36,6 +36,9 @@ in {
     mcp_ripgrep = callPkg (packagesRoot + "/mcp/ripgrep") {};
     "mcp-ripgrep" = mcp_ripgrep;
 
+    mcp_server_git = callPkg (packagesRoot + "/mcp/git") {};
+    "mcp-server-git" = mcp_server_git;
+
     mcp_server_memory = callPkg (packagesRoot + "/mcp/memory") {};
     "mcp-server-memory" = mcp_server_memory;
 
