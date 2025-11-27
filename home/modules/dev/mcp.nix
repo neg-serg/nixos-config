@@ -82,7 +82,6 @@
     "browserbase"
     "exa-search"
     "postgres-local"
-    "redis-local"
   ];
 in
   lib.mkIf cfgDev (lib.mkMerge [
