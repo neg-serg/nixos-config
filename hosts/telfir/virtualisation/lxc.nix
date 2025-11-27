@@ -1,7 +1,4 @@
-{
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   # LXC host-side configuration for the zero-sandbox container.
   #
   # This module:

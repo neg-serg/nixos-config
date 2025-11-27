@@ -1,7 +1,4 @@
-{
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   # Host-specific macOS VM description. The actual VM is managed by the
   # system-wide virtualisation.vms module via a dedicated QEMU service.
   #
