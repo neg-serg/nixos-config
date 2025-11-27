@@ -1,18 +1,1 @@
-{
-  imports = [
-    ./local-bin
-    ./envs
-    ./fun
-    ./games
-    ./autoclick.nix
-    ./gui
-    ./mail
-    ./systemd
-    ./terminal
-    ./theme
-    ./torrent
-    ./web
-    ./x11
-    ./xdg
-  ];
-}
+{...}: import ./modules.nix
