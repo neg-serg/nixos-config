@@ -1,1 +1,1 @@
-args @ {...}: import ./modules.nix args
+{...}: import ./modules.nix
