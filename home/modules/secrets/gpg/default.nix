@@ -13,6 +13,19 @@ with {
         PINENTRY_ROFI_ARGS="-theme askpass"
       fi
       export PINENTRY_ROFI_ARGS
+      # Best-effort to provide display/session env when gpg-agent is started early (no GUI vars).
+      if [ -z "$WAYLAND_DISPLAY" ] && [ -n "$XDG_RUNTIME_DIR" ]; then
+        wayland_socket=$(ls "$XDG_RUNTIME_DIR"/wayland-* 2>/dev/null | head -n1 || true)
+        if [ -n "$wayland_socket" ]; then
+          export WAYLAND_DISPLAY="$(basename "$wayland_socket")"
+        fi
+      fi
+      if [ -z "$DISPLAY" ] && [ -n "$WAYLAND_DISPLAY" ]; then
+        export DISPLAY=:0
+      fi
+      if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -n "$XDG_RUNTIME_DIR" ] && [ -S "$XDG_RUNTIME_DIR/bus" ]; then
+        export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+      fi
       PATH="$PATH:${pkgs.coreutils}/bin:${config.neg.rofi.package}/bin"
       "${lib.getExe pkgs.pinentry-rofi}" "$@"
     '';
