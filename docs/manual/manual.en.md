@@ -164,7 +164,7 @@ side-by-side so the patterns apply to both configurations.
 
 ### Commit Messages
 
-- Stick to `[scope] summary`. Examples: `[mcp] add docsearch server`,
+- Stick to `[scope] summary`.
   `[quickshell/gui] improve keyboard indicator`.
 - Scopes can be combined via `/` (e.g. `[cli/gui] …`) when touching multiple areas.
 

@@ -80,7 +80,6 @@
   tsgramEnabled = (hasEnv "TELEGRAM_BOT_TOKEN") && hasEnv "TSGRAM_AUTHORIZED_CHAT_ID";
   disabledServers = [
     "browserbase"
-    "docsearch-local"
     "exa-search"
     "postgres-local"
     "redis-local"

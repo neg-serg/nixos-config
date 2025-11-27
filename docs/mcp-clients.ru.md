@@ -45,7 +45,6 @@
 - `browserbase`
 - `exa-search`
 - `redis-local`
-- `docsearch-local`
 - `postgres-local`
 
 Остальные перечисленные выше MCP-клиенты запускаются с конфигурацией по умолчанию (`modules/dev/mcp.nix`) и не требуют дополнительной ручной настройки при включённой `config.features.dev.enable`.
