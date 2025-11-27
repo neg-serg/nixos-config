@@ -3,15 +3,13 @@
     ./android
     ./ansible
     ./editor
-    ./gdb
+    ./local-ai.nix
+    ./mcp.nix
     ./git
-    ./ipython
-    ./java
-    ./mcp
+    ./gdb
+    ./hack
     ./python
-    ./rust
-    ./shells
-    ./tmux
-    ./vcs
+    ./openxr
+    ./unreal
   ];
 }
