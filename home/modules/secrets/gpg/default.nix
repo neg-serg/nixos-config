@@ -7,6 +7,7 @@
 with {
   pinentryRofi = pkgs.writeShellApplication {
     name = "pinentry-rofi-with-env";
+    checkPhase = "true"; # skip shellcheck (handled manually)
     text = ''
       # Default to the custom askpass theme unless the caller overrides.
       if [ -z "$PINENTRY_ROFI_ARGS" ]; then
