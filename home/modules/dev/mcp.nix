@@ -53,7 +53,7 @@
     else lib.concatStringsSep ":" knowledgePathsList;
   knowledgeCacheDir = "${config.xdg.cacheHome}/mcp/knowledge";
   hmRepoRoot = "${config.neg.hmConfigRoot}";
-  gitRepoRoot = config.neg.dotfilesRoot;
+  gitRepoRoot = hmRepoRoot;
   openAiKeyEnv = builtins.getEnv "OPENAI_API_KEY";
   teiEndpointEnv = builtins.getEnv "TEI_ENDPOINT";
   embeddingsProviderEnv = builtins.getEnv "EMBEDDINGS_PROVIDER";
