@@ -29,9 +29,9 @@
       XDG_DOWNLOAD_DIR = "$HOME/dw";
       XDG_MUSIC_DIR = "$HOME/music";
       XDG_PICTURES_DIR = "$HOME/pic";
-      XDG_PUBLICSHARE_DIR = "$HOME/1st_level/upload/share";
+      XDG_PUBLICSHARE_DIR = "$HOME/.local/public";
       XDG_STATE_HOME = "$HOME/.local/state";
-      XDG_TEMPLATES_DIR = "$HOME/1st_level/templates";
+      XDG_TEMPLATES_DIR = "$HOME/.local/templates";
       XDG_VIDEOS_DIR = "$HOME/vid";
       ZDOTDIR = "$HOME/.config/zsh";
     };

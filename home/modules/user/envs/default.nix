@@ -1,4 +1,8 @@
-{config, lib, ...}: let
+{
+  config,
+  lib,
+  ...
+}: let
   profileTarget = config.home.profileDirectory;
 in {
   home = {
@@ -16,9 +20,9 @@ in {
       XDG_DOWNLOAD_DIR = "${config.home.homeDirectory}/dw";
       XDG_MUSIC_DIR = "${config.home.homeDirectory}/music";
       XDG_PICTURES_DIR = "${config.home.homeDirectory}/pic";
-      XDG_PUBLICSHARE_DIR = "${config.home.homeDirectory}/1st_level/public";
+      XDG_PUBLICSHARE_DIR = "${config.home.homeDirectory}/.local/public";
       XDG_STATE_HOME = "${config.home.homeDirectory}/.local/state";
-      XDG_TEMPLATES_DIR = "${config.home.homeDirectory}/1st_level/templates";
+      XDG_TEMPLATES_DIR = "${config.home.homeDirectory}/.local/templates";
       XDG_VIDEOS_DIR = "${config.home.homeDirectory}/vid";
       XDG_RUNTIME_DIR = "/run/user/$UID";
 

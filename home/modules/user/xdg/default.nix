@@ -89,8 +89,8 @@ with rec {
       download = "${config.home.homeDirectory}/dw";
       music = "${config.home.homeDirectory}/music";
       pictures = "${config.home.homeDirectory}/pic";
-      publicShare = "${config.home.homeDirectory}/1st_level/public";
-      templates = "${config.home.homeDirectory}/1st_level/templates";
+      publicShare = "${config.home.homeDirectory}/.local/public";
+      templates = "${config.home.homeDirectory}/.local/templates";
       videos = "${config.home.homeDirectory}/vid";
     };
     mime.enable = true;
