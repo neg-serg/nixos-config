@@ -1,5 +1,8 @@
 @import "colors.rasi"
 * {
+    background:             @surface;
+    foreground:             @on-surface;
+    selected:               @primary;
     background-color:       @background;
     text-color:             @foreground;
 }
