@@ -53,7 +53,6 @@
     ++ lib.optional gitlabEnabled pkgs.neg.gitlab_mcp # GitLab counterpart to GitHub MCP
     ++ lib.optional discordEnabled pkgs.neg.discord_mcp # Discord bot interface for LLM agents
     ++ lib.optional telegramEnabled pkgs.neg.telegram_mcp # Telegram client API bridge
-    ++ lib.optional exaEnabled pkgs.neg.exa_mcp # EXA semantic search API connector
     ++ lib.optional postgresEnabled pkgs.neg.postgres_mcp # Postgres query executor MCP
     ++ lib.optional telegramBotEnabled pkgs.neg.telegram_bot_mcp # Telegram Bot API command MCP
     ++ lib.optional tsgramEnabled pkgs.neg.tsgram_mcp # TSGram short-link relay for bots

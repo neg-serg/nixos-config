@@ -113,7 +113,6 @@ in
         chromiumBinary = "${pkgs.neg.chromium_mcp}/bin/mcp-chromium-cdp";
         meetingNotesBinary = "${pkgs.neg.meeting_notes_mcp}/bin/meeting-notes-mcp";
         telegramBinary = "${pkgs.neg.telegram_mcp}/bin/telegram-mcp";
-        exaBinary = "${pkgs.neg.exa_mcp}/bin/exa-mcp-server";
         postgresBinary = "${pkgs.neg.postgres_mcp}/bin/mcp-server-postgres";
         telegramBotBinary = "${pkgs.neg.telegram_bot_mcp}/bin/telegram-bot-mcp";
         tsgramBinary = "${pkgs.neg.tsgram_mcp}/bin/telegram-mcp";
@@ -235,14 +234,6 @@ in
               command = meetingNotesBinary;
               env = {
                 CLAUDE_SESSION_NOTES_DIR = meetingNotesDir;
-              };
-            };
-          }
-          // lib.optionalAttrs exaEnabled {
-            exa = {
-              command = exaBinary;
-              env = {
-                EXA_API_KEY = "{env:EXA_API_KEY}";
               };
             };
           }
