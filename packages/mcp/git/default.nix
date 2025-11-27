@@ -10,7 +10,7 @@ python3Packages.buildPythonApplication rec {
   src = python3Packages.fetchPypi {
     pname = "mcp_server_git";
     inherit version;
-    hash = "sha256-CwJBEmSKcHfg8NLGocJ+yt2llyZJbYNPzqvmHv0wFHg=";
+    hash = "sha256-Rf7Ooi3qKSJFr9qR2GEIcjOEqYEtE5jmcGvx6q796uA=";
   };
 
   nativeBuildInputs = [python3Packages.hatchling];
