@@ -1,3 +1,1 @@
-{...}: {
-  imports = [./pkgs.nix];
-}
+{...}: import ./modules.nix

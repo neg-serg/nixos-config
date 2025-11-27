@@ -5,10 +5,7 @@
 }: let
   cfg = config.services.ollama;
 in {
-  imports = [
-    ./pkgs.nix
-    ./codex-config.nix
-  ];
+  imports = [./modules.nix];
   config = lib.mkMerge [
     {
       services.ollama = {
