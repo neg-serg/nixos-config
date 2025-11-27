@@ -1,8 +1,9 @@
-{
-  pkgs,
-  inputs,
-  ...
-}: {
+{pkgs, ...}: {
+  imports = [
+    ./pkgs.nix
+    ./hypr-bindings.nix
+  ];
+
   programs.hyprland = {
     enable = true;
     withUWSM = true;
