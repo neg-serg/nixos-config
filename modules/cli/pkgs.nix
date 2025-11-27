@@ -60,6 +60,7 @@ in {
       pkgs.gum # TUIs for shell prompts/menus
       pkgs.inotify-tools # shell inotify bindings
       pkgs.jq # ubiquitous JSON processor for scripts
+      pkgs.nextcloud-client # Nextcloud CLI sync client (nextcloudcmd)
       pkgs.jdupes # deduplicate identical files via hardlinks
       pkgs.kmon # kernel activity monitor
       pkgs.kubectl # Kubernetes CLI

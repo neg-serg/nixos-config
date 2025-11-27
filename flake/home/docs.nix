@@ -2,9 +2,6 @@
   lib,
   perSystem,
   systems,
-  homeManagerInput,
-  mkHMArgs,
-  hmBaseModules,
   self,
 }: let
   docsLib = import ./features-docs.nix {inherit lib;};
@@ -17,7 +14,7 @@ in
       homeFeatureItems = docsLib.getFeatureOptionsItems {module = homeFeaturesPath;};
       systemFeatureItems = docsLib.getFeatureOptionsItems {
         module = systemFeaturesPath;
-        specialArgs = {inputs = {self = self;};};
+        specialArgs = {inputs = {inherit self;};};
       };
       featureOptionsItems = docsLib.mergeFeatureItems {
         home = homeFeatureItems;

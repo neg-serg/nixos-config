@@ -120,7 +120,6 @@
   };
   outputs = inputs @ {
     self,
-    bzmenu,
     chaotic,
     home-manager,
     lanzaboote,
@@ -143,12 +142,6 @@
 
       # Common lib
       inherit (nixpkgs) lib;
-      splitEnvList = name: let
-        v = builtins.getEnv name;
-      in
-        if v == ""
-        then []
-        else lib.filter (s: s != "") (lib.splitString "," v);
 
       hmDefaultSystem = linuxSystem;
       hmSystems = [hmDefaultSystem];
@@ -176,33 +169,33 @@
           else hyprBranch;
         hyprCommits = builtins.toString (hyprInfo.revCount or 0);
         hyprDate =
-          if hyprInfo ? lastModifiedDate
-          then hyprInfo.lastModifiedDate
-          else if hyprInfo ? lastModified
-          then "unix:${builtins.toString hyprInfo.lastModified}"
-          else "unknown";
+          hyprInfo.lastModifiedDate
+            or (
+            if hyprInfo ? lastModified
+            then "unix:${builtins.toString hyprInfo.lastModified}"
+            else "unknown"
+          );
         hyprMessage =
           if hyprTag != ""
           then "Release ${hyprTag}"
           else "Flake build ${builtins.substring 0 7 hyprRev}";
         hyprlandBase =
-          (inputs.hyprland.packages.${system}.hyprland.override {wrapRuntimeDeps = false;});
-        hyprland =
-          hyprlandBase.overrideAttrs (old: {
-            postPatch =
-              (old.postPatch or "")
-              + ''
-                rm -f src/version.h
-                HASH=${esc hyprRev} \
-                  BRANCH=${esc hyprBranch} \
-                  MESSAGE=${esc hyprMessage} \
-                  DATE=${esc hyprDate} \
-                  DIRTY= \
-                  TAG=${esc hyprTagOrBranch} \
-                  COMMITS=${esc hyprCommits} \
-                  ./scripts/generateVersion.sh
-              '';
-          });
+          inputs.hyprland.packages.${system}.hyprland.override {wrapRuntimeDeps = false;};
+        hyprland = hyprlandBase.overrideAttrs (old: {
+          postPatch =
+            (old.postPatch or "")
+            + ''
+              rm -f src/version.h
+              HASH=${esc hyprRev} \
+                BRANCH=${esc hyprBranch} \
+                MESSAGE=${esc hyprMessage} \
+                DATE=${esc hyprDate} \
+                DIRTY= \
+                TAG=${esc hyprTagOrBranch} \
+                COMMITS=${esc hyprCommits} \
+                ./scripts/generateVersion.sh
+            '';
+        });
       in {
         inherit hyprland;
         inherit (inputs.xdg-desktop-portal-hyprland.packages.${system}) xdg-desktop-portal-hyprland;
@@ -249,70 +242,6 @@
             deadnix.enable = true;
           };
         };
-
-        # Documentation driver evaluated against linuxSystem to be host-agnostic
-        docPkgs = nixpkgs.legacyPackages.${linuxSystem};
-        nixosLib = import (docPkgs.path + "/nixos/lib") {};
-        docLib =
-          if nixosLib ? nixosOptionsDoc
-          then nixosLib
-          else lib;
-
-        docCommonModules = [
-          nix-flatpak.nixosModules.nix-flatpak
-          lanzaboote.nixosModules.lanzaboote
-          chaotic.nixosModules.default
-          sops-nix.nixosModules.sops
-          home-manager.nixosModules.home-manager
-          ./modules/monitoring
-        ];
-        mkSpecialArgs = {
-          inherit inputs locale timeZone kexec_enabled pkgs;
-        };
-        evalMods = mods:
-          lib.nixosSystem {
-            system = linuxSystem;
-            modules = docCommonModules ++ mods;
-            specialArgs = mkSpecialArgs;
-          };
-        evalAll = evalMods [./modules];
-        hasOptionsDoc = docLib ? nixosOptionsDoc;
-        simpleRender = opts: let
-          flatten = prefix: as:
-            lib.concatLists (lib.mapAttrsToList (
-                n: v: let
-                  path = prefix ++ [n];
-                in
-                  if builtins.isAttrs v && (builtins.hasAttr "type" v)
-                  then [
-                    {
-                      name = lib.concatStringsSep "." path;
-                      desc = v.description or "";
-                    }
-                  ]
-                  else if builtins.isAttrs v
-                  then flatten path v
-                  else []
-              )
-              as);
-          items = flatten [] opts;
-          lines = map (i:
-            "- "
-            + i.name
-            + (
-              if i.desc != ""
-              then ": " + i.desc
-              else ""
-            ))
-          items;
-          body = lib.concatStringsSep "\n" (["# Options" ""] ++ lines ++ [""]);
-        in
-          pkgs.writeText "options-simple.md" body;
-        docDriverAll =
-          if hasOptionsDoc
-          then docLib.nixosOptionsDoc {inherit (evalAll) options;}
-          else {optionsCommonMark = simpleRender evalAll.options;};
-
       in {
         packages =
           (mkCustomPkgs pkgs)
@@ -343,42 +272,42 @@
         };
 
         checks = {
-            fmt-treefmt =
-              pkgs.runCommand "fmt-treefmt" {
-                nativeBuildInputs = with pkgs; [
-                  alejandra
-                  black
-                  python3Packages.mdformat
-                  shfmt
-                  treefmt
-                  findutils
-                ];
-                src = ./.;
-              } ''
-                set -euo pipefail
-                cp -r "$src" ./src
-                chmod -R u+w ./src
-                cd ./src
-                export XDG_CACHE_HOME="$PWD/.cache"
-                mkdir -p "$XDG_CACHE_HOME"
-                cp ${./treefmt.toml} ./.treefmt.toml
-                treefmt --config-file ./.treefmt.toml --tree-root . --fail-on-change .
-                touch "$out"
-              '';
-            lint-deadnix = pkgs.runCommand "lint-deadnix" {nativeBuildInputs = with pkgs; [deadnix];} ''
-              cd ${self}
-              deadnix --fail --exclude home .
+          fmt-treefmt =
+            pkgs.runCommand "fmt-treefmt" {
+              nativeBuildInputs = with pkgs; [
+                alejandra
+                black
+                python3Packages.mdformat
+                shfmt
+                treefmt
+                findutils
+              ];
+              src = ./.;
+            } ''
+              set -euo pipefail
+              cp -r "$src" ./src
+              chmod -R u+w ./src
+              cd ./src
+              export XDG_CACHE_HOME="$PWD/.cache"
+              mkdir -p "$XDG_CACHE_HOME"
+              cp ${./treefmt.toml} ./.treefmt.toml
+              treefmt --config-file ./.treefmt.toml --tree-root . --fail-on-change .
               touch "$out"
             '';
-            lint-statix = pkgs.runCommand "lint-statix" {nativeBuildInputs = with pkgs; [statix];} ''cd ${self}; statix check .; touch "$out"'';
-            pre-commit = preCommit;
-            lint-md-lang = pkgs.runCommand "lint-md-lang" {nativeBuildInputs = with pkgs; [bash coreutils findutils gnugrep gitMinimal];} ''
-              set -euo pipefail
-              cd ${self}
-              bash scripts/check-markdown-language.sh
-              : > "$out"
-            '';
-          };
+          lint-deadnix = pkgs.runCommand "lint-deadnix" {nativeBuildInputs = with pkgs; [deadnix];} ''
+            cd ${self}
+            deadnix --fail --exclude home .
+            touch "$out"
+          '';
+          lint-statix = pkgs.runCommand "lint-statix" {nativeBuildInputs = with pkgs; [statix];} ''cd ${self}; statix check .; touch "$out"'';
+          pre-commit = preCommit;
+          lint-md-lang = pkgs.runCommand "lint-md-lang" {nativeBuildInputs = with pkgs; [bash coreutils findutils gnugrep gitMinimal];} ''
+            set -euo pipefail
+            cd ${self}
+            bash scripts/check-markdown-language.sh
+            : > "$out"
+          '';
+        };
 
         devShells = {
           default = pkgs.mkShell {
@@ -420,7 +349,7 @@
           devShells = import ./flake/home/devshells.nix {
             inherit pkgs rustBaseTools rustExtraTools devNixTools;
           };
-          packages = ({default = pkgs.zsh;} // customPkgs);
+          packages = {default = pkgs.zsh;} // customPkgs;
           checks = import ./flake/home/checks.nix {
             inherit pkgs self system;
           };
@@ -440,16 +369,14 @@
         nur = inputs.nur;
         extraSubstituters = hmExtraSubstituters;
         extraTrustedKeys = hmExtraTrustedKeys;
-        hmInputs =
-          builtins.mapAttrs (_: input: input // {type = "derivation";}) {
-            inherit (inputs) nupm;
-          };
+        hmInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) {
+          inherit (inputs) nupm;
+        };
       };
       hmDocs = import ./flake/home/docs.nix {
-        inherit lib mkHMArgs self hmBaseModules;
+        inherit lib self;
         perSystem = hmPerSystem;
         systems = hmSystems;
-        homeManagerInput = inputs.home-manager;
       };
       hmChecks = import ./flake/home/checks-outputs.nix {
         inherit lib;
@@ -457,12 +384,11 @@
         perSystem = hmPerSystem;
       };
       hmHomeConfigurations = {
-        neg =
-          inputs.home-manager.lib.homeManagerConfiguration {
-            inherit (hmPerSystem.${hmDefaultSystem}) pkgs;
-            extraSpecialArgs = mkHMArgs hmDefaultSystem;
-            modules = hmBaseModules {};
-          };
+        neg = inputs.home-manager.lib.homeManagerConfiguration {
+          inherit (hmPerSystem.${hmDefaultSystem}) pkgs;
+          extraSpecialArgs = mkHMArgs hmDefaultSystem;
+          modules = hmBaseModules {};
+        };
       };
       hmTemplates = import ./flake/home/templates.nix self;
     in {
