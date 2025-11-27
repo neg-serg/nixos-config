@@ -35,7 +35,7 @@
     ${pkgs.jq}/bin/jq \
       --arg user "$USER" \
       --arg pass "$PASS" \
-      ' .webui = (.webui // {}) 
+      ' .webui = (.webui // {})
         | .webui.login = $user
         | .webui.password = $pass ' \
       "$CONFIG" > "$tmp"
@@ -279,7 +279,6 @@ in
         pkgs.openrgb # per-device RGB controller UI
         pkgs.nextcloud-client # Nextcloud desktop sync client
         (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile (inputs.self + "/scripts/cpu-boost.sh"))) # CLI toggle for AMD Precision Boost
-        (pkgs.writeShellScriptBin "fan-stop-capability-test" (builtins.readFile (inputs.self + "/scripts/fan-stop-capability-test.sh"))) # helper to test fan stop thresholds
       ];
       environment.etc = {
         "avahi/services/smb.service".text = ''
@@ -367,190 +366,155 @@ in
         '';
       };
 
-      services = let
-        devicesList = [
-          {
-            name = "telfir";
-            id = "EZG57BT-TANWJ2R-QDVLV5X-4DKP7GU-HQENUT7-MA43GUU-AV3IN6P-7KKGZA3";
-          }
-        ];
-        devices = builtins.listToAttrs (
-          map (d: {
-            inherit (d) name;
-            value = {inherit (d) id;};
-          })
-          devicesList
-        );
-        foldersList = [
-          # Former phone upload folders retained as plain data paths
-          {
-            name = "music-upload";
-            path = "/zero/sync-archive/music-upload";
-            devices = [];
-          }
-          {
-            name = "picture-upload";
-            path = "/zero/sync-archive/picture-upload";
-            devices = [];
-          }
-        ];
-        folders = builtins.listToAttrs (
-          map (f: {
-            inherit (f) name;
-            value = {inherit (f) path devices;};
-          })
-          foldersList
-        );
-      in
-        lib.mkMerge [
-          {
-            gnome = {
-              localsearch.enable = true;
-              tinysparql.enable = true;
+      services = lib.mkMerge [
+        {
+          gnome = {
+            localsearch.enable = true;
+            tinysparql.enable = true;
+          };
+          udev.packages = lib.mkAfter [pkgs.openrgb];
+          power-profiles-daemon.enable = true;
+          # Do not expose AdGuard Home Prometheus metrics on this host
+          adguardhome.settings.prometheus.enabled = false;
+
+          nextcloud = {
+            enable = true;
+            package = pkgs.nextcloud32;
+            hostName = "telfir";
+            https = true;
+            datadir = "/zero/sync/nextcloud";
+            config = {
+              dbtype = "mysql";
+              adminuser = "admin";
+              # Admin password is materialized from SOPS into a safe host path
+              adminpassFile = "/var/lib/nextcloud/adminpass";
             };
-            udev.packages = lib.mkAfter [pkgs.openrgb];
-            power-profiles-daemon.enable = true;
-            # Do not expose AdGuard Home Prometheus metrics on this host
-            adguardhome.settings.prometheus.enabled = false;
-
-            nextcloud = {
-              enable = true;
-              package = pkgs.nextcloud32;
-              hostName = "telfir";
-              https = true;
-              datadir = "/zero/sync/nextcloud";
-              config = {
-                dbtype = "mysql";
-                adminuser = "admin";
-                # Admin password is materialized from SOPS into a safe host path
-                adminpassFile = "/var/lib/nextcloud/adminpass";
-              };
-              database = {
-                createLocally = true;
-              };
+            database = {
+              createLocally = true;
             };
+          };
 
-            caddy = {
-              enable = true;
-              virtualHosts."telfir".extraConfig = ''
-                encode zstd gzip
+          caddy = {
+            enable = true;
+            virtualHosts."telfir".extraConfig = ''
+              encode zstd gzip
 
-                log {
-                  output file /var/lib/caddy/logs/nextcloud_access.log {
-                    roll_size 50mb
-                    roll_keep 3
-                    roll_keep_for 48h
-                  }
-                  format json
+              log {
+                output file /var/lib/caddy/logs/nextcloud_access.log {
+                  roll_size 50mb
+                  roll_keep 3
+                  roll_keep_for 48h
                 }
-
-                header {
-                  Strict-Transport-Security "max-age=15768000; includeSubDomains; preload"
-                  X-Content-Type-Options "nosniff"
-                  X-Frame-Options "SAMEORIGIN"
-                  Referrer-Policy "no-referrer"
-                  Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=(), fullscreen=(self), picture-in-picture=(self)"
-                }
-
-                root * ${config.services.nextcloud.package}
-                php_fastcgi unix//run/phpfpm/nextcloud.sock
-                file_server
-                tls internal
-              '';
-            };
-
-            "shairport-sync" = {
-              enable = true;
-              openFirewall = true;
-              settings.general = {
-                name = "Telfir AirPlay";
-                output_backend = "pw";
-              };
-            };
-
-            smartd.enable = false;
-
-            # Persistent journald logs with retention and rate limiting
-            journald = {
-              storage = "persistent";
-              extraConfig = ''
-                SystemMaxUse=1G
-                MaxRetentionSec=1month
-                RateLimitIntervalSec=30s
-                RateLimitBurst=1000
-              '';
-            };
-            # Keep Plasma/X11 off for this host
-            desktopManager.plasma6.enable = lib.mkForce false;
-            xserver.enable = lib.mkForce false;
-            # Remove SDDM/Plasma additions; keep Hyprland-only setup
-            # Temporarily disable Ollama on this host
-            ollama.enable = false;
-            # Avoid port conflicts: ensure nginx is disabled when using Caddy
-            nginx.enable = false;
-
-            # Prometheus stack removed on this host (server, exporters, alertmanager)
-
-            # Resilio Sync (interactive Web UI, auth via SOPS)
-            resilio = lib.mkIf hasResilioSecret {
-              enable = true;
-
-              # state / DB
-              storagePath = "/zero/sync/.state";
-
-              # data root (folders will live under this)
-              directoryRoot = "/zero/sync";
-
-              enableWebUI = true;
-              httpListenAddr = "127.0.0.1";
-              httpListenPort = 9000;
-
-              # Actual credentials come from SOPS and are injected into config.json
-              httpLogin = "placeholder";
-              httpPass = "placeholder";
-
-              listeningPort = 41111;
-              useUpnp = false;
-            };
-
-            # Bitcoind instance is now managed by modules/servers/bitcoind
-          }
-          (lib.mkIf grafanaEnabled {
-            # Harden Grafana: avoid external calls and too-frequent refreshes
-            grafana.settings = {
-              analytics = {
-                reporting_enabled = false;
-                check_for_updates = false;
-              };
-              users = {
-                # Do not fetch avatars from Gravatar (external egress from clients/Server)
-                allow_gravatar = false;
-              };
-              news.news_feed_enabled = false;
-              dashboards.min_refresh_interval = "10s";
-              snapshots.external_enabled = false;
-              # Conservative plugin settings (no alpha, keep install API default)
-              plugins = {
-                enable_alpha = false;
-                disable_install_api = true;
-              };
-            };
-
-            # (Grafana env + tmpfiles rules are defined at top-level below)
-
-            # Provision local dashboards (Unbound)
-            grafana.provision.dashboards.settings.providers = lib.mkAfter [
-              {
-                name = "local-json";
-                orgId = 1;
-                type = "file";
-                disableDeletion = false;
-                editable = true;
-                options.path = inputs.self + "/dashboards";
+                format json
               }
-            ];
-          })
-        ];
+
+              header {
+                Strict-Transport-Security "max-age=15768000; includeSubDomains; preload"
+                X-Content-Type-Options "nosniff"
+                X-Frame-Options "SAMEORIGIN"
+                Referrer-Policy "no-referrer"
+                Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=(), fullscreen=(self), picture-in-picture=(self)"
+              }
+
+              root * ${config.services.nextcloud.package}
+              php_fastcgi unix//run/phpfpm/nextcloud.sock
+              file_server
+              tls internal
+            '';
+          };
+
+          "shairport-sync" = {
+            enable = true;
+            openFirewall = true;
+            settings.general = {
+              name = "Telfir AirPlay";
+              output_backend = "pw";
+            };
+          };
+
+          smartd.enable = false;
+
+          # Persistent journald logs with retention and rate limiting
+          journald = {
+            storage = "persistent";
+            extraConfig = ''
+              SystemMaxUse=1G
+              MaxRetentionSec=1month
+              RateLimitIntervalSec=30s
+              RateLimitBurst=1000
+            '';
+          };
+          # Keep Plasma/X11 off for this host
+          desktopManager.plasma6.enable = lib.mkForce false;
+          xserver.enable = lib.mkForce false;
+          # Remove SDDM/Plasma additions; keep Hyprland-only setup
+          # Temporarily disable Ollama on this host
+          ollama.enable = false;
+          # Avoid port conflicts: ensure nginx is disabled when using Caddy
+          nginx.enable = false;
+
+          # Prometheus stack removed on this host (server, exporters, alertmanager)
+
+          # Resilio Sync (interactive Web UI, auth via SOPS)
+          resilio = lib.mkIf hasResilioSecret {
+            enable = true;
+
+            # state / DB
+            storagePath = "/zero/sync/.state";
+
+            # data root (folders will live under this)
+            directoryRoot = "/zero/sync";
+
+            enableWebUI = true;
+            httpListenAddr = "127.0.0.1";
+            httpListenPort = 9000;
+
+            # Actual credentials come from SOPS and are injected into config.json
+            httpLogin = "placeholder";
+            httpPass = "placeholder";
+
+            listeningPort = 41111;
+            useUpnp = false;
+          };
+
+          # Bitcoind instance is now managed by modules/servers/bitcoind
+        }
+        (lib.mkIf grafanaEnabled {
+          # Harden Grafana: avoid external calls and too-frequent refreshes
+          grafana.settings = {
+            analytics = {
+              reporting_enabled = false;
+              check_for_updates = false;
+            };
+            users = {
+              # Do not fetch avatars from Gravatar (external egress from clients/Server)
+              allow_gravatar = false;
+            };
+            news.news_feed_enabled = false;
+            dashboards.min_refresh_interval = "10s";
+            snapshots.external_enabled = false;
+            # Conservative plugin settings (no alpha, keep install API default)
+            plugins = {
+              enable_alpha = false;
+              disable_install_api = true;
+            };
+          };
+
+          # (Grafana env + tmpfiles rules are defined at top-level below)
+
+          # Provision local dashboards (Unbound)
+          grafana.provision.dashboards.settings.providers = lib.mkAfter [
+            {
+              name = "local-json";
+              orgId = 1;
+              type = "file";
+              disableDeletion = false;
+              editable = true;
+              options.path = inputs.self + "/dashboards";
+            }
+          ];
+        })
+      ];
 
       # (Prometheus/Alertmanager firewall openings removed for this host)
 
@@ -757,7 +721,6 @@ in
           };
         };
       };
-
     }
     (lib.mkIf grafanaEnabled {
       systemd = {
@@ -801,7 +764,6 @@ in
           # Restart Grafana if the secret changes
           restartUnits = ["grafana.service"];
         };
-
     })
     (lib.mkIf (builtins.pathExists wireguardSopsFile) {
       # On-demand WireGuard VPN for telfir, configured via wg-quick config stored in sops.
