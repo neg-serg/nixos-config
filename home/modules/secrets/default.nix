@@ -1,7 +1,1 @@
-{
-  imports = [
-    ./gpg
-    ./ssh
-    ./keyring.nix
-  ];
-}
+{...}: import ./modules.nix
