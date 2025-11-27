@@ -1,5 +1,1 @@
-_: {
-  programs.distrobox = {
-    enable = true; # tool try various distros in cli
-  };
-}
+{...}: import ./modules.nix

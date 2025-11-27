@@ -1,5 +1,1 @@
-{
-  imports = [
-    ./udiskie
-  ];
-}
+{...}: import ./modules.nix

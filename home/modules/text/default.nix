@@ -1,6 +1,1 @@
-{
-  imports = [
-    ./read.nix
-    ./manipulate.nix
-  ];
-}
+{...}: import ./modules.nix
