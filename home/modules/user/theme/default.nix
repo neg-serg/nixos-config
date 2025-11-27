@@ -9,8 +9,6 @@
 with {
   alkano-aio = pkgs.callPackage ./alkano-aio.nix {};
 }; let
-  cursorName = "Bibata-Modern-Ice";
-  cursorPkg = pkgs.bibata-cursors;
   kvantumAltConfig = xdg.mkXdgText "Kvantum/kvantum.kvconfig" ''
     [General]
     theme=KvantumAlt
@@ -22,16 +20,16 @@ in
         pointerCursor = {
           gtk.enable = true;
           x11.enable = lib.mkForce false;
-          package = lib.mkDefault cursorPkg;
-          name = lib.mkDefault cursorName;
+          package = lib.mkDefault alkano-aio;
+          name = lib.mkDefault "Alkano-aio";
           size = lib.mkDefault 23;
         };
         sessionVariables = {
-          XCURSOR_PATH = "${cursorPkg}/share/icons";
+          XCURSOR_PATH = "${alkano-aio}/share/icons";
           XCURSOR_SIZE = 23;
-          XCURSOR_THEME = cursorName;
+          XCURSOR_THEME = "alkano-aio";
           # Keep Hyprland cursor in sync with the system cursor
-          HYPRCURSOR_THEME = cursorName;
+          HYPRCURSOR_THEME = "Alkano-aio";
           HYPRCURSOR_SIZE = 23;
         };
       };
@@ -58,8 +56,8 @@ in
         };
 
         cursorTheme = {
-          name = cursorName;
-          package = cursorPkg;
+          name = "alkano-aio";
+          package = alkano-aio;
           size = 23;
         };
 
@@ -151,8 +149,8 @@ in
         };
         cursor = {
           size = 23;
-          name = cursorName;
-          package = cursorPkg;
+          name = "Alkano-aio";
+          package = alkano-aio;
         };
         polarity = "dark";
         fonts = {
