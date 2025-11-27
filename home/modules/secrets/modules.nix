@@ -1,6 +1,7 @@
 {
   imports = [
-    ./default.nix
+    ./gpg
+    ./ssh
     ./keyring.nix
   ];
 }
