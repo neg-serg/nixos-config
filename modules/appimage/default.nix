@@ -1,5 +1,5 @@
 {pkgs, ...}: {
-  imports = [./pkgs.nix];
+  imports = [./modules.nix];
   # run appimages directly (see https://nixos.wiki/wiki/Appimage)
   boot.binfmt.registrations.appimage = {
     wrapInterpreterInShell = false;
