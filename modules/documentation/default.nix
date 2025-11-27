@@ -1,1 +1,7 @@
-{...}: import ./modules.nix
+_: {
+  documentation = {
+    doc.enable = true;
+    dev.enable = true;
+    info.enable = false;
+  };
+}
