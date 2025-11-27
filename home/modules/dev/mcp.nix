@@ -81,7 +81,6 @@
   disabledServers = [
     "browserbase"
     "exa-search"
-    "postgres-local"
   ];
 in
   lib.mkIf cfgDev (lib.mkMerge [
