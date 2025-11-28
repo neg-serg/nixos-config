@@ -91,9 +91,10 @@ in
       home.activation.ensureHyprLocalDir = lib.hm.dag.entryAfter ["writeBoundary"] ''
         local_dir="${config.xdg.configHome}/hypr/local.d"
         mkdir -p "$local_dir"
-        # Hyprland fails on unmatched globs; keep an empty stub so source=.../*.conf always matches
+        # Hyprland fails on unmatched globs; keep an empty stub so source=.../*.conf always matches.
+        # Use a non-hidden file because dotfiles don't match without dotglob.
         if ! find "$local_dir" -maxdepth 1 -name '*.conf' -print -quit | grep -q .; then
-          : > "$local_dir/.placeholder.conf"
+          : > "$local_dir/placeholder.conf"
         fi
       '';
     }
