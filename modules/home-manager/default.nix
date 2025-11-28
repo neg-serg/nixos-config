@@ -6,7 +6,14 @@
   ...
 }: let
   inherit (pkgs.stdenv.hostPlatform) system;
-  repoRoot = inputs.self;
+  # Resolve repo root via mkHMArgs to prefer a live checkout (/etc/nixos or NEG_REPO_ROOT) over the store copy.
+  mkHMArgs = import (inputs.self + "/flake/home/mkHMArgs.nix") {
+    inherit lib perSystem hmInputs extraSubstituters extraTrustedKeys inputs;
+    yandexBrowserInput = inputs."yandex-browser";
+    inherit (inputs) nur;
+  };
+  extraArgs = mkHMArgs system;
+  repoRoot = extraArgs.negPaths.repoRoot;
   caches = import (repoRoot + "/nix/caches.nix");
   dropCache = url: url != "https://cache.nixos.org/";
   dropKey = key: key != "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=";
@@ -17,12 +24,6 @@
   hmInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) {
     inherit (inputs) nupm;
   };
-  mkHMArgs = import (repoRoot + "/flake/home/mkHMArgs.nix") {
-    inherit lib perSystem hmInputs extraSubstituters extraTrustedKeys inputs;
-    yandexBrowserInput = inputs."yandex-browser";
-    inherit (inputs) nur;
-  };
-  extraArgs = mkHMArgs system;
   mainUser = config.users.main.name or "neg";
   hmModules = [
     (repoRoot + "/home/home.nix")
@@ -30,13 +31,13 @@
     inputs.chaotic.homeManagerModules.default
     inputs."sops-nix".homeManagerModules.sops
   ];
-  cfgPath = repoRoot + "/home";
+  cfgPath = extraArgs.negPaths.hmConfigRoot;
   userConfig = {
     _module.args.negPaths = extraArgs.negPaths;
     imports = hmModules;
     neg.hmConfigRoot = cfgPath;
     neg.repoRoot = repoRoot;
-    neg.packagesRoot = repoRoot + "/packages";
+    neg.packagesRoot = extraArgs.negPaths.packagesRoot;
     programs.home-manager.enable = true;
     manual = {
       html.enable = false;
