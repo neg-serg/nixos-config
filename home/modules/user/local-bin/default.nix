@@ -69,6 +69,7 @@ with lib;
         # Special case: ren needs path substitution for libs as well
         renTpl = builtins.readFile (scriptRoot + "/ren");
         renText = lib.replaceStrings ["@LIBPP@" "@LIBCOLORED@"] [libpp libcolored] renTpl;
+        nextcloudExe = lib.getExe' pkgs.nextcloud-client "nextcloud";
       in
         autoEntries
         // base
@@ -137,6 +138,17 @@ with lib;
 
               export HYPRLAND_INSTANCE_SIGNATURE="$sig"
               exec ${exe} "$@"
+            '';
+          };
+          # GUI Nextcloud with GPU disabled to avoid QtWebEngine crashes
+          ".local/bin/nextcloud" = {
+            executable = true;
+            text = ''
+              #!/usr/bin/env bash
+              set -euo pipefail
+              export QTWEBENGINE_DISABLE_GPU=1
+              export QTWEBENGINE_CHROMIUM_FLAGS="--disable-gpu --disable-software-rasterizer"
+              exec ${nextcloudExe} "$@"
             '';
           };
         };
