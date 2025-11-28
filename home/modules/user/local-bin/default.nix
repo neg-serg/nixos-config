@@ -20,8 +20,6 @@ with lib;
           value = {
             executable = true;
             text = builtins.readFile (binDir + "/${name}");
-            # Avoid clobbering user overrides; keep a backup of existing files
-            backup = ".bak";
           };
         };
         autoEntries = builtins.listToAttrs (
