@@ -68,8 +68,8 @@ in {
       // lib.optionalAttrs hasNextcloudCli {
         # NEXTCLOUD_PASS=... for nextcloudcmd (user-level sync service)
         "nextcloud-cli/env" = {
-          format = "dotenv";
-          sopsFile = ./nextcloud-cli.sops.yaml;
+          format = "binary";
+          sopsFile = ./nextcloud-cli.sops;
           path = "/run/user/1000/secrets/nextcloud-cli.env";
           mode = "0400";
         };
