@@ -6,9 +6,7 @@
   ...
 }: let
   cfg = config.services.nextcloudCli;
-  secretName = "nextcloud-cli/env";
   nextcloudcmd = lib.getExe' pkgs.nextcloud-client "nextcloudcmd";
-  secretPath = lib.attrByPath [secretName "path"] null config.sops.secrets;
 in {
   options.services.nextcloudCli = {
     enable = lib.mkEnableOption "nextcloudcmd periodic sync (user-level)";
@@ -22,6 +20,11 @@ in {
       default = "${config.home.homeDirectory}/sync/telfir";
       description = "Local directory to sync into.";
     };
+    secretName = lib.mkOption {
+      type = lib.types.str;
+      default = "nextcloud-cli/env";
+      description = "Name of the SOPS secret (attr path) providing NEXTCLOUD_PASS.";
+    };
     onCalendar = lib.mkOption {
       type = lib.types.str;
       default = "hourly";
@@ -33,59 +36,124 @@ in {
       default = ["--non-interactive" "--silent"];
       description = "Extra arguments passed to nextcloudcmd.";
     };
+    additionalProfiles = lib.mkOption {
+      type = lib.types.listOf (lib.types.submodule ({name, ...}: {
+        options = {
+          name = lib.mkOption {
+            type = lib.types.str;
+            default = name;
+            description = "Profile name used to suffix unit names.";
+          };
+          userName = lib.mkOption {
+            type = lib.types.str;
+            default = config.home.username;
+            description = "Username for this profile.";
+          };
+          remoteUrl = lib.mkOption {
+            type = lib.types.str;
+            description = "Nextcloud WebDAV URL root to sync for this profile.";
+          };
+          localDir = lib.mkOption {
+            type = lib.types.str;
+            description = "Local directory to sync into for this profile.";
+          };
+          secretName = lib.mkOption {
+            type = lib.types.str;
+            default = "nextcloud-cli/${name}";
+            description = "SOPS secret path (attr) providing NEXTCLOUD_PASS for this profile.";
+          };
+          onCalendar = lib.mkOption {
+            type = lib.types.str;
+            default = config.services.nextcloudCli.onCalendar;
+            description = "OnCalendar for this profile.";
+          };
+          extraArgs = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = config.services.nextcloudCli.extraArgs;
+            description = "Extra arguments for this profile.";
+          };
+        };
+      }));
+      default = [];
+      description = "Additional nextcloudcmd profiles (independent dirs/credentials).";
+    };
   };
 
-  config = lib.mkIf cfg.enable (lib.mkMerge [
-    {
-      # Provide a default SOPS secret definition when not already set upstream.
-      sops.secrets.${secretName} = lib.mkDefault {
-        format = "dotenv";
-        sopsFile = config.neg.repoRoot + "/secrets/home/nextcloud-cli.env.sops";
-        path = "/run/user/1000/secrets/nextcloud-cli.env";
-        mode = "0400";
-      };
-
-      # Ensure local sync dir exists via tmpfiles
-      systemd.user.tmpfiles.rules = [
-        "d ${cfg.localDir} 0700 ${config.home.username} ${config.home.username} -"
-      ];
-
-      systemd.user.services.nextcloud-sync = lib.mkMerge [
+  config = lib.mkIf cfg.enable (let
+    mkProfile = p: let
+      suffix =
+        if p.name == "default"
+        then ""
+        else "-${p.name}";
+      secretAttrPath = lib.splitString "/" p.secretName;
+      profileSecretPath = lib.attrByPath secretAttrPath null config.sops.secrets;
+    in
+      lib.mkMerge [
         {
-          Unit = {
-            Description = "Nextcloud CLI sync";
-            StartLimitBurst = "8";
+          sops.secrets.${p.secretName} = lib.mkDefault {
+            format = "dotenv";
+            sopsFile = config.neg.repoRoot + "/secrets/home/nextcloud-cli-${p.name}.env.sops";
+            path = "/run/user/1000/secrets/nextcloud-cli-${p.name}.env";
+            mode = "0400";
           };
-          Service =
+          systemd.user.tmpfiles.rules = [
+            "d ${p.localDir} 0700 ${config.home.username} ${config.home.username} -"
+          ];
+          systemd.user.services."nextcloud-sync${suffix}" = lib.mkMerge [
             {
-              Type = "oneshot";
-              Environment = ["NC_USER=${config.home.username}"];
-              ExecStart = let
-                args =
-                  cfg.extraArgs
-                  ++ [
-                    cfg.localDir
-                    cfg.remoteUrl
-                  ];
-              in "${nextcloudcmd} ${lib.escapeShellArgs args}";
+              Unit = {
+                Description = "Nextcloud CLI sync (${p.name})";
+                StartLimitBurst = "8";
+              };
+              Service =
+                {
+                  Type = "oneshot";
+                  Environment = ["NC_USER=${p.userName}"];
+                  ExecStart = let
+                    args = p.extraArgs ++ [p.localDir p.remoteUrl];
+                  in "${nextcloudcmd} ${lib.escapeShellArgs args}";
+                }
+                // lib.optionalAttrs (profileSecretPath != null) {EnvironmentFile = profileSecretPath;};
             }
-            // lib.optionalAttrs (secretPath != null) {EnvironmentFile = secretPath;};
+            (systemdUser.mkUnitFromPresets {presets = ["netOnline" "sops"];})
+          ];
+          systemd.user.timers."nextcloud-sync${suffix}" = lib.mkMerge [
+            {
+              Unit = {Description = "Timer: Nextcloud CLI sync (${p.name})";};
+              Timer = {
+                OnCalendar = p.onCalendar;
+                RandomizedDelaySec = "5m";
+                Persistent = true;
+                Unit = "nextcloud-sync${suffix}.service";
+              };
+            }
+            (systemdUser.mkUnitFromPresets {presets = ["timers"];})
+          ];
         }
-        (systemdUser.mkUnitFromPresets {presets = ["netOnline" "sops"];})
       ];
 
-      systemd.user.timers.nextcloud-sync = lib.mkMerge [
-        {
-          Unit = {Description = "Timer: Nextcloud CLI sync";};
-          Timer = {
-            OnCalendar = cfg.onCalendar;
-            RandomizedDelaySec = "5m";
-            Persistent = true;
-            Unit = "nextcloud-sync.service";
-          };
-        }
-        (systemdUser.mkUnitFromPresets {presets = ["timers"];})
-      ];
-    }
-  ]);
+    defaultProfile = {
+      name = "default";
+      userName = config.home.username;
+      remoteUrl = cfg.remoteUrl;
+      localDir = cfg.localDir;
+      secretName = cfg.secretName;
+      onCalendar = cfg.onCalendar;
+      extraArgs = cfg.extraArgs;
+    };
+
+    extraProfiles =
+      map
+      (p: {
+        name = p.name;
+        userName = p.userName;
+        remoteUrl = p.remoteUrl;
+        localDir = p.localDir;
+        secretName = p.secretName;
+        onCalendar = p.onCalendar;
+        extraArgs = p.extraArgs;
+      })
+      cfg.additionalProfiles;
+  in
+    lib.mkMerge (map mkProfile ([defaultProfile] ++ extraProfiles)));
 }
