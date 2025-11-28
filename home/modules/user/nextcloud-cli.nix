@@ -85,15 +85,21 @@ in {
         if p.name == "default"
         then ""
         else "-${p.name}";
-      secretAttrPath = lib.splitString "/" p.secretName;
-      profileSecretPath = lib.attrByPath secretAttrPath null config.sops.secrets;
+      envPath =
+        if p.name == "default"
+        then "/run/user/1000/secrets/nextcloud-cli.env"
+        else "/run/user/1000/secrets/nextcloud-cli-${p.name}.env";
+      sopsFile =
+        if p.name == "default"
+        then config.neg.repoRoot + "/secrets/home/nextcloud-cli.env.sops"
+        else config.neg.repoRoot + "/secrets/home/nextcloud-cli-${p.name}.env.sops";
     in
       lib.mkMerge [
         {
           sops.secrets.${p.secretName} = lib.mkDefault {
             format = "dotenv";
-            sopsFile = config.neg.repoRoot + "/secrets/home/nextcloud-cli-${p.name}.env.sops";
-            path = "/run/user/1000/secrets/nextcloud-cli-${p.name}.env";
+            inherit sopsFile;
+            path = envPath;
             mode = "0400";
           };
           systemd.user.tmpfiles.rules = [
@@ -113,7 +119,7 @@ in {
                     args = p.extraArgs ++ [p.localDir p.remoteUrl];
                   in "${nextcloudcmd} ${lib.escapeShellArgs args}";
                 }
-                // lib.optionalAttrs (profileSecretPath != null) {EnvironmentFile = profileSecretPath;};
+                // {EnvironmentFile = envPath;};
             }
             (systemdUser.mkUnitFromPresets {presets = ["netOnline" "sops"];})
           ];
@@ -145,13 +151,16 @@ in {
     extraProfiles =
       map
       (p: {
-        name = p.name;
-        userName = p.userName;
-        remoteUrl = p.remoteUrl;
-        localDir = p.localDir;
-        secretName = p.secretName;
-        onCalendar = p.onCalendar;
-        extraArgs = p.extraArgs;
+        inherit
+          (p)
+          name
+          userName
+          remoteUrl
+          localDir
+          secretName
+          onCalendar
+          extraArgs
+          ;
       })
       cfg.additionalProfiles;
   in
