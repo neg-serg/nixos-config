@@ -89,19 +89,9 @@ in {
         if p.name == "default"
         then "/run/user/1000/secrets/nextcloud-cli.env"
         else "/run/user/1000/secrets/nextcloud-cli-${p.name}.env";
-      sopsFile =
-        if p.name == "default"
-        then config.neg.repoRoot + "/secrets/home/nextcloud-cli.env.sops"
-        else config.neg.repoRoot + "/secrets/home/nextcloud-cli-${p.name}.env.sops";
     in
       lib.mkMerge [
         {
-          sops.secrets."${p.secretName}" = lib.mkDefault {
-            format = "dotenv";
-            inherit sopsFile;
-            path = envPath;
-            mode = "0400";
-          };
           systemd.user.tmpfiles.rules = [
             "d ${p.localDir} 0700 ${config.home.username} ${config.home.username} -"
           ];
@@ -111,15 +101,14 @@ in {
                 Description = "Nextcloud CLI sync (${p.name})";
                 StartLimitBurst = "8";
               };
-              Service =
-                {
-                  Type = "oneshot";
-                  Environment = ["NC_USER=${p.userName}"];
-                  ExecStart = let
-                    args = p.extraArgs ++ [p.localDir p.remoteUrl];
-                  in "${nextcloudcmd} ${lib.escapeShellArgs args}";
-                }
-                // {EnvironmentFile = envPath;};
+              Service = {
+                Type = "oneshot";
+                Environment = ["NC_USER=${p.userName}"];
+                EnvironmentFile = envPath;
+                ExecStart = let
+                  args = p.extraArgs ++ [p.localDir p.remoteUrl];
+                in "${nextcloudcmd} ${lib.escapeShellArgs args}";
+              };
             }
             (systemdUser.mkUnitFromPresets {presets = ["netOnline" "sops"];})
           ];
