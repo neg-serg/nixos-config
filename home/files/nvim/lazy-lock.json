@@ -52,6 +52,7 @@
   "orgmode": { "branch": "master", "commit": "b7bcb90ef446a3e846ac7e0a84391fd737e9b793" },
   "other.nvim": { "branch": "main", "commit": "1d48e090f6d1d53dda9fb5094af3f2006ebbb858" },
   "overseer.nvim": { "branch": "master", "commit": "2fe35c4282c35179fb615acbf52881f22924e7ad" },
+  "paperplanes.nvim": { "branch": "master", "commit": "dfe43f895ec6f43f4a0a2af006ee74c79e5e1028" },
   "plenary.nvim": { "branch": "master", "commit": "b9fd5226c2f76c951fc8ed5923d85e4de065e509" },
   "qmk.nvim": { "branch": "main", "commit": "3c804c1480991e4837514900b22b9358cfd64fa1" },
   "quickfix.nvim": { "branch": "main", "commit": "78a07821f1bb121fe67d9396fdf3497875e4c4d6" },
