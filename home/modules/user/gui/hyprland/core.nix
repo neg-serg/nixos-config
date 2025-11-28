@@ -92,7 +92,10 @@ in
         local_dir="${config.xdg.configHome}/hypr/local.d"
         mkdir -p "$local_dir"
         # Hyprland fails on unmatched globs; keep an empty stub so source=.../*.conf always matches.
-        # Use a non-hidden file because dotfiles don't match without dotglob.
+        # Prefer a non-hidden placeholder because dotfiles don't match without dotglob.
+        if [ -f "$local_dir/.placeholder.conf" ] && [ ! -f "$local_dir/placeholder.conf" ]; then
+          mv "$local_dir/.placeholder.conf" "$local_dir/placeholder.conf"
+        fi
         if ! find "$local_dir" -maxdepth 1 -name '*.conf' -print -quit | grep -q .; then
           : > "$local_dir/placeholder.conf"
         fi
