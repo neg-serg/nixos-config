@@ -6,6 +6,7 @@
   hasGitHubToken = builtins.pathExists ./github-token.sops.yaml;
   hasCachixEnv = builtins.pathExists ./cachix.env;
   hasVdirsyncerGoogle = builtins.pathExists ./vdirsyncer/google.sops.yaml;
+  hasNextcloudWork = builtins.pathExists ./nextcloud-cli-wrk.env.sops;
 in {
   sops = {
     age.keyFile = "${config.xdg.configHome}/sops/age/keys.txt";
@@ -70,6 +71,15 @@ in {
           format = "dotenv";
           sopsFile = ./nextcloud-cli.env.sops;
           path = "/run/user/1000/secrets/nextcloud-cli.env";
+          mode = "0400";
+        };
+      }
+      // lib.optionalAttrs hasNextcloudWork {
+        # Work profile: NEXTCLOUD_URL, NEXTCLOUD_USER, NEXTCLOUD_PASS
+        "nextcloud-cli-wrk/env" = {
+          format = "dotenv";
+          sopsFile = ./nextcloud-cli-wrk.env.sops;
+          path = "/run/user/1000/secrets/nextcloud-cli-wrk.env";
           mode = "0400";
         };
       };
