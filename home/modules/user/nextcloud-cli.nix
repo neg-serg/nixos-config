@@ -119,7 +119,7 @@ in {
                 user_default=${lib.escapeShellArg userDefault}
                 url_default=${lib.escapeShellArg remoteDefault}
                 user=''${NEXTCLOUD_USER:-''${NC_USER:-$user_default}}
-                url=$(normalize_url ''${NEXTCLOUD_URL:-$url_default})
+                url=$(normalize_url "''${NEXTCLOUD_URL:-$url_default}")
                 pass=''${NEXTCLOUD_PASS:-''${NC_PASSWORD:-}}
 
                 if [ -z "$url" ]; then
@@ -200,7 +200,7 @@ in {
                 user_default=${lib.escapeShellArg userDefault}
                 url_default=${lib.escapeShellArg remoteDefault}
                 user=''${NEXTCLOUD_USER:-''${NC_USER:-$user_default}}
-                url=$(normalize_url ''${NEXTCLOUD_URL:-$url_default})
+                url=$(normalize_url "''${NEXTCLOUD_URL:-$url_default}")
                 pass=''${NEXTCLOUD_PASS:-''${NC_PASSWORD:-}}
 
                 if [ -z "$url" ]; then
