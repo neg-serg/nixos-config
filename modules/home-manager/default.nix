@@ -39,6 +39,7 @@
     neg.repoRoot = repoRoot;
     neg.packagesRoot = extraArgs.negPaths.packagesRoot;
     programs.home-manager.enable = true;
+    home-manager.backupFileExtension = ".bak";
     manual = {
       html.enable = false;
       json.enable = false;
