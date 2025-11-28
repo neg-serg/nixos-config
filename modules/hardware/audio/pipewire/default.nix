@@ -10,9 +10,11 @@
   rmeDefaultScript = pkgs.writeShellScript "wpctl-set-rme-default" ''
     set -euo pipefail
     jq_bin=${pkgs.jq}/bin/jq
+    pw_dump_bin=${pkgs.pipewire}/bin/pw-dump
+    wpctl_bin=${pkgs.pipewire}/bin/wpctl
     tries=60
     for i in $(seq 1 "$tries"); do
-      dump="$(pw-dump || true)"
+      dump="$("$pw_dump_bin" || true)"
       if [ -z "$dump" ]; then
         sleep 0.5
         continue
@@ -25,11 +27,11 @@
       ' <<<"$dump" | head -n1 | tr -d '\n')"
       done=0
       if [ -n "$sink_id" ]; then
-        wpctl set-default "$sink_id" || true
+        "$wpctl_bin" set-default "$sink_id" || true
         done=$((done + 1))
       fi
       if [ -n "$source_id" ]; then
-        wpctl set-default "$source_id" || true
+        "$wpctl_bin" set-default "$source_id" || true
         done=$((done + 1))
       fi
       if [ "$done" -gt 0 ]; then
