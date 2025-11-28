@@ -37,15 +37,13 @@ in {
 
   config = lib.mkIf cfg.enable (lib.mkMerge [
     {
-      assertions = [
-        {
-          assertion = config.sops.secrets ? secretName;
-          message = ''
-            services.nextcloudCli.enable is true but ${secretName} is missing.
-            Add secrets/home/nextcloud-cli.env.sops with a NEXTCLOUD_PASS entry.
-          '';
-        }
-      ];
+      # Provide a default SOPS secret definition when not already set upstream.
+      sops.secrets.${secretName} = lib.mkDefault {
+        format = "dotenv";
+        sopsFile = config.neg.repoRoot + "/secrets/home/nextcloud-cli.env.sops";
+        path = "/run/user/1000/secrets/nextcloud-cli.env";
+        mode = "0400";
+      };
 
       # Ensure local sync dir exists
       home.activation.ensureNextcloudDir = lib.hm.dag.entryAfter ["writeBoundary"] ''
