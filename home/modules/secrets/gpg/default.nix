@@ -9,11 +9,6 @@ with {
     name = "pinentry-rofi-with-env";
     checkPhase = "true"; # skip shellcheck (handled manually)
     text = ''
-      # Default to the custom askpass theme unless the caller overrides.
-      if [ -z "$PINENTRY_ROFI_ARGS" ]; then
-        PINENTRY_ROFI_ARGS="-theme askpass"
-      fi
-      export PINENTRY_ROFI_ARGS
       # shellcheck disable=SC2012,SC2155
       # Best-effort to provide display/session env when gpg-agent is started early (no GUI vars).
       if [ -z "$WAYLAND_DISPLAY" ] && [ -n "$XDG_RUNTIME_DIR" ]; then
