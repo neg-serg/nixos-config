@@ -13,7 +13,7 @@ in {
     remoteUrl = lib.mkOption {
       type = lib.types.str;
       default = "https://telfir/remote.php/dav/files/${config.home.username}";
-      description = "Nextcloud WebDAV URL root to sync (e.g. https://host/remote.php/dav/files/<user>).";
+      description = "Nextcloud WebDAV URL root to sync.";
     };
     localDir = lib.mkOption {
       type = lib.types.str;
@@ -23,13 +23,12 @@ in {
     envFile = lib.mkOption {
       type = lib.types.str;
       default = "/run/user/1000/secrets/nextcloud-cli.env";
-      description = "Path to dotenv file providing NEXTCLOUD_PASS.";
+      description = "Path to dotenv providing NEXTCLOUD_PASS.";
     };
     onCalendar = lib.mkOption {
       type = lib.types.str;
       default = "hourly";
       description = "Systemd OnCalendar spec for sync timer.";
-      example = "30min";
     };
     extraArgs = lib.mkOption {
       type = lib.types.listOf lib.types.str;
@@ -71,84 +70,86 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.enable (
-    let
-      mkProfile = {
-        name,
-        userName,
-        remoteUrl,
-        localDir,
-        envFile,
-        onCalendar,
-        extraArgs,
-      }: let
-        suffix =
-          if name == "default"
-          then ""
-          else "-${name}";
-      in {
-        assertions = [
-          {
-            assertion = remoteUrl != "" && localDir != "";
-            message = "nextcloudCli profile '${name}' requires remoteUrl and localDir";
-          }
-        ];
-        systemd.user.tmpfiles.rules = [
-          "d ${localDir} 0700 ${config.home.username} ${config.home.username} -"
-        ];
-        systemd.user.services."nextcloud-sync${suffix}" = lib.mkMerge [
-          {
-            Unit = {
-              Description = "Nextcloud CLI sync (${name})";
-              StartLimitBurst = "8";
-            };
-            Service = {
-              Type = "oneshot";
-              Environment = ["NC_USER=${userName}"];
-              EnvironmentFile = envFile;
-              ExecStart = let
-                args = extraArgs ++ [localDir remoteUrl];
-              in "${nextcloudcmd} ${lib.escapeShellArgs args}";
-            };
-          }
-          (systemdUser.mkUnitFromPresets {presets = ["netOnline" "sops"];})
-        ];
-        systemd.user.timers."nextcloud-sync${suffix}" = lib.mkMerge [
-          {
-            Unit = {Description = "Timer: Nextcloud CLI sync (${name})";};
-            Timer = {
-              OnCalendar = onCalendar;
-              RandomizedDelaySec = "5m";
-              Persistent = true;
-              Unit = "nextcloud-sync${suffix}.service";
-            };
-          }
-          (systemdUser.mkUnitFromPresets {presets = ["timers"];})
-        ];
-      };
-
-      profiles =
-        [
-          {
-            name = "default";
-            userName = config.home.username;
-            remoteUrl = cfg.remoteUrl;
-            localDir = cfg.localDir;
-            envFile = cfg.envFile;
-            onCalendar = cfg.onCalendar;
-            extraArgs = cfg.extraArgs;
-          }
-        ]
-        ++ lib.optional cfg.work.enable {
-          name = "wrk";
-          userName = cfg.work.userName;
-          remoteUrl = cfg.work.remoteUrl;
-          localDir = cfg.work.localDir;
-          envFile = cfg.work.envFile;
-          onCalendar = cfg.work.onCalendar;
-          extraArgs = cfg.work.extraArgs;
-        };
-    in
-      lib.mkMerge (map mkProfile profiles)
-  );
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      assertions = [
+        {
+          assertion = cfg.remoteUrl != "" && cfg.localDir != "";
+          message = "nextcloudCli requires remoteUrl and localDir";
+        }
+      ];
+      systemd.user.tmpfiles.rules = [
+        "d ${cfg.localDir} 0700 ${config.home.username} ${config.home.username} -"
+      ];
+      systemd.user.services.nextcloud-sync = lib.mkMerge [
+        {
+          Unit = {
+            Description = "Nextcloud CLI sync";
+            StartLimitBurst = "8";
+          };
+          Service = {
+            Type = "oneshot";
+            Environment = ["NC_USER=${config.home.username}"];
+            EnvironmentFile = cfg.envFile;
+            ExecStart = let
+              args = cfg.extraArgs ++ [cfg.localDir cfg.remoteUrl];
+            in "${nextcloudcmd} ${lib.escapeShellArgs args}";
+          };
+        }
+        (systemdUser.mkUnitFromPresets {presets = ["netOnline" "sops"];})
+      ];
+      systemd.user.timers.nextcloud-sync = lib.mkMerge [
+        {
+          Unit = {Description = "Timer: Nextcloud CLI sync";};
+          Timer = {
+            OnCalendar = cfg.onCalendar;
+            RandomizedDelaySec = "5m";
+            Persistent = true;
+            Unit = "nextcloud-sync.service";
+          };
+        }
+        (systemdUser.mkUnitFromPresets {presets = ["timers"];})
+      ];
+    }
+    (lib.mkIf cfg.work.enable {
+      assertions = [
+        {
+          assertion = cfg.work.remoteUrl != "" && cfg.work.localDir != "";
+          message = "nextcloudCli work profile requires remoteUrl and localDir";
+        }
+      ];
+      systemd.user.tmpfiles.rules = [
+        "d ${cfg.work.localDir} 0700 ${config.home.username} ${config.home.username} -"
+      ];
+      systemd.user.services."nextcloud-sync-wrk" = lib.mkMerge [
+        {
+          Unit = {
+            Description = "Nextcloud CLI sync (wrk)";
+            StartLimitBurst = "8";
+          };
+          Service = {
+            Type = "oneshot";
+            Environment = ["NC_USER=${cfg.work.userName}"];
+            EnvironmentFile = cfg.work.envFile;
+            ExecStart = let
+              args = cfg.work.extraArgs ++ [cfg.work.localDir cfg.work.remoteUrl];
+            in "${nextcloudcmd} ${lib.escapeShellArgs args}";
+          };
+        }
+        (systemdUser.mkUnitFromPresets {presets = ["netOnline" "sops"];})
+      ];
+      systemd.user.timers."nextcloud-sync-wrk" = lib.mkMerge [
+        {
+          Unit = {Description = "Timer: Nextcloud CLI sync (wrk)";};
+          Timer = {
+            OnCalendar = cfg.work.onCalendar;
+            RandomizedDelaySec = "5m";
+            Persistent = true;
+            Unit = "nextcloud-sync-wrk.service";
+          };
+        }
+        (systemdUser.mkUnitFromPresets {presets = ["timers"];})
+      ];
+    })
+  ]);
 }
