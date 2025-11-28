@@ -1,19 +1,28 @@
 @import "theme.rasi"
 @import "win/center_btm.rasi"
 
+#mainbox {
+    orientation: vertical;
+    /* Drop the message widget to avoid exposing helper text */
+    children: [ listview, inputbar ];
+    spacing: 0px;
+}
+
 #listview {
     lines: 4;
     columns: 10;
 }
 
 #message {
-    padding: 6px 6px;
-    background-color: @blackwidget;
+    padding: 0px;
+    margin: 0px;
+    border: 0px;
+    background-color: transparent;
 }
 
 #textbox {
-    text-color: @darkgray;
-    background-color: @blackwidget;
+    text-color: transparent;
+    background-color: transparent;
 }
 
 #listview {
