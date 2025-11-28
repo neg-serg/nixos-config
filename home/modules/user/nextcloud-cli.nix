@@ -51,10 +51,12 @@ in {
           };
           remoteUrl = lib.mkOption {
             type = lib.types.str;
+            default = "";
             description = "Nextcloud WebDAV URL root to sync for this profile.";
           };
           localDir = lib.mkOption {
             type = lib.types.str;
+            default = "";
             description = "Local directory to sync into for this profile.";
           };
           secretName = lib.mkOption {
@@ -64,12 +66,12 @@ in {
           };
           onCalendar = lib.mkOption {
             type = lib.types.str;
-            default = config.services.nextcloudCli.onCalendar;
+            default = "hourly";
             description = "OnCalendar for this profile.";
           };
           extraArgs = lib.mkOption {
             type = lib.types.listOf lib.types.str;
-            default = config.services.nextcloudCli.extraArgs;
+            default = ["--non-interactive" "--silent"];
             description = "Extra arguments for this profile.";
           };
         };
@@ -92,6 +94,12 @@ in {
     in
       lib.mkMerge [
         {
+          assertions = [
+            {
+              assertion = p.remoteUrl != "" && p.localDir != "";
+              message = "nextcloudCli profile '${p.name}' requires remoteUrl and localDir";
+            }
+          ];
           systemd.user.tmpfiles.rules = [
             "d ${p.localDir} 0700 ${config.home.username} ${config.home.username} -"
           ];
