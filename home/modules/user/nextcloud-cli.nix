@@ -42,7 +42,7 @@ in {
           assertion = config.sops.secrets ? secretName;
           message = ''
             services.nextcloudCli.enable is true but ${secretName} is missing.
-            Add secrets/home/nextcloud-cli.sops.yaml with a NEXTCLOUD_PASS entry.
+            Add secrets/home/nextcloud-cli.env.sops with a NEXTCLOUD_PASS entry.
           '';
         }
       ];
