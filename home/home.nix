@@ -44,4 +44,6 @@
     preferXdgDirectories = true;
     username = "neg";
   };
+
+  services.nextcloudCli.enable = true;
 }
