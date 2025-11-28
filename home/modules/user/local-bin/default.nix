@@ -20,12 +20,13 @@ with lib;
           value = {
             executable = true;
             text = builtins.readFile (binDir + "/${name}");
+            # Avoid clobbering user overrides; keep a backup of existing files
+            backup = ".bak";
           };
         };
-        autoEntries =
-          builtins.listToAttrs (
-            map mkAuto (lib.filter (n: !(lib.elem n autoSkip)) (builtins.attrNames binFiles))
-          );
+        autoEntries = builtins.listToAttrs (
+          map mkAuto (lib.filter (n: !(lib.elem n autoSkip)) (builtins.attrNames binFiles))
+        );
         mkEnt = e: {
           name = ".local/bin/${e.name}";
           value = {

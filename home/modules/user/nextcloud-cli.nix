@@ -59,14 +59,11 @@ in {
           Service =
             {
               Type = "oneshot";
+              Environment = ["NC_USER=${config.home.username}"];
               ExecStart = let
                 args =
                   cfg.extraArgs
                   ++ [
-                    "--user"
-                    config.home.username
-                    "--password-from-env"
-                    "NEXTCLOUD_PASS"
                     cfg.localDir
                     cfg.remoteUrl
                   ];
