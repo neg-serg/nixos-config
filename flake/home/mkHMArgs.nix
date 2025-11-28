@@ -9,7 +9,20 @@
   extraTrustedKeys,
 }: system: let
   pkgsForSystem = perSystem.${system}.pkgs or null;
-  repoRoot = inputs.self;
+  repoRoot = let
+    # Prefer an override (set NEG_REPO_ROOT=/path/to/checkout) or a live /etc/nixos checkout.
+    envRoot = builtins.getEnv "NEG_REPO_ROOT";
+    envPath =
+      if envRoot != ""
+      then envRoot
+      else null;
+    etcNixos = "/etc/nixos";
+  in
+    if envPath != null && builtins.pathExists envPath
+    then envPath
+    else if builtins.pathExists (etcNixos + "/.git")
+    then etcNixos
+    else inputs.self;
   homeRoot = repoRoot + "/home";
   packagesRoot = repoRoot + "/packages";
   hmLib = lib // {hm = inputs.home-manager.lib.hm;};
