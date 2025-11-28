@@ -19,7 +19,7 @@ in {
     };
     localDir = lib.mkOption {
       type = lib.types.str;
-      default = "${config.home.homeDirectory}/Nextcloud";
+      default = "${config.home.homeDirectory}/sync/telfir";
       description = "Local directory to sync into.";
     };
     onCalendar = lib.mkOption {
@@ -45,10 +45,10 @@ in {
         mode = "0400";
       };
 
-      # Ensure local sync dir exists
-      home.activation.ensureNextcloudDir = lib.hm.dag.entryAfter ["writeBoundary"] ''
-        mkdir -p ${lib.escapeShellArg cfg.localDir}
-      '';
+      # Ensure local sync dir exists via tmpfiles
+      systemd.user.tmpfiles.rules = [
+        "d ${cfg.localDir} 0700 ${config.home.username} ${config.home.username} -"
+      ];
 
       systemd.user.services.nextcloud-sync = lib.mkMerge [
         {
