@@ -36,9 +36,6 @@
     ./profiles/desktop.nix
   ];
 
-  # Make Home Manager keep backups on overwrite (e.g., ~/.local/bin conflicts)
-  home-manager.backupFileExtension = ".bak";
-
   xdg.stateHome = "${config.home.homeDirectory}/.local/state";
 
   home = {
