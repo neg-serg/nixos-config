@@ -39,7 +39,6 @@
     neg.repoRoot = repoRoot;
     neg.packagesRoot = extraArgs.negPaths.packagesRoot;
     programs.home-manager.enable = true;
-    home-manager.backupFileExtension = ".bak";
     manual = {
       html.enable = false;
       json.enable = false;
@@ -52,6 +51,7 @@ in {
     home-manager = {
       useGlobalPkgs = true;
       useUserPackages = true;
+      backupFileExtension = ".bak";
       inherit extraSpecialArgs;
       users.${mainUser} = userConfig;
     };
