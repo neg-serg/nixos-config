@@ -22,7 +22,7 @@
 }
 
 #element {
-    padding: 0 4mm;
+    padding: 0 8px;
 }
 
 #element.normal.normal {
