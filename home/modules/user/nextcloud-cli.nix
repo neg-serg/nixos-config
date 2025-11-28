@@ -96,7 +96,7 @@ in {
     in
       lib.mkMerge [
         {
-          sops.secrets.${p.secretName} = lib.mkDefault {
+          sops.secrets."${p.secretName}" = lib.mkDefault {
             format = "dotenv";
             inherit sopsFile;
             path = envPath;
