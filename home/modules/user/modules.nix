@@ -5,6 +5,7 @@
     ./fun
     ./games
     ./autoclick.nix
+    ./nextcloud-cli.nix
     ./gui
     ./mail
     ./systemd
