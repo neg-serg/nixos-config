@@ -6,7 +6,6 @@
   hasGitHubToken = builtins.pathExists ./github-token.sops.yaml;
   hasCachixEnv = builtins.pathExists ./cachix.env;
   hasVdirsyncerGoogle = builtins.pathExists ./vdirsyncer/google.sops.yaml;
-  hasNextcloudCli = builtins.pathExists ./nextcloud-cli.env.sops;
 in {
   sops = {
     age.keyFile = "${config.xdg.configHome}/sops/age/keys.txt";
@@ -65,7 +64,7 @@ in {
           key = "client_secret";
         };
       }
-      // lib.optionalAttrs hasNextcloudCli {
+      // {
         # NEXTCLOUD_PASS=... for nextcloudcmd (user-level sync service)
         "nextcloud-cli/env" = {
           format = "dotenv";
