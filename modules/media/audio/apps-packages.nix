@@ -14,6 +14,7 @@
     pkgs.ape # Monkey's Audio encoder/decoder for archival rips
     pkgs.cdparanoia # secure CD ripper w/ jitter correction
     pkgs.cider # Apple Music client w/ Discord presence and EQ
+    pkgs."yandex-music" # Yandex Music desktop client
     # analysis
     pkgs.dr14_tmeter # measure dynamic range DR14 style
     pkgs.essentia-extractor # bulk audio feature extractor (HQ descriptors)

@@ -61,6 +61,7 @@ in {
       pkgs.inotify-tools # shell inotify bindings
       pkgs.jq # ubiquitous JSON processor for scripts
       pkgs.nextcloud-client # Nextcloud CLI sync client (nextcloudcmd)
+      pkgs."yandex-disk" # Yandex Disk sync client and daemon
       pkgs.jdupes # deduplicate identical files via hardlinks
       pkgs.kmon # kernel activity monitor
       pkgs.kubectl # Kubernetes CLI
@@ -110,6 +111,7 @@ in {
       pkgs.rmlint # remove duplicates
       pkgs.sad # simpler sed alternative
       pkgs.scaleway-cli # Scaleway cloud CLI
+      pkgs."yandex-cloud" # Yandex Cloud CLI
       pkgs.sd # intuitive sed alternative
       pkgs.speedtest-cli # internet speed test
       pkgs.sox # audio swiss-army knife for CLI helpers
