@@ -12,8 +12,8 @@ in {
     enable = lib.mkEnableOption "nextcloudcmd periodic sync (user-level)";
     remoteUrl = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
-      default = "https://telfir/remote.php/dav/files/${config.home.username}";
-      description = "Nextcloud WebDAV URL root to sync; can be overridden with NEXTCLOUD_URL from envFile.";
+      default = "https://telfir";
+      description = "Nextcloud base URL (no /remote.php path); can be overridden with NEXTCLOUD_URL from envFile.";
     };
     userName = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
@@ -45,7 +45,7 @@ in {
       remoteUrl = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
-        description = "Work Nextcloud WebDAV URL root; can be overridden with NEXTCLOUD_URL from envFile.";
+        description = "Work Nextcloud base URL (no /remote.php path); can be overridden with NEXTCLOUD_URL from envFile.";
       };
       localDir = lib.mkOption {
         type = lib.types.str;
@@ -106,10 +106,20 @@ in {
                 else cfg.userName;
               runner = pkgs.writeShellScript "nextcloud-sync" ''
                 set -euo pipefail
+                normalize_url() {
+                  case "$1" in
+                    *"/remote.php/"*)
+                      printf '%s\n' "''${1%%/remote.php/*}"
+                      ;;
+                    *)
+                      printf '%s\n' "$1"
+                      ;;
+                  esac
+                }
                 user_default=${lib.escapeShellArg userDefault}
                 url_default=${lib.escapeShellArg remoteDefault}
                 user=''${NEXTCLOUD_USER:-''${NC_USER:-$user_default}}
-                url=''${NEXTCLOUD_URL:-$url_default}
+                url=$(normalize_url ''${NEXTCLOUD_URL:-$url_default})
                 pass=''${NEXTCLOUD_PASS:-''${NC_PASSWORD:-}}
 
                 if [ -z "$url" ]; then
@@ -177,10 +187,20 @@ in {
                 else cfg.work.userName;
               runner = pkgs.writeShellScript "nextcloud-sync-wrk" ''
                 set -euo pipefail
+                normalize_url() {
+                  case "$1" in
+                    *"/remote.php/"*)
+                      printf '%s\n' "''${1%%/remote.php/*}"
+                      ;;
+                    *)
+                      printf '%s\n' "$1"
+                      ;;
+                  esac
+                }
                 user_default=${lib.escapeShellArg userDefault}
                 url_default=${lib.escapeShellArg remoteDefault}
                 user=''${NEXTCLOUD_USER:-''${NC_USER:-$user_default}}
-                url=''${NEXTCLOUD_URL:-$url_default}
+                url=$(normalize_url ''${NEXTCLOUD_URL:-$url_default})
                 pass=''${NEXTCLOUD_PASS:-''${NC_PASSWORD:-}}
 
                 if [ -z "$url" ]; then
