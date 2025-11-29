@@ -1,4 +1,4 @@
-inputs: final: prev: let
+inputs: _: prev: let
   callPkg = path: extraArgs: let
     f = import path;
     wantsInputs = builtins.hasAttr "inputs" (builtins.functionArgs f);
@@ -8,7 +8,6 @@ inputs: final: prev: let
       else {};
   in
     prev.callPackage path (autoArgs // extraArgs);
-  packagesRoot = inputs.self + "/packages";
 in {
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
     postPatch =
@@ -20,7 +19,7 @@ in {
       '';
   });
 
-  wf-recorder = prev.wf-recorder.overrideAttrs (old: {
+  wf-recorder = prev.wf-recorder.overrideAttrs (_: {
     version = "0.6.0";
     src = prev.fetchFromGitHub {
       owner = "ammen99";
@@ -44,7 +43,7 @@ in {
   floorp-bin-unwrapped = prev.floorp-bin-unwrapped.overrideAttrs (old: {
     src = prev.fetchurl {
       url = "https://github.com/Floorp-Projects/Floorp/releases/download/v${old.version}/floorp-linux-x86_64.tar.xz";
-      hash = "sha256-51tgjjklC8B0g7wnNS3HhnXg08MZRXTmuWfFXy9EZ6E=";
+      hash = "sha256-jpfLrHCQzDc062POI+aUlaAIDciBxhI7GzsYvHtt72I=";
     };
   });
 
