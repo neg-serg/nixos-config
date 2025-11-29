@@ -4,9 +4,9 @@
 системные модули, так и оставшийся Home Manager под `home/`, так что инструкции и заметки агента
 теперь в одном месте.
 
-Дополнительно во flake доступен пакет `antigravity`, который запускает пасхалку Python
-`python -m antigravity`. Его можно запустить из корня репозитория командой:
+Дополнительно во flake доступен пакет `antigravity` — Google Antigravity (agentic IDE). Требует
+unfree Chrome. Запуск из корня:
 
 ```bash
-nix run .#antigravity
+NIXPKGS_ALLOW_UNFREE=1 nix run .#antigravity
 ```
