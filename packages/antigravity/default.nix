@@ -95,6 +95,13 @@
       mkdir -p $out/lib/antigravity
       cp -r ./* $out/lib/antigravity/
 
+      # native-keymap expects Debug build too; provide symlink to Release
+      nk="$out/lib/antigravity/resources/app/node_modules/native-keymap/build"
+      if [ -f "$nk/Release/keymapping.node" ]; then
+        mkdir -p "$nk/Debug"
+        ln -sf ../Release/keymapping.node "$nk/Debug/keymapping.node"
+      fi
+
       runHook postInstall
     '';
 
@@ -108,6 +115,14 @@
 
   fhs = buildFHSEnv {
     name = "antigravity-fhs";
+
+    extraMounts = [
+      {
+        source = "/etc/nixos";
+        target = "/etc/nixos";
+        recursive = true;
+      }
+    ];
 
     targetPkgs = pkgs:
       (with pkgs; [
@@ -128,6 +143,7 @@
         libsecret
         libuuid
         libxkbcommon
+        xorg.libxkbfile
         mesa
         nspr
         nss
@@ -153,6 +169,7 @@
       ++ lib.optional (browserPkg != null) browserPkg;
 
     runScript = writeShellScript "antigravity-wrapper" ''
+      cd "$HOME"
       export CHROME_BIN=${chromeWrapper}
       export CHROME_PATH=${chromeWrapper}
 
@@ -191,7 +208,12 @@ in
       runHook preInstall
 
       mkdir -p $out/bin
-      ln -s ${fhs}/bin/antigravity-fhs $out/bin/antigravity
+      cat > $out/bin/antigravity <<'SH'
+      #!/usr/bin/env bash
+      cd /
+      exec ${fhs}/bin/antigravity-fhs "$@"
+      SH
+      chmod +x $out/bin/antigravity
 
       mkdir -p $out/share/pixmaps $out/share/icons/hicolor/1024x1024/apps
       cp ${antigravity-unwrapped}/lib/antigravity/resources/app/resources/linux/code.png $out/share/pixmaps/antigravity.png
@@ -204,5 +226,6 @@ in
       antigravity-unwrapped.meta
       // {
         platforms = lib.platforms.linux;
+        mainProgram = "antigravity";
       };
   }
