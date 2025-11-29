@@ -214,6 +214,15 @@
           ];
           config = {
             allowAliases = false;
+            allowUnfreePredicate = pkg: let
+              name = pkg.pname or (builtins.parseDrvName (pkg.name or "")).name;
+              allowed = [
+                "google-antigravity"
+                "antigravity-fhs"
+                "google-chrome"
+              ];
+            in
+              builtins.elem name allowed;
           };
         };
       mkCustomPkgs = pkgs: import ./packages/flake/custom-packages.nix {inherit pkgs;};
