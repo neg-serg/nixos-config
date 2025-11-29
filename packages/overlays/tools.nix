@@ -1,4 +1,4 @@
-inputs: final: prev: let
+inputs: _final: prev: let
   packagesRoot = inputs.self + "/packages";
   callPkg = path: extraArgs: let
     f = import path;
@@ -22,13 +22,7 @@ in {
     cxxmatrix = callPkg (packagesRoot + "/cxxmatrix") {};
     comma = callPkg (packagesRoot + "/comma") {};
 
-    antigravity = prev.writeShellApplication {
-      name = "antigravity";
-      runtimeInputs = [prev.python3];
-      text = ''
-        exec python3 -m antigravity "$@"
-      '';
-    };
+    antigravity = callPkg (packagesRoot + "/antigravity") {};
 
     mcp_server_filesystem = callPkg (packagesRoot + "/mcp/server-filesystem") {};
     "mcp-server-filesystem" = mcp_server_filesystem;
