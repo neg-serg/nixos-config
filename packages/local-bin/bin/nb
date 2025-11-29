@@ -17,7 +17,8 @@ need git
 
 # Pull but do not abort the script if it fails (offline)
 git -C "$repo" pull || true
-find "$HOME"/music -maxdepth 1 -type d | sort > "$repo"/notes/music/list
+mkdir -p "$repo"/music
+find "$HOME"/music -maxdepth 1 -type d | sort > "$repo"/music/list
 
 changed_lines="$(git -C "$repo" status --short -b | wc -l | tr -d '[:space:]')"
 if [ "${changed_lines:-0}" -ge 2 ]; then
