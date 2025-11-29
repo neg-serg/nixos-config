@@ -84,9 +84,7 @@ with lib;
                     exe;
                   Environment = [
                     "RUST_LOG=info,quickshell.dbus.properties=error"
-                    "QSG_INFO=1" # verbose scene graph logging for profiling
                     "QSG_RENDER_LOOP=basic" # prefer basic loop to reduce wakeups
-                    "QT_LOGGING_RULES=qt.scenegraph.*=true;qt.rhi.*=true" # log render loop/dirty events
                   ];
                   # Quickshell 0.2+ removed SIGHUP reload support; rely on restarts for updates.
                   Restart = "on-failure";
