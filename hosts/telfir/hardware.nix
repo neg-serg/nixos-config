@@ -104,6 +104,9 @@
       # Allow editing kernel cmdline from the loader (useful for recovery)
       systemd-boot.editor = true;
     };
+
+    # Allow user-space ptrace for debugging quickshell (strace/perf) without sudo
+    kernel.sysctl."kernel.yama.ptrace_scope" = 0;
   };
 
   # Avoid double compression for swap
@@ -145,5 +148,6 @@
   # Host-specific hardware tools
   environment.systemPackages = [
     pkgs.bazecor # Dygma keyboard configurator
+    pkgs.radeontop # AMD GPU utilization monitor
   ];
 }
