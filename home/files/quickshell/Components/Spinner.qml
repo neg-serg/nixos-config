@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.Settings
 import "../Helpers/Utils.js" as Utils
 
@@ -11,6 +12,8 @@ Item {
     // Stroke width derived from size to avoid relying on Screen context
     property int strokeWidth: Utils.clamp(Math.round(size / 8), 1, 256)
     property int duration: Theme.uiSpinnerDurationMs
+    // Allow disabling animations globally for perf testing
+    property bool animationsEnabled: ((Quickshell.env("QS_DISABLE_ANIMATIONS") || "") !== "1")
     
     implicitWidth: size
     implicitHeight: size
@@ -42,11 +45,11 @@ Item {
         onRotationAngleChanged: {
             requestPaint()
         }
-        
+
         NumberFadeBehavior {
             target: spinnerCanvas
             property: "rotationAngle"
-            running: root.running
+            running: root.running && root.animationsEnabled
             from: 0
             to: 2 * Math.PI
             duration: root.duration
