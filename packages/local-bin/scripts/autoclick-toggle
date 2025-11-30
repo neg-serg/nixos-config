@@ -3,6 +3,8 @@ set -euo pipefail
 
 PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/autoclick.pid"
 DELAY_MS="${1:-16}"
+# ydotoold defaults to a runtime-dir socket; ensure we point to it explicitly
+export YDOTOOL_SOCKET="${YDOTOOL_SOCKET:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/.ydotool_socket}"
 
 stop() {
   if [[ -f "$PIDFILE" ]]; then
