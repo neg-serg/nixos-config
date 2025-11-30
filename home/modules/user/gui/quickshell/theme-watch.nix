@@ -19,7 +19,10 @@ with lib; let
     text = ''
       set -euo pipefail
       cd ${themeRoot}
-      ${pkgs.nodejs_24}/bin/node Tools/build-theme.mjs --quiet
+      # Write merged theme into the writable config dir, not the Nix store.
+      confdir="${config.home.homeDirectory}/.config/quickshell/Theme"
+      mkdir -p "$confdir"
+      ${pkgs.nodejs_24}/bin/node Tools/build-theme.mjs --out "$confdir/.theme.json" --quiet
       if systemctl --user is-active -q quickshell.service; then
         systemctl --user restart quickshell.service >/dev/null 2>&1 || true
       fi
