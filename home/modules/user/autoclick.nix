@@ -21,11 +21,8 @@ in
             Restart = "on-failure";
             RestartSec = "2";
             Slice = "background-graphical.slice";
-            # Run as an unprivileged user; uinput access is granted via the group
-            # (hardware.uinput + extraGroups). Dropping capability requests avoids
-            # failure in user systemd (exit 218/CAPABILITIES).
-            CapabilityBoundingSet = "";
-            AmbientCapabilities = "";
+            # Run unprivileged; uinput access comes from the group. Avoid any
+            # capability tweaking because systemd --user cannot adjust caps.
           };
         }
         (systemdUser.mkUnitFromPresets {presets = ["defaultWanted"];})
