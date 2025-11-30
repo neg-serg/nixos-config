@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 import Quickshell.Services.Mpris
 import qs.Services
 import qs.Settings
@@ -78,14 +79,19 @@ Item {
     function seek(posMs) { position.seek(posMs); }
 
     // Audio spectrum bars (prefer active profile, then settings)
-    Cava {
-        id: cava
-        count: (
-            Settings.settings.visualizerProfiles
-            && Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile]
-            && Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile].cavaBars !== undefined
-        ) ? Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile].cavaBars
-          : Settings.settings.cavaBars
+    readonly property bool visualizerAllowed: ((Quickshell.env("QS_DISABLE_VISUALIZER") || "") !== "1")
+    Loader {
+        id: cavaLoader
+        active: manager.visualizerAllowed
+        sourceComponent: Cava {
+            id: cava
+            count: (
+                Settings.settings.visualizerProfiles
+                && Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile]
+                && Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile].cavaBars !== undefined
+            ) ? Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile].cavaBars
+              : Settings.settings.cavaBars
+        }
     }
-    property alias cavaValues: cava.values
+    property var cavaValues: cavaLoader.active && cavaLoader.item ? cavaLoader.item.values : []
 }

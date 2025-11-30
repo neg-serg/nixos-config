@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import Quickshell
 import qs.Settings
 import "../Helpers/Utils.js" as Utils
 import "../Helpers/Color.js" as ColorHelpers
@@ -24,6 +25,8 @@ Item {
     property int autoHidePauseMs: Theme.panelPillAutoHidePauseMs
     // Optional override for how long to wait before showing the pill
     property int showDelayMs: Theme.panelPillShowDelayMs
+    // Global switch to disable animations for perf testing
+    property bool animationsEnabled: ((Quickshell.env("QS_DISABLE_ANIMATIONS") || "") !== "1")
 
     // Internal state
     property bool showPill: false
@@ -74,7 +77,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
 
-        Behavior on color { ColorFastInOutBehavior {} }
+        Behavior on color { enabled: revealPill.animationsEnabled; ColorFastInOutBehavior {} }
 
         MaterialIcon {
             anchors.centerIn: parent
@@ -122,6 +125,15 @@ Item {
     }
 
     function show() {
+        if (!animationsEnabled) {
+            showPill = true;
+            shouldAnimateHide = autoHide;
+            showTimer.stop();
+            delayedHideAnim.stop();
+            hideAnim.stop();
+            shown();
+            return;
+        }
         if (!showPill) {
             shouldAnimateHide = autoHide;
             showAnim.start();
@@ -132,6 +144,17 @@ Item {
     }
 
     function hide() {
+        if (!animationsEnabled) {
+            if (showPill) {
+                showPill = false;
+                shouldAnimateHide = false;
+                hidden();
+            }
+            showTimer.stop();
+            delayedHideAnim.stop();
+            hideAnim.stop();
+            return;
+        }
         if (showPill) {
             hideAnim.start();
         }
@@ -139,6 +162,10 @@ Item {
     }
 
     function showDelayed() {
+        if (!animationsEnabled) {
+            show();
+            return;
+        }
         if (!showPill) {
             shouldAnimateHide = autoHide;
             showTimer.start();

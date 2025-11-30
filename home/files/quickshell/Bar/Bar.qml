@@ -53,6 +53,10 @@ Scope {
         return Color.withAlpha(baseColor, baseAlpha * scale);
     }
 
+    // Env toggles to hard-disable expensive paths during perf triage
+    readonly property bool wedgeClipAllowed: ((Quickshell.env("QS_DISABLE_WEDGE") || "") !== "1")
+    readonly property bool trianglesAllowed: ((Quickshell.env("QS_DISABLE_TRIANGLES") || "") !== "1")
+
     component TriangleOverlay : Canvas {
         property color color: Theme.background
         property bool flipX: false
@@ -199,7 +203,7 @@ Scope {
         color: Color.withAlpha(Theme.textPrimary, alpha)
         opacity: 1.0
         Layout.alignment: Qt.AlignVCenter
-        visible: panelActive && userVisible
+        visible: panelActive && userVisible && rootScope.trianglesAllowed
 
 
         TriangleOverlay {
@@ -564,10 +568,11 @@ Scope {
                             // Raise above base content; seam remains higher.
                             z: 50
                             // Force-activate in debug/test modes to guarantee visibility
-                            active: ((Quickshell.env("QS_ENABLE_WEDGE_CLIP") || "") === "1")
+                            active: (((Quickshell.env("QS_ENABLE_WEDGE_CLIP") || "") === "1")
                                     || ((Quickshell.env("QS_WEDGE_DEBUG") || "") === "1")
                                     || ((Quickshell.env("QS_WEDGE_SHADER_TEST") || "") === "1")
-                                    || (Settings.settings.enableWedgeClipShader === true)
+                                    || (Settings.settings.enableWedgeClipShader === true))
+                                    && rootScope.wedgeClipAllowed
                             sourceComponent: ShaderEffect {
                                 fragmentShader: Qt.resolvedUrl("../shaders/wedge_clip.frag.qsb")
                                 // Clip the base face (pure fill color) to subtract the wedge
@@ -958,10 +963,11 @@ Scope {
                             anchors.fill: rightBarFill
                             z: 50
                             active: rightPanel.renderActive && (
-                                    ((Quickshell.env("QS_ENABLE_WEDGE_CLIP") || "") === "1")
+                                    (((Quickshell.env("QS_ENABLE_WEDGE_CLIP") || "") === "1")
                                     || ((Quickshell.env("QS_WEDGE_DEBUG") || "") === "1")
                                     || ((Quickshell.env("QS_WEDGE_SHADER_TEST") || "") === "1")
-                                    || (Settings.settings.enableWedgeClipShader === true)
+                                    || (Settings.settings.enableWedgeClipShader === true))
+                                    && rootScope.wedgeClipAllowed
                             )
                             sourceComponent: ShaderEffect {
                                 fragmentShader: Qt.resolvedUrl("../shaders/wedge_clip.frag.qsb")

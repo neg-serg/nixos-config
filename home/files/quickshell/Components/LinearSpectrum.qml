@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.Settings
 import "../Helpers/Utils.js" as Utils
 
@@ -25,6 +26,8 @@ Item {
     // Selective halves
     property bool drawTop: true
     property bool drawBottom: true
+    // Global switch to disable animations for perf testing
+    property bool animationsEnabled: ((Quickshell.env("QS_DISABLE_ANIMATIONS") || "") !== "1")
 
     readonly property int barCount: values.length
     readonly property real halfH: mirror ? height / 2 : height
@@ -61,7 +64,7 @@ Item {
             property real peak: 0
             onVChanged: if (root.showPeaks && v > peak) peak = v;
             Timer {
-                interval: Theme.spectrumPeakDecayIntervalMs; running: root.showPeaks; repeat: true
+                interval: Theme.spectrumPeakDecayIntervalMs; running: root.showPeaks && root.animationsEnabled; repeat: true
                 onTriggered: parent.peak = Utils.clamp(parent.peak - 0.04, 0, 1)
             }
 
@@ -75,7 +78,7 @@ Item {
                 y: root.mirror ? root.halfH : root.halfH - height
                 color: Qt.rgba(root.colorAt(index).r, root.colorAt(index).g, root.colorAt(index).b, root.fillOpacity)
                 antialiasing: true
-                Behavior on height { SmoothedAnimation { duration: Theme.spectrumBarAnimMs } }
+                Behavior on height { enabled: root.animationsEnabled; SmoothedAnimation { duration: Theme.spectrumBarAnimMs } }
             }
 
             // Mirrored bar (top half)
@@ -88,7 +91,7 @@ Item {
                 y: root.halfH - height
                 color: Qt.rgba(root.colorAt(index).r, root.colorAt(index).g, root.colorAt(index).b, root.fillOpacity)
                 antialiasing: true
-                Behavior on height { SmoothedAnimation { duration: Theme.spectrumBarAnimMs } }
+                Behavior on height { enabled: root.animationsEnabled; SmoothedAnimation { duration: Theme.spectrumBarAnimMs } }
             }
 
             // Peak indicator (optional)
