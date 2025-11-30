@@ -178,8 +178,6 @@ with lib;
               {
                 Unit = {
                   Description = "Restart pyprland on Hyprland instance change";
-                  # Disable start-rate limiting; path may trigger bursts on Hypr restarts
-                  StartLimitIntervalSec = "0";
                 };
                 Service = {
                   Type = "oneshot";
@@ -196,18 +194,16 @@ with lib;
           {
             Unit = {
               Description = "Watch Hyprland socket path";
-              # Also disable rate limiting on the path unit itself
-              StartLimitIntervalSec = "0";
             };
             Path = {
-              # Trigger when hypr creates sockets (avoid noisy PathChanged)
+              # Trigger when hypr creates sockets (avoid noisy PathChanged).
               PathExistsGlob = [
                 "%t/hypr/*/.socket.sock"
                 "%t/hypr/*/.socket2.sock"
               ];
-              # Disable path trigger rate limiting (systemd v258)
-              TriggerLimitIntervalSec = "0";
-              TriggerLimitBurst = 0;
+              # Avoid storms: limit triggers to 1 per 2s.
+              TriggerLimitIntervalSec = 2;
+              TriggerLimitBurst = 1;
               Unit = "pyprland-watch.service";
             };
           }
