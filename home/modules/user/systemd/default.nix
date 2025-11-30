@@ -178,6 +178,7 @@ with lib;
               {
                 Unit = {
                   Description = "Restart pyprland on Hyprland instance change";
+                  StartLimitIntervalSec = "0";
                 };
                 Service = {
                   Type = "oneshot";
@@ -194,6 +195,7 @@ with lib;
           {
             Unit = {
               Description = "Watch Hyprland socket path";
+              StartLimitIntervalSec = "0";
             };
             Path = {
               # Trigger when hypr creates sockets (avoid noisy PathChanged).
@@ -201,9 +203,9 @@ with lib;
                 "%t/hypr/*/.socket.sock"
                 "%t/hypr/*/.socket2.sock"
               ];
-              # Avoid storms: limit triggers to 1 per 2s.
-              TriggerLimitIntervalSec = 2;
-              TriggerLimitBurst = 1;
+              # Let the oneshot self-throttle via the stamp file.
+              TriggerLimitIntervalSec = 0;
+              TriggerLimitBurst = 0;
               Unit = "pyprland-watch.service";
             };
           }
