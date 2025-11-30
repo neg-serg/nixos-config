@@ -5,48 +5,53 @@
   systemdUser,
   negLib,
   ...
-}:
-let
+}: let
   inherit (lib) mkIf;
   mkLocalBin = negLib.mkLocalBin;
   # The custom helper from this flake. We need to import it to use it.
-  xdg = import ../../../lib/xdg-helpers.nix { inherit pkgs; };
+  xdg = import ../../../lib/xdg-helpers.nix {inherit pkgs;};
 
   # Dynamically generate the mbsyncrc content from the accounts configuration
-  mbsyncrcContent = lib.concatStringsSep "\n\n" (lib.mapAttrsToList (name: account: ''
-    #-- ${name}
-    IMAPAccount ${name}
-    Host ${account.imap.host}
-    User ${account.userName}
-    PassCmd "${lib.head account.passwordCommand}"
-    AuthMechs LOGIN
-    TLSType IMAPS
-    CertificateFile /etc/ssl/certs/ca-bundle.crt
+  mbsyncrcContent = lib.concatStringsSep "\n\n" (lib.mapAttrsToList (name: account: let
+      passwordCmd =
+        if builtins.isList account.passwordCommand
+        then lib.escapeShellArgs account.passwordCommand
+        else account.passwordCommand;
+    in ''
+      #-- ${name}
+      IMAPAccount ${name}
+      Host ${account.imap.host}
+      User ${account.userName}
+      PassCmd "${passwordCmd}"
+      AuthMechs LOGIN
+      TLSType IMAPS
+      CertificateFile /etc/ssl/certs/ca-bundle.crt
 
-    IMAPStore ${name}-remote
-    Account ${name}
+      IMAPStore ${name}-remote
+      Account ${name}
 
-    MaildirStore ${name}-local
-    Subfolders Verbatim
-    Path ${config.home.homeDirectory}/.local/mail/${name}/
-    Inbox ${config.home.homeDirectory}/.local/mail/${name}/INBOX/
+      MaildirStore ${name}-local
+      Subfolders Verbatim
+      Path ${config.home.homeDirectory}/.local/mail/${name}/
+      Inbox ${config.home.homeDirectory}/.local/mail/${name}/INBOX/
 
-    Channel ${name}
-    Far :${name}-remote:
-    Near :${name}-local:
-    Patterns "INBOX" "[Gmail]/Sent Mail" "[Gmail]/Drafts" "[Gmail]/All Mail" "[Gmail]/Trash" "[Gmail]/Spam"
-    Sync Pull
-    Create Near
-    Expunge Near
-    SyncState *
-  '') config.accounts.email.accounts);
+      Channel ${name}
+      Far :${name}-remote:
+      Near :${name}-local:
+      Patterns "INBOX" "[Gmail]/Sent Mail" "[Gmail]/Drafts" "[Gmail]/All Mail" "[Gmail]/Trash" "[Gmail]/Spam"
+      Sync Pull
+      Create Near
+      Expunge Near
+      SyncState *
+    '')
+    config.accounts.email.accounts);
 in
   # This is a list of attribute sets that will be merged.
   # We are NOT using the programs.mbsync module anymore to avoid conflicts.
   mkIf config.features.mail.enable (lib.mkMerge [
     {
       # 1. Install the package directly
-      home.packages = [ pkgs.isync ];
+      home.packages = [pkgs.isync];
     }
 
     # 2. Manually create the config file using the flake's own helper function.
