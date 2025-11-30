@@ -21,9 +21,11 @@ in
             Restart = "on-failure";
             RestartSec = "2";
             Slice = "background-graphical.slice";
-            CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_SYS_TTY_CONFIG CAP_SYS_NICE";
-            AmbientCapabilities = "CAP_SYS_ADMIN CAP_SYS_TTY_CONFIG CAP_SYS_NICE";
-            NoNewPrivileges = false;
+            # Run as an unprivileged user; uinput access is granted via the group
+            # (hardware.uinput + extraGroups). Dropping capability requests avoids
+            # failure in user systemd (exit 218/CAPABILITIES).
+            CapabilityBoundingSet = "";
+            AmbientCapabilities = "";
           };
         }
         (systemdUser.mkUnitFromPresets {presets = ["defaultWanted"];})
