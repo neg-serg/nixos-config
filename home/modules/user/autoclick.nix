@@ -3,14 +3,9 @@
   config,
   pkgs,
   systemdUser,
-  negLib,
   ...
 }:
-with lib; let
-  scriptRoot = config.neg.repoRoot + "/packages/local-bin/scripts";
-  scriptText = builtins.readFile (scriptRoot + "/autoclick-toggle");
-  mkLocalBin = negLib.mkLocalBin;
-in
+with lib;
   mkIf (config.features.gui.enable or false) (lib.mkMerge [
     {
       systemd.user.services.ydotoold = lib.mkMerge [
@@ -28,5 +23,4 @@ in
         (systemdUser.mkUnitFromPresets {presets = ["defaultWanted"];})
       ];
     }
-    (mkLocalBin "autoclick-toggle" scriptText)
   ])
