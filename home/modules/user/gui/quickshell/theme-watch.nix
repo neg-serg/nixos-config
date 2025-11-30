@@ -22,6 +22,8 @@ with lib; let
       # Write merged theme into the writable config dir, not the Nix store.
       confdir="${config.home.homeDirectory}/.config/quickshell/Theme"
       mkdir -p "$confdir"
+      # Replace any symlinked .theme.json (from home-manager) with a real file.
+      rm -f "$confdir/.theme.json"
       ${pkgs.nodejs_24}/bin/node Tools/build-theme.mjs --out "$confdir/.theme.json" --quiet
       if systemctl --user is-active -q quickshell.service; then
         systemctl --user restart quickshell.service >/dev/null 2>&1 || true
