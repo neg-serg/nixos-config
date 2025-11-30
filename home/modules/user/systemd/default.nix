@@ -190,24 +190,18 @@ with lib;
             ];
           }
         ];
-        # Path unit triggers the oneshot service whenever a new hypr socket appears
-        systemd.user.paths.pyprland-watch = lib.mkMerge [
+        # Timer to poll hypr sockets and restart pyprland if needed (avoids path storms)
+        systemd.user.timers.pyprland-watch = lib.mkMerge [
           {
             Unit = {
-              Description = "Watch Hyprland socket path";
-              StartLimitIntervalSec = "0";
+              Description = "Poll Hyprland socket and restart pyprland if instance changed";
             };
-            Path = {
-              # Trigger when hypr creates sockets (avoid noisy PathChanged).
-              PathExistsGlob = [
-                "%t/hypr/*/.socket.sock"
-                "%t/hypr/*/.socket2.sock"
-              ];
-              # Let the oneshot self-throttle via the stamp file.
-              TriggerLimitIntervalSec = 0;
-              TriggerLimitBurst = 0;
+            Timer = {
+              OnBootSec = "5s";
+              OnUnitActiveSec = "5s";
               Unit = "pyprland-watch.service";
             };
+            Install.WantedBy = ["default.target"];
           }
           (systemdUser.mkUnitFromPresets {presets = ["graphical"];})
         ];
