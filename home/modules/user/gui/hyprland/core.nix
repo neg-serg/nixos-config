@@ -42,9 +42,7 @@ in
         {
           Unit.Description = "Hyprland Polkit Agent";
           Service = {
-            ExecStart = let
-              exe = lib.getExe' pkgs.hyprpolkitagent "hyprpolkitagent";
-            in "${exe}";
+            ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
             Environment = [
               "QT_QPA_PLATFORM=wayland"
               "XDG_SESSION_TYPE=wayland"
