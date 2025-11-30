@@ -387,6 +387,7 @@ Item {
                         LinearSpectrum {
                             id: linearSpectrum
                             visible: Settings.settings.showMediaVisualizer === true
+                                     && MusicManager.visualizerAllowed
                                      && MusicManager.isPlaying
                                      && (trackText.text && trackText.text.length > 0)
                             anchors.left: parent.left
