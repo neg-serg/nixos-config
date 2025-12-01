@@ -677,6 +677,76 @@ Scope {
                             anchors.left: leftBarBackground.left
                             anchors.leftMargin: leftPanel.sideMargin
                             spacing: leftPanel.interWidgetSpacing
+                            ClockWidget { Layout.alignment: Qt.AlignVCenter }
+                            WsIndicator {
+                                id: wsindicator
+                                Layout.alignment: Qt.AlignVCenter
+                                workspaceGlyphDetached: true
+                                showSubmapIcon: false
+                                showLabel: true
+                            }
+                            PanelSeparator {
+                                scaleFactor: leftPanel.s
+                                panelHeightPx: leftPanel.barHeightPx
+                                triangleEnabled: true
+                                triangleWidthFactor: 0.75
+                                mirrorTriangle: true
+                                widthScale: 2.0
+                                backgroundKey: "workspaces"
+                            }
+                            RowLayout {
+                                id: kbCluster
+                                Layout.alignment: Qt.AlignVCenter
+                                spacing: Math.round(Theme.panelNetClusterSpacing * leftPanel.s)
+
+                                KeyboardLayoutHypr {
+                                    id: kbIndicator
+                                    Layout.alignment: Qt.AlignVCenter
+                                    showKeyboardIcon: true
+                                    showLayoutLabel: true
+                                    iconSquare: false
+                                }
+                            }
+                            PanelSeparator {
+                                scaleFactor: leftPanel.s
+                                panelHeightPx: leftPanel.barHeightPx
+                                userVisible: netCluster.visible
+                                triangleEnabled: netCluster.visible
+                                triangleWidthFactor: 0.75
+                                mirrorTriangle: netCluster.visible
+                                widthScale: 2.0
+                                highlightHypotenuse: netCluster.visible
+                                highlightMirror: true
+                                highlightColor: Color.towardsBlack(Color.saturate(Color.towardsBlack(Color.saturate(rootScope.vpnAccentColor(), 0.2), 0.3), 0.2), 0.3)
+                                highlightWidth: Math.max(2, Math.round(leftPanel.s * 3))
+                                backgroundKey: "keyboard"
+                            }
+                            Row {
+                                id: netCluster
+                                Layout.alignment: Qt.AlignVCenter
+                                spacing: Math.round(Theme.panelNetClusterSpacing * leftPanel.s)
+                                LocalMods.NetClusterCapsule {
+                                        id: netCapsule
+                                        Layout.alignment: Qt.AlignVCenter
+                                        screen: leftPanel.screen
+                                        vpnIconRounded: true
+                                        throughputText: ConnectivityState.throughputText
+                                }
+                            }
+                            PanelSeparator {
+                                scaleFactor: leftPanel.s
+                                panelHeightPx: leftPanel.barHeightPx
+                                triangleEnabled: true
+                                triangleWidthFactor: 0.75
+                                mirrorTriangle: false
+                                widthScale: 2.0
+                                backgroundKey: "network"
+                            }
+                            LocalMods.WeatherButton {
+                                id: weatherButton
+                                visible: Settings.settings.showWeatherInBar === true
+                                Layout.alignment: Qt.AlignVCenter
+                            }
                         }
                     }
 
@@ -998,7 +1068,112 @@ Scope {
                             anchors.verticalCenter: rightBarBackground.verticalCenter
                             anchors.right: rightBarBackground.right
                             anchors.rightMargin: rightPanel.sideMargin
-                            spacing: Math.round(Theme.panelClockSpacing * rightPanel.s)
+                            spacing: 0
+                            PanelSeparator {
+                                id: mediaLeadingSeparator
+                                scaleFactor: rightPanel.s
+                                panelHeightPx: rightPanel.barHeightPx
+                                panelActive: rightPanel.renderActive
+                                triangleEnabled: true
+                                triangleWidthFactor: 0.95
+                                mirrorTriangle: false
+                                widthScale: 1.0
+                                flipAcrossVerticalAxis: true
+                                highlightHypotenuse: true
+                                highlightColor: Color.towardsBlack(Color.saturate(Color.towardsBlack(Color.saturate(rootScope.vpnAccentColor(), 0.2), 0.3), 0.2), 0.3)
+                                highlightWidth: Math.max(2, Math.round(rightPanel.s * 3))
+                            }
+                            PillSeparator {
+                                scaleFactor: rightPanel.s
+                                panelHeightPx: rightPanel.barHeightPx
+                                panelActive: rightPanel.renderActive
+                                triangleEnabled: false
+                                widthScale: 0.5
+                            }
+                            Item {
+                                id: mediaRowSlot
+                                Layout.alignment: Qt.AlignVCenter
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                Layout.preferredWidth: implicitWidth
+                                implicitWidth: mediaModule.parent === mediaRowSlot ? Math.max(mediaModule.implicitWidth, 1) : 0
+                                implicitHeight: mediaModule.parent === mediaRowSlot ? Math.max(mediaModule.implicitHeight, 1) : 0
+                                visible: mediaModule.parent === mediaRowSlot
+
+                                Media {
+                                    id: mediaModule
+                                    anchors.fill: parent
+                                    sidePanelPopup: sidebarPopup
+                                }
+                            }
+                            LocalMods.MpdFlags {
+                                id: mpdFlagsBar
+                                Layout.alignment: Qt.AlignVCenter
+                                property bool _mediaVisible: (
+                                    Settings.settings.showMediaInBar
+                                    && MusicManager.currentPlayer
+                                    && !MusicManager.isStopped
+                                    && (MusicManager.isPlaying || MusicManager.isPaused || (MusicManager.trackTitle && MusicManager.trackTitle.length > 0))
+                                )
+                                enabled: _mediaVisible && MusicManager.isCurrentMpdPlayer()
+                                iconPx: Math.round(Theme.fontSizeSmall * Theme.scale(rightPanel.screen))
+                                iconColor: Theme.textPrimary
+                            }
+                            Item {
+                                id: systemTrayWrapper
+                                Layout.alignment: Qt.AlignVCenter
+                                Layout.fillHeight: true
+                                Layout.preferredHeight: rightPanel.barHeightPx
+                                readonly property bool trayCapsuleHidden: Settings.settings.hideSystemTrayCapsule === true
+                                readonly property bool trayVisible: (!trayCapsuleHidden || systemTrayModule.expanded)
+                                readonly property bool tightSpacing: Settings.settings.systemTrayTightSpacing !== false
+                                readonly property int horizontalPadding: tightSpacing ? 0 : Math.max(4, Math.round(Theme.panelTrayInlinePadding * rightPanel.s * 0.75))
+                                readonly property color capsuleColor: WidgetBg.color(Settings.settings, "systemTray", Theme.background)
+                                readonly property real trayContentHeight: (
+                                    systemTrayModule.capsuleHeight !== undefined
+                                        ? systemTrayModule.capsuleHeight
+                                        : (systemTrayModule.implicitHeight || systemTrayModule.height || 0)
+                                )
+                                readonly property int capsuleWidth: Math.max(1, systemTrayModule.implicitWidth) + systemTrayWrapper.horizontalPadding * 2
+                                readonly property int capsuleHeight: rightPanel.barHeightPx
+                                implicitWidth: trayVisible ? capsuleWidth : 0
+                                implicitHeight: trayVisible ? capsuleHeight : 0
+                                Layout.preferredWidth: implicitWidth
+                                Layout.minimumWidth: implicitWidth
+                                Layout.maximumWidth: implicitWidth
+
+                                Rectangle {
+                                    id: systemTrayBackground
+                                    visible: systemTrayWrapper.trayVisible
+                                    radius: 0
+                                    color: systemTrayWrapper.capsuleColor
+                                    width: systemTrayWrapper.capsuleWidth
+                                    height: systemTrayWrapper.capsuleHeight
+                                    border.width: 0
+                                    border.color: "transparent"
+                                    antialiasing: true
+                                }
+
+                                SystemTray {
+                                    id: systemTrayModule
+                                    shell: rootScope.shell
+                                    screen: modelData
+                                    trayMenu: externalTrayMenu
+                                    anchors.centerIn: systemTrayWrapper.trayVisible ? systemTrayBackground : systemTrayWrapper
+                                    inlineBgColor: Theme.background
+                                    inlineBorderColor: "transparent"
+                                    opacity: systemTrayWrapper.trayVisible ? 1 : 0
+                                }
+                            }
+                            CustomTrayMenu { id: externalTrayMenu }
+                            Microphone {
+                                id: widgetsMicrophone
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+                            Volume {
+                                id: widgetsVolume
+                                Layout.alignment: Qt.AlignVCenter
+                            }
                         }
 
                         Item {
