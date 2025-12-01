@@ -101,6 +101,11 @@ with lib; let
       name = " Ⲣ:notes";
       var = "notes";
     }
+    {
+      id = 20;
+      name = "ag";
+      var = "ag";
+    }
   ];
   workspacesConf = let
     wsLines = builtins.concatStringsSep "\n" (map (w: "workspace = ${toString w.id}, defaultName:${w.name}") workspaces);
