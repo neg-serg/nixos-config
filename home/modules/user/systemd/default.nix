@@ -84,6 +84,7 @@ with lib;
                     exe;
                   Environment = [
                     "RUST_LOG=info,quickshell.dbus.properties=error"
+                    "QSG_NO_VSYNC=1" # disable vsync to test render loop overhead
                     "QSG_RENDER_LOOP=basic" # prefer basic loop to reduce wakeups
                     "QS_DISABLE_ANIMATIONS=1" # disable QML animations for perf triage
                   ];
