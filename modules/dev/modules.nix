@@ -13,6 +13,6 @@
     ./openxr
     ./unreal
     ./mcp
-    ./antigravity
+    ./antigravity.nix
   ];
 }
