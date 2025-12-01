@@ -53,6 +53,7 @@ in
         description = "Neg";
       };
       # Host-specific feature toggles
+      features.dev.ai.antigravity.enable = true;
       features.apps.winapps.enable = true;
       # Roles enabled for this host
       roles = {
