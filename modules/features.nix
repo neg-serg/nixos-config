@@ -27,7 +27,10 @@ with lib; let
     };
     dev = {
       enable = true;
-      ai.enable = true;
+      ai = {
+        enable = true;
+        antigravity.enable = false;
+      };
       rust.enable = true;
       cpp.enable = true;
       haskell.enable = true;
@@ -94,6 +97,7 @@ in {
       enable = mkBool "enable Dev stack (toolchains, editors, hack tooling)" true;
       ai = {
         enable = mkBool "enable AI tools (e.g., LM Studio)" true;
+        antigravity.enable = mkBool "install Google Antigravity agentic IDE" false;
       };
       iac = {
         backend = mkOption {
@@ -452,6 +456,10 @@ in {
         {
           assertion = cfg.dev.enable || (! cfg.dev.ai.enable);
           message = "features.dev.ai.enable requires features.dev.enable = true";
+        }
+        {
+          assertion = cfg.dev.ai.enable || (! cfg.dev.ai.antigravity.enable);
+          message = "features.dev.ai.antigravity.enable requires features.dev.ai.enable = true";
         }
         {
           assertion = cfg.gui.enable || (! cfg.apps.obsidian.autostart.enable);
