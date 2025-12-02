@@ -7,6 +7,7 @@
   hasCachixEnv = builtins.pathExists ./cachix.env;
   hasVdirsyncerGoogle = builtins.pathExists ./vdirsyncer/google.sops.yaml;
   hasNextcloudWork = builtins.pathExists ./nextcloud-cli-wrk.env.sops;
+  hasWorkWireguard = builtins.pathExists ./wireguard/work-wg.conf.sops;
 in {
   sops = {
     age.keyFile = "${config.xdg.configHome}/sops/age/keys.txt";
@@ -81,6 +82,15 @@ in {
           sopsFile = ./nextcloud-cli-wrk.env.sops;
           path = "/run/user/1000/secrets/nextcloud-cli-wrk.env";
           mode = "0400";
+        };
+      }
+      // lib.optionalAttrs hasWorkWireguard {
+        # WireGuard/AmneziaWG config for work tunnel (wg-quick/awg-quick compatible)
+        "wireguard/work-wg.conf" = {
+          format = "binary";
+          sopsFile = ./wireguard/work-wg.conf.sops;
+          path = "/run/user/1000/secrets/wireguard/work-wg.conf";
+          mode = "0600";
         };
       };
   };
