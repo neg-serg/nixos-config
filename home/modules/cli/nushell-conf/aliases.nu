@@ -65,15 +65,7 @@ def cdm [] {
 def nrb [] { sudo nixos-rebuild }
 def foobar [] { nix run github:emmanuelrosa/erosanix#foobar2000 }
 def flake-checker [] { nix run github:DeterminateSystems/flake-checker }
-def linux-kernel [] {
-  nix-shell -E '
-    with import <nixpkgs> {};
-    (builtins.getFlake "github:chaotic-cx/nyx/nyxpkgs-unstable")
-      .packages.x86_64-linux.linuxPackages_cachyos.kernel.overrideAttrs
-      (o: { nativeBuildInputs = o.nativeBuildInputs ++ [ pkg-config ncurses ]; })
-  '
-}
-def nixify [] { nix-shell -p nur.repos.kampka.nixify }
+
 def S [...args: string] { nix shell ...$args }
 def nbuild [] { nix-build -E 'with import <nixpkgs> {}; callPackage ./default.nix {}' }
 def nlocate [...args: string] { nix run github:nix-community/nix-index-database ...$args }
