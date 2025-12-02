@@ -183,11 +183,11 @@
     name = "antigravity";
     desktopName = "Google Antigravity";
     comment = "Next-generation agentic IDE";
-    exec = "antigravity --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform-hint=auto %U";
+    exec = "antigravity --class=antigravity --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform-hint=auto %U";
     icon = "antigravity";
     categories = ["Development" "IDE"];
     startupNotify = true;
-    startupWMClass = "Antigravity";
+    startupWMClass = "antigravity";
     mimeTypes = [
       "x-scheme-handler/antigravity"
       "text/plain"
