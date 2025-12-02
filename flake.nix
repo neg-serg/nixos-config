@@ -5,9 +5,9 @@
       url = "github:e-tho/bzmenu";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Pin hy3 to release compatible with Hyprland v0.51.x
+    # Pin hy3 to release compatible with Hyprland v0.52.x
     hy3 = {
-      url = "git+https://github.com/outfoxxed/hy3?ref=hl0.51.0";
+      url = "git+https://github.com/outfoxxed/hy3?ref=hl0.52.0";
       inputs.hyprland.follows = "hyprland";
     };
     # Pin Hyprland to v0.52.x to align with the current desktop stack
