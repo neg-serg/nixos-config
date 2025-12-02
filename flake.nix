@@ -321,6 +321,7 @@
             bash scripts/check-markdown-language.sh
             : > "$out"
           '';
+          tests-caddy = pkgs.testers.runNixOSTest (import ./tests/caddy.nix);
         };
 
         devShells = {
