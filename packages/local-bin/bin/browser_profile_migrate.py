@@ -62,20 +62,24 @@ from typing import Optional, Tuple
 
 APP_DIRS = {
     "firefox": Path.home() / ".mozilla" / "firefox",
-    "floorp":  Path.home() / ".floorp",
+    "floorp": Path.home() / ".floorp",
 }
 
 KEY_FILES = ["places.sqlite", "logins.json", "key4.db"]
+
 
 def die(msg: str, code: int = 1) -> None:
     print(msg, file=sys.stderr)
     sys.exit(code)
 
+
 def info(msg: str) -> None:
     print(msg)
 
+
 def warn(msg: str) -> None:
     print(f"WARNING: {msg}")
+
 
 def backup_file(p: Path) -> Optional[Path]:
     if not p.exists():
@@ -85,10 +89,17 @@ def backup_file(p: Path) -> Optional[Path]:
     shutil.copy2(p, backup)
     return backup
 
+
 def app_running(process_hint: str) -> bool:
     # Try pgrep; fall back to /proc scan
     try:
-        res = subprocess.run(["pgrep", "-fl", process_hint], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False, text=True)
+        res = subprocess.run(
+            ["pgrep", "-fl", process_hint],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            text=True,
+        )
         if res.returncode == 0 and res.stdout.strip():
             return True
     except FileNotFoundError:
@@ -106,10 +117,12 @@ def app_running(process_hint: str) -> bool:
             pass
     return False
 
+
 def new_config() -> configparser.ConfigParser:
     cfg = configparser.ConfigParser(interpolation=None)
     cfg.optionxform = str  # preserve case
     return cfg
+
 
 def read_ini(path: Path) -> configparser.ConfigParser:
     cfg = new_config()
@@ -118,7 +131,10 @@ def read_ini(path: Path) -> configparser.ConfigParser:
             cfg.read_file(f)
     return cfg
 
-def get_val(section: configparser.SectionProxy, key: str, default: Optional[str] = None) -> Optional[str]:
+
+def get_val(
+    section: configparser.SectionProxy, key: str, default: Optional[str] = None
+) -> Optional[str]:
     # Tolerant getter: try canonical and common lowercase
     if key in section:
         return section[key]
@@ -127,6 +143,7 @@ def get_val(section: configparser.SectionProxy, key: str, default: Optional[str]
         if k.lower() == lk:
             return section[k]
     return default
+
 
 def ensure_general(cfg: configparser.ConfigParser) -> None:
     if "General" not in cfg:
@@ -137,6 +154,7 @@ def ensure_general(cfg: configparser.ConfigParser) -> None:
     if "StartWithLastProfile" not in cfg["General"]:
         cfg["General"]["StartWithLastProfile"] = "1"
 
+
 def list_profiles(cfg: configparser.ConfigParser) -> list[Tuple[str, configparser.SectionProxy]]:
     res = []
     for s in cfg.sections():
@@ -144,7 +162,10 @@ def list_profiles(cfg: configparser.ConfigParser) -> list[Tuple[str, configparse
             res.append((s, cfg[s]))
     return res
 
-def find_default_profile(cfg: configparser.ConfigParser) -> Optional[Tuple[str, configparser.SectionProxy]]:
+
+def find_default_profile(
+    cfg: configparser.ConfigParser,
+) -> Optional[Tuple[str, configparser.SectionProxy]]:
     candidates = list_profiles(cfg)
     for name, sec in candidates:
         if get_val(sec, "Default", "0") == "1":
@@ -152,6 +173,7 @@ def find_default_profile(cfg: configparser.ConfigParser) -> Optional[Tuple[str, 
     if len(candidates) == 1:
         return candidates[0]
     return None
+
 
 def detect_flat_structure(dest_app: str, cfg: configparser.ConfigParser) -> bool:
     """
@@ -166,27 +188,34 @@ def detect_flat_structure(dest_app: str, cfg: configparser.ConfigParser) -> bool
         return "/" not in path
     return dest_app == "floorp"
 
+
 def gen_profile_id() -> str:
     # 8 lowercase letters/digits + .default
     import random, string
+
     base = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
     return f"{base}.default"
+
 
 def profiles_ini_path(app: str) -> Path:
     return APP_DIRS[app] / "profiles.ini"
 
+
 def installs_ini_path(app: str) -> Path:
     return APP_DIRS[app] / "installs.ini"
+
 
 def resolve_profile_root(app: str, flat: bool) -> Path:
     """Return the directory under app dir where profiles live."""
     root = APP_DIRS[app]
     return root if flat else (root / "Profiles")
 
+
 def profile_dir_from_path_str(app_dir: Path, path_str: str, is_relative: bool) -> Path:
     if is_relative:
         return (app_dir / path_str).resolve()
     return Path(path_str).expanduser().resolve()
+
 
 def pick_source_default_profile(app: str) -> Tuple[Path, str]:
     """Return (absolute profile dir, profile_id_string_used_in_Path)."""
@@ -206,7 +235,10 @@ def pick_source_default_profile(app: str) -> Tuple[Path, str]:
     prof_dir = profile_dir_from_path_str(app_dir, path_str, is_rel)
     return prof_dir, path_str
 
-def pick_dest_profile(app: str, create_new: bool, desired_id: Optional[str]) -> Tuple[Path, str, bool, bool]:
+
+def pick_dest_profile(
+    app: str, create_new: bool, desired_id: Optional[str]
+) -> Tuple[Path, str, bool, bool]:
     """
     Returns: (absolute_profile_dir, path_string_for_ini, flat_structure, created_new)
     - If create_new is False: use existing Default profile; create fresh ini if none exists.
@@ -251,7 +283,9 @@ def pick_dest_profile(app: str, create_new: bool, desired_id: Optional[str]) -> 
     prof_dir.mkdir(parents=True, exist_ok=True)
     return prof_dir, path_str, flat, created_new
 
+
 # -------- INI write & validation (no spaces around '=') --------
+
 
 def validate_no_spaces_around_equals(path: Path) -> None:
     """
@@ -273,7 +307,7 @@ def validate_no_spaces_around_equals(path: Path) -> None:
             # Find first '=' and inspect adjacent chars
             i = s.find("=")
             left = s[:i]
-            right = s[i+1:]
+            right = s[i + 1 :]
             # Left side: last char must not be whitespace
             if left and left[-1].isspace():
                 bad_lines.append((ln, line.rstrip("\n")))
@@ -286,6 +320,7 @@ def validate_no_spaces_around_equals(path: Path) -> None:
         snippet = "\n".join(f"{ln}: {txt}" for ln, txt in bad_lines[:10])
         more = "" if len(bad_lines) <= 10 else f"\n... and {len(bad_lines)-10} more"
         die(f"{path} contains spaces around '=' which is not allowed:\n{snippet}{more}")
+
 
 def write_ini_strict(cfg: configparser.ConfigParser, path: Path) -> None:
     """
@@ -301,9 +336,13 @@ def write_ini_strict(cfg: configparser.ConfigParser, path: Path) -> None:
     # Validate formatting
     validate_no_spaces_around_equals(path)
 
+
 # ---------------------------------------------------------------
 
-def update_profiles_ini(app: str, path_str: str, make_default: bool, create_if_missing: bool) -> None:
+
+def update_profiles_ini(
+    app: str, path_str: str, make_default: bool, create_if_missing: bool
+) -> None:
     p_ini = profiles_ini_path(app)
     cfg = read_ini(p_ini)
     ensure_general(cfg)
@@ -336,6 +375,7 @@ def update_profiles_ini(app: str, path_str: str, make_default: bool, create_if_m
     write_ini_strict(cfg, p_ini)
     info(f"Updated {app} profiles.ini")
 
+
 def update_or_create_installs_ini(app: str, profile_path_str: str) -> None:
     i_ini = installs_ini_path(app)
     cfg = read_ini(i_ini)
@@ -359,6 +399,7 @@ def update_or_create_installs_ini(app: str, profile_path_str: str) -> None:
     write_ini_strict(cfg, i_ini)
     info(f"Updated {app} installs.ini")
 
+
 def copy_profile(src: Path, dst: Path, use_rsync: bool, rsync_args: str) -> None:
     # Clean destination but keep directory itself
     for p in dst.iterdir():
@@ -373,14 +414,23 @@ def copy_profile(src: Path, dst: Path, use_rsync: bool, rsync_args: str) -> None
         cmd = [rsync_bin, "-a"]
         if rsync_args:
             cmd.extend(rsync_args.split())
-        cmd += ["--exclude", "*.lock", "--exclude", "parent.lock", "--exclude", "lock", "--exclude", "compatibility.ini"]
+        cmd += [
+            "--exclude",
+            "*.lock",
+            "--exclude",
+            "parent.lock",
+            "--exclude",
+            "lock",
+            "--exclude",
+            "compatibility.ini",
+        ]
         cmd += [str(src) + "/", str(dst)]
         info(f"(rsync) {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
     else:
         for root, dirs, files in os.walk(src):
             rel = Path(root).relative_to(src)
-            target_dir = (dst / rel)
+            target_dir = dst / rel
             target_dir.mkdir(parents=True, exist_ok=True)
             for d in dirs:
                 (target_dir / d).mkdir(exist_ok=True)
@@ -392,6 +442,7 @@ def copy_profile(src: Path, dst: Path, use_rsync: bool, rsync_args: str) -> None
     # Ensure compatibility.ini absent
     (dst / "compatibility.ini").unlink(missing_ok=True)
 
+
 def validate_key_files(dir_: Path, strict: bool) -> None:
     missing = [k for k in KEY_FILES if not (dir_ / k).exists()]
     if missing:
@@ -401,17 +452,37 @@ def validate_key_files(dir_: Path, strict: bool) -> None:
         else:
             warn(msg + " (continuing)")
 
+
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Bidirectional Firefox <-> Floorp profile migration (Linux).")
+    p = argparse.ArgumentParser(
+        description="Bidirectional Firefox <-> Floorp profile migration (Linux)."
+    )
     p.add_argument("--from", dest="src_app", choices=("firefox", "floorp"), required=True)
-    p.add_argument("--to",   dest="dst_app", choices=("firefox", "floorp"), required=True)
-    p.add_argument("--strict", action="store_true", help="Abort if key files are missing in source.")
-    p.add_argument("--force",  action="store_true", help="Proceed even if apps are running (NOT recommended).")
-    p.add_argument("--rsync",  action="store_true", help="Use rsync for faster copying.")
-    p.add_argument("--rsync-args", default="--info=progress2", help="Extra rsync args (default: --info=progress2).")
-    p.add_argument("--new-profile", action="store_true", help="Create a NEW destination profile and set it default.")
-    p.add_argument("--new-id", default=None, help="When --new-profile, use this exact profile id (e.g., abcd1234.default).")
+    p.add_argument("--to", dest="dst_app", choices=("firefox", "floorp"), required=True)
+    p.add_argument(
+        "--strict", action="store_true", help="Abort if key files are missing in source."
+    )
+    p.add_argument(
+        "--force", action="store_true", help="Proceed even if apps are running (NOT recommended)."
+    )
+    p.add_argument("--rsync", action="store_true", help="Use rsync for faster copying.")
+    p.add_argument(
+        "--rsync-args",
+        default="--info=progress2",
+        help="Extra rsync args (default: --info=progress2).",
+    )
+    p.add_argument(
+        "--new-profile",
+        action="store_true",
+        help="Create a NEW destination profile and set it default.",
+    )
+    p.add_argument(
+        "--new-id",
+        default=None,
+        help="When --new-profile, use this exact profile id (e.g., abcd1234.default).",
+    )
     return p.parse_args()
+
 
 def main() -> None:
     args = parse_args()
@@ -432,7 +503,9 @@ def main() -> None:
     validate_key_files(src_dir, args.strict)
 
     # Determine destination profile (existing default by default)
-    dst_dir, dst_path_str, _flat, created_new = pick_dest_profile(dst_app, args.new_profile, args.new_id)
+    dst_dir, dst_path_str, _flat, created_new = pick_dest_profile(
+        dst_app, args.new_profile, args.new_id
+    )
 
     info(f"Source ({src_app}) profile: {src_dir}")
     info(f"Destination ({dst_app}) profile: {dst_dir}")
@@ -449,6 +522,7 @@ def main() -> None:
         info("(A new destination profile was created and set as default.)")
     else:
         info("(Migrated into the existing default destination profile.)")
+
 
 if __name__ == "__main__":
     main()

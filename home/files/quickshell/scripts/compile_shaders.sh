@@ -7,7 +7,7 @@ set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 shaders_dir="$(cd "$here/../shaders" && pwd)"
 
-if ! command -v qsb >/dev/null 2>&1; then
+if ! command -v qsb > /dev/null 2>&1; then
   echo "Error: 'qsb' not found. Install Qt 6 Shader Tools (qt6-shadertools)." >&2
   exit 1
 fi

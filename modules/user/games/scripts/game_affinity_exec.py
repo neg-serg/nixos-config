@@ -6,12 +6,12 @@ from typing import List, Tuple
 
 def parse_cpuset(s: str):
     cpus = set()
-    for part in s.split(','):
+    for part in s.split(","):
         part = part.strip()
         if not part:
             continue
-        if '-' in part:
-            a, b = part.split('-', 1)
+        if "-" in part:
+            a, b = part.split("-", 1)
             cpus.update(range(int(a), int(b) + 1))
         else:
             cpus.add(int(part))
@@ -23,11 +23,11 @@ def parse_size(sz: str) -> int:
     if not sz:
         return 0
     try:
-        if sz.endswith('K'):
+        if sz.endswith("K"):
             return int(float(sz[:-1]) * 1024)
-        if sz.endswith('M'):
+        if sz.endswith("M"):
             return int(float(sz[:-1]) * 1024 * 1024)
-        if sz.endswith('G'):
+        if sz.endswith("G"):
             return int(float(sz[:-1]) * 1024 * 1024 * 1024)
         return int(sz)
     except Exception:
@@ -37,21 +37,21 @@ def parse_size(sz: str) -> int:
 def l3_groups() -> List[Tuple[int, List[int]]]:
     """Return list of (size_bytes, cpus[]) unique L3 groups."""
     groups = {}
-    sysfs = '/sys/devices/system/cpu'
+    sysfs = "/sys/devices/system/cpu"
     try:
         for name in os.listdir(sysfs):
-            if not name.startswith('cpu'):
+            if not name.startswith("cpu"):
                 continue
             # Ensure the suffix after 'cpu' is numeric
             if not name[3:].isdigit():
                 continue
-            base = os.path.join(sysfs, name, 'cache', 'index3')
-            size_p = os.path.join(base, 'size')
-            share_p = os.path.join(base, 'shared_cpu_list')
+            base = os.path.join(sysfs, name, "cache", "index3")
+            size_p = os.path.join(base, "size")
+            share_p = os.path.join(base, "shared_cpu_list")
             try:
-                with open(size_p, 'r') as f:
+                with open(size_p, "r") as f:
                     size = parse_size(f.read())
-                with open(share_p, 'r') as f:
+                with open(share_p, "r") as f:
                     shared = f.read().strip()
             except Exception:
                 continue
@@ -73,7 +73,7 @@ def auto_cpuset() -> List[int]:
     if not groups:
         # Fallback to all online CPUs
         try:
-            with open('/sys/devices/system/cpu/online', 'r') as f:
+            with open("/sys/devices/system/cpu/online", "r") as f:
                 return parse_cpuset(f.read().strip())
         except Exception:
             return []
@@ -83,7 +83,7 @@ def auto_cpuset() -> List[int]:
     size, cpus = groups[-1]
     # Optional limit via env var (e.g., 8)
     try:
-        lim = int(os.environ.get('GAME_PIN_AUTO_LIMIT', '0'))
+        lim = int(os.environ.get("GAME_PIN_AUTO_LIMIT", "0"))
     except Exception:
         lim = 0
     if lim and lim > 0:
@@ -97,21 +97,21 @@ if __name__ == "__main__":
     # We'll handle the default logic in the main block if needed, but here we assume
     # the wrapper passes it or we read env.
     ap.add_argument(
-        '--cpus',
-        default=os.environ.get('GAME_PIN_CPUSET', 'auto'),
+        "--cpus",
+        default=os.environ.get("GAME_PIN_CPUSET", "auto"),
     )
-    ap.add_argument('cmd', nargs=argparse.REMAINDER)
+    ap.add_argument("cmd", nargs=argparse.REMAINDER)
     args = ap.parse_args()
 
-    if not args.cmd or args.cmd[0] != '--':
+    if not args.cmd or args.cmd[0] != "--":
         print(
-            'Usage: game-affinity-exec --cpus <set|auto> -- <command> [args...]',
+            "Usage: game-affinity-exec --cpus <set|auto> -- <command> [args...]",
             file=sys.stderr,
         )
         sys.exit(2)
     cmd = args.cmd[1:]
 
-    if str(args.cpus).strip().lower() == 'auto':
+    if str(args.cpus).strip().lower() == "auto":
         cpus = auto_cpuset()
     else:
         cpus = parse_cpuset(args.cpus)
@@ -120,12 +120,10 @@ if __name__ == "__main__":
         if cpus:
             os.sched_setaffinity(0, cpus)
     except Exception as e:
-        print(f'Warning: failed to set CPU affinity: {e}', file=sys.stderr)
+        print(f"Warning: failed to set CPU affinity: {e}", file=sys.stderr)
 
-    use_gamemode = os.environ.get('GAME_RUN_USE_GAMEMODE', '1') not in (
-        '0', 'false', 'no'
-    )
+    use_gamemode = os.environ.get("GAME_RUN_USE_GAMEMODE", "1") not in ("0", "false", "no")
     if use_gamemode:
-        cmd = ['gamemoderun'] + cmd
+        cmd = ["gamemoderun"] + cmd
 
     os.execvp(cmd[0], cmd)

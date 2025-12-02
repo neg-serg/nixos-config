@@ -1,4 +1,4 @@
-inputs: final: prev: let
+inputs: _final: prev: let
   packagesRoot = inputs.self + "/packages";
   callPkg = path: extraArgs: let
     f = import path;

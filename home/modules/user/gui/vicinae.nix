@@ -2,7 +2,6 @@
   lib,
   config,
   pkgs,
-  xdg,
   ...
 }: let
   vicinaeThemeNeg = import ./vicinae/themes/neg.nix;

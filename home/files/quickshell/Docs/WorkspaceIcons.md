@@ -16,7 +16,8 @@ Hyprland or the QuickShell theme changes.
 ## Regeneration steps
 
 1. Adjust Hypr workspaces or `icon-map.json` as needed.
-2. From the repo root run:
+
+1. From the repo root run:
 
    ```bash
    just workspace-icons
@@ -25,7 +26,8 @@ Hyprland or the QuickShell theme changes.
    The `just` recipe launches `quickshell/.config/quickshell/Tools/workspace-icons/generate.py`
    inside a `nix shell` with python 3.13, `fonttools`, `xmllint`, and `rsvg-convert`.
 
-3. The script will:
+1. The script will:
+
    - Parse Hypr workspace ids/names.
    - Merge that with `icon-map.json`, resolving fonts via `fc-match` (with per-slug overrides and
      fallbacks like `Iosevka`).
@@ -35,12 +37,13 @@ Hyprland or the QuickShell theme changes.
    - Update `icon-map.json` (preserving overrides) and emit a fresh `manifest.json` with absolute
      font metadata.
 
-4. Commit the new/modified SVGs, manifest, and any icon-map changes.
+1. Commit the new/modified SVGs, manifest, and any icon-map changes.
 
 ## Adding a new workspace icon
 
 1. Add the workspace entry to the Hypr config (without embedding the icon glyph).
-2. In `icon-map.json` add a block for the slug:
+
+1. In `icon-map.json` add a block for the slug:
 
    ```json
    "my-slug": {
@@ -52,13 +55,14 @@ Hyprland or the QuickShell theme changes.
    - `codepoints` can list multiple values (e.g., glyph + variation selector).
    - `fontPattern` is optional; omit it to use the global default.
 
-3. Run `just workspace-icons` to generate the SVG and manifest entry.
-4. Update docs / QML if the new workspace needs bespoke behavior.
+1. Run `just workspace-icons` to generate the SVG and manifest entry.
+
+1. Update docs / QML if the new workspace needs bespoke behavior.
 
 ## Troubleshooting
 
-- `fc-match` failure: ensure the referenced font is installed or point `fontPattern` at an
-  absolute path.
+- `fc-match` failure: ensure the referenced font is installed or point `fontPattern` at an absolute
+  path.
 - Missing glyph errors: add a fallback font (e.g., `Iosevka`) to `icon-map.json` or the global
   `fontFallbacks` list, then rerun the generator.
 - `xmllint` / `rsvg-convert` failures: check stdout for syntax errors; the generator will stop at

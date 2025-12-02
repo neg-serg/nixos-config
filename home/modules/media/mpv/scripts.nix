@@ -3,8 +3,7 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   scriptPkgs = with pkgs.mpvScripts; [
     cutter # cut and automatically concat videos
     mpris # MPRIS plugin

@@ -11,9 +11,11 @@ TNAME_TYPES_RE = re.compile(r'^\s*typeset(?:\s+-g)?\s+FAST_THEME_NAME\s*=\s*"?([
 # Matches: zstyle :plugin:fast-syntax-highlighting theme ...
 TNAME_ZSTYLE_RE = re.compile(r'^\s*zstyle\s+:plugin:fast-syntax-highlighting\s+theme\s+"?([^"]+)"?')
 
+
 def trim(s: str) -> str:
     """Trim whitespace from both ends."""
     return s.strip()
+
 
 def dequote(s: str) -> str:
     """Remove single/double quotes if present around the string."""
@@ -21,6 +23,7 @@ def dequote(s: str) -> str:
     if (s.startswith('"') and s.endswith('"')) or (s.startswith("'") and s.endswith("'")):
         return s[1:-1]
     return s
+
 
 def parse_file(path: str):
     """
@@ -33,7 +36,7 @@ def parse_file(path: str):
     theme_detected = None
     matches = 0
 
-    with (open(path, 'r', encoding='utf-8') if path != "-" else sys.stdin) as f:
+    with open(path, "r", encoding="utf-8") if path != "-" else sys.stdin as f:
         for line in f:
             # Remove trailing inline comment starting with '#'
             if "#" in line:
@@ -62,9 +65,10 @@ def parse_file(path: str):
                 if key not in raw:
                     raw[key] = val
                 else:
-                    pass # Will handle duplicates later if keep_last is set
+                    pass  # Will handle duplicates later if keep_last is set
 
     return raw, theme_detected, matches
+
 
 def compress(raw, theme, drop_nones=False, keep_last=False, min_group=2):
     """
@@ -79,18 +83,18 @@ def compress(raw, theme, drop_nones=False, keep_last=False, min_group=2):
             last[k] = raw[k]
         raw = OrderedDict(reversed(list(last.items())))
 
-    gen = OrderedDict() # Non-extension theme keys
-    ext2style = OrderedDict() # ext -> style
+    gen = OrderedDict()  # Non-extension theme keys
+    ext2style = OrderedDict()  # ext -> style
 
     for k, v in raw.items():
         if drop_nones and v == "none":
             continue
         if k.startswith(f"{theme}file-extensions-"):
-            ext = k[len(f"{theme}file-extensions-"):].lower()
+            ext = k[len(f"{theme}file-extensions-") :].lower()
             if ext not in ext2style:
                 ext2style[ext] = v
             else:
-                pass # Ignore duplicates unless keep_last was applied earlier
+                pass  # Ignore duplicates unless keep_last was applied earlier
         elif k.startswith(theme):
             if k not in gen:
                 gen[k] = v
@@ -106,6 +110,7 @@ def compress(raw, theme, drop_nones=False, keep_last=False, min_group=2):
 
     return gen, style_groups
 
+
 def emit(theme, gen, style_groups, min_group, out):
     """Emit compressed theme as Zsh script."""
     w = out.write
@@ -115,14 +120,19 @@ def emit(theme, gen, style_groups, min_group, out):
     for k, v in gen.items():
         w(f"  [{k}]='{v}'\n")
     w(")\n\n")
-    w('_setstyle(){ local k=$1 v=$2; [[ -n ${FAST_HIGHLIGHT_STYLES[$k]-} ]] || FAST_HIGHLIGHT_STYLES[$k]=$v; }\n\n')
+    w(
+        "_setstyle(){ local k=$1 v=$2; [[ -n ${FAST_HIGHLIGHT_STYLES[$k]-} ]] || FAST_HIGHLIGHT_STYLES[$k]=$v; }\n\n"
+    )
     for style, exts in style_groups.items():
         if len(exts) >= min_group:
-            w(f"for ext in {' '.join(exts)}; do _setstyle \"${{FAST_THEME_NAME}}file-extensions-$ext\" '{style}'; done\n")
+            w(
+                f"for ext in {' '.join(exts)}; do _setstyle \"${{FAST_THEME_NAME}}file-extensions-$ext\" '{style}'; done\n"
+            )
         else:
             for e in exts:
                 w(f"_setstyle \"${{FAST_THEME_NAME}}file-extensions-{e}\" '{style}'\n")
     w("# 🥟 pie")
+
 
 def main():
     ap = argparse.ArgumentParser(description="Compress F-Sy-H theme file")
@@ -136,16 +146,17 @@ def main():
     raw, detected, matches = parse_file(args.input)
     theme = args.theme or detected or "neg"
     if matches == 0:
-        print("# ERROR: nothing recognized. Expected lines like ${FAST_HIGHLIGHT_STYLES[...]:=...}", file=sys.stderr)
+        print(
+            "# ERROR: nothing recognized. Expected lines like ${FAST_HIGHLIGHT_STYLES[...]:=...}",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     gen, style_groups = compress(
-        raw, theme,
-        drop_nones=args.drop_nones,
-        keep_last=args.keep_last,
-        min_group=args.min_group
+        raw, theme, drop_nones=args.drop_nones, keep_last=args.keep_last, min_group=args.min_group
     )
     emit(theme, gen, style_groups, args.min_group, sys.stdout)
+
 
 if __name__ == "__main__":
     main()

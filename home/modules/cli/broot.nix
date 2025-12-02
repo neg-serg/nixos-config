@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  xdg,
   ...
 }: let
   brootRoot = config.neg.hmConfigRoot + "/files/shell/broot";
