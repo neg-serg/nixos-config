@@ -28,6 +28,7 @@ in {
       pkgs.plow # HTTP benchmarking tool
       pkgs.radare2 # command-line disassembler
       pkgs.strace # trace syscalls
+      pkgs.zee # terminal text editor (Rust)
 
       # Formatters and beautifiers
       pkgs.shfmt # shell formatter
