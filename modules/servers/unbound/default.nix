@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }: let
   # Defaults when option set is missing (keeps evaluation safe)

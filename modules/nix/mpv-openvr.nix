@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }: let
   inherit (lib.lists) unique;
@@ -10,7 +9,7 @@ in {
 
   config = lib.mkIf config.nix.mpvOpenvr.enable {
     nixpkgs.overlays = [
-      (final: prev: let
+      (_final: prev: let
         extraInputs = unique [
           prev.openvr
           prev.xorg.libX11

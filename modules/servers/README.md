@@ -52,14 +52,19 @@ Examples and ports
 ## DNS Healthcheck
 
 - Service status: `systemctl status adguardhome unbound systemd-resolved`
+
 - Listening ports: `ss -lntup | rg ':53|:5353|:5053'`
+
   - expected: resolved → 127.0.0.53:53; AdGuardHome → 127.0.0.1:53; Unbound → 127.0.0.1:5353;
     dnscrypt-proxy2 → 127.0.0.1:5053 (if mode="doh")
+
 - DNS routing: `resolvectl status` → `DNS Servers: 127.0.0.1`, `Domains: ~.`
+
 - AGH filters: `journalctl -u adguardhome -b | rg -i 'filter|download|update|enabled'`
-- Quick query: `resolvectl query example.com` (should resolve via the chain)
-Docs
+
+- Quick query: `resolvectl query example.com` (should resolve via the chain) Docs
 
 - See per‑service options in aggregated file: flake output `packages.${system}."options-md"` (when
   available).
+
 - Each module also exposes standard NixOS options under `services.*`.

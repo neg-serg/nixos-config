@@ -11,7 +11,7 @@ with lib; let
   hy3Permission =
     if hy3Enabled
     then ''
-        permission = ${hy3PluginPath}, plugin, allow
+      permission = ${hy3PluginPath}, plugin, allow
     ''
     else "";
 in
@@ -23,7 +23,7 @@ in
         permission = ${lib.getExe pkgs.grim}, screencopy, allow
         permission = ${lib.getExe pkgs.hyprlock}, screencopy, allow
       ${hy3Permission}
-      '')
+    '')
     # Ensure the generated file replaces any pre-existing file
     {xdg.configFile."hypr/permissions.conf".force = true;}
   ])

@@ -5,7 +5,6 @@
 # Dependencies: Referenced by service modules under modules/servers/*.
 {
   lib,
-  pkgs,
   inputs,
   ...
 }: let

@@ -3,12 +3,14 @@
 Lightweight wrapper around Quickshell Io.Process with common quality-of-life features.
 
 ## Properties
+
 - `cmd: string[]`: argv array, e.g. `["bash","-lc","ip -j -br a"]`.
 - `env: object | null`: extra environment vars.
 - `autoStart: bool` (default true for one-shot; false if polling via `intervalMs`).
 - `intervalMs: int` (0 = run once; >0 = poll on interval).
 - `backoffMs: int` (restart delay when not polling).
-- `restartMode: 'always'|'never'` (when `intervalMs == 0`). Falls back to legacy `restartOnExit` if unset.
+- `restartMode: 'always'|'never'` (when `intervalMs == 0`). Falls back to legacy `restartOnExit` if
+  unset.
 - `restartOnExit: bool` (deprecated; use `restartMode`).
 - `parseJson: bool`: parse entire stdout as JSON when process exits and emit `json(obj)`.
 - `jsonLine: bool`: parse each line as JSON while streaming. Falls back to `line(s)` if parse fails.
@@ -17,6 +19,7 @@ Lightweight wrapper around Quickshell Io.Process with common quality-of-life fea
 - `rawMode: bool`: emit raw stdout via `chunk(string)` instead of line splitting.
 
 ## Signals
+
 - `line(string)`: called per line in streaming mode.
 - `json(var obj)`: JSON payload (either from `parseJson` end-parse or `jsonLine`).
 - `chunk(string)`: raw chunk when `rawMode` is true.
@@ -24,13 +27,15 @@ Lightweight wrapper around Quickshell Io.Process with common quality-of-life fea
 - `started()`: emitted when process starts.
 
 ## Methods
+
 - `start()`, `stop()`.
 - `write(string)`: write to stdin (requires `stdinEnabled: true`).
 - `closeStdin()`: convenience to close stdin via `stdinEnabled = false`.
 
 ## Usage patterns
 
-1) One-shot JSON
+1. One-shot JSON
+
 ```qml
 ProcessRunner {
   cmd: ["bash","-lc","ip -j -br a"]
@@ -39,7 +44,8 @@ ProcessRunner {
 }
 ```
 
-2) Streaming JSON lines
+2. Streaming JSON lines
+
 ```qml
 ProcessRunner {
   cmd: ["my-json-stream"]
@@ -49,7 +55,8 @@ ProcessRunner {
 }
 ```
 
-3) Raw chunks (binary-like)
+3. Raw chunks (binary-like)
+
 ```qml
 ProcessRunner {
   cmd: ["cava","-p","/dev/stdin"]
@@ -63,7 +70,8 @@ ProcessRunner {
 }
 ```
 
-4) Polling on interval
+4. Polling on interval
+
 ```qml
 ProcessRunner {
   cmd: ["bash","-lc","uptime -p"]
@@ -74,7 +82,7 @@ ProcessRunner {
 ```
 
 Notes
+
 - Prefer `jsonLine` for per-line JSON sources (fewer try/catch blocks).
 - Use `debounceMs` to reduce UI churn for very chatty outputs.
 - `restartMode` is only relevant when `intervalMs == 0`.
-

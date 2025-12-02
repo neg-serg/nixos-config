@@ -77,52 +77,52 @@ in
       ];
     }
     # Local bin wrapper installed to ~/.local/bin (avoid config.* to prevent recursion)
-    (negLib.mkLocalBin "transmission-add-trackers" ''        #!/usr/bin/env bash
-            set -euo pipefail
+    (negLib.mkLocalBin "transmission-add-trackers" ''      #!/usr/bin/env bash
+          set -euo pipefail
 
-            # Fetch trackers list directly (no local checkout required)
-            TRACKERS_URL="''${TRACKERS_URL:-https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt}"
-            tmp="$(mktemp)"
-            trap 'rm -f "$tmp"' EXIT
+          # Fetch trackers list directly (no local checkout required)
+          TRACKERS_URL="''${TRACKERS_URL:-https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt}"
+          tmp="$(mktemp)"
+          trap 'rm -f "$tmp"' EXIT
 
-            # Prefer wget, fallback to curl if available
-            if command -v wget >/dev/null 2>&1; then
-              if ! wget -qO "$tmp" "$TRACKERS_URL"; then
-                echo "Failed to fetch trackers list with wget: $TRACKERS_URL" >&2
-                exit 1
-              fi
-            elif command -v curl >/dev/null 2>&1; then
-              if ! curl -fsSL "$TRACKERS_URL" -o "$tmp"; then
-                echo "Failed to fetch trackers list with curl: $TRACKERS_URL" >&2
-                exit 1
-              fi
-            else
-              echo "Neither wget nor curl found; please install one to fetch trackers." >&2
+          # Prefer wget, fallback to curl if available
+          if command -v wget >/dev/null 2>&1; then
+            if ! wget -qO "$tmp" "$TRACKERS_URL"; then
+              echo "Failed to fetch trackers list with wget: $TRACKERS_URL" >&2
               exit 1
             fi
-
-            # Optional connection args for transmission-remote
-            # TRANSMISSION_REMOTE may be a host, host:port or full RPC URL
-            # TRANSMISSION_AUTH may be "user:pass" if auth is enabled
-            args=()
-            if [ -n "''${TRANSMISSION_REMOTE:-}" ]; then
-              args+=("$TRANSMISSION_REMOTE")
+          elif command -v curl >/dev/null 2>&1; then
+            if ! curl -fsSL "$TRACKERS_URL" -o "$tmp"; then
+              echo "Failed to fetch trackers list with curl: $TRACKERS_URL" >&2
+              exit 1
             fi
-            if [ -n "''${TRANSMISSION_AUTH:-}" ]; then
-              args+=(--auth "$TRANSMISSION_AUTH")
-            fi
+          else
+            echo "Neither wget nor curl found; please install one to fetch trackers." >&2
+            exit 1
+          fi
 
-            # Probe connection (non-fatal)
-            transmission-remote "''${args[@]}" -si >/dev/null 2>&1 || true
+          # Optional connection args for transmission-remote
+          # TRANSMISSION_REMOTE may be a host, host:port or full RPC URL
+          # TRANSMISSION_AUTH may be "user:pass" if auth is enabled
+          args=()
+          if [ -n "''${TRANSMISSION_REMOTE:-}" ]; then
+            args+=("$TRANSMISSION_REMOTE")
+          fi
+          if [ -n "''${TRANSMISSION_AUTH:-}" ]; then
+            args+=(--auth "$TRANSMISSION_AUTH")
+          fi
 
-            # Add each tracker to all torrents; ignore duplicates/errors
-            while IFS= read -r line; do
-              [ -z "$line" ] && continue
-              case "$line" in \#*) continue;; esac
-              case "$line" in *://*) ;; *) continue;; esac
-              transmission-remote "''${args[@]}" -t all -td "$line" >/dev/null 2>&1 || true
-            done < "$tmp"
-      '')
+          # Probe connection (non-fatal)
+          transmission-remote "''${args[@]}" -si >/dev/null 2>&1 || true
+
+          # Add each tracker to all torrents; ignore duplicates/errors
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            case "$line" in \#*) continue;; esac
+            case "$line" in *://*) ;; *) continue;; esac
+            transmission-remote "''${args[@]}" -t all -td "$line" >/dev/null 2>&1 || true
+          done < "$tmp"
+    '')
 
     {
       # Periodic job to add/update public trackers on existing torrents

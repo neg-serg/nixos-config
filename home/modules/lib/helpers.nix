@@ -166,12 +166,13 @@ in rec {
       ${body}
     '';
 
-  mkEnsureRealLinks = pairs: lib.hm.dag.entryAfter ["writeBoundary"] ''
-    set -eu
-    while [ $# -gt 0 ]; do
-      link="$1"; target="$2"; shift 2
-      if [ -L "$link" ] || [ -e "$link" ]; then rm -rf "$link"; fi
-      ln -s "$target" "$link"
-    done
-  '';
+  mkEnsureRealLinks = _pairs:
+    lib.hm.dag.entryAfter ["writeBoundary"] ''
+      set -eu
+      while [ $# -gt 0 ]; do
+        link="$1"; target="$2"; shift 2
+        if [ -L "$link" ] || [ -e "$link" ]; then rm -rf "$link"; fi
+        ln -s "$target" "$link"
+      done
+    '';
 }

@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 import re, sys
 from pathlib import Path
@@ -7,7 +6,9 @@ ARRAY = "FAST_HIGHLIGHT_STYLES"
 
 # Patterns
 # : ${FAST_HIGHLIGHT_STYLES[key]:=value}
-default_re = re.compile(r"""^\s*:\s*\$\{\s*%s\s*\[\s*([^\]]+?)\s*\]\s*:?=\s*(.*?)\s*\}\s*$""" % ARRAY)
+default_re = re.compile(
+    r"""^\s*:\s*\$\{\s*%s\s*\[\s*([^\]]+?)\s*\]\s*:?=\s*(.*?)\s*\}\s*$""" % ARRAY
+)
 # _setstyle key 'value'
 setstyle_re = re.compile(r"""^\s*_setstyle\s+(.+?)\s+(.+?)\s*$""")
 # FAST_HIGHLIGHT_STYLES[key]=value
@@ -19,36 +20,44 @@ literal_entry_re = re.compile(r"""\[\s*([^\]]+?)\s*\]\s*=\s*(.+)""")
 theme_name_line_re = re.compile(r"""^\s*typeset\s+-g\s+FAST_THEME_NAME=.*$""")
 zstyle_theme_re = re.compile(r"""^\s*zstyle\s+:plugin:fast-syntax-highlighting\s+theme\b""")
 
+
 def strip_q(s: str) -> str:
     s = s.strip()
     if (s.startswith("'") and s.endswith("'")) or (s.startswith('"') and s.endswith('"')):
         return s[1:-1]
     return s
 
+
 def cut_comment(s: str) -> str:
     out = []
     in_q = False
-    q = ''
+    q = ""
     i = 0
     while i < len(s):
         ch = s[i]
         if ch in ("'", '"'):
             if not in_q:
-                in_q = True; q = ch
+                in_q = True
+                q = ch
             elif q == ch:
-                in_q = False; q = ''
-            out.append(ch); i += 1; continue
-        if ch == '#' and not in_q:
+                in_q = False
+                q = ""
+            out.append(ch)
+            i += 1
+            continue
+        if ch == "#" and not in_q:
             break
-        out.append(ch); i += 1
-    return ''.join(out).strip()
+        out.append(ch)
+        i += 1
+    return "".join(out).strip()
+
 
 def parse_literal_block(lines, start):
     d = {}
     i = start + 1
     while i < len(lines):
         line = lines[i]
-        if line.strip() == ')':
+        if line.strip() == ")":
             return i, d
         m = literal_entry_re.search(line)
         if m:
@@ -58,15 +67,25 @@ def parse_literal_block(lines, start):
         i += 1
     raise RuntimeError(f"Unterminated array starting at line {start+1}")
 
+
 def format_literal(d: dict) -> str:
-    def key_sort(k): return (0 if "file-extensions-" not in k else 1, k)
+    def key_sort(k):
+        return (0 if "file-extensions-" not in k else 1, k)
+
     out = [f"typeset -gA {ARRAY}=("]
     for k in sorted(d.keys(), key=key_sort):
         v = d[k]
-        v_fmt = v if v == 'none' or (v.startswith("'") and v.endswith("'")) or (v.startswith('"') and v.endswith('"')) else "'" + v.replace("'", r"'\''") + "'"
+        v_fmt = (
+            v
+            if v == "none"
+            or (v.startswith("'") and v.endswith("'"))
+            or (v.startswith('"') and v.endswith('"'))
+            else "'" + v.replace("'", r"'\''") + "'"
+        )
         out.append(f"  [{k}]={v_fmt}")
     out.append(")")
     return "\n".join(out)
+
 
 def transform_file(path: Path, write: bool):
     text = path.read_text(encoding="utf-8", errors="ignore")
@@ -95,7 +114,7 @@ def transform_file(path: Path, write: bool):
             insert_after = idx
         # Skip lines from old literal(s)
         in_literal = False
-        for s,e in literal_ranges:
+        for s, e in literal_ranges:
             if s <= idx <= e:
                 in_literal = True
                 break
@@ -135,12 +154,18 @@ def transform_file(path: Path, write: bool):
     else:
         # After initial comments/blank lines
         insert_idx = 0
-        while insert_idx < len(keep) and (keep[insert_idx].strip().startswith("#") or keep[insert_idx].strip()=="" or keep[insert_idx].strip().startswith("#!")):
+        while insert_idx < len(keep) and (
+            keep[insert_idx].strip().startswith("#")
+            or keep[insert_idx].strip() == ""
+            or keep[insert_idx].strip().startswith("#!")
+        ):
             insert_idx += 1
 
     out_lines = keep[:insert_idx] + [block] + keep[insert_idx:]
 
-    output_text = "\n".join(out_lines) + ("\n" if out_lines and not out_lines[-1].endswith("\n") else "")
+    output_text = "\n".join(out_lines) + (
+        "\n" if out_lines and not out_lines[-1].endswith("\n") else ""
+    )
     if write:
         bak = path.with_suffix(path.suffix + ".bak")
         if not bak.exists():
@@ -152,9 +177,13 @@ def transform_file(path: Path, write: bool):
         sys.stdout.write(output_text)
     return True
 
+
 def main():
     if len(sys.argv) < 2:
-        print("Usage: fsyh_theme_defaults_compactor.py /path/to/current_theme.zsh [--write]", file=sys.stderr)
+        print(
+            "Usage: fsyh_theme_defaults_compactor.py /path/to/current_theme.zsh [--write]",
+            file=sys.stderr,
+        )
         sys.exit(2)
     write = False
     paths = []
@@ -171,6 +200,7 @@ def main():
         ok_any = transform_file(p, write) or ok_any
     if not ok_any:
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -11,7 +11,7 @@ with lib;
         "vdirsyncer/google-client-id"
         "vdirsyncer/google-client-secret"
       ];
-      haveSecrets = lib.all (name: config.sops.secrets ? name) secretNames;
+      haveSecrets = lib.all (_name: config.sops.secrets ? name) secretNames;
     in {
       assertions = [
         {

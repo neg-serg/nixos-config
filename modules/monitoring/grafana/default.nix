@@ -6,7 +6,6 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }: let
   inherit (lib) mkEnableOption mkIf mkOption types;
@@ -113,10 +112,10 @@ in {
     # Per-interface firewall openings (Grafana port and, optionally, Caddy proxy ports)
     networking.firewall.interfaces = lib.mkMerge [
       (mkIf cfg.openFirewall (
-        lib.genAttrs cfg.firewallInterfaces (iface: {allowedTCPPorts = [cfg.port];})
+        lib.genAttrs cfg.firewallInterfaces (_iface: {allowedTCPPorts = [cfg.port];})
       ))
       (mkIf (cfg.caddyProxy.enable && cfg.caddyProxy.openFirewall) (
-        lib.genAttrs cfg.caddyProxy.firewallInterfaces (iface: {allowedTCPPorts = [80 443];})
+        lib.genAttrs cfg.caddyProxy.firewallInterfaces (_iface: {allowedTCPPorts = [80 443];})
       ))
     ];
 

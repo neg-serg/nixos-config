@@ -39,16 +39,11 @@ in
           hasIotop = pkgs ? iotop;
           hasLsof = pkgs ? lsof;
           hasKmon = pkgs ? kmon;
-          hasReflector = pkgs ? reflector;
           hasFd = pkgs ? fd;
           hasMpc = pkgs ? mpc;
           hasNixify = pkgs ? nixify; # Assuming nixify is a package
           hasNixIndexDb = pkgs ? nix-index-database; # Assuming nix-index-database is a package
-          hasFlatpak = pkgs ? flatpak;
-          hasBottles = pkgs ? bottles;
-          hasObs = pkgs ? obs-studio; # Assuming obs-studio is the package name
-          hasOnlyoffice = pkgs ? onlyoffice; # Assuming onlyoffice is the package name
-          hasZoom = pkgs ? zoom-us; # Assuming zoom-us is the package name
+          hasFlatpak = pkgs ? flatpak; # Assuming obs-studio is the package name # Assuming onlyoffice is the package name # Assuming zoom-us is the package name
           content = lib.concatStrings [
             "# Aliae aliases (cross-shell)\n"
             "# Edit and reload your shell to apply changes.\n"
