@@ -69,25 +69,10 @@ in {
             else pick (builtins.tail names);
       in
         pick candidates;
-    # Fallback to chaotic if it exposes a Qt/Blink variant and is explicitly enabled
-    chaoticPkgs =
-      if inputs ? chaotic
-      then (inputs.chaotic.packages.${system} or null)
-      else null;
-    fromChaotic =
-      if chaoticPkgs == null
-      then null
-      else if hasAttr "nyxt4" chaoticPkgs
-      then chaoticPkgs.nyxt4
-      else if hasAttr "nyxt-qtwebengine" chaoticPkgs
-      then chaoticPkgs."nyxt-qtwebengine"
-      else if hasAttr "nyxt-qt" chaoticPkgs
-      then chaoticPkgs."nyxt-qt"
-      else null;
   in
     if fromCustom != null
     then fromCustom
-    else fromChaotic;
+    else null;
   # Flake cache settings for reuse in modules (single source of truth)
   caches = {
     substituters = extraSubstituters;
