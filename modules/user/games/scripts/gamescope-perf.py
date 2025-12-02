@@ -14,7 +14,10 @@ H = {
 
 def get_monitors():
     try:
-        out = subprocess.check_output([H["HYPRCTL"], "monitors", "-j"], text=True)
+        out = subprocess.check_output(
+            [H["HYPRCTL"], "monitors", "-j"],
+            text=True,
+        )
         return json.loads(out)
     except Exception:
         return []
