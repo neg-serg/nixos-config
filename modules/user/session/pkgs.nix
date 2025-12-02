@@ -14,11 +14,10 @@
   devSpeed = config.features.devSpeed.enable or false;
   guiEnabled = config.features.gui.enable or false;
   getInputPackage = input: lib.attrByPath ["packages" hostSystem "default"] null input;
-  bzmenuPkg = getInputPackage inputs.bzmenu;
   iwmenuPkg = getInputPackage inputs.iwmenu;
   menuPkgs =
     if guiEnabled && !devSpeed
-    then lib.filter (pkg: pkg != null) [bzmenuPkg iwmenuPkg]
+    then lib.filter (pkg: pkg != null) [iwmenuPkg]
     else [];
   hyprWinList = pkgs.writeShellApplication {
     # helper to list Hypr windows through rofi

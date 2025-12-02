@@ -1,10 +1,6 @@
 {
   description = "Neg-Serg configuration";
   inputs = {
-    bzmenu = {
-      url = "github:e-tho/bzmenu";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # Pin hy3 to release compatible with Hyprland v0.52.x
     hy3 = {
       url = "git+https://github.com/outfoxxed/hy3?ref=hl0.52.0";
@@ -36,16 +32,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-flatpak = {url = "github:gmodena/nix-flatpak";}; # unstable branch. Use github:gmodena/nix-flatpak/?ref=<tag> to pin releases.
-    nix-gaming = {
-      url = "github:fufexan/nix-gaming";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # Pin nixpkgs to nixos-unstable so we get Hydra cache hits
     nixpkgs = {url = "github:NixOS/nixpkgs/nixos-unstable";};
-    nupm = {
-      url = "github:nushell/nupm";
-      flake = false;
-    };
     nur = {
       url = "github:nix-community/NUR";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -93,7 +81,6 @@
       "https://hyprland.cachix.org"
       "https://neg-serg.cachix.org"
       "https://nix-community.cachix.org"
-      "https://nix-gaming.cachix.org"
       "https://nixpkgs-unfree.cachix.org"
       "https://nixpkgs-wayland.cachix.org"
       "https://numtide.cachix.org"
@@ -108,7 +95,6 @@
       "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
       "neg-serg.cachix.org-1:MZ+xYOrDj1Uhq8GTJAg//KrS4fAPpnIvaWU/w3Qz/wo="
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-      "nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4="
       "nixpkgs-unfree.cachix.org-1:hqvoInulhbV4nJ9yJOEr+4wxhDV4xq2d1DK7S6Nj6rs="
       "nixpkgs-wayland.cachix.org-1:3lwxaILxMRkVhehr5StQprHdEo4IrE8sRho9R9HOLYA"
       "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE="
@@ -378,9 +364,9 @@
         nur = inputs.nur;
         extraSubstituters = hmExtraSubstituters;
         extraTrustedKeys = hmExtraTrustedKeys;
-        hmInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) {
-          inherit (inputs) nupm;
-        };
+        hmInputs =
+          builtins.mapAttrs (_: input: input // {type = "derivation";}) {
+          };
       };
       hmDocs = import ./flake/home/docs.nix {
         inherit lib self;

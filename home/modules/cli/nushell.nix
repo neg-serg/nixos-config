@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  inputs,
   xdg,
   ...
 }:
@@ -16,7 +15,6 @@ lib.mkMerge [
   {
     home.sessionVariables.NU_LIB_DIRS = lib.concatStringsSep ":" [
       # flake-provided Nushell modules (includes nupm)
-      "${inputs.nupm}/modules"
       # user-local modules remain discoverable
       "${config.xdg.configHome}/nushell/modules"
     ];
