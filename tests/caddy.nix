@@ -4,7 +4,7 @@
     server = {...}: {
       services.caddy = {
         enable = true;
-        virtualHosts."localhost".extraConfig = ''
+        virtualHosts."http://localhost".extraConfig = ''
           respond "Hello, world!"
         '';
       };
