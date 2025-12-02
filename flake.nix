@@ -5,10 +5,6 @@
       url = "github:e-tho/bzmenu";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    chaotic = {
-      url = "git+https://github.com/chaotic-cx/nyx?ref=nyxpkgs-unstable";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # Pin hy3 to release compatible with Hyprland v0.51.x
     hy3 = {
       url = "git+https://github.com/outfoxxed/hy3?ref=hl0.51.0";
@@ -89,7 +85,7 @@
   nixConfig = {
     extra-substituters = [
       "https://0uptime.cachix.org"
-      "https://chaotic-nyx.cachix.org"
+      "https://0uptime.cachix.org"
       "https://cuda-maintainers.cachix.org"
       "https://devenv.cachix.org"
       "https://ezkea.cachix.org"
@@ -104,7 +100,7 @@
     ];
     extra-trusted-public-keys = [
       "0uptime.cachix.org-1:ctw8yknBLg9cZBdqss+5krAem0sHYdISkw/IFdRbYdE="
-      "chaotic-nyx.cachix.org-1:HfnXSw4pj95iI/n17rIDy40agHj12WfF+Gqk6SonIT8="
+      "0uptime.cachix.org-1:ctw8yknBLg9cZBdqss+5krAem0sHYdISkw/IFdRbYdE="
       "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
       "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
       "ezkea.cachix.org-1:ioBmUbJTZIKsHmWWXPe1FSFbeVe+afhfgqgTSNd34eI="
@@ -120,7 +116,6 @@
   };
   outputs = inputs @ {
     self,
-    chaotic,
     home-manager,
     lanzaboote,
     nix-flatpak,
@@ -373,7 +368,6 @@
       hmHelpers = import ./flake/home/hm-helpers.nix {
         inherit lib self;
         stylixInput = inputs.stylix;
-        chaotic = inputs.chaotic;
         sopsNixInput = inputs."sops-nix";
       };
       inherit (hmHelpers) hmBaseModules;
@@ -420,7 +414,6 @@
           ./init.nix
           nix-flatpak.nixosModules.nix-flatpak
           lanzaboote.nixosModules.lanzaboote
-          chaotic.nixosModules.default
           sops-nix.nixosModules.sops
           home-manager.nixosModules.home-manager
         ];
