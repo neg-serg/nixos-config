@@ -117,6 +117,7 @@ in
 
       stylix = {
         enable = ! (config.features.devSpeed.enable or false);
+        enableReleaseChecks = false;
         autoEnable = false;
         targets = {
           bemenu.enable = true;
