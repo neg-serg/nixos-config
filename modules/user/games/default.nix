@@ -5,32 +5,6 @@
   ...
 }: let
   cfg = config.profiles.games or {};
-  # Helper to strip common leading indentation from a multi-line string
-  dedentPy = s: let
-    lines = lib.splitString "\n" s;
-    nonEmpty = lib.filter (l: l != "") lines;
-    leading = l: let
-      m = builtins.match "^( +)" l;
-    in
-      if m == null
-      then 0
-      else builtins.stringLength (builtins.elemAt m 0);
-    minIndent =
-      if nonEmpty == []
-      then 0
-      else
-        lib.foldl' (a: b:
-          if b < a
-          then b
-          else a)
-        9999 (map leading nonEmpty);
-    spaces = lib.concatStrings (builtins.genList (_: " ") minIndent);
-    stripN = l:
-      if lib.hasPrefix spaces l
-      then lib.removePrefix spaces l
-      else l;
-  in
-    lib.concatStringsSep "\n" (map stripN lines);
   # Python wrappers to avoid shell/Nix escaping pitfalls
   gamescopePinned =
     pkgs.writers.writePython3Bin "gamescope-pinned" {}
@@ -103,31 +77,7 @@
   # SteamVR launcher for Wayland/Hyprland
   steamvrCli = pkgs.writeShellApplication {
     name = "steamvr";
-    text = ''
-      set -euo pipefail
-      # Hint: SteamVR AppID is 250820
-      steam -applaunch 250820 &
-      STEAM_PID=$!
-
-      # Wait for VRCompositor to come up (up to 60s), then for it to exit
-      tries=60
-      while ! pgrep -f -u "$USER" -x vrcompositor >/dev/null 2>&1; do
-        sleep 1
-        tries=$((tries-1))
-        if [ "$tries" -le 0 ]; then
-          break
-        fi
-      done
-
-      # Poll until VR compositor fully exits
-      while pgrep -f -u "$USER" -x vrcompositor >/dev/null 2>&1; do
-        sleep 2
-      done
-
-      # Give Steam a moment to settle
-      sleep 1
-      wait "$STEAM_PID" || true
-    '';
+    text = builtins.readFile ./scripts/steamvr.sh;
   };
 
   steamvrDesktop = pkgs.makeDesktopItem {
@@ -157,25 +107,7 @@
   gameRun =
     pkgs.writers.writePython3Bin "game-run" {} # master wrapper orchestrating env vars, MangoHud, gamemode
     
-    (dedentPy ''
-      import os
-      import subprocess
-      import sys
-
-      CPUSET = os.environ.get('GAME_PIN_CPUSET', '${pinDefault}')
-      if len(sys.argv) <= 1:
-          print('Usage: game-run <command> [args...]', file=sys.stderr)
-          sys.exit(1)
-
-      cmd = [
-          'systemd-run', '--user', '--scope', '--same-dir', '--collect',
-          '-p', 'Slice=games.slice',
-          '-p', 'CPUWeight=10000', '-p', 'IOWeight=10000', '-p', 'TasksMax=infinity',
-          'game-affinity-exec', '--cpus', CPUSET, '--'
-      ] + sys.argv[1:]
-
-      raise SystemExit(subprocess.call(cmd))
-    '');
+    (lib.replaceStrings ["@pinDefault@"] [pinDefault] (builtins.readFile ./scripts/game_run.py));
 in {
   options.profiles.games = {
     enable = lib.mkOption {
