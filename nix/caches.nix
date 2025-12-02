@@ -4,7 +4,6 @@
   substituters = [
     "https://cache.nixos.org/"
     "https://0uptime.cachix.org"
-    "https://chaotic-nyx.cachix.org"
     "https://cuda-maintainers.cachix.org"
     "https://devenv.cachix.org"
     "https://ezkea.cachix.org"
@@ -22,7 +21,6 @@
     # Official NixOS cache (required for cache.nixos.org)
     "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
     "0uptime.cachix.org-1:ctw8yknBLg9cZBdqss+5krAem0sHYdISkw/IFdRbYdE="
-    "chaotic-nyx.cachix.org-1:HfnXSw4pj95iI/n17rIDy40agHj12WfF+Gqk6SonIT8="
     "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
     "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
     "ezkea.cachix.org-1:ioBmUbJTZIKsHmWWXPe1FSFbeVe+afhfgqgTSNd34eI="
