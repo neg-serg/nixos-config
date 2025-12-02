@@ -5,7 +5,6 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }: let
   inherit (lib) mkEnableOption mkIf mkOption types;
@@ -104,7 +103,7 @@ in {
 
     # Per-interface firewall opening if requested
     networking.firewall.interfaces = mkIf cfg.openFirewall (
-      lib.genAttrs cfg.firewallInterfaces (iface: {allowedTCPPorts = [cfg.port];})
+      lib.genAttrs cfg.firewallInterfaces (_iface: {allowedTCPPorts = [cfg.port];})
     );
   };
 }

@@ -34,7 +34,7 @@ MAP_FILENAME = "icon-map.json"
 MANIFEST_FILENAME = "manifest.json"
 SVG_SUBDIR = "workspaces"
 SVG_EXT = ".svg"
-XML_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+XML_HEADER = '<?xml version="1.0" encoding="UTF-8"?>'
 SVG_NS = "http://www.w3.org/2000/svg"
 
 WORKSPACE_RE = re.compile(r"^\s*workspace\s*=\s*([^,]+),\s*defaultName:(.+)$")
@@ -124,8 +124,8 @@ class SvgExporter:
     def _wrap_svg(self, path: str) -> str:
         return (
             f"{XML_HEADER}\n"
-            f"<svg xmlns=\"{SVG_NS}\" viewBox=\"0 0 {self.viewbox} {self.viewbox}\" role=\"img\">\n"
-            f"  <path fill=\"currentColor\" d=\"{path}\"/>\n"
+            f'<svg xmlns="{SVG_NS}" viewBox="0 0 {self.viewbox} {self.viewbox}" role="img">\n'
+            f'  <path fill="currentColor" d="{path}"/>\n'
             "</svg>\n"
         )
 
@@ -294,7 +294,9 @@ def validate_svg(path: Path) -> None:
         validate_command(["xmllint", "--noout", str(path)])
     tmp_png = path.with_suffix(".png")
     if shutil.which("rsvg-convert") is None:
-        print(f"WARN: rsvg-convert not found; skipping raster validation for {path}", file=sys.stderr)
+        print(
+            f"WARN: rsvg-convert not found; skipping raster validation for {path}", file=sys.stderr
+        )
         return
     try:
         validate_command(["rsvg-convert", "-o", str(tmp_png), str(path)])
@@ -303,7 +305,9 @@ def validate_svg(path: Path) -> None:
             tmp_png.unlink()
 
 
-def build_manifest(font_info: Tuple[str, str, str], font_pattern: str, viewbox: int, items: List[WorkspaceDef]) -> Dict:
+def build_manifest(
+    font_info: Tuple[str, str, str], font_pattern: str, viewbox: int, items: List[WorkspaceDef]
+) -> Dict:
     family, style, font_file = font_info
     return {
         "generatedAt": datetime.now(timezone.utc).isoformat(),

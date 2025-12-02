@@ -60,7 +60,10 @@ in rec {
     lib.filter (o: !(lib.hasPrefix "assertions" o.path)) items;
 
   # Merge feature option listings, preferring system-defined entries on conflicts
-  mergeFeatureItems = {home, system}: let
+  mergeFeatureItems = {
+    home,
+    system,
+  }: let
     toAttr = items:
       lib.listToAttrs (map (o: {
           name = o.path;
@@ -86,5 +89,4 @@ in rec {
   '';
 
   renderFeaturesOptionsJson = items: builtins.toJSON items;
-
 }

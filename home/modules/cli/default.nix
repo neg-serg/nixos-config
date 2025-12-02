@@ -1,4 +1,10 @@
-{lib, config, pkgs, negLib, ...}:
+{
+  lib,
+  config,
+  pkgs,
+  negLib,
+  ...
+}:
 with lib; let
   hasHishtory = pkgs ? hishtory;
 in {

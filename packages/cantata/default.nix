@@ -43,16 +43,6 @@
   withStreams ? true,
 }: let
   # Inter-dependencies.
-  assertDep = cond: msg: lib.asserts.assertMsg cond msg;
-  _assertCddb = assertDep (withCddb -> withCdda && withTaglib) "Cantata: CDDB requires CDDA + Taglib";
-  _assertCdda = assertDep (withCdda -> withCddb && withMusicbrainz) "Cantata: CDDA requires CDDB + MusicBrainz";
-  _assertLame = assertDep (withLame -> withCdda && withTaglib) "Cantata: LAME requires CDDA + Taglib";
-  _assertMtp = assertDep (withMtp -> withTaglib) "Cantata: MTP requires Taglib";
-  _assertMusicbrainz = assertDep (withMusicbrainz -> withCdda && withTaglib) "Cantata: MusicBrainz requires CDDA + Taglib";
-  _assertOnline = assertDep (withOnlineServices -> withTaglib) "Cantata: Online services require Taglib";
-  _assertReplaygain = assertDep (withReplaygain -> withTaglib) "Cantata: Replaygain requires Taglib";
-  _assertLibVlc = assertDep (withLibVlc -> withHttpStream) "Cantata: LibVLC requires HTTP stream playback";
-
   fstat = enabled: flag: "-DENABLE_${flag}=${
     if enabled
     then "ON"

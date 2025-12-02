@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }:
 lib.mkIf (config.features.text.read.enable or false) {

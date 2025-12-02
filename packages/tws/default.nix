@@ -31,7 +31,6 @@
   pango,
   xorg,
   zlib,
-  inputs,
 }: let
   libPath = lib.makeLibraryPath [
     alsa-lib

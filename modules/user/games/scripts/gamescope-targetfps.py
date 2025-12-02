@@ -15,9 +15,7 @@ H = {
 
 def get_monitors():
     try:
-        out = subprocess.check_output(
-            [H["HYPRCTL"], "monitors", "-j"], text=True
-        )
+        out = subprocess.check_output([H["HYPRCTL"], "monitors", "-j"], text=True)
         return json.loads(out)
     except Exception:
         return []
@@ -125,10 +123,5 @@ if len(sys.argv) == 1:
 else:
     args = sys.argv[1:]
 
-cmd = (
-    [H["GAME_RUN"], H["GAMESCOPE"]]
-    + flags
-    + ["--"]
-    + args
-)
+cmd = [H["GAME_RUN"], H["GAMESCOPE"]] + flags + ["--"] + args
 raise SystemExit(subprocess.call(cmd))

@@ -52,14 +52,19 @@
 ## Проверка DNS
 
 - Сервисы: `systemctl status adguardhome unbound systemd-resolved`
+
 - Порты: `ss -lntup | rg ':53|:5353|:5053'`
+
   - ожидается: resolved → 127.0.0.53:53; AdGuardHome → 127.0.0.1:53; Unbound → 127.0.0.1:5353;
     dnscrypt-proxy2 → 127.0.0.1:5053 (если mode="doh")
+
 - Маршрутизация DNS: `resolvectl status` → `DNS Servers: 127.0.0.1`, `Domains: ~.`
+
 - Фильтры AGH: `journalctl -u adguardhome -b | rg -i 'filter|download|update|enabled'`
-- Быстрый запрос: `resolvectl query example.com` (должно идти через цепочку)
-Документация
+
+- Быстрый запрос: `resolvectl query example.com` (должно идти через цепочку) Документация
 
 - Опции по сервисам в агрегированном файле: flake‑артефакт `packages.${system}."options-md"` (когда
   собран).
+
 - Каждый модуль также экспортирует стандартные опции `services.*`.

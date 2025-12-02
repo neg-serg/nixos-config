@@ -5,7 +5,7 @@ set -euo pipefail
 # Optional perf/strace/GPU samplers can be enabled via flags.
 
 usage() {
-  cat <<'EOF'
+  cat << 'EOF'
 collect-quickshell-metrics: capture diagnostics for quickshell resource usage
 
 Usage:
@@ -27,7 +27,7 @@ Outputs:
 EOF
 }
 
-have() { command -v "$1" >/dev/null 2>&1; }
+have() { command -v "$1" > /dev/null 2>&1; }
 log() { printf '\n=== %s ===\n' "$1"; }
 
 duration=15
@@ -38,12 +38,30 @@ do_gpu=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --pid) pid="$2"; shift 2 ;;
-    --duration) duration="$2"; shift 2 ;;
-    --perf) do_perf=1; shift ;;
-    --strace) do_strace=1; shift ;;
-    --gpu) do_gpu=1; shift ;;
-    -h|--help) usage; exit 0 ;;
+    --pid)
+      pid="$2"
+      shift 2
+      ;;
+    --duration)
+      duration="$2"
+      shift 2
+      ;;
+    --perf)
+      do_perf=1
+      shift
+      ;;
+    --strace)
+      do_strace=1
+      shift
+      ;;
+    --gpu)
+      do_gpu=1
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
     *)
       echo "error: unknown argument: $1" >&2
       usage
@@ -71,7 +89,7 @@ STRACE_OUT="/tmp/quickshell-strace-${ts}.txt"
 GPU_OUT="/tmp/quickshell-gpu-${ts}.log"
 GPU_JSON="/tmp/quickshell-gpu-${ts}.json"
 
-exec >"$LOG" 2>&1
+exec > "$LOG" 2>&1
 
 log "meta"
 echo "timestamp: $(date -Iseconds)"
@@ -118,11 +136,11 @@ log "numa"
 if have numastat; then numastat -p "$pid" || true; fi
 
 log "open files"
-find "/proc/$pid/fd" -maxdepth 1 -printf '%f -> %l\n' 2>/dev/null | head -n 200 || true
+find "/proc/$pid/fd" -maxdepth 1 -printf '%f -> %l\n' 2> /dev/null | head -n 200 || true
 if have lsof; then
-  fd_count=$(lsof -p "$pid" 2>/dev/null | wc -l || true)
+  fd_count=$(lsof -p "$pid" 2> /dev/null | wc -l || true)
   echo "fd count: ${fd_count:-unknown}"
-  lsof -p "$pid" 2>/dev/null | head -n 200 || true
+  lsof -p "$pid" 2> /dev/null | head -n 200 || true
 fi
 
 log "pmap"

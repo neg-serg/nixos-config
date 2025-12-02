@@ -2,10 +2,10 @@
 set -euo pipefail
 
 OUT="/tmp/nextcloud-cli-debug-$(date +%s).log"
-exec >"$OUT" 2>&1
+exec > "$OUT" 2>&1
 
 log() { printf '=== %s ===\n' "$1"; }
-have() { command -v "$1" >/dev/null 2>&1; }
+have() { command -v "$1" > /dev/null 2>&1; }
 
 log "env"
 echo "user: $(id -un) ($(id -u)), homedir: $HOME"
@@ -32,12 +32,15 @@ systemctl --user status nextcloud-sync-wrk.service || true
 systemctl --user status nextcloud-sync-wrk.timer || true
 
 log "sync dirs"
-ls -ld "$HOME/sync" "$HOME/sync/telfir" "$HOME/sync/wrk" 2>/dev/null || true
+ls -ld "$HOME/sync" "$HOME/sync/telfir" "$HOME/sync/wrk" 2> /dev/null || true
 
 log "manual run"
 manual_sync() {
   local profile="$1" envfile="$2" localdir="$3" fallback_url="$4"
-  [ -f "$envfile" ] || { echo "skip $profile: no env file $envfile"; return; }
+  [ -f "$envfile" ] || {
+    echo "skip $profile: no env file $envfile"
+    return
+  }
   set -a
   # shellcheck disable=SC1090
   source "$envfile"

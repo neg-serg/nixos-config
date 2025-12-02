@@ -54,9 +54,6 @@
   knowledgeCacheDir = "${config.xdg.cacheHome}/mcp/knowledge";
   hmRepoRoot = "${config.neg.hmConfigRoot}";
   gitRepoRoot = hmRepoRoot;
-  openAiKeyEnv = builtins.getEnv "OPENAI_API_KEY";
-  teiEndpointEnv = builtins.getEnv "TEI_ENDPOINT";
-  embeddingsProviderEnv = builtins.getEnv "EMBEDDINGS_PROVIDER";
   hasEnv = name: builtins.getEnv name != "";
   hasAllEnv = names: lib.all hasEnv names;
   context7Enabled = hasEnv "CONTEXT7_API_KEY";
@@ -73,7 +70,6 @@
   gitlabEnabled = hasEnv "GITLAB_TOKEN";
   discordEnabled = hasEnv "DISCORD_BOT_TOKEN";
   telegramEnabled = hasAllEnv ["TG_APP_ID" "TG_API_HASH"];
-  exaEnabled = hasEnv "EXA_API_KEY";
   postgresEnabled = hasEnv "MCP_POSTGRES_URL";
   telegramBotEnabled = hasEnv "TELEGRAM_BOT_TOKEN";
   tsgramEnabled = (hasEnv "TELEGRAM_BOT_TOKEN") && hasEnv "TSGRAM_AUTHORIZED_CHAT_ID";
@@ -118,9 +114,8 @@ in
         tsgramBinary = "${pkgs.neg.tsgram_mcp}/bin/telegram-mcp";
       in {
         enable = true;
-        servers =
-          lib.filterAttrs (name: _: !(lib.elem name disabledServers)) (
-            {
+        servers = lib.filterAttrs (name: _: !(lib.elem name disabledServers)) (
+          {
             # Kitchen‑sink demo server with many tools; runs via npx
             everything = {
               command = "npx";
@@ -405,24 +400,22 @@ in
               };
             };
           }
-          );
+        );
       };
 
-      home.activation.ensureMcpStateDirs = negLib.mkEnsureRealDirsMany (
-        [
-          (builtins.dirOf sqliteDbPath)
-          (builtins.dirOf telegramSessionPath)
-          gmailStateDir
-          meetingNotesDir
-          chromiumProfileDir
-          playwrightProfileDir
-          playwrightOutputDir
-          playwrightBrowsersPath
-          mediaSearchCacheDir
-          agendaNotesDir
-          knowledgeCacheDir
-        ]
-      );
+      home.activation.ensureMcpStateDirs = negLib.mkEnsureRealDirsMany [
+        (builtins.dirOf sqliteDbPath)
+        (builtins.dirOf telegramSessionPath)
+        gmailStateDir
+        meetingNotesDir
+        chromiumProfileDir
+        playwrightProfileDir
+        playwrightOutputDir
+        playwrightBrowsersPath
+        mediaSearchCacheDir
+        agendaNotesDir
+        knowledgeCacheDir
+      ];
     }
 
     # Optional integrations: OpenCode and VS Code consume the central MCP list

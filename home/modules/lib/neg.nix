@@ -1,7 +1,6 @@
 {
   lib,
   pkgs,
-  config,
   negPaths ? {
     hmConfigRoot = ../..;
     repoRoot = (../..) + "/..";
@@ -13,11 +12,13 @@
   hmRepoPath = negPaths.hmConfigRoot;
   repoRoot = negPaths.repoRoot;
   packagesRoot = negPaths.packagesRoot;
-  negLib = (import ./helpers.nix {
-    inherit lib pkgs systemdUser packagesRoot;
-  }) // {
-    inherit hmRepoPath repoRoot packagesRoot;
-  };
+  negLib =
+    (import ./helpers.nix {
+      inherit lib pkgs systemdUser packagesRoot;
+    })
+    // {
+      inherit hmRepoPath repoRoot packagesRoot;
+    };
 in {
   config.lib.neg = negLib;
 

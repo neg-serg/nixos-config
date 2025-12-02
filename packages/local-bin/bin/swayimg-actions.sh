@@ -3,7 +3,8 @@
 
 IFS=$'\n\t'
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-  sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'; exit 0
+  sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'
+  exit 0
 fi
 
 cache="${HOME}/tmp"
@@ -29,8 +30,11 @@ _find_ipc_socket() {
   if [ -d "$rt" ]; then
     # shellcheck disable=SC2012
     local s
-    s="$(ls -t "$rt"/swayimg-*.sock 2>/dev/null | head -n1 || true)"
-    [ -n "$s" ] && [ -S "$s" ] && { printf '%s' "$s"; return 0; }
+    s="$(ls -t "$rt"/swayimg-*.sock 2> /dev/null | head -n1 || true)"
+    [ -n "$s" ] && [ -S "$s" ] && {
+      printf '%s' "$s"
+      return 0
+    }
   fi
   return 1
 }
@@ -40,10 +44,10 @@ _ipc_send() { # _ipc_send <command>
   cmd="$1"
   sock="$(_find_ipc_socket || true)"
   [ -n "$sock" ] || return 0
-  if command -v socat >/dev/null 2>&1; then
-    printf '%s\n' "$cmd" | socat - "UNIX-CONNECT:$sock" >/dev/null 2>&1 || true
-  elif command -v ncat >/dev/null 2>&1; then
-    printf '%s\n' "$cmd" | ncat -U "$sock" >/dev/null 2>&1 || true
+  if command -v socat > /dev/null 2>&1; then
+    printf '%s\n' "$cmd" | socat - "UNIX-CONNECT:$sock" > /dev/null 2>&1 || true
+  elif command -v ncat > /dev/null 2>&1; then
+    printf '%s\n' "$cmd" | ncat -U "$sock" > /dev/null 2>&1 || true
   else
     return 0
   fi
@@ -52,8 +56,8 @@ _ipc_send() { # _ipc_send <command>
 # ---- swww helpers -----------------------------------------------------------
 ensure_swww() {
   # Start swww daemon if not running
-  if ! swww query >/dev/null 2>&1; then
-    swww init >/dev/null 2>&1 || true
+  if ! swww query > /dev/null 2>&1; then
+    swww init > /dev/null 2>&1 || true
     sleep 0.05
   fi
 }
@@ -61,11 +65,11 @@ ensure_swww() {
 # Return maximum WxH among active outputs (fallback 1920x1080)
 screen_wh() {
   local wh
-  if command -v swaymsg >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
-    wh="$(swaymsg -t get_outputs -r 2>/dev/null \
+  if command -v swaymsg > /dev/null 2>&1 && command -v jq > /dev/null 2>&1; then
+    wh="$(swaymsg -t get_outputs -r 2> /dev/null \
       | jq -r '[.[] | select(.active and .current_mode != null)
                 | {w:.current_mode.width|tonumber, h:.current_mode.height|tonumber, a:(.current_mode.width|tonumber)*(.current_mode.height|tonumber)}]
-               | if length>0 then (max_by(.a) | "\(.w)x\(.h)") else empty end' 2>/dev/null || true)"
+               | if length>0 then (max_by(.a) | "\(.w)x\(.h)") else empty end' 2> /dev/null || true)"
   fi
   [ -n "${wh:-}" ] && printf '%s\n' "$wh" || printf '1920x1080\n'
 }
@@ -74,25 +78,30 @@ screen_wh() {
 # writes output path to $tmp_wall
 render_for_mode() {
   local mode="$1" file="$2" wh
-  if ! command -v convert >/dev/null 2>&1; then
+  if ! command -v convert > /dev/null 2>&1; then
     return 1
   fi
   wh="$(screen_wh)"
-  rm -f "$tmp_wall" 2>/dev/null || true
+  rm -f "$tmp_wall" 2> /dev/null || true
   case "$mode" in
-    cover|full|fill)
+    cover | full | fill)
       # cover: crop to fill screen from center
-      convert "$file" -resize "${wh}^" -gravity center -extent "$wh" "$tmp_wall" ;;
+      convert "$file" -resize "${wh}^" -gravity center -extent "$wh" "$tmp_wall"
+      ;;
     center)
       # fit inside with borders, centered
-      convert "$file" -resize "${wh}" -gravity center -background black -extent "$wh" "$tmp_wall" ;;
+      convert "$file" -resize "${wh}" -gravity center -background black -extent "$wh" "$tmp_wall"
+      ;;
     tile)
       # make tiled canvas of exact screen size
-      convert -size "$wh" tile:"$file" "$tmp_wall" ;;
+      convert -size "$wh" tile:"$file" "$tmp_wall"
+      ;;
     mono)
-      convert "$file" -colors 2 "$tmp_wall" ;;
+      convert "$file" -colors 2 "$tmp_wall"
+      ;;
     retro)
-      convert "$file" -colors 12 "$tmp_wall" ;;
+      convert "$file" -colors 12 "$tmp_wall"
+      ;;
     *)
       # default to cover
       convert "$file" -resize "${wh}^" -gravity center -extent "$wh" "$tmp_wall"
@@ -114,27 +123,27 @@ choose_dest() {
 
   entries="$(
     {
-      command -v zoxide >/dev/null 2>&1 && zoxide query -l 2>/dev/null || true
+      command -v zoxide > /dev/null 2>&1 && zoxide query -l 2> /dev/null || true
     } \
-    | awk -v pic="$pics_dir" 'index($0, pic) == 1' \
-    | sed "s:^$HOME:~:" \
-    | awk 'NF' \
-    | sort -u
+      | awk -v pic="$pics_dir" 'index($0, pic) == 1' \
+      | sed "s:^$HOME:~:" \
+      | awk 'NF' \
+      | sort -u
   )"
 
   if [ -z "$entries" ]; then
     entries="$(
       {
         printf '%s\n' "$pics_dir"
-        if command -v fd >/dev/null 2>&1; then
-          fd -td -d 3 . "$pics_dir" 2>/dev/null
+        if command -v fd > /dev/null 2>&1; then
+          fd -td -d 3 . "$pics_dir" 2> /dev/null
         else
-          find "$pics_dir" -maxdepth 3 -type d -print 2>/dev/null
+          find "$pics_dir" -maxdepth 3 -type d -print 2> /dev/null
         fi
       } \
-      | sed "s:^$HOME:~:" \
-      | awk 'NF' \
-      | sort -u
+        | sed "s:^$HOME:~:" \
+        | awk 'NF' \
+        | sort -u
     )"
   fi
 
@@ -144,8 +153,10 @@ choose_dest() {
 }
 
 proc() { # mv/cp with remembered last dest
-  cmd="$1"; file="$2"; dest="${3:-}"
-  printf '%s\n' "$file" | tee "$ff" >/dev/null
+  cmd="$1"
+  file="$2"
+  dest="${3:-}"
+  printf '%s\n' "$file" | tee "$ff" > /dev/null
 
   if [ -z "${dest}" ]; then
     dest="$(choose_dest "$cmd" || true)"
@@ -158,9 +169,9 @@ proc() { # mv/cp with remembered last dest
     fi
     while read -r line; do
       "$cmd" "$(realpath "$line")" "$dest"
-    done <"$ff"
-    command -v zoxide >/dev/null 2>&1 && zoxide add "$dest" || true
-    printf '%s %s\n' "$cmd" "$dest" >"$last_file"
+    done < "$ff"
+    command -v zoxide > /dev/null 2>&1 && zoxide add "$dest" || true
+    printf '%s %s\n' "$cmd" "$dest" > "$last_file"
   fi
 }
 
@@ -186,15 +197,16 @@ wall() { # wall <mode> <file> via swww
   ensure_swww
   render_for_mode "$mode" "$file" || return 0
   # Allow user to override transition opts via $SWWW_FLAGS
-  swww img "${SWWW_IMAGE_OVERRIDE:-$tmp_wall}" ${SWWW_FLAGS:-} >/dev/null 2>&1 || true
-  echo "$file" >> "${XDG_DATA_HOME:-$HOME/.local/share}/wl/wallpaper.list" 2>/dev/null || true
+  swww img "${SWWW_IMAGE_OVERRIDE:-$tmp_wall}" ${SWWW_FLAGS:-} > /dev/null 2>&1 || true
+  echo "$file" >> "${XDG_DATA_HOME:-$HOME/.local/share}/wl/wallpaper.list" 2> /dev/null || true
 }
 
-finish() { rm -f "$ff" "$tmp_wall" 2>/dev/null || true; }
+finish() { rm -f "$ff" "$tmp_wall" 2> /dev/null || true; }
 trap finish EXIT
 
 # ---- dispatch --------------------------------------------------------------
-action="${1:-}"; file="${2:-}"
+action="${1:-}"
+file="${2:-}"
 
 case "$action" in
   rotate-left) printf '%s\n' "$file" | rotate 270 ;;
@@ -211,5 +223,8 @@ case "$action" in
   wall-tile) wall tile "$file" ;;
   wall-center) wall center "$file" ;;
   wall-cover) wall cover "$file" ;;
-  *) echo "Unknown action: $action" >&2; exit 2 ;;
+  *)
+    echo "Unknown action: $action" >&2
+    exit 2
+    ;;
 esac

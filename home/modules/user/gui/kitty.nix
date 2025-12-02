@@ -7,7 +7,7 @@
   ...
 }:
 lib.mkIf (config.features.gui.enable or false) (lib.mkMerge [
-(negLib.mkLocalBin "kitty-panel" (builtins.readFile ./kitty/panel))
+  (negLib.mkLocalBin "kitty-panel" (builtins.readFile ./kitty/panel))
   # Robust kitty-scrollback-nvim kitten wrapper (local-bin) and env hint
   (let
     mkLocalBin = negLib.mkLocalBin;
