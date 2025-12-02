@@ -254,7 +254,12 @@
       in {
         packages =
           (mkCustomPkgs pkgs)
-          // {default = pkgs.zsh;};
+          // {
+            default = pkgs.zsh;
+            docs-modules = import ./flake/docs-modules.nix {
+              inherit pkgs lib self;
+            };
+          };
 
         formatter = pkgs.writeShellApplication {
           name = "fmt";

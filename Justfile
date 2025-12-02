@@ -134,6 +134,15 @@ docs:
     # Generate docs packages (OPTIONS.md, features-options.{md,json})
     nix build --no-link -L .#docs.${SYSTEM:-x86_64-linux}.options-md
 
+docs-modules:
+    # Generate modules documentation (opt-in)
+    nix build .#docs-modules -o .result-docs
+    mkdir -p docs
+    cp -f .result-docs/modules.md docs/modules.md
+    rm -f .result-docs
+    chmod +w docs/modules.md
+    echo "Generated docs/modules.md"
+
 hooks-enable:
     git config core.hooksPath .githooks
 
