@@ -28,7 +28,6 @@
   hmModules = [
     (repoRoot + "/home/home.nix")
     inputs.stylix.homeModules.stylix
-    inputs.chaotic.homeManagerModules.default
     inputs."sops-nix".homeManagerModules.sops
   ];
   cfgPath = extraArgs.negPaths.hmConfigRoot;
