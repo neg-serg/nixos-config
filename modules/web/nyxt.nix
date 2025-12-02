@@ -26,24 +26,8 @@
         then provider.${n}
         else pick (builtins.tail names) provider;
   fromCustom = pick ["nyxt-qtwebengine" "nyxt-qt" "nyxt4" "nyxt"] customPkgs;
-  chaoticPkgs =
-    if inputs ? chaotic
-    then (inputs.chaotic.packages.${pkgs.stdenv.hostPlatform.system} or null)
-    else null;
-  fromChaotic =
-    if chaoticPkgs == null
-    then null
-    else if builtins.hasAttr "nyxt4" chaoticPkgs
-    then chaoticPkgs.nyxt4
-    else if builtins.hasAttr "nyxt-qtwebengine" chaoticPkgs
-    then chaoticPkgs."nyxt-qtwebengine"
-    else if builtins.hasAttr "nyxt-qt" chaoticPkgs
-    then chaoticPkgs."nyxt-qt"
-    else null;
-  nyxtCandidate =
-    if fromCustom != null
-    then fromCustom
-    else fromChaotic;
+
+  nyxtCandidate = fromCustom;
   fallback = pkgs.nyxt4-bin or pkgs.nyxt;
   package =
     if nyxtCandidate != null
