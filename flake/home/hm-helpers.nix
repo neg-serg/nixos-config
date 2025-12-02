@@ -1,9 +1,8 @@
 {
   lib,
-  stylixInput,
-  chaotic,
-  sopsNixInput,
   self,
+  stylixInput,
+  sopsNixInput,
 }: {
   hmBaseModules = {
     profile ? null,
