@@ -66,6 +66,14 @@ with lib;
           unfocus = "hide";
           multi = true;
         };
+        teardrop = {
+          animation = "fromTop";
+          command = "hiddify --class teardrop";
+          class = "teardrop";
+          size = "40% 90%";
+          lazy = true;
+          unfocus = "hide";
+        };
       };
     }
   )
