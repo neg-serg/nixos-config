@@ -41,7 +41,7 @@ in
           hasKmon = pkgs ? kmon;
           hasFd = pkgs ? fd;
           hasMpc = pkgs ? mpc;
-          hasNixify = pkgs ? nixify; # Assuming nixify is a package
+
           hasNixIndexDb = pkgs ? nix-index-database; # Assuming nix-index-database is a package
           hasFlatpak = pkgs ? flatpak; # Assuming obs-studio is the package name # Assuming onlyoffice is the package name # Assuming zoom-us is the package name
           content = lib.concatStrings [
@@ -212,7 +212,7 @@ in
             (lib.optionalString hasMpc "  unlove: \"mpc sendmessage mpdas unlove\"\n")
             (lib.optionalString hasYtDlp "  yta: \"yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all --write-info-json\"\n")
             "  scp: \"scp -r\"\n"
-            (lib.optionalString hasNixify "  nixify: \"nix-shell -p nur.repos.kampka.nixify\"\n")
+
             (lib.optionalString hasNixIndexDb "  nlocate: \"nix run github:nix-community/nix-index-database\"\n")
             (lib.optionalString hasFlatpak "  bottles: \"flatpak run com.usebottles.bottles\"\n")
             (lib.optionalString hasFlatpak "  obs: \"flatpak run com.obsproject.Studio\"\n")

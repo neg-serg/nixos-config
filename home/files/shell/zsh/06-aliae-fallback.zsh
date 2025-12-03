@@ -284,9 +284,7 @@ if command -v erd >/dev/null 2>&1; then
   alias tree='erd'
 fi
 
-if command -v nixify >/dev/null 2>&1; then
-  alias nixify='nix-shell -p nur.repos.kampka.nixify'
-fi
+
 
 if command -v nix-index >/dev/null 2>&1; then
   alias nlocate='nix run github:nix-community/nix-index-database'
