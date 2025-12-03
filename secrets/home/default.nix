@@ -9,7 +9,6 @@
   hasNextcloudWork = builtins.pathExists ./nextcloud-cli-wrk.env.sops;
   hasWorkWireguard = builtins.pathExists ./wireguard/work-wg.conf.sops;
   hasVlessRealitySingboxTun = builtins.pathExists ./vless/reality-singbox-tun.json.sops;
-  hasVlessRealityXrayTun = builtins.pathExists ./vless/reality-xray-tun.json.sops;
 in {
   sops = {
     age.keyFile = "${config.xdg.configHome}/sops/age/keys.txt";
@@ -101,15 +100,6 @@ in {
           format = "binary";
           sopsFile = ./vless/reality-singbox-tun.json.sops;
           path = "/run/user/1000/secrets/vless-reality-singbox-tun.json";
-          mode = "0600";
-        };
-      }
-      // lib.optionalAttrs hasVlessRealityXrayTun {
-        # VLESS Reality config (Xray, TUN/full-tunnel)
-        "vless/reality-xray-tun.json" = {
-          format = "binary";
-          sopsFile = ./vless/reality-xray-tun.json.sops;
-          path = "/run/user/1000/secrets/vless-reality-xray-tun.json";
           mode = "0600";
         };
       };
