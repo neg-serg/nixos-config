@@ -109,7 +109,8 @@ def build_entries() -> tuple[list[str], dict[str, dict[str, str]]]:
     special_ids = {
         ws.get("id")
         for ws in workspaces
-        if ws.get("special") or clean(ws.get("name") or "").startswith("special")
+        if ws.get("special")
+        or clean(ws.get("name") or "").startswith("special")
     }
 
     active_addr = ""

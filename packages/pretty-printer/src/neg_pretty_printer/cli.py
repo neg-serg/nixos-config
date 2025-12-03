@@ -6,8 +6,12 @@ from . import FileInfoPrinter
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(prog="ppinfo", description="Pretty print file info")
-    p.add_argument("paths", nargs="*", help="Files or directories to print info for")
+    p = argparse.ArgumentParser(
+        prog="ppinfo", description="Pretty print file info"
+    )
+    p.add_argument(
+        "paths", nargs="*", help="Files or directories to print info for"
+    )
     args = p.parse_args()
 
     if not args.paths:

@@ -24,7 +24,9 @@ MAX_SNIPPET = 320
 
 
 class SearchInput(BaseModel):
-    query: str = Field(..., min_length=2, description="Search string to match against docs")
+    query: str = Field(
+        ..., min_length=2, description="Search string to match against docs"
+    )
     limit: int = Field(
         default=5,
         ge=1,
@@ -34,7 +36,9 @@ class SearchInput(BaseModel):
 
 
 class ExtractInput(BaseModel):
-    doc_id: str = Field(..., description="Document identifier returned by search/list")
+    doc_id: str = Field(
+        ..., description="Document identifier returned by search/list"
+    )
 
 
 class ListResult(BaseModel):
@@ -221,7 +225,9 @@ class DocumentCatalog:
         ordered = sorted(results, key=lambda r: r.score, reverse=True)
         return ordered[:limit]
 
-    def _score_record(self, record: DocumentRecord, lower_query: str) -> tuple[str, float]:
+    def _score_record(
+        self, record: DocumentRecord, lower_query: str
+    ) -> tuple[str, float]:
         text = record.text
         lower_text = text.lower()
         idx = lower_text.find(lower_query)
@@ -235,7 +241,9 @@ class DocumentCatalog:
             if score > best_score:
                 best_score = score
                 best_snippet = line
-        snippet = textwrap.shorten(best_snippet, width=MAX_SNIPPET, placeholder=" … ")
+        snippet = textwrap.shorten(
+            best_snippet, width=MAX_SNIPPET, placeholder=" … "
+        )
         return (snippet, best_score)
 
     def extract(self, doc_id: str) -> ExtractResult:
@@ -278,7 +286,9 @@ async def serve(
     ocr_lang: str,
 ) -> None:
     if not search_paths:
-        raise McpError("No search paths provided (set MCP_MEDIA_SEARCH_PATHS or --paths)")
+        raise McpError(
+            "No search paths provided (set MCP_MEDIA_SEARCH_PATHS or --paths)"
+        )
     catalog = DocumentCatalog(
         search_paths=search_paths,
         cache_dir=cache_dir,
@@ -344,5 +354,9 @@ async def serve(
 
 def _dump_list(obj) -> str:
     if isinstance(obj, list):
-        return "[\n" + ",\n".join(item.model_dump_json(indent=2) for item in obj) + "\n]"
+        return (
+            "[\n"
+            + ",\n".join(item.model_dump_json(indent=2) for item in obj)
+            + "\n]"
+        )
     return str(obj)

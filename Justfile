@@ -41,42 +41,42 @@ lint:
     statix check -- .
     deadnix --fail .
     # Guard: discourage `with pkgs; [ ... ]` lists (prefer explicit pkgs.*)
-    if grep -R -nE --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' 'with[[:space:]]+pkgs;[[:space:]]*\[' . | grep -q .; then \
+    if grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' 'with[[:space:]]+pkgs;[[:space:]]*\[' . | grep -q .; then \
       echo 'Found discouraged pattern: use explicit pkgs.* items instead of `with pkgs; [...]`' >&2; \
-      grep -R -nE --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' 'with[[:space:]]+pkgs;[[:space:]]*\[' . || true; \
+      grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' 'with[[:space:]]+pkgs;[[:space:]]*\[' . || true; \
       exit 1; \
     fi; \
-    if grep -R -nE --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' 'targetPkgs[[:space:]]*=[[:space:]]*pkgs:[[:space:]]*with[[:space:]]+pkgs' . | grep -q .; then \
+    if grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' 'targetPkgs[[:space:]]*=[[:space:]]*pkgs:[[:space:]]*with[[:space:]]+pkgs' . | grep -q .; then \
       echo 'Found discouraged pattern in FHS targetPkgs: avoid `with pkgs`' >&2; \
-      grep -R -nE --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' 'targetPkgs[[:space:]]*=[[:space:]]*pkgs:[[:space:]]*with[[:space:]]+pkgs' . || true; \
+      grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' 'targetPkgs[[:space:]]*=[[:space:]]*pkgs:[[:space:]]*with[[:space:]]+pkgs' . || true; \
       exit 1; \
     fi
     # Guard: avoid mkdir/touch/rm in ExecStartPre/ExecStart within systemd units
     # Prefer mkLocalBin or per-file force on managed files/wrappers.
-    if grep -R -nE --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' \
+    if grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' \
          'Exec(Start|Stop)(Pre|Post)[[:space:]]*=.*(mkdir(\s+-p)?|install(\s+-d)?|touch|rm[[:space:]]+-rf?)' modules | \
        grep -v 'modules/dev/cachix/default.nix' | grep -q .; then \
       echo 'Found ExecStartPre/ExecStart with mkdir/touch/rm. Use mkLocalBin or per-file force instead.' >&2; \
-      grep -R -nE --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' \
+      grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' \
         'Exec(Start|Stop)(Pre|Post)[[:space:]]*=.*(mkdir(\s+-p)?|install(\s+-d)?|touch|rm[[:space:]]+-rf?)' modules \
         | grep -v 'modules/dev/cachix/default.nix' || true; \
       exit 1; \
     fi
     # Guard: avoid `with pkgs.lib` — use explicit pkgs.lib.*
-    if grep -R -nE --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' '\bwith[[:space:]]+pkgs\.lib\b' . | grep -q .; then \
+    if grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' '\bwith[[:space:]]+pkgs\.lib\b' . | grep -q .; then \
       echo "Found discouraged pattern: avoid 'with pkgs.lib'; use explicit pkgs.lib.*" >&2; \
-      grep -R -nE --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' '\bwith[[:space:]]+pkgs\.lib\b' . || true; \
+      grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' '\bwith[[:space:]]+pkgs\.lib\b' . || true; \
       exit 1; \
     fi
     # Guard: avoid generic `with pkgs.<ns>` — prefer explicit pkgs.<ns>.<item>
-    if grep -R -nE --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' '\bwith[[:space:]]+pkgs\.[A-Za-z0-9_-]+' . | grep -v -E 'pkgs\.lib\b' | grep -q .; then \
+    if grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' '\bwith[[:space:]]+pkgs\.[A-Za-z0-9_-]+' . | grep -v -E 'pkgs\.lib\b' | grep -q .; then \
       echo "Found discouraged pattern: avoid 'with pkgs.<ns>'; reference explicit pkgs.<ns>.<item>" >&2; \
-      grep -R -nE --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' '\bwith[[:space:]]+pkgs\.[A-Za-z0-9_-]+' . | grep -v -E 'pkgs\.lib\b' || true; \
+      grep -R -nE --exclude-dir={.direnv,result,.git} --include='*.nix' --exclude='flake/checks.nix' --exclude='checks.nix' '\bwith[[:space:]]+pkgs\.[A-Za-z0-9_-]+' . | grep -v -E 'pkgs\.lib\b' || true; \
       exit 1; \
     fi
     if git ls-files -- '*.py' >/dev/null 2>&1; then \
       ruff check -- .; \
-      black --check --line-length 100 --extend-exclude '(secrets/home/crypted|modules/user/gui/kitty/conf/tab_bar.py)' .; \
+      black --check --line-length 79 --extend-exclude '(secrets/home/crypted|modules/user/gui/kitty/conf/tab_bar.py|modules/user/gui/kitty/conf/scroll_mark.py|modules/user/gui/kitty/conf/search.py)' .; \
     fi
     # Optional guard: prefer `let exe = lib.getExe' pkgs.pkg "bin"; in "${exe} …" over direct ${pkgs.*}/bin paths
     # Enable with: EXECSTART_GUARD=1 just lint
