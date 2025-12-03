@@ -1,5 +1,6 @@
 {
   lib,
+  pkgs,
   appimageTools,
   fetchurl,
 }: let
@@ -13,6 +14,10 @@
 in
   appimageTools.wrapType2 {
     inherit pname version src;
+    extraPkgs = _: [
+      pkgs.libepoxy # OpenGL/EGL dispatch library for the bundled Qt
+      pkgs.libGL # GL provider required by libepoxy
+    ];
 
     meta = with lib; {
       description = "Multi-protocol proxy client (Hiddify App)";
