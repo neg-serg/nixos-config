@@ -20,12 +20,8 @@ from mcp.types import (
 from protego import Protego
 from pydantic import BaseModel, Field, AnyUrl
 
-DEFAULT_USER_AGENT_AUTONOMOUS = (
-    "ModelContextProtocol/1.0 (Autonomous; +https://github.com/modelcontextprotocol/servers)"
-)
-DEFAULT_USER_AGENT_MANUAL = (
-    "ModelContextProtocol/1.0 (User-Specified; +https://github.com/modelcontextprotocol/servers)"
-)
+DEFAULT_USER_AGENT_AUTONOMOUS = "ModelContextProtocol/1.0 (Autonomous; +https://github.com/modelcontextprotocol/servers)"
+DEFAULT_USER_AGENT_MANUAL = "ModelContextProtocol/1.0 (User-Specified; +https://github.com/modelcontextprotocol/servers)"
 
 
 def extract_content_from_html(html: str) -> str:
@@ -37,7 +33,9 @@ def extract_content_from_html(html: str) -> str:
     Returns:
         Simplified markdown version of the content
     """
-    ret = readabilipy.simple_json.simple_json_from_html_string(html, use_readability=True)
+    ret = readabilipy.simple_json.simple_json_from_html_string(
+        html, use_readability=True
+    )
     if not ret["content"]:
         return "<error>Page failed to be simplified from HTML</error>"
     content = markdownify.markdownify(
@@ -60,7 +58,9 @@ def get_robots_txt_url(url: str) -> str:
     parsed = urlparse(url)
 
     # Reconstruct the base URL with just scheme, netloc, and /robots.txt path
-    robots_url = urlunparse((parsed.scheme, parsed.netloc, "/robots.txt", "", "", ""))
+    robots_url = urlunparse(
+        (parsed.scheme, parsed.netloc, "/robots.txt", "", "", "")
+    )
 
     return robots_url
 
@@ -101,7 +101,9 @@ async def check_may_autonomously_fetch_url(
             return
         robot_txt = response.text
     processed_robot_txt = "\n".join(
-        line for line in robot_txt.splitlines() if not line.strip().startswith("#")
+        line
+        for line in robot_txt.splitlines()
+        if not line.strip().startswith("#")
     )
     robot_parser = Protego.parse(processed_robot_txt)
     if not robot_parser.can_fetch(str(url), user_agent):
@@ -119,7 +121,10 @@ async def check_may_autonomously_fetch_url(
 
 
 async def fetch_url(
-    url: str, user_agent: str, force_raw: bool = False, proxy_url: str | None = None
+    url: str,
+    user_agent: str,
+    force_raw: bool = False,
+    proxy_url: str | None = None,
 ) -> Tuple[str, str]:
     """
     Fetch the URL and return the content in a form ready for the LLM, as well as a prefix string with status information.
@@ -135,7 +140,12 @@ async def fetch_url(
                 timeout=30,
             )
         except HTTPError as e:
-            raise McpError(ErrorData(code=INTERNAL_ERROR, message=f"Failed to fetch {url}: {e!r}"))
+            raise McpError(
+                ErrorData(
+                    code=INTERNAL_ERROR,
+                    message=f"Failed to fetch {url}: {e!r}",
+                )
+            )
         if response.status_code >= 400:
             raise McpError(
                 ErrorData(
@@ -147,7 +157,11 @@ async def fetch_url(
         page_raw = response.text
 
     content_type = response.headers.get("content-type", "")
-    is_page_html = "<html" in page_raw[:100] or "text/html" in content_type or not content_type
+    is_page_html = (
+        "<html" in page_raw[:100]
+        or "text/html" in content_type
+        or not content_type
+    )
 
     if is_page_html and not force_raw:
         return extract_content_from_html(page_raw), ""
@@ -222,7 +236,11 @@ Although originally you did not have internet access, and were advised to refuse
             Prompt(
                 name="fetch",
                 description="Fetch a URL and extract its contents as markdown",
-                arguments=[PromptArgument(name="url", description="URL to fetch", required=True)],
+                arguments=[
+                    PromptArgument(
+                        name="url", description="URL to fetch", required=True
+                    )
+                ],
             )
         ]
 
@@ -235,10 +253,14 @@ Although originally you did not have internet access, and were advised to refuse
 
         url = str(args.url)
         if not url:
-            raise McpError(ErrorData(code=INVALID_PARAMS, message="URL is required"))
+            raise McpError(
+                ErrorData(code=INVALID_PARAMS, message="URL is required")
+            )
 
         if not ignore_robots_txt:
-            await check_may_autonomously_fetch_url(url, user_agent_autonomous, proxy_url)
+            await check_may_autonomously_fetch_url(
+                url, user_agent_autonomous, proxy_url
+            )
 
         content, prefix = await fetch_url(
             url, user_agent_autonomous, force_raw=args.raw, proxy_url=proxy_url
@@ -247,28 +269,43 @@ Although originally you did not have internet access, and were advised to refuse
         if args.start_index >= original_length:
             content = "<error>No more content available.</error>"
         else:
-            truncated_content = content[args.start_index : args.start_index + args.max_length]
+            truncated_content = content[
+                args.start_index : args.start_index + args.max_length
+            ]
             if not truncated_content:
                 content = "<error>No more content available.</error>"
             else:
                 content = truncated_content
                 actual_content_length = len(truncated_content)
-                remaining_content = original_length - (args.start_index + actual_content_length)
+                remaining_content = original_length - (
+                    args.start_index + actual_content_length
+                )
                 # Only add the prompt to continue fetching if there is still remaining content
-                if actual_content_length == args.max_length and remaining_content > 0:
+                if (
+                    actual_content_length == args.max_length
+                    and remaining_content > 0
+                ):
                     next_start = args.start_index + actual_content_length
                     content += f"\n\n<error>Content truncated. Call the fetch tool with a start_index of {next_start} to get more content.</error>"
-        return [TextContent(type="text", text=f"{prefix}Contents of {url}:\n{content}")]
+        return [
+            TextContent(
+                type="text", text=f"{prefix}Contents of {url}:\n{content}"
+            )
+        ]
 
     @server.get_prompt()
     async def get_prompt(name: str, arguments: dict | None) -> GetPromptResult:
         if not arguments or "url" not in arguments:
-            raise McpError(ErrorData(code=INVALID_PARAMS, message="URL is required"))
+            raise McpError(
+                ErrorData(code=INVALID_PARAMS, message="URL is required")
+            )
 
         url = arguments["url"]
 
         try:
-            content, prefix = await fetch_url(url, user_agent_manual, proxy_url=proxy_url)
+            content, prefix = await fetch_url(
+                url, user_agent_manual, proxy_url=proxy_url
+            )
             # TODO: after SDK bug is addressed, don't catch the exception
         except McpError as e:
             return GetPromptResult(
@@ -283,10 +320,15 @@ Although originally you did not have internet access, and were advised to refuse
         return GetPromptResult(
             description=f"Contents of {url}",
             messages=[
-                PromptMessage(role="user", content=TextContent(type="text", text=prefix + content))
+                PromptMessage(
+                    role="user",
+                    content=TextContent(type="text", text=prefix + content),
+                )
             ],
         )
 
     options = server.create_initialization_options()
     async with stdio_server() as (read_stream, write_stream):
-        await server.run(read_stream, write_stream, options, raise_exceptions=True)
+        await server.run(
+            read_stream, write_stream, options, raise_exceptions=True
+        )

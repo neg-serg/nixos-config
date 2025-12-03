@@ -33,7 +33,8 @@ def get_scrollback() -> str:
         # Fallback to just the screen if "all" fails for any reason
         try:
             out = subprocess.check_output(
-                base + ["get-text", "--extent=screen"], stderr=subprocess.DEVNULL
+                base + ["get-text", "--extent=screen"],
+                stderr=subprocess.DEVNULL,
             )
         except Exception as e:
             print(f"Failed to get scrollback: {e}", file=sys.stderr)

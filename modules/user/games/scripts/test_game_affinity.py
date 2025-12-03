@@ -78,7 +78,10 @@ class TestGameAffinityExec(unittest.TestCase):
     @patch("game_affinity_exec.l3_groups")
     def test_auto_cpuset_picks_largest(self, mock_l3):
         # Mock L3 groups: one small (standard CCD), one large (V-Cache CCD)
-        mock_l3.return_value = [(32 * 1024 * 1024, [0, 1, 2, 3]), (96 * 1024 * 1024, [4, 5, 6, 7])]
+        mock_l3.return_value = [
+            (32 * 1024 * 1024, [0, 1, 2, 3]),
+            (96 * 1024 * 1024, [4, 5, 6, 7]),
+        ]
 
         cpus = gae.auto_cpuset()
         self.assertEqual(cpus, [4, 5, 6, 7])
