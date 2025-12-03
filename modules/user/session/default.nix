@@ -2,11 +2,11 @@
   imports = [
     ./pkgs.nix
     ./hypr-bindings.nix
+    ./greetd.nix
   ];
 
   programs.hyprland = {
     enable = true;
-    withUWSM = true;
     # Use pkgs.* here; an overlay routes them to the flake-pinned Hyprland release
     package = pkgs.hyprland;
     portalPackage = pkgs.xdg-desktop-portal-hyprland;

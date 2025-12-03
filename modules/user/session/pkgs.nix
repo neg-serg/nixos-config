@@ -117,7 +117,6 @@ in {
       pkgs.hiddify-app # Hiddify proxy client
       hyprWinList # injects rust-based win switcher bound in Hypr
     ]
-    ++ lib.optionals (pkgs ? uwsm) [pkgs.uwsm] # UWSM desktop files for proper session entries
     ++ menuPkgs
     ++ lib.optionals guiEnabled localBinPackages;
 }
