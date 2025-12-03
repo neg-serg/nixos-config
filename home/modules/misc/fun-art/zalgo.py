@@ -155,7 +155,13 @@ def randStr(charset, count, allow_repeat=True, return_list=True):
         return "".join(Result)
 
 
-def zalgo(orig_str, intensities, excludes=(" "), rand_intensity=True, allow_repeat=True):
+def zalgo(
+    orig_str,
+    intensities,
+    excludes=(" "),
+    rand_intensity=True,
+    allow_repeat=True,
+):
     """Zalgo-ify `orig_str'.  `Intensityies' is a dict in the form of
     {"up": intense_up, "mid": intense_mid, "down":
     intense_down}.  "Intense_up" denotes the intensity of the
@@ -182,7 +188,9 @@ def zalgo(orig_str, intensities, excludes=(" "), rand_intensity=True, allow_repe
             Result.append(OrigChar)
 
             for pos in ZALGO_POS:
-                Result += randStr(ZALGO_CHARS[pos], ZalgoCounts[pos], allow_repeat)
+                Result += randStr(
+                    ZALGO_CHARS[pos], ZalgoCounts[pos], allow_repeat
+                )
 
     return "".join(Result)
 
@@ -243,7 +251,11 @@ def main():
 
     (Opts, Args) = OptParser.parse_args()
 
-    Intense = {"up": Opts.IntenseUp, "mid": Opts.IntenseMid, "down": Opts.IntenseDown}
+    Intense = {
+        "up": Opts.IntenseUp,
+        "mid": Opts.IntenseMid,
+        "down": Opts.IntenseDown,
+    }
 
     for Line in sys.stdin:
         print(zalgo(Line, Intense, tuple(Opts.Excludes), Opts.Random))

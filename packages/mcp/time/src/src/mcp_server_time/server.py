@@ -70,7 +70,9 @@ class TimeServer:
             is_dst=bool(current_time.dst()),
         )
 
-    def convert_time(self, source_tz: str, time_str: str, target_tz: str) -> TimeConversionResult:
+    def convert_time(
+        self, source_tz: str, time_str: str, target_tz: str
+    ) -> TimeConversionResult:
         """Convert time between timezones"""
         source_timezone = get_zoneinfo(source_tz)
         target_timezone = get_zoneinfo(target_tz)
@@ -78,7 +80,9 @@ class TimeServer:
         try:
             parsed_time = datetime.strptime(time_str, "%H:%M").time()
         except ValueError:
-            raise ValueError("Invalid time format. Expected HH:MM [24-hour format]")
+            raise ValueError(
+                "Invalid time format. Expected HH:MM [24-hour format]"
+            )
 
         now = datetime.now(source_timezone)
         source_time = datetime(
@@ -93,13 +97,17 @@ class TimeServer:
         target_time = source_time.astimezone(target_timezone)
         source_offset = source_time.utcoffset() or timedelta()
         target_offset = target_time.utcoffset() or timedelta()
-        hours_difference = (target_offset - source_offset).total_seconds() / 3600
+        hours_difference = (
+            target_offset - source_offset
+        ).total_seconds() / 3600
 
         if hours_difference.is_integer():
             time_diff_str = f"{hours_difference:+.1f}h"
         else:
             # For fractional hours like Nepal's UTC+5:45
-            time_diff_str = f"{hours_difference:+.2f}".rstrip("0").rstrip(".") + "h"
+            time_diff_str = (
+                f"{hours_difference:+.2f}".rstrip("0").rstrip(".") + "h"
+            )
 
         return TimeConversionResult(
             source=TimeResult(
@@ -181,7 +189,8 @@ async def serve(local_timezone: str | None = None) -> None:
 
                 case TimeTools.CONVERT_TIME.value:
                     if not all(
-                        k in arguments for k in ["source_timezone", "time", "target_timezone"]
+                        k in arguments
+                        for k in ["source_timezone", "time", "target_timezone"]
                     ):
                         raise ValueError("Missing required arguments")
 
@@ -193,10 +202,16 @@ async def serve(local_timezone: str | None = None) -> None:
                 case _:
                     raise ValueError(f"Unknown tool: {name}")
 
-            return [TextContent(type="text", text=json.dumps(result.model_dump(), indent=2))]
+            return [
+                TextContent(
+                    type="text", text=json.dumps(result.model_dump(), indent=2)
+                )
+            ]
 
         except Exception as e:
-            raise ValueError(f"Error processing mcp-server-time query: {str(e)}")
+            raise ValueError(
+                f"Error processing mcp-server-time query: {str(e)}"
+            )
 
     options = server.create_initialization_options()
     async with stdio_server() as (read_stream, write_stream):

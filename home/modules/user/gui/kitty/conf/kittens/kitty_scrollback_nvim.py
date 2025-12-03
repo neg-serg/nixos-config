@@ -27,7 +27,9 @@ if not _path:
     )
     sys.exit(1)
 
-spec = importlib.util.spec_from_file_location("kitty_scrollback_nvim_impl", _path)
+spec = importlib.util.spec_from_file_location(
+    "kitty_scrollback_nvim_impl", _path
+)
 if spec is None or spec.loader is None:
     print(f"failed to load spec for {_path}", file=sys.stderr)
     sys.exit(1)

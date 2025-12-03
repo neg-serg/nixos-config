@@ -147,6 +147,7 @@ GAME_PIN_CPUSET=14,15,30,31 MANGOHUD=1 game-run gamescope -f --adaptive-sync -- 
 *   **Systemd User Services**: Use `config.lib.neg.systemdUser.mkUnitFromPresets` to create systemd user units with consistent dependencies.
 *   **Commit Messages**: Must follow the `[scope] summary` format.
 *   **Comments**: All code comments must be written in English.
+*   **Python Style**: Python scripts must adhere to PEP 8, specifically the 79-character line limit, as enforced by the Nix build process. Run `just lint` to verify.
 
 ## Custom Packages
 

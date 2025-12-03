@@ -155,7 +155,9 @@ def ensure_general(cfg: configparser.ConfigParser) -> None:
         cfg["General"]["StartWithLastProfile"] = "1"
 
 
-def list_profiles(cfg: configparser.ConfigParser) -> list[Tuple[str, configparser.SectionProxy]]:
+def list_profiles(
+    cfg: configparser.ConfigParser,
+) -> list[Tuple[str, configparser.SectionProxy]]:
     res = []
     for s in cfg.sections():
         if re.fullmatch(r"Profile\d+", s):
@@ -175,7 +177,9 @@ def find_default_profile(
     return None
 
 
-def detect_flat_structure(dest_app: str, cfg: configparser.ConfigParser) -> bool:
+def detect_flat_structure(
+    dest_app: str, cfg: configparser.ConfigParser
+) -> bool:
     """
     True  => Path like 'i1c516zh.default'  (flat, Floorp-style)
     False => Path like 'Profiles/abcd.default' (Firefox-style)
@@ -193,7 +197,9 @@ def gen_profile_id() -> str:
     # 8 lowercase letters/digits + .default
     import random, string
 
-    base = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
+    base = "".join(
+        random.choice(string.ascii_lowercase + string.digits) for _ in range(8)
+    )
     return f"{base}.default"
 
 
@@ -211,7 +217,9 @@ def resolve_profile_root(app: str, flat: bool) -> Path:
     return root if flat else (root / "Profiles")
 
 
-def profile_dir_from_path_str(app_dir: Path, path_str: str, is_relative: bool) -> Path:
+def profile_dir_from_path_str(
+    app_dir: Path, path_str: str, is_relative: bool
+) -> Path:
     if is_relative:
         return (app_dir / path_str).resolve()
     return Path(path_str).expanduser().resolve()
@@ -318,8 +326,14 @@ def validate_no_spaces_around_equals(path: Path) -> None:
                 continue
     if bad_lines:
         snippet = "\n".join(f"{ln}: {txt}" for ln, txt in bad_lines[:10])
-        more = "" if len(bad_lines) <= 10 else f"\n... and {len(bad_lines)-10} more"
-        die(f"{path} contains spaces around '=' which is not allowed:\n{snippet}{more}")
+        more = (
+            ""
+            if len(bad_lines) <= 10
+            else f"\n... and {len(bad_lines)-10} more"
+        )
+        die(
+            f"{path} contains spaces around '=' which is not allowed:\n{snippet}{more}"
+        )
 
 
 def write_ini_strict(cfg: configparser.ConfigParser, path: Path) -> None:
@@ -400,7 +414,9 @@ def update_or_create_installs_ini(app: str, profile_path_str: str) -> None:
     info(f"Updated {app} installs.ini")
 
 
-def copy_profile(src: Path, dst: Path, use_rsync: bool, rsync_args: str) -> None:
+def copy_profile(
+    src: Path, dst: Path, use_rsync: bool, rsync_args: str
+) -> None:
     # Clean destination but keep directory itself
     for p in dst.iterdir():
         if p.is_dir():
@@ -435,7 +451,11 @@ def copy_profile(src: Path, dst: Path, use_rsync: bool, rsync_args: str) -> None
             for d in dirs:
                 (target_dir / d).mkdir(exist_ok=True)
             for f in files:
-                if f.endswith(".lock") or f in ("parent.lock", "lock", "compatibility.ini"):
+                if f.endswith(".lock") or f in (
+                    "parent.lock",
+                    "lock",
+                    "compatibility.ini",
+                ):
                     continue
                 shutil.copy2(Path(root) / f, target_dir / f)
 
@@ -457,15 +477,25 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="Bidirectional Firefox <-> Floorp profile migration (Linux)."
     )
-    p.add_argument("--from", dest="src_app", choices=("firefox", "floorp"), required=True)
-    p.add_argument("--to", dest="dst_app", choices=("firefox", "floorp"), required=True)
     p.add_argument(
-        "--strict", action="store_true", help="Abort if key files are missing in source."
+        "--from", dest="src_app", choices=("firefox", "floorp"), required=True
     )
     p.add_argument(
-        "--force", action="store_true", help="Proceed even if apps are running (NOT recommended)."
+        "--to", dest="dst_app", choices=("firefox", "floorp"), required=True
     )
-    p.add_argument("--rsync", action="store_true", help="Use rsync for faster copying.")
+    p.add_argument(
+        "--strict",
+        action="store_true",
+        help="Abort if key files are missing in source.",
+    )
+    p.add_argument(
+        "--force",
+        action="store_true",
+        help="Proceed even if apps are running (NOT recommended).",
+    )
+    p.add_argument(
+        "--rsync", action="store_true", help="Use rsync for faster copying."
+    )
     p.add_argument(
         "--rsync-args",
         default="--info=progress2",
@@ -514,7 +544,9 @@ def main() -> None:
     copy_profile(src_dir, dst_dir, args.rsync, args.rsync_args or "")
 
     # Update INIs (strict writer + formatting validation)
-    update_profiles_ini(dst_app, dst_path_str, make_default=True, create_if_missing=True)
+    update_profiles_ini(
+        dst_app, dst_path_str, make_default=True, create_if_missing=True
+    )
     update_or_create_installs_ini(dst_app, dst_path_str)
 
     info("Done.")

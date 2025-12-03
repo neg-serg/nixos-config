@@ -82,13 +82,18 @@ def media_info(filename: str):
             text=True,
         )
     except subprocess.CalledProcessError as e:
-        print(f"[vid-info] ffprobe failed for {filename}: {e.stderr.strip()}", file=sys.stderr)
+        print(
+            f"[vid-info] ffprobe failed for {filename}: {e.stderr.strip()}",
+            file=sys.stderr,
+        )
         return
 
     try:
         ret = json.loads(proc.stdout)
     except Exception as e:
-        print(f"[vid-info] bad ffprobe JSON for {filename}: {e}", file=sys.stderr)
+        print(
+            f"[vid-info] bad ffprobe JSON for {filename}: {e}", file=sys.stderr
+        )
         return
 
     pp = PrettyPrinter
@@ -115,7 +120,9 @@ def media_info(filename: str):
             br = stream.get("bit_rate")
             if br:
                 try:
-                    audio_bitrate = math.floor(convert_unit(float(br), SizeUnit.KIB))
+                    audio_bitrate = math.floor(
+                        convert_unit(float(br), SizeUnit.KIB)
+                    )
                 except Exception:
                     audio_bitrate = ""
             sr = stream.get("sample_rate")
@@ -127,12 +134,20 @@ def media_info(filename: str):
 
     file_format = ret["format"]
 
-    out += pp.wrap(str(datetime.timedelta(seconds=math.floor(float(file_format["duration"])))))
+    out += pp.wrap(
+        str(
+            datetime.timedelta(
+                seconds=math.floor(float(file_format["duration"]))
+            )
+        )
+    )
 
     size = math.floor(convert_unit(float(file_format["size"]), SizeUnit.MIB))
     out += pp.size(str(size), "MIB")
 
-    video_bitrate = math.floor(convert_unit(float(file_format["bit_rate"]), SizeUnit.KIB))
+    video_bitrate = math.floor(
+        convert_unit(float(file_format["bit_rate"]), SizeUnit.KIB)
+    )
     out += pp.size(str(video_bitrate), "kbps", pref="vidbrate")
     if vid_frame_rate:
         out += pp.wrap(str(vid_frame_rate), postfix="fps")
