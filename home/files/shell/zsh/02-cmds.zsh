@@ -48,12 +48,7 @@ if [[ -e /etc/NIXOS ]]; then
     }
     foobar(){nix run github:emmanuelrosa/erosanix#foobar2000}
     flake-checker(){nix run github:DeterminateSystems/flake-checker}
-    linux-kernel(){
-        nix-shell -E 'with import <nixpkgs> {};
-            (builtins.getFlake "github:chaotic-cx/nyx/nyxpkgs-unstable").packages.x86_64-linux.linuxPackages_cachyos.kernel.overrideAttrs
-            (o: {nativeBuildInputs=o.nativeBuildInputs ++ [ pkg-config ncurses ];})'
-        # unpackPhase && cd linux-*; patchPhase; make nconfig
-    }
+
     _exists nh && {
         
         
