@@ -201,6 +201,7 @@
                 "google-antigravity"
                 "antigravity-fhs"
                 "google-chrome"
+                "hiddify-app"
               ];
             in
               builtins.elem name allowed;
