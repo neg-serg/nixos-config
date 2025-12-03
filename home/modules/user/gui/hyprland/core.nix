@@ -60,7 +60,7 @@ in
     (mkHyprSource "bindings.conf")
     (lib.mkMerge [
       (xdg.mkXdgText "hypr/hyprland.conf" ''
-        exec-once = /run/current-system/sw/bin/dbus-update-activation-environment --systemd --all && systemctl --user stop hyprland-session.target && systemctl --user start hyprland-session.target
+
 
         source = ~/.config/hypr/init.conf
 

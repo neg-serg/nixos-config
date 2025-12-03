@@ -105,7 +105,8 @@ if __name__ == "__main__":
 
     if not args.cmd or args.cmd[0] != "--":
         print(
-            "Usage: game-affinity-exec --cpus <set|auto> -- <command> " "[args...]",
+            "Usage: game-affinity-exec --cpus <set|auto> -- <command> "
+            "[args...]",
             file=sys.stderr,
         )
         sys.exit(2)
@@ -122,7 +123,11 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Warning: failed to set CPU affinity: {e}", file=sys.stderr)
 
-    use_gamemode = os.environ.get("GAME_RUN_USE_GAMEMODE", "1") not in ("0", "false", "no")
+    use_gamemode = os.environ.get("GAME_RUN_USE_GAMEMODE", "1") not in (
+        "0",
+        "false",
+        "no",
+    )
     if use_gamemode:
         cmd = ["gamemoderun"] + cmd
 
