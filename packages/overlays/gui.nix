@@ -84,5 +84,7 @@ in {
     };
   };
 
+  hiddify-app = callPkg (inputs.self + "/packages/hiddify-app") {};
+
   flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") {};
 }

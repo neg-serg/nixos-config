@@ -4,6 +4,8 @@
     pkgs.amneziawg-go # userspace Go implementation of AmneziaWG
     pkgs.amneziawg-tools # tools for configuring AmneziaWG
     pkgs.netbird # WireGuard-based mesh network with SSO/MFA
+    pkgs.throne # Qt GUI proxy configuration manager (sing-box client)
+    pkgs.hiddify-app # Multi-protocol proxy client (Hiddify App)
     pkgs.openconnect # Cisco AnyConnect (open source)
     pkgs.wireguard-tools # tools for the WireGuard secure network tunnel
     (pkgs.openvpn.override {
