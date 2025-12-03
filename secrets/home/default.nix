@@ -8,6 +8,8 @@
   hasVdirsyncerGoogle = builtins.pathExists ./vdirsyncer/google.sops.yaml;
   hasNextcloudWork = builtins.pathExists ./nextcloud-cli-wrk.env.sops;
   hasWorkWireguard = builtins.pathExists ./wireguard/work-wg.conf.sops;
+  hasVlessRealitySingbox = builtins.pathExists ./vless/reality-singbox.json.sops;
+  hasVlessRealityXray = builtins.pathExists ./vless/reality-xray.json.sops;
 in {
   sops = {
     age.keyFile = "${config.xdg.configHome}/sops/age/keys.txt";
@@ -90,6 +92,24 @@ in {
           format = "binary";
           sopsFile = ./wireguard/work-wg.conf.sops;
           path = "/run/user/1000/secrets/wireguard/work-wg.conf";
+          mode = "0600";
+        };
+      }
+      // lib.optionalAttrs hasVlessRealitySingbox {
+        # VLESS Reality config (sing-box)
+        "vless/reality-singbox.json" = {
+          format = "binary";
+          sopsFile = ./vless/reality-singbox.json.sops;
+          path = "/run/user/1000/secrets/vless-reality-singbox.json";
+          mode = "0600";
+        };
+      }
+      // lib.optionalAttrs hasVlessRealityXray {
+        # VLESS Reality config (Xray)
+        "vless/reality-xray.json" = {
+          format = "binary";
+          sopsFile = ./vless/reality-xray.json.sops;
+          path = "/run/user/1000/secrets/vless-reality-xray.json";
           mode = "0600";
         };
       };
