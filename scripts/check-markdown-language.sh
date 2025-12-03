@@ -27,7 +27,7 @@ while IFS= read -r -d '' file; do
     LC_ALL=C.UTF-8 grep -P "[\x{0400}-\x{04FF}]" -n -- "$file" | head -n 5 >&2
     fail=1
   fi
-done < <(git ls-files -z -- '*.md')
+done < <(find . -name '*.md' -print0)
 
 if [[ $fail -ne 0 ]]; then
   echo "\nFix: move Russian content to a corresponding *.ru.md file." >&2
