@@ -13,6 +13,7 @@ with lib; let
       hy3.enable = true;
       qt.enable = true;
       quickshell.enable = true;
+      hyprexpo.enable = true;
     };
     web = {
       enable = true;
@@ -84,6 +85,7 @@ in {
       hy3.enable = mkBool "enable the hy3 tiling plugin for Hyprland" true;
       qt.enable = mkBool "enable Qt integrations for GUI (qt6ct, hyprland-qt-*)" true;
       quickshell.enable = mkBool "enable Quickshell (panel) at login" true;
+      hyprexpo.enable = mkBool "enable HyprExpo workspace overview plugin" true;
     };
     mail.enable = mkBool "enable Mail stack (notmuch, isync, vdirsyncer, etc.)" true;
     mail.vdirsyncer.enable = mkBool "enable Vdirsyncer sync service/timer" true;
@@ -421,6 +423,7 @@ in {
           # Ensure nested GUI components are disabled when GUI is off
           quickshell.enable = mkForce false;
           hy3.enable = mkForce false;
+          hyprexpo.enable = mkForce false;
         };
       };
     })
@@ -444,6 +447,10 @@ in {
         {
           assertion = cfg.gui.enable || (! cfg.gui.quickshell.enable);
           message = "features.gui.quickshell.enable requires features.gui.enable = true";
+        }
+        {
+          assertion = cfg.gui.enable || (! cfg.gui.hyprexpo.enable);
+          message = "features.gui.hyprexpo.enable requires features.gui.enable = true";
         }
         {
           assertion = cfg.web.enable || (! cfg.web.tools.enable && ! cfg.web.floorp.enable && ! cfg.web.yandex.enable && ! cfg.web.firefox.enable && ! cfg.web.librewolf.enable && ! cfg.web.nyxt.enable);
