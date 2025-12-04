@@ -119,6 +119,7 @@ in
                     gesture_positive = false # positive = swipe down. Negative = swipe up.
                 }
             }
+            bind = $M4, grave, hyprexpo:expo, toggle
           '')
           {xdg.configFile."hypr/plugins-expo.conf".force = true;}
         ]
