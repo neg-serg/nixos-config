@@ -37,9 +37,9 @@ start_recording() {
     notify-send -u low "Screen Recording" "Recording started..."
 
     if [ -n "$geometry" ]; then
-        wf-recorder -g "$geometry" -f "$filename" &
+        wf-recorder -g "$geometry" -c libx264 -x yuv420p -p crf=20 -p preset=superfast -f "$filename" &
     else
-        wf-recorder -f "$filename" &
+        wf-recorder -c libx264 -x yuv420p -p crf=20 -p preset=superfast -f "$filename" &
     fi
 
     echo $! > "$PIDFILE"
