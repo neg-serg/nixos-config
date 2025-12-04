@@ -29,7 +29,7 @@ in
           hasUg = pkgs ? ugrep;
           hasErd = pkgs ? erdtree;
           hasPrettyping = pkgs ? prettyping;
-          hasDuf = pkgs ? duf;
+          hasDuf = pkgs ? neg && pkgs.neg ? duf;
           hasDust = pkgs ? dust;
           hasHandlr = pkgs ? handlr;
           hasWget2 = pkgs ? wget2;
