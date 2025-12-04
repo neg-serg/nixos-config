@@ -1,11 +1,19 @@
 {
-  lib,
-  config,
-  ...
-}:
-with lib;
-  mkIf (config.features.gui.enable or false) {
-    imports = [
-      ./gui/swayosd
-    ];
-  }
+  imports = [
+    ./local-bin
+    ./envs
+    ./fun
+    ./games
+    ./autoclick.nix
+    ./nextcloud-cli.nix
+    ./gui
+    ./mail
+    ./systemd
+    ./terminal
+    ./theme
+    ./torrent
+    ./web
+    ./x11
+    ./xdg
+  ];
+}
