@@ -42,6 +42,10 @@
       url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    pyprland = {
+      url = "github:hyprland-community/pyprland";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     raise = {
       url = "github:neg-serg/raise";
       inputs.nixpkgs.follows = "nixpkgs";
