@@ -74,9 +74,7 @@ in
         env = CLUTTER_BACKEND,wayland
 
         source = ~/.config/hypr/init.conf
-
-        permission = ${lib.getExe pkgs.grim}, screencopy, allow
-        permission = ${lib.getExe pkgs.hyprlock}, screencopy, allow
+        source = ~/.config/hypr/permissions.conf
 
         # User overrides live in ~/.config/hypr/local.d/*.conf (not managed by Nix)
         source = ~/.config/hypr/local.d/*.conf
