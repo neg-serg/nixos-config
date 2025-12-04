@@ -28,9 +28,7 @@ DEFAULT_FONT_PATTERN = "Font Awesome 6 Pro"
 DEFAULT_FONT_FALLBACKS = ["FiraCode Nerd Font Mono", "Iosevka"]
 DEFAULT_VIEWBOX = 1024
 DEFAULT_PADDING = 48
-HYPR_REL_PATH = Path(
-    "nix/.config/home-manager/modules/user/gui/hypr/conf/workspaces.conf"
-)
+HYPR_REL_PATH = Path("nix/.config/home-manager/modules/user/gui/hypr/conf/workspaces.conf")
 ICONS_REL_DIR = Path("quickshell/.config/quickshell/Bar/Icons/workspaces")
 MAP_FILENAME = "icon-map.json"
 MANIFEST_FILENAME = "manifest.json"
@@ -139,9 +137,7 @@ class FontResolver:
         self.info_cache: Dict[str, Tuple[str, str, str]] = {}
         self.exporter_cache: Dict[str, SvgExporter] = {}
 
-    def exporter_for_pattern(
-        self, pattern: str
-    ) -> Tuple[SvgExporter, Tuple[str, str, str]]:
+    def exporter_for_pattern(self, pattern: str) -> Tuple[SvgExporter, Tuple[str, str, str]]:
         info = self.info_cache.get(pattern)
         if info is None:
             info = ensure_font_info(pattern)
@@ -235,18 +231,14 @@ def load_icon_map(path: Path) -> Dict:
         }
     with path.open("r", encoding="utf-8") as handle:
         data = json.load(handle)
-    if "fontFallbacks" not in data or not isinstance(
-        data["fontFallbacks"], list
-    ):
+    if "fontFallbacks" not in data or not isinstance(data["fontFallbacks"], list):
         data["fontFallbacks"] = list(DEFAULT_FONT_FALLBACKS)
     return data
 
 
 def save_json(path: Path, data: Dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(data, indent=2, ensure_ascii=True) + "\n", encoding="utf-8"
-    )
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
 
 
 def _get_name_record(name_table, name_id: int, default: str) -> str:
@@ -281,26 +273,18 @@ def ensure_font_info(pattern: str) -> Tuple[str, str, str]:
     fmt = "%{family}\n%{style}\n%{file}\n"
     cmd = ["fc-match", "-f", fmt, pattern]
     try:
-        result = subprocess.run(
-            cmd, check=True, capture_output=True, text=True
-        )
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as exc:
         raise RuntimeError(f"fc-match failed for pattern '{pattern}'") from exc
-    lines = [
-        line.strip() for line in result.stdout.splitlines() if line.strip()
-    ]
+    lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
     if len(lines) < 3:
-        raise RuntimeError(
-            f"Unexpected fc-match output for '{pattern}': {result.stdout!r}"
-        )
+        raise RuntimeError(f"Unexpected fc-match output for '{pattern}': {result.stdout!r}")
     family, style, file_path = lines[:3]
     return family, style, file_path
 
 
 def validate_command(cmd: Sequence[str]) -> None:
-    subprocess.run(
-        cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
+    subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
 def validate_svg(path: Path) -> None:
@@ -365,17 +349,11 @@ def build_manifest(
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     repo_root = Path(__file__).resolve().parents[5]
-    parser = argparse.ArgumentParser(
-        description="Generate workspace icon assets"
-    )
+    parser = argparse.ArgumentParser(description="Generate workspace icon assets")
     parser.add_argument("--hypr", type=Path, default=repo_root / HYPR_REL_PATH)
-    parser.add_argument(
-        "--icons", type=Path, default=repo_root / ICONS_REL_DIR
-    )
+    parser.add_argument("--icons", type=Path, default=repo_root / ICONS_REL_DIR)
     parser.add_argument("--font-pattern", dest="font_pattern", default=None)
-    parser.add_argument(
-        "--skip-validate", action="store_true", help="Skip XML/SVG validation"
-    )
+    parser.add_argument("--skip-validate", action="store_true", help="Skip XML/SVG validation")
     args = parser.parse_args(argv)
 
     hypr_path = args.hypr
@@ -419,9 +397,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             map_entry["codepoints"] = codepoints
         stored_codes = map_entry.get("codepoints")
         if not stored_codes:
-            raise RuntimeError(
-                f"Missing glyph codepoints for slug '{slug}' (workspace {ws_id})"
-            )
+            raise RuntimeError(f"Missing glyph codepoints for slug '{slug}' (workspace {ws_id})")
         glyph_codes = stored_codes
         glyph_chars = "".join(chr(int(cp[2:], 16)) for cp in glyph_codes)
         filename = f"{ws_id:02d}-{slug}.svg"
@@ -447,11 +423,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     for spec in workspace_specs:
         map_entry = spec["map_entry"]
         preferred_patterns: List[str] = []
-        entry_pattern = (
-            map_entry.get("fontPattern")
-            if isinstance(map_entry, dict)
-            else None
-        )
+        entry_pattern = map_entry.get("fontPattern") if isinstance(map_entry, dict) else None
         if isinstance(entry_pattern, str) and entry_pattern.strip():
             preferred_patterns.append(entry_pattern.strip())
         if font_pattern not in preferred_patterns:
@@ -466,26 +438,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         exported_path_data: Optional[str] = None
         last_error: Optional[Exception] = None
         for pattern_choice in preferred_patterns:
-            exporter_instance, info = resolver.exporter_for_pattern(
-                pattern_choice
-            )
+            exporter_instance, info = resolver.exporter_for_pattern(pattern_choice)
             try:
-                exported_path_data = exporter_instance.export_svg(
-                    primary_code, svg_path
-                )
+                exported_path_data = exporter_instance.export_svg(primary_code, svg_path)
             except RuntimeError as err:
                 last_error = err
                 continue
             export_info = (pattern_choice, *info)
             break
         if export_info is None:
-            raise last_error or RuntimeError(
-                f"No glyph available for slug '{spec['slug']}'"
-            )
+            raise last_error or RuntimeError(f"No glyph available for slug '{spec['slug']}'")
         if not exported_path_data:
-            raise RuntimeError(
-                f"Failed to export path data for slug '{spec['slug']}'"
-            )
+            raise RuntimeError(f"Failed to export path data for slug '{spec['slug']}'")
 
         used_pattern, used_family, used_style, used_file = export_info
         if isinstance(map_entry, dict):
@@ -513,13 +477,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     save_json(map_path, map_data)
 
-    manifest = build_manifest(
-        default_font_info, font_pattern, viewbox, final_items
-    )
+    manifest = build_manifest(default_font_info, font_pattern, viewbox, final_items)
     save_json(manifest_path, manifest)
-    print(
-        f"Wrote {manifest_path.relative_to(repo_root)} ({len(final_items)} icons)"
-    )
+    print(f"Wrote {manifest_path.relative_to(repo_root)} ({len(final_items)} icons)")
     return 0
 
 
