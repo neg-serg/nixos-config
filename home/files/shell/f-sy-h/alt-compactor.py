@@ -7,23 +7,30 @@ ARRAY = "FAST_HIGHLIGHT_STYLES"
 # Patterns
 # : ${FAST_HIGHLIGHT_STYLES[key]:=value}
 default_re = re.compile(
-    r"""^\s*:\s*\$\{\s*%s\s*\[\s*([^\]]+?)\s*\]\s*:?=\s*(.*?)\s*\}\s*$""" % ARRAY
+    r"""^\s*:\s*\$\{\s*%s\s*\[\s*([^\]]+?)\s*\]\s*:?=\s*(.*?)\s*\}\s*$"""
+    % ARRAY
 )
 # _setstyle key 'value'
 setstyle_re = re.compile(r"""^\s*_setstyle\s+(.+?)\s+(.+?)\s*$""")
 # FAST_HIGHLIGHT_STYLES[key]=value
-assign_re = re.compile(r"""^\s*%s\s*\[\s*([^\]]+)\s*\]\s*=\s*(.+?)\s*$""" % ARRAY)
+assign_re = re.compile(
+    r"""^\s*%s\s*\[\s*([^\]]+)\s*\]\s*=\s*(.+?)\s*$""" % ARRAY
+)
 # typeset block
 array_start_re = re.compile(r"""^\s*typeset\s+-gA\s+%s\s*=\s*\(\s*$""" % ARRAY)
 literal_entry_re = re.compile(r"""\[\s*([^\]]+?)\s*\]\s*=\s*(.+)""")
 
 theme_name_line_re = re.compile(r"""^\s*typeset\s+-g\s+FAST_THEME_NAME=.*$""")
-zstyle_theme_re = re.compile(r"""^\s*zstyle\s+:plugin:fast-syntax-highlighting\s+theme\b""")
+zstyle_theme_re = re.compile(
+    r"""^\s*zstyle\s+:plugin:fast-syntax-highlighting\s+theme\b"""
+)
 
 
 def strip_q(s: str) -> str:
     s = s.strip()
-    if (s.startswith("'") and s.endswith("'")) or (s.startswith('"') and s.endswith('"')):
+    if (s.startswith("'") and s.endswith("'")) or (
+        s.startswith('"') and s.endswith('"')
+    ):
         return s[1:-1]
     return s
 

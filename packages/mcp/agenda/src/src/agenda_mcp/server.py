@@ -167,7 +167,8 @@ class AgendaCatalog:
         results = [
             entry
             for entry in self.events
-            if self._parse(entry.start) >= now and self._parse(entry.start) <= horizon
+            if self._parse(entry.start) >= now
+            and self._parse(entry.start) <= horizon
         ]
         return results[:limit]
 
@@ -190,7 +191,9 @@ class AgendaCatalog:
                     WindowResult(
                         start=self._fmt(cursor),
                         end=self._fmt(interval_start),
-                        duration_minutes=int((interval_start - cursor).total_seconds() / 60),
+                        duration_minutes=int(
+                            (interval_start - cursor).total_seconds() / 60
+                        ),
                     )
                 )
                 if len(windows) >= limit:
@@ -207,7 +210,9 @@ class AgendaCatalog:
             )
         return windows[:limit]
 
-    def _collect_busy(self, start: datetime, end: datetime) -> list[tuple[datetime, datetime]]:
+    def _collect_busy(
+        self, start: datetime, end: datetime
+    ) -> list[tuple[datetime, datetime]]:
         intervals: list[tuple[datetime, datetime]] = []
         for entry in self.events:
             s = self._parse(entry.start)
@@ -249,7 +254,9 @@ class AgendaCatalog:
         )
         data = [entry.model_dump() for entry in self._load_notes()]
         data.append(entry.model_dump())
-        self.notes_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        self.notes_file.write_text(
+            json.dumps(data, indent=2), encoding="utf-8"
+        )
         self.events.append(entry)
         self.events.sort(key=lambda e: e.start)
         return entry
@@ -321,15 +328,20 @@ async def serve(
         try:
             if name == "list_upcoming":
                 data = ListUpcomingInput.model_validate(arguments)
-                after = date_parser.isoparse(data.after) if data.after else None
+                after = (
+                    date_parser.isoparse(data.after) if data.after else None
+                )
                 if after and after.tzinfo is None:
                     after = after.replace(tzinfo=config.timezone)
                 results = catalog.list_upcoming(
                     after=after.astimezone(config.timezone) if after else None,
-                    lookahead_days=data.lookahead_days or config.lookahead_days,
+                    lookahead_days=data.lookahead_days
+                    or config.lookahead_days,
                     limit=data.limit,
                 )
-                payload = json.dumps([r.model_dump() for r in results], indent=2)
+                payload = json.dumps(
+                    [r.model_dump() for r in results], indent=2
+                )
             elif name == "find_free_windows":
                 data = FreeWindowInput.model_validate(arguments)
                 start = catalog.parse_time(data.start)
@@ -340,7 +352,9 @@ async def serve(
                     duration=timedelta(minutes=data.duration_minutes),
                     limit=data.limit,
                 )
-                payload = json.dumps([w.model_dump() for w in windows], indent=2)
+                payload = json.dumps(
+                    [w.model_dump() for w in windows], indent=2
+                )
             elif name == "add_note_event":
                 data = NoteInput.model_validate(arguments)
                 entry = catalog.add_note(data)
