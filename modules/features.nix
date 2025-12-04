@@ -13,7 +13,7 @@ with lib; let
       hy3.enable = true;
       qt.enable = true;
       quickshell.enable = true;
-      hyprexpo.enable = true;
+      hyprexpo.enable = false;
     };
     web = {
       enable = true;
@@ -85,7 +85,7 @@ in {
       hy3.enable = mkBool "enable the hy3 tiling plugin for Hyprland" true;
       qt.enable = mkBool "enable Qt integrations for GUI (qt6ct, hyprland-qt-*)" true;
       quickshell.enable = mkBool "enable Quickshell (panel) at login" true;
-      hyprexpo.enable = mkBool "enable HyprExpo workspace overview plugin" true;
+      hyprexpo.enable = mkBool "enable HyprExpo workspace overview plugin" false;
     };
     mail.enable = mkBool "enable Mail stack (notmuch, isync, vdirsyncer, etc.)" true;
     mail.vdirsyncer.enable = mkBool "enable Vdirsyncer sync service/timer" true;
