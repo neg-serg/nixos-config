@@ -69,7 +69,7 @@ Item {
 					font {
 						pointSize: 120
 						hintingPreference: Font.PreferFullHinting
-						family: "Noto Sans"
+						family: "Iosevka"
 					}
 
 					color: "white"
@@ -98,6 +98,7 @@ Item {
 							: "#80ffffff";
 
 						font.pointSize: 24
+						font.family: "Iosevka"
 						horizontalAlignment: TextInput.AlignHCenter
 						echoMode: TextInput.Password
 						inputMethodHints: Qt.ImhSensitiveData
