@@ -8,9 +8,13 @@ from pathlib import Path
 from .server import serve
 
 DEFAULT_ICS_PATHS = tuple(
-    path for path in os.environ.get("MCP_AGENDA_ICS_PATHS", "").split(":") if path
+    path
+    for path in os.environ.get("MCP_AGENDA_ICS_PATHS", "").split(":")
+    if path
 )
-DEFAULT_NOTES_FILE = os.environ.get("MCP_AGENDA_NOTES_FILE", "~/.local/share/mcp/agenda/notes.json")
+DEFAULT_NOTES_FILE = os.environ.get(
+    "MCP_AGENDA_NOTES_FILE", "~/.local/share/mcp/agenda/notes.json"
+)
 DEFAULT_LOOKAHEAD = int(os.environ.get("MCP_AGENDA_LOOKAHEAD_DAYS", "7"))
 DEFAULT_TZ = os.environ.get("MCP_AGENDA_TZ", "")
 

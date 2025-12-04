@@ -7,11 +7,19 @@ from pathlib import Path
 
 from .server import serve
 
-DEFAULT_PATHS = tuple(path for path in os.environ.get("MCP_KNOWLEDGE_PATHS", "").split(":") if path)
+DEFAULT_PATHS = tuple(
+    path
+    for path in os.environ.get("MCP_KNOWLEDGE_PATHS", "").split(":")
+    if path
+)
 DEFAULT_CACHE = os.environ.get("MCP_KNOWLEDGE_CACHE", "")
-DEFAULT_MODEL = os.environ.get("MCP_KNOWLEDGE_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+DEFAULT_MODEL = os.environ.get(
+    "MCP_KNOWLEDGE_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
+)
 DEFAULT_PATTERNS = tuple(
-    glob for glob in os.environ.get("MCP_KNOWLEDGE_EXTRA_PATTERNS", "").split(",") if glob
+    glob
+    for glob in os.environ.get("MCP_KNOWLEDGE_EXTRA_PATTERNS", "").split(",")
+    if glob
 )
 
 
@@ -37,9 +45,13 @@ def main() -> None:
     asyncio.run(
         serve(
             paths=list(args.paths) if args.paths else [],
-            cache_dir=(Path(args.cache_dir).expanduser() if args.cache_dir else None),
+            cache_dir=(
+                Path(args.cache_dir).expanduser() if args.cache_dir else None
+            ),
             model_name=args.model,
-            include_globs=(list(args.include_globs) if args.include_globs else []),
+            include_globs=(
+                list(args.include_globs) if args.include_globs else []
+            ),
         )
     )
 
