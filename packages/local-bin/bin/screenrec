@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#пш!/usr/bin/env bash
 # Toggle screen recording with wf-recorder
 # Usage: screenrec [area|screen]
 
@@ -37,9 +37,9 @@ start_recording() {
     notify-send -u low "Screen Recording" "Recording started..."
 
     if [ -n "$geometry" ]; then
-        wf-recorder -g "$geometry" -c libx264rgb -p crf=20 -p preset=superfast -f "$filename" &
+        wf-recorder -g "$geometry" -c libx264rgb -r 60 -p crf=20 -p preset=superfast -f "$filename" &
     else
-        wf-recorder -c libx264rgb -p crf=20 -p preset=superfast -f "$filename" &
+        wf-recorder -c libx264rgb -r 60 -p crf=20 -p preset=superfast -f "$filename" &
     fi
 
     echo $! > "$PIDFILE"
