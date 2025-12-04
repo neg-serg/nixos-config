@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 with lib; let
@@ -17,7 +16,7 @@ in
       };
 
       Service = {
-        ExecStart = "${lib.getExe pkgs.pyprland}";
+        ExecStart = "%h/.local/bin/pypr-run";
         Restart = "on-failure";
         RestartSec = 1;
       };
