@@ -1,7 +1,6 @@
 {
   lib,
   buildNpmPackage,
-  inputs,
 }:
 buildNpmPackage rec {
   pname = "mcp-server-memory";
@@ -9,10 +8,10 @@ buildNpmPackage rec {
 
   src = ./src;
 
-  npmDepsHash = "sha256-tRIisJ5VgQ0BU/5cNPgo1wj3Pnw7GXI5R+p8EkkGm3A=";
+  npmDepsHash = "sha256-QBOu6twIjq8MNp30Mw5xwmlGEuXojJJ9YHoD5NqiNZA=";
 
   postPatch = ''
-    cp ${inputs.self + "/packages/mcp/memory/package-lock.json"} package-lock.json
+    cp ${./package-lock.json} package-lock.json
     substituteInPlace package.json \
       --replace '"prepare": "npm run build",' ""
   '';
