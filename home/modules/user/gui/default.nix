@@ -12,4 +12,10 @@
     ./quickshell.nix
     ./walker.nix
   ];
+
+  systemd.user.targets.graphical-session = {
+    Unit = {
+      RefuseManualStart = false;
+    };
+  };
 }
