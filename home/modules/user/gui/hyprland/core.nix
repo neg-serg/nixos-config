@@ -80,6 +80,10 @@ in
 
         # User overrides live in ~/.config/hypr/local.d/*.conf (not managed by Nix)
         source = ~/.config/hypr/local.d/*.conf
+
+        # Plugins
+        ${optionalString hy3Enabled "source = ~/.config/hypr/plugins.conf"}
+        ${optionalString hyprExpoEnabled "source = ~/.config/hypr/plugins-expo.conf"}
       '')
       {xdg.configFile."hypr/hyprland.conf".force = true;}
     ])
