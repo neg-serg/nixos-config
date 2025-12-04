@@ -155,3 +155,23 @@ GAME_PIN_CPUSET=14,15,30,31 MANGOHUD=1 game-run gamescope -f --adaptive-sync -- 
 2.  Add a `default.nix` file with the package derivation.
 3.  Add the package to the overlay in `packages/overlay.nix`.
 4.  Reference the package via `pkgs.<your-package-name>`.
+
+## Screen Recording
+
+Screen recording is handled by `wf-recorder` with a custom wrapper script `screenrec`.
+
+### Configuration
+
+To ensure accurate color reproduction (avoiding "washed out" colors or grey haze), the recording script uses **RGB encoding** (`libx264rgb`) instead of the standard YUV420P.
+
+*   **Codec:** `libx264rgb`
+*   **Pixel Format:** RGB (implicit with `libx264rgb`)
+*   **Quality:** `crf=20` (High quality)
+*   **Preset:** `superfast` (Low latency)
+
+### Usage
+
+*   **Full Screen:** `Super+Shift+V`
+*   **Select Area:** `Super+Ctrl+Shift+V`
+*   **Stop Recording:** Toggle the same keybinding.
+*   **Output:** `~/vid/recordings/`
