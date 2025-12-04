@@ -6,12 +6,12 @@ Scope {
 	id: root
 	signal launch();
 
-	property LockState state: LockState {
-		onTryPasswordUnlock: {
-			this.isUnlocking = true;
-			Greetd.createSession("admin");
-		}
-	}
+ property LockState state: LockState {
+    onTryPasswordUnlock: {
+      this.isUnlocking = true;
+      Greetd.createSession("neg");
+    }
+  }
 
 	Connections {
 		target: Greetd

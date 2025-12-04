@@ -6,6 +6,13 @@
   ...
 }: let
   hyprlandPackage = config.home-manager.users.${config.users.main.name}.wayland.windowManager.hyprland.package;
+  mainUser = config.users.main.name or "neg";
+  mainHome =
+    if builtins.hasAttr mainUser config.users.users
+    then config.users.users.${mainUser}.home or "/home/${mainUser}"
+    else "/home/${mainUser}";
+  greeterWallpaperSrc = "${mainHome}/pic/wl/concert_crowd_people_134866_3840x2160.jpg";
+  greeterWallpaperDst = "/var/lib/greetd/wallpaper.jpg";
   hyprlandConfig = pkgs.writeText "greetd-hyprland-config" ''
     # for some reason pkill is way faster than dispatching exit, to the point greetd thinks the greeter died.
     exec-once = quickshell -p ~/.config/quickshell/greeter.qml >& qslog.txt && pkill Hyprland
@@ -64,4 +71,18 @@ in {
     ];
     xdg.configFile."quickshell".source = ../../../home/modules/user/gui/quickshell/greeter;
   };
+
+  # Keep the greeter wallpaper in a world-readable location; falls back to the bundled
+  # background if the source is missing.
+  systemd.tmpfiles.rules = lib.mkAfter [
+    "d /var/lib/greetd 0755 root root -"
+  ];
+
+  system.activationScripts.greetdWallpaper = ''
+    if [ -f "${greeterWallpaperSrc}" ]; then
+      install -Dm644 "${greeterWallpaperSrc}" "${greeterWallpaperDst}"
+    else
+      echo "greetd wallpaper missing: ${greeterWallpaperSrc}" >&2
+    fi
+  '';
 }
