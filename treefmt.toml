@@ -11,6 +11,9 @@ excludes = [
   "home/modules/user/local-bin/scripts/mpd-add.sh",
   "home/modules/user/local-bin/scripts/pl.sh",
   "home/modules/user/local-bin/scripts/swayimg-actions.sh",
+  "home/modules/user/gui/kitty/conf/scroll_mark.py",
+  "home/modules/user/gui/kitty/conf/search.py",
+  "home/modules/user/gui/kitty/conf/tab_bar.py",
 ]
 
 # Nix files: format with alejandra
@@ -33,7 +36,7 @@ includes = ["**/*.sh", "**/*.bash"]
 # Python: auto-fix with ruff, then format with black
 [formatter.black]
 command = "black"
-options = ["--quiet", "--line-length", "100", "--config", "pyproject.toml"]
+options = ["--quiet", "--line-length", "79", "--config", "pyproject.toml"]
 includes = ["**/*.py"]
 
 # Markdown: format via mdformat (wrap at 100 cols)
