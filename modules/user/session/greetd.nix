@@ -1,18 +1,67 @@
 {
   pkgs,
   lib,
+  config,
+  inputs,
   ...
-}: {
+}: let
+  hyprlandPackage = config.home-manager.users.${config.users.main.name}.wayland.windowManager.hyprland.package;
+  hyprlandConfig = pkgs.writeText "greetd-hyprland-config" ''
+    # for some reason pkill is way faster than dispatching exit, to the point greetd thinks the greeter died.
+    exec-once = quickshell -p ~/.config/quickshell/greeter.qml >& qslog.txt && pkill Hyprland
+
+    input {
+      kb_layout = us,ru
+      sensitivity = 0
+      follow_mouse = 1
+      accel_profile = flat
+    }
+
+    decoration {
+      blur {
+        enabled = no
+      }
+    }
+
+    animations {
+      enabled = no
+    }
+
+    misc {
+      disable_hyprland_logo = true
+      disable_splash_rendering = true
+      background_color = 0x000000
+      key_press_enables_dpms = true
+      mouse_move_enables_dpms = true
+    }
+  '';
+in {
   services.greetd = {
     enable = true;
-    settings = {
-      default_session = {
-        command = "${lib.getExe pkgs.tuigreet} --time --cmd Hyprland";
-        user = "neg";
-      };
+    restart = false;
+    settings.default_session = {
+      command = "${lib.getExe hyprlandPackage} -c ${hyprlandConfig}";
+      user = "greeter";
     };
   };
 
   # Unlock GPG keyring on login
   security.pam.services.greetd.enableGnomeKeyring = true;
+
+  # needed for hyprland cache dir
+  users.users.greeter = {
+    home = "/home/greeter";
+    createHome = true;
+    isSystemUser = true;
+    group = "greeter";
+  };
+  users.groups.greeter = {};
+
+  home-manager.users.greeter = {
+    home.stateVersion = config.system.stateVersion;
+    home.packages = [
+      inputs.quickshell.packages.${pkgs.system}.default
+    ];
+    xdg.configFile."quickshell".source = ../../../home/modules/user/gui/quickshell/greeter;
+  };
 }
