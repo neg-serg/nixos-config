@@ -6,10 +6,14 @@ from collections import defaultdict, OrderedDict
 STYLE_RE = re.compile(r"\$\{FAST_HIGHLIGHT_STYLES\[([^\]]+)\]:=([^}]+)\}")
 
 # Matches: typeset ... FAST_THEME_NAME=...
-TNAME_TYPES_RE = re.compile(r'^\s*typeset(?:\s+-g)?\s+FAST_THEME_NAME\s*=\s*"?([^"]+)"?')
+TNAME_TYPES_RE = re.compile(
+    r'^\s*typeset(?:\s+-g)?\s+FAST_THEME_NAME\s*=\s*"?([^"]+)"?'
+)
 
 # Matches: zstyle :plugin:fast-syntax-highlighting theme ...
-TNAME_ZSTYLE_RE = re.compile(r'^\s*zstyle\s+:plugin:fast-syntax-highlighting\s+theme\s+"?([^"]+)"?')
+TNAME_ZSTYLE_RE = re.compile(
+    r'^\s*zstyle\s+:plugin:fast-syntax-highlighting\s+theme\s+"?([^"]+)"?'
+)
 
 
 def trim(s: str) -> str:
@@ -20,7 +24,9 @@ def trim(s: str) -> str:
 def dequote(s: str) -> str:
     """Remove single/double quotes if present around the string."""
     s = s.strip()
-    if (s.startswith('"') and s.endswith('"')) or (s.startswith("'") and s.endswith("'")):
+    if (s.startswith('"') and s.endswith('"')) or (
+        s.startswith("'") and s.endswith("'")
+    ):
         return s[1:-1]
     return s
 
@@ -130,7 +136,9 @@ def emit(theme, gen, style_groups, min_group, out):
             )
         else:
             for e in exts:
-                w(f"_setstyle \"${{FAST_THEME_NAME}}file-extensions-{e}\" '{style}'\n")
+                w(
+                    f"_setstyle \"${{FAST_THEME_NAME}}file-extensions-{e}\" '{style}'\n"
+                )
     w("# 🥟 pie")
 
 
@@ -143,7 +151,9 @@ def main():
         action="store_true",
         help="drop entries with style 'none'",
     )
-    ap.add_argument("--keep-last", action="store_true", help="last wins on duplicates")
+    ap.add_argument(
+        "--keep-last", action="store_true", help="last wins on duplicates"
+    )
     ap.add_argument(
         "--min-group",
         type=int,

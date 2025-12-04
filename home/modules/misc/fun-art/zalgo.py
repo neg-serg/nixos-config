@@ -188,7 +188,9 @@ def zalgo(
             Result.append(OrigChar)
 
             for pos in ZALGO_POS:
-                Result += randStr(ZALGO_CHARS[pos], ZalgoCounts[pos], allow_repeat)
+                Result += randStr(
+                    ZALGO_CHARS[pos], ZalgoCounts[pos], allow_repeat
+                )
 
     return "".join(Result)
 

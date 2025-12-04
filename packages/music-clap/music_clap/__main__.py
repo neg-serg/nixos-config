@@ -117,7 +117,10 @@ def _resolve_checkpoint(args: argparse.Namespace, enable_fusion: bool) -> Path:
     model_id = args.model_id
     if model_id == -1:
         model_id = 3 if enable_fusion else 1
-    url = "https://huggingface.co/lukewys/laion_clap/resolve/main/" + names[model_id]
+    url = (
+        "https://huggingface.co/lukewys/laion_clap/resolve/main/"
+        + names[model_id]
+    )
     cache_root = (
         Path(
             os.environ.get("LAION_CLAP_CACHE")
@@ -137,15 +140,21 @@ def _resolve_checkpoint(args: argparse.Namespace, enable_fusion: bool) -> Path:
 
 def load_model(args: argparse.Namespace) -> CLAP_Module:
     if not torch_available:
-        raise RuntimeError("PyTorch not available; install torch/torchaudio for laion-clap")
+        raise RuntimeError(
+            "PyTorch not available; install torch/torchaudio for laion-clap"
+        )
     device = args.device
     if device == "auto":
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
     enable_fusion = args.fusion
-    model = CLAP_Module(enable_fusion=enable_fusion, device=device, amodel=args.amodel)
+    model = CLAP_Module(
+        enable_fusion=enable_fusion, device=device, amodel=args.amodel
+    )
     ckpt = _resolve_checkpoint(args, enable_fusion)
     if not ckpt.exists():
-        print(f"[music-clap] checkpoint not available: {ckpt}", file=sys.stderr)
+        print(
+            f"[music-clap] checkpoint not available: {ckpt}", file=sys.stderr
+        )
         sys.exit(2)
     model.load_ckpt(ckpt=str(ckpt), model_id=-1, verbose=not args.quiet)
     return model
@@ -158,7 +167,11 @@ def dump_embedding(target: Path, embedding: np.ndarray) -> Path:
 
 
 def emit_json(data: dict) -> None:
-    payload = orjson.dumps(data).decode("utf-8") if orjson else json.dumps(data, ensure_ascii=False)
+    payload = (
+        orjson.dumps(data).decode("utf-8")
+        if orjson
+        else json.dumps(data, ensure_ascii=False)
+    )
     print(payload)
 
 
@@ -175,7 +188,9 @@ def emit_human(entry: dict, top_text: int) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    ap = argparse.ArgumentParser(description="Extract CLAP embeddings for audio files")
+    ap = argparse.ArgumentParser(
+        description="Extract CLAP embeddings for audio files"
+    )
     ap.add_argument("paths", nargs="*", help="audio files or directories")
     ap.add_argument(
         "--text",
@@ -189,22 +204,30 @@ def parse_args() -> argparse.Namespace:
         default=5,
         help="top-N text matches to display per track",
     )
-    ap.add_argument("--dump", type=Path, help="directory to store embeddings as .npy")
+    ap.add_argument(
+        "--dump", type=Path, help="directory to store embeddings as .npy"
+    )
     ap.add_argument("--json", action="store_true", help="emit JSON per track")
-    ap.add_argument("--device", default="auto", help="torch device (default: auto)")
+    ap.add_argument(
+        "--device", default="auto", help="torch device (default: auto)"
+    )
     ap.add_argument(
         "--amodel",
         default="HTSAT-tiny",
         help="audio encoder architecture (default: HTSAT-tiny)",
     )
-    ap.add_argument("--fusion", action="store_true", help="enable fusion model variant")
+    ap.add_argument(
+        "--fusion", action="store_true", help="enable fusion model variant"
+    )
     ap.add_argument(
         "--model-id",
         type=int,
         default=-1,
         help="pretrained checkpoint id to download (default: 3 fusion / 1 non-fusion)",
     )
-    ap.add_argument("--ckpt", type=str, help="path to a custom checkpoint (skips download)")
+    ap.add_argument(
+        "--ckpt", type=str, help="path to a custom checkpoint (skips download)"
+    )
     ap.add_argument(
         "--torch-threads",
         type=int,
@@ -222,7 +245,9 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="include embedding vector in output (JSON only)",
     )
-    ap.add_argument("--quiet", action="store_true", help="suppress model load logging")
+    ap.add_argument(
+        "--quiet", action="store_true", help="suppress model load logging"
+    )
     ap.add_argument(
         "--refresh",
         action="store_true",
@@ -275,13 +300,17 @@ def main() -> int:
 
     text_prompts = args.texts or list(DEFAULT_TEXTS)
     text_embeds = None
-    need_audio_inference = [path for path in files if path not in cached_embeddings]
+    need_audio_inference = [
+        path for path in files if path not in cached_embeddings
+    ]
 
     model = None
     if text_prompts or need_audio_inference:
         model = load_model(args)
         if text_prompts:
-            text_embeds = model.get_text_embedding(text_prompts, use_tensor=False)
+            text_embeds = model.get_text_embedding(
+                text_prompts, use_tensor=False
+            )
             text_embeds = np.asarray(text_embeds)
 
     for audio_path in files:

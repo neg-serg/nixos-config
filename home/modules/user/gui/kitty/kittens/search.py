@@ -34,7 +34,9 @@ def call_remote_control(args: list[str]) -> None:
     subprocess.run(["kitty", "@", *args], capture_output=True)
 
 
-def reindex(text: str, pattern: re.Pattern[str], right: bool = False) -> tuple[int, int]:
+def reindex(
+    text: str, pattern: re.Pattern[str], right: bool = False
+) -> tuple[int, int]:
     if not right:
         m = pattern.search(text)
     else:
@@ -147,7 +149,9 @@ class Search(Handler):
         elif key_event.matches("ctrl+e"):
             self.line_edit.end()
             self.refresh()
-        elif key_event.matches("ctrl+backspace") or key_event.matches("ctrl+w"):
+        elif key_event.matches("ctrl+backspace") or key_event.matches(
+            "ctrl+w"
+        ):
             before, _ = self.line_edit.split_at_cursor()
 
             try:
@@ -191,7 +195,9 @@ class Search(Handler):
             before, _ = self.line_edit.split_at_cursor()
 
             try:
-                start, _ = reindex(before, NON_ALPHANUM_PATTERN_END, right=True)
+                start, _ = reindex(
+                    before, NON_ALPHANUM_PATTERN_END, right=True
+                )
             except ValueError:
                 start = -1
             else:
@@ -212,7 +218,9 @@ class Search(Handler):
             before, _ = self.line_edit.split_at_cursor()
 
             try:
-                start, _ = reindex(before, NON_ALPHANUM_PATTERN_END, right=True)
+                start, _ = reindex(
+                    before, NON_ALPHANUM_PATTERN_END, right=True
+                )
             except ValueError:
                 start = -1
             else:
@@ -255,10 +263,14 @@ class Search(Handler):
             self.refresh()
         elif key_event.matches("up"):
             for match_arg in self.match_args():
-                call_remote_control(["kitten", match_arg, str(SCROLLMARK_FILE)])
+                call_remote_control(
+                    ["kitten", match_arg, str(SCROLLMARK_FILE)]
+                )
         elif key_event.matches("down"):
             for match_arg in self.match_args():
-                call_remote_control(["kitten", match_arg, str(SCROLLMARK_FILE), "next"])
+                call_remote_control(
+                    ["kitten", match_arg, str(SCROLLMARK_FILE), "next"]
+                )
         elif key_event.matches("enter"):
             self.quit(0)
         elif key_event.matches("esc"):
@@ -285,7 +297,9 @@ class Search(Handler):
             match_type = match_case + self.mode
             for match_arg in self.match_args():
                 try:
-                    call_remote_control(["create-marker", match_arg, match_type, "1", text])
+                    call_remote_control(
+                        ["create-marker", match_arg, match_type, "1", text]
+                    )
                 except SystemExit:
                     self.remove_mark()
         else:
@@ -305,7 +319,9 @@ class Search(Handler):
 
 
 def main(args: list[str]) -> None:
-    call_remote_control(["resize-window", "--self", "--axis=vertical", "--increment", "-100"])
+    call_remote_control(
+        ["resize-window", "--self", "--axis=vertical", "--increment", "-100"]
+    )
 
     error = ""
     if len(args) < 2 or not args[1].isdigit():
@@ -323,7 +339,9 @@ def main(args: list[str]) -> None:
                     if kitty_window["id"] == window_id:
                         current_tab = tab
         if current_tab:
-            window_ids = [w["id"] for w in current_tab["windows"] if not w["is_focused"]]
+            window_ids = [
+                w["id"] for w in current_tab["windows"] if not w["is_focused"]
+            ]
         else:
             error = "Error: Could not find the window id provided."
 
