@@ -67,7 +67,7 @@ in {
   home-manager.users.greeter = {
     home.stateVersion = config.system.stateVersion;
     home.packages = [
-      inputs.quickshell.packages.${pkgs.system}.default
+      inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
     ];
     xdg.configFile."quickshell".source = ../../../home/modules/user/gui/quickshell/greeter;
   };
