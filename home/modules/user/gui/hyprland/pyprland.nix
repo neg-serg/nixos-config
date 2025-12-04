@@ -68,7 +68,7 @@ with lib;
         };
         teardrop = {
           animation = "fromTop";
-          command = "hiddify --class teardrop";
+          command = "hiddify-app --class teardrop";
           class = "teardrop";
           size = "40% 90%";
           lazy = true;
