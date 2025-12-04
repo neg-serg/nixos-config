@@ -90,7 +90,7 @@ with lib;
             text = let
               exe = lib.getExe' pkgs.pyprland "pypr";
             in ''
-              #!/usr/bin/env bash
+              #!${pkgs.bash}/bin/bash
               set -euo pipefail
               exec ${exe} "$@"
             '';
@@ -103,7 +103,7 @@ with lib;
             text = let
               exe = lib.getExe' pkgs.pyprland "pypr";
             in ''
-              #!/usr/bin/env bash
+              #!${pkgs.bash}/bin/bash
               set -euo pipefail
 
               runtime="$XDG_RUNTIME_DIR"
