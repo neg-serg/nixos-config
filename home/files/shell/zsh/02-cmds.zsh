@@ -44,7 +44,7 @@ if [[ -e /etc/NIXOS ]]; then
     hash -d nix-now="/run/current-system"
     hash -d nix-boot="/nix/var/nix/profiles/system"
     _exists nixos-rebuild && {
-        
+        unalias nixos-rebuild 2>/dev/null
     }
     foobar(){nix run github:emmanuelrosa/erosanix#foobar2000}
     flake-checker(){nix run github:DeterminateSystems/flake-checker}
