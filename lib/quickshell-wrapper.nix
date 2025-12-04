@@ -38,6 +38,7 @@
           --set QML_XHR_ALLOW_FILE_READ 1 \
           --prefix PATH : ${qsPath}
       '';
+      meta.mainProgram = "qs";
     };
 in
   mkWrapper
