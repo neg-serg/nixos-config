@@ -116,6 +116,7 @@ in {
       pkgs.nchat # terminal-first Telegram client
       pkgs.hiddify-app # Hiddify proxy client
       hyprWinList # injects rust-based win switcher bound in Hypr
+      pkgs.uwsm # Universal Wayland Session Manager
     ]
     ++ menuPkgs
     ++ lib.optionals guiEnabled localBinPackages;
