@@ -24,7 +24,13 @@ in
       homepage = "https://github.com/hiddify/hiddify-app";
       license = licenses.cc-by-nc-sa-40;
       platforms = ["x86_64-linux"];
-      mainProgram = "hiddify";
+      mainProgram = "hiddify-app";
       sourceProvenance = with lib.sourceTypes; [binaryBytecode];
     };
+
+    extraInstallCommands = ''
+      install -m 444 -D ${appimageTools.extract {inherit pname version src;}}/hiddify.desktop $out/share/applications/hiddify.desktop
+      substituteInPlace $out/share/applications/hiddify.desktop \
+        --replace 'Exec=hiddify' 'Exec=hiddify-app'
+    '';
   }
