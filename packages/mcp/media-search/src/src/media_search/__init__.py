@@ -9,9 +9,7 @@ from .server import serve
 
 DEFAULT_CACHE = Path(os.environ.get("MCP_MEDIA_SEARCH_CACHE", "")).expanduser()
 DEFAULT_PATHS = tuple(
-    path
-    for path in os.environ.get("MCP_MEDIA_SEARCH_PATHS", "").split(":")
-    if path
+    path for path in os.environ.get("MCP_MEDIA_SEARCH_PATHS", "").split(":") if path
 )
 DEFAULT_TESSERACT = os.environ.get("TESSERACT_BIN", "tesseract")
 DEFAULT_OCR_LANG = os.environ.get("MCP_MEDIA_OCR_LANG", "eng")

@@ -108,12 +108,8 @@ class KnowledgeCatalog:
         self.model_name = model_name
         if self.cache_dir:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self.metadata_path = (
-            self.cache_dir / "metadata.json" if self.cache_dir else None
-        )
-        self.vectors_path = (
-            self.cache_dir / "vectors.npy" if self.cache_dir else None
-        )
+        self.metadata_path = self.cache_dir / "metadata.json" if self.cache_dir else None
+        self.vectors_path = self.cache_dir / "vectors.npy" if self.cache_dir else None
         self.manual_snippets_path = (
             self.cache_dir / "manual-snippets.json" if self.cache_dir else None
         )
@@ -145,11 +141,7 @@ class KnowledgeCatalog:
     def _collect_files(self) -> list[Path]:
         files: list[Path] = []
         seen: set[str] = set()
-        patterns = [
-            pattern.strip()
-            for pattern in self.include_globs
-            if pattern.strip()
-        ]
+        patterns = [pattern.strip() for pattern in self.include_globs if pattern.strip()]
         for root in self.paths:
             path = Path(root).expanduser()
             if not path.exists():
@@ -168,9 +160,7 @@ class KnowledgeCatalog:
                         files.append(file)
                 elif patterns:
                     rel = file.name
-                    if any(
-                        file.match(glob) or rel == glob for glob in patterns
-                    ):
+                    if any(file.match(glob) or rel == glob for glob in patterns):
                         key = str(file.resolve())
                         if key not in seen:
                             seen.add(key)
@@ -198,15 +188,10 @@ class KnowledgeCatalog:
         return chunks
 
     def _load_manual_snippets(self) -> list[Chunk]:
-        if (
-            not self.manual_snippets_path
-            or not self.manual_snippets_path.exists()
-        ):
+        if not self.manual_snippets_path or not self.manual_snippets_path.exists():
             return []
         try:
-            payload = json.loads(
-                self.manual_snippets_path.read_text(encoding="utf-8")
-            )
+            payload = json.loads(self.manual_snippets_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             return []
         chunks: list[Chunk] = []
@@ -220,9 +205,7 @@ class KnowledgeCatalog:
                 path=entry.get("path", "manual"),
                 title=entry.get("title", "Manual Snippet"),
                 text=text,
-                signature=entry.get(
-                    "signature", chunk.chunk_id if "chunk" in locals() else ""
-                ),
+                signature=entry.get("signature", chunk.chunk_id if "chunk" in locals() else ""),
             )
             chunk.signature = entry.get("signature", chunk.chunk_id)
             chunks.append(chunk)
@@ -238,9 +221,7 @@ class KnowledgeCatalog:
             return ""
 
     def _embed(self, texts: list[str]) -> np.ndarray:
-        vectors = self.model.encode(
-            texts, convert_to_numpy=True, show_progress_bar=False
-        )
+        vectors = self.model.encode(texts, convert_to_numpy=True, show_progress_bar=False)
         norms = np.linalg.norm(vectors, axis=1, keepdims=True)
         norms[norms == 0] = 1.0
         return vectors / norms
@@ -261,15 +242,10 @@ class KnowledgeCatalog:
         if not self.vectors_path or not self.vectors_path.exists():
             return None
         try:
-            metadata = json.loads(
-                self.metadata_path.read_text(encoding="utf-8")
-            )
+            metadata = json.loads(self.metadata_path.read_text(encoding="utf-8"))
             if metadata.get("model") != self.model_name:
                 return None
-            chunks = [
-                Chunk(**chunk_data)
-                for chunk_data in metadata.get("chunks", [])
-            ]
+            chunks = [Chunk(**chunk_data) for chunk_data in metadata.get("chunks", [])]
             vectors = np.load(self.vectors_path)
             if len(chunks) != len(vectors):
                 return None
@@ -299,9 +275,7 @@ class KnowledgeCatalog:
         results: list[SearchResult] = []
         for idx in order:
             chunk = self.chunks[int(idx)]
-            snippet = textwrap.shorten(
-                chunk.text, width=320, placeholder=" … "
-            )
+            snippet = textwrap.shorten(chunk.text, width=320, placeholder=" … ")
             results.append(
                 SearchResult(
                     doc_id=chunk.doc_id,
@@ -344,9 +318,7 @@ class KnowledgeCatalog:
         payload = []
         if self.manual_snippets_path.exists():
             try:
-                payload = json.loads(
-                    self.manual_snippets_path.read_text(encoding="utf-8")
-                )
+                payload = json.loads(self.manual_snippets_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
                 payload = []
         payload.append(
@@ -359,9 +331,7 @@ class KnowledgeCatalog:
                 "signature": chunk.signature,
             }
         )
-        self.manual_snippets_path.write_text(
-            json.dumps(payload, indent=2), encoding="utf-8"
-        )
+        self.manual_snippets_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
 def _segment_text(text: str) -> list[str]:
@@ -398,9 +368,7 @@ async def serve(
     include_globs: list[str],
 ) -> None:
     if not paths:
-        raise McpError(
-            "No knowledge paths configured; set MCP_KNOWLEDGE_PATHS"
-        )
+        raise McpError("No knowledge paths configured; set MCP_KNOWLEDGE_PATHS")
     catalog = KnowledgeCatalog(
         paths=paths,
         include_globs=include_globs,
@@ -438,15 +406,11 @@ async def serve(
         try:
             if name == "list_documents":
                 docs = catalog.list_documents()
-                payload = json.dumps(
-                    [doc.model_dump() for doc in docs], indent=2
-                )
+                payload = json.dumps([doc.model_dump() for doc in docs], indent=2)
             elif name == "vector_search":
                 data = SearchInput.model_validate(arguments)
                 results = catalog.vector_search(data.query, data.limit)
-                payload = json.dumps(
-                    [r.model_dump() for r in results], indent=2
-                )
+                payload = json.dumps([r.model_dump() for r in results], indent=2)
             elif name == "add_manual_snippet":
                 data = AddSnippetInput.model_validate(arguments)
                 entry = catalog.add_snippet(data)

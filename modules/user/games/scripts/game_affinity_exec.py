@@ -105,8 +105,7 @@ if __name__ == "__main__":
 
     if not args.cmd or args.cmd[0] != "--":
         print(
-            "Usage: game-affinity-exec --cpus <set|auto> -- <command> "
-            "[args...]",
+            "Usage: game-affinity-exec --cpus <set|auto> -- <command> " "[args...]",
             file=sys.stderr,
         )
         sys.exit(2)
