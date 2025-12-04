@@ -42,7 +42,7 @@ with lib;
             # Determine the newest Hyprland instance signature present
             newest=""
             if [ -d "$dir" ]; then
-              newest="$(${pkgs.coreutils}/bin/ls -td "$dir"/* 2>/dev/null | ${pkgs.coreutils}/bin/head -n1 | ${pkgs.coreutils}/bin/xargs -r basename || true)"
+              newest="$(${pkgs.coreutils}/bin/ls -td "$dir"/* 2>/dev/null | ${pkgs.coreutils}/bin/head -n1 | ${pkgs.findutils}/bin/xargs -r basename || true)"
             fi
             if [ -z "$newest" ]; then
               # No hypr instance detected; nothing to do
