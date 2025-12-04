@@ -42,7 +42,7 @@ in {
       pkgs.doggo # DNS client for humans
       pkgs.dos2unix # file conversion
       pkgs.dust # better du
-      pkgs.duf # better df
+      pkgs.neg.duf # better df (fork with plain style support)
       pkgs.entr # run commands on file change
       pkgs.erdtree # modern tree
       pkgs.enca # detect + reencode text
