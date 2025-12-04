@@ -7,9 +7,7 @@ def main(args: list[str]) -> None:
 
 
 @result_handler(no_ui=True)
-def handle_result(
-    args: list[str], answer: str, target_window_id: int, boss: Boss
-) -> None:
+def handle_result(args: list[str], answer: str, target_window_id: int, boss: Boss) -> None:
     w = boss.window_id_map.get(target_window_id)
     if w is not None:
         if len(args) > 1 and args[1] != "prev":

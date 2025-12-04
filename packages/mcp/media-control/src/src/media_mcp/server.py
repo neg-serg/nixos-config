@@ -47,9 +47,7 @@ class PlaybackControlInput(BaseModel):
 
 
 class QueueArtistInput(BaseModel):
-    artist: str = Field(
-        ..., min_length=1, description="Artist name to search for"
-    )
+    artist: str = Field(..., min_length=1, description="Artist name to search for")
     clear_queue: bool = Field(
         default=False,
         description="Clear the queue before adding tracks",
@@ -139,9 +137,7 @@ class MediaController:
             album=song.get("album"),
             title=song.get("title"),
             elapsed_seconds=_safe_float(status.get("elapsed")),
-            duration_seconds=_safe_float(
-                song.get("duration") or status.get("duration")
-            ),
+            duration_seconds=_safe_float(song.get("duration") or status.get("duration")),
             queue_length=_safe_int(status.get("playlistlength")),
             volume_percent=_safe_int(status.get("volume")),
             repeat=_safe_bool(status.get("repeat")),
@@ -179,13 +175,9 @@ class MediaController:
                 client.clear()
 
             matches = client.find("artist", payload.artist)
-            files = [
-                entry.get("file") for entry in matches if entry.get("file")
-            ]
+            files = [entry.get("file") for entry in matches if entry.get("file")]
             if not files:
-                raise McpError(
-                    f"No tracks found for artist '{payload.artist}'"
-                )
+                raise McpError(f"No tracks found for artist '{payload.artist}'")
 
             for song in files:
                 client.add(song)
@@ -241,13 +233,9 @@ class MediaController:
             )
             return proc.stdout.strip()
         except FileNotFoundError as exc:
-            raise McpError(
-                f"wpctl not found at {self.config.wpctl_path}"
-            ) from exc
+            raise McpError(f"wpctl not found at {self.config.wpctl_path}") from exc
         except subprocess.CalledProcessError as exc:
-            raise McpError(
-                exc.stderr.strip() or exc.stdout.strip() or str(exc)
-            ) from exc
+            raise McpError(exc.stderr.strip() or exc.stdout.strip() or str(exc)) from exc
 
     def _get_volume(self, sink: str) -> VolumeResult:
         output = self._run_wpctl(["get-volume", sink])
@@ -359,9 +347,7 @@ async def serve(
                     raise McpError(f"Unknown tool: {name}")
 
             return [
-                TextContent(
-                    type="text", text=result.model_dump_json(indent=2)
-                ),
+                TextContent(type="text", text=result.model_dump_json(indent=2)),
             ]
         except ValidationError as exc:
             raise McpError(str(exc)) from exc

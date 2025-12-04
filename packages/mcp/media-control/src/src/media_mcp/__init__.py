@@ -38,9 +38,7 @@ def main() -> None:
     parser.add_argument(
         "--pipewire-sink",
         default=env_sink,
-        help=(
-            "PipeWire sink/node ID passed to wpctl (default: " f"{env_sink})"
-        ),
+        help=("PipeWire sink/node ID passed to wpctl (default: " f"{env_sink})"),
     )
     parser.add_argument(
         "--wpctl",

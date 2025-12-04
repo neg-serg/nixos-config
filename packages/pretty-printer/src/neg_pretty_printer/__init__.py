@@ -82,26 +82,12 @@ class PrettyPrinter:
         if unit is None:
             return do_wrap(cls.darkwhite + pref + cls.darkwhite + str(size))
 
-        return do_wrap(
-            cls.darkwhite
-            + pref
-            + cls.darkwhite
-            + str(size)
-            + cls.almostgray
-            + unit
-        )
+        return do_wrap(cls.darkwhite + pref + cls.darkwhite + str(size) + cls.almostgray + unit)
 
     @classmethod
     def filelen(cls, length: int | str) -> str:
         """Print file line-length"""
-        return cls.wrap(
-            cls.darkwhite
-            + "len"
-            + cls.almostgray
-            + "="
-            + cls.darkwhite
-            + str(length)
-        )
+        return cls.wrap(cls.darkwhite + "len" + cls.almostgray + "=" + cls.darkwhite + str(length))
 
     @classmethod
     def newfile(cls, filename: str) -> str:
@@ -128,12 +114,8 @@ class PrettyPrinter:
         """Pretty printing for filename"""
         filename = re.sub("~", colored.fg(2) + "~" + colored.fg(7), filename)
         home = os.environ.get("HOME", os.path.expanduser("~"))
-        filename = re.sub(
-            re.escape(home), colored.fg(2) + "~" + colored.fg(7), filename
-        )
-        filename = re.sub(
-            "([/·])", colored.fg(4) + r"\1" + colored.fg(7), filename
-        )
+        filename = re.sub(re.escape(home), colored.fg(2) + "~" + colored.fg(7), filename)
+        filename = re.sub("([/·])", colored.fg(4) + r"\1" + colored.fg(7), filename)
         filename = re.sub(
             r"(-\[)([0-9]+)(x)([0-9A-Z]+)(\]-)",
             colored.fg(4)
