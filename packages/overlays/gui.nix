@@ -88,5 +88,5 @@ in {
 
   flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") {};
 
-  pyprland = inputs.pyprland.packages.${prev.system}.pyprland;
+  pyprland = inputs.pyprland.packages.${prev.stdenv.hostPlatform.system}.pyprland;
 }
