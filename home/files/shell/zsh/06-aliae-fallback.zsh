@@ -185,7 +185,7 @@ if command -v prettyping >/dev/null 2>&1; then
 fi
 
 if command -v duf >/dev/null 2>&1; then
-  alias df='duf --style plain --no-header --no-bars --hide special --hide-mp "/home/neg/*,/var/lib/*"'
+  alias df='duf --theme neg --style plain --no-header --hide special --hide-mp "/home/neg/*,/var/lib/*"'
 fi
 
 if command -v dust >/dev/null 2>&1; then
