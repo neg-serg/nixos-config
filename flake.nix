@@ -369,16 +369,7 @@
           builtins.mapAttrs (_: input: input // {type = "derivation";}) {
           };
       };
-      hmDocs = import ./flake/home/docs.nix {
-        inherit lib self;
-        perSystem = hmPerSystem;
-        systems = hmSystems;
-      };
-      hmChecks = import ./flake/home/checks-outputs.nix {
-        inherit lib;
-        systems = hmSystems;
-        perSystem = hmPerSystem;
-      };
+
       hmHomeConfigurations = {
         neg = inputs.home-manager.lib.homeManagerConfiguration {
           inherit (hmPerSystem.${hmDefaultSystem}) pkgs;
@@ -386,7 +377,6 @@
           modules = hmBaseModules {};
         };
       };
-      hmTemplates = import ./flake/home/templates.nix self;
     in {
       # Per-system outputs: packages, formatter, checks, devShells, apps
       packages = lib.genAttrs supportedSystems (s: (perSystem s).packages);
@@ -421,7 +411,5 @@
       in
         lib.genAttrs hostNamesEnabled mkHost;
       homeConfigurations = hmHomeConfigurations;
-      hm = hmPerSystem;
-      inherit hmChecks hmDocs hmTemplates;
     };
 }
