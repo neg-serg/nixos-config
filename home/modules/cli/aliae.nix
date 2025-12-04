@@ -233,7 +233,7 @@ in
             (mkAliasIf hasNmap "nmap-vulners" "nmap -sV --script=vulners/vulners.nse")
             (mkAliasIf hasNmap "nmap-vulscan" "nmap -sV --script=vulscan/vulscan.nse")
             (mkAliasIf hasPrettyping "ping" "prettyping")
-            (mkAliasIf hasDuf "df" "duf -theme ansi -hide special -hide-mp '/home/neg/*,/var/lib/*'")
+            (mkAliasIf hasDuf "df" "duf --style plain --no-header --no-bars --hide special --hide-mp '/home/neg/*,/var/lib/*'")
             (mkAliasIf hasDust "sp" "dust -r")
             (mkAliasIf hasKhal "cal" "khal calendar")
             (mkAliasIf hasHxd "hexdump" "hxd")
