@@ -5,7 +5,5 @@
 }:
 with lib;
   mkIf (config.features.gui.enable or false) {
-    imports = [
-      ./gui/swayosd
-    ];
+    services.swayosd.enable = true;
   }
