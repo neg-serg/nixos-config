@@ -77,6 +77,9 @@
             "antigravity-fhs"
             "google-chrome"
             "hiddify-app"
+            "steam-unwrapped"
+            "steam"
+            "steam-run"
           ];
         in
           builtins.elem name allowed;
