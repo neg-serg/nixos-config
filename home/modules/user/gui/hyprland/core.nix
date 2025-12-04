@@ -22,6 +22,7 @@ with lib; let
       force = true;
     };
   hy3Enabled = config.features.gui.hy3.enable or false;
+  hyprExpoEnabled = config.features.gui.hyprexpo.enable or false;
 in
   mkIf config.features.gui.enable (lib.mkMerge [
     # Local helper: safe Hyprland reload that ensures Quickshell is started if absent
@@ -92,6 +93,30 @@ in
             plugin = ${pluginPath}
           '')
           {xdg.configFile."hypr/plugins.conf".force = true;}
+        ]
+    ))
+    (mkIf hyprExpoEnabled (
+      let
+        pluginPath = "${pkgs.hyprlandPlugins.hyprexpo}/lib/libhyprexpo.so";
+      in
+        lib.mkMerge [
+          (xdg.mkXdgText "hypr/plugins-expo.conf" ''
+            plugin = ${pluginPath}
+            plugin {
+                hyprexpo {
+                    columns = 3
+                    gap_size = 5
+                    bg_col = rgb(111111)
+                    workspace_method = center current # [center/first] [workspace] e.g. first 1 or center m+1
+
+                    enable_gesture = true # laptop touchpad
+                    gesture_fingers = 3  # 3 or 4
+                    gesture_distance = 300 # how far is the "max"
+                    gesture_positive = false # positive = swipe down. Negative = swipe up.
+                }
+            }
+          '')
+          {xdg.configFile."hypr/plugins-expo.conf".force = true;}
         ]
     ))
     {
