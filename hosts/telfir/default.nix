@@ -1,4 +1,4 @@
-{
+{pkgs, ...}: {
   imports = [
     ../../profiles/desktop.nix
     ./hardware.nix
@@ -7,4 +7,14 @@
     ./virtualisation/macos.nix
     ./virtualisation/lxc.nix
   ];
+
+  boot.plymouth = {
+    enable = true;
+    theme = "rings_2";
+    themePackages = with pkgs; [
+      (adi1090x-plymouth-themes.override {
+        selected_themes = ["rings_2"];
+      })
+    ];
+  };
 }
