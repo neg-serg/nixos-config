@@ -87,4 +87,12 @@ in {
   hiddify-app = callPkg (inputs.self + "/packages/hiddify-app") {};
 
   flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") {};
+
+  pyprland = prev.pyprland.overrideAttrs (old: {
+    postPatch =
+      (old.postPatch or "")
+      + ''
+        sed -i -E 's/^([[:space:]]*)split_version = \[int\(i\) for i in version_str\.split\("\."\)\[:3\]\]/\1try: split_version = [int(i) for i in version_str.split(".")[:3]]\n\1except ValueError: split_version = [0, 0, 0]/' pyprland/plugins/pyprland.py
+      '';
+  });
 }
