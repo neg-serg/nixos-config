@@ -115,9 +115,6 @@ in {
       pkgs.vesktop # Discord (Vencord) desktop client
       pkgs.nchat # terminal-first Telegram client
       pkgs.hiddify-app # Hiddify proxy client
-      (pkgs.writeShellScriptBin "hiddify" ''
-        exec pypr toggle teardrop
-      '')
       hyprWinList # injects rust-based win switcher bound in Hypr
     ]
     ++ menuPkgs
