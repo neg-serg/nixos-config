@@ -102,27 +102,18 @@
   };
   outputs = inputs @ {
     self,
-    home-manager,
-    lanzaboote,
-    nix-flatpak,
     nixpkgs,
-    sops-nix,
     ...
   }:
     with {
-      locale = "en_US.UTF-8"; # select locale
-      timeZone = "Europe/Moscow";
-      kexec_enabled = true;
-      # Nilla raw-loader compatibility: synthetic type for each input (harmless for normal flakes)
-      nillaInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) inputs;
+      # Common lib
+      inherit (nixpkgs) lib;
+      flakeLib = import ./flake/lib.nix {inherit inputs nixpkgs;};
     }; let
       # Supported systems for generic flake outputs
       supportedSystems = ["x86_64-linux" "aarch64-linux"];
       # Linux system for NixOS configurations and docs evaluation
       linuxSystem = "x86_64-linux";
-
-      # Common lib
-      inherit (nixpkgs) lib;
 
       hmDefaultSystem = linuxSystem;
       hmSystems = [hmDefaultSystem];
@@ -131,216 +122,19 @@
       dropDefaultKey = key: key != "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=";
       hmExtraSubstituters = builtins.filter dropDefault caches.substituters;
       hmExtraTrustedKeys = builtins.filter dropDefaultKey caches."trusted-public-keys";
-      hyprlandOverlay = system: (_: prev: let
-        esc = lib.escapeShellArg;
-        hyprInfo = inputs.hyprland.sourceInfo or {};
-        hyprRev = hyprInfo.rev or "unknown";
-        hyprRef = hyprInfo.ref or "";
-        hyprBranch =
-          if hyprRef != ""
-          then hyprRef
-          else hyprRev;
-        hyprTag =
-          if (builtins.match "^v[0-9].*" hyprRef) != null
-          then hyprRef
-          else "";
-        hyprTagOrBranch =
-          if hyprTag != ""
-          then hyprTag
-          else hyprBranch;
-        hyprCommits = builtins.toString (hyprInfo.revCount or 0);
-        hyprDate =
-          hyprInfo.lastModifiedDate
-            or (
-            if hyprInfo ? lastModified
-            then "unix:${builtins.toString hyprInfo.lastModified}"
-            else "unknown"
-          );
-        hyprMessage =
-          if hyprTag != ""
-          then "Release ${hyprTag}"
-          else "Flake build ${builtins.substring 0 7 hyprRev}";
-        hyprlandBase =
-          inputs.hyprland.packages.${system}.hyprland.override {wrapRuntimeDeps = false;};
-        hyprland = hyprlandBase.overrideAttrs (old: {
-          postPatch =
-            (old.postPatch or "")
-            + ''
-              rm -f src/version.h
-              HASH=${esc hyprRev} \
-                BRANCH=${esc hyprBranch} \
-                MESSAGE=${esc hyprMessage} \
-                DATE=${esc hyprDate} \
-                DIRTY= \
-                TAG=${esc hyprTagOrBranch} \
-                COMMITS=${esc hyprCommits} \
-                ./scripts/generateVersion.sh
-            '';
-        });
-      in {
-        inherit hyprland;
-        inherit (inputs.xdg-desktop-portal-hyprland.packages.${system}) xdg-desktop-portal-hyprland;
-        hyprlandPlugins =
-          prev.hyprlandPlugins
-          // {
-            hy3 = inputs.hy3.packages.${system}.hy3;
-          };
-      });
-      mkPkgs = system:
-        import nixpkgs {
-          inherit system;
-          overlays = [
-            ((import ./packages/overlay.nix) inputs)
-            (hyprlandOverlay system)
-          ];
-          config = {
-            allowAliases = false;
-            allowUnfreePredicate = pkg: let
-              name = pkg.pname or (builtins.parseDrvName (pkg.name or "")).name;
-              allowed = [
-                "google-antigravity"
-                "antigravity-fhs"
-                "google-chrome"
-                "hiddify-app"
-              ];
-            in
-              builtins.elem name allowed;
-          };
-        };
-      mkCustomPkgs = pkgs: import ./packages/flake/custom-packages.nix {inherit pkgs;};
-      mkIosevkaNeg = system: inputs."iosevka-neg".packages.${system};
 
-      # Hosts discovery shared across sections
-      hostsDir = ./hosts;
-      entries = builtins.readDir hostsDir;
-      hostNames = builtins.attrNames (lib.filterAttrs (
-          name: type:
-            type
-            == "directory"
-            && builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
-        )
-        entries);
-      hostNamesEnabled = lib.filter (name: name != "telfir-vm") hostNames;
       # Per-system outputs factory
-      perSystem = system: let
-        pkgs = mkPkgs system;
-        # Pre-commit utility per system
-        preCommit = inputs.pre-commit-hooks.lib.${system}.run {
-          src = self;
-          hooks = {
-            alejandra.enable = true;
-            statix.enable = true;
-            deadnix.enable = true;
-          };
-        };
-      in {
-        packages =
-          (mkCustomPkgs pkgs)
-          // {
-            default = pkgs.zsh;
-            docs-modules = import ./flake/docs-modules.nix {
-              inherit pkgs lib self;
-            };
-          };
-
-        formatter = pkgs.writeShellApplication {
-          name = "fmt";
-          runtimeInputs = with pkgs; [
-            alejandra
-            black
-            python3Packages.mdformat
-            shfmt
-            treefmt
-          ];
-          text = ''
-            set -euo pipefail
-            if git rev-parse --show-toplevel >/dev/null 2>&1; then
-              repo_root="$(git rev-parse --show-toplevel)"
-            else
-              repo_root="${self}"
-            fi
-            cd "$repo_root"
-            tmp_conf=$(mktemp)
-            trap 'rm -f "$tmp_conf"' EXIT
-            cp ${./treefmt.toml} "$tmp_conf"
-            exec treefmt --config-file "$tmp_conf" --tree-root "$repo_root" "$@"
-          '';
-        };
-
-        checks = {
-          fmt-treefmt =
-            pkgs.runCommand "fmt-treefmt" {
-              nativeBuildInputs = with pkgs; [
-                alejandra
-                black
-                python3Packages.mdformat
-                shfmt
-                treefmt
-                findutils
-              ];
-              src = ./.;
-            } ''
-              set -euo pipefail
-              cp -r "$src" ./src
-              chmod -R u+w ./src
-              cd ./src
-              export XDG_CACHE_HOME="$PWD/.cache"
-              mkdir -p "$XDG_CACHE_HOME"
-              cp ${./treefmt.toml} ./.treefmt.toml
-              treefmt --config-file ./.treefmt.toml --tree-root . --fail-on-change .
-              touch "$out"
-            '';
-          lint-deadnix = pkgs.runCommand "lint-deadnix" {nativeBuildInputs = with pkgs; [deadnix];} ''
-            cd ${self}
-            deadnix --fail --exclude home .
-            touch "$out"
-          '';
-          lint-statix = pkgs.runCommand "lint-statix" {nativeBuildInputs = with pkgs; [statix];} ''cd ${self}; statix check .; touch "$out"'';
-          pre-commit = preCommit;
-          lint-md-lang = pkgs.runCommand "lint-md-lang" {nativeBuildInputs = with pkgs; [bash coreutils findutils gnugrep gitMinimal];} ''
-            set -euo pipefail
-            cd ${self}
-            bash scripts/check-markdown-language.sh
-            : > "$out"
-          '';
-          tests-caddy = pkgs.testers.runNixOSTest (import ./tests/caddy.nix);
-        };
-
-        devShells = {
-          default = pkgs.mkShell {
-            inherit (preCommit) shellHook;
-            packages = with pkgs; [alejandra deadnix statix nil just jq];
-          };
-        };
-
-        apps = let
-          genOptions = pkgs.writeShellApplication {
-            name = "gen-options";
-            runtimeInputs = with pkgs; [git jq nix];
-            text = ''
-              set -euo pipefail
-              exec "${self}/scripts/gen-options.sh" "$@"
-            '';
-          };
-          fmtApp = self.formatter.${system};
-        in {
-          gen-options = {
-            type = "app";
-            program = "${genOptions}/bin/gen-options";
-          };
-          fmt = {
-            type = "app";
-            program = "${fmtApp}/bin/fmt";
-          };
-        };
+      perSystem = import ./flake/per-system.nix {
+        inherit self inputs nixpkgs flakeLib;
       };
+
       hmPerSystem = lib.genAttrs hmSystems (
         system: let
-          pkgs = mkPkgs system;
-          iosevkaNeg = mkIosevkaNeg system;
+          pkgs = flakeLib.mkPkgs system;
+          iosevkaNeg = flakeLib.mkIosevkaNeg system;
           devTools = import ./flake/home/devtools.nix {inherit lib pkgs;};
           inherit (devTools) devNixTools rustBaseTools rustExtraTools;
-          customPkgs = mkCustomPkgs pkgs;
+          customPkgs = flakeLib.mkCustomPkgs pkgs;
         in {
           inherit pkgs iosevkaNeg;
           devShells = import ./flake/home/devshells.nix {
@@ -386,30 +180,7 @@
       apps = lib.genAttrs supportedSystems (s: (perSystem s).apps);
 
       # NixOS configurations (linuxSystem only)
-      nixosConfigurations = let
-        commonModules = [
-          ./init.nix
-          nix-flatpak.nixosModules.nix-flatpak
-          lanzaboote.nixosModules.lanzaboote
-          sops-nix.nixosModules.sops
-          home-manager.nixosModules.home-manager
-        ];
-        hostExtras = name: let
-          extraPath = (builtins.toString hostsDir) + "/" + name + "/extra.nix";
-        in
-          lib.optional (builtins.pathExists extraPath) (/. + extraPath);
-        mkHost = name:
-          lib.nixosSystem {
-            system = linuxSystem;
-            specialArgs = {
-              inherit locale timeZone kexec_enabled;
-              # Pass Nilla-friendly inputs (workaround for nilla-nix/nilla#14)
-              inputs = nillaInputs;
-            };
-            modules = commonModules ++ [(import ((builtins.toString hostsDir) + "/" + name))] ++ (hostExtras name);
-          };
-      in
-        lib.genAttrs hostNamesEnabled mkHost;
+      nixosConfigurations = import ./flake/nixos.nix {inherit inputs nixpkgs;};
       homeConfigurations = hmHomeConfigurations;
     };
 }
