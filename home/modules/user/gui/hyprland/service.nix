@@ -17,7 +17,7 @@ in
 
       Service = {
         ExecStart = "%h/.local/bin/pypr-run";
-        Restart = "on-failure";
+        Restart = "always";
         RestartSec = 1;
       };
 
