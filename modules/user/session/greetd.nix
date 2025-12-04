@@ -11,7 +11,7 @@
     if builtins.hasAttr mainUser config.users.users
     then config.users.users.${mainUser}.home or "/home/${mainUser}"
     else "/home/${mainUser}";
-  greeterWallpaperSrc = "${mainHome}/pic/wl/concert_crowd_people_134866_3840x2160.jpg";
+  greeterWallpaperSrc = "${mainHome}/pic/wl/waterfall_jungle_dark_150290_3840x2400.jpg";
   greeterWallpaperDst = "/var/lib/greetd/wallpaper.jpg";
   hyprlandConfig = pkgs.writeText "greetd-hyprland-config" ''
     # for some reason pkill is way faster than dispatching exit, to the point greetd thinks the greeter died.
