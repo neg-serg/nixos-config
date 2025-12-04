@@ -52,6 +52,8 @@ in {
       pkgs.radicle-explorer # Radicle web explorer
 
       # General runtimes & helpers
+      pkgs.jdk21 # Java Development Kit
+      pkgs.gradle # Build automation tool for Java/Kotlin/Groovy
       pkgs.nodejs_24 # Node.js runtime tooling
       pkgs.deheader # trim redundant C/C++ includes
 
