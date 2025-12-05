@@ -47,10 +47,5 @@
 
   services.nextcloudCli = {
     enable = true;
-    work = {
-      enable = true;
-      remoteUrl = null; # pulled from NEXTCLOUD_URL in secrets/home/nextcloud-cli-wrk.env.sops
-      userName = null; # pulled from NEXTCLOUD_USER in secrets/home/nextcloud-cli-wrk.env.sops
-    };
   };
 }
