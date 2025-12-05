@@ -22,7 +22,6 @@ with lib; let
       force = true;
     };
   hy3Enabled = config.features.gui.hy3.enable or false;
-  hyprExpoEnabled = config.features.gui.hyprexpo.enable or false;
 in
   mkIf config.features.gui.enable (lib.mkMerge [
     # Local helper: safe Hyprland reload that ensures Quickshell is started if absent
@@ -81,7 +80,7 @@ in
 
         # Plugins
         ${optionalString hy3Enabled "source = ~/.config/hypr/plugins.conf"}
-        ${optionalString hyprExpoEnabled "source = ~/.config/hypr/plugins-expo.conf"}
+
       '')
       {xdg.configFile."hypr/hyprland.conf".force = true;}
     ])
@@ -97,31 +96,7 @@ in
           {xdg.configFile."hypr/plugins.conf".force = true;}
         ]
     ))
-    (mkIf hyprExpoEnabled (
-      let
-        pluginPath = "${pkgs.hyprlandPlugins.hyprexpo}/lib/libhyprexpo.so";
-      in
-        lib.mkMerge [
-          (xdg.mkXdgText "hypr/plugins-expo.conf" ''
-            plugin = ${pluginPath}
-            plugin {
-                hyprexpo {
-                    columns = 3
-                    gap_size = 5
-                    bg_col = rgb(111111)
-                    workspace_method = center current # [center/first] [workspace] e.g. first 1 or center m+1
 
-                    enable_gesture = true # laptop touchpad
-                    gesture_fingers = 3  # 3 or 4
-                    gesture_distance = 300 # how far is the "max"
-                    gesture_positive = false # positive = swipe down. Negative = swipe up.
-                }
-            }
-            bind = $M4, grave, hyprexpo:expo, toggle
-          '')
-          {xdg.configFile."hypr/plugins-expo.conf".force = true;}
-        ]
-    ))
     {
       # Ensure the user-managed overrides directory exists (content is user-controlled)
       home.activation.ensureHyprLocalDir = lib.hm.dag.entryAfter ["writeBoundary"] ''
