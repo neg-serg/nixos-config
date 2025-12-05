@@ -123,4 +123,13 @@ _inputs: _final: prev: {
 
   # Reserved for development/toolchain overlays
   neg = {};
+
+  # Patch pre-commit to add a space before "Skipped" message
+  pre-commit = prev.pre-commit.overrideAttrs (old: {
+    postInstall =
+      (old.postInstall or "")
+      + ''
+        find $out -name run.py -exec sed -i "s/NO_FILES = '(no files to check)'/NO_FILES = '(no files to check) '/" {} +
+      '';
+  });
 }
