@@ -21,7 +21,6 @@ in
       # Host-specific feature toggles
       features.dev.ai.antigravity.enable = true;
       features.apps.winapps.enable = true;
-      home-manager.users.neg.features.gui.hy3.enable = lib.mkForce false;
       # Roles enabled for this host
       roles = {
         workstation.enable = true;
