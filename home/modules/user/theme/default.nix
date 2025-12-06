@@ -43,10 +43,6 @@ in
         };
       };
 
-      qt = {
-        platformTheme = "qt6ct";
-      };
-
       gtk = {
         enable = true;
 

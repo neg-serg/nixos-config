@@ -12,6 +12,7 @@
     ./quickshell.nix
     ./walker.nix
     ./swayosd
+    ./qt.nix
   ];
 
   systemd.user.targets.graphical-session = {
