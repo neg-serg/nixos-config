@@ -55,4 +55,13 @@ in {
       mesonFlags = (old.mesonFlags or []) ++ ["-Dvapoursynth=enabled"];
     });
   };
+  pythonPackagesExtensions =
+    (prev.pythonPackagesExtensions or [])
+    ++ [
+      (_python-final: python-prev: {
+        imageio = python-prev.imageio.overridePythonAttrs (_old: {
+          doCheck = false;
+        });
+      })
+    ];
 }
