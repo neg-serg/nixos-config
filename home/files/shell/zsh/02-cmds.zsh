@@ -1,7 +1,7 @@
 _exists() { (( $+commands[$1] )) }
 _exists eza && {
-    lcr(){ eza -al --sort=created --color=always "$@" | tail -14 }
-    lsd(){ eza -alD --sort=created --color=always "$@" | tail -14 }
+    # lcr/lsd are handled by Aliae now
+    :
 }
 
 _exists rg && {
@@ -54,7 +54,7 @@ if [[ -e /etc/NIXOS ]]; then
         
     }
     nbuild(){ nix-build -E 'with import <nixpkgs> {}; callPackage ./default.nix {}'}
-    nlocate(){ nix run github:nix-community/nix-index-database "$@" }
+    # nlocate handled by Aliae
     qi(){ NIXPKGS_ALLOW_UNFREE=1 nix shell --impure 'nixpkgs#'$1 }
     q(){ nix shell 'nixpkgs#'$1 }
     flakify() {
