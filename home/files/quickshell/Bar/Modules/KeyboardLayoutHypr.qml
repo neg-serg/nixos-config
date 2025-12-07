@@ -277,6 +277,16 @@ CenteredCapsuleRow {
         return s.split(/\s+/)[0].toUpperCase().slice(0, 3);
     }
 
+    function _submapGlyph(name) {
+        const key = (String(name || "")).toLowerCase().trim();
+        const map = {
+            "special": "\u2726", // heavy star
+            "resize": "\u21d4",  // left-right arrow
+            "tiling": "\u25a9",  // square with smaller square
+            "wallpaper": "\ud83d\uddbc" // framed picture
+        };
+        return map[key] || "";
+    }
     function _esc(s) {
         return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
@@ -284,9 +294,10 @@ CenteredCapsuleRow {
         const sub = kb.submapBadge.trim();
         const accent = Theme.accentHover || Theme.textPrimary;
         const layout = kb.layoutText || "??";
-        if (sub.length === 0)
+        const subGlyph = _submapGlyph(sub);
+        if (!subGlyph.length)
             return _esc(layout);
-        return "<font color=\"" + accent + "\">" + _esc(sub) + "</font> \u2328 " + _esc(layout);
+        return "<font color=\"" + accent + "\">" + _esc(subGlyph) + "</font> \u2328 " + _esc(layout);
     }
 
     function applyDeviceSnapshot(devs) {
