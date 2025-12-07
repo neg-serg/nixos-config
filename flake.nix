@@ -179,7 +179,7 @@
 
       # Home Manager configurations (linuxSystem only)
       homeConfigurations = import ./flake/home-configurations.nix {
-        inherit inputs lib mkHMArgs hmHelpers;
+        inherit inputs mkHMArgs hmHelpers;
         pkgs = hmPerSystem.${linuxSystem}.pkgs;
         system = linuxSystem;
       };
