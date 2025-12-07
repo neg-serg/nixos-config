@@ -19,6 +19,15 @@ in
           pkgs.ripgrep # project-wide search backend
           pkgs.fd # fast file finder used by pickers
         ];
+        additionalRuntimePaths = [
+          "$HOME/.config/nvf"
+        ];
+        luaConfigRC = {
+          userInit = ''
+            dofile(vim.fn.stdpath("config") .. "/init.lua")
+          '';
+        };
       };
     };
+    home.sessionVariables.NVIM_APPNAME = "nvf";
   }
