@@ -54,6 +54,7 @@ with rec {
       "x-scheme-handler/tg" = telegram;
       # Editing
       "text/plain" = editor;
+      "text/markdown" = editor;
       "application/json" = editor;
       "application/x-shellscript" = editor;
     }
