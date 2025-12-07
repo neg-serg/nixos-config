@@ -29,9 +29,6 @@ cpu-masks:
 
 # --- Repo-wide workflows (original Home Manager justfile) ------------------------
 
-hm-neg:
-    home-manager switch --flake .#neg
-
 fmt:
     repo_root="$(git rev-parse --show-toplevel)"; \
     cd "$repo_root" && nix fmt
