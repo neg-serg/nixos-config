@@ -15,6 +15,7 @@ with lib; let
     "media.conf"
     "notify.conf"
     "misc.conf"
+    "hy3.conf"
     "_resets.conf"
   ];
   mkHyprSource = rel:
