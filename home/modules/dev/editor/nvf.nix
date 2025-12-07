@@ -51,10 +51,6 @@ in
           luaPackages = [];
           withPython3 = true;
           python3Packages = [];
-          readme = {
-            enabled = false;
-            files = [];
-          };
         };
       };
     };
