@@ -116,55 +116,10 @@
     }; let
       # Supported systems for generic flake outputs
       supportedSystems = ["x86_64-linux" "aarch64-linux"];
-      # Linux system for NixOS configurations and docs evaluation
-      linuxSystem = "x86_64-linux";
-
-      hmDefaultSystem = linuxSystem;
-      hmSystems = [hmDefaultSystem];
-      caches = import ./nix/caches.nix;
-      dropDefault = url: url != "https://cache.nixos.org/";
-      dropDefaultKey = key: key != "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=";
-      hmExtraSubstituters = builtins.filter dropDefault caches.substituters;
-      hmExtraTrustedKeys = builtins.filter dropDefaultKey caches."trusted-public-keys";
 
       # Per-system outputs factory
       perSystem = import ./flake/per-system.nix {
         inherit self inputs nixpkgs flakeLib;
-      };
-
-      hmPerSystem = lib.genAttrs hmSystems (
-        system: let
-          pkgs = flakeLib.mkPkgs system;
-          iosevkaNeg = flakeLib.mkIosevkaNeg system;
-          devTools = import ./flake/home/devtools.nix {inherit lib pkgs;};
-          inherit (devTools) devNixTools rustBaseTools rustExtraTools;
-          customPkgs = flakeLib.mkCustomPkgs pkgs;
-        in {
-          inherit pkgs iosevkaNeg;
-          devShells = import ./flake/home/devshells.nix {
-            inherit pkgs rustBaseTools rustExtraTools devNixTools;
-          };
-          packages = {default = pkgs.zsh;} // customPkgs;
-          checks = import ./flake/home/checks.nix {
-            inherit pkgs self system;
-          };
-        }
-      );
-      hmHelpers = import ./flake/home/hm-helpers.nix {
-        inherit lib self;
-        stylixInput = inputs.stylix;
-        sopsNixInput = inputs."sops-nix";
-      };
-      mkHMArgs = import ./flake/home/mkHMArgs.nix {
-        inherit lib inputs;
-        perSystem = hmPerSystem;
-        yandexBrowserInput = inputs."yandex-browser";
-        nur = inputs.nur;
-        extraSubstituters = hmExtraSubstituters;
-        extraTrustedKeys = hmExtraTrustedKeys;
-        hmInputs =
-          builtins.mapAttrs (_: input: input // {type = "derivation";}) {
-          };
       };
     in {
       # Per-system outputs: packages, formatter, checks, devShells, apps
@@ -176,12 +131,5 @@
 
       # NixOS configurations (linuxSystem only)
       nixosConfigurations = import ./flake/nixos.nix {inherit inputs nixpkgs;};
-
-      # Home Manager configurations (linuxSystem only)
-      homeConfigurations = import ./flake/home-configurations.nix {
-        inherit inputs mkHMArgs hmHelpers;
-        pkgs = hmPerSystem.${linuxSystem}.pkgs;
-        system = linuxSystem;
-      };
     };
 }
