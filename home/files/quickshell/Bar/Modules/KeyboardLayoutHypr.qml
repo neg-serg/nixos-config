@@ -15,6 +15,9 @@ CenteredCapsuleRow {
     property bool iconSquare: false
 
     property string layoutText: "??"
+    // Hyprland submap (e.g., "spec") — surface current keyboard mode together with layout
+    readonly property string submapName: Services.HyprlandWatcher.currentSubmap || ""
+    readonly property string labelComposite: submapName.length ? (kb.layoutText + "/" + submapName) : kb.layoutText
     property string deviceName: ""
     // Normalized device selector for pinned device (if any)
     property string deviceNeedle: ""
@@ -63,7 +66,7 @@ CenteredCapsuleRow {
     iconAutoTune: true
     iconSpacing: kb.showLayoutLabel ? kb.activeIconSpacing : Theme.uiSpacingNone
     labelVisible: kb.showLayoutLabel
-    labelText: kb.layoutText
+    labelText: kb.labelComposite
     labelColor: Theme.textPrimary
     labelFontFamily: Theme.fontFamily
     labelFontWeight: Font.Medium
