@@ -15,6 +15,11 @@ in
         startPlugins = [
           pkgs.vimPlugins.lazy-nvim # lazy.nvim plugin manager shipped from Nix
         ];
+        # Override nvf defaults: keep absolute numbering off to match user config.
+        options = {
+          number = false;
+          relativenumber = false;
+        };
         extraPackages = [
           pkgs.ripgrep # project-wide search backend
           pkgs.fd # fast file finder used by pickers
