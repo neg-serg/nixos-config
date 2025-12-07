@@ -21,7 +21,8 @@ lib.mkIf (config.features.gui.enable or false) (lib.mkMerge [
       import sys
       import importlib.util
 
-      LAZY_KSB = os.path.expanduser("~/.local/share/nvim/lazy/kitty-scrollback.nvim/python/kitty_scrollback_nvim.py")
+      appname = os.environ.get("NVIM_APPNAME", "nvim")
+      LAZY_KSB = os.path.expanduser(f"~/.local/share/{appname}/lazy/kitty-scrollback.nvim/python/kitty_scrollback_nvim.py")
       NIX_KSB = """${nixKsbPath}"""
 
       def _resolve_path():
