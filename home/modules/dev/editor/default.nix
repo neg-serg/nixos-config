@@ -6,6 +6,7 @@
 with lib; {
   imports = [
     ./neovim
+    ./nvf.nix
     ./helix
   ];
   # Editor packages (code-cursor, LM Studio) now install via modules/dev/editor/pkgs.nix.

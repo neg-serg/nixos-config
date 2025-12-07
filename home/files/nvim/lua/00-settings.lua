@@ -1,7 +1,11 @@
 local o=vim.opt
 local env_=vim.env
 local home_=env_.HOME
-local config_home_=env_.XDG_CONFIG_HOME
+local config_home_=env_.XDG_CONFIG_HOME or (home_..'/.config')
+local data_home_=env_.XDG_DATA_HOME or (home_..'/.local/share')
+local appname=env_.NVIM_APPNAME or 'nvim'
+local config_dir=config_home_..'/'..appname
+local data_dir=data_home_..'/'..appname
 o.sessionoptions='blank,buffers,curdir,folds,help,tabpages,winsize'
 -- thx to https://www.reddit.com/r/neovim/comments/opipij/guide_tips_and_tricks_to_reduce_startup_and/
 local disabled_built_ins={
@@ -47,10 +51,10 @@ if vim.fn.executable('nvr') == 1 then
     env_.EDITOR='nvr -l --remote'
     env_.VISUAL='nvr -l --remote'
 end
-o.path='.,..,'..config_home_..'/nvim,'..
-    	config_home_..'/nvim/lua,'..
-	config_home_..'/nvim/after,'..
-	home_..'/.local/share/nvim/site/,/usr/include'
+o.path='.,..,'..config_dir..','..
+    	config_dir..'/lua,'..
+	config_dir..'/after,'..
+	data_dir..'/site/,/usr/include'
 -- Allow recursive file lookup for gf/:find
 vim.opt.path:append('**')
 o.fillchars={foldopen="", foldclose="",

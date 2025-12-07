@@ -34,6 +34,10 @@
     nix-flatpak = {url = "github:gmodena/nix-flatpak";}; # unstable branch. Use github:gmodena/nix-flatpak/?ref=<tag> to pin releases.
     # Pin nixpkgs to nixos-unstable so we get Hydra cache hits
     nixpkgs = {url = "github:NixOS/nixpkgs/nixos-25.11";};
+    nvf = {
+      url = "github:NotAShelf/nvf";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nur = {
       url = "github:nix-community/NUR";
       inputs.nixpkgs.follows = "nixpkgs";
