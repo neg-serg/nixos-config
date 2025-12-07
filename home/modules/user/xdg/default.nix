@@ -57,6 +57,17 @@ with rec {
       # --- Documents ---
       "application/pdf" = pdfreader;
       "application/epub+zip" = pdfreader;
+      "image/vnd.djvu" = pdfreader;
+      "application/postscript" = pdfreader;
+      "application/vnd.comicbook+zip" = pdfreader;
+      "application/vnd.comicbook+rar" = pdfreader;
+      "application/x-cbz" = pdfreader;
+      "application/x-cbr" = pdfreader;
+
+      # --- Playlists ---
+      "audio/x-mpegurl" = video;
+      "application/vnd.apple.mpegurl" = video;
+      "application/x-scpls" = video;
 
       # --- Misc ---
       "x-scheme-handler/tg" = telegram;
