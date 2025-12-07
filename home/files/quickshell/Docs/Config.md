@@ -163,8 +163,8 @@ Keyboard layout indicator (Hyprland)
 
 - The Bar’s keyboard layout indicator updates instantly from Hyprland’s keyboard-layout events for a
   zero‑lag UI.
-- If a Hyprland submap is active, the indicator shows it first in accent color with a keyboard glyph
-  before the layout (e.g., `special ⌨ en`) so the current mode is visible.
+- If a Hyprland submap is active, the indicator shows a pictogram for that submap in accent color
+  before the layout with a keyboard glyph (e.g., `★ ⌨ en`) so the current mode is visible.
 - To avoid noise from pseudo keyboards (power-button, video-bus, virtual keyboards), the module
   identifies the main:true keyboard at init and prefers its events.
 - If an event arrives from a non‑main device, the module issues one quick `hyprctl -j devices`
