@@ -1,6 +1,7 @@
 local ok, nixCats = pcall(require, "nixCats")
 local lazy
 local lockfile = vim.fn.stdpath("state") .. "/lazy-lock.json"
+local doc_cache = vim.fn.stdpath("state") .. "/lazy-docs"
 
 local plugin_tasks_ok, plugin_tasks = pcall(require, "lazy.manage.task.plugin")
 if plugin_tasks_ok and plugin_tasks.docs then
@@ -8,7 +9,11 @@ if plugin_tasks_ok and plugin_tasks.docs then
     plugin_tasks.docs.run = function(self)
         local docs = self.plugin.dir .. "/doc"
         if docs:match("^/nix/store/") then
-            return
+            local dst = doc_cache .. "/" .. (self.plugin.name or "plugin")
+            vim.fn.mkdir(dst, "p")
+            -- copy doc dir into writable state cache to allow helptags
+            vim.fn.system({ "cp", "-r", docs .. "/.", dst })
+            docs = dst
         end
         return orig_docs_run(self)
     end
