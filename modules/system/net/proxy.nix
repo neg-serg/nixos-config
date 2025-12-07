@@ -9,16 +9,17 @@
     pkgs.xray # VLESS/Reality-capable proxy core
   ];
 
-  # Manual TUN service for sing-box VLESS Reality (config expected at /run/user/1000/secrets/vless-reality-singbox-tun.json)
+  # TUN service for sing-box VLESS Reality (config expected at /run/user/1000/secrets/vless-reality-singbox-tun.json)
   systemd.services."sing-box-tun" = {
     description = "Sing-box VLESS Reality (tun, manual start)";
     wants = ["network-online.target"];
     after = ["network-online.target"];
     wantedBy = []; # manual start: systemctl start sing-box-tun
     serviceConfig = {
+      RuntimeDirectory = "sing-box-tun";
       ExecStartPre = [
         "/run/current-system/sw/bin/test -f /run/user/1000/secrets/vless-reality-singbox-tun.json"
-        "/run/current-system/sw/bin/sh -c '/run/current-system/sw/bin/ip rule del pref 100 2>/dev/null; /run/current-system/sw/bin/ip rule del pref 200 2>/dev/null; /run/current-system/sw/bin/ip route del default table 200 2>/dev/null'"
+        "/run/current-system/sw/bin/sh -c '/run/current-system/sw/bin/ip rule del pref 100 2>/dev/null; /run/current-system/sw/bin/ip rule del pref 200 2>/dev/null; /run/current-system/sw/bin/ip route show table 200 default > /run/sing-box-tun/prev-default-route 2>/dev/null; /run/current-system/sw/bin/ip route del default table 200 2>/dev/null'"
       ];
       ExecStart = "${pkgs.sing-box}/bin/sing-box run -c /run/user/1000/secrets/vless-reality-singbox-tun.json";
       ExecStartPost = [
@@ -30,7 +31,7 @@
         "/run/current-system/sw/bin/resolvectl domain sb0 \"~.\""
       ];
       ExecStopPost = [
-        "/run/current-system/sw/bin/sh -c '/run/current-system/sw/bin/ip rule del pref 200 2>/dev/null; /run/current-system/sw/bin/ip route del default dev sb0 table 200 2>/dev/null; /run/current-system/sw/bin/ip rule del pref 100 2>/dev/null; /run/current-system/sw/bin/ip route flush cache'"
+        "/run/current-system/sw/bin/sh -c \"/run/current-system/sw/bin/ip rule del pref 200 2>/dev/null; /run/current-system/sw/bin/ip route del default dev sb0 table 200 2>/dev/null; if test -s /run/sing-box-tun/prev-default-route; then /run/current-system/sw/bin/ip route replace table 200 $(cat /run/sing-box-tun/prev-default-route); fi; /run/current-system/sw/bin/ip rule del pref 100 2>/dev/null; /run/current-system/sw/bin/ip route flush cache\""
         "/run/current-system/sw/bin/resolvectl revert sb0"
       ];
       Restart = "on-failure";
