@@ -40,23 +40,66 @@ with rec {
   # Minimal associations to keep noise low; handlr covers the rest
   my_associations =
     {
-      # Browsing
+      # --- Browsing ---
       "text/html" = browser;
       "application/xhtml+xml" = browser;
       "x-scheme-handler/http" = browser;
       "x-scheme-handler/https" = browser;
-      # Media
+      "x-scheme-handler/about" = browser;
+      "x-scheme-handler/unknown" = browser;
+
+      # --- Media ---
       "audio/*" = video;
       "video/*" = video;
       "image/*" = image;
+      "image/svg+xml" = image;
+
+      # --- Documents ---
       "application/pdf" = pdfreader;
-      # Misc handlers
+      "application/epub+zip" = pdfreader;
+
+      # --- Misc ---
       "x-scheme-handler/tg" = telegram;
-      # Editing
+
+      # --- Editing (Text/Code/Config) ---
       "text/plain" = editor;
       "text/markdown" = editor;
+      "text/x-markdown" = editor;
+      "text/x-readme" = editor;
+      "text/x-log" = editor;
+      "text/x-tex" = editor;
+
+      # Config & Data
       "application/json" = editor;
       "application/x-shellscript" = editor;
+      "application/toml" = editor;
+      "application/yaml" = editor;
+      "text/x-yaml" = editor;
+      "application/xml" = editor;
+      "text/xml" = editor;
+      "text/x-ini" = editor;
+      "text/x-config" = editor;
+
+      # Programming Languages
+      "text/x-c" = editor;
+      "text/x-c++" = editor;
+      "text/x-python" = editor;
+      "application/x-python" = editor;
+      "text/x-rust" = editor;
+      "text/rust" = editor;
+      "text/x-go" = editor;
+      "text/x-java" = editor;
+      "text/x-lua" = editor;
+      "text/x-nix" = editor;
+      "text/x-script.python" = editor;
+      "text/x-script.perl" = editor;
+      "text/x-perl" = editor;
+      "text/x-ruby" = editor;
+      "text/x-makefile" = editor;
+      "text/x-cmake" = editor;
+      "text/css" = editor;
+      "application/javascript" = editor;
+      "application/typescript" = editor;
     }
     // lib.optionalAttrs config.features.torrent.enable {
       "x-scheme-handler/magnet" = torrent;
