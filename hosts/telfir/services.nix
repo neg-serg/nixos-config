@@ -21,6 +21,7 @@ in
       # Host-specific feature toggles
       features.dev.ai.antigravity.enable = true;
       features.apps.winapps.enable = true;
+      features.gui.hy3.enable = true;
       # Roles enabled for this host
       roles = {
         workstation.enable = true;
