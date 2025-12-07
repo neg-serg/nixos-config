@@ -7,8 +7,9 @@ import importlib.util
 # Lazy.nvim install in the user home.
 
 NIX_KSB = os.environ.get("KITTY_KSB_NIX_PATH", "")
+APPNAME = os.environ.get("NVIM_APPNAME", "nvim")
 LAZY_KSB = os.path.expanduser(
-    "~/.local/share/nvim/lazy/kitty-scrollback.nvim/python/kitty_scrollback_nvim.py"
+    f"~/.local/share/{APPNAME}/lazy/kitty-scrollback.nvim/python/kitty_scrollback_nvim.py"
 )
 
 

@@ -8,6 +8,10 @@
 in
   # Live-editable config and tiny init for kitty-scrollback.nvim kitten
   lib.mkMerge [
+    (xdg.mkXdgSource "nvf" {
+      source = filesRoot + "/nvim";
+      recursive = true;
+    })
     (xdg.mkXdgSource "nvim" {
       source = filesRoot + "/nvim";
       recursive = true;

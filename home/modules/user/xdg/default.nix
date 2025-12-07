@@ -11,6 +11,11 @@ with rec {
     bin = db.bin or "${lib.getExe' pkgs.xdg-utils "xdg-open"}";
     desktop = db.desktop or "floorp.desktop";
   };
+  nvfPackage = config.programs.nvf.finalPackage or null;
+  editorCmd =
+    if (config.programs.nvf.enable or false) && nvfPackage != null
+    then lib.getExe' nvfPackage "nvim"
+    else lib.getExe' pkgs.neovim "nvim";
   defaultApplications = {
     terminal = {
       cmd = "${lib.getExe' pkgs.kitty "kitty"}";
@@ -23,7 +28,7 @@ with rec {
       desktop = lib.removeSuffix ".desktop" browserRec.desktop;
     };
     editor = {
-      cmd = "${lib.getExe' pkgs.neovim "nvim"}";
+      cmd = "${editorCmd}";
       desktop = "nvim";
     };
   };
