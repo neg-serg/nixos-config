@@ -78,7 +78,8 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
 - `~/.local/bin/rofi` wrapper enforces consistent flags, auto-select, and theme lookup in XDG paths;
   disable auto-select per call with `-no-auto-select`.
 - Quickshell keyboard layout indicator listens to Hyprland `keyboard-layout` events, prefers the
-  `main: true` device, shows the current submap next to the layout (e.g., `en/spec`), and uses
+  `main: true` device, shows the current submap first in accent color with a keyboard glyph (e.g.,
+  `special ⌨ en`), and uses
   `hyprctl switchxkblayout current next` on click.
 - Floorp customizations keep the nav bar on top and strip telemetry/Activity Stream noise by
   default; toggle advanced tweaks in `modules/user/web/floorp.nix` if needed.
