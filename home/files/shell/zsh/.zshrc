@@ -30,6 +30,10 @@ done
 if [[ -r "${ZDOTDIR}/06-aliae.zsh" ]]; then
   zsh-defer source "${ZDOTDIR}/06-aliae.zsh"
 fi
+# Last-resort alias fixes
+if [[ -r "${ZDOTDIR}/99-fix-aliases.zsh" ]]; then
+  zsh-defer source "${ZDOTDIR}/99-fix-aliases.zsh"
+fi
 command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
 command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 [[ $NEOVIM_TERMINAL ]] && source "${ZDOTDIR}/08-neovim-cd.zsh"
