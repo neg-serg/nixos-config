@@ -10,14 +10,16 @@ CenteredCapsuleRow {
 
     property string deviceMatch: ""
 
-    property bool showKeyboardIcon: true
+    // Use text glyph inside the label instead of a separate inline icon
+    property bool showKeyboardIcon: false
     property bool showLayoutLabel: true
     property bool iconSquare: false
 
     property string layoutText: "??"
     // Hyprland submap (e.g., "spec") — surface current keyboard mode together with layout
     readonly property string submapName: Services.HyprlandWatcher.currentSubmap || ""
-    readonly property string labelComposite: submapName.length ? (kb.layoutText + "/" + submapName) : kb.layoutText
+    readonly property string submapBadge: submapName.length ? submapName : ""
+    readonly property string labelComposite: kb._richLabel()
     property string deviceName: ""
     // Normalized device selector for pinned device (if any)
     property string deviceNeedle: ""
@@ -66,6 +68,7 @@ CenteredCapsuleRow {
     iconAutoTune: true
     iconSpacing: kb.showLayoutLabel ? kb.activeIconSpacing : Theme.uiSpacingNone
     labelVisible: kb.showLayoutLabel
+    labelIsRichText: true
     labelText: kb.labelComposite
     labelColor: Theme.textPrimary
     labelFontFamily: Theme.fontFamily
@@ -272,6 +275,18 @@ CenteredCapsuleRow {
         if (/\bru\b/i.test(s))
             return "ru";
         return s.split(/\s+/)[0].toUpperCase().slice(0, 3);
+    }
+
+    function _esc(s) {
+        return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function _richLabel() {
+        const sub = kb.submapBadge.trim();
+        const accent = Theme.accentHover || Theme.textPrimary;
+        const layout = kb.layoutText || "??";
+        if (sub.length === 0)
+            return _esc(layout);
+        return "<font color=\"" + accent + "\">" + _esc(sub) + "</font> \u2328 " + _esc(layout);
     }
 
     function applyDeviceSnapshot(devs) {
