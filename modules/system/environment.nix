@@ -56,7 +56,7 @@
         + ":$HOME/.${format}";
     in {
       # Encourage Wayland backends where supported
-      QT_QPA_PLATFORM = "wayland";
+      QT_QPA_PLATFORM = "wayland;xcb";
       SDL_VIDEODRIVER = "wayland";
       ASPELL_CONF = ''
         per-conf $XDG_CONFIG_HOME/aspell/aspell.conf;

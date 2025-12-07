@@ -67,7 +67,7 @@ in
         env = QT_AUTO_SCREEN_SCALE_FACTOR,1
         env = QT_ENABLE_HIGHDPI_SCALING,1
         env = XCURSOR_SIZE,32
-        env = GDK_BACKEND,wayland,x11
+        env = GDK_BACKEND,wayland
         env = QT_QPA_PLATFORM,wayland;xcb
         env = SDL_VIDEODRIVER,wayland
         env = CLUTTER_BACKEND,wayland
