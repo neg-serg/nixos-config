@@ -72,6 +72,15 @@ with rec {
       # --- Misc ---
       "x-scheme-handler/tg" = telegram;
 
+      # --- Archives ---
+      "application/zip" = editor;
+      "application/x-tar" = editor;
+      "application/gzip" = editor;
+      "application/x-bzip2" = editor;
+      "application/x-7z-compressed" = editor;
+      "application/x-rar" = editor;
+      "application/x-xz" = editor;
+
       # --- Editing (Text/Code/Config) ---
       "text/plain" = editor;
       "text/markdown" = editor;
@@ -79,6 +88,8 @@ with rec {
       "text/x-readme" = editor;
       "text/x-log" = editor;
       "text/x-tex" = editor;
+      "text/x-diff" = editor;
+      "text/x-patch" = editor;
 
       # Config & Data
       "application/json" = editor;
@@ -90,12 +101,16 @@ with rec {
       "text/xml" = editor;
       "text/x-ini" = editor;
       "text/x-config" = editor;
+      "text/csv" = editor;
+      "text/x-csv" = editor;
 
       # Programming Languages
       "text/x-c" = editor;
       "text/x-c++" = editor;
       "text/x-python" = editor;
       "application/x-python" = editor;
+      "text/x-php" = editor;
+      "application/x-php" = editor;
       "text/x-rust" = editor;
       "text/rust" = editor;
       "text/x-go" = editor;
@@ -107,10 +122,13 @@ with rec {
       "text/x-perl" = editor;
       "text/x-ruby" = editor;
       "text/x-makefile" = editor;
+      "text/x-dockerfile" = editor;
       "text/x-cmake" = editor;
       "text/css" = editor;
       "application/javascript" = editor;
       "application/typescript" = editor;
+      "text/x-sql" = editor;
+      "application/sql" = editor;
     }
     // lib.optionalAttrs config.features.torrent.enable {
       "x-scheme-handler/magnet" = torrent;
