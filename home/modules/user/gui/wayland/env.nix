@@ -16,7 +16,6 @@ with lib;
       XDG_SESSION_TYPE = "wayland";
 
       # Toolkit-specific hints
-      QT_QPA_PLATFORMTHEME = "qt6ct";
       MOZ_ENABLE_WAYLAND = "1";
       ELECTRON_OZONE_PLATFORM_HINT = "auto";
     };

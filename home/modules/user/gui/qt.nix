@@ -9,7 +9,7 @@ in {
   config = lib.mkIf qtEnabled {
     qt = {
       enable = true;
-      platformTheme.name = "qtct";
+      platformTheme.name = "qt6ct";
       style.name = "kvantum";
     };
 
