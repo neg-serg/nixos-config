@@ -115,7 +115,7 @@
       flakeLib = import ./flake/lib.nix {inherit inputs nixpkgs;};
     }; let
       # Supported systems for generic flake outputs
-      supportedSystems = ["x86_64-linux" "aarch64-linux"];
+      supportedSystems = ["x86_64-linux"];
 
       # Per-system outputs factory
       perSystem = import ./flake/per-system.nix {
