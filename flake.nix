@@ -155,7 +155,6 @@
         stylixInput = inputs.stylix;
         sopsNixInput = inputs."sops-nix";
       };
-      inherit (hmHelpers) hmBaseModules;
       mkHMArgs = import ./flake/home/mkHMArgs.nix {
         inherit lib inputs;
         perSystem = hmPerSystem;
@@ -167,14 +166,6 @@
           builtins.mapAttrs (_: input: input // {type = "derivation";}) {
           };
       };
-
-      hmHomeConfigurations = {
-        neg = inputs.home-manager.lib.homeManagerConfiguration {
-          inherit (hmPerSystem.${hmDefaultSystem}) pkgs;
-          extraSpecialArgs = mkHMArgs hmDefaultSystem;
-          modules = hmBaseModules {};
-        };
-      };
     in {
       # Per-system outputs: packages, formatter, checks, devShells, apps
       packages = lib.genAttrs supportedSystems (s: (perSystem s).packages);
@@ -185,6 +176,12 @@
 
       # NixOS configurations (linuxSystem only)
       nixosConfigurations = import ./flake/nixos.nix {inherit inputs nixpkgs;};
-      homeConfigurations = hmHomeConfigurations;
+
+      # Home Manager configurations (linuxSystem only)
+      homeConfigurations = import ./flake/home-configurations.nix {
+        inherit inputs lib mkHMArgs hmHelpers;
+        pkgs = hmPerSystem.${linuxSystem}.pkgs;
+        system = linuxSystem;
+      };
     };
 }

@@ -29,6 +29,9 @@ cpu-masks:
 
 # --- Repo-wide workflows (original Home Manager justfile) ------------------------
 
+hm-neg:
+    home-manager switch --flake .#neg
+
 fmt:
     repo_root="$(git rev-parse --show-toplevel)"; \
     cd "$repo_root" && nix fmt
@@ -118,17 +121,6 @@ lint-md *ARGS:
     else \
       echo 'No Markdown files found'; \
     fi
-
-hm-neg:
-    home-manager switch --flake .#neg
-
-hm-lite:
-    @echo "hm-lite target is deprecated; use hm-neg" >&2
-    @exit 1
-
-hm-build:
-    # Build activation package without switching
-    home-manager build --flake .#neg
 
 docs:
     # Generate docs packages (OPTIONS.md, features-options.{md,json})
