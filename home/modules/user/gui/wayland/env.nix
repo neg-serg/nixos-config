@@ -5,6 +5,19 @@
 }:
 with lib;
   mkIf config.features.gui.enable {
-    # Reserved for Wayland-specific session variables if needed
-    home.sessionVariables = {};
+    home.sessionVariables = {
+      # Wayland-first backends with sensible fallbacks
+      GDK_BACKEND = "wayland";
+      QT_QPA_PLATFORM = "wayland;xcb";
+      SDL_VIDEODRIVER = "wayland";
+      CLUTTER_BACKEND = "wayland";
+      XDG_CURRENT_DESKTOP = "Hyprland";
+      XDG_SESSION_DESKTOP = "Hyprland";
+      XDG_SESSION_TYPE = "wayland";
+
+      # Toolkit-specific hints
+      QT_QPA_PLATFORMTHEME = "qt6ct";
+      MOZ_ENABLE_WAYLAND = "1";
+      ELECTRON_OZONE_PLATFORM_HINT = "auto";
+    };
   }
