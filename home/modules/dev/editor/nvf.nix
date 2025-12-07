@@ -10,27 +10,51 @@ in
     programs.nvf = {
       enable = true;
       defaultEditor = true;
-      settings.vim = {
-        lazy.enable = false;
-        startPlugins = [
-          pkgs.vimPlugins.lazy-nvim # lazy.nvim plugin manager shipped from Nix
-        ];
-        # Override nvf defaults: keep absolute numbering off to match user config.
-        options = {
-          number = false;
-          relativenumber = false;
-        };
-        extraPackages = [
-          pkgs.ripgrep # project-wide search backend
-          pkgs.fd # fast file finder used by pickers
-        ];
-        additionalRuntimePaths = [
-          "$HOME/.config/nvf"
-        ];
-        luaConfigRC = {
-          userInit = ''
-            dofile(vim.fn.stdpath("config") .. "/init.lua")
-          '';
+      settings = lib.mkForce {
+        vim = {
+          package = pkgs.neovim-unwrapped;
+          viAlias = true;
+          vimAlias = true;
+          lazy.enable = false;
+          startPlugins = [
+            pkgs.vimPlugins.lazy-nvim # lazy.nvim plugin manager shipped from Nix
+          ];
+          optPlugins = [];
+          extraPlugins = {};
+          pluginOverrides = {};
+          # Keep environment tooling available for your config
+          extraPackages = [
+            pkgs.ripgrep # project-wide search backend
+            pkgs.fd # fast file finder used by pickers
+          ];
+          # Avoid any nvf defaults bleeding in
+          globals = {};
+          options = {
+            number = false;
+            relativenumber = false;
+          };
+          keymaps = [];
+          pluginRC = {};
+          luaConfigPre = "";
+          luaConfigRC = {
+            userInit = ''
+              dofile(vim.fn.stdpath("config") .. "/init.lua")
+            '';
+          };
+          luaConfigPost = "";
+          additionalRuntimePaths = [
+            "$HOME/.config/nvf"
+          ];
+          extraLuaFiles = [];
+          withRuby = true;
+          withNodeJs = false;
+          luaPackages = [];
+          withPython3 = true;
+          python3Packages = [];
+          readme = {
+            enabled = false;
+            files = [];
+          };
         };
       };
     };
