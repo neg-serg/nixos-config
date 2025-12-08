@@ -64,8 +64,8 @@ in {
           doCheck = false;
         });
         FreeSimpleGUI = import (packagesRoot + "/freesimplegui") {
-          inherit (prev) lib;
-          inherit (python-prev) buildPythonPackage fetchPypi setuptools wheel tkinter;
+          inherit (prev) lib fetchPypi;
+          inherit (python-prev) buildPythonPackage setuptools wheel tkinter;
         };
       })
     ];

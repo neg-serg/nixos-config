@@ -21,6 +21,7 @@
     pkgs.opensoundmeter # FFT/RT60 analysis for calibration
     pkgs.sonic-visualiser # annotate spectra/sonograms
     pkgs.roomeqwizard # REW acoustic measurement suite
+    pkgs.neg.rtcqs # real-time audio latency checklist (rtirq/CPU settings)
     # tagging
     pkgs.id3v2 # low-level ID3 tag editor
     pkgs.picard # MusicBrainz tagging GUI
