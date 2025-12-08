@@ -69,5 +69,8 @@ in {
     daemonIOSchedClass = "idle";
     daemonIOSchedPriority = 7;
   };
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config = {
+    allowUnfree = true;
+    rocmSupport = true; # enable ROCm GPU stack (needed for ollama-rocm and AMD tooling)
+  };
 }
