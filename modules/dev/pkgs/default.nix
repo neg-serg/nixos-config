@@ -8,6 +8,9 @@
     lib.optionals (pkgs ? fourmolu) [pkgs.fourmolu]
     ++ lib.optionals (pkgs ? hindent) [pkgs.hindent];
   optionalIaCTools = lib.optionals (pkgs ? aiac) [pkgs.aiac];
+  optionalRustDebugAdapters = lib.optionals (pkgs ? codelldb) [
+    pkgs.codelldb # LLDB-based debug adapter for Rust (DAP)
+  ];
 in {
   environment.systemPackages = lib.unique (
     [
@@ -68,7 +71,6 @@ in {
 
       # Rust toolchain
       pkgs.rustup # manage Rust channels/components
-      pkgs.codelldb # LLDB-based debug adapter for Rust (DAP)
       pkgs.graphviz # dot backend for rustaceanvim crateGraph
 
       # C/C++ companions
@@ -87,5 +89,6 @@ in {
     ]
     ++ optionalHaskellTools
     ++ optionalIaCTools
+    ++ optionalRustDebugAdapters
   );
 }
