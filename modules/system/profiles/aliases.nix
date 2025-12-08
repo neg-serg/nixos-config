@@ -9,6 +9,7 @@
   mkAdguardRewrites = lib.mkAliasOptionModule ["profiles" "services" "adguardhome" "rewrites"] ["servicesProfiles" "adguardhome" "rewrites"];
   services = [
     "adguardhome"
+    "duckdns"
     "bitcoind"
     "unbound"
     "openssh"
