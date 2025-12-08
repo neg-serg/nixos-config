@@ -8,6 +8,8 @@
   grafanaEnabled = config.services.grafana.enable or false;
   hasResilioSecret = builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml");
   wireguardSopsFile = inputs.self + "/secrets/telfir-wireguard-wg-quick.sops";
+  duckdnsEnvSecret = inputs.self + "/secrets/duckdns.env.sops";
+  hasDuckdnsSecret = builtins.pathExists duckdnsEnvSecret;
 in
   lib.mkMerge [
     {
@@ -175,6 +177,15 @@ in
         bitcoind = {
           enable = false;
           dataDir = "/zero/bitcoin-node";
+        };
+        duckdns = lib.mkIf hasDuckdnsSecret {
+          enable = true;
+          domain = "${config.networking.hostName}.duckdns.org";
+          environmentFile = config.sops.secrets."duckdns/env".path;
+          ipv6 = {
+            enable = false;
+            device = "net1";
+          };
         };
       };
 
@@ -505,6 +516,14 @@ in
 
       # Disable runtime logrotate check (build-time check remains). Avoids false negatives
       # when rotating files under non-standard paths or missing until first run.
+
+      # DuckDNS token (EnvironmentFile with DUCKDNS_TOKEN)
+      sops.secrets."duckdns/env" = lib.mkIf hasDuckdnsSecret {
+        sopsFile = duckdnsEnvSecret;
+        format = "dotenv";
+        owner = "root";
+        mode = "0400";
+      };
 
       # Resilio Sync: Web UI auth via SOPS, data under /zero/sync
       sops.secrets."resilio/http-login" = lib.mkIf false {
