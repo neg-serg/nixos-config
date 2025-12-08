@@ -24,6 +24,8 @@ in {
     richcolors = callPkg (packagesRoot + "/richcolors") {};
     hxtools = callPkg (packagesRoot + "/hxtools") {};
     tewi = callPkg (packagesRoot + "/tewi") {};
+    two_percent = callPkg (packagesRoot + "/two_percent") {};
+    "two-percent" = two_percent;
 
     antigravity = callPkg (packagesRoot + "/antigravity") {};
 
