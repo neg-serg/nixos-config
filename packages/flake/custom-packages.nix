@@ -4,6 +4,8 @@
   hxtools = pkgs.neg.hxtools;
   transmission-exporter = pkgs.neg.transmission_exporter;
   ls-iommu = pkgs.neg.ls_iommu;
+  nemu = pkgs.neg.nemu;
+  _nemu = pkgs.neg.nemu;
   beatprints = pkgs.neg.beatprints;
   rtcqs = pkgs.neg.rtcqs;
   tewi = pkgs.neg.tewi;
