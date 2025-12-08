@@ -22,6 +22,8 @@ in {
     cxxmatrix = callPkg (packagesRoot + "/cxxmatrix") {};
     comma = callPkg (packagesRoot + "/comma") {};
     richcolors = callPkg (packagesRoot + "/richcolors") {};
+    ls_iommu = callPkg (packagesRoot + "/ls-iommu") {};
+    "ls-iommu" = ls_iommu;
     transmission_exporter = callPkg (packagesRoot + "/transmission-exporter") {};
     "transmission-exporter" = transmission_exporter;
     hxtools = callPkg (packagesRoot + "/hxtools") {};
