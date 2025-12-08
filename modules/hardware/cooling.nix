@@ -123,7 +123,7 @@ in {
       serviceConfig = {
         Type = "oneshot";
         ExecStart = let
-          script = pkgs.writeShellScript "fancontrol-setup" (builtins.readFile (inputs.self + "/scripts/fancontrol-setup.sh"));
+          script = pkgs.writeShellScript "fancontrol-setup" (builtins.readFile (inputs.self + "/scripts/hw/fancontrol-setup.sh"));
         in "${script}";
         Environment =
           [
@@ -172,7 +172,7 @@ in {
       source = let
         txt =
           builtins.replaceStrings ["@GPU_ENABLE@"] [(lib.boolToString (cfg.gpuFancontrol.enable or false))]
-          (builtins.readFile (inputs.self + "/scripts/fancontrol-reapply.sh"));
+          (builtins.readFile (inputs.self + "/scripts/hw/fancontrol-reapply.sh"));
       in
         pkgs.writeShellScript "fancontrol-reapply" txt; # shell helper to reapply fan curves
       mode = "0755";

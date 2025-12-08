@@ -73,4 +73,4 @@ All remaining MCP clients listed above start up with the default configuration g
 `modules/dev/mcp.nix` and do not require additional manual wiring when `config.features.dev.enable`
 is true.
 
-_Russian translation: see `docs/mcp-clients.ru.md`._
+_Russian translation: see `./mcp-clients.ru.md`._

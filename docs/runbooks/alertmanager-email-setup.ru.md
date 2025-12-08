@@ -39,7 +39,7 @@
 
    - Отправить тестовый алерт через API Alertmanager: curl -XPOST -H 'Content-Type:
      application/json' \
-     http://127.0.0.1:9093/api/v2/alerts -d '\[{\\n "labels": {"alertname": "TestEmail", "severity":
+     127.0.0.1:9093/api/v2/alerts -d '\[{\\n "labels": {"alertname": "TestEmail", "severity":
      "critical"},\\n "annotations": {"summary": "Test email", "description": "Manual test"}\\n }\]'
    - Убедитесь, что письмо пришло на `serg.zorg@gmail.com`.
 

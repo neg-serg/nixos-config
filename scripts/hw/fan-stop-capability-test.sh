@@ -7,7 +7,7 @@
 # - Restores the original pwmN/pwmN_enable values
 #
 # Usage:
-#   sudo scripts/fan-stop-capability-test.sh [--include-cpu] [--device <hwmon-path|name>] \
+#   sudo scripts/hw/fan-stop-capability-test.sh [--include-cpu] [--device <hwmon-path|name>] \
 #       [--wait <sec>] [--threshold <rpm>] [--list]
 #
 # Options:

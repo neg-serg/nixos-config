@@ -4,10 +4,10 @@ set shell := ["bash", "-cu"]
 
 # --- System-level docs/utilities -------------------------------------------------
 
-# Generate aggregated options docs into docs/*.md
+# Generate aggregated options docs into docs/howto/*.md
 gen-options:
     repo_root="$(git rev-parse --show-toplevel)"; \
-    cd "$repo_root" && scripts/gen-options.sh
+    cd "$repo_root" && scripts/dev/gen-options.sh
 
 # Generate and commit options docs if there are changes
 gen-options-commit:
@@ -25,7 +25,7 @@ gen-options-commit:
 # Detect V-Cache CPU set and print recommended kernel masks
 cpu-masks:
     repo_root="$(git rev-parse --show-toplevel)"; \
-    cd "$repo_root" && scripts/cpu-recommend-masks.sh
+    cd "$repo_root" && scripts/hw/cpu-recommend-masks.sh
 
 # --- Repo-wide workflows (original Home Manager justfile) ------------------------
 
@@ -126,11 +126,11 @@ docs:
 docs-modules:
     # Generate modules documentation (opt-in)
     nix build .#docs-modules -o .result-docs
-    mkdir -p docs
-    cp -f .result-docs/modules.md docs/modules.md
+    mkdir -p docs/howto
+    cp -f .result-docs/modules.md docs/howto/modules.md
     rm -f .result-docs
-    chmod +w docs/modules.md
-    echo "Generated docs/modules.md"
+    chmod +w docs/howto/modules.md
+    echo "Generated docs/howto/modules.md"
 
 hooks-enable:
     git config core.hooksPath .githooks

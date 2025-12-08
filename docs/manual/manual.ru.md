@@ -8,7 +8,8 @@
 
 ## Структура дерева
 
-- `modules/`, `packages/`, `docs/`, `hosts/` — системные модули, оверлеи и документация.
+- `modules/`, `packages/`, `docs/`, `hosts/` — системные модули, оверлеи и документация
+  (`docs/manual`, `docs/howto`, `docs/runbooks`).
 - `home/` — модули Home Manager (не отдельный flake), переиспользуются корневым флейком.
 - `templates/` — заготовки проектов (Rust crane, Python CLI, shell app).
 - `docs/manual/manual.*.md` — канонические руководства.
@@ -61,7 +62,7 @@
 ### Секреты (sops-nix / vaultix)
 
 - Секреты лежат в `secrets/` и подключаются через sops-nix; гайд по переходу на vaultix:
-  `docs/vaultix-migration.ru.md`.
+  `docs/runbooks/vaultix-migration.ru.md`.
 - Age-ключи: `~/.config/sops/age/keys.txt`.
 - Токен Cachix находится в `secrets/cachix.env` (sops).
 
@@ -252,13 +253,13 @@ in {
 
 ## Мониторинг DNS‑резолвера
 
-- Unbound + Prometheus + Grafana для оценивания качества DNS (задержки, DNSSEC‑валидация, кэш‑хиты):
-  см. `docs/unbound-metrics.ru.md`.
+- Unbound + Prometheus + Grafana для оценивания качества DNS (задержки, DNSSEC‑валидация,
+  кэш‑хиты): см. `docs/runbooks/unbound-metrics.ru.md`.
 
 ## Grafana: egress и жёсткое ограничение (TODO)
 
 - Возможные источники внешнего трафика и политика его блокировки/разрешения: см.
-  `docs/grafana-egress-todo.ru.md`.
+  `docs/runbooks/grafana-egress-todo.ru.md`.
 
 ## Политика «тихой» оценки (Evaluation Noise Policy)
 

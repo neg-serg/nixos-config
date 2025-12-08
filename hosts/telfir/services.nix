@@ -248,7 +248,7 @@ in
         pkgs.docker-compose
         pkgs.openrgb # per-device RGB controller UI
         pkgs.nextcloud-client # Nextcloud desktop sync client
-        (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile (inputs.self + "/scripts/cpu-boost.sh"))) # CLI toggle for AMD Precision Boost
+        (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile (inputs.self + "/scripts/hw/cpu-boost.sh"))) # CLI toggle for AMD Precision Boost
       ];
       environment.etc = {
         "avahi/services/smb.service".text = ''

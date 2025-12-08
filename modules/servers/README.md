@@ -47,7 +47,7 @@ Examples and ports
     - Logging: `verbosity` (default 1), and toggles `logQueries`, `logReplies`, `logLocalActions`,
       `logServfail` (all default false)
   - Monitoring: Prometheus exporter + Grafana dashboard for DNS latency, DNSSEC validation and cache
-    hits — see `docs/unbound-metrics.md`.
+    hits — see `docs/runbooks/unbound-metrics.md`.
 
 ## DNS Healthcheck
 

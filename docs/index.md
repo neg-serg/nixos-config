@@ -1,13 +1,8 @@
 # Documentation
 
-- Repository manual (EN): [manual/manual.en.md](./manual/manual.en.md)
-- Repository manual (RU): [manual/manual.ru.md](./manual/manual.ru.md)
-- /nix dedup benchmark (EN/RU): [nix-dedup-vdo.en.md](./nix-dedup-vdo.en.md),
-  [nix-dedup-vdo.ru.md](./nix-dedup-vdo.ru.md)
-- Swayimg hotkeys (EN/RU): [swayimg-hotkeys.md](./swayimg-hotkeys.md),
-  [swayimg-hotkeys.ru.md](./swayimg-hotkeys.ru.md)
-- Vaultix migration guide: [vaultix-migration.md](./vaultix-migration.md),
-  [vaultix-migration.ru.md](./vaultix-migration.ru.md)
+- Manuals (canonical workflows, both langs): [manual/manual.en.md](./manual/manual.en.md), [manual/manual.ru.md](./manual/manual.ru.md)
+- How-tos and reference (focused guides, pinning notes, hotkeys): [howto/index.md](./howto/index.md)
+- Runbooks and scripts (operational steps, credentials, maintenance helpers): [runbooks/index.md](./runbooks/index.md)
 
 ## Options Docs
 
@@ -17,4 +12,4 @@ These docs are generated locally and are not tracked in git. Generate them with:
 
 Index of generated option documentation artifacts:
 
-- [options-md](./options.md)
+- [modules.md](./howto/modules.md)
