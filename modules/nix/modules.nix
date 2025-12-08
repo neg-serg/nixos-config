@@ -8,6 +8,7 @@
     ./mpv-openvr.nix
     ./hyprland.nix
     ./home-overlay.nix
+    ./nix-ld.nix
     ./settings.nix
   ];
 }
