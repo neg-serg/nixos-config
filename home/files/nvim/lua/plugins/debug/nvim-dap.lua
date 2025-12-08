@@ -57,6 +57,62 @@ return {'mfussenegger/nvim-dap', -- neovim debugger protocol support
             },
         }
         require("nvim-dap-virtual-text").setup()
+        -- Rust adapters: prefer codelldb, fallback to lldb-dap
+        if vim.fn.executable('codelldb') == 1 then
+            dap.adapters.codelldb = function(on_adapter)
+                local tcp = vim.loop.new_tcp()
+                tcp:bind('127.0.0.1', 0)
+                local host, port = tcp:getsockname()
+                tcp:shutdown()
+                tcp:close()
+                local handle
+                local pid_or_err
+                handle, pid_or_err = vim.loop.spawn('codelldb', {
+                    args = { '--port', tostring(port) },
+                    detached = true,
+                }, function(code)
+                    handle:close()
+                    if code ~= 0 then
+                        vim.schedule(function()
+                            vim.notify('codelldb exited with code ' .. code, vim.log.levels.WARN)
+                        end)
+                    end
+                end)
+                if not handle then
+                    vim.notify('Error running codelldb: ' .. tostring(pid_or_err), vim.log.levels.ERROR)
+                    return
+                end
+                vim.defer_fn(function()
+                    on_adapter({
+                        type = 'server',
+                        host = host,
+                        port = port,
+                    })
+                end, 100)
+            end
+        elseif vim.fn.executable('lldb-dap') == 1 then
+            dap.adapters.lldb = {
+                type = 'executable',
+                command = 'lldb-dap',
+                name = 'lldb',
+            }
+        end
+        -- Provide a basic Rust config if none is loaded yet.
+        if not dap.configurations.rust or #dap.configurations.rust == 0 then
+            local adapter = dap.adapters.codelldb and 'codelldb' or 'lldb'
+            dap.configurations.rust = {
+                {
+                    name = 'Debug executable (rustaceanvim fallback)',
+                    type = adapter,
+                    request = 'launch',
+                    program = function()
+                        return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+                    end,
+                    cwd = '${workspaceFolder}',
+                    stopOnEntry = false,
+                },
+            }
+        end
         -- vim: fdm=marker
     end,
     event={'BufNewFile','BufRead'}}
