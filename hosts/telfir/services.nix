@@ -259,6 +259,7 @@ in
         pkgs.docker-compose
         pkgs.openrgb # per-device RGB controller UI
         pkgs.nextcloud-client # Nextcloud desktop sync client
+        pkgs.neg.tewi # TUI torrent client (Transmission/qBittorrent/Deluge)
         (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile (inputs.self + "/scripts/hw/cpu-boost.sh"))) # CLI toggle for AMD Precision Boost
       ];
       environment.etc = {
