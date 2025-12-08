@@ -2,15 +2,16 @@
   lib,
   python3,
   fetchFromGitHub,
+  fetchurl,
 }: let
   geoip2fast = python3.pkgs.buildPythonPackage rec {
     pname = "geoip2fast";
     version = "1.2.2";
     pyproject = true;
 
-    src = python3.pkgs.fetchPypi {
-      inherit pname version;
-      hash = "sha256-OIFXAM7f6xl9UbS4czsNT3lls23hUUfBJVJxJPi0XWs=";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/g/geoip2fast/geoip2fast-${version}.tar.gz";
+      hash = "sha256-0fjw/NqJhSRXsq2WpzZ2NV+Kcnb6+OiN0uxh9rTt6Hg=";
     };
 
     build-system = [python3.pkgs.setuptools];
