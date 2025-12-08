@@ -38,6 +38,7 @@
             "antigravity-fhs"
             "google-chrome"
             "hiddify-app"
+            "richcolors"
             "steam-unwrapped"
             "steam"
             "steam-run"
