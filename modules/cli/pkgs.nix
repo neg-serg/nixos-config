@@ -107,6 +107,7 @@ in {
       pkgs.restic # deduplicating backup CLI
       pkgs.rhash # hash sums calculator
       pkgs.ripgrep # better grep
+      pkgs.neg.two_percent # skim fork optimized as a faster fuzzy finder alternative
       pkgs.rlwrap # readline wrapper for everything
       pkgs.rmlint # remove duplicates
       pkgs.sad # simpler sed alternative
