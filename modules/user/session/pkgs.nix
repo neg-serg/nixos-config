@@ -71,6 +71,7 @@ in {
       pkgs.ydotool # uinput automation helper (autoclicker, etc.)
       pkgs.espanso # text expander daemon
       pkgs.matugen # wallpaper-driven palette/matcap generator
+      pkgs.matugen-themes # template pack for Matugen output files
       pkgs.playerctl # MPRIS media controller for bindings
       pkgs.mpc # MPD CLI helper for local scripts
       pkgs.hyprcursor # modern cursor theme format for Hyprland
