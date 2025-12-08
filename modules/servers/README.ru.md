@@ -47,7 +47,7 @@
     - Логи: `verbosity` (по умолчанию 1), флаги `logQueries`, `logReplies`, `logLocalActions`,
       `logServfail` (по умолчанию false)
   - Мониторинг: Prometheus‑экспортер + дашборд Grafana для задержек DNS, валидации DNSSEC и
-    кэш‑хитов — см. `docs/unbound-metrics.ru.md`.
+    кэш‑хитов — см. `docs/runbooks/unbound-metrics.ru.md`.
 
 ## Проверка DNS
 

@@ -48,7 +48,7 @@ For NixOS, the default value for this option includes at least this argument:
 
 *Declared by:*
 
-- [\<nixpkgs/lib/modules.nix>](https://github.com/NixOS/nixpkgs/blob//lib/modules.nix)
+- [\<nixpkgs/lib/modules.nix>](https://github.com/NixOS/nixpkgs/blob/nixos-unstable/lib/modules.nix)
 
 ## features.allowUnfree.allowed
 
