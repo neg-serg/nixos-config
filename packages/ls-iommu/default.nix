@@ -1,6 +1,8 @@
 {
   lib,
   buildGoModule,
+  makeWrapper,
+  hwdata,
   fetchFromGitHub,
 }:
 buildGoModule rec {
@@ -18,6 +20,8 @@ buildGoModule rec {
 
   subPackages = ["cmd"];
 
+  nativeBuildInputs = [makeWrapper];
+
   ldflags = [
     "-s"
     "-w"
@@ -26,6 +30,9 @@ buildGoModule rec {
 
   postInstall = ''
     mv "$out/bin/cmd" "$out/bin/${pname}"
+    wrapProgram "$out/bin/${pname}" \
+      --set PCIDB_PATH ${hwdata}/share/hwdata/pci.ids \
+      --set GHW_PCIDB_PATH ${hwdata}/share/hwdata/pci.ids
   '';
 
   meta = with lib; {
