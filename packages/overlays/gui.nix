@@ -90,5 +90,8 @@ in {
 
   matugen-themes = callPkg (inputs.self + "/packages/matugen-themes") {};
 
+  oldschool-pc-font-pack = callPkg (inputs.self + "/packages/oldschool-pc-font-pack") {};
+  px437-ibm-conv-e = callPkg (inputs.self + "/packages/px437-ibm-conv-e") {};
+
   pyprland = inputs.pyprland.packages.${prev.stdenv.hostPlatform.system}.pyprland;
 }
