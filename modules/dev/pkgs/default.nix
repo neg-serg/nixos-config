@@ -68,6 +68,8 @@ in {
 
       # Rust toolchain
       pkgs.rustup # manage Rust channels/components
+      pkgs.codelldb # LLDB-based debug adapter for Rust (DAP)
+      pkgs.graphviz # dot backend for rustaceanvim crateGraph
 
       # C/C++ companions
       pkgs.clang # LLVM compiler
