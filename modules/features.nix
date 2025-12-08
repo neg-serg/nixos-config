@@ -39,7 +39,10 @@ with lib; let
     mail.enable = true;
     hack.enable = true;
     fun.enable = true;
-    torrent.enable = true;
+    torrent = {
+      enable = true;
+      prometheus.enable = false;
+    };
     apps = {
       obsidian.autostart.enable = false;
       winapps.enable = false;
@@ -243,6 +246,8 @@ in {
     # Torrent stack (Transmission and related tools/services)
     torrent = {
       enable = mkBool "enable Torrent stack (Transmission, tools, services)" true;
+      prometheus.enable =
+        mkBool "enable Prometheus exporter for Transmission (transmission-exporter)" false;
     };
 
     text = {
