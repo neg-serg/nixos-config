@@ -11,7 +11,7 @@ if [[ -z "${root_dir}" ]]; then
 fi
 
 flake_path="$root_dir"
-docs_dir="$root_dir/docs"
+docs_dir="$root_dir/docs/howto"
 mkdir -p "$docs_dir"
 
 if [[ ! -f "$root_dir/flake.nix" ]]; then
@@ -60,14 +60,14 @@ if [[ ${#attrs[@]} -eq 0 ]]; then
     echo "# Options Docs"
     echo
     echo "- [options-md](./options.md)"
-  } > "$docs_dir/index.md"
-  echo "Wrote fallback $docs_dir/index.md and options.md" >&2
+  } > "$docs_dir/options-index.md"
+  echo "Wrote fallback $docs_dir/options-index.md and options.md" >&2
   exit 0
 fi
 
 for attr in "${attrs[@]}"; do
   case "$attr" in
-    options-index-md) out="index.md" ;;
+    options-index-md) out="options-index.md" ;;
     options-md) out="options.md" ;;
     *) out="${attr%-md}.md" ;;
   esac

@@ -38,7 +38,7 @@ exists, emails will not be sent.
 1. Test delivery (optional)
 
    - Trigger a test alert via Alertmanager API: curl -XPOST -H 'Content-Type: application/json' \
-     http://127.0.0.1:9093/api/v2/alerts -d '\[{ "labels": {"alertname": "TestEmail", "severity":
+     127.0.0.1:9093/api/v2/alerts -d '\[{ "labels": {"alertname": "TestEmail", "severity":
      "critical"}, "annotations": {"summary": "Test email", "description": "Manual test"} }\]'
    - Confirm receipt at `serg.zorg@gmail.com`.
 

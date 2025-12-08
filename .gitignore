@@ -9,5 +9,6 @@ result-man
 .tmp_build.log
 docs/options.md
 docs/options-all.md
+docs/howto/options*.md
 .direnv/
 .pre-commit-config.yaml

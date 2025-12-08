@@ -8,7 +8,8 @@ every workflow points to the same manual.
 
 ## Working Tree Layout
 
-- `modules/`, `packages/`, `docs/`, `hosts/`, … — system configuration and documentation.
+- `modules/`, `packages/`, `docs/`, `hosts/`, … — system configuration and documentation
+  (`docs/manual`, `docs/howto`, `docs/runbooks`).
 - `home/` — legacy Home Manager modules (not a standalone flake); reused by the root flake.
 - `templates/` — developer scaffolding (Rust crane, Python CLI, shell app).
 - `docs/manual/manual.*.md` — canonical guides (this file).
@@ -60,7 +61,7 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
 ### Secrets (sops-nix / vaultix)
 
 - Secrets live under `secrets/` and are wired via sops-nix; vaultix migration docs now live in
-  `docs/vaultix-migration.{md,ru.md}`.
+  `docs/runbooks/vaultix-migration.{md,ru.md}`.
 - Age keys should reside in `~/.config/sops/age/keys.txt`.
 - Cachix token is tracked via `secrets/cachix.env` (sops file).
 
@@ -714,8 +715,8 @@ Tuning tips:
 
 ## DNS Resolver Monitoring
 
-- Unbound + Prometheus + Grafana dashboard for DNS quality (latency, DNSSEC validation, cache hits):
-  see `docs/unbound-metrics.md`.
+- Unbound + Prometheus + Grafana dashboard for DNS quality (latency, DNSSEC validation, cache
+  hits): see `docs/runbooks/unbound-metrics.md`.
 
 ______________________________________________________________________
 

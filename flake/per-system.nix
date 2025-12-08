@@ -85,7 +85,7 @@ in {
     lint-md-lang = pkgs.runCommand "lint-md-lang" {nativeBuildInputs = with pkgs; [bash coreutils findutils gnugrep gitMinimal];} ''
       set -euo pipefail
       cd ${self}
-      bash scripts/check-markdown-language.sh
+      bash scripts/dev/check-markdown-language.sh
       : > "$out"
     '';
     tests-caddy = pkgs.testers.runNixOSTest (import ../tests/caddy.nix);
@@ -104,7 +104,7 @@ in {
       runtimeInputs = with pkgs; [git jq nix];
       text = ''
         set -euo pipefail
-        exec "${self}/scripts/gen-options.sh" "$@"
+        exec "${self}/scripts/dev/gen-options.sh" "$@"
       '';
     };
     fmtApp = pkgs.writeShellApplication {

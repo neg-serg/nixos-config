@@ -1,14 +1,8 @@
 # Документация
 
-- Основное руководство (RU): [manual/manual.ru.md](./manual/manual.ru.md)
-- English manual: [manual/manual.en.md](./manual/manual.en.md)
-- Бенчмарк дедупликации /nix (RU/EN): [nix-dedup-vdo.ru.md](./nix-dedup-vdo.ru.md),
-  [nix-dedup-vdo.en.md](./nix-dedup-vdo.en.md)
-- Горячие клавиши Swayimg: [swayimg-hotkeys.ru.md](./swayimg-hotkeys.ru.md),
-  [swayimg-hotkeys.md](./swayimg-hotkeys.md)
-- Гайд по миграции на Vaultix: [vaultix-migration.ru.md](./vaultix-migration.ru.md),
-  [vaultix-migration.md](./vaultix-migration.md)
-- DeepFaceLab_Linux через Docker: [deepfacelab-docker.ru.md](./deepfacelab-docker.ru.md)
+- Руководства (каноничные сценарии, EN/RU): [manual/manual.ru.md](./manual/manual.ru.md), [manual/manual.en.md](./manual/manual.en.md)
+- How-to и справка (точечные гайды, пины, хоткеи): [howto/index.ru.md](./howto/index.ru.md)
+- Runbook'и и скрипты (операции, секреты, обслуживающие шаги): [runbooks/index.ru.md](./runbooks/index.ru.md)
 
 ## Документация опций
 
@@ -20,4 +14,4 @@
 
 Индекс сгенерированных артефактов:
 
-- [options-md](./options.md)
+- [modules.md](./howto/modules.md)
