@@ -2,6 +2,7 @@
   antigravity = pkgs.neg.antigravity;
   richcolors = pkgs.neg.richcolors;
   hxtools = pkgs.neg.hxtools;
+  transmission-exporter = pkgs.neg.transmission_exporter;
   tewi = pkgs.neg.tewi;
   two_percent = pkgs.neg.two_percent;
 
