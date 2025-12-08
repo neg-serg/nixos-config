@@ -24,6 +24,10 @@ buildGoModule rec {
     "-X github.com/HikariKnight/ls-iommu/internal/version.Version=${version}"
   ];
 
+  postInstall = ''
+    mv "$out/bin/cmd" "$out/bin/${pname}"
+  '';
+
   meta = with lib; {
     description = "List devices and their IOMMU groups";
     homepage = "https://github.com/HikariKnight/ls-iommu";
