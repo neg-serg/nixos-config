@@ -22,6 +22,8 @@ in {
     cxxmatrix = callPkg (packagesRoot + "/cxxmatrix") {};
     comma = callPkg (packagesRoot + "/comma") {};
     richcolors = callPkg (packagesRoot + "/richcolors") {};
+    transmission_exporter = callPkg (packagesRoot + "/transmission-exporter") {};
+    "transmission-exporter" = transmission_exporter;
     hxtools = callPkg (packagesRoot + "/hxtools") {};
     tewi = callPkg (packagesRoot + "/tewi") {};
     two_percent = callPkg (packagesRoot + "/two_percent") {};
