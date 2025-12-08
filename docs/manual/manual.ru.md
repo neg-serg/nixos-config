@@ -107,6 +107,21 @@
 - Такой подход позволяет изолировать VPN только для сессии пользователя, не меняя глобальный
   routing/DNS для всего хоста и не требуя root‑прав для включения/выключения туннеля.
 
+### Sing-box Reality TUN (хост)
+
+- Секрет: `/run/user/1000/secrets/vless-reality-singbox-tun.json`, разворачивается Home Manager из
+  `secrets/home/vless/reality-singbox-tun.json.sops`.
+- Юнит: `systemctl start sing-box-tun` / `systemctl stop sing-box-tun` (ручной запуск). Policy routing
+  внутри юнита: `pref 100` — трафик к 204.152.223.171 по main; `pref 200` + `table 200` — остальной
+  трафик `default dev sb0`; DNS через `resolvectl dns sb0 1.1.1.1 1.0.0.1` и `resolvectl domain sb0 "~."`.
+- Требования: установленный `sing-box` в `environment.systemPackages`, секрет должен быть доступен,
+  нужны root/CAP_NET_ADMIN (запуск через systemd).
+- Проверки: `ip rule`, `ip route show table 200` (должен быть `default dev sb0`),
+  `curl --interface sb0 https://ifconfig.me`, `ping -I sb0 8.8.8.8`.
+- Xray tun из nixpkgs без jsonv5/tun удалён — используем только sing-box.
+- Если нужен автозапуск, добавьте `wantedBy = ["multi-user.target"]` и при необходимости сохраните
+  и восстановите прежний default route в `ExecStartPre`/`ExecStopPost` юнита.
+
 ### Hyprland и GUI
 
 - Автоперезагрузка Hyprland отключена; перезапускайте хоткеем.

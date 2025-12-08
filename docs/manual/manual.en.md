@@ -71,6 +71,22 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
 - Manage services via `systemctl --user start|stop|status <unit>`, logs via
   `journalctl --user -u <unit>`.
 
+### Sing-box Reality TUN (host)
+
+- Secret lives at `/run/user/1000/secrets/vless-reality-singbox-tun.json`, rendered by Home Manager
+  from `secrets/home/vless/reality-singbox-tun.json.sops`.
+- Service: `systemctl start sing-box-tun` / `systemctl stop sing-box-tun` (manual). Policy routing in
+  the unit: `pref 100` sends traffic to 204.152.223.171 via `main`; `pref 200` + `table 200` route
+  everything else to `default dev sb0`; DNS via `resolvectl dns sb0 1.1.1.1 1.0.0.1` and
+  `resolvectl domain sb0 "~."`.
+- Requirements: `sing-box` present in `environment.systemPackages`, secret available, needs
+  root/CAP_NET_ADMIN (systemd handles capabilities).
+- Checks: `ip rule`, `ip route show table 200` (expect `default dev sb0`),
+  `curl --interface sb0 https://ifconfig.me`, `ping -I sb0 8.8.8.8`.
+- Xray tun in nixpkgs lacks jsonv5/tun support and was dropped; use sing-box only.
+- For autostart, add `wantedBy = ["multi-user.target"]` and optionally save/restore the previous
+  default route in the unit’s `ExecStartPre`/`ExecStopPost`.
+
 ### Hyprland & GUI Notes
 
 - Hyprland autoreload stays off; reload manually via the keybinding.
