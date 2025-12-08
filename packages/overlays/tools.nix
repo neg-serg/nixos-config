@@ -22,6 +22,7 @@ in {
     cxxmatrix = callPkg (packagesRoot + "/cxxmatrix") {};
     comma = callPkg (packagesRoot + "/comma") {};
     richcolors = callPkg (packagesRoot + "/richcolors") {};
+    tewi = callPkg (packagesRoot + "/tewi") {};
 
     antigravity = callPkg (packagesRoot + "/antigravity") {};
 
