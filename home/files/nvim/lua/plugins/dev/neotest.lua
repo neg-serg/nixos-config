@@ -1,17 +1,22 @@
 -- ┌───────────────────────────────────────────────────────────────────────────────────┐
--- │ █▓▒░ mrcjkb/rustaceanvim                                                          │
+-- │ █▓▒░ nvim-neotest/neotest                                                         │
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {
-  'mrcjkb/rustaceanvim',
-  version = '^6',
-  ft = { 'rust' },
-  init = function()
-    vim.g.rustaceanvim = {
-      tools = {
-        test_executor = 'neotest',
-        code_actions = { ui_select_fallback = true },
+  'nvim-neotest/neotest',
+  dependencies = {
+    'nvim-lua/plenary.nvim',
+    'antoinemadec/FixCursorHold.nvim',
+    'nvim-treesitter/nvim-treesitter',
+    'mrcjkb/rustaceanvim',
+  },
+  event = { 'BufReadPost', 'BufNewFile' },
+  config = function()
+    local ok, neotest = pcall(require, 'neotest')
+    if not ok then return end
+    neotest.setup({
+      adapters = {
+        require('rustaceanvim.neotest'),
       },
-      dap = { autoload_configurations = true },
-    }
+    })
   end,
 }
