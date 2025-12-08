@@ -21,6 +21,7 @@
     ./irqbalance.nix
     ./zram.nix
     ./pkgs.nix
+    ./guix.nix
     ./systemd
     ./users.nix
     ./virt.nix
