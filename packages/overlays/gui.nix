@@ -88,5 +88,7 @@ in {
 
   flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") {};
 
+  matugen-themes = callPkg (inputs.self + "/packages/matugen-themes") {};
+
   pyprland = inputs.pyprland.packages.${prev.stdenv.hostPlatform.system}.pyprland;
 }
