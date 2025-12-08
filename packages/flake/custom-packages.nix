@@ -3,6 +3,7 @@
   richcolors = pkgs.neg.richcolors;
   hxtools = pkgs.neg.hxtools;
   tewi = pkgs.neg.tewi;
+  two_percent = pkgs.neg.two_percent;
 
   mcp-server-filesystem = pkgs.neg.mcp_server_filesystem;
   mcp-ripgrep = pkgs.neg.mcp_ripgrep;
