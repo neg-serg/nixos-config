@@ -11,7 +11,7 @@
 
     src = fetchurl {
       url = "https://files.pythonhosted.org/packages/source/g/geoip2fast/geoip2fast-${version}.tar.gz";
-      hash = "sha256-0fjw/NqJhSRXsq2WpzZ2NV+Kcnb6+OiN0uxh9rTt6Hg=";
+      hash = "sha256-OIFXAM7f6xl9UbS4czsNT3lls23hUUfBJVJxJPi0XWs=";
     };
 
     build-system = [python3.pkgs.setuptools];
