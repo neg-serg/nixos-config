@@ -1,7 +1,12 @@
 # pyright: reportMissingImports=false
 from datetime import datetime
 from kitty.boss import get_boss
-from kitty.fast_data_types import Screen, add_timer, get_options
+from kitty.fast_data_types import (
+    Screen,
+    add_timer,
+    current_focused_os_window_id,
+    get_options,
+)
 from kitty.utils import color_as_int
 from kitty.tab_bar import (
     DrawData,
@@ -23,6 +28,10 @@ SEPARATOR_SYMBOL, SOFT_SEPARATOR_SYMBOL = ("", "")
 RIGHT_MARGIN = 1
 REFRESH_TIME = 1
 ICON = ""
+UNFOCUSED_ACTIVE_TITLE_TEMPLATE = (
+    "   {index}:{f'{title[:6]}…{title[-6:]}' if len(title) > 25 else title}"
+    "{' []' if layout_name == 'stack' else ''} "
+)
 
 
 def _draw_icon(screen: Screen, index: int) -> int:
@@ -87,6 +96,18 @@ timer_id = None
 right_status_length = -1
 
 
+def _is_active_in_inactive_window(draw_data: DrawData, tab: TabBarData) -> bool:
+    if not tab.is_active:
+        return False
+    try:
+        focused_id = current_focused_os_window_id()
+    except Exception:
+        return False
+    if not focused_id:
+        return False
+    return draw_data.os_window_id != focused_id
+
+
 def draw_tab(
     draw_data: DrawData,
     screen: Screen,
@@ -101,13 +122,23 @@ def draw_tab(
     global right_status_length
     if timer_id is None:
         timer_id = add_timer(_redraw_tab_bar, REFRESH_TIME, True)
+    draw_data_for_tab = draw_data
+    if _is_active_in_inactive_window(draw_data, tab):
+        draw_data_for_tab = draw_data_for_tab._replace(
+            title_template=UNFOCUSED_ACTIVE_TITLE_TEMPLATE,
+            active_title_template=None,
+        )
+        screen.cursor.bold = False
+        screen.cursor.italic = False
+        screen.cursor.fg = as_rgb(color_as_int(draw_data.active_fg))
+        screen.cursor.bg = as_rgb(color_as_int(draw_data.active_bg))
     clock = datetime.now().strftime(" %H:%M")
     date = datetime.now().strftime(" %d.%m.%Y")
     right_status_length = RIGHT_MARGIN
 
     _draw_icon(screen, index)
     _draw_left_status(
-        draw_data,
+        draw_data_for_tab,
         screen,
         tab,
         before,
