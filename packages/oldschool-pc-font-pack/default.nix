@@ -1,16 +1,17 @@
 {
   lib,
   stdenvNoCC,
-  unzip,
-  inputs,
+  fetchzip,
 }:
 stdenvNoCC.mkDerivation rec {
   pname = "oldschool-pc-font-pack";
   version = "2.2";
 
-  src = inputs.self + "/fonts/oldschool_pc_font_pack_v2.2_linux.zip";
-
-  nativeBuildInputs = [unzip];
+  src = fetchzip {
+    url = "https://int10h.org/oldschool-pc-fonts/download/oldschool_pc_font_pack_v2.2_linux.zip";
+    hash = "sha256-0nfpld0in6a3fsmq5d8i35587j0k3387slg7igfx46lkr7nc63dk";
+    stripRoot = false;
+  };
 
   dontUnpack = true;
   dontConfigure = true;
@@ -18,9 +19,6 @@ stdenvNoCC.mkDerivation rec {
 
   installPhase = ''
     runHook preInstall
-    workdir="$(mktemp -d)"
-    unzip -qq "$src" -d "$workdir"
-
     fontRoot="$out/share/fonts"
     mkdir -p "$fontRoot/truetype" "$fontRoot/opentype"
 
@@ -32,12 +30,12 @@ stdenvNoCC.mkDerivation rec {
         *) continue ;;
       esac
       install -Dm644 "$file" "$dest"
-    done < <(find "$workdir" -type f)
+    done < <(find "$src" -type f)
 
     docDir="$out/share/doc/${pname}"
-    install -Dm644 "$workdir/LICENSE.TXT" "$docDir/LICENSE.TXT"
-    install -Dm644 "$workdir/docs/documentation.pdf" "$docDir/documentation.pdf"
-    install -Dm644 "$workdir/docs/font_list.pdf" "$docDir/font_list.pdf"
+    install -Dm644 "$src/LICENSE.TXT" "$docDir/LICENSE.TXT"
+    install -Dm644 "$src/docs/documentation.pdf" "$docDir/documentation.pdf"
+    install -Dm644 "$src/docs/font_list.pdf" "$docDir/font_list.pdf"
     runHook postInstall
   '';
 
