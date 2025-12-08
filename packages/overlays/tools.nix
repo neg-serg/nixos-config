@@ -31,6 +31,8 @@ in {
     "two-percent" = two_percent;
 
     antigravity = callPkg (packagesRoot + "/antigravity") {};
+    nemu = callPkg (packagesRoot + "/nemu") {};
+    _nemu = nemu;
 
     mcp_server_filesystem = callPkg (packagesRoot + "/mcp/server-filesystem") {};
     "mcp-server-filesystem" = mcp_server_filesystem;

@@ -11,6 +11,7 @@ in {
   imports = [
     ./virt/pkgs.nix
     ./virt/macos-vm.nix
+    ./virt/nemu.nix
   ];
 
   config = lib.mkIf (!cfg.enable) {
