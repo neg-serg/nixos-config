@@ -12,11 +12,15 @@ stdenvNoCC.mkDerivation rec {
 
   nativeBuildInputs = [unzip];
 
+  dontUnpack = true;
   dontConfigure = true;
   dontBuild = true;
 
   installPhase = ''
     runHook preInstall
+    workdir="$(mktemp -d)"
+    unzip -qq "$src" -d "$workdir"
+
     fontRoot="$out/share/fonts"
     mkdir -p "$fontRoot/truetype" "$fontRoot/opentype"
 
@@ -28,12 +32,12 @@ stdenvNoCC.mkDerivation rec {
         *) continue ;;
       esac
       install -Dm644 "$file" "$dest"
-    done < <(find . -type f)
+    done < <(find "$workdir" -type f)
 
     docDir="$out/share/doc/${pname}"
-    install -Dm644 LICENSE.TXT "$docDir/LICENSE.TXT"
-    install -Dm644 docs/documentation.pdf "$docDir/documentation.pdf"
-    install -Dm644 docs/font_list.pdf "$docDir/font_list.pdf"
+    install -Dm644 "$workdir/LICENSE.TXT" "$docDir/LICENSE.TXT"
+    install -Dm644 "$workdir/docs/documentation.pdf" "$docDir/documentation.pdf"
+    install -Dm644 "$workdir/docs/font_list.pdf" "$docDir/font_list.pdf"
     runHook postInstall
   '';
 
