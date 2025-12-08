@@ -21,6 +21,7 @@ in {
     "bt-migrate" = bt_migrate;
     cxxmatrix = callPkg (packagesRoot + "/cxxmatrix") {};
     comma = callPkg (packagesRoot + "/comma") {};
+    richcolors = callPkg (packagesRoot + "/richcolors") {};
 
     antigravity = callPkg (packagesRoot + "/antigravity") {};
 
