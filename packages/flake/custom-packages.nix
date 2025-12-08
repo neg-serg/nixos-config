@@ -1,6 +1,7 @@
 {pkgs, ...}: {
   antigravity = pkgs.neg.antigravity;
   richcolors = pkgs.neg.richcolors;
+  hxtools = pkgs.neg.hxtools;
   tewi = pkgs.neg.tewi;
 
   mcp-server-filesystem = pkgs.neg.mcp_server_filesystem;
