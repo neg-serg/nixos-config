@@ -13,6 +13,7 @@ in {
       pkgs.git-crypt # git-based encryption
       pkgs.git-extras # git extra commands
       pkgs.git-filter-repo # quickly rewrite git history
+      pkgs.bfg-repo-cleaner # BFG: fast Git history cleaner
       pkgs.git-lfs # git extension for large files
       pkgs.git-annex # manage large/partial content with git
       pkgs.git # my favorite DVCS
