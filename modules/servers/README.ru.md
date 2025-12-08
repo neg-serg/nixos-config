@@ -48,6 +48,10 @@
       `logServfail` (по умолчанию false)
   - Мониторинг: Prometheus‑экспортер + дашборд Grafana для задержек DNS, валидации DNSSEC и
     кэш‑хитов — см. `docs/runbooks/unbound-metrics.ru.md`.
+- duckdns: `profiles.services.duckdns.enable = true;`
+  - Укажите `servicesProfiles.duckdns.domain` и путь до EnvironmentFile с `DUCKDNS_TOKEN`
+    (желательно через sops-nix). IPv6 (`servicesProfiles.duckdns.ipv6.enable`) и ACME
+    (`servicesProfiles.duckdns.certs.enable`) опциональны и реализованы модулем Nyx.
 
 ## Проверка DNS
 

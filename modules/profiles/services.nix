@@ -187,6 +187,53 @@ in {
         };
       };
     };
+    duckdns = {
+      enable = opts.mkEnableOption "DuckDNS dynamic DNS updater (Nyx module).";
+      domain = opts.mkStrOpt {
+        default = "";
+        description = "Full DuckDNS domain to update (e.g., example.duckdns.org).";
+      };
+      environmentFile = opts.mkStrOpt {
+        default = "";
+        description = "Path to EnvironmentFile providing DUCKDNS_TOKEN for updates.";
+        notes = "Prefer a sops-nix secret rendered as a dotenv file.";
+        example = "/run/secrets/duckdns.env";
+      };
+      ipv6 = {
+        enable = opts.mkBoolOpt {
+          default = false;
+          description = "Also publish an IPv6 address to DuckDNS.";
+        };
+        device = opts.mkStrOpt {
+          default = "eth0";
+          description = "Network interface used to read the global IPv6 address when ipv6.enable = true.";
+        };
+      };
+      onCalendar = opts.mkStrOpt {
+        default = "*:0/5";
+        description = "systemd.timer schedule controlling update frequency.";
+        notes = "Syntax follows systemd.time(7). Default: every 5 minutes.";
+      };
+      certs = {
+        enable = opts.mkBoolOpt {
+          default = false;
+          description = "Issue a certificate for the DuckDNS domain via ACME/lego.";
+          notes = "Uses the duckdns DNS-01 provider by default unless useHttpServer = true.";
+        };
+        useHttpServer = opts.mkBoolOpt {
+          default = false;
+          description = "Use lego's built-in HTTP server instead of DuckDNS DNS-01 verification.";
+        };
+        group = opts.mkStrOpt {
+          default = "acme";
+          description = "Group that owns the generated cert artifacts (PFX bundle).";
+        };
+        httpPort = opts.mkIntOpt {
+          default = 80;
+          description = "Port served by lego when useHttpServer = true (must be reachable for HTTP-01).";
+        };
+      };
+    };
     openssh.enable = opts.mkEnableOption "OpenSSH (and mosh) profile.";
     mpd.enable = opts.mkEnableOption "MPD (Music Player Daemon) profile.";
     avahi.enable = opts.mkEnableOption "Avahi (mDNS) profile.";
