@@ -20,6 +20,7 @@ in {
   in {
     inherit blissify_rs;
     # Media-related tools
+    beatprints = callPkg (packagesRoot + "/beatprints") {};
     rtcqs = callPkg (packagesRoot + "/rtcqs") {python3Packages = python313;};
     mkvcleaner = callPkg (packagesRoot + "/mkvcleaner") {};
     rmpc = callPkg (packagesRoot + "/rmpc") {};
