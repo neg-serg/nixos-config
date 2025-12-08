@@ -9,5 +9,6 @@
     ./samba
     ./bitcoind
     ./seafile
+    ./duckdns
   ];
 }
