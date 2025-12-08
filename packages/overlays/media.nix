@@ -20,6 +20,7 @@ in {
   in {
     inherit blissify_rs;
     # Media-related tools
+    rtcqs = callPkg (packagesRoot + "/rtcqs") {python3Packages = python313;};
     mkvcleaner = callPkg (packagesRoot + "/mkvcleaner") {};
     rmpc = callPkg (packagesRoot + "/rmpc") {};
     cantata = callPkg (packagesRoot + "/cantata") {inherit (prev) qt6Packages;};
@@ -62,6 +63,10 @@ in {
         imageio = python-prev.imageio.overridePythonAttrs (_old: {
           doCheck = false;
         });
+        FreeSimpleGUI = import (packagesRoot + "/freesimplegui") {
+          inherit (prev) lib;
+          inherit (python-prev) buildPythonPackage fetchPypi setuptools wheel tkinter;
+        };
       })
     ];
 }
