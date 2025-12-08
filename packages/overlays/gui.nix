@@ -9,6 +9,7 @@ inputs: _: prev: let
   in
     prev.callPackage path (autoArgs // extraArgs);
   hydralauncherPkg = callPkg (inputs.self + "/packages/hydralauncher") {};
+  nyarchAssistantPkg = callPkg (inputs.self + "/packages/nyarch-assistant") {};
 in {
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
     postPatch =
@@ -89,6 +90,8 @@ in {
 
   hydralauncher = hydralauncherPkg;
   _hydra = hydralauncherPkg;
+  "nyarch-assistant" = nyarchAssistantPkg;
+  "_nyarch-assistant" = nyarchAssistantPkg;
 
   flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") {};
 
