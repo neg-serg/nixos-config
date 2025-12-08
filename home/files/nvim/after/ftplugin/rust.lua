@@ -21,4 +21,32 @@ map('<leader>rS', function()
   if query == nil then return end
   vim.cmd.RustLsp({ 'workspaceSymbol', 'allSymbols', query, bang = true })
 end, 'Rust workspace symbol (with deps)')
+map('<leader>rg', function() vim.cmd.RustLsp('crateGraph') end, 'Rust crate graph')
+map('<leader>rv', function()
+  local view = vim.fn.input('view hir/mir: ')
+  if view == nil or view == '' then return end
+  vim.cmd.RustLsp({ 'view', view })
+end, 'Rust view HIR/MIR')
+map('<leader>ru', function()
+  local kind = vim.fn.input('rustc unpretty (hir/mir/...): ')
+  if kind == nil or kind == '' then return end
+  vim.cmd.Rustc({ 'unpretty', kind })
+end, 'Rustc unpretty')
+map('<leader>rp', function() vim.cmd.RustLsp('rebuildProcMacros') end, 'Rust rebuild proc macros')
+map('<leader>rM', function() vim.cmd.RustLsp('parentModule') end, 'Rust parent module')
+map('<leader>rH', function() vim.cmd.RustLsp({ 'hover', 'range' }) end, 'Rust hover range')
+map('<leader>rA', function()
+  local cfg = vim.fn.input('rust-analyzer config (Lua table): ')
+  if cfg == nil or cfg == '' then return end
+  vim.cmd.RustAnalyzer({ 'config', cfg })
+end, 'RustAnalyzer config')
+map('<leader>rT', function()
+  local tgt = vim.fn.input('rust-analyzer target (empty = default): ')
+  if tgt == nil then return end
+  if tgt == '' then
+    vim.cmd.RustAnalyzer('target')
+  else
+    vim.cmd.RustAnalyzer({ 'target', tgt })
+  end
+end, 'RustAnalyzer target')
 map('K', function() vim.cmd.RustLsp({ 'hover', 'actions' }) end, 'Rust hover actions')
