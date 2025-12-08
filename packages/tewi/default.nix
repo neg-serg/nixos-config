@@ -2,7 +2,6 @@
   lib,
   python3,
   fetchFromGitHub,
-  pythonRelaxDepsHook,
 }: let
   geoip2fast = python3.pkgs.buildPythonPackage rec {
     pname = "geoip2fast";
@@ -41,7 +40,7 @@ in
 
     build-system = [python3.pkgs.setuptools];
 
-    nativeBuildInputs = [pythonRelaxDepsHook];
+    nativeBuildInputs = [python3.pkgs.pythonRelaxDepsHook];
 
     dependencies = with python3.pkgs; [
       textual
