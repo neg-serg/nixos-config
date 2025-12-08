@@ -9,6 +9,7 @@
     ./handlr.nix
     ./rofi.nix
     ./wayland.nix
+    ./discord.nix
     ./quickshell.nix
     ./walker.nix
     ./swayosd
