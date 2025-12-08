@@ -5,5 +5,6 @@
     pkgs.hunspellDicts.ru_RU # Russian dictionary for hunspell
     pkgs.hyphen # hyphenation patterns for office suites
     pkgs.nuspell # modern spellchecker replacing aspell/hunspell
+    pkgs.enchant # glue/CLI to probe spellchecker providers (hunspell/nuspell backends)
   ];
 }
