@@ -34,6 +34,7 @@
     pkgs.scour # SVG minifier to shrink UI assets
     pkgs.pastel # extract palettes / simulate colorblindness
     pkgs.neg.richcolors # render palette image from hex code file
+    pkgs.neg.beatprints # generate Spotify posters with lyrics/themes
     pkgs.lutgen # procedurally render LUTs for stylizing
     pkgs.qrencode # generate QR codes for wallpaper/text overlays
     pkgs.zbar # CLI barcode/QR scanner for verification
