@@ -27,6 +27,7 @@ in {
       XDG_RUNTIME_DIR = "/run/user/$UID";
 
       CARGO_HOME = "${config.xdg.dataHome}/cargo";
+      ENCHANT_CONFIG_DIR = "${config.xdg.configHome}/enchant";
       RUSTUP_HOME = "${config.xdg.dataHome}/rustup";
       CCACHE_CONFIGPATH = "${config.xdg.configHome}/ccache.config";
       CCACHE_DIR = "${config.xdg.cacheHome}/ccache";
@@ -82,4 +83,10 @@ in {
       ln -sfn "$HOME/.local/state/nix/profiles/profile" "$HOME/.nix-profile"
     '';
   };
+
+  xdg.configFile."enchant/enchant.ordering".text = ''
+    default:nuspell,hunspell
+    en_US:nuspell,hunspell
+    ru_RU:nuspell,hunspell
+  '';
 }
