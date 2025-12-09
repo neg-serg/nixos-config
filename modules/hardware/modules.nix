@@ -11,5 +11,6 @@
     ./gpu-corectrl.nix
     ./pkgs.nix
     ./uinput.nix
+    ./amdgpu.nix
   ];
 }
