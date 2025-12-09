@@ -13,13 +13,9 @@ if len(sys.argv) <= 1:
     sys.exit(1)
 
 # Debug logging
-try:
-    with open("/tmp/game_run_debug.log", "a") as f:
-        f.write(f"Args: {sys.argv}\n")
-        f.write(f"Env SSL: {os.environ.get('SSL_CERT_FILE')}\n")
-        f.write(f"Pin: {os.environ.get('GAME_PIN_CPUSET')}\n")
-except Exception:
-    pass
+print(f"DEBUG_GAME_RUN Args: {sys.argv}", file=sys.stderr)
+print(f"DEBUG_GAME_RUN Env SSL: {os.environ.get('SSL_CERT_FILE')}", file=sys.stderr)
+print(f"DEBUG_GAME_RUN Pin: {os.environ.get('GAME_PIN_CPUSET')}", file=sys.stderr)
 
 cmd = [
     "systemd-run",
