@@ -100,5 +100,7 @@ in {
   oldschool-pc-font-pack = callPkg (inputs.self + "/packages/oldschool-pc-font-pack") {};
   px437-ibm-conv-e = callPkg (inputs.self + "/packages/px437-ibm-conv-e") {};
 
+  windows95 = callPkg (inputs.self + "/packages/windows95") {};
+
   pyprland = inputs.pyprland.packages.${prev.stdenv.hostPlatform.system}.pyprland;
 }
