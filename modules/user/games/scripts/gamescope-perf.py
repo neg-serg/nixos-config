@@ -127,7 +127,19 @@ if "Soulstone" in cmd_str_check or "2066020" in cmd_str_check:
     os.environ["GAME_RUN_USE_GAMEMODE"] = "0"
     # Force X11 backend to avoid Wayland hangs with Unity
     os.environ["SDL_VIDEODRIVER"] = "x11"
-    cmd = [H["GAME_RUN"]] + args
+    # Disable Mangohud to prevent overlay deadlocks
+    os.environ["MANGOHUD"] = "0"
+
+    # Inject arguments to force windowed mode (prevents fullscreen hangs)
+    forced_args = [
+        "-screen-fullscreen",
+        "0",
+        "-screen-width",
+        "1280",
+        "-screen-height",
+        "720",
+    ]
+    cmd = [H["GAME_RUN"]] + forced_args + args
 else:
     cmd = [H["GAME_RUN"], H["GAMESCOPE"]] + flags + ["--"] + args
 
