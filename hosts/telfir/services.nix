@@ -22,6 +22,8 @@ in
       };
       # Host-specific feature toggles
       features.dev.ai.antigravity.enable = true;
+      features.text.tex.enable = true;
+      features.dev.tla.enable = true;
       features.apps.winapps.enable = true;
       features.gui.hy3.enable = true;
       features.dev.openxr = {

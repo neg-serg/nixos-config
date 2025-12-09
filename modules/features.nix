@@ -147,6 +147,7 @@ in {
         core = mkBool "enable core Python development packages" true;
         tools = mkBool "enable Python tooling (LSP, utilities)" true;
       };
+      tla.enable = mkBool "enable TLA+ tooling (toolbox, formatter)" false;
       unreal = {
         enable = mkBool "enable Unreal Engine 5 tooling" false;
         root = mkOption {
@@ -255,6 +256,7 @@ in {
       read.enable = mkBool "enable reading stack (CLI/GUI viewers, OCR, Recoll)" true;
       manipulate.enable = mkBool "enable text/markup manipulation CLI tools (jq/yq/htmlq)" true;
       notes.enable = mkBool "enable notes tooling (zk CLI)" true;
+      tex.enable = mkBool "enable TeX/LaTeX stack (TexLive full, rubber)" false;
     };
 
     # Fun/extras (e.g., curated art assets) that are nice-to-have
