@@ -25,7 +25,7 @@ in {
   };
 
   config = lib.mkIf (cfg.enable or false) {
-    environment.systemPackages = [pkgs.corectrl];
+    environment.systemPackages = [pkgs.corectrl]; # GUI for AMD/Intel GPU oveclocking and fan control
 
     # Polkit rule to allow the helper for selected group
     environment.etc."polkit-1/rules.d/60-corectrl.rules".text = ''
