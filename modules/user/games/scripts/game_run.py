@@ -13,9 +13,16 @@ if len(sys.argv) <= 1:
     sys.exit(1)
 
 # Debug logging
+# Debug logging
 print(f"DEBUG_GAME_RUN Args: {sys.argv}", file=sys.stderr)
-print(f"DEBUG_GAME_RUN Env SSL: {os.environ.get('SSL_CERT_FILE')}", file=sys.stderr)
-print(f"DEBUG_GAME_RUN Pin: {os.environ.get('GAME_PIN_CPUSET')}", file=sys.stderr)
+print(
+    f"DEBUG_GAME_RUN Env SSL: {os.environ.get('SSL_CERT_FILE')}",
+    file=sys.stderr,
+)
+print(
+    f"DEBUG_GAME_RUN Pin: {os.environ.get('GAME_PIN_CPUSET')}",
+    file=sys.stderr,
+)
 
 cmd = [
     "systemd-run",
