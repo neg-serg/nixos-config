@@ -116,5 +116,13 @@ if len(sys.argv) == 1:
 else:
     args = sys.argv[1:]
 
-cmd = [H["GAME_RUN"], H["GAMESCOPE"]] + flags + ["--"] + args
+
+# Exclude broken games from gamescope
+cmd_str_check = " ".join(args)
+# Soulstone Survivors (2066020) hangs with gamescope
+if "Soulstone" in cmd_str_check or "2066020" in cmd_str_check:
+    cmd = [H["GAME_RUN"]] + args
+else:
+    cmd = [H["GAME_RUN"], H["GAMESCOPE"]] + flags + ["--"] + args
+
 raise SystemExit(subprocess.call(cmd))
