@@ -56,8 +56,18 @@ in
     }
     # Core config files from repo
     (lib.mkMerge (map mkHyprSource coreFiles))
-    (mkHyprSource "init.conf")
-    (mkHyprSource "bindings.conf")
+    (mkHyprSource
+      (
+        if hy3Enabled
+        then "init.conf"
+        else "init.nohy3.conf"
+      ))
+    (mkHyprSource
+      (
+        if hy3Enabled
+        then "bindings.conf"
+        else "bindings.nohy3.conf"
+      ))
     (lib.mkMerge [
       (xdg.mkXdgText "hypr/hyprland.conf" ''
 
