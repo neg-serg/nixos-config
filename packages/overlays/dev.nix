@@ -132,4 +132,13 @@ _inputs: _final: prev: {
         find $out -name run.py -exec sed -i "s/NO_FILES = '(no files to check)'/NO_FILES = '(no files to check) '/" {} +
       '';
   });
+
+  pythonPackagesExtensions =
+    (prev.pythonPackagesExtensions or [])
+    ++ [
+      (python-final: _python-prev: {
+        neopyter = python-final.callPackage ../neopyter {};
+        FreeSimpleGUI = python-final.callPackage ../python/freesimplegui {};
+      })
+    ];
 }
