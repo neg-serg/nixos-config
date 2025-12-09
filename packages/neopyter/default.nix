@@ -2,7 +2,6 @@
   lib,
   buildPythonPackage,
   fetchPypi,
-  hatchling,
   aiohttp,
   jupyter-server,
   pygount,
@@ -11,14 +10,15 @@
 buildPythonPackage rec {
   pname = "neopyter";
   version = "0.3.2";
-  format = "pyproject";
+  format = "wheel";
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-w5gOSKdRc163UPFmrf/SGtkKRU5C2KOGb6aR6RT0FiM=";
+    format = "wheel";
+    dist = "py3";
+    python = "py3";
+    hash = "sha256-W4MZCQxqogBD5hONNlrcnrlT4DyUgiIjHhSiVJ+MNKs=";
   };
-
-  nativeBuildInputs = [hatchling];
 
   propagatedBuildInputs = [
     aiohttp
