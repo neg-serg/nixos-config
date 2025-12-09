@@ -18,6 +18,8 @@
     pkgs.pcem # IBM PC emulator
     pkgs.pcsx2 # PS2 emulator
     retroarchPkg # RetroArch frontend (full build when available)
+    pkgs.retroarch-assets # standard assets (fonts, icons, etc.)
+    pkgs.retroarch-joypad-autoconfig # controller profiles
   ];
 in {
   config = lib.mkMerge [
