@@ -17,5 +17,17 @@
 in {
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter packages;
+
+    services.monado = {
+      enable = cfg.runtime.service.enable or false;
+      defaultRuntime = true;
+    };
+
+    environment.variables = {
+      # Enable SteamVR Lighthouse driver for Valve Index
+      STEAMVR_LH_ENABLE = "true";
+      # Force OpenXR runtime to Monado (just in case)
+      XR_RUNTIME_JSON = "/run/current-system/sw/share/openxr/1/openxr_monado.json";
+    };
   };
 }
