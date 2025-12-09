@@ -24,6 +24,10 @@ in
       features.dev.ai.antigravity.enable = true;
       features.apps.winapps.enable = true;
       features.gui.hy3.enable = true;
+      features.dev.openxr = {
+        enable = true;
+        runtime.service.enable = true;
+      };
       # Roles enabled for this host
       roles = {
         workstation.enable = true;

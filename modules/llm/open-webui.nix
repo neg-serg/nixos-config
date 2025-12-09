@@ -11,6 +11,9 @@ in {
       host = lib.mkDefault "0.0.0.0";
       port = lib.mkDefault 11111;
       openFirewall = true;
+      environment = {
+        HOME = "/var/lib/open-webui";
+      };
     };
 
     networking.firewall.allowedTCPPorts =
