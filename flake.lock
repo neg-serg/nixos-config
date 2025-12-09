@@ -953,11 +953,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1765175814,
-        "narHash": "sha256-bru6D2QmfBNxQ5NQVKWMakolzzjLe8D1gFzeD0GAw08=",
+        "lastModified": 1765277391,
+        "narHash": "sha256-JxOuF7vpO99lpel/JHMrb3EoH628OGclNH66qeltoeI=",
         "ref": "refs/heads/main",
-        "rev": "7d878e019e009883a76f1e03bfdf155bfe05ba72",
-        "revCount": 33,
+        "rev": "875e09904750e8a67c37f17d203d8ae8d726b7af",
+        "revCount": 34,
         "type": "git",
         "url": "ssh://git@github.com/neg-serg/iosevka-neg"
       },
