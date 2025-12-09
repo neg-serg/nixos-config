@@ -24,6 +24,7 @@
     bucklespringFixed # keyboard click sound daemon
     pkgs.cool-retro-term # retro CRT terminal emulator
     pkgs.dotacat # colorful `cat`
+    pkgs.windows95 # Windows 95 electron VM for nostalgia
     pkgs.figlet # ASCII art banners
     pkgs.fortune # fortune cookie
     pkgs.free42 # HP-42S calculator clone
