@@ -2,6 +2,11 @@ import os
 import subprocess
 import sys
 
+
+# Fix for Unity games failing to find CA certs (Curl error 35)
+if "SSL_CERT_FILE" not in os.environ:
+    os.environ["SSL_CERT_FILE"] = "/etc/ssl/certs/ca-certificates.crt"
+
 CPUSET = os.environ.get("GAME_PIN_CPUSET", "@pinDefault@")
 if len(sys.argv) <= 1:
     print("Usage: game-run <command> [args...]", file=sys.stderr)
