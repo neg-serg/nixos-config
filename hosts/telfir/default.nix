@@ -9,6 +9,7 @@
   ];
 
   features.hardware.amdgpu.rocm.enable = true;
+  features.gui.hy3.enable = false;
 
   boot.plymouth = {
     enable = true;
