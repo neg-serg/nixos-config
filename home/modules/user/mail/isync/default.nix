@@ -51,7 +51,7 @@ in
   mkIf config.features.mail.enable (lib.mkMerge [
     {
       # 1. Install the package directly
-      home.packages = [pkgs.isync];
+      home.packages = [pkgs.isync]; # IMAP and MailDir synchronization
     }
 
     # 2. Manually create the config file using the flake's own helper function.
