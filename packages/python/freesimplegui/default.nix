@@ -8,13 +8,13 @@
 }:
 buildPythonPackage rec {
   pname = "freesimplegui";
-  version = "5.2.0.post1";
+  version = "5.1.1";
   format = "pyproject";
 
   src = fetchPypi {
-    pname = "FreeSimpleGUI";
+    pname = "freesimplegui";
     inherit version;
-    sha256 = "12prapfg57adkwx9f28kdlsrhffc9zwi2s95a9qyiag9b1khx2p5";
+    sha256 = "sha256-LwlGx6wiHJl5KRgcvnUm40L/9fwpGibR1yYoel3ZZPs=";
   };
 
   # I will update the hash in the next step once I have the prefetched output.
