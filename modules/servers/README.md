@@ -49,8 +49,8 @@ Examples and ports
   - Monitoring: Prometheus exporter + Grafana dashboard for DNS latency, DNSSEC validation and cache
     hits — see `docs/runbooks/unbound-metrics.md`.
 - duckdns: `profiles.services.duckdns.enable = true;`
-  - Set `servicesProfiles.duckdns.domain` and an EnvironmentFile with `DUCKDNS_TOKEN`
-    (prefer sops-nix). Optional IPv6 (`servicesProfiles.duckdns.ipv6.enable`) and ACME
+  - Set `servicesProfiles.duckdns.domain` and an EnvironmentFile with `DUCKDNS_TOKEN` (prefer
+    sops-nix). Optional IPv6 (`servicesProfiles.duckdns.ipv6.enable`) and ACME
     (`servicesProfiles.duckdns.certs.enable`) via the Nyx module.
 
 ## DNS Healthcheck

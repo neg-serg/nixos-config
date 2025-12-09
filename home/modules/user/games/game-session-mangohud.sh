@@ -2,25 +2,28 @@
 set -xeuo pipefail
 
 gamescopeArgs=(
-    --adaptive-sync # VRR support
-    --hdr-enabled
-    --mangoapp # performance overlay
-    --rt
-    --steam
+  --adaptive-sync # VRR support
+  --hdr-enabled
+  --mangoapp # performance overlay
+  --rt
+  --steam
 )
 steamArgs=(
-    -pipewire-dmabuf
-    -tenfoot
+  -pipewire-dmabuf
+  -tenfoot
 )
 mangoConfig=(
-    cpu_temp
-    gpu_temp
-    ram
-    vram
+  cpu_temp
+  gpu_temp
+  ram
+  vram
 )
 mangoVars=(
-    MANGOHUD=1
-    MANGOHUD_CONFIG="$(IFS=,; echo "${mangoConfig[*]}")"
+  MANGOHUD=1
+  MANGOHUD_CONFIG="$(
+    IFS=,
+    echo "${mangoConfig[*]}"
+  )"
 )
 
 export "${mangoVars[@]}"

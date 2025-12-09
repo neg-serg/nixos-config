@@ -2,17 +2,17 @@
 set -xeuo pipefail
 
 gamescopeArgs=(
-    # --adaptive-sync # VRR support
-    --hdr-enabled
-    # --mangoapp # performance overlay
-    --rt
-    --steam
-    --hdr-debug-force-output
+  # --adaptive-sync # VRR support
+  --hdr-enabled
+  # --mangoapp # performance overlay
+  --rt
+  --steam
+  --hdr-debug-force-output
 )
 
 steamArgs=(
-    -pipewire-dmabuf
-    -tenfoot
+  -pipewire-dmabuf
+  -tenfoot
 )
 
 export DXVK_HDR=1
