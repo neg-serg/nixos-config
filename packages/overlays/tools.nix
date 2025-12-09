@@ -14,6 +14,7 @@ in {
     # eBPF/BCC tools
     bpf_host_latency = callPkg (packagesRoot + "/bpf-host-latency") {};
     "bpf-host-latency" = bpf_host_latency;
+    skbtrace = callPkg (packagesRoot + "/skbtrace") {};
     # CLI/util packages
     a2ln = callPkg (packagesRoot + "/a2ln") {};
     awrit = callPkg (packagesRoot + "/awrit") {};
