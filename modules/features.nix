@@ -283,6 +283,10 @@ in {
       winapps.enable =
         mkBool "enable WinApps integration (KVM/libvirt Windows VM, RDP bridge)" false;
     };
+
+    hardware = {
+      amdgpu.rocm.enable = mkBool "enable AMDGPU ROCm support" false;
+    };
   };
 
   # Apply profile defaults. Users can still override flags after this.
