@@ -139,7 +139,14 @@ if "Soulstone" in cmd_str_check or "2066020" in cmd_str_check:
         "-screen-height",
         "720",
     ]
-    cmd = [H["GAME_RUN"]] + forced_args + args
+    # SSL fix (usually in game-run, but we need it here if bypassing)
+    if "SSL_CERT_FILE" not in os.environ:
+        os.environ["SSL_CERT_FILE"] = "/etc/ssl/certs/ca-certificates.crt"
+
+    # Append forced args to the END so they are passed to the game binary
+    # and not interpreted as the executable by game-run
+    # DIRECT LAUNCH: Bypass game-run/systemd-run to rule out isolation issues
+    cmd = args + forced_args
 else:
     cmd = [H["GAME_RUN"], H["GAMESCOPE"]] + flags + ["--"] + args
 
