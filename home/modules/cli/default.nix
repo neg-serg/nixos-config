@@ -27,7 +27,9 @@ in {
     ./tmux.nix
     ./tig.nix
     ./television
+    ./television
     ./yazi.nix
+    ./superfile.nix
   ];
   config = lib.mkMerge [
     {
