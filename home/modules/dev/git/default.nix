@@ -4,5 +4,6 @@
     ./hooks.nix
     ./packages.nix
     ./config.nix
+    ./gh.nix
   ];
 }
