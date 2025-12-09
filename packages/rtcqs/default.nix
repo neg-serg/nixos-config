@@ -23,7 +23,7 @@ python3Packages.buildPythonApplication rec {
   ];
 
   propagatedBuildInputs = with python3Packages; [
-    FreeSimpleGUI
+    freesimplegui
     tkinter
   ];
 

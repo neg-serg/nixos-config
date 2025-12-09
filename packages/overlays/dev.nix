@@ -138,7 +138,7 @@ _inputs: _final: prev: {
     ++ [
       (python-final: _python-prev: {
         neopyter = python-final.callPackage ../neopyter {};
-        FreeSimpleGUI = python-final.callPackage ../python/freesimplegui {};
+        freesimplegui = python-final.callPackage ../python/freesimplegui {};
       })
     ];
 }
