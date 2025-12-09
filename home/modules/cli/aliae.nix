@@ -201,6 +201,7 @@ in
             (mkAlias "nrb" "sudo nixos-rebuild")
             (mkAlias "j" "journalctl")
             (mkAlias "emptydir" "emptydir")
+            (mkAlias "jl" "jupyter lab --no-browser")
             (mkAlias "dosbox" "dosbox -conf $XDG_CONFIG_HOME/dosbox/dosbox.conf")
             (mkAlias "gdb" "gdb -nh -x $XDG_CONFIG_HOME/gdb/gdbinit")
             (mkAlias "iostat" "iostat --compact -p -h -s")
