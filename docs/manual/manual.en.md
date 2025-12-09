@@ -76,9 +76,9 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
 
 - Secret lives at `/run/user/1000/secrets/vless-reality-singbox-tun.json`, rendered by Home Manager
   from `secrets/home/vless/reality-singbox-tun.json.sops`.
-- Service: `systemctl start sing-box-tun` / `systemctl stop sing-box-tun` (manual). Policy routing in
-  the unit: `pref 100` sends traffic to 204.152.223.171 via `main`; `pref 200` + `table 200` route
-  everything else to `default dev sb0`; DNS via `resolvectl dns sb0 1.1.1.1 1.0.0.1` and
+- Service: `systemctl start sing-box-tun` / `systemctl stop sing-box-tun` (manual). Policy routing
+  in the unit: `pref 100` sends traffic to 204.152.223.171 via `main`; `pref 200` + `table 200`
+  route everything else to `default dev sb0`; DNS via `resolvectl dns sb0 1.1.1.1 1.0.0.1` and
   `resolvectl domain sb0 "~."`.
 - Requirements: `sing-box` present in `environment.systemPackages`, secret available, needs
   root/CAP_NET_ADMIN (systemd handles capabilities).
@@ -96,8 +96,7 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
   disable auto-select per call with `-no-auto-select`.
 - Quickshell keyboard layout indicator listens to Hyprland `keyboard-layout` events, prefers the
   `main: true` device, shows the current submap as an accent pictogram before the keyboard glyph and
-  layout (e.g., `★ ⌨ en`), and uses
-  `hyprctl switchxkblayout current next` on click.
+  layout (e.g., `★ ⌨ en`), and uses `hyprctl switchxkblayout current next` on click.
 - Floorp customizations keep the nav bar on top and strip telemetry/Activity Stream noise by
   default; toggle advanced tweaks in `modules/user/web/floorp.nix` if needed.
 - Swayimg wrappers (`swayimg-first`) land in `~/.local/bin/swayimg` and are tuned via Hyprland
@@ -715,8 +714,8 @@ Tuning tips:
 
 ## DNS Resolver Monitoring
 
-- Unbound + Prometheus + Grafana dashboard for DNS quality (latency, DNSSEC validation, cache
-  hits): see `docs/runbooks/unbound-metrics.md`.
+- Unbound + Prometheus + Grafana dashboard for DNS quality (latency, DNSSEC validation, cache hits):
+  see `docs/runbooks/unbound-metrics.md`.
 
 ______________________________________________________________________
 
