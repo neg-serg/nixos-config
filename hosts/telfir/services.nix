@@ -439,6 +439,9 @@ in
           # Avoid port conflicts: ensure nginx is disabled when using Caddy
           nginx.enable = false;
 
+          # Enable GVFS (virtual filesystem) support for file managers (MTP, SMB, etc.)
+          gvfs.enable = true;
+
           # Prometheus stack removed on this host (server, exporters, alertmanager)
 
           # Resilio Sync (interactive Web UI, auth via SOPS)
