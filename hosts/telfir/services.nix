@@ -261,8 +261,8 @@ in
 
       # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
       environment.systemPackages = lib.mkAfter [
-        pkgs.winboat
-        pkgs.docker-compose
+        pkgs.winboat # Windows VM support
+        pkgs.docker-compose # multi-container Docker applications
         pkgs.openrgb # per-device RGB controller UI
         pkgs.nextcloud-client # Nextcloud desktop sync client
         pkgs.neg.tewi # TUI torrent client (Transmission/qBittorrent/Deluge)
