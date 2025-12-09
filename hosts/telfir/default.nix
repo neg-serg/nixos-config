@@ -8,6 +8,8 @@
     ./virtualisation/lxc.nix
   ];
 
+  features.hardware.amdgpu.rocm.enable = true;
+
   boot.plymouth = {
     enable = true;
     theme = "lone";
