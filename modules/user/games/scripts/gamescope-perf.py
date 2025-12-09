@@ -125,10 +125,9 @@ cmd_str_check = " ".join(args)
 if "Soulstone" in cmd_str_check or "2066020" in cmd_str_check:
     # Disable gamemode as it fails to load libgamemode.so in this context
     os.environ["GAME_RUN_USE_GAMEMODE"] = "0"
-    # Force X11 backend to avoid Wayland hangs with Unity
-    os.environ["SDL_VIDEODRIVER"] = "x11"
-    # Disable Mangohud to prevent overlay deadlocks
-    os.environ["MANGOHUD"] = "0"
+    # X11 force might be causing hangs if game prefers Wayland or vice versa.
+    # Reverting to default (Unity usually auto-detects).
+    # os.environ["SDL_VIDEODRIVER"] = "x11"
 
     # Inject arguments to force windowed mode (prevents fullscreen hangs)
     forced_args = [
@@ -139,14 +138,10 @@ if "Soulstone" in cmd_str_check or "2066020" in cmd_str_check:
         "-screen-height",
         "720",
     ]
-    # SSL fix (usually in game-run, but we need it here if bypassing)
-    if "SSL_CERT_FILE" not in os.environ:
-        os.environ["SSL_CERT_FILE"] = "/etc/ssl/certs/ca-certificates.crt"
-
     # Append forced args to the END so they are passed to the game binary
     # and not interpreted as the executable by game-run
-    # DIRECT LAUNCH: Bypass game-run/systemd-run to rule out isolation issues
-    cmd = args + forced_args
+    # Restore usage of game-run wrapper (systemd isolation)
+    cmd = [H["GAME_RUN"]] + args + forced_args
 else:
     cmd = [H["GAME_RUN"], H["GAMESCOPE"]] + flags + ["--"] + args
 
