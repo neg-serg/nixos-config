@@ -117,12 +117,7 @@ else:
     args = sys.argv[1:]
 
 # Debug logging
-try:
-    with open("/tmp/gamescope_perf_wrapper_debug.log", "a") as f:
-        f.write(f"Wrapper Args: {args}\n")
-except Exception:
-    pass
-
+print(f"DEBUG: gamescope-perf wrapper args: {args}", file=sys.stderr)
 
 # Exclude broken games from gamescope
 cmd_str_check = " ".join(args)
