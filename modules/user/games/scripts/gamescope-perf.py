@@ -116,6 +116,13 @@ if len(sys.argv) == 1:
 else:
     args = sys.argv[1:]
 
+# Debug logging
+try:
+    with open("/tmp/gamescope_perf_wrapper_debug.log", "a") as f:
+        f.write(f"Wrapper Args: {args}\n")
+except Exception:
+    pass
+
 
 # Exclude broken games from gamescope
 cmd_str_check = " ".join(args)

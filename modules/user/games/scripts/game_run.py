@@ -12,6 +12,15 @@ if len(sys.argv) <= 1:
     print("Usage: game-run <command> [args...]", file=sys.stderr)
     sys.exit(1)
 
+# Debug logging
+try:
+    with open("/tmp/game_run_debug.log", "a") as f:
+        f.write(f"Args: {sys.argv}\n")
+        f.write(f"Env SSL: {os.environ.get('SSL_CERT_FILE')}\n")
+        f.write(f"Pin: {os.environ.get('GAME_PIN_CPUSET')}\n")
+except Exception:
+    pass
+
 cmd = [
     "systemd-run",
     "--user",
