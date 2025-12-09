@@ -7,5 +7,6 @@
     ./ai-upscale-rt.nix
     ./pipewire.nix
     ./playerctld.nix
+    ./ytfzf.nix
   ];
 }
