@@ -10,6 +10,7 @@
     ./hack
     ./python
     ./openxr
+    ./tla.nix
     ./unreal
   ];
 }
