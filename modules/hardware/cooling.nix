@@ -179,6 +179,6 @@ in {
     };
 
     # Ensure tools are present for manual inspection/tweaks
-    environment.systemPackages = [pkgs.lm_sensors];
+    environment.systemPackages = [pkgs.lm_sensors]; # tools to read temperature/voltage/fan sensors
   };
 }
