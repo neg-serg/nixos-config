@@ -26,6 +26,7 @@ in {
     ./cnf-fast.nix
     ./tmux.nix
     ./tig.nix
+    ./television
     ./yazi.nix
   ];
   config = lib.mkMerge [
