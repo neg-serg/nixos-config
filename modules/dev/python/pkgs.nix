@@ -28,6 +28,7 @@
         dbus-python
         fontforge
         pynvim
+        neopyter
       ];
   };
   mkPythonPackages = ps:
