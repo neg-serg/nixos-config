@@ -123,6 +123,10 @@ print(f"DEBUG: gamescope-perf wrapper args: {args}", file=sys.stderr)
 cmd_str_check = " ".join(args)
 # Soulstone Survivors (2066020) hangs with gamescope
 if "Soulstone" in cmd_str_check or "2066020" in cmd_str_check:
+    # Disable gamemode as it fails to load libgamemode.so in this context
+    os.environ["GAME_RUN_USE_GAMEMODE"] = "0"
+    # Force X11 backend to avoid Wayland hangs with Unity
+    os.environ["SDL_VIDEODRIVER"] = "x11"
     cmd = [H["GAME_RUN"]] + args
 else:
     cmd = [H["GAME_RUN"], H["GAMESCOPE"]] + flags + ["--"] + args
