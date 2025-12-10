@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  inputs,
   ...
 }: let
   cfg = config.profiles.games or {};
@@ -109,6 +110,9 @@
     
     (lib.replaceStrings ["@pinDefault@"] [pinDefault] (builtins.readFile ./scripts/game_run.py));
 in {
+  imports = [inputs.aagl.nixosModules.default];
+  nix.settings = inputs.aagl.nixConfig; # Set up Cachix
+
   options.profiles.games = {
     enable = lib.mkOption {
       type = lib.types.bool;
@@ -202,6 +206,7 @@ in {
       # MangoHud is installed via systemPackages; toggle via MANGOHUD=1
 
       anime-game-launcher.enable = true;
+      honkers-railway-launcher.enable = true;
     };
 
     environment = {
@@ -223,6 +228,7 @@ in {
         steamvrDesktop # desktop entry for that SteamVR script
         deovrSteamCli # CLI wrapper to start DeoVR via Steam with env fixes
         deovrSteamDesktop # desktop entry for DeoVR launcher
+        pkgs.prismlauncher # Minecraft launcher
       ];
 
       # Global defaults for wrappers
