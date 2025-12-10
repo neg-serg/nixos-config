@@ -125,9 +125,8 @@ cmd_str_check = " ".join(args)
 if "Soulstone" in cmd_str_check or "2066020" in cmd_str_check:
     # Disable gamemode as it fails to load libgamemode.so in this context
     os.environ["GAME_RUN_USE_GAMEMODE"] = "0"
-    # X11 force might be causing hangs if game prefers Wayland or vice versa.
-    # Reverting to default (Unity usually auto-detects).
-    # os.environ["SDL_VIDEODRIVER"] = "x11"
+    # Force X11 backend (Global is 'wayland', which breaks Proton/Unity)
+    os.environ["SDL_VIDEODRIVER"] = "x11"
     # Disable Mangohud to prevent overlay deadlocks
     os.environ["MANGOHUD"] = "0"
 
