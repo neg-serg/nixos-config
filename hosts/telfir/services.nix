@@ -363,7 +363,7 @@ in
       services = lib.mkMerge [
         {
           # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
-          unbound.settings."local-data" = unboundLocalData;
+          unbound.settings.server."local-data" = map (s: "\"${s}\"") unboundLocalData;
 
           gnome = {
             localsearch.enable = true;
