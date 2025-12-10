@@ -135,6 +135,7 @@ in {
 
   config = lib.mkIf cfg.enable {
     nix.settings = inputs.aagl.nixConfig; # Set up Cachix
+    aagl.enableNixpkgsReleaseBranchCheck = false;
 
     programs = {
       steam = {
