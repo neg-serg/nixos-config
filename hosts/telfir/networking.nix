@@ -22,7 +22,6 @@ _: {
       "10-lan" = {
         matchConfig.Name = "net0";
         networkConfig.DHCP = "ipv4";
-        linkConfig.WakeOnLan = "magic";
         dhcpV4Config = {
           UseDNS = true;
           UseRoutes = true;
@@ -32,7 +31,6 @@ _: {
       "11-lan" = {
         matchConfig.Name = "net1";
         networkConfig.DHCP = "ipv4";
-        linkConfig.WakeOnLan = "magic";
         dhcpV4Config = {
           UseDNS = true;
           UseRoutes = true;

@@ -137,10 +137,12 @@
       "10-net0" = {
         matchConfig.MACAddress = "a0:ad:9f:7e:4b:4e";
         linkConfig.Name = "net0";
+        linkConfig.WakeOnLan = "magic";
       };
       "10-net1" = {
         matchConfig.MACAddress = "a0:ad:9f:7e:4b:4f";
         linkConfig.Name = "net1";
+        linkConfig.WakeOnLan = "magic";
       };
     };
   };
