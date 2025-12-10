@@ -585,6 +585,13 @@ Additionally, a Markdown language policy is enforced:
   - Extra groups and PAM limits reference the main user/group.
 - Inspect transient scope: `systemctl --user list-units 'app-*scope' --no-pager`
 
+### Advanced: Nested Wayland (expose-wayland)
+
+- To run native Wayland clients inside Gamescope (or even nested Hyprland), use `--expose-wayland`.
+- Command: `game-run gamescope --expose-wayland -- %command%`
+- Use case: running applications that require a Wayland socket (like some SDL3 apps or development tools) or for testing.
+- Note: Experimental. detailed input/focus issues may occur. Not needed for typical Steam/Proton gaming.
+
 Notes:
 
 - Do not wrap the entire Steam client; prefer per‑game Launch Options to keep downloads/tooling on
