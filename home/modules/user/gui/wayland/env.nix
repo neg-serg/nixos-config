@@ -9,7 +9,7 @@ with lib;
       # Wayland-first backends with sensible fallbacks
       GDK_BACKEND = "wayland";
       QT_QPA_PLATFORM = "wayland;xcb";
-      SDL_VIDEODRIVER = "wayland";
+      SDL_VIDEODRIVER = "wayland,x11";
       CLUTTER_BACKEND = "wayland";
       XDG_CURRENT_DESKTOP = "Hyprland";
       XDG_SESSION_DESKTOP = "Hyprland";
