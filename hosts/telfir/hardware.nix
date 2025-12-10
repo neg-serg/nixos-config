@@ -72,6 +72,7 @@
       "video=3840x2160@240"
       "lru_gen=1"
       "lru_gen.min_ttl_ms=1000"
+      "mem_sleep_default=deep"
       # Avoid probing dozens of legacy UARTs; speeds up device coldplug
       "8250.nr_uarts=1"
     ];
