@@ -11,6 +11,7 @@
   rtcqs = pkgs.neg.rtcqs;
   tewi = pkgs.neg.tewi;
   two_percent = pkgs.neg.two_percent;
+  subsonic-tui = pkgs.subsonic-tui;
 
   mcp-server-filesystem = pkgs.neg.mcp_server_filesystem;
   mcp-ripgrep = pkgs.neg.mcp_ripgrep;
