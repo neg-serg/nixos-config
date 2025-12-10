@@ -1,4 +1,5 @@
 {pkgs, ...}: {
+  adguardian-term = pkgs.neg.adguardian_term;
   antigravity = pkgs.neg.antigravity;
   richcolors = pkgs.neg.richcolors;
   hxtools = pkgs.neg.hxtools;
