@@ -7,15 +7,25 @@ local plugin_tasks_ok, plugin_tasks = pcall(require, "lazy.manage.task.plugin")
 if plugin_tasks_ok and plugin_tasks.docs then
     local orig_docs_run = plugin_tasks.docs.run
     plugin_tasks.docs.run = function(self)
-        local docs = self.plugin.dir .. "/doc"
+        local orig_dir = self.plugin.dir
+        local docs = orig_dir .. "/doc"
+
         if docs:match("^/nix/store/") then
             local dst = doc_cache .. "/" .. (self.plugin.name or "plugin")
             vim.fn.mkdir(dst, "p")
             -- copy doc dir into writable state cache to allow helptags
-            vim.fn.system({ "cp", "-r", docs .. "/.", dst })
-            docs = dst
+            if vim.loop.fs_stat(docs) then
+                vim.fn.system({ "cp", "-r", docs .. "/.", dst })
+            end
+            self.plugin.dir = dst -- run helptags in writable cache
         end
-        return orig_docs_run(self)
+
+        local ok, err = pcall(orig_docs_run, self)
+        self.plugin.dir = orig_dir
+        if not ok then
+            error(err)
+        end
+        return ok
     end
 end
 if ok and nixCats.lazy then
