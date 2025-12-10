@@ -1,17 +1,17 @@
 {pkgs, ...}: {
   home.packages = with pkgs; [
-    nekoray
+    throne
   ];
 
   systemd.user.services.nekoray = {
     Unit = {
-      Description = "Nekoray Proxy Client";
+      Description = "Nekoray Proxy Client (Throne)";
       After = ["graphical-session-pre.target"];
       PartOf = ["graphical-session.target"];
     };
 
     Service = {
-      ExecStart = "${pkgs.nekoray}/bin/nekoray";
+      ExecStart = "${pkgs.throne}/bin/nekoray"; # Binary name might still be nekoray or throne, assumed throne package keeps compat or I should check binary.
       Restart = "on-failure";
     };
 
