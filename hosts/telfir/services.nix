@@ -10,6 +10,7 @@
   wireguardSopsFile = inputs.self + "/secrets/telfir-wireguard-wg-quick.sops";
   duckdnsEnvSecret = inputs.self + "/secrets/duckdns.env.sops";
   hasDuckdnsSecret = builtins.pathExists duckdnsEnvSecret;
+  unboundLocalData = import ./unbound-hosts.nix;
 in
   lib.mkMerge [
     {
@@ -198,6 +199,8 @@ in
           };
         };
       };
+      # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
+      services.unbound.settings."local-data" = unboundLocalData;
 
       monitoring = {
         # Disable Netdata on this host (keep other monitoring like sysstat)
