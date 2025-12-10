@@ -134,8 +134,18 @@ if "Soulstone" in cmd_str_check or "2066020" in cmd_str_check:
     # User has 32 threads (0-31)
     os.environ["GAME_PIN_CPUSET"] = "0-31"
 
+    # Unity SSL fix (Curl error 35)
+    if "SSL_CERT_FILE" not in os.environ:
+        os.environ["SSL_CERT_FILE"] = "/etc/ssl/certs/ca-certificates.crt"
+
+    # Disable Proton Crash Reporting (UnityCrashHandler64.exe)
+    os.environ["PROTON_CRASH_REPORT_DISABLE"] = "1"
+
     # Restore usage of game-run wrapper (systemd isolation)
-    cmd = [H["GAME_RUN"]] + args
+    # cmd = [H["GAME_RUN"]] + args
+
+    # Bypass game-run and systemd isolation completely
+    cmd = args
 else:
     cmd = [H["GAME_RUN"], H["GAMESCOPE"]] + flags + ["--"] + args
 
