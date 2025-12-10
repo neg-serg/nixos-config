@@ -5,6 +5,7 @@
 # Dependencies: Consumed by kernel/params.nix.
 {
   lib,
+  config,
   inputs,
   ...
 }:
@@ -138,5 +139,9 @@ in {
         example = "auto";
       };
     };
+  };
+
+  config = lib.mkIf config.profiles.performance.enable {
+    programs.gamescope.enable = true;
   };
 }
