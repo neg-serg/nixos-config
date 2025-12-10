@@ -121,30 +121,8 @@ print(f"DEBUG: gamescope-perf wrapper args: {args}", file=sys.stderr)
 
 # Exclude broken games from gamescope
 cmd_str_check = " ".join(args)
-# Soulstone Survivors (2066020) hangs with gamescope
-if "Soulstone" in cmd_str_check or "2066020" in cmd_str_check:
-    # Disable gamemode as it fails to load libgamemode.so in this context
-    os.environ["GAME_RUN_USE_GAMEMODE"] = "0"
-    # Force X11 backend (Global is 'wayland', which breaks Proton/Unity)
-    os.environ["SDL_VIDEODRIVER"] = "x11"
-    # Disable Mangohud to prevent overlay deadlocks
-    os.environ["MANGOHUD"] = "0"
-
-    # Disable CPU Pinning (set to all cores) to rule out scheduling deadlocks
-    # User has 32 threads (0-31)
-    os.environ["GAME_PIN_CPUSET"] = "0-31"
-
-    # Unity SSL fix (Curl error 35)
-    if "SSL_CERT_FILE" not in os.environ:
-        os.environ["SSL_CERT_FILE"] = "/etc/ssl/certs/ca-certificates.crt"
-
-    # Disable Proton Crash Reporting (UnityCrashHandler64.exe)
-    os.environ["PROTON_CRASH_REPORT_DISABLE"] = "1"
-
-    # Restore usage of game-run wrapper (systemd isolation)
-    # cmd = [H["GAME_RUN"]] + args
-
-    # Bypass game-run and systemd isolation completely
+# Example exclusion (placeholder)
+if "SomeBrokenGame" in cmd_str_check:
     cmd = args
 else:
     cmd = [H["GAME_RUN"], H["GAMESCOPE"]] + flags + ["--"] + args
