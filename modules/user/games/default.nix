@@ -176,6 +176,12 @@ in {
 
                 # libstdc++ for the runtime
                 (lib.getLib stdenv.cc.cc)
+
+                # Network/Auth libs often needed by Steam Runtime tools
+                openssl
+                libpsl
+                nghttp2
+                libidn2
               ];
           in
             mkDeps pkgs';
