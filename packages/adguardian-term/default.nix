@@ -14,8 +14,7 @@ rustPlatform.buildRustPackage rec {
     hash = "sha256-WxrSmCwLnXXs5g/hN3xWE66P5n0RD/L9MJpf5N2iNtY=";
   };
 
-  cargoLock.lockFile = "${src}/Cargo.lock";
-  cargoHash = "sha256-xCfFawZKyeqvrI8BPyr+ycX9jc6v16gMh30cXA81szg=";
+  cargoHash = "sha256-yPDysaslL/7N60eZ/hqZl5ZXIsof/pvlgHYfW1mIWtI=";
 
   # No extra system dependencies (built with rustls)
   meta = with lib; {
