@@ -135,6 +135,7 @@ in {
       steam = {
         enable = true;
         package = pkgs.steam.override {
+          extraBwrapArgs = ["--bind" "/zero" "/zero"];
           extraPkgs = pkgs': let
             mkDeps = pkgsSet:
               with pkgsSet; [
