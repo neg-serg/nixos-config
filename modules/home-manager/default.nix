@@ -23,6 +23,7 @@
   perSystem = lib.genAttrs [system] (_: {inherit pkgs iosevkaNeg;});
   hmInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) {
     inherit (inputs) "spicetify-nix";
+    inherit (inputs) "plasma-manager";
   };
   mainUser = config.users.main.name or "neg";
   hmModules = [
