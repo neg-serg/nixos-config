@@ -8,6 +8,7 @@
   nemu = pkgs.neg.nemu;
   _nemu = pkgs.neg.nemu;
   beatprints = pkgs.neg.beatprints;
+  webcamize = pkgs.neg.webcamize;
   rtcqs = pkgs.neg.rtcqs;
   tewi = pkgs.neg.tewi;
   two_percent = pkgs.neg.two_percent;
