@@ -10,6 +10,7 @@
     ./cooling.nix
     ./gpu-corectrl.nix
     ./pkgs.nix
+    ./usb-automount.nix
     ./uinput.nix
     ./amdgpu.nix
   ];
