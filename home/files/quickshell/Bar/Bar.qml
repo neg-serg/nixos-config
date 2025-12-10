@@ -685,15 +685,6 @@ Scope {
                                 showSubmapIcon: false
                                 showLabel: true
                             }
-                            PanelSeparator {
-                                scaleFactor: leftPanel.s
-                                panelHeightPx: leftPanel.barHeightPx
-                                triangleEnabled: true
-                                triangleWidthFactor: 0.75
-                                mirrorTriangle: true
-                                widthScale: 2.0
-                                backgroundKey: "workspaces"
-                            }
                             RowLayout {
                                 id: kbCluster
                                 Layout.alignment: Qt.AlignVCenter
