@@ -245,7 +245,7 @@ prev_volume=""
 prev_brightness=""
 prev_network=""
 prev_c0=""
-prev_c2=""
+prev_c24=""
 
 while true; do
   packages=$(read_packages)
@@ -253,20 +253,20 @@ while true; do
   brightness=$(read_brightness)
   network=$(read_network)
   color0=$(read_color color0 '#555555')
-  color2=$(read_color color2 '#5fb0f6')
+  color24=$(read_color color24 '#5fb0f6')
 
-  if [[ "$packages$volume$brightness$network$color0$color2" != "$prev_packages$prev_volume$prev_brightness$prev_network$prev_c0$prev_c2" ]]; then
+  if [[ "$packages$volume$brightness$network$color0$color24" != "$prev_packages$prev_volume$prev_brightness$prev_network$prev_c0$prev_c24" ]]; then
     prev_packages="$packages"
     prev_volume="$volume"
     prev_brightness="$brightness"
     prev_network="$network"
     prev_c0="$color0"
-    prev_c2="$color2"
+    prev_c24="$color24"
 
-    packages_box=$(gum style --border=rounded --border-foreground="$color2" --padding "0 1" "Packages: $packages")
-    volume_box=$(gum style --border=rounded --border-foreground="$color2" --padding "0 1" "Volume: $volume")
-    brightness_box=$(gum style --border=rounded --border-foreground="$color2" --padding "0 1" "Brightness: $brightness")
-    network_box=$(gum style --border=rounded --border-foreground="$color2" --padding "0 1" "Wi-Fi: $network")
+    packages_box=$(gum style --border=rounded --border-foreground="$color24" --padding "0 1" "Packages: $packages")
+    volume_box=$(gum style --border=rounded --border-foreground="$color24" --padding "0 1" "Volume: $volume")
+    brightness_box=$(gum style --border=rounded --border-foreground="$color24" --padding "0 1" "Brightness: $brightness")
+    network_box=$(gum style --border=rounded --border-foreground="$color24" --padding "0 1" "Wi-Fi: $network")
     calendar=$(LC_ALL=C cal --color=always | sed -n '1,7p' | gum style --border=rounded --padding "0 2" --border-foreground="$color0" --margin "0 0")
     vol_and_net=$(gum join "$volume_box" "$network_box")
     sys_info=$(gum join --vertical --align=right "$packages_box" "$brightness_box" "$vol_and_net")
