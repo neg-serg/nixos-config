@@ -17,9 +17,12 @@
     pkgs.media-player-info # udev HW database for player IDs
     pkgs.neg.mkvcleaner # custom Matroska cleanup tool
     pkgs.mpvc # mpv TUI controller
+    pkgs.neg.webcamize # use camera as webcam
   ];
 in {
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter packages;
+    boot.extraModulePackages = [config.boot.kernelPackages.v4l2loopback];
+    boot.kernelModules = ["v4l2loopback"];
   };
 }
