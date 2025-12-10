@@ -22,6 +22,12 @@
       openxr.enable = true; # Enable OpenXR dev stack (installs Envision UI)
     };
 
+    cli.zcli = {
+      enable = true;
+      profile = "telfir";
+      backupFiles = [".config/mimeapps.list.backup"];
+    };
+
     # Enable AI upscaling features (realtime + offline tools)
     media.aiUpscale = {
       enable = true;
