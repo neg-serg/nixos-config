@@ -12,6 +12,7 @@
     ./pkgs.nix
     ./usb-automount.nix
     ./uinput.nix
+    ./liquidctl.nix
     ./amdgpu.nix
   ];
 }
