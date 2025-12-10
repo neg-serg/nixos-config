@@ -21,9 +21,9 @@
   extraTrustedKeys = lib.filter dropKey caches."trusted-public-keys";
   iosevkaNeg = inputs."iosevka-neg".packages.${system};
   perSystem = lib.genAttrs [system] (_: {inherit pkgs iosevkaNeg;});
-  hmInputs =
-    builtins.mapAttrs (_: input: input // {type = "derivation";}) {
-    };
+  hmInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) {
+    inherit (inputs) "spicetify-nix";
+  };
   mainUser = config.users.main.name or "neg";
   hmModules = [
     (repoRoot + "/home/home.nix")
