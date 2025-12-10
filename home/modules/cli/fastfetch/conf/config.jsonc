@@ -23,41 +23,107 @@
   "modules": [
     {
       "type": "os",
+      "key": "",
       "format": "{3}"
     },
     {
       "type": "kernel",
+      "key": "",
       "format": "{1} {2} ({4})"
     },
-    "uptime",
-    "wm",
+    {
+      "type": "uptime",
+      "key": ""
+    },
+    {
+      "type": "wm",
+      "key": ""
+    },
     {
       "type": "command",
-      "key": "Packages",
+      "key": "",
       "text": "(nix-store --query --requisites /run/current-system | wc -l | tr -d '\n') && echo ' (nix; /run/current-system)'"
     },
-    "host",
-    "monitor",
-    "theme",
-    "icons",
-    "cursor",
-    "shell",
-    "terminal",
-    "terminalfont",
-    "cpu",
-    "memory",
-    "board",
-    "bios",
+    {
+      "type": "host",
+      "key": ""
+    },
+    {
+      "type": "monitor",
+      "key": ""
+    },
+    {
+      "type": "theme",
+      "key": ""
+    },
+    {
+      "type": "icons",
+      "key": ""
+    },
+    {
+      "type": "cursor",
+      "key": ""
+    },
+    {
+      "type": "shell",
+      "key": ""
+    },
+    {
+      "type": "terminal",
+      "key": ""
+    },
+    {
+      "type": "terminalfont",
+      "key": ""
+    },
+    {
+      "type": "cpu",
+      "key": ""
+    },
+    {
+      "type": "memory",
+      "key": ""
+    },
+    {
+      "type": "board",
+      "key": ""
+    },
+    {
+      "type": "bios",
+      "key": ""
+    },
     {
       "type": "gpu",
+      "key": "",
       "driverSpecific": true
     },
-    "vulkan",
-    "disk",
-    "sound",
-    "player",
-    "users",
-    "locale",
-    "weather"
+    {
+      "type": "vulkan",
+      "key": ""
+    },
+    {
+      "type": "disk",
+      "key": ""
+    },
+    {
+      "type": "sound",
+      "key": ""
+    },
+    {
+      "type": "player",
+      "key": ""
+    },
+    {
+      "type": "users",
+      "key": ""
+    },
+    {
+      "type": "locale",
+      "key": ""
+    },
+    {
+      "type": "weather",
+      "key": ""
+    }
   ]
 }
