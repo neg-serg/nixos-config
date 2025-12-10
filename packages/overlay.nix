@@ -11,4 +11,5 @@ in
   (functions // tools // media // dev // gui)
   // {
     neg = (functions.neg or {}) // (tools.neg or {}) // (media.neg or {}) // (dev.neg or {});
+    subsonic-tui = final.callPackage ./subsonic-tui {};
   }
