@@ -94,12 +94,12 @@
     },
     {
       "type": "gpu",
-      "key": "",
+      "key": "󰢮",
       "driverSpecific": true
     },
     {
       "type": "vulkan",
-      "key": ""
+      "key": "󰢮"
     },
     {
       "type": "disk",
