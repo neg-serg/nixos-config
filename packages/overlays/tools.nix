@@ -16,6 +16,8 @@ in {
     "bpf-host-latency" = bpf_host_latency;
     skbtrace = callPkg (packagesRoot + "/skbtrace") {};
     # CLI/util packages
+    adguardian_term = callPkg (packagesRoot + "/adguardian-term") {};
+    "adguardian-term" = adguardian_term;
     a2ln = callPkg (packagesRoot + "/a2ln") {};
     awrit = callPkg (packagesRoot + "/awrit") {};
     bt_migrate = callPkg (packagesRoot + "/bt-migrate") {};
