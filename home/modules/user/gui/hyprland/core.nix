@@ -79,7 +79,7 @@ in
         env = XCURSOR_SIZE,23
         env = GDK_BACKEND,wayland
         env = QT_QPA_PLATFORM,wayland;xcb
-        env = SDL_VIDEODRIVER,wayland
+        env = SDL_VIDEODRIVER,wayland,x11
         env = CLUTTER_BACKEND,wayland
 
         source = ~/.config/hypr/init.conf
