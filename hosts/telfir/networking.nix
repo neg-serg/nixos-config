@@ -1,4 +1,4 @@
-_: {
+{pkgs, ...}: {
   networking = {
     hostName = "telfir";
     hosts."192.168.2.240" = ["telfir" "telfir.local"];
