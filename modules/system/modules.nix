@@ -26,5 +26,6 @@
     ./users.nix
     ./virt.nix
     ./winapps.nix
+    ./preserve-flake.nix
   ];
 }
