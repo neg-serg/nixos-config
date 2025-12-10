@@ -28,6 +28,7 @@ in {
     ./tig.nix
     ./television
     ./television
+    ./zcli.nix
     ./yazi.nix
     ./superfile.nix
   ];
