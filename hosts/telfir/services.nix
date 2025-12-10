@@ -27,6 +27,7 @@ in
       features.dev.tla.enable = true;
       features.apps.winapps.enable = true;
       features.gui.hy3.enable = true;
+      features.hardware.usbAutomount.enable = true;
       features.dev.openxr = {
         enable = true;
         runtime.service.enable = true;
