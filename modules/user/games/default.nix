@@ -207,6 +207,9 @@ in {
 
       anime-game-launcher.enable = true;
       honkers-railway-launcher.enable = true;
+      honkers-launcher.enable = true;
+      sleepy-launcher.enable = true;
+      wavey-launcher.enable = true;
     };
 
     environment = {
@@ -229,6 +232,7 @@ in {
         deovrSteamCli # CLI wrapper to start DeoVR via Steam with env fixes
         deovrSteamDesktop # desktop entry for DeoVR launcher
         pkgs.prismlauncher # Minecraft launcher
+        pkgs.heroic # Epic, GOG, Amazon launcher
       ];
 
       # Global defaults for wrappers
