@@ -111,7 +111,6 @@
     (lib.replaceStrings ["@pinDefault@"] [pinDefault] (builtins.readFile ./scripts/game_run.py));
 in {
   imports = [inputs.aagl.nixosModules.default];
-  nix.settings = inputs.aagl.nixConfig; # Set up Cachix
 
   options.profiles.games = {
     enable = lib.mkOption {
@@ -135,6 +134,8 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
+    nix.settings = inputs.aagl.nixConfig; # Set up Cachix
+
     programs = {
       steam = {
         enable = true;
