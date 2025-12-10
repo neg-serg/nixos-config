@@ -200,7 +200,6 @@ in
         };
       };
       # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
-      services.unbound.settings."local-data" = unboundLocalData;
 
       monitoring = {
         # Disable Netdata on this host (keep other monitoring like sysstat)
@@ -363,6 +362,9 @@ in
 
       services = lib.mkMerge [
         {
+          # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
+          unbound.settings."local-data" = unboundLocalData;
+
           gnome = {
             localsearch.enable = true;
             tinysparql.enable = true;
