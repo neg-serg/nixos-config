@@ -8,6 +8,8 @@
     ./virtualisation/lxc.nix
   ];
 
+  system.preserveFlake = true;
+
   features.hardware.amdgpu.rocm.enable = true;
 
   boot.plymouth = {
