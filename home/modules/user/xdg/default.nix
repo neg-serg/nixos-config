@@ -69,6 +69,9 @@ with rec {
       "application/x-cbz" = pdfreader;
       "application/x-cbr" = pdfreader;
 
+      # --- Directories ---
+      "inode/directory" = "kitty-open.desktop";
+
       # --- Playlists ---
       "audio/x-mpegurl" = video;
       "application/vnd.apple.mpegurl" = video;
