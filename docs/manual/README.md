@@ -589,8 +589,10 @@ Additionally, a Markdown language policy is enforced:
 
 - To run native Wayland clients inside Gamescope (or even nested Hyprland), use `--expose-wayland`.
 - Command: `game-run gamescope --expose-wayland -- %command%`
-- Use case: running applications that require a Wayland socket (like some SDL3 apps or development tools) or for testing.
-- Note: Experimental. detailed input/focus issues may occur. Not needed for typical Steam/Proton gaming.
+- Use case: running applications that require a Wayland socket (like some SDL3 apps or development
+  tools) or for testing.
+- Note: Experimental. detailed input/focus issues may occur. Not needed for typical Steam/Proton
+  gaming.
 
 Notes:
 
