@@ -200,6 +200,8 @@ in {
       };
 
       # MangoHud is installed via systemPackages; toggle via MANGOHUD=1
+
+      anime-game-launcher.enable = true;
     };
 
     environment = {
