@@ -39,4 +39,47 @@ _: {
       };
     };
   };
+
+  # Pin link params and disable EEE/powersave on wired NICs
+  systemd.services = {
+    ethtool-net0 = {
+      description = "Set link params for net0 (Realtek 5GbE)";
+      after = ["systemd-networkd-wait-online.service"];
+      wants = ["systemd-networkd-wait-online.service"];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = let
+          script = pkgs.writeShellScript "ethtool-net0" ''
+            #!/bin/sh
+            set -e
+            IF=net0
+            [ -e /sys/class/net/$IF ] || exit 0
+            ${pkgs.ethtool}/bin/ethtool -s $IF speed 5000 duplex full autoneg on
+            ${pkgs.ethtool}/bin/ethtool --set-eee $IF eee off
+          '';
+        in "${script}";
+      };
+      wantedBy = ["multi-user.target"];
+    };
+
+    ethtool-net1 = {
+      description = "Set link params for net1 (Aquantia 10GbE)";
+      after = ["systemd-networkd-wait-online.service"];
+      wants = ["systemd-networkd-wait-online.service"];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = let
+          script = pkgs.writeShellScript "ethtool-net1" ''
+            #!/bin/sh
+            set -e
+            IF=net1
+            [ -e /sys/class/net/$IF ] || exit 0
+            ${pkgs.ethtool}/bin/ethtool -s $IF speed 10000 duplex full autoneg on
+            ${pkgs.ethtool}/bin/ethtool --set-eee $IF eee off
+          '';
+        in "${script}";
+      };
+      wantedBy = ["multi-user.target"];
+    };
+  };
 }
