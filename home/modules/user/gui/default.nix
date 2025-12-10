@@ -15,6 +15,7 @@
     ./swayosd
     ./qt.nix
     ./spicetify/default.nix
+    ./nekoray/default.nix
   ];
 
   systemd.user.targets.graphical-session = {
