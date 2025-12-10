@@ -76,7 +76,7 @@ in
         env = STEAM_FORCE_DESKTOPUI_SCALING,2
         env = QT_AUTO_SCREEN_SCALE_FACTOR,1
         env = QT_ENABLE_HIGHDPI_SCALING,1
-        env = XCURSOR_SIZE,32
+        env = XCURSOR_SIZE,23
         env = GDK_BACKEND,wayland
         env = QT_QPA_PLATFORM,wayland;xcb
         env = SDL_VIDEODRIVER,wayland
