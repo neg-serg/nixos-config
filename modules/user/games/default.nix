@@ -195,12 +195,12 @@ in {
       };
 
       gamescope = {
-        enable = true;
+        enable = false;
         package = pkgs.gamescope; # the default, here in case I want to override it
       };
 
       gamemode = {
-        enable = true;
+        enable = false;
         enableRenice = true;
         settings = {
           general = {
