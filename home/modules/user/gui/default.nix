@@ -14,6 +14,7 @@
     ./walker.nix
     ./swayosd
     ./qt.nix
+    ./spicetify/default.nix
   ];
 
   systemd.user.targets.graphical-session = {
