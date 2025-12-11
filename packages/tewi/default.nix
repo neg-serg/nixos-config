@@ -41,18 +41,16 @@ in
 
     postPatch = ''
       cat >> src/tewi/app.tcss <<'EOF'
-      Screen {
-        $primary: #367bbf;
-        $secondary: #0d1824;
-        $background: #000000;
-        $surface: #020202;
-        $success: #3CAF88;
-        $warning: #FFC44E;
-        $error: #CF4F88;
-        $accent: #98d3cb;
-        $text: #6C7E96;
-        $text-muted: #3D3D3D;
-      }
+      $primary: #367bbf;
+      $secondary: #0d1824;
+      $background: #000000;
+      $surface: #020202;
+      $success: #3CAF88;
+      $warning: #FFC44E;
+      $error: #CF4F88;
+      $accent: #98d3cb;
+      $text: #6C7E96;
+      $text-muted: #3D3D3D;
       EOF
     '';
 
