@@ -12,4 +12,5 @@ in
   // {
     neg = (functions.neg or {}) // (tools.neg or {}) // (media.neg or {}) // (dev.neg or {});
     subsonic-tui = final.callPackage ./subsonic-tui {};
+    wl-ocr = final.callPackage ./wl-ocr {};
   }
