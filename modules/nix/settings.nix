@@ -16,7 +16,7 @@ in {
 
   sops.secrets."github-netrc" = {
     sopsFile = repoRoot + "/secrets/github-netrc.sops.yaml";
-    owner = "root";
+    owner = config.users.main.name or "neg";
     mode = "0600";
   };
 
