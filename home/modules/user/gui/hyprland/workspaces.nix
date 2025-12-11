@@ -124,6 +124,21 @@ with lib; let
     windowrulev2 = size 1200 800, class:^(swayimg)$
     windowrulev2 = move 100 100, class:^(swayimg)$
     windowrulev2 = tag swayimg, class:^(swayimg)$
+
+    # gaming: immediate mode for low-latency input
+    windowrulev2 = immediate, class:^(osu!|cs2)$
+
+    # Bitwarden popup
+    windowrulev2 = float, title:^(.*Bitwarden Password Manager.*)$
+
+    # Calculator
+    windowrulev2 = float, class:^(org.gnome.Calculator)$
+    windowrulev2 = size 360 490, class:^(org.gnome.Calculator)$
+
+    # Picture-in-Picture (browser video popup)
+    windowrulev2 = float, title:^(Picture-in-Picture)$
+    windowrulev2 = pin, title:^(Picture-in-Picture)$
+
     # special
     windowrulev2 = fullscreen, $pic
   '';
