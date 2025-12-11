@@ -42,7 +42,7 @@ in
     postPatch = ''
       cat >> src/tewi/app.tcss <<'EOF'
       $primary: #367bbf;
-      $secondary: #0d1824;
+      $secondary: #050a10;
       $background: #000000;
       $surface: #020202;
       $success: #3CAF88;
