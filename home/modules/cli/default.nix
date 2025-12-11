@@ -31,6 +31,7 @@ in {
     ./zcli.nix
     ./yazi.nix
     ./superfile.nix
+    ./tewi.nix
   ];
   config = lib.mkMerge [
     {
