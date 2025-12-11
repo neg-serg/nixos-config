@@ -22,6 +22,7 @@ in
         description = "Neg";
       };
       # Host-specific feature toggles
+      features.dev.ai.enable = true;
       features.dev.ai.antigravity.enable = true;
       features.text.tex.enable = true;
       features.dev.tla.enable = true;
