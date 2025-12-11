@@ -25,6 +25,7 @@
     inherit (inputs) "spicetify-nix";
     inherit (inputs) "plasma-manager";
     inherit (inputs) "nix-index-database";
+    inherit (inputs) "yazi";
   };
   mainUser = config.users.main.name or "neg";
   hmModules = [
