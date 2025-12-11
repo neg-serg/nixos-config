@@ -57,12 +57,18 @@ in
             "# Edit and reload your shell to apply changes.\n"
             "alias:\n"
             # Core eza/ls aliases
-            (mkAlias "l" "eza --icons=auto --hyperlink")
-            (mkAlias "ll" "eza --icons=auto --hyperlink -l")
-            (mkAlias "lsd" "eza --icons=auto --hyperlink -alD --sort=created --color=always")
+            # Core eza/ls aliases
             (mkAlias "ls" "eza --icons=auto --hyperlink")
+            (mkAlias "l" "eza --icons=auto --hyperlink -lbF --git")
+            (mkAlias "ll" "eza --icons=auto --hyperlink -lbGF --git")
+            (mkAlias "llm" "eza --icons=auto --hyperlink -lbGF --git --sort=modified")
+            (mkAlias "la" "eza --icons=auto --hyperlink -lbhHigUmuSa --time-style=long-iso --git --color-scale")
+            (mkAlias "lx" "eza --icons=auto --hyperlink -lbhHigUmuSa@ --time-style=long-iso --git --color-scale")
+            (mkAlias "lt" "eza --icons=auto --hyperlink --tree --level=2")
             (mkAlias "eza" "eza --icons=auto --hyperlink")
+            (mkAlias "lS" "eza --icons=auto --hyperlink -1") # One entry per line
             (mkAlias "lcr" "eza --icons=auto --hyperlink -al --sort=created --color=always")
+            (mkAlias "lsd" "eza --icons=auto --hyperlink -alD --sort=created --color=always")
             # Core tools
             (mkAlias "cat" "bat -pp")
             (mkAlias "g" "git")
