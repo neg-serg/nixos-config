@@ -19,7 +19,28 @@ required.
 ## Enabling (NixOS snippets)
 
 If you use the `roles.homelab` role in this repo, Unbound is already enabled and configured as
-upstream for AdGuardHome. To collect metrics, enable the exporter and scrape job and add Prometheus
+upstream for AdGuardHome.
+
+### Using Comss.one DNS (optional)
+
+[Comss.one](https://www.comss.ru/page.php?id=7315) is a Russian privacy-focused DNS service that
+supports DNS-over-TLS. It may be useful when Cloudflare/Quad9 are blocked or unreliable.
+
+To enable Comss DNS as upstream resolver:
+
+```nix
+servicesProfiles.unbound = {
+  enable = true;
+  useComssDns = true;  # replaces default Cloudflare/Quad9 with Comss.one
+};
+```
+
+> **Note:** Comss DNS is disabled by default. When enabled, it overrides `dotUpstreams` with Comss
+> DoT servers (92.223.109.31, 93.115.24.204, 91.230.211.67 on port 853).
+
+### Metrics collection
+
+To collect metrics, enable the exporter and scrape job and add Prometheus
 to Grafana:
 
 ```nix
