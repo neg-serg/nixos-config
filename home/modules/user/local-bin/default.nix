@@ -157,7 +157,7 @@ with lib;
               #!/usr/bin/env bash
               set -e
 
-              REMOTE="''${1:-gdrive}"
+              REMOTE="''${1:-serg.zorg}"
               MOUNTPOINT="$HOME/GoogleDrive"
 
               if ! command -v rclone &>/dev/null; then
