@@ -1,6 +1,11 @@
-_: {
+{
+  inputs,
+  pkgs,
+  ...
+}: {
   programs.yazi = {
     enable = true;
+    package = inputs.yazi.packages.${pkgs.system}.default;
     enableZshIntegration = true;
     settings = {
       # Yazi 0.3+: [manager] -> [mgr]

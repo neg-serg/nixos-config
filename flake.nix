@@ -105,6 +105,10 @@
       url = "github:winapps-org/winapps";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    yazi = {
+      url = "github:sxyazi/yazi";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     yandex-browser = {
       url = "github:miuirussia/yandex-browser.nix";
       inputs.nixpkgs.follows = "nixpkgs";
