@@ -269,6 +269,10 @@ in {
       };
     };
 
+    net = {
+      tailscale.enable = mkBool "enable Tailscale mesh VPN and Tailray GUI" false;
+    };
+
     emulators = {
       retroarch.full = mkBool "use retroarchFull with extended (unfree) cores" false;
     };

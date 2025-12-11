@@ -17,6 +17,7 @@
     ./profiles/vm.nix
     ./profiles/aliases.nix
     ./net
+    ./tailscale.nix
     ./oomd.nix
     ./irqbalance.nix
     ./zram.nix
