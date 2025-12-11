@@ -46,7 +46,6 @@ in {
 
       services.listenbrainz-mpd = {
         enable = true;
-        tokenFile = config.sops.secrets.listenbrainz_token.path;
         settings = {
           mpd = {
             address = cfg.host;
@@ -55,7 +54,14 @@ in {
         };
       };
 
+      systemd.user.services.listenbrainz-mpd.Service.EnvironmentFile = config.sops.templates."listenbrainz-env".path;
+
       sops.secrets.listenbrainz_token = {};
+      sops.templates."listenbrainz-env" = {
+        content = ''
+          LISTENBRAINZ_TOKEN=${config.sops.secrets.listenbrainz_token.placeholder}
+        '';
+      };
 
       systemd.user.services = {
         mpdas = lib.mkMerge [
