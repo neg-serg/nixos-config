@@ -9,7 +9,16 @@ return {'saghen/blink.cmp',
     keymap = { preset = 'super-tab' }, -- See :h blink-cmp-config-keymap for defining your own keymap
     appearance = { nerd_font_variant = 'mono'},
     completion = { documentation = { auto_show = false } }, -- (Default) Only show the documentation popup when manually triggered
-    sources = {default = { 'lsp', 'path', 'snippets', 'buffer' },},
+    sources = {
+      default = { 'lsp', 'path', 'snippets', 'buffer', 'minuet' },
+      providers = {
+        minuet = {
+          name = 'minuet',
+          module = 'minuet.blink',
+          score_offset = 100,
+        },
+      },
+    },
     fuzzy = { implementation = "prefer_rust_with_warning" },
     -- highlight = {use_nvim_cmp_as_default = true,},
     -- windows = {
