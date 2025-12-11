@@ -112,7 +112,7 @@ return function()
         local S = setmetatable({
           folder='', sep='¦', modified=I('','*'), lock=I('🔒','RO'),
           search=I('','/'), rec=I('','REC'), gear=I('','[LSP]'),
-          branch=I('','[git]'), close=I('','[x]'),
+          branch=I('󰘵','[git]'), close=I('','[x]'),
           err=I('','E:'), warn=I('','W:'), utf8=I('','utf8'),
           latin=I('','enc'), linux=I('','unix'), mac=I('','mac'), win=I('','dos'),
           pilcrow=I('¶','¶'), wrap=I('⤶','↩'), doc=I('','[buf]'),
