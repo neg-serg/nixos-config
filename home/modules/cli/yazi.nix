@@ -5,7 +5,7 @@
 }: {
   programs.yazi = {
     enable = true;
-    package = inputs.yazi.packages.${pkgs.system}.default;
+    package = inputs.yazi.packages.${pkgs.stdenv.hostPlatform.system}.default;
     enableZshIntegration = true;
     settings = {
       # Yazi 0.3+: [manager] -> [mgr]
