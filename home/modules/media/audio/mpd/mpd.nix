@@ -47,8 +47,12 @@ in {
       services.listenbrainz-mpd = {
         enable = true;
         tokenFile = config.sops.secrets.listenbrainz_token.path;
-        mpd.address = cfg.host;
-        mpd.port = cfg.port;
+        settings = {
+          mpd = {
+            address = cfg.host;
+            port = cfg.port;
+          };
+        };
       };
 
       sops.secrets.listenbrainz_token = {};
