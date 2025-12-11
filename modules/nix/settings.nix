@@ -26,6 +26,7 @@ in {
     settings =
       {
         accept-flake-config = true;
+        builders-use-substitutes = true;
         show-trace = false;
         netrc-file = config.sops.secrets."github-netrc".path;
         system-features = [
