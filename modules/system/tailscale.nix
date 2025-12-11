@@ -13,7 +13,7 @@ in {
 
     # Tailray: GUI client for Tailscale
     # The tailray package comes from the flake input
-    environment.systemPackages = [inputs.tailray.packages.${pkgs.system}.default];
+    environment.systemPackages = [inputs.tailray.packages.${pkgs.stdenv.hostPlatform.system}.default];
 
     # Override start ordering for Tailray systemd user service
     # so it waits for graphical session (tray icon requirement)
