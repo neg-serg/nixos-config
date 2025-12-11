@@ -40,7 +40,7 @@ in
     };
 
     postPatch = ''
-      cat >> src/tewi/app.tcss <<EOF
+      cat >> src/tewi/app.tcss <<'EOF'
       Screen {
         $primary: #367bbf;
         $secondary: #0d1824;
