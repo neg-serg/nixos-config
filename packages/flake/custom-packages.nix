@@ -12,6 +12,7 @@
   webcamize = pkgs.neg.webcamize;
   rtcqs = pkgs.neg.rtcqs;
   tewi = pkgs.neg.tewi;
+  playscii = pkgs.neg.playscii;
   two_percent = pkgs.neg.two_percent;
   subsonic-tui = pkgs.subsonic-tui;
 
