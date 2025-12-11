@@ -10,5 +10,6 @@
     ./bitcoind
     ./seafile
     ./duckdns
+    ./gns3
   ];
 }
