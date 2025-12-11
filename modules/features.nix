@@ -172,6 +172,9 @@ in {
         core = mkBool "enable core Python development packages" true;
         tools = mkBool "enable Python tooling (LSP, utilities)" true;
       };
+      emacs = {
+        enable = mkBool "enable Emacs editor with org-babel config" false;
+      };
       tla.enable = mkBool "enable TLA+ tooling (toolbox, formatter)" false;
       unreal = {
         enable = mkBool "enable Unreal Engine 5 tooling" false;
