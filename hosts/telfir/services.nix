@@ -28,6 +28,7 @@ in
       features.apps.winapps.enable = true;
       features.gui.hy3.enable = true;
       features.hardware.usbAutomount.enable = true;
+      features.net.tailscale.enable = true;
       features.dev.openxr = {
         enable = true;
         runtime.service.enable = true;
