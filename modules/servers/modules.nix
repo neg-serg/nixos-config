@@ -11,5 +11,6 @@
     ./seafile
     ./duckdns
     ./gns3
+    ./geoclue
   ];
 }
