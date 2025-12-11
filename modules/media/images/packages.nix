@@ -26,6 +26,7 @@
     pkgs.gimp # full-featured raster editor
     pkgs.darktable # RAW editor/dam tailored to photographers
     pkgs.rawtherapee # alternative RAW developer (non-destructive)
+    pkgs.chainner # node-based image processing GUI (diffusion/upscale pipelines)
     pkgs.graphviz # render contact sheets / graph exports via dot
     pkgs.jpegoptim # lossy JPEG optimizer better than jpegtran
     pkgs.optipng # lossless PNG optimizer
