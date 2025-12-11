@@ -56,7 +56,10 @@ in {
 
       systemd.user.services.listenbrainz-mpd.Service.EnvironmentFile = config.sops.templates."listenbrainz-env".path;
 
-      sops.secrets.listenbrainz_token = {};
+      sops.secrets.listenbrainz_token = {
+        sopsFile = config.neg.repoRoot + "/secrets/home/musicbrainz";
+        format = "binary"; # It seems to be a binary/raw sops file based on ls output (no extension)
+      };
       sops.templates."listenbrainz-env" = {
         content = ''
           LISTENBRAINZ_TOKEN=${config.sops.secrets.listenbrainz_token.placeholder}
