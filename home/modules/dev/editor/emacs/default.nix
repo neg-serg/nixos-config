@@ -14,58 +14,58 @@ in {
       package = emacsPackage;
       extraPackages = epkgs:
         with epkgs; [
-          # Core
-          use-package
-          general
-          evil
-          evil-collection
-          which-key
+          # Core infrastructure
+          use-package # declarative package configuration
+          general # keybinding framework
+          evil # vim emulation layer
+          evil-collection # evil bindings for many modes
+          which-key # display available keybindings
 
-          # Completion
-          vertico
-          orderless
-          marginalia
-          consult
-          corfu
-          cape
+          # Completion framework
+          vertico # vertical completion UI
+          orderless # flexible matching style
+          marginalia # annotations in minibuffer
+          consult # search and navigation commands
+          corfu # in-buffer completion popup
+          cape # completion-at-point extensions
 
-          # UI
-          doom-themes
-          doom-modeline
-          all-the-icons
-          nerd-icons
-          rainbow-delimiters
+          # UI enhancements
+          doom-themes # curated theme collection
+          doom-modeline # fancy modeline
+          all-the-icons # icon support for dired/modeline
+          nerd-icons # nerd font icons
+          rainbow-delimiters # colorful parentheses
 
-          # Git
-          magit
-          git-gutter
-          git-gutter-fringe
+          # Git integration
+          magit # git porcelain
+          git-gutter # show git diff in fringe
+          git-gutter-fringe # bitmap fringe indicators
 
-          # Org
-          org
-          org-bullets
-          org-appear
-          toc-org
+          # Org-mode ecosystem
+          org # outliner and authoring system
+          org-bullets # fancy bullets for org headings
+          org-appear # reveal markup on cursor
+          toc-org # auto-generate table of contents
 
-          # LSP
-          eglot
+          # LSP/IDE features
+          eglot # built-in LSP client
 
-          # Languages
-          nix-mode
-          rust-mode
-          python-mode
-          yaml-mode
-          json-mode
-          markdown-mode
+          # Language modes
+          nix-mode # Nix expression syntax
+          rust-mode # Rust syntax and integration
+          python-mode # Python editing
+          yaml-mode # YAML files
+          json-mode # JSON files
+          markdown-mode # Markdown editing
 
-          # Tools
-          vterm
-          projectile
-          treemacs
-          treemacs-evil
-          undo-tree
-          wgrep
-          ripgrep
+          # Tools and utilities
+          vterm # terminal emulator
+          projectile # project management
+          treemacs # file tree sidebar
+          treemacs-evil # evil keybindings for treemacs
+          undo-tree # visual undo history
+          wgrep # writable grep buffers
+          ripgrep # fast search integration
         ];
     };
 
