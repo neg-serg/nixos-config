@@ -116,7 +116,7 @@ return function()
           err=I('','E:'), warn=I('','W:'), utf8=I('','utf8'),
           latin=I('','enc'), linux=I('','unix'), mac=I('','mac'), win=I('','dos'),
           pilcrow=I('¶','¶'), wrap=I('⤶','↩'), doc=I('','[buf]'),
-          plus=I('','+'), tilde=I('󰜥','~'), minus=I('','-'),
+          plus=I('','+'), tilde=I('󰜥','~'), minus=I('','-'),
         }, { __index = function(_, k) return '[' .. tostring(k) .. ']' end })
 
         -- Theme helpers
