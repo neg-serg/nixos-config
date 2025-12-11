@@ -2,6 +2,7 @@
   lib,
   pkgs,
   config,
+  inputs,
   ...
 }: let
   winappsCfg = config.features.apps.winapps or {};
@@ -28,6 +29,7 @@ in {
       pkgs.freerdp
       pkgs.virt-manager
       pkgs.qemu_kvm
+      inputs.winapps.packages.${pkgs.system}.winapps
     ];
   };
 }
