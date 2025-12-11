@@ -242,6 +242,7 @@ in {
         };
       };
     };
+    gns3.enable = opts.mkEnableOption "GNS3 network simulator profile.";
     openssh.enable = opts.mkEnableOption "OpenSSH (and mosh) profile.";
     mpd.enable = opts.mkEnableOption "MPD (Music Player Daemon) profile.";
     avahi.enable = opts.mkEnableOption "Avahi (mDNS) profile.";
