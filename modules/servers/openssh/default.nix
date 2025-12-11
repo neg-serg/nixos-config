@@ -17,6 +17,7 @@ in {
         PasswordAuthentication = false;
         KbdInteractiveAuthentication = false;
         PermitRootLogin = "no";
+        UseDns = true;
       };
     };
     programs.mosh.enable = true; # Opens the relevant UDP ports.
