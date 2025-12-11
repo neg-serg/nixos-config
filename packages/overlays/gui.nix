@@ -10,6 +10,7 @@ inputs: _: prev: let
     prev.callPackage path (autoArgs // extraArgs);
   hydralauncherPkg = callPkg (inputs.self + "/packages/hydralauncher") {};
   nyarchAssistantPkg = callPkg (inputs.self + "/packages/nyarch-assistant") {};
+  chainnerPkg = callPkg (inputs.self + "/packages/chainner") {};
 in {
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
     postPatch =
@@ -90,6 +91,7 @@ in {
 
   hydralauncher = hydralauncherPkg;
   _hydra = hydralauncherPkg;
+  chainner = chainnerPkg;
   "nyarch-assistant" = nyarchAssistantPkg;
   "_nyarch-assistant" = nyarchAssistantPkg;
 
