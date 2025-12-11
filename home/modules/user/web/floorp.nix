@@ -10,13 +10,22 @@ lib.mkIf (config.features.web.enable && config.features.web.floorp.enable) (let
   common = import ./mozilla-common-lib.nix {inherit lib pkgs config faProvider negLib;};
   # Floorp upstream source package is deprecated in nixpkgs >= 12.x; always use floorp-bin.
   floorpPkg = pkgs.floorp-bin;
+  profileId = "bqtlgdxw.default";
+
+  shimmerEnabled = config.features.web.floorp.shimmer.enable;
+  shimmer = pkgs.fetchFromGitHub {
+    owner = "nuclearcodecat";
+    repo = "shimmer";
+    rev = "main";
+    sha256 = "0ypwzyfbavdm4za8y0r2yz4b5aaw7g2j0q6n1ppixpr5q8m5ia1p";
+  };
 in
   lib.mkMerge [
     (common.mkBrowser {
       name = "floorp";
       package = floorpPkg;
       # Floorp uses flat profile tree; keep explicit id
-      profileId = "bqtlgdxw.default";
+      inherit profileId;
       # Keep navbar on top for Floorp.
       # Rationale:
       # - Floorp ships heavy UI theming (Lepton‑style tweaks); bottom pinning adds brittle CSS
@@ -28,6 +37,9 @@ in
       bottomNavbar = false;
       # Return to stock UI (no injected userChrome tweaks)
       vanillaChrome = true;
+      userChromeExtra = lib.optionalString shimmerEnabled ''
+        @import "shimmer/userChrome.css";
+      '';
       # Convenience tweaks: remove sponsored tiles on New Tab and
       # disable trending/Quicksuggest items in the urlbar.
       settingsExtra = {
@@ -79,4 +91,7 @@ in
         MOZ_ENABLE_WAYLAND = "1";
       };
     }
+    (lib.mkIf shimmerEnabled {
+      home.file.".floorp/${profileId}/chrome/shimmer".source = shimmer;
+    })
   ])
