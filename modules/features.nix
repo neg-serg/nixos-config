@@ -225,7 +225,10 @@ in {
       tools.enable = mkBool "enable web tools (aria2, yt-dlp, misc)" true;
       aria2.service.enable = mkBool "run aria2 download manager as a user service (graphical preset)" false;
       addonsFromNUR.enable = mkBool "install Mozilla addons from NUR packages (heavier eval)" true;
-      floorp.enable = mkBool "enable Floorp browser" true;
+      floorp = {
+        enable = mkBool "enable Floorp browser" true;
+        shimmer.enable = mkBool "enable Shimmer userChrome theme for Floorp" false;
+      };
       firefox.enable = mkBool "enable Firefox browser" false;
       librewolf.enable = mkBool "enable LibreWolf browser" false;
       nyxt.enable = mkBool "enable Nyxt browser" true;
