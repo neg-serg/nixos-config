@@ -40,8 +40,18 @@ in {
       services.mpdris2 = {
         enable = true;
         mpd.host = cfg.host;
+
         mpd.port = cfg.port;
       };
+
+      services.listenbrainz-mpd = {
+        enable = true;
+        tokenFile = config.sops.secrets.listenbrainz_token.path;
+        mpd.address = cfg.host;
+        mpd.port = cfg.port;
+      };
+
+      sops.secrets.listenbrainz_token = {};
 
       systemd.user.services = {
         mpdas = lib.mkMerge [
