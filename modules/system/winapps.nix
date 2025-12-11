@@ -29,7 +29,7 @@ in {
       pkgs.freerdp
       pkgs.virt-manager
       pkgs.qemu_kvm
-      inputs.winapps.packages.${pkgs.system}.winapps
+      inputs.winapps.packages.${pkgs.stdenv.hostPlatform.system}.winapps
     ];
   };
 }
