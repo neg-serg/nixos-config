@@ -43,6 +43,13 @@ in
       desktop = "floorp.desktop";
       newTabArg = "-new-tab";
     };
+    google-chrome = {
+      name = "google-chrome";
+      pkg = pkgs.google-chrome;
+      bin = lib.getExe' pkgs.google-chrome "google-chrome-stable";
+      desktop = "google-chrome.desktop";
+      newTabArg = "--new-tab";
+    };
   }
   // (lib.optionalAttrs (yandexBrowser != null) {
     yandex = {
