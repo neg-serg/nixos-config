@@ -19,6 +19,12 @@
     then "$env.${name}"
     else "$${name}";
 
+  # Helper for recursive aliases/standard commands in Nushell (force external)
+  mkCmd = name:
+    if isNushell
+    then "^${name}"
+    else name;
+
   hasRg = pkgs ? ripgrep;
   hasNmap = pkgs ? nmap;
   hasCurl = pkgs ? curl;
@@ -188,29 +194,13 @@
     (mkAlias "stash" "git stash")
     (mkAlias "status" "git status")
     # Misc
-    (mkAlias "sudo" "sudo ")
-    (mkAlias "cp" "${
-      if isNushell
-      then "^"
-      else ""
-    }cp --reflink=auto")
-    (mkAlias "mv" "${
-      if isNushell
-      then "^"
-      else ""
-    }mv -i")
-    (mkAlias "mk" "${
-      if isNushell
-      then "^"
-      else ""
-    }mkdir -p")
+    (mkAliasIf (!isNushell) "sudo" "sudo ")
+    (mkAlias "cp" "${mkCmd "cp"} --reflink=auto")
+    (mkAlias "mv" "${mkCmd "mv"} -i")
+    (mkAlias "mk" "${mkCmd "mkdir"} -p")
     (mkAlias "rd" "rmdir")
     (mkAlias "x" "xargs")
-    (mkAlias "sort" "${
-      if isNushell
-      then "^"
-      else ""
-    }sort --parallel 8 -S 16M")
+    (mkAlias "sort" "${mkCmd "sort"} --parallel 8 -S 16M")
     (mkAlias ":q" "exit")
     (mkAlias "s" "sudo ")
     (mkAlias "dig" "${
@@ -227,22 +217,22 @@
     (mkAlias "j" "journalctl")
     (mkAlias "emptydir" "emptydir")
     (mkAlias "jl" "jupyter lab --no-browser")
-    (mkAlias "dosbox" "dosbox -conf ${mkEnvVar "XDG_CONFIG_HOME"}/dosbox/dosbox.conf")
-    (mkAlias "gdb" "gdb -nh -x ${mkEnvVar "XDG_CONFIG_HOME"}/gdb/gdbinit")
-    (mkAlias "iostat" "iostat --compact -p -h -s")
+    (mkAlias "dosbox" "${mkCmd "dosbox"} -conf ${mkEnvVar "XDG_CONFIG_HOME"}/dosbox/dosbox.conf")
+    (mkAlias "gdb" "${mkCmd "gdb"} -nh -x ${mkEnvVar "XDG_CONFIG_HOME"}/gdb/gdbinit")
+    (mkAlias "iostat" "${mkCmd "iostat"} --compact -p -h -s")
     (mkAlias "mtrr" "mtr -wzbe")
     (mkAlias "nvidia-settings" "nvidia-settings --config=${mkEnvVar "XDG_CONFIG_HOME"}/nvidia/settings")
-    (mkAlias "ssh" "TERM=xterm-256color ssh")
+    (mkAliasIf (!isNushell) "ssh" "TERM=xterm-256color ssh")
     (mkAlias "matrix" "unimatrix -l Aang -s 95")
-    (mkAlias "svn" "svn --config-dir ${mkEnvVar "XDG_CONFIG_HOME"}/subversion")
-    (mkAlias "scp" "scp -r")
-    (mkAlias "dd" "dd status=progress")
-    (mkAlias "ip" "ip -c")
-    (mkAlias "readelf" "readelf -W")
-    (mkAlias "objdump" "objdump -M intel -d")
-    (mkAlias "strace" "strace -yy")
-    (mkAlias "xz" "xz --threads=0")
-    (mkAlias "zstd" "zstd --threads=0")
+    (mkAlias "svn" "${mkCmd "svn"} --config-dir ${mkEnvVar "XDG_CONFIG_HOME"}/subversion")
+    (mkAlias "scp" "${mkCmd "scp"} -r")
+    (mkAlias "dd" "${mkCmd "dd"} status=progress")
+    (mkAlias "ip" "${mkCmd "ip"} -c")
+    (mkAlias "readelf" "${mkCmd "readelf"} -W")
+    (mkAlias "objdump" "${mkCmd "objdump"} -M intel -d")
+    (mkAlias "strace" "${mkCmd "strace"} -yy")
+    (mkAlias "xz" "${mkCmd "xz"} --threads=0")
+    (mkAlias "zstd" "${mkCmd "zstd"} --threads=0")
     (mkAlias "ctl" "systemctl")
     (mkAlias "stl" "sudo systemctl")
     (mkAlias "utl" "systemctl --user")
@@ -251,8 +241,8 @@
     (mkAlias "up" "sudo systemctl start")
     (mkAlias "dn" "sudo systemctl stop")
     # Optional aliases
-    (mkAliasIf hasMpv "mpv" "mpv")
-    (mkAliasIf hasMpv "mp" "mpv")
+    (mkAliasIf hasMpv "mpv" "${mkCmd "mpv"}")
+    (mkAliasIf hasMpv "mp" "${mkCmd "mpv"}")
     (mkAliasIf hasMpv "mpa" "mpa")
     (mkAliasIf hasMpv "mpi" "mpi")
     (mkAliasIf hasRg "rg" "rg --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden")
@@ -268,7 +258,7 @@
     (mkAliasIf hasPigz "gzip" "pigz")
     (mkAliasIf hasPbzip2 "bzip2" "pbzip2")
     (mkAliasIf hasPlocate "locate" "plocate")
-    (mkAliasIf hasMpvc "mpvc" "mpvc -S ${mkEnvVar "XDG_CONFIG_HOME"}/mpv/socket")
+    (mkAliasIf hasMpvc "mpvc" "${mkCmd "mpvc"} -S ${mkEnvVar "XDG_CONFIG_HOME"}/mpv/socket")
     (mkAliasIf hasWget2 "wget" "wget2 --hsts-file ${mkEnvVar "XDG_DATA_HOME"}/wget-hsts")
     (mkAliasIf hasYtDlp "yt" "yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all")
     (mkAliasIf hasYtDlp "yta" "yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all --write-info-json")
@@ -293,7 +283,7 @@
     (mkAliasIf hasNixIndexDb "nlocate" "nix run github:nix-community/nix-index-database")
     (mkAliasIf hasFlatpak "bottles" "flatpak run com.usebottles.bottles")
     (mkAliasIf hasFlatpak "obs" "flatpak run com.obsproject.Studio")
-    (mkAliasIf hasFlatpak "onlyoffice" "QT_QPA_PLATFORM=xcb flatpak run org.onlyoffice.desktopeditors")
+    (mkAliasIf (hasFlatpak && !isNushell) "onlyoffice" "QT_QPA_PLATFORM=xcb flatpak run org.onlyoffice.desktopeditors")
     (mkAliasIf hasFlatpak "zoom" "flatpak run us.zoom.Zoom")
     # ugrep aliases
     (mkAliasIf hasUg "grep" "ug -G")
