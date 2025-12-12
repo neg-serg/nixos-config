@@ -14,7 +14,6 @@ in {
     ./broot.nix # nested fuzzy finding
     ./btop.nix
     ./fastfetch.nix
-    ./nushell.nix
     ./aliae.nix
     ./config-links.nix # dircolors, f-sy-h, zsh, inputrc
     ./amfora.nix

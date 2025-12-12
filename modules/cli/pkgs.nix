@@ -131,7 +131,6 @@ in {
       pkgs.blesh # bluetooth shell helpers
       pkgs.expect # automate interactive TTY programs
       pkgs.fish # alternative shell
-      pkgs.nushell # structured shell for scripts and exploration
       pkgs.powershell # Microsoft pwsh shell
       pkgs.readline # readline library
       pkgs.rlwrap # readline wrapper for everything
