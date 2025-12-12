@@ -13,10 +13,10 @@
     pkgs.ffmpegthumbnailer # generate thumbnails for videos (runners/rofi)
     pkgs.gmic # advanced image filters/CLI for batch work
     pkgs.imagemagick # fallback convert/mogrify for pipelines
-    pkgs.mediainfo # inspect video/audio metadata quickly
     pkgs.media-player-info # udev HW database for player IDs
-    pkgs.neg.mkvcleaner # custom Matroska cleanup tool
+    pkgs.mediainfo # inspect video/audio metadata quickly
     pkgs.mpvc # mpv TUI controller
+    pkgs.neg.mkvcleaner # custom Matroska cleanup tool
     pkgs.neg.webcamize # use camera as webcam
   ];
 in {
