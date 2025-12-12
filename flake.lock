@@ -1630,6 +1630,7 @@
         "stylix": "stylix",
         "tailray": "tailray",
         "winapps": "winapps",
+        "wrapper-manager": "wrapper-manager",
         "xdg-desktop-portal-hyprland": [
           "hyprland",
           "xdph"
@@ -2188,6 +2189,21 @@
       "original": {
         "owner": "winapps-org",
         "repo": "winapps",
+        "type": "github"
+      }
+    },
+    "wrapper-manager": {
+      "locked": {
+        "lastModified": 1757156862,
+        "narHash": "sha256-OGXsTE5jWhGiFfK6OwMvjksrYSobsIFUSUzKsexCDxY=",
+        "owner": "viperML",
+        "repo": "wrapper-manager",
+        "rev": "801dd9c876fcada046af45543e8c7e0bbccf20ea",
+        "type": "github"
+      },
+      "original": {
+        "owner": "viperML",
+        "repo": "wrapper-manager",
         "type": "github"
       }
     },
