@@ -36,7 +36,10 @@ in {
       # Nushell wrapper
       nushell = let
         # Generate the aliae configuration file at build time
-        aliaeContent = import ../../lib/aliae.nix {inherit lib pkgs;};
+        aliaeContent = import ../../lib/aliae.nix {
+          inherit lib pkgs;
+          isNushell = true;
+        };
         aliaeConfig = pkgs.writeText "aliae.yaml" aliaeContent;
 
         # Create a self-contained configuration directory in the Nix store
