@@ -26,11 +26,12 @@ _: {
       enable = true;
       nix-direnv.enable = true;
       enableZshIntegration = true;
-      enableBashIntegration = true;
+      enableBashIntegration = false;
     };
     oh-my-posh = {
       enable = true;
-      enableBashIntegration = true;
+      # Bash integration handled manually in ~/.config/bash/bashrc with runtime eval
+      enableBashIntegration = false;
       enableZshIntegration = false;
       settings = builtins.fromJSON (builtins.readFile ../../files/shell/zsh/neg.omp.json);
     };
