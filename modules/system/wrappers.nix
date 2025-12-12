@@ -1,16 +1,21 @@
 {
   pkgs,
-  config,
   lib,
+  config,
+  inputs,
   ...
 }: let
   cfg = config.features.gui.enable or false;
 in {
-  config = lib.mkIf cfg {
-    programs.wrapper-manager.enable = true;
+  imports = [
+    # Import the wrapper-manager generic module
+    (inputs.wrapper-manager + "/modules/many-wrappers.nix")
+  ];
 
-    programs.wrapper-manager.wrappers = {
-      # Nextcloud wrapper with GPU disabled to prevent crashes
+  config = lib.mkIf cfg {
+    # Define wrappers using the generic module options
+    wrappers = {
+      # Nextcloud wrapper with GPU disabled
       nextcloud = {
         basePackage = pkgs.nextcloud-client;
         flags = [
@@ -26,12 +31,12 @@ in {
       # Pyprland Client wrapper
       pypr-client = {
         basePackage = pkgs.pyprland;
-        # Rename the binary from pypr to pypr-client to match old script
-        # Actually wrapper-manager creates a wrapper named 'pypr-client' that calls basePackage binary
-        # We need to specify the target binary if it differs?
-        # By default it wraps the main binary.
-        # But we want 'pypr-client' command to exist.
       };
     };
+
+    # Install the built wrappers into system packages
+    environment.systemPackages = [
+      config.build.toplevel
+    ];
   };
 }
