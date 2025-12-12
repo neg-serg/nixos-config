@@ -26,11 +26,11 @@ in {
     ./tmux.nix
     ./tig.nix
     ./television
-    ./television
     ./zcli.nix
     ./yazi.nix
     ./superfile.nix
     ./tewi.nix
+    ./nushell.nix # nushell with oh-my-posh and aliae
   ];
   config = lib.mkMerge [
     {
