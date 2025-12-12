@@ -25,7 +25,7 @@ in
       hash = "sha256-SUPzVwtMi+5Jq28KzqjXNWJCZkgk9nHelLvHBh42JVo=";
     };
 
-    npmDepsHash = "sha256-VhaaVdUoE/kiMywZbTJwAJUj5IsERe9ooF7k+Ti4s7Q=";
+    npmDepsHash = "sha256-MyBqVdKseKbNfet/b+1TU7YJtHaQbTRY4xYgaqVM3ys=";
 
     patches = [
       ./fix-config-and-version.patch
