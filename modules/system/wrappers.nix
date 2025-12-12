@@ -162,8 +162,9 @@ in {
         bashRun = pkgs.writeShellScriptBin "bash" ''
           export XDG_CACHE_HOME="$HOME/.cache"
           mkdir -p "$XDG_CACHE_HOME/oh-my-posh"
-          # Remove stale init scripts to force regeneration
-          rm -f "$XDG_CACHE_HOME/oh-my-posh/init."*".sh"
+          # Pre-generate the oh-my-posh init script BEFORE starting bash
+          # This ensures the file exists when bashrc tries to source it
+          ${pkgs.oh-my-posh}/bin/oh-my-posh init bash > /dev/null 2>&1
           exec ${pkgs.bashInteractive}/bin/bash --rcfile ${bashConfig}/bashrc "$@"
         '';
       in {
