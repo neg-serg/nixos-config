@@ -46,6 +46,9 @@ in {
 
       # Nushell wrapper
       nushell = let
+        # oh-my-posh theme configuration (shared with bash wrapper)
+        ompConfig = ../../home/files/shell/zsh/neg.omp.json;
+
         # Generate the aliae configuration file at build time
         aliaeContent = import ../../lib/aliae.nix {
           inherit lib pkgs;
@@ -77,7 +80,7 @@ in {
 
         nushellRun = pkgs.writeShellScriptBin "nu" ''
           mkdir -p ~/.cache/oh-my-posh
-          OMP_OUT=$(${pkgs.oh-my-posh}/bin/oh-my-posh init nu --print 2>&1 || echo "failed")
+          OMP_OUT=$(${pkgs.oh-my-posh}/bin/oh-my-posh init nu --config ${ompConfig} --print 2>&1 || echo "failed")
 
           if [[ "$OMP_OUT" == *"Failed to write init script"* ]] || [[ "$OMP_OUT" == "failed" ]]; then
             echo "# oh-my-posh failed to initialize: $OMP_OUT" > ~/.cache/oh-my-posh.nu
@@ -103,6 +106,9 @@ in {
 
       # Bash wrapper
       bash = let
+        # oh-my-posh theme configuration (same as nushell wrapper)
+        ompConfig = ../../home/files/shell/zsh/neg.omp.json;
+
         # Aliae configuration for Bash
         aliaeContentBash = import ../../lib/aliae.nix {
           inherit lib pkgs;
@@ -161,7 +167,7 @@ in {
 
            # Initialize Oh-My-Posh (Runtime)
            # mkdir handled in bashRun
-           eval "$(${pkgs.oh-my-posh}/bin/oh-my-posh init bash)"
+           eval "$(${pkgs.oh-my-posh}/bin/oh-my-posh init bash --config ${ompConfig})"
 
           EOF
         '';
@@ -171,7 +177,7 @@ in {
           mkdir -p "$XDG_CACHE_HOME/oh-my-posh"
           # Pre-generate the oh-my-posh init script BEFORE starting bash
           # This ensures the file exists when bashrc tries to source it
-          ${pkgs.oh-my-posh}/bin/oh-my-posh init bash > /dev/null 2>&1
+          ${pkgs.oh-my-posh}/bin/oh-my-posh init bash --config ${ompConfig} > /dev/null 2>&1
           exec ${pkgs.bashInteractive}/bin/bash --rcfile ${bashConfig}/bashrc "$@"
         '';
       in {
