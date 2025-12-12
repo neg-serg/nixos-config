@@ -75,10 +75,10 @@ update_package() {
 # List of packages to maintain
 # You can add more directories here as needed
 PACKAGES=(
-  "packages/mcp/firecrawl"
+  # "packages/mcp/firecrawl" # Broken lockfile v3 / npm audit upstream issues
   "packages/mcp/memory"
   "packages/mcp/ripgrep"
-  "packages/mcp/sequentialthinking"
+  # "packages/mcp/sequentialthinking" # Broken lockfile v3 / npm audit upstream issues
   "packages/mcp/server-filesystem"
   "packages/awrit"
   "home/modules/user/gui/vicinae/extensions/neg-hello"
