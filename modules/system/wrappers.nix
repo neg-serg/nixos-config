@@ -33,6 +33,17 @@ in {
         basePackage = pkgs.pyprland;
       };
 
+      # ncpamixer wrapper (audio mixer)
+      ncpamixer = let
+        ncpaConfig = pkgs.writeText "ncpamixer.conf" (builtins.readFile ../../home/modules/media/audio/ncpamixer.conf);
+      in {
+        basePackage = pkgs.ncpamixer;
+        prependFlags = [
+          "-c"
+          "${ncpaConfig}"
+        ];
+      };
+
       # Nushell wrapper
       nushell = let
         # Generate the aliae configuration file at build time
