@@ -50,6 +50,7 @@ in {
           } ''
             export HOME=$TMPDIR
             ${pkgs.oh-my-posh}/bin/oh-my-posh init nu --print > $out
+            sed -i "s|$TMPDIR|\$env.HOME|g" $out
           '';
 
         nuConfig = pkgs.runCommand "nushell-config" {} ''
@@ -79,6 +80,85 @@ in {
           # Provide Nushell module search path via NU_LIB_DIRS
           NU_LIB_DIRS.value = "$HOME/.config/nushell/modules";
         };
+      };
+
+      # Bash wrapper
+      bash = let
+        # Aliae configuration for Bash
+        aliaeContentBash = import ../../lib/aliae.nix {
+          inherit lib pkgs;
+          isNushell = false;
+        };
+        aliaeConfigBash = pkgs.writeText "aliae-bash.yaml" aliaeContentBash;
+
+        ohMyPoshInitBash =
+          pkgs.runCommand "oh-my-posh-init.bash" {
+            buildInputs = [pkgs.bashInteractive];
+          } ''
+            export HOME=$TMPDIR
+            ${pkgs.oh-my-posh}/bin/oh-my-posh init bash --print > $out
+            sed -i "s|$TMPDIR|\$HOME|g" $out
+          '';
+
+        bashConfig = pkgs.runCommand "bash-config" {} ''
+          mkdir -p $out
+
+          # Generate static aliae init script
+          ${pkgs.aliae}/bin/aliae init bash --config ${aliaeConfigBash} > $out/aliae.bash
+
+          cat <<EOF > $out/bashrc
+          # Source global definitions
+          if [ -f /etc/bashrc ]; then
+              . /etc/bashrc
+          fi
+
+          # Bash options from old config
+          shopt -qs autocd 2>/dev/null
+          shopt -qs cdspell 2>/dev/null
+          shopt -qs checkhash 2>/dev/null
+          shopt -s checkwinsize 2>/dev/null
+          shopt -s cmdhist 2>/dev/null
+          shopt -qs direxpand 2>/dev/null
+          shopt -qs dirspell 2>/dev/null
+          shopt -qs dotglob 2>/dev/null
+          shopt -qs extglob 2>/dev/null
+          shopt -qs extquote 2>/dev/null
+          shopt -qs globstar 2>/dev/null
+          shopt -qs histappend histreedit histverify 2>/dev/null
+          shopt -qs hostcomplete 2>/dev/null
+          shopt -s nocaseglob nocasematch 2>/dev/null
+
+          # Custom functions
+          any(){
+              [ -n "\$1" ] && ps uwwwp \$(pgrep -f "\$@")
+          }
+
+          # Bindings (skip if not interactive or warnings issues)
+          bind 'set show-all-if-ambiguous on' 2>/dev/null || true
+          bind 'set completion-ignore-case on' 2>/dev/null || true
+          bind 'set completion-map-case on' 2>/dev/null || true
+          bind 'TAB:menu-complete' 2>/dev/null || true
+          bind 'set mark-symlinked-directories on' 2>/dev/null || true
+
+          # History settings
+          HISTFILESIZE=100000
+          HISTCONTROL="erasedups:ignoreboth"
+          export HISTIGNORE="&:[ ]*:exit:ls:bg:fg:history:clear"
+          HISTTIMEFORMAT='%F %T '
+
+          # Initialize Aliae aliases
+          source $out/aliae.bash
+
+          # Initialize Oh-My-Posh
+          source ${ohMyPoshInitBash}
+          EOF
+        '';
+      in {
+        basePackage = pkgs.bashInteractive;
+        prependFlags = [
+          "--rcfile"
+          "${bashConfig}/bashrc"
+        ];
       };
     };
 
