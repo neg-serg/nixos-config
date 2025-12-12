@@ -48,6 +48,7 @@ in {
           pkgs.runCommand "oh-my-posh-init.nu" {
             buildInputs = [pkgs.nushell];
           } ''
+            export HOME=$TMPDIR
             ${pkgs.oh-my-posh}/bin/oh-my-posh init nu --print > $out
           '';
 
