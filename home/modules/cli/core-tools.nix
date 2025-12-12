@@ -29,8 +29,10 @@ _: {
       enableBashIntegration = true;
     };
     oh-my-posh = {
-      enable = false;
-      useTheme = "atomic";
+      enable = true;
+      enableBashIntegration = true;
+      enableZshIntegration = false;
+      settings = builtins.fromJSON (builtins.readFile ../../files/shell/zsh/neg.omp.json);
     };
     nix-your-shell.enable = true;
   };
