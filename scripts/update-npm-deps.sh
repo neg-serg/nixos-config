@@ -76,7 +76,7 @@ update_package() {
 # You can add more directories here as needed
 PACKAGES=(
   # "packages/mcp/firecrawl" # Broken lockfile v3 / npm audit upstream issues
-  "packages/mcp/memory"
+  # "packages/mcp/memory" # Issues with npm audit and prefetch-npm-deps
   "packages/mcp/ripgrep"
   # "packages/mcp/sequentialthinking" # Broken lockfile v3 / npm audit upstream issues
   "packages/mcp/server-filesystem"
