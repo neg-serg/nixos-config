@@ -32,11 +32,41 @@ in {
       pypr-client = {
         basePackage = pkgs.pyprland;
       };
+
+      # Nushell wrapper
+      nushell = let
+        # Create a self-contained configuration directory in the Nix store
+        # referencing the files from the repo.
+        nuConfig = pkgs.runCommand "nushell-config" {} ''
+          mkdir -p $out
+          cp -r ${../../home/modules/cli/nushell-conf}/* $out/
+          chmod -R +w $out
+
+          # Patch config.nu to point to the store path files instead of looking up XDG_CONFIG_HOME
+          # Original lines look like: source $"($env.XDG_CONFIG_HOME)/nushell/aliases.nu"
+          # We replace $"($env.XDG_CONFIG_HOME)/nushell with "$out
+          # leaving the trailing part /aliases.nu" intact, forming "$out/aliases.nu"
+          sed -i 's|\$"(\$env.XDG_CONFIG_HOME)/nushell|"'"$out"'|g' $out/config.nu
+        '';
+      in {
+        basePackage = pkgs.nushell;
+        prependFlags = [
+          "--config"
+          "${nuConfig}/config.nu"
+          "--env-config"
+          "${nuConfig}/env.nu"
+        ];
+        env = {
+          # Provide Nushell module search path via NU_LIB_DIRS
+          NU_LIB_DIRS.value = "$HOME/.config/nushell/modules";
+        };
+      };
     };
 
     # Install the built wrappers into system packages
     environment.systemPackages = [
       config.build.toplevel
+      pkgs.oh-my-posh # Required for nushell prompt
     ];
   };
 }
