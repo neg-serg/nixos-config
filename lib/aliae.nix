@@ -137,7 +137,7 @@
     (mkAlias "gpd" "git push --dry-run")
     (mkAlias "gpf" "git push --force-with-lease")
     (mkAlias "gpf!" "git push --force")
-    (mkAlias "gpr" "git pull --rebase")
+    (mkAliasIf (!isNushell) "gpr" "git pull --rebase")
     (mkAlias "gpv" "git push -v")
     (mkAlias "gr" "git remote")
     (mkAlias "gra" "git remote --add")
@@ -171,10 +171,10 @@
     (mkAlias "gswc" "git switch -c")
     (mkAlias "gts" "git tag -s")
     (mkAlias "gu" "git reset --soft 'HEAD^'")
-    (mkAlias "gup" "git pull --rebase")
-    (mkAlias "gupa" "git pull --rebase --autostash")
-    (mkAlias "gupav" "git pull --rebase --autostash -v")
-    (mkAlias "gupv" "git pull --rebase -v")
+    (mkAliasIf (!isNushell) "gup" "git pull --rebase")
+    (mkAliasIf (!isNushell) "gupa" "git pull --rebase --autostash")
+    (mkAliasIf (!isNushell) "gupav" "git pull --rebase --autostash -v")
+    (mkAliasIf (!isNushell) "gupv" "git pull --rebase -v")
     (mkAlias "gwch" "git whatchanged -p --abbrev-commit --pretty=medium")
     (mkAlias "pull" "git pull")
     (mkAlias "push" "git push")
@@ -183,12 +183,26 @@
     (mkAlias "status" "git status")
     # Misc
     (mkAlias "sudo" "sudo ")
-    (mkAlias "cp" "cp --reflink=auto")
-    (mkAlias "mv" "mv -i")
-    (mkAlias "mk" "mkdir -p")
+    (mkAlias "cp" "${
+      if isNushell
+      then "^"
+      else ""
+    }cp --reflink=auto")
+    (mkAlias "mv" "${
+      if isNushell
+      then "^"
+      else ""
+    }mv -i")
+    (mkAlias "mk" "mkdir -p") # mkdir builtin supports -p? No invalid flag if checked. But wait, mk -> mkdir -p. mkdir is builtin.
+    # Nu mkdir has -v but no -p (it's auto?). Let's force external for consistency or check docs.
+    # Safest is external for `mk` -> `^mkdir -p` if nu.
     (mkAlias "rd" "rmdir")
     (mkAlias "x" "xargs")
-    (mkAlias "sort" "sort --parallel 8 -S 16M")
+    (mkAlias "sort" "${
+      if isNushell
+      then "^"
+      else ""
+    }sort --parallel 8 -S 16M")
     (mkAlias ":q" "exit")
     (mkAlias "s" "sudo ")
     (mkAlias "dig" "dig +noall +answer")
