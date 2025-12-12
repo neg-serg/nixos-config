@@ -26,10 +26,10 @@ in {
     # - virt-manager / qemu_kvm are typically provided by modules/system/virt.nix,
     #   but kept here as mkAfter to ensure they are present on WinApps hosts.
     environment.systemPackages = lib.mkAfter [
-      pkgs.freerdp
-      pkgs.virt-manager
-      pkgs.qemu_kvm
       inputs.winapps.packages.${pkgs.stdenv.hostPlatform.system}.winapps
+      pkgs.freerdp
+      pkgs.qemu_kvm
+      pkgs.virt-manager
     ];
   };
 }
