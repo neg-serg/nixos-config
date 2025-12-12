@@ -33,6 +33,7 @@
     inputs.stylix.homeModules.stylix
     inputs.nvf.homeManagerModules.default
     inputs."sops-nix".homeManagerModules.sops
+    inputs.wrapper-manager.homeModules.default
   ];
   cfgPath = extraArgs.negPaths.hmConfigRoot;
   userConfig = {
