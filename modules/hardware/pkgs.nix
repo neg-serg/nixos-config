@@ -1,8 +1,8 @@
 {pkgs, ...}: {
   environment.systemPackages = [
     # -- Bluetooth --
-    pkgs.overskride # bluetooth and obex client
     pkgs.bluez-tools # command line bluetooth manager
+    pkgs.overskride # bluetooth and obex client
 
     # -- Display --
     pkgs.brightnessctl # backlight control helper
