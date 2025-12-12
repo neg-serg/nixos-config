@@ -60,13 +60,17 @@ in {
                     # We use a constant string path for source to avoid parse errors.
           substituteInPlace $out/config.nu \
             --replace "source @OH_MY_POSH_INIT@" "
-          ^mkdir -p ~/.cache/oh-my-posh
-          oh-my-posh init nu --print | save -f ~/.cache/oh-my-posh.nu
           source ~/.cache/oh-my-posh.nu
           "
         '';
+
+        nushellRun = pkgs.writeShellScriptBin "nu" ''
+          mkdir -p ~/.cache/oh-my-posh
+          ${pkgs.oh-my-posh}/bin/oh-my-posh init nu --print > ~/.cache/oh-my-posh.nu 2>/dev/null || true
+          exec ${pkgs.nushell}/bin/nu "$@"
+        '';
       in {
-        basePackage = pkgs.nushell;
+        basePackage = nushellRun;
         prependFlags = [
           "--config"
           "${nuConfig}/config.nu"
