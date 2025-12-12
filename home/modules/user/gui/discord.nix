@@ -2,58 +2,254 @@
   lib,
   pkgs,
   config,
-  xdg,
   ...
 }: let
   guiEnabled = config.features.gui.enable or false;
-  cfg = config.features.apps.discord.system24Theme or {};
-  themeUrl = "https://raw.githubusercontent.com/refact0r/system24/main/theme/system24.theme.css";
-  themeFile = pkgs.fetchurl {
-    url = themeUrl;
-    sha256 = "sha256-6Qx+10/3Nf7IF3VQmf/r76qOuHHlOOU0RpxppVe4slI=";
+
+  # User provided Vesktop configuration
+  vesktopConfig = {
+    settings = {
+      notifyAboutUpdates = true;
+      autoUpdate = false;
+      autoUpdateNotification = true;
+      useQuickCss = true;
+      themeLinks = [
+        "https://raw.githubusercontent.com/catppuccin/discord/main/themes/mocha.theme.css"
+      ];
+      enableReactDevtools = false;
+      frameless = false;
+      transparent = false;
+      winCtrlQ = false;
+      macosTranslucency = false;
+      disableMinSize = false;
+      winNativeTitleBar = false;
+      plugins = {
+        BadgeAPI = {enabled = true;};
+        CommandsAPI = {enabled = true;};
+        ContextMenuAPI = {enabled = true;};
+        MemberListDecoratorsAPI = {enabled = false;};
+        MessageAccessoriesAPI = {enabled = true;};
+        MessageDecorationsAPI = {enabled = false;};
+        MessageEventsAPI = {enabled = true;};
+        MessagePopoverAPI = {enabled = false;};
+        NoticesAPI = {enabled = true;};
+        ServerListAPI = {enabled = false;};
+        SettingsStoreAPI = {enabled = false;};
+        NoTrack = {enabled = true;};
+        Settings = {
+          enabled = true;
+          settingsLocation = "aboveActivity";
+        };
+        AlwaysAnimate = {enabled = false;};
+        AlwaysTrust = {enabled = false;};
+        AnonymiseFileNames = {
+          enabled = true;
+          method = 0;
+          randomisedLength = 7;
+        };
+        BANger = {enabled = false;};
+        BetterFolders = {
+          enabled = false;
+          sidebar = true;
+          closeAllHomeButton = false;
+          sidebarAnim = true;
+          closeAllFolders = false;
+          forceOpen = false;
+        };
+        BetterGifAltText = {enabled = true;};
+        BetterNotesBox = {enabled = false;};
+        BetterRoleDot = {enabled = false;};
+        BetterUploadButton = {enabled = true;};
+        BiggerStreamPreview = {enabled = true;};
+        BlurNSFW = {enabled = false;};
+        CallTimer = {enabled = true;};
+        ClearURLs = {enabled = true;};
+        ColorSighted = {enabled = false;};
+        ConsoleShortcuts = {enabled = false;};
+        CrashHandler = {enabled = true;};
+        CustomRPC = {enabled = false;};
+        DisableDMCallIdle = {enabled = false;};
+        EmoteCloner = {enabled = true;};
+        Experiments = {enabled = false;};
+        F8Break = {enabled = false;};
+        FakeNitro = {
+          enabled = true;
+          enableEmojiBypass = true;
+          emojiSize = 48;
+          transformEmojis = true;
+          enableStickerBypass = true;
+          stickerSize = 160;
+          transformStickers = true;
+          transformCompoundSentence = false;
+          enableStreamQualityBypass = true;
+        };
+        FakeProfileThemes = {enabled = false;};
+        FavoriteEmojiFirst = {enabled = false;};
+        FixInbox = {enabled = false;};
+        ForceOwnerCrown = {enabled = false;};
+        FriendInvites = {enabled = false;};
+        GameActivityToggle = {enabled = false;};
+        GifPaste = {enabled = false;};
+        HideAttachments = {enabled = false;};
+        iLoveSpam = {enabled = false;};
+        IgnoreActivities = {enabled = false;};
+        ImageZoom = {enabled = false;};
+        InvisibleChat = {enabled = false;};
+        KeepCurrentChannel = {enabled = false;};
+        LastFMRichPresence = {enabled = false;};
+        LoadingQuotes = {enabled = false;};
+        MemberCount = {enabled = true;};
+        MessageClickActions = {enabled = false;};
+        MessageLinkEmbeds = {enabled = true;};
+        MessageLogger = {enabled = true;};
+        MessageTags = {enabled = false;};
+        MoreCommands = {enabled = false;};
+        MoreKaomoji = {enabled = false;};
+        MoreUserTags = {
+          enabled = false;
+          tagSettings = {
+            WEBHOOK = {
+              text = "Webhook";
+              showInChat = true;
+              showInNotChat = true;
+            };
+            OWNER = {
+              text = "Owner";
+              showInChat = true;
+              showInNotChat = true;
+            };
+            ADMINISTRATOR = {
+              text = "Admin";
+              showInChat = true;
+              showInNotChat = true;
+            };
+            MODERATOR_STAFF = {
+              text = "Staff";
+              showInChat = true;
+              showInNotChat = true;
+            };
+            MODERATOR = {
+              text = "Mod";
+              showInChat = true;
+              showInNotChat = true;
+            };
+            VOICE_MODERATOR = {
+              text = "VC Mod";
+              showInChat = true;
+              showInNotChat = true;
+            };
+          };
+        };
+        Moyai = {
+          enabled = false;
+          volume = 0.5;
+          triggerWhenUnfocused = true;
+          ignoreBots = true;
+        };
+        MuteNewGuild = {enabled = false;};
+        MutualGroupDMs = {enabled = false;};
+        NoBlockedMessages = {enabled = false;};
+        NoDevtoolsWarning = {enabled = false;};
+        NoF1 = {enabled = false;};
+        NoPendingCount = {enabled = false;};
+        NoProfileThemes = {enabled = false;};
+        NoRPC = {enabled = false;};
+        NoReplyMention = {enabled = false;};
+        NoScreensharePreview = {enabled = false;};
+        NoSystemBadge = {enabled = false;};
+        NoUnblockToJump = {enabled = false;};
+        NSFWGateBypass = {enabled = true;};
+        oneko = {enabled = true;};
+        "Party mode 🎉" = {enabled = false;};
+        PermissionsViewer = {enabled = true;};
+        petpet = {enabled = false;};
+        PinDMs = {enabled = false;};
+        PlainFolderIcon = {enabled = false;};
+        PlatformIndicators = {enabled = false;};
+        PronounDB = {enabled = false;};
+        QuickMention = {enabled = false;};
+        QuickReply = {enabled = false;};
+        ReactErrorDecoder = {enabled = false;};
+        ReadAllNotificationsButton = {enabled = false;};
+        RelationshipNotifier = {enabled = true;};
+        RevealAllSpoilers = {enabled = false;};
+        ReverseImageSearch = {enabled = false;};
+        ReviewDB = {enabled = false;};
+        RoleColorEverywhere = {enabled = false;};
+        SearchReply = {enabled = false;};
+        SendTimestamps = {enabled = false;};
+        ServerListIndicators = {enabled = false;};
+        ShikiCodeblocks = {enabled = false;};
+        ShowAllMessageButtons = {enabled = false;};
+        ShowConnections = {enabled = false;};
+        ShowHiddenChannels = {enabled = false;};
+        ShowMeYourName = {
+          enabled = true;
+          mode = "nick-user";
+          inReplies = false;
+        };
+        SilentMessageToggle = {enabled = false;};
+        SilentTyping = {enabled = false;};
+        SortFriendRequests = {enabled = false;};
+        SpotifyControls = {enabled = false;};
+        SpotifyCrack = {enabled = false;};
+        SpotifyShareCommands = {enabled = false;};
+        StartupTimings = {enabled = false;};
+        SupportHelper = {enabled = true;};
+        TextReplace = {enabled = false;};
+        TimeBarAllActivities = {enabled = false;};
+        Translate = {enabled = false;};
+        TypingIndicator = {enabled = true;};
+        TypingTweaks = {enabled = false;};
+        Unindent = {enabled = true;};
+        UnsuppressEmbeds = {enabled = false;};
+        UrbanDictionary = {enabled = false;};
+        UserVoiceShow = {enabled = false;};
+        USRBG = {enabled = false;};
+        UwUifier = {enabled = false;};
+        ValidUser = {enabled = true;};
+        VoiceChatDoubleClick = {enabled = true;};
+        VcNarrator = {enabled = false;};
+        VencordToolbox = {enabled = false;};
+        ViewIcons = {enabled = true;};
+        ViewRaw = {enabled = false;};
+        VolumeBooster = {enabled = false;};
+        GreetStickerPicker = {enabled = false;};
+        WhoReacted = {enabled = false;};
+        Wikisearch = {enabled = false;};
+        "WebRichPresence (arRPC)" = {enabled = false;};
+        WebContextMenus = {
+          enabled = true;
+          addBack = false;
+        };
+      };
+      notifications = {
+        timeout = 5000;
+        position = "bottom-right";
+        useNative = "not-focused";
+        logLimit = 50;
+      };
+      cloud = {
+        authenticated = false;
+        url = "https://api.vencord.dev/";
+        settingsSync = false;
+        settingsSyncVersion = 1689448932291;
+      };
+    };
+    quickCss = "";
   };
-  themePath = "${config.xdg.configHome}/Vencord/themes/system24.theme.css";
-  settingsPath = "${config.xdg.configHome}/Vencord/settings/settings.json";
-  themeEnabled = guiEnabled && (cfg.enable or false);
+
+  vesktopConfigFile = pkgs.writeText "vesktop-settings.json" (builtins.toJSON vesktopConfig);
+  settingsPath = "${config.xdg.configHome}/vesktop/settings/settings.json";
 in {
-  config = lib.mkMerge [
-    (lib.mkIf themeEnabled (lib.mkMerge [
-      (xdg.mkXdgSource "Vencord/themes/system24.theme.css" {source = themeFile;})
-      {
-        home.activation.vencordSystem24Theme = lib.hm.dag.entryAfter ["writeBoundary"] ''
-          set -euo pipefail
-          theme_path=${lib.escapeShellArg themePath}
-          settings=${lib.escapeShellArg settingsPath}
-
-          mkdir -p "$(dirname "$settings")"
-          if [ ! -s "$settings" ]; then
-            printf '%s\n' '{}' > "$settings"
-          fi
-
-          tmp="$(mktemp)"
-          ${pkgs.jq}/bin/jq --arg theme "$theme_path" '
-            .enabledThemes = ((.enabledThemes // []) + [$theme] | unique)
-          ' "$settings" > "$tmp"
-          install -Dm0644 "$tmp" "$settings"
-          rm -f "$tmp"
-        '';
-      }
-    ]))
-    (lib.mkIf (guiEnabled && !themeEnabled) {
-      home.activation.vencordSystem24ThemeCleanup = lib.hm.dag.entryAfter ["writeBoundary"] ''
-        set -euo pipefail
-        settings=${lib.escapeShellArg settingsPath}
-        theme_path=${lib.escapeShellArg themePath}
-
-        if [ -f "$settings" ]; then
-          tmp="$(mktemp)"
-          ${pkgs.jq}/bin/jq --arg theme "$theme_path" '
-            .enabledThemes = (.enabledThemes // [] | map(select(. != $theme)))
-          ' "$settings" > "$tmp"
-          install -Dm0644 "$tmp" "$settings"
-          rm -f "$tmp"
-        fi
-      '';
-    })
-  ];
+  config = lib.mkIf guiEnabled {
+    home.activation.configureVesktop = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      run mkdir -p "$(dirname ${settingsPath})"
+      # Copy the generated settings file to the mutable config location
+      # We use copy instead of symlink to allow runtime changes by Vesktop,
+      # though they might be overwritten on next activation.
+      run cp -f ${vesktopConfigFile} ${settingsPath}
+      run chmod 644 ${settingsPath}
+    '';
+  };
 }
