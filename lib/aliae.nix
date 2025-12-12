@@ -207,8 +207,16 @@
     }sort --parallel 8 -S 16M")
     (mkAlias ":q" "exit")
     (mkAlias "s" "sudo ")
-    (mkAlias "dig" "dig +noall +answer")
-    (mkAlias "rsync" "rsync -az --compress-choice=zstd --info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS")
+    (mkAlias "dig" "${
+      if isNushell
+      then "^dig '+noall' '+answer'"
+      else "dig +noall +answer"
+    }")
+    (mkAlias "rsync" "${
+      if isNushell
+      then "^rsync -az --compress-choice=zstd '--info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS'"
+      else "rsync -az --compress-choice=zstd --info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS"
+    }")
     (mkAlias "nrb" "sudo nixos-rebuild")
     (mkAlias "j" "journalctl")
     (mkAlias "emptydir" "emptydir")
