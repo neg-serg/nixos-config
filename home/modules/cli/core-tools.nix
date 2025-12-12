@@ -29,9 +29,11 @@ _: {
       enableBashIntegration = false;
     };
     oh-my-posh = {
-      # Disabled: oh-my-posh is managed by system wrappers in modules/system/wrappers.nix
-      # Having it enabled here causes conflicts with the wrapper's runtime initialization
-      enable = false;
+      enable = true;
+      # Shell integrations are disabled - shells manage their own init
+      enableBashIntegration = false;
+      enableZshIntegration = false;
+      settings = builtins.fromJSON (builtins.readFile ../../files/shell/zsh/neg.omp.json);
     };
     nix-your-shell.enable = true;
   };
