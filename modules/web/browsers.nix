@@ -19,7 +19,10 @@
     then yandexInput.yandex-browser-stable
     else null;
   packages =
-    lib.optionals webEnabled [pkgs.passff-host]
+    lib.optionals webEnabled [
+      pkgs.google-chrome # Google Chrome browser
+      pkgs.passff-host # native messaging host for PassFF Firefox extension
+    ]
     ++ lib.optionals (yandexEnabled && yandexPkg != null) [yandexPkg];
 in {
   config = lib.mkMerge [
