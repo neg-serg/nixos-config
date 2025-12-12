@@ -42,21 +42,29 @@ update_package() {
   
   # Compute new hash
   echo "Computing new npmDepsHash..."
-  # Clean up node_modules to ensure fresh calculation if needed, 
-  # though prefetch-npm-deps usually reads lockfile.
-  # rm -rf node_modules 
-  
-  new_hash=$(prefetch-npm-deps package-lock.json)
-  echo "New hash: $new_hash"
 
-  # Update default.nix if it exists
-  if [[ -f "default.nix" ]]; then
-    # Use sed to replace the hash
-    # Pattern looks for: npmDepsHash = "sha256-..."
-    sed -i -E "s|npmDepsHash = \"sha256-[^\"]+\";|npmDepsHash = \"$new_hash\";|" default.nix
-    echo "Updated default.nix"
+  # Capture output/error to handle failure gracefully
+  if new_hash=$(prefetch-npm-deps package-lock.json 2>&1); then
+      # Check if output actually looks like a hash (sha256-...)
+      # Sometimes prefetch-npm-deps outputs text even on success/warning
+      # We extract the last line usually
+      new_hash=$(echo "$new_hash" | tail -n1)
+      
+      if [[ "$new_hash" == sha256-* ]]; then
+          echo "New hash: $new_hash"
+          # Update default.nix if it exists
+          if [[ -f "default.nix" ]]; then
+            sed -i -E "s|npmDepsHash = \"sha256-[^\"]+\";|npmDepsHash = \"$new_hash\";|" default.nix
+            echo "Updated default.nix"
+          else
+             echo "Warning: default.nix not found in $dir."
+          fi
+      else
+          echo "Error computing hash: $new_hash"
+      fi
   else
-    echo "Warning: default.nix not found in $dir. Hash not updated in Nix expression."
+      echo "Failed to compute hash for $name"
+      echo "Output: $new_hash"
   fi
 
   popd > /dev/null
