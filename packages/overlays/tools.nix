@@ -84,5 +84,34 @@ in {
 
     # duf fork with --style plain, --no-header, --no-bars flags
     duf = callPkg (packagesRoot + "/duf") {};
+
+    # ncpamixer with custom config
+    ncpamixer-wrapped = let
+      ncpaConfig =
+        prev.writeText "ncpamixer.conf"
+        (builtins.readFile (inputs.self + "/home/modules/media/audio/ncpamixer.conf"));
+    in
+      prev.symlinkJoin {
+        name = "ncpamixer-wrapped";
+        paths = [prev.ncpamixer];
+        buildInputs = [prev.makeWrapper];
+        postBuild = ''
+          wrapProgram $out/bin/ncpamixer \
+            --add-flags "-c ${ncpaConfig}"
+        '';
+      };
+
+    # nextcloud-client with GPU disabled (for stability)
+    nextcloud-wrapped = prev.symlinkJoin {
+      name = "nextcloud-wrapped";
+      paths = [prev.nextcloud-client];
+      buildInputs = [prev.makeWrapper];
+      postBuild = ''
+        wrapProgram $out/bin/nextcloud \
+          --add-flags "--disable-gpu --disable-software-rasterizer" \
+          --set QTWEBENGINE_DISABLE_GPU "1" \
+          --set QTWEBENGINE_CHROMIUM_FLAGS "--disable-gpu --disable-software-rasterizer"
+      '';
+    };
   };
 }
