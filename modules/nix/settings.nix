@@ -37,7 +37,6 @@ in {
           "auto-allocate-uids" # allow nix to automatically pick UIDs, rather than creating nixbld* user accounts
           "flakes" # flakes for reprodusability
           "nix-command" # new nix interface
-          "pipe-operators" # pipe operator |> support
         ];
         eval-cache = true;
         allow-import-from-derivation = false;
