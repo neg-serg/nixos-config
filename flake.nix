@@ -107,7 +107,6 @@
     };
     wrapper-manager = {
       url = "github:viperML/wrapper-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     winapps = {
       url = "github:winapps-org/winapps";
