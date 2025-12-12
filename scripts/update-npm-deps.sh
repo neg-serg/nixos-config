@@ -77,9 +77,9 @@ update_package() {
 PACKAGES=(
   # "packages/mcp/firecrawl" # Broken lockfile v3 / npm audit upstream issues
   # "packages/mcp/memory" # Issues with npm audit and prefetch-npm-deps
-  "packages/mcp/ripgrep"
+  # "packages/mcp/ripgrep"
   # "packages/mcp/sequentialthinking" # Broken lockfile v3 / npm audit upstream issues
-  "packages/mcp/server-filesystem"
+  # "packages/mcp/server-filesystem"
   "packages/awrit"
   "home/modules/user/gui/vicinae/extensions/neg-hello"
 )
