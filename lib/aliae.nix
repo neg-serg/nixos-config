@@ -13,6 +13,12 @@
     then mkAlias name value
     else "";
 
+  # Helper for environment variables (Nushell needs $env.VAR)
+  mkEnvVar = name:
+    if isNushell
+    then "$env.${name}"
+    else "$${name}";
+
   hasRg = pkgs ? ripgrep;
   hasNmap = pkgs ? nmap;
   hasCurl = pkgs ? curl;
@@ -221,14 +227,14 @@
     (mkAlias "j" "journalctl")
     (mkAlias "emptydir" "emptydir")
     (mkAlias "jl" "jupyter lab --no-browser")
-    (mkAlias "dosbox" "dosbox -conf $XDG_CONFIG_HOME/dosbox/dosbox.conf")
-    (mkAlias "gdb" "gdb -nh -x $XDG_CONFIG_HOME/gdb/gdbinit")
+    (mkAlias "dosbox" "dosbox -conf ${mkEnvVar "XDG_CONFIG_HOME"}/dosbox/dosbox.conf")
+    (mkAlias "gdb" "gdb -nh -x ${mkEnvVar "XDG_CONFIG_HOME"}/gdb/gdbinit")
     (mkAlias "iostat" "iostat --compact -p -h -s")
     (mkAlias "mtrr" "mtr -wzbe")
-    (mkAlias "nvidia-settings" "nvidia-settings --config=$XDG_CONFIG_HOME/nvidia/settings")
+    (mkAlias "nvidia-settings" "nvidia-settings --config=${mkEnvVar "XDG_CONFIG_HOME"}/nvidia/settings")
     (mkAlias "ssh" "TERM=xterm-256color ssh")
     (mkAlias "matrix" "unimatrix -l Aang -s 95")
-    (mkAlias "svn" "svn --config-dir $XDG_CONFIG_HOME/subversion")
+    (mkAlias "svn" "svn --config-dir ${mkEnvVar "XDG_CONFIG_HOME"}/subversion")
     (mkAlias "scp" "scp -r")
     (mkAlias "dd" "dd status=progress")
     (mkAlias "ip" "ip -c")
@@ -262,8 +268,8 @@
     (mkAliasIf hasPigz "gzip" "pigz")
     (mkAliasIf hasPbzip2 "bzip2" "pbzip2")
     (mkAliasIf hasPlocate "locate" "plocate")
-    (mkAliasIf hasMpvc "mpvc" "mpvc -S $XDG_CONFIG_HOME/mpv/socket")
-    (mkAliasIf hasWget2 "wget" "wget2 --hsts-file $XDG_DATA_HOME/wget-hsts")
+    (mkAliasIf hasMpvc "mpvc" "mpvc -S ${mkEnvVar "XDG_CONFIG_HOME"}/mpv/socket")
+    (mkAliasIf hasWget2 "wget" "wget2 --hsts-file ${mkEnvVar "XDG_DATA_HOME"}/wget-hsts")
     (mkAliasIf hasYtDlp "yt" "yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all")
     (mkAliasIf hasYtDlp "yta" "yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all --write-info-json")
     (mkAliasIf hasCurl "moon" "curl wttr.in/Moon")
