@@ -18,7 +18,7 @@ in {
       # Nextcloud wrapper with GPU disabled
       nextcloud = {
         basePackage = pkgs.nextcloud-client;
-        flags = [
+        prependFlags = [
           "--disable-gpu"
           "--disable-software-rasterizer"
         ];
