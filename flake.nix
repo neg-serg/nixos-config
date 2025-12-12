@@ -101,6 +101,10 @@
       url = "github:NotAShelf/tailray";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    vermilion = {
+      url = "github:vaxerski/Vermilion";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     pre-commit-hooks = {
       url = "github:cachix/git-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
