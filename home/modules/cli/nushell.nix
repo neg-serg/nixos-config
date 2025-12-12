@@ -1,9 +1,15 @@
-{pkgs, ...}: let
-  # Path to the nushell config files in this repo
+{
+  lib,
+  pkgs,
+  ...
+}: let
   nuConfDir = ./nushell-conf;
-
-  # oh-my-posh theme config path
   ompConfig = ../../files/shell/zsh/neg.omp.json;
+
+  shellAliases = import ../../../lib/shell-aliases.nix {
+    inherit lib pkgs;
+    isNushell = true;
+  };
 in {
   programs.nushell = {
     enable = true;
@@ -13,28 +19,11 @@ in {
 
     # Use the config.nu directly
     configFile.source = "${nuConfDir}/config.nu";
+    inherit shellAliases;
 
-    # Use shellAliases for aliae-style aliases (no IFD, no source needed)
-    shellAliases = {
-      # Core aliases from aliae config
-      cat = "bat -pp";
-      l = "eza --icons=auto --hyperlink";
-      ll = "eza --icons=auto --hyperlink -l";
-      lsd = "eza --icons=auto --hyperlink -alD --sort=created --color=always";
-      gs = "git status -sb";
-      e = "handlr open";
-      tree = "erd";
-      gzip = "pigz";
-      bzip2 = "pbzip2";
-      locate = "plocate";
-      ping = "prettyping";
-    };
-
-    # oh-my-posh prompt via environment hooks (no source needed)
     extraEnv = ''
-      # Set oh-my-posh prompt command
       $env.PROMPT_COMMAND = {||
-        ${pkgs.oh-my-posh}/bin/oh-my-posh print primary --config=${ompConfig}
+        ${pkgs.oh-my-posh}/bin/oh-my-posh print primary --shell nu --config=${ompConfig}
       }
       $env.PROMPT_COMMAND_RIGHT = ""
     '';

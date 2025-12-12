@@ -30,7 +30,6 @@ _: {
     };
     oh-my-posh = {
       enable = true;
-      # Shell integrations are disabled - shells manage their own init
       enableBashIntegration = false;
       enableZshIntegration = false;
       settings = builtins.fromJSON (builtins.readFile ../../files/shell/zsh/neg.omp.json);
