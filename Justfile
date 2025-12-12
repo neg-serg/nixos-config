@@ -29,6 +29,10 @@ cpu-masks:
 
 # --- Repo-wide workflows (original Home Manager justfile) ------------------------
 
+# Updates npm dependencies and hashes for local packages
+update-npm:
+    nix-shell -p prefetch-npm-deps --run "bash scripts/update-npm-deps.sh"
+
 fmt:
     repo_root="$(git rev-parse --show-toplevel)"; \
     cd "$repo_root" && nix fmt
