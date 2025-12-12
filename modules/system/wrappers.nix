@@ -92,8 +92,6 @@ in {
         };
         aliaeConfigBash = pkgs.writeText "aliae-bash.yaml" aliaeContentBash;
 
-        # bashConfig generation handles init directly
-
         bashConfig = pkgs.runCommand "bash-config" {} ''
           mkdir -p $out
 
