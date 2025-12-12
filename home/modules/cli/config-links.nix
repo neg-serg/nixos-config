@@ -144,13 +144,6 @@ in
       source = filesRoot + "/shell/bash";
       recursive = true;
     })
-    # Ensure classic ~/.bashrc sources XDG bashrc
-    {
-      home.file.".bashrc".text = ''
-        # Forward to XDG bashrc managed by Home Manager
-        if [ -r "''${XDG_CONFIG_HOME:-$HOME/.config}/bash/bashrc" ]; then
-          . "''${XDG_CONFIG_HOME:-$HOME/.config}/bash/bashrc"
-        fi
-      '';
-    }
+    # Note: ~/.bashrc is NOT managed by Home Manager.
+    # User manages bash configuration manually via ~/.config/bash/bashrc
   ]

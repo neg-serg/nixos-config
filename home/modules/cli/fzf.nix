@@ -103,6 +103,6 @@
     };
 
     enableZshIntegration = true;
-    enableBashIntegration = true;
+    enableBashIntegration = false;
   };
 }
