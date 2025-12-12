@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  isNushell ? false,
   ...
 }: let
   # Helper to generate alias entry
@@ -69,7 +70,7 @@
     (mkAlias "add" "git add")
     (mkAlias "checkout" "git checkout")
     (mkAlias "commit" "git commit")
-    (mkAlias "fc" "fc -liE 100")
+    (mkAliasIf (!isNushell) "fc" "fc -liE 100")
     (mkAlias "ga" "git add")
     (mkAlias "gaa" "git add --all")
     (mkAlias "gam" "git am")
@@ -137,7 +138,6 @@
     (mkAlias "gpf" "git push --force-with-lease")
     (mkAlias "gpf!" "git push --force")
     (mkAlias "gpr" "git pull --rebase")
-    (mkAlias "gpristine" "git reset --hard && git clean -dffx")
     (mkAlias "gpv" "git push -v")
     (mkAlias "gr" "git remote")
     (mkAlias "gra" "git remote --add")
