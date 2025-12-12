@@ -29,11 +29,9 @@ _: {
       enableBashIntegration = false;
     };
     oh-my-posh = {
-      enable = true;
-      # Bash integration handled manually in ~/.config/bash/bashrc with runtime eval
-      enableBashIntegration = false;
-      enableZshIntegration = false;
-      settings = builtins.fromJSON (builtins.readFile ../../files/shell/zsh/neg.omp.json);
+      # Disabled: oh-my-posh is managed by system wrappers in modules/system/wrappers.nix
+      # Having it enabled here causes conflicts with the wrapper's runtime initialization
+      enable = false;
     };
     nix-your-shell.enable = true;
   };
