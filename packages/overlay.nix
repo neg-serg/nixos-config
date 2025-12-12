@@ -13,17 +13,4 @@ in
     neg = (functions.neg or {}) // (tools.neg or {}) // (media.neg or {}) // (dev.neg or {});
     subsonic-tui = final.callPackage ./subsonic-tui {};
     wl-ocr = final.callPackage ./wl-ocr {};
-    vermilion = final.callPackage "${inputs.vermilion}/nix/package.nix" {
-      self = inputs.vermilion;
-      pnpm_10 =
-        final.pnpm_10
-        // {
-          fetchDeps = args:
-            final.pnpm_10.fetchDeps (args
-              // {
-                fetcherVersion = 2;
-                hash = "sha256-pCMwbE7eYbaOOLhWfSQtjblVctOu7nCGnUal4SID+DQ=";
-              });
-        };
-    };
   }
