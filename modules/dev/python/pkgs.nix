@@ -10,25 +10,25 @@
   groups = {
     core = ps:
       with ps; [
+        annoy
+        beautifulsoup4
         colored
         docopt
-        beautifulsoup4
-        numpy
-        annoy
-        orjson
+        fonttools
         mutagen
+        numpy
+        orjson
         pillow
         psutil
         requests
         tabulate
-        fonttools
       ];
     tools = ps:
       with ps; [
         dbus-python
         fontforge
-        pynvim
         neopyter
+        pynvim
       ];
   };
   mkPythonPackages = ps:
