@@ -6,9 +6,9 @@
 }: let
   enabled = config.features.dev.enable or false;
   packages = [
-    pkgs.sqlite # self-contained, serverless SQL DB
-    pkgs.pgcli # PostgreSQL TUI client
     pkgs.iredis # Redis enhanced CLI
+    pkgs.pgcli # PostgreSQL TUI client
+    pkgs.sqlite # self-contained, serverless SQL DB
   ];
 in {
   config = lib.mkIf enabled {
