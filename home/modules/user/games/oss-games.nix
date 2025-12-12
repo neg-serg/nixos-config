@@ -1,9 +1,9 @@
 {pkgs, ...}: {
   home.packages = with pkgs; [
-    superTuxKart # arcade kart racer
     superTux # 2D platformer
-    zeroad # RTS set in ancient warfare
+    superTuxKart # arcade kart racer
     wesnoth # turn-based strategy with campaigns
     xonotic # arena FPS
+    zeroad # RTS set in ancient warfare
   ];
 }
