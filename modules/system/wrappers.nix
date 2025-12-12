@@ -77,7 +77,14 @@ in {
 
         nushellRun = pkgs.writeShellScriptBin "nu" ''
           mkdir -p ~/.cache/oh-my-posh
-          ${pkgs.oh-my-posh}/bin/oh-my-posh init nu --print > ~/.cache/oh-my-posh.nu 2>/dev/null || true
+          OMP_OUT=$(${pkgs.oh-my-posh}/bin/oh-my-posh init nu --print 2>&1 || echo "failed")
+
+          if [[ "$OMP_OUT" == *"Failed to write init script"* ]] || [[ "$OMP_OUT" == "failed" ]]; then
+            echo "# oh-my-posh failed to initialize: $OMP_OUT" > ~/.cache/oh-my-posh.nu
+          else
+            echo "$OMP_OUT" > ~/.cache/oh-my-posh.nu
+          fi
+
           exec ${pkgs.nushell}/bin/nu "$@"
         '';
       in {
