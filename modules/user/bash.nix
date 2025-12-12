@@ -1,4 +1,4 @@
 _: {
-  # Bash is now managed via wrapper-manager in modules/system/wrappers.nix
+  # Bash configuration is managed via ~/.config/bash/bashrc (user files)
   programs.bash = {};
 }
