@@ -75,7 +75,7 @@
     (mkAlias "cat" "bat -pp")
     (mkAlias "g" "git")
     (mkAlias "gs" "git status -sb")
-    (mkAlias "qe" "qe")
+    (mkAlias "qe" "${mkCmd "qe"}")
     (mkAlias "acp" "cp")
     (mkAlias "als" "ls")
     # Git shortcuts
@@ -215,7 +215,7 @@
     }")
     (mkAlias "nrb" "sudo nixos-rebuild")
     (mkAlias "j" "journalctl")
-    (mkAlias "emptydir" "emptydir")
+    (mkAlias "emptydir" "${mkCmd "emptydir"}")
     (mkAlias "jl" "jupyter lab --no-browser")
     (mkAlias "dosbox" "${mkCmd "dosbox"} -conf ${mkEnvVar "XDG_CONFIG_HOME"}/dosbox/dosbox.conf")
     (mkAlias "gdb" "${mkCmd "gdb"} -nh -x ${mkEnvVar "XDG_CONFIG_HOME"}/gdb/gdbinit")
@@ -243,8 +243,8 @@
     # Optional aliases
     (mkAliasIf hasMpv "mpv" "${mkCmd "mpv"}")
     (mkAliasIf hasMpv "mp" "${mkCmd "mpv"}")
-    (mkAliasIf hasMpv "mpa" "mpa")
-    (mkAliasIf hasMpv "mpi" "mpi")
+    (mkAliasIf hasMpv "mpa" "${mkCmd "mpa"}")
+    (mkAliasIf hasMpv "mpi" "${mkCmd "mpi"}")
     (mkAliasIf hasRg "rg" "${mkCmd "rg"} --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden")
     (mkAliasIf hasNmap "nmap-vulners" "nmap -sV --script=vulners/vulners.nse")
     (mkAliasIf hasNmap "nmap-vulscan" "nmap -sV --script=vulscan/vulscan.nse")
