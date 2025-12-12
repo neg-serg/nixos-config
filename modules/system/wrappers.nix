@@ -144,17 +144,19 @@ in {
           source $out/aliae.bash
 
            # Initialize Oh-My-Posh (Runtime)
-           mkdir -p ~/.cache/oh-my-posh
+           # mkdir handled in bashRun
            eval "$(${pkgs.oh-my-posh}/bin/oh-my-posh init bash)"
 
           EOF
         '';
+
+        bashRun = pkgs.writeShellScriptBin "bash" ''
+          mkdir -p ~/.cache/oh-my-posh
+          exec ${pkgs.bashInteractive}/bin/bash --rcfile ${bashConfig}/bashrc "$@"
+        '';
       in {
-        basePackage = pkgs.bashInteractive;
-        prependFlags = [
-          "--rcfile"
-          "${bashConfig}/bashrc"
-        ];
+        basePackage = bashRun;
+        prependFlags = [];
       };
     };
 
