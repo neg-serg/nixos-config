@@ -44,6 +44,13 @@ in {
 
         # Create a self-contained configuration directory in the Nix store
         # referencing the files from the repo.
+        ohMyPoshInit =
+          pkgs.runCommand "oh-my-posh-init.nu" {
+            buildInputs = [pkgs.nushell];
+          } ''
+            ${pkgs.oh-my-posh}/bin/oh-my-posh init nu --print > $out
+          '';
+
         nuConfig = pkgs.runCommand "nushell-config" {} ''
           mkdir -p $out
           cp -r ${../../home/modules/cli/nushell-conf}/* $out/
@@ -54,6 +61,10 @@ in {
 
           # Patch config.nu to point to the store path files
           sed -i 's|\$"(\$env.XDG_CONFIG_HOME)/nushell|"'"$out"'|g' $out/config.nu
+
+          # Substitute placeholders in config.nu
+          substituteInPlace $out/config.nu \
+            --replace "@OH_MY_POSH_INIT@" "${ohMyPoshInit}"
         '';
       in {
         basePackage = pkgs.nushell;
