@@ -19,7 +19,8 @@
     ./net
     ./tailscale.nix
     ./oomd.nix
-    ./irqbalance.nix
+    ./virt/virt.nix
+    ./wrappers.nix
     ./zram.nix
     ./pkgs.nix
     ./guix.nix
