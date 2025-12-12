@@ -67,7 +67,7 @@
     (mkAlias "la" "eza --icons=auto --hyperlink -lbhHigUmuSa --time-style=long-iso --git --color-scale")
     (mkAlias "lx" "eza --icons=auto --hyperlink -lbhHigUmuSa@ --time-style=long-iso --git --color-scale")
     (mkAlias "lt" "eza --icons=auto --hyperlink --tree --level=2")
-    (mkAlias "eza" "eza --icons=auto --hyperlink")
+    (mkAlias "eza" "${mkCmd "eza"} --icons=auto --hyperlink")
     (mkAlias "lS" "eza --icons=auto --hyperlink -1") # One entry per line
     (mkAlias "lcr" "eza --icons=auto --hyperlink -al --sort=created --color=always")
     (mkAlias "lsd" "eza --icons=auto --hyperlink -alD --sort=created --color=always")
