@@ -19,7 +19,7 @@
     pkgs.sonic-visualiser # annotate spectra/sonograms
 
     # -- CLI --
-    pkgs.ncpamixer # ncurses PulseAudio mixer (fallback)
+
     pkgs.sox # swiss-army audio CLI for conversions/effects
 
     # -- Codecs / Ripping / Players --
