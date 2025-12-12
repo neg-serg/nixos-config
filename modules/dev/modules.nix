@@ -12,7 +12,7 @@
     ./benchmarks
     ./openxr
     ./unreal
-    ./mcp
+
     ./antigravity.nix
   ];
 }
