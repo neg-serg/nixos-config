@@ -44,29 +44,26 @@ in {
 
         # Create a self-contained configuration directory in the Nix store
         # referencing the files from the repo.
-        ohMyPoshInit =
-          pkgs.runCommand "oh-my-posh-init.nu" {
-            buildInputs = [pkgs.nushell];
-          } ''
-            export HOME=$TMPDIR
-            ${pkgs.oh-my-posh}/bin/oh-my-posh init nu --print > $out
-            sed -i "s|$TMPDIR|\$env.HOME|g" $out
-          '';
 
         nuConfig = pkgs.runCommand "nushell-config" {} ''
-          mkdir -p $out
-          cp -r ${../../home/modules/cli/nushell-conf}/* $out/
-          chmod -R +w $out
+                    mkdir -p $out
+                    cp -r ${../../home/modules/cli/nushell-conf}/* $out/
+                    chmod -R +w $out
 
-          # Generate static aliae init script
-          ${pkgs.aliae}/bin/aliae init nu --config ${aliaeConfig} --print > $out/aliae.nu
+                    # Generate static aliae init script
+                    ${pkgs.aliae}/bin/aliae init nu --config ${aliaeConfig} --print > $out/aliae.nu
 
-          # Patch config.nu to point to the store path files
-          sed -i 's|\$"(\$env.XDG_CONFIG_HOME)/nushell|"'"$out"'|g' $out/config.nu
+                    # Patch config.nu to point to the store path files
+                    sed -i 's|\$"(\$env.XDG_CONFIG_HOME)/nushell|"'"$out"'|g' $out/config.nu
 
-          # Substitute placeholders in config.nu
+                    # Substitute placeholders in config.nu with RUNTIME logic
+                    # We use a constant string path for source to avoid parse errors.
           substituteInPlace $out/config.nu \
-            --replace "@OH_MY_POSH_INIT@" "${ohMyPoshInit}"
+            --replace "source @OH_MY_POSH_INIT@" "
+          ^mkdir -p ~/.cache/oh-my-posh
+          oh-my-posh init nu --print | save -f ~/.cache/oh-my-posh.nu
+          source ~/.cache/oh-my-posh.nu
+          "
         '';
       in {
         basePackage = pkgs.nushell;
@@ -91,14 +88,7 @@ in {
         };
         aliaeConfigBash = pkgs.writeText "aliae-bash.yaml" aliaeContentBash;
 
-        ohMyPoshInitBash =
-          pkgs.runCommand "oh-my-posh-init.bash" {
-            buildInputs = [pkgs.bashInteractive];
-          } ''
-            export HOME=$TMPDIR
-            ${pkgs.oh-my-posh}/bin/oh-my-posh init bash --print > $out
-            sed -i "s|$TMPDIR|\$HOME|g" $out
-          '';
+        # bashConfig generation handles init directly
 
         bashConfig = pkgs.runCommand "bash-config" {} ''
           mkdir -p $out
@@ -149,8 +139,10 @@ in {
           # Initialize Aliae aliases
           source $out/aliae.bash
 
-          # Initialize Oh-My-Posh
-          source ${ohMyPoshInitBash}
+           # Initialize Oh-My-Posh (Runtime)
+           mkdir -p ~/.cache/oh-my-posh
+           eval "$(${pkgs.oh-my-posh}/bin/oh-my-posh init bash)"
+
           EOF
         '';
       in {
