@@ -35,62 +35,69 @@
     '';
   };
   localBinPackages = [
-    pkgs.imagemagick # convert/mogrify workhorse; handles odd formats better than feh
-    pkgs.wireplumber # Lua PipeWire session mgr; more tweakable than media-session
-    pkgs.essentia-extractor # Essentia CLI; pro audio descriptors far beyond ffmpeg
-    pkgs.neg.music_clap # LAION-CLAP embeddings CLI; offline tagging faster than cloud AI
     pkgs.alsa-utils # alsamixer/amixer fallback; direct ALSA control when PipeWire drifts
-    pkgs.neg.bpf_host_latency # BCC DNS latency tracer; deeper insight than dig/tcpdump
+    pkgs.essentia-extractor # Essentia CLI; pro audio descriptors far beyond ffmpeg
+    pkgs.imagemagick # convert/mogrify workhorse; handles odd formats better than feh
     pkgs.neg.albumdetails # TagLib album metadata CLI; richer dump than mediainfo
+    pkgs.neg.bpf_host_latency # BCC DNS latency tracer; deeper insight than dig/tcpdump
+    pkgs.neg.music_clap # LAION-CLAP embeddings CLI; offline tagging faster than cloud AI
+    pkgs.wireplumber # Lua PipeWire session mgr; more tweakable than media-session
   ];
 in {
   # Wayland/Hyprland tools and small utilities
   environment.systemPackages =
     [
-      inputs.raise.defaultPackage.${pkgs.stdenv.hostPlatform.system} # run-or-raise for Hyprland
-      quickshellWrapped # wrapped quickshell binary with required envs
-      pkgs.xorg.xeyes # track eyes for your cursor
-      pkgs.swaybg # simple wallpaper setter
-      pkgs.dragon-drop # drag-n-drop from console
-      pkgs.localsend # AirDrop-like local file sharing
-      pkgs.gowall # generate palette from wallpaper
-      pkgs.grimblast # Hyprland-friendly screenshots (grim+slurp+wl-copy)
-      pkgs.grim # raw screenshot helper for clip wrappers
-      pkgs.slurp # select regions for grim/wlroots compositors
-      pkgs.swww # Wayland wallpaper daemon
-      pkgs.waybar # Wayland status bar
-      pkgs.waypipe # Wayland remoting (ssh -X like)
-      pkgs.wev # xev for Wayland
-      pkgs.wf-recorder # screen recording
-      pkgs.zathura # lightweight document viewer for rofi wrappers
-      pkgs.dunst # notification daemon + dunstctl
-      pkgs.wl-clipboard # wl-copy / wl-paste
-      pkgs.wl-clip-persist # persist clipboard across app exits
+      # -- Audio --
+      pkgs.cava # console audio visualizer for quickshell HUD
+      pkgs.mpc # MPD CLI helper for local scripts
+      pkgs.playerctl # MPRIS media controller for bindings
+
+      # -- Chat / Social --
+      pkgs.nchat # terminal-first Telegram client
+      pkgs.tdl # Telegram CLI uploader/downloader
+      pkgs.telegram-desktop # Telegram GUI client
+      pkgs.vesktop # Discord (Vencord) desktop client
+
+      # -- Clipboard --
       pkgs.cliphist # persistent Wayland clipboard history
+      pkgs.wl-clip-persist # persist clipboard across app exits
+      pkgs.wl-clipboard # wl-copy / wl-paste
+
+      # -- Dialogs / Automation --
+      pkgs.espanso # text expander daemon
+      pkgs.kdePackages.kdialog # Qt dialog helper
       pkgs.wtype # fake typing for Wayland automation
       pkgs.ydotool # uinput automation helper (autoclicker, etc.)
-      pkgs.espanso # text expander daemon
-      pkgs.matugen # wallpaper-driven palette/matcap generator
-      pkgs.matugen-themes # template pack for Matugen output files
-      pkgs.playerctl # MPRIS media controller for bindings
-      pkgs.mpc # MPD CLI helper for local scripts
+
+      # -- Fonts --
+      pkgs.cantarell-fonts # UI font for panels/widgets
+
+      # -- Hyprland --
+      hyprWinList # injects rust-based win switcher bound in Hypr
+      inputs.raise.defaultPackage.${pkgs.stdenv.hostPlatform.system} # run-or-raise for Hyprland
       pkgs.hyprcursor # modern cursor theme format for Hyprland
       pkgs.hypridle # idle daemon for Hyprland sessions
-      pkgs.swappy # screenshot editor (optional)
+      pkgs.hyprlandPlugins.hy3 # tiling plugin for Hyprland
       pkgs.hyprpicker # color picker for Wayland/Hyprland
       pkgs.hyprpolkitagent # Wayland-friendly polkit agent
       pkgs.hyprprop # Hyprland property helper (xprop-like)
       pkgs.hyprutils # assorted Hyprland utilities
-      pkgs.hyprlandPlugins.hy3 # tiling plugin for Hyprland
       pkgs.pyprland # Hyprland plugin/runtime helper
+
+      # -- Notifications --
+      pkgs.dunst # notification daemon + dunstctl
+
+      # -- Power --
       pkgs.upower # power management daemon for laptops/desktops
+
+      # -- Proxy --
+      pkgs.hiddify-app # Hiddify proxy client
+
+      # -- Qt --
       pkgs.hyprland-qt-support # Qt integration helpers for Hyprland
       pkgs.hyprland-qtutils # Qt extras (hyprland-qt-helper)
-      pkgs.kdePackages.qt6ct # Qt6 configuration utility
-      pkgs.cantarell-fonts # UI font for panels/widgets
-      pkgs.cava # console audio visualizer for quickshell HUD
-      pkgs.kdePackages.kdialog # Qt dialog helper
       pkgs.kdePackages.qt5compat # Qt6 QtQuick bridge
+      pkgs.kdePackages.qt6ct # Qt6 configuration utility
       pkgs.kdePackages.qtdeclarative # QtDeclarative (QML runtime)
       pkgs.kdePackages.qtimageformats # extra Qt image formats
       pkgs.kdePackages.qtmultimedia # Qt multimedia modules
@@ -103,20 +110,48 @@ in {
       pkgs.kdePackages.qtvirtualkeyboard # Qt virtual keyboard
       pkgs.kdePackages.qtwayland # Qt Wayland plugin
       pkgs.kdePackages.syntax-highlighting # KSyntaxHighlighting for QML
-      pkgs.libxml2 # xmllint for SVG validation
-      pkgs.librsvg # rsvg-convert for assets
-      pkgs.networkmanager # CLI nmcli helper for panels
       pkgs.qt6.qtimageformats # supplemental Qt6 image formats
       pkgs.qt6.qtsvg # supplemental Qt6 SVG support
+
+      # -- Quickshell --
+      quickshellWrapped # wrapped quickshell binary with required envs
+
+      # -- Screenshot / Recording --
+      pkgs.grim # raw screenshot helper for clip wrappers
+      pkgs.grimblast # Hyprland-friendly screenshots (grim+slurp+wl-copy)
+      pkgs.slurp # select regions for grim/wlroots compositors
+      pkgs.swappy # screenshot editor (optional)
+      pkgs.wf-recorder # screen recording
+
+      # -- Sharing --
+      pkgs.localsend # AirDrop-like local file sharing
+
+      # -- SVG / Graphics --
+      pkgs.librsvg # rsvg-convert for assets
+      pkgs.libxml2 # xmllint for SVG validation
+
+      # -- Terminal --
       pkgs.kitty # primary GUI terminal emulator
       pkgs.kitty-img # inline image helper for Kitty
       pkgs.warp-terminal # Warp GPU-accelerated terminal with modern UI
-      pkgs.telegram-desktop # Telegram GUI client
-      pkgs.tdl # Telegram CLI uploader/downloader
-      pkgs.vesktop # Discord (Vencord) desktop client
-      pkgs.nchat # terminal-first Telegram client
-      pkgs.hiddify-app # Hiddify proxy client
-      hyprWinList # injects rust-based win switcher bound in Hypr
+
+      # -- Theme / Wallpaper --
+      pkgs.gowall # generate palette from wallpaper
+      pkgs.matugen # wallpaper-driven palette/matcap generator
+      pkgs.matugen-themes # template pack for Matugen output files
+      pkgs.swaybg # simple wallpaper setter
+      pkgs.swww # Wayland wallpaper daemon
+
+      # -- Viewer --
+      pkgs.zathura # lightweight document viewer for rofi wrappers
+
+      # -- Wayland Utils --
+      pkgs.dragon-drop # drag-n-drop from console
+      pkgs.networkmanager # CLI nmcli helper for panels
+      pkgs.waybar # Wayland status bar
+      pkgs.waypipe # Wayland remoting (ssh -X like)
+      pkgs.wev # xev for Wayland
+      pkgs.xorg.xeyes # track eyes for your cursor
     ]
     ++ menuPkgs
     ++ lib.optionals guiEnabled localBinPackages;
