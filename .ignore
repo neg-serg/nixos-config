@@ -1,0 +1,5 @@
+# Ignore lock files from search (rg, fd)
+package-lock.json
+lazy-lock.json
+yarn.lock
+pnpm-lock.yaml
