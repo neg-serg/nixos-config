@@ -1,47 +1,43 @@
-{
-  lib,
-  pkgs,
-  ...
-}: let
+{pkgs, ...}: let
   # Path to the nushell config files in this repo
   nuConfDir = ./nushell-conf;
 
-  # Generate aliae configuration for nushell
-  aliaeContent = import ../../../lib/aliae.nix {
-    inherit lib pkgs;
-    isNushell = true;
-  };
-  aliaeConfig = pkgs.writeText "aliae.yaml" aliaeContent;
-
-  # oh-my-posh theme config
-  ompConfig = ../files/shell/zsh/neg.omp.json;
-
-  # Generate the oh-my-posh init script at build time
-  ompInitScript = pkgs.runCommand "omp-init-nu" {} ''
-    ${pkgs.oh-my-posh}/bin/oh-my-posh init nu --config ${ompConfig} --print > $out 2>/dev/null || echo "# oh-my-posh init failed" > $out
-  '';
-
-  # Generate aliae init script at build time
-  aliaeInitScript = pkgs.runCommand "aliae-init-nu" {} ''
-    ${pkgs.aliae}/bin/aliae init nu --config ${aliaeConfig} --print > $out
-  '';
-
-  # Build the final config.nu with oh-my-posh init substituted
-  finalConfigNu = pkgs.runCommand "nushell-config-nu" {} ''
-    cp ${nuConfDir}/config.nu $out
-    chmod +w $out
-    substituteInPlace $out \
-      --replace "source @OH_MY_POSH_INIT@" "source ${ompInitScript}"
-  '';
+  # oh-my-posh theme config path
+  ompConfig = ../../files/shell/zsh/neg.omp.json;
 in {
   programs.nushell = {
     enable = true;
 
-    # Use the custom env.nu
+    # Use the custom env.nu directly
     envFile.source = "${nuConfDir}/env.nu";
 
-    # Use the patched config.nu
-    configFile.source = finalConfigNu;
+    # Use the config.nu directly
+    configFile.source = "${nuConfDir}/config.nu";
+
+    # Use shellAliases for aliae-style aliases (no IFD, no source needed)
+    shellAliases = {
+      # Core aliases from aliae config
+      cat = "bat -pp";
+      l = "eza --icons=auto --hyperlink";
+      ll = "eza --icons=auto --hyperlink -l";
+      lsd = "eza --icons=auto --hyperlink -alD --sort=created --color=always";
+      gs = "git status -sb";
+      e = "handlr open";
+      tree = "erd";
+      gzip = "pigz";
+      bzip2 = "pbzip2";
+      locate = "plocate";
+      ping = "prettyping";
+    };
+
+    # oh-my-posh prompt via environment hooks (no source needed)
+    extraEnv = ''
+      # Set oh-my-posh prompt command
+      $env.PROMPT_COMMAND = {||
+        ${pkgs.oh-my-posh}/bin/oh-my-posh print primary --config=${ompConfig}
+      }
+      $env.PROMPT_COMMAND_RIGHT = ""
+    '';
   };
 
   # Link additional nushell config files to XDG config
@@ -50,7 +46,6 @@ in {
     "nushell/git.nu".source = "${nuConfDir}/git.nu";
     "nushell/broot.nu".source = "${nuConfDir}/broot.nu";
     "nushell/git-completion.nu".source = "${nuConfDir}/git-completion.nu";
-    "nushell/aliae.nu".source = aliaeInitScript;
   };
 
   home.packages = [
