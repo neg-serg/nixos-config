@@ -1,6 +1,7 @@
 {pkgs, ...}: {
   environment.systemPackages = [
     pkgs.overskride # bluetooth and obex client
+    pkgs.bluez-tools # command line bluetooth manager
     pkgs.brightnessctl # backlight control helper
     pkgs.wirelesstools # iwconfig/ifrename CLI helpers
     pkgs.acpi # ACPI probing utilities
