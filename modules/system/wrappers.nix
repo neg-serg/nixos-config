@@ -150,6 +150,9 @@ in {
 
         bashRun = pkgs.writeShellScriptBin "bash" ''
           mkdir -p ~/.cache/oh-my-posh
+          echo "DEBUG: PATH=$PATH" > /tmp/posh-debug.log
+          echo "DEBUG: HOME=$HOME" >> /tmp/posh-debug.log
+          ${pkgs.oh-my-posh}/bin/oh-my-posh init bash --print >> /tmp/posh-debug.log 2>&1
           exec ${pkgs.bashInteractive}/bin/bash --rcfile ${bashConfig}/bashrc "$@"
         '';
       in {
