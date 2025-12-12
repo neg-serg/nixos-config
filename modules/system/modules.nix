@@ -20,7 +20,6 @@
     ./tailscale.nix
     ./oomd.nix
     ./irqbalance.nix
-    ./wrappers.nix
     ./zram.nix
     ./pkgs.nix
     ./guix.nix
