@@ -1,0 +1,36 @@
+diff --git a/lua/telekasten.lua b/lua/telekasten.lua
+index 85aa0fb..f0741a2 100644
+--- a/lua/telekasten.lua
++++ b/lua/telekasten.lua
+@@ -1889,24 +1889,17 @@ local function follow_url(url)
+     end
+ 
+     -- we just leave it to the OS's handler to deal with what kind of URL it is
+-    local function format_command(cmd)
+-        return 'call jobstart(["'
+-            .. cmd
+-            .. '", "'
+-            .. url
+-            .. '"], {"detach": v:true})'
+-    end
+-
+-    local command
++    local opener
+     if vim.fn.has("mac") == 1 then
+-        command = format_command("open")
+-        vim.cmd(command)
+-    elseif vim.fn.has("unix") then
+-        command = format_command("xdg-open")
+-        vim.cmd(command)
++        opener = "open"
++    elseif vim.fn.has("unix") == 1 then
++        opener = "xdg-open"
+     else
+         print("Cannot open URLs on your operating system")
++        return
+     end
++
++    vim.fn.jobstart({opener, url}, {detach = true})
+ end
+ 
+ --

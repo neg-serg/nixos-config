@@ -2,6 +2,7 @@
 -- │ █▓▒░ renerocksai/telekasten.nvim                                                  │
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {'renerocksai/telekasten.nvim', ft='markdown', -- better md wiki stuff
+        build = "patch -p1 < " .. vim.fn.expand("~/.config/nvim/patches/telekasten-fix-url-quoting.patch"),
         config=function()
             local notes_home=vim.fn.expand("~/notes")
             local status, telekasten = pcall(require, 'telekasten')
