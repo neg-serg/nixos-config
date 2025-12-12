@@ -265,7 +265,7 @@
     (mkAliasIf hasCurl "moon" "curl wttr.in/Moon")
     (mkAliasIf hasCurl "we" "curl 'wttr.in/?T'")
     (mkAliasIf hasCurl "wem" "curl wttr.in/Moscow?lang=ru")
-    (mkAliasIf (hasCurl && hasJq) "cht" "cht")
+    (mkAliasIf (hasCurl && hasJq) "cht" "${mkCmd "cht"}")
     (mkAliasIf hasRlwrap "bb" "rlwrap bb")
     (mkAliasIf hasRlwrap "fennel" "rlwrap fennel")
     (mkAliasIf hasRlwrap "guile" "rlwrap guile")
