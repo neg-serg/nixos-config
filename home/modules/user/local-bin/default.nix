@@ -69,7 +69,6 @@ with lib;
         # Special case: ren needs path substitution for libs as well
         renTpl = builtins.readFile (scriptRoot + "/ren");
         renText = lib.replaceStrings ["@LIBPP@" "@LIBCOLORED@"] [libpp libcolored] renTpl;
-        nextcloudExe = lib.getExe' pkgs.nextcloud-client "nextcloud";
       in
         autoEntries
         // base
@@ -82,19 +81,7 @@ with lib;
             executable = true;
             text = renText;
           };
-          # Provide a stable wrapper for Pyprland CLI with absolute path,
-          # so Hypr bindings don't rely on PATH. Kept at ~/.local/bin/pypr-client
-          # to preserve existing config and muscle memory.
-          ".local/bin/pypr-client" = {
-            executable = true;
-            text = let
-              exe = lib.getExe' pkgs.pyprland "pypr";
-            in ''
-              #!${pkgs.bash}/bin/bash
-              set -euo pipefail
-              exec ${exe} "$@"
-            '';
-          };
+
           # Robust starter for Pyprland: determines the current Hyprland
           # instance signature before launching so that restarts/crashes
           # of Hyprland don't leave pyprland bound to a stale socket.
@@ -140,17 +127,10 @@ with lib;
               exec ${exe} "$@"
             '';
           };
-          # GUI Nextcloud with GPU disabled to avoid QtWebEngine crashes
-          ".local/bin/nextcloud" = {
-            executable = true;
-            text = ''
-              #!/usr/bin/env bash
-              set -euo pipefail
-              export QTWEBENGINE_DISABLE_GPU=1
-              export QTWEBENGINE_CHROMIUM_FLAGS="--disable-gpu --disable-software-rasterizer"
-              exec ${nextcloudExe} "$@"
-            '';
-          };
+          # Provide a stable wrapper for Pyprland CLI with absolute path,
+          # so Hypr bindings don't rely on PATH. Kept at ~/.local/bin/pypr-client
+          # to preserve existing config and muscle memory.
+
           ".local/bin/mount-drive" = {
             executable = true;
             text = ''
