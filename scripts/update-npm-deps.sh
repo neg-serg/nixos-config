@@ -80,8 +80,8 @@ PACKAGES=(
   # "packages/mcp/ripgrep"
   # "packages/mcp/sequentialthinking" # Broken lockfile v3 / npm audit upstream issues
   # "packages/mcp/server-filesystem"
-  "packages/awrit"
-  "home/modules/user/gui/vicinae/extensions/neg-hello"
+  # "packages/awrit" # npm error code ENOTCACHED (napi-rs/cli)
+  # "home/modules/user/gui/vicinae/extensions/neg-hello"
 )
 
 # Main loop
