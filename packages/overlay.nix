@@ -18,7 +18,12 @@ in
       pnpm_10 =
         final.pnpm_10
         // {
-          fetchDeps = args: final.pnpm_10.fetchDeps (args // {fetcherVersion = 2;});
+          fetchDeps = args:
+            final.pnpm_10.fetchDeps (args
+              // {
+                fetcherVersion = 2;
+                hash = "sha256-pCMwbE7eYbaOOLhWfSQtjblVctOu7nCGnUal4SID+DQ=";
+              });
         };
     };
   }
