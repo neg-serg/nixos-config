@@ -193,9 +193,11 @@
       then "^"
       else ""
     }mv -i")
-    (mkAlias "mk" "mkdir -p") # mkdir builtin supports -p? No invalid flag if checked. But wait, mk -> mkdir -p. mkdir is builtin.
-    # Nu mkdir has -v but no -p (it's auto?). Let's force external for consistency or check docs.
-    # Safest is external for `mk` -> `^mkdir -p` if nu.
+    (mkAlias "mk" "${
+      if isNushell
+      then "^"
+      else ""
+    }mkdir -p")
     (mkAlias "rd" "rmdir")
     (mkAlias "x" "xargs")
     (mkAlias "sort" "${
