@@ -38,7 +38,6 @@
   hasMpvc = pkgs ? mpvc;
   hasMpv = pkgs ? mpv;
   hasRlwrap = pkgs ? rlwrap;
-  hasYtDlp = pkgs ? yt-dlp;
   hasKhal = pkgs ? khal;
   hasBtm = pkgs ? btm;
   hasIotop = pkgs ? iotop;
@@ -263,10 +262,6 @@
     (optionalAlias hasWget2 {
       wget = "wget2 --hsts-file ${mkEnvVar "XDG_DATA_HOME"}/wget-hsts";
     })
-    (optionalAlias hasYtDlp {
-      yt = "yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all";
-      yta = "yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all --write-info-json";
-    })
     (optionalAlias hasCurl {
       moon = "curl wttr.in/Moon";
       we = "curl 'wttr.in/?T'";
@@ -298,7 +293,6 @@
       obs = "flatpak run com.obsproject.Studio";
       zoom = "flatpak run us.zoom.Zoom";
     })
-    # ugrep aliases
     (optionalAlias hasUg {
       grep = "ug -G";
       egrep = "ug -E";
@@ -311,7 +305,6 @@
       zpgrep = "ug -zP";
       zxgrep = "ug -zW";
     })
-    # Non-nushell specific aliases
     (optionalAlias (!isNushell) {
       sudo = "sudo ";
       ssh = "TERM=xterm-256color ssh";
