@@ -46,11 +46,19 @@ in
       $background: #000000;
       $surface: #020202;
       $success: #3CAF88;
-      $warning: #FFC44E;
+      $warning: #FFAA01;
       $error: #CF4F88;
-      $accent: #98d3cb;
+      $accent: #6096BF;
       $text: #6C7E96;
       $text-muted: #3D3D3D;
+
+      /* Selection overrides */
+      ListItem.-highlight > TorrentItemOneline,
+      ListItem.-highlight > TorrentItemCompact,
+      ListItem.-highlight > TorrentItemCard {
+          background: #0d1824 !important;
+          color: #367bbf;
+      }
       EOF
     '';
 
