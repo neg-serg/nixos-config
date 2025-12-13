@@ -164,7 +164,7 @@ in {
       pkgs.libnotify # notify-send helper used by CLI scripts
       pkgs.moreutils # assorted unix utils (sponge, etc.)
       pkgs.ncdu # interactive du
-      pkgs.neg.awrit # render web pages inside Kitty
+
       pkgs.neg.comma # run commands from nixpkgs by name (\",\") - local overlay helper
       pkgs.neg.duf # better df (fork with plain style support)
       pkgs.neg.pretty_printer # ppinfo CLI + Python module for scripts
