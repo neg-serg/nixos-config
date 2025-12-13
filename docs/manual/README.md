@@ -214,9 +214,7 @@ side-by-side so the patterns apply to both configurations.
 Keep this manifest updated whenever vendored sources change so that licensing remains clear.
 
 | Component | Source | Revision | License | Notes |
-|-----------|--------|----------|---------|-------| | awrit |
-[github.com/chase/awrit](https://github.com/chase/awrit) | tag `awrit-native-rs-2.0.3` |
-BSD-3-Clause | Terminal Chromium renderer (`pkgs.neg.awrit`). | | cantata |
+|-----------|--------|----------|---------|-------| | cantata |
 [github.com/nullobsi/cantata](https://github.com/nullobsi/cantata) |
 `a19efdf9649c50320f8592f07d82734c352ace9c` | GPL-3.0-only | MPD Qt client with extra patches
 (`pkgs.neg.cantata`). | | kitty-kitten-search |
