@@ -11,6 +11,22 @@
   duckdnsEnvSecret = inputs.self + "/secrets/duckdns.env.sops";
   hasDuckdnsSecret = builtins.pathExists duckdnsEnvSecret;
   unboundLocalData = import ./unbound-hosts.nix;
+  resilioAuthScript = pkgs.writeShellScript "resilio-auth" ''
+    CONFIG_FILE="/run/rslsync/config.json"
+
+    if [ ! -f "$CONFIG_FILE" ]; then
+      echo "Config file not found at $CONFIG_FILE"
+      exit 1
+    fi
+
+    chmod 600 "$CONFIG_FILE"
+
+    LOGIN=$(cat ${config.sops.secrets."resilio/http-login".path})
+    PASS=$(cat ${config.sops.secrets."resilio/http-pass".path})
+
+    ${pkgs.gnused}/bin/sed -i "s|placeholder_login|$LOGIN|" "$CONFIG_FILE"
+    ${pkgs.gnused}/bin/sed -i "s|placeholder_pass|$PASS|" "$CONFIG_FILE"
+  '';
 in
   lib.mkMerge [
     {
@@ -247,10 +263,10 @@ in
         autoFancontrol = {
           enable = true;
           # Late start for quieter idle while still letting fans reach near-max PWM quickly.
-          minTemp = 55; # °C — fans begin speeding up only after meaningful CPU heat
-          maxTemp = 84; # °C — reach full sweep near high 80s to tame load spikes
-          minPwm = 95; # 0–255, maintains a light baseline without stopping
-          maxPwm = 250; # almost full PWM; bump to 255 if needed
+          minTemp = 50; # °C — fans begin speeding up earlier
+          maxTemp = 80; # °C — reach full sweep sooner to tame load spikes
+          minPwm = 60; # 0–255, maintains a very quiet baseline (approx 23%)
+          maxPwm = 255; # full power available
           hysteresis = 4; # moderate hysteresis for stability
           interval = 2; # poll sensors more frequently during ramp-up
           allowStop = false; # CPU/case fans never idle below minPwm
@@ -260,10 +276,10 @@ in
         gpuFancontrol = {
           enable = true;
           # GPU fan starts later but retains headroom at the top end.
-          minTemp = 65; # °C — GPU fan stays low until substantial heat
-          maxTemp = 90; # °C — push close to the limit once it reaches 90
-          minPwm = 85; # 0–255, baseline spin to avoid stops
-          maxPwm = 245; # near-maximum; raise to 255 if you want all-in cooling
+          minTemp = 60; # °C — GPU fan stays low until substantial heat
+          maxTemp = 85; # °C — push close to the limit once it reaches 85
+          minPwm = 60; # 0–255, baseline spin to avoid stops
+          maxPwm = 255; # maximum cooling
           hysteresis = 4; # reduce chatter between steps
         };
       };
@@ -462,25 +478,26 @@ in
           # Prometheus stack removed on this host (server, exporters, alertmanager)
 
           # Resilio Sync (interactive Web UI, auth via SOPS)
+          # Resilio Sync (interactive Web UI, auth via SOPS)
           resilio = lib.mkIf hasResilioSecret {
-            enable = false;
+            enable = true;
 
             # state / DB
-            # storagePath = "/zero/sync/.state";
+            storagePath = "/zero/sync/.state";
 
             # data root (folders will live under this)
-            # directoryRoot = "/zero/sync";
+            directoryRoot = "/zero/sync";
 
-            # enableWebUI = true;
-            # httpListenAddr = "127.0.0.1";
-            # httpListenPort = 9000;
+            enableWebUI = true;
+            httpListenAddr = "127.0.0.1";
+            httpListenPort = 9000;
 
             # Actual credentials come from SOPS and are injected into config.json
-            # httpLogin = "placeholder";
-            # httpPass = "placeholder";
+            httpLogin = "placeholder_login";
+            httpPass = "placeholder_pass";
 
-            # listeningPort = 41111;
-            # useUpnp = false;
+            listeningPort = 41111;
+            useUpnp = false;
           };
 
           # Bitcoind instance is now managed by modules/servers/bitcoind
@@ -551,12 +568,12 @@ in
       };
 
       # Resilio Sync: Web UI auth via SOPS, data under /zero/sync
-      sops.secrets."resilio/http-login" = lib.mkIf false {
+      sops.secrets."resilio/http-login" = lib.mkIf hasResilioSecret {
         sopsFile = inputs.self + "/secrets/resilio.sops.yaml";
         owner = "rslsync";
         mode = "0400";
       };
-      sops.secrets."resilio/http-pass" = lib.mkIf false {
+      sops.secrets."resilio/http-pass" = lib.mkIf hasResilioSecret {
         sopsFile = inputs.self + "/secrets/resilio.sops.yaml";
         owner = "rslsync";
         mode = "0400";
@@ -719,9 +736,9 @@ in
           };
 
           # Inject Resilio Web UI credentials from SOPS into generated config.json
-          # resilio = lib.mkIf hasResilioSecret {
-          #   serviceConfig.ExecStartPre = lib.mkAfter [resilioAuthScript];
-          # };
+          resilio = lib.mkIf hasResilioSecret {
+            serviceConfig.ExecStartPre = lib.mkAfter [resilioAuthScript];
+          };
         };
 
         timers."bitcoind-textfile-metrics" = {
