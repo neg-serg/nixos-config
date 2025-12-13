@@ -10,8 +10,8 @@ buildGoModule rec {
   src = fetchFromGitHub {
     owner = "neg-serg";
     repo = "duf";
-    rev = "dfd8d81";
-    hash = "sha256-O39rZmejjxuKc22z/FfAzlDS+NfXG/nDxK4Km/dyWFQ=";
+    rev = "d0dbfd5";
+    hash = "sha256-V+snTF7Y7dsPfn/yptCuAZ03IlVlZ7dfBW82k0CGwz4=";
   };
 
   vendorHash = "sha256-mCOP6R072dmJBHN8c7ae8l7yN1O25FDLIgRGUSWUn2E=";
