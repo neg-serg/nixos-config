@@ -265,7 +265,7 @@ in
           # Aggressive silence at idle, ramp up quickly under load
           minTemp = 62; # °C — stay quiet until significant heat
           maxTemp = 75; # °C — reach full speed before hitting thermal limit
-          minPwm = 0; # 0–255, absolute minimum (fans may stall)
+          minPwm = 15; # 0–255, absolute minimum (fans may stall)
           maxPwm = 255; # full power for cooling headroom
           hysteresis = 5; # reduce fan speed oscillation
           interval = 2; # responsive polling
@@ -278,7 +278,7 @@ in
           # GPU fan stays silent at idle, ramps for load
           minTemp = 62; # °C — GPU fan quiet until significant heat
           maxTemp = 80; # °C — full speed well before throttle point
-          minPwm = 0; # 0–255, absolute minimum
+          minPwm = 15; # 0–255, absolute minimum
           maxPwm = 255; # maximum cooling
           hysteresis = 5; # stability
         };
