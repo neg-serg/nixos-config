@@ -34,6 +34,7 @@ if ok and nixCats.lazy then
         lockfile = lockfile,
         defaults = { lazy = false },
         install = { colorscheme = { "neg" } },
+        rocks = { enabled = false },
         ui = { icons = { ft = "", lazy = "󰂠 ", loaded = "", not_loaded = "" } },
         performance = {
             cache = { enabled = true },
@@ -60,6 +61,7 @@ else
         spec = { { import = "plugins" } },
         defaults = { lazy = false },
         install = { colorscheme = { "neg" } },
+        rocks = { enabled = false },
         ui = { icons = { ft = "", lazy = "󰂠 ", loaded = "", not_loaded = "" } },
         performance = {
             cache = { enabled = true },
