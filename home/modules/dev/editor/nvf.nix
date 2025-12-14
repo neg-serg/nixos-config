@@ -26,6 +26,7 @@ in
           extraPackages = [
             pkgs.ripgrep # project-wide search backend
             pkgs.fd # fast file finder used by pickers
+            pkgs.tree-sitter # parser generator for treesitter
           ];
           # Avoid any nvf defaults bleeding in
           globals = {};
