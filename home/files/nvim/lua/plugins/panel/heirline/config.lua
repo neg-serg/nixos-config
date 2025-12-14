@@ -181,7 +181,7 @@ return function()
           local dadd = hl_get('DiffAdd')
           local dchg = hl_get('DiffChange')
           local ddel = hl_get('DiffDelete')
-          return {
+          local t = {
             black       = fallback.black,
             white       = tohex(sl.fg)    or fallback.white,
             white_dim   = tohex(slnc.fg)  or fallback.white_dim,
@@ -202,6 +202,14 @@ return function()
             base_bg     = tohex(sl.bg)   or fallback.black,
             nc_bg       = tohex(slnc.bg) or fallback.black,
           }
+          if vim.g.colors_name == 'neg' then
+            -- Force Color 25 (#005faf) as the main accent for neg theme
+            local c25 = '#005faf'
+            t.blue = c25
+            t.cyan = c25
+            t.dir_mid = '#005faf' -- make path segments match strict blue
+          end
+          return t
         end
         local function colors_assign(dst, src) for k, v in pairs(src) do dst[k] = v end end
         local function adjust_diff_change_shade(palette)
