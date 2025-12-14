@@ -57,6 +57,7 @@ lib.mkIf (config.features.gui.enable or false) {
       osd-status-msg = "$\\{time-pos\\} / $\\{duration\\} ($\\{percent-pos\\}%)$\\{?estimated-vf-fps: FPS: $\\{estimated-vf-fps\\}\\}";
       ytdl-format = "bestvideo+bestaudio/best";
       screenshot-template = "~/dw/scr-%F_%P";
+      msg-level = "auto_profiles=warn";
     };
   };
 }
