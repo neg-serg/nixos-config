@@ -27,7 +27,6 @@ return {'MeanderingProgrammer/render-markdown.nvim',
       },
       indent = {
         enabled = true,
-        character = " "  -- можно указать символ отступа (пробел или что угодно)
       },
       checkbox={
         enabled=true,
