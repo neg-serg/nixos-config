@@ -42,7 +42,7 @@ with lib;
         };
         torrment = {
           animation = "";
-          command = "kitty --class torrment -e rustmission";
+          command = "kitty --class torrment -e tewi";
           class = "torrment";
           position = "1% 0%";
           size = "98% 40%";
