@@ -295,6 +295,8 @@ in
         pkgs.neg.tewi # TUI torrent client (Transmission/qBittorrent/Deluge)
         pkgs.neg.playscii
         (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile (inputs.self + "/scripts/hw/cpu-boost.sh"))) # CLI toggle for AMD Precision Boost
+        (pkgs.writeShellScriptBin "fan-manual" (builtins.readFile (inputs.self + "/scripts/hw/fan-manual.sh")))
+        (pkgs.writeShellScriptBin "fan-auto" (builtins.readFile (inputs.self + "/scripts/hw/fan-auto.sh")))
       ];
       environment.etc = {
         "avahi/services/smb.service".text = ''
