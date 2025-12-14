@@ -20,7 +20,7 @@ local disabled_built_ins={
     'logipat',
     'matchit',
     'matchparen',
-    'node_provider',
+
     'optwin',
     'perl_provider',
     'python3_provider',
@@ -41,6 +41,8 @@ local disabled_built_ins={
 for _, plugin in pairs(disabled_built_ins) do
     vim.g['loaded_'..plugin]=1
 end
+vim.g.loaded_node_provider=0
+
 -- netrw is disabled elsewhere; drop redundant globals
 if vim.fn.executable('ugrep') == 1 then
     o.grepprg='ugrep -RInk -j -u --tabs=1 --ignore-files'
