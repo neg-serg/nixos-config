@@ -2,9 +2,22 @@
 # v: open Neovim with system profile sourced
 # Usage: v [ARGS...]
 . /etc/profile
-if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
-  printf "v: wrapper for nvim (sources /etc/profile)\n" >&2
-  exit 0
+SOCKET="/tmp/nvim.sock"
+
+# 1. Check if socket exists
+if [ -S "$SOCKET" ]; then
+  # 2. Open file(s) in existing instance
+  # Use --remote-silent to avoid blocking or errors if args empty
+  if [ "$#" -gt 0 ]; then
+      nvr --servername "$SOCKET" --remote-silent "$@"
+  fi
+
+  # 3. Raise Window (via raise script)
+  raise --match "class:regex=^nwim$"
+  # Previous lsof implementation removed in favor of raise script interaction
+else
+  # 4. Start new instance acting as server
+  # Use exec to replace shell process
+  exec nvim --listen "$SOCKET" "$@"
 fi
-nvim "$@"
 # vim:filetype=sh
