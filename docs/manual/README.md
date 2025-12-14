@@ -264,7 +264,7 @@ Keep this manifest updated whenever vendored sources change so that licensing re
 ## Hyprland: Single Source of Truth and Updates
 
 - Source of truth: `inputs.hyprland` (compositor) tracks Hyprland v0.52.1 while `inputs.hy3` stays
-  pinned to `hl0.51.0` (last stable plugin tag); `flake.lock` still captures the exact commits.
+  pinned to `hl0.52.0` (last stable plugin tag); `flake.lock` still captures the exact commits.
 - The NixOS overlay routes `pkgs.hyprland`, `pkgs.xdg-desktop-portal-hyprland`, and
   `pkgs.hyprlandPlugins.hy3` to those inputs, so Home‑Manager modules can just use `pkgs.*`.
 - Supporting inputs stay in lockstep via `follows` (`hyprland-protocols`,

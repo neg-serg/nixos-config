@@ -4,8 +4,7 @@
 пошаговый runbook.
 
 - Заметки по плагину Hyprland hy3: [hyprland-plugin.md](./hyprland-plugin.md)
-- Быстрый старт MCP-клиентов: [mcp-clients.md](./mcp-clients.md),
-  [mcp-clients.ru.md](./mcp-clients.ru.md)
+
 - Шпаргалка по hxtools: [hxtools.md](./hxtools.md), [hxtools.ru.md](./hxtools.ru.md)
 - Бенчмарк дедупликации /nix: [nix-dedup-vdo.en.md](./nix-dedup-vdo.en.md),
   [nix-dedup-vdo.ru.md](./nix-dedup-vdo.ru.md)
