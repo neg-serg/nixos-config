@@ -114,13 +114,13 @@ in {
       services = {
         hyprlock.u2fAuth = false;
         login.u2fAuth = false;
-        sudo-rs.u2fAuth = false;
+
         sudo.u2fAuth = false;
         # Enable AppArmor-aware PAM for common services
         login.enableAppArmor = true;
         sshd.enableAppArmor = true;
         sudo.enableAppArmor = true;
-        sudo-rs.enableAppArmor = true;
+
         su.enableAppArmor = true;
         greetd.enableAppArmor = true;
       };
@@ -132,9 +132,9 @@ in {
       };
     };
 
-    sudo-rs = {
+    sudo = {
       enable = true;
-      package = pkgs.sudo-rs;
+      package = pkgs.sudo;
       extraConfig = ''
         Defaults timestamp_timeout = 300 # makes sudo ask for password less often
       '';

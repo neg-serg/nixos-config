@@ -584,7 +584,6 @@ in
       # Disable AppArmor PAM integration for sudo since the kernel lacks AppArmor hats
       security.pam.services = {
         sudo.enableAppArmor = lib.mkForce false;
-        "sudo-rs".enableAppArmor = lib.mkForce false;
       };
 
       # Avoid forcing pkexec as setuid; Steam/SteamVR misbehaves when invoked with elevated EUID.
