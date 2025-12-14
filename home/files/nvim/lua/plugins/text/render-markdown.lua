@@ -16,6 +16,9 @@ return {'MeanderingProgrammer/render-markdown.nvim',
     require'render-markdown'.setup{
       completions={blink={enabled=true}},
       render_modes=true,
+      latex = { enabled = false },
+      html = { enabled = false },
+      yaml = { enabled = false },
       heading={
         icons={'󰼏  ', '󰼐  ', '󰼑  ', '󰼒  ', '󰼓  ', '󰼔  ', },
         position='overlay',
