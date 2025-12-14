@@ -632,12 +632,12 @@ in
 
           # Энергосбережение по умолчанию для меньшего тепла/шума
           "power-profiles-default" = {
-            description = "Set default power profile to power-saver";
+            description = "Set default power profile to balanced";
             after = ["power-profiles-daemon.service"];
             wants = ["power-profiles-daemon.service"];
             serviceConfig = {
               Type = "oneshot";
-              ExecStart = "/run/current-system/sw/bin/powerprofilesctl set power-saver";
+              ExecStart = "/run/current-system/sw/bin/powerprofilesctl set balanced";
             };
             # Defer to post-boot to avoid interfering with activation and to follow repo policy
             wantedBy = ["post-boot.target"];
