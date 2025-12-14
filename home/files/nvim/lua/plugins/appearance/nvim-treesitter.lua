@@ -19,7 +19,6 @@ return {
         "go",
         "gomod",
         "gosum",
-        "graphics", -- for glsl/wgsl
         "graphql",
         "html",
         "http",
