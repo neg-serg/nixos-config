@@ -262,25 +262,25 @@ in
         enable = true;
         autoFancontrol = {
           enable = true;
-          # Late start for quieter idle while still letting fans reach near-max PWM quickly.
-          minTemp = 50; # °C — fans begin speeding up earlier
-          maxTemp = 80; # °C — reach full sweep sooner to tame load spikes
-          minPwm = 60; # 0–255, maintains a very quiet baseline (approx 23%)
-          maxPwm = 255; # full power available
-          hysteresis = 4; # moderate hysteresis for stability
-          interval = 2; # poll sensors more frequently during ramp-up
-          allowStop = false; # CPU/case fans never idle below minPwm
-          minStartOverride = 150; # ensures a confident spin-up from idle
+          # Aggressive silence at idle, ramp up quickly under load
+          minTemp = 62; # °C — stay quiet until significant heat
+          maxTemp = 75; # °C — reach full speed before hitting thermal limit
+          minPwm = 0; # 0–255, absolute minimum (fans may stall)
+          maxPwm = 255; # full power for cooling headroom
+          hysteresis = 5; # reduce fan speed oscillation
+          interval = 2; # responsive polling
+          allowStop = false; # fans never fully stop for safety
+          minStartOverride = 150; # reliable spin-up from low PWM
           gpuPwmChannels = [2 3]; # case fans follow GPU temperature
         };
         gpuFancontrol = {
           enable = true;
-          # GPU fan starts later but retains headroom at the top end.
-          minTemp = 60; # °C — GPU fan stays low until substantial heat
-          maxTemp = 85; # °C — push close to the limit once it reaches 85
-          minPwm = 60; # 0–255, baseline spin to avoid stops
+          # GPU fan stays silent at idle, ramps for load
+          minTemp = 62; # °C — GPU fan quiet until significant heat
+          maxTemp = 80; # °C — full speed well before throttle point
+          minPwm = 0; # 0–255, absolute minimum
           maxPwm = 255; # maximum cooling
-          hysteresis = 4; # reduce chatter between steps
+          hysteresis = 5; # stability
         };
       };
 
