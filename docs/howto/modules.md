@@ -102,7 +102,7 @@ Whether to enable autostart Obsidian at GUI login (systemd user service).
 
 ## features.apps.winapps.enable
 
-Whether to enable enable WinApps integration (KVM/libvirt Windows VM, RDP bridge).
+Whether to enable WinApps integration (KVM/libvirt Windows VM, RDP bridge).
 
 *Type:* boolean
 
@@ -116,7 +116,7 @@ Whether to enable enable WinApps integration (KVM/libvirt Windows VM, RDP bridge
 
 ## features.cli.fastCnf.enable
 
-Whether to enable enable fast zsh command-not-found handler powered by nix-index.
+Whether to enable fast zsh command-not-found handler powered by nix-index.
 
 *Type:* boolean
 
@@ -130,7 +130,7 @@ Whether to enable enable fast zsh command-not-found handler powered by nix-index
 
 ## features.cli.icedteaWeb.enable
 
-Whether to enable enable IcedTea Web (netx) integration.
+Whether to enable IcedTea Web (netx) integration.
 
 *Type:* boolean
 
@@ -144,7 +144,7 @@ Whether to enable enable IcedTea Web (netx) integration.
 
 ## features.cli.nixIndexDB.enable
 
-Whether to enable enable scheduled nix-index DB refresh (prebuilt cache).
+Whether to enable scheduled nix-index DB refresh (prebuilt cache).
 
 *Type:* boolean
 
@@ -158,7 +158,7 @@ Whether to enable enable scheduled nix-index DB refresh (prebuilt cache).
 
 ## features.dev.enable
 
-Whether to enable enable Dev stack (toolchains, editors, hack tooling).
+Whether to enable Dev stack (toolchains, editors, hack tooling).
 
 *Type:* boolean
 
@@ -172,7 +172,7 @@ Whether to enable enable Dev stack (toolchains, editors, hack tooling).
 
 ## features.dev.ai.enable
 
-Whether to enable enable AI tools (e.g., LM Studio).
+Whether to enable AI tools (e.g., LM Studio).
 
 *Type:* boolean
 
