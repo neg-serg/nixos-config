@@ -67,13 +67,48 @@
                     "style": "plain"
                 },
                 {
-                    "foreground": "#48a574",
-                    "style": "plain",
-                    "template": " <#1e293b>⟮</>{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}<#1e293b>⟯</><#899CA1></>",
-                    "type": "rust"
+                    "foreground": "#CC342D",
+                    "properties": {
+                        "fetch_version": false
+                    },
+                    "template": "\ue791{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
+                    "type": "ruby",
+                    "style": "plain"
                 },
                 {
-                    "foreground": "#899CA1",
+                    "foreground": "#b07219",
+                    "properties": {
+                        "fetch_version": false
+                    },
+                    "template": "\ue738{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
+                    "type": "java",
+                    "style": "plain"
+                },
+                {
+                    "foreground": "#0db7ed",
+                    "properties": {
+                        "fetch_version": false
+                    },
+                    "template": "\uf308{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
+                    "type": "docker",
+                    "style": "plain"
+                },
+                {
+                    "foreground": "#5f43e9",
+                    "properties": {
+                        "fetch_version": false
+                    },
+                    "template": "TF{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
+                    "type": "terraform",
+                    "style": "plain"
+                },
+                {
+                    "foreground": "#f7ad24",
+                    "properties": {
+                        "fetch_version": false
+                    },
+                    "template": "\ue718{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
+                    "type": "pnpm",
                     "foreground_templates": [
                         "{{ if gt .Code 0 }}#ce162b{{ end }}"
                     ],
