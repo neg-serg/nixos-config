@@ -181,26 +181,31 @@ return function()
           local dadd = hl_get('DiffAdd')
           local dchg = hl_get('DiffChange')
           local ddel = hl_get('DiffDelete')
+
+          -- Helper to get color with fallback chain
+          local function get_fg(hl, fb) return tohex(hl.fg) or fb end
+          local function get_bg(hl, fb) return tohex(hl.bg) or fb end
+
           local t = {
             black       = fallback.black,
-            white       = tohex(sl.fg)    or fallback.white,
-            white_dim   = tohex(slnc.fg)  or fallback.white_dim,
-            red         = tohex(dfe.fg)   or fallback.red,
-            yellow      = tohex(dfw.fg)   or fallback.yellow,
-            blue        = tohex(dir.fg)   or fallback.blue,
-            cyan        = tohex(id.fg)    or fallback.cyan,
-            green       = tohex(str.fg)   or fallback.green,
-            diff_add    = tohex(dadd.fg)  or fallback.green,
-            diff_change = tohex(dchg.fg)  or '#a0b1c5',
-            diff_del    = tohex(ddel.fg)  or fallback.red,
+            white       = get_fg(sl, fallback.white),
+            white_dim   = get_fg(slnc, fallback.white_dim) or fallback.white_dim,
+            red         = get_fg(dfe, fallback.red),
+            yellow      = get_fg(dfw, fallback.yellow),
+            blue        = get_fg(dir, fallback.blue),
+            cyan        = get_fg(id, fallback.cyan),
+            green       = get_fg(str, fallback.green),
+            diff_add    = get_fg(dadd, fallback.green),
+            diff_change = get_fg(dchg, '#a0b1c5'),
+            diff_del    = get_fg(ddel, fallback.red),
             blue_light  = fallback.blue_light,
             line_zero   = fallback.line_zero,
             dir_mid     = fallback.dir_mid,
-            mode_ins_bg = tohex(hl_get('DiffAdd').bg)    or 'NONE',
-            mode_vis_bg = tohex(hl_get('Visual').bg)     or 'NONE',
-            mode_rep_bg = tohex(hl_get('DiffDelete').bg) or 'NONE',
-            base_bg     = tohex(sl.bg)   or fallback.black,
-            nc_bg       = tohex(slnc.bg) or fallback.black,
+            mode_ins_bg = get_bg(hl_get('DiffAdd'), 'NONE'),
+            mode_vis_bg = get_bg(hl_get('Visual'), 'NONE'),
+            mode_rep_bg = get_bg(hl_get('DiffDelete'), 'NONE'),
+            base_bg     = get_bg(sl, fallback.black),
+            nc_bg       = get_bg(slnc, fallback.black) or get_bg(sl, fallback.black),
           }
           if vim.g.colors_name == 'neg' then
             -- Force Color 25 (#005faf) as the main accent for neg theme
@@ -208,6 +213,10 @@ return function()
             t.blue = c25
             t.cyan = c25
             t.dir_mid = '#005faf' -- make path segments match strict blue
+            -- Also ensure white_dim has a sensible value for neg
+            if not t.white_dim or t.white_dim == fallback.white_dim then
+              t.white_dim = '#4a6078'
+            end
           end
           return t
         end
@@ -457,16 +466,20 @@ return function()
         api.nvim_create_autocmd('ColorScheme', {
           group = AUG,
           callback = function()
-            _hl_cache = {}
-            if LOCK_THEME then
-              colors_assign(colors, initial_colors)
-            else
-              local fresh = themed_colors(colors_fallback)
-              apply_palette_adjustments(fresh)
-              colors_assign(colors, fresh)
-            end
-            apply_statusline_highlights()
-            if DEBUG then dbg_notify(LOCK_THEME and 'colors reapplied (locked to original)' or 'colors refreshed from theme') end
+            -- Defer to let the colorscheme fully apply before reading highlight groups
+            vim.defer_fn(function()
+              _hl_cache = {}
+              if LOCK_THEME then
+                colors_assign(colors, initial_colors)
+              else
+                local fresh = themed_colors(colors_fallback)
+                apply_palette_adjustments(fresh)
+                colors_assign(colors, fresh)
+              end
+              apply_statusline_highlights()
+              vim.cmd('redrawstatus')
+              if DEBUG then dbg_notify(LOCK_THEME and 'colors reapplied (locked to original)' or 'colors refreshed from theme') end
+            end, 50)
           end,
         })
 
