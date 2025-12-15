@@ -32,7 +32,7 @@
                     "type": "npm",
                     "style": "powerline",
                     "foreground": "#ce162b",
-                    "template": "<#899CA1>and</> \ue71e {{ .Full }} "
+                    "template": "<#899CA1>and</> \ue71e {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} "
                 },
                 {
                     "foreground": "#E4F34A",
@@ -60,7 +60,7 @@
                         "fetch_version": true,
                         "cache_duration": "3m"
                     },
-                    "template": " \ue718{{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} ",
+                    "template": " \ue718{{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} ",
                     "type": "node"
                 },
                 {
@@ -115,13 +115,13 @@
                     "type": "bun",
                     "style": "plain",
                     "foreground": "#007C00",
-                    "template": " {{ .Full }}"
+                    "template": " {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}"
                 },
                 {
                     "type": "deno",
                     "style": "plain",
                     "foreground": "#31658C",
-                    "template": "⏣ {{ .Full }}"
+                    "template": "⏣ {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}"
                 },
                 {
                     "type": "zig",
@@ -139,25 +139,25 @@
                     "type": "terraform",
                     "style": "plain",
                     "foreground": "#0090FF",
-                    "template": " {{ .Full }}"
+                    "template": " {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}"
                 },
                 {
                     "type": "docker",
                     "style": "plain",
                     "foreground": "#395573",
-                    "template": " Docker:{{ .Full }}"
+                    "template": " Docker:{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}"
                 },
                 {
                     "type": "helm",
                     "style": "plain",
                     "foreground": "#005faf",
-                    "template": " Helm:{{ .Full }}"
+                    "template": " Helm:{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}"
                 },
                 {
                     "type": "pnpm",
                     "style": "plain",
                     "foreground": "#005fd7",
-                    "template": " pnpm:{{ .Full }}"
+                    "template": " pnpm:{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}"
                 },
                 {
                     "foreground": "#899CA1",
