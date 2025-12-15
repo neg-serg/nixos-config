@@ -4,6 +4,7 @@
     ./git.nix
     ./mpv.nix
     ./shell.nix
+    ./dunst.nix
   ];
 
   users.users.neg.maid = {};
