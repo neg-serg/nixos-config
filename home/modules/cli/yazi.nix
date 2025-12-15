@@ -4,7 +4,7 @@
   ...
 }: {
   programs.yazi = {
-    enable = true;
+    enable = false;
     package = inputs.yazi.packages.${pkgs.stdenv.hostPlatform.system}.default;
     enableZshIntegration = true;
     settings = {

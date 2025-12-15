@@ -12,14 +12,18 @@
     }; # Fallback defaults if options missing
 in
   lib.mkIf mediaEnabled {
+    # Ensure system can decrypt user secrets using user's key
+    sops.age.keyFile = "${config.users.users.neg.home}/.config/sops/age/keys.txt";
+
     # 1. Secrets (System-level sops)
     # Replaces HM definition in secrets/home/default.nix
-    sops.secrets."home/mpdas_negrc" = {
+    # 1. Secrets (System-level sops)
+    # Replaces HM definition in secrets/home/default.nix
+    sops.secrets."mpdas_negrc" = {
       sopsFile = ../../../secrets/home/mpdas/neg.rc;
       format = "binary";
       owner = "neg";
-      # Setting path explicitly is optional but ensures we know where it is.
-      # Default is /run/secrets/home/mpdas_negrc
+      # Default is /run/secrets/mpdas_negrc
     };
 
     # 2. Config Files (Nix-Maid)
@@ -54,7 +58,7 @@ in
         wantedBy = ["default.target"]; # Autostart
         serviceConfig = {
           # Use the system-level sops secret path
-          ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets."home/mpdas_negrc".path}";
+          ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets."mpdas_negrc".path}";
           Restart = "on-failure";
           RestartSec = "2";
         };
