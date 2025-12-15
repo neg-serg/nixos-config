@@ -3,6 +3,7 @@
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {
     'HiPhish/rainbow-delimiters.nvim', -- rainbow parenthesis
+    event = { "BufReadPost", "BufNewFile" },
     -- Skip git submodules (plugin's tests use a submodule like test/bin)
     -- which may fail to fetch in restricted environments.
     submodules = false,
