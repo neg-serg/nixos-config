@@ -10,6 +10,7 @@
     ./gpg.nix
     ./cli-tools.nix
     ./terminals-shells.nix
+    ./gui-apps.nix
   ];
 
   users.users.neg.maid = {};
