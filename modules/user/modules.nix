@@ -12,7 +12,7 @@
     ./locale-pkgs.nix
     ./theme-packages.nix
     ./locale.nix
-    ./nix-maid
-    ./wrappers
+    # ./nix-maid
+    # ./wrappers
   ];
 }
