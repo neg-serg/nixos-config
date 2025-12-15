@@ -514,23 +514,23 @@ in {
   # Packages and Scripts
   environment.systemPackages = [
     # Terminals
-    pkgs.kitty
-    pkgs.wezterm
+    pkgs.kitty # GPU-accelerated terminal with ligatures and image support
+    pkgs.wezterm # GPU-accelerated terminal with Lua config
 
     # Shells
-    pkgs.nushell
-    pkgs.tmux
+    pkgs.nushell # Modern shell with structured data pipelines
+    pkgs.tmux # Terminal multiplexer for session management
 
     # Tools needed for kitty-panel
-    pkgs.gum
-    pkgs.btop
-    pkgs.cava
-    pkgs.peaclock
-    pkgs.curl
+    pkgs.gum # TUI styling toolkit for shell scripts
+    pkgs.btop # Resource monitor (CPU, memory, disks, network)
+    pkgs.cava # Console audio visualizer
+    pkgs.peaclock # Customizable clock for terminal
+    pkgs.curl # HTTP client for weather fetching
 
     # Helper Scripts
-    kittyPanel
-    kittyScrollback
+    kittyPanel # Dashboard panel layout for Kitty
+    kittyScrollback # Kitten wrapper for nvim scrollback
   ];
 
   # Session variables
