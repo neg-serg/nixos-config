@@ -124,6 +124,7 @@ in
             enable = false;
             flatpakSupport.enable = true;
           };
+          qt.enable = false;
           helix.enable = true;
         };
         base16Scheme = {
