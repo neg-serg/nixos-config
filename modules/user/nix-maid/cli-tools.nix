@@ -331,8 +331,7 @@ in {
       ".config/yazi/theme.toml".source = yaziFormat.generate "theme.toml" yaziTheme;
       ".config/yazi/keymap.toml".source = yaziFormat.generate "keymap.toml" yaziKeymap;
 
-      # Tig Config
-      ".config/tig/config".source = ../../../home/modules/cli/tig.conf;
+      # Tig Config - restored to HM in home/modules/cli/tig.nix
 
       # Fastfetch Configs (Source from repo)
       ".config/fastfetch/config.jsonc".source = "${fastfetchSrc}/config.jsonc";

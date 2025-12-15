@@ -509,9 +509,6 @@ in {
         }
         $env.PROMPT_COMMAND_RIGHT = ""
       '';
-
-    # Zsh config - symlink to user's existing config
-    ".config/zsh".source = ../../../home/files/shell/zsh;
   };
 
   # Packages and Scripts
