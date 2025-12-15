@@ -9,7 +9,7 @@ with lib;
     {
       programs = {
         git = {
-          enable = true;
+          enable = false;
           settings = {
             user = {
               name = "Sergey Miroshnichenko";
