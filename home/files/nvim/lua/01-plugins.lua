@@ -32,7 +32,7 @@ if ok and nixCats.lazy then
     lazy = nixCats.lazy
     lazy.setup({
         lockfile = lockfile,
-        defaults = { lazy = false },
+        defaults = { lazy = true },
         install = { colorscheme = { "neg" } },
         rocks = { enabled = false },
         ui = { icons = { ft = "", lazy = "󰂠 ", loaded = "", not_loaded = "" } },
@@ -59,7 +59,7 @@ else
     lazy.setup({
         lockfile = lockfile,
         spec = { { import = "plugins" } },
-        defaults = { lazy = false },
+        defaults = { lazy = true },
         install = { colorscheme = { "neg" } },
         rocks = { enabled = false },
         ui = { icons = { ft = "", lazy = "󰂠 ", loaded = "", not_loaded = "" } },
