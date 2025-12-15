@@ -1,13 +1,12 @@
 {
   lib,
   config,
-  systemdUser,
   ...
 }:
 with lib;
   mkIf config.features.gui.enable (lib.mkMerge [
     {
-      services.flameshot.enable = true;
+      services.flameshot.enable = false;
       # Keep config minimal and avoid invalid empty shortcuts (Flameshot errors out on "").
       services.flameshot.settings = {
         General = {
@@ -56,9 +55,9 @@ with lib;
     }
     # Force Qt to use Wayland to avoid xcb plugin crashes when racing the compositor.
     {
-      systemd.user.services.flameshot = lib.mkMerge [
-        {Service.Environment = ["QT_QPA_PLATFORM=wayland"];}
-        (systemdUser.mkUnitFromPresets {presets = ["graphical"];})
-      ];
+      # systemd.user.services.flameshot = lib.mkMerge [
+      #   {Service.Environment = ["QT_QPA_PLATFORM=wayland"];}
+      #   (systemdUser.mkUnitFromPresets {presets = ["graphical"];})
+      # ];
     }
   ])

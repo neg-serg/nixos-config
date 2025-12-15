@@ -5,6 +5,10 @@
     ./mpv.nix
     ./shell.nix
     ./dunst.nix
+    ./dunst.nix
+    ./mpd-services.nix
+    ./services-manual.nix
+    ./gpg.nix
   ];
 
   users.users.neg.maid = {};

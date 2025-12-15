@@ -1,6 +1,7 @@
 # Blink.cmp Customization Reference
 
-This file contains configuration code that was previously commented out in `blink.lua`. It serves as a reference for advanced window styling and icon customization.
+This file contains configuration code that was previously commented out in `blink.lua`. It serves as
+a reference for advanced window styling and icon customization.
 
 ```lua
     -- highlight = {use_nvim_cmp_as_default = true,},
