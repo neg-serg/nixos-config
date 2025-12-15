@@ -180,4 +180,34 @@ function M.qf_picker()
   }):find()
 end
 
+
+-- Smart Files: Use git_files if in git, else find_files
+function M.smart_files()
+  local ok = pcall(require('telescope.builtin').git_files, { show_untracked = true })
+  if not ok then require('telescope.builtin').find_files({ find_command = M.best_find_cmd() }) end
+end
+
+-- Turbo Find Files: Fast fd-based find
+function M.turbo_find_files(opts)
+  opts = opts or {}
+  local cwd = opts.cwd or vim.fn.expand('%:p:h')
+  require('telescope.builtin').find_files({
+    cwd = cwd,
+    find_command = { (vim.fn.executable('fd') == 1 and 'fd' or 'fdfind'), '-H', '--ignore-vcs', '-d', '2', '--strip-cwd-prefix' },
+    theme = 'ivy', previewer = false, prompt_title = false, sorting_strategy = 'descending', path_display = { 'truncate' },
+  })
+end
+
+-- Turbo File Browser: Fast browser
+function M.turbo_file_browser(opts)
+  opts = opts or {}
+  local cwd = opts.cwd or vim.fn.expand('%:p:h')
+  local t = require('telescope'); pcall(t.load_extension, 'file_browser')
+  t.extensions.file_browser.file_browser({
+    cwd = cwd, theme = 'ivy', previewer = false, grouped = false, git_status = false,
+    hidden = { file_browser = false, folder_browser = false }, respect_gitignore = true, prompt_title = false,
+    layout_config = { height = 12 },
+  })
+end
+
 return M

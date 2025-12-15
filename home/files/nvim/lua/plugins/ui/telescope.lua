@@ -308,68 +308,7 @@ return {
 
     -- ---------- Extensions ----------
     pcall(telescope.load_extension, 'fzf')
-    -- ---------- Smart/Turbo helpers ----------
-    local function smart_files()
-      local ok = pcall(require('telescope.builtin').git_files, { show_untracked = true })
-      if not ok then require('telescope.builtin').find_files({ find_command = utils.best_find_cmd() }) end
-    end
-    local function turbo_find_files(opts)
-      opts = opts or {}
-      local cwd = opts.cwd or vim.fn.expand('%:p:h')
-      require('telescope.builtin').find_files({
-        cwd = cwd,
-        find_command = { (vim.fn.executable('fd') == 1 and 'fd' or 'fdfind'), '-H', '--ignore-vcs', '-d', '2', '--strip-cwd-prefix' },
-        theme = 'ivy', previewer = false, prompt_title = false, sorting_strategy = 'descending', path_display = { 'truncate' },
-      })
-    end
-    local function turbo_file_browser(opts)
-      opts = opts or {}
-      local cwd = opts.cwd or vim.fn.expand('%:p:h')
-      local t = require('telescope'); pcall(t.load_extension, 'file_browser')
-      t.extensions.file_browser.file_browser({
-        cwd = cwd, theme = 'ivy', previewer = false, grouped = false, git_status = false,
-        hidden = { file_browser = false, folder_browser = false }, respect_gitignore = true, prompt_title = false,
-        layout_config = { height = 12 },
-      })
-    end
-
-    -- ---------- Keymaps ----------
-    local opts = { silent = true, noremap = true }
-    -- Help / grep word (replace deprecated vim-ref)
-    vim.keymap.set('n', '<leader>sh', builtin('help_tags'), opts)
-    vim.keymap.set('n', '<leader>sg', function()
-      require('telescope.builtin').grep_string({ search = vim.fn.expand('<cword>') })
-    end, opts)
-    -- zoxide (note: consider <leader>cd if 'cd' conflicts)
-    vim.keymap.set('n', 'cd', function()
-      local t = require('telescope')
-      pcall(t.load_extension, 'zoxide')
-      t.extensions.zoxide.list(require('telescope.themes').get_ivy({ layout_config = { height = 8 }, border = false }))
-    end, opts)
-
-    vim.keymap.set('n', '<leader>.', function()
-      local t = require('telescope')
-      pcall(t.load_extension, 'frecency')
-      vim.cmd('Telescope frecency theme=ivy layout_config={height=12} sorting_strategy=descending')
-    end, opts)
-
-    vim.keymap.set('n', '<leader>l', function()
-        local t = require('telescope')
-        pcall(t.load_extension, 'file_browser')
-        t.extensions.file_browser.file_browser({
-            path = vim.fn.expand('%:p:h'),
-            select_buffer = true,
-        })
-    end, opts)
-
-    vim.keymap.set('n', 'E', function()
-      if vim.bo.filetype then pcall(function() require('oil.actions').cd.callback() end)
-      else vim.cmd('chdir %:p:h') end
-      local t = require('telescope'); pcall(t.load_extension, 'pathogen')
-      t.extensions.pathogen.find_files({})
-    end, opts)
-
-    vim.keymap.set('n', 'ee', smart_files, opts)
+    vim.keymap.set('n', 'ee', utils.smart_files, opts)
     vim.keymap.set('n', '<leader>L', function()
       if vim.bo.filetype then pcall(function() require('oil.actions').cd.callback() end)
       else pcall(vim.cmd, 'ProjectRoot') end
@@ -378,9 +317,9 @@ return {
     end, opts)
 
     -- TURBO mode
-    vim.keymap.set('n', '<leader>sf', function() turbo_find_files({ cwd = vim.fn.expand('%:p:h') }) end, opts)
-    vim.keymap.set('n', '<leader>sF', function() turbo_find_files({ cwd = utils.project_root() }) end, opts)
-    vim.keymap.set('n', '<leader>sb', function() turbo_file_browser({ cwd = vim.fn.expand('%:p:h') }) end, opts)
+    vim.keymap.set('n', '<leader>sf', function() utils.turbo_find_files({ cwd = vim.fn.expand('%:p:h') }) end, opts)
+    vim.keymap.set('n', '<leader>sF', function() utils.turbo_find_files({ cwd = utils.project_root() }) end, opts)
+    vim.keymap.set('n', '<leader>sb', function() utils.turbo_file_browser({ cwd = vim.fn.expand('%:p:h') }) end, opts)
 
     -- Resume last picker
     vim.keymap.set('n', '<leader>sr', builtin('resume'), opts)
