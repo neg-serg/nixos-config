@@ -9,8 +9,8 @@ in {
   config = lib.mkIf qtEnabled {
     qt = {
       enable = true;
-      platformTheme.name = "qt6ct";
-      style.name = "kvantum";
+      # platformTheme.name = "qt6ct";
+      # style.name = "kvantum";
     };
 
     home.packages = with pkgs; [
