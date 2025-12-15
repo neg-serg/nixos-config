@@ -40,8 +40,7 @@ servicesProfiles.unbound = {
 
 ### Metrics collection
 
-To collect metrics, enable the exporter and scrape job and add Prometheus
-to Grafana:
+To collect metrics, enable the exporter and scrape job and add Prometheus to Grafana:
 
 ```nix
 { lib, config, ... }: {

@@ -1,21 +1,18 @@
 {
   config,
   lib,
-  pkgs,
   xdg,
-  systemdUser,
   ...
 }: let
-  inherit (lib) getExe';
-  inherit (config.xdg) configHome dataHome;
-  aria2Bin = getExe' pkgs.aria2 "aria2c";
+  inherit (config.xdg) dataHome;
+  # aria2Bin = lib.getExe' pkgs.aria2 "aria2c";
   sessionFile = "${dataHome}/aria2/session";
 in {
   config = lib.mkIf (config.features.web.enable && config.features.web.tools.enable) (lib.mkMerge [
     {
       # Minimal, robust aria2 configuration through Home Manager
       programs.aria2 = {
-        enable = true;
+        enable = false;
         settings = {
           # Download destination under XDG paths
           dir = "${config.xdg.userDirs.download}/aria";
@@ -31,23 +28,24 @@ in {
     # Ensure the session file exists under XDG data (no activation DAG noise)
     (xdg.mkXdgDataText "aria2/session" "")
     # Optional user service (behind a flag)
+    # Optional user service (behind a flag)
     (lib.mkIf (config.features.web.aria2.service.enable or false) {
-      systemd.user.services.aria2 = lib.mkMerge [
-        {
-          Unit = {
-            Description = "aria2 download manager";
-            PartOf = ["graphical-session.target"];
-          };
-          Service = {
-            ExecStart = let
-              exe = aria2Bin;
-              args = ["--conf-path=${configHome}/aria2/aria2.conf"];
-            in "${exe} ${lib.escapeShellArgs args}";
-            TimeoutStopSec = "5s";
-          };
-        }
-        (systemdUser.mkUnitFromPresets {presets = ["graphical"];})
-      ];
+      # systemd.user.services.aria2 = lib.mkMerge [
+      #   {
+      #     Unit = {
+      #       Description = "aria2 download manager";
+      #       PartOf = ["graphical-session.target"];
+      #     };
+      #     Service = {
+      #       ExecStart = let
+      #         exe = aria2Bin;
+      #         args = ["--conf-path=${configHome}/aria2/aria2.conf"];
+      #       in "${exe} ${lib.escapeShellArgs args}";
+      #       TimeoutStopSec = "5s";
+      #     };
+      #   }
+      #   (systemdUser.mkUnitFromPresets {presets = ["graphical"];})
+      # ];
     })
   ]);
 }
