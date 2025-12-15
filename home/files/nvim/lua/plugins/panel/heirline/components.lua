@@ -693,7 +693,9 @@ return function(ctx)
         local buf = self._buf or target_buf(); if not buf then self._ca_count = 0; return end
         local cnt = 0
         local ok_params, params = pcall(function()
-          local p = (vim.lsp.util and vim.lsp.util.make_range_params) and vim.lsp.util.make_range_params(0) or { textDocument = { uri = vim.uri_from_bufnr(buf) } }
+          local client = vim.lsp.get_clients({ bufnr = buf })[1]
+          local offset_encoding = client and client.offset_encoding or 'utf-16'
+          local p = (vim.lsp.util and vim.lsp.util.make_range_params) and vim.lsp.util.make_range_params(0, offset_encoding) or { textDocument = { uri = vim.uri_from_bufnr(buf) } }
           p.context = { diagnostics = (vim.diagnostic and vim.diagnostic.get and vim.diagnostic.get(buf, { lnum = (vim.api and vim.api.nvim_win_get_cursor and ((target_win() and vim.api.nvim_win_get_cursor(target_win()) or {1,0})[1] - 1)) }) or {}) }
           return p
         end)
