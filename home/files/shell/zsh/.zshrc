@@ -20,11 +20,17 @@ source ~/.zi/plugins/neg-serg---F-Sy-H/F-Sy-H.plugin.zsh
 # zi ice lucid atload'[[ -r ${ZDOTDIR}/.p10k.zsh ]] && source ${ZDOTDIR}/.p10k.zsh'
 # zi light romkatv/powerlevel10k
 
-# Oh-My-Posh prompt initialization
+# Oh-My-Posh prompt initialization (Cached)
 if command -v oh-my-posh >/dev/null 2>&1; then
   omp_config="${XDG_CONFIG_HOME:-$HOME/.config}/zsh/neg.omp.json"
-  if [ -r "$omp_config" ]; then
-    eval "$(oh-my-posh init zsh --config "$omp_config" --print)"
+  omp_cache="${XDG_CACHE_HOME:-$HOME/.cache}/oh-my-posh-init.zsh"
+  
+  if [[ -r "$omp_config" ]]; then
+    # Rebuild cache if config or binary is newer than cache
+    if [[ ! -r "$omp_cache" || "$omp_config" -nt "$omp_cache" || ${commands[oh-my-posh]} -nt "$omp_cache" ]]; then
+      oh-my-posh init zsh --config "$omp_config" --print > "$omp_cache"
+    fi
+    source "$omp_cache"
   fi
 fi
 # Utilities (deferred)
