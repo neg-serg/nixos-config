@@ -12,7 +12,9 @@ return {
     "TimeMachineLogShow",
     "TimeMachineLogClear",
   },
-  keys = {},
+  keys = {
+    { '<leader>ut', '<cmd>TimeMachineToggle<cr>', desc = 'Time Machine: toggle' },
+  },
   opts = {
     -- Keep defaults; we already use persistent undo in settings
     -- You can set diff_tool = 'difft' if you have it installed
