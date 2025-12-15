@@ -5,17 +5,6 @@ return {'mfussenegger/nvim-dap', -- neovim debugger protocol support
     dependencies={
         {'rcarriga/nvim-dap-ui'}, -- better ui for nvim-dap
         {'theHamsta/nvim-dap-virtual-text'}},  -- virtual debugging text support
-    config=function()
-        local status, dapui = pcall(require, 'dapui')
-        if (not status) then return end
-        dapui.setup()
-        local dap = require('dap')
-        local widgets = require('dap.ui.widgets')
-
-        local function opt(msg)
-            return { desc = "DAP: " .. msg }
-        end
-
     keys = {
       { "<leader>db", function() require("dap").toggle_breakpoint() end, desc = "DAP: breakpoint" },
       { "<F2>", function() require("dap").continue() end, desc = "DAP: continue" },
@@ -33,6 +22,11 @@ return {'mfussenegger/nvim-dap', -- neovim debugger protocol support
         if (not status) then return end
         dapui.setup()
         local dap = require('dap')
+        local widgets = require('dap.ui.widgets')
+
+        local function opt(msg)
+            return { desc = "DAP: " .. msg }
+        end
         
         dap.listeners.after.event_initialized["dapui_config"] = function()
             dapui.open()
