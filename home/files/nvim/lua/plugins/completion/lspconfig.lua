@@ -42,8 +42,15 @@ return {
       })
     end
 
+    -- Blink interaction
+    local capabilities = vim.lsp.protocol.make_client_capabilities()
+    if pcall(require, 'blink.cmp') then
+      capabilities = require('blink.cmp').get_lsp_capabilities(capabilities)
+    end
+
     local base_config = {
       handlers = handlers,
+      capabilities = capabilities,
     }
 
     local function configure(server, extra)
@@ -58,37 +65,24 @@ return {
       vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
     end
 
-    configure('bashls')
+    -- Servers with default config
+    local simple_servers = {
+      'bashls', 'cmake', 'nil_ls', 'qmlls', 'ts_ls', 'cssls', 'html', 'yamlls',
+      'taplo', 'lemminx', 'dhall_lsp_server', 'asm_lsp', 'autotools_ls', 'dotls',
+      'gopls', 'sqls', 'dockerls', 'docker_compose_language_service',
+      'systemd_language_server', 'nginx_language_server', 'svls', 'vhdl_ls',
+      'zls', 'awk_ls', 'just', 'marksman'
+    }
+    for _, srv in ipairs(simple_servers) do configure(srv) end
+
+    -- Servers with custom config
     configure('clangd', {
       cmd = { 'clangd', '--background-index', '--clang-tidy', '--completion-style=detailed', '--header-insertion=never' },
       init_options = { clangdFileStatus = true },
     })
-    configure('cmake')
-    configure('nil_ls') -- Nix
-    configure('qmlls') -- QML via qt6
-    configure('ts_ls') -- TypeScript/JavaScript
-    configure('cssls')
     configure('jsonls', {
       filetypes = { 'json', 'jsonc', 'json5' },
     })
-    configure('html')
-    configure('yamlls')
-    configure('taplo')
-    configure('lemminx')
-    configure('dhall_lsp_server')
-    configure('asm_lsp')
-    configure('autotools_ls')
-    configure('dotls')
-    configure('gopls')
-    configure('sqls')
-    configure('dockerls')
-    configure('docker_compose_language_service')
-    configure('systemd_language_server')
-    configure('nginx_language_server')
-    configure('svls')
-    configure('vhdl_ls')
-    configure('zls')
-    configure('awk_ls')
     configure('pyright', {
       settings = {
         python = {
@@ -99,8 +93,6 @@ return {
         },
       },
     })
-    configure('just')
-    configure('marksman')
 
     -- Global LSP/Help keymaps (replace vim-ref behavior)
     Map('n', 'K', function()
