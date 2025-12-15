@@ -11,6 +11,7 @@
     ./cli-tools.nix
     ./terminals-shells.nix
     ./gui-apps.nix
+    ./vicinae.nix
   ];
 
   users.users.neg.maid = {};
