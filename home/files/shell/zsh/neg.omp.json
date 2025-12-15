@@ -29,6 +29,50 @@
                     }
                 },
                 {
+                    "type": "npm",
+                    "style": "powerline",
+                    "foreground": "#ce162b",
+                    "template": "<#899CA1>and</> \ue71e {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} "
+                },
+                {
+                    "foreground": "#E4F34A",
+                    "properties": {
+                        "fetch_version": false
+                    },
+                    "template": "\ue235{{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}",
+                    "type": "python",
+                    "style": "plain"
+                },
+                {
+                    "foreground": "#7FD5EA",
+                    "properties": {
+                        "fetch_version": false
+                    },
+                    "template": "\ue626{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
+                    "type": "go",
+                    "style": "plain"
+                },
+                {
+                    "foreground": "#42E66C",
+                    "properties": {
+                        "detect_extensions": [
+                            "js",
+                            "ts"
+                        ],
+                        "fetch_version": true,
+                        "cache_duration": "3m"
+                    },
+                    "template": " \ue718{{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} ",
+                    "type": "node",
+                    "style": "plain"
+                },
+                {
+                    "foreground": "#48a574",
+                    "style": "plain",
+                    "template": " <#1e293b>⟮</>{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}<#1e293b>⟯</><#899CA1></>",
+                    "type": "rust"
+                },
+                {
                     "foreground": "#899CA1",
                     "foreground_templates": [
                         "{{ if gt .Code 0 }}#ce162b{{ end }}"
