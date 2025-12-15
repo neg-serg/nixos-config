@@ -2,7 +2,7 @@
   imports = [
     ./audio
     ./images
-    ./mpv
+    # ./mpv
     ./ai-upscale.nix
     ./ai-upscale-rt.nix
     ./pipewire.nix
