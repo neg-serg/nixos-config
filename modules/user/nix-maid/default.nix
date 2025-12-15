@@ -3,6 +3,7 @@
     inputs.nix-maid.nixosModules.default
     ./git.nix
     ./mpv.nix
+    ./shell.nix
   ];
 
   users.users.neg.maid = {};
