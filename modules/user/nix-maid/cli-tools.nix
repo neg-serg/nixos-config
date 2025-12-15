@@ -9,7 +9,7 @@
 
   # --- Bat Config ---
   batSyntaxes = {
-    "bat/syntaxes/Dockerfile (with bash).sublime-syntax".text = ''
+    "bat/syntaxes/Dockerfile_with_bash.sublime-syntax".text = ''
       %YAML 1.2
       ---
       name: Dockerfile (with bash)
