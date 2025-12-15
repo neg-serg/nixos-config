@@ -27,7 +27,6 @@ in {
       common."org.freedesktop.impl.portal.FileChooser" = ["gtk"];
       hyprland.default = ["hyprland" "gtk"];
       hyprland."org.freedesktop.impl.portal.FileChooser" = ["gtk"];
-      # Plasma-specific portal defaults removed to restore Hyprland-only setup
     };
   };
 

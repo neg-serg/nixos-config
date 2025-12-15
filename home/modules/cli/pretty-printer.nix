@@ -25,7 +25,6 @@ with lib;
         lib.concatStringsSep ":" ([libpp libcolored] ++ extra);
     }
     {
-      # Legacy cleanup removed to reduce activation noise; PATH prefers ~/.local/bin now.
     }
     (
       # Add a user site .pth to expose the library on Python's sys.path for scripts
