@@ -9,7 +9,7 @@
 
   # --- Bat Config ---
   batSyntaxes = {
-    "bat/syntaxes/Dockerfile_with_bash.sublime-syntax".text = ''
+    ".config/bat/syntaxes/Dockerfile_with_bash.sublime-syntax".text = ''
       %YAML 1.2
       ---
       name: Dockerfile (with bash)
@@ -18,7 +18,7 @@
         main:
           - include: scope:source.dockerfile
     '';
-    "bat/syntaxes/JSON.sublime-syntax".text = ''
+    ".config/bat/syntaxes/JSON.sublime-syntax".text = ''
       %YAML 1.2
       ---
       name: JSON
