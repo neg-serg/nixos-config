@@ -53,9 +53,28 @@ return {
       end, { desc = 'Surround (visual line)' })
       -- Current line add (cSS equivalent): map to linewise add on current line
       vim.keymap.set('n', 'cSS', 'cs_', { remap = true, desc = 'Surround current line' })
-      -- Convenience: keep your csw -> csiw shortcut
       vim.keymap.set('n', 'csw', 'csiw', { remap = true })
       vim.keymap.set('n', 'csW', 'csiW', { remap = true })
+    end
+
+    -- Mini.files: Simple file explorer that lets you edit the filesystem like text
+    local ok_files, files = pcall(require, 'mini.files')
+    if ok_files then
+      files.setup({
+        mappings = {
+          go_in = 'L',
+          go_in_plus = 'l', -- Map soft enter to simple navigation too
+        },
+      })
+      Map('n', '<leader>e', function()
+        if not files.close() then files.open() end
+      end, { desc = 'Mini Files (Explorer)' })
+    end
+
+    -- Mini.ai: Beter text objects (a/i/f/...)
+    local ok_ai, ai = pcall(require, 'mini.ai')
+    if ok_ai then
+      ai.setup()
     end
   end,
 }
