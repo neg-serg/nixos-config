@@ -11,7 +11,7 @@
 in
   lib.mkIf (config.features.gui.enable or false) {
     services.dunst = {
-      enable = true;
+      enable = false;
       iconTheme = {
         name = "kora";
         package = pkgs.kora-icon-theme;
