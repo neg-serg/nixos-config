@@ -6,7 +6,9 @@
   negLib,
   ...
 }:
-lib.mkIf (config.features.gui.enable or false) (lib.mkMerge [
+# NOTE: Migrated to modules/user/nix-maid/terminals-shells.nix
+# Keeping original structure commented for reference
+lib.mkIf false (lib.mkMerge [
   (negLib.mkLocalBin "kitty-panel" (builtins.readFile ./kitty/panel))
   # Robust kitty-scrollback-nvim kitten wrapper (local-bin) and env hint
   (let
