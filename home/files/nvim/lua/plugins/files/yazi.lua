@@ -4,7 +4,6 @@
 return {
   "mikavilpas/yazi.nvim",
   cond = function() return vim.fn.executable("yazi") == 1 end,
-  event = "VimEnter",
   keys = {
     { "<leader>-", "<cmd>Yazi<cr>", mode = { "n", "v" }, desc = "Yazi: open at current file" },
   },
