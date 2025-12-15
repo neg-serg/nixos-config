@@ -33,13 +33,11 @@ return {'ggandor/leap.nvim',
               multi_revert = '<backspace>',
           },
       }
-      vim.keymap.set('n', 's', '<Plug>(leap-anywhere)')
-      vim.keymap.set('o', 's', '<Plug>(leap-forward)')
-      vim.keymap.set('o', 'S', '<Plug>(leap-backward)')
-      -- If using the default mappings (`gs` for multi-window mode), you can
-      -- map e.g. `gS` here.
-      vim.keymap.set({'n', 'x', 'o'}, 'gs', function ()
-          require('leap.remote').action()
-      end)
-  end
+  end,
+  keys = {
+    { 's', '<Plug>(leap-anywhere)', mode = 'n' },
+    { 's', '<Plug>(leap-forward)', mode = 'o' },
+    { 'S', '<Plug>(leap-backward)', mode = 'o' },
+    { 'gs', function () require('leap.remote').action() end, mode = {'n', 'x', 'o'} },
+  }
 }

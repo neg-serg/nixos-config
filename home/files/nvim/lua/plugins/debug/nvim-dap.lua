@@ -16,20 +16,24 @@ return {'mfussenegger/nvim-dap', -- neovim debugger protocol support
             return { desc = "DAP: " .. msg }
         end
 
-        vim.keymap.set("n", "<leader>db", function() dap.toggle_breakpoint() end, opt("breakpoint"))
-        vim.keymap.set("n", "<F2>", function() dap.continue() end, opt("continue"))
-        vim.keymap.set("n", "<F3>", function() dap.step_into() end, opt("step into"))
-        vim.keymap.set("n", "<F4>", function() dap.step_over() end, opt("step over"))
-        vim.keymap.set("n", "<F5>", function() dap.step_out() end, opt("step out"))
-        vim.keymap.set("n", "<leader>dui", function() dapui.toggle() end, opt("toggle ui"))
-        vim.keymap.set("n", "<leader>duh", function() widgets.hover() end, opt("hover"))
-        vim.keymap.set("n", "<leader>duf", function() widgets.centered_float(widgets.scopes) end, opt("float view"))
-        vim.keymap.set("n", "<leader>dB", function()
-            dap.set_breakpoint(vim.fn.input("Breakpoint condition: "))
-        end, opt("contitional breakpoint"))
-        vim.keymap.set("n", "<leader>dl", function()
-            dap.set_breakpoint(nil, nil, vim.fn.input("Log point message: "))
-        end, opt("log point message"))
+    keys = {
+      { "<leader>db", function() require("dap").toggle_breakpoint() end, desc = "DAP: breakpoint" },
+      { "<F2>", function() require("dap").continue() end, desc = "DAP: continue" },
+      { "<F3>", function() require("dap").step_into() end, desc = "DAP: step into" },
+      { "<F4>", function() require("dap").step_over() end, desc = "DAP: step over" },
+      { "<F5>", function() require("dap").step_out() end, desc = "DAP: step out" },
+      { "<leader>dui", function() require("dapui").toggle() end, desc = "DAP: toggle ui" },
+      { "<leader>duh", function() require("dap.ui.widgets").hover() end, desc = "DAP: hover" },
+      { "<leader>duf", function() local w=require("dap.ui.widgets"); w.centered_float(w.scopes) end, desc = "DAP: float view" },
+      { "<leader>dB", function() require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: ")) end, desc = "DAP: conditional breakpoint" },
+      { "<leader>dl", function() require("dap").set_breakpoint(nil, nil, vim.fn.input("Log point message: ")) end, desc = "DAP: log point message" },
+    },
+    config=function()
+        local status, dapui = pcall(require, 'dapui')
+        if (not status) then return end
+        dapui.setup()
+        local dap = require('dap')
+        
         dap.listeners.after.event_initialized["dapui_config"] = function()
             dapui.open()
         end
@@ -114,5 +118,4 @@ return {'mfussenegger/nvim-dap', -- neovim debugger protocol support
             }
         end
         -- vim: fdm=marker
-    end,
-    event={'BufNewFile','BufRead'}}
+    end}
