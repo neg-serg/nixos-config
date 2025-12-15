@@ -46,6 +46,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-flatpak = {url = "github:gmodena/nix-flatpak";}; # unstable branch. Use github:gmodena/nix-flatpak/?ref=<tag> to pin releases.
+    nix-maid = {
+      url = "github:viperML/nix-maid";
+    };
     # Pin nixpkgs to nixos-unstable so we get Hydra cache hits
     nixpkgs = {url = "github:NixOS/nixpkgs/nixos-25.11";};
     nix-index-database = {
