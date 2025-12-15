@@ -29,6 +29,7 @@
     inputs.lanzaboote.nixosModules.lanzaboote
     inputs.sops-nix.nixosModules.sops
     inputs.home-manager.nixosModules.home-manager
+    inputs.nvf.nixosModules.default
   ];
 
   hostExtras = name: let
