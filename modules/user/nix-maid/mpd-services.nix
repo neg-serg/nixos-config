@@ -13,10 +13,8 @@
 in
   lib.mkIf mediaEnabled {
     # Ensure system can decrypt user secrets using user's key
-    sops.age.keyFile = "${config.users.users.neg.home}/.config/sops/age/keys.txt";
+    sops.age.keyFile = lib.mkForce "${config.users.users.neg.home}/.config/sops/age/keys.txt";
 
-    # 1. Secrets (System-level sops)
-    # Replaces HM definition in secrets/home/default.nix
     # 1. Secrets (System-level sops)
     # Replaces HM definition in secrets/home/default.nix
     sops.secrets."mpdas_negrc" = {
