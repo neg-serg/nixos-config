@@ -315,6 +315,16 @@ return {
       local t = require('telescope'); pcall(t.load_extension, 'pathogen')
       t.extensions.pathogen.find_files({})
     end, opts)
+    
+    vim.keymap.set('n', '<leader>l', function()
+      local t = require('telescope')
+      pcall(t.load_extension, 'file_browser')
+      t.extensions.file_browser.file_browser({
+        path = vim.fn.expand('%:p:h'),
+        cwd = vim.fn.expand('%:p:h'),
+        select_buffer = true,
+      })
+    end, opts)
 
     -- TURBO mode
     vim.keymap.set('n', '<leader>sf', function() utils.turbo_find_files({ cwd = vim.fn.expand('%:p:h') }) end, opts)
