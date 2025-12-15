@@ -1,4 +1,9 @@
-{inputs, ...}: let
+{
+  inputs,
+  pkgs,
+  lib,
+  ...
+}: let
   inputrc = ''
     set bell-style                 none
     set bind-tty-special-chars     on
@@ -55,9 +60,12 @@
     "\C-\M-w": unix-word-rubout
     "\ei": tab-insert
   '';
+  aliaeConfig = import "${inputs.self}/lib/aliae.nix" {inherit lib pkgs;};
 in {
   users.users.neg.maid.file.home = {
     ".inputrc".text = inputrc;
+
+    ".config/aliae/config.yaml".text = aliaeConfig;
 
     ".config/bash/bashrc" = {
       text = builtins.readFile "${inputs.self}/home/files/shell/bash/bashrc";
