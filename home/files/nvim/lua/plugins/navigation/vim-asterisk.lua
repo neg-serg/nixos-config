@@ -2,7 +2,6 @@
 -- │ █▓▒░ haya14busa/vim-asterisk                                                      │
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {'haya14busa/vim-asterisk', -- smartcase star
-    config=function() 
     keys = {
         { "*", "<Plug>(asterisk-#)", mode = "n" },
         { "#", "<Plug>(asterisk-*)", mode = "n" },
