@@ -232,8 +232,6 @@ in {
             ];
 
           features.excludePkgs = mkAfter ["clang-tools"];
-
-          # Removed obsolete ue5-sync GitHub access warning.
         }
         (
           let

@@ -15,8 +15,6 @@
     pkgs.writers.writePython3Bin "game-pinned" {}
     (builtins.readFile ./scripts/game-pinned.py);
 
-  # (no-op placeholder removed)
-
   gamescopePerf =
     pkgs.writers.writePython3Bin "gamescope-perf" {}
     (builtins.readFile ./scripts/gamescope-perf.py);

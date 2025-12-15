@@ -87,6 +87,5 @@ in {
         ];
       };
     }
-    # Soft migration notice removed (default points to XDG state; no warning needed)
   ]);
 }
