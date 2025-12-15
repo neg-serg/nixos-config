@@ -1,2 +1,4 @@
-{xdg, ...}:
-xdg.mkXdgText "tig/config" (builtins.readFile ./tig.conf)
+{...}: {}
+# {xdg, ...}:
+# xdg.mkXdgText "tig/config" (builtins.readFile ./tig.conf)
+

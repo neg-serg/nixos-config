@@ -4,7 +4,7 @@
   ...
 }: {
   programs.fzf = {
-    enable = true;
+    enable = false;
     defaultCommand = "${lib.getExe pkgs.fd} --type=f --hidden --exclude=.git";
     defaultOptions = builtins.filter (x: builtins.typeOf x == "string") [
       # Key bindings & quick actions
