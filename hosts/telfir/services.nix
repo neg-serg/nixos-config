@@ -477,8 +477,6 @@ in
           # Enable GVFS (virtual filesystem) support for file managers (MTP, SMB, etc.)
           gvfs.enable = true;
 
-          # Prometheus stack removed on this host (server, exporters, alertmanager)
-
           # Resilio Sync (interactive Web UI, auth via SOPS)
           # Resilio Sync (interactive Web UI, auth via SOPS)
           resilio = lib.mkIf hasResilioSecret {
@@ -541,11 +539,7 @@ in
         })
       ];
 
-      # (Prometheus/Alertmanager firewall openings removed for this host)
-
-      # Alertmanager removed; no SMTP credentials needed
-
-      # PHP-FPM exporter removed on this host
+      # (php-fpm settings)
 
       # Bitcoind minimal metrics → node_exporter textfile collector
       # Exposes:

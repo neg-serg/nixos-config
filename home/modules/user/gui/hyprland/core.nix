@@ -34,7 +34,7 @@ in
               # Start quickshell only if not already active; 'start' is idempotent.
               systemctl --user start quickshell.service >/dev/null 2>&1 || true
     '')
-    # Removed custom kb-layout-next wrapper; rely on Hyprland dispatcher and XKB options
+
     {programs.hyprlock.enable = true;}
     # Ensure polkit agent starts in a Wayland session and uses the graphical preset.
     {

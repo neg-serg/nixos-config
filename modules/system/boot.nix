@@ -55,6 +55,4 @@
       })
     ];
   };
-
-  # Boot-time console mode script removed per request.
 }

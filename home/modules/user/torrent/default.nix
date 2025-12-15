@@ -160,5 +160,4 @@ in
         (systemdUser.mkUnitFromPresets {presets = ["timers"];})
       ];
     }
-    # Soft migration warning removed; defaults and docs are sufficient
   ])

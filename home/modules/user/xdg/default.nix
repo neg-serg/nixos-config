@@ -159,7 +159,7 @@ with rec {
       "[Gmail]/All Mail"
     ];
   };
-  # Aggregated XDG fixups removed (prefer per-file force=true where necessary)
+
   xdg = {
     enable = true;
     userDirs = {
