@@ -46,7 +46,7 @@ in {
   floorp-bin-unwrapped = prev.floorp-bin-unwrapped.overrideAttrs (old: {
     src = prev.fetchurl {
       url = "https://github.com/Floorp-Projects/Floorp/releases/download/v${old.version}/floorp-linux-x86_64.tar.xz";
-      hash = "sha256-jpfLrHCQzDc062POI+aUlaAIDciBxhI7GzsYvHtt72I=";
+      hash = "sha256-DmZCyFhP3N6VPTR3OeuHyrLmvcfUZXHeLsn/TTu+I10=";
     };
   });
 
