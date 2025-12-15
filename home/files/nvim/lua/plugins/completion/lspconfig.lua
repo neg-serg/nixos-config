@@ -8,6 +8,7 @@ return {
     dependencies = { 'SmiteshP/nvim-navic', 'MunifTanjim/nui.nvim' },
     opts = { lsp = { auto_attach = true } },
   },
+  event = { "BufReadPre", "BufNewFile" },
   config = function()
     if not (vim.lsp and vim.lsp.config and vim.lsp.enable) then
       vim.notify('vim.lsp.config requires Neovim 0.11+', vim.log.levels.WARN)
