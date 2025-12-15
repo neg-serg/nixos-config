@@ -4,7 +4,7 @@
 return {
   "y3owk1n/time-machine.nvim",
   version = "*",
-  enabled = false, -- disabled via HM request: remove Neovim TimeMachine
+
   cmd = {
     "TimeMachineToggle",
     "TimeMachinePurgeBuffer",

@@ -5,13 +5,7 @@ return {
   "folke/flash.nvim",
   event = "VeryLazy",
   enabled = true,
-  opts = {
-    modes = {
-      search = {
-        enabled = false,
-      },
-    },
-  },
+  opts = {},
   keys = {
     {
       "<space>",
