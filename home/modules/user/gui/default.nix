@@ -13,7 +13,7 @@
     ./quickshell.nix
     ./walker.nix
     ./swayosd
-    # ./qt.nix
+    ./qt.nix
     ./spicetify/default.nix
     ./nekoray/default.nix
     # ./plasma-manager/default.nix

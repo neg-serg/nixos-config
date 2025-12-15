@@ -111,7 +111,7 @@ in
         };
       };
 
-      _stylix = {
+      stylix = {
         enable = ! (config.features.devSpeed.enable or false);
         enableReleaseChecks = false;
         autoEnable = false;
