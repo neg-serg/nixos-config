@@ -5,6 +5,7 @@ with lib; {
 
     ./rmpc.nix
     ./subsonic.nix
-    ./mpd
+    # ./mpd.nix
+    # ./mpdris2.nix
   ];
 }

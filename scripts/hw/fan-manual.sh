@@ -14,7 +14,7 @@ fi
 # Find nct6799 hwmon directory
 hwmon_dir=""
 for hm in /sys/class/hwmon/hwmon*; do
-  if grep -q "nct6799" "$hm/name" 2>/dev/null; then
+  if grep -q "nct6799" "$hm/name" 2> /dev/null; then
     hwmon_dir="$hm"
     break
   fi
@@ -40,11 +40,11 @@ for ch in "${channels[@]}"; do
   # Enable manual control (usually 1 for manual, 5 for SmartFan, 0 for full speed sometimes but generally 1)
   # driver nct6775: 1=manual, 2=thermal cruise/auto
   if [ -f "$hwmon_dir/pwm${ch}_enable" ]; then
-      echo 1 > "$hwmon_dir/pwm${ch}_enable"
-      echo "$target_pwm" > "$hwmon_dir/pwm${ch}"
-      echo "Set pwm${ch} to $target_pwm"
+    echo 1 > "$hwmon_dir/pwm${ch}_enable"
+    echo "$target_pwm" > "$hwmon_dir/pwm${ch}"
+    echo "Set pwm${ch} to $target_pwm"
   else
-      echo "Warning: $hwmon_dir/pwm${ch}_enable not found, skipping."
+    echo "Warning: $hwmon_dir/pwm${ch}_enable not found, skipping."
   fi
 done
 

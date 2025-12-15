@@ -172,7 +172,8 @@ side-by-side so the patterns apply to both configurations.
 
 ### Editor Shim
 
-- Use `v` (Smart Neovim shim at `~/.local/bin/v`) in bindings/scripts. It uses `nvr` to open files in an existing instance (and raises the window) or starts a new one if none exists.
+- Use `v` (Smart Neovim shim at `~/.local/bin/v`) in bindings/scripts. It uses `nvr` to open files
+  in an existing instance (and raises the window) or starts a new one if none exists.
 
 ### Soft Migrations / Warnings
 

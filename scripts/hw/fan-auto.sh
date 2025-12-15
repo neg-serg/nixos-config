@@ -8,8 +8,8 @@ fi
 
 echo "Restarting fancontrol service..."
 if systemctl restart fancontrol; then
-    echo "Automatic fan control restored."
+  echo "Automatic fan control restored."
 else
-    echo "Error: Failed to restart fancontrol service."
-    exit 1
+  echo "Error: Failed to restart fancontrol service."
+  exit 1
 fi

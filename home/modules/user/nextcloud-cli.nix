@@ -75,7 +75,7 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.enable (lib.mkMerge [
+  config = lib.mkIf false (lib.mkMerge [
     {
       assertions = [
         {
