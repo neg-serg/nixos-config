@@ -112,7 +112,10 @@ au({'BufWritePost'}, {pattern={'*'},
             if string.match(vim.fn.getline(1), "/bin/") ~= nil then vim.cmd([[silent !chmod a+x <afile>]]) end
         end
     end, group=utils})
-
+au({'BufNewFile','BufWritePre'}, {pattern={'*'},
+    command=[[if @% !~# '\(://\)' | call mkdir(expand('<afile>:p:h'), 'p') | endif]],
+    group=utils
+})
 
 vim.g.markdown_fenced_languages={'shell=bash'}
 local file_syntax_map={
