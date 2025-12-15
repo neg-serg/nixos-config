@@ -14,5 +14,6 @@
     ./locale.nix
     ./nix-maid
     ./wrappers
+    ./nvf.nix
   ];
 }

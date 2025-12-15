@@ -6,7 +6,9 @@
 with lib; {
   imports = [
     ./neovim
-    ./nvf.nix
+    ./neovim
+    # ./nvf.nix
+    ./helix
     ./helix
     ./emacs
   ];
