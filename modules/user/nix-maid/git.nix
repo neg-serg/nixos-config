@@ -131,7 +131,7 @@
     difftool.nwim.cmd = "nvim -d $LOCAL $REMOTE";
   };
 in {
-  users.users.neg.maid.files = {
+  users.users.neg.maid.file.home = {
     ".config/git/config" = {
       text = lib.generators.toGitINI gitSettings;
     };
