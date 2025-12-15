@@ -2,6 +2,8 @@
 -- │ █▓▒░ Saghen/blink.cmp                                                             │
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {'saghen/blink.cmp',
+  event = { "InsertEnter", "CmdlineEnter" },
+  lazy = true,
   dependencies = { 'rafamadriz/friendly-snippets' }, -- optional: provides snippets for the snippet source
   version = '1.*', -- use a release tag to download pre-built binaries
   -- build = 'nix run .#build-plugin',
