@@ -9,6 +9,7 @@
     ./mpd-services.nix
     ./services-manual.nix
     ./gpg.nix
+    ./cli-tools.nix
   ];
 
   users.users.neg.maid = {};

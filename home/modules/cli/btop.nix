@@ -1,6 +1,6 @@
 {pkgs, ...}: {
   programs.btop = {
-    enable = true;
+    enable = false;
     package = pkgs.btop.override {rocmSupport = true;};
     settings = {
       truecolor = true;
