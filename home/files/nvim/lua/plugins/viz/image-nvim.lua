@@ -4,6 +4,7 @@
 return {'3rd/image.nvim',
   build=false,
   enabled=false,
+  ft = { "markdown", "typst" },
   config=function()
     require"image".setup({
     backend = "kitty",

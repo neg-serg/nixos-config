@@ -3,13 +3,16 @@
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {'haya14busa/vim-asterisk', -- smartcase star
     config=function() 
-        map('n', '*',   '<Plug>(asterisk-#)')
-        map('n', '#',   '<Plug>(asterisk-*)')
-        map('n', 'g*',  '<Plug>(asterisk-g#)')
-        map('n', 'g#',  '<Plug>(asterisk-g*)')
-        map('n', 'z*',  '<Plug>(asterisk-z#)')
-        map('n', 'gz*', '<Plug>(asterisk-gz#)')
-        map('n', 'z#',  '<Plug>(asterisk-z*)')
-        map('n', 'gz#', '<Plug>(asterisk-gz*)')
+    keys = {
+        { "*", "<Plug>(asterisk-#)", mode = "n" },
+        { "#", "<Plug>(asterisk-*)", mode = "n" },
+        { "g*", "<Plug>(asterisk-g#)", mode = "n" },
+        { "g#", "<Plug>(asterisk-g*)", mode = "n" },
+        { "z*", "<Plug>(asterisk-z#)", mode = "n" },
+        { "gz*", "<Plug>(asterisk-gz#)", mode = "n" },
+        { "z#", "<Plug>(asterisk-z*)", mode = "n" },
+        { "gz#", "<Plug>(asterisk-gz*)", mode = "n" },
+    },
+    config=function() 
     end
 }

@@ -3,4 +3,5 @@
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {'folke/zen-mode.nvim', -- distraction-free coding for Neovim >= 0.5
         enabled=true,
+        cmd = "ZenMode",
 }
