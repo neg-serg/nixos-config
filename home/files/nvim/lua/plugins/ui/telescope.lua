@@ -346,5 +346,22 @@ return {
     vim.keymap.set('n', '<C-b>a', function()
         vim.ui.input({ prompt = ':cdo ' }, function(cmd) if cmd and cmd ~= '' then utils.apply_cmd_to_qf(cmd) end end)
     end, opts)
+
+    -- Missing keymaps restored
+    vim.keymap.set('n', '<leader>sh', builtin('help_tags'), opts)
+    vim.keymap.set('n', '<leader>sg', function()
+      require('telescope.builtin').grep_string({ search = vim.fn.expand('<cword>') })
+    end, opts)
+    vim.keymap.set('n', 'cd', function()
+      local t = require('telescope')
+      pcall(t.load_extension, 'zoxide')
+      t.extensions.zoxide.list(require('telescope.themes').get_ivy({ layout_config = { height = 8 }, border = false }))
+    end, opts)
+    vim.keymap.set('n', 'E', function()
+      if vim.bo.filetype then pcall(function() require('oil.actions').cd.callback() end)
+      else vim.cmd('chdir %:p:h') end
+      local t = require('telescope'); pcall(t.load_extension, 'pathogen')
+      t.extensions.pathogen.find_files({})
+    end, opts)
   end,
 }
