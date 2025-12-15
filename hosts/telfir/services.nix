@@ -630,7 +630,7 @@ in
               ExecStart = "/run/current-system/sw/bin/powerprofilesctl set balanced";
             };
             # Defer to post-boot to avoid interfering with activation and to follow repo policy
-            wantedBy = ["post-boot.target"];
+            wantedBy = ["graphical.target"];
           };
 
           # Periodic metric collection service + timer
