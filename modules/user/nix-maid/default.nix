@@ -4,7 +4,5 @@
     ./git.nix
   ];
 
-  users.users.neg.maid = {
-    enable = true;
-  };
+  users.users.neg.maid = {};
 }
