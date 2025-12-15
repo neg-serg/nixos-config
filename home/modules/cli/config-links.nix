@@ -38,15 +38,15 @@
 in
   lib.mkMerge [
     # dircolors, f-sy-h, zsh from dotfiles; inputrc inline
-    (xdg.mkXdgSource "dircolors" {
-      source = filesRoot + "/shell/dircolors";
-      recursive = true;
-    })
+    # (xdg.mkXdgSource "dircolors" {
+    #   source = filesRoot + "/shell/dircolors";
+    #   recursive = true;
+    # })
     (xdg.mkXdgSource "f-sy-h" {
       source = filesRoot + "/shell/f-sy-h";
       recursive = true;
     })
-    (xdg.mkXdgText "inputrc" (builtins.readFile ./inputrc))
+    # (xdg.mkXdgText "inputrc" (builtins.readFile ./inputrc))
     (xdg.mkXdgSource "zsh" {
       source = zshConfigSource;
       recursive = true;
@@ -140,10 +140,10 @@ in
       recursive = true;
     })
     # Bash XDG config directory
-    (xdg.mkXdgSource "bash" {
-      source = filesRoot + "/shell/bash";
-      recursive = true;
-    })
+    # (xdg.mkXdgSource "bash" {
+    #   source = filesRoot + "/shell/bash";
+    #   recursive = true;
+    # })
     # Note: ~/.bashrc is NOT managed by Home Manager.
     # User manages bash configuration manually via ~/.config/bash/bashrc
   ]
