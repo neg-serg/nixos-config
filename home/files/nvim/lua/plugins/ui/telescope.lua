@@ -326,6 +326,12 @@ return {
       })
     end, opts)
 
+    vim.keymap.set('n', '<leader>.', function()
+      local t = require('telescope')
+      pcall(t.load_extension, 'frecency')
+      vim.cmd('Telescope frecency theme=ivy layout_config={height=12} sorting_strategy=descending')
+    end, opts)
+
     -- TURBO mode
     vim.keymap.set('n', '<leader>sf', function() utils.turbo_find_files({ cwd = vim.fn.expand('%:p:h') }) end, opts)
     vim.keymap.set('n', '<leader>sF', function() utils.turbo_find_files({ cwd = utils.project_root() }) end, opts)
