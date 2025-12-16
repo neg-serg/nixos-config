@@ -153,7 +153,7 @@ in {
 
     # --- NCMPCPP ---
     # Generate config and bindings
-    ".config/ncmpcpp/config".text = lib.generators.toINI {} ncmpcppSettings;
+    ".config/ncmpcpp/config".text = lib.generators.toKeyValue {} ncmpcppSettings;
     # Bindings are complex list of sets in standard HM, but ncmpcpp bindings file is just "def_key <key> <command>"
     # We will skip manual bindings generation for now and rely on defaults or if user has a custom bindings file, it should be in home/files.
     # User's previous ncmpcpp.nix had a list, we can generate it:
