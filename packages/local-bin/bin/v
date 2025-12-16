@@ -12,9 +12,8 @@ if [ -S "$SOCKET" ]; then
       nvr --servername "$SOCKET" --remote-silent "$@"
   fi
 
-  # 3. Raise Window (via raise script)
-  raise --match "class:regex=^nwim$"
-  # Previous lsof implementation removed in favor of raise script interaction
+  # 3. Raise Window (via hyprctl)
+  hyprctl dispatch focuswindow "class:^nwim$"
 else
   # 4. Start new instance acting as server
   # Use exec to replace shell process
