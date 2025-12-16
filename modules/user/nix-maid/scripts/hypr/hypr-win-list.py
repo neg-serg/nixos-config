@@ -158,12 +158,12 @@ def build_entries() -> tuple[list[str], dict[str, dict[str, str]]]:
             display_parts.append(clip(ttl, TITLE_LIMIT))
 
         if ws_label and (not ttl or ws_label.casefold() not in ttl.casefold()):
-            display_parts.append(f"({{clip(ws_label, WORKSPACE_LIMIT)}})")
+            display_parts.append(f"({clip(ws_label, WORKSPACE_LIMIT)})")
             workspace_added = True
 
         if not ttl:
             if ws_label and not workspace_added:
-                display_parts.append(f"({{clip(ws_label, WORKSPACE_LIMIT)}})")
+                display_parts.append(f"({clip(ws_label, WORKSPACE_LIMIT)})")
             if cls:
                 display_parts.append(clip(cls, CLASS_LIMIT))
 
@@ -219,7 +219,7 @@ def rofi_command(count: int) -> list[str]:
     ]
     if DEBUG:
         print(
-            f"[hypr-win-list] rofi columns={{columns}} lines={{lines}} count={{count}}",
+            f"[hypr-win-list] rofi columns={columns} lines={lines} count={count}",
             file=sys.stderr,
         )
     return base
