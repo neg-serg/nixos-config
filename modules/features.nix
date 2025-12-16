@@ -89,6 +89,7 @@ in {
       hy3.enable = mkBool "enable the hy3 tiling plugin for Hyprland" true;
       qt.enable = mkBool "enable Qt integrations for GUI (qt6ct, hyprland-qt-*)" true;
       quickshell.enable = mkBool "enable Quickshell (panel) at login" true;
+      walker.enable = mkBool "enable Walker application launcher" true;
       hyprexpo.enable = mkBool "enable HyprExpo workspace overview plugin" false;
     };
     mail.enable = mkBool "enable Mail stack (notmuch, isync, vdirsyncer, etc.)" true;
@@ -474,6 +475,7 @@ in {
           # Ensure nested GUI components are disabled when GUI is off
           quickshell.enable = mkForce false;
           hy3.enable = mkForce false;
+          walker.enable = mkForce false;
           hyprexpo.enable = mkForce false;
         };
       };
@@ -502,6 +504,10 @@ in {
         {
           assertion = cfg.gui.enable || (! cfg.gui.hyprexpo.enable);
           message = "features.gui.hyprexpo.enable requires features.gui.enable = true";
+        }
+        {
+          assertion = cfg.gui.enable || (! cfg.gui.walker.enable);
+          message = "features.gui.walker.enable requires features.gui.enable = true";
         }
         {
           assertion = cfg.web.enable || (! cfg.web.tools.enable && ! cfg.web.floorp.enable && ! cfg.web.yandex.enable && ! cfg.web.firefox.enable && ! cfg.web.librewolf.enable && ! cfg.web.nyxt.enable);
