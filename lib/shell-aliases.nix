@@ -56,17 +56,17 @@
   # Base aliases (always included)
   baseAliases = {
     # Core eza/ls aliases
-    ls = "eza --icons=auto --hyperlink";
-    l = "eza --icons=auto --hyperlink -lbF --git";
-    ll = "eza --icons=auto --hyperlink -lbGF --git";
-    llm = "eza --icons=auto --hyperlink -lbGF --git --sort=modified";
-    la = "eza --icons=auto --hyperlink -lbhHigUmuSa --time-style=long-iso --git --color-scale";
-    lx = "eza --icons=auto --hyperlink -lbhHigUmuSa@ --time-style=long-iso --git --color-scale";
-    lt = "eza --icons=auto --hyperlink --tree --level=2";
-    eza = "${mkCmd "eza"} --icons=auto --hyperlink";
-    lS = "eza --icons=auto --hyperlink -1";
-    lcr = "eza --icons=auto --hyperlink -al --sort=created --color=always";
-    lsd = "eza --icons=auto --hyperlink -alD --sort=created --color=always";
+    ls = "eza --icons=auto --hyperlink --group-directories-first";
+    l = "eza --icons=auto --hyperlink --group-directories-first -lbF --git";
+    ll = "eza --icons=auto --hyperlink --group-directories-first -lbGF --git";
+    llm = "eza --icons=auto --hyperlink --group-directories-first -lbGF --git --sort=modified";
+    la = "eza --icons=auto --hyperlink --group-directories-first -lbhHigUmuSa --time-style=long-iso --git --color-scale";
+    lx = "eza --icons=auto --hyperlink --group-directories-first -lbhHigUmuSa@ --time-style=long-iso --git --color-scale";
+    lt = "eza --icons=auto --hyperlink --group-directories-first --tree --level=2";
+    eza = "${mkCmd "eza"} --icons=auto --hyperlink --group-directories-first";
+    lS = "eza --icons=auto --hyperlink --group-directories-first -1";
+    lcr = "eza --icons=auto --hyperlink --group-directories-first -al --sort=created --color=always";
+    lsd = "eza --icons=auto --hyperlink --group-directories-first -alD --sort=created --color=always";
 
     # Core tools
     cat = "bat -pp";
