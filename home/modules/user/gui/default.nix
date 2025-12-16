@@ -14,8 +14,7 @@
     ./walker.nix
     ./swayosd
     ./qt.nix
-    ./spicetify/default.nix
-    ./nekoray/default.nix
+
     # ./plasma-manager/default.nix
   ];
 
