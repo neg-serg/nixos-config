@@ -360,7 +360,7 @@ in {
     '';
 
     # Ripgrep Config
-    ".config/ripgrep/rc".text = ''
+    ".config/ripgrep/ripgreprc".text = ''
       --no-heading
       --smart-case
       --follow
@@ -396,7 +396,7 @@ in {
 
   # --- Environment Variables ---
   environment.variables = {
-    RIPGREP_CONFIG_PATH = "${config.users.users.neg.home}/.config/ripgrep/rc";
+    RIPGREP_CONFIG_PATH = "${config.users.users.neg.home}/.config/ripgrep/ripgreprc";
 
     FZF_DEFAULT_COMMAND = "${lib.getExe pkgs.fd} --type=f --hidden --exclude=.git";
     FZF_DEFAULT_OPTS = builtins.concatStringsSep " " (builtins.filter (x: builtins.typeOf x == "string") [
