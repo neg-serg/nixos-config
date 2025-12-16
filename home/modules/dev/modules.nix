@@ -5,7 +5,6 @@
     ./editor
     ./local-ai.nix
 
-    ./git
     ./gdb
     ./hack
     ./python

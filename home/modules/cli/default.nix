@@ -24,7 +24,7 @@ in {
     ./nix-index-db.nix
     ./cnf-fast.nix
     ./tmux.nix
-    ./tig.nix
+
     ./television
     ./zcli.nix
     ./yazi.nix
