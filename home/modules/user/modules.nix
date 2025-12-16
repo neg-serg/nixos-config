@@ -1,7 +1,7 @@
 {
   imports = [
     # Cleaned imports
-    ./systemd
+    # ./systemd
     ./theme
     # ./web
     # ./x11

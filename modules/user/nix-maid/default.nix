@@ -9,6 +9,8 @@
     ./git.nix
     ./mpv.nix
     ./shell.nix
+    ./migrated-services.nix
+    ./secrets.nix
     ./dunst.nix
     ./services-manual.nix
     ./gpg.nix
@@ -57,12 +59,7 @@
 
   users.users.neg.maid = {};
 
-  # Workaround: nix-maid hijacks ~/.config/systemd/user, breaking Home Manager.
-  # We redirect nix-maid's config home for the activation service so it creates its systemd link
-  # in a dummy directory, leaving the real one for Home Manager.
-  systemd.user.services.maid-activation = {
-    environment.XDG_CONFIG_HOME = "/home/neg/.cache/maid-systemd-workaround";
-  };
+  users.users.neg.maid = {};
 
   # Activation script to force restart maid-activation for 'neg'.
   # This ensures user configs are reapplied on every switch, working around

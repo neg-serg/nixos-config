@@ -320,6 +320,15 @@ in {
     aliae
     superfile
     pkgs.nh # Nix helper
+
+    # Migrated CLI Tools (from HM)
+    fabric-ai
+    hwatch
+    kubecolor
+    nix-search-tv
+    numbat
+    tray-tui
+    visidata
     # ZCLI (custom script)
     (import ../../../home/scripts/zcli.nix {
       inherit pkgs;

@@ -216,4 +216,8 @@ in {
       + ''
       '';
   };
+
+  environment.sessionVariables = {
+    ZDOTDIR = "$HOME/.config/zsh";
+  };
 }

@@ -32,8 +32,10 @@
     };
   };
 
+  systemd.user.enable = false; # Disable HM systemd to prevent conflict with nix-maid
+
   imports = [
-    ../secrets/home
+    # ../secrets/home
     ./profiles/desktop.nix
     # ./modules/programs
   ];
