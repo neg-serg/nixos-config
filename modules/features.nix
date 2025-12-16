@@ -23,7 +23,7 @@ with lib; let
       firefox.enable = false;
       librewolf.enable = false;
       nyxt.enable = true;
-      yandex.enable = true;
+      yandex.enable = false;
       prefs.fastfox.enable = true;
     };
     dev = {
