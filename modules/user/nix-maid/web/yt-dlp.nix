@@ -3,18 +3,17 @@
   lib,
   config,
   ...
-}:
-lib.mkIf (config.features.web.enable && config.features.web.tools.enable) {
-  programs.yt-dlp = {
-    enable = true;
-    package = pkgs.yt-dlp; # download from youtube and another sources
-    settings = {
-      downloader-args = "aria2c:'-c -x8 -s8 -k1M'";
-      downloader = "aria2c";
-      embed-metadata = true;
-      embed-subs = true;
-      embed-thumbnail = true;
-      sub-langs = "all";
-    };
+}: {
+  config = lib.mkIf (config.features.web.enable && config.features.web.tools.enable) {
+    environment.systemPackages = [pkgs.yt-dlp];
+
+    users.users.neg.maid.file.xdg_config."yt-dlp/config".text = ''
+      --downloader aria2c
+      --downloader-args aria2c:'-c -x8 -s8 -k1M'
+      --embed-metadata
+      --embed-subs
+      --embed-thumbnail
+      --sub-langs all
+    '';
   };
 }
