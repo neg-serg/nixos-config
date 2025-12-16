@@ -83,10 +83,4 @@ in {
       ln -sfn "$HOME/.local/state/nix/profiles/profile" "$HOME/.nix-profile"
     '';
   };
-
-  xdg.configFile."enchant/enchant.ordering".text = ''
-    default:nuspell,hunspell
-    en_US:nuspell,hunspell
-    ru_RU:nuspell,hunspell
-  '';
 }
