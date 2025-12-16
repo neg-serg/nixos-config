@@ -7,34 +7,34 @@
   # Assuming this file is in modules/user/nix-maid/
   fastfetchSrc = ../../../home/modules/cli/fastfetch/conf;
 
-  # --- Bat Config ---
-  batSyntaxes = {
-    ".config/bat/syntaxes/Dockerfile_with_bash.sublime-syntax".text = ''
-      %YAML 1.2
-      ---
-      name: Dockerfile (with bash)
-      scope: source.dockerfile.bash
-      contexts:
-        main:
-          - include: scope:source.dockerfile
-    '';
-    ".config/bat/syntaxes/JSON.sublime-syntax".text = ''
-      %YAML 1.2
-      ---
-      name: JSON
-      scope: source.json
-      contexts:
-        main:
-          - include: arrays
-        arrays:
-          - match: '\G\['
-            push: arrays
-          - match: ']'
-            pop: true
-          - match: '.'
-            scope: constant.character
-    '';
-  };
+  # --- Bat Config (syntaxes disabled due to HM batCache conflict) ---
+  # batSyntaxes = {
+  #   ".config/bat/syntaxes/Dockerfile_with_bash.sublime-syntax".text = ''
+  #     %YAML 1.2
+  #     ---
+  #     name: Dockerfile (with bash)
+  #     scope: source.dockerfile.bash
+  #     contexts:
+  #       main:
+  #         - include: scope:source.dockerfile
+  #   '';
+  #   ".config/bat/syntaxes/JSON.sublime-syntax".text = ''
+  #     %YAML 1.2
+  #     ---
+  #     name: JSON
+  #     scope: source.json
+  #     contexts:
+  #       main:
+  #         - include: arrays
+  #       arrays:
+  #         - match: '\G\['
+  #           push: arrays
+  #         - match: ']'
+  #           pop: true
+  #         - match: '.'
+  #           scope: constant.character
+  #   '';
+  # };
 
   # --- Btop Config Generator ---
   mkBtopConf = attrs:
@@ -312,31 +312,29 @@ in {
   ];
 
   # --- Nix-Maid Dotfiles ---
-  users.users.neg.maid.file.home =
-    batSyntaxes
-    // {
-      # Bat Config
-      ".config/bat/config".text = ''
-        --theme="ansi"
-        --italic-text="always"
-        --paging="never"
-        --decorations="never"
-      '';
+  users.users.neg.maid.file.home = {
+    # Bat Config (syntaxes disabled due to HM batCache conflict)
+    ".config/bat/config".text = ''
+      --theme="ansi"
+      --italic-text="always"
+      --paging="never"
+      --decorations="never"
+    '';
 
-      # Btop Config
-      ".config/btop/btop.conf".text = mkBtopConf btopSettings;
+    # Btop Config
+    ".config/btop/btop.conf".text = mkBtopConf btopSettings;
 
-      # Yazi Configs
-      ".config/yazi/yazi.toml".source = yaziFormat.generate "yazi.toml" yaziSettings;
-      ".config/yazi/theme.toml".source = yaziFormat.generate "theme.toml" yaziTheme;
-      ".config/yazi/keymap.toml".source = yaziFormat.generate "keymap.toml" yaziKeymap;
+    # Yazi Configs
+    ".config/yazi/yazi.toml".source = yaziFormat.generate "yazi.toml" yaziSettings;
+    ".config/yazi/theme.toml".source = yaziFormat.generate "theme.toml" yaziTheme;
+    ".config/yazi/keymap.toml".source = yaziFormat.generate "keymap.toml" yaziKeymap;
 
-      # Tig Config - restored to HM in home/modules/cli/tig.nix
+    # Tig Config - restored to HM in home/modules/cli/tig.nix
 
-      # Fastfetch Configs (Source from repo)
-      ".config/fastfetch/config.jsonc".source = "${fastfetchSrc}/config.jsonc";
-      ".config/fastfetch/skull".source = "${fastfetchSrc}/skull";
-    };
+    # Fastfetch Configs (Source from repo)
+    ".config/fastfetch/config.jsonc".source = "${fastfetchSrc}/config.jsonc";
+    ".config/fastfetch/skull".source = "${fastfetchSrc}/skull";
+  };
 
   # --- Environment Variables (FZF) ---
   environment.variables = {
