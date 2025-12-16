@@ -105,15 +105,6 @@
       url = "github:sxyazi/yazi";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    yandex-browser = {
-      url = "github:miuirussia/yandex-browser.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    # TODO: EXPERIMENT - Zen Browser
-    zen-browser = {
-      url = "github:0xc000022070/zen-browser-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   # Make Cachix caches available to all `nix {build,develop,run}` commands
