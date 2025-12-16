@@ -16,31 +16,28 @@ in
     users.users.neg.maid.file.home = {
       ".config/television/config.toml".source = "${filesRoot}/television/config.toml";
       ".config/television/cable/nix.toml".source = "${filesRoot}/television/nix.toml";
-
-      ".config/television/themes/stylix.toml".text = let
-        sf = config.home-manager.users.neg.lib.stylix.colors;
-      in ''
+      ".config/television/themes/stylix.toml".text = ''
         # general
         remote_control_mode_bg = '#00000000'
-        border_fg = '#${sf.base04}'
-        text_fg = '#${sf.base05}'
-        dimmed_text_fg = '#${sf.base0D}'
+        border_fg = '#6c7e96'
+        text_fg = '#8d9eb2'
+        dimmed_text_fg = '#0a3749'
         # input
-        input_text_fg = '#${sf.base08}'
-        result_count_fg = '#${sf.base08}'
+        input_text_fg = '#8a2f58'
+        result_count_fg = '#8a2f58'
         # results
-        result_name_fg = '#${sf.base0D}'
-        result_line_number_fg = '#${sf.base0A}'
-        result_value_fg = '#${sf.base07}'
-        selection_fg = '#${sf.base0B}'
-        selection_bg = '#${sf.base02}'
-        match_fg = '#${sf.base08}'
+        result_name_fg = '#0a3749'
+        result_line_number_fg = '#005faf'
+        result_value_fg = '#00ff00'
+        selection_fg = '#005200'
+        selection_bg = '#0f2329'
+        match_fg = '#8a2f58'
         # preview
-        preview_title_fg = '#${sf.base09}'
+        preview_title_fg = '#914e89'
         # modes
-        channel_mode_fg = '#${sf.base06}'
-        remote_control_mode_fg = '#${sf.base0B}'
-        send_to_channel_mode_fg = '#${sf.base0D}'
+        channel_mode_fg = '#ff0000'
+        remote_control_mode_fg = '#005200'
+        send_to_channel_mode_fg = '#0a3749'
       '';
     };
 

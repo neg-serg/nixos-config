@@ -43,6 +43,7 @@
       specialArgs = {
         inherit locale timeZone kexec_enabled;
         inputs = nillaInputs;
+        iosevkaNeg = inputs.iosevka-neg.packages.${linuxSystem};
       };
       modules = commonModules ++ [(import ((builtins.toString hostsDir) + "/" + name))] ++ (hostExtras name);
     };
