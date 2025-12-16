@@ -46,6 +46,7 @@ in
       features.gui.hy3.enable = true;
       features.hardware.usbAutomount.enable = true;
       features.net.tailscale.enable = true;
+      features.web.firefox.enable = true;
       features.web.floorp.shimmer.enable = true;
       features.dev.openxr = {
         enable = true;

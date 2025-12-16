@@ -13,6 +13,8 @@
     ./gui-apps.nix
     ./vicinae.nix
     ./quickshell.nix
+    ./firefox.nix
+    ./floorp.nix
   ];
 
   users.users.neg.maid = {};
