@@ -9,6 +9,7 @@
     ./services-manual.nix
     ./gpg.nix
     ./cli-tools.nix
+    ./tewi.nix
     ./terminals-shells.nix
     ./gui-apps.nix
     ./vicinae.nix
