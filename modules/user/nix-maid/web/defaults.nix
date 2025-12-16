@@ -25,7 +25,7 @@ in {
       inherit browsers;
     };
 
-    # Provide common env defaults (can be overridden elsewhere if needed)
+    # Provide sane defaults for BROWSER env var
     environment.sessionVariables = mkIf cfg.enable (
       let
         db = browser;
@@ -33,21 +33,6 @@ in {
         BROWSER = db.bin or (lib.getExe' pkgs.xdg-utils "xdg-open");
         DEFAULT_BROWSER = db.bin or (lib.getExe' pkgs.xdg-utils "xdg-open");
       }
-    );
-
-    # Provide minimal sane defaults for common browser handlers
-    users.users.neg.maid.file.home.".config/mimeapps.list".text = mkIf cfg.enable (
-      let
-        db = browser;
-        apps = {
-          "text/html" = db.desktop or "floorp.desktop";
-          "x-scheme-handler/http" = db.desktop or "floorp.desktop";
-          "x-scheme-handler/https" = db.desktop or "floorp.desktop";
-          "x-scheme-handler/about" = db.desktop or "floorp.desktop";
-          "x-scheme-handler/unknown" = db.desktop or "floorp.desktop";
-        };
-      in
-        lib.generators.toINI {} {"Default Applications" = apps;}
     );
   };
 }
