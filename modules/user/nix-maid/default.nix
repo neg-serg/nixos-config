@@ -39,10 +39,10 @@
     ./mail.nix
     ./autoclick.nix
     ./asciinema.nix
-    # ./fun-launchers.nix
+    ./fun-launchers.nix
     ./nekoray.nix
     # ./nyxt.nix
-    # ./tridactyl.nix
+    ./tridactyl.nix
     ./steam.nix
     ./local-bin.nix
     ./envs.nix
