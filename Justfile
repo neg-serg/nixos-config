@@ -1,4 +1,4 @@
-# Repository development helpers for both NixOS and Home Manager workflows
+# Repository development helpers for NixOS workflows
 
 set shell := ["bash", "-cu"]
 
@@ -27,7 +27,7 @@ cpu-masks:
     repo_root="$(git rev-parse --show-toplevel)"; \
     cd "$repo_root" && scripts/hw/cpu-recommend-masks.sh
 
-# --- Repo-wide workflows (original Home Manager justfile) ------------------------
+# --- Repo-wide workflows ---------------------------------------------------------
 
 
 fmt:
@@ -137,11 +137,9 @@ hooks-enable:
     git config core.hooksPath .githooks
 
 show-features:
-    # Print flattened features for given check names (or default matrix)
-    # Compatible with older `just` (no recipe args). Pass items via env var:
-    #   NAMES="hm-eval-neg-retro-on hm-eval-neg-retro-off" just show-features
-    # Or rely on defaults:
-    #   just show-features
+    # Print flattened features for given check names
+    # Pass items via env var:
+    #   NAMES="nixos-eval-telfir" just show-features
     # Filter only true values:
     #   ONLY_TRUE=1 just show-features
     set -eu
@@ -149,20 +147,7 @@ show-features:
     if [ -n "${NAMES:-}" ]; then \
     items=(${NAMES}); \
     else \
-    items=( \
-      hm-eval-neg-retro-on \
-      hm-eval-neg-retro-off \
-      hm-eval-lite-retro-on \
-      hm-eval-lite-retro-off \
-      hm-eval-neg-nogui-retro-on \
-      hm-eval-neg-nogui-retro-off \
-      hm-eval-lite-nogui-retro-on \
-      hm-eval-lite-nogui-retro-off \
-      hm-eval-neg-noweb-retro-on \
-      hm-eval-neg-noweb-retro-off \
-      hm-eval-lite-noweb-retro-on \
-      hm-eval-lite-noweb-retro-off \
-    ); \
+    items=(nixos-eval-telfir); \
     fi
     for name in "${items[@]}"; do \
       echo "== ${name} (system=${sys}) =="; \
@@ -179,7 +164,7 @@ show-features:
       echo; \
     done
 
-hm-status:
+systemd-status:
     set -eu
     echo "== systemd --user failed units =="
     systemctl --user --failed || true
@@ -226,47 +211,9 @@ clean-caches:
     find "$repo" -type f -name '*.zwc' -delete || true
     find "$repo" -type d -name '__pycache__' -prune -exec rm -rf {} + || true
     find "$repo" -type f -name '*.pyc' -delete || true
-    rm -rf "$repo/nix/.config/home-manager/.cache" || true
     : "${XDG_CACHE_HOME:=$HOME/.cache}"
     : "${XDG_STATE_HOME:=$HOME/.local/state}"
     rm -rf "$XDG_CACHE_HOME/zsh" || true
     rm -rf "$XDG_CACHE_HOME/nu" "$XDG_CACHE_HOME/nushell" || true
     rm -f "$XDG_STATE_HOME/nushell/history.sqlite3"* || true
 
-hm-bench:
-    # Fast eval stats for baseline + no-GUI + no-Web matrices
-    set -eu
-    sys=${SYSTEM:-x86_64-linux}
-    if [ -n "${NAMES:-}" ]; then \
-      items=(${NAMES}); \
-    else \
-      items=( \
-        hm-eval-neg-retro-off \
-        hm-eval-lite-retro-off \
-        hm-eval-neg-nogui-retro-off \
-        hm-eval-lite-nogui-retro-off \
-        hm-eval-neg-noweb-retro-off \
-        hm-eval-lite-noweb-retro-off \
-      ); \
-    fi
-    for name in "${items[@]}"; do \
-      echo "== ${name} (system=${sys}) =="; \
-      NIX_SHOW_STATS=1 nix build --no-link ".#checks.${sys}.${name}" -L || true; \
-      echo; \
-    done
-
-hm-bench-fast:
-    # Fast eval stats only for no-GUI/no-Web matrices
-    set -eu
-    sys=${SYSTEM:-x86_64-linux}
-    items=( \
-      hm-eval-neg-nogui-retro-off \
-      hm-eval-lite-nogui-retro-off \
-      hm-eval-neg-noweb-retro-off \
-      hm-eval-lite-noweb-retro-off \
-    )
-    for name in "${items[@]}"; do \
-      echo "== ${name} (system=${sys}) =="; \
-      NIX_SHOW_STATS=1 nix build --no-link ".#checks.${sys}.${name}" -L || true; \
-      echo; \
-    done
