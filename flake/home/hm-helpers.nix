@@ -1,7 +1,6 @@
 {
   lib,
   self,
-  stylixInput,
   sopsNixInput,
 }: {
   hmBaseModules = {
@@ -11,8 +10,7 @@
     homeModule = self + "/home/home.nix";
     base = [
       homeModule
-      stylixInput.homeModules.stylix
-      # chaotic.homeManagerModules.default
+      # stylix removed
       sopsNixInput.homeManagerModules.sops
     ];
     profMod = lib.optional (profile == "lite") (_: {features.profile = "lite";});
