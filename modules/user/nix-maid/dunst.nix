@@ -23,6 +23,8 @@
       follow = "mouse";
       font = "Iosevka Medium 10";
       format = "<b>%s</b>\\n%b";
+      background = "#000000";
+      foreground = "#BFCAD0";
       frame_color = "#000000";
       frame_width = 10;
       gap_size = 4;
