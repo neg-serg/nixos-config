@@ -1,16 +1,14 @@
 # Repository Overview
 
-This repository contains the system-wide NixOS configuration together with the legacy Home Manager
-flake (under `home/`). The NixOS modules are the single source of truth: all packages and services
-are wired from `modules/`, while the Home Manager tree stays available for standalone/remote setups
-and development. The documentation below replaces the duplicated READMEs from both projects so that
-every workflow points to the same manual.
+This repository contains the complete NixOS configuration using nix-maid for user-level management.
+All packages and services are wired from `modules/`, with user configuration under `modules/user/nix-maid/`.
+The documentation below provides workflows for system and user configuration.
 
 ## Working Tree Layout
 
 - `modules/`, `packages/`, `docs/`, `hosts/`, … — system configuration and documentation
   (`docs/manual`, `docs/howto`, `docs/runbooks`).
-- `home/` — legacy Home Manager modules (not a standalone flake); reused by the root flake.
+- `files/` — static config files linked to user homes via nix-maid.
 - `templates/` — developer scaffolding (Rust crane, Python CLI, shell app).
 - `docs/manual/manual.*.md` — canonical guides (this file).
 
@@ -21,21 +19,18 @@ every workflow points to the same manual.
 - Formatting/lint: `just fmt`, `just lint`, `just check`
 - Hooks (optional): `just hooks-enable`
 
-## Quick Start (Home Manager)
+## Quick Start (User Configuration)
 
 ### Prerequisites
 
 1. Install Nix with flakes enabled (`experimental-features = nix-command flakes`).
-1. Bootstrap Home Manager via flakes: `nix run home-manager/master -- init --switch`
+1. User configuration is managed via nix-maid modules under `modules/user/nix-maid/`.
 1. Optional helper: `nix profile install nixpkgs#just`
 
-### Clone & Switch Profiles
+### Apply Configuration
 
-- Clone the repo root (there is no `home/flake.nix`); run Home Manager via the root flake:
-  `home-manager switch --flake .#neg` (or `just hm-neg`).
-- Build without switching: `just hm-build`.
-- Unified repo reminder: prefer `sudo nixos-rebuild switch --flake /etc/nixos#<host>`; the `hm-*`
-  targets remain for standalone/dev workflows (same root flake).
+- User configuration is applied automatically during `nixos-rebuild switch`.
+- Build without switching: `nixos-rebuild build --flake .#<host>`.
 
 ### Profiles & Feature Flags
 
@@ -55,8 +50,7 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
 - Formatting: `just fmt`
 - Checks: `just check`
 - Lint only: `just lint`
-- Switch HM profiles: `just hm-neg` / `just hm-lite`
-- Status/logs helper: `just hm-status` (`systemctl --user --failed` + journal tail)
+- Rebuild: `sudo nixos-rebuild switch --flake .#<host>`
 
 ### Secrets (sops-nix / vaultix)
 
@@ -74,7 +68,7 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
 
 ### Sing-box Reality TUN (host)
 
-- Secret lives at `/run/user/1000/secrets/vless-reality-singbox-tun.json`, rendered by Home Manager
+- Secret lives at `/run/secrets/vless-reality-singbox-tun.json`, rendered by sops-nix
   from `secrets/home/vless/reality-singbox-tun.json.sops`.
 - Service: `systemctl start sing-box-tun` / `systemctl stop sing-box-tun` (manual). Policy routing
   in the unit: `pref 100` sends traffic to 204.152.223.171 via `main`; `pref 200` + `table 200`
@@ -91,7 +85,7 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
 ### Hyprland & GUI Notes
 
 - Hyprland autoreload stays off; reload manually via the keybinding.
-- Hypr config is split under `modules/user/gui/hypr/conf/*` and linked via Home Manager.
+- Hypr config is split under `files/gui/hypr/*` and linked via nix-maid.
 - `~/.local/bin/rofi` wrapper enforces consistent flags, auto-select, and theme lookup in XDG paths;
   disable auto-select per call with `-no-auto-select`.
 - Quickshell keyboard layout indicator listens to Hyprland `keyboard-layout` events, prefers the
@@ -110,8 +104,8 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
 
 ## Agent Guide & Conventions
 
-Use the same expectations regardless of whether you work under `modules/` or `home/`; helpers live
-side-by-side so the patterns apply to both configurations.
+Use the same expectations regardless of whether you work under `modules/` or `modules/user/nix-maid/`;
+helpers live side-by-side so the patterns apply to both configurations.
 
 ### Key Locations
 
