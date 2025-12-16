@@ -25,6 +25,8 @@
     ./vdirsyncer.nix
     ./dosemu.nix
     ./enchant.nix
+    ./nethack.nix
+    ./television.nix
   ];
 
   users.users.neg.maid = {};
