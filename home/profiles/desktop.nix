@@ -1,15 +1,15 @@
 {
   imports = [
     ../modules/default.nix
-    ../modules/cli
-    ../modules/dev
-    ../modules/distros
-    ../modules/flatpak
-    ../modules/hardware
-    ../modules/media
-    ../modules/misc
+    # ../modules/cli
+    # ../modules/dev
+    # ../modules/distros
+    # ../modules/flatpak
+    # ../modules/hardware
+    # ../modules/media
+    # ../modules/misc
     ../modules/secrets
-    ../modules/text
+    # ../modules/text
     ../modules/user
   ];
 }
