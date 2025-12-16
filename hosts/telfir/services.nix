@@ -717,6 +717,7 @@ in
             after = ["local-fs.target"];
             serviceConfig = {
               Type = "oneshot";
+              Environment = "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt";
               ExecStart = lib.getExe (pkgs.writeShellScriptBin "nextcloud-adminpass" ''
                 set -euo pipefail
                 umask 077
