@@ -5,7 +5,7 @@
   ...
 }: let
   cfg = config.features.cli.television;
-  filesRoot = ../../../home/files;
+  filesRoot = ../../../files;
 in
   lib.mkIf (cfg.enable or false) {
     environment.systemPackages = [

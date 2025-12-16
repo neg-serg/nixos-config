@@ -5,7 +5,7 @@
   ...
 }: let
   cfg = config.features.cli.broot;
-  brootRoot = ../../../home/files/shell/broot;
+  brootRoot = ../../../files/shell/broot;
 in
   lib.mkIf (cfg.enable or false) {
     environment.systemPackages = [pkgs.broot];

@@ -62,10 +62,10 @@
     "\ei": tab-insert
   '';
   aliaeConfig = import "${inputs.self}/lib/aliae.nix" {inherit lib pkgs;};
-  dircolorsConfig = "${inputs.self}/home/files/shell/dircolors/dircolors";
+  dircolorsConfig = "${inputs.self}/files/shell/dircolors/dircolors";
 
   # --- Shell Config Sources ---
-  shellFiles = ../../../home/files/shell;
+  shellFiles = ../../../files/shell;
   zshenvExtras = "";
 
   # Generate ZSH config with injected zshenv

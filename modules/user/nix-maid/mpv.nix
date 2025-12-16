@@ -50,9 +50,9 @@ in
     users.users.neg.maid.file.home = {
       # Main Config
       ".config/mpv/mpv.conf".text = ''
-        input-ipc-server=${config.home-manager.users.neg.xdg.configHome}/mpv/socket
+        input-ipc-server=${config.users.users.neg.home}/.config/mpv/socket
         cache=no
-        gpu-shader-cache-dir=${config.home-manager.users.neg.xdg.cacheHome}/mpv/
+        gpu-shader-cache-dir=${config.users.users.neg.home}/.config/mpv/
         hwdec=auto-safe
         profile=gpu-hq
         vd-lavc-dr=yes

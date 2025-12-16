@@ -5,7 +5,7 @@
   ...
 }: let
   cfg = config.features.games.dosemu;
-  filesRoot = ../../../home/files;
+  filesRoot = ../../../files;
 in
   lib.mkIf (cfg.enable or false) {
     # environment.systemPackages = [pkgs.dosemu2];

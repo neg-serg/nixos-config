@@ -8,23 +8,23 @@
 
   # Fun Art Scripts
   artFiles = {
-    "bonsai.sh" = ../../../home/modules/misc/fun-art/bonsai.sh;
-    "chess.sh" = ../../../home/modules/misc/fun-art/chess.sh;
-    "nvim-logo.sh" = ../../../home/modules/misc/fun-art/nvim-logo.sh;
-    "rain.sh" = ../../../home/modules/misc/fun-art/rain.sh;
-    "skull.sh" = ../../../home/modules/misc/fun-art/skull.sh;
-    "skullmono.sh" = ../../../home/modules/misc/fun-art/skullmono.sh;
-    "skulls.sh" = ../../../home/modules/misc/fun-art/skulls.sh;
-    "skull.txt" = ../../../home/modules/misc/fun-art/skull.txt;
-    "zalgo.py" = ../../../home/modules/misc/fun-art/zalgo.py;
-    "gandalf.txt" = ../../../home/modules/misc/fun-art/gandalf.txt;
-    "helmet.txt" = ../../../home/modules/misc/fun-art/helmet.txt;
-    "hydra.txt" = ../../../home/modules/misc/fun-art/hydra.txt;
-    "skeleton_hood.txt" = ../../../home/modules/misc/fun-art/skeleton_hood.txt;
+    "bonsai.sh" = ../../../files/art/fun-art/bonsai.sh;
+    "chess.sh" = ../../../files/art/fun-art/chess.sh;
+    "nvim-logo.sh" = ../../../files/art/fun-art/nvim-logo.sh;
+    "rain.sh" = ../../../files/art/fun-art/rain.sh;
+    "skull.sh" = ../../../files/art/fun-art/skull.sh;
+    "skullmono.sh" = ../../../files/art/fun-art/skullmono.sh;
+    "skulls.sh" = ../../../files/art/fun-art/skulls.sh;
+    "skull.txt" = ../../../files/art/fun-art/skull.txt;
+    "zalgo.py" = ../../../files/art/fun-art/zalgo.py;
+    "gandalf.txt" = ../../../files/art/fun-art/gandalf.txt;
+    "helmet.txt" = ../../../files/art/fun-art/helmet.txt;
+    "hydra.txt" = ../../../files/art/fun-art/hydra.txt;
+    "skeleton_hood.txt" = ../../../files/art/fun-art/skeleton_hood.txt;
   };
 
   # Rustmission Config Dir
-  rustmissionConf = ../../../home/modules/misc/rustmission/conf;
+  rustmissionConf = ../../../files/config/rustmission;
 in {
   # Fun Art Installation & Rustmission
   users.users.neg.maid.file.home = lib.mkIf (cfg.fun.enable or false) (lib.mkMerge [
@@ -38,10 +38,10 @@ in {
 
     # Fantasy Art
     {
-      ".local/share/fantasy-art/gandalf.txt".source = ../../../home/modules/misc/fun-art/gandalf.txt;
-      ".local/share/fantasy-art/helmet.txt".source = ../../../home/modules/misc/fun-art/helmet.txt;
-      ".local/share/fantasy-art/hydra.txt".source = ../../../home/modules/misc/fun-art/hydra.txt;
-      ".local/share/fantasy-art/skeleton_hood.txt".source = ../../../home/modules/misc/fun-art/skeleton_hood.txt;
+      ".local/share/fantasy-art/gandalf.txt".source = ../../../files/art/fun-art/gandalf.txt;
+      ".local/share/fantasy-art/helmet.txt".source = ../../../files/art/fun-art/helmet.txt;
+      ".local/share/fantasy-art/hydra.txt".source = ../../../files/art/fun-art/hydra.txt;
+      ".local/share/fantasy-art/skeleton_hood.txt".source = ../../../files/art/fun-art/skeleton_hood.txt;
     }
 
     # Rustmission

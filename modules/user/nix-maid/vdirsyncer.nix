@@ -5,7 +5,7 @@
   ...
 }: let
   cfg = config.features.mail.vdirsyncer;
-  filesRoot = ../../../home/files;
+  filesRoot = ../../../files;
 in
   lib.mkIf (cfg.enable or false) {
     environment.systemPackages = [pkgs.vdirsyncer];

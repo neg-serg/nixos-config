@@ -197,7 +197,7 @@
   rofiConfigSrc = ../../../packages/rofi-config;
 
   # Rofi wrapper script
-  rofiWrapperScript = builtins.readFile ../../../home/files/rofi/rofi-wrapper.sh;
+  rofiWrapperScript = builtins.readFile ../../../files/rofi/rofi-wrapper.sh;
   rofiWrapper = pkgs.writeShellApplication {
     name = "rofi-wrapper";
     runtimeInputs = [
