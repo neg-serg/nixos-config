@@ -14,6 +14,7 @@
     ./gpg.nix
     ./cli-tools.nix
     ./broot.nix
+    ./tig.nix
     ./tewi.nix
     ./terminals-shells.nix
     ./gui-apps.nix
