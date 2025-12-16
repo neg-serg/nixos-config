@@ -9,7 +9,19 @@
   mediaEnabled = config.features.media.audio.apps.enable or false;
 
   # Helper to generate INI (Flameshot, Aria2 often uses similar key=val)
-  toINI = lib.generators.toINI {};
+  toINI = lib.generators.toINI {
+    mkKeyValue = key: value: let
+      v =
+        if builtins.isString value && lib.hasPrefix "#" value
+        then "\"${value}\""
+        else if builtins.isBool value
+        then
+          if value
+          then "true"
+          else "false"
+        else toString value;
+    in "${key}=${v}";
+  };
 
   # Flameshot Settings
   flameshotSettings = {
