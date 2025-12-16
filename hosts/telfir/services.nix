@@ -59,7 +59,6 @@ in
       };
 
       home-manager.users.neg = {
-        modules.media.audio.subsonic.enable = true;
       };
       # Roles enabled for this host
       roles = {
