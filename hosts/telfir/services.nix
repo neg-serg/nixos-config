@@ -42,6 +42,7 @@ in
       features.dev.ai.antigravity.enable = true;
       features.text.tex.enable = true;
       features.cli.tewi.enable = true;
+      features.cli.broot.enable = true;
       features.dev.tla.enable = true;
       features.apps.winapps.enable = true;
       features.gui.hy3.enable = true;
