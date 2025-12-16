@@ -10,29 +10,30 @@
       nix-search-tv
     ];
 
-    home.file.".config/television/themes/stylix.toml".text = ''
+    # Hardcoded theme (previously from stylix)
+    home.file.".config/television/themes/neg.toml".text = ''
       # general
       # background = nil, transparent
       remote_control_mode_bg = '#00000000'
-      border_fg = '#${config.lib.stylix.colors.base04}'
-      text_fg = '#${config.lib.stylix.colors.base05}'
-      dimmed_text_fg = '#${config.lib.stylix.colors.base0D}'
+      border_fg = '#585858'
+      text_fg = '#c5c8c6'
+      dimmed_text_fg = '#81a2be'
       # input
-      input_text_fg = '#${config.lib.stylix.colors.base08}'
-      result_count_fg = '#${config.lib.stylix.colors.base08}'
+      input_text_fg = '#cc6666'
+      result_count_fg = '#cc6666'
       # results
-      result_name_fg = '#${config.lib.stylix.colors.base0D}'
-      result_line_number_fg = '#${config.lib.stylix.colors.base0A}'
-      result_value_fg = '#${config.lib.stylix.colors.base07}'
-      selection_fg = '#${config.lib.stylix.colors.base0B}'
-      selection_bg = '#${config.lib.stylix.colors.base02}'
-      match_fg = '#${config.lib.stylix.colors.base08}'
+      result_name_fg = '#81a2be'
+      result_line_number_fg = '#f0c674'
+      result_value_fg = '#e0e0e0'
+      selection_fg = '#b5bd68'
+      selection_bg = '#373b41'
+      match_fg = '#cc6666'
       # preview
-      preview_title_fg = '#${config.lib.stylix.colors.base09}'
+      preview_title_fg = '#de935f'
       # modes
-      channel_mode_fg = '#${config.lib.stylix.colors.base06}'
-      remote_control_mode_fg = '#${config.lib.stylix.colors.base0B}'
-      send_to_channel_mode_fg = '#${config.lib.stylix.colors.base0D}'
+      channel_mode_fg = '#c5c8c6'
+      remote_control_mode_fg = '#b5bd68'
+      send_to_channel_mode_fg = '#81a2be'
     '';
 
     home.file.".config/television/config.toml".source = ./config.toml;

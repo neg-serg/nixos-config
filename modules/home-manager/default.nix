@@ -30,7 +30,7 @@
   mainUser = config.users.main.name or "neg";
   hmModules = [
     (repoRoot + "/home/home.nix")
-    inputs.stylix.homeModules.stylix
+    # stylix removed
     inputs.nvf.homeManagerModules.default
     inputs."sops-nix".homeManagerModules.sops
   ];
