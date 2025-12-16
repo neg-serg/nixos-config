@@ -19,6 +19,7 @@
     ./firefox.nix
     ./floorp.nix
     ./yazi.nix
+    ./pipewire.nix
   ];
 
   users.users.neg.maid = {};
