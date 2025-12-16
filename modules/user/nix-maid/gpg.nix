@@ -6,7 +6,7 @@
 }: let
   cfg = config.features.gpg;
 
-  # Custom Pinentry Wrapper (migrated from HM)
+  # Custom Pinentry Wrapper
   # Injects Wayland/DBus env vars for reliable GUI prompting
   pinentryRofi = pkgs.writeShellApplication {
     name = "pinentry-rofi-with-env";
