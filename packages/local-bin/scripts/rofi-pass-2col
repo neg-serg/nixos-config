@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Wrapper for rofi-pass with 2-column layout
+
+# Determine executable
+CMD="rofi-pass"
+if command -v rofi-pass-wayland &> /dev/null; then
+    CMD="rofi-pass-wayland"
+fi
+
+# Execute with 2-column overrides
+# We inject a theme string to force 2 columns in the listview
+exec "$CMD" -theme-str 'listview { columns: 2; lines: 10; } window { width: 40%; }' "$@"

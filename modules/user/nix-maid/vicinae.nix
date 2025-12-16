@@ -151,5 +151,6 @@ in {
   # Packages
   environment.systemPackages = [
     pkgs.vicinae # Wayland launcher with layer-shell support
+    pkgs.rofi-pass-wayland # Rofi frontend for password store (Wayland support)
   ];
 }
