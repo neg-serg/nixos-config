@@ -21,7 +21,18 @@
   # Qt paths for wrapper
   qsBin = lib.getExe' qsPkg "qs";
   qsQmlPath = "${qsPkg}/${pkgs.qt6.qtbase.qtQmlPrefix}";
-  qsPath = pkgs.lib.makeBinPath [pkgs.fd pkgs.coreutils];
+
+  # Runtime dependencies for quickshell scripts
+  qsPath = pkgs.lib.makeBinPath [
+    pkgs.fd
+    pkgs.coreutils
+    pkgs.bash
+    pkgs.socat
+    pkgs.iproute2 # ip command
+    pkgs.ffmpeg # ffprobe
+    pkgs.mpc # mpc
+    pkgs.hyprland # hyprctl
+  ];
 
   # Wrapped quickshell package
   quickshellWrapped = pkgs.stdenv.mkDerivation {
