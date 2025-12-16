@@ -58,8 +58,6 @@ in
         runtime.service.enable = true;
       };
 
-      home-manager.users.neg = {
-      };
       # Roles enabled for this host
       roles = {
         workstation.enable = true;

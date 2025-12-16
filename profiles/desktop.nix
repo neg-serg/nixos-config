@@ -15,7 +15,7 @@
     ../modules/web
     ../modules/torrent
     ../modules/hardware
-    ../modules/home-manager
+
     ../modules/text
     ../modules/llm
     ../modules/monitoring

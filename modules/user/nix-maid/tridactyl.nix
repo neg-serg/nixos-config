@@ -6,7 +6,7 @@
 lib.mkIf config.features.web.enable {
   users.users.neg.maid = let
     # Use relative path to home/files for stability and to avoid dependency on undefined vars
-    base = ../../../home/files/misc/tridactyl;
+    base = ../../../files/misc/tridactyl;
     rcPath = "${base}/tridactylrc";
     themesPath = base + "/themes";
     mozillaPath = base + "/mozilla";

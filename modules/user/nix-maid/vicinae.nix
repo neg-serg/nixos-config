@@ -122,7 +122,7 @@
   };
 
   # Extension source path
-  extensionsSrc = ../../../home/modules/user/gui/vicinae/extensions;
+  extensionsSrc = ../../../files/gui/vicinae-extensions;
 in {
   # Vicinae config files via nix-maid
   users.users.neg.maid.file.home = {

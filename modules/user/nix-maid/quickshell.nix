@@ -6,7 +6,7 @@
   ...
 }: let
   repoRoot = "/etc/nixos";
-  quickshellSrc = "${repoRoot}/home/files/quickshell";
+  quickshellSrc = "${repoRoot}/files/quickshell";
 
   # Feature flags check
   quickshellEnabled =

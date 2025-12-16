@@ -5,7 +5,7 @@
   ...
 }: let
   cfg = config.features.torrent;
-  filesRoot = ../../../home/files;
+  filesRoot = ../../../files;
 
   transmissionPkg = pkgs.transmission_4;
   confDirNew = "${config.users.users.neg.home}/.config/transmission-daemon";

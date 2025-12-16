@@ -5,7 +5,7 @@
   inputs,
   ...
 }: let
-  hyprlandPackage = config.home-manager.users.${config.users.main.name}.wayland.windowManager.hyprland.package;
+  hyprlandPackage = pkgs.hyprland;
   mainUser = config.users.main.name or "neg";
   mainHome =
     if builtins.hasAttr mainUser config.users.users
@@ -70,7 +70,7 @@ in {
   ];
 
   # Deploy QuickShell config to /etc instead of Home Manager
-  environment.etc."greetd/quickshell".source = ../../../home/files/quickshell;
+  environment.etc."greetd/quickshell".source = ../../../files/quickshell;
 
   # Keep the greeter wallpaper in a world-readable location; falls back to the bundled
   # background if the source is missing.

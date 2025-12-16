@@ -4,7 +4,7 @@
   ...
 }: let
   cfg = config.features.games.nethack;
-  # filesRoot = ../../../home/files; # Unused
+  # filesRoot = ../../../files; # Unused
 in
   lib.mkIf (cfg.enable or false) {
     # Ensure package is installed (if not globally enabled by games module)
