@@ -8,7 +8,7 @@
   filesRoot = ../../../home/files;
 
   transmissionPkg = pkgs.transmission_4;
-  confDirNew = "${config.home.homeDirectory}/.config/transmission-daemon";
+  confDirNew = "${config.users.users.neg.home}/.config/transmission-daemon";
 
   # Define the tracker update script wrapper
   transmissionAddTrackers = pkgs.writeShellScriptBin "transmission-add-trackers" ''

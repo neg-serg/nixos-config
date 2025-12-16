@@ -101,6 +101,7 @@ in {
       nixIndexDB.enable = mkBool "enable scheduled nix-index DB refresh (prebuilt cache)" true;
       icedteaWeb.enable = mkBool "enable IcedTea Web (netx) integration" false;
       tewi.enable = mkBool "enable tewi tui torrent client configuration" false;
+      television.enable = mkBool "enable television (blazingly fast fuzzy finder)" true;
       zcli = {
         enable = mkBool "install zcli helper for nh-based flake switches" false;
         profile = mkOption {
@@ -301,6 +302,12 @@ in {
     # Fun/extras (e.g., curated art assets) that are nice-to-have
     fun = {
       enable = mkBool "enable fun extras (art collections, etc.)" true;
+    };
+
+    games = {
+      enable = mkBool "enable Games stack" true;
+      nethack.enable = mkBool "enable Nethack" true;
+      dosemu.enable = mkBool "enable Dosemu" true;
     };
 
     # GPG stack (gpg, gpg-agent, pinentry)
