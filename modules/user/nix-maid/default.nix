@@ -25,16 +25,17 @@
     ./firefox.nix
     ./floorp.nix
     # ./yazi.nix
-    # ./pipewire.nix
+    ./pipewire.nix
+    ./pipewire.nix
     # ./emacs.nix
-    # ./transmission.nix
+    ./transmission.nix
     # ./vdirsyncer.nix
     # ./dosemu.nix
     # ./enchant.nix
     # ./nethack.nix
     # ./television.nix
     ./hyprland.nix
-    # ./media.nix
+    ./media.nix
     # ./mail.nix
     # ./autoclick.nix
     # ./asciinema.nix
@@ -42,7 +43,7 @@
     # ./nekoray.nix
     # ./nyxt.nix
     # ./tridactyl.nix
-    # ./steam.nix
+    ./steam.nix
     ./local-bin.nix
     ./envs.nix
     # ./web/mozilla-common-lib.nix
