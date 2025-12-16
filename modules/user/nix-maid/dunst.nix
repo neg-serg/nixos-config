@@ -99,7 +99,22 @@
     };
   };
 
-  dunstrc = lib.generators.toINI {} settings;
+  # Custom INI generator that quotes values starting with # to prevent dunst parsing as comments
+  dunstrc =
+    lib.generators.toINI {
+      mkKeyValue = key: value: let
+        v =
+          if builtins.isString value && lib.hasPrefix "#" value
+          then "\"${value}\""
+          else if builtins.isBool value
+          then
+            if value
+            then "true"
+            else "false"
+          else toString value;
+      in "${key}=${v}";
+    }
+    settings;
 in
   lib.mkIf guiEnabled {
     # 1. Config file via nix-maid
