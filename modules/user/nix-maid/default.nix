@@ -23,6 +23,7 @@
     ./emacs.nix
     ./transmission.nix
     ./vdirsyncer.nix
+    ./dosemu.nix
   ];
 
   users.users.neg.maid = {};
