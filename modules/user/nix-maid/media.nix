@@ -218,7 +218,7 @@ in {
 
     # --- RMPC ---
     # Config symlink (lives in home/modules for live editing)
-    ".config/rmpc".source = ../../../home/modules/media/audio/rmpc/conf;
+    ".config/rmpc".source = ../../../home/files/rmpc;
 
     # --- NCPAMixer ---
     ".config/ncpamixer.conf".source = ../../../home/modules/media/audio/ncpamixer.conf;

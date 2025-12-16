@@ -15,6 +15,7 @@
     ./vicinae.nix
     ./walker.nix
     ./quickshell.nix
+    ./qt.nix
     ./firefox.nix
     ./floorp.nix
     ./yazi.nix
