@@ -36,6 +36,18 @@
     ./hyprland.nix
     ./media.nix
     ./mail.nix
+    ./autoclick.nix
+    ./asciinema.nix
+    ./fun-launchers.nix
+    ./spicetify.nix
+    ./nekoray.nix
+    ./nyxt.nix
+    ./tridactyl.nix
+    ./steam.nix
+    ./mangohud.nix
+    ./oss-games.nix
+    ./local-bin.nix
+    ./envs.nix
   ];
 
   users.users.neg.maid = {};

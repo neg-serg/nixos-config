@@ -223,6 +223,19 @@ in {
     # --- NCPAMixer ---
     ".config/ncpamixer.conf".source = ../../../home/modules/media/audio/ncpamixer.conf;
 
+    # --- MPDris2 Config ---
+    ".config/mpDris2/mpDris2.conf".text = lib.generators.toINI {} {
+      Connection = {
+        host = mpdHost;
+        port = mpdPort;
+        music_dir = "${config.users.users.neg.home}/music";
+      };
+      Bling = {
+        notify = "false";
+        mmkeys = "true";
+      };
+    };
+
     # --- AI Upscale Script ---
     ".local/bin/ai-upscale-video".text = ''
       #!/usr/bin/env bash
@@ -336,6 +349,10 @@ in {
       serviceConfig = {
         ExecStart = "${pkgs.mpdris2}/bin/mpdris2";
         Restart = "on-failure";
+        Environment = [
+          "MPD_HOST=${mpdHost}"
+          "MPD_PORT=${toString mpdPort}"
+        ];
       };
     };
 
