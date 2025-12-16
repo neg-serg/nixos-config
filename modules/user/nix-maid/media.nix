@@ -205,8 +205,22 @@ in {
       def_key "y" "save_tag_changes"
     '';
 
-    # NOTE: rmpc, swayimg, ncpamixer configs not yet moved to home/files
-    # TODO: Move these config directories later
+    # --- Swayimg ---
+    # Wrapper script that redirects to swayimg-first (installed system-wide)
+    ".local/bin/swayimg" = {
+      executable = true;
+      text = ''
+        #!/usr/bin/env bash
+        set -euo pipefail
+        exec swayimg-first "$@"
+      '';
+    };
+    # Config symlink (lives in home/modules for live editing)
+    ".config/swayimg".source = ../../../home/modules/media/images/swayimg/conf;
+
+    # --- RMPC ---
+    # Config symlink (lives in home/modules for live editing)
+    ".config/rmpc".source = ../../../home/modules/media/audio/rmpc/conf;
 
     # --- AI Upscale Script ---
     ".local/bin/ai-upscale-video".text = ''
