@@ -1,6 +1,8 @@
 {
   description = "Neg-Serg configuration";
   inputs = {
+    nixpkgs = {url = "github:NixOS/nixpkgs/nixos-25.11";}; # Pin nixpkgs to nixos-unstable so we get Hydra cache hits
+
     # Pin hy3 to release compatible with Hyprland v0.52.x
     aagl = {
       url = "github:ezkea/aagl-gtk-on-nix";
@@ -42,8 +44,6 @@
     nix-maid = {
       url = "github:viperML/nix-maid";
     };
-    # Pin nixpkgs to nixos-unstable so we get Hydra cache hits
-    nixpkgs = {url = "github:NixOS/nixpkgs/nixos-25.11";};
     nix-index-database = {
       url = "github:Mic92/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
