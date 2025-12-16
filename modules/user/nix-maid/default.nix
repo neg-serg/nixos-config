@@ -45,6 +45,7 @@
     ./tridactyl.nix
     ./steam.nix
     ./local-bin.nix
+    ./oss-games.nix
     ./envs.nix
     ./web/librewolf.nix
     ./web/aria.nix
