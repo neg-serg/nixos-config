@@ -2,7 +2,7 @@
   imports = [
     # Cleaned imports
     # ./systemd
-    ./theme
+    # ./theme
     # ./web
     # ./x11
     ./xdg
