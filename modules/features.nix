@@ -380,7 +380,7 @@ in {
           firefox.enable = mkDefault false;
           librewolf.enable = mkDefault false;
           nyxt.enable = mkDefault true;
-          yandex.enable = mkDefault true;
+          yandex.enable = mkDefault false;
           prefs.fastfox.enable = mkDefault true;
         };
         media.audio = {
