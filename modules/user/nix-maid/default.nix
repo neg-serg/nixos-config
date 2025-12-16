@@ -26,6 +26,7 @@
     ./enchant.nix
     ./nethack.nix
     ./television.nix
+    ./hyprland.nix
     ./media.nix
   ];
 
