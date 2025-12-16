@@ -12,6 +12,7 @@
     ./migrated-services.nix
     ./secrets.nix
     ./theme.nix
+    ./xdg.nix
     ./dunst.nix
     ./services-manual.nix
     ./gpg.nix
@@ -56,6 +57,9 @@
     ./web/yt-dlp.nix
     ./web/defaults.nix
     ./web/browsing.nix
+    ./dev.nix
+    ./misc.nix
+    ./text.nix
   ];
 
   users.users.neg.maid = {};
