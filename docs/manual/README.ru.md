@@ -1,16 +1,14 @@
 # Обзор репозитория
 
-Репозиторий объединяет конфигурацию NixOS и историческую конфигурацию Home Manager (каталог
-`home/`). Системные модули — единственный источник истины: пакеты и сервисы подключаются через
-`modules/`, а Home Manager остаётся доступным для автономных/WSL‑сценариев и разработки. Все
-инструкции сведены в этом файле, чтобы больше не держать отдельные README для системной и
-пользовательской частей.
+Репозиторий содержит полную конфигурацию NixOS с управлением пользовательской частью через nix-maid.
+Пакеты и сервисы подключаются через `modules/`, пользовательская конфигурация — в `modules/user/nix-maid/`.
+Все инструкции сведены в этом файле.
 
 ## Структура дерева
 
 - `modules/`, `packages/`, `docs/`, `hosts/` — системные модули, оверлеи и документация
   (`docs/manual`, `docs/howto`, `docs/runbooks`).
-- `home/` — модули Home Manager (не отдельный flake), переиспользуются корневым флейком.
+- `files/` — статические конфигурационные файлы, линкуемые в домашние директории через nix-maid.
 - `templates/` — заготовки проектов (Rust crane, Python CLI, shell app).
 - `docs/manual/manual.*.md` — канонические руководства.
 
@@ -21,21 +19,18 @@
 - Форматирование/линт/проверки: `just fmt`, `just lint`, `just check`
 - Опционально: `just hooks-enable` для включения git-hooks
 
-## Быстрый старт (Home Manager)
+## Быстрый старт (пользовательская конфигурация)
 
 ### Предпосылки
 
 1. Установите Nix и включите flakes (`experimental-features = nix-command flakes`).
-1. Инициализируйте Home Manager через flakes: `nix run home-manager/master -- init --switch`
+1. Пользовательская конфигурация управляется через модули nix-maid в `modules/user/nix-maid/`.
 1. Рекомендуемый helper: `nix profile install nixpkgs#just`
 
-### Клонирование и переключение профилей
+### Применение конфигурации
 
-- Клонируйте корень репозитория (в `home/` нет собственного `flake.nix`); Home Manager запускается
-  через корневой flake: `home-manager switch --flake .#neg` (или `just hm-neg`).
-- Сборка без переключения: `just hm-build`.
-- На хостах с общим репозиторием используйте `sudo nixos-rebuild switch --flake /etc/nixos#<host>`;
-  `hm-*` оставлены для standalone/dev окружений и используют тот же корневой flейк.
+- Пользовательская конфигурация применяется автоматически при `nixos-rebuild switch`.
+- Сборка без переключения: `nixos-rebuild build --flake .#<host>`.
 
 ### Профили и feature flags
 
@@ -56,8 +51,7 @@
 - Форматирование: `just fmt`
 - Проверки: `just check`
 - Линт: `just lint`
-- Переключение HM: `just hm-neg` / `just hm-lite`
-- Статус/логи: `just hm-status` (`systemctl --user --failed` + хвост журнала)
+- Пересборка: `sudo nixos-rebuild switch --flake .#<host>`
 
 ### Секреты (sops-nix / vaultix)
 
@@ -110,7 +104,7 @@
 
 ### Sing-box Reality TUN (хост)
 
-- Секрет: `/run/user/1000/secrets/vless-reality-singbox-tun.json`, разворачивается Home Manager из
+- Секрет: `/run/secrets/vless-reality-singbox-tun.json`, разворачивается sops-nix из
   `secrets/home/vless/reality-singbox-tun.json.sops`.
 - Юнит: `systemctl start sing-box-tun` / `systemctl stop sing-box-tun` (ручной запуск). Policy
   routing внутри юнита: `pref 100` — трафик к 204.152.223.171 по main; `pref 200` + `table 200` —
@@ -127,7 +121,7 @@
 ### Hyprland и GUI
 
 - Автоперезагрузка Hyprland отключена; перезапускайте хоткеем.
-- Конфиги Hypr разбиты на файлы в `modules/user/gui/hypr/conf/*` и линкуются HM.
+- Конфиги Hypr разбиты на файлы в `files/gui/hypr/*` и линкуются через nix-maid.
 - `~/.local/bin/rofi` задаёт дефолтные флаги, автопринятие и поиск тем в XDG путях; отключайте
   автопринятие флагом `-no-auto-select`.
 - `pinentry-rofi` по умолчанию запускается с темой `askpass`; переопределяйте флагами через
