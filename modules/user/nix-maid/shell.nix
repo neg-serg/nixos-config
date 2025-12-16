@@ -160,7 +160,7 @@
   shellAliases = {}; # Placeholder, assuming it's defined elsewhere or will be added.
 in {
   users.users.neg.maid.file.home = {
-    ".inputrc".text = inputrc;
+    ".config/inputrc".text = inputrc;
 
     ".config/aliae/config.yaml".text = aliaeConfig;
 

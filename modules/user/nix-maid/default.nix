@@ -12,7 +12,7 @@
     # ./dunst.nix
     # ./services-manual.nix
     ./gpg.nix
-    # ./cli-tools.nix
+    ./cli-tools.nix
     # ./broot.nix
     # ./tig.nix
     # ./tewi.nix
@@ -43,8 +43,8 @@
     # ./nyxt.nix
     # ./tridactyl.nix
     # ./steam.nix
-    # ./local-bin.nix
-    # ./envs.nix
+    ./local-bin.nix
+    ./envs.nix
     # ./web/mozilla-common-lib.nix
     # ./web/browsers-table.nix
     # ./web/default-browser-lib.nix

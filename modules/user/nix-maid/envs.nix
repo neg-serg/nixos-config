@@ -12,18 +12,18 @@ in {
   environment.variables = {
     # NixOS handles standard XDG variables by default if xdg.enable is true,
     # but we force them here to match the legacy Home Manager config
-    XDG_CACHE_HOME = cacheHome;
-    XDG_CONFIG_HOME = configHome;
-    XDG_DATA_HOME = dataHome;
-    XDG_DESKTOP_DIR = "${homeDir}/.local/desktop";
-    XDG_DOCUMENTS_DIR = "${homeDir}/doc";
-    XDG_DOWNLOAD_DIR = "${homeDir}/dw";
-    XDG_MUSIC_DIR = "${homeDir}/music";
-    XDG_PICTURES_DIR = "${homeDir}/pic";
-    XDG_PUBLICSHARE_DIR = "${homeDir}/.local/public";
-    XDG_STATE_HOME = "${homeDir}/.local/state";
-    XDG_TEMPLATES_DIR = "${homeDir}/.local/templates";
-    XDG_VIDEOS_DIR = "${homeDir}/vid";
+    XDG_CACHE_HOME = lib.mkForce cacheHome;
+    XDG_CONFIG_HOME = lib.mkForce configHome;
+    XDG_DATA_HOME = lib.mkForce dataHome;
+    XDG_DESKTOP_DIR = lib.mkForce "${homeDir}/.local/desktop";
+    XDG_DOCUMENTS_DIR = lib.mkForce "${homeDir}/doc";
+    XDG_DOWNLOAD_DIR = lib.mkForce "${homeDir}/dw";
+    XDG_MUSIC_DIR = lib.mkForce "${homeDir}/music";
+    XDG_PICTURES_DIR = lib.mkForce "${homeDir}/pic";
+    XDG_PUBLICSHARE_DIR = lib.mkForce "${homeDir}/.local/public";
+    XDG_STATE_HOME = lib.mkForce "${homeDir}/.local/state";
+    XDG_TEMPLATES_DIR = lib.mkForce "${homeDir}/.local/templates";
+    XDG_VIDEOS_DIR = lib.mkForce "${homeDir}/vid";
     # XDG_RUNTIME_DIR is managed by systemd-logind
 
     # Custom Env Vars
@@ -40,7 +40,7 @@ in {
     GREP_COLORS = "ms=0;32:mc=1;33:sl=:cx=:fn=1;32:ln=1;36:bn=36:se=1;30";
     GRIM_DEFAULT_DIR = "${homeDir}/pic/shots";
     HTTPIE_CONFIG_DIR = "${configHome}/httpie";
-    INPUTRC = "${configHome}/inputrc";
+    INPUTRC = lib.mkForce "${configHome}/inputrc";
     _JAVA_OPTIONS = "-Djava.util.prefs.userRoot=${configHome}/java";
     LIBSEAT_BACKEND = "logind";
     MPV_HOME = "${configHome}/mpv";
@@ -67,7 +67,7 @@ in {
     XINITRC = "${configHome}/xinit/xinitrc";
     XSERVERRC = "${configHome}/xinit/xserverrc";
     XZ_DEFAULTS = "-T 0";
-    ZDOTDIR = "${configHome}/zsh";
+    ZDOTDIR = lib.mkForce "${configHome}/zsh";
   };
 
   # Activation script to ensure profile links (legacy support)
