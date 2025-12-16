@@ -27,20 +27,20 @@
     # ./yazi.nix
     ./pipewire.nix
     ./pipewire.nix
-    # ./emacs.nix
+    ./emacs.nix
     ./transmission.nix
-    # ./vdirsyncer.nix
-    # ./dosemu.nix
-    # ./enchant.nix
-    # ./nethack.nix
-    # ./television.nix
+    ./vdirsyncer.nix
+    ./dosemu.nix
+    ./enchant.nix
+    ./nethack.nix
+    ./television.nix
     ./hyprland.nix
     ./media.nix
-    # ./mail.nix
-    # ./autoclick.nix
-    # ./asciinema.nix
+    ./mail.nix
+    ./autoclick.nix
+    ./asciinema.nix
     # ./fun-launchers.nix
-    # ./nekoray.nix
+    ./nekoray.nix
     # ./nyxt.nix
     # ./tridactyl.nix
     ./steam.nix
