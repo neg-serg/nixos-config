@@ -8,6 +8,5 @@
     ./shaders-profiles.nix
     ./shaders-fetch.nix
     ./vapoursynth.nix
-    ./styles.nix
   ];
 }

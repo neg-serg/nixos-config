@@ -249,5 +249,11 @@ in
       ".config/mpv/shaders/KrigBilateral.glsl".source = krig;
       ".config/mpv/shaders/Anime4K_Upscale_CNN_x2_S.glsl".source = anime4k;
       ".config/mpv/shaders/SSimSuperRes.glsl".source = ssim;
+
+      ".config/mpv/styles.ass".text = ''
+        ##[V4+ Styles]
+        Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+        Style: Default,Lucida Grande,20,&H00FFFFFF,&HF0000000,&H80000000,&HF0000000,0,0,0,0,100,100,0,0.00,1,2,0,2,30,30,20,1
+      '';
     };
   }
