@@ -32,6 +32,7 @@
     pkgs.ffmpeg # ffprobe
     pkgs.mpc # mpc
     pkgs.hyprland # hyprctl
+    pkgs.neg.rsmetrx
   ];
 
   # Wrapped quickshell package

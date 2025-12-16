@@ -36,6 +36,7 @@ in {
     antigravity = callPkg (packagesRoot + "/antigravity") {};
     nemu = callPkg (packagesRoot + "/nemu") {};
     _nemu = nemu;
+    rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
 
     # Music album metadata CLI (used by music-rename script)
     albumdetails = prev.stdenv.mkDerivation rec {
