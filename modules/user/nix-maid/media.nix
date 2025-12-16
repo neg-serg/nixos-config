@@ -308,5 +308,15 @@ in {
         RestartSec = "2";
       };
     };
+
+    # Playerctld (MPRIS daemon)
+    playerctld = {
+      description = "Keep track of media player activity";
+      wantedBy = ["default.target"];
+      serviceConfig = {
+        ExecStart = "${pkgs.playerctl}/bin/playerctld daemon";
+        Restart = "on-failure";
+      };
+    };
   };
 }
