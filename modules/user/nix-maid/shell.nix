@@ -66,7 +66,7 @@
 
   # --- Shell Config Sources ---
   shellFiles = ../../../home/files/shell;
-  zshenvExtras = builtins.readFile ../../../home/modules/user/envs/zshenv-extra.sh;
+  zshenvExtras = "";
 
   # Generate ZSH config with injected zshenv
   zshConfigSource = pkgs.runCommandLocal "neg-zsh-config" {} ''

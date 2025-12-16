@@ -6,9 +6,9 @@
 }: {
   imports = [
     inputs.nix-maid.nixosModules.default
-    # ./git.nix
-    # ./mpv.nix
-    # ./shell.nix
+    ./git.nix
+    ./mpv.nix
+    ./shell.nix
     # ./dunst.nix
     # ./services-manual.nix
     # ./gpg.nix
