@@ -3,7 +3,7 @@
 typeset -ga NEGCD_DIRS=(
   "$HOME/notes"
   "$HOME/dw"
-  "${XDG_CONFIG_HOME:-$HOME/.config}/home-manager"
+  ""
   "/etc/nixos"
   # add more...
 )

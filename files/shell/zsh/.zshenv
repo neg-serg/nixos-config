@@ -1,13 +1,5 @@
 # shellcheck disable=SC1090
 skip_global_compinit=1
-hm_session_vars="$HOME/.local/state/home-manager/gcroots/current-home/home-path/etc/profile.d/hm-session-vars.sh"
-if [ -r "$hm_session_vars" ]; then
-  . "$hm_session_vars"
-elif [ -r "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
-  . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
-elif [ -r "/etc/profiles/per-user/neg/etc/profile.d/hm-session-vars.sh" ]; then
-  . "/etc/profiles/per-user/neg/etc/profile.d/hm-session-vars.sh"
-fi
 export WORDCHARS='*/?_-.[]~&;!#$%^(){}<>~` '
 export KEYTIMEOUT=10
 export REPORTTIME=60
