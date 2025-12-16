@@ -4,7 +4,7 @@
   pkgs,
   ...
 }: let
-  cfg = config.features.cli.tools;
+  cfg = config.features.dev;
 in {
   config = lib.mkIf (cfg.enable or false) {
     users.users.neg.maid = {
