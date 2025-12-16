@@ -150,23 +150,6 @@ in {
     })
 
     # ============================================================================
-    # VDIRSYNCER
-    # ============================================================================
-    (lib.mkIf (config.features.mail.enable && config.features.mail.vdirsyncer.enable) {
-      systemd.user.services.vdirsyncer = {
-        description = "Vdirsyncer synchronization service";
-        after = ["network-online.target"];
-        wants = ["network-online.target"];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStartPre = "${lib.getExe pkgs.vdirsyncer} metasync";
-          ExecStart = "${lib.getExe pkgs.vdirsyncer} sync";
-        };
-      };
-      environment.systemPackages = [pkgs.vdirsyncer];
-    })
-
-    # ============================================================================
     # NEKORAY
     # ============================================================================
     (lib.mkIf (config.features.gui.enable or false) {
