@@ -2,6 +2,7 @@
   lib,
   pkgs,
   config,
+  inputs,
   ...
 }: let
   devEnabled = config.features.dev.enable or false;
@@ -141,6 +142,6 @@ in
 
     # Symlink nvf config directory
     users.users.neg.maid.file.home = {
-      ".config/nvf".source = ../../../files/nvim;
+      ".config/nvf".source = inputs.self + "/files/nvim";
     };
   }
