@@ -14,6 +14,7 @@
     ./terminals-shells.nix
     ./gui-apps.nix
     ./vicinae.nix
+    ./walker.nix
     ./quickshell.nix
     ./firefox.nix
     ./floorp.nix
