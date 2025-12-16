@@ -14,16 +14,7 @@ in
       "pic-dirs" = {
         description = "Pic dirs notification";
         serviceConfig = {
-          ExecStart = let
-            runner = pkgs.writeShellApplication {
-              name = "pic-dirs-runner";
-              text = ''
-                set -euo pipefail
-                # Assuming pic-dirs-list is in PATH (e.g. from local-bin)
-                exec pic-dirs-list
-              '';
-            };
-          in "${lib.getExe runner}";
+          ExecStart = "%h/.local/bin/pic-dirs-list";
           PassEnvironment = ["XDG_PICTURES_DIR" "XDG_DATA_HOME"];
           Restart = "on-failure";
           RestartSec = "1";
