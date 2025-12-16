@@ -4,7 +4,6 @@
   config,
   ...
 }: let
-  filesRoot = ../../../home/files;
   # --- Beets Config ---
   beetsSettings = {
     plugins = [
@@ -61,7 +60,8 @@
     # lastfm = {user = "e7z0x1";};
     lyrics = {auto = "yes";};
     bbq = {fields = ["artist" "title" "album"];};
-    include = [config.sops.secrets."musicbrainz.yaml".path];
+    # NOTE: Uncomment when musicbrainz secret is re-encrypted
+    # include = [config.sops.secrets."musicbrainz.yaml".path];
   };
 
   # --- MPD/NCMPCPP Settings ---
@@ -129,16 +129,17 @@ in {
   ];
 
   # --- Secrets (for Beets/MusicBrainz) ---
-  sops.secrets."musicbrainz.yaml" = {
-    sopsFile = ../../../secrets/home/musicbrainz;
-    format = "binary";
-    owner = "neg";
-  };
-  sops.secrets.mpdas_negrc = {
-    sopsFile = ../../../secrets/home/mpdas/neg.rc;
-    format = "binary";
-    owner = "neg";
-  };
+  # NOTE: These secrets need to be re-encrypted with the correct key
+  # sops.secrets."musicbrainz.yaml" = {
+  #   sopsFile = ../../../secrets/home/musicbrainz;
+  #   format = "binary";
+  #   owner = "neg";
+  # };
+  # sops.secrets.mpdas_negrc = {
+  #   sopsFile = ../../../secrets/home/mpdas/neg.rc;
+  #   format = "binary";
+  #   owner = "neg";
+  # };
 
   # --- Environment Variables ---
   environment.variables = {
@@ -204,14 +205,8 @@ in {
       def_key "y" "save_tag_changes"
     '';
 
-    # --- RMPC Config ---
-    ".config/rmpc".source = "${filesRoot}/rmpc/conf";
-
-    # --- Swayimg Config ---
-    ".config/swayimg".source = "${filesRoot}/swayimg/conf";
-
-    # --- NCPAMixer ---
-    ".config/ncpamixer.conf".source = "${filesRoot}/ncpamixer.conf";
+    # NOTE: rmpc, swayimg, ncpamixer configs not yet moved to home/files
+    # TODO: Move these config directories later
 
     # --- AI Upscale Script ---
     ".local/bin/ai-upscale-video".text = ''
@@ -329,16 +324,16 @@ in {
       };
     };
 
-    # MPDAS (Last.fm Scrobbler)
-    mpdas = {
-      description = "mpdas last.fm scrobbler";
-      after = ["sound.target" "sops-nix.service"];
-      wantedBy = ["default.target"];
-      serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
-        Restart = "on-failure";
-        RestartSec = "2";
-      };
-    };
+    # MPDAS (Last.fm Scrobbler) - disabled until secrets re-encrypted
+    # mpdas = {
+    #   description = "mpdas last.fm scrobbler";
+    #   after = ["sound.target" "sops-nix.service"];
+    #   wantedBy = ["default.target"];
+    #   serviceConfig = {
+    #     ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
+    #     Restart = "on-failure";
+    #     RestartSec = "2";
+    #   };
+    # };
   };
 }
