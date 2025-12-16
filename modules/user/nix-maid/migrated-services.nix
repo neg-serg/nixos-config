@@ -67,7 +67,7 @@ in
       udiskie = {
         description = "Udiskie automounter";
         serviceConfig = {
-          ExecStart = "${lib.getExe pkgs.udiskie} --no-tray";
+          ExecStart = "${lib.getExe' pkgs.udiskie "udiskie"} --no-tray";
           # Environment from HM override (Wayland specific)
           Environment = ["QT_QPA_PLATFORM=wayland" "XDG_SESSION_TYPE=wayland"];
           Restart = "on-failure";
