@@ -95,6 +95,7 @@ in {
     mail.vdirsyncer.enable = mkBool "enable Vdirsyncer sync service/timer" true;
     cli = {
       fastCnf.enable = mkBool "enable fast zsh command-not-found handler powered by nix-index" true;
+      broot.enable = mkBool "enable broot file manager and shell integration" false;
       nixIndexDB.enable = mkBool "enable scheduled nix-index DB refresh (prebuilt cache)" true;
       icedteaWeb.enable = mkBool "enable IcedTea Web (netx) integration" false;
       tewi.enable = mkBool "enable tewi tui torrent client configuration" false;
