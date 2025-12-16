@@ -18,11 +18,11 @@
       # If other HM-specific attrs are needed, add them here.
       # Current audit shows only home.homeDirectory and features.* are used.
     };
-  mozillaCommon = import ../../../home/modules/user/web/mozilla-common-lib.nix {
+  mozillaCommon = import ./web/mozilla-common-lib.nix {
     inherit lib pkgs negLib;
     config = commonConfig;
   };
-  inherit (import ../../../home/modules/user/web/firefox/prefgroups.nix {inherit lib;}) modules prefgroups;
+  inherit (import ./web/firefox-prefgroups.nix {inherit lib;}) modules prefgroups;
 
   # --- Addon Helpers (Ported from firefox.nix) ---
 
@@ -67,7 +67,7 @@
       pname = "firefox-theme-xpi-${name}";
       version = "1.0";
       addonId = "theme-${name}@outfoxxed.me";
-      src = import ../../../home/modules/user/web/firefox/theme.nix {inherit pkgs name theme;};
+      src = import ./web/firefox-theme.nix {inherit pkgs name theme;};
     };
 
   extraAddons = {
@@ -228,7 +228,7 @@
       name = "im";
       path = "im";
       settings = modules.base // prefgroups.misc.restore-pages;
-      userChrome = builtins.readFile ../../../home/modules/user/web/firefox/inline_tabs_chrome.css;
+      userChrome = builtins.readFile ./web/firefox/inline_tabs_chrome.css;
       enable = true;
       isDefault = false;
       extensions =
