@@ -521,6 +521,7 @@ in {
     # Shells
     pkgs.nushell # Modern shell with structured data pipelines
     pkgs.tmux # Terminal multiplexer for session management
+    pkgs.oh-my-posh # Cross-shell prompt theme engine
 
     # Tools needed for kitty-panel
     pkgs.gum # TUI styling toolkit for shell scripts
