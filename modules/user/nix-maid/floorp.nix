@@ -114,14 +114,75 @@
     ];
 in
   lib.mkIf (guiEnabled && (cfg.enable or false)) {
-    environment.systemPackages = [pkgs.floorp-bin];
+    environment.systemPackages = [
+      pkgs.floorp-bin
+      # Native messaging hosts for browser extensions
+      pkgs.tridactyl-native # Tridactyl vim-like bindings
+      pkgs.pywalfox-native # Pywalfox theme colors
+    ];
 
     users.users.neg.maid.file.home = lib.mkMerge (
       [
         {".floorp/profiles.ini".text = mkProfilesIni profiles;}
+        # Tridactyl native messenger manifest - link to ~/.mozilla for native messaging
+        {".mozilla/native-messaging-hosts/tridactyl.json".source = "${pkgs.tridactyl-native}/lib/mozilla/native-messaging-hosts/tridactyl.json";}
       ]
       ++ (lib.mapAttrsToList mkProfileFiles profiles)
     );
+
+    # Floorp policies for extensions (force-install via enterprise policies)
+    # Note: Floorp uses the same policies format as Firefox, placed in /etc/floorp/policies/
+    environment.etc."floorp/policies/policies.json".text = builtins.toJSON {
+      policies = {
+        ExtensionSettings = {
+          # Tridactyl - vim-like keyboard navigation
+          "tridactyl.vim@cmcaine.co.uk" = {
+            installation_mode = "force_installed";
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/tridactyl-vim/latest.xpi";
+          };
+          # Dark Reader - dark mode for all sites
+          "addon@darkreader.org" = {
+            installation_mode = "force_installed";
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/darkreader/latest.xpi";
+          };
+          # Stylus - custom CSS for sites
+          "{7a7a4a92-a2a0-41d1-9fd7-1e92480d612d}" = {
+            installation_mode = "force_installed";
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/styl-us/latest.xpi";
+          };
+          # Search by Image
+          "{2e5ff8c8-32fe-46d0-9fc8-6b8986621f3c}" = {
+            installation_mode = "force_installed";
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/search_by_image/latest.xpi";
+          };
+          # Hide Scrollbars
+          "hide-scrollbars@qashto" = {
+            installation_mode = "force_installed";
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/hide-scrollbars/latest.xpi";
+          };
+          # YouTube Dislikes
+          "kellyc-show-youtube-dislikes@nradiowave" = {
+            installation_mode = "force_installed";
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/kellyc-show-youtube-dislikes/latest.xpi";
+          };
+          # VK Music Downloader
+          "{4a311e5c-1ccc-49b7-9c23-3e2b47b6c6d5}" = {
+            installation_mode = "force_installed";
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C-%D0%BC%D1%83%D0%B7%D1%8B%D0%BA%D1%83-%D1%81-%D0%B2%D0%BA-vkd/latest.xpi";
+          };
+          # Block Tampermonkey
+          "firefox@tampermonkey.net" = {installation_mode = "blocked";};
+        };
+        DisableTelemetry = true;
+        DisableFirefoxStudies = true;
+        DisablePocket = true;
+        CaptivePortal = false;
+        DNSOverHTTPS = {
+          Enabled = true;
+          Locked = false;
+        };
+      };
+    };
 
     # Environment variables (from old floorp.nix)
     environment.sessionVariables = {
