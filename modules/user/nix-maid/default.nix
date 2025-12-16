@@ -21,6 +21,7 @@
     ./yazi.nix
     ./pipewire.nix
     ./emacs.nix
+    ./transmission.nix
   ];
 
   users.users.neg.maid = {};
