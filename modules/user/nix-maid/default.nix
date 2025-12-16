@@ -33,6 +33,7 @@
     ./television.nix
     ./hyprland.nix
     ./media.nix
+    ./mail.nix
   ];
 
   users.users.neg.maid = {};
