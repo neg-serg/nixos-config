@@ -24,6 +24,7 @@
     ./transmission.nix
     ./vdirsyncer.nix
     ./dosemu.nix
+    ./enchant.nix
   ];
 
   users.users.neg.maid = {};
