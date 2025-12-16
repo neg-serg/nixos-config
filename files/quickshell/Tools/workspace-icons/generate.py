@@ -173,6 +173,9 @@ def parse_hypr_workspaces(text: str) -> List[Tuple[int, str]]:
 def should_capture_icon(cp: int) -> bool:
     if is_private_use(cp):
         return True
+    # Gothic block: 0x10330 - 0x1034F
+    if 0x10330 <= cp <= 0x1034F:
+        return True
     category = unicodedata.category(chr(cp))
     return category.startswith("S")
 
