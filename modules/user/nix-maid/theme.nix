@@ -24,7 +24,7 @@
 in {
   # Enable Logic handled in default.nix imports usually,
   # or we use a feature flag "features.gui.theme.enable"?
-  # For now, let's assume it's part of core GUI or feature flags from HM default.nix logic.
+  # For now, let's assume it's part of core GUI or feature flags from feature flags.
   # HM module logic was "if config.features.gui.enable, set pointerCursor..."
   # We'll use lib.mkIf here using same features.
 

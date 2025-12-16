@@ -1,6 +1,6 @@
 ##
 # Module: fun/games-packages
-# Purpose: Provide casual/retro games that used to be installed via Home Manager.
+# Purpose: Provide casual/retro games that used to be installed in other configs.
 {
   lib,
   config,
