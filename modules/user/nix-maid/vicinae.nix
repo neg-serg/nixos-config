@@ -142,7 +142,7 @@ in {
     after = ["graphical-session.target"];
     wantedBy = ["graphical-session.target"];
     serviceConfig = {
-      ExecStart = "${pkgs.vicinae}/bin/vicinae --daemon";
+      ExecStart = "${pkgs.vicinae}/bin/vicinae server";
       Restart = "on-failure";
       RestartSec = "2";
     };

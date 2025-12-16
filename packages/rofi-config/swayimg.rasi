@@ -25,7 +25,7 @@
     padding: 0 8px;
     border-color: @mainbg;
     border-radius: 4px 4px 4px 4px;
-    border: 2px 0px 2px 0px;
+    border: 0px 0px 0px 0px;
 }
 
 #element.normal.normal {
