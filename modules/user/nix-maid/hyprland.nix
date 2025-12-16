@@ -334,6 +334,7 @@ in
         pkgs.wayvnc
         pkgs.wl-clipboard
         pkgs.wl-ocr
+        pkgs.pyprland
         # hyprmusic script
         (pkgs.writeScriptBin "hyprmusic" ''
           #!/bin/sh
@@ -431,7 +432,7 @@ in
         wantedBy = ["graphical-session.target"];
         after = ["graphical-session-pre.target"];
         serviceConfig = {
-          ExecStart = "%h/.local/bin/pypr-run";
+          ExecStart = "${pkgs.pyprland}/bin/pypr";
           Restart = "always";
           RestartSec = "1";
         };
