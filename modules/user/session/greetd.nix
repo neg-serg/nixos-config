@@ -69,7 +69,7 @@ in {
     home.packages = [
       inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
     ];
-    xdg.configFile."quickshell".source = ../../../home/modules/user/gui/quickshell/greeter;
+    xdg.configFile."quickshell".source = ../../../home/files/quickshell;
   };
 
   # Keep the greeter wallpaper in a world-readable location; falls back to the bundled

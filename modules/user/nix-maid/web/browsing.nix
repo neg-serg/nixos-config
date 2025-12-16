@@ -13,11 +13,11 @@ with lib; let
     else null;
 in {
   imports = [
-    ./defaults.nix
-    ./floorp.nix
-    ./firefox.nix
-    ./librewolf.nix
-    ./nyxt.nix
+    ./defaults.nix # Migrated
+    # ./floorp.nix # Removed (empty/deleted)
+    # ./firefox.nix # Removed (empty/deleted)
+    ./librewolf.nix # Migrated
+    ./nyxt.nix # Migrated
   ];
 
   config = {

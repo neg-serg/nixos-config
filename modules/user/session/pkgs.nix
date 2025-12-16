@@ -27,7 +27,7 @@
       pkgs.wl-clipboard # pipe clipboard ops without relying on system PATH
     ];
     text = let
-      tpl = builtins.readFile (inputs.self + "/home/modules/user/gui/hypr/hypr-win-list.py");
+      tpl = builtins.readFile (inputs.self + "/modules/user/nix-maid/scripts/hypr/hypr-win-list.py");
     in ''
                    exec python3 <<'PY'
       ${tpl}

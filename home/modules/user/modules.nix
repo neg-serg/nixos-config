@@ -1,17 +1,10 @@
 {
   imports = [
-    ./fun
-    ./games
-
-    ./nextcloud-cli.nix
-    ./gui
-
+    # Cleaned imports
     ./systemd
-
     ./theme
-    ./torrent
-    ./web
-    ./x11
+    # ./web
+    # ./x11
     ./xdg
   ];
 }

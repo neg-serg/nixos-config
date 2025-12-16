@@ -13,7 +13,7 @@ with lib; let
     if needYandex && yandexBrowserProvider != null
     then yandexBrowserProvider pkgs
     else null;
-  browsers = import ./browsers-table.nix {inherit lib pkgs yandexBrowser nyxt4;};
+  browsers = import ./browsers-table.nix {inherit lib pkgs yandexBrowser nyxt4;}; # Updated import path
   browser = let key = cfg.default or "floorp"; in lib.attrByPath [key] browsers browsers.floorp;
 in {
   config = {
