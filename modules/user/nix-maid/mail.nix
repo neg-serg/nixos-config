@@ -56,19 +56,19 @@ in {
       # ========================================================================
       # MUTT / NEOMUTT
       # ========================================================================
-      file.xdg_config."mutt" = {
+      file.home.".config/mutt" = {
         source = ./mutt-conf;
       };
 
       # ========================================================================
       # MBSYNC (ISYNC)
       # ========================================================================
-      file.xdg_config."mbsync/mbsyncrc".text = mkMbsyncConfig account;
+      file.home.".config/mbsync/mbsyncrc".text = mkMbsyncConfig account;
 
       # ========================================================================
       # MSMTP
       # ========================================================================
-      file.xdg_config."msmtp/config".text = ''
+      file.home.".config/msmtp/config".text = ''
         defaults
         auth           on
         tls            on
