@@ -18,6 +18,7 @@
     ./quickshell.nix
     ./firefox.nix
     ./floorp.nix
+    ./yazi.nix
   ];
 
   users.users.neg.maid = {};
