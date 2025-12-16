@@ -8,8 +8,8 @@
     # ../modules/hardware
     # ../modules/media
     # ../modules/misc
-    ../modules/secrets
+    # ../modules/secrets
     # ../modules/text
-    ../modules/user
+    # ../modules/user
   ];
 }
