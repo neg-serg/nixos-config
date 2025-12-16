@@ -700,15 +700,17 @@ return function(ctx)
           return p
         end)
         if ok_params and params and vim.lsp and vim.lsp.buf_request_sync then
-          local ok_req, res = pcall(vim.lsp.buf_request_sync, buf, 'textDocument/codeAction', params, 80)
-          if ok_req and type(res) == 'table' then
-            for _, resp in pairs(res) do
-              local actions = resp and resp.result
-              if type(actions) == 'table' then
-                for _ in ipairs(actions) do cnt = cnt + 1 end
-              end
-            end
-          end
+           -- FIXME: buf_request_sync triggers E565 in noice unmount (nui) race condition
+           -- local ok_req, res = pcall(vim.lsp.buf_request_sync, buf, 'textDocument/codeAction', params, 80)
+           local ok_req, res = false, nil 
+           if ok_req and type(res) == 'table' then
+             for _, resp in pairs(res) do
+               local actions = resp and resp.result
+               if type(actions) == 'table' then
+                 for _ in ipairs(actions) do cnt = cnt + 1 end
+               end
+             end
+           end
         end
         self._ca_count = cnt
       end,
