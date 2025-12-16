@@ -11,7 +11,7 @@
     ./shell.nix
     # ./dunst.nix
     # ./services-manual.nix
-    # ./gpg.nix
+    ./gpg.nix
     # ./cli-tools.nix
     # ./broot.nix
     # ./tig.nix
