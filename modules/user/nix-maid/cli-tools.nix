@@ -1,11 +1,12 @@
 {
   pkgs,
   lib,
+  config,
   ...
 }: let
   # Helper to access HM config root if needed, but we prefer relative paths for stability
   # Assuming this file is in modules/user/nix-maid/
-  fastfetchSrc = ../../../home/modules/cli/fastfetch/conf;
+  fastfetchSrc = ../../../home/files/fastfetch;
 
   # --- Bat Config (syntaxes disabled due to HM batCache conflict) ---
   # batSyntaxes = {
@@ -309,6 +310,11 @@ in {
     yazi
     fastfetch
     tig
+    # Core Tools
+    fd
+    ripgrep
+    direnv
+    nix-direnv
   ];
 
   # --- Nix-Maid Dotfiles ---
@@ -333,11 +339,37 @@ in {
 
     # Fastfetch Configs (Source from repo)
     ".config/fastfetch/config.jsonc".source = "${fastfetchSrc}/config.jsonc";
-    ".config/fastfetch/skull".source = "${fastfetchSrc}/skull";
+    ".config/fastfetch/skull".source = "${fastfetchSrc}/skull"; # Custom logo
+
+    # FD Ignore
+    ".config/fd/ignore".text = ''
+      .git/
+    '';
+
+    # Ripgrep Config
+    ".config/ripgrep/rc".text = ''
+      --no-heading
+      --smart-case
+      --follow
+      --hidden
+      --glob=!.git/
+      --glob=!node_modules/
+      --glob=!yarn.lock
+      --glob=!package-lock.json
+      --glob=!.yarn/
+      --glob=!_build/
+      --glob=!tags
+      --glob=!.pub-cache
+    '';
+
+    # Dircolors
+    ".dircolors".source = ../../../home/files/dircolors/dircolors;
   };
 
-  # --- Environment Variables (FZF) ---
+  # --- Environment Variables ---
   environment.variables = {
+    RIPGREP_CONFIG_PATH = "${config.users.users.neg.home}/.config/ripgrep/rc";
+
     FZF_DEFAULT_COMMAND = "${lib.getExe pkgs.fd} --type=f --hidden --exclude=.git";
     FZF_DEFAULT_OPTS = builtins.concatStringsSep " " (builtins.filter (x: builtins.typeOf x == "string") [
       "--bind='alt-p:toggle-preview,alt-a:select-all,alt-s:toggle-sort'"
