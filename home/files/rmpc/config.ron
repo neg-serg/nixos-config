@@ -61,11 +61,11 @@
             "w": ShowHelp,
             "z": ToggleRepeat,
 
-            "": ToggleConsume,
-            "": ToggleRandom,
-            "": ToggleSingle,
-            "":  VolumeDown,
-            "": VolumeUp,
+            "R": ToggleConsume,
+            "r": ToggleRandom,
+            "y": ToggleSingle,
+            "-":  VolumeDown,
+            "=": VolumeUp,
         },
         navigation: {
             "A": AddAll,
