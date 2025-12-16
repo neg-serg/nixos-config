@@ -36,16 +36,18 @@ in {
     );
 
     # Provide minimal sane defaults for common browser handlers
-    xdg.mime.defaultApplications = mkIf cfg.enable (
+    users.users.neg.maid.file.home.".config/mimeapps.list".text = mkIf cfg.enable (
       let
         db = browser;
-      in {
-        "text/html" = db.desktop or "floorp.desktop";
-        "x-scheme-handler/http" = db.desktop or "floorp.desktop";
-        "x-scheme-handler/https" = db.desktop or "floorp.desktop";
-        "x-scheme-handler/about" = db.desktop or "floorp.desktop";
-        "x-scheme-handler/unknown" = db.desktop or "floorp.desktop";
-      }
+        apps = {
+          "text/html" = db.desktop or "floorp.desktop";
+          "x-scheme-handler/http" = db.desktop or "floorp.desktop";
+          "x-scheme-handler/https" = db.desktop or "floorp.desktop";
+          "x-scheme-handler/about" = db.desktop or "floorp.desktop";
+          "x-scheme-handler/unknown" = db.desktop or "floorp.desktop";
+        };
+      in
+        lib.generators.toINI {} {"Default Applications" = apps;}
     );
   };
 }

@@ -17,16 +17,16 @@ lib.mkIf config.features.web.enable {
     '';
   in {
     # Write rc overlay that sources user's file and then applies small fixups
-    file.xdg_config."tridactyl/tridactylrc".text = rcText;
+    file.home.".config/tridactyl/tridactylrc".text = rcText;
 
     # Link supplemental files/dirs from misc assets tracked in the repo
-    file.xdg_config."tridactyl/user.js".source = userjsPath;
+    file.home.".config/tridactyl/user.js".source = userjsPath;
 
-    file.xdg_config."tridactyl/themes" = {
+    file.home.".config/tridactyl/themes" = {
       source = themesPath;
     };
 
-    file.xdg_config."tridactyl/mozilla" = {
+    file.home.".config/tridactyl/mozilla" = {
       source = mozillaPath;
     };
   };
