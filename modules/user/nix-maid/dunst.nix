@@ -84,11 +84,15 @@
       format = "%s\\n%b";
       script = "~/.local/bin/pic-notify";
       urgency = "normal";
+      background = "#010204";
+      foreground = "#BFCAD0";
     };
 
     telegram = {
       appname = "Telegram Desktop";
       word_wrap = true;
+      background = "#000000";
+      foreground = "#BFCAD0";
     };
   };
 
