@@ -20,11 +20,7 @@
       inputs.hyprland.follows = "hyprland";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    hypr-dynamic-cursors = {
-      url = "github:VirtCode/hypr-dynamic-cursors";
-      inputs.hyprland.follows = "hyprland";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+
     # Keep selected Hyprland-related inputs in lockstep with the tracked Hyprland flake
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
     # xdg-desktop-portal-hyprland is named 'xdph' inside the Hyprland flake inputs
