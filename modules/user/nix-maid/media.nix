@@ -241,10 +241,48 @@ in {
 
     # --- AI Upscale VapourSynth (Real-time) ---
     ".config/mpv/vs/ai/realesrgan.vpy".text = builtins.readFile ./scripts/realesrgan.vpy;
+
+    # --- MPD Config ---
+    ".config/mpd/mpd.conf".text = ''
+      music_directory "~/music"
+      playlist_directory "~/.local/share/mpd/playlists"
+      db_file "~/.local/share/mpd/database"
+      log_file "syslog"
+      state_file "~/.local/share/mpd/state"
+      sticker_file "~/.local/share/mpd/sticker.sql"
+      auto_update "yes"
+      bind_to_address "${mpdHost}"
+      port "${toString mpdPort}"
+      restore_paused "yes"
+      max_output_buffer_size "16384"
+
+      audio_output {
+        type "pipewire"
+        name "PipeWire Sound Server"
+      }
+
+      audio_output {
+        type "fifo"
+        name "my_fifo"
+        path "/tmp/audio.fifo"
+        format "44100:16:2"
+      }
+    '';
   };
 
   # --- User Services (MPD, etc) ---
   systemd.user.services = {
+    # MPD Service
+    mpd = {
+      description = "Music Player Daemon";
+      after = ["network.target" "sound.target"];
+      wantedBy = ["default.target"];
+      serviceConfig = {
+        ExecStart = "${pkgs.mpd}/bin/mpd --no-daemon";
+        Type = "notify";
+      };
+    };
+
     # MPD RIS2 (MPRIS support)
     mpdris2 = {
       description = "MPD MPRIS2 Bridge";
