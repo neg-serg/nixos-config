@@ -63,20 +63,43 @@
       # Replace any symlinked .theme.json with a real file.
       rm -f "$confdir/.theme.json"
       ${pkgs.nodejs_24}/bin/node Tools/build-theme.mjs --out "$confdir/.theme.json" --quiet
-      if systemctl --user is-active -q quickshell.service; then
-        systemctl --user restart quickshell.service >/dev/null 2>&1 || true
-      fi
+    '';
+  };
+
+  # Sync script that copies quickshell config (mutable, not symlink)
+  syncQuickshell = pkgs.writeShellApplication {
+    name = "quickshell-sync-config";
+    runtimeInputs = [pkgs.rsync pkgs.coreutils];
+    text = ''
+      set -euo pipefail
+      src="${quickshellSrc}/"
+      dest="$HOME/.config/quickshell/"
+      mkdir -p "$dest"
+      # Sync files, preserving any local changes to Theme/.theme.json
+      rsync -a --delete \
+        --exclude 'Theme/.theme.json' \
+        --exclude '*.zwc' \
+        "$src" "$dest"
     '';
   };
 in
   lib.mkIf quickshellEnabled {
-    # Quickshell config symlink
-    users.users.neg.maid.file.home = {
-      ".config/quickshell".source = quickshellSrc;
-    };
+    # Wrapped quickshell package + sync script
+    environment.systemPackages = [quickshellWrapped syncQuickshell];
 
-    # Wrapped quickshell package
-    environment.systemPackages = [quickshellWrapped];
+    # Quickshell config sync service (runs before quickshell starts)
+    systemd.user.services.quickshell-sync = {
+      enable = true;
+      description = "Sync Quickshell config from repo";
+      partOf = ["graphical-session.target"];
+      before = ["quickshell.service" "quickshell-theme-watch.service"];
+      wantedBy = ["graphical-session.target"];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = lib.getExe syncQuickshell;
+        RemainAfterExit = true;
+      };
+    };
 
     # Quickshell panel service
     systemd.user.services.quickshell = {
@@ -84,7 +107,8 @@ in
       description = "Quickshell - QtQuick based shell for Wayland";
       documentation = ["https://github.com/outfoxxed/quickshell"];
       partOf = ["graphical-session.target"];
-      after = ["graphical-session-pre.target"];
+      after = ["graphical-session-pre.target" "quickshell-sync.service"];
+      requires = ["quickshell-sync.service"];
       wantedBy = ["graphical-session.target"];
       serviceConfig = {
         ExecStart = "${lib.getExe quickshellWrapped} -p %h/.config/quickshell/shell.qml";
