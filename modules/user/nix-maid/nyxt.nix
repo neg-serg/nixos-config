@@ -15,5 +15,5 @@ with lib;
       lib.optional (nyxt4 == null && !(pkgs ? nyxt4-bin))
       "Nyxt Qt/Blink provider not found; using WebKitGTK (pkgs.nyxt). Provide `nyxtQt` input or a chaotic package attribute (nyxt-qtwebengine/nyxt-qt/nyxt4).";
 
-    users.users.neg.maid.file.xdg_config."nyxt/init.lisp".text = rendered;
+    users.users.neg.maid.file.home.".config/nyxt/init.lisp".text = rendered;
   })

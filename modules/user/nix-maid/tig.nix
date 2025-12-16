@@ -8,7 +8,7 @@
 in {
   config = lib.mkIf (cfg.enable or false) {
     users.users.neg.maid = {
-      file.xdg_config."tig/config".text = ''
+      file.home.".config/tig/config".text = ''
         #--[ View settings ]-----------------------------------------------------------------------------------------------
         set main-view = line-number:no,interval=5 id:no date:relative author:full commit-title:yes,graph,refs,overflow=no
         set blame-view = date:relative author:full file-name:auto id:yes,color line-number:no,interval=5 text
