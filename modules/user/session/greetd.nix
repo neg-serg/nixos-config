@@ -15,7 +15,7 @@
   greeterWallpaperDst = "/var/lib/greetd/wallpaper.jpg";
   hyprlandConfig = pkgs.writeText "greetd-hyprland-config" ''
     # for some reason pkill is way faster than dispatching exit, to the point greetd thinks the greeter died.
-    exec-once = quickshell -p ~/.config/quickshell/greeter.qml >& qslog.txt && pkill Hyprland
+    exec-once = quickshell -p /etc/greetd/quickshell/greeter.qml >& qslog.txt && pkill Hyprland
 
     input {
       kb_layout = us,ru
@@ -64,13 +64,13 @@ in {
   };
   users.groups.greeter = {};
 
-  home-manager.users.greeter = {
-    home.stateVersion = config.system.stateVersion;
-    home.packages = [
-      inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
-    ];
-    xdg.configFile."quickshell".source = ../../../home/files/quickshell;
-  };
+  # Install QuickShell globally for the greeter
+  environment.systemPackages = [
+    inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
+  ];
+
+  # Deploy QuickShell config to /etc instead of Home Manager
+  environment.etc."greetd/quickshell".source = ../../../home/files/quickshell;
 
   # Keep the greeter wallpaper in a world-readable location; falls back to the bundled
   # background if the source is missing.
