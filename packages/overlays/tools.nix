@@ -90,7 +90,7 @@ in {
     ncpamixer-wrapped = let
       ncpaConfig =
         prev.writeText "ncpamixer.conf"
-        (builtins.readFile (inputs.self + "/home/modules/media/audio/ncpamixer.conf"));
+        (builtins.readFile (inputs.self + "/files/gui/ncpamixer.conf"));
     in
       prev.symlinkJoin {
         name = "ncpamixer-wrapped";
