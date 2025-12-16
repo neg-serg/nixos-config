@@ -1,6 +1,7 @@
 {
   inputs,
-  config,
+  pkgs,
+  lib,
   ...
 }: {
   imports = [
@@ -43,9 +44,15 @@
   # in a dummy directory, leaving the real one for Home Manager.
   systemd.user.services.maid-activation = {
     environment.XDG_CONFIG_HOME = "/home/neg/.cache/maid-systemd-workaround";
-    # Force restart when maid configuration changes
-    restartTriggers = [
-      (builtins.toJSON config.users.users.neg.maid.file)
-    ];
   };
+
+  # Activation script to force restart maid-activation for 'neg'.
+  # This ensures user configs are reapplied on every switch, working around
+  # NixOS's behavior of not automatically restarting user services reliably.
+  system.activationScripts.maidForceRestart = lib.stringAfter ["users"] ''
+    if [ -e /run/user/1000 ]; then
+      echo "Restarting maid-activation for user 1000..."
+      ${pkgs.systemd}/bin/systemctl --user --machine=neg@.host restart maid-activation.service || true
+    fi
+  '';
 }
