@@ -139,10 +139,10 @@ in {
       source = ../../../home/files/git/ignore;
     };
     ".config/git/hooks/pre-commit" = {
-      source = ../../../home/modules/dev/git/hooks/pre-commit.sh;
+      source = ../../../home/files/git/hooks/pre-commit.sh;
     };
     ".config/git/hooks/commit-msg" = {
-      source = ../../../home/modules/dev/git/hooks/commit-msg.sh;
+      source = ../../../home/files/git/hooks/commit-msg.sh;
     };
   };
 }
