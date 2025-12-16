@@ -7,7 +7,7 @@
     ./autoclick.nix
     ./nextcloud-cli.nix
     ./gui
-    ./mail
+
     ./systemd
     ./terminal
     ./theme
