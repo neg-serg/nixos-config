@@ -6,7 +6,7 @@
   ...
 }: let
   repoRoot = inputs.self;
-  caches = import (repoRoot + "/nix/caches.nix");
+  caches = import ./caches.nix;
 in {
   sops.age = {
     generateKey = true;
