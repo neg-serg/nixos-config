@@ -41,6 +41,7 @@ in
       features.dev.ai.enable = true;
       features.dev.ai.antigravity.enable = true;
       features.text.tex.enable = true;
+      features.cli.tewi.enable = true;
       features.dev.tla.enable = true;
       features.apps.winapps.enable = true;
       features.gui.hy3.enable = true;
@@ -55,7 +56,6 @@ in
 
       home-manager.users.neg = {
         modules.media.audio.subsonic.enable = true;
-        modules.cli.tewi.enable = true;
       };
       # Roles enabled for this host
       roles = {
