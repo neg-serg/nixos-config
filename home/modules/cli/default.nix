@@ -17,7 +17,6 @@ in {
     ./aliae.nix
     ./config-links.nix # dircolors, f-sy-h, zsh, inputrc
     ./amfora.nix
-    ./icedtea-web.nix
     ./dosbox.nix
     ./pretty-printer.nix
     ./fzf.nix
@@ -27,7 +26,6 @@ in {
 
     ./television
     ./zcli.nix
-    ./yazi.nix
     ./superfile.nix
     ./tewi.nix
     ./nushell.nix # nushell with oh-my-posh and aliae
