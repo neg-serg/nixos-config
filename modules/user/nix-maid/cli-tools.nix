@@ -315,6 +315,19 @@ in {
     ripgrep
     direnv
     nix-direnv
+
+    # Migrated CLI Tools
+    aliae
+    superfile
+    pkgs.nh # Nix helper
+    # ZCLI (custom script)
+    (import ../../../home/scripts/zcli.nix {
+      inherit pkgs;
+      profile = "telfir"; # Hardcoded for now, or use config.networking.hostName if available
+      repoRoot = "/etc/nixos";
+      flakePath = "/etc/nixos/flake.nix";
+      backupFiles = [];
+    })
   ];
 
   # --- Nix-Maid Dotfiles ---
@@ -364,6 +377,21 @@ in {
 
     # Dircolors
     ".dircolors".source = ../../../home/files/shell/dircolors/dircolors;
+
+    # --- Migrated Configs ---
+    # Tig Config
+    ".config/tig/config".source = ../../../home/modules/cli/tig.conf;
+
+    # Amfora Config
+    ".config/amfora".source = ../../../home/modules/cli/amfora-conf;
+
+    # Dosbox Config
+    ".config/dosbox".source = ../../../home/modules/cli/dosbox-conf;
+
+    # Icedtea Web Config
+    ".config/icedtea-web".source = ../../../home/modules/cli/icedtea-web-conf;
+
+    # Aliae Config (if needed later, currently empty in source)
   };
 
   # --- Environment Variables ---
