@@ -309,7 +309,7 @@ in {
     fzf
     yazi
     fastfetch
-    tig
+
     # Core Tools
     fd
     ripgrep
@@ -348,8 +348,6 @@ in {
     ".config/yazi/theme.toml".source = yaziFormat.generate "theme.toml" yaziTheme;
     ".config/yazi/keymap.toml".source = yaziFormat.generate "keymap.toml" yaziKeymap;
 
-    # Tig Config - restored to HM in home/modules/cli/tig.nix
-
     # Fastfetch Configs (Source from repo)
     ".config/fastfetch/config.jsonc".source = "${fastfetchSrc}/config.jsonc";
     ".config/fastfetch/skull".source = "${fastfetchSrc}/skull"; # Custom logo
@@ -379,8 +377,6 @@ in {
     ".dircolors".source = ../../../home/files/shell/dircolors/dircolors;
 
     # --- Migrated Configs ---
-    # Tig Config
-    ".config/tig/config".source = ../../../home/modules/cli/tig.conf;
 
     # Amfora Config
     ".config/amfora".source = ../../../home/modules/cli/amfora-conf;
