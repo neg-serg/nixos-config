@@ -219,8 +219,7 @@ Keep this manifest updated whenever vendored sources change so that licensing re
 
 ## Open Tasks
 
-- Teach `nix flake check` (or a dedicated `hm-extras` job) to build `pkgs.neg.cantata` so the Qt
-  patches stay tested automatically.
+- Teach `nix flake check` to build `pkgs.neg.cantata` so the Qt patches stay tested automatically.
 - Document the Firefox multi-profile stack (profiles, desktop entries, addon requirements) once the
   layout stabilises.
 - Populate secrets/env vars for the new MCP stack so `seh` can finish without placeholders. Needed
