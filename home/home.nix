@@ -6,11 +6,6 @@
   features = {
     # Profile presets (full | lite). Full is default; set to "lite" for headless/minimal.
     profile = lib.mkDefault "full";
-    mail = {
-      enable = true;
-      # Temporarily disable Vdirsyncer units/timer until credentials are configured
-      vdirsyncer.enable = false;
-    };
 
     # Enable GPG stack (gpg + gpg-agent)
     gpg.enable = true;

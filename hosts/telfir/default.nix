@@ -11,6 +11,7 @@
   system.preserveFlake = true;
 
   features.hardware.amdgpu.rocm.enable = true;
+  features.mail.enable = true;
 
   boot.plymouth = {
     enable = true;
