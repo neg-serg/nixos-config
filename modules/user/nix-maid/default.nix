@@ -60,6 +60,8 @@
     ./dev.nix
     ./misc.nix
     ./text.nix
+    ./distros.nix
+    ./flatpak.nix
   ];
 
   users.users.neg.maid = {};
