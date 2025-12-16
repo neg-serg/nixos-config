@@ -60,12 +60,12 @@
       side-by-side = false;
       syntax-theme = "base16-256";
       true-color = "auto";
-      minus-emph-style = "#781f34 bold #000000";
-      minus-style = "#781f34 #000000";
+      minus-emph-style = "\"#781f34 bold #000000\"";
+      minus-style = "\"#781f34 #000000\"";
       whitespace-error-style = "22 reverse";
-      plus-emph-style = "#357B63 bold #000000";
-      plus-style = "#017978 #000000";
-      zero-style = "#c6c6c6";
+      plus-emph-style = "\"#357B63 bold #000000\"";
+      plus-style = "\"#017978 #000000\"";
+      zero-style = "\"#c6c6c6\"";
       decorations = {
         commit-decoration-style = "bold yellow box ul";
         file-decoration-style = "none";
