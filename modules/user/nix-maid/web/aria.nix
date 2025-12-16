@@ -1,51 +1,26 @@
 {
   config,
   lib,
-  xdg,
+  pkgs,
   ...
-}: let
-  inherit (config.xdg) dataHome;
-  # aria2Bin = lib.getExe' pkgs.aria2 "aria2c";
-  sessionFile = "${dataHome}/aria2/session";
-in {
-  config = lib.mkIf (config.features.web.enable && config.features.web.tools.enable) (lib.mkMerge [
-    {
-      # Minimal, robust aria2 configuration through Home Manager
-      programs.aria2 = {
-        enable = false;
-        settings = {
-          # Download destination under XDG paths
-          dir = "${config.xdg.userDirs.download}/aria";
-          # Enable RPC for external clients/UI
-          enable-rpc = true;
-          # Session file kept in XDG data (persist resume state)
-          save-session = sessionFile;
-          input-file = sessionFile;
-          save-session-interval = 1800;
-        };
-      };
-    }
-    # Ensure the session file exists under XDG data (no activation DAG noise)
-    (xdg.mkXdgDataText "aria2/session" "")
-    # Optional user service (behind a flag)
-    # Optional user service (behind a flag)
-    (lib.mkIf (config.features.web.aria2.service.enable or false) {
-      # systemd.user.services.aria2 = lib.mkMerge [
-      #   {
-      #     Unit = {
-      #       Description = "aria2 download manager";
-      #       PartOf = ["graphical-session.target"];
-      #     };
-      #     Service = {
-      #       ExecStart = let
-      #         exe = aria2Bin;
-      #         args = ["--conf-path=${configHome}/aria2/aria2.conf"];
-      #       in "${exe} ${lib.escapeShellArgs args}";
-      #       TimeoutStopSec = "5s";
-      #     };
-      #   }
-      #   (systemdUser.mkUnitFromPresets {presets = ["graphical"];})
-      # ];
-    })
-  ]);
+}: {
+  config = lib.mkIf (config.features.web.enable && config.features.web.tools.enable) {
+    # Install aria2
+    environment.systemPackages = [pkgs.aria2];
+
+    users.users.neg.maid = {
+      # Session file kept in XDG data (persist resume state)
+      # Ensure the session file exists under XDG data
+      file.xdg_data."aria2/session".text = "";
+
+      # Config file
+      file.xdg_config."aria2/aria2.conf".text = ''
+        dir=${config.users.users.neg.home}/dw/aria
+        enable-rpc=true
+        save-session=${config.users.users.neg.home}/.local/share/aria2/session
+        input-file=${config.users.users.neg.home}/.local/share/aria2/session
+        save-session-interval=1800
+      '';
+    };
+  };
 }

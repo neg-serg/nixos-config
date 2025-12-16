@@ -24,7 +24,7 @@
     ./qt.nix
     ./firefox.nix
     ./floorp.nix
-    # ./yazi.nix
+    ./yazi.nix
     ./pipewire.nix
     ./pipewire.nix
     ./emacs.nix
@@ -41,22 +41,17 @@
     ./asciinema.nix
     ./fun-launchers.nix
     ./nekoray.nix
-    # ./nyxt.nix
+    ./nyxt.nix
     ./tridactyl.nix
     ./steam.nix
     ./local-bin.nix
     ./envs.nix
-    # ./web/mozilla-common-lib.nix
-    # ./web/browsers-table.nix
-    # ./web/default-browser-lib.nix
-    # ./web/librewolf.nix
-    # ./web/aria.nix
-    # ./web/misc.nix
-    # ./web/yt-dlp.nix
-    # ./web/defaults.nix
-    # ./web/browsing.nix
-    # ./web/firefox-prefgroups.nix
-    # ./web/firefox-theme.nix
+    ./web/librewolf.nix
+    ./web/aria.nix
+    ./web/misc.nix
+    ./web/yt-dlp.nix
+    ./web/defaults.nix
+    ./web/browsing.nix
   ];
 
   users.users.neg.maid = {};

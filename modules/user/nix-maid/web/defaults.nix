@@ -3,7 +3,6 @@
   pkgs,
   config,
   yandexBrowserProvider ? null,
-  nyxt4 ? null,
   ...
 }:
 with lib; let
@@ -13,7 +12,10 @@ with lib; let
     if needYandex && yandexBrowserProvider != null
     then yandexBrowserProvider pkgs
     else null;
-  browsers = import ./browsers-table.nix {inherit lib pkgs yandexBrowser nyxt4;}; # Updated import path
+  browsers = import ./browsers-table.nix {
+    inherit lib pkgs yandexBrowser;
+    nyxt4 = null;
+  }; # Updated import path
   browser = let key = cfg.default or "floorp"; in lib.attrByPath [key] browsers browsers.floorp;
 in {
   config = {
@@ -24,7 +26,7 @@ in {
     };
 
     # Provide common env defaults (can be overridden elsewhere if needed)
-    home.sessionVariables = mkIf cfg.enable (
+    environment.sessionVariables = mkIf cfg.enable (
       let
         db = browser;
       in {
@@ -34,18 +36,15 @@ in {
     );
 
     # Provide minimal sane defaults for common browser handlers
-    xdg.mimeApps = mkIf cfg.enable (
+    xdg.mime.defaultApplications = mkIf cfg.enable (
       let
         db = browser;
       in {
-        enable = true;
-        defaultApplications = {
-          "text/html" = db.desktop or "floorp.desktop";
-          "x-scheme-handler/http" = db.desktop or "floorp.desktop";
-          "x-scheme-handler/https" = db.desktop or "floorp.desktop";
-          "x-scheme-handler/about" = db.desktop or "floorp.desktop";
-          "x-scheme-handler/unknown" = db.desktop or "floorp.desktop";
-        };
+        "text/html" = db.desktop or "floorp.desktop";
+        "x-scheme-handler/http" = db.desktop or "floorp.desktop";
+        "x-scheme-handler/https" = db.desktop or "floorp.desktop";
+        "x-scheme-handler/about" = db.desktop or "floorp.desktop";
+        "x-scheme-handler/unknown" = db.desktop or "floorp.desktop";
       }
     );
   };
