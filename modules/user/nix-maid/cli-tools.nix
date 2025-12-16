@@ -363,7 +363,7 @@ in {
     '';
 
     # Dircolors
-    ".dircolors".source = ../../../home/files/dircolors/dircolors;
+    ".dircolors".source = ../../../home/files/shell/dircolors/dircolors;
   };
 
   # --- Environment Variables ---
