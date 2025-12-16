@@ -10,18 +10,18 @@
     ./mpv.nix
     ./shell.nix
     ./dunst.nix
-    # ./services-manual.nix
+    ./services-manual.nix
     ./gpg.nix
     ./cli-tools.nix
-    # ./broot.nix
-    # ./tig.nix
-    # ./tewi.nix
+    ./broot.nix
+    ./tig.nix
+    ./tewi.nix
     ./terminals-shells.nix
     ./gui-apps.nix
-    # ./vicinae.nix
-    # ./walker.nix
-    # ./quickshell.nix
-    # ./qt.nix
+    ./vicinae.nix
+    ./walker.nix
+    ./quickshell.nix
+    ./qt.nix
     # ./firefox.nix
     # ./floorp.nix
     # ./yazi.nix
