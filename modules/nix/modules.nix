@@ -7,7 +7,7 @@
     ./multimon-ng.nix
     ./mpv-openvr.nix
     ./hyprland.nix
-    ./home-overlay.nix
+    ./packages-overlay.nix
     ./nix-ld.nix
     ./settings.nix
   ];
