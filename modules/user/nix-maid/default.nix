@@ -6,48 +6,56 @@
 }: {
   imports = [
     inputs.nix-maid.nixosModules.default
-    ./git.nix
-    ./mpv.nix
-    ./shell.nix
-    ./dunst.nix
-    ./services-manual.nix
-    ./gpg.nix
-    ./cli-tools.nix
-    ./broot.nix
-    ./tig.nix
-    ./tewi.nix
-    ./terminals-shells.nix
-    ./gui-apps.nix
-    ./vicinae.nix
-    ./walker.nix
-    ./quickshell.nix
-    ./qt.nix
-    ./firefox.nix
-    ./floorp.nix
-    ./yazi.nix
-    ./pipewire.nix
-    ./emacs.nix
-    ./transmission.nix
-    ./vdirsyncer.nix
-    ./dosemu.nix
-    ./enchant.nix
-    ./nethack.nix
-    ./television.nix
-    ./hyprland.nix
-    ./media.nix
-    ./mail.nix
-    ./autoclick.nix
-    ./asciinema.nix
-    ./fun-launchers.nix
-    ./spicetify.nix
-    ./nekoray.nix
-    ./nyxt.nix
-    ./tridactyl.nix
-    ./steam.nix
-    ./mangohud.nix
-    ./oss-games.nix
-    ./local-bin.nix
-    ./envs.nix
+    # ./git.nix
+    # ./mpv.nix
+    # ./shell.nix
+    # ./dunst.nix
+    # ./services-manual.nix
+    # ./gpg.nix
+    # ./cli-tools.nix
+    # ./broot.nix
+    # ./tig.nix
+    # ./tewi.nix
+    # ./terminals-shells.nix
+    # ./gui-apps.nix
+    # ./vicinae.nix
+    # ./walker.nix
+    # ./quickshell.nix
+    # ./qt.nix
+    # ./firefox.nix
+    # ./floorp.nix
+    # ./yazi.nix
+    # ./pipewire.nix
+    # ./emacs.nix
+    # ./transmission.nix
+    # ./vdirsyncer.nix
+    # ./dosemu.nix
+    # ./enchant.nix
+    # ./nethack.nix
+    # ./television.nix
+    # ./hyprland.nix
+    # ./media.nix
+    # ./mail.nix
+    # ./autoclick.nix
+    # ./asciinema.nix
+    # ./fun-launchers.nix
+    # ./nekoray.nix
+    # ./nyxt.nix
+    # ./tridactyl.nix
+    # ./steam.nix
+    # ./local-bin.nix
+    # ./envs.nix
+    # ./web/mozilla-common-lib.nix
+    # ./web/browsers-table.nix
+    # ./web/default-browser-lib.nix
+    # ./web/librewolf.nix
+    # ./web/aria.nix
+    # ./web/misc.nix
+    # ./web/yt-dlp.nix
+    # ./web/defaults.nix
+    # ./web/browsing.nix
+    # ./web/firefox-prefgroups.nix
+    # ./web/firefox-theme.nix
   ];
 
   users.users.neg.maid = {};

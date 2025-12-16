@@ -88,9 +88,9 @@ def glyph(cls: str) -> str:
 def build_entries() -> tuple[list[str], dict[str, dict[str, str]]]:
     clients_raw = hypr_json("clients")
     if not clients_raw:
-        return [], {}
+        return [], {{}}
     workspaces_raw = hypr_json("workspaces") or []
-    active_raw = hypr_json("activewindow") or {}
+    active_raw = hypr_json("activewindow") or {{}}
 
     workspaces = workspaces_raw
     if isinstance(workspaces_raw, dict) and "workspaces" in workspaces_raw:
@@ -100,17 +100,19 @@ def build_entries() -> tuple[list[str], dict[str, dict[str, str]]]:
     if isinstance(clients_raw, dict) and "clients" in clients_raw:
         clients = clients_raw["clients"]
 
-    ws_map: dict[int, str] = {}
+    ws_map: dict[int, str] = {{}}
     for ws in workspaces:
         wid = ws.get("id")
         if isinstance(wid, int):
             ws_map[wid] = clean(ws.get("name") or str(wid))
 
     special_ids = {
-        ws.get("id")
-        for ws in workspaces
-        if ws.get("special")
-        or clean(ws.get("name") or "").startswith("special")
+        {
+            ws.get("id")
+            for ws in workspaces
+            if ws.get("special")
+            or clean(ws.get("name") or "").startswith("special")
+        }
     }
 
     active_addr = ""
@@ -118,7 +120,7 @@ def build_entries() -> tuple[list[str], dict[str, dict[str, str]]]:
         active_addr = clean(str(active_raw.get("address") or ""))
 
     entries: list[str] = []
-    meta_by_addr: dict[str, dict[str, str]] = {}
+    meta_by_addr: dict[str, dict[str, str]] = {{}}
 
     for client in clients:
         if not isinstance(client, dict):
@@ -158,12 +160,12 @@ def build_entries() -> tuple[list[str], dict[str, dict[str, str]]]:
             display_parts.append(clip(ttl, TITLE_LIMIT))
 
         if ws_label and (not ttl or ws_label.casefold() not in ttl.casefold()):
-            display_parts.append(f"({clip(ws_label, WORKSPACE_LIMIT)})")
+            display_parts.append(f"({{clip(ws_label, WORKSPACE_LIMIT)}})")
             workspace_added = True
 
         if not ttl:
             if ws_label and not workspace_added:
-                display_parts.append(f"({clip(ws_label, WORKSPACE_LIMIT)})")
+                display_parts.append(f"({{clip(ws_label, WORKSPACE_LIMIT)}})")
             if cls:
                 display_parts.append(clip(cls, CLASS_LIMIT))
 
@@ -171,7 +173,7 @@ def build_entries() -> tuple[list[str], dict[str, dict[str, str]]]:
 
         line = f"{display} — {addr}"
 
-        disallowed = {c for c in line if ord(c) < 32 and c != "\t"}
+        disallowed = {{c for c in line if ord(c) < 32 and c != "\t"}}
         if disallowed:
             if DEBUG:
                 print(
@@ -183,9 +185,11 @@ def build_entries() -> tuple[list[str], dict[str, dict[str, str]]]:
             print(f"[hypr-win-list] entry: {repr(line)}", file=sys.stderr)
         entries.append(line)
         meta_by_addr[addr] = {
-            "title": ttl,
-            "class": cls,
-            "workspace": wname,
+            {
+                "title": ttl,
+                "class": cls,
+                "workspace": wname,
+            }
         }
 
     return entries, meta_by_addr
@@ -219,7 +223,7 @@ def rofi_command(count: int) -> list[str]:
     ]
     if DEBUG:
         print(
-            f"[hypr-win-list] rofi columns={columns} lines={lines} count={count}",
+            f"[hypr-win-list] rofi columns={{columns}} lines={{lines}} count={{count}}",
             file=sys.stderr,
         )
     return base
@@ -253,7 +257,7 @@ def main() -> int:
 
     display, addr = selection.split(" — ", 1)
     addr = addr.strip()
-    info = meta.get(addr, {})
+    info = meta.get(addr, {{}})
 
     if code == 10:
         title = info.get("title") or strip_hidden(display)
