@@ -2,7 +2,7 @@
 
 Scope
 
-- Applies to the entire `modules/` tree (NixOS modules plus HM glue under `home-manager/`).
+- Applies to the entire `modules/` tree (NixOS modules and nix-maid user config).
 - Top-level repo rules from `/etc/nixos/AGENTS.md` still apply.
 
 Guidelines

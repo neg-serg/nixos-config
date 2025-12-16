@@ -37,7 +37,7 @@
     };
 
     extraInit = let
-      user = config.users.main.name or "neg"; # Load variables from home-manager
+      user = config.users.main.name or "neg"; # Load variables from nix-maid
       # Avoid evaluation cycles by not dereferencing users.users.<name>.home here
       homedir = "/home/${user}";
     in ''

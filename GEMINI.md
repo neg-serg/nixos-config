@@ -4,9 +4,9 @@ This document provides context for the AI assistant to understand and effectivel
 
 ## Project Overview
 
-This is a comprehensive NixOS and Home Manager configuration managed as a Nix Flake. It defines the configurations for multiple hosts and users, with a strong emphasis on modularity, reproducibility, and developer tooling.
+This is a comprehensive NixOS configuration managed as a Nix Flake. It defines the configurations for multiple hosts and users, with a strong emphasis on modularity, reproducibility, and developer tooling.
 
-The repository is structured to separate system-level concerns (NixOS modules) from user-level configurations (Home Manager), although they are tightly integrated. It also includes a custom package overlay, extensive documentation, and a suite of development and linting tools. Two of the most specialized features of this repository are its advanced gaming performance tuning and its structured approach to managing multiple hosts.
+The repository uses `nix-maid` for user-level configuration management, integrated directly into NixOS modules. It also includes a custom package overlay, extensive documentation, and a suite of development and linting tools. Two of the most specialized features of this repository are its advanced gaming performance tuning and its structured approach to managing multiple hosts.
 
 ## Key Files and Directories
 
@@ -31,15 +31,10 @@ sudo nixos-rebuild switch --flake .#<host_name>
 
 Replace `<host_name>` with the name of a host defined in the `hosts/` directory (e.g., `telfir`).
 
-### Home Manager
+### User Configuration (Nix-Maid)
 
-To build and switch to a new Home Manager generation for the `neg` user:
-
-```bash
-just hm-neg
-```
-
-This is an alias for `home-manager switch --flake .#neg`.
+User-level configuration is managed via `nix-maid` modules under `modules/user/nix-maid/`.
+Configuration is applied automatically during `nixos-rebuild switch`.
 
 ## Development Workflow
 

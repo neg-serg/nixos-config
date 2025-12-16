@@ -1,6 +1,6 @@
-# Home Manager Features Overview
+# NixOS Features Overview
 
-This document maps the main `features.*` options used by this Home Manager setup, their defaults,
+This document maps the main `features.*` options used by this NixOS/nix-maid setup, their defaults,
 and how profiles affect them. It also notes where the libretro allowlist lives and how to toggle
 `retroarchFull`.
 
@@ -126,7 +126,7 @@ These are passed from `flake.nix` into modules for convenience (camelCase):
 
 Switch examples:
 
-- `home-manager switch --flake .#neg` (full)
+- `sudo nixos-rebuild switch --flake .#telfir`
 
 ## Developer Notes
 
