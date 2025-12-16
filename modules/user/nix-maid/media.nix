@@ -2,7 +2,6 @@
   pkgs,
   lib,
   config,
-  systemdUser,
   ...
 }: let
   filesRoot = ../../../home/files;
@@ -331,12 +330,14 @@ in {
     };
 
     # MPDAS (Last.fm Scrobbler)
-    mpdas = systemdUser.mkUnitFromPresets {
-      presets = ["sops" "defaultWanted"];
-      after = ["sound.target"];
-      service = {
+    mpdas = {
+      description = "mpdas last.fm scrobbler";
+      after = ["sound.target" "sops-nix.service"];
+      wantedBy = ["default.target"];
+      serviceConfig = {
         ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
         Restart = "on-failure";
+        RestartSec = "2";
       };
     };
   };
