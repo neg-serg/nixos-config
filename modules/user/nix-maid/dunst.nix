@@ -22,7 +22,7 @@
       ellipsize = "end";
       follow = "mouse";
       font = "Iosevka Medium 10";
-      format = "<span font_desc='Iosevka Medium 10' foreground='#2e72ac'>%s</span>\\n%b";
+      format = "<b>%s</b>\\n%b";
       frame_color = "#000000";
       frame_width = 10;
       gap_size = 4;
