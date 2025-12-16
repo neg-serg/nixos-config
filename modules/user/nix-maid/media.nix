@@ -130,12 +130,12 @@ in {
 
   # --- Secrets (for Beets/MusicBrainz) ---
   sops.secrets."musicbrainz.yaml" = {
-    sopsFile = config.neg.secretPath + "/home/musicbrainz";
+    sopsFile = ../../../secrets/home/musicbrainz;
     format = "binary";
     owner = "neg";
   };
   sops.secrets.mpdas_negrc = {
-    sopsFile = config.neg.secretPath + "/home/mpdas_negrc";
+    sopsFile = ../../../secrets/home/mpdas/neg.rc;
     format = "binary";
     owner = "neg";
   };
