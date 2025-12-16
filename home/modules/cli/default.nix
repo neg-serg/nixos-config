@@ -33,16 +33,16 @@ in {
   config = lib.mkMerge [
     {
       programs = {
-        bat.enable = true; # ensure bat present for cat alias
-        "fabric-ai".enable = true; # Fabric AI CLI
-        "fabric-ai".enableYtAlias = false; # disable default yt alias to avoid conflicts
-        hwatch = {enable = true;}; # better watch with history
-        kubecolor = {enable = true;}; # kubectl colorizer
-        nix-search-tv = {enable = true;}; # fast search for nix packages
-        numbat = {enable = true;}; # fancy scientific calculator
-        television = {enable = true;}; # yet another fuzzy finder
-        tray-tui = {enable = true;}; # system tray in your terminal
-        visidata = {enable = true;}; # interactive multitool for tabular data
+        # bat.enable = true; # ensure bat present for cat alias
+        # "fabric-ai".enable = true; # Fabric AI CLI
+        # "fabric-ai".enableYtAlias = false; # disable default yt alias to avoid conflicts
+        # hwatch = {enable = true;}; # better watch with history
+        # kubecolor = {enable = true;}; # kubectl colorizer
+        # nix-search-tv = {enable = true;}; # fast search for nix packages
+        # numbat = {enable = true;}; # fancy scientific calculator
+        # television = {enable = true;}; # yet another fuzzy finder
+        # tray-tui = {enable = true;}; # system tray in your terminal
+        # visidata = {enable = true;}; # interactive multitool for tabular data
       };
       # CLI package set now ships from modules/cli/pkgs.nix system-wide.
     }
