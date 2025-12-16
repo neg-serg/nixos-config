@@ -259,7 +259,7 @@
     scratchpads = {
       im = {
         animation = "";
-        command = "Telegram";
+        command = "${lib.getExe pkgs.telegram-desktop}";
         class = "org.telegram.desktop";
         size = "30% 95%";
         position = "69% 2%";
@@ -268,7 +268,7 @@
       };
       discord = {
         animation = "fromRight";
-        command = "vesktop";
+        command = "${lib.getExe pkgs.vesktop}";
         class = "vesktop";
         size = "50% 40%";
         lazy = true;
@@ -276,7 +276,7 @@
       };
       music = {
         animation = "";
-        command = "kitty --class music -e rmpc";
+        command = "${lib.getExe pkgs.kitty} --class music -e ${lib.getExe pkgs.neg.rmpc}";
         margin = "80%";
         class = "music";
         position = "15% 50%";
@@ -286,7 +286,7 @@
       };
       torrment = {
         animation = "";
-        command = "kitty --class torrment -e tewi";
+        command = "${lib.getExe pkgs.kitty} --class torrment -e ${lib.getExe pkgs.neg.tewi}";
         class = "torrment";
         position = "1% 0%";
         size = "98% 40%";
@@ -295,7 +295,7 @@
       };
       teardown = {
         animation = "";
-        command = "kitty --class teardown -e btop";
+        command = "${lib.getExe pkgs.kitty} --class teardown -e ${lib.getExe pkgs.btop}";
         class = "teardown";
         position = "1% 0%";
         size = "98% 50%";
@@ -303,7 +303,7 @@
       };
       mixer = {
         animation = "fromRight";
-        command = "pwvucontrol";
+        command = "${lib.getExe pkgs.pwvucontrol}";
         class = "com.saivert.pwvucontrol";
         lazy = true;
         size = "40% 90%";
@@ -312,7 +312,7 @@
       };
       teardrop = {
         animation = "fromTop";
-        command = "hiddify-app --class teardrop";
+        command = "${lib.getExe pkgs.hiddify-app} --class teardrop";
         class = "teardrop";
         size = "40% 90%";
         lazy = true;
