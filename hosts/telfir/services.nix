@@ -718,15 +718,14 @@ in
             after = ["local-fs.target"];
             serviceConfig = {
               Type = "oneshot";
-              ExecStart = ''
-                ${pkgs.bash}/bin/bash -euo pipefail -c '
-                  umask 077
-                  install -d -m 0700 -o nextcloud -g nextcloud /var/lib/nextcloud
-                  ${pkgs.sops}/bin/sops -d --extract "[\"data\"]" ${inputs.self + "/secrets/nextcloud-admin-password.sops.yaml"} > /var/lib/nextcloud/adminpass
-                  chown nextcloud:nextcloud /var/lib/nextcloud/adminpass
-                  chmod 0400 /var/lib/nextcloud/adminpass
-                '
-              '';
+              ExecStart = lib.getExe (pkgs.writeShellScript "nextcloud-adminpass" ''
+                ${pkgs.bash}/bin/bash -euo pipefail
+                umask 077
+                install -d -m 0700 -o nextcloud -g nextcloud /var/lib/nextcloud
+                ${pkgs.sops}/bin/sops -d --extract '["data"]' ${inputs.self + "/secrets/nextcloud-admin-password.sops.yaml"} > /var/lib/nextcloud/adminpass
+                chown nextcloud:nextcloud /var/lib/nextcloud/adminpass
+                chmod 0400 /var/lib/nextcloud/adminpass
+              '');
             };
           };
 

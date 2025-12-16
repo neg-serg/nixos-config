@@ -20,6 +20,10 @@ in {
     systemd.user.services.tailray = {
       wantedBy = ["graphical-session.target"];
       after = lib.mkForce ["graphical-session.target"];
+      serviceConfig = {
+        ExecStart = "${lib.getExe inputs.tailray.packages.${pkgs.stdenv.hostPlatform.system}.default}";
+        Restart = "on-failure";
+      };
     };
   };
 }
