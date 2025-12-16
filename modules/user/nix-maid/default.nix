@@ -20,6 +20,7 @@
     ./floorp.nix
     ./yazi.nix
     ./pipewire.nix
+    ./emacs.nix
   ];
 
   users.users.neg.maid = {};
