@@ -13,7 +13,7 @@
     // {
       home.homeDirectory = config.users.users.neg.home;
     };
-  mozillaCommon = import ../../../home/modules/user/web/mozilla-common-lib.nix {
+  mozillaCommon = import ./web/mozilla-common-lib.nix {
     inherit lib pkgs negLib;
     config = commonConfig;
   };
