@@ -52,7 +52,7 @@
   system.activationScripts.maidForceRestart = lib.stringAfter ["users"] ''
     if [ -e /run/user/1000 ]; then
       echo "Restarting maid-activation for user 1000..."
-      ${pkgs.systemd}/bin/systemctl --user --machine=neg@.host restart maid-activation.service || true
+      ${pkgs.util-linux}/bin/runuser -u neg -- ${pkgs.bash}/bin/bash -c "XDG_RUNTIME_DIR=/run/user/1000 ${pkgs.systemd}/bin/systemctl --user restart maid-activation.service" || true
     fi
   '';
 }
