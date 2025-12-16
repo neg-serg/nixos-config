@@ -138,4 +138,9 @@ in
       };
     };
     environment.sessionVariables.NVIM_APPNAME = "nvf";
+
+    # Symlink nvf config directory
+    users.users.neg.maid.file.home = {
+      ".config/nvf".source = ../../../files/nvim;
+    };
   }
