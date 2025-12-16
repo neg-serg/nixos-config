@@ -63,6 +63,100 @@
   '';
   aliaeConfig = import "${inputs.self}/lib/aliae.nix" {inherit lib pkgs;};
   dircolorsConfig = "${inputs.self}/home/files/shell/dircolors/dircolors";
+
+  # --- Shell Config Sources ---
+  shellFiles = ../../../home/files/shell;
+  zshenvExtras = builtins.readFile ../../../home/modules/user/envs/zshenv-extra.sh;
+
+  # Generate ZSH config with injected zshenv
+  zshConfigSource = pkgs.runCommandLocal "neg-zsh-config" {} ''
+    mkdir -p "$out"
+    cp -R ${shellFiles}/zsh/. "$out"/
+    chmod -R u+w "$out"
+    cat > "$out/.zshenv" <<'EOF'
+    # shellcheck disable=SC1090
+    skip_global_compinit=1
+    # Hardcoded path for Home Manager session vars (standard location)
+    hm_session_vars="$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+    if [ -r "$hm_session_vars" ]; then
+      . "$hm_session_vars"
+    elif [ -r "/etc/profiles/per-user/$USER/etc/profile.d/hm-session-vars.sh" ]; then
+      . "/etc/profiles/per-user/$USER/etc/profile.d/hm-session-vars.sh"
+    fi
+    export WORDCHARS='*/?_-.[]~&;!#$%^(){}<>~` '
+    export KEYTIMEOUT=10
+    export REPORTTIME=60
+    export ESCDELAY=1
+    ${zshenvExtras}
+    EOF
+  '';
+
+  # PowerShell Profile
+  pwshProfile = ''
+    # Aliae integration for PowerShell (pwsh)
+    try {
+      $cfg = if ($env:XDG_CONFIG_HOME) { Join-Path $env:XDG_CONFIG_HOME 'aliae/config.yaml' } else { Join-Path $HOME '.config/aliae/config.yaml' }
+      if (Get-Command aliae -ErrorAction SilentlyContinue) {
+        # Print init script and invoke it so aliases/functions load
+        $init = aliae init pwsh --config $cfg --print | Out-String
+        if ($init) { Invoke-Expression $init }
+      }
+    } catch {}
+
+    # Fallback aliases/functions to ensure parity with other shells
+    function Set-IfCmd([string]$cmd, [scriptblock]$body) {
+      if (Get-Command $cmd -ErrorAction SilentlyContinue) { & $body }
+    }
+
+    # eza-based listing (define at global: scope to persist)
+    if (Get-Command eza -ErrorAction SilentlyContinue) {
+      function global:l { eza --icons=auto --hyperlink @args }
+      function global:ll { eza --icons=auto --hyperlink -l @args }
+      function global:lsd { eza --icons=auto --hyperlink -alD --sort=created --color=always @args }
+    }
+
+    # git shortcuts
+    function gs { git status -sb @args }
+
+    # open helper via handlr
+    Set-IfCmd 'handlr' { function e { handlr open @args } }
+
+    # grep family via ugrep (ug)
+    Set-IfCmd 'ug' {
+      function grep  { ug -G @args }
+      function egrep { ug -E @args }
+      function epgrep { ug -P @args }
+      function fgrep { ug -F @args }
+      function xgrep { ug -W @args }
+      function zgrep { ug -zG @args }
+      function zegrep { ug -zE @args }
+      function zfgrep { ug -zF @args }
+      function zpgrep { ug -zP @args }
+      function zxgrep { ug -zW @args }
+    }
+
+    # tree
+    Set-IfCmd 'erd' { function tree { erd @args } }
+
+    # compression/locate
+    Set-IfCmd 'pigz'   { function gzip  { pigz @args } }
+    Set-IfCmd 'pbzip2' { function bzip2 { pbzip2 @args } }
+    Set-IfCmd 'plocate'{ function locate { plocate @args } }
+
+    # network/disk helpers
+    Set-IfCmd 'prettyping' { function ping { prettyping @args } }
+
+    # threads
+    Set-IfCmd 'xz'   { function xz   { & xz --threads=0 @args } }
+    Set-IfCmd 'zstd' { function zstd { & zstd --threads=0 @args } }
+
+    # mpv controller
+    Set-IfCmd 'mpvc' {
+      $xdg = if ($env:XDG_CONFIG_HOME) { $env:XDG_CONFIG_HOME } else { Join-Path $HOME '.config' }
+      function mpvc { mpvc -S (Join-Path $xdg 'mpv/socket') @args }
+    }
+  '';
+
   shellAliases = {}; # Placeholder, assuming it's defined elsewhere or will be added.
 in {
   users.users.neg.maid.file.home = {
@@ -73,7 +167,32 @@ in {
     ".config/dircolors/dircolors" = {
       source = dircolorsConfig;
     };
+
+    # ZSH Config (generated)
+    ".config/zsh".source = zshConfigSource;
+
+    # Also link .zshenv to home if needed?
+    # But zshConfigSource puts it in $out/.zshenv.
+    # If we link .config/zsh -> zshConfigSource, then .config/zsh/.zshenv exists.
+    # Does Zsh read ~/.config/zsh/.zshenv? Only if ZDOTDIR is set before.
+    # But ZDOTDIR is set in /etc/zshrc usually or /etc/profile.
+    # Let's match existing logic: existing logic constructs a dir.
+
+    # Fish Config
+    ".config/fish".source = "${shellFiles}/fish";
+
+    # Fast Syntax Highlighting
+    ".config/f-sy-h".source = "${shellFiles}/f-sy-h";
+
+    # PowerShell Profile
+    ".config/powershell/Microsoft.PowerShell_profile.ps1".text = pwshProfile;
   };
+
+  # Ensure Config Dirs exist for shells
+  # (nix-maid/systemd activation usually handles parents, but we can be safe)
+  systemd.tmpfiles.rules = [
+    "d ${config.users.users.neg.home}/.config/powershell 0755 neg users -"
+  ];
 
   # --- Interactive Shell Config (Bash) ---
   programs.bash = {
