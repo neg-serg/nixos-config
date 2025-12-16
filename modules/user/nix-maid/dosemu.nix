@@ -1,5 +1,5 @@
 {
-  pkgs,
+  #  pkgs,
   lib,
   config,
   ...
@@ -8,7 +8,7 @@
   filesRoot = ../../../home/files;
 in
   lib.mkIf (cfg.enable or false) {
-    environment.systemPackages = [pkgs.dosemu];
+    # environment.systemPackages = [pkgs.dosemu2];
 
     users.users.neg.maid.file.home = {
       ".dosemu/disclaimer".source = "${filesRoot}/dosemu/disclaimer";
