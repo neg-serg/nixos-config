@@ -71,6 +71,7 @@
     urgency_normal = {
       background = "#000000";
       foreground = "#BFCAD0";
+      timeout = 10;
     };
 
     urgency_critical = {
