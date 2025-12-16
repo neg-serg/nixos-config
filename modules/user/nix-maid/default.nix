@@ -12,6 +12,7 @@
     ./terminals-shells.nix
     ./gui-apps.nix
     ./vicinae.nix
+    ./quickshell.nix
   ];
 
   users.users.neg.maid = {};
