@@ -535,7 +535,7 @@ in
               type = "file";
               disableDeletion = false;
               editable = true;
-              options.path = inputs.self + "/dashboards";
+              options.path = inputs.self + "/files/dashboards";
             }
           ];
         })
