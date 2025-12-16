@@ -309,7 +309,7 @@ in {
       after = ["mpd.service"];
       wantedBy = ["default.target"];
       serviceConfig = {
-        ExecStart = "${pkgs.mpdris2}/bin/mpdris2";
+        ExecStart = "${pkgs.mpdris2}/bin/mpDris2";
         Restart = "on-failure";
         Environment = [
           "MPD_HOST=${mpdHost}"
