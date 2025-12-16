@@ -1,6 +1,6 @@
 ##
 # Module: text/read-packages
-# Purpose: Provide reading/preview/OCR utilities system-wide (migrated from Home Manager).
+# Purpose: Provide reading/preview/OCR utilities system-wide.
 {
   lib,
   config,

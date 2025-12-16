@@ -1,6 +1,6 @@
 {pkgs, ...}: {
   # Core mail CLI clients (himalaya, neomutt, kyotocabinet) now install at the
-  # system level so they are available even outside Home Manager sessions.
+  # system level so they are available even outside the shell sessions.
   environment.systemPackages = [
     pkgs.himalaya # async email CLI with IMAP/SMTP sync + TUI prompts
     pkgs.isync # mbsync; IMAP mirror used by neomutt

@@ -36,7 +36,7 @@ in
 
     usage() {
       cat <<USAGE
-    zcli - helper for NixOS/Home Manager flake at \$REPO_ROOT
+    zcli - helper for NixOS flake at \$REPO_ROOT
 
     Commands:
       switch [-- ...]   Run nh os switch for \$PROFILE (default)

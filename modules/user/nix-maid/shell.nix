@@ -76,7 +76,7 @@
     cat > "$out/.zshenv" <<'EOF'
     # shellcheck disable=SC1090
     skip_global_compinit=1
-    # Hardcoded path for Home Manager session vars (standard location)
+    # Hardcoded path for profile session vars (standard location)
     hm_session_vars="$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
     if [ -r "$hm_session_vars" ]; then
       . "$hm_session_vars"

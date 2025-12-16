@@ -13,10 +13,10 @@ with lib; let
     else null;
 in {
   imports = [
-    ./defaults.nix # Migrated
+    ./defaults.nix
     # ./floorp.nix # Removed (empty/deleted)
     # ./firefox.nix # Removed (empty/deleted)
-    ./librewolf.nix # Migrated
+    ./librewolf.nix
     # ./nyxt.nix # Migrated (moved to parent directory)
   ];
 

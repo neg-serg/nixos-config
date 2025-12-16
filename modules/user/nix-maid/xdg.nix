@@ -41,7 +41,7 @@
 
     # --- Directories ---
     "inode/directory" = "kitty-open.desktop"; # Provided by custom desktop item or we need to ensure it exists?
-    # kitty-open is likely a custom desktop file. We might need to migrate it if it was HM-managed.
+    # kitty-open is likely a custom desktop file. We might need to migrate it if it was previously managed.
     # For now, let's assume it exists or fallback to kitty.desktop.
 
     # --- Playlists ---

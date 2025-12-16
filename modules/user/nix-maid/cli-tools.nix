@@ -316,12 +316,12 @@ in {
     direnv
     nix-direnv
 
-    # Migrated CLI Tools
+    # CLI Tools
     aliae
     superfile
     pkgs.nh # Nix helper
 
-    # Migrated CLI Tools (from HM)
+    # CLI Tools
     fabric-ai
     hwatch
     kubecolor
@@ -385,7 +385,7 @@ in {
     # Dircolors
     ".dircolors".source = ../../../files/shell/dircolors/dircolors;
 
-    # --- Migrated Configs ---
+    # --- Configs ---
 
     # Amfora Config
     ".config/amfora".source = ../../../files/config/amfora;
