@@ -9,15 +9,15 @@
     ./git.nix
     ./mpv.nix
     ./shell.nix
-    # ./dunst.nix
+    ./dunst.nix
     # ./services-manual.nix
     ./gpg.nix
     ./cli-tools.nix
     # ./broot.nix
     # ./tig.nix
     # ./tewi.nix
-    # ./terminals-shells.nix
-    # ./gui-apps.nix
+    ./terminals-shells.nix
+    ./gui-apps.nix
     # ./vicinae.nix
     # ./walker.nix
     # ./quickshell.nix
@@ -33,7 +33,7 @@
     # ./enchant.nix
     # ./nethack.nix
     # ./television.nix
-    # ./hyprland.nix
+    ./hyprland.nix
     # ./media.nix
     # ./mail.nix
     # ./autoclick.nix
