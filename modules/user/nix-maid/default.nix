@@ -1,4 +1,8 @@
-{inputs, ...}: {
+{
+  inputs,
+  config,
+  ...
+}: {
   imports = [
     inputs.nix-maid.nixosModules.default
     ./git.nix
@@ -38,5 +42,9 @@
   # in a dummy directory, leaving the real one for Home Manager.
   systemd.user.services.maid-activation = {
     environment.XDG_CONFIG_HOME = "/home/neg/.cache/maid-systemd-workaround";
+    # Force restart when maid configuration changes
+    restartTriggers = [
+      (builtins.toJSON config.users.users.neg.maid.file)
+    ];
   };
 }
