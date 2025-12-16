@@ -7,7 +7,7 @@
   config = lib.mkIf (config.features.web.enable && config.features.web.tools.enable) {
     environment.systemPackages = [pkgs.yt-dlp];
 
-    users.users.neg.maid.file.xdg_config."yt-dlp/config".text = ''
+    users.users.neg.maid.file.home.".config/yt-dlp/config".text = ''
       --downloader aria2c
       --downloader-args aria2c:'-c -x8 -s8 -k1M'
       --embed-metadata
