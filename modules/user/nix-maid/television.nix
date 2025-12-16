@@ -16,7 +16,7 @@ in
     users.users.neg.maid.file.home = {
       ".config/television/config.toml".source = "${filesRoot}/television/config.toml";
       ".config/television/cable/nix.toml".source = "${filesRoot}/television/nix.toml";
-      ".config/television/themes/stylix.toml".text = ''
+      ".config/television/themes/custom.toml".text = ''
         # general
         remote_control_mode_bg = '#00000000'
         border_fg = '#6c7e96'
