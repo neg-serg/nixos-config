@@ -227,6 +227,11 @@
     env = QT_QPA_PLATFORM,wayland;xcb
     env = SDL_VIDEODRIVER,wayland,x11
     env = CLUTTER_BACKEND,wayland
+    env = XDG_CURRENT_DESKTOP,Hyprland
+    env = XDG_SESSION_DESKTOP,Hyprland
+    env = XDG_SESSION_TYPE,wayland
+    env = MOZ_ENABLE_WAYLAND,1
+    env = ELECTRON_OZONE_PLATFORM_HINT,auto
 
     source = ~/.config/hypr/init.conf
     source = ~/.config/hypr/permissions.conf
@@ -326,6 +331,9 @@ in
         pkgs.hyprlock
         pkgs.hyprpolkitagent
         pkgs.playerctl
+        pkgs.wayvnc
+        pkgs.wl-clipboard
+        pkgs.wl-ocr
         # hyprmusic script
         (pkgs.writeScriptBin "hyprmusic" ''
           #!/bin/sh

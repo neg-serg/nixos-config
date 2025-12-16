@@ -281,6 +281,12 @@ in {
 
     # Rofi themes in XDG data dir
     ".local/share/rofi/themes".source = rofiConfigSrc;
+
+    # Handlr Config
+    ".config/handlr/handlr.toml".text = ''
+      enable_selector = false
+      selector = "rofi -dmenu -p 'Open With: ❯>'"
+    '';
   };
 
   # Systemd user services
