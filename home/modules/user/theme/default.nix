@@ -1,9 +1,7 @@
 {
   lib,
   pkgs,
-  config,
   xdg,
-  iosevkaNeg,
   ...
 }:
 with {
@@ -111,65 +109,7 @@ in
         };
       };
 
-      stylix = {
-        enable = ! (config.features.devSpeed.enable or false);
-        enableReleaseChecks = false;
-        autoEnable = false;
-        targets = {
-          bemenu.enable = true;
-          btop.enable = true;
-          foot.enable = true;
-          gnome.enable = true;
-          gtk = {
-            enable = false;
-            flatpakSupport.enable = true;
-          };
-          qt.enable = false;
-          helix.enable = true;
-        };
-        base16Scheme = {
-          base00 = "#020202"; # Background
-          base01 = "#010912"; # Alternate background(for toolbars)
-          base02 = "#0f2329"; # Scrollbar highlight ???
-          base03 = "#15181f"; # Selection background
-          base04 = "#6c7e96"; # Alternate(darker) text
-          base05 = "#8d9eb2"; # Default text
-          base06 = "#ff0000"; # Light foreground (not often used)
-          base07 = "#00ff00"; # Light background (not often used)
-          base08 = "#8a2f58"; # Error (I use red for it)
-          base09 = "#914e89"; # Urgent (I use magenta or yellow for it)
-          base0A = "#005faf"; # Warning, progress bar, text selection
-          base0B = "#005200"; # Green
-          base0C = "#005f87"; # Cyan
-          base0D = "#0a3749"; # Alternative window border
-          base0E = "#5B5BBB"; # Purple
-          base0F = "#162b44"; # Brown
-        };
-        cursor = {
-          size = 23;
-          name = "Alkano-aio";
-          package = alkano-aio;
-        };
-        polarity = "dark";
-        fonts = {
-          serif = {
-            name = "Cantarell";
-            package = pkgs.cantarell-fonts;
-          };
-          sansSerif = {
-            name = "Iosevka";
-            package = iosevkaNeg.nerd-font;
-          };
-          monospace = {
-            name = "Iosevka";
-            package = iosevkaNeg.nerd-font;
-          };
-          sizes = {
-            applications = 10;
-            desktop = 10;
-          };
-        };
-      };
+      # stylix removed
     }
     kvantumAltConfig
   ]
