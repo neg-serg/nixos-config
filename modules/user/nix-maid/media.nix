@@ -301,19 +301,8 @@ in {
     '';
   };
 
-  # --- User Services (MPD, etc) ---
+  # --- User Services (MPRIS, etc) ---
   systemd.user.services = {
-    # MPD Service
-    mpd = {
-      description = "Music Player Daemon";
-      after = ["network.target" "sound.target"];
-      wantedBy = ["default.target"];
-      serviceConfig = {
-        ExecStart = "${pkgs.mpd}/bin/mpd --no-daemon";
-        Type = "notify";
-      };
-    };
-
     # MPD RIS2 (MPRIS support)
     mpdris2 = {
       description = "MPD MPRIS2 Bridge";
