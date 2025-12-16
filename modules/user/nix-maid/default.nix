@@ -22,8 +22,8 @@
     ./walker.nix
     ./quickshell.nix
     ./qt.nix
-    # ./firefox.nix
-    # ./floorp.nix
+    ./firefox.nix
+    ./floorp.nix
     # ./yazi.nix
     # ./pipewire.nix
     # ./emacs.nix
