@@ -40,6 +40,7 @@
   imports = [
     ../secrets/home
     ./profiles/desktop.nix
+    # ./modules/programs
   ];
 
   xdg.stateHome = "${config.home.homeDirectory}/.local/state";
@@ -49,9 +50,5 @@
     stateVersion = "23.11"; # Please read the comment before changing.
     preferXdgDirectories = true;
     username = "neg";
-  };
-
-  services.nextcloudCli = {
-    enable = true;
   };
 }

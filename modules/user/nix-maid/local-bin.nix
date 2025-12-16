@@ -8,7 +8,7 @@ with lib;
   mkIf (config.features.gui.enable or false) (lib.mkMerge [
     # Generate ~/.local/bin scripts from packages/local-bin
     {
-      home.file = let
+      users.users.neg.maid.file.home = let
         # Path to the source directories
         binDir = config.neg.repoRoot + "/packages/local-bin/bin";
         scriptsDir = config.neg.repoRoot + "/packages/local-bin/scripts";

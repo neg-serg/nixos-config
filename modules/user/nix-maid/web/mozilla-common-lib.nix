@@ -113,20 +113,26 @@ with lib; let
 
   extraConfig = "";
 
-  userChrome = ''
-    /* Hide buttons you don't use */
-    #nav-bar #back-button,
-    #nav-bar #forward-button,
-    #nav-bar #stop-reload-button,
-    #nav-bar #home-button { display: none !important; }
-    /* Compact urlbar text and results */
-    :root { --urlbar-min-height: 30px !important; }
-    #urlbar-input { font-size: 14px !important; font-weight: 500 !important; }
-    .urlbarView-row .urlbarView-title,
-    .urlbarView-row .urlbarView-url { font-size: 12px !important; font-weight: 400 !important; }
-    /* Keep urlbar dropdown reasonable */
-    .urlbarView-body-inner{ max-height: min(60vh, 640px) !important; overflow: auto !important; }
-  '';
+  userChrome =
+    ''
+      /* Hide buttons you don't use */
+      #nav-bar #back-button,
+      #nav-bar #forward-button,
+      #nav-bar #stop-reload-button,
+      #nav-bar #home-button { display: none !important; }
+      /* Compact urlbar text and results */
+      :root { --urlbar-min-height: 30px !important; }
+      #urlbar-input { font-size: 14px !important; font-weight: 500 !important; }
+      .urlbarView-row .urlbarView-title,
+      .urlbarView-row .urlbarView-url { font-size: 12px !important; font-weight: 400 !important; }
+      /* Keep urlbar dropdown reasonable */
+      .urlbarView-body-inner{ max-height: min(60vh, 640px) !important; overflow: auto !important; }
+    ''
+    + builtins.readFile ./firefox/hide_content_borders.css
+    + builtins.readFile ./firefox/hide_drm_nagbar_chrome.css
+    + builtins.readFile ./firefox/inline_tabs_chrome.css
+    + builtins.readFile ./firefox/sideberry_chrome.css
+    + builtins.readFile ./firefox/sideberry_hide_ext_button.css;
 
   # Tridactyl UI sizing (fallback cap):
   # Some Tridactyl builds/layouts render the completions list without the expected
