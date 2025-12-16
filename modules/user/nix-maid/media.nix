@@ -317,6 +317,7 @@ in {
     # MPD RIS2 (MPRIS support)
     mpdris2 = {
       description = "MPD MPRIS2 Bridge";
+      after = ["mpd.service"];
       wantedBy = ["default.target"];
       serviceConfig = {
         ExecStart = "${pkgs.mpdris2}/bin/mpdris2";
