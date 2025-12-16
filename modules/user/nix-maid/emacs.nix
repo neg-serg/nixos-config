@@ -62,7 +62,7 @@
       ripgrep # fast search integration
     ]);
 
-  filesRoot = ../../../home/files;
+  filesRoot = ../../../files;
 in
   lib.mkIf (cfg.enable or false) {
     environment.systemPackages = [emacsWithPackages];

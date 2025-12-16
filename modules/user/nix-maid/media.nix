@@ -125,6 +125,9 @@ in {
     swayimg
     imv
     feh
+    # Spotify
+    spotify
+    spicetify-cli
   ];
 
   # --- Secrets (for Beets/MusicBrainz) ---
@@ -146,6 +149,34 @@ in {
   };
 
   users.users.neg.maid.file.home = {
+    # --- Spicetify ---
+    ".config/spicetify/config-xpui.ini".text = lib.generators.toINI {} {
+      Setting = {
+        spotify_path = "/nix/store"; # User will likely need to adjust this or use spicetify-nix
+        prefs_path = "/home/neg/.config/spotify/prefs";
+        current_theme = "catppuccin";
+        color_scheme = "mocha";
+        inject_css = 1;
+        replace_colors = 1;
+        overwrite_assets = 0;
+        spotify_launch_flags = "";
+        check_spicetify_upgrade = 0;
+      };
+      Preprocesses = {
+        disable_sentry = 1;
+        disable_ui_logging = 1;
+        remove_rtl_rule = 1;
+        expose_apis = 1;
+      };
+      AdditionalOptions = {
+        extensions = "adblock.js|shuffle+.js|fullAppDisplay.js";
+        custom_apps = "";
+        sidebar_config = 1;
+        home_config = 1;
+        experimental_features = 1;
+      };
+    };
+
     # --- Beets ---
     ".config/beets/config.yaml".text = lib.generators.toYAML {} beetsSettings;
 
@@ -214,14 +245,14 @@ in {
       '';
     };
     # Config symlink (lives in home/modules for live editing)
-    ".config/swayimg".source = ../../../home/modules/media/images/swayimg/conf;
+    ".config/swayimg".source = ../../../files/gui/swayimg;
 
     # --- RMPC ---
     # Config symlink (lives in home/modules for live editing)
-    ".config/rmpc".source = ../../../home/files/rmpc;
+    ".config/rmpc".source = ../../../files/rmpc;
 
     # --- NCPAMixer ---
-    ".config/ncpamixer.conf".source = ../../../home/modules/media/audio/ncpamixer.conf;
+    ".config/ncpamixer.conf".source = ../../../files/gui/ncpamixer.conf;
 
     # --- MPDris2 Config ---
     ".config/mpDris2/mpDris2.conf".text = lib.generators.toINI {} {

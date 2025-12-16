@@ -5,7 +5,7 @@
   ...
 }: let
   cfg = config.features.media.audio.core;
-  filesRoot = ../../../home/files;
+  filesRoot = ../../../files;
 
   rnnoiseConf = builtins.toJSON {
     "context.modules" = [

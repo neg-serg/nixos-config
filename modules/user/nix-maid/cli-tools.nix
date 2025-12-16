@@ -6,7 +6,7 @@
 }: let
   # Helper to access HM config root if needed, but we prefer relative paths for stability
   # Assuming this file is in modules/user/nix-maid/
-  fastfetchSrc = ../../../home/files/fastfetch;
+  fastfetchSrc = ../../../files/fastfetch;
 
   # --- Bat Config (syntaxes disabled due to HM batCache conflict) ---
   # batSyntaxes = {
@@ -330,7 +330,7 @@ in {
     tray-tui
     visidata
     # ZCLI (custom script)
-    (import ../../../home/scripts/zcli.nix {
+    (import ../../../files/scripts/zcli.nix {
       inherit pkgs;
       profile = "telfir"; # Hardcoded for now, or use config.networking.hostName if available
       repoRoot = "/etc/nixos";
@@ -383,18 +383,18 @@ in {
     '';
 
     # Dircolors
-    ".dircolors".source = ../../../home/files/shell/dircolors/dircolors;
+    ".dircolors".source = ../../../files/shell/dircolors/dircolors;
 
     # --- Migrated Configs ---
 
     # Amfora Config
-    ".config/amfora".source = ../../../home/modules/cli/amfora-conf;
+    ".config/amfora".source = ../../../files/config/amfora;
 
     # Dosbox Config
-    ".config/dosbox".source = ../../../home/modules/cli/dosbox-conf;
+    ".config/dosbox".source = ../../../files/config/dosbox;
 
     # Icedtea Web Config
-    ".config/icedtea-web".source = ../../../home/modules/cli/icedtea-web-conf;
+    ".config/icedtea-web".source = ../../../files/config/icedtea-web;
 
     # Aliae Config (if needed later, currently empty in source)
   };

@@ -1,11 +1,11 @@
 {pkgs, ...}: let
   # Source Paths
   # Source Paths
-  kittyConf = ../../../home/files/kitty;
-  weztermConf = ../../../home/files/wezterm;
-  nuConfDir = ../../../home/files/nushell;
-  tmuxConfDir = ../../../home/files/tmux;
-  ompConfig = ../../../home/files/shell/zsh/neg.omp.json;
+  kittyConf = ../../../files/kitty;
+  weztermConf = ../../../files/wezterm;
+  nuConfDir = ../../../files/nushell;
+  tmuxConfDir = ../../../files/tmux;
+  ompConfig = ../../../files/shell/zsh/neg.omp.json;
 
   # Kitty Panel Script
   kittyPanel = pkgs.writeShellScriptBin "kitty-panel" ''

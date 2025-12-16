@@ -5,7 +5,7 @@
   ...
 }: let
   cfg = config.features.gui.walker;
-  walkerRoot = ../../../home/files/walker;
+  walkerRoot = ../../../files/walker;
 in
   lib.mkIf (cfg.enable or false) {
     environment.systemPackages = [pkgs.walker];

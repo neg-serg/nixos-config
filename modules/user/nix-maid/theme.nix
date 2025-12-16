@@ -5,7 +5,7 @@
   iosevkaNeg, # Assumes this is passed in modules/user/nix-maid/default.nix args, or we need to pass it
   ...
 }: let
-  alkano-aio = pkgs.callPackage ../../../home/modules/user/theme/alkano-aio.nix {};
+  alkano-aio = pkgs.callPackage ./alkano-aio.nix {};
 
   # GTK Settings
   gtkSettings = {

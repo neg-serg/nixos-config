@@ -8,7 +8,7 @@
   hy3Enabled = config.features.gui.hy3.enable or false;
 
   # Static config files location
-  hyprConfDir = ../../../home/modules/user/gui/hypr/conf;
+  hyprConfDir = ../../../files/gui/hypr;
 
   # Core static config files to link
   coreFiles = ["vars.conf" "classes.conf" "rules.conf" "autostart.conf"];
