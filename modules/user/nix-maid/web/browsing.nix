@@ -17,7 +17,6 @@ in {
     # ./floorp.nix # Removed (empty/deleted)
     # ./firefox.nix # Removed (empty/deleted)
     ./librewolf.nix
-    # ./nyxt.nix # Migrated (moved to parent directory)
   ];
 
   config = {
