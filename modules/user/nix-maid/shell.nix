@@ -2,6 +2,7 @@
   inputs,
   pkgs,
   lib,
+  config,
   ...
 }: let
   inputrc = ''
@@ -68,7 +69,11 @@ in {
     ".config/aliae/config.yaml".text = aliaeConfig;
 
     ".config/bash/bashrc" = {
-      text = builtins.readFile "${inputs.self}/home/files/shell/bash/bashrc";
+      text =
+        builtins.readFile "${inputs.self}/home/files/shell/bash/bashrc"
+        + lib.optionalString (config.features.cli.broot.enable or false) ''
+          source ~/.config/broot/launcher
+        '';
     };
 
     ".config/dircolors/dircolors" = {
