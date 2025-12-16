@@ -7,7 +7,7 @@
   cfg = config.features.gui;
 in
   lib.mkIf (cfg.enable or false) {
-    # Migrated services from home/modules/user/systemd/default.nix
+    # User systemd services
 
     systemd.user.services = {
       # Pic dirs notifier
@@ -68,7 +68,7 @@ in
         description = "Udiskie automounter";
         serviceConfig = {
           ExecStart = "${lib.getExe' pkgs.udiskie "udiskie"} --no-tray";
-          # Environment from HM override (Wayland specific)
+          # Wayland-specific environment
           Environment = ["QT_QPA_PLATFORM=wayland" "XDG_SESSION_TYPE=wayland"];
           Restart = "on-failure";
           RestartSec = "2";

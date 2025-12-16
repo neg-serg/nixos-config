@@ -34,7 +34,7 @@
     SyncState *
   '';
 
-  # Account definition (migrated from legacy)
+  # Account definition
   account = {
     name = "gmail";
     userName = "serg.zorg@gmail.com";

@@ -69,7 +69,7 @@ in {
     inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 
-  # Deploy QuickShell config to /etc instead of Home Manager
+  # Deploy QuickShell config to /etc instead of user profile
   environment.etc."greetd/quickshell".source = ../../../files/quickshell;
 
   # Keep the greeter wallpaper in a world-readable location; falls back to the bundled
