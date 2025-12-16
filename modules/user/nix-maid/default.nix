@@ -22,6 +22,7 @@
     ./pipewire.nix
     ./emacs.nix
     ./transmission.nix
+    ./vdirsyncer.nix
   ];
 
   users.users.neg.maid = {};
