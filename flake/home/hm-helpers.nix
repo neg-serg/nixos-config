@@ -12,7 +12,6 @@
     base = [
       homeModule
       stylixInput.homeModules.stylix
-      # chaotic.homeManagerModules.default
       sopsNixInput.homeManagerModules.sops
     ];
     profMod = lib.optional (profile == "lite") (_: {features.profile = "lite";});
