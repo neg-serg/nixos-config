@@ -130,7 +130,7 @@ in {
       ".config/mimeapps.list".text = mimeAppsList;
       ".config/user-dirs.dirs".text = userDirs;
 
-      # kitty-open.desktop (migrated from somewhere? assumed custom)
+      # kitty-open.desktop (custom)
       # If it was in HM, we should create it. HM config referenced it.
       # Let's create a minimal one to be safe:
       ".local/share/applications/kitty-open.desktop".text = ''

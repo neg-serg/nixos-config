@@ -9,7 +9,7 @@
     ./git.nix
     ./mpv.nix
     ./shell.nix
-    ./migrated-services.nix
+    ./user-services.nix
     ./secrets.nix
     ./theme.nix
     ./xdg.nix

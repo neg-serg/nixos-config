@@ -1,6 +1,6 @@
 ##
 # Module: media/audio/core-packages
-# Purpose: Provide core PipeWire/ALSA helper tools at the system level so they are available regardless of Home Manager state.
+# Purpose: Provide core PipeWire/ALSA helper tools at the system level so they are available regardless of user profile state.
 # Trigger: enabled for workstation role (desktop-first environments).
 {
   lib,

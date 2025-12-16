@@ -11,7 +11,7 @@
 in {
   environment.variables = {
     # NixOS handles standard XDG variables by default if xdg.enable is true,
-    # but we force them here to match the legacy Home Manager config
+    # but we force them here to match standard profile config
     XDG_CACHE_HOME = lib.mkForce cacheHome;
     XDG_CONFIG_HOME = lib.mkForce configHome;
     XDG_DATA_HOME = lib.mkForce dataHome;

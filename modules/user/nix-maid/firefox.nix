@@ -15,7 +15,7 @@
     config
     // {
       home.homeDirectory = config.users.users.neg.home;
-      # If other HM-specific attrs are needed, add them here.
+      # Add extra profile attrs here if needed.
       # Current audit shows only home.homeDirectory and features.* are used.
     };
   mozillaCommon = import ./web/mozilla-common-lib.nix {
