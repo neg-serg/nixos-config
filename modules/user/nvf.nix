@@ -7,6 +7,8 @@
   devEnabled = config.features.dev.enable or false;
 in
   lib.mkIf devEnabled {
+    # neovim-remote needed for `v` script (uses nvr command)
+    environment.systemPackages = [pkgs.neovim-remote];
     programs.nvf = {
       enable = true;
       defaultEditor = true;
