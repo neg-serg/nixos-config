@@ -5,7 +5,6 @@
     ./mpv.nix
     ./shell.nix
     ./dunst.nix
-    ./mpd-services.nix
     ./services-manual.nix
     ./gpg.nix
     ./cli-tools.nix
@@ -27,6 +26,7 @@
     ./enchant.nix
     ./nethack.nix
     ./television.nix
+    ./media.nix
   ];
 
   users.users.neg.maid = {};
