@@ -1,9 +1,8 @@
-# Migrating Home-Manager Secrets to Vaultix
+# Migrating Secrets to Vaultix
 
-This note describes how to move an existing Home Manager setup (currently using only `sops-nix`) to
-`vaultix`, mirroring the approach in `/home/neg/src/dotfiles`. The steps assume you ultimately
-deploy the HM modules through a NixOS host, because `vaultix` exposes its integration as a NixOS
-module plus a helper CLI.
+This note describes how to move an existing setup (currently using only `sops-nix`) to
+`vaultix`. The steps assume you deploy modules through a NixOS host, because `vaultix` exposes
+its integration as a NixOS module plus a helper CLI.
 
 ## Why Vaultix
 
@@ -26,8 +25,7 @@ Home-manager friendly | NixOS module (best used together with HM flakes) |
 
 ### Caveats
 
-- Works best when your HM modules are imported from a NixOS configuration; pure
-  `home-manager switch --flake` on non-NixOS cannot use `services.vaultix`.
+- Works best when modules are imported from a NixOS configuration.
 - Adds another dependency and CLI to your workflow.
 - Still requires you to keep `sops-nix` for user-level secrets unless you migrate everything to Age
   files managed by `vaultix`.
