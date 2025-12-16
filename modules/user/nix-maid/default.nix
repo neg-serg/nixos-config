@@ -11,6 +11,7 @@
     ./shell.nix
     ./migrated-services.nix
     ./secrets.nix
+    ./theme.nix
     ./dunst.nix
     ./services-manual.nix
     ./gpg.nix
