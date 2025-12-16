@@ -1,5 +1,4 @@
 {...}: {
-  # DEPRECATED: Replaced by nix-index-database in home-manager
   # systemd.services.nixindex = {
   #   serviceConfig.Type = "oneshot";
   #   path = [pkgs.nix-index];
