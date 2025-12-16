@@ -15,10 +15,10 @@ rustPlatform.buildRustPackage rec {
     repo = "rmpc";
     rev = "master";
     # nix-prefetch-url --unpack https://github.com/mierak/rmpc/archive/master.tar.gz
-    sha256 = "1515zxaamca8i1vvsiw5lwb6wjfmdz8ifh45z8m558w0xmx33dn1";
+    sha256 = "sha256-CVTHB+11nreizDvfJ5kvA6jEdfgYScvP52Lo7Yentl0=";
   };
 
-  cargoHash = "sha256-ZHajqTkdw0wkNVws0fr9HFcC3JF1B6TuwP5CTGw/3nQ=";
+  cargoHash = "sha256-d2/4q2s/11HNE18D8d8Y2yWidhT+XsUS4J9ahnxToI0=";
 
   checkFlags = [
     # Test currently broken, needs to be removed. See https://github.com/mierak/rmpc/issues/254
