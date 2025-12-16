@@ -15,7 +15,6 @@ Primary domains:
 Legacy/top-level files:
 
 - `args.nix`, `features.nix`, `neg.nix` remain as shared wiring.
-- `home-manager/` contains HM glue and still lives here for now.
 
 When adding a new module in a domain, include it in that domain’s `modules.nix` rather than editing
 `default.nix`. Keep domain-specific READMEs close to their folders if needed.\*\*\*
