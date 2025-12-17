@@ -9,7 +9,7 @@
       hyprlandPlugins =
         prev.hyprlandPlugins
         // {
-          "borders-plus-plus" = inputs.hyprland-plugins.packages.${system}."borders-plus-plus";
+          # "borders-plus-plus" = inputs.hyprland-plugins.packages.${system}."borders-plus-plus";
           # dynamic-cursors removed
           hy3 = inputs.hy3.packages.${system}.hy3;
         };
