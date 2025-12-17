@@ -122,7 +122,7 @@ in {
         sudo.enableAppArmor = true;
 
         su.enableAppArmor = true;
-        greetd.enableAppArmor = true;
+        greetd.enableAppArmor = false;
       };
 
       u2f = {
