@@ -232,7 +232,6 @@ in {
       addonsFromNUR.enable = mkBool "install Mozilla addons from NUR packages (heavier eval)" true;
       floorp = {
         enable = mkBool "enable Floorp browser" true;
-        shimmer.enable = mkBool "enable Shimmer userChrome theme for Floorp" false;
       };
       firefox.enable = mkBool "enable Firefox browser" false;
       librewolf.enable = mkBool "enable LibreWolf browser" false;

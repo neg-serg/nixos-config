@@ -20,13 +20,6 @@
 
   # Floorp settings
   profileId = "bqtlgdxw.default";
-  shimmerEnabled = cfg.shimmer.enable or false;
-  shimmer = pkgs.fetchFromGitHub {
-    owner = "nuclearcodecat";
-    repo = "shimmer";
-    rev = "main";
-    sha256 = "0ypwzyfbavdm4za8y0r2yz4b5aaw7g2j0q6n1ppixpr5q8m5ia1p";
-  };
 
   # Helper to generate user.js
   mkUserJs = prefs:
@@ -91,9 +84,7 @@
       name = "default";
       path = profileId; # Use the specific folder name
       inherit settings;
-      userChrome = lib.optionalString shimmerEnabled ''
-        @import "shimmer/userChrome.css";
-      '';
+
       enable = true;
       isDefault = true;
     };
@@ -106,10 +97,6 @@
       }
       (lib.mkIf (profile.userChrome != "") {
         ".floorp/${profile.path}/chrome/userChrome.css".text = profile.userChrome;
-      })
-      # Shimmer theme
-      (lib.mkIf shimmerEnabled {
-        ".floorp/${profile.path}/chrome/shimmer".source = shimmer;
       })
     ];
 in
