@@ -304,31 +304,33 @@
 in {
   # --- System Packages (ensure installed) ---
   environment.systemPackages = with pkgs; [
-    bat
-    btop
-    fzf
-    yazi
-    fastfetch
+    bat # A cat(1) clone with wings
+    btop # A monitor of resources
+    fzf # A command-line fuzzy finder
+    yazi # Blazing fast terminal file manager written in Rust, based on async I/O
+    fastfetch # Like neofetch, but much faster because written in C
 
     # Core Tools
-    fd
-    ripgrep
-    direnv
-    nix-direnv
+    fd # A simple, fast and user-friendly alternative to 'find'
+    ripgrep # A line-oriented search tool that recursively searches the current directory for a regex pattern
+    direnv # Extension for your shell
+    nix-direnv # A fast, persistent use_nix implementation for direnv
 
     # CLI Tools
-    aliae
-    superfile
-    pkgs.nh # Nix helper
+    aliae # Cross shell configuration
+    superfile # Pretty fancy file manager
+    pkgs.nh # Yet another nix helper
 
     # CLI Tools
-    fabric-ai
-    hwatch
-    kubecolor
+    fabric-ai # An open-source framework for augmenting humans
+    hwatch # Modern alternative to watch command
+    kubecolor # Colorize your kubectl output
+    nix-search-tv # TUI for searching libraries on search.nixos.org
     nix-search-tv
-    numbat
-    tray-tui
-    visidata
+    numbat # High precision scientific calculator
+    uni # Query the Unicode database from the command line
+    tray-tui # A system tray for TUI applications
+    visidata # A terminal spreadsheet multitool for discovering and arranging data
     # ZCLI (custom script)
     (import ../../../files/scripts/zcli.nix {
       inherit pkgs;

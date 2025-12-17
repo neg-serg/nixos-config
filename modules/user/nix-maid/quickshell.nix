@@ -24,15 +24,15 @@
 
   # Runtime dependencies for quickshell scripts
   qsPath = pkgs.lib.makeBinPath [
-    pkgs.fd
-    pkgs.coreutils
-    pkgs.bash
-    pkgs.socat
+    pkgs.fd # Simple, fast and user-friendly alternative to 'find'
+    pkgs.coreutils # Core GNU utilities (cp, mv, etc.)
+    pkgs.bash # GNU Bourne-Again SHell
+    pkgs.socat # Multipurpose relay (SOcket CAT)
     pkgs.iproute2 # ip command
     pkgs.ffmpeg # ffprobe
-    pkgs.mpc # mpc
+    pkgs.mpc # mpc (MPD client)
     pkgs.hyprland # hyprctl
-    pkgs.neg.rsmetrx
+    pkgs.neg.rsmetrx # Custom metric collector
   ];
 
   # Wrapped quickshell package
