@@ -153,20 +153,14 @@
                     "type": "root"
                 },
                 {
-                    "foreground": "#395573",
+                    "foreground": "#367bbf",
                     "options": {
                         "folder_separator_icon": "/",
                         "max_width": 40,
-                        "home_icon": "<#005faf>~</>",
+                        "home_icon": "<#367bbf>~</>",
                         "truncation_symbol": "…",
                         "cycle": [
-                            "#367bbf",
-                            "#367bbf",
-                            "#367bbf",
-                            "#367bbf",
-                            "#367bbf",
-                            "#367bbf",
-                            "#367bbf"
+                            "#b8c5d9"
                         ]
                     },
                     "template": "{{ .Path }}",
