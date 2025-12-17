@@ -1,85 +1,85 @@
 # Theme: neg
-# By: neg-serg (Pastel Cold 256-color)
-# Description: Desaturated cold palette for better readability. Lavender, Ice Blue, Mint.
+# By: neg-serg (Balanced Cold 256-color)
+# Description: Balanced saturation. Distinct colors without being neon or pastel.
 
 # Main background, empty for terminal default, need to be empty!
 theme[main_bg]="#080808"
 
-# Main text color (Off-White for readability)
-theme[main_fg]="#e4e4e4"
+# Main text color (White/Grey)
+theme[main_fg]="#dadada"
 
 # Title color for boxes (White)
 theme[title]="#ffffff"
 
-# Highlight color for keyboard shortcuts (Ice Blue)
-theme[hi_fg]="#89dceb"
+# Highlight color for keyboard shortcuts (Cyan)
+theme[hi_fg]="#00d7ff"
 
-# Background color of selected item in processes box (Muted Blue)
-theme[selected_bg]="#313244"
+# Background color of selected item in processes box (Deep Blue)
+theme[selected_bg]="#005f87"
 
 # Foreground color of selected item in processes box (White)
 theme[selected_fg]="#ffffff"
 
 # Color of inactive/disabled text (Grey)
-theme[inactive_fg]="#6c7086"
+theme[inactive_fg]="#585858"
 
 # Color of text appearing on top of graphs, i.e uptime and current network graph scaling
-theme[graph_text]="#cdd6f4"
+theme[graph_text]="#dadada"
 
 # Misc colors for processes box including mini cpu graphs, details memory graph and details status text
-theme[proc_misc]="#cba6f7"
+theme[proc_misc]="#af5fff"
 
-# Cpu box outline color (Lavender)
-theme[cpu_box]="#b4befe"
+# Cpu box outline color (Medium Purple)
+theme[cpu_box]="#875fdf"
 
-# Memory box outline color (Mint)
-theme[mem_box]="#94e2d5"
+# Memory box outline color (Emerald Green)
+theme[mem_box]="#00af87"
 
-# Net box outline color (Sky Blue)
-theme[net_box]="#89dceb"
+# Net box outline color (Royal Blue)
+theme[net_box]="#0087ff"
 
-# Processes box outline color (Soft Pink)
-theme[proc_box]="#f5c2e7"
+# Processes box outline color (Deep Pink)
+theme[proc_box]="#d7005f"
 
 # Box divider line and small boxes line color
-theme[div_line]="#45475a"
+theme[div_line]="#303030"
 
-# Temperature graph colors (Mint -> Sky)
-theme[temp_start]="#94e2d5"
-theme[temp_mid]="#89dceb"
-theme[temp_end]="#74c7ec"
+# Temperature graph colors (Cyan -> Blue)
+theme[temp_start]="#00ffff"
+theme[temp_mid]="#00afff"
+theme[temp_end]="#005fff"
 
-# CPU graph colors (Lavender -> Mauve)
-theme[cpu_start]="#b4befe"
-theme[cpu_mid]="#cba6f7"
-theme[cpu_end]="#f5c2e7"
+# CPU graph colors (Purple -> Blue)
+theme[cpu_start]="#af5fff"
+theme[cpu_mid]="#875fdf"
+theme[cpu_end]="#5f00d7"
 
-# Mem/Disk free meter (Mint)
-theme[free_start]="#94e2d5"
-theme[free_mid]="#94e2d5"
-theme[free_end]="#a6e3a1"
+# Mem/Disk free meter (Teal -> Green)
+theme[free_start]="#00af87"
+theme[free_mid]="#00d787"
+theme[free_end]="#5fd787"
 
-# Mem/Disk cached meter (Sapphire)
-theme[cached_start]="#74c7ec"
-theme[cached_mid]="#89b4fa"
-theme[cached_end]="#b4befe"
+# Mem/Disk cached meter (Blue -> Cyan)
+theme[cached_start]="#005f87"
+theme[cached_mid]="#0087af"
+theme[cached_end]="#00d7ff"
 
-# Mem/Disk available meter (Sky)
-theme[available_start]="#89dceb"
-theme[available_mid]="#89dceb"
-theme[available_end]="#74c7ec"
+# Mem/Disk available meter (Cyan)
+theme[available_start]="#00afaf"
+theme[available_mid]="#00d7d7"
+theme[available_end]="#00ffff"
 
-# Mem/Disk used meter (Pink -> Red)
-theme[used_start]="#f5c2e7"
-theme[used_mid]="#eba0ac"
-theme[used_end]="#f38ba8"
+# Mem/Disk used meter (Deep Pink -> Red)
+theme[used_start]="#af005f"
+theme[used_mid]="#d7005f"
+theme[used_end]="#ff005f"
 
-# Download graph colors (Sky -> Sapphire)
-theme[download_start]="#89dceb"
-theme[download_mid]="#74c7ec"
-theme[download_end]="#89b4fa"
+# Download graph colors (Blue -> Cyan)
+theme[download_start]="#005fff"
+theme[download_mid]="#00afff"
+theme[download_end]="#00ffff"
 
-# Upload graph colors (Lavender -> Mauve)
-theme[upload_start]="#b4befe"
-theme[upload_mid]="#cba6f7"
-theme[upload_end]="#f5c2e7"
+# Upload graph colors (Purple -> Pink)
+theme[upload_start]="#5f00ff"
+theme[upload_mid]="#af00ff"
+theme[upload_end]="#d700ff"
