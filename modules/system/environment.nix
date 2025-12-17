@@ -42,7 +42,9 @@
       homedir = "/home/${user}";
     in ''
       if [ "$(id -un)" = "${user}" ]; then
-        . "${homedir}/.local/state/nix/profile/etc/profile.d/hm-session-vars.sh"
+        if [ -f "${homedir}/.local/state/nix/profile/etc/profile.d/session-vars.sh" ]; then
+          . "${homedir}/.local/state/nix/profile/etc/profile.d/session-vars.sh"
+        fi
       fi
     '';
 
