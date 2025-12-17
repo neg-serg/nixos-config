@@ -1,6 +1,8 @@
-{...}: {
-  # Assuming wrapper-manager has a NixOS module, otherwise we will use it as a lib
-  # imports = [ inputs.wrapper-manager.nixosModules.default ];
+{inputs, ...}: {
+  imports = [
+    "${inputs.wrapper-manager}/modules/many-wrappers.nix"
+    ./tewi.nix
+  ];
 
   # Placeholder for wrapper configuration
 }
