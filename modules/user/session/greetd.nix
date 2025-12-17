@@ -15,7 +15,7 @@
   greeterWallpaperDst = "/var/lib/greetd/wallpaper.jpg";
   hyprlandConfig = pkgs.writeText "greetd-hyprland-config" ''
     # for some reason pkill is way faster than dispatching exit, to the point greetd thinks the greeter died.
-    exec-once = quickshell -p /etc/greetd/quickshell/greeter.qml >& qslog.txt && pkill Hyprland
+    exec-once = quickshell -p /etc/greetd/quickshell/greeter/greeter.qml >& qslog.txt && pkill Hyprland
 
     input {
       kb_layout = us,ru
