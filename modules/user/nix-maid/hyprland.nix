@@ -131,8 +131,13 @@
     }
     {
       id = 20;
-      name = "ag";
-      var = "ag";
+      name = "𐍅:winboat";
+      var = "winboat";
+    }
+    {
+      id = 21;
+      name = "𐍇:antigravity";
+      var = "antigravity";
     }
   ];
 
@@ -178,7 +183,7 @@
         map (
           w:
             if (w.var or null) != null
-            then "windowrulev2 = workspace name:${w.name}, $" + w.var
+            then "windowrulev2 = workspace ${toString w.id}, $" + w.var
             else ""
         )
         workspaces
