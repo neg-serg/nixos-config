@@ -44,15 +44,15 @@ theme[proc_box]="#d7005f"
 # Box divider line and small boxes line color
 theme[div_line]="#303030"
 
-# Temperature graph colors (Cyan -> Blue)
+# Temperature graph colors (Cyan -> Deep Blue)
 theme[temp_start]="#00ffff"
-theme[temp_mid]="#00afff"
-theme[temp_end]="#005fff"
+theme[temp_mid]="#0087ff"
+theme[temp_end]="#0000ff"
 
-# CPU graph colors (Purple -> Blue)
-theme[cpu_start]="#af5fff"
+# CPU graph colors (Light Purple -> Deep Blue)
+theme[cpu_start]="#d75fff"
 theme[cpu_mid]="#875fdf"
-theme[cpu_end]="#5f00d7"
+theme[cpu_end]="#0000af"
 
 # Mem/Disk free meter (Teal -> Green)
 theme[free_start]="#00af87"
@@ -72,14 +72,14 @@ theme[available_end]="#00ffff"
 # Mem/Disk used meter (Deep Pink -> Red)
 theme[used_start]="#af005f"
 theme[used_mid]="#d7005f"
-theme[used_end]="#ff005f"
+theme[used_end]="#ff0000"
 
-# Download graph colors (Blue -> Cyan)
-theme[download_start]="#005fff"
+# Download graph colors (Light Blue -> Deep Cyan)
+theme[download_start]="#5fd7ff"
 theme[download_mid]="#00afff"
-theme[download_end]="#00ffff"
+theme[download_end]="#000087"
 
-# Upload graph colors (Purple -> Pink)
-theme[upload_start]="#5f00ff"
+# Upload graph colors (Light Purple -> Deep Pink)
+theme[upload_start]="#af5fff"
 theme[upload_mid]="#af00ff"
-theme[upload_end]="#d700ff"
+theme[upload_end]="#87005f"
