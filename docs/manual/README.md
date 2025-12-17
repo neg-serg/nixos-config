@@ -1,8 +1,9 @@
 # Repository Overview
 
 This repository contains the complete NixOS configuration using nix-maid for user-level management.
-All packages and services are wired from `modules/`, with user configuration under `modules/user/nix-maid/`.
-The documentation below provides workflows for system and user configuration.
+All packages and services are wired from `modules/`, with user configuration under
+`modules/user/nix-maid/`. The documentation below provides workflows for system and user
+configuration.
 
 ## Working Tree Layout
 
@@ -68,8 +69,8 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
 
 ### Sing-box Reality TUN (host)
 
-- Secret lives at `/run/secrets/vless-reality-singbox-tun.json`, rendered by sops-nix
-  from `secrets/home/vless/reality-singbox-tun.json.sops`.
+- Secret lives at `/run/secrets/vless-reality-singbox-tun.json`, rendered by sops-nix from
+  `secrets/home/vless/reality-singbox-tun.json.sops`.
 - Service: `systemctl start sing-box-tun` / `systemctl stop sing-box-tun` (manual). Policy routing
   in the unit: `pref 100` sends traffic to 204.152.223.171 via `main`; `pref 200` + `table 200`
   route everything else to `default dev sb0`; DNS via `resolvectl dns sb0 1.1.1.1 1.0.0.1` and
@@ -104,8 +105,8 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
 
 ## Agent Guide & Conventions
 
-Use the same expectations regardless of whether you work under `modules/` or `modules/user/nix-maid/`;
-helpers live side-by-side so the patterns apply to both configurations.
+Use the same expectations regardless of whether you work under `modules/` or
+`modules/user/nix-maid/`; helpers live side-by-side so the patterns apply to both configurations.
 
 ### Key Locations
 
