@@ -162,6 +162,10 @@ in {
               command = "${pkgs.amneziawg-tools}/bin/awg-quick";
               options = ["NOPASSWD"];
             }
+            {
+              command = "/run/current-system/sw/bin/nixos-rebuild";
+              options = ["NOPASSWD"];
+            }
           ];
           groups = [mainGroup];
         }
