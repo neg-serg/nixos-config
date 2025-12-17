@@ -17,15 +17,8 @@
       url = "git+https://github.com/hyprwm/Hyprland?ref=v0.52.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # hyprland-plugins = {
-    #   url = "github:hyprwm/hyprland-plugins";
-    #   inputs.hyprland.follows = "hyprland";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
 
-    # Keep selected Hyprland-related inputs in lockstep with the tracked Hyprland flake
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
-    # xdg-desktop-portal-hyprland is named 'xdph' inside the Hyprland flake inputs
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
 
     iosevka-neg = {
