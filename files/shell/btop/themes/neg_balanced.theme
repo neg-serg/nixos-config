@@ -1,0 +1,57 @@
+# Theme: neg_balanced
+# Description: Soft Dark/Pastel palette. Modern and Clean.
+
+theme[main_bg]="#282a36"
+theme[main_fg]="#f8f8f2"
+theme[title]="#bd93f9"
+theme[hi_fg]="#ff79c6"
+theme[selected_bg]="#44475a"
+theme[selected_fg]="#f8f8f2"
+theme[inactive_fg]="#6272a4"
+theme[graph_text]="#f8f8f2"
+theme[proc_misc]="#bd93f9"
+theme[cpu_box]="#bd93f9"
+theme[mem_box]="#ff79c6"
+theme[net_box]="#8be9fd"
+theme[proc_box]="#50fa7b"
+theme[div_line]="#44475a"
+
+# Temp: Green -> Yellow -> Orange
+theme[temp_start]="#50fa7b"
+theme[temp_mid]="#f1fa8c"
+theme[temp_end]="#ffb86c"
+
+# CPU: Purple -> Pink
+theme[cpu_start]="#bd93f9"
+theme[cpu_mid]="#ff79c6"
+theme[cpu_end]="#ff5555"
+
+# Free: Cyan -> Green
+theme[free_start]="#8be9fd"
+theme[free_mid]="#50fa7b"
+theme[free_end]="#f1fa8c"
+
+# Cached: Pink -> Purple
+theme[cached_start]="#ff79c6"
+theme[cached_mid]="#bd93f9"
+theme[cached_end]="#8be9fd"
+
+# Available: Green -> Yellow
+theme[available_start]="#50fa7b"
+theme[available_mid]="#f1fa8c"
+theme[available_end]="#ffb86c"
+
+# Used: Red -> Pink
+theme[used_start]="#ff5555"
+theme[used_mid]="#ff79c6"
+theme[used_end]="#bd93f9"
+
+# Download: Cyan -> Green
+theme[download_start]="#8be9fd"
+theme[download_mid]="#50fa7b"
+theme[download_end]="#f1fa8c"
+
+# Upload: Purple -> Pink
+theme[upload_start]="#bd93f9"
+theme[upload_mid]="#ff79c6"
+theme[upload_end]="#ff5555"

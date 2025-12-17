@@ -1,0 +1,57 @@
+# Theme: neg_cool
+# Description: Harmonious Dark Blue/Teal/Purple palette. Low eye strain.
+
+theme[main_bg]="#0d1824"
+theme[main_fg]="#b8c5d9"
+theme[title]="#ffffff"
+theme[hi_fg]="#00f0ff"
+theme[selected_bg]="#315c70"
+theme[selected_fg]="#ffffff"
+theme[inactive_fg]="#828b99"
+theme[graph_text]="#b8c5d9"
+theme[proc_misc]="#367bbf"
+theme[cpu_box]="#367bbf"
+theme[mem_box]="#00d7ff"
+theme[net_box]="#bd00ff"
+theme[proc_box]="#367bbf"
+theme[div_line]="#315c70"
+
+# Temp: Teal -> Blue -> Purple
+theme[temp_start]="#00d7ff"
+theme[temp_mid]="#367bbf"
+theme[temp_end]="#bd00ff"
+
+# CPU: Deep Blue -> Cyan
+theme[cpu_start]="#005faf"
+theme[cpu_mid]="#367bbf"
+theme[cpu_end]="#00d7ff"
+
+# Free: Green -> Teal
+theme[free_start]="#00ff87"
+theme[free_mid]="#00d7ff"
+theme[free_end]="#367bbf"
+
+# Cached: Teal -> Blue
+theme[cached_start]="#00d7ff"
+theme[cached_mid]="#367bbf"
+theme[cached_end]="#005faf"
+
+# Available: Cyan -> Blue
+theme[available_start]="#00f0ff"
+theme[available_mid]="#367bbf"
+theme[available_end]="#005faf"
+
+# Used: Purple -> Pink
+theme[used_start]="#bd00ff"
+theme[used_mid]="#d75f5f"
+theme[used_end]="#ff007c"
+
+# Download: Cyan -> Blue
+theme[download_start]="#00f0ff"
+theme[download_mid]="#367bbf"
+theme[download_end]="#005faf"
+
+# Upload: Purple -> Pink
+theme[upload_start]="#bd00ff"
+theme[upload_mid]="#d75f5f"
+theme[upload_end]="#ff007c"
