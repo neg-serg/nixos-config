@@ -1,20 +1,21 @@
 # Theme: neg
-# By: neg-serg (Cold 256-color style)
+# By: neg-serg (Diverse Cold 256-color)
+# Description: Cold tonality but high variety (Purple, Teal, Pink, Lime, Cyan).
 
 # Main background, empty for terminal default, need to be empty!
 theme[main_bg]="#080808"
 
 # Main text color
-theme[main_fg]="#d0d0d0"
+theme[main_fg]="#e4e4e4"
 
 # Title color for boxes
 theme[title]="#ffffff"
 
 # Highlight color for keyboard shortcuts
-theme[hi_fg]="#00ffff"
+theme[hi_fg]="#00d7ff"
 
 # Background color of selected item in processes box
-theme[selected_bg]="#005f87"
+theme[selected_bg]="#5f00d7"
 
 # Foreground color of selected item in processes box
 theme[selected_fg]="#ffffff"
@@ -23,62 +24,62 @@ theme[selected_fg]="#ffffff"
 theme[inactive_fg]="#585858"
 
 # Color of text appearing on top of graphs, i.e uptime and current network graph scaling
-theme[graph_text]="#d0d0d0"
+theme[graph_text]="#e4e4e4"
 
 # Misc colors for processes box including mini cpu graphs, details memory graph and details status text
-theme[proc_misc]="#00afff"
+theme[proc_misc]="#ff5faf"
 
 # Cpu box outline color
-theme[cpu_box]="#005f87"
+theme[cpu_box]="#875fdf"
 
 # Memory box outline color
-theme[mem_box]="#00875f"
+theme[mem_box]="#00af87"
 
 # Net box outline color
-theme[net_box]="#005f87"
+theme[net_box]="#0087ff"
 
 # Processes box outline color
-theme[proc_box]="#005f87"
+theme[proc_box]="#d7005f"
 
 # Box divider line and small boxes line color
 theme[div_line]="#303030"
 
-# Temperature graph colors (Cyan -> Blue)
+# Temperature graph colors (Cyan -> Lime Green)
 theme[temp_start]="#00ffff"
-theme[temp_mid]="#00afff"
-theme[temp_end]="#005fff"
+theme[temp_mid]="#00afaf"
+theme[temp_end]="#afff00"
 
-# CPU graph colors (Blue -> Cyan -> White)
-theme[cpu_start]="#0000d7"
-theme[cpu_mid]="#00afff"
-theme[cpu_end]="#ffffff"
+# CPU graph colors (Purple -> Lavender)
+theme[cpu_start]="#5f00d7"
+theme[cpu_mid]="#875fdf"
+theme[cpu_end]="#af87ff"
 
-# Mem/Disk free meter (Cold Green)
+# Mem/Disk free meter (Teal -> Mint)
 theme[free_start]="#00875f"
 theme[free_mid]="#00af87"
 theme[free_end]="#5fffd7"
 
-# Mem/Disk cached meter (Cold Teal)
+# Mem/Disk cached meter (Blue -> Cyan)
 theme[cached_start]="#005f87"
 theme[cached_mid]="#0087af"
 theme[cached_end]="#00d7ff"
 
-# Mem/Disk available meter (Cyan)
-theme[available_start]="#008787"
-theme[available_mid]="#00afaf"
-theme[available_end]="#00ffff"
+# Mem/Disk available meter (Cyan -> White)
+theme[available_start]="#00afaf"
+theme[available_mid]="#00ffff"
+theme[available_end]="#ffffff"
 
-# Mem/Disk used meter (Blue -> Magenta)
-theme[used_start]="#0000af"
-theme[used_mid]="#5f00d7"
-theme[used_end]="#af00ff"
+# Mem/Disk used meter (Deep Pink -> Hot Pink)
+theme[used_start]="#87005f"
+theme[used_mid]="#d7005f"
+theme[used_end]="#ff5faf"
 
-# Download graph colors (Cyan -> Blue)
-theme[download_start]="#00ffff"
+# Download graph colors (Blue -> Cyan)
+theme[download_start]="#005fff"
 theme[download_mid]="#00afff"
-theme[download_end]="#005fff"
+theme[download_end]="#00ffff"
 
-# Upload graph colors (Blue -> Purple)
-theme[upload_start]="#005fff"
-theme[upload_mid]="#5f00ff"
-theme[upload_end]="#af00ff"
+# Upload graph colors (Purple -> Pink)
+theme[upload_start]="#5f00ff"
+theme[upload_mid]="#af00ff"
+theme[upload_end]="#ff00d7"
