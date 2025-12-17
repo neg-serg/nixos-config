@@ -13,7 +13,7 @@ if [ -S "$SOCKET" ]; then
   fi
 
   # 3. Raise Window (via hyprctl)
-  hyprctl dispatch focuswindow "class:^nwim$" >/dev/null
+  hyprctl dispatch focuswindow "class:nwim" >/dev/null
   echo "↗  nvim"
 else
   # 4. Start new instance acting as server
