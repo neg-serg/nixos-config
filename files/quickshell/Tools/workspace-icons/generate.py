@@ -28,9 +28,7 @@ DEFAULT_FONT_PATTERN = "Font Awesome 6 Pro"
 DEFAULT_FONT_FALLBACKS = ["FiraCode Nerd Font Mono", "Iosevka"]
 DEFAULT_VIEWBOX = 1024
 DEFAULT_PADDING = 48
-HYPR_REL_PATH = Path(
-    "files/gui/hypr/workspaces.conf"
-)
+HYPR_REL_PATH = Path("files/gui/hypr/workspaces.conf")
 ICONS_REL_DIR = Path("quickshell/.config/quickshell/Bar/Icons/workspaces")
 MAP_FILENAME = "icon-map.json"
 MANIFEST_FILENAME = "manifest.json"
