@@ -9,7 +9,7 @@
                     "type": "git",
                     "style": "plain",
                     "foreground": "#899CA1",
-                    "properties": {
+                    "options": {
                         "branch_icon": "",
                         "fetch_status": true,
                         "display_status": true,
@@ -23,7 +23,7 @@
                     "style": "powerline",
                     "foreground": "#45bf17",
                     "template": " {{ .FormattedMs }}s <#899CA1>\ue601</>",
-                    "properties": {
+                    "options": {
                         "threshold": 50,
                         "style": "dallas"
                     }
@@ -36,7 +36,7 @@
                 },
                 {
                     "foreground": "#E4F34A",
-                    "properties": {
+                    "options": {
                         "fetch_version": false
                     },
                     "template": "\ue235{{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}",
@@ -45,7 +45,7 @@
                 },
                 {
                     "foreground": "#7FD5EA",
-                    "properties": {
+                    "options": {
                         "fetch_version": false
                     },
                     "template": "\ue626{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
@@ -54,7 +54,7 @@
                 },
                 {
                     "foreground": "#42E66C",
-                    "properties": {
+                    "options": {
                         "detect_extensions": [
                             "js",
                             "ts"
@@ -68,7 +68,7 @@
                 },
                 {
                     "foreground": "#CC342D",
-                    "properties": {
+                    "options": {
                         "fetch_version": false
                     },
                     "template": "\ue791{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
@@ -77,7 +77,7 @@
                 },
                 {
                     "foreground": "#b07219",
-                    "properties": {
+                    "options": {
                         "fetch_version": false
                     },
                     "template": "\ue738{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
@@ -86,7 +86,7 @@
                 },
                 {
                     "foreground": "#0db7ed",
-                    "properties": {
+                    "options": {
                         "fetch_version": false
                     },
                     "template": "\uf308{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
@@ -95,7 +95,7 @@
                 },
                 {
                     "foreground": "#5f43e9",
-                    "properties": {
+                    "options": {
                         "fetch_version": false
                     },
                     "template": "TF{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
@@ -104,20 +104,23 @@
                 },
                 {
                     "foreground": "#f7ad24",
-                    "properties": {
+                    "options": {
                         "fetch_version": false
                     },
                     "template": "\ue718{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
                     "type": "pnpm",
+                    "style": "plain"
+                },
+                {
+                    "type": "status",
+                    "style": "plain",
                     "foreground_templates": [
                         "{{ if gt .Code 0 }}#ce162b{{ end }}"
                     ],
-                    "properties": {
+                    "options": {
                         "always_enabled": false
                     },
-                    "style": "plain",
-                    "template": " ×{{.Code}}",
-                    "type": "status"
+                    "template": " ×{{.Code}}"
                 }
             ],
             "type": "rprompt"
@@ -127,7 +130,7 @@
             "segments": [
                 {
                     "foreground": "#005faf",
-                    "properties": {
+                    "options": {
                         "linux": "<#005faf>\ue27f</>",
                         "macos": "<#005faf>\ue27f</>",
                         "windows": "<#005faf>\ue27f</>"
@@ -151,19 +154,19 @@
                 },
                 {
                     "foreground": "#395573",
-                    "properties": {
+                    "options": {
                         "folder_separator_icon": "/",
                         "max_width": 40,
                         "home_icon": "<#005faf>~</>",
                         "truncation_symbol": "…",
                         "cycle": [
-                            "#899CA1",
-                            "#899CA1",
-                            "#899CA1",
-                            "#899CA1",
-                            "#899CA1",
-                            "#899CA1",
-                            "#899CA1"
+                            "#367bbf",
+                            "#367bbf",
+                            "#367bbf",
+                            "#367bbf",
+                            "#367bbf",
+                            "#367bbf",
+                            "#367bbf"
                         ]
                     },
                     "template": "{{ .Path }}",
