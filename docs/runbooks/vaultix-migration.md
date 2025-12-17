@@ -1,8 +1,8 @@
 # Migrating Secrets to Vaultix
 
-This note describes how to move an existing setup (currently using only `sops-nix`) to
-`vaultix`. The steps assume you deploy modules through a NixOS host, because `vaultix` exposes
-its integration as a NixOS module plus a helper CLI.
+This note describes how to move an existing setup (currently using only `sops-nix`) to `vaultix`.
+The steps assume you deploy modules through a NixOS host, because `vaultix` exposes its integration
+as a NixOS module plus a helper CLI.
 
 ## Why Vaultix
 
