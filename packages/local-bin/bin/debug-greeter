@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Debug script for greetd/quickshell login issues
+
+echo "=== Greetd Service Status ==="
+systemctl status greetd --no-pager
+echo ""
+
+echo "=== Quickshell Processes ==="
+if pgrep -a quickshell >/dev/null; then
+    pgrep -a quickshell
+else
+    echo "No quickshell processes found."
+fi
+echo ""
+
+echo "=== Permissions Check ==="
+echo "/var/lib/greetd:"
+ls -ld /var/lib/greetd
+echo "/home/greeter:"
+ls -ld /home/greeter
+if [ -f /home/greeter/qslog.txt ]; then
+    echo "WARNING: /home/greeter/qslog.txt still exists:"
+    ls -l /home/greeter/qslog.txt
+fi
+echo ""
+
+echo "=== Recent Logs (Last 50 lines) ==="
+journalctl -u greetd -n 50 --no-pager
