@@ -173,9 +173,9 @@ return function(ctx)
         self._parts[#self._parts + 1] = { text = text, hl = hl }
       end
       local function slash_part()
-        return { fg = "#367bbf", bg = colors.base_bg }
+        return { fg = colors.blue, bg = colors.base_bg }
       end
-      local default_hl = { fg = "#ffffff", bg = colors.base_bg }
+      local default_hl = { fg = "#367bbf", bg = colors.base_bg }
       local rest = display
       if rest:sub(1, 1) == '~' then
         push('~', { fg = colors.green, bg = colors.base_bg, bold = true })
