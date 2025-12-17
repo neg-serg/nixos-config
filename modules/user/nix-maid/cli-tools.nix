@@ -57,7 +57,7 @@
       attrs);
 
   btopSettings = {
-    color_theme = "Default";
+    color_theme = "neg";
     theme_background = true;
     truecolor = true;
     force_tty = false;
@@ -351,6 +351,7 @@ in {
 
     # Btop Config
     ".config/btop/btop.conf".text = mkBtopConf btopSettings;
+    ".config/btop/themes/neg.theme".source = ../../../files/shell/btop/themes/neg.theme;
 
     # Yazi Configs
     ".config/yazi/yazi.toml".source = yaziFormat.generate "yazi.toml" yaziSettings;
