@@ -41,24 +41,25 @@
   };
 
   # Systemd unit to manage the zero-sandbox LXC container.
-  systemd.services."lxc-zero-sandbox" = {
-    description = "LXC container zero-sandbox on /zero/sandbox/d1-btrfs450.img";
-    after = [
-      "network.target"
-      "local-fs.target"
-    ];
-    requires = [
-      "local-fs.target"
-    ];
-    wantedBy = ["multi-user.target"];
-
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = "${pkgs.lxc}/bin/lxc-start -n zero-sandbox -P /zero/sandbox/mnt-d1 -d";
-      ExecStop = "${pkgs.lxc}/bin/lxc-stop -n zero-sandbox -P /zero/sandbox/mnt-d1";
-    };
-
-    unitConfig.RequiresMountsFor = ["/zero/sandbox/mnt-d1"];
-  };
+  # systemd.services."lxc-zero-sandbox".enable = false;
+  # systemd.services."lxc-zero-sandbox" = {
+  #   description = "LXC container zero-sandbox on /zero/sandbox/d1-btrfs450.img";
+  #   after = [
+  #     "network.target"
+  #     "local-fs.target"
+  #   ];
+  #   requires = [
+  #     "local-fs.target"
+  #   ];
+  #   wantedBy = ["multi-user.target"];
+  #
+  #   serviceConfig = {
+  #     Type = "oneshot";
+  #     RemainAfterExit = true;
+  #     ExecStart = "${pkgs.lxc}/bin/lxc-start -n zero-sandbox -P /zero/sandbox/mnt-d1 -d";
+  #     ExecStop = "${pkgs.lxc}/bin/lxc-stop -n zero-sandbox -P /zero/sandbox/mnt-d1";
+  #   };
+  #
+  #   unitConfig.RequiresMountsFor = ["/zero/sandbox/mnt-d1"];
+  # };
 }
