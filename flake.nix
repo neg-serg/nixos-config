@@ -93,7 +93,6 @@
     };
     wrapper-manager = {
       url = "github:viperML/wrapper-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     yazi = {
       url = "github:sxyazi/yazi";
