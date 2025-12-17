@@ -40,6 +40,9 @@ in {
   # Replace ad-hoc nixindex units with native module
   programs.nix-index.enable = true;
 
+  # Enable multi-threaded activation (uses switch-to-configuration-ng)
+  system.switch.enableNg = true;
+
   systemd = {
     coredump.enable = true;
     settings = {
