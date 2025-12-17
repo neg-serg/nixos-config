@@ -143,23 +143,23 @@ in {
         {
           commands = [
             {
-              command = "${pkgs.systemd}/bin/systemctl suspend";
+              command = "/run/current-system/sw/bin/systemctl suspend";
               options = ["NOPASSWD"];
             }
             {
-              command = "${pkgs.systemd}/bin/reboot";
+              command = "/run/current-system/sw/bin/reboot";
               options = ["NOPASSWD"];
             }
             {
-              command = "${pkgs.systemd}/bin/poweroff";
+              command = "/run/current-system/sw/bin/poweroff";
               options = ["NOPASSWD"];
             }
             {
-              command = "${pkgs.util-linux}/bin/dmesg";
+              command = "/run/current-system/sw/bin/dmesg";
               options = ["NOPASSWD"];
             }
             {
-              command = "${pkgs.amneziawg-tools}/bin/awg-quick";
+              command = "/run/current-system/sw/bin/awg-quick";
               options = ["NOPASSWD"];
             }
             {
