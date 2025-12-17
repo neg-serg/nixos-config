@@ -58,7 +58,7 @@ manual_sync() {
     export NC_PASSWORD="$pass"
   fi
   echo "running $profile sync to $url -> $localdir"
-  SSL_CERT_FILE=${SSL_CERT_FILE:-/etc/nixos/certs/caddy-root.crt} \
+  SSL_CERT_FILE=${SSL_CERT_FILE:-/etc/ssl/certs/ca-bundle.crt} \
     nextcloudcmd --logdebug --non-interactive --silent "$localdir" "$url" || true
 }
 

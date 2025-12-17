@@ -66,7 +66,7 @@ in
         monitoring.enable = true;
       };
       # Trust local Caddy CA so nextcloudcmd/Qt accepts the cert
-      security.pki.certificateFiles = [../../certs/caddy-root.crt];
+
       # Reduce microphone background noise system-wide (PipeWire RNNoise filter)
       # Enabled via modules/hardware/audio/noise by default for this host
       # (If you prefer toggling via an option, we can expose one later.)
