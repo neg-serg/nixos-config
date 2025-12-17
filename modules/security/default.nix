@@ -22,7 +22,7 @@ in {
 
   security = {
     apparmor = {
-      enable = false;
+      enable = true;
       killUnconfinedConfinables = false;
       packages = [pkgs.apparmor-utils pkgs.apparmor-profiles];
     };
