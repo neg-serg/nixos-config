@@ -1,5 +1,5 @@
 # Theme: neg
-# By: neg-serg matching neg.nvim
+# By: neg-serg matching neg.nvim (More Colorful Version)
 
 # Main background, empty for terminal default, need to be empty!
 theme[main_bg]="#020404"
@@ -32,53 +32,53 @@ theme[proc_misc]="#367bbf"
 theme[cpu_box]="#367bbf"
 
 # Memory box outline color
-theme[mem_box]="#005faf"
+theme[mem_box]="#5fd75f"
 
 # Net box outline color
-theme[net_box]="#005f87"
+theme[net_box]="#00d7ff"
 
 # Processes box outline color
-theme[proc_box]="#367bbf"
+theme[proc_box]="#ab1e87"
 
 # Box divider line and small boxes line color
 theme[div_line]="#315c70"
 
-# Temperature graph colors
-theme[temp_start]="#367bbf"
-theme[temp_mid]="#005faf"
-theme[temp_end]="#ab1e87"
+# Temperature graph colors (Green -> Yellow -> Red)
+theme[temp_start]="#5fd75f"
+theme[temp_mid]="#d7af5f"
+theme[temp_end]="#d75f5f"
 
-# CPU graph colors
+# CPU graph colors (Blue -> Magenta)
 theme[cpu_start]="#367bbf"
 theme[cpu_mid]="#005faf"
 theme[cpu_end]="#ab1e87"
 
-# Mem/Disk free meter
-theme[free_start]="#367bbf"
-theme[free_mid]="#005faf"
-theme[free_end]="#ab1e87"
+# Mem/Disk free meter (Green gradient)
+theme[free_start]="#5fd75f"
+theme[free_mid]="#00af5f"
+theme[free_end]="#00875f"
 
-# Mem/Disk cached meter
-theme[cached_start]="#367bbf"
-theme[cached_mid]="#005faf"
-theme[cached_end]="#ab1e87"
+# Mem/Disk cached meter (Cyan gradient)
+theme[cached_start]="#00d7ff"
+theme[cached_mid]="#00afff"
+theme[cached_end]="#0087ff"
 
-# Mem/Disk available meter
-theme[available_start]="#367bbf"
-theme[available_mid]="#005faf"
-theme[available_end]="#ab1e87"
+# Mem/Disk available meter (Yellow gradient)
+theme[available_start]="#d7af5f"
+theme[available_mid]="#d7875f"
+theme[available_end]="#d75f5f"
 
-# Mem/Disk used meter
-theme[used_start]="#367bbf"
-theme[used_mid]="#005faf"
-theme[used_end]="#ab1e87"
+# Mem/Disk used meter (Red gradient)
+theme[used_start]="#d75f5f"
+theme[used_mid]="#af5f5f"
+theme[used_end]="#870000"
 
-# Download graph colors
-theme[download_start]="#367bbf"
-theme[download_mid]="#005faf"
-theme[download_end]="#ab1e87"
+# Download graph colors (Cyan -> Blue)
+theme[download_start]="#00d7ff"
+theme[download_mid]="#00afff"
+theme[download_end]="#005faf"
 
-# Upload graph colors
-theme[upload_start]="#367bbf"
-theme[upload_mid]="#005faf"
-theme[upload_end]="#ab1e87"
+# Upload graph colors (Magenta -> Purple)
+theme[upload_start]="#ab1e87"
+theme[upload_mid]="#8700af"
+theme[upload_end]="#5f0087"
