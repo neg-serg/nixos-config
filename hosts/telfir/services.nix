@@ -47,7 +47,7 @@ in
       features.dev.tla.enable = true;
       features.apps.winapps.enable = true;
       features.gui.hy3.enable = true;
-      features.gui.walker.enable = true;
+      features.gui.walker.enable = false;
       features.gui.quickshell.enable = true;
       features.hardware.usbAutomount.enable = true;
       features.net.tailscale.enable = true;
