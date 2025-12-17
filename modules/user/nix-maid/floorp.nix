@@ -84,7 +84,7 @@
       name = "default";
       path = profileId; # Use the specific folder name
       inherit settings;
-
+      userChrome = "";
       enable = true;
       isDefault = true;
     };
