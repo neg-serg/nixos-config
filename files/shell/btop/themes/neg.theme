@@ -1,84 +1,84 @@
 # Theme: neg
-# By: neg-serg matching neg.nvim (More Colorful Version)
+# By: neg-serg (Cyberpunk Edition)
 
 # Main background, empty for terminal default, need to be empty!
-theme[main_bg]="#020404"
+theme[main_bg]="#050505"
 
 # Main text color
-theme[main_fg]="#b8c5d9"
+theme[main_fg]="#00f0ff"
 
 # Title color for boxes
-theme[title]="#ffffff"
+theme[title]="#fcee0a"
 
 # Highlight color for keyboard shortcuts
-theme[hi_fg]="#367bbf"
+theme[hi_fg]="#ff007c"
 
 # Background color of selected item in processes box
-theme[selected_bg]="#315c70"
+theme[selected_bg]="#ff007c"
 
 # Foreground color of selected item in processes box
 theme[selected_fg]="#ffffff"
 
 # Color of inactive/disabled text
-theme[inactive_fg]="#828b99"
+theme[inactive_fg]="#315c70"
 
 # Color of text appearing on top of graphs, i.e uptime and current network graph scaling
-theme[graph_text]="#b8c5d9"
+theme[graph_text]="#00f0ff"
 
 # Misc colors for processes box including mini cpu graphs, details memory graph and details status text
-theme[proc_misc]="#367bbf"
+theme[proc_misc]="#bd00ff"
 
 # Cpu box outline color
-theme[cpu_box]="#367bbf"
+theme[cpu_box]="#ff007c"
 
 # Memory box outline color
-theme[mem_box]="#5fd75f"
+theme[mem_box]="#00f0ff"
 
 # Net box outline color
-theme[net_box]="#00d7ff"
+theme[net_box]="#fcee0a"
 
 # Processes box outline color
-theme[proc_box]="#ab1e87"
+theme[proc_box]="#bd00ff"
 
 # Box divider line and small boxes line color
 theme[div_line]="#315c70"
 
-# Temperature graph colors (Green -> Yellow -> Red)
-theme[temp_start]="#5fd75f"
-theme[temp_mid]="#d7af5f"
-theme[temp_end]="#d75f5f"
+# Temperature graph colors (Green -> Yellow -> Red) (Cyberpunk: Cyan -> Pink)
+theme[temp_start]="#00f0ff"
+theme[temp_mid]="#bd00ff"
+theme[temp_end]="#ff007c"
 
-# CPU graph colors (Blue -> Magenta)
-theme[cpu_start]="#367bbf"
-theme[cpu_mid]="#005faf"
-theme[cpu_end]="#ab1e87"
+# CPU graph colors (Cyan -> Pink)
+theme[cpu_start]="#00f0ff"
+theme[cpu_mid]="#bd00ff"
+theme[cpu_end]="#ff007c"
 
-# Mem/Disk free meter (Green gradient)
-theme[free_start]="#5fd75f"
-theme[free_mid]="#00af5f"
-theme[free_end]="#00875f"
+# Mem/Disk free meter (Purple -> Cyan)
+theme[free_start]="#bd00ff"
+theme[free_mid]="#7100ff"
+theme[free_end]="#00f0ff"
 
-# Mem/Disk cached meter (Cyan gradient)
-theme[cached_start]="#00d7ff"
-theme[cached_mid]="#00afff"
-theme[cached_end]="#0087ff"
+# Mem/Disk cached meter (Pink -> Yellow)
+theme[cached_start]="#ff007c"
+theme[cached_mid]="#ff5f5f"
+theme[cached_end]="#fcee0a"
 
-# Mem/Disk available meter (Yellow gradient)
-theme[available_start]="#d7af5f"
-theme[available_mid]="#d7875f"
-theme[available_end]="#d75f5f"
+# Mem/Disk available meter (Yellow -> Green)
+theme[available_start]="#fcee0a"
+theme[available_mid]="#afff00"
+theme[available_end]="#00ff00"
 
-# Mem/Disk used meter (Red gradient)
-theme[used_start]="#d75f5f"
-theme[used_mid]="#af5f5f"
-theme[used_end]="#870000"
+# Mem/Disk used meter (Red -> Pink)
+theme[used_start]="#ff0000"
+theme[used_mid]="#ff005f"
+theme[used_end]="#ff007c"
 
 # Download graph colors (Cyan -> Blue)
-theme[download_start]="#00d7ff"
+theme[download_start]="#00f0ff"
 theme[download_mid]="#00afff"
 theme[download_end]="#005faf"
 
-# Upload graph colors (Magenta -> Purple)
-theme[upload_start]="#ab1e87"
-theme[upload_mid]="#8700af"
-theme[upload_end]="#5f0087"
+# Upload graph colors (Pink -> Purple)
+theme[upload_start]="#ff007c"
+theme[upload_mid]="#bd00ff"
+theme[upload_end]="#7100ff"
