@@ -333,13 +333,13 @@ in
   lib.mkIf guiEnabled {
     environment.systemPackages =
       [
-        pkgs.hyprlock
-        pkgs.hyprpolkitagent
-        pkgs.playerctl
-        pkgs.wayvnc
-        pkgs.wl-clipboard
-        pkgs.wl-ocr
-        pkgs.pyprland
+        pkgs.hyprlock # Hyprland's GPU-accelerated screen locking utility
+        pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
+        pkgs.playerctl # Command-line controller for media players
+        pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
+        pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
+        pkgs.wl-ocr # Wayland OCR tool
+        pkgs.pyprland # Python plugin system for Hyprland
         # hyprmusic script
         (pkgs.writeScriptBin "hyprmusic" ''
           #!/bin/sh
