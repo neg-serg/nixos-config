@@ -72,6 +72,12 @@ in {
   # Deploy QuickShell config to /etc instead of user profile
   environment.etc."greetd/quickshell".source = ../../../files/quickshell;
 
+  # Wrapper for verifying session launch
+  environment.etc."greetd/session-wrapper".source = pkgs.writeScript "session-wrapper" ''
+    #!/bin/sh
+    exec /run/current-system/sw/bin/hyprland > /tmp/hyprland-debug.log 2>&1
+  '';
+
   # Keep the greeter wallpaper in a world-readable location; falls back to the bundled
   # background if the source is missing.
   systemd.tmpfiles.rules = lib.mkAfter [
