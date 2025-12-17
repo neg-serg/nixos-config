@@ -1,85 +1,85 @@
 # Theme: neg
-# By: neg-serg (Diverse Cold 256-color)
-# Description: Cold tonality but high variety (Purple, Teal, Pink, Lime, Cyan).
+# By: neg-serg (Pastel Cold 256-color)
+# Description: Desaturated cold palette for better readability. Lavender, Ice Blue, Mint.
 
 # Main background, empty for terminal default, need to be empty!
 theme[main_bg]="#080808"
 
-# Main text color
+# Main text color (Off-White for readability)
 theme[main_fg]="#e4e4e4"
 
-# Title color for boxes
+# Title color for boxes (White)
 theme[title]="#ffffff"
 
-# Highlight color for keyboard shortcuts
-theme[hi_fg]="#00d7ff"
+# Highlight color for keyboard shortcuts (Ice Blue)
+theme[hi_fg]="#89dceb"
 
-# Background color of selected item in processes box
-theme[selected_bg]="#5f00d7"
+# Background color of selected item in processes box (Muted Blue)
+theme[selected_bg]="#313244"
 
-# Foreground color of selected item in processes box
+# Foreground color of selected item in processes box (White)
 theme[selected_fg]="#ffffff"
 
-# Color of inactive/disabled text
-theme[inactive_fg]="#585858"
+# Color of inactive/disabled text (Grey)
+theme[inactive_fg]="#6c7086"
 
 # Color of text appearing on top of graphs, i.e uptime and current network graph scaling
-theme[graph_text]="#e4e4e4"
+theme[graph_text]="#cdd6f4"
 
 # Misc colors for processes box including mini cpu graphs, details memory graph and details status text
-theme[proc_misc]="#ff5faf"
+theme[proc_misc]="#cba6f7"
 
-# Cpu box outline color
-theme[cpu_box]="#875fdf"
+# Cpu box outline color (Lavender)
+theme[cpu_box]="#b4befe"
 
-# Memory box outline color
-theme[mem_box]="#00af87"
+# Memory box outline color (Mint)
+theme[mem_box]="#94e2d5"
 
-# Net box outline color
-theme[net_box]="#0087ff"
+# Net box outline color (Sky Blue)
+theme[net_box]="#89dceb"
 
-# Processes box outline color
-theme[proc_box]="#d7005f"
+# Processes box outline color (Soft Pink)
+theme[proc_box]="#f5c2e7"
 
 # Box divider line and small boxes line color
-theme[div_line]="#303030"
+theme[div_line]="#45475a"
 
-# Temperature graph colors (Cyan -> Lime Green)
-theme[temp_start]="#00ffff"
-theme[temp_mid]="#00afaf"
-theme[temp_end]="#afff00"
+# Temperature graph colors (Mint -> Sky)
+theme[temp_start]="#94e2d5"
+theme[temp_mid]="#89dceb"
+theme[temp_end]="#74c7ec"
 
-# CPU graph colors (Purple -> Lavender)
-theme[cpu_start]="#5f00d7"
-theme[cpu_mid]="#875fdf"
-theme[cpu_end]="#af87ff"
+# CPU graph colors (Lavender -> Mauve)
+theme[cpu_start]="#b4befe"
+theme[cpu_mid]="#cba6f7"
+theme[cpu_end]="#f5c2e7"
 
-# Mem/Disk free meter (Teal -> Mint)
-theme[free_start]="#00875f"
-theme[free_mid]="#00af87"
-theme[free_end]="#5fffd7"
+# Mem/Disk free meter (Mint)
+theme[free_start]="#94e2d5"
+theme[free_mid]="#94e2d5"
+theme[free_end]="#a6e3a1"
 
-# Mem/Disk cached meter (Blue -> Cyan)
-theme[cached_start]="#005f87"
-theme[cached_mid]="#0087af"
-theme[cached_end]="#00d7ff"
+# Mem/Disk cached meter (Sapphire)
+theme[cached_start]="#74c7ec"
+theme[cached_mid]="#89b4fa"
+theme[cached_end]="#b4befe"
 
-# Mem/Disk available meter (Cyan -> White)
-theme[available_start]="#00afaf"
-theme[available_mid]="#00ffff"
-theme[available_end]="#ffffff"
+# Mem/Disk available meter (Sky)
+theme[available_start]="#89dceb"
+theme[available_mid]="#89dceb"
+theme[available_end]="#74c7ec"
 
-# Mem/Disk used meter (Deep Pink -> Hot Pink)
-theme[used_start]="#87005f"
-theme[used_mid]="#d7005f"
-theme[used_end]="#ff5faf"
+# Mem/Disk used meter (Pink -> Red)
+theme[used_start]="#f5c2e7"
+theme[used_mid]="#eba0ac"
+theme[used_end]="#f38ba8"
 
-# Download graph colors (Blue -> Cyan)
-theme[download_start]="#005fff"
-theme[download_mid]="#00afff"
-theme[download_end]="#00ffff"
+# Download graph colors (Sky -> Sapphire)
+theme[download_start]="#89dceb"
+theme[download_mid]="#74c7ec"
+theme[download_end]="#89b4fa"
 
-# Upload graph colors (Purple -> Pink)
-theme[upload_start]="#5f00ff"
-theme[upload_mid]="#af00ff"
-theme[upload_end]="#ff00d7"
+# Upload graph colors (Lavender -> Mauve)
+theme[upload_start]="#b4befe"
+theme[upload_mid]="#cba6f7"
+theme[upload_end]="#f5c2e7"
