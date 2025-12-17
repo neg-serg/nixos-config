@@ -153,11 +153,11 @@
                     "type": "root"
                 },
                 {
-                    "foreground": "#b8c5d9",
+                    "foreground": "#477AB3",
                     "options": {
-                        "folder_separator_icon": "<#367bbf>/</>",
+                        "folder_separator_icon": "<#477AB3>/</>",
                         "max_width": 40,
-                        "home_icon": "<#367bbf>~</>",
+                        "home_icon": "<#477AB3>~</>",
                         "truncation_symbol": "…",
                         "cycle": []
                     },
