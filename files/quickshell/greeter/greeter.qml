@@ -11,7 +11,7 @@ ShellRoot {
 
 		onLaunch: {
 			lock.locked = false;
-			Greetd.launch(["hyprland"]);
+			Greetd.launch(["/run/current-system/sw/bin/hyprland"]);
 		}
 	}
 
