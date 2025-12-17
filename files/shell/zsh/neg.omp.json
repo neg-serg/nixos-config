@@ -156,10 +156,14 @@
                     "foreground": "#477AB3",
                     "options": {
                         "folder_separator_icon": "<#477AB3>/</>",
-                        "max_width": 40,
                         "home_icon": "<#477AB3>~</>",
                         "truncation_symbol": "…",
-                        "cycle": []
+                        "cycle": [
+                            "#005faf",
+                            "#367bbf",
+                            "#5b9bd5",
+                            "#7FD5EA"
+                        ]
                     },
                     "template": "{{ .Path }}",
                     "enable_hyperlink": true,
