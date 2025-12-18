@@ -25,6 +25,6 @@
   });
 in {
   config = lib.mkIf webEnabled {
-    environment.systemPackages = lib.mkAfter [package];
+    environment.systemPackages = lib.mkAfter [package]; # Keyboard-focused browser with vim-like keybindings
   };
 }
