@@ -1,4 +1,5 @@
 {
+  # Helper script to unmount the Wine prefix overlay and squashfs
   writeShellScriptBin,
   util-linux,
 }:

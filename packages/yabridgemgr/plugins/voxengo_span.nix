@@ -1,4 +1,5 @@
 {
+  # Plugin installer for Voxengo SPAN (VST) into a Wine prefix
   writeShellScript,
   fetchurl,
 }: let
