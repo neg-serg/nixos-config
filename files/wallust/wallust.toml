@@ -1,0 +1,9 @@
+[backend]
+backend = "kmeans"
+color_space = "lab"
+palette = "dark16"
+threshold = 20
+
+[templates]
+hyprland.template = "hyprland.conf"
+hyprland.target = "~/.cache/wallust/hyprland.conf"

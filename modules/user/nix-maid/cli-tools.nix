@@ -398,6 +398,10 @@ in {
     # Icedtea Web Config
     ".config/icedtea-web".source = ../../../files/config/icedtea-web;
 
+    # Wallust Config
+    ".config/wallust/wallust.toml".source = ../../../files/wallust/wallust.toml;
+    ".config/wallust/templates/hyprland.conf".source = ../../../files/wallust/templates/hyprland.conf;
+
     # Aliae Config (if needed later, currently empty in source)
   };
 
