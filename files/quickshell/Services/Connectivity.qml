@@ -52,7 +52,7 @@ Item {
     }
     ProcessRunner {
         id: linkProbe
-        cmd: ["bash", "-lc", "ip -j -br a"]
+        cmd: ["dash", "-c", "ip -j -br a"]
         parseJson: true
         autoStart: false
         restartOnExit: false
@@ -85,7 +85,7 @@ Item {
     }
     ProcessRunner {
         id: inetProbe
-        cmd: ["bash", "-lc", "ping -n -c1 -W1 8.8.8.8 >/dev/null && echo OK || echo FAIL"]
+        cmd: ["dash", "-c", "ping -n -c1 -W1 8.8.8.8 >/dev/null && echo OK || echo FAIL"]
         autoStart: false
         restartOnExit: false
         onLine: (line) => { const ok = String(line||"").trim().indexOf("OK") !== -1; root.hasInternet = ok }
