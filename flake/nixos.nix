@@ -1,6 +1,7 @@
 {
   inputs,
   nixpkgs,
+  self,
   ...
 }: let
   inherit (nixpkgs) lib;
@@ -18,13 +19,13 @@
   linuxSystem = "x86_64-linux";
   locale = "en_US.UTF-8";
   timeZone = "Europe/Moscow";
-  kexec_enabled = true;
 
   # Nilla raw-loader compatibility
   nillaInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) inputs;
 
   commonModules = [
     ../init.nix
+    ../modules/impurity.nix
     inputs.nix-flatpak.nixosModules.nix-flatpak
     inputs.lanzaboote.nixosModules.lanzaboote
     inputs.sops-nix.nixosModules.sops
@@ -41,7 +42,7 @@
     lib.nixosSystem {
       system = linuxSystem;
       specialArgs = {
-        inherit locale timeZone kexec_enabled;
+        inherit locale timeZone self;
         inputs = nillaInputs;
         iosevkaNeg = inputs.iosevka-neg.packages.${linuxSystem};
       };
