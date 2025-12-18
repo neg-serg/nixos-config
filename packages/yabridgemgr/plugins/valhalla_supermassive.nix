@@ -1,4 +1,5 @@
 {
+  # Plugin installer for Valhalla Supermassive (VST) into a Wine prefix
   writeShellScript,
   fetchzip,
 }: let

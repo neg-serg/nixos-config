@@ -1,5 +1,6 @@
 # https://web.archive.org/web/20160316191703/http://thepiz.org/pizmidi/midiChordAnalyzer64.zip
 {
+  # Plugin installer for midiChordAnalyzer (VST2) into a Wine prefix
   writeShellScript,
   fetchzip,
 }: let

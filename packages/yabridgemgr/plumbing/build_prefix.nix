@@ -1,4 +1,5 @@
 {
+  # Helper to build a squashfs image of a Wine prefix with installed plugins
   runCommand,
   wineWowPackages,
   squashfsTools,
