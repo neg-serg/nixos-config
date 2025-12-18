@@ -212,6 +212,6 @@ in {
       '';
     };
 
-    environment.systemPackages = [pkgs.tig];
+    environment.systemPackages = [pkgs.tig]; # Text-mode interface for git
   };
 }

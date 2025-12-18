@@ -44,8 +44,8 @@ in
   lib.mkIf (cfg.enable or false) {
     # Packages
     environment.systemPackages = lib.optionals enableIac [
-      pkgs.ansible
-      pkgs.sshpass
+      pkgs.ansible # Radically simple IT automation
+      pkgs.sshpass # Non-interactive ssh password auth
     ];
 
     # Environment Variables

@@ -60,9 +60,9 @@
 in
   lib.mkIf (cfg.enable or false) {
     environment.systemPackages = [
-      transmissionPkg
-      pkgs.jackett
-      transmissionAddTrackers
+      transmissionPkg # Fast, easy and free Bittorrent client
+      pkgs.jackett # API Support for your favorite torrent trackers
+      transmissionAddTrackers # Helper script to add trackers to Transmission
     ];
 
     # Config files linked via maid

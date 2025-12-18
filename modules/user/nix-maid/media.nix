@@ -70,23 +70,23 @@ in {
   # --- System Packages ---
   environment.systemPackages = with pkgs; [
     # Audio
-    beets
-    mpd
-    mpdris2
+    beets # Music library manager and tagger
+    mpd # Music Player Daemon
+    mpdris2 # MPRIS2 bridge for MPD
 
-    mpdas
-    rmpc
-    ncpamixer
+    mpdas # Last.fm scrobbler for MPD
+    rmpc # Rust Music Player Client
+    ncpamixer # Ncurses mixer for PulseAudio/PipeWire
     # Subsonic
-    subsonic-tui
-    termsonic
+    subsonic-tui # TUI for Subsonic-compatible servers
+    termsonic # Terminal client for Subsonic
     # Images
-    swayimg
-    imv
-    feh
+    swayimg # Image viewer for Wayland
+    imv # Image viewer for Wayland and X11
+    feh # Fast and light image viewer
     # Spotify
-    spotify
-    spicetify-cli
+    spotify # Proprietary music streaming service
+    spicetify-cli # Command-line tool to customize the Spotify client
   ];
 
   # --- Secrets (for Beets/MusicBrainz) ---
