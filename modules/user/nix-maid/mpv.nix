@@ -44,7 +44,7 @@
 in
   lib.mkIf (cfg.enable or false) {
     # 1. Install Package
-    users.users.neg.packages = [mpvPackage];
+    users.users.neg.packages = [mpvPackage]; # Highly customizable command-line media player
 
     # 2. Configure Dotfiles via key-value to file
     users.users.neg.maid.file.home = {

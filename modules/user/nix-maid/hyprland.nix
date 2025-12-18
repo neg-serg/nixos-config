@@ -396,7 +396,7 @@ in
           echo "Done." >> "$LOG"
         '')
       ]
-      ++ lib.optional hy3Enabled pkgs.hyprlandPlugins.hy3;
+      ++ lib.optional hy3Enabled pkgs.hyprlandPlugins.hy3; # Tiling plugin for Hyprland inspired by i3/sway
 
     # --- Systemd user targets ---
     systemd.user.targets.hyprland-session = {

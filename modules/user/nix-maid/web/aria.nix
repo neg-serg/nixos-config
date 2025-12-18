@@ -6,7 +6,7 @@
 }: {
   config = lib.mkIf (config.features.web.enable && config.features.web.tools.enable) {
     # Install aria2
-    environment.systemPackages = [pkgs.aria2];
+    environment.systemPackages = [pkgs.aria2]; # Lightweight multi-protocol download utility
 
     users.users.neg.maid = {
       file.home = {

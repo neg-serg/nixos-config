@@ -326,7 +326,7 @@
     ];
 in
   lib.mkIf (guiEnabled && (cfg.enable or false)) {
-    environment.systemPackages = [pkgs.firefox-devedition];
+    environment.systemPackages = [pkgs.firefox-devedition]; # Firefox Developer Edition browser
 
     nixpkgs.overlays = [inputs.nur.overlays.default];
 

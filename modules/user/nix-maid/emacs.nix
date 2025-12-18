@@ -65,7 +65,7 @@
   filesRoot = ../../../files;
 in
   lib.mkIf (cfg.enable or false) {
-    environment.systemPackages = [emacsWithPackages];
+    environment.systemPackages = [emacsWithPackages]; # Emacs with a pre-configured set of packages
 
     users.users.neg.maid.file.home = {
       ".config/emacs/init.el".source = "${filesRoot}/emacs/init.el";

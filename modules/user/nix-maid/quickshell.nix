@@ -31,10 +31,10 @@
     pkgs.iproute2 # ip command
     pkgs.iputils # ping command
     pkgs.dash # Fast, lightweight shell for checks
-    pkgs.ffmpeg # ffprobe
-    pkgs.mpc # mpc (MPD client)
-    pkgs.hyprland # hyprctl
-    pkgs.neg.rsmetrx # Custom metric collector
+    pkgs.ffmpeg # Multimedia framework (provides ffprobe for metadata)
+    pkgs.mpc # Minimalist command line interface to MPD
+    pkgs.hyprland # Hyprland session control
+    pkgs.neg.rsmetrx # User-defined metric collection tool
   ];
 
   # Wrapped quickshell package
@@ -99,7 +99,10 @@
 in
   lib.mkIf quickshellEnabled {
     # Wrapped quickshell package + sync script
-    environment.systemPackages = [quickshellWrapped syncQuickshell];
+    environment.systemPackages = [
+      quickshellWrapped # Wrapped Quickshell with dependencies and environment
+      syncQuickshell # Helper script to sync Quickshell config from repo to home
+    ];
 
     # Quickshell config sync service (runs before quickshell starts)
     systemd.user.services.quickshell-sync = {
