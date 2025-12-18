@@ -142,7 +142,7 @@
                 {
                     "type": "path",
                     "style": "plain",
-                    "foreground": "#ffffff",
+                    "foreground": "#95a7bc",
                     "template": " {{ .Path }}",
                     "properties": {
                         "style": "full",
