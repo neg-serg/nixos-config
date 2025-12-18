@@ -31,7 +31,6 @@
     };
     impurity = {
       url = "github:outfoxxed/impurity.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
