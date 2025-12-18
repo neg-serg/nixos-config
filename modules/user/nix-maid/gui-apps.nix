@@ -240,6 +240,9 @@ in {
       enable_selector = false
       selector = "rofi -dmenu -p 'Open With: ❯>'"
     '';
+
+    # wlogout config
+    ".config/wlogout".source = ../../../files/config/wlogout;
   };
 
   # Systemd user services
@@ -263,5 +266,6 @@ in {
     pkgs.swayosd # OSD for volume/brightness on Wayland
     rofiLocalBin # Rofi wrapper script (shadows standard rofi bin)
     pkgs.wallust # Color palette generator
+    pkgs.wlogout # Logout menu
   ];
 }
