@@ -19,18 +19,16 @@ if command -v oh-my-posh >/dev/null 2>&1; then
   omp_cache="${XDG_CACHE_HOME:-$HOME/.cache}/oh-my-posh-init.zsh"
   
   if [[ -r "$omp_config" ]]; then
-    # Rebuild cache if config or binary is newer than cache
-    # On NixOS, config is a symlink to the store (old mtime), so -nt fails. Check symlink mtime explicitly.
-    local config_mtime
-    if [[ -h "$omp_config" ]]; then
-      config_mtime=$(stat -c %Y "$omp_config" 2>/dev/null)
-    else
-      config_mtime=$(stat -c %Y "$omp_config" 2>/dev/null)
-    fi
-    local cache_mtime=$(stat -c %Y "$omp_cache" 2>/dev/null)
+    # Rebuild cache if config content has changed (robust against NixOS 1970 mtimes)
+    local config_hash
+    config_hash=$(md5sum "$omp_config" 2>/dev/null | awk '{print $1}')
+    local cache_hash_file="${omp_cache}.md5"
+    local stored_hash
+    [[ -f "$cache_hash_file" ]] && stored_hash=$(<"$cache_hash_file")
 
-    if [[ ! -r "$omp_cache" || "$omp_config" -nt "$omp_cache" || ${commands[oh-my-posh]} -nt "$omp_cache" || ( -n "$config_mtime" && -n "$cache_mtime" && "$config_mtime" -gt "$cache_mtime" ) ]]; then
+    if [[ ! -r "$omp_cache" || -z "$stored_hash" || "$config_hash" != "$stored_hash" ]]; then
       oh-my-posh init zsh --config "$omp_config" --print > "$omp_cache"
+      echo "$config_hash" > "$cache_hash_file"
     fi
     source "$omp_cache"
   fi
