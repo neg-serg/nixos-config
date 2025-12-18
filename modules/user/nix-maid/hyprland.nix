@@ -420,7 +420,6 @@ in
         {".config/hypr/rules-routing.conf".text = routesConf;}
         {".config/hypr/permissions.conf".text = permissionsConf;}
         {".config/hypr/pyprland.toml".source = pyprlandToml;}
-        {".config/rofi/selector.rasi".source = ../../../files/gui/rofi/selector.rasi;}
       ]
       # Plugins config (hy3 only)
       ++ lib.optional hy3Enabled {".config/hypr/plugins.conf".text = pluginsConf;}

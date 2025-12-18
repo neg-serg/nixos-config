@@ -10,7 +10,7 @@ configuration {
     font:                        "JetBrainsMono Nerd Font 10";
 }
 
-@theme "~/.config/rofi/theme.rasi"
+@theme "theme.rasi"
 
 window {
     enabled:                     true;
@@ -22,7 +22,7 @@ window {
     border:                      0em;
     border-radius:               0em;
     border-color:                transparent;
-    background-color:            @main-bg;
+    background-color:            @mainbg;
 }
 
 mainbox {
@@ -49,7 +49,7 @@ listview {
     reverse:                     false;
     cursor:                      "default";
     background-color:            transparent;
-    text-color:                  @main-fg;
+    text-color:                  @fgwhite;
 }
 
 dummy {
@@ -64,14 +64,14 @@ element {
     padding:                     0em;
     cursor:                      pointer;
     background-color:            transparent;
-    text-color:                  @main-fg;
+    text-color:                  @fgwhite;
     orientation:                 vertical;
     border-radius:               15px;
 }
 
 element selected.normal {
-    background-color:            @select-bg;
-    text-color:                  @select-fg;
+    background-color:            @selectcolor;
+    text-color:                  @fgwhite;
 }
 
 element-icon {
