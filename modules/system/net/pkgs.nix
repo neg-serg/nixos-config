@@ -27,57 +27,57 @@
 
   environment.systemPackages = [
     # -- Analysis / Traffic --
-    pkgs.bandwhich # display network utilization per process
-    pkgs.iftop # display bandwidth
-    pkgs.netsniff-ng # sniffer
-    pkgs.tcpdump # best friend to show network stuff
-    pkgs.termshark # more modern tshark interface inspired by wireshark
-    pkgs.trippy # net analysis tool like ping + traceroute
-    pkgs.tshark # sniffer tui
-    pkgs.wireshark # sniffer gui
+    pkgs.bandwhich # Display network utilization per process in real-time
+    pkgs.iftop # Display bandwidth usage on an interface
+    pkgs.netsniff-ng # High-performance Linux networking toolkit
+    pkgs.tcpdump # Command-line network packet analyzer
+    pkgs.termshark # Terminal UI for tshark (Wireshark-inspired)
+    pkgs.trippy # Network diagnostic tool (ping + traceroute + mtr)
+    pkgs.tshark # Terminal-based Wireshark
+    pkgs.wireshark # GUI network protocol analyzer
 
     # -- DNS --
     pkgs.dnsutils # dns command-line tools (dig, nslookup)
     pkgs.dogdns # commandline dns client
 
     # -- Download --
-    pkgs.axel # console downloading program
-    pkgs.curl # transfer curl
-    pkgs.wget2 # non-interactive downloader
+    pkgs.axel # Multi-threaded download accelerator
+    pkgs.curl # Command line tool for transferring data with URLs
+    pkgs.wget2 # Wget successor with multi-threading and HTTP/2 support
 
     # -- HTTP --
-    pkgs.cacert # for curl certificate verification
-    pkgs.curlie # feature-rich httpie
-    pkgs.httpie # fancy curl
-    pkgs.httpstat # fancy curl -v
-    pkgs.xh # friendly and fast tool to send http requests
+    pkgs.cacert # Bundle of CA certificates for SSL/TLS verification
+    pkgs.curlie # curl wrapper that adds HTTPie-like features
+    pkgs.httpie # Modern, user-friendly command-line HTTP client
+    pkgs.httpstat # curl statistics visualizer
+    pkgs.xh # Friendly and fast tool to send HTTP requests
 
     # -- IP / Routing --
-    pkgs.fping # like ping -c1
-    pkgs.geoip # geoip lookup
-    pkgs.ipcalc # calculate ip addr stuff
-    pkgs.tcptraceroute # traceroute without icmp
-    pkgs.traceroute # basic traceroute
+    pkgs.fping # Multi-target ping (faster than ping -c1)
+    pkgs.geoip # IP-to-location lookup utility
+    pkgs.ipcalc # IPv4/IPv6 address calculator
+    pkgs.tcptraceroute # Traceroute using TCP SYN packets
+    pkgs.traceroute # Print the route packets trace to network host
 
     # -- Network Scanning --
-    pkgs.masscan # asynchronous port scanner like nmap
-    pkgs.netdiscover # another network scan
-    pkgs.netscanner # alternative traffic viewer
-    pkgs.nmap # port scanner
-    pkgs.rustscan # fast port scanner companion to nmap
-    pkgs.zmap # internet-scale network scanner
+    pkgs.masscan # Extremely fast port scanner
+    pkgs.netdiscover # Active/passive ARP reconnaissance tool
+    pkgs.netscanner # Network scanner with TUI
+    pkgs.nmap # Versatile network exploration and security auditing tool
+    pkgs.rustscan # Port scanner optimized for speed (rust-based)
+    pkgs.zmap # Internet-scale network scanner for IPv4 adress space
 
     # -- Remote / Transfer --
-    pkgs.rclone # rsync for cloud storage
-    pkgs.socat # multipurpose relay
-    pkgs.sshfs # ssh mount
+    pkgs.rclone # Sync files to/from cloud storage (S3, Drive, etc.)
+    pkgs.socat # Multipurpose relay (bidirectional data transfer)
+    pkgs.sshfs # Mount remote directories over SSH
 
     # -- Utilities --
-    pkgs.ethtool # control eth hardware and drivers
-    pkgs.inetutils # common network programs
-    pkgs.iputils # set of small useful utilities for Linux networking
-    pkgs.netcat-openbsd # openbsd netcat variant
-    pkgs.w3m # cli browser
+    pkgs.ethtool # Query and control network device settings
+    pkgs.inetutils # Collection of common network programs
+    pkgs.iputils # Networking utilities (ping, arping, etc.)
+    pkgs.netcat-openbsd # TCP/IP swiss army knife (OpenBSD variant)
+    pkgs.w3m # Text-mode web browser and pager
 
     # -- WiFi --
     pkgs.aircrack-ng # stuff for wifi security
