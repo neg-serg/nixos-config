@@ -182,6 +182,9 @@ in {
     # Fish Config
     ".config/fish".source = "${shellFiles}/fish";
 
+    # oh-my-posh for bash
+    ".config/bash/oh-my-posh.bash".source = "${shellFiles}/bash/oh-my-posh.bash";
+
     # Fast Syntax Highlighting
     ".config/f-sy-h".source = "${shellFiles}/f-sy-h";
 
@@ -215,6 +218,7 @@ in {
         else ""
       )
       + ''
+        source ~/.config/bash/oh-my-posh.bash
       '';
   };
 
