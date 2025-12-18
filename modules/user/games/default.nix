@@ -2,7 +2,6 @@
   pkgs,
   lib,
   config,
-  inputs,
   ...
 }: let
   cfg = config.profiles.games or {};
@@ -108,7 +107,7 @@
     
     (lib.replaceStrings ["@pinDefault@"] [pinDefault] (builtins.readFile ./scripts/game_run.py));
 in {
-  imports = [inputs.aagl.nixosModules.default];
+  imports = [];
 
   options.profiles.games = {
     enable = lib.mkOption {
@@ -132,9 +131,6 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    nix.settings = inputs.aagl.nixConfig; # Set up Cachix
-    aagl.enableNixpkgsReleaseBranchCheck = false;
-
     programs = {
       steam = {
         enable = true;
@@ -210,12 +206,6 @@ in {
       };
 
       # MangoHud is installed via systemPackages; toggle via MANGOHUD=1
-
-      anime-game-launcher.enable = true;
-      honkers-railway-launcher.enable = true;
-      honkers-launcher.enable = true;
-      sleepy-launcher.enable = true;
-      wavey-launcher.enable = true;
     };
 
     environment = {
