@@ -371,6 +371,17 @@ in
           # Start quickshell only if not already active; 'start' is idempotent.
           systemctl --user start quickshell.service >/dev/null 2>&1 || true
         '')
+        # hypr-start script (fixes race conditions)
+        (pkgs.writeShellScriptBin "hypr-start" ''
+          set -euo pipefail
+          # Wait a moment for Hyprland to fully initialize sockets
+          sleep 0.5
+          # Import environment
+          dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE
+          systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE
+          # Start session
+          systemctl --user start graphical-session.target
+        '')
       ]
       ++ lib.optional hy3Enabled pkgs.hyprlandPlugins.hy3;
 
