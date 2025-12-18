@@ -140,10 +140,18 @@
                     "type": "os"
                 },
                 {
-                    "type": "text",
-                    "style": "plain",
-                    "foreground": "#005faf",
-                    "template": " "
+                    "type": "path",
+                    "style": "powerline",
+                    "powerline_symbol": "\ue0b0",
+                    "background": "#005faf",
+                    "foreground": "#ffffff",
+                    "template": "  {{ .Path }} ",
+                    "properties": {
+                        "style": "full",
+                        "enable_hyperlink": true,
+                        "folder_separator_icon": "/",
+                        "home_icon": "~"
+                    }
                 },
                 {
                     "foreground": "#ce162b",
@@ -153,28 +161,10 @@
                     "type": "root"
                 },
                 {
-                    "foreground": "#477AB3",
-                    "options": {
-                        "folder_separator_icon": "<#477AB3>/</>",
-                        "home_icon": "<#477AB3>~</>",
-                        "truncation_symbol": "…",
-                        "cycle": [
-                            "#005faf",
-                            "#367bbf",
-                            "#5b9bd5",
-                            "#7FD5EA"
-                        ]
-                    },
-                    "template": "{{ .Path }}",
-                    "enable_hyperlink": true,
-                    "show_git_root": true,
-                    "type": "path"
-                },
-                {
                     "type": "text",
                     "style": "plain",
                     "foreground": "#005faf",
-                    "template": " ❯>"
+                    "template": " ❯"
                 }
             ],
             "type": "prompt"
