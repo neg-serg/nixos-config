@@ -110,6 +110,17 @@ in
             pkgs.svls # SystemVerilog LSP
             pkgs.vhdl-ls # VHDL language server
             pkgs.zls # Zig language server
+
+            # -- Debuggers (DAP) --
+            pkgs.delve # Go debugger
+            pkgs.netcoredbg # .NET Core debugger
+            pkgs.lldb # LLVM debugger (C/C++/Rust)
+
+            # -- Formatters --
+            pkgs.stylua # Lua formatter
+            pkgs.shfmt # Shell formatter
+            pkgs.prettierd # Faster Prettier (HTML/CSS/JS/TS/JSON/YAML)
+            pkgs.alejandra # Nix formatter
           ];
           # Avoid any nvf defaults bleeding in
           globals = {};
