@@ -566,12 +566,12 @@ in
       };
 
       # Resilio Sync: Web UI auth via SOPS, data under /zero/sync
-      sops.secrets."resilio/http-login" = lib.mkIf hasResilioSecret {
+      sops.secrets."resilio/http-login" = lib.mkIf (hasResilioSecret && config.services.resilio.enable) {
         sopsFile = inputs.self + "/secrets/resilio.sops.yaml";
         owner = "rslsync";
         mode = "0400";
       };
-      sops.secrets."resilio/http-pass" = lib.mkIf hasResilioSecret {
+      sops.secrets."resilio/http-pass" = lib.mkIf (hasResilioSecret && config.services.resilio.enable) {
         sopsFile = inputs.self + "/secrets/resilio.sops.yaml";
         owner = "rslsync";
         mode = "0400";
