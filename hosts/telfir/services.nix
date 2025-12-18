@@ -728,7 +728,7 @@ in
           };
 
           # Inject Resilio Web UI credentials from SOPS into generated config.json
-          resilio = lib.mkIf hasResilioSecret {
+          resilio = lib.mkIf (hasResilioSecret && config.services.resilio.enable) {
             serviceConfig.ExecStartPre = lib.mkAfter [resilioAuthScript];
           };
         };
