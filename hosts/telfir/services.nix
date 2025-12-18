@@ -51,7 +51,7 @@ in
       features.gui.quickshell.enable = true;
       features.hardware.usbAutomount.enable = true;
       features.net.tailscale.enable = true;
-      features.web.firefox.enable = true;
+      features.web.firefox.enable = false;
 
       features.dev.openxr = {
         enable = true;
