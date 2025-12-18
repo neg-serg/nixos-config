@@ -114,7 +114,8 @@
           else toString value;
       in "${key}=${v}";
     }
-    settings;
+    settings
+    + "\ninclude = ~/.cache/wallust/dunstrc\n";
 in
   lib.mkIf guiEnabled {
     # 1. Config file via nix-maid
