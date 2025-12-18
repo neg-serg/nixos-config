@@ -295,10 +295,10 @@ in
         pkgs.openrgb # per-device RGB controller UI
         pkgs.nextcloud-client # Nextcloud desktop sync client
         pkgs.neg.tewi # TUI torrent client (Transmission/qBittorrent/Deluge)
-        pkgs.neg.playscii
+        pkgs.neg.playscii # ASCII art editor and animator
         (pkgs.writeShellScriptBin "cpu-boost" (builtins.readFile (inputs.self + "/scripts/hw/cpu-boost.sh"))) # CLI toggle for AMD Precision Boost
-        (pkgs.writeShellScriptBin "fan-manual" (builtins.readFile (inputs.self + "/scripts/hw/fan-manual.sh")))
-        (pkgs.writeShellScriptBin "fan-auto" (builtins.readFile (inputs.self + "/scripts/hw/fan-auto.sh")))
+        (pkgs.writeShellScriptBin "fan-manual" (builtins.readFile (inputs.self + "/scripts/hw/fan-manual.sh"))) # Switch fans to manual control
+        (pkgs.writeShellScriptBin "fan-auto" (builtins.readFile (inputs.self + "/scripts/hw/fan-auto.sh"))) # Switch fans to automatic control
       ];
       environment.etc = {
         "avahi/services/smb.service".text = ''
