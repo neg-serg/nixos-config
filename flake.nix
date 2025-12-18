@@ -4,10 +4,6 @@
     nixpkgs = {url = "github:NixOS/nixpkgs/nixos-25.11";}; # Pin nixpkgs to nixos-unstable so we get Hydra cache hits
 
     # Pin hy3 to release compatible with Hyprland v0.52.x
-    aagl = {
-      url = "github:ezkea/aagl-gtk-on-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     hy3 = {
       url = "git+https://github.com/outfoxxed/hy3?ref=hl0.52.0";
       inputs.hyprland.follows = "hyprland";
