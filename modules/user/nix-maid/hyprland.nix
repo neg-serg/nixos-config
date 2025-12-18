@@ -374,13 +374,26 @@ in
         # hypr-start script (fixes race conditions)
         (pkgs.writeShellScriptBin "hypr-start" ''
           set -euo pipefail
+          LOG="/tmp/hypr-start.log"
+          echo "Starting hypr-start at $(date)" > "$LOG"
+
           # Wait a moment for Hyprland to fully initialize sockets
-          sleep 0.5
+          sleep 1
+
           # Import environment
-          dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE
+          echo "Importing environment..." >> "$LOG"
+          dbus-update-activation-environment --systemd --all
           systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE
+
+          # Stop any stale portals or session targets to force clean state
+          echo "Cleaning stale session state..." >> "$LOG"
+          systemctl --user stop xdg-desktop-portal xdg-desktop-portal-hyprland hyprland-session.target || true
+          systemctl --user reset-failed
+
           # Start session
+          echo "Starting hyprland-session.target..." >> "$LOG"
           systemctl --user start hyprland-session.target
+          echo "Done." >> "$LOG"
         '')
       ]
       ++ lib.optional hy3Enabled pkgs.hyprlandPlugins.hy3;
