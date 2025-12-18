@@ -30,6 +30,7 @@
     pkgs.socat # Multipurpose relay (SOcket CAT)
     pkgs.iproute2 # ip command
     pkgs.iputils # ping command
+    pkgs.dash # Fast, lightweight shell for checks
     pkgs.ffmpeg # ffprobe
     pkgs.mpc # mpc (MPD client)
     pkgs.hyprland # hyprctl
