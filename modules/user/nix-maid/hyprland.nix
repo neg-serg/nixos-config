@@ -380,10 +380,21 @@ in
           dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE
           systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE
           # Start session
-          systemctl --user start graphical-session.target
+          systemctl --user start hyprland-session.target
         '')
       ]
       ++ lib.optional hy3Enabled pkgs.hyprlandPlugins.hy3;
+
+    # --- Systemd user targets ---
+    systemd.user.targets.hyprland-session = {
+      unitConfig = {
+        Description = "Hyprland compositor session";
+        Documentation = ["man:systemd.special(7)"];
+        BindsTo = ["graphical-session.target"];
+        Wants = ["graphical-session-pre.target"];
+        After = ["graphical-session-pre.target"];
+      };
+    };
 
     # --- User config files ---
     users.users.neg.maid.file.home = lib.mkMerge (
