@@ -451,6 +451,12 @@ in
       ]
       # Static binding files
       ++ map (f: {".config/hypr/bindings/${f}".source = hyprConfDir + "/bindings/${f}";}) bindingFiles
+      # Animation files
+      ++ (let
+        animDir = ../../../files/gui/hypr/animations;
+        animFiles = builtins.attrNames (builtins.readDir animDir);
+      in
+        map (f: {".config/hypr/animations/${f}".source = animDir + "/${f}";}) animFiles)
     );
 
     # --- Systemd user services ---
