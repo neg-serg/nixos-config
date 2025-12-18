@@ -34,6 +34,16 @@ in {
         [General]
         theme=KvantumAlt
       '';
+
+      ".config/qt6ct/qt6ct.conf".text = ''
+        [Appearance]
+        standard_dialogs=xdgdesktopportal
+      '';
+
+      ".config/qt5ct/qt5ct.conf".text = ''
+        [Appearance]
+        standard_dialogs=xdgdesktopportal
+      '';
     };
   };
 }
