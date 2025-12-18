@@ -2,7 +2,7 @@
   lib,
   pkgs,
   config,
-  inputs,
+  impurity,
   ...
 }: let
   devEnabled = config.features.dev.enable or false;
@@ -64,6 +64,7 @@ in
               p.wgsl
               p.xml
               p.yaml
+              p.yaml
             ]))
           ];
           optPlugins = [];
@@ -121,6 +122,11 @@ in
             pkgs.shfmt # Shell formatter
             pkgs.prettierd # Faster Prettier (HTML/CSS/JS/TS/JSON/YAML)
             pkgs.alejandra # Nix formatter
+            pkgs.cmake-format # CMake formatter
+            pkgs.gotools # Go tools (goimports, gofmt)
+            pkgs.isort # Python import sorter
+            pkgs.black # Python formatter
+            pkgs.rustfmt # Rust formatter
           ];
           # Avoid any nvf defaults bleeding in
           globals = {};
@@ -153,6 +159,6 @@ in
 
     # Symlink nvf config directory
     users.users.neg.maid.file.home = {
-      ".config/nvf".source = inputs.self + "/files/nvim";
+      ".config/nvf".source = impurity.link "files/nvim";
     };
   }
