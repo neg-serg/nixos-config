@@ -159,6 +159,6 @@ in
 
     # Symlink nvf config directory
     users.users.neg.maid.file.home = {
-      ".config/nvf".source = impurity.link "files/nvim";
+      ".config/nvf".source = impurity.link ./../../files/nvim;
     };
   }
