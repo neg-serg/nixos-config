@@ -152,7 +152,8 @@ in {
     # ============================================================================
     # NEKORAY
     # ============================================================================
-    (lib.mkIf (config.features.gui.enable or false) {
+    (lib.mkIf false {
+      # user requested sing-box/client disable
       systemd.user.services.nekoray = {
         description = "Nekoray Proxy Client";
         after = ["graphical-session-pre.target"];
