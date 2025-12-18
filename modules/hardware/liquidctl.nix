@@ -27,7 +27,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = lib.mkAfter [pkgs.liquidctl];
+    environment.systemPackages = lib.mkAfter [pkgs.liquidctl]; # cooler control CLI (AIO/fans/RGB)
 
     systemd.services.liquidctl-init = lib.mkIf cfg.runInit {
       description = "Initialize AIO/cooler via liquidctl";

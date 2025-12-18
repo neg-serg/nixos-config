@@ -10,7 +10,7 @@
   services.udev.packages = [pkgs.dualsensectl];
 
   environment.systemPackages = [
-    pkgs.dualsensectl
+    pkgs.dualsensectl # tool for controlling DualSense controllers
     # (inputs.nix-gaming.packages.${hostPlatform.system}.star-citizen.override {
     #   location = "$HOME/games/star-citizen";
     # })
