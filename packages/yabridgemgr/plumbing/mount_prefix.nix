@@ -1,4 +1,5 @@
 {
+  # Helper script to mount the Wine prefix squashfs with an overlay for read/write access
   writeShellScriptBin,
   fuse-overlayfs,
   wineprefix,
