@@ -29,6 +29,10 @@
       url = "github:e-tho/iwmenu";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    impurity = {
+      url = "github:outfoxxed/impurity.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -158,6 +162,6 @@
       apps = lib.genAttrs supportedSystems (s: (perSystem s).apps);
 
       # NixOS configurations (linuxSystem only)
-      nixosConfigurations = import ./flake/nixos.nix {inherit inputs nixpkgs;};
+      nixosConfigurations = import ./flake/nixos.nix {inherit inputs nixpkgs self;};
     };
 }

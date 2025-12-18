@@ -9,11 +9,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1765900816,
-        "narHash": "sha256-Pa7QpF+84hTuPanVaJ/B3NgdaytUMj3PN06sEaNibaM=",
+        "lastModified": 1766066618,
+        "narHash": "sha256-GjOgjaZdtAjQ9FG9C3kQROKX2tZQWEdZ4IED9NQd0OU=",
         "owner": "ezkea",
         "repo": "aagl-gtk-on-nix",
-        "rev": "36b14e5e7014e471341f0807dc9a9e2d65a157f4",
+        "rev": "bc0e92deb0606c875a79740609689628838d2a8c",
         "type": "github"
       },
       "original": {
@@ -805,6 +805,21 @@
         "type": "github"
       }
     },
+    "impurity": {
+      "locked": {
+        "lastModified": 1689836741,
+        "narHash": "sha256-82KeRg2sAqDXCdzVs8P8GoqVaPsZjkWgrfsj6kgOLTY=",
+        "owner": "outfoxxed",
+        "repo": "impurity.nix",
+        "rev": "bbc41b69ab5485cd55aa315d08cff865781d3913",
+        "type": "github"
+      },
+      "original": {
+        "owner": "outfoxxed",
+        "repo": "impurity.nix",
+        "type": "github"
+      }
+    },
     "iosevka-neg": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -1130,11 +1145,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1765977048,
-        "narHash": "sha256-+DcXEPqDrlJHRCHWbHLNJGM5DOXu876//idEqhCS/eQ=",
+        "lastModified": 1766071242,
+        "narHash": "sha256-hqD/pvTosQZLCcwHTxf2x20H/rHbmFlMovdjbtG887E=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "55029722a6df0df3ea1880b1988c0387c0ff5b12",
+        "rev": "a8ec94a89518167e9c61f3c57aee6578246da35c",
         "type": "github"
       },
       "original": {
@@ -1360,6 +1375,7 @@
           "hyprland",
           "hyprland-protocols"
         ],
+        "impurity": "impurity",
         "iosevka-neg": "iosevka-neg",
         "iwmenu": "iwmenu",
         "lanzaboote": "lanzaboote",
@@ -1874,11 +1890,11 @@
         "rust-overlay": "rust-overlay_5"
       },
       "locked": {
-        "lastModified": 1765717342,
-        "narHash": "sha256-dzP8LLpKyyaDFZk+w1me+e2/0n8Ep7P9zxpjKAoTb98=",
+        "lastModified": 1765983605,
+        "narHash": "sha256-irshwzTSlWzvPWtXrTTj5Z7fREXTSsP/VetgFXkX4h4=",
         "owner": "sxyazi",
         "repo": "yazi",
-        "rev": "80b3b8465dd91ee2a6565b3e8a9565831949fa74",
+        "rev": "e9eb8b9155abfc3719a9a35fe79e05637add67ed",
         "type": "github"
       },
       "original": {
