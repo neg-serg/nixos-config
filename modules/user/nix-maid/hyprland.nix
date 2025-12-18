@@ -457,6 +457,16 @@ in
         animFiles = builtins.attrNames (builtins.readDir animDir);
       in
         map (f: {".config/hypr/animations/${f}".source = animDir + "/${f}";}) animFiles)
+      # Hyprlock files
+      ++ (let
+        lockDir = ../../../files/gui/hypr/hyprlock;
+        lockFiles = builtins.attrNames (builtins.readDir lockDir);
+      in
+        map (f: {".config/hypr/hyprlock/${f}".source = lockDir + "/${f}";}) lockFiles)
+      # Main hyprlock config (init)
+      ++ [
+        {".config/hypr/hyprlock.conf".source = ../../../files/gui/hypr/hyprlock/init.conf;}
+      ]
     );
 
     # --- Systemd user services ---
