@@ -142,7 +142,7 @@
                     "type": "path",
                     "style": "plain",
                     "foreground": "#95a7bc",
-                    "template": "<#005faf></> {{ if hasPrefix \"/\" .Path }}<#95a7bc>{{ trimPrefix \"/\" .Path }}</>{{ else }} <#95a7bc>{{ .Path }}</>{{ end }}",
+                    "template": "<#005faf></> {{ if hasPrefix \"/\" .Path }}<#95a7bc>{{ trimPrefix \"/\" .Path }}</>{{ else }}<#95a7bc>{{ .Path }}</>{{ end }}",
                     "properties": {
                         "style": "full",
                         "enable_hyperlink": true,
