@@ -210,7 +210,7 @@ in {
       + (
         if config.features.cli.broot.enable
         then ''
-          source ~/.config/broot/launcher/bash/br
+          eval "$(${pkgs.broot}/bin/broot --print-shell-function bash)"
         ''
         else ""
       )
