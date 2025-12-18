@@ -20,7 +20,7 @@
                 },
                 {
                     "type": "executiontime",
-                    "style": "powerline",
+                    "style": "plain",
                     "foreground": "#45bf17",
                     "template": " {{ .FormattedMs }}s <#899CA1>\ue601</>",
                     "options": {
@@ -30,7 +30,7 @@
                 },
                 {
                     "type": "npm",
-                    "style": "powerline",
+                    "style": "plain",
                     "foreground": "#ce162b",
                     "template": "<#899CA1>and</> \ue71e {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} "
                 },
@@ -141,21 +141,18 @@
                 },
                 {
                     "type": "path",
-                    "style": "powerline",
-                    "powerline_symbol": "\ue0b0",
-                    "background": "#005faf",
-                    "foreground": "#ffffff",
+                    "style": "plain",
+                    "foreground": "#b8c5d9",
                     "template": "  {{ .Path }} ",
                     "properties": {
                         "style": "full",
                         "enable_hyperlink": true,
-                        "folder_separator_icon": "/",
-                        "home_icon": "~"
+                        "folder_separator_icon": "<#367bbf>/</>",
+                        "home_icon": "<#7dff7e>~</>"
                     }
                 },
                 {
                     "foreground": "#ce162b",
-                    "powerline_symbol": "\ue0b0",
                     "style": "plain",
                     "template": "\uf0e7 ",
                     "type": "root"
