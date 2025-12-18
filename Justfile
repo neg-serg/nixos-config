@@ -27,6 +27,18 @@ cpu-masks:
     repo_root="$(git rev-parse --show-toplevel)"; \
     cd "$repo_root" && scripts/hw/cpu-recommend-masks.sh
 
+# --- System Management -----------------------------------------------------------
+
+# Rebuild and switch to the new system configuration
+# Usage: just deploy [host]
+deploy host="telfir":
+    repo_root="$((git rev-parse --show-toplevel 2>/dev/null) || pwd)"; \
+    sudo sh -c "IMPURITY_PATH=$repo_root nixos-rebuild switch --flake $repo_root#{{host}} --impure"
+
+# Alias for deploy
+switch host="telfir":
+    just deploy {{host}}
+
 # --- Repo-wide workflows ---------------------------------------------------------
 
 
