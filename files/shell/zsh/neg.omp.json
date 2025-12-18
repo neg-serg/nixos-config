@@ -141,16 +141,14 @@
                 {
                     "type": "path",
                     "style": "plain",
-                    "foreground": "#005faf",
-                    "template": " {{ .Path }}",
+                    "foreground": "#95a7bc",
+                    "template": "<#005faf></> {{ .Path }}",
                     "properties": {
                         "style": "full",
                         "enable_hyperlink": true,
                         "folder_separator_icon": "<#005faf>/</>",
-                        "home_icon": "<#287373>~</>",
-                        "cycle": [
-                            "#95a7bc"
-                        ]
+                        "root_icon": "<#005faf>/</>",
+                        "home_icon": "<#287373>~</>"
                     }
                 },
                 {
