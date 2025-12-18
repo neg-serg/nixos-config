@@ -16,3 +16,11 @@ in
     echo "$text"
     ${_ libnotify} "OCR Result" "$text"
   ''
+  // {
+    meta = with lib; {
+      description = "Wayland OCR tool using grim, slurp, and tesseract";
+      license = licenses.mit;
+      platforms = platforms.linux;
+      mainProgram = "wl-ocr";
+    };
+  }
