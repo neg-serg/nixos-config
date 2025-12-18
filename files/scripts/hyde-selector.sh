@@ -27,10 +27,25 @@ case "$1" in
             # Assuming swww is used
             if command -v swww >/dev/null; then
                 swww img "$WP_DIR/$selected" --transition-type grow --transition-pos "$(hyprctl cursorpos | sed 's/,//g')"
+                # Save wallpaper for hyprlock
+                mkdir -p "$HOME/.cache/hyde"
+                ln -sf "$WP_DIR/$selected" "$HOME/.cache/hyde/wall.set.png"
+                
                 # Trigger Wallbash
                 if command -v wallust >/dev/null; then
                     wallust run "$WP_DIR/$selected" >/dev/null 2>&1 &
                     notify-send "Wallbash" "Applying colors from $selected..."
+                    
+                    # Wait a bit for wallust to finish (could be improved)
+                    sleep 1
+                    
+                    # Reload Kitty
+                    pkill -USR1 kitty || true
+                    
+                    # Reload Dunst
+                    # killall dunst; notify-send "Dunst reloaded" # Restarting might be abrupt
+                    # Dunst hot reloads config changes if running? No, usually needs restart.
+                    systemctl --user restart dunst || true
                 fi
             elif command -v hyprpaper >/dev/null; then
                 # This requires hyprctl hyprpaper commands
