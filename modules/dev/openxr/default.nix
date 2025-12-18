@@ -8,11 +8,11 @@
   devEnabled = config.features.dev.enable or false;
   enabled = devEnabled && (cfg.enable or false);
   packages = lib.concatLists [
-    (lib.optionals (cfg.envision.enable or false) [pkgs.envision])
-    (lib.optionals (cfg.runtime.enable or false) [pkgs.monado])
-    (lib.optionals (cfg.runtime.vulkanLayers.enable or false) [pkgs."monado-vulkan-layers"])
-    (lib.optionals (cfg.tools.motoc.enable or false) [pkgs.motoc])
-    (lib.optionals (cfg.tools.basaltMonado.enable or false) [pkgs."basalt-monado"])
+    (lib.optionals (cfg.envision.enable or false) [pkgs.envision]) # OpenXR UI for managing VR runtimes
+    (lib.optionals (cfg.runtime.enable or false) [pkgs.monado]) # open source OpenXR runtime
+    (lib.optionals (cfg.runtime.vulkanLayers.enable or false) [pkgs."monado-vulkan-layers"]) # Monado Vulkan layers
+    (lib.optionals (cfg.tools.motoc.enable or false) [pkgs.motoc]) # Monado tool for configuration
+    (lib.optionals (cfg.tools.basaltMonado.enable or false) [pkgs."basalt-monado"]) # Basalt visual-inertial SLAM for Monado
   ];
 in {
   config = lib.mkIf enabled {
