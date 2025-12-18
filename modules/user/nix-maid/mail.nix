@@ -134,7 +134,7 @@ in {
         #!/usr/bin/env bash
         set -euo pipefail
         exec systemctl --user start --no-block mbsync-gmail.service
-      '')
+      '') # Helper script to trigger mail synchronization
     ];
 
     # Services

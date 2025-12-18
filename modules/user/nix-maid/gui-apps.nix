@@ -196,6 +196,11 @@
   # Rofi config source path
   rofiConfigSrc = ../../../packages/rofi-config;
 
+  # Rofi with plugins (file-browser-extended)
+  rofiWithPlugins = pkgs.rofi.override {
+    plugins = [pkgs.rofi-file-browser];
+  };
+
   # Rofi wrapper script
   rofiWrapperScript = builtins.readFile ../../../files/rofi/rofi-wrapper.sh;
   rofiWrapper = pkgs.writeShellApplication {
@@ -204,12 +209,12 @@
       pkgs.gawk # awk for simple text processing
       pkgs.gnused # sed for stream editing
       pkgs.jq # JSON processor
-      pkgs.rofi # Rofi launcher
+      rofiWithPlugins # Rofi launcher with plugins
     ];
     text =
       builtins.replaceStrings
       ["@ROFI_BIN@" "@JQ_BIN@"]
-      ["${pkgs.rofi}/bin/rofi" "${pkgs.jq}/bin/jq"]
+      ["${rofiWithPlugins}/bin/rofi" "${pkgs.jq}/bin/jq"]
       rofiWrapperScript;
   };
 
@@ -254,9 +259,9 @@ in {
   # Packages
   environment.systemPackages = [
     pkgs.vesktop # Discord client with Vencord built-in
-    pkgs.rofi # Application launcher for Wayland
+    rofiWithPlugins # Rofi launcher with plugins (Wayland/X11)
     pkgs.swayosd # OSD for volume/brightness on Wayland
-    rofiLocalBin # Rofi wrapper script
+    rofiLocalBin # Rofi wrapper script (shadows standard rofi bin)
     pkgs.wallust # Color palette generator
   ];
 }

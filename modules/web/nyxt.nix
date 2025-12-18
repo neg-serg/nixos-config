@@ -35,6 +35,6 @@
     else fallback;
 in {
   config = lib.mkIf nyxtEnabled {
-    environment.systemPackages = lib.mkAfter [package];
+    environment.systemPackages = lib.mkAfter [package]; # Keyboard-centric, Common Lisp-extensible browser
   };
 }
