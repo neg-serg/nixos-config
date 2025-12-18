@@ -482,7 +482,7 @@ in
           # Resilio Sync (interactive Web UI, auth via SOPS)
           # Resilio Sync (interactive Web UI, auth via SOPS)
           resilio = lib.mkIf hasResilioSecret {
-            enable = true;
+            enable = false;
 
             # state / DB
             storagePath = "/zero/sync/.state";
