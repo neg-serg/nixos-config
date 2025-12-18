@@ -29,6 +29,7 @@
     pkgs.bash # GNU Bourne-Again SHell
     pkgs.socat # Multipurpose relay (SOcket CAT)
     pkgs.iproute2 # ip command
+    pkgs.iputils # ping command
     pkgs.ffmpeg # ffprobe
     pkgs.mpc # mpc (MPD client)
     pkgs.hyprland # hyprctl
