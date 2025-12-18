@@ -436,6 +436,7 @@ in
               else "/init.nohy3.conf"
             );
         }
+        {".config/hypr/xdph.conf".source = hyprConfDir + "/xdph.conf";}
       ]
       # Bindings config (hy3 or nohy3)
       ++ [
