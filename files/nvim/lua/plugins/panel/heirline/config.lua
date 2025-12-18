@@ -213,7 +213,7 @@ return function()
             t.blue = c25
             t.cyan = c25
             t.dir_mid = '#005faf' -- make path segments match strict blue
-            t.green = '#7dff7e' -- use vibrant green for accents like tilde
+            t.green = '#287373' -- use vibrant green for accents like tilde
             -- Also ensure white_dim has a sensible value for neg
             if not t.white_dim or t.white_dim == fallback.white_dim then
               t.white_dim = '#4a6078'
