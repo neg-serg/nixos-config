@@ -27,6 +27,11 @@ case "$1" in
             # Assuming swww is used
             if command -v swww >/dev/null; then
                 swww img "$WP_DIR/$selected" --transition-type grow --transition-pos "$(hyprctl cursorpos | sed 's/,//g')"
+                # Trigger Wallbash
+                if command -v wallust >/dev/null; then
+                    wallust run "$WP_DIR/$selected" >/dev/null 2>&1 &
+                    notify-send "Wallbash" "Applying colors from $selected..."
+                fi
             elif command -v hyprpaper >/dev/null; then
                 # This requires hyprctl hyprpaper commands
                 true 
@@ -34,6 +39,25 @@ case "$1" in
         fi
         ;;
         
+    animation)
+        ANIM_DIR="$HOME/.config/hypr/animations"
+        if [ -d "$ANIM_DIR" ]; then
+             selected=$(find "$ANIM_DIR" -maxdepth 1 -name "*.conf" ! -name "selected.conf" | sort | while read -r anim; do
+                 echo -en "$(basename "$anim" .conf)\0icon\x1fvideo-display\n"
+            done | rofi -dmenu -theme "$ROFI_THEME" -p "Animation")
+            
+            if [ -n "$selected" ]; then
+                target="$ANIM_DIR/${selected}.conf"
+                if [ -f "$target" ]; then
+                    ln -sf "$target" "$ANIM_DIR/selected.conf"
+                    notify-send "Animation set to $selected"
+                fi
+            fi
+        else
+            notify-send "Animation directory not found"
+        fi
+        ;;
+
     theme)
         # This is harder on NixOS without full HyDE machinery
         # We can list available themes in ~/.config/hyde/themes or similar if they exist
