@@ -143,11 +143,11 @@
                     "type": "path",
                     "style": "plain",
                     "foreground": "#95a7bc",
-                    "template": " {{ .Path }}",
+                    "template": "<#005faf></> {{ .Path }}",
                     "properties": {
                         "style": "full",
                         "enable_hyperlink": true,
-                        "folder_separator_icon": "<#367bbf>/</>",
+                        "folder_separator_icon": "<#005faf>/</>",
                         "home_icon": "<#7dff7e>~</>"
                     }
                 },
