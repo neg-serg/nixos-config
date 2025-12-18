@@ -7,7 +7,6 @@
   lib,
   pkgs,
   config,
-  kexec_enabled,
   ...
 }: let
   # Toggles from profiles/performance.nix
@@ -156,7 +155,7 @@ in {
           ++ extra_security
           ++ lib.optionals (config.profiles.security.enable or false) ["page_poison=1"];
       };
-      security.protectKernelImage = !kexec_enabled;
+      security.protectKernelImage = false;
     }
   ];
 }
