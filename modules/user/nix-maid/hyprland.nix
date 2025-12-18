@@ -25,6 +25,7 @@
     "notify.conf"
     "misc.conf"
     "hy3.conf"
+    "selectors.conf"
     "_resets.conf"
   ];
 
@@ -395,6 +396,7 @@ in
           systemctl --user start hyprland-session.target
           echo "Done." >> "$LOG"
         '')
+        (pkgs.writeShellScriptBin "hyde-selector" (builtins.readFile ../../../files/scripts/hyde-selector.sh))
       ]
       ++ lib.optional hy3Enabled pkgs.hyprlandPlugins.hy3; # Tiling plugin for Hyprland inspired by i3/sway
 
@@ -418,6 +420,7 @@ in
         {".config/hypr/rules-routing.conf".text = routesConf;}
         {".config/hypr/permissions.conf".text = permissionsConf;}
         {".config/hypr/pyprland.toml".source = pyprlandToml;}
+        {".config/rofi/selector.rasi".source = ../../../files/gui/rofi/selector.rasi;}
       ]
       # Plugins config (hy3 only)
       ++ lib.optional hy3Enabled {".config/hypr/plugins.conf".text = pluginsConf;}
