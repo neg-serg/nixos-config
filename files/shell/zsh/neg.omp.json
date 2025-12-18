@@ -8,7 +8,6 @@
                 {
                     "type": "git",
                     "style": "plain",
-                    "foreground": "#899CA1",
                     "options": {
                         "branch_icon": "",
                         "fetch_status": true,
