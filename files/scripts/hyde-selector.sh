@@ -3,7 +3,7 @@
 # HyDE-style Selector Script for NixOS
 # Mimics the visual behavior of HyDE's selectors
 
-ROFI_THEME="$HOME/.config/rofi/selector.rasi"
+ROFI_THEME="neg"
 
 usage() {
     echo "Usage: $0 [wallpaper|theme|animation]"
