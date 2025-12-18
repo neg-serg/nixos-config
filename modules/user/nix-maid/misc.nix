@@ -52,7 +52,7 @@ in {
 
   # Winboat (Bottles/Wine)
   environment.systemPackages = with pkgs; [
-    bottles
-    wineWowPackages.stable
+    bottles # Run Windows software on Linux with Bottles
+    wineWowPackages.stable # Open-source implementation of the Windows API
   ];
 }

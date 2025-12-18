@@ -9,8 +9,8 @@
 in
   lib.mkIf (cfg.enable or false) {
     environment.systemPackages = [
-      pkgs.television
-      pkgs.nix-search-tv
+      pkgs.television # Blazingly fast TUI fuzzy finder
+      pkgs.nix-search-tv # Search packages on search.nixos.org from your terminal
     ];
 
     users.users.neg.maid.file.home = {

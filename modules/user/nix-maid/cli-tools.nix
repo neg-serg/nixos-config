@@ -304,37 +304,36 @@
 in {
   # --- System Packages (ensure installed) ---
   environment.systemPackages = with pkgs; [
-    bat # A cat(1) clone with wings
-    btop # A monitor of resources
+    bat # A cat(1) clone with wings (syntax highlighting)
+    btop # A monitor of resources (CPU, Memory, Network)
     fzf # A command-line fuzzy finder
-    yazi # Blazing fast terminal file manager written in Rust, based on async I/O
-    fastfetch # Like neofetch, but much faster because written in C
+    yazi # Blazing fast terminal file manager (Rust/Async I/O)
+    fastfetch # Like neofetch, but much faster (C)
 
     # Core Tools
     fd # A simple, fast and user-friendly alternative to 'find'
-    ripgrep # A line-oriented search tool that recursively searches the current directory for a regex pattern
-    direnv # Extension for your shell
+    ripgrep # Line-oriented search tool (grep alternative)
+    direnv # Extension for your shell to load/unload env vars
     nix-direnv # A fast, persistent use_nix implementation for direnv
 
     # CLI Tools
-    aliae # Cross shell configuration
-    superfile # Pretty fancy file manager
-    pkgs.nh # Yet another nix helper
+    aliae # Cross-shell configuration manager
+    superfile # Pretty fancy TUI file manager
+    pkgs.nh # Yet another nix helper (CLI for NixOS/Home Manager)
 
     # CLI Tools
-    fabric-ai # An open-source framework for augmenting humans
-    hwatch # Modern alternative to watch command
-    kubecolor # Colorize your kubectl output
+    fabric-ai # Open-source framework for augmenting humans (AI framework)
+    hwatch # Modern alternative to watch command with history
+    kubecolor # Colorize kubectl output
     nix-search-tv # TUI for searching libraries on search.nixos.org
-    nix-search-tv
-    numbat # High precision scientific calculator
+    numbat # High precision scientific calculator with unit support
     uni # Query the Unicode database from the command line
-    tray-tui # A system tray for TUI applications
-    visidata # A terminal spreadsheet multitool for discovering and arranging data
+    tray-tui # System tray for TUI applications in terminal
+    visidata # Terminal spreadsheet multitool for data discovery
     # ZCLI (custom script)
     (import ../../../files/scripts/zcli.nix {
       inherit pkgs;
-      profile = "telfir"; # Hardcoded for now, or use config.networking.hostName if available
+      profile = "telfir"; # Host profile for script configuration
       repoRoot = "/etc/nixos";
       flakePath = "/etc/nixos/flake.nix";
       backupFiles = [];

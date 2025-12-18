@@ -9,15 +9,15 @@ in {
   config = lib.mkIf qtEnabled {
     environment.systemPackages = with pkgs; [
       # Qt 5
-      libsForQt5.qt5.qtsvg
-      libsForQt5.qt5.qtwayland
-      libsForQt5.qt5ct
-      libsForQt5.qtstyleplugin-kvantum
+      libsForQt5.qt5.qtsvg # SVG support for Qt 5
+      libsForQt5.qt5.qtwayland # Wayland support for Qt 5
+      libsForQt5.qt5ct # Qt 5 configuration tool
+      libsForQt5.qtstyleplugin-kvantum # SVG-based theme engine for Qt 5
 
       # Qt 6
-      kdePackages.qt6ct
-      kdePackages.qtwayland
-      kdePackages.svgpart
+      kdePackages.qt6ct # Qt 6 configuration tool
+      kdePackages.qtwayland # Wayland support for Qt 6
+      kdePackages.svgpart # SVG part for KDE
     ];
 
     environment.sessionVariables = {

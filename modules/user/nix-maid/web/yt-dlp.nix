@@ -5,7 +5,7 @@
   ...
 }: {
   config = lib.mkIf (config.features.web.enable && config.features.web.tools.enable) {
-    environment.systemPackages = [pkgs.yt-dlp];
+    environment.systemPackages = [pkgs.yt-dlp]; # Command-line program to download videos from YouTube and other sites
 
     users.users.neg.maid.file.home.".config/yt-dlp/config".text = ''
       --downloader aria2c
