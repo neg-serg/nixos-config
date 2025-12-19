@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  impurity,
   ...
 }: let
   # --- Beets Config ---
@@ -150,14 +151,14 @@ in {
       '';
     };
     # Config symlink (lives in home/modules for live editing)
-    ".config/swayimg".source = ../../../files/gui/swayimg;
+    ".config/swayimg".source = impurity.link "/etc/nixos/files/gui/swayimg";
 
     # --- RMPC ---
     # Config symlink (lives in home/modules for live editing)
-    ".config/rmpc".source = ../../../files/rmpc;
+    ".config/rmpc".source = impurity.link "/etc/nixos/files/rmpc";
 
     # --- NCPAMixer ---
-    ".config/ncpamixer.conf".source = ../../../files/gui/ncpamixer.conf;
+    ".config/ncpamixer.conf".source = impurity.link "/etc/nixos/files/gui/ncpamixer.conf";
 
     # --- MPDris2 Config ---
     ".config/mpDris2/mpDris2.conf".text = lib.generators.toINI {} {
