@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  inputs,
   ...
 }: let
   repoRoot = "/etc/nixos";
@@ -17,50 +18,27 @@
   # Quickshell package from flake input
   qsPkg = pkgs.quickshell;
 
-  # Qt paths for wrapper
-  qsBin = lib.getExe' qsPkg "qs";
-  qsQmlPath = "${qsPkg}/${pkgs.qt6.qtbase.qtQmlPrefix}";
-
-  # Runtime dependencies for quickshell scripts
-  qsPath = pkgs.lib.makeBinPath [
-    pkgs.fd # Simple, fast and user-friendly alternative to 'find'
-    pkgs.coreutils # Core GNU utilities (cp, mv, etc.)
-    pkgs.bash # GNU Bourne-Again SHell
-    pkgs.socat # Multipurpose relay (SOcket CAT)
-    pkgs.iproute2 # ip command
-    pkgs.iputils # ping command
-    pkgs.dash # Fast, lightweight shell for checks
-    pkgs.ffmpeg # Multimedia framework (provides ffprobe for metadata)
-    pkgs.mpc # Minimalist command line interface to MPD
-    pkgs.hyprland # Hyprland session control
-    pkgs.neg.rsmetrx # User-defined metric collection tool
-  ];
+  # Wrapper factory
+  mkQuickshellWrapper = import (inputs.self + "/lib/quickshell-wrapper.nix") {
+    inherit lib pkgs;
+  };
 
   # Wrapped quickshell package
-  quickshellWrapped = pkgs.stdenv.mkDerivation {
-    name = "quickshell-wrapped";
-    buildInputs = [pkgs.makeWrapper];
-    dontUnpack = true;
-    installPhase = ''
-      mkdir -p "$out/bin"
-      makeWrapper ${qsBin} "$out/bin/qs" \
-        --prefix QT_PLUGIN_PATH : "${pkgs.qt6.qtbase}/${pkgs.qt6.qtbase.qtPluginPrefix}" \
-        --prefix QT_PLUGIN_PATH : "${pkgs.qt6.qt5compat}/${pkgs.qt6.qtbase.qtPluginPrefix}" \
-        --prefix QT_PLUGIN_PATH : "${pkgs.kdePackages.qtwayland}/${pkgs.qt6.qtbase.qtPluginPrefix}" \
-        --prefix QT_PLUGIN_PATH : "${pkgs.qt6.qtsvg}/${pkgs.qt6.qtbase.qtPluginPrefix}" \
-        --prefix QML2_IMPORT_PATH : "${pkgs.qt6.qt5compat}/${pkgs.qt6.qtbase.qtQmlPrefix}" \
-        --prefix QML2_IMPORT_PATH : "${pkgs.qt6.qtdeclarative}/${pkgs.qt6.qtbase.qtQmlPrefix}" \
-        --prefix QML2_IMPORT_PATH : "${pkgs.qt6.qtpositioning}/${pkgs.qt6.qtbase.qtQmlPrefix}" \
-        --prefix QML2_IMPORT_PATH : "${pkgs.qt6.qtsvg}/${pkgs.qt6.qtbase.qtQmlPrefix}" \
-        --prefix QML2_IMPORT_PATH : "${pkgs.kdePackages.syntax-highlighting}/${pkgs.qt6.qtbase.qtQmlPrefix}" \
-        --prefix QT_PLUGIN_PATH : "${pkgs.qt6.qtmultimedia}/${pkgs.qt6.qtbase.qtPluginPrefix}" \
-        --prefix QML2_IMPORT_PATH : "${pkgs.qt6.qtmultimedia}/${pkgs.qt6.qtbase.qtQmlPrefix}" \
-        --prefix QML2_IMPORT_PATH : "${qsQmlPath}" \
-        --set QT_QPA_PLATFORM wayland \
-        --set QML_XHR_ALLOW_FILE_READ 1 \
-        --prefix PATH : ${qsPath}
-    '';
-    meta.mainProgram = "qs";
+  quickshellWrapped = mkQuickshellWrapper {
+    inherit qsPkg;
+    extraPath = [
+      pkgs.fd
+      pkgs.coreutils
+      pkgs.bash
+      pkgs.socat
+      pkgs.iproute2
+      pkgs.iputils
+      pkgs.dash
+      pkgs.ffmpeg
+      pkgs.mpc
+      pkgs.hyprland
+      pkgs.neg.rsmetrx
+    ];
   };
 
   # Theme builder script
