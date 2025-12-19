@@ -148,7 +148,7 @@ in {
       # -- Wayland Utils --
       pkgs.dragon-drop # drag-n-drop from console
       pkgs.networkmanager # CLI nmcli helper for panels
-      pkgs.waybar # Wayland status bar
+
       pkgs.waypipe # Wayland remoting (ssh -X like)
       pkgs.wev # xev for Wayland
       pkgs.xorg.xeyes # track eyes for your cursor
