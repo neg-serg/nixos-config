@@ -321,11 +321,12 @@
         unfocus = "hide";
         multi = true;
       };
-      teardrop = {
+      vpn = {
         animation = "fromTop";
-        command = "${lib.getExe pkgs.hiddify-app} --class teardrop";
-        class = "teardrop";
-        size = "40% 90%";
+        command = "${lib.getExe pkgs.hiddify-app} --class vpn";
+        class = "vpn";
+        size = "35% 80%";
+        position = "32% 10%";
         lazy = true;
         unfocus = "hide";
       };
