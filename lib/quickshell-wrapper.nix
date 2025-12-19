@@ -37,6 +37,7 @@
           --set QT_QPA_PLATFORM wayland \
           --set QML_XHR_ALLOW_FILE_READ 1 \
           --prefix PATH : ${qsPath}
+        ln -s "$out/bin/qs" "$out/bin/quickshell"
       '';
       meta.mainProgram = "qs";
     };
