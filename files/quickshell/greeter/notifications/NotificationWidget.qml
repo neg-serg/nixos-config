@@ -106,7 +106,7 @@ BarWidgetInner {
 
 				CloseButton {
 					anchors.fill: parent
-					ringFill: root.backer.timePercentage
+					ringFill: root.backer?.timePercentage ?? 0
 				}
 			}
 		}

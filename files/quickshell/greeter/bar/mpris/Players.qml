@@ -129,12 +129,12 @@ FullwidthMouseArea {
 			id: positionInfo
 
 			property var player: root.activePlayer;
-			property int position: Math.floor(player.position);
-			property int length: Math.floor(player.length);
+			property int position: Math.floor(player?.position ?? 0);
+			property int length: Math.floor(player?.length ?? 0);
 
 			FrameAnimation {
 				id: posTracker;
-				running: positionInfo.player.isPlaying && (tooltip.visible || rightclickMenu.visible);
+				running: (positionInfo.player?.isPlaying ?? false) && (tooltip.visible || rightclickMenu.visible);
 				onTriggered: positionInfo.player.positionChanged();
 			}
 
@@ -260,7 +260,10 @@ FullwidthMouseArea {
 						}
 
 						color: "#80ceffff"
-						width: parent.width * (root.activePlayer.position / root.activePlayer.length)
+						width: parent.width * (function() {
+        if ((root.activePlayer?.length ?? 0) === 0) return 0;
+        return (root.activePlayer?.position ?? 0) / root.activePlayer.length;
+    }())
 					}
 				}
 
@@ -373,6 +376,7 @@ FullwidthMouseArea {
 									MouseArea {
 										required property MprisPlayer modelData;
 										readonly property bool selected: modelData == player;
+										readonly property bool isPlaying: root.activePlayer?.isPlaying ?? false;
 										onSelectedChanged: if (selected) playerSelector.selectedPlayerDisplay = this;
 
 										implicitWidth: childrenRect.width

@@ -37,7 +37,7 @@ ShellRoot {
 	}
 
 	Notifs.NotificationOverlay {
-		screen: Quickshell.screens.find(s => s.name == "DP-1")
+		screen: Quickshell.screens.find(s => s.name == "DP-1") ?? Quickshell.screens[0]
 	}
 
 	Variants {
