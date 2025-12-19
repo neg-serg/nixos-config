@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  impurity,
   ...
 }: let
   cfg = config.features.gui.walker;
@@ -11,7 +12,7 @@ in
     environment.systemPackages = [pkgs.walker]; # Wayland-native application runner
 
     users.users.neg.maid.file.home = {
-      ".config/walker/config.toml".source = "${walkerRoot}/config.toml";
-      ".config/walker/themes".source = "${walkerRoot}/themes";
+      ".config/walker/config.toml".source = impurity.link "${walkerRoot}/config.toml";
+      ".config/walker/themes".source = impurity.link "${walkerRoot}/themes";
     };
   }

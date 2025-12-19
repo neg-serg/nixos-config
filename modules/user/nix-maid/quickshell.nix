@@ -3,6 +3,7 @@
   lib,
   config,
   inputs,
+  impurity,
   ...
 }: let
   repoRoot = "/etc/nixos";
@@ -47,53 +48,25 @@
     runtimeInputs = [pkgs.coreutils pkgs.nodejs_24 pkgs.systemd];
     text = ''
       set -euo pipefail
-      cd ${quickshellSrc}
-      # Write merged theme into the writable config dir, not the Nix store.
+      # For mutable config, we build theme directly in the impurity source if valid,
+      # or formatted output to ~/.config/quickshell/Theme/.theme.json
+      # Actually, since we are linking, we can run this against the linked path.
+
       confdir="$HOME/.config/quickshell/Theme"
       mkdir -p "$confdir"
-      # Replace any symlinked .theme.json with a real file.
-      rm -f "$confdir/.theme.json"
-      ${pkgs.nodejs_24}/bin/node Tools/build-theme.mjs --out "$confdir/.theme.json" --quiet
-    '';
-  };
-
-  # Sync script that copies quickshell config (mutable, not symlink)
-  syncQuickshell = pkgs.writeShellApplication {
-    name = "quickshell-sync-config";
-    runtimeInputs = [pkgs.rsync pkgs.coreutils];
-    text = ''
-      set -euo pipefail
-      src="${quickshellSrc}/"
-      dest="$HOME/.config/quickshell/"
-      mkdir -p "$dest"
-      # Sync files, preserving any local changes to Theme/.theme.json
-      rsync -a --delete \
-        --exclude 'Theme/.theme.json' \
-        --exclude '*.zwc' \
-        "$src" "$dest"
+      # The build script presumably writes to --out
+      ${pkgs.nodejs_24}/bin/node "$HOME"/.config/quickshell/Tools/build-theme.mjs --out "$confdir/.theme.json" --quiet
     '';
   };
 in
   lib.mkIf quickshellEnabled {
-    # Wrapped quickshell package + sync script
+    # Link Quickshell config mutably
+    users.users.neg.maid.file.home.".config/quickshell".source = impurity.link quickshellSrc;
+
+    # Wrapped quickshell package
     environment.systemPackages = [
       quickshellWrapped # Wrapped Quickshell with dependencies and environment
-      syncQuickshell # Helper script to sync Quickshell config from repo to home
     ];
-
-    # Quickshell config sync service (runs before quickshell starts)
-    systemd.user.services.quickshell-sync = {
-      enable = true;
-      description = "Sync Quickshell config from repo";
-      partOf = ["graphical-session.target"];
-      before = ["quickshell.service" "quickshell-theme-watch.service"];
-      wantedBy = ["graphical-session.target"];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = lib.getExe syncQuickshell;
-        RemainAfterExit = true;
-      };
-    };
 
     # Quickshell panel service
     systemd.user.services.quickshell = {
@@ -101,8 +74,7 @@ in
       description = "Quickshell - QtQuick based shell for Wayland";
       documentation = ["https://github.com/outfoxxed/quickshell"];
       partOf = ["graphical-session.target"];
-      after = ["graphical-session-pre.target" "quickshell-sync.service"];
-      requires = ["quickshell-sync.service"];
+      after = ["graphical-session-pre.target"];
       wantedBy = ["graphical-session.target"];
       serviceConfig = {
         ExecStart = "${lib.getExe quickshellWrapped} -p %h/.config/quickshell/shell.qml";
@@ -124,10 +96,10 @@ in
         ExecStart = ''
           ${pkgs.watchexec}/bin/watchexec \
             --restart \
-            --watch ${quickshellSrc}/Theme \
-            --watch ${quickshellSrc}/Theme/manifest.json \
+            --watch %h/.config/quickshell/Theme \
+            --watch %h/.config/quickshell/Theme/manifest.json \
             --exts json,jsonc \
-            --ignore ${quickshellSrc}/Theme/.theme.json \
+            --ignore %h/.config/quickshell/Theme/.theme.json \
             --debounce 250ms \
             -- ${lib.getExe buildTheme}
         '';
