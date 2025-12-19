@@ -33,7 +33,8 @@ cpu-masks:
 # Usage: just deploy [host]
 deploy host="telfir":
     repo_root="$((git rev-parse --show-toplevel 2>/dev/null) || pwd)"; \
-    sudo sh -c "IMPURITY_PATH=$repo_root nixos-rebuild switch --flake $repo_root#{{host}} --impure"
+    export IMPURITY_PATH="$repo_root"; \
+    sudo --preserve-env=IMPURITY_PATH nixos-rebuild switch --flake "$repo_root#{{host}}" --impure
 
 # Alias for deploy
 switch host="telfir":
