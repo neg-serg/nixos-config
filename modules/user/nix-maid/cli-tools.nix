@@ -2,11 +2,10 @@
   pkgs,
   lib,
   config,
-  # impurity, # Temporarily disabled
+  impurity,
   ...
 }: let
-  # Helper to access HM config root if needed, but we prefer relative paths for stability
-  # Assuming this file is in modules/user/nix-maid/
+  # Source paths (must be Nix paths for impurity.link)
   fastfetchSrc = ../../../files/fastfetch;
   # --- Bat Config (syntaxes disabled due to HM batCache conflict) ---
   # batSyntaxes = {
@@ -359,8 +358,8 @@ in {
     ".config/yazi/keymap.toml".source = yaziFormat.generate "keymap.toml" yaziKeymap;
 
     # Fastfetch Configs (Source from repo)
-    ".config/fastfetch/config.jsonc".source = "${fastfetchSrc}/config.jsonc";
-    ".config/fastfetch/skull".source = "${fastfetchSrc}/skull"; # Custom logo
+    ".config/fastfetch/config.jsonc".source = impurity.link (fastfetchSrc + /config.jsonc);
+    ".config/fastfetch/skull".source = impurity.link (fastfetchSrc + /skull); # Custom logo
 
     # FD Ignore
     ".config/fd/ignore".text = ''

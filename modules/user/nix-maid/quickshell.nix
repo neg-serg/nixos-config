@@ -3,9 +3,10 @@
   lib,
   config,
   inputs,
-  # impurity, # Temporarily disabled
+  impurity,
   ...
 }: let
+  # Source path (Nix path for impurity.link)
   quickshellSrc = ../../../files/quickshell;
 
   # Feature flags check
@@ -59,8 +60,8 @@
   };
 in
   lib.mkIf quickshellEnabled {
-    # Link Quickshell config (static path, impurity disabled)
-    users.users.neg.maid.file.home.".config/quickshell".source = quickshellSrc;
+    # Link Quickshell config mutably via impurity
+    users.users.neg.maid.file.home.".config/quickshell".source = impurity.link quickshellSrc;
 
     # Wrapped quickshell package
     environment.systemPackages = [
