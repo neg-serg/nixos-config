@@ -18,7 +18,7 @@ BarWidgetInner {
 	readonly property real percentage: UPower.displayDevice.percentage
 	readonly property bool isLow: percentage <= 0.20
 
-	readonly property UPowerDevice batteryDevice: UPower.devices.values
+	readonly property var batteryDevice: UPower.devices.values
 		.find(device => device.isLaptopBattery);
 
 	function statusStr() {
