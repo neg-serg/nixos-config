@@ -1,4 +1,8 @@
-{pkgs, ...}: let
+{
+  pkgs,
+  impurity,
+  ...
+}: let
   # Vicinae theme definition (neg)
   vicinaeThemeNeg = let
     accent = "#005f87";
@@ -120,9 +124,7 @@
       rounding = 10;
     };
   };
-
   # Extension source path
-  extensionsSrc = ../../../files/gui/vicinae-extensions;
 in {
   # Vicinae config files via nix-maid
   users.users.neg.maid.file.home = {
@@ -133,7 +135,7 @@ in {
     ".config/vicinae/vicinae.json".text = builtins.toJSON vicinaeSettings;
 
     # Extensions
-    ".config/vicinae/extensions".source = extensionsSrc;
+    ".config/vicinae/extensions".source = impurity.link "/etc/nixos/files/gui/vicinae-extensions";
   };
 
   # Systemd user service for Vicinae
