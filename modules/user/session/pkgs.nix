@@ -8,7 +8,7 @@
   mkQuickshellWrapper = import (inputs.self + "/lib/quickshell-wrapper.nix") {
     inherit lib pkgs;
   };
-  quickshellPkg = inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default; # exact quickshell build for host cpu
+  quickshellPkg = pkgs.quickshell; # use system package to match Qt version
   quickshellWrapped = mkQuickshellWrapper {qsPkg = quickshellPkg;};
   hostSystem = pkgs.stdenv.hostPlatform.system; # shorthand for current architecture
   devSpeed = config.features.devSpeed.enable or false;
