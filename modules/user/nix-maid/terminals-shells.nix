@@ -2,7 +2,7 @@
   # Source Paths
   # Source Paths
   kittyConf = ../../../files/kitty;
-  weztermConf = ../../../files/wezterm;
+
   nuConfDir = ../../../files/nushell;
   tmuxConfDir = ../../../files/tmux;
   ompConfig = ../../../files/shell/zsh/neg.omp.json;
@@ -484,9 +484,6 @@ in {
     # Kitty Config
     ".config/kitty".source = kittyConf;
 
-    # WezTerm Config
-    ".config/wezterm".source = weztermConf;
-
     # Tmux Config
     ".config/tmux".source = tmuxConfDir;
 
@@ -516,7 +513,6 @@ in {
   environment.systemPackages = [
     # Terminals
     pkgs.kitty # GPU-accelerated terminal with ligatures and image support
-    pkgs.wezterm # GPU-accelerated terminal with Lua config
 
     # Shells
     pkgs.nushell # Modern shell with structured data pipelines
