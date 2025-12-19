@@ -18,7 +18,7 @@ PanelWindow {
 
 	property real baseWidth: 55
 	property real leftMargin: root.compactState * 10
-	width: baseWidth + 15
+	implicitWidth: baseWidth + 15
 	exclusiveZone: baseWidth + (isFullscreenWorkspace ? 0 : 15) - margins.left
 
 	mask: Region {
@@ -42,7 +42,7 @@ PanelWindow {
 		return Math.max(barRect.anchors.topMargin + height, Math.min(barRect.height + barRect.anchors.topMargin - height, targetY))
 	}
 
-	readonly property bool isFullscreenWorkspace: Hyprland.monitorFor(screen).activeWorkspace.hasFullscreen
+	readonly property bool isFullscreenWorkspace: Hyprland.monitorFor(screen)?.activeWorkspace?.hasFullscreen ?? false
 	property real compactState: isFullscreenWorkspace ? 0 : 1
 	Behavior on compactState {
 		NumberAnimation {

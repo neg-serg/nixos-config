@@ -101,8 +101,8 @@ Scope {
 			}
 
 			//height: bar.height
-			width: Math.max(700, tooltipItem.largestAnimWidth) // max due to qtwayland glitches
-			height: {
+			implicitWidth: Math.max(700, tooltipItem.largestAnimWidth) // max due to qtwayland glitches
+			implicitHeight: {
 				const h = tooltipItem.lowestAnimY - tooltipItem.highestAnimY
 				//console.log(`seth ${h} ${tooltipItem.highestAnimY} ${tooltipItem.lowestAnimY}; ${tooltipItem.y1} ${tooltipItem.y2}`)
 				return h
