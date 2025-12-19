@@ -1,6 +1,6 @@
 {
   pkgs,
-  # impurity, # Temporarily disabled
+  impurity,
   ...
 }: let
   # Vicinae theme definition (neg)
@@ -136,7 +136,7 @@ in {
     ".config/vicinae/vicinae.json".text = builtins.toJSON vicinaeSettings;
 
     # Extensions
-    ".config/vicinae/extensions".source = extensionsSrc;
+    ".config/vicinae/extensions".source = impurity.link extensionsSrc;
   };
 
   # Systemd user service for Vicinae
