@@ -322,8 +322,8 @@
       };
       vpn = {
         animation = "fromTop";
-        command = "${lib.getExe pkgs.hiddify-app} --class vpn";
-        class = "vpn";
+        command = "${lib.getExe pkgs.hiddify-app}";
+        class = "hiddify";
         size = "35% 80%";
         position = "32% 10%";
         lazy = true;
