@@ -2,11 +2,12 @@
   pkgs,
   lib,
   config,
-  impurity,
+  # impurity, # Temporarily disabled
   ...
 }: let
   # Helper to access HM config root if needed, but we prefer relative paths for stability
   # Assuming this file is in modules/user/nix-maid/
+  fastfetchSrc = ../../../files/fastfetch;
   # --- Bat Config (syntaxes disabled due to HM batCache conflict) ---
   # batSyntaxes = {
   #   ".config/bat/syntaxes/Dockerfile_with_bash.sublime-syntax".text = ''
@@ -358,8 +359,8 @@ in {
     ".config/yazi/keymap.toml".source = yaziFormat.generate "keymap.toml" yaziKeymap;
 
     # Fastfetch Configs (Source from repo)
-    ".config/fastfetch/config.jsonc".source = impurity.link "/etc/nixos/files/fastfetch/config.jsonc";
-    ".config/fastfetch/skull".source = impurity.link "/etc/nixos/files/fastfetch/skull"; # Custom logo
+    ".config/fastfetch/config.jsonc".source = "${fastfetchSrc}/config.jsonc";
+    ".config/fastfetch/skull".source = "${fastfetchSrc}/skull"; # Custom logo
 
     # FD Ignore
     ".config/fd/ignore".text = ''
