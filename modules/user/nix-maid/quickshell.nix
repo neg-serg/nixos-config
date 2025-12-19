@@ -2,7 +2,6 @@
   pkgs,
   lib,
   config,
-  inputs,
   ...
 }: let
   repoRoot = "/etc/nixos";
@@ -16,7 +15,7 @@
     && !(config.features.devSpeed.enable or false);
 
   # Quickshell package from flake input
-  qsPkg = inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  qsPkg = pkgs.quickshell;
 
   # Qt paths for wrapper
   qsBin = lib.getExe' qsPkg "qs";
