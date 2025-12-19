@@ -2,15 +2,14 @@
   pkgs,
   lib,
   config,
-  impurity,
+  # impurity, # Temporarily disabled
   ...
 }: let
   guiEnabled = config.features.gui.enable or false;
   hy3Enabled = config.features.gui.hy3.enable or false;
 
   # Static config files location
-  repoRoot = "/etc/nixos";
-  hyprFiles = "${repoRoot}/files/gui/hypr";
+  hyprConfDir = ../../../files/gui/hypr;
 
   # Core static config files to link
   coreFiles = ["vars.conf" "classes.conf" "rules.conf" "autostart.conf"];
@@ -427,47 +426,43 @@ in
       # Plugins config (hy3 only)
       ++ lib.optional hy3Enabled {".config/hypr/plugins.conf".text = pluginsConf;}
       # Static core config files
-      ++ map (f: {".config/hypr/${f}".source = impurity.link "${hyprFiles}/${f}";}) coreFiles
+      ++ map (f: {".config/hypr/${f}".source = "${hyprConfDir}/${f}";}) coreFiles
       # Init config (hy3 or nohy3)
       ++ [
         {
-          ".config/hypr/init.conf".source = impurity.link (hyprFiles
-            + (
-              if hy3Enabled
-              then "/init.conf"
-              else "/init.nohy3.conf"
-            ));
+          ".config/hypr/init.conf".source =
+            if hy3Enabled
+            then "${hyprConfDir}/init.conf"
+            else "${hyprConfDir}/init.nohy3.conf";
         }
-        {".config/hypr/xdph.conf".source = impurity.link "${hyprFiles}/xdph.conf";}
+        {".config/hypr/xdph.conf".source = "${hyprConfDir}/xdph.conf";}
       ]
       # Bindings config (hy3 or nohy3)
       ++ [
         {
-          ".config/hypr/bindings.conf".source = impurity.link (hyprFiles
-            + (
-              if hy3Enabled
-              then "/bindings.conf"
-              else "/bindings.nohy3.conf"
-            ));
+          ".config/hypr/bindings.conf".source =
+            if hy3Enabled
+            then "${hyprConfDir}/bindings.conf"
+            else "${hyprConfDir}/bindings.nohy3.conf";
         }
       ]
       # Static binding files
-      ++ map (f: {".config/hypr/bindings/${f}".source = impurity.link "${hyprFiles}/bindings/${f}";}) bindingFiles
+      ++ map (f: {".config/hypr/bindings/${f}".source = "${hyprConfDir}/bindings/${f}";}) bindingFiles
       # Animation files
       ++ (let
         animDir = ../../../files/gui/hypr/animations;
         animFiles = builtins.attrNames (builtins.readDir animDir);
       in
-        map (f: {".config/hypr/animations/${f}".source = impurity.link "${hyprFiles}/animations/${f}";}) animFiles)
+        map (f: {".config/hypr/animations/${f}".source = "${hyprConfDir}/animations/${f}";}) animFiles)
       # Hyprlock files
       ++ (let
         lockDir = ../../../files/gui/hypr/hyprlock;
         lockFiles = builtins.attrNames (builtins.readDir lockDir);
       in
-        map (f: {".config/hypr/hyprlock/${f}".source = impurity.link "${hyprFiles}/hyprlock/${f}";}) lockFiles)
+        map (f: {".config/hypr/hyprlock/${f}".source = "${hyprConfDir}/hyprlock/${f}";}) lockFiles)
       # Main hyprlock config (init)
       ++ [
-        {".config/hypr/hyprlock.conf".source = impurity.link "${hyprFiles}/hyprlock/init.conf";}
+        {".config/hypr/hyprlock.conf".source = "${hyprConfDir}/hyprlock/init.conf";}
       ]
     );
 

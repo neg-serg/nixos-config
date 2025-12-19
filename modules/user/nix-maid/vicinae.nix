@@ -1,6 +1,6 @@
 {
   pkgs,
-  impurity,
+  # impurity, # Temporarily disabled
   ...
 }: let
   # Vicinae theme definition (neg)
@@ -125,6 +125,7 @@
     };
   };
   # Extension source path
+  extensionsSrc = ../../../files/gui/vicinae-extensions;
 in {
   # Vicinae config files via nix-maid
   users.users.neg.maid.file.home = {
@@ -135,7 +136,7 @@ in {
     ".config/vicinae/vicinae.json".text = builtins.toJSON vicinaeSettings;
 
     # Extensions
-    ".config/vicinae/extensions".source = impurity.link "/etc/nixos/files/gui/vicinae-extensions";
+    ".config/vicinae/extensions".source = extensionsSrc;
   };
 
   # Systemd user service for Vicinae
