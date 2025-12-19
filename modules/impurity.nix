@@ -6,5 +6,6 @@
   imports = [inputs.impurity.nixosModules.impurity];
 
   impurity.configRoot = self;
-  impurity.enable = true;
+  # Temporarily disabled - can be re-enabled by setting to true
+  impurity.enable = false;
 }

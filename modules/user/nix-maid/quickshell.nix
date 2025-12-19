@@ -3,11 +3,10 @@
   lib,
   config,
   inputs,
-  impurity,
+  # impurity, # Temporarily disabled
   ...
 }: let
-  repoRoot = "/etc/nixos";
-  quickshellSrc = "${repoRoot}/files/quickshell";
+  quickshellSrc = ../../../files/quickshell;
 
   # Feature flags check
   quickshellEnabled =
@@ -60,8 +59,8 @@
   };
 in
   lib.mkIf quickshellEnabled {
-    # Link Quickshell config mutably
-    users.users.neg.maid.file.home.".config/quickshell".source = impurity.link quickshellSrc;
+    # Link Quickshell config (static path, impurity disabled)
+    users.users.neg.maid.file.home.".config/quickshell".source = quickshellSrc;
 
     # Wrapped quickshell package
     environment.systemPackages = [
