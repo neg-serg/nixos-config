@@ -48,7 +48,9 @@ fmt:
     cd "$repo_root" && nix fmt
 
 check:
-    nix flake check -L
+    repo_root="$(git rev-parse --show-toplevel)"; \
+    export IMPURITY_PATH="$repo_root"; \
+    nix flake check --impure -L
 
 lint:
     set -eu
