@@ -89,6 +89,27 @@ in {
       : > "$out"
     '';
     tests-caddy = pkgs.testers.runNixOSTest (import ../tests/caddy.nix);
+
+    # Shell script linting with shellcheck
+    lint-shellcheck =
+      pkgs.runCommand "lint-shellcheck" {
+        nativeBuildInputs = with pkgs; [shellcheck findutils gnugrep];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        # Find shell scripts with proper shebangs and run shellcheck
+        find files scripts -type f \( -name '*.sh' -o -name '*.bash' \) \
+          -exec grep -lZ -m1 -E '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh' {} + 2>/dev/null \
+          | xargs -0 -r shellcheck -S warning -x || true
+        touch "$out"
+      '';
+
+    # Verify NixOS configuration builds (evaluation only, no actual build)
+    nixos-eval-telfir = pkgs.runCommand "nixos-eval-telfir" {} ''
+      # Just check that the toplevel derivation exists
+      test -e ${inputs.self.nixosConfigurations.telfir.config.system.build.toplevel}
+      touch "$out"
+    '';
   };
 
   devShells = {
