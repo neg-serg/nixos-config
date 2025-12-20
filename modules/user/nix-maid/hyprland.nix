@@ -275,6 +275,7 @@
         position = "69% 2%";
         lazy = true;
         multi = true;
+        process_tracking = false; # Telegram is single-instance
       };
       discord = {
         animation = "fromRight";
@@ -283,6 +284,7 @@
         size = "50% 40%";
         lazy = true;
         multi = true;
+        process_tracking = false;
       };
       music = {
         animation = "";
@@ -293,6 +295,7 @@
         size = "70% 40%";
         lazy = true;
         unfocus = "hide";
+        process_tracking = false;
       };
       torrment = {
         animation = "";
@@ -302,6 +305,7 @@
         size = "98% 40%";
         lazy = true;
         unfocus = "hide";
+        process_tracking = false;
       };
       teardown = {
         animation = "";
@@ -310,6 +314,7 @@
         position = "1% 0%";
         size = "98% 50%";
         lazy = true;
+        process_tracking = false;
       };
       mixer = {
         animation = "fromRight";
@@ -319,15 +324,7 @@
         size = "40% 90%";
         unfocus = "hide";
         multi = true;
-      };
-      vpn = {
-        animation = "fromTop";
-        command = "sh -c 'cd ~ && ${lib.getExe pkgs.hiddify-app}'";
-        class = "hiddify";
-        size = "35% 80%";
-        position = "32% 10%";
-        lazy = true;
-        unfocus = "hide";
+        process_tracking = false;
       };
     };
   };

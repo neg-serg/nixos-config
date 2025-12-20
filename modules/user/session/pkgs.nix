@@ -90,9 +90,6 @@ in {
       # -- Power --
       pkgs.upower # power management daemon for laptops/desktops
 
-      # -- Proxy --
-      pkgs.hiddify-app # Hiddify proxy client
-
       # -- Qt --
       pkgs.hyprland-qt-support # Qt integration helpers for Hyprland
       pkgs.hyprland-qtutils # Qt extras (hyprland-qt-helper)
