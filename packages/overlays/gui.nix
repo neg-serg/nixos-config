@@ -87,8 +87,6 @@ in {
     };
   };
 
-  hiddify-app = callPkg (inputs.self + "/packages/hiddify-app") {};
-
   hydralauncher = hydralauncherPkg;
   _hydra = hydralauncherPkg;
   chainner = chainnerPkg;
