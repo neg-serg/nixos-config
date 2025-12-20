@@ -22,8 +22,7 @@ Item {
 
     property bool expanded: false
     property bool closeOnBackgroundClick: true
-    property bool showOverlay: Settings.settings.dimPanels
-    property color overlayColor: showOverlay ? Theme.overlayStrong : "transparent"
+    // Dimming overlay removed - background is always transparent
     property var screen: null
     property string overlayNamespace: "quickshell"
 
@@ -70,8 +69,7 @@ Item {
         id: overlayWindow
         visible: false
         screen: root.screen
-        showOverlay: root.showOverlay
-        overlayColor: root.overlayColor
+        // Overlay properties removed - always transparent
         closeOnBackgroundClick: root.closeOnBackgroundClick
         layerNamespace: (root.overlayNamespace && root.overlayNamespace.length)
             ? root.overlayNamespace
