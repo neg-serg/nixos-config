@@ -141,6 +141,9 @@ Item {
         centerContent: false
         borderVisible: !mediaControl.mediaBorderless
         backgroundColorOverride: mediaControl.mediaBorderless ? Theme.background : "transparent"
+        // Disable vertical padding to allow square cover art in all modes
+        verticalPaddingScale: 0
+        verticalPaddingMin: 0
 
         Item {
             id: layoutHost
@@ -155,11 +158,12 @@ Item {
 
                 Item {
                     id: compactIconHost
-                    implicitWidth: mediaControl.iconPreferredWidth
+                    // Force square aspect ratio: use height for both dimensions
+                    implicitWidth: mediaControl.baseHeight
                     implicitHeight: mediaControl.baseHeight
-                    Layout.preferredWidth: mediaControl.iconPreferredWidth
-                    Layout.minimumWidth: mediaControl.iconMinWidth
-                    Layout.maximumWidth: mediaControl.iconMaxWidth
+                    Layout.preferredWidth: mediaControl.baseHeight
+                    Layout.minimumWidth: mediaControl.baseHeight
+                    Layout.maximumWidth: mediaControl.baseHeight
                     Layout.fillHeight: true
                     Layout.alignment: Qt.AlignVCenter
 
@@ -530,7 +534,11 @@ Item {
 
                 Item {
                     id: panelIconHost
-                    anchors.fill: parent
+                    // Force square aspect ratio for cover art using explicit baseHeight
+                    width: mediaControl.baseHeight
+                    height: mediaControl.baseHeight
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
                 }
 
                 Item {
