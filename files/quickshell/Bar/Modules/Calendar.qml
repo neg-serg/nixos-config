@@ -12,7 +12,7 @@ OverlayToggleCapsule {
     id: calendarOverlay
     visible: false
     capsuleVisible: false
-    showOverlay: false
+    // Overlay properties removed - background always transparent
     autoToggleOnTap: false
 
     overlayChildren: [

@@ -75,8 +75,7 @@ Row {
         capsuleVisible: false
         autoToggleOnTap: false
         screen: root.screen
-        showOverlay: false
-        overlayColor: showOverlay ? Theme.overlayStrong : "transparent"
+        // Overlay properties removed - background always transparent
         onDismissed: reason => {
             if (trayMenu && trayMenu.visible) trayMenu.hideMenu();
             if (!root.expanded) return;
@@ -184,7 +183,6 @@ Row {
                                     trayMenu.menu = modelData.menu;
                                     trayMenu.showAt(parent, menuX, menuY);
                                     trayOverlay.open("tray-menu");
-                                    try { trayOverlay.showOverlay = true; } catch (e) {}
                                 }
                             }
                         }
@@ -206,7 +204,7 @@ Row {
         onClicked: {
             expanded = !expanded;
             if (expanded) { openGuard = true; Services.TrayController.startGuard(); }
-            if (expanded) { trayOverlay.open("tray-expanded"); try { trayOverlay.showOverlay = false; } catch (e) {} }
+            if (expanded) { trayOverlay.open("tray-expanded"); }
             else root.dismissOverlayNow();
         }
     }
@@ -309,7 +307,6 @@ Row {
                             trayMenu.menu = modelData.menu;
                             trayMenu.showAt(parent, menuX, menuY);
                             trayOverlay.open("tray-menu");
-                            try { trayOverlay.showOverlay = false; } catch (e) {}
                         } else
                         
                         {}

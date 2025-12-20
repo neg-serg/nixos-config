@@ -17,8 +17,7 @@ Item {
     property alias overlay: overlay
     property alias overlayChildren: overlayHost.data
     property alias overlayNamespace: overlay.overlayNamespace
-    property alias overlayColor: overlay.overlayColor
-    property alias showOverlay: overlay.showOverlay
+    // Overlay properties removed - background always transparent
     property alias closeOnBackgroundClick: overlay.closeOnBackgroundClick
     property alias expanded: overlay.expanded
     property real capsuleHoverYOffset: 0
@@ -54,7 +53,7 @@ Item {
         id: overlay
         screen: root.screen
         overlayNamespace: "quickshell"
-        showOverlay: Settings.settings.dimPanels
+        // Overlay properties removed - always transparent
         closeOnBackgroundClick: true
         onOpened: root.opened()
         onDismissed: reason => root.dismissed(reason)

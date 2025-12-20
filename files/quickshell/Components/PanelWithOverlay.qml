@@ -5,12 +5,11 @@ import qs.Settings
 
 PanelWindow {
     id: outerPanel
-    property bool showOverlay: Settings.settings.dimPanels
+    // Dimming overlay removed - background is always transparent
     property int topMargin: Math.round(Theme.panelModuleHeight * Theme.scale(screen))
     property int bottomMargin: Math.round(Theme.panelModuleHeight * Theme.scale(screen))
     property string layerNamespace: "quickshell"
     WlrLayershell.namespace: layerNamespace
-    property color overlayColor: showOverlay ? Theme.overlayStrong : "transparent"
     property bool closeOnBackgroundClick: true
     signal backgroundClicked()
     
@@ -24,7 +23,7 @@ PanelWindow {
 
     implicitWidth: screen.width
     implicitHeight: screen.height
-    color: visible ? overlayColor : "transparent"
+    color: "transparent"
     visible: false
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     screen: (typeof modelData !== 'undefined' ? modelData : null)
@@ -44,6 +43,4 @@ PanelWindow {
             outerPanel.dismiss();
         }
     }
-
-    Behavior on color { enabled: showOverlay; ColorRippleBehavior {} }
 }
