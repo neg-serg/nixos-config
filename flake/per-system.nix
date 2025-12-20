@@ -114,6 +114,32 @@ in {
         echo "Config evaluated successfully: ${configName}"
         touch "$out"
       '';
+
+    # Verify all impurity.link paths exist in the repository
+    check-impurity-paths =
+      pkgs.runCommand "check-impurity-paths" {
+        nativeBuildInputs = with pkgs; [bash coreutils findutils gnugrep gitMinimal];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        bash scripts/dev/check-impurity-paths.sh
+        touch "$out"
+      '';
+
+    # Validate JSON and TOML config file syntax
+    lint-json-toml =
+      pkgs.runCommand "lint-json-toml" {
+        nativeBuildInputs = with pkgs; [jq python3 findutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking JSON files..."
+        find files -name '*.json' -exec jq -e . {} + >/dev/null
+        echo "Checking TOML files..."
+        find files -name '*.toml' -print0 | xargs -0 -r -I {} python3 -c "import tomllib; tomllib.load(open('{}', 'rb'))"
+        echo "All config files are valid!"
+        touch "$out"
+      '';
   };
 
   devShells = {
