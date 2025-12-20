@@ -76,6 +76,17 @@
       "browser.urlbar.quicksuggest.scenario" = "offline";
       "browser.contentblocking.category" = "strict";
       "widget.use-xdg-desktop-portal.file-picker" = 1;
+
+      # Proxy settings - disable proxy (reset from Hiddify)
+      # 0 = No proxy, 1 = Manual, 2 = PAC, 4 = WPAD, 5 = System
+      "network.proxy.type" = 0;
+      "network.proxy.http" = "";
+      "network.proxy.http_port" = 0;
+      "network.proxy.ssl" = "";
+      "network.proxy.ssl_port" = 0;
+      "network.proxy.socks" = "";
+      "network.proxy.socks_port" = 0;
+      "network.proxy.no_proxies_on" = "localhost, 127.0.0.1";
     };
 
   profiles = {
