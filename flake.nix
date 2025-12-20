@@ -18,7 +18,7 @@
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
 
     iosevka-neg = {
-      url = "git+ssh://git@github.com/neg-serg/iosevka-neg";
+      url = "github:neg-serg/iosevka-neg";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     iwmenu = {
