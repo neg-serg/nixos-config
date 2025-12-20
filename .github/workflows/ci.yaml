@@ -18,4 +18,7 @@ jobs:
       with:
         name: neg-serg
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-    - run: nix flake check --system x86_64-linux -L
+    - name: Run flake check
+      run: nix flake check --system x86_64-linux --impure -L
+      env:
+        IMPURITY_PATH: ${{ github.workspace }}
