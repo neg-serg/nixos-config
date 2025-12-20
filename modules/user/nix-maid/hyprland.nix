@@ -322,7 +322,7 @@
       };
       vpn = {
         animation = "fromTop";
-        command = "${lib.getExe pkgs.hiddify-app}";
+        command = "sh -c 'cd ~ && ${lib.getExe pkgs.hiddify-app}'";
         class = "hiddify";
         size = "35% 80%";
         position = "32% 10%";
