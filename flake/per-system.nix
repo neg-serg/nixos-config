@@ -307,15 +307,17 @@ in {
         touch "$out"
       '';
 
-    # CSS syntax validation
+    # CSS syntax validation using Python cssutils
     check-css-syntax =
       pkgs.runCommand "check-css-syntax" {
-        nativeBuildInputs = with pkgs; [nodePackages.stylelint findutils];
+        nativeBuildInputs = with pkgs; [python3Packages.cssutils findutils];
       } ''
         set -euo pipefail
         cd ${self}
         echo "Checking CSS files (12 files)..."
-        find files -name '*.css' -exec stylelint --quiet {} + 2>&1 || true
+        find files -name '*.css' | while read -r css; do
+          python3 -c "import cssutils; cssutils.parseFile('$css')" 2>&1 || echo "Warning: $css"
+        done || true
         echo "CSS check complete!"
         touch "$out"
       '';
