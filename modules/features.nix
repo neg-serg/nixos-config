@@ -273,6 +273,7 @@ in {
         apps.enable = mkBool "enable audio apps (players, tools)" true;
         creation.enable = mkBool "enable audio creation stack (DAW, synths)" true;
         mpd.enable = mkBool "enable MPD stack (mpd, clients, mpdris2)" true;
+        spotify.enable = mkBool "enable Spotify stack (spotifyd daemon, spotify-tui)" false;
       };
     };
 
