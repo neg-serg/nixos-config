@@ -37,6 +37,12 @@ in {
       default = 8000;
       description = "Port for Portainer Edge Agent communication";
     };
+
+    timezone = mkOption {
+      type = types.str;
+      default = "Europe/Moscow";
+      description = "Container timezone";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -49,6 +55,9 @@ in {
       # Disabled by default - start manually with: sudo podman start portainer
       autoStart = false;
       image = "portainer/portainer-ce:latest";
+      environment = {
+        TZ = cfg.timezone;
+      };
       ports = [
         "${toString cfg.httpPort}:9000"
         "${toString cfg.edgePort}:8000"

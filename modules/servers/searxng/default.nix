@@ -25,6 +25,12 @@ in {
       default = 8181;
       description = "Port for SearXNG web UI";
     };
+
+    timezone = mkOption {
+      type = types.str;
+      default = "Europe/Moscow";
+      description = "Container timezone";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -38,6 +44,9 @@ in {
       # Disabled by default - start manually with: sudo podman start searxng
       autoStart = false;
       image = "docker.io/searxng/searxng:latest";
+      environment = {
+        TZ = cfg.timezone;
+      };
       ports = ["${toString cfg.httpPort}:8080"];
       volumes = [
         "${cfg.dataDir}/data:/var/cache/searxng"

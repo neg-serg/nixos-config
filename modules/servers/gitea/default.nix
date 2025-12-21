@@ -43,6 +43,12 @@ in {
       default = "git.localhost";
       description = "Hostname for Caddy virtual host (required if useCaddy = true)";
     };
+
+    timezone = mkOption {
+      type = types.str;
+      default = "Europe/Moscow";
+      description = "Container timezone";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -63,6 +69,7 @@ in {
       autoStart = false;
       image = "gitea/gitea:latest";
       environment = {
+        TZ = cfg.timezone;
         USER_UID = "1000";
         USER_GID = "100";
       };
