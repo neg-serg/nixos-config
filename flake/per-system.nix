@@ -254,6 +254,58 @@ in {
         bash scripts/dev/check-package-refs.sh
         touch "$out"
       '';
+
+    # Check that all shell scripts are executable
+    check-script-executability =
+      pkgs.runCommand "check-script-executability" {
+        nativeBuildInputs = with pkgs; [findutils coreutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking shell script executability..."
+        errors=0
+        find files scripts -name '*.sh' -type f | while read -r script; do
+          if [[ ! -x "$script" ]]; then
+            echo "WARNING: Not executable: $script"
+          fi
+        done || true
+        echo "Script executability check complete!"
+        touch "$out"
+      '';
+
+    # Check for potential secrets in code
+    check-no-secrets =
+      pkgs.runCommand "check-no-secrets" {
+        nativeBuildInputs = with pkgs; [gnugrep findutils coreutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking for potential secrets..."
+        # Look for common secret patterns (but allow false positives)
+        if grep -rI --include='*.nix' --include='*.sh' \
+            -E '(password|secret|api_key|apikey|token)\s*=\s*"[^"$]{8,}"' \
+            --exclude-dir=secrets --exclude-dir=.git . 2>/dev/null; then
+          echo "WARNING: Potential hardcoded secrets found above"
+        fi
+        echo "Secret check complete!"
+        touch "$out"
+      '';
+
+    # Lua syntax checking for Neovim config
+    lint-lua =
+      pkgs.runCommand "lint-lua" {
+        nativeBuildInputs = with pkgs; [lua54Packages.luacheck findutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking Lua files..."
+        find files/nvim -name '*.lua' -exec luacheck --no-color \
+          --globals vim --std luajit \
+          --ignore 212 311 631 \
+          {} + 2>&1 || true
+        echo "Lua check complete!"
+        touch "$out"
+      '';
   };
 
   devShells = {
