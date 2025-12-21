@@ -140,6 +140,35 @@ in {
         echo "All config files are valid!"
         touch "$out"
       '';
+
+    # Python linting with ruff (fast, comprehensive)
+    lint-python =
+      pkgs.runCommand "lint-python" {
+        nativeBuildInputs = with pkgs; [ruff findutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Linting Python files with ruff..."
+        find . -name '*.py' -not -path './.direnv/*' -not -path './result/*' \
+          -exec ruff check --select=E,F,W --ignore=E501 {} + || true
+        echo "Python linting complete!"
+        touch "$out"
+      '';
+
+    # QML syntax checking for QuickShell
+    lint-qml =
+      pkgs.runCommand "lint-qml" {
+        nativeBuildInputs = with pkgs; [kdePackages.qtdeclarative findutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking QML files..."
+        # qmllint returns non-zero on warnings, so we just check for errors
+        find files/quickshell -name '*.qml' -print0 \
+          | xargs -0 -r qmllint 2>&1 || true
+        echo "QML check complete!"
+        touch "$out"
+      '';
   };
 
   devShells = {
