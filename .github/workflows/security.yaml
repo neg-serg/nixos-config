@@ -1,0 +1,58 @@
+name: "Security Scan"
+
+on:
+  workflow_dispatch:
+    inputs:
+      full_scan:
+        description: 'Run full vulnerability scan (slower but more thorough)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: cachix/install-nix-action@v27
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+    
+    - uses: cachix/cachix-action@v15
+      with:
+        name: neg-serg
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    
+    - name: Build system closure for scanning
+      run: |
+        echo "Building system closure for telfir host..."
+        nix build .#nixosConfigurations.telfir.config.system.build.toplevel --impure -L
+      env:
+        IMPURITY_PATH: ${{ github.workspace }}
+      continue-on-error: true
+    
+    - name: Run vulnix security scan
+      run: |
+        echo "Installing vulnix..."
+        nix-env -iA nixpkgs.vulnix
+        
+        echo "Scanning for known CVEs..."
+        if [ -L result ]; then
+          vulnix ./result 2>&1 | tee vulnix-report.txt || true
+        else
+          echo "No build result found, scanning current store..."
+          vulnix --system 2>&1 | tee vulnix-report.txt || true
+        fi
+        
+        echo ""
+        echo "=== Security Scan Complete ==="
+        echo "See vulnix-report.txt for details"
+    
+    - name: Upload security report
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-report
+        path: vulnix-report.txt
+        retention-days: 30
