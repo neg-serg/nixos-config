@@ -229,18 +229,17 @@ in {
         set -euo pipefail
         cd ${self}
         echo "Checking module imports..."
-        errors=0
-        # Find all imports = [ ./path ] patterns and verify paths exist
-        while IFS= read -r file; do
+        # Find all .nix files and check that their relative imports exist
+        find modules -name '*.nix' -type f | while IFS= read -r file; do
           dir=$(dirname "$file")
-          # Extract imported paths
+          # Extract imported paths like ./foo.nix or ./bar/baz.nix
           grep -oE '\./[a-zA-Z0-9_/-]+\.nix' "$file" 2>/dev/null | while read -r imp; do
             full_path="$dir/$imp"
             if [[ ! -f "$full_path" ]]; then
               echo "WARNING: $file imports non-existent: $imp"
             fi
-          done
-        done < <(find modules -name '*.nix' -type f)
+          done || true
+        done || true
         echo "Module import check complete!"
         touch "$out"
       '';
