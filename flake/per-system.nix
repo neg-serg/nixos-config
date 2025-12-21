@@ -169,6 +169,28 @@ in {
         echo "QML check complete!"
         touch "$out"
       '';
+
+    # Check that all $variables in Hyprland configs are defined
+    check-hyprland-vars =
+      pkgs.runCommand "check-hyprland-vars" {
+        nativeBuildInputs = with pkgs; [bash coreutils gnugrep gnused];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        bash scripts/dev/check-hyprland-vars.sh
+        touch "$out"
+      '';
+
+    # Check flake input freshness (warning only)
+    check-flake-inputs =
+      pkgs.runCommand "check-flake-inputs" {
+        nativeBuildInputs = with pkgs; [bash coreutils jq gnugrep];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        bash scripts/dev/check-flake-inputs.sh
+        touch "$out"
+      '';
   };
 
   devShells = {
