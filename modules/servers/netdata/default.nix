@@ -26,6 +26,12 @@ in {
       default = 19999;
       description = "Port for Netdata web UI";
     };
+
+    timezone = mkOption {
+      type = types.str;
+      default = "Europe/Moscow";
+      description = "Container timezone";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -41,7 +47,9 @@ in {
       # Disabled by default - start manually with: sudo podman start netdata
       autoStart = false;
       image = "netdata/netdata";
-      environment = {};
+      environment = {
+        TZ = cfg.timezone;
+      };
       volumes = [
         "${cfg.dataDir}/config:/etc/netdata"
         "${cfg.dataDir}/lib:/var/lib/netdata"
