@@ -6,7 +6,7 @@
   ...
 }: let
   repoRoot = inputs.self;
-  caches = import ./caches.nix;
+  caches = import ./caches.data.nix;
 in {
   sops.age = {
     generateKey = true;
