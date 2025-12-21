@@ -334,6 +334,23 @@ in {
         echo "SVG check complete!"
         touch "$out"
       '';
+
+    # Check for typos in code and comments
+    check-typos =
+      pkgs.runCommand "check-typos" {
+        nativeBuildInputs = with pkgs; [typos];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking for typos..."
+        typos --format brief \
+          --exclude "*.lock" \
+          --exclude "flake.lock" \
+          --exclude "*.svg" \
+          . 2>&1 || true
+        echo "Typo check complete!"
+        touch "$out"
+      '';
   };
 
   devShells = {
