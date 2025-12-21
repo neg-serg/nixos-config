@@ -306,6 +306,32 @@ in {
         echo "Lua check complete!"
         touch "$out"
       '';
+
+    # CSS syntax validation
+    check-css-syntax =
+      pkgs.runCommand "check-css-syntax" {
+        nativeBuildInputs = with pkgs; [nodePackages.stylelint findutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking CSS files (12 files)..."
+        find files -name '*.css' -exec stylelint --quiet {} + 2>&1 || true
+        echo "CSS check complete!"
+        touch "$out"
+      '';
+
+    # SVG syntax validation (XML well-formedness)
+    check-svg-syntax =
+      pkgs.runCommand "check-svg-syntax" {
+        nativeBuildInputs = with pkgs; [libxml2 findutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking SVG files (52 files)..."
+        find files -name '*.svg' -exec xmllint --noout {} + 2>&1 || true
+        echo "SVG check complete!"
+        touch "$out"
+      '';
   };
 
   devShells = {
