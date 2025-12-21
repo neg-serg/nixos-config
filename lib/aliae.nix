@@ -141,7 +141,7 @@
     (mkAlias "gfo" "git fetch origin")
     (mkAlias "gignore" "git update-index --assume-unchanged")
     (mkAlias "gignored" "git ls-files -v | grep '^[[:lower:]]'")
-    (mkAlias "gl" "git pull")
+    (mkAlias "gl" "git log -n 4 --oneline")
     (mkAlias "gm" "git merge")
     (mkAlias "gma" "git merge --abort")
     (mkAlias "gmtl" "git mergetool --no-prompt")
