@@ -21,8 +21,7 @@
     "ignoredPlayers": [
     ],
     "lastActivePlayers": [
-        "Music Player Daemon",
-        "mpv"
+        "Music Player Daemon"
     ],
     "mediaIconBorderless": false,
     "mediaIconMaxWidthPx": 0,
