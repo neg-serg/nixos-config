@@ -4,6 +4,7 @@
     ./audio/apps-packages.nix
     ./audio/creation-packages.nix
     ./audio/mpd-packages.nix
+    ./audio/spotifyd.nix
     ./multimedia-packages.nix
     ./images/packages.nix
     ./ai-upscale-packages.nix
