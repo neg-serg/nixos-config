@@ -5,6 +5,20 @@
   ...
 }: let
   cfg = config.features.media.audio.spotify;
+  spotifydPkg = pkgs.spotifyd.override {withMpris = true;};
+  spotifydConf = pkgs.writeText "spotifyd.conf" ''
+    [global]
+    autoplay = true
+    backend = pulseaudio
+    bitrate = 320
+    cache_path = /home/neg/.cache/spotifyd
+    device_type = computer
+    initial_volume = 100
+    password_cmd = cat ${config.sops.secrets."spotify-password".path}
+    username_cmd = cat ${config.sops.secrets."spotify-username".path}
+    use_mpris = true
+    volume_normalisation = false
+  '';
 in {
   config = lib.mkIf (cfg.enable or false) {
     # Sops secrets for Spotify credentials
@@ -19,27 +33,21 @@ in {
       key = "password";
     };
 
-    # Spotifyd system service (runs as user)
-    services.spotifyd = {
-      enable = true;
-      package = pkgs.spotifyd.override {withMpris = true;};
-      settings.global = {
-        autoplay = true;
-        backend = "pulseaudio";
-        bitrate = 320; # Maximum quality (requires Premium)
-        cache_path = "/home/neg/.cache/spotifyd";
-        device_type = "computer";
-        initial_volume = "100";
-        # Credentials from sops secrets
-        password_cmd = "cat ${config.sops.secrets."spotify-password".path}";
-        username_cmd = "cat ${config.sops.secrets."spotify-username".path}";
-        use_mpris = true; # MPRIS integration for media controls
-        volume_normalisation = false;
+    # Spotifyd systemd user service
+    systemd.user.services.spotifyd = {
+      description = "Spotify daemon";
+      wantedBy = ["graphical-session.target"];
+      after = ["graphical-session.target" "pipewire.service"];
+      serviceConfig = {
+        ExecStart = "${spotifydPkg}/bin/spotifyd --no-daemon --config-path ${spotifydConf}";
+        Restart = "on-failure";
+        RestartSec = 5;
       };
     };
 
     # TUI client for controlling spotifyd
     environment.systemPackages = [
+      spotifydPkg
       pkgs.spotify-tui # TUI Spotify client
     ];
   };
