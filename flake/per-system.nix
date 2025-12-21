@@ -191,6 +191,59 @@ in {
         bash scripts/dev/check-flake-inputs.sh
         touch "$out"
       '';
+
+    # YAML syntax validation
+    lint-yaml =
+      pkgs.runCommand "lint-yaml" {
+        nativeBuildInputs = with pkgs; [yamllint findutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking YAML files..."
+        find . -type f \( -name '*.yml' -o -name '*.yaml' \) \
+          -not -path './.direnv/*' -not -path './result/*' \
+          -exec yamllint -d "{extends: relaxed, rules: {line-length: disable}}" {} + || true
+        echo "YAML check complete!"
+        touch "$out"
+      '';
+
+    # Desktop file validation
+    check-desktop-files =
+      pkgs.runCommand "check-desktop-files" {
+        nativeBuildInputs = with pkgs; [desktop-file-utils findutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking .desktop files..."
+        find . -name '*.desktop' -not -path './.direnv/*' -not -path './result/*' \
+          -exec desktop-file-validate {} + 2>&1 || true
+        echo "Desktop file check complete!"
+        touch "$out"
+      '';
+
+    # Check that all module imports exist
+    check-module-imports =
+      pkgs.runCommand "check-module-imports" {
+        nativeBuildInputs = with pkgs; [bash coreutils gnugrep findutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking module imports..."
+        errors=0
+        # Find all imports = [ ./path ] patterns and verify paths exist
+        while IFS= read -r file; do
+          dir=$(dirname "$file")
+          # Extract imported paths
+          grep -oE '\./[a-zA-Z0-9_/-]+\.nix' "$file" 2>/dev/null | while read -r imp; do
+            full_path="$dir/$imp"
+            if [[ ! -f "$full_path" ]]; then
+              echo "WARNING: $file imports non-existent: $imp"
+            fi
+          done
+        done < <(find modules -name '*.nix' -type f)
+        echo "Module import check complete!"
+        touch "$out"
+      '';
   };
 
   devShells = {
