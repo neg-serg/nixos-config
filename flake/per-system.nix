@@ -243,6 +243,17 @@ in {
         echo "Module import check complete!"
         touch "$out"
       '';
+
+    # Check for package reference patterns (informational)
+    check-package-refs =
+      pkgs.runCommand "check-package-refs" {
+        nativeBuildInputs = with pkgs; [bash coreutils gnugrep];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        bash scripts/dev/check-package-refs.sh
+        touch "$out"
+      '';
   };
 
   devShells = {
