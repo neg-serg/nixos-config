@@ -30,12 +30,12 @@ in {
 
   formatter = pkgs.writeShellApplication {
     name = "fmt";
-    runtimeInputs = with pkgs; [
-      alejandra
-      black
-      python3Packages.mdformat
-      shfmt
-      treefmt
+    runtimeInputs = [
+      pkgs.alejandra
+      pkgs.black
+      pkgs.python3Packages.mdformat
+      pkgs.shfmt
+      pkgs.treefmt
     ];
     text = ''
       set -euo pipefail
@@ -55,13 +55,13 @@ in {
   checks = {
     fmt-treefmt =
       pkgs.runCommand "fmt-treefmt" {
-        nativeBuildInputs = with pkgs; [
-          alejandra
-          black
-          python3Packages.mdformat
-          shfmt
-          treefmt
-          findutils
+        nativeBuildInputs = [
+          pkgs.alejandra
+          pkgs.black
+          pkgs.python3Packages.mdformat
+          pkgs.shfmt
+          pkgs.treefmt
+          pkgs.findutils
         ];
         src = ../.;
       } ''
@@ -75,14 +75,14 @@ in {
         treefmt --config-file ./.treefmt.toml --tree-root . --fail-on-change .
         touch "$out"
       '';
-    lint-deadnix = pkgs.runCommand "lint-deadnix" {nativeBuildInputs = with pkgs; [deadnix];} ''
+    lint-deadnix = pkgs.runCommand "lint-deadnix" {nativeBuildInputs = [pkgs.deadnix];} ''
       cd ${self}
       deadnix --fail --exclude home .
       touch "$out"
     '';
-    lint-statix = pkgs.runCommand "lint-statix" {nativeBuildInputs = with pkgs; [statix];} ''cd ${self}; statix check .; touch "$out"'';
+    lint-statix = pkgs.runCommand "lint-statix" {nativeBuildInputs = [pkgs.statix];} ''cd ${self}; statix check .; touch "$out"'';
     pre-commit = preCommit;
-    lint-md-lang = pkgs.runCommand "lint-md-lang" {nativeBuildInputs = with pkgs; [bash coreutils findutils gnugrep gitMinimal];} ''
+    lint-md-lang = pkgs.runCommand "lint-md-lang" {nativeBuildInputs = [pkgs.bash pkgs.coreutils pkgs.findutils pkgs.gnugrep pkgs.gitMinimal];} ''
       set -euo pipefail
       cd ${self}
       bash scripts/dev/check-markdown-language.sh
@@ -93,7 +93,7 @@ in {
     # Shell script linting with shellcheck
     lint-shellcheck =
       pkgs.runCommand "lint-shellcheck" {
-        nativeBuildInputs = with pkgs; [shellcheck findutils gnugrep];
+        nativeBuildInputs = [pkgs.shellcheck pkgs.findutils pkgs.gnugrep];
       } ''
         set -euo pipefail
         cd ${self}
@@ -118,7 +118,7 @@ in {
     # Verify all impurity.link paths exist in the repository
     check-impurity-paths =
       pkgs.runCommand "check-impurity-paths" {
-        nativeBuildInputs = with pkgs; [bash coreutils findutils gnugrep gitMinimal];
+        nativeBuildInputs = [pkgs.bash pkgs.coreutils pkgs.findutils pkgs.gnugrep pkgs.gitMinimal];
       } ''
         set -euo pipefail
         cd ${self}
@@ -129,7 +129,7 @@ in {
     # Validate JSON and TOML config file syntax
     lint-json-toml =
       pkgs.runCommand "lint-json-toml" {
-        nativeBuildInputs = with pkgs; [jq python3 findutils];
+        nativeBuildInputs = [pkgs.jq pkgs.python3 pkgs.findutils];
       } ''
         set -euo pipefail
         cd ${self}
@@ -144,7 +144,7 @@ in {
     # Python linting with ruff (fast, comprehensive)
     lint-python =
       pkgs.runCommand "lint-python" {
-        nativeBuildInputs = with pkgs; [ruff findutils];
+        nativeBuildInputs = [pkgs.ruff pkgs.findutils];
       } ''
         set -euo pipefail
         cd ${self}
@@ -158,7 +158,7 @@ in {
     # QML syntax checking for QuickShell
     lint-qml =
       pkgs.runCommand "lint-qml" {
-        nativeBuildInputs = with pkgs; [kdePackages.qtdeclarative findutils];
+        nativeBuildInputs = [pkgs.kdePackages.qtdeclarative pkgs.findutils];
       } ''
         set -euo pipefail
         cd ${self}
@@ -173,7 +173,7 @@ in {
     # Check that all $variables in Hyprland configs are defined
     check-hyprland-vars =
       pkgs.runCommand "check-hyprland-vars" {
-        nativeBuildInputs = with pkgs; [bash coreutils gnugrep gnused];
+        nativeBuildInputs = [pkgs.bash pkgs.coreutils pkgs.gnugrep pkgs.gnused];
       } ''
         set -euo pipefail
         cd ${self}
@@ -184,7 +184,7 @@ in {
     # Check flake input freshness (warning only)
     check-flake-inputs =
       pkgs.runCommand "check-flake-inputs" {
-        nativeBuildInputs = with pkgs; [bash coreutils jq gnugrep];
+        nativeBuildInputs = [pkgs.bash pkgs.coreutils pkgs.jq pkgs.gnugrep];
       } ''
         set -euo pipefail
         cd ${self}
@@ -195,7 +195,7 @@ in {
     # YAML syntax validation
     lint-yaml =
       pkgs.runCommand "lint-yaml" {
-        nativeBuildInputs = with pkgs; [yamllint findutils];
+        nativeBuildInputs = [pkgs.yamllint pkgs.findutils];
       } ''
         set -euo pipefail
         cd ${self}
@@ -210,7 +210,7 @@ in {
     # Desktop file validation
     check-desktop-files =
       pkgs.runCommand "check-desktop-files" {
-        nativeBuildInputs = with pkgs; [desktop-file-utils findutils];
+        nativeBuildInputs = [pkgs.desktop-file-utils pkgs.findutils];
       } ''
         set -euo pipefail
         cd ${self}
@@ -224,7 +224,7 @@ in {
     # Check that all module imports exist
     check-module-imports =
       pkgs.runCommand "check-module-imports" {
-        nativeBuildInputs = with pkgs; [bash coreutils gnugrep findutils];
+        nativeBuildInputs = [pkgs.bash pkgs.coreutils pkgs.gnugrep pkgs.findutils];
       } ''
         set -euo pipefail
         cd ${self}
@@ -247,7 +247,7 @@ in {
     # Check for package reference patterns (informational)
     check-package-refs =
       pkgs.runCommand "check-package-refs" {
-        nativeBuildInputs = with pkgs; [bash coreutils gnugrep];
+        nativeBuildInputs = [pkgs.bash pkgs.coreutils pkgs.gnugrep];
       } ''
         set -euo pipefail
         cd ${self}
@@ -258,7 +258,7 @@ in {
     # Check that all shell scripts are executable
     check-script-executability =
       pkgs.runCommand "check-script-executability" {
-        nativeBuildInputs = with pkgs; [findutils coreutils];
+        nativeBuildInputs = [pkgs.findutils pkgs.coreutils];
       } ''
         set -euo pipefail
         cd ${self}
@@ -276,7 +276,7 @@ in {
     # Check for potential secrets in code
     check-no-secrets =
       pkgs.runCommand "check-no-secrets" {
-        nativeBuildInputs = with pkgs; [gnugrep findutils coreutils];
+        nativeBuildInputs = [pkgs.gnugrep pkgs.findutils pkgs.coreutils];
       } ''
         set -euo pipefail
         cd ${self}
@@ -294,7 +294,7 @@ in {
     # Lua syntax checking for Neovim config
     lint-lua =
       pkgs.runCommand "lint-lua" {
-        nativeBuildInputs = with pkgs; [lua54Packages.luacheck findutils];
+        nativeBuildInputs = [pkgs.lua54Packages.luacheck pkgs.findutils];
       } ''
         set -euo pipefail
         cd ${self}
@@ -310,7 +310,7 @@ in {
     # CSS syntax validation using Python cssutils
     check-css-syntax =
       pkgs.runCommand "check-css-syntax" {
-        nativeBuildInputs = with pkgs; [python3Packages.cssutils findutils];
+        nativeBuildInputs = [pkgs.python3Packages.cssutils pkgs.findutils];
       } ''
         set -euo pipefail
         cd ${self}
@@ -325,7 +325,7 @@ in {
     # SVG syntax validation (XML well-formedness)
     check-svg-syntax =
       pkgs.runCommand "check-svg-syntax" {
-        nativeBuildInputs = with pkgs; [libxml2 findutils];
+        nativeBuildInputs = [pkgs.libxml2 pkgs.findutils];
       } ''
         set -euo pipefail
         cd ${self}
@@ -338,7 +338,7 @@ in {
     # Check for typos in code and comments
     check-typos =
       pkgs.runCommand "check-typos" {
-        nativeBuildInputs = with pkgs; [typos];
+        nativeBuildInputs = [pkgs.typos];
       } ''
         set -euo pipefail
         cd ${self}
@@ -356,14 +356,14 @@ in {
   devShells = {
     default = pkgs.mkShell {
       inherit (preCommit) shellHook;
-      packages = with pkgs; [alejandra deadnix statix nil just jq];
+      packages = [pkgs.alejandra pkgs.deadnix pkgs.statix pkgs.nil pkgs.just pkgs.jq];
     };
   };
 
   apps = let
     genOptions = pkgs.writeShellApplication {
       name = "gen-options";
-      runtimeInputs = with pkgs; [git jq nix];
+      runtimeInputs = [pkgs.git pkgs.jq pkgs.nix];
       text = ''
         set -euo pipefail
         exec "${self}/scripts/dev/gen-options.sh" "$@"
@@ -371,12 +371,12 @@ in {
     };
     fmtApp = pkgs.writeShellApplication {
       name = "fmt";
-      runtimeInputs = with pkgs; [
-        alejandra
-        black
-        python3Packages.mdformat
-        shfmt
-        treefmt
+      runtimeInputs = [
+        pkgs.alejandra
+        pkgs.black
+        pkgs.python3Packages.mdformat
+        pkgs.shfmt
+        pkgs.treefmt
       ];
       text = ''
         set -euo pipefail

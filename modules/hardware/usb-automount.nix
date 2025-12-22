@@ -131,11 +131,11 @@ in {
       };
     };
 
-    environment.systemPackages = lib.mkAfter (with pkgs; [
-      btrfs-progs # btrfs tools
-      exfatprogs # exfat tools
-      ntfs3g # ntfs tools
-      zfs # zfs tools
-    ]);
+    environment.systemPackages = lib.mkAfter [
+      pkgs.btrfs-progs # btrfs tools
+      pkgs.exfatprogs # exfat tools
+      pkgs.ntfs3g # ntfs tools
+      pkgs.zfs # zfs tools
+    ];
   };
 }

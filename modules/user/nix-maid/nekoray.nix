@@ -1,6 +1,6 @@
 {pkgs, ...}: {
-  environment.systemPackages = with pkgs; [
-    throne
+  environment.systemPackages = [
+    pkgs.throne
   ];
 
   # systemd.user.services.nekoray = {
