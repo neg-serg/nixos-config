@@ -29,16 +29,16 @@
       services.udev.packages = lib.mkAfter [pkgs.xr-hardware];
 
       environment = {
-        systemPackages = lib.mkAfter (with pkgs; [
-          opencomposite
-          openvr
-          openxr-loader
-          steam
-          steamcmd
-          vulkan-tools
-          vulkan-validation-layers
-          wlx-overlay-s
-        ]);
+        systemPackages = lib.mkAfter [
+          pkgs.opencomposite
+          pkgs.openvr
+          pkgs.openxr-loader
+          pkgs.steam
+          pkgs.steamcmd
+          pkgs.vulkan-tools
+          pkgs.vulkan-validation-layers
+          pkgs.wlx-overlay-s
+        ];
 
         # No default OpenXR runtime enforced; user/SteamVR may set it explicitly if desired.
         sessionVariables = {};

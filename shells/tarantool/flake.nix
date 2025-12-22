@@ -19,57 +19,57 @@
       };
     in {
       devShells.default = pkgs.mkShell {
-        packages = with pkgs; [
-          gdb
-          cpulimit
-          netcat-openbsd
+        packages = [
+          pkgs.gdb
+          pkgs.cpulimit
+          pkgs.netcat-openbsd
 
           # tt
-          lua51Packages.lua
-          lua51Packages.luacheck
-          lua51Packages.luacov
-          lua51Packages.luacheck
-          unzip
-          pkg-config
+          pkgs.lua51Packages.lua
+          pkgs.lua51Packages.luacheck
+          pkgs.lua51Packages.luacov
+          pkgs.lua51Packages.luacheck
+          pkgs.unzip
+          pkgs.pkg-config
 
-          cpulimit
+          pkgs.cpulimit
 
           # Tarantool dependencies
-          curl
-          bc
-          libyaml
+          pkgs.curl
+          pkgs.bc
+          pkgs.libyaml
 
-          git
-          gcc
+          pkgs.git
+          pkgs.gcc
           # clang
-          c-ares
-          gnumake
-          cmake
-          nghttp2
-          autoconf
-          automake
-          libtool
-          readline
-          ncurses
-          openssl
-          icu
-          zlib
-          python310
-          python310Packages.pip #pyyaml, gevent, six
-          lz4
+          pkgs.c-ares
+          pkgs.gnumake
+          pkgs.cmake
+          pkgs.nghttp2
+          pkgs.autoconf
+          pkgs.automake
+          pkgs.libtool
+          pkgs.readline
+          pkgs.ncurses
+          pkgs.openssl
+          pkgs.icu
+          pkgs.zlib
+          pkgs.python310
+          pkgs.python310Packages.pip #pyyaml, gevent, six
+          pkgs.lz4
 
           # TT building
-          go
-          mage
-          unzip
+          pkgs.go
+          pkgs.mage
+          pkgs.unzip
 
           # Cartridge
-          nodejs
+          pkgs.nodejs
 
           # Tcpdump
-          libnl
-          libpcap
-          _msgpuck
+          pkgs.libnl
+          pkgs.libpcap
+          pkgs._msgpuck
         ];
         shellHook = ''
           export LD_LIBRARY_PATH=${pkgs.stdenv.cc.cc.lib}/lib

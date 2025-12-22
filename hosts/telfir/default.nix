@@ -16,8 +16,8 @@
   boot.plymouth = {
     enable = true;
     theme = "lone";
-    themePackages = with pkgs; [
-      (adi1090x-plymouth-themes.override {
+    themePackages = [
+      (pkgs.adi1090x-plymouth-themes.override {
         selected_themes = ["lone" "green_blocks"];
       })
     ];
