@@ -34,6 +34,7 @@
     ./emacs.nix
     ./transmission.nix
     ./vdirsyncer.nix
+    ./khal.nix
     ./dosemu.nix
     ./enchant.nix
     ./nethack.nix
