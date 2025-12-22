@@ -137,7 +137,7 @@ in {
         [Desktop Entry]
         Type=Application
         Name=Isotope (Open)
-        Exec=kitty %f
+        Exec=kitty yazi %f
         Icon=kitty
         Categories=System;TerminalEmulator;
       '';
