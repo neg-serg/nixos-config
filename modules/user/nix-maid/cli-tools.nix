@@ -318,6 +318,7 @@ in {
     aliae # Cross-shell configuration manager
     superfile # Pretty fancy TUI file manager
     pkgs.nh # Yet another nix helper (CLI for NixOS/Home Manager)
+    process-compose # Process orchestrator (docker-compose but for processes)
 
     # CLI Tools
     fabric-ai # Open-source framework for augmenting humans (AI framework)
