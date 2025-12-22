@@ -55,7 +55,7 @@
       attrs);
 
   btopSettings = {
-    color_theme = "neg";
+    color_theme = "midnight-ocean";
     theme_background = true;
     truecolor = true;
     force_tty = false;
@@ -352,7 +352,7 @@ in {
 
     # Btop Config
     ".config/btop/btop.conf".text = mkBtopConf btopSettings;
-    ".config/btop/themes/neg.theme".source = ../../../files/shell/btop/themes/neg.theme;
+    ".config/btop/themes/midnight-ocean.theme".source = ../../../files/shell/btop/themes/midnight-ocean.theme;
 
     # Yazi Configs
     ".config/yazi/yazi.toml".source = yaziFormat.generate "yazi.toml" yaziSettings;
