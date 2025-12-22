@@ -51,8 +51,8 @@ in {
   ]);
 
   # Winboat (Bottles/Wine)
-  environment.systemPackages = with pkgs; [
-    bottles # Run Windows software on Linux with Bottles
-    wineWowPackages.stable # Open-source implementation of the Windows API
+  environment.systemPackages = [
+    pkgs.bottles # Run Windows software on Linux with Bottles
+    pkgs.wineWowPackages.stable # Open-source implementation of the Windows API
   ];
 }
