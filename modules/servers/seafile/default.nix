@@ -17,6 +17,7 @@
       adminPassword = "change-me";
       dbRootPassword = "change-me";
       httpPort = 8082;
+      timezone = config.time.timeZone;
       useCaddy = true;
     };
   hostName = cfg.hostName;
@@ -39,6 +40,7 @@ in {
         environment = {
           MYSQL_ROOT_PASSWORD = cfg.dbRootPassword;
           MYSQL_LOG_CONSOLE = "true";
+          TZ = cfg.timezone;
         };
       };
 
@@ -64,6 +66,7 @@ in {
             if cfg.useCaddy
             then "false"
             else "true";
+          TZ = cfg.timezone;
         };
       };
     };
