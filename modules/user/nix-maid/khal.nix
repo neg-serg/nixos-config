@@ -23,6 +23,7 @@ in
         datetimeformat = %d.%m.%Y %H:%M
         longdatetimeformat = %d.%m.%Y %H:%M
         firstweekday = 0
+        default_timezone = Europe/Moscow
 
         [default]
         show_all_days = False
