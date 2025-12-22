@@ -25,7 +25,6 @@ in
         firstweekday = 0
 
         [default]
-        default_calendar = default
         show_all_days = False
       '';
     };
