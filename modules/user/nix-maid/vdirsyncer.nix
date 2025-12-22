@@ -5,14 +5,38 @@
   ...
 }: let
   cfg = config.features.mail.vdirsyncer;
-  filesRoot = ../../../files;
 in
   lib.mkIf (cfg.enable or false) {
     environment.systemPackages = [pkgs.vdirsyncer];
 
     # Create the config from template
     sops.templates."vdirsyncer-config" = {
-      content = builtins.readFile "${filesRoot}/vdirsyncer/config";
+      content = ''
+        [general]
+        status_path = "~/.config/vdirsyncer/status/"
+
+        [storage neg_contacts_local]
+        type = "filesystem"
+        path = "~/.config/vdirsyncer/contacts/"
+        fileext = ".vcf"
+
+        [pair neg_calendar]
+        a = "neg_calendar_local"
+        b = "neg_calendar_remote"
+        collections = ["from a", "from b"]
+        metadata = ["displayname", "color"]
+
+        [storage neg_calendar_local]
+        type = "filesystem"
+        path = "~/.config/vdirsyncer/calendars/"
+        fileext = ".ics"
+
+        [storage neg_calendar_remote]
+        type = "google_calendar"
+        token_file = "~/.config/vdirsyncer/token_stuff"
+        client_id = "{{ .vdirsyncer_google_client_id }}"
+        client_secret = "{{ .vdirsyncer_google_client_secret }}"
+      '';
       owner = "neg";
       mode = "0600";
     };
