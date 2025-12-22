@@ -123,13 +123,13 @@ in {
     };
 
     # System packages
-    environment.systemPackages = with pkgs; [
-      isync # Free IMAP and Maildir mailbox synchronizer
-      neomutt # Command-line mail reader based on Mutt
-      msmtp # An SMTP client
-      notmuch # Thread-based email indexer, searcher and tagger
-      goimapnotify # Execute scripts on IMAP IDLE (new mail)
-      pass # The standard unix password manager
+    environment.systemPackages = [
+      pkgs.isync # Free IMAP and Maildir mailbox synchronizer
+      pkgs.neomutt # Command-line mail reader based on Mutt
+      pkgs.msmtp # An SMTP client
+      pkgs.notmuch # Thread-based email indexer, searcher and tagger
+      pkgs.goimapnotify # Execute scripts on IMAP IDLE (new mail)
+      pkgs.pass # The standard unix password manager
       (pkgs.writeShellScriptBin "sync-mail" ''
         #!/usr/bin/env bash
         set -euo pipefail

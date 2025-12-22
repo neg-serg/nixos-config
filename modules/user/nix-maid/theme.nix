@@ -30,11 +30,11 @@ in {
 
   config = lib.mkIf (config.features.gui.enable or false) {
     # 1. Packages
-    environment.systemPackages = with pkgs; [
+    environment.systemPackages = [
       alkano-aio # Animated cursor theme
-      flight-gtk-theme # Dark GTK theme
-      kora-icon-theme # Modern icon theme
-      cantarell-fonts # Default GNOME fonts
+      pkgs.flight-gtk-theme # Dark GTK theme
+      pkgs.kora-icon-theme # Modern icon theme
+      pkgs.cantarell-fonts # Default GNOME fonts
       iosevkaNeg.nerd-font # Personalized Iosevka fonts with Nerd Font icons
     ];
 
