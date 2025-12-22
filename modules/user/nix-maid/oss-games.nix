@@ -3,13 +3,13 @@
   lib,
   ...
 }: {
-  environment.systemPackages = with pkgs; [
-    mangohud # Gaming HUD
-    superTux # 2D platformer
-    superTuxKart # arcade kart racer
-    wesnoth # turn-based strategy with campaigns
-    xonotic # arena FPS
-    zeroad # RTS set in ancient warfare
+  environment.systemPackages = [
+    pkgs.mangohud # Gaming HUD
+    pkgs.superTux # 2D platformer
+    pkgs.superTuxKart # arcade kart racer
+    pkgs.wesnoth # turn-based strategy with campaigns
+    pkgs.xonotic # arena FPS
+    pkgs.zeroad # RTS set in ancient warfare
   ];
 
   # Mangohud Config

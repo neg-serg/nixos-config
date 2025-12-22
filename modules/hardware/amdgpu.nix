@@ -8,16 +8,16 @@
 in {
   config = lib.mkIf cfg.rocm.enable {
     hardware.graphics = {
-      extraPackages = with pkgs; [
-        rocmPackages.clr # Radeon Open Compute Common Language Runtime
-        rocmPackages.clr.icd # OpenCL ICD loader for ROCm
-        rocmPackages.rocminfo # ROCm info utility
-        rocmPackages.rocm-runtime # ROCm runtime
+      extraPackages = [
+        pkgs.rocmPackages.clr # Radeon Open Compute Common Language Runtime
+        pkgs.rocmPackages.clr.icd # OpenCL ICD loader for ROCm
+        pkgs.rocmPackages.rocminfo # ROCm info utility
+        pkgs.rocmPackages.rocm-runtime # ROCm runtime
       ];
     };
 
-    environment.systemPackages = with pkgs; [
-      rocmPackages.rocm-smi # ROCm System Management Interface
+    environment.systemPackages = [
+      pkgs.rocmPackages.rocm-smi # ROCm System Management Interface
     ];
 
     # This is necesery because many programs hard-code the path to hip

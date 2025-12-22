@@ -6,32 +6,7 @@
   makeDesktopItem,
   copyDesktopItems,
   writeShellScript,
-  alsa-lib,
-  at-spi2-atk,
-  at-spi2-core,
-  atk,
-  cairo,
   chromium,
-  cups,
-  dbus,
-  expat,
-  glib,
-  gtk3,
-  libdrm,
-  libgbm,
-  libglvnd,
-  libnotify,
-  libsecret,
-  libuuid,
-  libxkbcommon,
-  mesa,
-  nspr,
-  nss,
-  pango,
-  systemd,
-  vulkan-loader,
-  xorg,
-  zlib,
   google-chrome ? null,
 }: let
   pname = "google-antigravity";
@@ -125,47 +100,47 @@
     ];
 
     targetPkgs = pkgs:
-      (with pkgs; [
-        alsa-lib
-        at-spi2-atk
-        at-spi2-core
-        atk
-        cairo
-        cups
-        dbus
-        expat
-        glib
-        gtk3
-        libdrm
-        libgbm
-        libglvnd
-        libnotify
-        libsecret
-        libuuid
-        libxkbcommon
-        xorg.libxkbfile
-        mesa
-        nspr
-        nss
-        pango
-        stdenv.cc.cc.lib
-        systemd
-        vulkan-loader
-        xorg.libX11
-        xorg.libXScrnSaver
-        xorg.libXcomposite
-        xorg.libXcursor
-        xorg.libXdamage
-        xorg.libXext
-        xorg.libXfixes
-        xorg.libXi
-        xorg.libXrandr
-        xorg.libXrender
-        xorg.libXtst
-        xorg.libxcb
-        xorg.libxshmfence
-        zlib
-      ])
+      [
+        pkgs.alsa-lib
+        pkgs.at-spi2-atk
+        pkgs.at-spi2-core
+        pkgs.atk
+        pkgs.cairo
+        pkgs.cups
+        pkgs.dbus
+        pkgs.expat
+        pkgs.glib
+        pkgs.gtk3
+        pkgs.libdrm
+        pkgs.libgbm
+        pkgs.libglvnd
+        pkgs.libnotify
+        pkgs.libsecret
+        pkgs.libuuid
+        pkgs.libxkbcommon
+        pkgs.xorg.libxkbfile
+        pkgs.mesa
+        pkgs.nspr
+        pkgs.nss
+        pkgs.pango
+        pkgs.stdenv.cc.cc.lib
+        pkgs.systemd
+        pkgs.vulkan-loader
+        pkgs.xorg.libX11
+        pkgs.xorg.libXScrnSaver
+        pkgs.xorg.libXcomposite
+        pkgs.xorg.libXcursor
+        pkgs.xorg.libXdamage
+        pkgs.xorg.libXext
+        pkgs.xorg.libXfixes
+        pkgs.xorg.libXi
+        pkgs.xorg.libXrandr
+        pkgs.xorg.libXrender
+        pkgs.xorg.libXtst
+        pkgs.xorg.libxcb
+        pkgs.xorg.libxshmfence
+        pkgs.zlib
+      ]
       ++ lib.optional (browserPkg != null) browserPkg;
 
     runScript = writeShellScript "antigravity-wrapper" ''

@@ -20,8 +20,8 @@ in {
     };
 
     # GNS3 GUI client
-    environment.systemPackages = with pkgs; [
-      gns3-gui # graphical network topology designer
+    environment.systemPackages = [
+      pkgs.gns3-gui # graphical network topology designer
     ];
   };
 }
