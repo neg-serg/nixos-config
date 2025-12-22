@@ -2,8 +2,8 @@
 # By: Antigravity
 # Description: Deep Midnight Ocean theme. Matches system-wide Blue/Dark palette.
 
-# Main background
-theme[main_bg]="#050510"
+# Main background (Deep Obsidian Black)
+theme[main_bg]="#000000"
 
 # Main text color
 theme[main_fg]="#8da6b2"
