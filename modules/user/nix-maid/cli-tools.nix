@@ -307,6 +307,7 @@ in {
     fzf # A command-line fuzzy finder
     yazi # Blazing fast terminal file manager (Rust/Async I/O)
     fastfetch # Like neofetch, but much faster (C)
+    tealdeer # A fast tldr client in Rust
 
     # Core Tools
     fd # A simple, fast and user-friendly alternative to 'find'
@@ -402,6 +403,48 @@ in {
     ".config/wallust/templates/hyprland.conf".source = ../../../files/wallust/templates/hyprland.conf;
     ".config/wallust/templates/kitty.conf".source = ../../../files/wallust/templates/kitty.conf;
     ".config/wallust/templates/dunstrc".source = ../../../files/wallust/templates/dunstrc;
+
+    # Tealdeer Config
+    ".config/tealdeer/config.toml".text = ''
+      [style.description]
+      underline = false
+      bold = false
+      italic = true
+
+      [style.command_name]
+      foreground = "cyan"
+      underline = false
+      bold = false
+      italic = false
+
+      [style.example_text]
+      foreground = "green"
+      underline = false
+      bold = false
+      italic = false
+
+      [style.example_code]
+      foreground = "yellow"
+      underline = false
+      bold = false
+      italic = true
+
+      [style.example_variable]
+      foreground = "blue"
+      underline = false
+      bold = true
+      italic = false
+
+      [display]
+      compact = false
+      use_pager = false
+
+      [updates]
+      auto_update = true
+      auto_update_interval_hours = 720
+
+      [directories]
+    '';
 
     # Aliae Config (if needed later, currently empty in source)
   };
