@@ -33,13 +33,13 @@ in {
         };
       }
       // lib.optionalAttrs hasVdirsyncerGoogle {
-        "vdirsyncer/google-client-id" = {
+        "vdirsyncer_google_client_id" = {
           format = "yaml";
           sopsFile = "${secretsDir}/vdirsyncer/google.sops.yaml";
           key = "client_id";
           owner = "neg";
         };
-        "vdirsyncer/google-client-secret" = {
+        "vdirsyncer_google_client_secret" = {
           format = "yaml";
           sopsFile = "${secretsDir}/vdirsyncer/google.sops.yaml";
           key = "client_secret";
