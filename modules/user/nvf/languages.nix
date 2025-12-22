@@ -6,10 +6,10 @@
       autotagHtml = true;
     };
 
-    # High-level language modules.
     # nvf automatically handles LSP, Treesitter, and Formatter selection.
+    lsp.enable = true;
+
     languages = {
-      enableLSP = true;
       enableTreesitter = true;
       enableFormat = true;
       enableExtraDiagnostics = true;
@@ -17,13 +17,13 @@
       nix = {
         enable = true;
         format.enable = true;
-        lsp.server = "nil";
+        lsp.servers = ["nil"];
       };
 
       python = {
         enable = true;
         format.enable = true;
-        lsp.server = "pyright";
+        lsp.servers = ["pyright"];
       };
 
       go = {
@@ -38,12 +38,11 @@
 
       clang = {
         enable = true;
-        lsp.server = "clangd";
+        lsp.servers = ["clangd"];
       };
 
       lua = {
         enable = true;
-        lsp.server = "lua-language-server";
       };
 
       markdown = {
@@ -56,10 +55,10 @@
       ts.enable = true; # TypeScript / JS
 
       yaml.enable = true;
-      toml.enable = true;
+      # toml and cmake are not top-level modules in nvf,
+      # they are handled by treesitter + extraPackages (manual LSP)
 
       sql.enable = true;
-      cmake.enable = true;
     };
 
     # Tools that are not yet covered by specific language modules or need manual inclusion
@@ -84,6 +83,8 @@
       pkgs.svls
       pkgs.vhdl-ls
       pkgs.zls
+      pkgs.taplo # TOML LSP
+      pkgs.cmake-language-server # CMake LSP
 
       # Debuggers
       pkgs.delve
