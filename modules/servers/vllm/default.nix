@@ -58,7 +58,7 @@ in {
 
     timezone = mkOption {
       type = types.str;
-      default = "Europe/Moscow";
+      default = config.time.timeZone;
       description = "Container timezone";
     };
   };
