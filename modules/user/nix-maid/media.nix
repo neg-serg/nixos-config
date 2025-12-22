@@ -69,25 +69,25 @@
   mpdPort = 6600;
 in {
   # --- System Packages ---
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages = [
     # Audio
-    beets # Music library manager and tagger
-    mpd # Music Player Daemon
-    mpdris2 # MPRIS2 bridge for MPD
+    pkgs.beets # Music library manager and tagger
+    pkgs.mpd # Music Player Daemon
+    pkgs.mpdris2 # MPRIS2 bridge for MPD
 
-    mpdas # Last.fm scrobbler for MPD
-    rmpc # Rust Music Player Client
-    ncpamixer # Ncurses mixer for PulseAudio/PipeWire
+    pkgs.mpdas # Last.fm scrobbler for MPD
+    pkgs.rmpc # Rust Music Player Client
+    pkgs.ncpamixer # Ncurses mixer for PulseAudio/PipeWire
     # Subsonic
-    subsonic-tui # TUI for Subsonic-compatible servers
-    termsonic # Terminal client for Subsonic
+    pkgs.subsonic-tui # TUI for Subsonic-compatible servers
+    pkgs.termsonic # Terminal client for Subsonic
     # Images
-    swayimg # Image viewer for Wayland
-    imv # Image viewer for Wayland and X11
-    feh # Fast and light image viewer
+    pkgs.swayimg # Image viewer for Wayland
+    pkgs.imv # Image viewer for Wayland and X11
+    pkgs.feh # Fast and light image viewer
     # Spotify
-    spotify # Proprietary music streaming service
-    spicetify-cli # Command-line tool to customize the Spotify client
+    pkgs.spotify # Proprietary music streaming service
+    pkgs.spicetify-cli # Command-line tool to customize the Spotify client
   ];
 
   # --- Secrets (for Beets/MusicBrainz) ---
