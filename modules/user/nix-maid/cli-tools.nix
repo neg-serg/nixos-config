@@ -301,35 +301,35 @@
   };
 in {
   # --- System Packages (ensure installed) ---
-  environment.systemPackages = with pkgs; [
-    bat # A cat(1) clone with wings (syntax highlighting)
-    btop # A monitor of resources (CPU, Memory, Network)
-    fzf # A command-line fuzzy finder
-    yazi # Blazing fast terminal file manager (Rust/Async I/O)
-    fastfetch # Like neofetch, but much faster (C)
-    tealdeer # A fast tldr client in Rust
+  environment.systemPackages = [
+    pkgs.bat # A cat(1) clone with wings (syntax highlighting)
+    pkgs.btop # A monitor of resources (CPU, Memory, Network)
+    pkgs.fzf # A command-line fuzzy finder
+    pkgs.yazi # Blazing fast terminal file manager (Rust/Async I/O)
+    pkgs.fastfetch # Like neofetch, but much faster (C)
+    pkgs.tealdeer # A fast tldr client in Rust
 
     # Core Tools
-    fd # A simple, fast and user-friendly alternative to 'find'
-    ripgrep # Line-oriented search tool (grep alternative)
-    direnv # Extension for your shell to load/unload env vars
-    nix-direnv # A fast, persistent use_nix implementation for direnv
+    pkgs.fd # A simple, fast and user-friendly alternative to 'find'
+    pkgs.ripgrep # Line-oriented search tool (grep alternative)
+    pkgs.direnv # Extension for your shell to load/unload env vars
+    pkgs.nix-direnv # A fast, persistent use_nix implementation for direnv
 
     # CLI Tools
-    aliae # Cross-shell configuration manager
-    superfile # Pretty fancy TUI file manager
+    pkgs.aliae # Cross-shell configuration manager
+    pkgs.superfile # Pretty fancy TUI file manager
     pkgs.nh # Yet another nix helper (CLI for NixOS/Home Manager)
-    process-compose # Process orchestrator (docker-compose but for processes)
+    pkgs.process-compose # Process orchestrator (docker-compose but for processes)
 
     # CLI Tools
-    fabric-ai # Open-source framework for augmenting humans (AI framework)
-    hwatch # Modern alternative to watch command with history
-    kubecolor # Colorize kubectl output
-    nix-search-tv # TUI for searching libraries on search.nixos.org
-    numbat # High precision scientific calculator with unit support
-    uni # Query the Unicode database from the command line
-    tray-tui # System tray for TUI applications in terminal
-    visidata # Terminal spreadsheet multitool for data discovery
+    pkgs.fabric-ai # Open-source framework for augmenting humans (AI framework)
+    pkgs.hwatch # Modern alternative to watch command with history
+    pkgs.kubecolor # Colorize kubectl output
+    pkgs.nix-search-tv # TUI for searching libraries on search.nixos.org
+    pkgs.numbat # High precision scientific calculator with unit support
+    pkgs.uni # Query the Unicode database from the command line
+    pkgs.tray-tui # System tray for TUI applications in terminal
+    pkgs.visidata # Terminal spreadsheet multitool for data discovery
     # ZCLI (custom script)
     (import ../../../files/scripts/zcli.nix {
       inherit pkgs;

@@ -296,6 +296,15 @@
     (mkAliasIf hasUg "zfgrep" "ug -zF")
     (mkAliasIf hasUg "zpgrep" "ug -zP")
     (mkAliasIf hasUg "zxgrep" "ug -zW")
+    "\nfunction:\n"
+    "  - name: y\n"
+    "    value: |\n"
+    "      local tmp=\"$(mktemp -t \"yazi-cwd.XXXXXX\")\"\n"
+    "      yazi \"$@\" --cwd-file=\"$tmp\"\n"
+    "      if cwd=\"$(cat -- \"$tmp\")\" && [ -n \"$cwd\" ] && [ \"$cwd\" != \"$PWD\" ]; then\n"
+    "        builtin cd -- \"$cwd\"\n"
+    "      fi\n"
+    "      rm -f -- \"$tmp\"\n"
   ];
 in
   content
