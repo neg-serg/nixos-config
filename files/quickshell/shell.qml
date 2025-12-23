@@ -10,12 +10,15 @@ import qs.Services
 
 Scope {
     id: root
+    readonly property var quickshell: Quickshell
+    readonly property alias idleInhibitor: idleInhibitor
+
     // Env toggles to triage perf issues
-    readonly property bool disableBar: ((Quickshell.env("QS_DISABLE_BAR") || "") === "1")
-                                     || ((Quickshell.env("QS_MINIMAL_UI") || "") === "1")
+    readonly property bool disableBar: ((root.quickshell.env("QS_DISABLE_BAR") || "") === "1")
+                                     || ((root.quickshell.env("QS_MINIMAL_UI") || "") === "1")
 
     Component.onCompleted: {
-        Quickshell.shell = root;
+        root.quickshell.shell = root;
     }
 
     // Overview {}
@@ -25,19 +28,19 @@ Scope {
     }
 
     IdleInhibitor { id: idleInhibitor; }
-    IPCHandlers { idleInhibitor: idleInhibitor; }
+    IPCHandlers { idleInhibitor: root.idleInhibitor; }
 
     Connections {
-        function onReloadCompleted() { Quickshell.inhibitReloadPopup(); }
-        function onReloadFailed() { Quickshell.inhibitReloadPopup(); }
-        target: Quickshell
+        function onReloadCompleted() { root.quickshell.inhibitReloadPopup(); }
+        function onReloadFailed() { root.quickshell.inhibitReloadPopup(); }
+        target: root.quickshell
     }
 
     Timer {
         id: reloadTimer
         interval: 500
         repeat: false
-        onTriggered: Quickshell.reload(true)
+        onTriggered: root.quickshell.reload(true)
     }
 
     // Volume/mute updates are handled inside Services/Audio
