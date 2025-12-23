@@ -1,5 +1,10 @@
 {pkgs, ...}: {
   environment.systemPackages = [
+    pkgs.ouch # archive extractor/creator
+    pkgs.patool # universal archive unpacker (python)
+    pkgs.pbzip2 # parallel bzip2 backend
+    pkgs.pigz # parallel gzip backend
+
     pkgs.lbzip2 # parallel bzip2
     pkgs.p7zip # 7z x
     pkgs.pzip # parallel zip archiver
