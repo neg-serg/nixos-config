@@ -61,7 +61,10 @@
     "\C-\M-w": unix-word-rubout
     "\ei": tab-insert
   '';
-  aliaeConfig = import "${inputs.self}/lib/aliae.nix" {inherit lib pkgs;};
+  aliaeConfig = import "${inputs.self}/lib/aliae.nix" {
+    inherit lib pkgs;
+    homeDir = config.users.users.neg.home;
+  };
   dircolorsConfig = "${inputs.self}/files/shell/dircolors/dircolors";
 
   # --- Shell Config Sources ---

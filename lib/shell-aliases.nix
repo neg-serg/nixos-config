@@ -4,6 +4,7 @@
   lib,
   pkgs,
   isNushell ? false,
+  homeDir ? "/home/neg",
   ...
 }: let
   # Helper for environment variables (Nushell needs $env.VAR)
@@ -244,7 +245,7 @@
     })
     (optionalAlias hasPrettyping {ping = "prettyping";})
     (optionalAlias hasDuf {
-      df = "duf --theme neg --style plain --no-header --bar-style modern --hide special --hide-mp '/home/neg/*,/var/lib/*,/nix/store'";
+      df = "duf --theme neg --style plain --no-header --bar-style modern --hide special --hide-mp '${homeDir}/*,/var/lib/*,/nix/store'";
     })
     (optionalAlias hasDust {sp = "dust -r";})
     (optionalAlias hasKhal {cal = "khal calendar";})

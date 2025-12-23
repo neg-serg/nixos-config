@@ -11,7 +11,7 @@
     autoplay = true
     backend = pulseaudio
     bitrate = 320
-    cache_path = /home/neg/.cache/spotifyd
+    cache_path = ${config.users.users.neg.home}/.cache/spotifyd
     device_type = computer
     initial_volume = 100
     password_cmd = cat ${config.sops.secrets."spotify-password".path}

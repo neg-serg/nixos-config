@@ -1,4 +1,8 @@
-{lib, ...}: let
+{
+  lib,
+  config,
+  ...
+}: let
   secretsDir = ../../../secrets/home;
   hasGitHubToken = builtins.pathExists "${secretsDir}/github-token.sops.yaml";
   hasCachixEnv = builtins.pathExists "${secretsDir}/cachix.env";
@@ -8,7 +12,7 @@
   hasVlessRealitySingboxTun = builtins.pathExists "${secretsDir}/vless/reality-singbox-tun.json.sops";
 in {
   sops = {
-    age.keyFile = lib.mkForce "/home/neg/.config/sops/age/keys.txt";
+    age.keyFile = lib.mkForce "${config.users.users.neg.home}/.config/sops/age/keys.txt";
     defaultSopsFile = "${secretsDir}/all.yaml";
     secrets =
       {
