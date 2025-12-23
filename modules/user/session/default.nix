@@ -1,8 +1,6 @@
 {pkgs, ...}: {
   imports = [
-    ./pkgs.nix
-    ./hypr-bindings.nix
-    ./greetd.nix
+    ./modules.nix
   ];
 
   programs.hyprland = {
