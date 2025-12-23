@@ -113,7 +113,7 @@ in {
     ".config/spicetify/config-xpui.ini".text = lib.generators.toINI {} {
       Setting = {
         spotify_path = "/nix/store"; # User will likely need to adjust this or use spicetify-nix
-        prefs_path = "/home/neg/.config/spotify/prefs";
+        prefs_path = "${config.users.users.neg.home}/.config/spotify/prefs";
         current_theme = "catppuccin";
         color_scheme = "mocha";
         inject_css = 1;
