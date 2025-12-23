@@ -26,7 +26,7 @@ with lib;
           else {};
 
         # Scripts to skip automatic generation for (handled specially below)
-        autoSkip = ["ren"];
+        autoSkip = ["ren" "kitty-scrollback-nvim"];
 
         # Helper to generate the home.file entry
         mkAuto = name: {
@@ -93,6 +93,11 @@ with lib;
         rcloneExe = lib.getExe pkgs.rclone;
         mountDriveTpl = builtins.readFile ./scripts/mount-drive;
         mountDriveText = lib.replaceStrings ["rclone mount"] ["${rcloneExe} mount"] mountDriveTpl;
+
+        # kitty-scrollback-nvim substitution
+        nixKsbPath = "${pkgs.vimPlugins.kitty-scrollback-nvim}/python/kitty_scrollback_nvim.py";
+        ksbTpl = builtins.readFile (binDir + "/kitty-scrollback-nvim");
+        ksbText = lib.replaceStrings ["@NIX_KSB_PATH@"] [nixKsbPath] ksbTpl;
       in
         autoEntries
         // scriptEntries
@@ -112,6 +117,10 @@ with lib;
           ".local/bin/mount-drive" = {
             executable = true;
             text = mountDriveText;
+          };
+          ".local/bin/kitty-scrollback-nvim" = {
+            executable = true;
+            text = ksbText;
           };
         };
     }
