@@ -6,12 +6,11 @@
     # by default it only kills cgroups. So either systemd services marked for killing under OOM
     # or (disabled by default, enabled by us) the entire user slice. Fedora used to kill root
     # and system slices, but their oomd configuration has since changed.
-    # TODO: maybe disable user slice by default?
     oomd = {
       enable = true;
       enableRootSlice = true;
       enableSystemSlice = true;
-      enableUserSlices = true;
+      enableUserSlices = false;
       settings.OOM = {
         DefaultMemoryPressureDurationSec = "20s";
       };
