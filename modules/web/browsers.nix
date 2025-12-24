@@ -14,9 +14,20 @@
     else if inputs ? "yandex-browser"
     then inputs."yandex-browser".packages.${pkgs.stdenv.hostPlatform.system}
     else null;
-  yandexPkg =
+  yandexPkgRaw =
     if yandexInput != null
     then yandexInput.yandex-browser-stable
+    else null;
+  yandexPkg =
+    if yandexPkgRaw != null
+    then
+      yandexPkgRaw.overrideAttrs (_: {
+        version = "25.10.1.1173-1";
+        src = pkgs.fetchurl {
+          url = "http://repo.yandex.ru/yandex-browser/deb/pool/main/y/yandex-browser-stable/yandex-browser-stable_25.10.1.1173-1_amd64.deb";
+          hash = "sha256-31ec155f50ba0ec9c4d4841322ead9b196429926ededaee0c4c9b4caa937aa64";
+        };
+      })
     else null;
   packages =
     lib.optionals webEnabled [
