@@ -3,8 +3,11 @@
   pkgs,
   lib,
   config,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   inputrc = ''
     set bell-style                 none
     set bind-tty-special-chars     on
@@ -79,7 +82,6 @@
     cat > "$out/.zshenv" <<'EOF'
     # shellcheck disable=SC1090
     skip_global_compinit=1
-    # Hardcoded path for profile session vars (standard location)
     # Hardcoded path for profile session vars (standard location)
     session_vars="$HOME/.nix-profile/etc/profile.d/session-vars.sh"
     if [ -r "$session_vars" ]; then
@@ -161,71 +163,52 @@
     }
   '';
 
-  shellAliases = {}; # Placeholder, assuming it's defined elsewhere or will be added.
+  shellAliases = {};
 in {
-  users.users.neg.maid.file.home = {
-    ".config/inputrc".text = inputrc;
+  config = lib.mkMerge [
+    {
+      # Ensure Config Dirs exist for shells
+      systemd.tmpfiles.rules = [
+        "d ${config.users.users.neg.home}/.config/powershell 0755 neg users -"
+      ];
 
-    ".config/aliae/config.yaml".text = aliaeConfig;
+      # --- Interactive Shell Config (Bash) ---
+      programs.bash = {
+        enable = true;
+        inherit shellAliases;
+        interactiveShellInit =
+          ''
+            ${pkgs.nix-your-shell}/bin/nix-your-shell bash | source /dev/stdin
 
-    ".config/dircolors/dircolors" = {
-      source = dircolorsConfig;
-    };
+            if [[ -f ~/.config/dircolors/dircolors ]]; then
+              eval "$(${pkgs.coreutils}/bin/dircolors -b ~/.config/dircolors/dircolors)"
+            fi
+          ''
+          + (
+            if config.features.cli.broot.enable
+            then ''
+              eval "$(${pkgs.broot}/bin/broot --print-shell-function bash)"
+            ''
+            else ""
+          )
+          + ''
+            source ~/.config/bash/oh-my-posh.bash
+          '';
+      };
 
-    # ZSH Config (generated)
-    ".config/zsh".source = zshConfigSource;
-
-    # Also link .zshenv to home if needed?
-    # But zshConfigSource puts it in $out/.zshenv.
-    # If we link .config/zsh -> zshConfigSource, then .config/zsh/.zshenv exists.
-    # Does Zsh read ~/.config/zsh/.zshenv? Only if ZDOTDIR is set before.
-    # But ZDOTDIR is set in /etc/zshrc usually or /etc/profile.
-    # Let's match existing logic: existing logic constructs a dir.
-
-    # Fish Config
-    ".config/fish".source = "${shellFiles}/fish";
-
-    # oh-my-posh for bash
-    ".config/bash/oh-my-posh.bash".source = "${shellFiles}/bash/oh-my-posh.bash";
-
-    # Fast Syntax Highlighting
-    ".config/f-sy-h".source = "${shellFiles}/f-sy-h";
-
-    # PowerShell Profile
-    ".config/powershell/Microsoft.PowerShell_profile.ps1".text = pwshProfile;
-  };
-
-  # Ensure Config Dirs exist for shells
-  # (nix-maid/systemd activation usually handles parents, but we can be safe)
-  systemd.tmpfiles.rules = [
-    "d ${config.users.users.neg.home}/.config/powershell 0755 neg users -"
+      environment.sessionVariables = {
+        ZDOTDIR = "$HOME/.config/zsh";
+      };
+    }
+    (n.mkHomeFiles {
+      ".config/inputrc".text = inputrc;
+      ".config/aliae/config.yaml".text = aliaeConfig;
+      ".config/dircolors/dircolors".source = dircolorsConfig;
+      ".config/zsh".source = zshConfigSource;
+      ".config/fish".source = "${shellFiles}/fish";
+      ".config/bash/oh-my-posh.bash".source = "${shellFiles}/bash/oh-my-posh.bash";
+      ".config/f-sy-h".source = "${shellFiles}/f-sy-h";
+      ".config/powershell/Microsoft.PowerShell_profile.ps1".text = pwshProfile;
+    })
   ];
-
-  # --- Interactive Shell Config (Bash) ---
-  programs.bash = {
-    enable = true;
-    inherit shellAliases;
-    interactiveShellInit =
-      ''
-        ${pkgs.nix-your-shell}/bin/nix-your-shell bash | source /dev/stdin
-
-        if [[ -f ~/.config/dircolors/dircolors ]]; then
-          eval "$(${pkgs.coreutils}/bin/dircolors -b ~/.config/dircolors/dircolors)"
-        fi
-      ''
-      + (
-        if config.features.cli.broot.enable
-        then ''
-          eval "$(${pkgs.broot}/bin/broot --print-shell-function bash)"
-        ''
-        else ""
-      )
-      + ''
-        source ~/.config/bash/oh-my-posh.bash
-      '';
-  };
-
-  environment.sessionVariables = {
-    ZDOTDIR = "$HOME/.config/zsh";
-  };
 }
