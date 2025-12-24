@@ -2,11 +2,15 @@
   config,
   lib,
   pkgs,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   cfg = config.features.mail;
 
   # Helper to generate mbsync config
+  # ... (rest of mkMbsyncConfig remains unchanged)
   mkMbsyncConfig = acct: ''
     IMAPAccount ${acct.name}
     Host ${acct.imap.host}
@@ -51,24 +55,76 @@
     };
   };
 in {
-  config = lib.mkIf (cfg.enable or false) {
-    users.users.neg.maid = {
+  config = lib.mkIf (cfg.enable or false) (lib.mkMerge [
+    {
+      # System packages
+      environment.systemPackages = [
+        pkgs.isync # Free IMAP and Maildir mailbox synchronizer
+        pkgs.neomutt # Command-line mail reader based on Mutt
+        pkgs.msmtp # An SMTP client
+        pkgs.notmuch # Thread-based email indexer, searcher and tagger
+        pkgs.goimapnotify # Execute scripts on IMAP IDLE (new mail)
+        pkgs.pass # The standard unix password manager
+        (pkgs.writeShellScriptBin "sync-mail" ''
+          #!/usr/bin/env bash
+          set -euo pipefail
+          exec systemctl --user start --no-block mbsync-gmail.service
+        '') # Helper script to trigger mail synchronization
+      ];
+
+      # Services
+      systemd.user.services."mbsync-gmail" = {
+        description = "Sync mail via mbsync (gmail)";
+        serviceConfig = {
+          Type = "simple";
+          TimeoutStartSec = "30min";
+          ExecStart = "${lib.getExe pkgs.isync} -c %h/.config/mbsync/mbsyncrc -a";
+        };
+        after = ["network-online.target"];
+        wants = ["network-online.target"];
+      };
+
+      systemd.user.timers."mbsync-gmail" = {
+        description = "Timer: mbsync gmail";
+        timerConfig = {
+          OnBootSec = "2m";
+          OnUnitActiveSec = "10m";
+          Persistent = true;
+        };
+        wantedBy = ["timers.target"];
+      };
+
+      systemd.user.services."imapnotify-gmail" = {
+        description = "IMAP Notify (gmail)";
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = "${lib.getExe pkgs.goimapnotify} -conf %h/.config/imapnotify/gmail.conf";
+          Restart = "on-failure";
+          RestartSec = "20";
+        };
+        after = ["network-online.target"];
+        wants = ["network-online.target"];
+        wantedBy = ["default.target"]; # Using standard unwantedBy since we don't have the wrapper handy or want simple start
+      };
+    }
+
+    (n.mkHomeFiles {
       # ========================================================================
       # MUTT / NEOMUTT
       # ========================================================================
-      file.home.".config/mutt" = {
+      ".config/mutt" = {
         source = ./mutt-conf;
       };
 
       # ========================================================================
       # MBSYNC (ISYNC)
       # ========================================================================
-      file.home.".config/mbsync/mbsyncrc".text = mkMbsyncConfig account;
+      ".config/mbsync/mbsyncrc".text = mkMbsyncConfig account;
 
       # ========================================================================
       # MSMTP
       # ========================================================================
-      file.home.".config/msmtp/config".text = ''
+      ".config/msmtp/config".text = ''
         defaults
         auth           on
         tls            on
@@ -88,7 +144,7 @@ in {
       # ========================================================================
       # NOTMUCH
       # ========================================================================
-      file.home.".notmuch-config".text = ''
+      ".notmuch-config".text = ''
         [database]
         path=${config.users.users.neg.home}/.local/mail
 
@@ -110,7 +166,7 @@ in {
       # ========================================================================
       # IMAPNOTIFY
       # ========================================================================
-      file.home.".config/imapnotify/gmail.conf".text = builtins.toJSON {
+      ".config/imapnotify/gmail.conf".text = builtins.toJSON {
         host = account.imap.host;
         port = account.imap.port;
         tls = true;
@@ -120,56 +176,6 @@ in {
         onNewMail = "${config.users.users.neg.home}/.config/mutt/scripts/sync_mail";
         boxes = ["INBOX"];
       };
-    };
-
-    # System packages
-    environment.systemPackages = [
-      pkgs.isync # Free IMAP and Maildir mailbox synchronizer
-      pkgs.neomutt # Command-line mail reader based on Mutt
-      pkgs.msmtp # An SMTP client
-      pkgs.notmuch # Thread-based email indexer, searcher and tagger
-      pkgs.goimapnotify # Execute scripts on IMAP IDLE (new mail)
-      pkgs.pass # The standard unix password manager
-      (pkgs.writeShellScriptBin "sync-mail" ''
-        #!/usr/bin/env bash
-        set -euo pipefail
-        exec systemctl --user start --no-block mbsync-gmail.service
-      '') # Helper script to trigger mail synchronization
-    ];
-
-    # Services
-    systemd.user.services."mbsync-gmail" = {
-      description = "Sync mail via mbsync (gmail)";
-      serviceConfig = {
-        Type = "simple";
-        TimeoutStartSec = "30min";
-        ExecStart = "${lib.getExe pkgs.isync} -c %h/.config/mbsync/mbsyncrc -a";
-      };
-      after = ["network-online.target"];
-      wants = ["network-online.target"];
-    };
-
-    systemd.user.timers."mbsync-gmail" = {
-      description = "Timer: mbsync gmail";
-      timerConfig = {
-        OnBootSec = "2m";
-        OnUnitActiveSec = "10m";
-        Persistent = true;
-      };
-      wantedBy = ["timers.target"];
-    };
-
-    systemd.user.services."imapnotify-gmail" = {
-      description = "IMAP Notify (gmail)";
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${lib.getExe pkgs.goimapnotify} -conf %h/.config/imapnotify/gmail.conf";
-        Restart = "on-failure";
-        RestartSec = "20";
-      };
-      after = ["network-online.target"];
-      wants = ["network-online.target"];
-      wantedBy = ["default.target"]; # Using standard unwantedBy since we don't have the wrapper handy or want simple start
-    };
-  };
+    })
+  ]);
 }

@@ -2,8 +2,11 @@
   config,
   lib,
   pkgs,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   guiEnabled = config.features.gui.enable or false;
 
   # Browser helper logic from original HM module
@@ -117,30 +120,32 @@
     settings
     + "\ninclude = ~/.cache/wallust/dunstrc\n";
 in
-  lib.mkIf guiEnabled {
-    # 1. Config file via nix-maid
-    users.users.neg.maid.file.home = {
-      ".config/dunst/dunstrc".text = dunstrc;
-    };
-
-    # 2. Systemd user service
-    systemd.user.services.dunst = {
-      description = "Dunst notification daemon";
-      after = ["graphical-session-pre.target"];
-      partOf = ["graphical-session.target"];
-      wantedBy = ["graphical-session.target"];
-      serviceConfig = {
-        Type = "dbus";
-        BusName = "org.freedesktop.Notifications";
-        ExecStart = "${lib.getExe pkgs.dunst} -config %h/.config/dunst/dunstrc";
-        Restart = "on-failure";
+  lib.mkIf guiEnabled (lib.mkMerge [
+    {
+      # 2. Systemd user service
+      systemd.user.services.dunst = {
+        description = "Dunst notification daemon";
+        after = ["graphical-session-pre.target"];
+        partOf = ["graphical-session.target"];
+        wantedBy = ["graphical-session.target"];
+        serviceConfig = {
+          Type = "dbus";
+          BusName = "org.freedesktop.Notifications";
+          ExecStart = "${lib.getExe pkgs.dunst} -config %h/.config/dunst/dunstrc";
+          Restart = "on-failure";
+        };
       };
-    };
 
-    # Ensure packages are available
-    environment.systemPackages = [
-      pkgs.dunst # lightweight notification daemon for X11 and Wayland
-      pkgs.kora-icon-theme # colorful icon theme for Linux desktops
-      pkgs.libnotify # library for sending desktop notifications (provides notify-send)
-    ];
-  }
+      # Ensure packages are available
+      environment.systemPackages = [
+        pkgs.dunst # lightweight notification daemon for X11 and Wayland
+        pkgs.kora-icon-theme # colorful icon theme for Linux desktops
+        pkgs.libnotify # library for sending desktop notifications (provides notify-send)
+      ];
+    }
+
+    # 1. Config file via nix-maid
+    (n.mkHomeFiles {
+      ".config/dunst/dunstrc".text = dunstrc;
+    })
+  ])

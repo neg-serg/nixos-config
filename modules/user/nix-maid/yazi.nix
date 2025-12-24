@@ -3,8 +3,11 @@
   lib,
   config,
   inputs,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   cfg = config.features.cli.yazi;
   tomlFormat = pkgs.formats.toml {};
 
@@ -192,15 +195,17 @@
     ];
   };
 in
-  lib.mkIf (cfg.enable or false) {
-    # Use inputs.yazi if available, otherwise fallback to pkgs
-    environment.systemPackages = [
-      inputs.yazi.packages.${pkgs.stdenv.hostPlatform.system}.default # Terminal file manager from flake
-    ];
+  lib.mkIf (cfg.enable or false) (lib.mkMerge [
+    {
+      # Use inputs.yazi if available, otherwise fallback to pkgs
+      environment.systemPackages = [
+        inputs.yazi.packages.${pkgs.stdenv.hostPlatform.system}.default # Terminal file manager from flake
+      ];
+    }
 
-    users.users.neg.maid.file.home = {
+    (n.mkHomeFiles {
       ".config/yazi/yazi.toml".source = tomlFormat.generate "yazi.toml" settings;
       ".config/yazi/theme.toml".source = tomlFormat.generate "theme.toml" theme;
       ".config/yazi/keymap.toml".source = tomlFormat.generate "keymap.toml" keymap;
-    };
-  }
+    })
+  ])

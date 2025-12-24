@@ -2,8 +2,11 @@
   pkgs,
   lib,
   config,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   cfg = config.features.gpg;
 
   # Custom Pinentry Wrapper
@@ -52,59 +55,61 @@
     reader-port "Yubico Yubi"
   '';
 in {
-  config = lib.mkIf (cfg.enable or false) {
+  config = lib.mkIf (cfg.enable or false) (lib.mkMerge [
+    {
+      # 2. Systemd Service
+      # Replacing HM's services.gpg-agent
+      systemd.user.services.gpg-agent = {
+        description = "GnuPG cryptography agent";
+        documentation = ["man:gpg-agent(1)"];
+        requires = ["gpg-agent.socket"];
+        after = ["gpg-agent.socket" "gui-session.target"];
+        # We want it to be socket activated primarily, but can be started by target
+        wantedBy = ["default.target"];
+
+        serviceConfig = {
+          ExecStart = "${pkgs.gnupg}/bin/gpg-agent --supervised";
+          ExecReload = "${pkgs.gnupg}/bin/gpgconf --reload gpg-agent";
+        };
+      };
+
+      systemd.user.sockets.gpg-agent = {
+        description = "GnuPG cryptography agent socket";
+        documentation = ["man:gpg-agent(1)"];
+        listenStreams = ["%t/gnupg/S.gpg-agent"];
+        socketConfig = {
+          FileDescriptorName = "std";
+          SocketMode = "0600";
+          DirectoryMode = "0700";
+        };
+        wantedBy = ["sockets.target"];
+      };
+
+      systemd.user.sockets.gpg-agent-ssh = {
+        description = "GnuPG cryptography agent SSH socket";
+        documentation = ["man:gpg-agent(1)"];
+        listenStreams = ["%t/gnupg/S.gpg-agent.ssh"];
+        socketConfig = {
+          FileDescriptorName = "ssh";
+          SocketMode = "0600";
+          DirectoryMode = "0700";
+        };
+        wantedBy = ["sockets.target"];
+      };
+
+      # Include packages
+      environment.systemPackages = [
+        pkgs.gnupg # GNU Privacy Guard - encryption and signing tool
+        pkgs.pinentry-rofi # Rofi-based pinentry for GPG
+        pinentryRofi # custom wrapper script for pinentry-rofi with env injection
+      ];
+    }
+
     # 1. Config Files via Maid
-    users.users.neg.maid.file.home = {
+    (n.mkHomeFiles {
       ".gnupg/gpg-agent.conf".text = agentConf;
       ".gnupg/scdaemon.conf".text = scdaemonConf;
       # Ensure permissions for GPG dir? Maid handles file creation, but usually gnupg handles dir perms on run.
-    };
-
-    # 2. Systemd Service
-    # Replacing HM's services.gpg-agent
-    systemd.user.services.gpg-agent = {
-      description = "GnuPG cryptography agent";
-      documentation = ["man:gpg-agent(1)"];
-      requires = ["gpg-agent.socket"];
-      after = ["gpg-agent.socket" "gui-session.target"];
-      # We want it to be socket activated primarily, but can be started by target
-      wantedBy = ["default.target"];
-
-      serviceConfig = {
-        ExecStart = "${pkgs.gnupg}/bin/gpg-agent --supervised";
-        ExecReload = "${pkgs.gnupg}/bin/gpgconf --reload gpg-agent";
-      };
-    };
-
-    systemd.user.sockets.gpg-agent = {
-      description = "GnuPG cryptography agent socket";
-      documentation = ["man:gpg-agent(1)"];
-      listenStreams = ["%t/gnupg/S.gpg-agent"];
-      socketConfig = {
-        FileDescriptorName = "std";
-        SocketMode = "0600";
-        DirectoryMode = "0700";
-      };
-      wantedBy = ["sockets.target"];
-    };
-
-    systemd.user.sockets.gpg-agent-ssh = {
-      description = "GnuPG cryptography agent SSH socket";
-      documentation = ["man:gpg-agent(1)"];
-      listenStreams = ["%t/gnupg/S.gpg-agent.ssh"];
-      socketConfig = {
-        FileDescriptorName = "ssh";
-        SocketMode = "0600";
-        DirectoryMode = "0700";
-      };
-      wantedBy = ["sockets.target"];
-    };
-
-    # Include packages
-    environment.systemPackages = [
-      pkgs.gnupg # GNU Privacy Guard - encryption and signing tool
-      pkgs.pinentry-rofi # Rofi-based pinentry for GPG
-      pinentryRofi # custom wrapper script for pinentry-rofi with env injection
-    ];
-  };
+    })
+  ]);
 }

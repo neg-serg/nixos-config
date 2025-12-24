@@ -2,13 +2,19 @@
   config,
   lib,
   pkgs,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   cfg = config.features.dev;
 in {
-  config = lib.mkIf (cfg.enable or false) {
-    users.users.neg.maid = {
-      file.home.".config/tig/config".text = ''
+  config = lib.mkIf (cfg.enable or false) (lib.mkMerge [
+    {
+      environment.systemPackages = [pkgs.tig]; # Text-mode interface for git
+    }
+    (n.mkHomeFiles {
+      ".config/tig/config".text = ''
         #--[ View settings ]-----------------------------------------------------------------------------------------------
         set main-view = line-number:no,interval=5 id:no date:relative author:full commit-title:yes,graph,refs,overflow=no
         set blame-view = date:relative author:full file-name:auto id:yes,color line-number:no,interval=5 text
@@ -210,8 +216,6 @@ in {
             status.changed=stat-unstaged \
             status.untracked=stat-untracked
       '';
-    };
-
-    environment.systemPackages = [pkgs.tig]; # Text-mode interface for git
-  };
+    })
+  ]);
 }
