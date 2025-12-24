@@ -139,8 +139,8 @@ in
 
     # Ensure packages are available
     environment.systemPackages = [
-      pkgs.dunst
-      pkgs.kora-icon-theme
-      pkgs.libnotify # for notify-send testing
+      pkgs.dunst # lightweight notification daemon for X11 and Wayland
+      pkgs.kora-icon-theme # colorful icon theme for Linux desktops
+      pkgs.libnotify # library for sending desktop notifications (provides notify-send)
     ];
   }

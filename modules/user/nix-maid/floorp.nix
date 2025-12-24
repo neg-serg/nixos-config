@@ -113,10 +113,10 @@
 in
   lib.mkIf (guiEnabled && (cfg.enable or false)) {
     environment.systemPackages = [
-      pkgs.floorp-bin
+      pkgs.floorp-bin # custom Firefox-based browser with Japanese origin
       # Native messaging hosts for browser extensions
-      pkgs.tridactyl-native # Tridactyl vim-like bindings
-      pkgs.pywalfox-native # Pywalfox theme colors
+      pkgs.tridactyl-native # Tridactyl vim-like bindings native messenger
+      pkgs.pywalfox-native # Pywalfox theme colors native messenger
     ];
 
     users.users.neg.maid.file.home = lib.mkMerge (

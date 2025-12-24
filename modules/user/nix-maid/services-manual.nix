@@ -106,7 +106,7 @@ in {
         };
       };
 
-      environment.systemPackages = [pkgs.flameshot];
+      environment.systemPackages = [pkgs.flameshot]; # powerful screenshot tool with annotation features
     })
 
     # ============================================================================
@@ -129,7 +129,7 @@ in {
         };
       };
 
-      environment.systemPackages = [pkgs.aria2];
+      environment.systemPackages = [pkgs.aria2]; # lightweight multi-protocol download utility
     })
 
     # ============================================================================
@@ -146,7 +146,7 @@ in {
           RestartSec = "2";
         };
       };
-      environment.systemPackages = [pkgs.playerctl];
+      environment.systemPackages = [pkgs.playerctl]; # command-line tool for controlling media players
     })
 
     # ============================================================================
@@ -165,7 +165,7 @@ in {
           Restart = "on-failure";
         };
       };
-      environment.systemPackages = [pkgs.throne];
+      environment.systemPackages = [pkgs.throne]; # CLI client for Nextcloud's Throne service layer
     })
 
     # ============================================================================
@@ -239,7 +239,7 @@ in {
         };
       };
 
-      environment.systemPackages = [pkgs.nextcloud-client];
+      environment.systemPackages = [pkgs.nextcloud-client]; # Nextcloud desktop and command-line sync client
     })
 
     # ============================================================================
