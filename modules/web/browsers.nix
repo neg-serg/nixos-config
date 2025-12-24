@@ -25,7 +25,7 @@
         version = "25.10.1.1173-1";
         src = pkgs.fetchurl {
           url = "http://repo.yandex.ru/yandex-browser/deb/pool/main/y/yandex-browser-stable/yandex-browser-stable_25.10.1.1173-1_amd64.deb";
-          hash = "sha256-31ec155f50ba0ec9c4d4841322ead9b196429926ededaee0c4c9b4caa937aa64";
+          hash = "sha256-MewVX1C6DsnE1IQTIurZsZZCmSbt7a7gxMm0yqk3qmQ=";
         };
         meta = {
           insecure = false;
