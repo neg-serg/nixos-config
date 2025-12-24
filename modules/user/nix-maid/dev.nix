@@ -2,8 +2,11 @@
   pkgs,
   lib,
   config,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   cfg = config.features.dev;
   enableIac = cfg.enable && (cfg.pkgs.iac or false);
 
@@ -40,23 +43,23 @@
   ansibleHosts = ''
     # Add your inventory groups/hosts here
   '';
-in
-  lib.mkIf (cfg.enable or false) {
-    # Packages
-    environment.systemPackages = lib.optionals enableIac [
-      pkgs.ansible # Radically simple IT automation
-      pkgs.sshpass # Non-interactive ssh password auth
-    ];
+in {
+  config = lib.mkIf (cfg.enable or false) (lib.mkMerge [
+    {
+      # Packages
+      environment.systemPackages = lib.optionals enableIac [
+        pkgs.ansible # Radically simple IT automation
+        pkgs.sshpass # Non-interactive ssh password auth
+      ];
 
-    # Environment Variables
-    environment.variables = lib.mkIf enableIac {
-      ANSIBLE_CONFIG = "${config.users.users.neg.home}/.config/ansible/ansible.cfg";
-      ANSIBLE_ROLES_PATH = "${config.users.users.neg.home}/.local/share/ansible/roles";
-      ANSIBLE_GALAXY_COLLECTIONS_PATHS = "${config.users.users.neg.home}/.local/share/ansible/collections";
-    };
-
-    # Config Files
-    users.users.neg.maid.file.home = lib.mkIf enableIac {
+      # Environment Variables
+      environment.variables = lib.mkIf enableIac {
+        ANSIBLE_CONFIG = "${config.users.users.neg.home}/.config/ansible/ansible.cfg";
+        ANSIBLE_ROLES_PATH = "${config.users.users.neg.home}/.local/share/ansible/roles";
+        ANSIBLE_GALAXY_COLLECTIONS_PATHS = "${config.users.users.neg.home}/.local/share/ansible/collections";
+      };
+    }
+    (lib.mkIf enableIac (n.mkHomeFiles {
       ".config/ansible/ansible.cfg".text = ansibleCfg;
       ".config/ansible/hosts".text = ansibleHosts;
 
@@ -65,5 +68,6 @@ in
       ".local/share/ansible/collections/.keep".text = "";
       ".cache/ansible/facts/.keep".text = "";
       ".cache/ansible/ssh/.keep".text = "";
-    };
-  }
+    }))
+  ]);
+}

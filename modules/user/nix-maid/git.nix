@@ -1,8 +1,11 @@
 {
   pkgs,
   lib,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   gitSettings = {
     user = {
       name = "Sergey Miroshnichenko";
@@ -131,7 +134,7 @@
     difftool.nwim.cmd = "nvim -d $LOCAL $REMOTE";
   };
 in {
-  users.users.neg.maid.file.home = {
+  config = n.mkHomeFiles {
     ".config/git/config" = {
       text = lib.generators.toGitINI gitSettings;
     };

@@ -1,4 +1,11 @@
-{pkgs, ...}: let
+{
+  pkgs,
+  lib,
+  neg,
+  impurity ? null,
+  ...
+}: let
+  n = neg impurity;
   # --- Yazi Configs ---
   yaziFormat = pkgs.formats.toml {};
 
@@ -173,15 +180,18 @@
     ];
   };
 in {
-  environment.systemPackages = [
-    pkgs.yazi # Blazing fast terminal file manager (Rust/Async I/O)
-    pkgs.superfile # Pretty fancy TUI file manager
+  config = lib.mkMerge [
+    {
+      environment.systemPackages = [
+        pkgs.yazi # Blazing fast terminal file manager (Rust/Async I/O)
+        pkgs.superfile # Pretty fancy TUI file manager
+      ];
+    }
+    (n.mkHomeFiles {
+      # Yazi Configs
+      ".config/yazi/yazi.toml".source = yaziFormat.generate "yazi.toml" yaziSettings;
+      ".config/yazi/theme.toml".source = yaziFormat.generate "theme.toml" yaziTheme;
+      ".config/yazi/keymap.toml".source = yaziFormat.generate "keymap.toml" yaziKeymap;
+    })
   ];
-
-  users.users.neg.maid.file.home = {
-    # Yazi Configs
-    ".config/yazi/yazi.toml".source = yaziFormat.generate "yazi.toml" yaziSettings;
-    ".config/yazi/theme.toml".source = yaziFormat.generate "theme.toml" yaziTheme;
-    ".config/yazi/keymap.toml".source = yaziFormat.generate "keymap.toml" yaziKeymap;
-  };
 }
