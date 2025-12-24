@@ -2,8 +2,11 @@
   pkgs,
   lib,
   config,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   cfg = config.features.torrent;
   filesRoot = ../../../files;
 
@@ -58,75 +61,77 @@
     done < "$tmp"
   '';
 in
-  lib.mkIf (cfg.enable or false) {
-    environment.systemPackages = [
-      transmissionPkg # Fast, easy and free Bittorrent client
-      pkgs.jackett # API Support for your favorite torrent trackers
-      transmissionAddTrackers # Helper script to add trackers to Transmission
-    ];
+  lib.mkIf (cfg.enable or false) (lib.mkMerge [
+    {
+      environment.systemPackages = [
+        transmissionPkg # Fast, easy and free Bittorrent client
+        pkgs.jackett # API Support for your favorite torrent trackers
+        transmissionAddTrackers # Helper script to add trackers to Transmission
+      ];
+
+      # Ensure runtime dirs exist. Maid itself doesn't do "ensure dirs" easily without files,
+      # but we can abuse systemd.tmpfiles.rules to create them owned by the user.
+      systemd.tmpfiles.rules = [
+        "d ${confDirNew}/resume 0700 neg users -"
+        "d ${confDirNew}/torrents 0700 neg users -"
+        "d ${confDirNew}/blocklists 0700 neg users -"
+      ];
+
+      # Replicate user services
+      systemd.user.services = {
+        # Jackett
+        jackett = {
+          description = "Jackett (torrent indexer)";
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = lib.getExe pkgs.jackett;
+            Restart = "on-failure";
+            RestartSec = "10s";
+          };
+          wantedBy = ["default.target"];
+        };
+
+        # Transmission
+        transmission-daemon = {
+          description = "transmission service";
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = "${lib.getExe' transmissionPkg "transmission-daemon"} -g ${confDirNew} -f --log-level=error";
+            Restart = "on-failure";
+            RestartSec = "30";
+            ExecReload = "${lib.getExe' pkgs.util-linux "kill"} -s HUP $MAINPID";
+          };
+          wantedBy = ["default.target"];
+        };
+
+        # Trackers update
+        transmission-trackers-update = {
+          description = "Update Transmission trackers from trackerslist";
+          after = ["transmission-daemon.service"];
+          wants = ["transmission-daemon.service"];
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${lib.getExe transmissionAddTrackers}";
+          };
+        };
+      };
+
+      # Timer for trackers update
+      systemd.user.timers.transmission-trackers-update = {
+        description = "Timer: update Transmission trackers daily";
+        timerConfig = {
+          OnCalendar = "daily";
+          RandomizedDelaySec = "15m";
+          Persistent = true;
+          Unit = "transmission-trackers-update.service";
+        };
+        wantedBy = ["timers.target"];
+      };
+    }
 
     # Config files linked via maid
-    users.users.neg.maid.file.home = {
+    (n.mkHomeFiles {
       ".config/transmission-daemon/settings.json".source = "${filesRoot}/transmission/settings.json";
       ".config/transmission-daemon/bandwidth-groups.json".source = "${filesRoot}/transmission/bandwidth-groups.json";
-    };
-
-    # Ensure runtime dirs exist. Maid itself doesn't do "ensure dirs" easily without files,
-    # but we can abuse systemd.tmpfiles.rules to create them owned by the user.
-    systemd.tmpfiles.rules = [
-      "d ${confDirNew}/resume 0700 neg users -"
-      "d ${confDirNew}/torrents 0700 neg users -"
-      "d ${confDirNew}/blocklists 0700 neg users -"
-    ];
-
-    # Replicate user services
-    systemd.user.services = {
-      # Jackett
-      jackett = {
-        description = "Jackett (torrent indexer)";
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = lib.getExe pkgs.jackett;
-          Restart = "on-failure";
-          RestartSec = "10s";
-        };
-        wantedBy = ["default.target"];
-      };
-
-      # Transmission
-      transmission-daemon = {
-        description = "transmission service";
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = "${lib.getExe' transmissionPkg "transmission-daemon"} -g ${confDirNew} -f --log-level=error";
-          Restart = "on-failure";
-          RestartSec = "30";
-          ExecReload = "${lib.getExe' pkgs.util-linux "kill"} -s HUP $MAINPID";
-        };
-        wantedBy = ["default.target"];
-      };
-
-      # Trackers update
-      transmission-trackers-update = {
-        description = "Update Transmission trackers from trackerslist";
-        after = ["transmission-daemon.service"];
-        wants = ["transmission-daemon.service"];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${lib.getExe transmissionAddTrackers}";
-        };
-      };
-    };
-
-    # Timer for trackers update
-    systemd.user.timers.transmission-trackers-update = {
-      description = "Timer: update Transmission trackers daily";
-      timerConfig = {
-        OnCalendar = "daily";
-        RandomizedDelaySec = "15m";
-        Persistent = true;
-        Unit = "transmission-trackers-update.service";
-      };
-      wantedBy = ["timers.target"];
-    };
-  }
+    })
+  ])

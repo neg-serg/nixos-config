@@ -285,7 +285,7 @@ with lib; let
     };
   };
 in {
-  inherit nativeMessagingHosts settings extraConfig userChrome policies addons mkProfilesIni mkProfileFiles mkExtensionFiles mkUserJs;
+  inherit nativeMessagingHosts settings extraConfig userChrome policies addons;
   # mkBrowser: build a module fragment for programs.<name>
   # args: {
   #   name,
