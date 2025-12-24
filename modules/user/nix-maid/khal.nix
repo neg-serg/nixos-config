@@ -2,14 +2,18 @@
   pkgs,
   lib,
   config,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   cfg = config.features.mail; # Tie to mail feature as we're using it for calendars
-in
-  lib.mkIf (cfg.enable or false) {
-    environment.systemPackages = [pkgs.khal];
-
-    users.users.neg.maid.file.home = {
+in {
+  config = lib.mkIf (cfg.enable or false) (lib.mkMerge [
+    {
+      environment.systemPackages = [pkgs.khal];
+    }
+    (n.mkHomeFiles {
       ".config/khal/config".text = ''
         [calendars]
         [[calendars_discovery]]
@@ -28,5 +32,6 @@ in
         [default]
         show_all_days = False
       '';
-    };
-  }
+    })
+  ]);
+}
