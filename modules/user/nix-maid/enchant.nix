@@ -1,7 +1,11 @@
-{...}: {
-  # Always enable for neg user if this module is imported,
-  # mirroring the previous behavior in envs/default.nix
-  users.users.neg.maid.file.home = {
+{
+  neg,
+  impurity ? null,
+  ...
+}: let
+  n = neg impurity;
+in {
+  config = n.mkHomeFiles {
     ".config/enchant/enchant.ordering".text = ''
       default:nuspell,hunspell
       en_US:nuspell,hunspell
