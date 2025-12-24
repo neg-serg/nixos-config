@@ -1,8 +1,11 @@
 {
   pkgs,
   lib,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   # --- Btop Config Generator ---
   mkBtopConf = attrs:
     lib.concatStringsSep "\n" (lib.mapAttrsToList (
@@ -94,14 +97,17 @@
     gpu_mirror_graph = true;
   };
 in {
-  environment.systemPackages = [
-    pkgs.btop # A monitor of resources (CPU, Memory, Network)
-    pkgs.hwatch # Modern alternative to watch command with history
+  config = lib.mkMerge [
+    {
+      environment.systemPackages = [
+        pkgs.btop # A monitor of resources (CPU, Memory, Network)
+        pkgs.hwatch # Modern alternative to watch command with history
+      ];
+    }
+    (n.mkHomeFiles {
+      # Btop Config
+      ".config/btop/btop.conf".text = mkBtopConf btopSettings;
+      ".config/btop/themes/midnight-ocean.theme".source = ../../../../files/shell/btop/themes/midnight-ocean.theme;
+    })
   ];
-
-  users.users.neg.maid.file.home = {
-    # Btop Config
-    ".config/btop/btop.conf".text = mkBtopConf btopSettings;
-    ".config/btop/themes/midnight-ocean.theme".source = ../../../../files/shell/btop/themes/midnight-ocean.theme;
-  };
 }
