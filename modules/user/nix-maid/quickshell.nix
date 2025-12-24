@@ -28,17 +28,17 @@
   quickshellWrapped = mkQuickshellWrapper {
     inherit qsPkg;
     extraPath = [
-      pkgs.fd
-      pkgs.coreutils
-      pkgs.bash
-      pkgs.socat
-      pkgs.iproute2
-      pkgs.iputils
-      pkgs.dash
-      pkgs.ffmpeg
-      pkgs.mpc
-      pkgs.hyprland
-      pkgs.neg.rsmetrx
+      pkgs.fd # fast file finder
+      pkgs.coreutils # basic file, shell and text manipulation utilities
+      pkgs.bash # GNU Bourne-Again Shell
+      pkgs.socat # multipurpose relay (SOcket CAT)
+      pkgs.iproute2 # networking utilities
+      pkgs.iputils # basic networking tool suite (ping, traceroute, etc.)
+      pkgs.dash # POSIX-compliant shell
+      pkgs.ffmpeg # multimedia framework
+      pkgs.mpc # client for MPD
+      pkgs.hyprland # dynamic tiling Wayland compositor
+      pkgs.neg.rsmetrx # custom metrics exporter
     ];
   };
 
