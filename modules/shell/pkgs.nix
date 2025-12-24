@@ -1,10 +1,10 @@
 {pkgs, ...}: {
   environment.systemPackages = [
-    pkgs.bash-completion # generic bash completions
-    pkgs.carapace # universal autocompletion
-    pkgs.dash # faster sh
-    pkgs.nix-bash-completions # nix-related bash-completions
-    pkgs.nix-zsh-completions # nix-related zsh-completion
-    pkgs.oils-for-unix # better bash
+    pkgs.bash-completion # programmable completion for bash
+    pkgs.carapace # multi-shell multi-command argument completer
+    pkgs.dash # POSIX-compliant implementation of /bin/sh (lighter than bash)
+    pkgs.nix-bash-completions # bash completion for Nix commands
+    pkgs.nix-zsh-completions # zsh completion for Nix commands
+    pkgs.oils-for-unix # new Unix shell with bash compatibility
   ];
 }
