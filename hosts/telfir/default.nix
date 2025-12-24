@@ -10,6 +10,7 @@
 
   system.preserveFlake = true;
 
+  features.gui.walker.enable = false;
   features.hardware.amdgpu.rocm.enable = true;
   features.mail.enable = true;
   features.web.yandex.enable = true;
