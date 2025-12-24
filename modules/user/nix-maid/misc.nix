@@ -2,8 +2,11 @@
   pkgs,
   lib,
   config,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   cfg = config.features;
 
   # Fun Art Scripts
@@ -26,33 +29,35 @@
   # Rustmission Config Dir
   rustmissionConf = ../../../files/config/rustmission;
 in {
-  # Fun Art Installation & Rustmission
-  users.users.neg.maid.file.home = lib.mkIf (cfg.fun.enable or false) (lib.mkMerge [
-    # Hack Art
-    (lib.mapAttrs' (name: src:
-      lib.nameValuePair ".local/share/hack-art/${name}" {
-        source = src;
-        executable = lib.hasSuffix ".sh" name || lib.hasSuffix ".py" name;
-      })
-    artFiles)
-
-    # Fantasy Art
+  config = lib.mkMerge [
     {
-      ".local/share/fantasy-art/gandalf.txt".source = ../../../files/art/fun-art/gandalf.txt;
-      ".local/share/fantasy-art/helmet.txt".source = ../../../files/art/fun-art/helmet.txt;
-      ".local/share/fantasy-art/hydra.txt".source = ../../../files/art/fun-art/hydra.txt;
-      ".local/share/fantasy-art/skeleton_hood.txt".source = ../../../files/art/fun-art/skeleton_hood.txt;
+      # Winboat (Bottles/Wine)
+      environment.systemPackages = [
+        pkgs.bottles # Run Windows software on Linux with Bottles
+        pkgs.wineWowPackages.stable # Open-source implementation of the Windows API
+      ];
     }
+    (lib.mkIf (cfg.fun.enable or false) (n.mkHomeFiles (lib.mkMerge [
+      # Hack Art
+      (lib.mapAttrs' (name: src:
+        lib.nameValuePair ".local/share/hack-art/${name}" {
+          source = src;
+          executable = lib.hasSuffix ".sh" name || lib.hasSuffix ".py" name;
+        })
+      artFiles)
 
-    # Rustmission
-    {
-      ".config/rustmission".source = rustmissionConf;
-    }
-  ]);
+      # Fantasy Art
+      {
+        ".local/share/fantasy-art/gandalf.txt".source = ../../../files/art/fun-art/gandalf.txt;
+        ".local/share/fantasy-art/helmet.txt".source = ../../../files/art/fun-art/helmet.txt;
+        ".local/share/fantasy-art/hydra.txt".source = ../../../files/art/fun-art/hydra.txt;
+        ".local/share/fantasy-art/skeleton_hood.txt".source = ../../../files/art/fun-art/skeleton_hood.txt;
+      }
 
-  # Winboat (Bottles/Wine)
-  environment.systemPackages = [
-    pkgs.bottles # Run Windows software on Linux with Bottles
-    pkgs.wineWowPackages.stable # Open-source implementation of the Windows API
+      # Rustmission
+      {
+        ".config/rustmission".source = rustmissionConf;
+      }
+    ])))
   ];
 }

@@ -1,8 +1,11 @@
 {
   pkgs,
   lib,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   # --- Vesktop (Discord) Config ---
   vesktopConfig = {
     settings = {
@@ -234,26 +237,6 @@ in {
       # Packages
       neg.rofi.package = rofiWithPlugins;
 
-      # Vesktop config - generate JSON file
-      users.users.neg.maid.file.home = {
-        ".config/vesktop/settings/settings.json".text = builtins.toJSON vesktopConfig;
-
-        # Rofi config directory
-        ".config/rofi".source = rofiConfigSrc;
-
-        # Rofi themes in XDG data dir
-        ".local/share/rofi/themes".source = rofiConfigSrc;
-
-        # Handlr Config
-        ".config/handlr/handlr.toml".text = ''
-          enable_selector = false
-          selector = "rofi -dmenu -p 'Open With: ❯>'"
-        '';
-
-        # wlogout config
-        ".config/wlogout".source = ../../../files/config/wlogout;
-      };
-
       # Systemd user services
       systemd.user.services = {
         # SwayOSD LibInput Backend
@@ -278,5 +261,23 @@ in {
         pkgs.wlogout # Logout menu
       ];
     }
+    (n.mkHomeFiles {
+      ".config/vesktop/settings/settings.json".text = builtins.toJSON vesktopConfig;
+
+      # Rofi config directory
+      ".config/rofi".source = rofiConfigSrc;
+
+      # Rofi themes in XDG data dir
+      ".local/share/rofi/themes".source = rofiConfigSrc;
+
+      # Handlr Config
+      ".config/handlr/handlr.toml".text = ''
+        enable_selector = false
+        selector = "rofi -dmenu -p 'Open With: ❯>'"
+      '';
+
+      # wlogout config
+      ".config/wlogout".source = ../../../files/config/wlogout;
+    })
   ];
 }
