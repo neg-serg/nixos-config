@@ -5,7 +5,7 @@
   ...
 }: {
   imports = [
-    inputs.nix-maid.nixosModules.default
+    inputs.nix-maid.nixosModules.default # user configuration framework (nix-maid)
     ./git.nix
     ./mpv.nix
     ./shell.nix
