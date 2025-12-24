@@ -64,6 +64,35 @@
             if impurity != null
             then impurity.link x
             else x;
+
+          # Browser helpers
+          mkUserJs = prefs:
+            lib.concatStrings (lib.mapAttrsToList (name: value: ''
+                user_pref("${name}", ${builtins.toJSON value});
+              '')
+              prefs);
+          mkProfilesIni = profiles: let
+            enabledProfiles = lib.filterAttrs (_: v: v.enable) profiles;
+            sortedProfiles = lib.sort (a: b: a.id < b.id) (lib.attrValues enabledProfiles);
+            mkSection = index: profile: ''
+              [Profile${toString index}]
+              Name=${profile.name}
+              Path=${profile.path}
+              IsRelative=1
+              Default=${
+                if profile.isDefault
+                then "1"
+                else "0"
+              }
+            '';
+            sections = lib.imap0 mkSection sortedProfiles;
+          in ''
+            [General]
+            StartWithLastProfile=1
+            Version=2
+
+            ${lib.concatStringsSep "\n" sections}
+          '';
         };
       };
       modules = commonModules ++ [(import ((builtins.toString hostsDir) + "/" + name))] ++ (hostExtras name);

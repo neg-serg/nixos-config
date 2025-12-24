@@ -3,20 +3,20 @@
   lib,
   pkgs,
   negLib,
+  neg,
+  impurity ? null,
   inputs,
   ...
 }: let
+  n = neg impurity;
   cfg = config.features.web.firefox;
   guiEnabled = config.features.gui.enable or false;
 
-  # Reuse existing libraries
   # Reuse existing libraries with mocked config for home.homeDirectory compatibility
   commonConfig =
     config
     // {
       home.homeDirectory = config.users.users.neg.home;
-      # Add extra profile attrs here if needed.
-      # Current audit shows only home.homeDirectory and features.* are used.
     };
   mozillaCommon = import ./web/mozilla-common-lib.nix {
     inherit lib pkgs negLib;
@@ -78,16 +78,6 @@
       url = "https://addons.mozilla.org/firefox/downloads/file/3854469/github_repo_size-1.7.0.xpi";
       sha256 = "2zGY12esYusaw2IzXM+1kP0B/0Urxu0yj7xXlDlutto=";
     };
-    /*
-    vencord = buildFirefoxXpiAddon {
-      pname = "vencord";
-      version = "1.2.7";
-      addonId = "{5a6c8631-7b96-4127-ae7c-50bc99015e51}";
-      url = "https://addons.mozilla.org/firefox/downloads/file/4123132/vencord_web-1.2.7.xpi";
-      sha256 = "143r1ba3m44m80q80839h3876lcfrq5gw6b45y6rb8336x1vj5a5";
-      meta = {};
-    };
-    */
     theme-gray = themeAddon {
       name = "theme-gray";
       theme.colors = {
@@ -152,37 +142,6 @@
 
   addonList = firefoxAddons;
 
-  # --- Helpers ---
-
-  mkUserJs = prefs:
-    lib.concatStrings (lib.mapAttrsToList (name: value: ''
-        user_pref("${name}", ${builtins.toJSON value});
-      '')
-      prefs);
-
-  mkProfilesIni = profiles: let
-    enabledProfiles = lib.filterAttrs (_: v: v.enable) profiles;
-    sortedProfiles = lib.sort (a: b: a.id < b.id) (lib.attrValues enabledProfiles);
-    mkSection = index: profile: ''
-      [Profile${toString index}]
-      Name=${profile.name}
-      Path=${profile.path}
-      IsRelative=1
-      Default=${
-        if profile.isDefault
-        then "1"
-        else "0"
-      }
-    '';
-    sections = lib.imap0 mkSection sortedProfiles;
-  in ''
-    [General]
-    StartWithLastProfile=1
-    Version=2
-
-    ${lib.concatStringsSep "\n" sections}
-  '';
-
   # Profile Definitions
   profiles = {
     schizo = {
@@ -235,11 +194,7 @@
         (with addonList; [
           ublock-origin
         ])
-        ++ (with extraAddons; [
-          /*
-          vencord
-          */
-        ]);
+        ++ (with extraAddons; []);
     };
     trusted = {
       id = 3;
@@ -291,23 +246,9 @@
     };
   };
 
-  # Generate extension link
-  # Extension package must have addonId.
-  # Source path logic:
-  # - If it's a wrapper (buildFirefoxXpiAddon), the XPI is at share/mozilla/extensions/{id}/{id}.xpi
-  # - If it's a raw XPI/directory, we might need to assume or look inside.
-  # The HM module seems to rely on packages providing the right structure for linking extensions folder,
-  # or it links individual XPIs?
-  # HM `programs.firefox` actually creates a `extensions` directory with symlinks to XPIs.
-
   mkExtensionFiles = _profileName: profilePath: extensions:
     lib.mkMerge (map (ext: let
         extId = ext.addonId or (throw "Extension ${ext.name} has no addonId");
-        # Determine XPI path.
-        # Assumption: The package `ext` contains the XPI at share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/${extId}.xpi
-        # This matches buildFirefoxXpiAddon.
-        # NUR packages (rycee) also follow this structure or just expose the XPI?
-        # Let's assume standard structure for now.
         xpiPath = "${ext}/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/${extId}.xpi";
       in {
         ".mozilla/firefox/${profilePath}/extensions/${extId}.xpi".source = xpiPath;
@@ -317,23 +258,25 @@
   mkProfileFiles = name: profile:
     lib.mkMerge [
       {
-        ".mozilla/firefox/${profile.path}/user.js".text = mkUserJs profile.settings;
+        ".mozilla/firefox/${profile.path}/user.js".text = n.mkUserJs profile.settings;
       }
       (lib.mkIf (profile.userChrome != "") {
         ".mozilla/firefox/${profile.path}/chrome/userChrome.css".text = profile.userChrome;
       })
       (mkExtensionFiles name profile.path (profile.extensions or []))
     ];
-in
-  lib.mkIf (guiEnabled && (cfg.enable or false)) {
-    environment.systemPackages = [pkgs.firefox-devedition]; # Firefox Developer Edition browser
+in {
+  config = lib.mkIf (guiEnabled && (cfg.enable or false)) (lib.mkMerge [
+    {
+      environment.systemPackages = [pkgs.firefox-devedition]; # Firefox Developer Edition browser
 
-    nixpkgs.overlays = [inputs.nur.overlays.default];
-
-    users.users.neg.maid.file.home = lib.mkMerge (
+      nixpkgs.overlays = [inputs.nur.overlays.default];
+    }
+    (n.mkHomeFiles (lib.mkMerge (
       [
-        {".mozilla/firefox/profiles.ini".text = mkProfilesIni profiles;}
+        {".mozilla/firefox/profiles.ini".text = n.mkProfilesIni profiles;}
       ]
       ++ (lib.mapAttrsToList mkProfileFiles profiles)
-    );
-  }
+    )))
+  ]);
+}
