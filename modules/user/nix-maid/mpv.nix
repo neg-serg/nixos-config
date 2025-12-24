@@ -2,8 +2,11 @@
   config,
   lib,
   pkgs,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   cfg = config.features.gui;
 
   # --- Scripts & Package ---
@@ -42,12 +45,14 @@
   };
   # --- Config Generator Helper ---
 in
-  lib.mkIf (cfg.enable or false) {
-    # 1. Install Package
-    users.users.neg.packages = [mpvPackage]; # Highly customizable command-line media player
+  lib.mkIf (cfg.enable or false) (lib.mkMerge [
+    {
+      # 1. Install Package
+      users.users.neg.packages = [mpvPackage]; # Highly customizable command-line media player
+    }
 
     # 2. Configure Dotfiles via key-value to file
-    users.users.neg.maid.file.home = {
+    (n.mkHomeFiles {
       # Main Config
       ".config/mpv/mpv.conf".text = ''
         input-ipc-server=${config.users.users.neg.home}/.config/mpv/socket
@@ -259,5 +264,5 @@ in
         Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
         Style: Default,Lucida Grande,20,&H00FFFFFF,&HF0000000,&H80000000,&HF0000000,0,0,0,0,100,100,0,0.00,1,2,0,2,30,30,20,1
       '';
-    };
-  }
+    })
+  ])
