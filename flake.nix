@@ -97,6 +97,10 @@
       url = "github:sxyazi/yazi";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    yandex-browser = {
+      url = "github:ru-nix/yandex-browser-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   # Make Cachix caches available to all `nix {build,develop,run}` commands
