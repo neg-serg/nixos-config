@@ -1083,6 +1083,22 @@
         "type": "github"
       }
     },
+    "nixpkgs_4": {
+      "locked": {
+        "lastModified": 1751274312,
+        "narHash": "sha256-/bVBlRpECLVzjV19t5KMdMFWSwKLtb5RyXdjz3LJT+g=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "50ab793786d9de88ee30ec4e4c24fb4236fc2674",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nur": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -1345,6 +1361,7 @@
           "hyprland",
           "xdph"
         ],
+        "yandex-browser": "yandex-browser",
         "yazi": "yazi"
       }
     },
@@ -1805,6 +1822,24 @@
       "original": {
         "owner": "hyprwm",
         "repo": "xdg-desktop-portal-hyprland",
+        "type": "github"
+      }
+    },
+    "yandex-browser": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_4"
+      },
+      "locked": {
+        "lastModified": 1738661312,
+        "narHash": "sha256-jB/D+7rTUMAhp6m3BPIJ8QgN5if6xi6tjJ/Rwt3U8hI=",
+        "owner": "Teu5us",
+        "repo": "nix-yandex-browser",
+        "rev": "bdc6fca259f9435e7e9606fca2256905a36f48e9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Teu5us",
+        "repo": "nix-yandex-browser",
         "type": "github"
       }
     },
