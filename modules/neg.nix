@@ -1,41 +1,26 @@
 {
   lib,
   pkgs,
-  inputs,
+  neg,
   impurity ? null,
   ...
 }: {
   options.neg = {
     repoRoot = lib.mkOption {
-      type = lib.types.path;
-      default = inputs.self;
-      description = "Root path of the flake repository.";
+      type = lib.types.str;
+      default = "/etc/nixos";
+      description = "Path to the root of the configuration repository.";
     };
-
     rofi.package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.rofi;
-      description = "Primary Rofi package used by system-level wrappers.";
+      description = "The rofi package to use for the system.";
     };
   };
 
-  config.lib.neg = {
-    # Impurity link helper (falls back to regular source if impurity is missing)
-    linkImpure =
-      if impurity != null
-      then impurity.link
-      else (x: x);
-
-    # Nix-maid home file helpers
-    mkXdgText = path: text: {
-      home."${path}".text = text;
-    };
-
-    mkLocalBin = name: text: {
-      home.".local/bin/${name}" = {
-        inherit text;
-        executable = true;
-      };
-    };
+  config = {
+    # Expose helpers under lib.neg for legacy or non-structural use.
+    # We use the neg function from specialArgs.
+    lib.neg = neg impurity;
   };
 }

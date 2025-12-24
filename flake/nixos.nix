@@ -45,6 +45,26 @@
         inherit locale timeZone self;
         inputs = nillaInputs;
         iosevkaNeg = inputs.iosevka-neg.packages.${linuxSystem};
+        neg = impurity: {
+          # Core structural helpers (no config dependency)
+          mkHomeFiles = files: {
+            users.users.neg.maid.file.home = files;
+          };
+          mkXdgText = path: text: {
+            home."${path}".text = text;
+          };
+          mkLocalBin = name: text: {
+            home.".local/bin/${name}" = {
+              inherit text;
+              executable = true;
+            };
+          };
+          # Impurity link helper
+          linkImpure = x:
+            if impurity != null
+            then impurity.link x
+            else x;
+        };
       };
       modules = commonModules ++ [(import ((builtins.toString hostsDir) + "/" + name))] ++ (hostExtras name);
     };
