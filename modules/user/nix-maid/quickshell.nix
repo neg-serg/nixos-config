@@ -3,7 +3,6 @@
   lib,
   config,
   inputs,
-  impurity,
   ...
 }: let
   # Source path (Nix path for impurity.link)
@@ -59,9 +58,9 @@
     '';
   };
 in
-  lib.mkIf quickshellEnabled {
+  config.lib.neg.mkWhen quickshellEnabled {
     # Link Quickshell config mutably via impurity
-    users.users.neg.maid.file.home.".config/quickshell".source = impurity.link quickshellSrc;
+    users.users.neg.maid.file.home.".config/quickshell".source = config.lib.neg.linkImpure quickshellSrc;
 
     # Wrapped quickshell package
     environment.systemPackages = [
