@@ -23,7 +23,9 @@
       pkgs.google-chrome # Google Chrome browser
       pkgs.passff-host # native messaging host for PassFF Firefox extension
     ]
-    ++ lib.optionals (yandexEnabled && yandexPkg != null) [yandexPkg];
+    ++ lib.optionals (yandexEnabled && yandexPkg != null) [yandexPkg]
+    # Yandex Browser (Chromium-based with Russian services)
+    ;
 in {
   config = lib.mkMerge [
     (lib.mkIf yandexEnabled {
