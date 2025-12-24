@@ -2,8 +2,11 @@
   pkgs,
   lib,
   config,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   cfg = config.features.media.audio.core;
   filesRoot = ../../../files;
 
@@ -52,13 +55,12 @@
       (pkgs.writeTextDir "99-rnnoise.conf" rnnoiseConf)
     ];
   };
-in
-  lib.mkIf (cfg.enable or false) {
-    users.users.neg.maid.file.home = {
-      ".config/wireplumber" = {
-        source = "${filesRoot}/media/wireplumber";
-      };
-      # Link the merged directory
-      ".config/pipewire/pipewire.conf.d".source = pipewireConfD;
+in {
+  config = lib.mkIf (cfg.enable or false) (n.mkHomeFiles {
+    ".config/wireplumber" = {
+      source = "${filesRoot}/media/wireplumber";
     };
-  }
+    # Link the merged directory
+    ".config/pipewire/pipewire.conf.d".source = pipewireConfD;
+  });
+}
