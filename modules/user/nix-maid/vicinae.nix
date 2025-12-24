@@ -1,160 +1,77 @@
 {
   pkgs,
-  impurity,
+  lib,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   # Vicinae theme definition (neg)
   vicinaeThemeNeg = let
-    accent = "#005f87";
-    accentSecondary = "#1f6f8f";
-    background = "#030606";
-    backgroundRaised = "#080f14";
-    border = "#0b1c24";
-    selection = "#002d59";
-    selectionRaised = "#0c2738";
-    text = "#b8c5d9";
-    textMuted = "#90a4bd";
-    textPlaceholder = "#7d93ae";
-    link = "#58b6e2";
-    linkVisited = "#a89cff";
+    font = "Outfit";
   in {
-    meta = {
-      version = 1;
-      name = "neg";
-      description = "Matches the walker/rofi dark teal theme";
-      variant = "dark";
-      inherits = "vicinae-dark";
+    window = {
+      width = 750;
+      height = 420;
+      border_width = 1;
+      border_radius = 1;
+      margin = 10;
+      padding = 10;
     };
     colors = {
-      core = {
-        inherit accent background border;
-        accent_foreground = "#eff5ff";
-        foreground = text;
-        secondary_background = backgroundRaised;
-      };
-      main_window = {inherit border;};
-      settings_window = {inherit border;};
-      accents = {
-        blue = accent;
-        cyan = "#289ec4";
-        green = "#4fa388";
-        magenta = "#b379d5";
-        orange = "#dd8237";
-        purple = "#7f7ce2";
-        red = "#c15866";
-        yellow = "#d3a652";
-      };
-      text = {
-        default = text;
-        muted = textMuted;
-        danger = "#d67272";
-        success = "#63c092";
-        placeholder = textPlaceholder;
-        selection = {
-          background = selection;
-          foreground = "#f5fbff";
-        };
-        links = {
-          default = link;
-          visited = linkVisited;
-        };
-      };
-      input = {
-        inherit border;
-        border_focus = accent;
-        border_error = "#d05f6b";
-      };
-      button.primary = {
-        background = "#091318";
-        foreground = "#d8e4f6";
-        hover = {background = "#0f1f28";};
-        focus = {outline = accent;};
-      };
-      list.item = {
-        hover = {
-          background = "#0c1820";
-          foreground = text;
-        };
-        selection = {
-          background = selection;
-          foreground = "#eff6ff";
-          secondary_background = selectionRaised;
-          secondary_foreground = "#dae6f5";
-        };
-      };
-      grid.item = {
-        background = "#0b141c";
-        hover = {outline = accentSecondary;};
-        selection = {outline = accent;};
-      };
-      scrollbars = {background = "#0d2531";};
-      loading = {
-        bar = accent;
-        spinner = text;
-      };
+      background = "#04141C";
+      border = "#0B2536";
+      text = "#4f5d78";
+      accent = "#005faf";
+      selected_background = "#0B2536";
+      selected_text = "#8DA6B2";
+    };
+    fonts = {
+      main = "${font} 13";
+      secondary = "${font} 11";
     };
   };
 
   # Vicinae settings
-  vicinaeFont = {
-    name = "Iosevka";
-    size = 10;
-  };
-  vicinaeIconTheme = "Kora";
-
   vicinaeSettings = {
-    closeOnFocusLoss = false;
-    faviconService = "google";
-    font = {
-      normal = vicinaeFont.name;
-      family = vicinaeFont.name;
-      inherit (vicinaeFont) size;
-    };
-    keybinding = "emacs";
-    keybinds = {};
-    popToRootOnClose = true;
-    rootSearch.searchFiles = true;
-    theme = {
-      name = "neg";
-      iconTheme = vicinaeIconTheme;
-    };
-    window = {
-      csd = true;
-      opacity = 0.98;
-      rounding = 10;
-    };
-  };
-  # Extension source path
-  extensionsSrc = ../../../files/gui/vicinae-extensions;
-in {
-  # Vicinae config files via nix-maid
-  users.users.neg.maid.file.home = {
-    # Theme file
-    ".config/vicinae/themes/neg.json".text = builtins.toJSON vicinaeThemeNeg;
-
-    # Settings file
-    ".config/vicinae/vicinae.json".text = builtins.toJSON vicinaeSettings;
-
-    # Extensions
-    ".config/vicinae/extensions".source = impurity.link extensionsSrc;
-  };
-
-  # Systemd user service for Vicinae
-  systemd.user.services.vicinae = {
-    description = "Vicinae launcher daemon";
-    after = ["graphical-session.target"];
-    wantedBy = ["graphical-session.target"];
-    serviceConfig = {
-      ExecStart = "${pkgs.vicinae}/bin/vicinae server";
-      Restart = "on-failure";
-      RestartSec = "2";
+    terminal = "kitty";
+    launcher = {
+      show_icons = true;
+      icon_theme = "Papirus-Dark";
+      scan_desktop_files = true;
     };
   };
 
-  # Packages
-  environment.systemPackages = [
-    pkgs.vicinae # Wayland launcher with layer-shell support
-    pkgs.rofi-pass-wayland # Rofi frontend for password store (Wayland support)
-    pkgs.ollama # Local AI backend
-  ];
-}
+  # Source path
+  vicinaeSrc = ../../../files/vicinae;
+in
+  lib.mkMerge [
+    {
+      environment.systemPackages = [
+        pkgs.vicinae # Wayland-native application runner and window switcher
+        pkgs.rofi-pass-wayland # Rofi frontend for pass (password store)
+      ];
+
+      # Vicinae Systemd Service
+      systemd.user.services.vicinae = {
+        enable = true;
+        description = "Vicinae - Wayland application runner and window switcher";
+        partOf = ["graphical-session.target"];
+        wantedBy = ["graphical-session.target"];
+        serviceConfig = {
+          ExecStart = "${pkgs.vicinae}/bin/vicinae --daemon";
+          Restart = "on-failure";
+          RestartSec = 1;
+        };
+      };
+    }
+
+    (n.mkHomeFiles {
+      # Link Vicinae config mutably via impurity
+      ".config/vicinae".source = n.linkImpure vicinaeSrc;
+
+      # Thematic config (can be static or linked)
+      ".config/vicinae/theme.json".text = builtins.toJSON vicinaeThemeNeg;
+      ".config/vicinae/settings.json".text = builtins.toJSON vicinaeSettings;
+    })
+  ]

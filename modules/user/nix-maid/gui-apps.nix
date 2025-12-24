@@ -1,4 +1,8 @@
-{pkgs, ...}: let
+{
+  pkgs,
+  lib,
+  ...
+}: let
   # --- Vesktop (Discord) Config ---
   vesktopConfig = {
     settings = {
@@ -225,47 +229,54 @@
     exec ${rofiWrapper}/bin/rofi-wrapper "$@"
   '';
 in {
-  # Vesktop config - generate JSON file
-  users.users.neg.maid.file.home = {
-    ".config/vesktop/settings/settings.json".text = builtins.toJSON vesktopConfig;
+  config = lib.mkMerge [
+    {
+      # Packages
+      neg.rofi.package = rofiWithPlugins;
 
-    # Rofi config directory
-    ".config/rofi".source = rofiConfigSrc;
+      # Vesktop config - generate JSON file
+      users.users.neg.maid.file.home = {
+        ".config/vesktop/settings/settings.json".text = builtins.toJSON vesktopConfig;
 
-    # Rofi themes in XDG data dir
-    ".local/share/rofi/themes".source = rofiConfigSrc;
+        # Rofi config directory
+        ".config/rofi".source = rofiConfigSrc;
 
-    # Handlr Config
-    ".config/handlr/handlr.toml".text = ''
-      enable_selector = false
-      selector = "rofi -dmenu -p 'Open With: ❯>'"
-    '';
+        # Rofi themes in XDG data dir
+        ".local/share/rofi/themes".source = rofiConfigSrc;
 
-    # wlogout config
-    ".config/wlogout".source = ../../../files/config/wlogout;
-  };
+        # Handlr Config
+        ".config/handlr/handlr.toml".text = ''
+          enable_selector = false
+          selector = "rofi -dmenu -p 'Open With: ❯>'"
+        '';
 
-  # Systemd user services
-  systemd.user.services = {
-    # SwayOSD LibInput Backend
-    swayosd-libinput-backend = {
-      description = "SwayOSD LibInput Backend";
-      after = ["graphical-session.target"];
-      wantedBy = ["graphical-session.target"];
-      serviceConfig = {
-        ExecStart = "${pkgs.swayosd}/bin/swayosd-libinput-backend";
-        Restart = "always";
+        # wlogout config
+        ".config/wlogout".source = ../../../files/config/wlogout;
       };
-    };
-  };
 
-  # Packages
-  environment.systemPackages = [
-    pkgs.vesktop # Discord client with Vencord built-in
-    rofiWithPlugins # Rofi launcher with plugins (Wayland/X11)
-    pkgs.swayosd # OSD for volume/brightness on Wayland
-    rofiLocalBin # Rofi wrapper script (shadows standard rofi bin)
-    pkgs.wallust # Color palette generator
-    pkgs.wlogout # Logout menu
+      # Systemd user services
+      systemd.user.services = {
+        # SwayOSD LibInput Backend
+        swayosd-libinput-backend = {
+          description = "SwayOSD LibInput Backend";
+          after = ["graphical-session.target"];
+          wantedBy = ["graphical-session.target"];
+          serviceConfig = {
+            ExecStart = "${pkgs.swayosd}/bin/swayosd-libinput-backend";
+            Restart = "always";
+          };
+        };
+      };
+
+      # Packages
+      environment.systemPackages = [
+        pkgs.vesktop # Discord client with Vencord built-in
+        rofiWithPlugins # Rofi launcher with plugins (Wayland/X11)
+        pkgs.swayosd # OSD for volume/brightness on Wayland
+        rofiLocalBin # Rofi wrapper script (shadows standard rofi bin)
+        pkgs.wallust # Color palette generator
+        pkgs.wlogout # Logout menu
+      ];
+    }
   ];
 }
