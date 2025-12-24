@@ -124,6 +124,12 @@ lint:
     git ls-files -z -- '*.sh' '*.bash' 2>/dev/null \
       | xargs -0 -r grep -lZ -m1 -E '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh' \
       | xargs -0 -r shellcheck -S warning -x
+    just lint-annotations
+
+# Check that all packages in environment.systemPackages have inline annotations
+lint-annotations:
+    repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; \
+    bash "$repo_root/scripts/dev/check-package-annotations.sh" "$repo_root"
 
 lint-md *ARGS:
     set -eu
