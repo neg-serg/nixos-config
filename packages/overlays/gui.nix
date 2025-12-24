@@ -11,7 +11,20 @@ inputs: _: prev: let
   hydralauncherPkg = callPkg (inputs.self + "/packages/hydralauncher") {};
   nyarchAssistantPkg = callPkg (inputs.self + "/packages/nyarch-assistant") {};
   chainnerPkg = callPkg (inputs.self + "/packages/chainner") {};
+  protonGeBin = prev.stdenv.mkDerivation rec {
+    pname = "proton-ge-bin";
+    version = "GE-Proton9-23";
+    src = prev.fetchurl {
+      url = "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/${version}/${version}.tar.gz";
+      hash = "sha256:13z8099k6lhb4gacf3qm9qjc8nql665jqxn4b9qck30vgrp935fn";
+    };
+    buildCommand = ''
+      mkdir -p $out
+      tar -C $out --strip-components=1 -xzwf $src
+    '';
+  };
 in {
+  proton-ge-bin = protonGeBin;
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
     postPatch =
       (old.postPatch or "")
