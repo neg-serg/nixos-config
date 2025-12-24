@@ -4,8 +4,8 @@
 . /etc/profile
 SOCKET="/tmp/nvim.sock"
 
-# 1. Check if socket exists
-if [ -S "$SOCKET" ]; then
+# 1. Check if socket exists AND is responsive
+if [ -S "$SOCKET" ] && nvr --servername "$SOCKET" --remote-expr "1" >/dev/null 2>&1; then
   # 2. Open file(s) in existing instance
   # Use --remote-silent to avoid blocking or errors if args empty
   if [ "$#" -gt 0 ]; then
@@ -16,7 +16,9 @@ if [ -S "$SOCKET" ]; then
   hyprctl dispatch focuswindow "class:nwim" >/dev/null
   echo "↗  nvim"
 else
-  # 4. Start new instance acting as server
+  # 4. Socket might be stale, remove it if it exists
+  rm -f "$SOCKET"
+  # Start new instance acting as server
   # Use exec to replace shell process
   exec nvim --listen "$SOCKET" "$@"
 fi
