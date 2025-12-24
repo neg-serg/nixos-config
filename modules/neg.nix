@@ -22,7 +22,7 @@
   config.lib.neg = {
     # Impurity link helper (falls back to regular source if impurity is missing)
     linkImpure =
-      if (impurity or null) != null
+      if impurity != null
       then impurity.link
       else (x: x);
 
