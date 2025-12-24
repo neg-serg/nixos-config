@@ -40,6 +40,9 @@
 in {
   config = lib.mkMerge [
     (lib.mkIf yandexEnabled {
+      nixpkgs.config.permittedInsecurePackages = [
+        "yandex-browser-stable-25.10.1.1173-1"
+      ];
       assertions = [
         {
           assertion = yandexPkg != null;
