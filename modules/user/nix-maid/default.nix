@@ -30,7 +30,6 @@
     ./floorp.nix
     ./yazi.nix
     ./pipewire.nix
-    ./pipewire.nix
     ./emacs.nix
     ./transmission.nix
     ./vdirsyncer.nix
@@ -64,8 +63,6 @@
     ./distros.nix
     ./flatpak.nix
   ];
-
-  users.users.neg.maid = {};
 
   users.users.neg.maid = {};
 
