@@ -2,8 +2,11 @@
   pkgs,
   lib,
   config,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   cfg = config.features.dev.emacs;
   emacsPackage = pkgs.emacs29-pgtk;
   emacsWithPackages = emacsPackage.pkgs.withPackages (epkgs:
@@ -63,25 +66,27 @@
     ]);
 
   filesRoot = ../../../files;
-in
-  lib.mkIf (cfg.enable or false) {
-    environment.systemPackages = [emacsWithPackages]; # Emacs with a pre-configured set of packages
+in {
+  config = lib.mkIf (cfg.enable or false) (lib.mkMerge [
+    {
+      environment.systemPackages = [emacsWithPackages]; # Emacs with a pre-configured set of packages
 
-    users.users.neg.maid.file.home = {
+      systemd.user.services.emacs = {
+        description = "Emacs text editor";
+        serviceConfig = {
+          Type = "notify";
+          ExecStart = "${lib.getExe' emacsWithPackages "emacs"} --fg-daemon";
+          ExecStop = "${lib.getExe' emacsWithPackages "emacsclient"} --eval '(kill-emacs)'";
+          Restart = "on-failure";
+        };
+        wantedBy = ["default.target"];
+      };
+    }
+    (n.mkHomeFiles {
       ".config/emacs/init.el".source = "${filesRoot}/emacs/init.el";
       ".config/emacs/early-init.el".source = "${filesRoot}/emacs/early-init.el";
       ".config/emacs/config.org".source = "${filesRoot}/emacs/config.org";
       ".config/emacs/icons".source = "${filesRoot}/emacs/icons";
-    };
-
-    systemd.user.services.emacs = {
-      description = "Emacs text editor";
-      serviceConfig = {
-        Type = "notify";
-        ExecStart = "${lib.getExe' emacsWithPackages "emacs"} --fg-daemon";
-        ExecStop = "${lib.getExe' emacsWithPackages "emacsclient"} --eval '(kill-emacs)'";
-        Restart = "on-failure";
-      };
-      wantedBy = ["default.target"];
-    };
-  }
+    })
+  ]);
+}
