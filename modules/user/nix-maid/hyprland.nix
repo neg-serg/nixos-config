@@ -2,13 +2,15 @@
   pkgs,
   lib,
   config,
-  impurity,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   guiEnabled = config.features.gui.enable or false;
   hy3Enabled = config.features.gui.hy3.enable or false;
 
-  # Static config files location (Nix paths for impurity.link)
+  # Static config files location (Nix paths for linkImpure)
   hyprConfDir = ../../../files/gui/hypr;
 
   # Core static config files to link
@@ -32,7 +34,6 @@
 
   # hy3 plugin path
   hy3PluginPath = "${pkgs.hyprlandPlugins.hy3}/lib/libhy3.so";
-  # Note: dynamic-cursors plugin disabled due to build failure with current Hyprland
 
   # --- Workspaces ---
   workspaces = [
@@ -123,7 +124,7 @@
     }
     {
       id = 18;
-      name = " 𐍁:remote";
+      name = " 𐍀:remote";
       var = "remote";
     }
     {
@@ -332,167 +333,162 @@
   # Helper to generate TOML using pkgs.formats.toml
   tomlFormat = pkgs.formats.toml {};
   pyprlandToml = tomlFormat.generate "pyprland.toml" pyprlandConfig;
+
+  # File list generators
+  mkFiles = dir: files:
+    builtins.listToAttrs (map (f: {
+        name = "${dir}/${f}";
+        value = {source = n.linkImpure (hyprConfDir + "/${f}");};
+      })
+      files);
+
+  animDir = ../../../files/gui/hypr/animations;
+  lockDir = ../../../files/gui/hypr/hyprlock;
 in
-  lib.mkIf guiEnabled {
-    environment.systemPackages =
-      [
-        pkgs.hyprlock # Hyprland's GPU-accelerated screen locking utility
-        pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
-        pkgs.playerctl # Command-line controller for media players
-        pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
-        pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
-        pkgs.wl-ocr # Wayland OCR tool
-        pkgs.pyprland # Python plugin system for Hyprland
-        # hyprmusic script
-        (pkgs.writeScriptBin "hyprmusic" ''
-          #!/bin/sh
-          set -euo pipefail
-          case "''${1:-}" in
-            next) MEMBER=Next ;;
-            previous) MEMBER=Previous ;;
-            play) MEMBER=Play ;;
-            pause) MEMBER=Pause ;;
-            play-pause) MEMBER=PlayPause ;;
-            *) echo "Usage: $0 next|previous|play|pause|play-pause"; exit 1 ;;
-          esac
-          exec dbus-send \
-            --print-reply \
-            --dest="org.mpris.MediaPlayer2.$(playerctl -l | head -n 1)" \
-            /org/mpris/MediaPlayer2 \
-            "org.mpris.MediaPlayer2.Player.$MEMBER"
-        '')
-        # hypr-reload script
-        (pkgs.writeShellScriptBin "hypr-reload" ''
-          set -euo pipefail
-          # Reload Hyprland config (ignore failure to avoid spurious errors)
-          hyprctl reload >/dev/null 2>&1 || true
-          # Give Hypr a brief moment to settle before (re)starting quickshell
-          sleep 0.15
-          # Start quickshell only if not already active; 'start' is idempotent.
-          systemctl --user start quickshell.service >/dev/null 2>&1 || true
-        '')
-        # hypr-start script (fixes race conditions)
-        (pkgs.writeShellScriptBin "hypr-start" ''
-          set -euo pipefail
-          LOG="/tmp/hypr-start.log"
-          echo "Starting hypr-start at $(date)" > "$LOG"
+  lib.mkIf guiEnabled (lib.mkMerge [
+    {
+      environment.systemPackages =
+        [
+          pkgs.hyprlock # Hyprland's GPU-accelerated screen locking utility
+          pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
+          pkgs.playerctl # Command-line controller for media players
+          pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
+          pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
+          pkgs.wl-ocr # Wayland OCR tool
+          pkgs.pyprland # Python plugin system for Hyprland
+          # hyprmusic script
+          (pkgs.writeScriptBin "hyprmusic" ''
+            #!/bin/sh
+            set -euo pipefail
+            case "''${1:-}" in
+              next) MEMBER=Next ;;
+              previous) MEMBER=Previous ;;
+              play) MEMBER=Play ;;
+              pause) MEMBER=Pause ;;
+              play-pause) MEMBER=PlayPause ;;
+              *) echo "Usage: $0 next|previous|play|pause|play-pause"; exit 1 ;;
+            esac
+            exec dbus-send \
+              --print-reply \
+              --dest="org.mpris.MediaPlayer2.$(playerctl -l | head -n 1)" \
+              /org/mpris/MediaPlayer2 \
+              "org.mpris.MediaPlayer2.Player.$MEMBER"
+          '')
+          # hypr-reload script
+          (pkgs.writeShellScriptBin "hypr-reload" ''
+            set -euo pipefail
+            # Reload Hyprland config (ignore failure to avoid spurious errors)
+            hyprctl reload >/dev/null 2>&1 || true
+            # Give Hypr a brief moment to settle before (re)starting quickshell
+            sleep 0.15
+            # Start quickshell only if not already active; 'start' is idempotent.
+            systemctl --user start quickshell.service >/dev/null 2>&1 || true
+          '')
+          # hypr-start script (fixes race conditions)
+          (pkgs.writeShellScriptBin "hypr-start" ''
+            set -euo pipefail
+            LOG="/tmp/hypr-start.log"
+            echo "Starting hypr-start at $(date)" > "$LOG"
 
-          # Wait a moment for Hyprland to fully initialize sockets
-          sleep 1
+            # Wait a moment for Hyprland to fully initialize sockets
+            sleep 1
 
-          # Import environment
-          echo "Importing environment..." >> "$LOG"
-          dbus-update-activation-environment --systemd --all
-          systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE
+            # Import environment
+            echo "Importing environment..." >> "$LOG"
+            dbus-update-activation-environment --systemd --all
+            systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE
 
-          # Stop any stale portals or session targets to force clean state
-          echo "Cleaning stale session state..." >> "$LOG"
-          systemctl --user stop xdg-desktop-portal xdg-desktop-portal-hyprland hyprland-session.target || true
-          systemctl --user reset-failed
+            # Stop any stale portals or session targets to force clean state
+            echo "Cleaning stale session state..." >> "$LOG"
+            systemctl --user stop xdg-desktop-portal xdg-desktop-portal-hyprland hyprland-session.target || true
+            systemctl --user reset-failed
 
-          # Start session
-          echo "Starting hyprland-session.target..." >> "$LOG"
-          systemctl --user start hyprland-session.target
-          echo "Done." >> "$LOG"
-        '')
-        (pkgs.writeShellScriptBin "hyde-selector" (builtins.readFile ../../../files/scripts/hyde-selector.sh))
-      ]
-      ++ lib.optional hy3Enabled pkgs.hyprlandPlugins.hy3; # Tiling plugin for Hyprland inspired by i3/sway
+            # Start session
+            echo "Starting hyprland-session.target..." >> "$LOG"
+            systemctl --user start hyprland-session.target
+            echo "Done." >> "$LOG"
+          '')
+          (pkgs.writeShellScriptBin "hyde-selector" (builtins.readFile ../../../files/scripts/hyde-selector.sh))
+        ]
+        ++ lib.optional hy3Enabled pkgs.hyprlandPlugins.hy3; # Tiling plugin for Hyprland inspired by i3/sway
 
-    # --- Systemd user targets ---
-    systemd.user.targets.hyprland-session = {
-      unitConfig = {
-        Description = "Hyprland compositor session";
-        Documentation = ["man:systemd.special(7)"];
-        BindsTo = ["graphical-session.target"];
-        Wants = ["graphical-session-pre.target"];
-        After = ["graphical-session-pre.target"];
+      # --- Systemd user targets ---
+      systemd.user.targets.hyprland-session = {
+        unitConfig = {
+          Description = "Hyprland compositor session";
+          Documentation = ["man:systemd.special(7)"];
+          BindsTo = ["graphical-session.target"];
+          Wants = ["graphical-session-pre.target"];
+          After = ["graphical-session-pre.target"];
+        };
       };
-    };
+
+      # --- Systemd user services ---
+      systemd.user.services = {
+        # Hyprland Polkit Agent
+        hyprpolkitagent = {
+          description = "Hyprland Polkit Agent";
+          wantedBy = ["graphical-session.target"];
+          after = ["graphical-session-pre.target"];
+          serviceConfig = {
+            ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
+            Environment = [
+              "QT_QPA_PLATFORM=wayland"
+              "XDG_SESSION_TYPE=wayland"
+            ];
+            Restart = "on-failure";
+            RestartSec = "2s";
+          };
+        };
+
+        # Pyprland service
+        pyprland = {
+          description = "Pyprland - Hyprland plugin system";
+          wantedBy = ["graphical-session.target"];
+          after = ["graphical-session-pre.target"];
+          serviceConfig = {
+            ExecStart = "${pkgs.pyprland}/bin/pypr";
+            Restart = "always";
+            RestartSec = "1";
+          };
+        };
+      };
+    }
 
     # --- User config files ---
-    users.users.neg.maid.file.home = lib.mkMerge (
-      [
+    (n.mkHomeFiles (
+      {
         # Generated configs
-        {".config/hypr/hyprland.conf".text = hyprlandConf;}
-        {".config/hypr/workspaces.conf".text = workspacesConf;}
-        {".config/hypr/rules-routing.conf".text = routesConf;}
-        {".config/hypr/permissions.conf".text = permissionsConf;}
-        {".config/hypr/pyprland.toml".source = pyprlandToml;}
-      ]
-      # Plugins config (hy3 only)
-      ++ lib.optional hy3Enabled {".config/hypr/plugins.conf".text = pluginsConf;}
-      # Static core config files
-      ++ map (f: {".config/hypr/${f}".source = impurity.link (hyprConfDir + "/${f}");}) coreFiles
-      # Init config (hy3 or nohy3)
-      ++ [
-        {
-          ".config/hypr/init.conf".source = impurity.link (
-            if hy3Enabled
-            then hyprConfDir + /init.conf
-            else hyprConfDir + /init.nohy3.conf
-          );
-        }
-        {".config/hypr/xdph.conf".source = impurity.link (hyprConfDir + /xdph.conf);}
-      ]
-      # Bindings config (hy3 or nohy3)
-      ++ [
-        {
-          ".config/hypr/bindings.conf".source = impurity.link (
-            if hy3Enabled
-            then hyprConfDir + /bindings.conf
-            else hyprConfDir + /bindings.nohy3.conf
-          );
-        }
-      ]
-      # Static binding files
-      ++ map (f: {".config/hypr/bindings/${f}".source = impurity.link (hyprConfDir + "/bindings/${f}");}) bindingFiles
-      # Animation files
-      ++ (let
-        animDir = ../../../files/gui/hypr/animations;
-        animFiles = builtins.attrNames (builtins.readDir animDir);
-      in
-        map (f: {".config/hypr/animations/${f}".source = impurity.link (hyprConfDir + "/animations/${f}");}) animFiles)
-      # Hyprlock files
-      ++ (let
-        lockDir = ../../../files/gui/hypr/hyprlock;
-        lockFiles = builtins.attrNames (builtins.readDir lockDir);
-      in
-        map (f: {".config/hypr/hyprlock/${f}".source = impurity.link (hyprConfDir + "/hyprlock/${f}");}) lockFiles)
-      # Main hyprlock config (init)
-      ++ [
-        {".config/hypr/hyprlock.conf".source = impurity.link (hyprConfDir + /hyprlock/init.conf);}
-      ]
-    );
+        ".config/hypr/hyprland.conf".text = hyprlandConf;
+        ".config/hypr/workspaces.conf".text = workspacesConf;
+        ".config/hypr/rules-routing.conf".text = routesConf;
+        ".config/hypr/permissions.conf".text = permissionsConf;
+        ".config/hypr/pyprland.toml".source = pyprlandToml;
 
-    # --- Systemd user services ---
-    systemd.user.services = {
-      # Hyprland Polkit Agent
-      hyprpolkitagent = {
-        description = "Hyprland Polkit Agent";
-        wantedBy = ["graphical-session.target"];
-        after = ["graphical-session-pre.target"];
-        serviceConfig = {
-          ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
-          Environment = [
-            "QT_QPA_PLATFORM=wayland"
-            "XDG_SESSION_TYPE=wayland"
-          ];
-          Restart = "on-failure";
-          RestartSec = "2s";
-        };
-      };
+        # Init config (hy3 or nohy3)
+        ".config/hypr/init.conf".source = n.linkImpure (
+          if hy3Enabled
+          then hyprConfDir + /init.conf
+          else hyprConfDir + /init.nohy3.conf
+        );
+        ".config/hypr/xdph.conf".source = n.linkImpure (hyprConfDir + /xdph.conf);
 
-      # Pyprland service
-      pyprland = {
-        description = "Pyprland - Hyprland plugin system";
-        wantedBy = ["graphical-session.target"];
-        after = ["graphical-session-pre.target"];
-        serviceConfig = {
-          ExecStart = "${pkgs.pyprland}/bin/pypr";
-          Restart = "always";
-          RestartSec = "1";
-        };
-      };
-    };
-  }
+        # Bindings config (hy3 or nohy3)
+        ".config/hypr/bindings.conf".source = n.linkImpure (
+          if hy3Enabled
+          then hyprConfDir + /bindings.conf
+          else hyprConfDir + /bindings.nohy3.conf
+        );
+
+        # Main hyprlock config (init)
+        ".config/hypr/hyprlock.conf".source = n.linkImpure (hyprConfDir + /hyprlock/init.conf);
+      }
+      # Plugins config
+      // (lib.optionalAttrs hy3Enabled {".config/hypr/plugins.conf".text = pluginsConf;})
+      # Static files
+      // (mkFiles ".config/hypr" coreFiles)
+      // (mkFiles ".config/hypr/bindings" bindingFiles)
+      // (mkFiles ".config/hypr/animations" (builtins.attrNames (builtins.readDir animDir)))
+      // (mkFiles ".config/hypr/hyprlock" (builtins.attrNames (builtins.readDir lockDir)))
+    ))
+  ])

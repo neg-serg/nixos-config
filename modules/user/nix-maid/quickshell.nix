@@ -3,9 +3,12 @@
   lib,
   config,
   inputs,
+  neg,
+  impurity ? null,
   ...
 }: let
-  # Source path (Nix path for impurity.link)
+  n = neg impurity;
+  # Source path (Nix path for linkImpure)
   quickshellSrc = ../../../files/quickshell;
 
   # Feature flags check
@@ -58,52 +61,56 @@
     '';
   };
 in
-  lib.mkIf quickshellEnabled {
-    # Link Quickshell config mutably via impurity
-    users.users.neg.maid.file.home.".config/quickshell".source = config.lib.neg.linkImpure quickshellSrc;
+  lib.mkIf quickshellEnabled (lib.mkMerge [
+    {
+      # Wrapped quickshell package
+      environment.systemPackages = [
+        quickshellWrapped # Wrapped Quickshell with dependencies and environment
+      ];
 
-    # Wrapped quickshell package
-    environment.systemPackages = [
-      quickshellWrapped # Wrapped Quickshell with dependencies and environment
-    ];
-
-    # Quickshell panel service
-    systemd.user.services.quickshell = {
-      enable = true;
-      description = "Quickshell - QtQuick based shell for Wayland";
-      documentation = ["https://github.com/outfoxxed/quickshell"];
-      partOf = ["graphical-session.target"];
-      after = ["graphical-session-pre.target"];
-      wantedBy = ["graphical-session.target"];
-      serviceConfig = {
-        ExecStart = "${lib.getExe quickshellWrapped} -p %h/.config/quickshell/shell.qml";
-        Restart = "on-failure";
-        RestartSec = 1;
+      # Quickshell panel service
+      systemd.user.services.quickshell = {
+        enable = true;
+        description = "Quickshell - QtQuick based shell for Wayland";
+        documentation = ["https://github.com/outfoxxed/quickshell"];
+        partOf = ["graphical-session.target"];
+        after = ["graphical-session-pre.target"];
+        wantedBy = ["graphical-session.target"];
+        serviceConfig = {
+          ExecStart = "${lib.getExe quickshellWrapped} -p %h/.config/quickshell/shell.qml";
+          Restart = "on-failure";
+          RestartSec = 1;
+        };
       };
-    };
 
-    # Theme watch service
-    systemd.user.services.quickshell-theme-watch = {
-      enable = true;
-      description = "Watch Quickshell theme tokens";
-      partOf = ["graphical-session.target"];
-      after = ["graphical-session-pre.target"];
-      wantedBy = ["graphical-session.target"];
-      serviceConfig = {
-        Type = "simple";
-        ExecStartPre = lib.getExe buildTheme;
-        ExecStart = ''
-          ${pkgs.watchexec}/bin/watchexec \
-            --restart \
-            --watch %h/.config/quickshell/Theme \
-            --watch %h/.config/quickshell/Theme/manifest.json \
-            --exts json,jsonc \
-            --ignore %h/.config/quickshell/Theme/.theme.json \
-            --debounce 250ms \
-            -- ${lib.getExe buildTheme}
-        '';
-        Restart = "on-failure";
-        RestartSec = 2;
+      # Theme watch service
+      systemd.user.services.quickshell-theme-watch = {
+        enable = true;
+        description = "Watch Quickshell theme tokens";
+        partOf = ["graphical-session.target"];
+        after = ["graphical-session-pre.target"];
+        wantedBy = ["graphical-session.target"];
+        serviceConfig = {
+          Type = "simple";
+          ExecStartPre = lib.getExe buildTheme;
+          ExecStart = ''
+            ${pkgs.watchexec}/bin/watchexec \
+              --restart \
+              --watch %h/.config/quickshell/Theme \
+              --watch %h/.config/quickshell/Theme/manifest.json \
+              --exts json,jsonc \
+              --ignore %h/.config/quickshell/Theme/.theme.json \
+              --debounce 250ms \
+              -- ${lib.getExe buildTheme}
+          '';
+          Restart = "on-failure";
+          RestartSec = 2;
+        };
       };
-    };
-  }
+    }
+
+    (n.mkHomeFiles {
+      # Link Quickshell config mutably via impurity
+      ".config/quickshell".source = n.linkImpure quickshellSrc;
+    })
+  ])
