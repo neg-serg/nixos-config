@@ -1,33 +1,31 @@
 {
   lib,
   config,
+  neg,
+  impurity ? null,
   ...
-}:
-lib.mkIf config.features.web.enable {
-  users.users.neg.maid = let
-    # Use relative path to home/files for stability and to avoid dependency on undefined vars
+}: let
+  n = neg impurity;
+in
+  lib.mkIf config.features.web.enable (n.mkHomeFiles (let
+    # Use relative path to home/files for stability
     base = ../../../files/misc/tridactyl;
     rcPath = "${base}/tridactylrc";
     themesPath = base + "/themes";
     mozillaPath = base + "/mozilla";
     userjsPath = base + "/user.js";
-    # Compose Tridactyl config: only source user's rc; avoid overriding keys here
-    rcText = ''
+  in {
+    ".config/tridactyl/tridactylrc".text = ''
       source ${rcPath}
     '';
-  in {
-    # Write rc overlay that sources user's file and then applies small fixups
-    file.home.".config/tridactyl/tridactylrc".text = rcText;
 
-    # Link supplemental files/dirs from misc assets tracked in the repo
-    file.home.".config/tridactyl/user.js".source = userjsPath;
+    ".config/tridactyl/user.js".source = userjsPath;
 
-    file.home.".config/tridactyl/themes" = {
+    ".config/tridactyl/themes" = {
       source = themesPath;
     };
 
-    file.home.".config/tridactyl/mozilla" = {
+    ".config/tridactyl/mozilla" = {
       source = mozillaPath;
     };
-  };
-}
+  }))
