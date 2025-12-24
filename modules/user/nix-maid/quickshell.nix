@@ -58,7 +58,7 @@
     '';
   };
 in
-  config.lib.neg.mkWhen quickshellEnabled {
+  lib.mkIf quickshellEnabled {
     # Link Quickshell config mutably via impurity
     users.users.neg.maid.file.home.".config/quickshell".source = config.lib.neg.linkImpure quickshellSrc;
 

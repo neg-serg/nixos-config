@@ -26,9 +26,6 @@
       then impurity.link
       else (x: x);
 
-    # Logic helpers
-    mkWhen = lib.mkIf;
-
     # Nix-maid home file helpers
     mkXdgText = path: text: {
       home."${path}".text = text;
