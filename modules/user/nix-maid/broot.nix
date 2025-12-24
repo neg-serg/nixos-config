@@ -8,7 +8,7 @@
   brootRoot = ../../../files/shell/broot;
 in
   lib.mkIf (cfg.enable or false) {
-    environment.systemPackages = [pkgs.broot];
+    environment.systemPackages = [pkgs.broot]; # terminal file manager for visualizing and navigating directory trees
 
     users.users.neg.maid.file.home = {
       ".config/broot/conf.hjson".source = "${brootRoot}/conf.hjson";

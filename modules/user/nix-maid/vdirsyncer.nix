@@ -7,7 +7,7 @@
   cfg = config.features.mail.vdirsyncer;
 in
   lib.mkIf (cfg.enable or false) {
-    environment.systemPackages = [pkgs.vdirsyncer];
+    environment.systemPackages = [pkgs.vdirsyncer]; # synchronize calendars and contacts between diverse storage backends
 
     # Create the config from template
     sops.templates."vdirsyncer-config" = {

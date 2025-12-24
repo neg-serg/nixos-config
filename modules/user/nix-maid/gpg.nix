@@ -102,9 +102,9 @@ in {
 
     # Include packages
     environment.systemPackages = [
-      pkgs.gnupg
-      pkgs.pinentry-rofi
-      pinentryRofi
+      pkgs.gnupg # GNU Privacy Guard - encryption and signing tool
+      pkgs.pinentry-rofi # Rofi-based pinentry for GPG
+      pinentryRofi # custom wrapper script for pinentry-rofi with env injection
     ];
   };
 }
