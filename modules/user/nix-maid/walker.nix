@@ -1,12 +1,13 @@
 {
   pkgs,
+  lib,
   config,
   ...
 }: let
   cfg = config.features.gui.walker;
   walkerRoot = ../../../files/walker;
 in
-  config.lib.neg.mkWhen (cfg.enable or false) {
+  lib.mkIf (cfg.enable or false) {
     environment.systemPackages = [pkgs.walker]; # Wayland-native application runner
 
     users.users.neg.maid.file.home = {
