@@ -99,6 +99,7 @@
     };
     yandex-browser = {
       url = "github:Teu5us/nix-yandex-browser";
+      inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     };
   };
 
