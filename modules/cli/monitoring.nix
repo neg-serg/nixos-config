@@ -1,11 +1,11 @@
 {pkgs, ...}: {
   environment.systemPackages = [
-    pkgs.below # BPF-based system history
-    pkgs.bpftrace # high-level eBPF tracer
-    pkgs.goaccess # realtime log analyzer
-    pkgs.kmon # kernel activity monitor
-    pkgs.lnav # fancy log viewer
-    pkgs.viddy # modern watch with history
-    pkgs.zfxtop # Cloudflare/ZFX top-like monitor
+    pkgs.below # time-traveling system monitor for Linux (BPF-based)
+    pkgs.bpftrace # high-level tracing language for Linux eBPF
+    pkgs.goaccess # real-time web log analyzer and interactive viewer
+    pkgs.kmon # Linux kernel management and monitoring TUI
+    pkgs.lnav # Log File Navigator - advanced log viewer for terminal
+    pkgs.viddy # modern alternative to watch command with time-travel and diffs
+    pkgs.zfxtop # system monitor with focus on process grouping and ZFX style
   ];
 }
