@@ -26,7 +26,7 @@ with lib;
       };
     };
   in {
-    environment.systemPackages = [pkgs.librewolf];
+    environment.systemPackages = [pkgs.librewolf]; # privacy-focused Firefox fork with security-hardened defaults
     nixpkgs.overlays = [inputs.nur.overlays.default];
 
     users.users.neg.maid.file.home = lib.mkMerge (
