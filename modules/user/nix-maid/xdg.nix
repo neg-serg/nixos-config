@@ -1,8 +1,11 @@
 {
   pkgs,
   lib,
+  neg,
+  impurity ? null,
   ...
 }: let
+  n = neg impurity;
   # Browser/App Definitions
   browser = "floorp.desktop";
   pdfreader = "org.pwmt.zathura.desktop";
@@ -11,8 +14,6 @@
   video = "mpv.desktop";
   image = "swayimg.desktop";
   editor = "nvim.desktop";
-  # Note: nvim.desktop is usually just "nvim.desktop" provided by neovim wrapper or desktop item.
-  # In HM config it was derived dynamically. We'll stick to standard "nvim.desktop".
 
   associations = {
     # --- Browsing ---
@@ -40,9 +41,7 @@
     "application/x-cbr" = pdfreader;
 
     # --- Directories ---
-    "inode/directory" = "kitty-open.desktop"; # Provided by custom desktop item or we need to ensure it exists?
-    # kitty-open is likely a custom desktop file. We might need to migrate it if it was previously managed.
-    # For now, let's assume it exists or fallback to kitty.desktop.
+    "inode/directory" = "kitty-open.desktop";
 
     # --- Playlists ---
     "audio/x-mpegurl" = video;
@@ -124,15 +123,33 @@
     XDG_VIDEOS_DIR="$HOME/vid"
   '';
 in {
-  config = {
-    # 1. Config Files
-    users.users.neg.maid.file.home = {
+  config = lib.mkMerge [
+    {
+      # Activation: Create Directories
+      systemd.user.services.xdg-user-dirs-create = {
+        description = "Create XDG User Directories";
+        wantedBy = ["default.target"];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = toString (pkgs.writeShellScript "create-xdg-dirs" ''
+            mkdir -p $HOME/.local/desktop
+            mkdir -p $HOME/doc
+            mkdir -p $HOME/dw
+            mkdir -p $HOME/music
+            mkdir -p $HOME/pic
+            mkdir -p $HOME/.local/public
+            mkdir -p $HOME/.local/templates
+            mkdir -p $HOME/vid
+            mkdir -p $HOME/.local/bin
+            mkdir -p $HOME/.local/mail/gmail/INBOX
+          '');
+        };
+      };
+    }
+    (n.mkHomeFiles {
       ".config/mimeapps.list".text = mimeAppsList;
       ".config/user-dirs.dirs".text = userDirs;
 
-      # kitty-open.desktop (custom)
-      # If it was in HM, we should create it. HM config referenced it.
-      # Let's create a minimal one to be safe:
       ".local/share/applications/kitty-open.desktop".text = ''
         [Desktop Entry]
         Type=Application
@@ -141,32 +158,6 @@ in {
         Icon=kitty
         Categories=System;TerminalEmulator;
       '';
-    };
-
-    # 2. Activation: Create Directories
-    # Using a oneshot service is cleaner than hooking into system activation directly for user dirs
-    systemd.user.services.xdg-user-dirs-create = {
-      description = "Create XDG User Directories";
-      wantedBy = ["default.target"];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = toString (pkgs.writeShellScript "create-xdg-dirs" ''
-          mkdir -p $HOME/.local/desktop
-          mkdir -p $HOME/doc
-          mkdir -p $HOME/dw
-          mkdir -p $HOME/music
-          mkdir -p $HOME/pic
-          mkdir -p $HOME/.local/public
-          mkdir -p $HOME/.local/templates
-          mkdir -p $HOME/vid
-          mkdir -p $HOME/.local/bin
-          mkdir -p $HOME/.local/mail/gmail/INBOX
-        '');
-      };
-    };
-
-    # 3. Environment Variables (optional, but good for shell)
-    # NixOS handles XDG_CONFIG_HOME etc, but XDG_DATA_DIRS need to include .local/share/applications?
-    # Usually standard.
-  };
+    })
+  ];
 }
