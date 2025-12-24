@@ -98,7 +98,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     yandex-browser = {
-      url = "github:ru-nix/yandex-browser-nix";
+      url = "github:Teu5us/nix-yandex-browser";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
