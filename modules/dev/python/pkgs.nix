@@ -10,25 +10,25 @@
   groups = {
     core = ps:
       with ps; [
-        annoy
-        beautifulsoup4
-        colored
-        docopt
-        fonttools
-        mutagen
-        numpy
-        orjson
-        pillow
-        psutil
-        requests
-        tabulate
+        annoy # approximate nearest neighbors library
+        beautifulsoup4 # library for pulling data out of HTML and XML files
+        colored # simple library for color and formatting in terminal
+        docopt # Pythonic command line arguments parser
+        fonttools # library for manipulating fonts
+        mutagen # read and write audio metadata
+        numpy # fundamental package for scientific computing
+        orjson # fast, correct JSON library
+        pillow # friendly fork of PIL (Python Imaging Library)
+        psutil # process and system monitoring library
+        requests # elegant and simple HTTP library
+        tabulate # pretty-print tabular data
       ];
     tools = ps:
       with ps; [
-        dbus-python
-        fontforge
-        neopyter
-        pynvim
+        dbus-python # Python bindings for libdbus
+        fontforge # outline font editor
+        neopyter # bridge between Neovim and Jupyter
+        pynvim # Python client for Neovim
       ];
   };
   mkPythonPackages = ps:
