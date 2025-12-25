@@ -17,7 +17,7 @@
     ./hyprland/main.nix
 
     # Applications (GUI/TUI)
-    ./apps/mpv.nix
+    ./apps/mpv
     ./apps/gui-apps.nix
     ./apps/vicinae.nix
     ./apps/nyxt.nix
