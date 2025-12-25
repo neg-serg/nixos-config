@@ -11,7 +11,7 @@
   guiEnabled = config.features.gui.enable or false;
 
   commonConfig = config // {home.homeDirectory = config.users.users.neg.home;};
-  mozillaCommon = import ./web/mozilla-common-lib.nix {
+  mozillaCommon = import ./mozilla-common-lib.nix {
     inherit lib pkgs negLib;
     config = commonConfig;
   };
