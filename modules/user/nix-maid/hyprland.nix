@@ -335,15 +335,16 @@
   pyprlandToml = tomlFormat.generate "pyprland.toml" pyprlandConfig;
 
   # File list generators
-  mkFiles = dir: files:
+  mkFiles = destDir: sourceDir: files:
     builtins.listToAttrs (map (f: {
-        name = "${dir}/${f}";
-        value = {source = n.linkImpure (hyprConfDir + "/${f}");};
+        name = "${destDir}/${f}";
+        value = {source = n.linkImpure (sourceDir + "/${f}");};
       })
       files);
 
   animDir = ../../../files/gui/hypr/animations;
   lockDir = ../../../files/gui/hypr/hyprlock;
+  bindingsDir = hyprConfDir + /bindings;
 in
   lib.mkIf guiEnabled (lib.mkMerge [
     {
@@ -486,9 +487,9 @@ in
       # Plugins config
       // (lib.optionalAttrs hy3Enabled {".config/hypr/plugins.conf".text = pluginsConf;})
       # Static files
-      // (mkFiles ".config/hypr" coreFiles)
-      // (mkFiles ".config/hypr/bindings" bindingFiles)
-      // (mkFiles ".config/hypr/animations" (builtins.attrNames (builtins.readDir animDir)))
-      // (mkFiles ".config/hypr/hyprlock" (builtins.attrNames (builtins.readDir lockDir)))
+      // (mkFiles ".config/hypr" hyprConfDir coreFiles)
+      // (mkFiles ".config/hypr/bindings" bindingsDir bindingFiles)
+      // (mkFiles ".config/hypr/animations" animDir (builtins.attrNames (builtins.readDir animDir)))
+      // (mkFiles ".config/hypr/hyprlock" lockDir (builtins.attrNames (builtins.readDir lockDir)))
     ))
   ])
