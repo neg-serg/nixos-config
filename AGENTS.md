@@ -2,7 +2,7 @@
 
 Scope
 - This AGENTS.md applies to the entire `/etc/nixos` tree.
-- Prefer existing module structure (`modules/`, `hosts/`, `home/`, etc.) and follow surrounding style.
+- Prefer existing module structure (`modules/`, `hosts/`, `modules/user/nix-maid/`, etc.) and follow surrounding style.
 
 Nix style: `pkgs.*` lists
 - When adding items like `pkgs.<name>` to `environment.systemPackages` or other package lists, add a short comment after each entry describing what the package is/does, whenever it is not completely obvious.
