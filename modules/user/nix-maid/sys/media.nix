@@ -104,9 +104,6 @@ in
 
         # Images
         pkgs.swayimg # Lightweight image viewer for Wayland
-
-        # Video
-        pkgs.mpv # Open source media player
         pkgs.mpdas
         pkgs.mpdris2
       ];
