@@ -1,0 +1,24 @@
+{pkgs, ...}: {
+  environment.systemPackages = [
+    # Network diagnostics
+    pkgs.doggo # DNS client for humans
+    pkgs.prettyping # fancy ping output
+    pkgs.speedtest-cli # internet speed test
+    pkgs.urlscan # extract URLs from text blobs
+    pkgs.urlwatch # watch pages for changes
+    pkgs.whois # domain info lookup
+
+    # Remote access
+    pkgs.abduco # CLI session detach
+    pkgs.xxh # SSH wrapper for jumping into remote shells
+
+    # Cloud tools
+    pkgs.kubectl # Kubernetes CLI
+    pkgs.kubectx # fast switch Kubernetes contexts
+    pkgs.kubernetes-helm # Helm package manager
+    pkgs.nextcloud-client # Nextcloud CLI sync client (nextcloudcmd)
+    pkgs.scaleway-cli # Scaleway cloud CLI
+    pkgs."yandex-cloud" # Yandex Cloud CLI
+    pkgs."yandex-disk" # Yandex Disk sync client and daemon
+  ];
+}
