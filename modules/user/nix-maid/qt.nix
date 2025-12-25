@@ -26,6 +26,7 @@ in {
 
       environment.sessionVariables = {
         QT_QPA_PLATFORMTHEME = "qt6ct"; # Use qt6ct to configure Qt6 (and Qt5 if configured to use it)
+        QT_XDG_DESKTOP_PORTAL = "1"; # Force Qt applications to use the XDG desktop portal for dialogs
       };
 
       environment.variables = {
