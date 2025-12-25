@@ -47,10 +47,19 @@ in {
   config = lib.mkIf (cfg.enable or false) (lib.mkMerge [
     {
       # Packages
-      environment.systemPackages = lib.optionals enableIac [
-        pkgs.ansible # Radically simple IT automation
-        pkgs.sshpass # Non-interactive ssh password auth
-      ];
+      environment.systemPackages =
+        [
+          pkgs.direnv # Extension for your shell to load/unload env vars
+          pkgs.nix-direnv # A fast, persistent use_nix implementation for direnv
+          pkgs.nh # Yet another nix helper (CLI for NixOS/Home Manager)
+          pkgs.process-compose # Process orchestrator (docker-compose but for processes)
+          pkgs.kubecolor # Colorize kubectl output
+          pkgs.nix-search-tv # TUI for searching libraries on search.nixos.org
+        ]
+        ++ lib.optionals enableIac [
+          pkgs.ansible # Radically simple IT automation
+          pkgs.sshpass # Non-interactive ssh password auth
+        ];
 
       # Environment Variables
       environment.variables =
