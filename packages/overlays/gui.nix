@@ -10,7 +10,6 @@ inputs: _: prev: let
     prev.callPackage path (autoArgs // extraArgs);
   # hydralauncherPkg = callPkg (inputs.self + "/packages/hydralauncher") {};  # Archived - not in use
   nyarchAssistantPkg = callPkg (inputs.self + "/packages/nyarch-assistant") {};
-  chainnerPkg = callPkg (inputs.self + "/packages/chainner") {};
   protonGeBin = prev.stdenv.mkDerivation rec {
     pname = "proton-ge-bin";
     version = "GE-Proton9-23";
@@ -100,9 +99,6 @@ in {
     };
   };
 
-  # hydralauncher = hydralauncherPkg;  # Archived - not in use
-  # _hydra = hydralauncherPkg;  # Archived - not in use
-  chainner = chainnerPkg;
   "nyarch-assistant" = nyarchAssistantPkg;
   "_nyarch-assistant" = nyarchAssistantPkg;
 
@@ -112,8 +108,6 @@ in {
 
   oldschool-pc-font-pack = callPkg (inputs.self + "/packages/oldschool-pc-font-pack") {};
   px437-ibm-conv-e = callPkg (inputs.self + "/packages/px437-ibm-conv-e") {};
-
-  windows95 = callPkg (inputs.self + "/packages/windows95") {};
 
   pyprland_fixed = prev.python3Packages.buildPythonApplication rec {
     pname = "pyprland";

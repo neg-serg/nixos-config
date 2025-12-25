@@ -32,7 +32,6 @@
     pkgs.scour # SVG minifier to shrink UI assets
 
     # -- Editors --
-    pkgs.chainner # node-based image processing GUI (diffusion/upscale pipelines)
     pkgs.darktable # RAW editor/dam tailored to photographers
     pkgs.gimp # full-featured raster editor
     pkgs.rawtherapee # alternative RAW developer (non-destructive)
