@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import qs.Settings
 import "." as LocalComponents
@@ -78,18 +79,18 @@ Item {
         onBackgroundClicked: root._pendingReason = "background"
 
         onVisibleChanged: {
-            _syncingFromOverlay = true;
-            if (_syncingFromExpanded) {
-                _syncingFromExpanded = false;
+            root._syncingFromOverlay = true;
+            if (root._syncingFromExpanded) {
+                root._syncingFromExpanded = false;
             }
-            root.expanded = visible;
-            if (visible) {
+            root.expanded = overlayWindow.visible;
+            if (overlayWindow.visible) {
                 root.opened();
             } else {
                 root.dismissed(root._pendingReason);
                 root._pendingReason = "programmatic";
             }
-            _syncingFromOverlay = false;
+            root._syncingFromOverlay = false;
         }
 
         Item {
