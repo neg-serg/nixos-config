@@ -10,7 +10,6 @@
     [
       pkgs.transmission_4 # primary BitTorrent client/daemon
       pkgs.bitmagnet # torrent indexer for private trackers
-      pkgs.neg.bt_migrate # migration tool between torrent clients
       pkgs.rustmission # CLI Transmission client written in Rust
       pkgs.neg.tewi # TUI client for Transmission/qBittorrent/Deluge
       pkgs.curl # HTTP helper for tracker scripts
