@@ -10,13 +10,13 @@
   cfg = config.features.gui;
 
   # --- Scripts & Package ---
-  scriptPkgs = with pkgs.mpvScripts; [
-    cutter
-    mpris
-    quality-menu
-    sponsorblock
-    thumbfast
-    uosc
+  scriptPkgs = [
+    pkgs.mpvScripts.cutter
+    pkgs.mpvScripts.mpris
+    pkgs.mpvScripts.quality-menu
+    pkgs.mpvScripts.sponsorblock
+    pkgs.mpvScripts.thumbfast
+    pkgs.mpvScripts.uosc
   ];
 
   mpvPackage = pkgs.mpv.override {
