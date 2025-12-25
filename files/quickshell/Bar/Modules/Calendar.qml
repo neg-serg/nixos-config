@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import "../../Helpers/Holidays.js" as Holidays
 import QtQuick
 import QtQuick.Controls
@@ -9,7 +10,7 @@ import "../../Helpers/Color.js" as Color
 import "../../Helpers/TooltipText.js" as TooltipText
 
 OverlayToggleCapsule {
-    id: calendarOverlay
+    id: root
     visible: false
     capsuleVisible: false
     // Overlay properties removed - background always transparent
@@ -118,7 +119,7 @@ OverlayToggleCapsule {
                     Component.onCompleted: updateHolidays()
 
                     Connections {
-                        target: calendarOverlay
+                        target: root
                         function onOpened() {
                             calendar.month = Time.date.getMonth();
                             calendar.year = Time.date.getFullYear();
@@ -128,10 +129,11 @@ OverlayToggleCapsule {
 
                     delegate: Rectangle {
                         id: dayCell
+                        required property var model
                         property bool isSelected: model.year === calendar.selectedYear && model.month === calendar.selectedMonth && model.day === calendar.selectedDay
                         property var holidayInfo: calendar.holidays.filter(function(h) {
                             var d = new Date(h.date);
-                            return d.getDate() === model.day && d.getMonth() === model.month && d.getFullYear() === model.year;
+                            return d.getDate() === dayCell.model.day && d.getMonth() === dayCell.model.month && d.getFullYear() === dayCell.model.year;
                         })
                         property bool isHoliday: holidayInfo.length > 0
 
@@ -161,40 +163,40 @@ OverlayToggleCapsule {
 
                         Text {
                             anchors.centerIn: parent
-                            text: model.day
-                            color: (model.today || isSelected || mouseArea2.containsMouse) ? dayCg.fg : Theme.textPrimary
-                            opacity: model.month === calendar.month ? (mouseArea2.containsMouse ? 1 : Theme.calendarTitleOpacity) : Theme.calendarOtherMonthDayOpacity
-                            font.pixelSize: Math.round(Theme.calendarDayFontPx * Theme.scale(screen))
+                            text: dayCell.model.day
+                            color: (dayCell.model.today || dayCell.isSelected || mouseArea2.containsMouse) ? dayCell.dayCg.fg : Theme.textPrimary
+                            opacity: dayCell.model.month === calendar.month ? (mouseArea2.containsMouse ? 1 : Theme.calendarTitleOpacity) : Theme.calendarOtherMonthDayOpacity
+                            font.pixelSize: Math.round(Theme.calendarDayFontPx * Theme.scale(root.screen))
                             font.family: Theme.fontFamily
                             font.weight: Font.Bold
-                            font.underline: model.today
+                            font.underline: dayCell.model.today
                         }
 
                         MouseArea {
                             id: mouseArea2
-                            anchors.fill: parent
+                            anchors.fill: dayCell
                             hoverEnabled: true
                             onEntered: {
-                                if (isHoliday) {
+                                if (dayCell.isHoliday) {
                                     holidayTooltip.text = TooltipText.compose(
-                                        (holidayInfo && holidayInfo.length > 1) ? "Holidays" : (holidayInfo[0]?.localName || "Holiday"),
+                                        (dayCell.holidayInfo && dayCell.holidayInfo.length > 1) ? "Holidays" : (dayCell.holidayInfo[0]?.localName || "Holiday"),
                                         "",
-                                        holidayInfo.map(function(h) {
+                                        dayCell.holidayInfo.map(function(h) {
                                             var name = h.localName;
                                             if (h.name && h.name !== h.localName) name += " (" + h.name + ")";
                                             if (h.global) name += " [Global]";
                                             return name;
                                         })
                                     );
-                                    holidayTooltip.targetItem = parent;
+                                    holidayTooltip.targetItem = dayCell;
                                     holidayTooltip.visibleWhen = true;
                                 }
                             }
                             onExited: holidayTooltip.visibleWhen = false
                             onClicked: {
-                                calendar.selectedYear = model.year;
-                                calendar.selectedMonth = model.month;
-                                calendar.selectedDay = model.day;
+                                calendar.selectedYear = dayCell.model.year;
+                                calendar.selectedMonth = dayCell.model.month;
+                                calendar.selectedDay = dayCell.model.day;
                             }
                         }
 
