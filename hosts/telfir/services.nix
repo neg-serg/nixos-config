@@ -612,12 +612,6 @@ in
           "d /zero/sync/upload-next 0755 neg neg - -"
         ];
         services = {
-          # NOTE: podman-seafile-db currently fails to start due to a Podman OCI runtime issue.
-          # Temporarily disable the DB unit so nixos-rebuild switch does not fail on this host.
-          "podman-seafile-db" = {
-            enable = false;
-          };
-
           # Disable automatic Nextcloud setup/update units; manage via occ/scripts instead.
           "nextcloud-setup".enable = false;
           "nextcloud-update-db".enable = false;
