@@ -104,8 +104,8 @@ in
 
         # Images
         pkgs.swayimg # Lightweight image viewer for Wayland
-        pkgs.mpdas
-        pkgs.mpdris2
+        pkgs.mpdas # Audio Scrobbler client for MPD
+        pkgs.mpdris2 # MPRIS 2 support for MPD
       ];
 
       # Secrets for MPDAS
