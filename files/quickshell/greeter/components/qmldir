@@ -1,0 +1,5 @@
+module qs.components
+FlickMonitor 1.0 FlickMonitor.qml
+OptionSlider 1.0 OptionSlider.qml
+ProgressBar 1.0 ProgressBar.qml
+ZHVStack 1.0 ZHVStack.qml

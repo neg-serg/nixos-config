@@ -8,7 +8,7 @@ Scope {
 
  property LockState state: LockState {
     onTryPasswordUnlock: {
-      this.isUnlocking = true;
+      isUnlocking = true;
       Greetd.createSession("neg");
     }
   }
