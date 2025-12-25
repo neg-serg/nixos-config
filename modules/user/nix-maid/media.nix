@@ -84,18 +84,11 @@
   # --- RMPC Source ---
   rmpcSrc = ../../../files/rmpc;
 
-  # --- Swayimg Config ---
-  swayimgConfig = ''
-    [gallery]
-    fill = true
-    size = 120
-    cache = 100
-  '';
+  # --- Swayimg Source ---
+  swayimgSrc = ../../../files/gui/swayimg;
 
-  # --- NCPAMixer Config ---
-  ncpamixerConfig = ''
-    # ncpamixer configuration
-  '';
+  # --- NCPAMixer Source ---
+  ncpamixerConf = ../../../files/gui/ncpamixer.conf;
 in
   lib.mkMerge [
     {
@@ -142,10 +135,10 @@ in
       ".config/rmpc".source = n.linkImpure rmpcSrc;
 
       # Swayimg
-      ".config/swayimg/config".text = swayimgConfig;
+      ".config/swayimg".source = n.linkImpure swayimgSrc;
 
       # NCPAMixer
-      ".config/ncpamixer.conf".text = ncpamixerConfig;
+      ".config/ncpamixer.conf".source = n.linkImpure ncpamixerConf;
 
       # Spicetify Config (partial management)
       ".config/spicetify/config-xpui.ini".text = lib.generators.toINI {} spiceSettings;
