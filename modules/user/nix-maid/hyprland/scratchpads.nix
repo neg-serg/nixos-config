@@ -1,0 +1,78 @@
+{
+  lib,
+  pkgs,
+  ...
+}: let
+  pyprlandConfig = {
+    pyprland.plugins = [
+      "fetch_client_menu"
+      "scratchpads"
+      "toggle_special"
+    ];
+    scratchpads = {
+      im = {
+        animation = "";
+        command = "${lib.getExe pkgs.telegram-desktop}";
+        class = "org.telegram.desktop";
+        size = "30% 95%";
+        position = "69% 2%";
+        lazy = true;
+        multi = true;
+        process_tracking = false; # Telegram is single-instance
+      };
+      discord = {
+        animation = "fromRight";
+        command = "${lib.getExe pkgs.vesktop}";
+        class = "vesktop";
+        size = "50% 40%";
+        lazy = true;
+        multi = true;
+        process_tracking = false;
+      };
+      music = {
+        animation = "";
+        command = "${lib.getExe pkgs.kitty} --class music -e ${lib.getExe pkgs.neg.rmpc}";
+        margin = "80%";
+        class = "music";
+        position = "15% 50%";
+        size = "70% 40%";
+        lazy = true;
+        unfocus = "hide";
+        process_tracking = false;
+      };
+      torrment = {
+        animation = "";
+        command = "${lib.getExe pkgs.kitty} --class torrment -e ${lib.getExe pkgs.neg.tewi}";
+        class = "torrment";
+        position = "1% 0%";
+        size = "98% 40%";
+        lazy = true;
+        unfocus = "hide";
+        process_tracking = false;
+      };
+      teardown = {
+        animation = "";
+        command = "${lib.getExe pkgs.kitty} --class teardown -e ${lib.getExe pkgs.btop}";
+        class = "teardown";
+        position = "1% 0%";
+        size = "98% 50%";
+        lazy = true;
+        process_tracking = false;
+      };
+      mixer = {
+        animation = "fromRight";
+        command = "${lib.getExe pkgs.pwvucontrol}";
+        class = "com.saivert.pwvucontrol";
+        lazy = true;
+        size = "40% 90%";
+        unfocus = "hide";
+        multi = true;
+        process_tracking = false;
+      };
+    };
+  };
+
+  tomlFormat = pkgs.formats.toml {};
+in {
+  pyprlandToml = tomlFormat.generate "pyprland.toml" pyprlandConfig;
+}
