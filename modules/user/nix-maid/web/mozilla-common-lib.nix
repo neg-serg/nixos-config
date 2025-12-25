@@ -33,8 +33,25 @@ with lib; let
     "browser.download.useDownloadDir" = true;
     "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
     # Content blocking and notifications
-    "browser.contentblocking.category" = "standard";
+    "browser.contentblocking.category" = "strict";
     "permissions.default.desktop-notification" = 2;
+    # Activity Stream / New Tab tweaks (minimalism)
+    "browser.newtabpage.activity-stream.showSponsored" = false;
+    "browser.newtabpage.activity-stream.showSponsoredTopSites" = false;
+    "browser.newtabpage.activity-stream.feeds.topsites" = false;
+    "browser.newtabpage.activity-stream.showTopSites" = false;
+    "browser.newtabpage.activity-stream.feeds.section.highlights" = false;
+    "browser.newtabpage.activity-stream.showHighlights" = false;
+    "browser.newtabpage.activity-stream.feeds.section.topstories" = false;
+    "browser.newtabpage.activity-stream.showWeather" = false;
+    "browser.newtabpage.activity-stream.feeds.section.weather" = false;
+    "browser.newtabpage.activity-stream.feeds.weather" = false;
+    # Search bar / Urlbar tweaks
+    "browser.urlbar.quicksuggest.enabled" = false;
+    "browser.urlbar.quicksuggest.sponsoredEnabled" = false;
+    "browser.urlbar.quicksuggest.scenario" = "offline";
+    "browser.urlbar.merino.enabled" = false;
+    "browser.urlbar.trending.featureGate" = false;
     # HW video decoding (Wayland/VA-API)
     "media.ffmpeg.vaapi.enabled" = true;
     "media.hardware-video-decoding.enabled" = true;
@@ -278,6 +295,35 @@ with lib; let
       };
       # Explicitly block Tampermonkey userscript manager
       "firefox@tampermonkey.net" = {installation_mode = "blocked";};
+
+      # Tridactyl - vim-like keyboard navigation
+      "tridactyl.vim@cmcaine.co.uk" = {
+        installation_mode = "force_installed";
+        install_url = "https://addons.mozilla.org/firefox/downloads/latest/tridactyl-vim/latest.xpi";
+      };
+      # Dark Reader - dark mode for all sites
+      "addon@darkreader.org" = {
+        installation_mode = "force_installed";
+        install_url = "https://addons.mozilla.org/firefox/downloads/latest/darkreader/latest.xpi";
+      };
+      # Stylus - custom CSS for sites
+      "{7a7a4a92-a2a0-41d1-9fd7-1e92480d612d}" = {
+        installation_mode = "force_installed";
+        install_url = "https://addons.mozilla.org/firefox/downloads/latest/styl-us/latest.xpi";
+      };
+      # Search by Image
+      "{2e5ff8c8-32fe-46d0-9fc8-6b8986621f3c}" = {
+        installation_mode = "force_installed";
+        install_url = "https://addons.mozilla.org/firefox/downloads/latest/search_by_image/latest.xpi";
+      };
+    };
+    DisableTelemetry = true;
+    DisableFirefoxStudies = true;
+    DisablePocket = true;
+    CaptivePortal = false;
+    DNSOverHTTPS = {
+      Enabled = true;
+      Locked = false;
     };
     Extensions = {
       Install = true;
@@ -329,31 +375,120 @@ with lib; let
       addonId = "theme-${name}@outfoxxed.me";
       src = import ./firefox-theme.nix {inherit pkgs name theme;};
     };
+
+  # --- Enhanced Addon and Profile Helpers ---
+
+  # mkExtensionFiles: Creates nix-maid file entries for .xpi extensions.
+  # Handles both mozilla (Firefox) and floorp paths.
+  mkExtensionFiles = {
+    profilePath,
+    extensions,
+    browserType ? "mozilla", # "mozilla" or "floorp"
+  }: let
+    prefix =
+      if browserType == "floorp"
+      then ".floorp"
+      else ".mozilla/firefox";
+  in
+    lib.mkMerge (map (ext: let
+        extId = ext.addonId or (throw "Extension ${ext.name} has no addonId");
+        # Firefox-specific extension directory GUID
+        guid = "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}";
+        xpiPath = "${ext}/share/mozilla/extensions/${guid}/${extId}.xpi";
+      in {
+        "${prefix}/${profilePath}/extensions/${extId}.xpi".source = xpiPath;
+      })
+      extensions);
+
+  # mkProfileFiles: Generates user.js, userChrome.css and extension links for a profile.
+  mkProfileFiles = {
+    profile,
+    browserType ? "mozilla",
+    impurity ? null,
+    neg ? (_impurity: {mkUserJs = _: "";}), # Fallback for structural-only calls
+  }: let
+    n = neg impurity;
+    prefix =
+      if browserType == "floorp"
+      then ".floorp"
+      else ".mozilla/firefox";
+  in
+    lib.mkMerge [
+      {
+        "${prefix}/${profile.path}/user.js".text = n.mkUserJs profile.settings;
+      }
+      (lib.mkIf (profile.userChrome != "") {
+        "${prefix}/${profile.path}/chrome/userChrome.css".text = profile.userChrome;
+      })
+      (mkExtensionFiles {
+        profilePath = profile.path;
+        inherit (profile) extensions;
+        inherit browserType;
+      })
+    ];
+
+  # mkMozillaModule: The master helper to build a full browser configuration.
+  # This replaces the need for separate complex logic in firefox.nix/floorp.nix.
+  mkMozillaModule = {
+    package, # browser package
+    profiles, # attrset of profile definitions
+    impurity ? null,
+    neg,
+    cfg, # features.web.<browser>
+    guiEnabled ? true,
+    browserType ? "mozilla", # "mozilla", "floorp", or "librewolf"
+    policiesExtra ? {},
+    systemPackagesExtra ? [],
+    overlays ? [],
+  }: let
+    n = neg impurity;
+    prefix =
+      if browserType == "floorp"
+      then ".floorp"
+      else if browserType == "librewolf"
+      then ".librewolf"
+      else ".mozilla/firefox";
+
+    # Combined policies
+    mergedPolicies =
+      policies
+      // (lib.optionalAttrs (browserType == "floorp") {
+        # Add Floorp-specific defaults if needed
+      })
+      // policiesExtra;
+  in {
+    config = lib.mkIf (guiEnabled && (cfg.enable or false)) (lib.mkMerge [
+      {
+        environment.systemPackages = [package] ++ nativeMessagingHosts ++ systemPackagesExtra;
+        nixpkgs.overlays = overlays;
+
+        # Enterprise policies
+        environment.etc = let
+          policyPath =
+            if browserType == "floorp"
+            then "floorp/policies/policies.json"
+            else if browserType == "librewolf"
+            then "librewolf/policies/policies.json"
+            else "firefox/policies/policies.json";
+        in {
+          "${policyPath}".text = builtins.toJSON {policies = mergedPolicies;};
+        };
+      }
+      (n.mkHomeFiles (lib.mkMerge (
+        [
+          {"${prefix}/profiles.ini".text = n.mkProfilesIni profiles;}
+        ]
+        ++ (lib.mapAttrsToList (_name: profile:
+          mkProfileFiles {
+            inherit profile browserType impurity neg;
+          })
+        profiles)
+      )))
+    ]);
+  };
 in {
-  inherit nativeMessagingHosts settings extraConfig userChrome policies addons buildFirefoxXpiAddon remoteXpiAddon themeAddon;
-  # mkBrowser: build a module fragment for programs.<name>
-  # args: {
-  #   name,
-  #   package,
-  #   profileId ? "default",
-  #   # Settings overrides merged into base settings
-  #   settingsExtra ? {},
-  #   # Back-compat alias for settingsExtra (will be merged too)
-  #   defaults ? {},
-  #   # Extra extension packages to install
-  #   addonsExtra ? [],
-  #   # Extra native messaging hosts to add
-  #   nativeMessagingExtra ? [],
-  #   # Extra/override Firefox enterprise policies
-  #   policiesExtra ? {},
-  #   # Extra profile fields to merge (e.g., isDefault, bookmarks, search)
-  #   profileExtra ? {},
-  #   userChromeExtra ? "",
-  #   # Whether to pin navbar to bottom via CSS (default true)
-  #   bottomNavbar ? true,
-  #   # When true, do not inject default userChrome tweaks (return to stock UI)
-  #   vanillaChrome ? false,
-  # }
+  inherit nativeMessagingHosts settings extraConfig userChrome policies addons buildFirefoxXpiAddon remoteXpiAddon themeAddon mkMozillaModule mkProfileFiles mkExtensionFiles;
+  # mkBrowser: build a module fragment for programs.<name> (Home Manager style)
   mkBrowser = {
     name,
     package,
