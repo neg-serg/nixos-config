@@ -57,6 +57,7 @@
     ./web/defaults.nix
     ./web/browsing.nix
     ./dev.nix
+    ./editors.nix
     ./misc.nix
     ./text.nix
     ./distros.nix
