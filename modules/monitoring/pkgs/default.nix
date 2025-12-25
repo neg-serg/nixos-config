@@ -21,6 +21,7 @@ in {
       pkgs.perf # linux profile tools
       pkgs.linuxPackages_latest.turbostat # cpu monitor
       pkgs.nethogs # network traffic per process
+      pkgs.neg.adguardian_term # terminal dashboard for AdGuard Home
       pkgs.powertop # watch for power events
       pkgs.procdump # procdump for linux
       pkgs.sysstat # sar, iostat, mpstat, pidstat and friends

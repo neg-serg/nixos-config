@@ -9,6 +9,7 @@ inputs: _: prev: let
   in
     prev.callPackage path (autoArgs // extraArgs);
   # hydralauncherPkg = callPkg (inputs.self + "/packages/hydralauncher") {};  # Archived - not in use
+  nyarchAssistantPkg = callPkg (inputs.self + "/packages/nyarch-assistant") {};
   chainnerPkg = callPkg (inputs.self + "/packages/chainner") {};
   protonGeBin = prev.stdenv.mkDerivation rec {
     pname = "proton-ge-bin";
@@ -102,6 +103,8 @@ in {
   # hydralauncher = hydralauncherPkg;  # Archived - not in use
   # _hydra = hydralauncherPkg;  # Archived - not in use
   chainner = chainnerPkg;
+  "nyarch-assistant" = nyarchAssistantPkg;
+  "_nyarch-assistant" = nyarchAssistantPkg;
 
   flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") {};
 
