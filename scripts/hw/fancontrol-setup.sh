@@ -86,20 +86,24 @@ fi
 
 # Build DEVPATH/DEVNAME map with stable keys (hwmon1=nct, hwmon2=cpu, hwmon3=gpu [optional])
 devs=""
-names=""
-idx=1
+# names=""
+# idx=1
 add_dev() {
   local path="$1"
-  local base=$(basename "$path") # actual hwmonN symlink name
-  local name=$(cat "$path/name")
+  local base
+  base=$(basename "$path") # actual hwmonN symlink name
+  local name
+  name=$(cat "$path/name")
   # Align with fancontrol's expected DEVPATH: the real device target of $hwmon/device
-  local devtarget=$(readlink -f "$path/device" 2> /dev/null || true)
+  local devtarget
+  devtarget=$(readlink -f "$path/device" 2> /dev/null || true)
   if [ -n "$devtarget" ]; then
     # Strip leading /sys/
     devtarget=${devtarget#/sys/}
   else
     # Fallback to full path without /sys/
-    local full=$(readlink -f "$path")
+    local full
+    full=$(readlink -f "$path")
     devtarget=${full#/sys/}
   fi
   devs="$devs $base=$devtarget"
@@ -130,7 +134,8 @@ GPU_PWM_CHANNELS=${GPU_PWM_CHANNELS:-}
 # Choose a conservative default: start slightly above MIN_PWM.
 START_DELTA=${START_DELTA:-20}
 calc_minstart() {
-  local v=$((MIN_PWM + START_DELTA))
+  local v
+  v=$((MIN_PWM + START_DELTA))
   [ "$v" -gt "$MAX_PWM" ] && v=$MAX_PWM
   echo "$v"
 }
@@ -207,7 +212,7 @@ for pwm in "$nct_path"/pwm[1-9]; do
       break
     fi
   done
-  if [ "$use_gpu_temp" = true ] && [ -n "$gpu_path" ] && [ -n "$gpu_temp_name" ]; then
+  if [ "$use_gpu_temp" = "true" ] && [ -n "$gpu_path" ] && [ -n "$gpu_temp_name" ]; then
     fctemps="$fctemps $nct_base/$base=$gpu_base/$gpu_temp_name"
   else
     fctemps="$fctemps $nct_base/$base=$cpu_base/$cpu_temp_name"
