@@ -20,7 +20,7 @@ in {
     "adguardian-term" = adguardian_term;
     a2ln = callPkg (packagesRoot + "/a2ln") {};
 
-    bt_migrate = callPkg (packagesRoot + "/bt-migrate") {};
+    bt_migrate = prev.bt-migrate;
     "bt-migrate" = bt_migrate;
     cxxmatrix = callPkg (packagesRoot + "/cxxmatrix") {};
     comma = callPkg (packagesRoot + "/comma") {};
@@ -28,13 +28,13 @@ in {
     ls_iommu = callPkg (packagesRoot + "/ls-iommu") {};
     transmission_exporter = callPkg (packagesRoot + "/transmission-exporter") {};
     "transmission-exporter" = transmission_exporter;
-    hxtools = callPkg (packagesRoot + "/hxtools") {};
+    hxtools = prev.hxtools;
     tewi = callPkg (packagesRoot + "/tewi") {};
     two_percent = callPkg (packagesRoot + "/two_percent") {};
     "two-percent" = two_percent;
 
     antigravity = callPkg (packagesRoot + "/antigravity") {};
-    nemu = callPkg (packagesRoot + "/nemu") {};
+    nemu = prev.nemu;
     _nemu = nemu;
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
 
