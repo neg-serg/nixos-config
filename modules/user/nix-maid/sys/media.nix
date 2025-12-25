@@ -165,7 +165,7 @@ in
       ".config/mpd/playlists/.keep".text = "";
 
       # MPD RIS2 Config
-      ".config/mpdris2/mpdris2.conf".text = ''
+      ".config/mpDris2/mpDris2.conf".text = ''
         [Connection]
         host = localhost
         port = 6600
