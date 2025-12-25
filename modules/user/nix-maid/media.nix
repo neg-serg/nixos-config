@@ -81,16 +81,8 @@
     }
   '';
 
-  # --- RMPC Config ---
-  rmpcConfig = ''
-    [address]
-    host = "127.0.0.1"
-    port = 6600
-
-    [theme]
-    active_row_color = "magenta"
-    inactive_row_color = "white"
-  '';
+  # --- RMPC Source ---
+  rmpcSrc = ../../../files/rmpc;
 
   # --- Swayimg Config ---
   swayimgConfig = ''
@@ -147,7 +139,7 @@ in
       ".config/mpd/mpd.conf".text = mpdConfig;
 
       # RMPC
-      ".config/rmpc/config.toml".text = rmpcConfig;
+      ".config/rmpc".source = n.linkImpure rmpcSrc;
 
       # Swayimg
       ".config/swayimg/config".text = swayimgConfig;
