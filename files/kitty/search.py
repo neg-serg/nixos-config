@@ -17,7 +17,7 @@ from kittens.tui.operations import (
 )
 from kitty.config import cached_values_for
 from kitty.key_encoding import EventType
-from kitty.typing_compat import KeyEventType, ScreenSize
+from kitty.typing import KeyEventType, ScreenSize
 
 NON_SPACE_PATTERN = re.compile(r"\S+")
 SPACE_PATTERN = re.compile(r"\s+")
@@ -94,8 +94,8 @@ class Search(Handler):
         if self.error:
             with cursor(self.write):
                 self.print("")
-                for line in self.error.split("\n"):
-                    self.print(line)
+                for l in self.error.split("\n"):
+                    self.print(l)
 
     def refresh(self) -> None:
         self.draw_screen()
