@@ -1,7 +1,7 @@
 {
   imports = [
     ./args.nix
-    ./features.nix
+    ./features
     ./neg.nix
     ./profiles/services.nix
   ];
