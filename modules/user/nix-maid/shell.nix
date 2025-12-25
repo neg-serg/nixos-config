@@ -198,6 +198,11 @@ in {
 
       environment.sessionVariables = {
         ZDOTDIR = "$HOME/.config/zsh";
+        WORDCHARS = "*?_-.[]~&;!#$%^(){}<>~\\` ";
+        TERMINAL = "kitty";
+        MANWIDTH = "80";
+        GREP_COLOR = "37;45";
+        GREP_COLORS = "ms=0;32:mc=1;33:sl=:cx=:fn=1;32:ln=1;36:bn=36:se=1;30";
       };
     }
     (n.mkHomeFiles {

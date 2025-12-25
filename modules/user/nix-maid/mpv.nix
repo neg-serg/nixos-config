@@ -265,4 +265,9 @@ in
         Style: Default,Lucida Grande,20,&H00FFFFFF,&HF0000000,&H80000000,&HF0000000,0,0,0,0,100,100,0,0.00,1,2,0,2,30,30,20,1
       '';
     })
+
+    # 3. Environment Variables
+    {
+      environment.variables.MPV_HOME = "${config.users.users.neg.home}/.config/mpv";
+    }
   ])
