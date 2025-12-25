@@ -1,324 +1,646 @@
-# NixOS Configuration
+<div align="center">
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/neg-serg/nixos-config)
-[![NixOS](https://img.shields.io/badge/NixOS-24.11-blue?logo=nixos)](https://nixos.org)
-[![Commits](https://img.shields.io/badge/commits-4000+-orange)](https://github.com/neg-serg/nixos-config/commits)
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+```
+███╗   ██╗██╗██╗  ██╗ ██████╗ ███████╗    ██████╗ ██████╗ ███╗   ██╗███████╗██╗ ██████╗ 
+████╗  ██║██║╚██╗██╔╝██╔═══██╗██╔════╝   ██╔════╝██╔═══██╗████╗  ██║██╔════╝██║██╔════╝ 
+██╔██╗ ██║██║ ╚███╔╝ ██║   ██║███████╗   ██║     ██║   ██║██╔██╗ ██║█████╗  ██║██║  ███╗
+██║╚██╗██║██║ ██╔██╗ ██║   ██║╚════██║   ██║     ██║   ██║██║╚██╗██║██╔══╝  ██║██║   ██║
+██║ ╚████║██║██╔╝ ██╗╚██████╔╝███████║   ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝
+╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝    ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝ 
+```
 
-> **A comprehensive, modular NixOS configuration** focused on performance, developer productivity, and low-latency gaming.
+### 🚀 A Comprehensive, Modular NixOS Configuration
+**Performance-Tuned • Developer-Focused • Gaming-Optimized**
+
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge&logo=github)](https://github.com/neg-serg/nixos-config)
+[![NixOS](https://img.shields.io/badge/NixOS-24.11-5277C3?style=for-the-badge&logo=nixos&logoColor=white)](https://nixos.org)
+[![Hyprland](https://img.shields.io/badge/Hyprland-Dynamic_Tiling-00D9FF?style=for-the-badge&logo=wayland&logoColor=white)](https://hyprland.org)
+[![Commits](https://img.shields.io/badge/commits-4000+-FF6B35?style=for-the-badge&logo=git&logoColor=white)](https://github.com/neg-serg/nixos-config/commits)
+[![Stars](https://img.shields.io/github/stars/neg-serg/nixos-config?style=for-the-badge&logo=github)](https://github.com/neg-serg/nixos-config/stargazers)
+[![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
+
+---
+
+</div>
+
+## 📖 Table of Contents
+
+- [✨ Highlights](#-highlights)
+- [🚀 Quick Start](#-quick-start)
+- [📊 Project Statistics](#-project-statistics)
+- [🏗️ Architecture](#️-architecture)
+- [🎯 Key Features](#-key-features)
+- [🗂️ Module Categories](#️-module-categories)
+- [🔧 Development Workflow](#-development-workflow)
+- [🎮 Gaming Setup](#-gaming-setup)
+- [🌐 Hyprland Configuration](#-hyprland-configuration)
+- [🛠️ Custom Packages](#️-custom-packages)
+- [📚 Documentation](#-documentation)
+- [🤝 Contributing](#-contributing)
+
+---
+
+## ✨ Highlights
+
+> [!TIP]
+> **New to NixOS?** Check out the [User Manual](docs/manual/manual.en.md) for a comprehensive guide!
+
+🎯 **What makes this configuration special:**
+
+- 🚄 **Blazingly Fast Builds** - Optimized evaluation with module archiving
+- 🎮 **Gaming-First Design** - CPU isolation, low-latency optimizations, VRR support
+- 🔧 **Developer Paradise** - Multi-language support (Rust, C++, Haskell, Python), AI tools
+- 🎨 **Beautiful Hyprland** - 21 workspaces, 6 scratchpads, custom Quickshell panel
+- 📦 **52 Custom Packages** - Tailored tools for productivity and performance
+- 🧩 **Modular Architecture** - 32 categories, 404 files, crystal-clear organization
+- 🔄 **Continuous Integration** - Automated formatting, linting, and testing
+
+---
 
 ## 🚀 Quick Start
 
 ```bash
-# Clone the repository
+# 1️⃣ Clone the repository
 git clone https://github.com/neg-serg/nixos-config /etc/nixos
 cd /etc/nixos
 
-# Build and switch
+# 2️⃣ Build and switch (with flakes)
 sudo nixos-rebuild switch --flake .#telfir
 
-# Or use the helper script (if zcli is enabled)
+# 3️⃣ Or use the helper (if zcli is enabled)
 nh os switch
 ```
 
+> [!NOTE]
+> Replace `telfir` with your hostname if you're setting up a different machine.
+
+---
+
 ## 📊 Project Statistics
 
-| Metric | Count |
-|--------|-------|
-| **Module Categories** | 32 |
-| **Total Nix Files** | 404 |
-| **Custom Packages** | 52 |
-| **Total Commits** | 4000+ |
-| **Active Hosts** | 1 (telfir) |
-| **Archived Server Modules** | 28 |
+<div align="center">
+
+### 📈 By The Numbers
+
+| 📁 Category | 🔢 Count | 📊 Progress |
+|-------------|----------|-------------|
+| **Module Categories** | 32 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Nix Files** | 404 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Custom Packages** | 52 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Active Modules** | 376 | ![](https://geps.dev/progress/93?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Archived Modules** | 28 | ![](https://geps.dev/progress/7?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Total Commits** | 4000+ | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+
+</div>
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+graph TB
+    subgraph "🎯 Entry Point"
+        A[flake.nix]
+    end
+    
+    subgraph "🖥️ Host Configuration"
+        B[hosts/telfir]
+    end
+    
+    subgraph "📦 System Modules"
+        C[modules/features]
+        D[modules/cli]
+        E[modules/dev]
+        F[modules/gui]
+        G[modules/servers]
+    end
+    
+    subgraph "👤 User Configuration"
+        H[modules/user/nix-maid]
+        I[Hyprland Config]
+        J[Quickshell Panel]
+    end
+    
+    subgraph "🎁 Custom Packages"
+        K[packages/overlay]
+        L[Game Launchers]
+        M[Productivity Tools]
+    end
+    
+    A --> B
+    B --> C
+    B --> D
+    B --> E
+    B --> F
+    B --> G
+    H --> I
+    H --> J
+    C -.feature flags.-> D
+    C -.feature flags.-> E
+    K --> L
+    K --> M
+    
+    style A fill:#5277C3,color:#fff
+    style B fill:#00D9FF,color:#000
+    style H fill:#FF6B35,color:#fff
+    style K fill:#4CAF50,color:#fff
+```
+
+### 🔄 Build Flow
+
+```mermaid
+flowchart LR
+    A[📝 Edit Config] --> B{🔍 CI Checks}
+    B -->|✅ Pass| C[🎨 Format]
+    B -->|❌ Fail| A
+    C --> D[🔎 Lint]
+    D --> E[🏗️ Build]
+    E --> F{🧪 Test}
+    F -->|✅| G[🚀 Deploy]
+    F -->|❌| A
+    
+    style A fill:#5277C3,color:#fff
+    style G fill:#4CAF50,color:#fff
+    style B fill:#FF9800,color:#fff
+    style F fill:#FF9800,color:#fff
+```
+
+---
+
+## 🎯 Key Features
+
+<details open>
+<summary><h3>🎮 Performance & Gaming</h3></summary>
+
+- ⚡ **CPU Isolation** - Dedicated cores (14,15,30,31) for gaming
+- 🎯 **Custom Launch Scripts** - `game-run`, `gamescope-perf`, `gamescope-quality`, `gamescope-hdr`
+- 🚀 **Low-Latency Optimizations** - Kernel parameters, scheduler tweaks
+- 🖥️ **VRR Support** - Variable Refresh Rate via Gamescope
+- 🎪 **Immediate Mode** - For competitive games (CS2, osu!)
+
+> [!TIP]
+> **Steam Launch Options Example:**
+> ```bash
+> GAME_PIN_CPUSET=14,15,30,31 MANGOHUD=1 game-run gamescope -f --adaptive-sync -- %command%
+> ```
+
+</details>
+
+<details>
+<summary><h3>🔧 Development Environment</h3></summary>
+
+**Languages & Tools:**
+- 🦀 **Rust** - rustup, rust-analyzer, clippy, rustfmt
+- ⚙️ **C/C++** - GCC, Clang, CMake, Ninja, LLDB
+- 🎓 **Haskell** - GHC, Cabal, Stack, HLS
+- 🐍 **Python** - Multiple versions, LSP, utilities
+- 🤖 **AI/LLM** - Google Antigravity (optional), Codex integration
+- ☁️ **IaC** - Terraform/OpenTofu support
+- 🐳 **Containers** - Docker, Podman
+
+> [!NOTE]
+> Enable/disable languages via feature flags, e.g., `features.dev.rust.enable = true;`
+
+</details>
+
+<details>
+<summary><h3>🪟 Window Management</h3></summary>
+
+- 🎨 **Hyprland** - Dynamic tiling Wayland compositor
+- 🧩 **hy3 Plugin** - i3-inspired tiling behavior
+- 📐 **21 Workspaces** - Semantic routing (term, web, dev, games, etc.)
+- 💾 **6 Scratchpads** - Telegram, Discord, Music, Torrents, System, Mixer
+- 🎛️ **Quickshell Panel** - Custom status bar with system info
+
+</details>
+
+<details>
+<summary><h3>🎵 Media Stack</h3></summary>
+
+- 🎬 **Jellyfin** - Media server
+- 🎵 **MPD** - Music Player Daemon + clients (rmpc, ncmpcpp)
+- ⬇️ **Transmission** - Torrent client with custom TUI (tewi)
+- 🎨 **AI Upscaling** - Real-time video enhancement (optional)
+- 🔊 **PipeWire** - Modern audio server
+
+</details>
+
+---
 
 ## 🗂️ Repository Structure
 
 ```
-nixos-config/
-├── flake.nix                    # Flake entry point
-├── hosts/                       # Host-specific configurations
-│   └── telfir/                  # Primary workstation
-├── modules/                     # NixOS system modules
-│   ├── features/                # Feature flags & toggles (10 files)
-│   ├── cli/                     # CLI tools (11 consolidated files)
-│   ├── dev/                     # Development tools & languages
-│   ├── gui/                     # GUI applications
-│   ├── hardware/                # Hardware configuration
-│   ├── media/                   # Media applications
-│   ├── servers/                 # Server services
-│   │   └── _archive/            # Archived unused modules
-│   ├── system/                  # System configuration
-│   ├── user/                    # User-level configuration
-│   │   └── nix-maid/            # User home configuration
-│   │       ├── hyprland/        # Hyprland config (6 modules)
-│   │       └── ...
+📦 nixos-config/
+├── 📄 flake.nix                      # 🎯 Flake entry point
+├── 📂 hosts/                         # 🖥️ Host configurations
+│   └── 📁 telfir/                    # Primary workstation
+│       ├── hardware.nix
+│       ├── networking.nix
+│       └── services.nix
+├── 📂 modules/                       # 🧩 System modules (32 categories)
+│   ├── 📁 features/                  # ⚙️ Feature flags (10 files)
+│   │   ├── core.nix                 # Profile & unfree packages
+│   │   ├── gui.nix                  # GUI stack options
+│   │   ├── dev.nix                  # Development tools
+│   │   └── ...
+│   ├── 📁 cli/                       # 💻 CLI tools (11 files)
+│   │   ├── tools.nix                # 65 packages
+│   │   ├── dev.nix                  # Git, encoding, fetch
+│   │   └── ...
+│   ├── 📁 user/nix-maid/             # 👤 User configuration
+│   │   ├── 📁 hyprland/              # 🌊 Hyprland (6 modules)
+│   │   │   ├── main.nix
+│   │   │   ├── workspaces.nix      # 21 workspaces
+│   │   │   ├── scratchpads.nix     # 6 scratchpads
+│   │   │   └── ...
+│   │   └── ...
+│   ├── 📁 servers/                   # 🖧 Server services
+│   │   ├── active services/         # 7 active
+│   │   └── 📁 _archive/              # 28 archived
 │   └── ...
-├── packages/                    # Custom package overlays (52)
-├── files/                       # Configuration files
-│   ├── gui/hypr/                # Hyprland configs
-│   ├── quickshell/              # Quickshell panel
-│   └── scripts/                 # Utility scripts
-├── scripts/dev/                 # Development & CI scripts
-├── docs/                        # Documentation
-│   └── manual/                  # User manual
-└── .github/workflows/           # CI/CD workflows
+├── 📂 packages/                      # 🎁 Custom overlays (52)
+│   ├── game-run/
+│   ├── gamescope-*/
+│   ├── rmpc/
+│   └── ...
+├── 📂 files/                         # 📝 Config files
+│   ├── 📁 gui/hypr/                  # Hyprland configs
+│   ├── 📁 quickshell/                # Panel configuration
+│   └── 📁 scripts/                   # Utility scripts
+├── 📂 scripts/dev/                   # 🔧 Dev & CI scripts
+├── 📂 docs/                          # 📚 Documentation
+│   └── 📁 manual/                    # User manual
+└── 📂 .github/workflows/             # ⚙️ CI/CD pipelines
 ```
-
-## 🎯 Key Features
-
-### Performance & Gaming
-- **CPU Isolation** for dedicated gaming cores (14,15,30,31)
-- **Custom launch scripts** (`game-run`, `gamescope-*`)
-- **Low-latency optimizations** throughout the stack
-- **VRR support** via Gamescope
-
-### Development Environment
-- **Multi-language support:** Rust, C/C++, Haskell, Python
-- **AI/LLM tools:** Google Antigravity (optional)
-- **IaC:** Terraform/OpenTofu support
-- **Container runtime:** Docker/Podman
-
-### Window Management
-- **Hyprland** with hy3 plugin (i3-inspired tiling)
-- **21 workspaces** with semantic routing
-- **6 pyprland scratchpads** for quick access
-- **Quickshell** panel for status bar
-
-### Media Stack
-- **Jellyfin** media server
-- **MPD** + clients (rmpc, ncmpcpp)
-- **Transmission** torrent client
-- **AI upscaling** support (optional)
-
-## 📚 Module Categories
-
-<details>
-<summary><strong>Core Modules (16)</strong></summary>
-
-- **args** - Module arguments & impurity support
-- **features** - Feature flags (10 sub-modules)
-- **neg** - Custom library helpers
-- **profiles** - Service profiles
-- **roles** - Role-based configs (homelab, workstation, media, monitoring)
-
-</details>
-
-<details>
-<summary><strong>System (8)</strong></summary>
-
-- **boot** - Boot loader configuration
-- **hardware** - Hardware-specific settings
-- **kernel** - Kernel configuration
-- **net** - Networking (VPN, firewall)
-- **security** - Security hardening
-- **virt** - Virtualization (QEMU, Docker, Podman)
-
-</details>
-
-<details>
-<summary><strong>Desktop/GUI (12)</strong></summary>
-
-- **gui** - Hyprland, Wayland, Qt
-- **fonts** - Font configuration
-- **media** - Audio/video applications
-- **quickshell** - Panel configuration
-- **theme** - GTK/Qt theming
-
-</details>
-
-<details>
-<summary><strong>Development (6)</strong></summary>
-
-- **dev** - Programming languages & tools
-- **llm** - LLM integration (Codex, etc.)
-- **text** - Text editors & viewers
-
-</details>
-
-<details>
-<summary><strong>Web & Communication (4)</strong></summary>
-
-- **web** - Browsers (Floorp, Firefox, Nyxt, Yandex)
-- **mail** - Email clients (notmuch, isync)
-- **torrent** - Torrent clients
-
-</details>
-
-<details>
-<summary><strong>Servers (7 active + 28 archived)</strong></summary>
-
-**Active:**
-- adguardhome, avahi, caddy, jellyfin, mpd, nextcloud, openssh
-
-**Archived** (in `_archive/`):
-- Media: plex, sonarr, radarr, prowlarr, sabnzbd
-- AI: vllm, whisper, open-webui, tts-webui
-- Services: gitea, portainer, syncthing, seafile
-
-</details>
-
-## 🔧 Development Workflow
-
-### Local Development
-
-```bash
-# Enter development shell
-nix develop
-
-# Format all code
-just fmt
-
-# Run all checks (format, lint, flake check)
-just check
-
-# Build configuration without switching
-just build
-
-# Update flake inputs
-just update
-```
-
-### Git Hooks
-
-Pre-commit hooks automatically format and lint code:
-
-```bash
-# Enable hooks
-just hooks-enable
-
-# Disable hooks
-just hooks-disable
-```
-
-### CI/CD
-
-GitHub Actions run on every push:
-- Code formatting (alejandra)
-- Linting (deadnix, statix)
-- NixOS configuration evaluation
-- Custom checks (CSS, QML, shell scripts)
-
-## 🎨 Customization
-
-### Feature Flags
-
-Configure features in `hosts/telfir/services.nix`:
-
-```nix
-features = {
-  gui.enable = true;
-  gui.hy3.enable = true;
-  dev.rust.enable = true;
-  web.floorp.enable = true;
-  # ... many more options
-};
-```
-
-See [`modules/features/`](modules/features/) for all available options.
-
-### Profiles
-
-- **`full`** (default): All features enabled
-- **`lite`**: Minimal feature set for lightweight systems
-
-### Roles
-
-- **`workstation`**: Desktop-first setup with performance optimizations
-- **`homelab`**: Self-hosting services (AdGuard, Nextcloud, etc.)
-- **`media`**: Media server (Jellyfin, MPD)
-- **`monitoring`**: System monitoring (netdata, sysstat)
-
-## 📖 Documentation
-
-- **[User Manual](docs/manual/manual.en.md)** - Comprehensive guide
-- **[Walkthrough](https://github.com/neg-serg/nixos-config/tree/master/.gemini)** - Recent improvements
-- **[Package Annotations](modules/)** - Inline comments for all packages
-
-## 🛠️ Custom Packages
-
-This configuration includes **52 custom packages** in the overlay:
-
-**Notable packages:**
-- `game-run` - CPU isolation wrapper for games
-- `gamescope-*` - Gamescope launchers with presets
-- `rmpc` - Modern MPD client (Rust)
-- `tewi` - Transmission TUI
-- `two_percent` - Optimized fuzzy finder
-- `duf` - Better df with plain style
-- `comma` - Nix ,command wrapper
-- `pretty_printer` - CLI formatting utility
-
-See [`packages/`](packages/) for the full list.
-
-## 🎮 Gaming Setup
-
-### CPU Isolation
-
-This configuration reserves CPUs 14,15,30,31 exclusively for gaming, preventing system services from interrupting game performance.
-
-### Launch Wrappers
-
-```bash
-# Basic CPU pinning
-game-run %command%
-
-# With Gamescope (VRR + adaptive sync)
-game-run gamescope -f --adaptive-sync -- %command%
-
-# Performance preset
-gamescope-perf %command%
-
-# Quality preset
-gamescope-quality %command%
-
-# HDR support
-gamescope-hdr %command%
-```
-
-### Environment Variables
-
-- `GAME_PIN_CPUSET`: Override CPU set for specific game
-- `GAME_RUN_USE_GAMEMODE`: Enable/disable gamemode
-- `MANGOHUD`: Enable performance overlay
-
-## 🌐 Hyprland Configuration
-
-**21 Workspaces:**
-- 𐌰:term, 𐌱:web, 𐌲:dev, 𐌸:games, 𐌳:doc, 𐌴:draw, 𐌵:vid
-- 𐌶:obs, 𐌷:pic, 𐌹:sys, 𐌺:vm, 𐌻:wine, 𐌼:patchbay
-- 𐌽:daw, 𐌾:dw, 𐌿:keyboard, 𐍀:im, 𐍁:remote
-- Ⲣ:notes, 𐍅:winboat (floating), 𐍇:antigravity
-
-**6 Scratchpads:**
-- `im` - Telegram
-- `discord` - Vesktop
-- `music` - RMPC
-- `torrment` - Tewi
-- `teardown` - Btop
-- `mixer` - Pwvucontrol
-
-## 🤝 Contributing
-
-This is a personal configuration, but contributions are welcome:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run `just check` to verify
-5. Submit a pull request
-
-## 📝 License
-
-This configuration is available under the MIT License.
-
-## 🙏 Acknowledgments
-
-- [NixOS](https://nixos.org) - The reproducible Linux distribution
-- [Hyprland](https://hyprland.org) - Dynamic tiling Wayland compositor
-- [Home Manager](https://github.com/nix-community/home-manager) - User environment management
-- [nix-community](https://github.com/nix-community) - Various Nix tools and libraries
 
 ---
 
+## 🗂️ Module Categories
+
+<div align="center">
+
+### 📊 Module Distribution
+
+```mermaid
+pie title Module Categories Distribution
+    "System (8)" : 8
+    "Desktop/GUI (12)" : 12
+    "Development (6)" : 6
+    "Web & Comm (4)" : 4
+    "Core (16)" : 16
+    "Servers (7)" : 7
+    "Other (9)" : 9
+```
+
+</div>
+
+<details>
+<summary><h3>🎯 Core Modules (16)</h3></summary>
+
+| Module | Description | Files |
+|--------|-------------|-------|
+| 🎛️ **args** | Module arguments & impurity | 1 |
+| ⚙️ **features** | Feature flags system | 10 |
+| 📚 **neg** | Custom library helpers | 1 |
+| 👥 **profiles** | Service profiles | 1 |
+| 🎭 **roles** | Role configs (homelab, workstation, media) | 4 |
+
+</details>
+
+<details>
+<summary><h3>💻 System Modules (8)</h3></summary>
+
+- 🚀 **boot** - Boot loader & kernel
+- 🔧 **hardware** - Hardware-specific settings
+- 🌐 **net** - VPN, firewall, networking
+- 🔒 **security** - Hardening & authentication
+- 🖥️ **virt** - QEMU, Docker, Podman
+
+</details>
+
+<details>
+<summary><h3>🎨 Desktop/GUI Modules (12)</h3></summary>
+
+- 🪟 **gui** - Hyprland, Wayland, Qt
+- 🔤 **fonts** - Font configuration
+- 🎵 **media** - Audio/video apps
+- 🎛️ **quickshell** - Panel config
+- 🌈 **theme** - GTK/Qt theming
+
+</details>
+
+<details>
+<summary><h3>🔧 Development Modules (6)</h3></summary>
+
+- 💻 **dev** - Languages & tools
+- 🤖 **llm** - LLM integration
+- 📝 **text** - Editors & viewers
+- 🗃️ **db** - Databases
+- 📚 **documentation** - Doc generators
+
+</details>
+
+<details>
+<summary><h3>🌐 Web & Communication (4)</h3></summary>
+
+- 🌍 **web** - Browsers (Floorp, Firefox, Nyxt, Yandex)
+- 📧 **mail** - Email (notmuch, isync)
+- ⬇️ **torrent** - Torrent clients
+- 💬 **im** - Instant messaging
+
+</details>
+
+<details>
+<summary><h3>🖧 Server Modules (7 active + 28 archived)</h3></summary>
+
+**🟢 Active Services:**
+| Service | Purpose |
+|---------|---------|
+| 🔒 adguardhome | DNS-level ad blocking |
+| 📡 avahi | mDNS/DNS-SD |
+| 🌐 caddy | Web server & reverse proxy |
+| 🎬 jellyfin | Media streaming |
+| 🎵 mpd | Music Player Daemon |
+| ☁️ nextcloud | Cloud storage & sync |
+| 🔑 openssh | Remote access |
+
+**🔴 Archived** (in `_archive/`, 28 modules):
+- 📦 **Media Stack:** plex, sonarr, radarr, prowlarr, sabnzbd, qbittorrent-vpn
+- 🤖 **AI/LLM:** vllm, whisper, open-webui, tts-webui, wyoming-openai
+- 🛠️ **Services:** gitea, portainer, syncthing, seafile, qdrant
+
+> [!CAUTION]
+> Archived modules are preserved but not evaluated during builds to improve performance.
+
+</details>
+
+---
+
+## 🔧 Development Workflow
+
+### 🏃 Quick Commands
+
+```bash
+# 🐚 Enter development shell with all tools
+nix develop
+
+# 🎨 Format all code (alejandra)
+just fmt
+
+# 🔍 Run all checks (format + lint + build)
+just check
+
+# 🏗️ Build without switching
+just build
+
+# 🔄 Update flake inputs
+just update
+
+# 🪝 Enable/disable git hooks
+just hooks-enable
+just hooks-disable
+```
+
+### 🔄 CI/CD Pipeline
+
+> [!IMPORTANT]
+> All changes are automatically validated via GitHub Actions
+
+```mermaid
+graph LR
+    A[📝 Push] --> B[🎨 Format Check]
+    B --> C[🔎 Lint Check]
+    C --> D[🧪 Build Test]
+    D --> E[✅ NixOS Eval]
+    E --> F[🎯 Custom Checks]
+    F --> G{All Pass?}
+    G -->|Yes| H[✅ Success]
+    G -->|No| I[❌ Fail]
+    
+    style A fill:#5277C3,color:#fff
+    style H fill:#4CAF50,color:#fff
+    style I fill:#f44336,color:#fff
+```
+
+**Automated Checks:**
+- ✅ Code formatting (alejandra)
+- ✅ Dead code detection (deadnix)
+- ✅ Static analysis (statix)
+- ✅ CSS syntax validation
+- ✅ QML linting
+- ✅ Shell script checks
+- ✅ Full config evaluation
+
+---
+
+## 🎮 Gaming Setup
+
+### ⚡ CPU Isolation Architecture
+
+> [!TIP]
+> **Pro Tip:** Reserve specific CPU cores for gaming to eliminate system interrupts!
+
+```mermaid
+graph TB
+    subgraph "🖥️ CPU Core Layout"
+        subgraph "🏠 Housekeeping Cores"
+            A[Core 0-13]
+            B[Core 16-29]
+        end
+        subgraph "🎮 Gaming Cores ISOLATED"
+            C[Core 14]
+            D[Core 15]
+            E[Core 30]
+            F[Core 31]
+        end
+    end
+    
+    G[System Services] --> A
+    G --> B
+    H[🎮 Games] --> C
+    H --> D
+    H --> E
+    H --> F
+    
+    style C fill:#4CAF50,color:#fff
+    style D fill:#4CAF50,color:#fff
+    style E fill:#4CAF50,color:#fff
+    style F fill:#4CAF50,color:#fff
+    style H fill:#FF6B35,color:#fff
+```
+
+### 🚀 Launch Wrappers
+
+```bash
+# 🎯 Basic CPU pinning
+game-run %command%
+
+# 🖥️ With Gamescope (VRR + adaptive sync)
+game-run gamescope -f --adaptive-sync -- %command%
+
+# ⚡ Performance preset (low latency)
+gamescope-perf %command%
+
+# 🎨 Quality preset (visual fidelity)
+gamescope-quality %command%
+
+# 🌈 HDR support
+gamescope-hdr %command%
+```
+
+> [!NOTE]
+> **Steam Launch Options Example (Competitive FPS):**
+> ```bash
+> GAME_PIN_CPUSET=14,15,30,31 MANGOHUD=1 game-run gamescope -f --adaptive-sync -- %command%
+> ```
+
+### 🎛️ Environment Variables
+
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `GAME_PIN_CPUSET` | Override CPU cores | `14,15,30,31` |
+| `GAME_RUN_USE_GAMEMODE` | Toggle gamemode | `0` or `1` |
+| `MANGOHUD` | Performance overlay | `1` |
+
+---
+
+## 🌐 Hyprland Configuration
+
+### 📐 21 Workspaces
+
+<div align="center">
+
+| ID | Name | Icon | Purpose |
+|----|------|------|---------|
+| 1 | 𐌰:term | 💻 | Terminal |
+| 2 | 𐌱:web | 🌐 | Web browsing |
+| 3 | 𐌲:dev | 🔧 | Development |
+| 4 | 𐌸:games | 🎮 | Gaming |
+| 5 | 𐌳:doc | 📄 | Documents |
+| 6 | 𐌴:draw | 🎨 | Graphics |
+| 7 | 𐌵:vid | 📹 | Video |
+| 8 | 𐌶:obs | 🎥 | OBS Studio |
+| 9 | 𐌷:pic | 🖼️ | Pictures |
+| 10 | 𐌹:sys | ⚙️ | System |
+| 11 | 𐌺:vm | 💿 | Virtual Machines |
+| 12 | 𐌻:wine | 🍷 | Wine/Proton |
+| 13 | 𐌼:patchbay | 🎚️ | Audio Patchbay |
+| 14 | 𐌽:daw | 🎹 | DAW |
+| 15 | 𐌾:dw | 📊 | Data/DWM |
+| 16 | 𐌿:keyboard | ⌨️ | Keyboard tools |
+| 17 | 𐍀:im | 💬 | Instant Messaging |
+| 18 | 𐍁:remote | 🖥️ | Remote Desktop |
+| 19 | Ⲣ:notes | 📝 | Notes |
+| 20 | 𐍅:winboat | 🪟 | Windows VM (floating) |
+| 21 | 𐍇:antigravity | 🤖 | AI IDE |
+
+</div>
+
+### 💾 6 Pyprland Scratchpads
+
+Quick-access overlays for common applications:
+
+| Scratchpad | App | Keybind | Size |
+|------------|-----|---------|------|
+| 💬 **im** | Telegram | `Super+I` | 30% × 95% |
+| 🎮 **discord** | Vesktop | `Super+D` | 50% × 40% |
+| 🎵 **music** | RMPC | `Super+M` | 70% × 40% |
+| ⬇️ **torrment** | Tewi | `Super+T` | 98% × 40% |
+| 📊 **teardown** | Btop | `Super+B` | 98% × 50% |
+| 🔊 **mixer** | Pwvucontrol | `Super+V` | 40% × 90% |
+
+---
+
+## 🛠️ Custom Packages
+
+**52 Custom Packages** tailored for productivity and performance:
+
+### 🎮 Gaming Tools
+- `game-run` - CPU isolation wrapper
+- `gamescope-perf` - Performance preset launcher
+- `gamescope-quality` - Quality preset launcher
+- `gamescope-hdr` - HDR-enabled launcher
+
+### 🎵 Media
+- `rmpc` - Modern MPD client (Rust)
+- `tewi` - Transmission TUI
+
+### 💻 Productivity
+- `two_percent` - Optimized fuzzy finder (skim fork)
+- `duf` - Better `df` with plain style
+- `comma` - Nix `,command` wrapper
+- `pretty_printer` - CLI formatting utility
+
+> [!NOTE]
+> See [`packages/`](packages/) for the complete list.
+
+---
+
+## 📚 Documentation
+
+| Resource | Description |
+|----------|-------------|
+| 📖 [User Manual](docs/manual/manual.en.md) | Comprehensive guide |
+| 🎯 [Walkthrough](https://github.com/neg-serg/nixos-config/tree/master/.gemini) | Recent improvements |
+| 💬 [Package Annotations](modules/) | Inline comments |
+| 🔧 [CI Scripts](scripts/dev/) | Development tools |
+
+---
+
+## 🤝 Contributing
+
+> [!IMPORTANT]
+> This is a personal configuration, but contributions are welcome!
+
+### 📝 Guidelines
+
+1. 🍴 Fork the repository
+2. 🌿 Create a feature branch
+3. ✏️ Make your changes
+4. ✅ Run `just check` to verify
+5. 📬 Submit a pull request
+
+### 🎨 Code Style
+
+- ✅ Use `alejandra` for formatting
+- ✅ Add comments for all packages
+- ✅ Follow existing patterns
+- ✅ Test thoroughly before submitting
+
+---
+
+## 📜 License
+
+This configuration is available under the **MIT License**.
+
+---
+
+## 🙏 Acknowledgments
+
+<div align="center">
+
+**Built with amazing open-source technologies**
+
+[![NixOS](https://img.shields.io/badge/NixOS-5277C3?style=for-the-badge&logo=nixos&logoColor=white)](https://nixos.org)
+[![Hyprland](https://img.shields.io/badge/Hyprland-00D9FF?style=for-the-badge&logo=wayland&logoColor=black)](https://hyprland.org)
+[![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)](https://rust-lang.org)
+
+Special thanks to:
+- 🎯 [NixOS](https://nixos.org) - The reproducible Linux distribution
+- 🌊 [Hyprland](https://hyprland.org) - Dynamic tiling Wayland compositor
+- 🏠 [Home Manager](https://github.com/nix-community/home-manager) - User environment management
+- 👥 [nix-community](https://github.com/nix-community) - Tools and libraries
+
+</div>
+
+---
+
+<div align="center">
+
+### 🌟 Star this repo if you find it useful!
+
 **Last Updated:** December 2025 • **Version:** 24.11 • **Commits:** 4000+
+
+Made with ❤️ and ☕ by [neg-serg](https://github.com/neg-serg)
+
+</div>
