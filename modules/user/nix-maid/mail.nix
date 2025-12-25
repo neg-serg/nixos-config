@@ -141,10 +141,28 @@ in {
         account default : ${account.name}
       '';
 
+      # Environment Variables
+      # Note: Notmuch default config location is ~/.notmuch-config, but we explicitly set it here
+      # in case we want to move it later or purely for variable completeness.
+      # However, the file generated below is at ~/.notmuch-config.
+      # If we wanted to follow XDG, we'd put it in .config/notmuch/config and set this variable.
+      # For now, matching the legacy/standard notmuch path.
+      # BUT, envs.nix had: NOTMUCH_CONFIG = "${configHome}/notmuch/notmuchrc";
+      # Let's honor the refactoring plan but notice the discrepancy.
+      # The mkHomeFiles below currently writes to ".notmuch-config" (home root).
+      # To clean this up, let's move the file to XDG and set the variable.
+    })
+
+    {
+      environment.variables.NOTMUCH_CONFIG = "${config.users.users.neg.home}/.config/notmuch/notmuchrc";
+    }
+
+    (n.mkHomeFiles {
+      # ... (existing files)
       # ========================================================================
       # NOTMUCH
       # ========================================================================
-      ".notmuch-config".text = ''
+      ".config/notmuch/notmuchrc".text = ''
         [database]
         path=${config.users.users.neg.home}/.local/mail
 
