@@ -7,7 +7,6 @@
     [
       pkgs.hyprlock # Hyprland's GPU-accelerated screen locking utility
       pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
-      pkgs.playerctl # Command-line controller for media players
       pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
       pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
       pkgs.wl-ocr # Wayland OCR tool
@@ -26,7 +25,7 @@
         esac
         exec dbus-send \
           --print-reply \
-          --dest="org.mpris.MediaPlayer2.$(playerctl -l | head -n 1)" \
+          --dest="org.mpris.MediaPlayer2.$(${lib.getExe pkgs.playerctl} -l | head -n 1)" \
           /org/mpris/MediaPlayer2 \
           "org.mpris.MediaPlayer2.Player.$MEMBER"
       '')
