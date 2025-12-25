@@ -52,7 +52,7 @@
         # Import environment
         echo "Importing environment..." >> "$LOG"
         dbus-update-activation-environment --systemd --all
-        systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE
+        systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL
 
         # Stop any stale portals or session targets to force clean state
         echo "Cleaning stale session state..." >> "$LOG"
