@@ -67,6 +67,7 @@
     sticker_file       "~/.config/mpd/sticker.sql"
 
     auto_update "yes"
+    bind_to_address "localhost"
 
     audio_output {
       type "pipewire"
