@@ -7,7 +7,7 @@
   eval = lib.evalModules {
     modules = [
       # Include the features module
-      (self + "/modules/features.nix")
+      (self + "/modules/features")
       # Mock necessary config for evaluation
       ({lib, ...}: {
         config._module.check = false;
