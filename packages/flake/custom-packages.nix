@@ -15,6 +15,8 @@
   playscii = pkgs.neg.playscii;
   two_percent = pkgs.neg.two_percent;
   subsonic-tui = pkgs.subsonic-tui;
+  pyprland = pkgs.pyprland;
+  pyprland_fixed = pkgs.pyprland_fixed;
 
   # mcp-server-filesystem = pkgs.neg.mcp_server_filesystem;
   # mcp-ripgrep = pkgs.neg.mcp_ripgrep;

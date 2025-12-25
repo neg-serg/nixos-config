@@ -115,5 +115,17 @@ in {
 
   windows95 = callPkg (inputs.self + "/packages/windows95") {};
 
-  pyprland = inputs.pyprland.packages.${prev.stdenv.hostPlatform.system}.pyprland;
+  pyprland_fixed = prev.python3Packages.buildPythonApplication rec {
+    pname = "pyprland";
+    version = "2.5.0";
+    src = prev.fetchFromGitHub {
+      owner = "hyprland-community";
+      repo = "pyprland";
+      rev = "e82637d73207abd634a96ea21fa937455374d131";
+      hash = "sha256-0znrp6x143dmh40nihlkzyhpqzl56jk7acvyjkgyi6bchzp4a7kn";
+    };
+    format = "pyproject";
+    nativeBuildInputs = [prev.python3Packages.poetry-core];
+    propagatedBuildInputs = with prev.python3Packages; [aiofiles asyncio-dgram];
+  };
 }

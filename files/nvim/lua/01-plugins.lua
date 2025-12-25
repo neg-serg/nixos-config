@@ -44,18 +44,26 @@ if ok and nixCats.lazy then
     })
 else
     local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-    if not vim.loop.fs_stat(lazypath) then
-        vim.fn.system({
-            "git",
-            "clone",
-            "--filter=blob:none",
-            "https://github.com/folke/lazy.nvim.git",
-            "--branch=stable",
-            lazypath,
-        })
+    -- Check if lazy is already available (e.g. from nvf startPlugins)
+    local lazy_present, _ = pcall(require, "lazy")
+    
+    if not lazy_present then
+        if not vim.loop.fs_stat(lazypath) then
+            vim.fn.system({
+                "git",
+                "clone",
+                "--filter=blob:none",
+                "https://github.com/folke/lazy.nvim.git",
+                "--branch=stable",
+                lazypath,
+            })
+        end
+        vim.opt.rtp:prepend(lazypath)
+        lazy = require("lazy")
+    else
+        lazy = require("lazy")
     end
-    vim.opt.rtp:prepend(lazypath)
-    lazy = require("lazy")
+    
     lazy.setup({
         lockfile = lockfile,
         spec = { { import = "plugins" } },
