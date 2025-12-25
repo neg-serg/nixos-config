@@ -37,7 +37,7 @@
     ./enchant.nix
     ./nethack.nix
     ./television.nix
-    ./hyprland.nix
+    ./hyprland/main.nix
     ./media.nix
     ./mail.nix
     ./autoclick.nix
