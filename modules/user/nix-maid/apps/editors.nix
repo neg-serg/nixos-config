@@ -10,7 +10,7 @@
   devEnabled = config.features.dev.enable or false;
 
   # Helix Config Source
-  helixSrc = ../../../files/helix;
+  helixSrc = ../../../../files/helix;
 in
   lib.mkIf devEnabled (lib.mkMerge [
     {

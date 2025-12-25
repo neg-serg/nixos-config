@@ -8,7 +8,7 @@
 }: let
   n = neg impurity;
   cfg = config.features.cli.broot;
-  brootRoot = ../../../files/shell/broot;
+  brootRoot = ../../../../files/shell/broot;
 in
   lib.mkIf (cfg.enable or false) (lib.mkMerge [
     {

@@ -9,7 +9,7 @@
 in
   lib.mkIf config.features.web.enable (n.mkHomeFiles (let
     # Use relative path to home/files for stability
-    base = ../../../files/misc/tridactyl;
+    base = ../../../../files/misc/tridactyl;
     rcPath = "${base}/tridactylrc";
     themesPath = base + "/themes";
     mozillaPath = base + "/mozilla";

@@ -8,7 +8,7 @@
 }: let
   n = neg impurity;
   cfg = config.features.torrent;
-  filesRoot = ../../../files;
+  filesRoot = ../../../../files;
 
   transmissionPkg = pkgs.transmission_4;
   confDirNew = "${config.users.users.neg.home}/.config/transmission-daemon";

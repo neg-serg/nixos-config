@@ -8,7 +8,7 @@
 }: let
   n = neg impurity;
   cfg = config.features.cli.television;
-  filesRoot = ../../../files;
+  filesRoot = ../../../../files;
 in {
   config = lib.mkIf (cfg.enable or false) (lib.mkMerge [
     {

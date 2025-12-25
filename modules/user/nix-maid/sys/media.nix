@@ -82,13 +82,13 @@
   '';
 
   # --- RMPC Source ---
-  rmpcSrc = ../../../files/rmpc;
+  rmpcSrc = ../../../../files/rmpc;
 
   # --- Swayimg Source ---
-  swayimgSrc = ../../../files/gui/swayimg;
+  swayimgSrc = ../../../../files/gui/swayimg;
 
   # --- NCPAMixer Source ---
-  ncpamixerConf = ../../../files/gui/ncpamixer.conf;
+  ncpamixerConf = ../../../../files/gui/ncpamixer.conf;
 in
   lib.mkMerge [
     {

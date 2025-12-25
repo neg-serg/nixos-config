@@ -8,7 +8,7 @@
 }: let
   n = neg impurity;
   cfg = config.features.gui.walker;
-  walkerRoot = ../../../files/walker;
+  walkerRoot = ../../../../files/walker;
 in
   lib.mkIf (cfg.enable or false) (lib.mkMerge [
     {

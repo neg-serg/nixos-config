@@ -3,7 +3,7 @@
   config,
   ...
 }: let
-  secretsDir = ../../../secrets/home;
+  secretsDir = ../../../../secrets/home;
   hasGitHubToken = builtins.pathExists "${secretsDir}/github-token.sops.yaml";
   hasCachixEnv = builtins.pathExists "${secretsDir}/cachix.env";
   hasVdirsyncerGoogle = builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml";

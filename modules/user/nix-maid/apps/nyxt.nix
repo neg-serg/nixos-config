@@ -11,7 +11,7 @@ in {
   config = lib.mkIf (config.features.web.enable && config.features.web.nyxt.enable) (let
     nyxt4 = null;
     dlDir = "${config.users.users.neg.home}/dw";
-    tpl = builtins.readFile ./web/nyxt/init.lisp;
+    tpl = builtins.readFile ../web/nyxt/init.lisp;
     rendered = lib.replaceStrings ["@DL_DIR@"] [dlDir] tpl;
   in
     lib.mkMerge [

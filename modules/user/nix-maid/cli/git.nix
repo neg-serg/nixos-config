@@ -139,13 +139,13 @@ in {
       text = lib.generators.toGitINI gitSettings;
     };
     ".config/git/ignore" = {
-      source = ../../../files/git/ignore;
+      source = ../../../../files/git/ignore;
     };
     ".config/git/hooks/pre-commit" = {
-      source = ../../../files/git/hooks/pre-commit.sh;
+      source = ../../../../files/git/hooks/pre-commit.sh;
     };
     ".config/git/hooks/commit-msg" = {
-      source = ../../../files/git/hooks/commit-msg.sh;
+      source = ../../../../files/git/hooks/commit-msg.sh;
     };
   };
 }
