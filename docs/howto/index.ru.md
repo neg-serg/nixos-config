@@ -18,6 +18,4 @@
 
 - DeepFaceLab через Docker (RU): [deepfacelab-docker.ru.md](./deepfacelab-docker.ru.md)
 
-- TODO по запасным алиасам Aliae: [aliae-fallback-todo.md](./aliae-fallback-todo.md)
-
 - Справочник опций/модулей: [modules.md](./modules.md)
