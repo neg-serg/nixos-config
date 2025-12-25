@@ -245,7 +245,7 @@ in {
           after = ["graphical-session.target"];
           wantedBy = ["graphical-session.target"];
           serviceConfig = {
-            ExecStart = "${pkgs.swayosd}/bin/swayosd-libinput-backend";
+            ExecStart = "${lib.getExe' pkgs.swayosd "swayosd-libinput-backend"}";
             Restart = "always";
           };
         };
