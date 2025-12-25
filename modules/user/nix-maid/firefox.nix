@@ -8,7 +8,6 @@
   inputs,
   ...
 }: let
-  n = neg impurity;
   cfg = config.features.web.firefox;
   guiEnabled = config.features.gui.enable or false;
 
@@ -24,8 +23,7 @@
   };
   inherit (import ./web/firefox-prefgroups.nix {inherit lib;}) modules prefgroups;
 
-  # Import addon helpers from common library (DRY)
-  inherit (mozillaCommon) remoteXpiAddon themeAddon;
+  inherit (mozillaCommon) remoteXpiAddon themeAddon mkMozillaModule;
 
   firefoxAddons = pkgs.nur.repos.rycee.firefox-addons;
 
@@ -204,38 +202,9 @@
       extensions = [];
     };
   };
-
-  mkExtensionFiles = _profileName: profilePath: extensions:
-    lib.mkMerge (map (ext: let
-        extId = ext.addonId or (throw "Extension ${ext.name} has no addonId");
-        xpiPath = "${ext}/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/${extId}.xpi";
-      in {
-        ".mozilla/firefox/${profilePath}/extensions/${extId}.xpi".source = xpiPath;
-      })
-      extensions);
-
-  mkProfileFiles = name: profile:
-    lib.mkMerge [
-      {
-        ".mozilla/firefox/${profile.path}/user.js".text = n.mkUserJs profile.settings;
-      }
-      (lib.mkIf (profile.userChrome != "") {
-        ".mozilla/firefox/${profile.path}/chrome/userChrome.css".text = profile.userChrome;
-      })
-      (mkExtensionFiles name profile.path (profile.extensions or []))
-    ];
-in {
-  config = lib.mkIf (guiEnabled && (cfg.enable or false)) (lib.mkMerge [
-    {
-      environment.systemPackages = [pkgs.firefox-devedition]; # Firefox Developer Edition browser
-
-      nixpkgs.overlays = [inputs.nur.overlays.default];
-    }
-    (n.mkHomeFiles (lib.mkMerge (
-      [
-        {".mozilla/firefox/profiles.ini".text = n.mkProfilesIni profiles;}
-      ]
-      ++ (lib.mapAttrsToList mkProfileFiles profiles)
-    )))
-  ]);
-}
+in
+  mkMozillaModule {
+    inherit impurity neg cfg guiEnabled profiles;
+    package = pkgs.firefox-devedition;
+    overlays = [inputs.nur.overlays.default];
+  }
