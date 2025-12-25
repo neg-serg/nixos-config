@@ -7,8 +7,25 @@
   homeDir = config.users.users.neg.home;
   dataHome = "${homeDir}/.local/share";
   configHome = "${homeDir}/.config";
+  cacheHome = "${homeDir}/.cache";
 in {
   environment.variables = {
+    # NixOS handles standard XDG variables by default if xdg.enable is true,
+    # but we force them here to match standard profile config
+    XDG_CACHE_HOME = lib.mkForce cacheHome;
+    XDG_CONFIG_HOME = lib.mkForce configHome;
+    XDG_DATA_HOME = lib.mkForce dataHome;
+    XDG_DESKTOP_DIR = lib.mkForce "${homeDir}/.local/desktop";
+    XDG_DOCUMENTS_DIR = lib.mkForce "${homeDir}/doc";
+    XDG_DOWNLOAD_DIR = lib.mkForce "${homeDir}/dw";
+    XDG_MUSIC_DIR = lib.mkForce "${homeDir}/music";
+    XDG_PICTURES_DIR = lib.mkForce "${homeDir}/pic";
+    XDG_PUBLICSHARE_DIR = lib.mkForce "${homeDir}/.local/public";
+    XDG_STATE_HOME = lib.mkForce "${homeDir}/.local/state";
+    XDG_TEMPLATES_DIR = lib.mkForce "${homeDir}/.local/templates";
+    XDG_VIDEOS_DIR = lib.mkForce "${homeDir}/vid";
+    # XDG_RUNTIME_DIR is managed by systemd-logind
+
     # Custom Env Vars (Global / Miscellaneous)
     CRAWL_DIR = "${dataHome}/crawl/";
     __GL_VRR_ALLOWED = "1";
@@ -23,6 +40,7 @@ in {
     XINITRC = "${configHome}/xinit/xinitrc";
     XSERVERRC = "${configHome}/xinit/xserverrc";
     XZ_DEFAULTS = "-T 0";
+    ZDOTDIR = lib.mkForce "${configHome}/zsh";
   };
 
   # Activation script to ensure profile links (legacy support)
