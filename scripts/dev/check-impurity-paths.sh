@@ -19,15 +19,15 @@ errors=0
 echo "Checking impurity.link paths in $REPO_ROOT..."
 
 # Direct paths like ./../../files/nvim or ../../../files/gui/swayimg
-grep -rhoP 'impurity\.link\s+\.+/[^;]+' modules/ 2> /dev/null | while read -r match; do
-  # Extract the path after "impurity.link"
-  path=$(echo "$match" | sed -E 's/impurity\.link\s+//' | sed 's/;$//')
+while read -r match; do
+  # Extract the path after the function call
+  path=$(echo "$match" | sed -E 's/(impurity\.link|linkImpure)\s+//' | sed 's/;$//')
   # Resolve relative to /etc/nixos (repo root)
   if [[ ! -e "$path" ]]; then
     echo "ERROR: Path does not exist: $path"
     ((errors++)) || true
   fi
-done
+done < <(grep -rhoP '(impurity\.link|linkImpure)\s+\.+/[^;]+' modules/ 2> /dev/null || true)
 
 # Paths defined as variables - check the source directories exist
 dirs_to_check=(
@@ -47,6 +47,7 @@ dirs_to_check=(
   "files/quickshell"
   "files/fastfetch"
   "files/gui/vicinae-extensions"
+  "files/shell/zsh/neg.omp.json"
 )
 
 for dir in "${dirs_to_check[@]}"; do
