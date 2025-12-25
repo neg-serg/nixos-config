@@ -41,9 +41,6 @@
       scan_desktop_files = true;
     };
   };
-
-  # Source path
-  vicinaeSrc = ../../../files/vicinae;
 in
   lib.mkMerge [
     {
@@ -67,8 +64,7 @@ in
     }
 
     (n.mkHomeFiles {
-      # Link Vicinae config mutably via impurity
-      ".config/vicinae".source = n.linkImpure vicinaeSrc;
+      # Thematic config
 
       # Thematic config (can be static or linked)
       ".config/vicinae/theme.json".text = builtins.toJSON vicinaeThemeNeg;
