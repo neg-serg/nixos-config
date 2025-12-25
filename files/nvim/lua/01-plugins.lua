@@ -1,3 +1,7 @@
+if vim.g.lazy_did_setup then
+    return
+end
+
 local ok, nixCats = pcall(require, "nixCats")
 local lazy
 local lockfile = vim.fn.stdpath("state") .. "/lazy-lock.json"
@@ -38,7 +42,7 @@ if ok and nixCats.lazy then
         ui = { icons = { ft = "", lazy = "󰂠 ", loaded = "", not_loaded = "" } },
         performance = {
             cache = { enabled = true },
-            reset_packpath = true,
+            reset_packpath = false,
             rtp = { disabled_plugins = { "gzip", "matchparen", "netrwPlugin", "tarPlugin", "tohtml", "tutor", "zipPlugin" } },
         },
     })
@@ -73,7 +77,7 @@ else
         ui = { icons = { ft = "", lazy = "󰂠 ", loaded = "", not_loaded = "" } },
         performance = {
             cache = { enabled = true },
-            reset_packpath = true,
+            reset_packpath = false,
             rtp = { disabled_plugins = { "gzip", "matchparen", "netrwPlugin", "tarPlugin", "tohtml", "tutor", "zipPlugin" } },
         },
     })
