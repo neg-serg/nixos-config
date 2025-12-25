@@ -43,11 +43,32 @@ in
       desktop = "floorp.desktop";
       newTabArg = "-new-tab";
     };
-    google-chrome = {
-      name = "google-chrome";
+    chrome = {
+      name = "chrome";
       pkg = pkgs.google-chrome;
       bin = lib.getExe' pkgs.google-chrome "google-chrome-stable";
       desktop = "google-chrome.desktop";
+      newTabArg = "--new-tab";
+    };
+    brave = {
+      name = "brave";
+      pkg = pkgs.brave;
+      bin = lib.getExe' pkgs.brave "brave";
+      desktop = "brave-browser.desktop";
+      newTabArg = "--new-tab";
+    };
+    vivaldi = {
+      name = "vivaldi";
+      pkg = pkgs.vivaldi;
+      bin = lib.getExe' pkgs.vivaldi "vivaldi";
+      desktop = "vivaldi-stable.desktop";
+      newTabArg = "--new-tab";
+    };
+    edge = {
+      name = "edge";
+      pkg = pkgs.microsoft-edge;
+      bin = lib.getExe' pkgs.microsoft-edge "microsoft-edge";
+      desktop = "microsoft-edge.desktop";
       newTabArg = "--new-tab";
     };
   }

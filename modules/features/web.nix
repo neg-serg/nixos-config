@@ -5,7 +5,7 @@ in {
   options.features.web = {
     enable = mkBool "enable Web stack (browsers + tools)" true;
     default = mkOption {
-      type = types.enum ["floorp" "firefox" "librewolf" "nyxt" "yandex"];
+      type = types.enum ["floorp" "firefox" "librewolf" "nyxt" "yandex" "chrome" "brave" "vivaldi" "edge"];
       default = "floorp";
       description = "Default browser used for XDG handlers, $BROWSER, and integrations.";
     };
@@ -19,6 +19,10 @@ in {
     librewolf.enable = mkBool "enable LibreWolf browser" false;
     nyxt.enable = mkBool "enable Nyxt browser" true;
     yandex.enable = mkBool "enable Yandex browser" true;
+    chrome.enable = mkBool "enable Google Chrome browser" true;
+    brave.enable = mkBool "enable Brave browser" false;
+    vivaldi.enable = mkBool "enable Vivaldi browser" false;
+    edge.enable = mkBool "enable Microsoft Edge browser" false;
     prefs = {
       fastfox.enable = mkBool "enable FastFox-like perf prefs for Mozilla browsers" true;
     };

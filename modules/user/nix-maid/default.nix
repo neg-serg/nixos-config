@@ -51,6 +51,11 @@
     ./oss-games.nix
     ./envs.nix
     ./web/librewolf.nix
+    ./web/chrome.nix
+    ./web/brave.nix
+    ./web/vivaldi.nix
+    ./web/edge.nix
+    ./web/yandex.nix
     ./web/aria.nix
     ./web/misc.nix
     ./web/yt-dlp.nix
