@@ -15,12 +15,5 @@
     pkgs.wireplumber # Lua PipeWire session mgr; more tweakable than media-session
   ];
 in {
-  environment.systemPackages =
-    [
-      # -- Audio --
-      pkgs.cava # console audio visualizer for quickshell HUD
-      pkgs.mpc # MPD CLI helper for local scripts
-      pkgs.playerctl # MPRIS media controller for bindings
-    ]
-    ++ lib.optionals guiEnabled localBinPackages;
+  environment.systemPackages = lib.optionals guiEnabled localBinPackages;
 }
