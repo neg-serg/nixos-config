@@ -33,6 +33,8 @@ in {
     LIBSEAT_BACKEND = "logind";
     PASSWORD_STORE_DIR = "${dataHome}/pass";
     PASSWORD_STORE_ENABLE_EXTENSIONS_DEFAULT = "true";
+    PYTHON_HISTORY = "${dataHome}/python/history";
+    PULSE_COOKIE = "${configHome}/pulse/cookie";
     TERMINFO = "${dataHome}/terminfo";
     TERMINFO_DIRS = "${dataHome}/terminfo:/usr/share/terminfo";
     WINEPREFIX = "${dataHome}/wineprefixes/default";
