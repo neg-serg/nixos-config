@@ -103,7 +103,7 @@
       wantedBy = ["graphical-session.target"];
       after = ["graphical-session-pre.target"];
       serviceConfig = {
-        ExecStart = "${pkgs.pyprland}/bin/pypr";
+        ExecStart = "${lib.getExe pkgs.pyprland}";
         Restart = "always";
         RestartSec = "1";
       };

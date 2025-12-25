@@ -131,7 +131,7 @@ in
         partOf = ["graphical-session.target"];
         wantedBy = ["graphical-session.target"];
         serviceConfig = {
-          ExecStart = "${pkgs.mpd}/bin/mpd --no-daemon";
+          ExecStart = "${lib.getExe pkgs.mpd} --no-daemon";
           Restart = "on-failure";
         };
       };
