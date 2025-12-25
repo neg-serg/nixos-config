@@ -9,7 +9,7 @@
 }: let
   n = neg impurity;
   # Source path (Nix path for linkImpure)
-  quickshellSrc = ../../../files/quickshell;
+  quickshellSrc = ../../../../files/quickshell;
 
   # Feature flags check
   quickshellEnabled =

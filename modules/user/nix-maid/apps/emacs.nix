@@ -65,7 +65,7 @@
       ripgrep # fast search integration
     ]);
 
-  filesRoot = ../../../files;
+  filesRoot = ../../../../files;
 in {
   config = lib.mkIf (cfg.enable or false) (lib.mkMerge [
     {

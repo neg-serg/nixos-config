@@ -7,7 +7,7 @@
 }: let
   n = neg impurity;
   cfg = config.features;
-  filesRoot = ../../../files;
+  filesRoot = ../../../../files;
 in {
   config = lib.mkMerge [
     (lib.mkIf (cfg.games.dosemu.enable or false) (n.mkHomeFiles {
@@ -19,10 +19,10 @@ in {
 
     (n.mkHomeFiles {
       # Dosbox Config
-      ".config/dosbox".source = ../../../files/config/dosbox;
+      ".config/dosbox".source = ../../../../files/config/dosbox;
 
       # Icedtea Web Config
-      ".config/icedtea-web".source = ../../../files/config/icedtea-web;
+      ".config/icedtea-web".source = ../../../../files/config/icedtea-web;
     })
   ];
 }
