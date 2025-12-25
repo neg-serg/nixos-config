@@ -56,11 +56,19 @@
     ];
   };
 in {
-  config = lib.mkIf (cfg.enable or false) (n.mkHomeFiles {
-    ".config/wireplumber" = {
-      source = "${filesRoot}/media/wireplumber";
-    };
-    # Link the merged directory
-    ".config/pipewire/pipewire.conf.d".source = pipewireConfD;
-  });
+  config = lib.mkIf (cfg.enable or false) (lib.mkMerge [
+    (n.mkHomeFiles {
+      ".config/wireplumber" = {
+        source = "${filesRoot}/media/wireplumber";
+      };
+      # Link the merged directory
+      ".config/pipewire/pipewire.conf.d".source = pipewireConfD;
+    })
+    {
+      environment.variables = {
+        PIPEWIRE_DEBUG = "0";
+        PIPEWIRE_LOG_SYSTEMD = "true";
+      };
+    }
+  ]);
 }

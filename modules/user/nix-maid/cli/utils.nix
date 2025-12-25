@@ -41,6 +41,8 @@ in
       # --- Environment Variables ---
       environment.variables = {
         RIPGREP_CONFIG_PATH = "${config.users.users.neg.home}/.config/ripgrep/ripgreprc";
+        HTTPIE_CONFIG_DIR = "${config.users.users.neg.home}/.config/httpie";
+        PARALLEL_HOME = "${config.users.users.neg.home}/.config/parallel";
 
         FZF_DEFAULT_COMMAND = "${lib.getExe pkgs.fd} --type=f --hidden --exclude=.git";
         FZF_DEFAULT_OPTS = builtins.concatStringsSep " " (builtins.filter (x: builtins.typeOf x == "string") [

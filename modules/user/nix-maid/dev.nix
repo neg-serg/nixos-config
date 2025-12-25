@@ -53,11 +53,43 @@ in {
       ];
 
       # Environment Variables
-      environment.variables = lib.mkIf enableIac {
-        ANSIBLE_CONFIG = "${config.users.users.neg.home}/.config/ansible/ansible.cfg";
-        ANSIBLE_ROLES_PATH = "${config.users.users.neg.home}/.local/share/ansible/roles";
-        ANSIBLE_GALAXY_COLLECTIONS_PATHS = "${config.users.users.neg.home}/.local/share/ansible/collections";
-      };
+      environment.variables =
+        {
+          # General Dev
+          CCACHE_CONFIGPATH = "${config.users.users.neg.home}/.config/ccache.config";
+          CCACHE_DIR = "${config.users.users.neg.home}/.cache/ccache";
+
+          # Rust
+          CARGO_HOME = "${config.users.users.neg.home}/.local/share/cargo";
+          RUSTUP_HOME = "${config.users.users.neg.home}/.local/share/rustup";
+
+          # Haskell
+          GHCUP_USE_XDG_DIRS = "1";
+
+          # Go
+          GOMODCACHE = "${config.users.users.neg.home}/.cache/gomod";
+
+          # CUDA / LLVM
+          CUDA_CACHE_PATH = "${config.users.users.neg.home}/.cache/cuda";
+          LLVM_PROFILE_FILE = "${config.users.users.neg.home}/.cache/llvm/%h-%p-%m.profraw";
+
+          # Python
+          PYLINTHOME = "${config.users.users.neg.home}/.config/pylint";
+
+          # Java
+          _JAVA_OPTIONS = "-Djava.util.prefs.userRoot=${config.users.users.neg.home}/.config/java";
+
+          # Hardware / Firmware
+          QMK_HOME = "${config.users.users.neg.home}/src/qmk_firmware";
+
+          # VM
+          VAGRANT_HOME = "${config.users.users.neg.home}/.local/share/vagrant";
+        }
+        // lib.optionalAttrs enableIac {
+          ANSIBLE_CONFIG = "${config.users.users.neg.home}/.config/ansible/ansible.cfg";
+          ANSIBLE_ROLES_PATH = "${config.users.users.neg.home}/.local/share/ansible/roles";
+          ANSIBLE_GALAXY_COLLECTIONS_PATHS = "${config.users.users.neg.home}/.local/share/ansible/collections";
+        };
     }
     (lib.mkIf enableIac (n.mkHomeFiles {
       ".config/ansible/ansible.cfg".text = ansibleCfg;
