@@ -1,0 +1,7 @@
+module qs.bar.systray
+MenuCheckBox 1.0 MenuCheckBox.qml
+MenuChildrenRevealer 1.0 MenuChildrenRevealer.qml
+MenuItem 1.0 MenuItem.qml
+MenuRadioButton 1.0 MenuRadioButton.qml
+MenuView 1.0 MenuView.qml
+SysTray 1.0 SysTray.qml
