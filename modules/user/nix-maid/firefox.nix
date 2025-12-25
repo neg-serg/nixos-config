@@ -24,51 +24,10 @@
   };
   inherit (import ./web/firefox-prefgroups.nix {inherit lib;}) modules prefgroups;
 
-  # --- Addon Helpers (Ported from firefox.nix) ---
+  # Import addon helpers from common library (DRY)
+  inherit (mozillaCommon) remoteXpiAddon themeAddon;
 
   firefoxAddons = pkgs.nur.repos.rycee.firefox-addons;
-
-  buildFirefoxXpiAddon = {
-    src,
-    pname,
-    version,
-    addonId,
-  }:
-    pkgs.stdenv.mkDerivation {
-      name = "${pname}-${version}";
-      inherit src;
-      preferLocalBuild = true;
-      allowSubstitutes = true;
-      passthru = {inherit addonId;};
-      buildCommand = ''
-        dst="$out/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
-        mkdir -p "$dst"
-        install -v -m644 "$src" "$dst/${addonId}.xpi"
-      '';
-    };
-
-  remoteXpiAddon = {
-    pname,
-    version,
-    addonId,
-    url,
-    sha256,
-  }:
-    buildFirefoxXpiAddon {
-      inherit pname version addonId;
-      src = pkgs.fetchurl {inherit url sha256;};
-    };
-
-  themeAddon = {
-    name,
-    theme,
-  }:
-    buildFirefoxXpiAddon {
-      pname = "firefox-theme-xpi-${name}";
-      version = "1.0";
-      addonId = "theme-${name}@outfoxxed.me";
-      src = import ./web/firefox-theme.nix {inherit pkgs name theme;};
-    };
 
   extraAddons = {
     github-reposize = remoteXpiAddon {
