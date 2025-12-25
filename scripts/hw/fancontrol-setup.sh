@@ -86,7 +86,7 @@ fi
 
 # Build DEVPATH/DEVNAME map with stable keys (hwmon1=nct, hwmon2=cpu, hwmon3=gpu [optional])
 devs=""
-# names=""
+names=""
 # idx=1
 add_dev() {
   local path="$1"
