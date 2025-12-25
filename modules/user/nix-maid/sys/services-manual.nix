@@ -142,7 +142,7 @@ in {
           RestartSec = "2";
         };
       };
-      environment.systemPackages = [pkgs.playerctl]; # command-line tool for controlling media players
+      environment.systemPackages = []; # command-line tool for controlling media players
     })
 
     (lib.mkIf (config.features.gui.enable or false) {
