@@ -11,9 +11,21 @@ inputs: _final: prev: let
     prev.callPackage path (autoArgs // extraArgs);
 in {
   neg = rec {
+    # eBPF/BCC tools
+    bpf_host_latency = callPkg (packagesRoot + "/bpf-host-latency") {};
+    "bpf-host-latency" = bpf_host_latency;
+    skbtrace = callPkg (packagesRoot + "/skbtrace") {};
+    # CLI/util packages
+    adguardian_term = callPkg (packagesRoot + "/adguardian-term") {};
+    "adguardian-term" = adguardian_term;
+    a2ln = callPkg (packagesRoot + "/a2ln") {};
+
+    bt_migrate = callPkg (packagesRoot + "/bt-migrate") {};
+    "bt-migrate" = bt_migrate;
     cxxmatrix = callPkg (packagesRoot + "/cxxmatrix") {};
     comma = callPkg (packagesRoot + "/comma") {};
     richcolors = callPkg (packagesRoot + "/richcolors") {};
+    ls_iommu = callPkg (packagesRoot + "/ls-iommu") {};
     transmission_exporter = callPkg (packagesRoot + "/transmission-exporter") {};
     "transmission-exporter" = transmission_exporter;
     hxtools = callPkg (packagesRoot + "/hxtools") {};
@@ -65,6 +77,8 @@ in {
     "pretty-printer" = pretty_printer;
 
     # Rofi plugins / desktop helpers
+    rofi_games = callPkg (packagesRoot + "/rofi-games") {};
+    "rofi-games" = rofi_games;
 
     # Trader Workstation (IBKR) packaged from upstream installer
     tws = callPkg (packagesRoot + "/tws") {};

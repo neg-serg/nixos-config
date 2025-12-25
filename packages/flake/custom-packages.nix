@@ -1,8 +1,11 @@
 {pkgs, ...}: {
+  adguardian-term = pkgs.neg.adguardian_term;
   antigravity = pkgs.neg.antigravity;
   richcolors = pkgs.neg.richcolors;
   hxtools = pkgs.neg.hxtools;
   transmission-exporter = pkgs.neg.transmission_exporter;
+  ls-iommu = pkgs.neg.ls_iommu;
+  skbtrace = pkgs.neg.skbtrace;
   nemu = pkgs.neg.nemu;
   _nemu = pkgs.neg.nemu;
   beatprints = pkgs.neg.beatprints;

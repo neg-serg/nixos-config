@@ -15,6 +15,7 @@
     pkgs.hwinfo # detailed hardware inventory
     pkgs.inxi # summary hardware inspector
     pkgs.lshw # Linux hardware lister
+    pkgs.neg.ls_iommu # IOMMU group lister for VFIO planning
 
     # -- Peripherals --
     pkgs.evhz # HID polling rate monitor
