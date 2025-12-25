@@ -107,7 +107,21 @@ in
 
         # Video
         pkgs.mpv # Open source media player
+        pkgs.mpdas
+        pkgs.mpdris2
       ];
+
+      # Secrets for MPDAS
+      sops.secrets."mpdas_negrc" = {
+        sopsFile = ../../../../secrets/home/mpdas/neg.rc;
+        format = "binary";
+        owner = "neg";
+      };
+
+      environment.sessionVariables = {
+        MPD_HOST = "localhost";
+        MPD_PORT = "6600";
+      };
 
       # MPD Service
       systemd.user.services.mpd = {
@@ -121,6 +135,27 @@ in
           Restart = "on-failure";
         };
       };
+
+      # MPD RIS2 (MPRIS support)
+      systemd.user.services.mpdris2 = {
+        description = "MPD MPRIS2 Bridge";
+        wantedBy = ["default.target"];
+        serviceConfig = {
+          ExecStart = "${pkgs.mpdris2}/bin/mpdris2";
+          Restart = "on-failure";
+        };
+      };
+
+      # MPDAS (Last.fm Scrobbler)
+      systemd.user.services.mpdas = {
+        description = "mpdas last.fm scrobbler";
+        after = ["sound.target"];
+        wantedBy = ["default.target"];
+        serviceConfig = {
+          ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
+          Restart = "on-failure";
+        };
+      };
     }
 
     (n.mkHomeFiles {
@@ -130,6 +165,18 @@ in
       # MPD
       ".config/mpd/mpd.conf".text = mpdConfig;
       ".config/mpd/playlists/.keep".text = "";
+
+      # MPD RIS2 Config
+      ".config/mpdris2/mpdris2.conf".text = ''
+        [Connection]
+        host = localhost
+        port = 6600
+        music_dir = ${config.users.users.neg.home}/music
+        [Bling]
+        notify = False
+        mmkeys = True
+        can_quit = True
+      '';
 
       # RMPC
       ".config/rmpc".source = n.linkImpure rmpcSrc;
