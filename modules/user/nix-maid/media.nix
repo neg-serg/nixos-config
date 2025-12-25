@@ -118,7 +118,6 @@ in
         wantedBy = ["graphical-session.target"];
         serviceConfig = {
           ExecStart = "${pkgs.mpd}/bin/mpd --no-daemon";
-          ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %h/.config/mpd/playlists";
           Restart = "on-failure";
         };
       };
@@ -130,6 +129,7 @@ in
 
       # MPD
       ".config/mpd/mpd.conf".text = mpdConfig;
+      ".config/mpd/playlists/.keep".text = "";
 
       # RMPC
       ".config/rmpc".source = n.linkImpure rmpcSrc;
