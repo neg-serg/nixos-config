@@ -141,7 +141,7 @@ in
         description = "MPD MPRIS2 Bridge";
         wantedBy = ["default.target"];
         serviceConfig = {
-          ExecStart = "${pkgs.mpdris2}/bin/mpdris2";
+          ExecStart = "${lib.getExe pkgs.mpdris2}";
           Restart = "on-failure";
         };
       };
