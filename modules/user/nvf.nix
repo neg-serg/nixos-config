@@ -12,8 +12,35 @@
 in
   lib.mkIf devEnabled (lib.mkMerge [
     {
-      # neovim-remote needed for `v` script (uses nvr command)
-      environment.systemPackages = [pkgs.neovim-remote];
+      environment.systemPackages = [
+        pkgs.neovim-remote
+        (pkgs.makeDesktopItem {
+          name = "neovim";
+          desktopName = "Neovim";
+          genericName = "Text Editor";
+          exec = "nvim %F";
+          icon = "nvim";
+          terminal = true;
+          categories = ["Utility" "TextEditor"];
+          mimeTypes = [
+            "text/english"
+            "text/plain"
+            "text/x-makefile"
+            "text/x-c++hdr"
+            "text/x-c++src"
+            "text/x-chdr"
+            "text/x-csrc"
+            "text/x-java"
+            "text/x-moc"
+            "text/x-pascal"
+            "text/x-tcl"
+            "text/x-tex"
+            "application/x-shellscript"
+            "text/x-c"
+            "text/x-c++"
+          ];
+        })
+      ];
       programs.nvf = {
         enable = true;
         defaultEditor = true;
