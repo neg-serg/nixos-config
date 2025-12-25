@@ -67,16 +67,6 @@ in {
          mkdir -p "$HOME/tmp"
       fi
 
-      # Cleanup stale symlinks that conflict with new nix-maid management
-      # These directories were previously linked via linkImpure or similar mechanisms,
-      # but are now managed as directories containing generated files.
-      for dir in "$HOME/.config/rmpc" "$HOME/.config/swayimg" "$HOME/.config/vicinae"; do
-        if [ -L "$dir" ]; then
-          echo "Removing stale symlink: $dir"
-          rm "$dir"
-          mkdir -p "$dir"
-        fi
-      done
     '
   '';
 }
