@@ -68,7 +68,7 @@
   # Activation script to force restart maid-activation for 'neg'.
   # This ensures user configs are reapplied on every switch, working around
   # NixOS's behavior of not automatically restarting user services reliably.
-  system.activationScripts.maidForceRestart = lib.stringAfter ["users"] ''
+  system.activationScripts.maidForceRestart = lib.stringAfter ["users" "negProfileLinks"] ''
     if [ -e /run/user/1000 ]; then
       echo "Restarting maid-activation for user 1000..."
       ${pkgs.util-linux}/bin/runuser -u neg -- ${pkgs.bash}/bin/bash -c "XDG_RUNTIME_DIR=/run/user/1000 ${pkgs.systemd}/bin/systemctl --user restart maid-activation.service" || true
