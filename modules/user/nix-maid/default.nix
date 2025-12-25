@@ -8,7 +8,7 @@
     inputs.nix-maid.nixosModules.default # user configuration framework (nix-maid)
     ./git.nix
     ./mpv.nix
-    ./shell.nix
+    ./shells.nix
     ./user-services.nix
     ./secrets.nix
     ./theme.nix
@@ -20,7 +20,6 @@
     ./broot.nix
     ./tig.nix
     ./tewi.nix
-    ./terminals-shells.nix
     ./gui-apps.nix
     ./vicinae.nix
     ./walker.nix
