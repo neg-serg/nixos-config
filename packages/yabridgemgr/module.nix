@@ -65,10 +65,10 @@ with lib;
       };
       plugins = mkOption {
         type = types.listOf types.package;
-        default = with pkgs.neg.yabridgemgr.plugins; [
-          valhalla_supermassive # Valhalla Supermassive (VST)
-          voxengo_span # Voxengo SPAN analyzer (VST)
-          piz_midichordanalyzer # MIDI chord analyzer (VST)
+        default = [
+          pkgs.neg.yabridgemgr.plugins.valhalla_supermassive # Valhalla Supermassive (VST)
+          pkgs.neg.yabridgemgr.plugins.voxengo_span # Voxengo SPAN analyzer (VST)
+          pkgs.neg.yabridgemgr.plugins.piz_midichordanalyzer # MIDI chord analyzer (VST)
         ];
         description = "Plugin packages to install";
       };
