@@ -201,7 +201,7 @@
   };
 
   # Rofi config source path
-  rofiConfigSrc = ../../../packages/rofi-config;
+  rofiConfigSrc = ../../../../packages/rofi-config;
 
   # Rofi with plugins (file-browser-extended)
   rofiWithPlugins = pkgs.rofi.override {
@@ -209,7 +209,7 @@
   };
 
   # Rofi wrapper script
-  rofiWrapperScript = builtins.readFile ../../../files/rofi/rofi-wrapper.sh;
+  rofiWrapperScript = builtins.readFile ../../../../files/rofi/rofi-wrapper.sh;
   rofiWrapper = pkgs.writeShellApplication {
     name = "rofi-wrapper";
     runtimeInputs = [
@@ -277,7 +277,7 @@ in {
       '';
 
       # wlogout config
-      ".config/wlogout".source = ../../../files/config/wlogout;
+      ".config/wlogout".source = ../../../../files/config/wlogout;
     })
   ];
 }

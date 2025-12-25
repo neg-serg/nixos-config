@@ -9,11 +9,11 @@
 }: let
   n = neg impurity;
   # --- Config Sources ---
-  shellFiles = ../../../files/shell;
-  kittyConf = ../../../files/kitty;
-  nuConfDir = ../../../files/nushell;
-  tmuxConfDir = ../../../files/tmux;
-  ompConfig = ../../../files/shell/zsh/neg.omp.json;
+  shellFiles = ../../../../files/shell;
+  kittyConf = ../../../../files/kitty;
+  nuConfDir = ../../../../files/nushell;
+  tmuxConfDir = ../../../../files/tmux;
+  ompConfig = ../../../../files/shell/zsh/neg.omp.json;
   dircolorsConfig = "${inputs.self}/files/shell/dircolors/dircolors";
 
   # --- Inputrc ---

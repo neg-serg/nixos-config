@@ -6,50 +6,60 @@
 }: {
   imports = [
     inputs.nix-maid.nixosModules.default # user configuration framework (nix-maid)
-    ./git.nix
-    ./mpv.nix
-    ./shells.nix
-    ./user-services.nix
-    ./secrets.nix
-    ./theme.nix
-    ./xdg.nix
-    ./dunst.nix
-    ./services-manual.nix
-    ./gpg.nix
+
+    # Core & GUI
+    ./gui/theme.nix
+    ./gui/xdg.nix
+    ./gui/qt.nix
+    ./gui/dunst.nix
+    ./gui/walker.nix
+    ./gui/quickshell.nix
+    ./hyprland/main.nix
+
+    # Applications (GUI/TUI)
+    ./apps/mpv.nix
+    ./apps/gui-apps.nix
+    ./apps/vicinae.nix
+    ./apps/nyxt.nix
+    ./apps/emacs.nix
+    ./apps/editors.nix
+    ./apps/transmission.nix
+
+    # CLI & Shell Environment
     ./cli
-    ./broot.nix
-    ./tig.nix
-    ./tewi.nix
-    ./gui-apps.nix
-    ./vicinae.nix
-    ./walker.nix
-    ./quickshell.nix
-    ./qt.nix
+    ./cli/git.nix
+    ./cli/shells.nix
+    ./cli/broot.nix
+    ./cli/tig.nix
+    ./cli/tewi.nix
+    ./cli/yazi.nix
+    ./cli/television.nix
+    ./cli/envs.nix
+    ./cli/emulators.nix
+    ./cli/asciinema.nix
+    ./cli/local-bin.nix
+
+    # System & Services
+    ./sys/secrets.nix
+    ./sys/user-services.nix
+    ./sys/services-manual.nix
+    ./sys/gpg.nix
+    ./sys/enchant.nix
+    ./sys/text.nix
+    ./sys/distros.nix
+    ./sys/flatpak.nix
+    ./sys/dev.nix
+    ./sys/vdirsyncer.nix
+    ./sys/khal.nix
+    ./sys/autoclick.nix
+    ./sys/nekoray.nix
+    ./sys/misc.nix
+
+    # Web & Browsing
+    ./web/defaults.nix
+    ./web/browsing.nix
     ./web/firefox.nix
     ./web/floorp.nix
-    ./yazi.nix
-    ./pipewire.nix
-    ./emacs.nix
-    ./transmission.nix
-    ./vdirsyncer.nix
-    ./khal.nix
-    ./emulators.nix
-    ./enchant.nix
-    ./nethack.nix
-    ./television.nix
-    ./hyprland/main.nix
-    ./media.nix
-    ./mail.nix
-    ./autoclick.nix
-    ./asciinema.nix
-    ./fun-launchers.nix
-    ./nekoray.nix
-    ./nyxt.nix
-    ./tridactyl.nix
-    ./steam.nix
-    ./local-bin.nix
-    ./oss-games.nix
-    ./envs.nix
     ./web/librewolf.nix
     ./web/chrome.nix
     ./web/brave.nix
@@ -59,14 +69,17 @@
     ./web/aria.nix
     ./web/misc.nix
     ./web/yt-dlp.nix
-    ./web/defaults.nix
-    ./web/browsing.nix
-    ./dev.nix
-    ./editors.nix
-    ./misc.nix
-    ./text.nix
-    ./distros.nix
-    ./flatpak.nix
+    ./web/tridactyl.nix
+
+    # Fun & Games
+    ./fun/nethack.nix
+    ./fun/fun-launchers.nix
+    ./fun/oss-games.nix
+    ./fun/steam.nix
+
+    # Media & Audio
+    ./sys/media.nix
+    ./sys/pipewire.nix
   ];
 
   users.users.neg.maid = {};

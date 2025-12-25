@@ -8,7 +8,7 @@
 }: let
   n = neg impurity;
   cfg = config.features.media.audio.core;
-  filesRoot = ../../../files;
+  filesRoot = ../../../../files;
 
   rnnoiseConf = builtins.toJSON {
     "context.modules" = [

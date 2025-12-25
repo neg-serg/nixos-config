@@ -76,12 +76,12 @@ in {
 
     # pypr-run: Use the robust wrapper which handles the hyprland socket signature
     pyprExe = lib.getExe' pkgs.pyprland "pypr";
-    pyprRunTpl = builtins.readFile ./scripts/pypr-run;
+    pyprRunTpl = builtins.readFile ../scripts/pypr-run;
     pyprRunText = lib.replaceStrings ["exec pypr"] ["exec ${pyprExe}"] pyprRunTpl;
 
     # mount-drive: Uses rclone.
     rcloneExe = lib.getExe pkgs.rclone;
-    mountDriveTpl = builtins.readFile ./scripts/mount-drive;
+    mountDriveTpl = builtins.readFile ../scripts/mount-drive;
     mountDriveText = lib.replaceStrings ["rclone mount"] ["${rcloneExe} mount"] mountDriveTpl;
 
     # kitty-scrollback-nvim substitution
