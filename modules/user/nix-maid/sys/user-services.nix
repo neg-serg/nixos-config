@@ -40,7 +40,7 @@ in
       "local-ai" = {
         description = "Local AI (Ollama)";
         serviceConfig = {
-          ExecStart = "${pkgs.ollama}/bin/ollama serve";
+          ExecStart = "${lib.getExe pkgs.ollama} serve";
           Environment = [
             # For LocalAI compatibility
             "MODELS_PATH=${config.users.users.neg.home}/.local/share/localai/models"
