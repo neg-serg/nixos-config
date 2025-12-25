@@ -33,7 +33,7 @@
     ./transmission.nix
     ./vdirsyncer.nix
     ./khal.nix
-    ./dosemu.nix
+    ./emulators.nix
     ./enchant.nix
     ./nethack.nix
     ./television.nix
