@@ -1,8 +1,3 @@
-_exists() { (( $+commands[$1] )) }
-_exists eza && {
-    # lcr/lsd are handled by Aliae now
-    :
-}
 
 _exists rg && {
     local rg_options=(
@@ -49,12 +44,6 @@ if [[ -e /etc/NIXOS ]]; then
     foobar(){nix run github:emmanuelrosa/erosanix#foobar2000}
     flake-checker(){nix run github:DeterminateSystems/flake-checker}
 
-    _exists nh && {
-        
-        
-    }
-    nbuild(){ nix-build -E 'with import <nixpkgs> {}; callPackage ./default.nix {}'}
-    # nlocate handled by Aliae
     qi(){ NIXPKGS_ALLOW_UNFREE=1 nix shell --impure 'nixpkgs#'$1 }
     q(){ nix shell 'nixpkgs#'$1 }
     flakify() {
