@@ -26,6 +26,7 @@ configuration.
 
 1. Install Nix with flakes enabled (`experimental-features = nix-command flakes`).
 1. User configuration is managed via nix-maid modules under `modules/user/nix-maid/`.
+   - Modules are organized into categories: `apps/`, `cli/`, `gui/`, `sys/`, `fun/`, `web/`.
 1. Optional helper: `nix profile install nixpkgs#just`
 
 ### Apply Configuration
@@ -247,7 +248,7 @@ Keep this manifest updated whenever vendored sources change so that licensing re
 ## Custom Packages Overlay
 
 - All local derivations (`pkgs.neg.*`, CLI wrappers, MCP servers, etc.) now live under the top-level
-  `packages/` directory instead of `home/packages/`.
+  `packages/` directory.
 - The system modules add this overlay via `modules/nix/home-overlay.nix`; the Home Manager flake
   reuses it through `../packages/overlay.nix` so both sides see the same package set.
 - When working inside `home/`, remember paths now need one more `../` to reach the shared
