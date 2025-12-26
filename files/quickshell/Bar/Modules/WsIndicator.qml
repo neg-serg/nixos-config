@@ -82,6 +82,7 @@ CenteredCapsuleRow {
 
     // Detect terminal workspace
     readonly property var _terminalIcons: ["\uf120", "\ue795", "\ue7a2"]
+    property bool isAlphaWs: (wsName || "").toLowerCase().indexOf("alpha") !== -1
     property bool isTerminalWs: (function(){
         const rn = (restName || "").toLowerCase().trim();
         if (iconGlyph && _terminalIcons.indexOf(iconGlyph) !== -1) return true;
@@ -104,7 +105,7 @@ CenteredCapsuleRow {
     iconColor: Theme.wsSubmapIconColor
     iconAutoTune: true
     iconPadding: Theme.wsIconInnerPadding
-    iconSpacing: Math.max(0, Theme.wsIconSpacing)
+    iconSpacing: isAlphaWs ? 8 : Math.max(0, Theme.wsIconSpacing)
     labelIsRichText: true
     labelVisible: root.showLabel
     labelText: decoratedText
@@ -113,7 +114,7 @@ CenteredCapsuleRow {
     labelFontWeight: Font.Medium
     labelColor: Theme.textPrimary
     textPadding: Math.max(0, Theme.wsLabelPadding)
-    labelLeftPaddingOverride: root.isTerminalWs ? Theme.wsLabelLeftPaddingTerminal : Theme.wsLabelLeftPadding
+    labelLeftPaddingOverride: isAlphaWs ? 12 : (root.isTerminalWs ? Theme.wsLabelLeftPaddingTerminal : Theme.wsLabelLeftPadding)
 
     leadingContent: Item {
         readonly property bool glyphPresent: root.showWorkspaceGlyph && (root.workspaceIconValid || iconGlyph.length > 0)
@@ -198,12 +199,6 @@ CenteredCapsuleRow {
         updateDynamicMap(Services.HyprlandWatcher.binds);
         Services.HyprlandWatcher.refreshWorkspace();
         Services.HyprlandWatcher.refreshBinds();
-        console.log("[WsIndicator] Padding Debug:");
-        console.log("  wsName:", root.wsName);
-        console.log("  isTerminalWs:", root.isTerminalWs);
-        console.log("  Theme.wsLabelLeftPadding:", Theme.wsLabelLeftPadding);
-        console.log("  Theme.wsLabelLeftPaddingTerminal:", Theme.wsLabelLeftPaddingTerminal);
-        console.log("  resolved padding:", root.labelLeftPaddingOverride);
     }
 
 }
