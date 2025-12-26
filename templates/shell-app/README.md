@@ -1,14 +1,25 @@
-# Shell App Template
+# Shell App Template / Шаблон Shell приложения
 
 Quick-start scaffold for a small Bash CLI packaged via `writeShellApplication`.
 
-## Usage
+Быстрый старт для небольшого Bash CLI, упакованного через `writeShellApplication`.
 
-- Initialize: `nix flake init -t <this-flake>#shell-app`
-- Dev shell: `nix develop`
-- Build package: `nix build` (produces `./result/bin/mytool`)
+## Usage / Использование
 
-## Notes
+```bash
+# Initialize / Инициализация
+nix flake init -t <this-flake>#shell-app
 
-- Add runtime dependencies to `runtimeInputs` in `flake.nix`.
-- Keep scripts POSIX-compatible if you want to use `shellcheck` effectively.
+# Dev shell / Среда разработки
+nix develop
+
+# Build package / Сборка
+nix build  # produces ./result/bin/mytool
+```
+
+## Notes / Заметки
+
+- Add runtime dependencies to `runtimeInputs` in `flake.nix`
+- Добавляйте зависимости в `runtimeInputs` в `flake.nix`
+- Keep scripts POSIX-compatible for `shellcheck`
+- Сохраняйте POSIX-совместимость для `shellcheck`
