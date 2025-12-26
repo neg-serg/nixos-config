@@ -1,10 +1,14 @@
-# Quickshell Config (User Setup)
+# Quickshell Config / Конфигурация Quickshell
 
-Quick links
+User setup for the Quickshell status bar and greeter.
 
-- Docs/SHADERS.md — shader wedge clipping, build/debug, troubleshooting (RU/EN)
-- Docs/PANELS.md — panel background transparency settings (RU/EN)
-- scripts/compile_shaders.sh — builds `.frag` → `.qsb` (Qt 6 Shader Tools)
+Пользовательская настройка статус-бара и гритера Quickshell.
+
+## Quick Links / Быстрые ссылки
+
+- `Docs/SHADERS.md` — shader wedge clipping, build/debug / шейдеры
+- `Docs/PANELS.md` — panel background transparency / прозрачность панелей
+- `scripts/compile_shaders.sh` — builds `.frag` → `.qsb`
 
 Wedge Shader Quick Checklist
 

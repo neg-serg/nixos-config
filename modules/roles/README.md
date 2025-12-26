@@ -1,22 +1,33 @@
-# Roles: quick reference
+# Roles: Quick Reference / Справочник по ролям
 
-- Enable a role in your host config:
+## Enable Roles / Включение ролей
 
-  - `roles.workstation.enable = true;` — desktop defaults (performance profile, SSH, Avahi).
-  - `roles.homelab.enable = true;` — self‑hosting defaults (security profile, DNS, SSH, MPD).
-  - `roles.media.enable = true;` — media servers (Jellyfin, MPD, Avahi, SSH).
-  - `roles.server.enable = true;` — headless/server defaults (enables smartd by default).
+```nix
+roles.workstation.enable = true;  # Desktop defaults / Настройки рабочей станции
+roles.homelab.enable = true;      # Self-hosting defaults / Домашний сервер
+roles.media.enable = true;        # Media servers / Медиа сервера
+roles.server.enable = true;       # Headless/server defaults / Серверные настройки
+```
 
-- Override per‑service toggles via `profiles.services.<name>.enable` (alias:
-  `servicesProfiles.<name>.enable`).
+## Role Features / Возможности ролей
 
-  - Example: `profiles.services.jellyfin.enable = false;`
+| Role | Features / Возможности |
+|------|----------------------|
+| `workstation` | Performance profile, SSH, Avahi |
+| `homelab` | Security profile, DNS, SSH, MPD |
+| `media` | Jellyfin, MPD, Avahi, SSH |
+| `server` | Headless, smartd by default |
 
-- Typical next steps per role:
+## Override Services / Переопределение сервисов
 
-  - Workstation: adjust games stack in `profiles.games.*` and `modules/user/games`.
-  - Homelab: set DNS rewrites under `servicesProfiles.adguardhome.rewrites` and host-specific
-    media/backup paths in `hosts/<host>/services.nix`.
-  - Media: set media paths/ports for MPD; Jellyfin ports are opened by the module when enabled.
+```nix
+profiles.services.<name>.enable = false;
+# Example / Пример:
+profiles.services.jellyfin.enable = false;
+```
 
-- Docs: see aggregated options under flake output `packages.${system}."options-md"` when available.
+## Typical Next Steps / Следующие шаги
+
+- **Workstation**: Adjust games in `profiles.games.*` and `modules/user/games`
+- **Homelab**: Set DNS rewrites in `servicesProfiles.adguardhome.rewrites`
+- **Media**: Set media paths/ports for MPD

@@ -2,6 +2,8 @@
 
 Standalone CLI to compute LAION-CLAP embeddings for audio files.
 
+CLI-утилита для вычисления LAION-CLAP эмбеддингов аудиофайлов.
+
 ```sh
 music-clap ~/music --text "dreamy shoegaze" --dump ~/.cache/music-clap
 ```
