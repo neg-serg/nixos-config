@@ -1,4 +1,3 @@
-// very bad code DO NOT COPY
 pragma ComponentBehavior: Bound
 
 import QtQuick
@@ -15,11 +14,11 @@ Scope {
 	readonly property string path: `${ShellGlobals.rtpath}/screenshot.png`;
 
 	onShootingChanged: {
-		if (shooting) {
+		if (root.shooting) {
 			grimProc.running = true
 		} else {
-			visible = false
-			shootingComplete = false
+			root.visible = false
+			root.shootingComplete = false
 			cleanupProc.running = true
 		}
 	}
@@ -28,7 +27,7 @@ Scope {
 		id: grimProc
 		command: ["grim", "-l", "0", root.path]
 		onExited: code => {
-			if (code == 0) {
+			if (code === 0) {
 				root.visible = true
 			} else {
 				console.log("screenshot failed")
@@ -72,9 +71,9 @@ Scope {
 
 		readonly property real x: Math.min(x1, x2)
 		readonly property real y: Math.min(y1, y2)
-		readonly property real w: Math.max(x1, x2) - x
-		readonly property real h: Math.max(y1, y2) - y
-		readonly property rect normal: Qt.rect(x - topleft.x, y - topleft.y, w, h)
+		readonly property real w: Math.max(x1, x2) - selection.x
+		readonly property real h: Math.max(y1, y2) - selection.y
+		readonly property rect normal: Qt.rect(selection.x - root.topleft.x, selection.y - root.topleft.y, selection.w, selection.h)
 	}
 
 	readonly property point topleft: Quickshell.screens.reduce((point, screen) => {
@@ -82,15 +81,17 @@ Scope {
 	}, Qt.point(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY))
 
 	function normalizedScreenRect(screen: ShellScreen): rect {
-		const p = topleft;
+		const p = root.topleft;
 		return Qt.rect(screen.x - p.x, screen.y - p.y, screen.width, screen.height)
 	}
 
 	LazyLoader {
+		id: screenshotLoader
 		loading: root.shooting
 		active: root.visible
 
 		Variants {
+			id: visualVariants
 			model: Quickshell.screens
 
 			property bool selectionComplete: false
@@ -105,7 +106,7 @@ Scope {
 			PanelWindow {
 				id: panel
 				required property var modelData;
-				screen: modelData
+				screen: panel.modelData
 				visible: root.visible
 				exclusionMode: ExclusionMode.Ignore
 				WlrLayershell.namespace: "shell:screenshot"
@@ -121,41 +122,42 @@ Scope {
 
 				MouseArea {
 					id: area
-					anchors.fill: parent
-					cursorShape: selectionComplete ? Qt.WaitCursor : Qt.CrossCursor
-					enabled: !selectionComplete
+					anchors.fill: panel
+					cursorShape: visualVariants.selectionComplete ? Qt.WaitCursor : Qt.CrossCursor
+					enabled: !visualVariants.selectionComplete
 
 					onPressed: {
-						selection.x1 = mouseX + panel.screen.x;
+						selection.x1 = area.mouseX + panel.screen.x;
 						selection.x2 = selection.x1;
-						selection.y1 = mouseY + panel.screen.y;
+						selection.y1 = area.mouseY + panel.screen.y;
 						selection.y2 = selection.y1;
 					}
 
 					onPositionChanged: {
-						selection.x2 = mouseX + panel.screen.x;
-						selection.y2 = mouseY + panel.screen.y;
+						selection.x2 = area.mouseX + panel.screen.x;
+						selection.y2 = area.mouseY + panel.screen.y;
 					}
 
 					onReleased: {
 						if (selection.w > 0 && selection.h > 0) {
 							magickProc.running = true
-							selectionComplete = true
+							visualVariants.selectionComplete = true
 						} else {
 							root.shooting = false
 						}
 					}
 
 					Image {
+						id: screenshotImage
 						parent: area
-						anchors.fill: parent
+						anchors.fill: area
 						source: root.visible ? root.path : ""
 						sourceClipRect: root.normalizedScreenRect(panel.screen)
 					}
 
 					CutoutRect {
 						id: cutoutRect
-						anchors.fill: parent
+						anchors.fill: area
 						innerX: selection.x - panel.screen.x
 						innerY: selection.y - panel.screen.y
 						innerW: selection.w
@@ -172,7 +174,8 @@ Scope {
 						}
 
 						PropertyAnimation {
-							running: selectionComplete
+							id: borderColorAnim
+							running: visualVariants.selectionComplete
 							target: cutoutRect
 							property: "innerBorderColor"
 							duration: 200
@@ -180,7 +183,8 @@ Scope {
 						}
 
 						NumberAnimation {
-							running: selectionComplete
+							id: bgOpacityAnim
+							running: visualVariants.selectionComplete
 							target: cutoutRect
 							property: "backgroundOpacity"
 							duration: 200
@@ -188,7 +192,8 @@ Scope {
 						}
 
 						NumberAnimation {
-							running: shootingComplete
+							id: exitFadeAnim
+							running: root.shootingComplete
 							target: cutoutRect
 							property: "opacity"
 							easing.type: Easing.OutCubic
@@ -199,6 +204,7 @@ Scope {
 					}
 
 					Connections {
+						id: rootConnection
 						target: root
 
 						function onVisibleChanged() {

@@ -13,13 +13,14 @@ Item {
 
 	MouseArea {
 		id: mouseArea
-		anchors.fill: parent
+		anchors.fill: root
 
 		property real halfHandle: handle.width / 2;
 		property real activeWidth: groove.width - handle.width;
 		property real valueOffset: mouseArea.halfHandle + (root.index / (root.values.length - 1)) * mouseArea.activeWidth;
 
 		Repeater {
+			id: repeater
 			model: root.values
 
 			Item {
@@ -39,11 +40,12 @@ Item {
 				}
 
 				Text {
+					id: delegateText
 					anchors.top: mark.bottom
 
 					x: delegate.index === 0 ? -4
-					 : delegate.index === root.values.length - 1 ? -this.width + 4
-					 : -(this.width / 2);
+					 : delegate.index === root.values.length - 1 ? -delegateText.width + 4
+					 : -(delegateText.width / 2);
 
 					text: delegate.modelData
 					color: "#a0eeffff"
@@ -69,8 +71,8 @@ Item {
 			id: groove
 
 			anchors {
-				left: parent.left
-				right: parent.right
+				left: mouseArea.left
+				right: mouseArea.right
 			}
 
 			y: 5
@@ -85,15 +87,18 @@ Item {
 			id: handle
 			anchors.verticalCenter: groove.verticalCenter
 			height: 15
-			width: height
-			radius: height * 0.5
-			x: mouseArea.valueOffset - width * 0.5
+			width: handle.height
+			radius: handle.height * 0.5
+			x: mouseArea.valueOffset - handle.width * 0.5
 		}
 	}
 
 	Binding {
+		id: indexBinding
 		when: mouseArea.pressed
-		root.index: Math.max(0, Math.min(root.values.length - 1, Math.round((mouseArea.mouseX / root.width) * (root.values.length - 1))));
+		target: root
+		property: "index"
+		value: Math.max(0, Math.min(root.values.length - 1, Math.round((mouseArea.mouseX / root.width) * (root.values.length - 1))))
 		restoreMode: Binding.RestoreBinding
 	}
 }

@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
@@ -6,6 +7,8 @@ import "background"
 import "lock"
 
 ShellRoot {
+	id: root
+
 	GreeterContext {
 		id: context
 
@@ -25,12 +28,12 @@ ShellRoot {
 
 			BackgroundImage {
 				id: backgroundImage
-				anchors.fill: parent
+				anchors.fill: lockSurface
 				screen: lockSurface.screen
 			}
 
 			LockContent {
-				anchors.fill: parent
+				anchors.fill: lockSurface
 				state: context.state
 			}
 		}

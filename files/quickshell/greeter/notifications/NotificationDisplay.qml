@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import Qt5Compat.GraphicalEffects
@@ -20,8 +21,8 @@ Item {
 
 		harness.contentItem = notification.renderComponent.createObject(harness);
 
-		notifications = [...notifications, harness];
-		heightStack = [harness, ...heightStack];
+		root.notifications = [...root.notifications, harness];
+		root.heightStack = [harness, ...root.heightStack];
 
 		return harness;
 	}
@@ -69,12 +70,14 @@ Item {
 	}
 
 	Item {
-		anchors.fill: parent
+		id: contentLayer
+		anchors.fill: root
 
-		layer.enabled: stack.topNotification != null
+		layer.enabled: stack.topNotification !== null
 		layer.effect: Shaders.MaskedOverlay {
-			overlayItem: stack.topNotification?.displayContainer ?? null
-			overlayPos: Qt.point(stack.x + stack.topNotification.x + overlayItem.x, stack.y + stack.topNotification.y + overlayItem.y)
+			id: maskedOverlay
+			overlayItem: (stack.topNotification ? stack.topNotification.displayContainer : null)
+			overlayPos: (stack.topNotification && maskedOverlay.overlayItem) ? Qt.point(stack.x + stack.topNotification.x + maskedOverlay.overlayItem.x, stack.y + stack.topNotification.y + maskedOverlay.overlayItem.y) : Qt.point(0, 0)
 		}
 
 		ZHVStack {
@@ -83,41 +86,42 @@ Item {
 			property Item topNotification: {
 				if (root.heightStack.length < 2) return null;
 				const top = root.heightStack[0] ?? null;
-				return top && top.canOverlap ? top : null;
+				return (top && top.canOverlap) ? top : null;
 			};
 
 			property Component _harnessComponent: FlickableNotification {
-				id: notification
+				id: notificationDelegate
 				required property TrackedNotification backer;
 
 				edgeXOffset: -stack.x
 
-				onDismissed: backer.handleDismiss();
-				onDiscarded: backer.handleDiscard();
+				onDismissed: notificationDelegate.backer.handleDismiss();
+				onDiscarded: notificationDelegate.backer.handleDiscard();
 
 				onLeftViewBounds: {
-					root.notifications = root.notifications.filter(n => n != this);
-					root.heightStack = root.heightStack.filter(n => n != this);
-					this.destroy();
+					root.notifications = root.notifications.filter(n => n !== notificationDelegate);
+					root.heightStack = root.heightStack.filter(n => n !== notificationDelegate);
+					notificationDelegate.destroy();
 				}
 
 				onStartedFlick: {
-					root.heightStack = [this, ...root.heightStack.filter(n => n != this)];
+					root.heightStack = [notificationDelegate, ...root.heightStack.filter(n => n !== notificationDelegate)];
 				}
 
-				Component.onCompleted: backer.visualizer = this;
+				Component.onCompleted: notificationDelegate.backer.visualizer = notificationDelegate;
 
 				Connections {
-					target: backer
+					id: backerConnection
+					target: notificationDelegate.backer
 
 					function onDismiss() {
-						notification.playDismiss(0);
-						notification.dismissed();
+						notificationDelegate.playDismiss(0);
+						notificationDelegate.dismissed();
 					}
 
 					function onDiscard() {
-						notification.playDismiss(0);
-						notification.discarded();
+						notificationDelegate.playDismiss(0);
+						notificationDelegate.discarded();
 					}
 				}
 			}

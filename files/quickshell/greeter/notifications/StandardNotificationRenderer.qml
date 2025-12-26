@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
@@ -10,20 +11,21 @@ Rectangle {
 	required property Notification notif;
 	required property var backer;
 
-	color: notif.urgency == NotificationUrgency.Critical ? "#30ff2030" : "#30c0ffff"
+	color: root.notif.urgency === NotificationUrgency.Critical ? "#30ff2030" : "#30c0ffff"
 	radius: 5
 	implicitWidth: 450
-	implicitHeight: c.implicitHeight
+	implicitHeight: mainLayout.implicitHeight
 
 	HoverHandler {
+		id: hoverHandler
 		onHoveredChanged: {
-			backer.pauseCounter += hovered ? 1 : -1;
+			root.backer.pauseCounter += (hoverHandler.hovered ? 1 : -1);
 		}
 	}
 
 	Rectangle {
-		id: border
-		anchors.fill: parent
+		id: borderRect
+		anchors.fill: root
 		color: "transparent"
 		border.width: 2
 		border.color: ShellGlobals.colors.widgetOutline
@@ -31,17 +33,20 @@ Rectangle {
 	}
 
 	ColumnLayout {
-		id: c
-		anchors.fill: parent
+		id: mainLayout
+		anchors.fill: root
 		spacing: 0
 
 		ColumnLayout {
+			id: contentLayout
 			Layout.margins: 10
 
 			RowLayout {
+				id: headerLayout
 				Image {
-					visible: source != ""
-					source: notif.appIcon ? Quickshell.iconPath(notif.appIcon) : ""
+					id: appIconImage
+					visible: appIconImage.source !== ""
+					source: root.notif.appIcon ? Quickshell.iconPath(root.notif.appIcon) : ""
 					fillMode: Image.PreserveAspectFit
 					antialiasing: true
 					sourceSize.width: 30
@@ -51,14 +56,15 @@ Rectangle {
 				}
 
 				Label {
-					visible: text != ""
-					text: notif.summary
+					id: summaryLabel
+					visible: summaryLabel.text !== ""
+					text: root.notif.summary
 					font.pointSize: 20
 					elide: Text.ElideRight
 					Layout.maximumWidth: root.implicitWidth - 100 // QTBUG-127649
 				}
 
-				Item { Layout.fillWidth: true }
+				Item { id: headerSpacer; Layout.fillWidth: true }
 
 				MouseArea {
 					id: closeArea
@@ -69,9 +75,10 @@ Rectangle {
 					onPressed: root.backer.discard();
 
 					Rectangle {
-						anchors.fill: parent
+						id: closeBackground
+						anchors.fill: closeArea
 						anchors.margins: 5
-						radius: width * 0.5
+						radius: closeBackground.width * 0.5
 						antialiasing: true
 						color: "#60ffffff"
 						opacity: closeArea.containsMouse ? 1 : 0
@@ -79,39 +86,41 @@ Rectangle {
 					}
 
 					CloseButton {
-						anchors.fill: parent
+						id: closeButton
+						anchors.fill: closeArea
 						ringFill: root.backer.timePercentage
 					}
 				}
 			}
 
 			Item {
+				id: bodyWrapper
 				Layout.topMargin: 3
-				visible: bodyLabel.text != "" || notifImage.visible
+				visible: bodyLabel.text !== "" || notifImage.visible
 				implicitWidth: bodyLabel.width
 				implicitHeight: Math.max(notifImage.size, bodyLabel.implicitHeight)
 
 				Image {
 					id: notifImage
-					readonly property int size: visible ? 14 * 8 : 0
+					readonly property int size: notifImage.visible ? 14 * 8 : 0
 					y: bodyLabel.y + bodyLabel.topPadding
 
-					visible: source != ""
-					source: notif.image
+					visible: notifImage.source !== ""
+					source: root.notif.image
 					fillMode: Image.PreserveAspectFit
 					cache: false
 					antialiasing: true
 
-					width: size
-					height: size
-					sourceSize.width: size
-					sourceSize.height: size
+					width: notifImage.size
+					height: notifImage.size
+					sourceSize.width: notifImage.size
+					sourceSize.height: notifImage.size
 				}
 
 				Label {
 					id: bodyLabel
 					width: root.implicitWidth - 20
-					text: notif.body
+					text: root.notif.body
 					wrapMode: Text.Wrap
 
 					onLineLaidOut: line => {
@@ -128,25 +137,30 @@ Rectangle {
 		}
 
 		ColumnLayout {
+			id: actionsLayout
 			Layout.fillWidth: true
-			Layout.margins: root.border.width
+			Layout.margins: borderRect.border.width
 			spacing: 0
-			visible: notif.actions.length != 0
+			visible: root.notif.actions.length !== 0
 
 			Rectangle {
-				height: border.border.width
+				id: actionsSeparator
+				height: borderRect.border.width
 				Layout.fillWidth: true
-				color: border.border.color
+				color: borderRect.border.color
 				antialiasing: true
 			}
 
 			RowLayout {
+				id: actionsRow
 				spacing: 0
 
 				Repeater {
-					model: notif.actions
+					id: actionsRepeater
+					model: root.notif.actions
 
 					Item {
+						id: actionDelegate
 						required property NotificationAction modelData;
 						required property int index;
 
@@ -154,45 +168,52 @@ Rectangle {
 						implicitHeight: 35
 
 						Rectangle {
+							id: actionSeparator
 							anchors {
-								top: parent.top
-								bottom: parent.bottom
-								left: parent.left
-								leftMargin: -implicitWidth * 0.5
+								top: actionDelegate.top
+								bottom: actionDelegate.bottom
+								left: actionDelegate.left
+								leftMargin: -actionSeparator.implicitWidth * 0.5
 							}
 
-							visible: index != 0
-							implicitWidth: root.border.width
+							visible: actionDelegate.index !== 0
+							implicitWidth: borderRect.border.width
 							color: ShellGlobals.colors.widgetOutline
 							antialiasing: true
 						}
 
 						MouseArea {
 							id: actionArea
-							anchors.fill: parent
+							anchors.fill: actionDelegate
 
 							onClicked: {
-								modelData.invoke();
+								actionDelegate.modelData.invoke();
 							}
 
 							Rectangle {
-								anchors.fill: parent
+								id: actionPressHighlight
+								anchors.fill: actionArea
 								color: actionArea.pressed && actionArea.containsMouse ? "#20000000" : "transparent"
 							}
 
 							RowLayout {
-								anchors.centerIn: parent
+								id: actionContent
+								anchors.centerIn: actionArea
 
 								Image {
-									visible: notif.hasActionIcons
-									source: Quickshell.iconPath(modelData.identifier)
+									id: actionIcon
+									visible: root.notif.hasActionIcons
+									source: Quickshell.iconPath(actionDelegate.modelData.identifier)
 									fillMode: Image.PreserveAspectFit
 									antialiasing: true
 									sourceSize.height: 25
 									sourceSize.width: 25
 								}
 
-								Label { text: modelData.text }
+								Label {
+									id: actionLabel
+									text: actionDelegate.modelData.text
+								}
 							}
 						}
 					}

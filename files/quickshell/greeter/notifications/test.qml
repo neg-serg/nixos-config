@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -5,11 +6,15 @@ import Quickshell
 import "../components"
 
 ShellRoot {
+	id: root
+
 	Component {
 		id: demoNotif
 
 		FlickableNotification {
+			id: flickableNotif
 			contentItem: Rectangle {
+				id: contentRect
 				color: "white"
 				border.color: "blue"
 				border.width: 2
@@ -18,7 +23,7 @@ ShellRoot {
 				height: 150
 			}
 
-			onLeftViewBounds: this.destroy()
+			onLeftViewBounds: flickableNotif.destroy()
 		}
 	}
 
@@ -26,6 +31,7 @@ ShellRoot {
 		id: notification
 
 		renderComponent: Rectangle {
+			id: renderRect
 			color: "white"
 			border.color: "blue"
 			border.width: 2
@@ -34,12 +40,15 @@ ShellRoot {
 			height: 150
 
 			ColumnLayout {
+				id: buttonColumn
 				Button {
+					id: dismissButton
 					text: "dismiss"
 					onClicked: notification.dismiss();
 				}
 
 				Button {
+					id: discardButton
 					text: "discard"
 					onClicked: notification.discard();
 				}
@@ -61,34 +70,35 @@ ShellRoot {
 		id: dn
 	}
 
-	Daemon {
+	NotificationServer {
+		id: notificationServer
 		onNotification: notification => {
 			notification.tracked = true;
 
-			const o = realComponent.createObject(null, { notif: notification });
+			const o = root.realComponent.createObject(null, { notif: notification });
 			display.addNotification(o);
 		}
 	}
 
 	FloatingWindow {
+		id: testWindow
 		color: "transparent"
 
 		ColumnLayout {
+			id: mainLayout
 			x: 5
 
 			Button {
+				id: addNotifButton
 				visible: false
 				text: "add notif"
 
 				onClicked: {
-					//const notif = demoNotif.createObject(stack);
-					//stack.children = [...stack.children, notif];
-					const notif = testComponent.createObject(null);
+					const notif = root.testComponent.createObject(null);
 					display.addNotification(notif);
 				}
 			}
 
-			//ZHVStack { id: stack }
 			NotificationDisplay { id: display }
 		}
 	}

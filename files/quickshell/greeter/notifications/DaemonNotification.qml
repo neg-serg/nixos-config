@@ -9,12 +9,13 @@ TrackedNotification {
 	required property Notification notif;
 
 	renderComponent: StandardNotificationRenderer {
+		id: renderer
 		notif: root.notif
 		backer: root
 	}
 
 	function handleDiscard() {
-		if (!lock.retained) notif.dismiss();
+		if (!lock.retained) root.notif.dismiss();
 		root.discarded();
 	}
 
@@ -27,9 +28,9 @@ TrackedNotification {
 		object: root.notif
 		locked: true
 		onRetainedChanged: {
-			if (retained) root.discard();
+			if (lock.retained) root.discard();
 		}
 	}
 
-	expireTimeout: notif.expireTimeout
+	expireTimeout: root.notif.expireTimeout
 }
