@@ -1,4 +1,5 @@
 pragma Singleton
+pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
@@ -16,15 +17,15 @@ Singleton {
 
 	property bool locked: false;
 	property bool animState: false;
-	property real lockSlide: animState ? 1.0 : 0.0
-	property real bkgSlide: animState ? 1.0 : 0.0
+	property real lockSlide: root.animState ? 1.0 : 0.0
+	property real bkgSlide: root.animState ? 1.0 : 0.0
 
 	Behavior on lockSlide {
-   	NumberAnimation {
-   		duration: 500
-   		easing.type: Easing.BezierSpline
-   		easing.bezierCurve: [0.1, 0.75, 0.15, 1.0, 1.0, 1.0]
-   	}
+		NumberAnimation {
+			duration: 500
+			easing.type: Easing.BezierSpline
+			easing.bezierCurve: [0.1, 0.75, 0.15, 1.0, 1.0, 1.0]
+		}
 	}
 
 	Behavior on bkgSlide {
@@ -35,12 +36,12 @@ Singleton {
 	}
 
 	onLockedChanged: {
-		if (locked) {
+		if (root.locked) {
 			lockContextLoader.active = true;
 			lock.locked = true;
 		} else {
 			lockClearTimer.start();
-			workspaceUnlockAnimation();
+			root.workspaceUnlockAnimation();
 		}
 	}
 
@@ -83,6 +84,7 @@ Singleton {
 	}
 
 	IpcHandler {
+		id: lockscreenHandler
 		target: "lockscreen"
 		function lock(): void { root.locked = true; }
 	}
@@ -91,6 +93,7 @@ Singleton {
 		id: lockContextLoader
 
 		SessionLockContext {
+			id: lockContext
 			onUnlocked: root.locked = false;
 		}
 	}
@@ -111,14 +114,15 @@ Singleton {
 			// Ensure nothing spawns in the workspace behind the transparent lock
 			// by filling in the background after animations complete.
 			Rectangle {
-				anchors.fill: parent
+				id: fillRect
+				anchors.fill: lockSurface
 				color: "gray"
 				visible: backgroundImage.visible
 			}
 
 			BackgroundImage {
 				id: backgroundImage
-				anchors.fill: parent
+				anchors.fill: lockSurface
 				screen: lockSurface.screen
 				visible: root.lockSlide == 1.0
 				asynchronous: true
@@ -135,17 +139,18 @@ Singleton {
 			}
 
 			onVisibleChanged: {
-				if (visible) {
+				if (root.visible) {
 					lockContent.visible = true;
 					root.animState = true;
 				}
 			}
 
 			Connections {
+				id: rootLockConnection
 				target: root
 
 				function onLockedChanged() {
-					if (!locked) {
+					if (!root.locked) {
 						root.animState = false;
 					}
 				}

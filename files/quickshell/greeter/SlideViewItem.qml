@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import Quickshell
 import QtQuick
 
@@ -8,7 +9,7 @@ QtObject {
 	signal animationCompleted(self: SlideViewItem);
 
 	property Connections __animConnection: Connections {
-		target: activeAnimation
+		target: root.activeAnimation
 
 		function onStopped() {
 			root.activeAnimation.destroy();
@@ -17,31 +18,31 @@ QtObject {
 	}
 
 	function createAnimation(component: Component) {
-		this.stopIfRunning();
-		this.activeAnimation = component.createObject(this, { target: this.item });
-		this.activeAnimation.running = true;
+		root.stopIfRunning();
+		root.activeAnimation = component.createObject(root, { target: root.item });
+		root.activeAnimation.running = true;
 	}
 
 	function stopIfRunning() {
-		if (this.activeAnimation) {
-			this.activeAnimation.stop();
-			this.activeAnimation = null;
+		if (root.activeAnimation) {
+			root.activeAnimation.stop();
+			root.activeAnimation = null;
 		}
 	}
 
 	function finishIfRunning() {
-		if (this.activeAnimation) {
+		if (root.activeAnimation) {
 			// animator types dont handle complete correctly.
-			this.activeAnimation.complete();
-			this.activeAnimation.stop();
-			this.item.x = 0;
-			this.item.y = 0;
-			this.activeAnimation = null;
+			root.activeAnimation.complete();
+			root.activeAnimation.stop();
+			root.item.x = 0;
+			root.item.y = 0;
+			root.activeAnimation = null;
 		}
 	}
 
 	function destroyAll() {
-		this.item.destroy();
-		this.destroy();
+		root.item.destroy();
+		root.destroy();
 	}
 }

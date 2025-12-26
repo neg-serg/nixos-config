@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 
 Item {
@@ -28,9 +29,9 @@ Item {
 		id: groove
 
 		anchors {
-			left: parent.left
-			right: parent.right
-			verticalCenter: parent.verticalCenter
+			left: root.left
+			right: root.right
+			verticalCenter: root.verticalCenter
 		}
 
 		height: 7

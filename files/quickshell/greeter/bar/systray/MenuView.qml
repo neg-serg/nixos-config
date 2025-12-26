@@ -1,4 +1,4 @@
-//@ pragma Internal
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -8,7 +8,7 @@ ColumnLayout {
 	id: root
 	property alias menu: menuView.menu;
 	property Item animatingItem: null;
-	property bool animating: animatingItem != null;
+	property bool animating: root.animatingItem !== null;
 
 	signal close();
 	signal submenuExpanded(item: var);
@@ -18,9 +18,11 @@ ColumnLayout {
 	spacing: 0
 
 	Repeater {
+		id: menuRepeater
 		model: menuView.children;
 
 		Loader {
+			id: menuLoader
 			required property var modelData;
 
 			property var item: Component {
@@ -28,29 +30,30 @@ ColumnLayout {
 					id: itemComponent
 					source: "MenuItem.qml"
 
-					property var entry: modelData
+					property var entry: menuLoader.modelData
 
 					function onClose() {
 						root.close()
 					}
 
 					function onExpandedChanged() {
-						if (item.expanded) root.submenuExpanded(item);
+						if (itemComponent.expanded) root.submenuExpanded(itemComponent);
 					}
 
 					function onAnimatingChanged() {
-						if (item.animating) {
-							root.animatingItem = this;
-						} else if (root.animatingItem == this) {
+						if (itemComponent.animating) {
+							root.animatingItem = itemComponent;
+						} else if (root.animatingItem === itemComponent) {
 							root.animatingItem = null;
 						}
 					}
 
 					Connections {
+						id: expandedConnection
 						target: root
 
 						function onSubmenuExpanded(expandedItem) {
-							if (item != expandedItem) item.expanded = false;
+							if (itemComponent !== expandedItem) itemComponent.expanded = false;
 						}
 					}
 				}
@@ -58,15 +61,16 @@ ColumnLayout {
 
 			property var separator: Component {
 				Item {
+					id: separatorItem
 					implicitHeight: seprect.height + 6
 
 					Rectangle {
 						id: seprect
 
 						anchors {
-							verticalCenter: parent.verticalCenter
-							left: parent.left
-							right: parent.right
+							verticalCenter: separatorItem.verticalCenter
+							left: separatorItem.left
+							right: separatorItem.right
 						}
 
 						color: ShellGlobals.colors.separator
@@ -75,7 +79,7 @@ ColumnLayout {
 				}
 			}
 
-			sourceComponent: modelData.isSeparator ? separator : item
+			sourceComponent: menuLoader.modelData.isSeparator ? separator : item
 			Layout.fillWidth: true
 		}
 	}

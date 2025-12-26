@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 
@@ -19,45 +20,45 @@ Scope {
 	function handleDiscard() {}
 
 	onVisualizerChanged: {
-		if (!visualizer) {
+		if (!root.visualizer) {
 			expireAnim.stop();
-			timePercentage = 1;
+			root.timePercentage = 1;
 		}
 
-		if (!visualizer && destroyOnInvisible) this.destroy();
+		if (!root.visualizer && root.destroyOnInvisible) root.destroy();
 	}
 
 	function untrack() {
-		destroyOnInvisible = true;
-		if (!visualizer) this.destroy();
+		root.destroyOnInvisible = true;
+		if (!root.visualizer) root.destroy();
 	}
 
 	property int expireTimeout: -1
 	property real timePercentage: 1
 	property int pauseCounter: 0
-	readonly property bool shouldPause: root.pauseCounter != 0 || (NotificationManager.lastHoveredNotif?.pauseCounter ?? 0) != 0
+	readonly property bool shouldPause: root.pauseCounter !== 0 || (NotificationManager.lastHoveredNotif?.pauseCounter ?? 0) !== 0
 
 	onPauseCounterChanged: {
-		if (pauseCounter > 0) {
-			NotificationManager.lastHoveredNotif = this;
+		if (root.pauseCounter > 0) {
+			NotificationManager.lastHoveredNotif = root;
 		}
 	}
 
 	NumberAnimation on timePercentage {
 		id: expireAnim
-		running: expireTimeout != 0
-		paused: running && root.shouldPause && to == 0
-		duration: expireTimeout == -1 ? 10000 : expireTimeout
+		running: root.expireTimeout !== 0
+		paused: expireAnim.running && root.shouldPause && expireAnim.to === 0
+		duration: root.expireTimeout === -1 ? 10000 : root.expireTimeout
 		to: 0
 		onFinished: {
-			if (!inTray) root.dismiss();
+			if (!root.inTray) root.dismiss();
 		}
 	}
 
 	onInTrayChanged: {
-		if (inTray) {
+		if (root.inTray) {
 			expireAnim.stop();
-			expireAnim.duration = 300 * (1 - timePercentage);
+			expireAnim.duration = 300 * (1 - root.timePercentage);
 			expireAnim.to = 1;
 			expireAnim.start();
 		}

@@ -1,11 +1,14 @@
+pragma ComponentBehavior: Bound
 import Quickshell
 import Quickshell.Services.Pam
+import QtQuick
 
 Scope {
 	id: root
 	signal unlocked();
 
-	property LockState state: LockState {
+	property var state: LockState {
+		id: lockState
 		onTryPasswordUnlock: {
 			root.state.isUnlocking = true;
 			pam.start();
@@ -18,17 +21,17 @@ Scope {
 		config: "password.conf"
 
 		onPamMessage: {
-			if (this.responseRequired) {
-				this.respond(root.state.currentText);
-			} else if (this.messageIsError) {
+			if (pam.responseRequired) {
+				pam.respond(root.state.currentText);
+			} else if (pam.messageIsError) {
 				root.state.currentText = "";
 				root.state.failed = true;
-				root.state.error = this.message;
+				root.state.error = pam.message;
 			} // else ignore
 		}
 
 		onCompleted: status => {
-			const success = status == PamResult.Success;
+			const success = (status === PamResult.Success);
 
 			if (!success) {
 				root.state.currentText = "";
