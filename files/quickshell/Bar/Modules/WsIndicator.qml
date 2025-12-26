@@ -90,7 +90,7 @@ CenteredCapsuleRow {
         if (rn.endsWith("term")) return true; // e.g., names like "dev-term"
         return false;
     })()
-    property bool isSpaciousWs: isAlphaWs || isTerminalWs
+    property bool isSpaciousWs: isAlphaWs
 
     // Fallback to workspace id if name is empty
     property string fallbackText: (wsId >= 0 ? String(wsId) : "?")
