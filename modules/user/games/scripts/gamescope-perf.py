@@ -119,12 +119,6 @@ else:
 # Debug logging
 print(f"DEBUG: gamescope-perf wrapper args: {args}", file=sys.stderr)
 
-# Exclude broken games from gamescope
-cmd_str_check = " ".join(args)
-# Example exclusion (placeholder)
-if "SomeBrokenGame" in cmd_str_check:
-    cmd = args
-else:
-    cmd = [H["GAME_RUN"], H["GAMESCOPE"]] + flags + ["--"] + args
+cmd = [H["GAME_RUN"], H["GAMESCOPE"]] + flags + ["--"] + args
 
 raise SystemExit(subprocess.call(cmd))
