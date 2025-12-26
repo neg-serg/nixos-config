@@ -417,6 +417,7 @@ Scope {
                         && isFinite(Settings.settings.panelSideMarginPx)
                     ) ? Settings.settings.panelSideMarginPx : Theme.panelSideMargin
                     property int sideMargin: Math.round(_sideMarginBase * s)
+                    property int widgetSpacing: Math.round(Theme.panelWidgetSpacing * s)
                     property int interWidgetSpacing: Math.max(widgetSpacing, Math.round(widgetSpacing * 1.35))
                     property int seamWidth: Math.max(8, Math.round(widgetSpacing * 0.85))
                     // Panel background transparency is configurable via Settings:
