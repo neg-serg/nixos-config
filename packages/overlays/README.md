@@ -1,10 +1,12 @@
-# Overlay pattern and helpers
+# Overlay Pattern and Helpers / Паттерн оверлеев и хелперы
 
-## Overview
+## Overview / Обзор
 
-- Entry: packages/overlay.nix
-  - Loads overlays from packages/overlays/{functions,tools,media,dev}.nix
-  - Merges their attrsets and exposes a combined namespace under pkgs.neg.
+- Entry: `packages/overlay.nix` / Точка входа
+  - Loads overlays from `packages/overlays/{functions,tools,media,dev}.nix`
+  - Загружает оверлеи из `packages/overlays/{functions,tools,media,dev}.nix`
+  - Merges their attrsets and exposes a combined namespace under `pkgs.neg`
+  - Объединяет их атрибуты в единый namespace `pkgs.neg`
 - Structure is intentional and should be kept as:
   - functions.nix — shared helpers under pkgs.neg.functions
   - tools.nix — CLI/desktop helpers under pkgs.neg.\*
