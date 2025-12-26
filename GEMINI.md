@@ -170,3 +170,50 @@ To ensure accurate color reproduction (avoiding "washed out" colors or grey haze
 *   **Select Area:** `Super+Ctrl+Shift+V`
 *   **Stop Recording:** Toggle the same keybinding.
 *   **Output:** `~/vid/recordings/`
+
+## Documentation Structure
+
+All modules have README.md files with dual EN/RU format:
+
+*   `modules/*/README.md` — module overview and usage
+*   `packages/*/README.md` — package-specific docs
+*   `files/quickshell/README.md` — Quickshell status bar config
+*   `docs/runbooks/*.md` — operational runbooks
+
+## Workflow Guides
+
+Common operations are documented in `.agent/workflows/`:
+
+| Workflow | Description |
+|----------|-------------|
+| `/rebuild` | NixOS rebuild commands |
+| `/add-package` | Adding packages to config |
+| `/add-module` | Creating new modules |
+| `/add-secret` | sops-nix secrets |
+| `/add-service` | Systemd services |
+| `/gaming-setup` | Steam + Gamescope setup |
+| `/hyprland-keys` | Keybinding configuration |
+| `/lint` | Linting and formatting |
+| `/theming` | Quickshell/Rofi themes |
+
+## Games Module Structure
+
+The games module (`modules/user/games/`) is split into focused submodules:
+
+*   `default.nix` — Entry point with options
+*   `launchers.nix` — Steam, Heroic, Prismlauncher
+*   `performance.nix` — Gamescope, Gamemode, MangoHud
+*   `vr.nix` — SteamVR, DeoVR
+
+Game scripts are in `packages/game-scripts/` derivation.
+
+## GTK Theming
+
+GTK theme is `Flight-Dark-GTK` with consistent application via:
+
+*   `environment.sessionVariables.GTK_THEME` — forces theme for all apps
+*   `~/.config/gtk-{3,4}.0/settings.ini` — GTK config files
+*   `~/.gtkrc-2.0` — GTK2 fallback
+
+Cursor theme is `Alkano-aio` (animated), icon theme is `kora`.
+
