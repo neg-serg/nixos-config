@@ -46,7 +46,7 @@ for a in "$@"; do
 done
 
 # Persist the expanded playlist for helper scripts (one realpath per line)
-> "$playlist_file"
+: > "$playlist_file"
 if [ "${#out_args[@]}" -gt 0 ]; then
   for arg in "${out_args[@]}"; do
     if [ -e "$arg" ]; then
