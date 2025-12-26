@@ -1,10 +1,12 @@
-# Web Module
+# Web Module / Модуль веба
 
 Web browsers and related tools.
 
-## Includes
+Веб-браузеры и связанные инструменты.
+
+## Includes / Включает
 
 - Firefox/Floorp
 - Chromium
-- Web development tools
-- Download utilities
+- Web development tools / Инструменты веб-разработки
+- Download utilities / Утилиты загрузки

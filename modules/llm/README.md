@@ -1,20 +1,22 @@
-# LLM Module
+# LLM Module / Модуль LLM
 
 Local LLM infrastructure with Ollama and Open WebUI.
 
-## Structure
+Локальная инфраструктура LLM с Ollama и Open WebUI.
 
-| File | Purpose |
+## Structure / Структура
+
+| File | Purpose / Назначение |
 |------|---------|
-| `default.nix` | Main config with model paths |
-| `ollama.nix` | Ollama service (ROCm acceleration) |
-| `open-webui.nix` | Web interface for Ollama |
+| `default.nix` | Main config with model paths / Пути моделей |
+| `ollama.nix` | Ollama service (ROCm) / Сервис Ollama |
+| `open-webui.nix` | Web interface / Веб-интерфейс |
 | `codex-config.nix` | Codex assistant config |
-| `pkgs.nix` | CLI tools |
+| `pkgs.nix` | CLI tools / Утилиты |
 
-## Configuration
+## Configuration / Конфигурация
 
-Ollama runs with AMD ROCm acceleration on RX 7900 XTX:
+Ollama with AMD ROCm on RX 7900 XTX:
 
 ```nix
 services.ollama = {
@@ -25,16 +27,16 @@ services.ollama = {
 };
 ```
 
-## Ports
+## Ports / Порты
 
-| Service | Port | Description |
+| Service | Port | Description / Описание |
 |---------|------|-------------|
 | Ollama | 11434 | API endpoint |
 
-## Usage
+## Usage / Использование
 
 ```bash
-ollama run llama3.2      # Run a model
-ollama list              # List installed models
-ollama pull codellama    # Download a model
+ollama run llama3.2      # Run a model / Запустить модель
+ollama list              # List models / Список моделей
+ollama pull codellama    # Download / Скачать модель
 ```

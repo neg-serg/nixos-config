@@ -1,46 +1,44 @@
-# Dev Module
+# Dev Module / Модуль разработки
 
 Development tools, languages, and security research utilities.
 
-## Structure
+Инструменты разработки, языки и утилиты для исследования безопасности.
 
-| Directory | Purpose |
+## Structure / Структура
+
+| Directory | Purpose / Назначение |
 |-----------|---------|
 | `android/` | Android SDK and tools |
-| `benchmarks/` | System benchmarking tools |
-| `editor/` | Code editors configuration |
-| `elf/` | ELF binary analysis tools |
+| `benchmarks/` | System benchmarking / Бенчмарки |
+| `editor/` | Code editors / Редакторы кода |
+| `elf/` | ELF binary analysis / Анализ ELF |
 | `gcc/` | GCC toolchain |
-| `gdb/` | GDB debugger config |
-| `git/` | Git configuration and tools |
-| `hack/` | Security research and pentesting (19 modules) |
+| `gdb/` | GDB debugger / Отладчик |
+| `git/` | Git configuration / Конфигурация Git |
+| `hack/` | Security research (19 modules) / Безопасность |
 | `openxr/` | OpenXR development |
-| `pkgs/` | Development packages |
+| `pkgs/` | Development packages / Пакеты |
 | `python/` | Python ecosystem |
-| `unreal/` | Unreal Engine development |
+| `unreal/` | Unreal Engine |
 
-## Key Submodules
+## Key Submodules / Ключевые подмодули
 
 ### hack/
 
-Security research toolkit with:
-- **Forensics** — disk/memory analysis
+Security research toolkit / Инструменты безопасности:
+- **Forensics** — disk/memory analysis / Анализ дисков/памяти
 - **Pentest** — recon, fuzzing, passwords, web, wireless
 - **Reverse engineering** — disassemblers, debuggers
 
-### git/
-
-Git configuration with delta diff viewer and custom aliases.
-
 ### python/
 
-Python development with:
+Python development:
 - Linters (ruff, pyright)
 - Formatters (black, isort)
 - Virtual environment tools
 
-## Feature Toggle
+## Feature Toggle / Переключатель
 
 ```nix
-features.dev.enable = true;  # Enable dev tools
+features.dev.enable = true;  # Enable dev tools / Включить
 ```
