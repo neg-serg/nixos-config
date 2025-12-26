@@ -1,42 +1,70 @@
-@import "menu.rasi"
+@import "colors.rasi"
 
-#window {
-    width: 100%;
-    location: south;
-    anchor: south;
-    x-offset: 0;
-    y-offset: 0;
-    padding: 5px;
-    margin: 0px;
-    border: 1px;
-    border-color: #0d141d;
-    border-radius: 0px;
-    background-color: var(blackdarkest);
+* {
+    background-color:       transparent;
+    text-color:             @on-surface;
+    font:                   "Iosevka Medium 14";
 }
 
-#mainbox {
-    margin: 0px;
-    padding: 0px;
-    background-color: var(blackdarkest);
+window {
+    width:                  900px;
+    padding:                24px;
+    border:                 2px;
+    border-radius:          20px;
+    border-color:           @primary;
+    background-color:       @surface;
+    location:               center;
+    anchor:                 center;
 }
 
-#listview {
-    layout: horizontal;
-    dynamic: true;
-    fixed-columns: false;
-    spacing: 4px;
-    scrollbar: true;
-    /* reduce vertical padding between list and inputbar */
-    padding: 2px 0px 2px 0px;
-    background-color: var(blackdarkest);
+mainbox {
+    children:               [ inputbar, listview ];
+    spacing:                20px;
 }
 
-#element {
-    margin: 0px 6px;
-    padding: 0px 4px;
+inputbar {
+    background-color:       @surface-container-high;
+    border-radius:          12px;
+    padding:                12px 16px;
+    children:               [ prompt, entry ];
+    spacing:                12px;
+}
+
+prompt {
+    text-color:             @primary;
+}
+
+entry {
+    placeholder:            "Search windows...";
+    placeholder-color:      @on-surface-variant;
+}
+
+listview {
+    fixed-height:           false;
+    dynamic:                true;
+    scrollbar:              false;
+    spacing:                8px;
+    lines:                  10;
+}
+
+element {
+    padding:                8px 12px;
+    border-radius:          8px;
+}
+
+element selected {
+    background-color:       @primary;
+    text-color:             @on-primary;
 }
 
 element-text {
-    background-color: inherit;
-    text-color: inherit;
+    background-color:       inherit;
+    text-color:             inherit;
+    vertical-align:         0.5;
+}
+
+element-icon {
+    size:                   24px;
+    background-color:       inherit;
+    margin:                 0 8px 0 0;
 }
