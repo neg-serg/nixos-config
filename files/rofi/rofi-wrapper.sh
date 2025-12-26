@@ -60,9 +60,9 @@ for arg in "$@"; do
 done
 [ -d "$cd_dir" ] && cd "$cd_dir"
 
-# If the caller explicitly picked the pass theme, let the theme position it
-# (pass uses a top-anchored window); skip wrapper offsets in that case.
-if [ "$theme_name" = "pass" ]; then
+# If the caller explicitly picked the pass or askpass theme, let the theme position it
+# (pass uses a top-anchored window, askpass uses south); skip wrapper offsets in that case.
+if [[ "$theme_name" == "pass" || "$theme_name" == askpass* ]]; then
   want_offsets=0
 fi
 
