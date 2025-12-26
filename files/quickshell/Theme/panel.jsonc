@@ -4,7 +4,7 @@
     "height": 22,
     "scale": 1.15,
     "sideMargin": 18,
-    "widgetSpacing": 12,
+    "widgetSpacing": 16,
     "separatorWidthFactor": 1,
     "separatorOpacity": 0.88,
     "hotzone": {
