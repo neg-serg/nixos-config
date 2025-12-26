@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import re, sys
+import re
+import sys
 from pathlib import Path
 
 ARRAY = "FAST_HIGHLIGHT_STYLES"

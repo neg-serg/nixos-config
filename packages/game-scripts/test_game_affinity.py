@@ -1,7 +1,7 @@
 import os
 import sys
 import unittest
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import patch, mock_open
 
 # Import the module under test
 # We need to add the current directory to sys.path to import it
