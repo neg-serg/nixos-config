@@ -225,7 +225,6 @@ in {
 
       environment.sessionVariables = {
         ZDOTDIR = "$HOME/.config/zsh";
-        WORDCHARS = "*?_-.[]~&;!#$%^(){}<>~\\` ";
         TERMINAL = "kitty";
         MANWIDTH = "80";
         GREP_COLOR = "37;45";
