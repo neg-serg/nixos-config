@@ -924,7 +924,7 @@ Singleton {
     property int uiBorderNone: val('ui.border.noneWidth', 0)
     property real uiIconEmphasisOpacity: val('ui.icon.emphasisOpacity', 0.9)
     // Workspace indicator tuning
-    property int wsIconSpacing: val('ws.icon.spacing', 8)
+    property int wsIconSpacing: val('ws.icon.spacing', 1)
     property real wsIconScale: val('ws.icon.scale', 1.4)
     property real wsIconSvgScale: val('ws.icon.svgScale', 0.92)
     property real wsIconDetachedScale: val('ws.icon.detachedScale', 1.15)
@@ -941,8 +941,8 @@ Singleton {
     // Workspace label/icon paddings
     // Values validated by ThemeConstraints in tooling
     property int wsLabelPadding: val('ws.label.padding', 6)
-    property int wsLabelLeftPadding: val('ws.label.leftPadding.normal', 12)
-    property int wsLabelLeftPaddingTerminal: val('ws.label.leftPadding.terminal', 12)
+    property int wsLabelLeftPadding: val('ws.label.leftPadding.normal', 6)
+    property int wsLabelLeftPaddingTerminal: val('ws.label.leftPadding.terminal', 6)
     property int wsIconInnerPadding: val('ws.icon.innerPadding', 1)
     // Keyboard capsule spacing tokens mirror workspace defaults unless overridden
     property int keyboardCapsuleIconSpacing: val('keyboard.capsule.iconSpacing', wsIconSpacing)
