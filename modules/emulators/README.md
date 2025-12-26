@@ -1,9 +1,11 @@
-# Emulators Module
+# Emulators Module / Модуль эмуляторов
 
 Console and system emulators.
 
-## Includes
+Эмуляторы консолей и систем.
 
-- RetroArch cores
-- Standalone emulators
-- ROM management tools
+## Includes / Включает
+
+- RetroArch cores / Ядра RetroArch
+- Standalone emulators / Автономные эмуляторы
+- ROM management tools / Управление ROM

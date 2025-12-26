@@ -1,14 +1,18 @@
-# Fonts Module
+# Fonts Module / Модуль шрифтов
 
 Font packages and configuration.
 
-## Includes
+Пакеты шрифтов и конфигурация.
+
+## Includes / Включает
 
 - Nerd Fonts (FiraCode, Iosevka)
-- System fonts
-- Icon fonts (Font Awesome)
-- CJK fonts
+- System fonts / Системные шрифты
+- Icon fonts (Font Awesome) / Иконочные шрифты
+- CJK fonts / Шрифты CJK
 
-## Font Directories
+## Font Directories / Директории
 
 Custom fonts in `files/fonts/` are auto-installed.
+
+Кастомные шрифты из `files/fonts/` устанавливаются автоматически.

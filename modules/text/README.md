@@ -1,10 +1,12 @@
-# Text Module
+# Text Module / Модуль текста
 
 Text processing and editing tools.
 
-## Includes
+Инструменты обработки и редактирования текста.
 
-- Text editors
-- PDF tools
-- Document converters
-- Office utilities
+## Includes / Включает
+
+- Text editors / Текстовые редакторы
+- PDF tools / Инструменты PDF
+- Document converters / Конвертеры документов
+- Office utilities / Офисные утилиты

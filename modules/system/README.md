@@ -1,16 +1,18 @@
-# System Module
+# System Module / Модуль системы
 
 Core system configuration.
 
-## Includes
+Базовая конфигурация системы.
 
-- Boot configuration (Lanzaboote, systemd-boot)
-- Kernel and modules
-- Networking
-- Services (greetd, systemd units)
-- Power management
-- Virtualisation
+## Includes / Включает
 
-## Subdirectories
+- Boot configuration (Lanzaboote, systemd-boot) / Загрузка
+- Kernel and modules / Ядро и модули
+- Networking / Сеть
+- Services (greetd, systemd units) / Сервисы
+- Power management / Управление питанием
+- Virtualisation / Виртуализация
+
+## Subdirectories / Поддиректории
 
 See `modules/system/net/README.md` for networking details.

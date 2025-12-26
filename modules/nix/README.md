@@ -1,11 +1,13 @@
-# Nix Module
+# Nix Module / Модуль Nix
 
 Nix package manager configuration.
 
-## Includes
+Конфигурация пакетного менеджера Nix.
 
-- Nix daemon settings
-- Binary caches (Cachix)
-- Garbage collection
-- nix-ld (dynamic linking)
-- Flake settings
+## Includes / Включает
+
+- Nix daemon settings / Настройки демона Nix
+- Binary caches (Cachix) / Бинарные кэши
+- Garbage collection / Сборка мусора
+- nix-ld (dynamic linking) / Динамическая линковка
+- Flake settings / Настройки flakes
