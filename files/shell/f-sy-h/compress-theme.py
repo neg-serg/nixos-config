@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-import sys, re, argparse
+import sys
+import re
+import argparse
 from collections import defaultdict, OrderedDict
 
 # Matches: ${FAST_HIGHLIGHT_STYLES[key]:=value}

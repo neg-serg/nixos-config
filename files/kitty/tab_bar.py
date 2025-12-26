@@ -50,14 +50,11 @@ def _draw_left_status(
     if screen.cursor.x >= screen.columns - right_status_length:
         return screen.cursor.x
     tab_bg = screen.cursor.bg
-    tab_fg = screen.cursor.fg
     default_bg = as_rgb(int(draw_data.default_bg))
     if extra_data.next_tab:
-        next_tab_bg = as_rgb(draw_data.tab_bg(extra_data.next_tab))
-        needs_soft_separator = next_tab_bg == tab_bg
+        pass  # next_tab_bg available if needed
     else:
-        next_tab_bg = default_bg
-        needs_soft_separator = False
+        pass
     if screen.cursor.x <= len(ICON):
         screen.cursor.x = len(ICON)
     screen.draw("")
@@ -101,8 +98,7 @@ def draw_tab(
     global right_status_length
     if timer_id is None:
         timer_id = add_timer(_redraw_tab_bar, REFRESH_TIME, True)
-    clock = datetime.now().strftime(" %H:%M")
-    date = datetime.now().strftime(" %d.%m.%Y")
+    # clock/date available via datetime.now() if needed for right status
     right_status_length = RIGHT_MARGIN
 
     _draw_icon(screen, index)
