@@ -18,7 +18,7 @@
 
     bind = $M4, w, exec, raise --class $browser --launch $browser
     bind = $M4, x, exec, raise --class "term" --launch "kitty --class term"
-    bind = $M4, q, exec, raise --class "nwim" --launch "kitty --class nwim -e nvim --server /tmp/nvim.sock --remote || nvim --listen /tmp/nvim.sock"
+    bind = $M4, q, exec, raise --class "nwim" --launch "kitty --class nwim -e /home/neg/.local/bin/v"
     bind = $M4, b, exec, raise --class "mpv" --launch "~/.local/bin/pl video"
     bind = $M4+$C, c, exec, raise --class "swayimg" --launch "swayimg ~/dw"
     bind = $M4+$S, c, exec, ~/.local/bin/wl
