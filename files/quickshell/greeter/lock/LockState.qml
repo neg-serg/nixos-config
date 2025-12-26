@@ -1,9 +1,12 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Services.Mpris
 
 Scope {
+	id: root
 	signal tryPasswordUnlock();
 	property string currentText: "";
 	property string error: "";
@@ -21,30 +24,30 @@ Scope {
 		easing.bezierCurve: [0.0, 0.75, 0.15, 1.0, 1.0, 1.0]
 
 		onStopped: {
-			if (fadedOut) Hyprland.dispatch("dpms off");
+			if (root.fadedOut) Hyprland.dispatch("dpms off");
 		}
 	}
 
 	onCurrentTextChanged: {
-		failed = false;
-		error = "";
+		root.failed = false;
+		root.error = "";
 
-		if (fadedOut) {
-			fadeIn();
+		if (root.fadedOut) {
+			root.fadeIn();
 		}
 	}
 
 	function fadeOut() {
-		if (fadedOut) return;
-		fadedOut = true;
+		if (root.fadedOut) return;
+		root.fadedOut = true;
 		fadeAnim.to = 1;
 		fadeAnim.restart();
 	}
 
 	function fadeIn() {
-		if (!fadedOut) return;
+		if (!root.fadedOut) return;
 		Hyprland.dispatch("dpms on");
-		fadedOut = false;
+		root.fadedOut = false;
 		fadeAnim.to = 0;
 		fadeAnim.restart();
 	}
@@ -53,7 +56,7 @@ Scope {
 
 	// returns if mouse move should be continued, false should restart
 	function mouseMoved(): bool {
-		return mouseTimer.restart() < 0.2;
+		return root.mouseTimer.restart() < 0.2;
 	}
 
 	readonly property bool mediaPlaying: Mpris.players.values.some(player => {

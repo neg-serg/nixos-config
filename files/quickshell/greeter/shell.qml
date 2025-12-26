@@ -1,4 +1,4 @@
-//@ pragma ShellId shell
+pragma ComponentBehavior: Bound
 
 import Quickshell
 import Quickshell.Io
@@ -13,47 +13,55 @@ import "launcher" as Launcher
 import "background"
 
 ShellRoot {
+	id: root
 	Component.onCompleted: [Lock.Controller, Launcher.Controller.init()]
 
 	Process {
+		id: mkdirProcess
 		command: ["mkdir", "-p", ShellGlobals.rtpath]
 		running: true
 	}
 
 	LazyLoader {
-		id: screenshot
+		id: screenshotLoader
 		loading: true
 
 		Screenshot.Controller {
+			id: screenshotController
 		}
 	}
 
 	Connections {
+		id: ipcConnections
 		target: ShellIpc
 
 		function onScreenshot() {
-			screenshot.item.shooting = true;
+			screenshotLoader.item.shooting = true;
 		}
 	}
 
 	Notifs.NotificationOverlay {
-		screen: Quickshell.screens.find(s => s.name == "DP-1") ?? Quickshell.screens[0]
+		id: notifOverlay
+		screen: Quickshell.screens.find(s => s.name === "DP-1") ?? Quickshell.screens[0]
 	}
 
 	Variants {
+		id: screenVariants
 		model: Quickshell.screens
 
 		Scope {
-			property var modelData
+			id: screenScope
+			required property var modelData
 
 			Bar.Bar {
-				screen: modelData
+				id: bar
+				screen: screenScope.modelData
 			}
 
 			PanelWindow {
 				id: window
 
-				screen: modelData
+				screen: screenScope.modelData
 
 				exclusionMode: ExclusionMode.Ignore
 				WlrLayershell.layer: WlrLayer.Background
@@ -67,7 +75,8 @@ ShellRoot {
 				}
 
 				BackgroundImage {
-					anchors.fill: parent
+					id: bgImage
+					anchors.fill: window
 					screen: window.screen
 				}
 			}

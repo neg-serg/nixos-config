@@ -1,9 +1,11 @@
 pragma Singleton
+pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
 
 Singleton {
+	id: root
 	readonly property string rtpath: "/run/user/1000/quickshell"
 
 	readonly property var colors: QtObject {
@@ -17,10 +19,12 @@ Singleton {
 	}
 
 	readonly property var popoutXCurve: EasingCurve {
+		id: xCurve
 		curve.type: Easing.OutQuint
 	}
 
 	readonly property var popoutYCurve: EasingCurve {
+		id: yCurve
 		curve.type: Easing.InQuart
 	}
 

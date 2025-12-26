@@ -1,20 +1,22 @@
-//@ pragma Internal
+pragma ComponentBehavior: Bound
 import QtQuick
 import qs
 
 Rectangle {
+	id: root
 	property var checkState: Qt.Unchecked;
 	implicitHeight: 18
 	implicitWidth: 18
-	radius: width / 2
+	radius: root.width / 2
 	color: ShellGlobals.colors.widget
 
 	Rectangle {
-		x: parent.width * 0.25
-		y: parent.height * 0.25
-		visible: checkState == Qt.Checked
-		width: parent.width * 0.5
-		height: width
-		radius: width / 2
+		id: innerCircle
+		x: root.width * 0.25
+		y: root.height * 0.25
+		visible: root.checkState === Qt.Checked
+		width: root.width * 0.5
+		height: innerCircle.width
+		radius: innerCircle.width / 2
 	}
 }

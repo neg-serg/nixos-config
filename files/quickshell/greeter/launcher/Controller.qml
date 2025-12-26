@@ -38,6 +38,7 @@ Singleton {
 		activeAsync: persist.launcherOpen
 
 		PanelWindow {
+			id: launcherWindow
 			width: 450
 			height: 7 + searchContainer.implicitHeight + list.topMargin * 2 + list.delegateHeight * 10
 			color: "transparent"
@@ -45,7 +46,7 @@ Singleton {
 			WlrLayershell.namespace: "shell:launcher"
 
 			Rectangle {
-				//anchors.fill: parent
+				id: launcherBackground
 				height: 7 + searchContainer.implicitHeight + list.topMargin + list.bottomMargin + Math.min(list.contentHeight, list.delegateHeight * 10)
 				Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 				width: 450
@@ -55,7 +56,8 @@ Singleton {
 				border.width: 1
 
 				ColumnLayout {
-					anchors.fill: parent
+					id: launcherLayout
+					anchors.fill: launcherBackground
 					anchors.margins: 7
 					anchors.bottomMargin: 0
 					spacing: 0
@@ -70,11 +72,12 @@ Singleton {
 
 						RowLayout {
 							id: searchbox
-							anchors.fill: parent
+							anchors.fill: searchContainer
 							anchors.margins: 5
 
 							IconImage {
-								implicitSize: parent.height
+								id: searchIcon
+								implicitSize: searchbox.height
 								source: "root:icons/magnifying-glass.svg"
 							}
 
@@ -90,10 +93,10 @@ Singleton {
 								Keys.onPressed: event => {
 									if (event.modifiers & Qt.ControlModifier) {
 										if (event.key == Qt.Key_J) {
-											list.currentIndex = list.currentIndex == list.count - 1 ? 0 : list.currentIndex + 1;
+											list.currentIndex = (list.currentIndex === list.count - 1 ? 0 : list.currentIndex + 1);
 											event.accepted = true;
 										} else if (event.key == Qt.Key_K) {
-											list.currentIndex = list.currentIndex == 0 ? list.count - 1 : list.currentIndex - 1;
+											list.currentIndex = (list.currentIndex === 0 ? list.count - 1 : list.currentIndex - 1);
 											event.accepted = true;
 										}
 									}
@@ -120,11 +123,11 @@ Singleton {
 						cacheBuffer: 0 // works around QTBUG-131106
 						//reuseItems: true
 						model: ScriptModel {
+							id: searchModel
 							values: DesktopEntries.applications.values
 								.map(object => {
 									const stxt = search.text.toLowerCase();
 									const ntxt = object.name.toLowerCase();
-									let si = 0;
 									let ni = 0;
 
 									let matches = [];
@@ -135,15 +138,15 @@ Singleton {
 
 										while (true) {
 											// Drop any entries with letters that don't exist in order
-											if (ni == ntxt.length) return null;
+											if (ni === ntxt.length) return null;
 
 											const nc = ntxt[ni++];
 
-											if (nc == sc) {
-												if (startMatch == -1) startMatch = ni;
+											if (nc === sc) {
+												if (startMatch === -1) startMatch = ni;
 												break;
 											} else {
-												if (startMatch != -1) {
+												if (startMatch !== -1) {
 													matches.push({
 														index: startMatch,
 														length: ni - startMatch,
@@ -155,7 +158,7 @@ Singleton {
 										}
 									}
 
-									if (startMatch != -1) {
+									if (startMatch !== -1) {
 										matches.push({
 											index: startMatch,
 											length: ni - startMatch + 1,
@@ -201,7 +204,7 @@ Singleton {
 						}
 
 						topMargin: 7
-						bottomMargin: list.count == 0 ? 0 : 7
+						bottomMargin: list.count === 0 ? 0 : 7
 
 						add: Transition {
 							NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 100 }
@@ -223,6 +226,7 @@ Singleton {
 						}
 
 						highlight: Rectangle {
+							id: listHighlight
 							radius: 5
 							color: "#20e0ffff"
 							border.color: "#30ffffff"
@@ -240,32 +244,35 @@ Singleton {
 						readonly property real delegateHeight: 44
 
 						delegate: MouseArea {
+							id: delegateRoot
 							required property DesktopEntry modelData;
 
 							implicitHeight: list.delegateHeight
 							implicitWidth: ListView.view.width
 
 							onClicked: {
-								modelData.execute();
+								delegateRoot.modelData.execute();
 								persist.launcherOpen = false;
 							}
 
 							RowLayout {
 								id: delegateLayout
 								anchors {
-									verticalCenter: parent.verticalCenter
-									left: parent.left
+									verticalCenter: delegateRoot.verticalCenter
+									left: delegateRoot.left
 									leftMargin: 5
 								}
 
 								IconImage {
+									id: delegateIcon
 									Layout.alignment: Qt.AlignVCenter
 									asynchronous: true
 									implicitSize: 30
-									source: Quickshell.iconPath(modelData.icon)
+									source: Quickshell.iconPath(delegateRoot.modelData.icon)
 								}
 								Text {
-									text: modelData.name
+									id: delegateText
+									text: delegateRoot.modelData.name
 									color: "#f0f0f0"
 									Layout.alignment: Qt.AlignVCenter
 								}

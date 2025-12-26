@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import qs.bar
@@ -7,9 +8,10 @@ BarWidgetInner {
 	required property var bar;
 
 	property bool controlsOpen: false;
-	onControlsOpenChanged: NotificationManager.showTrayNotifs = controlsOpen;
+	onControlsOpenChanged: NotificationManager.showTrayNotifs = root.controlsOpen;
 
 	Connections {
+		id: managerConnection
 		target: NotificationManager
 
 		function onHasNotifsChanged() {
@@ -19,18 +21,19 @@ BarWidgetInner {
 		}
 	}
 
-	implicitHeight: width
+	implicitHeight: root.width
 
 	BarButton {
 		id: button
-		anchors.fill: parent
+		anchors.fill: root
 		baseMargin: 8
 		fillWindowWidth: true
 		acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-		showPressed: root.controlsOpen || (pressedButtons & ~Qt.RightButton)
+		showPressed: root.controlsOpen || (button.pressedButtons & ~Qt.RightButton)
 
 		Image {
-			anchors.fill: parent
+			id: bellIcon
+			anchors.fill: button
 
 			source: NotificationManager.hasNotifs
 				? "root:icons/bell-fill.svg"
@@ -38,35 +41,38 @@ BarWidgetInner {
 
 			fillMode: Image.PreserveAspectFit
 
-			sourceSize.width: width
-			sourceSize.height: height
+			sourceSize.width: bellIcon.width
+			sourceSize.height: bellIcon.height
 		}
 
 		onPressed: event => {
-			if (event.button == Qt.RightButton && NotificationManager.hasNotifs) {
+			if (event.button === Qt.RightButton && NotificationManager.hasNotifs) {
 				root.controlsOpen = !root.controlsOpen;
 			}
 		}
 	}
 
 	property TooltipItem tooltip: TooltipItem {
-		tooltip: bar.tooltip
+		id: widgetTooltip
+		tooltip: root.bar.tooltip
 		owner: root
 		show: button.containsMouse
 
 		Label {
-			anchors.verticalCenter: parent.verticalCenter
+			id: tooltipLabel
+			anchors.verticalCenter: widgetTooltip.verticalCenter
 			text: {
 				const count = NotificationManager.notifications.length;
-				return count == 0 ? "No notifications"
-					: count == 1 ? "1 notification"
+				return count === 0 ? "No notifications"
+					: count === 1 ? "1 notification"
 					: `${count} notifications`;
 			}
 		}
 	}
 
 	property TooltipItem rightclickMenu: TooltipItem {
-		tooltip: bar.tooltip
+		id: widgetMenu
+		tooltip: root.bar.tooltip
 		owner: root
 		isMenu: true
 		grabWindows: [NotificationManager.overlay]
@@ -74,6 +80,7 @@ BarWidgetInner {
 		onClose: root.controlsOpen = false
 
 		Item {
+			id: menuContainer
 			implicitWidth: 440
 			implicitHeight: root.implicitHeight - 10
 
@@ -81,9 +88,9 @@ BarWidgetInner {
 				id: closeArea
 
 				anchors {
-					right: parent.right
+					right: menuContainer.right
 					rightMargin: 5
-					verticalCenter: parent.verticalCenter
+					verticalCenter: menuContainer.verticalCenter
 				}
 
 				implicitWidth: 30
@@ -95,9 +102,10 @@ BarWidgetInner {
 				}
 
 				Rectangle {
-					anchors.fill: parent
+					id: closeBackground
+					anchors.fill: closeArea
 					anchors.margins: 5
-					radius: width * 0.5
+					radius: closeBackground.width * 0.5
 					antialiasing: true
 					color: "#60ffffff"
 					opacity: closeArea.containsMouse ? 1 : 0
@@ -105,8 +113,9 @@ BarWidgetInner {
 				}
 
 				CloseButton {
-					anchors.fill: parent
-					ringFill: root.backer?.timePercentage ?? 0
+					id: closeButton
+					anchors.fill: closeArea
+					ringFill: 0 // root.backer?.timePercentage ?? 0
 				}
 			}
 		}

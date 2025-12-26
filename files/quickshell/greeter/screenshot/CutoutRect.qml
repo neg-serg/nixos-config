@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 
 Item {
@@ -18,49 +19,53 @@ Item {
 	}
 
 	Rectangle {
+		id: topOverlay
 		color: root.backgroundColor
-		opacity: backgroundOpacity
+		opacity: root.backgroundOpacity
 
 		anchors {
-			top: parent.top
-			left: parent.left
-			right: parent.right
+			top: root.top
+			left: root.left
+			right: root.right
 			bottom: center.top
 		}
 	}
 
 	Rectangle {
+		id: bottomOverlay
 		color: root.backgroundColor
-		opacity: backgroundOpacity
+		opacity: root.backgroundOpacity
 
 		anchors {
 			top: center.bottom
-			left: parent.left
-			right: parent.right
-			bottom: parent.bottom
+			left: root.left
+			right: root.right
+			bottom: root.bottom
 		}
 	}
 
 	Rectangle {
+		id: leftOverlay
 		color: root.backgroundColor
-		opacity: backgroundOpacity
+		opacity: root.backgroundOpacity
 
 		anchors {
 			top: center.top
-			left: parent.left
+			left: root.left
 			right: center.left
 			bottom: center.bottom
 		}
 	}
 
 	Rectangle {
+		id: rightOverlay
 		color: root.backgroundColor
-		opacity: backgroundOpacity
+		opacity: root.backgroundOpacity
 
 		anchors {
 			top: center.top
 			left: center.right
-			right: parent.right
+			right: root.right
 			bottom: center.bottom
 		}
 	}

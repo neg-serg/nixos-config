@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
@@ -8,12 +9,13 @@ Item {
 	id: root
 	required property LockState state;
 
-	property real focusAnim: focusAnimInternal * 0.001
+	property real focusAnim: root.focusAnimInternal * 0.001
 	property int focusAnimInternal: Window.active ? 1000 : 0
 	Behavior on focusAnimInternal { SmoothedAnimation { velocity: 5000 } }
 
 	MouseArea {
-		anchors.fill: parent
+		id: wakeupMouseArea
+		anchors.fill: root
 		hoverEnabled: true
 
 		property real startMoveX: 0
@@ -23,37 +25,38 @@ Item {
 		onPositionChanged: event => {
 			if (root.state.fadedOut) {
 				if (root.state.mouseMoved()) {
-					const xOffset = Math.abs(event.x - startMoveX);
-					const yOffset = Math.abs(event.y - startMoveY);
+					const xOffset = Math.abs(event.x - wakeupMouseArea.startMoveX);
+					const yOffset = Math.abs(event.y - wakeupMouseArea.startMoveY);
 					const distanceSq = (xOffset * xOffset) + (yOffset * yOffset);
 					if (distanceSq > (100 * 100)) root.state.fadeIn();
 				} else {
-					startMoveX = event.x;
-					startMoveY = event.y;
+					wakeupMouseArea.startMoveX = event.x;
+					wakeupMouseArea.startMoveY = event.y;
 				}
 			}
 		}
 
 		Item {
 			id: content
-			width: parent.width
-			height: parent.height
-			y: root.state.fadeOutMul * (height / 2 + childrenRect.height)
+			width: wakeupMouseArea.width
+			height: wakeupMouseArea.height
+			y: root.state.fadeOutMul * (content.height / 2 + content.childrenRect.height)
 
 			Rectangle {
-				anchors.horizontalCenter: parent.horizontalCenter
-				y: parent.height / 2 + textBox.height
 				id: sep
+				anchors.horizontalCenter: content.horizontalCenter
+				y: content.height / 2 + textBox.height
 
 				implicitHeight: 6
 				implicitWidth: 800
-				radius: height / 2
+				radius: sep.height / 2
 				color: ShellGlobals.colors.widget
 			}
 
 			ColumnLayout {
+				id: contentLayout
 				implicitWidth: sep.implicitWidth
-				anchors.horizontalCenter: parent.horizontalCenter
+				anchors.horizontalCenter: content.horizontalCenter
 				anchors.bottom: sep.top
 				spacing: 0
 
@@ -83,17 +86,18 @@ Item {
 				}
 
 				Item {
+					id: textBoxWrapper
 					Layout.alignment: Qt.AlignHCenter
-					implicitHeight: textBox.height * focusAnim
+					implicitHeight: textBox.height * root.focusAnim
 					implicitWidth: sep.implicitWidth
 					clip: true
 
 					TextInput {
 						id: textBox
 						focus: true
-						width: parent.width
+						width: textBoxWrapper.width
 
-						color: enabled ?
+						color: textBox.enabled ?
 							root.state.failed ? "#ffa0a0" : "white"
 							: "#80ffffff";
 
@@ -103,21 +107,22 @@ Item {
 						echoMode: TextInput.Password
 						inputMethodHints: Qt.ImhSensitiveData
 
-						cursorVisible: text != ""
-						onCursorVisibleChanged: cursorVisible = text != ""
+						cursorVisible: textBox.text != ""
+						onCursorVisibleChanged: textBox.cursorVisible = (textBox.text != "")
 
 						onTextChanged: {
-							root.state.currentText = text;
-							cursorVisible = text != ""
+							root.state.currentText = textBox.text;
+							textBox.cursorVisible = (textBox.text != "")
 						}
 
 						Window.onActiveChanged: {
 							if (Window.active) {
-								text = root.state.currentText;
+								textBox.text = root.state.currentText;
 							}
 						}
 
 						Connections {
+							id: stateTextConnection
 							target: root.state
 
 							function onCurrentTextChanged() {
@@ -126,25 +131,27 @@ Item {
 						}
 
 						onAccepted: {
-							if (text != "") root.state.tryPasswordUnlock();
+							if (textBox.text != "") root.state.tryPasswordUnlock();
 						}
 
 						enabled: !root.state.isUnlocking;
 					}
 
 					Text {
+						id: placeholderText
 						anchors.fill: textBox
 						font: textBox.font
 						color: root.state.failed ? "#ffa0a0" : "#80ffffff";
-						horizontalAlignment: TextInput.AlignHCenter
+						horizontalAlignment: Text.AlignHCenter
 						visible: !textBox.cursorVisible
 						text: root.state.failed ? root.state.error
 							: root.state.fprintAvailable ? "Touch sensor or enter password" : "Enter password";
 					}
 
 					Rectangle {
+						id: fprintStatus
 						Layout.fillHeight: true
-						implicitWidth: height
+						implicitWidth: fprintStatus.height
 						color: "transparent"
 						visible: root.state.fprintAvailable
 
@@ -155,35 +162,40 @@ Item {
 						}
 
 						Image {
-							anchors.fill: parent
+							id: fprintIcon
+							anchors.fill: fprintStatus
 							anchors.margins: 5
 							source: "root:icons/fingerprint.svg"
-							sourceSize.width: width
-							sourceSize.height: height
+							sourceSize.width: fprintIcon.width
+							sourceSize.height: fprintIcon.height
 						}
 					}
 				}
 			}
 
 			Item {
-				anchors.horizontalCenter: parent.horizontalCenter
+				id: footerWrapper
+				anchors.horizontalCenter: content.horizontalCenter
 				anchors.top: sep.bottom
-				implicitHeight: (75 + 30) * focusAnim
+				implicitHeight: (75 + 30) * root.focusAnim
 				implicitWidth: sep.implicitWidth
 				clip: true
 
 				RowLayout {
-					anchors.horizontalCenter: parent.horizontalCenter
-					anchors.bottom: parent.bottom
+					id: footerLayout
+					anchors.horizontalCenter: footerWrapper.horizontalCenter
+					anchors.bottom: footerWrapper.bottom
 					anchors.topMargin: 50
 					spacing: 0
 
 					LockButton {
+						id: monitorButton
 						icon: "root:icons/monitor.svg"
 						onClicked: root.state.fadeOut();
 					}
 
 					LockButton {
+						id: mediaPauseButton
 						icon: "root:icons/pause.svg"
 						show: root.state.mediaPlaying;
 						onClicked: root.state.pauseMedia();
@@ -195,9 +207,9 @@ Item {
 
 	Rectangle {
 		id: darkenOverlay
-		anchors.fill: parent
+		anchors.fill: root
 		color: "black"
 		opacity: root.state.fadeOutMul
-		visible: opacity != 0
+		visible: darkenOverlay.opacity != 0
 	}
 }

@@ -1,4 +1,4 @@
-//@ pragma Internal
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -22,16 +22,16 @@ MouseArea {
 
 	hoverEnabled: true
 	onClicked: {
-		if (entry.hasChildren) childrenRevealer.expanded = !childrenRevealer.expanded
+		if (root.entry.hasChildren) root.childrenRevealer.expanded = !root.childrenRevealer.expanded
 		else {
-			entry.triggered();
-			close();
+			root.entry.triggered();
+			root.close();
 		}
 	}
 
 	ColumnLayout {
 		id: row
-		anchors.fill: parent
+		anchors.fill: root
 		anchors.margins: 2
 		spacing: 0
 
@@ -39,45 +39,51 @@ MouseArea {
 			id: innerRow
 
 			Item {
+				id: iconWrapper
 				implicitWidth: 22
 				implicitHeight: 22
 
 				MenuCheckBox {
-					anchors.centerIn: parent
-					visible: entry.buttonType == QsMenuButtonType.CheckBox
-					checkState: entry.checkState
+					id: checkBox
+					anchors.centerIn: iconWrapper
+					visible: root.entry.buttonType === QsMenuButtonType.CheckBox
+					checkState: root.entry.checkState
 				}
 
 				MenuRadioButton {
-					anchors.centerIn: parent
-					visible: entry.buttonType == QsMenuButtonType.RadioButton
-					checkState: entry.checkState
+					id: radioButton
+					anchors.centerIn: iconWrapper
+					visible: root.entry.buttonType === QsMenuButtonType.RadioButton
+					checkState: root.entry.checkState
 				}
 
 				MenuChildrenRevealer {
 					id: childrenRevealer
-					anchors.centerIn: parent
-					visible: entry.hasChildren
-					onOpenChanged: entry.showChildren = open
+					anchors.centerIn: iconWrapper
+					visible: root.entry.hasChildren
+					onOpenChanged: root.entry.showChildren = open
 				}
 			}
 
 			Text {
-				text: entry.text
-				color: entry.enabled ? "white" : "#bbbbbb"
+				id: label
+				text: root.entry.text
+				color: root.entry.enabled ? "white" : "#bbbbbb"
 			}
 
 			Item {
+				id: spacer
 				Layout.fillWidth: true
 				implicitWidth: 22
 				implicitHeight: 22
 
 				IconImage {
-					anchors.right: parent.right
-					anchors.verticalCenter: parent.verticalCenter
-					source: entry.icon
-					visible: source != ""
-					implicitSize: parent.height
+					id: icon
+					anchors.right: spacer.right
+					anchors.verticalCenter: spacer.verticalCenter
+					source: root.entry.icon
+					visible: icon.source !== ""
+					implicitSize: spacer.height
 				}
 			}
 		}
@@ -85,33 +91,34 @@ MouseArea {
 		Loader {
 			id: childMenuLoader
 			Layout.fillWidth: true
-			Layout.preferredHeight: active ? item.implicitHeight * childrenRevealer.progress : 0
+			Layout.preferredHeight: childMenuLoader.active ? (childMenuLoader.item?.implicitHeight ?? 0) * root.childrenRevealer.progress : 0
 
 			readonly property real widthDifference: {
-				Math.max(0, (item?.implicitWidth ?? 0) - innerRow.implicitWidth);
+				Math.max(0, (childMenuLoader.item?.implicitWidth ?? 0) - innerRow.implicitWidth);
 			}
-			Layout.preferredWidth: active ? innerRow.implicitWidth + (widthDifference * childrenRevealer.progress) : 0
+			Layout.preferredWidth: childMenuLoader.active ? innerRow.implicitWidth + (childMenuLoader.widthDifference * root.childrenRevealer.progress) : 0
 
 			active: root.expanded || root.animating
 			clip: true
 
 			sourceComponent: MenuView {
 				id: childrenList
-				menu: entry
+				menu: root.entry
 				onClose: root.close()
 
 				anchors {
-					top: parent.top
-					left: parent.left
-					right: parent.right
+					top: childMenuLoader.top
+					left: childMenuLoader.left
+					right: childMenuLoader.right
 				}
 			}
 		}
 	}
 
 	Rectangle {
-		anchors.fill: parent
-		visible: root.containsMouse || childrenRevealer.expanded
+		id: background
+		anchors.fill: root
+		visible: root.containsMouse || root.childrenRevealer.expanded
 
 		color: ShellGlobals.colors.widget
 		border.width: 1

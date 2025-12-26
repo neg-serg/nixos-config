@@ -1,15 +1,18 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 
 Item {
 	id: root
-	onChildrenChanged: recalc();
+	onChildrenChanged: root.recalc();
 
 	Instantiator {
+		id: childMonitor
 		model: root.children
 
 		Connections {
+			id: childConnection
 			required property Item modelData;
-			target: modelData;
+			target: childConnection.modelData;
 
 			function onImplicitHeightChanged() {
 				root.recalc();
@@ -24,13 +27,14 @@ Item {
 	function recalc() {
 		let y = 0
 		let w = 0
-		for (const child of this.children) {
+		for (let i = 0; i < root.children.length; i++) {
+			const child = root.children[i];
 			child.y = y;
 			y += child.implicitHeight
 			if (child.implicitWidth > w) w = child.implicitWidth;
 		}
 
-		this.implicitHeight = y;
-		this.implicitWidth = w;
+		root.implicitHeight = y;
+		root.implicitWidth = w;
 	}
 }

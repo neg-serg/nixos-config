@@ -1,9 +1,10 @@
-//@ pragma Internal
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Shapes
 import qs
 
 Rectangle {
+	id: root
 	property var checkState: Qt.Unchecked;
 	implicitHeight: 18
 	implicitWidth: 18
@@ -11,34 +12,38 @@ Rectangle {
 	color: ShellGlobals.colors.widget
 
 	Shape {
-		visible: checkState == Qt.Checked
-		anchors.fill: parent
+		id: checkShape
+		visible: root.checkState === Qt.Checked
+		anchors.fill: root
 		layer.enabled: true
 		layer.samples: 10
 
 		ShapePath {
+			id: checkPath
 			strokeWidth: 2
 			capStyle: ShapePath.RoundCap
 			joinStyle: ShapePath.RoundJoin
 			fillColor: "transparent"
 
-			startX: start.x
-			startY: start.y
+			startX: startLine.x
+			startY: startLine.y
 
 			PathLine {
-				id: start
-				x: width * 0.8
-				y: height * 0.2
+				id: startLine
+				x: root.width * 0.8
+				y: root.height * 0.2
 			}
 
 			PathLine {
-				x: width * 0.35
-				y: height * 0.8
+				id: middleLine
+				x: root.width * 0.35
+				y: root.height * 0.8
 			}
 
 			PathLine {
-				x: width * 0.2
-				y: height * 0.6
+				id: endLine
+				x: root.width * 0.2
+				y: root.height * 0.6
 			}
 		}
 	}
