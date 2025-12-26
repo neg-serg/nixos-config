@@ -195,7 +195,8 @@ def detect_flat_structure(
 
 def gen_profile_id() -> str:
     # 8 lowercase letters/digits + .default
-    import random, string
+    import random
+    import string
 
     base = "".join(
         random.choice(string.ascii_lowercase + string.digits) for _ in range(8)
