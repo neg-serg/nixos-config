@@ -12,8 +12,8 @@
     "label": {
       "padding": 0,
       "leftPadding": {
-        "normal": 2,
-        "terminal": 2
+        "normal": 6,
+        "terminal": 6
       }
     }
   }
