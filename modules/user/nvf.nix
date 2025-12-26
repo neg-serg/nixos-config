@@ -13,7 +13,7 @@ in
   lib.mkIf devEnabled (lib.mkMerge [
     {
       environment.systemPackages = [
-        pkgs.neovim-remote
+        pkgs.neovim-remote # nvr: control neovim from external tools
         (pkgs.makeDesktopItem {
           name = "neovim";
           desktopName = "Neovim";
