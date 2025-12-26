@@ -36,8 +36,9 @@ in {
         iosevkaNeg.nerd-font # Personalized Iosevka fonts with Nerd Font icons
       ];
 
-      # 2. Environment Variables (Cursor)
+      # 2. Environment Variables (Cursor + Theme)
       environment.sessionVariables = {
+        GTK_THEME = "Flight-Dark-GTK"; # Force GTK theme for all apps
         XCURSOR_THEME = "Alkano-aio";
         XCURSOR_SIZE = "23";
         HYPRCURSOR_THEME = "Alkano-aio";
