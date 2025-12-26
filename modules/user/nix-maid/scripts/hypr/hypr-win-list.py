@@ -203,7 +203,7 @@ def rofi_command(count: int) -> list[str]:
         "fuzzy",
         "-i",
         "-p",
-        "Windows ❯>",
+        " Windows",
         "-kb-accept-alt",
         "Alt+Return",
         "-kb-custom-1",
