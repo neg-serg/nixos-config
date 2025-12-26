@@ -10,31 +10,30 @@ in {
   environment.systemPackages = [
     (pkgs.appimageTools.wrapType2 {
       inherit pname version src;
-      extraPkgs = pkgs:
-        with pkgs; [
-          libsecret
-          libepoxy
-          gtk3
-          glib
-          nss
-          nspr
-          alsa-lib
-          at-spi2-atk
-          cups
-          dbus
-          libdrm
-          libxkbcommon
-          mesa
-          pango
-          cairo
-          xorg.libX11
-          xorg.libXcomposite
-          xorg.libXdamage
-          xorg.libXext
-          xorg.libXfixes
-          xorg.libXrandr
-          xorg.libxcb
-        ];
+      extraPkgs = pkgs': [
+        pkgs'.libsecret
+        pkgs'.libepoxy
+        pkgs'.gtk3
+        pkgs'.glib
+        pkgs'.nss
+        pkgs'.nspr
+        pkgs'.alsa-lib
+        pkgs'.at-spi2-atk
+        pkgs'.cups
+        pkgs'.dbus
+        pkgs'.libdrm
+        pkgs'.libxkbcommon
+        pkgs'.mesa
+        pkgs'.pango
+        pkgs'.cairo
+        pkgs'.xorg.libX11
+        pkgs'.xorg.libXcomposite
+        pkgs'.xorg.libXdamage
+        pkgs'.xorg.libXext
+        pkgs'.xorg.libXfixes
+        pkgs'.xorg.libXrandr
+        pkgs'.xorg.libxcb
+      ];
       extraInstallCommands = ''
         install -m 444 -D ${appimageContents}/hiddify.desktop $out/share/applications/hiddify.desktop
         install -m 444 -D ${appimageContents}/usr/share/icons/hicolor/256x256/apps/hiddify.png \
