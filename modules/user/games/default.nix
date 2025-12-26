@@ -5,30 +5,11 @@
   ...
 }: let
   cfg = config.profiles.games or {};
-  # Python wrappers to avoid shell/Nix escaping pitfalls
-  gamescopePinned =
-    pkgs.writers.writePython3Bin "gamescope-pinned" {}
-    (builtins.readFile ./scripts/gamescope-pinned.py);
 
-  gamePinned =
-    pkgs.writers.writePython3Bin "game-pinned" {}
-    (builtins.readFile ./scripts/game-pinned.py);
-
-  gamescopePerf =
-    pkgs.writers.writePython3Bin "gamescope-perf" {}
-    (builtins.readFile ./scripts/gamescope-perf.py);
-
-  gamescopeQuality =
-    pkgs.writers.writePython3Bin "gamescope-quality" {}
-    (builtins.readFile ./scripts/gamescope-quality.py);
-
-  gamescopeHDR =
-    pkgs.writers.writePython3Bin "gamescope-hdr" {}
-    (builtins.readFile ./scripts/gamescope-hdr.py);
-
-  gamescopeTargetFPS =
-    pkgs.writers.writePython3Bin "gamescope-targetfps" {}
-    (builtins.readFile ./scripts/gamescope-targetfps.py);
+  # Import consolidated game scripts from packages/game-scripts
+  gameScripts = import ../../../packages/game-scripts {
+    inherit pkgs lib config;
+  };
 
   # Desktop entries for convenient launchers
   gamescopePerfDesktop = pkgs.makeDesktopItem {
@@ -72,12 +53,6 @@
     categories = ["Game" "AudioVideo"];
   };
 
-  # SteamVR launcher for Wayland/Hyprland
-  steamvrCli = pkgs.writeShellApplication {
-    name = "steamvr";
-    text = builtins.readFile ./scripts/steamvr.sh;
-  };
-
   steamvrDesktop = pkgs.makeDesktopItem {
     name = "steamvr-hypr";
     desktopName = "SteamVR (Hyprland)";
@@ -86,26 +61,6 @@
     terminal = false;
     categories = ["Game" "Utility"];
   };
-
-  # Default CPU pin set for affinity wrappers (comes from profiles.performance.gamingCpuSet)
-  # Fallback is 'auto' to detect the V-Cache CCD via L3 size at runtime.
-  pinDefault = let
-    v = config.profiles.performance.gamingCpuSet or "";
-  in
-    if v != ""
-    then v
-    else "auto";
-
-  # Helper: set affinity inside the scope to avoid shell escaping issues
-  gameAffinityExec =
-    pkgs.writers.writePython3Bin "game-affinity-exec" {}
-    (lib.replaceStrings ["\${pinDefault}"] [pinDefault] (builtins.readFile ./scripts/game_affinity_exec.py));
-
-  # Helper: run any command in a user cgroup scope with CPU affinity to gaming cores
-  gameRun =
-    pkgs.writers.writePython3Bin "game-run" {} # master wrapper orchestrating env vars, MangoHud, gamemode
-    
-    (lib.replaceStrings ["@pinDefault@"] [pinDefault] (builtins.readFile ./scripts/game_run.py));
 in {
   imports = [];
 
@@ -212,21 +167,23 @@ in {
       systemPackages = [
         pkgs.protontricks # winetricks-like helper tailored for Steam Proton
         pkgs.mangohud # Vulkan/OpenGL overlay for FPS/frametime telemetry
-        gamescopePinned # CLI wrapper forcing pinned gamescope build
-        gamePinned # wrapper to launch a Steam title w/ pinned Proton version
-        gamescopePerf # helper to start gamescope with perf-friendly flags
-        gamescopeQuality # helper to start gamescope with max fidelity settings
-        gamescopeHDR # gamescope launcher enabling HDR pipeline tweaks
-        gamescopeTargetFPS # wrapper that enforces FPS cap logic per title
-        gamescopePerfDesktop # desktop entry for the perf preset
-        gamescopeQualityDesktop # desktop entry for the quality preset
-        gamescopeHDRDesktop # desktop entry for the HDR preset
-        gameRun # wrapper orchestrating MangoHud, Gamescope, Gamemode
-        gameAffinityExec # CLI forcing CPU affinity for stubborn games
-        steamvrCli # script launching SteamVR under Wayland/Hypr tweaks
-        steamvrDesktop # desktop entry for that SteamVR script
-        deovrSteamCli # CLI wrapper to start DeoVR via Steam with env fixes
-        deovrSteamDesktop # desktop entry for DeoVR launcher
+        # Game scripts from consolidated package
+        gameScripts.gamescope-pinned
+        gameScripts.game-pinned
+        gameScripts.gamescope-perf
+        gameScripts.gamescope-quality
+        gameScripts.gamescope-hdr
+        gameScripts.gamescope-targetfps
+        gameScripts.game-run
+        gameScripts.game-affinity-exec
+        gameScripts.steamvr
+        # Desktop entries
+        gamescopePerfDesktop
+        gamescopeQualityDesktop
+        gamescopeHDRDesktop
+        steamvrDesktop
+        deovrSteamCli
+        deovrSteamDesktop
         pkgs.prismlauncher # Minecraft launcher
         pkgs.heroic # Epic, GOG, Amazon launcher
       ];
