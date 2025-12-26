@@ -19,7 +19,7 @@ OverlayToggleCapsule {
     overlayChildren: [
         PanelOverlaySurface {
             id: calendarSurface
-            screen: calendarOverlay.screen
+            screen: root.screen
             backgroundColor: Theme.background
             borderColor: Theme.borderSubtle
             borderWidth: Theme.calendarBorderWidth
@@ -80,6 +80,7 @@ OverlayToggleCapsule {
                     Layout.rightMargin: Theme.calendarDowSideMargin
 
                     delegate: Text {
+                        required property string shortName
                         text: shortName
                         color: Theme.textSecondary
                         opacity: Theme.calendarDowOpacity
@@ -164,7 +165,7 @@ OverlayToggleCapsule {
                         Text {
                             anchors.centerIn: parent
                             text: dayCell.model.day
-                            color: (dayCell.model.today || dayCell.isSelected || mouseArea2.containsMouse) ? dayCell.dayCg.fg : Theme.textPrimary
+                            color: (dayCell.model.today || dayCell.isSelected || mouseArea2.containsMouse) ? dayCg.fg : Theme.textPrimary
                             opacity: dayCell.model.month === calendar.month ? (mouseArea2.containsMouse ? 1 : Theme.calendarTitleOpacity) : Theme.calendarOtherMonthDayOpacity
                             font.pixelSize: Math.round(Theme.calendarDayFontPx * Theme.scale(root.screen))
                             font.family: Theme.fontFamily

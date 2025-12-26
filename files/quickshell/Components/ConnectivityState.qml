@@ -7,14 +7,14 @@ QtObject {
     id: root
 
     // Direct bindings to Services.Connectivity
-    readonly property bool hasLink: Services.Connectivity.hasLink
-    readonly property bool hasInternet: Services.Connectivity.hasInternet
-    readonly property real rxKiBps: Services.Connectivity.rxKiBps
-    readonly property real txKiBps: Services.Connectivity.txKiBps
-    readonly property var interfaces: Services.Connectivity.interfaces
+    readonly property bool hasLink: !!(Services.Connectivity && Services.Connectivity.hasLink)
+    readonly property bool hasInternet: !!(Services.Connectivity && Services.Connectivity.hasInternet)
+    readonly property real rxKiBps: (Services.Connectivity && Services.Connectivity.rxKiBps) || 0
+    readonly property real txKiBps: (Services.Connectivity && Services.Connectivity.txKiBps) || 0
+    readonly property var interfaces: (Services.Connectivity && Services.Connectivity.interfaces) || []
 
     // Derived data
-    readonly property string throughputText: ConnUi.formatThroughput(rxKiBps, txKiBps)
+    readonly property string throughputText: ConnUi.formatThroughput(rxKiBps, txKiBps) || "0"
     property bool vpnConnected: false
     property string vpnInterface: ""
 
