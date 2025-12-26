@@ -9,12 +9,11 @@
 }
 
 window {
-    width:                  400px;
-    padding:                20px;
-    border:                 1px;
-    border-radius:          12px;
-    border-color:           @outline-variant;
-    background-color:       #131318CC; /* Semi-transparent Surface (80%) */
+    width:                  350px;
+    padding:                16px;
+    border:                 0px;
+    border-radius:          8px;
+    background-color:       #131318CC; /* Semi-transparent Surface */
     location:               south;
     x-offset:               0;
     y-offset:               -48px;
@@ -22,31 +21,21 @@ window {
 
 mainbox {
     children:               [ "inputbar" ];
-    spacing:                12px;
 }
 
 inputbar {
     enabled:                true;
-    spacing:                12px;
-    padding:                12px;
-    border-radius:          8px;
-    background-color:       @surface-container-low;
-    children:               [ "prompt", "entry" ];
-}
-
-prompt {
-    enabled:                true;
-    background-color:       transparent;
-    text-color:             @primary;
-    font:                   "Iosevka Bold 16";
+    spacing:                8px;
+    children:               [ "entry" ];
 }
 
 entry {
     enabled:                true;
     background-color:       transparent;
-    text-color:             @foreground;
-    font:                   "Iosevka 16";
+    text-color:             @primary;
+    font:                   "Iosevka 18";
     cursor:                 text;
-    placeholder:            "Unlock...";
+    placeholder:            "Password...";
     placeholder-color:      @outline;
+    horizontal-align:       0.5;
 }
