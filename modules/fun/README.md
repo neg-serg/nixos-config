@@ -1,9 +1,11 @@
-# Fun Module
+# Fun Module / Модуль развлечений
 
 Entertainment and miscellaneous fun utilities.
 
-## Includes
+Развлечения и разные забавные утилиты.
 
-- ASCII art generators
-- Terminal toys
-- Screensavers
+## Includes / Включает
+
+- ASCII art generators / Генераторы ASCII-арта
+- Terminal toys / Терминальные игрушки
+- Screensavers / Скринсейверы

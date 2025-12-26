@@ -1,9 +1,11 @@
-# AppImage Module
+# AppImage Module / Модуль AppImage
 
 AppImage integration and tools.
 
-## Features
+Интеграция AppImage и инструменты.
 
-- AppImage extraction and running
-- FHS environment for compatibility
-- Desktop integration
+## Features / Возможности
+
+- AppImage extraction and running / Извлечение и запуск
+- FHS environment for compatibility / FHS-окружение
+- Desktop integration / Интеграция с рабочим столом

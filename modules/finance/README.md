@@ -1,9 +1,11 @@
-# Finance Module
+# Finance Module / Модуль финансов
 
 Financial tools and calculators.
 
-## Includes
+Финансовые инструменты и калькуляторы.
 
-- Currency converters
-- Crypto tools
-- Financial calculators
+## Includes / Включает
+
+- Currency converters / Конвертеры валют
+- Crypto tools / Крипто-инструменты
+- Financial calculators / Финансовые калькуляторы

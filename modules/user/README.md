@@ -1,18 +1,20 @@
-# User Module
+# User Module / Модуль пользователя
 
 User-level configuration via nix-maid.
 
-## Structure
+Пользовательская конфигурация через nix-maid.
 
-- `games/` — Steam, Gamescope, VR (see `games/README.md`)
-- `nix-maid/` — User config management
-- `session/` — Hyprland, keybindings
-- `gui/` — GUI application configs
+## Structure / Структура
 
-## Key Subdirectories
+- `games/` — Steam, Gamescope, VR (см. `games/README.md`)
+- `nix-maid/` — User config management / Управление конфигом
+- `session/` — Hyprland, keybindings / Привязки клавиш
+- `gui/` — GUI application configs / Конфиги GUI-приложений
 
-| Path | Purpose |
+## Key Subdirectories / Ключевые поддиректории
+
+| Path | Purpose / Назначение |
 |------|---------|
-| `nix-maid/apps/` | Application configs |
-| `nix-maid/cli/` | Shell and CLI configs |
-| `session/` | Hyprland session setup |
+| `nix-maid/apps/` | Application configs / Конфиги приложений |
+| `nix-maid/cli/` | Shell and CLI / Оболочка и CLI |
+| `session/` | Hyprland session setup / Настройка сессии |

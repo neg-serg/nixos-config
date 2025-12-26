@@ -1,9 +1,11 @@
-# Tools Module
+# Tools Module / Модуль инструментов
 
 Miscellaneous system tools.
 
-## Includes
+Различные системные инструменты.
 
-- System utilities
-- AppImage wrappers
-- Custom tools
+## Includes / Включает
+
+- System utilities / Системные утилиты
+- AppImage wrappers / Обёртки AppImage
+- Custom tools / Пользовательские инструменты

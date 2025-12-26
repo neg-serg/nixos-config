@@ -1,9 +1,11 @@
-# Torrent Module
+# Torrent Module / Модуль торрентов
 
 BitTorrent clients and tools.
 
-## Includes
+Клиенты и инструменты BitTorrent.
+
+## Includes / Включает
 
 - Transmission
 - qBittorrent
-- Torrent utilities
+- Torrent utilities / Утилиты торрентов
