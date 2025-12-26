@@ -90,6 +90,7 @@ CenteredCapsuleRow {
         if (rn.endsWith("term")) return true; // e.g., names like "dev-term"
         return false;
     })()
+    property bool isSpaciousWs: isAlphaWs || isTerminalWs
 
     // Fallback to workspace id if name is empty
     property string fallbackText: (wsId >= 0 ? String(wsId) : "?")
@@ -105,7 +106,7 @@ CenteredCapsuleRow {
     iconColor: Theme.wsSubmapIconColor
     iconAutoTune: true
     iconPadding: Theme.wsIconInnerPadding
-    iconSpacing: isAlphaWs ? 8 : Math.max(0, Theme.wsIconSpacing)
+    iconSpacing: isSpaciousWs ? 8 : Math.max(0, Theme.wsIconSpacing)
     labelIsRichText: true
     labelVisible: root.showLabel
     labelText: decoratedText
@@ -114,7 +115,7 @@ CenteredCapsuleRow {
     labelFontWeight: Font.Medium
     labelColor: Theme.textPrimary
     textPadding: Math.max(0, Theme.wsLabelPadding)
-    labelLeftPaddingOverride: isAlphaWs ? 12 : (root.isTerminalWs ? Theme.wsLabelLeftPaddingTerminal : Theme.wsLabelLeftPadding)
+    labelLeftPaddingOverride: isSpaciousWs ? 12 : Theme.wsLabelLeftPadding
 
     leadingContent: Item {
         readonly property bool glyphPresent: root.showWorkspaceGlyph && (root.workspaceIconValid || iconGlyph.length > 0)
