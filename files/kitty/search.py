@@ -94,8 +94,8 @@ class Search(Handler):
         if self.error:
             with cursor(self.write):
                 self.print("")
-                for l in self.error.split("\n"):
-                    self.print(l)
+                for line in self.error.split("\n"):
+                    self.print(line)
 
     def refresh(self) -> None:
         self.draw_screen()
