@@ -108,7 +108,6 @@
   nixConfig = {
     extra-substituters = [
       "https://0uptime.cachix.org"
-      "https://0uptime.cachix.org"
       "https://cuda-maintainers.cachix.org"
       "https://devenv.cachix.org"
       "https://ezkea.cachix.org"
@@ -121,7 +120,6 @@
       "https://numtide.cachix.org"
     ];
     extra-trusted-public-keys = [
-      "0uptime.cachix.org-1:ctw8yknBLg9cZBdqss+5krAem0sHYdISkw/IFdRbYdE="
       "0uptime.cachix.org-1:ctw8yknBLg9cZBdqss+5krAem0sHYdISkw/IFdRbYdE="
       "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
       "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
