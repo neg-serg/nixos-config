@@ -14,7 +14,6 @@ dir="$HOME/.config/rofi/powermenu/type-6"
 theme='style-1'
 
 # CMDs
-lastlogin="$(last $USER | head -n1 | tr -s ' ' | cut -d' ' -f5,6,7)"
 uptime="$(uptime -p | sed -e 's/up //g')"
 host=$(hostname)
 
@@ -92,26 +91,26 @@ run_cmd() {
 # Actions
 chosen="$(run_rofi)"
 case ${chosen} in
-  $shutdown)
+  "$shutdown")
     run_cmd --shutdown
     ;;
-  $reboot)
+  "$reboot")
     run_cmd --reboot
     ;;
-  $hibernate)
+  "$hibernate")
     run_cmd --hibernate
     ;;
-  $lock)
+  "$lock")
     if [[ -x '/usr/bin/betterlockscreen' ]]; then
       betterlockscreen -l
     elif [[ -x '/usr/bin/i3lock' ]]; then
       i3lock
     fi
     ;;
-  $suspend)
+  "$suspend")
     run_cmd --suspend
     ;;
-  $logout)
+  "$logout")
     run_cmd --logout
     ;;
 esac

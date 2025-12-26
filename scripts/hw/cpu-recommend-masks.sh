@@ -94,6 +94,7 @@ main() {
     cpus_all=$(parse_cpuset "$vcache")
   fi
   # Build non-vcache set
+  # shellcheck disable=SC2046
   non_vcache=$(comm -23 \
     <(printf "%s\n" $cpus_all) \
     <(printf "%s\n" $(parse_cpuset "$vcache")) \

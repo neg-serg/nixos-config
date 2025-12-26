@@ -44,7 +44,7 @@ in_abs=$(readlink -f "$in")
 base_dir=$(dirname "$in_abs")
 base_name=$(basename "$in_abs")
 stem=$(printf '%s' "$base_name" | sed 's/\.[^.]*$//')
-out="$base_dir/$stem"_x"$scale"_realesrgan.mp4
+out="${base_dir}/${stem}_x${scale}_realesrgan.mp4"
 
 cache_root="$HOME/.cache/ai-upscale"
 mkdir -p "$cache_root"
