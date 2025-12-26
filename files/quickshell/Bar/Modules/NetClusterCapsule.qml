@@ -11,6 +11,12 @@ ConnectivityCapsule {
     id: root
 
     property bool vpnVisible: ConnectivityState.vpnConnected
+    
+    Component.onCompleted: {
+        if (ConnectivityState) {
+            // Initialization verified
+        }
+    }
     property bool linkVisible: true
     property string throughputText: ConnectivityState.throughputText
     property bool vpnIconRounded: false

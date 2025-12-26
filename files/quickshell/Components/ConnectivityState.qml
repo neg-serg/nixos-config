@@ -46,5 +46,8 @@ QtObject {
         }
     }
 
-    Component.onCompleted: updateVpnState(interfaces)
+    Component.onCompleted: {
+        console.log("[ConnectivityState] singleton loaded. hasLink:", root.hasLink, "hasInternet:", root.hasInternet);
+        updateVpnState(interfaces);
+    }
 }

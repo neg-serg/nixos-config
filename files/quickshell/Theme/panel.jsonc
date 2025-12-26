@@ -3,8 +3,8 @@
     // Layout primitives for the top bar; keep values even to avoid pixel jitter.
     "height": 22,
     "scale": 1.15,
-    "sideMargin": 0,
-    "widgetSpacing": 0,
+    "sideMargin": 18,
+    "widgetSpacing": 12,
     "separatorWidthFactor": 1,
     "separatorOpacity": 0.88,
     "hotzone": {
