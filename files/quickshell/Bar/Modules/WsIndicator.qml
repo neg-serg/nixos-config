@@ -198,6 +198,12 @@ CenteredCapsuleRow {
         updateDynamicMap(Services.HyprlandWatcher.binds);
         Services.HyprlandWatcher.refreshWorkspace();
         Services.HyprlandWatcher.refreshBinds();
+        console.log("[WsIndicator] Padding Debug:");
+        console.log("  wsName:", root.wsName);
+        console.log("  isTerminalWs:", root.isTerminalWs);
+        console.log("  Theme.wsLabelLeftPadding:", Theme.wsLabelLeftPadding);
+        console.log("  Theme.wsLabelLeftPaddingTerminal:", Theme.wsLabelLeftPaddingTerminal);
+        console.log("  resolved padding:", root.labelLeftPaddingOverride);
     }
 
 }
