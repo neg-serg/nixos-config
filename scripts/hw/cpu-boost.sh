@@ -18,6 +18,7 @@ Note: Requires root to change state.
 EOF
 }
 
+# shellcheck disable=SC2120
 require_root() {
   if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
     echo "error: need root (try: sudo $0 $*)" >&2

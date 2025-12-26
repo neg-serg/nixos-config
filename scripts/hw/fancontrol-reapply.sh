@@ -13,6 +13,7 @@ case "${1:-}" in
       fi
     done
     # Re-enable AMDGPU pwm1 if configured
+    # shellcheck disable=SC2050
     if [ "@GPU_ENABLE@" = "true" ]; then
       for d in /sys/class/hwmon/hwmon*; do
         if [ -f "$d/name" ] && grep -Eiq '^amdgpu$' "$d/name"; then
