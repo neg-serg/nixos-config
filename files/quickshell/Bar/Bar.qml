@@ -420,6 +420,13 @@ Scope {
                     property int widgetSpacing: Math.round(Theme.panelWidgetSpacing * s)
                     // Provide extra spacing between widgets now that decorative separators are gone
                     property int interWidgetSpacing: Math.max(widgetSpacing, Math.round(widgetSpacing * 1.35))
+                    Component.onCompleted: {
+                        console.log("[Bar] metrics:");
+                        console.log("  s:", s);
+                        console.log("  Theme.panelWidgetSpacing:", Theme.panelWidgetSpacing);
+                        console.log("  widgetSpacing:", widgetSpacing);
+                        console.log("  interWidgetSpacing:", interWidgetSpacing);
+                    }
                     property int seamWidth: Math.max(8, Math.round(widgetSpacing * 0.85))
                     // Panel background transparency is configurable via Settings:
                     // - panelBgAlphaScale: 0..1 multiplier applied to the base theme alpha
