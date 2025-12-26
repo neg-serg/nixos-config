@@ -1,5 +1,4 @@
 # pyright: reportMissingImports=false
-from datetime import datetime
 from kitty.boss import get_boss
 from kitty.fast_data_types import Screen, add_timer, get_options
 from kitty.utils import color_as_int
@@ -50,11 +49,6 @@ def _draw_left_status(
     if screen.cursor.x >= screen.columns - right_status_length:
         return screen.cursor.x
     tab_bg = screen.cursor.bg
-    default_bg = as_rgb(int(draw_data.default_bg))
-    if extra_data.next_tab:
-        pass  # next_tab_bg available if needed
-    else:
-        pass
     if screen.cursor.x <= len(ICON):
         screen.cursor.x = len(ICON)
     screen.draw("")
