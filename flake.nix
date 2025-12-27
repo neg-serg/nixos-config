@@ -18,24 +18,15 @@
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
 
-    pyprland = {
-      url = "github:hyprland-community/pyprland/e82637d73207abd634a96ea21fa937455374d131";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    pyprland.url = "github:hyprland-community/pyprland/e82637d73207abd634a96ea21fa937455374d131";
 
-    raise = {
-      url = "github:neg-serg/raise";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    raise.url = "github:neg-serg/raise";
 
     iosevka-neg = {
       url = "github:neg-serg/iosevka-neg";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    iwmenu = {
-      url = "github:e-tho/iwmenu";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    iwmenu.url = "github:e-tho/iwmenu";
     impurity = {
       url = "github:outfoxxed/impurity.nix";
     };
@@ -81,25 +72,16 @@
       url = "github:Gerg-L/spicetify-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    tailray = {
-      url = "github:NotAShelf/tailray";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    tailray.url = "github:NotAShelf/tailray";
     pre-commit-hooks = {
       url = "github:cachix/git-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    winapps = {
-      url = "github:winapps-org/winapps";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    winapps.url = "github:winapps-org/winapps";
     wrapper-manager = {
       url = "github:viperML/wrapper-manager";
     };
-    yazi = {
-      url = "github:sxyazi/yazi";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    yazi.url = "github:sxyazi/yazi";
     yandex-browser = {
       url = "github:Teu5us/nix-yandex-browser";
       inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
