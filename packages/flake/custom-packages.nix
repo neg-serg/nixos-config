@@ -1,13 +1,13 @@
 {pkgs, ...}: {
-  adguardian-term = pkgs.neg.adguardian_term;
+  adguardian-term = pkgs.adguardian;
   antigravity = pkgs.neg.antigravity;
   richcolors = pkgs.neg.richcolors;
-  hxtools = pkgs.neg.hxtools;
+  hxtools = pkgs.hxtools;
   transmission-exporter = pkgs.neg.transmission_exporter;
   ls-iommu = pkgs.neg.ls_iommu;
   skbtrace = pkgs.neg.skbtrace;
-  nemu = pkgs.neg.nemu;
-  _nemu = pkgs.neg.nemu;
+  nemu = pkgs.nemu;
+  _nemu = pkgs.nemu;
   # beatprints = pkgs.beatprints; # Disabled: upstream pylette tests fail
   webcamize = pkgs.neg.webcamize;
   rtcqs = pkgs.neg.rtcqs;

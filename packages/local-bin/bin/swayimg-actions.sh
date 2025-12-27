@@ -28,8 +28,9 @@ _find_ipc_socket() {
   # Fallback: pick the newest socket that looks like swayimg-*.sock
   local rt="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
   if [ -d "$rt" ]; then
-    # shellcheck disable=SC2012
-    local -a matches
+    # shellcheck disable=SC2012,SC2296
+    local -a matches=()
+    # Zsh globbing: (Nom) = Null glob + order by modification time
     matches=("$rt"/swayimg-*.sock(Nom))
     local s="${matches[1]:-}"
     if [ -n "$s" ] && [ -S "$s" ]; then
