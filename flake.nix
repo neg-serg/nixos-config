@@ -19,7 +19,6 @@
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
 
     pyprland.url = "github:hyprland-community/pyprland/e82637d73207abd634a96ea21fa937455374d131";
-
     raise.url = "github:neg-serg/raise";
 
     iosevka-neg = {
