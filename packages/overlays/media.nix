@@ -25,7 +25,6 @@ in {
     rtcqs = callPkg (packagesRoot + "/rtcqs") {python3Packages = python313;};
     playscii = callPkg (packagesRoot + "/playscii") {python3Packages = python313;};
     mkvcleaner = callPkg (packagesRoot + "/mkvcleaner") {};
-    rmpc = callPkg (packagesRoot + "/rmpc") {};
     lucida = callPkg (packagesRoot + "/lucida-downloader") {};
     inherit (prev) cantata;
     "blissify-rs" = blissify_rs;

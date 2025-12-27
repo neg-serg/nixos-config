@@ -31,7 +31,7 @@
       };
       music = {
         animation = "";
-        command = "${lib.getExe pkgs.kitty} --class music -e ${lib.getExe pkgs.neg.rmpc}";
+        command = "${lib.getExe pkgs.kitty} --class music -e ${lib.getExe pkgs.rmpc}";
         margin = "80%";
         class = "music";
         position = "15% 50%";
