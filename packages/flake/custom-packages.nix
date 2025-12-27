@@ -15,6 +15,7 @@
   playscii = pkgs.neg.playscii;
   two_percent = pkgs.neg.two_percent;
   subsonic-tui = pkgs.subsonic-tui;
+  rmpc = pkgs.callPackage ../rmpc {};
   pyprland = pkgs.pyprland;
   pyprland_fixed = pkgs.pyprland_fixed;
 
