@@ -143,13 +143,13 @@
 in
   stdenv.mkDerivation rec {
     pname = "cantata";
-    version = "3.3.1";
+    version = "3.4.0";
 
     src = fetchFromGitHub {
       owner = "nullobsi";
       repo = "cantata";
-      rev = "a19efdf9649c50320f8592f07d82734c352ace9c";
-      sha256 = "TVqgTYpHyU1OM9XddJ915GM1XQQrhH9V7yhSxQOaXRs=";
+      rev = "v3.4.0";
+      sha256 = "1hjq73w5lnh2gj51bnaqym0lds82zzlwjr2ndz2m8xrcv2w2q0lg";
     };
 
     patches = [
