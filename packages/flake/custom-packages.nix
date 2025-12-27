@@ -8,7 +8,7 @@
   skbtrace = pkgs.neg.skbtrace;
   nemu = pkgs.neg.nemu;
   _nemu = pkgs.neg.nemu;
-  beatprints = pkgs.neg.beatprints;
+  # beatprints = pkgs.beatprints; # Disabled: upstream pylette tests fail
   webcamize = pkgs.neg.webcamize;
   rtcqs = pkgs.neg.rtcqs;
   tewi = pkgs.neg.tewi;

@@ -43,7 +43,7 @@
 
     # -- Misc --
     pkgs.graphviz # render contact sheets / graph exports via dot
-    pkgs.neg.beatprints # generate Spotify posters with lyrics/themes
+    # pkgs.beatprints # generate Spotify posters (disabled: upstream pylette tests fail)
 
     # -- QR / Barcode --
     pkgs.qrencode # generate QR codes for wallpaper/text overlays

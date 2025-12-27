@@ -18,7 +18,6 @@ in {
     # CLI/util packages
     adguardian_term = callPkg (packagesRoot + "/adguardian-term") {};
     "adguardian-term" = adguardian_term;
-    a2ln = callPkg (packagesRoot + "/a2ln") {};
 
     bt_migrate = prev.bt-migrate;
     "bt-migrate" = bt_migrate;
