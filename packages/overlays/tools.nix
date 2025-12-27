@@ -38,7 +38,7 @@ in {
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
 
     # Music album metadata CLI (used by music-rename script)
-    albumdetails = prev.stdenv.mkDerivation rec {
+    albumdetails = prev.stdenv.mkDerivation {
       pname = "albumdetails";
       version = "0.1";
 
