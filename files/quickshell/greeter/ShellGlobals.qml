@@ -6,7 +6,7 @@ import Quickshell
 
 Singleton {
 	id: root
-	readonly property string rtpath: "/run/user/1000/quickshell"
+	readonly property string rtpath: "/tmp/quickshell-greeter"
 
 	readonly property var colors: QtObject {
 		readonly property color bar: "#30c0ffff";
