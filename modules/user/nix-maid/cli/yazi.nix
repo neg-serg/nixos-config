@@ -23,42 +23,42 @@
 
   theme = {
     manager = {
-      cwd = {fg = "#367bbf";};
+      cwd = {fg = "#ffffff";};
       hovered = {
-        fg = "#367bbf";
+        fg = "#ffffff";
         bg = "#000000";
       };
       preview_hovered = {underline = true;};
       find_keyword = {
-        fg = "#FFFF7D";
+        fg = "#cccccc";
         italic = true;
       };
       find_position = {
-        fg = "#367bbf";
+        fg = "#ffffff";
         bg = "reset";
         italic = true;
       };
       marker_copied = {
-        fg = "#7DFF7E";
-        bg = "#7DFF7E";
-      }; # Green
+        fg = "#cccccc";
+        bg = "#cccccc";
+      }; # Light Gray
       marker_cut = {
-        fg = "#CF4F88";
-        bg = "#CF4F88";
-      }; # Red/Pink
+        fg = "#666666";
+        bg = "#666666";
+      }; # Dark Gray
       marker_selected = {
-        fg = "#367bbf";
-        bg = "#367bbf";
-      }; # Blue
+        fg = "#ffffff";
+        bg = "#ffffff";
+      }; # White
       tab_active = {
         fg = "#000000";
-        bg = "#367bbf";
+        bg = "#ffffff";
       };
       tab_inactive = {
-        fg = "#6C7E96";
+        fg = "#666666";
         bg = "#000000";
       };
-      border_style = {fg = "#3D3D3D";};
+      border_style = {fg = "#333333";};
       border_symbol = "│";
     };
 
@@ -70,62 +70,62 @@
         bg = "#000000";
       };
 
-      # Mode colors matching Kitty marks/accents
+      # Mode colors matching Monochrome palette
       mode_normal = {
         fg = "#000000";
-        bg = "#367bbf";
+        bg = "#ffffff";
         bold = true;
-      }; # Blue
+      }; # White
       mode_select = {
         fg = "#000000";
-        bg = "#98d3cb";
+        bg = "#cccccc";
         bold = true;
-      }; # Teal (Mark1)
+      }; # Light Gray
       mode_unset = {
         fg = "#000000";
-        bg = "#f274bc";
+        bg = "#666666";
         bold = true;
-      }; # Pink (Mark3)
+      }; # Dark Gray
 
       progress_label = {
         fg = "#ffffff";
         bold = true;
       };
       progress_normal = {
-        fg = "#367bbf";
+        fg = "#ffffff";
         bg = "#000000";
       };
       progress_error = {
-        fg = "#CF4F88";
+        fg = "#666666";
         bg = "#000000";
       };
 
       # Permissions colors
-      permissions_t = {fg = "#367bbf";};
-      permissions_r = {fg = "#FFFF7D";}; # Yellow
-      permissions_w = {fg = "#CF4F88";}; # Red
-      permissions_x = {fg = "#7DFF7E";}; # Green
-      permissions_s = {fg = "#98d3cb";}; # Teal
+      permissions_t = {fg = "#ffffff";};
+      permissions_r = {fg = "#cccccc";}; # Light Gray
+      permissions_w = {fg = "#aaaaaa";}; # Mid Gray
+      permissions_x = {fg = "#ffffff";}; # White
+      permissions_s = {fg = "#999999";}; # Dark Gray
     };
 
     input = {
-      border = {fg = "#367bbf";};
+      border = {fg = "#ffffff";};
       title = {};
-      value = {fg = "#6C7E96";};
+      value = {fg = "#cccccc";};
       selected = {bg = "#000000";};
     };
 
     select = {
-      border = {fg = "#98d3cb";}; # Teal to match select mode
-      active = {fg = "#98d3cb";};
-      inactive = {fg = "#6C7E96";};
+      border = {fg = "#cccccc";}; # Light Gray
+      active = {fg = "#cccccc";};
+      inactive = {fg = "#666666";};
     };
 
     tasks = {
-      border = {fg = "#367bbf";};
+      border = {fg = "#ffffff";};
       title = {};
       hovered = {
-        fg = "#367bbf";
+        fg = "#ffffff";
         underline = true;
       };
     };
@@ -133,32 +133,32 @@
     which = {
       cols = 3;
       mask = {bg = "#000000";};
-      cand = {fg = "#98d3cb";};
-      rest = {fg = "#6C7E96";};
-      desc = {fg = "#367bbf";};
+      cand = {fg = "#cccccc";};
+      rest = {fg = "#666666";};
+      desc = {fg = "#ffffff";};
       separator = "  ";
-      separator_style = {fg = "#3D3D3D";};
+      separator_style = {fg = "#333333";};
     };
 
     notify = {
-      title_info = {fg = "#367bbf";};
-      title_warn = {fg = "#FFC44E";};
-      title_error = {fg = "#CF4F88";};
+      title_info = {fg = "#ffffff";};
+      title_warn = {fg = "#cccccc";};
+      title_error = {fg = "#666666";};
       icon_info = "ZE ";
       icon_warn = "ZE ";
       icon_error = "ZE ";
     };
 
     help = {
-      on = {fg = "#367bbf";};
-      exec = {fg = "#98d3cb";};
-      desc = {fg = "#6C7E96";};
+      on = {fg = "#ffffff";};
+      exec = {fg = "#cccccc";};
+      desc = {fg = "#666666";};
       hovered = {
         bg = "#000000";
         bold = true;
       };
       footer = {
-        fg = "#6C7E96";
+        fg = "#666666";
         bg = "#000000";
       };
     };
