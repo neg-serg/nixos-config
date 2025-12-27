@@ -3,11 +3,25 @@
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {
   "mikavilpas/yazi.nvim",
-  cond = function() return vim.fn.executable("yazi") == 1 end,
+  event = "VeryLazy",
   keys = {
-    { "<leader>-", "<cmd>Yazi<cr>", mode = { "n", "v" }, desc = "Yazi: open at current file" },
+    -- 👇 in this section, choose your own keymappings!
+    {
+      "<leader>-",
+      function()
+        require("yazi").yazi()
+      end,
+      desc = "Open yazi at the current file",
+    },
+    {
+      -- Open in the current working directory
+      "<leader>cw",
+      function()
+        require("yazi").yazi(nil, vim.fn.getcwd())
+      end,
+      desc = "Open yazi in cwd"
+    },
   },
-  main = "yazi",
   init = function()
     -- must be early, so nothing перехватит директории
     vim.g.loaded_netrw = 1
