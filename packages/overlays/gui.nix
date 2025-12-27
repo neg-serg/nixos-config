@@ -68,7 +68,7 @@ in {
       license = licenses.bsd3;
       platforms = ["x86_64-linux"];
       mainProgram = "nyxt";
-      maintainers = with maintainers; [];
+      maintainers = [];
     };
   };
 
@@ -82,7 +82,7 @@ in {
   oldschool-pc-font-pack = callPkg (inputs.self + "/packages/oldschool-pc-font-pack") {};
   px437-ibm-conv-e = callPkg (inputs.self + "/packages/px437-ibm-conv-e") {};
 
-  pyprland_fixed = prev.python3Packages.buildPythonApplication rec {
+  pyprland_fixed = prev.python3Packages.buildPythonApplication {
     pname = "pyprland";
     version = "2.5.0";
     src = prev.fetchFromGitHub {

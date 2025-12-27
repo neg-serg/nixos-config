@@ -99,8 +99,6 @@ _inputs: _final: prev: {
     checkPhase = ":";
   });
 
-  # aflplusplus: removed from profile; drop overrides
-
   # RTL-SDR family
   "rtl-sdr" = prev."rtl-sdr".overrideAttrs (old: {
     cmakeFlags = (old.cmakeFlags or []) ++ ["-DCMAKE_POLICY_VERSION_MINIMUM=3.5"];
@@ -116,10 +114,6 @@ _inputs: _final: prev: {
   rofi-emoji = prev.rofi-emoji.overrideAttrs (old: {
     cmakeFlags = (old.cmakeFlags or []) ++ ["-DCMAKE_POLICY_VERSION_MINIMUM=3.5"];
   });
-
-  # OpenMW: no local override — use upstream packaging for cache hits
-
-  # retdec: removed from profile; drop overrides to avoid unnecessary patching
 
   # Reserved for development/toolchain overlays
   neg = {};
