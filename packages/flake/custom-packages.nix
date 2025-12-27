@@ -18,6 +18,7 @@
   rmpc = pkgs.callPackage ../rmpc {};
   pyprland = pkgs.pyprland;
   pyprland_fixed = pkgs.pyprland_fixed;
+  lucida = pkgs.neg.lucida;
 
   # mcp-server-filesystem = pkgs.neg.mcp_server_filesystem;
   # mcp-ripgrep = pkgs.neg.mcp_ripgrep;
