@@ -26,7 +26,7 @@
       cwd = {fg = "#367bbf";};
       hovered = {
         fg = "#367bbf";
-        bg = "#0d1824";
+        bg = "#000000";
       };
       preview_hovered = {underline = true;};
       find_keyword = {
@@ -56,7 +56,7 @@
       };
       tab_inactive = {
         fg = "#6C7E96";
-        bg = "#0d1824";
+        bg = "#000000";
       };
       border_style = {fg = "#3D3D3D";};
       border_symbol = "│";
@@ -66,8 +66,8 @@
       separator_open = "";
       separator_close = "";
       separator_style = {
-        fg = "#0d1824";
-        bg = "#0d1824";
+        fg = "#000000";
+        bg = "#000000";
       };
 
       # Mode colors matching Kitty marks/accents
@@ -93,11 +93,11 @@
       };
       progress_normal = {
         fg = "#367bbf";
-        bg = "#0d1824";
+        bg = "#000000";
       };
       progress_error = {
         fg = "#CF4F88";
-        bg = "#0d1824";
+        bg = "#000000";
       };
 
       # Permissions colors
@@ -112,7 +112,7 @@
       border = {fg = "#367bbf";};
       title = {};
       value = {fg = "#6C7E96";};
-      selected = {bg = "#0d1824";};
+      selected = {bg = "#000000";};
     };
 
     select = {
@@ -132,7 +132,7 @@
 
     which = {
       cols = 3;
-      mask = {bg = "#0d1824";};
+      mask = {bg = "#000000";};
       cand = {fg = "#98d3cb";};
       rest = {fg = "#6C7E96";};
       desc = {fg = "#367bbf";};
@@ -154,12 +154,12 @@
       exec = {fg = "#98d3cb";};
       desc = {fg = "#6C7E96";};
       hovered = {
-        bg = "#0d1824";
+        bg = "#000000";
         bold = true;
       };
       footer = {
         fg = "#6C7E96";
-        bg = "#0d1824";
+        bg = "#000000";
       };
     };
   };
