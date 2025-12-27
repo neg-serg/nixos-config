@@ -97,7 +97,7 @@ in
         # Audio
         pkgs.beets # Music library manager and tagger
         pkgs.mpc # A minimalist command line interface to MPD
-        pkgs.neg.rmpc # Rust Music Player Client
+        pkgs.rmpc # Rust Music Player Client
         pkgs.neg.lucida # Lucida.to downloader
         pkgs.ncpamixer # An ncurses mixer for PulseAudio
         pkgs.pavucontrol # PulseAudio Volume Control
