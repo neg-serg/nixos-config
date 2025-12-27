@@ -16,13 +16,13 @@ in {
     "bpf-host-latency" = bpf_host_latency;
     skbtrace = callPkg (packagesRoot + "/skbtrace") {};
     # CLI/util packages
-    adguardian_term = callPkg (packagesRoot + "/adguardian-term") {};
+    adguardian_term = prev.adguardian;
     "adguardian-term" = adguardian_term;
 
     bt_migrate = prev.bt-migrate;
     "bt-migrate" = bt_migrate;
     cxxmatrix = callPkg (packagesRoot + "/cxxmatrix") {};
-    comma = callPkg (packagesRoot + "/comma") {};
+    comma = prev.comma;
     richcolors = callPkg (packagesRoot + "/richcolors") {};
     ls_iommu = callPkg (packagesRoot + "/ls-iommu") {};
     transmission_exporter = callPkg (packagesRoot + "/transmission-exporter") {};
