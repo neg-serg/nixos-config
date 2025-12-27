@@ -26,6 +26,7 @@ in {
     playscii = callPkg (packagesRoot + "/playscii") {python3Packages = python313;};
     mkvcleaner = callPkg (packagesRoot + "/mkvcleaner") {};
     rmpc = callPkg (packagesRoot + "/rmpc") {};
+    lucida = callPkg (packagesRoot + "/lucida-downloader") {};
     inherit (prev) cantata;
     "blissify-rs" = blissify_rs;
     "laion-clap" = laion_clap_pkg;
