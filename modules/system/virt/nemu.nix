@@ -5,7 +5,7 @@
   ...
 }: let
   cfg = config.programs.nemu;
-  defaultPackage = pkgs._nemu or (pkgs.nemu or pkgs.neg.nemu);
+  defaultPackage = pkgs.nemu;
 in {
   options.programs.nemu = {
     enable = lib.mkEnableOption "nemu (ncurses QEMU frontend)";
