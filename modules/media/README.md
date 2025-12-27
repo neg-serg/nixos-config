@@ -6,21 +6,18 @@ Audio, video, and image processing tools.
 
 ## Structure / Структура
 
-| Path | Purpose / Назначение |
-|------|---------|
-| `audio/` | PipeWire, audio tools, MPD |
-| `images/` | Image viewers/editors / Просмотрщики |
-| `scripts/` | Media processing scripts / Скрипты |
-| `ai-upscale-packages.nix` | AI video upscaling (RealESRGAN) |
-| `multimedia-packages.nix` | FFmpeg, mediainfo, etc. |
-| `vapoursynth-packages.nix` | VapourSynth frame server |
-| `deepfacelab-docker.nix` | DeepFaceLab container |
+| Path | Purpose / Назначение | |------|---------| | `audio/` | PipeWire, audio tools, MPD | |
+`images/` | Image viewers/editors / Просмотрщики | | `scripts/` | Media processing scripts / Скрипты
+| | `ai-upscale-packages.nix` | AI video upscaling (RealESRGAN) | | `multimedia-packages.nix` |
+FFmpeg, mediainfo, etc. | | `vapoursynth-packages.nix` | VapourSynth frame server | |
+`deepfacelab-docker.nix` | DeepFaceLab container |
 
 ## Key Features / Возможности
 
 ### AI Upscaling / AI-апскейл
 
 Video upscaling with RealESRGAN:
+
 ```bash
 ai-upscale-video input.mp4 --anime --scale 4
 ```

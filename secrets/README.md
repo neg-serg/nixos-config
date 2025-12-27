@@ -1,17 +1,15 @@
-# Secrets / Секреты
+# Secrets
 
 Encrypted secrets for the configuration.
 
-Зашифрованные секреты для конфигурации.
-
-## Documentation / Документация
+## Documentation
 
 - Vaultix migration guidance: `../docs/runbooks/vaultix-migration.md` (EN)
-- Vaultix миграция: `../docs/runbooks/vaultix-migration.ru.md` (RU)
+- Vaultix migration (RU): `../docs/runbooks/vaultix-migration.ru.md`
 
-## Usage / Использование
+## Usage
 
 ```bash
-sops secrets/my-secrets.yaml  # Edit secrets / Редактировать секреты
-sops -d secrets/my-secrets.yaml  # Decrypt / Расшифровать
+sops secrets/my-secrets.yaml     # Edit secrets
+sops -d secrets/my-secrets.yaml  # Decrypt
 ```

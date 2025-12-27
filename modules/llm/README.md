@@ -6,13 +6,10 @@ Local LLM infrastructure with Ollama and Open WebUI.
 
 ## Structure / Структура
 
-| File | Purpose / Назначение |
-|------|---------|
-| `default.nix` | Main config with model paths / Пути моделей |
-| `ollama.nix` | Ollama service (ROCm) / Сервис Ollama |
-| `open-webui.nix` | Web interface / Веб-интерфейс |
-| `codex-config.nix` | Codex assistant config |
-| `pkgs.nix` | CLI tools / Утилиты |
+| File | Purpose / Назначение | |------|---------| | `default.nix` | Main config with model paths /
+Пути моделей | | `ollama.nix` | Ollama service (ROCm) / Сервис Ollama | | `open-webui.nix` | Web
+interface / Веб-интерфейс | | `codex-config.nix` | Codex assistant config | | `pkgs.nix` | CLI tools
+/ Утилиты |
 
 ## Configuration / Конфигурация
 
@@ -29,9 +26,8 @@ services.ollama = {
 
 ## Ports / Порты
 
-| Service | Port | Description / Описание |
-|---------|------|-------------|
-| Ollama | 11434 | API endpoint |
+| Service | Port | Description / Описание | |---------|------|-------------| | Ollama | 11434 | API
+endpoint |
 
 ## Usage / Использование
 

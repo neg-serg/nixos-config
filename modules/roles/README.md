@@ -11,12 +11,9 @@ roles.server.enable = true;       # Headless/server defaults / Серверны�
 
 ## Role Features / Возможности ролей
 
-| Role | Features / Возможности |
-|------|----------------------|
-| `workstation` | Performance profile, SSH, Avahi |
-| `homelab` | Security profile, DNS, SSH, MPD |
-| `media` | Jellyfin, MPD, Avahi, SSH |
-| `server` | Headless, smartd by default |
+| Role | Features / Возможности | |------|----------------------| | `workstation` | Performance
+profile, SSH, Avahi | | `homelab` | Security profile, DNS, SSH, MPD | | `media` | Jellyfin, MPD,
+Avahi, SSH | | `server` | Headless, smartd by default |
 
 ## Override Services / Переопределение сервисов
 

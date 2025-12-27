@@ -1,12 +1,13 @@
----
-description: Quickshell and Rofi theming / Темизация Quickshell и Rofi
----
+______________________________________________________________________
+
+## description: Quickshell and Rofi theming / Темизация Quickshell и Rofi
 
 # Theming / Темизация
 
 ## Quickshell
 
 ### Configuration / Конфигурация:
+
 ```
 files/quickshell/
 ├── Bar/           # Status bar / Статус-бар
@@ -16,7 +17,9 @@ files/quickshell/
 ```
 
 ### Modify Colors / Изменение цветов:
+
 Edit `files/quickshell/Theme/panel.jsonc`:
+
 ```json
 {
   "colors": {
@@ -27,6 +30,7 @@ Edit `files/quickshell/Theme/panel.jsonc`:
 ```
 
 ### Reload / Перезагрузка:
+
 ```bash
 quickshell --quit && quickshell &
 ```
@@ -34,6 +38,7 @@ quickshell --quit && quickshell &
 ## Rofi
 
 ### Theme Files / Файлы тем:
+
 ```
 packages/rofi-config/
 ├── colors.rasi    # Color definitions / Цвета
@@ -43,7 +48,9 @@ packages/rofi-config/
 ```
 
 ### Modify Theme / Изменение темы:
+
 Edit `packages/rofi-config/colors.rasi`:
+
 ```css
 * {
     primary: #c1c1ff;
@@ -53,6 +60,7 @@ Edit `packages/rofi-config/colors.rasi`:
 ```
 
 ### Test Theme / Тест темы:
+
 ```bash
 rofi -show drun -theme ~/.config/rofi/config.rasi
 ```
@@ -60,5 +68,6 @@ rofi -show drun -theme ~/.config/rofi/config.rasi
 ## Hot Reload / Горячая перезагрузка
 
 For impurity-enabled configs / Для конфигов с impurity:
+
 - Changes apply immediately / Изменения применяются сразу
 - No rebuild needed / Пересборка не нужна

@@ -7,6 +7,7 @@ Command-line interface tools and utilities.
 ## Structure / Структура
 
 Organized by category / Организовано по категориям:
+
 - File management / Управление файлами
 - Text processing / Обработка текста
 - System utilities / Системные утилиты

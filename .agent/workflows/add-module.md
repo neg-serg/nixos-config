@@ -1,17 +1,19 @@
----
-description: Create a new NixOS module / Создание нового модуля NixOS
----
+______________________________________________________________________
+
+## description: Create a new NixOS module / Создание нового модуля NixOS
 
 # Add Module / Создание модуля
 
 ## Steps / Шаги
 
 1. **Create module directory** / Создать директорию модуля:
+
    ```bash
    mkdir -p modules/my-domain/
    ```
 
-2. **Create main module file** / Создать файл модуля:
+1. **Create main module file** / Создать файл модуля:
+
    ```nix
    # modules/my-domain/default.nix
    { pkgs, lib, config, ... }: {
@@ -19,7 +21,8 @@ description: Create a new NixOS module / Создание нового моду�
    }
    ```
 
-3. **Create modules.nix** / Создать modules.nix:
+1. **Create modules.nix** / Создать modules.nix:
+
    ```nix
    # modules/my-domain/modules.nix
    { pkgs, lib, config, ... }: {
@@ -30,7 +33,8 @@ description: Create a new NixOS module / Создание нового моду�
    }
    ```
 
-4. **Create README.md** / Создать README.md:
+1. **Create README.md** / Создать README.md:
+
    ```markdown
    # My Domain Module / Модуль моего домена
 
@@ -42,8 +46,8 @@ description: Create a new NixOS module / Создание нового моду�
    - Feature 2 / Функция 2
    ```
 
-5. **Add to imports** / Добавить в импорты:
-   Edit the appropriate role or profile to import your module.
+1. **Add to imports** / Добавить в импорты: Edit the appropriate role or profile to import your
+   module.
 
 ## Module Structure / Структура модуля
 

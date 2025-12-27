@@ -6,7 +6,8 @@ Hardware-specific configuration and tuning.
 
 ## Documentation / Документация
 
-- Fancontrol/CPU tuning helpers are documented in `../../docs/runbooks/scripts.md` (hardware section).
+- Fancontrol/CPU tuning helpers are documented in `../../docs/runbooks/scripts.md` (hardware
+  section).
 - Хелперы fancontrol/CPU описаны в `../../docs/runbooks/scripts.md` (раздел hardware).
 
 ## Includes / Включает
