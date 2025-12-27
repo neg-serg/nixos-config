@@ -14,14 +14,10 @@ servicesProfiles.<name>.enable = true;
 
 ## Available Services / Доступные сервисы
 
-| Service | Port | Description / Описание |
-|---------|------|------------------------|
-| `openssh` | 22/TCP | SSH server |
-| `mpd` | 6600/TCP | Music Player Daemon |
-| `jellyfin` | 8096/TCP | Media streaming |
-| `adguardhome` | 53, 3000 | DNS filtering |
-| `unbound` | 5353/TCP | DNS resolver |
-| `duckdns` | - | Dynamic DNS |
+| Service | Port | Description / Описание | |---------|------|------------------------| | `openssh`
+| 22/TCP | SSH server | | `mpd` | 6600/TCP | Music Player Daemon | | `jellyfin` | 8096/TCP | Media
+streaming | | `adguardhome` | 53, 3000 | DNS filtering | | `unbound` | 5353/TCP | DNS resolver | |
+`duckdns` | - | Dynamic DNS |
 
 ## DNS Stack / Стек DNS
 

@@ -1,6 +1,6 @@
----
-description: Update flake inputs to latest versions / Обновление flake inputs
----
+______________________________________________________________________
+
+## description: Update flake inputs to latest versions / Обновление flake inputs
 
 # Update Flake / Обновление Flake
 
@@ -19,13 +19,9 @@ nix flake lock --update-input home-manager
 
 ## Common Inputs / Частые inputs
 
-| Input | Description / Описание |
-|-------|----------------------|
-| `nixpkgs` | Main package repository |
-| `home-manager` | User config management |
-| `nvf` | Neovim flake |
-| `lanzaboote` | Secure boot |
-| `sops-nix` | Secrets management |
+| Input | Description / Описание | |-------|----------------------| | `nixpkgs` | Main package
+repository | | `home-manager` | User config management | | `nvf` | Neovim flake | | `lanzaboote` |
+Secure boot | | `sops-nix` | Secrets management |
 
 ## Rebuild After Update / Пересборка после обновления
 
@@ -38,11 +34,13 @@ sudo nixos-rebuild switch --flake .#telfir
 If update breaks something / Если что-то сломалось:
 
 1. **List generations** / Список поколений:
+
    ```bash
    sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
    ```
 
-2. **Switch to previous** / Переключиться на предыдущее:
+1. **Switch to previous** / Переключиться на предыдущее:
+
    ```bash
    sudo nixos-rebuild switch --rollback
    ```
@@ -50,6 +48,7 @@ If update breaks something / Если что-то сломалось:
 ## Check Changelog / Проверить изменения
 
 After updating nixpkgs / После обновления nixpkgs:
+
 ```bash
 nvd diff /run/current-system result
 ```

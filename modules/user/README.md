@@ -13,8 +13,6 @@ User-level configuration via nix-maid.
 
 ## Key Subdirectories / Ключевые поддиректории
 
-| Path | Purpose / Назначение |
-|------|---------|
-| `nix-maid/apps/` | Application configs / Конфиги приложений |
-| `nix-maid/cli/` | Shell and CLI / Оболочка и CLI |
-| `session/` | Hyprland session setup / Настройка сессии |
+| Path | Purpose / Назначение | |------|---------| | `nix-maid/apps/` | Application configs /
+Конфиги приложений | | `nix-maid/cli/` | Shell and CLI / Оболочка и CLI | | `session/` | Hyprland
+session setup / Настройка сессии |

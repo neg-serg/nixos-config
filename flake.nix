@@ -8,6 +8,7 @@
       url = "git+https://github.com/outfoxxed/hy3?ref=hl0.52.0";
       inputs.hyprland.follows = "hyprland";
     };
+
     # Pin Hyprland to v0.52.x to align with the current desktop stack
     hyprland = {
       url = "git+https://github.com/hyprwm/Hyprland?ref=v0.52.1";
@@ -16,6 +17,16 @@
 
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
+
+    pyprland = {
+      url = "github:hyprland-community/pyprland/e82637d73207abd634a96ea21fa937455374d131";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    raise = {
+      url = "github:neg-serg/raise";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     iosevka-neg = {
       url = "github:neg-serg/iosevka-neg";
@@ -54,14 +65,6 @@
     };
     quickshell = {
       url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    pyprland = {
-      url = "github:hyprland-community/pyprland/e82637d73207abd634a96ea21fa937455374d131";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    raise = {
-      url = "github:neg-serg/raise";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rsmetrx = {
@@ -139,13 +142,10 @@
     ...
   }:
     with {
-      # Common lib
-      inherit (nixpkgs) lib;
+      inherit (nixpkgs) lib; # Common lib
       flakeLib = import ./flake/lib.nix {inherit inputs nixpkgs;};
     }; let
-      # Supported systems for generic flake outputs
-      supportedSystems = ["x86_64-linux"];
-
+      supportedSystems = ["x86_64-linux"]; # Supported systems for generic flake outputs
       # Per-system outputs factory
       perSystem = import ./flake/per-system.nix {
         inherit self inputs nixpkgs flakeLib;
@@ -157,7 +157,6 @@
       checks = lib.genAttrs supportedSystems (s: (perSystem s).checks);
       devShells = lib.genAttrs supportedSystems (s: (perSystem s).devShells);
       apps = lib.genAttrs supportedSystems (s: (perSystem s).apps);
-
       # NixOS configurations (linuxSystem only)
       nixosConfigurations = import ./flake/nixos.nix {inherit inputs nixpkgs self;};
     };
