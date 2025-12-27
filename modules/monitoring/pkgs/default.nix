@@ -21,13 +21,13 @@ in {
       pkgs.perf # linux profile tools
       pkgs.linuxPackages_latest.turbostat # cpu monitor
       pkgs.nethogs # network traffic per process
-      pkgs.neg.adguardian_term # terminal dashboard for AdGuard Home
+      pkgs.adguardian # terminal dashboard for AdGuard Home
       pkgs.powertop # watch for power events
       pkgs.procdump # procdump for linux
       pkgs.sysstat # sar, iostat, mpstat, pidstat and friends
       pkgs.vmtouch # portable file system cache diagnostics and control
     ]
     ++ lib.optionals rolesMonitoringEnabled [
-      pkgs.neg.hxtools # misc hx* admin/git/media utilities (hxnetload, git-forest, qplay)
+      pkgs.hxtools # misc hx* admin/git/media utilities (hxnetload, git-forest, qplay)
     ];
 }

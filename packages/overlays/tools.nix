@@ -16,25 +16,18 @@ in {
     "bpf-host-latency" = bpf_host_latency;
     skbtrace = callPkg (packagesRoot + "/skbtrace") {};
     # CLI/util packages
-    adguardian_term = prev.adguardian;
-    "adguardian-term" = adguardian_term;
-
-    bt_migrate = prev.bt-migrate;
-    "bt-migrate" = bt_migrate;
     cxxmatrix = callPkg (packagesRoot + "/cxxmatrix") {};
-    comma = prev.comma;
+
     richcolors = callPkg (packagesRoot + "/richcolors") {};
     ls_iommu = callPkg (packagesRoot + "/ls-iommu") {};
     transmission_exporter = callPkg (packagesRoot + "/transmission-exporter") {};
     "transmission-exporter" = transmission_exporter;
-    hxtools = prev.hxtools;
     tewi = callPkg (packagesRoot + "/tewi") {};
     two_percent = callPkg (packagesRoot + "/two_percent") {};
     "two-percent" = two_percent;
 
     antigravity = callPkg (packagesRoot + "/antigravity") {};
-    nemu = prev.nemu;
-    _nemu = nemu;
+
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
 
     # Music album metadata CLI (used by music-rename script)
