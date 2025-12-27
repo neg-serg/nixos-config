@@ -29,12 +29,13 @@ _find_ipc_socket() {
   local rt="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
   if [ -d "$rt" ]; then
     # shellcheck disable=SC2012
-    local s
-    s="$(ls -t "$rt"/swayimg-*.sock 2> /dev/null | head -n1 || true)"
-    [ -n "$s" ] && [ -S "$s" ] && {
+    local -a matches
+    matches=("$rt"/swayimg-*.sock(Nom))
+    local s="${matches[1]:-}"
+    if [ -n "$s" ] && [ -S "$s" ]; then
       printf '%s' "$s"
       return 0
-    }
+    fi
   fi
   return 1
 }
