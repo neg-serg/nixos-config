@@ -8,17 +8,17 @@
 }:
 rustPlatform.buildRustPackage rec {
   pname = "rmpc";
-  version = "master";
+  version = "0.10.0";
 
   src = fetchFromGitHub {
     owner = "mierak";
     repo = "rmpc";
-    rev = "master";
-    # nix-prefetch-url --unpack https://github.com/mierak/rmpc/archive/master.tar.gz
-    sha256 = "sha256-NqOWyKzEFAhX5ZUjjixrZV6zz4/d3g8U9ucxASbXUNQ=";
+    rev = "v0.10.0";
+    # nix-prefetch-url --unpack https://github.com/mierak/rmpc/archive/v0.10.0.tar.gz
+    sha256 = "1k8ix00g2gbb3hmgmvxijv95m4vjp6gf4kh7xw5nz1hgmbdi6krm";
   };
 
-  cargoHash = "sha256-QB28rlMnXOhiveIQseFlm/uQLNqVAS2YlI70HJ8KmPY=";
+  cargoHash = "sha256-d2/4q2s/11HNE18D8d8Y2yWidhT+XsUS4J9ahnxToI0=";
 
   checkFlags = [
     # Test currently broken, needs to be removed. See https://github.com/mierak/rmpc/issues/254
