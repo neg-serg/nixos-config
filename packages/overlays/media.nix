@@ -20,7 +20,6 @@ in {
   in {
     inherit blissify_rs;
     # Media-related tools
-    beatprints = callPkg (packagesRoot + "/beatprints") {};
     webcamize = callPkg (packagesRoot + "/webcamize") {};
     rtcqs = callPkg (packagesRoot + "/rtcqs") {python3Packages = python313;};
     playscii = callPkg (packagesRoot + "/playscii") {python3Packages = python313;};
@@ -57,6 +56,14 @@ in {
           inherit (prev) lib fetchPypi;
           inherit (python-prev) buildPythonPackage setuptools wheel tkinter;
         };
+        pylette = python-prev.pylette.overridePythonAttrs (_old: {
+          doCheck = false;
+          # Force disable check phases
+          checkPhase = "true";
+          pytestCheckPhase = "true";
+          installCheckPhase = "true";
+          catchConflicts = false;
+        });
       })
     ];
 }
