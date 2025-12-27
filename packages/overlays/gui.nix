@@ -10,20 +10,10 @@ inputs: _: prev: let
     prev.callPackage path (autoArgs // extraArgs);
   # hydralauncherPkg = callPkg (inputs.self + "/packages/hydralauncher") {};  # Archived - not in use
   nyarchAssistantPkg = callPkg (inputs.self + "/packages/nyarch-assistant") {};
-  protonGeBin = prev.stdenv.mkDerivation rec {
-    pname = "proton-ge-bin";
-    version = "GE-Proton9-23";
-    src = prev.fetchurl {
-      url = "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/${version}/${version}.tar.gz";
-      hash = "sha256:13z8099k6lhb4gacf3qm9qjc8nql665jqxn4b9qck30vgrp935fn";
-    };
-    buildCommand = ''
-      mkdir -p $out
-      tar -C $out --strip-components=1 -xzwf $src
-    '';
-  };
 in {
-  proton-ge-bin = protonGeBin;
+  # proton-ge-bin: use upstream pkgs.proton-ge-bin (removed custom definition)
+  # wf-recorder: upstream has 0.6.0 now (removed override)
+
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
     postPatch =
       (old.postPatch or "")
@@ -32,17 +22,6 @@ in {
           substituteInPlace "$f" --replace "Qt6::WaylandClientPrivate" "Qt6::WaylandClient"
         done
       '';
-  });
-
-  wf-recorder = prev.wf-recorder.overrideAttrs (_: {
-    version = "0.6.0";
-    src = prev.fetchFromGitHub {
-      owner = "ammen99";
-      repo = "wf-recorder";
-      rev = "refs/tags/v0.6.0";
-      hash = "sha256-CY0pci2LNeQiojyeES5323tN3cYfS3m4pECK85fpn5I=";
-    };
-    patches = [];
   });
 
   # Avoid pulling hyprland-qtutils into Hyprland runtime closure
@@ -54,13 +33,7 @@ in {
     npmFlags = (old.npmFlags or []) ++ ["--legacy-peer-deps"];
   });
 
-  # Floorp: upstream binary tarball hash drifted; override unwrapped binary with refreshed hash
-  floorp-bin-unwrapped = prev.floorp-bin-unwrapped.overrideAttrs (old: {
-    src = prev.fetchurl {
-      url = "https://github.com/Floorp-Projects/Floorp/releases/download/v${old.version}/floorp-linux-x86_64.tar.xz";
-      hash = "sha256-DmZCyFhP3N6VPTR3OeuHyrLmvcfUZXHeLsn/TTu+I10=";
-    };
-  });
+  # Floorp: upstream hash is fixed, removed override
 
   # Nyxt 4 pre-release binary (Electron/Blink backend). Upstream provides a single self-contained
   # ELF binary for Linux. Package it as a convenience while no QtWebEngine build is available.
