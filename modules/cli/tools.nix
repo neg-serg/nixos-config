@@ -54,7 +54,7 @@ in {
       pkgs.moreutils # assorted unix utils (sponge, etc.)
       pkgs.ncdu # interactive du
 
-      pkgs.neg.comma # run commands from nixpkgs by name (",") - local overlay helper
+      pkgs.comma # run commands from nixpkgs by name (",")
       pkgs.neg.duf # better df (fork with plain style support)
       pkgs.neg.pretty_printer # ppinfo CLI + Python module for scripts
       pkgs.neg.two_percent # skim fork optimized as a faster fuzzy finder alternative

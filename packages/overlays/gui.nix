@@ -8,7 +8,6 @@ inputs: _: prev: let
       else {};
   in
     prev.callPackage path (autoArgs // extraArgs);
-  # hydralauncherPkg = callPkg (inputs.self + "/packages/hydralauncher") {};  # Archived - not in use
   nyarchAssistantPkg = callPkg (inputs.self + "/packages/nyarch-assistant") {};
 in {
   # proton-ge-bin: use upstream pkgs.proton-ge-bin (removed custom definition)
@@ -32,8 +31,6 @@ in {
   winboat = prev.winboat.overrideAttrs (old: {
     npmFlags = (old.npmFlags or []) ++ ["--legacy-peer-deps"];
   });
-
-  # Floorp: upstream hash is fixed, removed override
 
   # Nyxt 4 pre-release binary (Electron/Blink backend). Upstream provides a single self-contained
   # ELF binary for Linux. Package it as a convenience while no QtWebEngine build is available.

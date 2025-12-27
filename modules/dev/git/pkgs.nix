@@ -22,6 +22,6 @@ in {
       pkgs.gist # manage GitHub gists
     ]
     ++ lib.optionals (wantHxtools && (! monitoringEnabled)) [
-      pkgs.neg.hxtools # hx* git and stats helpers (git-forest, git-blame-stats, git-logsortbychgsize)
+      pkgs.hxtools # hx* git and stats helpers (git-forest, git-blame-stats, git-logsortbychgsize)
     ];
 }
