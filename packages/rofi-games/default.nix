@@ -9,16 +9,16 @@
 }:
 rustPlatform.buildRustPackage rec {
   pname = "rofi-games";
-  version = "1.9.1";
+  version = "1.16.0";
 
   src = fetchFromGitHub {
     owner = "Rolv-Apneseth";
     repo = "rofi-games";
     rev = "v${version}";
-    hash = "sha256-0QTUuf33EdGhFssFyVjjSE84SUfJT8kZeBcM5JzunBo=";
+    hash = "sha256-sPUqWuE8yte8SouxJZlCTfxvJYXBozRtzPEPLovfIF4=";
   };
 
-  cargoHash = "sha256-c1MV1QRsDJCh55rST/m17P37pCAvyi98+QbrVqwVfpM=";
+  cargoHash = "sha256-jfZgb8aTvP81mhvieKf9Dfme3ilU469LCxco0pL3EMw=";
 
   nativeBuildInputs = [
     pkg-config # discover C libs for build
