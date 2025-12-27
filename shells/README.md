@@ -1,24 +1,19 @@
-# Dev Shells / Среды разработки
+# Dev Shells
 
 Nix development shells for various projects.
 
-Nix-среды разработки для различных проектов.
+## Available Shells
 
-## Available Shells / Доступные среды
+| Shell | Purpose | |-------------|----------------------| | `comfy` | ComfyUI development | |
+`python` | Python development | | `tarantool` | Tarantool database |
 
-| Shell | Purpose / Назначение |
-|-------|---------------------|
-| `comfy` | ComfyUI development |
-| `python` | Python development |
-| `tarantool` | Tarantool database |
-
-## Usage / Использование
+## Usage
 
 ```bash
-# Enter a shell / Войти в среду
+# Enter a shell
 nix develop .#comfy
 nix develop .#python
 
-# Or from the shells directory / Или из директории shells
+# Or from the shells directory
 cd shells/python && nix develop
 ```

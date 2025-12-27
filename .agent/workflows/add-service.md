@@ -1,6 +1,6 @@
----
-description: Add new systemd service / Добавление нового systemd сервиса
----
+______________________________________________________________________
+
+## description: Add new systemd service / Добавление нового systemd сервиса
 
 # Add Systemd Service / Добавление systemd сервиса
 
@@ -26,6 +26,7 @@ systemd.services.my-service = {
 ## User Service / Пользовательский сервис
 
 Using nix-maid helpers / Используя хелперы nix-maid:
+
 ```nix
 config.lib.neg.systemdUser.mkUnitFromPresets {
   description = "My User Service";

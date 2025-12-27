@@ -6,12 +6,9 @@ Gaming configuration for Steam, Gamescope, VR, and performance optimization.
 
 ## Structure / Структура
 
-| File | Purpose / Назначение |
-|------|---------|
-| `default.nix` | Entry point with options / Точка входа с опциями |
-| `launchers.nix` | Steam, Heroic, Prismlauncher |
-| `performance.nix` | Gamescope presets, Gamemode, MangoHud |
-| `vr.nix` | SteamVR, DeoVR launchers / Лаунчеры VR |
+| File | Purpose / Назначение | |------|---------| | `default.nix` | Entry point with options /
+Точка входа с опциями | | `launchers.nix` | Steam, Heroic, Prismlauncher | | `performance.nix` |
+Gamescope presets, Gamemode, MangoHud | | `vr.nix` | SteamVR, DeoVR launchers / Лаунчеры VR |
 
 ## Options / Опции
 
@@ -27,6 +24,7 @@ profiles.games = {
 ## Scripts / Скрипты
 
 Scripts in `packages/game-scripts/`:
+
 - `game-run` — Main launcher with CPU pinning / Лаунчер с привязкой к CPU
 - `gamescope-perf` — FSR downscale preset
 - `gamescope-quality` — Native resolution preset

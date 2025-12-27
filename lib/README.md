@@ -8,14 +8,11 @@ Custom Nix library functions.
 
 Core helpers used across the configuration:
 
-| Function | Purpose / Назначение |
-|----------|---------------------|
-| `mkWhen` | Conditional merging / Условное слияние |
-| `mkUnless` | Inverse conditional / Обратное условие |
-| `mkXdgText` | XDG file creation / XDG файлы |
-| `mkLocalBin` | Script installation / Установка скриптов |
-| `mkHomeFiles` | Home directory files / Файлы home |
-| `mkEnsureRealDir` | Directory creation / Создание директории |
+| Function | Purpose / Назначение | |----------|---------------------| | `mkWhen` | Conditional
+merging / Условное слияние | | `mkUnless` | Inverse conditional / Обратное условие | | `mkXdgText` |
+XDG file creation / XDG файлы | | `mkLocalBin` | Script installation / Установка скриптов | |
+`mkHomeFiles` | Home directory files / Файлы home | | `mkEnsureRealDir` | Directory creation /
+Создание директории |
 
 ## Files / Файлы
 

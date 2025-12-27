@@ -6,26 +6,19 @@ Development tools, languages, and security research utilities.
 
 ## Structure / Структура
 
-| Directory | Purpose / Назначение |
-|-----------|---------|
-| `android/` | Android SDK and tools |
-| `benchmarks/` | System benchmarking / Бенчмарки |
-| `editor/` | Code editors / Редакторы кода |
-| `elf/` | ELF binary analysis / Анализ ELF |
-| `gcc/` | GCC toolchain |
-| `gdb/` | GDB debugger / Отладчик |
-| `git/` | Git configuration / Конфигурация Git |
-| `hack/` | Security research (19 modules) / Безопасность |
-| `openxr/` | OpenXR development |
-| `pkgs/` | Development packages / Пакеты |
-| `python/` | Python ecosystem |
-| `unreal/` | Unreal Engine |
+| Directory | Purpose / Назначение | |-----------|---------| | `android/` | Android SDK and tools |
+| `benchmarks/` | System benchmarking / Бенчмарки | | `editor/` | Code editors / Редакторы кода | |
+`elf/` | ELF binary analysis / Анализ ELF | | `gcc/` | GCC toolchain | | `gdb/` | GDB debugger /
+Отладчик | | `git/` | Git configuration / Конфигурация Git | | `hack/` | Security research (19
+modules) / Безопасность | | `openxr/` | OpenXR development | | `pkgs/` | Development packages /
+Пакеты | | `python/` | Python ecosystem | | `unreal/` | Unreal Engine |
 
 ## Key Submodules / Ключевые подмодули
 
 ### hack/
 
 Security research toolkit / Инструменты безопасности:
+
 - **Forensics** — disk/memory analysis / Анализ дисков/памяти
 - **Pentest** — recon, fuzzing, passwords, web, wireless
 - **Reverse engineering** — disassemblers, debuggers
@@ -33,6 +26,7 @@ Security research toolkit / Инструменты безопасности:
 ### python/
 
 Python development:
+
 - Linters (ruff, pyright)
 - Formatters (black, isort)
 - Virtual environment tools

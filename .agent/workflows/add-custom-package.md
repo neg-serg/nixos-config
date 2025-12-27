@@ -1,17 +1,19 @@
----
-description: Create custom package / overlay / Создание пользовательского пакета / оверлея
----
+______________________________________________________________________
+
+## description: Create custom package / overlay / Создание пользовательского пакета / оверлея
 
 # Add Custom Package / Добавление пакета
 
 ## Steps / Шаги
 
 ### 1. Create package directory / Создать директорию пакета:
+
 ```bash
 mkdir -p packages/my-package
 ```
 
 ### 2. Write derivation / Написать деривацию:
+
 ```nix
 # packages/my-package/default.nix
 { pkgs, lib, ... }:
@@ -37,6 +39,7 @@ pkgs.stdenv.mkDerivation {
 ```
 
 ### 3. Add to overlay / Добавить в оверлей:
+
 ```nix
 # packages/overlay.nix
 final: prev: {
@@ -45,6 +48,7 @@ final: prev: {
 ```
 
 ### 4. Use in configuration / Использовать в конфигурации:
+
 ```nix
 environment.systemPackages = [ pkgs.my-package ];
 ```
@@ -52,6 +56,7 @@ environment.systemPackages = [ pkgs.my-package ];
 ## Script Packages / Пакеты-скрипты
 
 For simple scripts / Для простых скриптов:
+
 ```nix
 pkgs.writeShellApplication {
   name = "my-script";

@@ -6,14 +6,13 @@ Machine-specific configurations.
 
 ## Available Hosts / Доступные хосты
 
-| Host | Description / Описание |
-|------|----------------------|
-| `telfir` | Primary workstation / Основная рабочая станция |
-| `telfir-vm` | VM testing configuration / VM для тестирования |
+| Host | Description / Описание | |------|----------------------| | `telfir` | Primary workstation /
+Основная рабочая станция | | `telfir-vm` | VM testing configuration / VM для тестирования |
 
 ## Structure / Структура
 
 Each host directory contains:
+
 - `default.nix` — Entry point / Точка входа
 - `hardware.nix` — Hardware configuration / Конфигурация оборудования
 - `networking.nix` — Network settings / Настройки сети
@@ -22,5 +21,5 @@ Each host directory contains:
 ## Adding a Host / Добавление хоста
 
 1. Create `hosts/new-host/default.nix`
-2. Add to `flake.nix` in `nixosConfigurations`
-3. Build: `sudo nixos-rebuild switch --flake .#new-host`
+1. Add to `flake.nix` in `nixosConfigurations`
+1. Build: `sudo nixos-rebuild switch --flake .#new-host`
