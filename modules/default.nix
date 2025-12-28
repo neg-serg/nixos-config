@@ -2,7 +2,7 @@
   imports = [
     ./args.nix
     ./features
-    ./neg.nix
+    ./core/neg.nix
     ./profiles/services.nix
   ];
 }
