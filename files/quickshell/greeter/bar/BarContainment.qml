@@ -3,7 +3,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import qs
-import qs.lock as Lock
+import greeter.lock as Lock
 
 PanelWindow {
 	id: root

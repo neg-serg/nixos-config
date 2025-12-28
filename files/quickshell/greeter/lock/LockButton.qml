@@ -1,5 +1,5 @@
 import QtQuick
-import qs.greeter
+import greeter
 
 Item {
 	id: root
