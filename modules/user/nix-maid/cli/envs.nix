@@ -43,6 +43,15 @@ in {
     XSERVERRC = "${configHome}/xinit/xserverrc";
     XZ_DEFAULTS = "-T 0";
     ZDOTDIR = lib.mkForce "${configHome}/zsh";
+
+    # XDG compliance (xdg-ninja fixes)
+    ANDROID_USER_HOME = "${dataHome}/android";
+    ANSIBLE_HOME = "${dataHome}/ansible";
+    GNUPGHOME = "${dataHome}/gnupg";
+    GTK2_RC_FILES = "${configHome}/gtk-2.0/gtkrc";
+    NPM_CONFIG_CACHE = "${cacheHome}/npm";
+    NPM_CONFIG_INIT_MODULE = "${configHome}/npm/config/npm-init.js";
+    NPM_CONFIG_TMP = "$XDG_RUNTIME_DIR/npm";
   };
 
   # Activation script to ensure profile links (legacy support)
