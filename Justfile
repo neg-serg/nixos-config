@@ -34,7 +34,7 @@ cpu-masks:
 deploy host="telfir":
     repo_root="$((git rev-parse --show-toplevel 2>/dev/null) || pwd)"; \
     export IMPURITY_PATH="$repo_root"; \
-    sudo --preserve-env=IMPURITY_PATH nixos-rebuild switch --flake "$repo_root#{{host}}" --impure
+    sudo --preserve-env=IMPURITY_PATH nixos-rebuild switch --flake "$repo_root#{{host}}" --impure -L
 
 # Alias for deploy
 switch host="telfir":
@@ -135,7 +135,7 @@ lint-md *ARGS:
     set -eu
     if [ "$#" -gt 0 ]; then \
       markdownlint --config .markdownlint.yaml "$@"; \
-    elif git ls-files -- '*.md' >/dev/null 2>&1; then \
+    elif [ -n "$$(git ls-files -- '*.md')" ]; then \
       markdownlint --config .markdownlint.yaml .; \
     else \
       echo 'No Markdown files found'; \
