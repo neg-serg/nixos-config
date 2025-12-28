@@ -100,7 +100,7 @@ in {
         path = [pkgs.pass pkgs.gnupg];
         serviceConfig = {
           Type = "simple";
-          ExecStart = "${lib.getExe pkgs.goimapnotify} -conf %h/.config/imapnotify/gmail.conf";
+          ExecStart = "${lib.getExe pkgs.goimapnotify} -conf %h/.config/imapnotify/gmail.json";
           Restart = "on-failure";
           RestartSec = "20";
         };
@@ -186,7 +186,7 @@ in {
       # ========================================================================
       # IMAPNOTIFY
       # ========================================================================
-      ".config/imapnotify/gmail.conf".text = builtins.toJSON {
+      ".config/imapnotify/gmail.json".text = builtins.toJSON {
         host = account.imap.host;
         port = account.imap.port;
         tls = true;
