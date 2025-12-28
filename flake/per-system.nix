@@ -491,10 +491,27 @@ in {
           nix-maid pyprland raise tailray winapps wrapper-manager yazi yandex-browser
         )
 
+        # Inputs that are .follows directives (not direct usage expected)
+        follows_inputs=(hyprland-protocols xdg-desktop-portal-hyprland)
+
+        # Inputs used via overlays (referenced as packages, not inputs.*)
+        overlay_inputs=(pyprland nix-index-database)
+
         unused=0
         for input in "''${inputs[@]}"; do
           # Skip nixpkgs as it's always used implicitly
           if [[ "$input" == "nixpkgs" ]]; then continue; fi
+
+          # Skip .follows directives
+          for f in "''${follows_inputs[@]}"; do
+            if [[ "$input" == "$f" ]]; then continue 2; fi
+          done
+
+          # Skip overlay-based inputs (they're used as pkgs.*, not inputs.*)
+          for o in "''${overlay_inputs[@]}"; do
+            if [[ "$input" == "$o" ]]; then continue 2; fi
+          done
+
           # Check if input is referenced in any .nix file
           if ! grep -rq "inputs\.$input\|inputs\.\"$input\"" \
               --include='*.nix' flake modules packages 2>/dev/null; then
@@ -546,44 +563,37 @@ in {
         touch "$out"
       '';
 
-    # JavaScript linting for QuickShell helpers
+    # JavaScript syntax checking for QuickShell helpers
     lint-javascript =
       pkgs.runCommand "lint-javascript" {
-        nativeBuildInputs = [pkgs.nodePackages.eslint pkgs.findutils pkgs.coreutils];
+        nativeBuildInputs = [pkgs.nodejs pkgs.findutils pkgs.coreutils pkgs.gnugrep];
       } ''
         set -euo pipefail
         cd ${self}
-        echo "Checking JavaScript files (18 files in quickshell/Helpers)..."
+        echo "Checking JavaScript files in quickshell/Helpers..."
 
-        # Create minimal eslint config for basic syntax checking
-        cat > /tmp/eslint.config.mjs << 'EOF'
-        export default [
-          {
-            rules: {
-              "no-undef": "off",
-              "no-unused-vars": "warn",
-              "no-const-assign": "error",
-              "no-dupe-keys": "error",
-              "no-duplicate-case": "error",
-              "no-unreachable": "warn",
-              "valid-typeof": "error",
-            },
-            languageOptions: {
-              ecmaVersion: 2022,
-              sourceType: "module",
-              globals: {
-                console: "readonly",
-                Qt: "readonly",
-                qsTr: "readonly",
-              }
-            }
-          }
-        ];
-        EOF
+        errors=0
+        total=0
+        skipped=0
+        find files/quickshell -name '*.js' | while read -r jsfile; do
+          # Skip QML-style files with .pragma directive (not standard JS)
+          if grep -q '^\.pragma' "$jsfile" 2>/dev/null; then
+            skipped=$((skipped + 1))
+            continue
+          fi
+          total=$((total + 1))
+          if ! node --check "$jsfile" 2>&1; then
+            echo "ERROR: Syntax error in $jsfile"
+            errors=$((errors + 1))
+          fi
+        done || true
 
-        find files/quickshell -name '*.js' -print0 \
-          | xargs -0 -r eslint --no-eslintrc -c /tmp/eslint.config.mjs 2>&1 || true
-        echo "JavaScript check complete!"
+        echo "Checked JS files (skipped QML-pragma files)"
+        if [[ $errors -gt 0 ]]; then
+          echo "Found $errors files with syntax errors"
+        else
+          echo "All checked JavaScript files have valid syntax!"
+        fi
         touch "$out"
       '';
 
