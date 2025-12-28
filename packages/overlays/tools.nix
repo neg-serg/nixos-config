@@ -29,38 +29,7 @@ in {
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
 
     # Music album metadata CLI (used by music-rename script)
-    albumdetails = prev.stdenv.mkDerivation {
-      pname = "albumdetails";
-      version = "0.1";
-
-      src = prev.fetchFromGitHub {
-        owner = "neg-serg";
-        repo = "albumdetails";
-        rev = "91f4a546ccb42d82ae3b97462da73c284f05dbbe";
-        hash = "sha256-9iaSyNqc/hXKc4iiDB6C7+2CMvKLWCRycsv6qVBD4wk=";
-      };
-
-      buildInputs = [prev.taglib];
-
-      # Provide TagLib headers/libs to Makefile's LDLIBS
-      preBuild = ''
-        makeFlagsArray+=(LDLIBS="-I${prev.taglib}/include/taglib -L${prev.taglib}/lib -ltag_c")
-      '';
-
-      # Upstream Makefile supports PREFIX+DESTDIR, but copying is simpler here
-      installPhase = ''
-        mkdir -p "$out/bin"
-        install -m755 albumdetails "$out/bin/albumdetails"
-      '';
-
-      meta = with prev.lib; {
-        description = "Generate details for music album";
-        homepage = "https://github.com/neg-serg/albumdetails";
-        license = licenses.mit;
-        platforms = platforms.unix;
-        mainProgram = "albumdetails";
-      };
-    };
+    albumdetails = callPkg (packagesRoot + "/albumdetails") {};
 
     # Pretty-printer library + CLI (ppinfo)
     pretty_printer = callPkg (packagesRoot + "/pretty-printer") {};
