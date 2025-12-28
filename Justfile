@@ -141,9 +141,7 @@ lint-md *ARGS:
       echo 'No Markdown files found'; \
     fi
 
-docs:
-    # Generate docs packages (OPTIONS.md, features-options.{md,json})
-    nix build --no-link -L .#docs.${SYSTEM:-x86_64-linux}.options-md
+# NOTE: Removed broken 'docs' recipe (missing .#docs.x86_64-linux.options-md flake attribute)
 
 docs-modules:
     # Generate modules documentation (opt-in)
@@ -193,38 +191,7 @@ systemd-status:
     echo "== recent user journal =="
     journalctl --user -b -n 120 --no-pager || true
 
-xdg-report:
-    # Size-sorted report for ~/.local/share, ~/.local/state, ~/.var/app
-    # Env: RETENTION_DAYS (default 60), TOP_N (default 30), SKIP_BASENAMES, SKIP_PATHS
-    RETENTION_DAYS=${RETENTION_DAYS:-60} TOP_N=${TOP_N:-30} bash scripts/xdg-report.sh
-
-xdg-clean:
-    # Clean caches older than RETENTION_DAYS and purge Zotero remnants
-    # Env: RETENTION_DAYS (default 60), KEEP_CACHE_NAMES (default floorp), DRY_RUN (default 0)
-    RETENTION_DAYS=${RETENTION_DAYS:-60} KEEP_CACHE_NAMES=${KEEP_CACHE_NAMES:-floorp} DRY_RUN=${DRY_RUN:-0} bash scripts/xdg-clean.sh
-
-xdg-clean-dry:
-    # Dry-run for cache+Zotero cleanup
-    RETENTION_DAYS=${RETENTION_DAYS:-60} KEEP_CACHE_NAMES=${KEEP_CACHE_NAMES:-floorp} DRY_RUN=1 bash scripts/xdg-clean.sh
-
-xdg-delete:
-    # Delete explicit paths (guarded to $HOME)
-    # Provide paths via TARGETS env or TARGETS_FILE, or pass as args after --
-    set -eu
-    if [ -n "${TARGETS:-}" ]; then \
-      bash scripts/xdg-clean.sh delete ${TARGETS}; \
-    elif [ -n "${TARGETS_FILE:-}" ]; then \
-      bash scripts/xdg-clean.sh delete --from-file "${TARGETS_FILE}"; \
-    elif [ "$#" -gt 0 ]; then \
-      bash scripts/xdg-clean.sh delete "$@"; \
-    else \
-      echo 'Provide TARGETS="<paths>" or TARGETS_FILE=<file> or args after --' >&2; \
-      exit 2; \
-    fi
-
-xdg-delete-targets:
-    # Delete curated list from scripts/xdg-delete-targets.txt
-    TARGETS_FILE=scripts/xdg-delete-targets.txt just xdg-delete
+# NOTE: Removed xdg-report, xdg-clean, xdg-clean-dry, xdg-delete, xdg-delete-targets (missing scripts)
 
 clean-caches:
     set -eu
