@@ -1,5 +1,4 @@
 module qs.bar.connections
 Bluetooth 1.0 Bluetooth.qml
 BluetoothDeviceDelegate 1.0 BluetoothDeviceDelegate.qml
-ConnectionDelegate 1.0 ConnectionDelegate.qml
 Connections 1.0 Connections.qml
