@@ -28,12 +28,12 @@ ShellRoot {
 
 			BackgroundImage {
 				id: backgroundImage
-				anchors.fill: lockSurface
+				anchors.fill: parent
 				screen: lockSurface.screen
 			}
 
 			LockContent {
-				anchors.fill: lockSurface
+				anchors.fill: parent
 				state: context.state
 			}
 		}
