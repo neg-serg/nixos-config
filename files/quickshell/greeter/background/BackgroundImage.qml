@@ -22,7 +22,7 @@ Item {
 		fillMode: Image.PreserveAspectCrop
 
 		onStatusChanged: {
-			if (root.status === Image.Error && !root.triedFallback) {
+			if (image.status === Image.Error && !root.triedFallback) {
 				root.triedFallback = true;
 				image.source = root.fallbackSource;
 			}
