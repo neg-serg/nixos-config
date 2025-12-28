@@ -124,7 +124,7 @@ Singleton {
             // Music player selection
             property var pinnedPlayers: []
             property var ignoredPlayers: []
-            property var lastActivePlayers: []
+            // NOTE: lastActivePlayers moved to StateCache.qml (runtime state in ~/.cache)
 
             // Media visualizer (CAVA/LinearSpectrum) toggle
             property bool showMediaVisualizer: false

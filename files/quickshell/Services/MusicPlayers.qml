@@ -36,8 +36,8 @@ Item {
             try {
                 var maxN = 5;
                 var toSave = arr.slice(0, maxN);
-                if (Settings.settings && JSON.stringify(Settings.settings.lastActivePlayers || []) !== JSON.stringify(toSave)) {
-                    Settings.settings.lastActivePlayers = toSave;
+                if (StateCache.state && JSON.stringify(StateCache.state.lastActivePlayers || []) !== JSON.stringify(toSave)) {
+                    StateCache.state.lastActivePlayers = toSave;
                 }
             } catch (e2) {}
         } catch (e) {}
@@ -208,7 +208,7 @@ Item {
         updateCurrentPlayer();
         // Load persisted LIFO stack from settings
         try {
-            var saved = (Settings.settings && Settings.settings.lastActivePlayers) ? Settings.settings.lastActivePlayers : [];
+            var saved = (StateCache.state && StateCache.state.lastActivePlayers) ? StateCache.state.lastActivePlayers : [];
             if (saved && saved.length) _lastActiveStack = saved.filter(function(x){ return typeof x === 'string' && x.length > 0; });
         } catch (e) { }
     }
