@@ -1,6 +1,6 @@
 {pkgs, ...}: {
   adguardian-term = pkgs.adguardian;
-  antigravity = pkgs.neg.antigravity;
+  antigravity = pkgs.antigravity;
   richcolors = pkgs.neg.richcolors;
   hxtools = pkgs.hxtools;
   transmission-exporter = pkgs.neg.transmission_exporter;

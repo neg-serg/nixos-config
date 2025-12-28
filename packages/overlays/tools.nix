@@ -26,8 +26,6 @@ in {
     two_percent = callPkg (packagesRoot + "/two_percent") {};
     "two-percent" = two_percent;
 
-    antigravity = callPkg (packagesRoot + "/antigravity") {};
-
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
 
     # Music album metadata CLI (used by music-rename script)

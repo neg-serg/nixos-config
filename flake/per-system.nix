@@ -456,7 +456,6 @@ in {
           (pkgs.neg.tewi or null)
           (pkgs.neg.lucida or null)
           (pkgs.neg.richcolors or null)
-          (pkgs.neg.antigravity or null)
         ];
       } ''
         set -euo pipefail
