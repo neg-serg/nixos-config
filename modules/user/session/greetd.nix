@@ -14,6 +14,20 @@
   greeterWallpaperSrc = "${mainHome}/pic/wl/waterfall_jungle_dark_150290_3840x2400.jpg";
   greeterWallpaperDst = "/var/lib/greetd/wallpaper.jpg";
   hyprlandConfig = pkgs.writeText "greetd-hyprland-config" ''
+    # Monitor configuration — must match main session for correct HiDPI scaling
+    monitorv2 {
+      output = DP-2
+      mode = 3840x2160@240
+      position = 0x0
+      scale = 2
+    }
+
+    # Disable phantom DP-1 (kernel reports only 640x480)
+    monitorv2 {
+      output = DP-1
+      disabled = true
+    }
+
     # For some reason pkill is way faster than dispatching exit, to the point greetd thinks the greeter died.
     exec-once = ${lib.getExe pkgs.bash} -c "QML2_IMPORT_PATH=/etc/greetd/quickshell ${lib.getExe inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default} -p /etc/greetd/quickshell/greeter/greeter.qml > /tmp/qs-greeter.log 2>&1 && pkill Hyprland"
 
