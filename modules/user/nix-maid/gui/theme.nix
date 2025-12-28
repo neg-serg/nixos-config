@@ -71,7 +71,7 @@ in {
       '';
 
       # Dircolors
-      ".dircolors".source = ../../../../files/shell/dircolors/dircolors;
+      ".config/dircolors".source = ../../../../files/shell/dircolors/dircolors;
 
       # Wallust Config
       ".config/wallust/wallust.toml".source = ../../../../files/wallust/wallust.toml;
