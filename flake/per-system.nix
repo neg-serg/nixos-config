@@ -426,6 +426,17 @@ in {
         touch "$out"
       '';
 
+    # Check for tracked files matching .gitignore patterns
+    check-git-ignore =
+      pkgs.runCommand "check-git-ignore" {
+        nativeBuildInputs = [pkgs.bash pkgs.coreutils pkgs.findutils pkgs.fd];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        bash scripts/dev/check-git-ignore.sh
+        touch "$out"
+      '';
+
     # Rofi rasi theme syntax check
     lint-rasi =
       pkgs.runCommand "lint-rasi" {
