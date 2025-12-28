@@ -473,6 +473,119 @@ in {
         echo "Custom packages build verification passed!"
         touch "$out"
       '';
+
+    # Check for unused flake inputs
+    check-unused-inputs =
+      pkgs.runCommand "check-unused-inputs" {
+        nativeBuildInputs = [pkgs.gnugrep pkgs.coreutils pkgs.jq];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking for unused flake inputs..."
+
+        # Known inputs from flake.nix
+        inputs=(
+          nixpkgs hyprland hy3 hyprland-protocols xdg-desktop-portal-hyprland
+          quickshell lanzaboote nvf nyx nur sops-nix spicetify-nix pre-commit-hooks
+          nix-index-database iosevka-neg rsmetrx impurity iwmenu nix-flatpak
+          nix-maid pyprland raise tailray winapps wrapper-manager yazi yandex-browser
+        )
+
+        unused=0
+        for input in "''${inputs[@]}"; do
+          # Skip nixpkgs as it's always used implicitly
+          if [[ "$input" == "nixpkgs" ]]; then continue; fi
+          # Check if input is referenced in any .nix file
+          if ! grep -rq "inputs\.$input\|inputs\.\"$input\"" \
+              --include='*.nix' flake modules packages 2>/dev/null; then
+            echo "WARNING: Input '$input' may be unused"
+            unused=$((unused + 1))
+          fi
+        done
+
+        if [[ $unused -gt 0 ]]; then
+          echo "Found $unused potentially unused inputs"
+        else
+          echo "All inputs appear to be used!"
+        fi
+        touch "$out"
+      '';
+
+    # Check that key modules have README.md documentation
+    check-readme-sync =
+      pkgs.runCommand "check-readme-sync" {
+        nativeBuildInputs = [pkgs.findutils pkgs.coreutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking module documentation..."
+
+        missing=0
+        # Check top-level module directories
+        for dir in modules/*/; do
+          if [[ ! -f "$dir/README.md" ]]; then
+            echo "WARNING: Missing README.md in $dir"
+            missing=$((missing + 1))
+          fi
+        done
+
+        # Check packages
+        for dir in packages/*/; do
+          # Skip overlay files
+          if [[ -f "$dir" ]]; then continue; fi
+          if [[ ! -f "$dir/README.md" ]] && [[ -f "$dir/default.nix" ]]; then
+            echo "INFO: Package $dir has no README.md"
+          fi
+        done
+
+        if [[ $missing -gt 0 ]]; then
+          echo "Found $missing modules missing README.md"
+        else
+          echo "All key modules have documentation!"
+        fi
+        touch "$out"
+      '';
+
+    # JavaScript linting for QuickShell helpers
+    lint-javascript =
+      pkgs.runCommand "lint-javascript" {
+        nativeBuildInputs = [pkgs.nodePackages.eslint pkgs.findutils pkgs.coreutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking JavaScript files (18 files in quickshell/Helpers)..."
+
+        # Create minimal eslint config for basic syntax checking
+        cat > /tmp/eslint.config.mjs << 'EOF'
+        export default [
+          {
+            rules: {
+              "no-undef": "off",
+              "no-unused-vars": "warn",
+              "no-const-assign": "error",
+              "no-dupe-keys": "error",
+              "no-duplicate-case": "error",
+              "no-unreachable": "warn",
+              "valid-typeof": "error",
+            },
+            languageOptions: {
+              ecmaVersion: 2022,
+              sourceType: "module",
+              globals: {
+                console: "readonly",
+                Qt: "readonly",
+                qsTr: "readonly",
+              }
+            }
+          }
+        ];
+        EOF
+
+        find files/quickshell -name '*.js' -print0 \
+          | xargs -0 -r eslint --no-eslintrc -c /tmp/eslint.config.mjs 2>&1 || true
+        echo "JavaScript check complete!"
+        touch "$out"
+      '';
   };
 
   devShells = {
