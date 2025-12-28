@@ -1,9 +1,7 @@
 # Repository development helpers for NixOS workflows
-
 set shell := ["bash", "-cu"]
 
 # --- System-level docs/utilities -------------------------------------------------
-
 # Generate aggregated options docs into docs/howto/*.md
 gen-options:
     repo_root="$(git rev-parse --show-toplevel)"; \
@@ -141,8 +139,6 @@ lint-md *ARGS:
       echo 'No Markdown files found'; \
     fi
 
-# NOTE: Removed broken 'docs' recipe (missing .#docs.x86_64-linux.options-md flake attribute)
-
 docs-modules:
     # Generate modules documentation (opt-in)
     nix build .#docs-modules -o .result-docs
@@ -190,8 +186,6 @@ systemd-status:
     echo
     echo "== recent user journal =="
     journalctl --user -b -n 120 --no-pager || true
-
-# NOTE: Removed xdg-report, xdg-clean, xdg-clean-dry, xdg-delete, xdg-delete-targets (missing scripts)
 
 clean-caches:
     set -eu
