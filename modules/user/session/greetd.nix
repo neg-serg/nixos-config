@@ -19,7 +19,7 @@
       output = DP-2
       mode = 3840x2160@240
       position = 0x0
-      scale = 2
+      scale = 1
     }
 
     # Disable phantom DP-1 (kernel reports only 640x480)
