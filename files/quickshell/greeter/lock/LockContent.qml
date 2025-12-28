@@ -45,7 +45,7 @@ Item {
 			Rectangle {
 				id: sep
 				anchors.horizontalCenter: content.horizontalCenter
-				y: content.height / 2 + textBox.height
+				y: (content.height - sep.height) / 2
 
 				implicitHeight: 6
 				implicitWidth: 800
