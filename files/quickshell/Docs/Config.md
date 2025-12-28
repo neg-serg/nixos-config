@@ -82,7 +82,7 @@ Music Players
 
 - pinnedPlayers: string array, default []. Pinned players (priority).
 - ignoredPlayers: string array, default []. Players to ignore.
-- lastActivePlayers: string array, persisted. Internal list of last active players (managed by app).
+- lastActivePlayers: **Moved to ~/.cache/quickshell/state.json** (runtime state, not committed to git).
 - playerSelectionPriority: string array, default
   ["mpdPlaying","anyPlaying","mpdRecent","recent","manual","first"]. Selection algorithm priority.
 - playerSelectionPreset: string, default "default". Preset name for priority ordering.
