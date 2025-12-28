@@ -1,4 +1,4 @@
-module qs.greeter
+module greeter
 ShellGlobals 1.0 ShellGlobals.qml
 ShellIpc 1.0 ShellIpc.qml
 SlideView 1.0 SlideView.qml

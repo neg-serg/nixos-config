@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
-import qs.greeter
+import greeter
 
 Item {
 	id: root
@@ -70,7 +70,7 @@ Item {
 					Layout.alignment: Qt.AlignHCenter
 
 					font {
-						pointSize: 120
+						pixelSize: 160
 						hintingPreference: Font.PreferFullHinting
 						family: "Iosevka"
 					}
@@ -101,7 +101,7 @@ Item {
 							root.state.failed ? "#ffa0a0" : "white"
 							: "#80ffffff";
 
-						font.pointSize: 24
+						font.pixelSize: 32
 						font.family: "Iosevka"
 						horizontalAlignment: TextInput.AlignHCenter
 						echoMode: TextInput.Password
