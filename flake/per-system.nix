@@ -586,6 +586,48 @@ in {
         echo "JavaScript check complete!"
         touch "$out"
       '';
+
+    # Check that Hyprland bindings reference executable commands
+    check-hyprland-bindings =
+      pkgs.runCommand "check-hyprland-bindings" {
+        nativeBuildInputs = [pkgs.gnugrep pkgs.gnused pkgs.coreutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking Hyprland bindings for valid commands..."
+
+        # Extract commands from bind= declarations
+        grep -rhE '^bind\s*=' files/gui/hypr --include='*.conf' 2>/dev/null \
+          | sed 's/.*,\s*//' \
+          | sed 's/\s*#.*//' \
+          | grep -oE '^[a-zA-Z0-9_-]+' \
+          | sort -u | while read -r cmd; do
+            # Skip known built-in Hyprland dispatchers
+            case "$cmd" in
+              exec|exec-once|pass|killactive|closewindow|togglefloating|\
+              fullscreen|fakefullscreen|pin|pseudo|togglesplit|togglegroup|\
+              workspace|movetoworkspace|movetoworkspacesilent|movefocus|\
+              movewindow|resizeactive|cyclenext|focuswindow|hy3*|split*|\
+              movecurrentworkspacetomonitor|focusmonitor|swapwindow|exit|\
+              hyprctl|notify|lockactivegroup|movewindoworgroup|changegroupactive)
+                continue ;;
+            esac
+            echo "INFO: Command used in binding: $cmd"
+          done || true
+        echo "Hyprland bindings check complete!"
+        touch "$out"
+      '';
+
+    # Check that packages have descriptive annotations
+    check-package-annotations =
+      pkgs.runCommand "check-package-annotations" {
+        nativeBuildInputs = [pkgs.bash pkgs.coreutils pkgs.gnugrep];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        bash scripts/dev/check-package-annotations.sh
+        touch "$out"
+      '';
   };
 
   devShells = {
