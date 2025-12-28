@@ -1,7 +1,6 @@
 {
     "activeVisualizerProfile": "classic",
-    "barMonitors": [
-    ],
+    "barMonitors": [],
     "cavaBars": 86,
     "cavaFramerate": 24,
     "cavaGravity": 150000,
@@ -18,12 +17,7 @@
     "enableWedgeClipShader": false,
     "fontSizeMultiplier": 1,
     "hideSystemTrayCapsule": true,
-    "ignoredPlayers": [
-    ],
-    "lastActivePlayers": [
-        "Music Player Daemon",
-        "Ablaze floorp"
-    ],
+    "ignoredPlayers": [],
     "mediaIconBorderless": false,
     "mediaIconMaxWidthPx": 0,
     "mediaIconMinWidthPx": 0,
@@ -36,8 +30,7 @@
     "mediaIconStretchShare": 1,
     "mediaPanelButtonBorderless": true,
     "mediaPanelButtonLargerIcon": true,
-    "monitorScaleOverrides": {
-    },
+    "monitorScaleOverrides": {},
     "musicPopupEdgeMargin": 4,
     "musicPopupHeight": 250,
     "musicPopupPadding": 12,
@@ -46,8 +39,7 @@
     "networkNoLinkColor": "#D81B60",
     "networkPingIntervalMs": 30000,
     "panelBgAlphaScale": 0.2,
-    "pinnedPlayers": [
-    ],
+    "pinnedPlayers": [],
     "playerSelectionPreset": "default",
     "playerSelectionPriority": [
         "mpdPlaying",
