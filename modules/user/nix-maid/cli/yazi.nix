@@ -21,219 +21,146 @@
     ];
   };
 
-  # Theme colors synced with neg.nvim palette
   theme = {
     manager = {
-      cwd = {fg = "#7095b0";}; # func color
+      cwd = {fg = "#367bbf";};
       hovered = {
-        fg = "#a5c1e6"; # high color
-        bg = "#131e30"; # clin color
-        bold = true;
+        fg = "#367bbf";
+        bg = "#000000";
       };
       preview_hovered = {underline = true;};
       find_keyword = {
-        fg = "#e0af68"; # dwarn color
-        bold = true;
+        fg = "#FFFF7D";
+        italic = true;
       };
       find_position = {
-        fg = "#7095b0";
+        fg = "#367bbf";
         bg = "reset";
         italic = true;
       };
       marker_copied = {
-        fg = "#007a66";
-        bg = "#007a66";
-      }; # dadd - green
+        fg = "#7DFF7E";
+        bg = "#7DFF7E";
+      }; # Green
       marker_cut = {
-        fg = "#6b0f2a";
-        bg = "#6b0f2a";
-      }; # dred - burgundy
+        fg = "#CF4F88";
+        bg = "#CF4F88";
+      }; # Red/Pink
       marker_selected = {
-        fg = "#1d4aaf";
-        bg = "#1d4aaf";
-      }; # dchg - indigo
+        fg = "#367bbf";
+        bg = "#367bbf";
+      }; # Blue
       tab_active = {
         fg = "#000000";
-        bg = "#7095b0";
+        bg = "#367bbf";
       };
       tab_inactive = {
-        fg = "#6c7e96"; # norm
-        bg = "#121212"; # dark
+        fg = "#6C7E96";
+        bg = "#000000";
       };
-      border_style = {fg = "#3c4754";}; # comm color
+      border_style = {fg = "#3D3D3D";};
       border_symbol = "│";
     };
 
     status = {
-      separator_open = "";
-      separator_close = "";
+      separator_open = "";
+      separator_close = "";
       separator_style = {
-        fg = "#121212";
-        bg = "#121212";
+        fg = "#000000";
+        bg = "#000000";
       };
 
-      # Mode colors from neg.nvim
+      # Mode colors matching Kitty marks/accents
       mode_normal = {
         fg = "#000000";
-        bg = "#7095b0"; # func
+        bg = "#367bbf";
         bold = true;
-      };
+      }; # Blue
       mode_select = {
         fg = "#000000";
-        bg = "#127978"; # lit1 - teal
+        bg = "#98d3cb";
         bold = true;
-      };
+      }; # Teal (Mark1)
       mode_unset = {
         fg = "#000000";
-        bg = "#6b0f2a"; # dred
+        bg = "#f274bc";
         bold = true;
-      };
+      }; # Pink (Mark3)
 
       progress_label = {
-        fg = "#d1e5ff"; # whit
+        fg = "#ffffff";
         bold = true;
       };
       progress_normal = {
-        fg = "#7095b0";
-        bg = "#121212";
+        fg = "#367bbf";
+        bg = "#000000";
       };
       progress_error = {
-        fg = "#6b0f2a";
-        bg = "#121212";
+        fg = "#CF4F88";
+        bg = "#000000";
       };
 
       # Permissions colors
-      permissions_t = {fg = "#7095b0";}; # func
-      permissions_r = {fg = "#e0af68";}; # dwarn - yellow
-      permissions_w = {fg = "#6b0f2a";}; # dred
-      permissions_x = {fg = "#007a66";}; # dadd - green
-      permissions_s = {fg = "#127978";}; # lit1 - teal
+      permissions_t = {fg = "#367bbf";};
+      permissions_r = {fg = "#FFFF7D";}; # Yellow
+      permissions_w = {fg = "#CF4F88";}; # Red
+      permissions_x = {fg = "#7DFF7E";}; # Green
+      permissions_s = {fg = "#98d3cb";}; # Teal
     };
 
     input = {
-      border = {fg = "#7095b0";};
+      border = {fg = "#367bbf";};
       title = {};
-      value = {fg = "#6c7e96";};
-      selected = {bg = "#131e30";};
+      value = {fg = "#6C7E96";};
+      selected = {bg = "#000000";};
     };
 
     select = {
-      border = {fg = "#127978";}; # lit1
-      active = {fg = "#a5c1e6";}; # high
-      inactive = {fg = "#6c7e96";}; # norm
+      border = {fg = "#98d3cb";}; # Teal to match select mode
+      active = {fg = "#98d3cb";};
+      inactive = {fg = "#6C7E96";};
     };
 
     tasks = {
-      border = {fg = "#7095b0";};
+      border = {fg = "#367bbf";};
       title = {};
       hovered = {
-        fg = "#a5c1e6";
+        fg = "#367bbf";
         underline = true;
       };
     };
 
     which = {
       cols = 3;
-      mask = {bg = "#080808";}; # visu
-      cand = {fg = "#127978";}; # lit1
-      rest = {fg = "#6c7e96";}; # norm
-      desc = {fg = "#7095b0";}; # func
-      separator = "  ";
-      separator_style = {fg = "#3c4754";}; # comm
+      mask = {bg = "#000000";};
+      cand = {fg = "#98d3cb";};
+      rest = {fg = "#6C7E96";};
+      desc = {fg = "#367bbf";};
+      separator = "  ";
+      separator_style = {fg = "#3D3D3D";};
     };
 
     notify = {
-      title_info = {fg = "#7095b0";}; # func
-      title_warn = {fg = "#e0af68";}; # dwarn
-      title_error = {fg = "#6b0f2a";}; # dred
-      icon_info = " ";
-      icon_warn = " ";
-      icon_error = " ";
+      title_info = {fg = "#367bbf";};
+      title_warn = {fg = "#FFC44E";};
+      title_error = {fg = "#CF4F88";};
+      icon_info = "ZE ";
+      icon_warn = "ZE ";
+      icon_error = "ZE ";
     };
 
     help = {
-      on = {fg = "#7095b0";}; # func
-      run = {fg = "#127978";}; # lit1
-      desc = {fg = "#6c7e96";}; # norm
+      on = {fg = "#367bbf";};
+      exec = {fg = "#98d3cb";};
+      desc = {fg = "#6C7E96";};
       hovered = {
-        bg = "#131e30";
+        bg = "#000000";
         bold = true;
       };
       footer = {
-        fg = "#6c7e96";
-        bg = "#121212";
+        fg = "#6C7E96";
+        bg = "#000000";
       };
-    };
-
-    # File type colors synced with neg.nvim
-    filetype = {
-      rules = [
-        # Directories
-        {
-          name = "*";
-          is = "dir";
-          fg = "#7095b0";
-        }
-
-        # Executables
-        {
-          name = "*";
-          is = "exec";
-          fg = "#007a66";
-        }
-
-        # Links
-        {
-          name = "*";
-          is = "link";
-          fg = "#127978";
-        }
-
-        # Special files
-        {
-          name = "*";
-          is = "orphan";
-          fg = "#6b0f2a";
-        }
-
-        # Media
-        {
-          mime = "image/*";
-          fg = "#148787";
-        }
-        {
-          mime = "video/*";
-          fg = "#148787";
-        }
-        {
-          mime = "audio/*";
-          fg = "#127a57";
-        }
-
-        # Documents
-        {
-          mime = "application/pdf";
-          fg = "#6b0f2a";
-        }
-        {
-          mime = "text/*";
-          fg = "#6c7e96";
-        }
-
-        # Archives
-        {
-          mime = "application/*zip*";
-          fg = "#e0af68";
-        }
-        {
-          mime = "application/*tar*";
-          fg = "#e0af68";
-        }
-        {
-          mime = "application/*compressed*";
-          fg = "#e0af68";
-        }
-      ];
     };
   };
 
