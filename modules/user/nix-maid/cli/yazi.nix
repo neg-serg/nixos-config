@@ -168,48 +168,42 @@
     # File type colors synced with neg.nvim
     filetype = {
       rules = [
-        # Directories
-        {
-          name = "*";
-          is = "dir";
-          fg = "#7095b0";
-        }
-
-        # Executables
-        {
-          name = "*";
-          is = "exec";
-          fg = "#007a66";
-        }
-
-        # Links
-        {
-          name = "*";
-          is = "link";
-          fg = "#127978";
-        }
-
-        # Special files
-        {
-          name = "*";
-          is = "orphan";
-          fg = "#6b0f2a";
-        }
-
-        # Media
+        # Images
         {
           mime = "image/*";
           fg = "#148787";
         }
+        # Videos
         {
           mime = "video/*";
           fg = "#148787";
         }
+        # Audio
         {
           mime = "audio/*";
           fg = "#127a57";
         }
-
+        # Archives
+        {
+          mime = "application/zip";
+          fg = "#e0af68";
+        }
+        {
+          mime = "application/gzip";
+          fg = "#e0af68";
+        }
+        {
+          mime = "application/x-tar";
+          fg = "#e0af68";
+        }
+        {
+          mime = "application/x-rar";
+          fg = "#e0af68";
+        }
+        {
+          mime = "application/x-7z-compressed";
+          fg = "#e0af68";
+        }
         # Documents
         {
           mime = "application/pdf";
@@ -219,19 +213,28 @@
           mime = "text/*";
           fg = "#6c7e96";
         }
-
-        # Archives
+        # Executables
         {
-          mime = "application/*zip*";
-          fg = "#e0af68";
+          name = "*";
+          is = "exec";
+          fg = "#007a66";
         }
+        # Symlinks
         {
-          mime = "application/*tar*";
-          fg = "#e0af68";
+          name = "*";
+          is = "link";
+          fg = "#127978";
         }
+        # Orphan symlinks
         {
-          mime = "application/*compressed*";
-          fg = "#e0af68";
+          name = "*";
+          is = "orphan";
+          fg = "#6b0f2a";
+        }
+        # Directories (fallback rule with trailing slash)
+        {
+          name = "*/";
+          fg = "#7095b0";
         }
       ];
     };
