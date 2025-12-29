@@ -638,6 +638,158 @@ in {
         bash scripts/dev/check-package-annotations.sh
         touch "$out"
       '';
+
+    # Verify sops secrets are encrypted (not plaintext)
+    check-sops-secrets =
+      pkgs.runCommand "check-sops-secrets" {
+        nativeBuildInputs = [pkgs.gnugrep pkgs.findutils pkgs.coreutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking sops secrets encryption..."
+
+        errors=0
+        find secrets -name '*.sops.yaml' -o -name '*.sops.json' 2>/dev/null | while read -r secret; do
+          # Encrypted sops files should contain 'sops:' metadata section
+          if ! grep -q 'sops:' "$secret" 2>/dev/null; then
+            echo "WARNING: $secret may not be encrypted (missing sops metadata)"
+            errors=$((errors + 1))
+          fi
+          # Check for common unencrypted patterns
+          if grep -qE '^\s*(password|secret|token|key):\s*[^E]' "$secret" 2>/dev/null; then
+            echo "WARNING: $secret may contain unencrypted secrets"
+          fi
+        done || true
+
+        echo "Sops secrets check complete!"
+        touch "$out"
+      '';
+
+    # Check flake.lock age (warn if older than 30 days)
+    check-flake-lock-age =
+      pkgs.runCommand "check-flake-lock-age" {
+        nativeBuildInputs = [pkgs.coreutils pkgs.jq];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking flake.lock freshness..."
+
+        if [[ -f flake.lock ]]; then
+          # Get file modification time
+          lock_mtime=$(stat -c %Y flake.lock)
+          current_time=$(date +%s)
+          age_days=$(( (current_time - lock_mtime) / 86400 ))
+
+          if [[ $age_days -gt 30 ]]; then
+            echo "WARNING: flake.lock is $age_days days old (>30 days)"
+            echo "Consider running: nix flake update"
+          elif [[ $age_days -gt 14 ]]; then
+            echo "INFO: flake.lock is $age_days days old"
+          else
+            echo "flake.lock is fresh ($age_days days old)"
+          fi
+        else
+          echo "WARNING: flake.lock not found"
+        fi
+        touch "$out"
+      '';
+
+    # Check that all hosts have required config files
+    check-host-configs =
+      pkgs.runCommand "check-host-configs" {
+        nativeBuildInputs = [pkgs.findutils pkgs.coreutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking host configurations..."
+
+        for host in hosts/*/; do
+          hostname=$(basename "$host")
+          # Skip non-directories and README files
+          [[ ! -d "$host" ]] && continue
+
+          missing=()
+          # Check required files
+          [[ ! -f "$host/default.nix" ]] && missing+=("default.nix")
+          [[ ! -f "$host/hardware.nix" ]] && [[ ! -f "$host/hardware-configuration.nix" ]] && missing+=("hardware.nix")
+
+          if [[ ''${#missing[@]} -gt 0 ]]; then
+            echo "WARNING: Host '$hostname' missing: ''${missing[*]}"
+          else
+            echo "✓ Host '$hostname' has required files"
+          fi
+        done
+        touch "$out"
+      '';
+
+    # Check for hardcoded paths instead of XDG variables
+    check-xdg-compliance =
+      pkgs.runCommand "check-xdg-compliance" {
+        nativeBuildInputs = [pkgs.gnugrep pkgs.coreutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking XDG compliance..."
+
+        # Look for hardcoded home paths that should use XDG
+        issues=0
+        if grep -rn --include='*.nix' --include='*.sh' \
+            -E '~/\.config|~/\.cache|~/\.local|~/\.data' \
+            files scripts 2>/dev/null | grep -v '#.*XDG' | head -10; then
+          echo "INFO: Found hardcoded paths (consider using XDG variables)"
+          issues=$((issues + 1))
+        fi
+
+        if [[ $issues -eq 0 ]]; then
+          echo "No obvious XDG compliance issues found"
+        fi
+        touch "$out"
+      '';
+
+    # Check for duplicate Hyprland bindings
+    check-hyprland-duplicates =
+      pkgs.runCommand "check-hyprland-duplicates" {
+        nativeBuildInputs = [pkgs.gnugrep pkgs.gnused pkgs.coreutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Checking for duplicate Hyprland bindings..."
+
+        # Extract key combinations and find duplicates
+        grep -rhE '^bind\s*=' files/gui/hypr --include='*.conf' 2>/dev/null \
+          | sed 's/#.*//' \
+          | sed 's/bind\s*=\s*//' \
+          | cut -d',' -f1-2 \
+          | sort | uniq -d | while read -r dup; do
+            [[ -n "$dup" ]] && echo "WARNING: Duplicate binding: $dup"
+          done || true
+
+        echo "Hyprland duplicates check complete!"
+        touch "$out"
+      '';
+
+    # Report TODO/FIXME comments in codebase
+    check-todo-fixme =
+      pkgs.runCommand "check-todo-fixme" {
+        nativeBuildInputs = [pkgs.gnugrep pkgs.coreutils];
+      } ''
+        set -euo pipefail
+        cd ${self}
+        echo "Scanning for TODO/FIXME comments..."
+
+        todo_count=$(grep -rI --include='*.nix' --include='*.sh' --include='*.py' \
+          -c -E '\b(TODO|FIXME|HACK|XXX)\b' modules packages scripts 2>/dev/null \
+          | awk -F: '{sum += $2} END {print sum+0}')
+
+        echo "Found $todo_count TODO/FIXME/HACK/XXX comments"
+
+        # Show a few examples
+        grep -rI --include='*.nix' --include='*.sh' \
+          -n -E '\b(TODO|FIXME)\b' modules packages 2>/dev/null \
+          | head -5 || true
+
+        touch "$out"
+      '';
   };
 
   devShells = {
