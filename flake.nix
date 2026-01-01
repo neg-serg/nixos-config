@@ -66,14 +66,37 @@
     # === Independent tools (no follows needed) ===
     impurity.url = "github:outfoxxed/impurity.nix";
     iwmenu.url = "github:e-tho/iwmenu";
+
     nix-flatpak.url = "github:gmodena/nix-flatpak";
+
     nix-maid.url = "github:viperML/nix-maid";
-    pyprland.url = "github:hyprland-community/pyprland/e82637d73207abd634a96ea21fa937455374d131";
-    raise.url = "github:neg-serg/raise";
-    tailray.url = "github:NotAShelf/tailray";
-    winapps.url = "github:winapps-org/winapps";
+
+    pyprland = {
+      url = "github:hyprland-community/pyprland/e82637d73207abd634a96ea21fa937455374d131";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    raise = {
+      url = "github:neg-serg/raise";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    tailray = {
+      url = "github:NotAShelf/tailray";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    winapps = {
+      url = "github:winapps-org/winapps";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     wrapper-manager.url = "github:viperML/wrapper-manager";
-    yazi.url = "github:sxyazi/yazi";
+
+    yazi = {
+      url = "github:sxyazi/yazi";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # === Special cases ===
     yandex-browser = {
