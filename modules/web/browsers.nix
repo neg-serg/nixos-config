@@ -12,7 +12,6 @@ in {
   config = lib.mkIf webEnabled {
     programs.yandex-browser = {
       enable = true;
-      package = "beta";
       # extensionInstallBlocklist = [ "imjepfoebignfgmogbbghpbkbcimgfpd" ]; # "buggy" extension in beta
     };
 
