@@ -32,7 +32,10 @@ cpu-masks:
 deploy host="telfir":
     repo_root="$((git rev-parse --show-toplevel 2>/dev/null) || pwd)"; \
     export IMPURITY_PATH="$repo_root"; \
-    sudo --preserve-env=IMPURITY_PATH nixos-rebuild switch --flake "$repo_root#{{host}}" --impure -L
+    sudo --preserve-env=IMPURITY_PATH nixos-rebuild switch --flake "$repo_root#{{host}}" --impure -L \
+      --option connect-timeout 5 \
+      --option download-attempts 1 \
+      --option fallback true
 
 # Alias for deploy
 switch host="telfir":
