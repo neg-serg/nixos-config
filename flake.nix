@@ -99,9 +99,6 @@
     };
 
     # === Special cases ===
-    yandex-browser = {
-      url = "github:Teu5us/nix-yandex-browser";
-    };
   };
 
   nixConfig = {
