@@ -72,7 +72,4 @@ in {
   };
   nixpkgs.config.allowUnfree = true;
   nixpkgs.config.rocmSupport = true; # enable ROCm GPU stack (needed for ollama-rocm and AMD tooling)
-  nixpkgs.config.permittedInsecurePackages = lib.mkForce [
-    "yandex-browser-stable-25.10.1.1173-1"
-  ];
 }
