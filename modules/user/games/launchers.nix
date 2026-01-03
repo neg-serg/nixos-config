@@ -42,6 +42,10 @@ in {
               keyutils
               openal
               zlib
+              libelf
+              attr
+              python3
+              zstd
 
               # GL/Vulkan plumbing for AMD on X11 (host RADV)
               libglvnd
