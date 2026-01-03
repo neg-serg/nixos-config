@@ -6,8 +6,6 @@
 }: let
   webEnabled = (config.features.web.enable or false) || (config.features.web.yandex.enable or false);
 in {
-  # imports = [inputs.yandex-browser.nixosModules.system];
-
   config = lib.mkIf webEnabled {
     environment.systemPackages = [
       pkgs.passff-host # native messaging host for PassFF Firefox extension
