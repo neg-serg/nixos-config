@@ -302,7 +302,7 @@ with lib; let
       };
 
       # Surfingkeys - vim-like keybindings
-      "surfingkeys_ff@brookhong.github.io" = {
+      "{a8332c60-5b6d-41ee-bfc8-e9bb331d34ad}" = {
         installation_mode = "force_installed";
         install_url = "https://addons.mozilla.org/firefox/downloads/latest/surfingkeys_ff/latest.xpi";
       };
