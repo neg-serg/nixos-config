@@ -297,9 +297,15 @@ with lib; let
       "firefox@tampermonkey.net" = {installation_mode = "blocked";};
 
       # Tridactyl - vim-like keyboard navigation
-      "tridactyl.vim@cmcaine.co.uk" = {
+      # "tridactyl.vim@cmcaine.co.uk" = {
+      #   installation_mode = "force_installed";
+      #   install_url = "https://addons.mozilla.org/firefox/downloads/latest/tridactyl-vim/latest.xpi";
+      # };
+
+      # Surfingkeys - vim-like keybindings
+      "surfingkeys_ff@brookhong.github.io" = {
         installation_mode = "force_installed";
-        install_url = "https://addons.mozilla.org/firefox/downloads/latest/tridactyl-vim/latest.xpi";
+        install_url = "https://addons.mozilla.org/firefox/downloads/latest/surfingkeys_ff/latest.xpi";
       };
       # Dark Reader - dark mode for all sites
       "addon@darkreader.org" = {
