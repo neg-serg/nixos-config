@@ -24,7 +24,7 @@ die(){ printf 'swd: %s\n' "$*" >&2; :; }
 need(){ command -v "$1" >/dev/null 2>&1 || printf 'swd: missing dependency: %s\n' "$1" >&2; }
 need curl
 need jq
-# TODO: create swd for unsplash
+
 location="${XDG_PICTURES_DIR:-$HOME/pic}/wl"
 atleast="3840x2160"
 purity="100"
