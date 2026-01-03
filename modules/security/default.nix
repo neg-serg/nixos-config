@@ -12,7 +12,7 @@
     then mainUser
     else g;
 in {
-  imports = [./modules.nix];
+  imports = [./firejail.nix];
   services.pcscd.enable = true; # pkcs support
   # Tell p11-kit to load/proxy opensc-pkcs11.so, providing all available slots
   # (PIN1 for authentication/decryption, PIN2 for signing).

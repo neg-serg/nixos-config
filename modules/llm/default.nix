@@ -5,7 +5,12 @@
 }: let
   cfg = config.services.ollama;
 in {
-  imports = [./modules.nix];
+  imports = [
+    ./codex-config.nix
+    ./ollama.nix
+    ./open-webui.nix
+    ./pkgs.nix
+  ];
   config = lib.mkMerge [
     {
       services.ollama = {

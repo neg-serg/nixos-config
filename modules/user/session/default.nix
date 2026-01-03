@@ -1,6 +1,17 @@
 {pkgs, ...}: {
   imports = [
-    ./modules.nix
+    ./chat.nix
+    ./clipboard.nix
+    ./greetd.nix
+    ./hypr-bindings.nix
+    ./hyprland.nix
+    ./media.nix
+    ./qt.nix
+    ./quickshell.nix
+    ./screenshot.nix
+    ./terminal.nix
+    ./theme.nix
+    ./utils.nix
   ];
 
   programs.hyprland = {
