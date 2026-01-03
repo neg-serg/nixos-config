@@ -35,7 +35,9 @@ deploy host="telfir":
     sudo --preserve-env=IMPURITY_PATH nixos-rebuild switch --flake "$repo_root#{{host}}" --impure -L \
       --option connect-timeout 5 \
       --option download-attempts 1 \
-      --option fallback true
+      --option fallback true \
+      --option stalled-download-timeout 5 \
+      --option substituters "https://cache.nixos.org/ https://0uptime.cachix.org https://cuda-maintainers.cachix.org https://devenv.cachix.org https://hercules-ci.cachix.org https://hyprland.cachix.org https://neg-serg.cachix.org https://nix-community.cachix.org https://nixpkgs-unfree.cachix.org https://numtide.cachix.org"
 
 # Alias for deploy
 switch host="telfir":
