@@ -476,9 +476,13 @@ with lib; let
             else if browserType == "librewolf"
             then "librewolf/policies/policies.json"
             else "firefox/policies/policies.json";
-        in {
-          "${policyPath}".text = builtins.toJSON {policies = mergedPolicies;};
-        };
+        in
+          {
+            "${policyPath}".text = builtins.toJSON {policies = mergedPolicies;};
+          }
+          // lib.optionalAttrs (browserType == "floorp") {
+            "firefox/policies/policies.json".text = builtins.toJSON {policies = mergedPolicies;};
+          };
       }
       (n.mkHomeFiles (lib.mkMerge (
         [
