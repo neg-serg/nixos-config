@@ -5,7 +5,10 @@
 }: let
   clangSuite = pkgs.buildEnv {
     name = "ue-clang-suite";
-    paths = [pkgs.llvmPackages_20.clang pkgs.llvmPackages_20.clang-tools];
+    paths = [
+      pkgs.llvmPackages_20.clang # C/C++ compiler
+      pkgs.llvmPackages_20.clang-tools # clangd, clang-format, etc.
+    ];
     ignoreCollisions = true;
   };
   packages =
