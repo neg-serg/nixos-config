@@ -304,7 +304,7 @@ with lib; let
       # Surfingkeys - vim-like keybindings
       "{a8332c60-5b6d-41ee-bfc8-e9bb331d34ad}" = {
         installation_mode = "force_installed";
-        install_url = "https://addons.mozilla.org/firefox/downloads/latest/surfingkeys_ff/latest.xpi";
+        install_url = "https://addons.mozilla.org/firefox/downloads/file/4573120/surfingkeys_ff-1.17.11.xpi";
       };
       # Dark Reader - dark mode for all sites
       "addon@darkreader.org" = {
