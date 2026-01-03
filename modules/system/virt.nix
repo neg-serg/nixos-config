@@ -10,7 +10,7 @@ in {
   # Keep imports at top-level; guard heavy config below
   imports = [
     ./virt/pkgs.nix
-    # ./virt/macos-vm.nix  # Archived - MacOS VM not currently in use
+
     ./virt/nemu.nix
   ];
 

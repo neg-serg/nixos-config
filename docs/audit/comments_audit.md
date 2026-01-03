@@ -8,13 +8,13 @@ These are blocks of code that define services, interfaces, or imports but are cu
 
 | File | Context | Impact/Status |
 |------|---------|---------------|
-| `modules/user/nix-maid/sys/nekoray.nix` | `systemd.user.services.nekoray` | Entire local GUI proxy service commented out. |
-| `modules/nix/nixindex.nix` | `systemd.services.nixindex` & timer | Periodic database updates for `nix-index` disabled. |
-| `hosts/telfir/virtualisation/lxc.nix` | `systemd.services."lxc-zero-sandbox"` | LXC container management service commented out. |
-| `modules/system/net/vpn/wireguard.nix` | `networking.wg-quick.interfaces.wg0` | Interface disabled due to missing keys (legacy/duplicate of SOPS setup). |
-| `modules/system/virt.nix` | `imports = [ ./virt/macos-vm.nix ];` | macOS VM integration commented out. |
-| `modules/web/browsers.nix` | `imports = [ ...yandex-browser... ];` | Yandex Browser module import commented out. |
-| `modules/dev/editor/pkgs.nix` | `pkgs.zeal` | Zeal (offline docs) package commented out. |
+| `modules/user/nix-maid/sys/nekoray.nix` | `systemd.user.services.nekoray` | [REMOVED] Entire local GUI proxy service cleaned up. |
+| `modules/nix/nixindex.nix` | `systemd.services.nixindex` & timer | [REMOVED] Periodic database updates for `nix-index` cleaned up. |
+| `hosts/telfir/virtualisation/lxc.nix` | `systemd.services."lxc-zero-sandbox"` | [REMOVED] LXC container management service cleaned up. |
+| `modules/system/net/vpn/wireguard.nix` | `networking.wg-quick.interfaces.wg0` | [REMOVED] Interface cleaned up (duplicate of SOPS setup). |
+| `modules/system/virt.nix` | `imports = [ ./virt/macos-vm.nix ];` | [REMOVED] macOS VM integration cleaned up. |
+| `modules/web/browsers.nix` | `imports = [ ...yandex-browser... ];` | [REMOVED] Yandex Browser module import cleaned up. |
+| `modules/dev/editor/pkgs.nix` | `pkgs.zeal` | [REMOVED] Zeal (offline docs) package cleaned up. |
 
 ## 2. TODOs and FIXMEs
 

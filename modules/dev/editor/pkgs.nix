@@ -19,7 +19,6 @@ in {
     {
       environment.systemPackages = [
         pkgs.neovim # primary editor
-        # pkgs.zeal
       ];
     }
     (lib.mkIf devEnabled {
