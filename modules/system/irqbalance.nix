@@ -26,7 +26,7 @@ in {
       # Compute banned CPU mask at runtime from /proc/cmdline and expose via EnvironmentFile
       systemd.services.irqbalance = {
         # Ensure tools used in preStart are available
-        path = [pkgs.gawk];
+        path = [pkgs.gawk]; # used for bitwise mask calculation in preStart
         preStart = ''
           set -euo pipefail
           CMDLINE=$(cat /proc/cmdline)

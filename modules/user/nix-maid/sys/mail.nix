@@ -75,7 +75,10 @@ in {
       # Services
       systemd.user.services."mbsync-gmail" = {
         description = "Sync mail via mbsync (gmail)";
-        path = [pkgs.pass pkgs.gnupg];
+        path = [
+          pkgs.pass # password manager for PassCmd
+          pkgs.gnupg # required by pass
+        ];
         serviceConfig = {
           Type = "simple";
           TimeoutStartSec = "30min";
@@ -97,7 +100,10 @@ in {
 
       systemd.user.services."imapnotify-gmail" = {
         description = "IMAP Notify (gmail)";
-        path = [pkgs.pass pkgs.gnupg];
+        path = [
+          pkgs.pass # password manager for passwordCmd
+          pkgs.gnupg # required by pass
+        ];
         serviceConfig = {
           Type = "simple";
           ExecStart = "${lib.getExe pkgs.goimapnotify} -conf %h/.config/imapnotify/gmail.json";

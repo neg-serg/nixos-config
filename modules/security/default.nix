@@ -17,14 +17,17 @@ in {
   # Tell p11-kit to load/proxy opensc-pkcs11.so, providing all available slots
   # (PIN1 for authentication/decryption, PIN2 for signing).
   environment.etc."pkcs11/modules/opensc-pkcs11".text = ''
-    module: ${pkgs.opensc}/lib/opensc-pkcs11.so
+    module: ${pkgs.opensc}/lib/opensc-pkcs11.so # smart card support library
   '';
 
   security = {
     apparmor = {
       enable = true;
       killUnconfinedConfinables = false;
-      packages = [pkgs.apparmor-utils pkgs.apparmor-profiles];
+      packages = [
+        pkgs.apparmor-utils # user-space tools for apparmor
+        pkgs.apparmor-profiles # standard profiles for various apps
+      ];
     };
     pki.useCompatibleBundle = true;
     lockKernelModules = false;
@@ -134,7 +137,7 @@ in {
 
     sudo = {
       enable = true;
-      package = pkgs.sudo;
+      package = pkgs.sudo; # superuser do utility
       extraConfig = ''
         Defaults timestamp_timeout = 300 # makes sudo ask for password less often
         Defaults passprompt="🔐 "
