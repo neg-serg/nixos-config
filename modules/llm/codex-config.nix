@@ -47,6 +47,6 @@ _: {
     model: deepseek/deepseek-reasoner
     editor-model: deepseek/deepseek-chat
     api-key:
-    - deepseek=your_api_key # FIXME
+    # - deepseek=your_api_key # FIXME: Set via environment variable or sops
   '';
 }
