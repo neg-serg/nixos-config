@@ -1,3 +1,7 @@
 {...}: {
-  imports = [./pkgs.nix];
+  imports = [
+    ./pkgs.nix
+    ./wireguard.nix
+    ./xray.nix
+  ];
 }
