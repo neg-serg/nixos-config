@@ -40,11 +40,14 @@ in {
               libvorbis
               libkrb5
               keyutils
+              openal
+              zlib
 
               # GL/Vulkan plumbing for AMD on X11 (host RADV)
               libglvnd
               libdrm
               vulkan-loader
+              libGLU
 
               # libstdc++ for the runtime
               (lib.getLib stdenv.cc.cc)
