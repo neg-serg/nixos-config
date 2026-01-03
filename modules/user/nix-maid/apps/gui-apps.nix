@@ -205,7 +205,11 @@
 
   # Rofi with plugins (file-browser-extended)
   rofiWithPlugins = pkgs.rofi.override {
-    plugins = [pkgs.rofi-file-browser pkgs.rofi-emoji pkgs.rofi-calc];
+    plugins = [
+      pkgs.rofi-file-browser # adds file browsing capability to rofi
+      pkgs.rofi-emoji # adds emoji selection to rofi
+      pkgs.rofi-calc # adds calculator capability to rofi
+    ];
   };
 
   # Rofi wrapper script
