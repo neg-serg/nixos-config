@@ -20,7 +20,7 @@ if [[ ! -f "$root_dir/flake.nix" ]]; then
 fi
 
 # Determine available systems by inspecting flake packages
-systems=$(nix eval --json "$flake_path#packages" | jq -r 'keys[]')
+systems=$(nix flake show --json "$flake_path" 2> /dev/null | jq -r '.packages | keys[]')
 if [[ -z "$systems" ]]; then
   echo "error: no packages.<system> found in flake outputs" >&2
   exit 1
@@ -35,7 +35,7 @@ fi
 echo "Using system: $found_system" >&2
 
 # Discover available options-* docs dynamically
-all_keys=$(nix eval --json "$flake_path#packages.${found_system}" | jq -r 'keys[]')
+all_keys=$(nix flake show --json "$flake_path" 2> /dev/null | jq -r ".packages.\"${found_system}\" | keys[]")
 mapfile -t option_keys < <(echo "$all_keys" | awk '/^options-.*-md$|^options-md$/')
 
 # Stable order: index -> aggregated -> the rest sorted
