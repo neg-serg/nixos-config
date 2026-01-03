@@ -35,6 +35,10 @@ if spec is None or spec.loader is None:
     print(f"failed to load spec for {_path}", file=sys.stderr)
     sys.exit(1)
 mod = importlib.util.module_from_spec(spec)
+
+# Hack: Add the directory of the real kitten to sys.path so it can import its local modules
+sys.path.insert(0, os.path.dirname(_path))
+
 spec.loader.exec_module(mod)
 
 
