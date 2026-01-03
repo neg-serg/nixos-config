@@ -35,7 +35,10 @@ in {
         Type = "oneshot";
       };
       # Provide required tools in PATH
-      path = [pkgs.util-linux pkgs.coreutils];
+      path = [
+        pkgs.util-linux # for mkswap, fallocate
+        pkgs.coreutils # for dd, chmod, chown, mkdir
+      ];
       # Ensure the underlying path is mounted before running
       unitConfig = {
         # Avoid implicit After=basic.target and friends which cause

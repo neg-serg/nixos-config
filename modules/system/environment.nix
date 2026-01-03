@@ -6,7 +6,7 @@
 }: {
   environment = {
     wordlist.enable = true; # to make "look" utility work
-    shells = [pkgs.zsh];
+    shells = [pkgs.zsh]; # Z shell as allowed system shell
     localBinInPath = true;
 
     # This is using a rec (recursive) expression to set and access XDG_BIN_HOME within the expression
