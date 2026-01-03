@@ -1,1 +1,6 @@
-{...}: import ./modules.nix
+{...}: {
+  imports = [
+    ./controllers.nix
+    ./tuning.nix
+  ];
+}

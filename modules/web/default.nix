@@ -1,1 +1,7 @@
-{...}: import ./modules.nix
+{...}: {
+  imports = [
+    ./browsers.nix
+    ./nyxt.nix
+    ./qutebrowser.nix
+  ];
+}

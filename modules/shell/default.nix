@@ -1,1 +1,6 @@
-{...}: import ./modules.nix
+{...}: {
+  imports = [
+    ./pkgs.nix
+    ./zsh.nix
+  ];
+}
