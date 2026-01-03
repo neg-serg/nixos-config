@@ -1,5 +1,5 @@
 {...}: {
   imports = [
-    ./pkgs.nix
+    ./packages.nix
   ];
 }

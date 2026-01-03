@@ -1,1 +1,3 @@
-{...}: import ./modules.nix
+{...}: {
+  imports = [./tws.nix];
+}

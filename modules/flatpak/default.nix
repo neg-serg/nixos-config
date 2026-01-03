@@ -1,5 +1,5 @@
 {...}: {
-  imports = [./modules.nix];
+  imports = [./pkgs.nix];
   services.flatpak = {
     enable = true;
     overrides = {

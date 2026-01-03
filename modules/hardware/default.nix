@@ -46,7 +46,23 @@
       # No extra user services; SteamVR runtime is expected to be used directly.
     };
   };
-  imports = [./modules.nix valveIndexModule];
+  imports = [
+    ./audio
+    ./cpu
+    ./io
+    ./qmk
+    ./udev-rules
+    ./video
+    ./webcam
+    ./amdgpu.nix
+    ./cooling.nix
+    ./gpu-corectrl.nix
+    ./liquidctl.nix
+    ./pkgs.nix
+    ./uinput.nix
+    ./usb-automount.nix
+    valveIndexModule
+  ];
 in {
   inherit imports;
   options.hardware.storage.autoMount.enable = lib.mkOption {

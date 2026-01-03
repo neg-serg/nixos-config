@@ -1,1 +1,15 @@
-{...}: import ./modules.nix
+{...}: {
+  imports = [
+    ./adguardhome
+    ./avahi
+    ./bitcoind
+    ./duckdns
+    ./geoclue
+    ./jellyfin
+    ./mpd
+    ./netdata
+    ./openssh
+    ./samba
+    ./unbound
+  ];
+}

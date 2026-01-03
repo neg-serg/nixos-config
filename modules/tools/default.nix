@@ -3,7 +3,10 @@
   inherit (lib.lists) zipListsWith;
   inherit (lib.strings) escapeShellArg;
 in {
-  imports = [./modules.nix];
+  imports = [
+    ./hiddify.nix
+    ./pkgs.nix
+  ];
 
   # Packages moved to ./pkgs.nix
 
