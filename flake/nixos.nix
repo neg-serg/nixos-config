@@ -6,22 +6,11 @@
 }: let
   inherit (nixpkgs) lib;
   hostsDir = ../hosts;
-  entries = builtins.readDir hostsDir;
-  hostNames = builtins.attrNames (lib.filterAttrs (
-      name: type:
-        type
-        == "directory"
-        && builtins.hasAttr "default.nix" (builtins.readDir ((builtins.toString hostsDir) + "/" + name))
-    )
-    entries);
-  hostNamesEnabled = lib.filter (name: name != "telfir-vm") hostNames;
+  hostNamesEnabled = ["telfir"];
 
   linuxSystem = "x86_64-linux";
   locale = "en_US.UTF-8";
   timeZone = "Europe/Moscow";
-
-  # Nilla raw-loader compatibility
-  nillaInputs = builtins.mapAttrs (_: input: input // {type = "derivation";}) inputs;
 
   commonModules = [
     ../init.nix
@@ -42,8 +31,7 @@
     lib.nixosSystem {
       system = linuxSystem;
       specialArgs = {
-        inherit locale timeZone self;
-        inputs = nillaInputs;
+        inherit locale timeZone self inputs;
         iosevkaNeg = inputs.iosevka-neg.packages.${linuxSystem};
         neg = impurity: {
           # Core structural helpers (no config dependency)
