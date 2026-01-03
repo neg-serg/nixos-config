@@ -1,432 +1,252 @@
-## _module\.args
+## \_module.args
 
-Additional arguments passed to each module in addition to ones
-like ` lib `, ` config `,
-and ` pkgs `, ` modulesPath `\.
+Additional arguments passed to each module in addition to ones like `lib`, `config`, and `pkgs`,
+`modulesPath`.
 
-This option is also available to all submodules\. Submodules do not
-inherit args from their parent module, nor do they provide args to
-their parent module or sibling submodules\. The sole exception to
-this is the argument ` name ` which is provided by
-parent modules to a submodule and contains the attribute name
-the submodule is bound to, or a unique generated name if it is
-not bound to an attribute\.
+This option is also available to all submodules. Submodules do not inherit args from their parent
+module, nor do they provide args to their parent module or sibling submodules. The sole exception to
+this is the argument `name` which is provided by parent modules to a submodule and contains the
+attribute name the submodule is bound to, or a unique generated name if it is not bound to an
+attribute.
 
-Some arguments are already passed by default, of which the
-following *cannot* be changed with this option:
+Some arguments are already passed by default, of which the following *cannot* be changed with this
+option:
 
- - ` lib `: The nixpkgs library\.
+- `lib`: The nixpkgs library.
 
- - ` config `: The results of all options after merging the values from all modules together\.
+- `config`: The results of all options after merging the values from all modules together.
 
- - ` options `: The options declared in all modules\.
+- `options`: The options declared in all modules.
 
- - ` specialArgs `: The ` specialArgs ` argument passed to ` evalModules `\.
+- `specialArgs`: The `specialArgs` argument passed to `evalModules`.
 
- - All attributes of ` specialArgs `
-   
-   Whereas option values can generally depend on other option values
-   thanks to laziness, this does not apply to ` imports `, which
-   must be computed statically before anything else\.
-   
-   For this reason, callers of the module system can provide ` specialArgs `
-   which are available during import resolution\.
-   
-   For NixOS, ` specialArgs ` includes
-   ` modulesPath `, which allows you to import
-   extra modules from the nixpkgs package tree without having to
-   somehow make the module aware of the location of the
-   ` nixpkgs ` or NixOS directories\.
-   
-   ```
-   { modulesPath, ... }: {
-     imports = [
-       (modulesPath + "/profiles/minimal.nix")
-     ];
-   }
-   ```
+- All attributes of `specialArgs`
+
+  Whereas option values can generally depend on other option values thanks to laziness, this does
+  not apply to `imports`, which must be computed statically before anything else.
+
+  For this reason, callers of the module system can provide `specialArgs` which are available during
+  import resolution.
+
+  For NixOS, `specialArgs` includes `modulesPath`, which allows you to import extra modules from the
+  nixpkgs package tree without having to somehow make the module aware of the location of the
+  `nixpkgs` or NixOS directories.
+
+  ```
+  { modulesPath, ... }: {
+    imports = [
+      (modulesPath + "/profiles/minimal.nix")
+    ];
+  }
+  ```
 
 For NixOS, the default value for this option includes at least this argument:
 
- - ` pkgs `: The nixpkgs package set according to
-   the ` nixpkgs.pkgs ` option\.
+- `pkgs`: The nixpkgs package set according to the `nixpkgs.pkgs` option.
 
-
-
-*Type:*
-lazy attribute set of raw value
+*Type:* lazy attribute set of raw value
 
 *Declared by:*
- - [\<nixpkgs/lib/modules\.nix>](https://github.com/NixOS/nixpkgs/blob//lib/modules.nix)
 
+- [\<nixpkgs/lib/modules.nix>](https://github.com/NixOS/nixpkgs/blob//lib/modules.nix)
 
+## features.allowUnfree.allowed
 
-## features\.allowUnfree\.allowed
+Final allowlist of unfree package names (overrides preset if explicitly set).
 
+*Type:* list of string
 
-
-Final allowlist of unfree package names (overrides preset if explicitly set)\.
-
-
-
-*Type:*
-list of string
-
-
-
-*Default:*
-` [ ] `
+*Default:* `[ ]`
 
 *Declared by:*
- - [/modules/features/core\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
 
+- [/modules/features/core.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
 
+## features.allowUnfree.extra
 
-## features\.allowUnfree\.extra
+Extra unfree package names to allow (in addition to preset).
 
+*Type:* list of string
 
-
-Extra unfree package names to allow (in addition to preset)\.
-
-
-
-*Type:*
-list of string
-
-
-
-*Default:*
-` [ ] `
+*Default:* `[ ]`
 
 *Declared by:*
- - [/modules/features/core\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
 
+- [/modules/features/core.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
 
+## features.allowUnfree.preset
 
-## features\.allowUnfree\.preset
+Preset allowlist for unfree packages.
 
+*Type:* one of “desktop”, “headless”
 
-
-Preset allowlist for unfree packages\.
-
-
-
-*Type:*
-one of “desktop”, “headless”
-
-
-
-*Default:*
-` "desktop" `
+*Default:* `"desktop"`
 
 *Declared by:*
- - [/modules/features/core\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
 
+- [/modules/features/core.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
 
+## features.apps.discord.system24Theme.enable
 
-## features\.apps\.discord\.system24Theme\.enable
+Whether to enable enable the System24 Discord/Vencord theme.
 
+*Type:* boolean
 
+*Default:* `true`
 
-Whether to enable enable the System24 Discord/Vencord theme\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/apps\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+- [/modules/features/apps.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+## features.apps.obsidian.autostart.enable
 
-## features\.apps\.obsidian\.autostart\.enable
+Whether to enable autostart Obsidian at GUI login (systemd user service).
 
+*Type:* boolean
 
+*Default:* `false`
 
-Whether to enable autostart Obsidian at GUI login (systemd user service)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-
-
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/apps\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+- [/modules/features/apps.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+## features.apps.winapps.enable
 
-## features\.apps\.winapps\.enable
+Whether to enable enable WinApps integration (KVM/libvirt Windows VM, RDP bridge).
 
+*Type:* boolean
 
+*Default:* `false`
 
-Whether to enable enable WinApps integration (KVM/libvirt Windows VM, RDP bridge)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-
-
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/apps\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+- [/modules/features/apps.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/apps.nix)
 
+## features.cli.broot.enable
 
-## features\.cli\.broot\.enable
+Whether to enable enable broot file manager and shell integration.
 
+*Type:* boolean
 
+*Default:* `false`
 
-Whether to enable enable broot file manager and shell integration\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-
-
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.fastCnf.enable
 
-## features\.cli\.fastCnf\.enable
+Whether to enable enable fast zsh command-not-found handler powered by nix-index.
 
+*Type:* boolean
 
+*Default:* `true`
 
-Whether to enable enable fast zsh command-not-found handler powered by nix-index\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.icedteaWeb.enable
 
-## features\.cli\.icedteaWeb\.enable
+Whether to enable enable IcedTea Web (netx) integration.
 
+*Type:* boolean
 
+*Default:* `false`
 
-Whether to enable enable IcedTea Web (netx) integration\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-
-
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.nixIndexDB.enable
 
-## features\.cli\.nixIndexDB\.enable
+Whether to enable enable scheduled nix-index DB refresh (prebuilt cache).
 
+*Type:* boolean
 
+*Default:* `true`
 
-Whether to enable enable scheduled nix-index DB refresh (prebuilt cache)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.television.enable
 
-## features\.cli\.television\.enable
+Whether to enable enable television (blazingly fast fuzzy finder).
 
+*Type:* boolean
 
+*Default:* `true`
 
-Whether to enable enable television (blazingly fast fuzzy finder)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.tewi.enable
 
-## features\.cli\.tewi\.enable
+Whether to enable enable tewi tui torrent client configuration.
 
+*Type:* boolean
 
+*Default:* `false`
 
-Whether to enable enable tewi tui torrent client configuration\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-
-
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.yazi.enable
 
-## features\.cli\.yazi\.enable
+Whether to enable enable yazi terminal file manager.
 
+*Type:* boolean
 
+*Default:* `true`
 
-Whether to enable enable yazi terminal file manager\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.zcli.enable
 
-## features\.cli\.zcli\.enable
+Whether to enable install zcli helper for nh-based flake switches.
 
+*Type:* boolean
 
+*Default:* `false`
 
-Whether to enable install zcli helper for nh-based flake switches\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-
-
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.zcli.backupFiles
 
-## features\.cli\.zcli\.backupFiles
+Relative paths under $HOME that zcli should report as pre-existing backups.
 
+*Type:* list of string
 
-
-Relative paths under $HOME that zcli should report as pre-existing backups\.
-
-
-
-*Type:*
-list of string
-
-
-
-*Default:*
-` [ ] `
-
-
+*Default:* `[ ]`
 
 *Example:*
 
@@ -437,2362 +257,1284 @@ list of string
 ```
 
 *Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.zcli.flakePath
 
-## features\.cli\.zcli\.flakePath
+Optional override for the flake.nix path if it is not under repoRoot.
 
+*Type:* null or string
 
+*Default:* `null`
 
-Optional override for the flake\.nix path if it is not under repoRoot\.
-
-
-
-*Type:*
-null or string
-
-
-
-*Default:*
-` null `
-
-*Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
-
-
-
-## features\.cli\.zcli\.profile
-
-
-
-Profile/hostname passed to nh os switch --hostname\.
-
-
-
-*Type:*
-string
-
-
-
-*Default:*
-` "telfir" `
-
-
-
-*Example:*
-` "telfir" `
-
-*Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
-
-
-
-## features\.cli\.zcli\.repoRoot
-
-
-
-Optional override for the repository root; defaults to the configured neg\.repoRoot\.
-
-
-
-*Type:*
-null or string
-
-
-
-*Default:*
-` null `
-
-*Declared by:*
- - [/modules/features/cli\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
-
-
-
-## features\.dev\.enable
-
-
-
-Whether to enable enable Dev stack (toolchains, editors, hack tooling)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.ai\.enable
-
-
-
-Whether to enable enable AI tools (e\.g\., LM Studio)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.ai\.antigravity\.enable
-
-
-
-Whether to enable install Google Antigravity agentic IDE\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.cpp\.enable
-
-
-
-Whether to enable enable C/C++ tooling (gcc/clang, cmake, ninja, lldb)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.emacs\.enable
-
-
-
-Whether to enable enable Emacs editor with org-babel config\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.hack\.core\.crawl
-
-
-
-Whether to enable enable web crawling tools\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.hack\.core\.reverse
-
-
-
-Whether to enable enable reverse/disasm helpers\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.hack\.core\.secrets
-
-
-
-Whether to enable enable git secret scanners\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.hack\.forensics\.analysis
-
-
-
-Whether to enable enable reverse/binary analysis tools\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.hack\.forensics\.fs
-
-
-
-Whether to enable enable filesystem/disk forensics tools\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.hack\.forensics\.network
-
-
-
-Whether to enable enable network forensics tools\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.hack\.forensics\.stego
-
-
-
-Whether to enable enable steganography tools\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.haskell\.enable
-
-
-
-Whether to enable enable Haskell tooling (ghc, cabal, stack, HLS)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.iac\.backend
-
-
-
-Choose IaC backend: HashiCorp Terraform or OpenTofu (tofu)\.
-
-
-
-*Type:*
-one of “terraform”, “tofu”
-
-
-
-*Default:*
-` "terraform" `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.openxr\.enable
-
-
-
-Whether to enable enable OpenXR development stack\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.openxr\.envision\.enable
-
-
-
-Whether to enable install Envision UI for Monado\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.openxr\.runtime\.enable
-
-
-
-Whether to enable install Monado OpenXR runtime\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.openxr\.runtime\.service\.enable
-
-
-
-Whether to enable run monado-service as a user systemd service (graphical preset)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.openxr\.runtime\.vulkanLayers\.enable
-
-
-
-Whether to enable install Monado Vulkan layers\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.openxr\.tools\.basaltMonado\.enable
-
-
-
-Whether to enable install optional basalt-monado tools\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.openxr\.tools\.motoc\.enable
-
-
-
-Whether to enable install motoc (Monado Tracking Origin Calibration)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.pkgs\.analyzers
-
-
-
-Whether to enable enable analyzers/linters\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.pkgs\.codecount
-
-
-
-Whether to enable enable code counting tools\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.pkgs\.formatters
-
-
-
-Whether to enable enable CLI/code formatters\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.pkgs\.iac
-
-
-
-Whether to enable enable infrastructure-as-code tooling (Terraform, etc\.)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.pkgs\.misc
-
-
-
-Whether to enable enable misc dev helpers\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.pkgs\.radicle
-
-
-
-Whether to enable enable radicle tooling\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.pkgs\.runtime
-
-
-
-Whether to enable enable general dev runtimes (node etc\.)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.python\.core
-
-
-
-Whether to enable enable core Python development packages\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.python\.tools
-
-
-
-Whether to enable enable Python tooling (LSP, utilities)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.rust\.enable
-
-
-
-Whether to enable enable Rust tooling (rustup, rust-analyzer)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.tla\.enable
-
-
-
-Whether to enable enable TLA+ tooling (toolbox, formatter)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.unreal\.enable
-
-
-
-Whether to enable enable Unreal Engine 5 tooling\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-
-
-*Example:*
-` true `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.unreal\.branch
-
-
-
-Branch or tag to sync from the Unreal Engine repository\.
-
-
-
-*Type:*
-string
-
-
-
-*Default:*
-` "5.4" `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.unreal\.repo
-
-
-
-Git URL used by ue5-sync (requires EpicGames/UnrealEngine access)\.
-
-
-
-*Type:*
-string
-
-
-
-*Default:*
-` "git@github.com:EpicGames/UnrealEngine.git" `
-
-*Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.unreal\.root
-
-
-
-Checkout directory for Unreal Engine sources\. Defaults to “~/games/UnrealEngine”\.
-
-
-
-*Type:*
-null or string
-
-
-
-*Default:*
-` null `
-
-
-
-*Example:*
-` "/mnt/storage/UnrealEngine" `
-
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-
-
-## features\.dev\.unreal\.useSteamRun
-
-
-
-Wrap Unreal Editor launch via steam-run to provide FHS runtime libraries\.
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.zcli.profile
 
-*Type:*
-boolean
+Profile/hostname passed to nh os switch --hostname.
 
+*Type:* string
 
+*Default:* `"telfir"`
 
-*Default:*
-` true `
+*Example:* `"telfir"`
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.zcli.repoRoot
 
-## features\.devSpeed\.enable
+Optional override for the repository root; defaults to the configured neg.repoRoot.
 
+*Type:* null or string
 
+*Default:* `null`
 
-Whether to enable enable dev-speed mode (trim heavy features for faster eval)\.
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` false `
-
-
-
-*Example:*
-` true `
-
 *Declared by:*
- - [/modules/features/core\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
-
-
-
-## features\.emulators\.retroarch\.full
-
-
-
-Whether to enable use retroarchFull with extended (unfree) cores\.
 
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.dev.enable
 
-*Type:*
-boolean
+Whether to enable enable Dev stack (toolchains, editors, hack tooling).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Default:*
-` false `
+*Example:* `true`
 
-
-
-*Example:*
-` true `
-
 *Declared by:*
- - [/modules/features/games\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
-
-
-
-## features\.excludePkgs
-
-
 
-List of package names (pname) to exclude from curated home\.packages lists\.
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.ai.enable
 
+Whether to enable enable AI tools (e.g., LM Studio).
 
-*Type:*
-list of string
+*Type:* boolean
 
+*Default:* `true`
 
+*Example:* `true`
 
-*Default:*
-` [ ] `
-
 *Declared by:*
- - [/modules/features/core\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
-
-
-
-## features\.finance\.tws\.enable
-
-
-
-Whether to enable enable Trader Workstation (IBKR) desktop client\.
-
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
-*Type:*
-boolean
+## features.dev.ai.antigravity.enable
 
+Whether to enable install Google Antigravity agentic IDE.
 
+*Type:* boolean
 
-*Default:*
-` false `
+*Default:* `false`
 
+*Example:* `true`
 
-
-*Example:*
-` true `
-
 *Declared by:*
- - [/modules/features/services\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
-
-
-
-## features\.fun\.enable
-
-
-
-Whether to enable enable fun extras (art collections, etc\.)\.
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.cpp.enable
 
-*Type:*
-boolean
+Whether to enable enable C/C++ tooling (gcc/clang, cmake, ninja, lldb).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Default:*
-` true `
+*Example:* `true`
 
-
-
-*Example:*
-` true `
-
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
-
-
-
-## features\.games\.enable
-
-
 
-Whether to enable enable Games stack\.
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.emacs.enable
 
+Whether to enable enable Emacs editor with org-babel config.
 
-*Type:*
-boolean
+*Type:* boolean
 
+*Default:* `false`
 
+*Example:* `true`
 
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
 *Declared by:*
- - [/modules/features/games\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
-
-
-
-## features\.games\.dosemu\.enable
-
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
-Whether to enable enable Dosemu\.
+## features.dev.hack.core.crawl
 
+Whether to enable enable web crawling tools.
 
+*Type:* boolean
 
-*Type:*
-boolean
+*Default:* `true`
 
+*Example:* `true`
 
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
 *Declared by:*
- - [/modules/features/games\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
-
-
-
-## features\.games\.nethack\.enable
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.hack.core.reverse
 
-Whether to enable enable Nethack\.
+Whether to enable enable reverse/disasm helpers.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Type:*
-boolean
+*Example:* `true`
 
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
 *Declared by:*
- - [/modules/features/games\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
-
-
 
-## features\.gpg\.enable
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.hack.core.secrets
 
+Whether to enable enable git secret scanners.
 
-Whether to enable enable GPG and gpg-agent (creates ~/\.gnupg)\.
+*Type:* boolean
 
+*Default:* `true`
 
+*Example:* `true`
 
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
-
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
-## features\.gui\.enable
+## features.dev.hack.forensics.analysis
 
+Whether to enable enable reverse/binary analysis tools.
 
+*Type:* boolean
 
-Whether to enable enable GUI stack (wayland/hyprland, quickshell, etc\.)\.
+*Default:* `true`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
-
-
-
-*Default:*
-` true `
-
-
-
-*Example:*
-` true `
-
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
-
-
-
-## features\.gui\.hy3\.enable
-
-
-
-Whether to enable enable the hy3 tiling plugin for Hyprland\.
-
-
 
-*Type:*
-boolean
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.hack.forensics.fs
 
+Whether to enable enable filesystem/disk forensics tools.
 
-*Default:*
-` true `
+*Type:* boolean
 
+*Default:* `true`
 
+*Example:* `true`
 
-*Example:*
-` true `
-
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
-
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
-## features\.gui\.hyprexpo\.enable
+## features.dev.hack.forensics.network
 
+Whether to enable enable network forensics tools.
 
+*Type:* boolean
 
-Whether to enable enable HyprExpo workspace overview plugin\.
+*Default:* `true`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.hack.forensics.stego
 
-*Default:*
-` false `
+Whether to enable enable steganography tools.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.haskell.enable
 
-## features\.gui\.qt\.enable
+Whether to enable enable Haskell tooling (ghc, cabal, stack, HLS).
 
+*Type:* boolean
 
+*Default:* `true`
 
-Whether to enable enable Qt integrations for GUI (qt6ct, hyprland-qt-\*)\.
+*Example:* `true`
 
-
-
-*Type:*
-boolean
-
+*Declared by:*
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
-*Default:*
-` true `
+## features.dev.iac.backend
 
+Choose IaC backend: HashiCorp Terraform or OpenTofu (tofu).
 
+*Type:* one of “terraform”, “tofu”
 
-*Example:*
-` true `
+*Default:* `"terraform"`
 
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.openxr.enable
 
-## features\.gui\.quickshell\.enable
+Whether to enable enable OpenXR development stack.
 
+*Type:* boolean
 
+*Default:* `false`
 
-Whether to enable enable Quickshell (panel) at login\.
+*Example:* `true`
 
-
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.openxr.envision.enable
 
-*Default:*
-` true `
+Whether to enable install Envision UI for Monado.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
-
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
-## features\.gui\.walker\.enable
+## features.dev.openxr.runtime.enable
 
+Whether to enable install Monado OpenXR runtime.
 
+*Type:* boolean
 
-Whether to enable enable Walker application launcher\.
+*Default:* `true`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.openxr.runtime.service.enable
 
-*Default:*
-` true `
+Whether to enable run monado-service as a user systemd service (graphical preset).
 
+*Type:* boolean
 
+*Default:* `false`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/gui\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
-
-
 
-## features\.hack\.enable
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.openxr.runtime.vulkanLayers.enable
 
+Whether to enable install Monado Vulkan layers.
 
-Whether to enable enable Hack/security tooling stack\.
+*Type:* boolean
 
+*Default:* `true`
 
+*Example:* `true`
 
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.openxr.tools.basaltMonado.enable
 
-*Default:*
-` true `
+Whether to enable install optional basalt-monado tools.
 
+*Type:* boolean
 
+*Default:* `false`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/dev\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
-## features\.hardware\.amdgpu\.rocm\.enable
+## features.dev.openxr.tools.motoc.enable
 
+Whether to enable install motoc (Monado Tracking Origin Calibration).
 
+*Type:* boolean
 
-Whether to enable enable AMDGPU ROCm support\.
+*Default:* `true`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.pkgs.analyzers
 
-*Default:*
-` false `
+Whether to enable enable analyzers/linters.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/services\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.pkgs.codecount
 
-## features\.mail\.enable
+Whether to enable enable code counting tools.
 
+*Type:* boolean
 
+*Default:* `true`
 
-Whether to enable enable Mail stack (notmuch, isync, vdirsyncer, etc\.)\.
+*Example:* `true`
 
-
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.pkgs.formatters
 
-*Default:*
-` true `
+Whether to enable enable CLI/code formatters.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/services\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
-
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
-## features\.mail\.vdirsyncer\.enable
+## features.dev.pkgs.iac
 
+Whether to enable enable infrastructure-as-code tooling (Terraform, etc.).
 
+*Type:* boolean
 
-Whether to enable enable Vdirsyncer sync service/timer\.
+*Default:* `true`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.pkgs.misc
 
-*Default:*
-` true `
+Whether to enable enable misc dev helpers.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/services\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
-
-
 
-## features\.media\.aiUpscale\.enable
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.pkgs.radicle
 
+Whether to enable enable radicle tooling.
 
-Whether to enable enable AI upscaling integration for video (mpv)\.
+*Type:* boolean
 
+*Default:* `true`
 
+*Example:* `true`
 
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.pkgs.runtime
 
-*Default:*
-` false `
+Whether to enable enable general dev runtimes (node etc.).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
-
-
-
-## features\.media\.aiUpscale\.content
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.python.core
 
-Tuning/model preference for content type\.
+Whether to enable enable core Python development packages.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Type:*
-one of “general”, “anime”
+*Example:* `true`
 
-
-
-*Default:*
-` "general" `
-
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
-
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
-## features\.media\.aiUpscale\.installShaders
+## features.dev.python.tools
 
+Whether to enable enable Python tooling (LSP, utilities).
 
+*Type:* boolean
 
-Whether to enable install recommended mpv GLSL shaders (FSRCNNX/SSimSR/Anime4K)\.
+*Default:* `true`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.rust.enable
 
-*Default:*
-` true `
+Whether to enable enable Rust tooling (rustup, rust-analyzer).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
-
-
 
-## features\.media\.aiUpscale\.mode
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.tla.enable
 
+Whether to enable enable TLA+ tooling (toolbox, formatter).
 
-AI upscale mode: realtime (mpv VapourSynth) or offline (CLI pipeline)\.
+*Type:* boolean
 
+*Default:* `false`
 
+*Example:* `true`
 
-*Type:*
-one of “realtime”, “offline”
-
-
-
-*Default:*
-` "realtime" `
-
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.unreal.enable
 
-## features\.media\.aiUpscale\.scale
+Whether to enable enable Unreal Engine 5 tooling.
 
+*Type:* boolean
 
+*Default:* `false`
 
-Upscale factor for realtime path (2 or 4)\.
+*Example:* `true`
 
+*Declared by:*
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
-*Type:*
-signed integer
+## features.dev.unreal.branch
 
+Branch or tag to sync from the Unreal Engine repository.
 
+*Type:* string
 
-*Default:*
-` 2 `
+*Default:* `"5.4"`
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
-
-
-
-## features\.media\.audio\.apps\.enable
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.unreal.repo
 
-Whether to enable enable audio apps (players, tools)\.
+Git URL used by ue5-sync (requires EpicGames/UnrealEngine access).
 
+*Type:* string
 
+*Default:* `"git@github.com:EpicGames/UnrealEngine.git"`
 
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.unreal.root
 
-*Default:*
-` true `
+Checkout directory for Unreal Engine sources. Defaults to “~/games/UnrealEngine”.
 
+*Type:* null or string
 
+*Default:* `null`
 
-*Example:*
-` true `
+*Example:* `"/mnt/storage/UnrealEngine"`
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
-
-
-
-## features\.media\.audio\.core\.enable
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.unreal.useSteamRun
 
-Whether to enable enable audio core (PipeWire routing tools)\.
+Wrap Unreal Editor launch via steam-run to provide FHS runtime libraries.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.devSpeed.enable
 
-*Default:*
-` true `
+Whether to enable enable dev-speed mode (trim heavy features for faster eval).
 
+*Type:* boolean
 
+*Default:* `false`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
-
-
-
-## features\.media\.audio\.creation\.enable
 
+- [/modules/features/core.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
 
+## features.emulators.retroarch.full
 
-Whether to enable enable audio creation stack (DAW, synths)\.
+Whether to enable use retroarchFull with extended (unfree) cores.
 
+*Type:* boolean
 
+*Default:* `false`
 
-*Type:*
-boolean
+*Example:* `true`
 
+*Declared by:*
 
+- [/modules/features/games.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
-*Default:*
-` true `
+## features.excludePkgs
 
+List of package names (pname) to exclude from curated home.packages lists.
 
+*Type:* list of string
 
-*Example:*
-` true `
+*Default:* `[ ]`
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
-
 
+- [/modules/features/core.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
 
-## features\.media\.audio\.mpd\.enable
+## features.finance.tws.enable
 
+Whether to enable enable Trader Workstation (IBKR) desktop client.
 
+*Type:* boolean
 
-Whether to enable enable MPD stack (mpd, clients, mpdris2)\.
+*Default:* `false`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
 
+## features.fun.enable
 
-*Default:*
-` true `
+Whether to enable enable fun extras (art collections, etc.).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.games.enable
 
-## features\.media\.audio\.spotify\.enable
+Whether to enable enable Games stack.
 
+*Type:* boolean
 
+*Default:* `true`
 
-Whether to enable enable Spotify stack (spotifyd daemon, spotify-tui)\.
+*Example:* `true`
 
-
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/games.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+## features.games.dosemu.enable
 
-*Default:*
-` false `
+Whether to enable enable Dosemu.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
-
 
+- [/modules/features/games.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
-## features\.net\.tailscale\.enable
+## features.games.nethack.enable
 
+Whether to enable enable Nethack.
 
+*Type:* boolean
 
-Whether to enable enable Tailscale mesh VPN and Tailray GUI\.
+*Default:* `true`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/games.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/games.nix)
 
+## features.gpg.enable
 
-*Default:*
-` false `
+Whether to enable enable GPG and gpg-agent (creates ~/.gnupg).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/services\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
-
-
-
-## features\.profile
-
-
-
-Profile preset that adjusts feature defaults: full or lite\.
 
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.gui.enable
 
-*Type:*
-one of “full”, “lite”
+Whether to enable enable GUI stack (wayland/hyprland, quickshell, etc.).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Default:*
-` "full" `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/core\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.hy3.enable
 
-## features\.secrets\.enable
+Whether to enable enable the hy3 tiling plugin for Hyprland.
 
+*Type:* boolean
 
+*Default:* `true`
 
-Whether to enable enable secrets tooling (pass, YubiKey helpers)\.
+*Example:* `true`
 
-
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.hyprexpo.enable
 
-*Default:*
-` true `
+Whether to enable enable HyprExpo workspace overview plugin.
 
+*Type:* boolean
 
+*Default:* `false`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
-
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
-## features\.text\.manipulate\.enable
+## features.gui.qt.enable
 
+Whether to enable enable Qt integrations for GUI (qt6ct, hyprland-qt-\*).
 
+*Type:* boolean
 
-Whether to enable enable text/markup manipulation CLI tools (jq/yq/htmlq)\.
+*Default:* `true`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.quickshell.enable
 
-*Default:*
-` true `
+Whether to enable enable Quickshell (panel) at login.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
-
-
 
-## features\.text\.notes\.enable
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.walker.enable
 
+Whether to enable enable Walker application launcher.
 
-Whether to enable enable notes tooling (zk CLI)\.
+*Type:* boolean
 
+*Default:* `true`
 
+*Example:* `true`
 
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.hack.enable
 
-*Default:*
-` true `
+Whether to enable enable Hack/security tooling stack.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
-
 
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
-## features\.text\.read\.enable
+## features.hardware.amdgpu.rocm.enable
 
+Whether to enable enable AMDGPU ROCm support.
 
+*Type:* boolean
 
-Whether to enable enable reading stack (CLI/GUI viewers, OCR, Recoll)\.
+*Default:* `false`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
 
+## features.mail.enable
 
-*Default:*
-` true `
+Whether to enable enable Mail stack (notmuch, isync, vdirsyncer, etc.).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
 
+## features.mail.vdirsyncer.enable
 
-## features\.text\.tex\.enable
+Whether to enable enable Vdirsyncer sync service/timer.
 
+*Type:* boolean
 
+*Default:* `true`
 
-Whether to enable enable TeX/LaTeX stack (TexLive full, rubber)\.
+*Example:* `true`
 
-
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
 
+## features.media.aiUpscale.enable
 
-*Default:*
-` false `
+Whether to enable enable AI upscaling integration for video (mpv).
 
+*Type:* boolean
 
+*Default:* `false`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/misc\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
-
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
-## features\.torrent\.enable
+## features.media.aiUpscale.content
 
+Tuning/model preference for content type.
 
+*Type:* one of “general”, “anime”
 
-Whether to enable enable Torrent stack (Transmission, tools, services)\.
+*Default:* `"general"`
 
-
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.aiUpscale.installShaders
 
-*Default:*
-` true `
+Whether to enable install recommended mpv GLSL shaders (FSRCNNX/SSimSR/Anime4K).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/services\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
-
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
-## features\.torrent\.prometheus\.enable
+## features.media.aiUpscale.mode
 
+AI upscale mode: realtime (mpv VapourSynth) or offline (CLI pipeline).
 
+*Type:* one of “realtime”, “offline”
 
-Whether to enable enable Prometheus exporter for Transmission (transmission-exporter)\.
+*Default:* `"realtime"`
 
-
-
-*Type:*
-boolean
-
+*Declared by:*
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
-*Default:*
-` false `
+## features.media.aiUpscale.scale
 
+Upscale factor for realtime path (2 or 4).
 
+*Type:* signed integer
 
-*Example:*
-` true `
+*Default:* `2`
 
 *Declared by:*
- - [/modules/features/services\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.apps.enable
 
-## features\.web\.enable
+Whether to enable enable audio apps (players, tools).
 
-Whether to enable enable Web stack (browsers + tools)\.
+*Type:* boolean
 
+*Default:* `true`
 
+*Example:* `true`
 
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.core.enable
 
-*Default:*
-` true `
+Whether to enable enable audio core (PipeWire routing tools).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
-
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
-## features\.web\.addonsFromNUR\.enable
+## features.media.audio.creation.enable
 
+Whether to enable enable audio creation stack (DAW, synths).
 
+*Type:* boolean
 
-Whether to enable install Mozilla addons from NUR packages (heavier eval)\.
+*Default:* `true`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.mpd.enable
 
-*Default:*
-` true `
+Whether to enable enable MPD stack (mpd, clients, mpdris2).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.spotify.enable
 
-## features\.web\.aria2\.service\.enable
+Whether to enable enable Spotify stack (spotifyd daemon, spotify-tui).
 
+*Type:* boolean
 
+*Default:* `false`
 
-Whether to enable run aria2 download manager as a user service (graphical preset)\.
+*Example:* `true`
 
-
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.net.tailscale.enable
 
-*Default:*
-` false `
+Whether to enable enable Tailscale mesh VPN and Tailray GUI.
 
+*Type:* boolean
 
+*Default:* `false`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
-
 
+- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
 
-## features\.web\.brave\.enable
+## features.profile
 
+Profile preset that adjusts feature defaults: full or lite.
 
+*Type:* one of “full”, “lite”
 
-Whether to enable enable Brave browser\.
+*Default:* `"full"`
 
-
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/core.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
 
+## features.secrets.enable
 
-*Default:*
-` false `
+Whether to enable enable secrets tooling (pass, YubiKey helpers).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
-
 
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
-## features\.web\.chrome\.enable
+## features.text.manipulate.enable
 
+Whether to enable enable text/markup manipulation CLI tools (jq/yq/htmlq).
 
+*Type:* boolean
 
-Whether to enable enable Google Chrome browser\.
+*Default:* `true`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.text.notes.enable
 
-*Default:*
-` true `
+Whether to enable enable notes tooling (zk CLI).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
-
-
 
-## features\.web\.default
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.text.read.enable
 
+Whether to enable enable reading stack (CLI/GUI viewers, OCR, Recoll).
 
-Default browser used for XDG handlers, $BROWSER, and integrations\.
+*Type:* boolean
 
+*Default:* `true`
 
+*Example:* `true`
 
-*Type:*
-one of “floorp”, “firefox”, “librewolf”, “nyxt”, “yandex”, “chrome”, “brave”, “vivaldi”, “edge”
-
-
-
-*Default:*
-` "floorp" `
-
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.text.tex.enable
 
-## features\.web\.edge\.enable
+Whether to enable enable TeX/LaTeX stack (TexLive full, rubber).
 
+*Type:* boolean
 
+*Default:* `false`
 
-Whether to enable enable Microsoft Edge browser\.
+*Example:* `true`
 
-
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
 
+## features.torrent.enable
 
-*Default:*
-` false `
+Whether to enable enable Torrent stack (Transmission, tools, services).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
-
 
+- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
 
-## features\.web\.firefox\.enable
+## features.torrent.prometheus.enable
 
+Whether to enable enable Prometheus exporter for Transmission (transmission-exporter).
 
+*Type:* boolean
 
-Whether to enable enable Firefox browser\.
+*Default:* `false`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
 
+## features.web.enable
 
-*Default:*
-` false `
+Whether to enable enable Web stack (browsers + tools).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
-
-
 
-## features\.web\.floorp\.enable
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.addonsFromNUR.enable
 
+Whether to enable install Mozilla addons from NUR packages (heavier eval).
 
-Whether to enable enable Floorp browser\.
+*Type:* boolean
 
+*Default:* `true`
 
+*Example:* `true`
 
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.aria2.service.enable
 
-*Default:*
-` true `
+Whether to enable run aria2 download manager as a user service (graphical preset).
 
+*Type:* boolean
 
+*Default:* `false`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
-
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
-## features\.web\.librewolf\.enable
+## features.web.brave.enable
 
+Whether to enable enable Brave browser.
 
+*Type:* boolean
 
-Whether to enable enable LibreWolf browser\.
+*Default:* `false`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.chrome.enable
 
-*Default:*
-` false `
+Whether to enable enable Google Chrome browser.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.default
 
-## features\.web\.nyxt\.enable
+Default browser used for XDG handlers, $BROWSER, and integrations.
 
+*Type:* one of “floorp”, “firefox”, “librewolf”, “nyxt”, “yandex”, “chrome”, “brave”, “vivaldi”,
+“edge”
 
+*Default:* `"floorp"`
 
-Whether to enable enable Nyxt browser\.
-
-
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.edge.enable
 
-*Default:*
-` true `
+Whether to enable enable Microsoft Edge browser.
 
+*Type:* boolean
 
+*Default:* `false`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.firefox.enable
 
-## features\.web\.prefs\.fastfox\.enable
+Whether to enable enable Firefox browser.
 
+*Type:* boolean
 
+*Default:* `false`
 
-Whether to enable enable FastFox-like perf prefs for Mozilla browsers\.
+*Example:* `true`
 
-
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.floorp.enable
 
-*Default:*
-` true `
+Whether to enable enable Floorp browser.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
-
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
-## features\.web\.tools\.enable
+## features.web.librewolf.enable
 
+Whether to enable enable LibreWolf browser.
 
+*Type:* boolean
 
-Whether to enable enable web tools (aria2, yt-dlp, misc)\.
+*Default:* `false`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.nyxt.enable
 
-*Default:*
-` true `
+Whether to enable enable Nyxt browser.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
-
-
 
-## features\.web\.vivaldi\.enable
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.prefs.fastfox.enable
 
+Whether to enable enable FastFox-like perf prefs for Mozilla browsers.
 
-Whether to enable enable Vivaldi browser\.
+*Type:* boolean
 
+*Default:* `true`
 
+*Example:* `true`
 
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.tools.enable
 
-*Default:*
-` false `
+Whether to enable enable web tools (aria2, yt-dlp, misc).
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
-
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
-## features\.web\.yandex\.enable
+## features.web.vivaldi.enable
 
+Whether to enable enable Vivaldi browser.
 
+*Type:* boolean
 
-Whether to enable enable Yandex browser\.
+*Default:* `false`
 
+*Example:* `true`
 
-
-*Type:*
-boolean
+*Declared by:*
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
+## features.web.yandex.enable
 
-*Default:*
-` true `
+Whether to enable enable Yandex browser.
 
+*Type:* boolean
 
+*Default:* `true`
 
-*Example:*
-` true `
+*Example:* `true`
 
 *Declared by:*
- - [/modules/features/web\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
-
 
+- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
