@@ -325,6 +325,36 @@ with lib; let
         installation_mode = "force_installed";
         install_url = "https://addons.mozilla.org/firefox/downloads/latest/search_by_image/latest.xpi";
       };
+
+      # SingleFile - save page as single html
+      "{531906d3-e22f-4a6c-a102-8057b88a1a63}" = {
+        installation_mode = "force_installed";
+        install_url = "https://addons.mozilla.org/firefox/downloads/file/4644494/single_file-1.22.96.xpi";
+      };
+
+      # FastForward - skip timers
+      "addon@fastforward.team" = {
+        installation_mode = "force_installed";
+        install_url = "https://addons.mozilla.org/firefox/downloads/file/4258067/fastforwardteam-0.2383.xpi";
+      };
+
+      # Violentmonkey - userscripts
+      "{aecec67f-0d10-4fa7-b7c7-609a2db280cf}" = {
+        installation_mode = "force_installed";
+        install_url = "https://addons.mozilla.org/firefox/downloads/file/4455138/violentmonkey-2.31.0.xpi";
+      };
+
+      # Imagus - hover zoom
+      "{00000f2a-7cde-4f20-83ed-434fcb420d71}" = {
+        installation_mode = "force_installed";
+        install_url = "https://addons.mozilla.org/firefox/downloads/file/3547888/imagus-0.9.8.74.xpi";
+      };
+
+      # SponsorBlock
+      "sponsorBlocker@ajay.app" = {
+        installation_mode = "force_installed";
+        install_url = "https://addons.mozilla.org/firefox/downloads/file/4644570/sponsorblock-6.1.2.xpi";
+      };
     };
     DisableTelemetry = true;
     DisableFirefoxStudies = true;
