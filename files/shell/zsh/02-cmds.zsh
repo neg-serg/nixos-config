@@ -67,5 +67,5 @@ _exists docker && {
 _exists broot && autoload -Uz br
 
 autoload zc
-unfunction _exists
+
 # vim: ft=zsh:nowrap
