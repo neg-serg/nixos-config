@@ -1,8 +1,11 @@
 const {
     map,
     mapkey,
+    vmapkey,
     unmap,
     addSearchAlias,
+    tabOpenLink,
+    RUNTIME,
     Hints,
     Front,
     Normal,
