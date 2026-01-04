@@ -572,7 +572,8 @@ in {
       settings = mergedSettings;
       userChrome = userChromeInjected;
       # Clamp Tridactyl overlay sizes globally via userContent.css
-      userContent = tridactylUserContent;
+      # Clamp Tridactyl overlay sizes globally via userContent.css
+      userContent = tridactylUserContent + surfingkeysUserContent;
       inherit extraConfig;
     };
     profile = profileBase // profileExtra;
