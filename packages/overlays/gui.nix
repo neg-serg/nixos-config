@@ -46,18 +46,15 @@ in {
       hash = "sha256-9kwgLVvnqXJnL/8jdY2jly/bS2XtgF9WBsDeoXNHX8M=";
     };
 
-    dontUnpack = true;
+    # dontUnpack = true; # It is a proper tarball containing an AppImage
+
+    nativeBuildInputs = [prev.makeWrapper];
 
     installPhase = ''
       runHook preInstall
       mkdir -p "$out/bin"
-      if gzip -t "$src" >/dev/null 2>&1; then
-        # Some releases ship a gzipped single binary under a misleading name.
-        gzip -dc "$src" > "$out/bin/nyxt"
-        chmod 0755 "$out/bin/nyxt"
-      else
-        install -Dm0755 "$src" "$out/bin/nyxt"
-      fi
+      # The tarball contains Nyxt-x86_64.AppImage
+      install -Dm755 Nyxt-x86_64.AppImage "$out/bin/nyxt"
       runHook postInstall
     '';
 
