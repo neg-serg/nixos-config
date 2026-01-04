@@ -81,6 +81,10 @@ with lib; let
     "devtools.debugger.prompt-connection" = false;
     # Keep popups open: default off; enable manually when inspecting
     "ui.popup.disable_autohide" = false;
+    # Allow extensions on restricted domains (e.g. AMO, Firefox Accounts)
+    "extensions.webextensions.restrictedDomains" = "";
+    # Disable quarantined domains (protects against malicious addons, but blocks legitimacy sometimes)
+    "extensions.quarantinedDomains.enabled" = false;
   };
 
   # FastFox-like prefs: performance-leaning overrides gated by features.web.prefs.fastfox.enable.
