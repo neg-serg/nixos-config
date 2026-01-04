@@ -459,6 +459,9 @@ with lib; let
       (lib.mkIf (profile.userChrome != "") {
         "${prefix}/${profile.path}/chrome/userChrome.css".text = profile.userChrome;
       })
+      (lib.mkIf (profile.userContent != "") {
+        "${prefix}/${profile.path}/chrome/userContent.css".text = profile.userContent;
+      })
       (mkExtensionFiles {
         profilePath = profile.path;
         inherit (profile) extensions;
