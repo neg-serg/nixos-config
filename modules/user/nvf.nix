@@ -52,6 +52,7 @@ in
             lazy.enable = false;
             startPlugins = [
               pkgs.vimPlugins.lazy-nvim # lazy.nvim plugin manager shipped from Nix
+              pkgs.fsread-nvim # flow state reading plugin
               (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
                 p.bash
                 p.caddy
