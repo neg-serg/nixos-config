@@ -160,54 +160,70 @@ with lib; let
   # inner wrapper targeted by theme CSS, which can lead to very tall popups
   # (e.g., :tabopen listing many buffers). Provide a conservative fallback that
   # caps the visible height to ~8 lines and scrolls, without touching other layout.
-  # Surfingkeys "Stealth" Theme (Matches Kitty Terminal)
+  # Surfingkeys "High Contrast" Theme
+  # Optimised for visibility: Yellow/Black hints, Solarized Dark HUD.
   surfingkeysUserContent = ''
-    /* Surfingkeys Stealth Theme (Terminal Match) */
+    /* Surfingkeys High Contrast Theme (Solarized) */
+
+    /* HINTS: Maximum Contrast (Yellow/Black) */
     #sk_hints .begin {
-        color: #367bbf !important; /* selection_foreground */
+        color: #b58900 !important; /* Yellow match */
     }
-    #sk_tabs .sk_tab {
-        background: #000000 !important;
-        color: #6C7E96 !important;
-    }
-    #sk_tabs .sk_tab_title {
-        color: #6C7E96 !important;
-    }
-    #sk_tabs .sk_tab_url {
-        color: #3f5876 !important; /* color243 */
-    }
-    #sk_bubble {
-        background-color: #000000 !important;
-        color: #6C7E96 !important;
-        border: 1px solid #367bbf !important;
-    }
-    /* Omnibar/HUD */
-    #sk_omnibar {
-        background-color: #000000 !important;
-        color: #6C7E96 !important;
-        border: 1px solid #367bbf !important;
-    }
-    #sk_omnibar .sk_source {
-        color: #367bbf !important;
-        border-bottom: 2px solid #367bbf !important;
-    }
-    #sk_omnibar .sk_result.focused {
-        background-color: #0d1824 !important; /* selection_background */
-        color: #367bbf !important;
-    }
-    #sk_status, #sk_find {
-        background-color: #000000 !important;
-        color: #6C7E96 !important;
-        border: 1px solid #367bbf !important;
+    .sk_hints > div {
+        background-color: #fdf6e3 !important; /* Light bg */
+        color: #000000 !important;            /* Black text */
+        border: 2px solid #b58900 !important; /* Yellow border */
+        font-family: "JetBrains Mono", monospace !important;
+        font-weight: 800 !important;
+        font-size: 14px !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+        padding: 4px 6px !important;
+        opacity: 1 !important;
     }
 
-    /* Hints */
-    .sk_hints > div {
-        background-color: #0d1824 !important; /* selection_background */
-        color: #367bbf !important;            /* selection_foreground */
-        border: 1px solid #6C7E96 !important; /* foreground */
+    /* TABS */
+    #sk_tabs .sk_tab {
+        background: #002b36 !important;
+        color: #839496 !important;
+        border: 1px solid #586e75 !important;
+    }
+    #sk_tabs .sk_tab_title {
+        color: #b58900 !important;
+    }
+    #sk_tabs .sk_tab_url {
+        color: #2aa198 !important;
+    }
+
+    /* OMNIBAR / POPUPS */
+    #sk_omnibar {
+        background-color: #073642 !important;
+        color: #93a1a1 !important;
+        border: 2px solid #b58900 !important;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.8) !important;
+    }
+    #sk_omnibar .sk_source {
+        color: #b58900 !important;
+        border-bottom: 2px solid #b58900 !important;
+    }
+    #sk_omnibar .sk_result.focused {
+        background-color: #002b36 !important;
+        color: #268bd2 !important;
         font-weight: bold !important;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
+    }
+    #sk_status, #sk_find {
+        background-color: #073642 !important;
+        color: #b58900 !important;
+        border: 2px solid #b58900 !important;
+    }
+
+    /* KEY BUBBLE */
+    #sk_bubble {
+        background-color: #073642 !important;
+        color: #cb4b16 !important; /* Orange */
+        border: 2px solid #dc322f !important; /* Red */
+        font-size: 18px !important;
+        font-weight: bold !important;
+        padding: 10px !important;
     }
   '';
 
