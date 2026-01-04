@@ -21,7 +21,7 @@ settings.omnibarPosition = "bottom";
 settings.focusFirstCandidate = true;
 
 // --- Site Specific Blacklist ---
-settings.blacklistPattern = /.*((localhost|127\.0\.0\.1|github\.dev|figma\.com).*)?/;
+settings.blacklistPattern = /.*((localhost|127\.0\.0\.1|github\.dev|figma\.com|mail\.google\.com).*)?/;
 
 // --- Theme (Ashen / Flight Dark Adaptation) ---
 const colors = {
