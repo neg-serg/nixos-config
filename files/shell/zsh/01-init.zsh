@@ -60,7 +60,7 @@ _exists nvim && {
     typeset -gx VISUAL="${EDITOR}"
     typeset -gx MANPAGER="nvim +Man!"
 }
-unfunction _exists
+
 
 # Initialize zoxide (smarter cd) if available
 (( $+commands[zoxide] )) && eval "$(zoxide init zsh --cmd z --hook prompt)"
