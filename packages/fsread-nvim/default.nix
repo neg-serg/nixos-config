@@ -7,10 +7,10 @@ vimUtils.buildVimPlugin {
   version = "2024-11-03";
 
   src = fetchFromGitHub {
-    owner = "nullchilly";
+    owner = "neg-serg";
     repo = "fsread.nvim";
-    rev = "a637bf048f733def7c5c46f5bf482f93a8311b29";
-    sha256 = "1ais9bp8gaqckaznwj4s634ys9jivdvzimhimssrkiw0r2gq3k0a";
+    rev = "ad341ed1e6452db51d5a3a581f3a0b581cbd2f48";
+    sha256 = "1k7zcwigcvjnv76bk95w73pbd0cm6wd7i19dmsld1v8s72h240wb";
   };
 
   meta.homepage = "https://github.com/nullchilly/fsread.nvim";
