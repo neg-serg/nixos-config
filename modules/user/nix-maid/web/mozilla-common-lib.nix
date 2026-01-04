@@ -530,7 +530,7 @@ with lib; let
     ]);
   };
 in {
-  inherit nativeMessagingHosts settings extraConfig userChrome policies addons buildFirefoxXpiAddon remoteXpiAddon themeAddon mkMozillaModule mkProfileFiles mkExtensionFiles;
+  inherit nativeMessagingHosts settings extraConfig userChrome policies addons buildFirefoxXpiAddon remoteXpiAddon themeAddon mkMozillaModule mkProfileFiles mkExtensionFiles tridactylUserContent surfingkeysUserContent;
   # mkBrowser: build a module fragment for programs.<name> (Home Manager style)
   mkBrowser = {
     name,
