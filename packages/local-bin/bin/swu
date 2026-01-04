@@ -60,6 +60,14 @@ done
 shift $((OPTIND-1))
 
 if [[ -z "$apikey" ]]; then
+    # Fallback to persistent key file
+    keyfile="$HOME/.gemini/unsplash.key"
+    if [[ -f "$keyfile" ]]; then
+        apikey="$(<"$keyfile")"
+    fi
+fi
+
+if [[ -z "$apikey" ]]; then
     die "Unsplash Access Key is required. Set UNSPLASH_ACCESS_KEY or use --apikey."
 fi
 
