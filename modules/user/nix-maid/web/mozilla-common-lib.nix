@@ -160,6 +160,57 @@ with lib; let
   # inner wrapper targeted by theme CSS, which can lead to very tall popups
   # (e.g., :tabopen listing many buffers). Provide a conservative fallback that
   # caps the visible height to ~8 lines and scrolls, without touching other layout.
+  # Surfingkeys "Stealth" Theme (Matches Kitty Terminal)
+  surfingkeysUserContent = ''
+    /* Surfingkeys Stealth Theme (Terminal Match) */
+    #sk_hints .begin {
+        color: #367bbf !important; /* selection_foreground */
+    }
+    #sk_tabs .sk_tab {
+        background: #000000 !important;
+        color: #6C7E96 !important;
+    }
+    #sk_tabs .sk_tab_title {
+        color: #6C7E96 !important;
+    }
+    #sk_tabs .sk_tab_url {
+        color: #3f5876 !important; /* color243 */
+    }
+    #sk_bubble {
+        background-color: #000000 !important;
+        color: #6C7E96 !important;
+        border: 1px solid #367bbf !important;
+    }
+    /* Omnibar/HUD */
+    #sk_omnibar {
+        background-color: #000000 !important;
+        color: #6C7E96 !important;
+        border: 1px solid #367bbf !important;
+    }
+    #sk_omnibar .sk_source {
+        color: #367bbf !important;
+        border-bottom: 2px solid #367bbf !important;
+    }
+    #sk_omnibar .sk_result.focused {
+        background-color: #0d1824 !important; /* selection_background */
+        color: #367bbf !important;
+    }
+    #sk_status, #sk_find {
+        background-color: #000000 !important;
+        color: #6C7E96 !important;
+        border: 1px solid #367bbf !important;
+    }
+
+    /* Hints */
+    .sk_hints > div {
+        background-color: #0d1824 !important; /* selection_background */
+        color: #367bbf !important;            /* selection_foreground */
+        border: 1px solid #6C7E96 !important; /* foreground */
+        font-weight: bold !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
+    }
+  '';
+
   tridactylUserContent = ''
     /* Fallback: cap completions viewport to ~8 rows and enable scrolling */
     #TridactylModeIndicatorAndCmdline #completions,
