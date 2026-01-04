@@ -1,0 +1,168 @@
+#!/usr/bin/env bash
+# sw: unified wallpaper downloader (wallhaven + unsplash)
+# Usage: sw [options] [source]
+# Source: wallhaven (default), unsplash
+# Common Options:
+#   -q, --query STR             search terms
+#   -l, --location DIR          download directory
+#   -k, --apikey KEY            API key
+#   -h, --help                  show help
+# Wallhaven Options:
+#   -C, --colors HEX            dominant colors
+#   -a, --atleast WxH           min resolution
+#   -p, --purity STR            purity (100/110)
+#   -c, --categories STR        categories (100/110)
+#   -r, --ratios LIST           aspect ratios
+#   -s, --sorting MODE          sorting mode
+#   -O, --order ORDER           order (asc/desc) [Note: -o in old swd]
+# Unsplash Options:
+#   -o, --orientation STR       orientation (landscape/portrait) [Note: -o in swu]
+#   -f, --featured              limit to featured
+
+IFS=$'\n\t'
+
+die(){ printf 'sw: %s\n' "$*" >&2; exit 1; }
+need(){ command -v "$1" >/dev/null 2>&1 || die "missing dependency: $1"; }
+need curl
+need jq
+
+# Defaults
+source="wallhaven"
+location="${XDG_PICTURES_DIR:-$HOME/pic}/wl"
+query=""
+apikey=""
+
+# Wallhaven defaults
+wh_atleast="3840x2160"
+wh_purity="100"
+wh_categories="100"
+wh_order="desc"
+wh_ratios="16x9"
+wh_sorting="random"
+wh_colors=""
+
+# Unsplash defaults
+us_orientation="landscape"
+us_featured=""
+
+show_help() {
+    cat <<EOF
+sw: unified wallpaper downloader
+Usage: sw [options]
+
+General:
+  -S, --source NAME         Source: wallhaven (default) or unsplash
+  -q, --query STR           Search terms
+  -l, --location DIR        Download directory
+  -k, --apikey KEY          API key (overrides env/file)
+  -h, --help                Show this help
+
+Wallhaven Specific:
+  -C, --colors HEX          Dominant colors (e.g. 424153)
+  -a, --atleast WxH         Min resolution (default: 3840x2160)
+  -p, --purity STR          Purity (default: 100)
+  -c, --categories STR      Categories (default: 100)
+  -r, --ratios LIST         Ratios (default: 16x9)
+  -s, --sorting MODE        Sorting (random, latest, top...)
+  -O, --order ORDER         Order (asc/desc)
+
+Unsplash Specific:
+  -o, --orientation STR     Orientation (landscape, portrait)
+  -f, --featured            Limit to featured photos
+EOF
+}
+
+# Parse Args
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help) show_help; exit 0 ;;
+        -S|--source) source="$2"; shift 2 ;;
+        -q|--query) query="$2"; shift 2 ;;
+        -l|--location) location="$2"; shift 2 ;;
+        -k|--apikey) apikey="$2"; shift 2 ;;
+        # Wallhaven
+        -C|--colors) wh_colors="$2"; shift 2 ;;
+        -a|--atleast) wh_atleast="$2"; shift 2 ;;
+        -p|--purity) wh_purity="$2"; shift 2 ;;
+        -c|--categories) wh_categories="$2"; shift 2 ;;
+        -r|--ratios) wh_ratios="$2"; shift 2 ;;
+        -s|--sorting) wh_sorting="$2"; shift 2 ;;
+        -O|--order) wh_order="$2"; shift 2 ;;
+        # Unsplash
+        -o|--orientation) us_orientation="$2"; shift 2 ;;
+        -f|--featured) us_featured="true"; shift ;;
+        *) die "unknown option: $1" ;;
+    esac
+done
+
+download_wallhaven() {
+    # Key Resolution
+    key="${apikey:-$WALLHAVEN_API_KEY}"
+    
+    # Build URL
+    api_url="https://wallhaven.cc/api/v1/search?"
+    [[ -n "$query" ]] && api_url+="q=$(jq -nr --arg v "$query" '$v|@uri')"
+    [[ -n "$wh_categories" ]] && api_url+="&categories=$wh_categories"
+    [[ -n "$wh_purity" ]] && api_url+="&purity=$wh_purity"
+    [[ -n "$wh_order" ]] && api_url+="&order=$wh_order"
+    [[ -n "$wh_colors" ]] && api_url+="&colors=${wh_colors//#/}"
+    [[ -n "$wh_ratios" ]] && api_url+="&ratios=$wh_ratios"
+    [[ -n "$wh_atleast" ]] && api_url+="&atleast=$wh_atleast"
+    [[ -n "$wh_sorting" ]] && api_url+="&sorting=$wh_sorting"
+    [[ -n "$key" ]] && api_url+="&apikey=$key"
+    api_url+="&page=$(("$RANDOM" % 10 + 1))" # Reduce page depth to standard
+
+    json="$(curl -fsS --retry 3 "${api_url}")" || die "Wallhaven API failed"
+    mapfile -t img_paths < <(jq -r '.data[]?.path' <<< "$json")
+    
+    if [[ ${#img_paths[@]} -eq 0 ]]; then
+        die "No wallpapers found on Wallhaven."
+    fi
+    
+    rand_img="${img_paths[$RANDOM % ${#img_paths[@]}]}"
+    mkdir -p -- "$location"
+    dest="$location/${rand_img##*/}"
+    curl -fsS --retry 3 -o "$dest" "$rand_img"
+    echo "$dest"
+}
+
+download_unsplash() {
+    # Key Resolution
+    key="$apikey"
+    if [[ -z "$key" ]]; then
+        key="${UNSPLASH_ACCESS_KEY:-}"
+    fi
+    if [[ -z "$key" && -f "$HOME/.gemini/unsplash.key" ]]; then
+        key="$(<"$HOME/.gemini/unsplash.key")"
+    fi
+    if [[ -z "$key" ]]; then
+        die "Unsplash requires API Key (use -k, export UNSPLASH_ACCESS_KEY, or save to ~/.gemini/unsplash.key)"
+    fi
+
+    api_url="https://api.unsplash.com/photos/random?client_id=$key&count=1"
+    [[ -n "$query" ]] && api_url+="&query=$(jq -nr --arg v "$query" '$v|@uri')"
+    [[ -n "$us_orientation" ]] && api_url+="&orientation=$us_orientation"
+    [[ -n "$us_featured" ]] && api_url+="&featured=true"
+
+    json="$(curl -fsS --retry 3 "${api_url}")" || die "Unsplash API failed"
+    
+    img_url=$(jq -r 'if type=="array" then .[0].urls.raw else .urls.raw end' <<< "$json")
+    id=$(jq -r 'if type=="array" then .[0].id else .id end' <<< "$json")
+    
+    if [[ "$img_url" == "null" || -z "$img_url" ]]; then
+        die "No image found on Unsplash."
+    fi
+
+    mkdir -p -- "$location"
+    dest="$location/unsplash-${id}.jpg"
+    curl -fsS --retry 3 -o "$dest" "$img_url"
+    echo "$dest"
+}
+
+if [[ "$source" == "wallhaven" ]]; then
+    download_wallhaven
+elif [[ "$source" == "unsplash" ]]; then
+    download_unsplash
+else
+    die "Unknown source: $source"
+fi
