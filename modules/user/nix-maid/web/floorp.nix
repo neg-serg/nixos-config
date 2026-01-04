@@ -39,6 +39,7 @@
         "network.proxy.no_proxies_on" = "localhost, 127.0.0.1";
       };
       userChrome = "";
+      userContent = mozillaCommon.tridactylUserContent + mozillaCommon.surfingkeysUserContent;
       enable = true;
       isDefault = true;
       extensions = [];
