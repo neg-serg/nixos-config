@@ -196,6 +196,11 @@ Common operations are documented in `.agent/workflows/`:
 | `/lint` | Linting and formatting |
 | `/theming` | Quickshell/Rofi themes |
 
+
+## Quality Assurance
+1.  **Build Check**: Always run `just check` or `nix build` (or `nixos-rebuild dry-build`) before confirming a task is done. Do not rely solely on linting.
+2.  **Verify Implementations**: Ensure you have actually applied the changes you claim (e.g., check that variables are defined and used).
+
 ## Games Module Structure
 
 The games module (`modules/user/games/`) is split into focused submodules:
