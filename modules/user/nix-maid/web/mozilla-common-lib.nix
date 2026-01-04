@@ -411,12 +411,6 @@ with lib; let
         install_url = "https://addons.mozilla.org/firefox/downloads/file/4455138/violentmonkey-2.31.0.xpi";
       };
 
-      # Imagus - hover zoom
-      "{00000f2a-7cde-4f20-83ed-434fcb420d71}" = {
-        installation_mode = "force_installed";
-        install_url = "https://addons.mozilla.org/firefox/downloads/file/3547888/imagus-0.9.8.74.xpi";
-      };
-
       # SponsorBlock
       "sponsorBlocker@ajay.app" = {
         installation_mode = "force_installed";
