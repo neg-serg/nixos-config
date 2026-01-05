@@ -50,5 +50,5 @@ in {
 
   pyprland_fixed = prev.python3Packages.callPackage ../pyprland-fixed/default.nix {};
 
-  surfingkeys-pkg = builtins.trace "DEBUG: defining surfingkeys-pkg" (prev.callPackage (inputs.self + "/packages/surfingkeys-conf") {});
+  surfingkeys-pkg = prev.callPackage (inputs.self + "/packages/surfingkeys-conf") {};
 }

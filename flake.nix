@@ -132,7 +132,10 @@
     ...
   }: let
     inherit (nixpkgs) lib;
-    flakeLib = import ./flake/lib.nix {inherit inputs nixpkgs;};
+    flakeLib = import ./flake/lib.nix {
+      inputs = inputs // {inherit self;};
+      inherit nixpkgs;
+    };
     supportedSystems = ["x86_64-linux"];
     perSystem = import ./flake/per-system.nix {inherit self inputs nixpkgs flakeLib;};
   in {
