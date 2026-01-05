@@ -99,6 +99,7 @@ in
         pkgs.mpc # A minimalist command line interface to MPD
         pkgs.rmpc # Rust Music Player Client
         pkgs.neg.lucida # Lucida.to downloader
+        pkgs.neg.rescrobbled # MPRIS Scrobbler
         pkgs.ncpamixer # An ncurses mixer for PulseAudio
         pkgs.pavucontrol # PulseAudio Volume Control
         pkgs.pwvucontrol # PipeWire volume control (GTK)
@@ -155,6 +156,17 @@ in
           Restart = "on-failure";
         };
       };
+
+      # Rescrobbled (MPRIS Scrobbler)
+      systemd.user.services.rescrobbled = {
+        description = "MPRIS music scrobbler daemon";
+        after = ["network-online.target"];
+        wantedBy = ["default.target"];
+        serviceConfig = {
+          ExecStart = "${lib.getExe pkgs.neg.rescrobbled}";
+          Restart = "on-failure";
+        };
+      };
     }
 
     (n.mkHomeFiles {
@@ -188,5 +200,13 @@ in
 
       # Spicetify Config (partial management)
       ".config/spicetify/config-xpui.ini".text = lib.generators.toINI {} spiceSettings;
+
+      # Rescrobbled Config
+      ".config/rescrobbled/config.toml".text = ''
+        [lastfm]
+        api_key = "CHANGE_ME"
+        secret = "CHANGE_ME"
+        # session_key = "" # Generated via `rescrobbled` auth
+      '';
     })
   ]
