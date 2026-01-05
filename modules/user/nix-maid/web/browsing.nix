@@ -14,8 +14,6 @@ with lib; let
 in {
   imports = [
     ./defaults.nix
-    # ./floorp.nix # Removed (empty/deleted)
-    # ./firefox.nix # Removed (empty/deleted)
     ./librewolf.nix
   ];
 
