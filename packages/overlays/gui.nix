@@ -36,50 +36,7 @@ in {
 
   # Nyxt 4 pre-release binary (Electron/Blink backend). Upstream provides a single self-contained
   # ELF binary for Linux. Package it as a convenience while no QtWebEngine build is available.
-  nyxt4-bin = let
-    pname = "nyxt4-bin";
-    version = "4.0.0-pre-release-13";
-    src = prev.fetchurl {
-      url = "https://github.com/atlas-engineer/nyxt/releases/download/${version}/Linux-Nyxt-x86_64.tar.gz";
-      hash = "sha256-9kwgLVvnqXJnL/8jdY2jly/bS2XtgF9WBsDeoXNHX8M=";
-    };
-    appimage = prev.runCommand "extract-nyxt" {} ''
-      mkdir -p $out
-      tar xf ${src} -C $out
-      mv $out/Nyxt-x86_64.AppImage $out/${pname}.AppImage
-    '';
-  in
-    prev.appimageTools.wrapType2 {
-      inherit pname version;
-      src = "${appimage}/${pname}.AppImage";
-      extraPkgs = pkgs:
-        with pkgs; [
-          enchant
-          # Common deps for GUI apps / Electron / WebKit
-          gsettings-desktop-schemas
-          glib
-          gtk3
-          cairo
-          pango
-          gdk-pixbuf
-          at-spi2-atk
-          at-spi2-core
-          dbus
-          libdrm
-          libxkbcommon
-          mesa
-          nspr
-          nss
-          cups
-          alsa-lib
-          # GStreamer
-          gst_all_1.gstreamer
-          gst_all_1.gst-plugins-base
-          gst_all_1.gst-plugins-bad
-          gst_all_1.gst-plugins-good
-          gst_all_1.gst-plugins-ugly
-        ];
-    };
+  nyxt4-bin = prev.callPackage ../nyxt/default.nix {};
 
   "nyarch-assistant" = nyarchAssistantPkg;
   "_nyarch-assistant" = nyarchAssistantPkg;
@@ -91,18 +48,5 @@ in {
   oldschool-pc-font-pack = callPkg (inputs.self + "/packages/oldschool-pc-font-pack") {};
   px437-ibm-conv-e = callPkg (inputs.self + "/packages/px437-ibm-conv-e") {};
 
-  pyprland_fixed = prev.python3Packages.buildPythonApplication {
-    pname = "pyprland";
-    version = "2.5.0";
-    src = prev.fetchFromGitHub {
-      owner = "hyprland-community";
-      repo = "pyprland";
-      rev = "e82637d73207abd634a96ea21fa937455374d131";
-      sha256 = "0znrp6x143dmh40nihlkzyhpqzl56jk7acvyjkgyi6bchzp4a7kn";
-    };
-    format = "pyproject";
-    nativeBuildInputs = [prev.python3Packages.poetry-core];
-    propagatedBuildInputs = with prev.python3Packages; [aiofiles asyncio-dgram];
-    meta.mainProgram = "pypr";
-  };
+  pyprland_fixed = prev.python3Packages.callPackage ../pyprland-fixed/default.nix {};
 }
