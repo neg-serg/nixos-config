@@ -190,6 +190,6 @@ in
     }
     (n.mkHomeFiles {
       # Symlink nvf config directory
-      ".config/nvf".source = n.linkImpure nvimConf;
+      ".config/nvf".source = nvimConf;
     })
   ])
