@@ -36,41 +36,50 @@ in {
 
   # Nyxt 4 pre-release binary (Electron/Blink backend). Upstream provides a single self-contained
   # ELF binary for Linux. Package it as a convenience while no QtWebEngine build is available.
-  nyxt4-bin = prev.stdenvNoCC.mkDerivation rec {
+  nyxt4-bin = let
     pname = "nyxt4-bin";
     version = "4.0.0-pre-release-13";
-
     src = prev.fetchurl {
       url = "https://github.com/atlas-engineer/nyxt/releases/download/${version}/Linux-Nyxt-x86_64.tar.gz";
-      # Note: despite the name, this is a single ELF binary (static-pie).
       hash = "sha256-9kwgLVvnqXJnL/8jdY2jly/bS2XtgF9WBsDeoXNHX8M=";
     };
-
-    # dontUnpack = true; # It is a proper tarball containing an AppImage
-
-    nativeBuildInputs = [prev.makeWrapper];
-
-    unpackPhase = ''
-      tar xf $src
+    appimage = prev.runCommand "extract-nyxt" {} ''
+      mkdir -p $out
+      tar xf ${src} -C $out
+      mv $out/Nyxt-x86_64.AppImage $out/${pname}.AppImage
     '';
-
-    installPhase = ''
-      runHook preInstall
-      mkdir -p "$out/bin"
-      # The tarball contains Nyxt-x86_64.AppImage
-      install -Dm755 Nyxt-x86_64.AppImage "$out/bin/nyxt"
-      runHook postInstall
-    '';
-
-    meta = with prev.lib; {
-      description = "Nyxt 4 pre-release (Electron/Blink) binary";
-      homepage = "https://nyxt.atlas.engineer";
-      license = licenses.bsd3;
-      platforms = ["x86_64-linux"];
-      mainProgram = "nyxt";
-      maintainers = [];
+  in
+    prev.appimageTools.wrapType2 {
+      inherit pname version;
+      src = "${appimage}/${pname}.AppImage";
+      extraPkgs = pkgs:
+        with pkgs; [
+          enchant
+          # Common deps for GUI apps / Electron / WebKit
+          gsettings-desktop-schemas
+          glib
+          gtk3
+          cairo
+          pango
+          gdk-pixbuf
+          at-spi2-atk
+          at-spi2-core
+          dbus
+          libdrm
+          libxkbcommon
+          mesa
+          nspr
+          nss
+          cups
+          alsa-lib
+          # GStreamer
+          gst_all_1.gstreamer
+          gst_all_1.gst-plugins-base
+          gst_all_1.gst-plugins-bad
+          gst_all_1.gst-plugins-good
+          gst_all_1.gst-plugins-ugly
+        ];
     };
-  };
 
   "nyarch-assistant" = nyarchAssistantPkg;
   "_nyarch-assistant" = nyarchAssistantPkg;
