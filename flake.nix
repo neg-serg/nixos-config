@@ -64,7 +64,7 @@
     };
 
     # === Independent tools (no follows needed) ===
-    impurity.url = "github:outfoxxed/impurity.nix";
+    impurity.url = "git+file:///home/neg/src/impurity.nix";
     iwmenu.url = "github:e-tho/iwmenu";
 
     nix-flatpak.url = "github:gmodena/nix-flatpak";
