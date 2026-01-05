@@ -387,11 +387,6 @@ with lib; let
         installation_mode = "force_installed";
         install_url = "https://addons.mozilla.org/firefox/downloads/latest/styl-us/latest.xpi";
       };
-      # Search by Image
-      "{2e5ff8c8-32fe-46d0-9fc8-6b8986621f3c}" = {
-        installation_mode = "force_installed";
-        install_url = "https://addons.mozilla.org/firefox/downloads/latest/search_by_image/latest.xpi";
-      };
 
       # SingleFile - save page as single html
       "{531906d3-e22f-4a6c-a102-8057b88a1a63}" = {
