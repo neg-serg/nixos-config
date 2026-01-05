@@ -50,6 +50,10 @@ in {
 
     nativeBuildInputs = [prev.makeWrapper];
 
+    unpackPhase = ''
+      tar xf $src
+    '';
+
     installPhase = ''
       runHook preInstall
       mkdir -p "$out/bin"
