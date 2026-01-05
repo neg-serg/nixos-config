@@ -49,4 +49,6 @@ in {
   px437-ibm-conv-e = callPkg (inputs.self + "/packages/px437-ibm-conv-e") {};
 
   pyprland_fixed = prev.python3Packages.callPackage ../pyprland-fixed/default.nix {};
+
+  surfingkeys-pkg = builtins.trace "DEBUG: defining surfingkeys-pkg" (prev.callPackage (inputs.self + "/packages/surfingkeys-conf") {});
 }
