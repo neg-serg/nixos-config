@@ -10,8 +10,8 @@
 in {
   config = lib.mkIf (config.features.gui.enable or false) (n.mkHomeFiles (let
     # Path to the source directories
-    binDir = config.neg.repoRoot + "/packages/local-bin/bin";
-    scriptsDir = config.neg.repoRoot + "/packages/local-bin/scripts";
+    binDir = ../../../../packages/local-bin/bin;
+    scriptsDir = ../../../../packages/local-bin/scripts;
 
     # Python library paths for special scripts
     sp = pkgs.python3.sitePackages;
