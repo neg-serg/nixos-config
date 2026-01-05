@@ -45,4 +45,5 @@ in
         gst_all_1.gst-plugins-good
         gst_all_1.gst-plugins-ugly
       ];
+    meta.mainProgram = "nyxt4-bin";
   }
