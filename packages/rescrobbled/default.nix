@@ -29,6 +29,7 @@ rustPlatform.buildRustPackage rec {
     description = "MPRIS music scrobbler daemon";
     homepage = "https://github.com/InputUsername/rescrobbled";
     license = licenses.gpl3Only;
+    mainProgram = "rescrobbled";
     maintainers = [];
     platforms = platforms.linux;
   };
