@@ -15,6 +15,9 @@ inputs: _final: prev: let
     inherit (prev) fetchurl;
   };
 in {
+  swayimg = prev.swayimg.overrideAttrs (old: {
+    env.NIX_CFLAGS_COMPILE = toString (old.env.NIX_CFLAGS_COMPILE or "") + " -O3 -ftree-parallelize-loops=8 -floop-parallelize-all";
+  });
   neg = let
     blissify_rs = callPkg (packagesRoot + "/blissify-rs") {};
   in {
