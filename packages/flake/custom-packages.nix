@@ -19,6 +19,7 @@
   pyprland_fixed = pkgs.pyprland_fixed;
   lucida = pkgs.neg.lucida;
   rescrobbled = pkgs.neg.rescrobbled;
+  surfingkeys-pkg = pkgs.surfingkeys-pkg;
 
   # mcp-server-filesystem = pkgs.neg.mcp_server_filesystem;
   # mcp-ripgrep = pkgs.neg.mcp_ripgrep;
