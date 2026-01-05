@@ -25,7 +25,7 @@ mkdir -p "$VM_DIR"
 if [ ! -f "$ISO_FILE" ]; then
     echo "Downloading Guix System ISO..."
     echo "URL: $ISO_URL"
-    wget -O "$ISO_FILE" "$ISO_URL" --show-progress
+    wget --no-config -O "$ISO_FILE" "$ISO_URL" --show-progress
 fi
 
 if [ ! -f "$DISK_FILE" ]; then
