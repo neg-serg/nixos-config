@@ -31,14 +31,6 @@
   ];
 
   # Mount the 450 GiB btrfs image as a loop filesystem.
-  fileSystems."/zero/sandbox/mnt-d1" = {
-    device = "/zero/sandbox/d1-btrfs450.img";
-    fsType = "btrfs";
-    options = [
-      "loop"
-      "nofail"
-    ];
-  };
 
   # Systemd unit to manage the zero-sandbox LXC container.
 }
