@@ -769,17 +769,17 @@
     },
     "impurity": {
       "locked": {
-        "lastModified": 1689836741,
-        "narHash": "sha256-82KeRg2sAqDXCdzVs8P8GoqVaPsZjkWgrfsj6kgOLTY=",
-        "owner": "outfoxxed",
-        "repo": "impurity.nix",
-        "rev": "bbc41b69ab5485cd55aa315d08cff865781d3913",
-        "type": "github"
+        "lastModified": 1767599561,
+        "narHash": "sha256-hWDKGh6CPz3tS9DAVBDXLKfawiwvSMaeyPEy9Z2yN/0=",
+        "ref": "refs/heads/master",
+        "rev": "9dcfde4adedfe44aa8243ba661adf54e50ef1317",
+        "revCount": 7,
+        "type": "git",
+        "url": "file:///home/neg/src/impurity.nix"
       },
       "original": {
-        "owner": "outfoxxed",
-        "repo": "impurity.nix",
-        "type": "github"
+        "type": "git",
+        "url": "file:///home/neg/src/impurity.nix"
       }
     },
     "iosevka-neg": {
@@ -855,11 +855,11 @@
         "rust-overlay": "rust-overlay_2"
       },
       "locked": {
-        "lastModified": 1767013031,
-        "narHash": "sha256-p8ANXBakAtfX/aEhLbU6w0tuQe3nrBvLdHbKirJP7ug=",
+        "lastModified": 1767618050,
+        "narHash": "sha256-ASAOWk0bZnK7F5w54j22JQaYHQCbeEBTt4J6kkOcUiI=",
         "owner": "nix-community",
         "repo": "lanzaboote",
-        "rev": "c2a82339373daee8cbbcad5f51f22ae6b71069e0",
+        "rev": "0d57507b648c2dd658165843f98acbf55fdbc23b",
         "type": "github"
       },
       "original": {
@@ -1092,11 +1092,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1767548836,
-        "narHash": "sha256-n2JD3pw7+PuV8x/WRCe+u6BJMroMf5bLZfm1R6ZsDxU=",
+        "lastModified": 1767624990,
+        "narHash": "sha256-mDofdvqFCHx4YiFNVDbmlNO/WF7pUvC5upiMYmBgYcc=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "4f84dba848bd20025b2858eabd78fa62fd438583",
+        "rev": "64f33d5e164164f102cc0ca16f01c013037e3531",
         "type": "github"
       },
       "original": {
@@ -1117,11 +1117,11 @@
         "systems": "systems_4"
       },
       "locked": {
-        "lastModified": 1767369300,
-        "narHash": "sha256-QV+tdP2bS+PJBcp4YHhqpMTzcxsxGaS/d6cKMCJ4PnA=",
+        "lastModified": 1767626959,
+        "narHash": "sha256-EToJ6xPZymL1X1mLL4rSSL4QNOe4vNewm+PSyZ4ffds=",
         "owner": "NotAShelf",
         "repo": "nvf",
-        "rev": "9c75c2a199af39fc95fb203636ce97d070ca3973",
+        "rev": "1bf757685b065c5aaeaf252c02457238df42ed31",
         "type": "github"
       },
       "original": {
