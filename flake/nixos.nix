@@ -32,6 +32,7 @@
       system = linuxSystem;
       specialArgs = {
         inherit locale timeZone self inputs;
+        impurity = inputs.impurity;
         iosevkaNeg = inputs.iosevka-neg.packages.${linuxSystem};
         neg = impurity: {
           # Core structural helpers (no config dependency)
