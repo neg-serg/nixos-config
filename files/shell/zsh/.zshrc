@@ -9,8 +9,11 @@ zi ice depth'1' lucid
 zi light romkatv/zsh-defer
 typeset -f zsh-defer >/dev/null || zsh-defer() { "$@"; }
 # F-Sy-H (deferred to next prompt is fine)
-zi ice depth'1' lucid atinit'typeset -gA FAST_HIGHLIGHT; FAST_HIGHLIGHT[use_async]=1 FAST_HIGHLIGHT[BIND_VI_WIDGETS]=0 FAST_HIGHLIGHT[WIDGETS_MODE]=minimal' wait'0'
-zi load neg-serg/F-Sy-H
+# Skip in Distrobox to prevent breakage due to missing dependencies/widgets
+if [[ -z "$DISTROBOX_ENTER_PATH" ]]; then
+  zi ice depth'1' lucid atinit'typeset -gA FAST_HIGHLIGHT; FAST_HIGHLIGHT[use_async]=1 FAST_HIGHLIGHT[BIND_VI_WIDGETS]=0 FAST_HIGHLIGHT[WIDGETS_MODE]=minimal' wait'0'
+  zi load neg-serg/F-Sy-H
+fi
 # P10k removed in favor of oh-my-posh
 
 # Oh-My-Posh prompt initialization (Cached)
