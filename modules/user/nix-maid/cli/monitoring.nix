@@ -40,7 +40,7 @@
     graph_symbol_net = "default";
     graph_symbol_proc = "default";
     shown_boxes = "cpu proc";
-    update_ms = 2000;
+    update_ms = 100;
     proc_sorting = "cpu direct";
     proc_reversed = false;
     proc_tree = false;
