@@ -1,12 +1,10 @@
-# Security Module / Модуль безопасности
+# Security Module
 
 System security hardening.
 
-Усиление безопасности системы.
+## Includes
 
-## Includes / Включает
-
-- AppArmor profiles / Профили AppArmor
-- Firewall rules / Правила файрвола
-- Security policies / Политики безопасности
-- Hardened kernel options / Защищённые опции ядра
+- AppArmor profiles
+- Firewall rules
+- Security policies
+- Hardened kernel options

@@ -1,14 +1,9 @@
-# Games Module (System) / Модуль игр (системный)
+# Games Module (System)
 
 System-level gaming configuration.
 
-Системная конфигурация для игр.
-
-## See Also / См. также
+## See Also
 
 - `modules/user/games/` — User-level gaming (Steam, Gamescope, VR)
-- `modules/user/games/` — Пользовательские игры (Steam, Gamescope, VR)
 
 This module handles system-wide gaming prerequisites.
-
-Этот модуль настраивает системные требования для игр.
