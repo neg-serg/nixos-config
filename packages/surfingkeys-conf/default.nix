@@ -2,6 +2,7 @@
   lib,
   buildNpmPackage,
   fetchFromGitHub,
+  customConfig ? null,
 }:
 buildNpmPackage {
   pname = "surfingkeys-pkg";
@@ -21,6 +22,15 @@ buildNpmPackage {
   buildPhase = ''
     runHook preBuild
     echo "export default {};" > ./src/conf.priv.js
+    
+    # Inject custom mappings if provided
+    if [ -n "${toString customConfig}" ] && [ -f "${toString customConfig}" ]; then
+      echo "Injecting custom mappings from ${toString customConfig}..."
+      # Extract from line 214 (// ========== Mappings ==========) to end
+      # We skip the settings/theme part of the old file to prefer b0o's look
+      sed -n '214,$p' "${toString customConfig}" >> ./src/index.js
+    fi
+
     cat > build.mjs <<EOF
     import webpack from 'webpack';
     import config from './webpack.config.js';
