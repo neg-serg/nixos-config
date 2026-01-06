@@ -11,12 +11,9 @@ in {
   config = lib.mkIf cfg {
     system.activationScripts.preserve-flake = {
       text = ''
-        if [ -d ${inputs.self.outPath} ]; then
-          echo "Copying current flake to /etc/current-flake..."
-          rm -rf /etc/current-flake
-          cp -r ${inputs.self.outPath} /etc/current-flake
-          chmod -R u+w /etc/current-flake
-        fi
+        # Use symlink instead of copy for speed
+        echo "Linking current flake to /etc/current-flake..."
+        ln -sfn ${inputs.self.outPath} /etc/current-flake
       '';
       deps = [];
     };
