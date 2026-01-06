@@ -121,8 +121,7 @@ in {
             TimeoutStopSec = "5s";
           };
         };
-
-        environment.systemPackages = [pkgs.aria2]; # lightweight multi-protocol download utility
+        # aria2 is installed via cli/file-ops.nix
       }
       (n.mkHomeFiles {
         ".config/aria2/aria2.conf".text = aria2ConfText;

@@ -10,8 +10,7 @@
 in {
   config = lib.mkIf (config.features.web.enable && config.features.web.tools.enable) (lib.mkMerge [
     {
-      # Install aria2
-      environment.systemPackages = [pkgs.aria2]; # Lightweight multi-protocol download utility
+      # aria2 is installed via cli/file-ops.nix
     }
     (n.mkHomeFiles {
       # Use .local/share for session file (XDG_DATA_HOME typically)
