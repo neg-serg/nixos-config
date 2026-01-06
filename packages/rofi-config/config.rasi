@@ -4,7 +4,6 @@ configuration {
     run-shell-command:             "${env:TERMINAL} {cmd}";
     sort:                          true;
     parse-hosts:                   false;
-    auto-select:                   false;
     show-icons:                    false;
     matching:                      "fuzzy";
     tokenize:                      true;
@@ -39,6 +38,7 @@ configuration {
     kb-row-select:                 "Control+space";
     kb-secondary-copy:             "";
     kb-cancel:                     "Control-c,Escape";
+    auto-select: true;
 }
 
 @theme "neg"
