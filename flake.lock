@@ -767,24 +767,6 @@
         "type": "github"
       }
     },
-    "impurity": {
-      "inputs": {
-        "nixpkgs": "nixpkgs"
-      },
-      "locked": {
-        "lastModified": 1767653762,
-        "narHash": "sha256-psIyFihSIkiJSEPhrPptpXBac+ja1j9D3BuOC35QDsU=",
-        "ref": "refs/heads/master",
-        "rev": "a7645bb3eb71a718701360527810f686d166fffc",
-        "revCount": 1,
-        "type": "git",
-        "url": "file:///home/neg/src/impurity.nix"
-      },
-      "original": {
-        "type": "git",
-        "url": "file:///home/neg/src/impurity.nix"
-      }
-    },
     "iosevka-neg": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -809,7 +791,7 @@
     "iwmenu": {
       "inputs": {
         "flake-utils": "flake-utils_2",
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": "nixpkgs",
         "rust-overlay": "rust-overlay"
       },
       "locked": {
@@ -1041,19 +1023,6 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1767480499,
-        "narHash": "sha256-8IQQUorUGiSmFaPnLSo2+T+rjHtiNWc+OAzeHck7N48=",
-        "path": "/nix/store/65lvd2sgh752p580mk6016wdkk3w828j-source",
-        "rev": "30a3c519afcf3f99e2c6df3b359aec5692054d92",
-        "type": "path"
-      },
-      "original": {
-        "id": "nixpkgs",
-        "type": "indirect"
-      }
-    },
-    "nixpkgs_2": {
-      "locked": {
         "lastModified": 1758277210,
         "narHash": "sha256-iCGWf/LTy+aY0zFu8q12lK8KuZp7yvdhStehhyX1v8w=",
         "owner": "NixOS",
@@ -1068,7 +1037,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_3": {
+    "nixpkgs_2": {
       "locked": {
         "lastModified": 1744536153,
         "narHash": "sha256-awS2zRgF4uTwrOKwwiJcByDzDOdo3Q1rPZbiHQg/N38=",
@@ -1084,7 +1053,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_4": {
+    "nixpkgs_3": {
       "locked": {
         "lastModified": 1767480499,
         "narHash": "sha256-8IQQUorUGiSmFaPnLSo2+T+rjHtiNWc+OAzeHck7N48=",
@@ -1337,14 +1306,13 @@
           "hyprland",
           "hyprland-protocols"
         ],
-        "impurity": "impurity",
         "iosevka-neg": "iosevka-neg",
         "iwmenu": "iwmenu",
         "lanzaboote": "lanzaboote",
         "nix-flatpak": "nix-flatpak",
         "nix-index-database": "nix-index-database",
         "nix-maid": "nix-maid",
-        "nixpkgs": "nixpkgs_4",
+        "nixpkgs": "nixpkgs_3",
         "nur": "nur",
         "nvf": "nvf",
         "nyx": "nyx",
@@ -1405,7 +1373,7 @@
     },
     "rust-overlay": {
       "inputs": {
-        "nixpkgs": "nixpkgs_3"
+        "nixpkgs": "nixpkgs_2"
       },
       "locked": {
         "lastModified": 1758508617,
