@@ -1,18 +1,18 @@
 ---
-description: Create custom package / overlay
+description: Создание пользовательского пакета / оверлея
 ---
 
-# Add Custom Package
+# Добавление пакета
 
-## Steps
+## Шаги
 
-### 1. Create package directory:
+### 1. Создать директорию пакета:
 
 ```bash
 mkdir -p packages/my-package
 ```
 
-### 2. Write derivation:
+### 2. Написать деривацию:
 
 ```nix
 # packages/my-package/default.nix
@@ -38,7 +38,7 @@ pkgs.stdenv.mkDerivation {
 }
 ```
 
-### 3. Add to overlay:
+### 3. Добавить в оверлей:
 
 ```nix
 # packages/overlay.nix
@@ -47,15 +47,15 @@ final: prev: {
 }
 ```
 
-### 4. Use in configuration:
+### 4. Использовать в конфигурации:
 
 ```nix
 environment.systemPackages = [ pkgs.my-package ];
 ```
 
-## Script Packages
+## Пакеты-скрипты
 
-For simple scripts:
+Для простых скриптов:
 
 ```nix
 pkgs.writeShellApplication {
@@ -68,7 +68,7 @@ pkgs.writeShellApplication {
 }
 ```
 
-## Get Hash
+## Получение хеша
 
 ```bash
 nix-prefetch-url --unpack https://github.com/user/repo/archive/v1.0.0.tar.gz

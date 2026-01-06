@@ -1,64 +1,66 @@
-______________________________________________________________________
+---
+description: Debug greetd and login issues
+---
 
-## description: Debug greetd and login issues / Отладка greetd и проблем входа
+# Debug Greeter
 
-# Debug Greeter / Отладка Greeter
-
-## Quick Diagnostic / Быстрая диагностика
+## Quick Diagnostic
 
 ```bash
 debug-greeter
 ```
 
-This script shows / Этот скрипт показывает:
+This script shows:
 
-- greetd service status / статус сервиса greetd
-- quickshell processes / процессы quickshell
-- directory permissions / права доступа
-- recent logs / последние логи
+- greetd service status
+- quickshell processes
+- directory permissions
+- recent logs
 
-## Manual Checks / Ручные проверки
+## Manual Checks
 
-### 1. Service Status / Статус сервиса:
+### 1. Service Status:
 
 ```bash
 systemctl status greetd
 ```
 
-### 2. Journal Logs / Логи журнала:
+### 2. Journal Logs:
 
 ```bash
 journalctl -u greetd -n 50
 ```
 
-### 3. Quickshell Processes / Процессы Quickshell:
+### 3. Quickshell Processes:
 
 ```bash
 pgrep -a quickshell
 ```
 
-### 4. Socket Permissions / Права сокета:
+### 4. Socket Permissions:
 
 ```bash
 ls -la /run/greetd/
 ```
 
-## Common Issues / Частые проблемы
+## Common Issues
 
-| Issue / Проблема | Solution / Решение | |------------------|-------------------| | AppArmor
-blocking | Check `aa-status`, add profile | | Missing greeter.qml | Verify
-`files/quickshell/greeter/` | | PAM errors | Check sessionVariables for special chars | | Black
-screen | Check Hyprland logs |
+| Issue | Solution |
+|-------|----------|
+| AppArmor blocking | Check `aa-status`, add profile |
+| Missing greeter.qml | Verify `files/quickshell/greeter/` |
+| PAM errors | Check sessionVariables for special chars |
+| Black screen | Check Hyprland logs |
 
-## Restart Greeter / Перезапуск Greeter
+## Restart Greeter
 
 ```bash
 sudo systemctl restart greetd
 ```
 
-## Switch to TTY / Переключиться на TTY
+## Switch to TTY
 
-If greeter is broken / Если greeter сломан:
+If greeter is broken:
 
 ```
 Ctrl+Alt+F2  # Switch to TTY2
