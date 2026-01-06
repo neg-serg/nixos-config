@@ -219,7 +219,9 @@ api.map('k', 'k');
 // Tabs
 api.map('E', 'E');  // Previous tab
 api.map('e', 'R');  // Next tab
-api.map('d', 'x');  // Close tab
+api.mapkey('d', 'Close current tab', function () {
+  api.RUNTIME("closeTab");
+});
 api.map('u', 'X');  // Restore tab
 api.map('w', 'T');  // Tab list
 
