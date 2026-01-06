@@ -36,10 +36,45 @@ buildNpmPackage {
       # Extract mappings (214-end)
       sed -n '214,$p' "${toString customConfig}" >> ./src/index.js
 
-      # Force t and o to always use the URL omnibar to avoid the "forced search" behavior
-      # We use mapkey directly since it's destructured in src/index.js
-      echo "mapkey('t', 'Open URL in new tab', function() { Front.openOmnibar({type: 'URLs'}); });" >> ./src/index.js
-      echo "mapkey('o', 'Open URL in current tab', function() { Front.openOmnibar({type: 'URLs'}); });" >> ./src/index.js
+      # Smart Omnibar logic: If input contains dots and no spaces, treat as URL.
+      # Otherwise, use the default search engine (DuckDuckGo).
+      cat >> ./src/index.js <<JS
+
+const smartDispatch = (input, newTab) => {
+  const isURL = input.includes(".") && !input.includes(" ");
+  if (isURL) {
+    const url = input.match(/^https?:\/\//) ? input : "https://" + input;
+    if (newTab) {
+      RUNTIME("openLink", { tab: { tabbed: true }, url });
+    } else {
+      window.location.href = url;
+    }
+  } else {
+    const searchURL = "https://duckduckgo.com/?q=" + encodeURIComponent(input);
+    if (newTab) {
+      RUNTIME("openLink", { tab: { tabbed: true }, url: searchURL });
+    } else {
+      window.location.href = searchURL;
+    }
+  }
+};
+
+mapkey("t", "Smart Omnibar (New Tab)", () => {
+  Front.openOmnibar({
+    type: "SearchEngine",
+    extra: "dd",
+    onEnter: (input) => smartDispatch(input, true),
+  });
+});
+
+mapkey("o", "Smart Omnibar (Current Tab)", () => {
+  Front.openOmnibar({
+    type: "SearchEngine",
+    extra: "dd",
+    onEnter: (input) => smartDispatch(input, false),
+  });
+});
+JS
     fi
 
     cat > build.mjs <<EOF
