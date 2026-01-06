@@ -211,10 +211,63 @@ body {
 }
 `;
 
+// ========== Smart Omnibar ==========
+const smartDispatch = (input, newTab) => {
+  const isURL = input.includes(".") && !input.includes(" ");
+  if (isURL) {
+    const url = input.match(/^https?:\/\//) ? input : "https://" + input;
+    if (newTab) {
+      api.tabOpenLink(url);
+    } else {
+      window.location.href = url;
+    }
+  } else {
+    // Note: 'd' alias must match what is defined in addSearchAlias below
+    const searchURL = "https://duckduckgo.com/?q=" + encodeURIComponent(input);
+    if (newTab) {
+      api.tabOpenLink(searchURL);
+    } else {
+      window.location.href = searchURL;
+    }
+  }
+};
+
+api.mapkey("t", "Smart Omnibar (New Tab)", () => {
+  api.Front.openOmnibar({
+    type: "SearchEngine",
+    extra: "d",
+    onEnter: (input) => smartDispatch(input, true),
+  });
+});
+
+api.mapkey("o", "Smart Omnibar (Current Tab)", () => {
+  api.Front.openOmnibar({
+    type: "SearchEngine",
+    extra: "d",
+    onEnter: (input) => smartDispatch(input, false),
+  });
+});
+
+api.mapkey("O", "Smart Omnibar (New Tab)", () => {
+  api.Front.openOmnibar({
+    type: "SearchEngine",
+    extra: "d",
+    onEnter: (input) => smartDispatch(input, true),
+  });
+});
+
 // ========== Mappings ==========
 // Scroll
 api.map('j', 'j');
 api.map('k', 'k');
+
+// Large Scroll (Half Page)
+api.mapkey('b', 'Scroll half page down', () => {
+  api.Normal.scroll("pageDown");
+});
+api.mapkey('v', 'Scroll half page up', () => {
+  api.Normal.scroll("pageUp");
+});
 
 // Tabs
 api.map('E', 'E');  // Previous tab
@@ -251,6 +304,7 @@ api.mapkey('[', 'Decrease video speed', function () {
     api.Front.showBanner("Speed: " + video.playbackRate.toFixed(2) + "x");
   }
 });
+
 // Search engines
 api.addSearchAlias('g', 'Google', 'https://www.google.com/search?q=');
 api.addSearchAlias('d', 'DuckDuckGo', 'https://duckduckgo.com/?q=');
@@ -261,20 +315,32 @@ api.addSearchAlias('aw', 'Arch Wiki', 'https://wiki.archlinux.org/index.php?sear
 api.addSearchAlias('np', 'npm', 'https://www.npmjs.com/search?q=');
 
 // ========== Quickmarks ==========
-// Usage: press 'o' + letter to open site
-api.mapkey('oA', 'Open ArtStation', function () { location.href = "https://magazine.artstation.com/"; });
-api.mapkey('oE', 'Open ProjectEuler', function () { location.href = "https://projecteuler.net/"; });
-api.mapkey('oL', 'Open LibGen', function () { location.href = "https://libgen.li"; });
-api.mapkey('oc', 'Open Twitch Cooller', function () { location.href = "https://twitch.tv/cooller"; });
-api.mapkey('og', 'Open Gmail', function () { location.href = "https://gmail.com"; });
-api.mapkey('oh', 'Open SciHub', function () { location.href = "https://sci-hub.hkvisa.net/"; });
-api.mapkey('ok', 'Open Reddit MechKeys', function () { location.href = "https://reddit.com/r/MechanicalKeyboards/"; });
-api.mapkey('ol', 'Open LastFM', function () { location.href = "https://last.fm/user/e7z0x1"; });
-api.mapkey('os', 'Open Steam Store', function () { location.href = "https://store.steampowered.com"; });
-api.mapkey('ou', 'Open Reddit UnixPorn', function () { location.href = "https://reddit.com/r/unixporn"; });
-api.mapkey('ov', 'Open VK', function () { location.href = "https://vk.com"; });
-api.mapkey('oy', 'Open YouTube', function () { location.href = "https://youtube.com/"; });
-api.mapkey('oz', 'Open Z-Lib', function () { location.href = "https://z-lib.is"; });
+const quickmarks = {
+  'A': { name: 'ArtStation', url: 'https://magazine.artstation.com/' },
+  'E': { name: 'ProjectEuler', url: 'https://projecteuler.net/' },
+  'L': { name: 'LibGen', url: 'https://libgen.li' },
+  'c': { name: 'Twitch Cooller', url: 'https://twitch.tv/cooller' },
+  'g': { name: 'Gmail', url: 'https://gmail.com' },
+  'h': { name: 'SciHub', url: 'https://sci-hub.hkvisa.net/' },
+  'k': { name: 'Reddit MechKeys', url: 'https://reddit.com/r/MechanicalKeyboards/' },
+  'l': { name: 'LastFM', url: 'https://last.fm/user/e7z0x1' },
+  's': { name: 'Steam Store', url: 'https://store.steampowered.com' },
+  'u': { name: 'Reddit UnixPorn', url: 'https://reddit.com/r/unixporn' },
+  'v': { name: 'VK', url: 'https://vk.com' },
+  'y': { name: 'YouTube', url: 'https://youtube.com/' },
+  'z': { name: 'Z-Lib', url: 'https://z-lib.is' }
+};
+
+Object.entries(quickmarks).forEach(([key, site]) => {
+  // Current tab (prefix 'o')
+  api.mapkey('o' + key, 'Open ' + site.name, () => {
+    location.href = site.url;
+  });
+  // New tab (prefix 'gn' for "Go New")
+  api.mapkey('gn' + key, 'Open ' + site.name + ' in new tab', () => {
+    api.tabOpenLink(site.url);
+  });
+});
 
 // ========== Site-specific ==========
 // Disable Surfingkeys on certain sites
