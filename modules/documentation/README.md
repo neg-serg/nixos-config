@@ -1,11 +1,9 @@
-# Documentation Module / Модуль документации
+# Documentation Module
 
 Documentation tools and generators.
 
-Инструменты и генераторы документации.
+## Includes
 
-## Includes / Включает
-
-- Man pages / Страницы man
-- Info pages / Страницы info
-- Documentation viewers / Просмотрщики документации
+- Man pages
+- Info pages
+- Documentation viewers

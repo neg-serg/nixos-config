@@ -1,26 +1,27 @@
-# Lib / Библиотека
+# Lib
 
 Custom Nix library functions.
 
-Пользовательские функции библиотеки Nix.
-
-## Provides / Предоставляет
+## Provides
 
 Core helpers used across the configuration:
 
-| Function | Purpose / Назначение | |----------|---------------------| | `mkWhen` | Conditional
-merging / Условное слияние | | `mkUnless` | Inverse conditional / Обратное условие | | `mkXdgText` |
-XDG file creation / XDG файлы | | `mkLocalBin` | Script installation / Установка скриптов | |
-`mkHomeFiles` | Home directory files / Файлы home | | `mkEnsureRealDir` | Directory creation /
-Создание директории |
+| Function | Purpose |
+|----------|---------|
+| `mkWhen` | Conditional merging |
+| `mkUnless` | Inverse conditional |
+| `mkXdgText` | XDG file creation |
+| `mkLocalBin` | Script installation |
+| `mkHomeFiles` | Home directory files |
+| `mkEnsureRealDir` | Directory creation |
 
-## Files / Файлы
+## Files
 
-- `neg.nix` — Main helper library / Основная библиотека
-- `xdg-helpers.nix` — XDG-related functions / XDG функции
-- `opts.nix` — Option helpers / Хелперы опций
+- `neg.nix` — Main helper library
+- `xdg-helpers.nix` — XDG-related functions
+- `opts.nix` — Option helpers
 
-## Usage / Использование
+## Usage
 
 ```nix
 config.lib.neg.mkWhen condition { ... }

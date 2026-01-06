@@ -1,25 +1,31 @@
-# Dev Module / Модуль разработки
+# Dev Module
 
 Development tools, languages, and security research utilities.
 
-Инструменты разработки, языки и утилиты для исследования безопасности.
+## Structure
 
-## Structure / Структура
+| Directory | Purpose |
+|-----------|---------|
+| `android/` | Android SDK and tools |
+| `benchmarks/` | System benchmarking |
+| `editor/` | Code editors |
+| `elf/` | ELF binary analysis |
+| `gcc/` | GCC toolchain |
+| `gdb/` | GDB debugger |
+| `git/` | Git configuration |
+| `hack/` | Security research (19 modules) |
+| `openxr/` | OpenXR development |
+| `pkgs/` | Development packages |
+| `python/` | Python ecosystem |
+| `unreal/` | Unreal Engine |
 
-| Directory | Purpose / Назначение | |-----------|---------| | `android/` | Android SDK and tools |
-| `benchmarks/` | System benchmarking / Бенчмарки | | `editor/` | Code editors / Редакторы кода | |
-`elf/` | ELF binary analysis / Анализ ELF | | `gcc/` | GCC toolchain | | `gdb/` | GDB debugger /
-Отладчик | | `git/` | Git configuration / Конфигурация Git | | `hack/` | Security research (19
-modules) / Безопасность | | `openxr/` | OpenXR development | | `pkgs/` | Development packages /
-Пакеты | | `python/` | Python ecosystem | | `unreal/` | Unreal Engine |
-
-## Key Submodules / Ключевые подмодули
+## Key Submodules
 
 ### hack/
 
-Security research toolkit / Инструменты безопасности:
+Security research toolkit:
 
-- **Forensics** — disk/memory analysis / Анализ дисков/памяти
+- **Forensics** — disk/memory analysis
 - **Pentest** — recon, fuzzing, passwords, web, wireless
 - **Reverse engineering** — disassemblers, debuggers
 
@@ -31,8 +37,8 @@ Python development:
 - Formatters (black, isort)
 - Virtual environment tools
 
-## Feature Toggle / Переключатель
+## Feature Toggle
 
 ```nix
-features.dev.enable = true;  # Enable dev tools / Включить
+features.dev.enable = true;  # Enable dev tools
 ```
