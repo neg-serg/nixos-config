@@ -33,7 +33,8 @@
       specialArgs = {
         inherit locale timeZone self inputs;
         iosevkaNeg = inputs.iosevka-neg.packages.${linuxSystem};
-        neg = impurity: {
+        neg = _: {
+          # impurity ignored
           # Core structural helpers (no config dependency)
           mkHomeFiles = files: {
             users.users.neg.maid.file.home = files;

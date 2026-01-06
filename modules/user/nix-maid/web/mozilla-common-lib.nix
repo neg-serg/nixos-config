@@ -226,30 +226,6 @@ with lib; let
     }
   '';
 
-  tridactylUserContent = ''
-    /* Fallback: cap completions viewport to ~8 rows and enable scrolling */
-    #TridactylModeIndicatorAndCmdline #completions,
-    #TridactylCommandline #completions{
-      /* Fallback line height if theme doesn't provide one */
-      --tri-option-height: 1.4em;
-      max-height: calc(8 * var(--tri-option-height)) !important;
-      overflow-y: auto !important;
-    }
-
-    /* If an inner wrapper exists, cap it as well (newer markup variants) */
-    #TridactylModeIndicatorAndCmdline #completions > div,
-    #TridactylCommandline #completions > div{
-      max-height: calc(8 * var(--tri-option-height)) !important;
-      overflow-y: auto !important;
-    }
-
-    /* Buffer (tabopen) source often grows aggressively; enforce row height */
-    #TridactylModeIndicatorAndCmdline #completions table tr,
-    #TridactylCommandline #completions table tr{
-      line-height: var(--tri-option-height) !important;
-    }
-  '';
-
   # Optional: move URL bar/toolbar to bottom.
   # Based on MrOtherGuy's firefox-csshacks (navbar_below_content.css).
   # Upstream: https://github.com/MrOtherGuy/firefox-csshacks
