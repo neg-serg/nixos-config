@@ -3,3 +3,6 @@ package-lock.json
 lazy-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# Ignore noisy completion files
+files/shell/zsh/lazyfuncs/_lutgen
