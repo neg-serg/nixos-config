@@ -28,9 +28,7 @@ jobs:
     - name: Build system closure for scanning
       run: |
         echo "Building system closure for telfir host..."
-        nix build .#nixosConfigurations.telfir.config.system.build.toplevel --impure -L
-      env:
-        IMPURITY_PATH: ${{ github.workspace }}
+        nix build .#nixosConfigurations.telfir.config.system.build.toplevel -L
       continue-on-error: true
     
     - name: Run vulnix security scan
