@@ -21,6 +21,7 @@
     inputs.sops-nix.nixosModules.sops
 
     inputs.nvf.nixosModules.default
+    inputs.nix-index-database.nixosModules.nix-index
   ];
 
   hostExtras = name: let
