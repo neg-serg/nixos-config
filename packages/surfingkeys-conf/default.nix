@@ -21,14 +21,25 @@ buildNpmPackage {
 
   buildPhase = ''
     runHook preBuild
-    echo "export default {};" > ./src/conf.priv.js
+    cat > ./src/conf.priv.js <<EOF
+    const handler = { get: (target, prop) => (prop in target ? target[prop] : "") };
+    const keys = new Proxy({}, handler);
+    export default new Proxy({ keys }, handler);
+    EOF
     
     # Inject custom mappings if provided
     if [ -n "${toString customConfig}" ] && [ -f "${toString customConfig}" ]; then
       echo "Injecting custom mappings from ${toString customConfig}..."
-      # Extract from line 214 (// ========== Mappings ==========) to end
-      # We skip the settings/theme part of the old file to prefer b0o's look
+      # Extract global settings (5-11) but NOT the theme (14-212)
+      # This restores settings.focusFirstCandidate, settings.omnibarSuggestion etc.
+      sed -n '5,11p' "${toString customConfig}" >> ./src/index.js
+      # Extract mappings (214-end)
       sed -n '214,$p' "${toString customConfig}" >> ./src/index.js
+
+      # Force t and o to always use the URL omnibar to avoid the "forced search" behavior
+      # We use mapkey directly since it's destructured in src/index.js
+      echo "mapkey('t', 'Open URL in new tab', function() { Front.openOmnibar({type: 'URLs'}); });" >> ./src/index.js
+      echo "mapkey('o', 'Open URL in current tab', function() { Front.openOmnibar({type: 'URLs'}); });" >> ./src/index.js
     fi
 
     cat > build.mjs <<EOF
@@ -39,6 +50,7 @@ buildNpmPackage {
 
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+    config.mode = 'production';
     config.output = {
       path: path.join(__dirname, 'build'),
       filename: 'surfingkeys.js',
