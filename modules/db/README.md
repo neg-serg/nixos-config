@@ -1,11 +1,9 @@
-# Database Module / Модуль баз данных
+# Database Module
 
 Database servers and tools.
 
-Серверы баз данных и инструменты.
-
-## Includes / Включает
+## Includes
 
 - PostgreSQL
-- SQLite tools / Утилиты SQLite
-- Database management utilities / Утилиты управления БД
+- SQLite tools
+- Database management utilities
