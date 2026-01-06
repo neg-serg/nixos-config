@@ -20,94 +20,49 @@ buildNpmPackage {
   dontNpmBuild = true;
 
   buildPhase = ''
-    runHook preBuild
-    cat > ./src/conf.priv.js <<EOF
-const handler = { get: (target, prop) => (prop in target ? target[prop] : "") };
-const keys = new Proxy({}, handler);
-export default new Proxy({ keys }, handler);
-EOF
-    
-    # Inject custom mappings if provided
-    if [ -n "${toString customConfig}" ] && [ -f "${toString customConfig}" ]; then
-      echo "Injecting custom mappings from ${toString customConfig}..."
-      # Extract global settings (5-11) but NOT the theme (14-212)
-      # This restores settings.focusFirstCandidate, settings.omnibarSuggestion etc.
-      sed -n '5,11p' "${toString customConfig}" >> ./src/index.js
-      # Extract mappings (214-end)
-      sed -n '214,$p' "${toString customConfig}" >> ./src/index.js
+        runHook preBuild
+        cat > ./src/conf.priv.js <<EOF
+    const handler = { get: (target, prop) => (prop in target ? target[prop] : "") };
+    const keys = new Proxy({}, handler);
+    export default new Proxy({ keys }, handler);
+    EOF
 
-      # Inject tabOpenLink into the destructuring if not already present
-      sed -i 's/addSearchAlias,/addSearchAlias, tabOpenLink,/' ./src/index.js
+        # Inject custom mappings if provided
+        if [ -n "${customConfig}" ]; then
+          echo "Injecting custom mappings from ${customConfig}..."
+          # Add a newline and semicolon to safely separate from existing code
+          echo -e "\n;\n" >> ./src/index.js
+          cat "${customConfig}" >> ./src/index.js
+        fi
 
-      # Smart Omnibar logic: If input contains dots and no spaces, treat as URL.
-      # Otherwise, use the default search engine (DuckDuckGo).
-      cat >> ./src/index.js <<JS
+        cat > build.mjs <<EOF
+    import webpack from 'webpack';
+    import config from './webpack.config.js';
+    import path from 'path';
+    import { fileURLToPath } from 'url';
 
-const smartDispatch = (input, newTab) => {
-  const isURL = input.includes(".") && !input.includes(" ");
-  if (isURL) {
-    const url = input.match(/^https?:\/\//) ? input : "https://" + input;
-    if (newTab) {
-      tabOpenLink(url);
-    } else {
-      window.location.href = url;
-    }
-  } else {
-    const searchURL = "https://duckduckgo.com/?q=" + encodeURIComponent(input);
-    if (newTab) {
-      tabOpenLink(searchURL);
-    } else {
-      window.location.href = searchURL;
-    }
-  }
-};
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-mapkey("t", "Smart Omnibar (New Tab)", () => {
-  Front.openOmnibar({
-    type: "SearchEngine",
-    extra: "dd",
-    onEnter: (input) => smartDispatch(input, true),
-  });
-});
+    config.mode = 'production';
+    config.output = {
+      path: path.join(__dirname, 'build'),
+      filename: 'surfingkeys.js',
+    };
 
-mapkey("o", "Smart Omnibar (Current Tab)", () => {
-  Front.openOmnibar({
-    type: "SearchEngine",
-    extra: "dd",
-    onEnter: (input) => smartDispatch(input, false),
-  });
-});
-JS
-    fi
-
-    cat > build.mjs <<EOF
-import webpack from 'webpack';
-import config from './webpack.config.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-config.mode = 'production';
-config.output = {
-  path: path.join(__dirname, 'build'),
-  filename: 'surfingkeys.js',
-};
-
-webpack(config, (err, stats) => {
-  if (err) {
-    console.error(err);
-    process.exit(1);
-  }
-  if (stats.hasErrors()) {
-    console.error(stats.toString());
-    process.exit(1);
-  }
-  console.log('Build complete');
-});
-EOF
-    node build.mjs
-    runHook postBuild
+    webpack(config, (err, stats) => {
+      if (err) {
+        console.error(err);
+        process.exit(1);
+      }
+      if (stats.hasErrors()) {
+        console.error(stats.toString());
+        process.exit(1);
+      }
+      console.log('Build complete');
+    });
+    EOF
+        node build.mjs
+        runHook postBuild
   '';
 
   installPhase = ''
