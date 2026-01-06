@@ -38,7 +38,7 @@
           # impurity ignored
           # Core structural helpers (no config dependency)
           mkHomeFiles = files: {
-            users.users.neg.homeFiles = files;
+            users.users.neg.maid.file.home = files;
           };
           mkXdgText = path: text: {
             home."${path}".text = text;
