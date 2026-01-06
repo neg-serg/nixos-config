@@ -123,6 +123,12 @@
     checks = lib.genAttrs supportedSystems (s: (perSystem s).checks);
     devShells = lib.genAttrs supportedSystems (s: (perSystem s).devShells);
     apps = lib.genAttrs supportedSystems (s: (perSystem s).apps);
-    nixosConfigurations = import ./flake/nixos.nix {inherit inputs nixpkgs self;};
+    nixosConfigurations = import ./flake/nixos.nix {
+      inherit inputs nixpkgs self;
+      filteredSource = lib.cleanSourceWith {
+        filter = name: type: ! (lib.hasSuffix ".md" (builtins.baseNameOf name));
+        src = lib.cleanSource ./.;
+      };
+    };
   };
 }
