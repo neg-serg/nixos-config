@@ -27,15 +27,22 @@ mkdir -p "$VM_DIR"
 if [ ! -f "$ISO_FILE" ]; then
     echo "Downloading Guix System ISO..."
     echo "URL: $ISO_URL"
-    # Prefer aria2c for multi-threaded download, fallback to wget
-    if command -v aria2c &> /dev/null; then
-        aria2c --enable-rpc=false -x 16 -s 16 -k 1M -d "$VM_DIR" -o "$(basename "$ISO_FILE")" "$ISO_URL"
+    # Create temp file to avoid partial downloads being seen as complete
+    TMP_ISO="${ISO_FILE}.tmp"
+    if command -v curl &> /dev/null; then
+        curl -L -C - -o "$TMP_ISO" "$ISO_URL"
     elif command -v wget &> /dev/null; then
-        wget --no-config -O "$ISO_FILE" "$ISO_URL" --show-progress
+        wget --no-config -c -O "$TMP_ISO" "$ISO_URL"
     else
-        echo "Error: Neither aria2c nor wget found. Please install one."
+        echo "Error: Neither curl nor wget found. Please install one."
         exit 1
     fi
+    mv "$TMP_ISO" "$ISO_FILE"
+fi
+
+if [ ! -f "$ISO_FILE" ]; then
+    echo "Error: Failed to download ISO to $ISO_FILE"
+    exit 1
 fi
 
 if [ ! -f "$DISK_FILE" ]; then
