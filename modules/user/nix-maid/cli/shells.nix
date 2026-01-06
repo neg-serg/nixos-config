@@ -239,7 +239,7 @@ in {
       ".config/aliae/config.yaml".text = aliaeConfig;
       ".config/dircolors/dircolors".source = dircolorsConfig;
       ".config/zsh".source = zshConfigSource;
-
+      ".config/fish".source = "${shellFiles}/fish";
       ".config/bash/oh-my-posh.bash".source = "${shellFiles}/bash/oh-my-posh.bash";
       ".config/f-sy-h".source = "${shellFiles}/f-sy-h";
       ".config/powershell/Microsoft.PowerShell_profile.ps1".text = pwshProfile;
