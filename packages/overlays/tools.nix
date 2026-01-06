@@ -15,7 +15,7 @@ in {
     bpf_host_latency = callPkg (packagesRoot + "/bpf-host-latency") {};
     "bpf-host-latency" = bpf_host_latency;
     skbtrace = callPkg (packagesRoot + "/skbtrace") {};
-    
+
     # Surfingkeys configuration
     surfingkeys_conf = callPkg (packagesRoot + "/surfingkeys-conf") {};
     "surfingkeys-conf" = surfingkeys_conf;

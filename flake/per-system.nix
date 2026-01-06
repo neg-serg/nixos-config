@@ -515,7 +515,9 @@ in {
         ];
       } ''
         set -euo pipefail
-        cd ${self}
+        cp -r ${self} ./src
+        chmod -R +w ./src
+        cd ./src
         bash scripts/dev/check-git-ignore.sh
         touch "$out"
       '';

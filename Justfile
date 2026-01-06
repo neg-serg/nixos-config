@@ -30,7 +30,7 @@ cpu-masks:
 # Rebuild and switch to the new system configuration
 # Usage: just deploy [host]
 deploy host="telfir":
-    sudo nixos-rebuild switch --flake .#{{host}} --impure -L
+    nh os switch . --hostname {{host}}
 
 # Alias for deploy
 switch host="telfir":
@@ -45,8 +45,7 @@ fmt:
 
 check:
     repo_root="$(git rev-parse --show-toplevel)"; \
-    export IMPURITY_PATH="$repo_root"; \
-    nix flake check --impure -L
+    nix flake check -L
 
 lint:
     set -eu
