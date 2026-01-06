@@ -1,6 +1,6 @@
----
-description: Добавление секретов через sops-nix
----
+______________________________________________________________________
+
+## description: Добавление секретов через sops-nix
 
 # Добавление секрета
 
@@ -59,9 +59,5 @@ sops updatekeys secrets/my-secrets.yaml
 
 ## Частые типы секретов
 
-| Тип | Использование |
-|-----|---------------|
-| API keys | External services |
-| Passwords | Database, services |
-| SSH keys | Git, automation |
-| Certificates | TLS, VPN |
+| Тип | Использование | |-----|---------------| | API keys | External services | | Passwords |
+Database, services | | SSH keys | Git, automation | | Certificates | TLS, VPN |

@@ -4,15 +4,11 @@
 
 ## Структура
 
-| Путь | Назначение |
-|------|------------|
-| `audio/` | PipeWire, аудио утилиты, MPD |
-| `images/` | Просмотрщики/редакторы изображений |
-| `scripts/` | Скрипты обработки медиа |
-| `ai-upscale-packages.nix` | AI апскейл видео (RealESRGAN) |
-| `multimedia-packages.nix` | FFmpeg, mediainfo, и т.д. |
-| `vapoursynth-packages.nix` | Фрейм-сервер VapourSynth |
-| `deepfacelab-docker.nix` | Контейнер DeepFaceLab |
+| Путь | Назначение | |------|------------| | `audio/` | PipeWire, аудио утилиты, MPD | | `images/`
+| Просмотрщики/редакторы изображений | | `scripts/` | Скрипты обработки медиа | |
+`ai-upscale-packages.nix` | AI апскейл видео (RealESRGAN) | | `multimedia-packages.nix` | FFmpeg,
+mediainfo, и т.д. | | `vapoursynth-packages.nix` | Фрейм-сервер VapourSynth | |
+`deepfacelab-docker.nix` | Контейнер DeepFaceLab |
 
 ## Возможности
 

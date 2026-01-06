@@ -4,20 +4,11 @@ Development tools, languages, and security research utilities.
 
 ## Structure
 
-| Directory | Purpose |
-|-----------|---------|
-| `android/` | Android SDK and tools |
-| `benchmarks/` | System benchmarking |
-| `editor/` | Code editors |
-| `elf/` | ELF binary analysis |
-| `gcc/` | GCC toolchain |
-| `gdb/` | GDB debugger |
-| `git/` | Git configuration |
-| `hack/` | Security research (19 modules) |
-| `openxr/` | OpenXR development |
-| `pkgs/` | Development packages |
-| `python/` | Python ecosystem |
-| `unreal/` | Unreal Engine |
+| Directory | Purpose | |-----------|---------| | `android/` | Android SDK and tools | |
+`benchmarks/` | System benchmarking | | `editor/` | Code editors | | `elf/` | ELF binary analysis |
+| `gcc/` | GCC toolchain | | `gdb/` | GDB debugger | | `git/` | Git configuration | | `hack/` |
+Security research (19 modules) | | `openxr/` | OpenXR development | | `pkgs/` | Development packages
+| | `python/` | Python ecosystem | | `unreal/` | Unreal Engine |
 
 ## Key Submodules
 

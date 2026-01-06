@@ -11,8 +11,5 @@ User-level configuration via nix-maid.
 
 ## Key Subdirectories
 
-| Path | Purpose |
-|------|---------|
-| `nix-maid/apps/` | Application configs |
-| `nix-maid/cli/` | Shell and CLI |
-| `session/` | Hyprland session setup |
+| Path | Purpose | |------|---------| | `nix-maid/apps/` | Application configs | | `nix-maid/cli/` |
+Shell and CLI | | `session/` | Hyprland session setup |

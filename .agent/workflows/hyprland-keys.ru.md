@@ -1,16 +1,14 @@
----
-description: Настройка клавиш Hyprland
----
+______________________________________________________________________
+
+## description: Настройка клавиш Hyprland
 
 # Клавиши Hyprland
 
 ## Файлы конфигурации
 
-| Файл | Назначение |
-|------|------------|
-| `files/gui/hypr/bindings/apps.conf` | Запуск приложений |
-| `files/gui/hypr/bindings/special.conf` | Спецклавиши |
-| `files/gui/hypr/bindings/wm.conf` | Управление окнами |
+| Файл | Назначение | |------|------------| | `files/gui/hypr/bindings/apps.conf` | Запуск
+приложений | | `files/gui/hypr/bindings/special.conf` | Спецклавиши | |
+`files/gui/hypr/bindings/wm.conf` | Управление окнами |
 
 ## Синтаксис
 

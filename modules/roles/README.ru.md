@@ -11,11 +11,8 @@ roles.server.enable = true;       # Серверные настройки
 
 ## Возможности ролей
 
-| Роль | Возможности |
-|------|-------------|
-| `workstation` | Профиль производительности, SSH, Avahi |
-| `homelab` | Профиль безопасности, DNS, SSH, MPD |
-| `media` | Jellyfin, MPD, Avahi, SSH |
+| Роль | Возможности | |------|-------------| | `workstation` | Профиль производительности, SSH,
+Avahi | | `homelab` | Профиль безопасности, DNS, SSH, MPD | | `media` | Jellyfin, MPD, Avahi, SSH |
 | `server` | Headless, smartd по умолчанию |
 
 ## Переопределение сервисов

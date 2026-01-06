@@ -4,13 +4,9 @@ Local LLM infrastructure with Ollama and Open WebUI.
 
 ## Structure
 
-| File | Purpose |
-|------|---------|
-| `default.nix` | Main config with model paths |
-| `ollama.nix` | Ollama service (ROCm) |
-| `open-webui.nix` | Web interface |
-| `codex-config.nix` | Codex assistant config |
-| `pkgs.nix` | CLI tools |
+| File | Purpose | |------|---------| | `default.nix` | Main config with model paths | |
+`ollama.nix` | Ollama service (ROCm) | | `open-webui.nix` | Web interface | | `codex-config.nix` |
+Codex assistant config | | `pkgs.nix` | CLI tools |
 
 ## Configuration
 
@@ -27,9 +23,7 @@ services.ollama = {
 
 ## Ports
 
-| Service | Port | Description |
-|---------|------|-------------|
-| Ollama | 11434 | API endpoint |
+| Service | Port | Description | |---------|------|-------------| | Ollama | 11434 | API endpoint |
 
 ## Usage
 

@@ -6,14 +6,9 @@ Custom Nix library functions.
 
 Core helpers used across the configuration:
 
-| Function | Purpose |
-|----------|---------|
-| `mkWhen` | Conditional merging |
-| `mkUnless` | Inverse conditional |
-| `mkXdgText` | XDG file creation |
-| `mkLocalBin` | Script installation |
-| `mkHomeFiles` | Home directory files |
-| `mkEnsureRealDir` | Directory creation |
+| Function | Purpose | |----------|---------| | `mkWhen` | Conditional merging | | `mkUnless` |
+Inverse conditional | | `mkXdgText` | XDG file creation | | `mkLocalBin` | Script installation | |
+`mkHomeFiles` | Home directory files | | `mkEnsureRealDir` | Directory creation |
 
 ## Files
 

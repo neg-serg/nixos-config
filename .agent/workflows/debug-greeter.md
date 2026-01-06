@@ -1,6 +1,6 @@
----
-description: Debug greetd and login issues
----
+______________________________________________________________________
+
+## description: Debug greetd and login issues
 
 # Debug Greeter
 
@@ -45,12 +45,9 @@ ls -la /run/greetd/
 
 ## Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| AppArmor blocking | Check `aa-status`, add profile |
-| Missing greeter.qml | Verify `files/quickshell/greeter/` |
-| PAM errors | Check sessionVariables for special chars |
-| Black screen | Check Hyprland logs |
+| Issue | Solution | |-------|----------| | AppArmor blocking | Check `aa-status`, add profile | |
+Missing greeter.qml | Verify `files/quickshell/greeter/` | | PAM errors | Check sessionVariables for
+special chars | | Black screen | Check Hyprland logs |
 
 ## Restart Greeter
 
