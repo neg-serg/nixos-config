@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  nix-alien-pkgs,
+  ...
+}: {
   environment.systemPackages = [
     pkgs.alejandra # the uncompromising nix code formatter
     pkgs.cached-nix-shell # nix-shell with instant startup
@@ -17,5 +21,8 @@
     pkgs.nurl # generate Nix fetcher calls from repository URLs
     pkgs.nvd # compare versions: nvd diff /run/current-system result
     pkgs.statix # static analyzer for nix
+
+    # nix-alien: run unpatched binaries on NixOS
+    nix-alien-pkgs.nix-alien
   ];
 }
