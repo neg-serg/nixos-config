@@ -1,18 +1,22 @@
-# Files / Файлы
+# Files
 
 Static configuration files linked to user home via nix-maid.
 
-Статические файлы конфигурации, связываемые с home через nix-maid.
+## Structure
 
-## Structure / Структура
+| Directory | Purpose |
+|-----------|---------|
+| `gui/` | Hyprland, waybar, desktop configs |
+| `shell/` | Zsh, bash, environment |
+| `kitty/` | Kitty terminal |
+| `nvim/` | Neovim configuration |
+| `git/` | Git config and ignore |
+| `quickshell/` | Status bar and greeter |
+| `rofi/` | Rofi scripts and wrappers |
+| `config/` | Misc app configs |
+| `wallust/` | Color scheme generator |
 
-| Directory | Purpose / Назначение | |-----------|---------------------| | `gui/` | Hyprland,
-waybar, desktop configs | | `shell/` | Zsh, bash, environment | | `kitty/` | Kitty terminal | |
-`nvim/` | Neovim configuration | | `git/` | Git config and ignore | | `quickshell/` | Status bar and
-greeter | | `rofi/` | Rofi scripts and wrappers | | `config/` | Misc app configs | | `wallust/` |
-Color scheme generator |
-
-## Usage / Использование
+## Usage
 
 Files are linked via nix-maid helpers:
 
@@ -22,7 +26,7 @@ config.lib.neg.mkHomeFiles {
 };
 ```
 
-## See Also / См. также
+## See Also
 
 - `files/quickshell/README.md` — Quickshell configuration
 - `modules/user/nix-maid/` — nix-maid modules

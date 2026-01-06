@@ -1,58 +1,63 @@
-______________________________________________________________________
+---
+description: Configure gaming with Steam and Gamescope
+---
 
-## description: Configure gaming with Steam and Gamescope / Настройка игр со Steam и Gamescope
+# Gaming Setup
 
-# Gaming Setup / Настройка игр
+## Enable Gaming
 
-## Enable Gaming / Включение игр
-
-In your host configuration / В конфигурации хоста:
+In your host configuration:
 
 ```nix
 profiles.games.enable = true;
 ```
 
-## Steam Launch Options / Опции запуска Steam
+## Steam Launch Options
 
-### Basic (CPU pinning) / Базовый (привязка CPU):
+### Basic (CPU pinning):
 
 ```
 game-run %command%
 ```
 
-### With Gamescope FSR / С Gamescope FSR:
+### With Gamescope FSR:
 
 ```
 game-run gamescope-perf -- %command%
 ```
 
-### With MangoHud overlay / С оверлеем MangoHud:
+### With MangoHud overlay:
 
 ```
 MANGOHUD=1 game-run %command%
 ```
 
-### Full setup / Полная настройка:
+### Full setup:
 
 ```
 MANGOHUD=1 game-run gamescope-perf -- %command%
 ```
 
-## Available Presets / Доступные пресеты
+## Available Presets
 
-| Script | Purpose / Назначение | |--------|---------------------| | `game-run` | CPU pinning to
-V-Cache CCD | | `gamescope-perf` | FSR downscale for performance | | `gamescope-quality` | Native
-resolution | | `gamescope-hdr` | HDR pipeline |
+| Script | Purpose |
+|--------|---------|
+| `game-run` | CPU pinning to V-Cache CCD |
+| `gamescope-perf` | FSR downscale for performance |
+| `gamescope-quality` | Native resolution |
+| `gamescope-hdr` | HDR pipeline |
 
-## Environment Variables / Переменные окружения
+## Environment Variables
 
-| Variable | Description / Описание | |----------|----------------------| | `GAME_PIN_CPUSET` |
-Override CPU cores / Переопределить ядра | | `MANGOHUD=1` | Enable MangoHud / Включить MangoHud | |
-`GAME_RUN_USE_GAMEMODE=0` | Disable gamemode |
+| Variable | Description |
+|----------|-------------|
+| `GAME_PIN_CPUSET` | Override CPU cores |
+| `MANGOHUD=1` | Enable MangoHud |
+| `GAME_RUN_USE_GAMEMODE=0` | Disable gamemode |
 
-## Troubleshooting / Устранение проблем
+## Troubleshooting
 
-Check CPU pinning / Проверить привязку CPU:
+Check CPU pinning:
 
 ```bash
 cat /proc/self/status | grep Cpus_allowed_list

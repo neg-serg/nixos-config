@@ -1,10 +1,10 @@
 ---
-description: Add new systemd service
+description: Добавление нового systemd сервиса
 ---
 
-# Add Systemd Service
+# Добавление systemd сервиса
 
-## System Service
+## Системный сервис
 
 ```nix
 systemd.services.my-service = {
@@ -23,9 +23,9 @@ systemd.services.my-service = {
 };
 ```
 
-## User Service
+## Пользовательский сервис
 
-Using nix-maid helpers:
+Используя хелперы nix-maid:
 
 ```nix
 config.lib.neg.systemdUser.mkUnitFromPresets {
@@ -34,7 +34,7 @@ config.lib.neg.systemdUser.mkUnitFromPresets {
 }
 ```
 
-## Timer Service
+## Сервис таймера
 
 ```nix
 systemd.timers.my-timer = {
@@ -50,20 +50,20 @@ systemd.services.my-timer = {
 };
 ```
 
-## Control
+## Управление
 
 ```bash
-# Start
+# Запустить
 sudo systemctl start my-service
 
-# Enable
+# Включить автозапуск
 sudo systemctl enable my-service
 
-# Logs
+# Логи
 journalctl -u my-service -f
 ```
 
-## User Services
+## Пользовательские сервисы
 
 ```bash
 systemctl --user start my-service

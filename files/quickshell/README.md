@@ -1,13 +1,11 @@
-# Quickshell Config / Конфигурация Quickshell
+# Quickshell Config
 
 User setup for the Quickshell status bar and greeter.
 
-Пользовательская настройка статус-бара и гритера Quickshell.
+## Quick Links
 
-## Quick Links / Быстрые ссылки
-
-- `Docs/SHADERS.md` — shader wedge clipping, build/debug / шейдеры
-- `Docs/PANELS.md` — panel background transparency / прозрачность панелей
+- `Docs/SHADERS.md` — shader wedge clipping, build/debug
+- `Docs/PANELS.md` — panel background transparency
 - `scripts/compile_shaders.sh` — builds `.frag` → `.qsb`
 
 Wedge Shader Quick Checklist

@@ -1,47 +1,49 @@
-______________________________________________________________________
+---
+description: Rebuild NixOS configuration
+---
 
-## description: Rebuild NixOS configuration / Пересборка конфигурации NixOS
+# Rebuild NixOS
 
-# Rebuild NixOS / Пересборка NixOS
-
-## Quick Command / Быстрая команда
+## Quick Command
 
 ```bash
 sudo nixos-rebuild switch --flake .#telfir
 ```
 
-## Steps / Шаги
+## Steps
 
-1. **Check configuration** / Проверка конфигурации:
+1. **Check configuration**:
 
    ```bash
    just check
    ```
 
-1. **Build without switching** / Сборка без переключения:
+1. **Build without switching**:
 
    ```bash
    nixos-rebuild build --flake .#telfir
    ```
 
-1. **Switch to new generation** / Переключение на новое поколение:
+1. **Switch to new generation**:
 
    ```bash
    sudo nixos-rebuild switch --flake .#telfir
    ```
 
-## Options / Опции
+## Options
 
-| Flag | Description / Описание | |------|------------------------| | `--flake .#host` | Use flake
-for host / Использовать flake | | `--show-trace` | Show error trace / Показать трейс ошибок | |
-`--dry-run` | Preview changes / Предпросмотр изменений | | `--upgrade` | Update flake inputs /
-Обновить inputs |
+| Flag | Description |
+|------|-------------|
+| `--flake .#host` | Use flake for host |
+| `--show-trace` | Show error trace |
+| `--dry-run` | Preview changes |
+| `--upgrade` | Update flake inputs |
 
-## Troubleshooting / Устранение проблем
+## Troubleshooting
 
-If build fails / Если сборка упала:
+If build fails:
 
 ```bash
-just lint      # Check for errors / Проверить ошибки
-just check     # Run all checks / Все проверки
+just lint      # Check for errors
+just check     # Run all checks
 ```

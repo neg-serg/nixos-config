@@ -1,14 +1,12 @@
-# Lib Module / Модуль библиотек
+# Lib Module
 
 Custom Nix library functions.
 
-Пользовательские функции библиотеки Nix.
-
-## Provides / Предоставляет
+## Provides
 
 Helper functions used across the configuration:
 
-- `mkWhen` — conditional merging / условное слияние
-- `mkXdgText` — XDG file creation / создание XDG-файлов
-- `mkLocalBin` — script installation / установка скриптов
-- `mkHomeFiles` — home directory management / управление home
+- `mkWhen` — conditional merging
+- `mkXdgText` — XDG file creation
+- `mkLocalBin` — script installation
+- `mkHomeFiles` — home directory management

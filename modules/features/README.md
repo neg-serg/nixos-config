@@ -1,22 +1,18 @@
-# Features Module / Модуль фич
+# Features Module
 
 Feature flags for conditional system configuration.
 
-Флаги функций для условной конфигурации системы.
-
-## Usage / Использование
+## Usage
 
 ```nix
 features = {
-  gui.enable = true;      # Enable GUI / Включить GUI
-  dev.enable = true;      # Enable dev tools / Разработка
-  cli.enable = true;      # Enable CLI / Командная строка
-  games.enable = true;    # Enable gaming / Игры
+  gui.enable = true;      # Enable GUI
+  dev.enable = true;      # Enable dev tools
+  cli.enable = true;      # Enable CLI
+  games.enable = true;    # Enable gaming
 };
 ```
 
-## Purpose / Назначение
+## Purpose
 
 Allows selective enabling of system components based on host role.
-
-Позволяет выборочно включать компоненты системы в зависимости от роли хоста.
