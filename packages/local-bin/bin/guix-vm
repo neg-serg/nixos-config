@@ -3,18 +3,21 @@ set -euo pipefail
 
 # Configuration
 VM_DIR="$HOME/vms/guix"
-ISO_URL="https://ftp.gnu.org/gnu/guix/guix-system-install-1.4.0.x86_64-linux.iso"
+# Use ftpmirror.gnu.org for automatic mirror selection (faster than ftp.gnu.org)
+# Using compressed ISO (xz) - ~350MB instead of ~800MB
+ISO_URL="https://ftpmirror.gnu.org/gnu/guix/guix-system-install-1.4.0.x86_64-linux.iso.xz"
 ISO_FILE="$VM_DIR/guix-install.iso"
+ISO_FILE_XZ="$VM_DIR/guix-install.iso.xz"
 DISK_FILE="$VM_DIR/guix.qcow2"
 DISK_SIZE="50G"
 MEMORY="4G"
 CORES="4"
 
 # Dependency check
-for cmd in qemu-system-x86_64 qemu-img wget; do
+for cmd in qemu-system-x86_64 qemu-img; do
     if ! command -v "$cmd" &> /dev/null; then
         echo "Error: '$cmd' is not installed."
-        echo "Please install it (e.g., via 'qemu', 'wget')."
+        echo "Please install it (e.g., via 'qemu')."
         exit 1
     fi
 done
@@ -25,7 +28,18 @@ mkdir -p "$VM_DIR"
 if [ ! -f "$ISO_FILE" ]; then
     echo "Downloading Guix System ISO..."
     echo "URL: $ISO_URL"
-    wget --no-config -O "$ISO_FILE" "$ISO_URL" --show-progress
+    # Prefer aria2c for multi-threaded download, fallback to wget
+    if command -v aria2c &> /dev/null; then
+        aria2c -x 16 -s 16 -k 1M -d "$VM_DIR" -o "$(basename "$ISO_FILE_XZ")" "$ISO_URL"
+    elif command -v wget &> /dev/null; then
+        wget --no-config -O "$ISO_FILE_XZ" "$ISO_URL" --show-progress
+    else
+        echo "Error: Neither aria2c nor wget found. Please install one."
+        exit 1
+    fi
+    echo "Decompressing ISO..."
+    xz -dk "$ISO_FILE_XZ"
+    rm -f "$ISO_FILE_XZ"
 fi
 
 if [ ! -f "$DISK_FILE" ]; then
