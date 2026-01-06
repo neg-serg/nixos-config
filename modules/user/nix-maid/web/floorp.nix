@@ -39,7 +39,7 @@
         "network.proxy.no_proxies_on" = "localhost, 127.0.0.1";
       };
       userChrome = "";
-      userContent = mozillaCommon.tridactylUserContent + mozillaCommon.surfingkeysUserContent;
+      userContent = mozillaCommon.surfingkeysUserContent;
       enable = true;
       isDefault = true;
       extensions = [];
@@ -59,10 +59,7 @@ in {
       };
 
       # Additional Floorp-specific home files
-      users.users.neg.maid.file.home = {
-        # Tridactyl native messenger manifest - link to ~/.mozilla for native messaging
-        ".mozilla/native-messaging-hosts/tridactyl.json".source = "${pkgs.tridactyl-native}/lib/mozilla/native-messaging-hosts/tridactyl.json";
-      };
+      users.users.neg.maid.file.home = {};
     }
   ]);
 }
