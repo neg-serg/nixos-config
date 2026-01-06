@@ -2,6 +2,7 @@
   inputs,
   nixpkgs,
   self,
+  filteredSource,
   ...
 }: let
   inherit (nixpkgs) lib;
@@ -31,7 +32,7 @@
     lib.nixosSystem {
       system = linuxSystem;
       specialArgs = {
-        inherit locale timeZone self inputs;
+        inherit locale timeZone self inputs filteredSource;
         iosevkaNeg = inputs.iosevka-neg.packages.${linuxSystem};
         neg = _: {
           # impurity ignored
