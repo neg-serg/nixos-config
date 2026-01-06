@@ -14,7 +14,7 @@
 
   commonModules = [
     ../init.nix
-    ../modules/impurity.nix
+    # ../modules/impurity.nix # Removed in favor of pure eval
     inputs.nix-flatpak.nixosModules.nix-flatpak
     inputs.lanzaboote.nixosModules.lanzaboote
     inputs.sops-nix.nixosModules.sops
@@ -32,7 +32,6 @@
       system = linuxSystem;
       specialArgs = {
         inherit locale timeZone self inputs;
-        impurity = inputs.impurity;
         iosevkaNeg = inputs.iosevka-neg.packages.${linuxSystem};
         neg = impurity: {
           # Core structural helpers (no config dependency)
@@ -48,11 +47,8 @@
               executable = true;
             };
           };
-          # Impurity link helper
-          linkImpure = x:
-            if impurity != null
-            then impurity.link x
-            else x;
+          # Impurity link helper (deprecated/disabled - always pure)
+          linkImpure = x: x;
 
           # Browser helpers
           mkUserJs = prefs:

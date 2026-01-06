@@ -64,7 +64,7 @@
     };
 
     # === Independent tools (no follows needed) ===
-    impurity.url = "git+file:///home/neg/src/impurity.nix";
+    # impurity.url = "git+file:///home/neg/src/impurity.nix"; # Removed in favor of pure eval
     iwmenu.url = "github:e-tho/iwmenu";
 
     nix-flatpak.url = "github:gmodena/nix-flatpak";

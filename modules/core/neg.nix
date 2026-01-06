@@ -2,7 +2,7 @@
   lib,
   pkgs,
   neg,
-  impurity ? null,
+  # impurity ? null, # Deprecated
   ...
 }: {
   options.neg = {
@@ -21,6 +21,6 @@
   config = {
     # Expose helpers under lib.neg for legacy or non-structural use.
     # We use the neg function from specialArgs.
-    lib.neg = neg impurity;
+    lib.neg = neg null; # impurity removed
   };
 }
