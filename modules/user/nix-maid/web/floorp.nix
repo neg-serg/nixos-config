@@ -59,7 +59,7 @@ in {
       };
 
       # Additional Floorp-specific home files
-      users.users.neg.maid.file.home = {};
+
     }
   ]);
 }
