@@ -1,6 +1,6 @@
----
-description: Quickshell and Rofi theming
----
+______________________________________________________________________
+
+## description: Quickshell and Rofi theming
 
 # Theming
 

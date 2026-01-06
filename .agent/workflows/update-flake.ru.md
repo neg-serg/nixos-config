@@ -1,6 +1,6 @@
----
-description: Обновление flake inputs
----
+______________________________________________________________________
+
+## description: Обновление flake inputs
 
 # Обновление Flake
 
@@ -19,13 +19,9 @@ nix flake lock --update-input home-manager
 
 ## Частые inputs
 
-| Input | Описание |
-|-------|----------|
-| `nixpkgs` | Main package repository |
-| `home-manager` | User config management |
-| `nvf` | Neovim flake |
-| `lanzaboote` | Secure boot |
-| `sops-nix` | Secrets management |
+| Input | Описание | |-------|----------| | `nixpkgs` | Main package repository | | `home-manager` |
+User config management | | `nvf` | Neovim flake | | `lanzaboote` | Secure boot | | `sops-nix` |
+Secrets management |
 
 ## Пересборка после обновления
 

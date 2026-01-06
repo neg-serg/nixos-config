@@ -1,6 +1,6 @@
----
-description: Отладка greetd и проблем входа
----
+______________________________________________________________________
+
+## description: Отладка greetd и проблем входа
 
 # Отладка Greeter
 
@@ -45,12 +45,9 @@ ls -la /run/greetd/
 
 ## Частые проблемы
 
-| Проблема | Решение |
-|----------|---------|
-| AppArmor blocking | Проверьте `aa-status`, добавьте профиль |
-| Missing greeter.qml | Проверьте `files/quickshell/greeter/` |
-| PAM errors | Проверьте sessionVariables на спецсимволы |
-| Black screen | Проверьте логи Hyprland |
+| Проблема | Решение | |----------|---------| | AppArmor blocking | Проверьте `aa-status`, добавьте
+профиль | | Missing greeter.qml | Проверьте `files/quickshell/greeter/` | | PAM errors | Проверьте
+sessionVariables на спецсимволы | | Black screen | Проверьте логи Hyprland |
 
 ## Перезапуск Greeter
 

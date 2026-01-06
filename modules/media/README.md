@@ -4,15 +4,11 @@ Audio, video, and image processing tools.
 
 ## Structure
 
-| Path | Purpose |
-|------|---------|
-| `audio/` | PipeWire, audio tools, MPD |
-| `images/` | Image viewers/editors |
-| `scripts/` | Media processing scripts |
-| `ai-upscale-packages.nix` | AI video upscaling (RealESRGAN) |
-| `multimedia-packages.nix` | FFmpeg, mediainfo, etc. |
-| `vapoursynth-packages.nix` | VapourSynth frame server |
-| `deepfacelab-docker.nix` | DeepFaceLab container |
+| Path | Purpose | |------|---------| | `audio/` | PipeWire, audio tools, MPD | | `images/` | Image
+viewers/editors | | `scripts/` | Media processing scripts | | `ai-upscale-packages.nix` | AI video
+upscaling (RealESRGAN) | | `multimedia-packages.nix` | FFmpeg, mediainfo, etc. | |
+`vapoursynth-packages.nix` | VapourSynth frame server | | `deepfacelab-docker.nix` | DeepFaceLab
+container |
 
 ## Key Features
 

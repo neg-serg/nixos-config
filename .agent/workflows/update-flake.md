@@ -1,6 +1,6 @@
----
-description: Update flake inputs to latest versions
----
+______________________________________________________________________
+
+## description: Update flake inputs to latest versions
 
 # Update Flake
 
@@ -19,13 +19,9 @@ nix flake lock --update-input home-manager
 
 ## Common Inputs
 
-| Input | Description |
-|-------|-------------|
-| `nixpkgs` | Main package repository |
-| `home-manager` | User config management |
-| `nvf` | Neovim flake |
-| `lanzaboote` | Secure boot |
-| `sops-nix` | Secrets management |
+| Input | Description | |-------|-------------| | `nixpkgs` | Main package repository | |
+`home-manager` | User config management | | `nvf` | Neovim flake | | `lanzaboote` | Secure boot | |
+`sops-nix` | Secrets management |
 
 ## Rebuild After Update
 

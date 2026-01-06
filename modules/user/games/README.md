@@ -4,12 +4,9 @@ Gaming configuration for Steam, Gamescope, VR, and performance optimization.
 
 ## Structure
 
-| File | Purpose |
-|------|---------|
-| `default.nix` | Entry point with options |
-| `launchers.nix` | Steam, Heroic, Prismlauncher |
-| `performance.nix` | Gamescope presets, Gamemode, MangoHud |
-| `vr.nix` | SteamVR, DeoVR launchers |
+| File | Purpose | |------|---------| | `default.nix` | Entry point with options | | `launchers.nix`
+| Steam, Heroic, Prismlauncher | | `performance.nix` | Gamescope presets, Gamemode, MangoHud | |
+`vr.nix` | SteamVR, DeoVR launchers |
 
 ## Options
 
