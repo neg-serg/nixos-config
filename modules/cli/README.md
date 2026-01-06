@@ -1,21 +1,19 @@
-# CLI Module / Модуль CLI
+# CLI Module
 
 Command-line interface tools and utilities.
 
-Инструменты и утилиты командной строки.
+## Structure
 
-## Structure / Структура
+Organized by category:
 
-Organized by category / Организовано по категориям:
+- File management
+- Text processing
+- System utilities
+- Network tools
+- Compression/archiving
 
-- File management / Управление файлами
-- Text processing / Обработка текста
-- System utilities / Системные утилиты
-- Network tools / Сетевые инструменты
-- Compression/archiving / Архивирование
-
-## Feature Toggle / Переключатель
+## Feature Toggle
 
 ```nix
-features.cli.enable = true;  # Enable CLI tools / Включить
+features.cli.enable = true;  # Enable CLI tools
 ```
