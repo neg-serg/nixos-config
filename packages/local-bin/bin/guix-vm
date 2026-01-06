@@ -4,10 +4,9 @@ set -euo pipefail
 # Configuration
 VM_DIR="$HOME/vms/guix"
 # Use ftpmirror.gnu.org for automatic mirror selection (faster than ftp.gnu.org)
-# Using compressed ISO (xz) - ~350MB instead of ~800MB
-ISO_URL="https://ftpmirror.gnu.org/gnu/guix/guix-system-install-1.4.0.x86_64-linux.iso.xz"
+# 1.4.0 ISO is not compressed on the mirror
+ISO_URL="https://ftpmirror.gnu.org/gnu/guix/guix-system-install-1.4.0.x86_64-linux.iso"
 ISO_FILE="$VM_DIR/guix-install.iso"
-ISO_FILE_XZ="$VM_DIR/guix-install.iso.xz"
 DISK_FILE="$VM_DIR/guix.qcow2"
 DISK_SIZE="50G"
 MEMORY="4G"
@@ -30,16 +29,13 @@ if [ ! -f "$ISO_FILE" ]; then
     echo "URL: $ISO_URL"
     # Prefer aria2c for multi-threaded download, fallback to wget
     if command -v aria2c &> /dev/null; then
-        aria2c --enable-rpc=false -x 16 -s 16 -k 1M -d "$VM_DIR" -o "$(basename "$ISO_FILE_XZ")" "$ISO_URL"
+        aria2c --enable-rpc=false -x 16 -s 16 -k 1M -d "$VM_DIR" -o "$(basename "$ISO_FILE")" "$ISO_URL"
     elif command -v wget &> /dev/null; then
-        wget --no-config -O "$ISO_FILE_XZ" "$ISO_URL" --show-progress
+        wget --no-config -O "$ISO_FILE" "$ISO_URL" --show-progress
     else
         echo "Error: Neither aria2c nor wget found. Please install one."
         exit 1
     fi
-    echo "Decompressing ISO..."
-    xz -dk "$ISO_FILE_XZ"
-    rm -f "$ISO_FILE_XZ"
 fi
 
 if [ ! -f "$DISK_FILE" ]; then
