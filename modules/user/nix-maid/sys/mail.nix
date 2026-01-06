@@ -77,7 +77,7 @@ in {
         description = "Sync mail via mbsync (gmail)";
         path = [
           pkgs.pass # password manager for PassCmd
-          pkgs.gnupg # required by pass
+          # gnupg is installed via gpg.nix
         ];
         serviceConfig = {
           Type = "simple";
@@ -102,7 +102,7 @@ in {
         description = "IMAP Notify (gmail)";
         path = [
           pkgs.pass # password manager for passwordCmd
-          pkgs.gnupg # required by pass
+          # gnupg is installed via gpg.nix
         ];
         serviceConfig = {
           Type = "simple";
