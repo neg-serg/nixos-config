@@ -3,7 +3,7 @@
   # system level so they are available even outside the shell sessions.
   environment.systemPackages = [
     pkgs.himalaya # async email CLI with IMAP/SMTP sync + TUI prompts
-    pkgs.isync # mbsync; IMAP mirror used by neomutt
+    # pkgs.isync is installed via nix-maid/sys/mail.nix with full mbsync config
     pkgs.kyotocabinet # DB backend for himalaya cache (faster than sqlite)
     pkgs.neomutt # terminal mail client for full-screen workflows
     pkgs.vdirsyncer # Cal/CardDAV sync to keep contacts/calendars local
