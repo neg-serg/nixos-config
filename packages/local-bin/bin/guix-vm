@@ -30,7 +30,7 @@ if [ ! -f "$ISO_FILE" ]; then
     echo "URL: $ISO_URL"
     # Prefer aria2c for multi-threaded download, fallback to wget
     if command -v aria2c &> /dev/null; then
-        aria2c -x 16 -s 16 -k 1M -d "$VM_DIR" -o "$(basename "$ISO_FILE_XZ")" "$ISO_URL"
+        aria2c --enable-rpc=false -x 16 -s 16 -k 1M -d "$VM_DIR" -o "$(basename "$ISO_FILE_XZ")" "$ISO_URL"
     elif command -v wget &> /dev/null; then
         wget --no-config -O "$ISO_FILE_XZ" "$ISO_URL" --show-progress
     else
