@@ -20,6 +20,11 @@ let
         default = name;
         description = "Relative path of the target file (defaults to attribute name).";
       };
+      executable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether the file should be executable.";
+      };
     };
   });
 
@@ -54,7 +59,7 @@ in
               let
                  # If text is provided, write it to the store and use that as source
                  src = if file.text != null 
-                       then pkgs.writeText (builtins.baseNameOf name) file.text 
+                       then (if file.executable then pkgs.writeScript else pkgs.writeText) (builtins.baseNameOf name) file.text 
                        else file.source;
                  targetPath = "${homeDir}/${file.target}";
                  targetDir = builtins.dirOf targetPath;
