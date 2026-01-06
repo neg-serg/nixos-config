@@ -20,7 +20,6 @@ with lib; let
     else {common = [];};
   nativeMessagingHosts = [
     pkgs.pywalfox-native # native host for Pywalfox (theme colors)
-    pkgs.tridactyl-native # native host for Tridactyl extension
   ];
 
   baseSettings = {
@@ -367,7 +366,7 @@ with lib; let
       # Explicitly block Tampermonkey userscript manager
       "firefox@tampermonkey.net" = {installation_mode = "blocked";};
 
-      # Tridactyl - vim-like keyboard navigation
+      # Tridactyl - vim-like keyboard navigation (disabled in favor of surfingkeys)
       "tridactyl.vim@cmcaine.co.uk" = {
         installation_mode = "blocked";
       };
@@ -589,7 +588,7 @@ with lib; let
     ]);
   };
 in {
-  inherit nativeMessagingHosts settings extraConfig userChrome policies addons buildFirefoxXpiAddon remoteXpiAddon themeAddon mkMozillaModule mkProfileFiles mkExtensionFiles tridactylUserContent surfingkeysUserContent;
+  inherit nativeMessagingHosts settings extraConfig userChrome policies addons buildFirefoxXpiAddon remoteXpiAddon themeAddon mkMozillaModule mkProfileFiles mkExtensionFiles surfingkeysUserContent;
   # mkBrowser: build a module fragment for programs.<name> (Home Manager style)
   mkBrowser = {
     name,
@@ -630,9 +629,7 @@ in {
       extensions = {packages = (addons.common or []) ++ addonsExtra;};
       settings = mergedSettings;
       userChrome = userChromeInjected;
-      # Clamp Tridactyl overlay sizes globally via userContent.css
-      # Clamp Tridactyl overlay sizes globally via userContent.css
-      userContent = tridactylUserContent + surfingkeysUserContent;
+      userContent = surfingkeysUserContent;
       inherit extraConfig;
     };
     profile = profileBase // profileExtra;
