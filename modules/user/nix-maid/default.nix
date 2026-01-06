@@ -32,7 +32,7 @@
     ./cli/broot.nix
     ./cli/tig.nix
     ./cli/tewi.nix
-    ./cli/yazi.nix
+    # ./cli/yazi.nix is imported via ./cli
     ./cli/television.nix
     ./cli/envs.nix
     ./cli/emulators.nix
@@ -57,11 +57,10 @@
     ./sys/misc.nix
 
     # Web & Browsing
-    ./web/defaults.nix
-    ./web/browsing.nix
+    ./web/browsing.nix # includes defaults.nix, librewolf.nix
     ./web/firefox.nix
     ./web/floorp.nix
-    ./web/librewolf.nix
+    # ./web/librewolf.nix is imported via ./web/browsing.nix
     ./web/chrome.nix
     ./web/brave.nix
     ./web/vivaldi.nix
