@@ -1,20 +1,22 @@
-# Media Module / Модуль медиа
+# Media Module
 
 Audio, video, and image processing tools.
 
-Инструменты для работы с аудио, видео и изображениями.
+## Structure
 
-## Structure / Структура
+| Path | Purpose |
+|------|---------|
+| `audio/` | PipeWire, audio tools, MPD |
+| `images/` | Image viewers/editors |
+| `scripts/` | Media processing scripts |
+| `ai-upscale-packages.nix` | AI video upscaling (RealESRGAN) |
+| `multimedia-packages.nix` | FFmpeg, mediainfo, etc. |
+| `vapoursynth-packages.nix` | VapourSynth frame server |
+| `deepfacelab-docker.nix` | DeepFaceLab container |
 
-| Path | Purpose / Назначение | |------|---------| | `audio/` | PipeWire, audio tools, MPD | |
-`images/` | Image viewers/editors / Просмотрщики | | `scripts/` | Media processing scripts / Скрипты
-| | `ai-upscale-packages.nix` | AI video upscaling (RealESRGAN) | | `multimedia-packages.nix` |
-FFmpeg, mediainfo, etc. | | `vapoursynth-packages.nix` | VapourSynth frame server | |
-`deepfacelab-docker.nix` | DeepFaceLab container |
+## Key Features
 
-## Key Features / Возможности
-
-### AI Upscaling / AI-апскейл
+### AI Upscaling
 
 Video upscaling with RealESRGAN:
 
@@ -22,19 +24,15 @@ Video upscaling with RealESRGAN:
 ai-upscale-video input.mp4 --anime --scale 4
 ```
 
-### Audio / Аудио
+### Audio
 
 PipeWire with low-latency configuration for gaming and music.
-
-PipeWire с низкой задержкой для игр и музыки.
 
 ### VapourSynth
 
 Frame-by-frame video processing integrated with mpv.
 
-Покадровая обработка видео, интегрированная с mpv.
-
-## Related / См. также
+## Related
 
 - `modules/user/nix-maid/apps/mpv/` — mpv player
 - `modules/servers/mpd/` — Music Player Daemon

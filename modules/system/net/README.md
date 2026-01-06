@@ -1,17 +1,14 @@
-# Network Module / Модуль сети
+# Network Module
 
 Networking configuration and VPN.
 
-Конфигурация сети и VPN.
-
-## Documentation / Документация
+## Documentation
 
 - Sing-box tun service notes: `../../docs/runbooks/sing-box-tun-notes.ru.md`
-- Заметки по sing-box tun: `../../docs/runbooks/sing-box-tun-notes.ru.md`
 
-## Includes / Включает
+## Includes
 
-- NetworkManager / Менеджер сети
-- Firewall rules / Правила файрвола
-- VPN clients (WireGuard, sing-box) / VPN клиенты
-- DNS configuration / Конфигурация DNS
+- NetworkManager
+- Firewall rules
+- VPN clients (WireGuard, sing-box)
+- DNS configuration

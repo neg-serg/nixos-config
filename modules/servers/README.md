@@ -1,31 +1,33 @@
-# Servers Module / Модуль серверов
+# Servers Module
 
 Server profiles and service configuration.
 
-Профили серверов и конфигурация сервисов.
-
-## Enable Services / Включение сервисов
+## Enable Services
 
 ```nix
 profiles.services.<name>.enable = true;
-# or / или
+# or
 servicesProfiles.<name>.enable = true;
 ```
 
-## Available Services / Доступные сервисы
+## Available Services
 
-| Service | Port | Description / Описание | |---------|------|------------------------| | `openssh`
-| 22/TCP | SSH server | | `mpd` | 6600/TCP | Music Player Daemon | | `jellyfin` | 8096/TCP | Media
-streaming | | `adguardhome` | 53, 3000 | DNS filtering | | `unbound` | 5353/TCP | DNS resolver | |
-`duckdns` | - | Dynamic DNS |
+| Service | Port | Description |
+|---------|------|-------------|
+| `openssh` | 22/TCP | SSH server |
+| `mpd` | 6600/TCP | Music Player Daemon |
+| `jellyfin` | 8096/TCP | Media streaming |
+| `adguardhome` | 53, 3000 | DNS filtering |
+| `unbound` | 5353/TCP | DNS resolver |
+| `duckdns` | - | Dynamic DNS |
 
-## DNS Stack / Стек DNS
+## DNS Stack
 
 ```
 Apps → systemd-resolved (127.0.0.53) → AdGuardHome (127.0.0.1:53) → Unbound (127.0.0.1:5353)
 ```
 
-## DNS Healthcheck / Проверка DNS
+## DNS Healthcheck
 
 ```bash
 systemctl status adguardhome unbound systemd-resolved
@@ -34,7 +36,6 @@ resolvectl status
 resolvectl query example.com
 ```
 
-## Policy / Политика
+## Policy
 
 - No eval warnings — modules must not emit `warnings`, `trace`, or `lib.warn`
-- Без warnings при eval — модули не должны вызывать `warnings`, `trace`, `lib.warn`

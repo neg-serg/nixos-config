@@ -1,16 +1,12 @@
-# Secrets Module / Модуль секретов
+# Secrets Module
 
 Secret management with sops-nix.
 
-Управление секретами с помощью sops-nix.
-
-## Structure / Структура
+## Structure
 
 Encrypted secrets stored in `secrets/` and decrypted at build time.
 
-Зашифрованные секреты хранятся в `secrets/` и расшифровываются при сборке.
-
-## Usage / Использование
+## Usage
 
 ```nix
 sops.secrets.my-secret = {

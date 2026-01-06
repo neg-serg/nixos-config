@@ -1,15 +1,11 @@
-# Profiles Module / Модуль профилей
+# Profiles Module
 
 Host profiles for different machine types.
 
-Профили хостов для разных типов машин.
-
-## Usage / Использование
+## Usage
 
 ```nix
 imports = [ profiles.workstation ];
 ```
 
 Profiles compose multiple modules for specific use cases.
-
-Профили объединяют модули для конкретных сценариев использования.
