@@ -1,6 +1,6 @@
----
-description: Запуск линтера и исправление проблем
----
+______________________________________________________________________
+
+## description: Запуск линтера и исправление проблем
 
 # Линтинг
 
@@ -14,14 +14,9 @@ just fmt     # Форматирование
 
 ## Доступные проверки
 
-| Проверка | Описание |
-|----------|----------|
-| `alejandra` | Nix formatter |
-| `deadnix` | Unused Nix code |
-| `statix` | Nix linter |
-| `ruff` | Python linter |
-| `black` | Python formatter |
-| `shellcheck` | Shell script linter |
+| Проверка | Описание | |----------|----------| | `alejandra` | Nix formatter | | `deadnix` | Unused
+Nix code | | `statix` | Nix linter | | `ruff` | Python linter | | `black` | Python formatter | |
+`shellcheck` | Shell script linter |
 
 ## Исправление частых проблем
 

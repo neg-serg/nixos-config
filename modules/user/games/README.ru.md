@@ -4,12 +4,9 @@
 
 ## Структура
 
-| Файл | Назначение |
-|------|------------|
-| `default.nix` | Точка входа с опциями |
-| `launchers.nix` | Steam, Heroic, Prismlauncher |
-| `performance.nix` | Gamescope presets, Gamemode, MangoHud |
-| `vr.nix` | Лаунчеры VR (SteamVR, DeoVR) |
+| Файл | Назначение | |------|------------| | `default.nix` | Точка входа с опциями | |
+`launchers.nix` | Steam, Heroic, Prismlauncher | | `performance.nix` | Gamescope presets, Gamemode,
+MangoHud | | `vr.nix` | Лаунчеры VR (SteamVR, DeoVR) |
 
 ## Опции
 

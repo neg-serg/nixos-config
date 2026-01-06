@@ -1,16 +1,14 @@
----
-description: Configure Hyprland keybindings
----
+______________________________________________________________________
+
+## description: Configure Hyprland keybindings
 
 # Hyprland Keybindings
 
 ## Configuration Files
 
-| File | Purpose |
-|------|---------|
-| `files/gui/hypr/bindings/apps.conf` | Application launchers |
-| `files/gui/hypr/bindings/special.conf` | Special keys |
-| `files/gui/hypr/bindings/wm.conf` | Window management |
+| File | Purpose | |------|---------| | `files/gui/hypr/bindings/apps.conf` | Application launchers
+| | `files/gui/hypr/bindings/special.conf` | Special keys | | `files/gui/hypr/bindings/wm.conf` |
+Window management |
 
 ## Syntax
 

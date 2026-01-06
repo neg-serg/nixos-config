@@ -1,6 +1,6 @@
----
-description: Rebuild NixOS configuration
----
+______________________________________________________________________
+
+## description: Rebuild NixOS configuration
 
 # Rebuild NixOS
 
@@ -32,12 +32,9 @@ sudo nixos-rebuild switch --flake .#telfir
 
 ## Options
 
-| Flag | Description |
-|------|-------------|
-| `--flake .#host` | Use flake for host |
-| `--show-trace` | Show error trace |
-| `--dry-run` | Preview changes |
-| `--upgrade` | Update flake inputs |
+| Flag | Description | |------|-------------| | `--flake .#host` | Use flake for host | |
+`--show-trace` | Show error trace | | `--dry-run` | Preview changes | | `--upgrade` | Update flake
+inputs |
 
 ## Troubleshooting
 

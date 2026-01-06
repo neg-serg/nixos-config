@@ -4,17 +4,11 @@
 
 ## Структура
 
-| Директория | Назначение |
-|------------|------------|
-| `gui/` | Hyprland, waybar, desktop configs |
-| `shell/` | Zsh, bash, environment |
-| `kitty/` | Kitty terminal |
-| `nvim/` | Neovim configuration |
-| `git/` | Git config and ignore |
-| `quickshell/` | Status bar and greeter |
-| `rofi/` | Rofi scripts and wrappers |
-| `config/` | Misc app configs |
-| `wallust/` | Color scheme generator |
+| Директория | Назначение | |------------|------------| | `gui/` | Hyprland, waybar, desktop configs
+| | `shell/` | Zsh, bash, environment | | `kitty/` | Kitty terminal | | `nvim/` | Neovim
+configuration | | `git/` | Git config and ignore | | `quickshell/` | Status bar and greeter | |
+`rofi/` | Rofi scripts and wrappers | | `config/` | Misc app configs | | `wallust/` | Color scheme
+generator |
 
 ## Использование
 

@@ -1,6 +1,6 @@
----
-description: Add a new package to the configuration
----
+______________________________________________________________________
+
+## description: Add a new package to the configuration
 
 # Add Package
 

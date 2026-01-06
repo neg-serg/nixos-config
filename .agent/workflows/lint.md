@@ -1,6 +1,6 @@
----
-description: Run linting and fix issues
----
+______________________________________________________________________
+
+## description: Run linting and fix issues
 
 # Linting
 
@@ -14,14 +14,9 @@ just fmt     # Format code
 
 ## Available Checks
 
-| Check | Description |
-|-------|-------------|
-| `alejandra` | Nix formatter |
-| `deadnix` | Unused Nix code |
-| `statix` | Nix linter |
-| `ruff` | Python linter |
-| `black` | Python formatter |
-| `shellcheck` | Shell script linter |
+| Check | Description | |-------|-------------| | `alejandra` | Nix formatter | | `deadnix` | Unused
+Nix code | | `statix` | Nix linter | | `ruff` | Python linter | | `black` | Python formatter | |
+`shellcheck` | Shell script linter |
 
 ## Fix Common Issues
 

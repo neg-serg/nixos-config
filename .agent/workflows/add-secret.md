@@ -1,6 +1,6 @@
----
-description: Add secrets with sops-nix
----
+______________________________________________________________________
+
+## description: Add secrets with sops-nix
 
 # Add Secret
 
@@ -59,9 +59,5 @@ sops updatekeys secrets/my-secrets.yaml
 
 ## Common Secret Types
 
-| Type | Usage |
-|------|-------|
-| API keys | External services |
-| Passwords | Database, services |
-| SSH keys | Git, automation |
-| Certificates | TLS, VPN |
+| Type | Usage | |------|-------| | API keys | External services | | Passwords | Database, services
+| | SSH keys | Git, automation | | Certificates | TLS, VPN |
