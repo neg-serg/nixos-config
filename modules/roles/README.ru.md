@@ -1,23 +1,33 @@
-# Роли: краткая шпаргалка
+# Справочник по ролям
 
-- Включайте роль в конфиге хоста:
+## Включение ролей
 
-  - `roles.workstation.enable = true;` — рабочая станция (профиль производительности, SSH, Avahi).
-  - `roles.homelab.enable = true;` — селф‑хостинг (профиль безопасности, DNS, SSH, MPD).
-  - `roles.media.enable = true;` — медиа‑серверы (Jellyfin, MPD, Avahi, SSH).
-  - `roles.server.enable = true;` — headless/сервер по умолчанию (включает smartd по умолчанию).
+```nix
+roles.workstation.enable = true;  # Настройки рабочей станции
+roles.homelab.enable = true;      # Домашний сервер
+roles.media.enable = true;        # Медиа сервера
+roles.server.enable = true;       # Серверные настройки
+```
 
-- Переопределяйте тумблеры сервисов через `profiles.services.<name>.enable` (алиас:
-  `servicesProfiles.<name>.enable`).
+## Возможности ролей
 
-  - Пример: `profiles.services.jellyfin.enable = false;`
+| Роль | Возможности |
+|------|-------------|
+| `workstation` | Профиль производительности, SSH, Avahi |
+| `homelab` | Профиль безопасности, DNS, SSH, MPD |
+| `media` | Jellyfin, MPD, Avahi, SSH |
+| `server` | Headless, smartd по умолчанию |
 
-- Типичные дальнейшие шаги по ролям:
+## Переопределение сервисов
 
-  - Workstation: настроить стек игр в `profiles.games.*` и `modules/user/games`.
-  - Homelab: задать DNS‑переписывания в `servicesProfiles.adguardhome.rewrites`, определить
-    хост‑специфичные пути для медиа/резервных копий в `hosts/<host>/services.nix`.
-  - Media: указать пути/порты для MPD; Jellyfin открывает нужные порты сам при включении.
+```nix
+profiles.services.<name>.enable = false;
+# Пример:
+profiles.services.jellyfin.enable = false;
+```
 
-- Документация: агрегированные опции доступны через flake‑артефакт
-  `packages.${system}."options-md"`, когда собран.
+## Следующие шаги
+
+- **Workstation**: Настроить игры в `profiles.games.*` и `modules/user/games`
+- **Homelab**: Установить DNS rewrites в `servicesProfiles.adguardhome.rewrites`
+- **Media**: Установить медиа-пути/порты для MPD

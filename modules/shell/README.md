@@ -1,16 +1,14 @@
-# Shell Module / Модуль оболочки
+# Shell Module
 
 Shell configuration (Zsh, Bash).
 
-Конфигурация оболочки (Zsh, Bash).
-
-## Includes / Включает
+## Includes
 
 - Zsh with plugins (f-sy-h, autosuggestions)
-- Oh My Posh prompt / Промпт Oh My Posh
-- Shell aliases / Алиасы
-- Environment variables / Переменные окружения
+- Oh My Posh prompt
+- Shell aliases
+- Environment variables
 
-## See Also / См. также
+## See Also
 
 - `modules/user/nix-maid/cli/shells.nix` — detailed config

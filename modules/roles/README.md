@@ -1,29 +1,32 @@
-# Roles: Quick Reference / Справочник по ролям
+# Roles: Quick Reference
 
-## Enable Roles / Включение ролей
+## Enable Roles
 
 ```nix
-roles.workstation.enable = true;  # Desktop defaults / Настройки рабочей станции
-roles.homelab.enable = true;      # Self-hosting defaults / Домашний сервер
-roles.media.enable = true;        # Media servers / Медиа сервера
-roles.server.enable = true;       # Headless/server defaults / Серверные настройки
+roles.workstation.enable = true;  # Desktop defaults
+roles.homelab.enable = true;      # Self-hosting defaults
+roles.media.enable = true;        # Media servers
+roles.server.enable = true;       # Headless/server defaults
 ```
 
-## Role Features / Возможности ролей
+## Role Features
 
-| Role | Features / Возможности | |------|----------------------| | `workstation` | Performance
-profile, SSH, Avahi | | `homelab` | Security profile, DNS, SSH, MPD | | `media` | Jellyfin, MPD,
-Avahi, SSH | | `server` | Headless, smartd by default |
+| Role | Features |
+|------|----------|
+| `workstation` | Performance profile, SSH, Avahi |
+| `homelab` | Security profile, DNS, SSH, MPD |
+| `media` | Jellyfin, MPD, Avahi, SSH |
+| `server` | Headless, smartd by default |
 
-## Override Services / Переопределение сервисов
+## Override Services
 
 ```nix
 profiles.services.<name>.enable = false;
-# Example / Пример:
+# Example:
 profiles.services.jellyfin.enable = false;
 ```
 
-## Typical Next Steps / Следующие шаги
+## Typical Next Steps
 
 - **Workstation**: Adjust games in `profiles.games.*` and `modules/user/games`
 - **Homelab**: Set DNS rewrites in `servicesProfiles.adguardhome.rewrites`

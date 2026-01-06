@@ -1,36 +1,37 @@
-# Games Module / Модуль игр
+# Games Module
 
 Gaming configuration for Steam, Gamescope, VR, and performance optimization.
 
-Конфигурация для игр: Steam, Gamescope, VR и оптимизация производительности.
+## Structure
 
-## Structure / Структура
+| File | Purpose |
+|------|---------|
+| `default.nix` | Entry point with options |
+| `launchers.nix` | Steam, Heroic, Prismlauncher |
+| `performance.nix` | Gamescope presets, Gamemode, MangoHud |
+| `vr.nix` | SteamVR, DeoVR launchers |
 
-| File | Purpose / Назначение | |------|---------| | `default.nix` | Entry point with options /
-Точка входа с опциями | | `launchers.nix` | Steam, Heroic, Prismlauncher | | `performance.nix` |
-Gamescope presets, Gamemode, MangoHud | | `vr.nix` | SteamVR, DeoVR launchers / Лаунчеры VR |
-
-## Options / Опции
+## Options
 
 ```nix
 profiles.games = {
-  enable = true;              # Enable gaming stack / Включить игры
+  enable = true;              # Enable gaming stack
   autoscaleDefault = false;   # Auto-scale FPS heuristics
   targetFps = 240;            # Target FPS for autoscale
   nativeBaseFps = 240;        # Baseline for autoscale
 };
 ```
 
-## Scripts / Скрипты
+## Scripts
 
 Scripts in `packages/game-scripts/`:
 
-- `game-run` — Main launcher with CPU pinning / Лаунчер с привязкой к CPU
+- `game-run` — Main launcher with CPU pinning
 - `gamescope-perf` — FSR downscale preset
 - `gamescope-quality` — Native resolution preset
 - `gamescope-hdr` — HDR pipeline preset
 
-## Usage / Использование
+## Usage
 
 ```bash
 game-run %command%                    # CPU pinning only

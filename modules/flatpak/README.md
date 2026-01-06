@@ -1,16 +1,14 @@
-# Flatpak Module / Модуль Flatpak
+# Flatpak Module
 
 Flatpak integration for containerized applications.
 
-Интеграция Flatpak для контейнерных приложений.
-
-## Configuration / Конфигурация
+## Configuration
 
 ```nix
 services.flatpak.enable = true;
 ```
 
-## Usage / Использование
+## Usage
 
 ```bash
 flatpak install flathub org.example.App
