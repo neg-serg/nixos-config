@@ -27,7 +27,7 @@ in
 {
   options.users.users = lib.mkOption {
     type = lib.types.attrsOf (lib.types.submodule {
-      options.home.file = lib.mkOption {
+      options.homeFiles = lib.mkOption {
         type = lib.types.attrsOf fileType;
         default = { };
         description = "Set of files to be managed in the user's home directory.";
@@ -38,7 +38,7 @@ in
   config.system.activationScripts = lib.mkMerge (
     lib.mapAttrsToList (user: userConfig:
       let
-        files = userConfig.home.file;
+        files = userConfig.homeFiles;
         homeDir = userConfig.home; # NixOS defines this string option
         scriptName = "home-manager-lite-${user}";
       in
