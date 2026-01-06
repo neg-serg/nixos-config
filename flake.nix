@@ -131,7 +131,7 @@
     nixosConfigurations = import ./flake/nixos.nix {
       inherit inputs nixpkgs self;
       filteredSource = lib.cleanSourceWith {
-        filter = name: type: ! (lib.hasSuffix ".md" (builtins.baseNameOf name));
+        filter = name: _type: ! (lib.hasSuffix ".md" (builtins.baseNameOf name));
         src = lib.cleanSource ./.;
       };
     };
