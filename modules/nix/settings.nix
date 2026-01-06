@@ -44,13 +44,14 @@ in {
           "root"
           (config.users.main.name or "neg")
         ];
-        connect-timeout = 5; # Bail early on missing cache hits (thx to nyx)
-        http-connections = 3; # Limit parallel HTTP connections (replaces obsolete binary-caches-parallel-connections)
+        connect-timeout = 5; # Bail early on missing cache hits
+        stalled-download-timeout = 5; # Abort stalled downloads quickly
+        http-connections = 3; # Limit parallel HTTP connections
         cores = 0; # Use all available cores per build
         max-jobs = "auto"; # Use all available cores
         use-xdg-base-directories = true;
         warn-dirty = false; # Disable annoying dirty warn
-        download-attempts = 2;
+        download-attempts = 1; # Fast failure on unavailable caches
         # Deduplicate the Nix store on writes
         auto-optimise-store = lib.mkDefault true;
       }
