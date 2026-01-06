@@ -22,10 +22,10 @@ buildNpmPackage {
   buildPhase = ''
     runHook preBuild
     cat > ./src/conf.priv.js <<EOF
-    const handler = { get: (target, prop) => (prop in target ? target[prop] : "") };
-    const keys = new Proxy({}, handler);
-    export default new Proxy({ keys }, handler);
-    EOF
+const handler = { get: (target, prop) => (prop in target ? target[prop] : "") };
+const keys = new Proxy({}, handler);
+export default new Proxy({ keys }, handler);
+EOF
     
     # Inject custom mappings if provided
     if [ -n "${toString customConfig}" ] && [ -f "${toString customConfig}" ]; then
@@ -36,6 +36,9 @@ buildNpmPackage {
       # Extract mappings (214-end)
       sed -n '214,$p' "${toString customConfig}" >> ./src/index.js
 
+      # Inject tabOpenLink into the destructuring if not already present
+      sed -i 's/addSearchAlias,/addSearchAlias, tabOpenLink,/' ./src/index.js
+
       # Smart Omnibar logic: If input contains dots and no spaces, treat as URL.
       # Otherwise, use the default search engine (DuckDuckGo).
       cat >> ./src/index.js <<JS
@@ -45,14 +48,14 @@ const smartDispatch = (input, newTab) => {
   if (isURL) {
     const url = input.match(/^https?:\/\//) ? input : "https://" + input;
     if (newTab) {
-      RUNTIME("openLink", { tab: { tabbed: true }, url });
+      tabOpenLink(url);
     } else {
       window.location.href = url;
     }
   } else {
     const searchURL = "https://duckduckgo.com/?q=" + encodeURIComponent(input);
     if (newTab) {
-      RUNTIME("openLink", { tab: { tabbed: true }, url: searchURL });
+      tabOpenLink(searchURL);
     } else {
       window.location.href = searchURL;
     }
@@ -78,31 +81,31 @@ JS
     fi
 
     cat > build.mjs <<EOF
-    import webpack from 'webpack';
-    import config from './webpack.config.js';
-    import path from 'path';
-    import { fileURLToPath } from 'url';
+import webpack from 'webpack';
+import config from './webpack.config.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-    config.mode = 'production';
-    config.output = {
-      path: path.join(__dirname, 'build'),
-      filename: 'surfingkeys.js',
-    };
+config.mode = 'production';
+config.output = {
+  path: path.join(__dirname, 'build'),
+  filename: 'surfingkeys.js',
+};
 
-    webpack(config, (err, stats) => {
-      if (err) {
-        console.error(err);
-        process.exit(1);
-      }
-      if (stats.hasErrors()) {
-        console.error(stats.toString());
-        process.exit(1);
-      }
-      console.log('Build complete');
-    });
-    EOF
+webpack(config, (err, stats) => {
+  if (err) {
+    console.error(err);
+    process.exit(1);
+  }
+  if (stats.hasErrors()) {
+    console.error(stats.toString());
+    process.exit(1);
+  }
+  console.log('Build complete');
+});
+EOF
     node build.mjs
     runHook postBuild
   '';
