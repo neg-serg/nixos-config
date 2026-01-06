@@ -70,7 +70,7 @@
     ./web/aria.nix
     ./web/misc.nix
     ./web/yt-dlp.nix
-    ./web/tridactyl.nix
+    # ./web/tridactyl.nix # disabled in favor of surfingkeys
 
     # Fun & Games
     ./fun/nethack.nix
