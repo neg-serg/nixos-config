@@ -1,38 +1,40 @@
-______________________________________________________________________
+---
+description: Configure Hyprland keybindings
+---
 
-## description: Configure Hyprland keybindings / Настройка клавиш Hyprland
+# Hyprland Keybindings
 
-# Hyprland Keybindings / Клавиши Hyprland
+## Configuration Files
 
-## Configuration Files / Файлы конфигурации
+| File | Purpose |
+|------|---------|
+| `files/gui/hypr/bindings/apps.conf` | Application launchers |
+| `files/gui/hypr/bindings/special.conf` | Special keys |
+| `files/gui/hypr/bindings/wm.conf` | Window management |
 
-| File | Purpose / Назначение | |------|---------------------| | `files/gui/hypr/bindings/apps.conf`
-| Application launchers | | `files/gui/hypr/bindings/special.conf` | Special keys | |
-`files/gui/hypr/bindings/wm.conf` | Window management |
-
-## Syntax / Синтаксис
+## Syntax
 
 ```
 bind = MODS, KEY, ACTION, ARGS
 ```
 
-### Modifiers / Модификаторы:
+### Modifiers:
 
 - `SUPER` (Mod4) — Windows/Super key
 - `SHIFT`
 - `CTRL`
 - `ALT`
 
-## Examples / Примеры
+## Examples
 
-### Launch application / Запуск приложения:
+### Launch application:
 
 ```
 bind = SUPER, Return, exec, kitty
 bind = SUPER, D, exec, rofi -show drun
 ```
 
-### Window control / Управление окнами:
+### Window control:
 
 ```
 bind = SUPER, Q, killactive
@@ -40,24 +42,24 @@ bind = SUPER, F, fullscreen
 bind = SUPER, Space, togglefloating
 ```
 
-### Workspaces / Рабочие столы:
+### Workspaces:
 
 ```
 bind = SUPER, 1, workspace, 1
 bind = SUPER SHIFT, 1, movetoworkspace, 1
 ```
 
-## Apply Changes / Применение изменений
+## Apply Changes
 
-After editing / После редактирования:
+After editing:
 
 ```bash
 hyprctl reload
 ```
 
-## Debug / Отладка
+## Debug
 
-Check active bindings / Проверить активные привязки:
+Check active bindings:
 
 ```bash
 hyprctl binds

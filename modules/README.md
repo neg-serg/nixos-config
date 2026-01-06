@@ -1,8 +1,6 @@
-## Modules Layout / Структура модулей
+## Modules Layout
 
 All system modules now follow a consistent pattern:
-
-Все системные модули следуют единому паттерну:
 
 - Each domain folder has a `modules.nix` that imports its submodules.
 
@@ -10,26 +8,17 @@ All system modules now follow a consistent pattern:
 
 - Host profiles (see `profiles/`) compose domains instead of importing individual files.
 
-- Каждая папка домена имеет `modules.nix`, который импортирует подмодули.
-
-- `default.nix` в домене просто импортирует `./modules.nix`.
-
-- Профили хостов (см. `profiles/`) компонуют домены вместо импорта отдельных файлов.
-
-## Primary Domains / Основные домены
+## Primary Domains
 
 `cli`, `dev`, `media`, `hardware`, `system`, `user`, `servers`, `monitoring`, `security`, `roles`,
 `nix`, `tools`, `documentation`, `appimage`, `llm`, `flatpak`, `games`, `finance`, `fun`, `text`,
 `db`, `torrent`, `fonts`, `web`, `emulators`.
 
-## Legacy Files / Устаревшие файлы
+## Legacy Files
 
-- `args.nix`, `features.nix`, `neg.nix` remain as shared wiring / остаются как общая проводка.
+- `args.nix`, `features.nix`, `neg.nix` remain as shared wiring.
 
-## Adding Modules / Добавление модулей
+## Adding Modules
 
 When adding a new module in a domain, include it in that domain's `modules.nix` rather than editing
-`default.nix`.
-
-При добавлении нового модуля в домен, добавляйте его в `modules.nix` этого домена, а не редактируйте
 `default.nix`.

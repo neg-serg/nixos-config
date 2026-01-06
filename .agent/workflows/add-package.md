@@ -1,19 +1,19 @@
-______________________________________________________________________
+---
+description: Add a new package to the configuration
+---
 
-## description: Add a new package to the configuration / Добавление нового пакета
+# Add Package
 
-# Add Package / Добавление пакета
+## Steps
 
-## Steps / Шаги
-
-1. **Find the right module** / Найти нужный модуль:
+1. **Find the right module**:
 
    - CLI tools → `modules/cli/`
    - GUI apps → `modules/user/nix-maid/apps/`
    - Dev tools → `modules/dev/`
    - Media → `modules/media/`
 
-1. **Add package with comment** / Добавить пакет с комментарием:
+1. **Add package with comment**:
 
    ```nix
    environment.systemPackages = [
@@ -21,7 +21,7 @@ ______________________________________________________________________
    ];
    ```
 
-1. **Or for user packages** / Или для пользовательских пакетов:
+1. **Or for user packages**:
 
    ```nix
    users.users.neg.packages = [
@@ -29,19 +29,19 @@ ______________________________________________________________________
    ];
    ```
 
-1. **Rebuild** / Пересобрать:
+1. **Rebuild**:
 
    ```bash
    sudo nixos-rebuild switch --flake .#telfir
    ```
 
-## Best Practices / Лучшие практики
+## Best Practices
 
-- Always add inline comment / Всегда добавляйте комментарий
-- Group related packages / Группируйте связанные пакеты
+- Always add inline comment
+- Group related packages
 - Use explicit `pkgs.package` instead of `with pkgs;`
 
-## Finding Packages / Поиск пакетов
+## Finding Packages
 
 ```bash
 nix search nixpkgs#package-name

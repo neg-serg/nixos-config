@@ -1,60 +1,65 @@
-______________________________________________________________________
+---
+description: Run linting and fix issues
+---
 
-## description: Run linting and fix issues / Запуск линтера и исправление проблем
+# Linting
 
-# Linting / Линтинг
-
-## Quick Check / Быстрая проверка
+## Quick Check
 
 ```bash
-just check   # Run all checks / Все проверки
-just lint    # Run linters only / Только линтеры
-just fmt     # Format code / Форматирование
+just check   # Run all checks
+just lint    # Run linters only
+just fmt     # Format code
 ```
 
-## Available Checks / Доступные проверки
+## Available Checks
 
-| Check | Description / Описание | |-------|----------------------| | `alejandra` | Nix formatter |
-| `deadnix` | Unused Nix code | | `statix` | Nix linter | | `ruff` | Python linter | | `black` |
-Python formatter | | `shellcheck` | Shell script linter |
+| Check | Description |
+|-------|-------------|
+| `alejandra` | Nix formatter |
+| `deadnix` | Unused Nix code |
+| `statix` | Nix linter |
+| `ruff` | Python linter |
+| `black` | Python formatter |
+| `shellcheck` | Shell script linter |
 
-## Fix Common Issues / Исправление частых проблем
+## Fix Common Issues
 
-### Nix formatting / Форматирование Nix:
+### Nix formatting:
 
 ```bash
 alejandra .
 ```
 
-### Python formatting / Форматирование Python:
+### Python formatting:
 
 ```bash
 black --line-length 79 file.py
 ```
 
-### Shell script issues / Проблемы shell:
+### Shell script issues:
 
 - Add `shellcheck disable` comments for false positives
 - Quote variables: `"$var"`
 - Use `[[ ]]` instead of `[ ]`
 
-## Pre-commit Hooks / Pre-commit хуки
+## Pre-commit Hooks
 
-Enable / Включить:
+Enable:
 
 ```bash
 just hooks-enable
 ```
 
-Disable / Отключить:
+Disable:
 
 ```bash
 just hooks-disable
 ```
 
-## Package Annotations / Аннотации пакетов
+## Package Annotations
 
-All packages need comments / Все пакеты нужны с комментариями:
+All packages need comments:
 
 ```nix
 pkgs.ripgrep  # Fast grep alternative for code search

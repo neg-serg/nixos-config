@@ -1,18 +1,18 @@
-______________________________________________________________________
+---
+description: Create a new NixOS module
+---
 
-## description: Create a new NixOS module / Создание нового модуля NixOS
+# Add Module
 
-# Add Module / Создание модуля
+## Steps
 
-## Steps / Шаги
-
-1. **Create module directory** / Создать директорию модуля:
+1. **Create module directory**:
 
    ```bash
    mkdir -p modules/my-domain/
    ```
 
-1. **Create main module file** / Создать файл модуля:
+1. **Create main module file**:
 
    ```nix
    # modules/my-domain/default.nix
@@ -21,7 +21,7 @@ ______________________________________________________________________
    }
    ```
 
-1. **Create modules.nix** / Создать modules.nix:
+1. **Create modules.nix**:
 
    ```nix
    # modules/my-domain/modules.nix
@@ -33,23 +33,21 @@ ______________________________________________________________________
    }
    ```
 
-1. **Create README.md** / Создать README.md:
+1. **Create README.md**:
 
    ```markdown
-   # My Domain Module / Модуль моего домена
+   # My Domain Module
 
    Description in English.
-   Описание на русском.
 
-   ## Includes / Включает
-   - Feature 1 / Функция 1
-   - Feature 2 / Функция 2
+   ## Includes
+   - Feature 1
+   - Feature 2
    ```
 
-1. **Add to imports** / Добавить в импорты: Edit the appropriate role or profile to import your
-   module.
+1. **Add to imports**: Edit the appropriate role or profile to import your module.
 
-## Module Structure / Структура модуля
+## Module Structure
 
 ```
 modules/my-domain/
@@ -59,8 +57,8 @@ modules/my-domain/
 └── README.md        # Documentation
 ```
 
-## Naming Conventions / Соглашения об именовании
+## Naming Conventions
 
-- Lowercase directory names / Имена директорий в нижнем регистре
-- Use hyphens for multi-word names / Дефисы для составных имён
-- `modules.nix` for submodule imports / `modules.nix` для подмодулей
+- Lowercase directory names
+- Use hyphens for multi-word names
+- `modules.nix` for submodule imports
