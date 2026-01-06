@@ -59,7 +59,6 @@ in {
       };
 
       # Additional Floorp-specific home files
-
     }
   ]);
 }

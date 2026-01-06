@@ -14,7 +14,11 @@ in {
       text = ''
         # Use symlink instead of copy for speed
         echo "Linking current flake to /etc/current-flake..."
-        ln -sfn ${if lib.hasAttr "filteredSource" specialArgs then specialArgs.filteredSource else inputs.self.outPath} /etc/current-flake
+        ln -sfn ${
+          if lib.hasAttr "filteredSource" specialArgs
+          then specialArgs.filteredSource
+          else inputs.self.outPath
+        } /etc/current-flake
       '';
       deps = [];
     };
