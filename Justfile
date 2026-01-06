@@ -30,12 +30,7 @@ cpu-masks:
 # Rebuild and switch to the new system configuration
 # Usage: just deploy [host]
 deploy host="telfir":
-    sudo nixos-rebuild switch --flake .#{{host}} --impure -L \
-      --option connect-timeout 5 \
-      --option download-attempts 1 \
-      --option fallback true \
-      --option stalled-download-timeout 5 \
-      --option substituters "https://cache.nixos.org/"
+    sudo nixos-rebuild switch --flake .#{{host}} --impure -L
 
 # Alias for deploy
 switch host="telfir":
