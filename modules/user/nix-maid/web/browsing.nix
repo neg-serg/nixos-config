@@ -18,11 +18,12 @@ in {
   imports = [
     ./defaults.nix
     ./librewolf.nix
+    ./surfingkeys-server.nix
   ];
 
   config = lib.mkMerge [
     (n.mkHomeFiles {
-      ".config/surfingkeys.js".source = "${pkgs.neg.surfingkeys-conf}/share/surfingkeys/surfingkeys.js";
+      ".config/surfingkeys.js".source = ../../../../files/surfingkeys.js;
     })
     {
       assertions = [
