@@ -103,7 +103,8 @@
         done
       '
 
-      ${pkgs.util-linux}/bin/runuser -u neg -- ${pkgs.bash}/bin/bash -c "XDG_RUNTIME_DIR=/run/user/1000 ${pkgs.systemd}/bin/systemctl --user restart maid-activation.service" || true
+      # Async restart: run in background to not block deploy, use --no-block to avoid waiting, and silence output
+      (${pkgs.util-linux}/bin/runuser -u neg -- ${pkgs.bash}/bin/bash -c "XDG_RUNTIME_DIR=/run/user/1000 ${pkgs.systemd}/bin/systemctl --user restart --no-block maid-activation.service" >/dev/null 2>&1 &) || true
     fi
   '';
 }
