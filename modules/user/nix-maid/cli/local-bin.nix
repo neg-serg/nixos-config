@@ -12,6 +12,7 @@ in {
     # Path to the source directories
     binDir = ../../../../packages/local-bin/bin;
     scriptsDir = ../../../../packages/local-bin/scripts;
+    appsDir = ../../../../packages/local-bin/share/applications;
 
     # Python library paths for special scripts
     sp = pkgs.python3.sitePackages;
@@ -61,7 +62,24 @@ in {
       map mkScriptAuto (lib.filter (n: !(lib.elem n scriptSkip)) (builtins.attrNames scriptFiles))
     );
 
-    # 3. Special cases (Substitutions)
+    # 3. Desktop files from packages/local-bin/share/applications
+    appsFiles =
+      if builtins.pathExists appsDir
+      then lib.filterAttrs (_: v: v == "regular") (builtins.readDir appsDir)
+      else {};
+
+    mkAppAuto = name: {
+      name = ".local/share/applications/${name}";
+      value = {
+        text = builtins.readFile (appsDir + "/${name}");
+      };
+    };
+
+    appsEntries = builtins.listToAttrs (
+      map mkAppAuto (builtins.attrNames appsFiles)
+    );
+
+    # 4. Special cases (Substitutions)
 
     # ren (Python) - Needs library paths
     renTpl = builtins.readFile (scriptsDir + "/ren");
@@ -91,6 +109,7 @@ in {
   in
     autoEntries
     // scriptEntries
+    // appsEntries
     // {
       ".local/bin/ren" = {
         executable = true;
