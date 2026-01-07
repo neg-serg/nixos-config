@@ -5,6 +5,7 @@
 settings.hintAlign = "left";
 settings.hintCharacters = "asdfghjkl";
 settings.omnibarSuggestion = true;
+settings.omnibarPosition = "bottom";
 settings.focusFirstCandidate = true;
 settings.scrollStepSize = 120;
 settings.smoothScroll = true;
@@ -13,21 +14,16 @@ settings.modeAfterYank = "Normal";
 // ========== Theme ==========
 settings.theme = `
 :root {
-  --font: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Monaco, Consolas, monospace;
-  --font-size: 14px;
-  --bg: #1e1e2e;
-  --bg-dark: #181825;
-  --bg-light: #313244;
-  --fg: #cdd6f4;
-  --fg-muted: #a6adc8;
-  --accent: #89b4fa;
-  --accent-hover: #b4befe;
-  --border: #45475a;
-  --green: #a6e3a1;
-  --yellow: #f9e2af;
-  --red: #f38ba8;
-  --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-size: 0.875rem;
+  --bg: #020202;
+  --bg-highlight: #13384f;
+  --fg: #f0f1ff;
+  --fg-muted: rgba(240, 241, 255, 0.6);
+  --accent: #89cdd2;
+  --border: #0a3749;
+  --hint-bg: #001742;
 }
 
 /* Global styles */
@@ -38,7 +34,7 @@ body {
 
 /* Hints */
 .sk_theme {
-  font-family: var(--font);
+  font-family: var(--font-mono);
   font-size: var(--font-size);
   background: var(--bg);
   color: var(--fg);
@@ -54,14 +50,15 @@ body {
 
 #sk_hints > div {
   font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: bold;
-  padding: 4px 6px;
-  background: var(--bg);
+  font-size: var(--font-size);
+  font-weight: 600;
+  padding: 2px 4px;
+  background: var(--hint-bg);
   color: var(--accent);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: var(--shadow);
+  border-radius: 0;
+  box-shadow: none;
+  min-width: 0.75em;
 }
 
 /* Omnibar */
@@ -70,28 +67,30 @@ body {
   left: 25%;
   background: var(--bg) !important;
   border: 1px solid var(--border) !important;
-  border-radius: 8px !important;
-  box-shadow: var(--shadow) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   overflow: hidden;
 }
 
 #sk_omnibarSearchArea {
-  background: var(--bg-dark) !important;
+  background: var(--bg) !important;
   border-bottom: 1px solid var(--border) !important;
-  padding: 12px 16px !important;
+  padding: 8px 12px !important;
   margin: 0 !important;
 }
 
 #sk_omnibarSearchArea input {
-  font-family: var(--font) !important;
-  font-size: 16px !important;
+  font-family: var(--font-mono) !important;
+  font-size: var(--font-size) !important;
+  font-weight: 600 !important;
   color: var(--fg) !important;
   background: transparent !important;
+  caret-color: var(--fg) !important;
 }
 
 #sk_omnibarSearchArea .prompt {
   color: var(--accent) !important;
-  font-weight: bold !important;
+  font-weight: 600 !important;
 }
 
 #sk_omnibarSearchArea .separator {
@@ -100,86 +99,94 @@ body {
 
 #sk_omnibarSearchResult {
   margin: 0 !important;
-  max-height: 60vh;
+  max-height: calc(8 * 1.2em);
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
 
 #sk_omnibarSearchResult > ul {
-  padding: 8px !important;
+  padding: 0 !important;
   margin: 0 !important;
 }
 
 #sk_omnibarSearchResult li {
-  padding: 10px 12px !important;
-  margin: 2px 0 !important;
-  border-radius: 6px !important;
+  padding: 4px 12px !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
   background: transparent !important;
+  font-family: var(--font-mono);
+  font-size: var(--font-size);
+  font-weight: 600;
 }
 
 #sk_omnibarSearchResult li.focused {
-  background: var(--bg-light) !important;
+  background: rgba(19, 56, 79, 0.8) !important;
 }
 
 #sk_omnibarSearchResult li .title {
   color: var(--fg) !important;
-  font-weight: 500 !important;
+  font-weight: 600 !important;
 }
 
 #sk_omnibarSearchResult li .url {
   color: var(--fg-muted) !important;
-  font-size: 12px !important;
+  font-size: var(--font-size) !important;
 }
 
 /* Status bar / Banner */
 #sk_banner {
-  font-family: var(--font);
+  font-family: var(--font-mono);
   font-size: var(--font-size);
+  font-weight: 600;
   background: var(--bg);
   color: var(--fg);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  box-shadow: var(--shadow);
-  padding: 8px 16px;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 4px 12px;
 }
 
 /* Keystroke help */
 #sk_keystroke {
   background: var(--bg) !important;
   border: 1px solid var(--border) !important;
-  border-radius: 6px !important;
-  box-shadow: var(--shadow) !important;
-  padding: 12px !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 8px !important;
 }
 
 #sk_keystroke kbd {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--font-size);
+  font-weight: 600;
   color: var(--accent);
-  background: var(--bg-light);
+  background: var(--hint-bg);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 2px 6px;
+  border-radius: 0;
+  padding: 2px 4px;
   margin: 2px;
   box-shadow: none;
 }
 
 #sk_keystroke .annotation {
   color: var(--fg);
-  font-family: var(--font);
+  font-family: var(--font-mono);
 }
 
 #sk_keystroke .candidates {
-  color: var(--yellow) !important;
+  color: var(--accent) !important;
 }
 
 /* Status line */
 #sk_status {
-  font-family: var(--font);
-  font-size: 12px;
-  background: var(--bg-dark);
+  font-family: var(--font-mono);
+  font-size: var(--font-size);
+  font-weight: 600;
+  background: var(--bg);
   color: var(--fg);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 0;
   right: 10px !important;
   bottom: 10px !important;
 }
@@ -201,11 +208,12 @@ body {
 #sk_find {
   background: var(--bg) !important;
   border: 1px solid var(--border) !important;
-  border-radius: 6px !important;
+  border-radius: 0 !important;
 }
 
 #sk_find input {
-  font-family: var(--font) !important;
+  font-family: var(--font-mono) !important;
+  font-weight: 600 !important;
   color: var(--fg) !important;
   background: transparent !important;
 }
