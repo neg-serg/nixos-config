@@ -185,6 +185,21 @@ body {
   animation: none;
 }
 
+/* Keystroke popup */
+#sk_keystroke {
+  background: var(--bg) !important;
+  color: var(--fg) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  padding: 6px !important;
+}
+
+/* Omnibar match highlight */
+#sk_omnibar span.omnibar_highlight {
+  color: var(--accent) !important;
+  text-shadow: none !important;
+}
+
 /* Visual mode */
 #sk_find {
   background: var(--bg) !important;
@@ -300,6 +315,10 @@ kbd {
   color: var(--accent) !important;
 }
 
+#sk_usage .feature_name > span {
+  border-bottom: 2px solid var(--border) !important;
+}
+
 #sk_usage span.annotation {
   color: var(--fg-muted) !important;
 }
@@ -330,16 +349,29 @@ kbd {
 // ========== Hints Styling (Shadow DOM) ==========
 // Hints live in a separate Shadow DOM and DON'T inherit settings.theme!
 // Must use api.Hints.style() API to override the default yellow gradient.
+// We start with "div" to prevent the default wrapper which would break "mask" selector
 api.Hints.style(`
-  font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.875rem;
-  font-weight: 600;
-  padding: 2px 4px;
-  background: #001742;
-  color: #89cdd2;
-  border: 1px solid #0a3749;
-  border-radius: 0;
-  box-shadow: none;
+  div, mask {
+    font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 2px 4px;
+    background: #001742;
+    color: #89cdd2;
+    border: 1px solid #0a3749;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  
+  mask {
+    background: rgba(137, 205, 210, 0.3); /* Accent transparent */
+    border: 1px solid #89cdd2;
+  }
+
+  mask.activeInput {
+    background: rgba(137, 205, 210, 0.6);
+    border: 2px solid #89cdd2;
+  }
 `);
 
 // Style for text/visual mode hints
