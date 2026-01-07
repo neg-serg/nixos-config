@@ -1,6 +1,7 @@
 @import "theme.rasi"
 /* @import "win/gap_btm.rasi" */
-@import "win/no_gap.rasi"
+/* @import "win/no_gap.rasi" */
+@import "win/oneline_btm.rasi"
 
 element-icon {
     size: 2.2ch;
@@ -71,20 +72,22 @@ element-icon {
 
 #listview {
     background: @blackdarkest;
-    columns: 12;
+    columns: 1;
     dynamic: true;
     fixed-columns: false;
-    lines: 2;
+    lines: 1;
+    flow: horizontal;
     margin: 0px 0px 0px 0px;
-    padding: 6px 6px 6px 6px;
+    padding: 2px 6px;
     scrollbar: false;
-    spacing: 5px;
+    spacing: 8px;
+    layout: horizontal;
 }
 
 entry {
-    expand: true;
-    width: 8em;
-    padding: 8px 8px;
+    expand: false;
+    width: 15em;
+    padding: 4px 8px;
     background-color: @blackwidget;
     text-color: @fgwhite;
 }
@@ -115,13 +118,13 @@ entry {
 
 #prompt {
     spacing: 0px;
-    padding: 8px 8px;
+    padding: 4px 8px;
     background-color: @blackwidget;
     text-color: @maincolor;
 }
 
 #case-indicator {
-    padding: 8px 8px;
+    padding: 4px 8px;
     text-color: @maincolor;
     background-color: @blackwidget;
 }
