@@ -212,48 +212,24 @@ body {
 `;
 
 // ========== Smart Omnibar ==========
-const smartDispatch = (input, newTab) => {
-  const isURL = input.includes(".") && !input.includes(" ");
-  if (isURL) {
-    const url = input.match(/^https?:\/\//) ? input : "https://" + input;
-    if (newTab) {
-      api.tabOpenLink(url);
-    } else {
-      window.location.href = url;
-    }
-  } else {
-    // Note: 'd' alias must match what is defined in addSearchAlias below
-    const searchURL = "https://duckduckgo.com/?q=" + encodeURIComponent(input);
-    if (newTab) {
-      api.tabOpenLink(searchURL);
-    } else {
-      window.location.href = searchURL;
-    }
-  }
-};
+// Unmap default bindings first to avoid conflicts
+api.unmap('t');
+api.unmap('o');
+api.unmap('O');
+api.unmap('b');
+api.unmap('v');
 
-api.mapkey("t", "Smart Omnibar (New Tab)", () => {
-  api.Front.openOmnibar({
-    type: "SearchEngine",
-    extra: "d",
-    onEnter: (input) => smartDispatch(input, true),
-  });
+// Smart navigation: opens omnibar for URL/Search input
+api.mapkey("t", "Open URL/Search (New Tab)", () => {
+  api.Front.openOmnibar({ type: "URLs" });
 });
 
-api.mapkey("o", "Smart Omnibar (Current Tab)", () => {
-  api.Front.openOmnibar({
-    type: "SearchEngine",
-    extra: "d",
-    onEnter: (input) => smartDispatch(input, false),
-  });
+api.mapkey("o", "Open URL/Search (Current Tab)", () => {
+  api.Front.openOmnibar({ type: "URLs" });
 });
 
-api.mapkey("O", "Smart Omnibar (New Tab)", () => {
-  api.Front.openOmnibar({
-    type: "SearchEngine",
-    extra: "d",
-    onEnter: (input) => smartDispatch(input, true),
-  });
+api.mapkey("O", "Open URL/Search (New Tab)", () => {
+  api.Front.openOmnibar({ type: "URLs" });
 });
 
 // ========== Mappings ==========
