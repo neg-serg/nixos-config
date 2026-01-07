@@ -301,35 +301,35 @@ kbd {
 `;
 // ========== Hints Styling (Shadow DOM) ==========
 // Hints live in a separate Shadow DOM and DON'T inherit settings.theme!
-// Must use Hints.style() API to override the default yellow gradient.
-Hints.style(`
-font - family: "Iosevka", ui - monospace, SFMono - Regular, Menlo, Consolas, monospace;
-font - size: 0.875rem;
-font - weight: 600;
-padding: 2px 4px;
-background: #001742;
-color: #89cdd2;
-border: 1px solid #0a3749;
-border - radius: 0;
-box - shadow: none;
-`);
-
-// Style for text/visual mode hints
-Hints.style(`
-  div {
-  font - family: "Iosevka", ui - monospace, SFMono - Regular, Menlo, Consolas, monospace;
-  font - size: 0.875rem;
-  font - weight: 600;
+// Must use api.Hints.style() API to override the default yellow gradient.
+api.Hints.style(`
+  font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875rem;
+  font-weight: 600;
   padding: 2px 4px;
   background: #001742;
   color: #89cdd2;
   border: 1px solid #0a3749;
-  border - radius: 0;
-  box - shadow: none;
-}
-div.begin {
-  color: #89cdd2;
-}
+  border-radius: 0;
+  box-shadow: none;
+`);
+
+// Style for text/visual mode hints
+api.Hints.style(`
+  div {
+    font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 2px 4px;
+    background: #001742;
+    color: #89cdd2;
+    border: 1px solid #0a3749;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  div.begin {
+    color: #89cdd2;
+  }
 `, "text");
 
 // ========== Smart Omnibar ==========
