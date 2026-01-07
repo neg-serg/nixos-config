@@ -32,6 +32,11 @@ cpu-masks:
 deploy host="telfir":
     nh os switch . --hostname {{host}}
 
+# Fast local deploy (skip git overhead)
+# Usage: just deploy-fast [host]
+deploy-fast host="telfir":
+    sudo nixos-rebuild switch --flake 'path:.#{{host}}' --no-write-lock-file
+
 # Alias for deploy
 switch host="telfir":
     just deploy {{host}}
