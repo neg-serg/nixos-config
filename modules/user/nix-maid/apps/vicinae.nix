@@ -56,7 +56,7 @@ in
         partOf = ["graphical-session.target"];
         wantedBy = ["graphical-session.target"];
         serviceConfig = {
-          ExecStart = "${lib.getExe pkgs.vicinae} --daemon";
+          ExecStart = "${lib.getExe pkgs.vicinae} server";
           Restart = "always";
           RestartSec = 2;
         };
