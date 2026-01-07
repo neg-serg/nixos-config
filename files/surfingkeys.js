@@ -32,33 +32,14 @@ body {
   font-size: var(--font-size);
 }
 
-/* Hints */
+/* Hints are styled via Hints.style() API - see below */
+
+/* Base theme for UI elements (omnibar, status, etc.) */
 .sk_theme {
   font-family: var(--font-mono);
   font-size: var(--font-size);
   background: var(--bg);
   color: var(--fg);
-}
-
-#sk_hints .begin {
-  color: var(--accent) !important;
-}
-
-#sk_hints .pending {
-  color: var(--fg-muted) !important;
-}
-
-#sk_hints > div {
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
-  font-weight: 600;
-  padding: 2px 4px;
-  background: var(--hint-bg);
-  color: var(--accent);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  box-shadow: none;
-  min-width: 0.75em;
 }
 
 /* Omnibar */
@@ -217,7 +198,139 @@ body {
   color: var(--fg) !important;
   background: transparent !important;
 }
+
+/* Tab switcher (w key) - override gradients */
+#sk_tabs {
+  background: var(--bg) !important;
+}
+
+div.sk_tab {
+  background: var(--bg) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+div.sk_tab_title {
+  color: var(--fg) !important;
+}
+
+div.sk_tab_url {
+  color: var(--fg-muted) !important;
+}
+
+div.sk_tab_hint {
+  font-family: var(--font-mono) !important;
+  font-weight: 600 !important;
+  background: var(--hint-bg) !important;
+  color: var(--accent) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* kbd elements (keybindings display) */
+kbd {
+  font-family: var(--font-mono) !important;
+  background: var(--hint-bg) !important;
+  color: var(--accent) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Bubble popup (link previews, etc.) */
+#sk_bubble {
+  background: var(--bg) !important;
+  color: var(--fg) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+#sk_bubble * {
+  color: var(--fg) !important;
+}
+
+/* List item backgrounds (override white/light defaults) */
+.sk_theme #sk_omnibarSearchResult > ul > li:nth-child(odd) {
+  background: var(--bg) !important;
+}
+
+.sk_theme #sk_omnibarSearchResult > ul > li:nth-child(even) {
+  background: rgba(10, 55, 73, 0.3) !important;
+}
+
+/* Usage/help popup */
+#sk_usage {
+  background: var(--bg) !important;
+  color: var(--fg) !important;
+  border: 1px solid var(--border) !important;
+}
+
+#sk_usage .feature_name {
+  color: var(--accent) !important;
+}
+
+#sk_usage span.annotation {
+  color: var(--fg-muted) !important;
+}
+
+/* Editor popup */
+#sk_editor {
+  background: var(--bg) !important;
+  color: var(--fg) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* Popup */
+#sk_popup {
+  background: var(--bg) !important;
+  color: var(--fg) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* Rich hints annotations */
+.expandRichHints span.annotation {
+  color: var(--accent) !important;
+}
+
+.expandRichHints kbd > .candidates {
+  color: var(--accent) !important;
+}
 `;
+// ========== Hints Styling (Shadow DOM) ==========
+// Hints live in a separate Shadow DOM and DON'T inherit settings.theme!
+// Must use Hints.style() API to override the default yellow gradient.
+Hints.style(`
+font - family: "Iosevka", ui - monospace, SFMono - Regular, Menlo, Consolas, monospace;
+font - size: 0.875rem;
+font - weight: 600;
+padding: 2px 4px;
+background: #001742;
+color: #89cdd2;
+border: 1px solid #0a3749;
+border - radius: 0;
+box - shadow: none;
+`);
+
+// Style for text/visual mode hints
+Hints.style(`
+  div {
+  font - family: "Iosevka", ui - monospace, SFMono - Regular, Menlo, Consolas, monospace;
+  font - size: 0.875rem;
+  font - weight: 600;
+  padding: 2px 4px;
+  background: #001742;
+  color: #89cdd2;
+  border: 1px solid #0a3749;
+  border - radius: 0;
+  box - shadow: none;
+}
+div.begin {
+  color: #89cdd2;
+}
+`, "text");
 
 // ========== Smart Omnibar ==========
 // Unmap default bindings first to avoid conflicts
