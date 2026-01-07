@@ -199,34 +199,62 @@ body {
   background: transparent !important;
 }
 
-/* Tab switcher (w key) - override gradients */
+/* Tab switcher (w key) - comprehensive override */
 #sk_tabs {
   background: var(--bg) !important;
 }
 
+#sk_tabs div.sk_tab,
 div.sk_tab {
   background: var(--bg) !important;
+  background-image: none !important;
   border: 1px solid var(--border) !important;
+  border-top: 1px solid var(--border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
 
-div.sk_tab_title {
-  color: var(--fg) !important;
+#sk_tabs div.sk_tab_wrap,
+div.sk_tab_wrap {
+  background: transparent !important;
 }
 
+#sk_tabs div.sk_tab_icon,
+div.sk_tab_icon {
+  background: transparent !important;
+}
+
+#sk_tabs div.sk_tab_title,
+div.sk_tab_title {
+  color: var(--fg) !important;
+  font-family: var(--font-mono) !important;
+}
+
+#sk_tabs div.sk_tab_url,
 div.sk_tab_url {
   color: var(--fg-muted) !important;
 }
 
+#sk_tabs div.sk_tab_hint,
 div.sk_tab_hint {
   font-family: var(--font-mono) !important;
   font-weight: 600 !important;
   background: var(--hint-bg) !important;
+  background-image: none !important;
   color: var(--accent) !important;
   border: 1px solid var(--border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
+}
+
+div.sk_tab_group {
+  background: var(--bg) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--fg) !important;
+}
+
+div.sk_tab_group_header {
+  color: var(--fg) !important;
 }
 
 /* kbd elements (keybindings display) */
