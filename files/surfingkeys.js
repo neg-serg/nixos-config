@@ -366,9 +366,11 @@ api.mapkey('v', 'Scroll half page up', () => {
   api.Normal.scroll("pageUp");
 });
 
-// Tabs
-api.map('E', 'E');  // Previous tab
-api.map('e', 'R');  // Next tab
+// Tabs (unmap default scroll first)
+api.unmap('e');  // Default: scroll page up
+api.unmap('E');  // Default: scroll page down
+api.map('E', 'E');  // Previous tab (keep E as prev tab - it's the default)
+api.map('e', 'R');  // Next tab (R is default next tab)
 api.mapkey('d', 'Close current tab', function () {
   api.RUNTIME("closeTab");
 });
