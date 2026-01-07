@@ -44,16 +44,17 @@ in {
           "root"
           (config.users.main.name or "neg")
         ];
-        connect-timeout = 5; # Bail early on missing cache hits
-        stalled-download-timeout = 5; # Abort stalled downloads quickly
+        connect-timeout = 3; # Aggressive: bail quickly on slow caches
+        stalled-download-timeout = 3; # Aggressive: abort stalled downloads fast
         http-connections = 3; # Limit parallel HTTP connections
         cores = 0; # Use all available cores per build
         max-jobs = "auto"; # Use all available cores
         use-xdg-base-directories = true;
         warn-dirty = false; # Disable annoying dirty warn
         download-attempts = 1; # Fast failure on unavailable caches
-        # Deduplicate the Nix store on writes
-        auto-optimise-store = lib.mkDefault true;
+        narinfo-cache-negative-ttl = 0; # Always re-check for previously missing paths
+        # Deduplication via weekly nix.optimise timer instead of per-write
+        auto-optimise-store = false;
       }
       // caches;
     gc = {
