@@ -5,6 +5,6 @@
 SCRATCHPADS="im discord music torrment teardown mixer vpn"
 
 for scratch in $SCRATCHPADS; do
-    pypr hide "$scratch" &
+    ~/.local/bin/pypr-client hide "$scratch" &
 done
 wait
