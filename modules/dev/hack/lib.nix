@@ -21,6 +21,7 @@ with lib; let
       )
       groups
     );
+  pentestEnabled = enabled && (config.features.dev.hack.pentest or false);
 in {
-  inherit enabled filterPackages mkGroupPackages;
+  inherit enabled pentestEnabled filterPackages mkGroupPackages;
 }
