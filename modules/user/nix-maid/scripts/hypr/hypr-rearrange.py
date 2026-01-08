@@ -1,4 +1,6 @@
+import glob
 import json
+import os
 import re
 import subprocess
 import sys
@@ -24,83 +26,127 @@ def get_hyprctl_json(cmd_type):
         sys.exit(1)
 
 
-def get_config_rules():
+def parse_config_file(path, visited=None):
     """
-    Parses `hyprctl rules` output to find workspace rules.
-    Returns a list of (rule_type, rule_pattern, workspace_id) tuples.
+    Recursively parses a Hyprland config file for window rules.
+    Returns a list of rules found.
     """
+    if visited is None:
+        visited = set()
+
+    # Expand user, vars, resolve path
+    path = os.path.expandvars(os.path.expanduser(path))
+    if not os.path.isabs(path):
+        # Fallback for relative paths - assume relative to ~/.config/hypr/
+        path = os.path.join(os.path.expanduser("~/.config/hypr/"), path)
+
+    # Glob expansion
+    paths = glob.glob(path)
     rules = []
-    try:
-        # hyprctl rules returns text, not JSON
-        result = subprocess.run(
-            ["hyprctl", "rules"], capture_output=True, text=True, check=True
-        )
-        output = result.stdout
 
-        # We are looking for lines like:
-        # windowrulev2 = workspace 2, class:^(firefox)$
-        # windowrule = workspace 2, ^(firefox)$
+    for p in paths:
+        real_p = os.path.realpath(p)
+        if real_p in visited:
+            continue
+        visited.add(real_p)
 
-        # Regex for windowrulev2
-        # Example: windowrule = workspace 2, class:^(firefox)$
-        # Standard format from `hyprctl rules`:
-        # rule: workspace 2, class:^(firefox)$
+        try:
+            with open(real_p, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+        except Exception as e:
+            print(
+                f"Warning: could not read config file {p}: {e}",
+                file=sys.stderr,
+            )
+            continue
 
-        # Let's inspect typical output format. It's usually a list of rules.
-        # "windowrule: workspace 2, ^(firefox)$"
-        # "windowrulev2: workspace 2, class:^(firefox)$"
-
-        for line in output.splitlines():
+        for line in lines:
             line = line.strip()
-            if not line:
+            if not line or line.startswith("#"):
                 continue
 
-            workspace_id = None
-            pattern = None
-            rule_type = (
-                None  # 'class', 'title', 'initialClass', 'initialTitle'
-            )
+            # Handle source inclusion
+            if line.startswith("source ="):
+                try:
+                    # source = path
+                    src_path = line.split("=", 1)[1].strip()
+                    rules.extend(parse_config_file(src_path, visited))
+                except Exception:
+                    pass
+                continue
 
-            # Simple parsing strategy: look for "workspace" action
-            if "workspace" in line:
-                # Handle windowrulev2 format:
-                # "windowrulev2: workspace 2 silent, class:^(firefox)$"
-                # Handle windowrule format:
-                # "windowrule: workspace 2, ^(firefox)$" -> implies class
+            # Parse window rules
+            # windowrulev2 = workspace 2, class:^(firefox)$
+            # windowrule = workspace 2, ^(firefox)$
 
-                parts = line.split(":", 1)
-                if len(parts) < 2:
-                    continue
+            if not (line.startswith("windowrule") and "=" in line):
+                continue
 
-                rule_def = parts[
-                    1
-                ].strip()  # "workspace 2 silent, class:^(firefox)$"
+            parts = line.split("=", 1)
+            rule_def = parts[1].strip()
 
-                # Split action and condition
-                if "," not in rule_def:
-                    continue
+            # Split action and condition
+            if "," not in rule_def:
+                continue
 
-                action_part, condition_part = rule_def.split(",", 1)
-                action_part = action_part.strip()
-                condition_part = condition_part.strip()
+            # "workspace 2 silent, class:^(firefox)$"
+            # Split on first comma only? No, standard split is by comma.
+            # But regex can contain commas.
+            # Hyprland parsing is tricky. windowrulev2 = ACTION, PATTERN
 
-                # Check if action is workspace
-                if action_part.startswith("workspace"):
-                    # Extract ID: "workspace 2 silent" -> "2"
-                    ws_args = action_part.split()
-                    if len(ws_args) >= 2:
-                        # Find the first numeric part or named workspace
-                        # Usually "workspace ID" or "workspace name"
-                        # Simple heuristics: take the second token
-                        raw_ws = ws_args[1]
-                        workspace_id = raw_ws.rstrip(",")
+            # Let's try to find the comma separating action and pattern.
+            # Usually the action doesn't contain commas
+            # (e.g. "workspace 2", "float")
+            # except maybe for complex position args.
 
-                if not workspace_id:
-                    continue
+            # windowrulev2 = workspace 2, class:^(.*)$
+            # windowrule = workspace 2, ^(.*)$
 
-                # Parse condition
-                # class:^(firefox)$
-                # title:^(.*)$
+            args = [a.strip() for a in rule_def.split(",")]
+            if len(args) < 2:
+                continue
+
+            action = args[0]
+            # Reconstruct the rest as pattern/condition because
+            # split(",") might break regex
+            # actually windowrulev2 takes specific args.
+            # windowrulev2 = workspace 2, class:^...
+
+            # simple check for workspace action
+            if not action.startswith("workspace"):
+                continue
+
+            ws_part = action.split()
+            if len(ws_part) < 2:
+                continue
+
+            # "workspace 2 silent" -> id="2"
+            workspace_id = ws_part[1]
+            if not workspace_id:
+                continue
+
+            # Now find the condition/pattern
+            # For windowrule: "workspace 2, ^regex$"
+            # For windowrulev2: "workspace 2, class:^regex$"
+
+            # We used split(","), so args[1:] are the rest.
+            # But simple join might not be perfect if regex had comma.
+            # Let's rely on string manipulation from the first comma.
+
+            first_comma_idx = rule_def.find(",")
+            if first_comma_idx == -1:
+                continue
+
+            condition_part = rule_def[first_comma_idx + 1:].strip()
+
+            # Normalize pattern/type
+            rule_type = "class"
+            # default for windowrule if no type specified (implies class)
+            pattern = condition_part
+
+            if line.startswith("windowrulev2"):
+                # windowrulev2 MUST have a field selector
+                # condition_part = "class:^(firefox)$"
                 if condition_part.startswith("class:"):
                     rule_type = "class"
                     pattern = condition_part[6:]
@@ -114,25 +160,32 @@ def get_config_rules():
                     rule_type = "initialTitle"
                     pattern = condition_part[13:]
                 else:
-                    # windowrule (v1) implies class matched against
-                    # regex if just regex
-                    # "workspace 2, ^(firefox)$"
-                    rule_type = "class"
-                    pattern = condition_part
+                    # Ignore other v2 rules that aren't class/title related
+                    continue
 
-                if workspace_id and pattern:
-                    rules.append(
-                        {
-                            "ws": workspace_id,
-                            "type": rule_type,
-                            "pattern": pattern,
-                        }
-                    )
+            # Strip quotes if present?
+            # Hyprland usually doesn't need them but users add them.
+            # pattern = pattern.strip('"\'')
 
-    except Exception as e:
-        print(f"Error getting rules: {e}", file=sys.stderr)
+            if workspace_id and pattern:
+                rules.append(
+                    {
+                        "ws": workspace_id,
+                        "type": rule_type,
+                        "pattern": pattern,
+                    }
+                )
 
     return rules
+
+
+def get_config_rules():
+    """
+    Entry point to parse config rules.
+    """
+    # Start from main config
+    main_conf = "~/.config/hypr/hyprland.conf"
+    return parse_config_file(main_conf)
 
 
 def match_rule(client, rules):
