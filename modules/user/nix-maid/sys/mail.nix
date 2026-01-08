@@ -8,6 +8,7 @@
 }: let
   n = neg impurity;
   cfg = config.features.mail;
+  passPkg = pkgs.pass.withExtensions (exts: [exts.pass-otp]);
 
   # Helper to generate mbsync config
   # ... (rest of mkMbsyncConfig remains unchanged)
@@ -64,7 +65,7 @@ in {
         pkgs.msmtp # An SMTP client
         pkgs.notmuch # Thread-based email indexer, searcher and tagger
         pkgs.goimapnotify # Execute scripts on IMAP IDLE (new mail)
-        pkgs.pass # The standard unix password manager
+        passPkg # The standard unix password manager
         (pkgs.writeShellScriptBin "sync-mail" ''
           #!/usr/bin/env bash
           set -euo pipefail
@@ -76,7 +77,7 @@ in {
       systemd.user.services."mbsync-gmail" = {
         description = "Sync mail via mbsync (gmail)";
         path = [
-          pkgs.pass # password manager for PassCmd
+          passPkg # password manager for PassCmd
           # gnupg is installed via gpg.nix
         ];
         serviceConfig = {
@@ -101,7 +102,7 @@ in {
       systemd.user.services."imapnotify-gmail" = {
         description = "IMAP Notify (gmail)";
         path = [
-          pkgs.pass # password manager for passwordCmd
+          passPkg # password manager for passwordCmd
           # gnupg is installed via gpg.nix
         ];
         serviceConfig = {
