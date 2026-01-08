@@ -64,6 +64,7 @@
     };
 
     # === Independent tools (no follows needed) ===
+    extra-container.url = "git+file:///home/neg/src/extra-container";
     # impurity.url = "git+file:///home/neg/src/impurity.nix"; # Removed in favor of pure eval
     iwmenu.url = "github:e-tho/iwmenu";
 

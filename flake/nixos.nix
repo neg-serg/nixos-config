@@ -17,6 +17,7 @@
     ../init.nix
     # ../modules/impurity.nix # Removed in favor of pure eval
     inputs.nix-flatpak.nixosModules.nix-flatpak
+    inputs.extra-container.nixosModules.default
     inputs.lanzaboote.nixosModules.lanzaboote
     inputs.sops-nix.nixosModules.sops
 
