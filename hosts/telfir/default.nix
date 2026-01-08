@@ -13,6 +13,7 @@
   features.gui.walker.enable = false;
   features.hardware.amdgpu.rocm.enable = true;
   features.mail.enable = true;
+  features.dev.hack.pentest = false;
 
   boot.plymouth = {
     enable = true;
