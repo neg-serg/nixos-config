@@ -35,6 +35,7 @@ in {
         stego = mkBool "enable steganography tools" true;
         analysis = mkBool "enable reverse/binary analysis tools" true;
         network = mkBool "enable network forensics tools" true;
+        pentest = mkBool "enable pentest tools" true;
       };
     };
     rust = {
