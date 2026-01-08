@@ -63,6 +63,7 @@
         systemctl --user start hyprland-session.target
         echo "Done." >> "$LOG"
       '')
+      (pkgs.writers.writePython3Bin "hypr-rearrange" {} (builtins.readFile ../scripts/hypr/hypr-rearrange.py))
       (pkgs.writeShellScriptBin "hyde-selector" (builtins.readFile ../../../../files/scripts/hyde-selector.sh))
     ]
     ++ lib.optional hy3Enabled pkgs.hyprlandPlugins.hy3; # Tiling plugin for Hyprland inspired by i3/sway
