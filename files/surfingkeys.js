@@ -26,19 +26,19 @@ settings.theme = `
   --hint-bg: #001742;
 }
 
-/* Global styles */
-body {
-  font-family: var(--font);
-  font-size: var(--font-size);
-}
-
-/* Hints are styled via Hints.style() API - see below */
-
-/* Base theme for UI elements (omnibar, status, etc.) */
+/* Global Reset */
 .sk_theme {
   font-family: var(--font-mono);
   font-size: var(--font-size);
   background: var(--bg);
+  color: var(--fg);
+}
+
+.sk_theme tbody {
+  color: var(--fg);
+}
+
+.sk_theme input {
   color: var(--fg);
 }
 
@@ -67,6 +67,8 @@ body {
   color: var(--fg) !important;
   background: transparent !important;
   caret-color: var(--fg) !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 #sk_omnibarSearchArea .prompt {
@@ -80,7 +82,7 @@ body {
 
 #sk_omnibarSearchResult {
   margin: 0 !important;
-  max-height: calc(8 * 1.2em);
+  max-height: calc(8 * 1.5em);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
@@ -99,10 +101,15 @@ body {
   font-family: var(--font-mono);
   font-size: var(--font-size);
   font-weight: 600;
+  border-bottom: 1px solid transparent;
+}
+
+#sk_omnibarSearchResult li:nth-child(odd) {
+  background: var(--bg) !important;
 }
 
 #sk_omnibarSearchResult li.focused {
-  background: rgba(19, 56, 79, 0.8) !important;
+  background: var(--bg-highlight) !important;
 }
 
 #sk_omnibarSearchResult li .title {
@@ -113,6 +120,18 @@ body {
 #sk_omnibarSearchResult li .url {
   color: var(--fg-muted) !important;
   font-size: var(--font-size) !important;
+  margin-left: 8px;
+}
+
+/* Omnibar Metadata (Source, Timestamp) */
+#sk_omnibarSearchResult li .source {
+  color: var(--accent) !important;
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+#sk_omnibar p {
+  margin-bottom: 0px !important;
 }
 
 /* Status bar / Banner */
@@ -120,8 +139,8 @@ body {
   font-family: var(--font-mono);
   font-size: var(--font-size);
   font-weight: 600;
-  background: var(--bg);
-  color: var(--fg);
+  background: var(--bg) !important;
+  color: var(--fg) !important;
   border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
@@ -134,16 +153,17 @@ body {
   border: 1px solid var(--border) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  padding: 8px !important;
+  padding: 6px !important;
+  color: var(--fg) !important;
 }
 
 #sk_keystroke kbd {
   font-family: var(--font-mono);
   font-size: var(--font-size);
   font-weight: 600;
-  color: var(--accent);
-  background: var(--hint-bg);
-  border: 1px solid var(--border);
+  color: var(--accent) !important;
+  background: var(--hint-bg) !important;
+  border: 1px solid var(--border) !important;
   border-radius: 0;
   padding: 2px 4px;
   margin: 2px;
@@ -151,8 +171,7 @@ body {
 }
 
 #sk_keystroke .annotation {
-  color: var(--fg);
-  font-family: var(--font-mono);
+  color: var(--fg) !important;
 }
 
 #sk_keystroke .candidates {
@@ -164,34 +183,23 @@ body {
   font-family: var(--font-mono);
   font-size: var(--font-size);
   font-weight: 600;
-  background: var(--bg);
-  color: var(--fg);
-  border: 1px solid var(--border);
+  background: var(--bg) !important;
+  color: var(--fg) !important;
+  border: 1px solid var(--border) !important;
   border-radius: 0;
-  right: 10px !important;
-  bottom: 10px !important;
 }
 
 #sk_status > span {
   padding: 4px 8px;
-}
-
-/* Rich hints */
-.expandRichHints {
-  animation: none;
-}
-
-.collapseRichHints {
-  animation: none;
-}
-
-/* Keystroke popup */
-#sk_keystroke {
-  background: var(--bg) !important;
   color: var(--fg) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 0 !important;
-  padding: 6px !important;
+  border-right: 1px solid var(--border);
+}
+
+/* Search Matches on Page */
+.sk_find_highlight {
+  background: var(--bg-highlight) !important;
+  color: var(--fg) !important;
+  border-bottom: 2px solid var(--accent) !important;
 }
 
 /* Omnibar match highlight */
@@ -200,111 +208,53 @@ body {
   text-shadow: none !important;
 }
 
-/* Visual mode */
+/* Search Bar (Visual Mode /) */
 #sk_find {
   background: var(--bg) !important;
   border: 1px solid var(--border) !important;
-  border-radius: 0 !important;
+  color: var(--fg) !important;
 }
 
 #sk_find input {
   font-family: var(--font-mono) !important;
   font-weight: 600 !important;
   color: var(--fg) !important;
-  background: transparent !important;
+  background: transparent !important; 
+  border: none !important;
 }
 
-/* Tab switcher (w key) - comprehensive override */
+/* Tab switcher */
 #sk_tabs {
   background: var(--bg) !important;
-}
-
-#sk_tabs div.sk_tab,
-div.sk_tab {
-  background: var(--bg) !important;
-  background-image: none !important;
   border: 1px solid var(--border) !important;
-  border-top: 1px solid var(--border) !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
 }
 
-#sk_tabs div.sk_tab_wrap,
-div.sk_tab_wrap {
-  background: transparent !important;
+#sk_tabs div.sk_tab {
+  background: var(--bg) !important;
+  border-bottom: 1px solid var(--border) !important;
 }
 
-#sk_tabs div.sk_tab_icon,
-div.sk_tab_icon {
-  background: transparent !important;
+#sk_tabs div.sk_tab_hint {
+  background: var(--hint-bg) !important;
+  color: var(--accent) !important;
+  border: 1px solid var(--border) !important;
 }
 
-#sk_tabs div.sk_tab_title,
-div.sk_tab_title {
+#sk_tabs div.sk_tab_title {
   color: var(--fg) !important;
-  font-family: var(--font-mono) !important;
 }
 
-#sk_tabs div.sk_tab_url,
-div.sk_tab_url {
+#sk_tabs div.sk_tab_url {
   color: var(--fg-muted) !important;
 }
 
-#sk_tabs div.sk_tab_hint,
-div.sk_tab_hint {
-  font-family: var(--font-mono) !important;
-  font-weight: 600 !important;
-  background: var(--hint-bg) !important;
-  background-image: none !important;
-  color: var(--accent) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-}
-
-div.sk_tab_group {
-  background: var(--bg) !important;
-  border: 1px solid var(--border) !important;
-  color: var(--fg) !important;
-}
-
-div.sk_tab_group_header {
-  color: var(--fg) !important;
-}
-
-/* kbd elements (keybindings display) */
-kbd {
-  font-family: var(--font-mono) !important;
-  background: var(--hint-bg) !important;
-  color: var(--accent) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-}
-
-/* Bubble popup (link previews, etc.) */
+/* Markdown/Misc Popups */
 #sk_bubble {
   background: var(--bg) !important;
   color: var(--fg) !important;
   border: 1px solid var(--border) !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
 }
 
-#sk_bubble * {
-  color: var(--fg) !important;
-}
-
-/* List item backgrounds (override white/light defaults) */
-.sk_theme #sk_omnibarSearchResult > ul > li:nth-child(odd) {
-  background: var(--bg) !important;
-}
-
-.sk_theme #sk_omnibarSearchResult > ul > li:nth-child(even) {
-  background: rgba(10, 55, 73, 0.3) !important;
-}
-
-/* Usage/help popup */
 #sk_usage {
   background: var(--bg) !important;
   color: var(--fg) !important;
@@ -313,37 +263,17 @@ kbd {
 
 #sk_usage .feature_name {
   color: var(--accent) !important;
-}
-
-#sk_usage .feature_name > span {
   border-bottom: 2px solid var(--border) !important;
 }
 
-#sk_usage span.annotation {
-  color: var(--fg-muted) !important;
+#sk_usage .feature_name > span {
+  border-bottom: none !important;
 }
 
-/* Editor popup */
-#sk_editor {
-  background: var(--bg) !important;
-  color: var(--fg) !important;
-  border: 1px solid var(--border) !important;
-}
-
-/* Popup */
 #sk_popup {
   background: var(--bg) !important;
   color: var(--fg) !important;
   border: 1px solid var(--border) !important;
-}
-
-/* Rich hints annotations */
-.expandRichHints span.annotation {
-  color: var(--accent) !important;
-}
-
-.expandRichHints kbd > .candidates {
-  color: var(--accent) !important;
 }
 `;
 // ========== Hints Styling (Shadow DOM) ==========
