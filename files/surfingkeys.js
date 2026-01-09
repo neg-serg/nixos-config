@@ -395,7 +395,7 @@ api.Hints.style(`
 // ========== Smart Omnibar ==========
 // Unmap default bindings first to avoid conflicts
 api.unmap('t');
-api.unmap('o');
+
 api.unmap('O');
 api.unmap('b');
 api.unmap('v');
@@ -405,9 +405,7 @@ api.mapkey("t", "Open URL/Search (New Tab)", () => {
   api.Front.openOmnibar({ type: "URLs" });
 });
 
-api.mapkey("o", "Open URL/Search (Current Tab)", () => {
-  api.Front.openOmnibar({ type: "URLs" });
-});
+
 
 api.mapkey("O", "Open URL/Search (New Tab)", () => {
   api.Front.openOmnibar({ type: "URLs" });
