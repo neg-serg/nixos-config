@@ -352,43 +352,45 @@ kbd {
 // We start with "div" to prevent the default wrapper which would break "mask" selector
 api.Hints.style(`
   div, mask {
-    font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.875rem;
-    font-weight: 600;
-    padding: 2px 4px;
-    background: #001742;
-    color: #89cdd2;
-    border: 1px solid #0a3749;
-    border-radius: 0;
-    box-shadow: none;
+    font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    padding: 2px 4px !important;
+    background: #001742 !important;
+    background-image: none !important;
+    color: #89cdd2 !important;
+    border: 1px solid #0a3749 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
   
   mask {
-    background: rgba(137, 205, 210, 0.3); /* Accent transparent */
-    border: 1px solid #89cdd2;
+    background: rgba(137, 205, 210, 0.3) !important;
+    border: 1px solid #89cdd2 !important;
   }
 
   mask.activeInput {
-    background: rgba(137, 205, 210, 0.6);
-    border: 2px solid #89cdd2;
+    background: rgba(137, 205, 210, 0.6) !important;
+    border: 2px solid #89cdd2 !important;
   }
 `);
 
 // Style for text/visual mode hints
 api.Hints.style(`
   div {
-    font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.875rem;
-    font-weight: 600;
-    padding: 2px 4px;
-    background: #001742;
-    color: #89cdd2;
-    border: 1px solid #0a3749;
-    border-radius: 0;
-    box-shadow: none;
+    font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    padding: 2px 4px !important;
+    background: #001742 !important;
+    background-image: none !important;
+    color: #89cdd2 !important;
+    border: 1px solid #0a3749 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
   div.begin {
-    color: #89cdd2;
+    color: #89cdd2 !important;
   }
 `, "text");
 
