@@ -23,6 +23,7 @@
 
     inputs.nvf.nixosModules.default
     inputs.nix-index-database.nixosModules.nix-index
+    inputs.microvm.nixosModules.host
   ];
 
   hostExtras = name: let
