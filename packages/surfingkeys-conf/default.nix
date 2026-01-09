@@ -30,8 +30,9 @@ buildNpmPackage {
         # Inject custom mappings if provided
         if [ -n "${customConfig}" ]; then
           echo "Injecting custom mappings from ${customConfig}..."
-          # Add a newline and semicolon to safely separate from existing code
-          echo -e "\n;\n" >> ./src/index.js
+          # Clear upstream index.js to prevent conflicts with default mappings
+          # (specifically 't' which is often used as a prefix in other configs)
+          echo "" > ./src/index.js
           cat "${customConfig}" >> ./src/index.js
         fi
 
