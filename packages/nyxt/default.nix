@@ -18,32 +18,31 @@ in
   appimageTools.wrapType2 {
     inherit pname version;
     src = "${appimage}/${pname}.AppImage";
-    extraPkgs = pkgs:
-      with pkgs; [
-        enchant
-        # Common deps for GUI apps / Electron / WebKit
-        gsettings-desktop-schemas
-        glib
-        gtk3
-        cairo
-        pango
-        gdk-pixbuf
-        at-spi2-atk
-        at-spi2-core
-        dbus
-        libdrm
-        libxkbcommon
-        mesa
-        nspr
-        nss
-        cups
-        alsa-lib
-        # GStreamer
-        gst_all_1.gstreamer
-        gst_all_1.gst-plugins-base
-        gst_all_1.gst-plugins-bad
-        gst_all_1.gst-plugins-good
-        gst_all_1.gst-plugins-ugly
-      ];
+    extraPkgs = pkgs: [
+      pkgs.enchant
+      # Common deps for GUI apps / Electron / WebKit
+      pkgs.gsettings-desktop-schemas
+      pkgs.glib
+      pkgs.gtk3
+      pkgs.cairo
+      pkgs.pango
+      pkgs.gdk-pixbuf
+      pkgs.at-spi2-atk
+      pkgs.at-spi2-core
+      pkgs.dbus
+      pkgs.libdrm
+      pkgs.libxkbcommon
+      pkgs.mesa
+      pkgs.nspr
+      pkgs.nss
+      pkgs.cups
+      pkgs.alsa-lib
+      # GStreamer
+      pkgs.gst_all_1.gstreamer
+      pkgs.gst_all_1.gst-plugins-base
+      pkgs.gst_all_1.gst-plugins-bad
+      pkgs.gst_all_1.gst-plugins-good
+      pkgs.gst_all_1.gst-plugins-ugly
+    ];
     meta.mainProgram = "nyxt4-bin";
   }
