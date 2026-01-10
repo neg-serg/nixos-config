@@ -403,6 +403,10 @@ api.addSearchAlias('gh', 'GitHub', 'https://github.com/search?q=');
 api.addSearchAlias('aw', 'Arch Wiki', 'https://wiki.archlinux.org/index.php?search=');
 api.addSearchAlias('np', 'npm', 'https://www.npmjs.com/search?q=');
 
+// Force all inputs to be URLs by default (pass-through)
+api.addSearchAlias('raw', 'Raw URL', '{0}');
+settings.defaultSearchEngine = 'raw';
+
 // ========== Quickmarks ==========
 const quickmarks = {
   'A': { name: 'ArtStation', url: 'https://magazine.artstation.com/' },
