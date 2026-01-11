@@ -3,6 +3,7 @@
   nixpkgs,
   self,
   pkgs,
+  filteredSource,
   ...
 }:
 let
