@@ -5,12 +5,14 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   devEnabled = config.features.dev.enable or false;
   nvimConf = ../../files/nvim;
 in
-  lib.mkIf devEnabled (lib.mkMerge [
+lib.mkIf devEnabled (
+  lib.mkMerge [
     {
       environment.systemPackages = [
         pkgs.neovim-remote # nvr: control neovim from external tools
@@ -21,7 +23,10 @@ in
           exec = "nvim %F";
           icon = "nvim";
           terminal = true;
-          categories = ["Utility" "TextEditor"];
+          categories = [
+            "Utility"
+            "TextEditor"
+          ];
           mimeTypes = [
             "text/english"
             "text/plain"
@@ -98,9 +103,9 @@ in
                 p.yaml
               ]))
             ];
-            optPlugins = [];
-            extraPlugins = {};
-            pluginOverrides = {};
+            optPlugins = [ ];
+            extraPlugins = { };
+            pluginOverrides = { };
             # Keep environment tooling available for your config
             extraPackages = [
               pkgs.ripgrep # project-wide search backend
@@ -152,7 +157,7 @@ in
               pkgs.stylua # Lua formatter
               pkgs.shfmt # Shell formatter
               pkgs.prettierd # Faster Prettier (HTML/CSS/JS/TS/JSON/YAML)
-              pkgs.alejandra # Nix formatter
+              pkgs.nixfmt-classic # Nix formatter
               pkgs.cmake-format # CMake formatter
               pkgs.gotools # Go tools (goimports, gofmt)
               pkgs.isort # Python import sorter
@@ -160,13 +165,13 @@ in
               pkgs.rustfmt # Rust formatter
             ];
             # Avoid any nvf defaults bleeding in
-            globals = {};
+            globals = { };
             options = {
               number = false;
               relativenumber = false;
             };
-            keymaps = [];
-            pluginRC = {};
+            keymaps = [ ];
+            pluginRC = { };
             luaConfigPre = "";
             luaConfigRC = {
               userInit = ''
@@ -177,12 +182,12 @@ in
             additionalRuntimePaths = [
               "$HOME/.config/nvf"
             ];
-            extraLuaFiles = [];
+            extraLuaFiles = [ ];
             withRuby = true;
             withNodeJs = false;
-            luaPackages = [];
+            luaPackages = [ ];
             withPython3 = true;
-            python3Packages = [];
+            python3Packages = [ ];
           };
         };
       };
@@ -192,4 +197,5 @@ in
       # Symlink nvf config directory
       ".config/nvf".source = n.linkImpure nvimConf;
     })
-  ])
+  ]
+)
