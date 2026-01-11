@@ -17,9 +17,9 @@ in {
     # We override the latest kernel to use clangStdenv.
     # Users can override this by setting boot.kernelPackages manually,
     # but they must ensure it uses Clang.
-    boot.kernelPackages = mkDefault (pkgs.linuxPackages_latest.override {
+    boot.kernelPackages = mkForce (pkgs.linuxPackagesFor (pkgs.linuxPackages_latest.kernel.override {
       stdenv = pkgs.clangStdenv;
-    });
+    }));
 
     boot.kernelPatches = [
       {
