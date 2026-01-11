@@ -65,9 +65,12 @@
         systemctl --user start hyprland-session.target
         echo "Done." >> "$LOG"
       '')
-      (pkgs.writers.writePython3Bin "hypr-rearrange" { flakeIgnore = [ "E203" ]; } (
-        builtins.readFile ../scripts/hypr/hypr-rearrange.py
-      ))
+      (pkgs.writers.writePython3Bin "hypr-rearrange" {
+        flakeIgnore = [
+          "E203"
+          "W503"
+        ];
+      } (builtins.readFile ../scripts/hypr/hypr-rearrange.py))
       (pkgs.writeShellScriptBin "hyde-selector" (
         builtins.readFile ../../../../files/scripts/hyde-selector.sh
       ))
