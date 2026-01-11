@@ -10,16 +10,32 @@
   ...
 }:
 let
-  cfg = config.servicesProfiles.openssh or { enable = false; };
+  cfg = config.servicesProfiles.openssh;
 in
 {
+  options.servicesProfiles.openssh = {
+    enable = lib.mkEnableOption "OpenSSH server with hardened settings";
+
+    allowTcpForwarding = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Allow TCP forwarding. Disable for maximum security.";
+    };
+
+    permitTunnel = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Allow tunnel forwarding. Disable for maximum security.";
+    };
+  };
+
   config = lib.mkIf cfg.enable {
     services.openssh = {
       enable = true;
       extraConfig = ''
-        # Hardening: disable TCP/tunnel forwarding
-        AllowTcpForwarding no
-        PermitTunnel no
+        # TCP/tunnel forwarding (configurable)
+        AllowTcpForwarding ${if cfg.allowTcpForwarding then "yes" else "no"}
+        PermitTunnel ${if cfg.permitTunnel then "yes" else "no"}
         # Restrict host key algorithms to modern secure ones
         HostKeyAlgorithms ssh-ed25519,ssh-ed25519-cert-v01@openssh.com,sk-ssh-ed25519@openssh.com,sk-ssh-ed25519-cert-v01@openssh.com,rsa-sha2-256,rsa-sha2-512,rsa-sha2-256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com
       '';
