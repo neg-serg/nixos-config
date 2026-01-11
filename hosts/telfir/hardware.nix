@@ -105,8 +105,7 @@
       systemd-boot.editor = true;
     };
 
-    # Allow user-space ptrace for debugging quickshell (strace/perf) without sudo
-    kernel.sysctl."kernel.yama.ptrace_scope" = 0;
+
   };
 
   # Avoid double compression for swap
