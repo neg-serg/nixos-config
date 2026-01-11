@@ -13,6 +13,10 @@
     "kernel.unprivileged_bpf_disabled" = 1; # Restrict eBPF to CAP_BPF
     "net.core.bpf_jit_harden" = 2; # Harden eBPF JIT against spraying attacks
 
+    # IP forwarding (required for VPN/Docker/containers)
+    "net.ipv4.ip_forward" = 1;
+    "net.ipv6.conf.all.forwarding" = 1;
+
     # TCP hardening
     "net.ipv4.icmp_ignore_bogus_error_responses" = 1;
     "net.ipv4.conf.default.rp_filter" = 1;
