@@ -5,7 +5,8 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   guiEnabled = config.features.gui.enable or false;
 
@@ -105,29 +106,30 @@
   # Custom INI generator that quotes values starting with # to prevent dunst parsing as comments
   dunstrc =
     lib.generators.toINI {
-      mkKeyValue = key: value: let
-        v =
-          if builtins.isString value && lib.hasPrefix "#" value
-          then "\"${value}\""
-          else if builtins.isBool value
-          then
-            if value
-            then "true"
-            else "false"
-          else toString value;
-      in "${key}=${v}";
-    }
-    settings
+      mkKeyValue =
+        key: value:
+        let
+          v =
+            if builtins.isString value && lib.hasPrefix "#" value then
+              "\"${value}\""
+            else if builtins.isBool value then
+              if value then "true" else "false"
+            else
+              toString value;
+        in
+        "${key}=${v}";
+    } settings
     + "\ninclude = ~/.cache/wallust/dunstrc\n";
 in
-  lib.mkIf guiEnabled (lib.mkMerge [
+lib.mkIf guiEnabled (
+  lib.mkMerge [
     {
       # 2. Systemd user service
       systemd.user.services.dunst = {
         description = "Dunst notification daemon";
-        after = ["graphical-session-pre.target"];
-        partOf = ["graphical-session.target"];
-        wantedBy = ["graphical-session.target"];
+        after = [ "graphical-session-pre.target" ];
+        partOf = [ "graphical-session.target" ];
+        wantedBy = [ "graphical-session.target" ];
         serviceConfig = {
           Type = "dbus";
           BusName = "org.freedesktop.Notifications";
@@ -148,4 +150,5 @@ in
     (n.mkHomeFiles {
       ".config/dunst/dunstrc".text = dunstrc;
     })
-  ])
+  ]
+)

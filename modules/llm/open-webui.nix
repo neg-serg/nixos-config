@@ -2,9 +2,11 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.services."open-webui";
-in {
+in
+{
   config = {
     services."open-webui" = {
       enable = lib.mkDefault true;
@@ -16,7 +18,6 @@ in {
       };
     };
 
-    networking.firewall.allowedTCPPorts =
-      lib.mkIf cfg.enable (lib.mkAfter [11111]);
+    networking.firewall.allowedTCPPorts = lib.mkIf cfg.enable (lib.mkAfter [ 11111 ]);
   };
 }

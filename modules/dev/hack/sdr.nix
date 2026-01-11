@@ -3,8 +3,9 @@
   config,
   pkgs,
   ...
-}: let
-  hackLib = import ./lib.nix {inherit lib config;};
+}:
+let
+  hackLib = import ./lib.nix { inherit lib config; };
   packages = hackLib.filterPackages [
     pkgs.chirp # radio programming tool for handhelds
     pkgs.gnuradio # SDR processing toolkit
@@ -15,7 +16,8 @@
     pkgs.multimon-ng # decode pager/AX.25/etc.
     pkgs.rtl-sdr-librtlsdr # RTL-SDR driver utilities
   ];
-in {
+in
+{
   config = lib.mkIf hackLib.enabled {
     environment.systemPackages = lib.mkAfter packages;
   };

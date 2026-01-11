@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   imports = [
     ./session
     ./nix-maid

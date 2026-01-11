@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   fonts.fontDir.enable = true; # add fontdir support for nixos
   fonts.packages = [
     pkgs.liberation_ttf # Liberation Fonts, replacements for Times New Roman, Arial, and Courier New

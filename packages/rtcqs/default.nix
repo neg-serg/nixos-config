@@ -27,7 +27,7 @@ python3Packages.buildPythonApplication rec {
     tkinter
   ];
 
-  pythonImportsCheck = ["rtcqs"];
+  pythonImportsCheck = [ "rtcqs" ];
 
   postInstall = ''
     install -Dm644 ${src}/rtcqs.desktop $out/share/applications/rtcqs.desktop

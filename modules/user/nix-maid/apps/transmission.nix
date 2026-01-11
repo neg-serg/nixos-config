@@ -5,7 +5,8 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   cfg = config.features.torrent;
   filesRoot = ../../../../files;
@@ -61,7 +62,8 @@
     done < "$tmp"
   '';
 in
-  lib.mkIf (cfg.enable or false) (lib.mkMerge [
+lib.mkIf (cfg.enable or false) (
+  lib.mkMerge [
     {
       environment.systemPackages = [
         transmissionPkg # Fast, easy and free Bittorrent client
@@ -88,7 +90,7 @@ in
             Restart = "on-failure";
             RestartSec = "10s";
           };
-          wantedBy = ["default.target"];
+          wantedBy = [ "default.target" ];
         };
 
         # Transmission
@@ -101,14 +103,14 @@ in
             RestartSec = "30";
             ExecReload = "${lib.getExe' pkgs.util-linux "kill"} -s HUP $MAINPID";
           };
-          wantedBy = ["default.target"];
+          wantedBy = [ "default.target" ];
         };
 
         # Trackers update
         transmission-trackers-update = {
           description = "Update Transmission trackers from trackerslist";
-          after = ["transmission-daemon.service"];
-          wants = ["transmission-daemon.service"];
+          after = [ "transmission-daemon.service" ];
+          wants = [ "transmission-daemon.service" ];
           serviceConfig = {
             Type = "oneshot";
             ExecStart = "${lib.getExe transmissionAddTrackers}";
@@ -125,13 +127,15 @@ in
           Persistent = true;
           Unit = "transmission-trackers-update.service";
         };
-        wantedBy = ["timers.target"];
+        wantedBy = [ "timers.target" ];
       };
     }
 
     # Config files linked via maid
     (n.mkHomeFiles {
       ".config/transmission-daemon/settings.json".source = "${filesRoot}/transmission/settings.json";
-      ".config/transmission-daemon/bandwidth-groups.json".source = "${filesRoot}/transmission/bandwidth-groups.json";
+      ".config/transmission-daemon/bandwidth-groups.json".source =
+        "${filesRoot}/transmission/bandwidth-groups.json";
     })
-  ])
+  ]
+)

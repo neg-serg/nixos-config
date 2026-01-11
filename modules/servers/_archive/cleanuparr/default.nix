@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.cleanuparr;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.cleanuparr = {
     enable = mkEnableOption "Cleanuparr maintenance tool container";
 
@@ -54,10 +61,10 @@ in {
       volumes = [
         "${cfg.dataDir}:/config"
       ];
-      extraOptions = ["--name=cleanuparr"];
+      extraOptions = [ "--name=cleanuparr" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

@@ -3,14 +3,20 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
 
   # Static config files location (Nix paths for linkImpure)
   hyprConfDir = ../../../../files/gui/hypr;
 
   # Core static config files to link
-  coreFiles = ["vars.conf" "classes.conf" "rules.conf" "autostart.conf"];
+  coreFiles = [
+    "vars.conf"
+    "classes.conf"
+    "rules.conf"
+    "autostart.conf"
+  ];
 
   # Binding files to link
   bindingFiles = [
@@ -33,22 +39,28 @@
   bindingsDir = hyprConfDir + /bindings;
 
   # File list generators
-  mkFiles = destDir: sourceDir: files:
-    builtins.listToAttrs (map (f: {
+  mkFiles =
+    destDir: sourceDir: files:
+    builtins.listToAttrs (
+      map (f: {
         name = "${destDir}/${f}";
-        value = {source = n.linkImpure (sourceDir + "/${f}");};
-      })
-      files);
-in {
-  generateFileLinks = {
-    hy3Enabled,
-    hyprlandConfText,
-    workspacesConfText,
-    routesConfText,
-    permissionsConfText,
-    pluginsConfText,
-    pyprlandToml,
-  }:
+        value = {
+          source = n.linkImpure (sourceDir + "/${f}");
+        };
+      }) files
+    );
+in
+{
+  generateFileLinks =
+    {
+      hy3Enabled,
+      hyprlandConfText,
+      workspacesConfText,
+      routesConfText,
+      permissionsConfText,
+      pluginsConfText,
+      pyprlandToml,
+    }:
     n.mkHomeFiles (
       {
         # Generated configs
@@ -60,24 +72,20 @@ in {
 
         # Init config (hy3 or nohy3)
         ".config/hypr/init.conf".source = n.linkImpure (
-          if hy3Enabled
-          then hyprConfDir + /init.conf
-          else hyprConfDir + /init.nohy3.conf
+          if hy3Enabled then hyprConfDir + /init.conf else hyprConfDir + /init.nohy3.conf
         );
         ".config/hypr/xdph.conf".source = n.linkImpure (hyprConfDir + /xdph.conf);
 
         # Bindings config (hy3 or nohy3)
         ".config/hypr/bindings.conf".source = n.linkImpure (
-          if hy3Enabled
-          then hyprConfDir + /bindings.conf
-          else hyprConfDir + /bindings.nohy3.conf
+          if hy3Enabled then hyprConfDir + /bindings.conf else hyprConfDir + /bindings.nohy3.conf
         );
 
         # Main hyprlock config (init)
         ".config/hypr/hyprlock.conf".source = n.linkImpure (hyprConfDir + /hyprlock/init.conf);
       }
       # Plugins config
-      // (lib.optionalAttrs hy3Enabled {".config/hypr/plugins.conf".text = pluginsConfText;})
+      // (lib.optionalAttrs hy3Enabled { ".config/hypr/plugins.conf".text = pluginsConfText; })
       # Static files
       // (mkFiles ".config/hypr" hyprConfDir coreFiles)
       // (mkFiles ".config/hypr/bindings" bindingsDir bindingFiles)

@@ -7,7 +7,8 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   environment.systemPackages = [
     # pkgs.sing-box # proxy core supporting VLESS/Reality and tun
     pkgs.xray # VLESS/Reality-capable proxy core
@@ -17,9 +18,9 @@
   # systemd.services."sing-box-tun" = {
   systemd.services."sing-box-tun" = lib.mkIf false {
     description = "Sing-box VLESS Reality (tun, manual start)";
-    wants = ["network-online.target"];
-    after = ["network-online.target"];
-    wantedBy = []; # manual start: systemctl start sing-box-tun
+    wants = [ "network-online.target" ];
+    after = [ "network-online.target" ];
+    wantedBy = [ ]; # manual start: systemctl start sing-box-tun
     serviceConfig = {
       RuntimeDirectory = "sing-box-tun";
       ExecStartPre = [
@@ -40,8 +41,16 @@
         "/run/current-system/sw/bin/resolvectl revert sb0"
       ];
       Restart = "on-failure";
-      CapabilityBoundingSet = ["CAP_NET_ADMIN" "CAP_NET_RAW" "CAP_NET_BIND_SERVICE"];
-      AmbientCapabilities = ["CAP_NET_ADMIN" "CAP_NET_RAW" "CAP_NET_BIND_SERVICE"];
+      CapabilityBoundingSet = [
+        "CAP_NET_ADMIN"
+        "CAP_NET_RAW"
+        "CAP_NET_BIND_SERVICE"
+      ];
+      AmbientCapabilities = [
+        "CAP_NET_ADMIN"
+        "CAP_NET_RAW"
+        "CAP_NET_BIND_SERVICE"
+      ];
       NoNewPrivileges = false;
     };
   };

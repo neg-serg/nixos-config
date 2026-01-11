@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.brutefir # digital convolution engine for audio processing
     pkgs.camilladsp # flexible audio DSP engine for HTTP control

@@ -3,11 +3,13 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   enabled = config.features.finance.tws.enable or false;
   package = pkgs.neg.tws or pkgs.tws; # Interactive Brokers Trader Workstation (TWS)
-in {
+in
+{
   config = lib.mkIf enabled {
-    environment.systemPackages = lib.mkAfter [package];
+    environment.systemPackages = lib.mkAfter [ package ];
   };
 }

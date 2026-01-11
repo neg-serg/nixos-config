@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.sonarr;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.sonarr = {
     enable = mkEnableOption "Sonarr PVR container";
 
@@ -68,10 +75,10 @@ in {
         "${cfg.downloadsDir}:/downloads"
         "${cfg.tvDir}:/tv"
       ];
-      extraOptions = ["--name=sonarr"];
+      extraOptions = [ "--name=sonarr" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

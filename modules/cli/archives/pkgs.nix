@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.ouch # archive extractor/creator
     pkgs.patool # universal archive unpacker (python)

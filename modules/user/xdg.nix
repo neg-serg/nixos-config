@@ -3,16 +3,18 @@
   pkgs,
   config,
   ...
-}: let
+}:
+let
   pnameOf = pkg: (pkg.pname or (builtins.parseDrvName (pkg.name or "")).name);
-  excludePkgs = config.features.excludePkgs or [];
+  excludePkgs = config.features.excludePkgs or [ ];
   filterExcluded = pkgList: lib.filter (pkg: !(builtins.elem (pnameOf pkg) excludePkgs)) pkgList;
   packages = filterExcluded [
     pkgs.handlr # xdg-open replacement with per-handler rules
     pkgs.xdg-utils # classic xdg helpers (xdg-open/xdg-mime/etc.)
     pkgs.xdg-ninja # detect mislocated files in $HOME
   ];
-in {
+in
+{
   environment.systemPackages = lib.mkAfter packages;
   xdg.portal = {
     enable = true;
@@ -23,10 +25,16 @@ in {
       pkgs.xdg-desktop-portal-gtk # fallback portal for apps expecting GTK implementation
     ];
     config = {
-      common.default = ["hyprland" "gtk"];
-      common."org.freedesktop.impl.portal.FileChooser" = ["gtk"];
-      hyprland.default = ["hyprland" "gtk"];
-      hyprland."org.freedesktop.impl.portal.FileChooser" = ["gtk"];
+      common.default = [
+        "hyprland"
+        "gtk"
+      ];
+      common."org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+      hyprland.default = [
+        "hyprland"
+        "gtk"
+      ];
+      hyprland."org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
     };
   };
 

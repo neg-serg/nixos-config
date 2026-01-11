@@ -17,13 +17,13 @@ buildGoModule {
 
   vendorHash = "sha256-PmmoGnMTAHPpCvRbSTWaca6qOWOimQdiHxlWBa4ZW/Q=";
 
-  nativeBuildInputs = [pkg-config];
-  buildInputs = [alsa-lib];
+  nativeBuildInputs = [ pkg-config ];
+  buildInputs = [ alsa-lib ];
 
   meta = {
     description = "Subsonic TUI client";
     homepage = "https://git.dayanhub.com/sagi/subsonic-tui";
     license = lib.licenses.mit;
-    maintainers = [];
+    maintainers = [ ];
   };
 }

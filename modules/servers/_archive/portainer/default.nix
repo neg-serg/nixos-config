@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.portainer;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.portainer = {
     enable = mkEnableOption "Portainer container management UI";
 
@@ -67,10 +74,14 @@ in {
         "${cfg.dataDir}:/data"
         "/run/podman/podman.sock:/var/run/docker.sock"
       ];
-      extraOptions = ["--name=portainer"];
+      extraOptions = [ "--name=portainer" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort cfg.httpsPort cfg.edgePort];
+    networking.firewall.allowedTCPPorts = [
+      cfg.httpPort
+      cfg.httpsPort
+      cfg.edgePort
+    ];
   };
 }

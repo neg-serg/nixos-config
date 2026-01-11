@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   imports = [
     ./apps-packages.nix
     ./core-packages.nix

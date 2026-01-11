@@ -60,8 +60,13 @@ stdenv.mkDerivation rec {
   meta = with lib; {
     description = "Collection of small admin, git, and media utilities";
     homepage = "https://codeberg.org/jengelh/hxtools";
-    license = with licenses; [mit bsd2Patent lgpl21Plus gpl2Plus];
-    maintainers = with maintainers; [];
+    license = with licenses; [
+      mit
+      bsd2Patent
+      lgpl21Plus
+      gpl2Plus
+    ];
+    maintainers = with maintainers; [ ];
     platforms = platforms.unix;
   };
 }

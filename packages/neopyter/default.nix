@@ -33,6 +33,6 @@ buildPythonPackage rec {
     description = "Neovim plugin for JupyterLab";
     homepage = "https://github.com/SUSTech-data/neopyter";
     license = licenses.mit;
-    maintainers = [];
+    maintainers = [ ];
   };
 }

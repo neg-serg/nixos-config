@@ -2,7 +2,8 @@
   locale,
   timeZone,
   ...
-}: {
+}:
+{
   time.timeZone = timeZone;
   i18n.defaultLocale = locale;
   i18n.extraLocaleSettings = {

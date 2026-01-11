@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.aichat # Use GPT-4(V), Gemini, LocalAI, Ollama, etc. in terminal
     pkgs.aider-chat # Aider CLI assistant

@@ -4,9 +4,11 @@
   inputs,
   specialArgs,
   ...
-}: let
+}:
+let
   cfg = config.system.preserveFlake;
-in {
+in
+{
   options.system.preserveFlake = lib.mkEnableOption "copy the current flake to /etc/current-flake";
 
   config = lib.mkIf cfg {
@@ -15,12 +17,10 @@ in {
         # Use symlink instead of copy for speed
         echo "Linking current flake to /etc/current-flake..."
         ln -sfn ${
-          if lib.hasAttr "filteredSource" specialArgs
-          then specialArgs.filteredSource
-          else inputs.self.outPath
+          if lib.hasAttr "filteredSource" specialArgs then specialArgs.filteredSource else inputs.self.outPath
         } /etc/current-flake
       '';
-      deps = [];
+      deps = [ ];
     };
   };
 }

@@ -17,9 +17,9 @@ buildGoModule rec {
 
   vendorHash = "sha256-6ZtoZhKtNZ9iWCTYYZsmF64T55ovb12Id9EPtuChyEw=";
 
-  subPackages = ["cmd"];
+  subPackages = [ "cmd" ];
 
-  propagatedBuildInputs = [bpftrace];
+  propagatedBuildInputs = [ bpftrace ];
 
   meta = with lib; {
     description = "BPFTrace helper for tracing socket buffers via eBPF";
@@ -29,7 +29,7 @@ buildGoModule rec {
     '';
     homepage = "https://github.com/yandex-cloud/skbtrace";
     license = licenses.mit;
-    maintainers = [];
+    maintainers = [ ];
     mainProgram = "skbtrace";
     platforms = platforms.linux;
   };

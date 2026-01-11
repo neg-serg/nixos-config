@@ -2,16 +2,19 @@
   lib,
   config,
   ...
-}: let
-  mkPostBoot = _:
+}:
+let
+  mkPostBoot =
+    _:
     lib.mkIf true {
       # Defer the unit under the post-boot target without introducing
       # ordering cycles. Do not add After=graphical.target here because
       # these units are indirectly wanted by graphical.target via the
       # post-boot target itself.
-      wantedBy = lib.mkForce ["post-boot.target"];
+      wantedBy = lib.mkForce [ "post-boot.target" ];
     };
-in {
+in
+{
   # Define a target for non-critical background services that can start after desktop is up.
   systemd.targets.post-boot = {
     description = "Post-boot background services";
@@ -20,7 +23,10 @@ in {
     # creates an ordering cycle. Individual services added to post-boot are ordered After=graphical.target.
     # Also pull in post-boot on headless systems where multi-user.target is the default.
     # This ensures deferred services run even without a graphical session.
-    wantedBy = ["graphical.target" "multi-user.target"]; # reached with graphical or headless boot
+    wantedBy = [
+      "graphical.target"
+      "multi-user.target"
+    ]; # reached with graphical or headless boot
   };
 
   # Defer heavier services to post-boot when enabled.
@@ -30,7 +36,9 @@ in {
 
     # Libvirt stack after graphical
     libvirtd = lib.mkIf (config.virtualisation.libvirtd.enable or false) (mkPostBoot "libvirtd");
-    "libvirt-guests" = lib.mkIf (config.virtualisation.libvirtd.enable or false) (mkPostBoot "libvirt-guests");
+    "libvirt-guests" = lib.mkIf (config.virtualisation.libvirtd.enable or false) (
+      mkPostBoot "libvirt-guests"
+    );
 
     # Ollama model server
     ollama = lib.mkIf (config.services.ollama.enable or false) (mkPostBoot "ollama");

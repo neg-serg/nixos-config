@@ -3,12 +3,14 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   homeDir = config.users.users.neg.home;
   dataHome = "${homeDir}/.local/share";
   configHome = "${homeDir}/.config";
   cacheHome = "${homeDir}/.cache";
-in {
+in
+{
   environment.variables = {
     # NixOS handles standard XDG variables by default if xdg.enable is true,
     # but we force them here to match standard profile config
@@ -55,7 +57,7 @@ in {
   };
 
   # Activation script to ensure profile links (legacy support)
-  system.activationScripts.negProfileLinks = lib.stringAfter ["users"] ''
+  system.activationScripts.negProfileLinks = lib.stringAfter [ "users" ] ''
     echo "Ensuring legacy profile links for user neg..."
     ${pkgs.util-linux}/bin/runuser -u neg -- ${pkgs.bash}/bin/bash -c '
       set -eu

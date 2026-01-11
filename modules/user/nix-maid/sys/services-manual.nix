@@ -5,7 +5,8 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   guiEnabled = config.features.gui.enable or false;
   webEnabled = config.features.web.enable or false;
@@ -13,17 +14,18 @@
 
   # Helper to generate INI (Flameshot, Aria2 often uses similar key=val)
   toINI = lib.generators.toINI {
-    mkKeyValue = key: value: let
-      v =
-        if builtins.isString value && lib.hasPrefix "#" value
-        then "\"${value}\""
-        else if builtins.isBool value
-        then
-          if value
-          then "true"
-          else "false"
-        else toString value;
-    in "${key}=${v}";
+    mkKeyValue =
+      key: value:
+      let
+        v =
+          if builtins.isString value && lib.hasPrefix "#" value then
+            "\"${value}\""
+          else if builtins.isBool value then
+            if value then "true" else "false"
+          else
+            toString value;
+      in
+      "${key}=${v}";
   };
 
   # Flameshot Settings
@@ -84,56 +86,63 @@
   };
 
   # Aria2 config text generator (key=value)
-  aria2ConfText = lib.concatStringsSep "\n" (lib.mapAttrsToList (k: v: "${k}=${toString v}") aria2Settings);
-in {
+  aria2ConfText = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (k: v: "${k}=${toString v}") aria2Settings
+  );
+in
+{
   config = lib.mkMerge [
-    (lib.mkIf guiEnabled (lib.mkMerge [
-      {
-        systemd.user.services.flameshot = {
-          description = "Flameshot screenshot tool";
-          after = ["graphical-session.target"];
-          wantedBy = ["graphical-session.target"];
-          environment = {
-            QT_QPA_PLATFORM = "wayland";
+    (lib.mkIf guiEnabled (
+      lib.mkMerge [
+        {
+          systemd.user.services.flameshot = {
+            description = "Flameshot screenshot tool";
+            after = [ "graphical-session.target" ];
+            wantedBy = [ "graphical-session.target" ];
+            environment = {
+              QT_QPA_PLATFORM = "wayland";
+            };
+            serviceConfig = {
+              ExecStart = "${lib.getExe pkgs.flameshot}";
+              Restart = "on-failure";
+              RestartSec = "2";
+            };
           };
-          serviceConfig = {
-            ExecStart = "${lib.getExe pkgs.flameshot}";
-            Restart = "on-failure";
-            RestartSec = "2";
-          };
-        };
 
-        environment.systemPackages = [pkgs.flameshot]; # powerful screenshot tool with annotation features
-      }
-      (n.mkHomeFiles {
-        ".config/flameshot/flameshot.ini".text = toINI flameshotSettings;
-      })
-    ]))
+          environment.systemPackages = [ pkgs.flameshot ]; # powerful screenshot tool with annotation features
+        }
+        (n.mkHomeFiles {
+          ".config/flameshot/flameshot.ini".text = toINI flameshotSettings;
+        })
+      ]
+    ))
 
-    (lib.mkIf (webEnabled && config.features.web.tools.enable or false) (lib.mkMerge [
-      {
-        systemd.user.services.aria2 = {
-          description = "aria2 download manager";
-          partOf = ["graphical-session.target"];
-          wantedBy = ["graphical-session.target"];
-          serviceConfig = {
-            ExecStart = "${lib.getExe pkgs.aria2} --conf-path=%h/.config/aria2/aria2.conf";
-            TimeoutStopSec = "5s";
+    (lib.mkIf (webEnabled && config.features.web.tools.enable or false) (
+      lib.mkMerge [
+        {
+          systemd.user.services.aria2 = {
+            description = "aria2 download manager";
+            partOf = [ "graphical-session.target" ];
+            wantedBy = [ "graphical-session.target" ];
+            serviceConfig = {
+              ExecStart = "${lib.getExe pkgs.aria2} --conf-path=%h/.config/aria2/aria2.conf";
+              TimeoutStopSec = "5s";
+            };
           };
-        };
-        # aria2 is installed via cli/file-ops.nix
-      }
-      (n.mkHomeFiles {
-        ".config/aria2/aria2.conf".text = aria2ConfText;
-        # Ensure session file exists (empty init)
-        ".local/share/aria2/session".text = "";
-      })
-    ]))
+          # aria2 is installed via cli/file-ops.nix
+        }
+        (n.mkHomeFiles {
+          ".config/aria2/aria2.conf".text = aria2ConfText;
+          # Ensure session file exists (empty init)
+          ".local/share/aria2/session".text = "";
+        })
+      ]
+    ))
 
     (lib.mkIf mediaEnabled {
       systemd.user.services.playerctld = {
         description = "Keep track of media player activity";
-        wantedBy = ["default.target"];
+        wantedBy = [ "default.target" ];
         serviceConfig = {
           Type = "simple";
           ExecStart = "${lib.getExe' pkgs.playerctl "playerctld"} daemon";
@@ -141,7 +150,7 @@ in {
           RestartSec = "2";
         };
       };
-      environment.systemPackages = []; # command-line tool for controlling media players
+      environment.systemPackages = [ ]; # command-line tool for controlling media players
     })
 
     (lib.mkIf (config.features.gui.enable or false) {
@@ -150,39 +159,41 @@ in {
         serviceConfig = {
           Type = "oneshot";
           EnvironmentFile = "/run/services/nextcloud-cli.env";
-          ExecStart = let
-            nextcloudcmd = lib.getExe' pkgs.nextcloud-client "nextcloudcmd";
-            syncScript = pkgs.writeShellScript "nextcloud-sync" ''
-              set -euo pipefail
-              normalize_url() {
-                case "$1" in
-                  *"/remote.php/"*) printf '%s\n' "''${1%%/remote.php/*}" ;;
-                  *) printf '%s\n' "$1" ;;
-                esac
-              }
-              user_default="neg"
-              url_default="https://telfir"
-              if [ -f /run/user/1000/secrets/nextcloud-cli.env ]; then
-                  source /run/user/1000/secrets/nextcloud-cli.env
-              fi
-              user=''${NEXTCLOUD_USER:-''${NC_USER:-$user_default}}
-              url=$(normalize_url "''${NEXTCLOUD_URL:-$url_default}")
-              pass=''${NEXTCLOUD_PASS:-''${NC_PASSWORD:-}}
-              if [ -z "$url" ]; then echo "Error: Missing URL"; exit 1; fi
-              if [ -z "$user" ]; then echo "Error: Missing User"; exit 1; fi
-              export NC_USER="$user"
-              if [ -n "$pass" ]; then export NC_PASSWORD="$pass"; fi
-              localDir="${config.users.users.neg.home}/sync/telfir"
-              mkdir -p "$localDir"
-              exec ${nextcloudcmd} --non-interactive --silent "$localDir" "$url"
-            '';
-          in "${syncScript}";
+          ExecStart =
+            let
+              nextcloudcmd = lib.getExe' pkgs.nextcloud-client "nextcloudcmd";
+              syncScript = pkgs.writeShellScript "nextcloud-sync" ''
+                set -euo pipefail
+                normalize_url() {
+                  case "$1" in
+                    *"/remote.php/"*) printf '%s\n' "''${1%%/remote.php/*}" ;;
+                    *) printf '%s\n' "$1" ;;
+                  esac
+                }
+                user_default="neg"
+                url_default="https://telfir"
+                if [ -f /run/user/1000/secrets/nextcloud-cli.env ]; then
+                    source /run/user/1000/secrets/nextcloud-cli.env
+                fi
+                user=''${NEXTCLOUD_USER:-''${NC_USER:-$user_default}}
+                url=$(normalize_url "''${NEXTCLOUD_URL:-$url_default}")
+                pass=''${NEXTCLOUD_PASS:-''${NC_PASSWORD:-}}
+                if [ -z "$url" ]; then echo "Error: Missing URL"; exit 1; fi
+                if [ -z "$user" ]; then echo "Error: Missing User"; exit 1; fi
+                export NC_USER="$user"
+                if [ -n "$pass" ]; then export NC_PASSWORD="$pass"; fi
+                localDir="${config.users.users.neg.home}/sync/telfir"
+                mkdir -p "$localDir"
+                exec ${nextcloudcmd} --non-interactive --silent "$localDir" "$url"
+              '';
+            in
+            "${syncScript}";
         };
       };
 
       systemd.user.timers.nextcloud-sync = {
         description = "Timer: Nextcloud CLI sync";
-        wantedBy = ["timers.target"];
+        wantedBy = [ "timers.target" ];
         timerConfig = {
           OnCalendar = "hourly";
           RandomizedDelaySec = "5m";
@@ -191,44 +202,52 @@ in {
         };
       };
 
-      environment.systemPackages = [pkgs.nextcloud-client]; # Nextcloud desktop and command-line sync client
+      environment.systemPackages = [ pkgs.nextcloud-client ]; # Nextcloud desktop and command-line sync client
     })
 
-    (lib.mkIf ((config.features.dev.openxr.enable or false) && (config.features.dev.openxr.runtime.service.enable or false)) (lib.mkMerge [
-      {
-        systemd.user.services.monado-service = {
-          description = "Monado OpenXR Runtime Service";
-          wantedBy = ["graphical-session.target"];
-          serviceConfig = {
-            ExecStart = "${lib.getExe' pkgs.monado "monado-service"}";
-          };
-        };
-      }
-      (n.mkHomeFiles {
-        ".config/monado/config.example.jsonc".text = ''
-          // Monado user configuration (example).
-          // Rename to config.json to activate.
+    (lib.mkIf
+      (
+        (config.features.dev.openxr.enable or false)
+        && (config.features.dev.openxr.runtime.service.enable or false)
+      )
+      (
+        lib.mkMerge [
           {
-            "settings": { "log": { "level": "info" } }
+            systemd.user.services.monado-service = {
+              description = "Monado OpenXR Runtime Service";
+              wantedBy = [ "graphical-session.target" ];
+              serviceConfig = {
+                ExecStart = "${lib.getExe' pkgs.monado "monado-service"}";
+              };
+            };
           }
-        '';
-        ".config/monado/basalt.config.example.jsonc".text = ''
-          // Basalt + Monado example.
-          {
-            "drivers": {
-              "basalt": {
-                "enable": true,
-                "cams": [ { "name": "/dev/video0", "resolution": [1280, 720], "fps": 60 } ],
-                "imu": "icm20602",
-                "calibration": {
-                  "intrinsics": "${config.users.users.neg.home}/.config/monado/calib/intrinsics.yaml",
-                  "cam_to_imu": "${config.users.users.neg.home}/.config/monado/calib/cam_to_imu.yaml"
+          (n.mkHomeFiles {
+            ".config/monado/config.example.jsonc".text = ''
+              // Monado user configuration (example).
+              // Rename to config.json to activate.
+              {
+                "settings": { "log": { "level": "info" } }
+              }
+            '';
+            ".config/monado/basalt.config.example.jsonc".text = ''
+              // Basalt + Monado example.
+              {
+                "drivers": {
+                  "basalt": {
+                    "enable": true,
+                    "cams": [ { "name": "/dev/video0", "resolution": [1280, 720], "fps": 60 } ],
+                    "imu": "icm20602",
+                    "calibration": {
+                      "intrinsics": "${config.users.users.neg.home}/.config/monado/calib/intrinsics.yaml",
+                      "cam_to_imu": "${config.users.users.neg.home}/.config/monado/calib/cam_to_imu.yaml"
+                    }
+                  }
                 }
               }
-            }
-          }
-        '';
-      })
-    ]))
+            '';
+          })
+        ]
+      )
+    )
   ];
 }

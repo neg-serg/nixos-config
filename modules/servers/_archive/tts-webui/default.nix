@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.tts-webui;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.tts-webui = {
     enable = mkEnableOption "TTS-WebUI container";
 
@@ -77,12 +84,14 @@ in {
         "${cfg.dataDir}/outputs:/app/tts-webui/outputs"
         "${cfg.dataDir}/favorites:/app/tts-webui/favorites"
       ];
-      extraOptions =
-        ["--name=tts-webui"]
-        ++ lib.optional cfg.useGpu "--device=nvidia.com/gpu=all";
+      extraOptions = [ "--name=tts-webui" ] ++ lib.optional cfg.useGpu "--device=nvidia.com/gpu=all";
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort cfg.uiPort cfg.extraPort];
+    networking.firewall.allowedTCPPorts = [
+      cfg.httpPort
+      cfg.uiPort
+      cfg.extraPort
+    ];
   };
 }

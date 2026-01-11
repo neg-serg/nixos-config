@@ -4,7 +4,8 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   # Browser/App Definitions
   browser = "floorp.desktop";
@@ -106,7 +107,7 @@
     "application/sql" = editor;
   };
 
-  mimeAppsList = lib.generators.toINI {} {
+  mimeAppsList = lib.generators.toINI { } {
     "Default Applications" = associations;
     "Added Associations" = associations;
   };
@@ -122,27 +123,30 @@
     XDG_TEMPLATES_DIR="$HOME/.local/templates"
     XDG_VIDEOS_DIR="$HOME/vid"
   '';
-in {
+in
+{
   config = lib.mkMerge [
     {
       # Activation: Create Directories
       systemd.user.services.xdg-user-dirs-create = {
         description = "Create XDG User Directories";
-        wantedBy = ["default.target"];
+        wantedBy = [ "default.target" ];
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = toString (pkgs.writeShellScript "create-xdg-dirs" ''
-            mkdir -p $HOME/.local/desktop
-            mkdir -p $HOME/doc
-            mkdir -p $HOME/dw
-            mkdir -p $HOME/music
-            mkdir -p $HOME/pic
-            mkdir -p $HOME/.local/public
-            mkdir -p $HOME/.local/templates
-            mkdir -p $HOME/vid
-            mkdir -p $HOME/.local/bin
-            mkdir -p $HOME/.local/mail/gmail/INBOX
-          '');
+          ExecStart = toString (
+            pkgs.writeShellScript "create-xdg-dirs" ''
+              mkdir -p $HOME/.local/desktop
+              mkdir -p $HOME/doc
+              mkdir -p $HOME/dw
+              mkdir -p $HOME/music
+              mkdir -p $HOME/pic
+              mkdir -p $HOME/.local/public
+              mkdir -p $HOME/.local/templates
+              mkdir -p $HOME/vid
+              mkdir -p $HOME/.local/bin
+              mkdir -p $HOME/.local/mail/gmail/INBOX
+            ''
+          );
         };
       };
     }

@@ -3,9 +3,11 @@
   pkgs,
   config,
   ...
-}: let
-  cfg = config.hardware.gpu.corectrl or {};
-in {
+}:
+let
+  cfg = config.hardware.gpu.corectrl or { };
+in
+{
   options.hardware.gpu.corectrl = {
     enable = lib.mkEnableOption "Install CoreCtrl and allow GPU power/voltage control via polkit.";
 
@@ -25,7 +27,7 @@ in {
   };
 
   config = lib.mkIf (cfg.enable or false) {
-    environment.systemPackages = [pkgs.corectrl]; # GUI for AMD/Intel GPU oveclocking and fan control
+    environment.systemPackages = [ pkgs.corectrl ]; # GUI for AMD/Intel GPU oveclocking and fan control
 
     # Polkit rule to allow the helper for selected group
     environment.etc."polkit-1/rules.d/60-corectrl.rules".text = ''
@@ -37,6 +39,8 @@ in {
     '';
 
     # Optionally unlock more controls
-    boot.kernelParams = lib.optionals (cfg.ppfeaturemask != null) ["amdgpu.ppfeaturemask=${cfg.ppfeaturemask}"];
+    boot.kernelParams = lib.optionals (cfg.ppfeaturemask != null) [
+      "amdgpu.ppfeaturemask=${cfg.ppfeaturemask}"
+    ];
   };
 }

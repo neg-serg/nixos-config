@@ -6,18 +6,13 @@
   isNushell ? false,
   homeDir ? "/home/neg",
   ...
-}: let
+}:
+let
   # Helper for environment variables (Nushell needs $env.VAR)
-  mkEnvVar = name:
-    if isNushell
-    then "$env.${name}"
-    else "\$${name}";
+  mkEnvVar = name: if isNushell then "$env.${name}" else "\$${name}";
 
   # Helper for recursive aliases/standard commands in Nushell (force external)
-  mkCmd = name:
-    if isNushell
-    then "^${name}"
-    else name;
+  mkCmd = name: if isNushell then "^${name}" else name;
 
   # Package availability checks
   hasRg = pkgs ? ripgrep;
@@ -49,10 +44,7 @@
   hasFlatpak = pkgs ? flatpak;
 
   # Conditional alias helper
-  optionalAlias = cond: attrs:
-    if cond
-    then attrs
-    else {};
+  optionalAlias = cond: attrs: if cond then attrs else { };
 
   # Base aliases (always included)
   baseAliases = {
@@ -192,14 +184,12 @@
     sort = "${mkCmd "sort"} --parallel 8 -S 16M";
     ":q" = "exit";
     s = "sudo ";
-    dig =
-      if isNushell
-      then "^dig '+noall' '+answer'"
-      else "dig +noall +answer";
+    dig = if isNushell then "^dig '+noall' '+answer'" else "dig +noall +answer";
     rsync =
-      if isNushell
-      then "^rsync -az --compress-choice=zstd '--info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS'"
-      else "rsync -az --compress-choice=zstd --info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS";
+      if isNushell then
+        "^rsync -az --compress-choice=zstd '--info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS'"
+      else
+        "rsync -az --compress-choice=zstd --info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS";
     nrb = "sudo nixos-rebuild";
     j = "journalctl";
     emptydir = "${mkCmd "emptydir"}";
@@ -243,20 +233,20 @@
       nmap-vulners = "nmap -sV --script=vulners/vulners.nse";
       nmap-vulscan = "nmap -sV --script=vulscan/vulscan.nse";
     })
-    (optionalAlias hasPrettyping {ping = "prettyping";})
+    (optionalAlias hasPrettyping { ping = "prettyping"; })
     (optionalAlias hasDuf {
       df = "duf --theme neg --style plain --no-header --bar-style modern --hide special --hide-mp '${homeDir}/*,/var/lib/*,/nix/store'";
     })
-    (optionalAlias hasDust {sp = "dust -r";})
-    (optionalAlias hasKhal {cal = "khal calendar";})
-    (optionalAlias hasHxd {hexdump = "hxd";})
+    (optionalAlias hasDust { sp = "dust -r"; })
+    (optionalAlias hasKhal { cal = "khal calendar"; })
+    (optionalAlias hasHxd { hexdump = "hxd"; })
     (optionalAlias hasOuch {
       se = "ouch decompress";
       pk = "ouch compress";
     })
-    (optionalAlias hasPigz {gzip = "pigz";})
-    (optionalAlias hasPbzip2 {bzip2 = "pbzip2";})
-    (optionalAlias hasPlocate {locate = "plocate";})
+    (optionalAlias hasPigz { gzip = "pigz"; })
+    (optionalAlias hasPbzip2 { bzip2 = "pbzip2"; })
+    (optionalAlias hasPlocate { locate = "plocate"; })
     (optionalAlias hasMpvc {
       mpvc = "${mkCmd "mpvc"} -S ${mkEnvVar "XDG_CONFIG_HOME"}/mpv/socket";
     })
@@ -268,17 +258,17 @@
       we = "curl 'wttr.in/?T'";
       wem = "curl wttr.in/Moscow?lang=ru";
     })
-    (optionalAlias (hasCurl && hasJq) {cht = "${mkCmd "cht"}";})
+    (optionalAlias (hasCurl && hasJq) { cht = "${mkCmd "cht"}"; })
     (optionalAlias hasRlwrap {
       bb = "rlwrap bb";
       fennel = "rlwrap fennel";
       guile = "rlwrap guile";
       irb = "rlwrap irb";
     })
-    (optionalAlias hasBtm {htop = "btm -b -T --mem_as_value";})
-    (optionalAlias hasIotop {iotop = "sudo iotop -oPa";})
-    (optionalAlias hasLsof {ports = "sudo lsof -Pni";})
-    (optionalAlias hasKmon {kmon = "sudo kmon -u --color 19683a";})
+    (optionalAlias hasBtm { htop = "btm -b -T --mem_as_value"; })
+    (optionalAlias hasIotop { iotop = "sudo iotop -oPa"; })
+    (optionalAlias hasLsof { ports = "sudo lsof -Pni"; })
+    (optionalAlias hasKmon { kmon = "sudo kmon -u --color 19683a"; })
     (optionalAlias hasFd {
       fd = "${mkCmd "fd"} -H --ignore-vcs";
       fda = "${mkCmd "fd"} -Hu";
@@ -287,8 +277,8 @@
       love = "mpc sendmessage mpdas love";
       unlove = "mpc sendmessage mpdas unlove";
     })
-    (optionalAlias hasHandlr {e = "handlr open";})
-    (optionalAlias hasErd {tree = "erd";})
+    (optionalAlias hasHandlr { e = "handlr open"; })
+    (optionalAlias hasErd { tree = "erd"; })
     (optionalAlias hasFlatpak {
       bottles = "flatpak run com.usebottles.bottles";
       obs = "flatpak run com.obsproject.Studio";
@@ -323,4 +313,4 @@
     })
   ];
 in
-  baseAliases // conditionalAliases
+baseAliases // conditionalAliases

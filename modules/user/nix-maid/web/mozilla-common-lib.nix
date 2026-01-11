@@ -6,18 +6,13 @@
   faProvider ? null,
   ...
 }:
-with lib; let
+with lib;
+let
   # Prefer configured XDG Downloads directory; fallback to ~/dw to match defaults
-  dlDir = lib.attrByPath ["xdg" "userDirs" "download"] "${config.home.homeDirectory}/dw" config;
+  dlDir = lib.attrByPath [ "xdg" "userDirs" "download" ] "${config.home.homeDirectory}/dw" config;
   useNurAddons = config.features.web.addonsFromNUR.enable or false;
-  fa =
-    if useNurAddons && faProvider != null
-    then faProvider pkgs
-    else null;
-  addons =
-    if fa != null
-    then negLib.browserAddons fa
-    else {common = [];};
+  fa = if useNurAddons && faProvider != null then faProvider pkgs else null;
+  addons = if fa != null then negLib.browserAddons fa else { common = [ ]; };
   nativeMessagingHosts = [
     pkgs.pywalfox-native # native host for Pywalfox (theme colors)
   ];
@@ -129,30 +124,30 @@ with lib; let
     "privacy.resistFingerprinting.block_mozAddonManager" = true;
   };
 
-  settings = baseSettings // (optionalAttrs (config.features.web.prefs.fastfox.enable or false) fastfoxSettings);
+  settings =
+    baseSettings // (optionalAttrs (config.features.web.prefs.fastfox.enable or false) fastfoxSettings);
 
   extraConfig = "";
 
-  userChrome =
-    ''
-      /* Hide buttons you don't use */
-      #nav-bar #back-button,
-      #nav-bar #forward-button,
-      #nav-bar #stop-reload-button,
-      #nav-bar #home-button { display: none !important; }
-      /* Compact urlbar text and results */
-      :root { --urlbar-min-height: 30px !important; }
-      #urlbar-input { font-size: 14px !important; font-weight: 500 !important; }
-      .urlbarView-row .urlbarView-title,
-      .urlbarView-row .urlbarView-url { font-size: 12px !important; font-weight: 400 !important; }
-      /* Keep urlbar dropdown reasonable */
-      .urlbarView-body-inner{ max-height: min(60vh, 640px) !important; overflow: auto !important; }
-    ''
-    + builtins.readFile ./firefox/hide_content_borders.css
-    + builtins.readFile ./firefox/hide_drm_nagbar_chrome.css
-    + builtins.readFile ./firefox/inline_tabs_chrome.css
-    + builtins.readFile ./firefox/sideberry_chrome.css
-    + builtins.readFile ./firefox/sideberry_hide_ext_button.css;
+  userChrome = ''
+    /* Hide buttons you don't use */
+    #nav-bar #back-button,
+    #nav-bar #forward-button,
+    #nav-bar #stop-reload-button,
+    #nav-bar #home-button { display: none !important; }
+    /* Compact urlbar text and results */
+    :root { --urlbar-min-height: 30px !important; }
+    #urlbar-input { font-size: 14px !important; font-weight: 500 !important; }
+    .urlbarView-row .urlbarView-title,
+    .urlbarView-row .urlbarView-url { font-size: 12px !important; font-weight: 400 !important; }
+    /* Keep urlbar dropdown reasonable */
+    .urlbarView-body-inner{ max-height: min(60vh, 640px) !important; overflow: auto !important; }
+  ''
+  + builtins.readFile ./firefox/hide_content_borders.css
+  + builtins.readFile ./firefox/hide_drm_nagbar_chrome.css
+  + builtins.readFile ./firefox/inline_tabs_chrome.css
+  + builtins.readFile ./firefox/sideberry_chrome.css
+  + builtins.readFile ./firefox/sideberry_hide_ext_button.css;
 
   # Tridactyl UI sizing (fallback cap):
   # Some Tridactyl builds/layouts render the completions list without the expected
@@ -340,7 +335,9 @@ with lib; let
         install_url = "https://addons.mozilla.org/firefox/downloads/latest/%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C-%D0%BC%D1%83%D0%B7%D1%8B%D0%BA%D1%83-%D1%81-%D0%B2%D0%BA-vkd/latest.xpi";
       };
       # Explicitly block Tampermonkey userscript manager
-      "firefox@tampermonkey.net" = {installation_mode = "blocked";};
+      "firefox@tampermonkey.net" = {
+        installation_mode = "blocked";
+      };
 
       # Tridactyl - vim-like keyboard navigation (disabled in favor of surfingkeys)
       "tridactyl.vim@cmcaine.co.uk" = {
@@ -404,18 +401,19 @@ with lib; let
   # --- Addon Helpers ---
   # Shared functions for building and fetching Firefox addons
 
-  buildFirefoxXpiAddon = {
-    src,
-    pname,
-    version,
-    addonId,
-  }:
+  buildFirefoxXpiAddon =
+    {
+      src,
+      pname,
+      version,
+      addonId,
+    }:
     pkgs.stdenv.mkDerivation {
       name = "${pname}-${version}";
       inherit src;
       preferLocalBuild = true;
       allowSubstitutes = true;
-      passthru = {inherit addonId;};
+      passthru = { inherit addonId; };
       buildCommand = ''
         dst="$out/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
         mkdir -p "$dst"
@@ -423,66 +421,71 @@ with lib; let
       '';
     };
 
-  remoteXpiAddon = {
-    pname,
-    version,
-    addonId,
-    url,
-    sha256,
-  }:
+  remoteXpiAddon =
+    {
+      pname,
+      version,
+      addonId,
+      url,
+      sha256,
+    }:
     buildFirefoxXpiAddon {
       inherit pname version addonId;
-      src = pkgs.fetchurl {inherit url sha256;};
+      src = pkgs.fetchurl { inherit url sha256; };
     };
 
-  themeAddon = {
-    name,
-    theme,
-  }:
+  themeAddon =
+    {
+      name,
+      theme,
+    }:
     buildFirefoxXpiAddon {
       pname = "firefox-theme-xpi-${name}";
       version = "1.0";
       addonId = "theme-${name}@outfoxxed.me";
-      src = import ./firefox-theme.nix {inherit pkgs name theme;};
+      src = import ./firefox-theme.nix { inherit pkgs name theme; };
     };
 
   # --- Enhanced Addon and Profile Helpers ---
 
   # mkExtensionFiles: Creates nix-maid file entries for .xpi extensions.
   # Handles both mozilla (Firefox) and floorp paths.
-  mkExtensionFiles = {
-    profilePath,
-    extensions,
-    browserType ? "mozilla", # "mozilla" or "floorp"
-  }: let
-    prefix =
-      if browserType == "floorp"
-      then ".floorp"
-      else ".mozilla/firefox";
-  in
-    lib.mkMerge (map (ext: let
-        extId = ext.addonId or (throw "Extension ${ext.name} has no addonId");
-        # Firefox-specific extension directory GUID
-        guid = "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}";
-        xpiPath = "${ext}/share/mozilla/extensions/${guid}/${extId}.xpi";
-      in {
-        "${prefix}/${profilePath}/extensions/${extId}.xpi".source = xpiPath;
-      })
-      extensions);
+  mkExtensionFiles =
+    {
+      profilePath,
+      extensions,
+      browserType ? "mozilla", # "mozilla" or "floorp"
+    }:
+    let
+      prefix = if browserType == "floorp" then ".floorp" else ".mozilla/firefox";
+    in
+    lib.mkMerge (
+      map (
+        ext:
+        let
+          extId = ext.addonId or (throw "Extension ${ext.name} has no addonId");
+          # Firefox-specific extension directory GUID
+          guid = "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}";
+          xpiPath = "${ext}/share/mozilla/extensions/${guid}/${extId}.xpi";
+        in
+        {
+          "${prefix}/${profilePath}/extensions/${extId}.xpi".source = xpiPath;
+        }
+      ) extensions
+    );
 
   # mkProfileFiles: Generates user.js, userChrome.css and extension links for a profile.
-  mkProfileFiles = {
-    profile,
-    browserType ? "mozilla",
-    impurity ? null,
-    neg ? (_impurity: {mkUserJs = _: "";}), # Fallback for structural-only calls
-  }: let
-    n = neg impurity;
-    prefix =
-      if browserType == "floorp"
-      then ".floorp"
-      else ".mozilla/firefox";
-  in
+  mkProfileFiles =
+    {
+      profile,
+      browserType ? "mozilla",
+      impurity ? null,
+      neg ? (_impurity: { mkUserJs = _: ""; }), # Fallback for structural-only calls
+    }:
+    let
+      n = neg impurity;
+      prefix = if browserType == "floorp" then ".floorp" else ".mozilla/firefox";
+    in
     lib.mkMerge [
       {
         "${prefix}/${profile.path}/user.js".text = n.mkUserJs profile.settings;
@@ -502,132 +505,173 @@ with lib; let
 
   # mkMozillaModule: The master helper to build a full browser configuration.
   # This replaces the need for separate complex logic in firefox.nix/floorp.nix.
-  mkMozillaModule = {
-    package, # browser package
-    profiles, # attrset of profile definitions
-    impurity ? null,
-    neg,
-    cfg, # features.web.<browser>
-    guiEnabled ? true,
-    browserType ? "mozilla", # "mozilla", "floorp", or "librewolf"
-    policiesExtra ? {},
-    systemPackagesExtra ? [],
-    overlays ? [],
-  }: let
-    n = neg impurity;
-    prefix =
-      if browserType == "floorp"
-      then ".floorp"
-      else if browserType == "librewolf"
-      then ".librewolf"
-      else ".mozilla/firefox";
+  mkMozillaModule =
+    {
+      package, # browser package
+      profiles, # attrset of profile definitions
+      impurity ? null,
+      neg,
+      cfg, # features.web.<browser>
+      guiEnabled ? true,
+      browserType ? "mozilla", # "mozilla", "floorp", or "librewolf"
+      policiesExtra ? { },
+      systemPackagesExtra ? [ ],
+      overlays ? [ ],
+    }:
+    let
+      n = neg impurity;
+      prefix =
+        if browserType == "floorp" then
+          ".floorp"
+        else if browserType == "librewolf" then
+          ".librewolf"
+        else
+          ".mozilla/firefox";
 
-    # Combined policies
-    mergedPolicies =
-      policies
-      // (lib.optionalAttrs (browserType == "floorp") {
-        # Add Floorp-specific defaults if needed
-      })
-      // policiesExtra;
-  in {
-    config = lib.mkIf (guiEnabled && (cfg.enable or false)) (lib.mkMerge [
-      {
-        environment.systemPackages = [package] ++ nativeMessagingHosts ++ systemPackagesExtra;
-        nixpkgs.overlays = overlays;
-
-        # Enterprise policies
-        environment.etc = let
-          policyPath =
-            if browserType == "floorp"
-            then "floorp/policies/policies.json"
-            else if browserType == "librewolf"
-            then "librewolf/policies/policies.json"
-            else "firefox/policies/policies.json";
-        in
+      # Combined policies
+      mergedPolicies =
+        policies
+        // (lib.optionalAttrs (browserType == "floorp") {
+          # Add Floorp-specific defaults if needed
+        })
+        // policiesExtra;
+    in
+    {
+      config = lib.mkIf (guiEnabled && (cfg.enable or false)) (
+        lib.mkMerge [
           {
-            "${policyPath}".text = builtins.toJSON {policies = mergedPolicies;};
-          }
-          // lib.optionalAttrs (browserType == "floorp") {
-            "firefox/policies/policies.json".text = builtins.toJSON {policies = mergedPolicies;};
-          };
-      }
-      (n.mkHomeFiles (lib.mkMerge (
-        [
-          {"${prefix}/profiles.ini".text = n.mkProfilesIni profiles;}
-        ]
-        ++ (lib.mapAttrsToList (_name: profile:
-          mkProfileFiles {
-            inherit profile browserType impurity neg;
-          })
-        profiles)
-      )))
-    ]);
-  };
-in {
-  inherit nativeMessagingHosts settings extraConfig userChrome policies addons buildFirefoxXpiAddon remoteXpiAddon themeAddon mkMozillaModule mkProfileFiles mkExtensionFiles surfingkeysUserContent;
-  # mkBrowser: build a module fragment for programs.<name> (Home Manager style)
-  mkBrowser = {
-    name,
-    package,
-    profileId ? "default",
-    settingsExtra ? {},
-    defaults ? {},
-    addonsExtra ? [],
-    nativeMessagingExtra ? [],
-    policiesExtra ? {},
-    profileExtra ? {},
-    userChromeExtra ? "",
-    bottomNavbar ? true,
-    vanillaChrome ? false,
-  }: let
-    pid = profileId;
-    mergedSettings = settings // defaults // settingsExtra;
-    mergedNMH = nativeMessagingHosts ++ nativeMessagingExtra;
-    mergedPolicies = policies // policiesExtra;
-    # Soft migration hint: legacy downloads were stored under ~/dw.
-    # When XDG Downloads differs, emit a one-time warning for the default browser.
-    oldDownloadsDir = "${config.home.homeDirectory}/dw";
-    isDefaultBrowser = let def = config.features.web.default or "floorp"; in def == name;
-    needsMigration = (config.features.web.enable or false) && (dlDir != oldDownloadsDir) && isDefaultBrowser;
-    userChromeInjected =
-      if vanillaChrome
-      then userChromeExtra
-      else
-        userChrome
-        + (optionalString bottomNavbar bottomNavbarChrome)
-        + hideSearchModeChip
-        + hideUrlbarOneOffs
-        + hideSearchBarWidget
-        + userChromeExtra;
+            environment.systemPackages = [ package ] ++ nativeMessagingHosts ++ systemPackagesExtra;
+            nixpkgs.overlays = overlays;
 
-    profileBase = {
-      isDefault = true;
-      extensions = {packages = (addons.common or []) ++ addonsExtra;};
-      settings = mergedSettings;
-      userChrome = userChromeInjected;
-      userContent = surfingkeysUserContent;
-      inherit extraConfig;
+            # Enterprise policies
+            environment.etc =
+              let
+                policyPath =
+                  if browserType == "floorp" then
+                    "floorp/policies/policies.json"
+                  else if browserType == "librewolf" then
+                    "librewolf/policies/policies.json"
+                  else
+                    "firefox/policies/policies.json";
+              in
+              {
+                "${policyPath}".text = builtins.toJSON { policies = mergedPolicies; };
+              }
+              // lib.optionalAttrs (browserType == "floorp") {
+                "firefox/policies/policies.json".text = builtins.toJSON { policies = mergedPolicies; };
+              };
+          }
+          (n.mkHomeFiles (
+            lib.mkMerge (
+              [
+                { "${prefix}/profiles.ini".text = n.mkProfilesIni profiles; }
+              ]
+              ++ (lib.mapAttrsToList (
+                _name: profile:
+                mkProfileFiles {
+                  inherit
+                    profile
+                    browserType
+                    impurity
+                    neg
+                    ;
+                }
+              ) profiles)
+            )
+          ))
+        ]
+      );
     };
-    profile = profileBase // profileExtra;
-  in {
-    programs = {
-      "${name}" = {
-        enable = true;
-        inherit package;
-        nativeMessagingHosts = mergedNMH;
-        profiles = {
-          "${pid}" = profile;
+in
+{
+  inherit
+    nativeMessagingHosts
+    settings
+    extraConfig
+    userChrome
+    policies
+    addons
+    buildFirefoxXpiAddon
+    remoteXpiAddon
+    themeAddon
+    mkMozillaModule
+    mkProfileFiles
+    mkExtensionFiles
+    surfingkeysUserContent
+    ;
+  # mkBrowser: build a module fragment for programs.<name> (Home Manager style)
+  mkBrowser =
+    {
+      name,
+      package,
+      profileId ? "default",
+      settingsExtra ? { },
+      defaults ? { },
+      addonsExtra ? [ ],
+      nativeMessagingExtra ? [ ],
+      policiesExtra ? { },
+      profileExtra ? { },
+      userChromeExtra ? "",
+      bottomNavbar ? true,
+      vanillaChrome ? false,
+    }:
+    let
+      pid = profileId;
+      mergedSettings = settings // defaults // settingsExtra;
+      mergedNMH = nativeMessagingHosts ++ nativeMessagingExtra;
+      mergedPolicies = policies // policiesExtra;
+      # Soft migration hint: legacy downloads were stored under ~/dw.
+      # When XDG Downloads differs, emit a one-time warning for the default browser.
+      oldDownloadsDir = "${config.home.homeDirectory}/dw";
+      isDefaultBrowser =
+        let
+          def = config.features.web.default or "floorp";
+        in
+        def == name;
+      needsMigration =
+        (config.features.web.enable or false) && (dlDir != oldDownloadsDir) && isDefaultBrowser;
+      userChromeInjected =
+        if vanillaChrome then
+          userChromeExtra
+        else
+          userChrome
+          + (optionalString bottomNavbar bottomNavbarChrome)
+          + hideSearchModeChip
+          + hideUrlbarOneOffs
+          + hideSearchBarWidget
+          + userChromeExtra;
+
+      profileBase = {
+        isDefault = true;
+        extensions = {
+          packages = (addons.common or [ ]) ++ addonsExtra;
         };
-        policies = mergedPolicies;
+        settings = mergedSettings;
+        userChrome = userChromeInjected;
+        userContent = surfingkeysUserContent;
+        inherit extraConfig;
       };
+      profile = profileBase // profileExtra;
+    in
+    {
+      programs = {
+        "${name}" = {
+          enable = true;
+          inherit package;
+          nativeMessagingHosts = mergedNMH;
+          profiles = {
+            "${pid}" = profile;
+          };
+          policies = mergedPolicies;
+        };
+      };
+      warnings = lib.optional needsMigration (
+        "Browser downloads directory moved to XDG Downloads. "
+        + "Consider migrating from "
+        + oldDownloadsDir
+        + " to "
+        + dlDir
+        + "."
+      );
     };
-    warnings = lib.optional needsMigration (
-      "Browser downloads directory moved to XDG Downloads. "
-      + "Consider migrating from "
-      + oldDownloadsDir
-      + " to "
-      + dlDir
-      + "."
-    );
-  };
 }

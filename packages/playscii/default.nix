@@ -51,7 +51,10 @@ python3Packages.buildPythonApplication rec {
       icon = "playscii";
       comment = "ASCII art, animation, game creation tool";
       desktopName = "Playscii";
-      categories = ["Graphics" "Art"];
+      categories = [
+        "Graphics"
+        "Art"
+      ];
     })
   ];
 

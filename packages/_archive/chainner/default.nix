@@ -23,7 +23,8 @@
   libdrm,
   alsa-lib,
   systemd,
-}: let
+}:
+let
   pname = "chainner";
   version = "0.25.1";
 
@@ -59,45 +60,49 @@
     systemd
   ];
 in
-  stdenvNoCC.mkDerivation {
-    inherit pname version src;
+stdenvNoCC.mkDerivation {
+  inherit pname version src;
 
-    sourceRoot = ".";
-    nativeBuildInputs = [autoPatchelfHook makeWrapper zstd];
-    buildInputs = runtimeLibs;
+  sourceRoot = ".";
+  nativeBuildInputs = [
+    autoPatchelfHook
+    makeWrapper
+    zstd
+  ];
+  buildInputs = runtimeLibs;
 
-    unpackPhase = ''
-      runHook preUnpack
-      ar p "$src" data.tar.zst | tar --use-compress-program=unzstd -x
-      runHook postUnpack
-    '';
+  unpackPhase = ''
+    runHook preUnpack
+    ar p "$src" data.tar.zst | tar --use-compress-program=unzstd -x
+    runHook postUnpack
+  '';
 
-    dontConfigure = true;
-    dontBuild = true;
+  dontConfigure = true;
+  dontBuild = true;
 
-    installPhase = ''
-      runHook preInstall
-      mkdir -p "$out"
-      cp -r usr/* "$out/"
+  installPhase = ''
+    runHook preInstall
+    mkdir -p "$out"
+    cp -r usr/* "$out/"
 
-      rm -f "$out/lib/chainner/chrome-sandbox"
+    rm -f "$out/lib/chainner/chrome-sandbox"
 
-      substituteInPlace "$out/share/applications/chainner.desktop" \
-        --replace-fail "Exec=chainner %U" "Exec=$out/bin/chainner %U" \
-        --replace-fail "Icon=chainner" "Icon=$out/share/pixmaps/chainner.png"
+    substituteInPlace "$out/share/applications/chainner.desktop" \
+      --replace-fail "Exec=chainner %U" "Exec=$out/bin/chainner %U" \
+      --replace-fail "Icon=chainner" "Icon=$out/share/pixmaps/chainner.png"
 
-      wrapProgram "$out/bin/chainner" --add-flags "--no-sandbox"
-      runHook postInstall
-    '';
+    wrapProgram "$out/bin/chainner" --add-flags "--no-sandbox"
+    runHook postInstall
+  '';
 
-    meta = with lib; {
-      description = "Flowchart-based image processing GUI";
-      homepage = "https://github.com/chaiNNer-org/chaiNNer";
-      changelog = "https://github.com/chaiNNer-org/chaiNNer/releases/tag/v${version}";
-      license = licenses.gpl3Only;
-      platforms = ["x86_64-linux"];
-      mainProgram = "chainner";
-      sourceProvenance = [sourceTypes.binaryNativeCode];
-      maintainers = with maintainers; [];
-    };
-  }
+  meta = with lib; {
+    description = "Flowchart-based image processing GUI";
+    homepage = "https://github.com/chaiNNer-org/chaiNNer";
+    changelog = "https://github.com/chaiNNer-org/chaiNNer/releases/tag/v${version}";
+    license = licenses.gpl3Only;
+    platforms = [ "x86_64-linux" ];
+    mainProgram = "chainner";
+    sourceProvenance = [ sourceTypes.binaryNativeCode ];
+    maintainers = with maintainers; [ ];
+  };
+}

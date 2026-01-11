@@ -8,7 +8,8 @@
   config,
   pkgs,
   ...
-}: {
+}:
+{
   # Open KDE Connect ports only if the program is enabled
   networking.firewall = lib.mkIf (config.programs.kdeconnect.enable or false) {
     allowedTCPPortRanges = [
@@ -87,8 +88,8 @@
   ];
 
   # Expose iwd's systemd unit so it can be started manually when required
-  systemd.packages = [pkgs.iwd];
+  systemd.packages = [ pkgs.iwd ];
 
   # Provide D-Bus service definition for manual activation of iwd
-  services.dbus.packages = [pkgs.iwd];
+  services.dbus.packages = [ pkgs.iwd ];
 }

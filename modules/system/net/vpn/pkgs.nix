@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.amnezia-vpn # Amnezia VPN client
     pkgs.amneziawg-go # userspace Go implementation of AmneziaWG

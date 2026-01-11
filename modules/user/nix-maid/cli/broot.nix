@@ -5,14 +5,16 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   cfg = config.features.cli.broot;
   brootRoot = ../../../../files/shell/broot;
 in
-  lib.mkIf (cfg.enable or false) (lib.mkMerge [
+lib.mkIf (cfg.enable or false) (
+  lib.mkMerge [
     {
-      environment.systemPackages = [pkgs.broot]; # terminal file manager for visualizing and navigating directory trees
+      environment.systemPackages = [ pkgs.broot ]; # terminal file manager for visualizing and navigating directory trees
     }
 
     (n.mkHomeFiles {
@@ -21,4 +23,5 @@ in
       ".config/broot/to_stdout.hjson".source = "${brootRoot}/to_stdout.hjson";
       ".config/broot/launcher".source = "${brootRoot}/launcher";
     })
-  ])
+  ]
+)

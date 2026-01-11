@@ -1,8 +1,10 @@
-{config, ...}: let
+{ config, ... }:
+let
   mainUser = config.users.main.name or "neg";
   # Avoid module eval cycles: assume default home path
   homeDir = "/home/${mainUser}";
-in {
+in
+{
   boot.supportedFilesystems = [
     "btrfs"
     "exfat"
@@ -48,43 +50,83 @@ in {
 
     "${homeDir}/music" = {
       device = "/zero/music";
-      options = ["bind" "nofail" "x-systemd.automount"];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/torrent" = {
       device = "/zero/torrent";
-      options = ["bind" "nofail" "x-systemd.automount"];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/vid" = {
       device = "/zero/vid";
-      options = ["bind" "nofail" "x-systemd.automount"];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/games" = {
       device = "/zero/games";
-      options = ["bind" "nofail" "x-systemd.automount"];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/doc" = {
       device = "/zero/doc";
-      options = ["bind" "nofail" "x-systemd.automount"];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "/var/lib/flatpak" = {
       device = "/zero/flatpak";
-      options = ["bind" "nofail" "x-systemd.automount"];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/.local/mail" = {
       device = "/zero/mail";
-      options = ["bind" "nofail" "x-systemd.automount"];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/.local/share/Steam/userdata" = {
       device = "/zero/userdata_steam";
-      options = ["bind" "nofail" "x-systemd.automount"];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/.local/share/wineprefixes" = {
       device = "/zero/wineprefixes";
-      options = ["bind" "nofail" "x-systemd.automount"];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/.cache/winetricks" = {
       device = "/zero/winetricks_cache";
-      options = ["bind" "nofail" "x-systemd.automount"];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
   };
 

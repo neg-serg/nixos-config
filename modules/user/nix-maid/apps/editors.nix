@@ -5,14 +5,16 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   devEnabled = config.features.dev.enable or false;
 
   # Helix Config Source
   helixSrc = ../../../../files/helix;
 in
-  lib.mkIf devEnabled (lib.mkMerge [
+lib.mkIf devEnabled (
+  lib.mkMerge [
     {
       environment.systemPackages = [
         pkgs.helix # A post-modern text editor
@@ -22,4 +24,5 @@ in
       # Helix Configuration
       ".config/helix".source = n.linkImpure helixSrc;
     })
-  ])
+  ]
+)

@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.open-webui;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.open-webui = {
     enable = mkEnableOption "Open WebUI container";
 
@@ -75,11 +82,11 @@ in {
       volumes = [
         "${cfg.dataDir}/data:/app/backend/data"
       ];
-      extraOptions = ["--name=open-webui"];
+      extraOptions = [ "--name=open-webui" ];
     };
 
     # Open firewall port
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
 
     # Nginx reverse proxy
     services.nginx = {

@@ -3,10 +3,16 @@
 # Purpose: Alias profiles.services.* → servicesProfiles.* for unified naming.
 # Key options: none (option redirection only).
 # Dependencies: lib.mkAliasOptionModule; affects modules referencing profiles.services.*
-{lib, ...}: let
-  mk = svc: lib.mkAliasOptionModule ["profiles" "services" svc "enable"] ["servicesProfiles" svc "enable"];
+{ lib, ... }:
+let
+  mk =
+    svc:
+    lib.mkAliasOptionModule [ "profiles" "services" svc "enable" ] [ "servicesProfiles" svc "enable" ];
   # Optional extra aliases for service-specific options
-  mkAdguardRewrites = lib.mkAliasOptionModule ["profiles" "services" "adguardhome" "rewrites"] ["servicesProfiles" "adguardhome" "rewrites"];
+  mkAdguardRewrites =
+    lib.mkAliasOptionModule
+      [ "profiles" "services" "adguardhome" "rewrites" ]
+      [ "servicesProfiles" "adguardhome" "rewrites" ];
   services = [
     "adguardhome"
     "duckdns"
@@ -19,6 +25,7 @@
     "samba"
     "seafile"
   ];
-in {
-  imports = (map mk services) ++ [mkAdguardRewrites];
+in
+{
+  imports = (map mk services) ++ [ mkAdguardRewrites ];
 }

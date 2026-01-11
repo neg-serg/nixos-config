@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     # -- Disk / Filesystem --
     pkgs.btrfs-progs # manage and check btrfs filesystems

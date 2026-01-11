@@ -77,7 +77,7 @@ buildNpmPackage {
     description = "Maddison's SurfingKeys Configuration";
     homepage = "https://github.com/b0o/surfingkeys-conf";
     license = licenses.mit;
-    maintainers = [];
+    maintainers = [ ];
     platforms = platforms.all;
   };
 }

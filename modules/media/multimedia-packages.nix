@@ -6,7 +6,8 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   enabled = config.features.media.audio.apps.enable or false;
   packages = [
     pkgs.ffmpeg-full # everything-enabled ffmpeg build for transcoding
@@ -19,10 +20,11 @@
     pkgs.neg.mkvcleaner # custom Matroska cleanup tool
     pkgs.neg.webcamize # use camera as webcam
   ];
-in {
+in
+{
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter packages;
-    boot.extraModulePackages = [config.boot.kernelPackages.v4l2loopback];
-    boot.kernelModules = ["v4l2loopback"];
+    boot.extraModulePackages = [ config.boot.kernelPackages.v4l2loopback ];
+    boot.kernelModules = [ "v4l2loopback" ];
   };
 }

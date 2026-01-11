@@ -1,14 +1,17 @@
 _: {
   networking = {
     hostName = "telfir";
-    hosts."192.168.2.240" = ["telfir" "telfir.local"];
+    hosts."192.168.2.240" = [
+      "telfir"
+      "telfir.local"
+    ];
 
     # NAT from the local bridge (br0, 192.168.122.0/24) to the main uplink
     # so VMs/LXC containers on br0 have Internet access.
     nat = {
       enable = true;
       externalInterface = "net1";
-      internalInterfaces = ["br0"];
+      internalInterfaces = [ "br0" ];
     };
   };
 

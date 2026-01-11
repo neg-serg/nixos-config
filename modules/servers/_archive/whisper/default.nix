@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.whisper;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.whisper = {
     enable = mkEnableOption "Faster-Whisper speech-to-text engine container";
 
@@ -75,12 +82,10 @@ in {
       volumes = [
         "${cfg.dataDir}/config:/config"
       ];
-      extraOptions =
-        ["--name=whisper"]
-        ++ lib.optional cfg.useGpu "--device=nvidia.com/gpu=all";
+      extraOptions = [ "--name=whisper" ] ++ lib.optional cfg.useGpu "--device=nvidia.com/gpu=all";
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

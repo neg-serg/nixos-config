@@ -6,7 +6,8 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   enabled = config.features.gui.enable or false;
   swayimgFirst = pkgs.writeShellScriptBin "swayimg-first" (
     let
@@ -16,7 +17,7 @@
         (lib.getExe pkgs.socat)
       ];
     in
-      lib.replaceStrings ["@SWAYIMG_BIN@" "@SOCAT_BIN@"] replacements tpl
+    lib.replaceStrings [ "@SWAYIMG_BIN@" "@SOCAT_BIN@" ] replacements tpl
   );
   packages = [
     # -- Color --
@@ -57,7 +58,8 @@
     pkgs.viu # terminal image preview helper for scripts
     swayimgFirst # wrapper that ensures swayimg session state
   ];
-in {
+in
+{
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter packages;
   };

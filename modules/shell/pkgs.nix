@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.bash-completion # programmable completion for bash
     pkgs.carapace # multi-shell multi-command argument completer

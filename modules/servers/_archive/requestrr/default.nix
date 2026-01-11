@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.requestrr;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.requestrr = {
     enable = mkEnableOption "Requestrr chatbot container";
 
@@ -54,10 +61,10 @@ in {
       volumes = [
         "${cfg.dataDir}:/config"
       ];
-      extraOptions = ["--name=requestrr"];
+      extraOptions = [ "--name=requestrr" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

@@ -2,7 +2,8 @@
   inputs,
   pkgs,
   ...
-}: let
+}:
+let
   hyprWinList = pkgs.writeShellApplication {
     # helper to list Hypr windows through rofi
     name = "hypr-win-list";
@@ -10,15 +11,18 @@
       pkgs.python3 # embed interpreter so the script ships zero deps
       pkgs.wl-clipboard # pipe clipboard ops without relying on system PATH
     ];
-    text = let
-      tpl = builtins.readFile (inputs.self + "/modules/user/nix-maid/scripts/hypr/hypr-win-list.py");
-    in ''
-                   exec python3 <<'PY'
-      ${tpl}
-      PY
-    '';
+    text =
+      let
+        tpl = builtins.readFile (inputs.self + "/modules/user/nix-maid/scripts/hypr/hypr-win-list.py");
+      in
+      ''
+                     exec python3 <<'PY'
+        ${tpl}
+        PY
+      '';
   };
-in {
+in
+{
   environment.systemPackages = [
     # -- Hyprland --
     hyprWinList # injects rust-based win switcher bound in Hypr

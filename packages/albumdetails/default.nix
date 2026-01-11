@@ -15,7 +15,7 @@ stdenv.mkDerivation {
     hash = "sha256-9iaSyNqc/hXKc4iiDB6C7+2CMvKLWCRycsv6qVBD4wk=";
   };
 
-  buildInputs = [taglib];
+  buildInputs = [ taglib ];
 
   # Provide TagLib headers/libs to Makefile's LDLIBS
   preBuild = ''

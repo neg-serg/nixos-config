@@ -7,9 +7,11 @@
   lib,
   config,
   ...
-}: let
-  cfg = config.profiles.work or {enable = false;};
-in {
+}:
+let
+  cfg = config.profiles.work or { enable = false; };
+in
+{
   options.profiles.work.enable = lib.mkEnableOption "Enable desktop 'work' profile (turn on zswap).";
 
   config = lib.mkIf cfg.enable {

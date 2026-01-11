@@ -6,10 +6,17 @@
   lib,
   config,
   ...
-}: let
-  inherit (lib) mkEnableOption mkIf mkOption types;
-  cfg = config.monitoring.loki or {};
-in {
+}:
+let
+  inherit (lib)
+    mkEnableOption
+    mkIf
+    mkOption
+    types
+    ;
+  cfg = config.monitoring.loki or { };
+in
+{
   options.monitoring.loki = {
     enable = mkEnableOption "Enable Grafana Loki (log aggregator).";
 
@@ -39,7 +46,7 @@ in {
 
     firewallInterfaces = mkOption {
       type = types.listOf types.str;
-      default = ["br0"];
+      default = [ "br0" ];
       description = "Interfaces to allow Loki port on when openFirewall is true.";
     };
   };
@@ -103,7 +110,9 @@ in {
 
     # Per-interface firewall opening if requested
     networking.firewall.interfaces = mkIf cfg.openFirewall (
-      lib.genAttrs cfg.firewallInterfaces (_iface: {allowedTCPPorts = [cfg.port];})
+      lib.genAttrs cfg.firewallInterfaces (_iface: {
+        allowedTCPPorts = [ cfg.port ];
+      })
     );
   };
 }

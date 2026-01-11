@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.age # modern age encryption CLI for sops/secrets
     pkgs.opensc # PKCS#11 tools for smart cards

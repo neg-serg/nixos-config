@@ -7,19 +7,20 @@
   lib,
   config,
   ...
-}: let
-  cfg = config.servicesProfiles.mpd or {enable = false;};
+}:
+let
+  cfg = config.servicesProfiles.mpd or { enable = false; };
   myUser = config.users.main.name or "neg";
   myUID = config.users.main.uid or 1000;
-  myGroup = let
-    g = config.users.main.group or null;
-  in
-    if g == null
-    then myUser
-    else g;
+  myGroup =
+    let
+      g = config.users.main.group or null;
+    in
+    if g == null then myUser else g;
   # Avoid module eval cycles: assume default home path
   myHome = "/home/${myUser}";
-in {
+in
+{
   config = lib.mkIf cfg.enable {
     systemd.services.mpd.serviceConfig = {
       Environment = "XDG_RUNTIME_DIR=/run/user/${builtins.toString myUID}";
@@ -77,7 +78,7 @@ in {
 
     networking.firewall = {
       enable = lib.mkDefault true;
-      allowedTCPPorts = [6600];
+      allowedTCPPorts = [ 6600 ];
     };
   };
 }

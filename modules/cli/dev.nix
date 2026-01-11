@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     # Git tools
     pkgs.mergiraf # AST-aware git merge driver

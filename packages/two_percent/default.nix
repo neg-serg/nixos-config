@@ -22,6 +22,6 @@ rustPlatform.buildRustPackage rec {
     license = licenses.mit;
     mainProgram = "sk";
     platforms = platforms.unix;
-    maintainers = with maintainers; [];
+    maintainers = with maintainers; [ ];
   };
 }

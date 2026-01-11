@@ -6,7 +6,8 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   # Source path (Nix path for linkImpure)
   quickshellSrc = ../../../../files/quickshell;
@@ -47,7 +48,11 @@
   # Theme builder script
   buildTheme = pkgs.writeShellApplication {
     name = "quickshell-build-theme";
-    runtimeInputs = [pkgs.coreutils pkgs.nodejs_24 pkgs.systemd];
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.nodejs_24
+      pkgs.systemd
+    ];
     text = ''
       set -euo pipefail
       # For mutable config, we build theme directly in the impurity source if valid,
@@ -61,7 +66,8 @@
     '';
   };
 in
-  lib.mkIf quickshellEnabled (lib.mkMerge [
+lib.mkIf quickshellEnabled (
+  lib.mkMerge [
     {
       # Wrapped quickshell package
       environment.systemPackages = [
@@ -72,10 +78,10 @@ in
       systemd.user.services.quickshell = {
         enable = true;
         description = "Quickshell - QtQuick based shell for Wayland";
-        documentation = ["https://github.com/outfoxxed/quickshell"];
-        partOf = ["graphical-session.target"];
-        after = ["graphical-session-pre.target"];
-        wantedBy = ["graphical-session.target"];
+        documentation = [ "https://github.com/outfoxxed/quickshell" ];
+        partOf = [ "graphical-session.target" ];
+        after = [ "graphical-session-pre.target" ];
+        wantedBy = [ "graphical-session.target" ];
         serviceConfig = {
           ExecStart = "${lib.getExe quickshellWrapped} -p %h/.config/quickshell/shell.qml";
           Restart = "on-failure";
@@ -87,9 +93,9 @@ in
       systemd.user.services.quickshell-theme-watch = {
         enable = true;
         description = "Watch Quickshell theme tokens";
-        partOf = ["graphical-session.target"];
-        after = ["graphical-session-pre.target"];
-        wantedBy = ["graphical-session.target"];
+        partOf = [ "graphical-session.target" ];
+        after = [ "graphical-session-pre.target" ];
+        wantedBy = [ "graphical-session.target" ];
         serviceConfig = {
           Type = "simple";
           ExecStartPre = lib.getExe buildTheme;
@@ -113,4 +119,5 @@ in
       # Link Quickshell config mutably via impurity
       ".config/quickshell".source = n.linkImpure quickshellSrc;
     })
-  ])
+  ]
+)

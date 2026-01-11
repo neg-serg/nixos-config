@@ -4,9 +4,11 @@
   config,
   inputs,
   ...
-}: let
-  cfg = config.hardware.cooling or {};
-in {
+}:
+let
+  cfg = config.hardware.cooling or { };
+in
+{
   options.hardware.cooling = {
     enable = lib.mkEnableOption "Enable cooling stack (sensors + optional fancontrol).";
 
@@ -70,7 +72,7 @@ in {
 
       gpuPwmChannels = lib.mkOption {
         type = lib.types.listOf lib.types.int;
-        default = [];
+        default = [ ];
         description = ''
           Motherboard PWM channel numbers (e.g., [ 2 3 ]) that should follow GPU
           temperature instead of CPU temperature for case airflow near the GPU.
@@ -112,38 +114,44 @@ in {
 
   config = lib.mkIf (cfg.enable or false) {
     # Load the typical motherboard PWM driver (Nuvoton/ASUS)
-    boot.kernelModules = lib.mkIf cfg.loadNct6775 ["nct6775"];
+    boot.kernelModules = lib.mkIf cfg.loadNct6775 [ "nct6775" ];
 
     # Autogenerate a quiet fan profile if requested
     systemd.services.fancontrol-setup = lib.mkIf (cfg.autoFancontrol.enable or false) {
       description = "Generate quiet /etc/fancontrol from detected hwmon devices";
       # Avoid boot ordering cycle: do not depend on multi-user.target.
-      before = ["fancontrol.service"];
-      wantedBy = ["fancontrol.service"];
+      before = [ "fancontrol.service" ];
+      wantedBy = [ "fancontrol.service" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = let
-          script = pkgs.writeShellScript "fancontrol-setup" (builtins.readFile (inputs.self + "/scripts/hw/fancontrol-setup.sh"));
-        in "${script}";
-        Environment =
-          [
-            "MIN_TEMP=${builtins.toString cfg.autoFancontrol.minTemp}"
-            "MAX_TEMP=${builtins.toString cfg.autoFancontrol.maxTemp}"
-            "MIN_PWM=${builtins.toString cfg.autoFancontrol.minPwm}"
-            "MAX_PWM=${builtins.toString cfg.autoFancontrol.maxPwm}"
-            "HYST=${builtins.toString cfg.autoFancontrol.hysteresis}"
-            "INTERVAL=${builtins.toString cfg.autoFancontrol.interval}"
-            "ALLOW_STOP=${lib.boolToString (cfg.autoFancontrol.allowStop or false)}"
-            "GPU_PWM_CHANNELS=${builtins.concatStringsSep "," (map builtins.toString (cfg.autoFancontrol.gpuPwmChannels or []))}"
-            "GPU_ENABLE=${lib.boolToString (cfg.gpuFancontrol.enable or false)}"
-            "GPU_MIN_TEMP=${builtins.toString cfg.gpuFancontrol.minTemp}"
-            "GPU_MAX_TEMP=${builtins.toString cfg.gpuFancontrol.maxTemp}"
-            "GPU_MIN_PWM=${builtins.toString cfg.gpuFancontrol.minPwm}"
-            "GPU_MAX_PWM=${builtins.toString cfg.gpuFancontrol.maxPwm}"
-            "GPU_HYST=${builtins.toString cfg.gpuFancontrol.hysteresis}"
-          ]
-          ++ lib.optional (cfg.autoFancontrol.minStartOverride != null)
-          ("MIN_START_OVERRIDE=" + builtins.toString cfg.autoFancontrol.minStartOverride);
+        ExecStart =
+          let
+            script = pkgs.writeShellScript "fancontrol-setup" (
+              builtins.readFile (inputs.self + "/scripts/hw/fancontrol-setup.sh")
+            );
+          in
+          "${script}";
+        Environment = [
+          "MIN_TEMP=${builtins.toString cfg.autoFancontrol.minTemp}"
+          "MAX_TEMP=${builtins.toString cfg.autoFancontrol.maxTemp}"
+          "MIN_PWM=${builtins.toString cfg.autoFancontrol.minPwm}"
+          "MAX_PWM=${builtins.toString cfg.autoFancontrol.maxPwm}"
+          "HYST=${builtins.toString cfg.autoFancontrol.hysteresis}"
+          "INTERVAL=${builtins.toString cfg.autoFancontrol.interval}"
+          "ALLOW_STOP=${lib.boolToString (cfg.autoFancontrol.allowStop or false)}"
+          "GPU_PWM_CHANNELS=${
+            builtins.concatStringsSep "," (map builtins.toString (cfg.autoFancontrol.gpuPwmChannels or [ ]))
+          }"
+          "GPU_ENABLE=${lib.boolToString (cfg.gpuFancontrol.enable or false)}"
+          "GPU_MIN_TEMP=${builtins.toString cfg.gpuFancontrol.minTemp}"
+          "GPU_MAX_TEMP=${builtins.toString cfg.gpuFancontrol.maxTemp}"
+          "GPU_MIN_PWM=${builtins.toString cfg.gpuFancontrol.minPwm}"
+          "GPU_MAX_PWM=${builtins.toString cfg.gpuFancontrol.maxPwm}"
+          "GPU_HYST=${builtins.toString cfg.gpuFancontrol.hysteresis}"
+        ]
+        ++ lib.optional (cfg.autoFancontrol.minStartOverride != null) (
+          "MIN_START_OVERRIDE=" + builtins.toString cfg.autoFancontrol.minStartOverride
+        );
         RemainAfterExit = true;
       };
     };
@@ -151,8 +159,8 @@ in {
     # Fancontrol service (runs the binary from lm_sensors)
     systemd.services.fancontrol = lib.mkIf (cfg.autoFancontrol.enable or false) {
       description = "Software fan speed control (fancontrol)";
-      requires = ["fancontrol-setup.service"];
-      after = ["fancontrol-setup.service"];
+      requires = [ "fancontrol-setup.service" ];
+      after = [ "fancontrol-setup.service" ];
       unitConfig = {
         # Only start if config exists
         ConditionPathExists = "/etc/fancontrol";
@@ -163,22 +171,27 @@ in {
         Restart = "on-failure";
         RestartSec = 5;
       };
-      wantedBy = ["multi-user.target"];
+      wantedBy = [ "multi-user.target" ];
     };
 
     # Re-apply manual PWM ownership after suspend/hibernate resume
     # (amdgpu and some motherboard controllers reset pwm*_enable to automatic)
-    environment.etc."systemd/system-sleep/99-fancontrol-reapply" = lib.mkIf (cfg.autoFancontrol.enable or false) {
-      source = let
-        txt =
-          builtins.replaceStrings ["@GPU_ENABLE@"] [(lib.boolToString (cfg.gpuFancontrol.enable or false))]
-          (builtins.readFile (inputs.self + "/scripts/hw/fancontrol-reapply.sh"));
-      in
-        pkgs.writeShellScript "fancontrol-reapply" txt; # shell helper to reapply fan curves
-      mode = "0755";
-    };
+    environment.etc."systemd/system-sleep/99-fancontrol-reapply" =
+      lib.mkIf (cfg.autoFancontrol.enable or false)
+        {
+          source =
+            let
+              txt =
+                builtins.replaceStrings
+                  [ "@GPU_ENABLE@" ]
+                  [ (lib.boolToString (cfg.gpuFancontrol.enable or false)) ]
+                  (builtins.readFile (inputs.self + "/scripts/hw/fancontrol-reapply.sh"));
+            in
+            pkgs.writeShellScript "fancontrol-reapply" txt; # shell helper to reapply fan curves
+          mode = "0755";
+        };
 
     # Ensure tools are present for manual inspection/tweaks
-    environment.systemPackages = [pkgs.lm_sensors]; # tools to read temperature/voltage/fan sensors
+    environment.systemPackages = [ pkgs.lm_sensors ]; # tools to read temperature/voltage/fan sensors
   };
 }

@@ -4,13 +4,15 @@
   config,
   inputs,
   ...
-}: let
+}:
+let
   hyprlandPackage = pkgs.hyprland;
   mainUser = config.users.main.name or "neg";
   mainHome =
-    if builtins.hasAttr mainUser config.users.users
-    then config.users.users.${mainUser}.home or "/home/${mainUser}"
-    else "/home/${mainUser}";
+    if builtins.hasAttr mainUser config.users.users then
+      config.users.users.${mainUser}.home or "/home/${mainUser}"
+    else
+      "/home/${mainUser}";
   greeterWallpaperSrc = "${mainHome}/pic/wl/waterfall_jungle_dark_150290_3840x2400.jpg";
   greeterWallpaperDst = "/var/lib/greetd/wallpaper.jpg";
   hyprlandConfig = pkgs.writeText "greetd-hyprland-config" ''
@@ -29,7 +31,9 @@
     }
 
     # For some reason pkill is way faster than dispatching exit, to the point greetd thinks the greeter died.
-    exec-once = ${lib.getExe pkgs.bash} -c "QML2_IMPORT_PATH=/etc/greetd/quickshell ${lib.getExe inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default} -p /etc/greetd/quickshell/greeter/greeter.qml > /tmp/qs-greeter.log 2>&1 && pkill Hyprland"
+    exec-once = ${lib.getExe pkgs.bash} -c "QML2_IMPORT_PATH=/etc/greetd/quickshell ${
+      lib.getExe inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
+    } -p /etc/greetd/quickshell/greeter/greeter.qml > /tmp/qs-greeter.log 2>&1 && pkill Hyprland"
 
     input {
       kb_layout = us,ru
@@ -56,7 +60,8 @@
       mouse_move_enables_dpms = true
     }
   '';
-in {
+in
+{
   services.greetd = {
     enable = true;
     restart = false;
@@ -76,7 +81,7 @@ in {
     isSystemUser = true;
     group = "greeter";
   };
-  users.groups.greeter = {};
+  users.groups.greeter = { };
 
   # Install QuickShell globally for the greeter
   environment.systemPackages = [

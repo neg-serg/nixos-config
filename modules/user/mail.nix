@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   # Core mail CLI clients (himalaya, neomutt, kyotocabinet) now install at the
   # system level so they are available even outside the shell sessions.
   environment.systemPackages = [

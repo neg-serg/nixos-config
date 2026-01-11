@@ -1,66 +1,68 @@
-inputs: _final: prev: let
+inputs: _final: prev:
+let
   packagesRoot = inputs.self + "/packages";
-  callPkg = path: extraArgs: let
-    f = import path;
-    wantsInputs = builtins.hasAttr "inputs" (builtins.functionArgs f);
-    autoArgs =
-      if wantsInputs
-      then {inherit inputs;}
-      else {};
-  in
+  callPkg =
+    path: extraArgs:
+    let
+      f = import path;
+      wantsInputs = builtins.hasAttr "inputs" (builtins.functionArgs f);
+      autoArgs = if wantsInputs then { inherit inputs; } else { };
+    in
     prev.callPackage path (autoArgs // extraArgs);
-in {
+in
+{
   neg = rec {
     # eBPF/BCC tools
-    bpf_host_latency = callPkg (packagesRoot + "/bpf-host-latency") {};
+    bpf_host_latency = callPkg (packagesRoot + "/bpf-host-latency") { };
     "bpf-host-latency" = bpf_host_latency;
-    skbtrace = callPkg (packagesRoot + "/skbtrace") {};
+    skbtrace = callPkg (packagesRoot + "/skbtrace") { };
 
     # Surfingkeys configuration
-    surfingkeys_conf = callPkg (packagesRoot + "/surfingkeys-conf") {};
+    surfingkeys_conf = callPkg (packagesRoot + "/surfingkeys-conf") { };
     "surfingkeys-conf" = surfingkeys_conf;
 
     # CLI/util packages
-    cxxmatrix = callPkg (packagesRoot + "/cxxmatrix") {};
+    cxxmatrix = callPkg (packagesRoot + "/cxxmatrix") { };
 
-    richcolors = callPkg (packagesRoot + "/richcolors") {};
-    ls_iommu = callPkg (packagesRoot + "/ls-iommu") {};
-    transmission_exporter = callPkg (packagesRoot + "/transmission-exporter") {};
+    richcolors = callPkg (packagesRoot + "/richcolors") { };
+    ls_iommu = callPkg (packagesRoot + "/ls-iommu") { };
+    transmission_exporter = callPkg (packagesRoot + "/transmission-exporter") { };
     "transmission-exporter" = transmission_exporter;
-    tewi = callPkg (packagesRoot + "/tewi") {};
-    two_percent = callPkg (packagesRoot + "/two_percent") {};
+    tewi = callPkg (packagesRoot + "/tewi") { };
+    two_percent = callPkg (packagesRoot + "/two_percent") { };
     "two-percent" = two_percent;
 
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
 
     # Music album metadata CLI (used by music-rename script)
-    albumdetails = callPkg (packagesRoot + "/albumdetails") {};
+    albumdetails = callPkg (packagesRoot + "/albumdetails") { };
 
     # Pretty-printer library + CLI (ppinfo)
-    pretty_printer = callPkg (packagesRoot + "/pretty-printer") {};
+    pretty_printer = callPkg (packagesRoot + "/pretty-printer") { };
     "pretty-printer" = pretty_printer;
 
     # Rofi plugins / desktop helpers
-    rofi_games = callPkg (packagesRoot + "/rofi-games") {};
+    rofi_games = callPkg (packagesRoot + "/rofi-games") { };
     "rofi-games" = rofi_games;
-    rescrobbled = prev.callPackage ../rescrobbled {};
+    rescrobbled = prev.callPackage ../rescrobbled { };
 
     # Trader Workstation (IBKR) packaged from upstream installer
-    tws = callPkg (packagesRoot + "/tws") {};
+    tws = callPkg (packagesRoot + "/tws") { };
 
     # duf fork with --style plain, --no-header, --no-bars flags
-    duf = callPkg (packagesRoot + "/duf") {};
+    duf = callPkg (packagesRoot + "/duf") { };
 
     # ncpamixer with custom config
-    ncpamixer-wrapped = let
-      ncpaConfig =
-        prev.writeText "ncpamixer.conf"
-        (builtins.readFile (inputs.self + "/files/gui/ncpamixer.conf"));
-    in
+    ncpamixer-wrapped =
+      let
+        ncpaConfig = prev.writeText "ncpamixer.conf" (
+          builtins.readFile (inputs.self + "/files/gui/ncpamixer.conf")
+        );
+      in
       prev.symlinkJoin {
         name = "ncpamixer-wrapped";
-        paths = [prev.ncpamixer];
-        buildInputs = [prev.makeWrapper];
+        paths = [ prev.ncpamixer ];
+        buildInputs = [ prev.makeWrapper ];
         postBuild = ''
           wrapProgram $out/bin/ncpamixer \
             --add-flags "-c ${ncpaConfig}"
@@ -70,8 +72,8 @@ in {
     # nextcloud-client with GPU disabled (for stability)
     nextcloud-wrapped = prev.symlinkJoin {
       name = "nextcloud-wrapped";
-      paths = [prev.nextcloud-client];
-      buildInputs = [prev.makeWrapper];
+      paths = [ prev.nextcloud-client ];
+      buildInputs = [ prev.makeWrapper ];
       postBuild = ''
         wrapProgram $out/bin/nextcloud \
           --add-flags "--disable-gpu --disable-software-rasterizer" \

@@ -4,17 +4,21 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   cfg = config.features.games.nethack;
-in {
-  config = lib.mkIf (cfg.enable or false) (n.mkHomeFiles {
-    ".nethackrc".text = ''
-      OPTIONS=windowtype:curses
-      OPTIONS=popup_dialog
-      OPTIONS=splash_screen
-      OPTIONS=guicolor
-      OPTIONS=perm_invent
-    '';
-  });
+in
+{
+  config = lib.mkIf (cfg.enable or false) (
+    n.mkHomeFiles {
+      ".nethackrc".text = ''
+        OPTIONS=windowtype:curses
+        OPTIONS=popup_dialog
+        OPTIONS=splash_screen
+        OPTIONS=guicolor
+        OPTIONS=perm_invent
+      '';
+    }
+  );
 }

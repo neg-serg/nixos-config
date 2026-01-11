@@ -6,10 +6,11 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   enabled = config.roles.workstation.enable or false;
   tidalGhci = pkgs.writeShellScriptBin "tidal-ghci" ''
-    exec ${pkgs.ghc.withPackages (ps: [ps.tidal])}/bin/ghci "$@"
+    exec ${pkgs.ghc.withPackages (ps: [ ps.tidal ])}/bin/ghci "$@"
   '';
   packages = [
     # -- DAWs / Editors --
@@ -34,7 +35,8 @@
     pkgs.vcv-rack # modular synth platform
     pkgs.vital # spectral wavetable synth
   ];
-in {
+in
+{
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter packages;
   };

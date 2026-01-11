@@ -3,7 +3,8 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   mainUser = config.users.main.name or "neg";
   homeDir = "/home/${mainUser}";
   enabled = config.roles.media.enable or false;
@@ -13,12 +14,12 @@
   repoDir = "${deepfacelabRoot}/repo";
 
   deepfacelabDocker = pkgs.writeShellScriptBin "deepfacelab-docker" (
-    lib.replaceStrings
-    ["@repoDir@" "@dataDir@"]
-    [repoDir dataDir]
-    (builtins.readFile ./scripts/deepfacelab-docker.sh)
+    lib.replaceStrings [ "@repoDir@" "@dataDir@" ] [ repoDir dataDir ] (
+      builtins.readFile ./scripts/deepfacelab-docker.sh
+    )
   );
-in {
+in
+{
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter [
       deepfacelabDocker # helper to launch DeepFaceLab Ubuntu Docker container
