@@ -6,6 +6,7 @@
     ./args.nix
     ./cli/archives/default.nix
     ./cli/archives/pkgs.nix
+    ./cli/default.nix
     ./cli/dev.nix
     ./cli/file-ops.nix
     ./cli/media.nix
@@ -22,20 +23,24 @@
     ./dev/android/default.nix
     ./dev/antigravity.nix
     ./dev/benchmarks/default.nix
+    ./dev/default.nix
     ./dev/editor/default.nix
     ./dev/editor/neovim/pkgs.nix
     ./dev/editor/pkgs.nix
     ./dev/elf/default.nix
     ./dev/elf/pkgs.nix
     ./dev/gcc/autofdo.nix
+    ./dev/gcc/default.nix
     ./dev/gdb/default.nix
     ./dev/git/default.nix
     ./dev/git/pkgs.nix
     ./dev/hack/core.nix
+    ./dev/hack/default.nix
     ./dev/hack/forensics.nix
     ./dev/hack/lib.nix
     ./dev/hack/pentest/backdoor.nix
     ./dev/hack/pentest/database.nix
+    ./dev/hack/pentest/default.nix
     ./dev/hack/pentest/explotation.nix
     ./dev/hack/pentest/fuzzing.nix
     ./dev/hack/pentest/passwords.nix
@@ -55,22 +60,23 @@
     ./dev/unreal/default.nix
     ./dev/unreal/packages.nix
     ./diff-closures.nix
+    ./documentation/default.nix
     ./documentation/settings.nix
     ./emulators/default.nix
     ./emulators/pkgs.nix
-    ./features/apps.nix
-    ./features/cli.nix
-    ./features/core.nix
+    ./features-data/unfree-presets.nix
     ./features-data/unfree/categories/ai-tools.nix
     ./features-data/unfree/categories/audio.nix
     ./features-data/unfree/categories/browsers.nix
     ./features-data/unfree/categories/editors.nix
     ./features-data/unfree/categories/forensics-analysis.nix
-    ./features-data/unfree/categories/forensics.nix
     ./features-data/unfree/categories/forensics-stego.nix
+    ./features-data/unfree/categories/forensics.nix
     ./features-data/unfree/categories/iac.nix
     ./features-data/unfree/categories/misc.nix
-    ./features-data/unfree-presets.nix
+    ./features/apps.nix
+    ./features/cli.nix
+    ./features/core.nix
     ./features/default.nix
     ./features/dev.nix
     ./features/games.nix
@@ -79,15 +85,18 @@
     ./features/misc.nix
     ./features/services.nix
     ./features/web.nix
+    ./finance/default.nix
     ./finance/tws.nix
     ./flake-preflight.nix
     ./flatpak/default.nix
     ./flatpak/pkgs.nix
     ./fonts/default.nix
+    ./fun/default.nix
     ./fun/games-packages.nix
     ./fun/launchers-packages.nix
     ./fun/misc-packages.nix
     ./games/controllers.nix
+    ./games/default.nix
     ./games/tuning.nix
     ./hardware/amdgpu.nix
     ./hardware/audio/dsp/default.nix
@@ -105,9 +114,11 @@
     ./hardware/pkgs.nix
     ./hardware/qmk/default.nix
     ./hardware/qmk/pkgs.nix
+    ./hardware/udev-rules/default.nix
     ./hardware/uinput.nix
     ./hardware/usb-automount.nix
     ./hardware/video/amd/default.nix
+    ./hardware/video/nvidia/default.nix
     ./hardware/video/nvidia/rtx5090.nix
     ./hardware/video/pkgs/default.nix
     ./hardware/webcam/default.nix
@@ -122,9 +133,12 @@
     ./media/audio/apps-packages.nix
     ./media/audio/core-packages.nix
     ./media/audio/creation-packages.nix
+    ./media/audio/default.nix
     ./media/audio/mpd-packages.nix
     ./media/audio/spotifyd.nix
     ./media/deepfacelab-docker.nix
+    ./media/default.nix
+    ./media/images/default.nix
     ./media/images/packages.nix
     ./media/multimedia-packages.nix
     ./media/vapoursynth-packages.nix
@@ -140,6 +154,7 @@
     ./nix/bpftrace.nix
     ./nix/caches.data.nix
     ./nix/clblast.nix
+    ./nix/default.nix
     ./nix/hyprland.nix
     ./nix/mpv-openvr.nix
     ./nix/multimon-ng.nix
@@ -148,6 +163,7 @@
     ./nix/settings.nix
     ./nix/wb32-dfu-updater.nix
     ./profiles/services.nix
+    ./roles/default.nix
     ./roles/homelab.nix
     ./roles/media.nix
     ./roles/monitoring.nix
@@ -159,7 +175,6 @@
     ./secrets/yubikey/default.nix
     ./security/default.nix
     ./security/firejail.nix
-    ./servers/adguardhome/default.nix
     ./servers/_archive/audiobookshelf/default.nix
     ./servers/_archive/cleanuparr/default.nix
     ./servers/_archive/deemix/default.nix
@@ -180,14 +195,15 @@
     ./servers/_archive/requestrr/default.nix
     ./servers/_archive/sabnzbd/default.nix
     ./servers/_archive/seafile/default.nix
-    ./servers/_archive/searxng/default.nix
     ./servers/_archive/searxng-mcp/default.nix
+    ./servers/_archive/searxng/default.nix
     ./servers/_archive/sonarr/default.nix
     ./servers/_archive/syncthing/default.nix
     ./servers/_archive/tts-webui/default.nix
     ./servers/_archive/vllm/default.nix
     ./servers/_archive/whisper/default.nix
     ./servers/_archive/wyoming-openai/default.nix
+    ./servers/adguardhome/default.nix
     ./servers/avahi/default.nix
     ./servers/bitcoind/default.nix
     ./servers/duckdns/default.nix
@@ -201,21 +217,22 @@
     ./shell/default.nix
     ./shell/pkgs.nix
     ./shell/zsh.nix
+    ./system/boot.nix
     ./system/boot/autofdo.nix
     ./system/boot/default.nix
-    ./system/boot.nix
     ./system/boot/pkgs.nix
     ./system/default.nix
     ./system/environment.nix
     ./system/filesystems.nix
     ./system/guix.nix
     ./system/irqbalance.nix
+    ./system/kernel/default.nix
     ./system/kernel/params.nix
     ./system/kernel/patches-amd.nix
     ./system/kernel/sysctl-mem-extras.nix
     ./system/kernel/sysctl-net-extras.nix
-    ./system/kernel/sysctl.nix
     ./system/kernel/sysctl-writeback.nix
+    ./system/kernel/sysctl.nix
     ./system/net/bridge.nix
     ./system/net/default.nix
     ./system/net/nscd.nix
@@ -231,6 +248,7 @@
     ./system/preserve-flake.nix
     ./system/profiles/aliases.nix
     ./system/profiles/debug.nix
+    ./system/profiles/default.nix
     ./system/profiles/performance.nix
     ./system/profiles/security.nix
     ./system/profiles/vm.nix
@@ -241,13 +259,14 @@
     ./system/systemd/timesyncd/default.nix
     ./system/tailscale.nix
     ./system/users.nix
+    ./system/virt.nix
     ./system/virt/_archive/macos-vm.nix
     ./system/virt/default.nix
     ./system/virt/nemu.nix
-    ./system/virt.nix
     ./system/virt/pkgs.nix
     ./system/winapps.nix
     ./system/zram.nix
+    ./text/default.nix
     ./text/manipulate-packages.nix
     ./text/notes-packages.nix
     ./text/read-packages.nix
@@ -264,14 +283,15 @@
     ./user/games/performance.nix
     ./user/games/vr.nix
     ./user/gui-packages.nix
-    ./user/locale.nix
     ./user/locale-pkgs.nix
+    ./user/locale.nix
     ./user/locate.nix
     ./user/mail.nix
     ./user/nix-maid/apps/editors.nix
     ./user/nix-maid/apps/emacs.nix
     ./user/nix-maid/apps/gui-apps.nix
     ./user/nix-maid/apps/mpv/config.nix
+    ./user/nix-maid/apps/mpv/default.nix
     ./user/nix-maid/apps/mpv/input.nix
     ./user/nix-maid/apps/mpv/package.nix
     ./user/nix-maid/apps/mpv/profiles.nix
@@ -339,9 +359,9 @@
     ./user/nix-maid/web/default-browser-lib.nix
     ./user/nix-maid/web/defaults.nix
     ./user/nix-maid/web/edge.nix
-    ./user/nix-maid/web/firefox.nix
     ./user/nix-maid/web/firefox-prefgroups.nix
     ./user/nix-maid/web/firefox-theme.nix
+    ./user/nix-maid/web/firefox.nix
     ./user/nix-maid/web/floorp.nix
     ./user/nix-maid/web/librewolf.nix
     ./user/nix-maid/web/misc.nix
@@ -352,6 +372,7 @@
     ./user/nix-maid/web/yandex.nix
     ./user/nix-maid/web/yt-dlp.nix
     ./user/nvf.nix
+    ./user/psd/default.nix
     ./user/session/chat.nix
     ./user/session/clipboard.nix
     ./user/session/default.nix
@@ -366,9 +387,11 @@
     ./user/session/theme.nix
     ./user/session/utils.nix
     ./user/theme-packages.nix
+    ./user/wrappers/default.nix
     ./user/wrappers/tewi.nix
     ./user/xdg.nix
     ./web/browsers.nix
+    ./web/default.nix
     ./web/nyxt.nix
     ./web/qutebrowser.nix
   ];
