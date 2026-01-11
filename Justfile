@@ -32,6 +32,14 @@ cpu-masks:
 deploy host="telfir":
     nh os switch . --hostname {{host}}
 
+# Deploy with build logs printed to stdout
+deploy-verbose host="telfir":
+    nh os switch . --hostname {{host}} -L
+
+# Deploy with maximum verbosity (logs + trace + verbose)
+deploy-debug host="telfir":
+    nh os switch . --hostname {{host}} -L -t -v
+
 # Alias for deploy
 switch host="telfir":
     just deploy {{host}}
