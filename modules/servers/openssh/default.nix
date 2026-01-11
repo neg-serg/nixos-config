@@ -14,8 +14,6 @@ let
 in
 {
   options.servicesProfiles.openssh = {
-    enable = lib.mkEnableOption "OpenSSH server with hardened settings";
-
     allowTcpForwarding = lib.mkOption {
       type = lib.types.bool;
       default = true;
