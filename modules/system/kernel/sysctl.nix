@@ -8,6 +8,11 @@
   boot.kernel.sysctl = {
     "kernel.sysrq" = 0;
 
+    # Kernel security
+    "kernel.dmesg_restrict" = 1; # Restrict dmesg to root only
+    "kernel.unprivileged_bpf_disabled" = 1; # Restrict eBPF to CAP_BPF
+    "net.core.bpf_jit_harden" = 2; # Harden eBPF JIT against spraying attacks
+
     # TCP hardening
     "net.ipv4.icmp_ignore_bogus_error_responses" = 1;
     "net.ipv4.conf.default.rp_filter" = 1;
