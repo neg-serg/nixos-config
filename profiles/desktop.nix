@@ -1,32 +1,9 @@
 {
   imports = [
     # system/user modules already structured under modules/
-    ../modules/cli
-    ../modules/dev
-    ../modules/db
-    ../modules/documentation
-    ../modules/appimage
-    ../modules/emulators
-    ../modules/flatpak
-    ../modules/games
-    ../modules/fun
-    ../modules/fonts
-    ../modules/media
-    ../modules/web
-    ../modules/torrent
-    ../modules/hardware
-
-    ../modules/text
-    ../modules/llm
-    ../modules/monitoring
-    ../modules/nix
-    ../modules/tools
-    ../modules/roles
-    ../modules/secrets
-    ../modules/security
-    ../modules/servers
-    ../modules/shell
-    ../modules/system
-    ../modules/user
+    # Modules are now imported via modules/flat.nix in init.nix
+    # ../modules/cli
+    # ../modules/dev
+    # ... (removed for flat structure)
   ];
 }
