@@ -343,6 +343,10 @@ api.mapkey("O", "Open URL/Search (New Tab)", () => {
   api.Front.openOmnibar({ type: "URLs" });
 });
 
+api.mapkey("U", "Open Recently Closed Tabs", () => {
+  api.Front.openOmnibar({ type: "URLs", extra: "getRecentlyClosed" });
+});
+
 // ========== Mappings ==========
 // Scroll
 api.map('j', 'j');
