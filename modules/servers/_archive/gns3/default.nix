@@ -8,9 +8,11 @@
   config,
   pkgs,
   ...
-}: let
-  cfg = config.servicesProfiles.gns3 or {enable = false;};
-in {
+}:
+let
+  cfg = config.servicesProfiles.gns3 or { enable = false; };
+in
+{
   config = lib.mkIf cfg.enable {
     services.gns3-server = {
       enable = true;

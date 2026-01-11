@@ -7,10 +7,18 @@
   negLib,
   faProvider ? null,
   ...
-}: let
+}:
+let
   common = import ./mozilla-common-lib.nix {
-    inherit lib pkgs faProvider negLib;
-    config = config // {home.homeDirectory = config.users.users.neg.home;};
+    inherit
+      lib
+      pkgs
+      faProvider
+      negLib
+      ;
+    config = config // {
+      home.homeDirectory = config.users.users.neg.home;
+    };
   };
 
   profiles = {
@@ -22,14 +30,14 @@
       userChrome = common.userChrome;
       enable = true;
       isDefault = true;
-      extensions = common.addons.common or [];
+      extensions = common.addons.common or [ ];
     };
   };
 in
-  common.mkMozillaModule {
-    inherit impurity neg profiles;
-    cfg = config.features.web.librewolf;
-    guiEnabled = config.features.gui.enable;
-    package = pkgs.librewolf;
-    browserType = "librewolf";
-  }
+common.mkMozillaModule {
+  inherit impurity neg profiles;
+  cfg = config.features.web.librewolf;
+  guiEnabled = config.features.gui.enable;
+  package = pkgs.librewolf;
+  browserType = "librewolf";
+}

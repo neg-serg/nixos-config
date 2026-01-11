@@ -4,10 +4,12 @@
   pkgs,
   self,
   ...
-}: let
+}:
+let
   cfg = config.flakePreflight;
   toStr = builtins.toString;
-in {
+in
+{
   options.flakePreflight = {
     enable = lib.mkEnableOption "Run 'nix flake check' during activation (best-effort).";
 
@@ -44,9 +46,12 @@ in {
 
     extraArgs = lib.mkOption {
       type = with lib.types; listOf str;
-      default = [];
+      default = [ ];
       description = "Extra arguments to pass to 'nix flake check'.";
-      example = ["--show-trace" "--print-build-logs"];
+      example = [
+        "--show-trace"
+        "--print-build-logs"
+      ];
     };
   };
 

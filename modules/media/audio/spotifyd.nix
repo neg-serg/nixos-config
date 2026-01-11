@@ -3,9 +3,10 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   cfg = config.features.media.audio.spotify;
-  spotifydPkg = pkgs.spotifyd.override {withMpris = true;};
+  spotifydPkg = pkgs.spotifyd.override { withMpris = true; };
   spotifydConf = pkgs.writeText "spotifyd.conf" ''
     [global]
     autoplay = true
@@ -19,7 +20,8 @@
     use_mpris = true
     volume_normalisation = false
   '';
-in {
+in
+{
   config = lib.mkIf (cfg.enable or false) {
     # Sops secrets for Spotify credentials
     sops.secrets."spotify-username" = {
@@ -36,8 +38,11 @@ in {
     # Spotifyd systemd user service
     systemd.user.services.spotifyd = {
       description = "Spotify daemon";
-      wantedBy = ["graphical-session.target"];
-      after = ["graphical-session.target" "pipewire.service"];
+      wantedBy = [ "graphical-session.target" ];
+      after = [
+        "graphical-session.target"
+        "pipewire.service"
+      ];
       serviceConfig = {
         ExecStart = "${spotifydPkg}/bin/spotifyd --no-daemon --config-path ${spotifydConf}";
         Restart = "on-failure";

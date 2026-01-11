@@ -8,10 +8,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.netdata;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.netdata = {
     enable = mkEnableOption "Netdata real-time performance monitoring container";
 
@@ -73,6 +80,6 @@ in {
     };
 
     # Open firewall port for web UI
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

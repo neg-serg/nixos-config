@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.below # time-traveling system monitor for Linux (BPF-based)
     pkgs.bpftrace # high-level tracing language for Linux eBPF

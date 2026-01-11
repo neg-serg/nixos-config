@@ -3,8 +3,9 @@
   pkgs,
   config,
   ...
-}: let
-  cfg = config.hardware.audio.rnnoise or {};
+}:
+let
+  cfg = config.hardware.audio.rnnoise or { };
   rmeSinkName = "alsa_output.usb-RME_ADI-2_4_Pro_SE__53011083__B992903C2BD8DC8-00.iec958-stereo";
   rmeSourceName = "alsa_input.usb-RME_ADI-2_4_Pro_SE__53011083__B992903C2BD8DC8-00.analog-stereo";
   rmeDefaultScript = pkgs.writeShellScript "wpctl-set-rme-default" ''
@@ -41,8 +42,10 @@
     done
     exit 0
   '';
-in {
-  options.hardware.audio.rnnoise.enable = lib.mkEnableOption "Enable RNNoise-based virtual microphone (PipeWire filter-chain).";
+in
+{
+  options.hardware.audio.rnnoise.enable =
+    lib.mkEnableOption "Enable RNNoise-based virtual microphone (PipeWire filter-chain).";
 
   config = {
     # Default to enabled globally; hosts can override to false
@@ -56,48 +59,47 @@ in {
       pulse.enable = true;
       jack.enable = true;
       # Base low-latency tuning + optional RNNoise virtual mic
-      extraConfig.pipewire =
-        {
-          "92-low-latency" = {
-            "context.properties" = {
-              "default.clock.rate" = 48000;
-              "default.clock.quantum" = 128;
-              "default.clock.min-quantum" = 32;
-              "default.clock.max-quantum" = 2048;
-            };
-          };
-        }
-        // lib.optionalAttrs (cfg.enable or false) {
-          "95-rnnoise-filter-chain" = {
-            "context.modules" = [
-              {
-                name = "libpipewire-module-filter-chain";
-                args = {
-                  "node.name" = "rnnoise_source";
-                  "node.description" = "Noise Canceling (RNNoise)";
-                  "media.class" = "Audio/Source";
-                  "filter.graph" = {
-                    nodes = [
-                      {
-                        type = "ladspa";
-                        name = "rnnoise";
-                        plugin = "${pkgs.rnnoise-plugin}/lib/ladspa/rnnoise_ladspa.so";
-                        label = "noise_suppressor_stereo";
-                      }
-                    ];
-                  };
-                  "capture.props" = {
-                    "node.passive" = true;
-                    "node.description" = "RNNoise Input";
-                  };
-                  "playback.props" = {
-                    "node.description" = "RNNoise Source";
-                  };
-                };
-              }
-            ];
+      extraConfig.pipewire = {
+        "92-low-latency" = {
+          "context.properties" = {
+            "default.clock.rate" = 48000;
+            "default.clock.quantum" = 128;
+            "default.clock.min-quantum" = 32;
+            "default.clock.max-quantum" = 2048;
           };
         };
+      }
+      // lib.optionalAttrs (cfg.enable or false) {
+        "95-rnnoise-filter-chain" = {
+          "context.modules" = [
+            {
+              name = "libpipewire-module-filter-chain";
+              args = {
+                "node.name" = "rnnoise_source";
+                "node.description" = "Noise Canceling (RNNoise)";
+                "media.class" = "Audio/Source";
+                "filter.graph" = {
+                  nodes = [
+                    {
+                      type = "ladspa";
+                      name = "rnnoise";
+                      plugin = "${pkgs.rnnoise-plugin}/lib/ladspa/rnnoise_ladspa.so";
+                      label = "noise_suppressor_stereo";
+                    }
+                  ];
+                };
+                "capture.props" = {
+                  "node.passive" = true;
+                  "node.description" = "RNNoise Input";
+                };
+                "playback.props" = {
+                  "node.description" = "RNNoise Source";
+                };
+              };
+            }
+          ];
+        };
+      };
       wireplumber = {
         package = pkgs.wireplumber;
         extraConfig = {
@@ -113,7 +115,7 @@ in {
       };
     };
     # run pipewire on default.target, this fixes xdg-portal startup delay
-    systemd.user.services.pipewire.wantedBy = ["default.target"];
+    systemd.user.services.pipewire.wantedBy = [ "default.target" ];
 
     # Try to make RNNoise the default source automatically once WirePlumber is up
     systemd.user.services."wp-rnnoise-default" = lib.mkIf (cfg.enable or false) (
@@ -129,11 +131,15 @@ in {
           done
           exit 0
         '';
-      in {
+      in
+      {
         description = "Set RNNoise virtual source as default (wpctl)";
-        after = ["wireplumber.service" "pipewire.service"];
-        partOf = ["wireplumber.service"];
-        wantedBy = ["default.target"];
+        after = [
+          "wireplumber.service"
+          "pipewire.service"
+        ];
+        partOf = [ "wireplumber.service" ];
+        wantedBy = [ "default.target" ];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${script}";
@@ -142,9 +148,12 @@ in {
     );
     systemd.user.services."wp-rme-default" = {
       description = "Ensure RME ADI-2/4 analog nodes are default (wpctl)";
-      after = ["wireplumber.service" "pipewire.service"];
-      partOf = ["wireplumber.service"];
-      wantedBy = ["default.target"];
+      after = [
+        "wireplumber.service"
+        "pipewire.service"
+      ];
+      partOf = [ "wireplumber.service" ];
+      wantedBy = [ "default.target" ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${rmeDefaultScript}";

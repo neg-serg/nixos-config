@@ -7,12 +7,14 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   inherit (lib.kernel) yes no freeform;
   inherit (lib.attrsets) mapAttrs;
   inherit (lib) mkEnableOption mkIf;
   cfg = config.profiles.kernel.amd;
-in {
+in
+{
   options.profiles.kernel.amd.enable =
     mkEnableOption "Enable AMD-oriented kernel structuredExtraConfig patches.";
 

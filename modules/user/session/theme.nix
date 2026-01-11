@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     # -- Theme / Wallpaper --
     pkgs.gowall # generate palette from wallpaper

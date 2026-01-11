@@ -6,8 +6,9 @@
   lib,
   config,
   ...
-}: let
-  cfg = config.profiles.games or {};
+}:
+let
+  cfg = config.profiles.games or { };
 
   # Import consolidated game scripts for SteamVR launcher
   gameScripts = import ../../../packages/game-scripts {
@@ -28,7 +29,10 @@
     comment = "Launch DeoVR via Steam (AppID 837380)";
     exec = "steam steam://rungameid/837380";
     terminal = false;
-    categories = ["Game" "AudioVideo"];
+    categories = [
+      "Game"
+      "AudioVideo"
+    ];
   };
 
   steamvrDesktop = pkgs.makeDesktopItem {
@@ -37,9 +41,13 @@
     comment = "Launch SteamVR under Hyprland";
     exec = "steamvr";
     terminal = false;
-    categories = ["Game" "Utility"];
+    categories = [
+      "Game"
+      "Utility"
+    ];
   };
-in {
+in
+{
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [
       gameScripts.steamvr

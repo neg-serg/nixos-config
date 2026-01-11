@@ -7,10 +7,11 @@ let
   forensicsAnalysis = import ./unfree/categories/forensics-analysis.nix;
   misc = import ./unfree/categories/misc.nix;
   forensics = forensicsStego ++ forensicsAnalysis;
-in {
+in
+{
   # Desktop-oriented unfree packages (composed from categories)
   desktop = audio ++ editors ++ ai ++ browsers ++ forensics ++ misc;
 
   # Headless/server preset: no unfree packages allowed
-  headless = [];
+  headless = [ ];
 }

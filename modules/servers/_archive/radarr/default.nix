@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.radarr;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.radarr = {
     enable = mkEnableOption "Radarr movie PVR container";
 
@@ -68,10 +75,10 @@ in {
         "${cfg.downloadsDir}:/downloads"
         "${cfg.moviesDir}:/movies"
       ];
-      extraOptions = ["--name=radarr"];
+      extraOptions = [ "--name=radarr" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

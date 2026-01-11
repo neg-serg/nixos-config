@@ -7,9 +7,11 @@
   lib,
   config,
   ...
-}: let
-  cfg = config.servicesProfiles.geoclue or {enable = false;};
-in {
+}:
+let
+  cfg = config.servicesProfiles.geoclue or { enable = false; };
+in
+{
   config = lib.mkIf cfg.enable {
     services.geoclue2 = {
       enable = true;

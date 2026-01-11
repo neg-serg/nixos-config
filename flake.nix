@@ -116,30 +116,42 @@
     # Only using official cache.nixos.org - no extra substituters
   };
 
-  outputs = inputs @ {
-    self,
-    nixpkgs,
-    ...
-  }: let
-    inherit (nixpkgs) lib;
-    flakeLib = import ./flake/lib.nix {
-      inputs = inputs // {inherit self;};
-      inherit nixpkgs;
-    };
-    supportedSystems = ["x86_64-linux"];
-    perSystem = import ./flake/per-system.nix {inherit self inputs nixpkgs flakeLib;};
-  in {
-    packages = lib.genAttrs supportedSystems (s: (perSystem s).packages);
-    formatter = lib.genAttrs supportedSystems (s: (perSystem s).formatter);
-    checks = lib.genAttrs supportedSystems (s: (perSystem s).checks);
-    devShells = lib.genAttrs supportedSystems (s: (perSystem s).devShells);
-    apps = lib.genAttrs supportedSystems (s: (perSystem s).apps);
-    nixosConfigurations = import ./flake/nixos.nix {
-      inherit inputs nixpkgs self;
-      filteredSource = lib.cleanSourceWith {
-        filter = name: _type: ! (lib.hasSuffix ".md" (builtins.baseNameOf name));
-        src = lib.cleanSource ./.;
+  outputs =
+    inputs@{
+      self,
+      nixpkgs,
+      ...
+    }:
+    let
+      inherit (nixpkgs) lib;
+      flakeLib = import ./flake/lib.nix {
+        inputs = inputs // {
+          inherit self;
+        };
+        inherit nixpkgs;
+      };
+      supportedSystems = [ "x86_64-linux" ];
+      perSystem = import ./flake/per-system.nix {
+        inherit
+          self
+          inputs
+          nixpkgs
+          flakeLib
+          ;
+      };
+    in
+    {
+      packages = lib.genAttrs supportedSystems (s: (perSystem s).packages);
+      formatter = lib.genAttrs supportedSystems (s: (perSystem s).formatter);
+      checks = lib.genAttrs supportedSystems (s: (perSystem s).checks);
+      devShells = lib.genAttrs supportedSystems (s: (perSystem s).devShells);
+      apps = lib.genAttrs supportedSystems (s: (perSystem s).apps);
+      nixosConfigurations = import ./flake/nixos.nix {
+        inherit inputs nixpkgs self;
+        filteredSource = lib.cleanSourceWith {
+          filter = name: _type: !(lib.hasSuffix ".md" (builtins.baseNameOf name));
+          src = lib.cleanSource ./.;
+        };
       };
     };
-  };
 }

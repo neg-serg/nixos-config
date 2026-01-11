@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.keymapviz # visualize QMK keymap.c
     pkgs.qmk # QMK Firmware helper

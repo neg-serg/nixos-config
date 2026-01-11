@@ -2,7 +2,8 @@
   lib,
   config,
   ...
-}: {
+}:
+{
   services = {
     # Replace chrony with systemd-timesyncd
     # I am yet to confirm the difference in accuracy

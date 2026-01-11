@@ -7,16 +7,18 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg =
     config.servicesProfiles.adguardhome or {
       enable = false;
-      rewrites = [];
-      filterLists = [];
+      rewrites = [ ];
+      filterLists = [ ];
     };
-in {
+in
+{
   config = lib.mkIf cfg.enable {
-    users.groups.adguardhome = {};
+    users.groups.adguardhome = { };
     users.users.adguardhome = {
       isSystemUser = true;
       group = "adguardhome";
@@ -51,18 +53,23 @@ in {
           filtering_enabled = true;
           parental_enabled = false;
           safebrowsing_enabled = false;
-          safe_search = {enabled = false;};
+          safe_search = {
+            enabled = false;
+          };
         };
         # Subscribe to upstream lists (if provided)
-        filters = map (f: {inherit (f) name url enabled;}) cfg.filterLists;
+        filters = map (f: { inherit (f) name url enabled; }) cfg.filterLists;
         dns = {
           # Bind locally and serve on default DNS port.
           bind_host = "127.0.0.1";
-          bind_hosts = ["127.0.0.1"]; # restrict to IPv4 localhost to avoid conflicts with libvirt/systemd-resolved
+          bind_hosts = [ "127.0.0.1" ]; # restrict to IPv4 localhost to avoid conflicts with libvirt/systemd-resolved
           ipv6 = false;
           port = 53;
-          upstream_dns = ["127.0.0.1:5353"];
-          bootstrap_dns = ["1.1.1.1" "8.8.8.8"];
+          upstream_dns = [ "127.0.0.1:5353" ];
+          bootstrap_dns = [
+            "1.1.1.1"
+            "8.8.8.8"
+          ];
           inherit (cfg) rewrites;
         };
       };
@@ -80,7 +87,7 @@ in {
     # - domains = ["~."] ensures all lookups go through the configured DNS
     services.resolved = {
       enable = lib.mkDefault true;
-      domains = ["~."];
+      domains = [ "~." ];
       # Keep local resolver deterministic: disable LLMNR and mDNS broadcast resolution
       # (some NixOS releases expose these as explicit options; if not, extraConfig below handles it)
       llmnr = lib.mkDefault "false";
@@ -90,6 +97,6 @@ in {
       '';
     };
     # Keep resolv.conf compatibility for tools that read networking.nameservers directly
-    networking.nameservers = ["127.0.0.1"];
+    networking.nameservers = [ "127.0.0.1" ];
   };
 }

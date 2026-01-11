@@ -7,9 +7,11 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.roles.homelab;
-in {
+in
+{
   options.roles.homelab.enable = lib.mkEnableOption "Enable homelab role (self-hosting services).";
 
   config = lib.mkIf cfg.enable {

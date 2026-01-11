@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.komga;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.komga = {
     enable = mkEnableOption "Komga comics/mangas media server container";
 
@@ -63,10 +70,10 @@ in {
         "${cfg.readDir}:/read"
         "/etc/localtime:/etc/localtime:ro"
       ];
-      extraOptions = ["--name=komga"];
+      extraOptions = [ "--name=komga" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

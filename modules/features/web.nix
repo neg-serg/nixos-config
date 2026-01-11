@@ -1,11 +1,23 @@
-{lib, ...}:
-with lib; let
-  mkBool = desc: default: (lib.mkEnableOption desc) // {inherit default;};
-in {
+{ lib, ... }:
+with lib;
+let
+  mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
+in
+{
   options.features.web = {
     enable = mkBool "enable Web stack (browsers + tools)" true;
     default = mkOption {
-      type = types.enum ["floorp" "firefox" "librewolf" "nyxt" "yandex" "chrome" "brave" "vivaldi" "edge"];
+      type = types.enum [
+        "floorp"
+        "firefox"
+        "librewolf"
+        "nyxt"
+        "yandex"
+        "chrome"
+        "brave"
+        "vivaldi"
+        "edge"
+      ];
       default = "floorp";
       description = "Default browser used for XDG handlers, $BROWSER, and integrations.";
     };

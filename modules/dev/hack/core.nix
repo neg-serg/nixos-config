@@ -3,9 +3,10 @@
   config,
   pkgs,
   ...
-}: let
-  hackLib = import ./lib.nix {inherit lib config;};
-  flags = config.features.dev.hack.core or {};
+}:
+let
+  hackLib = import ./lib.nix { inherit lib config; };
+  flags = config.features.dev.hack.core or { };
   groups = {
     secrets = [
       pkgs.gitleaks # scan repos/binaries for leaked secrets
@@ -19,7 +20,8 @@
     ];
   };
   packages = hackLib.filterPackages (hackLib.mkGroupPackages flags groups);
-in {
+in
+{
   config = lib.mkIf hackLib.enabled {
     environment.systemPackages = lib.mkAfter packages;
   };

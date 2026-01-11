@@ -3,7 +3,8 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   # --- Scripts & Package ---
   scriptPkgs = [
     pkgs.mpvScripts.cutter # cut/extract video segments from mpv
@@ -20,11 +21,14 @@
       vapoursynthSupport = true;
     };
   };
-in {
-  config = lib.mkIf (config.features.gui.enable or false) (lib.mkMerge [
-    {
-      # Install Package
-      users.users.neg.packages = [mpvPackage];
-    }
-  ]);
+in
+{
+  config = lib.mkIf (config.features.gui.enable or false) (
+    lib.mkMerge [
+      {
+        # Install Package
+        users.users.neg.packages = [ mpvPackage ];
+      }
+    ]
+  );
 }

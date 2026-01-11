@@ -2,9 +2,11 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.services.ollama;
-in {
+in
+{
   config = {
     services.ollama = {
       enable = lib.mkDefault true;
@@ -17,7 +19,6 @@ in {
       };
     };
 
-    networking.firewall.allowedTCPPorts =
-      lib.mkIf cfg.enable (lib.mkAfter [11434]);
+    networking.firewall.allowedTCPPorts = lib.mkIf cfg.enable (lib.mkAfter [ 11434 ]);
   };
 }

@@ -4,11 +4,13 @@
   config,
   inputs,
   ...
-}: let
-  winappsCfg = config.features.apps.winapps or {};
+}:
+let
+  winappsCfg = config.features.apps.winapps or { };
   enabled = winappsCfg.enable or false;
-  vmProfile = (config.profiles.vm or {enable = false;}).enable;
-in {
+  vmProfile = (config.profiles.vm or { enable = false; }).enable;
+in
+{
   config = lib.mkIf enabled {
     assertions = [
       {

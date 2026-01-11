@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.chrpath # adjust rpath for ELF
     pkgs.debugedit # debug info rewrite

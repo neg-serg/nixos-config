@@ -3,16 +3,15 @@
   pkgs,
   inputs,
   ...
-}: let
+}:
+let
   system = pkgs.stdenv.hostPlatform.system;
-  iosevkaInput =
-    if inputs ? "iosevka-neg"
-    then inputs."iosevka-neg".packages.${system}
-    else null;
+  iosevkaInput = if inputs ? "iosevka-neg" then inputs."iosevka-neg".packages.${system} else null;
   iosevkaFont =
-    if iosevkaInput != null && (iosevkaInput ? nerd-font)
-    then iosevkaInput.nerd-font
-    else pkgs.nerd-fonts.iosevka;
+    if iosevkaInput != null && (iosevkaInput ? nerd-font) then
+      iosevkaInput.nerd-font
+    else
+      pkgs.nerd-fonts.iosevka;
   packages = [
     iosevkaFont # patched Iosevka Nerd Font for UI monospace
     pkgs.adw-gtk3 # libadwaita GTK3 port; matches GNOME styling
@@ -23,6 +22,7 @@
     pkgs.kora-icon-theme # sharp icon pack w/ dark + light variants
     pkgs.libsForQt5.qtstyleplugin-kvantum # Qt5 Kvantum plugin for old apps
   ];
-in {
+in
+{
   environment.systemPackages = lib.mkAfter packages;
 }

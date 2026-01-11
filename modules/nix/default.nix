@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   imports = [
     ./bpftrace.nix
     ./hyprland.nix

@@ -6,13 +6,16 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   cfg = config.features.cli.yazi;
-  tomlFormat = pkgs.formats.toml {};
+  tomlFormat = pkgs.formats.toml { };
 
   settings = {
-    mgr = {show_hidden = true;};
+    mgr = {
+      show_hidden = true;
+    };
     opener.edit = [
       {
         run = ''nvim "$@"'';
@@ -23,12 +26,16 @@
 
   theme = {
     manager = {
-      cwd = {fg = "#367bbf";};
+      cwd = {
+        fg = "#367bbf";
+      };
       hovered = {
         fg = "#367bbf";
         bg = "#000000";
       };
-      preview_hovered = {underline = true;};
+      preview_hovered = {
+        underline = true;
+      };
       find_keyword = {
         fg = "#FFFF7D";
         italic = true;
@@ -58,7 +65,9 @@
         fg = "#6C7E96";
         bg = "#000000";
       };
-      border_style = {fg = "#3D3D3D";};
+      border_style = {
+        fg = "#3D3D3D";
+      };
       border_symbol = "│";
     };
 
@@ -101,29 +110,53 @@
       };
 
       # Permissions colors
-      permissions_t = {fg = "#367bbf";};
-      permissions_r = {fg = "#FFFF7D";}; # Yellow
-      permissions_w = {fg = "#CF4F88";}; # Red
-      permissions_x = {fg = "#7DFF7E";}; # Green
-      permissions_s = {fg = "#98d3cb";}; # Teal
+      permissions_t = {
+        fg = "#367bbf";
+      };
+      permissions_r = {
+        fg = "#FFFF7D";
+      }; # Yellow
+      permissions_w = {
+        fg = "#CF4F88";
+      }; # Red
+      permissions_x = {
+        fg = "#7DFF7E";
+      }; # Green
+      permissions_s = {
+        fg = "#98d3cb";
+      }; # Teal
     };
 
     input = {
-      border = {fg = "#367bbf";};
-      title = {};
-      value = {fg = "#6C7E96";};
-      selected = {bg = "#000000";};
+      border = {
+        fg = "#367bbf";
+      };
+      title = { };
+      value = {
+        fg = "#6C7E96";
+      };
+      selected = {
+        bg = "#000000";
+      };
     };
 
     select = {
-      border = {fg = "#98d3cb";}; # Teal to match select mode
-      active = {fg = "#98d3cb";};
-      inactive = {fg = "#6C7E96";};
+      border = {
+        fg = "#98d3cb";
+      }; # Teal to match select mode
+      active = {
+        fg = "#98d3cb";
+      };
+      inactive = {
+        fg = "#6C7E96";
+      };
     };
 
     tasks = {
-      border = {fg = "#367bbf";};
-      title = {};
+      border = {
+        fg = "#367bbf";
+      };
+      title = { };
       hovered = {
         fg = "#367bbf";
         underline = true;
@@ -132,27 +165,49 @@
 
     which = {
       cols = 3;
-      mask = {bg = "#000000";};
-      cand = {fg = "#98d3cb";};
-      rest = {fg = "#6C7E96";};
-      desc = {fg = "#367bbf";};
+      mask = {
+        bg = "#000000";
+      };
+      cand = {
+        fg = "#98d3cb";
+      };
+      rest = {
+        fg = "#6C7E96";
+      };
+      desc = {
+        fg = "#367bbf";
+      };
       separator = "  ";
-      separator_style = {fg = "#3D3D3D";};
+      separator_style = {
+        fg = "#3D3D3D";
+      };
     };
 
     notify = {
-      title_info = {fg = "#367bbf";};
-      title_warn = {fg = "#FFC44E";};
-      title_error = {fg = "#CF4F88";};
+      title_info = {
+        fg = "#367bbf";
+      };
+      title_warn = {
+        fg = "#FFC44E";
+      };
+      title_error = {
+        fg = "#CF4F88";
+      };
       icon_info = "ZE ";
       icon_warn = "ZE ";
       icon_error = "ZE ";
     };
 
     help = {
-      on = {fg = "#367bbf";};
-      exec = {fg = "#98d3cb";};
-      desc = {fg = "#6C7E96";};
+      on = {
+        fg = "#367bbf";
+      };
+      exec = {
+        fg = "#98d3cb";
+      };
+      desc = {
+        fg = "#6C7E96";
+      };
       hovered = {
         bg = "#000000";
         bold = true;
@@ -169,33 +224,34 @@
     mgr.prepend_keymap = [
       {
         run = "close";
-        on = ["<Esc>"];
+        on = [ "<Esc>" ];
       }
       {
         run = "close";
-        on = ["<C-q>"];
+        on = [ "<C-q>" ];
       }
       {
         run = "yank --cut";
-        on = ["d"];
+        on = [ "d" ];
       }
       {
         run = "remove --force";
-        on = ["D"];
+        on = [ "D" ];
       }
       {
         run = "remove --permanently";
-        on = ["X"];
+        on = [ "X" ];
       }
       {
-        on = ["f"];
+        on = [ "f" ];
         run = ''shell "$SHELL" --block'';
         desc = "Open $SHELL here";
       }
     ];
   };
 in
-  lib.mkIf (cfg.enable or false) (lib.mkMerge [
+lib.mkIf (cfg.enable or false) (
+  lib.mkMerge [
     {
       # Use inputs.yazi if available, otherwise fallback to pkgs
       environment.systemPackages = [
@@ -208,4 +264,5 @@ in
       ".config/yazi/theme.toml".source = tomlFormat.generate "theme.toml" theme;
       ".config/yazi/keymap.toml".source = tomlFormat.generate "keymap.toml" keymap;
     })
-  ])
+  ]
+)

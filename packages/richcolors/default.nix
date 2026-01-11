@@ -19,7 +19,7 @@ python3.pkgs.buildPythonApplication rec {
     pillow
   ];
 
-  pythonImportsCheck = ["PIL"];
+  pythonImportsCheck = [ "PIL" ];
 
   installPhase = ''
     runHook preInstall
@@ -36,7 +36,7 @@ python3.pkgs.buildPythonApplication rec {
     description = "CLI that renders color palette images from hex code files";
     homepage = "https://github.com/Rizen54/richcolors";
     license = licenses.unfree;
-    maintainers = with maintainers; [];
+    maintainers = with maintainers; [ ];
     platforms = platforms.unix;
     mainProgram = "richcolors";
   };

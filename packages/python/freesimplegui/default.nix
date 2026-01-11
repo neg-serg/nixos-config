@@ -19,8 +19,11 @@ buildPythonPackage rec {
 
   # I will update the hash in the next step once I have the prefetched output.
 
-  nativeBuildInputs = [setuptools wheel];
-  propagatedBuildInputs = [tkinter];
+  nativeBuildInputs = [
+    setuptools
+    wheel
+  ];
+  propagatedBuildInputs = [ tkinter ];
 
   doCheck = false;
 

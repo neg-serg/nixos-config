@@ -6,11 +6,14 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   cfg = config.features.web.floorp;
   guiEnabled = config.features.gui.enable or false;
 
-  commonConfig = config // {home.homeDirectory = config.users.users.neg.home;};
+  commonConfig = config // {
+    home.homeDirectory = config.users.users.neg.home;
+  };
   mozillaCommon = import ./mozilla-common-lib.nix {
     inherit lib pkgs negLib;
     config = commonConfig;
@@ -42,23 +45,32 @@
       userContent = mozillaCommon.surfingkeysUserContent;
       enable = true;
       isDefault = true;
-      extensions = [];
+      extensions = [ ];
     };
   };
-in {
-  config = lib.mkIf (guiEnabled && (cfg.enable or false)) (lib.mkMerge [
-    (mkMozillaModule {
-      inherit impurity neg cfg guiEnabled profiles;
-      package = pkgs.floorp-bin;
-      browserType = "floorp";
-    }).config
-    {
-      environment.sessionVariables = {
-        MOZ_DBUS_REMOTE = "1";
-        MOZ_ENABLE_WAYLAND = "1";
-      };
+in
+{
+  config = lib.mkIf (guiEnabled && (cfg.enable or false)) (
+    lib.mkMerge [
+      (mkMozillaModule {
+        inherit
+          impurity
+          neg
+          cfg
+          guiEnabled
+          profiles
+          ;
+        package = pkgs.floorp-bin;
+        browserType = "floorp";
+      }).config
+      {
+        environment.sessionVariables = {
+          MOZ_DBUS_REMOTE = "1";
+          MOZ_ENABLE_WAYLAND = "1";
+        };
 
-      # Additional Floorp-specific home files
-    }
-  ]);
+        # Additional Floorp-specific home files
+      }
+    ]
+  );
 }

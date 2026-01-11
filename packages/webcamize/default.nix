@@ -22,15 +22,29 @@ stdenv.mkDerivation rec {
     hash = "sha256-rmATEcAcngCHidMFXNocrhP06LKNLEb+9jfFMGL4AKU=";
   };
 
-  nativeBuildInputs = [makeWrapper pkg-config];
-  buildInputs = [libgphoto2 ffmpeg-full kmod];
+  nativeBuildInputs = [
+    makeWrapper
+    pkg-config
+  ];
+  buildInputs = [
+    libgphoto2
+    ffmpeg-full
+    kmod
+  ];
 
   installPhase = ''
     mkdir -p $out/bin
     make bin/webcamize
     install -Dm755 bin/webcamize $out/bin/webcamize
     wrapProgram $out/bin/webcamize \
-      --prefix PATH : ${lib.makeBinPath [ffmpeg-full gphoto2 v4l-utils jq]}
+      --prefix PATH : ${
+        lib.makeBinPath [
+          ffmpeg-full
+          gphoto2
+          v4l-utils
+          jq
+        ]
+      }
   '';
 
   meta = with lib; {
@@ -38,7 +52,7 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/cowtoolz/webcamize";
     license = licenses.mit;
     platforms = platforms.linux;
-    maintainers = [];
+    maintainers = [ ];
     mainProgram = "webcamize";
   };
 }

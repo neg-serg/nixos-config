@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.blktrace # block layer tracing tools
     pkgs.dmraid # device mapper RAID tool for "fakeRAID" controllers

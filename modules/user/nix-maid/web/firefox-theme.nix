@@ -2,7 +2,8 @@
   pkgs,
   name,
   theme,
-}: let
+}:
+let
   json = builtins.toJSON {
     manifest_version = 2;
     version = "1.0";
@@ -18,18 +19,18 @@
     text = json;
   };
 in
-  pkgs.stdenvNoCC.mkDerivation {
-    pname = "firefox-theme-${name}.xpi";
-    version = "1.0";
-    preferLocalBuild = true;
-    unpackPhase = "true";
+pkgs.stdenvNoCC.mkDerivation {
+  pname = "firefox-theme-${name}.xpi";
+  version = "1.0";
+  preferLocalBuild = true;
+  unpackPhase = "true";
 
-    buildPhase = ''
-      cp ${jsonFile} manifest.json
-      ${pkgs.zip}/bin/zip out.xpi manifest.json
-    '';
+  buildPhase = ''
+    cp ${jsonFile} manifest.json
+    ${pkgs.zip}/bin/zip out.xpi manifest.json
+  '';
 
-    installPhase = ''
-      mv out.xpi $out
-    '';
-  }
+  installPhase = ''
+    mv out.xpi $out
+  '';
+}

@@ -10,12 +10,13 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   inherit (lib) mkIf mkEnableOption;
   cfg = config.monitoring.netdata;
-in {
-  options.monitoring.netdata.enable =
-    mkEnableOption "Enable Netdata (lightweight, local-only UI)";
+in
+{
+  options.monitoring.netdata.enable = mkEnableOption "Enable Netdata (lightweight, local-only UI)";
 
   config = mkIf cfg.enable {
     services.netdata = {
@@ -37,8 +38,8 @@ in {
         MemoryMax = "256M";
       };
       # Ensure it starts after network
-      after = ["network-online.target"];
-      wants = ["network-online.target"];
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
     };
 
     # Netdata remains bound to localhost via its own config in role

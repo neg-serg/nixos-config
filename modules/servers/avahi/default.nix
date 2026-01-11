@@ -7,9 +7,11 @@
   lib,
   config,
   ...
-}: let
-  cfg = config.servicesProfiles.avahi or {enable = false;};
-in {
+}:
+let
+  cfg = config.servicesProfiles.avahi or { enable = false; };
+in
+{
   config = lib.mkIf cfg.enable {
     services.avahi = {
       enable = true;

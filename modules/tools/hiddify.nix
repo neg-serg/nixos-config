@@ -1,12 +1,14 @@
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   pname = "hiddify";
   version = "2.0.5";
   src = pkgs.fetchurl {
     url = "https://github.com/hiddify/hiddify-app/releases/download/v${version}/Hiddify-Linux-x64.AppImage";
     hash = "sha256-zVwSBiKYMK0GjrUpPQrd0PaexJ4F2D9TNS/Sk8BX4BE=";
   };
-  appimageContents = pkgs.appimageTools.extract {inherit pname version src;};
-in {
+  appimageContents = pkgs.appimageTools.extract { inherit pname version src; };
+in
+{
   environment.systemPackages = [
     (pkgs.appimageTools.wrapType2 {
       inherit pname version src;

@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     # -- Terminal --
     pkgs.kitty # primary GUI terminal emulator

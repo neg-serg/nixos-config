@@ -7,9 +7,11 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   enabled = config.roles.workstation.enable or false;
-in {
+in
+{
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter [
       # -- CLI --

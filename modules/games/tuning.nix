@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   boot.kernel.sysctl = {
     "fs.file-max" = 524288;
     "kernel.sched_cfs_bandwidth_slice_us" = 3000; # better settings for cfs

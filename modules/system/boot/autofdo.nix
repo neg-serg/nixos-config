@@ -5,9 +5,11 @@
   pkgs,
   ...
 }:
-with lib; let
+with lib;
+let
   cfg = config.boot.kernel.autofdo;
-in {
+in
+{
   options.boot.kernel.autofdo = {
     enable = mkEnableOption "Kernel AutoFDO support (requires Clang-built kernel)";
   };
@@ -17,9 +19,13 @@ in {
     # We override the latest kernel to use clangStdenv.
     # Users can override this by setting boot.kernelPackages manually,
     # but they must ensure it uses Clang.
-    boot.kernelPackages = mkForce (pkgs.linuxPackagesFor (pkgs.linuxPackages_latest.kernel.override {
-      stdenv = pkgs.clangStdenv;
-    }));
+    boot.kernelPackages = mkForce (
+      pkgs.linuxPackagesFor (
+        pkgs.linuxPackages_latest.kernel.override {
+          stdenv = pkgs.clangStdenv;
+        }
+      )
+    );
 
     boot.kernelPatches = [
       {

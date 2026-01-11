@@ -5,7 +5,8 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   cfg = config.features;
 
@@ -28,7 +29,8 @@
 
   # Rustmission Config Dir
   rustmissionConf = ../../../../files/config/rustmission;
-in {
+in
+{
   config = lib.mkMerge [
     {
       # Winboat (Bottles/Wine)
@@ -37,27 +39,33 @@ in {
         pkgs.wineWowPackages.stable # Open-source implementation of the Windows API
       ];
     }
-    (lib.mkIf (cfg.fun.enable or false) (n.mkHomeFiles (lib.mkMerge [
-      # Hack Art
-      (lib.mapAttrs' (name: src:
-        lib.nameValuePair ".local/share/hack-art/${name}" {
-          source = src;
-          executable = lib.hasSuffix ".sh" name || lib.hasSuffix ".py" name;
-        })
-      artFiles)
+    (lib.mkIf (cfg.fun.enable or false) (
+      n.mkHomeFiles (
+        lib.mkMerge [
+          # Hack Art
+          (lib.mapAttrs' (
+            name: src:
+            lib.nameValuePair ".local/share/hack-art/${name}" {
+              source = src;
+              executable = lib.hasSuffix ".sh" name || lib.hasSuffix ".py" name;
+            }
+          ) artFiles)
 
-      # Fantasy Art
-      {
-        ".local/share/fantasy-art/gandalf.txt".source = ../../../../files/art/fun-art/gandalf.txt;
-        ".local/share/fantasy-art/helmet.txt".source = ../../../../files/art/fun-art/helmet.txt;
-        ".local/share/fantasy-art/hydra.txt".source = ../../../../files/art/fun-art/hydra.txt;
-        ".local/share/fantasy-art/skeleton_hood.txt".source = ../../../../files/art/fun-art/skeleton_hood.txt;
-      }
+          # Fantasy Art
+          {
+            ".local/share/fantasy-art/gandalf.txt".source = ../../../../files/art/fun-art/gandalf.txt;
+            ".local/share/fantasy-art/helmet.txt".source = ../../../../files/art/fun-art/helmet.txt;
+            ".local/share/fantasy-art/hydra.txt".source = ../../../../files/art/fun-art/hydra.txt;
+            ".local/share/fantasy-art/skeleton_hood.txt".source =
+              ../../../../files/art/fun-art/skeleton_hood.txt;
+          }
 
-      # Rustmission
-      {
-        ".config/rustmission".source = rustmissionConf;
-      }
-    ])))
+          # Rustmission
+          {
+            ".config/rustmission".source = rustmissionConf;
+          }
+        ]
+      )
+    ))
   ];
 }

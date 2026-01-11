@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.plex;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.plex = {
     enable = mkEnableOption "Plex Media Server container";
 
@@ -75,12 +82,10 @@ in {
         "${cfg.tvDir}:/tv"
         "${cfg.animeDir}:/anime"
       ];
-      extraOptions =
-        ["--name=plex"]
-        ++ (lib.optional cfg.enableGpu "--device=/dev/dri:/dev/dri");
+      extraOptions = [ "--name=plex" ] ++ (lib.optional cfg.enableGpu "--device=/dev/dri:/dev/dri");
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [32400];
+    networking.firewall.allowedTCPPorts = [ 32400 ];
   };
 }

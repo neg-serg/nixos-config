@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   imports = [
     ../../profiles/desktop.nix
     ./hardware.nix
@@ -21,7 +22,10 @@
     themePackages = [
       (pkgs.adi1090x-plymouth-themes.override {
         # collection of plymouth themes
-        selected_themes = ["lone" "green_blocks"];
+        selected_themes = [
+          "lone"
+          "green_blocks"
+        ];
       })
     ];
   };

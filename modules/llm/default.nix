@@ -2,9 +2,11 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.services.ollama;
-in {
+in
+{
   imports = [
     ./codex-config.nix
     ./ollama.nix
@@ -24,7 +26,7 @@ in {
         "d /zero/llm 0750 ollama ollama -"
         "d /zero/llm/ollama-models 0750 ollama ollama -"
       ];
-      users.groups.ollama = {};
+      users.groups.ollama = { };
       users.users.ollama = {
         isSystemUser = true;
         group = "ollama";

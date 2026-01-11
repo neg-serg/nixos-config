@@ -4,9 +4,11 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
-in {
+in
+{
   config = lib.mkMerge [
     {
       environment.systemPackages = [
@@ -20,7 +22,7 @@ in {
     }
     (n.mkHomeFiles {
       # Mangohud Config
-      ".config/MangoHud/MangoHud.conf".text = lib.generators.toKeyValue {} {
+      ".config/MangoHud/MangoHud.conf".text = lib.generators.toKeyValue { } {
         cpu_stats = true;
         cpu_temp = true;
         gpu_stats = true;

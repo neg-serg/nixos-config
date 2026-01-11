@@ -1,6 +1,6 @@
 _inputs: _final: prev: {
   # bpftrace 0.23.x does not support LLVM 21 yet; pin to LLVM 20
-  bpftrace = prev.bpftrace.override {llvmPackages = prev.llvmPackages_20;};
+  bpftrace = prev.bpftrace.override { llvmPackages = prev.llvmPackages_20; };
 
   # Security: avoid insecure Mbed TLS 2 by aliasing to v3
   mbedtls_2 = prev.mbedtls;
@@ -12,23 +12,19 @@ _inputs: _final: prev: {
   });
 
   # Reserved for development/toolchain overlays
-  neg = {};
+  neg = { };
 
   # Patch pre-commit to add a space before "Skipped" message
   pre-commit = prev.pre-commit.overrideAttrs (old: {
-    postInstall =
-      (old.postInstall or "")
-      + ''
-        find $out -name run.py -exec sed -i "s/NO_FILES = '(no files to check)'/NO_FILES = '(no files to check) '/" {} +
-      '';
+    postInstall = (old.postInstall or "") + ''
+      find $out -name run.py -exec sed -i "s/NO_FILES = '(no files to check)'/NO_FILES = '(no files to check) '/" {} +
+    '';
   });
 
-  pythonPackagesExtensions =
-    (prev.pythonPackagesExtensions or [])
-    ++ [
-      (python-final: _python-prev: {
-        neopyter = python-final.callPackage ../neopyter {};
-        freesimplegui = python-final.callPackage ../python/freesimplegui {};
-      })
-    ];
+  pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
+    (python-final: _python-prev: {
+      neopyter = python-final.callPackage ../neopyter { };
+      freesimplegui = python-final.callPackage ../python/freesimplegui { };
+    })
+  ];
 }

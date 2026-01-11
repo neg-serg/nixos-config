@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.filebot;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.filebot = {
     enable = mkEnableOption "FileBot organizer container";
 
@@ -61,10 +68,10 @@ in {
         "${cfg.dataDir}:/config"
         "${cfg.storageDir}:/storage"
       ];
-      extraOptions = ["--name=filebot"];
+      extraOptions = [ "--name=filebot" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

@@ -8,9 +8,11 @@
   pkgs,
   config,
   ...
-}: let
-  cfg = config.features.hardware.liquidctl or {enable = false;};
-in {
+}:
+let
+  cfg = config.features.hardware.liquidctl or { enable = false; };
+in
+{
   options.features.hardware.liquidctl = {
     enable = lib.mkEnableOption "Enable liquidctl tooling and optional init service for AIO/cooler controllers.";
     initCommand = lib.mkOption {
@@ -27,11 +29,11 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = lib.mkAfter [pkgs.liquidctl]; # cooler control CLI (AIO/fans/RGB)
+    environment.systemPackages = lib.mkAfter [ pkgs.liquidctl ]; # cooler control CLI (AIO/fans/RGB)
 
     systemd.services.liquidctl-init = lib.mkIf cfg.runInit {
       description = "Initialize AIO/cooler via liquidctl";
-      wantedBy = ["multi-user.target"];
+      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = cfg.initCommand;

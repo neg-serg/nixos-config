@@ -8,10 +8,12 @@
   config,
   inputs,
   ...
-}: let
-  cfg = config.servicesProfiles.duckdns or {enable = false;};
-in {
-  imports = [inputs.nyx.nixosModules.duckdns];
+}:
+let
+  cfg = config.servicesProfiles.duckdns or { enable = false; };
+in
+{
+  imports = [ inputs.nyx.nixosModules.duckdns ];
 
   config = lib.mkIf cfg.enable {
     assertions = [

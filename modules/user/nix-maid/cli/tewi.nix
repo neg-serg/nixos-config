@@ -4,7 +4,8 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   cfg = config.features.cli.tewi;
   tewiConf = ''
@@ -31,8 +32,11 @@
     [debug]
     logs = false
   '';
-in {
-  config = lib.mkIf (cfg.enable or false) (n.mkHomeFiles {
-    ".config/tewi/tewi.conf".text = tewiConf;
-  });
+in
+{
+  config = lib.mkIf (cfg.enable or false) (
+    n.mkHomeFiles {
+      ".config/tewi/tewi.conf".text = tewiConf;
+    }
+  );
 }

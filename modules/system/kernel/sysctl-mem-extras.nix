@@ -8,10 +8,12 @@
   config,
   inputs,
   ...
-}: let
-  opts = import (inputs.self + "/lib/opts.nix") {inherit lib;};
+}:
+let
+  opts = import (inputs.self + "/lib/opts.nix") { inherit lib; };
   cfg = config.profiles.performance.memExtras;
-in {
+in
+{
   options.profiles.performance.memExtras = {
     enable = opts.mkEnableOption "Enable optional memory sysctl tweaks for desktop/work sessions.";
 

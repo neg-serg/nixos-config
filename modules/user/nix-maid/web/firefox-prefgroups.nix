@@ -1,4 +1,5 @@
-{lib, ...}: rec {
+{ lib, ... }:
+rec {
   prefgroups = {
     base = {
       "browser.aboutConfig.showWarning" = false;
@@ -215,7 +216,8 @@
 
       geolocation = {
         # Use mozilla's location provider over google's
-        "geo.provider.network.url" = "https://location.services.mozilla.com/v1/geolocate?key=%MOZILLA_API_KEY%";
+        "geo.provider.network.url" =
+          "https://location.services.mozilla.com/v1/geolocate?key=%MOZILLA_API_KEY%";
 
         # Disable OS geolocation services
         "geo.provider.use_gpsd" = false;
@@ -493,7 +495,7 @@
 
   modules = with prefgroups; {
     base =
-      {}
+      { }
       // base
       // misc.disable-mozilla-account
       // misc.container-tabs
@@ -539,7 +541,7 @@
       // misc.default-dark-theme;
 
     minor-1 =
-      {}
+      { }
       // misc.disable-prefetching
       // privacy.disable-captive-portals
       // privacy.disable-search-suggestions
@@ -548,14 +550,14 @@
       // security.etp-strict;
 
     minor-2 =
-      {}
+      { }
       // security.disable-webgl
       // privacy.ephemeral-cookies
       // privacy.sanitize-on-shutdown
       // security.disable-sessionrestore;
 
     annoying =
-      {}
+      { }
       // privacy.resist-fingerprinting
       // security.disable-js-jit
       // security.disable-wasm
@@ -565,13 +567,10 @@
       // privacy.disable-referrer-strict
       // privacy.disable-accessability;
 
-    trusted =
-      {}
-      // modules.base
-      // modules.minor-1;
+    trusted = { } // modules.base // modules.minor-1;
 
     general =
-      {}
+      { }
       // modules.base
       // modules.minor-1
       // modules.minor-2
@@ -581,9 +580,11 @@
     schizo = modules.general // modules.annoying;
   };
 
-  mkUserJs = prefs:
-    lib.concatStrings (lib.mapAttrsToList (name: value: ''
+  mkUserJs =
+    prefs:
+    lib.concatStrings (
+      lib.mapAttrsToList (name: value: ''
         user_pref("${name}", "${builtins.toJSON value}");
-      '')
-      prefs);
+      '') prefs
+    );
 }

@@ -3,10 +3,12 @@
   lib,
   config,
   ...
-}: let
-  cfg = config.profiles.vm or {enable = false;};
+}:
+let
+  cfg = config.profiles.vm or { enable = false; };
   mainUser = config.users.main.name or "neg";
-in {
+in
+{
   # Keep imports at top-level; guard heavy config below
   imports = [
     ./virt/pkgs.nix
@@ -17,7 +19,10 @@ in {
   config = lib.mkIf (!cfg.enable) {
     users.users = {
       "${mainUser}" = {
-        extraGroups = ["video" "render"];
+        extraGroups = [
+          "video"
+          "render"
+        ];
       };
     };
     virtualisation = {
@@ -37,7 +42,7 @@ in {
         autoPrune = {
           enable = true;
           dates = "weekly";
-          flags = ["--all"];
+          flags = [ "--all" ];
         };
       };
 
@@ -46,7 +51,7 @@ in {
         qemu = {
           package = pkgs.qemu_kvm;
           runAsRoot = true;
-          vhostUserPackages = [pkgs.virtiofsd];
+          vhostUserPackages = [ pkgs.virtiofsd ];
           swtpm.enable = true;
         };
       };

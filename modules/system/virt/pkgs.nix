@@ -3,9 +3,11 @@
   lib,
   config,
   ...
-}: let
-  vmEnabled = (config.profiles.vm or {enable = false;}).enable;
-in {
+}:
+let
+  vmEnabled = (config.profiles.vm or { enable = false; }).enable;
+in
+{
   config = lib.mkIf (!vmEnabled) {
     environment.systemPackages = [
       # -- Container --

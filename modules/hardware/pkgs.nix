@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     # -- Bluetooth --
     pkgs.bluez-tools # command line bluetooth manager

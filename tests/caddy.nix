@@ -1,15 +1,20 @@
 {
   name = "caddy-test";
   nodes = {
-    server = {...}: {
-      services.caddy = {
-        enable = true;
-        virtualHosts."http://localhost".extraConfig = ''
-          respond "Hello, world!"
-        '';
+    server =
+      { ... }:
+      {
+        services.caddy = {
+          enable = true;
+          virtualHosts."http://localhost".extraConfig = ''
+            respond "Hello, world!"
+          '';
+        };
+        networking.firewall.allowedTCPPorts = [
+          80
+          443
+        ];
       };
-      networking.firewall.allowedTCPPorts = [80 443];
-    };
   };
 
   testScript = ''

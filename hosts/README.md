@@ -4,9 +4,7 @@ Machine-specific configurations.
 
 ## Available Hosts
 
-| Host | Description |
-|------|-------------|
-| `telfir` | Primary workstation |
+| Host | Description | |------|-------------| | `telfir` | Primary workstation |
 
 ## Structure
 

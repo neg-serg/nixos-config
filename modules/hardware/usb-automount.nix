@@ -8,8 +8,9 @@
   pkgs,
   config,
   ...
-}: let
-  cfg = config.features.hardware.usbAutomount or {enable = false;};
+}:
+let
+  cfg = config.features.hardware.usbAutomount or { enable = false; };
   mountScript = pkgs.writeScriptBin "usb-mount.sh" ''
     #!/bin/sh
     PATH=$PATH:/run/current-system/sw/bin
@@ -105,7 +106,8 @@
             ;;
     esac
   '';
-in {
+in
+{
   options.features.hardware.usbAutomount.enable = lib.mkEnableOption ''
     Enable udev-driven USB storage auto-mount via systemd service (mounts under /mnt/<label>).
   '';

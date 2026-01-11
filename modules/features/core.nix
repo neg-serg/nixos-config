@@ -1,18 +1,23 @@
-{lib, ...}:
-with lib; let
+{ lib, ... }:
+with lib;
+let
   presets = import ../features-data/unfree-presets.nix;
-  mkBool = desc: default: (lib.mkEnableOption desc) // {inherit default;};
-in {
+  mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
+in
+{
   options.features = {
     # Global package exclusions for curated lists in modules that adopt this filter.
     excludePkgs = mkOption {
       type = types.listOf types.str;
-      default = [];
+      default = [ ];
       description = "List of package names (pname) to exclude from curated home.packages lists.";
     };
 
     profile = mkOption {
-      type = types.enum ["full" "lite"];
+      type = types.enum [
+        "full"
+        "lite"
+      ];
       default = "full";
       description = "Profile preset that adjusts feature defaults: full or lite.";
     };
@@ -25,12 +30,12 @@ in {
       };
       extra = mkOption {
         type = types.listOf types.str;
-        default = [];
+        default = [ ];
         description = "Extra unfree package names to allow (in addition to preset).";
       };
       allowed = mkOption {
         type = types.listOf types.str;
-        default = [];
+        default = [ ];
         description = "Final allowlist of unfree package names (overrides preset if explicitly set).";
       };
     };

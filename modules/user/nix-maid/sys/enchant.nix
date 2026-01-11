@@ -4,9 +4,11 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
-in {
+in
+{
   config = lib.mkMerge [
     (n.mkHomeFiles {
       ".config/enchant/enchant.ordering".text = ''

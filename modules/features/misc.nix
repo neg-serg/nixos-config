@@ -1,7 +1,9 @@
-{lib, ...}:
-with lib; let
-  mkBool = desc: default: (lib.mkEnableOption desc) // {inherit default;};
-in {
+{ lib, ... }:
+with lib;
+let
+  mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
+in
+{
   options.features = {
     text = {
       read.enable = mkBool "enable reading stack (CLI/GUI viewers, OCR, Recoll)" true;

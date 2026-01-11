@@ -26,7 +26,7 @@ buildGoModule rec {
     description = "Disk Usage/Free Utility (fork with plain style support)";
     homepage = "https://github.com/neg-serg/duf";
     license = licenses.mit;
-    maintainers = [];
+    maintainers = [ ];
     mainProgram = "duf";
     platforms = platforms.unix;
   };

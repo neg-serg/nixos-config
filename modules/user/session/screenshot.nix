@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     # -- Screenshot / Recording --
     pkgs.grim # raw screenshot helper for clip wrappers

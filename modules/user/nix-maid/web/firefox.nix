@@ -7,21 +7,20 @@
   impurity ? null,
   inputs,
   ...
-}: let
+}:
+let
   cfg = config.features.web.firefox;
   guiEnabled = config.features.gui.enable or false;
 
   # Reuse existing libraries with mocked config for home.homeDirectory compatibility
-  commonConfig =
-    config
-    // {
-      home.homeDirectory = config.users.users.neg.home;
-    };
+  commonConfig = config // {
+    home.homeDirectory = config.users.users.neg.home;
+  };
   mozillaCommon = import ./mozilla-common-lib.nix {
     inherit lib pkgs negLib;
     config = commonConfig;
   };
-  inherit (import ./firefox-prefgroups.nix {inherit lib;}) modules prefgroups;
+  inherit (import ./firefox-prefgroups.nix { inherit lib; }) modules prefgroups;
 
   inherit (mozillaCommon) remoteXpiAddon themeAddon mkMozillaModule;
 
@@ -117,7 +116,7 @@
           ublock-origin
           umatrix
         ])
-        ++ (with extraAddons; [theme-purple]);
+        ++ (with extraAddons; [ theme-purple ]);
     };
     general = {
       id = 1;
@@ -137,7 +136,10 @@
           ublock-origin
           umatrix
         ])
-        ++ (with extraAddons; [github-reposize theme-gray]);
+        ++ (with extraAddons; [
+          github-reposize
+          theme-gray
+        ]);
     };
     im = {
       id = 2;
@@ -151,7 +153,7 @@
         (with addonList; [
           ublock-origin
         ])
-        ++ (with extraAddons; []);
+        ++ (with extraAddons; [ ]);
     };
     trusted = {
       id = 3;
@@ -170,7 +172,10 @@
           ublock-origin
           umatrix
         ])
-        ++ (with extraAddons; [github-reposize theme-green]);
+        ++ (with extraAddons; [
+          github-reposize
+          theme-green
+        ]);
     };
     work = {
       id = 4;
@@ -189,22 +194,31 @@
           ublock-origin
           umatrix
         ])
-        ++ (with extraAddons; [github-reposize theme-orange]);
+        ++ (with extraAddons; [
+          github-reposize
+          theme-orange
+        ]);
     };
     base = {
       id = 5;
       name = "base";
       path = "base";
-      settings = {};
+      settings = { };
       userChrome = "";
       enable = true;
       isDefault = false;
-      extensions = [];
+      extensions = [ ];
     };
   };
 in
-  mkMozillaModule {
-    inherit impurity neg cfg guiEnabled profiles;
-    package = pkgs.firefox-devedition;
-    overlays = [inputs.nur.overlays.default];
-  }
+mkMozillaModule {
+  inherit
+    impurity
+    neg
+    cfg
+    guiEnabled
+    profiles
+    ;
+  package = pkgs.firefox-devedition;
+  overlays = [ inputs.nur.overlays.default ];
+}

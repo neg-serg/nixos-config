@@ -6,5 +6,5 @@
 }:
 lib.mkIf (config.features.distros.distrobox.enable or true) {
   # Distrobox
-  environment.systemPackages = [pkgs.distrobox]; # Container wrapper for running any Linux distribution in your terminal
+  environment.systemPackages = [ pkgs.distrobox ]; # Container wrapper for running any Linux distribution in your terminal
 }

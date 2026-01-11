@@ -1,7 +1,9 @@
-{lib, ...}:
-with lib; let
-  mkBool = desc: default: (lib.mkEnableOption desc) // {inherit default;};
-in {
+{ lib, ... }:
+with lib;
+let
+  mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
+in
+{
   options.features.dev = {
     enable = mkBool "enable Dev stack (toolchains, editors, hack tooling)" true;
     ai = {
@@ -10,7 +12,10 @@ in {
     };
     iac = {
       backend = mkOption {
-        type = types.enum ["terraform" "tofu"];
+        type = types.enum [
+          "terraform"
+          "tofu"
+        ];
         default = "terraform";
         description = "Choose IaC backend: HashiCorp Terraform or OpenTofu (tofu).";
       };

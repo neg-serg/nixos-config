@@ -5,7 +5,8 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   cfg = config.features.dev;
   enableIac = cfg.enable && (cfg.pkgs.iac or false);
@@ -43,12 +44,13 @@
   ansibleHosts = ''
     # Add your inventory groups/hosts here
   '';
-in {
-  config = lib.mkIf (cfg.enable or false) (lib.mkMerge [
-    {
-      # Packages
-      environment.systemPackages =
-        [
+in
+{
+  config = lib.mkIf (cfg.enable or false) (
+    lib.mkMerge [
+      {
+        # Packages
+        environment.systemPackages = [
           pkgs.direnv # Extension for your shell to load/unload env vars
           pkgs.nix-direnv # A fast, persistent use_nix implementation for direnv
           pkgs.nh # Yet another nix helper (CLI for NixOS/Home Manager)
@@ -61,9 +63,8 @@ in {
           pkgs.sshpass # Non-interactive ssh password auth
         ];
 
-      # Environment Variables
-      environment.variables =
-        {
+        # Environment Variables
+        environment.variables = {
           # General Dev
           CCACHE_CONFIGPATH = "${config.users.users.neg.home}/.config/ccache.config";
           CCACHE_DIR = "${config.users.users.neg.home}/.cache/ccache";
@@ -99,16 +100,19 @@ in {
           ANSIBLE_ROLES_PATH = "${config.users.users.neg.home}/.local/share/ansible/roles";
           ANSIBLE_GALAXY_COLLECTIONS_PATHS = "${config.users.users.neg.home}/.local/share/ansible/collections";
         };
-    }
-    (lib.mkIf enableIac (n.mkHomeFiles {
-      ".config/ansible/ansible.cfg".text = ansibleCfg;
-      ".config/ansible/hosts".text = ansibleHosts;
+      }
+      (lib.mkIf enableIac (
+        n.mkHomeFiles {
+          ".config/ansible/ansible.cfg".text = ansibleCfg;
+          ".config/ansible/hosts".text = ansibleHosts;
 
-      # Ensure directories exist via keep files (pseudo-creation)
-      ".local/share/ansible/roles/.keep".text = "";
-      ".local/share/ansible/collections/.keep".text = "";
-      ".cache/ansible/facts/.keep".text = "";
-      ".cache/ansible/ssh/.keep".text = "";
-    }))
-  ]);
+          # Ensure directories exist via keep files (pseudo-creation)
+          ".local/share/ansible/roles/.keep".text = "";
+          ".local/share/ansible/collections/.keep".text = "";
+          ".cache/ansible/facts/.keep".text = "";
+          ".cache/ansible/ssh/.keep".text = "";
+        }
+      ))
+    ]
+  );
 }

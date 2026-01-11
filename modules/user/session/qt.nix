@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.hyprland-qt-support # Qt integration helpers for Hyprland
     pkgs.hyprland-qtutils # Qt extras (hyprland-qt-helper)

@@ -7,9 +7,11 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.roles.workstation;
-in {
+in
+{
   options.roles.workstation.enable = lib.mkEnableOption "Enable workstation role (desktop-first defaults).";
 
   config = lib.mkIf cfg.enable {

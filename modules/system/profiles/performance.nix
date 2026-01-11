@@ -15,8 +15,9 @@
 # WARNING: These options may reduce security and/or stability.
 # Enable only what you need and understand.
 let
-  opts = import (inputs.self + "/lib/opts.nix") {inherit lib;};
-in {
+  opts = import (inputs.self + "/lib/opts.nix") { inherit lib; };
+in
+{
   options.profiles.performance = with opts; {
     enable = mkEnableOption "Performance-oriented kernel/boot tweaks (reduces security; use with care).";
 
@@ -102,11 +103,21 @@ in {
     };
 
     # Transparent Huge Pages policy
-    thpMode = mkOpt (lib.types.nullOr (lib.types.enum ["always" "madvise" "never"])) null {
-      description = "Transparent Huge Pages policy (kernel param transparent_hugepage). Null leaves kernel default.";
-      example = "madvise";
-      defaultText = "kernel default";
-    };
+    thpMode =
+      mkOpt
+        (lib.types.nullOr (
+          lib.types.enum [
+            "always"
+            "madvise"
+            "never"
+          ]
+        ))
+        null
+        {
+          description = "Transparent Huge Pages policy (kernel param transparent_hugepage). Null leaves kernel default.";
+          example = "madvise";
+          defaultText = "kernel default";
+        };
 
     # CPU set for game pinning (used by modules/user/games game-run wrapper)
     gamingCpuSet = mkStrOpt {
@@ -133,7 +144,7 @@ in {
         default = false;
         description = "Enable PREEMPT_RT (CONFIG_PREEMPT_RT). Requires kernel >= 6.12 or RT kernel.";
       };
-      mode = mkEnumOpt ["auto" "in-tree" "rt"] {
+      mode = mkEnumOpt [ "auto" "in-tree" "rt" ] {
         default = "auto";
         description = "How to provide PREEMPT_RT: 'in-tree' toggles CONFIG_PREEMPT_RT in current kernel; 'rt' switches to linuxPackages_rt; 'auto' tries in-tree on >=6.12, else uses RT kernel.";
         example = "auto";

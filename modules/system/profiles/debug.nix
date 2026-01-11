@@ -12,10 +12,12 @@
   config,
   inputs,
   ...
-}: let
-  opts = import (inputs.self + "/lib/opts.nix") {inherit lib;};
-  cfg = config.profiles.debug or {enable = false;};
-in {
+}:
+let
+  opts = import (inputs.self + "/lib/opts.nix") { inherit lib; };
+  cfg = config.profiles.debug or { enable = false; };
+in
+{
   options.profiles.debug = {
     enable = opts.mkEnableOption "Enable debug/profiling helpers (kernel memory allocation profiling, perf data-type tooling).";
 
@@ -63,68 +65,71 @@ in {
 
   # Apply when the global toggle is on OR any sub-feature is explicitly enabled.
   config =
-    lib.mkIf (
-      (cfg.enable or false)
-      || (cfg.memAllocProfiling.compileSupport or false)
-      || (cfg.memAllocProfiling.enable or false)
-      || (cfg.perfDataType.enable or false)
-      || (cfg.perfDataType.enableKernelBtf or false)
-    ) (
-      lib.mkMerge [
-        # Memory allocation profiling (6.10+)
-        (lib.mkIf (cfg.memAllocProfiling.compileSupport or false) {
-          boot.kernelPatches = [
-            {
-              name = "enable-mem-alloc-profiling";
-              patch = null; # config-only change
-              structuredExtraConfig = with lib.kernel;
-                {
-                  MEM_ALLOC_PROFILING = yes;
-                }
-                // (lib.optionalAttrs (cfg.memAllocProfiling.enabledByDefault or false) (
-                  with lib.kernel; {MEM_ALLOC_PROFILING_ENABLED_BY_DEFAULT = yes;}
-                ))
-                // (lib.optionalAttrs (cfg.memAllocProfiling.debugChecks or false) (
-                  with lib.kernel; {MEM_ALLOC_PROFILING_DEBUG = yes;}
-                ));
-            }
-          ];
-        })
-        (lib.mkIf (cfg.memAllocProfiling.enable or false) {
-          # Boot-param to set initial sysctl value
-          boot.kernelParams = let
-            base =
-              if cfg.memAllocProfiling.enable
-              then "sysctl.vm.mem_profiling=1"
-              else "sysctl.vm.mem_profiling=never";
-            suffix =
-              if (cfg.memAllocProfiling.compressed or false)
-              then ",compressed"
-              else "";
-          in [(base + suffix)];
-        })
+    lib.mkIf
+      (
+        (cfg.enable or false)
+        || (cfg.memAllocProfiling.compileSupport or false)
+        || (cfg.memAllocProfiling.enable or false)
+        || (cfg.perfDataType.enable or false)
+        || (cfg.perfDataType.enableKernelBtf or false)
+      )
+      (
+        lib.mkMerge [
+          # Memory allocation profiling (6.10+)
+          (lib.mkIf (cfg.memAllocProfiling.compileSupport or false) {
+            boot.kernelPatches = [
+              {
+                name = "enable-mem-alloc-profiling";
+                patch = null; # config-only change
+                structuredExtraConfig =
+                  with lib.kernel;
+                  {
+                    MEM_ALLOC_PROFILING = yes;
+                  }
+                  // (lib.optionalAttrs (cfg.memAllocProfiling.enabledByDefault or false) (
+                    with lib.kernel; { MEM_ALLOC_PROFILING_ENABLED_BY_DEFAULT = yes; }
+                  ))
+                  // (lib.optionalAttrs (cfg.memAllocProfiling.debugChecks or false) (
+                    with lib.kernel; { MEM_ALLOC_PROFILING_DEBUG = yes; }
+                  ));
+              }
+            ];
+          })
+          (lib.mkIf (cfg.memAllocProfiling.enable or false) {
+            # Boot-param to set initial sysctl value
+            boot.kernelParams =
+              let
+                base =
+                  if cfg.memAllocProfiling.enable then
+                    "sysctl.vm.mem_profiling=1"
+                  else
+                    "sysctl.vm.mem_profiling=never";
+                suffix = if (cfg.memAllocProfiling.compressed or false) then ",compressed" else "";
+              in
+              [ (base + suffix) ];
+          })
 
-        # perf data-type tooling (6.8+)
-        (lib.mkIf (cfg.perfDataType.enable or false) {
-          environment.systemPackages = lib.mkIf (cfg.perfDataType.installTools or false) [
-            pkgs.perf # Linux perf tooling with bpftrace integration
-            pkgs.dwarves # provides pahole for BTF/DWARF work
-          ];
-        })
-        (lib.mkIf (cfg.perfDataType.enableKernelBtf or false) {
-          # Force kernel to be built with BTF info
-          boot.kernelPatches = [
-            {
-              name = "enable-kernel-btf";
-              patch = null;
-              structuredExtraConfig = with lib.kernel; {
-                DEBUG_INFO_BTF = yes;
-              };
-            }
-          ];
-        })
+          # perf data-type tooling (6.8+)
+          (lib.mkIf (cfg.perfDataType.enable or false) {
+            environment.systemPackages = lib.mkIf (cfg.perfDataType.installTools or false) [
+              pkgs.perf # Linux perf tooling with bpftrace integration
+              pkgs.dwarves # provides pahole for BTF/DWARF work
+            ];
+          })
+          (lib.mkIf (cfg.perfDataType.enableKernelBtf or false) {
+            # Force kernel to be built with BTF info
+            boot.kernelPatches = [
+              {
+                name = "enable-kernel-btf";
+                patch = null;
+                structuredExtraConfig = with lib.kernel; {
+                  DEBUG_INFO_BTF = yes;
+                };
+              }
+            ];
+          })
 
-        # Evaluation Noise Policy: avoid warnings during evaluation; document expectations in option descriptions.
-      ]
-    );
+          # Evaluation Noise Policy: avoid warnings during evaluation; document expectations in option descriptions.
+        ]
+      );
 }

@@ -1,3 +1,4 @@
-{...}: {
-  imports = [./autofdo.nix];
+{ ... }:
+{
+  imports = [ ./autofdo.nix ];
 }

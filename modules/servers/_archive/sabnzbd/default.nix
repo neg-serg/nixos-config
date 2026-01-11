@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.sabnzbd;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.sabnzbd = {
     enable = mkEnableOption "SABnzbd Usenet downloader container";
 
@@ -55,15 +62,15 @@ in {
         PUID = "1000";
         PGID = "100";
       };
-      ports = ["${toString cfg.httpPort}:8080"];
+      ports = [ "${toString cfg.httpPort}:8080" ];
       volumes = [
         "${cfg.dataDir}:/config"
         "${cfg.downloadsDir}:/downloads"
       ];
-      extraOptions = ["--name=sabnzbd"];
+      extraOptions = [ "--name=sabnzbd" ];
     };
 
     # Open firewall port for web UI
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

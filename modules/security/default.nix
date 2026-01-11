@@ -3,16 +3,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   mainUser = config.users.main.name or "neg";
-  mainGroup = let
-    g = config.users.main.group or null;
-  in
-    if g == null
-    then mainUser
-    else g;
-in {
-  imports = [./firejail.nix];
+  mainGroup =
+    let
+      g = config.users.main.group or null;
+    in
+    if g == null then mainUser else g;
+in
+{
+  imports = [ ./firejail.nix ];
   services.pcscd.enable = true; # pkcs support
   # Tell p11-kit to load/proxy opensc-pkcs11.so, providing all available slots
   # (PIN1 for authentication/decryption, PIN2 for signing).
@@ -147,30 +148,33 @@ in {
           commands = [
             {
               command = "/run/current-system/sw/bin/systemctl suspend";
-              options = ["NOPASSWD"];
+              options = [ "NOPASSWD" ];
             }
             {
               command = "/run/current-system/sw/bin/reboot";
-              options = ["NOPASSWD"];
+              options = [ "NOPASSWD" ];
             }
             {
               command = "/run/current-system/sw/bin/poweroff";
-              options = ["NOPASSWD"];
+              options = [ "NOPASSWD" ];
             }
             {
               command = "/run/current-system/sw/bin/dmesg";
-              options = ["NOPASSWD"];
+              options = [ "NOPASSWD" ];
             }
             {
               command = "/run/current-system/sw/bin/awg-quick";
-              options = ["NOPASSWD"];
+              options = [ "NOPASSWD" ];
             }
             {
               command = "/run/current-system/sw/bin/nixos-rebuild";
-              options = ["NOPASSWD" "SETENV"];
+              options = [
+                "NOPASSWD"
+                "SETENV"
+              ];
             }
           ];
-          groups = [mainGroup];
+          groups = [ mainGroup ];
         }
       ];
       execWheelOnly = true;

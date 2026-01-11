@@ -1,7 +1,9 @@
-{lib, ...}:
-with lib; let
-  mkBool = desc: default: (lib.mkEnableOption desc) // {inherit default;};
-in {
+{ lib, ... }:
+with lib;
+let
+  mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
+in
+{
   options.features.cli = {
     fastCnf.enable = mkBool "enable fast zsh command-not-found handler powered by nix-index" true;
     broot.enable = mkBool "enable broot file manager and shell integration" false;
@@ -30,9 +32,9 @@ in {
       };
       backupFiles = mkOption {
         type = types.listOf types.str;
-        default = [];
+        default = [ ];
         description = "Relative paths under $HOME that zcli should report as pre-existing backups.";
-        example = [".config/mimeapps.list.backup"];
+        example = [ ".config/mimeapps.list.backup" ];
       };
     };
   };

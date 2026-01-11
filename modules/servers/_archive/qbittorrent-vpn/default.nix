@@ -8,10 +8,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.qbittorrent-vpn;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.qbittorrent-vpn = {
     enable = mkEnableOption "qBittorrent with WireGuard VPN container";
 
@@ -52,7 +59,10 @@ in {
     };
 
     vpnType = mkOption {
-      type = types.enum ["wireguard" "openvpn"];
+      type = types.enum [
+        "wireguard"
+        "openvpn"
+      ];
       default = "wireguard";
       description = "VPN type (wireguard or openvpn)";
     };
@@ -85,10 +95,7 @@ in {
         TZ = cfg.timezone;
         PUID = "1000";
         PGID = "100";
-        VPN_ENABLED =
-          if cfg.vpnEnabled
-          then "yes"
-          else "no";
+        VPN_ENABLED = if cfg.vpnEnabled then "yes" else "no";
         VPN_TYPE = cfg.vpnType;
         WEBUI_PORT_ENV = toString cfg.httpPort;
         INCOMING_PORT_ENV = toString cfg.incomingPort;
@@ -112,8 +119,11 @@ in {
 
     # Open firewall ports
     networking.firewall = {
-      allowedTCPPorts = [cfg.httpPort cfg.incomingPort];
-      allowedUDPPorts = [cfg.incomingPort];
+      allowedTCPPorts = [
+        cfg.httpPort
+        cfg.incomingPort
+      ];
+      allowedUDPPorts = [ cfg.incomingPort ];
     };
   };
 }

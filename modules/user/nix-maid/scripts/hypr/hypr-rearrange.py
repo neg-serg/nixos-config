@@ -137,7 +137,7 @@ def parse_config_file(path, visited=None):
             if first_comma_idx == -1:
                 continue
 
-            condition_part = rule_def[first_comma_idx + 1:].strip()
+            condition_part = rule_def[first_comma_idx + 1 :].strip()
 
             # Normalize pattern/type
             rule_type = "class"

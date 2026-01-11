@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.ddccontrol # ddc control
     pkgs.ddcutil # rule monitor params

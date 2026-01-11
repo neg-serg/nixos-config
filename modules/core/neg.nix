@@ -4,7 +4,8 @@
   neg,
   # impurity ? null, # Deprecated
   ...
-}: {
+}:
+{
   options.neg = {
     repoRoot = lib.mkOption {
       type = lib.types.str;

@@ -8,11 +8,13 @@
   pkgs,
   inputs,
   ...
-}: let
+}:
+let
   inherit (lib) mkIf mkEnableOption;
-  opts = import (inputs.self + "/lib/opts.nix") {inherit lib;};
+  opts = import (inputs.self + "/lib/opts.nix") { inherit lib; };
   cfg = config.system.swapfile;
-in {
+in
+{
   options.system.swapfile = with opts; {
     enable = mkEnableOption "Create the swap file if missing before swap.target.";
     path = mkStrOpt {
@@ -44,10 +46,10 @@ in {
         # Avoid implicit After=basic.target and friends which cause
         # an ordering cycle with Before=swap.target during sysinit.
         DefaultDependencies = false;
-        RequiresMountsFor = [cfg.path];
+        RequiresMountsFor = [ cfg.path ];
       };
-      before = ["swap.target"]; # must run before any swap units
-      wantedBy = ["swap.target"]; # run automatically during boot
+      before = [ "swap.target" ]; # must run before any swap units
+      wantedBy = [ "swap.target" ]; # run automatically during boot
       script = ''
         set -euo pipefail
         P=${lib.escapeShellArg cfg.path}

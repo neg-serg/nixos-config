@@ -3,10 +3,11 @@
   pkgs,
   config,
   ...
-}: {
+}:
+{
   environment = {
     wordlist.enable = true; # to make "look" utility work
-    shells = [pkgs.zsh]; # Z shell as allowed system shell
+    shells = [ pkgs.zsh ]; # Z shell as allowed system shell
     localBinInPath = true;
 
     # This is using a rec (recursive) expression to set and access XDG_BIN_HOME within the expression
@@ -36,46 +37,51 @@
       ZDOTDIR = "$HOME/.config/zsh";
     };
 
-    extraInit = let
-      user = config.users.main.name or "neg"; # Load variables from nix-maid
-      # Avoid evaluation cycles by not dereferencing users.users.<name>.home here
-      homedir = "/home/${user}";
-    in ''
-      if [ "$(id -un)" = "${user}" ]; then
-        if [ -f "${homedir}/.local/state/nix/profile/etc/profile.d/session-vars.sh" ]; then
-          . "${homedir}/.local/state/nix/profile/etc/profile.d/session-vars.sh"
+    extraInit =
+      let
+        user = config.users.main.name or "neg"; # Load variables from nix-maid
+        # Avoid evaluation cycles by not dereferencing users.users.<name>.home here
+        homedir = "/home/${user}";
+      in
+      ''
+        if [ "$(id -un)" = "${user}" ]; then
+          if [ -f "${homedir}/.local/state/nix/profile/etc/profile.d/session-vars.sh" ]; then
+            . "${homedir}/.local/state/nix/profile/etc/profile.d/session-vars.sh"
+          fi
         fi
-      fi
-    '';
-
-    variables = let
-      makePluginPath = format:
-        (lib.makeSearchPath format [
-          "/run/current-system/sw/lib"
-          "/etc/profiles/per-user/$USER/lib"
-          "$HOME/.local/state/nix/profile/lib"
-        ])
-        + ":$HOME/.${format}";
-    in {
-      # Encourage Wayland backends where supported
-      QT_QPA_PLATFORM = "wayland;xcb";
-      SDL_VIDEODRIVER = "wayland";
-      ASPELL_CONF = ''
-        per-conf $XDG_CONFIG_HOME/aspell/aspell.conf;
-        personal $XDG_CONFIG_HOME/aspell/en_US.pws;
-        repl $XDG_CONFIG_HOME/aspell/en.prepl;
       '';
-      DSSI_PATH = makePluginPath "dssi";
-      GTK_USE_PORTAL = 1;
-      HISTFILE = "$XDG_DATA_HOME/bash/history";
-      INPUTRC = "$XDG_CONFIG_HOME/readline/inputrc";
-      LADSPA_PATH = makePluginPath "ladspa";
-      LESSHISTFILE = "$XDG_CACHE_HOME/lesshst";
-      LV2_PATH = makePluginPath "lv2";
-      LXVST_PATH = makePluginPath "lxvst";
-      VST3_PATH = makePluginPath "vst3";
-      VST_PATH = makePluginPath "vst";
-      WGETRC = "$XDG_CONFIG_HOME/wgetrc";
-    };
+
+    variables =
+      let
+        makePluginPath =
+          format:
+          (lib.makeSearchPath format [
+            "/run/current-system/sw/lib"
+            "/etc/profiles/per-user/$USER/lib"
+            "$HOME/.local/state/nix/profile/lib"
+          ])
+          + ":$HOME/.${format}";
+      in
+      {
+        # Encourage Wayland backends where supported
+        QT_QPA_PLATFORM = "wayland;xcb";
+        SDL_VIDEODRIVER = "wayland";
+        ASPELL_CONF = ''
+          per-conf $XDG_CONFIG_HOME/aspell/aspell.conf;
+          personal $XDG_CONFIG_HOME/aspell/en_US.pws;
+          repl $XDG_CONFIG_HOME/aspell/en.prepl;
+        '';
+        DSSI_PATH = makePluginPath "dssi";
+        GTK_USE_PORTAL = 1;
+        HISTFILE = "$XDG_DATA_HOME/bash/history";
+        INPUTRC = "$XDG_CONFIG_HOME/readline/inputrc";
+        LADSPA_PATH = makePluginPath "ladspa";
+        LESSHISTFILE = "$XDG_CACHE_HOME/lesshst";
+        LV2_PATH = makePluginPath "lv2";
+        LXVST_PATH = makePluginPath "lxvst";
+        VST3_PATH = makePluginPath "vst3";
+        VST_PATH = makePluginPath "vst";
+        WGETRC = "$XDG_CONFIG_HOME/wgetrc";
+      };
   };
 }

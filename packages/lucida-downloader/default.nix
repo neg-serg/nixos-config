@@ -18,14 +18,14 @@ rustPlatform.buildRustPackage rec {
 
   cargoHash = "sha256-ADo0AuMsvd86ytlVStBXPJ9vFG/JeSm2kDMGM5VCqzA=";
 
-  nativeBuildInputs = [pkg-config];
-  buildInputs = [openssl];
+  nativeBuildInputs = [ pkg-config ];
+  buildInputs = [ openssl ];
 
   meta = {
     description = "A multithreaded downloader for lucida.to";
     homepage = "https://github.com/jelni/lucida-downloader";
     license = lib.licenses.gpl3Only;
     mainProgram = "lucida";
-    maintainers = [];
+    maintainers = [ ];
   };
 }

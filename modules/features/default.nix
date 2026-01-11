@@ -3,7 +3,8 @@
   config,
   ...
 }:
-with lib; let
+with lib;
+let
   defaults = {
     profile = "full";
     devSpeed.enable = false;
@@ -48,8 +49,9 @@ with lib; let
       winapps.enable = false;
     };
   };
-  cfg = lib.recursiveUpdate defaults (config.features or {});
-in {
+  cfg = lib.recursiveUpdate defaults (config.features or { });
+in
+{
   imports = [
     ./core.nix
     ./gui.nix
@@ -142,7 +144,7 @@ in {
       };
     })
     # If parent feature is disabled, default child toggles to false to avoid contradictions
-    (mkIf (! cfg.web.enable) {
+    (mkIf (!cfg.web.enable) {
       # Parent off must force-disable children to avoid priority conflicts
       features.web = {
         tools.enable = mkForce false;
@@ -156,7 +158,7 @@ in {
       };
     })
     # When a parent feature is disabled, force-disable children to avoid priority conflicts
-    (mkIf (! cfg.dev.enable) {
+    (mkIf (!cfg.dev.enable) {
       features = {
         dev = {
           ai.enable = mkForce false;
@@ -165,7 +167,7 @@ in {
         };
       };
     })
-    (mkIf (! cfg.dev.haskell.enable) {
+    (mkIf (!cfg.dev.haskell.enable) {
       # When Haskell tooling is disabled, proactively exclude common Haskell tool pnames
       # from curated package lists that honor features.excludePkgs via config.lib.neg.pkgsList.
       features.excludePkgs = mkAfter [
@@ -180,7 +182,7 @@ in {
         "ghcid"
       ];
     })
-    (mkIf (! cfg.dev.rust.enable) {
+    (mkIf (!cfg.dev.rust.enable) {
       # When Rust tooling is disabled, exclude common Rust tool pnames
       features.excludePkgs = mkAfter [
         "rustup"
@@ -191,7 +193,7 @@ in {
         "rustfmt"
       ];
     })
-    (mkIf (! cfg.dev.cpp.enable) {
+    (mkIf (!cfg.dev.cpp.enable) {
       # When C/C++ tooling is disabled, exclude typical C/C++ tool pnames
       features.excludePkgs = mkAfter [
         "gcc"
@@ -204,7 +206,7 @@ in {
         "lldb"
       ];
     })
-    (mkIf (! cfg.gui.enable) {
+    (mkIf (!cfg.gui.enable) {
       features = {
         gui = {
           qt.enable = mkForce false;
@@ -216,57 +218,66 @@ in {
         };
       };
     })
-    (mkIf (! cfg.mail.enable) {
+    (mkIf (!cfg.mail.enable) {
       features.mail.vdirsyncer.enable = mkForce false;
     })
-    (mkIf (! cfg.hack.enable) {
-      features.hack = {};
+    (mkIf (!cfg.hack.enable) {
+      features.hack = { };
     })
     # Consistency assertions for nested flags
     {
       assertions = [
         {
-          assertion = cfg.gui.enable || (! cfg.gui.qt.enable);
+          assertion = cfg.gui.enable || (!cfg.gui.qt.enable);
           message = "features.gui.qt.enable requires features.gui.enable = true";
         }
         {
-          assertion = cfg.gui.enable || (! cfg.gui.hy3.enable);
+          assertion = cfg.gui.enable || (!cfg.gui.hy3.enable);
           message = "features.gui.hy3.enable requires features.gui.enable = true";
         }
         {
-          assertion = cfg.gui.enable || (! cfg.gui.quickshell.enable);
+          assertion = cfg.gui.enable || (!cfg.gui.quickshell.enable);
           message = "features.gui.quickshell.enable requires features.gui.enable = true";
         }
         {
-          assertion = cfg.gui.enable || (! cfg.gui.hyprexpo.enable);
+          assertion = cfg.gui.enable || (!cfg.gui.hyprexpo.enable);
           message = "features.gui.hyprexpo.enable requires features.gui.enable = true";
         }
         {
-          assertion = cfg.gui.enable || (! cfg.gui.walker.enable);
+          assertion = cfg.gui.enable || (!cfg.gui.walker.enable);
           message = "features.gui.walker.enable requires features.gui.enable = true";
         }
         {
-          assertion = cfg.web.enable || (! cfg.web.tools.enable && ! cfg.web.floorp.enable && ! cfg.web.yandex.enable && ! cfg.web.firefox.enable && ! cfg.web.librewolf.enable && ! cfg.web.nyxt.enable);
+          assertion =
+            cfg.web.enable
+            || (
+              !cfg.web.tools.enable
+              && !cfg.web.floorp.enable
+              && !cfg.web.yandex.enable
+              && !cfg.web.firefox.enable
+              && !cfg.web.librewolf.enable
+              && !cfg.web.nyxt.enable
+            );
           message = "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)";
         }
         {
-          assertion = ! (cfg.web.firefox.enable && cfg.web.librewolf.enable);
+          assertion = !(cfg.web.firefox.enable && cfg.web.librewolf.enable);
           message = "Only one of features.web.firefox.enable or features.web.librewolf.enable can be true";
         }
         {
-          assertion = cfg.dev.enable || (! cfg.dev.ai.enable);
+          assertion = cfg.dev.enable || (!cfg.dev.ai.enable);
           message = "features.dev.ai.enable requires features.dev.enable = true";
         }
         {
-          assertion = cfg.dev.ai.enable || (! cfg.dev.ai.antigravity.enable);
+          assertion = cfg.dev.ai.enable || (!cfg.dev.ai.antigravity.enable);
           message = "features.dev.ai.antigravity.enable requires features.dev.ai.enable = true";
         }
         {
-          assertion = cfg.gui.enable || (! cfg.apps.obsidian.autostart.enable);
+          assertion = cfg.gui.enable || (!cfg.apps.obsidian.autostart.enable);
           message = "features.apps.obsidian.autostart.enable requires features.gui.enable = true";
         }
         {
-          assertion = cfg.gui.enable || (! cfg.apps.winapps.enable);
+          assertion = cfg.gui.enable || (!cfg.apps.winapps.enable);
           message = "features.apps.winapps.enable requires features.gui.enable = true";
         }
       ];

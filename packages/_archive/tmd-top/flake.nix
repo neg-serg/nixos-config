@@ -7,13 +7,15 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = {
-    nixpkgs,
-    flake-utils,
-  }:
+  outputs =
+    {
+      nixpkgs,
+      flake-utils,
+    }:
     flake-utils.lib.eachDefaultSystem (
-      system: let
-        pkgs = import nixpkgs {inherit system;};
+      system:
+      let
+        pkgs = import nixpkgs { inherit system; };
         python = pkgs.python3; # use default python3 for this channel
         pyPkgs = python.pkgs;
 
@@ -79,7 +81,8 @@
             platforms = pkgs.lib.platforms.linux;
           };
         };
-      in {
+      in
+      {
         packages.default = tmd-top;
 
         apps.default = {

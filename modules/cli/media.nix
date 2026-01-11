@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.asciinema-agg # render asciinema casts to GIF/APNG
     pkgs.chafa # terminal graphics renderer

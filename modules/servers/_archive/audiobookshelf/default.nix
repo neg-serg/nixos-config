@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.audiobookshelf;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.audiobookshelf = {
     enable = mkEnableOption "Audiobookshelf audiobook and podcast server";
 
@@ -64,7 +71,7 @@ in {
         "${cfg.dataDir}/metadata:/metadata"
         "${cfg.listenDir}:/listen"
       ];
-      extraOptions = ["--name=audiobookshelf"];
+      extraOptions = [ "--name=audiobookshelf" ];
     };
 
     # Reverse proxy configuration
@@ -95,6 +102,6 @@ in {
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

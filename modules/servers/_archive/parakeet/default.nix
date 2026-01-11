@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.parakeet;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.parakeet = {
     enable = mkEnableOption "Parakeet (Wyoming-ONNX-ASR) speech-to-text engine container";
 
@@ -50,9 +57,10 @@ in {
       # Disabled by default - start manually with: sudo podman start parakeet
       autoStart = false;
       image =
-        if cfg.useGpu
-        then "ghcr.io/tboby/wyoming-onnx-asr-gpu:latest"
-        else "ghcr.io/tboby/wyoming-onnx-asr:latest";
+        if cfg.useGpu then
+          "ghcr.io/tboby/wyoming-onnx-asr-gpu:latest"
+        else
+          "ghcr.io/tboby/wyoming-onnx-asr:latest";
       environment = {
         TZ = cfg.timezone;
       };
@@ -62,12 +70,10 @@ in {
       volumes = [
         "${cfg.dataDir}/data:/data"
       ];
-      extraOptions =
-        ["--name=parakeet"]
-        ++ lib.optional cfg.useGpu "--device=nvidia.com/gpu=all";
+      extraOptions = [ "--name=parakeet" ] ++ lib.optional cfg.useGpu "--device=nvidia.com/gpu=all";
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }
