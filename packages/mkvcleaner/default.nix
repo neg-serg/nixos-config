@@ -16,13 +16,16 @@ buildGoModule rec {
 
   vendorHash = "sha256-UO6qcgd39PRXSnfE8kTuyug8o7VRhnyfTjLGVWGYxfc=";
 
-  ldflags = ["-s" "-w"];
+  ldflags = [
+    "-s"
+    "-w"
+  ];
 
   meta = with lib; {
     description = "Cleans unwanted tracks from video files";
     homepage = "https://github.com/etu/mkvcleaner";
     license = licenses.gpl3Only;
-    maintainers = with maintainers; [];
+    maintainers = with maintainers; [ ];
     mainProgram = "mkvcleaner";
   };
 }

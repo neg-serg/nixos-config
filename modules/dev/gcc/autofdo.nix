@@ -3,9 +3,11 @@
   pkgs,
   config,
   ...
-}: let
+}:
+let
   cfg = config.dev.gcc.autofdo;
-in {
+in
+{
   options.dev.gcc.autofdo = {
     enable = lib.mkEnableOption "Install AutoFDO tooling (sample-based PGO helpers).";
 
@@ -33,38 +35,45 @@ in {
   };
 
   config = lib.mkMerge [
-    (lib.mkIf cfg.enable (let
-      hasAutofdo = pkgs ? autofdo;
-    in {
-      # Install AutoFDO tools only if available in the pinned nixpkgs.
-      # If unavailable, silently skip to keep evaluation noise-free.
-      environment.systemPackages = lib.optionals hasAutofdo [pkgs.autofdo];
-    }))
+    (lib.mkIf cfg.enable (
+      let
+        hasAutofdo = pkgs ? autofdo;
+      in
+      {
+        # Install AutoFDO tools only if available in the pinned nixpkgs.
+        # If unavailable, silently skip to keep evaluation noise-free.
+        environment.systemPackages = lib.optionals hasAutofdo [ pkgs.autofdo ];
+      }
+    ))
 
     (lib.mkIf (cfg.gccProfile != null) {
-      environment.systemPackages = let
-        gccFlags = "-fauto-profile=${toString cfg.gccProfile}";
-      in [
-        (pkgs.writeShellScriptBin "gcc-afdo" ''
-          exec gcc ${gccFlags} "$@"
-        '')
-        (pkgs.writeShellScriptBin "g++-afdo" ''
-          exec g++ ${gccFlags} "$@"
-        '')
-      ];
+      environment.systemPackages =
+        let
+          gccFlags = "-fauto-profile=${toString cfg.gccProfile}";
+        in
+        [
+          (pkgs.writeShellScriptBin "gcc-afdo" ''
+            exec gcc ${gccFlags} "$@"
+          '')
+          (pkgs.writeShellScriptBin "g++-afdo" ''
+            exec g++ ${gccFlags} "$@"
+          '')
+        ];
     })
 
     (lib.mkIf (cfg.clangProfile != null) {
-      environment.systemPackages = let
-        clangFlags = "-fprofile-sample-use=${toString cfg.clangProfile}";
-      in [
-        (pkgs.writeShellScriptBin "clang-afdo" ''
-          exec clang ${clangFlags} "$@"
-        '')
-        (pkgs.writeShellScriptBin "clang++-afdo" ''
-          exec clang++ ${clangFlags} "$@"
-        '')
-      ];
+      environment.systemPackages =
+        let
+          clangFlags = "-fprofile-sample-use=${toString cfg.clangProfile}";
+        in
+        [
+          (pkgs.writeShellScriptBin "clang-afdo" ''
+            exec clang ${clangFlags} "$@"
+          '')
+          (pkgs.writeShellScriptBin "clang++-afdo" ''
+            exec clang++ ${clangFlags} "$@"
+          '')
+        ];
     })
   ];
 }

@@ -5,12 +5,13 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   cfg = config.features.dev.emacs;
   emacsPackage = pkgs.emacs29-pgtk;
-  emacsWithPackages = emacsPackage.pkgs.withPackages (epkgs:
-    with epkgs; [
+  emacsWithPackages = emacsPackage.pkgs.withPackages (
+    epkgs: with epkgs; [
       # Core infrastructure
       use-package # declarative package configuration
       general # keybinding framework
@@ -63,30 +64,34 @@
       undo-tree # visual undo history
       wgrep # writable grep buffers
       ripgrep # fast search integration
-    ]);
+    ]
+  );
 
   filesRoot = ../../../../files;
-in {
-  config = lib.mkIf (cfg.enable or false) (lib.mkMerge [
-    {
-      environment.systemPackages = [emacsWithPackages]; # Emacs with a pre-configured set of packages
+in
+{
+  config = lib.mkIf (cfg.enable or false) (
+    lib.mkMerge [
+      {
+        environment.systemPackages = [ emacsWithPackages ]; # Emacs with a pre-configured set of packages
 
-      systemd.user.services.emacs = {
-        description = "Emacs text editor";
-        serviceConfig = {
-          Type = "notify";
-          ExecStart = "${lib.getExe' emacsWithPackages "emacs"} --fg-daemon";
-          ExecStop = "${lib.getExe' emacsWithPackages "emacsclient"} --eval '(kill-emacs)'";
-          Restart = "on-failure";
+        systemd.user.services.emacs = {
+          description = "Emacs text editor";
+          serviceConfig = {
+            Type = "notify";
+            ExecStart = "${lib.getExe' emacsWithPackages "emacs"} --fg-daemon";
+            ExecStop = "${lib.getExe' emacsWithPackages "emacsclient"} --eval '(kill-emacs)'";
+            Restart = "on-failure";
+          };
+          wantedBy = [ "default.target" ];
         };
-        wantedBy = ["default.target"];
-      };
-    }
-    (n.mkHomeFiles {
-      ".config/emacs/init.el".source = "${filesRoot}/emacs/init.el";
-      ".config/emacs/early-init.el".source = "${filesRoot}/emacs/early-init.el";
-      ".config/emacs/config.org".source = "${filesRoot}/emacs/config.org";
-      ".config/emacs/icons".source = "${filesRoot}/emacs/icons";
-    })
-  ]);
+      }
+      (n.mkHomeFiles {
+        ".config/emacs/init.el".source = "${filesRoot}/emacs/init.el";
+        ".config/emacs/early-init.el".source = "${filesRoot}/emacs/early-init.el";
+        ".config/emacs/config.org".source = "${filesRoot}/emacs/config.org";
+        ".config/emacs/icons".source = "${filesRoot}/emacs/icons";
+      })
+    ]
+  );
 }

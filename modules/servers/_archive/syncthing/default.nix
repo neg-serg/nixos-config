@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.syncthing;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.syncthing = {
     enable = mkEnableOption "Syncthing file synchronization container";
 
@@ -22,8 +29,11 @@ in {
 
     syncDirs = mkOption {
       type = types.listOf types.str;
-      default = [];
-      example = ["/home/user/Documents:/documents" "/home/user/Photos:/photos"];
+      default = [ ];
+      example = [
+        "/home/user/Documents:/documents"
+        "/home/user/Photos:/photos"
+      ];
       description = "List of volume mounts in format 'host_path:container_path'";
     };
 
@@ -67,7 +77,7 @@ in {
         "22000:22000/udp" # QUIC file transfers
         "21027:21027/udp" # Discovery broadcasts
       ];
-      volumes = ["${cfg.dataDir}:/config"] ++ cfg.syncDirs;
+      volumes = [ "${cfg.dataDir}:/config" ] ++ cfg.syncDirs;
       extraOptions = [
         "--hostname=${cfg.hostname}-syncthing"
         "--name=syncthing"
@@ -76,8 +86,14 @@ in {
 
     # Open firewall ports for Syncthing discovery and transfer
     networking.firewall = {
-      allowedTCPPorts = [cfg.httpPort 22000];
-      allowedUDPPorts = [22000 21027];
+      allowedTCPPorts = [
+        cfg.httpPort
+        22000
+      ];
+      allowedUDPPorts = [
+        22000
+        21027
+      ];
     };
   };
 }

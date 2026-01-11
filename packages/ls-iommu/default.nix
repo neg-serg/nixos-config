@@ -18,9 +18,9 @@ buildGoModule rec {
 
   vendorHash = "sha256-LwvQj4UcbNk4kG6rE72/NwxQtXr37koC1/NFz7V/Sek=";
 
-  subPackages = ["cmd"];
+  subPackages = [ "cmd" ];
 
-  nativeBuildInputs = [makeWrapper];
+  nativeBuildInputs = [ makeWrapper ];
 
   ldflags = [
     "-s"
@@ -39,7 +39,7 @@ buildGoModule rec {
     description = "List devices and their IOMMU groups";
     homepage = "https://github.com/HikariKnight/ls-iommu";
     license = licenses.mit;
-    maintainers = [];
+    maintainers = [ ];
     mainProgram = "ls-iommu";
     platforms = platforms.linux;
   };

@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     # Backup tools
     pkgs.borgbackup # deduplicating backup utility

@@ -1,3 +1,4 @@
-{...}: {
-  imports = [./tws.nix];
+{ ... }:
+{
+  imports = [ ./tws.nix ];
 }

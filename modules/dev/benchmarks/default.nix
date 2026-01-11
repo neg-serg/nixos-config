@@ -3,7 +3,8 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   devEnabled = config.features.dev.enable or false;
   packages = [
     pkgs.memtester # user-space memory stress test for bad DIMMs
@@ -12,7 +13,8 @@
     pkgs.vrrtest # validate VRR timings on Wayland
     pkgs.wrk2 # latency-focused HTTP benchmark
   ];
-in {
+in
+{
   config = lib.mkIf devEnabled {
     environment.systemPackages = lib.mkAfter packages;
   };

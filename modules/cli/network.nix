@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     # Network diagnostics
     pkgs.doggo # DNS client for humans

@@ -7,9 +7,11 @@
   lib,
   config,
   ...
-}: let
-  cfg = config.profiles.network.wifi or {enable = false;};
-in {
+}:
+let
+  cfg = config.profiles.network.wifi or { enable = false; };
+in
+{
   options.profiles.network.wifi.enable = lib.mkEnableOption ''
     Enable Wi-Fi management (starts iwd). Use this on hosts that need wireless networking;
     the base network module keeps iwd disabled elsewhere to avoid unnecessary units.

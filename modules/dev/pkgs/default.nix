@@ -2,16 +2,18 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   # Optional packages only available on some nixpkgs revisions.
   optionalHaskellTools =
-    lib.optionals (pkgs ? fourmolu) [pkgs.fourmolu] # haskell formatter
-    ++ lib.optionals (pkgs ? hindent) [pkgs.hindent]; # alternative haskell formatter
-  optionalIaCTools = lib.optionals (pkgs ? aiac) [pkgs.aiac]; # AI infrastructure as code generator
+    lib.optionals (pkgs ? fourmolu) [ pkgs.fourmolu ] # haskell formatter
+    ++ lib.optionals (pkgs ? hindent) [ pkgs.hindent ]; # alternative haskell formatter
+  optionalIaCTools = lib.optionals (pkgs ? aiac) [ pkgs.aiac ]; # AI infrastructure as code generator
   optionalRustDebugAdapters = lib.optionals (pkgs ? codelldb) [
     pkgs.codelldb # LLDB-based debug adapter for Rust (DAP)
   ];
-in {
+in
+{
   environment.systemPackages = lib.unique (
     [
       # Former base system dev helpers

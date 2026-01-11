@@ -3,9 +3,10 @@
   config,
   pkgs,
   ...
-}: let
-  hackLib = import ./lib.nix {inherit lib config;};
-  flags = config.features.dev.hack.forensics or {};
+}:
+let
+  hackLib = import ./lib.nix { inherit lib config; };
+  flags = config.features.dev.hack.forensics or { };
   groups = {
     fs = [
       pkgs.ddrescue # block-level data recovery tool
@@ -31,7 +32,8 @@
     ];
   };
   packages = hackLib.filterPackages (hackLib.mkGroupPackages flags groups);
-in {
+in
+{
   config = lib.mkIf hackLib.enabled {
     environment.systemPackages = lib.mkAfter packages;
   };

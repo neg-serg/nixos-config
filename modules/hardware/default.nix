@@ -2,50 +2,54 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.hardware.storage.autoMount;
-  valveIndexModule = {
-    lib,
-    pkgs,
-    config,
-    ...
-  }: let
-    vrCfg = config.hardware.vr.valveIndex;
-  in {
-    options.hardware.vr.valveIndex.enable =
-      lib.mkEnableOption "Enable the Valve Index VR stack (OpenXR/SteamVR helpers, udev rules).";
+  valveIndexModule =
+    {
+      lib,
+      pkgs,
+      config,
+      ...
+    }:
+    let
+      vrCfg = config.hardware.vr.valveIndex;
+    in
+    {
+      options.hardware.vr.valveIndex.enable =
+        lib.mkEnableOption "Enable the Valve Index VR stack (OpenXR/SteamVR helpers, udev rules).";
 
-    config = lib.mkIf vrCfg.enable {
-      assertions = [
-        {
-          assertion = config.hardware.graphics.enable or false;
-          message = "Valve Index VR requires hardware.graphics.enable = true.";
-        }
-      ];
-
-      hardware.steam-hardware.enable = lib.mkDefault true;
-
-      # Provide udev rules for XR devices (generic XR rules)
-      services.udev.packages = lib.mkAfter [pkgs.xr-hardware];
-
-      environment = {
-        systemPackages = lib.mkAfter [
-          pkgs.opencomposite # bridge OpenXR to OpenVR applications
-          pkgs.openvr # OpenVR API library and headers
-          pkgs.openxr-loader # OpenXR loader library
-          pkgs.steam # Steam gaming platform
-          pkgs.steamcmd # Steam command-line client
-          pkgs.vulkan-tools # Vulkan diagnostic and testing tools
-          pkgs.vulkan-validation-layers # Vulkan validation layers for development
-          pkgs.wlx-overlay-s # Wayland overlay for OpenXR/OpenVR
+      config = lib.mkIf vrCfg.enable {
+        assertions = [
+          {
+            assertion = config.hardware.graphics.enable or false;
+            message = "Valve Index VR requires hardware.graphics.enable = true.";
+          }
         ];
 
-        # No default OpenXR runtime enforced; user/SteamVR may set it explicitly if desired.
-        sessionVariables = {};
+        hardware.steam-hardware.enable = lib.mkDefault true;
+
+        # Provide udev rules for XR devices (generic XR rules)
+        services.udev.packages = lib.mkAfter [ pkgs.xr-hardware ];
+
+        environment = {
+          systemPackages = lib.mkAfter [
+            pkgs.opencomposite # bridge OpenXR to OpenVR applications
+            pkgs.openvr # OpenVR API library and headers
+            pkgs.openxr-loader # OpenXR loader library
+            pkgs.steam # Steam gaming platform
+            pkgs.steamcmd # Steam command-line client
+            pkgs.vulkan-tools # Vulkan diagnostic and testing tools
+            pkgs.vulkan-validation-layers # Vulkan validation layers for development
+            pkgs.wlx-overlay-s # Wayland overlay for OpenXR/OpenVR
+          ];
+
+          # No default OpenXR runtime enforced; user/SteamVR may set it explicitly if desired.
+          sessionVariables = { };
+        };
+        # No extra user services; SteamVR runtime is expected to be used directly.
       };
-      # No extra user services; SteamVR runtime is expected to be used directly.
     };
-  };
   imports = [
     ./audio
     ./cpu
@@ -63,7 +67,8 @@
     ./usb-automount.nix
     valveIndexModule
   ];
-in {
+in
+{
   inherit imports;
   options.hardware.storage.autoMount.enable = lib.mkOption {
     type = lib.types.nullOr lib.types.bool;
@@ -77,10 +82,7 @@ in {
       udisks2.enable = true;
       upower.enable = true;
       # Default to enabled, but allow per-host override via hardware.storage.autoMount.enable
-      devmon.enable =
-        if (cfg.enable or null) == null
-        then lib.mkDefault true
-        else cfg.enable;
+      devmon.enable = if (cfg.enable or null) == null then lib.mkDefault true else cfg.enable;
       fwupd.enable = true;
       # Trim SSDs weekly (non-destructive), better than mount-time discard for sustained perf
       fstrim.enable = lib.mkDefault true;
@@ -91,7 +93,9 @@ in {
       bluetooth = {
         enable = true; # disable bluetooth
         powerOnBoot = false;
-        settings = {General.Enable = "Source,Sink,Media,Socket";};
+        settings = {
+          General.Enable = "Source,Sink,Media,Socket";
+        };
       };
       cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
       enableAllFirmware = true; # Enable all the firmware

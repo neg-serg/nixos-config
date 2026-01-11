@@ -1,4 +1,6 @@
-{pkgs ? import <nixpkgs> {}}:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 pkgs.mkShell {
-  packages = [pkgs.qt6.qtdeclarative];
+  packages = [ pkgs.qt6.qtdeclarative ];
 }

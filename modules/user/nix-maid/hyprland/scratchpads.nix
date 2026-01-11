@@ -2,7 +2,8 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   pyprlandConfig = {
     pyprland.plugins = [
       "fetch_client_menu"
@@ -72,7 +73,8 @@
     };
   };
 
-  tomlFormat = pkgs.formats.toml {};
-in {
+  tomlFormat = pkgs.formats.toml { };
+in
+{
   pyprlandToml = tomlFormat.generate "pyprland.toml" pyprlandConfig;
 }

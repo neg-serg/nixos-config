@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.gitea;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.gitea = {
     enable = mkEnableOption "Gitea self-hosted Git service container";
 
@@ -81,11 +88,14 @@ in {
         "${cfg.dataDir}:/data"
         "/etc/localtime:/etc/localtime:ro"
       ];
-      extraOptions = ["--name=gitea"];
+      extraOptions = [ "--name=gitea" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort cfg.sshPort];
+    networking.firewall.allowedTCPPorts = [
+      cfg.httpPort
+      cfg.sshPort
+    ];
 
     # Optional: Caddy reverse proxy with automatic HTTPS
     services.caddy = mkIf cfg.useCaddy {

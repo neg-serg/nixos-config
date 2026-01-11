@@ -1,5 +1,6 @@
-{...}: {
-  imports = [./pkgs.nix];
+{ ... }:
+{
+  imports = [ ./pkgs.nix ];
   services.flatpak = {
     enable = true;
     overrides = {

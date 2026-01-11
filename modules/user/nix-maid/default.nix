@@ -3,7 +3,8 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   imports = [
     inputs.nix-maid.nixosModules.default # user configuration framework (nix-maid)
     # ../../core/home-manager-lite.nix # Native replacement (fast eval)
@@ -83,12 +84,12 @@
     ./sys/pipewire.nix
   ];
 
-  users.users.neg.maid = {};
+  users.users.neg.maid = { };
 
   # Activation script to force restart maid-activation for 'neg'.
   # This ensures user configs are reapplied on every switch, working around
   # NixOS's behavior of not automatically restarting user services reliably.
-  system.activationScripts.maidForceRestart = lib.stringAfter ["users"] ''
+  system.activationScripts.maidForceRestart = lib.stringAfter [ "users" ] ''
     if [ -e /run/user/1000 ]; then
       echo "Restarting maid-activation for user 1000..."
 

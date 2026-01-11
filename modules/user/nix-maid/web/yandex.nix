@@ -2,48 +2,46 @@
   pkgs,
   lib,
   config,
-  inputs ? {},
+  inputs ? { },
   yandexBrowserProvider ? null,
   ...
-}: let
+}:
+let
   webEnabled = config.features.web.enable or false;
   yandexEnabled = config.features.web.yandex.enable or false;
   enabled = webEnabled && yandexEnabled;
 
   yandexInput =
-    if yandexBrowserProvider != null
-    then yandexBrowserProvider pkgs
-    else if inputs ? "yandex-browser"
-    then inputs."yandex-browser".packages.${pkgs.stdenv.hostPlatform.system}
-    else null;
-  yandexPkgRaw =
-    if yandexInput != null
-    then yandexInput.yandex-browser-stable
-    else null;
+    if yandexBrowserProvider != null then
+      yandexBrowserProvider pkgs
+    else if inputs ? "yandex-browser" then
+      inputs."yandex-browser".packages.${pkgs.stdenv.hostPlatform.system}
+    else
+      null;
+  yandexPkgRaw = if yandexInput != null then yandexInput.yandex-browser-stable else null;
   yandexPkg =
-    if yandexPkgRaw != null
-    then
+    if yandexPkgRaw != null then
       yandexPkgRaw.overrideAttrs (old: {
         version = "25.10.1.1173-1";
         src = pkgs.fetchurl {
           url = "http://repo.yandex.ru/yandex-browser/deb/pool/main/y/yandex-browser-stable/yandex-browser-stable_25.10.1.1173-1_amd64.deb";
           hash = "sha256-MewVX1C6DsnE1IQTIurZsZZCmSbt7a7gxMm0yqk3qmQ=";
         };
-        meta =
-          (old.meta or {})
-          // {
-            insecure = false;
-            knownVulnerabilities = [];
-          };
+        meta = (old.meta or { }) // {
+          insecure = false;
+          knownVulnerabilities = [ ];
+        };
       })
-    else null;
-in {
+    else
+      null;
+in
+{
   nixpkgs.config.permittedInsecurePackages = lib.mkForce [
     "yandex-browser-stable-25.10.1.1173-1"
   ];
 
   # Using mkMerge for the conditional configuration part
-  environment.systemPackages = lib.mkIf enabled [yandexPkg];
+  environment.systemPackages = lib.mkIf enabled [ yandexPkg ];
 
   programs.chromium = lib.mkIf enabled {
     enable = true;

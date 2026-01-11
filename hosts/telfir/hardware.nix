@@ -3,7 +3,8 @@
   lib,
   config,
   ...
-}: {
+}:
+{
   # Hardware and performance tuning specific to host 'telfir'
   hardware = {
     storage.autoMount.enable = true;
@@ -84,12 +85,12 @@
     ];
     extraModulePackages = lib.mkAfter (
       lib.optional (builtins.hasAttr "asus-ec-sensors" config.boot.kernelPackages)
-      config.boot.kernelPackages."asus-ec-sensors"
+        config.boot.kernelPackages."asus-ec-sensors"
     );
 
     # Load heavy GPU driver early in initrd to reduce userspace module-load time
     initrd = {
-      kernelModules = ["amdgpu"];
+      kernelModules = [ "amdgpu" ];
       # Enable systemd in initrd; keep logs quiet for faster boot now
       systemd.enable = true;
       verbose = false;
@@ -104,7 +105,6 @@
       # Allow editing kernel cmdline from the loader (useful for recovery)
       systemd-boot.editor = true;
     };
-
 
     # Enable AutoFDO (requires building kernel with Clang)
     kernel.autofdo.enable = true;

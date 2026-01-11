@@ -3,10 +3,12 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   inherit (lib) mkIf mkMerge types;
   cfg = config.profiles.performance.irqbalance;
-in {
+in
+{
   options.profiles.performance.irqbalance.autoBannedFromIsolated = lib.mkOption {
     type = types.bool;
     default = true;
@@ -26,7 +28,7 @@ in {
       # Compute banned CPU mask at runtime from /proc/cmdline and expose via EnvironmentFile
       systemd.services.irqbalance = {
         # Ensure tools used in preStart are available
-        path = [pkgs.gawk]; # used for bitwise mask calculation in preStart
+        path = [ pkgs.gawk ]; # used for bitwise mask calculation in preStart
         preStart = ''
           set -euo pipefail
           CMDLINE=$(cat /proc/cmdline)
@@ -56,7 +58,7 @@ in {
         '';
         serviceConfig = {
           RuntimeDirectory = "irqbalance";
-          EnvironmentFile = ["-/run/irqbalance/irqbalance.env"];
+          EnvironmentFile = [ "-/run/irqbalance/irqbalance.env" ];
         };
       };
     })

@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.choose # human-friendly and fast alternative to cut and (sometimes) awk
     pkgs.enca # Extremely Naive Charset Analyser - detects and converts text file encoding

@@ -22,7 +22,8 @@
   alsa-lib,
   systemd,
   libdrm,
-}: let
+}:
+let
   pname = "windows95";
   version = "4.0.0";
 
@@ -57,47 +58,50 @@
     systemd
   ];
 in
-  stdenvNoCC.mkDerivation {
-    inherit pname version src;
+stdenvNoCC.mkDerivation {
+  inherit pname version src;
 
-    nativeBuildInputs = [autoPatchelfHook makeWrapper];
-    buildInputs = runtimeLibs;
+  nativeBuildInputs = [
+    autoPatchelfHook
+    makeWrapper
+  ];
+  buildInputs = runtimeLibs;
 
-    sourceRoot = ".";
+  sourceRoot = ".";
 
-    unpackPhase = ''
-      runHook preUnpack
-      ar p "$src" data.tar.xz | tar -xJ
-      runHook postUnpack
-    '';
+  unpackPhase = ''
+    runHook preUnpack
+    ar p "$src" data.tar.xz | tar -xJ
+    runHook postUnpack
+  '';
 
-    dontConfigure = true;
-    dontBuild = true;
+  dontConfigure = true;
+  dontBuild = true;
 
-    installPhase = ''
-      runHook preInstall
-      mkdir -p "$out"
-      cp -r usr/* "$out/"
+  installPhase = ''
+    runHook preInstall
+    mkdir -p "$out"
+    cp -r usr/* "$out/"
 
-      rm -f "$out/lib/windows95/chrome-sandbox"
+    rm -f "$out/lib/windows95/chrome-sandbox"
 
-      substituteInPlace "$out/share/applications/windows95.desktop" \
-        --replace-fail "Exec=windows95 %U" "Exec=$out/bin/windows95 %U" \
-        --replace-fail "Icon=windows95" "Icon=$out/share/pixmaps/windows95.png"
+    substituteInPlace "$out/share/applications/windows95.desktop" \
+      --replace-fail "Exec=windows95 %U" "Exec=$out/bin/windows95 %U" \
+      --replace-fail "Icon=windows95" "Icon=$out/share/pixmaps/windows95.png"
 
-      wrapProgram "$out/bin/windows95" \
-        --add-flags "--no-sandbox"
-      runHook postInstall
-    '';
+    wrapProgram "$out/bin/windows95" \
+      --add-flags "--no-sandbox"
+    runHook postInstall
+  '';
 
-    meta = with lib; {
-      description = "Electron app bundling Windows 95 (v86-based)";
-      homepage = "https://github.com/felixrieseberg/windows95";
-      changelog = "https://github.com/felixrieseberg/windows95/releases/tag/v${version}";
-      license = licenses.mit;
-      platforms = ["x86_64-linux"];
-      mainProgram = "windows95";
-      sourceProvenance = [sourceTypes.binaryNativeCode];
-      maintainers = with maintainers; [];
-    };
-  }
+  meta = with lib; {
+    description = "Electron app bundling Windows 95 (v86-based)";
+    homepage = "https://github.com/felixrieseberg/windows95";
+    changelog = "https://github.com/felixrieseberg/windows95/releases/tag/v${version}";
+    license = licenses.mit;
+    platforms = [ "x86_64-linux" ];
+    mainProgram = "windows95";
+    sourceProvenance = [ sourceTypes.binaryNativeCode ];
+    maintainers = with maintainers; [ ];
+  };
+}

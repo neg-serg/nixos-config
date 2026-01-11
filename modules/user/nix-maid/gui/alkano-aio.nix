@@ -24,6 +24,6 @@ stdenvNoCC.mkDerivation rec {
     homepage = "https://github.com/neg-serg/Alkano-aio";
     license = licenses.gpl3;
     platforms = platforms.all;
-    maintainers = with maintainers; [neg-serg];
+    maintainers = with maintainers; [ neg-serg ];
   };
 }

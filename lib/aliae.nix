@@ -4,27 +4,21 @@
   isNushell ? false,
   homeDir ? "/home/neg",
   ...
-}: let
+}:
+let
   # Helper to generate alias entry
   mkAlias = name: value: "  - name: ${name}\n    value: ${builtins.toJSON value}\n";
 
   # Conditional alias
-  mkAliasIf = cond: name: value:
-    if cond
-    then mkAlias name value
-    else "";
+  mkAliasIf =
+    cond: name: value:
+    if cond then mkAlias name value else "";
 
   # Helper for environment variables (Nushell needs $env.VAR)
-  mkEnvVar = name:
-    if isNushell
-    then "$env.${name}"
-    else "$${name}";
+  mkEnvVar = name: if isNushell then "$env.${name}" else "$${name}";
 
   # Helper for recursive aliases/standard commands in Nushell (force external)
-  mkCmd = name:
-    if isNushell
-    then "^${name}"
-    else name;
+  mkCmd = name: if isNushell then "^${name}" else name;
 
   hasRg = pkgs ? ripgrep;
   hasNmap = pkgs ? nmap;
@@ -204,15 +198,12 @@
     (mkAlias "sort" "${mkCmd "sort"} --parallel 8 -S 16M")
     (mkAlias ":q" "exit")
     (mkAlias "s" "sudo ")
-    (mkAlias "dig" "${
-      if isNushell
-      then "^dig '+noall' '+answer'"
-      else "dig +noall +answer"
-    }")
+    (mkAlias "dig" "${if isNushell then "^dig '+noall' '+answer'" else "dig +noall +answer"}")
     (mkAlias "rsync" "${
-      if isNushell
-      then "^rsync -az --compress-choice=zstd '--info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS'"
-      else "rsync -az --compress-choice=zstd --info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS"
+      if isNushell then
+        "^rsync -az --compress-choice=zstd '--info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS'"
+      else
+        "rsync -az --compress-choice=zstd --info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS"
     }")
     (mkAlias "nrb" "sudo nixos-rebuild")
     (mkAlias "j" "journalctl")
@@ -246,11 +237,15 @@
     (mkAliasIf hasMpv "mp" "${mkCmd "mpv"}")
     (mkAliasIf hasMpv "mpa" "${mkCmd "mpa"}")
     (mkAliasIf hasMpv "mpi" "${mkCmd "mpi"}")
-    (mkAliasIf hasRg "rg" "${mkCmd "rg"} --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden")
+    (mkAliasIf hasRg "rg"
+      "${mkCmd "rg"} --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden"
+    )
     (mkAliasIf hasNmap "nmap-vulners" "nmap -sV --script=vulners/vulners.nse")
     (mkAliasIf hasNmap "nmap-vulscan" "nmap -sV --script=vulscan/vulscan.nse")
     (mkAliasIf hasPrettyping "ping" "prettyping")
-    (mkAliasIf hasDuf "df" "duf --theme neg --style plain --no-header --bar-style modern --hide special --hide-mp '${homeDir}/*,/var/lib/*,/nix/store'")
+    (mkAliasIf hasDuf "df"
+      "duf --theme neg --style plain --no-header --bar-style modern --hide special --hide-mp '${homeDir}/*,/var/lib/*,/nix/store'"
+    )
     (mkAliasIf hasDust "sp" "dust -r")
     (mkAliasIf hasKhal "cal" "khal calendar")
     (mkAliasIf hasHxd "hexdump" "hxd")
@@ -261,8 +256,12 @@
     (mkAliasIf hasPlocate "locate" "plocate")
     (mkAliasIf hasMpvc "mpvc" "${mkCmd "mpvc"} -S ${mkEnvVar "XDG_CONFIG_HOME"}/mpv/socket")
     (mkAliasIf hasWget2 "wget" "wget2 --hsts-file ${mkEnvVar "XDG_DATA_HOME"}/wget-hsts")
-    (mkAliasIf hasYtDlp "yt" "yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all")
-    (mkAliasIf hasYtDlp "yta" "yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all --write-info-json")
+    (mkAliasIf hasYtDlp "yt"
+      "yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all"
+    )
+    (mkAliasIf hasYtDlp "yta"
+      "yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all --write-info-json"
+    )
     (mkAliasIf hasCurl "moon" "curl wttr.in/Moon")
     (mkAliasIf hasCurl "we" "curl 'wttr.in/?T'")
     (mkAliasIf hasCurl "wem" "curl wttr.in/Moscow?lang=ru")
@@ -284,7 +283,9 @@
     (mkAliasIf hasNixIndexDb "nlocate" "nix run github:nix-community/nix-index-database")
     (mkAliasIf hasFlatpak "bottles" "flatpak run com.usebottles.bottles")
     (mkAliasIf hasFlatpak "obs" "flatpak run com.obsproject.Studio")
-    (mkAliasIf (hasFlatpak && !isNushell) "onlyoffice" "QT_QPA_PLATFORM=xcb flatpak run org.onlyoffice.desktopeditors")
+    (mkAliasIf (
+      hasFlatpak && !isNushell
+    ) "onlyoffice" "QT_QPA_PLATFORM=xcb flatpak run org.onlyoffice.desktopeditors")
     (mkAliasIf hasFlatpak "zoom" "flatpak run us.zoom.Zoom")
     # ugrep aliases
     (mkAliasIf hasUg "grep" "ug -G")
@@ -308,4 +309,4 @@
     "      rm -f -- \"$tmp\"\n"
   ];
 in
-  content
+content

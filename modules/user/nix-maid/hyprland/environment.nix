@@ -2,9 +2,11 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   hy3PluginPath = "${pkgs.hyprlandPlugins.hy3}/lib/libhy3.so";
-in {
+in
+{
   hyprlandConf = hy3Enabled: ''
     env = GDK_SCALE,2
     env = STEAM_FORCE_DESKTOPUI_SCALING,2
@@ -34,13 +36,15 @@ in {
     ${lib.optionalString hy3Enabled "source = ~/.config/hypr/plugins.conf"}
   '';
 
-  pluginsConf = hy3Enabled:
+  pluginsConf =
+    hy3Enabled:
     lib.optionalString hy3Enabled ''
       # Hyprland plugins
       plugin = ${hy3PluginPath}
     '';
 
-  permissionsConf = hy3Enabled:
+  permissionsConf =
+    hy3Enabled:
     ''
       ecosystem {
         enforce_permissions = 1

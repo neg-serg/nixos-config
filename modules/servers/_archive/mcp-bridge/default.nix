@@ -7,9 +7,15 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.mcp-bridge;
-  inherit (lib) mkEnableOption mkOption types mkIf;
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
 
   mcpConfig = {
     inference_server = {
@@ -19,7 +25,10 @@
     mcp_servers = {
       searxng = {
         command = "npx";
-        args = ["-y" "mcp-searxng"];
+        args = [
+          "-y"
+          "mcp-searxng"
+        ];
         env = {
           SEARXNG_URL = cfg.searxngUrl;
         };
@@ -40,7 +49,8 @@
       };
     };
   };
-in {
+in
+{
   options.profiles.services.mcp-bridge = {
     enable = mkEnableOption "MCP-Bridge gateway container";
 
@@ -112,10 +122,10 @@ in {
         "${cfg.dataDir}/npm:/root/.npm"
         "${cfg.dataDir}/docs:/docs"
       ];
-      extraOptions = ["--name=mcp-bridge"];
+      extraOptions = [ "--name=mcp-bridge" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

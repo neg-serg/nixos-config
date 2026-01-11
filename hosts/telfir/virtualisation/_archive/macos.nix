@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   # Host-specific macOS VM description. The actual VM is managed by the
   # system-wide virtualisation.vms module via a dedicated QEMU service.
   #
@@ -24,7 +25,14 @@
     # Pin the VM process to a set of host CPUs.
     # This uses systemd CPUAffinity and does not attempt fine-grained
     # vCPU/iothread pinning inside QEMU.
-    hostCPUAffinity = [4 5 6 7 8 9];
+    hostCPUAffinity = [
+      4
+      5
+      6
+      7
+      8
+      9
+    ];
 
     # Extra QEMU arguments for better macOS ergonomics.
     # These stay generic (no Apple-specific secrets) and can

@@ -5,20 +5,27 @@
   lib,
   config,
   ...
-}: let
-  inherit (lib) mkAfter mkDefault mkIf mkForce;
+}:
+let
+  inherit (lib)
+    mkAfter
+    mkDefault
+    mkIf
+    mkForce
+    ;
   exporterEnabled = config.services.prometheus.exporters."php-fpm".enable or false;
-in {
+in
+{
   config = mkIf exporterEnabled {
     # Ensure the shared web group exists and prometheus joins it for socket access
     users = {
-      groups.nginx = mkDefault {};
-      groups.prometheus = mkDefault {};
+      groups.nginx = mkDefault { };
+      groups.prometheus = mkDefault { };
       users.prometheus = {
         isSystemUser = mkDefault true;
         group = mkDefault "prometheus";
         home = mkDefault "/var/lib/prometheus";
-        extraGroups = mkAfter ["nginx"];
+        extraGroups = mkAfter [ "nginx" ];
       };
     };
 
@@ -29,8 +36,12 @@ in {
       User = mkForce "prometheus";
       Group = mkForce "prometheus";
       # Allow connecting to php-fpm via unix socket and ensure group access
-      SupplementaryGroups = ["nginx"];
-      RestrictAddressFamilies = ["AF_UNIX" "AF_INET" "AF_INET6"];
+      SupplementaryGroups = [ "nginx" ];
+      RestrictAddressFamilies = [
+        "AF_UNIX"
+        "AF_INET"
+        "AF_INET6"
+      ];
       Restart = "on-failure";
       RestartSec = 5;
     };

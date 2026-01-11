@@ -10,10 +10,12 @@
   config,
   inputs,
   ...
-}: let
-  opts = import (inputs.self + "/lib/opts.nix") {inherit lib;};
+}:
+let
+  opts = import (inputs.self + "/lib/opts.nix") { inherit lib; };
   cfg = config.profiles.performance.netExtras;
-in {
+in
+{
   options.profiles.performance.netExtras = {
     enable = opts.mkEnableOption "Enable a minimal preset of moderate network sysctl tweaks for clients.";
 

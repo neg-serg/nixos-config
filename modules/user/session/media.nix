@@ -3,7 +3,8 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   guiEnabled = config.features.gui.enable or false;
   localBinPackages = [
     pkgs.alsa-utils # alsamixer/amixer fallback; direct ALSA control when PipeWire drifts
@@ -14,6 +15,7 @@
     pkgs.neg.music_clap # LAION-CLAP embeddings CLI; offline tagging faster than cloud AI
     pkgs.wireplumber # Lua PipeWire session mgr; more tweakable than media-session
   ];
-in {
+in
+{
   environment.systemPackages = lib.optionals guiEnabled localBinPackages;
 }

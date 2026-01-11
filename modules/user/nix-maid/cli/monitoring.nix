@@ -4,26 +4,27 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   # --- Btop Config Generator ---
-  mkBtopConf = attrs:
-    lib.concatStringsSep "\n" (lib.mapAttrsToList (
-        k: v: let
+  mkBtopConf =
+    attrs:
+    lib.concatStringsSep "\n" (
+      lib.mapAttrsToList (
+        k: v:
+        let
           val =
-            if builtins.isBool v
-            then
-              (
-                if v
-                then "true"
-                else "false"
-              )
-            else if builtins.isInt v
-            then builtins.toString v
-            else ''"${builtins.toString v}"'';
-        in "${k} = ${val}"
-      )
-      attrs);
+            if builtins.isBool v then
+              (if v then "true" else "false")
+            else if builtins.isInt v then
+              builtins.toString v
+            else
+              ''"${builtins.toString v}"'';
+        in
+        "${k} = ${val}"
+      ) attrs
+    );
 
   btopSettings = {
     color_theme = "midnight-ocean";
@@ -96,7 +97,8 @@
     nvml_measure_pcie_speeds = true;
     gpu_mirror_graph = true;
   };
-in {
+in
+{
   config = lib.mkMerge [
     {
       environment.systemPackages = [
@@ -107,7 +109,8 @@ in {
     (n.mkHomeFiles {
       # Btop Config
       ".config/btop/btop.conf".text = mkBtopConf btopSettings;
-      ".config/btop/themes/midnight-ocean.theme".source = ../../../../files/shell/btop/themes/midnight-ocean.theme;
+      ".config/btop/themes/midnight-ocean.theme".source =
+        ../../../../files/shell/btop/themes/midnight-ocean.theme;
     })
   ];
 }

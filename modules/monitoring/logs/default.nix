@@ -6,12 +6,13 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   inherit (lib) mkEnableOption mkIf;
-  cfg = config.monitoring.logs or {};
-in {
-  options.monitoring.logs.enable =
-    mkEnableOption "Enable logs stack (Loki + Promtail).";
+  cfg = config.monitoring.logs or { };
+in
+{
+  options.monitoring.logs.enable = mkEnableOption "Enable logs stack (Loki + Promtail).";
 
   config = mkIf (cfg.enable or false) {
     monitoring.loki.enable = true;

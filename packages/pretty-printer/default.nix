@@ -11,15 +11,18 @@ python3Packages.buildPythonApplication rec {
   format = "pyproject";
   src = ./.;
 
-  nativeBuildInputs = with python3Packages; [setuptools wheel];
-  propagatedBuildInputs = with python3Packages; [colored];
+  nativeBuildInputs = with python3Packages; [
+    setuptools
+    wheel
+  ];
+  propagatedBuildInputs = with python3Packages; [ colored ];
 
   # Ensure external tools used by CLI are available (wc from coreutils)
   makeWrapperArgs = [
     "--prefix"
     "PATH"
     ":"
-    (lib.makeBinPath [coreutils])
+    (lib.makeBinPath [ coreutils ])
   ];
 
   meta = with lib; {

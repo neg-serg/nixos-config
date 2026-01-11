@@ -26,7 +26,8 @@
   fetchurl,
   fetchFromGitHub,
   keepBuildTree,
-}: let
+}:
+let
   datasetCsv = fetchurl {
     url = "https://github.com/NyarchLinux/Smart-Prompts/releases/download/0.3/dataset.csv";
     sha256 = "7c40ecee34ea02e4dcad2c479e5036cf417366752f85902cb76360f3303341f0";
@@ -96,8 +97,8 @@
     sourceRoot = "LivePNG/src";
     doCheck = false;
 
-    nativeBuildInputs = with python3.pkgs; [setuptools];
-    buildInputs = [ffmpeg];
+    nativeBuildInputs = with python3.pkgs; [ setuptools ];
+    buildInputs = [ ffmpeg ];
     propagatedBuildInputs = with python3.pkgs; [
       pydub
       pyaudio
@@ -143,7 +144,7 @@
       hash = "sha256-ZSao6DvCEJAJmxBB5UjvPikcsj9olTQLmrWVX6O+c4g=";
     };
 
-    nativeBuildInputs = with python3.pkgs; [setuptools];
+    nativeBuildInputs = with python3.pkgs; [ setuptools ];
     propagatedBuildInputs = with python3.pkgs; [
       aiohttp
       certifi
@@ -169,7 +170,7 @@
       hash = "sha256-cfmb8vmi/L2+6Z+5pBWmmckd0NLNLZ3XeKqPorRXe9k=";
     };
 
-    nativeBuildInputs = with python3.pkgs; [setuptools];
+    nativeBuildInputs = with python3.pkgs; [ setuptools ];
     propagatedBuildInputs = with python3.pkgs; [
       aiohttp
       typing-extensions
@@ -188,7 +189,10 @@
     };
 
     sourceRoot = "source/gpt4all-backend";
-    nativeBuildInputs = [cmake keepBuildTree];
+    nativeBuildInputs = [
+      cmake
+      keepBuildTree
+    ];
 
     cmakeFlags = [
       (lib.cmakeBool "LLMODEL_CUDA" false)
@@ -252,7 +256,7 @@
     ];
 
     doCheck = false;
-    pythonImportsCheck = ["gpt4all"];
+    pythonImportsCheck = [ "gpt4all" ];
   };
 
   pythonDependencies = with python3.pkgs; [
@@ -283,84 +287,85 @@
     llama-index
   ];
 in
-  stdenv.mkDerivation rec {
-    pname = "nyarchassistant";
-    version = "0.9.6";
-    format = "other";
+stdenv.mkDerivation rec {
+  pname = "nyarchassistant";
+  version = "0.9.6";
+  format = "other";
 
-    src = fetchgit {
-      url = "https://github.com/NyarchLinux/NyarchAssistant";
-      rev = "fb41981977c0a824e032d85c62fc52aa578b33e9";
-      hash = "sha256-SKZxl5KaP/vJVk0R19YFuGe06YVqV9TquERMSLMcGo0=";
-    };
+  src = fetchgit {
+    url = "https://github.com/NyarchLinux/NyarchAssistant";
+    rev = "fb41981977c0a824e032d85c62fc52aa578b33e9";
+    hash = "sha256-SKZxl5KaP/vJVk0R19YFuGe06YVqV9TquERMSLMcGo0=";
+  };
 
-    nativeBuildInputs =
-      [
-        meson
-        ninja
-        gobject-introspection
-        docutils
-        wrapGAppsHook4
-        desktop-file-utils
-        pkg-config
-      ]
-      ++ lib.optional stdenv.hostPlatform.isDarwin desktopToDarwinBundle;
+  nativeBuildInputs = [
+    meson
+    ninja
+    gobject-introspection
+    docutils
+    wrapGAppsHook4
+    desktop-file-utils
+    pkg-config
+  ]
+  ++ lib.optional stdenv.hostPlatform.isDarwin desktopToDarwinBundle;
 
-    buildInputs = [
-      libadwaita
-      python3
-      gobject-introspection
-      vte-gtk4
-      dconf
-      adwaita-icon-theme
-      webkitgtk_6_0
-      gtk4-layer-shell
-      gsettings-desktop-schemas
-      gtksourceview5
-      desktop-file-utils
-      lsb-release
-    ];
+  buildInputs = [
+    libadwaita
+    python3
+    gobject-introspection
+    vte-gtk4
+    dconf
+    adwaita-icon-theme
+    webkitgtk_6_0
+    gtk4-layer-shell
+    gsettings-desktop-schemas
+    gtksourceview5
+    desktop-file-utils
+    lsb-release
+  ];
 
-    patchPhase = ''
-      echo "Patching /usr/share to $out/share in source files..."
-      substituteInPlace **/* --replace "/usr/share" "$out/share" || true
-      substituteInPlace src/handlers/smart_prompt/smart_prompt.py \
-        --replace "/usr/share" "$out/share"
-    '';
+  patchPhase = ''
+    echo "Patching /usr/share to $out/share in source files..."
+    substituteInPlace **/* --replace "/usr/share" "$out/share" || true
+    substituteInPlace src/handlers/smart_prompt/smart_prompt.py \
+      --replace "/usr/share" "$out/share"
+  '';
 
-    preFixup = ''
-      glib-compile-schemas $out/share/gsettings-schemas/${pname}-${version}/glib-2.0/schemas
-      gappsWrapperArgs+=(
-        --set PYTHONPATH "${python3.pkgs.makePythonPath pythonDependencies}"
-        --prefix PATH : ${lib.makeBinPath [
-        python3.pkgs.pip
-        python3
-        ffmpeg
-        git
-      ]}
-        --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [gtk4-layer-shell]}
-      )
-      patchShebangs $out/bin
-    '';
+  preFixup = ''
+    glib-compile-schemas $out/share/gsettings-schemas/${pname}-${version}/glib-2.0/schemas
+    gappsWrapperArgs+=(
+      --set PYTHONPATH "${python3.pkgs.makePythonPath pythonDependencies}"
+      --prefix PATH : ${
+        lib.makeBinPath [
+          python3.pkgs.pip
+          python3
+          ffmpeg
+          git
+        ]
+      }
+      --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ gtk4-layer-shell ]}
+    )
+    patchShebangs $out/bin
+  '';
 
-    postInstall = ''
-      mkdir -p $out/share/nyarchassistant
-      cp ${datasetCsv} $out/share/nyarchassistant/dataset.csv
-      mkdir -p $out/share/nyarchassistant/data/smart-prompts
-      cp ${pklFile} $out/share/nyarchassistant/data/smart-prompts/NyaMedium_0.3_256.pkl
-      cp ${tokenizerConfig} $out/share/nyarchassistant/data/smart-prompts/l2_supercat_tokenizer_config.json
+  postInstall = ''
+    mkdir -p $out/share/nyarchassistant
+    cp ${datasetCsv} $out/share/nyarchassistant/dataset.csv
+    mkdir -p $out/share/nyarchassistant/data/smart-prompts
+    cp ${pklFile} $out/share/nyarchassistant/data/smart-prompts/NyaMedium_0.3_256.pkl
+    cp ${tokenizerConfig} $out/share/nyarchassistant/data/smart-prompts/l2_supercat_tokenizer_config.json
 
-      mkdir -p $out/share/nyarchassistant/data/live2d/web
-      tar -xJf ${live2dTarball} -C $out/share/nyarchassistant/data/live2d/web --no-same-owner
-      cp ${archChanPng} $out/share/nyarchassistant/data/live2d/web/arch-chan.png
-    '';
+    mkdir -p $out/share/nyarchassistant/data/live2d/web
+    tar -xJf ${live2dTarball} -C $out/share/nyarchassistant/data/live2d/web --no-same-owner
+    cp ${archChanPng} $out/share/nyarchassistant/data/live2d/web/arch-chan.png
+  '';
 
-    meta = with lib; {
-      homepage = "https://github.com/NyarchLinux/NyarchAssistant";
-      description = "Nyarch Assistant GTK4/Libadwaita AI assistant";
-      mainProgram = "nyarchassistant";
-      license = licenses.gpl3;
-      platforms = platforms.unix;
-      maintainers = with maintainers; [];
-    };
-  }
+  meta = with lib; {
+    homepage = "https://github.com/NyarchLinux/NyarchAssistant";
+    description = "Nyarch Assistant GTK4/Libadwaita AI assistant";
+    mainProgram = "nyarchassistant";
+    license = licenses.gpl3;
+    platforms = platforms.unix;
+    maintainers = with maintainers; [ ];
+  };
+}

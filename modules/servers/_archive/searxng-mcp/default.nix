@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.searxng-mcp;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.searxng-mcp = {
     enable = mkEnableOption "SearXNG-MCP bridge container";
 
@@ -46,10 +53,10 @@ in {
       ports = [
         "${toString cfg.httpPort}:8080"
       ];
-      extraOptions = ["--name=searxng-mcp"];
+      extraOptions = [ "--name=searxng-mcp" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

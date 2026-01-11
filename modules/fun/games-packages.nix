@@ -6,7 +6,8 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   enabled = config.features.fun.enable or false;
   packages = [
     pkgs.abuse # classic side-scrolling shooter customizable with LISP
@@ -26,7 +27,8 @@
     pkgs.shattered-pixel-dungeon # roguelike
     pkgs.xaos # interactive fractal explorer
   ];
-in {
+in
+{
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter packages;
   };

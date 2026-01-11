@@ -54,40 +54,41 @@ stdenv.mkDerivation rec {
     installShellFiles
   ];
 
-  buildInputs =
-    [
-      gettext
-      libpthreadstubs
-      libusb1
-      sqlite
-      qemu
-      ncurses
-      socat
-      picocom
-      json_c
-    ]
-    ++ lib.optional withDbus dbus
-    ++ lib.optional withNetworkMap graphviz
-    ++ lib.optionals withOVF [libxml2 libarchive]
-    ++ lib.optional withSpice virt-viewer
-    ++ lib.optional withVNC tigervnc
-    ++ lib.optional withRemote openssl;
+  buildInputs = [
+    gettext
+    libpthreadstubs
+    libusb1
+    sqlite
+    qemu
+    ncurses
+    socat
+    picocom
+    json_c
+  ]
+  ++ lib.optional withDbus dbus
+  ++ lib.optional withNetworkMap graphviz
+  ++ lib.optionals withOVF [
+    libxml2
+    libarchive
+  ]
+  ++ lib.optional withSpice virt-viewer
+  ++ lib.optional withVNC tigervnc
+  ++ lib.optional withRemote openssl;
 
-  cmakeFlags =
-    [
-      "-DNM_CFG_NAME=${configName}"
-      "-DNM_DEFAULT_VMDIR=${vmDir}"
-      "-DNM_DEFAULT_VNC=${tigervnc}/bin/vncviewer"
-      "-DNM_DEFAULT_DBFILE=${databaseName}"
-      "-DNM_DEFAULT_SPICE=${virt-viewer}/bin/remote-viewer"
-      "-DNM_DEFAULT_QEMUDIR=${qemu}/bin"
-    ]
-    ++ lib.optional withDbus "-DNM_WITH_DBUS=ON"
-    ++ lib.optional withNetworkMap "-DNM_WITH_NETWORK_MAP=ON"
-    ++ lib.optional withOVF "-DNM_WITH_OVF_SUPPORT=ON"
-    ++ lib.optional withSpice "-DNM_WITH_SPICE=ON"
-    ++ lib.optional withVNC "-DNM_WITH_VNC_CLIENT=ON"
-    ++ lib.optional withRemote "-DNM_WITH_REMOTE=ON";
+  cmakeFlags = [
+    "-DNM_CFG_NAME=${configName}"
+    "-DNM_DEFAULT_VMDIR=${vmDir}"
+    "-DNM_DEFAULT_VNC=${tigervnc}/bin/vncviewer"
+    "-DNM_DEFAULT_DBFILE=${databaseName}"
+    "-DNM_DEFAULT_SPICE=${virt-viewer}/bin/remote-viewer"
+    "-DNM_DEFAULT_QEMUDIR=${qemu}/bin"
+  ]
+  ++ lib.optional withDbus "-DNM_WITH_DBUS=ON"
+  ++ lib.optional withNetworkMap "-DNM_WITH_NETWORK_MAP=ON"
+  ++ lib.optional withOVF "-DNM_WITH_OVF_SUPPORT=ON"
+  ++ lib.optional withSpice "-DNM_WITH_SPICE=ON"
+  ++ lib.optional withVNC "-DNM_WITH_VNC_CLIENT=ON"
+  ++ lib.optional withRemote "-DNM_WITH_REMOTE=ON";
 
   preConfigure = ''
     patchShebangs .

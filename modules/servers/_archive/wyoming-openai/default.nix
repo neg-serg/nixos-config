@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.wyoming-openai;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.wyoming-openai = {
     enable = mkEnableOption "Wyoming-OpenAI bridge container";
 
@@ -88,10 +95,10 @@ in {
       ports = [
         "${toString cfg.httpPort}:10300"
       ];
-      extraOptions = ["--name=wyoming-openai"];
+      extraOptions = [ "--name=wyoming-openai" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

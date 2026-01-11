@@ -3,9 +3,11 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.features.hardware.amdgpu;
-in {
+in
+{
   config = lib.mkIf cfg.rocm.enable {
     hardware.graphics = {
       extraPackages = [

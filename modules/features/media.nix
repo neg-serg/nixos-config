@@ -1,19 +1,27 @@
-{lib, ...}:
-with lib; let
-  mkBool = desc: default: (lib.mkEnableOption desc) // {inherit default;};
-in {
+{ lib, ... }:
+with lib;
+let
+  mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
+in
+{
   options.features.media = {
     aiUpscale = {
       enable = mkBool "enable AI upscaling integration for video (mpv)" false;
       # realtime: use mpv + VapourSynth hook (fast path; requires VS runtime; falls back to no-op if plugin absent)
       # offline: provide a CLI wrapper to render to a new file via Real-ESRGAN
       mode = lib.mkOption {
-        type = lib.types.enum ["realtime" "offline"];
+        type = lib.types.enum [
+          "realtime"
+          "offline"
+        ];
         default = "realtime";
         description = "AI upscale mode: realtime (mpv VapourSynth) or offline (CLI pipeline).";
       };
       content = lib.mkOption {
-        type = lib.types.enum ["general" "anime"];
+        type = lib.types.enum [
+          "general"
+          "anime"
+        ];
         default = "general";
         description = "Tuning/model preference for content type.";
       };

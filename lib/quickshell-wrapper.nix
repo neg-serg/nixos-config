@@ -1,26 +1,27 @@
 {
   lib,
   pkgs,
-}: let
-  mkWrapper = {
-    qsPkg,
-    extraPath ? [],
-  }: let
-    qsBin = lib.getExe' qsPkg "qs";
-    qsQmlPath = "${qsPkg}/${pkgs.qt6.qtbase.qtQmlPrefix}";
-    qsPath =
-      pkgs.lib.makeBinPath
-      (
+}:
+let
+  mkWrapper =
+    {
+      qsPkg,
+      extraPath ? [ ],
+    }:
+    let
+      qsBin = lib.getExe' qsPkg "qs";
+      qsQmlPath = "${qsPkg}/${pkgs.qt6.qtbase.qtQmlPrefix}";
+      qsPath = pkgs.lib.makeBinPath (
         [
           pkgs.fd # fast find replacement
           pkgs.coreutils # basic file/text utilities
         ]
         ++ extraPath
       );
-  in
+    in
     pkgs.stdenv.mkDerivation {
       name = "quickshell-wrapped";
-      buildInputs = [pkgs.makeWrapper]; # utility to create shell wrappers
+      buildInputs = [ pkgs.makeWrapper ]; # utility to create shell wrappers
       dontUnpack = true;
       installPhase = ''
         mkdir -p "$out/bin"
@@ -47,4 +48,4 @@
       meta.mainProgram = "qs";
     };
 in
-  mkWrapper
+mkWrapper

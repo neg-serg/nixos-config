@@ -16,13 +16,16 @@ buildGoModule rec {
 
   vendorHash = "sha256-stHoGnv3me0q6XKStnPr1pWNv5okCFbjPuORUrRDYOw=";
 
-  ldflags = ["-s" "-w"];
+  ldflags = [
+    "-s"
+    "-w"
+  ];
 
   meta = with lib; {
     description = "Prometheus exporter for Transmission BitTorrent client";
     homepage = "https://github.com/pborzenkov/transmission-exporter";
     license = licenses.mit;
-    maintainers = with maintainers; [];
+    maintainers = with maintainers; [ ];
     mainProgram = "transmission-exporter";
   };
 }

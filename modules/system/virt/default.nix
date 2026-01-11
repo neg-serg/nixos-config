@@ -1,1 +1,7 @@
-{...}: {imports = [./nemu.nix ./pkgs.nix];}
+{ ... }:
+{
+  imports = [
+    ./nemu.nix
+    ./pkgs.nix
+  ];
+}

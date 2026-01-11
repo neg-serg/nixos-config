@@ -5,91 +5,92 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   fastfetchSrc = ../../../../files/fastfetch;
 in
-  lib.mkMerge [
-    {
-      environment.systemPackages = [
-        pkgs.fastfetch # Like neofetch, but much faster (C)
-        pkgs.tealdeer # A fast tldr client in Rust
+lib.mkMerge [
+  {
+    environment.systemPackages = [
+      pkgs.fastfetch # Like neofetch, but much faster (C)
+      pkgs.tealdeer # A fast tldr client in Rust
 
-        # Core Tools
-        pkgs.aliae # Cross-shell configuration manager
+      # Core Tools
+      pkgs.aliae # Cross-shell configuration manager
 
-        # CLI Tools
-        pkgs.fabric-ai # Open-source framework for augmenting humans (AI framework)
-        pkgs.numbat # High precision scientific calculator with unit support
-        pkgs.uni # Query the Unicode database from the command line
-        pkgs.tray-tui # System tray for TUI applications in terminal
-        pkgs.visidata # Terminal spreadsheet multitool for data discovery
+      # CLI Tools
+      pkgs.fabric-ai # Open-source framework for augmenting humans (AI framework)
+      pkgs.numbat # High precision scientific calculator with unit support
+      pkgs.uni # Query the Unicode database from the command line
+      pkgs.tray-tui # System tray for TUI applications in terminal
+      pkgs.visidata # Terminal spreadsheet multitool for data discovery
 
-        # ZCLI (custom script)
-        (import ../../../../files/scripts/zcli.nix {
-          inherit pkgs;
-          profile = "telfir"; # Host profile for script configuration
-          repoRoot = "/etc/nixos";
-          flakePath = "/etc/nixos/flake.nix";
-          backupFiles = [];
-        })
-      ];
+      # ZCLI (custom script)
+      (import ../../../../files/scripts/zcli.nix {
+        inherit pkgs;
+        profile = "telfir"; # Host profile for script configuration
+        repoRoot = "/etc/nixos";
+        flakePath = "/etc/nixos/flake.nix";
+        backupFiles = [ ];
+      })
+    ];
 
-      # --- Environment Variables ---
-      environment.variables = {
-        HTTPIE_CONFIG_DIR = "${config.users.users.neg.home}/.config/httpie";
-        PARALLEL_HOME = "${config.users.users.neg.home}/.config/parallel";
-      };
-    }
+    # --- Environment Variables ---
+    environment.variables = {
+      HTTPIE_CONFIG_DIR = "${config.users.users.neg.home}/.config/httpie";
+      PARALLEL_HOME = "${config.users.users.neg.home}/.config/parallel";
+    };
+  }
 
-    (n.mkHomeFiles {
-      # Fastfetch Configs (Source from repo)
-      ".config/fastfetch/config.jsonc".source = n.linkImpure (fastfetchSrc + /config.jsonc);
-      ".config/fastfetch/skull".source = n.linkImpure (fastfetchSrc + /skull); # Custom logo
+  (n.mkHomeFiles {
+    # Fastfetch Configs (Source from repo)
+    ".config/fastfetch/config.jsonc".source = n.linkImpure (fastfetchSrc + /config.jsonc);
+    ".config/fastfetch/skull".source = n.linkImpure (fastfetchSrc + /skull); # Custom logo
 
-      # Amfora Config
-      ".config/amfora".source = ../../../../files/config/amfora;
+    # Amfora Config
+    ".config/amfora".source = ../../../../files/config/amfora;
 
-      # Tealdeer Config
-      ".config/tealdeer/config.toml".text = ''
-        [style.description]
-        underline = false
-        bold = false
-        italic = true
+    # Tealdeer Config
+    ".config/tealdeer/config.toml".text = ''
+      [style.description]
+      underline = false
+      bold = false
+      italic = true
 
-        [style.command_name]
-        foreground = "cyan"
-        underline = false
-        bold = false
-        italic = false
+      [style.command_name]
+      foreground = "cyan"
+      underline = false
+      bold = false
+      italic = false
 
-        [style.example_text]
-        foreground = "green"
-        underline = false
-        bold = false
-        italic = false
+      [style.example_text]
+      foreground = "green"
+      underline = false
+      bold = false
+      italic = false
 
-        [style.example_code]
-        foreground = "yellow"
-        underline = false
-        bold = false
-        italic = true
+      [style.example_code]
+      foreground = "yellow"
+      underline = false
+      bold = false
+      italic = true
 
-        [style.example_variable]
-        foreground = "blue"
-        underline = false
-        bold = true
-        italic = false
+      [style.example_variable]
+      foreground = "blue"
+      underline = false
+      bold = true
+      italic = false
 
-        [display]
-        compact = false
-        use_pager = false
+      [display]
+      compact = false
+      use_pager = false
 
-        [updates]
-        auto_update = true
-        auto_update_interval_hours = 720
+      [updates]
+      auto_update = true
+      auto_update_interval_hours = 720
 
-        [directories]
-      '';
-    })
-  ]
+      [directories]
+    '';
+  })
+]

@@ -6,7 +6,8 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   enabled = config.features.text.read.enable or false;
   packages = [
     pkgs.amfora # Gemini/Gopher terminal client
@@ -18,7 +19,8 @@
     pkgs.sioyek # Qt document viewer
     pkgs.tesseract # OCR helper
   ];
-in {
+in
+{
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter packages;
   };

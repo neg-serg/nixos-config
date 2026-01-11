@@ -2,9 +2,11 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.diffClosures;
-in {
+in
+{
   options.diffClosures = {
     enable = lib.mkEnableOption "Show diff-closures during system activation";
   };

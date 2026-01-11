@@ -10,10 +10,12 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   inherit (lib) mkEnableOption mkIf mkDefault;
   cfg = config.roles.monitoring;
-in {
+in
+{
   options.roles.monitoring.enable = mkEnableOption "Enable lightweight monitoring role.";
 
   config = mkIf cfg.enable {

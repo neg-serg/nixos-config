@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   imports = [
     ./homelab.nix
     ./media.nix

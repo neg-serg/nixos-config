@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.huntarr;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.huntarr = {
     enable = mkEnableOption "Huntarr search aggregator container";
 
@@ -54,10 +61,10 @@ in {
       volumes = [
         "${cfg.dataDir}:/config"
       ];
-      extraOptions = ["--name=huntarr"];
+      extraOptions = [ "--name=huntarr" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

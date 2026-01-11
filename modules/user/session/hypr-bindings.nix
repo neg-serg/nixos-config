@@ -3,11 +3,12 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   user = config.users.main.name or "neg";
-  userData = lib.attrByPath ["users" "users" user] {} config;
-  userGroup = lib.attrByPath ["group"] user userData;
-  homeDir = lib.attrByPath ["home"] "/home/${user}" userData;
+  userData = lib.attrByPath [ "users" "users" user ] { } config;
+  userGroup = lib.attrByPath [ "group" ] user userData;
+  homeDir = lib.attrByPath [ "home" ] "/home/${user}" userData;
   hyprAppsConf = pkgs.writeText "hypr-apps.conf" ''
     bind = $M4, d, exec, $pypr toggle teardown
     bind = $M4, e, exec, $pypr toggle im
@@ -29,7 +30,8 @@
     bind = $M4+$S, o, exec, raise --class "obs" --launch "obs"
     bind = $M4+$S, l, exec, raise --class "lutris" --launch "flatpak run net.lutris.Lutris || lutris"
   '';
-in {
+in
+{
   systemd.tmpfiles.rules = [
     "d ${homeDir}/.config 0755 ${user} ${userGroup} -"
     "d ${homeDir}/.config/hypr 0755 ${user} ${userGroup} -"

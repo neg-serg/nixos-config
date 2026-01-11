@@ -9,7 +9,8 @@
   sqlite,
   libcxx,
   stdenv,
-}: let
+}:
+let
   rev = "a0ad533d252f0a7d741496f5fbeec2f38862f795";
   stdenv' = clangStdenv;
   clang = llvmPackages.clang-unwrapped;
@@ -18,51 +19,55 @@
     sha256 = "sha256-QYm/vSMhS8sdAcN60FBbjvdiNlvf0Tmj4t1OtpsglcI=";
   };
   version = "unstable-${lib.substring 0 7 rev}";
-  builder = rustPlatform.buildRustPackage.override {stdenv = stdenv';};
+  builder = rustPlatform.buildRustPackage.override { stdenv = stdenv'; };
 in
-  builder {
-    pname = "blissify-rs";
-    inherit version src;
+builder {
+  pname = "blissify-rs";
+  inherit version src;
 
-    nativeBuildInputs = [
-      pkg-config
-      cmake
+  nativeBuildInputs = [
+    pkg-config
+    cmake
+  ];
+
+  buildInputs = [
+    ffmpeg
+    ffmpeg.dev
+    llvmPackages.libclang
+    stdenv.cc.cc.lib
+    sqlite
+    libcxx
+  ];
+
+  env = {
+    LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+    C_INCLUDE_PATH = "${stdenv.cc.libc.dev}/include:${clang}/lib/clang/${clang.version}/include";
+    BINDGEN_EXTRA_CLANG_ARGS = lib.concatStringsSep " " [
+      "-isystem ${stdenv.cc}/include"
+      "-isystem ${stdenv.cc.libc.dev}/include"
+      "-isystem ${clang}/lib/clang/${clang.version}/include"
+      "-isystem ${ffmpeg.dev}/include"
     ];
+    PKG_CONFIG_PATH = builtins.concatStringsSep ":" (
+      map (drv: "${drv}/lib/pkgconfig") [
+        ffmpeg
+        ffmpeg.dev
+      ]
+    );
+    FFMPEG_DIR = "${ffmpeg.dev}";
+    FFMPEG_INCLUDE_DIR = "${ffmpeg.dev}/include";
+    FFMPEG_LIB_DIR = "${ffmpeg}/lib";
+  };
 
-    buildInputs = [
-      ffmpeg
-      ffmpeg.dev
-      llvmPackages.libclang
-      stdenv.cc.cc.lib
-      sqlite
-      libcxx
-    ];
+  cargoLock = {
+    lockFile = "${src}/Cargo.lock";
+  };
 
-    env = {
-      LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
-      C_INCLUDE_PATH = "${stdenv.cc.libc.dev}/include:${clang}/lib/clang/${clang.version}/include";
-      BINDGEN_EXTRA_CLANG_ARGS = lib.concatStringsSep " " [
-        "-isystem ${stdenv.cc}/include"
-        "-isystem ${stdenv.cc.libc.dev}/include"
-        "-isystem ${clang}/lib/clang/${clang.version}/include"
-        "-isystem ${ffmpeg.dev}/include"
-      ];
-      PKG_CONFIG_PATH =
-        builtins.concatStringsSep ":" (map (drv: "${drv}/lib/pkgconfig") [ffmpeg ffmpeg.dev]);
-      FFMPEG_DIR = "${ffmpeg.dev}";
-      FFMPEG_INCLUDE_DIR = "${ffmpeg.dev}/include";
-      FFMPEG_LIB_DIR = "${ffmpeg}/lib";
-    };
-
-    cargoLock = {
-      lockFile = "${src}/Cargo.lock";
-    };
-
-    meta = with lib; {
-      description = "Automatic playlist generator written in Rust";
-      homepage = "https://github.com/Polochon-street/blissify-rs";
-      license = licenses.mit;
-      platforms = platforms.linux;
-      mainProgram = "blissify";
-    };
-  }
+  meta = with lib; {
+    description = "Automatic playlist generator written in Rust";
+    homepage = "https://github.com/Polochon-street/blissify-rs";
+    license = licenses.mit;
+    platforms = platforms.linux;
+    mainProgram = "blissify";
+  };
+}

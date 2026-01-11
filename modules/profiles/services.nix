@@ -7,50 +7,56 @@
   lib,
   inputs,
   ...
-}: let
+}:
+let
   inherit (lib) types;
-  opts = import (inputs.self + "/lib/opts.nix") {inherit lib;};
-in {
+  opts = import (inputs.self + "/lib/opts.nix") { inherit lib; };
+in
+{
   options.servicesProfiles = {
     adguardhome = {
       enable = opts.mkEnableOption "AdGuard Home DNS with rewrites/profile wiring.";
       # Optional filter list catalog to be written into AdGuardHome.yaml
       filterLists =
-        opts.mkListOpt (types.submodule (_: {
-          options = {
-            name = opts.mkStrOpt {description = "Human-friendly filter list name";};
-            url = opts.mkStrOpt {description = "URL to the filter list";};
-            enabled = opts.mkBoolOpt {
-              default = true;
-              description = "Enable this list";
+        opts.mkListOpt
+          (types.submodule (_: {
+            options = {
+              name = opts.mkStrOpt { description = "Human-friendly filter list name"; };
+              url = opts.mkStrOpt { description = "URL to the filter list"; };
+              enabled = opts.mkBoolOpt {
+                default = true;
+                description = "Enable this list";
+              };
             };
+          }))
+          {
+            default = [ ];
+            description = "List of upstream filter lists for AdGuardHome.";
+            example = [
+              {
+                name = "AdGuard DNS filter";
+                url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt";
+              }
+            ];
           };
-        })) {
-          default = [];
-          description = "List of upstream filter lists for AdGuardHome.";
-          example = [
-            {
-              name = "AdGuard DNS filter";
-              url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt";
-            }
-          ];
-        };
       rewrites =
-        opts.mkListOpt (types.submodule (_: {
-          options = {
-            domain = opts.mkStrOpt {description = "Domain to rewrite";};
-            answer = opts.mkStrOpt {description = "Rewrite answer (IP or hostname)";};
+        opts.mkListOpt
+          (types.submodule (_: {
+            options = {
+              domain = opts.mkStrOpt { description = "Domain to rewrite"; };
+              answer = opts.mkStrOpt { description = "Rewrite answer (IP or hostname)"; };
+            };
+          }))
+          {
+            default = [ ];
+            description = "List of DNS rewrite rules for AdGuard Home.";
+            example = [
+              {
+                domain = "nas.local";
+                answer = "192.168.1.10";
+              }
+            ];
           };
-        })) {
-          default = [];
-          description = "List of DNS rewrite rules for AdGuard Home.";
-          example = [
-            {
-              domain = "nas.local";
-              answer = "192.168.1.10";
-            }
-          ];
-        };
     };
     bitcoind = {
       enable = opts.mkEnableOption "Bitcoin Core node profile with a custom data directory.";
@@ -72,7 +78,7 @@ in {
     };
     unbound = {
       enable = opts.mkEnableOption "Unbound DNS resolver profile.";
-      mode = opts.mkEnumOpt ["recursive" "dot" "doh"] {
+      mode = opts.mkEnumOpt [ "recursive" "dot" "doh" ] {
         default = "dot";
         description = "How Unbound fetches upstream DNS: direct recursion, DNS-over-TLS, or via DoH proxy.";
       };
@@ -170,7 +176,10 @@ in {
           description = "Local address where dnscrypt-proxy2 (DoH proxy) listens.";
         };
         serverNames = opts.mkListOpt types.str {
-          default = ["cloudflare" "quad9-doh"];
+          default = [
+            "cloudflare"
+            "quad9-doh"
+          ];
           description = "dnscrypt-proxy2 server_names to use for DoH.";
         };
         ipv6Servers = opts.mkBoolOpt {
@@ -181,7 +190,7 @@ in {
           default = true;
           description = "Require DNSSEC-capable upstreams in dnscrypt-proxy2.";
         };
-        sources = opts.mkOpt types.attrs {} {
+        sources = opts.mkOpt types.attrs { } {
           description = "Optional dnscrypt-proxy2 sources object to override default public-resolvers.";
           example = {
             public-resolvers = {

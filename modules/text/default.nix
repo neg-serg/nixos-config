@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   imports = [
     ./manipulate-packages.nix
     ./notes-packages.nix

@@ -1,4 +1,5 @@
-{lib, ...}: let
+{ lib, ... }:
+let
   # Workspace definitions
   workspaces = [
     {
@@ -112,73 +113,72 @@
       var = "warp";
     }
   ];
-in {
+in
+{
   inherit workspaces;
 
-  workspacesConf = let
-    wsLines = builtins.concatStringsSep "\n" (map (w: "workspace = ${toString w.id}, defaultName:${w.name}") workspaces);
-  in ''
-    ${wsLines}
+  workspacesConf =
+    let
+      wsLines = builtins.concatStringsSep "\n" (
+        map (w: "workspace = ${toString w.id}, defaultName:${w.name}") workspaces
+      );
+    in
+    ''
+      ${wsLines}
 
-    workspace = w[tv1], gapsout:0, gapsin:0
-    workspace = f[1], gapsout:0, gapsin:0
-    windowrule = bordersize 0, floating:0, onworkspace:w[tv1]
-    windowrule = rounding 0, floating:0, onworkspace:w[tv1]
-    windowrule = bordersize 0, floating:0, onworkspace:f[1]
-    windowrule = rounding 0, floating:0, onworkspace:f[1]
+      workspace = w[tv1], gapsout:0, gapsin:0
+      workspace = f[1], gapsout:0, gapsin:0
+      windowrule = bordersize 0, floating:0, onworkspace:w[tv1]
+      windowrule = rounding 0, floating:0, onworkspace:w[tv1]
+      windowrule = bordersize 0, floating:0, onworkspace:f[1]
+      windowrule = rounding 0, floating:0, onworkspace:f[1]
 
-    # swayimg
-    windowrulev2 = float, class:^(swayimg)$
-    windowrulev2 = size 1200 800, class:^(swayimg)$
-    windowrulev2 = move 100 100, class:^(swayimg)$
-    windowrulev2 = tag swayimg, class:^(swayimg)$
+      # swayimg
+      windowrulev2 = float, class:^(swayimg)$
+      windowrulev2 = size 1200 800, class:^(swayimg)$
+      windowrulev2 = move 100 100, class:^(swayimg)$
+      windowrulev2 = tag swayimg, class:^(swayimg)$
 
-    # gaming: immediate mode for low-latency input
-    windowrulev2 = immediate, class:^(osu!|cs2)$
+      # gaming: immediate mode for low-latency input
+      windowrulev2 = immediate, class:^(osu!|cs2)$
 
-    # Bitwarden popup
-    windowrulev2 = float, title:^(.*Bitwarden Password Manager.*)$
+      # Bitwarden popup
+      windowrulev2 = float, title:^(.*Bitwarden Password Manager.*)$
 
-    # Calculator
-    windowrulev2 = float, class:^(org.gnome.Calculator)$
-    windowrulev2 = size 360 490, class:^(org.gnome.Calculator)$
+      # Calculator
+      windowrulev2 = float, class:^(org.gnome.Calculator)$
+      windowrulev2 = size 360 490, class:^(org.gnome.Calculator)$
 
-    # Picture-in-Picture (browser video popup)
-    windowrulev2 = float, title:^(Picture-in-Picture)$
-    windowrulev2 = pin, title:^(Picture-in-Picture)$
+      # Picture-in-Picture (browser video popup)
+      windowrulev2 = float, title:^(Picture-in-Picture)$
+      windowrulev2 = pin, title:^(Picture-in-Picture)$
 
-    # special
-    windowrulev2 = fullscreen, $pic
-  '';
+      # special
+      windowrulev2 = fullscreen, $pic
+    '';
 
-  routesConf = let
-    routeLines = builtins.concatStringsSep "\n" (
-      lib.filter (s: s != "") (
-        map (
-          w:
-            if (w.var or null) != null
-            then "windowrulev2 = workspace ${toString w.id}, $" + w.var
-            else ""
+  routesConf =
+    let
+      routeLines = builtins.concatStringsSep "\n" (
+        lib.filter (s: s != "") (
+          map (
+            w: if (w.var or null) != null then "windowrulev2 = workspace ${toString w.id}, $" + w.var else ""
+          ) workspaces
         )
-        workspaces
-      )
-    );
-    tagLines = builtins.concatStringsSep "\n" (
-      lib.filter (s: s != "") (
-        map (
-          w:
-            if (w.var or null) != null
-            then "windowrulev2 = tag " + w.var + ", $" + w.var
-            else ""
+      );
+      tagLines = builtins.concatStringsSep "\n" (
+        lib.filter (s: s != "") (
+          map (
+            w: if (w.var or null) != null then "windowrulev2 = tag " + w.var + ", $" + w.var else ""
+          ) workspaces
         )
-        workspaces
-      )
-    );
-  in ''
-    # routing
-    windowrulev2 = noblur, $term
-    # tags for workspace-routed classes
-    ${tagLines}
-    ${routeLines}
-  '';
+      );
+    in
+    ''
+      # routing
+      windowrulev2 = noblur, $term
+      # tags for workspace-routed classes
+      ${tagLines}
+      ${routeLines}
+    '';
 }

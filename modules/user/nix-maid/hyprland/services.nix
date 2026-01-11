@@ -2,8 +2,10 @@
   lib,
   pkgs,
   ...
-}: {
-  packages = hy3Enabled:
+}:
+{
+  packages =
+    hy3Enabled:
     [
       pkgs.hyprlock # Hyprland's GPU-accelerated screen locking utility
       pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
@@ -63,8 +65,12 @@
         systemctl --user start hyprland-session.target
         echo "Done." >> "$LOG"
       '')
-      (pkgs.writers.writePython3Bin "hypr-rearrange" {} (builtins.readFile ../scripts/hypr/hypr-rearrange.py))
-      (pkgs.writeShellScriptBin "hyde-selector" (builtins.readFile ../../../../files/scripts/hyde-selector.sh))
+      (pkgs.writers.writePython3Bin "hypr-rearrange" { } (
+        builtins.readFile ../scripts/hypr/hypr-rearrange.py
+      ))
+      (pkgs.writeShellScriptBin "hyde-selector" (
+        builtins.readFile ../../../../files/scripts/hyde-selector.sh
+      ))
     ]
     ++ lib.optional hy3Enabled pkgs.hyprlandPlugins.hy3; # Tiling plugin for Hyprland inspired by i3/sway
 
@@ -72,10 +78,10 @@
     hyprland-session = {
       unitConfig = {
         Description = "Hyprland compositor session";
-        Documentation = ["man:systemd.special(7)"];
-        BindsTo = ["graphical-session.target"];
-        Wants = ["graphical-session-pre.target"];
-        After = ["graphical-session-pre.target"];
+        Documentation = [ "man:systemd.special(7)" ];
+        BindsTo = [ "graphical-session.target" ];
+        Wants = [ "graphical-session-pre.target" ];
+        After = [ "graphical-session-pre.target" ];
       };
     };
   };
@@ -84,8 +90,8 @@
     # Hyprland Polkit Agent
     hyprpolkitagent = {
       description = "Hyprland Polkit Agent";
-      wantedBy = ["graphical-session.target"];
-      after = ["graphical-session-pre.target"];
+      wantedBy = [ "graphical-session.target" ];
+      after = [ "graphical-session-pre.target" ];
       serviceConfig = {
         ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
         Environment = [
@@ -100,8 +106,8 @@
     # Pyprland service
     pyprland = {
       description = "Pyprland - Hyprland plugin system";
-      wantedBy = ["graphical-session.target"];
-      after = ["graphical-session-pre.target"];
+      wantedBy = [ "graphical-session.target" ];
+      after = [ "graphical-session-pre.target" ];
       serviceConfig = {
         ExecStart = "${lib.getExe pkgs.pyprland_fixed}";
         Restart = "always";

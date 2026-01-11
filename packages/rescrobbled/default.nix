@@ -19,8 +19,11 @@ rustPlatform.buildRustPackage rec {
 
   cargoHash = "sha256-ZawdZdP87X7xMdSdZ1VJDJxz7dBGVYo+8jR8qb2Jgq8=";
 
-  nativeBuildInputs = [pkg-config];
-  buildInputs = [dbus openssl];
+  nativeBuildInputs = [ pkg-config ];
+  buildInputs = [
+    dbus
+    openssl
+  ];
 
   # Tests require environment specific filters which are not active in build sandbox
   doCheck = false;
@@ -30,7 +33,7 @@ rustPlatform.buildRustPackage rec {
     homepage = "https://github.com/InputUsername/rescrobbled";
     license = licenses.gpl3Only;
     mainProgram = "rescrobbled";
-    maintainers = [];
+    maintainers = [ ];
     platforms = platforms.linux;
   };
 }

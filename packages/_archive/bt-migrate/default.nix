@@ -57,7 +57,7 @@ stdenv.mkDerivation {
     description = "Torrent state migration tool";
     homepage = "https://github.com/mikedld/bt-migrate";
     license = licenses.gpl3Only;
-    maintainers = with maintainers; [ambroisie];
+    maintainers = with maintainers; [ ambroisie ];
     mainProgram = "BtMigrate";
   };
 }

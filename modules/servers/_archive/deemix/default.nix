@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.deemix;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.deemix = {
     enable = mkEnableOption "Deemix music downloader container";
 
@@ -64,10 +71,10 @@ in {
         "${cfg.dataDir}:/config"
         "${cfg.downloadsDir}:/downloads"
       ];
-      extraOptions = ["--name=deemix"];
+      extraOptions = [ "--name=deemix" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

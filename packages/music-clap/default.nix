@@ -9,14 +9,14 @@ python3Packages.buildPythonApplication {
   format = "pyproject";
   src = ./.;
 
-  build-system = [python3Packages.setuptools];
-  propagatedBuildInputs = [laion_clap];
+  build-system = [ python3Packages.setuptools ];
+  propagatedBuildInputs = [ laion_clap ];
 
   doCheck = false;
   meta = {
     description = "CLI wrapper around LAION-CLAP to produce audio embeddings";
     homepage = "https://github.com/LAION-AI/CLAP";
     license = lib.licenses.asl20;
-    maintainers = with lib.maintainers; [];
+    maintainers = with lib.maintainers; [ ];
   };
 }

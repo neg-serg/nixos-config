@@ -5,7 +5,8 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
 
   # --- Shaders Sources ---
@@ -25,11 +26,14 @@
     url = "https://gist.githubusercontent.com/igv/2364ffa6e81540f29cb7ab4c9bc05b6b/raw/SSimSuperRes.glsl";
     sha256 = "03s62mwcj90pnpp7dmwa4lbh404805g3f6s1a1908q0chhap3cm8";
   };
-in {
-  config = lib.mkIf (config.features.gui.enable or false) (n.mkHomeFiles {
-    ".config/mpv/shaders/FSRCNNX_x2_8-0-4-1.glsl".source = fsrcnnx;
-    ".config/mpv/shaders/KrigBilateral.glsl".source = krig;
-    ".config/mpv/shaders/Anime4K_Upscale_CNN_x2_S.glsl".source = anime4k;
-    ".config/mpv/shaders/SSimSuperRes.glsl".source = ssim;
-  });
+in
+{
+  config = lib.mkIf (config.features.gui.enable or false) (
+    n.mkHomeFiles {
+      ".config/mpv/shaders/FSRCNNX_x2_8-0-4-1.glsl".source = fsrcnnx;
+      ".config/mpv/shaders/KrigBilateral.glsl".source = krig;
+      ".config/mpv/shaders/Anime4K_Upscale_CNN_x2_S.glsl".source = anime4k;
+      ".config/mpv/shaders/SSimSuperRes.glsl".source = ssim;
+    }
+  );
 }

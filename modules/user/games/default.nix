@@ -2,7 +2,8 @@
 #
 # Main entry point for gaming configuration.
 # Imports submodules for launchers, performance, and VR.
-{lib, ...}: {
+{ lib, ... }:
+{
   imports = [
     ./launchers.nix
     ./performance.nix

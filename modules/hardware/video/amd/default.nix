@@ -2,7 +2,8 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   config = lib.mkMerge [
     {
       hardware = {
@@ -23,7 +24,7 @@
           pkgs.mesa-demos # contains glxinfo/glxgears
           pkgs.libva-utils # vainfo, encode/decode probing
           pkgs.lact # linux amdgpu controller
-          (pkgs.nvtopPackages.amd.override {intel = true;}) # GPU monitor showing AMD + Intel iGPU
+          (pkgs.nvtopPackages.amd.override { intel = true; }) # GPU monitor showing AMD + Intel iGPU
           pkgs.vulkan-extension-layer # inspect layers/extensions
           pkgs.vulkan-tools # vulkaninfo etc.
           pkgs.vulkan-validation-layers # debug validation for Vulkan apps

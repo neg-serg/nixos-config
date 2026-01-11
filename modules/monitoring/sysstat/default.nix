@@ -6,12 +6,13 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   inherit (lib) mkIf mkEnableOption;
   cfg = config.monitoring.sysstat;
-in {
-  options.monitoring.sysstat.enable =
-    mkEnableOption "Enable sysstat collectors (very low overhead).";
+in
+{
+  options.monitoring.sysstat.enable = mkEnableOption "Enable sysstat collectors (very low overhead).";
 
   config = mkIf cfg.enable {
     services.sysstat.enable = true;

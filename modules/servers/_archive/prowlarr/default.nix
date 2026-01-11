@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.prowlarr;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.prowlarr = {
     enable = mkEnableOption "Prowlarr indexer manager container";
 
@@ -54,10 +61,10 @@ in {
       volumes = [
         "${cfg.dataDir}:/config"
       ];
-      extraOptions = ["--name=prowlarr"];
+      extraOptions = [ "--name=prowlarr" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

@@ -7,7 +7,8 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   enabled = config.roles.workstation.enable or false;
   packages = [
     # -- Analysis --
@@ -42,7 +43,8 @@
     # -- Recording --
     pkgs.screenkey # show keystrokes when recording tutorials
   ];
-in {
+in
+{
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter packages;
   };

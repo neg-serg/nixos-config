@@ -7,12 +7,19 @@
   lib,
   config,
   ...
-}: let
-  inherit (lib) mkEnableOption mkIf mkOption types;
-  cfg = config.monitoring.grafana or {};
+}:
+let
+  inherit (lib)
+    mkEnableOption
+    mkIf
+    mkOption
+    types
+    ;
+  cfg = config.monitoring.grafana or { };
   lokiPort = config.monitoring.loki.port or 3100;
   lokiUrl = "http://127.0.0.1:${toString lokiPort}";
-in {
+in
+{
   options.monitoring.grafana = {
     enable = mkEnableOption "Enable Grafana with Loki datasource.";
 
@@ -48,7 +55,7 @@ in {
 
     firewallInterfaces = mkOption {
       type = types.listOf types.str;
-      default = ["br0"];
+      default = [ "br0" ];
       description = "Interfaces where Grafana port is allowed when openFirewall is true.";
     };
 
@@ -56,7 +63,11 @@ in {
       enable = mkEnableOption "Serve Grafana via Caddy with HTTPS (TLS internal).";
       domain = mkOption {
         type = types.str;
-        default = let hn = config.networking.hostName or "telfir"; in "grafana." + hn;
+        default =
+          let
+            hn = config.networking.hostName or "telfir";
+          in
+          "grafana." + hn;
         description = "Domain name to serve Grafana on via Caddy.";
       };
       tlsInternal = mkOption {
@@ -71,7 +82,7 @@ in {
       };
       firewallInterfaces = mkOption {
         type = types.listOf types.str;
-        default = ["br0"];
+        default = [ "br0" ];
         description = "Interfaces where 80/443 are allowed when openFirewall is true.";
       };
     };
@@ -85,13 +96,12 @@ in {
         http_addr = cfg.listenAddress;
         domain = config.networking.hostName or "grafana.local";
       };
-      settings.security =
-        {
-          admin_user = cfg.adminUser;
-        }
-        // (lib.optionalAttrs (cfg.adminPasswordFile != null) {
-          admin_password = "${"$"}__file{${cfg.adminPasswordFile}}";
-        });
+      settings.security = {
+        admin_user = cfg.adminUser;
+      }
+      // (lib.optionalAttrs (cfg.adminPasswordFile != null) {
+        admin_password = "${"$"}__file{${cfg.adminPasswordFile}}";
+      });
       # Provision a Loki datasource so Explore works out of the box
       provision = {
         enable = true;
@@ -103,7 +113,7 @@ in {
             access = "proxy";
             url = lokiUrl;
             isDefault = true;
-            jsonData = {}; # keep minimal
+            jsonData = { }; # keep minimal
           }
         ];
       };
@@ -112,10 +122,17 @@ in {
     # Per-interface firewall openings (Grafana port and, optionally, Caddy proxy ports)
     networking.firewall.interfaces = lib.mkMerge [
       (mkIf cfg.openFirewall (
-        lib.genAttrs cfg.firewallInterfaces (_iface: {allowedTCPPorts = [cfg.port];})
+        lib.genAttrs cfg.firewallInterfaces (_iface: {
+          allowedTCPPorts = [ cfg.port ];
+        })
       ))
       (mkIf (cfg.caddyProxy.enable && cfg.caddyProxy.openFirewall) (
-        lib.genAttrs cfg.caddyProxy.firewallInterfaces (_iface: {allowedTCPPorts = [80 443];})
+        lib.genAttrs cfg.caddyProxy.firewallInterfaces (_iface: {
+          allowedTCPPorts = [
+            80
+            443
+          ];
+        })
       ))
     ];
 

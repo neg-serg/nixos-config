@@ -4,7 +4,8 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   gitSettings = {
     user = {
@@ -133,7 +134,8 @@
     credential.helper = "!${pkgs.pass-git-helper}/bin/pass-git-helper --file ~/.config/git/pass.yml";
     difftool.nwim.cmd = "nvim -d $LOCAL $REMOTE";
   };
-in {
+in
+{
   config = n.mkHomeFiles {
     ".config/git/config" = {
       text = lib.generators.toGitINI gitSettings;

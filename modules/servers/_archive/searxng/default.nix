@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.searxng;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.searxng = {
     enable = mkEnableOption "SearXNG metasearch engine container";
 
@@ -47,15 +54,15 @@ in {
       environment = {
         TZ = cfg.timezone;
       };
-      ports = ["${toString cfg.httpPort}:8080"];
+      ports = [ "${toString cfg.httpPort}:8080" ];
       volumes = [
         "${cfg.dataDir}/data:/var/cache/searxng"
         "${cfg.dataDir}/config:/etc/searxng"
       ];
-      extraOptions = ["--name=searxng"];
+      extraOptions = [ "--name=searxng" ];
     };
 
     # Open firewall port for web UI
-    networking.firewall.allowedTCPPorts = [cfg.httpPort];
+    networking.firewall.allowedTCPPorts = [ cfg.httpPort ];
   };
 }

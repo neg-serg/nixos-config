@@ -7,10 +7,17 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.profiles.services.qdrant;
-  inherit (lib) mkEnableOption mkOption types mkIf;
-in {
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mkIf
+    ;
+in
+{
   options.profiles.services.qdrant = {
     enable = mkEnableOption "Qdrant vector database container";
 
@@ -59,10 +66,13 @@ in {
       volumes = [
         "${cfg.dataDir}:/qdrant/storage"
       ];
-      extraOptions = ["--name=qdrant"];
+      extraOptions = [ "--name=qdrant" ];
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [cfg.httpPort cfg.grpcPort];
+    networking.firewall.allowedTCPPorts = [
+      cfg.httpPort
+      cfg.grpcPort
+    ];
   };
 }

@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   environment.systemPackages = [
     pkgs.enchant # glue/CLI to probe spellchecker providers (hunspell/nuspell backends)
     pkgs.hunspell # classic spellchecker used across desktop apps

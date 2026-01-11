@@ -6,7 +6,8 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   enabled = config.features.text.manipulate.enable or false;
   packages = [
     pkgs.gron # flatten JSON for grep
@@ -16,7 +17,8 @@
     pkgs.pup # HTML parser
     pkgs.yq-go # YAML processor
   ];
-in {
+in
+{
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter packages;
   };

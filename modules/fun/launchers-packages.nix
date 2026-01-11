@@ -6,10 +6,9 @@
   config,
   pkgs,
   ...
-}: let
-  enabled =
-    (config.features.fun.enable or false)
-    && (config.features.gui.enable or false);
+}:
+let
+  enabled = (config.features.fun.enable or false) && (config.features.gui.enable or false);
   packages = [
     pkgs.protonplus # Proton/Wine prefix manager
     pkgs.protontricks # Winetricks wrapper for Proton
@@ -17,7 +16,8 @@
     pkgs.vkbasalt # Vulkan post-processing layer
     pkgs.vkbasalt-cli # CLI for vkBasalt configuration
   ];
-in {
+in
+{
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter packages;
   };

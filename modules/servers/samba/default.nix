@@ -7,11 +7,13 @@
   lib,
   config,
   ...
-}: let
-  cfg = config.servicesProfiles.samba or {enable = false;};
+}:
+let
+  cfg = config.servicesProfiles.samba or { enable = false; };
   host = config.networking.hostName or "nixos";
   sharePath = "/zero/sync/smb";
-in {
+in
+{
   config = lib.mkIf cfg.enable {
     # Ensure the shared directory exists with permissive access for guests
     systemd.tmpfiles.rules = [

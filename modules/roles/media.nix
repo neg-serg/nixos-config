@@ -7,9 +7,11 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.roles.media;
-in {
+in
+{
   options.roles.media.enable = lib.mkEnableOption "Enable media role (media servers and discovery).";
 
   config = lib.mkIf cfg.enable {

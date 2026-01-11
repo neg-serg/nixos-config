@@ -5,7 +5,8 @@
   neg,
   impurity ? null,
   ...
-}: let
+}:
+let
   n = neg impurity;
   # --- Beets Config ---
   beetsSettings = {
@@ -91,122 +92,125 @@
   # --- NCPAMixer Source ---
   ncpamixerConf = ../../../../files/gui/ncpamixer.conf;
 in
-  lib.mkMerge [
-    {
-      environment.systemPackages = [
-        # Audio
-        pkgs.beets # Music library manager and tagger
-        pkgs.mpc # A minimalist command line interface to MPD
-        pkgs.rmpc # Rust Music Player Client
-        pkgs.neg.lucida # Lucida.to downloader
-        pkgs.neg.rescrobbled # MPRIS Scrobbler
-        pkgs.ncpamixer # An ncurses mixer for PulseAudio
-        pkgs.pavucontrol # PulseAudio Volume Control
-        pkgs.pwvucontrol # PipeWire volume control (GTK)
-        pkgs.playerctl # Command-line controller for MPC-capable players
+lib.mkMerge [
+  {
+    environment.systemPackages = [
+      # Audio
+      pkgs.beets # Music library manager and tagger
+      pkgs.mpc # A minimalist command line interface to MPD
+      pkgs.rmpc # Rust Music Player Client
+      pkgs.neg.lucida # Lucida.to downloader
+      pkgs.neg.rescrobbled # MPRIS Scrobbler
+      pkgs.ncpamixer # An ncurses mixer for PulseAudio
+      pkgs.pavucontrol # PulseAudio Volume Control
+      pkgs.pwvucontrol # PipeWire volume control (GTK)
+      pkgs.playerctl # Command-line controller for MPC-capable players
 
-        # Images
-        pkgs.swayimg # Lightweight image viewer for Wayland
-        pkgs.mpdas # Audio Scrobbler client for MPD
-        pkgs.mpdris2 # MPRIS 2 support for MPD
+      # Images
+      pkgs.swayimg # Lightweight image viewer for Wayland
+      pkgs.mpdas # Audio Scrobbler client for MPD
+      pkgs.mpdris2 # MPRIS 2 support for MPD
+    ];
+
+    # Secrets for MPDAS
+    sops.secrets."mpdas_negrc" = {
+      sopsFile = ../../../../secrets/home/mpdas/neg.rc;
+      format = "binary";
+      owner = "neg";
+    };
+
+    environment.sessionVariables = {
+      MPD_HOST = "localhost";
+      MPD_PORT = "6600";
+    };
+
+    # MPD Service
+    systemd.user.services.mpd = {
+      enable = true;
+      description = "Music Player Daemon";
+      documentation = [
+        "man:mpd(1)"
+        "man:mpd.conf(5)"
       ];
-
-      # Secrets for MPDAS
-      sops.secrets."mpdas_negrc" = {
-        sopsFile = ../../../../secrets/home/mpdas/neg.rc;
-        format = "binary";
-        owner = "neg";
+      partOf = [ "graphical-session.target" ];
+      wantedBy = [ "graphical-session.target" ];
+      serviceConfig = {
+        ExecStart = "${lib.getExe pkgs.mpd} --no-daemon";
+        Restart = "on-failure";
       };
+    };
 
-      environment.sessionVariables = {
-        MPD_HOST = "localhost";
-        MPD_PORT = "6600";
+    # MPD RIS2 (MPRIS support)
+    systemd.user.services.mpdris2 = {
+      description = "MPD MPRIS2 Bridge";
+      wantedBy = [ "default.target" ];
+      serviceConfig = {
+        ExecStart = "${lib.getExe' pkgs.mpdris2 "mpDris2"}";
+        Restart = "on-failure";
       };
+    };
 
-      # MPD Service
-      systemd.user.services.mpd = {
-        enable = true;
-        description = "Music Player Daemon";
-        documentation = ["man:mpd(1)" "man:mpd.conf(5)"];
-        partOf = ["graphical-session.target"];
-        wantedBy = ["graphical-session.target"];
-        serviceConfig = {
-          ExecStart = "${lib.getExe pkgs.mpd} --no-daemon";
-          Restart = "on-failure";
-        };
+    # MPDAS (Last.fm Scrobbler)
+    systemd.user.services.mpdas = {
+      description = "mpdas last.fm scrobbler";
+      after = [ "sound.target" ];
+      wantedBy = [ "default.target" ];
+      serviceConfig = {
+        ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
+        Restart = "on-failure";
       };
+    };
 
-      # MPD RIS2 (MPRIS support)
-      systemd.user.services.mpdris2 = {
-        description = "MPD MPRIS2 Bridge";
-        wantedBy = ["default.target"];
-        serviceConfig = {
-          ExecStart = "${lib.getExe' pkgs.mpdris2 "mpDris2"}";
-          Restart = "on-failure";
-        };
+    # Rescrobbled (MPRIS Scrobbler)
+    systemd.user.services.rescrobbled = {
+      description = "MPRIS music scrobbler daemon";
+      after = [ "network-online.target" ];
+      wantedBy = [ "default.target" ];
+      serviceConfig = {
+        ExecStart = "${lib.getExe pkgs.neg.rescrobbled}";
+        Restart = "on-failure";
       };
+    };
+  }
 
-      # MPDAS (Last.fm Scrobbler)
-      systemd.user.services.mpdas = {
-        description = "mpdas last.fm scrobbler";
-        after = ["sound.target"];
-        wantedBy = ["default.target"];
-        serviceConfig = {
-          ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
-          Restart = "on-failure";
-        };
-      };
+  (n.mkHomeFiles {
+    # Beets
+    ".config/beets/config.yaml".text = builtins.toJSON beetsSettings;
 
-      # Rescrobbled (MPRIS Scrobbler)
-      systemd.user.services.rescrobbled = {
-        description = "MPRIS music scrobbler daemon";
-        after = ["network-online.target"];
-        wantedBy = ["default.target"];
-        serviceConfig = {
-          ExecStart = "${lib.getExe pkgs.neg.rescrobbled}";
-          Restart = "on-failure";
-        };
-      };
-    }
+    # MPD
+    ".config/mpd/mpd.conf".text = mpdConfig;
+    ".config/mpd/playlists/.keep".text = "";
 
-    (n.mkHomeFiles {
-      # Beets
-      ".config/beets/config.yaml".text = builtins.toJSON beetsSettings;
+    # MPD RIS2 Config
+    ".config/mpDris2/mpDris2.conf".text = ''
+      [Connection]
+      host = localhost
+      port = 6600
+      music_dir = ${config.users.users.neg.home}/music
+      [Bling]
+      notify = False
+      mmkeys = True
+      can_quit = True
+    '';
 
-      # MPD
-      ".config/mpd/mpd.conf".text = mpdConfig;
-      ".config/mpd/playlists/.keep".text = "";
+    # RMPC
+    ".config/rmpc".source = n.linkImpure rmpcSrc;
 
-      # MPD RIS2 Config
-      ".config/mpDris2/mpDris2.conf".text = ''
-        [Connection]
-        host = localhost
-        port = 6600
-        music_dir = ${config.users.users.neg.home}/music
-        [Bling]
-        notify = False
-        mmkeys = True
-        can_quit = True
-      '';
+    # Swayimg
+    ".config/swayimg".source = n.linkImpure swayimgSrc;
 
-      # RMPC
-      ".config/rmpc".source = n.linkImpure rmpcSrc;
+    # NCPAMixer
+    ".config/ncpamixer.conf".source = n.linkImpure ncpamixerConf;
 
-      # Swayimg
-      ".config/swayimg".source = n.linkImpure swayimgSrc;
+    # Spicetify Config (partial management)
+    ".config/spicetify/config-xpui.ini".text = lib.generators.toINI { } spiceSettings;
 
-      # NCPAMixer
-      ".config/ncpamixer.conf".source = n.linkImpure ncpamixerConf;
-
-      # Spicetify Config (partial management)
-      ".config/spicetify/config-xpui.ini".text = lib.generators.toINI {} spiceSettings;
-
-      # Rescrobbled Config
-      ".config/rescrobbled/config.toml".text = ''
-        [lastfm]
-        api_key = "CHANGE_ME"
-        secret = "CHANGE_ME"
-        # session_key = "" # Generated via `rescrobbled` auth
-      '';
-    })
-  ]
+    # Rescrobbled Config
+    ".config/rescrobbled/config.toml".text = ''
+      [lastfm]
+      api_key = "CHANGE_ME"
+      secret = "CHANGE_ME"
+      # session_key = "" # Generated via `rescrobbled` auth
+    '';
+  })
+]

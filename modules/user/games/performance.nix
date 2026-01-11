@@ -6,8 +6,9 @@
   lib,
   config,
   ...
-}: let
-  cfg = config.profiles.games or {};
+}:
+let
+  cfg = config.profiles.games or { };
 
   # Import consolidated game scripts from packages/game-scripts
   gameScripts = import ../../../packages/game-scripts {
@@ -21,7 +22,10 @@
     comment = "Run a command via Gamescope with FSR downscale (2560x1440→3840x2160) and CPU pinning";
     exec = "gamescope-perf";
     terminal = false;
-    categories = ["Game" "Utility"];
+    categories = [
+      "Game"
+      "Utility"
+    ];
   };
   gamescopeQualityDesktop = pkgs.makeDesktopItem {
     name = "gamescope-quality";
@@ -29,7 +33,10 @@
     comment = "Run a command via Gamescope at native resolution with CPU pinning";
     exec = "gamescope-quality";
     terminal = false;
-    categories = ["Game" "Utility"];
+    categories = [
+      "Game"
+      "Utility"
+    ];
   };
   gamescopeHDRDesktop = pkgs.makeDesktopItem {
     name = "gamescope-hdr";
@@ -37,9 +44,13 @@
     comment = "Run a command via Gamescope with HDR enabled and CPU pinning";
     exec = "gamescope-hdr";
     terminal = false;
-    categories = ["Game" "Utility"];
+    categories = [
+      "Game"
+      "Utility"
+    ];
   };
-in {
+in
+{
   config = lib.mkIf cfg.enable {
     programs = {
       gamescope = {
