@@ -2,9 +2,10 @@
   pkgs,
   nix-alien-pkgs,
   ...
-}: {
+}:
+{
   environment.systemPackages = [
-    pkgs.alejandra # the uncompromising nix code formatter
+    pkgs.nixfmt-classic # Nix formatter
     pkgs.cached-nix-shell # nix-shell with instant startup
     pkgs.cachix # download pre-built binaries
     pkgs.dconf2nix # convert dconf to nix config

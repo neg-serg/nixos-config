@@ -25,7 +25,7 @@ return {
 				json = prettier,
 				lua = { "stylua" },
 				python = { "ruff_fix", "ruff_format" }, -- Use Ruff for fixing imports and formatting (faster than isort+black)
-				nix = { "alejandra" },
+				nix = { "nixfmt" },
 				rust = { "rustfmt", lsp_format = "fallback" }, -- You can also customize some of the format options for the filetype
 				sh = { "shfmt" },
 				["_"] = { "trim_whitespace" }, -- Use the "_" filetype to run formatters on filetypes that don't have other formatters configured.
