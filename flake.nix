@@ -131,14 +131,18 @@
         inherit nixpkgs;
       };
       supportedSystems = [ "x86_64-linux" ];
-      perSystem = import ./flake/per-system.nix {
-        inherit
-          self
-          inputs
-          nixpkgs
-          flakeLib
-          ;
-      };
+      sharedPackages = lib.genAttrs supportedSystems (system: flakeLib.mkPkgs system);
+      perSystem =
+        system:
+        import ./flake/per-system.nix {
+          inherit
+            self
+            inputs
+            nixpkgs
+            flakeLib
+            ;
+          pkgs = sharedPackages.${system};
+        } system;
     in
     {
       packages = lib.genAttrs supportedSystems (s: (perSystem s).packages);
@@ -148,6 +152,7 @@
       apps = lib.genAttrs supportedSystems (s: (perSystem s).apps);
       nixosConfigurations = import ./flake/nixos.nix {
         inherit inputs nixpkgs self;
+        pkgs = sharedPackages.x86_64-linux;
         filteredSource = lib.cleanSourceWith {
           filter = name: _type: !(lib.hasSuffix ".md" (builtins.baseNameOf name));
           src = lib.cleanSource ./.;

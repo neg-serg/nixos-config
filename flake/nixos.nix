@@ -2,7 +2,7 @@
   inputs,
   nixpkgs,
   self,
-  filteredSource,
+  pkgs,
   ...
 }:
 let
@@ -37,7 +37,8 @@ let
   mkHost =
     name:
     lib.nixosSystem {
-      system = linuxSystem;
+      # Use shared pkgs instance
+      inherit pkgs;
       specialArgs = {
         inherit
           locale
