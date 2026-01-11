@@ -4,8 +4,9 @@ Machine-specific configurations.
 
 ## Available Hosts
 
-| Host | Description | |------|-------------| | `telfir` | Primary workstation | | `telfir-vm` | VM
-testing configuration |
+| Host | Description |
+|------|-------------|
+| `telfir` | Primary workstation |
 
 ## Structure
 
