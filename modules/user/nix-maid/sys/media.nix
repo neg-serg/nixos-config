@@ -102,7 +102,6 @@ lib.mkMerge [
       pkgs.neg.lucida # Lucida.to downloader
       pkgs.neg.rescrobbled # MPRIS Scrobbler
       pkgs.ncpamixer # An ncurses mixer for PulseAudio
-      pkgs.pavucontrol # PulseAudio Volume Control
       pkgs.pwvucontrol # PipeWire volume control (GTK)
       pkgs.playerctl # Command-line controller for MPC-capable players
 
