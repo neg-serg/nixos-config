@@ -3,12 +3,13 @@
   inputs,
   nixpkgs,
   flakeLib,
+  pkgs,
   ...
 }:
 system:
 let
   inherit (nixpkgs) lib;
-  pkgs = flakeLib.mkPkgs system;
+  # pkgs is now passed from flake.nix
   mkCustomPkgs = flakeLib.mkCustomPkgs;
   nixfmtPkg = nixpkgs.legacyPackages.${system}.nixfmt;
 
