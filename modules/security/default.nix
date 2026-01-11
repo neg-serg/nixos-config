@@ -28,6 +28,7 @@ in
       packages = [
         pkgs.apparmor-utils # user-space tools for apparmor
         pkgs.apparmor-profiles # standard profiles for various apps
+        pkgs.roddhjav-apparmor-rules # community profiles for browsers, etc.
       ];
     };
     pki.useCompatibleBundle = true;
