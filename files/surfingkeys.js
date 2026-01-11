@@ -411,6 +411,34 @@ api.addSearchAlias('np', 'npm', 'https://www.npmjs.com/search?q=');
 api.addSearchAlias('raw', 'Raw URL', '');
 settings.defaultSearchEngine = 'raw';
 
+// ========== Omnibar Hotkeys ==========
+// Ctrl+G: Convert current input to Google search
+api.cmap('<Ctrl-g>', function () {
+  const input = document.querySelector('#sk_omnibarSearchArea input');
+  if (input && input.value) {
+    const query = input.value;
+    api.Front.openOmnibar({ type: 'SearchEngine', extra: 'g', pref: query });
+  }
+});
+
+// Ctrl+D: Convert current input to DuckDuckGo search
+api.cmap('<Ctrl-d>', function () {
+  const input = document.querySelector('#sk_omnibarSearchArea input');
+  if (input && input.value) {
+    const query = input.value;
+    api.Front.openOmnibar({ type: 'SearchEngine', extra: 'd', pref: query });
+  }
+});
+
+// Ctrl+Y: Convert current input to YouTube search
+api.cmap('<Ctrl-y>', function () {
+  const input = document.querySelector('#sk_omnibarSearchArea input');
+  if (input && input.value) {
+    const query = input.value;
+    api.Front.openOmnibar({ type: 'SearchEngine', extra: 'y', pref: query });
+  }
+});
+
 // ========== Quickmarks ==========
 const quickmarks = {
   'A': { name: 'ArtStation', url: 'https://magazine.artstation.com/' },
