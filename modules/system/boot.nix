@@ -8,7 +8,7 @@
   config,
   ...
 }: {
-  imports = [./boot/pkgs.nix];
+  imports = [./boot/pkgs.nix ./boot/autofdo.nix];
   boot = {
     lanzaboote = {
       enable = lib.mkDefault true;
