@@ -20,8 +20,8 @@ excludes = [
 
 # Nix files: format with alejandra
 [formatter.nix]
-command = "alejandra"
-options = ["-q"]
+command = "nixfmt"
+options = []
 includes = ["*.nix"]
 
 # Remove unused attributes from Nix files in-place
