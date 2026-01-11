@@ -126,8 +126,8 @@ lib.mkIf devEnabled (
               pkgs.yaml-language-server # YAML LSP
               pkgs.taplo # TOML LSP/formatter
               pkgs.marksman # Markdown LSP
-              pkgs.nodePackages_latest.typescript-language-server # TypeScript/JS LSP
-              pkgs.nodePackages_latest.vscode-langservers-extracted # HTML/CSS/JSON LSP bundle
+              pkgs.typescript-language-server # TypeScript/JS LSP
+              pkgs.vscode-langservers-extracted # HTML/CSS/JSON LSP bundle
               pkgs.qt6.qtdeclarative # qmlfmt/qmlcachegen for QML editing
               pkgs.qt6.qttools # qmlscene/lrelease etc. for QML dev
               pkgs.just-lsp # LSP for justfiles
@@ -157,7 +157,7 @@ lib.mkIf devEnabled (
               pkgs.stylua # Lua formatter
               pkgs.shfmt # Shell formatter
               pkgs.prettierd # Faster Prettier (HTML/CSS/JS/TS/JSON/YAML)
-              pkgs.nixfmt-classic # Nix formatter
+              pkgs.nixfmt # Nix formatter
               pkgs.cmake-format # CMake formatter
               pkgs.gotools # Go tools (goimports, gofmt)
               pkgs.isort # Python import sorter

@@ -15,4 +15,13 @@ in
   subsonic-tui = final.callPackage ./subsonic-tui { };
   wl-ocr = final.callPackage ./wl-ocr { };
   fsread-nvim = final.callPackage ./fsread-nvim { };
+
+  # Python with LTO optimizations
+  python3-lto = prev.python3.override {
+    packageOverrides = _pythonSelf: _pythonSuper: {
+      enableOptimizations = true;
+      enableLTO = true;
+      reproducibleBuild = false;
+    };
+  };
 }
