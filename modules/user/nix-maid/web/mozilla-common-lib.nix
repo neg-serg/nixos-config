@@ -157,64 +157,64 @@ let
   # Surfingkeys "High Contrast" Theme
   # Optimised for visibility: Yellow/Black hints, Solarized Dark HUD.
   surfingkeysUserContent = ''
-    /* Surfingkeys High Contrast Theme (Solarized) */
+    /* Surfingkeys Dark Theme (Matches surfingkeys.js) */
 
-    /* HINTS: Maximum Contrast (Yellow/Black) */
+    /* HINTS */
     #sk_hints .begin {
-        color: #b58900 !important; /* Yellow match */
+        color: #89cdd2 !important; /* Accent */
     }
     .sk_hints > div {
-        background-color: #fdf6e3 !important; /* Light bg */
-        color: #000000 !important;            /* Black text */
-        border: 2px solid #b58900 !important; /* Yellow border */
-        font-family: "JetBrains Mono", monospace !important;
-        font-weight: 800 !important;
+        background-color: #001742 !important; /* Hint BG */
+        color: #89cdd2 !important;            /* Accent text */
+        border: 1px solid #0a3749 !important; /* Border */
+        font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+        font-weight: 600 !important;
         font-size: 14px !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+        box-shadow: none !important;
         padding: 4px 6px !important;
         opacity: 1 !important;
     }
 
     /* TABS */
     #sk_tabs .sk_tab {
-        background: #002b36 !important;
-        color: #839496 !important;
-        border: 1px solid #586e75 !important;
+        background: #020202 !important;
+        color: #f0f1ff !important;
+        border: 1px solid #0a3749 !important;
     }
     #sk_tabs .sk_tab_title {
-        color: #b58900 !important;
+        color: #f0f1ff !important;
     }
     #sk_tabs .sk_tab_url {
-        color: #2aa198 !important;
+        color: rgba(240, 241, 255, 0.6) !important;
     }
 
     /* OMNIBAR / POPUPS */
     #sk_omnibar {
-        background-color: #073642 !important;
-        color: #93a1a1 !important;
-        border: 2px solid #b58900 !important;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.8) !important;
+        background-color: #020202 !important;
+        color: #f0f1ff !important;
+        border: 1px solid #0a3749 !important;
+        box-shadow: none !important;
     }
     #sk_omnibar .sk_source {
-        color: #b58900 !important;
-        border-bottom: 2px solid #b58900 !important;
+        color: #89cdd2 !important;
+        border-bottom: 1px solid #0a3749 !important;
     }
     #sk_omnibar .sk_result.focused {
-        background-color: #002b36 !important;
-        color: #268bd2 !important;
+        background-color: #13384f !important;
+        color: #f0f1ff !important;
         font-weight: bold !important;
     }
     #sk_status, #sk_find {
-        background-color: #073642 !important;
-        color: #b58900 !important;
-        border: 2px solid #b58900 !important;
+        background-color: #020202 !important;
+        color: #f0f1ff !important;
+        border: 1px solid #0a3749 !important;
     }
 
     /* KEY BUBBLE */
     #sk_bubble {
-        background-color: #073642 !important;
-        color: #cb4b16 !important; /* Orange */
-        border: 2px solid #dc322f !important; /* Red */
+        background-color: #020202 !important;
+        color: #f0f1ff !important;
+        border: 1px solid #0a3749 !important;
         font-size: 18px !important;
         font-weight: bold !important;
         padding: 10px !important;
