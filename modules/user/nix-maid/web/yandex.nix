@@ -36,9 +36,7 @@ let
       null;
 in
 {
-  nixpkgs.config.permittedInsecurePackages = lib.mkForce [
-    "yandex-browser-stable-25.10.1.1173-1"
-  ];
+  # nixpkgs.config.permittedInsecurePackages moved to flake/pkgs-config.nix
 
   # Using mkMerge for the conditional configuration part
   environment.systemPackages = lib.mkIf enabled [ yandexPkg ];

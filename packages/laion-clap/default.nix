@@ -2,6 +2,7 @@
   lib,
   fetchurl,
   python3Packages,
+  fetchPypi,
 }:
 let
   pythonSitePackages = python3Packages.python.sitePackages;
@@ -37,7 +38,7 @@ python3Packages.buildPythonPackage rec {
   pname = "laion_clap";
   version = "1.1.7";
 
-  src = python3Packages.fetchPypi {
+  src = fetchPypi {
     inherit pname version;
     hash = "sha256-mrnFI2ueCUT2fWaF7yqcFIFOvRPA2GLH/gepu1ZgQ5c=";
   };

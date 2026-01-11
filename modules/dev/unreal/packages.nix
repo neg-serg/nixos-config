@@ -2,6 +2,7 @@
   lib,
   pkgs,
   useSteamRun ? true,
+  ...
 }:
 let
   clangSuite = pkgs.buildEnv {

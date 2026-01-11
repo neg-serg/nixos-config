@@ -92,6 +92,16 @@ def main():
             if filepath == "modules/default.nix":
                 continue
             
+            # Use 'modules/' relative path for checking exclusion
+            rel_path = os.path.relpath(filepath, MODULES_DIR)
+            if rel_path.startswith("features-data/") or rel_path.startswith("lib/"):
+                print(f"Skipping data/lib file: {filepath}")
+                continue
+
+            if rel_path in ["user/default.nix", "system/default.nix", "hardware/default.nix"]:
+                print(f"Force skipping known aggregator: {filepath}")
+                continue
+            
             # Check if default.nix is pure aggregator
             if file == "default.nix":
                 with open(filepath, 'r') as f:
@@ -104,24 +114,43 @@ def main():
                 has_content = False
                 
                 # Keywords that imply logic/config
-                start_indicators = [
-                    "options", "config", "mkIf", "mkMerge", "mkOption", 
-                    "services", "programs", "environment", "networking", "boot", 
-                    "security", "users", "home", "fonts", "hardware", "virtualisation",
-                    "nixpkgs", "nix", "system", "specialisation", "age"
-                ]
+                # Using regex to ensure they are used as keys or functions
                 
-                # If any indicator is set (assigned) or used
-                # We check for "keyword =" or "keyword."
+                # Function-like keywords (called directly)
+                funcs = ["mkIf", "mkMerge", "mkOption", "mkEnableOption"]
+                for func in funcs:
+                    if re.search(fr'\b{func}\b', content_nocomm):
+                         has_content = True
+                         break
                 
-                for key in start_indicators:
-                    if re.search(fr'\b{key}\b', content_nocomm):
+                if not has_content:
+                    # Property-like keywords (assigned or sub-accessed: key = ... or key.foo ...)
+                    # We expect them to be followed by . or = or whitespace then =
+                    props = [
+                        "options", "config", 
+                        "services", "programs", "environment", "networking", "boot", 
+                        "security", "users", "home", "fonts", "hardware", "virtualisation",
+                        "nixpkgs", "nix", "system", "specialisation", "age", "inputs"
+                    ]
+                    
+                    # Regex: \bKEY\s*[.=]
+                    # This avoids "nix-maid" matching "nix"
+                    regex_props = r'\b(' + '|'.join(props) + r')\s*[.=]'
+                    if re.search(regex_props, content_nocomm):
                         has_content = True
-                        break
+                        
+                # Common shorthand: "foo.enable = true" - looking for unexpected top-level assignments
+                # (handled by above props usually, but let's keep generic check too if needed)
+                # But generic check caused issues. Let's rely on props list for now.
                 
-                # Common shorthand: "foo.enable = true"
-                if re.search(r'\.[a-zA-Z0-9_]+\s*=', content_nocomm):
-                    has_content = True
+                # Check for "top-level" simple assignments not in imports?
+                # If we have "foo = bar;" where foo is not in "imports".
+                # But difficult to parse without full parser.
+                
+                # Logic: If it has imports and NO props/funcs, it is aggregator.
+                # If it has NO imports, it MUST be content.
+                if "imports" not in content_nocomm:
+                     has_content = True
                     
                 if has_content:
                     files_to_include.append(filepath)
@@ -134,6 +163,30 @@ def main():
                         files_to_include.append(filepath)
                         
             else:
+                # Check if it looks like a package (derivation)
+                # Heuristic: matches { stdenv, ... } or { fetch... } but NOT { config, options ... }
+                with open(filepath, 'r') as f:
+                    content = f.read()
+                
+                # Simple arg parser (first few lines)
+                header = content.split(":", 1)[0]
+                if "stdenv" in header or "fetchFrom" in header or "buildGoModule" in header:
+                    if "config" not in header and "options" not in header:
+                         print(f"Skipping potential package: {filepath}")
+                         continue
+                
+                if "browsers-table.nix" in file or file.endswith("lib.nix") or file == "firefox-theme.nix" or file == "packages.nix" or file == "files.nix":
+                     print(f"Skipping helper/lib/package file: {filepath}")
+                     continue
+                
+                if "hyprland" in rel_path and file in ["services.nix", "environment.nix", "workspaces.nix", "scratchpads.nix"]:
+                     print(f"Skipping hyprland helper file: {filepath}")
+                     continue
+
+                if file.endswith("prefgroups.nix") or file.endswith(".data.nix"):
+                     print(f"Skipping prefgroups/data file: {filepath}")
+                     continue
+
                 files_to_include.append(filepath)
 
     files_to_include.sort()

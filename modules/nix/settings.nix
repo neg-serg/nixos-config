@@ -73,5 +73,5 @@ in
     daemonIOSchedClass = "idle";
     daemonIOSchedPriority = 7;
   };
-  nixpkgs.config.rocmSupport = true; # enable ROCm GPU stack (needed for ollama-rocm and AMD tooling)
+  # nixpkgs.config.rocmSupport moved to flake/pkgs-config.nix
 }
