@@ -33,7 +33,14 @@ let
     "systemd.show_status=false"
     "vt.global_cursor_default=0"
   ];
-  extra_security = [ "page_alloc.shuffle=1" ];
+  extra_security = [
+    "page_alloc.shuffle=1"
+    "slab_nomerge"
+    "init_on_alloc=1"
+    "randomize_kstack_offset=on"
+    "vsyscall=none"
+    "debugfs=off"
+  ];
   idle_nomwait = [ "idle=nomwait" ]; # latency over power
   usb_noautosuspend = [ "usbcore.autosuspend=-1" ]; # avoid hiccups
   no_watchdog = [
@@ -44,6 +51,22 @@ let
     "ax25"
     "netrom"
     "rose"
+    "dccp"
+    "sctp"
+    "rds"
+    "tipc"
+    "n-hdlc"
+    "x25"
+    "decnet"
+    "econet"
+    "af_802154"
+    "ipx"
+    "appletalk"
+    "psnap"
+    "p8023"
+    "p8022"
+    "can"
+    "atm"
   ];
   old_rare_insufficiently_audited_fs = [
     "adfs"
@@ -71,6 +94,7 @@ let
     "sysv"
     "ufs"
     "vivid"
+    "udf"
   ];
 
   base_params = [
