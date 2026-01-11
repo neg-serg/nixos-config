@@ -23,7 +23,7 @@ in
 
   config = lib.mkMerge [
     (n.mkHomeFiles {
-      ".config/surfingkeys.js".source = "${pkgs.surfingkeys-pkg}/share/surfingkeys/surfingkeys.js";
+      ".config/surfingkeys.js".source = n.linkImpure ../../../../files/surfingkeys.js;
     })
     {
       assertions = [
