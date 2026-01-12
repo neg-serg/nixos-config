@@ -10,7 +10,7 @@ in
   imports = [
     ./codex-config.nix
     ./ollama.nix
-    ./open-webui.nix
+    # ./open-webui.nix
     ./pkgs.nix
   ];
   config = lib.mkMerge [
