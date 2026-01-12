@@ -77,11 +77,15 @@
       "key": ""
     },
     {
+      "type": "terminalsize",
+      "key": ""
+    },
+    {
       "type": "cpu",
       "key": ""
     },
     {
-      "type": "memory",
+      "type": "physicalmemory",
       "key": ""
     },
     {
@@ -102,7 +106,7 @@
       "key": "󰢮"
     },
     {
-      "type": "disk",
+      "type": "physicaldisk",
       "key": ""
     },
     {
