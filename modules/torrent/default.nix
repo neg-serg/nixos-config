@@ -15,7 +15,7 @@ let
     pkgs.neg.tewi # TUI client for Transmission/qBittorrent/Deluge
     pkgs.curl # HTTP helper for tracker scripts
     pkgs.jq # parse Transmission RPC JSON responses
-    pkgs.jackett # meta-indexer to feed torrent search
+    # pkgs.jackett # meta-indexer to feed torrent search
   ]
   ++ lib.optionals prometheusEnabled [
     pkgs.neg.transmission_exporter # Prometheus exporter for Transmission metrics
