@@ -3,8 +3,6 @@
   # and modules/nix/settings.nix (nix.settings).
   # Only official NixOS cache - third-party caches disabled for reliability.
   substituters = [
-    "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
-    "https://cache.nixos.kz"
     "https://nixos-cache-proxy.cofob.dev"
     "https://nixos-cache-proxy.sweetdogs.ru"
     "https://ncproxy.vizqq.cc"
