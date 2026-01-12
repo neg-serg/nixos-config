@@ -64,7 +64,7 @@ let
       sticky_history = true;
       transparency = 14;
       vertical_alignment = "center";
-      width = "(300, 2000)";
+      width = "(300, 500)";
       word_wrap = true;
     };
 
