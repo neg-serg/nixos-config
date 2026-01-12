@@ -32,7 +32,7 @@ let
     # -- Synths / Instruments --
     pkgs.dexed # DX7-compatible synth (LV2/VST standalone)
     pkgs.stochas # probability-driven MIDI sequencer
-    pkgs.vcv-rack # modular synth platform
+    # pkgs.vcv-rack # modular synth platform
     pkgs.vital # spectral wavetable synth
   ];
 in
