@@ -99,7 +99,7 @@
     ./llm/codex-config.nix
     ./llm/default.nix
     ./llm/ollama.nix
-    ./llm/open-webui.nix
+    # ./llm/open-webui.nix
     ./llm/pkgs.nix
     ./media/ai-upscale-packages.nix
     ./media/audio/apps-packages.nix
