@@ -8,7 +8,7 @@
 let
   guiEnabled = config.features.gui.enable or false;
 
-  iosevkaFont = if iosevkaNeg ? nerd-font then iosevkaNeg.nerd-font else pkgs.nerd-fonts.iosevka;
+  iosevkaFont = iosevkaNeg.nerd-font or pkgs.nerd-fonts.iosevka;
 
   packages = [
     pkgs.pango # ensure fontconfig has Pango shaping libs for GTK

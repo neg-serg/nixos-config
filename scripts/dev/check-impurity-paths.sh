@@ -19,15 +19,22 @@ errors=0
 echo "Checking impurity.link paths in $REPO_ROOT..."
 
 # Direct paths like ./../../files/nvim or ../../../files/gui/swayimg
-while read -r match; do
+grep -roP '(impurity\.link|linkImpure)\s+\.+/[^;]+' modules/ 2> /dev/null | while read -r line; do
+  file=$(echo "$line" | cut -d: -f1)
+  match=$(echo "$line" | cut -d: -f2-)
+
   # Extract the path after the function call
-  path=$(echo "$match" | sed -E 's/(impurity\.link|linkImpure)\s+//' | sed 's/;$//')
-  # Resolve relative to /etc/nixos (repo root)
-  if [[ ! -e "$path" ]]; then
-    echo "ERROR: Path does not exist: $path"
+  rel_path=$(echo "$match" | sed -E 's/.*(impurity\.link|linkImpure)\s+//' | sed 's/;$//')
+
+  # Directory of the source file
+  dir=$(dirname "$file")
+
+  # Resolve/Check relative to the source file location
+  if [[ ! -e "$dir/$rel_path" ]]; then
+    echo "ERROR: Path does not exist: $dir/$rel_path (referenced in $file)"
     ((errors++)) || true
   fi
-done < <(grep -rhoP '(impurity\.link|linkImpure)\s+\.+/[^;]+' modules/ 2> /dev/null || true)
+done
 
 # Paths defined as variables - check the source directories exist
 dirs_to_check=(
