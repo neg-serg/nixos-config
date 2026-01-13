@@ -107,7 +107,7 @@
     };
 
     # Enable AutoFDO (requires building kernel with Clang)
-    kernel.autofdo.enable = true;
+    kernel.autofdo.enable = false;
   };
 
   # Avoid double compression for swap
