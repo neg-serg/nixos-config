@@ -24,6 +24,5 @@
     pkgs.nix-melt # TUI for nix flake lock --update
     pkgs.statix # static analyzer for nix
 
-
   ];
 }
