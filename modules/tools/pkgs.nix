@@ -1,6 +1,6 @@
 {
   pkgs,
-  nix-alien-pkgs,
+
   ...
 }:
 {
@@ -24,7 +24,6 @@
     pkgs.nix-melt # TUI for nix flake lock --update
     pkgs.statix # static analyzer for nix
 
-    # nix-alien: run unpatched binaries on NixOS
-    nix-alien-pkgs.nix-alien
+
   ];
 }

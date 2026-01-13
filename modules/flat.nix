@@ -127,7 +127,7 @@
     ./nix/hyprland.nix
     ./nix/mpv-openvr.nix
     ./nix/multimon-ng.nix
-    ./nix/nix-ld.nix
+
     ./nix/packages-overlay.nix
     ./nix/settings.nix
     ./nix/wb32-dfu-updater.nix
