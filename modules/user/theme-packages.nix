@@ -1,16 +1,12 @@
 {
   lib,
   pkgs,
-  inputs,
+
   iosevkaNeg,
   ...
 }:
 let
-  iosevkaFont =
-    if iosevkaNeg ? nerd-font then
-      iosevkaNeg.nerd-font
-    else
-      pkgs.nerd-fonts.iosevka; # fallback iosevka font
+  iosevkaFont = iosevkaNeg.nerd-font or pkgs.nerd-fonts.iosevka; # fallback iosevka font
   packages = [
     iosevkaFont # patched Iosevka Nerd Font for UI monospace
     pkgs.adw-gtk3 # libadwaita GTK3 port; matches GNOME styling
