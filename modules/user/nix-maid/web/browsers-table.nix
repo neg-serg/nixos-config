@@ -10,9 +10,9 @@ let
     if nyxt4 != null then
       nyxt4
     else if lib.hasAttr "nyxt4-bin" pkgs then
-      pkgs.nyxt4-bin
+      pkgs.nyxt4-bin # nyxt 4 (binary)
     else
-      pkgs.nyxt;
+      pkgs.nyxt; # nyxt (source)
   # Floorp upstream source package is deprecated in nixpkgs >= 12.x; always use floorp-bin.
   floorpPkg = pkgs.floorp-bin;
 in
