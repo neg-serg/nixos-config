@@ -69,6 +69,14 @@ in
         profile-cond=((width ==1920 and height ==1080) and not p["video-frame-info/interlaced"] and p["estimated-vf-fps"]<31)
         interpolation=no
 
+
+        [hdr]
+        profile-desc=Auto-HDR
+        profile-cond=p["video-params/gamma"] == "pq" or p["video-params/gamma"] == "hlg" or p["video-params/primaries"] == "bt.2020"
+        target-colorspace-hint=yes
+        target-prim=bt.2020
+        target-trc=pq
+
         # --- Shader Profiles ---
         [ai-off]
         glsl-shaders-clr
