@@ -2,13 +2,12 @@
   lib,
   config,
   pkgs,
-  inputs ? { },
+
   ...
 }:
 let
   guiEnabled = config.features.gui.enable or false;
-  system = pkgs.stdenv.hostPlatform.system;
-  iosevkaInput = if inputs ? "iosevka-neg" then inputs."iosevka-neg".packages.${system} else null;
+
   iosevkaFont =
       pkgs.nerd-fonts.iosevka;
     # if iosevkaInput != null && (iosevkaInput ? nerd-font) then
