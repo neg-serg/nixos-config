@@ -2,14 +2,13 @@
   lib,
   pkgs,
   inputs,
+  iosevkaNeg,
   ...
 }:
 let
-  system = pkgs.stdenv.hostPlatform.system;
-  iosevkaInput = if inputs ? "iosevka-neg" then inputs."iosevka-neg".packages.${system} else null;
   iosevkaFont =
-    if iosevkaInput != null && (iosevkaInput ? nerd-font) then
-      iosevkaInput.nerd-font
+    if iosevkaNeg ? nerd-font then
+      iosevkaNeg.nerd-font
     else
       pkgs.nerd-fonts.iosevka; # fallback iosevka font
   packages = [
