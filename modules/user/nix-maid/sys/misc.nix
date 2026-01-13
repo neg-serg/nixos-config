@@ -32,13 +32,13 @@ let
 in
 {
   config = lib.mkMerge [
-    {
+    (lib.mkIf (cfg.apps.winapps.enable or false) {
       # Winboat (Bottles/Wine)
       environment.systemPackages = [
         pkgs.bottles # Run Windows software on Linux with Bottles
         pkgs.wineWowPackages.stable # Open-source implementation of the Windows API
       ];
-    }
+    })
     (lib.mkIf (cfg.fun.enable or false) (
       n.mkHomeFiles (
         lib.mkMerge [
