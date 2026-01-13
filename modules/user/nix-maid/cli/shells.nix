@@ -105,8 +105,6 @@ let
     EOF
   '';
 
-
-
   # Kitty Scrollback Path (for session variable)
   nixKsbPath = "${pkgs.vimPlugins.kitty-scrollback-nvim}/python/kitty_scrollback_nvim.py";
 

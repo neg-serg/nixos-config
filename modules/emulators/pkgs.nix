@@ -18,7 +18,8 @@ let
     pkgs.pcsx2 # PS2 emulator
     pkgs.retroarch-assets # standard assets (fonts, icons, etc.)
     pkgs.retroarch-joypad-autoconfig # controller profiles
-  ] ++ (lib.optionals (config.features.emulators.retroarch.enable or true) [
+  ]
+  ++ (lib.optionals (config.features.emulators.retroarch.enable or true) [
     retroarchPkg # RetroArch frontend (full build when available)
   ]);
 in
