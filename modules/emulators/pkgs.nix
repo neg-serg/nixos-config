@@ -16,10 +16,11 @@ let
     pkgs.dosbox-x # DOSBox fork focused on historical accuracy
     pkgs.pcem # IBM PC emulator
     pkgs.pcsx2 # PS2 emulator
-    retroarchPkg # RetroArch frontend (full build when available)
     pkgs.retroarch-assets # standard assets (fonts, icons, etc.)
     pkgs.retroarch-joypad-autoconfig # controller profiles
-  ];
+  ] ++ (lib.optionals (config.features.emulators.retroarch.enable or true) [
+    retroarchPkg # RetroArch frontend (full build when available)
+  ]);
 in
 {
   config = lib.mkMerge [

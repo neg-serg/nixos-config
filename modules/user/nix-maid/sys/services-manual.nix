@@ -153,7 +153,7 @@ in
       environment.systemPackages = [ ]; # command-line tool for controlling media players
     })
 
-    (lib.mkIf (config.features.gui.enable or false) {
+    (lib.mkIf false {
       systemd.user.services.nextcloud-sync = {
         description = "Nextcloud CLI sync";
         serviceConfig = {

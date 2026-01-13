@@ -41,12 +41,13 @@ lib.mkMerge [
     # Host-specific feature toggles
     features.dev.ai.enable = true;
     features.dev.ai.antigravity.enable = true;
-    features.text.tex.enable = true;
+    features.text.tex.enable = false;
     features.cli.tewi.enable = true;
     features.cli.broot.enable = true;
     features.cli.yazi.enable = true;
     features.dev.tla.enable = true;
-    features.apps.winapps.enable = true;
+    features.apps.winapps.enable = false;
+    features.emulators.retroarch.enable = false;
     features.gui.hy3.enable = true;
     features.gui.walker.enable = false;
     features.gui.quickshell.enable = true;
@@ -55,7 +56,8 @@ lib.mkMerge [
     features.web.firefox.enable = false;
 
     features.dev.openxr = {
-      enable = true;
+      enable = false;
+      envision.enable = false;
       runtime.service.enable = true;
     };
 
@@ -296,7 +298,7 @@ lib.mkMerge [
       pkgs.winboat # Windows VM support
       pkgs.docker-compose # multi-container Docker applications
       pkgs.openrgb # per-device RGB controller UI
-      pkgs.nextcloud-client # Nextcloud desktop sync client
+      # pkgs.nextcloud-client # Nextcloud desktop sync client
       pkgs.neg.tewi # TUI torrent client (Transmission/qBittorrent/Deluge)
       pkgs.neg.playscii # ASCII art editor and animator
       (pkgs.writeShellScriptBin "cpu-boost" (
@@ -408,7 +410,7 @@ lib.mkMerge [
         adguardhome.settings.prometheus.enabled = false;
 
         nextcloud = {
-          enable = true;
+          enable = false;
           package = pkgs.nextcloud32;
           hostName = "telfir";
           https = true;
@@ -712,27 +714,27 @@ lib.mkMerge [
         logrotate-checkconf.enable = false;
 
         # Materialize Nextcloud admin password from SOPS into /var/lib/nextcloud/adminpass
-        "nextcloud-adminpass-from-sops" = {
-          description = "Materialize Nextcloud admin password from SOPS";
-          wantedBy = [ "multi-user.target" ];
-          after = [ "local-fs.target" ];
-          serviceConfig = {
-            Type = "oneshot";
-            Environment = "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt";
-            ExecStart = lib.getExe (
-              pkgs.writeShellScriptBin "nextcloud-adminpass" ''
-                set -euo pipefail
-                umask 077
-                install -d -m 0700 -o nextcloud -g nextcloud /var/lib/nextcloud
-                ${pkgs.sops}/bin/sops -d --extract '["data"]' ${
-                  inputs.self + "/secrets/nextcloud-admin-password.sops.yaml"
-                } > /var/lib/nextcloud/adminpass
-                chown nextcloud:nextcloud /var/lib/nextcloud/adminpass
-                chmod 0400 /var/lib/nextcloud/adminpass
-              ''
-            );
-          };
-        };
+        # "nextcloud-adminpass-from-sops" = {
+        #   description = "Materialize Nextcloud admin password from SOPS";
+        #   wantedBy = [ "multi-user.target" ];
+        #   after = [ "local-fs.target" ];
+        #   serviceConfig = {
+        #     Type = "oneshot";
+        #     Environment = "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt";
+        #     ExecStart = lib.getExe (
+        #       pkgs.writeShellScriptBin "nextcloud-adminpass" ''
+        #         set -euo pipefail
+        #         umask 077
+        #         install -d -m 0700 -o nextcloud -g nextcloud /var/lib/nextcloud
+        #         ${pkgs.sops}/bin/sops -d --extract '["data"]' ${
+        #           inputs.self + "/secrets/nextcloud-admin-password.sops.yaml"
+        #         } > /var/lib/nextcloud/adminpass
+        #         chown nextcloud:nextcloud /var/lib/nextcloud/adminpass
+        #         chmod 0400 /var/lib/nextcloud/adminpass
+        #       ''
+        #     );
+        #   };
+        # };
 
         # Inject Resilio Web UI credentials from SOPS into generated config.json
         resilio = lib.mkIf (hasResilioSecret && config.services.resilio.enable) {

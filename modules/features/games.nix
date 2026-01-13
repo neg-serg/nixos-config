@@ -12,6 +12,7 @@ in
     };
 
     emulators = {
+      retroarch.enable = mkBool "enable RetroArch emulator" true;
       retroarch.full = mkBool "use retroarchFull with extended (unfree) cores" false;
     };
   };
