@@ -49,9 +49,9 @@ let
   buildTheme = pkgs.writeShellApplication {
     name = "quickshell-build-theme";
     runtimeInputs = [
-      pkgs.coreutils
-      pkgs.nodejs_24
-      pkgs.systemd
+      pkgs.coreutils # basic file operations
+      pkgs.nodejs_24 # javascript runtime for build script
+      pkgs.systemd # systemd utilities
     ];
     text = ''
       set -euo pipefail
