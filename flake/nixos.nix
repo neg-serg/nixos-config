@@ -49,7 +49,7 @@ let
           filteredSource
           ;
         iosevkaNeg = inputs.iosevka-neg.packages.${linuxSystem};
-        nix-alien-pkgs = inputs.nix-alien.packages.${linuxSystem};
+
         neg = _: {
           # impurity ignored
           # Core structural helpers (no config dependency)
