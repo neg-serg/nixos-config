@@ -62,8 +62,8 @@ let
       };
       mixer = {
         animation = "fromRight";
-        command = "${lib.getExe pkgs.pwvucontrol}";
-        class = "com.saivert.pwvucontrol";
+        command = "${lib.getExe pkgs.kitty} --class mixer -e ${lib.getExe pkgs.ncpamixer}";
+        class = "mixer";
         lazy = true;
         size = "40% 90%";
         unfocus = "hide";
