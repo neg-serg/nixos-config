@@ -2,8 +2,8 @@
 {
   # Route Hyprland, its portal, and the hy3 plugin in nixpkgs to the flake-pinned versions
   nixpkgs.overlays = [
-    inputs.hyprland.overlays.default
-    inputs.xdg-desktop-portal-hyprland.overlays.default
+    inputs.hyprland.overlays.default # Hyprland wayland compositor overlay
+    inputs.xdg-desktop-portal-hyprland.overlays.default # XDG portal implementation for Hyprland overlay
     (
       _: prev:
       let

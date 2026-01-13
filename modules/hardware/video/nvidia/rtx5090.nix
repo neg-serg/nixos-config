@@ -34,9 +34,9 @@ in
       open = false;
       package = lib.mkDefault (
         if cfg.useBetaDriver then
-          pkgs.linuxPackages.nvidiaPackages.beta
+          pkgs.linuxPackages.nvidiaPackages.beta # cutting-edge driver
         else
-          pkgs.linuxPackages.nvidiaPackages.stable
+          pkgs.linuxPackages.nvidiaPackages.stable # stable driver
       );
     };
 
