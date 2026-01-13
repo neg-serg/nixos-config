@@ -21,9 +21,9 @@ in
     # but they must ensure it uses Clang.
     boot.kernelPackages = mkForce (
       pkgs.linuxPackagesFor (
-        # Build kernel packages for the custom kernel
+        # custom kernel packages
         pkgs.linuxPackages_latest.kernel.override {
-          # Override latest kernel with custom toolchain
+          # use clang toolchain
           stdenv = pkgs.clangStdenv;
         }
       )

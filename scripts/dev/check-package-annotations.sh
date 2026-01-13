@@ -16,7 +16,7 @@ echo "Checking for unannotated package references in modules/..."
 PKG_PATTERN='(pkgs|inputs)\.[a-zA-Z0-9_-]+'
 
 # Exclude list (regex) for non-package references or constructors
-EXCLUDE_PATTERN='(with pkgs|inherit|pkgs\.lib|pkgs\.stdenv|pkgs\.system|pkgs\.config|pkgs\.callPackage|pkgs\.write|pkgs\.fetch|pkgs\.python|pkgs\.build|pkgs\.runCommand|pkgs\.symlinkJoin|pkgs\.override|pkgs\.neg\s*=|pkgs\.recurseIntoAttrs)'
+EXCLUDE_PATTERN='(with pkgs|inherit|pkgs\.lib|pkgs\.stdenv|pkgs\.system|pkgs\.config|pkgs\.callPackage|pkgs\.write|pkgs\.fetch|pkgs\.python|pkgs\.build|pkgs\.runCommand|pkgs\.symlinkJoin|pkgs\.override|pkgs\.neg\s*=|pkgs\.recurseIntoAttrs|pkgs\.linuxPackages)'
 
 # We look for lines in modules/ that have a package reference but no '#' comment.
 # We focus on lines where pkgs. starts after some whitespace (common for list items).
