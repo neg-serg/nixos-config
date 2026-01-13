@@ -26,9 +26,7 @@ in
           vo=gpu-next
           gpu-context=auto
           gpu-api=vulkan
-          target-colorspace-hint=yes
-          target-prim=bt.2020
-          target-trc=pq
+
           deband-grain=48
           deband-iterations=4
           deband=yes
