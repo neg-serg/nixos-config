@@ -31,7 +31,7 @@ let
       pkgs.p0f # passive OS/network fingerprinting
     ];
   };
-  packages = hackLib.filterPackages (hackLib.mkGroupPackages flags groups);
+# _packages = hackLib.filterPackages (hackLib.mkGroupPackages flags groups);
 in
 {
   config = lib.mkIf hackLib.enabled {
