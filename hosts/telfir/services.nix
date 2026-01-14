@@ -428,8 +428,8 @@ lib.mkMerge [
           };
         };
 
-        caddy = {
-          enable = true;
+        caddy = lib.mkIf (config.services.nextcloud.enable or false) {
+          enable = lib.mkDefault true;
           virtualHosts."telfir".extraConfig = ''
             encode zstd gzip
 
@@ -599,7 +599,9 @@ lib.mkMerge [
         group = "nginx";
       };
       # Allow Caddy to access php-fpm socket via shared group
-      users.caddy.extraGroups = [ "nginx" ];
+      users.caddy = lib.mkIf (config.services.caddy.enable or false) {
+        extraGroups = [ "nginx" ];
+      };
       groups.nginx = { };
     };
     # Games autoscale defaults for this host
