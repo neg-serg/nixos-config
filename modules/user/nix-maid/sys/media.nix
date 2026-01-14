@@ -108,6 +108,7 @@ lib.mkMerge [
       pkgs.swayimg # Lightweight image viewer for Wayland
       pkgs.mpdas # Audio Scrobbler client for MPD
       pkgs.mpdris2 # MPRIS 2 support for MPD
+      pkgs.spicetify-cli # Spotify customization tool
     ];
 
     # Secrets for MPDAS
