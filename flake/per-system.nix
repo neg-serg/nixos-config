@@ -1087,7 +1087,48 @@ in
         pkgs.gcc # explicitly available in devshell
       ];
 
-      python =
+      java = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.jdk21
+        pkgs.gradle
+      ];
+    };
+
+    node = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.nodejs_24
+      ];
+    };
+
+    vlang = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.vlang
+      ];
+    };
+
+    re = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.radare2
+        pkgs.cutter
+        pkgs.flawfinder
+        pkgs.codeql
+        pkgs.foremost # forensic tool
+      ];
+    };
+
+    infra =
+      let
+        optionalIaCTools = lib.optionals (pkgs ? aiac) [ pkgs.aiac ];
+      in
+      pkgs.mkShell {
+        nativeBuildInputs = [
+          pkgs.ansible
+          pkgs.terraform
+          pkgs.opentofu
+        ] ++ optionalIaCTools;
+      };
+
+    python =
         let
           # Replicating logic from modules/dev/python/pkgs.nix
           myPythonPackages =
