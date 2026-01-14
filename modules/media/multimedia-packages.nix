@@ -18,13 +18,17 @@ let
     pkgs.mediainfo # inspect video/audio metadata quickly
     pkgs.mpvc # mpv TUI controller
     pkgs.neg.mkvcleaner # custom Matroska cleanup tool
-    pkgs.neg.webcamize # use camera as webcam
   ];
 in
 {
-  config = lib.mkIf enabled {
-    environment.systemPackages = lib.mkAfter packages;
-    boot.extraModulePackages = [ config.boot.kernelPackages.v4l2loopback ];
-    boot.kernelModules = [ "v4l2loopback" ];
-  };
+  config = lib.mkMerge [
+    (lib.mkIf enabled {
+      environment.systemPackages = lib.mkAfter packages;
+    })
+    (lib.mkIf (config.features.media.webcam.enable or false) {
+      environment.systemPackages = [ pkgs.neg.webcamize ];
+      boot.extraModulePackages = [ config.boot.kernelPackages.v4l2loopback ];
+      boot.kernelModules = [ "v4l2loopback" ];
+    })
+  ];
 }
