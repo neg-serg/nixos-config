@@ -5,9 +5,7 @@
 }:
 let
   # Optional packages only available on some nixpkgs revisions.
-  optionalHaskellTools =
-    lib.optionals (pkgs ? fourmolu) [ pkgs.fourmolu ] # haskell formatter
-    ++ lib.optionals (pkgs ? hindent) [ pkgs.hindent ]; # alternative haskell formatter
+
   optionalIaCTools = lib.optionals (pkgs ? aiac) [ pkgs.aiac ]; # AI infrastructure as code generator
   optionalRustDebugAdapters = lib.optionals (pkgs ? codelldb) [
     pkgs.codelldb # LLDB-based debug adapter for Rust (DAP)
@@ -63,34 +61,7 @@ in
       pkgs.vlang # V programming language compiler
       pkgs.deheader # trim redundant C/C++ includes
 
-      # Haskell toolchain
-      pkgs.ghc # compiler
-      pkgs.cabal-install # package/build tool
-      pkgs.stack # alternative build tool
-      pkgs.haskell-language-server # IDE/LSP backend
-      pkgs.hlint # linter
-      pkgs.ormolu # formatter
-      pkgs.ghcid # fast GHCi reload loop
-
-      # Rust toolchain
-      pkgs.rustup # manage Rust channels/components
-      pkgs.graphviz # dot backend for rustaceanvim crateGraph
-
-      # C/C++ companions
-      pkgs.clang # LLVM compiler
-      pkgs.clang-tools # clangd, clang-tidy, etc.
-      pkgs.cmake # build system generator
-      pkgs.ninja # fast build executor
-      pkgs.bear # generate compile_commands.json
-      pkgs.ccache # compiler cache
-      pkgs.lldb # LLVM debugger
-
-      # Infrastructure as code and automation
-      pkgs.terraform # IaC backend (default)
-      pkgs.opentofu # OpenTofu alternative backend
-      pkgs.ansible # configuration management CLI
     ]
-    ++ optionalHaskellTools
     ++ optionalIaCTools
     ++ optionalRustDebugAdapters
   );
