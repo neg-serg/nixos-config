@@ -655,7 +655,7 @@ in
             nixpkgs hyprland hy3 hyprland-protocols xdg-desktop-portal-hyprland
             quickshell lanzaboote nvf nyx nur sops-nix pre-commit-hooks
             nix-index-database iosevka-neg rsmetrx impurity nix-flatpak
-            nix-maid pyprland raise tailray winapps wrapper-manager yandex-browser
+            nix-maid pyprland raise tailray winapps wrapper-manager
           )
 
           # Inputs that are .follows directives (not direct usage expected)
