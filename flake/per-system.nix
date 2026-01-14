@@ -1315,6 +1315,13 @@ in
         ]))
       ];
     };
+
+    media = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.ffmpeg-full
+        pkgs.gmic
+      ];
+    };
   };
 
   apps =
