@@ -420,17 +420,23 @@ in
       pkgs.runCommand "check-css-syntax"
         {
           nativeBuildInputs = [
-            pkgs.python3Packages.cssutils # css parser
+            (pkgs.python3.withPackages (p: [ p.cssutils ]))
             pkgs.findutils # find, xargs
+            pkgs.gnugrep # grep
           ];
         }
         ''
           set -euo pipefail
           cd ${self}
-          echo "Checking CSS files (12 files)..."
+          echo "Checking CSS files..."
+          # Skip template files and silence logger noise for non-standard CSS (GTK/mozilla extensions)
           find files -name '*.css' | while read -r css; do
-            python3 -c "import cssutils; cssutils.parseFile('$css')" 2>&1 || echo "Warning: $css"
-          done || true
+            if grep -q '\''${' "$css" 2>/dev/null; then
+              echo "INFO: Skipping Nix template $css"
+              continue
+            fi
+            python3 -c "import cssutils, logging; cssutils.log.setLevel(logging.FATAL); cssutils.parseFile('$css')" 2>&1 | grep -vE "Unknown @rule|Unknown Property|Unknown syntax|Invalid value|No content to parse" || true
+          done
           echo "CSS check complete!"
           touch "$out"
         '';
