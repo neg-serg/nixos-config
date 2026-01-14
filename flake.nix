@@ -34,17 +34,11 @@
   };
 
   outputs =
-    inputs@{
-      self,
-      nixpkgs,
-      ...
-    }:
+    inputs@{self, nixpkgs, ...}:
     let
       inherit (nixpkgs) lib;
       flakeLib = import ./flake/lib.nix {
-        inputs = inputs // {
-          inherit self;
-        };
+        inputs = inputs // { inherit self; };
         inherit nixpkgs;
       };
       supportedSystems = [ "x86_64-linux" ];
@@ -52,16 +46,10 @@
       perSystem =
         system:
         import ./flake/per-system.nix {
-          inherit
-            self
-            inputs
-            nixpkgs
-            flakeLib
-            ;
+          inherit self inputs nixpkgs flakeLib;
           pkgs = sharedPackages.${system};
         } system;
-    in
-    {
+    in {
       packages = lib.genAttrs supportedSystems (s: (perSystem s).packages);
       formatter = lib.genAttrs supportedSystems (s: (perSystem s).formatter);
       checks = lib.genAttrs supportedSystems (s: (perSystem s).checks);
