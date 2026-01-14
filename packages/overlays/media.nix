@@ -16,6 +16,15 @@ let
   };
 in
 {
+  ffmpeg = prev.ffmpeg.override {
+    withSdl2 = false;
+    buildFfplay = false;
+  };
+  ffmpeg-full = prev.ffmpeg-full.override {
+    withSdl2 = false;
+    buildFfplay = false;
+  };
+
   swayimg = prev.swayimg.overrideAttrs (old: {
     env.NIX_CFLAGS_COMPILE =
       toString (old.env.NIX_CFLAGS_COMPILE or "")
