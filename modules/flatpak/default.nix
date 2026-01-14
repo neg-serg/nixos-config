@@ -1,4 +1,4 @@
-{ ... }:
+{ config, lib, ... }:
 {
   imports = [ ./pkgs.nix ];
   services.flatpak = {
@@ -33,10 +33,12 @@
         appId = "org.chromium.Chromium";
         origin = "flathub";
       }
+    ] ++ lib.optionals (config.features.apps.libreoffice.enable) [
       {
         appId = "org.libreoffice.LibreOffice";
         origin = "flathub";
       }
+    ] ++ lib.optionals (config.features.games.launchers.lutris.enable) [
       {
         appId = "net.lutris.Lutris";
         origin = "flathub";

@@ -12,6 +12,7 @@ in
       launchers = {
         prismlauncher.enable = mkBool "enable PrismLauncher" true;
         heroic.enable = mkBool "enable Heroic Launcher" true;
+        lutris.enable = mkBool "enable Lutris" true;
       };
     };
 
