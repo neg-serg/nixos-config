@@ -1181,6 +1181,14 @@ in
       ]
       ++ lib.optionals (pkgs ? fuse3) [ pkgs.fuse3 ];
     };
+
+    qmk = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.qmk
+        pkgs.qmk_hid
+        pkgs.keymapviz
+      ];
+    };
   };
 
   apps =
