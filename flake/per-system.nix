@@ -1354,6 +1354,12 @@ in
         pkgs.quickemu
       ];
     };
+    text = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.recoll
+        pkgs.tesseract
+      ];
+    };
   };
 
   apps =

@@ -15,9 +15,7 @@ let
     pkgs.epr # CLI EPUB reader
     pkgs.glow # markdown viewer
     pkgs.lowdown # markdown cat
-    pkgs.recoll # desktop full-text search
     pkgs.sioyek # Qt document viewer
-    pkgs.tesseract # OCR helper
   ];
 in
 {
