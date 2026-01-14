@@ -26,7 +26,7 @@
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
     quickshell = {
-      url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
+      url = "git+https://git.outfoxxed.me/quickshell/quickshell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -76,14 +76,8 @@
       url = "github:e-tho/iwmenu";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-flatpak = {
-      url = "github:gmodena/nix-flatpak";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    nix-maid = {
-      url = "github:viperML/nix-maid";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    nix-flatpak.url = "github:gmodena/nix-flatpak";
+    nix-maid.url = "github:viperML/nix-maid";
 
     tailray = {
       url = "github:NotAShelf/tailray";
@@ -95,10 +89,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    wrapper-manager = {
-      url = "github:viperML/wrapper-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    wrapper-manager.url = "github:viperML/wrapper-manager";
 
     yazi = {
       url = "github:sxyazi/yazi";
