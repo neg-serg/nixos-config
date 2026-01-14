@@ -1329,6 +1329,14 @@ in
         pkgs.neg.music_clap
       ];
     };
+
+    virt = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.guestfs-tools
+        pkgs.lima
+        pkgs.quickemu
+      ];
+    };
   };
 
   apps =
