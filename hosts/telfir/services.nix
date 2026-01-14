@@ -47,6 +47,8 @@ lib.mkMerge [
     features.cli.yazi.enable = true;
     features.dev.tla.enable = true;
     features.apps.winapps.enable = false;
+    features.games.launchers.prismlauncher.enable = false;
+    features.games.launchers.heroic.enable = false;
     features.emulators.retroarch.enable = false;
     features.gui.hy3.enable = true;
     features.gui.walker.enable = false;

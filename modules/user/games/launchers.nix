@@ -82,9 +82,13 @@ in
 
     environment.systemPackages = [
       pkgs.protontricks # winetricks-like helper tailored for Steam Proton
+    ]
+    ++ (lib.optionals (config.features.games.launchers.prismlauncher.enable or true) [
       pkgs.prismlauncher # Minecraft launcher
+    ])
+    ++ (lib.optionals (config.features.games.launchers.heroic.enable or true) [
       pkgs.heroic # Epic, GOG, Amazon launcher
-    ];
+    ]);
 
     # Expose udev rules/devices used by various game controllers
     hardware.steam-hardware.enable = true;
