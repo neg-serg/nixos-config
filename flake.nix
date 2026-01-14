@@ -69,10 +69,7 @@
     };
 
     extra-container.url = "git+file:///home/neg/src/extra-container";
-    iwmenu = {
-      url = "github:e-tho/iwmenu";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+
     nix-flatpak.url = "github:gmodena/nix-flatpak";
     nix-maid.url = "github:viperML/nix-maid";
 
