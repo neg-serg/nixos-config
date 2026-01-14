@@ -20,6 +20,7 @@ let
       nixfmt-rfc-style = {
         enable = true;
         package = nixfmtPkg;
+        excludes = [ "flake.nix" ];
       };
       statix.enable = true;
       deadnix.enable = true;

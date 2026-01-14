@@ -4,6 +4,7 @@
 # Keep noise down and avoid rewriting encrypted or VCS-managed files
 excludes = [
   "flake.lock",
+  "flake.nix",
   ".git/*",
   "secrets/home/crypted/*",
   "shell/.config/tmux/plugins/tpm/**",
