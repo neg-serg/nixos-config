@@ -99,111 +99,37 @@ lib.mkMerge [
     servicesProfiles = {
       # Local DNS rewrites for LAN names (service enable comes from roles)
       adguardhome.rewrites = [
-        {
-          domain = "telfir";
-          answer = "192.168.2.240";
-        }
-        {
-          domain = "telfir.local";
-          answer = "192.168.2.240";
-        }
+        { domain = "telfir"; answer = "192.168.2.240"; }
+        { domain = "telfir.local"; answer = "192.168.2.240"; }
       ];
       # Enable curated AdGuardHome filter lists
       adguardhome.filterLists = [
         # Core/general
-        {
-          name = "AdGuard DNS filter";
-          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt";
-          enabled = true;
-        }
-        {
-          name = "OISD full";
-          url = "https://big.oisd.nl/";
-          enabled = true;
-        }
-        {
-          name = "AdAway";
-          url = "https://raw.githubusercontent.com/AdAway/adaway.github.io/master/hosts.txt";
-          enabled = false;
-        }
+        { name = "AdGuard DNS filter"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt"; enabled = true; }
+        { name = "OISD full"; url = "https://big.oisd.nl/"; enabled = true; }
+        { name = "AdAway"; url = "https://raw.githubusercontent.com/AdAway/adaway.github.io/master/hosts.txt"; enabled = false; }
 
         # Well-known hostlists (mostly covered by OISD, kept optional)
-        {
-          name = "Peter Lowe's Blocklist";
-          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_3.txt";
-          enabled = false;
-        }
-        {
-          name = "Dan Pollock's Hosts";
-          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_4.txt";
-          enabled = false;
-        }
-        {
-          name = "Steven Black's List";
-          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_33.txt";
-          enabled = false;
-        }
+        { name = "Peter Lowe's Blocklist"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_3.txt"; enabled = false; }
+        { name = "Dan Pollock's Hosts"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_4.txt"; enabled = false; }
+        { name = "Steven Black's List"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_33.txt"; enabled = false; }
 
         # Security-focused
-        {
-          name = "Dandelion Sprout Anti‑Malware";
-          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_12.txt";
-          enabled = true;
-        }
-        {
-          name = "Phishing Army";
-          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_18.txt";
-          enabled = true;
-        }
-        {
-          name = "URLHaus Malicious URL";
-          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt";
-          enabled = true;
-        }
-        {
-          name = "Scam Blocklist (DurableNapkin)";
-          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_10.txt";
-          enabled = true;
-        }
+        { name = "Dandelion Sprout Anti‑Malware"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_12.txt"; enabled = true; }
+        { name = "Phishing Army"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_18.txt"; enabled = true; }
+        { name = "URLHaus Malicious URL"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt"; enabled = true; }
+        { name = "Scam Blocklist (DurableNapkin)"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_10.txt"; enabled = true; }
 
         # Niche/optional
-        {
-          name = "NoCoin (Cryptomining)";
-          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_8.txt";
-          enabled = false;
-        }
-        {
-          name = "Smart‑TV Blocklist";
-          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_7.txt";
-          enabled = false;
-        }
-        {
-          name = "Game Console Adblock";
-          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_6.txt";
-          enabled = false;
-        }
-        {
-          name = "1Hosts Lite";
-          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_24.txt";
-          enabled = false;
-        }
-        {
-          name = "1Hosts Xtra";
-          url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_70.txt";
-          enabled = false;
-        }
+        { name = "NoCoin (Cryptomining)"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_8.txt"; enabled = false; }
+        { name = "Smart‑TV Blocklist"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_7.txt"; enabled = false; }
+        { name = "Game Console Adblock"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_6.txt"; enabled = false; }
+        { name = "1Hosts Lite"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_24.txt"; enabled = false; }
+        { name = "1Hosts Xtra"; url = "https://adguardteam.github.io/HostlistsRegistry/assets/filter_70.txt"; enabled = false; }
 
         # Regional (RU) — Adblock syntax lists; optional at DNS level
-        {
-          name = "AdGuard Russian filter";
-          url = "https://filters.adtidy.org/extension/ublock/filters/2.txt";
-          enabled = true;
-        }
-        {
-          name = "RU AdList + EasyList";
-          url = "https://easylist-downloads.adblockplus.org/ruadlist+easylist.txt";
-          enabled = true;
-        }
+        { name = "AdGuard Russian filter"; url = "https://filters.adtidy.org/extension/ublock/filters/2.txt"; enabled = true; }
+        { name = "RU AdList + EasyList"; url = "https://easylist-downloads.adblockplus.org/ruadlist+easylist.txt"; enabled = true; }
       ];
       # Explicitly override media role to keep Jellyfin off on this host
       jellyfin.enable = false;
@@ -213,10 +139,7 @@ lib.mkMerge [
       samba.enable = true;
       # Run a Bitcoin Core node with data stored under /zero/bitcoin-node
       # Temporarily disabled
-      bitcoind = {
-        enable = false;
-        dataDir = "/zero/bitcoin-node";
-      };
+      bitcoind = { enable = false; dataDir = "/zero/bitcoin-node"; };
       duckdns = lib.mkIf hasDuckdnsSecret {
         enable = true;
         domain = "${config.networking.hostName}.duckdns.org";
@@ -230,31 +153,9 @@ lib.mkMerge [
     # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
 
     monitoring = {
-      # Disable Netdata on this host (keep other monitoring like sysstat)
-      netdata.enable = false;
-      # Disable centralized logs (Loki + Promtail) for this host
-      logs.enable = false;
-      # Keep Grafana wiring available but disabled on this host
-      grafana = {
-        enable = false;
-        port = 3030;
-        # Serve Grafana only via Caddy: bind to localhost and do not open the port
-        listenAddress = "127.0.0.1";
-        openFirewall = false;
-        firewallInterfaces = [ "br0" ];
-        # Admin via SOPS secret (if present)
-        adminUser = "admin";
-        # Point to the SOPS-managed file below (only when the secret is defined)
-        adminPasswordFile = lib.attrByPath [ "sops" "secrets" "grafana/admin_password" "path" ] null config;
-        # HTTPS via Caddy on grafana.telfir
-        caddyProxy = {
-          enable = true;
-          domain = "grafana.telfir";
-          tlsInternal = true;
-          openFirewall = true;
-          firewallInterfaces = [ "br0" ];
-        };
-      };
+      netdata.enable = false; # Disable Netdata on this host
+      logs.enable = false; # Disable centralized logs (Loki + Promtail) for this host
+      grafana = { enable = false; }; # Keep Grafana wiring available but disabled on this host
     };
 
     # Disable RNNoise virtual mic for this host by default
@@ -268,32 +169,27 @@ lib.mkMerge [
         # Aggressive silence at idle, ramp up quickly under load
         minTemp = 62; # °C — stay quiet until significant heat
         maxTemp = 75; # °C — reach full speed before hitting thermal limit
-        minPwm = 15; # 0–255, absolute minimum (fans may stall)
+        minPwm = 64; # ~25% (was 15), absolute minimum (fans may stall)
         maxPwm = 255; # full power for cooling headroom
         hysteresis = 5; # reduce fan speed oscillation
         interval = 2; # responsive polling
         allowStop = false; # fans never fully stop for safety
         minStartOverride = 150; # reliable spin-up from low PWM
-        gpuPwmChannels = [
-          2
-          3
-        ]; # case fans follow GPU temperature
+        gpuPwmChannels = [ 2 3 ]; # case fans follow GPU temperature
       };
+
       gpuFancontrol = {
         enable = true;
         # GPU fan stays silent at idle, ramps for load
         minTemp = 62; # °C — GPU fan quiet until significant heat
-        maxTemp = 80; # °C — full speed well before throttle point
-        minPwm = 15; # 0–255, absolute minimum
+        maxTemp = 75; # °C — full speed well before throttle point
+        minPwm = 15; # ~25% (was 15), absolute minimum
         maxPwm = 255; # maximum cooling
         hysteresis = 5; # stability
       };
     };
 
-    networking.firewall.interfaces.br0.allowedTCPPorts = lib.mkAfter [
-      80
-      443
-    ];
+    networking.firewall.interfaces.br0.allowedTCPPorts = lib.mkAfter [ 80 443 ];
 
     # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
     environment.systemPackages = lib.mkAfter [
@@ -406,6 +302,7 @@ lib.mkMerge [
           localsearch.enable = true;
           tinysparql.enable = true;
         };
+
         udev.packages = lib.mkAfter [ pkgs.openrgb ];
         power-profiles-daemon.enable = true;
         # Do not expose AdGuard Home Prometheus metrics on this host
@@ -611,11 +508,8 @@ lib.mkMerge [
       nativeBaseFps = 240;
     };
 
-    # Limit auto-picked V-Cache CPU set size for game-run pinning
-    environment.variables.GAME_PIN_AUTO_LIMIT = "8";
-
-    # AutoFDO tooling disabled on this host (module kept)
-    dev.gcc.autofdo.enable = false;
+    environment.variables.GAME_PIN_AUTO_LIMIT = "8"; # Limit auto-picked V-Cache CPU set size for game-run pinning
+    dev.gcc.autofdo.enable = false; # AutoFDO tooling disabled on this host (module kept)
 
     systemd = {
       # Ensure auxiliary data directories exist with correct ownership
@@ -716,29 +610,6 @@ lib.mkMerge [
         # Disable runtime logrotate check (build-time check remains). Avoids false negatives
         # when rotating files under non-standard paths or missing until first run.
         logrotate-checkconf.enable = false;
-
-        # Materialize Nextcloud admin password from SOPS into /var/lib/nextcloud/adminpass
-        # "nextcloud-adminpass-from-sops" = {
-        #   description = "Materialize Nextcloud admin password from SOPS";
-        #   wantedBy = [ "multi-user.target" ];
-        #   after = [ "local-fs.target" ];
-        #   serviceConfig = {
-        #     Type = "oneshot";
-        #     Environment = "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt";
-        #     ExecStart = lib.getExe (
-        #       pkgs.writeShellScriptBin "nextcloud-adminpass" ''
-        #         set -euo pipefail
-        #         umask 077
-        #         install -d -m 0700 -o nextcloud -g nextcloud /var/lib/nextcloud
-        #         ${pkgs.sops}/bin/sops -d --extract '["data"]' ${
-        #           inputs.self + "/secrets/nextcloud-admin-password.sops.yaml"
-        #         } > /var/lib/nextcloud/adminpass
-        #         chown nextcloud:nextcloud /var/lib/nextcloud/adminpass
-        #         chmod 0400 /var/lib/nextcloud/adminpass
-        #       ''
-        #     );
-        #   };
-        # };
 
         # Inject Resilio Web UI credentials from SOPS into generated config.json
         resilio = lib.mkIf (hasResilioSecret && config.services.resilio.enable) {
