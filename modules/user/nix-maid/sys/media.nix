@@ -212,4 +212,14 @@ lib.mkMerge [
       # session_key = "" # Generated via `rescrobbled` auth
     '';
   })
+
+  (lib.mkIf (config.features.media.aiUpscale.enable or false) (
+    n.mkHomeFiles {
+      ".local/bin/ai-upscale-video" = {
+        executable = true;
+        text = builtins.readFile ../scripts/ai-upscale-video.sh;
+      };
+      ".config/mpv/scripts/realesrgan.vpy".source = n.linkImpure ../scripts/realesrgan.vpy;
+    }
+  ))
 ]

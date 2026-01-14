@@ -53,7 +53,8 @@ in
         Alt+0 apply-profile ai-off
         Alt+1 apply-profile ai-fsrcnnx
         Alt+2 apply-profile ai-anime4k
-
+      ''
+      + lib.optionalString (config.features.media.aiUpscale.enable or false) ''
         # AI Upscale Bindings
         Alt+I vf toggle vapoursynth=~~/vs/ai/realesrgan.vpy:buffered-frames=3:concurrent-frames=1
         Alt+U run "/bin/sh" "-c" "~/.local/bin/ai-upscale-video \"$path\""
