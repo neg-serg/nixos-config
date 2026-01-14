@@ -29,8 +29,9 @@
     pkgs.tokei # fast code statistics
 
     # Radicle tooling
-    pkgs.radicle-node # Radicle node/server
-    pkgs.radicle-explorer # Radicle web explorer
+    # Refactored to devShells.radicle
+    # pkgs.radicle-node # Radicle node/server
+    # pkgs.radicle-explorer # Radicle web explorer
 
     # General runtimes & helpers
     pkgs.deheader # trim redundant C/C++ includes
