@@ -22,6 +22,7 @@ in
 
     net = {
       tailscale.enable = mkBool "enable Tailscale mesh VPN and Tailray GUI" false;
+      wifi.enable = mkBool "enable Wi-Fi stack and management tools (iwd, wavemon, etc.)" false;
     };
 
     hardware = {

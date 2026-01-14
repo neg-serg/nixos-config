@@ -9,6 +9,9 @@
   pkgs,
   ...
 }:
+let
+  wifiEnabled = config.profiles.network.wifi.enable || (config.features.net.wifi.enable or false);
+in
 {
   # Open KDE Connect ports only if the program is enabled
   networking.firewall = lib.mkIf (config.programs.kdeconnect.enable or false) {
@@ -74,15 +77,16 @@
     pkgs.iputils # Networking utilities (ping, arping, etc.)
     pkgs.netcat-openbsd # TCP/IP swiss army knife (OpenBSD variant)
     pkgs.w3m # Text-mode web browser and pager
-
+  ]
+  ++ (lib.optionals wifiEnabled [
     # -- WiFi --
     # Refactored to devShells.pentest: aircrack-ng, hcxdumptool, impala
     pkgs.iwd # install iwd without enabling the service
-  ];
+  ]);
 
   # Expose iwd's systemd unit so it can be started manually when required
-  systemd.packages = [ pkgs.iwd ];
+  systemd.packages = lib.optionals wifiEnabled [ pkgs.iwd ];
 
   # Provide D-Bus service definition for manual activation of iwd
-  services.dbus.packages = [ pkgs.iwd ];
+  services.dbus.packages = lib.optionals wifiEnabled [ pkgs.iwd ];
 }
