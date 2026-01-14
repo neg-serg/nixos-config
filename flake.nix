@@ -72,9 +72,18 @@
     };
 
     extra-container.url = "git+file:///home/neg/src/extra-container";
-    iwmenu.url = "github:e-tho/iwmenu";
-    nix-flatpak.url = "github:gmodena/nix-flatpak";
-    nix-maid.url = "github:viperML/nix-maid";
+    iwmenu = {
+      url = "github:e-tho/iwmenu";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-flatpak = {
+      url = "github:gmodena/nix-flatpak";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-maid = {
+      url = "github:viperML/nix-maid";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     tailray = {
       url = "github:NotAShelf/tailray";
@@ -86,7 +95,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    wrapper-manager.url = "github:viperML/wrapper-manager";
+    wrapper-manager = {
+      url = "github:viperML/wrapper-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     yazi = {
       url = "github:sxyazi/yazi";
