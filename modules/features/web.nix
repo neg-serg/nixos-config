@@ -12,7 +12,7 @@ in
         "firefox"
         "librewolf"
         "nyxt"
-        "yandex"
+
         "chrome"
         "brave"
         "vivaldi"
@@ -30,7 +30,7 @@ in
     firefox.enable = mkBool "enable Firefox browser" false;
     librewolf.enable = mkBool "enable LibreWolf browser" false;
     nyxt.enable = mkBool "enable Nyxt browser" true;
-    yandex.enable = mkBool "enable Yandex browser" true;
+
     chrome.enable = mkBool "enable Google Chrome browser" true;
     brave.enable = mkBool "enable Brave browser" false;
     vivaldi.enable = mkBool "enable Vivaldi browser" false;
