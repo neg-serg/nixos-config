@@ -12,7 +12,6 @@ let
   hyprAppsConf = pkgs.writeText "hypr-apps.conf" ''
     bind = $M4, d, exec, $pypr toggle teardown
     bind = $M4, e, exec, $pypr toggle im
-    bind = $M4, v, exec, $pypr toggle discord
     bind = $M4, f, exec, $pypr toggle music
     bind = $M4, t, exec, $pypr toggle torrment
     bind = $M4+$C, p, exec, $pypr toggle mixer
