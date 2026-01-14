@@ -37,6 +37,10 @@
         appId = "org.libreoffice.LibreOffice";
         origin = "flathub";
       }
+      {
+        appId = "net.lutris.Lutris";
+        origin = "flathub";
+      }
     ];
     update.onActivation = false;
   };
