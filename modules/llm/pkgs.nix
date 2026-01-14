@@ -1,10 +1,8 @@
 { pkgs, ... }:
 {
   environment.systemPackages = [
-    pkgs.aichat # Use GPT-4(V), Gemini, LocalAI, Ollama, etc. in terminal
-    pkgs.aider-chat # Aider CLI assistant
-    pkgs.codex # lightweight coding agent that runs in your terminal
-    pkgs.openai # Python client library for OpenAI API
-    pkgs.voxinput # voice→text via LocalAI/OpenAI + dotool/uinput
+
+    # Most LLM CLI tools moved to devShells.ai (aichat, aider-chat, codex, openai)
+    pkgs.voxinput # voice→text via LocalAI/OpenAI + dotool/uinput (system-level utility)
   ];
 }
