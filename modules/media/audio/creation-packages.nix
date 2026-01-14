@@ -9,9 +9,7 @@
 }:
 let
   enabled = config.roles.workstation.enable or false;
-  tidalGhci = pkgs.writeShellScriptBin "tidal-ghci" ''
-    exec ${pkgs.ghc.withPackages (ps: [ ps.tidal ])}/bin/ghci "$@"
-  '';
+
   packages = [
     # -- DAWs / Editors --
     pkgs.bespokesynth # modular DAW for live coding / patching
@@ -20,10 +18,8 @@ let
 
     # -- Live Coding --
     pkgs.glicol-cli # audio DSL for generative compositions
-    pkgs.haskellPackages.tidal # TidalCycles live-coding library
     pkgs.supercollider # SuperCollider IDE and audio engine
     pkgs.supercolliderPlugins.sc3-plugins # extra SuperCollider plugins (UGens)
-    tidalGhci # GHCi wrapper with Tidal preloaded
 
     # -- Noise Processing --
     pkgs.noisetorch # PulseAudio/PipeWire microphone noise gate
