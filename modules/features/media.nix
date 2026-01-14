@@ -38,6 +38,7 @@ in
       creation.enable = mkBool "enable audio creation stack (DAW, synths)" true;
       mpd.enable = mkBool "enable MPD stack (mpd, clients, mpdris2)" true;
       spotify.enable = mkBool "enable Spotify stack (spotifyd daemon, spotify-tui)" false;
+      carlaLoopback.enable = mkBool "enable virtual loopback sink for Carla" false;
     };
     webcam.enable = mkBool "enable virtual webcam support (webcamize, v4l2loopback)" false;
   };
