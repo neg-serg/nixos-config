@@ -6,10 +6,10 @@
 {
   environment.systemPackages = lib.unique ([
     # Former base system dev helpers
-    pkgs.just # command runner for project tasks
     pkgs.freeze # render source files to images
     pkgs.hexyl # hexdump viewer
     pkgs.hyperfine # benchmarking tool
+    pkgs.just # command runner for project tasks
     pkgs.license-generator # CLI license boilerplates
     pkgs.lzbench # compression benchmark
     pkgs.pkgconf # pkg-config wrapper
@@ -27,11 +27,6 @@
     pkgs.cloc # count lines of code
     pkgs.scc # parallel code counter
     pkgs.tokei # fast code statistics
-
-    # Radicle tooling
-    # Refactored to devShells.radicle
-    # pkgs.radicle-node # Radicle node/server
-    # pkgs.radicle-explorer # Radicle web explorer
 
     # General runtimes & helpers
     pkgs.deheader # trim redundant C/C++ includes
