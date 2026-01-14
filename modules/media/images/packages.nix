@@ -33,9 +33,7 @@ let
     pkgs.scour # SVG minifier to shrink UI assets
 
     # -- Editors --
-    pkgs.darktable # RAW editor/dam tailored to photographers
     pkgs.gimp # full-featured raster editor
-    pkgs.rawtherapee # alternative RAW developer (non-destructive)
 
     # -- Metadata --
     pkgs.exiftool # swiss-army EXIF inspector used in scripts
@@ -51,7 +49,6 @@ let
     pkgs.zbar # CLI barcode/QR scanner for verification
 
     # -- Recovery --
-    pkgs.testdisk-qt # photorec GUI for image recovery
 
     # -- Viewer --
     pkgs.swayimg # primary image viewer with IPC hooks
