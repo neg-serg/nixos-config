@@ -2,7 +2,7 @@
   pkgs,
   lib,
   config,
-  inputs ? { },
+
   yandexBrowserProvider ? null,
   ...
 }:
@@ -11,13 +11,7 @@ let
   yandexEnabled = config.features.web.yandex.enable or false;
   enabled = webEnabled && yandexEnabled;
 
-  yandexInput =
-    if yandexBrowserProvider != null then
-      yandexBrowserProvider pkgs
-    else if inputs ? "yandex-browser" then
-      inputs."yandex-browser".packages.${pkgs.stdenv.hostPlatform.system}
-    else
-      null;
+  yandexInput = if yandexBrowserProvider != null then yandexBrowserProvider pkgs else null;
   yandexPkgRaw = if yandexInput != null then yandexInput.yandex-browser-stable else null;
   yandexPkg =
     if yandexPkgRaw != null then
@@ -39,7 +33,7 @@ in
   # nixpkgs.config.permittedInsecurePackages moved to flake/pkgs-config.nix
 
   # Using mkMerge for the conditional configuration part
-  environment.systemPackages = lib.mkIf enabled [ yandexPkg ];
+  environment.systemPackages = lib.mkIf (enabled && yandexPkg != null) [ yandexPkg ];
 
   programs.chromium = lib.mkIf enabled {
     enable = true;
