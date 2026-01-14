@@ -55,10 +55,8 @@ let
     mkdir -p $out
     # Copy all static configs from files/
     cp ${filesRoot}/media/pipewire/pipewire.conf.d/*.conf $out/
-
     # Remove the loopback sink if not enabled
     ${lib.optionalString (!cfgAudio.carlaLoopback.enable) "rm -f $out/10-virtual-sink.conf"}
-
     # Add the generated rnnoise config
     ln -s ${pkgs.writeText "99-rnnoise.conf" rnnoiseConf} $out/99-rnnoise.conf
   '';
