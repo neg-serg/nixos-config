@@ -4,6 +4,5 @@
   ...
 }:
 lib.mkIf (config.features.flatpak.enable or true) {
-  # Flatpak Integration
-  services.flatpak.enable = true;
+  services.flatpak.enable = true; # Flatpak Integration
 }
