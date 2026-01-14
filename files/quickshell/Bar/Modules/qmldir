@@ -1,0 +1,18 @@
+module qs.Bar.Modules
+AudioEndpointTile 1.0 AudioEndpointTile.qml
+Calendar 1.0 Calendar.qml
+ClockWidget 1.0 ClockWidget.qml
+CustomTrayMenu 1.0 CustomTrayMenu.qml
+KeyboardLayoutHypr 1.0 KeyboardLayoutHypr.qml
+Media 1.0 Media.qml
+Microphone 1.0 Microphone.qml
+MpdFlags 1.0 MpdFlags.qml
+NetClusterCapsule 1.0 NetClusterCapsule.qml
+NetworkLinkIndicator 1.0 NetworkLinkIndicator.qml
+NetworkUsage 1.0 NetworkUsage.qml
+SystemTray 1.0 SystemTray.qml
+Time 1.0 Time.qml
+Volume 1.0 Volume.qml
+VpnAmneziaIndicator 1.0 VpnAmneziaIndicator.qml
+WeatherButton 1.0 WeatherButton.qml
+WsIndicator 1.0 WsIndicator.qml

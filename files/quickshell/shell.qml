@@ -42,7 +42,4 @@ Scope {
         repeat: false
         onTriggered: root.quickshell.reload(true)
     }
-
-    // Volume/mute updates are handled inside Services/Audio
-
 }
