@@ -322,7 +322,7 @@
     ./user/nix-maid/web/surfingkeys-server.nix
     ./user/nix-maid/web/tridactyl.nix
     ./user/nix-maid/web/vivaldi.nix
-    ./user/nix-maid/web/yandex.nix
+
     ./user/nix-maid/web/yt-dlp.nix
     ./user/nvf.nix
     ./user/psd/default.nix
