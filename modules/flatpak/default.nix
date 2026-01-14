@@ -33,6 +33,10 @@
         appId = "org.chromium.Chromium";
         origin = "flathub";
       }
+      {
+        appId = "org.libreoffice.LibreOffice";
+        origin = "flathub";
+      }
     ];
     update.onActivation = false;
   };
