@@ -9,6 +9,10 @@ in
       enable = mkBool "enable Games stack" true;
       nethack.enable = mkBool "enable Nethack" true;
       dosemu.enable = mkBool "enable Dosemu" true;
+      launchers = {
+        prismlauncher.enable = mkBool "enable PrismLauncher" true;
+        heroic.enable = mkBool "enable Heroic Launcher" true;
+      };
     };
 
     emulators = {
