@@ -1026,6 +1026,11 @@ in
         pkgs.nil # nix language server
         pkgs.just # command runner
         pkgs.jq # json processor
+        # Linters/Formatters required by 'just lint' (moved from system pkgs)
+        pkgs.black
+        pkgs.ruff
+        pkgs.mypy
+        pkgs.stylua
       ];
     };
 
