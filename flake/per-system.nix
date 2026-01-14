@@ -1322,6 +1322,12 @@ in
         pkgs.gmic
       ];
     };
+
+    "music-clap" = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.neg.music_clap
+      ];
+    };
   };
 
   apps =
