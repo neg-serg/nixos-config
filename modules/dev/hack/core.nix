@@ -19,7 +19,7 @@ let
       pkgs.katana # fast web crawler for recon
     ];
   };
-  packages = hackLib.filterPackages (hackLib.mkGroupPackages flags groups);
+# _packages = hackLib.filterPackages (hackLib.mkGroupPackages flags groups);
 in
 {
   config = lib.mkIf hackLib.enabled {
