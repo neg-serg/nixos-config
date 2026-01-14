@@ -1,2 +1,4 @@
-{ ... }: { # Content moved to devShells.pentest 
+{ ... }:
+{
+  # Content moved to devShells.pentest
 }
