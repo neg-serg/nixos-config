@@ -1303,6 +1303,18 @@ in
         pkgs.git-annex
       ];
     };
+
+    latex = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.rubber
+        (pkgs.texlive.combined.scheme-full.withPackages (ps: [
+          ps.cyrillic
+          ps.cyrillic-bin
+          ps.collection-langcyrillic
+          ps.context-cyrillicnumbers
+        ]))
+      ];
+    };
   };
 
   apps =
