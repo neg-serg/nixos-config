@@ -1128,6 +1128,16 @@ in
           pkgs.stylua
         ];
       };
+
+      android = pkgs.mkShell {
+        nativeBuildInputs = [
+          pkgs.android-tools
+          pkgs.scrcpy
+          pkgs.adbfs-rootless
+          pkgs.adbtuifm
+        ]
+        ++ lib.optionals (pkgs ? fuse3) [ pkgs.fuse3 ];
+      };
     };
   };
 
