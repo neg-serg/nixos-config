@@ -39,7 +39,11 @@ in
       mpd.enable = mkBool "enable MPD stack (mpd, clients, mpdris2)" true;
       spotify.enable = mkBool "enable Spotify stack (spotifyd daemon, spotify-tui)" false;
       carlaLoopback.enable = mkBool "enable virtual loopback sink for Carla" false;
+      proAudio.enable = mkBool "enable professional audio tools (REW, OpenSoundMeter, rtcqs)" false;
+      cider.enable = mkBool "enable Cider (Apple Music client)" false;
+      yandexMusic.enable = mkBool "enable Yandex Music client" false;
     };
+    photo.enable = mkBool "enable photography workflow (darktable, rawtherapee, testdisk)" false;
     webcam.enable = mkBool "enable virtual webcam support (webcamize, v4l2loopback)" false;
   };
 }
