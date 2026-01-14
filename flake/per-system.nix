@@ -1297,6 +1297,12 @@ in
         pkgs.dump_syms
       ];
     };
+
+    gitops = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.git-annex
+      ];
+    };
   };
 
   apps =

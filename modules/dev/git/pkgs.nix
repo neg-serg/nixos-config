@@ -16,7 +16,7 @@ in
     pkgs.git-filter-repo # quickly rewrite git history
     pkgs.bfg-repo-cleaner # BFG: fast Git history cleaner
     pkgs.git-lfs # git extension for large files
-    pkgs.git-annex # manage large/partial content with git
+    # pkgs.git-annex # moved to devShells.gitops
     pkgs.git # my favorite DVCS
     pkgs.act # run GitHub Actions locally
     pkgs.gh # GitHub CLI
