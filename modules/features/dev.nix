@@ -97,6 +97,7 @@ in
         basaltMonado.enable = mkBool "install optional basalt-monado tools" false;
       };
     };
+    bpf.enable = mkBool "enable BPF tracing tools (bpftrace, below)" false;
   };
 
   options.features.hack.enable = mkBool "enable Hack/security tooling stack" true;
