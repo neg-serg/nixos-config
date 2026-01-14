@@ -31,11 +31,11 @@
     pkgs.bandwhich # Display network utilization per process in real-time
     pkgs.iftop # Display bandwidth usage on an interface
     pkgs.netsniff-ng # High-performance Linux networking toolkit
-    pkgs.tcpdump # Command-line network packet analyzer
-    pkgs.termshark # Terminal UI for tshark (Wireshark-inspired)
-    pkgs.trippy # Network diagnostic tool (ping + traceroute + mtr)
-    pkgs.tshark # Terminal-based Wireshark
-    pkgs.wireshark # GUI network protocol analyzer
+    # pkgs.tcpdump - Refactored to devShells.pentest
+    # pkgs.termshark - Refactored to devShells.pentest
+    # pkgs.trippy - Refactored to devShells.pentest
+    # pkgs.tshark - Refactored to devShells.pentest
+    # pkgs.wireshark - Refactored to devShells.pentest
 
     # -- DNS --
     pkgs.dnsutils # dns command-line tools (dig, nslookup)
@@ -54,19 +54,14 @@
     pkgs.xh # Friendly and fast tool to send HTTP requests
 
     # -- IP / Routing --
-    pkgs.fping # Multi-target ping (faster than ping -c1)
+    # pkgs.fping - Refactored to devShells.pentest
     pkgs.geoip # IP-to-location lookup utility
     pkgs.ipcalc # IPv4/IPv6 address calculator
-    pkgs.tcptraceroute # Traceroute using TCP SYN packets
+    # pkgs.tcptraceroute - Refactored to devShells.pentest
     pkgs.traceroute # Print the route packets trace to network host
 
     # -- Network Scanning --
-    pkgs.masscan # Extremely fast port scanner
-    pkgs.netdiscover # Active/passive ARP reconnaissance tool
-    pkgs.netscanner # Network scanner with TUI
-    pkgs.nmap # Versatile network exploration and security auditing tool
-    pkgs.rustscan # Port scanner optimized for speed (rust-based)
-    pkgs.zmap # Internet-scale network scanner for IPv4 adress space
+    # Refactored to devShells.pentest: masscan, netdiscover, netscanner, nmap, rustscan, zmap
 
     # -- Remote / Transfer --
     pkgs.rclone # Sync files to/from cloud storage (S3, Drive, etc.)
@@ -81,9 +76,7 @@
     pkgs.w3m # Text-mode web browser and pager
 
     # -- WiFi --
-    pkgs.aircrack-ng # stuff for wifi security
-    pkgs.hcxdumptool # wpa scanner
-    pkgs.impala # tui for wifi management
+    # Refactored to devShells.pentest: aircrack-ng, hcxdumptool, impala
     pkgs.iwd # install iwd without enabling the service
   ];
 
