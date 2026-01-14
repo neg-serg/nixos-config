@@ -1189,6 +1189,13 @@ in
         pkgs.keymapviz
       ];
     };
+
+    radicle = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.radicle-node
+        pkgs.radicle-explorer
+      ];
+    };
   };
 
   apps =
