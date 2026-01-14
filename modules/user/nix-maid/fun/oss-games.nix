@@ -2,6 +2,7 @@
   pkgs,
   lib,
   neg,
+  config,
   impurity ? null,
   ...
 }:
@@ -13,13 +14,18 @@ in
     {
       environment.systemPackages = [
         pkgs.mangohud # Gaming HUD
+      ];
+    }
+    (lib.mkIf config.features.games.oss.enable {
+      environment.systemPackages = [
         pkgs.superTux # 2D platformer
         pkgs.superTuxKart # arcade kart racer
         pkgs.wesnoth # turn-based strategy with campaigns
         pkgs.xonotic # arena FPS
         pkgs.zeroad # RTS set in ancient warfare
       ];
-    }
+    })
+
     (n.mkHomeFiles {
       # Mangohud Config
       ".config/MangoHud/MangoHud.conf".text = lib.generators.toKeyValue { } {

@@ -14,6 +14,7 @@ in
         heroic.enable = mkBool "enable Heroic Launcher" true;
         lutris.enable = mkBool "enable Lutris" true;
       };
+      oss.enable = mkBool "enable OSS Games (SuperTux, Wesnoth, etc.)" false;
     };
 
     emulators = {
