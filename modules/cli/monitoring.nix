@@ -15,5 +15,6 @@
   ++ (lib.optionals (config.features.dev.bpf.enable or false) [
     pkgs.below # time-traveling system monitor for Linux (BPF-based)
     pkgs.bpftrace # high-level tracing language for Linux eBPF
+    pkgs.neg.bpf_host_latency # BCC DNS latency tracer; deeper insight than dig/tcpdump
   ]);
 }

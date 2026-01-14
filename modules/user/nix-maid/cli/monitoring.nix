@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  config,
   neg,
   impurity ? null,
   ...
@@ -106,8 +107,13 @@ in
         pkgs.hwatch # Modern alternative to watch command with history
         pkgs.s-tui # Stress terminal UI for CPU monitoring
         pkgs.sysdig # System-wide visibility tool
-        pkgs.wavemon # Wireless device monitoring
-      ];
+      ]
+      ++ (lib.optionals
+        (config.profiles.network.wifi.enable || (config.features.net.wifi.enable or false))
+        [
+          pkgs.wavemon # Wireless device monitoring
+        ]
+      );
     }
     (n.mkHomeFiles {
       # Btop Config

@@ -4,6 +4,9 @@
   config,
   ...
 }:
+let
+  wifiEnabled = config.profiles.network.wifi.enable || (config.features.net.wifi.enable or false);
+in
 {
   environment.systemPackages = lib.unique (
     (lib.optionals (config.features.hardware.bluetooth.enable or false) [
@@ -11,12 +14,13 @@
       pkgs.bluez-tools # command line bluetooth manager
       pkgs.overskride # bluetooth and obex client
     ])
+    ++ (lib.optionals wifiEnabled [
+      # -- Network --
+      pkgs.wirelesstools # iwconfig/ifrename CLI helpers
+    ])
     ++ [
       # -- Display --
       pkgs.brightnessctl # backlight control helper
-
-      # -- Network --
-      pkgs.wirelesstools # iwconfig/ifrename CLI helpers
 
       # -- System Info --
       pkgs.acpi # ACPI probing utilities

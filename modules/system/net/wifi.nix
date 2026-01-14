@@ -8,17 +8,16 @@
   config,
   ...
 }:
-let
-  cfg = config.profiles.network.wifi or { enable = false; };
-in
 {
   options.profiles.network.wifi.enable = lib.mkEnableOption ''
     Enable Wi-Fi management (starts iwd). Use this on hosts that need wireless networking;
     the base network module keeps iwd disabled elsewhere to avoid unnecessary units.
   '';
 
-  config = lib.mkIf cfg.enable {
-    # Base module hard-disables iwd to keep hosts wired-only by default; opt-in hosts force-enable it.
-    networking.wireless.iwd.enable = lib.mkForce true;
-  };
+  config =
+    lib.mkIf (config.profiles.network.wifi.enable || (config.features.net.wifi.enable or false))
+      {
+        # Base module hard-disables iwd to keep hosts wired-only by default; opt-in hosts force-enable it.
+        networking.wireless.iwd.enable = lib.mkForce true;
+      };
 }

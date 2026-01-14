@@ -43,6 +43,9 @@ let
       enable = true;
       prometheus.enable = false;
     };
+    net = {
+      wifi.enable = false;
+    };
     apps = {
       obsidian.autostart.enable = false;
       winapps.enable = false;
