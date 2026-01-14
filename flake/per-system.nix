@@ -653,7 +653,7 @@ in
           # Known inputs from flake.nix
           inputs=(
             nixpkgs hyprland hy3 hyprland-protocols xdg-desktop-portal-hyprland
-            quickshell lanzaboote nvf nyx nur sops-nix spicetify-nix pre-commit-hooks
+            quickshell lanzaboote nvf nyx nur sops-nix pre-commit-hooks
             nix-index-database iosevka-neg rsmetrx impurity iwmenu nix-flatpak
             nix-maid pyprland raise tailray winapps wrapper-manager yazi yandex-browser
           )
