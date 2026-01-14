@@ -1287,6 +1287,16 @@ in
         pkgs.trippy
       ];
     };
+
+    elf = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.patchelf
+        pkgs.elfutils
+        pkgs.chrpath
+        pkgs.debugedit
+        pkgs.dump_syms
+      ];
+    };
   };
 
   apps =
