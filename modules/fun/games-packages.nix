@@ -23,13 +23,18 @@ let
     pkgs.gzdoom # open-source Doom engine
     pkgs.jazz2 # open source Jazz Jackrabbit 2
     pkgs.nethack # roguelike
-    pkgs.openmw # open-source engine for Morrowind
+
     pkgs.shattered-pixel-dungeon # roguelike
     pkgs.xaos # interactive fractal explorer
   ];
 in
 {
-  config = lib.mkIf enabled {
-    environment.systemPackages = lib.mkAfter packages;
-  };
+  config = lib.mkMerge [
+    (lib.mkIf enabled {
+      environment.systemPackages = lib.mkAfter packages;
+    })
+    (lib.mkIf config.features.games.openmw.enable {
+      environment.systemPackages = [ pkgs.openmw ];
+    })
+  ];
 }

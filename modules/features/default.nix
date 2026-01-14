@@ -63,6 +63,7 @@ in
     ./services.nix
     ./apps.nix
     ./misc.nix
+    ./hardware.nix
   ];
 
   # Apply profile defaults. Users can still override flags after this.

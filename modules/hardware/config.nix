@@ -63,34 +63,38 @@ in
     example = true;
   };
 
-  config = {
-    services = {
-      udisks2.enable = true;
-      upower.enable = true;
-      # Default to enabled, but allow per-host override via hardware.storage.autoMount.enable
-      devmon.enable = if (cfg.enable or null) == null then lib.mkDefault true else cfg.enable;
-      fwupd.enable = true;
-      # Trim SSDs weekly (non-destructive), better than mount-time discard for sustained perf
-      fstrim.enable = lib.mkDefault true;
-    };
+  config = lib.mkMerge [
+    {
+      services = {
+        udisks2.enable = true;
+        upower.enable = true;
+        # Default to enabled, but allow per-host override via hardware.storage.autoMount.enable
+        devmon.enable = if (cfg.enable or null) == null then lib.mkDefault true else cfg.enable;
+        fwupd.enable = true;
+        # Trim SSDs weekly (non-destructive), better than mount-time discard for sustained perf
+        fstrim.enable = lib.mkDefault true;
+      };
 
-    hardware = {
-      i2c.enable = true;
-      bluetooth = {
+      hardware = {
+        i2c.enable = true;
+        cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+        enableAllFirmware = true; # Enable all the firmware
+        usb-modeswitch.enable = true; # mode switching tool for controlling 'multi-mode' USB devices.
+        enableRedistributableFirmware = true;
+      };
+
+      # Packages moved to ./pkgs.nix
+
+      powerManagement.cpuFreqGovernor = "performance";
+    }
+    (lib.mkIf (config.features.hardware.bluetooth.enable or false) {
+      hardware.bluetooth = {
         enable = true; # disable bluetooth
         powerOnBoot = false;
         settings = {
           General.Enable = "Source,Sink,Media,Socket";
         };
       };
-      cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
-      enableAllFirmware = true; # Enable all the firmware
-      usb-modeswitch.enable = true; # mode switching tool for controlling 'multi-mode' USB devices.
-      enableRedistributableFirmware = true;
-    };
-
-    # Packages moved to ./pkgs.nix
-
-    powerManagement.cpuFreqGovernor = "performance";
-  };
+    })
+  ];
 }
