@@ -5,21 +5,16 @@
 }:
 let
   # Optional packages only available on some nixpkgs revisions.
-
   optionalIaCTools = lib.optionals (pkgs ? aiac) [ pkgs.aiac ]; # AI infrastructure as code generator
-  optionalRustDebugAdapters = lib.optionals (pkgs ? codelldb) [
-    pkgs.codelldb # LLDB-based debug adapter for Rust (DAP)
-  ];
+
 in
 {
   environment.systemPackages = lib.unique (
     [
       # Former base system dev helpers
       pkgs.just # command runner for project tasks
-      pkgs.bacon # background rust code checker
       pkgs.bpftrace # trace events via eBPF
       pkgs.cutter # Rizin-powered reverse engineering UI
-      pkgs.evcxr # Rust REPL
       pkgs.foremost # recover files from raw disk data
       pkgs.freeze # render source files to images
       pkgs.gcc # GNU compiler collection
@@ -63,6 +58,5 @@ in
 
     ]
     ++ optionalIaCTools
-    ++ optionalRustDebugAdapters
   );
 }
