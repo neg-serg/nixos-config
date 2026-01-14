@@ -1018,6 +1018,13 @@ in
   };
 
   devShells = {
+    # AI development shell (LLMs, etc.)
+    ai = pkgs.mkShell {
+      nativeBuildInputs = [
+        (pkgs.ai-studio or pkgs.lmstudio)
+      ];
+    };
+
     default = pkgs.mkShell {
       inherit (preCommit) shellHook;
       packages = [
