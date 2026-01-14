@@ -21,15 +21,6 @@ let
         multi = true;
         process_tracking = false; # Telegram is single-instance
       };
-      discord = {
-        animation = "fromRight";
-        command = "${lib.getExe pkgs.vesktop}";
-        class = "vesktop";
-        size = "50% 40%";
-        lazy = true;
-        multi = true;
-        process_tracking = false;
-      };
       music = {
         animation = "";
         command = "${lib.getExe pkgs.kitty} --class music -e ${lib.getExe pkgs.rmpc}";

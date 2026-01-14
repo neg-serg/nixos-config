@@ -45,7 +45,6 @@ let
     };
     apps = {
       obsidian.autostart.enable = false;
-      discord.system24Theme.enable = true;
       winapps.enable = false;
     };
   };

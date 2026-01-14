@@ -74,7 +74,6 @@ def glyph(cls: str) -> str:
         "zathura": "",
         "org.pwmt.zathura": "",
         "steam": "",
-        "discord": "",
         "obsidian": "",
         "obs": "",
         "swayimg": "",
