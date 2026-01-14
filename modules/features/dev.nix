@@ -41,7 +41,7 @@ in
         analysis = mkBool "enable reverse/binary analysis tools" true;
         network = mkBool "enable network forensics tools" true;
       };
-      pentest = mkBool "enable pentest tools" true;
+      pentest = mkBool "enable pentest tools" false;
     };
     rust = {
       enable = mkBool "enable Rust tooling (rustup, rust-analyzer)" true;

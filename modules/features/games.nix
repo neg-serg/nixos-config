@@ -12,7 +12,7 @@ in
       launchers = {
         prismlauncher.enable = mkBool "enable PrismLauncher" true;
         heroic.enable = mkBool "enable Heroic Launcher" true;
-        lutris.enable = mkBool "enable Lutris" true;
+        lutris.enable = mkBool "enable Lutris" false;
       };
       oss.enable = mkBool "enable OSS Games (SuperTux, Wesnoth, etc.)" false;
       openmw.enable = mkBool "enable OpenMW (Morrowind Engine)" false;

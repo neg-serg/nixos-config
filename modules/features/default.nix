@@ -13,7 +13,6 @@ let
       hy3.enable = true;
       qt.enable = true;
       quickshell.enable = true;
-      hyprexpo.enable = false;
     };
     web = {
       enable = true;
@@ -217,7 +216,6 @@ in
           quickshell.enable = mkForce false;
           hy3.enable = mkForce false;
           walker.enable = mkForce false;
-          hyprexpo.enable = mkForce false;
         };
       };
     })
@@ -241,10 +239,6 @@ in
         {
           assertion = cfg.gui.enable || (!cfg.gui.quickshell.enable);
           message = "features.gui.quickshell.enable requires features.gui.enable = true";
-        }
-        {
-          assertion = cfg.gui.enable || (!cfg.gui.hyprexpo.enable);
-          message = "features.gui.hyprexpo.enable requires features.gui.enable = true";
         }
         {
           assertion = cfg.gui.enable || (!cfg.gui.walker.enable);
