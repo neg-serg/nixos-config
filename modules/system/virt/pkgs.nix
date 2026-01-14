@@ -18,9 +18,10 @@ in
       pkgs.podman-tui # Podman status TUI
 
       # -- VM --
-      pkgs.guestfs-tools # virt-sysprep et al.
-      pkgs.lima # run Linux VMs
-      pkgs.quickemu # fast/simple VM builder
+      # moved to devShells.virt
+      # pkgs.guestfs-tools
+      # pkgs.lima
+      # pkgs.quickemu
 
       # -- Wine --
       pkgs.dxvk # setup script for DXVK
