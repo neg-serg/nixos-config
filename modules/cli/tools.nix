@@ -44,6 +44,7 @@ in
 
     # Utilities
     pkgs.amfora # Gemini/Gopher terminal client for text browsing
+    pkgs.comma # run commands from nixpkgs by name (",")
     pkgs.dcfldd # dd with progress/hash
     pkgs.dust # better du
     pkgs.erdtree # modern tree
@@ -52,8 +53,6 @@ in
     pkgs.libnotify # notify-send helper used by CLI scripts
     pkgs.moreutils # assorted unix utils (sponge, etc.)
     pkgs.ncdu # interactive du
-
-    pkgs.comma # run commands from nixpkgs by name (",")
     pkgs.neg.duf # better df (fork with plain style support)
     pkgs.neg.pretty_printer # ppinfo CLI + Python module for scripts
     pkgs.neg.two_percent # skim fork optimized as a faster fuzzy finder alternative
