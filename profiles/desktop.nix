@@ -6,4 +6,7 @@
     # ../modules/dev
     # ... (removed for flat structure)
   ];
+
+  features.games.launchers.lutris.enable = false;
+  features.apps.libreoffice.enable = false;
 }
