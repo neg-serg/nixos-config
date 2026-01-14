@@ -1086,10 +1086,11 @@ in
         pkgs.gdb
         pkgs.gcc # explicitly available in devshell
       ];
+    };
 
-      java = pkgs.mkShell {
+    java = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.jdk21
+        pkgs.jdk
         pkgs.gradle
       ];
     };
@@ -1125,60 +1126,60 @@ in
           pkgs.ansible
           pkgs.terraform
           pkgs.opentofu
-        ] ++ optionalIaCTools;
+        ]
+        ++ optionalIaCTools;
       };
 
     python =
-        let
-          # Replicating logic from modules/dev/python/pkgs.nix
-          myPythonPackages =
-            ps: with ps; [
-              # Core
-              annoy
-              beautifulsoup4
-              colored
-              docopt
-              fonttools
-              mutagen
-              numpy
-              orjson
-              pillow
-              psutil
-              requests
-              tabulate
-              # Tools
-              dbus-python
-              fontforge
-              neopyter
-              pynvim
-            ];
-          pythonEnv = pkgs.python3-lto.withPackages myPythonPackages;
-        in
-        pkgs.mkShell {
-          nativeBuildInputs = [
-            pythonEnv
-            pkgs.pipx
-            pkgs.black
-            pkgs.ruff
-            pkgs.mypy
+      let
+        # Replicating logic from modules/dev/python/pkgs.nix
+        myPythonPackages =
+          ps: with ps; [
+            # Core
+            annoy
+            beautifulsoup4
+            colored
+            docopt
+            fonttools
+            mutagen
+            numpy
+            orjson
+            pillow
+            psutil
+            requests
+            tabulate
+            # Tools
+            dbus-python
+            fontforge
+            neopyter
+            pynvim
           ];
-        };
-
-      lua = pkgs.mkShell {
+        pythonEnv = pkgs.python3-lto.withPackages myPythonPackages;
+      in
+      pkgs.mkShell {
         nativeBuildInputs = [
-          pkgs.stylua
+          pythonEnv
+          pkgs.pipx
+          pkgs.black
+          pkgs.ruff
+          pkgs.mypy
         ];
       };
 
-      android = pkgs.mkShell {
-        nativeBuildInputs = [
-          pkgs.android-tools
-          pkgs.scrcpy
-          pkgs.adbfs-rootless
-          pkgs.adbtuifm
-        ]
-        ++ lib.optionals (pkgs ? fuse3) [ pkgs.fuse3 ];
-      };
+    lua = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.stylua
+      ];
+    };
+
+    android = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.android-tools
+        pkgs.scrcpy
+        pkgs.adbfs-rootless
+        pkgs.adbtuifm
+      ]
+      ++ lib.optionals (pkgs ? fuse3) [ pkgs.fuse3 ];
     };
   };
 
