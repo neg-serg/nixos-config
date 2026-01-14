@@ -1014,7 +1014,6 @@ in
           touch "$out"
         '';
 
-
   };
 
   devShells = {
@@ -1067,10 +1066,22 @@ in
           pkgs.bacon # background rust code checker
           pkgs.evcxr # Rust REPL
           pkgs.lldb # LLVM debugger
-          pkgs.ccache # compiler cache
         ]
         ++ optionalRustDebugAdapters;
       };
+    cpp = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.clang
+        pkgs.clang-tools
+        pkgs.cmake
+        pkgs.ninja
+        pkgs.bear
+        pkgs.ccache
+        pkgs.lldb
+        pkgs.gdb
+        pkgs.gcc # explicitly available in devshell
+      ];
+    };
   };
 
   apps =

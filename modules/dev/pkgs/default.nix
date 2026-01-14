@@ -17,7 +17,6 @@ in
       pkgs.cutter # Rizin-powered reverse engineering UI
       pkgs.foremost # recover files from raw disk data
       pkgs.freeze # render source files to images
-      pkgs.gcc # GNU compiler collection
       pkgs.hexyl # hexdump viewer
       pkgs.hyperfine # benchmarking tool
       pkgs.license-generator # CLI license boilerplates
