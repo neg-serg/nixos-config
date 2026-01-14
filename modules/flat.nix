@@ -346,6 +346,5 @@
     ./web/browsers.nix
     ./web/default.nix
     ./web/nyxt.nix
-    ./web/qutebrowser.nix
   ];
 }
