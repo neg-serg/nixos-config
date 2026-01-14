@@ -4,7 +4,6 @@
   ...
 }:
 let
-  inherit (nixpkgs) lib;
 
   hyprlandOverlay =
     system:
@@ -14,9 +13,6 @@ let
         # "borders-plus-plus" = inputs.hyprland-plugins.packages.${system}."borders-plus-plus";
         # dynamic-cursors removed
         hy3 = inputs.hy3.packages.${system}.hy3;
-        hyprexpo = prev.hyprlandPlugins.hyprexpo.overrideAttrs (old: {
-          buildInputs = [ prev.hyprland ] ++ (lib.filter (i: i.pname or "" != "hyprland") old.buildInputs);
-        });
       };
     });
   # Note: inputs.hyprland.overlays.default is applied separately in mkPkgs
