@@ -2,17 +2,15 @@
   lib,
   pkgs,
   config,
-  yandexBrowserProvider ? null,
+
   ...
 }:
 with lib;
 let
   cfg = config.features.web;
-  needYandex = (cfg.enable or false) && (cfg.yandex.enable or false);
-  yandexBrowser =
-    if needYandex && yandexBrowserProvider != null then yandexBrowserProvider pkgs else null;
+
   browsers = import ./browsers-table.nix {
-    inherit lib pkgs yandexBrowser;
+    inherit lib pkgs;
     nyxt4 = null;
   }; # Updated import path
   browser =

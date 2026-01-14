@@ -1,7 +1,7 @@
 {
   lib,
   pkgs,
-  yandexBrowser ? null,
+
   nyxt4 ? null,
   ...
 }:
@@ -74,12 +74,3 @@ in
     newTabArg = "--new-tab";
   };
 }
-// (lib.optionalAttrs (yandexBrowser != null) {
-  yandex = {
-    name = "yandex";
-    pkg = yandexBrowser.yandex-browser-stable;
-    bin = lib.getExe' yandexBrowser.yandex-browser-stable "yandex-browser-stable";
-    desktop = "yandex-browser.desktop";
-    newTabArg = "--new-tab";
-  };
-})

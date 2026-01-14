@@ -14,8 +14,6 @@ in
   # proton-ge-bin: use upstream pkgs.proton-ge-bin (removed custom definition)
   # wf-recorder: upstream has 0.6.0 now (removed override)
 
-  # yandex-browser-stable: moved inline to modules/web/browsers.nix due to overlay corruption
-
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
     postPatch = (old.postPatch or "") + ''
       for f in $(grep -RIl "Qt6::WaylandClientPrivate" . || true); do

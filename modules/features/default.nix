@@ -23,7 +23,7 @@ let
       firefox.enable = false;
       librewolf.enable = false;
       nyxt.enable = true;
-      yandex.enable = false;
+
       prefs.fastfox.enable = true;
     };
     dev = {
@@ -91,7 +91,7 @@ in
           tools.enable = mkDefault false;
           addonsFromNUR.enable = mkDefault false;
           floorp.enable = mkDefault false;
-          yandex.enable = mkDefault false;
+
           prefs.fastfox.enable = mkDefault false;
         };
         emulators.retroarch.full = mkDefault false;
@@ -110,7 +110,7 @@ in
           firefox.enable = mkDefault false;
           librewolf.enable = mkDefault false;
           nyxt.enable = mkDefault true;
-          yandex.enable = mkDefault false;
+
           prefs.fastfox.enable = mkDefault true;
         };
         media.audio = {
@@ -134,7 +134,7 @@ in
           firefox.enable = mkDefault false;
           librewolf.enable = mkDefault false;
           nyxt.enable = mkDefault false;
-          yandex.enable = mkDefault false;
+
           prefs.fastfox.enable = mkDefault false;
         };
         gui.qt.enable = mkDefault false;
@@ -153,7 +153,7 @@ in
         firefox.enable = mkForce false;
         librewolf.enable = mkForce false;
         nyxt.enable = mkForce false;
-        yandex.enable = mkForce false;
+
         prefs.fastfox.enable = mkForce false;
       };
     })
@@ -253,7 +253,7 @@ in
             || (
               !cfg.web.tools.enable
               && !cfg.web.floorp.enable
-              && !cfg.web.yandex.enable
+
               && !cfg.web.firefox.enable
               && !cfg.web.librewolf.enable
               && !cfg.web.nyxt.enable
