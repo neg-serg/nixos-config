@@ -220,7 +220,7 @@ in
           echo "Checking QML files..."
           # qmllint returns non-zero on warnings, so we just check for errors
           find files/quickshell -name '*.qml' -print0 \
-            | xargs -0 -r qmllint 2>&1 || true
+            | xargs -0 -r qmllint -I files/quickshell 2>&1 || true
           echo "QML check complete!"
           touch "$out"
         '';
