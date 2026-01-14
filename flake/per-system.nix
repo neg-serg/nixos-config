@@ -1196,6 +1196,97 @@ in
         pkgs.radicle-explorer
       ];
     };
+
+    pentest = pkgs.mkShell {
+      nativeBuildInputs = [
+        # Recon
+        pkgs.nmap
+        pkgs.masscan
+        pkgs.rustscan
+        pkgs.zmap
+        pkgs.dnsenum
+        pkgs.dnsrecon
+        pkgs.dnstracer
+        pkgs.fierce
+        pkgs.netdiscover
+        pkgs.enum4linux
+        pkgs.onesixtyone
+        pkgs.arping
+        pkgs.cloudbrute
+        pkgs.sn0int
+        pkgs.netmask
+        pkgs.net-snmp
+        pkgs.sslsplit
+        pkgs.ssldump
+        pkgs.sslh
+        pkgs.sslscan
+        pkgs.swaks
+
+        # Web
+        pkgs.gobuster
+        pkgs.dirb
+        pkgs.wfuzz
+        pkgs.zap
+        pkgs.katana
+        pkgs.urlhunter
+
+        # Passwords
+        pkgs.john
+        pkgs.hashcat
+        pkgs.thc-hydra
+        pkgs.brutespray
+        pkgs.crowbar
+        pkgs.crunch
+        pkgs.chntpw
+        pkgs.hcxtools
+        pkgs.phrasendrescher
+
+        # Exploitation
+        pkgs.metasploit
+        pkgs.exploitdb
+        pkgs.msfpc
+        pkgs.shellnoob
+        pkgs.termineter
+
+        # Sniffing/MITM
+        pkgs.wireshark
+        pkgs.tshark
+        pkgs.termshark
+        pkgs.tcpdump
+        pkgs.bettercap
+        pkgs.mitmproxy
+        pkgs.dsniff
+        pkgs.rshijack
+        pkgs.sipp
+        pkgs.sniffglue
+
+        # Forensics
+        pkgs.sleuthkit
+        pkgs.volatility3
+        pkgs.ddrescue
+        pkgs.ext4magic
+        pkgs.extundelete
+        pkgs.steghide
+        pkgs.stegseek
+        pkgs.outguess
+        pkgs.zsteg
+        pkgs.stegsolve
+        pkgs.ghidra-bin
+        pkgs.capstone
+        pkgs.pdf-parser
+        pkgs.p0f
+
+        # Wireless
+        pkgs.aircrack-ng
+        pkgs.impala
+
+        # Misc Network
+        pkgs.hping
+        pkgs.fping
+        pkgs.tcptraceroute
+        pkgs.trippy
+      ];
+    };
   };
 
   apps =

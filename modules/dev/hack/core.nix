@@ -23,6 +23,6 @@ let
 in
 {
   config = lib.mkIf hackLib.enabled {
-    environment.systemPackages = lib.mkAfter packages;
+    # environment.systemPackages = lib.mkAfter packages; # Moved to devShells.pentest
   };
 }
