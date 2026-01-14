@@ -960,20 +960,6 @@ Whether to enable enable the hy3 tiling plugin for Hyprland.
 
 - [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
-## features.gui.hyprexpo.enable
-
-Whether to enable enable HyprExpo workspace overview plugin.
-
-*Type:* boolean
-
-*Default:* `false`
-
-*Example:* `true`
-
-*Declared by:*
-
-- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
-
 ## features.gui.qt.enable
 
 Whether to enable enable Qt integrations for GUI (qt6ct, hyprland-qt-\*).
