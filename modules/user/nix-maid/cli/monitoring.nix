@@ -105,6 +105,8 @@ in
         pkgs.btop # A monitor of resources (CPU, Memory, Network)
         pkgs.hwatch # Modern alternative to watch command with history
         pkgs.sysdig # System-wide visibility tool
+        pkgs.s-tui # Stress terminal UI for CPU monitoring
+        pkgs.wavemon # Wireless device monitoring
       ];
     }
     (n.mkHomeFiles {
