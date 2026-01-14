@@ -2,7 +2,7 @@
   pkgs,
   lib,
   config,
-  inputs,
+
   neg,
   impurity ? null,
   ...
@@ -255,7 +255,7 @@ lib.mkIf (cfg.enable or false) (
     {
       # Use inputs.yazi if available, otherwise fallback to pkgs
       environment.systemPackages = [
-        inputs.yazi.packages.${pkgs.stdenv.hostPlatform.system}.default # Terminal file manager from flake
+        pkgs.yazi # Terminal file manager
       ];
     }
 
