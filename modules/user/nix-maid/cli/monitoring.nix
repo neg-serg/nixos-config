@@ -104,6 +104,7 @@ in
       environment.systemPackages = [
         pkgs.btop # A monitor of resources (CPU, Memory, Network)
         pkgs.hwatch # Modern alternative to watch command with history
+        pkgs.sysdig # System-wide visibility tool
       ];
     }
     (n.mkHomeFiles {
