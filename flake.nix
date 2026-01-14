@@ -2,14 +2,23 @@
   description = "Neg-Serg configuration";
 
   inputs = {
-    # === Core ===
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
 
-    # === Hyprland ecosystem (requires follows) ===
     hyprland = {
       url = "git+https://github.com/hyprwm/Hyprland?ref=v0.52.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    pyprland = {
+      url = "github:hyprland-community/pyprland/e82637d73207abd634a96ea21fa937455374d131";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    raise = {
+      url = "github:neg-serg/raise";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     hy3 = {
       url = "git+https://github.com/outfoxxed/hy3?ref=hl0.52.0";
       inputs.hyprland.follows = "hyprland";
@@ -21,7 +30,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # === Heavy deps (benefit from shared nixpkgs) ===
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -63,24 +71,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # === Independent tools (no follows needed) ===
     extra-container.url = "git+file:///home/neg/src/extra-container";
-    # impurity.url = "git+file:///home/neg/src/impurity.nix"; # Removed in favor of pure eval
     iwmenu.url = "github:e-tho/iwmenu";
-
     nix-flatpak.url = "github:gmodena/nix-flatpak";
-
     nix-maid.url = "github:viperML/nix-maid";
-
-    pyprland = {
-      url = "github:hyprland-community/pyprland/e82637d73207abd634a96ea21fa937455374d131";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    raise = {
-      url = "github:neg-serg/raise";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
     tailray = {
       url = "github:NotAShelf/tailray";
@@ -103,8 +97,6 @@
       url = "github:microvm-nix/microvm.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    # === Special cases ===
   };
 
   nixConfig = {
