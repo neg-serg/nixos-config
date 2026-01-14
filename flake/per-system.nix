@@ -1022,6 +1022,10 @@ in
     ai = pkgs.mkShell {
       nativeBuildInputs = [
         (pkgs.ai-studio or pkgs.lmstudio)
+        pkgs.aichat
+        pkgs.aider-chat
+        pkgs.codex
+        pkgs.openai
       ];
     };
 
