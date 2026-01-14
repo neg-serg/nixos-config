@@ -654,7 +654,7 @@ in
           inputs=(
             nixpkgs hyprland hy3 hyprland-protocols xdg-desktop-portal-hyprland
             quickshell lanzaboote nvf nyx nur sops-nix pre-commit-hooks
-            nix-index-database iosevka-neg rsmetrx impurity iwmenu nix-flatpak
+            nix-index-database iosevka-neg rsmetrx impurity nix-flatpak
             nix-maid pyprland raise tailray winapps wrapper-manager yandex-browser
           )
 

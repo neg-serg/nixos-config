@@ -1,18 +1,13 @@
 {
   config,
-  inputs,
-  lib,
+
   pkgs,
   ...
 }:
 let
   devSpeed = config.features.devSpeed.enable or false;
   guiEnabled = config.features.gui.enable or false;
-  hostSystem = pkgs.stdenv.hostPlatform.system; # shorthand for current architecture
-
-  getInputPackage = input: lib.attrByPath [ "packages" hostSystem "default" ] null input;
-  iwmenuPkg = getInputPackage inputs.iwmenu;
-  menuPkgs = if guiEnabled && !devSpeed then lib.filter (pkg: pkg != null) [ iwmenuPkg ] else [ ];
+  menuPkgs = if guiEnabled && !devSpeed then [ pkgs.iwmenu ] else [ ];
 in
 {
   environment.systemPackages = [
