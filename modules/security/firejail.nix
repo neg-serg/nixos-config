@@ -19,14 +19,6 @@
         executable = "${lib.getBin pkgs.telegram-desktop}/bin/telegram-desktop";
         profile = "${pkgs.firejail}/etc/firejail/telegram-desktop.profile";
       };
-      qutebrowser = {
-        executable = "${lib.getBin pkgs.qutebrowser}/bin/qutebrowser";
-        profile = "${pkgs.firejail}/etc/firejail/qutebrowser.profile";
-      };
-      thunar = {
-        executable = "${lib.getBin pkgs.xfce.thunar}/bin/thunar";
-        profile = "${pkgs.firejail}/etc/firejail/thunar.profile";
-      };
     };
   };
 }
