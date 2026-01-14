@@ -14,21 +14,26 @@ let
     # -- Analysis --
     pkgs.dr14_tmeter # measure dynamic range DR14 style
     pkgs.essentia-extractor # bulk audio feature extractor (HQ descriptors)
+    pkgs.sonic-visualiser # annotate spectra/sonograms
+  ]
+  ++ (lib.optionals (config.features.media.audio.proAudio.enable or false) [
     pkgs.neg.rtcqs # real-time audio latency checklist (rtirq/CPU settings)
     pkgs.opensoundmeter # FFT/RT60 analysis for calibration
     pkgs.roomeqwizard # REW acoustic measurement suite
-    pkgs.sonic-visualiser # annotate spectra/sonograms
+  ])
+  ++ [
 
     # -- CLI --
-
     pkgs.sox # swiss-army audio CLI for conversions/effects
 
     # -- Codecs / Ripping / Players --
     pkgs.ape # Monkey's Audio encoder/decoder for archival rips
     pkgs.cdparanoia # secure CD ripper w/ jitter correction
-    pkgs.cider # Apple Music client w/ Discord presence and EQ
     pkgs.unflac # convert FLAC cuesheets quickly
-    pkgs."yandex-music" # Yandex Music desktop client
+  ]
+  ++ (lib.optional (config.features.media.audio.cider.enable or false) pkgs.cider)
+  ++ (lib.optional (config.features.media.audio.yandexMusic.enable or false) pkgs."yandex-music")
+  ++ [
 
     # -- Network --
     pkgs.nicotine-plus # Soulseek client

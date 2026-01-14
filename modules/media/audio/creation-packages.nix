@@ -14,7 +14,9 @@ let
     # -- DAWs / Editors --
     pkgs.bespokesynth # modular DAW for live coding / patching
     pkgs.ocenaudio # lightweight waveform editor
-    pkgs.reaper # flagship DAW; low latency, works great on Wine
+  ]
+  ++ (lib.optional (config.features.media.audio.proAudio.enable or false) pkgs.reaper)
+  ++ [
 
     # -- Live Coding --
     pkgs.glicol-cli # audio DSL for generative compositions
