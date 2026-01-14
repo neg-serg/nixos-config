@@ -22,14 +22,10 @@
 
     # Formatters and beautifiers
     pkgs.shfmt # shell formatter
-    pkgs.black # Python formatter
-    pkgs.stylua # Lua formatter
 
     # Static analysis and linters
     pkgs.flawfinder # C/C++ security scanner
-    pkgs.ruff # Python linter
     pkgs.shellcheck # shell linter
-    pkgs.mypy # Python type checker
     pkgs.codeql # GitHub CodeQL CLI for queries
 
     # Code counting/reporting utilities

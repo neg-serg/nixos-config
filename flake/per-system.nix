@@ -1081,6 +1081,48 @@ in
         pkgs.gdb
         pkgs.gcc # explicitly available in devshell
       ];
+
+      python =
+        let
+          # Replicating logic from modules/dev/python/pkgs.nix
+          myPythonPackages =
+            ps: with ps; [
+              # Core
+              annoy
+              beautifulsoup4
+              colored
+              docopt
+              fonttools
+              mutagen
+              numpy
+              orjson
+              pillow
+              psutil
+              requests
+              tabulate
+              # Tools
+              dbus-python
+              fontforge
+              neopyter
+              pynvim
+            ];
+          pythonEnv = pkgs.python3-lto.withPackages myPythonPackages;
+        in
+        pkgs.mkShell {
+          nativeBuildInputs = [
+            pythonEnv
+            pkgs.pipx
+            pkgs.black
+            pkgs.ruff
+            pkgs.mypy
+          ];
+        };
+
+      lua = pkgs.mkShell {
+        nativeBuildInputs = [
+          pkgs.stylua
+        ];
+      };
     };
   };
 
