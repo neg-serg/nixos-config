@@ -143,34 +143,7 @@
     ./secrets/yubikey/default.nix
     ./security/default.nix
     ./security/firejail.nix
-    ./servers/_archive/audiobookshelf/default.nix
-    ./servers/_archive/cleanuparr/default.nix
-    ./servers/_archive/deemix/default.nix
-    ./servers/_archive/filebot/default.nix
-    ./servers/_archive/gitea/default.nix
-    ./servers/_archive/gns3/default.nix
-    ./servers/_archive/huntarr/default.nix
-    ./servers/_archive/komga/default.nix
-    ./servers/_archive/mcp-bridge/default.nix
-    ./servers/_archive/open-webui/default.nix
-    ./servers/_archive/parakeet/default.nix
-    ./servers/_archive/plex/default.nix
-    ./servers/_archive/portainer/default.nix
-    ./servers/_archive/prowlarr/default.nix
-    ./servers/_archive/qbittorrent-vpn/default.nix
-    ./servers/_archive/qdrant/default.nix
-    ./servers/_archive/radarr/default.nix
-    ./servers/_archive/requestrr/default.nix
-    ./servers/_archive/sabnzbd/default.nix
-    ./servers/_archive/seafile/default.nix
-    ./servers/_archive/searxng-mcp/default.nix
-    ./servers/_archive/searxng/default.nix
-    ./servers/_archive/sonarr/default.nix
-    ./servers/_archive/syncthing/default.nix
-    ./servers/_archive/tts-webui/default.nix
-    ./servers/_archive/vllm/default.nix
-    ./servers/_archive/whisper/default.nix
-    ./servers/_archive/wyoming-openai/default.nix
+
     ./servers/adguardhome/default.nix
     ./servers/avahi/default.nix
     ./servers/bitcoind/default.nix
