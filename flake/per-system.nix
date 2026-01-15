@@ -1323,6 +1323,13 @@ in
       ];
     };
 
+    graphics = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.librsvg
+        pkgs.libxml2
+      ];
+    };
+
     latex = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.rubber
