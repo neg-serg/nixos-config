@@ -1381,9 +1381,24 @@ in
       ];
     };
     text = pkgs.mkShell {
+      # light text processing and previewing tools
       nativeBuildInputs = [
-        pkgs.recoll # full-text search system
-        pkgs.tesseract # optical character recognition engine
+        pkgs.recoll # metadata-based full-text desktop search tool
+        pkgs.tesseract # OCR engine with multi-language support
+      ];
+    };
+
+    vrr = pkgs.mkShell {
+      # tools for VRR (Variable Refresh Rate) testing
+      nativeBuildInputs = [
+        pkgs.vrrtest # validate VRR timings on Wayland
+      ];
+    };
+
+    clojure = pkgs.mkShell {
+      # Clojure development and scripting environment
+      nativeBuildInputs = [
+        pkgs.babashka # native Clojure scripting runtime for shell scripts
       ];
     };
   };
