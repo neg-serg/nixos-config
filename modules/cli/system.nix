@@ -21,7 +21,6 @@
     pkgs.zfxtop # system monitor with focus on process grouping and ZFX style
 
     # Shell enhancements
-    pkgs.babashka # native Clojure scripting runtime for shell scripts
     pkgs.blesh # full-featured line editor written in pure Bash (syntax highlighting, etc.)
     pkgs.expect # tool for automating interactive applications
     pkgs.readline # GNU library for command-line editing
