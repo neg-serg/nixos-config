@@ -49,6 +49,7 @@ lib.mkMerge [
     features.apps.winapps.enable = false;
     features.games.launchers.prismlauncher.enable = false;
     features.games.launchers.heroic.enable = false;
+    features.games.nethack.enable = true;
     features.emulators.retroarch.enable = false;
     features.gui.hy3.enable = true;
     features.gui.walker.enable = false;
