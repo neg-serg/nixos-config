@@ -9,7 +9,6 @@
 {
   imports = [
     ./modules
-    ./profiles/common.nix
   ];
   system = {
     stateVersion = "23.11"; # (man configuration.nix or on https://nixos.org/nixos/options.html).
