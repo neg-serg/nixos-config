@@ -249,7 +249,7 @@ lib.mkMerge [
         minTemp = 62; # °C — stay quiet until significant heat
         maxTemp = 75; # °C — reach full speed before hitting thermal limit
         minPwm = 64; # ~25% (was 15), absolute minimum (fans may stall)
-        maxPwm = 255; # full power for cooling headroom
+        maxPwm = 178; # capped at 70% to reduce noise under load
         hysteresis = 5; # reduce fan speed oscillation
         interval = 2; # responsive polling
         allowStop = false; # fans never fully stop for safety
@@ -263,7 +263,7 @@ lib.mkMerge [
         minTemp = 62; # °C — GPU fan quiet until significant heat
         maxTemp = 75; # °C — full speed well before throttle point
         minPwm = 15; # ~25% (was 15), absolute minimum
-        maxPwm = 255; # maximum cooling
+        maxPwm = 178; # capped at 70% for improved acoustics
         hysteresis = 5; # stability
       };
     };
