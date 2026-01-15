@@ -15,7 +15,6 @@ in
   };
   environment.systemPackages = [
     pkgs.atop # system and process monitor with logging
-    pkgs.bcc # eBPF tracing toolkit (BCC) utilities
     pkgs.btop # even more fancy top
     pkgs.dool # example use: dool -cdnpmgs --top-bio --top-cpu --top-mem (dstat is not supported as standalone tool anymore)
     pkgs.iotop # top for iops
