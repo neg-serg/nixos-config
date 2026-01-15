@@ -423,7 +423,6 @@ lib.mkMerge [
         gvfs.enable = true;
 
         # Resilio Sync (interactive Web UI, auth via SOPS)
-        # Resilio Sync (interactive Web UI, auth via SOPS)
         resilio = lib.mkIf hasResilioSecret {
           enable = false;
 
@@ -712,11 +711,9 @@ lib.mkMerge [
         RemainAfterExit = true;
         ExecStart = "${pkgs.wireguard-tools}/bin/wg-quick up ${
           # Tools for the WireGuard secure network tunnel
-          # Tools for the WireGuard secure network tunnel
           config.sops.secrets."wireguard/telfir-wg-quick".path
         }";
         ExecStop = "${pkgs.wireguard-tools}/bin/wg-quick down ${
-          # Tools for the WireGuard secure network tunnel
           # Tools for the WireGuard secure network tunnel
           config.sops.secrets."wireguard/telfir-wg-quick".path
         }";
