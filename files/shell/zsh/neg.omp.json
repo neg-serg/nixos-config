@@ -125,7 +125,7 @@
                     "type": "path",
                     "style": "plain",
                     "foreground": "#95a7bc",
-                    "template": "<#005faf></> {{ .Path }}",
+                    "template": "<#005faf></> {{ if hasPrefix \"/\" .Path }}<#005faf>/</>{{ trimPrefix \"/\" .Path }}{{ else }}{{ .Path }}{{ end }}",
                     "properties": {
                         "style": "full",
                         "folder_separator_icon": "<#005faf>/</>",
