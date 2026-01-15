@@ -1428,6 +1428,10 @@ in
     speech = pkgs.mkShell {
       packages = [ pkgs.speechd ];
     };
+
+    bcc = pkgs.mkShell {
+      packages = [ pkgs.bcc ];
+    };
   };
 
   apps =
