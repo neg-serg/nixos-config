@@ -108,6 +108,7 @@ lib.mkMerge [
       pkgs.swayimg # Lightweight image viewer for Wayland
       pkgs.mpdas # Audio Scrobbler client for MPD
       pkgs.mpdris2 # MPRIS 2 support for MPD
+    ] ++ lib.optionals (config.features.media.audio.spicetify.enable or false) [
       pkgs.spicetify-cli # Spotify customization tool
     ];
 
@@ -202,7 +203,9 @@ lib.mkMerge [
     ".config/ncpamixer.conf".source = n.linkImpure ncpamixerConf;
 
     # Spicetify Config (partial management)
-    ".config/spicetify/config-xpui.ini".text = lib.generators.toINI { } spiceSettings;
+    ".config/spicetify/config-xpui.ini" = lib.mkIf (config.features.media.audio.spicetify.enable or false) {
+      text = lib.generators.toINI { } spiceSettings;
+    };
 
     # Rescrobbled Config
     ".config/rescrobbled/config.toml".text = ''
