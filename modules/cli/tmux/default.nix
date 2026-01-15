@@ -47,8 +47,8 @@
       set -g update-environment "DISPLAY SSH_ASKPASS SSH_AUTH_SOCK SSH_AGENT_PID SSH_CONNECTION WINDOWID XAUTHORITY"
       set-window-option -g mode-keys vi
       set -wg mode-style "bg=#000008","fg=#367bbf",bold
-      set -g default-shell ${pkgs.zsh}/bin/zsh
-      set -g default-command ${pkgs.zsh}/bin/zsh
+      set -g default-shell ${pkgs.zsh}/bin/zsh # Z shell
+      set -g default-command ${pkgs.zsh}/bin/zsh # Z shell
 
       set -sg escape-time 0 # fixes insert mode exit lag in vim
       bind C-a send-prefix # send the prefix to client inside window (ala nested sessions)

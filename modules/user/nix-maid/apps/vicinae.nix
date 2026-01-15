@@ -59,7 +59,7 @@ lib.mkMerge [
       partOf = [ "graphical-session.target" ];
       wantedBy = [ "graphical-session.target" ];
       serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.vicinae} server";
+        ExecStart = "${lib.getExe pkgs.vicinae} server"; # Native, fast, extensible launcher for the desktop
         Restart = "always";
         RestartSec = 2;
       };

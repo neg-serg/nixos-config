@@ -10,7 +10,7 @@
 }:
 {
   imports = [
-    ./boot/pkgs.nix
+    ./boot/pkgs.nix # Nix package manager
     ./boot/autofdo.nix
   ];
   boot = {

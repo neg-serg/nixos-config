@@ -1,6 +1,6 @@
 { pkgs, ... }:
 {
-  imports = [ ./pkgs.nix ];
+  imports = [ ./pkgs.nix ]; # Nix package manager
   # run appimages directly (see https://nixos.wiki/wiki/Appimage)
   boot.binfmt.registrations.appimage = {
     wrapInterpreterInShell = false;

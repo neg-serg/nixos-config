@@ -122,10 +122,10 @@ in
         enable = true;
         inherit shellAliases;
         interactiveShellInit = ''
-          ${pkgs.nix-your-shell}/bin/nix-your-shell bash | source /dev/stdin
+          ${pkgs.nix-your-shell}/bin/nix-your-shell bash | source /dev/stdin # `nix` and `nix-shell` wrapper for shells other than `bash`
 
           if [[ -f ~/.config/dircolors/dircolors ]]; then
-            eval "$(${pkgs.coreutils}/bin/dircolors -b ~/.config/dircolors/dircolors)"
+            eval "$(${pkgs.coreutils}/bin/dircolors -b ~/.config/dircolors/dircolors)" # GNU Core Utilities
           fi
         ''
         + (

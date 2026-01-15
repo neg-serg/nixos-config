@@ -4,7 +4,7 @@
     enable = false;
   };
   imports = [
-    ./pkgs.nix
-    ./neovim/pkgs.nix
+    ./pkgs.nix # Nix package manager
+    ./neovim/pkgs.nix # Nix package manager
   ];
 }

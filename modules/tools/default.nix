@@ -7,7 +7,7 @@ in
 {
   imports = [
     ./hiddify.nix
-    ./pkgs.nix
+    ./pkgs.nix # Nix package manager
   ];
 
   # Packages moved to ./pkgs.nix

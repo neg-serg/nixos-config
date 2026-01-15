@@ -6,5 +6,5 @@
 { pkgs, ... }:
 {
   services.nscd.enableNsncd = false; # try to fix buggy nscd
-  services.nscd.package = pkgs.unscd;
+  services.nscd.package = pkgs.unscd; # Less buggy replacement for the glibc name service cache d...
 }

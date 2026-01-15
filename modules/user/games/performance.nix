@@ -55,7 +55,7 @@ in
     programs = {
       gamescope = {
         enable = true;
-        package = pkgs.gamescope;
+        package = pkgs.gamescope; # SteamOS session compositing window manager
       };
 
       gamemode = {
@@ -128,7 +128,7 @@ in
     security.wrappers.gamemode = {
       owner = "root";
       group = "root";
-      source = "${pkgs.gamemode}/bin/gamemoderun";
+      source = "${pkgs.gamemode}/bin/gamemoderun"; # Optimise Linux system performance on demand
       capabilities = "cap_sys_ptrace,cap_sys_nice+pie";
     };
   };

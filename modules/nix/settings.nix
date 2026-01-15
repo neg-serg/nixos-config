@@ -23,7 +23,7 @@ in
   };
 
   nix = {
-    package = pkgs.lix;
+    package = pkgs.lix; # Powerful package manager that makes package management re...
     nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
     settings = {
       accept-flake-config = true;

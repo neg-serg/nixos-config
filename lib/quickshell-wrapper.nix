@@ -39,7 +39,7 @@ let
           --prefix QML2_IMPORT_PATH : "${pkgs.qt6.qtmultimedia}/${pkgs.qt6.qtbase.qtQmlPrefix}" \
           --prefix QML2_IMPORT_PATH : "${qsQmlPath}" \
           --prefix XDG_DATA_DIRS : "${pkgs.adwaita-icon-theme}/share" \
-          --prefix XDG_DATA_DIRS : "${pkgs.hicolor-icon-theme}/share" \
+          --prefix XDG_DATA_DIRS : "${pkgs.hicolor-icon-theme}/share" \ # Default fallback theme used by implementations of the ico...
           --set QT_QPA_PLATFORM wayland \
           --set QML_XHR_ALLOW_FILE_READ 1 \
           --prefix PATH : ${qsPath}

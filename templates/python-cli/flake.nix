@@ -16,11 +16,11 @@
         default = pkgs.mkShell {
           name = "python-cli-dev";
           packages = [
-            pkgs.python312
+            pkgs.python312 # High-level dynamically-typed programming language
             pkgs.python312Packages.pip
             pkgs.python312Packages.setuptools
             pkgs.python312Packages.wheel
-            pkgs.ruff
+            pkgs.ruff # Extremely fast Python linter and code formatter
             pkgs.black
             pkgs.pytest
           ];

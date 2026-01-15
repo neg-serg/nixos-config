@@ -18,8 +18,8 @@
   programs.hyprland = {
     enable = true;
     # Use pkgs.* here; an overlay routes them to the flake-pinned Hyprland release
-    package = pkgs.hyprland;
-    portalPackage = pkgs.xdg-desktop-portal-hyprland;
+    package = pkgs.hyprland; # Dynamic tiling Wayland compositor that doesn't sacrifice ...
+    portalPackage = pkgs.xdg-desktop-portal-hyprland; # xdg-desktop-portal backend for Hyprland
   };
 
   services = {

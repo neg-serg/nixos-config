@@ -14,7 +14,7 @@
     };
     rofi.package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.rofi;
+      default = pkgs.rofi; # Window switcher, run dialog and dmenu replacement
       description = "The rofi package to use for the system.";
     };
   };

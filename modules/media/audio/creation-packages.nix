@@ -15,7 +15,7 @@ let
     pkgs.bespokesynth # modular DAW for live coding / patching
     pkgs.ocenaudio # lightweight waveform editor
   ]
-  ++ (lib.optional (config.features.media.audio.proAudio.enable or false) pkgs.reaper)
+  ++ (lib.optional (config.features.media.audio.proAudio.enable or false) pkgs.reaper) # Digital audio workstation
   ++ [
 
     # -- Live Coding --

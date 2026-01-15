@@ -60,7 +60,7 @@ in
           guiEnabled
           profiles
           ;
-        package = pkgs.floorp-bin;
+        package = pkgs.floorp-bin; # Fork of Firefox that seeks balance between versatility, p...
         browserType = "floorp";
       }).config
       {

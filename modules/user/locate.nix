@@ -2,6 +2,6 @@
 {
   services.locate = {
     enable = true;
-    package = pkgs.plocate;
+    package = pkgs.plocate; # Much faster locate
   };
 }

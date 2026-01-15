@@ -19,7 +19,7 @@ in
         appsDir = ../../../../packages/local-bin/share/applications;
 
         # Python library paths for special scripts
-        sp = pkgs.python3.sitePackages;
+        sp = pkgs.python3.sitePackages; # High-level dynamically-typed programming language
         libpp = "${pkgs.neg.pretty_printer}/${sp}";
         libcolored = "${pkgs.python3Packages.colored}/${sp}";
 
@@ -109,7 +109,7 @@ in
         pyprRunText = lib.replaceStrings [ "exec pypr" ] [ "exec ${pyprExe}" ] pyprRunTpl;
 
         # mount-drive: Uses rclone.
-        rcloneExe = lib.getExe pkgs.rclone;
+        rcloneExe = lib.getExe pkgs.rclone; # Command line program to sync files and directories to and...
         mountDriveTpl = builtins.readFile ../scripts/mount-drive;
         mountDriveText = lib.replaceStrings [ "rclone mount" ] [ "${rcloneExe} mount" ] mountDriveTpl;
 
