@@ -22,21 +22,20 @@ let
       lib.unique ((lib.remove pkgs.alure bi) ++ [ alureFixed ]);
   });
   packages = [
-    pkgs.almonds # TUI fractal viewer
+
     bucklespringFixed # keyboard click sound daemon
-    pkgs.cool-retro-term # retro CRT terminal emulator
+
     pkgs.dotacat # colorful `cat`
     pkgs.figlet # ASCII art banners
     pkgs.fortune # fortune cookie
-    pkgs.free42 # HP-42S calculator clone
+
     pkgs.neo-cowsay # render cowsay balloons
     pkgs.neo # digital rain
     pkgs.neg.cxxmatrix # colorful matrix rain (C++ impl)
     pkgs.nms # "No More Secrets" decrypt effect
     pkgs.taoup # The Tao of Unix Programming
     pkgs.toilet # text banners
-    pkgs.xephem # astronomy application
-    pkgs.xlife # cellular automata explorer
+
   ];
 in
 {
