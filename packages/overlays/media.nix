@@ -68,15 +68,7 @@ in
       imageio = python-prev.imageio.overridePythonAttrs (_old: {
         doCheck = false;
       });
-      FreeSimpleGUI = import (packagesRoot + "/freesimplegui") {
-        inherit (prev) lib fetchPypi;
-        inherit (python-prev)
-          buildPythonPackage
-          setuptools
-          wheel
-          tkinter
-          ;
-      };
+
       pylette = python-prev.pylette.overridePythonAttrs (_old: {
         doCheck = false;
         # Force disable check phases

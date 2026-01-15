@@ -24,7 +24,7 @@ _inputs: _final: prev: {
   pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
     (python-final: _python-prev: {
       neopyter = python-final.callPackage ../neopyter { };
-      freesimplegui = python-final.callPackage ../python/freesimplegui { };
+
     })
   ];
 }
