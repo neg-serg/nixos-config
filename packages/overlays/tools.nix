@@ -68,18 +68,5 @@ in
             --add-flags "-c ${ncpaConfig}"
         '';
       };
-
-    # nextcloud-client with GPU disabled (for stability)
-    nextcloud-wrapped = prev.symlinkJoin {
-      name = "nextcloud-wrapped";
-      paths = [ prev.nextcloud-client ];
-      buildInputs = [ prev.makeWrapper ];
-      postBuild = ''
-        wrapProgram $out/bin/nextcloud \
-          --add-flags "--disable-gpu --disable-software-rasterizer" \
-          --set QTWEBENGINE_DISABLE_GPU "1" \
-          --set QTWEBENGINE_CHROMIUM_FLAGS "--disable-gpu --disable-software-rasterizer"
-      '';
-    };
   };
 }

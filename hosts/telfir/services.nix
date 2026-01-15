@@ -71,7 +71,6 @@ lib.mkMerge [
       media.enable = true;
       monitoring.enable = true;
     };
-    # Trust local Caddy CA so nextcloudcmd/Qt accepts the cert
 
     # Reduce microphone background noise system-wide (PipeWire RNNoise filter)
     # Enabled via modules/hardware/audio/noise by default for this host
@@ -282,7 +281,6 @@ lib.mkMerge [
       pkgs.winboat # Windows VM support
       pkgs.docker-compose # multi-container Docker applications
       pkgs.openrgb # per-device RGB controller UI
-      # pkgs.nextcloud-client # Nextcloud desktop sync client
       pkgs.neg.tewi # TUI torrent client (Transmission/qBittorrent/Deluge)
       pkgs.neg.playscii # ASCII art editor and animator
       (pkgs.writeShellScriptBin "cpu-boost" (
@@ -393,52 +391,6 @@ lib.mkMerge [
         power-profiles-daemon.enable = true;
         # Do not expose AdGuard Home Prometheus metrics on this host
         adguardhome.settings.prometheus.enabled = false;
-
-        nextcloud = {
-          enable = false;
-          package = pkgs.nextcloud32;
-          hostName = "telfir";
-          https = true;
-          datadir = "/zero/sync/nextcloud";
-          config = {
-            dbtype = "mysql";
-            adminuser = "admin";
-            # Admin password is materialized from SOPS into a safe host path
-            adminpassFile = "/var/lib/nextcloud/adminpass";
-          };
-          database = {
-            createLocally = true;
-          };
-        };
-
-        caddy = lib.mkIf (config.services.nextcloud.enable or false) {
-          enable = lib.mkDefault true;
-          virtualHosts."telfir".extraConfig = ''
-            encode zstd gzip
-
-            log {
-              output file /var/lib/caddy/logs/nextcloud_access.log {
-                roll_size 50mb
-                roll_keep 3
-                roll_keep_for 48h
-              }
-              format json
-            }
-
-            header {
-              Strict-Transport-Security "max-age=15768000; includeSubDomains; preload"
-              X-Content-Type-Options "nosniff"
-              X-Frame-Options "SAMEORIGIN"
-              Referrer-Policy "no-referrer"
-              Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=(), fullscreen=(self), picture-in-picture=(self)"
-            }
-
-            root * ${config.services.nextcloud.package}
-            php_fastcgi unix//run/phpfpm/nextcloud.sock
-            file_server
-            tls internal
-          '';
-        };
 
         "shairport-sync" = {
           enable = true;
@@ -574,19 +526,6 @@ lib.mkMerge [
     # Avoid forcing pkexec as setuid; Steam/SteamVR misbehaves when invoked with elevated EUID.
     # Use polkit rules if specific privileges are required instead of global setuid pkexec.
 
-    # Provide nginx system user/group so PHP-FPM pool configs referencing
-    # nginx for socket ownership won't fail even when nginx service is off.
-    users = {
-      users.nginx = {
-        isSystemUser = true;
-        group = "nginx";
-      };
-      # Allow Caddy to access php-fpm socket via shared group
-      users.caddy = lib.mkIf (config.services.caddy.enable or false) {
-        extraGroups = [ "nginx" ];
-      };
-      groups.nginx = { };
-    };
     # Games autoscale defaults for this host
     profiles.games = {
       autoscaleDefault = false;
@@ -605,10 +544,6 @@ lib.mkMerge [
         "d /zero/sync/upload-next 0755 neg neg - -"
       ];
       services = {
-        # Disable automatic Nextcloud setup/update units; manage via occ/scripts instead.
-        "nextcloud-setup".enable = false;
-        "nextcloud-update-db".enable = false;
-
         # Энергосбережение по умолчанию для меньшего тепла/шума
         "power-profiles-default" = {
           description = "Set default power profile to balanced";

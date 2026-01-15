@@ -7,7 +7,6 @@ let
   hasGitHubToken = builtins.pathExists ./github-token.sops.yaml;
   hasCachixEnv = builtins.pathExists ./cachix.env;
   hasVdirsyncerGoogle = builtins.pathExists ./vdirsyncer/google.sops.yaml;
-  hasNextcloudWork = builtins.pathExists ./nextcloud-cli-wrk.env.sops;
   hasWorkWireguard = builtins.pathExists ./wireguard/work-wg.conf.sops;
   hasVlessRealitySingboxTun = builtins.pathExists ./vless/reality-singbox-tun.json.sops;
 in
@@ -66,24 +65,6 @@ in
         format = "yaml";
         sopsFile = ./vdirsyncer/google.sops.yaml;
         key = "client_secret";
-      };
-    }
-    // {
-      # NEXTCLOUD_PASS=... for nextcloudcmd (user-level sync service)
-      "nextcloud-cli/env" = {
-        format = "dotenv";
-        sopsFile = ./nextcloud-cli.env.sops;
-        path = "/run/user/1000/secrets/nextcloud-cli.env";
-        mode = "0400";
-      };
-    }
-    // lib.optionalAttrs hasNextcloudWork {
-      # Work profile: NEXTCLOUD_URL, NEXTCLOUD_USER, NEXTCLOUD_PASS
-      "nextcloud-cli-wrk/env" = {
-        format = "dotenv";
-        sopsFile = ./nextcloud-cli-wrk.env.sops;
-        path = "/run/user/1000/secrets/nextcloud-cli-wrk.env";
-        mode = "0400";
       };
     }
     // lib.optionalAttrs hasWorkWireguard {

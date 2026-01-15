@@ -8,7 +8,7 @@
                 {
                     "type": "git",
                     "style": "plain",
-                    "options": {
+                    "properties": {
                         "branch_icon": "",
                         "fetch_status": true
                     },
@@ -19,7 +19,7 @@
                     "style": "plain",
                     "foreground": "#45bf17",
                     "template": " {{ .FormattedMs }}s <#899CA1>\ue601</>",
-                    "options": {
+                    "properties": {
                         "threshold": 50,
                         "style": "dallas"
                     }
@@ -32,21 +32,21 @@
                 },
                 {
                     "foreground": "#E4F34A",
-                    "options": {},
+                    "properties": {},
                     "template": "\ue235{{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}",
                     "type": "python",
                     "style": "plain"
                 },
                 {
                     "foreground": "#7FD5EA",
-                    "options": {},
+                    "properties": {},
                     "template": "\ue626{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
                     "type": "go",
                     "style": "plain"
                 },
                 {
                     "foreground": "#42E66C",
-                    "options": {
+                    "properties": {
                         "detect_extensions": [
                             "js",
                             "ts"
@@ -60,35 +60,35 @@
                 },
                 {
                     "foreground": "#CC342D",
-                    "options": {},
+                    "properties": {},
                     "template": "\ue791{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
                     "type": "ruby",
                     "style": "plain"
                 },
                 {
                     "foreground": "#b07219",
-                    "options": {},
+                    "properties": {},
                     "template": "\ue738{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
                     "type": "java",
                     "style": "plain"
                 },
                 {
                     "foreground": "#0db7ed",
-                    "options": {},
+                    "properties": {},
                     "template": "\uf308{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
                     "type": "docker",
                     "style": "plain"
                 },
                 {
                     "foreground": "#5f43e9",
-                    "options": {},
+                    "properties": {},
                     "template": "TF{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
                     "type": "terraform",
                     "style": "plain"
                 },
                 {
                     "foreground": "#f7ad24",
-                    "options": {},
+                    "properties": {},
                     "template": "\ue718{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
                     "type": "pnpm",
                     "style": "plain"
@@ -99,7 +99,7 @@
                     "foreground_templates": [
                         "{{ if gt .Code 0 }}#ce162b{{ end }}"
                     ],
-                    "options": {
+                    "properties": {
                         "always_enabled": false
                     },
                     "template": " ×{{.Code}}"
@@ -112,7 +112,7 @@
             "segments": [
                 {
                     "foreground": "#005faf",
-                    "options": {
+                    "properties": {
                         "linux": "<#005faf>\ue27f</>",
                         "macos": "<#005faf>\ue27f</>",
                         "windows": "<#005faf>\ue27f</>"
@@ -126,9 +126,9 @@
                     "style": "plain",
                     "foreground": "#95a7bc",
                     "template": "<#005faf></> {{ .Path }}",
-                    "options": {
+                    "properties": {
                         "style": "full",
-                        "folder_separator_icon": "<#005faf> / </>",
+                        "folder_separator_icon": "<#005faf>/</>",
                         "home_icon": "<#287373>~</>"
                     }
                 },
