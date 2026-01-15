@@ -70,7 +70,7 @@
     ./flatpak/pkgs.nix
     ./fonts/default.nix
     ./fun/default.nix
-    ./fun/games-packages.nix
+
     ./fun/launchers-packages.nix
     ./fun/misc-packages.nix
     ./games/controllers.nix
