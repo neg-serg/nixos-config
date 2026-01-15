@@ -15,6 +15,7 @@
   features.hardware.amdgpu.rocm.enable = true;
   features.mail.enable = true;
   features.dev.hack.pentest = false;
+  services.speechd.enable = false;
 
   boot.plymouth = {
     enable = true;
