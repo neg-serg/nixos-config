@@ -1432,6 +1432,10 @@ in
     bcc = pkgs.mkShell {
       packages = [ pkgs.bcc ];
     };
+
+    slskd = pkgs.mkShell {
+      packages = [ pkgs.slskd ];
+    };
   };
 
   apps =
