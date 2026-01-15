@@ -125,10 +125,10 @@
                     "type": "path",
                     "style": "plain",
                     "foreground": "#95a7bc",
-                    "template": "<#005faf></> {{ if hasPrefix \"/\" .Path }}<#95a7bc>{{ trimPrefix \"/\" .Path }}</>{{ else }}<#95a7bc>{{ .Path }}</>{{ end }}",
+                    "template": "<#005faf></> {{ .Path }}",
                     "options": {
                         "style": "full",
-                        "folder_separator_icon": "<#005faf>/</>",
+                        "folder_separator_icon": "<#005faf> / </>",
                         "home_icon": "<#287373>~</>"
                     }
                 },
