@@ -50,7 +50,7 @@ dirs_to_check=(
   "files/walker/themes"
   "files/kitty"
   "files/tmux"
-  "files/nushell"
+
   "files/quickshell"
   "files/fastfetch"
   "files/gui/vicinae-extensions"
