@@ -254,10 +254,7 @@ lib.mkMerge [
         interval = 2; # responsive polling
         allowStop = false; # fans never fully stop for safety
         minStartOverride = 150; # reliable spin-up from low PWM
-        gpuPwmChannels = [
-          2
-          3
-        ]; # case fans follow GPU temperature
+        gpuPwmChannels = [ ]; # case fans follow CPU temperature
       };
 
       gpuFancontrol = {
