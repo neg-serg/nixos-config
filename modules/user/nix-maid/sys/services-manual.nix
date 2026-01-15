@@ -153,58 +153,6 @@ in
       environment.systemPackages = [ ]; # command-line tool for controlling media players
     })
 
-    (lib.mkIf false {
-      systemd.user.services.nextcloud-sync = {
-        description = "Nextcloud CLI sync";
-        serviceConfig = {
-          Type = "oneshot";
-          EnvironmentFile = "/run/services/nextcloud-cli.env";
-          ExecStart =
-            let
-              nextcloudcmd = lib.getExe' pkgs.nextcloud-client "nextcloudcmd";
-              syncScript = pkgs.writeShellScript "nextcloud-sync" ''
-                set -euo pipefail
-                normalize_url() {
-                  case "$1" in
-                    *"/remote.php/"*) printf '%s\n' "''${1%%/remote.php/*}" ;;
-                    *) printf '%s\n' "$1" ;;
-                  esac
-                }
-                user_default="neg"
-                url_default="https://telfir"
-                if [ -f /run/user/1000/secrets/nextcloud-cli.env ]; then
-                    source /run/user/1000/secrets/nextcloud-cli.env
-                fi
-                user=''${NEXTCLOUD_USER:-''${NC_USER:-$user_default}}
-                url=$(normalize_url "''${NEXTCLOUD_URL:-$url_default}")
-                pass=''${NEXTCLOUD_PASS:-''${NC_PASSWORD:-}}
-                if [ -z "$url" ]; then echo "Error: Missing URL"; exit 1; fi
-                if [ -z "$user" ]; then echo "Error: Missing User"; exit 1; fi
-                export NC_USER="$user"
-                if [ -n "$pass" ]; then export NC_PASSWORD="$pass"; fi
-                localDir="${config.users.users.neg.home}/sync/telfir"
-                mkdir -p "$localDir"
-                exec ${nextcloudcmd} --non-interactive --silent "$localDir" "$url"
-              '';
-            in
-            "${syncScript}";
-        };
-      };
-
-      systemd.user.timers.nextcloud-sync = {
-        description = "Timer: Nextcloud CLI sync";
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnCalendar = "hourly";
-          RandomizedDelaySec = "5m";
-          Persistent = true;
-          Unit = "nextcloud-sync.service";
-        };
-      };
-
-      environment.systemPackages = [ pkgs.nextcloud-client ]; # Nextcloud desktop and command-line sync client
-    })
-
     (lib.mkIf
       (
         (config.features.dev.openxr.enable or false)
