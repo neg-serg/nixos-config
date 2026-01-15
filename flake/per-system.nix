@@ -113,6 +113,7 @@ in
                : > "$out"
         '';
     tests-caddy = pkgs.testers.runNixOSTest (import ../tests/caddy.nix);
+    tests-hyprland-startup = pkgs.testers.runNixOSTest (import ../tests/hyprland-startup.nix);
 
     # Shell script linting with shellcheck
     lint-shellcheck =
