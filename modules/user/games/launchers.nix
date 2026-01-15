@@ -16,7 +16,6 @@ in
       enable = true;
       package = pkgs.steam.override {
         # Digital distribution platform
-        # Digital distribution platform
         extraBwrapArgs = [
           "--bind"
           "/zero"

@@ -7,7 +7,6 @@ let
   # Wrap ugrep/ug to always load the system-wide /etc/ugrep.conf
   ugrepWithConfig = pkgs.ugrep.overrideAttrs (old: {
     # Ultra fast grep with interactive query UI
-    # Ultra fast grep with interactive query UI
     nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
     postInstall = (old.postInstall or "") + ''
       wrapProgram "$out/bin/ugrep" --add-flags "--config=/etc/ugrep.conf"

@@ -86,7 +86,6 @@ in
         '';
     lint-deadnix = pkgs.runCommand "lint-deadnix" { nativeBuildInputs = [ pkgs.deadnix ]; } ''
       # Find and remove unused code in .nix source files
-           # Find and remove unused code in .nix source files
                 # unused code detector
                      cd ${self}
                      deadnix --fail --exclude home .

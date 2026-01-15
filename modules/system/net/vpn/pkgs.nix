@@ -10,7 +10,6 @@
     pkgs.wireguard-tools # tools for the WireGuard secure network tunnel
     (pkgs.openvpn.override {
       # Robust and highly flexible tunneling application
-      # Robust and highly flexible tunneling application
       pkcs11Support = true;
       inherit (pkgs) pkcs11helper;
     }) # OpenVPN with PKCS#11 support
