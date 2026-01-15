@@ -8,7 +8,6 @@ let
   hasGitHubToken = builtins.pathExists "${secretsDir}/github-token.sops.yaml";
   hasCachixEnv = builtins.pathExists "${secretsDir}/cachix.env";
   hasVdirsyncerGoogle = builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml";
-  hasNextcloudWork = builtins.pathExists "${secretsDir}/nextcloud-cli-wrk.env.sops";
   hasWorkWireguard = builtins.pathExists "${secretsDir}/wireguard/work-wg.conf.sops";
   hasVlessRealitySingboxTun = builtins.pathExists "${secretsDir}/vless/reality-singbox-tun.json.sops";
 in
@@ -48,24 +47,6 @@ in
         format = "yaml";
         sopsFile = "${secretsDir}/vdirsyncer/google.sops.yaml";
         key = "client_secret";
-        owner = "neg";
-      };
-    }
-    // {
-      "nextcloud-cli/env" = {
-        format = "dotenv";
-        sopsFile = "${secretsDir}/nextcloud-cli.env.sops";
-        path = "/run/user/1000/secrets/nextcloud-cli.env";
-        mode = "0400";
-        owner = "neg";
-      };
-    }
-    // lib.optionalAttrs hasNextcloudWork {
-      "nextcloud-cli-wrk/env" = {
-        format = "dotenv";
-        sopsFile = "${secretsDir}/nextcloud-cli-wrk.env.sops";
-        path = "/run/user/1000/secrets/nextcloud-cli-wrk.env";
-        mode = "0400";
         owner = "neg";
       };
     }
