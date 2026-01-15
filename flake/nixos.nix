@@ -24,7 +24,6 @@ let
     inputs.sops-nix.nixosModules.sops
 
     inputs.nvf.nixosModules.default
-    inputs.nix-index-database.nixosModules.nix-index
     inputs.microvm.nixosModules.host
   ];
 

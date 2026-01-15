@@ -13,7 +13,6 @@
     pkgs.manix # nixos documentation
     pkgs.niv # pin dependencies
     pkgs.nix-diff # show what makes derivations differ
-    pkgs.nix-index # index for nix-locate
     pkgs.nix-init # easier creation of nix packages
     pkgs.nixos-shell # create VM for current config
     pkgs.nix-output-monitor # fancy nix output (nom)
