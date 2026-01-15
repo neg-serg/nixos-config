@@ -22,7 +22,7 @@ in
       '';
     }
     // {
-      environment.systemPackages = [ pkgs.nethack ];
+      environment.systemPackages = [ pkgs.nethack ]; # Rogue-like game
     }
   );
 }

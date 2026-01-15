@@ -49,8 +49,8 @@ in
       ecosystem {
         enforce_permissions = 1
       }
-      permission = ${lib.getExe pkgs.grim}, screencopy, allow
-      permission = ${lib.getExe pkgs.hyprlock}, screencopy, allow
+      permission = ${lib.getExe pkgs.grim}, screencopy, allow # Grab images from a Wayland compositor
+      permission = ${lib.getExe pkgs.hyprlock}, screencopy, allow # Hyprland's GPU-accelerated screen locking utility
     ''
     + lib.optionalString hy3Enabled ''
       permission = ${hy3PluginPath}, plugin, allow

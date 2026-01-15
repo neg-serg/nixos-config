@@ -20,23 +20,23 @@ appimageTools.wrapType2 {
   inherit pname version;
   src = "${appimage}/${pname}.AppImage";
   extraPkgs = pkgs: [
-    pkgs.enchant
+    pkgs.enchant # Generic spell checking library
     # Common deps for GUI apps / Electron / WebKit
-    pkgs.gsettings-desktop-schemas
-    pkgs.glib
-    pkgs.gtk3
+    pkgs.gsettings-desktop-schemas # Collection of GSettings schemas for settings shared by va...
+    pkgs.glib # C library of programming buildings blocks
+    pkgs.gtk3 # Multi-platform toolkit for creating graphical user interf...
     pkgs.cairo
-    pkgs.pango
-    pkgs.gdk-pixbuf
+    pkgs.pango # Library for laying out and rendering of text, with an emp...
+    pkgs.gdk-pixbuf # Library for image loading and manipulation
     pkgs.at-spi2-atk
     pkgs.at-spi2-core
-    pkgs.dbus
-    pkgs.libdrm
-    pkgs.libxkbcommon
-    pkgs.mesa
-    pkgs.nspr
-    pkgs.nss
-    pkgs.cups
+    pkgs.dbus # Simple interprocess messaging system
+    pkgs.libdrm # Direct Rendering Manager library and headers
+    pkgs.libxkbcommon # Library to handle keyboard descriptions
+    pkgs.mesa # Open source 3D graphics library
+    pkgs.nspr # Netscape Portable Runtime, a platform-neutral API for sys...
+    pkgs.nss # Set of libraries for development of security-enabled clie...
+    pkgs.cups # Standards-based printing system for UNIX
     pkgs.alsa-lib
     # GStreamer
     pkgs.gst_all_1.gstreamer

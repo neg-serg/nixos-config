@@ -10,7 +10,8 @@ let
     pkgs.tomb # simple encrypted vaults (LUKS+dm-crypt) for secrets
     pkgs.keepass # KeePassXC CLI for migrating legacy vaults
     pkgs.pass-git-helper # Git credential helper backed by pass
-    (pkgs.pass.withExtensions (
+    (pkgs.pass.withExtensions ( # Stores, retrieves, generates, and synchronizes passwords ...
+      # Stores, retrieves, generates, and synchronizes passwords ...
       ext: with ext; [
         pass-import
         pass-otp

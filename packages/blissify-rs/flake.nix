@@ -23,7 +23,7 @@
           };
         };
 
-        stdenv = pkgs.clangStdenv;
+        stdenv = pkgs.clangStdenv; # The default build environment for Unix packages in Nixpkgs
         clang = pkgs.llvmPackages.clang-unwrapped;
 
         blissify-rs-src = pkgs.fetchgit {
@@ -59,15 +59,15 @@
               "-isystem ${pkgs.stdenv.cc.cc}/include"
               "-isystem ${pkgs.stdenv.cc.libc.dev}/include"
               "-isystem ${clang}/lib/clang/${clang.version}/include"
-              "-isystem ${pkgs.ffmpeg.dev}/include"
+              "-isystem ${pkgs.ffmpeg.dev}/include" # Complete, cross-platform solution to record, convert and ...
             ];
             PKG_CONFIG_PATH = builtins.concatStringsSep ":" (
               map (drv: "${drv}/lib/pkgconfig") [
-                pkgs.ffmpeg
-                pkgs.ffmpeg.dev
+                pkgs.ffmpeg # Complete, cross-platform solution to record, convert and ...
+                pkgs.ffmpeg.dev # Complete, cross-platform solution to record, convert and ...
               ]
             );
-            FFMPEG_DIR = "${pkgs.ffmpeg.dev}";
+            FFMPEG_DIR = "${pkgs.ffmpeg.dev}"; # Complete, cross-platform solution to record, convert and ...
           };
 
           cargoLock = {
@@ -114,9 +114,9 @@
               -isystem ${pkgs.stdenv.cc.cc}/include \
               -isystem ${pkgs.stdenv.cc.libc.dev}/include \
               -isystem ${clang}/lib/clang/${clang.version}/include \
-              -isystem ${pkgs.ffmpeg.dev}/include"
-            export PKG_CONFIG_PATH="$(printf '%s:%s' ${pkgs.ffmpeg}/lib/pkgconfig ${pkgs.ffmpeg.dev}/lib/pkgconfig)"
-            export FFMPEG_DIR=${pkgs.ffmpeg.dev}
+              -isystem ${pkgs.ffmpeg.dev}/include" # Complete, cross-platform solution to record, convert and ...
+            export PKG_CONFIG_PATH="$(printf '%s:%s' ${pkgs.ffmpeg}/lib/pkgconfig ${pkgs.ffmpeg.dev}/lib/pkgconfig)" # Complete, cross-platform solution to record, convert and ...
+            export FFMPEG_DIR=${pkgs.ffmpeg.dev} # Complete, cross-platform solution to record, convert and ...
 
             echo
             echo "✅ Rust devShell for blissify-rs ready."

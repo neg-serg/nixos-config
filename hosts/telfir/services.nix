@@ -25,8 +25,8 @@ let
     LOGIN=$(cat ${config.sops.secrets."resilio/http-login".path})
     PASS=$(cat ${config.sops.secrets."resilio/http-pass".path})
 
-    ${pkgs.gnused}/bin/sed -i "s|placeholder_login|$LOGIN|" "$CONFIG_FILE"
-    ${pkgs.gnused}/bin/sed -i "s|placeholder_pass|$PASS|" "$CONFIG_FILE"
+    ${pkgs.gnused}/bin/sed -i "s|placeholder_login|$LOGIN|" "$CONFIG_FILE" # GNU sed, a batch stream editor
+    ${pkgs.gnused}/bin/sed -i "s|placeholder_pass|$PASS|" "$CONFIG_FILE" # GNU sed, a batch stream editor
   '';
 in
 lib.mkMerge [
@@ -384,7 +384,7 @@ lib.mkMerge [
           tinysparql.enable = true;
         };
 
-        udev.packages = lib.mkAfter [ pkgs.openrgb ];
+        udev.packages = lib.mkAfter [ pkgs.openrgb ]; # Open source RGB lighting control
         power-profiles-daemon.enable = true;
         # Do not expose AdGuard Home Prometheus metrics on this host
         adguardhome.settings.prometheus.enabled = false;
@@ -573,13 +573,13 @@ lib.mkMerge [
               blocks=$($CLI getblockcount 2>/dev/null || echo 0)
               # headers and chain via blockchaininfo
               info=$($CLI getblockchaininfo 2>/dev/null || echo '{}')
-              headers=$(printf '%s\n' "$info" | ${pkgs.jq}/bin/jq -r '.headers // 0' 2>/dev/null || echo 0)
-              chain=$(printf '%s\n' "$info" | ${pkgs.jq}/bin/jq -r '.chain // "unknown"' 2>/dev/null || echo unknown)
+              headers=$(printf '%s\n' "$info" | ${pkgs.jq}/bin/jq -r '.headers // 0' 2>/dev/null || echo 0) # Lightweight and flexible command-line JSON processor
+              chain=$(printf '%s\n' "$info" | ${pkgs.jq}/bin/jq -r '.chain // "unknown"' 2>/dev/null || echo unknown) # Lightweight and flexible command-line JSON processor
 
               # Determine best block time for staleness metric
               besthash=$($CLI getbestblockhash 2>/dev/null || echo)
               if [ -n "$besthash" ]; then
-                block_time=$($CLI getblockheader "$besthash" 2>/dev/null | ${pkgs.jq}/bin/jq -r '.time // 0' 2>/dev/null || echo 0)
+                block_time=$($CLI getblockheader "$besthash" 2>/dev/null | ${pkgs.jq}/bin/jq -r '.time // 0' 2>/dev/null || echo 0) # Lightweight and flexible command-line JSON processor
               else
                 block_time=0
               fi
@@ -591,7 +591,7 @@ lib.mkMerge [
               fi
 
               # Peer connections
-              peers=$($CLI getnetworkinfo 2>/dev/null | ${pkgs.jq}/bin/jq -r '.connections // 0' 2>/dev/null || echo 0)
+              peers=$($CLI getnetworkinfo 2>/dev/null | ${pkgs.jq}/bin/jq -r '.connections // 0' 2>/dev/null || echo 0) # Lightweight and flexible command-line JSON processor
 
               cat > "$TMPFILE" <<EOF
               # HELP bitcoin_block_height Current block height as reported by bitcoind
@@ -710,10 +710,12 @@ lib.mkMerge [
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = "${pkgs.wireguard-tools}/bin/wg-quick up ${
+        ExecStart = "${pkgs.wireguard-tools}/bin/wg-quick up ${ # Tools for the WireGuard secure network tunnel
+          # Tools for the WireGuard secure network tunnel
           config.sops.secrets."wireguard/telfir-wg-quick".path
         }";
-        ExecStop = "${pkgs.wireguard-tools}/bin/wg-quick down ${
+        ExecStop = "${pkgs.wireguard-tools}/bin/wg-quick down ${ # Tools for the WireGuard secure network tunnel
+          # Tools for the WireGuard secure network tunnel
           config.sops.secrets."wireguard/telfir-wg-quick".path
         }";
       };

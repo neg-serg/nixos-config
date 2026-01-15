@@ -2,12 +2,12 @@
 {
   adguardian-term = pkgs.adguardian;
   richcolors = pkgs.neg.richcolors;
-  hxtools = pkgs.hxtools;
+  hxtools = pkgs.hxtools; # Collection of small tools over the years by j.eng
   transmission-exporter = pkgs.neg.transmission_exporter;
   ls-iommu = pkgs.neg.ls_iommu;
   skbtrace = pkgs.neg.skbtrace;
-  nemu = pkgs.nemu;
-  _nemu = pkgs.nemu;
+  nemu = pkgs.nemu; # Ncurses UI for QEMU
+  _nemu = pkgs.nemu; # Ncurses UI for QEMU
   # beatprints = pkgs.beatprints; # Disabled: upstream pylette tests fail
   webcamize = pkgs.neg.webcamize;
   rtcqs = pkgs.neg.rtcqs;
@@ -15,8 +15,8 @@
   playscii = pkgs.neg.playscii;
   two_percent = pkgs.neg.two_percent;
   subsonic-tui = pkgs.subsonic-tui;
-  rmpc = pkgs.rmpc;
-  pyprland = pkgs.pyprland;
+  rmpc = pkgs.rmpc; # TUI music player client for MPD with album art support vi...
+  pyprland = pkgs.pyprland; # Hyperland plugin system
   pyprland_fixed = pkgs.pyprland_fixed;
   lucida = pkgs.neg.lucida;
   rescrobbled = pkgs.neg.rescrobbled;

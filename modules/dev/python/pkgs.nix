@@ -34,7 +34,7 @@ let
       mutagen
     ];
 
-  pythonEnv = (pkgs.python3-lto or pkgs.python3).withPackages myPythonPackages;
+  pythonEnv = (pkgs.python3-lto or pkgs.python3).withPackages myPythonPackages; # High-level dynamically-typed programming language
 in
 {
   config = lib.mkIf (cfg.core or true) {

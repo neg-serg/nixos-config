@@ -60,8 +60,8 @@ in
           description = "Vdirsyncer synchronization service";
           serviceConfig = {
             Type = "oneshot";
-            ExecStartPre = "${lib.getExe pkgs.vdirsyncer} metasync";
-            ExecStart = "${lib.getExe pkgs.vdirsyncer} sync";
+            ExecStartPre = "${lib.getExe pkgs.vdirsyncer} metasync"; # Synchronize calendars and contacts
+            ExecStart = "${lib.getExe pkgs.vdirsyncer} sync"; # Synchronize calendars and contacts
           };
         };
 

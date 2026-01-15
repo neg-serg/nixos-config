@@ -9,7 +9,7 @@
     ./fonts.nix
     ./gui-packages.nix
     ./locale.nix
-    ./locale-pkgs.nix
+    ./locale-pkgs.nix # Nix package manager
     ./locate.nix
     ./mail.nix
     ./nvf.nix

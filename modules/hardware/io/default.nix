@@ -1,4 +1,4 @@
 { ... }:
 {
-  imports = [ ./pkgs.nix ];
+  imports = [ ./pkgs.nix ]; # Nix package manager
 }

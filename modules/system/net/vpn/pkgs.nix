@@ -8,7 +8,8 @@
     pkgs.throne # Qt GUI proxy configuration manager (sing-box client)
     pkgs.openconnect # Cisco AnyConnect (open source)
     pkgs.wireguard-tools # tools for the WireGuard secure network tunnel
-    (pkgs.openvpn.override {
+    (pkgs.openvpn.override { # Robust and highly flexible tunneling application
+      # Robust and highly flexible tunneling application
       pkcs11Support = true;
       inherit (pkgs) pkcs11helper;
     }) # OpenVPN with PKCS#11 support

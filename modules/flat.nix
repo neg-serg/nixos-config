@@ -2,9 +2,9 @@
 {
   imports = [
     ./appimage/default.nix
-    ./appimage/pkgs.nix
+    ./appimage/pkgs.nix # Nix package manager
     ./args.nix
-    ./cli/archives/pkgs.nix
+    ./cli/archives/pkgs.nix # Nix package manager
     ./cli/default.nix
     ./cli/dev.nix
     ./cli/file-ops.nix
@@ -17,17 +17,17 @@
     ./cli/tools.nix
     ./cli/ugrep.nix
     ./core/neg.nix
-    ./db/pkgs.nix
+    ./db/pkgs.nix # Nix package manager
     ./dev/android/default.nix
     ./dev/antigravity.nix
     ./dev/benchmarks/default.nix
     ./dev/editor/default.nix
-    ./dev/editor/neovim/pkgs.nix
-    ./dev/editor/pkgs.nix
-    ./dev/elf/pkgs.nix
+    ./dev/editor/neovim/pkgs.nix # Nix package manager
+    ./dev/editor/pkgs.nix # Nix package manager
+    ./dev/elf/pkgs.nix # Nix package manager
     ./dev/gcc/autofdo.nix
     ./dev/gdb/default.nix
-    ./dev/git/pkgs.nix
+    ./dev/git/pkgs.nix # Nix package manager
     ./dev/hack/core.nix
     ./dev/hack/default.nix
     ./dev/hack/forensics.nix
@@ -48,11 +48,11 @@
     ./dev/hack/vulnerability_scanners.nix
     ./dev/openxr/default.nix
     ./dev/pkgs/default.nix
-    ./dev/python/pkgs.nix
+    ./dev/python/pkgs.nix # Nix package manager
     ./dev/unreal/default.nix
     ./diff-closures.nix
     ./documentation/settings.nix
-    ./emulators/pkgs.nix
+    ./emulators/pkgs.nix # Nix package manager
     ./features/apps.nix
     ./features/cli.nix
     ./features/core.nix
@@ -67,7 +67,7 @@
     ./finance/tws.nix
     ./flake-preflight.nix
     ./flatpak/default.nix
-    ./flatpak/pkgs.nix
+    ./flatpak/pkgs.nix # Nix package manager
     ./fonts/default.nix
     ./fun/default.nix
 
@@ -77,30 +77,30 @@
     ./games/default.nix
     ./games/tuning.nix
     ./hardware/amdgpu.nix
-    ./hardware/audio/dsp/pkgs.nix
+    ./hardware/audio/dsp/pkgs.nix # Nix package manager
     ./hardware/audio/pipewire/default.nix
     ./hardware/audio/pulseaudio/default.nix
     ./hardware/config.nix
     ./hardware/cooling.nix
-    ./hardware/cpu/pkgs.nix
+    ./hardware/cpu/pkgs.nix # Nix package manager
     ./hardware/gpu-corectrl.nix
-    ./hardware/io/pkgs.nix
+    ./hardware/io/pkgs.nix # Nix package manager
     ./hardware/liquidctl.nix
-    ./hardware/pkgs.nix
+    ./hardware/pkgs.nix # Nix package manager
     ./hardware/qmk/default.nix
-    ./hardware/qmk/pkgs.nix
+    ./hardware/qmk/pkgs.nix # Nix package manager
     ./hardware/udev-rules/default.nix
     ./hardware/uinput.nix
     ./hardware/usb-automount.nix
     ./hardware/video/amd/default.nix
     ./hardware/video/nvidia/rtx5090.nix
     ./hardware/video/pkgs/default.nix
-    ./hardware/webcam/pkgs.nix
+    ./hardware/webcam/pkgs.nix # Nix package manager
     ./llm/codex-config.nix
     ./llm/default.nix
     ./llm/ollama.nix
     # ./llm/open-webui.nix
-    ./llm/pkgs.nix
+    ./llm/pkgs.nix # Nix package manager
     ./media/ai-upscale-packages.nix
     ./media/audio/apps-packages.nix
     ./media/audio/core-packages.nix
@@ -139,7 +139,7 @@
     ./roles/server.nix
     ./roles/workstation.nix
     ./secrets/pass/default.nix
-    ./secrets/pkgs.nix
+    ./secrets/pkgs.nix # Nix package manager
     ./secrets/yubikey/default.nix
     ./security/default.nix
     ./security/firejail.nix
@@ -156,11 +156,11 @@
     ./servers/samba/default.nix
     ./servers/unbound/default.nix
     ./shell/default.nix
-    ./shell/pkgs.nix
+    ./shell/pkgs.nix # Nix package manager
     ./shell/zsh.nix
     ./system/boot.nix
     ./system/boot/autofdo.nix
-    ./system/boot/pkgs.nix
+    ./system/boot/pkgs.nix # Nix package manager
     ./system/environment.nix
     ./system/filesystems.nix
     ./system/guix.nix
@@ -175,15 +175,15 @@
     ./system/net/bridge.nix
     ./system/net/default.nix
     ./system/net/nscd.nix
-    ./system/net/pkgs.nix
+    ./system/net/pkgs.nix # Nix package manager
     ./system/net/proxy.nix
     ./system/net/ssh.nix
     ./system/net/vpn/default.nix
-    ./system/net/vpn/pkgs.nix
+    ./system/net/vpn/pkgs.nix # Nix package manager
     ./system/net/vpn/xray.nix
     ./system/net/wifi.nix
     ./system/oomd.nix
-    ./system/pkgs.nix
+    ./system/pkgs.nix # Nix package manager
     ./system/preserve-flake.nix
     ./system/profiles/aliases.nix
     ./system/profiles/debug.nix
@@ -202,7 +202,7 @@
 
     ./system/virt/default.nix
     ./system/virt/nemu.nix
-    ./system/virt/pkgs.nix
+    ./system/virt/pkgs.nix # Nix package manager
     ./system/winapps.nix
     ./system/zram.nix
     ./text/default.nix
@@ -211,7 +211,7 @@
     ./text/read-packages.nix
     ./tools/default.nix
     ./tools/hiddify.nix
-    ./tools/pkgs.nix
+    ./tools/pkgs.nix # Nix package manager
     ./torrent/default.nix
     ./user/bash.nix
     ./user/dbus.nix
@@ -221,7 +221,7 @@
     ./user/games/performance.nix
     ./user/games/vr.nix
     ./user/gui-packages.nix
-    ./user/locale-pkgs.nix
+    ./user/locale-pkgs.nix # Nix package manager
     ./user/locale.nix
     ./user/locate.nix
     ./user/mail.nix

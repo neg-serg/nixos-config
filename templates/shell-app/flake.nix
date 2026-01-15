@@ -27,8 +27,8 @@
         default = pkgs.mkShell {
           name = "shell-app-dev";
           packages = [
-            pkgs.shellcheck
-            pkgs.shfmt
+            pkgs.shellcheck # Shell script analysis tool
+            pkgs.shfmt # Shell parser and formatter
           ];
         };
       });

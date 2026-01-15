@@ -13,8 +13,8 @@ let
     let
       tpl = builtins.readFile ./swayimg-first.sh;
       replacements = [
-        (lib.getExe pkgs.swayimg)
-        (lib.getExe pkgs.socat)
+        (lib.getExe pkgs.swayimg) # Image viewer for Sway/Wayland
+        (lib.getExe pkgs.socat) # Utility for bidirectional data transfer between two indep...
       ];
     in
     lib.replaceStrings [ "@SWAYIMG_BIN@" "@SOCAT_BIN@" ] replacements tpl

@@ -84,14 +84,15 @@ in
           treefmt --config-file ./.treefmt.toml --tree-root . --fail-on-change .
           touch "$out"
         '';
-    lint-deadnix = pkgs.runCommand "lint-deadnix" { nativeBuildInputs = [ pkgs.deadnix ]; } ''
-      # unused code detector
-           cd ${self}
-           deadnix --fail --exclude home .
-           touch "$out"
+    lint-deadnix = pkgs.runCommand "lint-deadnix" { nativeBuildInputs = [ pkgs.deadnix ]; } '' # Find and remove unused code in .nix source files
+      # Find and remove unused code in .nix source files
+           # unused code detector
+                cd ${self}
+                deadnix --fail --exclude home .
+                touch "$out"
     '';
     lint-statix = pkgs.runCommand "lint-statix" {
-      nativeBuildInputs = [ pkgs.statix ];
+      nativeBuildInputs = [ pkgs.statix ]; # Lints and suggestions for the nix programming language
     } ''cd ${self}; statix check .; touch "$out"''; # nix antipattern linter
     pre-commit = preCommit;
     lint-md-lang =
@@ -99,10 +100,10 @@ in
         {
           nativeBuildInputs = [
             pkgs.bash
-            pkgs.coreutils
-            pkgs.findutils
-            pkgs.gnugrep
-            pkgs.gitMinimal
+            pkgs.coreutils # GNU Core Utilities
+            pkgs.findutils # GNU Find Utilities, the basic directory searching utiliti...
+            pkgs.gnugrep # GNU implementation of the Unix grep command
+            pkgs.gitMinimal # Distributed version control system
           ];
         }
         ''
@@ -421,7 +422,7 @@ in
       pkgs.runCommand "check-css-syntax"
         {
           nativeBuildInputs = [
-            (pkgs.python3.withPackages (p: [ p.cssutils ]))
+            (pkgs.python3.withPackages (p: [ p.cssutils ])) # High-level dynamically-typed programming language
             pkgs.findutils # find, xargs
             pkgs.gnugrep # grep
           ];
@@ -1028,11 +1029,11 @@ in
     # AI development shell (LLMs, etc.)
     ai = pkgs.mkShell {
       nativeBuildInputs = [
-        (pkgs.ai-studio or pkgs.lmstudio)
+        (pkgs.ai-studio or pkgs.lmstudio) # LM Studio is an easy to use desktop app for experimenting...
         pkgs.aichat
         pkgs.aider-chat
-        pkgs.codex
-        pkgs.openai
+        pkgs.codex # Lightweight coding agent that runs in your terminal
+        pkgs.openai # Python client library for the OpenAI API
       ];
     };
 
@@ -1047,16 +1048,16 @@ in
         pkgs.jq # json processor
         # Linters/Formatters required by 'just lint' (moved from system pkgs)
         pkgs.black
-        pkgs.ruff
-        pkgs.mypy
-        pkgs.stylua
+        pkgs.ruff # Extremely fast Python linter and code formatter
+        pkgs.mypy # Optional static typing for Python
+        pkgs.stylua # Opinionated Lua code formatter
       ];
     };
 
     haskell =
       let
         tidalGhci = pkgs.writeShellScriptBin "tidal-ghci" ''
-          exec ${pkgs.ghc.withPackages (ps: [ ps.tidal ])}/bin/ghci "$@"
+          exec ${pkgs.ghc.withPackages (ps: [ ps.tidal ])}/bin/ghci "$@" # Glasgow Haskell Compiler
         '';
         optionalHaskellTools =
           lib.optionals (pkgs ? fourmolu) [ pkgs.fourmolu ] # haskell formatter
@@ -1095,43 +1096,43 @@ in
       };
     cpp = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.clang
-        pkgs.clang-tools
-        pkgs.cmake
-        pkgs.ninja
+        pkgs.clang # C language family frontend for LLVM (wrapper script)
+        pkgs.clang-tools # Standalone command line tools for C++ development
+        pkgs.cmake # Cross-platform, open-source build system generator
+        pkgs.ninja # Small build system with a focus on speed
         pkgs.bear
-        pkgs.ccache
-        pkgs.lldb
-        pkgs.gdb
+        pkgs.ccache # Compiler cache for fast recompilation of C/C++ code
+        pkgs.lldb # Next-generation high-performance debugger
+        pkgs.gdb # GNU Project debugger
         pkgs.gcc # explicitly available in devshell
       ];
     };
 
     java = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.jdk
-        pkgs.gradle
+        pkgs.jdk # Open-source Java Development Kit
+        pkgs.gradle # Enterprise-grade build system
       ];
     };
 
     node = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.nodejs_24
+        pkgs.nodejs_24 # Event-driven I/O framework for the V8 JavaScript engine
       ];
     };
 
     vlang = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.vlang
+        pkgs.vlang # Simple, fast, safe, compiled language for developing main...
       ];
     };
 
     re = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.radare2
-        pkgs.cutter
-        pkgs.flawfinder
-        pkgs.codeql
+        pkgs.radare2 # UNIX-like reverse engineering framework and command-line ...
+        pkgs.cutter # Free and Open Source Reverse Engineering Platform powered...
+        pkgs.flawfinder # Tool to examines C/C++ source code for security flaws
+        pkgs.codeql # Semantic code analysis engine
         pkgs.foremost # forensic tool
       ];
     };
@@ -1143,8 +1144,8 @@ in
       pkgs.mkShell {
         nativeBuildInputs = [
           pkgs.ansible
-          pkgs.terraform
-          pkgs.opentofu
+          pkgs.terraform # Tool for building, changing, and versioning infrastructure
+          pkgs.opentofu # Tool for building, changing, and versioning infrastructure
         ]
         ++ optionalIaCTools;
       };
@@ -1178,168 +1179,168 @@ in
       pkgs.mkShell {
         nativeBuildInputs = [
           pythonEnv
-          pkgs.pipx
+          pkgs.pipx # Install and run Python applications in isolated environments
           pkgs.black
-          pkgs.ruff
-          pkgs.mypy
+          pkgs.ruff # Extremely fast Python linter and code formatter
+          pkgs.mypy # Optional static typing for Python
         ];
       };
 
     lua = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.stylua
+        pkgs.stylua # Opinionated Lua code formatter
       ];
     };
 
     android = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.android-tools
-        pkgs.scrcpy
+        pkgs.scrcpy # Display and control Android devices over USB or TCP/IP
         pkgs.adbfs-rootless
         pkgs.adbtuifm
       ]
-      ++ lib.optionals (pkgs ? fuse3) [ pkgs.fuse3 ];
+      ++ lib.optionals (pkgs ? fuse3) [ pkgs.fuse3 ]; # Library that allows filesystems to be implemented in user...
     };
 
     qmk = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.qmk
-        pkgs.qmk_hid
-        pkgs.keymapviz
+        pkgs.qmk # Program to help users work with QMK Firmware
+        pkgs.qmk_hid # Commandline tool for interactng with QMK devices over HID
+        pkgs.keymapviz # Qmk keymap.c visualizer
       ];
     };
 
     radicle = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.radicle-node
-        pkgs.radicle-explorer
+        pkgs.radicle-node # Radicle node and CLI for decentralized code collaboration
+        pkgs.radicle-explorer # Web frontend for Radicle
       ];
     };
 
     pentest = pkgs.mkShell {
       nativeBuildInputs = [
         # Recon
-        pkgs.nmap
-        pkgs.masscan
-        pkgs.rustscan
-        pkgs.zmap
-        pkgs.dnsenum
-        pkgs.dnsrecon
-        pkgs.dnstracer
-        pkgs.fierce
-        pkgs.netdiscover
-        pkgs.enum4linux
-        pkgs.onesixtyone
+        pkgs.nmap # Free and open source utility for network discovery and se...
+        pkgs.masscan # Fast scan of the Internet
+        pkgs.rustscan # Faster Nmap Scanning with Rust
+        pkgs.zmap # Fast single packet network scanner designed for Internet-...
+        pkgs.dnsenum # Tool to enumerate DNS information
+        pkgs.dnsrecon # DNS Enumeration script
+        pkgs.dnstracer # Determines where a given Domain Name Server (DNS) gets it...
+        pkgs.fierce # DNS reconnaissance tool for locating non-contiguous IP space
+        pkgs.netdiscover # Network address discovering tool, developed mainly for th...
+        pkgs.enum4linux # Tool for enumerating information from Windows and Samba s...
+        pkgs.onesixtyone # Fast SNMP Scanner
         pkgs.arping
-        pkgs.cloudbrute
-        pkgs.sn0int
-        pkgs.netmask
-        pkgs.net-snmp
-        pkgs.sslsplit
-        pkgs.ssldump
-        pkgs.sslh
-        pkgs.sslscan
-        pkgs.swaks
+        pkgs.cloudbrute # Cloud enumeration tool
+        pkgs.sn0int # Semi-automatic OSINT framework and package manager
+        pkgs.netmask # IP address formatting tool
+        pkgs.net-snmp # Clients and server for the SNMP network monitoring protocol
+        pkgs.sslsplit # Transparent SSL/TLS interception
+        pkgs.ssldump # SSLv3/TLS network protocol analyzer
+        pkgs.sslh # Applicative Protocol Multiplexer (e.g. share SSH and HTTP...
+        pkgs.sslscan # Tests SSL/TLS services and discover supported cipher suites
+        pkgs.swaks # Featureful, flexible, scriptable, transaction-oriented SM...
 
         # Web
-        pkgs.gobuster
-        pkgs.dirb
-        pkgs.wfuzz
-        pkgs.zap
-        pkgs.katana
-        pkgs.urlhunter
+        pkgs.gobuster # Tool used to brute-force URIs, DNS subdomains, Virtual Ho...
+        pkgs.dirb # Web content scanner
+        pkgs.wfuzz # Web content fuzzer to facilitate web applications assessm...
+        pkgs.zap # Java application for web penetration testing
+        pkgs.katana # Next-generation crawling and spidering framework
+        pkgs.urlhunter # Recon tool that allows searching shortened URLs
 
         # Passwords
-        pkgs.john
-        pkgs.hashcat
-        pkgs.thc-hydra
+        pkgs.john # John the Ripper password cracker
+        pkgs.hashcat # Fast password cracker
+        pkgs.thc-hydra # Very fast network logon cracker which support many differ...
         pkgs.brutespray
-        pkgs.crowbar
-        pkgs.crunch
-        pkgs.chntpw
-        pkgs.hcxtools
-        pkgs.phrasendrescher
+        pkgs.crowbar # Brute forcing tool that can be used during penetration tests
+        pkgs.crunch # Wordlist generator
+        pkgs.chntpw # Utility to reset the password of any user that has a vali...
+        pkgs.hcxtools # Tools for capturing wlan traffic and conversion to hashca...
+        pkgs.phrasendrescher # Modular and multi processing pass phrase cracking tool
 
         # Exploitation
-        pkgs.metasploit
-        pkgs.exploitdb
-        pkgs.msfpc
-        pkgs.shellnoob
-        pkgs.termineter
+        pkgs.metasploit # Metasploit Framework - a collection of exploits
+        pkgs.exploitdb # Archive of public exploits and corresponding vulnerable s...
+        pkgs.msfpc # MSFvenom Payload Creator
+        pkgs.shellnoob # Shellcode writing toolkit
+        pkgs.termineter # Smart Meter Security Testing Framework
 
         # Sniffing/MITM
-        pkgs.wireshark
-        pkgs.tshark
-        pkgs.termshark
-        pkgs.tcpdump
+        pkgs.wireshark # Powerful network protocol analyzer
+        pkgs.tshark # Powerful network protocol analyzer
+        pkgs.termshark # Terminal UI for wireshark-cli, inspired by Wireshark
+        pkgs.tcpdump # Network sniffer
         pkgs.bettercap
-        pkgs.mitmproxy
-        pkgs.dsniff
-        pkgs.rshijack
-        pkgs.sipp
-        pkgs.sniffglue
+        pkgs.mitmproxy # Man-in-the-middle proxy
+        pkgs.dsniff # Collection of tools for network auditing and penetration ...
+        pkgs.rshijack # TCP connection hijacker
+        pkgs.sipp # SIPp testing tool
+        pkgs.sniffglue # Secure multithreaded packet sniffer
 
         # Forensics
-        pkgs.sleuthkit
-        pkgs.volatility3
-        pkgs.ddrescue
-        pkgs.ext4magic
-        pkgs.extundelete
-        pkgs.steghide
-        pkgs.stegseek
-        pkgs.outguess
-        pkgs.zsteg
-        pkgs.stegsolve
-        pkgs.ghidra-bin
+        pkgs.sleuthkit # Forensic/data recovery tool
+        pkgs.volatility3 # Volatile memory extraction frameworks
+        pkgs.ddrescue # GNU ddrescue, a data recovery tool
+        pkgs.ext4magic # Recover / undelete files from ext3 or ext4 partitions
+        pkgs.extundelete # Utility that can recover deleted files from an ext3 or ex...
+        pkgs.steghide # Open source steganography program
+        pkgs.stegseek # Tool to crack steganography
+        pkgs.outguess # Universal steganographic tool that allows the insertion o...
+        pkgs.zsteg # Detect stegano-hidden data in PNG & BMP
+        pkgs.stegsolve # Steganographic image analyzer, solver and data extractor ...
+        pkgs.ghidra-bin # Software reverse engineering (SRE) suite of tools develop...
         pkgs.capstone
-        pkgs.pdf-parser
-        pkgs.p0f
+        pkgs.pdf-parser # Parse a PDF document
+        pkgs.p0f # Passive network reconnaissance and fingerprinting tool
 
         # Wireless
         pkgs.aircrack-ng
-        pkgs.impala
+        pkgs.impala # TUI for managing wifi
 
         # Misc Network
-        pkgs.hping
-        pkgs.fping
-        pkgs.tcptraceroute
-        pkgs.trippy
+        pkgs.hping # Command-line oriented TCP/IP packet assembler/analyzer
+        pkgs.fping # Send ICMP echo probes to network hosts
+        pkgs.tcptraceroute # Traceroute implementation using TCP packets
+        pkgs.trippy # Network diagnostic tool
       ];
     };
 
     elf = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.patchelf
-        pkgs.elfutils
-        pkgs.chrpath
-        pkgs.debugedit
-        pkgs.dump_syms
+        pkgs.patchelf # Small utility to modify the dynamic linker and RPATH of E...
+        pkgs.elfutils # Set of utilities to handle ELF objects
+        pkgs.chrpath # Command line tool to adjust the RPATH or RUNPATH of ELF b...
+        pkgs.debugedit # Provides programs and scripts for creating debuginfo and ...
+        pkgs.dump_syms # Command-line utility for parsing the debugging informatio...
       ];
     };
 
     gitops = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.git-annex
+        pkgs.git-annex # manage files with git, without checking their contents in...
       ];
     };
 
     graphics = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.librsvg
-        pkgs.libxml2
+        pkgs.librsvg # Small library to render SVG images to Cairo surfaces
+        pkgs.libxml2 # XML parsing library for C
       ];
     };
 
     latex = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.rubber
+        pkgs.rubber # Wrapper for LaTeX and friends
         (pkgs.texlive.combined.scheme-full.withPackages (ps: [
           ps.cyrillic
           ps.cyrillic-bin
           ps.collection-langcyrillic
           ps.context-cyrillicnumbers
         ]))
-        pkgs.sioyek
+        pkgs.sioyek # PDF viewer designed for research papers and technical books
       ];
     };
 
@@ -1407,8 +1408,8 @@ in
           nixfmtPkg
           pkgs.black
           pkgs.python3Packages.mdformat
-          pkgs.shfmt
-          pkgs.treefmt
+          pkgs.shfmt # Shell parser and formatter
+          pkgs.treefmt # One CLI to format the code tree
         ];
         text = ''
           set -euo pipefail

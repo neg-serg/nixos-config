@@ -11,7 +11,8 @@ let
   rofiConfigSrc = ../../../../packages/rofi-config;
 
   # Rofi with plugins (file-browser-extended)
-  rofiWithPlugins = pkgs.rofi.override {
+  rofiWithPlugins = pkgs.rofi.override { # Window switcher, run dialog and dmenu replacement
+    # Window switcher, run dialog and dmenu replacement
     plugins = [
       pkgs.rofi-file-browser # adds file browsing capability to rofi
       pkgs.rofi-emoji # adds emoji selection to rofi
@@ -32,7 +33,7 @@ let
     text =
       builtins.replaceStrings
         [ "@ROFI_BIN@" "@JQ_BIN@" ]
-        [ "${rofiWithPlugins}/bin/rofi" "${pkgs.jq}/bin/jq" ]
+        [ "${rofiWithPlugins}/bin/rofi" "${pkgs.jq}/bin/jq" ] # Lightweight and flexible command-line JSON processor
         rofiWrapperScript;
   };
 
@@ -57,7 +58,7 @@ in
           after = [ "graphical-session.target" ];
           wantedBy = [ "graphical-session.target" ];
           serviceConfig = {
-            ExecStart = "${lib.getExe' pkgs.swayosd "swayosd-libinput-backend"}";
+            ExecStart = "${lib.getExe' pkgs.swayosd "swayosd-libinput-backend"}"; # GTK based on screen display for keyboard shortcuts
             Restart = "always";
           };
         };

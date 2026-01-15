@@ -2,6 +2,6 @@
 {
   imports = [
     ./nemu.nix
-    ./pkgs.nix
+    ./pkgs.nix # Nix package manager
   ];
 }

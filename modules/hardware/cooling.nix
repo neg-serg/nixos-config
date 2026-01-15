@@ -167,7 +167,7 @@ in
       };
       serviceConfig = {
         Type = "simple";
-        ExecStart = "${pkgs.lm_sensors}/bin/fancontrol";
+        ExecStart = "${pkgs.lm_sensors}/bin/fancontrol"; # Tools for reading hardware sensors - maintained fork
         Restart = "on-failure";
         RestartSec = 5;
       };

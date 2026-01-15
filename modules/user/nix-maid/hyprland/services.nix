@@ -27,7 +27,7 @@
         esac
         exec dbus-send \
           --print-reply \
-          --dest="org.mpris.MediaPlayer2.$(${lib.getExe pkgs.playerctl} -l | head -n 1)" \
+          --dest="org.mpris.MediaPlayer2.$(${lib.getExe pkgs.playerctl} -l | head -n 1)" \ # Command-line utility and library for controlling media pl...
           /org/mpris/MediaPlayer2 \
           "org.mpris.MediaPlayer2.Player.$MEMBER"
       '')
@@ -96,7 +96,7 @@
       wantedBy = [ "graphical-session.target" ];
       after = [ "graphical-session-pre.target" ];
       serviceConfig = {
-        ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
+        ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent"; # Polkit authentication agent written in QT/QML
         Environment = [
           "QT_QPA_PLATFORM=wayland"
           "XDG_SESSION_TYPE=wayland"

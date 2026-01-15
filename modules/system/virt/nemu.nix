@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.programs.nemu;
-  defaultPackage = pkgs.nemu;
+  defaultPackage = pkgs.nemu; # Ncurses UI for QEMU
 in
 {
   options.programs.nemu = {
@@ -165,7 +165,7 @@ in
             User = user;
             ExecStart = ''
               /bin/sh -c \
-              "${pkgs.coreutils}/bin/echo DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$UID/bus > /tmp/nemu-daemon-${user}.env"
+              "${pkgs.coreutils}/bin/echo DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$UID/bus > /tmp/nemu-daemon-${user}.env" # GNU Core Utilities
             '';
           };
           wantedBy = [ "nemu.target" ];

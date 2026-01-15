@@ -24,7 +24,7 @@ in
         # custom kernel packages
         pkgs.linuxPackages_latest.kernel.override {
           # use clang toolchain
-          stdenv = pkgs.clangStdenv;
+          stdenv = pkgs.clangStdenv; # The default build environment for Unix packages in Nixpkgs
         }
       )
     );

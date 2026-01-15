@@ -20,7 +20,7 @@ let
     && !(config.features.devSpeed.enable or false);
 
   # Quickshell package from flake input
-  qsPkg = pkgs.quickshell;
+  qsPkg = pkgs.quickshell; # Flexbile QtQuick based desktop shell toolkit
 
   # Wrapper factory
   mkQuickshellWrapper = import (inputs.self + "/lib/quickshell-wrapper.nix") {
@@ -62,7 +62,7 @@ let
       confdir="$HOME/.config/quickshell/Theme"
       mkdir -p "$confdir"
       # The build script presumably writes to --out
-      ${pkgs.nodejs_24}/bin/node "$HOME"/.config/quickshell/Tools/build-theme.mjs --out "$confdir/.theme.json" --quiet
+      ${pkgs.nodejs_24}/bin/node "$HOME"/.config/quickshell/Tools/build-theme.mjs --out "$confdir/.theme.json" --quiet # Event-driven I/O framework for the V8 JavaScript engine
     '';
   };
 in
@@ -100,7 +100,7 @@ lib.mkIf quickshellEnabled (
           Type = "simple";
           ExecStartPre = lib.getExe buildTheme;
           ExecStart = ''
-            ${pkgs.watchexec}/bin/watchexec \
+            ${pkgs.watchexec}/bin/watchexec \ # Executes commands in response to file modifications
               --restart \
               --watch %h/.config/quickshell/Theme \
               --watch %h/.config/quickshell/Theme/manifest.json \

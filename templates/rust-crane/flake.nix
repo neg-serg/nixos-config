@@ -75,16 +75,16 @@
         devShells.default = pkgs.mkShell {
           packages = [
             rustToolchain
-            pkgs.pkg-config
-            pkgs.openssl
-            pkgs.cargo-nextest
-            pkgs.cargo-audit
-            pkgs.cargo-deny
-            pkgs.cargo-outdated
-            pkgs.cargo-bloat
-            pkgs.cargo-modules
-            pkgs.cargo-zigbuild
-            pkgs.zig
+            pkgs.pkg-config # Tool that allows packages to find out information about o...
+            pkgs.openssl # Cryptographic library that implements the SSL and TLS pro...
+            pkgs.cargo-nextest # Next-generation test runner for Rust projects
+            pkgs.cargo-audit # Audit Cargo.lock files for crates with security vulnerabi...
+            pkgs.cargo-deny # Cargo plugin for linting your dependencies
+            pkgs.cargo-outdated # Cargo subcommand for displaying when Rust dependencies ar...
+            pkgs.cargo-bloat # Tool and Cargo subcommand that helps you find out what ta...
+            pkgs.cargo-modules # Cargo plugin for showing a tree-like overview of a crate'...
+            pkgs.cargo-zigbuild # Tool to compile Cargo projects with zig as the linker
+            pkgs.zig # General-purpose programming language and toolchain for ma...
             pkgs.bacon
           ];
           RUST_BACKTRACE = "1";

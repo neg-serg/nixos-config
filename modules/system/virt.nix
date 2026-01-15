@@ -11,7 +11,7 @@ in
 {
   # Keep imports at top-level; guard heavy config below
   imports = [
-    ./virt/pkgs.nix
+    ./virt/pkgs.nix # Nix package manager
 
     ./virt/nemu.nix
   ];
@@ -49,9 +49,9 @@ in
       libvirtd = {
         enable = true;
         qemu = {
-          package = pkgs.qemu_kvm;
+          package = pkgs.qemu_kvm; # Generic and open source machine emulator and virtualizer
           runAsRoot = true;
-          vhostUserPackages = [ pkgs.virtiofsd ];
+          vhostUserPackages = [ pkgs.virtiofsd ]; # vhost-user virtio-fs device backend written in Rust
           swtpm.enable = true;
         };
       };

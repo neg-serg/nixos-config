@@ -3,6 +3,6 @@
   imports = [
     ./pass
     ./yubikey
-    ./pkgs.nix
+    ./pkgs.nix # Nix package manager
   ];
 }

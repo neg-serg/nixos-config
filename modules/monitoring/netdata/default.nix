@@ -21,7 +21,7 @@ in
   config = mkIf cfg.enable {
     services.netdata = {
       enable = true;
-      package = pkgs.netdata;
+      package = pkgs.netdata; # Real-time performance monitoring tool
       # Keep defaults minimal; do not enable cloud/extra plugins here.
       # Users can extend via services.netdata.config in host overrides.
     };

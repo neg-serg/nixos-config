@@ -98,7 +98,7 @@ with rec {
           "wheel"
         ];
       };
-      defaultUserShell = pkgs.zsh;
+      defaultUserShell = pkgs.zsh; # Z shell
       groups.${mainGroup}.gid = mainGid;
     };
   };

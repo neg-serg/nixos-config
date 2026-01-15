@@ -10,9 +10,9 @@ let
   rmeSourceName = "alsa_input.usb-RME_ADI-2_4_Pro_SE__53011083__B992903C2BD8DC8-00.analog-stereo";
   rmeDefaultScript = pkgs.writeShellScript "wpctl-set-rme-default" ''
     set -euo pipefail
-    jq_bin=${pkgs.jq}/bin/jq
-    pw_dump_bin=${pkgs.pipewire}/bin/pw-dump
-    wpctl_bin=${pkgs.pipewire}/bin/wpctl
+    jq_bin=${pkgs.jq}/bin/jq # Lightweight and flexible command-line JSON processor
+    pw_dump_bin=${pkgs.pipewire}/bin/pw-dump # Server and user space API to deal with multimedia pipelines
+    wpctl_bin=${pkgs.pipewire}/bin/wpctl # Server and user space API to deal with multimedia pipelines
     tries=60
     for i in $(seq 1 "$tries"); do
       dump="$("$pw_dump_bin" || true)"
@@ -83,7 +83,7 @@ in
                     {
                       type = "ladspa";
                       name = "rnnoise";
-                      plugin = "${pkgs.rnnoise-plugin}/lib/ladspa/rnnoise_ladspa.so";
+                      plugin = "${pkgs.rnnoise-plugin}/lib/ladspa/rnnoise_ladspa.so"; # Real-time noise suppression plugin for voice based on Xip...
                       label = "noise_suppressor_stereo";
                     }
                   ];
@@ -101,7 +101,7 @@ in
         };
       };
       wireplumber = {
-        package = pkgs.wireplumber;
+        package = pkgs.wireplumber; # Modular session / policy manager for PipeWire
         extraConfig = {
           # # Tell wireplumber to be more verbose
           # "10-log-level-debug" = {

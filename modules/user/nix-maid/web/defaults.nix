@@ -33,8 +33,8 @@ in
         db = browser;
       in
       {
-        BROWSER = db.bin or (lib.getExe' pkgs.xdg-utils "xdg-open");
-        DEFAULT_BROWSER = db.bin or (lib.getExe' pkgs.xdg-utils "xdg-open");
+        BROWSER = db.bin or (lib.getExe' pkgs.xdg-utils "xdg-open"); # Set of command line tools that assist applications with a...
+        DEFAULT_BROWSER = db.bin or (lib.getExe' pkgs.xdg-utils "xdg-open"); # Set of command line tools that assist applications with a...
       }
     );
   };

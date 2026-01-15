@@ -33,7 +33,7 @@ lib.mkIf (cfg.enable or false) {
       serviceConfig = {
         ExecStart =
           let
-            exe = lib.getExe pkgs.openrgb;
+            exe = lib.getExe pkgs.openrgb; # Open source RGB lighting control
             args = [
               "--server"
               "-p"
@@ -50,7 +50,7 @@ lib.mkIf (cfg.enable or false) {
     "local-ai" = {
       description = "Local AI (Ollama)";
       serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.ollama} serve";
+        ExecStart = "${lib.getExe pkgs.ollama} serve"; # Get up and running with large language models locally
         Environment = [
           # For LocalAI compatibility
           "MODELS_PATH=${config.users.users.neg.home}/.local/share/localai/models"
@@ -68,7 +68,7 @@ lib.mkIf (cfg.enable or false) {
     udiskie = {
       description = "Udiskie automounter";
       serviceConfig = {
-        ExecStart = "${lib.getExe' pkgs.udiskie "udiskie"} --no-tray";
+        ExecStart = "${lib.getExe' pkgs.udiskie "udiskie"} --no-tray"; # Removable disk automounter for udisks
         # Wayland-specific environment
         Environment = [
           "QT_QPA_PLATFORM=wayland"

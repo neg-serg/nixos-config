@@ -13,7 +13,7 @@ let
     scratchpads = {
       im = {
         animation = "";
-        command = "${lib.getExe pkgs.telegram-desktop}";
+        command = "${lib.getExe pkgs.telegram-desktop}"; # Telegram Desktop messaging app
         class = "org.telegram.desktop";
         size = "30% 95%";
         position = "69% 2%";
@@ -23,7 +23,7 @@ let
       };
       music = {
         animation = "";
-        command = "${lib.getExe pkgs.kitty} --class music -e ${lib.getExe pkgs.rmpc}";
+        command = "${lib.getExe pkgs.kitty} --class music -e ${lib.getExe pkgs.rmpc}"; # Fast, feature-rich, GPU based terminal emulator | TUI music player client for MPD with album art support vi...
         margin = "80%";
         class = "music";
         position = "15% 50%";
@@ -34,7 +34,7 @@ let
       };
       torrment = {
         animation = "";
-        command = "${lib.getExe pkgs.kitty} --class torrment -e ${lib.getExe pkgs.neg.tewi}";
+        command = "${lib.getExe pkgs.kitty} --class torrment -e ${lib.getExe pkgs.neg.tewi}"; # Fast, feature-rich, GPU based terminal emulator
         class = "torrment";
         position = "1% 0%";
         size = "98% 40%";
@@ -44,7 +44,7 @@ let
       };
       teardown = {
         animation = "";
-        command = "${lib.getExe pkgs.kitty} --class teardown -e ${lib.getExe pkgs.btop}";
+        command = "${lib.getExe pkgs.kitty} --class teardown -e ${lib.getExe pkgs.btop}"; # Fast, feature-rich, GPU based terminal emulator
         class = "teardown";
         position = "1% 0%";
         size = "98% 50%";
@@ -53,7 +53,7 @@ let
       };
       mixer = {
         animation = "fromRight";
-        command = "${lib.getExe pkgs.kitty} --class mixer -e ${lib.getExe pkgs.ncpamixer}";
+        command = "${lib.getExe pkgs.kitty} --class mixer -e ${lib.getExe pkgs.ncpamixer}"; # Fast, feature-rich, GPU based terminal emulator | Terminal mixer for PulseAudio inspired by pavucontrol
         class = "mixer";
         lazy = true;
         size = "40% 90%";

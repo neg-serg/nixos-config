@@ -4,7 +4,7 @@
   ...
 }:
 {
-  imports = [ ./pkgs.nix ];
+  imports = [ ./pkgs.nix ]; # Nix package manager
 
   # Enable upstream QMK module to ship udev rules and create 'plugdev'.
   hardware.keyboard.qmk.enable = true;

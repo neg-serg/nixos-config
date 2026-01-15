@@ -133,7 +133,7 @@ lib.mkIf guiEnabled (
         serviceConfig = {
           Type = "dbus";
           BusName = "org.freedesktop.Notifications";
-          ExecStart = "${lib.getExe pkgs.dunst} -config %h/.config/dunst/dunstrc";
+          ExecStart = "${lib.getExe pkgs.dunst} -config %h/.config/dunst/dunstrc"; # Lightweight and customizable notification daemon
           Restart = "on-failure";
         };
       };

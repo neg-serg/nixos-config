@@ -65,7 +65,7 @@ in
       # Silence failing ad-hoc nixindex timer/service; prefer proper modules
       nixindex.enable = lib.mkForce false;
     };
-    packages = [ pkgs.packagekit ];
+    packages = [ pkgs.packagekit ]; # System to facilitate installing and updating packages
     timers.nixindex.enable = lib.mkForce false;
   };
 }
