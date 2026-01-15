@@ -1349,6 +1349,16 @@ in
       ];
     };
 
+    misc = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.xephem
+        pkgs.xlife
+        pkgs.free42
+        pkgs.cool-retro-term
+        pkgs.almonds
+      ];
+    };
+
     media = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.ffmpeg-full
