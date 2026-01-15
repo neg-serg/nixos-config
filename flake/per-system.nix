@@ -1343,6 +1343,12 @@ in
       ];
     };
 
+    music-learning = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.solfege
+      ];
+    };
+
     media = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.ffmpeg-full
