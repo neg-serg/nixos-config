@@ -85,13 +85,13 @@ lib.mkMerge [
     };
 
     # Enable Docker engine for WinBoat and use real docker socket
-    virtualisation = {
-      docker.enable = true;
-      podman = {
-        dockerCompat = lib.mkForce false;
-        dockerSocket.enable = lib.mkForce false;
-      };
-    };
+#     virtualisation = {
+#       docker.enable = true;
+#       podman = {
+#         dockerCompat = lib.mkForce false;
+#         dockerSocket.enable = lib.mkForce false;
+#       };
+#     };
 
     # Remove experimental mpv OpenVR overlay
 
@@ -276,7 +276,6 @@ lib.mkMerge [
     # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
     environment.systemPackages = lib.mkAfter [
       pkgs.winboat # Windows VM support
-      pkgs.docker-compose # multi-container Docker applications
       pkgs.openrgb # per-device RGB controller UI
       pkgs.neg.tewi # TUI torrent client (Transmission/qBittorrent/Deluge)
       pkgs.neg.playscii # ASCII art editor and animator
@@ -719,5 +718,8 @@ lib.mkMerge [
         }";
       };
     };
+  })
+  (lib.mkIf (config.features.virt.docker.enable or false) {
+    environment.systemPackages = [ pkgs.docker-compose ];
   })
 ]

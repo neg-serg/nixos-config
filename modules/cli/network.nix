@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, config, ... }:
 {
   environment.systemPackages = [
     # Network diagnostics
@@ -19,7 +19,7 @@
     pkgs.kubernetes-helm # Helm package manager
 
     pkgs.scaleway-cli # Scaleway cloud CLI
-    pkgs."yandex-cloud" # Yandex Cloud CLI
     pkgs."yandex-disk" # Yandex Disk sync client and daemon
-  ];
+  ] ++ (lib.optional (config.features.cli.yandexCloud.enable or false) pkgs."yandex-cloud");
+
 }

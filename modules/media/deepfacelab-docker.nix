@@ -20,7 +20,7 @@ let
   );
 in
 {
-  config = lib.mkIf enabled {
+  config = lib.mkIf (enabled && (config.features.virt.docker.enable or false)) {
     environment.systemPackages = lib.mkAfter [
       deepfacelabDocker # helper to launch DeepFaceLab Ubuntu Docker container
     ];
