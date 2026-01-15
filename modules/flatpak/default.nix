@@ -1,6 +1,6 @@
 { config, lib, ... }:
 {
-  imports = [ ./pkgs.nix ];
+  imports = [ ./pkgs.nix ]; # Nix package manager
   services.flatpak = {
     enable = true;
     overrides = {

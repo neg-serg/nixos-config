@@ -15,7 +15,7 @@
     ./cooling.nix
     ./gpu-corectrl.nix
     ./liquidctl.nix
-    ./pkgs.nix
+    ./pkgs.nix # Nix package manager
     ./uinput.nix
     ./usb-automount.nix
   ];

@@ -14,20 +14,20 @@ let
     else
       pkgs.nyxt; # nyxt (source)
   # Floorp upstream source package is deprecated in nixpkgs >= 12.x; always use floorp-bin.
-  floorpPkg = pkgs.floorp-bin;
+  floorpPkg = pkgs.floorp-bin; # Fork of Firefox that seeks balance between versatility, p...
 in
 {
   firefox = {
     name = "firefox";
-    pkg = pkgs.firefox;
-    bin = lib.getExe' pkgs.firefox "firefox";
+    pkg = pkgs.firefox; # Web browser built from Firefox source tree
+    bin = lib.getExe' pkgs.firefox "firefox"; # Web browser built from Firefox source tree
     desktop = "firefox.desktop";
     newTabArg = "-new-tab";
   };
   librewolf = {
     name = "librewolf";
-    pkg = pkgs.librewolf;
-    bin = lib.getExe' pkgs.librewolf "librewolf";
+    pkg = pkgs.librewolf; # Fork of Firefox, focused on privacy, security and freedom
+    bin = lib.getExe' pkgs.librewolf "librewolf"; # Fork of Firefox, focused on privacy, security and freedom
     desktop = "librewolf.desktop";
     newTabArg = "-new-tab";
   };
@@ -47,8 +47,8 @@ in
   };
   chrome = {
     name = "chrome";
-    pkg = pkgs.google-chrome;
-    bin = lib.getExe' pkgs.google-chrome "google-chrome-stable";
+    pkg = pkgs.google-chrome; # Freeware web browser developed by Google
+    bin = lib.getExe' pkgs.google-chrome "google-chrome-stable"; # Freeware web browser developed by Google
     desktop = "google-chrome.desktop";
     newTabArg = "--new-tab";
   };
@@ -61,15 +61,15 @@ in
   };
   vivaldi = {
     name = "vivaldi";
-    pkg = pkgs.vivaldi;
-    bin = lib.getExe' pkgs.vivaldi "vivaldi";
+    pkg = pkgs.vivaldi; # Browser for our Friends, powerful and personal
+    bin = lib.getExe' pkgs.vivaldi "vivaldi"; # Browser for our Friends, powerful and personal
     desktop = "vivaldi-stable.desktop";
     newTabArg = "--new-tab";
   };
   edge = {
     name = "edge";
-    pkg = pkgs.microsoft-edge;
-    bin = lib.getExe' pkgs.microsoft-edge "microsoft-edge";
+    pkg = pkgs.microsoft-edge; # Web browser from Microsoft
+    bin = lib.getExe' pkgs.microsoft-edge "microsoft-edge"; # Web browser from Microsoft
     desktop = "microsoft-edge.desktop";
     newTabArg = "--new-tab";
   };

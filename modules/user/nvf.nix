@@ -51,7 +51,7 @@ lib.mkIf devEnabled (
         defaultEditor = true;
         settings = lib.mkForce {
           vim = {
-            package = pkgs.neovim-unwrapped;
+            package = pkgs.neovim-unwrapped; # Vim text editor fork focused on extensibility and agility
             viAlias = true;
             vimAlias = true;
             lazy.enable = false;

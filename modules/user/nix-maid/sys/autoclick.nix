@@ -20,7 +20,7 @@ mkIf (config.features.gui.enable or false) (
           serviceConfig = {
             ExecStart =
               let
-                exe = lib.getExe' pkgs.ydotool "ydotoold";
+                exe = lib.getExe' pkgs.ydotool "ydotoold"; # Generic Linux command-line automation tool
               in
               "${exe}";
             Restart = "on-failure";

@@ -9,7 +9,7 @@
 let
   n = neg impurity;
   cfg = config.features.mail;
-  passPkg = pkgs.pass.withExtensions (exts: [ exts.pass-otp ]);
+  passPkg = pkgs.pass.withExtensions (exts: [ exts.pass-otp ]); # Stores, retrieves, generates, and synchronizes passwords ...
 
   # Helper to generate mbsync config
   # ... (rest of mkMbsyncConfig remains unchanged)
@@ -86,7 +86,7 @@ in
           serviceConfig = {
             Type = "simple";
             TimeoutStartSec = "30min";
-            ExecStart = "${lib.getExe pkgs.isync} -c %h/.config/mbsync/mbsyncrc -a";
+            ExecStart = "${lib.getExe pkgs.isync} -c %h/.config/mbsync/mbsyncrc -a"; # Free IMAP and MailDir mailbox synchronizer
           };
           after = [ "network-online.target" ];
           wants = [ "network-online.target" ];
@@ -110,7 +110,7 @@ in
           ];
           serviceConfig = {
             Type = "simple";
-            ExecStart = "${lib.getExe pkgs.goimapnotify} -conf %h/.config/imapnotify/gmail.json";
+            ExecStart = "${lib.getExe pkgs.goimapnotify} -conf %h/.config/imapnotify/gmail.json"; # Execute scripts on IMAP mailbox changes (new/deleted/upda...
             Restart = "on-failure";
             RestartSec = "20";
           };

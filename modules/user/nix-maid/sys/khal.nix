@@ -14,7 +14,7 @@ in
   config = lib.mkIf (cfg.enable or false) (
     lib.mkMerge [
       {
-        environment.systemPackages = [ pkgs.khal ];
+        environment.systemPackages = [ pkgs.khal ]; # CLI calendar application
       }
       (n.mkHomeFiles {
         ".config/khal/config".text = ''

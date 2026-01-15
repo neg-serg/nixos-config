@@ -11,7 +11,7 @@ in
     ./codex-config.nix
     ./ollama.nix
     # ./open-webui.nix
-    ./pkgs.nix
+    ./pkgs.nix # Nix package manager
   ];
   config = lib.mkMerge [
     {

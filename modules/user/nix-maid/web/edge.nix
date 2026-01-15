@@ -10,5 +10,5 @@ in
 libChromium.mkChromiumModule {
   inherit config;
   browserName = "edge";
-  package = pkgs.microsoft-edge;
+  package = pkgs.microsoft-edge; # Web browser from Microsoft
 }

@@ -19,7 +19,7 @@ mkIf (config.features.web.enable or false) {
     {
       description = "HTTP server for Surfingkeys configuration";
       serviceConfig = {
-        ExecStart = "${pkgs.python3}/bin/python3 -m http.server ${toString port} --directory ${serveDir}";
+        ExecStart = "${pkgs.python3}/bin/python3 -m http.server ${toString port} --directory ${serveDir}"; # High-level dynamically-typed programming language
         Restart = "on-failure";
         RestartSec = "5";
         Slice = "background.slice";

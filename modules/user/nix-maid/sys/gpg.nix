@@ -33,9 +33,9 @@ let
       fi
 
       # Ensure rofi and coreutils are in path
-      PATH="$PATH:${pkgs.coreutils}/bin:${pkgs.rofi}/bin"
+      PATH="$PATH:${pkgs.coreutils}/bin:${pkgs.rofi}/bin" # GNU Core Utilities | Window switcher, run dialog and dmenu replacement
 
-      "${lib.getExe pkgs.pinentry-rofi}" "$@"
+      "${lib.getExe pkgs.pinentry-rofi}" "$@" # Rofi frontend to pinentry
     '';
   };
 
@@ -74,8 +74,8 @@ in
           wantedBy = [ "default.target" ];
 
           serviceConfig = {
-            ExecStart = "${pkgs.gnupg}/bin/gpg-agent --supervised";
-            ExecReload = "${pkgs.gnupg}/bin/gpgconf --reload gpg-agent";
+            ExecStart = "${pkgs.gnupg}/bin/gpg-agent --supervised"; # Modern release of the GNU Privacy Guard, a GPL OpenPGP im...
+            ExecReload = "${pkgs.gnupg}/bin/gpgconf --reload gpg-agent"; # Modern release of the GNU Privacy Guard, a GPL OpenPGP im...
           };
         };
 

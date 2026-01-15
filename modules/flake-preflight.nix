@@ -58,9 +58,9 @@ in
   config = lib.mkIf cfg.enable {
     system.activationScripts.flakePreflight.text = ''
       echo -e "\e[1mFlake checks (best effort):\e[0m"
-      ${pkgs.coreutils}/bin/timeout ${toStr cfg.timeoutSec}s \
-        ${pkgs.util-linux}/bin/ionice -c ${toStr cfg.ioniceClass} -n ${toStr cfg.ionicePriority} \
-        ${pkgs.coreutils}/bin/nice -n ${toStr cfg.niceLevel} \
+      ${pkgs.coreutils}/bin/timeout ${toStr cfg.timeoutSec}s \ # GNU Core Utilities
+        ${pkgs.util-linux}/bin/ionice -c ${toStr cfg.ioniceClass} -n ${toStr cfg.ionicePriority} \ # Set of system utilities for Linux
+        ${pkgs.coreutils}/bin/nice -n ${toStr cfg.niceLevel} \ # GNU Core Utilities
         ${config.nix.package}/bin/nix \
           --experimental-features nix-command flakes \
           --accept-flake-config \

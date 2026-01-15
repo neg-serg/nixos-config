@@ -32,7 +32,7 @@ let
         hardware.steam-hardware.enable = lib.mkDefault true;
 
         # Provide udev rules for XR devices (generic XR rules)
-        services.udev.packages = lib.mkAfter [ pkgs.xr-hardware ];
+        services.udev.packages = lib.mkAfter [ pkgs.xr-hardware ]; # Hardware description for XR devices
 
         environment = {
           systemPackages = lib.mkAfter [

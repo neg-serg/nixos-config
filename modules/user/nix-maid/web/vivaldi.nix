@@ -10,5 +10,5 @@ in
 libChromium.mkChromiumModule {
   inherit config;
   browserName = "vivaldi";
-  package = pkgs.vivaldi;
+  package = pkgs.vivaldi; # Browser for our Friends, powerful and personal
 }

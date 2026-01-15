@@ -219,6 +219,6 @@ mkMozillaModule {
     guiEnabled
     profiles
     ;
-  package = pkgs.firefox-devedition;
+  package = pkgs.firefox-devedition; # Web browser built from Firefox Developer Edition source tree
   overlays = [ inputs.nur.overlays.default ];
 }

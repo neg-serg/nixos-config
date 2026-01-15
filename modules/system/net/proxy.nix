@@ -27,7 +27,7 @@
         "/run/current-system/sw/bin/test -f /run/user/1000/secrets/vless-reality-singbox-tun.json"
         "/run/current-system/sw/bin/sh -c '/run/current-system/sw/bin/ip rule del pref 100 2>/dev/null; /run/current-system/sw/bin/ip rule del pref 200 2>/dev/null; /run/current-system/sw/bin/ip route show table 200 default > /run/sing-box-tun/prev-default-route 2>/dev/null; /run/current-system/sw/bin/ip route del default table 200 2>/dev/null'"
       ];
-      ExecStart = "${pkgs.sing-box}/bin/sing-box run -c /run/user/1000/secrets/vless-reality-singbox-tun.json";
+      ExecStart = "${pkgs.sing-box}/bin/sing-box run -c /run/user/1000/secrets/vless-reality-singbox-tun.json"; # Universal proxy platform
       ExecStartPost = [
         "/run/current-system/sw/bin/sh -c '/run/current-system/sw/bin/ip rule add pref 100 to 204.152.223.171 lookup main'"
         "/run/current-system/sw/bin/sh -c '/run/current-system/sw/bin/ip route replace default dev sb0 table 200'"

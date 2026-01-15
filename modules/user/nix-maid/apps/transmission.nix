@@ -11,7 +11,7 @@ let
   cfg = config.features.torrent;
   filesRoot = ../../../../files;
 
-  transmissionPkg = pkgs.transmission_4;
+  transmissionPkg = pkgs.transmission_4; # Fast, easy and free BitTorrent client
   confDirNew = "${config.users.users.neg.home}/.config/transmission-daemon";
 
   # Define the tracker update script wrapper
@@ -101,7 +101,7 @@ lib.mkIf (cfg.enable or false) (
             ExecStart = "${lib.getExe' transmissionPkg "transmission-daemon"} -g ${confDirNew} -f --log-level=error";
             Restart = "on-failure";
             RestartSec = "30";
-            ExecReload = "${lib.getExe' pkgs.util-linux "kill"} -s HUP $MAINPID";
+            ExecReload = "${lib.getExe' pkgs.util-linux "kill"} -s HUP $MAINPID"; # Set of system utilities for Linux
           };
           wantedBy = [ "default.target" ];
         };

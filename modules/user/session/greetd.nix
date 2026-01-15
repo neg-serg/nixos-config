@@ -6,7 +6,7 @@
   ...
 }:
 let
-  hyprlandPackage = pkgs.hyprland;
+  hyprlandPackage = pkgs.hyprland; # Dynamic tiling Wayland compositor that doesn't sacrifice ...
   mainUser = config.users.main.name or "neg";
   mainHome =
     if builtins.hasAttr mainUser config.users.users then

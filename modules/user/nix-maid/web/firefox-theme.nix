@@ -19,7 +19,8 @@ let
     text = json;
   };
 in
-pkgs.stdenvNoCC.mkDerivation {
+pkgs.stdenvNoCC.mkDerivation { # The default build environment for Unix packages in Nixpkgs
+  # The default build environment for Unix packages in Nixpkgs
   pname = "firefox-theme-${name}.xpi";
   version = "1.0";
   preferLocalBuild = true;
@@ -27,7 +28,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
   buildPhase = ''
     cp ${jsonFile} manifest.json
-    ${pkgs.zip}/bin/zip out.xpi manifest.json
+    ${pkgs.zip}/bin/zip out.xpi manifest.json # Compressor/archiver for creating and modifying zipfiles
   '';
 
   installPhase = ''

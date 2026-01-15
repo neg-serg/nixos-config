@@ -21,7 +21,7 @@ in
       {
         warnings =
           lib.optional (nyxt4 == null && !(pkgs ? nyxt4-bin))
-            "Nyxt Qt/Blink provider not found; using WebKitGTK (pkgs.nyxt). Provide `nyxtQt` input or a chaotic package attribute (nyxt-qtwebengine/nyxt-qt/nyxt4).";
+            "Nyxt Qt/Blink provider not found; using WebKitGTK (pkgs.nyxt). Provide `nyxtQt` input or a chaotic package attribute (nyxt-qtwebengine/nyxt-qt/nyxt4)."; # Infinitely extensible web-browser (with Lisp development ...
       }
       (n.mkHomeFiles {
         ".config/nyxt/init.lisp".text = rendered;

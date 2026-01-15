@@ -14,7 +14,8 @@ in
   config = lib.mkIf cfg.enable {
     programs.steam = {
       enable = true;
-      package = pkgs.steam.override {
+      package = pkgs.steam.override { # Digital distribution platform
+        # Digital distribution platform
         extraBwrapArgs = [
           "--bind"
           "/zero"

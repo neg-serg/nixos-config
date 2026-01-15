@@ -85,8 +85,8 @@ in
   ]);
 
   # Expose iwd's systemd unit so it can be started manually when required
-  systemd.packages = lib.optionals wifiEnabled [ pkgs.iwd ];
+  systemd.packages = lib.optionals wifiEnabled [ pkgs.iwd ]; # Wireless daemon for Linux
 
   # Provide D-Bus service definition for manual activation of iwd
-  services.dbus.packages = lib.optionals wifiEnabled [ pkgs.iwd ];
+  services.dbus.packages = lib.optionals wifiEnabled [ pkgs.iwd ]; # Wireless daemon for Linux
 }

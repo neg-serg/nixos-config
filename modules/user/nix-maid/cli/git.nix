@@ -131,7 +131,7 @@ let
         trustExitCode = true;
       };
     };
-    credential.helper = "!${pkgs.pass-git-helper}/bin/pass-git-helper --file ~/.config/git/pass.yml";
+    credential.helper = "!${pkgs.pass-git-helper}/bin/pass-git-helper --file ~/.config/git/pass.yml"; # Git credential helper interfacing with pass, the standard...
     difftool.nwim.cmd = "nvim -d $LOCAL $REMOTE";
   };
 in

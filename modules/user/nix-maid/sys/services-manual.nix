@@ -103,7 +103,7 @@ in
               QT_QPA_PLATFORM = "wayland";
             };
             serviceConfig = {
-              ExecStart = "${lib.getExe pkgs.flameshot}";
+              ExecStart = "${lib.getExe pkgs.flameshot}"; # Powerful yet simple to use screenshot software
               Restart = "on-failure";
               RestartSec = "2";
             };
@@ -145,7 +145,7 @@ in
         wantedBy = [ "default.target" ];
         serviceConfig = {
           Type = "simple";
-          ExecStart = "${lib.getExe' pkgs.playerctl "playerctld"} daemon";
+          ExecStart = "${lib.getExe' pkgs.playerctl "playerctld"} daemon"; # Command-line utility and library for controlling media pl...
           Restart = "on-failure";
           RestartSec = "2";
         };
@@ -165,7 +165,7 @@ in
               description = "Monado OpenXR Runtime Service";
               wantedBy = [ "graphical-session.target" ];
               serviceConfig = {
-                ExecStart = "${lib.getExe' pkgs.monado "monado-service"}";
+                ExecStart = "${lib.getExe' pkgs.monado "monado-service"}"; # Open source XR runtime
               };
             };
           }

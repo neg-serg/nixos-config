@@ -13,7 +13,7 @@
     ./guix.nix
     ./irqbalance.nix
     ./oomd.nix
-    ./pkgs.nix
+    ./pkgs.nix # Nix package manager
     ./preserve-flake.nix
     ./swapfile.nix
     ./tailscale.nix

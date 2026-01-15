@@ -38,6 +38,6 @@ common.mkMozillaModule {
   inherit impurity neg profiles;
   cfg = config.features.web.librewolf;
   guiEnabled = config.features.gui.enable;
-  package = pkgs.librewolf;
+  package = pkgs.librewolf; # Fork of Firefox, focused on privacy, security and freedom
   browserType = "librewolf";
 }

@@ -28,7 +28,7 @@ let
   fromCustom = pick [ "nyxt-qtwebengine" "nyxt-qt" "nyxt4" "nyxt" ] customPkgs;
 
   nyxtCandidate = fromCustom;
-  fallback = pkgs.nyxt4-bin or pkgs.nyxt;
+  fallback = pkgs.nyxt4-bin or pkgs.nyxt; # Infinitely extensible web-browser (with Lisp development ...
   package = if nyxtCandidate != null then nyxtCandidate else fallback;
 in
 {

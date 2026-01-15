@@ -21,14 +21,14 @@ pkgs.writeShellScriptBin "zcli" ''
   FLAKE_NIX_PATH=${flakePathLiteral}
   BACKUP_FILES=(${backupItems})
 
-  NH_BIN=${lib.escapeShellArg "${pkgs.nh}/bin/nh"}
-  GIT_BIN=${lib.escapeShellArg "${pkgs.git}/bin/git"}
-  INXI_BIN=${lib.escapeShellArg "${pkgs.inxi}/bin/inxi"}
-  LSPCI_BIN=${lib.escapeShellArg "${pkgs.pciutils}/bin/lspci"}
-  FIND_BIN=${lib.escapeShellArg "${pkgs.findutils}/bin/find"}
-  NIX_BIN=${lib.escapeShellArg "${pkgs.nix}/bin/nix"}
-  REALPATH_BIN=${lib.escapeShellArg "${pkgs.coreutils}/bin/realpath"}
-  LSBLK_BIN=${lib.escapeShellArg "${pkgs.util-linux}/bin/lsblk"}
+  NH_BIN=${lib.escapeShellArg "${pkgs.nh}/bin/nh"} # Yet another nix cli helper
+  GIT_BIN=${lib.escapeShellArg "${pkgs.git}/bin/git"} # Distributed version control system
+  INXI_BIN=${lib.escapeShellArg "${pkgs.inxi}/bin/inxi"} # Full featured CLI system information tool
+  LSPCI_BIN=${lib.escapeShellArg "${pkgs.pciutils}/bin/lspci"} # Collection of programs for inspecting and manipulating co...
+  FIND_BIN=${lib.escapeShellArg "${pkgs.findutils}/bin/find"} # GNU Find Utilities, the basic directory searching utiliti...
+  NIX_BIN=${lib.escapeShellArg "${pkgs.nix}/bin/nix"} # Nix package manager
+  REALPATH_BIN=${lib.escapeShellArg "${pkgs.coreutils}/bin/realpath"} # GNU Core Utilities
+  LSBLK_BIN=${lib.escapeShellArg "${pkgs.util-linux}/bin/lsblk"} # Set of system utilities for Linux
 
   usage() {
     cat <<USAGE

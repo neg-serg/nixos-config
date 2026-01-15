@@ -9,7 +9,7 @@ let
   retroarchFull = config.features.emulators.retroarch.full or false;
   retroarchAvailable = builtins.hasAttr "retroarch-full" pkgs;
   retroarchPkg =
-    if retroarchFull && retroarchAvailable then pkgs."retroarch-full" else pkgs.retroarch;
+    if retroarchFull && retroarchAvailable then pkgs."retroarch-full" else pkgs.retroarch; # Multi-platform emulator frontend for libretro cores
   retroarchEnabled = config.features.emulators.retroarch.enable or false;
   extraEnabled = config.features.emulators.extra.enable or false;
 
