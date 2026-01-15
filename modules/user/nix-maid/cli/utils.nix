@@ -24,7 +24,6 @@ lib.mkMerge [
       pkgs.numbat # High precision scientific calculator with unit support
       pkgs.uni # Query the Unicode database from the command line
       pkgs.tray-tui # System tray for TUI applications in terminal
-      pkgs.visidata # Terminal spreadsheet multitool for data discovery
 
       # ZCLI (custom script)
       (import ../../../../files/scripts/zcli.nix {

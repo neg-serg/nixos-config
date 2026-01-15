@@ -3,7 +3,6 @@
   environment.systemPackages = [
     # Backup tools
     pkgs.borgbackup # deduplicating backup utility
-    pkgs.restic # deduplicating backup CLI
 
     # Deduplication
     pkgs.czkawka # find duplicate/similar files
@@ -13,8 +12,6 @@
 
     # Download tools
     pkgs.aria2 # segmented downloader (used by clip/yt-dlp wrappers)
-    pkgs.gallery-dl # download image galleries
-    pkgs.monolith # single-file webpage archiver
     pkgs.yt-dlp # video downloader used across scripts
 
     # Data processing
