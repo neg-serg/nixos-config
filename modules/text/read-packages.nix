@@ -10,11 +10,11 @@
 let
   enabled = config.features.text.read.enable or false;
   packages = [
-    pkgs.amfora # Gemini/Gopher terminal client
-    pkgs.antiword # convert MS Word documents
-    pkgs.epr # CLI EPUB reader
-    pkgs.glow # markdown viewer
-    pkgs.lowdown # markdown cat
+    pkgs.amfora # a terminal browser for the Gemini protocol
+    pkgs.antiword # convert MS Word documents to text, PostScript and XML
+    pkgs.epr # CLI Epub reader
+    pkgs.glow # terminal based markdown reader
+    pkgs.lowdown # simple markdown translator
   ];
 in
 {

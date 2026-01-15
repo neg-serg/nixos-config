@@ -1345,24 +1345,24 @@ in
 
     music-learning = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.solfege
+        pkgs.solfege # ear training program
       ];
     };
 
     misc = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.xephem
-        pkgs.xlife
-        pkgs.free42
-        pkgs.cool-retro-term
-        pkgs.almonds
+        pkgs.xephem # astronomy application
+        pkgs.xlife # cellular automata explorer
+        pkgs.free42 # HP-42S calculator clone
+        pkgs.cool-retro-term # retro CRT terminal emulator
+        pkgs.almonds # TUI fractal viewer
       ];
     };
 
     media = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.ffmpeg-full
-        pkgs.gmic
+        pkgs.ffmpeg-full # complete multimedia framework
+        pkgs.gmic # image processing framework
       ];
     };
 
@@ -1374,15 +1374,15 @@ in
 
     virt = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.guestfs-tools
-        pkgs.lima
-        pkgs.quickemu
+        pkgs.guestfs-tools # tools for accessing and modifying virtual machine disk images
+        pkgs.lima # Linux virtual machines
+        pkgs.quickemu # quickly create and run highly optimised desktop virtual machines
       ];
     };
     text = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.recoll
-        pkgs.tesseract
+        pkgs.recoll # full-text search system
+        pkgs.tesseract # optical character recognition engine
       ];
     };
   };
