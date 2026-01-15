@@ -1026,7 +1026,6 @@ in
   };
 
   devShells = {
-    # AI development shell (LLMs, etc.)
     ai = pkgs.mkShell {
       nativeBuildInputs = [
         (pkgs.ai-studio or pkgs.lmstudio) # LM Studio is an easy to use desktop app for experimenting...
@@ -1034,6 +1033,7 @@ in
         pkgs.aider-chat
         pkgs.codex # Lightweight coding agent that runs in your terminal
         pkgs.openai # Python client library for the OpenAI API
+        pkgs.code-cursor-fhs # AI code editor (VS Code)
       ];
     };
 
@@ -1399,6 +1399,15 @@ in
       # Clojure development and scripting environment
       nativeBuildInputs = [
         pkgs.babashka # native Clojure scripting runtime for shell scripts
+      ];
+    };
+
+    "pro-audio" = pkgs.mkShell {
+      # professional audio production environment (DAWs, editors, synths)
+      nativeBuildInputs = [
+        pkgs.reaper # Digital Audio Workstation
+        pkgs.ocenaudio # lightweight waveform editor
+        pkgs.vital # spectral wavetable synth
       ];
     };
   };

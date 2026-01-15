@@ -13,9 +13,8 @@ let
   packages = [
     # -- DAWs / Editors --
     pkgs.bespokesynth # modular DAW for live coding / patching
-    pkgs.ocenaudio # lightweight waveform editor
   ]
-  ++ (lib.optional (config.features.media.audio.proAudio.enable or false) pkgs.reaper) # Digital audio workstation
+  # ++ (lib.optional (config.features.media.audio.proAudio.enable or false) pkgs.reaper) # Digital audio workstation
   ++ [
 
     # -- Live Coding --
@@ -31,7 +30,6 @@ let
     pkgs.dexed # DX7-compatible synth (LV2/VST standalone)
     pkgs.stochas # probability-driven MIDI sequencer
     # pkgs.vcv-rack # modular synth platform
-    pkgs.vital # spectral wavetable synth
   ];
 in
 {
