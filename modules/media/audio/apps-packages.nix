@@ -38,7 +38,6 @@ let
     # -- Network --
     pkgs.nicotine-plus # Soulseek client
     pkgs.scdl # SoundCloud downloader
-    pkgs.slskd # Soulseek daemon with web UI
     pkgs.streamlink # stream extractor (Twitch/YT) for mpv feeding
 
     # -- Tagging --
