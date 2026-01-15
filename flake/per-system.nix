@@ -1361,6 +1361,25 @@ in
         pkgs.tesseract
       ];
     };
+
+    monitoring = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.atop
+        pkgs.bcc
+        pkgs.dool
+        pkgs.iperf
+        pkgs.iperf2
+        pkgs.perf
+        pkgs.linuxPackages_latest.turbostat
+        pkgs.nethogs
+        pkgs.adguardian
+        pkgs.powertop
+        pkgs.procdump
+        pkgs.sysstat
+        pkgs.vmtouch
+        pkgs.hxtools
+      ];
+    };
   };
 
   apps =
