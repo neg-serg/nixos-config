@@ -1332,6 +1332,7 @@ in
           ps.collection-langcyrillic
           ps.context-cyrillicnumbers
         ]))
+        pkgs.sioyek
       ];
     };
 
