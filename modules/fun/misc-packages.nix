@@ -25,12 +25,12 @@ let
 
     bucklespringFixed # keyboard click sound daemon
 
-    pkgs.dotacat # colorful `cat`
-    pkgs.figlet # ASCII art banners
-    pkgs.fortune # fortune cookie
+    pkgs.dotacat # colorful cat implementation in Rust
+    pkgs.figlet # program for making large letters out of ordinary text
+    pkgs.fortune # program that displays a pseudorandom message from a database of quotations
 
-    pkgs.neo-cowsay # render cowsay balloons
-    pkgs.neo # digital rain
+    pkgs.neo-cowsay # cowsay and cowthink reboot for GNU/Linux
+    pkgs.neo # matrix legacy digital rain solution
     pkgs.neg.cxxmatrix # colorful matrix rain (C++ impl)
     pkgs.nms # "No More Secrets" decrypt effect
     pkgs.taoup # The Tao of Unix Programming

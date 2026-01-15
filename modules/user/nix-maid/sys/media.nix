@@ -47,7 +47,7 @@ let
   # --- Spicetify Config ---
   spiceSettings = {
     Setting = {
-      spotify_path = "${pkgs.spotify}/share/spotify";
+      spotify_path = "${pkgs.spotify}/share/spotify"; # Path to Spotify desktop files
       prefs_path = "${config.users.users.neg.home}/.config/spotify/prefs";
       current_theme = "Ziro";
       color_scheme = "rose-pine-moon";
@@ -136,7 +136,7 @@ lib.mkMerge [
       partOf = [ "graphical-session.target" ];
       wantedBy = [ "graphical-session.target" ];
       serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.mpd} --no-daemon";
+        ExecStart = "${lib.getExe pkgs.mpd} --no-daemon"; # Start MPD in foreground
         Restart = "on-failure";
       };
     };
@@ -146,7 +146,7 @@ lib.mkMerge [
       description = "MPD MPRIS2 Bridge";
       wantedBy = [ "default.target" ];
       serviceConfig = {
-        ExecStart = "${lib.getExe' pkgs.mpdris2 "mpDris2"}";
+        ExecStart = "${lib.getExe' pkgs.mpdris2 "mpDris2"}"; # Start MPD MPRIS2 bridge
         Restart = "on-failure";
       };
     };
@@ -157,7 +157,7 @@ lib.mkMerge [
       after = [ "sound.target" ];
       wantedBy = [ "default.target" ];
       serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
+        ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}"; # Start Last.fm scrobbler
         Restart = "on-failure";
       };
     };
