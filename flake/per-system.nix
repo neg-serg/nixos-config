@@ -663,7 +663,6 @@ in
           inputs=(
             nixpkgs hyprland hy3 hyprland-protocols xdg-desktop-portal-hyprland
             quickshell lanzaboote nvf nyx nur sops-nix pre-commit-hooks
-            nix-index-database iosevka-neg rsmetrx impurity nix-flatpak
             nix-maid pyprland raise tailray winapps wrapper-manager
           )
 
@@ -671,7 +670,6 @@ in
           follows_inputs=(hyprland-protocols xdg-desktop-portal-hyprland)
 
           # Inputs used via overlays (referenced as packages, not inputs.*)
-          overlay_inputs=(pyprland nix-index-database)
 
           unused=0
           for input in "''${inputs[@]}"; do
