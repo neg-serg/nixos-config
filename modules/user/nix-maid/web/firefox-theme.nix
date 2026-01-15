@@ -19,7 +19,7 @@ let
     text = json;
   };
 in
-pkgs.stdenvNoCC.mkDerivation { # The default build environment for Unix packages in Nixpkgs
+pkgs.stdenvNoCC.mkDerivation {
   # The default build environment for Unix packages in Nixpkgs
   pname = "firefox-theme-${name}.xpi";
   version = "1.0";
