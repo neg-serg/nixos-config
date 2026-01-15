@@ -6,6 +6,7 @@ in
 {
   options.features.cli = {
     fastCnf.enable = mkBool "enable fast zsh command-not-found handler powered by nix-index" true;
+    yandexCloud.enable = mkBool "enable Yandex Cloud CLI" false;
     broot.enable = mkBool "enable broot file manager and shell integration" false;
     yazi.enable = mkBool "enable yazi terminal file manager" true;
     nixIndexDB.enable = mkBool "enable scheduled nix-index DB refresh (prebuilt cache)" true;
