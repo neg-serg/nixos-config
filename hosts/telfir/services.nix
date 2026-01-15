@@ -710,11 +710,13 @@ lib.mkMerge [
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = "${pkgs.wireguard-tools}/bin/wg-quick up ${ # Tools for the WireGuard secure network tunnel
+        ExecStart = "${pkgs.wireguard-tools}/bin/wg-quick up ${
+          # Tools for the WireGuard secure network tunnel
           # Tools for the WireGuard secure network tunnel
           config.sops.secrets."wireguard/telfir-wg-quick".path
         }";
-        ExecStop = "${pkgs.wireguard-tools}/bin/wg-quick down ${ # Tools for the WireGuard secure network tunnel
+        ExecStop = "${pkgs.wireguard-tools}/bin/wg-quick down ${
+          # Tools for the WireGuard secure network tunnel
           # Tools for the WireGuard secure network tunnel
           config.sops.secrets."wireguard/telfir-wg-quick".path
         }";

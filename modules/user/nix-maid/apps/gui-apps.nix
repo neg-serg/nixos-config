@@ -11,7 +11,8 @@ let
   rofiConfigSrc = ../../../../packages/rofi-config;
 
   # Rofi with plugins (file-browser-extended)
-  rofiWithPlugins = pkgs.rofi.override { # Window switcher, run dialog and dmenu replacement
+  rofiWithPlugins = pkgs.rofi.override {
+    # Window switcher, run dialog and dmenu replacement
     # Window switcher, run dialog and dmenu replacement
     plugins = [
       pkgs.rofi-file-browser # adds file browsing capability to rofi
