@@ -7,9 +7,7 @@
 let
   devEnabled = config.features.dev.enable or false;
 
-  devPackages = [
-    pkgs.code-cursor-fhs # Cursor IDE packaged via FHS env
-  ];
+  devPackages = [ ];
 in
 {
   config = lib.mkMerge [
