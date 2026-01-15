@@ -33,7 +33,6 @@ let
     pkgs.neo # digital rain
     pkgs.neg.cxxmatrix # colorful matrix rain (C++ impl)
     pkgs.nms # "No More Secrets" decrypt effect
-    pkgs.solfege # ear training program
     pkgs.taoup # The Tao of Unix Programming
     pkgs.toilet # text banners
     pkgs.xephem # astronomy application
