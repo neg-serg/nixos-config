@@ -15,7 +15,6 @@
     lanzaboote = { url = "github:nix-community/lanzaboote"; inputs.nixpkgs.follows = "nixpkgs"; };
     microvm = { url = "github:microvm-nix/microvm.nix"; inputs.nixpkgs.follows = "nixpkgs"; };
     nix-flatpak.url = "github:gmodena/nix-flatpak";
-    nix-index-database = { url = "github:Mic92/nix-index-database"; inputs.nixpkgs.follows = "nixpkgs"; };
     nix-maid.url = "github:viperML/nix-maid";
     nur = { url = "github:nix-community/NUR"; inputs.nixpkgs.follows = "nixpkgs"; };
     nvf = { url = "github:NotAShelf/nvf"; inputs.nixpkgs.follows = "nixpkgs"; };

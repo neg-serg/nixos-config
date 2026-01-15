@@ -29,8 +29,6 @@ in
   };
 
   # Replace ad-hoc nixindex units with native module
-  programs.nix-index.enable = true;
-  programs.nix-index-database.comma.enable = true;
 
   systemd = {
     coredump.enable = true;
