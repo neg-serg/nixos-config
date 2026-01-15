@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   neg,
   impurity ? null,
   ...
@@ -19,6 +20,9 @@ in
         OPTIONS=guicolor
         OPTIONS=perm_invent
       '';
+    }
+    // {
+      environment.systemPackages = [ pkgs.nethack ];
     }
   );
 }

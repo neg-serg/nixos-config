@@ -18,9 +18,23 @@ in
     }
     (lib.mkIf config.features.games.oss.enable {
       environment.systemPackages = [
+        pkgs.abuse # classic side-scrolling shooter customizable with LISP
+        pkgs.airshipper # Veloren voxel client/launcher
+        pkgs.angband # roguelike
+        pkgs.brogue-ce # roguelike (community edition)
+        pkgs.crawl # roguelike
+        pkgs.crawlTiles # roguelike tiles build
+        pkgs.endless-sky # space exploration game
+        pkgs.fheroes2 # free Heroes 2 implementation
+        pkgs.flare # fantasy action RPG using the FLARE engine
+        pkgs.gnuchess # GNU chess engine
+        pkgs.gzdoom # open-source Doom engine
+        pkgs.jazz2 # open source Jazz Jackrabbit 2
+        pkgs.shattered-pixel-dungeon # roguelike
         pkgs.superTux # 2D platformer
         pkgs.superTuxKart # arcade kart racer
         pkgs.wesnoth # turn-based strategy with campaigns
+        pkgs.xaos # interactive fractal explorer
         pkgs.xonotic # arena FPS
         pkgs.zeroad # RTS set in ancient warfare
       ];
