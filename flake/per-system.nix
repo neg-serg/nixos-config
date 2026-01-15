@@ -84,12 +84,13 @@ in
           treefmt --config-file ./.treefmt.toml --tree-root . --fail-on-change .
           touch "$out"
         '';
-    lint-deadnix = pkgs.runCommand "lint-deadnix" { nativeBuildInputs = [ pkgs.deadnix ]; } '' # Find and remove unused code in .nix source files
+    lint-deadnix = pkgs.runCommand "lint-deadnix" { nativeBuildInputs = [ pkgs.deadnix ]; } ''
       # Find and remove unused code in .nix source files
-           # unused code detector
-                cd ${self}
-                deadnix --fail --exclude home .
-                touch "$out"
+           # Find and remove unused code in .nix source files
+                # unused code detector
+                     cd ${self}
+                     deadnix --fail --exclude home .
+                     touch "$out"
     '';
     lint-statix = pkgs.runCommand "lint-statix" {
       nativeBuildInputs = [ pkgs.statix ]; # Lints and suggestions for the nix programming language
