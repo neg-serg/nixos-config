@@ -44,8 +44,8 @@ settings.theme = `
 
 /* Omnibar */
 #sk_omnibar {
-  width: 50%;
-  left: 25%;
+  width: 85%;
+  left: 7.5%;
   background: var(--bg) !important;
   border: 1px solid var(--border) !important;
   border-radius: 0 !important;
@@ -409,7 +409,7 @@ api.addSearchAlias('np', 'npm', 'https://www.npmjs.com/search?q=');
 
 // Force all inputs to be URLs by default (pass-through)
 api.addSearchAlias('raw', 'Raw URL', '');
-settings.defaultSearchEngine = 'raw';
+settings.defaultSearchEngine = 'g';
 
 // ========== Omnibar Hotkeys ==========
 // Ctrl+G: Convert current input to Google search
