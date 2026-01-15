@@ -100,7 +100,7 @@ lib.mkIf quickshellEnabled (
           Type = "simple";
           ExecStartPre = lib.getExe buildTheme;
           ExecStart = ''
-            ${pkgs.watchexec}/bin/watchexec \ # Executes commands in response to file modifications
+            ${pkgs.watchexec}/bin/watchexec \
               --restart \
               --watch %h/.config/quickshell/Theme \
               --watch %h/.config/quickshell/Theme/manifest.json \

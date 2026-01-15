@@ -12,7 +12,6 @@ let
     pkgs.pass-git-helper # Git credential helper backed by pass
     (pkgs.pass.withExtensions (
       # Stores, retrieves, generates, and synchronizes passwords ...
-      # Stores, retrieves, generates, and synchronizes passwords ...
       ext: with ext; [
         pass-import
         pass-otp

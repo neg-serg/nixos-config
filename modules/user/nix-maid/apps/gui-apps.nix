@@ -13,7 +13,6 @@ let
   # Rofi with plugins (file-browser-extended)
   rofiWithPlugins = pkgs.rofi.override {
     # Window switcher, run dialog and dmenu replacement
-    # Window switcher, run dialog and dmenu replacement
     plugins = [
       pkgs.rofi-file-browser # adds file browsing capability to rofi
       pkgs.rofi-emoji # adds emoji selection to rofi

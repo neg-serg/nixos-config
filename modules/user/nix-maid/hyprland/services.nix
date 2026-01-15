@@ -27,7 +27,7 @@
         esac
         exec dbus-send \
           --print-reply \
-          --dest="org.mpris.MediaPlayer2.$(${lib.getExe pkgs.playerctl} -l | head -n 1)" \ # Command-line utility and library for controlling media pl...
+          --dest="org.mpris.MediaPlayer2.$(${lib.getExe pkgs.playerctl} -l | head -n 1)" \
           /org/mpris/MediaPlayer2 \
           "org.mpris.MediaPlayer2.Player.$MEMBER"
       '')
