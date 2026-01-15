@@ -1411,6 +1411,23 @@ in
         pkgs.vcv-rack # modular synth platform
       ];
     };
+
+    visidata = pkgs.mkShell {
+      nativeBuildInputs = [
+        pkgs.visidata # Terminal spreadsheet multitool for data discovery
+      ];
+    };
+
+    "web-archive" = pkgs.mkShell {
+      packages = [
+        pkgs.gallery-dl # download image galleries
+        pkgs.monolith # single-file webpage archiver
+      ];
+    };
+
+    speech = pkgs.mkShell {
+      packages = [ pkgs.speechd ];
+    };
   };
 
   apps =
