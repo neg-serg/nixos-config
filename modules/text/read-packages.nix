@@ -15,7 +15,6 @@ let
     pkgs.epr # CLI EPUB reader
     pkgs.glow # markdown viewer
     pkgs.lowdown # markdown cat
-    pkgs.sioyek # Qt document viewer
   ];
 in
 {
