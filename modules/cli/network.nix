@@ -1,4 +1,9 @@
-{ pkgs, lib, config, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 {
   environment.systemPackages = [
     # Network diagnostics
@@ -15,6 +20,7 @@
 
     # Cloud tools
 
-  ] ++ (lib.optional (config.features.cli.yandexCloud.enable or false) pkgs."yandex-cloud");
+  ]
+  ++ (lib.optional (config.features.cli.yandexCloud.enable or false) pkgs."yandex-cloud");
 
 }
