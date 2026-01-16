@@ -1381,6 +1381,10 @@ in
       ];
     };
 
+    "mesa-demos" = pkgs.mkShell {
+      packages = [ pkgs.mesa-demos ];
+    };
+
     "music-clap" = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.neg.music_clap

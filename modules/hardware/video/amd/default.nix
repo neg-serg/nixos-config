@@ -21,7 +21,6 @@
           pkgs.clinfo # show info about opencl
           pkgs.rocmPackages.rocminfo # query ROCm driver for GPU topology
           pkgs.rocmPackages.rocm-smi # AMD SMI CLI (clocks, fans)
-          pkgs.mesa-demos # contains glxinfo/glxgears
           pkgs.libva-utils # vainfo, encode/decode probing
           pkgs.lact # linux amdgpu controller
           (pkgs.nvtopPackages.amd.override { intel = true; }) # GPU monitor showing AMD + Intel iGPU
