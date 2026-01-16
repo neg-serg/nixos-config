@@ -1232,6 +1232,10 @@ in
       packages = [ pkgs.bespokesynth ];
     };
 
+    fabric-ai = pkgs.mkShell {
+      packages = [ pkgs.fabric-ai ];
+    };
+
     qmk = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.qmk # Program to help users work with QMK Firmware
