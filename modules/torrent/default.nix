@@ -14,8 +14,8 @@ let
     pkgs.rustmission # CLI Transmission client written in Rust
     pkgs.neg.tewi # TUI client for Transmission/qBittorrent/Deluge
     pkgs.curl # HTTP helper for tracker scripts
+    pkgs.jackett # meta-indexer to feed torrent search
     pkgs.jq # parse Transmission RPC JSON responses
-    # pkgs.jackett # meta-indexer to feed torrent search
   ]
   ++ lib.optionals prometheusEnabled [
     pkgs.neg.transmission_exporter # Prometheus exporter for Transmission metrics
