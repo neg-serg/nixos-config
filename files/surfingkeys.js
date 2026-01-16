@@ -82,7 +82,7 @@ settings.theme = `
 
 #sk_omnibarSearchResult {
   margin: 0 !important;
-  max-height: calc(8 * 1.5em);
+  max-height: calc(12 * 1.5em);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
