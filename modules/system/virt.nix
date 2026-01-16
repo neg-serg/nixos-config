@@ -16,7 +16,6 @@ in
   imports = [
     ./virt/pkgs.nix # Nix package manager
 
-
   ];
 
   config = lib.mkIf (!cfg.enable) {
@@ -25,21 +24,22 @@ in
         extraGroups = [
           "video"
           "render"
-        ] ++ (lib.optional (config.features.virt.docker.enable or false) "docker"); # Add docker group here if needed, usually 'docker' group is for real docker
+        ]
+        ++ (lib.optional (config.features.virt.docker.enable or false) "docker"); # Add docker group here if needed, usually 'docker' group is for real docker
       };
     };
     virtualisation = lib.mkMerge [
       {
-         containers.enable = true;
-         libvirtd = {
-           enable = true;
-           qemu = {
-             package = pkgs.qemu_kvm; # Generic and open source machine emulator and virtualizer
-             runAsRoot = true;
-             vhostUserPackages = [ pkgs.virtiofsd ]; # vhost-user virtio-fs device backend written in Rust
-             swtpm.enable = true;
-           };
-         };
+        containers.enable = true;
+        libvirtd = {
+          enable = true;
+          qemu = {
+            package = pkgs.qemu_kvm; # Generic and open source machine emulator and virtualizer
+            runAsRoot = true;
+            vhostUserPackages = [ pkgs.virtiofsd ]; # vhost-user virtio-fs device backend written in Rust
+            swtpm.enable = true;
+          };
+        };
       }
       (lib.mkIf (config.features.virt.docker.enable or false) {
         podman = {

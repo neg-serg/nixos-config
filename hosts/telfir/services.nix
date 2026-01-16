@@ -85,13 +85,13 @@ lib.mkMerge [
     };
 
     # Enable Docker engine for WinBoat and use real docker socket
-#     virtualisation = {
-#       docker.enable = true;
-#       podman = {
-#         dockerCompat = lib.mkForce false;
-#         dockerSocket.enable = lib.mkForce false;
-#       };
-#     };
+    #     virtualisation = {
+    #       docker.enable = true;
+    #       podman = {
+    #         dockerCompat = lib.mkForce false;
+    #         dockerSocket.enable = lib.mkForce false;
+    #       };
+    #     };
 
     # Remove experimental mpv OpenVR overlay
 
