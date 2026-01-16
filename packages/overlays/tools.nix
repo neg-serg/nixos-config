@@ -44,7 +44,6 @@ in
     # Rofi plugins / desktop helpers
     rofi_games = callPkg (packagesRoot + "/rofi-games") { };
     "rofi-games" = rofi_games;
-    rescrobbled = prev.callPackage ../rescrobbled { };
 
     # Trader Workstation (IBKR) packaged from upstream installer
     tws = callPkg (packagesRoot + "/tws") { };
