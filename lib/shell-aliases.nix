@@ -204,6 +204,7 @@ let
     choose = "nix shell nixpkgs#choose -c choose";
     sd = "nix shell nixpkgs#sd -c sd";
     streamlink = "nix shell nixpkgs#streamlink -c streamlink";
+    lucida = "nix shell nixpkgs#lucida-downloader -c lucida";
 
     # Misc
     cp = "${mkCmd "cp"} --reflink=auto";
