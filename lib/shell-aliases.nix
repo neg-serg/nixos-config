@@ -175,6 +175,12 @@ let
     stash = "git stash";
     status = "git status";
 
+    # Containers
+    nerdctl = "nix shell nixpkgs#nerdctl -c nerdctl";
+    podman = "nix shell nixpkgs#podman -c podman";
+    podman-compose = "nix shell nixpkgs#podman-compose -c podman-compose";
+    podman-tui = "nix shell nixpkgs#podman-tui -c podman-tui";
+
     # Misc
     cp = "${mkCmd "cp"} --reflink=auto";
     mv = "${mkCmd "mv"} -i";

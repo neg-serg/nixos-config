@@ -6,8 +6,7 @@
   transmission-exporter = pkgs.neg.transmission_exporter;
   ls-iommu = pkgs.neg.ls_iommu;
   skbtrace = pkgs.neg.skbtrace;
-  nemu = pkgs.nemu; # Ncurses UI for QEMU
-  _nemu = pkgs.nemu; # Ncurses UI for QEMU
+
   # beatprints = pkgs.beatprints; # Disabled: upstream pylette tests fail
   webcamize = pkgs.neg.webcamize;
   rtcqs = pkgs.neg.rtcqs;

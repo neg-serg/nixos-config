@@ -199,7 +199,7 @@
     ./system/virt.nix
 
     ./system/virt/default.nix
-    ./system/virt/nemu.nix
+
     ./system/virt/pkgs.nix # Nix package manager
     ./system/winapps.nix
     ./system/zram.nix

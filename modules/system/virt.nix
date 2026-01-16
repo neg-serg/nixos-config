@@ -16,7 +16,7 @@ in
   imports = [
     ./virt/pkgs.nix # Nix package manager
 
-    ./virt/nemu.nix
+
   ];
 
   config = lib.mkIf (!cfg.enable) {
