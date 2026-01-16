@@ -1368,6 +1368,10 @@ in
       ];
     };
 
+    neonmodem = pkgs.mkShell {
+      packages = [ pkgs.neonmodem ];
+    };
+
     misc = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.xephem # astronomy application
