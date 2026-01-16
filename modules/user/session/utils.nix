@@ -1,6 +1,6 @@
 {
   config,
-
+  lib,
   pkgs,
   ...
 }:
@@ -12,7 +12,6 @@ in
 {
   environment.systemPackages = [
     # -- Dialogs / Automation --
-    pkgs.espanso # text expander daemon
     pkgs.wtype # fake typing for Wayland automation
     pkgs.ydotool # uinput automation helper (autoclicker, etc.)
 
@@ -27,12 +26,13 @@ in
     pkgs.libxml2 # xmllint for SVG validation
 
     # -- Viewer --
-    pkgs.zathura # lightweight document viewer for rofi wrappers
+    (pkgs.zathura.override { plugins = [ pkgs.zathuraPkgs.zathura_pdf_mupdf ]; }) # lightweight document viewer (PDF only)
 
     # -- Wayland Utils --
     pkgs.networkmanager # CLI nmcli helper for panels
     pkgs.waypipe # Wayland remoting (ssh -X like)
     pkgs.wev # xev for Wayland
   ]
+  ++ lib.optional (config.features.text.espanso.enable or false) pkgs.espanso
   ++ menuPkgs;
 }

@@ -10,6 +10,7 @@ in
       manipulate.enable = mkBool "enable text/markup manipulation CLI tools (jq/yq/htmlq)" true;
       notes.enable = mkBool "enable notes tooling (zk CLI)" true;
       tex.enable = mkBool "enable TeX/LaTeX stack (TexLive full, rubber)" false;
+      espanso.enable = mkBool "enable espanso text expander" false;
     };
 
     # Fun/extras (e.g., curated art assets) that are nice-to-have
