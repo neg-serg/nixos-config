@@ -3,7 +3,7 @@
 {
   lib,
   config,
-  ...
+  ../..
 }:
 let
   cfg = config.hardware.storage.autoMount;
@@ -12,7 +12,7 @@ let
       lib,
       pkgs,
       config,
-      ...
+      ../..
     }:
     let
       vrCfg = config.hardware.vr.valveIndex;
@@ -78,9 +78,12 @@ in
       hardware = {
         i2c.enable = true;
         cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
-        enableAllFirmware = true; # Enable all the firmware
+        
+        enableAllFirmware = false; # Disable installing ALL firmware to save space
+        enableRedistributableFirmware = true; # Install standard distributable firmware
+        firmwareCompression = true; # Compress firmware (xz) to save space (requires kernel support)
+        
         usb-modeswitch.enable = true; # mode switching tool for controlling 'multi-mode' USB devices.
-        enableRedistributableFirmware = true;
       };
 
       # Packages moved to ./pkgs.nix
