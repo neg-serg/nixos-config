@@ -180,6 +180,9 @@ let
     podman = "nix shell nixpkgs#podman -c podman";
     podman-compose = "nix shell nixpkgs#podman-compose -c podman-compose";
     podman-tui = "nix shell nixpkgs#podman-tui -c podman-tui";
+    mergiraf = "nix shell nixpkgs#mergiraf -c mergiraf";
+    ctop = "nix shell nixpkgs#ctop -c ctop";
+    dive = "nix shell nixpkgs#dive -c dive";
 
     # Misc
     cp = "${mkCmd "cp"} --reflink=auto";
