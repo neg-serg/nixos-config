@@ -198,6 +198,11 @@ let
     playscii = "nix shell .#playscii -c playscii";
     bitmagnet = "nix shell nixpkgs#bitmagnet -c bitmagnet";
     jackett = "nix shell nixpkgs#jackett -c jackett";
+    sad = "nix shell nixpkgs#sad -c sad";
+    grex = "nix shell nixpkgs#grex -c grex";
+    enca = "nix shell nixpkgs#enca -c enca";
+    choose = "nix shell nixpkgs#choose -c choose";
+    sd = "nix shell nixpkgs#sd -c sd";
 
     # Misc
     cp = "${mkCmd "cp"} --reflink=auto";
