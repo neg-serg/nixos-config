@@ -3,7 +3,7 @@
 {
   lib,
   config,
-  ../..
+  ...
 }:
 let
   cfg = config.hardware.storage.autoMount;
@@ -12,7 +12,7 @@ let
       lib,
       pkgs,
       config,
-      ../..
+      ...
     }:
     let
       vrCfg = config.hardware.vr.valveIndex;
@@ -81,7 +81,7 @@ in
         
         enableAllFirmware = false; # Disable installing ALL firmware to save space
         enableRedistributableFirmware = true; # Install standard distributable firmware
-        firmwareCompression = true; # Compress firmware (xz) to save space (requires kernel support)
+        firmwareCompression = "xz"; # Compress firmware (xz) to save space (requires kernel support)
         
         usb-modeswitch.enable = true; # mode switching tool for controlling 'multi-mode' USB devices.
       };
