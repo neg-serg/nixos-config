@@ -5,9 +5,10 @@
 }:
 let
   cfg = config.services.ollama;
+  enabled = config.features.llm.enable or false;
 in
 {
-  config = {
+  config = lib.mkIf enabled {
     services.ollama = {
       enable = lib.mkDefault true;
       host = lib.mkDefault "0.0.0.0";
