@@ -20,7 +20,6 @@ lib.mkMerge [
       pkgs.aliae # Cross-shell configuration manager
 
       # CLI Tools
-      pkgs.tray-tui # System tray for TUI applications in terminal
 
       # ZCLI (custom script)
       (import ../../../../files/scripts/zcli.nix {
