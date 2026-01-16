@@ -1056,6 +1056,10 @@ in
       packages = [ pkgs.difftastic ];
     };
 
+    rclone = pkgs.mkShell {
+      packages = [ pkgs.rclone ];
+    };
+
     haskell =
       let
         tidalGhci = pkgs.writeShellScriptBin "tidal-ghci" ''
