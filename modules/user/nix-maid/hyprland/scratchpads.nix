@@ -34,7 +34,7 @@ let
       };
       torrment = {
         animation = "";
-        command = "${lib.getExe pkgs.kitty} --class torrment -e ${lib.getExe pkgs.neg.tewi}"; # Fast, feature-rich, GPU based terminal emulator
+        command = "${lib.getExe pkgs.kitty} --class torrment -e ${lib.getExe pkgs.rustmission}"; # Fast, feature-rich, GPU based terminal emulator
         class = "torrment";
         position = "1% 0%";
         size = "98% 40%";
