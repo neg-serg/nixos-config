@@ -409,7 +409,7 @@ in
           set -euo pipefail
           cd ${self}
           echo "Checking Lua files..."
-          find files/nvim -name '*.lua' -exec luacheck --no-color \
+          find packages/nvf-configuration/files/nvim -name '*.lua' -exec luacheck --no-color \
             --globals vim --std luajit \
             --ignore 212 311 631 \
             {} + 2>&1 || true
