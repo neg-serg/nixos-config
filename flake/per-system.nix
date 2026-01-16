@@ -1141,6 +1141,10 @@ in
       ];
     };
 
+    viddy = pkgs.mkShell {
+      packages = [ pkgs.viddy ];
+    };
+
     re = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.radare2 # UNIX-like reverse engineering framework and command-line ...
