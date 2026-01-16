@@ -67,7 +67,6 @@ in
     # Refactored to devShells.pentest: masscan, netdiscover, netscanner, nmap, rustscan, zmap
 
     # -- Remote / Transfer --
-    pkgs.rclone # Sync files to/from cloud storage (S3, Drive, etc.)
     pkgs.socat # Multipurpose relay (bidirectional data transfer)
     pkgs.sshfs # Mount remote directories over SSH
 
