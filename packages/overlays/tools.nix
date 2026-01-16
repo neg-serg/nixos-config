@@ -41,10 +41,6 @@ in
     pretty_printer = callPkg (packagesRoot + "/pretty-printer") { };
     "pretty-printer" = pretty_printer;
 
-    # Rofi plugins / desktop helpers
-    rofi_games = callPkg (packagesRoot + "/rofi-games") { };
-    "rofi-games" = rofi_games;
-
     # Trader Workstation (IBKR) packaged from upstream installer
     tws = callPkg (packagesRoot + "/tws") { };
 
