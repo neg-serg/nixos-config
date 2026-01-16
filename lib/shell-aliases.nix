@@ -183,6 +183,9 @@ let
     mergiraf = "nix shell nixpkgs#mergiraf -c mergiraf";
     ctop = "nix shell nixpkgs#ctop -c ctop";
     dive = "nix shell nixpkgs#dive -c dive";
+    onefetch = "nix shell nixpkgs#onefetch -c onefetch";
+    cpufetch = "nix shell nixpkgs#cpufetch -c cpufetch";
+    ramfetch = "nix shell nixpkgs#ramfetch -c ramfetch";
 
     # Misc
     cp = "${mkCmd "cp"} --reflink=auto";
