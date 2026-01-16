@@ -99,7 +99,6 @@ lib.mkMerge [
       pkgs.beets # Music library manager and tagger
       pkgs.mpc # A minimalist command line interface to MPD
       pkgs.rmpc # Rust Music Player Client
-      pkgs.neg.lucida # Lucida.to downloader
       pkgs.rescrobbled # MPRIS Scrobbler # MPRIS Scrobbler
       pkgs.ncpamixer # An ncurses mixer for PulseAudio
       pkgs.playerctl # Command-line controller for MPC-capable players

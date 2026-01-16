@@ -17,7 +17,6 @@
   rmpc = pkgs.rmpc; # TUI music player client for MPD with album art support vi...
   pyprland = pkgs.pyprland; # Hyperland plugin system
   pyprland_fixed = pkgs.pyprland_fixed;
-  lucida = pkgs.neg.lucida;
   surfingkeys-pkg = pkgs.surfingkeys-pkg;
 
   # mcp-server-filesystem = pkgs.neg.mcp_server_filesystem;
