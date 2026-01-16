@@ -1127,6 +1127,10 @@ in
       ];
     };
 
+    nchat = pkgs.mkShell {
+      packages = [ pkgs.nchat ];
+    };
+
     vlang = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.vlang # Simple, fast, safe, compiled language for developing main...
