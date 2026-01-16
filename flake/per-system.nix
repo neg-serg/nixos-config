@@ -1131,6 +1131,10 @@ in
       ];
     };
 
+    numbat = pkgs.mkShell {
+      packages = [ pkgs.numbat ];
+    };
+
     nchat = pkgs.mkShell {
       packages = [ pkgs.nchat ];
     };
