@@ -20,7 +20,6 @@ lib.mkMerge [
       pkgs.aliae # Cross-shell configuration manager
 
       # CLI Tools
-      pkgs.fabric-ai # Open-source framework for augmenting humans (AI framework)
       pkgs.tray-tui # System tray for TUI applications in terminal
 
       # ZCLI (custom script)
