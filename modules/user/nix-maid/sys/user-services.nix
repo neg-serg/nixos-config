@@ -47,7 +47,7 @@ lib.mkIf (cfg.enable or false) {
     };
 
     # Local AI (Ollama)
-    "local-ai" = {
+    "local-ai" = lib.mkIf (config.features.llm.enable or false) {
       description = "Local AI (Ollama)";
       serviceConfig = {
         ExecStart = "${lib.getExe pkgs.ollama} serve"; # Get up and running with large language models locally
