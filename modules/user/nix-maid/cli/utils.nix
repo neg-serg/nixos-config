@@ -21,7 +21,6 @@ lib.mkMerge [
 
       # CLI Tools
       pkgs.fabric-ai # Open-source framework for augmenting humans (AI framework)
-      pkgs.numbat # High precision scientific calculator with unit support
       pkgs.uni # Query the Unicode database from the command line
       pkgs.tray-tui # System tray for TUI applications in terminal
 
