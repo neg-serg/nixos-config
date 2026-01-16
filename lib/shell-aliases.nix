@@ -203,6 +203,7 @@ let
     enca = "nix shell nixpkgs#enca -c enca";
     choose = "nix shell nixpkgs#choose -c choose";
     sd = "nix shell nixpkgs#sd -c sd";
+    streamlink = "nix shell nixpkgs#streamlink -c streamlink";
 
     # Misc
     cp = "${mkCmd "cp"} --reflink=auto";
