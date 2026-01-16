@@ -1388,6 +1388,10 @@ in
       packages = [ pkgs.neonmodem ];
     };
 
+    "netsniff-ng" = pkgs.mkShell {
+      packages = [ pkgs.netsniff-ng ];
+    };
+
     misc = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.xephem # astronomy application
