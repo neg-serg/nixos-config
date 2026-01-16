@@ -13,6 +13,8 @@ in
       espanso.enable = mkBool "enable espanso text expander" false;
     };
 
+    llm.enable = mkBool "enable local LLM stack (Ollama, local-ai)" false;
+
     # Fun/extras (e.g., curated art assets) that are nice-to-have
     fun = {
       enable = mkBool "enable fun extras (art collections, etc.)" true;
