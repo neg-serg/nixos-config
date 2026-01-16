@@ -100,7 +100,7 @@ lib.mkMerge [
       pkgs.mpc # A minimalist command line interface to MPD
       pkgs.rmpc # Rust Music Player Client
       pkgs.neg.lucida # Lucida.to downloader
-      pkgs.neg.rescrobbled # MPRIS Scrobbler
+      pkgs.rescrobbled # MPRIS Scrobbler # MPRIS Scrobbler
       pkgs.ncpamixer # An ncurses mixer for PulseAudio
       pkgs.playerctl # Command-line controller for MPC-capable players
 
@@ -168,7 +168,7 @@ lib.mkMerge [
       after = [ "network-online.target" ];
       wantedBy = [ "default.target" ];
       serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.neg.rescrobbled}";
+        ExecStart = "${lib.getExe pkgs.rescrobbled}"; # MPRIS Scrobbler
         Restart = "on-failure";
       };
     };
