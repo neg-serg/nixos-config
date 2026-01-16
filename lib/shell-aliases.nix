@@ -193,6 +193,11 @@ let
     miller = "nix shell nixpkgs#miller -c miller";
     taplo = "nix shell nixpkgs#taplo -c taplo";
     xidel = "nix shell nixpkgs#xidel -c xidel";
+    tewi = "nix shell .#tewi -c tewi";
+    bt-migrate = "nix shell nixpkgs#bt-migrate -c bt-migrate";
+    playscii = "nix shell .#playscii -c playscii";
+    bitmagnet = "nix shell nixpkgs#bitmagnet -c bitmagnet";
+    jackett = "nix shell nixpkgs#jackett -c jackett";
 
     # Misc
     cp = "${mkCmd "cp"} --reflink=auto";

@@ -277,8 +277,6 @@ lib.mkMerge [
     environment.systemPackages = lib.mkAfter [
       pkgs.winboat # Windows VM support
       pkgs.openrgb # per-device RGB controller UI
-      pkgs.neg.tewi # TUI torrent client (Transmission/qBittorrent/Deluge)
-      pkgs.neg.playscii # ASCII art editor and animator
       (pkgs.writeShellScriptBin "cpu-boost" (
         builtins.readFile (inputs.self + "/scripts/hw/cpu-boost.sh")
       )) # CLI toggle for AMD Precision Boost
