@@ -1056,6 +1056,10 @@ in
       packages = [ pkgs.difftastic ];
     };
 
+    doggo = pkgs.mkShell {
+      packages = [ pkgs.doggo ];
+    };
+
     rclone = pkgs.mkShell {
       packages = [ pkgs.rclone ];
     };
