@@ -15,7 +15,6 @@
 
     # Cloud tools
 
-    pkgs."yandex-disk" # Yandex Disk sync client and daemon
   ] ++ (lib.optional (config.features.cli.yandexCloud.enable or false) pkgs."yandex-cloud");
 
 }
