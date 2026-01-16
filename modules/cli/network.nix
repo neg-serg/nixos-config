@@ -14,11 +14,7 @@
     pkgs.xxh # SSH wrapper for jumping into remote shells
 
     # Cloud tools
-    pkgs.kubectl # Kubernetes CLI
-    pkgs.kubectx # fast switch Kubernetes contexts
-    pkgs.kubernetes-helm # Helm package manager
 
-    pkgs.scaleway-cli # Scaleway cloud CLI
     pkgs."yandex-disk" # Yandex Disk sync client and daemon
   ] ++ (lib.optional (config.features.cli.yandexCloud.enable or false) pkgs."yandex-cloud");
 
