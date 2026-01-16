@@ -33,7 +33,6 @@ in
     # -- Analysis / Traffic --
     pkgs.bandwhich # Display network utilization per process in real-time
     pkgs.iftop # Display bandwidth usage on an interface
-    pkgs.netsniff-ng # High-performance Linux networking toolkit
     # pkgs.tcpdump - Refactored to devShells.pentest
     # pkgs.termshark - Refactored to devShells.pentest
     # pkgs.trippy - Refactored to devShells.pentest
