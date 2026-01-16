@@ -1052,6 +1052,10 @@ in
       ];
     };
 
+    difftastic = pkgs.mkShell {
+      packages = [ pkgs.difftastic ];
+    };
+
     haskell =
       let
         tidalGhci = pkgs.writeShellScriptBin "tidal-ghci" ''
