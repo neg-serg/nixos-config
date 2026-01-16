@@ -13,13 +13,9 @@ in
 lib.mkMerge [
   {
     environment.systemPackages = [
+      pkgs.aliae # Cross-shell configuration manager
       pkgs.fastfetch # Like neofetch, but much faster (C)
       pkgs.tealdeer # A fast tldr client in Rust
-
-      # Core Tools
-      pkgs.aliae # Cross-shell configuration manager
-
-      # CLI Tools
 
       # ZCLI (custom script)
       (import ../../../../files/scripts/zcli.nix {
