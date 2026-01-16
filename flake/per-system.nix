@@ -1452,6 +1452,10 @@ in
         pkgs.kubecolor # Colorize kubectl output
       ];
     };
+
+    "yandex-disk" = pkgs.mkShell {
+      packages = [ pkgs."yandex-disk" ];
+    };
   };
 
   apps =
