@@ -11,8 +11,6 @@ in
   config = lib.mkIf (!vmEnabled) {
     environment.systemPackages = [
       # -- Container --
-      pkgs.ctop # container metrics TUI
-      pkgs.dive # inspect Docker image layers
 
       # -- VM --
       # moved to devShells.virt
