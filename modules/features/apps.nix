@@ -9,5 +9,6 @@ in
     hiddify.enable = mkBool "enable Hiddify VPN client" false;
     winapps.enable = mkBool "enable WinApps integration (KVM/libvirt Windows VM, RDP bridge)" false;
     libreoffice.enable = mkBool "enable LibreOffice (Flatpak)" true;
+    throne.enable = mkBool "enable Throne GUI proxy configuration manager" false;
   };
 }

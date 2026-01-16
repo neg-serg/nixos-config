@@ -1,6 +1,4 @@
-{ pkgs, ... }:
+{ config, lib, pkgs, ... }:
 {
-  environment.systemPackages = [
-    pkgs.throne # Qt-based cross-platform GUI proxy configuration manager
-  ];
+  environment.systemPackages = lib.optional (config.features.apps.throne.enable or false) pkgs.throne;
 }
