@@ -128,7 +128,6 @@ let
       isDefault = true;
       extensions =
         (with addonList; [
-          keepassxc-browser
           darkreader
           sidebery
           simplelogin
@@ -165,7 +164,6 @@ let
       isDefault = false;
       extensions =
         (with addonList; [
-          keepassxc-browser
           darkreader
           sidebery
           simplelogin
@@ -187,7 +185,6 @@ let
       isDefault = false;
       extensions =
         (with addonList; [
-          keepassxc-browser
           darkreader
           sidebery
           simplelogin
