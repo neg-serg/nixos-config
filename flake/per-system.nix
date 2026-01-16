@@ -1212,6 +1212,10 @@ in
       ++ lib.optionals (pkgs ? fuse3) [ pkgs.fuse3 ]; # Library that allows filesystems to be implemented in user...
     };
 
+    bespokesynth = pkgs.mkShell {
+      packages = [ pkgs.bespokesynth ];
+    };
+
     qmk = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.qmk # Program to help users work with QMK Firmware

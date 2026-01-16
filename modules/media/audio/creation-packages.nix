@@ -12,7 +12,6 @@ let
 
   packages = [
     # -- DAWs / Editors --
-    pkgs.bespokesynth # modular DAW for live coding / patching
   ]
   # ++ (lib.optional (config.features.media.audio.proAudio.enable or false) pkgs.reaper) # Digital audio workstation
   ++ [
