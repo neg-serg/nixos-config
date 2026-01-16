@@ -38,7 +38,6 @@ let
     # -- Network --
     pkgs.nicotine-plus # Soulseek client
     pkgs.scdl # SoundCloud downloader
-    pkgs.streamlink # stream extractor (Twitch/YT) for mpv feeding
 
     # -- Tagging --
     pkgs.id3v2 # low-level ID3 tag editor
