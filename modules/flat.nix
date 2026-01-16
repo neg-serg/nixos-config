@@ -314,7 +314,6 @@
     ./user/wrappers/default.nix
     ./user/wrappers/tewi.nix
     ./user/xdg.nix
-    ./web/browsers.nix
     ./web/default.nix
     ./web/nyxt.nix
   ];
