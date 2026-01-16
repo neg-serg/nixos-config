@@ -186,6 +186,13 @@ let
     onefetch = "nix shell nixpkgs#onefetch -c onefetch";
     cpufetch = "nix shell nixpkgs#cpufetch -c cpufetch";
     ramfetch = "nix shell nixpkgs#ramfetch -c ramfetch";
+    rhash = "nix shell nixpkgs#rhash -c rhash";
+    borgbackup = "nix shell nixpkgs#borgbackup -c borgbackup";
+    fclones = "nix shell nixpkgs#fclones -c fclones";
+    jdupes = "nix shell nixpkgs#jdupes -c jdupes";
+    miller = "nix shell nixpkgs#miller -c miller";
+    taplo = "nix shell nixpkgs#taplo -c taplo";
+    xidel = "nix shell nixpkgs#xidel -c xidel";
 
     # Misc
     cp = "${mkCmd "cp"} --reflink=auto";
