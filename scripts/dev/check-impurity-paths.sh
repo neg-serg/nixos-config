@@ -38,7 +38,7 @@ done
 
 # Paths defined as variables - check the source directories exist
 dirs_to_check=(
-  "packages/nvf-configuration/files/nvim"
+  "files/nvim"
   "files/gui/hypr"
   "files/gui/hypr/bindings"
   "files/gui/hypr/animations"

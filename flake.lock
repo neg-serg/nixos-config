@@ -1084,26 +1084,6 @@
         "type": "github"
       }
     },
-    "nvf-config": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "nvf": [
-          "nvf"
-        ]
-      },
-      "locked": {
-        "lastModified": 1,
-        "narHash": "sha256-5HaFMYFMHP19uyfq67hwx9QScwXhAbCgmncw2XSXDvY=",
-        "path": "./packages/nvf-configuration",
-        "type": "path"
-      },
-      "original": {
-        "path": "./packages/nvf-configuration",
-        "type": "path"
-      }
-    },
     "nyx": {
       "inputs": {
         "flake-schemas": "flake-schemas",
@@ -1306,7 +1286,6 @@
         "nixpkgs": "nixpkgs_2",
         "nur": "nur",
         "nvf": "nvf",
-        "nvf-config": "nvf-config",
         "nyx": "nyx",
         "pre-commit-hooks": "pre-commit-hooks_2",
         "pyprland": "pyprland",
