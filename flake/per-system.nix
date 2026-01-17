@@ -1545,6 +1545,10 @@ in
       packages = [ pkgs.wlx-overlay-s ];
     };
 
+    "stress-ng" = pkgs.mkShell {
+      packages = [ pkgs.stress-ng ];
+    };
+
     "yandex-disk" = pkgs.mkShell {
       packages = [ pkgs."yandex-disk" ];
     };
