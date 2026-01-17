@@ -23,7 +23,6 @@ let
     inputs.lanzaboote.nixosModules.lanzaboote
     inputs.sops-nix.nixosModules.sops
 
-    inputs.nvf.nixosModules.default
     inputs.microvm.nixosModules.host
   ];
 
