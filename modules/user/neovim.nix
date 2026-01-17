@@ -21,6 +21,50 @@ lib.mkIf devEnabled (
         vimAlias = true;
         withPython3 = true;
         withNodeJs = true;
+        withRuby = false;
+        configure = {
+          customRC = "";
+          packages.myVimPackage = {
+            start = [
+              pkgs.vimPlugins.lazy-nvim
+              pkgs.fsread-nvim
+              (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
+                p.bash
+                p.caddy
+                p.cmake
+                p.css
+                p.diff
+                p.dockerfile
+                p.gitcommit
+                p.gitignore
+                p.glsl
+                p.graphql
+                p.html
+                p.http
+                p.ini
+                p.javascript
+                p.json
+                p.just
+                p.kconfig
+                p.lua
+                p.luadoc
+                p.make
+                p.markdown
+                p.markdown_inline
+                p.meson
+                p.ninja
+                p.nix
+                p.python
+                p.query
+                p.regex
+                p.scss
+                p.wgsl
+                p.xml
+                p.yaml
+              ]))
+            ];
+          };
+        };
       };
 
       environment.sessionVariables.NVIM_APPNAME = "";
@@ -90,8 +134,6 @@ lib.mkIf devEnabled (
         pkgs.lemminx # XML language server
         pkgs.awk-language-server # AWK LSP
         pkgs.autotools-language-server # Autoconf/Automake LSP
-        pkgs.gopls # Go language server
-        pkgs.sqls # SQL language server
         pkgs.cmake-language-server # CMake LSP
         pkgs.dhall-lsp-server # Dhall LSP
         pkgs.docker-compose-language-service # docker-compose schema validation
@@ -105,8 +147,6 @@ lib.mkIf devEnabled (
         pkgs.zls # Zig language server
 
         # -- Debuggers (DAP) --
-        pkgs.delve # Go debugger
-        pkgs.netcoredbg # .NET Core debugger
         pkgs.lldb # LLVM debugger (C/C++/Rust)
 
         # -- Formatters --
@@ -115,7 +155,6 @@ lib.mkIf devEnabled (
         pkgs.prettierd # Faster Prettier (HTML/CSS/JS/TS/JSON/YAML)
         pkgs.nixfmt # Nix formatter
         pkgs.cmake-format # CMake formatter
-        pkgs.gotools # Go tools (goimports, gofmt)
         pkgs.isort # Python import sorter
         pkgs.black # Python formatter
         pkgs.rustfmt # Rust formatter
