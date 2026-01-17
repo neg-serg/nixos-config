@@ -1232,6 +1232,10 @@ in
       ++ lib.optionals (pkgs ? fuse3) [ pkgs.fuse3 ]; # Library that allows filesystems to be implemented in user...
     };
 
+    ape = pkgs.mkShell {
+      packages = [ pkgs.ape ];
+    };
+
     "ast-grep" = pkgs.mkShell {
       packages = [ pkgs.ast-grep ];
     };

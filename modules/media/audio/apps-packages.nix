@@ -27,7 +27,6 @@ let
     pkgs.sox # swiss-army audio CLI for conversions/effects
 
     # -- Codecs / Ripping / Players --
-    pkgs.ape # Monkey's Audio encoder/decoder for archival rips
     pkgs.cdparanoia # secure CD ripper w/ jitter correction
     pkgs.unflac # convert FLAC cuesheets quickly
   ]
