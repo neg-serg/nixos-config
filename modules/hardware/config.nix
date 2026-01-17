@@ -42,7 +42,6 @@ let
             pkgs.steam # Steam gaming platform
             pkgs.steamcmd # Steam command-line client
             pkgs.vulkan-tools # Vulkan diagnostic and testing tools
-            pkgs.vulkan-validation-layers # Vulkan validation layers for development
           ];
 
           # No default OpenXR runtime enforced; user/SteamVR may set it explicitly if desired.

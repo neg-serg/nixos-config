@@ -26,7 +26,6 @@
           (pkgs.nvtopPackages.amd.override { intel = true; }) # GPU monitor showing AMD + Intel iGPU
           pkgs.vulkan-extension-layer # inspect layers/extensions
           pkgs.vulkan-tools # vulkaninfo etc.
-          pkgs.vulkan-validation-layers # debug validation for Vulkan apps
         ];
       };
     }
