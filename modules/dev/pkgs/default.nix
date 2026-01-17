@@ -11,7 +11,6 @@
     pkgs.hyperfine # benchmarking tool
     pkgs.just # command runner for project tasks
     pkgs.license-generator # CLI license boilerplates
-    pkgs.lzbench # compression benchmark
     pkgs.pkgconf # pkg-config wrapper
     pkgs.plow # HTTP benchmarking tool
     pkgs.strace # trace syscalls
