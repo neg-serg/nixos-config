@@ -1554,6 +1554,10 @@ in
       packages = [ pkgs.pueue ];
     };
 
+    gron = pkgs.mkShell {
+      packages = [ pkgs.gron ];
+    };
+
     "yandex-disk" = pkgs.mkShell {
       packages = [ pkgs."yandex-disk" ];
     };
