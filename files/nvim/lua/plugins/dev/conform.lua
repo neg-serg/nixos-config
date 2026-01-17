@@ -19,7 +19,6 @@ return {
 				cmake = { "cmake-format" },
 				cpp = { "clang-format" },
 				css = prettier,
-				go = { "goimports", "gofmt" }, -- Conform will run multiple formatters sequentially
 				html = prettier,
 				javascript = { "prettierd", "prettier" }, -- Use a sub-list to run only the first available formatter
 				json = prettier,

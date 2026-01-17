@@ -68,10 +68,9 @@ return {
     -- Servers with default config
     local simple_servers = {
       'bashls', 'cmake', 'nil_ls', 'qmlls', 'ts_ls', 'cssls', 'html', 'yamlls',
-      'taplo', 'lemminx', 'dhall_lsp_server', 'asm_lsp', 'autotools_ls', 'dotls',
-      'gopls', 'sqls', 'dockerls', 'docker_compose_language_service',
-      'systemd_language_server', 'nginx_language_server', 'svls', 'vhdl_ls',
-      'zls', 'awk_ls', 'just', 'marksman'
+      'taplo', 'lemminx', 'autotools_ls', 'dotls',
+      'systemd_language_server', 'nginx_language_server',
+      'awk_ls', 'just', 'marksman'
     }
     for _, srv in ipairs(simple_servers) do configure(srv) end
 
