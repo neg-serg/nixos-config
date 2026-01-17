@@ -1064,6 +1064,13 @@ in
       packages = [ pkgs.rclone ];
     };
 
+    helix = pkgs.mkShell {
+      packages = [ pkgs.helix ];
+      shellHook = ''
+        alias hx="XDG_CONFIG_HOME=$PWD/files helix"
+      '';
+    };
+
     haskell =
       let
         tidalGhci = pkgs.writeShellScriptBin "tidal-ghci" ''
