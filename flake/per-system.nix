@@ -1558,6 +1558,10 @@ in
       packages = [ pkgs.gron ];
     };
 
+    lzbench = pkgs.mkShell {
+      packages = [ pkgs.lzbench ];
+    };
+
     "yandex-disk" = pkgs.mkShell {
       packages = [ pkgs."yandex-disk" ];
     };
