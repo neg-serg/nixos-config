@@ -29,38 +29,31 @@ lib.mkIf devEnabled (
               pkgs.vimPlugins.lazy-nvim
               pkgs.fsread-nvim
               (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
-                p.bash
-                p.caddy
-                p.cmake
-                p.css
-                p.diff
-                p.dockerfile
-                p.gitcommit
-                p.gitignore
-                p.glsl
-                p.graphql
-                p.html
-                p.http
-                p.ini
-                p.javascript
-                p.json
-                p.just
-                p.kconfig
-                p.lua
-                p.luadoc
-                p.make
-                p.markdown
-                p.markdown_inline
-                p.meson
-                p.ninja
-                p.nix
-                p.python
-                p.query
-                p.regex
-                p.scss
-                p.wgsl
-                p.xml
-                p.yaml
+                p.bash              # Bash shell script parser
+                p.caddy             # Caddy web server config parser
+                p.cmake             # CMake build system parser
+                p.diff              # Diff format parser
+                p.dockerfile        # Dockerfile parser
+                p.gitcommit         # Git commit message parser
+                p.gitignore         # .gitignore parser
+                p.glsl              # GLSL shader language parser
+                p.ini               # INI configuration file parser
+                p.just              # Justfile parser
+                p.kconfig           # Kconfig parser (Linux kernel config)
+                p.lua               # Lua language parser
+                p.luadoc            # Lua documentation parser
+                p.make              # Makefile parser
+                p.markdown          # Markdown parser
+                p.markdown_inline   # Markdown inline parser
+                p.meson             # Meson build system parser
+                p.ninja             # Ninja build system parser
+                p.nix               # Nix language parser
+                p.python            # Python language parser
+                p.query             # Treesitter query language parser
+                p.regex             # Regular expression parser
+                p.wgsl              # WGSL shader language parser
+                p.xml               # XML language parser
+                p.yaml              # YAML language parser
               ]))
             ];
           };
@@ -121,12 +114,9 @@ lib.mkIf devEnabled (
         pkgs.clang-tools # clangd/clang-format for C/C++
         pkgs.lua-language-server # Lua LSP
         pkgs.hyprls # Hyprland config LSP
-        pkgs.emmet-language-server # Emmet completions for HTML/CSS
         pkgs.yaml-language-server # YAML LSP
         pkgs.taplo # TOML LSP/formatter
         pkgs.marksman # Markdown LSP
-        pkgs.typescript-language-server # TypeScript/JS LSP
-        pkgs.vscode-langservers-extracted # HTML/CSS/JSON LSP bundle
         pkgs.qt6.qtdeclarative # qmlfmt/qmlcachegen for QML editing
         pkgs.qt6.qttools # qmlscene/lrelease etc. for QML dev
         pkgs.just-lsp # LSP for justfiles
@@ -151,12 +141,10 @@ lib.mkIf devEnabled (
         # -- Formatters --
         pkgs.stylua # Lua formatter
         pkgs.shfmt # Shell formatter
-        pkgs.prettierd # Faster Prettier (HTML/CSS/JS/TS/JSON/YAML)
         pkgs.nixfmt # Nix formatter
         pkgs.cmake-format # CMake formatter
         pkgs.isort # Python import sorter
         pkgs.black # Python formatter
-        pkgs.rustfmt # Rust formatter
       ];
     }
     (n.mkHomeFiles {
