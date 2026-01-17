@@ -1562,6 +1562,10 @@ in
       packages = [ pkgs.lzbench ];
     };
 
+    btrfs = pkgs.mkShell {
+      packages = [ pkgs.btrfs-progs ];
+    };
+
     "yandex-disk" = pkgs.mkShell {
       packages = [ pkgs."yandex-disk" ];
     };
