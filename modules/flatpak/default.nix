@@ -26,10 +26,6 @@
         origin = "flathub";
       }
       {
-        appId = "org.zealdocs.Zeal";
-        origin = "flathub";
-      }
-      {
         appId = "org.chromium.Chromium";
         origin = "flathub";
       }
