@@ -295,7 +295,7 @@
     ./user/nix-maid/web/vivaldi.nix
 
     ./user/nix-maid/web/yt-dlp.nix
-    ./user/nvf.nix
+    ./user/neovim.nix
     ./user/psd/default.nix
     ./user/session/chat.nix
     ./user/session/clipboard.nix
