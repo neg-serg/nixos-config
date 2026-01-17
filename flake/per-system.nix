@@ -1142,6 +1142,10 @@ in
       packages = [ pkgs.numbat ];
     };
 
+    openconnect = pkgs.mkShell {
+      packages = [ pkgs.openconnect ];
+    };
+
     nurl = pkgs.mkShell {
       packages = [ pkgs.nurl ];
     };
