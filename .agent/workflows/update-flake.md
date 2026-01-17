@@ -20,7 +20,7 @@ nix flake lock --update-input home-manager
 ## Common Inputs
 
 | Input | Description | |-------|-------------| | `nixpkgs` | Main package repository | |
-`home-manager` | User config management | | `nvf` | Neovim flake | | `lanzaboote` | Secure boot | |
+`home-manager` | User config management | | `lanzaboote` | Secure boot | |
 `sops-nix` | Secrets management |
 
 ## Rebuild After Update
