@@ -56,6 +56,6 @@ in
     pkgs.pwgen # password generator
     pkgs.tealdeer # tldr replacement written in Rust
   ]
-  ++ lib.optional (pkgs ? icedtea-web) pkgs.icedtea-web # Java WebStart fallback for legacy consoles
+
   ++ lib.optional (hishtoryPkg != null) hishtoryPkg; # sync shell history w/ encryption, better than zsh-histdb
 }
