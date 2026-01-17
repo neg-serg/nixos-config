@@ -134,7 +134,6 @@ in
     };
 
     environment.systemPackages = lib.mkAfter [
-      pkgs.btrfs-progs # btrfs tools
       pkgs.exfatprogs # exfat tools
       pkgs.ntfs3g # ntfs tools
       pkgs.zfs # zfs tools

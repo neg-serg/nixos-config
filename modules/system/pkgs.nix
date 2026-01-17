@@ -2,7 +2,6 @@
 {
   environment.systemPackages = [
     # -- Disk / Filesystem --
-    pkgs.btrfs-progs # manage and check btrfs filesystems
     pkgs.cryptsetup # stuff for LUKS
 
     # -- Hardware Info --
