@@ -24,7 +24,6 @@
           pkgs.libva-utils # vainfo, encode/decode probing
           pkgs.lact # linux amdgpu controller
           (pkgs.nvtopPackages.amd.override { intel = true; }) # GPU monitor showing AMD + Intel iGPU
-          pkgs.vulkan-extension-layer # inspect layers/extensions
           pkgs.vulkan-tools # vulkaninfo etc.
         ];
       };
