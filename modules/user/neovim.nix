@@ -95,7 +95,6 @@ lib.mkIf devEnabled (
             "text/x-c++src"
             "text/x-chdr"
             "text/x-csrc"
-            "text/x-java"
             "text/x-moc"
             "text/x-pascal"
             "text/x-tcl"
