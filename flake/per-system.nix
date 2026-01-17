@@ -1467,6 +1467,7 @@ in
         pkgs.ocenaudio # lightweight waveform editor
         pkgs.vital # spectral wavetable synth
         pkgs.dexed # DX7-compatible synth
+        pkgs.stochas # probability-driven MIDI sequencer
         pkgs.vcv-rack # modular synth platform
       ];
     };
