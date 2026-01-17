@@ -62,12 +62,6 @@ command = "systemd-language-server"
 [language-server."nginx-language-server"]
 command = "nginx-language-server"
 
-[language-server.svls]
-command = "svls"
-
-[language-server."vhdl-ls"]
-command = "vhdl_ls"
-
 [language-server.zls]
 command = "zls"
 
@@ -237,18 +231,6 @@ name = "nginx"
 scope = "source.nginx"
 file-types = ["nginx", "nginx.conf"]
 language-servers = ["nginx-language-server"]
-
-[[language]]
-name = "verilog"
-scope = "source.verilog"
-file-types = ["v", "sv", "svh", "vh"]
-language-servers = ["svls"]
-
-[[language]]
-name = "vhdl"
-scope = "source.vhdl"
-file-types = ["vhd", "vhdl"]
-language-servers = ["vhdl-ls"]
 
 [[language]]
 name = "zig"
