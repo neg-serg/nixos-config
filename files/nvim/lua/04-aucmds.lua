@@ -163,7 +163,6 @@ do
     cpp = { 'src', 'include' },
     objc = { 'src', 'include' },
     objcpp = { 'src', 'include' },
-    go = { 'cmd', 'internal', 'pkg' },
     nix = { 'nix' },
     sh = { 'scripts', 'shell' },
     bash = { 'scripts', 'shell' },

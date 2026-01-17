@@ -13,14 +13,9 @@ local PROJECT_INDICATORS = {
   'pyproject.toml',  -- Python
   'setup.py',        -- Python
   'requirements.txt',-- Python
-  'go.mod',          -- Go
   'Cargo.toml',      -- Rust
   'mix.exs',         -- Elixir
   'project.clj',     -- Clojure
-  'build.gradle',    -- Java
-  'pom.xml',         -- Java
-  'composer.json',   -- PHP
-  'Gemfile',         -- Ruby
   
   -- Build systems
   'Makefile',
