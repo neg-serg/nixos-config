@@ -26,7 +26,6 @@ let
     pkgs.rnnoise # WebRTC RNNoise denoiser CLI for mic chains
 
     # -- Synths / Instruments --
-    pkgs.stochas # probability-driven MIDI sequencer
     # pkgs.vcv-rack # modular synth platform
   ];
 in
