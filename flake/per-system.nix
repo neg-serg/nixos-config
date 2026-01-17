@@ -1535,6 +1535,12 @@ in
       ];
     };
 
+    ranger = pkgs.mkShell {
+      packages = [ pkgs.ranger ];
+    };
+
+
+
     "yandex-disk" = pkgs.mkShell {
       packages = [ pkgs."yandex-disk" ];
     };
