@@ -1466,6 +1466,7 @@ in
         pkgs.reaper # Digital Audio Workstation
         pkgs.ocenaudio # lightweight waveform editor
         pkgs.vital # spectral wavetable synth
+        pkgs.dexed # DX7-compatible synth
         pkgs.vcv-rack # modular synth platform
       ];
     };
