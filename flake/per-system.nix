@@ -1415,6 +1415,10 @@ in
       packages = [ pkgs.netsniff-ng ];
     };
 
+    netbird = pkgs.mkShell {
+      packages = [ pkgs.netbird ];
+    };
+
     misc = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.xephem # astronomy application
