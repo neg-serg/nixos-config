@@ -7,7 +7,6 @@
     pkgs.kdePackages.qt6ct # Qt6 configuration utility
     pkgs.kdePackages.qtdeclarative # QtDeclarative (QML runtime)
     pkgs.kdePackages.qtimageformats # extra Qt image formats
-    pkgs.kdePackages.qtmultimedia # Qt multimedia modules
     pkgs.kdePackages.qtpositioning # Qt positioning (sensors)
     pkgs.kdePackages.qtquicktimeline # Qt timeline module
     pkgs.kdePackages.qtsensors # Qt sensors module
