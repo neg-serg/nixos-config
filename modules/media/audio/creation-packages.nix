@@ -12,9 +12,6 @@ let
 
   packages = [
     # -- DAWs / Editors --
-  ]
-  # ++ (lib.optional (config.features.media.audio.proAudio.enable or false) pkgs.reaper) # Digital audio workstation
-  ++ [
 
     # -- Live Coding --
     pkgs.glicol-cli # audio DSL for generative compositions
