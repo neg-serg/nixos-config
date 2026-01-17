@@ -1541,6 +1541,10 @@ in
 
 
 
+    "wlx-overlay-s" = pkgs.mkShell {
+      packages = [ pkgs.wlx-overlay-s ];
+    };
+
     "yandex-disk" = pkgs.mkShell {
       packages = [ pkgs."yandex-disk" ];
     };

@@ -43,7 +43,6 @@ let
             pkgs.steamcmd # Steam command-line client
             pkgs.vulkan-tools # Vulkan diagnostic and testing tools
             pkgs.vulkan-validation-layers # Vulkan validation layers for development
-            pkgs.wlx-overlay-s # Wayland overlay for OpenXR/OpenVR
           ];
 
           # No default OpenXR runtime enforced; user/SteamVR may set it explicitly if desired.
