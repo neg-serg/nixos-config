@@ -12,7 +12,7 @@
     ./locale-pkgs.nix # Nix package manager
     ./locate.nix
     ./mail.nix
-    ./nvf.nix
+    ./neovim.nix
     ./psd
     ./theme-packages.nix
     ./xdg.nix

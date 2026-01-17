@@ -662,7 +662,7 @@ in
           # Known inputs from flake.nix
           inputs=(
             nixpkgs hyprland hy3 hyprland-protocols xdg-desktop-portal-hyprland
-            quickshell lanzaboote nvf nyx nur sops-nix pre-commit-hooks
+            quickshell lanzaboote nyx nur sops-nix pre-commit-hooks
             nix-maid pyprland raise tailray winapps wrapper-manager
           )
 
