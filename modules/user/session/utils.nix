@@ -22,7 +22,6 @@ in
     pkgs.upower # power management daemon for laptops/desktops
 
     # -- SVG / Graphics --
-    pkgs.librsvg # rsvg-convert for assets
     pkgs.libxml2 # xmllint for SVG validation
 
     # -- Viewer --
