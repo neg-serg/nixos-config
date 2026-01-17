@@ -1550,6 +1550,10 @@ in
       packages = [ pkgs.stress-ng ];
     };
 
+    pueue = pkgs.mkShell {
+      packages = [ pkgs.pueue ];
+    };
+
     "yandex-disk" = pkgs.mkShell {
       packages = [ pkgs."yandex-disk" ];
     };
