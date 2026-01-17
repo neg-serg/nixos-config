@@ -4,7 +4,6 @@
     pkgs.amnezia-vpn # Amnezia VPN client
     pkgs.amneziawg-go # userspace Go implementation of AmneziaWG
     pkgs.amneziawg-tools # tools for configuring AmneziaWG
-    pkgs.openconnect # Cisco AnyConnect (open source)
     pkgs.wireguard-tools # tools for the WireGuard secure network tunnel
     (pkgs.openvpn.override {
       # Robust and highly flexible tunneling application
