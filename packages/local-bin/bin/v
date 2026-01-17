@@ -1,6 +1,7 @@
 #!/bin/sh
 # v: open Neovim with system profile sourced
 # Usage: v [ARGS...]
+export NVIM_APPNAME=
 . /etc/profile
 SOCKET="/tmp/nvim.sock"
 
