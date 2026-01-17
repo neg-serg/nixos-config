@@ -9,7 +9,6 @@
     pkgs.procps # utilities for monitoring and managing system processes (top, ps, etc.)
     pkgs.progress # show progress for coreutils (cp, mv, dd, tar, etc.)
     pkgs.psmisc # small utilities that use the proc filesystem (killall, fuser, pstree)
-    pkgs.pueue # command-line task management tool for sequential and parallel execution
     pkgs.pv # monitor the progress of data through a pipeline
     pkgs.reptyr # tool for taking an existing running program and attaching it to a new terminal
 
