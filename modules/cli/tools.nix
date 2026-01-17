@@ -18,7 +18,6 @@ in
 {
   environment.systemPackages = [
     # Search tools
-    pkgs.ast-grep # AST-aware grep
     pkgs.ripgrep # better grep
     ugrepWithConfig # better grep, rg alternative (wrapped with global config)
 
