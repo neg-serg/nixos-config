@@ -42,6 +42,6 @@
         origin = "flathub";
       }
     ];
-    update.onActivation = true;
+    update.onActivation = false;
   };
 }
