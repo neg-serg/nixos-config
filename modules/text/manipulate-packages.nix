@@ -10,7 +10,6 @@
 let
   enabled = config.features.text.manipulate.enable or false;
   packages = [
-    pkgs.gron # flatten JSON for grep
     pkgs.htmlq # jq-like for HTML
     pkgs.jc # convert command output to JSON/YAML
     pkgs.jq # JSON processor
