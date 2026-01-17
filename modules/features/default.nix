@@ -199,11 +199,8 @@ in
       # When C/C++ tooling is disabled, exclude typical C/C++ tool pnames
       features.excludePkgs = mkAfter [
         "gcc"
-        "clang"
-        "clang-tools"
         "cmake"
         "ninja"
-        "bear"
         "ccache"
         "lldb"
       ];
