@@ -48,7 +48,7 @@ if ok and nixCats.lazy then
     })
 else
     local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-    -- Check if lazy is already available (e.g. from nvf startPlugins)
+    -- Check if lazy is already available
     local lazy_present, _ = pcall(require, "lazy")
     
     if not lazy_present then
