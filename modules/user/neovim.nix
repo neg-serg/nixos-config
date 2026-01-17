@@ -140,7 +140,6 @@ lib.mkIf devEnabled (
         pkgs.stylua # Lua formatter
         pkgs.shfmt # Shell formatter
         pkgs.nixfmt # Nix formatter
-        pkgs.cmake-format # CMake formatter
         pkgs.isort # Python import sorter
         pkgs.black # Python formatter
       ];
