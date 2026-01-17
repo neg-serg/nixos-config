@@ -151,7 +151,6 @@ in
         pkgs.oh-my-posh # Cross-shell prompt theme engine
 
         # Tools needed for kitty-panel
-        pkgs.gum # TUI styling toolkit for shell scripts
         pkgs.btop # Resource monitor (CPU, memory, disks, network)
         pkgs.cava # Console audio visualizer
         pkgs.peaclock # Customizable clock for terminal
