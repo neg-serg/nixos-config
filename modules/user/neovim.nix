@@ -23,13 +23,20 @@ lib.mkIf devEnabled (
         withNodeJs = true;
       };
 
+      environment.sessionVariables.NVIM_APPNAME = "";
+      environment.shellAliases = {
+        nvim = "NVIM_APPNAME= nvim";
+        vim = "NVIM_APPNAME= nvim";
+        vi = "NVIM_APPNAME= nvim";
+      };
+
       environment.systemPackages = [
         pkgs.neovim-remote # nvr: control neovim from external tools
         (pkgs.makeDesktopItem {
           name = "neovim";
           desktopName = "Neovim";
           genericName = "Text Editor";
-          exec = "nvim %F";
+          exec = "env NVIM_APPNAME= nvim %F";
           icon = "nvim";
           terminal = true;
           categories = [
