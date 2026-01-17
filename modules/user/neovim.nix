@@ -131,8 +131,6 @@ lib.mkIf devEnabled (
         pkgs.asm-lsp # Assembly language server
         pkgs.systemd-language-server # systemd unit LSP
         pkgs.nginx-language-server # nginx.conf language server
-        pkgs.svls # SystemVerilog LSP
-        pkgs.vhdl-ls # VHDL language server
         pkgs.zls # Zig language server
 
         # -- Debuggers (DAP) --
