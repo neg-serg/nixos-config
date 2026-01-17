@@ -25,8 +25,6 @@ in
       # Dosbox Config
       ".config/dosbox".source = ../../../../files/config/dosbox;
 
-      # Icedtea Web Config
-      ".config/icedtea-web".source = ../../../../files/config/icedtea-web;
     })
   ];
 }

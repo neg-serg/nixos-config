@@ -10,7 +10,7 @@ in
     broot.enable = mkBool "enable broot file manager and shell integration" false;
     yazi.enable = mkBool "enable yazi terminal file manager" true;
     nixIndexDB.enable = mkBool "enable scheduled nix-index DB refresh (prebuilt cache)" true;
-    icedteaWeb.enable = mkBool "enable IcedTea Web (netx) integration" false;
+
     tewi.enable = mkBool "enable tewi tui torrent client configuration" false;
     television.enable = mkBool "enable television (blazingly fast fuzzy finder)" true;
     zcli = {
