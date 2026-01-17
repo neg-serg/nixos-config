@@ -1566,6 +1566,10 @@ in
       packages = [ pkgs.btrfs-progs ];
     };
 
+    vulkan = pkgs.mkShell {
+      packages = [ pkgs.vulkan-extension-layer ];
+    };
+
     "yandex-disk" = pkgs.mkShell {
       packages = [ pkgs."yandex-disk" ];
     };
