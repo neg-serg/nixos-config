@@ -12,11 +12,9 @@
     pkgs.license-generator # CLI license boilerplates
     pkgs.pkgconf # pkg-config wrapper
     pkgs.plow # HTTP benchmarking tool
-    pkgs.strace # trace syscalls
-    pkgs.zee # terminal text editor (Rust)
-    pkgs.shfmt # shell formatter
-    pkgs.shellcheck # shell linter
     pkgs.scc # parallel code counter
-    pkgs.deheader # trim redundant C/C++ includes
+    pkgs.shellcheck # shell linter
+    pkgs.shfmt # shell formatter
+    pkgs.strace # trace syscalls
   ]);
 }
