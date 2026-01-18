@@ -10,10 +10,6 @@ let
     in
     prev.callPackage path (autoArgs // extraArgs);
   python313 = prev.python313Packages;
-  laion_clap_pkg = callPkg (packagesRoot + "/laion-clap") {
-    python3Packages = python313;
-    inherit (prev) fetchurl;
-  };
 in
 {
   ffmpeg = prev.ffmpeg.override {
@@ -43,17 +39,6 @@ in
       rtcqs = callPkg (packagesRoot + "/rtcqs") { python3Packages = python313; };
       playscii = callPkg (packagesRoot + "/playscii") { python3Packages = python313; };
       "blissify-rs" = blissify_rs;
-      "laion-clap" = laion_clap_pkg;
-      laion_clap = laion_clap_pkg;
-      # music_clap depends on laion_clap, which already propagates the
-      # heavy Python deps (torch/torchaudio/torchvision, numpy, etc.).
-      # Passing them explicitly here causes callPackage to complain about
-      # unexpected arguments because the package does not declare them.
-      # Keep the call minimal.
-      music_clap = callPkg (packagesRoot + "/music-clap") {
-        python3Packages = python313;
-        laion_clap = laion_clap_pkg;
-      };
 
       # Ensure mpv is built with VapourSynth support
       mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
