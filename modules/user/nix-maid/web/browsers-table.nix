@@ -5,26 +5,23 @@
   ...
 }:
 let
-    else
   # Floorp upstream source package is deprecated in nixpkgs >= 12.x; always use floorp-bin.
-  floorpPkg = pkgs.floorp-bin; # Fork of Firefox that seeks balance between versatility, p...
+  floorpPkg = pkgs.floorp-bin;
 in
 {
   firefox = {
     name = "firefox";
     pkg = pkgs.firefox; # Web browser built from Firefox source tree
-    bin = lib.getExe' pkgs.firefox "firefox"; # Web browser built from Firefox source tree
+    bin = lib.getExe' pkgs.firefox "firefox";
     desktop = "firefox.desktop";
     newTabArg = "-new-tab";
   };
   librewolf = {
     name = "librewolf";
     pkg = pkgs.librewolf; # Fork of Firefox, focused on privacy, security and freedom
-    bin = lib.getExe' pkgs.librewolf "librewolf"; # Fork of Firefox, focused on privacy, security and freedom
+    bin = lib.getExe' pkgs.librewolf "librewolf";
     desktop = "librewolf.desktop";
     newTabArg = "-new-tab";
-  };
-    newTabArg = "";
   };
   floorp = {
     name = "floorp";
