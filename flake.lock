@@ -1206,6 +1206,26 @@
         "type": "github"
       }
     },
+    "richcolors": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1768767509,
+        "narHash": "sha256-KKuR8FVkTY+wfCQv0y/ERlqFGE97TZU4a7aKeCkWEXk=",
+        "owner": "neg-serg",
+        "repo": "richcolors",
+        "rev": "ee67b41dc929532d4e5d94d2fb4972cccf812b55",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "richcolors",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "extra-container": "extra-container",
@@ -1229,6 +1249,7 @@
         "pyprland": "pyprland",
         "quickshell": "quickshell",
         "raise": "raise",
+        "richcolors": "richcolors",
         "rsmetrx": "rsmetrx",
         "rtcqs": "rtcqs",
         "rust-overlay": "rust-overlay",
