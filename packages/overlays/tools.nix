@@ -20,10 +20,6 @@ in
     # Surfingkeys configuration
     surfingkeys_conf = callPkg (packagesRoot + "/surfingkeys-conf") { };
     "surfingkeys-conf" = surfingkeys_conf;
-
-    # CLI/util packages
-    cxxmatrix = callPkg (packagesRoot + "/cxxmatrix") { };
-
     richcolors = callPkg (packagesRoot + "/richcolors") { };
     ls_iommu = callPkg (packagesRoot + "/ls-iommu") { };
     transmission_exporter = callPkg (packagesRoot + "/transmission-exporter") { };
