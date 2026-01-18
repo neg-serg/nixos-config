@@ -104,7 +104,7 @@ in
         # These are now in modules/user/nix-maid/scripts/
 
         # pypr-run: Use the robust wrapper which handles the hyprland socket signature
-        pyprExe = lib.getExe' pkgs.pyprland_fixed "pypr";
+        pyprExe = lib.getExe' pkgs.pyprland "pypr";
         pyprRunTpl = builtins.readFile ../scripts/pypr-run;
         pyprRunText = lib.replaceStrings [ "exec pypr" ] [ "exec ${pyprExe}" ] pyprRunTpl;
 
