@@ -21,7 +21,6 @@ in
     "surfingkeys-conf" = surfingkeys_conf;
     richcolors = callPkg (packagesRoot + "/richcolors") { };
     ls_iommu = callPkg (packagesRoot + "/ls-iommu") { };
-    tewi = callPkg (packagesRoot + "/tewi") { };
     two_percent = callPkg (packagesRoot + "/two_percent") { };
     "two-percent" = two_percent;
 

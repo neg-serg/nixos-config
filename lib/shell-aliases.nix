@@ -193,7 +193,7 @@ let
     miller = "nix shell nixpkgs#miller -c miller";
     taplo = "nix shell nixpkgs#taplo -c taplo";
     xidel = "nix shell nixpkgs#xidel -c xidel";
-    tewi = "nix shell .#tewi -c tewi";
+    tewi = "nix run github:neg-serg/tewi";
     bt-migrate = "nix shell nixpkgs#bt-migrate -c bt-migrate";
     playscii = "nix shell .#playscii -c playscii";
     bitmagnet = "nix shell nixpkgs#bitmagnet -c bitmagnet";
@@ -210,7 +210,7 @@ let
     # Misc
     # Run
     # nyxt = "nix run github:neg-serg/nyxt-bin";
-    
+
     # System
     transmission-exporter = "nix run github:neg-serg/transmission-exporter";
     mkvcleaner = "nix run github:neg-serg/mkvcleaner";

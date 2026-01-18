@@ -11,7 +11,6 @@
   rtcqs = pkgs.neg.rtcqs;
   subsonic-tui = pkgs.subsonic-tui;
   surfingkeys-pkg = pkgs.surfingkeys-pkg;
-  tewi = pkgs.neg.tewi;
   two_percent = pkgs.neg.two_percent;
   webcamize = pkgs.neg.webcamize;
 }
