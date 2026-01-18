@@ -2,17 +2,10 @@
   lib,
   pkgs,
 
-  nyxt4 ? null,
   ...
 }:
 let
-  nyxtPkg =
-    if nyxt4 != null then
-      nyxt4
-    else if lib.hasAttr "nyxt4-bin" pkgs then
-      pkgs.nyxt4-bin # nyxt 4 (binary)
     else
-      pkgs.nyxt; # nyxt (source)
   # Floorp upstream source package is deprecated in nixpkgs >= 12.x; always use floorp-bin.
   floorpPkg = pkgs.floorp-bin; # Fork of Firefox that seeks balance between versatility, p...
 in
@@ -31,11 +24,6 @@ in
     desktop = "librewolf.desktop";
     newTabArg = "-new-tab";
   };
-  nyxt = {
-    name = "nyxt";
-    pkg = nyxtPkg;
-    bin = lib.getExe' nyxtPkg "nyxt";
-    desktop = "nyxt.desktop";
     newTabArg = "";
   };
   floorp = {

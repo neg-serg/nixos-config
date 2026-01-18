@@ -3,7 +3,6 @@
   pkgs,
   config,
   yandexBrowserProvider ? null,
-  nyxt4 ? null,
   ...
 }:
 with lib;
@@ -18,7 +17,6 @@ let
       lib
       pkgs
       yandexBrowser
-      nyxt4
       ;
   };
 in
