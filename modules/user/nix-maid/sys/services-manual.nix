@@ -8,25 +8,10 @@
 }:
 let
   n = neg impurity;
-  guiEnabled = config.features.gui.enable or false;
   webEnabled = config.features.web.enable or false;
   mediaEnabled = config.features.media.audio.apps.enable or false;
 
   # Helper to generate INI (Flameshot, Aria2 often uses similar key=val)
-  toINI = lib.generators.toINI {
-    mkKeyValue =
-      key: value:
-      let
-        v =
-          if builtins.isString value && lib.hasPrefix "#" value then
-            "\"${value}\""
-          else if builtins.isBool value then
-            if value then "true" else "false"
-          else
-            toString value;
-      in
-      "${key}=${v}";
-  };
 
   # Aria2 Settings
   aria2Settings = {

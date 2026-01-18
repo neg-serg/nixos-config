@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   environment.systemPackages = [
     pkgs.amnezia-vpn # Amnezia VPN client
@@ -11,5 +16,6 @@
       inherit (pkgs) pkcs11helper;
     }) # OpenVPN with PKCS#11 support
     pkgs.update-resolv-conf # apply pushed DNS options to resolv.conf
-  ] ++ lib.optional (config.features.apps.throne.enable or false) pkgs.throne;
+  ]
+  ++ lib.optional (config.features.apps.throne.enable or false) pkgs.throne;
 }

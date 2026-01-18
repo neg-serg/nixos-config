@@ -24,7 +24,6 @@
     ./apps/vicinae.nix
     ./apps/nyxt.nix
     ./apps/emacs.nix
-    ./apps/editors.nix
     ./apps/transmission.nix
 
     # CLI & Shell Environment
@@ -63,7 +62,6 @@
     ./web/firefox.nix
     ./web/floorp.nix
     # ./web/librewolf.nix is imported via ./web/browsing.nix
-    ./web/chrome.nix
     ./web/brave.nix
     ./web/vivaldi.nix
     ./web/edge.nix

@@ -10,7 +10,6 @@ in
     broot.enable = mkBool "enable broot file manager and shell integration" false;
     yazi.enable = mkBool "enable yazi terminal file manager" true;
 
-
     tewi.enable = mkBool "enable tewi tui torrent client configuration" false;
     television.enable = mkBool "enable television (blazingly fast fuzzy finder)" true;
     zcli = {
