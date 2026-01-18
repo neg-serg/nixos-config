@@ -25,7 +25,7 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
     WebRender, disables inline PDF.
   - Caveats: higher memory usage, possible AMO/RFP interaction, inline PDF disabled.
 - `features.web.default` (default browser)
-  - Type: one of `"floorp" | "firefox" | "librewolf" | "nyxt" | "yandex"`
+  - Type: one of `"floorp" | "firefox" | "librewolf" | "yandex"`
   - Default: `"floorp"`
   - Selected browser record is exposed at `config.lib.neg.web.defaultBrowser` with fields
     `{ name, pkg, bin, desktop, newTabArg }`.

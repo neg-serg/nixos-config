@@ -208,7 +208,10 @@ let
     netsniff-ng = "nix shell nixpkgs#netsniff-ng";
 
     # Misc
-    nyxt = "nix run github:neg-serg/nyxt-bin";
+    # Run
+    # nyxt = "nix run github:neg-serg/nyxt-bin";
+    
+    # System
     transmission-exporter = "nix run github:neg-serg/transmission-exporter";
     mkvcleaner = "nix run github:neg-serg/mkvcleaner";
     cxxmatrix = "nix run github:neg-serg/cxxmatrix";
