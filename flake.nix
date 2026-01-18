@@ -6,7 +6,6 @@
     hy3 = { url = "git+https://github.com/outfoxxed/hy3?ref=hl0.52.0"; inputs.hyprland.follows = "hyprland"; };
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
     hyprland = { url = "git+https://github.com/hyprwm/Hyprland?ref=v0.52.1"; inputs.nixpkgs.follows = "nixpkgs"; };
-    pyprland = { url = "github:hyprland-community/pyprland/e82637d73207abd634a96ea21fa937455374d131"; inputs.nixpkgs.follows = "nixpkgs"; };
     raise = { url = "github:neg-serg/raise"; inputs.nixpkgs.follows = "nixpkgs"; };
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
 
