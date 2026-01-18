@@ -1574,6 +1574,22 @@ in
       packages = [ pkgs.amfora ];
     };
 
+    freeze = pkgs.mkShell {
+      packages = [ pkgs.freeze ]; # render source files to images
+    };
+
+    hexyl = pkgs.mkShell {
+      packages = [ pkgs.hexyl ]; # hexdump viewer
+    };
+
+    license = pkgs.mkShell {
+      packages = [ pkgs.license-generator ]; # CLI license boilerplates
+    };
+
+    plow = pkgs.mkShell {
+      packages = [ pkgs.plow ]; # HTTP benchmarking tool
+    };
+
     "yandex-disk" = pkgs.mkShell {
       packages = [ pkgs."yandex-disk" ];
     };
