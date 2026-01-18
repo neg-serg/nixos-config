@@ -14,7 +14,6 @@ in
 
   # Keep imports at top-level; guard heavy config below
   imports = [
-    ./virt/pkgs.nix # Nix package manager
 
   ];
 
