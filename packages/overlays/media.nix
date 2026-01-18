@@ -1,4 +1,4 @@
-inputs: _final: prev:
+_inputs: _final: prev:
 
 {
   ffmpeg = prev.ffmpeg.override {
@@ -18,8 +18,6 @@ inputs: _final: prev:
       + " -O3 -ftree-parallelize-loops=8 -floop-parallelize-all";
   });
   neg = {
-    # Media-related tools
-    rtcqs = inputs.rtcqs.packages.${prev.stdenv.hostPlatform.system}.default;
     # Ensure mpv is built with VapourSynth support
     mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
       buildInputs = (old.buildInputs or [ ]) ++ [ prev.vapoursynth ];
