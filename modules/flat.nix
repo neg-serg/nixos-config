@@ -181,7 +181,6 @@
 
     ./system/virt/default.nix
 
-    ./system/virt/pkgs.nix # Nix package manager
     ./system/winapps.nix
     ./system/zram.nix
     ./text/default.nix

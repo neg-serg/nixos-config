@@ -1587,6 +1587,15 @@ in
       packages = [ pkgs.plow ]; # HTTP benchmarking tool
     };
 
+    wine = pkgs.mkShell {
+      packages = [
+        pkgs.dxvk # setup script for DXVK
+        pkgs.vkd3d # DX12 for Wine
+        pkgs.wineWowPackages.staging # Wine (staging) for Windows apps
+        pkgs.winetricks # helpers for Wine (e.g., DXVK)
+      ];
+    };
+
     "yandex-disk" = pkgs.mkShell {
       packages = [ pkgs."yandex-disk" ];
     };
