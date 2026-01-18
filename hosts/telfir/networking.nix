@@ -13,6 +13,10 @@ _: {
       externalInterface = "net1";
       internalInterfaces = [ "br0" ];
     };
+
+    # Use systemd-networkd for networking
+    useNetworkd = true;
+    useDHCP = false;
   };
 
   # Enable local bridge (br0) with DHCP server
