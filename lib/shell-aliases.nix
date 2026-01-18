@@ -208,6 +208,7 @@ let
     netsniff-ng = "nix shell nixpkgs#netsniff-ng";
     music-clap = "nix run github:neg-serg/music-clap";
     webcamize = "nix run github:neg-serg/webcamize --";
+    subsonic-tui = "nix run github:neg-serg/subsonic-tui --";
 
     # Misc
     # Run
