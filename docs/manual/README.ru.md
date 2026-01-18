@@ -492,3 +492,156 @@ Nextcloud на telfir (чистая установка)
     разворачивает секрет в `/var/lib/nextcloud/adminpass` (владелец `nextcloud`, права `0400`).
   - Автоматические юниты `nextcloud-setup` и `nextcloud-update-db` отключены; обновление выполняется
     вручную через `sudo -u nextcloud nextcloud-occ upgrade` после смены версии Nextcloud в конфиге.
+
+## Игры: Изоляция CPU и лаунчеры
+
+### Переключатель игрового стека
+
+- Переключение всего игрового стека:
+  - `profiles.games.enable = false;` — отключить Steam/Gamescope wrappers/MangoHud на уровне
+    системы.
+  - По умолчанию `true` для сохранения текущего поведения.
+
+- Изолированные CPU: хост `telfir` резервирует ядра `14,15,30,31` для низколатентного гейминга.
+  Системные сервисы остаются на «housekeeping» ядрах.
+
+- Transient scope runner: `game-run` запускает любую команду в пользовательском systemd scope и
+  привязывает её к изолированным CPU через `game-affinity-exec`.
+
+- Хелперы Gamescope: `gamescope-pinned`, `gamescope-perf`, `gamescope-quality`, `gamescope-hdr` и
+  `gamescope-targetfps` оборачивают `game-run`.
+
+### Steam (опции запуска для каждой игры)
+
+- Базовый: `game-run %command%`
+- С Gamescope (fullscreen + VRR): `game-run gamescope -f --adaptive-sync -- %command%`
+- Переопределить CPU set для игры: `GAME_PIN_CPUSET=14,15,30,31 game-run %command%`
+- Отключить GameMode для игры: `GAME_RUN_USE_GAMEMODE=0 game-run %command%`
+
+### Игры вне Steam
+
+- Запуск напрямую: `game-run /path/to/game`
+- С пресетами Gamescope:
+  - Performance: `gamescope-perf <game | command-with-args>`
+  - Quality: `gamescope-quality <game | command-with-args>`
+  - HDR: `gamescope-hdr <game | command-with-args>`
+  - Target FPS autoscale: `TARGET_FPS=120 gamescope-targetfps <cmd>`
+
+### Переменные окружения
+
+- `GAME_PIN_CPUSET`: список или диапазоны CPU (по умолчанию `14,15,30,31`). Примеры: `14,30` или
+  `14-15,30-31`.
+- `GAME_RUN_USE_GAMEMODE`: `1` (по умолчанию) запускать через `gamemoderun`, `0` — отключить.
+- `GAMESCOPE_FLAGS`: дополнительные флаги для gamescope в `gamescope-pinned`.
+- `GAMESCOPE_RATE`, `GAMESCOPE_OUT_W`, `GAMESCOPE_OUT_H`: переопределить частоту и размер вывода
+  для обёрток gamescope.
+- `TARGET_FPS`, `NATIVE_BASE_FPS`, `GAMESCOPE_AUTOSCALE`: управление автомасштабированием в
+  `gamescope-targetfps`.
+
+### Проверка affinity и scope
+
+- Показать CPU mask текущего шелла: `grep Cpus_allowed_list /proc/$$/status`
+- Проверить запуск игры: `game-run bash -lc 'grep Cpus_allowed_list /proc/$$/status; sleep 1'`
+
+## Main User (единый источник правды)
+
+- Настройка основного аккаунта через `users.main.*` в модулях:
+  - `users.main.name`: логин (по умолчанию `neg`).
+  - `users.main.uid` / `users.main.gid`: ID пользователя/группы (по умолчанию `1000`).
+  - `users.main.group`: имя основной группы (по умолчанию равно `users.main.name`).
+  - `users.main.description`, `users.main.opensshAuthorizedKeys`, `users.main.hashedPassword`.
+- Модули используют это вместо хардкода имён/ID:
+  - MPD запускается как `users.main.name` и задаёт `XDG_RUNTIME_DIR` из `users.main.uid`.
+  - Bind mounts файловой системы используют home основного пользователя вместо `/home/neg/...`.
+  - Extra groups и PAM limits ссылаются на основного пользователя/группу.
+- Просмотр transient scope: `systemctl --user list-units 'app-*scope' --no-pager`
+
+Замечания:
+
+- Не оборачивайте весь Steam‑клиент; лучше использовать per‑game Launch Options, чтобы загрузки и
+  тулинг оставались на housekeeping CPU.
+- Чтобы изменить изолированные ядра по умолчанию, установите `GAME_PIN_CPUSET` в окружении или
+  измените изоляцию CPU хоста в `modules/hardware/host/telfir.nix`.
+
+## Рекомендации по гейммингу
+
+- 4K/240 Hz (VRR): используйте Gamescope с fullscreen и VRR для улучшения frame pacing на Wayland.
+  - Типовой запуск: `game-run gamescope -f --adaptive-sync -r 240 -- %command%`
+  - Если GPU‑limited, апскейл: рендер ниже, вывод native. Пример 1440p→4K:
+    `-w 2560 -h 1440 -W 3840 -H 2160 --fsr-sharpness 3`.
+
+- HDR (AMD + Wayland): используйте обёртку `gamescope-hdr` или добавьте `--hdr-enabled` к Gamescope.
+  - Требования: HDR включён на мониторе, свежее ядро/Mesa, Gamescope с поддержкой HDR.
+  - Некоторым играм нужно включить HDR внутри игры после запуска в HDR‑режиме.
+
+- Латентность и стабильность:
+  - Предпочитайте per‑game CPU set: `GAME_PIN_CPUSET=14,15,30,31 game-run %command%`. Если игра
+    создаёт много потоков, расширьте (например, `14-15,28-31`).
+  - Держите VRR включённым: `--adaptive-sync`. При тиринге или проблемах с синхронизацией
+    попробуйте без него и/или ограничьте FPS чуть ниже максимума (например, 237 при 240 Hz) через
+    in‑game лимитер или MangoHud.
+  - Опционально: проверьте Gamescope `--rt` (realtime scheduling). Если появляется jitter
+    аудио/ввода, уберите.
+
+### Субъективные пресеты (мои личные настройки)
+
+Эти пресеты субъективны и экспериментальны — я придумал их сам. Используйте как отправную точку и
+настраивайте под своё железо/игру.
+
+- Соревновательный FPS (минимальная латентность, 240 Hz VRR):
+  - Steam Launch Options:
+    `GAME_PIN_CPUSET=14,15,30,31 MANGOHUD=1 MANGOHUD_CONFIG=fps_limit=237 game-run gamescope -f --adaptive-sync -r 240 -- %command%`
+  - Замечания: ограничение ниже максимального refresh (237/240) для стабильных frametimes;
+    попробуйте добавить `--rt` к Gamescope, если стабильность ОК; отключите in‑game V‑Sync.
+
+- Кинематографический single‑player (качество, стабильные 120 FPS):
+  - Если native 4K устойчив: `game-run gamescope -f --adaptive-sync -r 120 -- %command%`
+  - Если GPU‑bound: 1800p→4K апскейл:
+    `game-run gamescope -f --adaptive-sync -r 120 -w 3200 -h 1800 -W 3840 -H 2160 --fsr-sharpness 3 -- %command%`
+  - Замечания: на панели 240 Hz 120 FPS тоже плавно с VRR и оставляет запас для HDR/RT.
+
+- Тяжёлый DX12/Open‑World (например, RT heavy):
+  - Начните консервативно: `TARGET_FPS=110 game-run gamescope -f --adaptive-sync -- %command%`
+  - Опциональные RADV‑переключатели (могут меняться с версиями Mesa):
+    `RADV_PERFTEST=gpl shadercache` — только если знаете что делаете.
+
+- Стратегия/Сим с множеством воркер‑потоков:
+  - Расширьте CPU set для игры: `GAME_PIN_CPUSET=12-15,28-31 game-run %command%`
+  - Если стуттеры от фоновых задач — оставьте Gamescope и MangoHud, но уберите `--rt`.
+
+- Эмуляторы / старые GL‑тайтлы:
+  - `MESA_GLTHREAD=true game-run %command%`
+  - Для строгого frame pacing предпочитайте integer scale в Gamescope или ограничьте FPS до
+    делителей native rate.
+
+- HDR‑тайтлы:
+  - `game-run gamescope --hdr-enabled -f --adaptive-sync -- %command%`
+  - HDR в игре нужно включить; проверьте HDR OSD монитора и логи Gamescope.
+
+Советы по настройке:
+
+- Если увеличивается input lag — уберите `--rt` и слегка понизьте лимит FPS.
+- Если GPU на 99% со спайками — снизьте render resolution (`-w/-h`) или примените in‑game
+  апскейлеры (FSR/DLSS/XeSS), сохраняя вывод Gamescope на native.
+- Если CPU спайки — снизьте фоновую активность или расширьте `GAME_PIN_CPUSET`.
+
+## Лёгкий мониторинг (игровой PC)
+
+- Netdata (локальный, очень лёгкий):
+  - Включить на хосте: `monitoring.netdata.enable = true;` (см. `hosts/telfir/services.nix`).
+  - Открывает локальный UI на `http://127.0.0.1:19999` с CPU/GPU/sensors/disks/net.
+  - Сервис де‑приоритизирован (nice/CPU/IO weights) для минимального влияния.
+  - Расширьте через `services.netdata.config`, если нужны дополнительные коллекторы.
+
+- История Sysstat (ультра‑лёгкий):
+  - Включить на хосте: `monitoring.sysstat.enable = true;`.
+  - Смотреть позже: `sar`, `iostat`, `mpstat`, `pidstat`.
+
+- In‑game overlay (уже включён):
+  - Используйте MangoHud: запускайте игры с `MANGOHUD=1`.
+  - Переключить логирование: `Shift+F2` (CSV сохраняется в `$XDG_DATA_HOME/MangoHud` по умолчанию).
+
+- VictoriaMetrics (если нужны графики без Grafana):
+  - Рекомендуемый стек: `vmagent -> VictoriaMetrics single -> vmui`.
+  - Очень низкое RAM/CPU при 10–15 s scrape и 7–14 дней retention.
+  - По умолчанию не включён; можно добавить позже как отдельный модуль.
