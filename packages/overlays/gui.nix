@@ -25,8 +25,6 @@ in
   winboat = prev.winboat.overrideAttrs (old: {
     npmFlags = (old.npmFlags or [ ]) ++ [ "--legacy-peer-deps" ];
   });
-  # Nyxt 4 pre-release binary (Electron/Blink backend). Upstream provides a single self-contained
-  # ELF binary for Linux. Package it as a convenience while no QtWebEngine build is available.
   "nyarch-assistant" = nyarchAssistantPkg;
   "_nyarch-assistant" = nyarchAssistantPkg;
   flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") { };
