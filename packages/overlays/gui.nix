@@ -30,7 +30,6 @@ in
   flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") { };
   matugen-themes = callPkg (inputs.self + "/packages/matugen-themes") { };
   oldschool-pc-font-pack = callPkg (inputs.self + "/packages/oldschool-pc-font-pack") { };
-  px437-ibm-conv-e = callPkg (inputs.self + "/packages/px437-ibm-conv-e") { };
   pyprland_fixed = inputs.pyprland.packages.${prev.stdenv.hostPlatform.system}.pyprland;
   surfingkeys-pkg = prev.callPackage (inputs.self + "/packages/surfingkeys-conf") {
     customConfig = inputs.self + "/files/surfingkeys.js";
