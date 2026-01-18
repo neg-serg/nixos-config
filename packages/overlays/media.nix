@@ -35,7 +35,7 @@ in
     {
       inherit blissify_rs;
       # Media-related tools
-      webcamize = callPkg (packagesRoot + "/webcamize") { };
+
       rtcqs = callPkg (packagesRoot + "/rtcqs") { python3Packages = python313; };
       playscii = callPkg (packagesRoot + "/playscii") { python3Packages = python313; };
       "blissify-rs" = blissify_rs;
