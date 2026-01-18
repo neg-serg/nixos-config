@@ -197,6 +197,7 @@ let
     bt-migrate = "nix shell nixpkgs#bt-migrate -c bt-migrate";
 
     playscii = "nix run github:neg-serg/playscii --";
+    richcolors = "nix run github:neg-serg/richcolors --";
     bitmagnet = "nix shell nixpkgs#bitmagnet -c bitmagnet";
     jackett = "nix shell nixpkgs#jackett -c jackett";
     sad = "nix shell nixpkgs#sad -c sad";

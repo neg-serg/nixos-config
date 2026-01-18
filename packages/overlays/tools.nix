@@ -15,7 +15,6 @@ in
     # Surfingkeys configuration
     surfingkeys_conf = callPkg (packagesRoot + "/surfingkeys-conf") { };
     "surfingkeys-conf" = surfingkeys_conf;
-    richcolors = callPkg (packagesRoot + "/richcolors") { };
 
     two_percent = callPkg (packagesRoot + "/two_percent") { };
     "two-percent" = two_percent;

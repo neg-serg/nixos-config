@@ -22,7 +22,7 @@ let
   packages = [
     # -- Color --
     pkgs.lutgen # procedurally render LUTs for stylizing
-    pkgs.neg.richcolors # render palette image from hex code file
+
     pkgs.pastel # extract palettes / simulate colorblindness
 
     # -- Compression / Optimization --
