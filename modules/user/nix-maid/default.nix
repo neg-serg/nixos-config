@@ -73,7 +73,6 @@
 
     # Fun & Games
     ./fun/nethack.nix
-    ./fun/fun-launchers.nix
     ./fun/oss-games.nix
     ./fun/openmw.nix
     ./fun/steam.nix

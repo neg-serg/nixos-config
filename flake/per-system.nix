@@ -1593,6 +1593,7 @@ in
         pkgs.vkd3d # DX12 for Wine
         pkgs.wineWowPackages.staging # Wine (staging) for Windows apps
         pkgs.winetricks # helpers for Wine (e.g., DXVK)
+        pkgs.wineWow64Packages.full # full 32/64-bit Wine
       ];
     };
 
