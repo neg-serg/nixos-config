@@ -32,7 +32,6 @@ in
     # Media-related tools
 
     rtcqs = callPkg (packagesRoot + "/rtcqs") { python3Packages = python313; };
-    playscii = callPkg (packagesRoot + "/playscii") { python3Packages = python313; };
 
     # Ensure mpv is built with VapourSynth support
     mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
