@@ -196,6 +196,7 @@ let
     tewi = "nix run github:neg-serg/tewi";
     bt-migrate = "nix shell nixpkgs#bt-migrate -c bt-migrate";
 
+    playscii = "nix run github:neg-serg/playscii --";
     bitmagnet = "nix shell nixpkgs#bitmagnet -c bitmagnet";
     jackett = "nix shell nixpkgs#jackett -c jackett";
     sad = "nix shell nixpkgs#sad -c sad";
@@ -212,7 +213,6 @@ let
     neopyter = "nix run github:neg-serg/neopyter --";
     blissify-rs = "nix run github:neg-serg/blissify-rs --";
     ls-iommu = "nix run github:neg-serg/ls-iommu --";
-    playscii = "nix run github:neg-serg/playscii --";
 
     # Misc
     # Run
