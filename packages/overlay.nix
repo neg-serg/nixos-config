@@ -14,7 +14,11 @@ in
   neg = (functions.neg or { }) // (tools.neg or { }) // (media.neg or { }) // (dev.neg or { });
   subsonic-tui = final.callPackage ./subsonic-tui { };
   wl-ocr = final.callPackage ./wl-ocr { };
-  fsread-nvim = final.callPackage ./fsread-nvim { };
+  fsread-nvim = final.vimUtils.buildVimPlugin {
+    pname = "fsread-nvim";
+    version = "flake";
+    src = inputs.fsread-nvim;
+  };
 
   # Python with LTO optimizations
   python3-lto = prev.python3.override {
