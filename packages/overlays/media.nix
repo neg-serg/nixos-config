@@ -28,24 +28,18 @@ in
       toString (old.env.NIX_CFLAGS_COMPILE or "")
       + " -O3 -ftree-parallelize-loops=8 -floop-parallelize-all";
   });
-  neg =
-    let
-      blissify_rs = callPkg (packagesRoot + "/blissify-rs") { };
-    in
-    {
-      inherit blissify_rs;
-      # Media-related tools
+  neg = {
+    # Media-related tools
 
-      rtcqs = callPkg (packagesRoot + "/rtcqs") { python3Packages = python313; };
-      playscii = callPkg (packagesRoot + "/playscii") { python3Packages = python313; };
-      "blissify-rs" = blissify_rs;
+    rtcqs = callPkg (packagesRoot + "/rtcqs") { python3Packages = python313; };
+    playscii = callPkg (packagesRoot + "/playscii") { python3Packages = python313; };
 
-      # Ensure mpv is built with VapourSynth support
-      mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
-        buildInputs = (old.buildInputs or [ ]) ++ [ prev.vapoursynth ];
-        mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Dvapoursynth=enabled" ];
-      });
-    };
+    # Ensure mpv is built with VapourSynth support
+    mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
+      buildInputs = (old.buildInputs or [ ]) ++ [ prev.vapoursynth ];
+      mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Dvapoursynth=enabled" ];
+    });
+  };
   pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
     (_python-final: python-prev: {
       imageio = python-prev.imageio.overridePythonAttrs (_old: {
