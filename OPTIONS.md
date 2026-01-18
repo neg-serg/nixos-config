@@ -17,7 +17,7 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
   - Default: true in full, false in lite
 - `features.web.floorp.enable` (Floorp browser)
   - Default: true in full, false in lite
-- `features.web.yandex.enable` (Yandex Browser)
+
   - Default: true in full, false in lite
 - `features.web.prefs.fastfox.enable` (FastFox‑like Mozilla prefs)
   - Default: true in full, false in lite
@@ -25,7 +25,7 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
     WebRender, disables inline PDF.
   - Caveats: higher memory usage, possible AMO/RFP interaction, inline PDF disabled.
 - `features.web.default` (default browser)
-  - Type: one of `"floorp" | "firefox" | "librewolf" | "yandex"`
+  - Type: one of `"floorp" | "firefox" | "librewolf"`
   - Default: `"floorp"`
   - Selected browser record is exposed at `config.lib.neg.web.defaultBrowser` with fields
     `{ name, pkg, bin, desktop, newTabArg }`.
@@ -33,7 +33,7 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
 
 Notes
 
-- Yandex Browser is passed in via `extraSpecialArgs` as `yandexBrowser` (system‑scoped package set).
+
   See `flake.nix` and usage in `modules/user/web/browsing.nix`.
 - Floorp profile and prefs live in `modules/user/web/floorp.nix`.
 
@@ -90,7 +90,7 @@ The central unfree policy and presets live in:
 - `modules/misc/unfree.nix` (wires `nixpkgs.config.allowUnfreePredicate`)
 - `modules/features-data/unfree-presets.nix` (presets)
   - Preset `desktop` currently includes: `abuse`, `ocenaudio`, `reaper`, `vcv-rack`, `vital`,
-    `roomeqwizard`, `stegsolve`, `volatility3`, `cursor`, `claude-code`, `yandex-browser-stable`,
+    `roomeqwizard`, `stegsolve`, `volatility3`, `cursor`, `claude-code`,
     `ai-studio` (or `lmstudio` on older nixpkgs), `code-cursor-fhs`.
 
 Libretro allowlist (gated by RetroArch mode) lives in:
@@ -115,8 +115,7 @@ You can always extend with your own names via:
 
 These are passed from `flake.nix` into modules for convenience (camelCase):
 
-- `yandexBrowser` — system package set from the Yandex Browser flake input. Used in
-  `modules/user/web/browsing.nix`.
+
 - `iosevkaNeg` — system package set from the custom Iosevka flake input. Used in
   `modules/user/theme/default.nix`.
 
