@@ -51,9 +51,38 @@ let
         neg = _: {
           # impurity ignored
           # Core structural helpers (no config dependency)
-          mkHomeFiles = files: {
-            users.users.neg.maid.file.home = files;
-          };
+          mkHomeFiles = files:
+            let
+              inherit (lib)
+                filterAttrs
+                mapAttrs'
+                mapAttrsToList
+                nameValuePair
+                hasPrefix
+                removePrefix
+                ;
+
+              # Separate impure links from regular files
+              isImpure = _: v: v ? IsImpure && v.IsImpure;
+              impureFiles = filterAttrs isImpure files;
+              regularFiles = filterAttrs (n: v: !isImpure n v) files;
+
+              # Generate systemd tmpfiles rules for impure links
+              # Format: L+ /home/user/path - - - - /etc/nixos/path
+              mkTmpfiles =
+                path: cfg:
+                let
+                  # Handle path normalization (remove leading slash or ./ )
+                  destRel = removePrefix "./" path;
+                  homePath = "%h/" + destRel; # %h is systemd specifier for Home Directory
+                in
+                "L+ ${homePath} - - - - ${cfg.Path}";
+            in
+            {
+              users.users.neg.maid.file.home = regularFiles;
+              systemd.user.tmpfiles.rules = mapAttrsToList mkTmpfiles impureFiles;
+            };
+
           mkXdgText = path: text: {
             home."${path}".text = text;
           };
@@ -63,8 +92,22 @@ let
               executable = true;
             };
           };
-          # Impurity link helper (deprecated/disabled - always pure)
-          linkImpure = x: x;
+          # Impurity link helper
+          # Calculates the path relative to the repo root (/etc/nixos) based on the inputs.self store path
+          linkImpure =
+            path:
+            let
+              pathStr = toString path;
+              selfStr = toString self;
+              # Remove the store path prefix of the flake source to get the relative path
+              relPath = lib.removePrefix (selfStr + "/") pathStr;
+              # Hardcoded repo root as per user context
+              repoRoot = "/etc/nixos";
+            in
+            {
+              IsImpure = true;
+              Path = "${repoRoot}/${relPath}";
+            };
 
           # Browser helpers
           mkUserJs =
