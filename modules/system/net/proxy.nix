@@ -10,12 +10,9 @@
 }:
 {
   environment.systemPackages = [
-    # pkgs.sing-box # proxy core supporting VLESS/Reality and tun
     pkgs.xray # VLESS/Reality-capable proxy core
   ];
 
-  # TUN service for sing-box VLESS Reality (config expected at /run/user/1000/secrets/vless-reality-singbox-tun.json)
-  # systemd.services."sing-box-tun" = {
   systemd.services."sing-box-tun" = lib.mkIf false {
     description = "Sing-box VLESS Reality (tun, manual start)";
     wants = [ "network-online.target" ];
