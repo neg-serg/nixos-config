@@ -63,7 +63,7 @@ let
                 ;
 
               # Separate impure links from regular files
-              isImpure = _: v: (v ? IsImpure && v.IsImpure) || (v ? source && v.source ? IsImpure && v.source.IsImpure);
+              isImpure = _: v: v ? IsImpure && v.IsImpure;
               impureFiles = filterAttrs isImpure files;
               regularFiles = filterAttrs (n: v: !isImpure n v) files;
 
@@ -75,9 +75,8 @@ let
                   # Handle path normalization (remove leading slash or ./ )
                   destRel = removePrefix "./" path;
                   homePath = "%h/" + destRel; # %h is systemd specifier for Home Directory
-                  impureObj = if cfg ? IsImpure then cfg else cfg.source;
                 in
-                "L+ ${homePath} - - - - ${impureObj.Path}";
+                "L+ ${homePath} - - - - ${cfg.Path}";
             in
             {
               users.users.neg.maid.file.home = regularFiles;
