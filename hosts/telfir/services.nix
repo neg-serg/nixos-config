@@ -47,6 +47,8 @@ lib.mkMerge [
     features.cli.yazi.enable = true;
     features.dev.tla.enable = true;
     features.apps.winapps.enable = false;
+    features.apps.libreoffice.enable = false;
+    features.games.launchers.lutris.enable = false;
     features.games.launchers.prismlauncher.enable = false;
     features.games.launchers.heroic.enable = false;
     features.games.nethack.enable = true;
