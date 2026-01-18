@@ -195,7 +195,7 @@ let
     xidel = "nix shell nixpkgs#xidel -c xidel";
     tewi = "nix run github:neg-serg/tewi";
     bt-migrate = "nix shell nixpkgs#bt-migrate -c bt-migrate";
-    playscii = "nix shell .#playscii -c playscii";
+
     bitmagnet = "nix shell nixpkgs#bitmagnet -c bitmagnet";
     jackett = "nix shell nixpkgs#jackett -c jackett";
     sad = "nix shell nixpkgs#sad -c sad";
