@@ -1684,7 +1684,6 @@ Whether to enable enable Google Chrome browser.
 
 Default browser used for XDG handlers, $BROWSER, and integrations.
 
-
 *Default:* `"floorp"`
 
 *Declared by:*
@@ -1746,8 +1745,6 @@ Whether to enable enable LibreWolf browser.
 *Declared by:*
 
 - [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
-
-
 
 *Type:* boolean
 

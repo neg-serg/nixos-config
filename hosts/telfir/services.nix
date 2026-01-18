@@ -42,7 +42,6 @@ lib.mkMerge [
     features.dev.ai.enable = true;
     features.dev.ai.antigravity.enable = true;
     features.text.tex.enable = false;
-    features.cli.tewi.enable = true;
     features.cli.broot.enable = true;
     features.cli.yazi.enable = true;
     features.dev.tla.enable = true;

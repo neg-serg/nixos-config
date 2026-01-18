@@ -632,7 +632,6 @@ in
           nativeBuildInputs = [ pkgs.coreutils ]; # basic file/text utilities
           # Reference a few key custom packages to verify they build
           customPkgs = [
-            (pkgs.neg.tewi or null)
             (pkgs.neg.lucida or null)
             (pkgs.neg.richcolors or null)
           ];
