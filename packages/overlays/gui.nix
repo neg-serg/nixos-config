@@ -35,4 +35,5 @@ in
   surfingkeys-pkg = prev.callPackage (inputs.self + "/packages/surfingkeys-conf") {
     customConfig = inputs.self + "/files/surfingkeys.js";
   };
+  tws = inputs.tws.packages.${prev.system}.default;
 }
