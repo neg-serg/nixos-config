@@ -9,6 +9,7 @@ in
     ai = {
       enable = mkBool "enable AI tools (e.g., LM Studio)" true;
       antigravity.enable = mkBool "install Google Antigravity agentic IDE" false;
+      opencode.enable = mkBool "install OpenCode AI coding agent" false;
     };
     iac = {
       backend = mkOption {
