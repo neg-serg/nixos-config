@@ -1,5 +1,4 @@
 [
-
   "google-chrome" # Google Chrome (needed for Antigravity)
   "vivaldi" # Vivaldi Browser
   "microsoft-edge" # Microsoft Edge Browser
