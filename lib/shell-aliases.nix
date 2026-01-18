@@ -208,6 +208,7 @@ let
     netsniff-ng = "nix shell nixpkgs#netsniff-ng";
 
     # Misc
+    cxxmatrix = "nix run github:neg-serg/cxxmatrix";
     cp = "${mkCmd "cp"} --reflink=auto";
     mv = "${mkCmd "mv"} -i";
     mk = "${mkCmd "mkdir"} -p";
