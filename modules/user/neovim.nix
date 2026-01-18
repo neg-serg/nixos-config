@@ -124,7 +124,6 @@ lib.mkIf devEnabled (
         pkgs.awk-language-server # AWK LSP
         pkgs.autotools-language-server # Autoconf/Automake LSP
         pkgs.cmake-language-server # CMake LSP
-        pkgs.dhall-lsp-server # Dhall LSP
         pkgs.docker-compose-language-service # docker-compose schema validation
         pkgs.dockerfile-language-server # Dockerfile LSP
         pkgs.dot-language-server # Graphviz DOT LSP
