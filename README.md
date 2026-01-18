@@ -343,7 +343,7 @@ pie title Module Categories Distribution
 <details>
 <summary><h3>🌐 Web & Communication (4)</h3></summary>
 
-- 🌍 **web** - Browsers (Floorp, Firefox, Yandex)
+- 🌍 **web** - Browsers (Floorp, Firefox)
 - 📧 **mail** - Email (notmuch, isync)
 - ⬇️ **torrent** - Torrent clients
 - 💬 **im** - Instant messaging
