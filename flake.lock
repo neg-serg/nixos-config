@@ -1145,7 +1145,6 @@
         "raise": "raise",
         "richcolors": "richcolors",
         "rsmetrx": "rsmetrx",
-        "rtcqs": "rtcqs",
         "rust-overlay": "rust-overlay",
         "sops-nix": "sops-nix",
         "tailray": "tailray",
@@ -1175,26 +1174,6 @@
       "original": {
         "owner": "neg-serg",
         "repo": "rsmetrx",
-        "type": "github"
-      }
-    },
-    "rtcqs": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1768766765,
-        "narHash": "sha256-p/1zRrAcfmKv2C4NJ7+gnRWsqZNRcyCXHPUHqze8sew=",
-        "owner": "neg-serg",
-        "repo": "rtcqs",
-        "rev": "faaec446557ecf9d158543a9db00508bf423df44",
-        "type": "github"
-      },
-      "original": {
-        "owner": "neg-serg",
-        "repo": "rtcqs",
         "type": "github"
       }
     },

@@ -22,7 +22,6 @@
     quickshell = { url = "git+https://git.outfoxxed.me/quickshell/quickshell"; inputs.nixpkgs.follows = "nixpkgs"; };
     richcolors = { url = "github:neg-serg/richcolors"; inputs.nixpkgs.follows = "nixpkgs"; };
     rsmetrx = { url = "github:neg-serg/rsmetrx"; inputs.nixpkgs.follows = "nixpkgs"; };
-    rtcqs = { url = "github:neg-serg/rtcqs"; inputs.nixpkgs.follows = "nixpkgs"; };
     rust-overlay = { url = "github:oxalica/rust-overlay"; inputs.nixpkgs.follows = "nixpkgs"; };
     sops-nix = { url = "github:Mic92/sops-nix"; inputs.nixpkgs.follows = "nixpkgs"; };
     tailray = { url = "github:NotAShelf/tailray"; inputs.nixpkgs.follows = "nixpkgs"; };
