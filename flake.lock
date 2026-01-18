@@ -1210,6 +1210,7 @@
         "raise": "raise",
         "rsmetrx": "rsmetrx",
         "rust-overlay": "rust-overlay",
+        "skbtrace": "skbtrace",
         "sops-nix": "sops-nix",
         "tailray": "tailray",
         "winapps": "winapps",
@@ -1275,6 +1276,22 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "skbtrace": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1720443573,
+        "narHash": "sha256-jmL95Ji4Oe7UAUfPK3kEYKSaH/BCq0i9sPS9ZRP/Rqc=",
+        "owner": "yandex-cloud",
+        "repo": "skbtrace",
+        "rev": "a7d6218d7c7430f48d591252648af22c7e9b1e34",
+        "type": "github"
+      },
+      "original": {
+        "owner": "yandex-cloud",
+        "repo": "skbtrace",
         "type": "github"
       }
     },
