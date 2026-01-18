@@ -40,7 +40,6 @@ in
     pkgs.peaclock # animated TUI clock (used in panels)
 
     # Utilities
-    pkgs.amfora # Gemini/Gopher terminal client for text browsing
     pkgs.dcfldd # dd with progress/hash
     pkgs.dust # better du
     pkgs.erdtree # modern tree

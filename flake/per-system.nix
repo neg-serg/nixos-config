@@ -1570,6 +1570,10 @@ in
       packages = [ pkgs.vulkan-extension-layer ];
     };
 
+    amfora = pkgs.mkShell {
+      packages = [ pkgs.amfora ];
+    };
+
     "yandex-disk" = pkgs.mkShell {
       packages = [ pkgs."yandex-disk" ];
     };
