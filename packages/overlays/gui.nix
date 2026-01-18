@@ -8,7 +8,7 @@ let
       autoArgs = if wantsInputs then { inherit inputs; } else { };
     in
     prev.callPackage path (autoArgs // extraArgs);
-  nyarchAssistantPkg = callPkg (inputs.self + "/packages/nyarch-assistant") { };
+  nyarchAssistantPkg = inputs.nyarch-assistant.packages.${prev.system}.default;
 in
 {
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
