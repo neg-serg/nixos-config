@@ -32,9 +32,6 @@ let
     pkgs.pngquant # perceptual PNG quantizer for quicksharing
     pkgs.scour # SVG minifier to shrink UI assets
 
-    # -- Editors --
-
-
     # -- Metadata --
     pkgs.exiftool # swiss-army EXIF inspector used in scripts
     pkgs.exiv2 # CLI for editing EXIF/IPTC/XMP metadata
