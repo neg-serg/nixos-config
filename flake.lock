@@ -1149,7 +1149,6 @@
         "rust-overlay": "rust-overlay",
         "sops-nix": "sops-nix",
         "tailray": "tailray",
-        "tws": "tws",
         "winapps": "winapps",
         "wrapper-manager": "wrapper-manager",
         "xdg-desktop-portal-hyprland": [
@@ -1379,26 +1378,6 @@
       "original": {
         "owner": "NotAShelf",
         "repo": "tailray",
-        "type": "github"
-      }
-    },
-    "tws": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1768766054,
-        "narHash": "sha256-whALg1Qk619MsV3ckfK/Nn2k0M18O5M9J9vyF/wxTEI=",
-        "owner": "neg-serg",
-        "repo": "tws",
-        "rev": "a69c89ceea43607a12dbb2077f3b5d8a634ba2ed",
-        "type": "github"
-      },
-      "original": {
-        "owner": "neg-serg",
-        "repo": "tws",
         "type": "github"
       }
     },
