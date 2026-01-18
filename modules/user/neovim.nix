@@ -29,31 +29,31 @@ lib.mkIf devEnabled (
               pkgs.vimPlugins.lazy-nvim
               pkgs.fsread-nvim
               (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
-                p.bash              # Bash shell script parser
-                p.caddy             # Caddy web server config parser
-                p.cmake             # CMake build system parser
-                p.diff              # Diff format parser
-                p.dockerfile        # Dockerfile parser
-                p.gitcommit         # Git commit message parser
-                p.gitignore         # .gitignore parser
-                p.glsl              # GLSL shader language parser
-                p.ini               # INI configuration file parser
-                p.just              # Justfile parser
-                p.kconfig           # Kconfig parser (Linux kernel config)
-                p.lua               # Lua language parser
-                p.luadoc            # Lua documentation parser
-                p.make              # Makefile parser
-                p.markdown          # Markdown parser
-                p.markdown_inline   # Markdown inline parser
-                p.meson             # Meson build system parser
-                p.ninja             # Ninja build system parser
-                p.nix               # Nix language parser
-                p.python            # Python language parser
-                p.query             # Treesitter query language parser
-                p.regex             # Regular expression parser
-                p.wgsl              # WGSL shader language parser
-                p.xml               # XML language parser
-                p.yaml              # YAML language parser
+                p.bash # Bash shell script parser
+                p.caddy # Caddy web server config parser
+                p.cmake # CMake build system parser
+                p.diff # Diff format parser
+                p.dockerfile # Dockerfile parser
+                p.gitcommit # Git commit message parser
+                p.gitignore # .gitignore parser
+                p.glsl # GLSL shader language parser
+                p.ini # INI configuration file parser
+                p.just # Justfile parser
+                p.kconfig # Kconfig parser (Linux kernel config)
+                p.lua # Lua language parser
+                p.luadoc # Lua documentation parser
+                p.make # Makefile parser
+                p.markdown # Markdown parser
+                p.markdown_inline # Markdown inline parser
+                p.meson # Meson build system parser
+                p.ninja # Ninja build system parser
+                p.nix # Nix language parser
+                p.python # Python language parser
+                p.query # Treesitter query language parser
+                p.regex # Regular expression parser
+                p.wgsl # WGSL shader language parser
+                p.xml # XML language parser
+                p.yaml # YAML language parser
               ]))
             ];
           };

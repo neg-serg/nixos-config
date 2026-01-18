@@ -20,8 +20,8 @@ nix flake lock --update-input home-manager
 ## Common Inputs
 
 | Input | Description | |-------|-------------| | `nixpkgs` | Main package repository | |
-`home-manager` | User config management | | `lanzaboote` | Secure boot | |
-`sops-nix` | Secrets management |
+`home-manager` | User config management | | `lanzaboote` | Secure boot | | `sops-nix` | Secrets
+management |
 
 ## Rebuild After Update
 

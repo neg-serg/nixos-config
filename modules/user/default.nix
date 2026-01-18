@@ -4,7 +4,6 @@
     ./session
     ./nix-maid
     ./games
-    ./bash.nix
     ./dbus.nix
     ./fonts.nix
     ./gui-packages.nix

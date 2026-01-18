@@ -22,28 +22,9 @@
     ./dev/editor/default.nix
     ./dev/editor/neovim/pkgs.nix # Nix package manager
     ./dev/editor/pkgs.nix # Nix package manager
-    ./dev/elf/pkgs.nix # Nix package manager
     ./dev/gcc/autofdo.nix
     ./dev/gdb/default.nix
     ./dev/git/pkgs.nix # Nix package manager
-    ./dev/hack/core.nix
-    ./dev/hack/default.nix
-    ./dev/hack/forensics.nix
-    ./dev/hack/pentest/backdoor.nix
-    ./dev/hack/pentest/database.nix
-    ./dev/hack/pentest/default.nix
-    ./dev/hack/pentest/explotation.nix
-    ./dev/hack/pentest/fuzzing.nix
-    ./dev/hack/pentest/passwords.nix
-    ./dev/hack/pentest/recon.nix
-    ./dev/hack/pentest/reversing.nix
-    ./dev/hack/pentest/rfid.nix
-    ./dev/hack/pentest/sniffing.nix
-    ./dev/hack/pentest/steganography.nix
-    ./dev/hack/pentest/web.nix
-    ./dev/hack/pentest/wireless.nix
-    ./dev/hack/sdr.nix
-    ./dev/hack/vulnerability_scanners.nix
     ./dev/openxr/default.nix
     ./dev/pkgs/default.nix
     ./dev/python/pkgs.nix # Nix package manager
@@ -211,7 +192,6 @@
     ./tools/hiddify.nix
     ./tools/pkgs.nix # Nix package manager
     ./torrent/default.nix
-    ./user/bash.nix
     ./user/dbus.nix
     ./user/fonts.nix
     ./user/games/default.nix
@@ -223,7 +203,6 @@
     ./user/locale.nix
     ./user/locate.nix
     ./user/mail.nix
-    ./user/nix-maid/apps/editors.nix
     ./user/nix-maid/apps/emacs.nix
     ./user/nix-maid/apps/gui-apps.nix
     ./user/nix-maid/apps/mpv/config.nix
@@ -283,7 +262,6 @@
     ./user/nix-maid/web/aria.nix
     ./user/nix-maid/web/brave.nix
     ./user/nix-maid/web/browsing.nix
-    ./user/nix-maid/web/chrome.nix
     ./user/nix-maid/web/defaults.nix
     ./user/nix-maid/web/edge.nix
     ./user/nix-maid/web/firefox.nix
