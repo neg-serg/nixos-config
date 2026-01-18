@@ -211,6 +211,7 @@ let
     subsonic-tui = "nix run github:neg-serg/subsonic-tui --";
     neopyter = "nix run github:neg-serg/neopyter --";
     blissify-rs = "nix run github:neg-serg/blissify-rs --";
+    ls-iommu = "nix run github:neg-serg/ls-iommu --";
 
     # Misc
     # Run
