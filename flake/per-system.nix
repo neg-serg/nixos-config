@@ -1596,6 +1596,10 @@ in
       ];
     };
 
+    dconf2nix = pkgs.mkShell {
+      packages = [ pkgs.dconf2nix ]; # convert dconf to nix config
+    };
+
     "yandex-disk" = pkgs.mkShell {
       packages = [ pkgs."yandex-disk" ];
     };
