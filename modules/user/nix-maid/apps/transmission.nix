@@ -67,7 +67,6 @@ lib.mkIf (cfg.enable or false) (
     {
       environment.systemPackages = [
         # transmissionPkg # Fast, easy and free Bittorrent client
-        # pkgs.jackett # API Support for your favorite torrent trackers
         transmissionAddTrackers # Helper script to add trackers to Transmission
       ];
 
@@ -81,18 +80,6 @@ lib.mkIf (cfg.enable or false) (
 
       # Replicate user services
       systemd.user.services = {
-        # Jackett
-        # jackett = {
-        #   description = "Jackett (torrent indexer)";
-        #   serviceConfig = {
-        #     Type = "simple";
-        #     ExecStart = lib.getExe pkgs.jackett;
-        #     Restart = "on-failure";
-        #     RestartSec = "10s";
-        #   };
-        #   wantedBy = [ "default.target" ];
-        # };
-
         # Transmission
         transmission-daemon = {
           description = "transmission service";

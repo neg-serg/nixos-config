@@ -61,7 +61,6 @@
     ./hardware/audio/pulseaudio/default.nix
     ./hardware/config.nix
     ./hardware/cooling.nix
-    ./hardware/cpu/pkgs.nix # Nix package manager
     ./hardware/gpu-corectrl.nix
     ./hardware/io/pkgs.nix # Nix package manager
     ./hardware/liquidctl.nix
@@ -254,7 +253,6 @@
     ./user/nix-maid/sys/pipewire.nix
     ./user/nix-maid/sys/secrets.nix
     ./user/nix-maid/sys/services-manual.nix
-    ./user/nix-maid/sys/text.nix
     ./user/nix-maid/sys/user-services.nix
     ./user/nix-maid/sys/vdirsyncer.nix
     ./user/nix-maid/web/aria.nix

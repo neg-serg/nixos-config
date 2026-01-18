@@ -46,7 +46,6 @@
     ./sys/services-manual.nix
     ./sys/gpg.nix
     ./sys/enchant.nix
-    ./sys/text.nix
     ./sys/distros.nix
     ./sys/flatpak.nix
     ./sys/dev.nix
