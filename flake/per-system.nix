@@ -1278,7 +1278,6 @@ in
     pentest = pkgs.mkShell {
       nativeBuildInputs = [
         # Recon
-        pkgs.nmap # Free and open source utility for network discovery and se...
         pkgs.masscan # Fast scan of the Internet
         pkgs.rustscan # Faster Nmap Scanning with Rust
         pkgs.zmap # Fast single packet network scanner designed for Internet-...
