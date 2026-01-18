@@ -6,11 +6,9 @@
   pkgs,
   ...
 }:
-system:
 let
   inherit (nixpkgs) lib;
-  # pkgs is now passed from flake.nix
-  mkCustomPkgs = flakeLib.mkCustomPkgs;
+  mkCustomPkgs = flakeLib.mkCustomPkgs; # pkgs is now passed from flake.nix
   nixfmtPkg = nixpkgs.legacyPackages.${system}.nixfmt;
 
   # Pre-commit utility per system
