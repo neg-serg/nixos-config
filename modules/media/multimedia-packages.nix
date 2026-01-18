@@ -16,7 +16,6 @@ let
     pkgs.media-player-info # udev HW database for player IDs
     pkgs.mediainfo # inspect video/audio metadata quickly
     pkgs.mpvc # mpv TUI controller
-    pkgs.neg.mkvcleaner # custom Matroska cleanup tool
   ];
 in
 {

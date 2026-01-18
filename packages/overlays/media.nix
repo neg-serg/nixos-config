@@ -42,7 +42,6 @@ in
       webcamize = callPkg (packagesRoot + "/webcamize") { };
       rtcqs = callPkg (packagesRoot + "/rtcqs") { python3Packages = python313; };
       playscii = callPkg (packagesRoot + "/playscii") { python3Packages = python313; };
-      mkvcleaner = callPkg (packagesRoot + "/mkvcleaner") { };
       "blissify-rs" = blissify_rs;
       "laion-clap" = laion_clap_pkg;
       laion_clap = laion_clap_pkg;
