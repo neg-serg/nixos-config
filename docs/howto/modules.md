@@ -1684,7 +1684,6 @@ Whether to enable enable Google Chrome browser.
 
 Default browser used for XDG handlers, $BROWSER, and integrations.
 
-*Type:* one of “floorp”, “firefox”, “librewolf”, “nyxt”, “chrome”, “brave”, “vivaldi”, “edge”
 
 *Default:* `"floorp"`
 
@@ -1748,9 +1747,7 @@ Whether to enable enable LibreWolf browser.
 
 - [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
-## features.web.nyxt.enable
 
-Whether to enable enable Nyxt browser.
 
 *Type:* boolean
 

@@ -11,7 +11,6 @@ let
 
   browsers = import ./browsers-table.nix {
     inherit lib pkgs;
-    nyxt4 = null;
   }; # Updated import path
   browser =
     let
