@@ -33,7 +33,7 @@ let
     pkgs.scour # SVG minifier to shrink UI assets
 
     # -- Editors --
-    pkgs.gimp # full-featured raster editor
+
 
     # -- Metadata --
     pkgs.exiftool # swiss-army EXIF inspector used in scripts
