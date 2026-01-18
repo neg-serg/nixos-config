@@ -1,16 +1,5 @@
 inputs: _final: prev:
-let
-  packagesRoot = inputs.self + "/packages";
-  callPkg =
-    path: extraArgs:
-    let
-      f = import path;
-      wantsInputs = builtins.hasAttr "inputs" (builtins.functionArgs f);
-      autoArgs = if wantsInputs then { inherit inputs; } else { };
-    in
-    prev.callPackage path (autoArgs // extraArgs);
-  python313 = prev.python313Packages;
-in
+
 {
   ffmpeg = prev.ffmpeg.override {
     withSdl2 = false;
@@ -30,7 +19,7 @@ in
   });
   neg = {
     # Media-related tools
-    rtcqs = callPkg (packagesRoot + "/rtcqs") { python3Packages = python313; };
+    rtcqs = inputs.rtcqs.packages.${prev.stdenv.hostPlatform.system}.default;
     # Ensure mpv is built with VapourSynth support
     mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
       buildInputs = (old.buildInputs or [ ]) ++ [ prev.vapoursynth ];
