@@ -3,7 +3,6 @@
   adguardian-term = pkgs.adguardian;
   richcolors = pkgs.neg.richcolors;
   hxtools = pkgs.hxtools; # Collection of small tools over the years by j.eng
-  transmission-exporter = pkgs.neg.transmission_exporter;
   ls-iommu = pkgs.neg.ls_iommu;
   skbtrace = pkgs.neg.skbtrace;
 
