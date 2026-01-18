@@ -5,7 +5,7 @@
 
   pyprland_fixed = pkgs.pyprland_fixed;
   pyprland = pkgs.pyprland; # Hyperland plugin system
-  richcolors = pkgs.neg.richcolors;
+
   rmpc = pkgs.rmpc; # TUI music player client for MPD with album art support vi...
   rtcqs = pkgs.neg.rtcqs;
 
