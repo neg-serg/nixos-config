@@ -43,7 +43,7 @@
     ./features/misc.nix
     ./features/services.nix
     ./features/web.nix
-    ./finance/tws.nix
+
     ./flake-preflight.nix
     ./flatpak/default.nix
     ./flatpak/pkgs.nix # Nix package manager

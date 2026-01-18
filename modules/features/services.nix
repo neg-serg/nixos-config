@@ -17,7 +17,7 @@ in
     };
 
     finance = {
-      tws.enable = mkBool "enable Trader Workstation (IBKR) desktop client" false;
+
     };
 
     net = {

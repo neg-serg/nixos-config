@@ -29,7 +29,6 @@ in
     "pretty-printer" = pretty_printer;
 
     # Trader Workstation (IBKR) packaged from upstream installer
-    tws = callPkg (packagesRoot + "/tws") { };
 
     # duf fork with --style plain, --no-header, --no-bars flags
     duf = callPkg (packagesRoot + "/duf") { };
