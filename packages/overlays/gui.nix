@@ -27,7 +27,6 @@ in
   });
   # Nyxt 4 pre-release binary (Electron/Blink backend). Upstream provides a single self-contained
   # ELF binary for Linux. Package it as a convenience while no QtWebEngine build is available.
-  nyxt4-bin = prev.callPackage ../nyxt/default.nix { };
   "nyarch-assistant" = nyarchAssistantPkg;
   "_nyarch-assistant" = nyarchAssistantPkg;
   flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") { };

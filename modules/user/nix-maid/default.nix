@@ -22,7 +22,6 @@
     ./apps/mpv
     ./apps/gui-apps.nix
     ./apps/vicinae.nix
-    ./apps/nyxt.nix
     ./apps/emacs.nix
     ./apps/transmission.nix
 
