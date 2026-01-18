@@ -31,7 +31,6 @@ let
 
     pkgs.neo-cowsay # cowsay and cowthink reboot for GNU/Linux
     pkgs.neo # matrix legacy digital rain solution
-    pkgs.neg.cxxmatrix # colorful matrix rain (C++ impl)
     pkgs.nms # "No More Secrets" decrypt effect
     pkgs.taoup # The Tao of Unix Programming
     pkgs.toilet # text banners
