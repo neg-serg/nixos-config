@@ -33,11 +33,6 @@ in
     # -- Analysis / Traffic --
     pkgs.bandwhich # Display network utilization per process in real-time
     pkgs.iftop # Display bandwidth usage on an interface
-    # pkgs.tcpdump - Refactored to devShells.pentest
-    # pkgs.termshark - Refactored to devShells.pentest
-    # pkgs.trippy - Refactored to devShells.pentest
-    # pkgs.tshark - Refactored to devShells.pentest
-    # pkgs.wireshark - Refactored to devShells.pentest
 
     # -- DNS --
     pkgs.dnsutils # dns command-line tools (dig, nslookup)
@@ -56,14 +51,11 @@ in
     pkgs.xh # Friendly and fast tool to send HTTP requests
 
     # -- IP / Routing --
-    # pkgs.fping - Refactored to devShells.pentest
+    pkgs.fping # Fast ping
     pkgs.geoip # IP-to-location lookup utility
     pkgs.ipcalc # IPv4/IPv6 address calculator
-    # pkgs.tcptraceroute - Refactored to devShells.pentest
+    pkgs.tcptraceroute # Traceroute implementation using TCP packets
     pkgs.traceroute # Print the route packets trace to network host
-
-    # -- Network Scanning --
-    # Refactored to devShells.pentest: masscan, netdiscover, netscanner, nmap, rustscan, zmap
 
     # -- Remote / Transfer --
     pkgs.socat # Multipurpose relay (bidirectional data transfer)
@@ -78,13 +70,11 @@ in
   ]
   ++ (lib.optionals wifiEnabled [
     # -- WiFi --
-    # Refactored to devShells.pentest: aircrack-ng, hcxdumptool, impala
     pkgs.iwd # install iwd without enabling the service
   ]);
 
   # Expose iwd's systemd unit so it can be started manually when required
   systemd.packages = lib.optionals wifiEnabled [ pkgs.iwd ]; # Wireless daemon for Linux
-
   # Provide D-Bus service definition for manual activation of iwd
   services.dbus.packages = lib.optionals wifiEnabled [ pkgs.iwd ]; # Wireless daemon for Linux
 }
