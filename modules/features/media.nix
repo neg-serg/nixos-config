@@ -45,6 +45,6 @@ in
       spicetify.enable = mkBool "enable Spicetify (Spotify customization)" false;
     };
     photo.enable = mkBool "enable photography workflow (darktable, rawtherapee, testdisk)" false;
-    webcam.enable = mkBool "enable virtual webcam support (webcamize, v4l2loopback)" false;
+    webcam.enable = mkBool "enable virtual webcam support (v4l2loopback)" false;
   };
 }
