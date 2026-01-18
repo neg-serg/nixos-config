@@ -210,7 +210,6 @@
     ./user/nix-maid/apps/mpv/profiles.nix
     ./user/nix-maid/apps/mpv/scripts.nix
     ./user/nix-maid/apps/mpv/shaders.nix
-    ./user/nix-maid/apps/nyxt.nix
     ./user/nix-maid/apps/transmission.nix
     ./user/nix-maid/apps/vicinae.nix
     ./user/nix-maid/cli/asciinema.nix
@@ -289,6 +288,5 @@
     ./user/wrappers/tewi.nix
     ./user/xdg.nix
     ./web/default.nix
-    ./web/nyxt.nix
   ];
 }

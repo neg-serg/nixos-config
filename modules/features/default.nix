@@ -21,7 +21,6 @@ let
       floorp.enable = true;
       firefox.enable = false;
       librewolf.enable = false;
-      nyxt.enable = true;
 
       prefs.fastfox.enable = true;
     };
@@ -111,7 +110,6 @@ in
           floorp.enable = mkDefault true;
           firefox.enable = mkDefault false;
           librewolf.enable = mkDefault false;
-          nyxt.enable = mkDefault true;
 
           prefs.fastfox.enable = mkDefault true;
         };
@@ -135,7 +133,6 @@ in
           floorp.enable = mkDefault false;
           firefox.enable = mkDefault false;
           librewolf.enable = mkDefault false;
-          nyxt.enable = mkDefault false;
 
           prefs.fastfox.enable = mkDefault false;
         };
@@ -154,7 +151,6 @@ in
         floorp.enable = mkForce false;
         firefox.enable = mkForce false;
         librewolf.enable = mkForce false;
-        nyxt.enable = mkForce false;
 
         prefs.fastfox.enable = mkForce false;
       };
@@ -250,7 +246,6 @@ in
 
               && !cfg.web.firefox.enable
               && !cfg.web.librewolf.enable
-              && !cfg.web.nyxt.enable
             );
           message = "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)";
         }

@@ -11,7 +11,6 @@ in
         "floorp"
         "firefox"
         "librewolf"
-        "nyxt"
 
         "chrome"
         "brave"
@@ -29,7 +28,6 @@ in
     };
     firefox.enable = mkBool "enable Firefox browser" false;
     librewolf.enable = mkBool "enable LibreWolf browser" false;
-    nyxt.enable = mkBool "enable Nyxt browser" true;
 
     chrome.enable = mkBool "enable Google Chrome browser" true;
     brave.enable = mkBool "enable Brave browser" false;
