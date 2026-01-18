@@ -6,6 +6,7 @@
   pkgs,
   ...
 }:
+system:
 let
   inherit (nixpkgs) lib;
   mkCustomPkgs = flakeLib.mkCustomPkgs; # pkgs is now passed from flake.nix

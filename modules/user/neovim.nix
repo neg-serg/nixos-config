@@ -26,8 +26,8 @@ lib.mkIf devEnabled (
           customRC = "";
           packages.myVimPackage = {
             start = [
-              pkgs.vimPlugins.lazy-nvim
-              pkgs.fsread-nvim
+              pkgs.vimPlugins.lazy-nvim # plugin manager
+              pkgs.fsread-nvim # custom plugin for file reading
               (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
                 p.bash # Bash shell script parser
                 p.caddy # Caddy web server config parser
@@ -101,8 +101,6 @@ lib.mkIf devEnabled (
         # Environment tooling
         pkgs.ripgrep # project-wide search backend
         pkgs.fd # fast file finder used by pickers
-        pkgs.tree-sitter # parser generator for treesitter
-        pkgs.gcc # Needed for treesitter parsers compilation
 
         # -- LSPs & Tooling --
         pkgs.bash-language-server # Bash LSP for shell scripts
@@ -111,7 +109,6 @@ lib.mkIf devEnabled (
         pkgs.pylyzer # static type analyzer for Python
         pkgs.pyright # Microsoft Pyright LSP
         pkgs.ruff # Python formatter/linter CLI + LSP
-        pkgs.clang-tools # clangd/clang-format for C/C++
         pkgs.lua-language-server # Lua LSP
         pkgs.hyprls # Hyprland config LSP
         pkgs.yaml-language-server # YAML LSP
