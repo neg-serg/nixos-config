@@ -11,7 +11,7 @@
       pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
       pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
       pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
-      pkgs.wl-ocr # Wayland OCR tool
+
       pkgs.pyprland # Python plugin system for Hyprland
       # hyprmusic script
       (pkgs.writeScriptBin "hyprmusic" ''
