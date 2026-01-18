@@ -15,13 +15,8 @@ in
 
   fsread-nvim = final.vimUtils.buildVimPlugin {
     pname = "fsread-nvim";
-    version = "unstable";
-    src = final.fetchFromGitHub {
-      owner = "neg-serg";
-      repo = "fsread.nvim";
-      rev = "main";
-      hash = "sha256-iwMioDga7dCori2FeBo3lYG27ji8pLnM2VZu9iJn/8w=";
-    };
+    version = "flake";
+    src = inputs.fsread-nvim;
   };
 
   # Python with LTO optimizations
