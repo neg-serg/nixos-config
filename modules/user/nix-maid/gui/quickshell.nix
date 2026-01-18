@@ -31,7 +31,6 @@ let
   quickshellWrapped = mkQuickshellWrapper {
     inherit qsPkg;
     extraPath = [
-      # pkgs.fd # fast file finder (installed via cli/search.nix)
       pkgs.coreutils # basic file, shell and text manipulation utilities
       pkgs.bash # GNU Bourne-Again Shell
       pkgs.socat # multipurpose relay (SOcket CAT)

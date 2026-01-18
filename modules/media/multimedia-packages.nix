@@ -12,7 +12,6 @@ let
   packages = [
     pkgs.ffmpeg # basic ffmpeg for playback
     pkgs.ffmpegthumbnailer # generate thumbnails for videos (runners/rofi)
-    # pkgs.gmic # moved to devShells.media
     pkgs.imagemagick # fallback convert/mogrify for pipelines
     pkgs.media-player-info # udev HW database for player IDs
     pkgs.mediainfo # inspect video/audio metadata quickly

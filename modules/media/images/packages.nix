@@ -42,13 +42,10 @@ let
 
     # -- Misc --
     pkgs.graphviz # render contact sheets / graph exports via dot
-    # pkgs.beatprints # generate Spotify posters (disabled: upstream pylette tests fail)
 
     # -- QR / Barcode --
     pkgs.qrencode # generate QR codes for wallpaper/text overlays
     pkgs.zbar # CLI barcode/QR scanner for verification
-
-    # -- Recovery --
 
     # -- Viewer --
     pkgs.swayimg # primary image viewer with IPC hooks
