@@ -216,6 +216,7 @@ let
     neopyter = "nix run github:neg-serg/neopyter --";
     blissify-rs = "nix run github:neg-serg/blissify-rs --";
     ls-iommu = "nix run github:neg-serg/ls-iommu --";
+    rtcqs = "nix run github:neg-serg/rtcqs --";
 
     # Misc
     # Run
