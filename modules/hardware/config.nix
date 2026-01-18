@@ -76,11 +76,11 @@ in
       hardware = {
         i2c.enable = true;
         cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
-        
+
         enableAllFirmware = false; # Disable installing ALL firmware to save space
         enableRedistributableFirmware = true; # Install standard distributable firmware
         firmwareCompression = "xz"; # Compress firmware (xz) to save space (requires kernel support)
-        
+
         usb-modeswitch.enable = true; # mode switching tool for controlling 'multi-mode' USB devices.
       };
 

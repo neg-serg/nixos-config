@@ -1540,8 +1540,6 @@ in
       packages = [ pkgs.ranger ];
     };
 
-
-
     "wlx-overlay-s" = pkgs.mkShell {
       packages = [ pkgs.wlx-overlay-s ];
     };
@@ -1588,16 +1586,6 @@ in
 
     plow = pkgs.mkShell {
       packages = [ pkgs.plow ]; # HTTP benchmarking tool
-    };
-
-    elf = pkgs.mkShell {
-      packages = [
-        pkgs.chrpath # adjust rpath for ELF
-        pkgs.debugedit # debug info rewrite
-        pkgs.dump_syms # parse debugging information
-        pkgs.elfutils # utilities to handle ELF objects
-        pkgs.patchelf # fix up binaries in Nix store
-      ];
     };
 
     "yandex-disk" = pkgs.mkShell {

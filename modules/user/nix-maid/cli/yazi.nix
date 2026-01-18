@@ -18,8 +18,6 @@ let
     default_dir = $HOME
   '';
 
-
-
   settings = {
     mgr = {
       show_hidden = true;
