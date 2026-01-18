@@ -1442,12 +1442,6 @@ in
       packages = [ pkgs.mesa-demos ];
     };
 
-    "music-clap" = pkgs.mkShell {
-      nativeBuildInputs = [
-        pkgs.neg.music_clap
-      ];
-    };
-
     virt = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.guestfs-tools # tools for accessing and modifying virtual machine disk images
