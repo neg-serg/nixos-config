@@ -12,5 +12,4 @@
   subsonic-tui = pkgs.subsonic-tui;
   surfingkeys-pkg = pkgs.surfingkeys-pkg;
   two_percent = pkgs.neg.two_percent;
-  webcamize = pkgs.neg.webcamize;
 }

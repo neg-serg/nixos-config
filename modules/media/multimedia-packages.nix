@@ -24,7 +24,7 @@ in
       environment.systemPackages = lib.mkAfter packages;
     })
     (lib.mkIf (config.features.media.webcam.enable or false) {
-      environment.systemPackages = [ pkgs.neg.webcamize ];
+
       boot.extraModulePackages = [ config.boot.kernelPackages.v4l2loopback ];
       boot.kernelModules = [ "v4l2loopback" ];
     })
