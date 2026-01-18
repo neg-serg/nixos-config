@@ -230,7 +230,6 @@
     ./user/nix-maid/cli/utils.nix
     ./user/nix-maid/cli/yazi.nix
     ./user/nix-maid/default.nix
-    ./user/nix-maid/fun/fun-launchers.nix
     ./user/nix-maid/fun/nethack.nix
     ./user/nix-maid/fun/oss-games.nix
     ./user/nix-maid/fun/steam.nix
