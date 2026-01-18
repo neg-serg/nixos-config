@@ -1211,7 +1211,7 @@ in
             # Tools
             dbus-python
             fontforge
-            neopyter
+
             pynvim
           ];
         pythonEnv = pkgs.python3-lto.withPackages myPythonPackages;
