@@ -12,6 +12,14 @@ let
   cfg = config.features.cli.yazi;
   tomlFormat = pkgs.formats.toml { };
 
+  termfilechooserConfig = ''
+    [filechooser]
+    cmd = kitty yazi --chooser-file
+    default_dir = $HOME
+  '';
+
+
+
   settings = {
     mgr = {
       show_hidden = true;
@@ -263,6 +271,8 @@ lib.mkIf (cfg.enable or false) (
       ".config/yazi/yazi.toml".source = tomlFormat.generate "yazi.toml" settings;
       ".config/yazi/theme.toml".source = tomlFormat.generate "theme.toml" theme;
       ".config/yazi/keymap.toml".source = tomlFormat.generate "keymap.toml" keymap;
+      # Termfilechooser config for yazi-based file picker
+      ".config/xdg-desktop-portal-termfilechooser/config".text = termfilechooserConfig;
     })
   ]
 )

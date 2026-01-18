@@ -29,12 +29,12 @@ in
         "hyprland"
         "gtk"
       ];
-      common."org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+      common."org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
       hyprland.default = [
         "hyprland"
         "gtk"
       ];
-      hyprland."org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+      hyprland."org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
     };
   };
 
