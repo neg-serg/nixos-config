@@ -15,7 +15,15 @@ in
     # eBPF/BCC tools
     bpf_host_latency = callPkg (packagesRoot + "/bpf-host-latency") { };
     "bpf-host-latency" = bpf_host_latency;
-    skbtrace = callPkg (packagesRoot + "/skbtrace") { };
+    skbtrace = prev.buildGoModule {
+      pname = "skbtrace";
+      version = "flake";
+      src = inputs.skbtrace;
+      vendorHash = "sha256-6ZtoZhKtNZ9iWCTYYZsmF64T55ovb12Id9EPtuChyEw=";
+      subPackages = [ "cmd" ];
+      propagatedBuildInputs = [ prev.bpftrace ];
+      meta.mainProgram = "skbtrace";
+    };
 
     # Surfingkeys configuration
     surfingkeys_conf = callPkg (packagesRoot + "/surfingkeys-conf") { };
