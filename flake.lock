@@ -1001,6 +1001,26 @@
         "type": "github"
       }
     },
+    "nyarch-assistant": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1768764262,
+        "narHash": "sha256-3as7BNkxueuFInNWqhMtEu3lDERACLumRlzylehaSas=",
+        "owner": "neg-serg",
+        "repo": "nyarch-assistant",
+        "rev": "13ab1e43b62c76e1003dfa6e11d9696fd503ae82",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "nyarch-assistant",
+        "type": "github"
+      }
+    },
     "nyx": {
       "inputs": {
         "flake-schemas": "flake-schemas",
@@ -1203,6 +1223,7 @@
         "nix-maid": "nix-maid",
         "nixpkgs": "nixpkgs_2",
         "nur": "nur",
+        "nyarch-assistant": "nyarch-assistant",
         "nyx": "nyx",
         "pre-commit-hooks": "pre-commit-hooks_2",
         "pyprland": "pyprland",

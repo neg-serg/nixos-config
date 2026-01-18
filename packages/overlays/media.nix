@@ -15,12 +15,12 @@ in
   ffmpeg = prev.ffmpeg.override {
     withSdl2 = false;
     buildFfplay = false;
-    withOpenmpt = false;
+    withOpenmpt = true;
   };
   ffmpeg-full = prev.ffmpeg-full.override {
     withSdl2 = false;
     buildFfplay = false;
-    withOpenmpt = false;
+    withOpenmpt = true;
   };
 
   swayimg = prev.swayimg.overrideAttrs (old: {
@@ -30,29 +30,11 @@ in
   });
   neg = {
     # Media-related tools
-
     rtcqs = callPkg (packagesRoot + "/rtcqs") { python3Packages = python313; };
-
     # Ensure mpv is built with VapourSynth support
     mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
       buildInputs = (old.buildInputs or [ ]) ++ [ prev.vapoursynth ];
       mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Dvapoursynth=enabled" ];
     });
   };
-  pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
-    (_python-final: python-prev: {
-      imageio = python-prev.imageio.overridePythonAttrs (_old: {
-        doCheck = false;
-      });
-
-      pylette = python-prev.pylette.overridePythonAttrs (_old: {
-        doCheck = false;
-        # Force disable check phases
-        checkPhase = "true";
-        pytestCheckPhase = "true";
-        installCheckPhase = "true";
-        catchConflicts = false;
-      });
-    })
-  ];
 }
