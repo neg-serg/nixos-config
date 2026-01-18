@@ -26,7 +26,6 @@
     sops-nix = { url = "github:Mic92/sops-nix"; inputs.nixpkgs.follows = "nixpkgs"; };
     tailray = { url = "github:NotAShelf/tailray"; inputs.nixpkgs.follows = "nixpkgs"; };
     winapps = { url = "github:winapps-org/winapps"; inputs.nixpkgs.follows = "nixpkgs"; };
-    fsread-nvim = { url = "github:neg-serg/fsread.nvim"; flake = false; };
     wrapper-manager.url = "github:viperML/wrapper-manager";
   };
 
