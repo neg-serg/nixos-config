@@ -13,7 +13,6 @@ in
 // {
   neg = (functions.neg or { }) // (tools.neg or { }) // (media.neg or { }) // (dev.neg or { });
 
-  wl-ocr = final.callPackage ./wl-ocr { };
   fsread-nvim = final.vimUtils.buildVimPlugin {
     pname = "fsread-nvim";
     version = "flake";
