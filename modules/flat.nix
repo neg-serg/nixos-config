@@ -223,7 +223,6 @@
     ./user/nix-maid/cli/search.nix
     ./user/nix-maid/cli/shells.nix
     ./user/nix-maid/cli/television.nix
-    ./user/nix-maid/cli/tewi.nix
     ./user/nix-maid/cli/tig.nix
     ./user/nix-maid/cli/utils.nix
     ./user/nix-maid/cli/yazi.nix
@@ -285,7 +284,6 @@
     ./user/session/utils.nix
     ./user/theme-packages.nix
     ./user/wrappers/default.nix
-    ./user/wrappers/tewi.nix
     ./user/xdg.nix
     ./web/default.nix
   ];

@@ -31,7 +31,6 @@
     ./cli/shells.nix
     ./cli/broot.nix
     ./cli/tig.nix
-    ./cli/tewi.nix
     # ./cli/yazi.nix is imported via ./cli
     ./cli/television.nix
     ./cli/envs.nix
