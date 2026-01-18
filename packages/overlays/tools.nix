@@ -12,10 +12,6 @@ let
 in
 {
   neg = rec {
-    # eBPF/BCC tools
-    bpf_host_latency = callPkg (packagesRoot + "/bpf-host-latency") { };
-    "bpf-host-latency" = bpf_host_latency;
-
     # Surfingkeys configuration
     surfingkeys_conf = callPkg (packagesRoot + "/surfingkeys-conf") { };
     "surfingkeys-conf" = surfingkeys_conf;
