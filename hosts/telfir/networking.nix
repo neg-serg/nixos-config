@@ -45,5 +45,6 @@ _: {
         };
       };
     };
+    wait-online.anyInterface = true;
   };
 }
