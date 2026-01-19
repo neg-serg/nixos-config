@@ -92,7 +92,10 @@ handler() {
 }
 
 dac_name='RME ADI-2/4 PRO SE'
-set -- -auto-select -markup-rows -b -lines 1 -theme neg -dmenu -p '❯>'
+# Count menu items to calculate columns
+menu_count=$(printf '%s\n' "$main_menu" | grep -c .)
+# Use 4 columns with 2 lines (8 items visible at once)
+set -- -auto-select -markup-rows -b -columns 4 -lines 2 -theme menu-columns -dmenu -p '❯>'
 if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
   sed -n '2,2p' "$0" | sed 's/^# \{0,1\}//'; exit 0
 fi
