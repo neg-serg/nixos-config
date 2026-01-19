@@ -60,7 +60,7 @@ valgrind \
     --tool=callgrind \
     --callgrind-out-file="$OUT_DIR/callgrind.out" \
     --trace-children=yes \
-    nix-instantiate --flake "$TARGET_ATTR" > "$OUT_DIR/eval_stdout.log" 2> "$OUT_DIR/eval_stderr.log"
+    nix build "$TARGET_ATTR" --dry-run > "$OUT_DIR/eval_stdout.log" 2> "$OUT_DIR/eval_stderr.log"
 
 echo "  > Evaluation profile saved to: $OUT_DIR/callgrind.out"
 echo "  > You can analyze this file using 'kcachegrind' or 'qcachegrind'."

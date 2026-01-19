@@ -13,3 +13,4 @@ docs/howto/options*.md
 .direnv/
 .pre-commit-config.yaml
 __pycache__/
+benchmarks/
