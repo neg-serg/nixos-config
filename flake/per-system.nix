@@ -1036,6 +1036,7 @@ in
     default = pkgs.mkShell {
       inherit (preCommit) shellHook;
       packages = [
+        pkgs.valgrind # Tool for debugging and profiling
         nixfmtPkg # nix formatter
         pkgs.deadnix # unused code detector
         pkgs.statix # nix antipattern linter
