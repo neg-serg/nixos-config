@@ -7,8 +7,6 @@
 }:
 let
   n = neg impurity;
-  # Rofi config source path
-  rofiConfigSrc = ../../../../packages/rofi-config;
 
   # Rofi with plugins (file-browser-extended)
   rofiWithPlugins = pkgs.rofi.override {
@@ -19,36 +17,20 @@ let
       pkgs.rofi-calc # adds calculator capability to rofi
     ];
   };
-
-  # Rofi wrapper script
-  rofiWrapperScript = builtins.readFile ../../../../files/rofi/rofi-wrapper.sh;
-  rofiWrapper = pkgs.writeShellApplication {
-    name = "rofi-wrapper";
-    runtimeInputs = [
-      pkgs.gawk # awk for simple text processing
-      pkgs.gnused # sed for stream editing
-      pkgs.jq # JSON processor
-      rofiWithPlugins # Rofi launcher with plugins
-    ];
-    text =
-      builtins.replaceStrings
-        [ "@ROFI_BIN@" "@JQ_BIN@" ]
-        [ "${rofiWithPlugins}/bin/rofi" "${pkgs.jq}/bin/jq" ] # Lightweight and flexible command-line JSON processor
-        rofiWrapperScript;
-  };
-
-  # Rofi local bin wrapper
-  rofiLocalBin = pkgs.writeShellScriptBin "rofi" ''
-    #!/usr/bin/env bash
-    set -euo pipefail
-    exec ${rofiWrapper}/bin/rofi-wrapper "$@"
-  '';
 in
 {
   config = lib.mkMerge [
     {
-      # Packages
-      neg.rofi.package = rofiWithPlugins;
+      # Rofi Wrapper using wrapper-manager
+      wrappers.rofi = {
+        basePackage = rofiWithPlugins;
+        pathAdd = [
+          pkgs.gawk # awk for text processing
+          pkgs.gnused # sed for stream editing
+          pkgs.jq # JSON processor
+        ];
+        env.XDG_DATA_DIRS.append = "${pkgs.neg.rofi-config}/share";
+      };
 
       # Systemd user services
       systemd.user.services = {
@@ -66,20 +48,14 @@ in
 
       # Packages
       environment.systemPackages = [
-        rofiWithPlugins # Rofi launcher with plugins (Wayland/X11)
+        # rofiWithPlugins is wrapped by wrappers.rofi
+        pkgs.neg.rofi-config # Custom scripts (launcher, powermenu)
         pkgs.swayosd # OSD for volume/brightness on Wayland
-        rofiLocalBin # Rofi wrapper script (shadows standard rofi bin)
         pkgs.wallust # Color palette generator
         pkgs.wlogout # Logout menu
       ];
     }
     (n.mkHomeFiles {
-      # Rofi config directory
-      ".config/rofi".source = rofiConfigSrc;
-
-      # Rofi themes in XDG data dir
-      ".local/share/rofi/themes".source = rofiConfigSrc;
-
       # Handlr Config
       ".config/handlr/handlr.toml".text = ''
         enable_selector = false
