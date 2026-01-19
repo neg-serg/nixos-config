@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
-  imports = [ ./pkgs.nix ]; # Nix package manager
   # run appimages directly (see https://nixos.wiki/wiki/Appimage)
+  # appimage-run available via `nix shell nixpkgs#appimage-run`
   boot.binfmt.registrations.appimage = {
     wrapInterpreterInShell = false;
     interpreter = "${pkgs.appimage-run}/bin/appimage-run";
