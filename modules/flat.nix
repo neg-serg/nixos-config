@@ -26,6 +26,7 @@
     ./dev/gdb/default.nix
     ./dev/git/pkgs.nix # Nix package manager
     ./dev/openxr/default.nix
+    ./dev/opencode.nix
     ./dev/pkgs/default.nix
     ./dev/python/pkgs.nix # Nix package manager
     ./dev/unreal/default.nix
