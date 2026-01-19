@@ -19,6 +19,7 @@ in
   environment.shellAliases = {
     sk = "nix run github:neg-serg/two_percent --";
     newsraft = "nix run github:neg-serg/newsraft --";
+    tealdeer = "nix run github:neg-serg/tealdeer --";
   };
 
   environment.systemPackages = [
@@ -51,7 +52,6 @@ in
     pkgs.ncdu # interactive du
     pkgs.neg.duf # better df (fork with plain style support)
     pkgs.pwgen # password generator
-    pkgs.tealdeer # tldr replacement written in Rust
   ]
   ++ lib.optional (hishtoryPkg != null) hishtoryPkg; # sync shell history w/ encryption, better than zsh-histdb
 }
