@@ -1,6 +1,8 @@
 {
+  lib,
   stdenv,
   makeWrapper,
+  rofi,
 }:
 stdenv.mkDerivation rec {
   pname = "rofi-config";
@@ -41,6 +43,12 @@ stdenv.mkDerivation rec {
     substituteInPlace $out/bin/rofi-powermenu \
       --replace '$HOME/.config/rofi' "$out/share/rofi" \
       --replace 'powermenu/type-6' '_rofi/powermenu-type-6'
+
+    wrapProgram $out/bin/rofi-launcher \
+      --prefix PATH : ${lib.makeBinPath [ rofi ]}
+    
+    wrapProgram $out/bin/rofi-powermenu \
+      --prefix PATH : ${lib.makeBinPath [ rofi ]}
 
     runHook postInstall
   '';
