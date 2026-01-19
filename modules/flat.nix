@@ -201,72 +201,20 @@
     ./user/locale.nix
     ./user/locate.nix
     ./user/mail.nix
-    ./user/nix-maid/apps/emacs.nix
-    ./user/nix-maid/apps/gui-apps.nix
-    ./user/nix-maid/apps/mpv/config.nix
-    ./user/nix-maid/apps/mpv/default.nix
-    ./user/nix-maid/apps/mpv/input.nix
-    ./user/nix-maid/apps/mpv/package.nix
-    ./user/nix-maid/apps/mpv/profiles.nix
-    ./user/nix-maid/apps/mpv/scripts.nix
-    ./user/nix-maid/apps/mpv/shaders.nix
-    ./user/nix-maid/apps/transmission.nix
-    ./user/nix-maid/apps/vicinae.nix
-    ./user/nix-maid/cli/asciinema.nix
-    ./user/nix-maid/cli/broot.nix
-    ./user/nix-maid/cli/default.nix
-    ./user/nix-maid/cli/emulators.nix
-    ./user/nix-maid/cli/envs.nix
-    ./user/nix-maid/cli/git.nix
-    ./user/nix-maid/cli/local-bin.nix
-    ./user/nix-maid/cli/monitoring.nix
-    ./user/nix-maid/cli/search.nix
-    ./user/nix-maid/cli/shells.nix
-    ./user/nix-maid/cli/television.nix
-    ./user/nix-maid/cli/tig.nix
-    ./user/nix-maid/cli/utils.nix
-    ./user/nix-maid/cli/yazi.nix
-    ./user/nix-maid/default.nix
-    ./user/nix-maid/fun/nethack.nix
-    ./user/nix-maid/fun/oss-games.nix
-    ./user/nix-maid/fun/steam.nix
-    ./user/nix-maid/gui/dunst.nix
-    ./user/nix-maid/gui/qt.nix
-    ./user/nix-maid/gui/quickshell.nix
-    ./user/nix-maid/gui/theme.nix
-    ./user/nix-maid/gui/walker.nix
-    ./user/nix-maid/gui/xdg.nix
-    ./user/nix-maid/hyprland/main.nix
-    ./user/nix-maid/sys/autoclick.nix
-    ./user/nix-maid/sys/dev.nix
-    ./user/nix-maid/sys/distros.nix
-    ./user/nix-maid/sys/enchant.nix
-    ./user/nix-maid/sys/flatpak.nix
-    ./user/nix-maid/sys/gpg.nix
-    ./user/nix-maid/sys/khal.nix
-    ./user/nix-maid/sys/mail.nix
-    ./user/nix-maid/sys/media.nix
-    ./user/nix-maid/sys/misc.nix
-    ./user/nix-maid/sys/nekoray.nix
-    ./user/nix-maid/sys/pipewire.nix
-    ./user/nix-maid/sys/secrets.nix
-    ./user/nix-maid/sys/services-manual.nix
-    ./user/nix-maid/sys/user-services.nix
-    ./user/nix-maid/sys/vdirsyncer.nix
-    ./user/nix-maid/web/aria.nix
-    ./user/nix-maid/web/brave.nix
-    ./user/nix-maid/web/browsing.nix
-    ./user/nix-maid/web/defaults.nix
-    ./user/nix-maid/web/edge.nix
-    ./user/nix-maid/web/firefox.nix
-    ./user/nix-maid/web/floorp.nix
-    ./user/nix-maid/web/librewolf.nix
-    ./user/nix-maid/web/misc.nix
-    ./user/nix-maid/web/surfingkeys-server.nix
-    ./user/nix-maid/web/tridactyl.nix
-    ./user/nix-maid/web/vivaldi.nix
+    ./user/nix-maid/apps
 
-    ./user/nix-maid/web/yt-dlp.nix
+    ./user/nix-maid/cli
+
+    ./user/nix-maid/default.nix
+    ./user/nix-maid/fun
+
+    ./user/nix-maid/gui
+
+    ./user/nix-maid/hyprland/main.nix
+    ./user/nix-maid/sys
+
+    ./user/nix-maid/web
+
     ./user/neovim.nix
     ./user/psd/default.nix
     ./user/session/chat.nix
