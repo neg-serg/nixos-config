@@ -11,7 +11,14 @@ in
 # provide a combined pkgs.neg namespace aggregating their custom packages and helpers.
 (functions // tools // media // dev // gui)
 // {
-  neg = (functions.neg or { }) // (tools.neg or { }) // (media.neg or { }) // (dev.neg or { });
+  neg =
+    (functions.neg or { })
+    // (tools.neg or { })
+    // (media.neg or { })
+    // (dev.neg or { })
+    // {
+      rofi-config = final.callPackage ./rofi-config { };
+    };
 
   fsread-nvim = final.vimUtils.buildVimPlugin {
     pname = "fsread-nvim";
