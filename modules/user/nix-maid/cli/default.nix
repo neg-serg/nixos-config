@@ -1,10 +1,19 @@
 { ... }:
 {
   imports = [
+    ./asciinema.nix
+    ./broot.nix
+    ./emulators.nix
+    ./envs.nix
+    ./git.nix
+    ./local-bin.nix
     ./monitoring.nix
-    ./yazi.nix
     ./search.nix
+    ./shells.nix
+    ./television.nix
+    ./tig.nix
     ./utils.nix
+    ./yazi.nix
   ];
 
   environment.systemPackages = [

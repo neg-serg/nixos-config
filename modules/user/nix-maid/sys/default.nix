@@ -1,0 +1,20 @@
+{
+  imports = [
+    ./autoclick.nix
+    ./dev.nix
+    ./distros.nix
+    ./enchant.nix
+    ./flatpak.nix
+    ./gpg.nix
+    ./khal.nix
+    ./mail.nix
+    ./media.nix
+    ./misc.nix
+    ./nekoray.nix
+    ./pipewire.nix
+    ./secrets.nix
+    ./services-manual.nix
+    ./user-services.nix
+    ./vdirsyncer.nix
+  ];
+}
