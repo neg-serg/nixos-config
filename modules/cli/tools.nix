@@ -18,6 +18,7 @@ in
 {
   environment.shellAliases = {
     sk = "nix run github:neg-serg/two_percent --";
+    newsraft = "nix run github:neg-serg/newsraft --";
   };
 
   environment.systemPackages = [
@@ -49,7 +50,6 @@ in
     pkgs.moreutils # assorted unix utils (sponge, etc.)
     pkgs.ncdu # interactive du
     pkgs.neg.duf # better df (fork with plain style support)
-    pkgs.newsraft # terminal RSS/Atom feed reader
     pkgs.pwgen # password generator
     pkgs.tealdeer # tldr replacement written in Rust
   ]
