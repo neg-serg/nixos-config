@@ -2,7 +2,6 @@
 {
   imports = [
     ./appimage/default.nix
-    ./appimage/pkgs.nix # Nix package manager
     ./cli/archives/pkgs.nix # Nix package manager
     ./cli/default.nix
     ./cli/dev.nix
