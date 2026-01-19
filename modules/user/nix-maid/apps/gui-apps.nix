@@ -21,17 +21,6 @@ in
 {
   config = lib.mkMerge [
     {
-      # Rofi Wrapper using wrapper-manager
-      wrappers.rofi = {
-        basePackage = rofiWithPlugins;
-        pathAdd = [
-          pkgs.gawk # awk for text processing
-          pkgs.gnused # sed for stream editing
-          pkgs.jq # JSON processor
-        ];
-        env.XDG_DATA_DIRS.append = "${pkgs.neg.rofi-config}/share";
-      };
-
       # Systemd user services
       systemd.user.services = {
         # SwayOSD LibInput Backend
@@ -48,7 +37,18 @@ in
 
       # Packages
       environment.systemPackages = [
-        # rofiWithPlugins is wrapped by wrappers.rofi
+        # Rofi wrapper with config and plugins
+        (pkgs.writeShellScriptBin "rofi" ''
+          export PATH="${
+            lib.makeBinPath [
+              pkgs.gawk # awk for text processing
+              pkgs.gnused # sed for stream editing
+              pkgs.jq # JSON processor
+            ]
+          }:$PATH"
+          export XDG_DATA_DIRS="${pkgs.neg.rofi-config}/share:$XDG_DATA_DIRS"
+          exec ${rofiWithPlugins}/bin/rofi "$@"
+        '')
         pkgs.neg.rofi-config # Custom scripts (launcher, powermenu)
         pkgs.swayosd # OSD for volume/brightness on Wayland
         pkgs.wallust # Color palette generator
