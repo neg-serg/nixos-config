@@ -16,8 +16,11 @@ let
   hishtoryPkg = pkgs.hishtory or null; # Your shell history: synced, queryable, and in context
 in
 {
+  environment.shellAliases = {
+    sk = "nix run github:neg-serg/two_percent --";
+  };
+
   environment.systemPackages = [
-    # Search tools
     pkgs.ripgrep # better grep
     ugrepWithConfig # better grep, rg alternative (wrapped with global config)
 
@@ -36,9 +39,6 @@ in
     pkgs.stow # manage farms of symlinks
     pkgs.zoxide # smarter cd with ranking
 
-    # TUI tools
-    pkgs.peaclock # animated TUI clock (used in panels)
-
     # Utilities
     pkgs.dcfldd # dd with progress/hash
     pkgs.dust # better du
@@ -49,11 +49,9 @@ in
     pkgs.moreutils # assorted unix utils (sponge, etc.)
     pkgs.ncdu # interactive du
     pkgs.neg.duf # better df (fork with plain style support)
-    pkgs.neg.two_percent # skim fork optimized as a faster fuzzy finder alternative
     pkgs.newsraft # terminal RSS/Atom feed reader
     pkgs.pwgen # password generator
     pkgs.tealdeer # tldr replacement written in Rust
   ]
-
   ++ lib.optional (hishtoryPkg != null) hishtoryPkg; # sync shell history w/ encryption, better than zsh-histdb
 }
