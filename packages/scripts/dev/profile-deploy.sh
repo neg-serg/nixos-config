@@ -90,8 +90,7 @@ TIME_FMT="Real: %E\nUser: %U\nSys:  %S\nCPU:  %P\nMaxMem: %Mk"
 # Run the command
 {
     $TIME_BIN -f "$TIME_FMT" just deploy host="$HOST"
-}
- "$TIME_OUT"
+} 2> "$TIME_OUT"
 
 echo "  > Benchmark complete."
 echo "  > Stats saved to: $TIME_OUT"
