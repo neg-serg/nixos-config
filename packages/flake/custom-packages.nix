@@ -8,6 +8,5 @@
   rmpc = pkgs.rmpc; # TUI music player client for MPD with album art support vi...
 
   surfingkeys-pkg = pkgs.surfingkeys-pkg;
-  two_percent = pkgs.neg.two_percent;
   rofi-config = pkgs.neg.rofi-config;
 }
