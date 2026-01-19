@@ -49,6 +49,11 @@ deploy-debug host="telfir":
 switch host="telfir":
     just deploy {{host}}
 
+# Show diff between last two generations
+diff:
+    @files=$(find /nix/var/nix/profiles -maxdepth 1 -name "system-*-link" | sort -V | tail -n 2); \
+    nix run nixpkgs#nvd -- diff $files
+
 # --- Repo-wide workflows ---------------------------------------------------------
 
 
