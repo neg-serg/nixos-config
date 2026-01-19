@@ -10,6 +10,7 @@ let
     runtimeInputs = [
       pkgs.python3 # embed interpreter so the script ships zero deps
       pkgs.wl-clipboard # pipe clipboard ops without relying on system PATH
+      pkgs.hyprland # hyprctl command for window management
     ];
     text =
       let
