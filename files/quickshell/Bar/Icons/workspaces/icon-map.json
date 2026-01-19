@@ -123,12 +123,6 @@
         "U+F21A"
       ],
       "fontPattern": "Font Awesome 6 Pro"
-    },
-    "antigravity": {
-      "codepoints": [
-        "U+F544"
-      ],
-      "fontPattern": "Font Awesome 6 Pro"
     }
   },
   "fontFallbacks": [
