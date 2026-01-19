@@ -97,7 +97,7 @@ nh os switch
 - ⚙️ **C/C++** — GCC, Clang, CMake, Ninja, LLDB
 - 🎓 **Haskell** — GHC, Cabal, Stack, HLS
 - 🐍 **Python** — несколько версий, LSP, утилиты
-- 🤖 **AI/LLM** — Google Antigravity (опционально), интеграция Codex
+- 🤖 **AI/LLM** — интеграция Codex
 - ☁️ **IaC** — поддержка Terraform/OpenTofu
 - 🐳 **Контейнеры** — Docker, Podman
 
@@ -224,7 +224,6 @@ gamescope-hdr %command%
 | 18 | 𐍁:remote | Remote Desktop |
 | 19 | Ⲣ:notes | Заметки |
 | 20 | 𐍅:winboat | Windows VM |
-| 21 | 𐍇:antigravity | AI IDE |
 
 ### 💾 6 Pyprland Scratchpad'ов
 
