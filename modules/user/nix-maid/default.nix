@@ -88,18 +88,6 @@
     if [ -e /run/user/1000 ]; then
       echo "Restarting maid-activation for user 1000..."
 
-      # Cleanup stale symlinks that conflict with new nix-maid management
-      # These directories were previously linked via linkImpure or similar mechanisms
-      ${pkgs.util-linux}/bin/runuser -u neg -- ${pkgs.bash}/bin/bash -c ' # Set of system utilities for Linux
-        for dir in "$HOME/.config/rmpc" "$HOME/.config/swayimg" "$HOME/.config/vicinae"; do
-          if [ -L "$dir" ]; then
-            echo "Removing stale symlink: $dir"
-            rm "$dir"
-            mkdir -p "$dir"
-          fi
-        done
-      '
-
       # Async restart: run in background to not block deploy, use --no-block to avoid waiting, and silence output
       (${pkgs.util-linux}/bin/runuser -u neg -- ${pkgs.bash}/bin/bash -c "XDG_RUNTIME_DIR=/run/user/1000 ${pkgs.systemd}/bin/systemctl --user restart --no-block maid-activation.service" >/dev/null 2>&1 &) || true # System and service manager for Linux | Set of system utilities for Linux
     fi
