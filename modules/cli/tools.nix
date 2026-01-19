@@ -20,6 +20,7 @@ in
     sk = "nix run github:neg-serg/two_percent --";
     newsraft = "nix run github:neg-serg/newsraft --";
     tealdeer = "nix run github:neg-serg/tealdeer --";
+    gemini-cli = "nix run github:neg-serg/gemini-cli --";
   };
 
   environment.systemPackages = [
@@ -46,7 +47,6 @@ in
     pkgs.dust # better du
     pkgs.erdtree # modern tree
     pkgs.eza # modern 'ls' replacement
-    pkgs.gemini-cli # Google Gemini prompt CLI with streaming UI beats curl wrappers
     pkgs.libnotify # notify-send helper used by CLI scripts
     pkgs.moreutils # assorted unix utils (sponge, etc.)
     pkgs.ncdu # interactive du
