@@ -30,11 +30,16 @@ cpu-masks:
 # Rebuild and switch to the new system configuration
 # Usage: just deploy [host]
 deploy host="telfir":
-    nh os switch . --hostname {{host}}
+    # Build system closure (fast, git-aware, user-cache)
+    nix build .#nixosConfigurations.{{host}}.config.system.build.toplevel --out-link result
+    # Update system profile
+    sudo nix-env -p /nix/var/nix/profiles/system --set $(readlink -f result)
+    # Switch to new configuration
+    sudo ./result/bin/switch-to-configuration switch
 
-# Deploy with build logs printed to stdout
-deploy-verbose host="telfir":
-    nh os switch . --hostname {{host}} -L
+# Deploy (Legacy/Slow) - keeps nh features like pretty print
+deploy-nh host="telfir":
+    nh os switch . --hostname {{host}}
 
 # Deploy with maximum verbosity (logs + trace + verbose)
 deploy-debug host="telfir":
