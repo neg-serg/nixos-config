@@ -46,42 +46,44 @@ let
   '';
 in
 {
-  config = lib.mkIf enableIac {
-    environment.systemPackages = [
-      pkgs.ansible # Radically simple IT automation
-      pkgs.sshpass # Non-interactive ssh password auth
-    ];
+  config =
+    lib.mkIf enableIac {
+      environment.systemPackages = [
+        pkgs.ansible # Radically simple IT automation
+        pkgs.sshpass # Non-interactive ssh password auth
+      ];
 
-    environment.variables = {
-      ANSIBLE_HOME = "${config.users.users.neg.home}/.local/share/ansible"; # From envs.nix
-      ANSIBLE_CONFIG = "${config.users.users.neg.home}/.config/ansible/ansible.cfg";
-      ANSIBLE_ROLES_PATH = "${config.users.users.neg.home}/.local/share/ansible/roles";
-      ANSIBLE_GALAXY_COLLECTIONS_PATHS = "${config.users.users.neg.home}/.local/share/ansible/collections";
-    };
+      environment.variables = {
+        ANSIBLE_HOME = "${config.users.users.neg.home}/.local/share/ansible"; # From envs.nix
+        ANSIBLE_CONFIG = "${config.users.users.neg.home}/.config/ansible/ansible.cfg";
+        ANSIBLE_ROLES_PATH = "${config.users.users.neg.home}/.local/share/ansible/roles";
+        ANSIBLE_GALAXY_COLLECTIONS_PATHS = "${config.users.users.neg.home}/.local/share/ansible/collections";
+      };
 
-    # Nix-maid configuration files
-    # Note: We need to check if 'neg' is available passed down or if we need to access it differently.
-    # Usually in this repo modules, 'neg' is passed as an argument if defined in specialArgs.
-    # Assuming 'neg' is available as per original file.
-    
-    # We use lib.mkMerge to attach to user configuration if needed, but since this is a system module,
-    # we might need to route this into the user profile correctly if it uses home-manager module sytle.
-    # However, the original code used `n.mkHomeFiles`. Let's verify if we can simply use it here.
-    
-    # original dev.nix:
-    # config = lib.mkIf ... ( lib.mkMerge [ ... (n.mkHomeFiles ...) ] )
-    
-    # Here we are in a standard module. We can use the same pattern.
-  } // (lib.mkIf enableIac (
-    n.mkHomeFiles {
-      ".config/ansible/ansible.cfg".text = ansibleCfg;
-      ".config/ansible/hosts".text = ansibleHosts;
+      # Nix-maid configuration files
+      # Note: We need to check if 'neg' is available passed down or if we need to access it differently.
+      # Usually in this repo modules, 'neg' is passed as an argument if defined in specialArgs.
+      # Assuming 'neg' is available as per original file.
 
-      # Ensure directories exist via keep files (pseudo-creation)
-      ".local/share/ansible/roles/.keep".text = "";
-      ".local/share/ansible/collections/.keep".text = "";
-      ".cache/ansible/facts/.keep".text = "";
-      ".cache/ansible/ssh/.keep".text = "";
+      # We use lib.mkMerge to attach to user configuration if needed, but since this is a system module,
+      # we might need to route this into the user profile correctly if it uses home-manager module sytle.
+      # However, the original code used `n.mkHomeFiles`. Let's verify if we can simply use it here.
+
+      # original dev.nix:
+      # config = lib.mkIf ... ( lib.mkMerge [ ... (n.mkHomeFiles ...) ] )
+
+      # Here we are in a standard module. We can use the same pattern.
     }
-  ));
+    // (lib.mkIf enableIac (
+      n.mkHomeFiles {
+        ".config/ansible/ansible.cfg".text = ansibleCfg;
+        ".config/ansible/hosts".text = ansibleHosts;
+
+        # Ensure directories exist via keep files (pseudo-creation)
+        ".local/share/ansible/roles/.keep".text = "";
+        ".local/share/ansible/collections/.keep".text = "";
+        ".cache/ansible/facts/.keep".text = "";
+        ".cache/ansible/ssh/.keep".text = "";
+      }
+    ));
 }
