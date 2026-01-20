@@ -14,7 +14,7 @@ let
 
   termfilechooserConfig = ''
     [filechooser]
-    cmd = kitty yazi --chooser-file
+    cmd = kitty --detach=no yazi --chooser-file
     default_dir = $HOME
   '';
 
