@@ -18,6 +18,7 @@ in
     // (dev.neg or { })
     // {
       rofi-config = final.callPackage ./rofi-config { };
+      opencode = inputs.nixos-unstable.legacyPackages.${final.system}.opencode;
     };
 
   fsread-nvim = final.vimUtils.buildVimPlugin {
