@@ -2,15 +2,13 @@
   pkgs,
   lib,
   config,
-  neg,
-  impurity ? null,
+
   ...
 }:
 let
-  n = neg impurity;
+
   cfg = config.features.dev;
   enableIac = cfg.enable && (cfg.pkgs.iac or false);
-
 
 in
 {
