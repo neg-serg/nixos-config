@@ -17,23 +17,21 @@ lib.mkIf enable {
     (pkgs.makeDesktopItem {
       name = "opencode";
       desktopName = "OpenCode";
-      exec = "${
-          pkgs.writeShellScript "opencode-wrapper" ''
-            PLUGIN_PATH="${pkgs.neg.opencode-antigravity-auth}/share/plugin"
-            CONFIG_FILE="$HOME/.config/opencode/opencode.json"
-            
-            # Ensure config directory exists
-            mkdir -p "$(dirname "$CONFIG_FILE")"
+      exec = "${pkgs.writeShellScript "opencode-wrapper" ''
+        PLUGIN_PATH="${pkgs.neg.opencode-antigravity-auth}/share/plugin"
+        CONFIG_FILE="$HOME/.config/opencode/opencode.json"
 
-            if [ -f "$CONFIG_FILE" ]; then
-              # Safely update the plugin path using jq
-              tmp=$(mktemp)
-              ${pkgs.jq}/bin/jq --arg path "$PLUGIN_PATH" '.plugin = [$path]' "$CONFIG_FILE" > "$tmp" && mv "$tmp" "$CONFIG_FILE"
-            fi
-            
-            exec ${pkgs.opencode}/bin/opencode "$@"
-          ''
-        }";
+        # Ensure config directory exists
+        mkdir -p "$(dirname "$CONFIG_FILE")"
+
+        if [ -f "$CONFIG_FILE" ]; then
+          # Safely update the plugin path using jq
+          tmp=$(mktemp)
+          ${pkgs.jq}/bin/jq --arg path "$PLUGIN_PATH" '.plugin = [$path]' "$CONFIG_FILE" > "$tmp" && mv "$tmp" "$CONFIG_FILE"
+        fi
+
+        exec ${pkgs.opencode}/bin/opencode "$@"
+      ''}";
       terminal = true;
       icon = "utilities-terminal";
       categories = [ "Development" ];

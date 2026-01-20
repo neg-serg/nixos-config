@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Surfingkeys Logic Mock</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #222; color: #eee; }
+        .pass { color: #8f8; }
+        .fail { color: #f88; }
+        #results { margin-top: 20px; border-top: 1px solid #555; padding-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Surfingkeys Mock Test</h1>
+
+    <!-- Mock DOM -->
+    <div id="sk_omnibarSearchArea">
+        <input type="text" id="mockInput" value="">
+    </div>
+    <div id="sk_omnibarSearchResult">
+        <ul>
+            <!-- Mocks for list items will be inserted here dynamically -->
+        </ul>
+    </div>
+
+    <div id="results">Running tests...</div>
+
+    <script>
+        // --- Mock API ---
+        const api = {
+            tabOpenLink: (url) => {
+                console.log("OPEN_LINK:", url);
+                return "OPEN_LINK: " + url;
+            },
+            Front: {
+                openOmnibar: (opts) => console.log("OPEN_OMNIBAR:", opts),
+                closeOmnibar: () => {
+                    console.log("CLOSE_OMNIBAR");
+                    return "CLOSE_OMNIBAR";
+                }
+            },
+            cmap: (key, func) => {
+                window.testHandler = func;
+            }
+        };
+
+        // --- Logic to Test (Copied from surfingkeys.js) ---
+        // Replacing actual DOM calls with our mocks happens inside the function context 
+        // because we use the same selectors in the mock HTML.
+
+        api.cmap('<Enter>', function () {
+            const input = document.querySelector('#sk_omnibarSearchArea input');
+            const text = input.value;
+            const focused = document.querySelector('#sk_omnibarSearchResult li.focused');
+
+            // Condition: Single word AND (First item selected OR No item selected)
+            const isSingleWord = text.indexOf(' ') === -1;
+            const isFirstOrNone = !focused || (focused.parentElement && focused === focused.parentElement.firstElementChild);
+
+            if (isSingleWord && isFirstOrNone) {
+                let url = text;
+                if (url.indexOf(':') === -1) {
+                    url = 'http://' + url;
+                }
+                // Return value for testing
+                return api.tabOpenLink(url);
+            } else {
+                if (focused) {
+                    // focused.click(); // Not testing click in this unit
+                    return "CLICK_FOCUSED";
+                } else {
+                    api.tabOpenLink('https://www.google.com/search?q=' + encodeURIComponent(text));
+                    return "SEARCH_GOOGLE: " + text;
+                }
+            }
+        });
+
+        // --- Test Runner ---
+        const resultsDiv = document.getElementById('results');
+        const tests = [
+            {
+                name: "Simple URL: google.com",
+                input: "google.com",
+                focused: null, // No focus (or first item implicitly)
+                expected: "OPEN_LINK: http://google.com"
+            },
+            {
+                name: "Simple URL: localhost",
+                input: "localhost",
+                focused: null,
+                expected: "OPEN_LINK: http://localhost"
+            },
+            {
+                name: "Explicit http URL",
+                input: "http://example.com",
+                focused: null,
+                expected: "OPEN_LINK: http://example.com"
+            },
+            {
+                name: "Search: hello world",
+                input: "hello world",
+                focused: null,
+                expected: "SEARCH_GOOGLE: hello world"
+            },
+            {
+                name: "Search: singleword (unfocused)", 
+                input: "singleword",
+                focused: null,
+                expected: "OPEN_LINK: http://singleword" 
+                // Wait, if I type "singleword", is it a search or url? 
+                // Current logic says URL. This is standard browser behavior usually, unless it's clearly not a TLD.
+                // But for "raw" behavior, assuming URL is safer if space-less.
+            }
+        ];
+
+        let logs = "";
+        
+        tests.forEach(test => {
+            // Setup DOM
+            document.querySelector('#mockInput').value = test.input;
+            const list = document.querySelector('#sk_omnibarSearchResult ul');
+            list.innerHTML = ""; // Clear
+            if (test.focused === "MOCK_ITEM") {
+                const li = document.createElement('li');
+                li.className = "focused";
+                list.appendChild(li);
+            }
+
+            // Run
+            const result = window.testHandler();
+            
+            // Verify
+            const passed = result === test.expected;
+            const color = passed ? "pass" : "fail";
+            logs += `<div class="${color}">[${passed ? "PASS" : "FAIL"}] ${test.name}<br/>Expected: ${test.expected}<br/>Actual: ${result}</div><hr/>`;
+        });
+
+        resultsDiv.innerHTML = logs;
+    </script>
+</body>
+</html>

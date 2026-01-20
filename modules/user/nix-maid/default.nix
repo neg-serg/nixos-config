@@ -22,7 +22,7 @@
     ./apps/mpv
     ./apps/gui-apps.nix
     ./apps/vicinae.nix
-    ./apps/emacs.nix
+
     ./apps/transmission.nix
 
     # CLI & Shell Environment
