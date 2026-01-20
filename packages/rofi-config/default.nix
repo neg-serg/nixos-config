@@ -46,7 +46,7 @@ stdenv.mkDerivation rec {
 
     wrapProgram $out/bin/rofi-launcher \
       --prefix PATH : ${lib.makeBinPath [ rofi ]}
-    
+
     wrapProgram $out/bin/rofi-powermenu \
       --prefix PATH : ${lib.makeBinPath [ rofi ]}
 
