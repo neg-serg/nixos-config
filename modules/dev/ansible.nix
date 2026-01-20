@@ -8,7 +8,8 @@
 }:
 let
   n = neg impurity;
-  cfg = config.features.dev.ansible;
+  cfg = config.features.dev;
+  enableIac = cfg.enable && (cfg.pkgs.iac or false);
 
   # Ansible Config
   ansibleCfg = ''
@@ -45,7 +46,7 @@ let
   '';
 in
 {
-  config = lib.mkIf (cfg.enable or false) {
+  config = lib.mkIf enableIac {
     environment.systemPackages = [
       pkgs.ansible # Radically simple IT automation
       pkgs.sshpass # Non-interactive ssh password auth
@@ -71,7 +72,7 @@ in
     # config = lib.mkIf ... ( lib.mkMerge [ ... (n.mkHomeFiles ...) ] )
     
     # Here we are in a standard module. We can use the same pattern.
-  } // (lib.mkIf (cfg.enable or false) (
+  } // (lib.mkIf enableIac (
     n.mkHomeFiles {
       ".config/ansible/ansible.cfg".text = ansibleCfg;
       ".config/ansible/hosts".text = ansibleHosts;
