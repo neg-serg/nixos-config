@@ -194,7 +194,7 @@ flowchart LR
 - ⚙️ **C/C++** - GCC, Clang, CMake, Ninja, LLDB
 - 🎓 **Haskell** - GHC, Cabal, Stack, HLS
 - 🐍 **Python** - Multiple versions, LSP, utilities
-- 🤖 **AI/LLM** - Codex integration
+- 🤖 **AI/LLM** - Google Antigravity (optional), Codex integration
 - ☁️ **IaC** - Terraform/OpenTofu support
 - 🐳 **Containers** - Docker, Podman
 
@@ -532,6 +532,7 @@ gamescope-hdr %command%
 | 18 | 𐍁:remote | 🖥️ | Remote Desktop |
 | 19 | Ⲣ:notes | 📝 | Notes |
 | 20 | 𐍅:winboat | 🪟 | Windows VM (floating) |
+| 21 | 𐍇:antigravity | 🤖 | AI IDE |
 
 </div>
 
