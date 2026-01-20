@@ -2,7 +2,7 @@
 set -e
 
 # profile-deploy.sh
-# 
+#
 # Comprehensive profiling for the 'just deploy' workflow (NixOS configuration).
 #
 # USAGE:
@@ -46,21 +46,21 @@ echo "  > This uses the C++ Nix evaluator and is VERY slow (20x-50x)."
 echo "  > It measures CPU instructions, not wall time."
 echo "  > Please wait..."
 
-# Note: We use --dry-run on nix build or nix-instantiate. 
+# Note: We use --dry-run on nix build or nix-instantiate.
 # The Justfile uses: nix build .#nixosConfigurations.{{host}}.config.system.build.toplevel
 # We replicate that logic for instantiation.
 
 TARGET_ATTR=".#nixosConfigurations.${HOST}.config.system.build.toplevel"
 
-# We use nix-instantiate directly as it's cleaner for profiling than 'nix build --dry-run' 
+# We use nix-instantiate directly as it's cleaner for profiling than 'nix build --dry-run'
 # which might invoke other CLI overhead.
 # We redirect stdout/stderr to separate logs.
 
 valgrind \
-    --tool=callgrind \
-    --callgrind-out-file="$OUT_DIR/callgrind.out" \
-    --trace-children=yes \
-    nix build "$TARGET_ATTR" --dry-run > "$OUT_DIR/eval_stdout.log" 2> "$OUT_DIR/eval_stderr.log"
+  --tool=callgrind \
+  --callgrind-out-file="$OUT_DIR/callgrind.out" \
+  --trace-children=yes \
+  nix build "$TARGET_ATTR" --dry-run > "$OUT_DIR/eval_stdout.log" 2> "$OUT_DIR/eval_stderr.log"
 
 echo "  > Evaluation profile saved to: $OUT_DIR/callgrind.out"
 echo "  > You can analyze this file using 'kcachegrind' or 'qcachegrind'."
@@ -89,7 +89,7 @@ TIME_FMT="Real: %E\nUser: %U\nSys:  %S\nCPU:  %P\nMaxMem: %Mk"
 
 # Run the command
 {
-    $TIME_BIN -f "$TIME_FMT" just deploy host="$HOST"
+  $TIME_BIN -f "$TIME_FMT" just deploy host="$HOST"
 } 2> "$TIME_OUT"
 
 echo "  > Benchmark complete."
