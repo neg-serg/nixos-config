@@ -15,13 +15,13 @@ let
     pkgs.mpvScripts.uosc # modern minimalist UI with controls
   ];
 
+  mpvUnwrapped = pkgs.mpv-unwrapped.override {
+    vapoursynthSupport = true;
+  };
+
   mpvPackage = pkgs.mpv.override {
-    # General-purpose media player, fork of MPlayer and mplayer2
+    mpv = mpvUnwrapped;
     scripts = scriptPkgs;
-    mpv-unwrapped = pkgs.mpv-unwrapped.override {
-      # General-purpose media player, fork of MPlayer and mplayer2
-      vapoursynthSupport = true;
-    };
   };
 in
 {
