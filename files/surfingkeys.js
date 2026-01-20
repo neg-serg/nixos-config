@@ -416,24 +416,33 @@ api.cmap('<Enter>', function () {
   const text = input.value;
   const focused = document.querySelector('#sk_omnibarSearchResult li.focused');
 
-  // Condition: Single word AND (First item selected OR No item selected)
-  // This ensures we don't override explicit selection of other suggestions
-  const isSingleWord = text.indexOf(' ') === -1;
-  const isFirstOrNone = !focused || (focused.parentElement && focused === focused.parentElement.firstElementChild);
+  // Logic:
+  // 1. If Explicitly selected (Index > 0), always click.
+  // 2. If Space in text, Search (unless explicit select).
+  // 3. If No Space, Open URL (unless explicit select).
 
-  if (isSingleWord && isFirstOrNone) {
+  let isFirstOrNone = true;
+  if (focused && focused.parentElement) {
+    const children = Array.from(focused.parentElement.children);
+    const index = children.indexOf(focused);
+    if (index > 0) isFirstOrNone = false;
+  }
+
+  const isSingleWord = text.indexOf(' ') === -1;
+
+  if (isFirstOrNone && isSingleWord) {
     let url = text;
     if (url.indexOf(':') === -1) {
       url = 'http://' + url;
     }
+    api.Front.showBanner("Opening URL: " + url);
     api.tabOpenLink(url);
     api.Front.closeOmnibar();
   } else {
-    // Fallback to default (Search or Click)
     if (focused) {
       focused.click();
     } else {
-      // Nothing focused (rare), force search
+      // Fallback
       api.tabOpenLink('https://www.google.com/search?q=' + encodeURIComponent(text));
       api.Front.closeOmnibar();
     }
