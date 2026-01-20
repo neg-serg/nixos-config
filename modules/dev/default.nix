@@ -2,6 +2,7 @@
 {
   imports = [
     ./android
+    ./ansible.nix
     ./benchmarks
     ./editor
     ./elf
