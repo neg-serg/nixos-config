@@ -16,7 +16,11 @@ lib.mkIf enable {
     (pkgs.makeDesktopItem {
       name = "opencode";
       desktopName = "OpenCode";
-      exec = "opencode";
+      exec = "${
+          pkgs.writeShellScript "opencode-debug" ''
+            ${pkgs.opencode}/bin/opencode --print-logs --log-level DEBUG 2> /tmp/opencode.log; sleep 10
+          ''
+        }";
       terminal = true;
       icon = "utilities-terminal";
       categories = [ "Development" ];
