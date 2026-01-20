@@ -408,8 +408,37 @@ api.addSearchAlias('aw', 'Arch Wiki', 'https://wiki.archlinux.org/index.php?sear
 api.addSearchAlias('np', 'npm', 'https://www.npmjs.com/search?q=');
 
 // Force all inputs to be URLs by default (pass-through)
-api.addSearchAlias('raw', 'Raw URL', '');
 settings.defaultSearchEngine = 'g';
+
+// Smart Enter: No spaces -> URL, Spaces -> Search
+api.cmap('<Enter>', function () {
+  const input = document.querySelector('#sk_omnibarSearchArea input');
+  const text = input.value;
+  const focused = document.querySelector('#sk_omnibarSearchResult li.focused');
+
+  // Condition: Single word AND (First item selected OR No item selected)
+  // This ensures we don't override explicit selection of other suggestions
+  const isSingleWord = text.indexOf(' ') === -1;
+  const isFirstOrNone = !focused || (focused.parentElement && focused === focused.parentElement.firstElementChild);
+
+  if (isSingleWord && isFirstOrNone) {
+    let url = text;
+    if (url.indexOf(':') === -1) {
+      url = 'http://' + url;
+    }
+    api.tabOpenLink(url);
+    api.Front.closeOmnibar();
+  } else {
+    // Fallback to default (Search or Click)
+    if (focused) {
+      focused.click();
+    } else {
+      // Nothing focused (rare), force search
+      api.tabOpenLink('https://www.google.com/search?q=' + encodeURIComponent(text));
+      api.Front.closeOmnibar();
+    }
+  }
+});
 
 // ========== Omnibar Hotkeys ==========
 // Ctrl+G: Convert current input to Google search
