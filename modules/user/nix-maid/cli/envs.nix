@@ -48,7 +48,7 @@ in
 
     # XDG compliance (xdg-ninja fixes)
     ANDROID_USER_HOME = "${dataHome}/android";
-    ANSIBLE_HOME = "${dataHome}/ansible";
+
     GNUPGHOME = "${dataHome}/gnupg";
     GTK2_RC_FILES = "${configHome}/gtk-2.0/gtkrc";
     NPM_CONFIG_CACHE = "${cacheHome}/npm";
