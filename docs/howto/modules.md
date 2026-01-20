@@ -340,6 +340,20 @@ Whether to enable enable AI tools (e.g., LM Studio).
 
 - [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
+## features.dev.ai.antigravity.enable
+
+Whether to enable install Google Antigravity agentic IDE.
+
+*Type:* boolean
+
+*Default:* `false`
+
+*Example:* `true`
+
+*Declared by:*
+
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
+
 ## features.dev.bpf.enable
 
 Whether to enable enable BPF tracing tools (bpftrace, below).
