@@ -892,22 +892,6 @@
         "type": "github"
       }
     },
-    "nixos-unstable": {
-      "locked": {
-        "lastModified": 1768564909,
-        "narHash": "sha256-Kell/SpJYVkHWMvnhqJz/8DqQg2b6PguxVWOuadbHCc=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1765838191,
@@ -926,16 +910,16 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1768877948,
-        "narHash": "sha256-D+GLCmhxA9O69GViYl48lSvp/Dr/Ohy5/onXVPwY6rI=",
+        "lastModified": 1768564909,
+        "narHash": "sha256-Kell/SpJYVkHWMvnhqJz/8DqQg2b6PguxVWOuadbHCc=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "43b2e61c9d09cf6c1c9c192fe6da08accc9bfb1d",
+        "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixos-25.11-small",
+        "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -1152,7 +1136,6 @@
         "microvm": "microvm",
         "nix-flatpak": "nix-flatpak",
         "nix-maid": "nix-maid",
-        "nixos-unstable": "nixos-unstable",
         "nixpkgs": "nixpkgs_2",
         "nur": "nur",
         "nyarch-assistant": "nyarch-assistant",

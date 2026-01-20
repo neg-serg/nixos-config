@@ -36,7 +36,7 @@ in
 
     # -- DNS --
     pkgs.dnsutils # dns command-line tools (dig, nslookup)
-    pkgs.dogdns # commandline dns client
+    pkgs.doggo # commandline dns client
 
     # -- Download --
     pkgs.axel # Multi-threaded download accelerator
