@@ -40,6 +40,7 @@ lib.mkMerge [
     };
     # Host-specific feature toggles
     features.dev.ai.enable = true;
+    features.dev.ai.antigravity.enable = true;
     features.dev.ai.opencode.enable = true;
     features.text.tex.enable = false;
     features.cli.broot.enable = true;

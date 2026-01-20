@@ -13,6 +13,7 @@
     ./python
     ./unreal
     ./pkgs
+    ./antigravity.nix
     ./opencode.nix
   ];
 }

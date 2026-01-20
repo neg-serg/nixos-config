@@ -16,6 +16,7 @@
     ./cli/ugrep.nix
     ./core/neg.nix
     ./dev/android/default.nix
+    ./dev/antigravity.nix
     ./dev/benchmarks/default.nix
     ./dev/editor/default.nix
     ./dev/editor/neovim/pkgs.nix # Nix package manager
