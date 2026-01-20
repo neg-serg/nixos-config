@@ -40,41 +40,39 @@ in
         port = 6600;
       };
 
-      settings = {
-        log_file = "/dev/null";
-        max_output_buffer_size = "131072";
-        max_connections = "100";
-        connection_timeout = "864000";
-        restore_paused = "yes";
-        save_absolute_paths_in_playlists = "yes";
-        follow_inside_symlinks = "yes";
-        replaygain = "off";
-        auto_update = "yes";
+      extraConfig = ''
+        log_file "/dev/null"
+        max_output_buffer_size "131072"
+        max_connections "100"
+        connection_timeout "864000"
+        restore_paused "yes"
+        save_absolute_paths_in_playlists "yes"
+        follow_inside_symlinks "yes"
+        replaygain "off"
+        auto_update "yes"
         # Use a per-application (software) mixer so MPD can
         # control volume independently of the system master.
-        mixer_type = "software";
+        mixer_type "software"
 
         # Show up as a separate application stream
         # in Pulse/ PipeWire mixers (own slider)
-        audio_output = [
-          {
-            type = "pulse";
-            name = "PipeWire (Pulse)";
-          }
-          {
-            type = "alsa";
-            name = "RME ADI-2/4 PRO SE";
-            device = "hw:CARD=SE53011083";
-            auto_resample = "no";
-            auto_format = "no";
-            auto_channels = "no";
-            replay_gain_handler = "none";
-            dsd_native = "yes";
-            dop = "no";
-            tags = "yes";
-          }
-        ];
-      };
+        audio_output {
+          type "pulse"
+          name "PipeWire (Pulse)"
+        }
+        audio_output {
+          type "alsa"
+          name "RME ADI-2/4 PRO SE"
+          device "hw:CARD=SE53011083"
+          auto_resample "no"
+          auto_format "no"
+          auto_channels "no"
+          replay_gain_handler "none"
+          dsd_native "yes"
+          dop "no"
+          tags "yes"
+        }
+      '';
     };
 
     networking.firewall = {

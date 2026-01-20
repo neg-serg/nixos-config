@@ -89,12 +89,7 @@ in
       enable = lib.mkDefault true;
       domains = [ "~." ];
       # Keep local resolver deterministic: disable LLMNR and mDNS broadcast resolution
-      settings = {
-        Resolve = {
-          LLMNR = "no";
-          MulticastDNS = "no";
-        };
-      };
+      extraConfig = "LLMNR=no\nMulticastDNS=no";
     };
     # Keep resolv.conf compatibility for tools that read networking.nameservers directly
     networking.nameservers = [ "127.0.0.1" ];
