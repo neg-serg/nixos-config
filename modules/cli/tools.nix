@@ -18,8 +18,8 @@ in
 {
   environment.shellAliases = {
     sk = "nix run github:neg-serg/two_percent --";
-    newsraft = "nix run github:neg-serg/newsraft --";
-    tealdeer = "nix run github:neg-serg/tealdeer --";
+    newsraft = "nix run nixpkgs#newsraft --";
+    tealdeer = "nix run nixpkgs#tealdeer --";
     gemini-cli = "nix run nixpkgs#gemini-cli --";
   };
 
