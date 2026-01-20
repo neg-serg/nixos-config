@@ -411,6 +411,7 @@ api.addSearchAlias('np', 'npm', 'https://www.npmjs.com/search?q=');
 settings.defaultSearchEngine = 'g';
 
 // Smart Enter: No spaces -> URL, Spaces -> Search
+// Smart Enter: No spaces -> URL, Spaces -> Search
 api.cmap('<Enter>', function () {
   const input = document.querySelector('#sk_omnibarSearchArea input');
   const text = input.value;
@@ -418,8 +419,12 @@ api.cmap('<Enter>', function () {
 
   // Logic:
   // 1. If Explicitly selected (Index > 0), always click.
-  // 2. If Space in text, Search (unless explicit select).
-  // 3. If No Space, Open URL (unless explicit select).
+  // 2. If Space in text -> Search.
+  // 3. If No Space:
+  //    - Has protocol (http/s) -> URL
+  //    - Is "localhost" -> URL
+  //    - Has dot (google.com) -> URL
+  //    - Else -> Search
 
   let isFirstOrNone = true;
   if (focused && focused.parentElement) {
@@ -431,18 +436,37 @@ api.cmap('<Enter>', function () {
   const isSingleWord = text.indexOf(' ') === -1;
 
   if (isFirstOrNone && isSingleWord) {
-    let url = text;
-    if (url.indexOf(':') === -1) {
-      url = 'http://' + url;
+    // Smart Domain Detection
+    const hasProtocol = /^[a-zA-Z]+:\/\//.test(text);
+    const isLocalhost = text === 'localhost' || text.startsWith('localhost:');
+    const hasDot = text.indexOf('.') !== -1;
+
+    if (hasProtocol || isLocalhost || hasDot) {
+      let url = text;
+      if (url.indexOf(':') === -1 && !isLocalhost) {
+        url = 'http://' + url;
+      }
+      // Special case: localhost without header needs protocol if missing? 
+      // Chrome/FF usually handle localhost, but adding http:// ensures it.
+      if (isLocalhost && !hasProtocol) {
+        url = 'http://' + text;
+      }
+
+      api.Front.showBanner("Opening URL: " + url);
+      api.tabOpenLink(url);
+      api.Front.closeOmnibar();
+    } else {
+      // Single word, no dot -> Search (e.g. "codex7")
+      api.Front.showBanner("Searching: " + text);
+      api.tabOpenLink('https://www.google.com/search?q=' + encodeURIComponent(text));
+      api.Front.closeOmnibar();
     }
-    api.Front.showBanner("Opening URL: " + url);
-    api.tabOpenLink(url);
-    api.Front.closeOmnibar();
   } else {
+    // Fallback
     if (focused) {
       focused.click();
     } else {
-      // Fallback
+      // Multi-word search
       api.tabOpenLink('https://www.google.com/search?q=' + encodeURIComponent(text));
       api.Front.closeOmnibar();
     }
