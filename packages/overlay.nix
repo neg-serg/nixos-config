@@ -18,7 +18,7 @@ in
     // (dev.neg or { })
     // {
       rofi-config = final.callPackage ./rofi-config { };
-      opencode = final.opencode;
+      opencode = final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { };
     };
 
   fsread-nvim = final.vimUtils.buildVimPlugin {
