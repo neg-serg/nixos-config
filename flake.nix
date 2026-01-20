@@ -31,7 +31,9 @@
   };
 
   nixConfig = {
-    # Only using official cache.nixos.org - no extra substituters
+    # Explicitly enable official cache
+    substituters = [ "https://cache.nixos.org" ];
+    trusted-public-keys = [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ];
   };
 
   outputs =
