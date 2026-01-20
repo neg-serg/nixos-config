@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -17,7 +18,7 @@ in
     {
       services.ollama = {
         enable = lib.mkDefault true;
-        acceleration = "rocm";
+        package = pkgs.ollama-rocm;
         models = "/zero/llm/ollama-models";
       };
     }
