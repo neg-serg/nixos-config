@@ -10,7 +10,6 @@ in
       enable = mkBool "enable AI tools (e.g., LM Studio)" true;
       antigravity.enable = mkBool "install Google Antigravity agentic IDE" false;
       opencode.enable = mkBool "install OpenCode AI coding agent" false;
-      ansible.enable = mkBool "install Ansible automation tool" false;
     };
     iac = {
       backend = mkOption {
