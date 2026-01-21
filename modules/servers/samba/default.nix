@@ -41,5 +41,11 @@ in
         };
       };
     };
+
+    # Don't start Samba at boot (removes network-online.target dependency from critical path)
+    # Start manually with: systemctl start samba-smbd
+    systemd.services.samba-smbd.wantedBy = lib.mkForce [ ];
+    systemd.services.samba-nmbd.wantedBy = lib.mkForce [ ];
+    systemd.services.samba-winbindd.wantedBy = lib.mkForce [ ];
   };
 }
