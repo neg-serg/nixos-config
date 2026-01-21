@@ -14,9 +14,10 @@ let
 
   opencodeConfig = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
-    plugin = [ "opencode-antigravity-auth@latest" ];
+    plugin = [ "opencode-antigravity-auth@beta" ];
     provider = {
       google = {
+        npm = "@ai-sdk/google";
         models = {
           antigravity-gemini-3-pro = {
             name = "Gemini 3 Pro (Antigravity)";
