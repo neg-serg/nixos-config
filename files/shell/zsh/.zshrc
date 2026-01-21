@@ -40,8 +40,8 @@ fi
 zi ice depth'1' lucid wait'0'
 zi light QuarticCat/zsh-smartcache
 source "${ZDOTDIR}/01-init.zsh"
-for file in {02-cmds,03-completion,04-bindings,04-fzf,05-neg-cd,07-hishtory}; do
-  zsh-defer source "${ZDOTDIR}/$file.zsh"
+for file in {02-cmds,03-completion,04-bindings,04-fzf,05-neg-cd,07-hishtory,10-opencode-brave}; do
+  [[ -r "${ZDOTDIR}/$file.zsh" ]] && zsh-defer source "${ZDOTDIR}/$file.zsh"
 done
 ## Load Aliae aliases after base command aliases to allow Aliae to override them
 if [[ -r "${ZDOTDIR}/06-aliae.zsh" ]]; then
