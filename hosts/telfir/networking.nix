@@ -52,4 +52,13 @@ _: {
       anyInterface = true;  # (kept for reference if re-enabled)
     };
   };
+
+  # Explicitly disable rfkill management as it is not needed and causes delays/issues
+  systemd.services."systemd-rfkill".enable = false;
+  systemd.sockets."systemd-rfkill".enable = false;
+
+  # Ensure all wireless stacks are force-disabled
+  networking.wireless.enable = false;        # wpa_supplicant
+  networking.wireless.iwd.enable = false;    # iwd
+
 }
