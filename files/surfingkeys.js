@@ -413,18 +413,24 @@ settings.defaultSearchEngine = 'g';
 // Smart Enter: No spaces -> URL, Spaces -> Search
 // Smart Enter: No spaces -> URL, Spaces -> Search
 api.cmap('<Enter>', function () {
-  const input = document.querySelector('#sk_omnibarSearchArea input');
-  const text = input.value;
-  const focused = document.querySelector('#sk_omnibarSearchResult li.focused');
+  // Helper to find elements inside Shadow DOM or standard DOM
+  const getSkElement = (selector) => {
+    const skFrame = document.querySelector('#sk_frame');
+    if (skFrame && skFrame.contentDocument) {
+      return skFrame.contentDocument.querySelector(selector);
+    }
+    return document.querySelector(selector) ||
+      (document.body.shadowRoot && document.body.shadowRoot.querySelector(selector));
+  };
 
-  // Logic:
-  // 1. If Explicitly selected (Index > 0), always click.
-  // 2. If Space in text -> Search.
-  // 3. If No Space:
-  //    - Has protocol (http/s) -> URL
-  //    - Is "localhost" -> URL
-  //    - Has dot (google.com) -> URL
-  //    - Else -> Search
+  const input = getSkElement('#sk_omnibarSearchArea input');
+  if (!input) {
+    // Fallback: If we can't find the input, allow default behavior by not intercepting
+    return true;
+  }
+
+  const text = input.value.trim();
+  const focused = getSkElement('#sk_omnibarSearchResult li.focused');
 
   let isFirstOrNone = true;
   if (focused && focused.parentElement) {
@@ -433,40 +439,36 @@ api.cmap('<Enter>', function () {
     if (index > 0) isFirstOrNone = false;
   }
 
-  const isSingleWord = text.indexOf(' ') === -1;
+  const isSingleWord = !/\s/.test(text);
 
-  if (isFirstOrNone && isSingleWord) {
+  if (isFirstOrNone && isSingleWord && text.length > 0) {
     // Smart Domain Detection
     const hasProtocol = /^[a-zA-Z]+:\/\//.test(text);
     const isLocalhost = text === 'localhost' || text.startsWith('localhost:');
-    const hasDot = text.indexOf('.') !== -1;
+    const hasDot = text.includes('.') && !text.startsWith('.') && !text.endsWith('.');
+    const isIP = /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(:[0-9]+)?$/.test(text);
 
-    if (hasProtocol || isLocalhost || hasDot) {
+    if (hasProtocol || isLocalhost || hasDot || isIP) {
       let url = text;
-      if (url.indexOf(':') === -1 && !isLocalhost) {
+      if (!hasProtocol) {
         url = 'http://' + url;
-      }
-      // Special case: localhost without header needs protocol if missing? 
-      // Chrome/FF usually handle localhost, but adding http:// ensures it.
-      if (isLocalhost && !hasProtocol) {
-        url = 'http://' + text;
       }
 
       api.Front.showBanner("Opening URL: " + url);
       api.tabOpenLink(url);
       api.Front.closeOmnibar();
     } else {
-      // Single word, no dot -> Search (e.g. "codex7")
+      // Single word, no dot -> Search
       api.Front.showBanner("Searching: " + text);
       api.tabOpenLink('https://www.google.com/search?q=' + encodeURIComponent(text));
       api.Front.closeOmnibar();
     }
   } else {
-    // Fallback
+    // Fallback to default (click focused item or multi-word search)
     if (focused) {
       focused.click();
-    } else {
-      // Multi-word search
+    } else if (text.length > 0) {
+      api.Front.showBanner("Searching: " + text);
       api.tabOpenLink('https://www.google.com/search?q=' + encodeURIComponent(text));
       api.Front.closeOmnibar();
     }
