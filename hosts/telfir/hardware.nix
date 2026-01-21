@@ -75,7 +75,7 @@
       "lru_gen.min_ttl_ms=1000"
       "mem_sleep_default=deep"
       # Avoid probing dozens of legacy UARTs; speeds up device coldplug
-      "8250.nr_uarts=1"
+      "8250.nr_uarts=0"
     ];
 
     # Load ASUS EC sensor driver for detailed telemetry + OpenRGB access
@@ -127,6 +127,8 @@
     "tpm_crb"
     "tpm_tis"
     "tpm_tis_core"
+    "8250"
+    "serial8250"
   ];
   # No separate initrd blacklist option; TPM modules are excluded from initrd
   # via modules/system/boot.nix when security.tpm2.enable = false
