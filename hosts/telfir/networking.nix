@@ -29,6 +29,8 @@ _: {
       "10-lan" = {
         matchConfig.Name = "net0";
         networkConfig.DHCP = "ipv4";
+        # net0 is our main link, we want to wait for it
+        linkConfig.RequiredForOnline = "routable";
         dhcpV4Config = {
           UseDNS = true;
           UseRoutes = true;
@@ -38,6 +40,8 @@ _: {
       "11-lan" = {
         matchConfig.Name = "net1";
         networkConfig.DHCP = "ipv4";
+        # net1 is optional (e.g. unplugged 10G), don't wait for it
+        linkConfig.RequiredForOnline = "no";
         dhcpV4Config = {
           UseDNS = true;
           UseRoutes = true;
