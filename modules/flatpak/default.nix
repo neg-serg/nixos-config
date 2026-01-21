@@ -50,6 +50,6 @@
         origin = "flathub";
       }
     ];
-    update.onActivation = false;
+    update.onActivation = true;
   };
 }
