@@ -11,11 +11,29 @@ let
   n = neg impurity;
   cfg = config.features.cli.yazi;
   tomlFormat = pkgs.formats.toml { };
+  
+  yazi-wrapper = pkgs.writeShellScript "yazi-wrapper" ''
+    # Find the output path argument (it's one of the args, usually 5th, but we scan)
+    OUTPUT_PATH=""
+    for arg in "$@"; do
+      if [[ "$arg" == *.portal ]]; then
+        OUTPUT_PATH="$arg"
+        break
+      fi
+    done
+    
+    if [[ -z "$OUTPUT_PATH" ]]; then
+       exit 1
+    fi
+
+    # Run kitty with yazi
+    exec ${pkgs.kitty}/bin/kitty --detach=no ${pkgs.yazi}/bin/yazi --chooser-file "$OUTPUT_PATH"
+  '';
 
   termfilechooserConfig = ''
     [filechooser]
-    cmd = kitty --detach=no yazi --chooser-file
-    default_dir = $HOME
+    cmd = ${yazi-wrapper}
+    default_dir = /home/neg
   '';
 
   settings = {
