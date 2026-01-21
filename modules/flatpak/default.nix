@@ -33,6 +33,10 @@
         appId = "org.gimp.GIMP";
         origin = "flathub";
       }
+      {
+        appId = "com.google.Chrome";
+        origin = "flathub";
+      }
     ]
     ++ lib.optionals (config.features.apps.libreoffice.enable) [
       {
