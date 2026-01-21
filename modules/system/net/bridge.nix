@@ -24,6 +24,8 @@ in
       networks."10-br0" = {
         matchConfig.Name = "br0";
         address = [ "192.168.122.1/24" ];
+        # Local bridge for VMs, don't wait for it
+        linkConfig.RequiredForOnline = "no";
         networkConfig.DHCPServer = "yes";
         dhcpServerConfig = {
           PoolOffset = 50;
