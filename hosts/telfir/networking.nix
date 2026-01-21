@@ -47,6 +47,9 @@ _: {
         };
       };
     };
-    wait-online.anyInterface = true;
+    wait-online = {
+      enable = false;       # Don't block boot waiting for network
+      anyInterface = true;  # (kept for reference if re-enabled)
+    };
   };
 }
