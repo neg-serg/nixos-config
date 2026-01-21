@@ -129,9 +129,6 @@ lib.mkIf devEnabled (
         pkgs.nginx-language-server # nginx.conf language server
         pkgs.zls # Zig language server
 
-        # -- Debuggers (DAP) --
-        pkgs.lldb # LLVM debugger (C/C++/Rust)
-
         # -- Formatters --
         pkgs.stylua # Lua formatter
         pkgs.shfmt # Shell formatter

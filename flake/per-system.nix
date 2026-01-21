@@ -1106,7 +1106,6 @@ in
           pkgs.graphviz # dot backend for rustaceanvim crateGraph
           pkgs.bacon # background rust code checker
           pkgs.evcxr # Rust REPL
-          pkgs.lldb # LLVM debugger
         ]
         ++ optionalRustDebugAdapters;
       };
@@ -1119,7 +1118,6 @@ in
         pkgs.ninja # Small build system with a focus on speed
         pkgs.bear
         pkgs.ccache # Compiler cache for fast recompilation of C/C++ code
-        pkgs.lldb # Next-generation high-performance debugger
         pkgs.gdb # GNU Project debugger
         pkgs.gcc # explicitly available in devshell
       ];
@@ -1516,6 +1514,10 @@ in
         pkgs.pgcli # PostgreSQL TUI client
         pkgs.sqlite # self-contained, serverless SQL DB
       ];
+    };
+
+    lldb = pkgs.mkShell {
+      packages = [ pkgs.lldb ]; # LLVM debugger
     };
 
     k8s = pkgs.mkShell {
