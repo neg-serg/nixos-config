@@ -20,7 +20,6 @@
     nyx = { url = "github:chaotic-cx/nyx"; inputs.nixpkgs.follows = "nixpkgs"; inputs.rust-overlay.follows = "rust-overlay"; };
     pre-commit-hooks = { url = "github:cachix/git-hooks.nix"; inputs.nixpkgs.follows = "nixpkgs"; };
     quickshell = { url = "git+https://git.outfoxxed.me/quickshell/quickshell"; inputs.nixpkgs.follows = "nixpkgs"; };
-    opencode-antigravity-auth = { url = "git+file:///home/neg/src/ai/opencode-antigravity-auth"; inputs.nixpkgs.follows = "nixpkgs"; };
     richcolors = { url = "github:neg-serg/richcolors"; inputs.nixpkgs.follows = "nixpkgs"; };
     rsmetrx = { url = "github:neg-serg/rsmetrx"; inputs.nixpkgs.follows = "nixpkgs"; };
     rust-overlay = { url = "github:oxalica/rust-overlay"; inputs.nixpkgs.follows = "nixpkgs"; };
