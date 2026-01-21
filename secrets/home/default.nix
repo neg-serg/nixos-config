@@ -9,6 +9,7 @@ let
   hasVdirsyncerGoogle = builtins.pathExists ./vdirsyncer/google.sops.yaml;
   hasWorkWireguard = builtins.pathExists ./wireguard/work-wg.conf.sops;
   hasVlessRealitySingboxTun = builtins.pathExists ./vless/reality-singbox-tun.json.sops;
+  hasBraveSearchApi = builtins.pathExists ./brave-search-api.env.sops;
 in
 {
   sops = {
@@ -83,6 +84,15 @@ in
         sopsFile = ./vless/reality-singbox-tun.json.sops;
         path = "/run/user/1000/secrets/vless-reality-singbox-tun.json";
         mode = "0600";
+      };
+    }
+    // lib.optionalAttrs hasBraveSearchApi {
+      # Brave Search API key for MCP server (environment file format)
+      "brave-search-api-env" = {
+        format = "dotenv";
+        sopsFile = ./brave-search-api.env.sops;
+        path = "/run/user/1000/secrets/brave-search-api.env";
+        mode = "0400";
       };
     };
   };
