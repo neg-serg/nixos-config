@@ -28,14 +28,12 @@ _: {
     networks = {
       "10-lan" = {
         matchConfig.Name = "net0";
-        networkConfig.DHCP = "ipv4";
+        # Static IP configuration (faster boot, no DHCP wait)
+        address = [ "192.168.2.240/24" ];
+        gateway = [ "192.168.2.1" ];
+        dns = [ "192.168.2.1" ];
         # net0 is our main link, we want to wait for it
         linkConfig.RequiredForOnline = "routable";
-        dhcpV4Config = {
-          UseDNS = true;
-          UseRoutes = true;
-          RouteMetric = 50; # prefer net1 (10G) over net0 (1G)
-        };
       };
       "11-lan" = {
         matchConfig.Name = "net1";
