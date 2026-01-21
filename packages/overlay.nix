@@ -19,8 +19,6 @@ in
     // {
       rofi-config = final.callPackage ./rofi-config { };
       opencode = final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { };
-      opencode-antigravity-auth =
-        inputs.opencode-antigravity-auth.packages.${prev.stdenv.hostPlatform.system}.default;
     };
 
   fsread-nvim = final.vimUtils.buildVimPlugin {
