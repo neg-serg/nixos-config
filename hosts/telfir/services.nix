@@ -212,7 +212,7 @@ lib.mkMerge [
       # Enable Avahi (mDNS) so iOS/macOS can resolve *.local and discover SMB shares
       avahi.enable = true;
       # Enable Samba profile on this host (guest-access share under /zero/sync/smb)
-      samba.enable = true;
+      samba.enable = false;
       # Run a Bitcoin Core node with data stored under /zero/bitcoin-node
       # Temporarily disabled
       bitcoind = {
