@@ -429,6 +429,7 @@ api.cmap('<Enter>', function () {
     return true;
   }
 
+
   const text = input.value.trim();
   const focused = getSkElement('#sk_omnibarSearchResult li.focused');
 
@@ -439,45 +440,76 @@ api.cmap('<Enter>', function () {
     if (index > 0) isFirstOrNone = false;
   }
 
-  const isSingleWord = !/\s/.test(text);
+  // If user selected a specific item (not the first one/input), click it
+  if (!isFirstOrNone && focused) {
+    focused.click();
+    return;
+  }
 
-  if (isFirstOrNone && isSingleWord && text.length > 0) {
-    // Smart Domain Detection
-    const hasProtocol = /^[a-zA-Z]+:\/\//.test(text);
-    const isLocalhost = text === 'localhost' || text.startsWith('localhost:');
-    const hasDot = text.includes('.') && !text.startsWith('.') && !text.endsWith('.');
-    const isIP = /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(:[0-9]+)?$/.test(text);
+  if (text.length === 0) return;
 
-    if (hasProtocol || isLocalhost || hasDot || isIP) {
-      let url = text;
-      if (!hasProtocol) {
-        url = 'http://' + url;
-      }
+  /* 
+     Logic:
+     1. Check for Multi-Engine Flags (-y, -g, etc.) -> Search
+     2. No Flags + Spaces -> Search (Google)
+     3. No Flags + No Spaces -> URL
+  */
 
-      api.Front.showBanner("Opening URL: " + url);
-      api.tabOpenLink(url);
-      api.Front.closeOmnibar();
-    } else {
-      // Single word, no dot -> Search
-      api.Front.showBanner("Searching: " + text);
-      api.tabOpenLink('https://www.google.com/search?q=' + encodeURIComponent(text));
-      api.Front.closeOmnibar();
-    }
+  let searchUrl = null;
+  let query = text;
+  let engineName = "";
+
+  if (text.endsWith(' -y')) {
+    searchUrl = 'https://www.youtube.com/results?search_query=';
+    query = text.slice(0, -3);
+    engineName = "YouTube";
+  } else if (text.endsWith(' -w')) {
+    searchUrl = 'https://en.wikipedia.org/wiki/Special:Search?search=';
+    query = text.slice(0, -3);
+    engineName = "Wikipedia";
+  } else if (text.endsWith(' -gh')) {
+    searchUrl = 'https://github.com/search?q=';
+    query = text.slice(0, -4);
+    engineName = "GitHub";
+  } else if (text.endsWith(' -d')) {
+    searchUrl = 'https://duckduckgo.com/?q=';
+    query = text.slice(0, -3);
+    engineName = "DuckDuckGo";
+  } else if (text.endsWith(' -npm')) {
+    searchUrl = 'https://www.npmjs.com/search?q=';
+    query = text.slice(0, -5);
+    engineName = "NPM";
+  } else if (text.endsWith(' -g')) {
+    searchUrl = 'https://www.google.com/search?q=';
+    query = text.slice(0, -3);
+    engineName = "Google";
+  } else if (/\s/.test(input.value)) {
+    // No flags, but has spaces (even padded) -> Default Search
+    searchUrl = 'https://www.google.com/search?q=';
+    engineName = "Google";
+  }
+
+  if (searchUrl) {
+    api.Front.showBanner(`Searching ${engineName}: ${query}`);
+    api.tabOpenLink(searchUrl + encodeURIComponent(query));
+    api.Front.closeOmnibar();
   } else {
-    // Fallback to default (click focused item or multi-word search)
-    if (focused) {
-      focused.click();
-    } else if (text.length > 0) {
-      api.Front.showBanner("Searching: " + text);
-      api.tabOpenLink('https://www.google.com/search?q=' + encodeURIComponent(text));
-      api.Front.closeOmnibar();
+    // Default: Treat as URL
+    let url = text;
+    // If no protocol, prepend http://
+    if (!/^[a-zA-Z]+:\/\//.test(text)) {
+      url = 'http://' + url;
     }
+
+    api.Front.showBanner("Opening URL: " + url);
+    api.tabOpenLink(url);
+    api.Front.closeOmnibar();
   }
 });
 
 // ========== Omnibar Hotkeys ==========
-// Ctrl+G: Convert current input to Google search
-api.cmap('<Ctrl-g>', function () {
+// Ctrl+Alt+G: Convert current input to Google search
+api.cmap('<Ctrl-Alt-g>', function () {
   const input = document.querySelector('#sk_omnibarSearchArea input');
   if (input && input.value) {
     const query = input.value;
@@ -485,8 +517,8 @@ api.cmap('<Ctrl-g>', function () {
   }
 });
 
-// Ctrl+D: Convert current input to DuckDuckGo search
-api.cmap('<Ctrl-d>', function () {
+// Ctrl+Alt+D: Convert current input to DuckDuckGo search
+api.cmap('<Ctrl-Alt-d>', function () {
   const input = document.querySelector('#sk_omnibarSearchArea input');
   if (input && input.value) {
     const query = input.value;
@@ -494,8 +526,8 @@ api.cmap('<Ctrl-d>', function () {
   }
 });
 
-// Ctrl+Y: Convert current input to YouTube search
-api.cmap('<Ctrl-y>', function () {
+// Ctrl+Alt+Y: Convert current input to YouTube search
+api.cmap('<Ctrl-Alt-y>', function () {
   const input = document.querySelector('#sk_omnibarSearchArea input');
   if (input && input.value) {
     const query = input.value;
