@@ -374,8 +374,9 @@ lib.mkMerge [
     };
 
     services = lib.mkMerge [
+    services = lib.mkMerge [
       {
-        services.ncps = {
+        ncps = {
           enable = true;
           cache.hostName = "your-ncps-hostname";
           upstream = {
