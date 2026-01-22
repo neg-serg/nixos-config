@@ -15,6 +15,7 @@
     microvm = { url = "github:microvm-nix/microvm.nix"; inputs.nixpkgs.follows = "nixpkgs"; };
     nix-flatpak.url = "github:gmodena/nix-flatpak";
     nix-maid.url = "github:viperML/nix-maid";
+    ncps = { url = "github:kalbasit/ncps"; inputs.nixpkgs.follows = "nixpkgs"; };
     nur = { url = "github:nix-community/NUR"; inputs.nixpkgs.follows = "nixpkgs"; };
     nyarch-assistant = { url = "github:neg-serg/nyarch-assistant"; inputs.nixpkgs.follows = "nixpkgs"; };
     nyx = { url = "github:chaotic-cx/nyx"; inputs.nixpkgs.follows = "nixpkgs"; inputs.rust-overlay.follows = "rust-overlay"; };
