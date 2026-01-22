@@ -1,6 +1,7 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
   imports = [
+    inputs.ncps.nixosModules.default
 
     ./hardware.nix
     ./networking.nix
