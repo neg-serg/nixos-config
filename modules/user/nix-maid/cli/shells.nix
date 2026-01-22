@@ -108,7 +108,9 @@ let
   # Kitty Scrollback Path (for session variable)
   nixKsbPath = "${pkgs.vimPlugins.kitty-scrollback-nvim}/python/kitty_scrollback_nvim.py";
 
-  shellAliases = { };
+  shellAliases = {
+    ping = "mtr";
+  };
 in
 {
   config = lib.mkMerge [
@@ -155,10 +157,12 @@ in
         pkgs.cava # Console audio visualizer
         pkgs.peaclock # Customizable clock for terminal
         pkgs.curl # HTTP client for weather fetching
+        pkgs.mtr # Network diagnostic tool
       ];
 
       environment.sessionVariables = {
         ZDOTDIR = "$HOME/.config/zsh";
+
         TERMINAL = "kitty";
         MANWIDTH = "80";
         GREP_COLOR = "37;45";
