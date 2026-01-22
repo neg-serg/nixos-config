@@ -3,7 +3,6 @@
   config,
   neg,
   impurity ? null,
-  pkgs,
   ...
 }:
 let
