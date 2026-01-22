@@ -411,9 +411,18 @@ api.addSearchAlias('np', 'npm', 'https://www.npmjs.com/search?q=');
 // Force all inputs to be URLs by default (pass-through)
 settings.defaultSearchEngine = 'g';
 
-// Smart Enter: No spaces -> URL, Spaces -> Search
-// Smart Enter Logic (Omnibar Mode Mapping)
-const omnibarEnterHandler = function () {
+// Smart Enter Logic (MutationObserver Injection)
+const customEnterHandler = function (e) {
+  if (e.key !== 'Enter') return;
+
+  e.stopImmediatePropagation();
+  e.stopPropagation();
+
+  const input = e.target;
+  const text = input.value.trim();
+
+  if (text.length === 0) return;
+
   const getSkElement = (selector) => {
     const skFrame = document.querySelector('#sk_frame');
     if (skFrame && skFrame.contentDocument) {
@@ -423,13 +432,6 @@ const omnibarEnterHandler = function () {
       (document.body.shadowRoot && document.body.shadowRoot.querySelector(selector));
   };
 
-  const input = getSkElement('#sk_omnibarSearchArea input');
-  if (!input) {
-    // If we can't find input, can't assume anything.
-    return;
-  }
-
-  const text = input.value.trim();
   const focused = getSkElement('#sk_omnibarSearchResult li.focused');
 
   let isFirstOrNone = true;
@@ -439,22 +441,12 @@ const omnibarEnterHandler = function () {
     if (index > 0) isFirstOrNone = false;
   }
 
-  // If user selected a specific item (not the first one/input), and it's not the input mirroring
-  // We trigger a click on it.
   if (!isFirstOrNone && focused) {
     focused.click();
     return;
   }
 
-  if (text.length === 0) return;
-
-  /* 
-     Logic:
-     1. Check for Multi-Engine Flags (-y, -g, etc.) -> Search
-     2. No Flags + Spaces -> Search (Google)
-     3. No Flags + No Spaces -> URL
-  */
-
+  // --- Custom Logic for Input Text ---
   let searchUrl = null;
   let query = text;
   let engineName = "";
@@ -497,29 +489,79 @@ const omnibarEnterHandler = function () {
   }
 
   if (searchUrl) {
-    // api.Front.showBanner(`DEBUG: Search ${engineName}: ${query}`);
     api.tabOpenLink(searchUrl + encodeURIComponent(query));
     api.Front.closeOmnibar();
   } else {
     // Treat as URL
     let url = text;
-    // If no protocol, prepend http://
     if (!/^[a-zA-Z]+:\/\//.test(url)) {
       url = 'http://' + url;
     }
-
-    // api.Front.showBanner("DEBUG: Opening URL: " + url);
     api.tabOpenLink(url);
     api.Front.closeOmnibar();
   }
 };
 
-// Map Enter key in Omnibar to our custom handler
-api.cmap('<Enter>', omnibarEnterHandler);
-api.cmap('<Return>', omnibarEnterHandler);
+// Robust Injection Mechanism using MutationObserver
+const setupOmnibarObserver = () => {
+  const tryAttach = (node) => {
+    if (node && node.querySelector) {
+      const input = node.querySelector('#sk_omnibarSearchArea input') ||
+        (node.id === 'sk_omnibarSearchArea' && node.querySelector('input'));
 
+      if (input) {
+        // console.log("SurfingKeys: Found input via MutationObserver");
+        input.removeEventListener('keydown', customEnterHandler, true);
+        input.addEventListener('keydown', customEnterHandler, true);
+        return true;
+      }
+    }
+    return false;
+  };
 
-api.Front.showBanner("SurfingKeys Config Loaded (CMAP Mode)");
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.addedNodes.length) {
+        for (const node of mutation.addedNodes) {
+          if (tryAttach(node)) return;
+          // Deep check if needed, but SK usually inserts the whole omnibar
+          if (node.childNodes && node.childNodes.length) {
+            // Basic recursion for shallow trees (SK structure isn't deep)
+            for (const child of node.childNodes) {
+              if (tryAttach(child)) return;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // Observe the body (where SK usually injects #sk_frame or shadow host)
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // Also check if already present
+  const getSkInput = () => document.querySelector('#sk_omnibarSearchArea input') ||
+    (document.body.shadowRoot && document.body.shadowRoot.querySelector('#sk_omnibarSearchArea input'));
+
+  const existing = getSkInput();
+  if (existing) {
+    existing.removeEventListener('keydown', customEnterHandler, true);
+    existing.addEventListener('keydown', customEnterHandler, true);
+  }
+};
+
+// Start Observer
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupOmnibarObserver);
+} else {
+  setupOmnibarObserver();
+}
+
+api.Front.showBanner("SurfingKeys Config Loaded (Observer Mode)");
+
+// Remove failed cmap attempts
+api.cmap('<Enter>', null);
+api.cmap('<Return>', null);
 
 // ========== Omnibar Hotkeys ==========
 // Ctrl+Alt+G: Convert current input to Google search
