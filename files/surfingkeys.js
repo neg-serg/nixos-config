@@ -411,10 +411,16 @@ api.addSearchAlias('np', 'npm', 'https://www.npmjs.com/search?q=');
 settings.defaultSearchEngine = 'g';
 
 // Smart Enter: No spaces -> URL, Spaces -> Search
-// Smart Enter: No spaces -> URL, Spaces -> Search
-api.cunmap('<Enter>');
+// Smart Enter Logic (DOM-level Interception)
+// We hijack the Omnibar input event directly because api.cmap is unreliable for this specific overrides.
 
-const customEnterHandler = function () {
+const customEnterHandler = function (e) {
+  if (e.key !== 'Enter') return;
+
+  // Prevent default SurfingKeys behavior immediately
+  e.stopImmediatePropagation();
+  e.preventDefault();
+
   try {
     // Helper to find elements inside Shadow DOM or standard DOM
     const getSkElement = (selector) => {
@@ -429,7 +435,7 @@ const customEnterHandler = function () {
     const input = getSkElement('#sk_omnibarSearchArea input');
     if (!input) {
       api.Front.showBanner("DEBUG: Input Not Found! Fallback...");
-      return true;
+      return;
     }
 
     const text = input.value.trim();
@@ -444,6 +450,10 @@ const customEnterHandler = function () {
 
     // If user selected a specific item (not the first one/input), click it
     if (!isFirstOrNone && focused) {
+      // We need to temporarily unbind to allow the click to work naturally? 
+      // Or just dispatch a click?
+      // Since we stopped propagation, we might need to handle this carefully.
+      // Actually, standard behavior is to click. Let's try manual click.
       focused.click();
       return;
     }
@@ -513,10 +523,39 @@ const customEnterHandler = function () {
   }
 };
 
-api.cmap('<Enter>', customEnterHandler);
-api.cmap('<Ctrl-Enter>', customEnterHandler);
+// Wrap openOmnibar to inject the listener
+const originalOpenOmnibar = api.Front.openOmnibar;
+api.Front.openOmnibar = function (args) {
+  originalOpenOmnibar(args);
 
-api.Front.showBanner("SurfingKeys Config Loaded (DEBUG Mode)");
+  // Wait slightly for DOM to be ready
+  setTimeout(() => {
+    // Helper to find elements inside Shadow DOM or standard DOM
+    const getSkElement = (selector) => {
+      const skFrame = document.querySelector('#sk_frame');
+      if (skFrame && skFrame.contentDocument) {
+        return skFrame.contentDocument.querySelector(selector);
+      }
+      return document.querySelector(selector) ||
+        (document.body.shadowRoot && document.body.shadowRoot.querySelector(selector));
+    };
+
+    const input = getSkElement('#sk_omnibarSearchArea input');
+    if (input) {
+      // Remove old listener if exists (to be safe)
+      input.removeEventListener('keydown', customEnterHandler);
+      // Add new listener (capture phase to ensure we get it first?)
+      // Actually bubble phase with stopImmediatePropagation is usually enough if we are attached to the input.
+      input.addEventListener('keydown', customEnterHandler);
+      // api.Front.showBanner("DEBUG: Listener Attached");
+    } else {
+      console.log("DEBUG: Input not found for listener injection");
+    }
+  }, 100);
+};
+
+
+api.Front.showBanner("SurfingKeys Config Loaded (DOM-Inject Mode)");
 
 // ========== Omnibar Hotkeys ==========
 // Ctrl+Alt+G: Convert current input to Google search
