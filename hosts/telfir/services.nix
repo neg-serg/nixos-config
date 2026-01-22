@@ -643,12 +643,14 @@ lib.mkMerge [
         # Disable runtime logrotate check (build-time check remains). Avoids false negatives
         # when rotating files under non-standard paths or missing until first run.
         logrotate-checkconf.enable = false;
-
+        
         # Inject Resilio Web UI credentials from SOPS into generated config.json
         resilio = lib.mkIf (hasResilioSecret && config.services.resilio.enable) {
           serviceConfig.ExecStartPre = lib.mkAfter [ resilioAuthScript ];
         };
       };
+
+
 
       timers."bitcoind-textfile-metrics" = {
         enable = false;
@@ -660,6 +662,17 @@ lib.mkMerge [
           Unit = "bitcoind-textfile-metrics.service";
         };
       };
+    };
+
+    # Configure Nix to use the local NCPS cache
+    nix.settings = {
+      substituters = lib.mkForce [
+        "http://127.0.0.1:8501"
+        "https://cache.nixos.org"
+      ];
+      trusted-public-keys = [
+        "cache.example.com:bBR/xna7TbBMPQnlakT/cuLs6b/J4afpXhNJfjcFM+k="
+      ];
     };
   }
   (lib.mkIf grafanaEnabled {
