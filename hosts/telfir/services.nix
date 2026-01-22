@@ -390,6 +390,8 @@ lib.mkMerge [
           };
         };
 
+
+
         # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
         unbound.settings.server."local-data" = map (s: "\"${s}\"") unboundLocalData;
 
@@ -737,4 +739,18 @@ lib.mkMerge [
   (lib.mkIf (config.features.virt.docker.enable or false) {
     environment.systemPackages = [ pkgs.docker-compose ];
   })
+  {
+    systemd.services.ncps.serviceConfig.ExecStartPre = lib.mkForce [
+      (pkgs.writeShellScript "ncps-init-db" ''
+         ${pkgs.dbmate}/bin/dbmate \
+           --migrations-dir=${pkgs.fetchFromGitHub {
+             owner = "kalbasit";
+             repo = "ncps";
+             rev = "935417859d2671290be8a8f4722e6cd1925dc41f";
+             sha256 = "0ib819jiz0jq9xhzg8k75mv7qkmkb01yjjfzcj1v515f9if95ypf";
+           }}/db/migrations/sqlite \
+           --url=sqlite:/var/lib/ncps/db/db.sqlite up
+      '')
+    ];
+  }
 ]
