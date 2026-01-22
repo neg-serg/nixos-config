@@ -377,16 +377,15 @@ lib.mkMerge [
       {
         ncps = {
           enable = true;
-          cache.hostName = "your-ncps-hostname";
+          cache = {
+            hostName = "cache.example.com";
+            dataPath = "/zero/ncps";
+            tempPath = "/zero/ncps-temp";
+            maxSize = "150G";
+          };
           upstream = {
-            caches = [
-              "https://cache.nixos.org"
-              "https://nix-community.cachix.org"
-            ];
-            publicKeys = [
-              "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-              "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-            ];
+            caches = [ "https://cache.nixos.org" ];
+            publicKeys = [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ];
           };
         };
 
@@ -552,6 +551,9 @@ lib.mkMerge [
         # Resilio state / license storage (service runs as rslsync)
         "d /zero/sync/.state 0700 rslsync rslsync - -"
         "d /zero/sync/upload-next 0755 neg neg - -"
+        # NCPS storage
+        "d /zero/ncps 0750 ncps ncps - -"
+        "d /zero/ncps-temp 0750 ncps ncps - -"
       ];
       services = {
         # Энергосбережение по умолчанию для меньшего тепла/шума
