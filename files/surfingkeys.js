@@ -242,6 +242,7 @@ settings.theme = `
 
 #sk_tabs div.sk_tab_title {
   color: var(--fg) !important;
+  font-weight: 600 !important;
 }
 
 #sk_tabs div.sk_tab_url {
@@ -411,148 +412,114 @@ api.addSearchAlias('np', 'npm', 'https://www.npmjs.com/search?q=');
 settings.defaultSearchEngine = 'g';
 
 // Smart Enter: No spaces -> URL, Spaces -> Search
-// Smart Enter Logic (DOM-level Interception)
-// We hijack the Omnibar input event directly because api.cmap is unreliable for this specific overrides.
+// Smart Enter Logic (Omnibar Mode Mapping)
+const omnibarEnterHandler = function () {
+  const getSkElement = (selector) => {
+    const skFrame = document.querySelector('#sk_frame');
+    if (skFrame && skFrame.contentDocument) {
+      return skFrame.contentDocument.querySelector(selector);
+    }
+    return document.querySelector(selector) ||
+      (document.body.shadowRoot && document.body.shadowRoot.querySelector(selector));
+  };
 
-const customEnterHandler = function (e) {
-  if (e.key !== 'Enter') return;
+  const input = getSkElement('#sk_omnibarSearchArea input');
+  if (!input) {
+    // If we can't find input, can't assume anything.
+    return;
+  }
 
-  // Prevent default SurfingKeys behavior
-  e.stopImmediatePropagation();
-  e.stopPropagation();
-  e.preventDefault();
+  const text = input.value.trim();
+  const focused = getSkElement('#sk_omnibarSearchResult li.focused');
 
-  try {
-    // Helper to find elements inside Shadow DOM or standard DOM
-    const getSkElement = (selector) => {
-      const skFrame = document.querySelector('#sk_frame');
-      if (skFrame && skFrame.contentDocument) {
-        return skFrame.contentDocument.querySelector(selector);
-      }
-      return document.querySelector(selector) ||
-        (document.body.shadowRoot && document.body.shadowRoot.querySelector(selector));
-    };
+  let isFirstOrNone = true;
+  if (focused && focused.parentElement) {
+    const children = Array.from(focused.parentElement.children);
+    const index = children.indexOf(focused);
+    if (index > 0) isFirstOrNone = false;
+  }
 
-    const input = getSkElement('#sk_omnibarSearchArea input');
-    if (!input) {
-      api.Front.showBanner("DEBUG: Input Not Found! Fallback...");
-      return;
+  // If user selected a specific item (not the first one/input), and it's not the input mirroring
+  // We trigger a click on it.
+  if (!isFirstOrNone && focused) {
+    focused.click();
+    return;
+  }
+
+  if (text.length === 0) return;
+
+  /* 
+     Logic:
+     1. Check for Multi-Engine Flags (-y, -g, etc.) -> Search
+     2. No Flags + Spaces -> Search (Google)
+     3. No Flags + No Spaces -> URL
+  */
+
+  let searchUrl = null;
+  let query = text;
+  let engineName = "";
+
+  // 1. Explicit Flags
+  if (text.endsWith(' -y')) {
+    searchUrl = 'https://www.youtube.com/results?search_query=';
+    query = text.slice(0, -3);
+    engineName = "YouTube";
+  } else if (text.endsWith(' -w')) {
+    searchUrl = 'https://en.wikipedia.org/wiki/Special:Search?search=';
+    query = text.slice(0, -3);
+    engineName = "Wikipedia";
+  } else if (text.endsWith(' -gh')) {
+    searchUrl = 'https://github.com/search?q=';
+    query = text.slice(0, -4);
+    engineName = "GitHub";
+  } else if (text.endsWith(' -d')) {
+    searchUrl = 'https://duckduckgo.com/?q=';
+    query = text.slice(0, -3);
+    engineName = "DuckDuckGo";
+  } else if (text.endsWith(' -npm')) {
+    searchUrl = 'https://www.npmjs.com/search?q=';
+    query = text.slice(0, -5);
+    engineName = "NPM";
+  } else if (text.endsWith(' -g')) {
+    searchUrl = 'https://www.google.com/search?q=';
+    query = text.slice(0, -3);
+    engineName = "Google";
+  }
+  // 2. URL Detection (Domains, IPs, Protocols)
+  // If it looks like a domain (has dot, no spaces) -> Treat as URL
+  else if (text.indexOf(' ') === -1 && (text.indexOf('.') !== -1 || text.includes('://') || text === 'localhost')) {
+    searchUrl = null; // Assert null
+  }
+  // 3. Search Fallback (Has spaces OR is a single word without dots)
+  else {
+    searchUrl = 'https://www.google.com/search?q=';
+    engineName = "Google";
+  }
+
+  if (searchUrl) {
+    // api.Front.showBanner(`DEBUG: Search ${engineName}: ${query}`);
+    api.tabOpenLink(searchUrl + encodeURIComponent(query));
+    api.Front.closeOmnibar();
+  } else {
+    // Treat as URL
+    let url = text;
+    // If no protocol, prepend http://
+    if (!/^[a-zA-Z]+:\/\//.test(url)) {
+      url = 'http://' + url;
     }
 
-    const text = input.value.trim();
-    const rawValue = input.value;
-
-    // Check if user is selecting a suggestion from the list
-    const focused = getSkElement('#sk_omnibarSearchResult li.focused');
-    let isFirstOrNone = true;
-    if (focused && focused.parentElement) {
-      const children = Array.from(focused.parentElement.children);
-      const index = children.indexOf(focused);
-      if (index > 0) isFirstOrNone = false;
-    }
-
-    // If user selected a specific item (not the first one/input), click it
-    if (!isFirstOrNone && focused) {
-      focused.click();
-      return;
-    }
-
-    if (text.length === 0) return;
-
-    let searchUrl = null;
-    let query = text;
-    let engineName = "";
-
-    // 1. Explicit Flags
-    if (text.endsWith(' -y')) {
-      searchUrl = 'https://www.youtube.com/results?search_query=';
-      query = text.slice(0, -3);
-      engineName = "YouTube";
-    } else if (text.endsWith(' -w')) {
-      searchUrl = 'https://en.wikipedia.org/wiki/Special:Search?search=';
-      query = text.slice(0, -3);
-      engineName = "Wikipedia";
-    } else if (text.endsWith(' -gh')) {
-      searchUrl = 'https://github.com/search?q=';
-      query = text.slice(0, -4);
-      engineName = "GitHub";
-    } else if (text.endsWith(' -d')) {
-      searchUrl = 'https://duckduckgo.com/?q=';
-      query = text.slice(0, -3);
-      engineName = "DuckDuckGo";
-    } else if (text.endsWith(' -npm')) {
-      searchUrl = 'https://www.npmjs.com/search?q=';
-      query = text.slice(0, -5);
-      engineName = "NPM";
-    } else if (text.endsWith(' -g')) {
-      searchUrl = 'https://www.google.com/search?q=';
-      query = text.slice(0, -3);
-      engineName = "Google";
-    }
-    // 2. URL Detection (Domains, IPs, Protocols)
-    // If it looks like a domain (has dot, no spaces) -> Treat as URL
-    else if (text.indexOf(' ') === -1 && (text.indexOf('.') !== -1 || text.includes('://') || text === 'localhost')) {
-      searchUrl = null; // Assert null
-    }
-    // 3. Search Fallback (Has spaces OR is a single word without dots)
-    else {
-      searchUrl = 'https://www.google.com/search?q=';
-      engineName = "Google";
-    }
-
-    if (searchUrl) {
-      api.Front.showBanner(`DEBUG: Search ${engineName}: ${query}`);
-      api.tabOpenLink(searchUrl + encodeURIComponent(query));
-      api.Front.closeOmnibar();
-    } else {
-      // Treat as URL
-      let url = text;
-      if (!/^[a-zA-Z]+:\/\//.test(url)) {
-        url = 'http://' + url;
-      }
-
-      api.Front.showBanner("DEBUG: Opening URL: " + url);
-      api.tabOpenLink(url);
-      api.Front.closeOmnibar();
-    }
-  } catch (e) {
-    api.Front.showBanner("DEBUG ERROR: " + e.message);
-    console.error(e);
+    // api.Front.showBanner("DEBUG: Opening URL: " + url);
+    api.tabOpenLink(url);
+    api.Front.closeOmnibar();
   }
 };
 
-// Wrap openOmnibar to inject the listener
-const originalOpenOmnibar = api.Front.openOmnibar;
-api.Front.openOmnibar = function (args) {
-  originalOpenOmnibar(args);
-
-  // Wait slightly for DOM to be ready
-  setTimeout(() => {
-    // Helper to find elements inside Shadow DOM or standard DOM
-    const getSkElement = (selector) => {
-      const skFrame = document.querySelector('#sk_frame');
-      if (skFrame && skFrame.contentDocument) {
-        return skFrame.contentDocument.querySelector(selector);
-      }
-      return document.querySelector(selector) ||
-        (document.body.shadowRoot && document.body.shadowRoot.querySelector(selector));
-    };
-
-    const input = getSkElement('#sk_omnibarSearchArea input');
-    if (input) {
-      // Remove old listener if exists (to be safe)
-      input.removeEventListener('keydown', customEnterHandler);
-      // Add new listener (capture phase to ensure we get it first!)
-      input.addEventListener('keydown', customEnterHandler, true);
-      // api.Front.showBanner("DEBUG: Listener Attached (Capture Mode)");
-    } else {
-      console.log("DEBUG: Input not found for listener injection");
-    }
-  }, 100);
-};
+// Map Enter key in Omnibar to our custom handler
+api.cmap('<Enter>', omnibarEnterHandler);
+api.cmap('<Return>', omnibarEnterHandler);
 
 
-api.Front.showBanner("SurfingKeys Config Loaded (DOM-Inject Mode)");
+api.Front.showBanner("SurfingKeys Config Loaded (CMAP Mode)");
 
 // ========== Omnibar Hotkeys ==========
 // Ctrl+Alt+G: Convert current input to Google search
