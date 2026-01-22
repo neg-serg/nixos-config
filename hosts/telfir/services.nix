@@ -374,7 +374,6 @@ lib.mkMerge [
     };
 
     services = lib.mkMerge [
-    services = lib.mkMerge [
       {
         ncps = {
           enable = true;
