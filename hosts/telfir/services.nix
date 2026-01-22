@@ -751,7 +751,7 @@ lib.mkMerge [
               sha256 = "0ib819jiz0jq9xhzg8k75mv7qkmkb01yjjfzcj1v515f9if95ypf";
             }
           }/db/migrations/sqlite \
-          --url=sqlite:/var/lib/ncps/db/db.sqlite up
+          --url=sqlite:/zero/ncps/db/db.sqlite up
       '')
     ];
   }
