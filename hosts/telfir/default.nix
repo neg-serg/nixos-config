@@ -8,7 +8,7 @@
     ./virtualisation/lxc.nix
   ];
 
-  system.preserveFlake = true;
+  system.preserveFlake = false;
 
   features.gui.walker.enable = false;
   features.hardware.amdgpu.rocm.enable = true;
