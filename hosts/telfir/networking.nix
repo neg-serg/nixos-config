@@ -48,8 +48,8 @@ _: {
       };
     };
     wait-online = {
-      enable = false;       # Don't block boot waiting for network
-      anyInterface = true;  # (kept for reference if re-enabled)
+      enable = false; # Don't block boot waiting for network
+      anyInterface = true; # (kept for reference if re-enabled)
     };
   };
 
@@ -58,7 +58,7 @@ _: {
   systemd.sockets."systemd-rfkill".enable = false;
 
   # Ensure all wireless stacks are force-disabled
-  networking.wireless.enable = false;        # wpa_supplicant
-  networking.wireless.iwd.enable = false;    # iwd
+  networking.wireless.enable = false; # wpa_supplicant
+  networking.wireless.iwd.enable = false; # iwd
 
 }
