@@ -412,22 +412,28 @@ api.addSearchAlias('np', 'npm', 'https://www.npmjs.com/search?q=');
 settings.defaultSearchEngine = 'g';
 
 // Smart Enter: No spaces -> URL, Spaces -> Search
-// Smart Enter Logic (Omnibar Mode Mapping)
 // Smart Enter Logic (Robust Injection with Iframe Support)
 const customEnterHandler = function (e) {
   if (e.key !== 'Enter') return;
 
+  // DEBUG BANNER IN HANDLER
+  // Un-comment the line below if nothing happens
+  api.Front.showBanner("DEBUG: HANDLER FIRED!");
+
   e.stopImmediatePropagation();
   e.stopPropagation();
 
-  const input = e.target;
-  const text = input.value.trim();
+  // Handle Target Resolution
+  const target = e.target;
+  const input = (target.tagName === 'INPUT') ? target :
+    (target.querySelector ? target.querySelector('input') : null);
 
+  if (!input) return;
+
+  const text = input.value.trim();
   if (text.length === 0) return;
 
-  // Resolve document based on context (Iframe aware)
   const doc = input.ownerDocument || document;
-
   const focused = doc.querySelector('#sk_omnibarSearchResult li.focused');
 
   let isFirstOrNone = true;
@@ -494,15 +500,20 @@ const customEnterHandler = function (e) {
 const setupIframeInjector = () => {
   const tryInject = (entryPoint, isIframe = false) => {
     try {
-      const doc = isIframe ? entryPoint.contentDocument : entryPoint;
-      if (!doc) return false;
+      const win = isIframe ? entryPoint.contentWindow : window;
+      const doc = isIframe ? entryPoint.contentDocument : document;
 
+      if (!win || !doc) return false;
+
+      // Check if input exists just to be sure
       const input = doc.querySelector('#sk_omnibarSearchArea input');
       if (input) {
-        // Found input, inject listener
-        input.removeEventListener('keydown', customEnterHandler, true);
-        input.addEventListener('keydown', customEnterHandler, true);
-        // api.Front.showBanner("Success: Injected Enter Handler into Omnibar");
+        // Attach to WINDOW in CAPTURE mode for maximum priority
+        win.removeEventListener('keydown', customEnterHandler, true);
+        win.addEventListener('keydown', customEnterHandler, true);
+
+        // Debug Banner
+        api.Front.showBanner("DEBUG: Injected on Window (Capture)");
         return true;
       }
       return false;
@@ -521,10 +532,8 @@ const setupIframeInjector = () => {
           // Try immediately in case ready
           tryInject(node, true);
         } else if (node.id === 'sk_omnibarSearchArea') {
-          // Shadow/Direct injection
           tryInject(document);
         } else if (node.querySelector) {
-          // Deep scan
           if (node.querySelector('#sk_omnibarSearchArea')) tryInject(document);
         }
       }
@@ -560,14 +569,13 @@ if (document.readyState === 'loading') {
   setupIframeInjector();
 }
 
-api.Front.showBanner("SurfingKeys Config Loaded (Iframe-Aware Mode)");
+api.Front.showBanner("SurfingKeys Config Loaded (Debug Iframe Mode)");
 
 // Remove failed cmap attempts
 api.cmap('<Enter>', null);
 api.cmap('<Return>', null);
 
 // ========== Omnibar Hotkeys ==========
-// Ctrl+Alt+G: Convert current input to Google search
 api.cmap('<Ctrl-Alt-g>', function () {
   const input = document.querySelector('#sk_omnibarSearchArea input');
   if (input && input.value) {
@@ -576,7 +584,6 @@ api.cmap('<Ctrl-Alt-g>', function () {
   }
 });
 
-// Ctrl+Alt+D: Convert current input to DuckDuckGo search
 api.cmap('<Ctrl-Alt-d>', function () {
   const input = document.querySelector('#sk_omnibarSearchArea input');
   if (input && input.value) {
@@ -585,7 +592,6 @@ api.cmap('<Ctrl-Alt-d>', function () {
   }
 });
 
-// Ctrl+Alt+Y: Convert current input to YouTube search
 api.cmap('<Ctrl-Alt-y>', function () {
   const input = document.querySelector('#sk_omnibarSearchArea input');
   if (input && input.value) {
@@ -612,16 +618,13 @@ const quickmarks = {
 };
 
 Object.entries(quickmarks).forEach(([key, site]) => {
-  // Current tab (prefix 'o')
   api.mapkey('o' + key, 'Open ' + site.name, () => {
     location.href = site.url;
   });
-  // New tab (prefix 'gn' for "Go New")
   api.mapkey('gn' + key, 'Open ' + site.name + ' in new tab', () => {
     api.tabOpenLink(site.url);
   });
 });
 
 // ========== Site-specific ==========
-// Disable Surfingkeys on certain sites
 settings.blocklistPattern = /mail\.google\.com|docs\.google\.com|discord\.com/i;
