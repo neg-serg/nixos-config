@@ -1,8 +1,6 @@
 { pkgs, inputs, ... }:
 {
   imports = [
-    ../../modules/services/ncps.nix
-
     ./hardware.nix
     ./networking.nix
     ./services.nix
