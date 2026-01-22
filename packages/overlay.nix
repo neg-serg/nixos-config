@@ -27,7 +27,7 @@ in
     src = inputs.fsread-nvim;
   };
 
-  ncps = inputs.ncps.packages.${prev.system}.default;
+  ncps = inputs.ncps.packages.${prev.stdenv.hostPlatform.system}.default;
 
   # Python with LTO optimizations
   python3-lto = prev.python3.override {
