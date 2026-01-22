@@ -544,10 +544,9 @@ api.Front.openOmnibar = function (args) {
     if (input) {
       // Remove old listener if exists (to be safe)
       input.removeEventListener('keydown', customEnterHandler);
-      // Add new listener (capture phase to ensure we get it first?)
-      // Actually bubble phase with stopImmediatePropagation is usually enough if we are attached to the input.
-      input.addEventListener('keydown', customEnterHandler);
-      // api.Front.showBanner("DEBUG: Listener Attached");
+      // Add new listener (capture phase to ensure we get it first!)
+      input.addEventListener('keydown', customEnterHandler, true);
+      // api.Front.showBanner("DEBUG: Listener Attached (Capture Mode)");
     } else {
       console.log("DEBUG: Input not found for listener injection");
     }
