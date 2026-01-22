@@ -56,5 +56,7 @@
   systemd.services.flatpak-managed-install.environment = {
     NIX_SSL_CERT_FILE = "/etc/ssl/certs/ca-bundle.crt";
     SSL_CERT_FILE = "/etc/ssl/certs/ca-bundle.crt";
+    CURL_CA_BUNDLE = "/etc/ssl/certs/ca-bundle.crt";
+    GIT_SSL_CAINFO = "/etc/ssl/certs/ca-bundle.crt";
   };
 }
