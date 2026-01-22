@@ -62,7 +62,9 @@ in
 
           # Rustmission
           {
-            ".config/rustmission".source = rustmissionConf;
+            ".config/rustmission/config.toml".source = "${rustmissionConf}/config.toml";
+            ".config/rustmission/keymap.toml".source = "${rustmissionConf}/keymap.toml";
+            ".config/rustmission/categories.toml".source = "${rustmissionConf}/categories.toml";
           }
         ]
       )
