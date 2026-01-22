@@ -412,100 +412,111 @@ settings.defaultSearchEngine = 'g';
 
 // Smart Enter: No spaces -> URL, Spaces -> Search
 // Smart Enter: No spaces -> URL, Spaces -> Search
-api.cmap('<Enter>', function () {
-  // Helper to find elements inside Shadow DOM or standard DOM
-  const getSkElement = (selector) => {
-    const skFrame = document.querySelector('#sk_frame');
-    if (skFrame && skFrame.contentDocument) {
-      return skFrame.contentDocument.querySelector(selector);
-    }
-    return document.querySelector(selector) ||
-      (document.body.shadowRoot && document.body.shadowRoot.querySelector(selector));
-  };
+api.cunmap('<Enter>');
 
-  const input = getSkElement('#sk_omnibarSearchArea input');
-  if (!input) {
-    // Fallback: If we can't find the input, allow default behavior by not intercepting
-    return true;
-  }
+const customEnterHandler = function () {
+  try {
+    // Helper to find elements inside Shadow DOM or standard DOM
+    const getSkElement = (selector) => {
+      const skFrame = document.querySelector('#sk_frame');
+      if (skFrame && skFrame.contentDocument) {
+        return skFrame.contentDocument.querySelector(selector);
+      }
+      return document.querySelector(selector) ||
+        (document.body.shadowRoot && document.body.shadowRoot.querySelector(selector));
+    };
 
-
-  const text = input.value.trim();
-  const focused = getSkElement('#sk_omnibarSearchResult li.focused');
-
-  let isFirstOrNone = true;
-  if (focused && focused.parentElement) {
-    const children = Array.from(focused.parentElement.children);
-    const index = children.indexOf(focused);
-    if (index > 0) isFirstOrNone = false;
-  }
-
-  // If user selected a specific item (not the first one/input), click it
-  if (!isFirstOrNone && focused) {
-    focused.click();
-    return;
-  }
-
-  if (text.length === 0) return;
-
-  /* 
-     Logic:
-     1. Check for Multi-Engine Flags (-y, -g, etc.) -> Search
-     2. No Flags + Spaces -> Search (Google)
-     3. No Flags + No Spaces -> URL
-  */
-
-  let searchUrl = null;
-  let query = text;
-  let engineName = "";
-
-  if (text.endsWith(' -y')) {
-    searchUrl = 'https://www.youtube.com/results?search_query=';
-    query = text.slice(0, -3);
-    engineName = "YouTube";
-  } else if (text.endsWith(' -w')) {
-    searchUrl = 'https://en.wikipedia.org/wiki/Special:Search?search=';
-    query = text.slice(0, -3);
-    engineName = "Wikipedia";
-  } else if (text.endsWith(' -gh')) {
-    searchUrl = 'https://github.com/search?q=';
-    query = text.slice(0, -4);
-    engineName = "GitHub";
-  } else if (text.endsWith(' -d')) {
-    searchUrl = 'https://duckduckgo.com/?q=';
-    query = text.slice(0, -3);
-    engineName = "DuckDuckGo";
-  } else if (text.endsWith(' -npm')) {
-    searchUrl = 'https://www.npmjs.com/search?q=';
-    query = text.slice(0, -5);
-    engineName = "NPM";
-  } else if (text.endsWith(' -g')) {
-    searchUrl = 'https://www.google.com/search?q=';
-    query = text.slice(0, -3);
-    engineName = "Google";
-  } else if (/\s/.test(input.value)) {
-    // No flags, but has spaces (even padded) -> Default Search
-    searchUrl = 'https://www.google.com/search?q=';
-    engineName = "Google";
-  }
-
-  if (searchUrl) {
-    api.Front.showBanner(`Searching ${engineName}: ${query}`);
-    api.tabOpenLink(searchUrl + encodeURIComponent(query));
-    api.Front.closeOmnibar();
-  } else {
-    // Default: Treat as URL
-    let url = text;
-    // If no protocol, prepend http://
-    if (!/^[a-zA-Z]+:\/\//.test(text)) {
-      url = 'http://' + url;
+    const input = getSkElement('#sk_omnibarSearchArea input');
+    if (!input) {
+      api.Front.showBanner("DEBUG: Input Not Found! Fallback...");
+      return true;
     }
 
-    api.Front.showBanner("Opening URL: " + url);
-    api.tabOpenLink(url);
-    api.Front.closeOmnibar();
+    const text = input.value.trim();
+    const focused = getSkElement('#sk_omnibarSearchResult li.focused');
+
+    let isFirstOrNone = true;
+    if (focused && focused.parentElement) {
+      const children = Array.from(focused.parentElement.children);
+      const index = children.indexOf(focused);
+      if (index > 0) isFirstOrNone = false;
+    }
+
+    // If user selected a specific item (not the first one/input), click it
+    if (!isFirstOrNone && focused) {
+      focused.click();
+      return;
+    }
+
+    if (text.length === 0) return;
+
+    /* 
+       Logic:
+       1. Check for Multi-Engine Flags (-y, -g, etc.) -> Search
+       2. No Flags + Spaces -> Search (Google)
+       3. No Flags + No Spaces -> URL
+    */
+
+    let searchUrl = null;
+    let query = text;
+    let engineName = "";
+
+    if (text.endsWith(' -y')) {
+      searchUrl = 'https://www.youtube.com/results?search_query=';
+      query = text.slice(0, -3);
+      engineName = "YouTube";
+    } else if (text.endsWith(' -w')) {
+      searchUrl = 'https://en.wikipedia.org/wiki/Special:Search?search=';
+      query = text.slice(0, -3);
+      engineName = "Wikipedia";
+    } else if (text.endsWith(' -gh')) {
+      searchUrl = 'https://github.com/search?q=';
+      query = text.slice(0, -4);
+      engineName = "GitHub";
+    } else if (text.endsWith(' -d')) {
+      searchUrl = 'https://duckduckgo.com/?q=';
+      query = text.slice(0, -3);
+      engineName = "DuckDuckGo";
+    } else if (text.endsWith(' -npm')) {
+      searchUrl = 'https://www.npmjs.com/search?q=';
+      query = text.slice(0, -5);
+      engineName = "NPM";
+    } else if (text.endsWith(' -g')) {
+      searchUrl = 'https://www.google.com/search?q=';
+      query = text.slice(0, -3);
+      engineName = "Google";
+    } else if (/\s/.test(input.value)) {
+      // No flags, but has spaces (even padded) -> Default Search
+      searchUrl = 'https://www.google.com/search?q=';
+      engineName = "Google";
+    }
+
+    if (searchUrl) {
+      api.Front.showBanner(`DEBUG: Search ${engineName}: ${query}`);
+      api.tabOpenLink(searchUrl + encodeURIComponent(query));
+      api.Front.closeOmnibar();
+    } else {
+      // Default: Treat as URL
+      let url = text;
+      // If no protocol, prepend http://
+      if (!/^[a-zA-Z]+:\/\//.test(text)) {
+        url = 'http://' + url;
+      }
+
+      api.Front.showBanner("DEBUG: Opening URL: " + url);
+      api.tabOpenLink(url);
+      api.Front.closeOmnibar();
+    }
+  } catch (e) {
+    api.Front.showBanner("DEBUG ERROR: " + e.message);
+    console.error(e);
   }
-});
+};
+
+api.cmap('<Enter>', customEnterHandler);
+api.cmap('<Ctrl-Enter>', customEnterHandler);
+
+api.Front.showBanner("SurfingKeys Config Loaded (DEBUG Mode)");
 
 // ========== Omnibar Hotkeys ==========
 // Ctrl+Alt+G: Convert current input to Google search
