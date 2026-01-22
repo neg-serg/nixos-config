@@ -411,7 +411,9 @@ api.addSearchAlias('np', 'npm', 'https://www.npmjs.com/search?q=');
 // Force all inputs to be URLs by default (pass-through)
 settings.defaultSearchEngine = 'g';
 
-// Smart Enter Logic (MutationObserver Injection)
+// Smart Enter: No spaces -> URL, Spaces -> Search
+// Smart Enter Logic (Omnibar Mode Mapping)
+// Smart Enter Logic (Robust Injection with Iframe Support)
 const customEnterHandler = function (e) {
   if (e.key !== 'Enter') return;
 
@@ -423,16 +425,10 @@ const customEnterHandler = function (e) {
 
   if (text.length === 0) return;
 
-  const getSkElement = (selector) => {
-    const skFrame = document.querySelector('#sk_frame');
-    if (skFrame && skFrame.contentDocument) {
-      return skFrame.contentDocument.querySelector(selector);
-    }
-    return document.querySelector(selector) ||
-      (document.body.shadowRoot && document.body.shadowRoot.querySelector(selector));
-  };
+  // Resolve document based on context (Iframe aware)
+  const doc = input.ownerDocument || document;
 
-  const focused = getSkElement('#sk_omnibarSearchResult li.focused');
+  const focused = doc.querySelector('#sk_omnibarSearchResult li.focused');
 
   let isFirstOrNone = true;
   if (focused && focused.parentElement) {
@@ -449,33 +445,26 @@ const customEnterHandler = function (e) {
   // --- Custom Logic for Input Text ---
   let searchUrl = null;
   let query = text;
-  let engineName = "";
 
   // 1. Explicit Flags
   if (text.endsWith(' -y')) {
     searchUrl = 'https://www.youtube.com/results?search_query=';
     query = text.slice(0, -3);
-    engineName = "YouTube";
   } else if (text.endsWith(' -w')) {
     searchUrl = 'https://en.wikipedia.org/wiki/Special:Search?search=';
     query = text.slice(0, -3);
-    engineName = "Wikipedia";
   } else if (text.endsWith(' -gh')) {
     searchUrl = 'https://github.com/search?q=';
     query = text.slice(0, -4);
-    engineName = "GitHub";
   } else if (text.endsWith(' -d')) {
     searchUrl = 'https://duckduckgo.com/?q=';
     query = text.slice(0, -3);
-    engineName = "DuckDuckGo";
   } else if (text.endsWith(' -npm')) {
     searchUrl = 'https://www.npmjs.com/search?q=';
     query = text.slice(0, -5);
-    engineName = "NPM";
   } else if (text.endsWith(' -g')) {
     searchUrl = 'https://www.google.com/search?q=';
     query = text.slice(0, -3);
-    engineName = "Google";
   }
   // 2. URL Detection (Domains, IPs, Protocols)
   // If it looks like a domain (has dot, no spaces) -> Treat as URL
@@ -485,7 +474,6 @@ const customEnterHandler = function (e) {
   // 3. Search Fallback (Has spaces OR is a single word without dots)
   else {
     searchUrl = 'https://www.google.com/search?q=';
-    engineName = "Google";
   }
 
   if (searchUrl) {
@@ -502,62 +490,77 @@ const customEnterHandler = function (e) {
   }
 };
 
-// Robust Injection Mechanism using MutationObserver
-const setupOmnibarObserver = () => {
-  const tryAttach = (node) => {
-    if (node && node.querySelector) {
-      const input = node.querySelector('#sk_omnibarSearchArea input') ||
-        (node.id === 'sk_omnibarSearchArea' && node.querySelector('input'));
+// Injection that specifically handles Iframe loading
+const setupIframeInjector = () => {
+  const tryInject = (entryPoint, isIframe = false) => {
+    try {
+      const doc = isIframe ? entryPoint.contentDocument : entryPoint;
+      if (!doc) return false;
 
+      const input = doc.querySelector('#sk_omnibarSearchArea input');
       if (input) {
-        // console.log("SurfingKeys: Found input via MutationObserver");
+        // Found input, inject listener
         input.removeEventListener('keydown', customEnterHandler, true);
         input.addEventListener('keydown', customEnterHandler, true);
+        // api.Front.showBanner("Success: Injected Enter Handler into Omnibar");
         return true;
       }
+      return false;
+    } catch (e) {
+      // console.log("SK Injection Error:", e);
+      return false;
     }
-    return false;
   };
 
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
-      if (mutation.addedNodes.length) {
-        for (const node of mutation.addedNodes) {
-          if (tryAttach(node)) return;
-          // Deep check if needed, but SK usually inserts the whole omnibar
-          if (node.childNodes && node.childNodes.length) {
-            // Basic recursion for shallow trees (SK structure isn't deep)
-            for (const child of node.childNodes) {
-              if (tryAttach(child)) return;
-            }
-          }
+      for (const node of mutation.addedNodes) {
+        if (node.id === 'sk_frame' || node.tagName === 'IFRAME') {
+          // Wait for load
+          node.addEventListener('load', () => tryInject(node, true));
+          // Try immediately in case ready
+          tryInject(node, true);
+        } else if (node.id === 'sk_omnibarSearchArea') {
+          // Shadow/Direct injection
+          tryInject(document);
+        } else if (node.querySelector) {
+          // Deep scan
+          if (node.querySelector('#sk_omnibarSearchArea')) tryInject(document);
         }
       }
     }
   });
 
-  // Observe the body (where SK usually injects #sk_frame or shadow host)
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // Also check if already present
-  const getSkInput = () => document.querySelector('#sk_omnibarSearchArea input') ||
-    (document.body.shadowRoot && document.body.shadowRoot.querySelector('#sk_omnibarSearchArea input'));
-
-  const existing = getSkInput();
-  if (existing) {
-    existing.removeEventListener('keydown', customEnterHandler, true);
-    existing.addEventListener('keydown', customEnterHandler, true);
+  // Initial Check
+  const frame = document.querySelector('#sk_frame');
+  if (frame) {
+    tryInject(frame, true);
+    frame.addEventListener('load', () => tryInject(frame, true));
   }
+  tryInject(document);
+
+  // Hook openOmnibar just in case
+  const originalOpen = api.Front.openOmnibar;
+  api.Front.openOmnibar = function (args) {
+    originalOpen(args);
+    setTimeout(() => {
+      const frame = document.querySelector('#sk_frame');
+      if (frame) tryInject(frame, true);
+      tryInject(document);
+    }, 300);
+  };
 };
 
 // Start Observer
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupOmnibarObserver);
+  document.addEventListener('DOMContentLoaded', setupIframeInjector);
 } else {
-  setupOmnibarObserver();
+  setupIframeInjector();
 }
 
-api.Front.showBanner("SurfingKeys Config Loaded (Observer Mode)");
+api.Front.showBanner("SurfingKeys Config Loaded (Iframe-Aware Mode)");
 
 // Remove failed cmap attempts
 api.cmap('<Enter>', null);
