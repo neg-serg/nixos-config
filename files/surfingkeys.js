@@ -417,8 +417,9 @@ settings.defaultSearchEngine = 'g';
 const customEnterHandler = function (e) {
   if (e.key !== 'Enter') return;
 
-  // Prevent default SurfingKeys behavior immediately
+  // Prevent default SurfingKeys behavior
   e.stopImmediatePropagation();
+  e.stopPropagation();
   e.preventDefault();
 
   try {
@@ -439,8 +440,10 @@ const customEnterHandler = function (e) {
     }
 
     const text = input.value.trim();
-    const focused = getSkElement('#sk_omnibarSearchResult li.focused');
+    const rawValue = input.value;
 
+    // Check if user is selecting a suggestion from the list
+    const focused = getSkElement('#sk_omnibarSearchResult li.focused');
     let isFirstOrNone = true;
     if (focused && focused.parentElement) {
       const children = Array.from(focused.parentElement.children);
@@ -450,27 +453,17 @@ const customEnterHandler = function (e) {
 
     // If user selected a specific item (not the first one/input), click it
     if (!isFirstOrNone && focused) {
-      // We need to temporarily unbind to allow the click to work naturally? 
-      // Or just dispatch a click?
-      // Since we stopped propagation, we might need to handle this carefully.
-      // Actually, standard behavior is to click. Let's try manual click.
       focused.click();
       return;
     }
 
     if (text.length === 0) return;
 
-    /* 
-       Logic:
-       1. Check for Multi-Engine Flags (-y, -g, etc.) -> Search
-       2. No Flags + Spaces -> Search (Google)
-       3. No Flags + No Spaces -> URL
-    */
-
     let searchUrl = null;
     let query = text;
     let engineName = "";
 
+    // 1. Explicit Flags
     if (text.endsWith(' -y')) {
       searchUrl = 'https://www.youtube.com/results?search_query=';
       query = text.slice(0, -3);
@@ -495,8 +488,14 @@ const customEnterHandler = function (e) {
       searchUrl = 'https://www.google.com/search?q=';
       query = text.slice(0, -3);
       engineName = "Google";
-    } else if (/\s/.test(input.value)) {
-      // No flags, but has spaces (even padded) -> Default Search
+    }
+    // 2. URL Detection (Domains, IPs, Protocols)
+    // If it looks like a domain (has dot, no spaces) -> Treat as URL
+    else if (text.indexOf(' ') === -1 && (text.indexOf('.') !== -1 || text.includes('://') || text === 'localhost')) {
+      searchUrl = null; // Assert null
+    }
+    // 3. Search Fallback (Has spaces OR is a single word without dots)
+    else {
       searchUrl = 'https://www.google.com/search?q=';
       engineName = "Google";
     }
@@ -506,10 +505,9 @@ const customEnterHandler = function (e) {
       api.tabOpenLink(searchUrl + encodeURIComponent(query));
       api.Front.closeOmnibar();
     } else {
-      // Default: Treat as URL
+      // Treat as URL
       let url = text;
-      // If no protocol, prepend http://
-      if (!/^[a-zA-Z]+:\/\//.test(text)) {
+      if (!/^[a-zA-Z]+:\/\//.test(url)) {
         url = 'http://' + url;
       }
 
