@@ -11,7 +11,7 @@ let
   n = neg impurity;
   cfg = config.features.cli.yazi;
   tomlFormat = pkgs.formats.toml { };
-  
+
   yazi-wrapper = pkgs.writeShellScript "yazi-wrapper" ''
     # Find the output path argument (it's one of the args, usually 5th, but we scan)
     OUTPUT_PATH=""
@@ -21,7 +21,7 @@ let
         break
       fi
     done
-    
+
     if [[ -z "$OUTPUT_PATH" ]]; then
        exit 1
     fi
