@@ -20,7 +20,7 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "joshikarthikey";
     repo = "bsh";
-    rev = "main";
+    rev = "8ea561c5729cadaabdd80e04f7e6ecbda860c135";
     hash = "sha256-ZSM60HNqADNQ2iTbvc8hsjlyqT/56328dMryVaqXEBw=";
   };
 
@@ -55,6 +55,13 @@ stdenv.mkDerivation rec {
 
     # Prevent overwriting BSH_REPO_ROOT if already set (fixes NixOS path resolution)
     sed -i 's|^export BSH_REPO_ROOT=|[[ -z "$BSH_REPO_ROOT" ]] \&\& export BSH_REPO_ROOT=|' scripts/bsh_init.zsh
+
+    # Fix SIGSEGV by moving git_libgit2_init to main after fork
+    sed -i '/struct GitLib {/,/};/d' src/git_utils.cpp
+    sed -i '/static GitLib git_init;/d' src/git_utils.cpp
+
+    sed -i 's|#include "ipc.hpp"|#include "ipc.hpp"\n#include <git2.h>|' src/daemon.cpp
+    sed -i 's|daemonize();|daemonize();|' src/daemon.cpp
   '';
 
   # Build both client and daemon
