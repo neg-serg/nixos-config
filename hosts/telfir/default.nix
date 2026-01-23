@@ -11,6 +11,7 @@
   system.preserveFlake = false;
 
   features.gui.walker.enable = false;
+  features.web.nyxt.enable = true;
   features.hardware.amdgpu.rocm.enable = true;
   features.mail.enable = true;
   features.dev.hack.pentest = false;
