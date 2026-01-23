@@ -12,6 +12,54 @@ let
   cfg = config.features.cli.yazi;
   tomlFormat = pkgs.formats.toml { };
 
+  yazi-save-wrapper = pkgs.writeShellScript "yazi-save-wrapper" ''
+    # Find the output path argument (it's one of the args, usually 5th, but we scan)
+    OUTPUT_PATH=""
+    CURRENT_NAME=""
+    
+    # Simple arg parsing to find output path and potentially current name/folder
+    # The portal passes args like: method request_handle parent_window title ...
+    # But usually valid output path ends in .portal
+    for arg in "$@"; do
+      if [[ "$arg" == *.portal ]]; then
+        OUTPUT_PATH="$arg"
+      elif [[ "$arg" == "/"* ]]; then
+         # Heuristics: if it looks like a path, might be default dir, but we rely on yazi defaults
+         :
+      fi
+    done
+
+    if [[ -z "$OUTPUT_PATH" ]]; then
+       echo "No output path found given args: $@" >&2
+       exit 1
+    fi
+
+    CWD_FILE=$(mktemp)
+    
+    # We run kitty, but inside kitty we run a shell script that runs yazi then asks for input
+    # We explicitly wait for user input after yazi closes.
+    ${pkgs.kitty}/bin/kitty --detach=no sh -c "
+      ${pkgs.yazi}/bin/yazi --cwd-file='$CWD_FILE'
+      selected_dir=\$(cat '$CWD_FILE')
+      
+      if [ -n \"\$selected_dir\" ]; then
+        echo \"Selected directory: \$selected_dir\"
+        echo -n \"Enter filename to save as: \"
+        read filename
+        
+        if [ -n \"\$filename\" ]; then
+           # Construct full path
+           full_path=\"\$selected_dir/\$filename\"
+           # Write to the portal output file
+           echo \"\$full_path\" > '$OUTPUT_PATH'
+        else 
+           echo \"No filename entered, cancelling.\"
+        fi
+      fi
+      rm -f '$CWD_FILE'
+    "
+  '';
+
   yazi-wrapper = pkgs.writeShellScript "yazi-wrapper" ''
     # Find the output path argument (it's one of the args, usually 5th, but we scan)
     OUTPUT_PATH=""
@@ -33,6 +81,10 @@ let
   termfilechooserConfig = ''
     [filechooser]
     cmd = ${yazi-wrapper}
+    default_dir = /home/neg
+
+    [savefile]
+    cmd = ${yazi-save-wrapper}
     default_dir = /home/neg
   '';
 
