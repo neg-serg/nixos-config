@@ -9,7 +9,6 @@ in
     yandexCloud.enable = mkBool "enable Yandex Cloud CLI" false;
     broot.enable = mkBool "enable broot file manager and shell integration" false;
     yazi.enable = mkBool "enable yazi terminal file manager" true;
-    bsh.enable = mkBool "enable BSH (Better Shell History) - Git-aware predictive terminal history" true;
 
     television.enable = mkBool "enable television (blazingly fast fuzzy finder)" true;
     zcli = {
