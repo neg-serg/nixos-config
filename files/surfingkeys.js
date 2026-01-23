@@ -433,65 +433,35 @@ const customEnterHandler = function (e) {
   const text = input.value.trim();
   if (text.length === 0) return;
 
-  const doc = input.ownerDocument || document;
-  const focused = doc.querySelector('#sk_omnibarSearchResult li.focused');
-
-  let isFirstOrNone = true;
-  if (focused && focused.parentElement) {
-    const children = Array.from(focused.parentElement.children);
-    const index = children.indexOf(focused);
-    if (index > 0) isFirstOrNone = false;
-  }
-
-  if (!isFirstOrNone && focused) {
-    focused.click();
-    return;
-  }
-
   // --- Custom Logic for Input Text ---
-  let searchUrl = null;
+  // "Everything I wrote goes into the urlbar" behavior
+  // We ignore focused suggestions and just process the raw input text.
+
+  let searchUrl = 'https://www.google.com/search?q=';
   let query = text;
+  let isUrl = false;
 
-  // 1. Explicit Flags
-  if (text.endsWith(' -y')) {
-    searchUrl = 'https://www.youtube.com/results?search_query=';
-    query = text.slice(0, -3);
-  } else if (text.endsWith(' -w')) {
-    searchUrl = 'https://en.wikipedia.org/wiki/Special:Search?search=';
-    query = text.slice(0, -3);
-  } else if (text.endsWith(' -gh')) {
-    searchUrl = 'https://github.com/search?q=';
-    query = text.slice(0, -4);
-  } else if (text.endsWith(' -d')) {
-    searchUrl = 'https://duckduckgo.com/?q=';
-    query = text.slice(0, -3);
-  } else if (text.endsWith(' -npm')) {
-    searchUrl = 'https://www.npmjs.com/search?q=';
-    query = text.slice(0, -5);
-  } else if (text.endsWith(' -g')) {
-    searchUrl = 'https://www.google.com/search?q=';
-    query = text.slice(0, -3);
-  }
-  // 2. URL Detection (Domains, IPs, Protocols)
-  // If it looks like a domain (has dot, no spaces) -> Treat as URL
-  else if (text.indexOf(' ') === -1 && (text.indexOf('.') !== -1 || text.includes('://') || text === 'localhost')) {
-    searchUrl = null; // Assert null
-  }
-  // 3. Search Fallback (Has spaces OR is a single word without dots)
-  else {
-    searchUrl = 'https://www.google.com/search?q=';
+  // Simple heuristic: 
+  // 1. If it has spaces -> It is a SEARCH.
+  // 2. If no spaces, check for dots/protocols -> It might be a URL.
+  // 3. Otherwise -> SEARCH.
+
+  if (text.indexOf(' ') === -1) {
+    if (text.includes('.') || text.includes('://') || text === 'localhost') {
+      isUrl = true;
+    }
   }
 
-  if (searchUrl) {
-    api.tabOpenLink(searchUrl + encodeURIComponent(query));
-    api.Front.closeOmnibar();
-  } else {
-    // Treat as URL
+  if (isUrl) {
     let url = text;
     if (!/^[a-zA-Z]+:\/\//.test(url)) {
       url = 'http://' + url;
     }
     api.tabOpenLink(url);
+    api.Front.closeOmnibar();
+  } else {
+    // Treat as Search
+    api.tabOpenLink(searchUrl + encodeURIComponent(query));
     api.Front.closeOmnibar();
   }
 };
