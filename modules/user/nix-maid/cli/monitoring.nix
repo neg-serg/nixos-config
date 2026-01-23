@@ -125,7 +125,7 @@ in
       # Glances Config (Optimized)
       ".config/glances/glances.conf".text = ''
         [global]
-        refresh=10
+        refresh=0.1
         check_update=false
         history_size=0
 
