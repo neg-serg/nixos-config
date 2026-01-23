@@ -418,7 +418,7 @@ const customEnterHandler = function (e) {
 
   // DEBUG BANNER IN HANDLER
   // Un-comment the line below if nothing happens
-  api.Front.showBanner("DEBUG: HANDLER FIRED!");
+  // api.Front.showBanner("DEBUG: HANDLER FIRED! Input: " + (input ? input.value : "null"));
 
   e.stopImmediatePropagation();
   e.stopPropagation();
@@ -443,13 +443,10 @@ const customEnterHandler = function (e) {
 
   // Simple heuristic: 
   // 1. If it has spaces -> It is a SEARCH.
-  // 2. If no spaces, check for dots/protocols -> It might be a URL.
-  // 3. Otherwise -> SEARCH.
+  // 2. If no spaces -> It is a URL.
 
   if (text.indexOf(' ') === -1) {
-    if (text.includes('.') || text.includes('://') || text === 'localhost') {
-      isUrl = true;
-    }
+    isUrl = true;
   }
 
   if (isUrl) {
@@ -483,8 +480,10 @@ const setupIframeInjector = () => {
         win.addEventListener('keydown', customEnterHandler, true);
 
         // Debug Banner
-        api.Front.showBanner("DEBUG: Injected on Window (Capture)");
+        // api.Front.showBanner("DEBUG: Injected on Window (Capture)");
         return true;
+      } else {
+        // api.Front.showBanner("DEBUG: Input not found in " + (isIframe ? "Iframe" : "Window"));
       }
       return false;
     } catch (e) {
@@ -539,11 +538,42 @@ if (document.readyState === 'loading') {
   setupIframeInjector();
 }
 
-api.Front.showBanner("SurfingKeys Config Loaded (Debug Iframe Mode)");
+// api.Front.showBanner("SurfingKeys Config Loaded (Debug Iframe Mode)");
 
 // Remove failed cmap attempts
-api.cmap('<Enter>', null);
-api.cmap('<Return>', null);
+// Remove failed cmap attempts
+// api.cmap('<Enter>', null);
+// api.cmap('<Return>', null);
+
+// Try using CMAP as primary or fallback
+const enterCmapHandler = () => {
+  // We need to find the input to get the value
+  // This runs in the context of the main window or iframe depending on where SK is
+  const input = document.querySelector('#sk_omnibarSearchArea input') ||
+    (document.querySelector('#sk_frame') && document.querySelector('#sk_frame').contentDocument.querySelector('#sk_omnibarSearchArea input'));
+
+  if (input) {
+    customEnterHandler({
+      key: 'Enter',
+      target: input,
+      stopImmediatePropagation: () => { },
+      stopPropagation: () => { }
+    });
+  } else {
+    api.Front.showBanner("DEBUG: CMAP Enter fired but no input found");
+  }
+};
+api.cmap('<Enter>', enterCmapHandler);
+
+
+// Aggressive focus listener to catch late-spawning inputs
+window.addEventListener('focus', (e) => {
+  if (e.target && e.target.tagName === 'INPUT' && e.target.closest('#sk_omnibarSearchArea')) {
+    api.Front.showBanner("DEBUG: Focus detected on Omnibar Input");
+    e.target.removeEventListener('keydown', customEnterHandler, true);
+    e.target.addEventListener('keydown', customEnterHandler, true);
+  }
+}, true);
 
 // ========== Omnibar Hotkeys ==========
 api.cmap('<Ctrl-Alt-g>', function () {
