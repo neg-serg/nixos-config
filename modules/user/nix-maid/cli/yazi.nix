@@ -16,7 +16,7 @@ let
     # Find the output path argument (it's one of the args, usually 5th, but we scan)
     OUTPUT_PATH=""
     CURRENT_NAME=""
-    
+
     # Simple arg parsing to find output path and potentially current name/folder
     # The portal passes args like: method request_handle parent_window title ...
     # But usually valid output path ends in .portal
@@ -35,7 +35,7 @@ let
     fi
 
     CWD_FILE=$(mktemp)
-    
+
     # We run kitty, but inside kitty we run a shell script that runs yazi then asks for input
     # We explicitly wait for user input after yazi closes.
     ${pkgs.kitty}/bin/kitty --detach=no sh -c "
