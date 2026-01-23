@@ -63,7 +63,10 @@ _exists nvim && {
 
 
 # Initialize zoxide (smarter cd) if available
-(( $+commands[zoxide] )) && eval "$(zoxide init zsh --cmd z --hook prompt)"
+if (( $+commands[zoxide] )); then
+  eval "$(zoxide init zsh --no-cmd --hook prompt)"
+  alias z='__zoxide_z'
+fi
 
 typeset -gx TIMEFMT="[37m[34m⟬[37m[37m%J[34m⟭[39m[34m⟬[37m%U[34m⟭[39m[34m⟬[37muser %S[34m⟭[39m[34m⟬[37msystem %P[34m⟭[39m[34m⟬[37mcpu %*E total[34m⟭[39m[34m[39m[34m⟬[37mMem: %M kb max[34m⟭[39m"
 typeset -gx WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
