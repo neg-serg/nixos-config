@@ -18,6 +18,7 @@
     ncps = { url = "github:kalbasit/ncps"; inputs.nixpkgs.follows = "nixpkgs"; };
     nur = { url = "github:nix-community/NUR"; inputs.nixpkgs.follows = "nixpkgs"; };
     nyarch-assistant = { url = "github:neg-serg/nyarch-assistant"; inputs.nixpkgs.follows = "nixpkgs"; };
+    nyxt-bin = { url = "github:neg-serg/nyxt-bin"; inputs.nixpkgs.follows = "nixpkgs"; };
     nyx = { url = "github:chaotic-cx/nyx"; inputs.nixpkgs.follows = "nixpkgs"; inputs.rust-overlay.follows = "rust-overlay"; };
     pre-commit-hooks = { url = "github:cachix/git-hooks.nix"; inputs.nixpkgs.follows = "nixpkgs"; };
     quickshell = { url = "git+https://git.outfoxxed.me/quickshell/quickshell"; inputs.nixpkgs.follows = "nixpkgs"; };
