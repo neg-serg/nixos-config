@@ -125,9 +125,39 @@ in
       # Glances Config (Optimized)
       ".config/glances/glances.conf".text = ''
         [global]
-        refresh=5
+        refresh=10
         check_update=false
         history_size=0
+
+        [processlist]
+        cpu_careful=50
+        cpu_critical=70
+        mem_careful=50
+        mem_critical=70
+
+        # Disable heavy/unused plugins to save CPU
+        [amps]
+        disable=true
+        [cloud]
+        disable=true
+        [connections]
+        disable=true
+        [containers]
+        disable=true
+        [folders]
+        disable=true
+        [ip]
+        disable=true
+        [ports]
+        disable=true
+        [raid]
+        disable=true
+        [smart]
+        disable=true
+        [vms]
+        disable=true
+        [wifi]
+        disable=true
       '';
     })
   ];
