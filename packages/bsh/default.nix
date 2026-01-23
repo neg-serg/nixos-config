@@ -49,6 +49,12 @@ stdenv.mkDerivation rec {
     sed -i 's|include(FetchContent)|# include(FetchContent) - using system SQLiteCpp|' CMakeLists.txt
     sed -i 's|FetchContent_Declare(SQLiteCpp GIT_REPOSITORY https://github.com/SRombauts/SQLiteCpp.git GIT_TAG 3.3.1)|# FetchContent removed|' CMakeLists.txt
     sed -i 's|FetchContent_MakeAvailable(SQLiteCpp)|find_package(SQLiteCpp REQUIRED CONFIG PATHS ${sqlitecpp}/lib/cmake/SQLiteCpp)|' CMakeLists.txt
+
+    # Change hotkey from Ctrl+F to Alt+X for toggle success filter
+    sed -i "s|bindkey '^F' _bsh_toggle_success_filter|bindkey '^[x' _bsh_toggle_success_filter|" scripts/bsh_init.zsh
+    
+    # Prevent overwriting BSH_REPO_ROOT if already set (fixes NixOS path resolution)
+    sed -i 's|^export BSH_REPO_ROOT=|[[ -z "$BSH_REPO_ROOT" ]] \&\& export BSH_REPO_ROOT=|' scripts/bsh_init.zsh
   '';
 
   # Build both client and daemon
@@ -67,7 +73,7 @@ stdenv.mkDerivation rec {
 
     # Install Zsh integration script
     mkdir -p $out/share/bsh/scripts
-    install -m644 ${src}/scripts/bsh_init.zsh $out/share/bsh/scripts/bsh_init.zsh
+    install -m644 ../scripts/bsh_init.zsh $out/share/bsh/scripts/bsh_init.zsh
 
     runHook postInstall
   '';
