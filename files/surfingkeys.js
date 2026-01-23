@@ -333,15 +333,21 @@ api.unmap('O');
 api.unmap('b');
 api.unmap('v');
 
-// Smart navigation: opens omnibar for URL/Search input
-api.mapkey("t", "Open URL/Search (New Tab)", () => {
-  api.Front.openOmnibar({ type: "URLs" });
+// Add a custom "search engine" that just opens URLs directly
+api.addSearchAlias('o', 'Open URL', 'https://', 's', '', function (response) {
+  return [];
+});
+
+// Smart navigation: opens omnibar for direct URL input
+// Using SearchEngine mode with empty prefix to just open URLs
+api.mapkey("t", "Open URL (New Tab)", () => {
+  api.Front.openOmnibar({ type: "SearchEngine", extra: "o" });
 });
 
 
 
-api.mapkey("O", "Open URL/Search (New Tab)", () => {
-  api.Front.openOmnibar({ type: "URLs" });
+api.mapkey("O", "Open URL (New Tab)", () => {
+  api.Front.openOmnibar({ type: "SearchEngine", extra: "o" });
 });
 
 api.mapkey("U", "Open Recently Closed Tabs", () => {
