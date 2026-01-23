@@ -26,7 +26,6 @@ in
     "pretty-printer" = pretty_printer;
 
     # Better Shell History - Git-aware predictive terminal history tool
-    bsh = callPkg (packagesRoot + "/bsh") { };
 
     # Trader Workstation (IBKR) packaged from upstream installer
 
