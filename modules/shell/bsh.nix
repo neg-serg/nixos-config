@@ -13,13 +13,26 @@ let
 in
 {
   options.programs.bsh = {
-    enable = mkEnableOption "BSH (Better Shell History)";
+    enable = mkEnableOption "BSH (Better Shell History) - Git-aware predictive terminal history";
 
     package = mkOption {
       type = types.package;
       default = pkgs.neg.bsh;
       defaultText = literalExpression "pkgs.neg.bsh";
-      description = "The bsh package to use.";
+      description = ''
+        The bsh package to use.
+
+        BSH provides live predictive suggestions based on:
+        - Current working directory
+        - Active Git branch
+        - Historical command success rates
+
+        Key bindings (customized for NixOS):
+        - Alt+1-5: Execute suggested command
+        - Alt+Shift+1-5: Insert suggested command
+        - Alt+arrows (or Alt+f/Alt+b): Cycle search context
+        - Alt+X: Toggle success filter (hide failed commands)
+      '';
     };
   };
 
