@@ -52,7 +52,7 @@ stdenv.mkDerivation rec {
 
     # Change hotkey from Ctrl+F to Alt+X for toggle success filter
     sed -i "s|bindkey '^F' _bsh_toggle_success_filter|bindkey '^[x' _bsh_toggle_success_filter|" scripts/bsh_init.zsh
-    
+
     # Prevent overwriting BSH_REPO_ROOT if already set (fixes NixOS path resolution)
     sed -i 's|^export BSH_REPO_ROOT=|[[ -z "$BSH_REPO_ROOT" ]] \&\& export BSH_REPO_ROOT=|' scripts/bsh_init.zsh
   '';
