@@ -1,4 +1,4 @@
-bindkey -e
+# bindkey -e
 
 autoload -Uz fg-widget && zle -N fg-widget
 autoload -Uz imv
