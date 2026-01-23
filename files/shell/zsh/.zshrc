@@ -54,4 +54,8 @@ fi
 
 
 [[ $NEOVIM_TERMINAL ]] && source "${ZDOTDIR}/08-neovim-cd.zsh"
+# Transient Prompt (must be loaded after prompt setup)
+zi ice depth'1' lucid
+zi light olets/zsh-transient-prompt
+
 # vim: ft=zsh:nowrap
