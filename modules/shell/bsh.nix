@@ -51,6 +51,8 @@ in
         # Override BSH_REPO_ROOT for Nix installation
         export BSH_REPO_ROOT="${cfg.package}"
         source "${cfg.package}/share/bsh/scripts/bsh_init.zsh"
+        # Ensure daemon is started at shell initialization
+        _bsh_ensure_daemon
       fi
     '';
   };
