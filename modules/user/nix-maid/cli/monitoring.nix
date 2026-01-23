@@ -107,6 +107,7 @@ in
         pkgs.hwatch # Modern alternative to watch command with history
         pkgs.s-tui # Stress terminal UI for CPU monitoring
         pkgs.sysdig # System-wide visibility tool
+        pkgs.glances # Cross-platform system monitoring tool
       ]
       ++ (lib.optionals
         (config.profiles.network.wifi.enable || (config.features.net.wifi.enable or false))
@@ -120,6 +121,14 @@ in
       ".config/btop/btop.conf".text = mkBtopConf btopSettings;
       ".config/btop/themes/midnight-ocean.theme".source =
         ../../../../files/shell/btop/themes/midnight-ocean.theme;
+
+      # Glances Config (Optimized)
+      ".config/glances/glances.conf".text = ''
+        [global]
+        refresh=5
+        check_update=false
+        history_size=0
+      '';
     })
   ];
 }
