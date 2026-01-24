@@ -206,7 +206,13 @@ api.Hints.style(`
 // ========== Navigation ==========
 
 // Unmap Omnibar-related default bindings to prevent accidental triggering
-api.unmap('t');
+// Map 't' to Native Focus (requires me.neg.focus host)
+api.mapkey('t', 'Focus Address Bar', function () {
+  api.connectNative('me.neg.focus', {}, function (response) {
+    // console.log("Focus response:", response);
+  });
+});
+
 api.unmap('b');
 api.unmap('og'); // default open google
 api.unmap('od'); // default open duckduckgo
