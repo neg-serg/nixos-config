@@ -1,9 +1,9 @@
 #window {
     background-color: @blackdarkest;
-    width: 100%;
+    width: 80%;
     padding: 0.1em;
-    location: south west;
-    anchor: south west;
+    location: south;
+    anchor: south;
     y-offset: 0%;
     x-offset: 0;
     children:   [ horibox ];
