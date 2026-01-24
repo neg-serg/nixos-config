@@ -13,8 +13,66 @@ let
   useNurAddons = config.features.web.addonsFromNUR.enable or false;
   fa = if useNurAddons && faProvider != null then faProvider pkgs else null;
   addons = if fa != null then negLib.browserAddons fa else { common = [ ]; };
+  focusBarHost = pkgs.stdenv.mkDerivation {
+    name = "surfingkeys-focus-host";
+    unpackPhase = "true";
+    buildInputs = [ pkgs.python3 ];
+    installPhase = ''
+      mkdir -p $out/bin $out/lib/mozilla/native-messaging-hosts
+      
+      # The script
+      cat > $out/bin/surfingkeys-focus <<EOF
+      #!${pkgs.python3}/bin/python3
+      import sys
+      import struct
+      import json
+      import subprocess
+      import os
+
+      def get_message():
+          raw_length = sys.stdin.buffer.read(4)
+          if not raw_length:
+              sys.exit(0)
+          message_length = struct.unpack('=I', raw_length)[0]
+          message = sys.stdin.buffer.read(message_length).decode('utf-8')
+          return json.loads(message)
+
+      def send_message(message):
+          encoded_content = json.dumps(message).encode('utf-8')
+          encoded_length = struct.pack('=I', len(encoded_content))
+          sys.stdout.buffer.write(encoded_length)
+          sys.stdout.buffer.write(encoded_content)
+          sys.stdout.buffer.flush()
+
+      while True:
+          message = get_message()
+          try:
+              # Use wtype to press Ctrl+L
+              subprocess.run(["${pkgs.wtype}/bin/wtype", "-M", "ctrl", "-k", "l", "-m", "ctrl"])
+              send_message({"status": "ok"})
+          except Exception as e:
+              send_message({"error": str(e)})
+      EOF
+      chmod +x $out/bin/surfingkeys-focus
+
+      # The manifest
+      cat > $out/lib/mozilla/native-messaging-hosts/me.neg.focus.json <<EOF
+      {
+        "name": "me.neg.focus",
+        "description": "Native focus host for SurfingKeys",
+        "path": "$out/bin/surfingkeys-focus",
+        "type": "stdio",
+        "allowed_extensions": [
+          "{a8332c60-5b6d-41ee-bfc8-e9bb331d34ad}"
+        ]
+      }
+      EOF
+    '';
+  };
+
   nativeMessagingHosts = [
     pkgs.pywalfox-native # native host for Pywalfox (theme colors)
+    focusBarHost
   ];
 
   baseSettings = {
