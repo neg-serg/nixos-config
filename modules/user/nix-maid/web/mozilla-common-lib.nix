@@ -148,7 +148,8 @@ let
   + builtins.readFile ./firefox/hide_drm_nagbar_chrome.css
   + builtins.readFile ./firefox/inline_tabs_chrome.css
   + builtins.readFile ./firefox/sideberry_chrome.css
-  + builtins.readFile ./firefox/sideberry_hide_ext_button.css;
+  + builtins.readFile ./firefox/sideberry_hide_ext_button.css
+  + builtins.readFile ./firefox/spotlight_chrome.css;
 
   # Tridactyl UI sizing (fallback cap):
   # Some Tridactyl builds/layouts render the completions list without the expected
