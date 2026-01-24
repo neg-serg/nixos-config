@@ -15,11 +15,52 @@ mkIf (config.features.web.enable or false) {
   systemd.user.services.surfingkeys-server =
     let
       preset = systemdUser.mkUnitFromPresets { presets = [ "defaultWanted" ]; };
+      serverScript = pkgs.writeText "sk-server.py" ''
+        import http.server
+        import socketserver
+        import subprocess
+        import os
+        import sys
+
+        PORT = ${toString port}
+        DIR = "${serveDir}"
+
+        class Handler(http.server.SimpleHTTPRequestHandler):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, directory=DIR, **kwargs)
+
+            def do_GET(self):
+                if self.path == '/focus':
+                    try:
+                        # Press Ctrl+L using wtype
+                        subprocess.run(["${pkgs.wtype}/bin/wtype", "-M", "ctrl", "-k", "l", "-m", "ctrl"])
+                        self.send_response(200)
+                        self.send_header('Access-Control-Allow-Origin', '*')
+                        self.end_headers()
+                        self.wfile.write(b'OK')
+                    except Exception as e:
+                        self.send_response(500)
+                        self.end_headers()
+                        self.wfile.write(str(e).encode())
+                else:
+                    return super().do_GET()
+
+            def end_headers(self):
+                self.send_header('Access-Control-Allow-Origin', '*')
+                super().end_headers()
+
+        # Allow reuse address to prevent "Address already in use" on restarts
+        socketserver.TCPServer.allow_reuse_address = True
+
+        with socketserver.TCPServer(("", PORT), Handler) as httpd:
+            print(f"Serving at port {PORT} form {DIR}")
+            httpd.serve_forever()
+      '';
     in
     {
       description = "HTTP server for Surfingkeys configuration";
       serviceConfig = {
-        ExecStart = "${pkgs.python3}/bin/python3 -m http.server ${toString port} --directory ${serveDir}"; # High-level dynamically-typed programming language
+        ExecStart = "${pkgs.python3}/bin/python3 -u ${serverScript}";
         Restart = "on-failure";
         RestartSec = "5";
         Slice = "background.slice";

@@ -13,95 +13,9 @@ let
   useNurAddons = config.features.web.addonsFromNUR.enable or false;
   fa = if useNurAddons && faProvider != null then faProvider pkgs else null;
   addons = if fa != null then negLib.browserAddons fa else { common = [ ]; };
-  focusBarHost = pkgs.stdenv.mkDerivation {
-    name = "surfingkeys-focus-host";
-    unpackPhase = "true";
-    buildInputs = [ pkgs.python3 ];
-    installPhase = ''
-      mkdir -p $out/bin $out/lib/mozilla/native-messaging-hosts
-      
-      # The script
-      cat > $out/bin/surfingkeys-focus <<EOF
-      #!${pkgs.python3}/bin/python3
-      import sys
-      import struct
-      import json
-      import subprocess
-      import os
-      import time
-
-      LOG_FILE = "/tmp/sk_native.log"
-
-      def log(msg):
-          with open(LOG_FILE, "a") as f:
-              f.write(f"{time.ctime()}: {msg}\n")
-
-      def get_message():
-          raw_length = sys.stdin.buffer.read(4)
-          if not raw_length:
-              log("Input stream closed, exiting")
-              sys.exit(0)
-          message_length = struct.unpack('=I', raw_length)[0]
-          message = sys.stdin.buffer.read(message_length).decode('utf-8')
-          log(f"Received message: {message}")
-          return json.loads(message)
-
-      def send_message(message):
-          encoded_content = json.dumps(message).encode('utf-8')
-          encoded_length = struct.pack('=I', len(encoded_content))
-          sys.stdout.buffer.write(encoded_length)
-          sys.stdout.buffer.write(encoded_content)
-          sys.stdout.buffer.flush()
-
-      log("Host started")
-
-      while True:
-          message = get_message()
-          try:
-              # Use wtype to press Ctrl+L
-              log("Executing wtype...")
-              # Ensure WAYLAND_DISPLAY is present (it should be if Firefox launched it)
-              env = os.environ.copy()
-              log(f"Environment DISPLAY check: {env.get('WAYLAND_DISPLAY', 'Not Set')}")
-              
-              result = subprocess.run(
-                  ["${pkgs.wtype}/bin/wtype", "-M", "ctrl", "-k", "l", "-m", "ctrl"], 
-                  capture_output=True, 
-                  text=True,
-                  env=env
-              )
-              
-              if result.returncode != 0:
-                  log(f"wtype failed: {result.stderr}")
-                  send_message({"error": f"wtype failed: {result.stderr}"})
-              else:
-                  log("wtype success")
-                  send_message({"status": "ok"})
-                  
-          except Exception as e:
-              log(f"Exception: {str(e)}")
-              send_message({"error": str(e)})
-      EOF
-      chmod +x $out/bin/surfingkeys-focus
-
-      # The manifest
-      cat > $out/lib/mozilla/native-messaging-hosts/me.neg.focus.json <<EOF
-      {
-        "name": "me.neg.focus",
-        "description": "Native focus host for SurfingKeys",
-        "path": "$out/bin/surfingkeys-focus",
-        "type": "stdio",
-        "allowed_extensions": [
-          "{a8332c60-5b6d-41ee-bfc8-e9bb331d34ad}"
-        ]
-      }
-      EOF
-    '';
-  };
 
   nativeMessagingHosts = [
     pkgs.pywalfox-native # native host for Pywalfox (theme colors)
-    focusBarHost
   ];
 
   baseSettings = {
@@ -652,9 +566,6 @@ let
             lib.mkMerge (
               [
                 { "${prefix}/profiles.ini".text = n.mkProfilesIni profiles; }
-                {
-                  "${prefix}/native-messaging-hosts/me.neg.focus.json".source = "${focusBarHost}/lib/mozilla/native-messaging-hosts/me.neg.focus.json";
-                }
               ]
               ++ (lib.mapAttrsToList (
                 _name: profile:
