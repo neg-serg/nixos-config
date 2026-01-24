@@ -1,42 +1,44 @@
 /* Spotlight Focus Mode which moves the URL bar to the center of the screen when focused */
-@-moz-document url(chrome://browser/content/browser.xhtml) {
+@-moz-document url(chrome://browser/content/browser.xhtml){
 
-  /* ONLY when the urlbar is expanded/focused */
-  #urlbar[breakout][breakout-extend] {
-    position: fixed !important;
-    top: 25vh !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    
-    /* Sizing */
-    width: 50vw !important;
-    max-width: 1000px !important;
-    min-height: 52px !important;
-    
-    /* Visuals */
-    z-index: 9999999 !important;
-    box-shadow: 0 10px 50px rgba(0,0,0,0.8), 0 0 0 100vw rgba(0,0,0,0.5) !important; /* Deep shadow + Backdrop dimming */
-    border: 1px solid var(--toolbar-field-border-color, #0a3749) !important;
-    border-radius: 8px !important;
-    
-    /* Animation (optional, can be jittery in FF) */
-    transition: top 0.1s ease-out, opacity 0.1s ease-out !important;
-  }
+/* ONLY when the urlbar is expanded/focused */
+#urlbar[breakout][breakout-extend] {
+  position: fixed !important;
+  top: 25vh !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
 
-  /* Make the input larger */
-  #urlbar[breakout][breakout-extend] #urlbar-input {
-    font-size: 1.5em !important;
-    text-align: center !important;
-    color: var(--lwt-toolbar-field-color, #fff) !important;
-  }
-  
-  /* Hide the "Search with..." text to keep it clean */
-  #urlbar[breakout][breakout-extend] .urlbar-input-box::before {
-    display: none !important;
-  }
+  /* Sizing */
+  width: 50vw !important;
+  max-width: 1000px !important;
+  min-height: 52px !important;
 
-  /* Results view styling */
-  .urlbarView-body-inner {
-    border-top: 1px solid var(--toolbar-field-border-color) !important;
-  }
+  /* Visuals */
+  z-index: 9999999 !important;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8), 0 0 0 100vw rgba(0, 0, 0, 0.5) !important;
+  /* Deep shadow + Backdrop dimming */
+  border: 5px solid red !important;
+  /* DEBUG BORDER */
+  border-radius: 8px !important;
+
+  /* Animation (optional, can be jittery in FF) */
+  transition: top 0.1s ease-out, opacity 0.1s ease-out !important;
+}
+
+/* Make the input larger */
+#urlbar[breakout][breakout-extend] #urlbar-input {
+  font-size: 1.5em !important;
+  text-align: center !important;
+  color: var(--lwt-toolbar-field-color, #fff) !important;
+}
+
+/* Hide the "Search with..." text to keep it clean */
+#urlbar[breakout][breakout-extend] .urlbar-input-box::before {
+  display: none !important;
+}
+
+/* Results view styling */
+.urlbarView-body-inner {
+  border-top: 1px solid var(--toolbar-field-border-color) !important;
+}
 }
