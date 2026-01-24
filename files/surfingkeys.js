@@ -206,17 +206,16 @@ api.Hints.style(`
 // ========== Navigation ==========
 
 // Unmap Omnibar-related default bindings to prevent accidental triggering
-// Map 't' to Native Focus (requires me.neg.focus host)
+// Map 't' to Local Focus Server (bypassing Content Script restrictions)
 api.mapkey('t', 'Focus Address Bar', function () {
-  // Attempt standard WebExtension API
-  try {
-    chrome.runtime.sendNativeMessage('me.neg.focus', {}, function (response) {
-      // console.log("Native response:", response);
+  fetch('http://localhost:18888/focus')
+    .then(r => {
+      if (!r.ok) api.Front.showBanner("Focus Error: " + r.statusText);
+    })
+    .catch(e => {
+      api.Front.showBanner("Focus Failed: Is surfingkeys-server running?");
+      console.error(e);
     });
-  } catch (e) {
-    api.Front.showBanner("Native Error: " + e);
-    console.error(e);
-  }
 });
 
 api.unmap('b');
