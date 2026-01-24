@@ -244,7 +244,14 @@ api.unmap('E');  // Default: scroll page down
 api.map('E', 'gT');  // Previous tab
 api.map('e', 'R');  // Next tab (R is default next tab)
 api.mapkey('d', 'Close current tab', function () {
-  api.RUNTIME("closeTab");
+  fetch('http://localhost:18888/close')
+    .then(r => {
+      if (!r.ok) api.Front.showBanner("Close Error: " + r.statusText);
+    })
+    .catch(e => {
+      api.Front.showBanner("Close Failed: Is surfingkeys-server running?");
+      console.error(e);
+    });
 });
 api.map('u', 'X');  // Restore tab
 api.map('w', 'T');  // Tab list
