@@ -355,12 +355,35 @@ let
         desc = "Smart paste";
       }
       {
-        run = "shell '${pkgs.yazi}/bin/ya pub reveal --str \"$(${pkgs.wl-clipboard}/bin/wl-paste)\"' --confirm";
+        run = "plugin paste-to-select";
         on = [ "g" "p" ];
         desc = "Reveal file from clipboard";
       }
     ];
   };
+
+    paste-to-select-plugin = ''
+    local function entry()
+    local output_file = "/tmp/yazi_clip_content"
+    os.execute("wl-paste > " .. output_file)
+    
+    local file = io.open(output_file, "r")
+    if not file then return end
+    
+    local path = file:read("*all")
+    file:close()
+    
+    if path then
+      path = path:gsub("[\n\r]", "")
+      if path ~= "" then
+        ya.manager_emit("reveal", { path })
+        ya.manager_emit("open", { hovered = true })
+      end
+    end
+    end
+
+    return { entry = entry }
+  '';
 
   yazi-plugins = pkgs.fetchFromGitHub {
     owner = "yazi-rs";
@@ -386,6 +409,7 @@ lib.mkIf (cfg.enable or false) (
       # Plugins
       ".config/yazi/plugins/smart-paste.yazi".source = "${yazi-plugins}/smart-paste.yazi";
       ".config/yazi/plugins/smart-enter.yazi/main.lua".text = smart-enter-plugin;
+      ".config/yazi/plugins/paste-to-select.yazi/main.lua".text = paste-to-select-plugin;
 
       # Termfilechooser config for yazi-based file picker
       ".config/xdg-desktop-portal-termfilechooser/config".text = termfilechooserConfig;
