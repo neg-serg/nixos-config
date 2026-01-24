@@ -1,6 +1,11 @@
 /* Spotlight Focus Mode which moves the URL bar to the center of the screen when focused */
 @-moz-document url(chrome://browser/content/browser.xhtml){
 
+/* DEBUG: Verify userChrome.css is loaded */
+#nav-bar {
+  border: 4px solid blue !important;
+}
+
 /* ONLY when the urlbar is expanded/focused */
 #urlbar[breakout][breakout-extend] {
   position: fixed !important;
