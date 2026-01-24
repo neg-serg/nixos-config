@@ -30,7 +30,8 @@ mkIf (config.features.web.enable or false) {
                 super().__init__(*args, directory=DIR, **kwargs)
 
             def do_GET(self):
-                if self.path == '/focus':
+                print(f"Request: {self.path}", flush=True)
+                if self.path.startswith('/focus'):
                     try:
                         # Press Ctrl+L using wtype
                         subprocess.run(["${pkgs.wtype}/bin/wtype", "-M", "ctrl", "-k", "l", "-m", "ctrl"])
@@ -39,6 +40,7 @@ mkIf (config.features.web.enable or false) {
                         self.end_headers()
                         self.wfile.write(b'OK')
                     except Exception as e:
+                        print(f"Error: {e}", flush=True)
                         self.send_response(500)
                         self.end_headers()
                         self.wfile.write(str(e).encode())
