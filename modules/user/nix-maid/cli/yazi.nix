@@ -101,7 +101,7 @@ let
   };
 
   theme = {
-    manager = {
+    mgr = {
       cwd = {
         fg = "#367bbf";
       };
@@ -327,6 +327,11 @@ let
         run = "plugin smart-paste";
         on = [ "p" ];
         desc = "Smart paste";
+      }
+      {
+        run = "shell '${pkgs.yazi}/bin/ya pub reveal --str \"$(${pkgs.wl-clipboard}/bin/wl-paste)\"' --confirm";
+        on = [ "g" "p" ];
+        desc = "Reveal file from clipboard";
       }
     ];
   };
