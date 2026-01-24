@@ -75,7 +75,28 @@ let
     fi
 
     # Run kitty with yazi
+    export YAZI_FILE_CHOOSER_PATH="$OUTPUT_PATH"
     exec ${pkgs.kitty}/bin/kitty --detach=no ${pkgs.yazi}/bin/yazi --chooser-file "$OUTPUT_PATH"
+  '';
+
+  smart-enter-plugin = ''
+    local function entry()
+    local h = cx.active.current.hovered
+    if h and h.cha.is_dir then
+    ya.manager_emit("enter", {})
+    else
+    local out = os.getenv("YAZI_FILE_CHOOSER_PATH")
+    if out then
+    local url = tostring(h.url)
+    os.execute(string.format("echo '%s' > '%s'", url, out))
+    ya.manager_emit("quit", { rule = "all" })
+    else
+    ya.manager_emit("open", { hovered = true })
+    end
+    end
+    end
+
+    return { entry = entry }
   '';
 
   termfilechooserConfig = ''
@@ -299,6 +320,11 @@ let
     # Yazi 0.3+: [keymap.manager] -> [keymap.mgr]
     mgr.prepend_keymap = [
       {
+        on = [ "<Enter>" ];
+        run = "plugin smart-enter";
+        desc = "Enter directory or open file (smart chooser)";
+      }
+      {
         run = "close";
         on = [ "<Esc>" ];
       }
@@ -359,6 +385,7 @@ lib.mkIf (cfg.enable or false) (
       
       # Plugins
       ".config/yazi/plugins/smart-paste.yazi".source = "${yazi-plugins}/smart-paste.yazi";
+      ".config/yazi/plugins/smart-enter.yazi/init.lua".text = smart-enter-plugin;
 
       # Termfilechooser config for yazi-based file picker
       ".config/xdg-desktop-portal-termfilechooser/config".text = termfilechooserConfig;
