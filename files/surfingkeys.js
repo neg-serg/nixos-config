@@ -4,8 +4,7 @@
 // ========== Settings ==========
 settings.hintAlign = "left";
 settings.hintCharacters = "asdfghjkl";
-settings.omnibarSuggestion = true;
-settings.omnibarPosition = "bottom";
+settings.omnibarSuggestion = false; // DISABLED: Using native address bar
 settings.focusFirstCandidate = false;
 settings.scrollStepSize = 120;
 settings.smoothScroll = true;
@@ -42,96 +41,9 @@ settings.theme = `
   color: var(--fg);
 }
 
-/* Omnibar */
-#sk_omnibar {
-  width: 85%;
-  left: 7.5%;
-  background: var(--bg) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  overflow: hidden;
-}
-
-#sk_omnibarSearchArea {
-  background: var(--bg) !important;
-  border-bottom: 1px solid var(--border) !important;
-  padding: 8px 12px !important;
-  margin: 0 !important;
-}
-
-#sk_omnibarSearchArea input {
-  font-family: var(--font-mono) !important;
-  font-size: var(--font-size) !important;
-  font-weight: 600 !important;
-  color: var(--fg) !important;
-  background: transparent !important;
-  caret-color: var(--fg) !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-#sk_omnibarSearchArea .prompt {
+/* Hints */
+#sk_hints .begin {
   color: var(--accent) !important;
-  font-weight: 600 !important;
-}
-
-#sk_omnibarSearchArea .separator {
-  color: var(--border) !important;
-}
-
-#sk_omnibarSearchResult {
-  margin: 0 !important;
-  max-height: calc(12 * 1.5em);
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-}
-
-#sk_omnibarSearchResult > ul {
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-#sk_omnibarSearchResult li {
-  padding: 4px 12px !important;
-  margin: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
-  font-weight: 600;
-  border-bottom: 1px solid transparent;
-}
-
-#sk_omnibarSearchResult li:nth-child(odd) {
-  background: var(--bg) !important;
-}
-
-#sk_omnibarSearchResult li.focused {
-  background: var(--bg-highlight) !important;
-}
-
-#sk_omnibarSearchResult li .title {
-  color: var(--fg) !important;
-  font-weight: 600 !important;
-}
-
-#sk_omnibarSearchResult li .url {
-  color: var(--fg-muted) !important;
-  font-size: var(--font-size) !important;
-  margin-left: 8px;
-}
-
-/* Omnibar Metadata (Source, Timestamp) */
-#sk_omnibarSearchResult li .source {
-  color: var(--accent) !important;
-  font-weight: bold;
-  margin-right: 8px;
-}
-
-#sk_omnibar p {
-  margin-bottom: 0px !important;
 }
 
 /* Status bar / Banner */
@@ -202,12 +114,6 @@ settings.theme = `
   border-bottom: 2px solid var(--accent) !important;
 }
 
-/* Omnibar match highlight */
-#sk_omnibar span.omnibar_highlight {
-  color: var(--accent) !important;
-  text-shadow: none !important;
-}
-
 /* Search Bar (Visual Mode /) */
 #sk_find {
   background: var(--bg) !important;
@@ -221,32 +127,6 @@ settings.theme = `
   color: var(--fg) !important;
   background: transparent !important; 
   border: none !important;
-}
-
-/* Tab switcher */
-#sk_tabs {
-  background: var(--bg) !important;
-  border: 1px solid var(--border) !important;
-}
-
-#sk_tabs div.sk_tab {
-  background: var(--bg) !important;
-  border-bottom: 1px solid var(--border) !important;
-}
-
-#sk_tabs div.sk_tab_hint {
-  background: var(--hint-bg) !important;
-  color: var(--accent) !important;
-  border: 1px solid var(--border) !important;
-}
-
-#sk_tabs div.sk_tab_title {
-  color: var(--fg) !important;
-  font-weight: 600 !important;
-}
-
-#sk_tabs div.sk_tab_url {
-  color: var(--fg-muted) !important;
 }
 
 /* Markdown/Misc Popups */
@@ -277,10 +157,8 @@ settings.theme = `
   border: 1px solid var(--border) !important;
 }
 `;
+
 // ========== Hints Styling (Shadow DOM) ==========
-// Hints live in a separate Shadow DOM and DON'T inherit settings.theme!
-// Must use api.Hints.style() API to override the default yellow gradient.
-// We start with "div" to prevent the default wrapper which would break "mask" selector
 api.Hints.style(`
   div, mask {
     font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
@@ -325,37 +203,19 @@ api.Hints.style(`
   }
 `, "text");
 
-// ========== Smart Omnibar ==========
-// Unmap default bindings first to avoid conflicts
+// ========== Navigation ==========
+
+// Unmap Omnibar-related default bindings to prevent accidental triggering
 api.unmap('t');
-
-api.unmap('O');
 api.unmap('b');
-api.unmap('v');
+api.unmap('og'); // default open google
+api.unmap('od'); // default open duckduckgo
+api.unmap('oy'); // default open youtube
+api.unmap('ow');
+api.unmap('on');
+api.unmap('ox');
 
-// Add a custom "search engine" that just opens URLs directly
-api.addSearchAlias('o', 'Open URL', 'https://', 's', '', function (response) {
-  return [];
-});
-
-// Smart navigation: opens omnibar for direct URL input
-// Using SearchEngine mode with empty prefix to just open URLs
-api.mapkey("t", "Open URL (New Tab)", () => {
-  api.Front.openOmnibar({ type: "SearchEngine", extra: "o" });
-});
-
-
-
-api.mapkey("O", "Open URL (New Tab)", () => {
-  api.Front.openOmnibar({ type: "SearchEngine", extra: "o" });
-});
-
-api.mapkey("U", "Open Recently Closed Tabs", () => {
-  api.Front.openOmnibar({ type: "URLs", extra: "getRecentlyClosed" });
-});
-
-// ========== Mappings ==========
-// Scroll
+// Mapping for standard browsing
 api.map('j', 'j');
 api.map('k', 'k');
 
@@ -405,208 +265,10 @@ api.mapkey('[', 'Decrease video speed', function () {
   }
 });
 
-// Search engines
-api.addSearchAlias('g', 'Google', 'https://www.google.com/search?q=');
-api.addSearchAlias('d', 'DuckDuckGo', 'https://duckduckgo.com/?q=');
-api.addSearchAlias('y', 'YouTube', 'https://www.youtube.com/results?search_query=');
-api.addSearchAlias('w', 'Wikipedia', 'https://en.wikipedia.org/wiki/Special:Search?search=');
-api.addSearchAlias('gh', 'GitHub', 'https://github.com/search?q=');
-api.addSearchAlias('aw', 'Arch Wiki', 'https://wiki.archlinux.org/index.php?search=');
-api.addSearchAlias('np', 'npm', 'https://www.npmjs.com/search?q=');
+// ========== Quickmarks (Using Native Tab Open) ==========
+// Since we disabled Omnibar, we just open these directly in new tabs or current tab
+// but without passing through the Omnibar UI.
 
-// Force all inputs to be URLs by default (pass-through)
-settings.defaultSearchEngine = 'g';
-
-// Smart Enter: No spaces -> URL, Spaces -> Search
-// Smart Enter Logic (Robust Injection with Iframe Support)
-const customEnterHandler = function (e) {
-  if (e.key !== 'Enter') return;
-
-  // DEBUG BANNER IN HANDLER
-  // Un-comment the line below if nothing happens
-  // api.Front.showBanner("DEBUG: HANDLER FIRED! Input: " + (input ? input.value : "null"));
-
-  e.stopImmediatePropagation();
-  e.stopPropagation();
-
-  // Handle Target Resolution
-  const target = e.target;
-  const input = (target.tagName === 'INPUT') ? target :
-    (target.querySelector ? target.querySelector('input') : null);
-
-  if (!input) return;
-
-  const text = input.value.trim();
-  if (text.length === 0) return;
-
-  // --- Custom Logic for Input Text ---
-  // "Everything I wrote goes into the urlbar" behavior
-  // We ignore focused suggestions and just process the raw input text.
-
-  let searchUrl = 'https://www.google.com/search?q=';
-  let query = text;
-  let isUrl = false;
-
-  // Simple heuristic: 
-  // 1. If it has spaces -> It is a SEARCH.
-  // 2. If no spaces -> It is a URL.
-
-  if (text.indexOf(' ') === -1) {
-    isUrl = true;
-  }
-
-  if (isUrl) {
-    let url = text;
-    if (!/^[a-zA-Z]+:\/\//.test(url)) {
-      url = 'http://' + url;
-    }
-    api.tabOpenLink(url);
-    api.Front.closeOmnibar();
-  } else {
-    // Treat as Search
-    api.tabOpenLink(searchUrl + encodeURIComponent(query));
-    api.Front.closeOmnibar();
-  }
-};
-
-// Injection that specifically handles Iframe loading
-const setupIframeInjector = () => {
-  const tryInject = (entryPoint, isIframe = false) => {
-    try {
-      const win = isIframe ? entryPoint.contentWindow : window;
-      const doc = isIframe ? entryPoint.contentDocument : document;
-
-      if (!win || !doc) return false;
-
-      // Check if input exists just to be sure
-      const input = doc.querySelector('#sk_omnibarSearchArea input');
-      if (input) {
-        // Attach to WINDOW in CAPTURE mode for maximum priority
-        win.removeEventListener('keydown', customEnterHandler, true);
-        win.addEventListener('keydown', customEnterHandler, true);
-
-        // Debug Banner
-        // api.Front.showBanner("DEBUG: Injected on Window (Capture)");
-        return true;
-      } else {
-        // api.Front.showBanner("DEBUG: Input not found in " + (isIframe ? "Iframe" : "Window"));
-      }
-      return false;
-    } catch (e) {
-      // console.log("SK Injection Error:", e);
-      return false;
-    }
-  };
-
-  const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) {
-        if (node.id === 'sk_frame' || node.tagName === 'IFRAME') {
-          // Wait for load
-          node.addEventListener('load', () => tryInject(node, true));
-          // Try immediately in case ready
-          tryInject(node, true);
-        } else if (node.id === 'sk_omnibarSearchArea') {
-          tryInject(document);
-        } else if (node.querySelector) {
-          if (node.querySelector('#sk_omnibarSearchArea')) tryInject(document);
-        }
-      }
-    }
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  // Initial Check
-  const frame = document.querySelector('#sk_frame');
-  if (frame) {
-    tryInject(frame, true);
-    frame.addEventListener('load', () => tryInject(frame, true));
-  }
-  tryInject(document);
-
-  // Hook openOmnibar just in case
-  const originalOpen = api.Front.openOmnibar;
-  api.Front.openOmnibar = function (args) {
-    originalOpen(args);
-    setTimeout(() => {
-      const frame = document.querySelector('#sk_frame');
-      if (frame) tryInject(frame, true);
-      tryInject(document);
-    }, 300);
-  };
-};
-
-// Start Observer
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupIframeInjector);
-} else {
-  setupIframeInjector();
-}
-
-// api.Front.showBanner("SurfingKeys Config Loaded (Debug Iframe Mode)");
-
-// Remove failed cmap attempts
-// Remove failed cmap attempts
-// api.cmap('<Enter>', null);
-// api.cmap('<Return>', null);
-
-// Try using CMAP as primary or fallback
-const enterCmapHandler = () => {
-  // We need to find the input to get the value
-  // This runs in the context of the main window or iframe depending on where SK is
-  const input = document.querySelector('#sk_omnibarSearchArea input') ||
-    (document.querySelector('#sk_frame') && document.querySelector('#sk_frame').contentDocument.querySelector('#sk_omnibarSearchArea input'));
-
-  if (input) {
-    customEnterHandler({
-      key: 'Enter',
-      target: input,
-      stopImmediatePropagation: () => { },
-      stopPropagation: () => { }
-    });
-  } else {
-    api.Front.showBanner("DEBUG: CMAP Enter fired but no input found");
-  }
-};
-api.cmap('<Enter>', enterCmapHandler);
-
-
-// Aggressive focus listener to catch late-spawning inputs
-window.addEventListener('focus', (e) => {
-  if (e.target && e.target.tagName === 'INPUT' && e.target.closest('#sk_omnibarSearchArea')) {
-    api.Front.showBanner("DEBUG: Focus detected on Omnibar Input");
-    e.target.removeEventListener('keydown', customEnterHandler, true);
-    e.target.addEventListener('keydown', customEnterHandler, true);
-  }
-}, true);
-
-// ========== Omnibar Hotkeys ==========
-api.cmap('<Ctrl-Alt-g>', function () {
-  const input = document.querySelector('#sk_omnibarSearchArea input');
-  if (input && input.value) {
-    const query = input.value;
-    api.Front.openOmnibar({ type: 'SearchEngine', extra: 'g', pref: query });
-  }
-});
-
-api.cmap('<Ctrl-Alt-d>', function () {
-  const input = document.querySelector('#sk_omnibarSearchArea input');
-  if (input && input.value) {
-    const query = input.value;
-    api.Front.openOmnibar({ type: 'SearchEngine', extra: 'd', pref: query });
-  }
-});
-
-api.cmap('<Ctrl-Alt-y>', function () {
-  const input = document.querySelector('#sk_omnibarSearchArea input');
-  if (input && input.value) {
-    const query = input.value;
-    api.Front.openOmnibar({ type: 'SearchEngine', extra: 'y', pref: query });
-  }
-});
-
-// ========== Quickmarks ==========
 const quickmarks = {
   'A': { name: 'ArtStation', url: 'https://magazine.artstation.com/' },
   'E': { name: 'ProjectEuler', url: 'https://projecteuler.net/' },
@@ -624,13 +286,16 @@ const quickmarks = {
 };
 
 Object.entries(quickmarks).forEach(([key, site]) => {
+  // Open in current tab
   api.mapkey('o' + key, 'Open ' + site.name, () => {
-    location.href = site.url;
+    window.location.href = site.url;
   });
+  // Open in new tab
   api.mapkey('gn' + key, 'Open ' + site.name + ' in new tab', () => {
     api.tabOpenLink(site.url);
   });
 });
 
 // ========== Site-specific ==========
-settings.blocklistPattern = /mail\.google\.com|docs\.google\.com|discord\.com/i;
+settings.blocklistPattern = /mail\.google\.com|docs\.google\.com|discord\.com|app\.slack\.com/i;
+
