@@ -44,6 +44,20 @@ mkIf (config.features.web.enable or false) {
                         self.send_response(500)
                         self.end_headers()
                         self.wfile.write(str(e).encode())
+
+                elif self.path.startswith('/close'):
+                    try:
+                        # Press Ctrl+W using wtype
+                        subprocess.run(["${pkgs.wtype}/bin/wtype", "-M", "ctrl", "-k", "w", "-m", "ctrl"])
+                        self.send_response(200)
+                        self.send_header('Access-Control-Allow-Origin', '*')
+                        self.end_headers()
+                        self.wfile.write(b'OK')
+                    except Exception as e:
+                        print(f"Error: {e}", flush=True)
+                        self.send_response(500)
+                        self.end_headers()
+                        self.wfile.write(str(e).encode())
                 else:
                     return super().do_GET()
 
