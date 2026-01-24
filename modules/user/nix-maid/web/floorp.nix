@@ -41,7 +41,7 @@ let
         "network.proxy.socks_port" = 0;
         "network.proxy.no_proxies_on" = "localhost, 127.0.0.1";
       };
-      userChrome = "";
+      userChrome = mozillaCommon.userChrome;
       userContent = mozillaCommon.surfingkeysUserContent;
       enable = true;
       isDefault = true;
