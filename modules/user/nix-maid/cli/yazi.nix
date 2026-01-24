@@ -385,7 +385,7 @@ lib.mkIf (cfg.enable or false) (
       
       # Plugins
       ".config/yazi/plugins/smart-paste.yazi".source = "${yazi-plugins}/smart-paste.yazi";
-      ".config/yazi/plugins/smart-enter.yazi/init.lua".text = smart-enter-plugin;
+      ".config/yazi/plugins/smart-enter.yazi/main.lua".text = smart-enter-plugin;
 
       # Termfilechooser config for yazi-based file picker
       ".config/xdg-desktop-portal-termfilechooser/config".text = termfilechooserConfig;
