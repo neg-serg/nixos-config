@@ -208,9 +208,15 @@ api.Hints.style(`
 // Unmap Omnibar-related default bindings to prevent accidental triggering
 // Map 't' to Native Focus (requires me.neg.focus host)
 api.mapkey('t', 'Focus Address Bar', function () {
-  api.connectNative('me.neg.focus', {}, function (response) {
-    // console.log("Focus response:", response);
-  });
+  // Attempt standard WebExtension API
+  try {
+    chrome.runtime.sendNativeMessage('me.neg.focus', {}, function (response) {
+      // console.log("Native response:", response);
+    });
+  } catch (e) {
+    api.Front.showBanner("Native Error: " + e);
+    console.error(e);
+  }
 });
 
 api.unmap('b');
