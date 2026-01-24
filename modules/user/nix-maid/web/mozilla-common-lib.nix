@@ -28,13 +28,22 @@ let
       import json
       import subprocess
       import os
+      import time
+
+      LOG_FILE = "/tmp/sk_native.log"
+
+      def log(msg):
+          with open(LOG_FILE, "a") as f:
+              f.write(f"{time.ctime()}: {msg}\n")
 
       def get_message():
           raw_length = sys.stdin.buffer.read(4)
           if not raw_length:
+              log("Input stream closed, exiting")
               sys.exit(0)
           message_length = struct.unpack('=I', raw_length)[0]
           message = sys.stdin.buffer.read(message_length).decode('utf-8')
+          log(f"Received message: {message}")
           return json.loads(message)
 
       def send_message(message):
@@ -44,13 +53,33 @@ let
           sys.stdout.buffer.write(encoded_content)
           sys.stdout.buffer.flush()
 
+      log("Host started")
+
       while True:
           message = get_message()
           try:
               # Use wtype to press Ctrl+L
-              subprocess.run(["${pkgs.wtype}/bin/wtype", "-M", "ctrl", "-k", "l", "-m", "ctrl"])
-              send_message({"status": "ok"})
+              log("Executing wtype...")
+              # Ensure WAYLAND_DISPLAY is present (it should be if Firefox launched it)
+              env = os.environ.copy()
+              log(f"Environment DISPLAY check: {env.get('WAYLAND_DISPLAY', 'Not Set')}")
+              
+              result = subprocess.run(
+                  ["${pkgs.wtype}/bin/wtype", "-M", "ctrl", "-k", "l", "-m", "ctrl"], 
+                  capture_output=True, 
+                  text=True,
+                  env=env
+              )
+              
+              if result.returncode != 0:
+                  log(f"wtype failed: {result.stderr}")
+                  send_message({"error": f"wtype failed: {result.stderr}"})
+              else:
+                  log("wtype success")
+                  send_message({"status": "ok"})
+                  
           except Exception as e:
+              log(f"Exception: {str(e)}")
               send_message({"error": str(e)})
       EOF
       chmod +x $out/bin/surfingkeys-focus
