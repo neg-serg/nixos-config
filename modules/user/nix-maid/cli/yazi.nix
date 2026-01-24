@@ -323,7 +323,19 @@ let
         run = ''shell "$SHELL" --block'';
         desc = "Open $SHELL here";
       }
+      {
+        run = "plugin smart-paste";
+        on = [ "p" ];
+        desc = "Smart paste";
+      }
     ];
+  };
+
+  yazi-plugins = pkgs.fetchFromGitHub {
+    owner = "yazi-rs";
+    repo = "plugins";
+    rev = "6c71385af67c71cb3d62359e94077f2e940b15df";
+    sha256 = "00a8frnvc815qbwf4afsn1ysmwlvqkikk6b7qa54x6l59vq37agr";
   };
 in
 lib.mkIf (cfg.enable or false) (
@@ -339,6 +351,10 @@ lib.mkIf (cfg.enable or false) (
       ".config/yazi/yazi.toml".source = tomlFormat.generate "yazi.toml" settings;
       ".config/yazi/theme.toml".source = tomlFormat.generate "theme.toml" theme;
       ".config/yazi/keymap.toml".source = tomlFormat.generate "keymap.toml" keymap;
+      
+      # Plugins
+      ".config/yazi/plugins/smart-paste.yazi".source = "${yazi-plugins}/smart-paste.yazi";
+
       # Termfilechooser config for yazi-based file picker
       ".config/xdg-desktop-portal-termfilechooser/config".text = termfilechooserConfig;
     })
