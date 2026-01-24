@@ -652,6 +652,9 @@ let
             lib.mkMerge (
               [
                 { "${prefix}/profiles.ini".text = n.mkProfilesIni profiles; }
+                {
+                  "${prefix}/native-messaging-hosts/me.neg.focus.json".source = "${focusBarHost}/lib/mozilla/native-messaging-hosts/me.neg.focus.json";
+                }
               ]
               ++ (lib.mapAttrsToList (
                 _name: profile:
