@@ -13,5 +13,10 @@
     SUBSYSTEMS=="usb", ATTRS{idVendor}=="35ef", ATTRS{idProduct}=="2200", GROUP="users", MODE="0666"
     SUBSYSTEMS=="usb", ATTRS{idVendor}=="31e3", ATTRS{idProduct}=="1322", GROUP="users", MODE="0666"
     SUBSYSTEMS=="usb", ATTRS{idVendor}=="31e3", ATTRS{idProduct}=="132f", GROUP="users", MODE="0666"
+
+    # SATA Active Link Power Management
+    ACTION=="add", SUBSYSTEM=="scsi_host", KERNEL=="host*", \
+      ATTR{link_power_management_policy}=="*", \
+      ATTR{link_power_management_policy}="max_performance"
   '';
 }
