@@ -1,5 +1,6 @@
 {
   imports = [
+    ./antigravity.nix
     ./opencode.nix
     ./gui-apps.nix
     ./mpv
