@@ -1,4 +1,4 @@
-_inputs: _final: prev: {
+inputs: final: prev: {
   # Shared helper functions under pkgs.neg.functions to DRY up overlay patterns
   neg = (prev.neg or { }) // {
     functions = {
@@ -65,6 +65,29 @@ _inputs: _final: prev: {
         drv:
         drv.overrideAttrs (old: {
           cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" ];
+        });
+
+      # Zen 5 Optimization Helper (Clang + LTO + AVX-512)
+      # Usage: pkgs.neg.functions.mkZen5LtoPackage pkgs.somePackage
+      mkZen5LtoPackage =
+        drv:
+        (drv.override {
+          stdenv = final.llvmPackages_latest.stdenv;
+        }).overrideAttrs (old: {
+          # Use cmake IPO if available, otherwise rely on flags
+          cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE" ];
+          
+          # Force Clang to use Zen 5 instructions and ThinLTO
+          env = (old.env or { }) // {
+            NIX_CFLAGS_COMPILE = toString [
+              "-march=znver5"
+              "-flto=thin"
+              "-mprefer-vector-width=512" # Leverage reliable AVX-512 on Zen 5
+              "-Wno-error" # Prevent LTO strictness from failing builds
+            ];
+            # Ensure LTO is handled during linking
+            NIX_LDFLAGS = "-flto=thin";
+          };
         });
     };
   };
