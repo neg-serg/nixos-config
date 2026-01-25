@@ -6,6 +6,7 @@
 {
   packages =
     hy3Enabled:
+    pyprlandConfig:
     [
       pkgs.hyprlock # Hyprland's GPU-accelerated screen locking utility
       pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
@@ -30,6 +31,16 @@
           --dest="org.mpris.MediaPlayer2.$(${lib.getExe pkgs.playerctl} -l | head -n 1)" \
           /org/mpris/MediaPlayer2 \
           "org.mpris.MediaPlayer2.Player.$MEMBER"
+      '')
+      # hypr-scratch-toggle script
+      (pkgs.writeShellScriptBin "hypr-scratch-toggle" ''
+        target="$1"
+        active_class=$(${lib.getExe' pkgs.hyprland "hyprctl"} activewindow -j | ${lib.getExe pkgs.jq} -r '.class')
+
+        case "$active_class" in
+          ${lib.concatStringsSep "\n          " (lib.mapAttrsToList (name: cfg: ''"${cfg.class}") ${lib.getExe pkgs.pyprland} toggle "${name}" ;;'') pyprlandConfig.scratchpads)}
+          *) ${lib.getExe pkgs.pyprland} toggle "$target" ;;
+        esac
       '')
       # hypr-reload script
       (pkgs.writeShellScriptBin "hypr-reload" ''

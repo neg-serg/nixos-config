@@ -20,7 +20,7 @@ in
 lib.mkIf guiEnabled (
   lib.mkMerge [
     {
-      environment.systemPackages = services.packages hy3Enabled;
+      environment.systemPackages = services.packages hy3Enabled scratchpads.pyprlandConfig;
 
       systemd.user.targets = services.systemdTargets;
       systemd.user.services = services.systemdServices;
