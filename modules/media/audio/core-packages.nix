@@ -24,5 +24,10 @@ in
       pkgs.open-music-kontrollers.patchmatrix # advanced patch matrix for LV2/JACK bridging
       pkgs.qpwgraph # Qt patchbay, best for big graphs
     ];
+
+    services.udev.extraRules = ''
+      KERNEL=="rtc0", GROUP="audio"
+      KERNEL=="hpet", GROUP="audio"
+    '';
   };
 }
