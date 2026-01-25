@@ -474,6 +474,10 @@ rec {
         "browser.tabs.loadBookmarksInTabs" = true;
       };
 
+      urlbar-openintab = {
+        "browser.urlbar.openintab" = true;
+      };
+
       enable-userchrome = {
         "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
       };
@@ -534,6 +538,7 @@ rec {
       // misc.reduce-dialog-delay
       // security.enforce-defaults
       // misc.bookmark-new-tab
+      // misc.urlbar-openintab
       // misc.disable-pocket
       // misc.always-show-downloads
       // misc.enable-userchrome
