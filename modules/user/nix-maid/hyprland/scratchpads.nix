@@ -68,4 +68,5 @@ let
 in
 {
   pyprlandToml = tomlFormat.generate "pyprland.toml" pyprlandConfig;
+  inherit pyprlandConfig;
 }
