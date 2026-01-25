@@ -43,4 +43,8 @@ in
       reproducibleBuild = false;
     };
   };
+
+  # Zen 5 Optimized Gaming Packages
+  gamescope = final.neg.functions.mkZen5LtoPackage prev.gamescope;
+  mangohud = final.neg.functions.mkZen5LtoPackage prev.mangohud;
 }
