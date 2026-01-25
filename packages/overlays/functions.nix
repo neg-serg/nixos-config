@@ -67,26 +67,25 @@ inputs: final: prev: {
           cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" ];
         });
 
-      # Zen 5 Optimization Helper (Clang + LTO + AVX-512)
+      # Zen 5 Optimization Helper (Clang + Zen 5)
       # Usage: pkgs.neg.functions.mkZen5LtoPackage pkgs.somePackage
       mkZen5LtoPackage =
         drv:
         (drv.override {
-          stdenv = final.llvmPackages_latest.stdenv;
+          stdenv = prev.llvmPackages_19.stdenv;
         }).overrideAttrs (old: {
-          # Use cmake IPO if available, otherwise rely on flags
-          cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE" ];
+          # LTO disabled due to linker issues (archive has no index)
+          # cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE" ];
           
-          # Force Clang to use Zen 5 instructions and ThinLTO
+          # Force Clang to use Zen 5 instructions
           env = (old.env or { }) // {
             NIX_CFLAGS_COMPILE = toString [
               "-march=znver5"
-              "-flto=thin"
+              # "-flto=thin" # Disabled
               "-mprefer-vector-width=512" # Leverage reliable AVX-512 on Zen 5
-              "-Wno-error" # Prevent LTO strictness from failing builds
+              "-Wno-error"
             ];
-            # Ensure LTO is handled during linking
-            NIX_LDFLAGS = "-flto=thin";
+            # NIX_LDFLAGS = "-flto=thin"; # Disabled
           };
         });
     };
