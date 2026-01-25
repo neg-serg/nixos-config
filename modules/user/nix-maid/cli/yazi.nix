@@ -320,6 +320,11 @@ let
     # Yazi 0.3+: [keymap.manager] -> [keymap.mgr]
     mgr.prepend_keymap = [
       {
+        on = [ "g" "r" ];
+        run = ''shell -- ya emit cd "$(git rev-parse --show-toplevel)"'';
+        desc = "Go to git root";
+      }
+      {
         on = [ "<Enter>" ];
         run = "plugin smart-enter";
         desc = "Enter directory or open file (smart chooser)";
