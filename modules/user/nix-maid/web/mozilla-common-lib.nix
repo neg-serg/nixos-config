@@ -149,7 +149,15 @@ let
   + builtins.readFile ./firefox/inline_tabs_chrome.css
   + builtins.readFile ./firefox/sideberry_chrome.css
   + builtins.readFile ./firefox/sideberry_hide_ext_button.css
-  + builtins.readFile ./firefox/spotlight_chrome.css;
+  + builtins.readFile ./firefox/spotlight_chrome.css
+  + ''
+    /* Fix navbar visibility when tabs are hidden */
+    #main-window[titlepreface*="​​​​​"] #nav-bar {
+        margin-top: 0px !important;
+        margin-right: 0px !important;
+        visibility: visible !important;
+    }
+  '';
 
   # Tridactyl UI sizing (fallback cap):
   # Some Tridactyl builds/layouts render the completions list without the expected
