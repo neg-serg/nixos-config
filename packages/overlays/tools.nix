@@ -11,11 +11,6 @@ let
     prev.callPackage path (autoArgs // extraArgs);
 in
 {
-  dvtm = prev.dvtm.overrideAttrs (old: {
-    env.NIX_CFLAGS_COMPILE =
-      toString (old.env.NIX_CFLAGS_COMPILE or "")
-      + " -O3";
-  });
 
   neg = (prev.neg or { }) // rec {
     # Surfingkeys configuration
