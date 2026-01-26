@@ -59,7 +59,7 @@ let
     eza = "${mkCmd "eza"} --icons=auto --hyperlink --group-directories-first";
     lS = "eza --icons=auto --hyperlink --group-directories-first -1";
     lcr = "eza --icons=auto --hyperlink --group-directories-first -al --sort=created --color=always";
-    lsd = "eza --icons=auto --hyperlink --group-directories-first -alD --sort=created --color=always";
+    # lsd = "eza --icons=auto --hyperlink --group-directories-first -alD --sort=created --color=always";
 
     # Core tools
     cat = "bat -pp";
