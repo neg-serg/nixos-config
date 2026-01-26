@@ -40,23 +40,36 @@ let
     # We explicitly wait for user input after yazi closes.
     ${pkgs.kitty}/bin/kitty --detach=no sh -c "
       ${pkgs.yazi}/bin/yazi --cwd-file='$CWD_FILE'
-      selected_dir=\$(cat '$CWD_FILE')
+      if [ -f '$CWD_FILE' ]; then
+        selected_dir=\$(cat '$CWD_FILE')
+      else
+        echo 'Error: CWD_FILE missing'
+      fi
+
+      echo "Debug: Yazi exited."
+      echo "Debug: Selected dir: '\$selected_dir'"
       
-      if [ -n \"\$selected_dir\" ]; then
-        echo \"Selected directory: \$selected_dir\"
-        echo -n \"Enter filename to save as: \"
+      if [ -n "\$selected_dir" ]; then
+        echo "Selected directory: \$selected_dir"
+        echo -n "Enter filename to save as: "
         read filename
         
-        if [ -n \"\$filename\" ]; then
+        if [ -n "\$filename" ]; then
            # Construct full path
-           full_path=\"\$selected_dir/\$filename\"
+           full_path="\$selected_dir/\$filename"
+           echo "Saving to: \$full_path"
            # Write to the portal output file
-           echo \"\$full_path\" > '$OUTPUT_PATH'
+           echo "\$full_path" > '$OUTPUT_PATH'
         else 
-           echo \"No filename entered, cancelling.\"
+           echo "No filename entered, cancelling."
         fi
+      else
+         echo "Error: No directory passed from Yazi."
       fi
       rm -f '$CWD_FILE'
+      echo
+      echo 'Press Enter to close this window...'
+      read _
     "
   '';
 
