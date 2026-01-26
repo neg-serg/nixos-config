@@ -34,8 +34,15 @@
 
   nixConfig = {
     # Explicitly enable official cache
-    substituters = [ "https://cache.nixos.org" ];
-    trusted-public-keys = [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ];
+    substituters = [
+      "https://cache.nixos.org"
+      "https://nyx.chaotic.cx"
+    ];
+    trusted-public-keys = [
+      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      "nyx.chaotic.cx-1:dHw3h/9TeD0j15P48r+W+5B8K5b5K4iO8r7eO8r7eO8="
+      "chaotic-nyx.cachix.org-1:HfnXSw4pj95iI/n17rIDy40agHj12WfF+Gqk6SonIT8="
+    ];
   };
 
   outputs =

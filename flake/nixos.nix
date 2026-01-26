@@ -24,6 +24,7 @@ let
     inputs.sops-nix.nixosModules.sops
 
     inputs.microvm.nixosModules.host
+    inputs.nyx.nixosModules.default
   ];
 
   hostExtras =
