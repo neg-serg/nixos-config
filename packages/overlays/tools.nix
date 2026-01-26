@@ -17,9 +17,6 @@ in
     surfingkeys_conf = callPkg (packagesRoot + "/surfingkeys-conf") { };
     "surfingkeys-conf" = surfingkeys_conf;
 
-    # Zsh Fancy Completions
-    zsh-fancy-completions = callPkg (packagesRoot + "/zsh-fancy-completions") { };
-
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
 
     # Music album metadata CLI (used by music-rename script)

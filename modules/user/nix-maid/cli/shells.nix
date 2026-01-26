@@ -86,10 +86,6 @@ let
     mkdir -p "$out"
     cp -R ${shellFiles}/zsh/. "$out"/
     chmod -R u+w "$out"
-
-    # Source zsh-fancy-completions
-    echo "source ${pkgs.neg.zsh-fancy-completions}/share/zsh/plugins/zsh-fancy-completions/zsh-fancy-completions.plugin.zsh" > "$out/03-fancy-completions.zsh"
-
     cat > "$out/.zshenv" <<'EOF'
     # shellcheck disable=SC1090
     skip_global_compinit=1
@@ -161,9 +157,6 @@ in
         pkgs.peaclock # Customizable clock for terminal
         pkgs.curl # HTTP client for weather fetching
         pkgs.mtr # Network diagnostic tool
-
-        # Zsh Plugins
-        pkgs.neg.zsh-fancy-completions
       ];
 
       environment.sessionVariables = {
