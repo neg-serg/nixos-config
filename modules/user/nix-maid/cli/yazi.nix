@@ -34,6 +34,7 @@ let
        exit 1
     fi
 
+    export YAZI_FILE_CHOOSER_PATH="$OUTPUT_PATH"
     CWD_FILE=$(mktemp)
 
     # We run kitty, but inside kitty we run a shell script that runs yazi then asks for input
