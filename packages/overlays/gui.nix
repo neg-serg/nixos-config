@@ -11,6 +11,9 @@ let
   nyarchAssistantPkg = inputs.nyarch-assistant.packages.${prev.system}.default;
 in
 {
+  kitty = prev.kitty.overrideAttrs (old: {
+    env.NIX_CFLAGS_COMPILE = toString (old.env.NIX_CFLAGS_COMPILE or "") + " -O3 -ftree-parallelize-loops=8 -floop-parallelize-all";
+  });
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
     postPatch = (old.postPatch or "") + ''
       for f in $(grep -RIl "Qt6::WaylandClientPrivate" . || true); do
