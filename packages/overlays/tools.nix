@@ -11,6 +11,12 @@ let
     prev.callPackage path (autoArgs // extraArgs);
 in
 {
+  dvtm = prev.dvtm.overrideAttrs (old: {
+    env.NIX_CFLAGS_COMPILE =
+      toString (old.env.NIX_CFLAGS_COMPILE or "")
+      + " -O3 -ftree-parallelize-loops=8 -floop-parallelize-all";
+  });
+
   neg = rec {
     # Surfingkeys configuration
     surfingkeys_conf = callPkg (packagesRoot + "/surfingkeys-conf") { };
