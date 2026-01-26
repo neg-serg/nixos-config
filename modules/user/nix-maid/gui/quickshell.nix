@@ -61,7 +61,7 @@ let
       confdir="$HOME/.config/quickshell/Theme"
       mkdir -p "$confdir"
       # The build script presumably writes to --out
-      ${pkgs.nodejs_24}/bin/node "$HOME"/.config/quickshell/Tools/build-theme.mjs --out "$confdir/.theme.json" --quiet # Event-driven I/O framework for the V8 JavaScript engine
+      ${pkgs.nodejs_24}/bin/node "$HOME"/.config/quickshell/Tools/build-theme.mjs --dir "$confdir" --out "$confdir/.theme.json" --quiet # Event-driven I/O framework for the V8 JavaScript engine
     '';
   };
 in
