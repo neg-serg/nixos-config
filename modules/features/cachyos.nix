@@ -32,7 +32,7 @@ in
     };
 
     # Enable UKSMD (Userspace KSM helper) for memory deduplication
-    services.uksmd.enable = true;
+    # services.uksmd.enable = true;
     
     # Enable other CachyOS optimizations if available/safe
     # (e.g., specific sysctls are often handled by their kernel or ananicy)
