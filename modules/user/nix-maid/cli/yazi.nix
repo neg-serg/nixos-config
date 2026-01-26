@@ -40,20 +40,28 @@ let
     # We run kitty, but inside kitty we run a shell script that runs yazi then asks for input
     # We explicitly wait for user input after yazi closes.
     ${pkgs.kitty}/bin/kitty --detach=no sh -c "
+      exec > >(tee -a /tmp/yazi-wrapper.log) 2>&1
+      echo '--- New Session ---'
+      date
+      echo 'Running yazi...'
+      
       ${pkgs.yazi}/bin/yazi --cwd-file='$CWD_FILE'
+      YAZI_EXIT_CODE=\$?
+      echo "Yazi exited with code \$YAZI_EXIT_CODE"
+      
       if [ -f '$CWD_FILE' ]; then
         selected_dir=\$(cat '$CWD_FILE')
       else
         echo 'Error: CWD_FILE missing'
       fi
 
-      echo "Debug: Yazi exited."
       echo "Debug: Selected dir: '\$selected_dir'"
       
       if [ -n "\$selected_dir" ]; then
         echo "Selected directory: \$selected_dir"
         echo -n "Enter filename to save as: "
         read filename
+        echo "Read filename: '\$filename'"
         
         if [ -n "\$filename" ]; then
            # Construct full path
@@ -61,6 +69,7 @@ let
            echo "Saving to: \$full_path"
            # Write to the portal output file
            echo "\$full_path" > '$OUTPUT_PATH'
+           echo "Written to portal output path: $OUTPUT_PATH"
         else 
            echo "No filename entered, cancelling."
         fi
