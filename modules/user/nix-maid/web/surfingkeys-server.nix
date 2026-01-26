@@ -81,9 +81,9 @@ mkIf (config.features.web.enable or false) {
         RestartSec = "5";
         Slice = "background.slice";
       };
-      after = preset.Unit.After or [ ];
-      wants = preset.Unit.Wants or [ ];
-      partOf = preset.Unit.PartOf or [ ];
-      wantedBy = preset.Install.WantedBy or [ ];
+      after = preset.Unit.After or [ ] ++ [ "graphical-session.target" ];
+      wants = preset.Unit.Wants or [ ] ++ [ "graphical-session.target" ];
+      partOf = preset.Unit.PartOf or [ ] ++ [ "graphical-session.target" ];
+      wantedBy = preset.Install.WantedBy or [ ] ++ [ "graphical-session.target" ];
     };
 }
