@@ -24,6 +24,7 @@ let
       overlays = [
         ((import ../packages/overlay.nix) inputs)
         inputs.hyprland.overlays.default
+        inputs.nyx.overlays.default
         (hyprlandOverlay system)
       ];
       config = import ./pkgs-config.nix;
