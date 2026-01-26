@@ -1,4 +1,4 @@
-inputs: final: prev: {
+_inputs: _final: prev: {
   # Shared helper functions under pkgs.neg.functions to DRY up overlay patterns
   neg = (prev.neg or { }) // {
     functions = {

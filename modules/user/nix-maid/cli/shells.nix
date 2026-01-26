@@ -13,7 +13,6 @@ let
   shellFiles = ../../../../files/shell;
   kittyConf = ../../../../files/kitty;
   tmuxConfDir = ../../../../files/tmux;
-  ompConfig = ../../../../files/shell/zsh/neg.omp.json;
   dircolorsConfig = "${inputs.self}/files/shell/dircolors/dircolors";
 
   # --- Inputrc ---
