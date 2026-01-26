@@ -16,6 +16,7 @@ in
     // (tools.neg or { })
     // (media.neg or { })
     // (dev.neg or { })
+    // (gui.neg or { })
     // {
       rofi-config = final.callPackage ./rofi-config { };
       opencode = final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { };
@@ -44,7 +45,17 @@ in
     };
   };
 
-  # Zen 5 Optimized Gaming Packages
+  # Zen 5 Optimized Packages
   gamescope = final.neg.functions.mkZen5LtoPackage prev.gamescope;
   mangohud = final.neg.functions.mkZen5LtoPackage prev.mangohud;
+  
+  # Zen 5 Optimized Editor
+  neovim-optimized = (final.neg.functions.mkZen5LtoPackage prev.neovim-unwrapped).overrideAttrs (old: {
+    cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE" ];
+    env = (old.env or { }) // {
+      NIX_CFLAGS_COMPILE = (old.env.NIX_CFLAGS_COMPILE or "") + " -flto=thin";
+      NIX_LDFLAGS = (old.env.NIX_LDFLAGS or "") + " -flto=thin";
+    };
+  });
 }
+
