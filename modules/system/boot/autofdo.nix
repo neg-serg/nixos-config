@@ -12,6 +12,13 @@ in
 {
   options.boot.kernel.autofdo = {
     enable = mkEnableOption "Kernel AutoFDO support (requires Clang-built kernel)";
+
+    profile = mkOption {
+      type = types.nullOr types.path;
+      default = null;
+      description = "Path to the AutoFDO profile (gcov format) to use for optimization.";
+      example = "/root/autofdo.prof";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -22,10 +29,16 @@ in
     boot.kernelPackages = mkForce (
       pkgs.linuxPackagesFor (
         # custom kernel packages
-        pkgs.linuxPackages_latest.kernel.override {
+        (pkgs.linuxPackages_latest.kernel.override {
           # use clang toolchain
           stdenv = pkgs.clangStdenv; # The default build environment for Unix packages in Nixpkgs
-        }
+        }).overrideAttrs
+          (old: {
+            # Inject profile if provided
+            makeFlags =
+              (old.makeFlags or [ ])
+              ++ (lib.optional (cfg.profile != null) "CLANG_AUTOFDO_PROFILE=${cfg.profile}");
+          })
       )
     );
 
@@ -41,3 +54,4 @@ in
     ];
   };
 }
+
