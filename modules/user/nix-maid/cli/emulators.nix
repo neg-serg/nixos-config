@@ -47,66 +47,7 @@ in
         }
       '';
 
-      # Ghostty Config (Synced with Kitty)
-      ".config/ghostty/config".text = ''
-        # Font settings
-        font-family = Iosevka Medium
-        font-family-bold = Iosevka Bold
-        font-family-italic = Iosevka Italic
-        font-family-bold-italic = Iosevka Bold Italic
-        font-size = 13
 
-        # Colors (matching Kitty theme.conf)
-        background = 000000
-        foreground = 6C7E96
-        selection-background = 0d1824
-        selection-foreground = 367bbf
-        cursor-color = 4842ff
-        cursor-text = 000000
-
-        # Palette (16 standard colors)
-        palette = 0=#020202
-        palette = 1=#8A2F58
-        palette = 2=#287373
-        palette = 3=#914E89
-        palette = 4=#395573
-        palette = 5=#5E468C
-        palette = 6=#31658C
-        palette = 7=#899CA1
-        palette = 8=#3D3D3D
-        palette = 9=#CF4F88
-        palette = 10=#53A6A6
-        palette = 11=#BF85CC
-        palette = 12=#477AB3
-        palette = 13=#7E62B3
-        palette = 14=#6096BF
-        palette = 15=#617287
-
-        # Transparency (matching Kitty background_opacity=0.88)
-        background-opacity = 0.88
-
-        # Cursor settings
-        cursor-style = block
-        cursor-style-blink = false
-
-        # Scrollback (matching Kitty scrollback_lines=4000)
-        scrollback-limit = 4000
-
-        # URL handling
-        link-url = true
-
-        # Window settings
-        window-decoration = false
-        gtk-titlebar = false
-        window-padding-x = 0
-        window-padding-y = 0
-
-        # Behavior (matching Kitty)
-        copy-on-select = clipboard
-        confirm-close-surface = false
-        mouse-hide-while-typing = true
-        shell-integration = detect
-      '';
     })
   ];
 }
