@@ -11,7 +11,7 @@ return {'lewis6991/gitsigns.nvim', -- fast git decorations
             current_line_blame_opts={
                 delay=1000,
                 virt_text = true,
-                virt_text_pos = 'right_align',  -- Или 'eol'
+                virt_text_pos = 'right_align',  -- Or 'eol'
             },
             on_attach = function(bufnr)
                 local gs = package.loaded.gitsigns

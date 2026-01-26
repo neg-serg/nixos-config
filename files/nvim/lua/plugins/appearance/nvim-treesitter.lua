@@ -7,8 +7,8 @@ return {
   config = function()
     require('nvim-treesitter.configs').setup({
       ensure_installed = {}, -- managed by Nix 
-      highlight = { enable = true }, -- включить подсветку
-      indent = { enable = true }, -- умные отступы
+      highlight = { enable = true }, -- enable highlighting
+      indent = { enable = true }, -- smart indentation
     })
   end
 }

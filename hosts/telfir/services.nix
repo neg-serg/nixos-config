@@ -556,7 +556,7 @@ lib.mkMerge [
         "d /zero/ncps-temp 0750 ncps ncps - -"
       ];
       services = {
-        # Энергосбережение по умолчанию для меньшего тепла/шума
+        # Power saving by default for less heat/noise
         "power-profiles-default" = {
           description = "Set default power profile to balanced";
           after = [ "power-profiles-daemon.service" ];
