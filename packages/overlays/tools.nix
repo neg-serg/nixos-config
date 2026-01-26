@@ -14,7 +14,7 @@ in
   dvtm = prev.dvtm.overrideAttrs (old: {
     env.NIX_CFLAGS_COMPILE =
       toString (old.env.NIX_CFLAGS_COMPILE or "")
-      + " -O3 -ftree-parallelize-loops=8 -floop-parallelize-all";
+      + " -O3";
   });
 
   neg = (prev.neg or { }) // rec {

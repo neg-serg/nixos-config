@@ -12,7 +12,7 @@ let
 in
 {
   kitty = prev.kitty.overrideAttrs (old: {
-    env.NIX_CFLAGS_COMPILE = toString (old.env.NIX_CFLAGS_COMPILE or "") + " -O3 -ftree-parallelize-loops=8 -floop-parallelize-all";
+    env.NIX_CFLAGS_COMPILE = toString (old.env.NIX_CFLAGS_COMPILE or "") + " -O3";
   });
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
     postPatch = (old.postPatch or "") + ''
