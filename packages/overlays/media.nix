@@ -15,7 +15,7 @@ _inputs: _final: prev:
   swayimg = prev.swayimg.overrideAttrs (old: {
     env.NIX_CFLAGS_COMPILE =
       toString (old.env.NIX_CFLAGS_COMPILE or "")
-      + " -O3 -ftree-parallelize-loops=8 -floop-parallelize-all";
+      + " -O3";
   });
   neg = (prev.neg or { }) // {
     # Ensure mpv is built with VapourSynth support
