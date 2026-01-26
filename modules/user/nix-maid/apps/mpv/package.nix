@@ -15,9 +15,11 @@ let
     pkgs.mpvScripts.uosc # modern minimalist UI with controls
   ];
 
-  mpvUnwrapped = pkgs.mpv-unwrapped.override {
+  mpvUnwrapped = (pkgs.mpv-unwrapped.override {
     vapoursynthSupport = true;
-  };
+  }).overrideAttrs (old: {
+    env.NIX_CFLAGS_COMPILE = toString (old.env.NIX_CFLAGS_COMPILE or "") + " -O3 -ftree-parallelize-loops=8 -floop-parallelize-all";
+  });
 
   mpvPackage = pkgs.mpv.override {
     mpv = mpvUnwrapped;
