@@ -16,7 +16,6 @@ lib.mkMerge [
       pkgs.aliae # Cross-shell configuration manager
       pkgs.fastfetch # Like neofetch, but much faster (C)
       pkgs.tealdeer # A fast tldr client in Rust
-      # pkgs.lsd # The next gen ls command (Removed in favor of eza)
       pkgs.nodejs # For npx and npm
 
       # ZCLI (custom script)
