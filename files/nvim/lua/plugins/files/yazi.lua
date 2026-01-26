@@ -23,7 +23,7 @@ return {
     },
   },
   init = function()
-    -- must be early, so nothing перехватит директории
+    -- must be early, so nothing intercepts directories
     vim.g.loaded_netrw = 1
     vim.g.loaded_netrwPlugin = 1
   end,
