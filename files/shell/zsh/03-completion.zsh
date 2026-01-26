@@ -96,8 +96,4 @@ zstyle ':zle:*kill*' word-chars '*?_-.[]~=&;!#$%^(){}<>'
 zshcache_time="$(date +%s%N)"
 autoload -Uz add-zsh-hook
 
-if (( $+commands[carapace] )); then
-  zsh-defer source <(carapace _carapace)
-fi
-
 # vim: ft=zsh:nowrap
