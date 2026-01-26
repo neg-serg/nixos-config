@@ -12,100 +12,72 @@ let
   cfg = config.features.cli.yazi;
   tomlFormat = pkgs.formats.toml { };
 
-  yazi-save-wrapper = pkgs.writeShellScript "yazi-save-wrapper" ''
-    # Find the output path argument (it's one of the args, usually 5th, but we scan)
-    OUTPUT_PATH=""
-    CURRENT_NAME=""
+  
 
-    # Simple arg parsing to find output path and potentially current name/folder
-    # The portal passes args like: method request_handle parent_window title ...
-    # But usually valid output path ends in .portal
+  yazi-wrapper = pkgs.writeShellScript "yazi-wrapper" ''
+    # Find the output path argument
+    OUTPUT_PATH=""
+    METHOD=""
+    
+    # Log args for debugging
+    LOGfile=/tmp/yazi-debug.log
+    exec > >(tee -a "$LOGfile") 2>&1
+    echo "--- New Unified Session ---"
+    date
+    echo "Args: $@"
+
     for arg in "$@"; do
       if [[ "$arg" == *.portal ]]; then
         OUTPUT_PATH="$arg"
-      elif [[ "$arg" == "/"* ]]; then
-         # Heuristics: if it looks like a path, might be default dir, but we rely on yazi defaults
-         :
+      fi
+      if [[ "$arg" == *"SaveFile"* ]]; then
+        METHOD="save"
       fi
     done
 
     if [[ -z "$OUTPUT_PATH" ]]; then
-       echo "No output path found given args: $@" >&2
+       echo "No output path found"
        exit 1
     fi
 
+    # Propagate env for smart-enter
     export YAZI_FILE_CHOOSER_PATH="$OUTPUT_PATH"
-    CWD_FILE=$(mktemp)
 
-    # We run kitty, but inside kitty we run a shell script that runs yazi then asks for input
-    # We explicitly wait for user input after yazi closes.
+    CWD_FILE=$(mktemp)
+    
     ${pkgs.kitty}/bin/kitty --detach=no sh -c "
-      # Propagate the variable into the inner shell explicitly
+      # Re-export needed for inner shell if env cleared
       export YAZI_FILE_CHOOSER_PATH='$OUTPUT_PATH'
       
-      LOGfile=\\$HOME/yazi-debug.log
-      exec > >(tee -a \"\\$LOGfile\") 2>&1
-      echo '--- New Session ---'
-      date
-      echo "Checking Env var: YAZI_FILE_CHOOSER_PATH=\$YAZI_FILE_CHOOSER_PATH"
-      env | grep YAZI
-      
-      pwd
-      ls -la '$OUTPUT_PATH' || echo 'Output path does not exist yet'
-
+      echo 'Running yazi in method: $METHOD'
+      # Open yazi
       ${pkgs.yazi}/bin/yazi --cwd-file='$CWD_FILE'
-      YAZI_EXIT_CODE=\$?
-      echo "Yazi exited with code \$YAZI_EXIT_CODE"
+      # User exits yazi (via quit or C-s keybind)
       
       if [ -f '$CWD_FILE' ]; then
-        selected_dir=\$(cat '$CWD_FILE')
+        selected_dir=$(cat '$CWD_FILE')
       else
         echo 'Error: CWD_FILE missing'
       fi
 
-      echo "Debug: Selected dir: '\$selected_dir'"
-      
-      if [ -n "\$selected_dir" ]; then
-        echo "Selected directory: \$selected_dir"
-        echo -n "Enter filename to save as: "
-        read filename
-        echo "Read filename: '\$filename'"
-        
-        if [ -n "\$filename" ]; then
-           full_path="\$selected_dir/\$filename"
-           echo "Saving to: \$full_path"
-           echo "\$full_path" > '$OUTPUT_PATH'
-           echo "Written to portal output path: $OUTPUT_PATH"
-        else 
-           echo "No filename entered, cancelling."
-        fi
+      if [ "$METHOD" = "save" ]; then
+          if [ -n "$selected_dir" ]; then
+            echo "Selected directory: $selected_dir"
+            echo -n "Enter filename to save as: "
+            read filename
+            if [ -n "$filename" ]; then
+               full_path="$selected_dir/$filename"
+               echo "$full_path" > '$OUTPUT_PATH'
+            fi
+          fi
+          echo 'Press Enter to close...'
+          read _
       else
-         echo "Error: No directory passed from Yazi."
+          # Open mode
+          :
       fi
       rm -f '$CWD_FILE'
-      echo
-      echo 'Press Enter to close this window...'
-      read _
     "
-  '';
-
-  yazi-wrapper = pkgs.writeShellScript "yazi-wrapper" ''
-    # Find the output path argument (it's one of the args, usually 5th, but we scan)
-    OUTPUT_PATH=""
-    for arg in "$@"; do
-      if [[ "$arg" == *.portal ]]; then
-        OUTPUT_PATH="$arg"
-        break
-      fi
-    done
-
-    if [[ -z "$OUTPUT_PATH" ]]; then
-       exit 1
-    fi
-
-    # Run kitty with yazi
-    export YAZI_FILE_CHOOSER_PATH="$OUTPUT_PATH"
-    exec ${pkgs.kitty}/bin/kitty --detach=no ${pkgs.yazi}/bin/yazi --chooser-file "$OUTPUT_PATH"
   '';
 
   smart-enter-plugin = ''
@@ -131,10 +103,6 @@ let
   termfilechooserConfig = ''
     [filechooser]
     cmd = ${yazi-wrapper}
-    default_dir = /home/neg
-
-    [savefile]
-    cmd = ${yazi-save-wrapper}
     default_dir = /home/neg
   '';
 
@@ -348,6 +316,11 @@ let
   keymap = {
     # Yazi 0.3+: [keymap.manager] -> [keymap.mgr]
     mgr.prepend_keymap = [
+      {
+        on = [ "<C-s>" ];
+        run = "quit";
+        desc = "Confirm selection (Save)";
+      }
       {
         on = [ "g" "r" ];
         run = ''shell -- ya emit cd "$(git rev-parse --show-toplevel)"'';
