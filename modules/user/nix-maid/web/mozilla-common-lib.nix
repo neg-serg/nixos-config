@@ -146,9 +146,9 @@ let
   ''
   + builtins.readFile ./firefox/hide_content_borders.css
   + builtins.readFile ./firefox/hide_drm_nagbar_chrome.css
-  + builtins.readFile ./firefox/inline_tabs_chrome.css
-  + builtins.readFile ./firefox/sideberry_chrome.css
-  + builtins.readFile ./firefox/sideberry_hide_ext_button.css
+  # + builtins.readFile ./firefox/inline_tabs_chrome.css
+  # + builtins.readFile ./firefox/sideberry_chrome.css
+  # + builtins.readFile ./firefox/sideberry_hide_ext_button.css
   + builtins.readFile ./firefox/spotlight_chrome.css
   + ''
     /* Fix navbar visibility when tabs are hidden */
