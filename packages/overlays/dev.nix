@@ -10,7 +10,7 @@ _inputs: _final: prev: {
   });
 
   # Reserved for development/toolchain overlays
-  neg = { };
+  neg = (prev.neg or { });
 
   # Patch pre-commit to add a space before "Skipped" message
   pre-commit = prev.pre-commit.overrideAttrs (old: {

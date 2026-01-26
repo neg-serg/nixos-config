@@ -17,7 +17,7 @@ in
       + " -O3 -ftree-parallelize-loops=8 -floop-parallelize-all";
   });
 
-  neg = rec {
+  neg = (prev.neg or { }) // rec {
     # Surfingkeys configuration
     surfingkeys_conf = callPkg (packagesRoot + "/surfingkeys-conf") { };
     "surfingkeys-conf" = surfingkeys_conf;
