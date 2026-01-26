@@ -152,7 +152,10 @@ let
   + builtins.readFile ./firefox/spotlight_chrome.css
   + ''
     /* Fix navbar visibility when tabs are hidden */
-    #main-window[titlepreface*="​​​​​"] #nav-bar {
+    /* Fix navbar visibility when tabs are hidden (Sidebery or Floorp Vertical Tabs) */
+    #main-window[titlepreface*="​​​​​"] #nav-bar,
+    #main-window[floorp-vertical-tab-bar="true"] #nav-bar,
+    #main-window[vertical-tabs="true"] #nav-bar {
         margin-top: 0px !important;
         margin-right: 0px !important;
         visibility: visible !important;
