@@ -158,7 +158,6 @@ in
         pkgs.peaclock # Customizable clock for terminal
         pkgs.curl # HTTP client for weather fetching
         pkgs.mtr # Network diagnostic tool
-        pkgs.carapace # Universal shell completions
       ];
 
       environment.sessionVariables = {
@@ -208,12 +207,6 @@ in
         oh-my-posh init nu --config $env.OMP_CONFIG --print | save -f ~/.cache/oh-my-posh-init.nu
         source ~/.cache/oh-my-posh-init.nu
         $env.PROMPT_COMMAND_RIGHT = ""
-
-        # Carapace Completions
-        $env.CARAPACE_BRIDGES = 'zsh,fish,bash,inshellisense' # optional
-        mkdir ~/.cache/carapace
-        carapace _carapace nushell | save --force ~/.cache/carapace/init.nu
-        source ~/.cache/carapace/init.nu
       '';
     })
   ];
