@@ -972,11 +972,11 @@
         "trilium": "trilium"
       },
       "locked": {
-        "lastModified": 1769307210,
-        "narHash": "sha256-SO9zad7klfAZ5mOKpu0vVfahQr3XLW3bxSeF6WiXGAw=",
+        "lastModified": 1769388864,
+        "narHash": "sha256-sR/B8diOyr5fly6unBrgolJshWo+YVBYMByWoRjcVlw=",
         "owner": "kalbasit",
         "repo": "ncps",
-        "rev": "3f8882c62a77d473ef3d64a5c4b1ce3124a7f5e8",
+        "rev": "5ed0ca2fde1a4cca6943f4b1bd7026ef12e222a2",
         "type": "github"
       },
       "original": {
@@ -1093,11 +1093,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1769354239,
-        "narHash": "sha256-MhbptUY7ancteazxhCR+cFZYbitaX5CR+F86XHoAJZM=",
+        "lastModified": 1769393565,
+        "narHash": "sha256-g7btCIf9YeQn5kRmLwSw3J4YrBX7W4LYluaXfN3N830=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "1cd64d78f51a4f341ee33e718699e6b74437e8e0",
+        "rev": "f90689c46132257590f0cb15755eede9e20ac415",
         "type": "github"
       },
       "original": {
