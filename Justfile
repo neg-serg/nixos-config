@@ -30,7 +30,7 @@ cpu-masks:
 # Rebuild and switch to the new system configuration
 # Usage: just deploy [host]
 deploy host="telfir":
-    # Build system closure (fast, git-aware, user-cache)
+    # Build system closure
     nix build .#nixosConfigurations.{{host}}.config.system.build.toplevel --out-link result
     # Update system profile
     sudo nix-env -p /nix/var/nix/profiles/system --set $(readlink -f result)
@@ -55,8 +55,6 @@ diff:
     nix run nixpkgs#nvd -- diff $files
 
 # --- Repo-wide workflows ---------------------------------------------------------
-
-
 fmt:
     repo_root="$(git rev-parse --show-toplevel)"; \
     cd "$repo_root" && nix fmt
@@ -143,16 +141,6 @@ lint:
 lint-annotations:
     repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; \
     bash "$repo_root/scripts/dev/check-package-annotations.sh" "$repo_root"
-
-lint-md *ARGS:
-    set -eu
-    if [ "$#" -gt 0 ]; then \
-      markdownlint --config .markdownlint.yaml "$@"; \
-    elif [ -n "$$(git ls-files -- '*.md')" ]; then \
-      markdownlint --config .markdownlint.yaml .; \
-    else \
-      echo 'No Markdown files found'; \
-    fi
 
 docs-modules:
     # Generate modules documentation (opt-in)
