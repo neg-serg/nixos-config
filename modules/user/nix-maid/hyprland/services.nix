@@ -36,14 +36,10 @@
       (pkgs.writeShellScriptBin "hypr-scratch-toggle" ''
         target="$1"
         active_class=$(${lib.getExe' pkgs.hyprland "hyprctl"} activewindow -j | ${lib.getExe pkgs.jq} -r '.class')
-        PYPR_CLIENT="$HOME/.local/bin/pypr-client"
+
         case "$active_class" in
-          ${lib.concatStringsSep "\n          " (lib.mapAttrsToList (name: cfg: ''"${cfg.class}") "$PYPR_CLIENT" toggle "${name}" ;;'') pyprlandConfig.scratchpads)}
-          *)
-             if [ "$target" != "close" ]; then
-                "$PYPR_CLIENT" toggle "$target"
-             fi
-             ;;
+          ${lib.concatStringsSep "\n          " (lib.mapAttrsToList (name: cfg: ''"${cfg.class}") ${lib.getExe pkgs.pyprland} toggle "${name}" ;;'') pyprlandConfig.scratchpads)}
+          *) ${lib.getExe pkgs.pyprland} toggle "$target" ;;
         esac
       '')
       # hypr-reload script
