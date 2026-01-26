@@ -13,7 +13,7 @@ let
   cfg = config.servicesProfiles.duckdns or { enable = false; };
 in
 {
-  imports = [ inputs.nyx.nixosModules.duckdns ];
+  imports = [ ];
 
   config = lib.mkIf cfg.enable {
     assertions = [
