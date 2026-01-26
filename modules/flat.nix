@@ -33,6 +33,7 @@
     ./documentation/settings.nix
     ./emulators/pkgs.nix # Nix package manager
     ./features/apps.nix
+    ./features/cachyos.nix
     ./features/cli.nix
     ./features/core.nix
     ./features/default.nix
