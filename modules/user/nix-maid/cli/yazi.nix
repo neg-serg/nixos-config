@@ -173,7 +173,7 @@ let
   '';
 
   save-file-plugin = ''
-    local function entry(state)
+    local function entry(state, ...)
       local function log(msg)
         local f = io.open("/tmp/yazi_save_debug.log", "a")
         if f then
@@ -183,7 +183,22 @@ let
       end
 
       log("Plugin started.")
-      local mode = state.args[1]
+      local args = {}
+      if state and type(state) == "table" and state.args then
+          args = state.args
+          log("Args found in state.args")
+      else
+          log("State is " .. type(state))
+          if ... then
+             log("Varargs presence: yes")
+             args = { state, ... }
+          else
+             -- Fallback or error
+             log("No args found!")
+          end
+      end
+
+      local mode = args[1]
       log("Mode: " .. tostring(mode))
 
       local output_path = os.getenv("YAZI_FILE_CHOOSER_PATH")
@@ -254,6 +269,8 @@ let
              if value then save(value) end
            end
         end
+      else
+        log("Unknown mode: " .. tostring(mode))
       end
     end
     return { entry = entry }
