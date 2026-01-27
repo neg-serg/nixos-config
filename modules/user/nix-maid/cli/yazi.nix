@@ -174,51 +174,83 @@ let
 
   save-file-plugin = ''
     local function entry(state)
+      local function log(msg)
+        local f = io.open("/tmp/yazi_save_debug.log", "a")
+        if f then
+          f:write(os.date("%c") .. " > " .. tostring(msg) .. "\n")
+          f:close()
+        end
+      end
+
+      log("Plugin started.")
       local mode = state.args[1]
+      log("Mode: " .. tostring(mode))
+
       local output_path = os.getenv("YAZI_FILE_CHOOSER_PATH")
       local suggested = os.getenv("YAZI_SUGGESTED_FILENAME")
       local cwd = cx.active.current.cwd
       
       if not output_path then
+        log("Error: No output path")
         ya.notify({ title = "Save File", content = "No output path set", timeout = 5.0, level = "error" })
         return
       end
 
       local function save(filename)
-        if not filename or filename == "" then return end
+        log("Saving: " .. tostring(filename))
+        if not filename or filename == "" then 
+            log("Empty filename, aborting save")
+            return 
+        end
         local full_path = filename
         if string.sub(filename, 1, 1) ~= "/" then
            full_path = tostring(cwd) .. "/" .. filename
         end
+        
+        log("Full path: " .. full_path)
         local out_file = io.open(output_path, "w")
         if out_file then
           out_file:write(full_path)
           out_file:close()
         else
+          log("Failed to write to portal output")
           ya.notify({ title = "Save File", content = "Failed to write to portal output", timeout = 5.0, level = "error" })
           return
         end
+        
         local f = io.open(full_path, "a")
         if f then f:close() end
+        
+        log("Quitting yazi...")
         ya.manager_emit("quit", { "--no-confirm" })
       end
 
       if mode == "input" then
+        log("Requesting input...")
         local value, event = ya.input({
-          title = "Save as (New File):", value = suggested or "", position = { "top-center", y = 3, w = 40 }
+          title = "Save as (New File):", 
+          value = suggested or "", 
+          pos = { "top-center", y = 3, w = 40 }
         })
+        log("Input result: " .. tostring(value))
         if value then save(value) end
       elseif mode == "overwrite" then
         if suggested and suggested ~= "" then
+           log("Auto-saving suggested: " .. suggested)
            save(suggested)
         else
            local hovered = cx.active.current.hovered
            if hovered then
+             log("Saving hovered: " .. tostring(hovered.name))
              save(tostring(hovered.name))
            else
+             log("No hovered, requesting input")
              local value, event = ya.input({
-                title = "Save as:", value = "", position = { "top-center", y = 3, w = 40 }
+                title = "Save as:", 
+                value = "", 
+                pos = { "top-center", y = 3, w = 40 }
              })
+             log("Input result: " .. tostring(value))
              if value then save(value) end
            end
         end
