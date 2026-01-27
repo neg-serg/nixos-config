@@ -200,7 +200,7 @@ let
         end
         local f = io.open(full_path, "a")
         if f then f:close() end
-        ya.manager_emit("quit", { true })
+        ya.manager_emit("quit", { "--no-confirm" })
       end
 
       if mode == "input" then
