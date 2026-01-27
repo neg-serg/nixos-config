@@ -204,9 +204,10 @@ let
       end
 
       if mode == "input" then
-        ya.input({
+        local value, event = ya.input({
           title = "Save as (New File):", value = suggested or "", position = { "top-center", y = 3, w = 40 }
-        }):then_call(function(value, event) if value then save(value) end end)
+        })
+        if value then save(value) end
       elseif mode == "overwrite" then
         if suggested and suggested ~= "" then
            save(suggested)
@@ -215,9 +216,10 @@ let
            if hovered then
              save(tostring(hovered.name))
            else
-             ya.input({
+             local value, event = ya.input({
                 title = "Save as:", value = "", position = { "top-center", y = 3, w = 40 }
-             }):then_call(function(value, event) if value then save(value) end end)
+             })
+             if value then save(value) end
            end
         end
       end
