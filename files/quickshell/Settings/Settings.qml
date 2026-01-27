@@ -7,7 +7,7 @@ Singleton {
     property string shellName: "quickshell"
     property string settingsDir: (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/" + shellName + "/"
     property string settingsFile: (settingsDir + "Settings.json")
-    property string themeFile: ((Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache") + "/quickshell/theme.json")
+    property string themeFile: (settingsDir + "Theme/.theme.json")
     property var settings: settingAdapter
 
     Item {
