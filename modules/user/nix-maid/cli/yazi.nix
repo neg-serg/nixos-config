@@ -380,7 +380,7 @@ lib.mkIf (cfg.enable or false) (
       ".config/yazi/keymap.toml".source = tomlFormat.generate "keymap.toml" keymap;
       ".config/yazi/plugins/smart-paste.yazi".source = "${yazi-plugins}/smart-paste.yazi";
       ".config/yazi/plugins/paste-to-select.yazi/main.lua".text = paste-to-select-plugin;
-      ".config/yazi/plugins/save-file/init.lua".text = save-file-plugin;
+      ".config/yazi/plugins/save-file.yazi/main.lua".text = save-file-plugin;
       ".config/xdg-desktop-portal-termfilechooser/config".text = termfilechooserConfig;
     })
   ]
