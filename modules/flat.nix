@@ -121,7 +121,7 @@
     ./secrets/pkgs.nix # Nix package manager
     ./secrets/yubikey/default.nix
     ./security/default.nix
-    ./security/firejail.nix
+
 
     ./servers/adguardhome/default.nix
     ./servers/avahi/default.nix
