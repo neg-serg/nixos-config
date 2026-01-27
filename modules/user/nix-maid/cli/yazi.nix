@@ -14,7 +14,7 @@ let
 
   
 
-      yazi-wrapper = pkgs.writeShellScript "yazi-wrapper" ''
+        yazi-wrapper = pkgs.writeShellScript "yazi-wrapper" ''
     # Find the output path argument
     OUTPUT_PATH=""
     METHOD=""
@@ -35,18 +35,35 @@ let
        exit 1
     fi
 
+    # Propagate env for smart-enter/gs
+    export YAZI_FILE_CHOOSER_PATH="$OUTPUT_PATH"
+    export YA_SOCKET="/tmp/yazi-wrapper.sock"
+
     CWD_FILE=$(mktemp)
     
     ${pkgs.kitty}/bin/kitty --detach=no sh -c "
+      export YAZI_FILE_CHOOSER_PATH='$OUTPUT_PATH'
+      
       echo 'Running yazi in method: $METHOD'
       logger -t Yazi-Wrapper "Starting Yazi. Method: $METHOD"
       
       if [ \"$METHOD\" = \"save\" ]; then
          # Save Mode: Use cwd-file tracking
+         # Note: 'gs' writes directly to OUTPUT_PATH
          ${pkgs.yazi}/bin/yazi --cwd-file='$CWD_FILE'
          
+         # Check if 'gs' was used (OUTPUT_PATH has content)
+         if [ -s '$OUTPUT_PATH' ]; then
+            full_path=\$(cat '$OUTPUT_PATH')
+            logger -t Yazi-Wrapper "GS selected: \$full_path"
+            touch "\$full_path"
+            # Done, exit
+            exit 0
+         fi
+         
+         # If not gs, proceed with manual filename prompt
          if [ -f '$CWD_FILE' ]; then
-           selected_dir=$(cat '$CWD_FILE')
+           selected_dir=\$(cat '$CWD_FILE')
            
            if [ -n \"\$selected_dir\" ]; then
              echo -n \"Enter filename to save as: \"
@@ -64,13 +81,13 @@ let
          
       else
          # Open Mode: Use native chooser
-         # This handles Enter key automatically
          ${pkgs.yazi}/bin/yazi --chooser-file='$OUTPUT_PATH'
       fi
       
       rm -f '$CWD_FILE'
     "
   '';
+
 
 
 
@@ -292,6 +309,12 @@ let
   keymap = {
     # Yazi 0.3+: [keymap.manager] -> [keymap.mgr]
     mgr.prepend_keymap = [
+      {
+        on = [ "g" "s" ];
+        run = "shell -- 'echo \"$1\" > \"$YAZI_FILE_CHOOSER_PATH\"; ${pkgs.yazi}/bin/ya emit quit' --confirm";
+        desc = "Select current file (Overwrite)";
+      }
+
       {
         on = [ "<C-s>" ];
         run = "quit";
