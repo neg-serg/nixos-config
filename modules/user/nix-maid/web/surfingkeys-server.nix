@@ -14,7 +14,7 @@ with lib;
 mkIf (config.features.web.enable or false) {
   systemd.user.services.surfingkeys-server =
     let
-      preset = systemdUser.mkUnitFromPresets { presets = [ "defaultWanted" ]; };
+      preset = systemdUser.mkUnitFromPresets { };
       serverScript = pkgs.writeText "sk-server.py" ''
         import http.server
         import socketserver
