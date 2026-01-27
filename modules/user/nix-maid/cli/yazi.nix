@@ -1,7 +1,15 @@
-{ pkgs, lib, config, ... }:
+{
+  pkgs,
+  lib,
+  config,
+
+  neg,
+  impurity ? null,
+  ...
+}:
 let
-  cfg = config.nix-maid.cli.yazi;
-  n = config.nix-maid.helpers;
+  n = neg impurity;
+  cfg = config.features.cli.yazi;
   tomlFormat = pkgs.formats.toml { };
 
   # Updated wrapper to export env vars for Lua plugin
@@ -46,8 +54,6 @@ let
          if [ -s '$OUTPUT_PATH' ]; then
             exit 0
          fi
-         # echo 'Press Enter to close...'
-         # read _
       else
          # Open Mode
          ${pkgs.yazi}/bin/yazi --chooser-file='$OUTPUT_PATH'
