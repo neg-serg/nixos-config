@@ -14,12 +14,11 @@ let
 
   
 
-    yazi-wrapper = pkgs.writeShellScript "yazi-wrapper" ''
+      yazi-wrapper = pkgs.writeShellScript "yazi-wrapper" ''
     # Find the output path argument
     OUTPUT_PATH=""
     METHOD=""
     
-    # Log args to journal
     logger -t Yazi-Wrapper "Args: $*"
 
     for arg in "$@"; do
@@ -36,69 +35,46 @@ let
        exit 1
     fi
 
-    # Propagate env for smart-enter
-    export YAZI_FILE_CHOOSER_PATH="$OUTPUT_PATH"
-
     CWD_FILE=$(mktemp)
     
     ${pkgs.kitty}/bin/kitty --detach=no sh -c "
-      export YAZI_FILE_CHOOSER_PATH='$OUTPUT_PATH'
-      
       echo 'Running yazi in method: $METHOD'
       logger -t Yazi-Wrapper "Starting Yazi. Method: $METHOD"
       
-      ${pkgs.yazi}/bin/yazi --cwd-file='$CWD_FILE'
+      if [ \"$METHOD\" = \"save\" ]; then
+         # Save Mode: Use cwd-file tracking
+         ${pkgs.yazi}/bin/yazi --cwd-file='$CWD_FILE'
+         
+         if [ -f '$CWD_FILE' ]; then
+           selected_dir=$(cat '$CWD_FILE')
+           
+           if [ -n \"\$selected_dir\" ]; then
+             echo -n \"Enter filename to save as: \"
+             read filename
+             if [ -n \"\$filename\" ]; then
+                full_path=\"\$selected_dir/\$filename\"
+                logger -t Yazi-Wrapper "Docs say save to: \$full_path"
+                touch \"\$full_path\"
+                echo \"\$full_path\" > '$OUTPUT_PATH'
+             fi
+           fi
+         fi
+         echo 'Press Enter to close...'
+         read _
+         
+      else
+         # Open Mode: Use native chooser
+         # This handles Enter key automatically
+         ${pkgs.yazi}/bin/yazi --chooser-file='$OUTPUT_PATH'
+      fi
       
-      if [ -f '$CWD_FILE' ]; then
-        selected_dir=$(cat '$CWD_FILE')
-      else
-        echo 'Error: CWD_FILE missing'
-      fi
-
-      if [ "$METHOD" = "save" ]; then
-          if [ -n "$selected_dir" ]; then
-            echo -n "Enter filename to save as: "
-            read filename
-            if [ -n "$filename" ]; then
-               full_path="$selected_dir/$filename"
-               logger -t Yazi-Wrapper "Docs say save to: $full_path"
-               # Create empty file to ensure it exists and is clean?
-               # Or let portal handle it?
-               # Attempt to touch it.
-               touch "$full_path"
-               echo "$full_path" > '$OUTPUT_PATH'
-            fi
-          fi
-          echo 'Press Enter to close...'
-          read _
-      else
-          # Open mode
-          :
-      fi
       rm -f '$CWD_FILE'
     "
   '';
 
 
-  smart-enter-plugin = ''
-    local function entry()
-    local h = cx.active.current.hovered
-    if h and h.cha.is_dir then
-    ya.manager_emit("enter", {})
-    else
-    local out = os.getenv("YAZI_FILE_CHOOSER_PATH")
-    if out then
-    local url = tostring(h.url)
-    os.execute(string.format("echo '%s' > '%s'", url, out))
-    ya.manager_emit("quit", { rule = "all" })
-    else
-    ya.manager_emit("open", { hovered = true })
-    end
-    end
-    end
 
-    return { entry = entry }
-  '';
+  
 
   termfilechooserConfig = ''
     [filechooser]
@@ -326,11 +302,7 @@ let
         run = ''shell -- ya emit cd "$(git rev-parse --show-toplevel)"'';
         desc = "Go to git root";
       }
-      {
-        on = [ "<Enter>" ];
-        run = "plugin smart-enter";
-        desc = "Enter directory or open file (smart chooser)";
-      }
+      
       {
         run = "close";
         on = [ "<Esc>" ];
