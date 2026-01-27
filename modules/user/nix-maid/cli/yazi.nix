@@ -137,7 +137,7 @@ let
       }
       {
         on = [ "g" "z" ];
-        run = "plugin save-file --args=input";
+        run = "shell --block --confirm 'read -e -p \"Enter filename: \" -i \"$YAZI_SUGGESTED_FILENAME\" filename; if [ -n \"$filename\" ]; then touch \"$filename\"; echo \"$PWD/$filename\" > \"$YAZI_FILE_CHOOSER_PATH\"; ya emit quit; fi'";
         desc = "Save as new file (Input)";
       }
       { on = [ "<C-s>" ]; run = "quit"; desc = "Confirm selection (Save)"; }
