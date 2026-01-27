@@ -14,17 +14,13 @@ let
 
   
 
-  yazi-wrapper = pkgs.writeShellScript "yazi-wrapper" ''
+    yazi-wrapper = pkgs.writeShellScript "yazi-wrapper" ''
     # Find the output path argument
     OUTPUT_PATH=""
     METHOD=""
     
-    # Log args for debugging
-    LOGfile=/tmp/yazi-debug.log
-    exec > >(tee -a "$LOGfile") 2>&1
-    echo "--- New Unified Session ---"
-    date
-    echo "Args: $@"
+    # Log args to journal
+    logger -t Yazi-Wrapper "Args: $*"
 
     for arg in "$@"; do
       if [[ "$arg" == *.portal ]]; then
@@ -36,7 +32,7 @@ let
     done
 
     if [[ -z "$OUTPUT_PATH" ]]; then
-       echo "No output path found"
+       logger -t Yazi-Wrapper "No output path found"
        exit 1
     fi
 
@@ -46,13 +42,12 @@ let
     CWD_FILE=$(mktemp)
     
     ${pkgs.kitty}/bin/kitty --detach=no sh -c "
-      # Re-export needed for inner shell if env cleared
       export YAZI_FILE_CHOOSER_PATH='$OUTPUT_PATH'
       
       echo 'Running yazi in method: $METHOD'
-      # Open yazi
+      logger -t Yazi-Wrapper "Starting Yazi. Method: $METHOD"
+      
       ${pkgs.yazi}/bin/yazi --cwd-file='$CWD_FILE'
-      # User exits yazi (via quit or C-s keybind)
       
       if [ -f '$CWD_FILE' ]; then
         selected_dir=$(cat '$CWD_FILE')
@@ -62,11 +57,15 @@ let
 
       if [ "$METHOD" = "save" ]; then
           if [ -n "$selected_dir" ]; then
-            echo "Selected directory: $selected_dir"
             echo -n "Enter filename to save as: "
             read filename
             if [ -n "$filename" ]; then
                full_path="$selected_dir/$filename"
+               logger -t Yazi-Wrapper "Docs say save to: $full_path"
+               # Create empty file to ensure it exists and is clean?
+               # Or let portal handle it?
+               # Attempt to touch it.
+               touch "$full_path"
                echo "$full_path" > '$OUTPUT_PATH'
             fi
           fi
@@ -79,6 +78,7 @@ let
       rm -f '$CWD_FILE'
     "
   '';
+
 
   smart-enter-plugin = ''
     local function entry()
