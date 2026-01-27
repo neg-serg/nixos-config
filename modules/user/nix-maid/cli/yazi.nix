@@ -183,35 +183,99 @@ let
       end
 
       local function main_logic()
-        log("Plugin started (main_logic).")
+        log("Plugin started (main_logic + table dump).")
+        
+        local function dump(o)
+           if type(o) == 'table' then
+              local s = '{ '
+              for k,v in pairs(o) do
+                 if type(k) ~= 'number' then k = '"'..k..'"' end
+                 s = s .. '['..k..'] = ' .. dump(v) .. ','
+              end
+              return s .. '} '
+           else
+              return tostring(o)
+           end
+        end
+
         local args = {}
         
-        log("Checking state type...")
+        log("Inspecting state (arg #1)...")
         if state == nil then
             log("State is nil")
         else
             log("State type: " .. type(state))
+            -- Safe dump top level keys only to avoid recursion
+            local s_keys = ""
+            for k,v in pairs(state) do
+                s_keys = s_keys .. tostring(k) .. "(" .. type(v) .. ") "
+            end
+            log("State keys: " .. s_keys)
         end
-
+        
+        -- Check if state IS the 'job' and has args
         if state and type(state) == "table" and state.args then
-             log("Extracting args from state.args")
+             log("Found state.args!")
+             log("state.args dump: " .. dump(state.args))
              args = state.args
         else
-             log("Checking varargs...")
+             log("Checking varargs (arg #2+)...")
              local va = { ... }
+             local va_info = ""
+             for i, v in ipairs(va) do
+                va_info = va_info .. "Arg" .. i .. ":" .. type(v) .. " "
+             end
+             log("Varargs info: " .. va_info)
+
              if #va > 0 then
-                log("Varargs found: " .. #va)
-                args = { state, ... }
-             else
-                log("No args found via varargs")
+                -- Maybe the string arg is in varargs?
+                -- If called as plugin "save-file" --args="overwrite"
+                -- args might be directly passed? 
+                -- Let's try to find a string argument
+                if type(state) == "string" then
+                     log("State is string, assuming it is the mode")
+                     args = { state }
+                else
+                     -- Check varargs for strings
+                     for _, v in ipairs(va) do
+                         if type(v) == "string" then
+                             table.insert(args, v)
+                         end
+                     end
+                     if #args == 0 then
+                        -- fallback
+                        args = { state, ... }
+                     end
+                end
              end
         end
 
         local mode = args[1]
-        log("Mode: " .. tostring(mode))
+        log("Resolved Mode: " .. tostring(mode))
 
         local output_path = os.getenv("YAZI_FILE_CHOOSER_PATH")
         local suggested = os.getenv("YAZI_SUGGESTED_FILENAME")
+        
+        log("Accessing cx (active.current.cwd)...")
+        if cx then
+             log("cx exists")
+             if cx.active then
+                log("cx.active exists")
+                if cx.active.current then
+                    log("cx.active.current exists")
+                    local cwd_obj = cx.active.current.cwd
+                    log("cwd object type: " .. type(cwd_obj))
+                    log("cwd string: " .. tostring(cwd_obj))
+                else
+                    log("cx.active.current missing")
+                end
+             else
+                log("cx.active missing")
+            end
+        else
+             log("cx missing!")
+        end
+        
         local cwd = cx.active.current.cwd
         
         if not output_path then
