@@ -14,6 +14,8 @@ let
 
   # Updated wrapper to export env vars for Lua plugin
   yazi-wrapper = pkgs.writeShellScript "yazi-wrapper" ''
+    echo "$(date) Wrapper started. Args: $@" >> /tmp/yazi_save_debug.log
+    
     OUTPUT_PATH=""
     METHOD="open"
     SUGGESTED_FILENAME=""
@@ -41,13 +43,18 @@ let
        METHOD="save"
     fi
 
+    echo "$(date) Method: $METHOD" >> /tmp/yazi_save_debug.log
+
     ${pkgs.kitty}/bin/kitty --detach=no sh -c "
       export YAZI_FILE_CHOOSER_PATH='$OUTPUT_PATH'
       export YAZI_SUGGESTED_FILENAME='$SUGGESTED_FILENAME'
       
+      echo \"\$(date) Kitty shell started. Method: $METHOD\" >> /tmp/yazi_save_debug.log
+      
       if [ \"$METHOD\" = \"save\" ]; then
          # Save Mode: Use cwd-file tracking
          # New Lua plugin handles logic via 'gs'/'gz' keybinds
+         echo \"\$(date) Launching Yazi in save mode...\" >> /tmp/yazi_save_debug.log
          ${pkgs.yazi}/bin/yazi --cwd-file='$CWD_FILE'
          
          # Fallback if user quits without saving via plugin (check output file)
