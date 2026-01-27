@@ -45,10 +45,19 @@ let
       export YAZI_FILE_CHOOSER_PATH='$OUTPUT_PATH'
       export YAZI_SUGGESTED_FILENAME='$SUGGESTED_FILENAME'
       
-      # Unified execution: Always use --chooser-file so 'open' action selects the file.
-      # We also track CWD if needed, though strictly strictly mostly for debugging or restoring state if we weren't quitting.
-      ${pkgs.yazi}/bin/yazi --chooser-file='$OUTPUT_PATH' --cwd-file='$CWD_FILE'
-      
+      if [ \"$METHOD\" = \"save\" ]; then
+         # Save Mode: Use cwd-file tracking
+         # New Lua plugin handles logic via 'gs'/'gz' keybinds
+         ${pkgs.yazi}/bin/yazi --cwd-file='$CWD_FILE'
+         
+         # Fallback if user quits without saving via plugin (check output file)
+         if [ -s '$OUTPUT_PATH' ]; then
+            exit 0
+         fi
+      else
+         # Open Mode
+         ${pkgs.yazi}/bin/yazi --chooser-file='$OUTPUT_PATH'
+      fi
       rm -f '$CWD_FILE'
     "
   '';
@@ -166,7 +175,14 @@ let
   save-file-plugin = ''
     local function entry(state)
       local mode = state.args[1]
+      local output_path = os.getenv("YAZI_FILE_CHOOSER_PATH")
+      local suggested = os.getenv("YAZI_SUGGESTED_FILENAME")
       local cwd = cx.active.current.cwd
+      
+      if not output_path then
+        ya.notify({ title = "Save File", content = "No output path set", timeout = 5.0, level = "error" })
+        return
+      end
 
       local function save(filename)
         if not filename or filename == "" then return end
@@ -174,21 +190,27 @@ let
         if string.sub(filename, 1, 1) ~= "/" then
            full_path = tostring(cwd) .. "/" .. filename
         end
-        
-        -- Touch the file to ensure it exists
+        local out_file = io.open(output_path, "w")
+        if out_file then
+          out_file:write(full_path)
+          out_file:close()
+        else
+          ya.notify({ title = "Save File", content = "Failed to write to portal output", timeout = 5.0, level = "error" })
+          return
+        end
         local f = io.open(full_path, "a")
         if f then f:close() end
-        
-        -- Reveal and Open. Since we are in chooser-file mode, 'open' selects the file and exits.
-        ya.manager_emit("reveal", { full_path })
-        ya.manager_emit("open", { hovered = true })
+        ya.manager_emit("quit", { "--no-confirm" })
       end
 
       if mode == "input" then
         ya.input({
-          title = "Save as (New File):", value = "", position = { "top-center", y = 3, w = 40 }
+          title = "Save as (New File):", value = suggested or "", position = { "top-center", y = 3, w = 40 }
         }):then_call(function(value, event) if value then save(value) end end)
       elseif mode == "overwrite" then
+        if suggested and suggested ~= "" then
+           save(suggested)
+        else
            local hovered = cx.active.current.hovered
            if hovered then
              save(tostring(hovered.name))
@@ -197,6 +219,7 @@ let
                 title = "Save as:", value = "", position = { "top-center", y = 3, w = 40 }
              }):then_call(function(value, event) if value then save(value) end end)
            end
+        end
       end
     end
     return { entry = entry }
