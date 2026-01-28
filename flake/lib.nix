@@ -22,10 +22,10 @@ let
     import nixpkgs {
       inherit system;
       overlays = [
-        ((import ../packages/overlay.nix) inputs)
         inputs.hyprland.overlays.default
         inputs.nyx.overlays.default
         (hyprlandOverlay system)
+        ((import ../packages/overlay.nix) inputs)
       ];
       config = import ./pkgs-config.nix;
     };
