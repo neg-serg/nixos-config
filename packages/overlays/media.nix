@@ -15,6 +15,9 @@ _inputs: _final: prev:
   swayimg = prev.swayimg.overrideAttrs (old: {
     env.NIX_CFLAGS_COMPILE = toString (old.env.NIX_CFLAGS_COMPILE or "") + " -O3";
   });
+
+  pipemixer = prev.callPackage ../pipemixer { };
+
   neg = (prev.neg or { }) // {
     # Ensure mpv is built with VapourSynth support
     mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
