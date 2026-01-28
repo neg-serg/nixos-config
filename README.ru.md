@@ -224,7 +224,6 @@ gamescope-hdr %command%
 | 18 | 𐍁:remote | Remote Desktop |
 | 19 | Ⲣ:notes | Заметки |
 | 20 | 𐍅:winboat | Windows VM |
-| 21 | 𐍇:antigravity | AI IDE |
 
 ### 💾 6 Pyprland Scratchpad'ов
 
