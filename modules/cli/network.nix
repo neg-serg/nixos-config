@@ -19,7 +19,6 @@
 
     # Cloud tools
 
-  ]
-  ++ (lib.optional (config.features.cli.yandexCloud.enable or false) pkgs."yandex-cloud");
+  ];
 
 }
