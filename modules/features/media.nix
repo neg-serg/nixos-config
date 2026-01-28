@@ -41,7 +41,6 @@ in
       carlaLoopback.enable = mkBool "enable virtual loopback sink for Carla" false;
       proAudio.enable = mkBool "enable professional audio tools (REW, OpenSoundMeter, rtcqs)" false;
       cider.enable = mkBool "enable Cider (Apple Music client)" false;
-      yandexMusic.enable = mkBool "enable Yandex Music client" false;
       spicetify.enable = mkBool "enable Spicetify (Spotify customization)" false;
     };
     photo.enable = mkBool "enable photography workflow (darktable, rawtherapee, testdisk)" false;

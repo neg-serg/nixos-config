@@ -30,7 +30,6 @@ let
     pkgs.unflac # convert FLAC cuesheets quickly
   ]
   ++ (lib.optional (config.features.media.audio.cider.enable or false) pkgs.cider) # New look into listening and enjoying Apple Music in style...
-  ++ (lib.optional (config.features.media.audio.yandexMusic.enable or false) pkgs."yandex-music")
   ++ [
 
     # -- Network --
