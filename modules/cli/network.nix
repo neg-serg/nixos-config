@@ -1,7 +1,5 @@
 {
   pkgs,
-  lib,
-  config,
   ...
 }:
 {
@@ -16,12 +14,6 @@
     # Remote access
     pkgs.abduco # CLI session detach
     pkgs.xxh # SSH wrapper for jumping into remote shells
-
-    # Experimental networking
-    pkgs.neg.antigravity # Google's Antigravity AI IDE
-
-    # Cloud tools
-
   ];
 
 }
