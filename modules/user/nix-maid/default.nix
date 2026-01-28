@@ -56,7 +56,7 @@
 
     # Web & Browsing
     ./web/browsing.nix # includes defaults.nix, librewolf.nix
-    ./apps/nyxt.nix
+
     ./web/firefox.nix
     ./web/floorp.nix
     # ./web/librewolf.nix is imported via ./web/browsing.nix

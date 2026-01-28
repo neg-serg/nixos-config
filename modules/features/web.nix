@@ -26,7 +26,7 @@ in
     floorp = {
       enable = mkBool "enable Floorp browser" true;
     };
-    nyxt.enable = mkBool "enable Nyxt browser" false;
+
     firefox.enable = mkBool "enable Firefox browser" false;
     librewolf.enable = mkBool "enable LibreWolf browser" false;
 
