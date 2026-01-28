@@ -12,6 +12,6 @@ let
 in
 lib.mkIf enable {
   environment.systemPackages = [
-    pkgs.antigravity # Google Antigravity agentic IDE
+    pkgs.antigravity-manual # Google Antigravity agentic IDE (Manual Wrapper)
   ];
 }
