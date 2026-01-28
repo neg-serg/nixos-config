@@ -61,4 +61,6 @@ in
         };
       });
 
+  # Google's Antigravity networking protocol
+  antigravity-manual = final.callPackage ./antigravity/package.nix { };
 }
