@@ -42,12 +42,6 @@
         origin = "flathub";
       }
     ]
-    ++ lib.optionals (config.features.web.floorp.enable or false) [
-      {
-        appId = "one.ablaze.floorp";
-        origin = "flathub";
-      }
-    ]
     ++ lib.optionals (config.features.apps.libreoffice.enable) [
       {
         appId = "org.libreoffice.LibreOffice";
