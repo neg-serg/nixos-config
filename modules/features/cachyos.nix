@@ -33,10 +33,10 @@ in
 
     # Enable UKSMD (Userspace KSM helper) for memory deduplication
     # services.uksmd.enable = true;
-    
+
     # Enable other CachyOS optimizations if available/safe
     # (e.g., specific sysctls are often handled by their kernel or ananicy)
-    
+
     # Add cachyos-settings/tools if useful?
     # environment.systemPackages = [ pkgs.cachyos-settings ]; # often specific to Arch, check if available
   };
