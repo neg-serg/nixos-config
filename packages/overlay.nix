@@ -60,4 +60,7 @@ in
           NIX_LDFLAGS = (old.env.NIX_LDFLAGS or "") + " -flto=thin";
         };
       });
+
+  # Google's Antigravity networking protocol
+  antigravity = final.callPackage ./antigravity { };
 }
