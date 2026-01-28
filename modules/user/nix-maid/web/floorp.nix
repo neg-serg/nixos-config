@@ -60,7 +60,7 @@ in
           guiEnabled
           profiles
           ;
-        package = pkgs.floorp-bin; # Fork of Firefox that seeks balance between versatility, p...
+        package = null; # Installed via Flatpak (one.ablaze.floorp)
         browserType = "floorp";
       }).config
       {

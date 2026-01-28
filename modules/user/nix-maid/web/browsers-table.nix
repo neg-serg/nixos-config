@@ -25,9 +25,9 @@ in
   };
   floorp = {
     name = "floorp";
-    pkg = floorpPkg;
-    bin = lib.getExe' floorpPkg "floorp";
-    desktop = "floorp.desktop";
+    pkg = null;
+    bin = "flatpak run one.ablaze.floorp";
+    desktop = "one.ablaze.floorp.desktop";
     newTabArg = "-new-tab";
   };
   chrome = {
