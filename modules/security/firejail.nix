@@ -15,14 +15,6 @@
         executable = "${lib.getBin pkgs.zathura}/bin/zathura"; # Highly customizable and functional PDF viewer
         profile = "${pkgs.firejail}/etc/firejail/zathura.profile"; # Namespace-based sandboxing tool for Linux
       };
-      telegram-desktop = {
-        executable = "${lib.getBin pkgs.telegram-desktop}/bin/telegram-desktop"; # Telegram Desktop messaging app
-        profile = "${pkgs.firejail}/etc/firejail/telegram-desktop.profile";
-        extraArgs = [
-          # Allow access to XDG Desktop Portal for native file chooser
-          "--dbus-user.talk=org.freedesktop.portal.Desktop"
-        ];
-      };
     };
   };
 }
