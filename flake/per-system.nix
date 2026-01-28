@@ -28,10 +28,12 @@ let
 in
 {
   packages = (mkCustomPkgs pkgs) // {
-    default = pkgs.zsh; # default shell for the flake environment
+    default = pkgs.zsh; # default shell for flake environment
     docs-modules = import ./docs-modules.nix {
       inherit pkgs lib self;
     };
+    antigravity = pkgs.neg.antigravity;
+  };
   };
 
   formatter = pkgs.writeShellApplication {
