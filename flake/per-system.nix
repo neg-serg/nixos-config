@@ -33,7 +33,6 @@ in
       inherit pkgs lib self;
     };
   };
-  };
 
   formatter = pkgs.writeShellApplication {
     name = "fmt";
