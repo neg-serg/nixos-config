@@ -17,6 +17,7 @@ _inputs: _final: prev:
   });
 
   pipemixer = prev.callPackage ../pipemixer { };
+  cable = prev.callPackage ../cable { };
 
   neg = (prev.neg or { }) // {
     # Ensure mpv is built with VapourSynth support
