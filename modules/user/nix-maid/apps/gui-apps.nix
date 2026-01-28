@@ -65,13 +65,11 @@ in
       };
 
       # Packages
-      services.udev.packages = [ pkgs.bazecor ];
       environment.systemPackages = [
         pkgs.neg.rofi-config # Custom scripts (launcher, powermenu)
         pkgs.swayosd # OSD for volume/brightness on Wayland
         pkgs.wallust # Color palette generator
         pkgs.wlogout # Logout menu
-        pkgs.bazecor # Graphical configuration tool for Dygma keyboards
       ];
     }
     (n.mkHomeFiles {
