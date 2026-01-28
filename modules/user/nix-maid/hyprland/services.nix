@@ -68,7 +68,7 @@
 
         # Stop any stale portals or session targets to force clean state
         echo "Cleaning stale session state..." >> "$LOG"
-        systemctl --user stop xdg-desktop-portal xdg-desktop-portal-hyprland hyprland-session.target || true
+        systemctl --user stop "xdg-desktop-portal*" hyprland-session.target || true
         systemctl --user reset-failed
 
         # Start session
