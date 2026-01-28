@@ -120,24 +120,3 @@ zsh-defer dircolors_init
 
 # vim: ft=zsh:nowrap
 
-# Fast command-not-found: avoid slow nix-index lookup for non-ASCII or trivial typos.
-# If a prebuilt nix-index DB exists, delegate to its handler; otherwise return fast.
-command_not_found_handler() {
-    emulate -L zsh
-    local cmd="$1"
-    # Quick exit for non-ASCII command names (e.g., Cyrillic) or 1-char typos
-    if [[ -z "$cmd" || ${#cmd} -lt 2 || "$cmd" != [A-Za-z0-9_.-]## ]]; then
-        print -u2 -- "$cmd: command not found"
-        return 127
-    fi
-    # Delegate to nix-index handler only if its DB looks present
-    local cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/nix-index"
-    if typeset -f command_not_found_handle >/dev/null; then
-        if [[ -e "$cache_dir/files" || -e "$cache_dir/files.idx" || -e "$cache_dir/index" || -e "$cache_dir/index-$(uname -m)-linux" || -e "$cache_dir/files.sqlite" ]]; then
-            command_not_found_handle "$@"
-            return $?
-        fi
-    fi
-    print -u2 -- "$cmd: command not found"
-    return 127
-}
