@@ -32,6 +32,7 @@ in
     docs-modules = import ./docs-modules.nix {
       inherit pkgs lib self;
     };
+    antigravity = pkgs.neg.antigravity;
   };
 
   formatter = pkgs.writeShellApplication {
