@@ -220,7 +220,7 @@ let
 
     # Misc
     # Run
-    # nyxt = "nix run github:neg-serg/nyxt-bin";
+
 
     # System
     transmission-exporter = "nix run github:neg-serg/transmission-exporter";
