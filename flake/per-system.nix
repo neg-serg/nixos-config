@@ -1591,10 +1591,6 @@ in
         pkgs.wineWow64Packages.full # full 32/64-bit Wine
       ];
     };
-
-    dconf2nix = pkgs.mkShell {
-      packages = [ pkgs.dconf2nix ]; # convert dconf to nix config
-    };
   };
 
   apps =
