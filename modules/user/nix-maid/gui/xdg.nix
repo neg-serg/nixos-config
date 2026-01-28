@@ -8,7 +8,7 @@
 let
   n = neg impurity;
   # Browser/App Definitions
-  browser = "one.ablaze.floorp.desktop";
+  browser = "floorp.desktop";
   pdfreader = "org.pwmt.zathura.desktop";
   telegram = "org.telegram.desktop.desktop";
   torrent = "org.transmissionbt.Transmission.desktop";
