@@ -20,7 +20,6 @@ in
     sk = "nix run github:neg-serg/two_percent --";
     newsraft = "nix run nixpkgs#newsraft --";
     tealdeer = "nix run nixpkgs#tealdeer --";
-    gemini-cli = "nix run nixpkgs#gemini-cli --";
   };
 
   environment.systemPackages = [
