@@ -10,4 +10,5 @@
   surfingkeys-pkg = pkgs.surfingkeys-pkg;
   rofi-config = pkgs.neg.rofi-config;
   neovim-optimized = pkgs.neovim-optimized;
+  pipemixer = pkgs.pipemixer;
 }
