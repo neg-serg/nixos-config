@@ -47,7 +47,6 @@ let
   hasKmon = pkgs ? kmon;
   hasFd = pkgs ? fd;
   hasMpc = pkgs ? mpc;
-  hasNixIndexDb = pkgs ? nix-index-database;
   hasFlatpak = pkgs ? flatpak;
 
   content = lib.concatStrings [
@@ -280,7 +279,6 @@ let
     (mkAliasIf hasMpc "unlove" "mpc sendmessage mpdas unlove")
     (mkAliasIf hasHandlr "e" "handlr open")
     (mkAliasIf hasErd "tree" "erd")
-    (mkAliasIf hasNixIndexDb "nlocate" "nix run github:nix-community/nix-index-database")
     (mkAliasIf hasFlatpak "bottles" "flatpak run com.usebottles.bottles")
     (mkAliasIf hasFlatpak "obs" "flatpak run com.obsproject.Studio")
     (mkAliasIf (
