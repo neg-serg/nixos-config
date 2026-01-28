@@ -152,6 +152,5 @@
   services.udev.packages = [ pkgs.bazecor ];
   environment.systemPackages = [
     pkgs.bazecor # Dygma keyboard configurator
-    pkgs.radeontop # AMD GPU utilization monitor
   ];
 }
