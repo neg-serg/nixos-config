@@ -12,4 +12,5 @@
   neovim-optimized = pkgs.neovim-optimized;
   pipemixer = pkgs.pipemixer;
   cable = pkgs.cable;
+  wiremix = pkgs.wiremix;
 }
