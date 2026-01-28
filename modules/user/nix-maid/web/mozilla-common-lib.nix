@@ -26,6 +26,8 @@ let
     # Downloads and userChrome support
     "browser.download.dir" = dlDir;
     "browser.download.useDownloadDir" = true;
+    "browser.helperApps.neverAsk.saveToDisk" =
+      "image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/avif,image/bmp,video/mp4,video/webm,video/ogg,video/x-matroska,video/avi,audio/mpeg,audio/wav,audio/ogg,audio/flac,audio/aac,audio/webm";
     "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
     # Content blocking and notifications
     "browser.contentblocking.category" = "strict";
