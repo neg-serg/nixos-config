@@ -13,7 +13,7 @@ let
     scratchpads = {
       im = {
         animation = "";
-        command = "${lib.getExe pkgs.telegram-desktop}"; # Telegram Desktop messaging app
+        command = "flatpak run org.telegram.desktop";
         class = "org.telegram.desktop";
         size = "30% 95%";
         position = "69% 2%";
