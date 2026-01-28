@@ -162,14 +162,6 @@ in
         ];
         description = "List of DoT forwarders in host@port#SNI format.";
       };
-      useComssDns = opts.mkBoolOpt {
-        default = false;
-        description = ''
-          Use Comss.one DNS (Russian privacy-focused DNS) as upstream instead of
-          Cloudflare/Quad9. When enabled, dotUpstreams are replaced with Comss servers.
-          Comss supports DoT on port 853.
-        '';
-      };
       doh = {
         listenAddress = opts.mkStrOpt {
           default = "127.0.0.1:5053";
