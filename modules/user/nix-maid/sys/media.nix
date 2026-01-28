@@ -202,6 +202,9 @@ lib.mkMerge [
     # NCPAMixer
     ".config/ncpamixer.conf".source = n.linkImpure ncpamixerConf;
 
+    # Wiremix
+    ".config/wiremix/wiremix.toml".source = n.linkImpure ../../../../files/wiremix/wiremix.toml;
+
     # Spicetify Config (partial management)
     ".config/spicetify/config-xpui.ini" =
       lib.mkIf (config.features.media.audio.spicetify.enable or false)
