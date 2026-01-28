@@ -553,7 +553,8 @@ let
       config = lib.mkIf (guiEnabled && (cfg.enable or false)) (
         lib.mkMerge [
           {
-            environment.systemPackages = [ package ] ++ nativeMessagingHosts ++ systemPackagesExtra;
+            environment.systemPackages =
+              (if package != null then [ package ] else [ ]) ++ nativeMessagingHosts ++ systemPackagesExtra;
             nixpkgs.overlays = overlays;
 
             # Enterprise policies
