@@ -38,23 +38,12 @@ let
       };
     };
 
-  # Comss.one DNS servers (Russian privacy DNS, supports DoT)
-  # https://www.comss.ru/page.php?id=7315
-  comssDotUpstreams = [
-    "92.223.109.31@853#comss.dns.yandex.net"
-    "93.115.24.204@853#comss.dns.yandex.net"
-    "91.230.211.67@853#comss.dns.yandex.net"
-  ];
-
-  # Select upstreams based on useComssDns option
-  effectiveUpstreams = if (cfg.useComssDns or false) then comssDotUpstreams else cfg.dotUpstreams;
-
   mkForwardZone =
     if cfg.mode == "dot" then
       {
         name = ".";
         "forward-tls-upstream" = "yes";
-        forward-addr = effectiveUpstreams;
+        forward-addr = cfg.dotUpstreams;
       }
     else if cfg.mode == "doh" then
       {
