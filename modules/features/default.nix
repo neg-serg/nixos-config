@@ -28,7 +28,6 @@ let
       enable = true;
       ai = {
         enable = true;
-        antigravity.enable = false;
         opencode.enable = false;
       };
       rust.enable = true;
@@ -257,10 +256,6 @@ in
         {
           assertion = cfg.dev.enable || (!cfg.dev.ai.enable);
           message = "features.dev.ai.enable requires features.dev.enable = true";
-        }
-        {
-          assertion = cfg.dev.ai.enable || (!cfg.dev.ai.antigravity.enable);
-          message = "features.dev.ai.antigravity.enable requires features.dev.ai.enable = true";
         }
         {
           assertion = cfg.dev.ai.enable || (!cfg.dev.ai.opencode.enable);
