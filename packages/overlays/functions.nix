@@ -73,21 +73,22 @@ _inputs: _final: prev: {
         drv:
         (drv.override {
           stdenv = prev.llvmPackages_19.stdenv;
-        }).overrideAttrs (old: {
-          # LTO disabled due to linker issues (archive has no index)
-          # cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE" ];
-          
-          # Force Clang to use Zen 5 instructions
-          env = (old.env or { }) // {
-            NIX_CFLAGS_COMPILE = toString [
-              "-march=znver5"
-              # "-flto=thin" # Disabled
-              "-mprefer-vector-width=512" # Leverage reliable AVX-512 on Zen 5
-              "-Wno-error"
-            ];
-            # NIX_LDFLAGS = "-flto=thin"; # Disabled
-          };
-        });
+        }).overrideAttrs
+          (old: {
+            # LTO disabled due to linker issues (archive has no index)
+            # cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE" ];
+
+            # Force Clang to use Zen 5 instructions
+            env = (old.env or { }) // {
+              NIX_CFLAGS_COMPILE = toString [
+                "-march=znver5"
+                # "-flto=thin" # Disabled
+                "-mprefer-vector-width=512" # Leverage reliable AVX-512 on Zen 5
+                "-Wno-error"
+              ];
+              # NIX_LDFLAGS = "-flto=thin"; # Disabled
+            };
+          });
     };
   };
 }

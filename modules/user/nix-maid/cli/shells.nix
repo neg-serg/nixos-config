@@ -186,7 +186,6 @@ in
       # Tmux Config
       ".config/tmux".source = n.linkImpure tmuxConfDir;
 
-
     })
   ];
 }
