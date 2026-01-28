@@ -170,6 +170,20 @@ Whether to enable enable broot file manager and shell integration.
 
 - [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
+## features.cli.fastCnf.enable
+
+Whether to enable enable fast zsh command-not-found handler powered by nix-index.
+
+*Type:* boolean
+
+*Default:* `true`
+
+*Example:* `true`
+
+*Declared by:*
+
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
+
 ## features.cli.television.enable
 
 Whether to enable enable television (blazingly fast fuzzy finder).
@@ -187,6 +201,20 @@ Whether to enable enable television (blazingly fast fuzzy finder).
 ## features.cli.tewi.enable
 
 Whether to enable enable tewi tui torrent client configuration.
+
+*Type:* boolean
+
+*Default:* `false`
+
+*Example:* `true`
+
+*Declared by:*
+
+- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
+
+## features.cli.yandexCloud.enable
+
+Whether to enable enable Yandex Cloud CLI.
 
 *Type:* boolean
 
@@ -305,6 +333,20 @@ Whether to enable enable AI tools (e.g., LM Studio).
 *Type:* boolean
 
 *Default:* `true`
+
+*Example:* `true`
+
+*Declared by:*
+
+- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
+
+## features.dev.ai.antigravity.enable
+
+Whether to enable install Google Antigravity agentic IDE.
+
+*Type:* boolean
+
+*Default:* `false`
 
 *Example:* `true`
 
