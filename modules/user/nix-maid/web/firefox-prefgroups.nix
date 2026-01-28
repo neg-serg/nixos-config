@@ -438,10 +438,12 @@ rec {
       };
 
       ask-downloads = {
-        "browser.download.useDownloadDir" = false;
+        "browser.download.useDownloadDir" = true;
 
         # Disable panel opening, lumped together
         "browser.download.alwaysOpenPanel" = false;
+        "browser.helperApps.neverAsk.saveToDisk" =
+          "image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/avif,image/bmp,video/mp4,video/webm,video/ogg,video/x-matroska,video/avi,audio/mpeg,audio/wav,audio/ogg,audio/flac,audio/aac,audio/webm";
       };
 
       ask-new-mimetypes = {
