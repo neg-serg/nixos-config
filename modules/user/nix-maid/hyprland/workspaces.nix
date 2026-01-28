@@ -103,6 +103,11 @@ let
       var = "winboat";
     }
     {
+      id = 21;
+      name = "𐍇:antigravity";
+      var = "antigravity";
+    }
+    {
       id = 22;
       name = "warp";
       var = "warp";
