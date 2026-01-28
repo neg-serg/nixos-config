@@ -11,4 +11,5 @@
   rofi-config = pkgs.neg.rofi-config;
   neovim-optimized = pkgs.neovim-optimized;
   pipemixer = pkgs.pipemixer;
+  cable = pkgs.cable;
 }

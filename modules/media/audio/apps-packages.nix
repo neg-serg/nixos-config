@@ -25,6 +25,7 @@ let
     # -- CLI --
     pkgs.sox # swiss-army audio CLI for conversions/effects
     pkgs.pipemixer # TUI mixer for PipeWire
+    pkgs.cable # GUI PipeWire settings manager
 
     # -- Codecs / Ripping / Players --
     pkgs.cdparanoia # secure CD ripper w/ jitter correction
