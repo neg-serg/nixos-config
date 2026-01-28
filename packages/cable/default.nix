@@ -22,6 +22,10 @@ python3Packages.buildPythonApplication rec {
     python3Packages.setuptools
   ];
 
+  buildInputs = [
+    qt6.qtbase
+  ];
+
   pyproject = true;
 
   propagatedBuildInputs = with python3Packages; [
