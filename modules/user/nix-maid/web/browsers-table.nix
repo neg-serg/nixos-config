@@ -6,7 +6,7 @@
 }:
 let
   # Floorp upstream source package is deprecated in nixpkgs >= 12.x; always use floorp-bin.
-  floorpPkg = pkgs.floorp-bin;
+  floorpPkg = pkgs.floorp;
 in
 {
   firefox = {
