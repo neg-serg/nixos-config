@@ -18,11 +18,11 @@ in
 
     # Enable sched_ext (SCX) and use the rusty scheduler
     # Note: scx package and service are provided by chaotic-nyx module
-    # services.scx = {
-    #   enable = true;
-    #   scheduler = "scx_rusty"; # Default recommended scheduler
-    #   # package = pkgs.scx; # Implicit from module
-    # };
+    services.scx = {
+      enable = true;
+      scheduler = "scx_rusty"; # Default recommended scheduler
+      # package = pkgs.scx; # Implicit from module
+    };
 
     # Enable Ananicy-cpp for auto-prioritization
     services.ananicy = {
