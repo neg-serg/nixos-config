@@ -41,9 +41,12 @@ let
         "network.proxy.socks_port" = 0;
         "network.proxy.no_proxies_on" = "localhost, 127.0.0.1";
 
+        "browser.download.folderList" = 2;
         "browser.download.useDownloadDir" = true;
+        "browser.download.manager.showWhenStarting" = false;
+        "browser.download.alwaysOpenPanel" = false;
         "browser.helperApps.neverAsk.saveToDisk" =
-          "image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/avif,image/bmp,video/mp4,video/webm,video/ogg,video/x-matroska,video/avi,audio/mpeg,audio/wav,audio/ogg,audio/flac,audio/aac,audio/webm";
+          "image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/avif,image/bmp,image/tiff,image/x-icon,image/vnd.microsoft.icon,image/heic,image/heif,video/mp4,video/webm,video/ogg,video/x-matroska,video/avi,audio/mpeg,audio/wav,audio/ogg,audio/flac,audio/aac,audio/webm";
       };
       userChrome = mozillaCommon.userChrome;
       userContent = mozillaCommon.surfingkeysUserContent;
