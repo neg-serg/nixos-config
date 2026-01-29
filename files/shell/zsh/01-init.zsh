@@ -26,7 +26,6 @@ setopt pushdtohome # pushd with no args pushes to home
 setopt rematch_pcre # use perl-like regexes
 setopt rm_star_silent # disable "sure you want to delete all the files?" prompt
 setopt short_loops # short loops support
-setopt transient_rprompt # only show the rprompt on the current prompt
 setopt rc_quotes # quotes with ''
 
 () {
