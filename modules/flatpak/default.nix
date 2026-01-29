@@ -10,6 +10,14 @@
           GTK_THEME = "Adwaita:dark"; # Force correct theme for some GTK apps
         };
       };
+      "org.telegram.desktop" = {
+        Environment = {
+          GTK_USE_PORTAL = "1";
+          QT_QPA_PLATFORMTHEME = "xdgdesktopportal";
+          QT_QPA_PLATFORM = "wayland";
+          XDG_SESSION_TYPE = "wayland";
+        };
+      };
     };
 
     packages = [
