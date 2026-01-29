@@ -14,7 +14,7 @@ let
       im = {
         animation = "";
         command = "flatpak run org.telegram.desktop";
-        class = ".telegram-desktop-wrapped";
+        class = "org.telegram.desktop";
         size = "30% 95%";
         position = "69% 2%";
         lazy = true;
