@@ -34,6 +34,8 @@ in
   matugen-themes = callPkg (inputs.self + "/packages/matugen-themes") { };
   floorp-bin = prev.floorp-bin.overrideAttrs (old: {
     postFixup = (old.postFixup or "") + ''
+      # Remove MOZ_LEGACY_PROFILES=1 to prevent creation of ~/Floorp directory
+      # and ensure it respects ~/.floorp defined in profiles.ini
       sed -i '/MOZ_LEGACY_PROFILES/d' $out/bin/floorp
     '';
   });
