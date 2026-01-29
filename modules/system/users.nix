@@ -96,6 +96,8 @@ with rec {
           "tss"
           "video"
           "wheel"
+          "adbusers"
+          "kvm"
         ];
       };
       defaultUserShell = pkgs.zsh; # Z shell
