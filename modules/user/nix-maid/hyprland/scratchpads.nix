@@ -13,10 +13,8 @@ let
     scratchpads = {
       im = {
         animation = "";
-        command = "flatpak run org.telegram.desktop";
-        # Use .telegram-desktop-wrapped class because the binary is wrapped,
-        # confusing the standard window matching.
-        class = ".telegram-desktop-wrapped";
+        command = "${lib.getExe pkgs.telegram-desktop}";
+        class = "org.telegram.desktop";
         size = "30% 95%";
         position = "69% 2%";
         lazy = true;
