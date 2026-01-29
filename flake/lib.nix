@@ -23,7 +23,7 @@ let
       inherit system;
       overlays = [
         inputs.hyprland.overlays.default
-        inputs.nyx.overlays.default
+        # inputs.nyx.overlays.default
         (hyprlandOverlay system)
         ((import ../packages/overlay.nix) inputs)
       ];
