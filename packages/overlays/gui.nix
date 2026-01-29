@@ -32,6 +32,11 @@ in
   "_nyarch-assistant" = nyarchAssistantPkg;
   flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") { };
   matugen-themes = callPkg (inputs.self + "/packages/matugen-themes") { };
+  floorp-bin = prev.floorp-bin.overrideAttrs (old: {
+    postFixup = (old.postFixup or "") + ''
+      sed -i '/MOZ_LEGACY_PROFILES/d' $out/bin/floorp
+    '';
+  });
   oldschool-pc-font-pack = callPkg (inputs.self + "/packages/oldschool-pc-font-pack") { };
   surfingkeys-pkg = prev.callPackage (inputs.self + "/packages/surfingkeys-conf") {
     customConfig = inputs.self + "/files/surfingkeys.js";
