@@ -751,19 +751,26 @@ lib.mkMerge [
     environment.systemPackages = [ pkgs.docker-compose ];
   })
   {
-    systemd.services.ncps.serviceConfig.ExecStartPre = lib.mkForce [
-      (pkgs.writeShellScript "ncps-init-db" ''
-        ${pkgs.dbmate}/bin/dbmate \
-          --migrations-dir=${
-            pkgs.fetchFromGitHub {
-              owner = "kalbasit";
-              repo = "ncps";
-              rev = "935417859d2671290be8a8f4722e6cd1925dc41f";
-              sha256 = "0ib819jiz0jq9xhzg8k75mv7qkmkb01yjjfzcj1v515f9if95ypf";
-            }
-          }/db/migrations/sqlite \
-          --url=sqlite:/zero/ncps/db/db.sqlite up
-      '')
-    ];
+    systemd.services.ncps = {
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      serviceConfig = {
+        ExecStartPre = lib.mkForce [
+          (pkgs.writeShellScript "ncps-init-keys" ''
+            if [ ! -f /zero/ncps/key.sec ]; then
+              ${pkgs.nix}/bin/nix-store --generate-binary-cache-key telfir-ncps /zero/ncps/key.sec /zero/ncps/key.pub
+              chown ncps:ncps /zero/ncps/key.sec /zero/ncps/key.pub
+              chmod 400 /zero/ncps/key.sec
+            fi
+          '')
+          (pkgs.writeShellScript "ncps-init-db" ''
+            ${pkgs.dbmate}/bin/dbmate \
+              --migrations-dir=${pkgs.ncps}/share/ncps/db/migrations/sqlite \
+              --url=sqlite:/zero/ncps/db/db.sqlite up
+          '')
+        ];
+        ExecStart = lib.mkForce "${pkgs.ncps}/bin/ncps serve --log-level=info --cache-hostname=cache.example.com --cache-storage-local=/zero/ncps --cache-database-url=sqlite:/zero/ncps/db/db.sqlite --cache-temp-path=/zero/ncps-temp --server-addr=:8501 --cache-max-size=150G --cache-upstream-url=https://cache.nixos.org --cache-upstream-public-key=cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= --cache-secret-key-path=/zero/ncps/key.sec";
+      };
+    };
   }
 ]
