@@ -101,7 +101,7 @@
 
     # Skip boot menu by default (can hold a key to show menu)
     loader = {
-      timeout = 0; # seconds
+      timeout = 2; # seconds
       # Allow editing kernel cmdline from the loader (useful for recovery)
       systemd-boot.editor = true;
     };
