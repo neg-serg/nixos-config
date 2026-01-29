@@ -14,13 +14,23 @@ in
 
   config = lib.mkIf cfg.enable {
     # switch to CachyOS kernel with sched-ext support
-    boot.kernelPackages = lib.mkForce pkgs.linuxPackages_cachyos;
+    # Use znver4 optimized kernel if Zen 5 optimization is requested (closest match available)
+    boot.kernelPackages = lib.mkForce (
+      if (config.features.optimization.enable && config.features.optimization.zen5.enable) then
+        pkgs.linuxPackages_cachyos-lto-znver4
+      else
+        pkgs.linuxPackages_cachyos
+    );
 
-    # Enable sched_ext (SCX) and use the rusty scheduler
+    # Enable sched_ext (SCX) and use the configured scheduler
     # Note: scx package and service are provided by chaotic-nyx module
     services.scx = {
       enable = true;
-      scheduler = "scx_rusty"; # Default recommended scheduler
+      scheduler =
+        if config.features.optimization.enable then
+          config.features.optimization.scx.scheduler
+        else
+          "scx_rusty";
       # package = pkgs.scx; # Implicit from module
     };
 

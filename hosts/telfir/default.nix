@@ -15,6 +15,15 @@
 
   features.hardware.amdgpu.rocm.enable = true;
   features.mail.enable = true;
+
+  # Optimization settings
+  features.optimization = {
+    enable = true;
+    zen5.enable = true;
+    # zen5.rebuildWorld = true; # UNCOMMENT TO ENABLE GLOBAL REBUILD (Takes hours!)
+    scx.scheduler = "scx_lavd"; # Optimized for Gaming/X3D latency
+  };
+
   features.dev.hack.pentest = false;
   features.dev.cpp.enable = false; # Disable C++ toolchain (saves ~2GB)
   features.dev.haskell.enable = false; # Disable Haskell toolchain (saves ~1GB)
