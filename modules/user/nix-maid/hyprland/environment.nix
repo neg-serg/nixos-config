@@ -22,6 +22,8 @@ in
     env = XDG_SESSION_TYPE,wayland
     env = MOZ_ENABLE_WAYLAND,1
     env = ELECTRON_OZONE_PLATFORM_HINT,auto
+    env = GTK_USE_PORTAL,1
+    env = QT_QPA_PLATFORMTHEME,xdgdesktopportal
 
     exec-once = dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL
     exec-once = systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL
