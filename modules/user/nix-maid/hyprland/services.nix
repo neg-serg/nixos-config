@@ -45,6 +45,14 @@
           *) ${lib.getExe pkgs.pyprland} toggle "$target" ;;
         esac
       '')
+      # hypr-fix script (Reset Pyprland and Hyprland state)
+      (pkgs.writeShellScriptBin "hypr-fix" ''
+        set -euo pipefail
+        ${lib.getExe pkgs.libnotify} "System Fix" "Restarting Pyprland and reloading config..."
+        systemctl --user restart pyprland.service
+        hyprctl reload
+        ${lib.getExe pkgs.libnotify} "System Fix" "Done."
+      '')
       # hypr-reload script
       (pkgs.writeShellScriptBin "hypr-reload" ''
         set -euo pipefail
