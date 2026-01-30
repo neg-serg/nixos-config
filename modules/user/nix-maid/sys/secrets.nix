@@ -11,6 +11,7 @@ let
   hasWorkWireguard = builtins.pathExists "${secretsDir}/wireguard/work-wg.conf.sops";
   hasVlessRealitySingboxTun = builtins.pathExists "${secretsDir}/vless/reality-singbox-tun.json.sops";
   hasBraveSearchApi = builtins.pathExists "${secretsDir}/brave-search-api.env.sops";
+  hasContext7Api = builtins.pathExists "${secretsDir}/context7-api.env.sops";
 in
 {
   sops = {
@@ -74,6 +75,15 @@ in
         format = "dotenv";
         sopsFile = "${secretsDir}/brave-search-api.env.sops";
         path = "/run/user/1000/secrets/brave-search-api.env";
+        mode = "0400";
+        owner = "neg";
+      };
+    }
+    // lib.optionalAttrs hasContext7Api {
+      "context7-api-env" = {
+        format = "dotenv";
+        sopsFile = "${secretsDir}/context7-api.env.sops";
+        path = "/run/user/1000/secrets/context7-api.env";
         mode = "0400";
         owner = "neg";
       };

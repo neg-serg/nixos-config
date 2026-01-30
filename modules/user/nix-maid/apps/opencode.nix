@@ -14,6 +14,7 @@ let
 
   hasBraveSearchApi = builtins.pathExists ../../../../secrets/home/brave-search-api.env.sops;
   hasGitHubToken = builtins.pathExists ../../../../secrets/home/github-token.sops.yaml;
+  hasContext7Api = builtins.pathExists ../../../../secrets/home/context7-api.env.sops;
 
   opencodeConfig = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
@@ -280,6 +281,15 @@ let
         };
         timeout = 5000;
       };
+      # Context7 integration
+      context7 = {
+        type = "remote";
+        url = "https://mcp.context7.com/mcp";
+        headers = {
+          CONTEXT7_API_KEY = "{env:CONTEXT7_API_KEY}";
+        };
+        enabled = true;
+      };
     };
   };
 in
@@ -301,6 +311,15 @@ lib.mkIf enable (
         # Export GITHUB_TOKEN for OpenCode MCP
         if [[ -f "/run/user/1000/secrets/github-token" ]]; then
           export GITHUB_TOKEN="$(cat /run/user/1000/secrets/github-token)"
+        fi
+      '';
+    };
+    # Shell init snippet to export CONTEXT7_API_KEY (sourced by zshrc)
+    ".config/zsh/10-opencode-context7.zsh" = lib.mkIf hasContext7Api {
+      text = ''
+        # Export CONTEXT7_API_KEY for OpenCode MCP
+        if [[ -f "/run/user/1000/secrets/context7-api.env" ]]; then
+          source "/run/user/1000/secrets/context7-api.env"
         fi
       '';
     };
