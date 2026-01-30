@@ -972,11 +972,11 @@
         "trilium": "trilium"
       },
       "locked": {
-        "lastModified": 1769592209,
-        "narHash": "sha256-UKUO3x6Alt5pWw7DeJKMj0gD68FKjKYtF8p9pCVMZqw=",
+        "lastModified": 1769757821,
+        "narHash": "sha256-N4/DyOFU2F+DPnciwSGzKI4QHWvpW2CdUfomaCtuuto=",
         "owner": "kalbasit",
         "repo": "ncps",
-        "rev": "0438d1e17bd43be0ffb603bb188efa363cd4a97e",
+        "rev": "918e285a81e15a8dce1d4097b6957dede16f1448",
         "type": "github"
       },
       "original": {
@@ -1093,11 +1093,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1769644009,
-        "narHash": "sha256-YQZZtahc9MMxVQVLemYGt5aI6MTTu3LynxP8pS3cbKk=",
+        "lastModified": 1769792282,
+        "narHash": "sha256-wj26kOQ6b6k7qvc5RWQjnYIoK9sCrQfS83iRO0ay2s8=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "5b9ce1c8c3192735e864b2b2cdc24f915b1cee91",
+        "rev": "f97782fc91ede67db16c651ddf7ca6be058e4a1d",
         "type": "github"
       },
       "original": {
@@ -1423,11 +1423,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1769568593,
-        "narHash": "sha256-vf3cZf8imUlPzFtICa1uyReDzoPV0XhHOIRM3tqI5VY=",
+        "lastModified": 1769742225,
+        "narHash": "sha256-roSD/OJ3x9nF+Dxr+/bLClX3U8FP9EkCQIFpzxKjSUM=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "6fe5039018d05cee5d01dda7df1c0846fb7943a4",
+        "rev": "bcdd8d37594f0e201639f55889c01c827baf5c75",
         "type": "github"
       },
       "original": {
