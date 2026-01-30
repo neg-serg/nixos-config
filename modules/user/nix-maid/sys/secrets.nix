@@ -10,6 +10,7 @@ let
   hasVdirsyncerGoogle = builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml";
   hasWorkWireguard = builtins.pathExists "${secretsDir}/wireguard/work-wg.conf.sops";
   hasVlessRealitySingboxTun = builtins.pathExists "${secretsDir}/vless/reality-singbox-tun.json.sops";
+  hasBraveSearchApi = builtins.pathExists "${secretsDir}/brave-search-api.env.sops";
 in
 {
   sops = {
@@ -65,6 +66,15 @@ in
         sopsFile = "${secretsDir}/vless/reality-singbox-tun.json.sops";
         path = "/run/user/1000/secrets/vless-reality-singbox-tun.json";
         mode = "0600";
+        owner = "neg";
+      };
+    }
+    // lib.optionalAttrs hasBraveSearchApi {
+      "brave-search-api-env" = {
+        format = "dotenv";
+        sopsFile = "${secretsDir}/brave-search-api.env.sops";
+        path = "/run/user/1000/secrets/brave-search-api.env";
+        mode = "0400";
         owner = "neg";
       };
     };
