@@ -10,6 +10,7 @@ let
   hasWorkWireguard = builtins.pathExists ./wireguard/work-wg.conf.sops;
   hasVlessRealitySingboxTun = builtins.pathExists ./vless/reality-singbox-tun.json.sops;
   hasBraveSearchApi = builtins.pathExists ./brave-search-api.env.sops;
+  hasContext7Api = builtins.pathExists ./context7-api.env.sops;
 in
 {
   sops = {
@@ -92,6 +93,15 @@ in
         format = "dotenv";
         sopsFile = ./brave-search-api.env.sops;
         path = "/run/user/1000/secrets/brave-search-api.env";
+        mode = "0400";
+      };
+    }
+    // lib.optionalAttrs hasContext7Api {
+      # Context7 API key for MCP server (environment file format)
+      "context7-api-env" = {
+        format = "dotenv";
+        sopsFile = ./context7-api.env.sops;
+        path = "/run/user/1000/secrets/context7-api.env";
         mode = "0400";
       };
     };
