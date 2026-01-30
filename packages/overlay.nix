@@ -63,4 +63,15 @@ in
 
   # Google's Antigravity networking protocol
   antigravity-manual = final.callPackage ./antigravity/package.nix { };
+
+  # Fix keyutils patch download failing (upstream lore.kernel.org 403)
+  keyutils = finalPrev.keyutils.overrideAttrs (old: {
+    patches = builtins.map (
+      p:
+      if builtins.isAttrs p && (p.name or "") == "raw" then
+        inputs.self + "/files/patches/keyutils-fix-format-specifier.patch"
+      else
+        p
+    ) (old.patches or [ ]);
+  });
 }
