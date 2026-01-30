@@ -125,20 +125,8 @@ lib.mkMerge [
     };
 
     # MPD Service
-    systemd.user.services.mpd = {
-      enable = true;
-      description = "Music Player Daemon";
-      documentation = [
-        "man:mpd(1)"
-        "man:mpd.conf(5)"
-      ];
-      partOf = [ "graphical-session.target" ];
-      wantedBy = [ "graphical-session.target" ];
-      serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.mpd} --no-daemon"; # Start MPD in foreground
-        Restart = "on-failure";
-      };
-    };
+    # Note: MPD is enabled system-wide in modules/servers/mpd/default.nix
+    # systemd.user.services.mpd is removed to avoid conflicts.
 
     # MPD RIS2 (MPRIS support)
     systemd.user.services.mpdris2 = {
