@@ -12,7 +12,8 @@ let
     && (config.features.dev.ai.enable or false)
     && (config.features.dev.ai.opencode.enable or false);
 
-  hasBraveSearchApi = builtins.pathExists ../../secrets/home/brave-search-api.env.sops;
+  hasBraveSearchApi = builtins.pathExists ../../../../secrets/home/brave-search-api.env.sops;
+  hasGitHubToken = builtins.pathExists ../../../../secrets/home/github-token.sops.yaml;
 
   opencodeConfig = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
@@ -291,6 +292,15 @@ lib.mkIf enable (
         # Source Brave Search API key for OpenCode MCP
         if [[ -f "/run/user/1000/secrets/brave-search-api.env" ]]; then
           source "/run/user/1000/secrets/brave-search-api.env"
+        fi
+      '';
+    };
+    # Shell init snippet to export GITHUB_TOKEN (sourced by zshrc)
+    ".config/zsh/10-opencode-github.zsh" = lib.mkIf hasGitHubToken {
+      text = ''
+        # Export GITHUB_TOKEN for OpenCode MCP
+        if [[ -f "/run/user/1000/secrets/github-token" ]]; then
+          export GITHUB_TOKEN="$(cat /run/user/1000/secrets/github-token)"
         fi
       '';
     };
