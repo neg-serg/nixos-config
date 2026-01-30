@@ -211,7 +211,7 @@ let
       gh_grep = {
         type = "remote";
         url = "https://mcp.grep.app";
-        enabled = true;
+        enabled = false;
       };
       # MCP test server with various tools
       mcp_everything = {
@@ -232,6 +232,7 @@ let
           "-y"
           "@modelcontextprotocol/server-filesystem"
           "/home/neg"
+          "/etc/nixos"
         ];
         enabled = true;
         timeout = 5000;
