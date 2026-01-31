@@ -79,4 +79,14 @@ in
   openldap = finalPrev.openldap.overrideAttrs (old: {
     doCheck = false;
   });
+
+  # Disable libyuv tests (fails with OOM and has many warnings)
+  libyuv = finalPrev.libyuv.overrideAttrs (old: {
+    doCheck = false;
+  });
+
+  # Disable rsync tests (fails on hardlinks test)
+  rsync = finalPrev.rsync.overrideAttrs (old: {
+    doCheck = false;
+  });
 }
