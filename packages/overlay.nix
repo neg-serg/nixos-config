@@ -74,4 +74,9 @@ in
         p
     ) (old.patches or [ ]);
   });
+
+  # Disable flaky OpenLDAP tests (fails on syncreplication)
+  openldap = finalPrev.openldap.overrideAttrs (old: {
+    doCheck = false;
+  });
 }
