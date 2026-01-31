@@ -72,7 +72,7 @@ in
     }
     // lib.optionalAttrs hasBraveSearchApi {
       "brave-search-api-env" = {
-        format = "dotenv";
+        format = "binary";
         sopsFile = "${secretsDir}/brave-search-api.env.sops";
         path = "/run/user/1000/secrets/brave-search-api.env";
         mode = "0400";
@@ -81,7 +81,7 @@ in
     }
     // lib.optionalAttrs hasContext7Api {
       "context7-api-env" = {
-        format = "dotenv";
+        format = "binary";
         sopsFile = "${secretsDir}/context7-api.env.sops";
         path = "/run/user/1000/secrets/context7-api.env";
         mode = "0400";
