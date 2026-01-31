@@ -21,7 +21,6 @@
   features.optimization = {
     enable = true;
     zen5.enable = true;
-    # zen5.rebuildWorld = true; # UNCOMMENT TO ENABLE GLOBAL REBUILD (Takes hours!)
     scx.scheduler = "scx_rusty"; # Fallback to rusty until reboot; use "scx_lavd" after reboot for X3D
   };
 
