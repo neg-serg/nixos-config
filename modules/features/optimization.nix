@@ -12,12 +12,7 @@ in
     enable = lib.mkEnableOption "Global system optimizations";
 
     zen5 = {
-      enable = lib.mkEnableOption "Optimize for AMD Zen 5 (Ryzen 9000/9950X3D)";
-      rebuildWorld = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-        description = "Rebuild entire system with -march=znver5 (WARNING: Massive compile time)";
-      };
+      enable = lib.mkEnableOption "Optimize for AMD Zen 5 (Ryzen 9000/9950X3D) using Zen 4 compatible binaries";
     };
 
     scx = {
@@ -30,12 +25,8 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # Global Compiler Flags (The "Nuclear Option")
-    # Forces all packages to be built with -march=znver5
-    nixpkgs.hostPlatform = lib.mkIf (cfg.zen5.enable && cfg.zen5.rebuildWorld) {
-      system = "x86_64-linux";
-      gcc.arch = "znver5";
-      gcc.tune = "znver5";
-    };
+    # World rebuild disabled to prevent massive compilation times.
+    # Zen 5 optimizations are applied via kernel selection (znver4) and
+    # specific package overrides (using znver4 for cache compatibility)
   };
 }
