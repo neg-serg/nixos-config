@@ -55,7 +55,11 @@ in
     programs = {
       gamescope = {
         enable = true;
-        package = pkgs.gamescope; # SteamOS session compositing window manager
+        package =
+          if (config.features.optimization.zen5.enable or false) then
+            pkgs.gamescope-zen5
+          else
+            pkgs.gamescope; # SteamOS session compositing window manager
       };
 
       gamemode = {
@@ -72,7 +76,7 @@ in
 
     environment = {
       systemPackages = [
-        pkgs.mangohud # Vulkan/OpenGL overlay for FPS/frametime telemetry
+        (if (config.features.optimization.zen5.enable or false) then pkgs.mangohud-zen5 else pkgs.mangohud) # Vulkan/OpenGL overlay for FPS/frametime telemetry
         # Game scripts from consolidated package
         gameScripts.gamescope-pinned
         gameScripts.game-pinned
