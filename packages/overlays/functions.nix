@@ -78,12 +78,12 @@ _inputs: _final: prev: {
             # LTO disabled due to linker issues (archive has no index)
             # cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE" ];
 
-            # Force Clang to use Zen 5 instructions
+            # Force Clang to use Zen 4 instructions (compatible with Zen 5, better cache hit rate)
             env = (old.env or { }) // {
               NIX_CFLAGS_COMPILE = toString [
-                "-march=znver5"
+                "-march=znver4"
                 # "-flto=thin" # Disabled
-                "-mprefer-vector-width=512" # Leverage reliable AVX-512 on Zen 5
+                "-mprefer-vector-width=512" # Leverage reliable AVX-512 on Zen 4/5
                 "-Wno-error"
               ];
               # NIX_LDFLAGS = "-flto=thin"; # Disabled
