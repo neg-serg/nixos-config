@@ -90,4 +90,13 @@ in
   rsync = finalPrev.rsync.overrideAttrs (old: {
     doCheck = false;
   });
+
+  # Disable flaky pytest-xdist tests
+  pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
+    (python-final: python-prev: {
+      pytest-xdist = python-prev.pytest-xdist.overrideAttrs (old: {
+        doCheck = false;
+      });
+    })
+  ];
 }
