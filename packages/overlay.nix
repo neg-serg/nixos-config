@@ -47,11 +47,11 @@ in
   };
 
   # Zen 5 Optimized Packages
-  gamescope = final.neg.functions.mkZen5LtoPackage finalPrev.gamescope;
-  mangohud = final.neg.functions.mkZen5LtoPackage finalPrev.mangohud;
+  gamescope-zen5 = final.neg.functions.mkZen5LtoPackage finalPrev.gamescope;
+  mangohud-zen5 = final.neg.functions.mkZen5LtoPackage finalPrev.mangohud;
 
   # Zen 5 Optimized Editor
-  neovim-optimized =
+  neovim-zen5 =
     (final.neg.functions.mkZen5LtoPackage finalPrev.neovim-unwrapped).overrideAttrs
       (old: {
         cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE" ];
