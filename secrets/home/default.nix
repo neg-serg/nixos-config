@@ -90,7 +90,7 @@ in
     // lib.optionalAttrs hasBraveSearchApi {
       # Brave Search API key for MCP server (environment file format)
       "brave-search-api-env" = {
-        format = "dotenv";
+        format = "binary";
         sopsFile = ./brave-search-api.env.sops;
         path = "/run/user/1000/secrets/brave-search-api.env";
         mode = "0400";
@@ -99,7 +99,7 @@ in
     // lib.optionalAttrs hasContext7Api {
       # Context7 API key for MCP server (environment file format)
       "context7-api-env" = {
-        format = "dotenv";
+        format = "binary";
         sopsFile = ./context7-api.env.sops;
         path = "/run/user/1000/secrets/context7-api.env";
         mode = "0400";
