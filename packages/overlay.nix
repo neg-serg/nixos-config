@@ -83,6 +83,7 @@ in
   # Disable libyuv tests (fails with OOM and has many warnings)
   libyuv = finalPrev.libyuv.overrideAttrs (old: {
     doCheck = false;
+    cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DUNIT_TEST=OFF" ];
   });
 
   # Disable rsync tests (fails on hardlinks test)
