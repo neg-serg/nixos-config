@@ -315,5 +315,17 @@ Object.entries(quickmarks).forEach(([key, site]) => {
 });
 
 // ========== Site-specific ==========
+
 settings.blocklistPattern = /mail\.google\.com|docs\.google\.com|discord\.com|app\.slack\.com/i;
+
+// ========== Image Download ==========
+api.mapkey('zi', 'Download image without dialog', function() {
+    api.Hints.create('img', function(element) {
+        var src = element.src;
+        api.RUNTIME('download', {
+            url: src,
+            saveAs: false
+        });
+    });
+});
 
