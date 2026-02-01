@@ -13,18 +13,19 @@ _inputs: _final: prev:
   #   withOpenmpt = true;
   # };
 
-  swayimg = prev.swayimg.overrideAttrs (old: {
-    env.NIX_CFLAGS_COMPILE = toString (old.env.NIX_CFLAGS_COMPILE or "") + " -O3";
-  });
+  # swayimg override removed to avoid local compilation/segfaults
+  # swayimg = prev.swayimg.overrideAttrs (old: {
+  #   env.NIX_CFLAGS_COMPILE = toString (old.env.NIX_CFLAGS_COMPILE or "") + " -O3";
+  # });
 
   pipemixer = prev.callPackage ../pipemixer { };
   wiremix = prev.callPackage ../wiremix { };
 
   neg = (prev.neg or { }) // {
     # Ensure mpv is built with VapourSynth support
-    mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
-      buildInputs = (old.buildInputs or [ ]) ++ [ prev.vapoursynth ];
-      mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Dvapoursynth=enabled" ];
-    });
+    # mpv-unwrapped = prev.mpv-unwrapped.overrideAttrs (old: {
+    #   buildInputs = (old.buildInputs or [ ]) ++ [ prev.vapoursynth ];
+    #   mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Dvapoursynth=enabled" ];
+    # });
   };
 }
