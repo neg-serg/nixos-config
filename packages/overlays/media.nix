@@ -1,16 +1,17 @@
 _inputs: _final: prev:
 
 {
-  ffmpeg = prev.ffmpeg.override {
-    withSdl2 = false;
-    buildFfplay = false;
-    withOpenmpt = true;
-  };
-  ffmpeg-full = prev.ffmpeg-full.override {
-    withSdl2 = false;
-    buildFfplay = false;
-    withOpenmpt = true;
-  };
+  # ffmpeg overrides removed to prevent mass rebuilds
+  # ffmpeg = prev.ffmpeg.override {
+  #   withSdl2 = false;
+  #   buildFfplay = false;
+  #   withOpenmpt = true;
+  # };
+  # ffmpeg-full = prev.ffmpeg-full.override {
+  #   withSdl2 = false;
+  #   buildFfplay = false;
+  #   withOpenmpt = true;
+  # };
 
   swayimg = prev.swayimg.overrideAttrs (old: {
     env.NIX_CFLAGS_COMPILE = toString (old.env.NIX_CFLAGS_COMPILE or "") + " -O3";
