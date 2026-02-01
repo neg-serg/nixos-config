@@ -107,11 +107,6 @@ let
       name = "𐍇:antigravity";
       var = "antigravity";
     }
-    {
-      id = 22;
-      name = "warp";
-      var = "warp";
-    }
   ];
 in
 {
