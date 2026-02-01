@@ -48,8 +48,8 @@ in
       connect-timeout = 3; # Aggressive: bail quickly on slow caches
       stalled-download-timeout = 3; # Aggressive: abort stalled downloads fast
       http-connections = 3; # Limit parallel HTTP connections
-      cores = 0; # Use all available cores per build
-      max-jobs = "auto"; # Use all available cores
+      cores = 4; # Limit per-build cores to prevent OOM
+      max-jobs = 4; # Limit parallel builds to prevent OOM
       use-xdg-base-directories = true;
       warn-dirty = false; # Disable annoying dirty warn
       download-attempts = 1; # Fast failure on unavailable caches
