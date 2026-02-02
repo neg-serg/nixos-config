@@ -26,19 +26,19 @@ in
       }
     ];
 
-    chaotic.duckdns = {
-      enable = true;
-      inherit (cfg) domain environmentFile onCalendar;
-      ipv6 = {
-        enable = cfg.ipv6.enable;
-        device = cfg.ipv6.device;
-      };
-      certs = {
-        enable = cfg.certs.enable;
-        useHttpServer = cfg.certs.useHttpServer;
-        group = cfg.certs.group;
-        httpPort = cfg.certs.httpPort;
-      };
-    };
+    # chaotic.duckdns = {
+    #   enable = true;
+    #   inherit (cfg) domain environmentFile onCalendar;
+    #   ipv6 = {
+    #     enable = cfg.ipv6.enable;
+    #     device = cfg.ipv6.device;
+    #   };
+    #   certs = {
+    #     enable = cfg.certs.enable;
+    #     useHttpServer = cfg.certs.useHttpServer;
+    #     group = cfg.certs.group;
+    #     httpPort = cfg.certs.httpPort;
+    #   };
+    # };
   };
 }
