@@ -33,8 +33,8 @@ mkIf (config.features.web.enable or false) {
                 print(f"Request: {self.path}", flush=True)
                 if self.path.startswith('/focus'):
                     try:
-                        # Press Ctrl+L using wtype
-                        subprocess.run(["${pkgs.wtype}/bin/wtype", "-M", "ctrl", "-k", "l", "-m", "ctrl"])
+                        # Press Ctrl+L using hyprctl (cleaner than wtype)
+                        subprocess.run(["${pkgs.hyprland}/bin/hyprctl", "dispatch", "sendshortcut", "CTRL,l,activewindow"])
                         self.send_response(200)
                         self.send_header('Access-Control-Allow-Origin', '*')
                         self.end_headers()
@@ -47,8 +47,8 @@ mkIf (config.features.web.enable or false) {
 
                 elif self.path.startswith('/close'):
                     try:
-                        # Press Ctrl+W using wtype
-                        subprocess.run(["${pkgs.wtype}/bin/wtype", "-M", "ctrl", "-k", "w", "-m", "ctrl"])
+                        # Press Ctrl+W using hyprctl
+                        subprocess.run(["${pkgs.hyprland}/bin/hyprctl", "dispatch", "sendshortcut", "CTRL,w,activewindow"])
                         self.send_response(200)
                         self.send_header('Access-Control-Allow-Origin', '*')
                         self.end_headers()
