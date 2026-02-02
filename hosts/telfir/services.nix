@@ -379,13 +379,13 @@ lib.mkMerge [
           enable = true;
           cache = {
             hostName = "cache.example.com";
-            dataPath = "/zero/ncps";
+            storage.local = "/zero/ncps";
             tempPath = "/zero/ncps-temp";
             maxSize = "150G";
-          };
-          upstream = {
-            caches = [ "https://cache.nixos.org" ];
-            publicKeys = [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ];
+            upstream = {
+              urls = [ "https://cache.nixos.org" ];
+              publicKeys = [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ];
+            };
           };
         };
 

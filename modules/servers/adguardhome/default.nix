@@ -87,9 +87,12 @@ in
     # - domains = ["~."] ensures all lookups go through the configured DNS
     services.resolved = {
       enable = lib.mkDefault true;
-      domains = [ "~." ];
       # Keep local resolver deterministic: disable LLMNR and mDNS broadcast resolution
-      extraConfig = "LLMNR=no\nMulticastDNS=no";
+      settings.Resolve = {
+        Domains = [ "~." ];
+        LLMNR = "no";
+        MulticastDNS = "no";
+      };
     };
     # Keep resolv.conf compatibility for tools that read networking.nameservers directly
     networking.nameservers = [ "127.0.0.1" ];
