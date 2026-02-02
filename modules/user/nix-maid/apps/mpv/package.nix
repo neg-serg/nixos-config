@@ -26,7 +26,7 @@ let
       });
 
   mpvPackage = pkgs.mpv.override {
-    mpv = mpvUnwrapped;
+    mpv-unwrapped = mpvUnwrapped;
     scripts = scriptPkgs;
   };
 in
