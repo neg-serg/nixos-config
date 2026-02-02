@@ -54,7 +54,7 @@ in
     patches = builtins.map (
       p:
       if builtins.isAttrs p && (p.name or "") == "raw" then
-        inputs.self + "/files/patches/keyutils-fix-format-specifier.patch"
+        ./../files/patches/keyutils-fix-format-specifier.patch
       else
         p
     ) (old.patches or [ ]);
