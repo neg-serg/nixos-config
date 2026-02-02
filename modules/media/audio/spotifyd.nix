@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.features.media.audio.spotify;
-  spotifydPkg = pkgs.spotifyd; # .override { withMpris = true; }; # Open source Spotify client running as a UNIX daemon
+  spotifydPkg = pkgs.spotifyd;
   spotifydConf = pkgs.writeText "spotifyd.conf" ''
     [global]
     autoplay = true
