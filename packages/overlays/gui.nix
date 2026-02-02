@@ -21,21 +21,10 @@ in
   # Avoid pulling hyprland-qtutils into Hyprland runtime closure
   # Some downstream overlays add qtutils to PATH wrapping; disable that.
   hyprland = prev.hyprland.override { wrapRuntimeDeps = false; };
-  # WinBoat: relax npm peer dependency resolution to avoid npm ci failures
-  winboat = prev.winboat.overrideAttrs (old: {
-    npmFlags = (old.npmFlags or [ ]) ++ [ "--legacy-peer-deps" ];
-  });
   "nyarch-assistant" = nyarchAssistantPkg;
   "_nyarch-assistant" = nyarchAssistantPkg;
   flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") { };
   matugen-themes = callPkg (inputs.self + "/packages/matugen-themes") { };
-  floorp-bin = prev.floorp-bin.overrideAttrs (old: {
-    postFixup = (old.postFixup or "") + ''
-      # Remove MOZ_LEGACY_PROFILES=1 to prevent creation of ~/Floorp directory
-      # and ensure it respects ~/.floorp defined in profiles.ini
-      sed -i '/MOZ_LEGACY_PROFILES/d' $out/bin/floorp
-    '';
-  });
   oldschool-pc-font-pack = callPkg (inputs.self + "/packages/oldschool-pc-font-pack") { };
   surfingkeys-pkg = prev.callPackage (inputs.self + "/packages/surfingkeys-conf") {
     customConfig = inputs.self + "/files/surfingkeys.js";
