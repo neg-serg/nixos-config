@@ -34,59 +34,53 @@ in
       # Socket-activate MPD so it only starts on first client connect
       startWhenNeeded = true;
       dataDir = "${myHome}/.config/mpd";
-      musicDirectory = "${myHome}/music";
-      network = {
-        listenAddress = "any";
-        port = 6600;
-      };
+      openFirewall = true;
 
-      extraConfig = ''
-        log_file "/dev/null"
-        max_output_buffer_size "131072"
-        max_connections "100"
-        connection_timeout "864000"
-        restore_paused "yes"
-        save_absolute_paths_in_playlists "yes"
-        follow_inside_symlinks "yes"
-        replaygain "off"
-        auto_update "yes"
+      settings = {
+        music_directory = "${myHome}/music";
+        bind_to_address = "any";
+        port = 6600;
+        log_file = "/dev/null";
+        max_output_buffer_size = 131072;
+        max_connections = 100;
+        connection_timeout = 864000;
+        restore_paused = "yes";
+        save_absolute_paths_in_playlists = "yes";
+        follow_inside_symlinks = "yes";
+        replaygain = "off";
+        auto_update = "yes";
         # Use a per-application (software) mixer so MPD can
         # control volume independently of the system master.
-        mixer_type "software"
+        mixer_type = "software";
 
         # Show up as a separate application stream
         # in Pulse/ PipeWire mixers (own slider)
-        audio_output {
-          type "pulse"
-          name "PipeWire (Pulse)"
-        }
-
-        # FIFO output for visualizers
-        audio_output {
-          type   "fifo"
-          name   "my_fifo"
-          path   "/tmp/mpd.fifo"
-          format "44100:16:2"
-        }
-
-        audio_output {
-          type "alsa"
-          name "RME ADI-2/4 PRO SE"
-          device "hw:CARD=SE53011083"
-          auto_resample "no"
-          auto_format "no"
-          auto_channels "no"
-          replay_gain_handler "none"
-          dsd_native "yes"
-          dop "no"
-          tags "yes"
-        }
-      '';
+        audio_output = [
+          {
+            type = "pulse";
+            name = "PipeWire (Pulse)";
+          }
+          {
+            type = "fifo";
+            name = "my_fifo";
+            path = "/tmp/mpd.fifo";
+            format = "44100:16:2";
+          }
+          {
+            type = "alsa";
+            name = "RME ADI-2/4 PRO SE";
+            device = "hw:CARD=SE53011083";
+            auto_resample = "no";
+            auto_format = "no";
+            auto_channels = "no";
+            replay_gain_handler = "none";
+            dsd_native = "yes";
+            dop = "no";
+            tags = "yes";
+          }
+        ];
+      };
     };
 
-    networking.firewall = {
-      enable = lib.mkDefault true;
-      allowedTCPPorts = [ 6600 ];
-    };
   };
 }
