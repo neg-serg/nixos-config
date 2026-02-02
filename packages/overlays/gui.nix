@@ -8,7 +8,6 @@ let
       autoArgs = if wantsInputs then { inherit inputs; } else { };
     in
     prev.callPackage path (autoArgs // extraArgs);
-  nyarchAssistantPkg = inputs.nyarch-assistant.packages.${prev.system}.default;
 in
 {
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
@@ -21,8 +20,6 @@ in
   # Avoid pulling hyprland-qtutils into Hyprland runtime closure
   # Some downstream overlays add qtutils to PATH wrapping; disable that.
   hyprland = prev.hyprland.override { wrapRuntimeDeps = false; };
-  "nyarch-assistant" = nyarchAssistantPkg;
-  "_nyarch-assistant" = nyarchAssistantPkg;
   flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") { };
   matugen-themes = callPkg (inputs.self + "/packages/matugen-themes") { };
   oldschool-pc-font-pack = callPkg (inputs.self + "/packages/oldschool-pc-font-pack") { };
