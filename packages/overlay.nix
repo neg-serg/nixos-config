@@ -46,21 +46,6 @@ in
     };
   };
 
-  # Zen 5 Optimized Packages
-  gamescope-zen5 = final.neg.functions.mkZen5LtoPackage finalPrev.gamescope;
-  mangohud-zen5 = final.neg.functions.mkZen5LtoPackage finalPrev.mangohud;
-
-  # Zen 5 Optimized Editor
-  neovim-zen5 =
-    (final.neg.functions.mkZen5LtoPackage finalPrev.neovim-unwrapped).overrideAttrs
-      (old: {
-        cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE" ];
-        env = (old.env or { }) // {
-          NIX_CFLAGS_COMPILE = (old.env.NIX_CFLAGS_COMPILE or "") + " -flto=thin";
-          NIX_LDFLAGS = (old.env.NIX_LDFLAGS or "") + " -flto=thin";
-        };
-      });
-
   # Google's Antigravity networking protocol
   antigravity-manual = final.callPackage ./antigravity/package.nix { };
 
