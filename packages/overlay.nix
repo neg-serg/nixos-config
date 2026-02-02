@@ -81,6 +81,11 @@ in
     doCheck = false;
   });
 
+  # Disable flaky lua-language-server tests
+  lua-language-server = finalPrev.lua-language-server.overrideAttrs (old: {
+    doCheck = false;
+  });
+
   # Disable flaky pytest-xdist tests
   pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
     (python-final: python-prev: {
