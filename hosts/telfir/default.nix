@@ -20,8 +20,6 @@
   # Optimization settings
   features.optimization = {
     enable = true;
-    zen5.enable = true;
-    # scx.scheduler = "scx_rusty"; # Fallback to rusty until reboot; use "scx_lavd" after reboot for X3D
   };
 
   features.dev.hack.pentest = false;

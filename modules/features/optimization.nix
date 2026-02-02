@@ -11,10 +11,6 @@ in
   options.features.optimization = {
     enable = lib.mkEnableOption "Global system optimizations";
 
-    zen5 = {
-      enable = lib.mkEnableOption "Optimize for AMD Zen 5 (Ryzen 9000/9950X3D) using Zen 4 compatible binaries";
-    };
-
     scx = {
       scheduler = lib.mkOption {
         type = lib.types.str;

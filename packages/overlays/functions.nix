@@ -66,29 +66,6 @@ _inputs: _final: prev: {
         drv.overrideAttrs (old: {
           cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" ];
         });
-
-      # Zen 5 Optimization Helper (Clang + Zen 5)
-      # Usage: pkgs.neg.functions.mkZen5LtoPackage pkgs.somePackage
-      mkZen5LtoPackage =
-        drv:
-        (drv.override {
-          stdenv = prev.llvmPackages_19.stdenv;
-        }).overrideAttrs
-          (old: {
-            # LTO disabled due to linker issues (archive has no index)
-            # cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE" ];
-
-            # Force Clang to use Zen 4 instructions (compatible with Zen 5, better cache hit rate)
-            env = (old.env or { }) // {
-              NIX_CFLAGS_COMPILE = toString [
-                "-march=znver4"
-                # "-flto=thin" # Disabled
-                "-mprefer-vector-width=512" # Leverage reliable AVX-512 on Zen 4/5
-                "-Wno-error"
-              ];
-              # NIX_LDFLAGS = "-flto=thin"; # Disabled
-            };
-          });
     };
   };
 }
