@@ -1,0 +1,70 @@
+# recipe.yml
+# Description of your OS image.
+# Documentation: https://blue-build.org/reference/recipe/
+
+name: my-silverblue
+description: My custom high-performance Fedora Silverblue
+base-image: ghcr.io/ublue-os/silverblue-main # Universal Blue base image (Fedora + patches)
+image-version: latest
+
+# Fedora version (39, 40, etc.)
+# If not specified, uses the latest stable
+major-version: 41
+
+modules:
+  # 1. Package Installation (rpm-ostree)
+  # "Native" layer. Everything here works instantly (native speed).
+  - type: rpm-ostree
+    install:
+      # --- Performance Core (for < 50ms startup) ---
+      - neovim        # Editor (baked into system)
+      - git           # Version control
+      - ripgrep       # For telescope (text search)
+      - fd-find       # For file search
+      - xclip         # Clipboard (X11)
+      - wl-clipboard  # Clipboard (Wayland)
+      - gcc           # Compiler (needed for treesitter)
+      - make          # Build utilities
+      
+      # --- Detected CLI Tools (from your NixOS config) ---
+      - jq                # JSON processor
+      - wireguard-tools   # VPN utilities (wg-quick)
+      - docker-compose    # Container orchestration
+      - openrgb           # RGB lighting control
+      - mangohud          # Gaming HUD overlay
+      - htop              # Process viewer
+      - zsh               # Shell
+      # Note: 'spotify-tui' and 'rmpc' might need to be installed via cargo/brew 
+      # or distrobox if not in Fedora repos.
+
+      # --- Development Utilities ---
+      - distrobox     # For creating development containers
+
+    remove:
+      - firefox          # Removing base Firefox (prefer Flatpak version)
+      - firefox-langpacks
+
+  # 2. File Copying
+  # Takes files from ./files/ and places them in the image
+  - type: files
+    files:
+      - source: system # Local folder (inside files/)
+        destination: / # Destination in system (e.g., /etc)
+
+  # 3. Systemd Services
+  - type: systemd
+    system:
+      enabled:
+        - podman.socket  # Enable podman socket for non-root container management
+
+  # 4. Flatpak Installation (Applications)
+  # Installed on first boot
+  - type: default-flatpaks
+    notify: true
+    system:
+      install:
+        - org.mozilla.firefox
+        - org.gnome.Loupe       # Image viewer
+        - com.raggesilver.BlackBox # Terminal (example)
+        # Add your GUI apps here (mpv, etc.)
+        - io.mpv.Mpv
