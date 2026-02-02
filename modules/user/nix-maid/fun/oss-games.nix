@@ -13,7 +13,7 @@ in
   config = lib.mkMerge [
     {
       environment.systemPackages = [
-        (if (config.features.optimization.zen5.enable or false) then pkgs.mangohud-zen5 else pkgs.mangohud) # Gaming HUD
+        pkgs.mangohud # Gaming HUD (was zen5 opt)
       ];
     }
     (lib.mkIf config.features.games.oss.enable {
