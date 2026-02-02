@@ -46,11 +46,11 @@
       url = "github:neg-serg/nyxt-bin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nyx = {
-      url = "github:chaotic-cx/nyx";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.rust-overlay.follows = "rust-overlay";
-    };
+    # nyx = {
+    #   url = "github:chaotic-cx/nyx";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    #   inputs.rust-overlay.follows = "rust-overlay";
+    # };
     pre-commit-hooks = {
       url = "github:cachix/git-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -94,12 +94,12 @@
     # Explicitly enable official cache
     substituters = [
       "https://cache.nixos.org"
-      "https://nyx.chaotic.cx"
+      # "https://nyx.chaotic.cx"
     ];
     trusted-public-keys = [
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-      "nyx.chaotic.cx-1:dHw3h/9TeD0j15P48r+W+5B8K5b5K4iO8r7eO8r7eO8="
-      "chaotic-nyx.cachix.org-1:HfnXSw4pj95iI/n17rIDy40agHj12WfF+Gqk6SonIT8="
+      # "nyx.chaotic.cx-1:dHw3h/9TeD0j15P48r+W+5B8K5b5K4iO8r7eO8r7eO8="
+      # "chaotic-nyx.cachix.org-1:HfnXSw4pj95iI/n17rIDy40agHj12WfF+Gqk6SonIT8="
     ];
     connect-timeout = 60;
     download-attempts = 2;
