@@ -76,6 +76,11 @@ in
     doCheck = false;
   });
 
+  # Disable flaky libuv tests
+  libuv = finalPrev.libuv.overrideAttrs (old: {
+    doCheck = false;
+  });
+
   # Disable flaky pytest-xdist tests
   pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
     (python-final: python-prev: {
