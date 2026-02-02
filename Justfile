@@ -30,8 +30,13 @@ cpu-masks:
 # Rebuild and switch to the new system configuration
 # Usage: just deploy [host]
 deploy host="telfir":
-    # Build system closure
-    nix build .#nixosConfigurations.{{host}}.config.system.build.toplevel --out-link result
+    # Build system closure with network tuning
+    nix build .#nixosConfigurations.{{host}}.config.system.build.toplevel \
+      --out-link result \
+      --option connect-timeout 60 \
+      --option download-attempts 2 \
+      --option stalled-download-timeout 600
+
     # Update system profile
     sudo nix-env -p /nix/var/nix/profiles/system --set $(readlink -f result)
     # Switch to new configuration
