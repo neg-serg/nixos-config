@@ -101,6 +101,9 @@
       "nyx.chaotic.cx-1:dHw3h/9TeD0j15P48r+W+5B8K5b5K4iO8r7eO8r7eO8="
       "chaotic-nyx.cachix.org-1:HfnXSw4pj95iI/n17rIDy40agHj12WfF+Gqk6SonIT8="
     ];
+    connect-timeout = 60;
+    download-attempts = 2;
+    stalled-download-timeout = 600;
   };
 
   outputs =
