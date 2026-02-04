@@ -9,13 +9,22 @@ image-version: latest
 
 # Fedora version (39, 40, etc.)
 # If not specified, uses the latest stable
-major-version: 41
+major-version: 43
 
 modules:
+  - type: yum-repos
+    repos:
+      - https://copr.fedorainfracloud.org/coprs/amneziavpn/amneziawg/repo/fedora-43/amneziavpn-amneziawg-fedora-43.repo
+
   # 1. Package Installation (rpm-ostree)
   # "Native" layer. Everything here works instantly (native speed).
   - type: rpm-ostree
     install:
+      # --- VPN & Networking ---
+      - amneziawg-dkms
+      - amneziawg-tools
+      - wireguard-tools   # VPN utilities (wg-quick)
+
       # --- Performance Core (for < 50ms startup) ---
       - neovim        # Editor (baked into system)
       - git           # Version control
