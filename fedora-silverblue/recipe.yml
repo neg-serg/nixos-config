@@ -19,6 +19,7 @@ modules:
       # --- Performance Core (for < 50ms startup) ---
       - neovim        # Editor (baked into system)
       - git           # Version control
+      - gh            # GitHub CLI
       - ripgrep       # For telescope (text search)
       - fd-find       # For file search
       - xclip         # Clipboard (X11)
