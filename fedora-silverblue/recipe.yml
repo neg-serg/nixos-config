@@ -67,5 +67,21 @@ modules:
         - org.mozilla.firefox
         - org.gnome.Loupe       # Image viewer
         - com.raggesilver.BlackBox # Terminal (example)
-        # Add your GUI apps here (mpv, etc.)
         - io.mpv.Mpv
+        - org.fedoraproject.MediaWriter
+        - org.gnome.Calculator
+        - org.gnome.Calendar
+        - org.gnome.Characters
+        - org.gnome.Connections
+        - org.gnome.Contacts
+        - org.gnome.Extensions
+        - org.gnome.Logs
+        - org.gnome.Maps
+        - org.gnome.NautilusPreviewer
+        - org.gnome.Papers
+        - org.gnome.Snapshot
+        - org.gnome.TextEditor
+        - org.gnome.Weather
+        - org.gnome.baobab
+        - org.gnome.clocks
+        - org.gnome.font-viewer
