@@ -1,4 +1,4 @@
-#пш!/usr/bin/env bash
+#!/usr/bin/env bash
 # Toggle screen recording with wf-recorder
 # Usage: screenrec [area|screen]
 
