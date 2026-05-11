@@ -18,6 +18,9 @@ in
       pkgs.alsa-utils # amixer/alsamixer fallback when PipeWire fails
       pkgs.pw-volume # minimal PipeWire volume controller for scripts
 
+      # -- RME HDSPe --
+      pkgs.wxwidgets-gtk3 # wx GTK3 libs required by hdspeconf
+
       # -- GUI Patchbays --
       pkgs.coppwr # PipeWire CLI to copy/paste complex graphs
       pkgs.helvum # GTK patchbay for PipeWire nodes
