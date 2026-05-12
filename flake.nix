@@ -91,8 +91,8 @@
   };
 
   nixConfig = {
-    extra-substituters = [ "https://cache.nixos.org" ];
-    extra-trusted-public-keys = [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ];
+    extra-substituters = [ "https://install.determinate.systems" "https://cache.nixos.org" ];
+    extra-trusted-public-keys = [ "install.determinate.systems:2/bvnFWPrR6uxEXpB7XqOSykYemH8e8WoMWvoLLXpF4=" "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ];
   };
 
   outputs =
