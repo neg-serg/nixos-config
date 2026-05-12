@@ -24,7 +24,17 @@
     ];
   };
 
+  # 16GB swap on /swapfile
+  swapDevices = [{
+    device = "/swapfile";
+    size = 16384; # MB
+  }];
+
+  nix.settings = {
+    max-jobs = 28;
+    cores = 14;
+  };
+
   environment.systemPackages = [ pkgs.git ];
   users.users.root.hashedPassword = "!";
 }
-
