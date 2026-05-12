@@ -1,0 +1,85 @@
+# Theme: midnight-ocean
+# By: Antigravity
+# Description: Deep Midnight Ocean theme. Matches system-wide Blue/Dark palette.
+
+# Main background (Deep Obsidian Black)
+theme[main_bg]="#000000"
+
+# Main text color
+theme[main_fg]="#8da6b2"
+
+# Title color for boxes
+theme[title]="#ffffff"
+
+# Highlight color for keyboard shortcuts
+theme[hi_fg]="#00d7ff"
+
+# Background color of selected item in processes box (Matches Yazi Active Tab)
+theme[selected_bg]="#367bbf"
+
+# Foreground color of selected item in processes box
+theme[selected_fg]="#ffffff"
+
+# Color of inactive/disabled text
+theme[inactive_fg]="#2c3e50"
+
+# Color of text appearing on top of graphs
+theme[graph_text]="#8da6b2"
+
+# Misc colors for processes box
+theme[proc_misc]="#367bbf"
+
+# Cpu box outline color (Matches Hyprland Active Border base)
+theme[cpu_box]="#002859"
+
+# Memory box outline color
+theme[mem_box]="#005faf"
+
+# Net box outline color
+theme[net_box]="#367bbf"
+
+# Processes box outline color
+theme[proc_box]="#546c8a"
+
+# Box divider line
+theme[div_line]="#0d1824"
+
+# Temperature graph colors (Deep Blue -> Bright Blue -> Cyan)
+theme[temp_start]="#002859"
+theme[temp_mid]="#367bbf"
+theme[temp_end]="#00d7ff"
+
+# CPU graph colors (Midnight Blue -> Steel Blue -> Cyan)
+theme[cpu_start]="#050510"
+theme[cpu_mid]="#367bbf"
+theme[cpu_end]="#00d7ff"
+
+# Mem/Disk free meter (Oceanic Gradients)
+theme[free_start]="#0d1824"
+theme[free_mid]="#1b4f72"
+theme[free_end]="#367bbf"
+
+# Mem/Disk cached meter
+theme[cached_start]="#2e4053"
+theme[cached_mid]="#5d6d7e"
+theme[cached_end]="#8da6b2"
+
+# Mem/Disk available meter (Cyan Accents)
+theme[available_start]="#005faf"
+theme[available_mid]="#0087af"
+theme[available_end]="#00afff"
+
+# Mem/Disk used meter (Deep Blue -> Pink Accent from Yazi/Hyprland)
+theme[used_start]="#367bbf"
+theme[used_mid]="#f274bc"
+theme[used_end]="#cf4f88"
+
+# Download graph colors
+theme[download_start]="#002859"
+theme[download_mid]="#005faf"
+theme[download_end]="#00d7ff"
+
+# Upload graph colors
+theme[upload_start]="#367bbf"
+theme[upload_mid]="#f274bc"
+theme[upload_end]="#cf4f88"

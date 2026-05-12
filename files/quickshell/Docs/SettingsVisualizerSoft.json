@@ -1,0 +1,20 @@
+{
+  "showMediaVisualizer": true,
+  "activeVisualizerProfile": "soft",
+  "visualizerProfiles": {
+    "soft": {
+      "cavaBars": 72,
+      "cavaFramerate": 30,
+      "cavaMonstercat": true,
+      "cavaGravity": 120000,
+      "cavaNoiseReduction": 10,
+      "spectrumFillOpacity": 0.28,
+      "spectrumHeightFactor": 1.0,
+      "spectrumOverlapFactor": 0.15,
+      "spectrumBarGap": 1.5,
+      "spectrumVerticalRaise": 0.6,
+      "spectrumMirror": false
+    }
+  }
+}
+

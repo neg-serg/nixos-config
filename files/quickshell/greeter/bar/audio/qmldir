@@ -1,0 +1,8 @@
+module qs.bar.audio
+AudioControl 1.0 AudioControl.qml
+AudioControls 1.0 AudioControls.qml
+Mixer 1.0 Mixer.qml
+MixerEntry 1.0 MixerEntry.qml
+MixerEntryBase 1.0 MixerEntryBase.qml
+MixerEntryWithSelect 1.0 MixerEntryWithSelect.qml
+VolumeSlider 1.0 VolumeSlider.qml

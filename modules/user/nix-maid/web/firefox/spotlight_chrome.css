@@ -1,0 +1,54 @@
+/* Spotlight Focus Mode v2 (Compact & Clean) */
+@-moz-document url(chrome://browser/content/browser.xhtml){
+
+/* ONLY when the urlbar is expanded/focused */
+#urlbar[breakout][breakout-extend] {
+    /* Positioning */
+    position: fixed !important;
+    top: 20vh !important;
+    bottom: auto !important;
+    /* Override sticky bottom-navbar */
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+
+    /* Sizing (Compact) */
+    width: 600px !important;
+    max-width: 90vw !important;
+    min-height: 46px !important;
+
+    /* Layout Reset (Fix inversion) */
+    display: flex !important;
+    flex-direction: column !important;
+
+    /* Visuals */
+    z-index: 9999999 !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 0 100vw rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid var(--toolbar-field-border-color, #0a3749) !important;
+    border-radius: 8px !important;
+
+    /* Animation */
+    transition: top 0.05s ease-out, opacity 0.05s ease-out !important;
+}
+
+/* Input Styling */
+#urlbar[breakout][breakout-extend] #urlbar-input {
+    font-size: 1.25em !important;
+    /* Slightly smaller than previous */
+    text-align: center !important;
+    color: var(--lwt-toolbar-field-color, #fff) !important;
+    padding-block: 4px !important;
+}
+
+/* Hide search icons/chips for clean look */
+#urlbar[breakout][breakout-extend] .urlbar-input-box::before,
+#urlbar[breakout][breakout-extend] #identity-box {
+    display: none !important;
+}
+
+/* Results List */
+.urlbarView-body-inner {
+    border-top: 1px solid var(--toolbar-field-border-color) !important;
+    max-height: 50vh !important;
+    /* Prevent overflowing off screen */
+}
+}

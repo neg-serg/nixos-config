@@ -1,0 +1,13 @@
+{
+  "volume": {
+    "icon": {
+      "offThreshold": 0,
+      "downThreshold": 30,
+      "upThreshold": 50
+    },
+    "pill": {
+      "autoHidePauseMs": 2500,
+      "showDelayMs": 500
+    }
+  }
+}

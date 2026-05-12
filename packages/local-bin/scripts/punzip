@@ -1,0 +1,24 @@
+#!/bin/sh
+# punzip: simple unzip helper with optional -d DIR target
+# Usage: punzip [-d DIR] FILE.zip
+
+set -eu
+dest=""
+if [ "${1:-}" = "-d" ]; then
+  dest="${2:-}"
+  [ -n "$dest" ] || { echo "punzip: missing DIR for -d" >&2; exit 2; }
+  shift 2 || true
+fi
+[ -n "${1:-}" ] || { echo "punzip: missing FILE.zip" >&2; exit 2; }
+zipfile="$1"
+case "$zipfile" in
+  *.zip|*.ZIP) :;;
+  *) echo "punzip: not a zip: $zipfile" >&2; exit 2;;
+esac
+if [ -n "$dest" ]; then
+  mkdir -p -- "$dest"
+  exec unzip -o "$zipfile" -d "$dest"
+else
+  exec unzip -o "$zipfile"
+fi
+

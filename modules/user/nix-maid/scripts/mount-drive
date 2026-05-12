@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -e
+
+REMOTE="${1:-serg.zorg}"
+MOUNTPOINT="$HOME/GoogleDrive"
+
+if ! command -v rclone &>/dev/null;
+    echo "Error: rclone is not installed."
+    exit 1
+fi
+
+if [ ! -d "$MOUNTPOINT" ]; then
+    echo "Creating mountpoint: $MOUNTPOINT"
+    mkdir -p "$MOUNTPOINT"
+fi
+
+if mount | grep -q "$MOUNTPOINT"; then
+    echo "Drive already mounted at $MOUNTPOINT"
+    exit 0
+fi
+
+echo "Mounting $REMOTE to $MOUNTPOINT..."
+echo "Note: If this fails, run 'rclone config' to setup your '$REMOTE' remote."
+
+# Mount in background but show errors
+rclone mount "$REMOTE:" "$MOUNTPOINT" \
+    --vfs-cache-mode writes \
+    --daemon
+
+echo "Mounted."

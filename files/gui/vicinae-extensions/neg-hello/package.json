@@ -1,0 +1,10 @@
+{
+  "name": "neg-hello",
+  "version": "0.0.1",
+  "description": "Minimal local Vicinae extension placeholder",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "mkdir -p /build/.local/share/vicinae/extensions/neg-hello && cp -r . /build/.local/share/vicinae/extensions/neg-hello"
+  }
+}

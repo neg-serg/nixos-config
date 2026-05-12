@@ -1,0 +1,7 @@
+module greeter.lock
+Controller 1.0 Controller.qml
+GreeterContext 1.0 GreeterContext.qml
+LockButton 1.0 LockButton.qml
+LockContent 1.0 LockContent.qml
+LockState 1.0 LockState.qml
+SessionLockContext 1.0 SessionLockContext.qml

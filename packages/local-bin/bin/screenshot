@@ -1,0 +1,77 @@
+#!/bin/sh
+
+IFS=' 	
+'
+show_help() {
+  cat <<'EOF'
+Usage: screenshot [-r|-c|-d|-m|-o]
+  (no args)  Full screen capture to ~/pic/shots
+  -r         Rectangular selection (interactive)
+  -c         Current window
+  -d         Delayed shot (5s)
+  -m         Show menu (rofi)
+  -o         OCR region to clipboard (tesseract)
+  -h, --help Show this help
+EOF
+}
+
+scr_dir=$HOME/pic/shots
+mkdir -p -- "$scr_dir"
+filename="screenshot-$(date +%Y-%m-%d_%H-%M-%S).png"
+summary_="$scr_dir/$filename"
+
+shot() {
+  # Fullscreen screenshot via grim
+  grim "$summary_" && ~/bin/pic-notify "$summary_"
+}
+select_region() {
+  # Region selection via slurp
+  grim -g "$(slurp)" "$summary_" && ~/bin/pic-notify "$summary_"
+}
+current_window() {
+  # Try Hyprland active window, fall back to selection
+  if command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+    geo=$(hyprctl -j activewindow | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"') || geo=""
+    if [ -n "$geo" ]; then
+      grim -g "$geo" "$summary_" && ~/bin/pic-notify "$summary_" && return 0
+    fi
+  fi
+  Select "$@"
+}
+delay() { sleep 5; shot "$@"; }
+full() { shot "$@"; }
+
+menu() {
+    sel=$(printf '%s\n' \
+        "Full screen" \
+        "Rectangular selection" \
+        "Current window" \
+        "Delayed (5s)" \
+        | rofi -dmenu -theme clip -p '⟬shot⟭ ❯>' || true)
+    case "$sel" in
+        "Full screen") full "$@" ;;
+        "Rectangular selection") select_region "$@" ;;
+        "Current window") current_window "$@" ;;
+        "Delayed (5s)") delay "$@" ;;
+        *) : ;;
+    esac
+}
+
+ocr() {
+  command -v tesseract >/dev/null 2>&1 || { printf 'screenshot: missing tesseract\n' >&2; :; }
+  grim -g "$(slurp)" - \
+    | tesseract --dpi 96 -l eng - - \
+    | wl-copy --type text/plain
+  command -v notify-send >/dev/null 2>&1 && notify-send -i ebook-reader "OCR" "Saved to clipboard" || true
+}
+
+case "${1:-}" in
+    -r) select_region "$@";;
+    -c) current_window "$@";;
+    -d) delay "$@";;
+    -m) menu "$@";;
+    -o) ocr "$@" ;; # thx to vincentbernat
+    --help) show_help;;
+    -h) show_help;;
+    *) full "$@";;
+esac

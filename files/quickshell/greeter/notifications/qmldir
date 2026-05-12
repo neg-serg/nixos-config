@@ -1,0 +1,12 @@
+module qs.notifications
+CloseButton 1.0 CloseButton.qml
+DaemonNotification 1.0 DaemonNotification.qml
+FlickableNotification 1.0 FlickableNotification.qml
+NotificationDisplay 1.0 NotificationDisplay.qml
+NotificationManager 1.0 NotificationManager.qml
+NotificationOverlay 1.0 NotificationOverlay.qml
+NotificationWidget 1.0 NotificationWidget.qml
+StandardNotificationRenderer 1.0 StandardNotificationRenderer.qml
+TestNotification 1.0 TestNotification.qml
+TrackedNotification 1.0 TrackedNotification.qml
+test 1.0 test.qml

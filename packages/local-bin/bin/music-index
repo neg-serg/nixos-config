@@ -1,0 +1,275 @@
+#!/usr/bin/env python3
+"""Build a similarity index for audio files (Essentia + Annoy).
+
+Usage:
+  music-index [--out DIR] [-j N] [-n N] [-v|-vv] [--quiet] [MUSIC_DIR]
+
+Description:
+  Scans MUSIC_DIR (default: $MUSIC_DIR or ~/music), extracts features via
+  Essentia's streaming_extractor_music, caches vectors, and builds an Annoy
+  index under --out (default: ~/.cache/music-index).
+"""
+import argparse
+import concurrent.futures
+import hashlib
+import json
+import os
+import subprocess as sp
+import sys
+import tempfile
+from pathlib import Path
+
+# Simple verbosity-aware logger
+def _mk_logger(verbosity: int, quiet: bool = False):
+    class _L:
+        def __init__(self, v: int, q: bool):
+            self.v = -1 if q else v
+
+        def info(self, msg: str):
+            if self.v >= 0:
+                print(msg, file=sys.stderr)
+
+        def v1(self, msg: str):
+            if self.v >= 1:
+                print(msg, file=sys.stderr)
+
+        def v2(self, msg: str):
+            if self.v >= 2:
+                print(msg, file=sys.stderr)
+
+    return _L(verbosity, quiet)
+
+try:
+    import orjson  # type: ignore
+except Exception:  # pragma: no cover
+    orjson = None
+import numpy as np
+try:
+    from annoy import AnnoyIndex  # type: ignore
+except Exception as e:
+    print("[music-index] Missing python module 'annoy'. Install pythonPackages.annoy", file=sys.stderr)
+    raise
+
+
+AUDIO_EXTS = {".mp3", ".flac", ".wav", ".ogg", ".m4a", ".opus", ".aac", ".wma"}
+
+
+def read_json_bytes(path: Path) -> dict:
+    data = path.read_bytes()
+    if orjson:
+        return orjson.loads(data)
+    return json.loads(data.decode("utf-8"))
+
+
+def file_hash(path: Path, chunk_size: int = 1 << 20) -> str:
+    """Compute SHA-256 of file contents."""
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(chunk_size), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def vec_from_essentia(d: dict) -> np.ndarray:
+    # Minimal, robust feature vector
+    def arr(path, default=()):
+        cur = d
+        for k in path:
+            if not isinstance(cur, dict) or k not in cur:
+                return np.asarray(default, dtype=np.float32)
+            cur = cur[k]
+        return np.asarray(cur, dtype=np.float32)
+
+    parts = [
+        arr(["lowlevel", "mfcc", "mean"]),
+        arr(["tonal", "hpcp", "mean"]),
+        arr(["tonal", "chords_histogram"], default=()),
+        np.asarray([float(d.get("rhythm", {}).get("bpm", 0.0))], dtype=np.float32),
+    ]
+    v = np.concatenate([p for p in parts if p.size > 0], axis=0)
+    # L2 normalize for angular distance
+    n = float(np.linalg.norm(v))
+    return v / (n + 1e-8)
+
+
+def extract_one(audio_path: Path) -> tuple[Path, np.ndarray] | None:
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            out_json = Path(td) / "feat.json"
+            cmd = ["streaming_extractor_music", str(audio_path), str(out_json)]
+            sp.run(cmd, check=True, stdout=sp.DEVNULL, stderr=sp.DEVNULL)
+            d = read_json_bytes(out_json)
+            v = vec_from_essentia(d)
+            if v.size == 0:
+                return None
+            return (audio_path, v)
+    except sp.CalledProcessError:
+        print(f"[music-index] extractor failed: {audio_path}", file=sys.stderr)
+        return None
+    except Exception as e:
+        print(f"[music-index] error {audio_path}: {e}", file=sys.stderr)
+        return None
+
+
+def walk_audios(root: Path):
+    for p in root.rglob("*"):
+        if p.is_file() and p.suffix.lower() in AUDIO_EXTS:
+            yield p
+
+
+def extract_one_with_hash(arg: tuple[Path, str]) -> tuple[Path, str, np.ndarray] | None:
+    path, h = arg
+    res = extract_one(path)
+    if res is None:
+        return None
+    _, v = res
+    return (path, h, v)
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Build a similarity index from audio files using Essentia + Annoy")
+    ap.add_argument("music_dir", nargs="?", default=os.environ.get("MUSIC_DIR", str(Path.home() / "music")))
+    ap.add_argument("--out", default=str(Path.home() / ".cache" / "music-index"), help="output directory for index files")
+    ap.add_argument("-j", "--jobs", type=int, default=os.cpu_count() or 4, help="parallel workers")
+    ap.add_argument("-n", "--limit", type=int, default=0, help="limit number of files (debug)")
+    ap.add_argument("-v", "--verbose", action="count", default=0, help="increase verbosity (-v, -vv)")
+    ap.add_argument("-q", "--quiet", action="store_true", help="suppress non-error output")
+    args = ap.parse_args()
+
+    log = _mk_logger(args.verbose, args.quiet)
+
+    music_dir = Path(args.music_dir).expanduser().resolve()
+    out_dir = Path(args.out).expanduser().resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    log.info(f"[music-index] scanning for audio files under {music_dir}…")
+    files = list(walk_audios(music_dir))
+    log.v1(f"[music-index] found {len(files)} candidate files before filtering")
+    if args.limit:
+        files = files[: args.limit]
+        log.v1(f"[music-index] applying limit: {len(files)} files")
+    if not files:
+        print(f"[music-index] no audio files under {music_dir}")
+        return 1
+
+    # Load cached feature vectors by content hash
+    out_dir = Path(args.out).expanduser().resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    cache_file = out_dir / "features.jsonl"
+    cache: dict[str, list[float]] = {}
+    if cache_file.exists():
+        try:
+            log.info(f"[music-index] loading feature cache from {cache_file}…")
+            for line in cache_file.read_text().splitlines():
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                    h = obj.get("hash")
+                    v = obj.get("vec")
+                    if isinstance(h, str) and isinstance(v, list):
+                        cache[h] = v
+                except Exception:
+                    continue
+        except Exception as e:
+            print(f"[music-index] failed reading cache: {e}", file=sys.stderr)
+    log.v1(f"[music-index] cache size: {len(cache)} entries")
+
+    # Compute hashes for all files (parallelized)
+    print(f"[music-index] hashing {len(files)} files…")
+    path_to_hash: dict[Path, str] = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as ex:
+        total = len(files)
+        every = 500 if args.verbose <= 1 else 50
+        for i, (p, h) in enumerate(ex.map(lambda p: (p, file_hash(p)), files), start=1):
+            path_to_hash[p] = h
+            if i % every == 0:
+                log.v1(f"[music-index] hashed {i}/{total} files…")
+
+    # Split into cached vs new
+    to_extract: list[tuple[Path, str]] = []
+    results: list[tuple[Path, str, np.ndarray]] = []
+    reused = 0
+    for p in files:
+        h = path_to_hash[p]
+        if h in cache:
+            v = np.asarray(cache[h], dtype=np.float32)
+            if v.size == 0:
+                continue
+            results.append((p, h, v))
+            reused += 1
+        else:
+            to_extract.append((p, h))
+    log.info(f"[music-index] to extract: {len(to_extract)}; reused from cache: {reused}")
+
+    if to_extract:
+        print(f"[music-index] extracting features for {len(to_extract)} new files with {args.jobs} workers… (reused {reused})")
+        with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as ex:
+            total = len(to_extract)
+            done = 0
+            every = 200 if args.verbose <= 1 else 25
+            for res in ex.map(extract_one_with_hash, to_extract):
+                if res is None:
+                    continue
+                p, h, v = res
+                results.append((p, h, v))
+                # Save to in-memory cache for this run
+                cache[h] = v.astype(float).tolist()
+                done += 1
+                if done % every == 0:
+                    log.v1(f"[music-index] extracted {done}/{total} files…")
+        # Append newly discovered hashes to on-disk cache
+        try:
+            # Determine which entries are new vs previously present
+            # We rebuild a set to avoid duplicates
+            existing_hashes = set()
+            try:
+                if cache_file.exists():
+                    for line in cache_file.read_text().splitlines():
+                        if not line:
+                            continue
+                        try:
+                            obj = json.loads(line)
+                        except Exception:
+                            continue
+                        h = obj.get("hash")
+                        if isinstance(h, str):
+                            existing_hashes.add(h)
+            except Exception:
+                pass
+            log.info(f"[music-index] updating cache file {cache_file}…")
+            with cache_file.open("a", encoding="utf-8") as f:
+                for h, v in cache.items():
+                    if h in existing_hashes:
+                        continue
+                    f.write(json.dumps({"hash": h, "vec": v}) + "\n")
+        except Exception as e:
+            print(f"[music-index] failed updating cache: {e}", file=sys.stderr)
+    else:
+        print(f"[music-index] all {len(files)} files reused from cache")
+
+    if not results:
+        print("[music-index] no features extracted", file=sys.stderr)
+        return 2
+
+    dim = results[0][2].shape[0]
+    idx = AnnoyIndex(dim, "angular")
+    tracks: list[str] = []
+    log.info(f"[music-index] adding {len(results)} items to Annoy index…")
+    for i, (path, h, vec) in enumerate(results):
+        idx.add_item(i, vec.tolist())
+        tracks.append(str(path))
+
+    print(f"[music-index] building Annoy index (items={len(tracks)}, dim={dim})…")
+    idx.build(50)
+    log.v2("[music-index] saving index and metadata files…")
+    idx.save(str(out_dir / "index.ann"))
+    (out_dir / "tracks.jsonl").write_text("\n".join(json.dumps({"path": p}) for p in tracks))
+    meta = {"dim": dim, "count": len(tracks)}
+    (out_dir / "meta.json").write_text(json.dumps(meta))
+    print(f"[music-index] wrote {out_dir}/index.ann and tracks.jsonl")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
