@@ -9,7 +9,7 @@
 let
   inherit (nixpkgs) lib;
   hostsDir = ../hosts;
-  hostNamesEnabled = [ "telfir" ];
+  hostNamesEnabled = [ "telfir" "nixos" ];
 
   linuxSystem = "x86_64-linux";
   locale = "en_US.UTF-8";
