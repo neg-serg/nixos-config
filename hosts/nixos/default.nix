@@ -26,3 +26,5 @@
 
   users.users.root.hashedPassword = "!";
 }
+
+  environment.systemPackages = [ pkgs.git ];
