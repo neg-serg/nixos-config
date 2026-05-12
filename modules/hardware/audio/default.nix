@@ -1,0 +1,8 @@
+{ ... }:
+{
+  imports = [
+    ./dsp
+    ./pipewire
+    ./pulseaudio
+  ];
+}

@@ -1,0 +1,120 @@
+size 16px (image 32x32), hotspot (1,1)
+  hotspot pixel: srgba(214,214,214,0.0745098)
+  top color 3x3@hotspot (alpha>=0.2):       1 #FBFBFBCC srgba(251,251,251,0.8)
+
+size 17px (image 32x32), hotspot (1,1)
+  hotspot pixel: srgba(31,31,31,0.0627451)
+  top color 3x3@hotspot (alpha>=0.2):       2 #1826286A srgba(24,38,40,0.415686)
+
+size 18px (image 32x32), hotspot (1,1)
+  hotspot pixel: srgba(26,26,26,0.0745098)
+  top color 3x3@hotspot (alpha>=0.2):       1 #B2A53FED srgba(178,165,63,0.929412)
+
+size 19px (image 32x32), hotspot (1,1)
+  hotspot pixel: srgba(26,26,26,0.0745098)
+  top color 3x3@hotspot (alpha>=0.2):       1 #65A230ED srgba(101,162,48,0.929412)
+
+size 20px (image 32x32), hotspot (1,1)
+  hotspot pixel: srgba(0,31,0,0.0627451)
+  top color 3x3@hotspot (alpha>=0.2):       2 #0021006A srgba(0,33,0,0.415686)
+
+size 21px (image 32x32), hotspot (1,1)
+  hotspot pixel: srgba(31,31,31,0.0627451)
+  top color 3x3@hotspot (alpha>=0.2):       2 #2121216A srgba(33,33,33,0.415686)
+
+size 22px (image 32x32), hotspot (1,1)
+  hotspot pixel: srgba(26,26,26,0.0745098)
+  top color 3x3@hotspot (alpha>=0.2):       1 #AA2525ED srgba(170,37,37,0.929412)
+
+size 23px (image 32x32), hotspot (1,1)
+  hotspot pixel: srgba(26,26,26,0.0745098)
+  top color 3x3@hotspot (alpha>=0.2):       1 #2121216C srgba(33,33,33,0.423529)
+
+size 24px (image 32x32), hotspot (1,1)
+  hotspot pixel: srgba(214,214,214,0.0745098)
+  top color 3x3@hotspot (alpha>=0.2):       1 #FBFBFBCC srgba(251,251,251,0.8)
+
+size 25px (image 32x32), hotspot (1,1)
+  hotspot pixel: srgba(0,0,0,0.0745098)
+  top color 3x3@hotspot (alpha>=0.2):       1 #AAAAAAED srgba(170,170,170,0.929412)
+
+size 28px (image 48x48), hotspot (3,3)
+  hotspot pixel: srgba(252,252,252,0.807843)
+  top color 3x3@hotspot (alpha>=0.2):       2 #FCFCFCCE srgba(252,252,252,0.807843)
+
+size 29px (image 48x48), hotspot (3,3)
+  hotspot pixel: srgba(25,37,41,0.8)
+  top color 3x3@hotspot (alpha>=0.2):       4 #192529CC srgba(25,37,41,0.8)
+
+size 30px (image 48x48), hotspot (3,3)
+  hotspot pixel: srgba(32,32,32,0.807843)
+  top color 3x3@hotspot (alpha>=0.2):       2 #202020CE srgba(32,32,32,0.807843)
+
+size 31px (image 48x48), hotspot (3,3)
+  hotspot pixel: srgba(24,37,40,0.807843)
+  top color 3x3@hotspot (alpha>=0.2):       2 #182528CE srgba(24,37,40,0.807843)
+
+size 32px (image 48x48), hotspot (3,3)
+  hotspot pixel: srgba(0,32,0,0.8)
+  top color 3x3@hotspot (alpha>=0.2):       4 #002000CC srgba(0,32,0,0.8)
+
+size 33px (image 48x48), hotspot (3,3)
+  hotspot pixel: srgba(32,32,32,0.8)
+  top color 3x3@hotspot (alpha>=0.2):       4 #202020CC srgba(32,32,32,0.8)
+
+size 34px (image 48x48), hotspot (3,3)
+  hotspot pixel: srgba(32,32,32,0.807843)
+  top color 3x3@hotspot (alpha>=0.2):       2 #202020CE srgba(32,32,32,0.807843)
+
+size 35px (image 48x48), hotspot (3,3)
+  hotspot pixel: srgba(32,32,32,0.807843)
+  top color 3x3@hotspot (alpha>=0.2):       2 #202020CE srgba(32,32,32,0.807843)
+
+size 36px (image 48x48), hotspot (3,3)
+  hotspot pixel: srgba(252,252,252,0.807843)
+  top color 3x3@hotspot (alpha>=0.2):       2 #FCFCFCCE srgba(252,252,252,0.807843)
+
+size 37px (image 48x48), hotspot (3,3)
+  hotspot pixel: srgba(0,0,0,0.807843)
+  top color 3x3@hotspot (alpha>=0.2):       2 #000000CE srgba(0,0,0,0.807843)
+
+size 39px (image 64x64), hotspot (4,4)
+  hotspot pixel: srgba(252,252,252,0.807843)
+  top color 3x3@hotspot (alpha>=0.2):       3 #FCFCFCCE srgba(252,252,252,0.807843)
+
+size 40px (image 64x64), hotspot (4,4)
+  hotspot pixel: srgba(25,37,41,0.8)
+  top color 3x3@hotspot (alpha>=0.2):       5 #192529CC srgba(25,37,41,0.8)
+
+size 41px (image 64x64), hotspot (4,4)
+  hotspot pixel: srgba(32,32,32,0.807843)
+  top color 3x3@hotspot (alpha>=0.2):       3 #202020CE srgba(32,32,32,0.807843)
+
+size 42px (image 64x64), hotspot (4,4)
+  hotspot pixel: srgba(24,37,40,0.807843)
+  top color 3x3@hotspot (alpha>=0.2):       3 #182528CE srgba(24,37,40,0.807843)
+
+size 43px (image 64x64), hotspot (4,4)
+  hotspot pixel: srgba(0,32,0,0.8)
+  top color 3x3@hotspot (alpha>=0.2):       5 #002000CC srgba(0,32,0,0.8)
+
+size 44px (image 64x64), hotspot (4,4)
+  hotspot pixel: srgba(32,32,32,0.8)
+  top color 3x3@hotspot (alpha>=0.2):       5 #202020CC srgba(32,32,32,0.8)
+
+size 45px (image 64x64), hotspot (4,4)
+  hotspot pixel: srgba(32,32,32,0.807843)
+  top color 3x3@hotspot (alpha>=0.2):       3 #202020CE srgba(32,32,32,0.807843)
+
+size 46px (image 64x64), hotspot (4,4)
+  hotspot pixel: srgba(32,32,32,0.807843)
+  top color 3x3@hotspot (alpha>=0.2):       3 #202020CE srgba(32,32,32,0.807843)
+
+size 47px (image 64x64), hotspot (4,4)
+  hotspot pixel: srgba(252,252,252,0.807843)
+  top color 3x3@hotspot (alpha>=0.2):       3 #FCFCFCCE srgba(252,252,252,0.807843)
+
+size 48px (image 64x64), hotspot (4,4)
+  hotspot pixel: srgba(0,0,0,0.807843)
+  top color 3x3@hotspot (alpha>=0.2):       3 #000000CE srgba(0,0,0,0.807843)
+

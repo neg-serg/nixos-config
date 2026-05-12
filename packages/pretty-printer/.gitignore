@@ -1,0 +1,4 @@
+# Ensure Python sources are included even if a global pattern ignores "src"
+!src/
+!src/**
+

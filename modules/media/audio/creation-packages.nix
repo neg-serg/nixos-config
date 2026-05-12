@@ -1,0 +1,29 @@
+##
+# Module: media/audio/creation-packages
+# Purpose: Provide the creative audio stack (DAWs, synths, editors) system-wide for workstation hosts.
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
+let
+  enabled = config.roles.workstation.enable or false;
+  packages = [
+    # -- Live Coding --
+    pkgs.supercollider # SuperCollider IDE and audio engine
+    pkgs.supercolliderPlugins.sc3-plugins # extra SuperCollider plugins (UGens)
+    # -- Session Management --
+    pkgs.carla # Audio plugin host
+    pkgs.raysession # Session manager
+
+    # -- Noise Processing --
+    pkgs.noisetorch # PulseAudio/PipeWire microphone noise gate
+    pkgs.rnnoise # WebRTC RNNoise denoiser CLI for mic chains
+  ];
+in
+{
+  config = lib.mkIf enabled {
+    environment.systemPackages = lib.mkAfter packages;
+  };
+}

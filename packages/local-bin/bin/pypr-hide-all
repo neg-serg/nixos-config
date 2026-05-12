@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Hides all known Pyprland scratchpads
+
+# List of scratchpads defined in scratchpads.nix
+SCRATCHPADS="im discord music torrment teardown mixer vpn"
+
+for scratch in $SCRATCHPADS; do
+    ~/.local/bin/pypr-client hide "$scratch" &
+done
+wait

@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Toggle screen recording with wf-recorder
+# Usage: screenrec [area|screen]
+
+set -euo pipefail
+
+RECORDINGS_DIR="${HOME}/vid/recordings"
+PIDFILE="/tmp/wf-recorder-${USER}.pid"
+MODE="${1:-screen}"
+
+mkdir -p "$RECORDINGS_DIR"
+
+is_recording() {
+    [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null
+}
+
+stop_recording() {
+    if is_recording; then
+        kill -INT "$(cat "$PIDFILE")" 2>/dev/null || true
+        rm -f "$PIDFILE"
+        notify-send -u low "Screen Recording" "Recording stopped"
+        exit 0
+    fi
+}
+
+start_recording() {
+    local filename="$RECORDINGS_DIR/rec-$(date '+%Y%m%d-%H.%M.%S').mp4"
+    local geometry=""
+
+    if [ "$MODE" = "area" ]; then
+        geometry=$(slurp -d 2>/dev/null) || exit 0
+        if [ -z "$geometry" ]; then
+            exit 0
+        fi
+    fi
+
+    notify-send -u low "Screen Recording" "Recording started..."
+
+    if [ -n "$geometry" ]; then
+        wf-recorder -g "$geometry" -c libx264rgb -r 60 -p crf=20 -p preset=superfast -f "$filename" &
+    else
+        wf-recorder -c libx264rgb -r 60 -p crf=20 -p preset=superfast -f "$filename" &
+    fi
+
+    echo $! > "$PIDFILE"
+}
+
+# Toggle: if recording, stop; otherwise start
+if is_recording; then
+    stop_recording
+else
+    start_recording
+fi

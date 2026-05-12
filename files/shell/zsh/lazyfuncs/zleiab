@@ -1,0 +1,16 @@
+local -A abk=(
+    'C'    '| wc -l'
+    'E'    '|& v -'
+    'G'    '|& rg -i '
+    'H'    '| head'
+    'Q'    '&>/dev/null'
+    'S'    '| sort -h '
+    'T'    '| tail'
+    'V'    '|& rg -iv '
+    'X'    '|& xargs '
+    'Z'    '|& rg -iz '
+)
+local MATCH
+matched_chars='[.-|_a-zA-Z0-9]#'
+LBUFFER=${LBUFFER%%(#m)[.-|_a-zA-Z0-9]#}
+LBUFFER+=${abk[$MATCH]:-$MATCH}

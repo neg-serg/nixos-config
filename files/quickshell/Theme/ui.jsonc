@@ -1,0 +1,42 @@
+{
+  "ui": {
+    "iconSizeLarge": 28,
+    "border": {
+      "width": 1,
+      "noneWidth": 0
+    },
+    "icon": {
+      "emphasisOpacity": 0.9
+    },
+    "anim": {
+      "quickMs": 120,
+      "rotateMs": 160,
+      "rippleMs": 320,
+      "easing": {
+        "quick": "OutQuad",
+        "rotate": "OutCubic",
+        "ripple": "InOutCubic",
+        "stdOut": "OutCubic",
+        "stdIn": "InCubic",
+        "inOut": "InOutQuad"
+      }
+    },
+    "spinner": {
+      "durationMs": 1000
+    },
+    "visibilityEpsilon": 0.01,
+    "margin": {
+      "none": 0
+    },
+    "spacing": {
+      "none": 0,
+      "xsmall": 4
+    },
+    "gap": {
+      "tiny": 10
+    },
+    "control": {
+      "height": 48
+    }
+  }
+}

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neg-pretty-printer"
+version = "0.1.0"
+description = "Custom pretty-printer utilities for scripts (colors, file info)"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "colored>=1.4.4",
+]
+
+[project.scripts]
+ppinfo = "neg_pretty_printer.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["neg_pretty_printer", "pretty_printer"]

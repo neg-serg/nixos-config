@@ -1,0 +1,11 @@
+module qs.Services
+singleton Audio 1.0 Audio.qml
+singleton Connectivity 1.0 Connectivity.qml
+singleton HyprlandWatcher 1.0 HyprlandWatcher.qml
+singleton MusicManager 1.0 MusicManager.qml
+MusicMeta 1.0 MusicMeta.qml
+MusicPlayers 1.0 MusicPlayers.qml
+MusicPosition 1.0 MusicPosition.qml
+singleton Timers 1.0 Timers.qml
+singleton TrayController 1.0 TrayController.qml
+singleton Weather 1.0 Weather.qml

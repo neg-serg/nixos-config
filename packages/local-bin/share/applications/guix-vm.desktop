@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Guix VM
+Comment=Launch Guix System VM (QEMU)
+Exec=guix-vm
+Icon=qemu
+Terminal=false
+Categories=System;Emulator;
+StartupNotify=true

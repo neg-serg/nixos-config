@@ -1,0 +1,35 @@
+{
+  "media": {
+    "hover": {
+      "openDelayMs": 320,
+      "stillThresholdMs": 180
+    },
+    "time": {
+      "alpha": {
+        "playing": 1.0,
+        "paused": 0.8
+      }
+    },
+    "mpd": {
+      "flags": {
+        "fallbackMs": 2500
+      }
+    },
+    "albumArt": {
+      "fallbackOpacity": 0.4
+    },
+    "accent": {
+      "samplerPx": 48,
+      "retryMs": 120,
+      "retryMax": 5,
+      "satMin": 10,
+      "lumMin": 20,
+      "lumMax": 235,
+      "relaxed": {
+        "satMin": 8,
+        "lumMin": 20,
+        "lumMax": 240
+      }
+    }
+  }
+}

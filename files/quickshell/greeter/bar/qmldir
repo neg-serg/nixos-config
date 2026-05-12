@@ -1,0 +1,12 @@
+module qs.bar
+ActivityButton 1.0 ActivityButton.qml
+Bar 1.0 Bar.qml
+BarButton 1.0 BarButton.qml
+BarContainment 1.0 BarContainment.qml
+BarWidgetInner 1.0 BarWidgetInner.qml
+ClickableIcon 1.0 ClickableIcon.qml
+ClockWidget 1.0 ClockWidget.qml
+FullwidthMouseArea 1.0 FullwidthMouseArea.qml
+Tooltip 1.0 Tooltip.qml
+TooltipItem 1.0 TooltipItem.qml
+Workspaces 1.0 Workspaces.qml

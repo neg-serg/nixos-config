@@ -1,0 +1,37 @@
+#!/usr/bin/env zsh
+# sx: view images in swayimg sorted by ctime (newest first)
+# Usage: sx [DIR...]
+
+IFS=$'\n\t'
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  echo "Usage: sx [DIR...]" >&2
+  exit 0
+fi
+
+# If no arguments provided, default to current directory
+if [[ "$#" -eq 0 ]]; then
+  set -- "."
+fi
+
+swimg_bin="${HOME}/.local/bin/swayimg"
+[[ -x "$swimg_bin" ]] || swimg_bin="swayimg"
+if ! command -v "$swimg_bin" >/dev/null 2>&1; then
+  print -u2 'sx: swayimg not found in PATH or ~/.local/bin'
+  exit 1
+fi
+
+filter_ext() {
+  if command -v ug >/dev/null 2>&1; then
+    ug -iE '\.(jpe?g|png|gif|svg|webp|tiff|heif|heic|avif|ico|bmp)$'
+  else
+    grep -Ei '\.(jpe?g|png|gif|svg|webp|tiff|heif|heic|avif|ico|bmp)$'
+  fi
+}
+
+"$swimg_bin" -C "${XDG_CONFIG_HOME:-$HOME/.config}/swayimg/config" -g -f -F <(
+  # Follow symlinks and sort by ctime (newest first)
+  find -L "$@" -type f -printf '%C@ %p\n' \
+  | sort -rn \
+  | cut -d ' ' -f 2- \
+  | filter_ext
+)

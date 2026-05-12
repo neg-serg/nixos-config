@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Aliae integration for bash
+if command -v aliae >/dev/null 2>&1; then
+  cfg="${XDG_CONFIG_HOME:-$HOME/.config}/aliae/config.yaml"
+  eval "$(aliae init bash --config "$cfg" --print)"
+fi
+
+# Carapace universal completions (only in interactive shells)
+if [[ $- == *i* ]] && command -v carapace >/dev/null 2>&1; then
+  eval "$(carapace _carapace bash)"
+fi
+
+# Oh-My-Posh prompt initialization (runtime eval to avoid cached script issues)
+if command -v oh-my-posh >/dev/null 2>&1; then
+  omp_config="${XDG_CONFIG_HOME:-$HOME/.config}/zsh/neg.omp.json"
+  if [ -r "$omp_config" ]; then
+    eval "$(oh-my-posh init bash --config "$omp_config" --print)"
+  fi
+fi

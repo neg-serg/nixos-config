@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+msg_file="$1"
+subject="$(sed -n '1{s/[[:space:]]*$//;p;q}' "$msg_file")"
+
+# Allow Git-generated messages without enforcing our style
+case "$subject" in
+  Merge\ *|Revert\ *|WIP\:*)
+    exit 0;
+  ;;
+esac
+
+# 1) Enforce ASCII-only commit subject (helps keep messages in English)
+if LC_ALL=C grep -P '[^\x00-\x7F]' <<<"$subject" >/dev/null 2>&1; then
+  echo "Commit subject contains non-ASCII characters (use English / ASCII only)" >&2
+  echo "Subject: $subject" >&2
+  exit 1
+fi
+
+# 2) Enforce bracketed scope prefix: [scope] Subject
+if ! [[ "$subject" =~ ^\[[^][]+\]\  ]]; then
+  echo "Commit subject must start with bracketed scope, e.g.: [module] short description" >&2
+  echo "Subject: $subject" >&2
+  exit 1
+fi
+
+exit 0
+
