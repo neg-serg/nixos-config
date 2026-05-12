@@ -1,4 +1,10 @@
-{ config, inputs, lib, pkgs, ... }:
+{
+  config,
+  inputs,
+  lib,
+  pkgs,
+  ...
+}:
 let
   guiEnabled = config.features.gui.enable or true;
   mainUser = config.users.main.name or "neg";
@@ -9,14 +15,7 @@ let
       "/home/${mainUser}";
   greeterWallpaperSrc = "${mainHome}/pic/wl/waterfall_jungle_dark_150290_3840x2400.jpg";
   greeterWallpaperDst = "/var/lib/greetd/wallpaper.jpg";
-in
-{
-  config = lib.mkIf guiEnabled {
-    services.greetd = {
-      enable = true;
-      restart = false;
-      settings.default_session = {
-        command = "${lib.getExe pkgs.hyprland} -c ${pkgs.writeText "greetd-hyprland-config" ''}
+  hyprlandConfig = pkgs.writeText "greetd-hyprland-config" ''
     monitorv2 {
       output = DP-2
       mode = 3840x2160@240
@@ -27,7 +26,9 @@ in
       output = DP-1
       disabled = true
     }
-    exec-once = ${lib.getExe pkgs.bash} -c "QML2_IMPORT_PATH=/etc/greetd/quickshell ${
+    exec-once = ${
+      lib.getExe pkgs.bash
+    } -c "QML2_IMPORT_PATH=/etc/greetd/quickshell ${
       lib.getExe inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
     } -p /etc/greetd/quickshell/greeter/greeter.qml > /tmp/qs-greeter.log 2>&1 && pkill Hyprland"
     input {
@@ -51,7 +52,15 @@ in
       key_press_enables_dpms = true
       mouse_move_enables_dpms = true
     }
-  ''}";
+  '';
+in
+{
+  config = lib.mkIf guiEnabled {
+    services.greetd = {
+      enable = true;
+      restart = false;
+      settings.default_session = {
+        command = "${lib.getExe pkgs.hyprland} -c ${hyprlandConfig}";
         user = "greeter";
       };
     };
