@@ -1,0 +1,502 @@
+{
+  "ui.anim.quickMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 2000
+  },
+  "ui.anim.rotateMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 5000
+  },
+  "ui.anim.rippleMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 10000
+  },
+  "ui.spinner.durationMs": {
+    "type": "integer",
+    "min": 100,
+    "max": 600000
+  },
+  "panel.height": {
+    "type": "integer",
+    "min": 16,
+    "max": 64
+  },
+  "panel.scale": {
+    "type": "number",
+    "min": 0.25,
+    "max": 2.5
+  },
+  "panel.hotzone.width": {
+    "type": "integer",
+    "min": 4,
+    "max": 64
+  },
+  "panel.hotzone.height": {
+    "type": "integer",
+    "min": 2,
+    "max": 64
+  },
+  "panel.hotzone.rightShift": {
+    "type": "number",
+    "min": 0.5,
+    "max": 3.0
+  },
+  "panel.netCluster.spacing": {
+    "type": "integer",
+    "min": 0,
+    "max": 64
+  },
+  "panel.animations.stdMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 5000
+  },
+  "panel.animations.fastMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 5000
+  },
+  "panel.tray.longHoldMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 10000
+  },
+  "panel.tray.shortHoldMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 10000
+  },
+  "panel.tray.guardMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 2000
+  },
+  "panel.tray.overlayDismissDelayMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 600000
+  },
+  "weather.headerScale": {
+    "type": "number",
+    "min": 0.25,
+    "max": 1.5
+  },
+  "weather.card.opacity": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "weather.centerOffset": {
+    "type": "integer",
+    "min": -100,
+    "max": 100
+  },
+  "volume.icon.offThreshold": {
+    "type": "integer",
+    "min": 0,
+    "max": 100
+  },
+  "volume.icon.downThreshold": {
+    "type": "integer",
+    "min": 0,
+    "max": 100
+  },
+  "volume.icon.upThreshold": {
+    "type": "integer",
+    "min": 0,
+    "max": 100
+  },
+  "volume.pill.autoHidePauseMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 600000
+  },
+  "volume.pill.showDelayMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 600000
+  },
+  "timers.timeTickMs": {
+    "type": "integer",
+    "min": 100,
+    "max": 60000
+  },
+  "timers.wsRefreshDebounceMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 10000
+  },
+  "timers.musicPositionPollMs": {
+    "type": "integer",
+    "min": 100,
+    "max": 600000
+  },
+  "timers.musicPlayersPollMs": {
+    "type": "integer",
+    "min": 100,
+    "max": 600000
+  },
+  "timers.musicMetaRecalcDebounceMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 10000
+  },
+  "network.vpnPollMs": {
+    "type": "integer",
+    "min": 500,
+    "max": 600000
+  },
+  "network.restartBackoffMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 600000
+  },
+  "network.linkPollMs": {
+    "type": "integer",
+    "min": 500,
+    "max": 600000
+  },
+  "media.hover.openDelayMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 5000
+  },
+  "media.hover.stillThresholdMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 10000
+  },
+  "spectrum.peakDecayIntervalMs": {
+    "type": "integer",
+    "min": 10,
+    "max": 1000
+  },
+  "spectrum.barAnimMs": {
+    "type": "integer",
+    "min": 0,
+    "max": 5000
+  },
+  "spectrum.peakThickness": {
+    "type": "integer",
+    "min": 1,
+    "max": 12
+  },
+  "spectrum.fillOpacity": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "spectrum.peakOpacity": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "media.accent.samplerPx": {
+    "type": "integer",
+    "min": 8,
+    "max": 256
+  },
+  "media.accent.retryMs": {
+    "type": "integer",
+    "min": 10,
+    "max": 2000
+  },
+  "media.accent.retryMax": {
+    "type": "integer",
+    "min": 0,
+    "max": 20
+  },
+  "media.accent.satMin": {
+    "type": "integer",
+    "min": 0,
+    "max": 255
+  },
+  "media.accent.lumMin": {
+    "type": "integer",
+    "min": 0,
+    "max": 255
+  },
+  "media.accent.lumMax": {
+    "type": "integer",
+    "min": 0,
+    "max": 255
+  },
+  "media.accent.relaxed.satMin": {
+    "type": "integer",
+    "min": 0,
+    "max": 255
+  },
+  "media.accent.relaxed.lumMin": {
+    "type": "integer",
+    "min": 0,
+    "max": 255
+  },
+  "media.accent.relaxed.lumMax": {
+    "type": "integer",
+    "min": 0,
+    "max": 255
+  },
+  "sidePanel.button.activeVisibleMin": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "sidePanel.innerRadius": {
+    "type": "integer",
+    "min": 0,
+    "max": 32
+  },
+  "sidePanel.buttonHoverRadiusFactor": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "sidePanel.selector.minWidth": {
+    "type": "integer",
+    "min": 40,
+    "max": 600
+  },
+  "sidePanel.weather.leftColumnRatio": {
+    "type": "number",
+    "min": 0.1,
+    "max": 0.8
+  },
+  "panel.menu.width": {
+    "type": "integer",
+    "min": 100,
+    "max": 600
+  },
+  "panel.menu.padding": {
+    "type": "integer",
+    "min": 0,
+    "max": 32
+  },
+  "panel.menu.itemSpacing": {
+    "type": "integer",
+    "min": 0,
+    "max": 16
+  },
+  "panel.menu.itemHeight": {
+    "type": "integer",
+    "min": 16,
+    "max": 64
+  },
+  "panel.menu.dividerMargin": {
+    "type": "integer",
+    "min": 0,
+    "max": 32
+  },
+  "panel.menu.radius": {
+    "type": "integer",
+    "min": 0,
+    "max": 32
+  },
+  "panel.menu.itemRadius": {
+    "type": "integer",
+    "min": 0,
+    "max": 32
+  },
+  "panel.menu.heightExtra": {
+    "type": "integer",
+    "min": 0,
+    "max": 64
+  },
+  "panel.menu.anchorYOffset": {
+    "type": "integer",
+    "min": -20,
+    "max": 100
+  },
+  "panel.menu.itemFontScale": {
+    "type": "number",
+    "min": 0.5,
+    "max": 1.5
+  },
+  "ui.margin.large": {
+    "type": "integer",
+    "min": 0,
+    "max": 128
+  },
+  "ui.margin.medium": {
+    "type": "integer",
+    "min": 0,
+    "max": 64
+  },
+  "ui.padding.medium": {
+    "type": "integer",
+    "min": 0,
+    "max": 64
+  },
+  "ui.spacing.large": {
+    "type": "integer",
+    "min": 0,
+    "max": 64
+  },
+  "ui.spacing.small": {
+    "type": "integer",
+    "min": 0,
+    "max": 32
+  },
+  "ui.spacing.xsmall": {
+    "type": "integer",
+    "min": 0,
+    "max": 16
+  },
+  "ui.border.width": {
+    "type": "integer",
+    "min": 0,
+    "max": 8
+  },
+  "ui.visibilityEpsilon": {
+    "type": "number",
+    "min": 0,
+    "max": 0.5
+  },
+  "ui.ripple.opacity": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "ui.icon.emphasisOpacity": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "network.icon.scale": {
+    "type": "number",
+    "min": 0.2,
+    "max": 3.0
+  },
+  "network.icon.vAdjust": {
+    "type": "integer",
+    "min": -100,
+    "max": 100
+  },
+  "ws.label.padding": {
+    "type": "integer",
+    "min": 0,
+    "max": 64
+  },
+  "ws.label.leftPadding.normal": {
+    "type": "integer",
+    "min": -32,
+    "max": 64
+  },
+  "ws.label.leftPadding.terminal": {
+    "type": "integer",
+    "min": -64,
+    "max": 64
+  },
+  "ws.icon.innerPadding": {
+    "type": "integer",
+    "min": 0,
+    "max": 32
+  },
+  "vpn.icon.scale": {
+    "type": "number",
+    "min": 0.2,
+    "max": 3.0
+  },
+  "vpn.icon.vAdjust": {
+    "type": "integer",
+    "min": -100,
+    "max": 100
+  },
+  "vpn.icon.spacing": {
+    "type": "integer",
+    "min": 0,
+    "max": 64
+  },
+  "vpn.text.padding": {
+    "type": "integer",
+    "min": 0,
+    "max": 64
+  },
+  "vpn.accent.saturateBoost": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "vpn.accent.lightenTowardWhite": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "vpn.desaturateAmount": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "calendar.size.width": {
+    "type": "integer",
+    "min": 200,
+    "max": 800
+  },
+  "calendar.size.height": {
+    "type": "integer",
+    "min": 200,
+    "max": 800
+  },
+  "calendar.popupMargin": {
+    "type": "integer",
+    "min": 0,
+    "max": 32
+  },
+  "calendar.cellSize": {
+    "type": "integer",
+    "min": 16,
+    "max": 64
+  },
+  "calendar.font.titlePx": {
+    "type": "integer",
+    "min": 8,
+    "max": 64
+  },
+  "calendar.font.dowPx": {
+    "type": "integer",
+    "min": 6,
+    "max": 48
+  },
+  "calendar.font.dayPx": {
+    "type": "integer",
+    "min": 8,
+    "max": 64
+  },
+  "calendar.cell.radiusFactor": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "calendar.holidayDot.radiusFactor": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "calendar.opacity.title": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "calendar.opacity.dow": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "calendar.opacity.otherMonthDay": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "calendar.accentDarken": {
+    "type": "number",
+    "min": 0,
+    "max": 1
+  },
+  "ws.icon.svgScale": {
+    "type": "number",
+    "min": 0.2,
+    "max": 2
+  }
+}

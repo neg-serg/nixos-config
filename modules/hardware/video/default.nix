@@ -1,0 +1,8 @@
+{ ... }:
+{
+  imports = [
+    ./amd
+    ./nvidia
+    ./pkgs
+  ];
+}

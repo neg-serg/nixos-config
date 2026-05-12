@@ -1,0 +1,16 @@
+result
+domain
+domains
+nixos.qcow2
+result-man
+
+.tmp_py
+.tmp_py_dedented
+.tmp_build.log
+docs/options.md
+docs/options-all.md
+docs/howto/options*.md
+.direnv/
+.pre-commit-config.yaml
+__pycache__/
+benchmarks/

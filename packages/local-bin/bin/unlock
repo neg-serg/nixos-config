@@ -1,0 +1,37 @@
+#!/bin/sh
+# unlock: unlock SSH keys (optionally Yubikey) via expect using pass(1) secrets
+# Usage: unlock
+
+cleanup() { unset pp0 pp1 pp2 || true; }
+trap cleanup EXIT HUP INT TERM
+
+# Ensure we have an ssh-agent
+if [ -z "$SSH_AUTH_SOCK" ]; then
+    eval "$(ssh-agent -s)"
+fi
+
+# Retrieve secrets
+pp0="$(pass show ssh-key)"
+# Quietly try to get the work key, ignore if missing
+if pass show wrk/ssh-key >/dev/null 2>&1; then
+    pp2="$(pass show wrk/ssh-key)"
+fi
+
+# YubiKey handling
+if lsusb | grep -q "0407 Yubico"; then
+    pp1="$(pass show pin)"
+    expect << EOF
+        spawn "$XDG_CONFIG_HOME/zsh-nix/ylock"
+        expect "Enter passphrase"
+        send "$pp1\r"
+        expect eof
+EOF
+fi
+
+# Main key handling
+expect << EOF
+    spawn ssh-add $HOME/.ssh/id_neg
+    expect "Enter passphrase"
+    send "$pp0\r"
+    expect eof
+EOF

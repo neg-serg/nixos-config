@@ -1,0 +1,13 @@
+{
+  "tooltip": {
+    "delayMs": 1500,
+    "minSize": 20,
+    "margin": 12,
+    "padding": 8,
+    "borderWidth": 1,
+    "radius": 2,
+    "fontPx": 14,
+    "opacity": 0.98,
+    "smallScaleRatio": 0.71
+  }
+}

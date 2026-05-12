@@ -1,0 +1,3 @@
+module qs.Helpers
+IdleInhibitor 1.0 IdleInhibitor.qml
+IPCHandlers 1.0 IPCHandlers.qml

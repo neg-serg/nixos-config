@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# emptydir: list empty directories (recursively).
+# Usage:
+#   emptydir           # from current directory
+#   emptydir /path/dir # from given directory
+
+start="${1:-.}"
+
+if ! cd "$start" 2>/dev/null; then
+  printf '%s\n' "$start"
+  exit 0
+fi
+
+find . -type d -empty -print 2>/dev/null
+

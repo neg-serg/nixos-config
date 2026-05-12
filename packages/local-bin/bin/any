@@ -1,0 +1,31 @@
+#!/bin/sh
+# any: show processes matching a pattern (pgrep -> ps)
+# Usage: any [PGREP_OPTS...] PATTERN
+# Example: any firefox
+#          any -u neg -x sshd
+
+
+IFS=' 	
+'
+
+usage() {
+  printf "Usage: any [PGREP_OPTS...] PATTERN\n" >&2
+  exit 1
+}
+
+need() { command -v "$1" >/dev/null 2>&1 || { printf 'any: missing %s\n' "$1" >&2; :; }; }
+
+case "${1:-}" in
+  -h|--help|help|\?) usage ;;
+esac
+
+need pgrep
+need ps
+
+# Default to full-command search unless user overrides with their own opts
+pids="$(pgrep -f -- "$@" 2>/dev/null || true)"
+[ -n "$pids" ] || { printf 'any: no matches\n' >&2; exit 1; }
+
+# Join PIDs by comma for ps -p and show wide, user-centric view
+list="$(printf '%s' "$pids" | paste -sd, -)"
+exec ps uwww -p "$list"

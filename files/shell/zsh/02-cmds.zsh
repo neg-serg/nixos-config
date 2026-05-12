@@ -1,0 +1,71 @@
+
+_exists rg && {
+    local rg_options=(
+        --max-columns=0
+        --max-columns-preview
+        --glob="'!*.git*'"
+        --glob="'!*.obsidian'"
+        --colors=match:fg:25
+        --colors=match:style:underline
+        --colors=line:fg:cyan
+        --colors=line:style:bold
+        --colors=path:fg:249
+        --colors=path:style:bold
+        --smart-case
+        --hidden
+    )
+    alias -g RG="rg $rg_options"
+    alias -g zrg="rg $rg_options -z"
+}
+
+_exists sudo && {
+    local sudo_list=(chmod chown modprobe umount)
+    local logind_sudo_list=(reboot halt poweroff)
+    for c in ${sudo_list[@]}; {_exists "$c" && alias "$c=sudo $c"}
+}
+_exists journalctl && journalctl() {command journalctl "${@:--b}";}
+_exists mpc && {
+    cdm(){
+        dirname="$XDG_MUSIC_DIR/$(dirname "$(mpc -f '%file%'|head -1)")"
+        cd "$dirname"
+    }
+}
+_exists curl && {
+    geoip(){ curl ipinfo.io/$1; }
+    sprunge(){ curl -F "sprunge=<-" http://sprunge.us <"$1" ;}
+}
+if [[ -e /etc/NIXOS ]]; then
+    # thx to @oni: https://discourse.nixos.org/t/nvd-simple-nix-nixos-version-diff-tool/12397/3
+    hash -d nix-now="/run/current-system"
+    hash -d nix-boot="/nix/var/nix/profiles/system"
+    _exists nixos-rebuild && {
+        unalias nixos-rebuild 2>/dev/null
+    }
+    foobar(){nix run github:emmanuelrosa/erosanix#foobar2000}
+    flake-checker(){nix run github:DeterminateSystems/flake-checker}
+
+    qi(){ NIXPKGS_ALLOW_UNFREE=1 nix shell --impure 'nixpkgs#'$1 }
+    q(){ nix shell 'nixpkgs#'$1 }
+    flakify() {
+        # thx to Mic92:
+        if [ ! -e flake.nix ]; then
+            nix flake new -t github:Mic92/flake-templates#nix-develop .
+        elif [ ! -e .envrc ]; then
+            echo "use flake" > .envrc
+        fi
+        direnv allow
+        ${EDITOR:-vim} flake.nix
+    }
+fi
+
+_exists docker && {
+    carbonyl(){docker run --rm -ti fathyb/carbonyl https://youtube.com}
+    ipmi_one(){ docker run -p 127.0.0.1:5900:5900 -p 127.0.0.1:8080:8080 gari123/ipmi-kvm-docker; echo xdg-open http://127.0.0.1:8080|wl-copy }
+    ipmi_two(){ docker run -p 8080:8080 solarkennedy/ipmi-kvm-docker; echo xdg-open localhost:8080|wl-copy }
+}
+
+_exists broot && autoload -Uz br
+
+autoload zc
+
+# vim: ft=zsh:nowrap

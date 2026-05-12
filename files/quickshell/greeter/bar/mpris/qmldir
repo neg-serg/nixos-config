@@ -1,0 +1,5 @@
+module qs.bar.mpris
+BackgroundArt 1.0 BackgroundArt.qml
+MediaSlider 1.0 MediaSlider.qml
+MprisController 1.0 MprisController.qml
+Players 1.0 Players.qml

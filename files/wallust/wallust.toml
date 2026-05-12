@@ -1,0 +1,15 @@
+[backend]
+backend = "kmeans"
+color_space = "lab"
+palette = "dark16"
+threshold = 20
+
+[templates]
+hyprland.template = "hyprland.conf"
+hyprland.target = "~/.cache/wallust/hyprland.conf"
+
+catppuccin.template = "kitty.conf"
+catppuccin.target = "~/.cache/wallust/kitty.conf"
+
+dunst.template = "dunstrc"
+dunst.target = "~/.cache/wallust/dunstrc"

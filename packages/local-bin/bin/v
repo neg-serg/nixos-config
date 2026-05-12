@@ -1,0 +1,25 @@
+#!/bin/sh
+# v: open Neovim with system profile sourced
+# Usage: v [ARGS...]
+export NVIM_APPNAME=
+. /etc/profile
+SOCKET="/tmp/nvim.sock"
+
+# 1. Check if socket exists AND is responsive (has a listener)
+# We use nc -zU for a reliable, non-blocking check.
+if [ -S "$SOCKET" ] && nc -zU "$SOCKET" >/dev/null 2>&1; then
+  # 2. Open file(s) in existing instance
+  if [ "$#" -gt 0 ]; then
+      nvr --servername "$SOCKET" --remote-silent "$@"
+  fi
+
+  # 3. Raise Window (via hyprctl)
+  hyprctl dispatch focuswindow "class:nwim" >/dev/null
+  echo "↗  nvim (attached)"
+else
+  # 4. Socket might be stale or missing, remove it if it exists
+  rm -f "$SOCKET"
+  # Start new instance acting as server
+  exec nvim --listen "$SOCKET" "$@"
+fi
+# vim:filetype=sh

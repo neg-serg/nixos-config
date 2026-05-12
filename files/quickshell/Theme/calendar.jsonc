@@ -1,0 +1,41 @@
+{
+  "calendar": {
+    "rowSpacing": 2,
+    "cellSpacing": 2,
+    "sideMargin": 2,
+    "popupMargin": 2,
+    "borderWidth": 1,
+    "cellSize": 28,
+    "holidayDotSize": 3,
+    "font": {
+      "titlePx": 18,
+      "dowPx": 15,
+      "dayPx": 24
+    },
+    "opacity": {
+      "title": 0.7,
+      "dow": 0.9,
+      "otherMonthDay": 0.3
+    },
+    "dow": {
+      "spacing": 0,
+      "sideMargin": 0,
+      "italic": true,
+      "underline": true
+    },
+    "cell": {
+      "radiusFactor": 0.33
+    },
+    "holidayDot": {
+      "radiusFactor": 0.5
+    },
+    "grid": {
+      "spacing": 0
+    },
+    "size": {
+      "width": 280,
+      "height": 320
+    },
+    "accentDarken": 0.8
+  }
+}

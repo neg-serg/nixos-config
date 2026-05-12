@@ -1,0 +1,85 @@
+# Theme: neg
+# By: neg-serg (Balanced Cold 256-color)
+# Description: Balanced saturation. Distinct colors without being neon or pastel.
+
+# Main background, empty for terminal default, need to be empty!
+theme[main_bg]="#080808"
+
+# Main text color (White/Grey)
+theme[main_fg]="#dadada"
+
+# Title color for boxes (White)
+theme[title]="#ffffff"
+
+# Highlight color for keyboard shortcuts (Cyan)
+theme[hi_fg]="#00d7ff"
+
+# Background color of selected item in processes box (Deep Blue)
+theme[selected_bg]="#005f87"
+
+# Foreground color of selected item in processes box (White)
+theme[selected_fg]="#ffffff"
+
+# Color of inactive/disabled text (Grey)
+theme[inactive_fg]="#585858"
+
+# Color of text appearing on top of graphs, i.e uptime and current network graph scaling
+theme[graph_text]="#dadada"
+
+# Misc colors for processes box including mini cpu graphs, details memory graph and details status text
+theme[proc_misc]="#af5fff"
+
+# Cpu box outline color (Medium Purple)
+theme[cpu_box]="#875fdf"
+
+# Memory box outline color (Emerald Green)
+theme[mem_box]="#00af87"
+
+# Net box outline color (Royal Blue)
+theme[net_box]="#0087ff"
+
+# Processes box outline color (Deep Pink)
+theme[proc_box]="#d7005f"
+
+# Box divider line and small boxes line color
+theme[div_line]="#303030"
+
+# Temperature graph colors (Cyan -> Deep Blue)
+theme[temp_start]="#00ffff"
+theme[temp_mid]="#0087ff"
+theme[temp_end]="#0000ff"
+
+# CPU graph colors (Light Purple -> Deep Blue)
+theme[cpu_start]="#d75fff"
+theme[cpu_mid]="#875fdf"
+theme[cpu_end]="#0000af"
+
+# Mem/Disk free meter (Teal -> Green)
+theme[free_start]="#00af87"
+theme[free_mid]="#00d787"
+theme[free_end]="#5fd787"
+
+# Mem/Disk cached meter (Blue -> Cyan)
+theme[cached_start]="#005f87"
+theme[cached_mid]="#0087af"
+theme[cached_end]="#00d7ff"
+
+# Mem/Disk available meter (Cyan)
+theme[available_start]="#00afaf"
+theme[available_mid]="#00d7d7"
+theme[available_end]="#00ffff"
+
+# Mem/Disk used meter (Deep Pink -> Red)
+theme[used_start]="#af005f"
+theme[used_mid]="#d7005f"
+theme[used_end]="#ff0000"
+
+# Download graph colors (Light Blue -> Deep Cyan)
+theme[download_start]="#5fd7ff"
+theme[download_mid]="#00afff"
+theme[download_end]="#000087"
+
+# Upload graph colors (Light Purple -> Deep Pink)
+theme[upload_start]="#af5fff"
+theme[upload_mid]="#af00ff"
+theme[upload_end]="#87005f"

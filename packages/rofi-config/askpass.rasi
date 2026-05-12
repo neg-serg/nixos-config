@@ -1,0 +1,41 @@
+@import "colors.rasi"
+
+* {
+    background:             @surface;
+    foreground:             @on-surface;
+    selected:               @primary;
+    background-color:       transparent;
+    text-color:             @foreground;
+}
+
+window {
+    width:                  350px;
+    padding:                16px;
+    border:                 0px;
+    border-radius:          8px;
+    background-color:       #131318CC; /* Semi-transparent Surface */
+    location:               south;
+    x-offset:               0;
+    y-offset:               -48px;
+}
+
+mainbox {
+    children:               [ "inputbar" ];
+}
+
+inputbar {
+    enabled:                true;
+    spacing:                8px;
+    children:               [ "entry" ];
+}
+
+entry {
+    enabled:                true;
+    background-color:       transparent;
+    text-color:             @primary;
+    font:                   "Iosevka 18";
+    cursor:                 text;
+    placeholder:            "Password...";
+    placeholder-color:      @outline;
+    horizontal-align:       0.5;
+}
