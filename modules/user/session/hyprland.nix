@@ -17,7 +17,7 @@ let
     text =
       let
         tpl = builtins.readFile (
-          inputs.self
+          inputs.self # flake self-reference
           + "/modules/user/nix-maid/scripts/hypr/hypr-win-list.py" # hypr-win-list script
         );
       in
