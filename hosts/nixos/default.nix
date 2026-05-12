@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ pkgs, lib, ... }: {
   imports = [
     ./hardware.nix
     ../../modules/system
@@ -24,16 +24,19 @@
     ];
   };
 
-  # 16GB swap on /swapfile
-  swapDevices = [{
-    device = "/swapfile";
-    size = 16384; # MB
-  }];
+  # 16GB swap
+  swapDevices = [{ device = "/swapfile"; size = 16384; }];
 
+  # Limit build parallelism to avoid OOM (V8/nodejs needs ~2GB per compiler)
   nix.settings = {
-    max-jobs = 28;
-    cores = 14;
+    max-jobs = 4;
+    cores = 4;
   };
+
+  # Disable doc generation (pulls nodejs/furo)
+  documentation.doc.enable = lib.mkForce false;
+  documentation.info.enable = lib.mkForce false;
+  documentation.man.enable = lib.mkForce false;
 
   environment.systemPackages = [ pkgs.git ];
   users.users.root.hashedPassword = "!";
