@@ -5,8 +5,6 @@ let
     hyprlandPlugins = prev.hyprlandPlugins // {};
   });
 
-  # Base pkgs used for dev shells and checks — no hyprland overlay
-  # Hyprland overlay is applied conditionally via modules/nix/hyprland.nix
   mkPkgs = system:
     import nixpkgs {
       inherit system;
@@ -14,7 +12,12 @@ let
         (hyprlandOverlay system)
         ((import ../packages/overlay.nix) inputs)
       ];
-      config = import ./pkgs-config.nix;
+      config = {
+        allowAliases = false;
+        allowUnfree = true;
+        rocmSupport = true;
+        permittedInsecurePackages = [ "minio-2025-10-15T17-29-55Z" ];
+      };
     };
 
   mkCustomPkgs = pkgs: import ../packages/flake/custom-packages.nix { inherit pkgs; };
