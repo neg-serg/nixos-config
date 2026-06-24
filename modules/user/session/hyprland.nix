@@ -35,7 +35,6 @@ in
       inputs.raise.defaultPackage.${pkgs.stdenv.hostPlatform.system} # run-or-raise for Hyprland
       pkgs.hyprcursor # modern cursor theme format for Hyprland
       pkgs.hypridle # idle daemon for Hyprland
-      pkgs.hyprlandPlugins.hy3 # tiling plugin for Hyprland
       pkgs.hyprpicker # color picker for Wayland/Hyprland
       pkgs.hyprpolkitagent # Wayland-friendly polkit agent
       pkgs.hyprprop # Hyprland property helper

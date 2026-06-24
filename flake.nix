@@ -3,10 +3,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    hy3 = {
-      url = "git+https://github.com/outfoxxed/hy3?ref=refs/tags/hl0.54.0";
-      inputs.hyprland.follows = "hyprland";
-    };
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
     hyprland = {
       url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.54.0";
