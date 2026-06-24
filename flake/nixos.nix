@@ -9,7 +9,7 @@
 let
   inherit (nixpkgs) lib;
   hostsDir = ../hosts;
-  hostNamesEnabled = [ "nixos" ]; # telfir temporarily disabled: Hyprland flake v0.52.1 incompatible with nixpkgs-unstable
+  hostNamesEnabled = [ "nixos" "telfir" ];
 
   linuxSystem = "x86_64-linux";
   locale = "en_US.UTF-8";

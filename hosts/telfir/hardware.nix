@@ -76,6 +76,16 @@
       "mem_sleep_default=deep"
       # Avoid probing dozens of legacy UARTs; speeds up device coldplug
       "8250.nr_uarts=0"
+      # NVMe + PCIe performance (match CachyOS)
+      "nvme_core.default_ps_max_latency_us=0"
+      "nvme_core.io_timeout=4294967295"
+      "pcie_aspm=performance"
+      "usbcore.autosuspend=-1"
+      # AMD GPU overdrive
+      "amdgpu.ppfeaturemask=0xffffffff"
+      # Fix 60s USB port hang on ASUS AM5
+      "udev.children_max=32"
+      "udev.event_timeout=10"
     ];
 
     # Load ASUS EC sensor driver for detailed telemetry + OpenRGB access
