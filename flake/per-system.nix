@@ -665,7 +665,7 @@ in
           inputs=(
             nixpkgs hyprland hyprland-protocols xdg-desktop-portal-hyprland
             quickshell lanzaboote nyx nur sops-nix pre-commit-hooks
-            nix-maid pyprland raise tailray winapps wrapper-manager
+            nix-maid raise tailray winapps wrapper-manager
           )
 
           # Inputs that are .follows directives (not direct usage expected)
