@@ -4,10 +4,9 @@
   ...
 }:
 let
-  hy3PluginPath = "${pkgs.hyprlandPlugins.hy3}/lib/libhy3.so";
 in
 {
-  hyprlandConf = hy3Enabled: ''
+  hyprlandConf = ''
     env = GDK_SCALE,2
     env = QT_AUTO_SCREEN_SCALE_FACTOR,1
     env = QT_ENABLE_HIGHDPI_SCALING,1
@@ -32,28 +31,13 @@ in
 
     # User overrides live in ~/.config/hypr/local.d/*.conf (not managed by Nix)
     source = ~/.config/hypr/local.d/*.conf
-
-    # Plugins
-    ${lib.optionalString hy3Enabled "source = ~/.config/hypr/plugins.conf"}
   '';
 
-  pluginsConf =
-    hy3Enabled:
-    lib.optionalString hy3Enabled ''
-      # Hyprland plugins
-      plugin = ${hy3PluginPath}
-    '';
-
-  permissionsConf =
-    hy3Enabled:
-    ''
-      ecosystem {
+  permissionsConf = ''
+    ecosystem {
         enforce_permissions = 1
       }
       permission = ${lib.getExe pkgs.grim}, screencopy, allow # Grab images from a Wayland compositor
       permission = ${lib.getExe pkgs.hyprlock}, screencopy, allow # Hyprland's GPU-accelerated screen locking utility
     ''
-    + lib.optionalString hy3Enabled ''
-      permission = ${hy3PluginPath}, plugin, allow
-    '';
 }

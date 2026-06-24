@@ -2,9 +2,7 @@
 let
   hyprlandOverlay = system: (_: prev: {
     inherit (inputs.xdg-desktop-portal-hyprland.packages.${system}) xdg-desktop-portal-hyprland;
-    hyprlandPlugins = prev.hyprlandPlugins // {
-      hy3 = inputs.hy3.packages.${system}.hy3;
-    };
+    hyprlandPlugins = prev.hyprlandPlugins // {};
   });
 
   # Base pkgs used for dev shells and checks — no hyprland overlay

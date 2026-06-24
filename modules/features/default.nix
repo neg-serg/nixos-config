@@ -10,7 +10,7 @@ let
     devSpeed.enable = false;
     gui = {
       enable = true;
-      hy3.enable = true;
+      hy3.enable = false;
       qt.enable = true;
       quickshell.enable = true;
     };

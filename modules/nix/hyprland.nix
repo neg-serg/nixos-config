@@ -7,9 +7,7 @@
       inputs.hyprland.overlays.default # Hyprland wayland compositor
       inputs.xdg-desktop-portal-hyprland.overlays.default # XDG portal backend for Hyprland
       (_: prev: let inherit (prev.stdenv.hostPlatform) system; in {
-        hyprlandPlugins = prev.hyprlandPlugins // {
-          hy3 = inputs.hy3.packages.${system}.hy3; # tiling plugin for Hyprland
-        };
+        hyprlandPlugins = prev.hyprlandPlugins // {};
       })
     ];
   };
