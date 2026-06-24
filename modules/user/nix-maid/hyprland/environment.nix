@@ -3,10 +3,8 @@
   pkgs,
   ...
 }:
-let
-in
 {
-  hyprlandConf = ''
+  hyprlandConf = _hy3Enabled: ''
     env = GDK_SCALE,2
     env = QT_AUTO_SCREEN_SCALE_FACTOR,1
     env = QT_ENABLE_HIGHDPI_SCALING,1
@@ -29,15 +27,14 @@ in
     source = ~/.config/hypr/init.conf
     source = ~/.config/hypr/permissions.conf
 
-    # User overrides live in ~/.config/hypr/local.d/*.conf (not managed by Nix)
     source = ~/.config/hypr/local.d/*.conf
   '';
 
-  permissionsConf = ''
+  permissionsConf = _hy3Enabled: ''
     ecosystem {
         enforce_permissions = 1
-      }
-      permission = ${lib.getExe pkgs.grim}, screencopy, allow # Grab images from a Wayland compositor
-      permission = ${lib.getExe pkgs.hyprlock}, screencopy, allow # Hyprland's GPU-accelerated screen locking utility
-    ''
+    }
+    permission = ${lib.getExe pkgs.grim}, screencopy, allow
+    permission = ${lib.getExe pkgs.hyprlock}, screencopy, allow
+  '';
 }

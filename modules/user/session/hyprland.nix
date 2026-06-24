@@ -39,7 +39,6 @@ in
       pkgs.hyprpolkitagent # Wayland-friendly polkit agent
       pkgs.hyprprop # Hyprland property helper
       pkgs.hyprutils # assorted Hyprland utilities
-      pkgs.pyprland # Hyprland plugin/runtime helper
     ];
   };
 }
