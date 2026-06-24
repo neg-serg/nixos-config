@@ -26,19 +26,6 @@ in
           let
             mkDeps =
               pkgsSet: with pkgsSet; [
-                # Core X11 libs required by many titles
-                xorg.libX11 # X11 protocol client library
-                xorg.libXext # X11 extension library
-                xorg.libXrender # X11 Render extension library
-                xorg.libXi # X11 Input extension library
-                xorg.libXinerama # X11 Xinerama extension library
-                xorg.libXcursor # X11 Cursor management library
-                xorg.libXScrnSaver # X11 Screen Saver extension library
-                xorg.libSM # X11 Session Management library
-                xorg.libICE # X11 Inter-Client Exchange library
-                xorg.libxcb # X11 C Binding library
-                xorg.libXrandr # X11 Resize, Rotate and Reflection extension library
-
                 # Common multimedia/system libs
                 libxkbcommon # keyboard layout management
                 freetype # font rendering engine

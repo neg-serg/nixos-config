@@ -34,13 +34,6 @@ in
           pkgs'.mesa
           pkgs'.pango
           pkgs'.cairo
-          pkgs'.xorg.libX11
-          pkgs'.xorg.libXcomposite
-          pkgs'.xorg.libXdamage
-          pkgs'.xorg.libXext
-          pkgs'.xorg.libXfixes
-          pkgs'.xorg.libXrandr
-          pkgs'.xorg.libxcb
         ];
         extraInstallCommands = ''
           install -m 444 -D ${appimageContents}/hiddify.desktop $out/share/applications/hiddify.desktop
