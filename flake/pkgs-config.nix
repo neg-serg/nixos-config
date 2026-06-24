@@ -1,9 +1,5 @@
 {
   allowAliases = false;
   allowUnfree = true;
-  permittedInsecurePackages = [
-    "minio-2025-10-15T17-29-55Z"
-  ];
-  allowInsecurePredicate = _: true;
   rocmSupport = true;
 }
