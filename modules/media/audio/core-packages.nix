@@ -22,7 +22,6 @@ in
 
       # -- GUI Patchbays --
       pkgs.coppwr # PipeWire CLI to copy/paste complex graphs
-      pkgs.helvum # GTK patchbay for PipeWire nodes
       pkgs.open-music-kontrollers.patchmatrix # advanced patch matrix for LV2/JACK bridging
       pkgs.qpwgraph # Qt patchbay, best for big graphs
     ];
