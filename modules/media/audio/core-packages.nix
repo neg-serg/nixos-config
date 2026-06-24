@@ -19,7 +19,6 @@ in
       pkgs.pw-volume # minimal PipeWire volume controller for scripts
 
       # -- RME HDSPe --
-      pkgs.wxwidgets-gtk3 # wx GTK3 libs required by hdspeconf
 
       # -- GUI Patchbays --
       pkgs.coppwr # PipeWire CLI to copy/paste complex graphs
