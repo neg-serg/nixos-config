@@ -407,7 +407,7 @@ lib.mkMerge [
           openFirewall = true;
           settings.general = {
             name = "Telfir AirPlay";
-            output_backend = "pw";
+            output_backend = "pipewire";
           };
         };
 

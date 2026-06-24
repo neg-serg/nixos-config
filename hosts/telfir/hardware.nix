@@ -68,24 +68,20 @@
   # Host-specific kernel parameters and boot tuning
   boot = {
     kernelParams = [
-      "acpi_osi=!"
-      "acpi_osi=Linux"
-      "video=3840x2160@240"
-      "lru_gen=1"
-      "lru_gen.min_ttl_ms=1000"
-      "mem_sleep_default=deep"
-      # Avoid probing dozens of legacy UARTs; speeds up device coldplug
-      "8250.nr_uarts=0"
-      # NVMe + PCIe performance (match CachyOS)
-      "nvme_core.default_ps_max_latency_us=0"
-      "nvme_core.io_timeout=4294967295"
-      "pcie_aspm=performance"
-      "usbcore.autosuspend=-1"
-      # AMD GPU overdrive
-      "amdgpu.ppfeaturemask=0xffffffff"
-      # Fix 60s USB port hang on ASUS AM5
-      "udev.children_max=32"
-      "udev.event_timeout=10"
+      "acpi_osi=!"                             # Fix ACPI compatibility on ASUS boards
+      "acpi_osi=Linux"                         # Report Linux-compatible ACPI interface
+      "video=3840x2160@240"                    # Set display resolution for early KMS
+      "lru_gen=1"                              # Enable multi-gen LRU page reclaim
+      "lru_gen.min_ttl_ms=1000"                # Min TTL for multi-gen LRU
+      "mem_sleep_default=deep"                 # Prefer deep sleep (S3) for suspend
+      "8250.nr_uarts=0"                        # Skip legacy UART probing
+      "nvme_core.default_ps_max_latency_us=0"  # Disable NVMe APST (fixes 70s boot)
+      "nvme_core.io_timeout=4294967295"        # Max NVMe I/O timeout
+      "pcie_aspm=performance"                  # Disable PCIe power saving
+      "usbcore.autosuspend=-1"                 # Disable USB autosuspend
+      "amdgpu.ppfeaturemask=0xffffffff"        # Enable all AMD GPU overdrive features
+      "udev.children_max=32"                   # Parallelize udev device init
+      "udev.event_timeout=10"                  # Fix 60s USB port hang on ASUS AM5
     ];
 
     # Load ASUS EC sensor driver for detailed telemetry + OpenRGB access
