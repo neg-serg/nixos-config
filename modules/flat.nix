@@ -104,7 +104,6 @@
     ./nix/clblast.nix
     ./nix/default.nix
     ./nix/hyprland.nix
-    ./nix/mpv-openvr.nix
     ./nix/multimon-ng.nix
 
     ./nix/packages-overlay.nix
