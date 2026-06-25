@@ -15,8 +15,8 @@ in
   fileSystems = lib.mkIf isTelfir {
     "/" = {
       device = "/dev/nvme0n1p2";
-      fsType = "btrfs";
-      options = [ "rw" "relatime" "lazytime" "compress=zstd" ];
+      fsType = "xfs";
+      options = [ "rw" "relatime" "lazytime" ];
     };
     "/boot" = {
       device = "/dev/nvme0n1p5";
@@ -77,6 +77,7 @@ in
 
   swapDevices = lib.mkIf isTelfir [
     { device = "/zero/swapfile"; priority = -2; }
+    { device = "/swapfile"; priority = -3; size = 61440; }
   ];
 
   services.fstrim = lib.mkIf isTelfir { enable = true; };
