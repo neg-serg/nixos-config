@@ -35,8 +35,6 @@ in
     src = inputs.fsread-nvim;
   };
 
-  ncps = inputs.ncps.packages.${finalPrev.stdenv.hostPlatform.system}.default;
-
   # Python with LTO optimizations
   python3-lto = finalPrev.python3.override {
     packageOverrides = _pythonSelf: _pythonSuper: {

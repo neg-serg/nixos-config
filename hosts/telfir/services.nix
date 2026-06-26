@@ -375,20 +375,6 @@ lib.mkMerge [
 
     services = lib.mkMerge [
       {
-        ncps = {
-          enable = true;
-          cache = {
-            hostName = "cache.example.com";
-            storage.local = "/zero/ncps";
-            tempPath = "/zero/ncps-temp";
-            maxSize = "150G";
-            upstream = {
-              urls = [ "https://cache.nixos.org" ];
-              publicKeys = [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ];
-            };
-          };
-        };
-
         # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
         unbound.settings.server."local-data" = map (s: "\"${s}\"") unboundLocalData;
 
@@ -551,9 +537,6 @@ lib.mkMerge [
         # Resilio state / license storage (service runs as rslsync)
         "d /zero/sync/.state 0700 rslsync rslsync - -"
         "d /zero/sync/upload-next 0755 neg neg - -"
-        # NCPS storage
-        "d /zero/ncps 0750 ncps ncps - -"
-        "d /zero/ncps-temp 0750 ncps ncps - -"
       ];
       services = {
         # Power saving by default for less heat/noise
@@ -750,27 +733,4 @@ lib.mkMerge [
   (lib.mkIf (config.features.virt.docker.enable or false) {
     environment.systemPackages = [ pkgs.docker-compose ];
   })
-  {
-    systemd.services.ncps = {
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
-      serviceConfig = {
-        ExecStartPre = lib.mkForce [
-          (pkgs.writeShellScript "ncps-init-keys" ''
-            if [ ! -f /zero/ncps/key.sec ]; then
-              ${pkgs.nix}/bin/nix-store --generate-binary-cache-key telfir-ncps /zero/ncps/key.sec /zero/ncps/key.pub
-              chown ncps:ncps /zero/ncps/key.sec /zero/ncps/key.pub
-              chmod 400 /zero/ncps/key.sec
-            fi
-          '')
-          (pkgs.writeShellScript "ncps-init-db" ''
-            ${pkgs.dbmate}/bin/dbmate \
-              --migrations-dir=${pkgs.ncps}/share/ncps/db/migrations/sqlite \
-              --url=sqlite:/zero/ncps/db/db.sqlite up
-          '')
-        ];
-        ExecStart = lib.mkForce "${pkgs.ncps}/bin/ncps serve --log-level=info --cache-hostname=cache.example.com --cache-storage-local=/zero/ncps --cache-database-url=sqlite:/zero/ncps/db/db.sqlite --cache-temp-path=/zero/ncps-temp --server-addr=:8501 --cache-max-size=150G --cache-upstream-url=https://cache.nixos.org --cache-upstream-public-key=cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= --cache-secret-key-path=/zero/ncps/key.sec";
-      };
-    };
-  }
 ]
