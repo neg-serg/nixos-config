@@ -18,7 +18,7 @@ stdenv.mkDerivation rec {
     owner = "heather7283";
     repo = "pipemixer";
     rev = "master";
-    sha256 = "0z799646j355y8j6pf5ldyyy2iy5jzxwrmayh3jnp3f2z3555p65";
+    sha256 = "sha256-dVw8x9c3DFSL5eLbBOe7ExNzeKsj3xB5Spl516XFqTQ=";
   };
 
   nativeBuildInputs = [
