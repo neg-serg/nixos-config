@@ -84,6 +84,12 @@ in
     doCheck = false;
   });
 
+  # XFS breaks nix-util readLinkAt test on kernel 7.0+
+  nix = finalPrev.nix.overrideAttrs (old: {
+    doCheck = false;
+    doInstallCheck = false;
+  });
+
   # Disable flaky pytest-xdist tests
   pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
     (python-final: python-prev: {
