@@ -30,10 +30,6 @@
     };
     nix-flatpak.url = "github:gmodena/nix-flatpak";
     nix-maid.url = "github:viperML/nix-maid";
-    ncps = {
-      url = "github:kalbasit/ncps";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     nur = {
       url = "github:nix-community/NUR";
       inputs.nixpkgs.follows = "nixpkgs";
