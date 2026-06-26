@@ -6,7 +6,6 @@
     ./services.nix
     # ./virtualisation/macos.nix  # Archived - MacOS VM not currently in use
     ./virtualisation/lxc.nix
-    ./virtualisation/android.nix
   ];
 
   system.preserveFlake = false;
