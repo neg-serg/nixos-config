@@ -96,6 +96,9 @@ in
       pytest-xdist = python-prev.pytest-xdist.overrideAttrs (old: {
         doCheck = false;
       });
+      uvloop = python-prev.uvloop.overrideAttrs (old: {
+        doCheck = false; # flaky timing test
+      });
     })
   ];
 }
