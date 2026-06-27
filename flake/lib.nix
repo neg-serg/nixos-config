@@ -16,6 +16,7 @@ let
         allowAliases = false;
         allowUnfree = true;
         rocmSupport = true;
+        doCheckByDefault = false;
       };
     };
 
