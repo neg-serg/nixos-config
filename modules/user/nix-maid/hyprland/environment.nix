@@ -24,7 +24,7 @@
     exec-once = dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL
     exec-once = systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL
 
-    source = ~/.config/hypr/hyprland.lua
+    source = ~/.config/hypr/init.conf
     source = ~/.config/hypr/permissions.conf
 
     source = ~/.config/hypr/local.d/*.conf
