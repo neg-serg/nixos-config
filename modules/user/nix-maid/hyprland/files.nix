@@ -63,6 +63,7 @@ in
         ".config/pypr/config.toml".source = pyprlandToml;
 
         ".config/hypr/init.conf".source = n.linkImpure (hyprConfDir + /init.conf);
+        ".config/hypr/hyprland.lua".source = n.linkImpure (hyprConfDir + /hyprland.lua);
         ".config/hypr/xdph.conf".source = n.linkImpure (hyprConfDir + /xdph.conf);
         ".config/hypr/bindings.conf".source = n.linkImpure (hyprConfDir + /bindings.conf);
 
