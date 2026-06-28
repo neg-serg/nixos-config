@@ -1,6 +1,6 @@
 { config, inputs, lib, ... }:
 {
-  # Route Hyprland, its portal, and the hy3 plugin in nixpkgs to the flake-pinned versions
+  # Route Hyprland and its portal to the flake-pinned versions
   # Gated behind features.gui.enable to avoid pkgs.hyprland evaluation on headless hosts
   config = lib.mkIf config.features.gui.enable {
     nixpkgs.overlays = [

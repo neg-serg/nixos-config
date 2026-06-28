@@ -4,7 +4,7 @@
   ...
 }:
 {
-  hyprlandConf = _hy3Enabled: ''
+  hyprlandConf = ''
     env = GDK_SCALE,2
     env = QT_AUTO_SCREEN_SCALE_FACTOR,1
     env = QT_ENABLE_HIGHDPI_SCALING,1
@@ -30,7 +30,7 @@
     source = ~/.config/hypr/local.d/*.conf
   '';
 
-  permissionsConf = _hy3Enabled: ''
+  permissionsConf = ''
     ecosystem {
         enforce_permissions = 1
     }
