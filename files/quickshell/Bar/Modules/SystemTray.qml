@@ -1,12 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import QtQuick.Effects
 import Quickshell.Services.SystemTray
-import Quickshell.Widgets
 import qs.Settings
 import qs.Components
-import "../../Helpers/TooltipText.js" as TooltipText
 import qs.Services as Services
 import "../../Helpers/CapsuleMetrics.js" as CapsuleMetrics
 
@@ -230,107 +227,6 @@ Row {
                 root.holdOpen = true;
                 Services.TrayController.startLongHold();
             }
-        }
-    }
-
-
-    // Inline icons (disabled: we show tray only via hover hot zone)
-    Repeater {
-        // Disabled always to avoid duplicate inline tray; use inlineBox above
-        model: 0
-        delegate: Item {
-            width: Math.round(Theme.panelIconSize * root._scale)
-            height: Math.round(Theme.panelIconSize * root._scale)
-
-            visible: modelData
-            property bool isHovered: trayMouseArea.containsMouse
-
-            // No animations - static display
-
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: Math.round(Theme.panelIconSizeSmall * root._scale)
-                        height: Math.round(Theme.panelIconSizeSmall * root._scale)
-                        radius: Theme.cornerRadiusSmall
-                        color: "transparent"
-                        clip: true
-
-                        TrayIcon {
-                            id: trayIcon
-                            anchors.centerIn: parent
-                            size: Math.round(Theme.panelIconSizeSmall * root._scale)
-                            source: modelData?.icon || ""
-                            grayscale: trayOverlay.expanded
-                            opacity: ready ? 1 : 0
-                        }
-                    }
-
-            MouseArea {
-                id: trayMouseArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-                onClicked: mouse => {
-                    if (!modelData)
-                        return;
-
-                    if (mouse.button === Qt.LeftButton) {
-                        // Close any open menu first
-                        if (trayMenu && trayMenu.visible) {
-                            trayMenu.hideMenu();
-                        }
-
-                        if (!modelData.onlyMenu) {
-                            modelData.activate();
-                        }
-                    } else if (mouse.button === Qt.MiddleButton) {
-                        // Close any open menu first
-                        if (trayMenu && trayMenu.visible) {
-                            trayMenu.hideMenu();
-                        }
-
-                        modelData.secondaryActivate && modelData.secondaryActivate();
-                    } else if (mouse.button === Qt.RightButton) {
-                        trayTooltip.visibleWhen = false;
-                        // If menu is already visible, close it
-                        if (trayMenu && trayMenu.visible) {
-                            trayMenu.hideMenu();
-                            trayOverlay.close("programmatic");
-                            return;
-                        }
-
-                        if (modelData.hasMenu && modelData.menu && trayMenu) {
-                            // Anchor the menu to the tray icon item (parent) and position it below the icon
-                            const menuX = (width / 2) - (trayMenu.width / 2);
-                            const menuY = height + Math.round(Services.TrayController.menuYOffset * root._scale);
-                            trayMenu.menu = modelData.menu;
-                            trayMenu.showAt(parent, menuX, menuY);
-                            trayOverlay.open("tray-menu");
-                        } else
-                        
-                        {}
-                    }
-                }
-                onEntered: trayTooltip.visibleWhen = true
-                onExited: trayTooltip.visibleWhen = false
-            }
-
-            PanelTooltip {
-                id: trayTooltip
-                text: TooltipText.compose(
-                    modelData.tooltipTitle || modelData.name || modelData.id || "Tray Item",
-                    "",
-                    []
-                )
-                targetItem: trayIcon
-                delayMs: Services.TrayController.tooltipDelayMs
-                visibleWhen: false
-            }
-
-            Component.onDestruction:
-            // No cache cleanup needed
-            {}
         }
     }
 }

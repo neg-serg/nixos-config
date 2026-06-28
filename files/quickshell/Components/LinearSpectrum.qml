@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell
 import qs.Settings
 import "../Helpers/Utils.js" as Utils
 
@@ -15,8 +14,6 @@ Item {
     property bool mirror: true               // draw above and below center
     property real fillOpacity: Theme.spectrumFillOpacity
     property real peakOpacity: Theme.spectrumPeakOpacity
-    // Simpler look by default: no peak caps
-    property bool showPeaks: false
     // Coloring: default to a neutral/darker theme color (no gradient)
     property bool useGradient: false
     property color barColor: Theme.outline
@@ -26,8 +23,6 @@ Item {
     // Selective halves
     property bool drawTop: true
     property bool drawBottom: true
-    // Global switch to disable animations for perf testing
-    property bool animationsEnabled: ((Quickshell.env("QS_DISABLE_ANIMATIONS") || "") !== "1")
 
     readonly property int barCount: values.length
     readonly property real halfH: mirror ? height / 2 : height
@@ -62,9 +57,9 @@ Item {
             // Bar value and peak with simple decay
             property real v: (root.values[index] || 0) * root.amplitudeScale
             property real peak: 0
-            onVChanged: if (root.showPeaks && v > peak) peak = v;
+            onVChanged: {}
             Timer {
-                interval: Theme.spectrumPeakDecayIntervalMs; running: root.showPeaks && root.animationsEnabled; repeat: true
+                interval: Theme.spectrumPeakDecayIntervalMs; running: false; repeat: true
                 onTriggered: parent.peak = Utils.clamp(parent.peak - 0.04, 0, 1)
             }
 
@@ -78,7 +73,7 @@ Item {
                 y: root.mirror ? root.halfH : root.halfH - height
                 color: Qt.rgba(root.colorAt(index).r, root.colorAt(index).g, root.colorAt(index).b, root.fillOpacity)
                 antialiasing: true
-                Behavior on height { enabled: root.animationsEnabled; SmoothedAnimation { duration: Theme.spectrumBarAnimMs } }
+                Behavior on height { enabled: Theme.animationsEnabled; SmoothedAnimation { duration: Theme.spectrumBarAnimMs } }
             }
 
             // Mirrored bar (top half)
@@ -91,12 +86,12 @@ Item {
                 y: root.halfH - height
                 color: Qt.rgba(root.colorAt(index).r, root.colorAt(index).g, root.colorAt(index).b, root.fillOpacity)
                 antialiasing: true
-                Behavior on height { enabled: root.animationsEnabled; SmoothedAnimation { duration: Theme.spectrumBarAnimMs } }
+                Behavior on height { enabled: Theme.animationsEnabled; SmoothedAnimation { duration: Theme.spectrumBarAnimMs } }
             }
 
             // Peak indicator (optional)
             Rectangle {
-                visible: root.showPeaks && root.mirror && root.drawTop
+                visible: false
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width
                 height: Theme.spectrumPeakThickness

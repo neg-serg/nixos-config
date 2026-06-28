@@ -1,9 +1,6 @@
 import QtQuick
-import QtQuick.Controls
-import Quickshell
 import qs.Settings
 import "../Helpers/Utils.js" as Utils
-import "../Helpers/Color.js" as ColorHelpers
 
 Item {
     id: revealPill
@@ -25,8 +22,6 @@ Item {
     property int autoHidePauseMs: Theme.panelPillAutoHidePauseMs
     // Optional override for how long to wait before showing the pill
     property int showDelayMs: Theme.panelPillShowDelayMs
-    // Global switch to disable animations for perf testing
-    property bool animationsEnabled: ((Quickshell.env("QS_DISABLE_ANIMATIONS") || "") !== "1")
 
     // Internal state
     property bool showPill: false
@@ -36,8 +31,6 @@ Item {
     readonly property int pillOverlap: iconSize / 2
     readonly property int maxPillWidth: Utils.clamp(textItem.implicitWidth + pillPaddingHorizontal * 2 + pillOverlap, 1, textItem.implicitWidth + pillPaddingHorizontal * 2 + pillOverlap)
 
-    signal shown
-    signal hidden
 
     width: iconSize + (showPill ? maxPillWidth - pillOverlap : 0)
     height: pillHeight
@@ -77,7 +70,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
 
-        Behavior on color { enabled: revealPill.animationsEnabled; ColorFastInOutBehavior {} }
+        Behavior on color { enabled: Theme.animationsEnabled; ColorFastInOutBehavior {} }
 
         MaterialIcon {
             anchors.centerIn: parent
@@ -98,7 +91,7 @@ Item {
         }
         onStopped: {
             delayedHideAnim.start();
-            shown();
+
         }
     }
 
@@ -120,18 +113,18 @@ Item {
         onStopped: {
             showPill = false;
             shouldAnimateHide = false;
-            hidden();
+
         }
     }
 
     function show() {
-        if (!animationsEnabled) {
+        if (!Theme.animationsEnabled) {
             showPill = true;
             shouldAnimateHide = autoHide;
             showTimer.stop();
             delayedHideAnim.stop();
             hideAnim.stop();
-            shown();
+
             return;
         }
         if (!showPill) {
@@ -144,11 +137,11 @@ Item {
     }
 
     function hide() {
-        if (!animationsEnabled) {
+        if (!Theme.animationsEnabled) {
             if (showPill) {
                 showPill = false;
                 shouldAnimateHide = false;
-                hidden();
+    
             }
             showTimer.stop();
             delayedHideAnim.stop();
@@ -162,7 +155,7 @@ Item {
     }
 
     function showDelayed() {
-        if (!animationsEnabled) {
+        if (!Theme.animationsEnabled) {
             show();
             return;
         }

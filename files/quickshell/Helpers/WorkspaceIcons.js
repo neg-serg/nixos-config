@@ -15,6 +15,7 @@ function slugify(value) {
         lower = lower.replace(/^-+/, "").replace(/-+$/, "");
         return lower;
     } catch (e) {
+        console.warn("[WorkspaceIcons.slugify]", e);
         return "";
     }
 }
@@ -53,19 +54,6 @@ function loadManifest() {
     }
 }
 
-function reload() {
-    manifestCache = null;
-    slugIndex = {};
-    hyprIndex = {};
-    idIndex = {};
-    return loadManifest();
-}
-
-function resolvedIconPath(relPath) {
-    if (!relPath) return "";
-    return Qt.resolvedUrl(iconBaseUrl + relPath);
-}
-
 function entryForName(name, fallbackId) {
     var data = loadManifest();
     if (!data) return null;
@@ -92,34 +80,3 @@ function manifestViewBox() {
     return isFinite(v) && v > 0 ? v : 1024;
 }
 
-function metadataForSlug(slug) {
-    if (!slug) return null;
-    var data = loadManifest();
-    if (!data) return null;
-    return slugIndex[slug] || null;
-}
-
-function metadataForId(id) {
-    if (typeof id !== "number") return null;
-    var data = loadManifest();
-    if (!data) return null;
-    return idIndex[id] || null;
-}
-
-function sourceForWorkspace(name, id) {
-    var entry = entryForName(name, id);
-    if (!entry || !entry.svg) return "";
-    return resolvedIconPath(entry.svg);
-}
-
-function fontForWorkspace(name, id) {
-    var entry = entryForName(name, id);
-    if (!entry || !entry.font) return null;
-    return entry.font;
-}
-
-function pathForWorkspace(name, id) {
-    var entry = entryForName(name, id);
-    if (!entry || !entry.path) return "";
-    return entry.path;
-}

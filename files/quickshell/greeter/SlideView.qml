@@ -8,13 +8,13 @@ Item {
 	property Component enterTransition: XAnimator {
 		id: enterAnimator
 		from: root.width
-		duration: 3000
+		duration: GreeterTheme.slideshowDurationMs
 	}
 
 	property Component exitTransition: XAnimator {
 		id: exitAnimator
 		to: (exitAnimator.target ? exitAnimator.target.x - exitAnimator.target.width : 0)
-		duration: 3000
+		duration: GreeterTheme.slideshowDurationMs
 	}
 
 	property bool animate: root.visible;

@@ -4,7 +4,7 @@ import qs.Settings
 MouseArea {
     id: root
     property string icon
-    property bool enabled: true
+    enabled: true
     property bool hovering: false
     property var screen: null
     property real size: Math.round(Theme.panelIconSize * Theme.scale(screen || Screen))

@@ -1,7 +1,7 @@
 .pragma library
 // Bridge to RichText helpers for consistency
 // Use Qt.include to rely on Helpers/RichText.js for rich text utilities
-try { Qt.include("./RichText.js"); } catch (e) {}
+try { Qt.include("./RichText.js"); } catch (e) { /* RichText.js not available in this context */ }
 
 // Helpers/Format.js — common lightweight formatting utilities
 
@@ -36,6 +36,7 @@ function colorCss(color, alphaOverride) {
         if (!(a >= 0 && a <= 1)) a = 1;
         return "rgba(" + r255 + "," + g255 + "," + b255 + "," + a + ")";
     } catch (e) {
+        console.warn("[Format.colorCss]", e);
         return "rgba(0,0,0,1)";
     }
 }

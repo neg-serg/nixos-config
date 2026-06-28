@@ -30,12 +30,12 @@ Item {
     property color debugBorderColor: "#ff0000"
     property real debugBorderWidth: 1
 
-    visible: active
+    visible: true
     readonly property int _box: Math.max(0, box)
     readonly property int _outerMargin: Math.max(0, outerHorizontalMargin)
     implicitWidth: (square ? _box : glyph.implicitWidth) + _outerMargin * 2
     implicitHeight: square ? _box : glyph.implicitHeight
-    width: active ? implicitWidth : 0
+    width: implicitWidth
     height: square ? implicitHeight : glyph.implicitHeight
 
     Item {

@@ -39,6 +39,7 @@ let
       pkgs.dash # POSIX-compliant shell
       pkgs.ffmpeg # multimedia framework
       pkgs.mpc # client for MPD
+      pkgs.gawk # GNU awk: used by SystemMonitor probes parsing /proc/{meminfo,swaps,diskstats}
       pkgs.hyprland # dynamic tiling Wayland compositor
       pkgs.neg.rsmetrx # custom metrics exporter
     ];

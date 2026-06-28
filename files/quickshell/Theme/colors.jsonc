@@ -6,7 +6,7 @@
       "primary": "#006FCC"
     },
     "background": "#ff000000",
-    "surface": "#181C25",
+    "surface": "#88000000",
     "surfaceVariant": "#242A35",
     "outline": "#3B4C5C",
     "text": {
@@ -16,7 +16,8 @@
     },
     "shadow": "#000000",
     "status": {
-      "error": "#FF6B81"
+      "error": "#FF6B81",
+      "warning": "#FFB347"
     },
     "highlight": "#94E1F9",
     "onAccent": "#FFFFFF"

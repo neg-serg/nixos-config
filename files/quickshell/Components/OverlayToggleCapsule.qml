@@ -20,7 +20,6 @@ Item {
     // Overlay properties removed - background always transparent
     property alias closeOnBackgroundClick: overlay.closeOnBackgroundClick
     property alias expanded: overlay.expanded
-    property real capsuleHoverYOffset: 0
 
     default property alias content: capsule.content
 
@@ -37,7 +36,7 @@ Item {
         visible: root.capsuleVisible
         anchors.fill: parent
         screen: root.screen
-        contentYOffset: root.capsuleHoverYOffset
+        contentYOffset: 0
     }
 
     TapHandler {

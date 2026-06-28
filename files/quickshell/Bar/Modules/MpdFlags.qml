@@ -1,15 +1,12 @@
 import QtQuick
-import QtQuick.Layouts
-import Quickshell.Io
 import qs.Settings
 import qs.Services as Services
 import qs.Components
-import qs.Services
-import "../../Helpers/Utils.js" as Utils
 
 WidgetCapsule {
     id: root
-    property bool enabled: false
+    forceHeightFromMetrics: true
+    enabled: false
     property int fallbackIntervalMs:Theme.mpdFlagsFallbackMs
     property color iconColor: Theme.textPrimary
     property int iconPx: Math.round(Theme.fontSizeSmall * capsuleScale)
@@ -69,18 +66,7 @@ WidgetCapsule {
     }
 
     function refresh() {
-        try {
-            if (!proc.running) proc.running = true
-        } catch (e) { }
-    }
-
-    function isMpd() {
-        try {
-            const p = MusicManager.currentPlayer;
-            if (!p) return false;
-            const n = String(p.identity || p.name || p.id || "").toLowerCase();
-            return /(mpd|mpdris)/.test(n);
-        } catch (e) { return false; }
+        if (!proc.running) proc.start();
     }
 
     // One-shot status parser
@@ -96,14 +82,15 @@ WidgetCapsule {
     }
 
     // Updates via MPD idle on 'options' subsystem
+    // Direct command array (no bash wrapper) so Quickshell's Process
+    // can properly SIGTERM the child, preventing orphan processes.
     ProcessRunner {
         id: idle
-        // Prefer mpc; fallback to rmpc
-        cmd: ["bash", "-lc", "mpc -q idle options player 2>/dev/null || rmpc -q idle options player 2>/dev/null || true"]
+        cmd: ["mpc", "-q", "idle", "options", "player"]
         restartOnExit: true
         backoffMs: 250
         onExited: (code, status) => {
-            if (root.enabled) proc.start()
+            if (root.enabled && !idle.running) root.refresh()
         }
     }
 
@@ -148,6 +135,6 @@ WidgetCapsule {
 
     implicitWidth: horizontalPadding * 2 + content.implicitWidth
     implicitHeight: forceHeightFromMetrics
-        ? Math.max(capsuleMetrics.height, content.implicitHeight + verticalPadding * 2)
+        ? Math.max(uniformCapsuleHeight, content.implicitHeight + verticalPadding * 2)
         : content.implicitHeight + verticalPadding * 2
 }

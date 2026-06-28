@@ -9,25 +9,34 @@ LocalComponents.WidgetCapsule {
     id: root
 
     property string settingsKey: ""
-    property color pillBackground: WidgetBg.color(Settings.settings, settingsKey)
-    property color gradientLow: Theme.panelVolumeLowColor
-    property color gradientHigh: Theme.panelVolumeHighColor
     property string iconOff: "volume_off"
     property string iconLow: "volume_down"
     property string iconHigh: "volume_up"
-    property int iconOffThreshold: Theme.volumeIconOffThreshold
-    property int iconLowThreshold: Theme.volumeIconDownThreshold
-    property int iconHighThreshold: Theme.volumeIconUpThreshold
     property string labelSuffix: "%"
-    property bool autoHideAtFull: true
-    property int fullHideValue: 100
-    property bool collapseWhenHidden: true
+    property string labelText: ""
+    property bool autoHideWhenMuted: false
+    property bool panelHovering: false
+    property bool wheelEnabled: true
+    property string offReminderStateKey: ""
+    readonly property int effectiveOffReminderCooldownMs: {
+        const raw = Settings.settings ? Number(Settings.settings.audioOffReminderCooldownMs) : -1;
+        if (isFinite(raw) && raw >= 0)
+            return Math.round(raw);
+        return Theme.panelVolumeOffReminderCooldownMs;
+    }
 
     property int level: 0
     property bool muted: false
     property bool firstChange: true
     property string lastIconCategory: "up"
     property bool containsMouse: false
+
+    // Track previous values so updateFrom() does not re-show the pill
+    // when nothing actually changed (which prevents auto-hide from ever
+    // completing).
+    property int _prevClamped: -1
+    property bool _prevMuted: false
+    property string _prevCategory: ""
 
     readonly property alias pill: pillIndicator
 
@@ -36,13 +45,13 @@ LocalComponents.WidgetCapsule {
 
     backgroundKey: settingsKey
     centerContent: true
-    forceHeightFromMetrics: false
+    forceHeightFromMetrics: true
     verticalPaddingScale: 0
     verticalPaddingMin: 0
 
     visible: false
-    width: collapseWhenHidden ? (visible ? implicitWidth : 0) : implicitWidth
-    height: collapseWhenHidden ? (visible ? implicitHeight : 0) : implicitHeight
+    width: visible ? implicitWidth : 0
+    height: visible ? implicitHeight : 0
     Layout.preferredWidth: width
     Layout.preferredHeight: height
     Layout.minimumWidth: width
@@ -54,7 +63,37 @@ LocalComponents.WidgetCapsule {
         interval: Theme.panelVolumeFullHideMs
         repeat: false
         onTriggered: {
-            if (root.autoHideAtFull && root.level === root.fullHideValue) {
+            if (root.level === 100) {
+                root.visible = false;
+                pillIndicator.hide();
+            }
+        }
+    }
+
+    Timer {
+        id: mutedHideTimer
+        interval: Theme.panelVolumeMutedHideMs
+        repeat: false
+        onTriggered: {
+            if (root.autoHideWhenMuted
+                    && root.resolveIconCategory(root.level, root.muted) === "off"
+                    && !root.panelHovering) {
+                root.visible = false;
+                pillIndicator.hide();
+            }
+        }
+    }
+
+    onPanelHoveringChanged: {
+        if (!autoHideWhenMuted) return;
+        if (resolveIconCategory(level, muted) !== "off") return;
+        if (panelHovering) {
+            if (!root.visible) {
+                root.visible = true;
+                pillIndicator.show();
+            }
+        } else {
+            if (!mutedHideTimer.running) {
                 root.visible = false;
                 pillIndicator.hide();
             }
@@ -63,17 +102,19 @@ LocalComponents.WidgetCapsule {
 
     function levelColorFor(value) {
         var t = Utils.clamp(value / 100.0, 0, 1);
-        return Qt.rgba(gradientLow.r + (gradientHigh.r - gradientLow.r) * t, gradientLow.g + (gradientHigh.g - gradientLow.g) * t, gradientLow.b + (gradientHigh.b - gradientLow.b) * t, 1);
+        const lo = Theme.panelVolumeLowColor;
+        const hi = Theme.panelVolumeHighColor;
+        return Qt.rgba(lo.r + (hi.r - lo.r) * t, lo.g + (hi.g - lo.g) * t, lo.b + (hi.b - lo.b) * t, 1);
     }
 
     function resolveIconCategory(value, mutedValue) {
         if (mutedValue)
             return "off";
-        if (value <= iconOffThreshold)
+        if (value <= Theme.volumeIconOffThreshold)
             return "off";
-        if (value < iconLowThreshold)
+        if (value < Theme.volumeIconDownThreshold)
             return "down";
-        if (value >= iconHighThreshold)
+        if (value >= Theme.volumeIconUpThreshold)
             return "up";
         return lastIconCategory === "down" ? "down" : "up";
     }
@@ -90,31 +131,77 @@ LocalComponents.WidgetCapsule {
         }
     }
 
+    function shouldShowOffReminder(category) {
+        const enteringOff = category === "off" && _prevCategory !== "off";
+        if (!enteringOff)
+            return false;
+        if (!offReminderStateKey.length || !StateCache.state)
+            return true;
+
+        const lastShownAt = Number(StateCache.state[offReminderStateKey] || 0);
+        const now = Date.now();
+        const expired = !isFinite(lastShownAt) || lastShownAt <= 0 || (now - lastShownAt) >= effectiveOffReminderCooldownMs;
+        if (expired)
+            StateCache.state[offReminderStateKey] = now;
+        return expired;
+    }
+
     function updateFrom(value, mutedValue) {
         const clamped = Utils.clamp(value, 0, 100);
+        const category = resolveIconCategory(clamped, mutedValue);
+        const showOffReminder = autoHideWhenMuted && shouldShowOffReminder(category);
+
+        // Always update presentation (text, icon, colour)
         level = clamped;
         muted = mutedValue;
-
-        pillIndicator.text = clamped + labelSuffix;
-        const category = resolveIconCategory(clamped, mutedValue);
+        pillIndicator.text = labelText.length ? labelText : clamped + labelSuffix;
         if (category !== "off")
             lastIconCategory = category;
         pillIndicator.icon = iconNameForCategory(category);
-
         const levelColor = levelColorFor(clamped);
         pillIndicator.iconCircleColor = levelColor;
         pillIndicator.collapsedIconColor = levelColor;
 
-        if (!root.visible && (!autoHideAtFull || clamped !== fullHideValue)) {
-            root.visible = true;
+        if (autoHideWhenMuted && category === "off") {
+            if (showOffReminder) {
+                if (!root.visible)
+                    root.visible = true;
+                mutedHideTimer.restart();
+                if (!firstChange)
+                    pillIndicator.show();
+            } else {
+                if (mutedHideTimer.running)
+                    mutedHideTimer.stop();
+                root.visible = false;
+                pillIndicator.hide();
+            }
+            firstChange = false;
+            if (fullHideTimer.running)
+                fullHideTimer.stop();
+            _prevClamped = clamped;
+            _prevMuted = mutedValue;
+            _prevCategory = category;
+            return;
         }
 
-        if (!firstChange || (!autoHideAtFull || clamped !== fullHideValue)) {
-            pillIndicator.show();
-        }
+        if (mutedHideTimer.running)
+            mutedHideTimer.stop();
+
+        if (!root.visible && clamped !== 100)
+            root.visible = true;
+
+        // Only show the pill when the value *actually* changed, so the
+        // auto-hide timer can complete instead of being restarted on
+        // every idle sync.
+        if (clamped !== _prevClamped || mutedValue !== _prevMuted)
+            if (!firstChange || clamped !== 100)
+                pillIndicator.show();
+        _prevClamped = clamped;
+        _prevMuted = mutedValue;
+        _prevCategory = category;
         firstChange = false;
 
-        if (autoHideAtFull && clamped === fullHideValue) {
+        if (clamped === 100) {
             fullHideTimer.restart();
         } else if (fullHideTimer.running) {
             fullHideTimer.stop();
@@ -126,7 +213,7 @@ LocalComponents.WidgetCapsule {
         anchors.centerIn: parent
         icon: iconHigh
         text: "0" + labelSuffix
-        pillColor: pillBackground
+        pillColor: WidgetBg.color(Settings.settings, settingsKey, Theme.surface)
         iconCircleColor: levelColorFor(level)
         iconTextColor: Theme.background
         textColor: Theme.textPrimary
@@ -164,7 +251,7 @@ LocalComponents.WidgetCapsule {
                 pillIndicator.hide();
             }
             onWheel: wheel => {
-                if (wheel.angleDelta.y === 0)
+                if (!root.wheelEnabled || wheel.angleDelta.y === 0)
                     return;
                 root.wheelStep(wheel.angleDelta.y > 0 ? 1 : -1);
             }
@@ -174,5 +261,5 @@ LocalComponents.WidgetCapsule {
     default property alias extraContent: overlayLayer.data
 
     implicitWidth: horizontalPadding * 2 + Math.max(pillIndicator.width, capsuleMetrics.inner)
-    implicitHeight: forceHeightFromMetrics ? Math.max(capsuleMetrics.height, pillIndicator.height + verticalPadding * 2) : pillIndicator.height + verticalPadding * 2
+    implicitHeight: forceHeightFromMetrics ? Math.max(uniformCapsuleHeight, pillIndicator.height + verticalPadding * 2) : pillIndicator.height + verticalPadding * 2
 }

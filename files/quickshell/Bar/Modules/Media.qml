@@ -1,13 +1,10 @@
 import QtQuick
-import "../../Helpers/Utils.js" as Utils
-import QtQuick.Controls
 import QtQuick.Layouts
-// Quickshell.Widgets not needed
-import QtQuick.Effects
 import "../../Helpers/Format.js" as Format
 import "../../Helpers/RichText.js" as Rich
 import "../../Helpers/Time.js" as Time
 import "../../Helpers/Color.js" as Color
+import "../../Helpers/AccentSampler.js" as AccentSampler
 import qs.Settings
 import qs.Services
 import qs.Components
@@ -68,64 +65,104 @@ Item {
         ? (capsule.horizontalPadding * 2 + mediaControl.baseHeight)
         : ((mediaControl.stretchMode ? mediaControl.stretchContentWidth : mediaControl.compactContentWidth)
             + capsule.horizontalPadding * 2)
-    height: baseHeight
-    implicitHeight: baseHeight
-    visible: Settings.settings.showMediaInBar
-             && MusicManager.currentPlayer
-             && !MusicManager.isStopped
-             && (MusicManager.isPlaying
-                 || MusicManager.isPaused
-                 || (MusicManager.trackTitle && MusicManager.trackTitle.length > 0))
+    height: capsule.uniformCapsuleHeight
+    implicitHeight: height
+    visible: Settings.settings.showMediaInBar && MusicManager.hasPlayer && (MusicManager.isPlaying || MusicManager.isPaused)
 
     property int musicTextPx: Math.round(Theme.fontSizeSmall * capsuleScale)
-    // Accent derived from current cover art (dominant color)
-    property color mediaAccent: Theme.accentPrimary
+    // Accent derived from current cover art — centralized in MusicManager
+    property color mediaAccent: MusicManager.accentColor
     property string mediaAccentCss: Format.colorCss(mediaAccent, 1)
-    // Cache of computed accents keyed by cover URL to avoid flicker on track changes
-    property var _accentCache: ({})
-    // Use the same accent for minus and brackets (simplified)
     // Version bump to force RichText recompute on accent changes
     property int accentVersion: 0
-    // Accent readiness: hold accent color until palette is ready
-    property bool accentReady: false
+    property bool accentReady: MusicManager.accentReady
     readonly property bool mediaBorderless: Settings.settings.mediaIconBorderless !== false
     onMediaAccentChanged: { accentVersion++; }
-    Component.onCompleted: { colorSampler.requestPaint(); accentRetry.restart() }
-    onVisibleChanged: { if (visible) { colorSampler.requestPaint(); accentRetry.restart() } }
-    // When cover/album changes, reuse cached accent (if any) to avoid UI flicker while sampling
-    Connections {
-        target: MusicManager
-        function onCoverUrlChanged() {
-            try {
-                const url = MusicManager.coverUrl || "";
-                if (mediaControl._accentCache && mediaControl._accentCache[url]) {
-                    mediaControl.mediaAccent = mediaControl._accentCache[url];
-                    mediaControl.accentReady = true;
-                } // else keep previous accent/color and readiness until sampler updates
-            } catch (e) { /* ignore */ }
-            colorSampler.requestPaint();
-            accentRetry.restart();
-        }
-        function onTrackAlbumChanged() {
-            try {
-                const url = MusicManager.coverUrl || "";
-                if (mediaControl._accentCache && mediaControl._accentCache[url]) {
-                    mediaControl.mediaAccent = mediaControl._accentCache[url];
-                    mediaControl.accentReady = true;
-                } // else keep previous accent/color and readiness until sampler updates
-            } catch (e) { /* ignore */ }
-            colorSampler.requestPaint();
-            accentRetry.restart();
+
+    // ── Accent color sampling (Canvas must live in a windowed component) ──
+    property int _accentRetryCount: 0
+
+    function _requestAccentSample() {
+        if (!MusicManager.accentNeedsSample()) return;
+        _accentRetryCount = 0;
+        sampleDebounce.restart();
+    }
+
+    Image {
+        id: accentSamplerImg
+        visible: false
+        width: 64; height: 64
+        sourceSize.width: 64; sourceSize.height: 64
+        fillMode: Image.PreserveAspectCrop
+        source: MusicManager.coverUrl || ""
+        asynchronous: true
+    }
+
+    Canvas {
+        id: colorSampler
+        width: 64; height: 64
+        opacity: 0
+        renderStrategy: Canvas.Cooperative
+        onPaint: {
+            var ctx = getContext("2d");
+            if (!accentSamplerImg || accentSamplerImg.status !== Image.Ready) return;
+            ctx.clearRect(0, 0, 64, 64);
+            ctx.drawImage(accentSamplerImg, 0, 0, 64, 64);
+            var imgData = ctx.getImageData(0, 0, 64, 64);
+            var url = MusicManager.coverUrl || "";
+            var rgb = AccentSampler.sampleAccent(imgData);
+            if (!rgb) {
+                // First paint may yield empty data; retry once
+                accentRetry.restart();
+                return;
+            }
+            MusicManager.accentSetResult(url, rgb);
+            accentRetry.stop();
         }
     }
-    // Retry sampler a few times while UI/cover settles
-    property int _accentRetryCount: 0
+
+    Timer {
+        id: sampleDebounce
+        interval: Theme.mediaArtDebounceMs
+        repeat: false
+        onTriggered: {
+            if (accentSamplerImg.status === Image.Ready) {
+                colorSampler.requestPaint();
+            } else {
+                accentRetry.restart();
+            }
+        }
+    }
+
+    Timer {
+        id: accentRetry
+        interval: Theme.mediaAccentRetryMs
+        repeat: true
+        onTriggered: {
+            mediaControl._accentRetryCount++;
+            if (mediaControl._accentRetryCount > Theme.mediaAccentRetryMax) {
+                stop();
+                MusicManager.accentSetResult(MusicManager.coverUrl || "", null);
+                return;
+            }
+            if (accentSamplerImg.status === Image.Ready) {
+                stop();
+                colorSampler.requestPaint();
+            }
+        }
+    }
+
+    Connections {
+        target: MusicManager
+        function onCoverUrlChanged() { mediaControl._requestAccentSample(); }
+    }
+    Component.onCompleted: { _requestAccentSample(); }
+
     // Active visualizer profile (if any). Settings are schema-validated, so no clamps here.
     property var _vizProfile: (Settings.settings.visualizerProfiles
                                && Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile])
                               ? Settings.settings.visualizerProfiles[Settings.settings.activeVisualizerProfile]
                               : null
-    Timer { id: accentRetry; interval: Theme.mediaAccentRetryMs; repeat: false; onTriggered: { colorSampler.requestPaint(); if (!mediaControl.accentReady && mediaControl._accentRetryCount < Theme.mediaAccentRetryMax) { mediaControl._accentRetryCount++; start() } else { mediaControl._accentRetryCount = 0 } } }
 
     function _resolveIconPx(settingVal, themeVal, fallback) {
         var s = Number(settingVal);
@@ -140,7 +177,11 @@ Item {
         backgroundKey: "media"
         centerContent: false
         borderVisible: !mediaControl.mediaBorderless
-        backgroundColorOverride: mediaControl.mediaBorderless ? Theme.background : "transparent"
+        leftTriangleVisible: true
+        triangleHighlightEnabled: true
+        triangleHighlightColor: Color.towardsBlack(Color.saturate(Color.towardsBlack(Color.saturate(Theme.accentPrimary, 0.2), 0.3), 0.2), 0.3)
+        triangleHighlightWidth: Math.max(2, Math.round(capsule.capsuleScale * 3))
+        backgroundColorOverride: mediaControl.mediaBorderless ? Theme.surface : "transparent"
         // Disable vertical padding to allow square cover art in all modes
         verticalPaddingScale: 0
         verticalPaddingMin: 0
@@ -192,80 +233,6 @@ Item {
                                 source: (MusicManager.coverUrl || "")
                                 fillMode: Image.PreserveAspectCrop
                                 visible: status === Image.Ready
-                                onStatusChanged: {
-                                    if (status === Image.Ready) {
-                                        colorSampler.requestPaint();
-                                        mediaControl._accentRetryCount = 0;
-                                        accentRetry.restart();
-                                    }
-                                }
-                                onSourceChanged: {
-                                    colorSampler.requestPaint();
-                                    mediaControl._accentRetryCount = 0;
-                                    accentRetry.restart();
-                                }
-                            }
-
-                            Canvas {
-                                id: colorSampler
-                                width: Theme.mediaAccentSamplerPx
-                                height: Theme.mediaAccentSamplerPx
-                                visible: false
-                                onPaint: {
-                                    try {
-                                        var ctx = getContext('2d');
-                                        ctx.clearRect(0, 0, width, height);
-                                        var url = MusicManager.coverUrl || "";
-                                        if (!cover.visible) {
-                                            if (mediaControl._accentCache && mediaControl._accentCache[url]) {
-                                                mediaControl.mediaAccent = mediaControl._accentCache[url];
-                                                mediaControl.accentReady = true;
-                                            }
-                                            return;
-                                        }
-                                        ctx.drawImage(cover, 0, 0, width, height);
-                                        var img = ctx.getImageData(0, 0, width, height);
-                                        var data = img.data;
-                                        var len = data.length;
-                                        var rs = 0, gs = 0, bs = 0, n = 0;
-                                        for (var i = 0; i < len; i += 4) {
-                                            var a = data[i + 3]; if (a < 128) continue;
-                                            var r = data[i], g = data[i + 1], b = data[i + 2];
-                                            var maxv = Math.max(r, g, b), minv = Math.min(r, g, b);
-                                            var sat = maxv - minv; if (sat < 10) continue;
-                                            var lum = (r + g + b) / 3; if (lum < 20 || lum > 235) continue;
-                                            rs += r; gs += g; bs += b; ++n;
-                                        }
-                                        if (n === 0) {
-                                            rs = 0; gs = 0; bs = 0; n = 0;
-                                            for (var j = 0; j < len; j += 4) {
-                                                var a2 = data[j + 3]; if (a2 < 128) continue;
-                                                var r2 = data[j], g2 = data[j + 1], b2 = data[j + 2];
-                                                var max2 = Math.max(r2, g2, b2), min2 = Math.min(r2, g2, b2);
-                                                var sat2 = max2 - min2; if (sat2 < 8) continue;
-                                                var lum2 = (r2 + g2 + b2) / 3; if (lum2 < 20 || lum2 > 240) continue;
-                                                rs += r2; gs += g2; bs += b2; ++n;
-                                            }
-                                        }
-                                        if (n > 0) {
-                                            var rr = Math.min(255, Math.round(rs / n));
-                                            var gg = Math.min(255, Math.round(gs / n));
-                                            var bb = Math.min(255, Math.round(bs / n));
-                                            var col = Qt.rgba(rr / 255.0, gg / 255.0, bb / 255.0, 1);
-                                            mediaControl.mediaAccent = col;
-                                            mediaControl.accentReady = true;
-                                            if (mediaControl._accentCache) mediaControl._accentCache[url] = col;
-                                        } else {
-                                            if (mediaControl._accentCache && mediaControl._accentCache[url]) {
-                                                mediaControl.mediaAccent = mediaControl._accentCache[url];
-                                                mediaControl.accentReady = true;
-                                            } else {
-                                                mediaControl.mediaAccent = Theme.accentPrimary;
-                                                mediaControl.accentReady = false;
-                                            }
-                                        }
-                                    } catch (e) { /* ignore */ }
-                                }
                             }
 
                             MaterialIcon {

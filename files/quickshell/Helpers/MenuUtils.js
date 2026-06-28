@@ -9,7 +9,7 @@ function unwindMenuChildren(opener) {
         if (v && v.length !== undefined) return v;
         if (ch && ch.length !== undefined) return ch;
         return [];
-    } catch (_) { return []; }
+    } catch (_) { console.warn("[MenuUtils.unwindMenuChildren]", _); return []; }
 }
 
 var MenuUtils = {

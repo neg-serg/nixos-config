@@ -16,12 +16,9 @@ AudioLevelCapsule {
     property string mutedProperty: "muted"
     property string changeMethod: ""
     property string toggleMethod: ""
-    property string stepProperty: "step"
 
     // Behaviour toggles
-    property bool autoWheel: true
     property bool toggleOnClick: false
-    property int wheelStepOverride: 0
 
     function refreshFromService() {
         if (!Services.Audio || !levelProperty.length) return;
@@ -32,14 +29,13 @@ AudioLevelCapsule {
     }
 
     function _serviceStep() {
-        if (wheelStepOverride) return wheelStepOverride;
-        if (!stepProperty.length || !Services.Audio) return 1;
-        const val = Services.Audio[stepProperty];
+        if (!Services.Audio) return 1;
+        const val = Services.Audio["step"];
         return (typeof val === "number" && !isNaN(val)) ? val : 1;
     }
 
     function invokeChange(direction) {
-        if (!autoWheel || !Services.Audio || !changeMethod.length) return;
+        if (!Services.Audio || !changeMethod.length) return;
         const fn = Services.Audio[changeMethod];
         if (typeof fn !== "function") return;
         fn.call(Services.Audio, direction > 0 ? _serviceStep() : -_serviceStep());
@@ -65,6 +61,8 @@ AudioLevelCapsule {
         function onMutedChanged() { root._maybeHandle("muted"); }
         function onMicVolumeChanged() { root._maybeHandle("micVolume"); }
         function onMicMutedChanged() { root._maybeHandle("micMuted"); }
+        function onCurrentRouteChanged() { root.refreshFromService(); }
+        function onIsProAudioSinkChanged() { root.refreshFromService(); }
     }
 
     Connections {
