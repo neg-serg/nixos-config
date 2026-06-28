@@ -371,8 +371,7 @@ lib.mkIf enable (
         '';
       in {
         description = "OpenCode AI coding agent daemon";
-        after = [ "network.target" "maid-activation.service" ];
-        wants = [ "maid-activation.service" ];
+        after = [ "network.target" ];
         wantedBy = [ "default.target" ];
         serviceConfig = {
           Type = "simple";
