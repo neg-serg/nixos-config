@@ -11,7 +11,6 @@ in
 {
   imports = [
     ./defaults.nix
-    ./librewolf.nix
     ./surfingkeys-server.nix
   ];
 
