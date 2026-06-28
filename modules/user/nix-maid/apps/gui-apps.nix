@@ -70,6 +70,8 @@ in
         pkgs.swayosd # OSD for volume/brightness on Wayland
         pkgs.wallust # Color palette generator
         pkgs.wlogout # Logout menu
+        pkgs.gimp # GNU Image Manipulation Program (migrated from Flatpak)
+        pkgs.obs-studio # Live streaming and recording software (migrated from Flatpak)
       ];
     }
     (n.mkHomeFiles {
