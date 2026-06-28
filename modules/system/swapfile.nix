@@ -18,14 +18,14 @@ in
   options.system.swapfile = with opts; {
     enable = mkEnableOption "Create the swap file if missing before swap.target.";
     path = mkStrOpt {
-      default = "/zero/swapfile";
+      default = "/mnt/zero/swapfile";
       description = "Absolute path to the swap file to ensure.";
-      example = "/zero/swapfile";
+      example = "/mnt/zero/swapfile";
     };
     sizeGiB = mkIntOpt {
-      default = 80;
+      default = 100;
       description = "Swap file size in GiB used on creation (if missing).";
-      example = 80;
+      example = 100;
     };
   };
 

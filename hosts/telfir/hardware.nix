@@ -124,11 +124,11 @@
   # Avoid double compression for swap
   zramSwap.enable = false;
 
-  # Ensure the on-disk swapfile exists if missing (80G on /zero)
+  # Ensure the on-disk swapfile exists if missing (100G on root)
   system.swapfile = {
     enable = true;
-    path = "/zero/swapfile";
-    sizeGiB = 80;
+    path = "/mnt/zero/swapfile";
+    sizeGiB = 100;
   };
 
   # Disable TPM entirely on this host to remove tpmrm device wait
