@@ -13,6 +13,9 @@
   features.gui.walker.enable = false;
   features.cachyos.enable = true;
 
+  features.web.enable = true;
+  features.web.zen.enable = true;
+
   features.hardware.amdgpu.rocm.enable = true;
   features.mail.enable = true;
   features.mail.vdirsyncer.enable = false;
