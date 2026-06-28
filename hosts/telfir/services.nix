@@ -644,14 +644,10 @@ lib.mkMerge [
       };
     };
 
-    # Configure Nix to use the local NCPS cache
+    # Configure Nix to use only upstream binary caches
     nix.settings = {
       substituters = lib.mkForce [
-        "http://127.0.0.1:8501"
         "https://cache.nixos.org"
-      ];
-      trusted-public-keys = [
-        "cache.example.com:bBR/xna7TbBMPQnlakT/cuLs6b/J4afpXhNJfjcFM+k="
       ];
     };
   }
