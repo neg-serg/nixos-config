@@ -60,7 +60,7 @@ in
         ".config/hypr/workspaces.conf".text = workspacesConfText;
         ".config/hypr/rules-routing.conf".text = routesConfText;
         ".config/hypr/permissions.conf".text = permissionsConfText;
-        ".config/hypr/pyprland.toml".source = pyprlandToml;
+        ".config/pypr/config.toml".source = pyprlandToml;
 
         ".config/hypr/init.conf".source = n.linkImpure (hyprConfDir + /init.conf);
         ".config/hypr/xdph.conf".source = n.linkImpure (hyprConfDir + /xdph.conf);

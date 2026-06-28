@@ -24,7 +24,6 @@ let
       music = {
         animation = "";
         command = "${lib.getExe pkgs.kitty} --class music -e ${lib.getExe pkgs.rmpc}"; # Fast, feature-rich, GPU based terminal emulator | TUI music player client for MPD with album art support vi...
-        margin = "80%";
         class = "music";
         position = "15% 50%";
         size = "70% 40%";
