@@ -206,8 +206,8 @@ swayimg.gallery.on_key("k", function() swayimg.gallery.select("up") end)
 swayimg.gallery.on_key("j", function() swayimg.gallery.select("down") end)
 
 -- Grid paging
-swayimg.gallery.on_key("PageUp", function() swayimg.gallery.select("pgup") end)
-swayimg.gallery.on_key("PageDown", function() swayimg.gallery.select("pgdown") end)
+swayimg.gallery.on_key("Prior", function() swayimg.gallery.select("pgup") end)
+swayimg.gallery.on_key("Next", function() swayimg.gallery.select("pgdown") end)
 
 -- Image info
 swayimg.gallery.on_key("i", function() swayimg.text.show() end)
