@@ -281,20 +281,6 @@ let
         };
         timeout = 5000;
       };
-      # Google Maps integration
-      google_maps = {
-        type = "local";
-        command = [
-          "npx"
-          "-y"
-          "@modelcontextprotocol/server-google-maps"
-        ];
-        enabled = false;
-        environment = {
-          GOOGLE_MAPS_API_KEY = "{env:GOOGLE_MAPS_API_KEY}";
-        };
-        timeout = 5000;
-      };
       # Context7 integration
       context7 = {
         type = "remote";
