@@ -28,4 +28,5 @@ in
   };
   tws = inputs.tws.packages.${prev.system}.default;
   wl = callPkg (inputs.self + "/packages/wl") { };
+  zen-browser = inputs.zen-browser.packages.${prev.stdenv.hostPlatform.system}.default; # Zen Browser (Firefox-based), beta channel from zen-browser flake
 }

@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  inputs,
   ...
 }:
 let
@@ -13,7 +12,7 @@ in
 {
   config = lib.mkIf (webEnabled && guiEnabled && (cfg.enable or false)) {
     environment.systemPackages = [
-      inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default # Zen Browser (Firefox-based; profile migrated manually to ~/.config/zen)
+      pkgs.zen-browser # Zen Browser (Firefox-based; profile migrated manually to ~/.config/zen)
     ];
 
     environment.sessionVariables = {
