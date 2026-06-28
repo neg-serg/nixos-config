@@ -85,6 +85,7 @@ let
     mkdir -p "$out"
     cp -R ${shellFiles}/zsh/. "$out"/
     chmod -R u+w "$out"
+    sed -i "s|@zinit@|${pkgs.zinit}|g" "$out/.zshrc"
     cat > "$out/.zshenv" <<'EOF'
     # shellcheck disable=SC1090
     skip_global_compinit=1
@@ -148,6 +149,7 @@ in
         # Shells
         pkgs.tmux # Terminal multiplexer for session management
         pkgs.oh-my-posh # Cross-shell prompt theme engine
+        pkgs.zinit # Zsh plugin manager (zi)
 
         # Tools needed for kitty-panel
         pkgs.btop # Resource monitor (CPU, memory, disks, network)

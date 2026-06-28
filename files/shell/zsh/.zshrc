@@ -1,9 +1,6 @@
-module_path+=("$HOME/.zi/zmodules/zpmod/Src"); zmodload zi/zpmod 2> /dev/null
+source @zinit@/share/zinit/zinit.zsh
 FAST_WORK_DIR=~/.config/f-sy-h
 source ~/.config/zsh/00-fsyh-parser.zsh
-
-zi_init=${XDG_CONFIG_HOME:-$HOME/.config}/zi/init.zsh
-[[ -r $zi_init ]] && . $zi_init && zzinit
 [[ -f /etc/NIXOS ]] && fpath=(${ZDOTDIR}/lazyfuncs ${XDG_CONFIG_HOME}/zsh-nix $fpath)
 zi ice depth'1' lucid
 zi light romkatv/zsh-defer
