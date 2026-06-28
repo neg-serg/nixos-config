@@ -30,6 +30,13 @@ in
     desktop = "floorp.desktop";
     newTabArg = "-new-tab";
   };
+  zen = {
+    name = "zen";
+    pkg = pkgs.zen-browser; # Zen Browser (Firefox-based), beta channel from zen-browser flake
+    bin = lib.getExe' pkgs.zen-browser "zen-beta";
+    desktop = "zen-beta.desktop";
+    newTabArg = "-new-tab";
+  };
   chrome = {
     name = "chrome";
     pkg = pkgs.google-chrome; # Freeware web browser developed by Google
