@@ -2,15 +2,15 @@ creation_rules:
   - path_regex: secrets/.*\.sops.yaml$
     key_groups:
     - age:
-      - age1eggdzmjp2h4a68kn0j5zay72s7s6tc7qzak6cy9zp3dj0rwxxetsmz4t52 # from ~/.config/sops/age/keys.txt
-      - age1lnkpac97m7drx3k2ej5jwccfa99z4n2sxlezwzjfcevwqtvw9chs8knmtc # from ssh-to-age
+      - age1et3dh7wm5pdr7f8h5e6damqmtpzenze6acpwx9tyql5h0qzhj9fq2mlfl5 # from ~/.config/sops/age/keys.txt
+      - age1mvk4tj7kp9spfftefhlr25xrr4dsrxetcmyldpnmv8sulv90lunq20fjj0 # from ssh-to-age (ssh_host_ed25519_key)
   - path_regex: secrets/.*\.env\.sops$
     key_groups:
     - age:
-      - age1eggdzmjp2h4a68kn0j5zay72s7s6tc7qzak6cy9zp3dj0rwxxetsmz4t52 # from ~/.config/sops/age/keys.txt
-      - age1lnkpac97m7drx3k2ej5jwccfa99z4n2sxlezwzjfcevwqtvw9chs8knmtc # from ssh-to-age
+      - age1et3dh7wm5pdr7f8h5e6damqmtpzenze6acpwx9tyql5h0qzhj9fq2mlfl5 # from ~/.config/sops/age/keys.txt
+      - age1mvk4tj7kp9spfftefhlr25xrr4dsrxetcmyldpnmv8sulv90lunq20fjj0 # from ssh-to-age (ssh_host_ed25519_key)
   - path_regex: secrets/home/.*
     key_groups:
     - age:
-      - age1eggdzmjp2h4a68kn0j5zay72s7s6tc7qzak6cy9zp3dj0rwxxetsmz4t52 # from ~/.config/sops/age/keys.txt
-      - age1lnkpac97m7drx3k2ej5jwccfa99z4n2sxlezwzjfcevwqtvw9chs8knmtc # from ssh-to-age
+      - age1et3dh7wm5pdr7f8h5e6damqmtpzenze6acpwx9tyql5h0qzhj9fq2mlfl5 # from ~/.config/sops/age/keys.txt
+      - age1mvk4tj7kp9spfftefhlr25xrr4dsrxetcmyldpnmv8sulv90lunq20fjj0 # from ssh-to-age (ssh_host_ed25519_key)
