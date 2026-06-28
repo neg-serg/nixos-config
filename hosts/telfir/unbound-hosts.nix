@@ -145,7 +145,6 @@
   "fitbit-pa.googleapis.com. A 185.246.223.127"
   "fitbitvestibuleshim-pa.googleapis.com. A 185.246.223.127"
   "fitbit.google.com. A 185.246.223.127"
-  "claude.ai. A 185.246.223.127"
   "console.anthropic.com. A 185.246.223.127"
   "auth.anthropic.com. A 185.246.223.127"
   "api.anthropic.com. A 185.246.223.127"
