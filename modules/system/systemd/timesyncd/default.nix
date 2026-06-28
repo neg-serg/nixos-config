@@ -14,11 +14,6 @@
     timesyncd = {
       enable = lib.mkDefault true;
       servers = config.networking.timeServers; # default value
-      extraConfig = ''
-        # poll every 128s as opposed to default 32s
-        # should help with battery life a little
-        PollIntervalMinSec=128
-      '';
     };
   };
 }
