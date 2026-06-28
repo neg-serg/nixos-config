@@ -220,7 +220,6 @@
     ./user/session/clipboard.nix
     ./user/session/default.nix
     ./user/session/greetd.nix
-    ./user/session/hypr-bindings.nix
     ./user/session/hyprland.nix
     ./user/session/media.nix
     ./user/session/qt.nix

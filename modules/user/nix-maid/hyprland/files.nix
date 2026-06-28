@@ -8,31 +8,8 @@ let
   n = neg impurity;
 
   hyprConfDir = ../../../../files/gui/hypr;
-
-  coreFiles = [
-    "vars.conf"
-    "classes.conf"
-    "rules.conf"
-    "autostart.conf"
-  ];
-
-  bindingFiles = [
-    "resize.conf"
-    "apps.conf"
-    "special.conf"
-    "wallpaper.conf"
-    "tiling.conf"
-    "tiling-helpers.conf"
-    "media.conf"
-    "notify.conf"
-    "misc.conf"
-    "selectors.conf"
-    "_resets.conf"
-  ];
-
   animDir = ../../../../files/gui/hypr/animations;
   lockDir = ../../../../files/gui/hypr/hyprlock;
-  bindingsDir = hyprConfDir + /bindings;
 
   mkFiles =
     destDir: sourceDir: files:
@@ -49,27 +26,21 @@ in
   generateFileLinks =
     {
       hyprlandConfText,
-      workspacesConfText,
-      routesConfText,
       permissionsConfText,
       pyprlandToml,
     }:
     n.mkHomeFiles (
       {
         ".config/hypr/hyprland.conf".text = hyprlandConfText;
-        ".config/hypr/workspaces.conf".text = workspacesConfText;
-        ".config/hypr/rules-routing.conf".text = routesConfText;
         ".config/hypr/permissions.conf".text = permissionsConfText;
         ".config/pypr/config.toml".source = pyprlandToml;
 
-        ".config/hypr/init.conf".source = n.linkImpure (hyprConfDir + /init.conf);
         ".config/hypr/hyprland.lua".source = n.linkImpure (hyprConfDir + /hyprland.lua);
         ".config/hypr/xdph.conf".source = n.linkImpure (hyprConfDir + /xdph.conf);
-        ".config/hypr/bindings.conf".source = n.linkImpure (hyprConfDir + /bindings.conf);
 
         ".config/hypr/hyprlock.conf".source = n.linkImpure (hyprConfDir + /hyprlock/init.conf);
 
-        # Wallust generates this file at runtime; provide a fallback with known-good defaults so Hyprland never fails on source
+        # Wallust generates this file at runtime; provide a fallback with known-good defaults so hyprlock never fails on source
         ".cache/wallust/hyprland.conf".text = ''
           $col_border_active_base = rgba(00285981)
           $col_border_inactive   = rgba(00000000)
@@ -77,10 +48,8 @@ in
         '';
 
         # Ensure local.d directory exists with at least one .conf file so the glob never fails
-        ".config/hypr/local.d/00-override.conf".text = "# Local Hyprland overrides\n# Put your custom config snippets here, they will be sourced after init.conf\n";
+        ".config/hypr/local.d/00-override.conf".text = "# Local Hyprland overrides (Lua API)\n# Use hl.env(), hl.config(), hl.bind(), hl.window_rule() etc.\n# See ~/.config/hypr/hyprland.lua for reference\n";
       }
-      // (mkFiles ".config/hypr" hyprConfDir coreFiles)
-      // (mkFiles ".config/hypr/bindings" bindingsDir bindingFiles)
       // (mkFiles ".config/hypr/animations" animDir (builtins.attrNames (builtins.readDir animDir)))
       // (mkFiles ".config/hypr/hyprlock" lockDir (builtins.attrNames (builtins.readDir lockDir)))
     );
