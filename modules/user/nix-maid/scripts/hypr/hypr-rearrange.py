@@ -179,11 +179,70 @@ def parse_config_file(path, visited=None):
     return rules
 
 
+def unescape_lua(s):
+    """Unescape common Lua string escape sequences."""
+    s = s.replace("\\\\", "\\")  # \\ → \
+    s = s.replace('\\"', '"')
+    s = s.replace("\\n", "\n")
+    s = s.replace("\\t", "\t")
+    return s
+
+
+def parse_lua_routing(filepath):
+    """Parse hyprland.lua to extract workspace routing rules from cls/routes tables."""
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            content = f.read()
+    except Exception:
+        return []
+
+    # Step 1: Extract cls table (class name → regex pattern)
+    cls_map = {}
+    cls_match = re.search(r"local\s+cls\s*=\s*\{(.*?)\n\}", content, re.DOTALL)
+    if cls_match:
+        for line in cls_match.group(1).split("\n"):
+            m = re.match(r'\s*(\w+)\s*=\s*"((?:[^"\\]|\\.)*)"\s*,?\s*$', line)
+            if m:
+                cls_map[m.group(1)] = unescape_lua(m.group(2))
+
+    if not cls_map:
+        return []
+
+    # Step 2: Extract routes table entries
+    rules = []
+    routes_match = re.search(r"local\s+routes\s*=\s*\{(.*?)\n\}", content, re.DOTALL)
+    if routes_match:
+        for line in routes_match.group(1).split("\n"):
+            # { class = cls.term, id = 1, no_blur = true },
+            m = re.match(r"\s*\{\s*class\s*=\s*cls\.(\w+)\s*,\s*id\s*=\s*(\d+)", line)
+            if m:
+                cls_name = m.group(1)
+                ws_id = m.group(2)
+                if cls_name in cls_map:
+                    rules.append(
+                        {
+                            "ws": ws_id,
+                            "type": "class",
+                            "pattern": cls_map[cls_name],
+                        }
+                    )
+
+    return rules
+
+
 def get_config_rules():
     """
     Entry point to parse config rules.
+    Tries Lua config first, falls back to old conf format.
     """
-    # Start from main config
+    # Try Lua config first (post-migration canonical format)
+    lua_conf = os.path.expanduser("~/.config/hypr/hyprland.lua")
+    if os.path.isfile(lua_conf):
+        rules = parse_lua_routing(lua_conf)
+        if rules:
+            return rules
+
+    # Fall back to old conf format (pre-migration)
     main_conf = "~/.config/hypr/hyprland.conf"
     return parse_config_file(main_conf)
 

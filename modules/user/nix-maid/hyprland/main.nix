@@ -9,7 +9,6 @@
 let
   guiEnabled = config.features.gui.enable or false;
 
-  workspaces = import ./workspaces.nix { inherit lib; };
   scratchpads = import ./scratchpads.nix { inherit lib pkgs; };
   environment = import ./environment.nix { inherit lib pkgs; };
   services = import ./services.nix { inherit lib pkgs; };
@@ -26,8 +25,6 @@ lib.mkIf guiEnabled (
 
     (files.generateFileLinks {
       hyprlandConfText = environment.hyprlandConf;
-      workspacesConfText = workspaces.workspacesConf;
-      routesConfText = workspaces.routesConf;
       permissionsConfText = environment.permissionsConf;
       pyprlandToml = scratchpads.pyprlandToml;
     })

@@ -4,7 +4,6 @@
     ./chat.nix
     ./clipboard.nix
     ./greetd.nix
-    ./hypr-bindings.nix
     ./hyprland.nix
     ./media.nix
     ./qt.nix
