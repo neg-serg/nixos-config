@@ -2,9 +2,9 @@
   lib,
   stdenv,
   fetchFromGitHub,
-  rustPlatform,
   cargo,
   rustc,
+  rustPlatform,
   zsh,
   ncurses,
   gcc,
@@ -33,7 +33,26 @@ let
       "--disable-multibyte"
     ];
 
-    buildPhase = "true";
+    buildPhase = ''
+      # Generate zsh module headers (zsh.mdh, etc.)
+      make -C Src headers 2>/dev/null || make -C Src MODULE 2>/dev/null || true
+      # Ensure zsh.mdh exists; create minimal version if not generated
+      if [ ! -f Src/zsh.mdh ]; then
+        cat > Src/zsh.mdh <<'MHD_EOF'
+#ifndef have_zshQsmain_module
+#define have_zshQsmain_module
+# ifndef IMPORTING_MODULE_zshQsmain
+#  define boot_ boot_zshQsmain
+#  define cleanup_ cleanup_zshQsmain
+#  define features_ features_zshQsmain
+#  define enables_ enables_zshQsmain
+#  define setup_ setup_zshQsmain
+#  define finish_ finish_zshQsmain
+# endif
+#endif
+MHD_EOF
+      fi
+    '';
 
     installPhase = ''
       mkdir -p "$out"
@@ -49,7 +68,7 @@ stdenv.mkDerivation {
   cargoDeps = rustPlatform.fetchCargoVendor {
     inherit src;
     sourceRoot = "${src.name}/rust-engine";
-    hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+    hash = "sha256-Nzforh46hZtsgCuWjKt2An3MdqpFItUcGNIXCe72bDE=";
   };
 
   nativeBuildInputs = [
@@ -59,7 +78,12 @@ stdenv.mkDerivation {
     gcc
   ];
 
+  buildInputs = [ ncurses ];
+
+
   ZSH_INC = "-I${zshHeaders} -I${zshHeaders}/Src -I${zshHeaders}/Src/Zle -I${zshHeaders}/Src/Modules";
+
+  cargoRoot = "rust-engine";
 
   buildPhase = ''
     runHook preBuild
