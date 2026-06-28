@@ -5,9 +5,9 @@ source ~/.config/zsh/00-fsyh-parser.zsh
 zi ice depth'1' lucid
 zi light romkatv/zsh-defer
 typeset -f zsh-defer >/dev/null || zsh-defer() { "$@"; }
-# Native Rust syntax highlighting module (primary — defers to load after F-Sy-H)
+# Native Rust syntax highlighting module (primary)
 module_path+=("@native-syntax@/lib/zsh")
-zsh-defer 'source @native-syntax@/lib/zsh/zsh-native-syntax.plugin.zsh' || source @native-syntax@/lib/zsh/zsh-native-syntax.plugin.zsh
+source @native-syntax@/lib/zsh/zsh-native-syntax.plugin.zsh
 # F-Sy-H (deferred to next prompt, secondary — provides file-ext styles)
 # Skip in Distrobox to prevent breakage due to missing dependencies/widgets
 if [[ -z "$DISTROBOX_ENTER_PATH" ]]; then
