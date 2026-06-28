@@ -180,8 +180,8 @@ lib.mkMerge [
     # Rescrobbled Config
     ".config/rescrobbled/config.toml".text = ''
       [lastfm]
-      api_key = "CHANGE_ME"
-      secret = "CHANGE_ME"
+      api_key = "d374b5a27d6536dc09e105eefad6530c"
+      secret = "ef5ec843f664b52332b61b5884b8d0dd"
       # session_key = "" # Generated via `rescrobbled` auth
     '';
   })
