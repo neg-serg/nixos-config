@@ -41,19 +41,13 @@ lib.mkMerge [
     # Host-specific feature toggles
     features.dev.ai.antigravity.enable = true;
     features.dev.ai.opencode.enable = true;
-    features.text.tex.enable = false;
     features.cli.broot.enable = true;
     features.dev.tla.enable = true;
-    features.apps.winapps.enable = false;
-    features.apps.libreoffice.enable = false;
-    features.games.launchers.lutris.enable = false;
     features.games.launchers.prismlauncher.enable = false;
     features.games.launchers.heroic.enable = false;
-    features.emulators.retroarch.enable = false;
     features.gui.walker.enable = false;
     features.hardware.usbAutomount.enable = true;
     features.net.tailscale.enable = true;
-    features.web.firefox.enable = false;
 
     features.dev.openxr = {
       enable = false;

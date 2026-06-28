@@ -1,7 +1,6 @@
 { ... }:
 {
   imports = [
-    ./bpftrace.nix
     ./hyprland.nix
     ./multimon-ng.nix
     ./packages-overlay.nix
