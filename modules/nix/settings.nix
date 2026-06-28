@@ -23,6 +23,7 @@ in
   };
 
   nix = {
+    package = pkgs.lix;
     nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
     settings = {
       accept-flake-config = true;

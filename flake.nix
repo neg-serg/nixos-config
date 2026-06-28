@@ -10,7 +10,6 @@
     };
     hyprland-guiutils.follows = "hyprland/hyprland-guiutils";
 
-    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/0";
     raise = {
       url = "github:neg-serg/raise";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -79,8 +78,6 @@
   };
 
   nixConfig = {
-    extra-substituters = [ "https://install.determinate.systems" "https://cache.nixos.org" ];
-    extra-trusted-public-keys = [ "install.determinate.systems:2/bvnFWPrR6uxEXpB7XqOSykYemH8e8WoMWvoLLXpF4=" "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ];
   };
 
   outputs =

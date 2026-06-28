@@ -35,7 +35,7 @@ in
     lockKernelModules = false;
     polkit = {
       enable = true;
-      debug = lib.mkDefault false;
+      extraArgs = lib.mkDefault [ ];
     };
     tpm2 = {
       enable = lib.mkDefault true; # enable Trusted Platform Module 2 support
