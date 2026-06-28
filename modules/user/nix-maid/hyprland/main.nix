@@ -9,7 +9,7 @@
 let
   guiEnabled = config.features.gui.enable or false;
 
-  scratchpads = import ./scratchpads.nix { inherit lib pkgs; };
+  scratchpads = import ./scratchpads.nix { inherit lib pkgs config; };
   environment = import ./environment.nix { inherit lib pkgs; };
   services = import ./services.nix { inherit lib pkgs; };
   files = import ./files.nix { inherit lib neg impurity; };
