@@ -86,6 +86,7 @@ let
     cp -R ${shellFiles}/zsh/. "$out"/
     chmod -R u+w "$out"
     sed -i "s|@zinit@|${pkgs.zinit}|g" "$out/.zshrc"
+    sed -i "s|@native-syntax@|${pkgs.neg.zsh-native-syntax}|g" "$out/.zshrc"
     cat > "$out/.zshenv" <<'EOF'
     # shellcheck disable=SC1090
     skip_global_compinit=1
@@ -119,6 +120,7 @@ in
       # systemd-tmpfiles' unsafe-path-transition check (systemd >=252).
       systemd.tmpfiles.rules = [
         "d /home/neg/.config/zsh 0755 neg neg -"
+        "d /home/neg/.config/zsh-native-syntax 0755 neg neg -"
       ];
 
       # --- Interactive Shell Config (Bash) ---
@@ -181,6 +183,7 @@ in
       ".config/zsh".source = zshConfigSource;
       ".config/bash/oh-my-posh.bash".source = "${shellFiles}/bash/oh-my-posh.bash";
       ".config/f-sy-h".source = "${shellFiles}/f-sy-h";
+      ".config/zsh-native-syntax".source = "${shellFiles}/zsh-native-syntax";
 
       # --- Terminal & Specific Shell Configs ---
 
