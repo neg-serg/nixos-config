@@ -10,7 +10,6 @@
 
   system.preserveFlake = false;
 
-  features.gui.walker.enable = false;
   features.cachyos.enable = true;
 
   features.web.enable = true;
