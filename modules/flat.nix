@@ -167,7 +167,6 @@
     ./system/users.nix
     ./system/virt.nix
 
-
     ./system/winapps.nix
     ./system/zram.nix
     ./text/default.nix
