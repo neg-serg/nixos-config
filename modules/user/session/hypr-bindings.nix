@@ -21,7 +21,7 @@ let
     bind = $M4, q, exec, raise --class "nwim" --launch "kitty --class nwim -e /home/neg/.local/bin/v"
     bind = $M4, b, exec, raise --class "mpv" --launch "~/.local/bin/pl video"
     bind = $M4+$C, c, exec, raise --class "swayimg" --launch "swayimg ~/dw"
-    bind = $M4+$S, c, exec, ~/.local/bin/wl
+    bind = $M4+$S, c, exec, wl random ~/pic/wl ~/pic/black
     bind = $M4+$C, v, exec, raise --class "Bazecor" --launch "bazecor"
     bind = $M4, g, exec, raise --class "steam" --launch "flatpak run com.valvesoftware.Steam || steam"
     bind = $M4, o, exec, raise --class "org.pwmt.zathura" --launch "zathura"

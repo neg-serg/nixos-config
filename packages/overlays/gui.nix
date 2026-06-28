@@ -27,4 +27,5 @@ in
     customConfig = inputs.self + "/files/surfingkeys.js";
   };
   tws = inputs.tws.packages.${prev.system}.default;
+  wl = callPkg (inputs.self + "/packages/wl") { };
 }
