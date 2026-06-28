@@ -24,52 +24,52 @@ in
       options = [ "x-systemd.automount" "nofail" "fmask=0177" "dmask=0077" ];
     };
     "${homeDir}/music" = {
-      device = "/zero/music";
+      device = "/mnt/zero/music";
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
     "${homeDir}/torrent" = {
-      device = "/zero/torrent";
+      device = "/mnt/zero/torrent";
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
     "${homeDir}/vid" = {
-      device = "/zero/vid";
+      device = "/mnt/one/vid";
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
     "${homeDir}/games" = {
-      device = "/zero/games";
+      device = "/mnt/zero/games";
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
     "${homeDir}/doc" = {
-      device = "/zero/doc";
+      device = "/mnt/zero/doc";
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
     "/var/lib/flatpak" = {
-      device = "/zero/flatpak";
+      device = "/mnt/zero/flatpak";
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
     "${homeDir}/.local/mail" = {
-      device = "/zero/mail";
+      device = "/mnt/zero/mail";
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
     "${homeDir}/.local/share/Steam/userdata" = {
-      device = "/zero/userdata_steam";
+      device = "/mnt/zero/userdata_steam";
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
     "${homeDir}/.local/share/wineprefixes" = {
-      device = "/zero/wineprefixes";
+      device = "/mnt/zero/wineprefixes";
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
     "${homeDir}/.cache/winetricks" = {
-      device = "/zero/winetricks_cache";
+      device = "/mnt/zero/winetricks_cache";
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
@@ -83,8 +83,8 @@ in
       options = [ "nofail" "x-systemd.automount" ];
     };
 
-    # Xenon 7TiB LV (nvme2n1)
-    "/mnt/xenon" = {
+    # One 7TiB LV (nvme2n1)
+    "/mnt/one" = {
       device = "/dev/mapper/xenon-one";
       fsType = "xfs";
       options = [ "nofail" "x-systemd.automount" ];
