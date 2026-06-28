@@ -6,6 +6,7 @@
   cargo,
   rustc,
   zsh,
+  ncurses,
   gcc,
 }:
 let
@@ -24,6 +25,7 @@ let
     name = "zsh-headers-${zsh.version}";
     src = zsh.src;
     nativeBuildInputs = zsh.nativeBuildInputs or [ ];
+    buildInputs = [ ncurses ];
 
     configureFlags = [
       "--disable-gdbm"
