@@ -123,57 +123,93 @@ in
 
       workspace = w[tv1], gapsout:0, gapsin:0
       workspace = f[1], gapsout:0, gapsin:0
-      windowrule = bordersize 0, onworkspace:w[tv1]
-      windowrule = rounding 0, onworkspace:w[tv1]
-      windowrule = bordersize 0, onworkspace:f[1]
-      windowrule = rounding 0, onworkspace:f[1]
+
+      windowrule {
+          name = no-border-tv
+          match:workspace = w[tv1]
+          border_size = 0
+          rounding = 0
+      }
+
+      windowrule {
+          name = no-border-f1
+          match:workspace = f[1]
+          border_size = 0
+          rounding = 0
+      }
 
       # swayimg
-      windowrule = float, class:^(swayimg)$
-      windowrule = size 1200 800, class:^(swayimg)$
-      windowrule = move 100 100, class:^(swayimg)$
-      windowrule = tag swayimg, class:^(swayimg)$
+      windowrule {
+          name = swayimg
+          match:class = ^(swayimg)$
+          float = yes
+          size = 1200 800
+          move = 100 100
+          tag = swayimg
+      }
 
       # gaming: immediate mode for low-latency input
-      windowrule = immediate, class:^(osu!|cs2)$
+      windowrule {
+          name = gaming-immediate
+          match:class = ^(osu!|cs2)$
+          immediate = yes
+      }
 
       # Bitwarden popup
-      windowrule = float, title:^(.*Bitwarden Password Manager.*)$
+      windowrule {
+          name = bitwarden
+          match:title = ^(.*Bitwarden Password Manager.*)$
+          float = yes
+      }
 
       # Calculator
-      windowrule = float, class:^(org.gnome.Calculator)$
-      windowrule = size 360 490, class:^(org.gnome.Calculator)$
+      windowrule {
+          name = calculator
+          match:class = ^(org.gnome.Calculator)$
+          float = yes
+          size = 360 490
+      }
 
       # Picture-in-Picture (browser video popup)
-      windowrule = float, title:^(Picture-in-Picture)$
-      windowrule = pin, title:^(Picture-in-Picture)$
+      windowrule {
+          name = browser-pip
+          match:title = ^(Picture-in-Picture)$
+          float = yes
+          pin = yes
+      }
 
       # special
-      windowrule = fullscreen, $pic
+      windowrule {
+          name = pic-fullscreen
+          match:class = $pic
+          fullscreen = yes
+      }
     '';
 
   routesConf =
     let
-      routeLines = builtins.concatStringsSep "\n" (
+      ruleLines = builtins.concatStringsSep "\n" (
         lib.filter (s: s != "") (
           map (
-            w: if (w.var or null) != null then "windowrule = workspace ${toString w.id}, $" + w.var else ""
-          ) workspaces
-        )
-      );
-      tagLines = builtins.concatStringsSep "\n" (
-        lib.filter (s: s != "") (
-          map (
-            w: if (w.var or null) != null then "windowrule = tag " + w.var + ", $" + w.var else ""
+            w:
+              if (w.var or null) != null then
+                ''
+                  windowrule {
+                      name = route-${w.var}
+                      match:class = $$${w.var}
+                      no_blur = yes
+                      tag = ${w.var}
+                      workspace = ${toString w.id}
+                  }
+                ''
+              else
+                ""
           ) workspaces
         )
       );
     in
     ''
       # routing
-      windowrule = noblur, $term
-      # tags for workspace-routed classes
-      ${tagLines}
-      ${routeLines}
+      ${ruleLines}
     '';
 }
