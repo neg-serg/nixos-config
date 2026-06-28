@@ -36,7 +36,7 @@ in
             package = pkgs.qemu_kvm; # Generic and open source machine emulator and virtualizer
             runAsRoot = true;
             vhostUserPackages = [ pkgs.virtiofsd ]; # vhost-user virtio-fs device backend written in Rust
-            swtpm.enable = true;
+            swtpm.enable = false;
           };
         };
       }
