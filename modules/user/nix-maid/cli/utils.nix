@@ -17,15 +17,6 @@ lib.mkMerge [
       pkgs.fastfetch # Like neofetch, but much faster (C)
       pkgs.tealdeer # A fast tldr client in Rust
       pkgs.nodejs # For npx and npm
-
-      # ZCLI (custom script)
-      (import ../../../../files/scripts/zcli.nix {
-        inherit pkgs;
-        profile = "telfir"; # Host profile for script configuration
-        repoRoot = "/etc/nixos";
-        flakePath = "/etc/nixos/flake.nix";
-        backupFiles = [ ];
-      })
     ];
 
     # --- Environment Variables ---
