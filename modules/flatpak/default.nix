@@ -22,37 +22,11 @@
 
     packages = [
       {
-        appId = "com.obsproject.Studio";
-        origin = "flathub";
-      }
-      {
         appId = "net.sapples.LiveCaptions";
         origin = "flathub";
       }
       {
         appId = "md.obsidian.Obsidian";
-        origin = "flathub";
-      }
-      {
-        appId = "org.chromium.Chromium";
-        origin = "flathub";
-      }
-      {
-        appId = "org.gimp.GIMP";
-        origin = "flathub";
-      }
-      {
-        appId = "com.google.Chrome";
-        origin = "flathub";
-      }
-      # {
-      #   appId = "org.telegram.desktop";
-      #   origin = "flathub";
-      # }
-    ]
-    ++ lib.optionals (config.features.apps.libreoffice.enable) [
-      {
-        appId = "org.libreoffice.LibreOffice";
         origin = "flathub";
       }
     ]
