@@ -13,9 +13,6 @@ let
     && (config.features.dev.ai.enable or false)
     && (config.features.dev.ai.opencode.enable or false);
 
-  hasGitHubToken = builtins.pathExists ../../../../secrets/home/github-token.sops.yaml;
-  hasDeepseekApi = builtins.pathExists ../../../../secrets/home/deepseek-api.sops.yaml;
-
   opencodeConfig = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
     model = "deepseek/deepseek-v4-flash";
@@ -236,12 +233,6 @@ let
     };
     # MCP (Model Context Protocol) servers configuration
     mcp = {
-      # GitHub code search via Vercel Grep
-      gh_grep = {
-        type = "remote";
-        url = "https://mcp.grep.app";
-        enabled = false;
-      };
       # MCP test server with various tools
       mcp_everything = {
         type = "local";
