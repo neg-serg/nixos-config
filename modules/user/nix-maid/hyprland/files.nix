@@ -68,6 +68,13 @@ in
 
         ".config/hypr/hyprlock.conf".source = n.linkImpure (hyprConfDir + /hyprlock/init.conf);
 
+        # Wallust generates this file at runtime; provide a fallback with known-good defaults so Hyprland never fails on source
+        ".cache/wallust/hyprland.conf".text = ''
+          $col_border_active_base = rgba(00285981)
+          $col_border_inactive   = rgba(00000000)
+          $shadow_color          = rgba(005fafaa)
+        '';
+
         # Ensure local.d directory exists with at least one .conf file so the glob never fails
         ".config/hypr/local.d/00-override.conf".text = "# Local Hyprland overrides\n# Put your custom config snippets here, they will be sourced after init.conf\n";
       }
