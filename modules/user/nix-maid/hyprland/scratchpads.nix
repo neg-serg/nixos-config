@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  config,
   ...
 }:
 let
@@ -10,8 +11,8 @@ let
       "scratchpads"
       "toggle_special"
     ];
-    scratchpads = {
-      im = {
+    scratchpads = lib.filterAttrs (_: v: v != null) {
+      ${if config.features.web.chat.enable or true then "im" else null} = {
         animation = "";
         command = "${lib.getExe pkgs.telegram-desktop}";
         class = "org.telegram.desktop";

@@ -39,5 +39,8 @@ in
     prefs = {
       fastfox.enable = mkBool "enable FastFox-like perf prefs for Mozilla browsers" true;
     };
+    chat = {
+      enable = mkBool "enable Telegram chat client (depends on webkitgtk via telegram-desktop)" true;
+    };
   };
 }

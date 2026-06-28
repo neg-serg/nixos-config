@@ -5,10 +5,11 @@
   ...
 }:
 let
+  cfg = config.features.web.chat or {};
   hasXrayConfig = builtins.pathExists /home/neg/.config/sing-box-tun/config.json;
   proxyEnabled = hasXrayConfig;
 in
-{
+lib.mkIf (cfg.enable or true) {
   environment.systemPackages =
     [
       pkgs.telegram-desktop # Telegram Desktop messenger
