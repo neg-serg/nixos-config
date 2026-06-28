@@ -1,5 +1,6 @@
 {
   lib,
+  pkgs,
   config,
   neg,
   impurity ? null,
@@ -294,34 +295,44 @@ let
   };
 in
 lib.mkIf enable (
-  n.mkHomeFiles {
-    ".config/opencode/opencode.json".text = opencodeConfig;
-    # Shell init snippet to export BRAVE_API_KEY (sourced by zshrc)
-    ".config/zsh/10-opencode-brave.zsh" = lib.mkIf hasBraveSearchApi {
-      text = ''
-        # Source Brave Search API key for OpenCode MCP
-        if [[ -f "/run/user/1000/secrets/brave-search-api.env" ]]; then
-          source "/run/user/1000/secrets/brave-search-api.env"
-        fi
-      '';
-    };
-    # Shell init snippet to export GITHUB_TOKEN (sourced by zshrc)
-    ".config/zsh/10-opencode-github.zsh" = lib.mkIf hasGitHubToken {
-      text = ''
-        # Export GITHUB_TOKEN for OpenCode MCP
-        if [[ -f "/run/user/1000/secrets/github-token" ]]; then
-          export GITHUB_TOKEN="$(cat /run/user/1000/secrets/github-token)"
-        fi
-      '';
-    };
-    # Shell init snippet to export CONTEXT7_API_KEY (sourced by zshrc)
-    ".config/zsh/10-opencode-context7.zsh" = lib.mkIf hasContext7Api {
-      text = ''
-        # Export CONTEXT7_API_KEY for OpenCode MCP
-        if [[ -f "/run/user/1000/secrets/context7-api.env" ]]; then
-          source "/run/user/1000/secrets/context7-api.env"
-        fi
-      '';
-    };
-  }
+  lib.mkMerge [
+    (n.mkHomeFiles {
+      ".config/opencode/opencode.json".text = opencodeConfig;
+      ".config/zsh/10-opencode-brave.zsh" = lib.mkIf hasBraveSearchApi {
+        text = ''
+          if [[ -f "/run/user/1000/secrets/brave-search-api.env" ]]; then
+            source "/run/user/1000/secrets/brave-search-api.env"
+          fi
+        '';
+      };
+      ".config/zsh/10-opencode-github.zsh" = lib.mkIf hasGitHubToken {
+        text = ''
+          if [[ -f "/run/user/1000/secrets/github-token" ]]; then
+            export GITHUB_TOKEN="$(cat /run/user/1000/secrets/github-token)"
+          fi
+        '';
+      };
+      ".config/zsh/10-opencode-context7.zsh" = lib.mkIf hasContext7Api {
+        text = ''
+          if [[ -f "/run/user/1000/secrets/context7-api.env" ]]; then
+            source "/run/user/1000/secrets/context7-api.env"
+          fi
+        '';
+      };
+    })
+    {
+      systemd.user.services.opencode-daemon = {
+        description = "OpenCode AI coding agent daemon";
+        after = [ "network.target" ];
+        wantedBy = [ "default.target" ];
+        serviceConfig = {
+          Type = "simple";
+          Restart = "on-failure";
+          RestartSec = 10;
+          ExecStart = "${pkgs.opencode}/bin/opencode serve";
+          Environment = "HOME=%h";
+        };
+      };
+    }
+  ]
 )
