@@ -99,26 +99,14 @@ in
   };
 
   swapDevices = lib.mkIf isTelfir [
-    { device = "/zero/swapfile"; priority = -2; }
-    { device = "/swapfile"; priority = -3; size = 61440; }
+    { device = "/mnt/zero/swapfile"; priority = -1; size = 102400; }
   ];
 
   services.fstrim = lib.mkIf isTelfir { enable = true; };
 
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"
-    "d /mnt/one 0755 root root -"
   ];
 
-  # Symlinks for convenience: /zero → /mnt/zero, /one → /mnt/one.
-  # Created only when the target path doesn't already exist, so the existing
-  # /zero directory (which holds bind-mount subdirs on the root fs) is preserved.
-  system.activationScripts.mountSymlinks = ''
-    if [ ! -e /zero ] && [ ! -L /zero ]; then
-      ln -s /mnt/zero /zero
-    fi
-    if [ ! -e /one ] && [ ! -L /one ]; then
-      ln -s /mnt/one /one
-    fi
-  '';
+
 }
