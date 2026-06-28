@@ -16,11 +16,39 @@ let
   hasBraveSearchApi = builtins.pathExists ../../../../secrets/home/brave-search-api.env.sops;
   hasGitHubToken = builtins.pathExists ../../../../secrets/home/github-token.sops.yaml;
   hasContext7Api = builtins.pathExists ../../../../secrets/home/context7-api.env.sops;
+  hasDeepseekApi = builtins.pathExists ../../../../secrets/home/deepseek-api.sops.yaml;
 
   opencodeConfig = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
+    model = "deepseek/deepseek-v4-flash";
     plugin = [ "opencode-antigravity-auth@beta" ];
     provider = {
+      deepseek = {
+        npm = "@ai-sdk/openai-compatible";
+        name = "DeepSeek";
+        options = {
+          baseURL = "https://api.deepseek.com/v1";
+          apiKey = "{env:DEEPSEEK_API_KEY}";
+        };
+        models = {
+          deepseek-v4-flash = {
+            name = "DeepSeek V4 Flash";
+          };
+          deepseek-v4-pro = {
+            name = "DeepSeek V4 Pro";
+            reasoning = true;
+            options = {
+              reasoningEffort = "high";
+            };
+            variants = {
+              none = { reasoningEffort = "none"; };
+              low = { reasoningEffort = "low"; };
+              medium = { reasoningEffort = "medium"; };
+              high = { reasoningEffort = "high"; };
+            };
+          };
+        };
+      };
       google = {
         npm = "@ai-sdk/google";
         models = {
@@ -290,6 +318,39 @@ let
           CONTEXT7_API_KEY = "{env:CONTEXT7_API_KEY}";
         };
         enabled = true;
+      };
+      puppeteer = {
+        type = "local";
+        command = [
+          "npx"
+          "-y"
+          "@modelcontextprotocol/server-puppeteer"
+        ];
+        enabled = true;
+        timeout = 5000;
+      };
+      yt_dlp = {
+        type = "local";
+        command = [
+          "npx"
+          "-y"
+          "@kevinwatt/yt-dlp-mcp@latest"
+        ];
+        enabled = true;
+        environment = {
+          YTDLP_DOWNLOADS_DIR = "/home/neg/dw";
+        };
+        timeout = 5000;
+      };
+      youtube = {
+        type = "local";
+        command = [
+          "npx"
+          "-y"
+          "@anaisbetts/mcp-youtube"
+        ];
+        enabled = true;
+        timeout = 5000;
       };
     };
   };
