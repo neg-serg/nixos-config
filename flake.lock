@@ -1283,11 +1283,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1761890579,
-        "narHash": "sha256-D50/N1kcysjr8Tx7FfXR1L0OP+DiqdLjS54+/ptp37I=",
+        "lastModified": 1782687362,
+        "narHash": "sha256-ujQ4rAt20PRooqTeX6GWu6VqkfhOCeL2plSlVr7V49k=",
         "owner": "neg-serg",
         "repo": "raise",
-        "rev": "562de21b6dda28753582bdcbc50dfc3d8581c722",
+        "rev": "14c4df80d1b204eb7abc2448faa9e6d041426bb9",
         "type": "github"
       },
       "original": {
