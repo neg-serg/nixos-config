@@ -45,7 +45,6 @@
     ./sys/gpg.nix
     ./sys/enchant.nix
     ./sys/distros.nix
-    ./sys/flatpak.nix
     ./sys/dev.nix
     ./sys/vdirsyncer.nix
     ./sys/khal.nix

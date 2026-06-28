@@ -28,7 +28,6 @@
   features.dev.hack.pentest = false;
   features.dev.cpp.enable = true;
   features.dev.haskell.enable = false; # Disable Haskell toolchain (saves ~1GB)
-  features.fun.enable = false; # Disable Nix Steam (using Flatpak instead, saves ~5.5GB)
   services.speechd.enable = false;
 
   boot.plymouth = {

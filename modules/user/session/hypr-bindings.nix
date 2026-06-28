@@ -23,11 +23,9 @@ let
     bind = $M4+$C, c, exec, raise --class "swayimg" --launch "swayimg ~/dw"
     bind = $M4+$S, c, exec, wl random ~/pic/wl ~/pic/black
     bind = $M4+$C, v, exec, raise --class "Bazecor" --launch "bazecor"
-    bind = $M4, g, exec, raise --class "steam" --launch "flatpak run com.valvesoftware.Steam || steam"
-    bind = $M4, o, exec, raise --class "org.pwmt.zathura" --launch "zathura"
-    bind = $M4+$C, n, exec, raise --class "Obsidian" --launch "flatpak run md.obsidian.Obsidian"
-    bind = $M4+$S, o, exec, raise --class "obs" --launch "obs"
-    bind = $M4+$S, l, exec, raise --class "lutris" --launch "flatpak run net.lutris.Lutris || lutris"
+    bind = $M4, g, exec, raise --class "steam" --launch "steam"
+    bind = $M4+$C, n, exec, raise --class "Obsidian" --launch "obsidian"
+    bind = $M4+$S, l, exec, raise --class "lutris" --launch "lutris"
   '';
 in
 {

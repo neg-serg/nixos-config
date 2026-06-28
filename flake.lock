@@ -983,21 +983,6 @@
         "type": "github"
       }
     },
-    "nix-flatpak": {
-      "locked": {
-        "lastModified": 1780908363,
-        "narHash": "sha256-llGS4y3Qh1eUkli3/Y2VY9FV3GOUKFZR1E2BDftt45Q=",
-        "owner": "gmodena",
-        "repo": "nix-flatpak",
-        "rev": "1df08625f0f8c7d6e300a0e5df7955bbb877d809",
-        "type": "github"
-      },
-      "original": {
-        "owner": "gmodena",
-        "repo": "nix-flatpak",
-        "type": "github"
-      }
-    },
     "nix-maid": {
       "locked": {
         "lastModified": 1775372244,
@@ -1151,11 +1136,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782676702,
-        "narHash": "sha256-9Wk3iOgY4bYMenbxhcE5/kV+beGBQAA/VcKHqZ4rciM=",
+        "lastModified": 1782686875,
+        "narHash": "sha256-xSf/w8HI7ydIFHkikjccNnc3mqvW3usi/7H8MWBQNPs=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "b4b4ff5eea66ed5288a2029927789b5b62af8ec7",
+        "rev": "0eb92a7be841da6c23f0922b201f231cf1580fd5",
         "type": "github"
       },
       "original": {
@@ -1313,7 +1298,6 @@
         "iosevka-neg": "iosevka-neg",
         "lanzaboote": "lanzaboote",
         "microvm": "microvm",
-        "nix-flatpak": "nix-flatpak",
         "nix-maid": "nix-maid",
         "nixpkgs": "nixpkgs_5",
         "nur": "nur",
