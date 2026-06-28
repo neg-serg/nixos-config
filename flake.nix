@@ -34,11 +34,11 @@
       url = "github:nix-community/NUR";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # nyx = {
-    #   url = "github:chaotic-cx/nyx";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    #   inputs.rust-overlay.follows = "rust-overlay";
-    # };
+    nyx = {
+      url = "github:chaotic-cx/nyx";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-overlay.follows = "rust-overlay";
+    };
     pre-commit-hooks = {
       url = "github:cachix/git-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
