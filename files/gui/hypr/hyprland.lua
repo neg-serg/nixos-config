@@ -198,11 +198,10 @@ hl.bind(M4 .. "+b", hl.dsp.exec_cmd('raise --match "class:regex=^mpv$" --launch 
 hl.bind(M4 .. "+" .. C .. "+c", hl.dsp.exec_cmd('raise --match "class:regex=^swayimg$" --launch "swayimg ~/dw"'))
 hl.bind(M4 .. "+" .. SH .. "+c", hl.dsp.exec_cmd("wl random ~/pic/wl ~/pic/black"))
 hl.bind(M4 .. "+" .. C .. "+v", hl.dsp.exec_cmd('raise --match "class:regex=^Bazecor$" --launch "bazecor"'))
-hl.bind(M4 .. "+g", hl.dsp.exec_cmd('raise --match "class:regex=^(steam|com\\.valvesoftware\\.Steam|steam_app.*|gamescope)$" --launch "steam || flatpak run com.valvesoftware.Steam"'))
-hl.bind(M4 .. "+" .. SH .. "+g", hl.dsp.exec_cmd('raise --match "class:regex=^(lutris|net\\.lutris\\.Lutris)$" --launch "flatpak run net.lutris.Lutris || lutris"'))
-hl.bind(M4 .. "+o", hl.dsp.exec_cmd('raise --match "class:regex=^org\\.pwmt\\.zathura$" --launch "zathura"'))
+hl.bind(M4 .. "+g", hl.dsp.exec_cmd('raise --match "class:regex=^(steam|com\\.valvesoftware\\.Steam|steam_app.*|gamescope)$" --launch "steam"'))
+hl.bind(M4 .. "+" .. SH .. "+g", hl.dsp.exec_cmd('raise --match "class:regex=^(lutris|net\\.lutris\\.Lutris)$" --launch "lutris"'))
 hl.bind(M4 .. "+" .. C .. "+o", hl.dsp.exec_cmd('raise --match "class:regex=^(obs|com\\.obsproject\\.Studio)$" --launch "obs"'))
-hl.bind(M4 .. "+" .. C .. "+n", hl.dsp.exec_cmd('raise --match "class:regex=^(Obsidian|md\\.obsidian\\.Obsidian)$" --launch "flatpak run md.obsidian.Obsidian"'))
+hl.bind(M4 .. "+" .. C .. "+n", hl.dsp.exec_cmd('raise --match "class:regex=^(Obsidian|md\\.obsidian\\.Obsidian)$" --launch "obsidian"'))
 
 -- --- Media (media.conf) ---
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("swayosd-client --output-volume +5"), { repeating = true })

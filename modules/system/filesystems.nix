@@ -48,11 +48,6 @@ in
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
-    "/var/lib/flatpak" = {
-      device = "/mnt/zero/flatpak";
-      fsType = "none";
-      options = [ "bind" "nofail" "x-systemd.automount" ];
-    };
     "${homeDir}/.local/mail" = {
       device = "/mnt/zero/mail";
       fsType = "none";

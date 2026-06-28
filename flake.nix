@@ -35,7 +35,6 @@
       url = "github:microvm-nix/microvm.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-flatpak.url = "github:gmodena/nix-flatpak";
     nix-maid.url = "github:viperML/nix-maid";
     nur = {
       url = "github:nix-community/NUR";

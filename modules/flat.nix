@@ -46,8 +46,6 @@
     ./features/web.nix
 
     ./flake-preflight.nix
-    ./flatpak/default.nix
-    ./flatpak/pkgs.nix # Nix package manager
     ./fonts/default.nix
     ./fun/default.nix
 
