@@ -23,6 +23,7 @@ in
     net = {
       tailscale.enable = mkBool "enable Tailscale mesh VPN and Tailray GUI" false;
       wifi.enable = mkBool "enable Wi-Fi stack and management tools (iwd, wavemon, etc.)" false;
+      proxy.enable = mkBool "enable Xray SOCKS5 proxy (127.0.0.1:10808)" false;
     };
 
     hardware = {

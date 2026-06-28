@@ -22,6 +22,8 @@
     enable = true;
   };
 
+  features.net.proxy.enable = true;
+
   features.dev.hack.pentest = false;
   features.dev.cpp.enable = false; # Disable C++ toolchain (saves ~2GB)
   features.dev.haskell.enable = false; # Disable Haskell toolchain (saves ~1GB)
