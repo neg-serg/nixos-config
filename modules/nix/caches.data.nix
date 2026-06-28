@@ -7,10 +7,13 @@
     # "https://nixos-cache-proxy.sweetdogs.ru"
     # "https://ncproxy.vizqq.cc"
     "https://cache.nixos.org/"
+    "https://install.determinate.systems"
   ];
 
   trusted-public-keys = [
     # Official NixOS cache
     "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+    # Determinate Systems
+    "install.determinate.systems:2/bvnFWPrR6uxEXpB7XqOSykYemH8e8WoMWvoLLXpF4="
   ];
 }
