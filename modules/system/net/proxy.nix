@@ -64,4 +64,5 @@ in
   systemd.services.nix-daemon = lib.mkIf proxyEnabled {
     serviceConfig.EnvironmentFile = [ "/run/secrets/xray-proxy-env" ];
   };
+
 }
