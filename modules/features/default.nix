@@ -108,6 +108,7 @@ in
           enable = mkDefault true;
           tools.enable = mkDefault true;
           addonsFromNUR.enable = mkDefault true;
+          default = mkDefault "zen";
           floorp.enable = mkDefault true;
           firefox.enable = mkDefault false;
           librewolf.enable = mkDefault false;
