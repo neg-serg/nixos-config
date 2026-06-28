@@ -14,7 +14,7 @@ let
     owner = "neg-serg";
     repo = "zsh-native-syntax";
     rev = "3ed903e9c66359d8b5457c25c7e76bb09aa6a565";
-    hash = "sha256-0kv1g3x5j38b6sxwci1i7qqc8h8sc3lfflzkz1aip2r03hn0nlhk";
+    hash = "sha256-E1ILLBwgixtV+PNT5+hgGkHEMD4xRMa7NgsNWfp4YU8=";
   };
 
   # Configured zsh source (provides module headers: zsh.h, zle.h, zsh.mdh, etc.)
@@ -45,7 +45,7 @@ stdenv.mkDerivation {
   cargoDeps = rustPlatform.fetchCargoVendor {
     inherit src;
     sourceRoot = "${src.name}/rust-engine";
-    hash = "sha256-0000000000000000000000000000000000000000000000000000=";
+    hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
   };
 
   nativeBuildInputs = [
