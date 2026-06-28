@@ -89,7 +89,8 @@
       "ec_sys"
       "asus_ec_sensors"
     ];
-    extraModulePackages = lib.mkAfter (
+    # amneziawg disabled — incompatible with 7.1.1-cachyos (ipv6_stub removed)
+    extraModulePackages = lib.mkForce (
       lib.optional (builtins.hasAttr "asus-ec-sensors" config.boot.kernelPackages)
         config.boot.kernelPackages."asus-ec-sensors"
     );
@@ -105,11 +106,15 @@
     # Lower console log level during/after boot; messages stay in journalctl
     consoleLogLevel = 3;
 
-    # Skip boot menu by default (can hold a key to show menu)
+    # Disable lanzaboote — Secure Boot is off, PKI bundle not provisioned
+    lanzaboote.enable = false;
     loader = {
       timeout = 2; # seconds
-      # Allow editing kernel cmdline from the loader (useful for recovery)
-      systemd-boot.editor = true;
+      # Use systemd-boot instead of lanzaboote
+      systemd-boot = {
+        enable = true;
+        editor = true;
+      };
     };
 
     # Enable AutoFDO (requires building kernel with Clang)
