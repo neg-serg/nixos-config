@@ -13,7 +13,6 @@ let
     && (config.features.dev.ai.enable or false)
     && (config.features.dev.ai.opencode.enable or false);
 
-  hasBraveSearchApi = builtins.pathExists ../../../../secrets/home/brave-search-api.env.sops;
   hasGitHubToken = builtins.pathExists ../../../../secrets/home/github-token.sops.yaml;
   hasContext7Api = builtins.pathExists ../../../../secrets/home/context7-api.env.sops;
   hasDeepseekApi = builtins.pathExists ../../../../secrets/home/deepseek-api.sops.yaml;
@@ -296,20 +295,6 @@ let
         };
         timeout = 5000;
       };
-      # Brave Search integration
-      brave_search = {
-        type = "local";
-        command = [
-          "npx"
-          "-y"
-          "@modelcontextprotocol/server-brave-search"
-        ];
-        enabled = true;
-        environment = {
-          BRAVE_API_KEY = "{env:BRAVE_API_KEY}";
-        };
-        timeout = 5000;
-      };
       # Context7 integration
       context7 = {
         type = "remote";
@@ -365,7 +350,6 @@ lib.mkIf enable (
         opencodeServe = pkgs.writeShellScript "opencode-serve" ''
           export DEEPSEEK_API_KEY="$(${pkgs.coreutils}/bin/cat /run/secrets/deepseek-api 2>/dev/null || true)"
           export GITHUB_TOKEN="$(${pkgs.coreutils}/bin/cat /run/secrets/github-token 2>/dev/null || true)"
-          export BRAVE_API_KEY="$(${pkgs.coreutils}/bin/cat /run/user/1000/secrets/brave-search-api.env 2>/dev/null || true)"
           export CONTEXT7_API_KEY="$(${pkgs.coreutils}/bin/cat /run/user/1000/secrets/context7-api.env 2>/dev/null || true)"
           exec ${pkgs.opencode}/bin/opencode serve
         '';
