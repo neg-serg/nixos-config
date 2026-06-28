@@ -17,13 +17,10 @@ let
 
   commonModules = [
     ../init.nix
-    # ../modules/impurity.nix # Removed in favor of pure eval
     inputs.determinate.nixosModules.default
-    inputs.extra-container.nixosModules.default
     inputs.lanzaboote.nixosModules.lanzaboote
     inputs.sops-nix.nixosModules.sops
 
-    inputs.microvm.nixosModules.host
     inputs.nyx.nixosModules.default
   ];
 
