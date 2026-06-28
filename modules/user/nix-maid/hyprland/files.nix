@@ -67,6 +67,9 @@ in
         ".config/hypr/bindings.conf".source = n.linkImpure (hyprConfDir + /bindings.conf);
 
         ".config/hypr/hyprlock.conf".source = n.linkImpure (hyprConfDir + /hyprlock/init.conf);
+
+        # Ensure local.d directory exists with at least one .conf file so the glob never fails
+        ".config/hypr/local.d/00-override.conf".text = "# Local Hyprland overrides\n# Put your custom config snippets here, they will be sourced after init.conf\n";
       }
       // (mkFiles ".config/hypr" hyprConfDir coreFiles)
       // (mkFiles ".config/hypr/bindings" bindingsDir bindingFiles)

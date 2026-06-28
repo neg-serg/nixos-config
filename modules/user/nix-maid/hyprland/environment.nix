@@ -27,9 +27,7 @@
     source = ~/.config/hypr/init.conf
     source = ~/.config/hypr/permissions.conf
 
-    hyprlang noerror true
     source = ~/.config/hypr/local.d/*.conf
-    hyprlang noerror false
   '';
 
   permissionsConf = ''

@@ -129,27 +129,27 @@ in
       windowrule = rounding 0, floating:0, onworkspace:f[1]
 
       # swayimg
-      windowrulev2 = float, class:^(swayimg)$
-      windowrulev2 = size 1200 800, class:^(swayimg)$
-      windowrulev2 = move 100 100, class:^(swayimg)$
-      windowrulev2 = tag swayimg, class:^(swayimg)$
+      windowrule = float, class:^(swayimg)$
+      windowrule = size 1200 800, class:^(swayimg)$
+      windowrule = move 100 100, class:^(swayimg)$
+      windowrule = tag swayimg, class:^(swayimg)$
 
       # gaming: immediate mode for low-latency input
-      windowrulev2 = immediate, class:^(osu!|cs2)$
+      windowrule = immediate, class:^(osu!|cs2)$
 
       # Bitwarden popup
-      windowrulev2 = float, title:^(.*Bitwarden Password Manager.*)$
+      windowrule = float, title:^(.*Bitwarden Password Manager.*)$
 
       # Calculator
-      windowrulev2 = float, class:^(org.gnome.Calculator)$
-      windowrulev2 = size 360 490, class:^(org.gnome.Calculator)$
+      windowrule = float, class:^(org.gnome.Calculator)$
+      windowrule = size 360 490, class:^(org.gnome.Calculator)$
 
       # Picture-in-Picture (browser video popup)
-      windowrulev2 = float, title:^(Picture-in-Picture)$
-      windowrulev2 = pin, title:^(Picture-in-Picture)$
+      windowrule = float, title:^(Picture-in-Picture)$
+      windowrule = pin, title:^(Picture-in-Picture)$
 
       # special
-      windowrulev2 = fullscreen, $pic
+      windowrule = fullscreen, $pic
     '';
 
   routesConf =
@@ -157,21 +157,21 @@ in
       routeLines = builtins.concatStringsSep "\n" (
         lib.filter (s: s != "") (
           map (
-            w: if (w.var or null) != null then "windowrulev2 = workspace ${toString w.id}, $" + w.var else ""
+            w: if (w.var or null) != null then "windowrule = workspace ${toString w.id}, $" + w.var else ""
           ) workspaces
         )
       );
       tagLines = builtins.concatStringsSep "\n" (
         lib.filter (s: s != "") (
           map (
-            w: if (w.var or null) != null then "windowrulev2 = tag " + w.var + ", $" + w.var else ""
+            w: if (w.var or null) != null then "windowrule = tag " + w.var + ", $" + w.var else ""
           ) workspaces
         )
       );
     in
     ''
       # routing
-      windowrulev2 = noblur, $term
+      windowrule = noblur, $term
       # tags for workspace-routed classes
       ${tagLines}
       ${routeLines}
