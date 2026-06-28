@@ -15,6 +15,7 @@
 
   features.hardware.amdgpu.rocm.enable = true;
   features.mail.enable = true;
+  features.mail.vdirsyncer.enable = false;
 
   # Optimization settings
   features.optimization = {
