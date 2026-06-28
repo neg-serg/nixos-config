@@ -11,6 +11,8 @@ let
   hasVlessRealitySingboxTun = builtins.pathExists ./vless/reality-singbox-tun.json.sops;
   hasBraveSearchApi = builtins.pathExists ./brave-search-api.env.sops;
   hasContext7Api = builtins.pathExists ./context7-api.env.sops;
+  hasMpdasNegrc = builtins.pathExists ./mpdas/neg.rc;
+  hasMusicbrainz = builtins.pathExists ./musicbrainz;
 in
 {
   sops = {
@@ -25,20 +27,24 @@ in
         path = "${config.xdg.configHome}/nix/netrc";
         mode = "0400";
       };
+      # Cachix token for watch-store user service (systemd EnvironmentFile format)
+      # Included only if secrets/cachix.env exists in the repo.
+      # Create and encrypt this file with sops; contents must be a single line:
+      #   CACHIX_AUTH_TOKEN=...
+    }
+    // lib.optionalAttrs hasMpdasNegrc {
       "mpdas_negrc" = {
         format = "binary";
         sopsFile = ./mpdas/neg.rc;
         path = "/run/user/1000/secrets/mpdas_negrc";
       };
+    }
+    // lib.optionalAttrs hasMusicbrainz {
       "musicbrainz.yaml" = {
         format = "binary";
         sopsFile = ./musicbrainz;
         path = "/run/user/1000/secrets/musicbrainz.yaml";
       };
-      # Cachix token for watch-store user service (systemd EnvironmentFile format)
-      # Included only if secrets/cachix.env exists in the repo.
-      # Create and encrypt this file with sops; contents must be a single line:
-      #   CACHIX_AUTH_TOKEN=...
     }
     // lib.optionalAttrs hasCachixEnv {
       "cachix_env" = {
