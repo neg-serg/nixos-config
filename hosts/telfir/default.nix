@@ -25,10 +25,8 @@
 
   features.net.proxy.enable = true;
 
-  features.dev.hack.pentest = false;
-  features.dev.cpp.enable = true;
   features.dev.haskell.enable = false; # Disable Haskell toolchain (saves ~1GB)
-  services.speechd.enable = false;
+  features.dev.cpp.enable = true; # Enable C++ toolchain (ccache, gcc, cmake)
 
   boot.plymouth = {
     enable = true;

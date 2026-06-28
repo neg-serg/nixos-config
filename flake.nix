@@ -21,7 +21,6 @@
     };
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
 
-    extra-container.url = "github:erikarvstedt/extra-container";
     iosevka-neg = {
       url = "github:neg-serg/iosevka-neg";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -30,10 +29,6 @@
       url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
-    };
-    microvm = {
-      url = "github:microvm-nix/microvm.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-maid.url = "github:viperML/nix-maid";
     nur = {

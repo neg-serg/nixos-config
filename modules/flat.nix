@@ -97,15 +97,9 @@
     ./monitoring/promtail/default.nix
     ./monitoring/sysstat/default.nix
     ./monitoring/vnstat/default.nix
-    ./nix/bpftrace.nix
     ./nix/clblast.nix
     ./nix/default.nix
-    ./nix/hyprland.nix
-    ./nix/multimon-ng.nix
 
-    ./nix/packages-overlay.nix
-    ./nix/settings.nix
-    ./nix/wb32-dfu-updater.nix
     ./profiles/services.nix
     ./roles/default.nix
     ./roles/homelab.nix
@@ -137,7 +131,6 @@
     ./system/boot/pkgs.nix # Nix package manager
     ./system/environment.nix
     ./system/filesystems.nix
-    ./system/guix.nix
     ./system/irqbalance.nix
     ./system/kernel/default.nix
     ./system/kernel/params.nix
@@ -174,7 +167,6 @@
     ./system/users.nix
     ./system/virt.nix
 
-    ./system/virt/default.nix
 
     ./system/winapps.nix
     ./system/zram.nix
