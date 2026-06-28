@@ -63,5 +63,8 @@ in
 
     programs.virt-manager.enable = true;
     services.spice-webdavd.enable = true;
+
+    # Clear TPM credential loading — no TPM device available
+    systemd.services.libvirtd.serviceConfig.LoadCredential = lib.mkForce [ ];
   };
 }
