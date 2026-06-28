@@ -361,15 +361,24 @@ lib.mkIf enable (
       ".config/opencode/opencode.json".text = opencodeConfig;
     })
     {
-      systemd.user.services.opencode-daemon = {
+      systemd.user.services.opencode-daemon = let
+        opencodeServe = pkgs.writeShellScript "opencode-serve" ''
+          export DEEPSEEK_API_KEY="$(${pkgs.coreutils}/bin/cat /run/secrets/deepseek-api 2>/dev/null || true)"
+          export GITHUB_TOKEN="$(${pkgs.coreutils}/bin/cat /run/secrets/github-token 2>/dev/null || true)"
+          export BRAVE_API_KEY="$(${pkgs.coreutils}/bin/cat /run/user/1000/secrets/brave-search-api.env 2>/dev/null || true)"
+          export CONTEXT7_API_KEY="$(${pkgs.coreutils}/bin/cat /run/user/1000/secrets/context7-api.env 2>/dev/null || true)"
+          exec ${pkgs.opencode}/bin/opencode serve
+        '';
+      in {
         description = "OpenCode AI coding agent daemon";
-        after = [ "network.target" ];
+        after = [ "network.target" "maid-activation.service" ];
+        wants = [ "maid-activation.service" ];
         wantedBy = [ "default.target" ];
         serviceConfig = {
           Type = "simple";
           Restart = "on-failure";
           RestartSec = 10;
-          ExecStart = "${pkgs.opencode}/bin/opencode serve";
+          ExecStart = "${opencodeServe}";
           Environment = "HOME=%h";
         };
       };
