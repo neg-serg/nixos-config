@@ -3,6 +3,7 @@
   rustPlatform,
   shaderc,
   pkg-config,
+  makeWrapper,
   wayland,
   vulkan-loader,
   libxkbcommon,
@@ -17,6 +18,7 @@ rustPlatform.buildRustPackage rec {
   cargoLock.lockFile = "${inputs.wl}/Cargo.lock";
 
   nativeBuildInputs = [
+    makeWrapper
     shaderc # for glslc (Vulkan shader compilation)
     pkg-config
   ];
@@ -26,6 +28,13 @@ rustPlatform.buildRustPackage rec {
     vulkan-loader
     libxkbcommon
   ];
+
+  postFixup = ''
+    wrapProgram "$out/bin/wl" \
+      --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ vulkan-loader ]}
+    wrapProgram "$out/bin/wl-daemon" \
+      --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ vulkan-loader ]}
+  '';
 
   meta = with lib; {
     description = "Vulkan-accelerated wallpaper daemon for Wayland compositors";
