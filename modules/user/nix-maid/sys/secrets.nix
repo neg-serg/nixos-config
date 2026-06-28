@@ -16,6 +16,7 @@ let
   hasBraveSearchApi = builtins.pathExists "${secretsDir}/brave-search-api.env.sops";
   hasContext7Api = builtins.pathExists "${secretsDir}/context7-api.env.sops";
   hasXrayProxyPassword = builtins.pathExists "${secretsDir}/xray-proxy-password.sops.yaml";
+  hasDeepseekApi = builtins.pathExists "${secretsDir}/deepseek-api.sops.yaml";
 in
 lib.mkMerge [
 {
@@ -89,6 +90,16 @@ lib.mkMerge [
         format = "binary";
         sopsFile = "${secretsDir}/context7-api.env.sops";
         path = "/run/user/1000/secrets/context7-api.env";
+        mode = "0400";
+        owner = "neg";
+      };
+    }
+    // lib.optionalAttrs hasDeepseekApi {
+      "deepseek-api" = {
+        format = "yaml";
+        sopsFile = "${secretsDir}/deepseek-api.sops.yaml";
+        key = "DEEPSEEK_API_KEY";
+        path = "/run/user/1000/secrets/deepseek-api";
         mode = "0400";
         owner = "neg";
       };
