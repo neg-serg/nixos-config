@@ -15,4 +15,4 @@ let
       ;
   };
 in
-lib.attrByPath [ key ] browsers browsers.floorp
+lib.attrByPath [ key ] browsers.floorp browsers
