@@ -80,7 +80,6 @@ stdenv.mkDerivation {
 
   buildInputs = [ ncurses ];
 
-
   ZSH_INC = "-I${zshHeaders} -I${zshHeaders}/Src -I${zshHeaders}/Src/Zle -I${zshHeaders}/Src/Modules";
 
   cargoRoot = "rust-engine";
