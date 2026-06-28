@@ -1070,6 +1070,7 @@
         "sops-nix": "sops-nix",
         "tailray": "tailray",
         "winapps": "winapps",
+        "wl": "wl",
         "wrapper-manager": "wrapper-manager",
         "xdg-desktop-portal-hyprland": [
           "hyprland",
@@ -1302,6 +1303,22 @@
       "original": {
         "owner": "winapps-org",
         "repo": "winapps",
+        "type": "github"
+      }
+    },
+    "wl": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778551419,
+        "narHash": "sha256-mBDzV8110wdBDV/f+2FOKMZjGOkGwC0cKBudvuk/e/4=",
+        "owner": "neg-serg",
+        "repo": "wl",
+        "rev": "6f2a3b0d3a582d69dc926c9ea1c621a7c63fa6fc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "wl",
         "type": "github"
       }
     },
