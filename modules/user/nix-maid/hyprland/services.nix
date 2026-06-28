@@ -5,7 +5,7 @@
 }:
 {
   packages =
-    hy3Enabled: pyprlandConfig:
+    pyprlandConfig:
     [
       pkgs.hyprlock # Hyprland's GPU-accelerated screen locking utility
       pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
@@ -96,8 +96,7 @@
       (pkgs.writeShellScriptBin "hyde-selector" (
         builtins.readFile ../../../../files/scripts/hyde-selector.sh
       ))
-    ]
-    ++ lib.optional hy3Enabled pkgs.hyprlandPlugins.hy3; # Tiling plugin for Hyprland inspired by i3/sway
+    ];
 
   systemdTargets = {
     hyprland-session = {

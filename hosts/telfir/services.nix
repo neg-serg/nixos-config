@@ -53,7 +53,6 @@ lib.mkMerge [
     features.games.launchers.heroic.enable = false;
     features.games.nethack.enable = true;
     features.emulators.retroarch.enable = false;
-    features.gui.hy3.enable = false;
     features.gui.walker.enable = false;
     features.gui.quickshell.enable = true;
     features.hardware.usbAutomount.enable = true;
