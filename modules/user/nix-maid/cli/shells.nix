@@ -114,8 +114,11 @@ in
 {
   config = lib.mkMerge [
     {
-      # Ensure Config Dirs exist for shells
+      # Pre-establish shell config dirs with correct ownership so that
+      # nix-maid's later symlink-layer (into the nix store) doesn't trip
+      # systemd-tmpfiles' unsafe-path-transition check (systemd >=252).
       systemd.tmpfiles.rules = [
+        "d /home/neg/.config/zsh 0755 neg neg -"
       ];
 
       # --- Interactive Shell Config (Bash) ---

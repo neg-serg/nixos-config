@@ -118,5 +118,10 @@ zle_highlight=(region:bg=228 paste:none)
 zsh-defer _zpcompinit_custom
 zsh-defer dircolors_init
 
+# Proxy env for local SOCKS5 (Xray) — sourced early so nix/user commands pick it up
+if [[ -f "/run/secrets/xray-proxy-env" ]]; then
+  source "/run/secrets/xray-proxy-env"
+fi
+
 # vim: ft=zsh:nowrap
 

@@ -298,27 +298,6 @@ lib.mkIf enable (
   lib.mkMerge [
     (n.mkHomeFiles {
       ".config/opencode/opencode.json".text = opencodeConfig;
-      ".config/zsh/10-opencode-brave.zsh" = lib.mkIf hasBraveSearchApi {
-        text = ''
-          if [[ -f "/run/user/1000/secrets/brave-search-api.env" ]]; then
-            source "/run/user/1000/secrets/brave-search-api.env"
-          fi
-        '';
-      };
-      ".config/zsh/10-opencode-github.zsh" = lib.mkIf hasGitHubToken {
-        text = ''
-          if [[ -f "/run/user/1000/secrets/github-token" ]]; then
-            export GITHUB_TOKEN="$(cat /run/user/1000/secrets/github-token)"
-          fi
-        '';
-      };
-      ".config/zsh/10-opencode-context7.zsh" = lib.mkIf hasContext7Api {
-        text = ''
-          if [[ -f "/run/user/1000/secrets/context7-api.env" ]]; then
-            source "/run/user/1000/secrets/context7-api.env"
-          fi
-        '';
-      };
     })
     {
       systemd.user.services.opencode-daemon = {
