@@ -59,12 +59,8 @@ in
           };
         };
       })
+      # No TPM device available — libvirtd 12.x fails without it
+      { libvirtd.enable = lib.mkForce false; }
     ];
-
-    programs.virt-manager.enable = true;
-    services.spice-webdavd.enable = true;
-
-    # Clear TPM credential loading — no TPM device available
-    systemd.services.libvirtd.serviceConfig.LoadCredential = lib.mkForce [ ];
   };
 }
