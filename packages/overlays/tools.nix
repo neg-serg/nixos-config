@@ -33,6 +33,9 @@ in
     # duf fork with --style plain, --no-header, --no-bars flags
     duf = callPkg (packagesRoot + "/duf") { };
 
+    # Native Rust-based zsh syntax highlighting engine
+    zsh-native-syntax = callPkg (packagesRoot + "/zsh-native-syntax") { };
+
     # ncpamixer with custom config
     ncpamixer-wrapped =
       let
