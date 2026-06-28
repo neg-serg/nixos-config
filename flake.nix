@@ -5,12 +5,17 @@
 
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
     hyprland = {
-      url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.54.0";
+      url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.55.4";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    hyprland-guiutils.follows = "hyprland/hyprland-guiutils";
     raise = {
       url = "github:neg-serg/raise";
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+    wl = {
+      url = "github:neg-serg/wl";
+      flake = false;
     };
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
 
@@ -71,6 +76,10 @@
       flake = false;
     };
     wrapper-manager.url = "github:viperML/wrapper-manager";
+    zen-browser = {
+      url = "github:0xc000022070/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   nixConfig = {

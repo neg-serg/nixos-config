@@ -204,6 +204,5 @@ clean-caches:
     : "${XDG_CACHE_HOME:=$HOME/.cache}"
     : "${XDG_STATE_HOME:=$HOME/.local/state}"
     rm -rf "$XDG_CACHE_HOME/zsh" || true
-    rm -rf "$XDG_CACHE_HOME/nu" "$XDG_CACHE_HOME/nushell" || true
-    rm -f "$XDG_STATE_HOME/nushell/history.sqlite3"* || true
+
 
