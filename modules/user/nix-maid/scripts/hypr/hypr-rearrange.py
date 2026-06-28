@@ -189,7 +189,7 @@ def unescape_lua(s):
 
 
 def parse_lua_routing(filepath):
-    """Parse hyprland.lua to extract workspace routing rules from cls/routes tables."""
+    """Parse hyprland.lua to extract workspace routing from cls/routes tables."""
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
@@ -210,11 +210,15 @@ def parse_lua_routing(filepath):
 
     # Step 2: Extract routes table entries
     rules = []
-    routes_match = re.search(r"local\s+routes\s*=\s*\{(.*?)\n\}", content, re.DOTALL)
+    routes_match = re.search(
+        r"local\s+routes\s*=\s*\{(.*?)\n\}", content, re.DOTALL
+    )
     if routes_match:
         for line in routes_match.group(1).split("\n"):
             # { class = cls.term, id = 1, no_blur = true },
-            m = re.match(r"\s*\{\s*class\s*=\s*cls\.(\w+)\s*,\s*id\s*=\s*(\d+)", line)
+            m = re.match(
+                r"\s*\{\s*class\s*=\s*cls\.(\w+)\s*,\s*id\s*=\s*(\d+)", line
+            )
             if m:
                 cls_name = m.group(1)
                 ws_id = m.group(2)
