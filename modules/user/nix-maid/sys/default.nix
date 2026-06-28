@@ -4,7 +4,6 @@
     ./dev.nix
     ./distros.nix
     ./enchant.nix
-    ./flatpak.nix
     ./gpg.nix
     ./khal.nix
     ./mail.nix
