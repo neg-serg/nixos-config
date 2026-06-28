@@ -13,7 +13,6 @@ let
   hasVdirsyncerGoogle = builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml";
   hasWorkWireguard = builtins.pathExists "${secretsDir}/wireguard/work-wg.conf.sops";
   hasVlessRealitySingboxTun = builtins.pathExists "${secretsDir}/vless/reality-singbox-tun.json.sops";
-  hasBraveSearchApi = builtins.pathExists "${secretsDir}/brave-search-api.env.sops";
   hasContext7Api = builtins.pathExists "${secretsDir}/context7-api.env.sops";
   hasXrayProxyPassword = builtins.pathExists "${secretsDir}/xray-proxy-password.sops.yaml";
   hasDeepseekApi = builtins.pathExists "${secretsDir}/deepseek-api.sops.yaml";
@@ -73,15 +72,6 @@ lib.mkMerge [
         sopsFile = "${secretsDir}/vless/reality-singbox-tun.json.sops";
         path = "/run/user/1000/secrets/vless-reality-singbox-tun.json";
         mode = "0600";
-        owner = "neg";
-      };
-    }
-    // lib.optionalAttrs hasBraveSearchApi {
-      "brave-search-api-env" = {
-        format = "binary";
-        sopsFile = "${secretsDir}/brave-search-api.env.sops";
-        path = "/run/user/1000/secrets/brave-search-api.env";
-        mode = "0400";
         owner = "neg";
       };
     }
