@@ -15,12 +15,6 @@ in
     lib.mkMerge [
       {
         environment.systemPackages = [
-          # Qt 5
-          pkgs.libsForQt5.qt5.qtsvg # SVG support for Qt 5
-          pkgs.libsForQt5.qt5.qtwayland # Wayland support for Qt 5
-          pkgs.libsForQt5.qt5ct # Qt 5 configuration tool
-          pkgs.libsForQt5.qtstyleplugin-kvantum # SVG-based theme engine for Qt 5
-
           # Qt 6
           pkgs.kdePackages.qt6ct # Qt 6 configuration tool
           pkgs.kdePackages.qtwayland # Wayland support for Qt 6
@@ -43,11 +37,6 @@ in
         '';
 
         ".config/qt6ct/qt6ct.conf".text = ''
-          [Appearance]
-          standard_dialogs=xdgdesktopportal
-        '';
-
-        ".config/qt5ct/qt5ct.conf".text = ''
           [Appearance]
           standard_dialogs=xdgdesktopportal
         '';
