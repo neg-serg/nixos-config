@@ -31,7 +31,6 @@ Item {
         ? Theme.wsRefreshDebounceMs
         : 120
 
-    signal hyprEvent(string eventName, string payload)
     signal keyboardLayoutEvent(string deviceName, string layoutName)
     signal focusedMonitorEvent()
 
@@ -55,7 +54,7 @@ Item {
             try {
                 if (typeof obj.id === "number") root.activeWorkspaceId = obj.id;
                 if (obj.name !== undefined) root.activeWorkspaceName = obj.name || "";
-            } catch (e) { }
+            } catch (e) { console.warn("[HyprlandWatcher.activeWs]", e) }
         }
     }
 
@@ -69,7 +68,7 @@ Item {
         onJson: arr => {
             try {
                 root.binds = Array.isArray(arr) ? arr : [];
-            } catch (e) { }
+            } catch (e) { console.warn("[HyprlandWatcher.binds]", e) }
         }
     }
 
@@ -84,7 +83,7 @@ Item {
             try {
                 const list = Array.isArray(obj?.keyboards) ? obj.keyboards : [];
                 root.keyboardDevices = list;
-            } catch (e) { }
+            } catch (e) { console.warn("[HyprlandWatcher.devices]", e) }
         }
     }
 
@@ -117,7 +116,6 @@ Item {
         if (sep <= 0) return;
         const eventName = line.substring(0, sep);
         const payload = line.substring(sep + 2);
-        root.hyprEvent(eventName, payload);
         const key = eventName.toLowerCase();
         if (key === "workspacev2") {
             const parts = payload.split(",", 2);

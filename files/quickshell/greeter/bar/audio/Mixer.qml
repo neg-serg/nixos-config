@@ -21,10 +21,10 @@ ColumnLayout {
 
 	PwObjectTracker { objects: [ trackedNode, ...linkTracker.linkGroups ] }
 
-	MixerEntry/*WithSelect*/ {
+	MixerEntryWithSelect {
 		id: nodeEntry
 		node: trackedNode
-		//nodeList: root.nodeList
+		nodeList: root.nodeList
 		image: nodeImage
 
 		Component.onCompleted: this.selected.connect(root.selected);

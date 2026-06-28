@@ -30,7 +30,7 @@ Scope {
 			if (code === 0) {
 				root.visible = true
 			} else {
-				console.log("screenshot failed")
+				console.warn("screenshot failed")
 				cleanupProc.running = true
 			}
 		}

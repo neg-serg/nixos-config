@@ -1,12 +1,10 @@
 pragma ComponentBehavior: Bound
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
 import Quickshell
 import qs.Settings
 import qs.Components
 import "../../Helpers/Utils.js" as Utils
-import "../../Helpers/Color.js" as Color
 import "../../Helpers/MenuUtils.js" as MenuUtils
 
     PopupWindow {

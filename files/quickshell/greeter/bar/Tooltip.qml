@@ -100,16 +100,13 @@ Scope {
 				}
 			}
 
-			//height: bar.height
 			implicitWidth: Math.max(700, tooltipItem.largestAnimWidth) // max due to qtwayland glitches
 			implicitHeight: {
 				const h = tooltipItem.lowestAnimY - tooltipItem.highestAnimY
-				//console.log(`seth ${h} ${tooltipItem.highestAnimY} ${tooltipItem.lowestAnimY}; ${tooltipItem.y1} ${tooltipItem.y2}`)
 				return h
 			}
 			visible: true
 			color: "transparent"
-			//color: "#20ff0000"
 
 			mask: Region {
 				item: (shownItem?.hoverable ?? false) ? tooltipItem : null
@@ -125,20 +122,6 @@ Scope {
 				}
 			}
 
-			/*Rectangle {
-				color: "#10ff0000"
-				//y: tooltipItem.highestAnimY
-				height: tooltipItem.lowestAnimY - tooltipItem.highestAnimY
-				width: parent.width
-			}
-
-			Rectangle {
-				color: "#1000ff00"
-				//y: tooltipItem.highestAnimY
-				height: popup.height
-				width: parent.width
-			}*/
-
 			Item {
 				id: tooltipItem
 				Component.onCompleted: {
@@ -146,9 +129,6 @@ Scope {
 					if (root.shownItem) {
 						root.shownItem.parent = this;
 					}
-
-					//highestAnimY = targetY - targetHeight / 2;
-					//lowestAnimY = targetY + targetHeight / 2;
 				}
 
 				transform: Scale {
@@ -179,18 +159,6 @@ Scope {
 					}
 				}
 
-				onTargetYChanged: updateYBounds();
-				onTargetHeightChanged: updateYBounds();
-				function updateYBounds() {
-					if (targetY - targetHeight / 2 < highestAnimY) {
-						//highestAnimY = targetY - targetHeight / 2
-					}
-
-					if (targetY + targetHeight / 2 > lowestAnimY) {
-						//lowestAnimY = targetY + targetHeight / 2
-					}
-				}
-
 				readonly property real targetY: {
 					if (shownItem == null) return 0;
 					const target = bar.contentItem.mapFromItem(shownItem.owner, 0, shownItem.targetRelativeY).y;
@@ -211,8 +179,6 @@ Scope {
 				onAnyAnimsRunningChanged: {
 					if (!anyAnimsRunning) {
 						largestAnimWidth = targetWidth
-						//highestAnimY = y1;
-						//lowestAnimY = y2;
 					}
 				}
 

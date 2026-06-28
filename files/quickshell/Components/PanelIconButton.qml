@@ -9,10 +9,8 @@ import "." as LocalComponents
 LocalComponents.IconButton {
     id: root
 
-    property bool useAccentBorder: true
-
     cornerRadius: Theme.cornerRadiusSmall
-    accentColor: useAccentBorder ? Theme.accentPrimary : "transparent"
+    accentColor: Theme.accentPrimary
     iconNormalColor: Theme.textPrimary
     iconHoverColor: Theme.onAccent
     cursorShape: Qt.PointingHandCursor

@@ -20,7 +20,6 @@ TrackedNotification {
 	}
 
 	function handleDismiss() {
-		//handleDiscard();
 	}
 
 	RetainableLock {

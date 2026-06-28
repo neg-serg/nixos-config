@@ -46,9 +46,9 @@ Item {
     }
 
 
-    // Generic 2s tick for UI dedupe tasks
+    // Generic tick for UI dedupe tasks (configurable via Theme)
     Timer {
-        interval: 2000
+        interval: Theme.genericTickMs
         repeat: true
         running: true
         onTriggered: root.tick2s()

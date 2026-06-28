@@ -7,6 +7,4 @@ NotificationManager 1.0 NotificationManager.qml
 NotificationOverlay 1.0 NotificationOverlay.qml
 NotificationWidget 1.0 NotificationWidget.qml
 StandardNotificationRenderer 1.0 StandardNotificationRenderer.qml
-TestNotification 1.0 TestNotification.qml
 TrackedNotification 1.0 TrackedNotification.qml
-test 1.0 test.qml

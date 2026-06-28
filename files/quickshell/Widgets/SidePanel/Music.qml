@@ -24,7 +24,7 @@ Rectangle {
             var ratio = Color.contrastRatio(bg, fg);
             var th = (Settings.settings && Settings.settings.contrastWarnRatio) ? Settings.settings.contrastWarnRatio : 4.5;
             if (ratio < th) console.debug('[Music] Low contrast', label || 'text', ratio.toFixed(2));
-        } catch (e) {}
+        } catch (e) { console.warn("[Music.warnContrast]", e) }
     }
 
         Rectangle {
@@ -114,9 +114,7 @@ Rectangle {
                         }
                         playerSelector.currentIndex = idx;
                     }
-                } catch (e) {
-                    // ignore
-                }
+                } catch (e) { console.warn("[Music.dedupePlayers]", e) }
             }
             // Refresh list periodically and on player change (centralized timer)
             Connections { target: Timers; function onTick2s() { playerUI.dedupePlayers() } }
@@ -136,9 +134,9 @@ Rectangle {
                             MusicManager.selectedPlayerIndex = playerUI.uniquePlayers[index].idx;
                             MusicManager.updateCurrentPlayer();
                         }
-                    } catch (e) { /* ignore */ }
+                    } catch (e) { console.warn("[Music.playerSelector]", e) }
                 }
-            
+
                 background: Rectangle {
                     implicitWidth: Math.round(Theme.sidePanelSelectorMinWidth * Theme.scale(screen))
                     implicitHeight: Math.round(Theme.uiControlHeight * Theme.scale(screen))
@@ -255,24 +253,6 @@ Rectangle {
                             cache: false
                             source: (MusicManager.coverUrl || "")
                             visible: source && source.toString() !== ""
-                            onStatusChanged: {
-                                if (status === Image.Ready) {
-                                    // Reuse cached accent (if any) to avoid flicker while sampling new cover
-                                    try {
-                                        const url = MusicManager.coverUrl || "";
-                                        if (detailsCol._accentCache && detailsCol._accentCache[url]) {
-                                            detailsCol.musicAccent = detailsCol._accentCache[url];
-                                            detailsCol.musicAccentReady = true;
-                                        } else {
-                                            detailsCol.musicAccentReady = false;
-                                        }
-                                    } catch (e) { /* ignore */ }
-                                    detailsCol._accentRetryCount = 0;
-                                    accentSampler.requestPaint();
-                                    musicAccentRetry.restart();
-                                }
-                            }
-
                             // Apply rounded-rect mask (corner radius)
                             layer.enabled: true
                             layer.effect: MultiEffect {
@@ -280,62 +260,6 @@ Rectangle {
                                 maskSource: mask
                             }
                         }
-                        // Accent sampler (dominant color); gates icon coloring until ready
-                        Canvas { id: accentSampler; width: Theme.mediaAccentSamplerPx; height: Theme.mediaAccentSamplerPx; visible: false; onPaint: {
-                            try {
-                                var ctx = getContext('2d');
-                                ctx.clearRect(0, 0, width, height);
-                                var url = MusicManager.coverUrl || "";
-                                if (!albumArt.visible) {
-                                    if (detailsCol._accentCache && detailsCol._accentCache[url]) {
-                                        detailsCol.musicAccent = detailsCol._accentCache[url];
-                                        detailsCol.musicAccentReady = true;
-                                    }
-                                    return;
-                                }
-                                ctx.drawImage(albumArt, 0, 0, width, height);
-                                var img = ctx.getImageData(0, 0, width, height);
-                                var data = img.data; var len = data.length;
-                                var rs=0, gs=0, bs=0, n=0;
-                                for (var i=0; i<len; i+=4) {
-                                    var a = data[i+3]; if (a < 128) continue;
-                                    var r = data[i], g = data[i+1], b = data[i+2];
-                                    var maxv = Math.max(r,g,b), minv = Math.min(r,g,b);
-                                    var sat = maxv - minv; if (sat < Theme.mediaAccentSatMin) continue;
-                                    var lum = (r+g+b)/3; if (lum < Theme.mediaAccentLumMin || lum > Theme.mediaAccentLumMax) continue;
-                                    rs += r; gs += g; bs += b; ++n;
-                                }
-                                if (n === 0) {
-                                    // Relaxed thresholds
-                                    rs=0; gs=0; bs=0; n=0;
-                                    for (var j=0; j<len; j+=4) {
-                                        var a2 = data[j+3]; if (a2 < 128) continue;
-                                        var r2 = data[j], g2 = data[j+1], b2 = data[j+2];
-                                        var max2 = Math.max(r2,g2,b2), min2 = Math.min(r2,g2,b2);
-                                        var sat2 = max2 - min2; if (sat2 < Theme.mediaAccentSatRelax) continue;
-                                        var lum2 = (r2+g2+b2)/3; if (lum2 < Theme.mediaAccentLumRelaxMin || lum2 > Theme.mediaAccentLumRelaxMax) continue;
-                                        rs += r2; gs += g2; bs += b2; ++n;
-                                    }
-                                }
-                                if (n > 0) {
-                                    var rr = Math.min(255, Math.round(rs/n));
-                                    var gg = Math.min(255, Math.round(gs/n));
-                                    var bb = Math.min(255, Math.round(bs/n));
-                                    var col = Qt.rgba(rr/255.0, gg/255.0, bb/255.0, 1);
-                                    detailsCol.musicAccent = col;
-                                    detailsCol.musicAccentReady = true;
-                                    if (detailsCol._accentCache) detailsCol._accentCache[url] = col;
-                                } else {
-                                    if (detailsCol._accentCache && detailsCol._accentCache[url]) {
-                                        detailsCol.musicAccent = detailsCol._accentCache[url];
-                                        detailsCol.musicAccentReady = true;
-                                    } else {
-                                        detailsCol.musicAccent = Theme.accentPrimary;
-                                        detailsCol.musicAccentReady = false;
-                                    }
-                                }
-                                } catch (e) { /* ignore */ }
-                            } }
 
                         Item {
                             id: mask
@@ -386,14 +310,10 @@ Rectangle {
                             anchors.bottomMargin: Theme.uiMarginNone
                             spacing: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(screen))
                             // layout follows tokens; no special table-like props
-                            property color musicAccent: Theme.accentPrimary
+                            // Accent color — centralized in MusicManager
+                            property color musicAccent: MusicManager.accentColor
                             property string musicAccentCss: Format.colorCss(musicAccent, 1)
-                            property bool musicAccentReady: false
-                            // Cache accent per cover URL to avoid flicker on track changes
-                            property var _accentCache: ({})
-                            // Retry sampler a few times until cover is fully ready
-                            property int _accentRetryCount: 0
-                            Timer { id: musicAccentRetry; interval: Theme.mediaAccentRetryMs; repeat: false; onTriggered: { accentSampler.requestPaint(); if (!detailsCol.musicAccentReady && detailsCol._accentRetryCount < Theme.mediaAccentRetryMax) { detailsCol._accentRetryCount++; start(); } else { detailsCol._accentRetryCount = 0 } } }
+                            property bool musicAccentReady: MusicManager.accentReady
                             
 
                     
@@ -490,28 +410,6 @@ Rectangle {
                                 iconAlignment: Qt.AlignVCenter
                             }
 
-                            // Codec (hidden; included in Quality)
-                            RowLayout {
-                                visible: false
-                                Layout.fillWidth: true
-                                spacing: Math.round(Theme.sidePanelSpacingTight * Theme.scale(screen))
-                                Text {
-                                    text: "Codec"
-                                    color: playerUI.musicTextColor
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: playerUI.musicTextPx
-                                    font.weight: Font.DemiBold
-                                }
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: MusicManager.trackCodecDetail || MusicManager.trackCodec
-                                    color: playerUI.musicTextColor
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: playerUI.musicTextPx
-                                    elide: Text.ElideRight
-                                }
-                            }
-
                             // Quality summary (combined)
                             MusicWidgets.MusicDetailRow {
                                 visible: !!MusicManager.trackQualitySummary
@@ -520,25 +418,7 @@ Rectangle {
                                 iconColor: detailsCol.musicAccentReady ? detailsCol.musicAccent : playerUI.musicTextColor
                                 fontPixelSize: playerUI.musicTextPx
                                 textFormat: Text.RichText
-                                textValue: (function(){
-                                    const raw = String(MusicManager.trackQualitySummary || "");
-                                    if (!raw) return "";
-                                    const accentCss = detailsCol.musicAccentCss;
-                                    let out = "";
-                                    for (let i = 0; i < raw.length; ) {
-                                        const cp = raw.codePointAt(i);
-                                        const ch = String.fromCodePoint(cp);
-                                        if (cp >= 0xE000 && cp <= 0xF8FF) {
-                                            out += Rich.colorSpan(accentCss, ch);
-                                        } else if (ch === "\u00B7") {
-                                            out += " ";
-                                        } else {
-                                            out += Rich.esc(ch);
-                                        }
-                                        i += (cp > 0xFFFF) ? 2 : 1;
-                                    }
-                                    return out;
-                                })()
+                                textValue: Rich.decorateGlyphs(MusicManager.trackQualitySummary || "", { pua: detailsCol.musicAccentCss })
                                 textColor: playerUI.musicTextColor
                                 textAlignment: Qt.AlignVCenter
                                 iconAlignment: Qt.AlignVCenter
@@ -558,49 +438,6 @@ Rectangle {
                                 iconAlignment: Qt.AlignVCenter
                             }
 
-                            // Bit depth (hidden; included in Quality)
-                            RowLayout {
-                                visible: false
-                                Layout.fillWidth: true
-                                spacing: Math.round(Theme.sidePanelSpacingTight * Theme.scale(screen))
-                                Text {
-                                    text: "Bit depth"
-                                    color: playerUI.musicTextColor
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: playerUI.musicTextPx
-                                    font.weight: Font.DemiBold
-                                }
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: MusicManager.trackBitDepthStr
-                                    color: playerUI.musicTextColor
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: playerUI.musicTextPx
-                                    elide: Text.ElideRight
-                                }
-                            }
-
-                            // Channels (hidden; included in Quality)
-                            RowLayout {
-                                visible: false
-                                Layout.fillWidth: true
-                                spacing: Math.round(Theme.sidePanelSpacingTight * Theme.scale(screen))
-                                Text {
-                                    text: "Channels"
-                                    color: playerUI.musicTextColor
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: playerUI.musicTextPx
-                                    font.weight: Font.DemiBold
-                                }
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: MusicManager.trackChannelsStr
-                                    color: playerUI.musicTextColor
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: playerUI.musicTextPx
-                                    elide: Text.ElideRight
-                                }
-                            }
 
                             // Channel layout (hide when Quality is shown)
                             RowLayout {
@@ -627,69 +464,6 @@ Rectangle {
                                 }
                             }
 
-                            // Bitrate (hidden; included in Quality)
-                            RowLayout {
-                                visible: false
-                                Layout.fillWidth: true
-                                spacing: Math.round(Theme.sidePanelSpacingTight * Theme.scale(screen))
-                                Text {
-                                    text: "Bitrate"
-                                    color: playerUI.musicTextColor
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: playerUI.musicTextPx
-                                    font.weight: Font.DemiBold
-                                }
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: MusicManager.trackBitrateStr
-                                    color: playerUI.musicTextColor
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: playerUI.musicTextPx
-                                    elide: Text.ElideRight
-                                }
-                            }
-
-                            // Track/Disc numbers (hidden by request)
-                            RowLayout {
-                                visible: false
-                                Layout.fillWidth: true
-                                spacing: Math.round(Theme.sidePanelSpacingTight * Theme.scale(screen))
-                                Text {
-                                    text: "Track"
-                                    color: playerUI.musicTextColor
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: playerUI.musicTextPx
-                                    font.weight: Font.DemiBold
-                                }
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: MusicManager.trackNumberStr
-                                    color: playerUI.musicTextColor
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: playerUI.musicTextPx
-                                    elide: Text.ElideRight
-                                }
-                            }
-                            RowLayout {
-                                visible: false
-                                Layout.fillWidth: true
-                                spacing: Math.round(Theme.sidePanelSpacingTight * Theme.scale(screen))
-                                Text {
-                                    text: "Disc"
-                                    color: playerUI.musicTextColor
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: playerUI.musicTextPx
-                                    font.weight: Font.DemiBold
-                                }
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: MusicManager.trackDiscNumberStr
-                                    color: playerUI.musicTextColor
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: playerUI.musicTextPx
-                                    elide: Text.ElideRight
-                                }
-                            }
 
                             // Path (if available)
                             

@@ -1,13 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
 import Quickshell
-import greeter
+import qs
 
 Item {
 	id: root
 	required property LockState state;
+	property GreeterContext context: null
 
 	property real focusAnim: root.focusAnimInternal * 0.001
 	property int focusAnimInternal: Window.active ? 1000 : 0
@@ -173,10 +173,61 @@ Item {
 				}
 			}
 
+			// User and session selector (visible only in greeter mode)
+			RowLayout {
+				id: selectorRow
+				anchors.horizontalCenter: content.horizontalCenter
+				anchors.top: sep.bottom
+				anchors.topMargin: 12 * root.focusAnim
+				spacing: 24
+				visible: root.context !== null
+				opacity: root.focusAnim
+
+				Text {
+					id: userLabel
+					color: "#80ffffff"
+					font.pixelSize: 18
+					font.family: "Iosevka"
+					text: root.context ? root.context.currentUser : ""
+					renderType: Text.NativeRendering
+
+					MouseArea {
+						anchors.fill: parent
+						cursorShape: root.context && root.context.users.length > 1
+							? Qt.PointingHandCursor : Qt.ArrowCursor
+						onClicked: { if (root.context) root.context.cycleUser(); }
+					}
+				}
+
+				Text {
+					color: "#40ffffff"
+					font.pixelSize: 18
+					font.family: "Iosevka"
+					text: "|"
+					renderType: Text.NativeRendering
+				}
+
+				Text {
+					id: sessionLabel
+					color: "#80ffffff"
+					font.pixelSize: 18
+					font.family: "Iosevka"
+					text: root.context ? root.context.currentSessionName : ""
+					renderType: Text.NativeRendering
+
+					MouseArea {
+						anchors.fill: parent
+						cursorShape: root.context && root.context.sessions.length > 1
+							? Qt.PointingHandCursor : Qt.ArrowCursor
+						onClicked: { if (root.context) root.context.cycleSession(); }
+					}
+				}
+			}
+
 			Item {
 				id: footerWrapper
 				anchors.horizontalCenter: content.horizontalCenter
-				anchors.top: sep.bottom
+				anchors.top: selectorRow.bottom
 				implicitHeight: (75 + 30) * root.focusAnim
 				implicitWidth: sep.implicitWidth
 				clip: true

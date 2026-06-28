@@ -15,5 +15,6 @@
   "weather.jsonc",
   "vpn.jsonc",
   "time.jsonc",
-  "volume.jsonc"
+  "volume.jsonc",
+  "greeter.jsonc"
 ]

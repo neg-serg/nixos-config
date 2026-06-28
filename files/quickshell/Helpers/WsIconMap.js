@@ -90,16 +90,3 @@ function submapIcon(name, overrides) {
   return _heuristic(key);
 }
 
-// Export API
-var WsIconMap = {
-  submapIcon: submapIcon,
-  fallback: _geometricFallbackIcon
-};
-
-// QML import compatibility: when imported as a namespace, return functions directly
-if (typeof WsIconMap !== 'undefined') {
-  // no-op; used via WsIconMap.submapIcon
-}
-
-// Also expose top-level for direct namespacing
-function __qml_namespace__() { return WsIconMap }

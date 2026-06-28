@@ -12,8 +12,8 @@ function _coerceUA(ua) {
 }
 
 function _hostOf(u) {
-    try { return (new URL(u)).host || ''; } catch (e) {}
-    try { var m = String(u).match(/^https?:\/\/([^\/#?]+)/i); return m ? m[1] : ''; } catch (e2) {}
+    try { return (new URL(u)).host || ''; } catch (e) { /* URL API unavailable */ }
+    try { var m = String(u).match(/^https?:\/\/([^\/#?]+)/i); return m ? m[1] : ''; } catch (e2) { /* regex fallback failed */ }
     return '';
 }
 
@@ -24,9 +24,9 @@ function httpGetJson(url, timeoutMs, success, fail, userAgent) {
         if (timeoutMs !== undefined && timeoutMs !== null) xhr.timeout = timeoutMs;
         try {
             if (xhr.setRequestHeader) {
-                try { xhr.setRequestHeader('Accept', 'application/json'); } catch (e1) {}
+                try { xhr.setRequestHeader('Accept', 'application/json'); } catch (e1) { /* header API unavailable */ }
                 var _ua = _coerceUA(userAgent);
-                try { xhr.setRequestHeader('User-Agent', _ua); } catch (e2) {}
+                try { xhr.setRequestHeader('User-Agent', _ua); } catch (e2) { /* header API unavailable */ }
             }
         } catch (e) { /* ignore header setting failures */ }
         // Advisory: some geocoding APIs require a descriptive User-Agent with contact info
@@ -39,13 +39,13 @@ function httpGetJson(url, timeoutMs, success, fail, userAgent) {
                 if (!(_uaWarnedHosts[key])) {
                     if (!uastr || /^quickshell$/i.test(uastr) || /^negpanel$/i.test(uastr)) {
                         try {
-                            try { if (Settings && Settings.settings && Settings.settings.debugLogs) console.debug('[Http] Geocoding service recommends a descriptive User-Agent with contact. Set Settings.userAgent, e.g.: "NegPanel/1.0 (contact: you@example.com)"'); } catch (_e1) {}
-                        } catch (_e) {}
+                            try { if (Settings && Settings.settings && Settings.settings.debugLogs) console.debug('[Http] Geocoding service recommends a descriptive User-Agent with contact. Set Settings.userAgent, e.g.: "NegPanel/1.0 (contact: you@example.com)"'); } catch (_e1) { /* Settings unavailable */ }
+                        } catch (_e) { /* debug logging guard */ }
                     }
                     _uaWarnedHosts[key] = true;
                 }
             }
-        } catch (e4) {}
+        } catch (e4) { /* advisory UA check non-critical */ }
         xhr.onreadystatechange = function() {
             if (xhr.readyState !== XMLHttpRequest.DONE) return;
             var status = xhr.status;
@@ -60,7 +60,7 @@ function httpGetJson(url, timeoutMs, success, fail, userAgent) {
                 try {
                     var ra = xhr.getResponseHeader && xhr.getResponseHeader('Retry-After');
                     if (ra) retryAfter = Number(ra) * 1000;
-                } catch (e3) {}
+                } catch (e3) { /* Retry-After header unavailable */ }
                 fail && fail({ type: "http", status: status, retryAfter: retryAfter });
             }
         };

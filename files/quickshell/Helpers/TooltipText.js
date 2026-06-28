@@ -27,14 +27,6 @@ function compose(title, value, hints) {
     return parts.join("\n");
 }
 
-function composePercent(title, valuePercent, hints) {
-    var val = (valuePercent === undefined || valuePercent === null)
-        ? "0%"
-        : (String(valuePercent).trim().endsWith("%") ? String(valuePercent) : (String(valuePercent) + "%"));
-    return compose(title, val, hints);
-}
-
 var TooltipText = {
     compose: compose,
-    composePercent: composePercent
 };

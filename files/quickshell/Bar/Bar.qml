@@ -3,7 +3,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
-import Qt5Compat.GraphicalEffects as GE
 import qs.Bar.Modules
 import qs.Components
 import "Modules" as LocalMods
@@ -11,6 +10,7 @@ import qs.Services
 import qs.Settings
 import qs.Widgets.SidePanel
 import "../Helpers/Color.js" as Color
+import "../Helpers/Utils.js" as Utils
 import "../Helpers/WidgetBg.js" as WidgetBg
 
 Scope {
@@ -18,25 +18,11 @@ Scope {
     property var shell
     property alias visible: barRootItem.visible
     property real barHeight: 0 // Expose current bar height for other components (e.g. window mirroring)
-    function mixColor(a, b, t) {
-        return Qt.rgba(a.r * (1 - t) + b.r * t,
-                       a.g * (1 - t) + b.g * t,
-                       a.b * (1 - t) + b.b * t,
-                       a.a * (1 - t) + b.a * t);
-    }
-    function grayOf(c) {
-        const y = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
-        return Qt.rgba(y, y, y, c.a);
-    }
-    function desaturateColor(c, amount) {
-        const clamped = Math.min(1, Math.max(0, amount || 0));
-        return mixColor(c, grayOf(c), clamped);
-    }
     function vpnAccentColor() {
         const boost = Theme.vpnAccentSaturateBoost || 0;
         const desat = Theme.vpnDesaturateAmount || 0;
         const base = Color.saturate(Theme.accentPrimary, boost);
-        return desaturateColor(base, desat);
+        return Color.desaturate(base, desat);
     }
     readonly property real _defaultPanelAlphaScale: 0.2
     function panelBgAlphaScale() {
@@ -44,63 +30,58 @@ Scope {
         let val = Number(raw);
         if (!isFinite(val))
             val = _defaultPanelAlphaScale;
-        return Math.max(0.0, Math.min(1.0, val));
+        return Utils.clamp01(val);
     }
-    function panelBgColor(baseColor) {
-        const scale = panelBgAlphaScale();
-        const hsl = Color.toHsl(baseColor);
-        const baseAlpha = (hsl && hsl.a !== undefined) ? hsl.a : 1.0;
-        return Color.withAlpha(baseColor, baseAlpha * scale);
+    function wedgeWidthNorm(faceWidth, seamWidth) {
+        var ww = Number(Quickshell.env("QS_WEDGE_WIDTH_PCT") || "");
+        if (isFinite(ww) && ww > 0) return Utils.clamp01(ww/100.0);
+        var faceW = Math.max(1, faceWidth);
+        var targetPx = Math.max(1, Math.round(seamWidth));
+        var capPx = Math.round(faceW * 0.35);
+        var wpx = Math.min(targetPx, capPx);
+        return Math.max(0.02, Math.min(0.98, wpx / faceW));
     }
 
     // Env toggles to hard-disable expensive paths during perf triage
     readonly property bool wedgeClipAllowed: ((Quickshell.env("QS_DISABLE_WEDGE") || "") !== "1")
     readonly property bool trianglesAllowed: ((Quickshell.env("QS_DISABLE_TRIANGLES") || "") !== "1")
 
-    component TriangleOverlay : Canvas {
-        property color color: Theme.background
-        property bool flipX: false
-        property bool flipY: false
-        property real xCoverage: 1.0
+    // Terminal workspace detection — makes seam gap fully transparent on non-terminal workspaces
+    readonly property var _terminalIcons: ["\uf120", "\ue795", "\ue7a2"]
+    property bool isTerminalWs: false
 
-        antialiasing: true
-        enabled: visible
-        contextType: "2d"
-
-        onPaint: {
-            var ctx = getContext("2d");
-            var w = width;
-            var h = height;
-            ctx.clearRect(0, 0, w, h);
-            if (w <= 0 || h <= 0) {
-                return;
+    function _recalcTerminalWs() {
+        const name = HyprlandWatcher.activeWorkspaceName || "";
+        let glyph = "";
+        let rest = name;
+        if (name.length > 0) {
+            const cp = name.codePointAt(0);
+            if (cp >= 0xE000 && cp <= 0xF8FF) {
+                const skip = (cp > 0xFFFF) ? 2 : 1;
+                glyph = String.fromCodePoint(cp);
+                rest = name.substring(skip).replace(/^\s+/, "");
             }
-            var coverage = Math.max(0.0, Math.min(1.0, xCoverage));
-            var span = Math.max(1, w * coverage);
-            span = Math.min(span, w);
-            var xBase = flipX ? w : 0;
-            var xEdge = flipX ? Math.max(0, w - span) : span;
-            var yBase = flipY ? 0 : h;
-            var yOpp = flipY ? h : 0;
-            ctx.lineWidth = 0;
-            ctx.lineJoin = "miter";
-            ctx.lineCap = "butt";
-            ctx.beginPath();
-            ctx.moveTo(xBase, yBase);
-            ctx.lineTo(xBase, yOpp);
-            ctx.lineTo(xEdge, yBase);
-            ctx.closePath();
-            ctx.fillStyle = color;
-            ctx.fill();
         }
+        const rn = rest.toLowerCase().trim();
+        let terminal = false;
+        if (glyph && _terminalIcons.indexOf(glyph) !== -1) { terminal = true; }
+        else if (rn.startsWith("term")) { terminal = true; }
+        else if (rn.endsWith("term")) { terminal = true; }
+        isTerminalWs = terminal;
+        if (Settings.settings && Settings.settings.debugLogs)
+            console.debug('[Bar] workspace:', JSON.stringify(name), 'glyph:', JSON.stringify(glyph), 'rest:', JSON.stringify(rest), 'rn:', JSON.stringify(rn), 'isTerminalWs:', terminal);
+    }
 
-        onWidthChanged: requestPaint()
-        onHeightChanged: requestPaint()
-        onColorChanged: requestPaint()
-        onFlipXChanged: requestPaint()
-        onFlipYChanged: requestPaint()
-        onXCoverageChanged: requestPaint()
-        Component.onCompleted: requestPaint()
+    Connections {
+        target: HyprlandWatcher
+        function onActiveWorkspaceNameChanged() { rootScope._recalcTerminalWs(); }
+        function onActiveWorkspaceIdChanged() { rootScope._recalcTerminalWs(); }
+    }
+
+    Component.onCompleted: {
+        // Force WallpaperAccent singleton to instantiate
+        var wa = WallpaperAccent;
+        _recalcTerminalWs();
     }
 
     function makeTriangleVariant(widthPx, heightPx, variantSelector) {
@@ -162,7 +143,7 @@ Scope {
         property real alpha: 0.0
         property bool triangleEnabled: false
         property string backgroundKey: ""
-        property color fallbackColor: Qt.rgba(0, 0, 0, 1)
+        property color fallbackColor: Theme.surface
         property color backgroundColorOverride: "transparent"
         property color triangleColor: backgroundColorOverride.a > 0
             ? backgroundColorOverride
@@ -171,6 +152,20 @@ Scope {
         property bool mirrorTriangle: false
         property real mirrorTriangleWidthFactor: triangleWidthFactor
         property real widthScale: 1.0
+        property Item snapLeft: null
+        property Item snapRight: null
+        property real snapWidth: 0
+        property real snapInset: 0
+
+        readonly property bool _snapLeftVisible: snapLeft ? snapLeft.visible : true
+        readonly property bool _snapRightVisible: snapRight ? snapRight.visible : true
+        readonly property bool _snapGated: {
+            if (!snapLeft && !snapRight) return true;
+            if (snapRight) return snapRight.visible;
+            return snapLeft.visible;
+        }
+        readonly property bool _snapPrimaryEnabled: snapLeft ? snapLeft.visible : true
+        readonly property bool _snapMirrorEnabled: snapRight ? snapRight.visible : true
         readonly property real _heightRaw: panelHeightPx
         readonly property int triangleHeightPx: Math.max(2, Math.round(_heightRaw))
         property bool highlightHypotenuse: false
@@ -181,7 +176,9 @@ Scope {
         property bool useMirrorTriangleOnly: false
         property bool usePrimaryTriangleOnly: false
         property bool flipAcrossVerticalAxis: false
-        width: Math.max(1, Math.round(widthScale * Theme.panelSeparatorWidthFactor * scaleFactor * Math.max(1, Theme.uiBorderWidth) * 16))
+        width: snapWidth > 0
+            ? Math.max(1, Math.round(snapWidth))
+            : Math.max(1, Math.round(widthScale * Theme.panelSeparatorWidthFactor * scaleFactor * Math.max(1, Theme.uiBorderWidth) * 16))
         height: triangleHeightPx
         implicitHeight: triangleHeightPx
         Layout.preferredHeight: triangleHeightPx
@@ -193,17 +190,21 @@ Scope {
         readonly property var triangleVariants: rootScope.makeTriangleVariantSet(width, height)
         readonly property bool _preferPrimary: usePrimaryTriangleOnly && useMirrorTriangleOnly
         readonly property bool primaryTriangleEnabled: (triangleEnabled && visible
-                                                        && !(useMirrorTriangleOnly && !usePrimaryTriangleOnly))
+                                                        && !(useMirrorTriangleOnly && !usePrimaryTriangleOnly)
+                                                        && _snapPrimaryEnabled)
         readonly property bool mirrorTriangleEnabled: (triangleEnabled && mirrorTriangle && visible
                                                         && !(usePrimaryTriangleOnly && !useMirrorTriangleOnly)
-                                                        && !_preferPrimary)
+                                                        && !_preferPrimary
+                                                        && _snapMirrorEnabled)
         readonly property bool primaryFlipX: flipAcrossVerticalAxis ? !triangleFlipX : triangleFlipX
         readonly property bool mirrorFlipX: flipAcrossVerticalAxis ? triangleFlipX : !triangleFlipX
         radius: 0
         color: Color.withAlpha(Theme.textPrimary, alpha)
         opacity: 1.0
         Layout.alignment: Qt.AlignVCenter
-        visible: panelActive && userVisible && rootScope.trianglesAllowed
+        Layout.leftMargin: snapInset > 0 ? -Math.round(snapInset) : 0
+        Layout.rightMargin: snapInset > 0 ? -Math.round(snapInset) : 0
+        visible: panelActive && userVisible && rootScope.trianglesAllowed && _snapGated
 
 
         TriangleOverlay {
@@ -246,7 +247,7 @@ Scope {
                 var h = height;
                 if (w <= 0 || h <= 0)
                     return;
-                var cov = Math.max(0.0, Math.min(1.0, coverage));
+                var cov = Utils.clamp01(coverage);
                 var span = Math.max(1, Math.min(w, w * cov));
                 var drawFlipX = useMirror ? parent.mirrorFlipX : parent.primaryFlipX;
                 var drawFlipY = useMirror ? !parent.triangleFlipY : parent.triangleFlipY;
@@ -295,11 +296,23 @@ Scope {
     }
 
     component PillSeparator : PanelSeparator {
-        readonly property color pillColor: Theme.panelPillColor
+        readonly property color pillColor: Theme.surface
         backgroundColorOverride: pillColor
         fallbackColor: pillColor
         color: pillColor
         alpha: pillColor.a
+    }
+
+    // Workaround: Hyprland skips wallpaper render behind transparent bar
+    // on first workspace (term). Brief opacity toggle forces a full repaint.
+    Timer {
+        interval: 1200
+        running: true
+        repeat: false
+        onTriggered: {
+            barRootItem.opacity = 0.99
+            Qt.callLater(function() { barRootItem.opacity = 1.0 })
+        }
     }
 
     Item {
@@ -307,12 +320,46 @@ Scope {
         anchors.fill: parent
 
         Variants {
+            id: barVariants
             model: Quickshell.screens
 
             Item {
+                id: monitorItem
                 property var modelData // 'modelData' comes from Variants
                 readonly property bool monitorEnabled: (Settings.settings.barMonitors.includes(modelData.name)
                                                         || (Settings.settings.barMonitors.length === 0))
+
+                // --- Whole-bar slide-up entrance animation (clip reveal) ---
+                property real barSlideProgress: 1.0
+                property bool barSlideAnimating: false
+                property bool _barSlideInitDone: false
+                NumberFadeBehavior {
+                    id: barSlideAnim
+                    target: monitorItem
+                    property: "barSlideProgress"
+                    duration: Theme.panelSlideMs || 350
+                    easing.type: Theme.uiEasingStdOut || Easing.OutCubic
+                    onStopped: { monitorItem.barSlideAnimating = false }
+                }
+                Timer {
+                    id: barSlideTimer
+                    interval: Theme.panelSlideTimerTickMs
+                    repeat: false
+                    onTriggered: {
+                        monitorItem.barSlideProgress = 0;
+                        monitorItem.barSlideAnimating = true;
+                        barSlideAnim.from = 0;
+                        barSlideAnim.to = 1;
+                        barSlideAnim.start();
+                    }
+                }
+                Component.onCompleted: {
+                    if (monitorEnabled && Theme.animationsEnabled) {
+                        _barSlideInitDone = true;
+                        barSlideProgress = 0;
+                        barSlideTimer.start();
+                    }
+                }
 
                 PanelLayer {
                     id: reservePanel
@@ -350,36 +397,50 @@ Scope {
                 }
 
                 PanelLayer {
-                    id: shadowPanel
+                    id: backdropPanel
                     screen: modelData
                     color: "transparent"
-                    WlrLayershell.namespace: "quickshell-bar-shadow"
+                    WlrLayershell.namespace: "qs-panel"
                     readonly property bool _forceOverlay: (((Quickshell.env("QS_WEDGE_DEBUG") || "") === "1")
                                                              || ((Quickshell.env("QS_WEDGE_SHADER_TEST") || "") === "1"))
-                    WlrLayershell.layer: shadowPanel._forceOverlay ? WlrLayer.Overlay : WlrLayer.Bottom
+                    WlrLayershell.layer: backdropPanel._forceOverlay ? WlrLayer.Overlay : WlrLayer.Bottom
                     anchors.bottom: true
                     anchors.left: true
                     anchors.right: true
                     visible: monitorEnabled
                     exclusionMode: ExclusionMode.Ignore
                     exclusiveZone: 0
-                    // flag unavailable; keep default
-                    property real s: Theme.scale(shadowPanel.screen)
+                    property real s: Theme.scale(backdropPanel.screen)
                     property int barHeightPx: Math.round(Theme.panelHeight * s)
+                    property real nonTerminalOpacity: 0.5
                     implicitHeight: barHeightPx
-                    Component.onCompleted: { if (contentItem) contentItem.enabled = false }
 
                     Item {
                         anchors.fill: parent
+                        transform: Translate { y: backdropPanel.barHeightPx * (1 - monitorItem.barSlideProgress) }
 
-                        ShaderEffect {
+                        Canvas {
+                            id: sharedBarBackdrop
                             anchors.fill: parent
-                            visible: shadowPanel.visible
-                            property color baseColor: Theme.panelPillColor
-                            property color accentColor: Theme.panelPillColor
-                            property vector4d params0: Qt.vector4d(0.0, 0.0, 0.0, 0.0)
-                            property vector4d params1: Qt.vector4d(0.0, 0.0, 0.93, 0.0)
-                            fragmentShader: Qt.resolvedUrl("../shaders/diag.frag.qsb")
+                            readonly property color bgColor: Theme.panelBackdropColor
+                            readonly property real baseOpacity: Theme.panelSeamOpacity
+                            readonly property real effectiveOpacity: rootScope.isTerminalWs
+                                ? baseOpacity
+                                : baseOpacity * backdropPanel.nonTerminalOpacity
+
+                            onPaint: {
+                                var ctx = getContext("2d");
+                                ctx.reset();
+                                ctx.clearRect(0, 0, width, height);
+                                ctx.fillStyle = bgColor.toString();
+                                ctx.globalAlpha = effectiveOpacity;
+                                ctx.fillRect(0, 0, width, height);
+                            }
+
+                            onWidthChanged: requestPaint()
+                            onHeightChanged: requestPaint()
+                            onBgColorChanged: requestPaint()
+                            onEffectiveOpacityChanged: requestPaint()
                         }
 
                         MouseArea {
@@ -395,7 +456,7 @@ Scope {
                     screen: modelData
                     color: "transparent"
                     property bool panelHovering: false
-                    WlrLayershell.namespace: "quickshell-bar-left"
+                    WlrLayershell.namespace: "qs-content-left"
                     // Debug/testing: put bars on Overlay when wedge debug or shader-test enabled
                     WlrLayershell.layer: (((Quickshell.env("QS_WEDGE_DEBUG") || "") === "1")
                                           || ((Quickshell.env("QS_WEDGE_SHADER_TEST") || "") === "1"))
@@ -405,7 +466,6 @@ Scope {
                     anchors.right: false
                     implicitWidth: leftPanel.screen ? Math.round(leftPanel.screen.width / 2) : 960
                     visible: monitorEnabled
-                    onVisibleChanged: {}
                     implicitHeight: leftBarBackground.height
                     exclusionMode: ExclusionMode.Ignore
                     exclusiveZone: 0
@@ -418,33 +478,20 @@ Scope {
                     ) ? Settings.settings.panelSideMarginPx : Theme.panelSideMargin
                     property int sideMargin: Math.round(_sideMarginBase * s)
                     property int widgetSpacing: Math.round(Theme.panelWidgetSpacing * s)
-                    property int interWidgetSpacing: Math.max(widgetSpacing, Math.round(widgetSpacing * 1.35))
-                    property int seamWidth: Math.max(8, Math.round(widgetSpacing * 0.85))
+                    property int interWidgetSpacing: Math.max(widgetSpacing, Math.round(widgetSpacing * Theme.panelInterWidgetRatio))
+                    property int seamWidth: Math.max(Theme.panelSeamMinPx, Math.round(widgetSpacing * Theme.panelSeamWidthRatio))
                     // Panel background transparency is configurable via Settings:
                     // - panelBgAlphaScale: 0..1 multiplier applied to the base theme alpha
                     property color barBgColor: "transparent"
-                    property real seamTaperTop: 0.25
-                    property real seamTaperBottom: 0.9
-                    property real seamOpacity: 0.55
-                    readonly property real seamTiltSign: 1.0
-                    readonly property real seamTaperTopClamped: Math.max(0.0, Math.min(1.0, seamTaperTop))
-                    readonly property real seamTaperBottomClamped: Math.max(0.0, Math.min(1.0, seamTaperBottom))
-                    readonly property real seamEdgeBaseTop: (seamTiltSign > 0)
-                        ? (1.0 - seamTaperTopClamped)
-                        : seamTaperTopClamped
-                    readonly property real seamEdgeSlope: ((seamTiltSign > 0)
-                        ? (1.0 - seamTaperBottomClamped)
-                        : seamTaperBottomClamped) - seamEdgeBaseTop
-                    property color seamFillColor: Color.withAlpha(
-                        Color.mix(Theme.surfaceVariant, Theme.background, 0.45),
-                        seamOpacity
-                    )
-                    readonly property real seamSlackWidth: Math.max(0, leftBarBackground.width - leftBarFill.width)
                     property bool panelTintEnabled: true
-                    property color panelTintColor: Color.withAlpha("#ff2a36", 0.75)
-                    property real panelTintStrength: 1.0
-                    property real panelTintFeatherTop: 0.08
-                    property real panelTintFeatherBottom: 0.35
+                    property color panelTintColor: Color.withAlpha(Theme.panelTintColor, Theme.panelTintAlpha)
+                    Behavior on panelTintColor {
+                        enabled: Theme._themeLoaded
+                        ColorAnimation { duration: Theme.panelAnimFastMs }
+                    }
+                    property real panelTintStrength: Theme.panelTintStrength
+                    property real panelTintFeatherTop: Theme.panelTintFeatherTop
+                    property real panelTintFeatherBottom: Theme.panelTintFeatherBottom
                     readonly property real contentWidth: Math.max(
                         leftWidgetsRow.width,
                         leftWidgetsRow.implicitWidth || leftWidgetsRow.width || 0
@@ -453,17 +500,8 @@ Scope {
                         Item {
                             id: leftPanelContent
                             anchors.fill: parent
+                            transform: Translate { y: leftPanel.barHeightPx * (1 - monitorItem.barSlideProgress) }
 
-                    Rectangle {
-                        id: leftBarBackdrop
-                        width: Math.max(1, leftPanel.width)
-                        height: leftPanel.barHeightPx
-                        color: "#000000"
-                        opacity: 0.65
-                        anchors.top: parent.top
-                        anchors.left: parent.left
-                        z: -1
-                    }
                     Rectangle {
                         id: leftBarBackground
                         width: Math.max(1, leftPanel.width)
@@ -477,6 +515,10 @@ Scope {
                                 width: Math.min(leftBarBackground.width, Math.ceil(leftPanel.sideMargin + leftPanel.contentWidth))
                                 height: leftBarBackground.height
                                 color: leftPanel.barBgColor
+                                topLeftRadius: Theme.cornerRadius
+                                bottomLeftRadius: Theme.cornerRadius
+                                topRightRadius: 0
+                                bottomRightRadius: 0
                                 anchors.top: leftBarBackground.top
                             anchors.left: leftBarBackground.left
                             // Keep visible; ShaderEffectSource will hide it from the scene
@@ -534,16 +576,7 @@ Scope {
                                 fragmentShader: Qt.resolvedUrl("../shaders/wedge_clip.frag.qsb")
                                 property var sourceSampler: leftPanelTintSource
                                 property vector4d params0: Qt.vector4d(
-                                    // QS_WEDGE_WIDTH_PCT override; otherwise use panel seamWidth capped to 35% of face.
-                                    (function(){
-                                        var ww = Number(Quickshell.env("QS_WEDGE_WIDTH_PCT") || "");
-                                        if (isFinite(ww) && ww > 0) return Math.max(0.0, Math.min(1.0, ww/100.0));
-                                        var faceW = Math.max(1, leftBarFill.width);
-                                        var targetPx = Math.max(1, Math.round(leftPanel.seamWidth));
-                                        var capPx = Math.round(faceW * 0.35);
-                                        var wpx = Math.min(targetPx, capPx);
-                                        return Math.max(0.02, Math.min(0.98, wpx / faceW));
-                                    })(),
+                                    rootScope.wedgeWidthNorm(leftBarFill.width, leftPanel.seamWidth),
                                     1,
                                     1,
                                     0
@@ -578,15 +611,7 @@ Scope {
                                 property var sourceSampler: leftBarFillSource
                                 // params0: x=wNorm, y=slopeUp, z=side(+1 right edge), w=unused
                                 property vector4d params0: Qt.vector4d(
-                                    (function(){
-                                        var ww = Number(Quickshell.env("QS_WEDGE_WIDTH_PCT") || "");
-                                        if (isFinite(ww) && ww > 0) return Math.max(0.0, Math.min(1.0, ww/100.0));
-                                        var faceW = Math.max(1, leftBarFill.width);
-                                        var targetPx = Math.max(1, Math.round(leftPanel.seamWidth));
-                                        var capPx = Math.round(faceW * 0.35);
-                                        var wpx = Math.min(targetPx, capPx);
-                                        return Math.max(0.02, Math.min(0.98, wpx / faceW));
-                                    })(),
+                                    rootScope.wedgeWidthNorm(leftBarFill.width, leftPanel.seamWidth),
                                     1,
                                     1,
                                     0
@@ -605,65 +630,6 @@ Scope {
                             }
                         }
 
-                        Item {
-                            id: leftSeamFill
-                            width: Math.min(leftBarBackground.width, leftPanel.seamWidth)
-                            height: leftBarBackground.height
-                            anchors.bottom: leftBarBackground.bottom
-                            anchors.right: leftBarBackground.right
-                            z: 1000
-                            // Draw local seam wedge only when the shader path is active,
-                            // and hide it while QS_WEDGE_DEBUG is enabled so the shader's
-                            // magenta overlay remains visible for validation.
-                            visible: leftFaceClipLoader.active === true && ((Quickshell.env("QS_WEDGE_DEBUG") || "") !== "1")
-                            ShaderEffect {
-                                id: leftSeamFX
-                                anchors.fill: parent
-                                fragmentShader: Qt.resolvedUrl("../shaders/seam.frag.qsb")
-                                property color baseColor: leftPanel.seamFillColor
-                                // params0: edgeBase, edgeSlope, tilt, opacity
-                                property vector4d params0: Qt.vector4d(leftPanel.seamEdgeBaseTop, leftPanel.seamEdgeSlope, leftPanel.seamTiltSign, leftPanel.seamOpacity)
-                                blending: true
-                            }
-                        }
-
-                        // Mask the left seam fill so its visible area becomes a triangle
-                        // matching the wedge; this prevents rectangular seam blocks.
-                        ShaderEffectSource {
-                            id: leftSeamSource
-                            anchors.fill: leftSeamFill
-                            sourceItem: leftSeamFX
-                            hideSource: true
-                            live: true
-                            recursive: true
-                        }
-                        Canvas {
-                            id: leftSeamMask
-                            anchors.fill: leftSeamFill
-                            visible: false
-                            onPaint: {
-                                var ctx = getContext('2d');
-                                ctx.reset();
-                                ctx.clearRect(0, 0, width, height);
-                                ctx.fillStyle = '#ffffffff';
-                                ctx.fillRect(0, 0, width, height);
-                                // Cut triangle adjacent to the seam boundary (x = 0 in this local space)
-                                ctx.fillStyle = '#000000ff';
-                                ctx.beginPath();
-                                // Default orientation: bottom-left → top-right
-                                ctx.moveTo(0, height);
-                                ctx.lineTo(width, 0);
-                                ctx.lineTo(width, height);
-                                ctx.closePath();
-                                ctx.fill();
-                            }
-                        }
-                        GE.OpacityMask {
-                            anchors.fill: leftSeamFill
-                            source: leftSeamSource
-                            maskSource: leftSeamMask
-                        }
-
                         Component.onCompleted: rootScope.barHeight = leftBarBackground.height
                         Connections {
                             target: leftBarBackground
@@ -676,9 +642,10 @@ Scope {
                             anchors.left: leftBarBackground.left
                             anchors.leftMargin: leftPanel.sideMargin
                             spacing: leftPanel.interWidgetSpacing
-                            ClockWidget { Layout.alignment: Qt.AlignVCenter }
+                            ClockWidget { Layout.alignment: Qt.AlignVCenter; visible: WidgetRegistry.isVisible("clock") }
                             WsIndicator {
                                 id: wsindicator
+                                visible: WidgetRegistry.isVisible("workspaces")
                                 Layout.alignment: Qt.AlignVCenter
                                 workspaceGlyphDetached: true
                                 showSubmapIcon: false
@@ -686,6 +653,7 @@ Scope {
                             }
                             RowLayout {
                                 id: kbCluster
+                                visible: WidgetRegistry.isVisible("keyboard")
                                 Layout.alignment: Qt.AlignVCenter
                                 spacing: Math.round(Theme.panelNetClusterSpacing * leftPanel.s)
 
@@ -697,22 +665,9 @@ Scope {
                                     iconSquare: false
                                 }
                             }
-                            PanelSeparator {
-                                scaleFactor: leftPanel.s
-                                panelHeightPx: leftPanel.barHeightPx
-                                userVisible: netCluster.visible
-                                triangleEnabled: netCluster.visible
-                                triangleWidthFactor: 0.75
-                                mirrorTriangle: netCluster.visible
-                                widthScale: 2.0
-                                highlightHypotenuse: netCluster.visible
-                                highlightMirror: true
-                                highlightColor: Color.towardsBlack(Color.saturate(Color.towardsBlack(Color.saturate(rootScope.vpnAccentColor(), 0.2), 0.3), 0.2), 0.3)
-                                highlightWidth: Math.max(2, Math.round(leftPanel.s * 3))
-                                backgroundKey: "keyboard"
-                            }
                             Row {
                                 id: netCluster
+                                visible: WidgetRegistry.isVisible("network")
                                 Layout.alignment: Qt.AlignVCenter
                                 spacing: Math.round(Theme.panelNetClusterSpacing * leftPanel.s)
                                 LocalMods.NetClusterCapsule {
@@ -723,19 +678,21 @@ Scope {
                                         throughputText: ConnectivityState.throughputText
                                 }
                             }
-                            PanelSeparator {
-                                scaleFactor: leftPanel.s
-                                panelHeightPx: leftPanel.barHeightPx
-                                triangleEnabled: true
-                                triangleWidthFactor: 0.75
-                                mirrorTriangle: false
-                                widthScale: 2.0
-                                backgroundKey: "network"
+                            LocalMods.SystemMonitorCapsule {
+                                id: systemMonitorCapsule
+                                visible: WidgetRegistry.isVisible("sysmon")
+                                Layout.alignment: Qt.AlignVCenter
+                                screen: modelData
                             }
                             LocalMods.WeatherButton {
                                 id: weatherButton
-                                visible: Settings.settings.showWeatherInBar === true
+                                visible: WidgetRegistry.isVisible("weather") && Settings.settings.showWeatherInBar === true
                                 Layout.alignment: Qt.AlignVCenter
+                                capsule.rightTriangleVisible: true
+                                capsule.rightTriangleWidthFactor: 0.75
+                                capsule.triangleHighlightEnabled: true
+                                capsule.triangleHighlightColor: Color.towardsBlack(Color.saturate(Color.towardsBlack(Color.saturate(rootScope.vpnAccentColor(), 0.2), 0.3), 0.2), 0.3)
+                                capsule.triangleHighlightWidth: Math.max(2, Math.round(leftPanel.s * 3))
                             }
                         }
                     }
@@ -744,6 +701,7 @@ Scope {
                         id: leftPanelSource
                         anchors.fill: parent
                         sourceItem: leftPanelContent
+                        transform: Translate { y: leftPanel.barHeightPx * (1 - monitorItem.barSlideProgress) }
                         hideSource: false
                         live: true
                         recursive: true
@@ -763,7 +721,7 @@ Scope {
                     screen: modelData
                     color: "transparent"
                     property bool panelHovering: false
-                    WlrLayershell.namespace: "quickshell-bar-right"
+                    WlrLayershell.namespace: "qs-content-right"
                     // Debug/testing: put bars on Overlay when wedge debug or shader-test enabled
                     WlrLayershell.layer: (((Quickshell.env("QS_WEDGE_DEBUG") || "") === "1")
                                           || ((Quickshell.env("QS_WEDGE_SHADER_TEST") || "") === "1"))
@@ -773,14 +731,13 @@ Scope {
                     anchors.left: false
                     implicitWidth: rightPanel.screen ? Math.round(rightPanel.screen.width / 2) : 960
                     visible: monitorEnabled
-                    onVisibleChanged: {}
                     implicitHeight: rightBarBackground.height
                     exclusionMode: ExclusionMode.Ignore
                     exclusiveZone: 0
                     property real s: Theme.scale(rightPanel.screen)
                     property int barHeightPx: Math.round(Theme.panelHeight * s)
                     readonly property bool _mediaSlotVisible: !!(mediaModule && mediaModule.visible)
-                    readonly property bool _mediaOverlayVisible: !!(mediaOverlayHost && mediaOverlayHost.visible)
+                    readonly property bool _mediaOverlayVisible: !!(mediaOverlayHost && mediaOverlayHost.visible && mediaModule && mediaModule.visible)
                     readonly property bool _mpdFlagsVisible: !!(mpdFlagsBar && mpdFlagsBar.visible)
                     readonly property bool _trayVisible: !!(systemTrayWrapper && systemTrayWrapper.trayVisible)
                     readonly property bool _microphoneVisible: !!(widgetsMicrophone && widgetsMicrophone.visible)
@@ -790,8 +747,6 @@ Scope {
                         || _mediaOverlayVisible
                         || _mpdFlagsVisible
                         || _trayVisible
-                        || _microphoneVisible
-                        || _volumeVisible
                     )
                     readonly property bool baseFillVisible: monitorEnabled
                     readonly property bool renderActive: baseFillVisible && _hasPanelContent
@@ -802,33 +757,20 @@ Scope {
                     ) ? Settings.settings.panelSideMarginPx : Theme.panelSideMargin
                     property int sideMargin: Math.round(_sideMarginBase * s)
                     property int widgetSpacing: Math.round(Theme.panelWidgetSpacing * s)
-                    property int interWidgetSpacing: Math.max(widgetSpacing, Math.round(widgetSpacing * 1.35))
-                    property int seamWidth: Math.max(8, Math.round(widgetSpacing * 0.85))
+                    property int interWidgetSpacing: Math.max(widgetSpacing, Math.round(widgetSpacing * Theme.panelInterWidgetRatio))
+                    property int seamWidth: Math.max(Theme.panelSeamMinPx, Math.round(widgetSpacing * Theme.panelSeamWidthRatio))
                     // Panel background transparency is configurable via Settings:
                     // - panelBgAlphaScale: 0..1 multiplier applied to the base theme alpha
                     property color barBgColor: "transparent"
-                    property real seamTaperTop: 0.25
-                    property real seamTaperBottom: 0.9
-                    property real seamOpacity: 0.55
-                    readonly property real seamTiltSign: -1.0
-                    readonly property real seamTaperTopClamped: Math.max(0.0, Math.min(1.0, seamTaperTop))
-                    readonly property real seamTaperBottomClamped: Math.max(0.0, Math.min(1.0, seamTaperBottom))
-                    readonly property real seamEdgeBaseTop: (seamTiltSign > 0)
-                        ? (1.0 - seamTaperTopClamped)
-                        : seamTaperTopClamped
-                    readonly property real seamEdgeSlope: ((seamTiltSign > 0)
-                        ? (1.0 - seamTaperBottomClamped)
-                        : seamTaperBottomClamped) - seamEdgeBaseTop
-                    property color seamFillColor: Color.withAlpha(
-                        Color.mix(Theme.surfaceVariant, Theme.background, 0.45),
-                        seamOpacity
-                    )
-                    readonly property real seamSlackWidth: Math.max(0, rightBarBackground.width - rightBarFill.width)
                     property bool panelTintEnabled: true
-                    property color panelTintColor: Color.withAlpha("#ff2a36", 0.75)
-                    property real panelTintStrength: 1.0
-                    property real panelTintFeatherTop: 0.08
-                    property real panelTintFeatherBottom: 0.35
+                    property color panelTintColor: Color.withAlpha(Theme.panelTintColor, Theme.panelTintAlpha)
+                    Behavior on panelTintColor {
+                        enabled: Theme._themeLoaded
+                        ColorAnimation { duration: Theme.panelAnimFastMs }
+                    }
+                    property real panelTintStrength: Theme.panelTintStrength
+                    property real panelTintFeatherTop: Theme.panelTintFeatherTop
+                    property real panelTintFeatherBottom: Theme.panelTintFeatherBottom
 
                     readonly property real contentWidth: Math.max(
                         rightWidgetsRow.width,
@@ -838,18 +780,8 @@ Scope {
                         Item {
                             id: rightPanelContent
                             anchors.fill: parent
-
-                    Rectangle {
-                        id: rightBarBackdrop
-                        width: Math.max(1, rightPanel.width)
-                        height: rightPanel.barHeightPx
-                        color: "#000000"
-                        opacity: 0.65
-                        anchors.top: parent.top
-                        anchors.right: parent.right
-                        z: -1
-                        visible: rightPanel.baseFillVisible
-                    }
+                            transform: Translate { y: rightPanel.barHeightPx * (1 - monitorItem.barSlideProgress) }
+    
                     Rectangle {
                         id: rightBarBackground
                         width: Math.max(1, rightPanel.width)
@@ -864,6 +796,10 @@ Scope {
                                 width: Math.min(rightBarBackground.width, Math.ceil(rightPanel.sideMargin + rightPanel.contentWidth))
                                 height: rightBarBackground.height
                                 color: rightPanel.barBgColor
+                                topRightRadius: Theme.cornerRadius
+                                bottomRightRadius: Theme.cornerRadius
+                                topLeftRadius: 0
+                                bottomLeftRadius: 0
                             anchors.top: rightBarBackground.top
                             anchors.right: rightBarBackground.right
                             // Keep visible; ShaderEffectSource will hide it from the scene
@@ -922,15 +858,7 @@ Scope {
                                 fragmentShader: Qt.resolvedUrl("../shaders/wedge_clip.frag.qsb")
                                 property var sourceSampler: rightPanelTintSource
                                 property vector4d params0: Qt.vector4d(
-                                    (function(){
-                                        var ww = Number(Quickshell.env("QS_WEDGE_WIDTH_PCT") || "");
-                                        if (isFinite(ww) && ww > 0) return Math.max(0.0, Math.min(1.0, ww/100.0));
-                                        var faceW = Math.max(1, rightBarFill.width);
-                                        var targetPx = Math.max(1, Math.round(rightPanel.seamWidth));
-                                        var capPx = Math.round(faceW * 0.35);
-                                        var wpx = Math.min(targetPx, capPx);
-                                        return Math.max(0.02, Math.min(0.98, wpx / faceW));
-                                    })(),
+                                    rootScope.wedgeWidthNorm(rightBarFill.width, rightPanel.seamWidth),
                                     1,
                                     -1,
                                     0
@@ -965,15 +893,7 @@ Scope {
                                 property var sourceSampler: rightBarFillSource
                                 // params0: x=wNorm, y=slopeUp, z=side(-1 left edge), w=unused
                                 property vector4d params0: Qt.vector4d(
-                                    (function(){
-                                        var ww = Number(Quickshell.env("QS_WEDGE_WIDTH_PCT") || "");
-                                        if (isFinite(ww) && ww > 0) return Math.max(0.0, Math.min(1.0, ww/100.0));
-                                        var faceW = Math.max(1, rightBarFill.width);
-                                        var targetPx = Math.max(1, Math.round(rightPanel.seamWidth));
-                                        var capPx = Math.round(faceW * 0.35);
-                                        var wpx = Math.min(targetPx, capPx);
-                                        return Math.max(0.02, Math.min(0.98, wpx / faceW));
-                                    })(),
+                                    rootScope.wedgeWidthNorm(rightBarFill.width, rightPanel.seamWidth),
                                     1,
                                     -1,
                                     0
@@ -992,94 +912,12 @@ Scope {
                             }
                         }
 
-                        // (old right Canvas triangle overlay removed)
-                        Item {
-                            id: rightSeamFill
-                            width: Math.min(rightBarBackground.width, rightPanel.seamWidth)
-                            height: rightBarBackground.height
-                            anchors.bottom: rightBarBackground.bottom
-                            anchors.left: rightBarBackground.left
-                            z: 1000
-                            // Draw local seam wedge only when the shader path is active,
-                            // and hide it while QS_WEDGE_DEBUG is enabled so the shader's
-                            // magenta overlay remains visible for validation.
-                            visible: rightPanel.renderActive
-                                && rightFaceClipLoader.active === true
-                                && ((Quickshell.env("QS_WEDGE_DEBUG") || "") !== "1")
-                            ShaderEffect {
-                                id: rightSeamFX
-                                anchors.fill: parent
-                                fragmentShader: Qt.resolvedUrl("../shaders/seam.frag.qsb")
-                                property color baseColor: rightPanel.seamFillColor
-                                // params0: edgeBase, edgeSlope, tilt, opacity
-                                property vector4d params0: Qt.vector4d(rightPanel.seamEdgeBaseTop, rightPanel.seamEdgeSlope, rightPanel.seamTiltSign, rightPanel.seamOpacity)
-                                blending: true
-                            }
-                        }
-
-                        // Mask the right seam fill similarly to form a triangular visible area.
-                        ShaderEffectSource {
-                            id: rightSeamSource
-                            anchors.fill: rightSeamFill
-                            sourceItem: rightSeamFX
-                            hideSource: true
-                            live: true
-                            recursive: true
-                        }
-                        Canvas {
-                            id: rightSeamMask
-                            anchors.fill: rightSeamFill
-                            visible: false
-                            onPaint: {
-                                var ctx = getContext('2d');
-                                ctx.reset();
-                                ctx.clearRect(0, 0, width, height);
-                                ctx.fillStyle = '#ffffffff';
-                                ctx.fillRect(0, 0, width, height);
-                                // Cut triangle adjacent to the seam boundary (x = width in this local space)
-                                ctx.fillStyle = '#000000ff';
-                                ctx.beginPath();
-                                // Default orientation: bottom-left → top-right (seam edge on the right)
-                                ctx.moveTo(width, height);
-                                ctx.lineTo(0, 0);
-                                ctx.lineTo(0, height);
-                                ctx.closePath();
-                                ctx.fill();
-                            }
-                        }
-                        GE.OpacityMask {
-                            anchors.fill: rightSeamFill
-                            source: rightSeamSource
-                            maskSource: rightSeamMask
-                        }
-
                         RowLayout {
                             id: rightWidgetsRow
                             anchors.verticalCenter: rightBarBackground.verticalCenter
                             anchors.right: rightBarBackground.right
                             anchors.rightMargin: rightPanel.sideMargin
                             spacing: 0
-                            PanelSeparator {
-                                id: mediaLeadingSeparator
-                                scaleFactor: rightPanel.s
-                                panelHeightPx: rightPanel.barHeightPx
-                                panelActive: rightPanel.renderActive
-                                triangleEnabled: true
-                                triangleWidthFactor: 0.95
-                                mirrorTriangle: false
-                                widthScale: 1.0
-                                flipAcrossVerticalAxis: true
-                                highlightHypotenuse: true
-                                highlightColor: Color.towardsBlack(Color.saturate(Color.towardsBlack(Color.saturate(rootScope.vpnAccentColor(), 0.2), 0.3), 0.2), 0.3)
-                                highlightWidth: Math.max(2, Math.round(rightPanel.s * 3))
-                            }
-                            PillSeparator {
-                                scaleFactor: rightPanel.s
-                                panelHeightPx: rightPanel.barHeightPx
-                                panelActive: rightPanel.renderActive
-                                triangleEnabled: false
-                                widthScale: 0.5
-                            }
                             Item {
                                 id: mediaRowSlot
                                 Layout.alignment: Qt.AlignVCenter
@@ -1088,7 +926,7 @@ Scope {
                                 Layout.preferredWidth: implicitWidth
                                 implicitWidth: mediaModule.parent === mediaRowSlot ? Math.max(mediaModule.implicitWidth, 1) : 0
                                 implicitHeight: mediaModule.parent === mediaRowSlot ? Math.max(mediaModule.implicitHeight, 1) : 0
-                                visible: mediaModule.parent === mediaRowSlot
+                                visible: WidgetRegistry.isVisible("media") && mediaModule.parent === mediaRowSlot && Settings.settings.showMediaInBar && MusicManager.hasPlayer && (MusicManager.isPlaying || MusicManager.isPaused)
 
                                 Media {
                                     id: mediaModule
@@ -1098,34 +936,36 @@ Scope {
                             }
                             LocalMods.MpdFlags {
                                 id: mpdFlagsBar
+                                visible: WidgetRegistry.isVisible("mpdFlags") && _mediaVisible && activeFlags.length > 0
                                 Layout.alignment: Qt.AlignVCenter
-                                property bool _mediaVisible: (
-                                    Settings.settings.showMediaInBar
-                                    && MusicManager.currentPlayer
-                                    && !MusicManager.isStopped
-                                    && (MusicManager.isPlaying || MusicManager.isPaused || (MusicManager.trackTitle && MusicManager.trackTitle.length > 0))
-                                )
+                                property bool _mediaVisible: Settings.settings.showMediaInBar && MusicManager.hasPlayer
                                 enabled: _mediaVisible && MusicManager.isCurrentMpdPlayer()
                                 iconPx: Math.round(Theme.fontSizeSmall * Theme.scale(rightPanel.screen))
                                 iconColor: Theme.textPrimary
+                            }
+                            LocalMods.PillCapsule {
+                                id: pillCapsule
+                                visible: WidgetRegistry.isVisible("pills")
+                                Layout.alignment: Qt.AlignVCenter
+                                screen: modelData
                             }
                             Item {
                                 id: systemTrayWrapper
                                 Layout.alignment: Qt.AlignVCenter
                                 Layout.fillHeight: true
-                                Layout.preferredHeight: rightPanel.barHeightPx
+                                Layout.preferredHeight: pillCapsule.capsule.uniformCapsuleHeight
                                 readonly property bool trayCapsuleHidden: Settings.settings.hideSystemTrayCapsule === true
-                                readonly property bool trayVisible: (!trayCapsuleHidden || systemTrayModule.expanded)
+                                readonly property bool trayVisible: WidgetRegistry.isVisible("systray") && (!trayCapsuleHidden || systemTrayModule.expanded)
                                 readonly property bool tightSpacing: Settings.settings.systemTrayTightSpacing !== false
                                 readonly property int horizontalPadding: tightSpacing ? 0 : Math.max(4, Math.round(Theme.panelTrayInlinePadding * rightPanel.s * 0.75))
-                                readonly property color capsuleColor: WidgetBg.color(Settings.settings, "systemTray", Theme.background)
+                                readonly property color capsuleColor: WidgetBg.color(Settings.settings, "systemTray", Theme.surface)
                                 readonly property real trayContentHeight: (
                                     systemTrayModule.capsuleHeight !== undefined
                                         ? systemTrayModule.capsuleHeight
                                         : (systemTrayModule.implicitHeight || systemTrayModule.height || 0)
                                 )
                                 readonly property int capsuleWidth: Math.max(1, systemTrayModule.implicitWidth) + systemTrayWrapper.horizontalPadding * 2
-                                readonly property int capsuleHeight: rightPanel.barHeightPx
+                                readonly property int capsuleHeight: pillCapsule.capsule.uniformCapsuleHeight
                                 implicitWidth: trayVisible ? capsuleWidth : 0
                                 implicitHeight: trayVisible ? capsuleHeight : 0
                                 Layout.preferredWidth: implicitWidth
@@ -1158,11 +998,141 @@ Scope {
                             CustomTrayMenu { id: externalTrayMenu }
                             Microphone {
                                 id: widgetsMicrophone
+                                visible: WidgetRegistry.isVisible("microphone")
                                 Layout.alignment: Qt.AlignVCenter
+                                panelHovering: rightPanel.panelHovering
                             }
                             Volume {
                                 id: widgetsVolume
+                                visible: WidgetRegistry.isVisible("volume")
                                 Layout.alignment: Qt.AlignVCenter
+                                panelHovering: rightPanel.panelHovering
+                            }
+                        }
+
+                        // Wallpaper accent sampler — inside visible panel so Canvas can paint
+                        Item {
+                            id: _wpSampler
+                            opacity: 0
+                            property int _accentRetryCount: 0
+
+                            property string _wpPath: WallpaperAccent.currentWallpaperPath
+                            on_WpPathChanged: {
+                                if (_wpPath.length > 0) {
+                                    _accentRetryCount = 0;
+                                    _wpImage.source = "file://" + _wpPath;
+                                    _wpDebounce.restart();
+                                }
+                            }
+                            Component.onCompleted: {
+                                var p = WallpaperAccent.currentWallpaperPath || _wpPath;
+                                if (p.length > 0) {
+                                    _accentRetryCount = 0;
+                                    _wpImage.source = "file://" + p;
+                                    _wpDebounce.restart();
+                                }
+                            }
+
+                            Image {
+                                id: _wpImage
+                                opacity: 0
+                                width: 48; height: 48
+                                sourceSize.width: 48; sourceSize.height: 48
+                                asynchronous: true
+                                onStatusChanged: {
+                                    if (status === Image.Ready)
+                                        _wpDebounce.restart();
+                                }
+                            }
+
+                            Timer {
+                                id: _wpDebounce
+                                interval: 50
+                                repeat: false
+                                onTriggered: {
+                                    if (_wpImage.status === Image.Ready) {
+                                        _wpRetry.stop();
+                                        _wpCanvas.requestPaint();
+                                    } else {
+                                        _wpRetry.restart();
+                                    }
+                                }
+                            }
+
+                            Timer {
+                                id: _wpRetry
+                                interval: 200
+                                repeat: true
+                                onTriggered: {
+                                    if (++_wpSampler._accentRetryCount > 10) {
+                                        stop();
+                                        Theme._wpHasAccent = false;
+                                        return;
+                                    }
+                                    if (_wpImage.status === Image.Ready) {
+                                        _wpRetry.stop();
+                                        _wpCanvas.requestPaint();
+                                    }
+                                }
+                            }
+
+                            function _sampleAccent(imageData) {
+                                if (!imageData || !imageData.data) return null;
+                                var data = imageData.data;
+                                var len = data.length;
+                                var satMin = 10, lumMin = 20, lumMax = 235;
+                                var satRelax = 8, lumRelaxMin = 20, lumRelaxMax = 240;
+                                var rs = 0, gs = 0, bs = 0, n = 0;
+                                for (var i = 0; i < len; i += 4) {
+                                    var a = data[i + 3]; if (a < 128) continue;
+                                    var r = data[i], g = data[i + 1], b = data[i + 2];
+                                    var maxv = Math.max(r, g, b), minv = Math.min(r, g, b);
+                                    var sat = maxv - minv; if (sat < satMin) continue;
+                                    var lum = (r + g + b) / 3; if (lum < lumMin || lum > lumMax) continue;
+                                    rs += r; gs += g; bs += b; ++n;
+                                }
+                                if (n === 0) {
+                                    rs = 0; gs = 0; bs = 0; n = 0;
+                                    for (var j = 0; j < len; j += 4) {
+                                        var a2 = data[j + 3]; if (a2 < 128) continue;
+                                        var r2 = data[j], g2 = data[j + 1], b2 = data[j + 2];
+                                        var max2 = Math.max(r2, g2, b2), min2 = Math.min(r2, g2, b2);
+                                        var sat2 = max2 - min2; if (sat2 < satRelax) continue;
+                                        var lum2 = (r2 + g2 + b2) / 3; if (lum2 < lumRelaxMin || lum2 > lumRelaxMax) continue;
+                                        rs += r2; gs += g2; bs += b2; ++n;
+                                    }
+                                }
+                                if (n > 0) return { r: Math.min(255, Math.round(rs / n)), g: Math.min(255, Math.round(gs / n)), b: Math.min(255, Math.round(bs / n)) };
+                                // Ultimate fallback: average all non-transparent pixels (handles dark grayscale images)
+                                rs = 0; gs = 0; bs = 0; n = 0;
+                                for (var k = 0; k < len; k += 4) {
+                                    var a3 = data[k + 3]; if (a3 < 128) continue;
+                                    rs += data[k]; gs += data[k + 1]; bs += data[k + 2]; ++n;
+                                }
+                                if (n > 0) return { r: Math.min(255, Math.round(rs / n)), g: Math.min(255, Math.round(gs / n)), b: Math.min(255, Math.round(bs / n)) };
+                                return null;
+                            }
+
+                            Canvas {
+                                id: _wpCanvas
+                                width: 48
+                                height: 48
+                                opacity: 0
+                                renderStrategy: Canvas.Cooperative
+                                onPaint: {
+                                    var ctx = getContext('2d');
+                                    if (_wpImage.status !== Image.Ready) return;
+                                    ctx.clearRect(0, 0, width, height);
+                                    ctx.drawImage(_wpImage, 0, 0, width, height);
+                                    var img = ctx.getImageData(0, 0, width, height);
+                                    var rgb = _wpSampler._sampleAccent(img);
+                                    if (!rgb) {
+                                        _wpRetry.restart();
+                                        return;
+                                    }
+                                    Theme._wpAccent = Qt.rgba(rgb.r / 255.0, rgb.g / 255.0, rgb.b / 255.0, 1);
+                                    Theme._wpHasAccent = true;
+                                }
                             }
                         }
 
@@ -1198,6 +1168,7 @@ Scope {
                         id: rightPanelSource
                         anchors.fill: parent
                         sourceItem: rightPanelContent
+                        transform: Translate { y: rightPanel.barHeightPx * (1 - monitorItem.barSlideProgress) }
                         hideSource: false
                         live: true
                         recursive: true
@@ -1213,7 +1184,7 @@ Scope {
                     function maybeShowOnAlbumChange() {
                         try {
                             if (!rightPanel.visible) return;
-                            if (MusicManager.isStopped) return;
+                            if (!MusicManager.hasPlayer) return;
                             const album = String(MusicManager.trackAlbum || "");
                             if (!album || album.length === 0) return;
                             if (album !== rightPanel._lastAlbum) {
@@ -1271,186 +1242,6 @@ Scope {
                         Rectangle { visible: false }
                     }
 
-                }
-
-                PanelLayer {
-                    id: seamPanel
-                    screen: modelData
-                    color: "transparent"
-                    anchors.bottom: true
-                    anchors.left: true
-                    anchors.right: true
-                    // Ensure the seam window has a real height; without this the window
-                    // collapses to 0px and shaders never render (stays invisible).
-                    implicitHeight: seamPanel.seamHeightPx
-                    // Readiness filter: when enabled, only show seam once geometry stabilizes.
-                    // Prevents early full-width flash while rows are still measuring.
-                    property bool useReadinessFilter: true
-                    property bool rightPanelActive: rightPanel.renderActive
-                    visible: monitorEnabled && seamPanel.rightPanelActive && (
-                        !seamPanel.useReadinessFilter
-                        ? (seamPanel.rawGapWidth > 0)
-                        : (seamPanel.geometryReady)
-                    )
-                    // flag unavailable; keep default
-                    onVisibleChanged: {}
-                    exclusionMode: ExclusionMode.Ignore
-                    exclusiveZone: 0
-                    WlrLayershell.namespace: "quickshell-bar-seam"
-                    // Place seam below panel elements so debug fill shows through the center gap only
-                    WlrLayershell.layer: WlrLayer.Bottom
-                    property real s: Theme.scale(seamPanel.screen)
-                    property int seamHeightPx: Math.round(Theme.panelHeight * s)
-                    property real seamTaperTop: 0.12
-                    property real seamTaperBottom: 0.65
-                    property real seamEffectOpacity: 0.85
-                    property color seamFillColor: Color.mix(Theme.surfaceVariant, Theme.background, 0.35)
-                    property bool seamTintEnabled: true
-                    // Use theme accent for seam tint to avoid hardcoded red
-                    property color seamTintColor: Theme.accentPrimary
-                    property real seamTintOpacity: 0.9
-                    property color seamBaseColor: Theme.background
-                    property real seamBaseOpacityTop: 0.5
-                    property real seamBaseOpacityBottom: 0.65
-                    function seamClamp01(v) { return Math.max(0.0, Math.min(1.0, v)); }
-                    function seamEdgeBaseForTilt(tiltSign, frac) {
-                        var f = seamClamp01(frac);
-                        return (tiltSign > 0) ? (1.0 - f) : f;
-                    }
-                    function seamEdgeParamsFor(tiltSign) {
-                        var topEdge = seamEdgeBaseForTilt(tiltSign, seamTaperTop);
-                        var bottomEdge = seamEdgeBaseForTilt(tiltSign, seamTaperBottom);
-                        return ({ base: topEdge, slope: (bottomEdge - topEdge) });
-                    }
-                    readonly property var seamEdgeLeft: seamEdgeParamsFor(-1)
-                    readonly property var seamEdgeRight: seamEdgeParamsFor(1)
-                    property real seamTintTopInsetPx: Math.round(Theme.panelWidgetSpacing * 0.55 * s)
-                    property real seamTintBottomInsetPx: Math.round(Theme.panelWidgetSpacing * 0.2 * s)
-                    property real seamTintFeatherPx: Math.max(1, Math.round(Theme.uiRadiusSmall * 0.35 * s))
-                    readonly property real monitorWidth: seamPanel.screen ? seamPanel.screen.width : seamPanel.width
-                    // Consider geometry "ready" only when left/right fills are measured and gap is sane
-                    readonly property bool leftReady: _leftFillWidth > Math.max(8, leftPanel.sideMargin + leftPanel.widgetSpacing)
-                    readonly property bool rightReady: _rightFillWidth > Math.max(8, rightPanel.sideMargin + rightPanel.widgetSpacing)
-                    readonly property bool gapSane: rawGapWidth < (monitorWidth * 0.98)
-                    readonly property bool geometryReady: leftReady && rightReady && gapSane
-
-                    readonly property real _leftFillWidth: leftBarFill ? leftBarFill.width : seamPanel.monitorWidth / 2
-                    readonly property real _rightFillWidth: rightBarFill ? rightBarFill.width : seamPanel.monitorWidth / 2
-                    readonly property real _leftVisibleEdge: Math.max(
-                        0,
-                        Math.min(seamPanel.monitorWidth, _leftFillWidth - Math.max(0, leftPanel.seamWidth || 0))
-                    )
-                    readonly property real _rightFillVisibleWidth: Math.max(0, _rightFillWidth - Math.max(0, rightPanel.seamWidth || 0))
-                    readonly property real _rightVisibleEdge: Math.max(
-                        _leftVisibleEdge,
-                        seamPanel.monitorWidth - Math.min(seamPanel.monitorWidth, _rightFillVisibleWidth)
-                    )
-                    readonly property real gapStart: _leftVisibleEdge
-                    readonly property real gapEnd: _rightVisibleEdge
-                    readonly property real rawGapWidth: Math.max(0, gapEnd - gapStart)
-                    readonly property real seamWidthPx: Math.min(
-                        seamPanel.monitorWidth,
-                        Math.max(Math.round(Theme.panelWidgetSpacing * seamPanel.s * 2.4), rawGapWidth)
-                    )
-                    readonly property real seamLeftMargin: Math.max(
-                        0,
-                        Math.min(
-                            seamPanel.monitorWidth - seamPanel.seamWidthPx,
-                            gapStart - Math.max(0, (seamPanel.seamWidthPx - rawGapWidth) / 2)
-                        )
-                    )
-                    readonly property real seamTintLeftTop: seamPanel._normalizedInset(seamPanel.seamTintTopInsetPx)
-                    readonly property real seamTintLeftBottom: seamPanel._normalizedInset(seamPanel.seamTintBottomInsetPx)
-                    readonly property real seamTintRightTop: 1 - seamPanel.seamTintLeftTop
-                    readonly property real seamTintRightBottom: 1 - seamPanel.seamTintLeftBottom
-                    readonly property real seamTintFeatherLeft: seamPanel._normalizedFeather(seamPanel.seamTintFeatherPx)
-                    readonly property real seamTintFeatherRight: seamPanel.seamTintFeatherLeft
-
-                    function _normalizedInset(px) {
-                        const width = Math.max(1, seamPanel.seamWidthPx);
-                        return Math.min(0.49, Math.max(0, px / width));
-                    }
-
-                    function _normalizedFeather(px) {
-                        const width = Math.max(1, seamPanel.seamWidthPx);
-                        return Math.min(0.25, Math.max(0.005, px / width));
-                    }
-
-                    Item {
-                        // Render shader content only after geometry stabilizes
-                        visible: seamPanel.geometryReady
-                        width: seamPanel.seamWidthPx + 2
-                        height: seamPanel.seamHeightPx
-                        anchors.bottom: parent.bottom
-                        anchors.left: parent.left
-                        anchors.leftMargin: Math.max(0, seamPanel.seamLeftMargin - 1)
-
-                        // Hidden visuals (used as source for mask)
-                        Item {
-                            id: seamVisuals
-                            anchors.fill: parent
-                            visible: false
-                            ShaderEffect {
-                                z: 0
-                                anchors.fill: parent
-                                fragmentShader: Qt.resolvedUrl("../shaders/seam_fill.frag.qsb")
-                                property color baseColor: seamPanel.seamBaseColor
-                                property vector4d params0: Qt.vector4d(
-                                    seamPanel.seamBaseOpacityTop,
-                                    seamPanel.seamBaseOpacityBottom - seamPanel.seamBaseOpacityTop,
-                                    0,
-                                    0
-                                )
-                            }
-                            ShaderEffect {
-                                z: 50
-                                visible: seamPanel.seamTintEnabled
-                                anchors.fill: parent
-                                fragmentShader: Qt.resolvedUrl("../shaders/seam_tint.frag.qsb")
-                                property color tintColor: seamPanel.seamTintColor
-                                property vector4d params0: Qt.vector4d(
-                                    seamPanel.seamTintLeftTop,
-                                    seamPanel.seamTintLeftBottom,
-                                    seamPanel.seamTintRightTop,
-                                    seamPanel.seamTintRightBottom
-                                )
-                                property vector4d params1: Qt.vector4d(
-                                    seamPanel.seamTintFeatherLeft,
-                                    seamPanel.seamTintFeatherRight,
-                                    seamPanel.seamTintOpacity,
-                                    0
-                                )
-                                property color baseColor: seamPanel.seamBaseColor
-                                blending: true
-                            }
-                            Row {
-                                z: 10
-                                anchors.fill: parent
-                            ShaderEffect {
-                                width: parent.width / 2
-                                height: parent.height
-                                fragmentShader: Qt.resolvedUrl("../shaders/seam.frag.qsb")
-                                property color baseColor: seamPanel.seamFillColor
-                                property vector4d params0: Qt.vector4d(seamPanel.seamEdgeLeft.base, seamPanel.seamEdgeLeft.slope, -1, seamPanel.seamEffectOpacity)
-                                blending: true
-                            }
-                            ShaderEffect {
-                                width: parent.width / 2
-                                height: parent.height
-                                fragmentShader: Qt.resolvedUrl("../shaders/seam.frag.qsb")
-                                property color baseColor: seamPanel.seamFillColor
-                                property vector4d params0: Qt.vector4d(seamPanel.seamEdgeRight.base, seamPanel.seamEdgeRight.slope, 1, seamPanel.seamEffectOpacity)
-                                blending: true
-                            }
-                            }
-                        }
-
-                        // (removed) Previously we punched holes in the seam visuals.
-                        // The new approach is to mask panel fills instead, so the seam
-                        // remains intact and shows through the wedges.
-                    }
-
-                    // (debug logging removed)
                 }
 
             }

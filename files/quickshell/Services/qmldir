@@ -3,9 +3,14 @@ singleton Audio 1.0 Audio.qml
 singleton Connectivity 1.0 Connectivity.qml
 singleton HyprlandWatcher 1.0 HyprlandWatcher.qml
 singleton MusicManager 1.0 MusicManager.qml
+CoverResolver 1.0 CoverResolver.qml
 MusicMeta 1.0 MusicMeta.qml
 MusicPlayers 1.0 MusicPlayers.qml
 MusicPosition 1.0 MusicPosition.qml
 singleton Timers 1.0 Timers.qml
 singleton TrayController 1.0 TrayController.qml
+singleton WallpaperAccent 1.0 WallpaperAccent.qml
+singleton SystemMonitor 1.0 SystemMonitor.qml
 singleton Weather 1.0 Weather.qml
+singleton PillTracker 1.0 PillTracker.qml
+singleton WidgetRegistry 1.0 WidgetRegistry.qml

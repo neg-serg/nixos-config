@@ -4,6 +4,7 @@
     "wsRefreshDebounceMs": 120,
     "musicPositionPollMs": 1000,
     "musicPlayersPollMs": 5000,
-    "musicMetaRecalcDebounceMs": 80
+    "musicMetaRecalcDebounceMs": 80,
+    "genericTickMs": 2000
   }
 }

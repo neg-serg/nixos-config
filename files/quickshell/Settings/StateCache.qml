@@ -26,7 +26,9 @@ Singleton {
             reload()
         }
         onLoadFailed: function(error) {
-            stateAdapter = {}
+            console.warn("[StateCache] load failed:", error, "— resetting to defaults")
+            stateAdapter.lastActivePlayers = []
+            stateAdapter.audioOffReminderLastShownAt = 0
             writeAdapter()
         }
         JsonAdapter {
@@ -35,6 +37,7 @@ Singleton {
 
             // Last active music players (LIFO stack)
             property var lastActivePlayers: []
+            property double audioOffReminderLastShownAt: 0
         }
     }
 }

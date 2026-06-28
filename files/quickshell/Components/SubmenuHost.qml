@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts 1.15
 import Quickshell
 import qs.Components
 import qs.Settings

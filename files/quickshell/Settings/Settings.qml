@@ -38,14 +38,14 @@ Singleton {
 
             // Enable wedge clip ShaderEffect path (env vars can override in debug)
             property bool enableWedgeClipShader: false
-            property string weatherCity: "Moscow"
+            property string weatherCity: "Saint Petersburg"
             property string userAgent: "NegPanel"
             // Unified logging toggle for low-importance debug logs
             property bool debugLogs: false
             property bool debugNetwork: false
-            // Quickshell bar seam debug overlay: fill full width instead of only the gap
-            property bool debugSeamFullWidth: true
             property bool strictThemeTokens: false
+            // Accessibility: disable all non-essential animations
+            property bool reducedMotion: false
             property bool useFahrenheit: false
             property bool showMediaInBar: false
             property string mediaIconStretchMode: "compact"
@@ -58,10 +58,9 @@ Singleton {
             property real mediaIconPanelOverlayWidthShare: 0.45
             property real mediaIconPanelOverlayBgOpacity: 0.65
             // Weather button in bar
-            property bool showWeatherInBar: false
+            property bool showWeatherInBar: true
             property bool reverseDayMonth: false
             property bool use12HourClock: false
-            property bool dimPanels: true
             property real fontSizeMultiplier: 1.0  // Font size multiplier (1.0 = normal, 1.2 = 20% larger, 0.8 = 20% smaller)
 
             // Media spectrum / CAVA
@@ -147,8 +146,29 @@ Singleton {
             property int musicPopupEdgeMargin:4  // logical px, scaled (distance from screen edge/panel)
 
             property int networkPingIntervalMs:30000
+            property string networkPingTarget: "8.8.8.8"
             property string networkNoInternetColor: "#FF6E00"
             property string networkNoLinkColor: "#D81B60"
+
+            // Panel layout: ordered widget identifiers per section
+            property var panelLayout: ({
+                left: ["clock", "workspaces", "keyboard", "network", "weather"],
+                right: ["media", "mpdFlags", "sysmon", "pills", "systray", "microphone", "volume"]
+            })
+
+            // Weather/geocoding API base URLs (configurable for proxies/firewalls)
+            property string weatherApiBaseUrl: "https://api.open-meteo.com/v1"
+            property string weatherGeocodingBaseUrl: "https://geocoding-api.open-meteo.com/v1"
+
+            // Pill tracker reminder deadline (HH:MM format)
+            property string pillReminderDeadline: "10:00"
+
+            // Audio off reminder cooldown override in milliseconds.
+            // -1 means: use Theme.panelVolumeOffReminderCooldownMs.
+            property int audioOffReminderCooldownMs: -1
+
+            // Wallpaper accent extraction
+            property bool wallpaperAccent: true
         }
     }
 

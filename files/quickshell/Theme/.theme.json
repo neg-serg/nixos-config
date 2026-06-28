@@ -4,7 +4,7 @@
       "primary": "#006FCC"
     },
     "background": "#ff000000",
-    "surface": "#181C25",
+    "surface": "#88000000",
     "surfaceVariant": "#242A35",
     "outline": "#3B4C5C",
     "text": {
@@ -14,7 +14,8 @@
     },
     "shadow": "#000000",
     "status": {
-      "error": "#FF6B81"
+      "error": "#FF6B81",
+      "warning": "#FFB347"
     },
     "highlight": "#94E1F9",
     "onAccent": "#FFFFFF"
@@ -22,8 +23,8 @@
   "panel": {
     "height": 22,
     "scale": 1.15,
-    "sideMargin": 0,
-    "widgetSpacing": 0,
+    "sideMargin": 4,
+    "widgetSpacing": 4,
     "separatorWidthFactor": 1,
     "separatorOpacity": 0.88,
     "hotzone": {
@@ -36,7 +37,7 @@
     "pill": {
       "height": 28,
       "iconSize": 22,
-      "paddingH": 14,
+      "paddingH": 8,
       "showDelayMs": 500,
       "autoHidePauseMs": 2500,
       "color": "#000000"
@@ -50,10 +51,10 @@
       "shortHoldMs": 1500,
       "guardMs": 120,
       "overlayDismissDelayMs": 5000,
-      "inlinePadding": 8
+      "inlinePadding": 4
     },
-    "rowSpacing": 8,
-    "rowSpacingSmall": 4,
+    "rowSpacing": 4,
+    "rowSpacingSmall": 2,
     "volume": {
       "fullHideMs": 800,
       "lowColor": "#D62E6E",
@@ -77,9 +78,9 @@
       "iconSize": 16,
       "itemFontScale": 0.9
     },
-    "overlayRadius": 20,
+    "overlayRadius": 5,
     "netCluster": {
-      "spacing": 6
+      "spacing": 2
     },
     "capsule": {
       "borderInset": -1,
@@ -87,11 +88,18 @@
       "borderOpacity": 0.08,
       "borderColor": "#000000"
     },
-    "computedFontScale": 0.6
+    "computedFontScale": 0.6,
+    "seam": {
+      "opacity": 0.6536
+    },
+    "backdrop": {
+      "opacity": 0.6536
+    },
+    "slideTimerTickMs": 50
   },
   "shape": {
-    "cornerRadius": 0,
-    "cornerRadiusSmall": 0,
+    "cornerRadius": 10,
+    "cornerRadiusSmall": 10,
     "cornerRadiusLarge": 0
   },
   "tooltip": {
@@ -118,9 +126,9 @@
     "selector": {
       "minWidth": 120
     },
-    "spacing": 12,
-    "spacingTight": 6,
-    "spacingSmall": 4,
+    "spacing": 6,
+    "spacingTight": 3,
+    "spacingSmall": 2,
     "albumArtSize": 200,
     "weather": {
       "width": 440,
@@ -130,7 +138,7 @@
     "button": {
       "activeVisibleMin": 0.18
     },
-    "spacingMedium": 8
+    "spacingMedium": 4
   },
   "ui": {
     "iconSizeLarge": 28,
@@ -185,8 +193,8 @@
     "label": {
       "padding": 0,
       "leftPadding": {
-        "normal": 2,
-        "terminal": -2
+        "normal": 6,
+        "terminal": 6
       }
     }
   },
@@ -206,7 +214,8 @@
     "wsRefreshDebounceMs": 120,
     "musicPositionPollMs": 1000,
     "musicPlayersPollMs": 5000,
-    "musicMetaRecalcDebounceMs": 80
+    "musicMetaRecalcDebounceMs": 80,
+    "genericTickMs": 2000
   },
   "network": {
     "vpnPollMs": 2500,
@@ -215,7 +224,8 @@
     "capsule": {
       "iconPadding": 0,
       "gapTightenPx": 8,
-      "iconHorizontalMargin": 0
+      "iconHorizontalMargin": 0,
+      "stacked": true
     }
   },
   "media": {
@@ -304,7 +314,8 @@
     "card": {
       "opacity": 0.85
     },
-    "centerOffset": -2
+    "centerOffset": -2,
+    "httpTimeoutMs": 8000
   },
   "vpn": {
     "accent": {
@@ -332,5 +343,20 @@
       "autoHidePauseMs": 2500,
       "showDelayMs": 500
     }
+  },
+  "greeter": {
+    "lockAnimationMs": 500,
+    "slideshowDurationMs": 3000,
+    "contextTimerMs": 300,
+    "animFastMs": 150,
+    "animMediumMs": 250,
+    "animSlowMs": 500,
+    "barColor": "#30c0ffff",
+    "barOutline": "#50ffffff",
+    "widgetColor": "#25ceffff",
+    "widgetActiveColor": "#80ceffff",
+    "widgetOutline": "#40ffffff",
+    "widgetOutlineSeparate": "#20ffffff",
+    "separatorColor": "#60ffffff"
   }
 }

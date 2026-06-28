@@ -1,4 +1,4 @@
-module greeter.lock
+module qs.lock
 Controller 1.0 Controller.qml
 GreeterContext 1.0 GreeterContext.qml
 LockButton 1.0 LockButton.qml

@@ -12,9 +12,9 @@
     "selector": {
       "minWidth": 120
     },
-    "spacing": 12,
-    "spacingTight": 6,
-    "spacingSmall": 4,
+    "spacing": 6,
+    "spacingTight": 3,
+    "spacingSmall": 2,
     "albumArtSize": 200,
     "weather": {
       "width": 440,
@@ -24,6 +24,6 @@
     "button": {
       "activeVisibleMin": 0.18
     },
-    "spacingMedium": 8
+    "spacingMedium": 4
   }
 }

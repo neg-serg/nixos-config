@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 import Quickshell
 import qs.Components
 import qs.Settings
@@ -7,8 +6,6 @@ import qs.Services as Services
 
 CenteredCapsuleRow {
     id: kb
-
-    property string deviceMatch: ""
 
     // Use text glyph inside the label instead of a separate inline icon
     property bool showKeyboardIcon: false
@@ -196,6 +193,9 @@ CenteredCapsuleRow {
         autoStart: false
         restartOnExit: false
         env: Services.HyprlandWatcher.hyprEnvObject
+        onExited: (code, status) => {
+            if (code !== 0) console.warn("[KeyboardLayoutHypr.switchProc] exited with code", code)
+        }
     }
 
     function norm(s) {
@@ -324,6 +324,6 @@ CenteredCapsuleRow {
                 if (txt && txt !== kb.layoutText)
                     kb.layoutText = txt;
             }
-        } catch (e) {}
+        } catch (e) { console.warn("[KeyboardLayoutHypr]", e) }
     }
 }

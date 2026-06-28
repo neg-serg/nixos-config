@@ -19,7 +19,7 @@ Item {
         try {
             if (!p) return "";
             return String(p.service || p.busName || p.name || p.identity || "");
-        } catch (e) { return ""; }
+        } catch (e) { console.warn("[MusicPlayers.playerId]", e); return ""; }
     }
 
     function isPlayerMpd(p) { return MusicIds.isPlayerMpd(p); }
@@ -39,8 +39,8 @@ Item {
                 if (StateCache.state && JSON.stringify(StateCache.state.lastActivePlayers || []) !== JSON.stringify(toSave)) {
                     StateCache.state.lastActivePlayers = toSave;
                 }
-            } catch (e2) {}
-        } catch (e) {}
+            } catch (e2) { console.warn("[MusicPlayers.touchActive.save]", e2) }
+        } catch (e) { console.warn("[MusicPlayers.touchActive]", e) }
     }
 
     function pruneStack() {
@@ -52,7 +52,7 @@ Item {
             var src = _lastActiveStack || [];
             for (var j = 0; j < src.length; j++) if (ids[src[j]]) pruned.push(src[j]);
             _lastActiveStack = pruned;
-        } catch (e) {}
+        } catch (e) { console.warn("[MusicPlayers.pruneStack]", e) }
     }
 
     function _isIgnored(p) {
@@ -62,7 +62,7 @@ Item {
             var id = playerId(p);
             for (var i = 0; i < list.length; i++) if (String(list[i]) === id) return true;
             return false;
-        } catch (e) { return false; }
+        } catch (e) { console.warn("[MusicPlayers._isIgnored]", e); return false; }
     }
     function _isPinned(p) {
         try {
@@ -71,7 +71,7 @@ Item {
             var id = playerId(p);
             for (var i = 0; i < list.length; i++) if (String(list[i]) === id) return true;
             return false;
-        } catch (e) { return false; }
+        } catch (e) { console.warn("[MusicPlayers._isPinned]", e); return false; }
     }
     function getAvailablePlayers() {
         if (!Mpris.players || !Mpris.players.values) return [];
@@ -153,12 +153,12 @@ Item {
                 for (var i = 0; i < arr.length; i++) {
                     var r = String(arr[i]);
                     if (_allowedRules.indexOf(r) === -1) {
-                        try { if (Settings.settings && Settings.settings.debugLogs) console.debug('[MusicPlayers] Unknown rule in playerSelectionPriority:', r); } catch (e2) {}
+                        try { if (Settings.settings && Settings.settings.debugLogs) console.debug('[MusicPlayers] Unknown rule in playerSelectionPriority:', r); } catch (e2) { /* debug logging guard */ }
                         continue;
                     }
                     if (out.indexOf(r) === -1) out.push(r);
                 }
-            } catch (e) {}
+            } catch (e) { console.warn("[MusicPlayers._sanitizeRules]", e) }
             return out;
         }
         function presetRules(name) {
@@ -173,7 +173,7 @@ Item {
             case "default":
             default:
                 if (n !== "default") {
-                    try { if (Settings.settings && Settings.settings.debugLogs) console.debug('[MusicPlayers] Unknown playerSelectionPreset:', n, '; using default'); } catch (e1) {}
+                    try { if (Settings.settings && Settings.settings.debugLogs) console.debug('[MusicPlayers] Unknown playerSelectionPreset:', n, '; using default'); } catch (e1) { /* debug logging guard */ }
                 }
                 return ["pinnedPlaying", "mpdPlaying", "anyPlaying", "mpdRecent", "pinned", "recent", "manual", "first"]; // default
             }
@@ -183,7 +183,7 @@ Item {
         if (cfg && cfg.length > 0) {
             rules = _sanitizeRules(cfg);
             if (!rules.length) {
-                try { if (Settings.settings && Settings.settings.debugLogs) console.debug('[MusicPlayers] playerSelectionPriority contained no valid rules; falling back to preset'); } catch (e3) {}
+                try { if (Settings.settings && Settings.settings.debugLogs) console.debug('[MusicPlayers] playerSelectionPriority contained no valid rules; falling back to preset'); } catch (e3) { /* debug logging guard */ }
                 rules = presetRules(Settings.settings && Settings.settings.playerSelectionPreset);
             }
         } else {
@@ -202,6 +202,7 @@ Item {
         if (np !== currentPlayer) {
             currentPlayer = np;
         }
+        hasPlayer = getAvailablePlayers().length > 0;
     }
 
     Component.onCompleted: {
@@ -210,7 +211,7 @@ Item {
         try {
             var saved = (StateCache.state && StateCache.state.lastActivePlayers) ? StateCache.state.lastActivePlayers : [];
             if (saved && saved.length) _lastActiveStack = saved.filter(function(x){ return typeof x === 'string' && x.length > 0; });
-        } catch (e) { }
+        } catch (e) { console.warn("[MusicPlayers.onCompleted]", e) }
     }
 
         // React to players list via Connections

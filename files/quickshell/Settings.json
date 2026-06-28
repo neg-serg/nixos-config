@@ -12,9 +12,7 @@
     "contrastWarnRatio": 4.5,
     "debugLogs": false,
     "debugNetwork": false,
-    "debugSeamFullWidth": true,
-    "dimPanels": true,
-    "enableWedgeClipShader": false,
+    "enableWedgeClipShader": true,
     "fontSizeMultiplier": 1,
     "hideSystemTrayCapsule": true,
     "ignoredPlayers": [],
@@ -39,6 +37,7 @@
     "networkNoLinkColor": "#D81B60",
     "networkPingIntervalMs": 30000,
     "panelBgAlphaScale": 0.2,
+    "panel.capsule.borderWidth": 0,
     "pinnedPlayers": [],
     "playerSelectionPreset": "default",
     "playerSelectionPriority": [
@@ -53,7 +52,7 @@
     "showMediaInBar": true,
     "showMediaVisualizer": false,
     "showSpectrumTopHalf": false,
-    "showWeatherInBar": false,
+    "showWeatherInBar": true,
     "spectrumBarGap": 1,
     "spectrumFillOpacity": 0.35,
     "spectrumHeightFactor": 1.2,
@@ -82,5 +81,7 @@
             "spectrumVerticalRaise": 0.75
         }
     },
-    "weatherCity": "Moscow"
+    "weatherCity": "Saint Petersburg",
+    "weatherLatitude": 59.9375,
+    "weatherLongitude": 30.3086
 }
