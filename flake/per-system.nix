@@ -572,7 +572,6 @@ in
       packages = [ pkgs.ranger ];
     };
 
-
     "stress-ng" = pkgs.mkShell {
       packages = [ pkgs.stress-ng ];
     };
