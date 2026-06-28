@@ -28,7 +28,7 @@ filter_ext() {
   fi
 }
 
-"$swimg_bin" -C "${XDG_CONFIG_HOME:-$HOME/.config}/swayimg/config" -g -f -F <(
+"$swimg_bin" -c "${XDG_CONFIG_HOME:-$HOME/.config}/swayimg/init.lua" -g -f -F <(
   # Follow symlinks and sort by ctime (newest first)
   find -L "$@" -type f -printf '%C@ %p\n' \
   | sort -rn \
