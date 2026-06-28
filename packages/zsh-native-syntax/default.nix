@@ -3,6 +3,8 @@
   stdenv,
   fetchFromGitHub,
   rustPlatform,
+  cargo,
+  rustc,
   zsh,
   gcc,
 }:
@@ -50,8 +52,8 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [
     rustPlatform.cargoSetupHook
-    rustPlatform.rust.cargo
-    rustPlatform.rust.rustc
+    cargo
+    rustc
     gcc
   ];
 
