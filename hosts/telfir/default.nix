@@ -15,6 +15,7 @@
 
   features.web.enable = true;
   features.web.zen.enable = true;
+  features.web.floorp.enable = false;
 
   features.hardware.amdgpu.rocm.enable = true;
   features.mail.enable = true;
