@@ -37,7 +37,6 @@
     nyx = {
       url = "github:chaotic-cx/nyx";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.rust-overlay.follows = "rust-overlay";
     };
     pre-commit-hooks = {
       url = "github:cachix/git-hooks.nix";
