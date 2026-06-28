@@ -1,54 +1,67 @@
 ##
 # Module: system/net/proxy
-# Purpose: V2Ray/V2RayA proxy utilities.
+# Purpose: V2Ray/Xray proxy utilities.
 # Key options: none.
-# Dependencies: pkgs.
+# Dependencies: pkgs, sops.
+#
+# The proxy password is stored in a sops-encrypted file and exposed to
+# nix-daemon and the user shell via a sops template at runtime.
+#
+# Bootstrap note: on a fresh system the Xray config doesn't exist yet.
+# Copy or create it at ~/.config/sing-box-tun/config.json (from the old
+# system), then:
+#   sudo systemctl start xray
+#   nixos-rebuild switch
 {
   pkgs,
   lib,
+  config,
   ...
 }:
+let
+  secretsDir = ../../../secrets/home;
+  hasSopsFile = builtins.pathExists "${secretsDir}/xray-proxy-password.sops.yaml";
+  xrayConfigFile = "/home/neg/.config/sing-box-tun/config.json";
+  hasXrayConfig = builtins.pathExists xrayConfigFile;
+  proxyEnabled = hasSopsFile && hasXrayConfig;
+in
 {
   environment.systemPackages = [
     pkgs.xray # VLESS/Reality-capable proxy core
   ];
 
-  systemd.services."sing-box-tun" = lib.mkIf false {
-    description = "Sing-box VLESS Reality (tun, manual start)";
-    wants = [ "network-online.target" ];
-    after = [ "network-online.target" ];
-    wantedBy = [ ]; # manual start: systemctl start sing-box-tun
-    serviceConfig = {
-      RuntimeDirectory = "sing-box-tun";
-      ExecStartPre = [
-        "/run/current-system/sw/bin/test -f /run/user/1000/secrets/vless-reality-singbox-tun.json"
-        "/run/current-system/sw/bin/sh -c '/run/current-system/sw/bin/ip rule del pref 100 2>/dev/null; /run/current-system/sw/bin/ip rule del pref 200 2>/dev/null; /run/current-system/sw/bin/ip route show table 200 default > /run/sing-box-tun/prev-default-route 2>/dev/null; /run/current-system/sw/bin/ip route del default table 200 2>/dev/null'"
-      ];
-      ExecStart = "${pkgs.sing-box}/bin/sing-box run -c /run/user/1000/secrets/vless-reality-singbox-tun.json"; # Universal proxy platform
-      ExecStartPost = [
-        "/run/current-system/sw/bin/sh -c '/run/current-system/sw/bin/ip rule add pref 100 to 204.152.223.171 lookup main'"
-        "/run/current-system/sw/bin/sh -c '/run/current-system/sw/bin/ip route replace default dev sb0 table 200'"
-        "/run/current-system/sw/bin/sh -c '/run/current-system/sw/bin/ip rule add pref 200 lookup 200'"
-        "/run/current-system/sw/bin/ip route flush cache"
-        "/run/current-system/sw/bin/resolvectl dns sb0 1.1.1.1 1.0.0.1"
-        "/run/current-system/sw/bin/resolvectl domain sb0 \"~.\""
-      ];
-      ExecStopPost = [
-        "/run/current-system/sw/bin/sh -c \"/run/current-system/sw/bin/ip rule del pref 200 2>/dev/null; /run/current-system/sw/bin/ip route del default dev sb0 table 200 2>/dev/null; if test -s /run/sing-box-tun/prev-default-route; then /run/current-system/sw/bin/ip route replace table 200 $(cat /run/sing-box-tun/prev-default-route); fi; /run/current-system/sw/bin/ip rule del pref 100 2>/dev/null; /run/current-system/sw/bin/ip route flush cache\""
-        "/run/current-system/sw/bin/resolvectl revert sb0"
-      ];
-      Restart = "on-failure";
-      CapabilityBoundingSet = [
-        "CAP_NET_ADMIN"
-        "CAP_NET_RAW"
-        "CAP_NET_BIND_SERVICE"
-      ];
-      AmbientCapabilities = [
-        "CAP_NET_ADMIN"
-        "CAP_NET_RAW"
-        "CAP_NET_BIND_SERVICE"
-      ];
-      NoNewPrivileges = false;
+  # Sops-managed proxy + Xray service — only active when both the sops
+  # file and xray config exist.
+  sops = lib.mkIf hasSopsFile {
+    secrets."xray_proxy_password" = {
+      format = "yaml";
+      sopsFile = "${secretsDir}/xray-proxy-password.sops.yaml";
+      key = "xray_proxy_password";
     };
+    templates."xray-proxy-env" = {
+      content = ''
+        ALL_PROXY=socks5://phone:{{ .xray_proxy_password }}@127.0.0.1:10808
+      '';
+      path = "/run/secrets/xray-proxy-env";
+    };
+  };
+
+  # Xray local SOCKS5 proxy (auto-starts)
+  systemd.services.xray = lib.mkIf hasXrayConfig {
+    description = "Xray local SOCKS5 proxy (127.0.0.1:10808)";
+    after = [ "network-online.target" ];
+    wantedBy = [ "default.target" ];
+    serviceConfig = {
+      Type = "simple";
+      User = "neg";
+      ExecStart = "${pkgs.xray}/bin/xray run -config ${xrayConfigFile}";
+      Restart = "on-failure";
+      RestartSec = 5;
+    };
+  };
+
+  # Inject proxy env into nix-daemon
+  systemd.services.nix-daemon = lib.mkIf proxyEnabled {
+    serviceConfig.EnvironmentFile = [ "/run/secrets/xray-proxy-env" ];
   };
 }
