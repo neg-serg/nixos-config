@@ -5,7 +5,7 @@
 # Dependencies: pkgs, sops.
 #
 # The proxy password is stored in a sops-encrypted file and exposed to
-# nix-daemon and the user shell via a sops template at runtime.
+# nix-daemon and the user shell via a generated env file at runtime.
 #
 # Bootstrap note: on a fresh system the Xray config doesn't exist yet.
 # Copy or create it at ~/.config/sing-box-tun/config.json (from the old
@@ -38,12 +38,6 @@ in
       sopsFile = "${secretsDir}/xray-proxy-password.sops.yaml";
       key = "xray_proxy_password";
     };
-    templates."xray-proxy-env" = {
-      content = ''
-        ALL_PROXY=socks5://phone:{{ .xray_proxy_password }}@127.0.0.1:10808
-      '';
-      path = "/run/secrets/xray-proxy-env";
-    };
   };
 
   # Xray local SOCKS5 proxy (auto-starts)
@@ -63,6 +57,26 @@ in
   # Inject proxy env into nix-daemon
   systemd.services.nix-daemon = lib.mkIf proxyEnabled {
     serviceConfig.EnvironmentFile = [ "/run/secrets/xray-proxy-env" ];
+  };
+
+  # Generate xray-proxy-env from decrypted sops password (oneshot, runs at boot)
+  systemd.services.xray-proxy-env = lib.mkIf hasSopsFile {
+    description = "Generate proxy environment file from sops secret";
+    before = [ "nix-daemon.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      PW=$(cat /run/secrets/xray_proxy_password 2>/dev/null || true)
+      if [ -n "$PW" ]; then
+        printf 'ALL_PROXY=socks5://phone:%s@127.0.0.1:10808\n' "$PW" > /run/secrets/xray-proxy-env.tmp
+        mv /run/secrets/xray-proxy-env.tmp /run/secrets/xray-proxy-env
+        chmod 400 /run/secrets/xray-proxy-env
+        chown neg:neg /run/secrets/xray-proxy-env
+      fi
+    '';
   };
 
 }
