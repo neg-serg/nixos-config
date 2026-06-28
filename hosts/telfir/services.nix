@@ -644,10 +644,11 @@ lib.mkMerge [
       };
     };
 
-    # Configure Nix to use only upstream binary caches
+    # Configure Nix to use upstream binary caches with mirrors
     nix.settings = {
       substituters = lib.mkForce [
         "https://cache.nixos.org"
+        "https://install.determinate.systems"
       ];
     };
   }
