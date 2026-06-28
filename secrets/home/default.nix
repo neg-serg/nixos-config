@@ -11,6 +11,7 @@ let
   hasVlessRealitySingboxTun = builtins.pathExists ./vless/reality-singbox-tun.json.sops;
   hasBraveSearchApi = builtins.pathExists ./brave-search-api.env.sops;
   hasContext7Api = builtins.pathExists ./context7-api.env.sops;
+  hasDeepseekApi = builtins.pathExists ./deepseek-api.sops.yaml;
   hasMpdasNegrc = builtins.pathExists ./mpdas/neg.rc;
   hasMusicbrainz = builtins.pathExists ./musicbrainz;
 in
@@ -108,6 +109,16 @@ in
         format = "binary";
         sopsFile = ./context7-api.env.sops;
         path = "/run/user/1000/secrets/context7-api.env";
+        mode = "0400";
+      };
+    }
+    // lib.optionalAttrs hasDeepseekApi {
+      # DeepSeek API key for OpenCode DeepSeek provider
+      "deepseek-api" = {
+        format = "yaml";
+        sopsFile = ./deepseek-api.sops.yaml;
+        key = "DEEPSEEK_API_KEY";
+        path = "/run/user/1000/secrets/deepseek-api";
         mode = "0400";
       };
     };
