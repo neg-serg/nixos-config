@@ -29,6 +29,7 @@ in
 
     firefox.enable = mkBool "enable Firefox browser" false;
     librewolf.enable = mkBool "enable LibreWolf browser" false;
+    zen.enable = mkBool "enable Zen browser (package only; profile managed manually)" true;
 
     chrome.enable = mkBool "enable Google Chrome browser" true;
     brave.enable = mkBool "enable Brave browser" false;

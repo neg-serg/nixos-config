@@ -111,6 +111,7 @@ in
           floorp.enable = mkDefault true;
           firefox.enable = mkDefault false;
           librewolf.enable = mkDefault false;
+          zen.enable = mkDefault true;
 
           prefs.fastfox.enable = mkDefault true;
         };
