@@ -14,15 +14,23 @@ Rectangle {
     property real inset: 0
     // Base radius from the target geometry; OverlayFrame adjusts relative to inset.
     property real baseRadius: 0
+    // Individual corner radii override baseRadius per-corner.
+    property real baseTopLeftRadius: baseRadius
+    property real baseTopRightRadius: baseRadius
+    property real baseBottomLeftRadius: baseRadius
+    property real baseBottomRightRadius: baseRadius
     property color strokeColor: "transparent"
     property real strokeWidth: 0
-    property bool enabled: true
     // Allows callers to fine-tune stacking relative to siblings.
     property real zIndex: 10
 
     anchors.fill: anchorTarget ? anchorTarget : parent
     anchors.margins: inset
-    radius: Math.max(0, baseRadius - inset)
+    radius: 0
+    topLeftRadius: Math.max(0, baseTopLeftRadius - inset)
+    topRightRadius: Math.max(0, baseTopRightRadius - inset)
+    bottomLeftRadius: Math.max(0, baseBottomLeftRadius - inset)
+    bottomRightRadius: Math.max(0, baseBottomRightRadius - inset)
     color: "transparent"
     border.width: enabled ? strokeWidth : 0
     border.color: enabled ? strokeColor : "transparent"

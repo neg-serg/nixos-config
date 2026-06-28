@@ -21,7 +21,7 @@ Item {
                 currentPlayer.seek(deltaMs / 1000.0);
                 currentPosition = targetMs;
             }
-        } catch (e) { /* ignore */ }
+        } catch (e) { console.warn("[MusicPosition]", e) }
     }
 
     function seekByRatio(ratio) {
@@ -30,7 +30,7 @@ Item {
                 var targetMs = Utils.clamp(Math.round(ratio * currentPlayer.length * 1000), 0, 2147483647);
                 seek(targetMs);
             }
-        } catch (e) { /* ignore */ }
+        } catch (e) { console.warn("[MusicPosition]", e) }
     }
 
     // Poll MPRIS position via centralized Timers service
@@ -45,7 +45,7 @@ Item {
                     var lenMs = Time.mprisToMs(root.currentPlayer.length);
                     root.currentPosition = (lenMs > 0) ? Utils.clamp(posMs, 0, lenMs) : posMs;
                 }
-            } catch (e) { /* ignore */ }
+            } catch (e) { console.warn("[MusicPosition]", e) }
         }
     }
 
@@ -58,7 +58,7 @@ Item {
                     var lenMs = Time.mprisToMs(root.currentPlayer.length);
                     root.currentPosition = (lenMs > 0) ? Utils.clamp(posMs, 0, lenMs) : posMs;
                 }
-            } catch (e) { /* ignore */ }
+            } catch (e) { console.warn("[MusicPosition]", e) }
         }
         function onPlaybackStateChanged() {
             if (!root.currentPlayer) { root.currentPosition = 0; return; }

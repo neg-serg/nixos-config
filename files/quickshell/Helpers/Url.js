@@ -26,6 +26,7 @@ function parseQuery(queryString) {
         }
         return params;
     } catch (e) {
+        console.warn("[Url.parseQuery]", e);
         return {};
     }
 }
@@ -52,6 +53,7 @@ function buildFileUrl(dirPath, fileName) {
         try { encodedName = encodeURIComponent(name); } catch (e) { encodedName = name; }
         return 'file://' + path + '/' + encodedName;
     } catch (e) {
+        console.warn("[Url.buildFileUrl]", e);
         return "";
     }
 }

@@ -1,0 +1,20 @@
+{
+  "greeter": {
+    // Lock screen / greeter timing tokens
+    "lockAnimationMs": 500,
+    "slideshowDurationMs": 3000,
+    "contextTimerMs": 300,
+    // Animation tiers for greeter UI elements
+    "animFastMs": 150,
+    "animMediumMs": 250,
+    "animSlowMs": 500,
+    // Greeter color tokens (synced with main Theme or independent)
+    "barColor": "#30c0ffff",
+    "barOutline": "#50ffffff",
+    "widgetColor": "#25ceffff",
+    "widgetActiveColor": "#80ceffff",
+    "widgetOutline": "#40ffffff",
+    "widgetOutlineSeparate": "#20ffffff",
+    "separatorColor": "#60ffffff"
+  }
+}

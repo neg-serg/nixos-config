@@ -10,13 +10,6 @@ Item {
     // Reflect window visibility for external checks (buttons, etc.)
     visible: toast.visible
 
-    // External offset (height of your bar/panel). New name:
-    property int barMarginPx: 0
-    // Backward-compat alias: keep two-way sync with old configs
-    property int panelMarginPx: barMarginPx
-    onPanelMarginPxChanged: if (panelMarginPx !== barMarginPx) barMarginPx = panelMarginPx
-    onBarMarginPxChanged: if (barMarginPx   !== panelMarginPx) panelMarginPx = barMarginPx
-
     // Anchor: panel/bar window for correct positioning relative to exclusive zones
     property var anchorWindow: null
     // Panel edge: "top" | "bottom" | "left" | "right"
@@ -125,7 +118,7 @@ Item {
                                   : Theme.sidePanelPopupOuterMargin;
                 const baseMargin = Math.max(0, Math.round(cfgMargin * scale));
                 const marginX = baseMargin;
-                const marginY = baseMargin + sidebarPopup.barMarginPx;
+                const marginY = baseMargin;
 
                 // Align to the right edge of the panel window
                 const px = sidebarPopup.anchorWindow

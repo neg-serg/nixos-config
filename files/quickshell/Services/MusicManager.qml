@@ -11,11 +11,6 @@ import "../Helpers/MusicIds.js" as MusicIds
 Item {
     id: manager
 
-    // Identify whether a player is MPD-like (mpd/mpdris/mopidy)
-    function isPlayerMpd(player) {
-        return MusicIds.isPlayerMpd(player || currentPlayer);
-    }
-
     function isCurrentMpdPlayer() { return MusicIds.isPlayerMpd(currentPlayer); }
     MusicPlayers { id: players }
     MusicPosition { id: position; currentPlayer: players.currentPlayer }
@@ -30,7 +25,7 @@ Item {
     property string trackTitle: currentPlayer ? (currentPlayer.trackTitle  || "") : ""
     property string trackArtist: currentPlayer ? (currentPlayer.trackArtist || "") : ""
     property string trackAlbum: currentPlayer ? (currentPlayer.trackAlbum  || "") : ""
-    property string coverUrl: currentPlayer ? (currentPlayer.trackArtUrl || "") : ""
+    property string coverUrl: coverResolver.resolvedCoverUrl || ""
     property real trackLength:currentPlayer ? currentPlayer.length : 0  // raw from backend
     property bool canPlay:currentPlayer ? currentPlayer.canPlay : false
     property bool canPause:currentPlayer ? currentPlayer.canPause : false
@@ -39,6 +34,13 @@ Item {
     property bool canSeek:currentPlayer ? currentPlayer.canSeek : false
     property bool hasPlayer:players.hasPlayer
 
+    CoverResolver {
+        id: coverResolver
+        rawArtUrl: currentPlayer ? (currentPlayer.trackArtUrl || "") : ""
+        trackTitle: currentPlayer ? (currentPlayer.trackTitle || "") : ""
+        trackArtist: currentPlayer ? (currentPlayer.trackArtist || "") : ""
+        currentPlayer: players.currentPlayer
+    }
     MusicMeta { id: meta; currentPlayer: players.currentPlayer }
     property alias trackGenre: meta.trackGenre
     property alias trackLabel: meta.trackLabel
@@ -94,4 +96,51 @@ Item {
         }
     }
     property var cavaValues: cavaLoader.active && cavaLoader.item ? cavaLoader.item.values : []
+
+    // ── Accent color (shared state, sampled by first consumer in a window) ──
+    property color accentColor: Theme.accentPrimary
+    property bool accentReady: false
+    property string _lastSampledUrl: ""
+    property var _accentCache: ({})
+
+    // Called by consumers before sampling — returns true if sampling is needed
+    function accentNeedsSample() {
+        var url = coverUrl || "";
+        if (url === manager._lastSampledUrl) return false;
+        // Invalidate stale cache entry when only the cache-buster changed (same base path)
+        var oldBase = String(manager._lastSampledUrl || "").replace(/\?t=\d+$/, "");
+        var newBase = String(url).replace(/\?t=\d+$/, "");
+        if (oldBase && oldBase === newBase && manager._accentCache) {
+            delete manager._accentCache[manager._lastSampledUrl];
+        }
+        manager._lastSampledUrl = url;
+        if (!url) {
+            manager.accentColor = Theme.accentPrimary;
+            manager.accentReady = false;
+            return false;
+        }
+        if (manager._accentCache && manager._accentCache[url]) {
+            manager.accentColor = manager._accentCache[url];
+            manager.accentReady = true;
+            return false;
+        }
+        manager.accentReady = false;
+        return true;
+    }
+
+    // Called by the consumer's Canvas after sampling
+    function accentSetResult(url, rgb) {
+        if (rgb) {
+            var col = Qt.rgba(rgb.r / 255.0, rgb.g / 255.0, rgb.b / 255.0, 1);
+            manager.accentColor = col;
+            manager.accentReady = true;
+            if (manager._accentCache) manager._accentCache[url] = col;
+        } else {
+            var cached = manager._accentCache && manager._accentCache[url];
+            var fallback = cached || Theme.accentPrimary;
+            manager.accentColor = fallback;
+            manager.accentReady = !!cached;
+            if (manager._accentCache && !cached) manager._accentCache[url] = fallback;
+        }
+    }
 }

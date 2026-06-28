@@ -1,5 +1,6 @@
-module greeter
+module qs
 singleton ShellGlobals 1.0 ShellGlobals.qml
+singleton GreeterTheme 1.0 GreeterTheme.qml
 ShellIpc 1.0 ShellIpc.qml
 SlideView 1.0 SlideView.qml
 SlideViewItem 1.0 SlideViewItem.qml

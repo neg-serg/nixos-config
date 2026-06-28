@@ -1,10 +1,3 @@
-function normalizedPlayerId(player) {
-    try {
-        if (!player) return "";
-        return String(player.service || player.busName || player.name || player.identity || "");
-    } catch (e) { return ""; }
-}
-
 function isPlayerMpd(player) {
     try {
         var p = player;
@@ -14,10 +7,9 @@ function isPlayerMpd(player) {
         var identStr = String(p.identity || "").toLowerCase();
         var re = /(mpd|mpdris|mopidy|music\s*player\s*daemon)/;
         return re.test(idStr) || re.test(nameStr) || re.test(identStr);
-    } catch (e) { return false; }
+    } catch (e) { console.warn("[MusicIds.isPlayerMpd]", e); return false; }
 }
 
 var MusicIds = {
-    normalizedPlayerId: normalizedPlayerId,
     isPlayerMpd: isPlayerMpd
 };

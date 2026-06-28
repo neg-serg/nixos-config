@@ -4,6 +4,8 @@
 // mix(a,b,t): linear blend between two colors, t in [0,1]
 // towardsBlack(color,t): mix color toward black by t
 // towardsWhite(color,t): mix color toward white by t
+// saturate(c, t): increase HSL saturation by t
+// desaturate(c, amount): blend toward grayscale by amount [0,1]
 
 function _toRgb(obj) {
     try {
@@ -32,7 +34,7 @@ function _toRgb(obj) {
         if (typeof obj === 'object' && obj.r !== undefined && obj.g !== undefined && obj.b !== undefined) {
             return { r: Number(obj.r), g: Number(obj.g), b: Number(obj.b), a: (obj.a !== undefined ? Number(obj.a) : 1.0) };
         }
-    } catch(e) {}
+    } catch(e) { console.warn("[Color._toRgb]", e) }
     return null;
 }
 
@@ -56,6 +58,7 @@ function contrastOn(bg, light, dark, threshold) {
         var darkColor = dark || '#000000';
         return (lum < th) ? lightColor : darkColor;
     } catch(e) {
+        console.warn("[Color.contrastOn]", e);
         return light || '#FFFFFF';
     }
 }
@@ -70,7 +73,7 @@ function contrastRatio(a, b) {
         var high = Math.max(La, Lb);
         var low  = Math.min(La, Lb);
         return high / low;
-    } catch (e) { return 1; }
+    } catch (e) { console.warn("[Color.contrastRatio]", e); return 1; }
 }
 
 function withAlpha(c, a) {
@@ -80,7 +83,7 @@ function withAlpha(c, a) {
         if (!(alpha >= 0 && alpha <= 1)) alpha = (alpha && alpha > 1) ? (alpha / 255.0) : 1.0;
         if (!rgb) return c;
         return Qt.rgba(rgb.r, rgb.g, rgb.b, alpha);
-    } catch (e) { return c; }
+    } catch (e) { console.warn("[Color.withAlpha]", e); return c; }
 }
 
 function mix(a, b, t) {
@@ -94,7 +97,7 @@ function mix(a, b, t) {
             ca.b * (1-tt) + cb.b * tt,
             ca.a * (1-tt) + cb.a * tt
         );
-    } catch (e) { return a; }
+    } catch (e) { console.warn("[Color.mix]", e); return a; }
 }
 
 function towardsBlack(c, t) {
@@ -145,40 +148,39 @@ function _hslToRgb(hsl) {
 }
 
 function toHsl(c) {
-    try { var rgb = _toRgb(c); if (!rgb) return null; return _rgbToHsl(rgb); } catch(e){ return null }
-}
-function fromHsl(h, s, l, a) { try { return _hslToRgb({ h: Number(h)/360, s: s, l: l, a: a }); } catch(e){ return c } }
-
-function lighten(c, t) {
-    try {
-        var hsl = toHsl(c); if (!hsl) return c; hsl.l = _clamp01(hsl.l + Number(t)); return _hslToRgb(hsl);
-    } catch(e){ return c }
-}
-function darken(c, t) {
-    try {
-        var hsl = toHsl(c); if (!hsl) return c; hsl.l = _clamp01(hsl.l - Number(t)); return _hslToRgb(hsl);
-    } catch(e){ return c }
+    try { var rgb = _toRgb(c); if (!rgb) return null; return _rgbToHsl(rgb); } catch(e){ console.warn("[Color.toHsl]", e); return null }
 }
 function saturate(c, t) {
     try {
         var hsl = toHsl(c); if (!hsl) return c; hsl.s = _clamp01(hsl.s + Number(t)); return _hslToRgb(hsl);
-    } catch(e){ return c }
+    } catch(e){ console.warn("[Color.saturate]", e); return c }
 }
-function desaturate(c, t) {
+function desaturate(c, amount) {
     try {
-        var hsl = toHsl(c); if (!hsl) return c; hsl.s = _clamp01(hsl.s - Number(t)); return _hslToRgb(hsl);
-    } catch(e){ return c }
+        var rgb = _toRgb(c);
+        if (!rgb) return c;
+        var clamped = _clamp01(Number(amount) || 0);
+        var y = 0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b;
+        return mix(c, Qt.rgba(y, y, y, rgb.a), clamped);
+    } catch(e) { console.warn("[Color.desaturate]", e); return c }
 }
-function shiftHue(c, deg) {
+// Take hue+saturation from source, lightness from reference
+function matchLightness(source, lightnessRef) {
     try {
-        var hsl = toHsl(c); if (!hsl) return c; hsl.h = hsl.h + (Number(deg)/360); return _hslToRgb(hsl);
-    } catch(e){ return c }
+        var srcHsl = toHsl(source);
+        var refHsl = toHsl(lightnessRef);
+        if (!srcHsl || !refHsl) return source;
+        srcHsl.l = refHsl.l;
+        return _hslToRgb(srcHsl);
+    } catch(e) { console.warn("[Color.matchLightness]", e); return source }
 }
-
-// OKLCH stubs with HSL fallback to keep API stable
-function toOklch(c) {
-    try { var hsl = toHsl(c); if (!hsl) return null; return { l: hsl.l, c: hsl.s, h: hsl.h*360, a: (hsl.a!==undefined?hsl.a:1) }; } catch(e){ return null }
-}
-function fromOklch(l, c, h, a) {
-    try { return fromHsl(h, Math.max(0, Math.min(1, c)), Math.max(0, Math.min(1, l)), a); } catch(e){ return Qt.rgba(0,0,0,1) }
+// Take only hue from source, preserve saturation and lightness from reference
+function matchHue(source, ref) {
+    try {
+        var srcHsl = toHsl(source);
+        var refHsl = toHsl(ref);
+        if (!srcHsl || !refHsl) return source;
+        refHsl.h = srcHsl.h;
+        return _hslToRgb(refHsl);
+    } catch(e) { console.warn("[Color.matchHue]", e); return source }
 }

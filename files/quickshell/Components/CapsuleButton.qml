@@ -5,7 +5,7 @@ LocalComponents.WidgetCapsule {
     id: root
 
     property bool interactive: true
-    property bool enabled: true
+    enabled: true
     property bool checkable: false
     property bool checked: false
     property bool autoExclusive: false

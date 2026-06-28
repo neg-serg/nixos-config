@@ -1,7 +1,6 @@
 import QtQuick
 import "../Helpers/Utils.js" as Utils
 import Quickshell
-import Quickshell.Io
 import qs.Services
 import qs.Settings
 
@@ -22,7 +21,6 @@ Scope {
     property int gravity: (_vp && _vp.cavaGravity        !== undefined) ? _vp.cavaGravity        : (Settings.settings.cavaGravity        !== undefined ? Settings.settings.cavaGravity        : 20000)
     property bool monstercat: (_vp && _vp.cavaMonstercat     !== undefined) ? _vp.cavaMonstercat     : (Settings.settings.cavaMonstercat     !== undefined ? Settings.settings.cavaMonstercat     : false)
     property string channels: "mono"
-    property string monoOption: "average"
 
     property var config: ({
             general: {
@@ -39,7 +37,7 @@ Scope {
                 method: "raw",
                 bit_format: 8,
                 channels: channels,
-                mono_option: monoOption
+                mono_option: "average"
             }
         })
 
@@ -73,8 +71,7 @@ Scope {
             process.stdinEnabled = false;
         }
         onChunk: (data) => {
-            const newValues = Array(count).fill(0);
-            for (let i = 0; i < values.length; i++) newValues[i] = values[i];
+            const newValues = values.slice();
             if (process.index + data.length > count) process.index = 0;
             for (let i = 0; i < data.length; i += 1) {
                 newValues[process.index] = Utils.clamp(data.charCodeAt(i), 0, 128) / 128;

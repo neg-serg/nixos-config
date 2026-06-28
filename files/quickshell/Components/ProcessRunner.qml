@@ -27,8 +27,8 @@ Item {
 
     // STDIN support
     property bool stdinEnabled: false
-    function write(data) { try { proc.write(String(data)) } catch (e) {} }
-    function closeStdin() { try { proc.stdinEnabled = false } catch (e) {} }
+    function write(data) { try { proc.write(String(data)) } catch (e) { /* proc may not be running */ } }
+    function closeStdin() { try { proc.stdinEnabled = false } catch (e) { /* proc may not be running */ } }
 
     // Raw chunk mode (binary-like streaming)
     // When true, emit chunks of stdout via `chunk(string data)` instead of line/jsonLine logic.

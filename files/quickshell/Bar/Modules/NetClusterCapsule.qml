@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.Components
 import qs.Settings
 import "../../Components" as LocalComponents
@@ -10,58 +11,51 @@ import "../../Helpers/ConnectivityUi.js" as ConnUi
 ConnectivityCapsule {
     id: root
 
-    property bool vpnVisible: ConnectivityState.vpnConnected
-    
+    property string throughputText: ConnectivityState.throughputText
+    property bool vpnIconRounded: false
+    property bool iconSquare: true
+
+    property color accentBase: Color.saturate(Theme.accentPrimary, Theme.vpnAccentSaturateBoost)
+    property color accentColor: Color.desaturate(accentBase, Theme.vpnDesaturateAmount)
+
     Component.onCompleted: {
         if (ConnectivityState) {
             // Initialization verified
         }
     }
-    property bool linkVisible: true
-    property string throughputText: ConnectivityState.throughputText
-    property bool vpnIconRounded: false
-    property bool linkIconRounded: false
-    property bool iconSquare: true
-    property bool iconDebugFrames: false
-    property color iconDebugFrameColor: "#ff0000"
-    property real iconDebugFrameWidth: 1.5
-
-    property real accentSaturateBoost: Theme.vpnAccentSaturateBoost
-    property real accentLightenTowardWhite: Theme.vpnAccentLightenTowardWhite
-    property real desaturateAmount: Theme.vpnDesaturateAmount
-    property color accentBase: Color.saturate(Theme.accentPrimary, accentSaturateBoost)
-    property color accentColor: desaturateColor(accentBase, desaturateAmount)
-    property color vpnOffColor: Theme.textDisabled
-
-    property string linkIconDefault: "lan"
-    property string vpnIconDefault: "verified_user"
-    property string iconConnected: "network_check"
-    property string iconNoInternet: "network_ping"
-    property string iconDisconnected: "link_off"
-    property bool useStatusFallbackIcons: false
 
     readonly property bool vpnConnected: ConnectivityState.vpnConnected
     readonly property bool hasLink: ConnectivityState.hasLink
     readonly property bool hasInternet: ConnectivityState.hasInternet
-    readonly property bool _hasLeading: vpnVisible || linkVisible
+    readonly property var hiddifyTrayItem: ConnectivityState.hiddifyTrayItem
+    readonly property bool hiddifyHasTrayIcon: !!(hiddifyTrayItem && hiddifyTrayItem.icon)
+    readonly property bool _hasLeading: true
     readonly property int _baseClusterSpacing: Math.max(0, Theme.networkCapsuleIconSpacing)
     readonly property int _baseIconMargin: Math.max(0, Theme.networkCapsuleIconHorizontalMargin)
     readonly property int _gapTighten: Math.min(Math.max(0, Theme.networkCapsuleGapTightenPx), Math.round(_baseClusterSpacing))
     readonly property int clusterSpacing: Math.max(0, _baseClusterSpacing - _gapTighten)
     readonly property int iconHorizontalMargin: Math.max(0, _baseIconMargin - Math.round(_gapTighten / 2))
-    readonly property color vpnIconColor: vpnConnected ? accentColor : vpnOffColor
+    readonly property color vpnIconColor: vpnConnected ? accentColor : Theme.textDisabled
     readonly property color linkIconColor: (!hasLink)
         ? ConnUi.errorColor(Settings.settings, Theme)
         : (!hasInternet ? ConnUi.warningColor(Settings.settings, Theme) : accentColor)
-    readonly property string currentLinkIconName: useStatusFallbackIcons ? (!hasLink ? iconDisconnected : (!hasInternet ? iconNoInternet : iconConnected)) : linkIconDefault
+    readonly property string currentLinkIconName: "lan"
 
     backgroundKey: "network"
     iconVisible: false
     glyphLeadingActive: _hasLeading
     labelIsRichText: true
-    labelText: _richThroughputText
-    labelVisible: throughputText && throughputText.length > 0
+    labelText: Theme.networkCapsuleStacked ? "" : _richThroughputText
+    labelVisible: !Theme.networkCapsuleStacked && throughputText && throughputText.length > 0
     readonly property string _richThroughputText: _formatThroughputRich(throughputText)
+
+    // Stacked (two-row) layout properties
+    readonly property string _rxRichText: _dimLeadingZeros(ConnUi.formatRxText(throughputText))
+    readonly property string _txRichText: _dimLeadingZeros(ConnUi.formatTxText(throughputText))
+    readonly property int _stackedRowFontPx: Math.max(8, Math.round(labelPixelSize * 0.7))
+
+    // Hiddify tray menu popup
+    CustomTrayMenu { id: hiddifyMenu }
 
     leadingContent: Row {
         id: iconRow
@@ -69,64 +63,106 @@ ConnectivityCapsule {
         spacing: root.clusterSpacing
         height: root.desiredInnerHeight
 
-        LocalComponents.ConnectivityIconSlot {
-            id: vpnSlot
-            active: root.vpnVisible
-            square: root.iconSquare
-            box: root.desiredInnerHeight
-            mode: "material"
-            icon: root.vpnIconDefault
-            rounded: root.vpnIconRounded
-            color: root.vpnIconColor
-            screen: root.screen
-            labelRef: root.labelItem
-            alignTarget: root.labelItem
-            outerHorizontalMargin: root.iconHorizontalMargin
-            debugBorderVisible: root.iconDebugFrames
-            debugBorderColor: root.iconDebugFrameColor
-            debugBorderWidth: root.iconDebugFrameWidth
+        Item {
+            id: vpnSlotWrapper
+            width: vpnSlot.width
+            height: vpnSlot.height
+            visible: root.vpnConnected
             anchors.verticalCenter: parent.verticalCenter
+
+            LocalComponents.ConnectivityIconSlot {
+                id: vpnSlot
+                active: ConnectivityState.vpnConnected
+                square: root.iconSquare
+                box: root.desiredInnerHeight
+                mode: "material"
+                icon: "verified_user"
+                rounded: root.vpnIconRounded
+                // Dim the fallback icon when Hiddify icon is shown on top
+                color: root.hiddifyHasTrayIcon ? "transparent" : root.vpnIconColor
+                screen: root.screen
+                labelRef: root.labelItem
+                alignTarget: root.labelItem
+                outerHorizontalMargin: root.iconHorizontalMargin
+
+                // Hiddify real tray icon rendered on top when available
+                LocalComponents.TrayIcon {
+                    visible: root.hiddifyHasTrayIcon
+                    anchors.centerIn: parent
+                    size: Math.max(8, vpnSlot.box - 4)
+                    source: root.hiddifyTrayItem ? (root.hiddifyTrayItem.icon || "") : ""
+                    screen: root.screen
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                visible: !!root.hiddifyTrayItem
+                cursorShape: Qt.PointingHandCursor
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: mouse => {
+                    if (!root.hiddifyTrayItem) return
+                    if (mouse.button === Qt.LeftButton) {
+                        if (!root.hiddifyTrayItem.onlyMenu)
+                            root.hiddifyTrayItem.activate()
+                    } else if (mouse.button === Qt.RightButton) {
+                        if (root.hiddifyTrayItem.hasMenu && root.hiddifyTrayItem.menu) {
+                            hiddifyMenu.menu = root.hiddifyTrayItem.menu
+                            hiddifyMenu.showAt(vpnSlotWrapper,
+                                (vpnSlotWrapper.width / 2) - (hiddifyMenu.width / 2),
+                                vpnSlotWrapper.height + 4)
+                        }
+                    }
+                }
+            }
         }
 
         LocalComponents.ConnectivityIconSlot {
             id: linkSlot
-            active: root.linkVisible
             square: root.iconSquare
             box: root.desiredInnerHeight
             mode: "material"
             icon: root.currentLinkIconName
-            rounded: root.linkIconRounded
             color: root.linkIconColor
             screen: root.screen
             labelRef: root.labelItem
             alignTarget: root.labelItem
             outerHorizontalMargin: root.iconHorizontalMargin
-            debugBorderVisible: root.iconDebugFrames
-            debugBorderColor: root.iconDebugFrameColor
-            debugBorderWidth: root.iconDebugFrameWidth
             anchors.verticalCenter: parent.verticalCenter
         }
     }
 
-    function mixColor(a, b, t) {
-        return Qt.rgba(a.r * (1 - t) + b.r * t, a.g * (1 - t) + b.g * t, a.b * (1 - t) + b.b * t, a.a * (1 - t) + b.a * t);
-    }
+    // Stacked two-row throughput display (RX top, TX bottom)
+    Column {
+        visible: Theme.networkCapsuleStacked && root.throughputText && root.throughputText.length > 0
+        spacing: -2
+        y: 2
 
-    function grayOf(c) {
-        const y = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
-        return Qt.rgba(y, y, y, c.a);
-    }
-
-    function desaturateColor(c, amount) {
-        const clamped = Math.min(1, Math.max(0, amount || 0));
-        return mixColor(c, grayOf(c), clamped);
+        Text {
+            text: root._rxRichText
+            textFormat: Text.RichText
+            font.family: Theme.fontFamily
+            font.weight: Font.Black
+            font.pixelSize: root._stackedRowFontPx
+            font.letterSpacing: 0.5
+            color: Theme.textPrimary
+        }
+        Text {
+            text: root._txRichText
+            textFormat: Text.RichText
+            font.family: Theme.fontFamily
+            font.weight: Font.Black
+            font.pixelSize: root._stackedRowFontPx
+            font.letterSpacing: 0.5
+            color: Theme.textPrimary
+        }
     }
 
     function vpnAccentColor() {
         const boost = Theme.vpnAccentSaturateBoost || 0;
         const desat = Theme.vpnDesaturateAmount || 0;
         const base = Color.saturate(Theme.accentPrimary, boost);
-        return desaturateColor(base, desat);
+        return Color.desaturate(base, desat);
     }
 
     readonly property color slashAccentColor: (function() {
@@ -136,6 +172,33 @@ ConnectivityCapsule {
         return Color.towardsBlack(satAgain, 0.3);
     })()
     readonly property string _slashAccentCss: Format.colorCss(slashAccentColor, 1)
+    readonly property string _dimZeroCss: Format.colorCss(Theme.textDisabled, 1)
+    readonly property color _unitAccentColor: Color.matchLightness(accentColor, Theme.textDisabled)
+    readonly property string _unitAccentCss: Format.colorCss(_unitAccentColor, 1)
+
+    // Dim leading zeros and unit suffix in "NNN.DU" or "NNNU" formatted string
+    function _dimLeadingZeros(side) {
+        var unit = side.slice(-1);
+        var body = side.slice(0, -1);
+        var dotIdx = body.indexOf(".");
+        var intPart, decPart;
+        if (dotIdx !== -1) {
+            intPart = body.slice(0, dotIdx);
+            decPart = body.slice(dotIdx + 1);
+        } else {
+            intPart = body;
+            decPart = "";
+        }
+        var i = 0;
+        while (i < intPart.length && intPart[i] === "0") i++;
+        var dimmed = (i > 0) ? Rich.colorSpan(_dimZeroCss, intPart.slice(0, i)) : "";
+        var rest = Rich.esc(intPart.slice(i));
+        var dotAndDec = (decPart !== "") ? Rich.dotSpan() + Rich.esc(decPart) : "";
+        var unitSuffix = (unit === "K")
+            ? ""
+            : Rich.colorSpan(_unitAccentCss, unit);
+        return dimmed + rest + dotAndDec + unitSuffix;
+    }
 
     function _formatThroughputRich(text) {
         const raw = (text === undefined || text === null) ? "" : String(text);
@@ -144,8 +207,8 @@ ConnectivityCapsule {
         const slashIdx = raw.indexOf("/");
         if (slashIdx === -1)
             return Rich.esc(raw);
-        const left = Rich.esc(raw.slice(0, slashIdx));
-        const right = Rich.esc(raw.slice(slashIdx + 1));
+        const left = _dimLeadingZeros(raw.slice(0, slashIdx));
+        const right = _dimLeadingZeros(raw.slice(slashIdx + 1));
         return left + Rich.sepSpan(_slashAccentCss, "/", true) + right;
     }
 

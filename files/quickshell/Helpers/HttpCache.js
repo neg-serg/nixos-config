@@ -1,7 +1,7 @@
 // Shared helpers for building URLs, handling TTL caches, and ensuring httpGetJson exists.
 // QML JS files should `Qt.include("./HttpCache.js")` and call the exported functions.
 
-try { Qt.include("./Http.js"); } catch (e) {}
+try { Qt.include("./Http.js"); } catch (e) { /* Http.js not available in this context */ }
 
 function _hcNow() { return Date.now(); }
 
@@ -62,10 +62,10 @@ function _hcHttpFallback(url, timeoutMs, success, fail, userAgent) {
         if (timeoutMs !== undefined && timeoutMs !== null) xhr.timeout = timeoutMs;
         try {
             if (xhr.setRequestHeader) {
-                try { xhr.setRequestHeader('Accept', 'application/json'); } catch (e1) {}
-                if (userAgent) { try { xhr.setRequestHeader('User-Agent', String(userAgent)); } catch (e2) {} }
+                try { xhr.setRequestHeader('Accept', 'application/json'); } catch (e1) { /* header API unavailable */ }
+                if (userAgent) { try { xhr.setRequestHeader('User-Agent', String(userAgent)); } catch (e2) { /* header API unavailable */ } }
             }
-        } catch (e) {}
+        } catch (e) { /* ignore header setting failures */ }
         xhr.onreadystatechange = function() {
             if (xhr.readyState !== XMLHttpRequest.DONE) return;
             var status = xhr.status;
@@ -77,7 +77,7 @@ function _hcHttpFallback(url, timeoutMs, success, fail, userAgent) {
                 try {
                     var ra = xhr.getResponseHeader && xhr.getResponseHeader('Retry-After');
                     if (ra) retryAfter = Number(ra) * 1000;
-                } catch (hdrErr) {}
+                } catch (hdrErr) { /* Retry-After header unavailable */ }
                 fail && fail({ type: 'http', status: status, retryAfter: retryAfter });
             }
         };

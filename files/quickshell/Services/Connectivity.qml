@@ -1,12 +1,13 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 import qs.Settings
 import qs.Components
 // No runtime clamping: Settings.json is validated by schema
 
 // Connectivity: shared networking signals/state
 // - hasLink: any non-loopback interface up (or UNKNOWN with address)
-// - hasInternet: ping 1.1.1.1 reachable
+// - hasInternet: ping reachable (target from Settings.networkPingTarget)
 // - interfaces: last JSON array from `ip -j -br a`
 // - rxKiBps / txKiBps: live rates from `rsmetrx` stream
 Item {
@@ -52,7 +53,7 @@ Item {
     }
     ProcessRunner {
         id: linkProbe
-        cmd: ["dash", "-c", "ip -j -br a"]
+        cmd: ["ip", "-j", "-br", "a"]
         parseJson: true
         autoStart: false
         restartOnExit: false
@@ -68,7 +69,7 @@ Item {
                     if (state === "UP" || (state === "UNKNOWN" && addrs.length > 0)) { up = true; break }
                 }
                 root.hasLink = up
-            } catch (e) { /* ignore */ }
+            } catch (e) { console.warn("[Connectivity.linkProbe]", e) }
         }
     }
 
@@ -85,16 +86,18 @@ Item {
     }
     ProcessRunner {
         id: inetProbe
-        cmd: ["dash", "-c", "ping -n -c1 -W1 8.8.8.8 >/dev/null && echo OK || echo FAIL"]
+        cmd: ["dash", "-c", "ping -n -c1 -W1 " + Settings.settings.networkPingTarget + " >/dev/null && echo OK || echo FAIL"]
         autoStart: false
         restartOnExit: false
         onLine: (line) => { const ok = String(line||"").trim().indexOf("OK") !== -1; root.hasInternet = ok }
     }
 
     // --- rsmetrx streaming (JSON lines: { rx_kib_s, tx_kib_s })
+    property bool _rsmetrxWarned: false
+    readonly property string _rsmetrxBin: "rsmetrx" // Nix-managed: resolved from PATH via quickshell wrapper
     ProcessRunner {
         id: rsStream
-        cmd: ["rsmetrx"]
+        cmd: [root._rsmetrxBin]
         backoffMs: Theme.networkRestartBackoffMs
         debounceMs: 100
         jsonLine: true
@@ -102,7 +105,13 @@ Item {
             try {
                 if (typeof data.rx_kib_s === "number") root.rxKiBps = data.rx_kib_s
                 if (typeof data.tx_kib_s === "number") root.txKiBps = data.tx_kib_s
-            } catch (e) { /* ignore */ }
+            } catch (e) { console.warn("[Connectivity.rsStream]", e) }
+        }
+        onExited: (code, status) => {
+            if (code !== 0 && !root._rsmetrxWarned) {
+                console.warn("[Connectivity] rsmetrx exited with code", code, "— throughput metrics unavailable. Install rsmetrx for network rate monitoring.")
+                root._rsmetrxWarned = true
+            }
         }
     }
 

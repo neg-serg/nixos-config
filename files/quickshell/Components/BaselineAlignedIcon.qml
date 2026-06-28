@@ -16,8 +16,6 @@ Item {
     property string mode: "text"
     // Auto-tune size to match label visual height
     property bool autoTune: true
-    // Visual center fallback when labelRef is absent (e.g., detached icons)
-    property real fallbackLabelCenter: 0
 
     // Text mode properties
     property string text: ""
@@ -35,15 +33,11 @@ Item {
     // SVG mode properties
     property string svgPathData: ""
     property int svgViewBox: 1024
-    property real svgScaleFactor: (Theme.wsIconSvgScale !== undefined ? Theme.wsIconSvgScale : 1.0)
 
     // Alignment: "baseline" (default) or "optical" (center-to-center)
     property string alignMode: "baseline"
     // Optional target to reuse vertical center offset
     property var alignTarget: null
-    // Optional ascent compensation (legacy)
-    property bool compensateMetrics: false
-    property real compensationFactor: 1.0
 
     // Effective inputs (token adds to direct prop)
     readonly property real _effScale: (typeof scaleToken === 'number') ? scaleToken : scale
@@ -53,7 +47,7 @@ Item {
     readonly property int _labelPx: (labelRef && labelRef.font && labelRef.font.pixelSize)
         ? labelRef.font.pixelSize : Theme.fontSizeSmall
 
-    readonly property real _svgScaleFactor: Math.max(0.1, Number(svgScaleFactor) || 1.0)
+    readonly property real _svgScaleFactor: Math.max(0.1, (Theme.wsIconSvgScale !== undefined ? Theme.wsIconSvgScale : 1.0))
     readonly property real _svgTargetSize: Math.max(1, Math.round(root._labelPx * root._effScale * root._autoScale * _svgScaleFactor))
     readonly property real _svgRenderHeight: root._svgTargetSize
     readonly property real _svgAscent: _svgRenderHeight / 2.0
@@ -105,7 +99,7 @@ Item {
         if (root.labelRef && root.labelRef.font) {
             return centerOffset(fmLabel.ascent, fmLabel.descent);
         }
-        return root.fallbackLabelCenter;
+        return 0;
     }
     function computeCenterOffset(iconAscent, iconDescent) {
         var off = root._effBaselineOffset;
@@ -117,9 +111,6 @@ Item {
         } else {
             // Align baselines via center math
             off = off - (labelCenter - iconCenter);
-            if (root.compensateMetrics) {
-                off = off + (fmLabel.ascent - iconAscent) * root.compensationFactor;
-            }
         }
         return Math.round(off);
     }
@@ -192,7 +183,7 @@ Item {
     }
 
     // Baseline for external anchoring (distance from top)
-    property real baselineOffset: (mode === 'material')
+    baselineOffset: (mode === 'material')
         ? (materialItem.baselineOffset + _effBaselineOffset)
         : (mode === 'svg')
             ? ((_svgRenderHeight / 2) + _effBaselineOffset)

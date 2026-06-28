@@ -1,7 +1,7 @@
 {
   "shape": {
-    "cornerRadius": 0,
-    "cornerRadiusSmall": 0,
+    "cornerRadius": 6,
+    "cornerRadiusSmall": 6,
     "cornerRadiusLarge": 0
   }
 }

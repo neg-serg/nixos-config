@@ -12,6 +12,9 @@ Singleton {
     id: root
     // Set true after Theme/.theme.json is loaded/applied at least once
     property bool _themeLoaded: false
+    // Centralized animation toggle: respects Settings.reducedMotion and QS_DISABLE_ANIMATIONS env
+    property bool animationsEnabled: !Settings.settings.reducedMotion
+        && ((Quickshell.env("QS_DISABLE_ANIMATIONS") || "") !== "1")
     // Per-monitor UI scaling (defaults to theme global scale)
     function scale(currentScreen) {
         var base = Number(Theme.panelScaleFactor);
@@ -24,7 +27,7 @@ Singleton {
                 if (isFinite(raw) && raw > 0)
                     return raw * base;
             }
-        } catch (e) {}
+        } catch (e) { console.warn("[Theme.scale]", e) }
         return base;
     }
 
@@ -62,7 +65,6 @@ Singleton {
     property var _themeManifestEntries: []
     property var _themePartCache: ({})
     property var _themePartLoaded: ({})
-    property var _themePartErrors: ({})
     property string _lastWrittenThemeJson: ""
 
     Timer {
@@ -144,18 +146,20 @@ Singleton {
         path: Settings.themeFile
         watchChanges: true
         onFileChanged: reload()
-        // After adapter updates (file written/loaded), write and check deprecated tokens
+        // Theme/.theme.json is written exclusively by the theme-parts merge system
+        // (_performThemeMerge → setText).  Do NOT call writeAdapter() here — the
+        // JsonAdapter property var defaults are ({}) and would overwrite the merged
+        // content with empty groups, causing all tokens to fall back to hardcoded
+        // defaults.
         onAdapterUpdated: {
-            writeAdapter();
             try {
                 root._checkDeprecatedTokens();
-            } catch (e) {}
+            } catch (e) { /* checked on load */ }
             root._themeLoaded = true;
         }
         onLoadFailed: function (error) {
-            if (error.toString().includes("No such file") || error === 2) {
-                writeAdapter(); // File doesn't exist, create it with default values
-            }
+            // If the file is missing, the merge system will create it once all
+            // theme parts have been loaded — no need to seed with empty defaults.
         }
         JsonAdapter {
             id: themeData
@@ -223,8 +227,7 @@ Singleton {
                 return out;
             var total = listing.count || 0;
             for (var i = 0; i < total; i++) {
-                var entry = listing.get(i);
-                var name = entry && entry.fileName ? String(entry.fileName) : "";
+                var name = String(listing.get(i, "fileName") || "");
                 if (!name)
                     continue;
                 if (name === "manifest.json")
@@ -236,7 +239,7 @@ Singleton {
                     continue;
                 out.push(name);
             }
-        } catch (e) {}
+        } catch (e) { console.warn("[Theme._listAvailableThemeFiles]", e) }
         out.sort();
         return out;
     }
@@ -484,6 +487,88 @@ Singleton {
     // Internal cache of tokens we've already warned about (strict mode)
     property var _strictWarned: ({})
 
+    // Legacy flat-compat map: maps nested token paths to old flat keys.
+    // Hoisted here to avoid re-creating the object literal on every val() call.
+    readonly property var _flatCompatMap: ({
+        'colors.background': 'background',
+        'colors.surface': 'surface',
+        'colors.surfaceVariant': 'surfaceVariant',
+        'colors.text.primary': 'textPrimary',
+        'colors.text.secondary': 'textSecondary',
+        'colors.text.disabled': 'textDisabled',
+        'colors.accent.primary': 'accentPrimary',
+        'colors.status.error': 'error',
+        'colors.status.warning': 'warning',
+        'colors.highlight': 'highlight',
+        'colors.onAccent': 'onAccent',
+        'colors.outline': 'outline',
+        'colors.shadow': 'shadow',
+        'panel.height': 'panelHeight',
+        'panel.sideMargin': 'panelSideMargin',
+        'panel.widgetSpacing': 'panelWidgetSpacing',
+        'panel.icons.iconSize': 'panelIconSize',
+        'panel.icons.iconSizeSmall': 'panelIconSizeSmall',
+        'panel.hotzone.width': 'panelHotzoneWidth',
+        'panel.hotzone.height': 'panelHotzoneHeight',
+        'panel.hotzone.rightShift': 'panelHotzoneRightShift',
+        'panel.moduleHeight': 'panelModuleHeight',
+        'panel.menuYOffset': 'panelMenuYOffset',
+        'shape.cornerRadius': 'cornerRadius',
+        'shape.cornerRadiusSmall': 'cornerRadiusSmall',
+        'shape.cornerRadiusLarge': 'cornerRadiusLarge',
+        'tooltip.delayMs': 'tooltipDelayMs',
+        'tooltip.minSize': 'tooltipMinSize',
+        'tooltip.margin': 'tooltipMargin',
+        'tooltip.padding': 'tooltipPadding',
+        'tooltip.borderWidth': 'tooltipBorderWidth',
+        'tooltip.radius': 'tooltipRadius',
+        'tooltip.fontPx': 'tooltipFontPx',
+        'panel.pill.height': 'panelPillHeight',
+        'panel.pill.iconSize': 'panelPillIconSize',
+        'panel.pill.paddingH': 'panelPillPaddingH',
+        'panel.pill.showDelayMs': 'panelPillShowDelayMs',
+        'panel.pill.autoHidePauseMs': 'panelPillAutoHidePauseMs',
+        'panel.pill.color': 'panelPillColor',
+        'panel.animations.stdMs': 'panelAnimStdMs',
+        'panel.animations.fastMs': 'panelAnimFastMs',
+        'panel.animations.slideMs': 'panelSlideMs',
+        'panel.tray.longHoldMs': 'panelTrayLongHoldMs',
+        'panel.tray.shortHoldMs': 'panelTrayShortHoldMs',
+        'panel.tray.guardMs': 'panelTrayGuardMs',
+        'panel.tray.overlayDismissDelayMs': 'panelTrayOverlayDismissDelayMs',
+        'panel.rowSpacing': 'panelRowSpacing',
+        'panel.rowSpacingSmall': 'panelRowSpacingSmall',
+        'panel.volume.fullHideMs': 'panelVolumeFullHideMs',
+        'panel.volume.mutedHideMs': 'panelVolumeMutedHideMs',
+        'panel.volume.offReminderCooldownMs': 'panelVolumeOffReminderCooldownMs',
+        'panel.volume.lowColor': 'panelVolumeLowColor',
+        'panel.volume.highColor': 'panelVolumeHighColor',
+        'timers.timeTickMs': 'timeTickMs',
+        'timers.wsRefreshDebounceMs': 'wsRefreshDebounceMs',
+        'network.vpnPollMs': 'vpnPollMs',
+        'network.restartBackoffMs': 'networkRestartBackoffMs',
+        'network.linkPollMs': 'networkLinkPollMs',
+        'media.hover.openDelayMs': 'mediaHoverOpenDelayMs',
+        'media.hover.stillThresholdMs': 'mediaHoverStillThresholdMs',
+        'spectrum.peakDecayIntervalMs': 'spectrumPeakDecayIntervalMs',
+        'spectrum.barAnimMs': 'spectrumBarAnimMs',
+        'calendar.rowSpacing': 'calendarRowSpacing',
+        'calendar.cellSpacing': 'calendarCellSpacing',
+        'calendar.sideMargin': 'calendarSideMargin',
+        'panel.hover.fadeMs': 'panelHoverFadeMs',
+        'panel.menu.width': 'panelMenuWidth',
+        'panel.menu.submenuWidth': 'panelSubmenuWidth',
+        'panel.menu.padding': 'panelMenuPadding',
+        'panel.menu.itemSpacing': 'panelMenuItemSpacing',
+        'panel.menu.itemHeight': 'panelMenuItemHeight',
+        'panel.menu.radius': 'panelMenuRadius',
+        'panel.menu.heightExtra': 'panelMenuHeightExtra',
+        'panel.menu.anchorYOffset': 'panelMenuAnchorYOffset',
+        'panel.menu.submenuGap': 'panelSubmenuGap',
+        'panel.menu.chevronSize': 'panelMenuChevronSize',
+        'panel.menu.iconSize': 'panelMenuIconSize'
+    })
+
     function _getNested(path) {
         try {
             var obj = themeData;
@@ -513,82 +598,7 @@ Singleton {
                 // Optional override keys: do not warn when absent
                 if (!/^colors\.overrides\./.test(key)) {
                     // Legacy flat-compat mapping: if a corresponding flat key exists, suppress warning
-                    var compat = ({
-                            'colors.background': 'background',
-                            'colors.surface': 'surface',
-                            'colors.surfaceVariant': 'surfaceVariant',
-                            'colors.text.primary': 'textPrimary',
-                            'colors.text.secondary': 'textSecondary',
-                            'colors.text.disabled': 'textDisabled',
-                            'colors.accent.primary': 'accentPrimary',
-                            'colors.status.error': 'error',
-                            'colors.status.warning': 'warning',
-                            'colors.highlight': 'highlight',
-                            'colors.onAccent': 'onAccent',
-                            'colors.outline': 'outline',
-                            'colors.shadow': 'shadow',
-                            'panel.height': 'panelHeight',
-                            'panel.sideMargin': 'panelSideMargin',
-                            'panel.widgetSpacing': 'panelWidgetSpacing',
-                            'panel.icons.iconSize': 'panelIconSize',
-                            'panel.icons.iconSizeSmall': 'panelIconSizeSmall',
-                            'panel.hotzone.width': 'panelHotzoneWidth',
-                            'panel.hotzone.height': 'panelHotzoneHeight',
-                            'panel.hotzone.rightShift': 'panelHotzoneRightShift',
-                            'panel.moduleHeight': 'panelModuleHeight',
-                            'panel.menuYOffset': 'panelMenuYOffset',
-                            'shape.cornerRadius': 'cornerRadius',
-                            'shape.cornerRadiusSmall': 'cornerRadiusSmall',
-                            'shape.cornerRadiusLarge': 'cornerRadiusLarge',
-                            'tooltip.delayMs': 'tooltipDelayMs',
-                            'tooltip.minSize': 'tooltipMinSize',
-                            'tooltip.margin': 'tooltipMargin',
-                            'tooltip.padding': 'tooltipPadding',
-                            'tooltip.borderWidth': 'tooltipBorderWidth',
-                            'tooltip.radius': 'tooltipRadius',
-                            'tooltip.fontPx': 'tooltipFontPx',
-                            'panel.pill.height': 'panelPillHeight',
-                            'panel.pill.iconSize': 'panelPillIconSize',
-                            'panel.pill.paddingH': 'panelPillPaddingH',
-                            'panel.pill.showDelayMs': 'panelPillShowDelayMs',
-                            'panel.pill.autoHidePauseMs': 'panelPillAutoHidePauseMs',
-                            'panel.pill.color': 'panelPillColor',
-                            'panel.animations.stdMs': 'panelAnimStdMs',
-                            'panel.animations.fastMs': 'panelAnimFastMs',
-                            'panel.tray.longHoldMs': 'panelTrayLongHoldMs',
-                            'panel.tray.shortHoldMs': 'panelTrayShortHoldMs',
-                            'panel.tray.guardMs': 'panelTrayGuardMs',
-                            'panel.tray.overlayDismissDelayMs': 'panelTrayOverlayDismissDelayMs',
-                            'panel.rowSpacing': 'panelRowSpacing',
-                            'panel.rowSpacingSmall': 'panelRowSpacingSmall',
-                            'panel.volume.fullHideMs': 'panelVolumeFullHideMs',
-                            'panel.volume.lowColor': 'panelVolumeLowColor',
-                            'panel.volume.highColor': 'panelVolumeHighColor',
-                            'timers.timeTickMs': 'timeTickMs',
-                            'timers.wsRefreshDebounceMs': 'wsRefreshDebounceMs',
-                            'network.vpnPollMs': 'vpnPollMs',
-                            'network.restartBackoffMs': 'networkRestartBackoffMs',
-                            'network.linkPollMs': 'networkLinkPollMs',
-                            'media.hover.openDelayMs': 'mediaHoverOpenDelayMs',
-                            'media.hover.stillThresholdMs': 'mediaHoverStillThresholdMs',
-                            'spectrum.peakDecayIntervalMs': 'spectrumPeakDecayIntervalMs',
-                            'spectrum.barAnimMs': 'spectrumBarAnimMs',
-                            'calendar.rowSpacing': 'calendarRowSpacing',
-                            'calendar.cellSpacing': 'calendarCellSpacing',
-                            'calendar.sideMargin': 'calendarSideMargin',
-                            'panel.hover.fadeMs': 'panelHoverFadeMs',
-                            'panel.menu.width': 'panelMenuWidth',
-                            'panel.menu.submenuWidth': 'panelSubmenuWidth',
-                            'panel.menu.padding': 'panelMenuPadding',
-                            'panel.menu.itemSpacing': 'panelMenuItemSpacing',
-                            'panel.menu.itemHeight': 'panelMenuItemHeight',
-                            'panel.menu.radius': 'panelMenuRadius',
-                            'panel.menu.heightExtra': 'panelMenuHeightExtra',
-                            'panel.menu.anchorYOffset': 'panelMenuAnchorYOffset',
-                            'panel.menu.submenuGap': 'panelSubmenuGap',
-                            'panel.menu.chevronSize': 'panelMenuChevronSize',
-                            'panel.menu.iconSize': 'panelMenuIconSize'
-                        })[key];
+                    var compat = root._flatCompatMap[key];
                     var hasCompat = compat && (themeData[compat] !== undefined);
                     if (!hasCompat) {
                         if (!root._strictWarned[key]) {
@@ -598,7 +608,7 @@ Singleton {
                     }
                 }
             }
-        } catch (e) {}
+        } catch (e) { console.warn("[Theme.val]", e) }
         return fallback;
     }
 
@@ -661,7 +671,7 @@ Singleton {
                         continue; // nested groups (already covered)
                     flats.push(k);
                 }
-            } catch (e) {}
+            } catch (e) { console.warn("[Theme._checkDeprecatedTokens]", e) }
             if (flats.length > 0) {
                 var warnKey = 'flat::detected';
                 if (!root._strictWarned[warnKey]) {
@@ -670,7 +680,7 @@ Singleton {
                     root._strictWarned[warnKey] = true;
                 }
             }
-        } catch (e) {}
+        } catch (e) { console.warn("[Theme._checkDeprecatedTokens]", e) }
     }
 
     // Initial deprecated check
@@ -678,7 +688,7 @@ Singleton {
         _refreshThemeParts("startup");
         try {
             root._checkDeprecatedTokens();
-        } catch (e) {}
+        } catch (e) { /* checked on load */ }
     }
 
     // Map string or numeric to a QML Easing.Type
@@ -714,16 +724,22 @@ Singleton {
     // Backgrounds
     property color background: val('colors.background', "#ef000000")
     // Surfaces & Elevation
-    property color surface: val('colors.surface', "#181C25")
+    property color surface: val('colors.surface', "#000000")
     property color surfaceVariant: val('colors.surfaceVariant', "#242A35")
     // Text Colors
     property color textPrimary: val('colors.text.primary', "#CBD6E5")
     property color textSecondary: val('colors.text.secondary', "#AEB9C8")
     property color textDisabled: val('colors.text.disabled', "#6B718A")
-    // Accent Colors
-    property color accentPrimary: val('colors.accent.primary', "#006FCC")
-    // Error state
+    // Accent Colors — wallpaper-derived accent overrides theme default when available
+    // WallpaperAccent is in qs.Services; we read it via _wpAccent to avoid circular import
+    property color _wpAccent: "#000000"
+    property bool _wpHasAccent: false
+    property color accentPrimary: _wpHasAccent
+        ? Color.matchHue(_wpAccent, val('colors.accent.primary', "#006FCC"))
+        : val('colors.accent.primary', "#006FCC")
+    // Status colors
     property color error: val('colors.status.error', "#FF6B81")
+    property color warning: val('colors.status.warning', "#FFB347")
     // Highlights & Focus
     property color highlight: val('colors.highlight', "#94E1F9")
 
@@ -749,7 +765,25 @@ Singleton {
     property int panelHeight: val('panel.height', 22)
     property int panelSideMargin: val('panel.sideMargin', 18)
     property int panelWidgetSpacing: val('panel.widgetSpacing', 12)
-    property real panelSeparatorOpacity: val('panel.separatorOpacity', 0.88)
+    // Panel layout ratios
+    property real panelInterWidgetRatio: val('panel.interWidgetRatio', 1.35)
+    property real panelSeamWidthRatio: val('panel.seamWidthRatio', 0.85)
+    property int panelSeamMinPx: val('panel.seamMinPx', 8)
+    // Panel seam appearance
+    property real panelSeamTaperTop: val('panel.seam.taperTop', 0.25)
+    property real panelSeamTaperBottom: val('panel.seam.taperBottom', 0.9)
+    property real panelSeamOpacity: val('panel.seam.opacity', 0.5)
+    property real panelSeamGapOpacity: val('panel.seam.gapOpacity', 0.5)
+    property real panelSeamColorMixRatio: val('panel.seam.colorMixRatio', 0.45)
+    // Panel tint overlay
+    property color panelTintColor: val('panel.tint.color', "#ff2a36")
+    property real panelTintAlpha: val('panel.tint.alpha', 0.75)
+    property real panelTintStrength: val('panel.tint.strength', 1.0)
+    property real panelTintFeatherTop: val('panel.tint.featherTop', 0)
+    property real panelTintFeatherBottom: val('panel.tint.featherBottom', 0)
+    // Panel backdrop
+    property color panelBackdropColor: val('panel.backdrop.color', "#000000")
+    property real panelBackdropOpacity: val('panel.backdrop.opacity', 1.0)
     property real panelSeparatorWidthFactor: val('panel.separatorWidthFactor', 1)
     // Panel icon sizing
     property int panelIconSize: val('panel.icons.iconSize', 24)
@@ -790,6 +824,7 @@ Singleton {
     // Animation timings
     property int panelAnimStdMs: val('panel.animations.stdMs', 250)
     property int panelAnimFastMs: val('panel.animations.fastMs', 200)
+    property int panelSlideMs: val('panel.animations.slideMs', 700)
     // Tray behavior timings
     property int panelTrayLongHoldMs: val('panel.tray.longHoldMs', 2500)
     property int panelTrayShortHoldMs: val('panel.tray.shortHoldMs', 1500)
@@ -807,6 +842,8 @@ Singleton {
     property int panelNetClusterSpacing: val('panel.netCluster.spacing', 6)
     // Volume behavior
     property int panelVolumeFullHideMs: val('panel.volume.fullHideMs', 800)
+    property int panelVolumeMutedHideMs: val('panel.volume.mutedHideMs', 180000)
+    property int panelVolumeOffReminderCooldownMs: val('panel.volume.offReminderCooldownMs', 86400000)
     property color panelVolumeLowColor: val('panel.volume.lowColor', "#D62E6E")
     property color panelVolumeHighColor: val('panel.volume.highColor', "#0E6B4D")
     // Volume icon thresholds
@@ -853,6 +890,7 @@ Singleton {
     // Side-panel popup spacing (between inner items)
     property int sidePanelPopupSpacing: val('sidePanel.popup.spacing', 0)
     // Media dominant-accent sampler/logic (extract hardcoded tuning)
+    property int mediaArtDebounceMs: val('media.artDebounceMs', 60)
     property int mediaAccentSamplerPx: val('media.accent.samplerPx', 48)
     property int mediaAccentRetryMs: val('media.accent.retryMs', 120)
     property int mediaAccentRetryMax: val('media.accent.retryMax', 5)
@@ -942,7 +980,6 @@ Singleton {
     // Values validated by ThemeConstraints in tooling
     property int wsLabelPadding: val('ws.label.padding', 6)
     property int wsLabelLeftPadding: val('ws.label.leftPadding.normal', 6)
-    property int wsLabelLeftPaddingTerminal: val('ws.label.leftPadding.terminal', 6)
     property int wsIconInnerPadding: val('ws.icon.innerPadding', 1)
     // Keyboard capsule spacing tokens mirror workspace defaults unless overridden
     property int keyboardCapsuleIconSpacing: val('keyboard.capsule.iconSpacing', wsIconSpacing)
@@ -962,6 +999,7 @@ Singleton {
     property int networkCapsuleIconHorizontalMargin: Math.max(0, val('network.capsule.iconHorizontalMargin', keyboardCapsuleIconHorizontalMargin))
     property int networkCapsuleGapTightenPx: Math.max(0, val('network.capsule.gapTightenPx', 0))
     property string networkCapsuleIconAlignMode: val('network.capsule.iconAlignMode', "optical")
+    property bool networkCapsuleStacked: val('network.capsule.stacked', false)
     // VPN icon/layout tuning and accent mix
     property real vpnAccentSaturateBoost: val('vpn.accent.saturateBoost', 0.12)
     property real vpnAccentLightenTowardWhite: val('vpn.accent.lightenTowardWhite', 0.20)
@@ -980,7 +1018,7 @@ Singleton {
     // MPD flags polling (fallback interval)
     property int mpdFlagsFallbackMs: val('media.mpd.flags.fallbackMs', 2500)
     // Time/Clock module
-    property real timeFontScale: val('time.font.scale', 1.0)
+    property real timeFontScale: val('time.font.scale', 0.7)
     property int timeFontWeight: val('time.font.weight', Font.Medium)
     property color timeTextColor: val('time.text.color', textPrimary)
     // UI easing (configurable via string names)
@@ -1030,4 +1068,25 @@ Singleton {
     property color borderSubtle: (val('colors.overrides.borderSubtle', themeData.borderSubtleOverride) !== undefined) ? val('colors.overrides.borderSubtle', themeData.borderSubtleOverride) : Color.withAlpha(textPrimary, 0.15)
     property color overlayWeak: (val('colors.overrides.overlayWeak', themeData.overlayWeakOverride) !== undefined) ? val('colors.overrides.overlayWeak', themeData.overlayWeakOverride) : Color.withAlpha(shadow, 0.08)
     property color overlayStrong: (val('colors.overrides.overlayStrong', themeData.overlayStrongOverride) !== undefined) ? val('colors.overrides.overlayStrong', themeData.overlayStrongOverride) : Color.withAlpha(shadow, 0.18)
+    // Generic tick timer (UI dedupe)
+    property int genericTickMs: val('timers.genericTickMs', 2000)
+    // Bar slide debounce timer
+    property int panelSlideTimerTickMs: val('panel.slideTimerTickMs', 50)
+    // Weather HTTP timeout
+    property int weatherHttpTimeoutMs: val('weather.httpTimeoutMs', 8000)
+    // Greeter timing tokens
+    property int greeterLockAnimationMs: val('greeter.lockAnimationMs', 500)
+    property int greeterSlideshowDurationMs: val('greeter.slideshowDurationMs', 3000)
+    property int greeterContextTimerMs: val('greeter.contextTimerMs', 300)
+    property int greeterAnimFastMs: val('greeter.animFastMs', 150)
+    property int greeterAnimMediumMs: val('greeter.animMediumMs', 250)
+    property int greeterAnimSlowMs: val('greeter.animSlowMs', 500)
+    // Greeter color tokens
+    property color greeterBarColor: val('greeter.barColor', "#30c0ffff")
+    property color greeterBarOutline: val('greeter.barOutline', "#50ffffff")
+    property color greeterWidgetColor: val('greeter.widgetColor', "#25ceffff")
+    property color greeterWidgetActiveColor: val('greeter.widgetActiveColor', "#80ceffff")
+    property color greeterWidgetOutline: val('greeter.widgetOutline', "#40ffffff")
+    property color greeterWidgetOutlineSeparate: val('greeter.widgetOutlineSeparate', "#20ffffff")
+    property color greeterSeparatorColor: val('greeter.separatorColor', "#60ffffff")
 }

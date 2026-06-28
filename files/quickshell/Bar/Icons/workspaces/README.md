@@ -18,8 +18,8 @@ Run from the repo root:
 just workspace-icons
 ```
 
-The recipe wraps `quickshell/.config/quickshell/Tools/workspace-icons/generate.py` inside a
-`nix shell` that provides python+fonttools, `xmllint`, and `rsvg-convert`. The script:
+The recipe wraps `quickshell/.config/quickshell/Tools/workspace-icons/generate.py`.
+Requires: `python`, `python-fonttools`, `libxml2` (xmllint), `librsvg` (rsvg-convert). The script:
 
 1. Parses `modules/user/gui/hypr/conf/workspaces.conf` for workspace ids/labels.
 1. Uses `icon-map.json` to map slugs to glyph codepoints and preferred fonts. If you removed glyphs

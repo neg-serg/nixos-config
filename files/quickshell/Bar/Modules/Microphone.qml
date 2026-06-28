@@ -14,6 +14,7 @@ LocalMods.AudioEndpointTile {
     changeMethod: "changeMicVolume"
     toggleMethod: "toggleMicMute"
     toggleOnClick: true
+    autoHideWhenMuted: true
     tooltipTitle: "Microphone"
     tooltipHints: [
         "Left click to toggle mute.",

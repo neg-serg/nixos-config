@@ -271,6 +271,17 @@ def _font_names_from_file(font_path: Path) -> Tuple[str, str]:
         font.close()
 
 
+def _portablize_font_path(file_path: str) -> str:
+    """Replace absolute home dir prefix with $XDG_DATA_HOME or ~ for portability."""
+    home = os.path.expanduser("~")
+    xdg_data = os.environ.get("XDG_DATA_HOME", os.path.join(home, ".local", "share"))
+    if file_path.startswith(xdg_data + "/"):
+        return "$XDG_DATA_HOME/" + file_path[len(xdg_data) + 1:]
+    if file_path.startswith(home + "/"):
+        return "~/" + file_path[len(home) + 1:]
+    return file_path
+
+
 def ensure_font_info(pattern: str) -> Tuple[str, str, str]:
     candidate = Path(os.path.expanduser(pattern))
     if candidate.exists():
@@ -337,7 +348,7 @@ def build_manifest(
             "pattern": font_pattern,
             "family": family,
             "style": style,
-            "file": font_file,
+            "file": _portablize_font_path(font_file),
         },
         "icons": [
             {
@@ -353,7 +364,7 @@ def build_manifest(
                     "pattern": item.font_pattern,
                     "family": item.font_family,
                     "style": item.font_style,
-                    "file": item.font_file,
+                    "file": _portablize_font_path(item.font_file),
                 },
             }
             for item in items

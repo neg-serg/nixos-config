@@ -1,18 +1,18 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 set -euo pipefail
 
 # Compile all .frag shaders in ../shaders to .qsb using Qt 6 shadertool (qsb).
 # Requires: qsb (Qt 6 Shader Tools)
 
-here="$(cd "$(dirname "$0")" && pwd)"
-shaders_dir="$(cd "$here/../shaders" && pwd)"
+here=${0:h:A}
+shaders_dir=$here/../shaders; shaders_dir=${shaders_dir:A}
 
 if ! command -v qsb > /dev/null 2>&1; then
   echo "Error: 'qsb' not found. Install Qt 6 Shader Tools (qt6-shadertools)." >&2
   exit 1
 fi
 
-shopt -s nullglob
+setopt nullglob
 rc=0
 for src in "$shaders_dir"/*.frag; do
   out="${src}.qsb"

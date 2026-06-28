@@ -13,18 +13,12 @@ LocalComponents.CapsuleButton {
     property int fontPixelSize: 0
     property int textPadding: Theme.panelRowSpacingSmall
     property int iconSpacing: Theme.panelRowSpacingSmall
-    property real centerOffset: 0
-    property bool centerRow: true
     property bool labelVisible: true
     property bool iconVisible: true
     property int iconPadding: 0
     property int minContentWidth: 0
-    property int maxContentWidth: 0
     property int contentWidth: 0
-    property int labelMaxWidth: 0
     property int labelLeftPaddingOverride: -1
-    property int labelRightPaddingOverride: -1
-    property int labelElideMode: Text.ElideRight
 
     // Label configuration
     property string labelText: ""
@@ -54,18 +48,19 @@ LocalComponents.CapsuleButton {
         ? fontPixelSize
         : Utils.computedInlineFontPx(desiredInnerHeight, textPadding, Theme.panelComputedFontScale)
 
-    centerContent: centerRow
-    contentYOffset: centerOffset
+    forceHeightFromMetrics: true
+    Layout.alignment: Qt.AlignVCenter
+    centerContent: true
+    contentYOffset: 0
     interactive: false
 
     readonly property int _naturalWidth: Math.max(0, rowLayout.implicitWidth || 0)
     readonly property int _contentWidth: (function() {
         var width = Math.max(minContentWidth, _naturalWidth);
         if (contentWidth > 0) width = contentWidth;
-        if (maxContentWidth > 0) width = Math.min(width, maxContentWidth);
         return width;
     })()
-    readonly property bool _isClamped: _contentWidth < _naturalWidth || (contentWidth > 0) || (maxContentWidth > 0) || (labelMaxWidth > 0)
+    readonly property bool _isClamped: _contentWidth < _naturalWidth || (contentWidth > 0)
 
     Item {
         id: lineBox
@@ -104,7 +99,7 @@ LocalComponents.CapsuleButton {
                 rounded: root.materialIconRounded
                 screen: root.screen
                 autoTune: root.iconAutoTune
-                baselineAdjust: root.iconVAdjust
+                baselineAdjust: 0
                 padding: root.iconPadding
             }
 
@@ -123,7 +118,7 @@ LocalComponents.CapsuleButton {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
                 Layout.minimumWidth: 0
-                Layout.maximumWidth: (root.labelMaxWidth > 0) ? root.labelMaxWidth : Number.POSITIVE_INFINITY
+                Layout.maximumWidth: Number.POSITIVE_INFINITY
                 textFormat: root.labelIsRichText ? Text.RichText : Text.PlainText
                 text: root.labelText
                 color: root.labelColor
@@ -132,10 +127,10 @@ LocalComponents.CapsuleButton {
                 font.pixelSize: root.computedFontPx
                 padding: 0
                 leftPadding: root.labelLeftPaddingOverride !== -1 ? root.labelLeftPaddingOverride : root.textPadding
-                rightPadding: root.labelRightPaddingOverride !== -1 ? root.labelRightPaddingOverride : root.textPadding
+                rightPadding: root.textPadding
                 verticalAlignment: Text.AlignVCenter
-                baselineOffset: labelMetrics.ascent + root.labelBaselineAdjust
-                elide: root.labelElideMode
+                baselineOffset: labelMetrics.ascent
+                elide: Text.ElideRight
                 clip: true
                 maximumLineCount: 1
             }
@@ -160,6 +155,6 @@ LocalComponents.CapsuleButton {
 
     implicitWidth: root.horizontalPadding * 2 + lineBox.width
     implicitHeight: root.forceHeightFromMetrics
-        ? Math.max(root.capsuleMetrics.height, lineBox.implicitHeight + root.verticalPadding * 2)
+        ? Math.max(root.uniformCapsuleHeight, lineBox.implicitHeight + root.verticalPadding * 2)
         : lineBox.implicitHeight + root.verticalPadding * 2
 }

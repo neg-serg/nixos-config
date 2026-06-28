@@ -53,7 +53,6 @@ ClickableIcon {
 				implicitWidth: 200
 				implicitHeight: root.height
 
-				//enabled: !node.audio.muted
 				value: node.audio.volume
 				onValueChanged: node.audio.volume = value
 			}
@@ -68,9 +67,6 @@ ClickableIcon {
 		show: mixerOpen
 
 		onClose: mixerOpen = false
-		/*onVisibleChanged: {
-			if (!visible) mixerOpen = false;
-		}*/
 
 		Loader {
 			active: rightclickMenu.visible

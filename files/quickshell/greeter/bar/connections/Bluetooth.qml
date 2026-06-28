@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
-import Quickshell.Widgets
 import Quickshell.Bluetooth
 import qs
 import qs.bar
