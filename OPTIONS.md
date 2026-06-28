@@ -17,15 +17,19 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
   - Default: true in full, false in lite
 - `features.web.floorp.enable` (Floorp browser)
   - Default: true in full, false in lite
-
-  - Default: true in full, false in lite
+- `features.web.zen.enable` (Zen browser)
+  - Default: true
+  - Note: profile migrated manually to `~/.config/zen/`; symlink `~/.zen` created via systemd tmpfiles
+- `features.web.chat.enable` (Telegram chat client)
+  - Default: true
+  - Installs `telegram-desktop` and `tdl`, pulls in webkitgtk
 - `features.web.prefs.fastfox.enable` (FastFox‑like Mozilla prefs)
   - Default: true in full, false in lite
   - Summary: increases parallelism, enables site isolation (Fission), lazy tab restore, forces
     WebRender, disables inline PDF.
   - Caveats: higher memory usage, possible AMO/RFP interaction, inline PDF disabled.
 - `features.web.default` (default browser)
-  - Type: one of `"floorp" | "firefox" | "librewolf"`
+  - Type: one of `"floorp" | "firefox" | "librewolf" | "zen" | "chrome" | "brave" | "vivaldi" | "edge"`
   - Default: `"floorp"`
   - Selected browser record is exposed at `config.lib.neg.web.defaultBrowser` with fields
     `{ name, pkg, bin, desktop, newTabArg }`.
