@@ -42,11 +42,9 @@ in
 stdenv.mkDerivation {
   inherit pname version src;
 
-  cargoDeps = rustPlatform.fetchCargoTarball {
+  cargoDeps = rustPlatform.fetchCargoVendor {
     inherit src;
     sourceRoot = "${src.name}/rust-engine";
-    # Replace the hash below with the correct value after first build attempt.
-    # Nix will print the expected hash when the build fails.
     hash = "sha256-0000000000000000000000000000000000000000000000000000=";
   };
 
