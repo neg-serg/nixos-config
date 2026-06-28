@@ -112,18 +112,6 @@ lib.mkMerge [
       pkgs.spicetify-cli # Spotify customization tool
     ];
 
-    # Secrets for MPDAS
-    sops.secrets."mpdas_negrc" = {
-      sopsFile = ../../../../secrets/home/mpdas/neg.rc;
-      format = "binary";
-      owner = "neg";
-    };
-
-    environment.sessionVariables = {
-      MPD_HOST = "localhost";
-      MPD_PORT = "6600";
-    };
-
     # MPD Service
     # Note: MPD is enabled system-wide in modules/servers/mpd/default.nix
     # systemd.user.services.mpd is removed to avoid conflicts.
@@ -134,17 +122,6 @@ lib.mkMerge [
       wantedBy = [ "default.target" ];
       serviceConfig = {
         ExecStart = "${lib.getExe' pkgs.mpdris2 "mpDris2"}"; # Start MPD MPRIS2 bridge
-        Restart = "on-failure";
-      };
-    };
-
-    # MPDAS (Last.fm Scrobbler)
-    systemd.user.services.mpdas = {
-      description = "mpdas last.fm scrobbler";
-      after = [ "sound.target" ];
-      wantedBy = [ "default.target" ];
-      serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}"; # Start Last.fm scrobbler
         Restart = "on-failure";
       };
     };
@@ -208,7 +185,22 @@ lib.mkMerge [
       # session_key = "" # Generated via `rescrobbled` auth
     '';
   })
-
+  (lib.mkIf (builtins.pathExists ../../../../secrets/home/mpdas/neg.rc) {
+    sops.secrets."mpdas_negrc" = {
+      sopsFile = ../../../../secrets/home/mpdas/neg.rc;
+      format = "binary";
+      owner = "neg";
+    };
+    systemd.user.services.mpdas = {
+      description = "mpdas last.fm scrobbler";
+      after = [ "sound.target" ];
+      wantedBy = [ "default.target" ];
+      serviceConfig = {
+        ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}"; # Start Last.fm scrobbler
+        Restart = "on-failure";
+      };
+    };
+  })
   (lib.mkIf (config.features.media.aiUpscale.enable or false) (
     n.mkHomeFiles {
       ".local/bin/ai-upscale-video" = {
