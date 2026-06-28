@@ -120,7 +120,6 @@
     ./secrets/yubikey/default.nix
     ./security/default.nix
 
-
     ./servers/adguardhome/default.nix
     ./servers/avahi/default.nix
     ./servers/bitcoind/default.nix
