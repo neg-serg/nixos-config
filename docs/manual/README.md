@@ -42,7 +42,7 @@ configuration.
   - GUI (`features.gui.*`), Web (`features.web.*`), Secrets (`features.secrets.enable`)
   - Dev stacks (`features.dev.*`, `features.dev.openxr.*`, `features.dev.unreal.*`)
   - Media/Torrent (`features.media.*`, `features.torrent.enable`)
-  - Finance (`features.finance.tws.enable`), Fun extras (`features.fun.enable`)
+  - Fun extras (`features.fun.enable`)
   - Package exclusions by pname via `features.excludePkgs`
 
 Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false` values).

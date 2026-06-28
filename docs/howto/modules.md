@@ -918,20 +918,6 @@ List of package names (pname) to exclude from curated home.packages lists.
 
 - [/modules/features/core.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
 
-## features.finance.tws.enable
-
-Whether to enable enable Trader Workstation (IBKR) desktop client.
-
-*Type:* boolean
-
-*Default:* `false`
-
-*Example:* `true`
-
-*Declared by:*
-
-- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
-
 ## features.fun.enable
 
 Whether to enable enable fun extras (art collections, etc.).

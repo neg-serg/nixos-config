@@ -209,7 +209,6 @@ let
     lucida = "nix shell nixpkgs#lucida-downloader -c lucida";
     netsniff-ng = "nix shell nixpkgs#netsniff-ng";
     wl-ocr = "nix run github:neg-serg/wl-ocr --";
-    tws = "nix run github:neg-serg/tws --";
     music-clap = "nix run github:neg-serg/music-clap";
     webcamize = "nix run github:neg-serg/webcamize --";
     subsonic-tui = "nix run github:neg-serg/subsonic-tui --";
