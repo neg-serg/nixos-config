@@ -1031,7 +1031,6 @@ in
         (pkgs.ai-studio or pkgs.lmstudio) # LM Studio is an easy to use desktop app for experimenting...
         pkgs.aichat
         pkgs.aider-chat
-        pkgs.codex # Lightweight coding agent that runs in your terminal
         pkgs.openai # Python client library for the OpenAI API
         pkgs.code-cursor-fhs # AI code editor (VS Code)
       ];
