@@ -24,12 +24,12 @@ in
       options = [ "x-systemd.automount" "nofail" "fmask=0177" "dmask=0077" ];
     };
     "${homeDir}/music" = {
-      device = "/mnt/zero/music";
+      device = "/mnt/one/music";
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
     "${homeDir}/torrent" = {
-      device = "/mnt/zero/torrent";
+      device = "/mnt/one/torrent";
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
@@ -44,7 +44,7 @@ in
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
     "${homeDir}/doc" = {
-      device = "/mnt/zero/doc";
+      device = "/mnt/one/doc";
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
