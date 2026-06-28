@@ -9,6 +9,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland-guiutils.follows = "hyprland/hyprland-guiutils";
+
+    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/0";
     raise = {
       url = "github:neg-serg/raise";
       inputs.nixpkgs.follows = "nixpkgs";
