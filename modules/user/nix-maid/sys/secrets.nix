@@ -1,9 +1,12 @@
 {
   lib,
   config,
+  neg,
+  impurity ? null,
   ...
 }:
 let
+  n = neg impurity;
   secretsDir = ../../../../secrets/home;
   hasGitHubToken = builtins.pathExists "${secretsDir}/github-token.sops.yaml";
   hasCachixEnv = builtins.pathExists "${secretsDir}/cachix.env";
@@ -12,7 +15,9 @@ let
   hasVlessRealitySingboxTun = builtins.pathExists "${secretsDir}/vless/reality-singbox-tun.json.sops";
   hasBraveSearchApi = builtins.pathExists "${secretsDir}/brave-search-api.env.sops";
   hasContext7Api = builtins.pathExists "${secretsDir}/context7-api.env.sops";
+  hasXrayProxyPassword = builtins.pathExists "${secretsDir}/xray-proxy-password.sops.yaml";
 in
+lib.mkMerge [
 {
   sops = {
     age.keyFile = lib.mkForce "${config.users.users.neg.home}/.config/sops/age/keys.txt";
@@ -89,4 +94,15 @@ in
       };
     };
   };
+
 }
+
+# Zsh init to source the proxy env file (created by system-level sops template)
+(lib.mkIf hasXrayProxyPassword (n.mkHomeFiles {
+  ".config/zsh/10-xray-proxy.zsh".text = ''
+    if [[ -f "/run/secrets/xray-proxy-env" ]]; then
+      source "/run/secrets/xray-proxy-env"
+    fi
+  '';
+}))
+]
