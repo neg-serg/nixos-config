@@ -73,6 +73,29 @@ in
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
+
+    # ---- Bulk storage LVs ----
+
+    # Old CachyOS system root (nvme0n1p4) — keep accessible for data recovery / reference
+    "/mnt/cachyos" = {
+      device = "/dev/nvme0n1p4";
+      fsType = "xfs";
+      options = [ "nofail" "x-systemd.automount" ];
+    };
+
+    # Xenon 7TiB LV (nvme2n1)
+    "/mnt/xenon" = {
+      device = "/dev/mapper/xenon-one";
+      fsType = "xfs";
+      options = [ "nofail" "x-systemd.automount" ];
+    };
+
+    # Argon 3.6TiB LV (nvme1n1 + nvme3n1)
+    "/mnt/zero" = {
+      device = "/dev/mapper/argon-zero";
+      fsType = "xfs";
+      options = [ "nofail" "x-systemd.automount" ];
+    };
   };
 
   swapDevices = lib.mkIf isTelfir [
@@ -84,5 +107,18 @@ in
 
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"
+    "d /mnt/one 0755 root root -"
   ];
+
+  # Symlinks for convenience: /zero → /mnt/zero, /one → /mnt/one.
+  # Created only when the target path doesn't already exist, so the existing
+  # /zero directory (which holds bind-mount subdirs on the root fs) is preserved.
+  system.activationScripts.mountSymlinks = ''
+    if [ ! -e /zero ] && [ ! -L /zero ]; then
+      ln -s /mnt/zero /zero
+    fi
+    if [ ! -e /one ] && [ ! -L /one ]; then
+      ln -s /mnt/one /one
+    fi
+  '';
 }
