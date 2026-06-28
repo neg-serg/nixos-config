@@ -45,14 +45,14 @@ in
         "root"
         (config.users.main.name or "neg")
       ];
-      connect-timeout = 15;
-      stalled-download-timeout = 30;
+      connect-timeout = 5;
+      stalled-download-timeout = 1;
       http-connections = 8;
       cores = 4; # Limit per-build cores to prevent OOM
       max-jobs = 4; # Limit parallel builds to prevent OOM
       use-xdg-base-directories = true;
       warn-dirty = false; # Disable annoying dirty warn
-      download-attempts = 3;
+      download-attempts = 1;
       narinfo-cache-negative-ttl = 0; # Always re-check for previously missing paths
       # Deduplication via weekly nix.optimise timer instead of per-write
       auto-optimise-store = false;
