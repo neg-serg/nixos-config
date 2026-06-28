@@ -97,12 +97,4 @@ lib.mkMerge [
 
 }
 
-# Zsh init to source the proxy env file (created by system-level sops template)
-(lib.mkIf hasXrayProxyPassword (n.mkHomeFiles {
-  ".config/zsh/10-xray-proxy.zsh".text = ''
-    if [[ -f "/run/secrets/xray-proxy-env" ]]; then
-      source "/run/secrets/xray-proxy-env"
-    fi
-  '';
-}))
 ]
