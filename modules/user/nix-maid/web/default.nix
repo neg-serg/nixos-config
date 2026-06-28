@@ -13,5 +13,6 @@
     ./tridactyl.nix
     ./vivaldi.nix
     ./yt-dlp.nix
+    ./zen.nix
   ];
 }
