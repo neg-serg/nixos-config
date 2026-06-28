@@ -33,7 +33,7 @@ lib.mkIf cfg.enable {
     };
   };
 
-  systemd.services.nix-daemon.serviceConfig.EnvironmentFile = lib.mkAfter [ "/run/secrets/xray-proxy-env" ];
+  systemd.services.nix-daemon.serviceConfig.EnvironmentFile = lib.mkAfter [ "-/run/secrets/xray-proxy-env" ];
 
   systemd.services.xray-proxy-env = {
     description = "Generate proxy environment file from sops secret";
