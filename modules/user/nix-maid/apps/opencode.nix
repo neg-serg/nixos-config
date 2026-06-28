@@ -14,7 +14,6 @@ let
     && (config.features.dev.ai.opencode.enable or false);
 
   hasGitHubToken = builtins.pathExists ../../../../secrets/home/github-token.sops.yaml;
-  hasContext7Api = builtins.pathExists ../../../../secrets/home/context7-api.env.sops;
   hasDeepseekApi = builtins.pathExists ../../../../secrets/home/deepseek-api.sops.yaml;
 
   opencodeConfig = builtins.toJSON {
@@ -281,15 +280,6 @@ let
         };
         timeout = 5000;
       };
-      # Context7 integration
-      context7 = {
-        type = "remote";
-        url = "https://mcp.context7.com/mcp";
-        headers = {
-          CONTEXT7_API_KEY = "{env:CONTEXT7_API_KEY}";
-        };
-        enabled = true;
-      };
       puppeteer = {
         type = "local";
         command = [
@@ -336,7 +326,6 @@ lib.mkIf enable (
         opencodeServe = pkgs.writeShellScript "opencode-serve" ''
           export DEEPSEEK_API_KEY="$(${pkgs.coreutils}/bin/cat /run/secrets/deepseek-api 2>/dev/null || true)"
           export GITHUB_TOKEN="$(${pkgs.coreutils}/bin/cat /run/secrets/github-token 2>/dev/null || true)"
-          export CONTEXT7_API_KEY="$(${pkgs.coreutils}/bin/cat /run/user/1000/secrets/context7-api.env 2>/dev/null || true)"
           exec ${pkgs.opencode}/bin/opencode serve
         '';
       in {
