@@ -8,7 +8,6 @@ in
     enable = mkBool "enable Dev stack (toolchains, editors, hack tooling)" true;
     ai = {
       enable = mkBool "enable AI tools (e.g., LM Studio)" true;
-      antigravity.enable = mkBool "install Google Antigravity agentic IDE" false;
       opencode.enable = mkBool "install OpenCode AI coding agent" false;
     };
     iac = {

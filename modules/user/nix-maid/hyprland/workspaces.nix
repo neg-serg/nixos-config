@@ -102,11 +102,6 @@ let
       name = "𐍅:winboat";
       var = "winboat";
     }
-    {
-      id = 21;
-      name = "𐍇:antigravity";
-      var = "antigravity";
-    }
   ];
 in
 {
