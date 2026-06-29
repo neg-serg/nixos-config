@@ -62,7 +62,6 @@ let
         # File system type specific mount options
         case "''${ID_FS_TYPE}" in
           vfat) OPTS="''${OPTS},users,gid=100,umask=000,shortname=mixed,utf8=1,flush" ;;
-          btrfs) OPTS="''${OPTS},compress-force=zstd:3,autodefrag" ;;
           exfat) OPTS="''${OPTS},fmask=0000,dmask=0000" ;;
         esac
 
