@@ -90,6 +90,7 @@
       (pkgs.writers.writePython3Bin "hypr-rearrange" {
         flakeIgnore = [
           "E203"
+          "E501"
           "W503"
         ];
       } (builtins.readFile ../scripts/hypr/hypr-rearrange.py))
