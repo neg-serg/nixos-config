@@ -35,45 +35,6 @@ lib.mkMerge [
     ".config/amfora".source = ../../../../files/config/amfora;
 
     # Tealdeer Config
-    ".config/tealdeer/config.toml".text = ''
-      [style.description]
-      underline = false
-      bold = false
-      italic = true
-
-      [style.command_name]
-      foreground = "cyan"
-      underline = false
-      bold = false
-      italic = false
-
-      [style.example_text]
-      foreground = "green"
-      underline = false
-      bold = false
-      italic = false
-
-      [style.example_code]
-      foreground = "yellow"
-      underline = false
-      bold = false
-      italic = true
-
-      [style.example_variable]
-      foreground = "blue"
-      underline = false
-      bold = true
-      italic = false
-
-      [display]
-      compact = false
-      use_pager = false
-
-      [updates]
-      auto_update = true
-      auto_update_interval_hours = 720
-
-      [directories]
-    '';
+    ".config/tealdeer/config.toml".source = n.linkImpure ../../../../files/tealdeer/config.toml;
   })
 ]
