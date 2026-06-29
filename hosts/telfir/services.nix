@@ -39,7 +39,6 @@ lib.mkMerge [
       description = "Neg";
     };
     # Host-specific feature toggles
-    features.dev.ai.antigravity.enable = true;
     features.dev.ai.opencode.enable = true;
     features.cli.broot.enable = true;
     features.dev.tla.enable = true;
