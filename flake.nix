@@ -1,7 +1,7 @@
 {
   description = "Neg-Serg configuration";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
     hyprland = {
       url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.55.4";
