@@ -11,7 +11,7 @@ in
 {
   config = lib.mkIf (config.features.gui.enable or false) (
     n.mkHomeFiles {
-      ".config/mpv/input.conf".source = n.linkImpure ../../../../files/mpv/input.conf;
+      ".config/mpv/input.conf".source = n.linkImpure ../../../../../files/mpv/input.conf;
     }
   );
 }
