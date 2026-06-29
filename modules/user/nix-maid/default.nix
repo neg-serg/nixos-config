@@ -14,7 +14,6 @@
     ./gui/xdg.nix
     ./gui/qt.nix
     ./gui/dunst.nix
-    ./gui/walker.nix
     ./gui/quickshell.nix
     ./hyprland/main.nix
 

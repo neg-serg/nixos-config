@@ -43,9 +43,6 @@ lib.mkMerge [
     features.dev.ai.opencode.enable = true;
     features.cli.broot.enable = true;
     features.dev.tla.enable = true;
-    features.games.launchers.prismlauncher.enable = false;
-    features.games.launchers.heroic.enable = false;
-    features.gui.walker.enable = false;
     features.hardware.usbAutomount.enable = true;
     features.net.tailscale.enable = true;
 

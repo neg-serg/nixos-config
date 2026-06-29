@@ -25,7 +25,6 @@ let
     bind = $M4+$C, v, exec, raise --class "Bazecor" --launch "bazecor"
     bind = $M4, g, exec, raise --class "steam" --launch "steam"
     bind = $M4+$C, n, exec, raise --class "Obsidian" --launch "obsidian"
-    bind = $M4+$S, l, exec, raise --class "lutris" --launch "lutris"
   '';
 in
 {

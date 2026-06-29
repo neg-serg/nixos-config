@@ -9,11 +9,7 @@ in
       enable = mkBool "enable Games stack" true;
       nethack.enable = mkBool "enable Nethack" true;
       dosemu.enable = mkBool "enable Dosemu" true;
-      launchers = {
-        prismlauncher.enable = mkBool "enable PrismLauncher" true;
-        heroic.enable = mkBool "enable Heroic Launcher" true;
-        lutris.enable = mkBool "enable Lutris" false;
-      };
+      launchers = { };
       oss.enable = mkBool "enable OSS Games (SuperTux, Wesnoth, etc.)" false;
       openmw.enable = mkBool "enable OpenMW (Morrowind Engine)" false;
     };
