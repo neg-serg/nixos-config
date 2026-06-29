@@ -1,10 +1,9 @@
 {
   # Shared binary caches and public keys for both flake.nix (nixConfig)
   # and modules/nix/settings.nix (nix.settings).
-  # Only official NixOS cache - third-party caches disabled for reliability.
+  # Official NixOS cache + Russian mirrors for lower latency.
   substituters = [
     "https://ncproxy.vizqq.cc"
-    "https://nixos-cache-proxy.sweetdogs.ru"
     "https://cache.nixos.org/"
   ];
 
