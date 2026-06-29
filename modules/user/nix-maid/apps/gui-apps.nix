@@ -73,7 +73,6 @@ in
         pkgs.gimp # GNU Image Manipulation Program
         pkgs.obs-studio # Live streaming and recording software
         pkgs.obsidian # Knowledge base on local Markdown files
-        pkgs.livecaptions # Linux desktop live captioning
       ];
     }
     (n.mkHomeFiles {
