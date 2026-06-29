@@ -7,9 +7,10 @@ let
   media = importOv ./overlays/media.nix;
   gui = importOv ./overlays/gui.nix;
   dev = importOv ./overlays/dev.nix;
+  fixTinycc = importOv ./overlays/fix-tinycc.nix;
 in
 # Standard overlay pattern: merge top-level attributes
-(functions // tools // media // dev // gui)
+(functions // tools // media // dev // gui // fixTinycc)
 // {
   # Merge all pkgs.neg sub-attributes from individual overlays
   neg =

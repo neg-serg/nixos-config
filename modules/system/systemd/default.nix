@@ -37,15 +37,6 @@ in
         RebootWatchdogSec = "10s";
       };
     };
-    # Ensure the user systemd manager has a sane PATH so TryExec checks
-    # for Wayland sessions do not fail. Include system profile,
-    # per-user profile, and the user's state profile.
-    user.settings.Manager = {
-      DefaultEnvironment = let
-        user = config.users.main.name or "neg";
-        home = "/home/${user}";
-      in "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/${user}/bin:${home}/.local/state/nix/profile/bin";
-    };
     services = {
       nix-daemon.serviceConfig = {
         CPUWeight = 200;
