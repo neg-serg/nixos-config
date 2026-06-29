@@ -24,6 +24,7 @@
   };
 
   features.net.proxy.enable = true;
+  features.net.lan-proxy.enable = true;
 
   features.dev.haskell.enable = false; # Disable Haskell toolchain (saves ~1GB)
   features.dev.cpp.enable = true; # Enable C++ toolchain (ccache, gcc, cmake)
