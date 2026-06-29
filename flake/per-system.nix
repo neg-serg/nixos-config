@@ -32,7 +32,6 @@ in
     docs-modules = import ./docs-modules.nix {
       inherit pkgs lib self;
     };
-    antigravity = pkgs.antigravity-manual;
   };
 
   formatter = pkgs.writeShellApplication {
@@ -586,10 +585,6 @@ in
 
     lzbench = pkgs.mkShell {
       packages = [ pkgs.lzbench ];
-    };
-
-    btrfs = pkgs.mkShell {
-      packages = [ pkgs.btrfs-progs ];
     };
 
     vulkan = pkgs.mkShell {

@@ -71,7 +71,6 @@ local cls = {
   remote      = "^(Vmware-view|xfreerdp|remmina|org.remmina.Remmina)$",
   notes       = "^(Obsidian)$",
   winboat     = "^(winboat|WinBoat)$",
-  antigravity = "^(antigravity)$",
 }
 
 -- ---------------------------------------------------------------------
@@ -193,7 +192,6 @@ hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("/etc/nixos/packages/local-bin/
 hl.bind(M4 .. "+w", hl.dsp.exec_cmd('raise --match "class:regex=' .. m.browser .. '" --launch ' .. browser))
 hl.bind(M4 .. "+x", hl.dsp.exec_cmd('raise --match "class:regex=^term$" --launch "kitty --class term"'))
 hl.bind(M4 .. "+q", hl.dsp.exec_cmd('raise --match "class:regex=^nwim$" --launch "kitty --class nwim -e /home/neg/.local/bin/v"'))
-hl.bind(M4 .. "+a", hl.dsp.exec_cmd('raise --match "class:regex=^antigravity$" --launch "antigravity"'))
 hl.bind(M4 .. "+b", hl.dsp.exec_cmd('raise --match "class:regex=^mpv$" --launch "~/.local/bin/pl video"'))
 hl.bind(M4 .. "+" .. C .. "+c", hl.dsp.exec_cmd('raise --match "class:regex=^swayimg$" --launch "swayimg ~/dw"'))
 hl.bind(M4 .. "+" .. SH .. "+c", hl.dsp.exec_cmd("wl random ~/pic/wl ~/pic/black"))
@@ -352,7 +350,6 @@ local workspaces = {
   { id = 18, name = "𐍁:remote" },
   { id = 19, name = "Ⲣ:notes" },
   { id = 20, name = "𐍅:winboat" },
-  { id = 21, name = "𐍇:antigravity" },
 }
 
 for _, w in ipairs(workspaces) do
@@ -481,7 +478,6 @@ local routes = {
   { class = cls.remote,      id = 18 },
   { class = cls.notes,       id = 19 },
   { class = cls.winboat,     id = 20, float = true },
-  { class = cls.antigravity, id = 21 },
 }
 
 for _, r in ipairs(routes) do
