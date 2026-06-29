@@ -12,8 +12,6 @@ lib.mkIf cfg.enable {
     pkgs.xray # VLESS/Reality-capable proxy core
   ];
 
-  environment.variables.ALL_PROXY = "socks5://127.0.0.1:10808";
-
   sops.secrets."xray_proxy_password" = {
     format = "yaml";
     sopsFile = ../../../secrets/home/xray-proxy-password.sops.yaml;
