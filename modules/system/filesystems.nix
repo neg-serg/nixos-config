@@ -6,7 +6,6 @@ let
 in
 {
   boot.supportedFilesystems = [
-    "btrfs"
     "exfat"
     "xfs"
     "udf"
