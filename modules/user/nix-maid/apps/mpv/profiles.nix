@@ -11,7 +11,7 @@ in
 {
   config = lib.mkIf (config.features.gui.enable or false) (
     n.mkHomeFiles {
-      ".config/mpv/profiles.conf".source = n.linkImpure ../../../../files/mpv/profiles.conf;
+      ".config/mpv/profiles.conf".source = n.linkImpure ../../../../../files/mpv/profiles.conf;
     }
   );
 }
