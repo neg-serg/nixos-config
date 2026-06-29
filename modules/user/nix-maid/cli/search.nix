@@ -99,33 +99,13 @@ in
 
     (n.mkHomeFiles {
       # Bat Config (syntaxes disabled due to HM batCache conflict)
-      ".config/bat/config".text = ''
-        --theme="ansi"
-        --italic-text="always"
-        --paging="never"
-        --decorations="never"
-      '';
+      ".config/bat/config".source = n.linkImpure ../../../../files/search/bat-config;
 
       # FD Ignore
-      ".config/fd/ignore".text = ''
-        .git/
-      '';
+      ".config/fd/ignore".source = n.linkImpure ../../../../files/search/fd-ignore;
 
       # Ripgrep Config
-      ".config/ripgrep/ripgreprc".text = ''
-        --no-heading
-        --smart-case
-        --follow
-        --hidden
-        --glob=!.git/
-        --glob=!node_modules/
-        --glob=!yarn.lock
-        --glob=!package-lock.json
-        --glob=!.yarn/
-        --glob=!_build/
-        --glob=!tags
-        --glob=!.pub-cache
-      '';
+      ".config/ripgrep/ripgreprc".source = n.linkImpure ../../../../files/search/ripgreprc;
     })
   ];
 }
