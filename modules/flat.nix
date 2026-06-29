@@ -143,6 +143,7 @@
     ./system/net/nscd.nix
     ./system/net/pkgs.nix # Nix package manager
     ./system/net/proxy.nix
+    ./system/net/lan-proxy.nix
     ./system/net/ssh.nix
     ./system/net/vpn/default.nix
     ./system/net/vpn/pkgs.nix # Nix package manager
