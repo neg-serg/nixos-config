@@ -209,7 +209,6 @@ in
         gui = {
           qt.enable = mkForce false;
           quickshell.enable = mkForce false;
-          walker.enable = mkForce false;
         };
       };
     })
@@ -231,8 +230,6 @@ in
           message = "features.gui.quickshell.enable requires features.gui.enable = true";
         }
         {
-          assertion = cfg.gui.enable || (!cfg.gui.walker.enable);
-          message = "features.gui.walker.enable requires features.gui.enable = true";
         }
         {
           assertion =
