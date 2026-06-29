@@ -230,8 +230,6 @@ in
           message = "features.gui.quickshell.enable requires features.gui.enable = true";
         }
         {
-        }
-        {
           assertion =
             cfg.web.enable
             || (
