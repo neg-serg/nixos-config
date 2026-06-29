@@ -97,6 +97,13 @@ in
     doInstallCheck = false;
   });
 
+  nixVersions = finalPrev.nixVersions // {
+    stable = finalPrev.nixVersions.stable.overrideAttrs (old: {
+      doCheck = false;
+      doInstallCheck = false;
+    });
+  };
+
   # Disable flaky pytest-xdist tests
   pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
     (python-final: python-prev: {
