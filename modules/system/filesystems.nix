@@ -3,14 +3,14 @@ let
   mainUser = config.users.main.name or "neg";
   homeDir = "/home/${mainUser}";
   isTelfir = config.networking.hostName == "telfir";
+  hasZfs = builtins.hasAttr "zfs" config.boot.kernelPackages;
 in
 {
   boot.supportedFilesystems = [
     "exfat"
     "xfs"
     "udf"
-    "zfs"
-  ];
+  ] ++ lib.optional hasZfs "zfs";
 
   fileSystems = lib.mkIf isTelfir {
     "/" = {
@@ -80,7 +80,7 @@ in
 
     # ---- ZFS ----
 
-    "/tank" = {
+    "/tank" = lib.mkIf hasZfs {
       device = "tank";
       fsType = "zfs";
       options = [ "nofail" "x-systemd.automount" ];
@@ -98,11 +98,11 @@ in
     { device = "/mnt/zero/swapfile"; priority = -1; size = 102400; }
   ];
 
-  boot.zfs.forceImportRoot = false;
+  boot.zfs.forceImportRoot = lib.mkIf hasZfs false;
 
   services.fstrim = lib.mkIf isTelfir { enable = true; };
-  services.zfs.autoScrub.enable = true;
-  services.zfs.trim.enable = true;
+  services.zfs.autoScrub.enable = lib.mkIf hasZfs true;
+  services.zfs.trim.enable = lib.mkIf hasZfs true;
 
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"
