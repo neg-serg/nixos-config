@@ -629,14 +629,6 @@ lib.mkMerge [
         };
       };
     };
-
-    # Configure Nix to use upstream binary caches with mirrors
-    nix.settings = {
-      substituters = lib.mkForce [
-        "https://cache.nixos.org"
-        "https://install.determinate.systems"
-      ];
-    };
   }
   (lib.mkIf grafanaEnabled {
     systemd = {
