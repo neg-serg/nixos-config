@@ -9,7 +9,6 @@
   ];
 
   system.preserveFlake = false;
-  features.cachyos.enable = true;
   features.web.enable = true;
   features.web.floorp.enable = false;
   features.hardware.amdgpu.rocm.enable = true;

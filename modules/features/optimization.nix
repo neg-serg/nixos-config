@@ -24,5 +24,18 @@ in
     # World rebuild disabled to prevent massive compilation times.
     # Zen 5 optimizations are applied via kernel selection (znver4) and
     # specific package overrides (using znver4 for cache compatibility)
+
+    # Enable sched_ext (SCX) scheduler
+    services.scx = {
+      enable = true;
+      scheduler = cfg.scx.scheduler;
+    };
+
+    # Enable Ananicy-cpp for process auto-prioritization
+    services.ananicy = {
+      enable = true;
+      package = pkgs.ananicy-cpp;
+      rulesProvider = pkgs.ananicy-rules-cachyos;
+    };
   };
 }
