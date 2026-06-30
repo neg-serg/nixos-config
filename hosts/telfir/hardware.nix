@@ -37,6 +37,7 @@
       disableAudit = false;
       skipCryptoSelftests = false;
       lowLatencyScheduling = false; # With PREEMPT_RT enabled, drop extra low-latency cmdline toggles
+      noreplaceSmp = false; # Allow SMP alternatives patching on Zen 5 dual-CCD (9950X3D)
     };
     # Do not enable PREEMPT_RT on this host
     performance.preemptRt.enable = false;
