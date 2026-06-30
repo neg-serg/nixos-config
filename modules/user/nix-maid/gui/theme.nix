@@ -35,7 +35,6 @@ in
           alkano-aio # Animated cursor theme
           pkgs.flight-gtk-theme # Dark GTK theme
           pkgs.kora-icon-theme # Modern icon theme
-          pkgs.cantarell-fonts # Default GNOME fonts
           iosevkaNeg.nerd-font # Personalized Iosevka fonts with Nerd Font icons
         ];
 
@@ -51,11 +50,6 @@ in
         # 4. Fonts Config (NixOS level)
         fonts.fontconfig = {
           enable = true;
-          defaultFonts = {
-            serif = [ "Cantarell" ];
-            sansSerif = [ "Cantarell" ];
-            monospace = [ "Iosevka" ];
-          };
         };
       }
       (n.mkHomeFiles {

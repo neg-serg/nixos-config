@@ -18,5 +18,10 @@ in
 {
   config = lib.mkIf guiEnabled {
     fonts.packages = lib.mkAfter packages;
+    fonts.fontconfig.defaultFonts = {
+      serif = [ "Iosevka" ];
+      sansSerif = [ "Iosevka" ];
+      monospace = [ "Iosevka" ];
+    };
   };
 }
