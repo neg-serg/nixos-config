@@ -113,6 +113,9 @@ in
       uvloop = python-prev.uvloop.overrideAttrs (old: {
         doCheck = false; # flaky timing test
       });
+      pylint = python-prev.pylint.overrideAttrs (old: {
+        doCheck = false; # flaky primer test (network-dependent)
+      });
     })
   ];
 }
