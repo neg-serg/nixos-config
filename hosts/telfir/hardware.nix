@@ -86,7 +86,7 @@
       "asus_ec_sensors"
       "snd-hdspe" # RME HDSPe driver (replaces in-tree snd-hdspm)
     ];
-    # amneziawg disabled — incompatible with 7.1.1-cachyos (ipv6_stub removed)
+    # amneziawg disabled — incompatible with certain kernel versions (ipv6_stub removed)
     extraModulePackages = lib.mkForce (
       let
         snd-hdspe = pkgs.callPackage ../../packages/snd-hdspe {
