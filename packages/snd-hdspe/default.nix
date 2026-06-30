@@ -24,6 +24,10 @@ stdenv.mkDerivation rec {
     # Fix for kernel >= 6.7: from_timer macro removed, use container_of
     substituteInPlace sound/pci/hdsp/hdspe/hdspe_midi.c \
       --replace-fail 'from_timer(hmidi, t, timer)' 'container_of(t, struct hdspe_midi, timer)'
+
+    # Fix for kernel >= 6.8: del_timer renamed to timer_delete, mod_timer still exists
+    substituteInPlace sound/pci/hdsp/hdspe/hdspe_midi.c \
+      --replace-fail 'del_timer (' 'timer_delete('
   '';
 
   buildPhase = ''
@@ -32,6 +36,7 @@ stdenv.mkDerivation rec {
       -C ${kernel.dev}/lib/modules/${kernel.modDirVersion}/build \
       M=$(pwd) \
       CC=${kernel.stdenv.cc}/bin/clang \
+      LD=${lld}/bin/ld.lld \
       LLVM=1 \
       KCFLAGS="-Wno-error=unused-command-line-argument -Wno-error=implicit-function-declaration" \
       modules
