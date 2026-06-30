@@ -3,13 +3,11 @@
   inputs = {
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    hyprland-protocols.follows = "hyprland/hyprland-protocols";
     nix.follows = "determinate/nix";
     hyprland = {
       url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.55.4";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    hyprland-guiutils.follows = "hyprland/hyprland-guiutils";
     raise = {
       url = "github:neg-serg/raise";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -27,13 +25,8 @@
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.rust-overlay.follows = "rust-overlay";
     };
     nix-maid.url = "github:viperML/nix-maid";
-    nur = {
-      url = "github:nix-community/NUR";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     nyx = {
       url = "github:chaotic-cx/nyx";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -48,10 +41,6 @@
     };
     rsmetrx = {
       url = "github:neg-serg/rsmetrx";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     sops-nix = {
