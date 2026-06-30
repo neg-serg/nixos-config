@@ -33,6 +33,12 @@ in
     # duf fork with --style plain, --no-header, --no-bars flags
     duf = callPkg (packagesRoot + "/duf") { };
 
+    # Local AI proxy for Claude Code / OpenCode
+    proxypilot = callPkg (packagesRoot + "/proxypilot") { };
+
+    # AI agent tool for code assistance
+    sidecar = callPkg (packagesRoot + "/sidecar") { };
+
     # Native Rust-based zsh syntax highlighting engine
     zsh-native-syntax = callPkg (packagesRoot + "/zsh-native-syntax") { };
 
