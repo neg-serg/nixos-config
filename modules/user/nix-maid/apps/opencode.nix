@@ -13,6 +13,17 @@ let
     && (config.features.dev.ai.enable or false)
     && (config.features.dev.ai.opencode.enable or false);
 
+  deepseekSecretPath = "/run/secrets/deepseek-api";
+  deepseekApiKey =
+    if builtins.pathExists deepseekSecretPath
+    then lib.strings.removeSuffix "\n" (builtins.readFile deepseekSecretPath)
+    else "{env:DEEPSEEK_API_KEY}";
+  githubSecretPath = "/run/secrets/github-token";
+  githubToken =
+    if builtins.pathExists githubSecretPath
+    then lib.strings.removeSuffix "\n" (builtins.readFile githubSecretPath)
+    else "{env:GITHUB_TOKEN}";
+
   opencodeConfig = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
     model = "deepseek/deepseek-v4-flash";
@@ -23,7 +34,7 @@ let
         name = "DeepSeek";
         options = {
           baseURL = "https://api.deepseek.com/v1";
-          apiKey = "{env:DEEPSEEK_API_KEY}";
+          apiKey = deepseekApiKey;
         };
         models = {
           deepseek-v4-flash = {
@@ -146,7 +157,7 @@ let
         ];
         enabled = true;
         environment = {
-          GITHUB_PERSONAL_ACCESS_TOKEN = "{env:GITHUB_TOKEN}";
+          GITHUB_PERSONAL_ACCESS_TOKEN = githubToken;
         };
         timeout = 5000;
       };
@@ -194,8 +205,8 @@ lib.mkIf enable (
     {
       systemd.user.services.opencode-daemon = let
         opencodeServe = pkgs.writeShellScript "opencode-serve" ''
-          export DEEPSEEK_API_KEY="$(${pkgs.coreutils}/bin/cat /run/secrets/deepseek-api 2>/dev/null || true)"
-          export GITHUB_TOKEN="$(${pkgs.coreutils}/bin/cat /run/secrets/github-token 2>/dev/null || true)"
+          export DEEPSEEK_API_KEY="$(${pkgs.coreutils}/bin/cat /run/user/1000/secrets/deepseek-api 2>/dev/null || true)"
+          export GITHUB_TOKEN="$(${pkgs.coreutils}/bin/cat /run/user/1000/secrets/github-token 2>/dev/null || true)"
           exec ${pkgs.opencode}/bin/opencode serve
         '';
       in {
