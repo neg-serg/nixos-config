@@ -6,4 +6,6 @@ _inputs: _final: prev:
   pipemixer = prev.callPackage ../pipemixer { };
   wiremix = prev.callPackage ../wiremix { };
 
+  hdspeconf = prev.callPackage ../hdspeconf { };
+
 }
