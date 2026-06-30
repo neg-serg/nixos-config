@@ -16,7 +16,6 @@ let
     web = {
       enable = true;
       tools.enable = true;
-      addonsFromNUR.enable = true;
       floorp.enable = true;
       firefox.enable = false;
       librewolf.enable = false;
@@ -90,7 +89,6 @@ in
         web = {
           enable = mkDefault false;
           tools.enable = mkDefault false;
-          addonsFromNUR.enable = mkDefault false;
           floorp.enable = mkDefault false;
 
           prefs.fastfox.enable = mkDefault false;
@@ -106,7 +104,6 @@ in
         web = {
           enable = mkDefault true;
           tools.enable = mkDefault true;
-          addonsFromNUR.enable = mkDefault true;
           default = mkDefault "zen";
           floorp.enable = mkDefault true;
           firefox.enable = mkDefault false;
@@ -131,7 +128,6 @@ in
       features = {
         web = {
           tools.enable = mkDefault false;
-          addonsFromNUR.enable = mkDefault false;
           floorp.enable = mkDefault false;
           firefox.enable = mkDefault false;
           librewolf.enable = mkDefault false;
@@ -149,7 +145,6 @@ in
       # Parent off must force-disable children to avoid priority conflicts
       features.web = {
         tools.enable = mkForce false;
-        addonsFromNUR.enable = mkForce false;
         floorp.enable = mkForce false;
         firefox.enable = mkForce false;
         librewolf.enable = mkForce false;
