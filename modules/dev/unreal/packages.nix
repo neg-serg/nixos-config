@@ -8,8 +8,8 @@ let
   clangSuite = pkgs.buildEnv {
     name = "ue-clang-suite";
     paths = [
-      pkgs.llvmPackages_21.clang # C/C++ compiler
-      pkgs.llvmPackages_21.clang-tools # clangd, clang-format, etc.
+      pkgs.llvmPackages_22.clang # C/C++ compiler
+      pkgs.llvmPackages_22.clang-tools # clangd, clang-format, etc.
     ];
     ignoreCollisions = true;
   };
@@ -20,10 +20,10 @@ let
     pkgs.cmake # configure helper for ancillary libs
     pkgs.ninja # build tool favored by UE's generated projects
     (lib.lowPrio pkgs.python3) # scripts rely on python3 (low prio to avoid conflicts)
-    clangSuite # bundled clang/clang-tools pinned to UE version
-    pkgs.llvmPackages_21.llvm # LLVM libs for backend compatibility
-    pkgs.llvmPackages_21.lld # LLD linker required by UE build chain
-    pkgs.llvmPackages_21.libclang.lib # libclang for bindings/plugins
+    clangSuite # bundled clang/clang-tools (LLVM 22)
+    pkgs.llvmPackages_22.llvm # LLVM libs for backend compatibility
+    pkgs.llvmPackages_22.lld # LLD linker required by UE build chain
+    pkgs.llvmPackages_22.libclang.lib # libclang for bindings/plugins
     pkgs.dotnet-sdk_9 # UnrealBuildTool requires modern dotnet SDK
     pkgs.protobuf # protoplugin build dependency
     pkgs.grpc # gRPC headers/libs for remote control modules
