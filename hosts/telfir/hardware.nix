@@ -8,9 +8,7 @@
   # Hardware and performance tuning specific to host 'telfir'
   hardware = {
     storage.autoMount.enable = true;
-    vr.valveIndex.enable = true;
-
-    # Ensure Mesa stack for Steam/VR (64-bit only)
+    vr.valveIndex.enable = false;
     graphics = {
       enable = true;
       enable32Bit = true; # required for Proton/32-bit games (GL/Vulkan i686)
@@ -32,16 +30,13 @@
       zswap.enable = lib.mkDefault false;
       # Optimize initrd compression (smaller image, slower rebuilds)
       optimizeInitrdCompression = true;
-      # Reduce boot verbosity to speed kernel + userspace stage slightly
-      quietBoot = true;
-      # Prefer THP on madvise only to reduce jitter
-      thpMode = "madvise";
+      quietBoot = true; # Reduce boot verbosity to speed kernel + userspace stage slightly
+      thpMode = "madvise"; # Prefer THP on madvise only to reduce jitter
       # Dial back aggressive defaults for desktop security/stability
       disableMitigations = false;
       disableAudit = false;
       skipCryptoSelftests = false;
-      # With PREEMPT_RT enabled, drop extra low-latency cmdline toggles
-      lowLatencyScheduling = false;
+      lowLatencyScheduling = false; # With PREEMPT_RT enabled, drop extra low-latency cmdline toggles
     };
     # Do not enable PREEMPT_RT on this host
     performance.preemptRt.enable = false;
