@@ -23,7 +23,7 @@ in
   };
 
   nix = {
-    package = pkgs.nixVersions.stable;
+    # package left for Determinate module to set
     nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
     settings = {
       accept-flake-config = true;

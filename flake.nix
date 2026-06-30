@@ -1,8 +1,10 @@
 {
   description = "Neg-Serg configuration";
   inputs = {
+    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     hyprland-protocols.follows = "hyprland/hyprland-protocols";
+    nix.follows = "determinate/nix";
     hyprland = {
       url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.55.4";
       inputs.nixpkgs.follows = "nixpkgs";

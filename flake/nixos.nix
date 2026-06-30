@@ -17,6 +17,7 @@ let
 
   commonModules = [
     ../init.nix
+    inputs.determinate.nixosModules.default
     inputs.lanzaboote.nixosModules.lanzaboote
     inputs.sops-nix.nixosModules.sops
 
