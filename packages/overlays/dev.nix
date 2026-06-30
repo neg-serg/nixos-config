@@ -1,6 +1,6 @@
 _inputs: _final: prev: {
-  # bpftrace 0.23.x does not support LLVM 21 yet; pin to LLVM 20
-  bpftrace = prev.bpftrace.override { llvmPackages = prev.llvmPackages_21; };
+  # bpftrace 0.25+ works with LLVM 22; use same version as the rest of the config
+  bpftrace = prev.bpftrace.override { llvmPackages = prev.llvmPackages_22; };
   # Security: avoid insecure Mbed TLS 2 by aliasing to v3
   mbedtls_2 = prev.mbedtls;
   # GNU Radio: disable upstream tests (flaky qa_blocks_hier_block2)
