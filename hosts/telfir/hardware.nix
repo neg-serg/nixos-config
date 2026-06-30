@@ -83,11 +83,21 @@
     kernelModules = lib.mkAfter [
       "ec_sys"
       "asus_ec_sensors"
+      "snd-hdspe" # RME HDSPe driver (replaces in-tree snd-hdspm)
     ];
     # amneziawg disabled — incompatible with 7.1.1-cachyos (ipv6_stub removed)
     extraModulePackages = lib.mkForce (
+      let
+        snd-hdspe = pkgs.callPackage ../../packages/snd-hdspe {
+          kernel = config.boot.kernelPackages.kernel;
+          lld = pkgs.llvmPackages_22.lld;
+        };
+      in
       lib.optional (builtins.hasAttr "asus-ec-sensors" config.boot.kernelPackages)
         config.boot.kernelPackages."asus-ec-sensors"
+      ++ lib.optional (builtins.hasAttr "zfs" config.boot.kernelPackages)
+        config.boot.kernelPackages.zfs
+      ++ [ snd-hdspe ]
     );
 
     # Load heavy GPU driver early in initrd to reduce userspace module-load time
@@ -135,6 +145,7 @@
     "tpm_tis_core"
     "8250"
     "serial8250"
+    "snd-hdspm" # Replaced by out-of-tree snd-hdspe
   ];
   # No separate initrd blacklist option; TPM modules are excluded from initrd
   # via modules/system/boot.nix when security.tpm2.enable = false
