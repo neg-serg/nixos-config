@@ -10,7 +10,6 @@
     ./boot.nix
     ./environment.nix
     ./filesystems.nix
-    ./guix.nix
     ./irqbalance.nix
     ./oomd.nix
     ./pkgs.nix # Nix package manager
