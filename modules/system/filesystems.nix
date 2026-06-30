@@ -9,6 +9,7 @@ in
     "exfat"
     "xfs"
     "udf"
+    "zfs"
   ];
 
   fileSystems = lib.mkIf isTelfir {
@@ -77,6 +78,14 @@ in
       options = [ "nofail" "x-systemd.automount" ];
     };
 
+    # ---- ZFS ----
+
+    "/tank" = {
+      device = "tank";
+      fsType = "zfs";
+      options = [ "nofail" "x-systemd.automount" ];
+    };
+
     # Argon 3.6TiB LV (nvme1n1 + nvme3n1)
     "/mnt/zero" = {
       device = "/dev/mapper/argon-zero";
@@ -89,7 +98,11 @@ in
     { device = "/mnt/zero/swapfile"; priority = -1; size = 102400; }
   ];
 
+  boot.zfs.forceImportRoot = false;
+
   services.fstrim = lib.mkIf isTelfir { enable = true; };
+  services.zfs.autoScrub.enable = true;
+  services.zfs.trim.enable = true;
 
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"

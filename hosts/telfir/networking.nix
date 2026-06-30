@@ -1,6 +1,7 @@
 _: {
   networking = {
     hostName = "telfir";
+    hostId = "ab0cd1ef"; # Required for ZFS pool import
     hosts."192.168.2.240" = [
       "telfir"
       "telfir.local"
