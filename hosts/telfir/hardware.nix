@@ -70,13 +70,13 @@
       "lru_gen.min_ttl_ms=1000"                # Min TTL for multi-gen LRU
       "mem_sleep_default=deep"                 # Prefer deep sleep (S3) for suspend
       "8250.nr_uarts=0"                        # Skip legacy UART probing
-      "nvme_core.default_ps_max_latency_us=0"  # Disable NVMe APST (fixes 70s boot)
+      # nvme_core.* / pcie_aspm / usbcore.autosuspend already covered by performance profile in params.nix
       "nvme_core.io_timeout=4294967295"        # Max NVMe I/O timeout
-      "pcie_aspm=performance"                  # Disable PCIe power saving
-      "usbcore.autosuspend=-1"                 # Disable USB autosuspend
       "amdgpu.ppfeaturemask=0xffffffff"        # Enable all AMD GPU overdrive features
       "udev.children_max=32"                   # Parallelize udev device init
-      "udev.event_timeout=10"                  # Fix 60s USB port hang on ASUS AM5
+      "udev.event_timeout=10"                  # Kill stuck udev workers after 10s
+      "rd.udev.event_timeout=10"               # Same for initrd udev
+      "usbcore.initial_descriptor_timeout=2000" # Cut USB descriptor timeout from 5s to 2s (phantom port 8 on ASUS AM5)
     ];
 
     # Load ASUS EC sensor driver for detailed telemetry + OpenRGB access
