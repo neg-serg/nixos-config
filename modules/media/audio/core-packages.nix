@@ -19,6 +19,7 @@ in
       pkgs.pw-volume # minimal PipeWire volume controller for scripts
 
       # -- RME HDSPe --
+      pkgs.alsa-tools # hdspconf (matrix mixer), hdspmixer (RME HDSPe control)
 
       # -- GUI Patchbays --
       pkgs.coppwr # PipeWire CLI to copy/paste complex graphs
