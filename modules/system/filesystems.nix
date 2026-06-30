@@ -70,13 +70,6 @@ in
 
     # ---- Bulk storage LVs ----
 
-    # Old CachyOS system root (nvme0n1p4) — keep accessible for data recovery / reference
-    "/mnt/cachyos" = {
-      device = "/dev/nvme0n1p4";
-      fsType = "xfs";
-      options = [ "nofail" "x-systemd.automount" ];
-    };
-
     # One 7TiB LV (nvme2n1)
     "/mnt/one" = {
       device = "/dev/mapper/xenon-one";
