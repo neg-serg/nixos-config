@@ -48,8 +48,8 @@ in
       connect-timeout = 15;
       stalled-download-timeout = 10;
       http-connections = 8;
-      cores = 4; # Limit per-build cores to prevent OOM
-      max-jobs = 2; # Limit parallel builds to prevent OOM
+      cores = 0; # Use all available cores per build
+      max-jobs = "auto"; # Auto-balance parallel jobs based on available memory/cores
       use-xdg-base-directories = true;
       warn-dirty = false; # Disable annoying dirty warn
       download-attempts = 5;
