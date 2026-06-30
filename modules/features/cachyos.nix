@@ -25,7 +25,7 @@ in
         if config.features.optimization.enable then
           config.features.optimization.scx.scheduler
         else
-          "scx_rusty";
+          "scx_lavd";
       # package = pkgs.scx; # Implicit from module
     };
 
