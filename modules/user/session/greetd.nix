@@ -13,8 +13,9 @@ let
       config.users.users.${mainUser}.home or "/home/${mainUser}"
     else
       "/home/${mainUser}";
+  greeterCache = "/home/greeter/.cache";
   greeterWallpaperSrc = "${mainHome}/pic/wl/waterfall_jungle_dark_150290_3840x2400.jpg";
-  greeterWallpaperDst = "/var/lib/greetd/wallpaper.jpg";
+  greeterWallpaperDst = "${greeterCache}/greeter-wallpaper";
   hyprlandConfig = pkgs.writeText "greetd-hyprland-config" ''
     monitorv2 {
       output = DP-2
@@ -28,7 +29,7 @@ let
     }
     exec-once = ${
       lib.getExe pkgs.bash
-    } -c "QML2_IMPORT_PATH=/etc/greetd/quickshell ${
+    } -c "HOME=/home/greeter QML2_IMPORT_PATH=/etc/greetd/quickshell ${
       lib.getExe inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
     } -p /etc/greetd/quickshell/greeter/greeter.qml > /tmp/qs-greeter.log 2>&1 && pkill Hyprland"
     input {
@@ -86,7 +87,8 @@ in
       exec /run/current-system/sw/bin/hyprland > /tmp/hyprland-debug.log 2>&1
     '';
     systemd.tmpfiles.rules = lib.mkAfter [
-      "d /var/lib/greetd 0755 root root -"
+      "d /home/greeter/.cache 0755 greeter greeter -"
+      "d /home/greeter/.config/quickshell/Theme 0755 greeter greeter -"
     ];
     system.activationScripts.greetdWallpaper = ''
       if [ -f "${greeterWallpaperSrc}" ]; then
@@ -94,6 +96,7 @@ in
       else
         echo "greetd wallpaper missing: ${greeterWallpaperSrc}" >&2
       fi
+      install -Dm644 ${pkgs.writeText "greeter-theme.json" "{}"} /home/greeter/.config/quickshell/Theme/.theme.json
     '';
   };
 }
