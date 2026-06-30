@@ -22,7 +22,7 @@ let
       excludesfile = "~/.config/git/ignore"; # Hardcoded path
       editor = "nvim";
       untrackedCache = true;
-      sshCommand = "ssh -i ~/.ssh/id_neg";
+      sshCommand = "ssh -i ~/.ssh/id_ed25519";
     };
     color = {
       grep = "auto";
