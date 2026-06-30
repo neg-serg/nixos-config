@@ -56,7 +56,10 @@ EOF
       "xray.service"
       "transparent-proxy-env.service"
     ];
-    wants = [ "transparent-proxy-env.service" ];
+    wants = [
+      "network-online.target"
+      "transparent-proxy-env.service"
+    ];
     wantedBy = [ "transparent-proxy.target" ];
     serviceConfig = {
       Type = "simple";
@@ -103,6 +106,7 @@ EOF
     description = "Transparent proxy via nftables + redsocks → Xray SOCKS5";
     after = [ "network-online.target" "xray.service" ];
     wants = [
+      "network-online.target"
       "redsocks.service"
       "transparent-proxy-rules.service"
     ];

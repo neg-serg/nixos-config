@@ -21,6 +21,7 @@ lib.mkIf cfg.enable {
   systemd.services.xray = {
     description = "Xray local SOCKS5 proxy (127.0.0.1:10808)";
     after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
     wantedBy = [ "default.target" ];
     serviceConfig = {
       Type = "simple";
