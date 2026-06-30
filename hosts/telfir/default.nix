@@ -1,6 +1,5 @@
 { inputs, lib, pkgs, ... }:
 {
-  nix.package = lib.mkForce (inputs.nix.packages.x86_64-linux.default.overrideAttrs (_: { doCheck = false; }));
 
   imports = [
     ./hardware.nix
