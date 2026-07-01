@@ -66,18 +66,15 @@ in
             path = "/tmp/mpd.fifo";
             format = "44100:16:2";
           }
-          {
-            type = "alsa";
-            name = "RME ADI-2/4 PRO SE";
-            device = "hw:CARD=SE53011083";
-            auto_resample = "no";
-            auto_format = "no";
-            auto_channels = "no";
-            replay_gain_handler = "none";
-            dsd_native = "yes";
-            dop = "no";
-            tags = "yes";
-          }
+          # Uncomment and adjust card name after checking `aplay -l`:
+          # {
+          #   type = "alsa";
+          #   name = "RME HDSPe AIO";
+          #   device = "hw:CARD=RMEAIO,DEV=0";
+          #   auto_resample = "no";
+          #   auto_format = "no";
+          #   auto_channels = "no";
+          # }
         ];
       };
     };
