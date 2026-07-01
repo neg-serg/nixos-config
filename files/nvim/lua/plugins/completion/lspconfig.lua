@@ -23,42 +23,32 @@ return {
       float = { border = 'rounded', source = 'if_many' },
     })
 
-    do
-      local group = vim.api.nvim_create_augroup('NegLspAttach', { clear = true })
-      vim.api.nvim_create_autocmd('LspAttach', {
-        group = group,
-        callback = function(event)
-          local buf = event.buf
-          local function bmap(mode, lhs, rhs, desc)
-            vim.keymap.set(mode, lhs, rhs, { buffer = buf, silent = true, desc = desc })
-          end
-          bmap('n', '<leader>D', vim.lsp.buf.type_definition, 'LSP: type definition')
-          bmap('n', '<leader>ws', vim.lsp.buf.workspace_symbol, 'LSP: workspace symbol')
-          bmap('n', '<leader>uh', function()
-            local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = buf })
-            vim.lsp.inlay_hint.enable(not enabled, { bufnr = buf })
-          end, 'Inlay Hints: toggle')
-        end,
-      })
+    local capabilities = require('blink.cmp').get_lsp_capabilities(
+      vim.lsp.protocol.make_client_capabilities()
+    )
+
+    vim.api.nvim_create_autocmd('LspAttach', {
+      group = vim.api.nvim_create_augroup('NegLspAttach', { clear = true }),
+      callback = function(event)
+        local buf = event.buf
+        vim.keymap.set('n', '<leader>D', vim.lsp.buf.type_definition, { buffer = buf, silent = true, desc = 'LSP: type definition' })
+        vim.keymap.set('n', '<leader>ws', vim.lsp.buf.workspace_symbol, { buffer = buf, silent = true, desc = 'LSP: workspace symbol' })
+        vim.keymap.set('n', '<leader>uh', function()
+          local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = buf })
+          vim.lsp.inlay_hint.enable(not enabled, { bufnr = buf })
+        end, { buffer = buf, silent = true, desc = 'Inlay Hints: toggle' })
+      end,
+    })
+
+    -- Neovim 0.11 API: vim.lsp.config + vim.lsp.enable
+    local function configure(server, opts)
+      vim.lsp.config[server] = vim.tbl_deep_extend('force', { capabilities = capabilities }, opts or {})
+      vim.lsp.enable(server)
     end
 
-    local base_config = {}
+    configure('cmake', {})
+    configure('systemd_ls', {})
 
-    -- configure: set custom config; optionally enable (for non-Mason servers)
-    local function configure(server, extra, enable)
-      local capabilities = require('blink.cmp').get_lsp_capabilities(
-        vim.lsp.protocol.make_client_capabilities()
-      )
-      local resolved = vim.tbl_deep_extend('force', { capabilities = capabilities }, extra or {})
-      local config = vim.tbl_extend('force', resolved, { autostart = enable or false })
-      require('lspconfig')[server].setup(config)
-    end
-
-    -- System-installed servers (pacman/AUR — not managed by Mason, must enable manually)
-    configure('cmake', nil, true)
-    configure('systemd_ls', nil, true)
-
-    -- lua_ls: configured here, lazydev.nvim injects workspace libraries at runtime
     configure('lua_ls', {
       settings = {
         Lua = {
@@ -73,7 +63,6 @@ return {
       },
     })
 
-    -- Mason-managed servers: config only, mason-lspconfig handles enable via automatic_enable
     configure('clangd', {
       cmd = { 'clangd', '--background-index', '--clang-tidy', '--completion-style=detailed', '--header-insertion=never' },
       init_options = { clangdFileStatus = true },
