@@ -1,4 +1,4 @@
-{ lib, stdenv, kernel, fetchFromGitHub, lld }:
+{ lib, stdenv, kernel, fetchFromGitHub }:
 
 stdenv.mkDerivation rec {
   pname = "snd-hdspe";
@@ -11,7 +11,7 @@ stdenv.mkDerivation rec {
     hash = "sha256-r51wkeOtosnfjbnGmyoBciKRXjDkhuYB5v9jAiENkNY=";
   };
 
-  nativeBuildInputs = kernel.moduleBuildDependencies ++ [ lld ];
+  nativeBuildInputs = kernel.moduleBuildDependencies;
 
   hardeningDisable = [ "pic" "format" ];
 
@@ -35,10 +35,8 @@ stdenv.mkDerivation rec {
     make W=1 \
       -C ${kernel.dev}/lib/modules/${kernel.modDirVersion}/build \
       M=$(pwd) \
-      CC=${kernel.stdenv.cc}/bin/clang \
-      LD=${lld}/bin/ld.lld \
-      LLVM=1 \
-      KCFLAGS="-Wno-error=unused-command-line-argument -Wno-error=implicit-function-declaration" \
+      CC=${kernel.stdenv.cc}/bin/gcc \
+      KCFLAGS="-Wno-error=implicit-function-declaration" \
       modules
     runHook postBuild
   '';

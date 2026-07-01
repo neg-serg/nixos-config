@@ -91,7 +91,6 @@
       let
         snd-hdspe = pkgs.callPackage ../../packages/snd-hdspe {
           kernel = config.boot.kernelPackages.kernel;
-          lld = pkgs.llvmPackages_22.lld;
         };
       in
       lib.optional (builtins.hasAttr "asus-ec-sensors" config.boot.kernelPackages)
