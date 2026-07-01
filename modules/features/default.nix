@@ -17,8 +17,6 @@ let
       enable = true;
       tools.enable = true;
       floorp.enable = true;
-      firefox.enable = false;
-      librewolf.enable = false;
 
       prefs.fastfox.enable = true;
     };
@@ -90,7 +88,6 @@ in
           enable = mkDefault false;
           tools.enable = mkDefault false;
           floorp.enable = mkDefault false;
-
           prefs.fastfox.enable = mkDefault false;
         };
         emulators.retroarch.full = mkDefault false;
@@ -106,8 +103,6 @@ in
           tools.enable = mkDefault true;
           default = mkDefault "zen";
           floorp.enable = mkDefault true;
-          firefox.enable = mkDefault false;
-          librewolf.enable = mkDefault false;
           zen.enable = mkDefault true;
 
           prefs.fastfox.enable = mkDefault true;
@@ -129,9 +124,6 @@ in
         web = {
           tools.enable = mkDefault false;
           floorp.enable = mkDefault false;
-          firefox.enable = mkDefault false;
-          librewolf.enable = mkDefault false;
-
           prefs.fastfox.enable = mkDefault false;
         };
         gui.qt.enable = mkDefault false;
@@ -146,9 +138,6 @@ in
       features.web = {
         tools.enable = mkForce false;
         floorp.enable = mkForce false;
-        firefox.enable = mkForce false;
-        librewolf.enable = mkForce false;
-
         prefs.fastfox.enable = mkForce false;
       };
     })
@@ -229,15 +218,8 @@ in
             || (
               !cfg.web.tools.enable
               && !cfg.web.floorp.enable
-
-              && !cfg.web.firefox.enable
-              && !cfg.web.librewolf.enable
             );
           message = "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)";
-        }
-        {
-          assertion = !(cfg.web.firefox.enable && cfg.web.librewolf.enable);
-          message = "Only one of features.web.firefox.enable or features.web.librewolf.enable can be true";
         }
         {
           assertion = cfg.dev.enable || (!cfg.dev.ai.enable);

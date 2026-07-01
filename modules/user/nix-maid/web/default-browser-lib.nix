@@ -7,12 +7,9 @@
 with lib;
 let
   cfg = config.features.web;
-  key = cfg.default or "floorp";
+  key = cfg.default or "zen";
   browsers = import ./browsers-table.nix {
-    inherit
-      lib
-      pkgs
-      ;
+    inherit lib pkgs;
   };
 in
-lib.attrByPath [ key ] browsers.floorp browsers
+lib.attrByPath [ key ] browsers.zen browsers

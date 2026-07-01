@@ -9,17 +9,10 @@ in
     default = mkOption {
       type = types.enum [
         "floorp"
-        "firefox"
-        "librewolf"
         "zen"
-
-        "chrome"
-        "brave"
-        "vivaldi"
-        "edge"
       ];
-      default = "floorp";
-      description = "Default browser used for XDG handlers, $BROWSER, and integrations.";
+      default = "zen";
+      description = "Default browser used for XDG handlers, \$BROWSER, and integrations.";
     };
     tools.enable = mkBool "enable web tools (aria2, yt-dlp, misc)" true;
     aria2.service.enable = mkBool "run aria2 download manager as a user service (graphical preset)" false;
@@ -27,14 +20,7 @@ in
       enable = mkBool "enable Floorp browser" true;
     };
 
-    firefox.enable = mkBool "enable Firefox browser" false;
-    librewolf.enable = mkBool "enable LibreWolf browser" false;
     zen.enable = mkBool "enable Zen browser (package only; profile managed manually)" true;
-
-    chrome.enable = mkBool "enable Google Chrome browser" true;
-    brave.enable = mkBool "enable Brave browser" false;
-    vivaldi.enable = mkBool "enable Vivaldi browser" false;
-    edge.enable = mkBool "enable Microsoft Edge browser" false;
     prefs = {
       fastfox.enable = mkBool "enable FastFox-like perf prefs for Mozilla browsers" true;
     };

@@ -55,9 +55,6 @@ ColumnLayout {
 					icon = props["application.process.binary"];
 				}
 
-				// special cases :(
-				if (icon == "firefox") icon = "firefox-devedition";
-
 				return Quickshell.iconPath(icon)
 			}
 		}
