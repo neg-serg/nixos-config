@@ -91,7 +91,7 @@ handler() {
     done
 }
 
-dac_name='RME ADI-2/4 PRO SE'
+dac_name='RME HDSPe AIO'
 # Count menu items to calculate columns
 menu_count=$(printf '%s\n' "$main_menu" | grep -c .)
 # Use 4 columns with 2 lines (8 items visible at once)
