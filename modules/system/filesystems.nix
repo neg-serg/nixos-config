@@ -3,15 +3,11 @@ let
   mainUser = config.users.main.name or "neg";
   homeDir = "/home/${mainUser}";
   isTelfir = config.networking.hostName == "telfir";
-  attrName = pkgs.zfs.kernelModuleAttribute;
-  hasZfs = builtins.hasAttr attrName config.boot.kernelPackages;
 in
 {
-  boot.supportedFilesystems = [
-    "exfat"
-    "xfs"
-    "udf"
-  ] ++ lib.optional hasZfs "zfs";
+  boot.supportedFilesystems = [ "exfat" "xfs" "udf" "zfs" ];
+  boot.initrd.supportedFilesystems = [ "zfs" ];
+  boot.zfs.forceImportRoot = false;
 
   fileSystems = lib.mkIf isTelfir {
     "/" = {
@@ -81,11 +77,23 @@ in
 
     # ---- ZFS ----
 
-    "/tank" = lib.mkIf hasZfs {
-      device = "tank/root";
+    "/tank" = {
+      device = "tank";
       fsType = "zfs";
       options = [ "nofail" "x-systemd.automount" ];
     };
+
+    # ZFS root (prepare for migration — enable to switch from XFS)
+    # fileSystems."/" = {
+    #   device = "tank/nixos";
+    #   fsType = "zfs";
+    #   options = [ "rw" "noatime" ];
+    # };
+    # fileSystems."/nix/store" = {
+    #   device = "tank/store";
+    #   fsType = "zfs";
+    #   options = [ "noatime" "nofail" ];
+    # };
 
     # Argon 3.6TiB LV (nvme1n1 + nvme3n1)
     "/mnt/zero" = {
@@ -99,8 +107,6 @@ in
     { device = "/mnt/zero/swapfile"; priority = -1; size = 102400; }
   ];
 
-  boot.zfs.forceImportRoot = false;
-
   # No zfs_arc_meta_min in ZFS 2.4 — use dataset primarycache=metadata instead
   # to pin metadata in ARC. Hot data (libc, bash) won't be cached but for
   # /nix/store build workloads (read each dep once), this is optimal.
@@ -108,7 +114,7 @@ in
   # Optimal dataset properties for /nix/store workload:
   #   recordsize=32K — fewer block pointers per binary, faster grep/find
   #   primarycache=all — cache both metadata and hot data in ARC
-  systemd.services.zfs-store-props = lib.mkIf hasZfs {
+  systemd.services.zfs-store-props = {
     description = "Set optimal ZFS properties on tank/store";
     wantedBy = [ "zfs.target" ];
     after = [ "zfs.target" ];
@@ -133,28 +139,10 @@ in
     '';
   };
 
-  # Enable automatic ZFS snapshots for safe rollback (opt-in)
-  # services.zfs.autoSnapshot = lib.mkIf hasZfs {
-  #   enable = true;
-  #   frequent = 4;
-  #   daily = 7;
-  #   weekly = 4;
-  # };
-
-  # Future: /nix/store on ZFS (uncomment after migration)
-  # 1. sudo zfs create -o mountpoint=legacy tank/store
-  # 2. sudo rsync -a /nix/store/ /mnt/nix-store/
-  # 3. Uncomment fileSystems."/nix/store" below
-  # 4. sudo reboot
-  # fileSystems."/nix/store" = lib.mkIf hasZfs {
-  #   device = "tank/store";
-  #   fsType = "zfs";
-  #   options = [ "nofail" ];
-  # };
-
+  # ZFS auto-scrub and trim
+  services.zfs.autoScrub.enable = true;
+  services.zfs.trim.enable = true;
   services.fstrim = lib.mkIf isTelfir { enable = true; };
-  services.zfs.autoScrub.enable = lib.mkIf hasZfs true;
-  services.zfs.trim.enable = lib.mkIf hasZfs true;
 
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"
