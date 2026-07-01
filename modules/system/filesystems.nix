@@ -203,9 +203,26 @@ in
         extraConfig = ''
           proxy_cache nixcache;
           proxy_cache_key "$uri";
+
+          # Fail fast when upstream is unreachable or slow;
+          # nix will fall through to the next substituter (cache.nixos.org directly).
+          proxy_connect_timeout 5s;
+          proxy_read_timeout 15s;
+          proxy_send_timeout 5s;
+
+          # Prevent thundering herd on cache misses — only one request
+          # per cache key goes upstream, others wait for it.
+          proxy_cache_lock on;
+          proxy_cache_lock_age 60s;
+          proxy_cache_lock_timeout 10s;
+
+          # Serve stale cache entry while refreshing in background
+          proxy_cache_background_update on;
+          proxy_cache_use_stale error timeout invalid_header updating
+                              http_500 http_502 http_503 http_504 http_429;
+
           proxy_cache_valid 200 302 7d;
           proxy_cache_valid 404 1m;
-          proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
         '';
       };
     };
