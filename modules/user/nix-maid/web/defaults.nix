@@ -14,9 +14,9 @@ let
   }; # Updated import path
   browser =
     let
-      key = cfg.default or "floorp";
+      key = cfg.default or "zen";
     in
-    lib.attrByPath [ key ] browsers.floorp browsers;
+    lib.attrByPath [ key ] browsers.zen browsers;
 in
 {
   config = {
