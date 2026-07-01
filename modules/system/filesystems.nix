@@ -118,7 +118,7 @@ in
     script = ''
       if zfs list tank/store >/dev/null 2>&1; then
         zfs set compression=lz4 tank/store
-        zfs set recordsize=32K tank/store
+        zfs set recordsize=128K tank/store
         zfs set atime=off tank/store
         zfs set xattr=sa tank/store
         zfs set primarycache=metadata tank/store
