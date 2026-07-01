@@ -13,7 +13,7 @@ in
   config = lib.mkMerge [
     {
       environment.systemPackages = [
-        pkgs.neovim # primary editor
+        # neovim is provided via programs.neovim.enable in modules/user/neovim.nix
       ];
     }
     (lib.mkIf devEnabled {

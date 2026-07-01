@@ -983,6 +983,23 @@
         "type": "github"
       }
     },
+    "openzfs": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782941489,
+        "narHash": "sha256-UnR77iFi5V+3HkvGVEKQmr+mky11RBiznPOrZG7sTEU=",
+        "owner": "openzfs",
+        "repo": "zfs",
+        "rev": "6721ab9817c48a56dbbff9f2d24b7a45d2728f7d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "openzfs",
+        "repo": "zfs",
+        "rev": "6721ab9817c48a56dbbff9f2d24b7a45d2728f7d",
+        "type": "github"
+      }
+    },
     "pre-commit": {
       "inputs": {
         "flake-compat": "flake-compat_3",
@@ -1106,6 +1123,7 @@
         "nix-maid": "nix-maid",
         "nixpkgs": "nixpkgs_3",
         "nyx": "nyx",
+        "openzfs": "openzfs",
         "pre-commit-hooks": "pre-commit-hooks_2",
         "quickshell": "quickshell",
         "raise": "raise",
