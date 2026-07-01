@@ -1,15 +1,11 @@
 {
   # Shared binary caches and public keys for both flake.nix (nixConfig)
   # and modules/nix/settings.nix (nix.settings).
-  # Official NixOS cache + Russian mirrors for lower latency.
-  # Ordered by measured latency (3 probes avg):
-  #   cache.nixos.org          ~0.17s  (fastest)
-  #   ncproxy.vizqq.cc         ~0.25s  (RU proxy)
-  #   nix-community.cachix.org ~0.28s
-  #   install.determinate.systems ~0.66s + 502 (last)
+  # Local nginx cache proxy (127.0.0.1:3210) backed by cache.nixos.org,
+  # followed by the official cache and community mirrors.
   substituters = [
+    "http://127.0.0.1:3210"
     "https://cache.nixos.org/"
-    "https://ncproxy.vizqq.cc"
     "https://nix-community.cachix.org"
     "https://install.determinate.systems"
   ];

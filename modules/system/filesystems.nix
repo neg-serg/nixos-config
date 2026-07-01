@@ -152,4 +152,63 @@ in
     "d /boot 0700 root root -"
   ];
 
+  # ---- Local Nix binary cache proxy ----
+
+  # Dataset for nginx cache storage. Created once; safe to run repeatedly.
+  systemd.services.zfs-nix-cache-create = lib.mkIf isTelfir {
+    description = "Create tank/nix-cache dataset if absent";
+    wantedBy = [ "zfs.target" ];
+    after = [ "zfs.target" ];
+    before = [ "nginx.service" ];
+    serviceConfig.Type = "oneshot";
+    serviceConfig.RemainAfterExit = true;
+    path = [ pkgs.zfs ];
+    script = ''
+      if ! zfs list tank/nix-cache >/dev/null 2>&1; then
+        zfs create -o mountpoint=/tank/nix-cache \
+                   -o compression=lz4 \
+                   -o atime=off \
+                   -o quota=150G \
+                   tank/nix-cache
+      fi
+    '';
+  };
+
+  # nginx reverse proxy that caches cache.nixos.org responses locally.
+  # After first download, subsequent builds hit the local cache.
+  services.nginx = lib.mkIf isTelfir {
+    enable = true;
+    recommendedProxySettings = true;
+    recommendedOptimisation = false;
+    recommendedTlsSettings = false;
+
+    proxyCachePath."/tank/nix-cache/nginx" = {
+      enable = true;
+      keysZoneName = "nixcache";
+      keysZoneSize = "100m";
+      levels = "1:2";
+      useTempPath = false;
+      inactive = "30d";
+      maxSize = "100G";
+    };
+
+    virtualHosts."nix-cache" = {
+      listen = [
+        { addr = "127.0.0.1"; port = 3210; }
+      ];
+      serverName = "nix-cache";
+      locations."/" = {
+        proxyPass = "https://cache.nixos.org";
+        recommendedProxySettings = true;
+        extraConfig = ''
+          proxy_cache nixcache;
+          proxy_cache_key "$uri";
+          proxy_cache_valid 200 302 7d;
+          proxy_cache_valid 404 1m;
+          proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
+        '';
+      };
+    };
+  };
+
 }
