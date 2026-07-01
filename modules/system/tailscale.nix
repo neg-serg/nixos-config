@@ -12,7 +12,7 @@ let
   tailrayPkg = inputs.tailray.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   # Wrapper that waits for tailscale to be logged in before starting tailray
-  tailrayWrapped = pkgs.writeShellScript "tailray-wrapped" ''
+  tailrayWrapped = pkgs.writeShellScriptBin "tailray-wrapped" ''
     set -euo pipefail
     TAILRAY="${lib.getExe tailrayPkg}"
     for i in $(seq 12); do
