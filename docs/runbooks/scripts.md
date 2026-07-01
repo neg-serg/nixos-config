@@ -23,5 +23,8 @@
 
 - [../../scripts/dev/check-markdown-language.sh](../../scripts/dev/check-markdown-language.sh) —
   enforce Markdown language annotations locally.
+- [../../scripts/dev/diff-preview.sh](../../scripts/dev/diff-preview.sh) — build new system closure
+  and show `nvd diff` against current system; flags: `--new-only` to see only added packages.
+  Use via `just diff-preview [host]` or `just diff-preview-new [host]`.
 - [../../scripts/dev/gen-options.sh](../../scripts/dev/gen-options.sh) — build options/module
   documentation artifacts.
