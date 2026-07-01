@@ -84,7 +84,7 @@ in
       sleep 0.3
       # AQ_NO_ATOMIC=1 avoids atomic KMS issues on newer AMD GPUs (RDNA4 / RX 9070)
       export AQ_NO_ATOMIC=1
-      exec /run/current-system/sw/bin/hyprland > /tmp/hyprland-debug.log 2>&1
+      exec /run/current-system/sw/bin/start-hyprland > /tmp/hyprland-debug.log 2>&1
     '';
     systemd.tmpfiles.rules = lib.mkAfter [
       "d /home/greeter/.cache 0755 greeter greeter -"
