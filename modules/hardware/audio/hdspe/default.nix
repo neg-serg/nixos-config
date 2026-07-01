@@ -55,7 +55,7 @@ let
         continue
       fi
       sink_id="$("$jq_bin" -r '
-        .[] | select(
+        .[] | objects | select(
           .type=="PipeWire:Interface:Node"
           and (
             (.info.props["node.nick"] // "") | test("RME AIO Pro"; "i")
