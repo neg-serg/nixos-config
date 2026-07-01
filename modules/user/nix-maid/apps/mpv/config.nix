@@ -67,6 +67,10 @@ in
           osd-status-msg=''${time-pos} / ''${duration} (''${percent-pos}%)''${?estimated-vf-fps: FPS: ''${estimated-vf-fps}}
           ytdl-format=bestvideo+bestaudio/best
           screenshot-template=~/dw/scr-%F_%P
+          target-colorspace-hint=yes
+          target-peak=auto
+          icc-profile-auto=yes
+
           msg-level=auto_profiles=warn
 
           # Include profiles split into profiles.conf
