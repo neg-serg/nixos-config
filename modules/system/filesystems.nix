@@ -7,13 +7,24 @@ in
 {
   boot.supportedFilesystems = [ "exfat" "xfs" "udf" "zfs" ];
   boot.initrd.supportedFilesystems = [ "zfs" ];
-  boot.zfs.forceImportRoot = false;
+  boot.zfs.forceImportRoot = true;
 
   fileSystems = lib.mkIf isTelfir {
+    # XFS root fallback (comment ZFS root and uncomment this to switch back)
+    # "/" = {
+    #   device = "/dev/nvme0n1p2";
+    #   fsType = "xfs";
+    #   options = [ "rw" "relatime" "lazytime" ];
+    # };
     "/" = {
-      device = "/dev/nvme0n1p2";
-      fsType = "xfs";
-      options = [ "rw" "relatime" "lazytime" ];
+      device = "tank/nixos";
+      fsType = "zfs";
+      options = [ "rw" "noatime" ];
+    };
+    "/nix/store" = {
+      device = "tank/store";
+      fsType = "zfs";
+      options = [ "noatime" "nofail" ];
     };
     "/boot" = {
       device = "/dev/nvme0n1p5";
@@ -66,6 +77,13 @@ in
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
 
+    # XFS nix/store fallback (use with XFS root above)
+    # "/nix/store" = {
+    #   device = "/nix/store";
+    #   fsType = "none";
+    #   options = [ "bind" ];
+    # };
+
     # ---- Bulk storage LVs ----
 
     # One 7TiB LV (nvme2n1)
@@ -82,18 +100,6 @@ in
       fsType = "zfs";
       options = [ "nofail" "x-systemd.automount" ];
     };
-
-    # ZFS root — prepared for future migration
-    # "/" = {
-    #   device = "tank/nixos";
-    #   fsType = "zfs";
-    #   options = [ "rw" "noatime" ];
-    # };
-    # "/nix/store" = {
-    #   device = "tank/store";
-    #   fsType = "zfs";
-    #   options = [ "noatime" "nofail" ];
-    # };
 
     # Argon 3.6TiB LV (nvme1n1 + nvme3n1)
     "/mnt/zero" = {
