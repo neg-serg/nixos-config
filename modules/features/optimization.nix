@@ -21,9 +21,11 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # World rebuild disabled to prevent massive compilation times.
-    # Zen 5 optimizations are applied via kernel selection (znver4) and
-    # specific package overrides (using znver4 for cache compatibility)
+    nixpkgs.hostPlatform = {
+      system = "x86_64-linux";
+      gcc.arch = "znver4";
+      gcc.tune = "znver4";
+    };
 
     # Enable sched_ext (SCX) scheduler
     services.scx = {
