@@ -67,6 +67,7 @@ let
       ' <<<"$dump" | head -n1 | tr -d '\n')"
       if [ -n "$sink_id" ]; then
         "$wpctl_bin" set-default "$sink_id" || true
+        ${pwRouteScript}/bin/pw-route aes || true
         exit 0
       fi
       sleep 0.5
@@ -85,14 +86,14 @@ let
       card_name: "RME AIO Pro"
       profile: "pro-audio"
       routes:
-        an:
-          left: 0
-          right: 1
-          label: "Speakers"
         aes:
           left: 2
           right: 3
           label: "AES"
+        an:
+          left: 0
+          right: 1
+          label: "Speakers"
         spdif:
           left: 4
           right: 5
