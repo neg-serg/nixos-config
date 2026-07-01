@@ -13,21 +13,12 @@ in
     "udf"
   ] ++ lib.optional hasZfs "zfs";
 
-  # ZFS in initrd for root-on-ZFS boot
-  boot.initrd.supportedFilesystems = lib.mkIf hasZfs [ "zfs" ];
-  boot.initrd.kernelModules = lib.mkIf hasZfs [ "zfs" ];
-
   fileSystems = lib.mkIf isTelfir {
-    "/" = lib.mkIf hasZfs {
-      device = "tank/nixos";
-      fsType = "zfs";
+    "/" = {
+      device = "/dev/nvme0n1p2";
+      fsType = "xfs";
+      options = [ "rw" "relatime" "lazytime" ];
     };
-    # Old XFS root (fallback, kept for reference)
-    # "/" = {
-    #   device = "/dev/nvme0n1p2";
-    #   fsType = "xfs";
-    #   options = [ "rw" "relatime" "lazytime" ];
-    # };
     "/boot" = {
       device = "/dev/nvme0n1p5";
       fsType = "vfat";
