@@ -8,6 +8,7 @@
     ./proxy.nix
     ./lan-proxy.nix
     ./transparent-proxy.nix
+    ./transparent-tun.nix
     ./ssh.nix
     ./wifi.nix
     ./vpn
