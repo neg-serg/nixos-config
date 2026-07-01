@@ -13,14 +13,14 @@ let
 
   mkFiles =
     destDir: sourceDir: files:
-    builtins.listToAttrs (
-      map (f: {
-        name = "${destDir}/${f}";
-        value = {
-          source = n.linkImpure (sourceDir + "/${f}");
-        };
-      }) files
-    );
+    files
+    |> map (f: {
+      name = "${destDir}/${f}";
+      value = {
+        source = n.linkImpure (sourceDir + "/${f}");
+      };
+    })
+    |> builtins.listToAttrs;
 in
 {
   generateFileLinks =

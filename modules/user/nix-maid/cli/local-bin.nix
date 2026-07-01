@@ -27,7 +27,7 @@ in
         # We filter for regular files.
         binFiles =
           if builtins.pathExists binDir then
-            lib.filterAttrs (_: v: v == "regular") (builtins.readDir binDir)
+            builtins.readDir binDir |> lib.filterAttrs (_: v: v == "regular")
           else
             { };
 
@@ -46,14 +46,16 @@ in
           };
         };
 
-        autoEntries = builtins.listToAttrs (
-          map mkAuto (lib.filter (n: !(lib.elem n autoSkip)) (builtins.attrNames binFiles))
-        );
+        autoEntries =
+          builtins.attrNames binFiles
+          |> lib.filter (n: !(lib.elem n autoSkip))
+          |> map mkAuto
+          |> builtins.listToAttrs;
 
         # 2. Scripts from packages/local-bin/scripts
         scriptFiles =
           if builtins.pathExists scriptsDir then
-            lib.filterAttrs (_: v: v == "regular") (builtins.readDir scriptsDir)
+            builtins.readDir scriptsDir |> lib.filterAttrs (_: v: v == "regular")
           else
             { };
 
@@ -70,14 +72,16 @@ in
           };
         };
 
-        scriptEntries = builtins.listToAttrs (
-          map mkScriptAuto (lib.filter (n: !(lib.elem n scriptSkip)) (builtins.attrNames scriptFiles))
-        );
+        scriptEntries =
+          builtins.attrNames scriptFiles
+          |> lib.filter (n: !(lib.elem n scriptSkip))
+          |> map mkScriptAuto
+          |> builtins.listToAttrs;
 
         # 3. Desktop files from packages/local-bin/share/applications
         appsFiles =
           if builtins.pathExists appsDir then
-            lib.filterAttrs (_: v: v == "regular") (builtins.readDir appsDir)
+            builtins.readDir appsDir |> lib.filterAttrs (_: v: v == "regular")
           else
             { };
 
@@ -88,7 +92,10 @@ in
           };
         };
 
-        appsEntries = builtins.listToAttrs (map mkAppAuto (builtins.attrNames appsFiles));
+        appsEntries =
+          builtins.attrNames appsFiles
+          |> map mkAppAuto
+          |> builtins.listToAttrs;
 
         # 4. Special cases (Substitutions)
 
