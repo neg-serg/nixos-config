@@ -47,7 +47,7 @@ Scope {
 	function fadeIn() {
 		if (!root.fadedOut) return;
 		Hyprland.dispatch("dpms on");
-		wlRestart.start();
+		wlRestart.running = true;
 		root.fadedOut = false;
 		fadeAnim.to = 0;
 		fadeAnim.restart();
