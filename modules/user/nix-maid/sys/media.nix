@@ -191,15 +191,17 @@ lib.mkMerge [
       format = "binary";
       owner = "neg";
     };
-    systemd.user.services.mpdas = {
-      description = "mpdas last.fm scrobbler";
-      after = [ "sound.target" ];
-      wantedBy = [ "default.target" ];
-      serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}"; # Start Last.fm scrobbler
-        Restart = "on-failure";
-      };
-    };
+    # mpdas disabled because Last.fm password auth (error code 11) no longer works.
+    # Use rescrobbled instead — run `rescrobbled auth` to generate a session_key.
+    # systemd.user.services.mpdas = {
+    #   description = "mpdas last.fm scrobbler";
+    #   after = [ "sound.target" ];
+    #   wantedBy = [ "default.target" ];
+    #   serviceConfig = {
+    #     ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}"; # Start Last.fm scrobbler
+    #     Restart = "on-failure";
+    #   };
+    # };
   })
   (lib.mkIf (config.features.media.aiUpscale.enable or false) (
     n.mkHomeFiles {
