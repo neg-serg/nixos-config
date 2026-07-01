@@ -82,6 +82,18 @@ in
     cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DSKIP_TEST_SUITES=psa_crypto" ];
   });
 
+  # Fix /sbin/ldconfig symlink in FHS envs (Steam pressure-vessel nested container fix).
+  # Symlinking /sbin/ldconfig -> /bin/ldconfig creates a resolution loop when
+  # pressure-vessel tries to set up a nested bwrap container for Proton.
+  # Copy the binary instead, as SteamRT3 expects.
+  buildFHSEnv = args: finalPrev.buildFHSEnv (args // {
+    extraBuildCommands = (args.extraBuildCommands or "") + ''
+      if [ -L $out/usr/sbin/ldconfig ] && [ -f $out/usr/bin/ldconfig ]; then
+        cp -f $out/usr/bin/ldconfig $out/usr/sbin/ldconfig
+      fi
+    '';
+  });
+
   # XFS breaks nix-util readLinkAt test on kernel 7.0+
   # Build failures on nixpkgs-unstable
   valkey = finalPrev.valkey.overrideAttrs (old: {
