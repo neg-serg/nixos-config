@@ -30,12 +30,6 @@ in
       });
     };
 
-  fsread-nvim = final.vimUtils.buildVimPlugin {
-    pname = "fsread-nvim";
-    version = "flake";
-    src = inputs.fsread-nvim;
-  };
-
   # Python with LTO optimizations
   python3-lto = finalPrev.python3.override {
     packageOverrides = _pythonSelf: _pythonSuper: {

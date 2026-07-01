@@ -1,106 +1,46 @@
-local luasnip = require "luasnip"
 local ls = require "luasnip"
 local s = ls.snippet
 local sn = ls.snippet_node
-local isn = ls.indent_snippet_node
 local t = ls.text_node
 local i = ls.insert_node
 local f = ls.function_node
 local c = ls.choice_node
 local d = ls.dynamic_node
 local r = ls.restore_node
-local events = require "luasnip.util.events"
-local ai = require "luasnip.nodes.absolute_indexer"
 local extras = require "luasnip.extras"
 local l = extras.lambda
 local rep = extras.rep
-local p = extras.partial
-local m = extras.match
 local n = extras.nonempty
-local dl = extras.dynamic_lambda
-local fmt = require("luasnip.extras.fmt").fmt
-local fmta = require("luasnip.extras.fmt").fmta
-local conds = require "luasnip.extras.expand_conditions"
-local postfix = require("luasnip.extras.postfix").postfix
-local types = require "luasnip.util.types"
 local parse = require("luasnip.util.parser").parse_snippet
-local ms = ls.multi_snippet
-local k = require("luasnip.nodes.key_indexer").new_key
 --- Provides snippets for C++.
 
 --- Gets name of the surrounding C++ class.
 -- @param linenr Line number to use.
 -- @return Name of the surrounding class or nil if none was found.
 local function get_surrounding_class(linenr)
-  local classes = list_classes(linenr)
-  local min_range
-  local min_name
+  local max_lines = vim.fn.line('$')
+  local current_line = linenr
 
-  for _, class_info in pairs(classes) do
-    local lbegin, lend, name = unpack(class_info)
-
-    if lbegin <= linenr and lend >= linenr and (not min_range or lend - lbegin < min_range) then
-      min_range = lend - lbegin
-      min_name = name
+  while current_line > 0 do
+    local line = vim.fn.getline(current_line)
+    local class_start = line:match('^%s*class%s+(%w+)')
+    if class_start then
+      return class_start
     end
+    current_line = current_line - 1
   end
-
-  return min_name
-end
-
-local function gen_doc(_, _, _)
-  require("neogen").generate()
-  return "some"
-end
-
--- FIXME: Initialization of once happens only when snippets load.
--- This will lead to non generating of docs on second run.
-local once = true
-local function count(_, _, old_state)
-  if not old_state then
-    print "No old state!"
-  else
-    if once then
-      once = false
-      require("neogen").setup {
-        enabled = true, --if you want to disable Neogen
-        input_after_comment = false, -- (default: true) automatic jump (with insert mode) on inserted annotation
-      }
-      gen_doc()
-    end
-  end
-
-  old_state = old_state or {
-    updates = 0,
-  }
-
-  old_state.updates = old_state.updates + 1
-
-  local snip = sn(nil, {
-    t(tostring ""),
-  })
-
-  snip.old_state = old_state
-
-  return snip
+  return nil
 end
 
 ls.add_snippets("cpp", {
   -- Toggle TODO
   s("cody", {
     t { "// Cody DEMO:", "" },
-
     i(0),
     c(1, {
       t 'std::cout << "<AI CODEGEN DEMO>" << std::endl;',
       t "",
     }),
-  }),
-
-  s("stff", {
-    t "auto ",
-    i(1, "change to update"),
-    d(2, count, { 1 }),
   }),
 
   s("dfn", {
@@ -117,7 +57,6 @@ ls.add_snippets("cpp", {
     }),
     t { "", "{", "\t" },
     i(4),
-    d(5, count, { 4 }),
     t { "", "}" },
   }),
 

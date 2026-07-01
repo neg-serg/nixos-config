@@ -58,14 +58,14 @@ return {'mfussenegger/nvim-dap', -- neovim debugger protocol support
         -- Rust adapters: prefer codelldb, fallback to lldb-dap
         if vim.fn.executable('codelldb') == 1 then
             dap.adapters.codelldb = function(on_adapter)
-                local tcp = vim.loop.new_tcp()
+                local tcp = vim.uv.new_tcp()
                 tcp:bind('127.0.0.1', 0)
                 local host, port = tcp:getsockname()
                 tcp:shutdown()
                 tcp:close()
                 local handle
                 local pid_or_err
-                handle, pid_or_err = vim.loop.spawn('codelldb', {
+                handle, pid_or_err = vim.uv.spawn('codelldb', {
                     args = { '--port', tostring(port) },
                     detached = true,
                 }, function(code)
