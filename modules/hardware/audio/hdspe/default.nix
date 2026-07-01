@@ -75,7 +75,7 @@ let
   '';
 
   # pw-route: switch RME AIO Pro output between an/aes/spdif/phones
-  pwRouteScript = pkgs.writeShellScript "pw-route" ''
+  pwRouteScript = pkgs.writeShellScriptBin "pw-route" ''
     #!/usr/bin/env zsh
     setopt ERR_EXIT NOUNSET PIPE_FAIL
     IFS=$'\n\t'
