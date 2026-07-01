@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  inputs,
   ...
 }:
 {
@@ -62,9 +63,16 @@
 
   # Host-specific kernel parameters and boot tuning
   boot = {
-    # Use LTS kernel (6.18.x) for ZFS compatibility — the ZFS kernel module package
-    # is marked broken on linuxPackages_latest (7.1.2) as of nixos-26.05.
-    kernelPackages = lib.mkForce pkgs.linuxPackages;
+    # Use latest kernel with ZFS from OpenZFS master (overlay provides 7.x compat)
+    kernelPackages = lib.mkForce (
+      pkgs.linuxPackages_latest.extend (self: super: {
+        zfs_2_4 = super.zfs_2_4.overrideAttrs (old: {
+          version = pkgs.zfs.version;
+          src = inputs.openzfs;
+          meta = (old.meta or { }) // { broken = false; };
+        });
+      })
+    );
 
     kernelParams = [
       "acpi_osi=!"                             # Fix ACPI compatibility on ASUS boards

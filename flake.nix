@@ -57,6 +57,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     wrapper-manager.url = "github:viperML/wrapper-manager";
+    openzfs = {
+      url = "github:openzfs/zfs/6721ab9817c48a56dbbff9f2d24b7a45d2728f7d";
+      flake = false;
+    };
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
