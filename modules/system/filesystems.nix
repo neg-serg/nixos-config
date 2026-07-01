@@ -96,7 +96,7 @@ in
     { device = "/mnt/zero/swapfile"; priority = -1; size = 102400; }
   ];
 
-  # boot.zfs.forceImportRoot = lib.mkIf hasZfs false;
+  boot.zfs.forceImportRoot = false;
 
   services.fstrim = lib.mkIf isTelfir { enable = true; };
   # ZFS pool services: enable after creating the pool
