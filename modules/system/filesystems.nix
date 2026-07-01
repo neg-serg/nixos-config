@@ -7,6 +7,7 @@ in
 {
   boot.supportedFilesystems = [ "exfat" "xfs" "udf" "zfs" ];
   boot.initrd.supportedFilesystems = [ "zfs" ];
+  boot.initrd.kernelModules = [ "zfs" ];
   boot.zfs.forceImportRoot = true;
 
   fileSystems = lib.mkIf isTelfir {
