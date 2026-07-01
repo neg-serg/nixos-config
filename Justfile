@@ -59,6 +59,14 @@ diff:
     @files=$(find /nix/var/nix/profiles -maxdepth 1 -name "system-*-link" | sort -V | tail -n 2); \
     nix run nixpkgs#nvd -- diff $files
 
+# Build new closure and preview diff against current system
+diff-preview host="telfir":
+    bash scripts/dev/diff-preview.sh {{host}}
+
+# Same as diff-preview, but only show newly added packages
+diff-preview-new host="telfir":
+    bash scripts/dev/diff-preview.sh {{host}} --new-only
+
 # --- Repo-wide workflows ---------------------------------------------------------
 fmt:
     repo_root="$(git rev-parse --show-toplevel)"; \
