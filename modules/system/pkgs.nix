@@ -16,5 +16,8 @@
 
     # -- Scheduling --
     pkgs.schedtool # Query and set CPU scheduling policies
+
+    # -- Backup --
+    pkgs.borgbackup # Deduplicating backup tool (Borg)
   ];
 }
