@@ -58,10 +58,10 @@
         set -euo pipefail
         # Reload Hyprland config (ignore failure to avoid spurious errors)
         hyprctl reload > /dev/null 2>&1 || true
-        # Give Hypr a brief moment to settle before (re)starting quickshell
-        sleep 0.15
-        # Start quickshell only if not already active; 'start' is idempotent.
-        systemctl --user start quickshell.service > /dev/null 2>&1 || true
+        # Give Hypr a brief moment to settle before restarting quickshell
+        sleep 0.3
+        # Restart quickshell to reconnect Wayland protocols after hypr reload
+        systemctl --user restart quickshell.service > /dev/null 2>&1 || true
       '')
       # hypr-start script (fixes race conditions)
       (pkgs.writeShellScriptBin "hypr-start" ''
