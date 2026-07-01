@@ -26,6 +26,7 @@ in
       proxy.enable = mkBool "enable Xray SOCKS5 proxy (127.0.0.1:10808)" false;
       lan-proxy.enable = mkBool "enable LAN SOCKS5 proxy without auth (0.0.0.0:10809)" false;
       transparent-proxy.enable = mkBool "enable transparent proxy (nftables + redsocks -> Xray SOCKS5)" false;
+      transparent-tun.enable = mkBool "enable TUN-based routing for nix traffic (nftables fwmark → custom routing table)" false;
       vpn-scripts.enable = mkBool "enable VPN helper scripts collection (zen-vpn, cdn-proxy, split-router, etc.)" false;
     };
 
