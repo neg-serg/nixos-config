@@ -9,7 +9,7 @@ typeset -A labels
 typeset -a route_order
 
 init_config() {
-  for key_pair_label in "an:0 1:Speakers" "aes:2 3:AES" "spdif:4 5:SPDIF" "phones:6 7:Headphones"; do
+  for key_pair_label in "aes:2 3:AES" "an:0 1:Speakers" "spdif:4 5:SPDIF" "phones:6 7:Headphones"; do
     local key="${key_pair_label%%:*}"
     local rest="${key_pair_label#*:}"
     local pair="${rest%:*}"
