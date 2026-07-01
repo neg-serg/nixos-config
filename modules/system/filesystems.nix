@@ -80,12 +80,9 @@ in
     };
 
     # ---- ZFS ----
-
-    "/tank" = lib.mkIf hasZfs {
-      device = "tank";
-      fsType = "zfs";
-      options = [ "nofail" "x-systemd.automount" ];
-    };
+    # Uncomment /tank mount and enable scrub/trim below after creating the pool:
+    #   zpool create tank <devices>
+    #   zfs create tank/...
 
     # Argon 3.6TiB LV (nvme1n1 + nvme3n1)
     "/mnt/zero" = {
@@ -99,11 +96,12 @@ in
     { device = "/mnt/zero/swapfile"; priority = -1; size = 102400; }
   ];
 
-  boot.zfs.forceImportRoot = lib.mkIf hasZfs false;
+  # boot.zfs.forceImportRoot = lib.mkIf hasZfs false;
 
   services.fstrim = lib.mkIf isTelfir { enable = true; };
-  services.zfs.autoScrub.enable = lib.mkIf hasZfs true;
-  services.zfs.trim.enable = lib.mkIf hasZfs true;
+  # ZFS pool services: enable after creating the pool
+  # services.zfs.autoScrub.enable = lib.mkIf hasZfs true;
+  # services.zfs.trim.enable = lib.mkIf hasZfs true;
 
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"
