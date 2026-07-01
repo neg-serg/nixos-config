@@ -101,10 +101,9 @@ in
 
   boot.zfs.forceImportRoot = false;
 
-  # Reserve ARC metadata to prevent grep/find from evicting block pointers
-  boot.extraModprobeConfig = lib.mkIf hasZfs ''
-    options zfs zfs_arc_meta_min=4294967296
-  '';
+  # No zfs_arc_meta_min in ZFS 2.4 — use dataset primarycache=metadata instead
+  # to pin metadata in ARC. Hot data (libc, bash) won't be cached but for
+  # /nix/store build workloads (read each dep once), this is optimal.
 
   # Optimal dataset properties for /nix/store workload:
   #   recordsize=32K — fewer block pointers per binary, faster grep/find
@@ -122,7 +121,7 @@ in
         zfs set recordsize=32K tank/store
         zfs set atime=off tank/store
         zfs set xattr=sa tank/store
-        zfs set primarycache=all tank/store
+        zfs set primarycache=metadata tank/store
         zfs set redundant_metadata=most tank/store
         zfs set dnodesize=auto tank/store
         zfs set logbias=latency tank/store
@@ -134,13 +133,13 @@ in
     '';
   };
 
-  # Enable automatic ZFS snapshots for safe rollback
-  services.zfs.autoSnapshot = lib.mkIf hasZfs {
-    enable = true;
-    frequent = 4;  # every 15min, keep 4
-    daily = 7;
-    weekly = 4;
-  };
+  # Enable automatic ZFS snapshots for safe rollback (opt-in)
+  # services.zfs.autoSnapshot = lib.mkIf hasZfs {
+  #   enable = true;
+  #   frequent = 4;
+  #   daily = 7;
+  #   weekly = 4;
+  # };
 
   # Future: /nix/store on ZFS (uncomment after migration)
   # 1. sudo zfs create -o mountpoint=legacy tank/store
