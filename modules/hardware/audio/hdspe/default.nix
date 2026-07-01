@@ -44,33 +44,17 @@ let
   # Set HDSPe pro-audio output as default PipeWire sink
   hdspeDefaultScript = pkgs.writeShellScript "wpctl-set-hdspe-default" ''
     set -euo pipefail
-    jq_bin=${pkgs.jq}/bin/jq
-    pw_dump_bin=${pkgs.pipewire}/bin/pw-dump
     wpctl_bin=${pkgs.pipewire}/bin/wpctl
-    tries=60
+    tries=30
     for i in $(seq 1 "$tries"); do
-      dump="$("$pw_dump_bin" || true)"
-      if [ -z "$dump" ]; then
-        sleep 0.5
-        continue
-      fi
-      sink_id="$("$jq_bin" -r '
-        .[] | objects | select(
-          .type=="PipeWire:Interface:Node"
-          and (
-            (.info.props["node.nick"] // "") | test("RME AIO Pro"; "i")
-            or (.info.props["node.name"] // "") | test("hdspe|HDSPe|rme.*aio|rme.*hdsp"; "i")
-            or (.info.props["alsa.card_name"] // "") | test("HDSPe|AIO|RME"; "i")
-          )
-          and (.info.props["media.class"] == "Audio/Sink")
-        ) | .id
-      ' <<<"$dump" | head -n1 | tr -d '\n')"
+      status="$("$wpctl_bin" status 2>/dev/null || true)"
+      sink_id="$(echo "$status" | ${pkgs.gnused}/bin/sed -n '/RME AIO Pro/{s/^[│ ]*\([0-9]\+\).*/\1/p;q}')"
       if [ -n "$sink_id" ]; then
         "$wpctl_bin" set-default "$sink_id" || true
         ${pwRouteScript}/bin/pw-route aes || true
         exit 0
       fi
-      sleep 0.5
+      sleep 1
     done
     exit 0
   '';
