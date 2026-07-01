@@ -101,13 +101,8 @@ in
     { device = "/mnt/zero/swapfile"; priority = -1; size = 102400; }
   ];
 
-  # No zfs_arc_meta_min in ZFS 2.4 — use dataset primarycache=metadata instead
-  # to pin metadata in ARC. Hot data (libc, bash) won't be cached but for
-  # /nix/store build workloads (read each dep once), this is optimal.
-
-  # Optimal dataset properties for /nix/store workload:
-  #   recordsize=32K — fewer block pointers per binary, faster grep/find
-  #   primarycache=all — cache both metadata and hot data in ARC
+  # Cache both metadata and data for /nix/store — ARC has room (60 GB RAM),
+  # and repeated builds read the same store paths.
   systemd.services.zfs-store-props = {
     description = "Set optimal ZFS properties on tank/store";
     wantedBy = [ "zfs.target" ];
@@ -121,7 +116,7 @@ in
         zfs set recordsize=128K tank/store
         zfs set atime=off tank/store
         zfs set xattr=sa tank/store
-        zfs set primarycache=metadata tank/store
+        zfs set primarycache=all tank/store
         zfs set redundant_metadata=most tank/store
         zfs set dnodesize=auto tank/store
         zfs set logbias=latency tank/store
