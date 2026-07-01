@@ -62,7 +62,7 @@ let
       confdir="$HOME/.config/quickshell/Theme"
       mkdir -p "$confdir"
       # The build script presumably writes to --out
-      ${pkgs.nodejs_24}/bin/node "$HOME"/.config/quickshell/Tools/build-theme.mjs --out "$confdir/.theme.json" --quiet # Event-driven I/O framework for the V8 JavaScript engine
+      ${pkgs.nodejs_24}/bin/node "$HOME"/.config/quickshell/Tools/build-theme.mjs --dir "$confdir" --out "$confdir/.theme.json" --quiet # Event-driven I/O framework for the V8 JavaScript engine
     '';
   };
 in
@@ -89,30 +89,13 @@ lib.mkIf quickshellEnabled (
         };
       };
 
-      # Theme watch service
-      systemd.user.services.quickshell-theme-watch = {
-        enable = true;
-        description = "Watch Quickshell theme tokens";
-        partOf = [ "graphical-session.target" ];
-        after = [ "graphical-session-pre.target" ];
-        wantedBy = [ "graphical-session.target" ];
-        serviceConfig = {
-          Type = "simple";
-          ExecStartPre = lib.getExe buildTheme;
-          ExecStart = ''
-            ${pkgs.watchexec}/bin/watchexec \
-              --restart \
-              --watch %h/.config/quickshell/Theme \
-              --watch %h/.config/quickshell/Theme/manifest.json \
-              --exts json,jsonc \
-              --ignore %h/.config/quickshell/Theme/.theme.json \
-              --debounce 250ms \
-              -- ${lib.getExe buildTheme}
-          '';
-          Restart = "on-failure";
-          RestartSec = 2;
-        };
-      };
+      # Theme watch service — disabled because the Theme directory is immutable
+      # (linked from the nix store via nix-maid impurity). The theme is pre-built
+      # during nix build and .theme.json is read from the store.
+      # systemd.user.services.quickshell-theme-watch = {
+      #   enable = true;
+      #   ...
+      # };
     }
 
     (n.mkHomeFiles {
