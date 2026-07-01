@@ -133,7 +133,6 @@
     ./system/irqbalance.nix
     ./system/kernel/default.nix
     ./system/kernel/params.nix
-    ./system/kernel/patches-amd.nix
     ./system/kernel/sysctl-mem-extras.nix
     ./system/kernel/sysctl-net-extras.nix
     ./system/kernel/sysctl-writeback.nix
