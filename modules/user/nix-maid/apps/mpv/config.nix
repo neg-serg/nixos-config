@@ -23,9 +23,9 @@ in
           profile=gpu-hq
           vd-lavc-dr=yes
           vd-lavc-threads=12
-          vo=gpu-next
+          vo=gpu
           gpu-context=auto
-          gpu-api=vulkan
+          gpu-api=opengl
 
           deband-grain=48
           deband-iterations=4
