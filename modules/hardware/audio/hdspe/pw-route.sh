@@ -168,7 +168,7 @@ main() {
   init_config
   local -a valid_cmds=( toggle current status list -h --help help )
   valid_cmds+=( "${route_order[@]}" )
-  if [[ -z "${valid_cmds[(r)$command]}" ]]; then
+  if [[ -z "$command" ]] || [[ -z "${valid_cmds[(r)$command]}" ]]; then
     usage >&2
     exit 1
   fi
