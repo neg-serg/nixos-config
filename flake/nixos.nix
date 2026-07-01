@@ -75,8 +75,11 @@ let
           mkProfilesIni =
             profiles:
             let
-              enabledProfiles = lib.filterAttrs (_: v: v.enable) profiles;
-              sortedProfiles = lib.sort (a: b: a.id < b.id) (lib.attrValues enabledProfiles);
+              sortedProfiles =
+                profiles
+                |> lib.filterAttrs (_: v: v.enable)
+                |> lib.attrValues
+                |> lib.sort (a: b: a.id < b.id);
               mkSection = index: profile: ''
                 [Profile${toString index}]
                 Name=${profile.name}

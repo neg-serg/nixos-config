@@ -41,13 +41,14 @@ in
 
   # Fix keyutils patch download failing (upstream lore.kernel.org 403)
   keyutils = finalPrev.keyutils.overrideAttrs (old: {
-    patches = builtins.map (
-      p:
-      if builtins.isAttrs p && (p.name or "") == "raw" then
-        ./../files/patches/keyutils-fix-format-specifier.patch
-      else
-        p
-    ) (old.patches or [ ]);
+    patches = (old.patches or [ ])
+      |> builtins.map (
+        p:
+        if builtins.isAttrs p && (p.name or "") == "raw" then
+          ./../files/patches/keyutils-fix-format-specifier.patch
+        else
+          p
+      );
   });
 
   # Disable flaky OpenLDAP tests (fails on syncreplication)
