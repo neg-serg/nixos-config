@@ -128,5 +128,18 @@ EOF
       echo "[rebuild-proxied] running nixos-rebuild..."
       ${config.system.build.nixos-rebuild}/bin/nixos-rebuild "$@"
     '')
+    (pkgs.writeShellScriptBin "nh-proxied" ''
+      set -euo pipefail
+      cleanup() {
+        echo "[nh-proxied] stopping transparent proxy..."
+        ${pkgs.systemd}/bin/systemctl stop transparent-proxy.target 2>/dev/null || true
+        echo "[nh-proxied] done."
+      }
+      trap cleanup EXIT
+      echo "[nh-proxied] starting transparent proxy..."
+      ${pkgs.systemd}/bin/systemctl start transparent-proxy.target
+      echo "[nh-proxied] running nh..."
+      ${pkgs.nh}/bin/nh "$@"
+    '')
   ];
 }
