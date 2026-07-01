@@ -12,61 +12,77 @@ let
   cfg = config.features.cli.yazi;
   tomlFormat = pkgs.formats.toml { };
 
-  # Updated wrapper to export env vars for Lua plugin
+  # Wrapper for xdg-desktop-portal-termfilechooser (hunkyburrito fork, v1.4.0)
+  # Arguments passed by the portal:
+  #   $1 = multiple  (0/1)
+  #   $2 = directory (0/1)
+  #   $3 = save      (0/1)
+  #   $4 = path      (suggested dir or save path)
+  #   $5 = out       (portal result file)
+  #   $6 = debug     (0/1)
   yazi-wrapper = pkgs.writeShellScript "yazi-wrapper" ''
-    echo "$(date) Wrapper started. Args: $@" >> /tmp/yazi_save_debug.log
+    multiple="$1"
+    directory="$2"
+    save="$3"
+    path="$4"
+    out="$5"
 
-    OUTPUT_PATH=""
-    METHOD="open"
-    SUGGESTED_FILENAME=""
-    CWD_FILE="/tmp/yazi_cwd_$$"
-
-    for arg in "$@"; do
-      case "$arg" in
-        --chooser-file) ;;
-        *)
-          if [ -z "$OUTPUT_PATH" ] && [[ "$arg" == /* ]]; then
-             OUTPUT_PATH="$arg"
-          elif [ -n "$OUTPUT_PATH" ] && [[ "$arg" != -* ]] && [[ "$arg" != /* ]]; then
-             SUGGESTED_FILENAME="$arg"
-             METHOD="save"
-          fi
-          ;;
-      esac
-    done
-
-    if [ -z "$OUTPUT_PATH" ]; then
-       OUTPUT_PATH="/tmp/yazi_chooser_out"
+    TITLE="Select File:"
+    if [ "$save" = "1" ]; then
+      TITLE="Save File:"
+    elif [ "$directory" = "1" ]; then
+      TITLE="Select Directory:"
     fi
 
-    if [ -n "$SUGGESTED_FILENAME" ]; then
-       METHOD="save"
+    tmpfile=""
+    if [ "$save" = "1" ]; then
+      tmpfile=$(/usr/bin/mktemp)
+      /usr/bin/printf '%s' 'xdg-desktop-portal-termfilechooser saving files tutorial
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!                 === WARNING! ===                 !!!
+!!! The contents of *whatever* file you open last in !!!
+!!! yazi will be *overwritten*!                    !!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Instructions:
+1) Move this file wherever you want.
+2) Rename the file if needed.
+3) Confirm your selection by opening the file, for
+   example by pressing <Enter>.
+
+Notes:
+1) This file is provided for your convenience. You can
+   only choose this placeholder file otherwise the save
+   operation aborted.
+2) If you quit yazi without opening a file, this file
+   will be removed and the save operation aborted.
+' >"$path"
+      set -- --chooser-file="$tmpfile" "$path"
+    elif [ "$directory" = "1" ]; then
+      set -- --cwd-file="$out" "$path"
+    else
+      set -- --chooser-file="$out" "$path"
     fi
 
-    echo "$(date) Method: $METHOD" >> /tmp/yazi_save_debug.log
-
-    ${pkgs.kitty}/bin/kitty --detach=no sh -c "
-      export YAZI_FILE_CHOOSER_PATH='$OUTPUT_PATH'
-      export YAZI_SUGGESTED_FILENAME='$SUGGESTED_FILENAME'
-      
-      echo \"\$(date) Kitty shell started. Method: $METHOD\" >> /tmp/yazi_save_debug.log
-      
-      if [ \"$METHOD\" = \"save\" ]; then
-         # Save Mode: Use cwd-file tracking
-         # New Lua plugin handles logic via 'gs'/'gz' keybinds
-         echo \"\$(date) Launching Yazi in save mode...\" >> /tmp/yazi_save_debug.log
-         ${pkgs.yazi}/bin/yazi --cwd-file='$CWD_FILE'
-         
-         # Fallback if user quits without saving via plugin (check output file)
-         if [ -s '$OUTPUT_PATH' ]; then
-            exit 0
-         fi
-      else
-         # Open Mode
-         ${pkgs.yazi}/bin/yazi --chooser-file='$OUTPUT_PATH'
+    cleanup() {
+      if [ -f "$tmpfile" ]; then
+        /usr/bin/rm -f "$tmpfile" || :
       fi
-      rm -f '$CWD_FILE'
-    "
+      if [ "$save" = "1" ] && [ ! -s "$out" ]; then
+        /usr/bin/rm -f "$path" || :
+      fi
+    }
+    trap cleanup EXIT HUP INT QUIT ABRT TERM
+
+    ${pkgs.kitty}/bin/kitty --title "$TITLE" -- ${pkgs.yazi}/bin/yazi "$@"
+
+    if [ "$save" = "1" ] && [ -s "$tmpfile" ]; then
+      selected_file=$(/usr/bin/head -n 1 "$tmpfile")
+      if [ -f "$selected_file" ] && /usr/bin/grep -qi "^xdg-desktop-portal-termfilechooser saving files tutorial" "$selected_file" 2>/dev/null; then
+        /usr/bin/printf '%s' "$selected_file" >"$out"
+      fi
+    fi
   '';
 
   termfilechooserConfig = ''
