@@ -52,15 +52,13 @@ in
 
       # Systemd user services
       systemd.user.services = {
-        # SwayOSD LibInput Backend
-        swayosd-libinput-backend = {
-          description = "SwayOSD LibInput Backend";
+        # SwayOSD server (shows volume/brightness OSD on client commands)
+        swayosd-server = {
+          description = "SwayOSD Server";
           after = [ "graphical-session.target" ];
           wantedBy = [ "graphical-session.target" ];
           serviceConfig = {
-            Type = "dbus";
-            BusName = "org.erikreider.swayosd";
-            ExecStart = "${lib.getExe' pkgs.swayosd "swayosd-libinput-backend"}"; # GTK based on screen display for keyboard shortcuts
+            ExecStart = "${lib.getExe' pkgs.swayosd "swayosd-server"}"; # GTK based on screen display
             Restart = "on-failure";
           };
         };
@@ -90,13 +88,6 @@ in
       # wlogout config
       ".config/wlogout".source = ../../../../files/config/wlogout;
 
-      # Session D-Bus service for swayosd-libinput-backend
-      # (package only provides system bus files)
-      ".local/share/dbus-1/services/org.erikreider.swayosd.service".text = ''
-        [D-BUS Service]
-        Name=org.erikreider.swayosd
-        Exec=${lib.getExe' pkgs.swayosd "swayosd-libinput-backend"}
-      '';
     })
   ];
 }
