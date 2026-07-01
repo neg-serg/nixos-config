@@ -49,8 +49,8 @@ in
       connect-timeout = 15;
       stalled-download-timeout = 10;
       http-connections = 8;
-      cores = 16; # Cores per build (0=auto gets overridden by Determinate to just 4)
-      max-jobs = 8; # Max parallel builds (auto gets overridden by Determinate to just 2)
+      cores = 0; # Auto per-job cores — nix balances across max-jobs
+      max-jobs = 16; # Parallel builds (1 per physical core on 9950X3D)
       use-xdg-base-directories = true;
       warn-dirty = false; # Disable annoying dirty warn
       download-attempts = 5;
