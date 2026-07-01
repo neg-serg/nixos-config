@@ -57,6 +57,8 @@ in
       narinfo-cache-negative-ttl = 0; # Always re-check for previously missing paths
       # Deduplication via weekly nix.optimise timer instead of per-write
       auto-optimise-store = false;
+      preallocate-contents = true; # Reduce ZFS CoW fragmentation by pre-allocating store paths
+      lazy-locks = true; # Lazy flake.lock loading for faster eval
     }
     // caches;
     gc = {
