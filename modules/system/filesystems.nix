@@ -10,11 +10,12 @@ in
   boot.zfs.forceImportRoot = false;
 
   fileSystems = lib.mkIf isTelfir {
-    "/" = {
-      device = "/dev/nvme0n1p2";
-      fsType = "xfs";
-      options = [ "rw" "relatime" "lazytime" ];
-    };
+    # Previous XFS root — kept as fallback
+    # "/" = {
+    #   device = "/dev/nvme0n1p2";
+    #   fsType = "xfs";
+    #   options = [ "rw" "relatime" "lazytime" ];
+    # };
     "/boot" = {
       device = "/dev/nvme0n1p5";
       fsType = "vfat";
@@ -83,17 +84,16 @@ in
       options = [ "nofail" "x-systemd.automount" ];
     };
 
-    # ZFS root (prepare for migration — enable to switch from XFS)
-    # fileSystems."/" = {
-    #   device = "tank/nixos";
-    #   fsType = "zfs";
-    #   options = [ "rw" "noatime" ];
-    # };
-    # fileSystems."/nix/store" = {
-    #   device = "tank/store";
-    #   fsType = "zfs";
-    #   options = [ "noatime" "nofail" ];
-    # };
+    "/" = {
+      device = "tank/nixos";
+      fsType = "zfs";
+      options = [ "rw" "noatime" ];
+    };
+    "/nix/store" = {
+      device = "tank/store";
+      fsType = "zfs";
+      options = [ "noatime" "nofail" ];
+    };
 
     # Argon 3.6TiB LV (nvme1n1 + nvme3n1)
     "/mnt/zero" = {
