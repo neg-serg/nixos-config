@@ -54,6 +54,7 @@
     ./games/tuning.nix
     ./hardware/amdgpu.nix
     ./hardware/audio/dsp/pkgs.nix # Nix package manager
+    ./hardware/audio/hdspe/default.nix
     ./hardware/audio/pipewire/default.nix
     ./hardware/audio/pulseaudio/default.nix
     ./hardware/config.nix
