@@ -73,5 +73,20 @@ in
     daemonIOSchedClass = "idle";
     daemonIOSchedPriority = 7;
   };
+
+  # Determinate Nix overrides netrc-file in /etc/nix/nix.conf after including
+  # nix.custom.conf, so sops-managed netrc path doesn't take effect.
+  # This service copies the sops-decrypted netrc to the Determinate-managed path.
+  systemd.services.fix-determinate-netrc = {
+    description = "Copy sops-decrypted netrc to Determinate Nix path";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "sops-nix.service" ];
+    requires = [ "sops-nix.service" ];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      install -m 600 ${config.sops.secrets."github-netrc".path} /nix/var/determinate/netrc
+    '';
+  };
+
   # nixpkgs.config.rocmSupport moved to flake/pkgs-config.nix
 }
