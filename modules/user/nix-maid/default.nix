@@ -53,12 +53,7 @@
     ./sys/misc.nix
 
     # Web & Browsing
-    ./web/browsing.nix # includes defaults.nix, librewolf.nix
-
-    # ./web/librewolf.nix is imported via ./web/browsing.nix
-    ./web/brave.nix
-    ./web/vivaldi.nix
-    ./web/edge.nix
+    ./web/browsing.nix
 
     ./web/aria.nix
     ./web/misc.nix

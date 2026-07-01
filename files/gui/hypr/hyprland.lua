@@ -32,7 +32,7 @@ local blur_vibrancy          = 0.1696
 -- NOTE: in Lua strings "\\." == regex "\." (a literal dot)
 -- ---------------------------------------------------------------------
 local m = {
-  browser            = "^(org\\.mozilla\\.firefox|firefox|floorp|one\\.ablaze\\.floorp|floorpdeveloperedition|zen-beta|zen|zen-browser|Zen)$",
+  browser            = "^(floorp|one\\.ablaze\\.floorp|floorpdeveloperedition|zen-beta|zen|zen-browser|Zen)$",
   file_dialog        = "^(Open File|Select a File|Choose wallpaper|Open Folder|Save As|Library|File Upload)(.*)$",
   pip                = "^([Pp]icture[-\\s]?[Ii]n[-\\s]?[Pp]icture)(.*)$",
   telegram_wrapped   = "^(.telegram-desktop-wrapped)$",
@@ -54,7 +54,7 @@ local m = {
 -- Workspace routing classes (from classes.conf)
 local cls = {
   term        = "^(term)$",
-  web         = "^(firefox|org\\.mozilla\\.firefox|librewolf|io\\.gitlab\\.librewolf-community|floorp|one\\.ablaze\\.floorp|floorpdeveloperedition|zen-beta|zen|zen-browser|Zen|chromium|org\\.chromium\\.Chromium|thorium-browser|com\\.thorium\\.Thorium|palemoon|net\\.palemoon\\.PaleMoon)$",
+  web         = "^(floorp|one\\.ablaze\\.floorp|floorpdeveloperedition|zen-beta|zen|zen-browser|Zen)$",
   dev         = "^(nwim)$",
   games       = "^(steam|Steam)$",
   doc         = "^(org.pwmt.zathura)$",
