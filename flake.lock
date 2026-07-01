@@ -313,22 +313,6 @@
         "type": "github"
       }
     },
-    "fsread-nvim": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1767490979,
-        "narHash": "sha256-iwMioDga7dCori2FeBo3lYG27ji8pLnM2VZu9iJn/8w=",
-        "owner": "neg-serg",
-        "repo": "fsread.nvim",
-        "rev": "ad341ed1e6452db51d5a3a581f3a0b581cbd2f48",
-        "type": "github"
-      },
-      "original": {
-        "owner": "neg-serg",
-        "repo": "fsread.nvim",
-        "type": "github"
-      }
-    },
     "git-hooks-nix": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -1112,7 +1096,6 @@
     "root": {
       "inputs": {
         "determinate": "determinate",
-        "fsread-nvim": "fsread-nvim",
         "hyprland": "hyprland",
         "iosevka-neg": "iosevka-neg",
         "lanzaboote": "lanzaboote",

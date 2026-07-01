@@ -7,13 +7,10 @@ local appname=env_.NVIM_APPNAME or 'nvim'
 local config_dir=config_home_..'/'..appname
 local data_dir=data_home_..'/'..appname
 o.sessionoptions='blank,buffers,curdir,folds,help,tabpages,winsize'
--- thx to https://www.reddit.com/r/neovim/comments/opipij/guide_tips_and_tricks_to_reduce_startup_and/
 local disabled_built_ins={
     '2html_plugin',
     'bugreport',
     'compiler',
-    'did_load_filetypes',
-    'ftplugin',
     'getscript',
     'getscriptPlugin',
     'gzip',
@@ -22,11 +19,8 @@ local disabled_built_ins={
     'matchparen',
 
     'optwin',
-    'perl_provider',
-    'python3_provider',
     'rplugin',
     'rrhelper',
-    'ruby_provider',
     'spellfile_plugin',
     'synmenu',
     'syntax',
@@ -42,21 +36,28 @@ for _, plugin in pairs(disabled_built_ins) do
     vim.g['loaded_'..plugin]=1
 end
 vim.g.loaded_node_provider=0
+vim.g.loaded_perl_provider=0
+vim.g.loaded_ruby_provider=0
 
--- netrw is disabled elsewhere; drop redundant globals
-if vim.fn.executable('ugrep') == 1 then
-    o.grepprg='ugrep -RInk -j -u --tabs=1 --ignore-files'
-    o.grepformat='%f:%l:%c:%m,%f+%l+%c+%m,%-G%f\\|%l\\|%c\\|%m'
-end
-if vim.fn.executable('nvr') == 1 then
-    env_.GIT_EDITOR="nvr -cc split +'setl bh=delete' --remote-wait"
-    env_.EDITOR='nvr -l --remote'
-    env_.VISUAL='nvr -l --remote'
-end
+-- Defer executable() checks to VeryLazy (synchronous PATH scans are slow at startup)
+vim.api.nvim_create_autocmd('User', {
+  pattern = 'VeryLazy', once = true,
+  callback = function()
+    if vim.fn.executable('ugrep') == 1 then
+      vim.o.grepprg = 'ugrep -RInk -j -u --tabs=1 --ignore-files'
+      vim.o.grepformat = '%f:%l:%c:%m,%f+%l+%c+%m,%-G%f\\|%l\\|%c\\|%m'
+    end
+    if vim.fn.executable('nvr') == 1 then
+      vim.env.GIT_EDITOR = "nvr -cc split +'setl bh=delete' --remote-wait"
+      vim.env.EDITOR = 'nvr -l --remote'
+      vim.env.VISUAL = 'nvr -l --remote'
+    end
+  end,
+})
 o.path='.,..,'..config_dir..','..
-    	config_dir..'/lua,'..
-	config_dir..'/after,'..
-	data_dir..'/site/,/usr/include'
+    config_dir..'/lua,'..
+    config_dir..'/after,'..
+    data_dir..'/site/,/usr/include'
 -- Allow recursive file lookup for gf/:find
 vim.opt.path:append('**')
 o.fillchars={foldopen="", foldclose="",
@@ -86,14 +87,15 @@ o.isfname='#,$,%,+,,,-,.,/,48-57,=,@,_,~,@-@'  -- Scan in filenames in such brac
 o.matchtime=0                                -- Default time to hi brackets too long for me
 o.matchpairs='(:),{:},[:],<:>'                 -- More matchpairs
 o.foldenable=false                           -- Disable folds as
+o.relativenumber=false                        -- Relative line numbers
+o.number=false                                -- No line numbers at all
 o.numberwidth=3                              -- Shorter number width
-o.signcolumn='yes:1'                         -- Merge sign and numbers
+o.signcolumn='yes:3'                         -- 3 slots for diagnostic/git/dap signs
 o.pumblend=15                                -- setup pmenu transparency
 o.pumheight=10                               -- Do not make pmenu too wide
 o.scrolljump=0                               -- Lines to scroll when cursor leaves screen
-o.scrollback=1                               -- Disable scrollback
+o.scrollback=10000                             -- Terminal scrollback lines
 o.shiftwidth=4                               -- Spaces for autoindents
-o.termguicolors=true                         -- Enable termguicolors
 o.wildignorecase=true                        -- Ignore case for wildmenu
 o.wildignore='*.7z,*.aux,*.avi,*.bak,*.bib,*.class,*.cls,*.cmi,'..
     '*.cmo,*.doc,*.docx,*.dvi,*.flac,*.flv,*.gif,*.ico,'..
@@ -108,8 +110,6 @@ o.showcmd=false                              -- Do not show command output
 o.showtabline=0                              -- Do not show tab line
 o.smartcase=true                             -- Case sensitive when uc present
 o.softtabstop=4                              -- Let backspace delete indent
-o.splitbelow=true                            -- Puts new split windows to the bottom of the current
-o.splitright=true                            -- Puts new vsplit windows to the right of the current
 o.switchbuf='useopen,usetab'                 -- useopen may be useful for re-using QuickFix window.
 o.tabstop=4                                  -- An indentation every four columns
 o.timeoutlen=400                             -- 400 ms wait to sequence complete
@@ -127,14 +127,49 @@ o.mouse='a'                                  -- Add mouse support
 o.mousescroll={'ver:2','hor:1'}              -- More conservative mouse scroll
 o.backupdir=home_..'/trash/'               -- Setup backupdir
 o.directory=home_..'/trash/'               -- Directory for swap files
-o.undodir=home_..'/trash/'                 -- Setup undo dir
+o.undodir=data_dir..'/undo'                 -- Setup undo dir
 o.undofile=true                              -- Enable undofile
 o.swapfile=false                             -- Do not use swapfiles
+
+-- Disable undofile for sensitive files to prevent leaking secrets via undo history
+vim.api.nvim_create_autocmd('BufReadPre', {
+  pattern = { '*.gpg', '*.asc', '*.env', '*/.env.*', '*/gopass-*', '/dev/shm/*', 'COMMIT_EDITMSG' },
+  callback = function()
+    vim.bo.undofile = false
+    vim.bo.swapfile = false
+  end,
+})
 o.shada=[['1000,<50,s10,h]]                     -- Ultra fast shada settings
+-- Defer ShaDa reading to after first screen render
+local orig_shadafile = vim.o.shadafile
+vim.o.shadafile = 'NONE'
+vim.api.nvim_create_autocmd('UIEnter', {
+  once = true,
+  callback = function()
+    vim.o.shadafile = orig_shadafile
+    pcall(vim.cmd, 'rshada')
+  end,
+})
 o.cdhome=true                                -- :cd without argument goes to the home directory
 o.completeopt='menu,menuone,noselect'        -- Completion options
-o.formatoptions='n1jcroqlj'                  -- Format settings
+o.formatoptions='n1jcroql'                    -- Format settings
 o.cpoptions='_$ABFWcdesa'                    -- Vim-exclusive stuff
 o.ruler=false                                -- No ruler
 o.cmdheight=0                                -- Fancy cmdheight for neovim
 o.laststatus=3                               -- One statusline for all
+
+-- Russian langmap (extracted from langmapper for fast startup)
+do
+  local function escape(str)
+    local escape_chars = [[;,."|\]]
+    return vim.fn.escape(str, escape_chars)
+  end
+  local en = [[`qwertyuiop[]asdfghjkl;'zxcvbnm]]
+  local ru = [[ёйцукенгшщзхъфывапролджэячсмить]]
+  local en_shift = [[~QWERTYUIOP{}ASDFGHJKL:"ZXCVBNM<>]]
+  local ru_shift = [[ËЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ]]
+  o.langmap = vim.fn.join({
+    escape(ru_shift) .. ';' .. escape(en_shift),
+    escape(ru) .. ';' .. escape(en),
+  }, ',')
+end

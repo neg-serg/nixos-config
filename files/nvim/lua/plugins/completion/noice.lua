@@ -4,9 +4,8 @@
 return {'folke/noice.nvim', -- better UX
     event={'VeryLazy'},
     config=function()
-        local status, noice = pcall(require, 'noice')
-        if (not status) then return end
-
+        local noice = require('noice')
+        local border = 'rounded'
         noice.setup({
             cmdline={
                 enabled=true,
@@ -50,7 +49,6 @@ return {'folke/noice.nvim', -- better UX
                         {event='msg_show', find='line %d+ of %d+'},
                         {event='msg_show', find='%d+ line'},
                         {event='msg_show', find='%d+ more line'},
-                        {event='msg_show', kind='search_count'},
                         {event='msg_show', find='%d+L, %d+B'},
                         {event='msg_show', find='^Hunk %d+ of %d'},
                         {event='msg_show', find='%d+ change'},
@@ -87,7 +85,7 @@ return {'folke/noice.nvim', -- better UX
         },
         lsp={
             progress={
-                enabled=true,
+                enabled=false, -- using heirline's lsp_progress component instead
                 format='lsp_progress',
                 format_done='lsp_progress_done',
                 throttle=1000 / 30, -- frequency to update lsp progress message
@@ -96,9 +94,8 @@ return {'folke/noice.nvim', -- better UX
             override={
                 ['vim.lsp.util.convert_input_to_markdown_lines']=true,
                 ['vim.lsp.util.stylize_markdown']=true,
-                ['cmp.entry.get_documentation']=true,
             },
-            hover={enabled=false},
+            hover={enabled=true},
             signature={
                 enabled=true,
                 auto_open={

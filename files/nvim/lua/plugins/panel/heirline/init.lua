@@ -1,6 +1,6 @@
 return {
   'rebelot/heirline.nvim',
-  lazy = false,
+  event = 'UIEnter',
   dependencies = { 'nvim-tree/nvim-web-devicons' },
   config = function()
     require('plugins.panel.heirline.config')()

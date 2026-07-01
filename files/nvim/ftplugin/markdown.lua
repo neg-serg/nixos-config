@@ -1,21 +1,8 @@
 -- Enhanced Markdown link navigation and URL handling
 -- Ported from the legacy home overlay before the Home Manager merge.
+-- File/URL dispatch delegates to utils/nav.lua.
 
-local uv = vim.uv or vim.loop
-
-local function open_url(url)
-  if url:match('^https?://') or url:match('^file://') then
-    local cmd
-    if vim.fn.has('mac') == 1 then
-      cmd = { 'open', url }
-    elseif vim.fn.has('wsl') == 1 then
-      cmd = { 'wslview', url }
-    else
-      cmd = { 'xdg-open', url }
-    end
-    vim.fn.jobstart(cmd, { detach = true })
-  end
-end
+local nav = require('utils.nav')
 
 local function goto_markdown_anchor(anchor)
   if not anchor or anchor == '' then return end
@@ -109,40 +96,22 @@ end
 local function open_link(opts)
   opts = opts or {}
   local link = link_at_cursor()
-  if not link then return vim.cmd([[normal! gf]]) end
+  if not link then return pcall(vim.cmd, [[normal! gf]]) end
   if link.type == 'url' then
-    return open_url(link.url)
+    return nav.open_url(link.url)
   elseif link.type == 'heading' then
     goto_markdown_anchor(link.anchor); return
   elseif link.type == 'file' then
     local path = link.path
-    do
-      local has_slash = path:find('/') ~= nil
-      local has_ext = path:match('%.[%w%.]+$') ~= nil
-      local candidates = {}
-      if not has_slash then
-        for _, d in ipairs(preferred_dirs) do
-          table.insert(candidates, d .. '/' .. path)
-          if not has_ext then
-            table.insert(candidates, d .. '/' .. path .. '.md')
-            table.insert(candidates, d .. '/' .. path .. '.mdx')
-          end
-        end
-      end
-      for _, c in ipairs(candidates) do
-        local stat_ok = false
-        if uv and uv.fs_stat then stat_ok = uv.fs_stat(c) ~= nil
-        else stat_ok = vim.fn.filereadable(c) == 1 or vim.fn.isdirectory(c) == 1 end
-        if stat_ok then
-          vim.cmd.edit(vim.fn.fnameescape(c))
-          if opts.jump_to_anchor and link.anchor then goto_markdown_anchor(link.anchor) end
-          return
-        end
-      end
+    if not path or path == '' then return end
+    local anchor_fn = opts.jump_to_anchor and goto_markdown_anchor or nil
+    local resolved = nav.resolve_path(path, {
+      extensions     = { '.md', '.mdx' },
+      preferred_dirs = preferred_dirs,
+    })
+    if resolved then
+      nav.open_file(resolved, { anchor = link.anchor, anchor_fn = anchor_fn })
     end
-    if path == nil or path == '' then return end
-    vim.cmd(('find %s'):format(vim.fn.fnameescape(path)))
-    if opts.jump_to_anchor and link.anchor then goto_markdown_anchor(link.anchor) end
     return
   end
 end
@@ -151,8 +120,10 @@ vim.keymap.set('n', 'gf', function() open_link({ jump_to_anchor = false }) end,
   { buffer = true, desc = 'Open file/wiki/URL under cursor' })
 vim.keymap.set('n', 'gF', function() open_link({ jump_to_anchor = true }) end,
   { buffer = true, desc = 'Open and jump to anchor' })
+vim.keymap.set('n', '<CR>', function() open_link({ jump_to_anchor = true }) end,
+  { buffer = true, desc = 'Follow link under cursor' })
 vim.keymap.set('n', 'gx', function()
   local link = link_at_cursor()
-  if link and link.type == 'url' then open_url(link.url)
+  if link and link.type == 'url' then nav.open_url(link.url)
   else pcall(vim.cmd.normal, { args = { 'gx' }, bang = true }) end
 end, { buffer = true, desc = 'Open URL under cursor' })

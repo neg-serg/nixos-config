@@ -1,4 +1,4 @@
 -- ┌───────────────────────────────────────────────────────────────────────────────────┐
 -- │ █▓▒░ lervag/vimtex                                                                │
 -- └───────────────────────────────────────────────────────────────────────────────────┘
-return {'lervag/vimtex', ft={'tex','latex'}} -- modern TeX support
+return {'lervag/vimtex', ft={'tex','latex','plaintex','cls','tikz','bib'}} -- modern TeX support

@@ -1,6 +1,0 @@
--- ┌───────────────────────────────────────────────────────────────────────────────────┐
--- │ █▓▒░ Eandrju/cellular-automaton.nvim                                              │
--- └───────────────────────────────────────────────────────────────────────────────────┘
-return {'Eandrju/cellular-automaton.nvim', -- useless plugin for fun
-  cmd = "CellularAutomaton",
-} 

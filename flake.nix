@@ -55,10 +55,6 @@
       url = "github:winapps-org/winapps";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    fsread-nvim = {
-      url = "github:neg-serg/fsread.nvim";
-      flake = false;
-    };
     wrapper-manager.url = "github:viperML/wrapper-manager";
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";

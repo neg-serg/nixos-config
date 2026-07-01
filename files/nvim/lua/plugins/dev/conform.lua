@@ -5,7 +5,6 @@ return {
 	"stevearc/conform.nvim", -- neovim modern formatter
 	cmd = { "ConformInfo" },
 	config = function()
-		local conform = require("conform")
 		local prettier = { "prettierd", "prettier", stop_after_first = true }
 		require("conform").setup({
 			-- Set this to change the default values when calling conform.format()
@@ -24,17 +23,19 @@ return {
 				json = prettier,
 				lua = { "stylua" },
 				python = { "ruff_fix", "ruff_format" }, -- Use Ruff for fixing imports and formatting (faster than isort+black)
-				nix = { "nixfmt" },
 				rust = { "rustfmt", lsp_format = "fallback" }, -- You can also customize some of the format options for the filetype
 				sh = { "shfmt" },
+				zsh = { "shfmt" },
+				toml = { lsp_format = "prefer" },
+				yaml = prettier,
 				["_"] = { "trim_whitespace" }, -- Use the "_" filetype to run formatters on filetypes that don't have other formatters configured.
 			},
 			formatters = {
 				astyle = { command = "astyle", prepend_args = { "-s2", "-c", "-J", "-n", "-q", "-z2", "-xC80" } },
 				["clang-format"] = { command = "clang-format", prepend_args = { "--style=file", "-i" } },
 				["cmake-format"] = { command = "cmake-format", prepend_args = { "-i" } },
-				prettier = { command = "prettier", prepend_args = { "-w" } },
-				prettierd = { command = "prettierd", prepend_args = { "-w" } },
+				prettier = { command = "prettier" },
+				prettierd = { command = "prettierd" },
 				shfmt = { command = "shfmt", prepend_args = { "-i", "0", "-sr", "-kp" } },
 			},
 		})
