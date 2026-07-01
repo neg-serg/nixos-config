@@ -10,22 +10,22 @@ in
   boot.zfs.forceImportRoot = true;
 
   fileSystems = lib.mkIf isTelfir {
-    "/" = {
-      device = "/dev/nvme0n1p2";
-      fsType = "xfs";
-      options = [ "rw" "relatime" "lazytime" ];
-    };
-    # ZFS root — prepared, uncomment to switch
+    # XFS root — fallback, kept for debug
     # "/" = {
-    #   device = "tank/nixos";
-    #   fsType = "zfs";
-    #   options = [ "rw" "noatime" ];
+    #   device = "/dev/nvme0n1p2";
+    #   fsType = "xfs";
+    #   options = [ "rw" "relatime" "lazytime" ];
     # };
-    # "/nix/store" = {
-    #   device = "tank/store";
-    #   fsType = "zfs";
-    #   options = [ "noatime" "nofail" ];
-    # };
+    "/" = {
+      device = "tank/nixos";
+      fsType = "zfs";
+      options = [ "rw" "noatime" ];
+    };
+    "/nix/store" = {
+      device = "tank/store";
+      fsType = "zfs";
+      options = [ "noatime" "nofail" ];
+    };
     "/boot" = {
       device = "/dev/nvme0n1p5";
       fsType = "vfat";
