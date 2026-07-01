@@ -38,6 +38,7 @@ in
         "auto-allocate-uids" # allow nix to automatically pick UIDs, rather than creating nixbld* user accounts
         "flakes" # flakes for reprodusability
         "nix-command" # new nix interface
+        "parallel-eval" # parallel nix evaluation (Determinate Nix)
         "pipe-operators" # |> syntax for cleaner function chains
       ];
       eval-cache = true;
