@@ -117,13 +117,28 @@ in
         zfs set atime=off tank/store
         zfs set xattr=sa tank/store
         zfs set primarycache=all tank/store
-        zfs set redundant_metadata=most tank/store
+        zfs set redundant_metadata=all tank/store
         zfs set dnodesize=auto tank/store
         zfs set logbias=latency tank/store
-        zfs set sync=standard tank/store
+        zfs set sync=disabled tank/store
         zfs set snapshot_limit=1000 tank/store
-        zfs set relatime=on tank/store
         zpool set autotrim=on tank
+      fi
+    '';
+  };
+
+  # Tune tank/nixos (root) for OS workloads and Nix xattr compatibility.
+  systemd.services.zfs-nixos-props = {
+    description = "Set optimal ZFS properties on tank/nixos";
+    wantedBy = [ "zfs.target" ];
+    after = [ "zfs.target" ];
+    serviceConfig.Type = "oneshot";
+    serviceConfig.RemainAfterExit = true;
+    path = [ pkgs.zfs ];
+    script = ''
+      if zfs list tank/nixos >/dev/null 2>&1; then
+        zfs set dnodesize=auto tank/nixos
+        zfs set snapshot_limit=50 tank/nixos
       fi
     '';
   };
