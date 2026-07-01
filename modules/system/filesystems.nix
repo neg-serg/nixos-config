@@ -1,9 +1,10 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 let
   mainUser = config.users.main.name or "neg";
   homeDir = "/home/${mainUser}";
   isTelfir = config.networking.hostName == "telfir";
-  hasZfs = builtins.hasAttr "zfs" config.boot.kernelPackages;
+  attrName = pkgs.zfs.kernelModuleAttribute;
+  hasZfs = builtins.hasAttr attrName config.boot.kernelPackages;
 in
 {
   boot.supportedFilesystems = [
