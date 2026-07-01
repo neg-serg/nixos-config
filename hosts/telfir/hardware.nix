@@ -23,7 +23,6 @@
 
   # Enable AMD-oriented kernel structured config for this host and tune performance
   profiles = {
-    kernel.amd.enable = false;
     performance = {
       enable = true;
       # Avoid double compression
@@ -63,6 +62,10 @@
 
   # Host-specific kernel parameters and boot tuning
   boot = {
+    # Use LTS kernel (6.18.x) for ZFS compatibility — the ZFS kernel module package
+    # is marked broken on linuxPackages_latest (7.1.2) as of nixos-26.05.
+    kernelPackages = lib.mkForce pkgs.linuxPackages;
+
     kernelParams = [
       "acpi_osi=!"                             # Fix ACPI compatibility on ASUS boards
       "acpi_osi=Linux"                         # Report Linux-compatible ACPI interface
@@ -95,8 +98,8 @@
       in
       lib.optional (builtins.hasAttr "asus-ec-sensors" config.boot.kernelPackages)
         config.boot.kernelPackages."asus-ec-sensors"
-      ++ lib.optional (builtins.hasAttr "zfs" config.boot.kernelPackages)
-        config.boot.kernelPackages.zfs
+      ++ lib.optional (builtins.hasAttr pkgs.zfs.kernelModuleAttribute config.boot.kernelPackages)
+        config.boot.kernelPackages.${pkgs.zfs.kernelModuleAttribute}
       ++ [ snd-hdspe ]
     );
 

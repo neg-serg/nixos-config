@@ -1,4 +1,4 @@
-{ lib, stdenv, kernel, fetchFromGitHub }:
+{ lib, stdenv, kernel, fetchFromGitHub, python3 }:
 
 stdenv.mkDerivation rec {
   pname = "snd-hdspe";
@@ -11,7 +11,7 @@ stdenv.mkDerivation rec {
     hash = "sha256-r51wkeOtosnfjbnGmyoBciKRXjDkhuYB5v9jAiENkNY=";
   };
 
-  nativeBuildInputs = kernel.moduleBuildDependencies;
+  nativeBuildInputs = kernel.moduleBuildDependencies ++ [ python3 ];
 
   hardeningDisable = [ "pic" "format" ];
 
