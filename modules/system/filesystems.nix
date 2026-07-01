@@ -10,22 +10,22 @@ in
   boot.zfs.forceImportRoot = true;
 
   fileSystems = lib.mkIf isTelfir {
-    # XFS root fallback (comment ZFS root and uncomment this to switch back)
-    # "/" = {
-    #   device = "/dev/nvme0n1p2";
-    #   fsType = "xfs";
-    #   options = [ "rw" "relatime" "lazytime" ];
-    # };
     "/" = {
-      device = "tank/nixos";
-      fsType = "zfs";
-      options = [ "rw" "noatime" ];
+      device = "/dev/nvme0n1p2";
+      fsType = "xfs";
+      options = [ "rw" "relatime" "lazytime" ];
     };
-    "/nix/store" = {
-      device = "tank/store";
-      fsType = "zfs";
-      options = [ "noatime" "nofail" ];
-    };
+    # ZFS root — prepared, uncomment to switch
+    # "/" = {
+    #   device = "tank/nixos";
+    #   fsType = "zfs";
+    #   options = [ "rw" "noatime" ];
+    # };
+    # "/nix/store" = {
+    #   device = "tank/store";
+    #   fsType = "zfs";
+    #   options = [ "noatime" "nofail" ];
+    # };
     "/boot" = {
       device = "/dev/nvme0n1p5";
       fsType = "vfat";
@@ -76,13 +76,6 @@ in
       fsType = "none";
       options = [ "bind" "nofail" "x-systemd.automount" ];
     };
-
-    # XFS nix/store fallback (use with XFS root above)
-    # "/nix/store" = {
-    #   device = "/nix/store";
-    #   fsType = "none";
-    #   options = [ "bind" ];
-    # };
 
     # ---- Bulk storage LVs ----
 
