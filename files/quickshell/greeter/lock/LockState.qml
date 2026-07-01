@@ -47,9 +47,16 @@ Scope {
 	function fadeIn() {
 		if (!root.fadedOut) return;
 		Hyprland.dispatch("dpms on");
+		wlRestart.start();
 		root.fadedOut = false;
 		fadeAnim.to = 0;
 		fadeAnim.restart();
+	}
+
+	Process {
+		id: wlRestart
+		command: ["bash", "-c", "pkill -x wl-daemon 2>/dev/null; wl init; wl random ~/pic/wl ~/pic/black"]
+		running: false
 	}
 
 	ElapsedTimer { id: mouseTimer }
