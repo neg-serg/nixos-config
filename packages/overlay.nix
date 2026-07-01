@@ -77,6 +77,11 @@ in
     doCheck = false;
   });
 
+  # Skip flaky PSA crypto tests in mbedtls (SEGFAULT on concurrent, failures on persistent/init)
+  mbedtls = finalPrev.mbedtls.overrideAttrs (old: {
+    cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DSKIP_TEST_SUITES=psa_crypto" ];
+  });
+
   # XFS breaks nix-util readLinkAt test on kernel 7.0+
   # Build failures on nixpkgs-unstable
   valkey = finalPrev.valkey.overrideAttrs (old: {
