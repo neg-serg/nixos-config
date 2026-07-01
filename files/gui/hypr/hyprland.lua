@@ -76,7 +76,7 @@ local cls = {
 -- ---------------------------------------------------------------------
 -- Monitors (from init.conf)
 -- ---------------------------------------------------------------------
-hl.monitor({ output = "DP-2", mode = "3840x2160@240", position = "0x0", scale = 2, vrr = 3, bitdepth = 10, cm = true })
+hl.monitor({ output = "DP-2", mode = "3840x2160@240", position = "0x0", scale = 2, vrr = 3, bitdepth = 10, cm = "auto" })
 hl.monitor({ output = "DP-1", disabled = true })
 
 -- ---------------------------------------------------------------------
@@ -135,7 +135,7 @@ hl.config({
     sync_gsettings_theme = true, min_refresh_rate = 240, inactive_timeout = 3.0,
     hide_on_key_press = true, warp_on_change_workspace = false,
   },
-  render = { direct_scanout = 0 },
+  render = { direct_scanout = 2 },
   xwayland = { force_zero_scaling = true, use_nearest_neighbor = true },
   master = { new_status = "master", mfact = 0.6, orientation = "left", allow_small_split = true, smart_resizing = true },
 })
