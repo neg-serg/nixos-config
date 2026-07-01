@@ -22,42 +22,6 @@ lib.mkIf devEnabled (
         withPython3 = true;
         withNodeJs = true;
         withRuby = false;
-        configure = {
-          customRC = "";
-          packages.myVimPackage = {
-            start = [
-              pkgs.vimPlugins.lazy-nvim # plugin manager
-              pkgs.fsread-nvim # custom plugin for file reading
-              (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
-                p.bash # Bash shell script parser
-                p.caddy # Caddy web server config parser
-                p.cmake # CMake build system parser
-                p.diff # Diff format parser
-                p.dockerfile # Dockerfile parser
-                p.gitcommit # Git commit message parser
-                p.gitignore # .gitignore parser
-                p.glsl # GLSL shader language parser
-                p.ini # INI configuration file parser
-                p.just # Justfile parser
-                p.kconfig # Kconfig parser (Linux kernel config)
-                p.lua # Lua language parser
-                p.luadoc # Lua documentation parser
-                p.make # Makefile parser
-                p.markdown # Markdown parser
-                p.markdown_inline # Markdown inline parser
-                p.meson # Meson build system parser
-                p.ninja # Ninja build system parser
-                p.nix # Nix language parser
-                p.python # Python language parser
-                p.query # Treesitter query language parser
-                p.regex # Regular expression parser
-                p.wgsl # WGSL shader language parser
-                p.xml # XML language parser
-                p.yaml # YAML language parser
-              ]))
-            ];
-          };
-        };
       };
 
       environment.sessionVariables.NVIM_APPNAME = "";
@@ -98,47 +62,13 @@ lib.mkIf devEnabled (
           ];
         })
 
-        # Environment tooling
+        # Search tools for fzf-lua and telescope
         pkgs.ripgrep # project-wide search backend
-        pkgs.fd # fast file finder used by pickers
-
-        # -- LSPs & Tooling --
-        pkgs.bash-language-server # Bash LSP for shell scripts
-        pkgs.neovim-remote # nvr helper for external editor integration
-        pkgs.nil # Nix LSP (fast)
-        pkgs.pylyzer # static type analyzer for Python
-        pkgs.pyright # Microsoft Pyright LSP
-        pkgs.ruff # Python formatter/linter CLI + LSP
-        pkgs.lua-language-server # Lua LSP
-        pkgs.hyprls # Hyprland config LSP
-        pkgs.yaml-language-server # YAML LSP
-        pkgs.taplo # TOML LSP/formatter
-        pkgs.marksman # Markdown LSP
-        pkgs.qt6.qtdeclarative # qmlfmt/qmlcachegen for QML editing
-        pkgs.qt6.qttools # qmlscene/lrelease etc. for QML dev
-        pkgs.just-lsp # LSP for justfiles
-        pkgs.lemminx # XML language server
-        pkgs.awk-language-server # AWK LSP
-        pkgs.autotools-language-server # Autoconf/Automake LSP
-        pkgs.cmake-language-server # CMake LSP
-        pkgs.docker-compose-language-service # docker-compose schema validation
-        pkgs.dockerfile-language-server # Dockerfile LSP
-        pkgs.dot-language-server # Graphviz DOT LSP
-        pkgs.asm-lsp # Assembly language server
-        pkgs.systemd-language-server # systemd unit LSP
-        pkgs.nginx-language-server # nginx.conf language server
-        pkgs.zls # Zig language server
-
-        # -- Formatters --
-        pkgs.stylua # Lua formatter
-        pkgs.shfmt # Shell formatter
-        pkgs.nixfmt # Nix formatter
-        pkgs.isort # Python import sorter
-        pkgs.black # Python formatter
+        pkgs.fd # fast file finder
+        pkgs.fzf # fuzzy finder binary (for fzf-lua)
       ];
     }
     (n.mkHomeFiles {
-      # Symlink nvim config directory
       ".config/nvim".source = n.linkImpure nvimConf;
     })
   ]

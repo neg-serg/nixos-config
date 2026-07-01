@@ -3,7 +3,19 @@ local ls = require("luasnip")
 local fmt = require("luasnip.extras.fmt").fmt
 local fmta = require("luasnip.extras.fmt").fmta
 local rep = require("luasnip.extras").rep
-local util = require("settings.luasnip.util")
+local ok_util, util = pcall(require, "settings.luasnip.util")
+if not ok_util then
+  -- Provide stubs so snippets that use util still load (without conditions)
+  util = {
+    is_in_function = function() return true end,
+    is_in_test_function = function() return true end,
+    is_in_test_file = function() return true end,
+    make_return_nodes = function() return ls.snippet_node(nil, { ls.insert_node(1) }) end,
+    create_t_run = function() return ls.snippet_node(nil, { ls.insert_node(1) }) end,
+    mirror_t_run_funcs = function() return ls.snippet_node(nil, { ls.insert_node(1) }) end,
+    snake_case = function(s) return s:lower():gsub("%u", "_%1"):gsub("^_", "") end,
+  }
+end
 local ai = require("luasnip.nodes.absolute_indexer")
 local partial = require("luasnip.extras").partial
 --}}}

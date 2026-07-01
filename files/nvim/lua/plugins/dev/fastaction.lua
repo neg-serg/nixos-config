@@ -3,8 +3,8 @@
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {
   'Chaitanyabsprip/fastaction.nvim',
+  keys = {
+    { 'eq', function() require('fastaction').code_action() end, mode = { 'n', 'x' }, desc = 'Code action (fastaction)' },
+  },
   opts = {},
-  config=function()
-      vim.keymap.set({'n', 'x'}, 'eq', '<cmd>lua require("fastaction").code_action()<CR>', { buffer = bufnr })
-  end
 }

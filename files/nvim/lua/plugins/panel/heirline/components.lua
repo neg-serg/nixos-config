@@ -18,6 +18,26 @@ return function(ctx)
   local safe_buffer_matches = ctx.safe_buffer_matches
   local notify = ctx.notify
 
+  -- ── Module-check cache ───────────────────────────────────────────────────
+  local _has = {}
+  local function has_mod(name)
+    local v = _has[name]; if v ~= nil then return v end
+    local ok = pcall(require, name); _has[name] = ok; return ok
+  end
+
+  -- ── Window width helper ─────────────────────────────────────────────────
+  local function win_w()
+    local win = get_status_win()
+    if win and api.nvim_win_is_valid(win) then
+      local ok, width = pcall(api.nvim_win_get_width, win)
+      if ok and type(width) == 'number' and width > 0 then return width end
+    end
+    local ok_cur, width_cur = pcall(api.nvim_win_get_width, 0)
+    if ok_cur and type(width_cur) == 'number' and width_cur > 0 then return width_cur end
+    local columns = tonumber(vim.o.columns) or 0
+    return (columns > 0) and columns or 120
+  end
+
   -- ── Window/buffer helpers ─────────────────────────────────────────────────
   local function target_win()
     local win = get_status_win()
@@ -36,15 +56,15 @@ return function(ctx)
   end
   local function buf_option(bufnr, name, fallback)
     if bufnr and api.nvim_buf_is_valid(bufnr) then
-      local ok, val = pcall(api.nvim_buf_get_option, bufnr, name)
-      if ok then return val end
+      local ok, val = pcall(function() return vim.bo[bufnr][name] end)
+      if ok and val ~= nil then return val end
     end
     return fallback
   end
   local function win_option(win, name, fallback)
     if win and api.nvim_win_is_valid(win) then
-      local ok, val = pcall(api.nvim_win_get_option, win, name)
-      if ok then return val end
+      local ok, val = pcall(function() return vim.wo[win][name] end)
+      if ok and val ~= nil then return val end
     end
     return fallback
   end
@@ -175,7 +195,7 @@ return function(ctx)
       local function slash_part()
         return { fg = "#367bbf", bg = colors.base_bg }
       end
-      local default_hl = { fg = "#b8c5d9", bg = colors.base_bg }
+      local default_hl = { fg = "#d1d9e6", bg = colors.base_bg }
       local rest = display
       if rest:sub(1, 1) == '~' then
         push('~', { fg = colors.green, bg = colors.base_bg, bold = true })
@@ -534,7 +554,7 @@ return function(ctx)
   -- Search debounce
   local SEARCH_DEBOUNCE_MS = 90
   local last_sc = { t = 0, out = '', pat = '', cur = 0, tot = 0 }
-  local function now_ms() return math.floor(vim.loop.hrtime() / 1e6) end
+  local function now_ms() return math.floor(vim.uv.hrtime() / 1e6) end
 
   -- ── Mode pill ─────────────────────────────────────────────────────────────
   local function mode_info()
@@ -558,15 +578,18 @@ return function(ctx)
 
   -- ── Macro timer state ─────────────────────────────────────────────────────
   local macro_start = nil
+  local macro_aug = api.nvim_create_augroup('HeirlineMacroTimer', { clear = true })
   api.nvim_create_autocmd('RecordingEnter', {
-    callback = function() macro_start = vim.loop.hrtime() end,
+    group = macro_aug,
+    callback = function() macro_start = vim.uv.hrtime() end,
   })
   api.nvim_create_autocmd('RecordingLeave', {
+    group = macro_aug,
     callback = function() macro_start = nil end,
   })
   local function macro_elapsed()
     if not macro_start then return '00:00' end
-    local s = (vim.loop.hrtime() - macro_start) / 1e9
+    local s = (vim.uv.hrtime() - macro_start) / 1e9
     local mm = math.floor(s / 60)
     local ss = math.floor(s % 60)
     return string.format('%02d:%02d', mm, ss)
@@ -624,14 +647,7 @@ return function(ctx)
       condition = function()
         local buf = target_buf()
         if not buf then return false end
-        local clients = {}
-        if vim.lsp and vim.lsp.get_clients then
-          clients = vim.lsp.get_clients({ bufnr = buf })
-        elseif vim.lsp and vim.lsp.buf_get_clients then
-          local map = vim.lsp.buf_get_clients(buf)
-          for _, client in pairs(map or {}) do table.insert(clients, client) end
-        end
-        return #clients > 0
+        return #vim.lsp.get_clients({ bufnr = buf }) > 0
       end,
       provider = function() return S.gear .. ' ' end,
       hl = function() return { fg = colors.cyan, bg = colors.base_bg } end,
@@ -643,76 +659,36 @@ return function(ctx)
       condition = function()
         local buf = target_buf()
         if not buf then return false end
-        if vim.lsp and vim.lsp.get_clients then
-          return #vim.lsp.get_clients({ bufnr = buf }) > 0
-        end
-        if vim.lsp and vim.lsp.buf_get_clients then
-          local map = vim.lsp.buf_get_clients(buf)
-          return map and (vim.tbl_count(map) > 0)
-        end
-        return false
+        return #vim.lsp.get_clients({ bufnr = buf }) > 0
       end,
       init = function(self)
         self.frames = { '⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏' }
         self.idx = (self.idx or 0) + 1
         if self.idx > #self.frames then self.idx = 1 end
-        local msgs = {}
-        if vim.lsp and vim.lsp.util and vim.lsp.util.get_progress_messages then
-          for _, m in ipairs(vim.lsp.util.get_progress_messages()) do
-            local title = m.title or m.message or ''
-            local pct = m.percentage and (m.percentage .. '%%') or ''
-            if title ~= '' then table.insert(msgs, (pct ~= '' and (title .. ' ' .. pct) or title)) end
-          end
-        end
-        self.text = table.concat(msgs, ' | ')
+        local status = vim.lsp.status()
+        self.text = (status and status ~= '') and status or ''
       end,
       provider = function(self)
         if self.text == nil or self.text == '' then return '' end
         return string.format('%s %s ', self.frames[self.idx], self.text)
       end,
       hl = function() return { fg = colors.blue_light, bg = colors.base_bg } end,
-      update = { 'LspAttach', 'LspDetach', 'CursorHold', 'CursorHoldI', 'BufEnter', 'WinEnter' },
+      update = { 'LspProgress', 'LspAttach', 'LspDetach', 'BufEnter', 'WinEnter' },
     },
 
     code_actions = {
       condition = function(self)
         local buf = target_buf(); if not buf then return false end
-        if not vim.lsp then return false end
-        local clients = {}
-        if vim.lsp.get_clients then
-          clients = vim.lsp.get_clients({ bufnr = buf })
-        elseif vim.lsp.buf_get_clients then
-          local map = vim.lsp.buf_get_clients(buf)
-          for _, client in pairs(map or {}) do table.insert(clients, client) end
-        end
-        if not clients or (type(clients) == 'table' and next(clients) == nil) then return false end
+        local clients = vim.lsp.get_clients({ bufnr = buf })
+        if #clients == 0 then return false end
         self._buf = buf
         return true
       end,
       init = function(self)
-        local buf = self._buf or target_buf(); if not buf then self._ca_count = 0; return end
-        local cnt = 0
-        local ok_params, params = pcall(function()
-          local client = vim.lsp.get_clients({ bufnr = buf })[1]
-          local offset_encoding = client and client.offset_encoding or 'utf-16'
-          local p = (vim.lsp.util and vim.lsp.util.make_range_params) and vim.lsp.util.make_range_params(0, offset_encoding) or { textDocument = { uri = vim.uri_from_bufnr(buf) } }
-          p.context = { diagnostics = (vim.diagnostic and vim.diagnostic.get and vim.diagnostic.get(buf, { lnum = (vim.api and vim.api.nvim_win_get_cursor and ((target_win() and vim.api.nvim_win_get_cursor(target_win()) or {1,0})[1] - 1)) }) or {}) }
-          return p
-        end)
-        if ok_params and params and vim.lsp and vim.lsp.buf_request_sync then
-           -- FIXME: buf_request_sync triggers E565 in noice unmount (nui) race condition
-           -- local ok_req, res = pcall(vim.lsp.buf_request_sync, buf, 'textDocument/codeAction', params, 80)
-           local ok_req, res = false, nil 
-           if ok_req and type(res) == 'table' then
-             for _, resp in pairs(res) do
-               local actions = resp and resp.result
-               if type(actions) == 'table' then
-                 for _ in ipairs(actions) do cnt = cnt + 1 end
-               end
-             end
-           end
-        end
-        self._ca_count = cnt
+        -- NOTE: buf_request_sync for code actions is disabled due to E565 race
+        -- condition with noice/nui unmount. The component renders the click handler
+        -- (which opens code_action picker) but does not display a count badge.
+        self._ca_count = 0
       end,
       update = { 'LspAttach', 'LspDetach', 'DiagnosticChanged', 'CursorHold', 'CursorHoldI', 'BufEnter', 'WinEnter' },
       provider = function(self)
@@ -813,7 +789,7 @@ return function(ctx)
       on_click = {
         callback = vim.schedule_wrap(function()
           dbg_push('click: size -> buffer fuzzy find')
-          if has_mod('telescope.builtin') then require('telescope.builtin').current_buffer_fuzzy_find() end
+          if has_mod('fzf-lua') then require('fzf-lua').blines() end
         end),
         name = 'heirline_size_click',
       },
@@ -936,11 +912,12 @@ return function(ctx)
     env = {
       condition = function()
         if not SHOW_ENV then return false end
-        local lbl = env_label()
-        return lbl ~= nil and lbl ~= ''
+        local venv = vim.env.VIRTUAL_ENV or vim.env.CONDA_DEFAULT_ENV
+        return venv ~= nil and venv ~= ''
       end,
       init = function(self)
-        self._env_label = env_label() or ''
+        local venv = vim.env.VIRTUAL_ENV or vim.env.CONDA_DEFAULT_ENV or ''
+        self._env_label = vim.fn.fnamemodify(venv, ':t')
       end,
       update = { 'VimResized' },
       panel_divider(),
@@ -998,78 +975,6 @@ return function(ctx)
         par_start, ')', par_end,
         ' ',
       })
-    end,
-  }
-
-  local CenterFilePath = {
-    condition = function() return not is_empty() end,
-    init = function(self)
-      local buf = get_status_buf()
-      local path = buf_full_path(buf)
-      if not path or path == '' then self._parts = nil; return end
-      local display = fn.fnamemodify(path, ':~')
-      local parts = {}
-      local function push(text, hl)
-        if not text or text == '' then return end
-        parts[#parts + 1] = { text = text, hl = hl }
-      end
-      local slash_hl = { fg = colors.blue, bg = colors.base_bg, italic = true }
-      local dir_hl = { fg = colors.dir_mid or colors.white, bg = colors.base_bg, italic = true }
-      local file_hl = { fg = colors.white, bg = colors.base_bg, bold = true }
-
-      local dir_part, file_part = display:match('^(.*)/([^/]+)$')
-      if not file_part then
-        file_part = display
-        dir_part = nil
-      end
-
-      local function emit_dirs(rest)
-        if not rest or rest == '' then return end
-        local cursor = rest
-        if cursor:sub(1, 1) == '~' then
-          push('~', { fg = colors.green, bg = colors.base_bg, bold = true })
-          cursor = cursor:sub(2)
-        elseif cursor:sub(1, 1) == '/' then
-          push('/', slash_hl)
-          cursor = cursor:sub(2)
-        end
-        local idx = 1
-        while idx <= #cursor do
-          local slash_pos = cursor:find('/', idx)
-          if slash_pos then
-            local segment = cursor:sub(idx, slash_pos - 1)
-            push(segment, dir_hl)
-            push('/', slash_hl)
-            idx = slash_pos + 1
-          else
-            local tail = cursor:sub(idx)
-            push(tail, dir_hl)
-            break
-          end
-        end
-      end
-
-      emit_dirs(dir_part)
-      if dir_part and dir_part ~= '' then push('/', slash_hl) end
-      if display:sub(1, 1) == '/' and not dir_part then push('/', slash_hl) end
-      local icon, icon_color = file_icon_for(buf)
-      push(icon .. ' ', { fg = icon_color, bg = colors.base_bg })
-      push(file_part, file_hl)
-
-      self._parts = parts
-    end,
-    update = { 'BufEnter', 'BufFilePost', 'DirChanged', 'WinResized' },
-    provider = function(self)
-      local parts = self._parts
-      if not parts or #parts == 0 then return '' end
-      local chunks = { ' ' }
-      for _, part in ipairs(parts) do
-        local hl = part.hl or { fg = colors.white, bg = colors.base_bg }
-        local start_hl, end_hl = highlights.eval_hl(hl)
-        chunks[#chunks + 1] = start_hl .. (part.text or '') .. end_hl
-      end
-      chunks[#chunks + 1] = ' '
-      return table.concat(chunks)
     end,
   }
 
@@ -1156,35 +1061,16 @@ return function(ctx)
     components.position,
   }
 
-  -- Center path still experimental: keep disabled until layout finalized.
-  local ENABLE_CENTER_PATH = false
-
-  local DefaultStatusline
-  if ENABLE_CENTER_PATH then
-    DefaultStatusline = {
-      utils.surround({ '', '' }, colors.base_bg, {
-        VisualSelection,
-        EmptyBadge,
-        LeftComponents,
-        components.search,
-      }),
-      align,
-      CenterFilePath,
-      align,
-      RightComponents,
-    }
-  else
-    DefaultStatusline = {
-      utils.surround({ '', '' }, colors.base_bg, {
-        VisualSelection,
-        EmptyBadge,
-        LeftComponents,
-        components.search,
-      }),
-      align,
-      RightComponents,
-    }
-  end
+  local DefaultStatusline = {
+    utils.surround({ '', '' }, colors.base_bg, {
+      VisualSelection,
+      EmptyBadge,
+      LeftComponents,
+      components.search,
+    }),
+    align,
+    RightComponents,
+  }
 
   -- ── Ultra-compact statusline (tiny windows) ───────────────────────────────
   local TinyStatusline = {
