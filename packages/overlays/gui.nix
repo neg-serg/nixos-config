@@ -28,4 +28,10 @@ in
   };
   wl = callPkg (inputs.self + "/packages/wl") { };
   zen-browser = inputs.zen-browser.packages.${prev.stdenv.hostPlatform.system}.default; # Zen Browser (Firefox-based), beta channel from zen-browser flake
+
+  # Fix GSettings schema lookup and GTK wrapping for PipeWire graph GUI
+  crosspipe = prev.crosspipe.overrideAttrs (old: {
+    nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.wrapGAppsHook ];
+    buildInputs = (old.buildInputs or [ ]) ++ [ prev.dconf ];
+  });
 }
