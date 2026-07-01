@@ -101,6 +101,58 @@ in
 
   boot.zfs.forceImportRoot = false;
 
+  # Reserve ARC metadata to prevent grep/find from evicting block pointers
+  boot.extraModprobeConfig = lib.mkIf hasZfs ''
+    options zfs zfs_arc_meta_min=4294967296
+  '';
+
+  # Optimal dataset properties for /nix/store workload:
+  #   recordsize=32K — fewer block pointers per binary, faster grep/find
+  #   primarycache=all — cache both metadata and hot data in ARC
+  systemd.services.zfs-store-props = lib.mkIf hasZfs {
+    description = "Set optimal ZFS properties on tank/store";
+    wantedBy = [ "zfs.target" ];
+    after = [ "zfs.target" ];
+    serviceConfig.Type = "oneshot";
+    serviceConfig.RemainAfterExit = true;
+    path = [ pkgs.zfs ];
+    script = ''
+      if zfs list tank/store >/dev/null 2>&1; then
+        zfs set compression=lz4 tank/store
+        zfs set recordsize=32K tank/store
+        zfs set atime=off tank/store
+        zfs set xattr=sa tank/store
+        zfs set primarycache=all tank/store
+        zfs set redundant_metadata=most tank/store
+        zfs set dnodesize=auto tank/store
+        zfs set logbias=latency tank/store
+        zfs set sync=standard tank/store
+        zfs set snapshot_limit=1000 tank/store
+        zfs set relatime=on tank/store
+        zpool set autotrim=on tank
+      fi
+    '';
+  };
+
+  # Enable automatic ZFS snapshots for safe rollback
+  services.zfs.autoSnapshot = lib.mkIf hasZfs {
+    enable = true;
+    frequent = 4;  # every 15min, keep 4
+    daily = 7;
+    weekly = 4;
+  };
+
+  # Future: /nix/store on ZFS (uncomment after migration)
+  # 1. sudo zfs create -o mountpoint=legacy tank/store
+  # 2. sudo rsync -a /nix/store/ /mnt/nix-store/
+  # 3. Uncomment fileSystems."/nix/store" below
+  # 4. sudo reboot
+  # fileSystems."/nix/store" = lib.mkIf hasZfs {
+  #   device = "tank/store";
+  #   fsType = "zfs";
+  #   options = [ "nofail" ];
+  # };
+
   services.fstrim = lib.mkIf isTelfir { enable = true; };
   services.zfs.autoScrub.enable = lib.mkIf hasZfs true;
   services.zfs.trim.enable = lib.mkIf hasZfs true;
