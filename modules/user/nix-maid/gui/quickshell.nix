@@ -102,5 +102,24 @@ lib.mkIf quickshellEnabled (
       # Link Quickshell config mutably via impurity
       ".config/quickshell".source = n.linkImpure quickshellSrc;
     })
+    {
+      # Replace read-only Theme symlink with a writable copy at every activation
+      system.activationScripts.quickshellTheme = ''
+        theme_dir="/home/neg/.config/quickshell/Theme"
+        cache_dir="/home/neg/.cache/quickshell-theme"
+        if [ -L "$theme_dir" ] && [ ! -w "$theme_dir" ]; then
+          mkdir -p "$cache_dir"
+          if [ -z "$(ls -A "$cache_dir" 2>/dev/null)" ]; then
+            cp -r "$theme_dir"/* "$cache_dir"/ 2>/dev/null || true
+          fi
+          rm -f "$theme_dir"
+          chown -R neg:users "$cache_dir" 2>/dev/null || true
+          chmod -R 0755 "$cache_dir"
+          ln -sf "$cache_dir" "$theme_dir"
+        fi
+      '';
+      systemd.user.services.quickshell.after = lib.mkForce [ "graphical-session-pre.target" "maid-activation.service" ];
+      systemd.user.services.quickshell.wants = [ "maid-activation.service" ];
+    }
   ]
 )
