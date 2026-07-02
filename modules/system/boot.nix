@@ -14,10 +14,6 @@
     ./boot/autofdo.nix
   ];
   boot = {
-    lanzaboote = {
-      enable = lib.mkDefault true;
-      pkiBundle = "/etc/secureboot";
-    };
     loader = {
       efi.canTouchEfiVariables = true;
       # With lanzaboote enabled, default systemd-boot to disabled; hosts may override.
