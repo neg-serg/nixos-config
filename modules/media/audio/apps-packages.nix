@@ -24,7 +24,6 @@ let
 
     # -- CLI --
     pkgs.sox # swiss-army audio CLI for conversions/effects
-    pkgs.pipemixer # TUI mixer for PipeWire
     pkgs.wiremix # PipeWire mixer for the terminal
 
     # -- Codecs / Ripping / Players --
