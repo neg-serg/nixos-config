@@ -1,7 +1,7 @@
 # repo.or.cz generates non-reproducible tarballs for tinycc snapshots.
 # minimal-bootstrap uses its own fetchurl (from boot.nix), not the global one.
 # Override minimal-bootstrap entirely with a fixed fetchurl.
-inputs: final: prev:
+_inputs: final: prev:
 let
   inherit (final) lib;
 
