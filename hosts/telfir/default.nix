@@ -10,7 +10,7 @@
 
   system.preserveFlake = false;
   features.web.enable = true;
-  features.web.floorp.enable = false;
+  # features.web.floorp.enable = false; # Floorp disabled by default now
   # features.hardware.amdgpu.rocm.enable = false; # ROCm disabled (heavy, unused)
   features.mail.vdirsyncer.enable = false;
   features.optimization = {

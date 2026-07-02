@@ -16,7 +16,6 @@ let
     web = {
       enable = true;
       tools.enable = true;
-      floorp.enable = true;
 
       prefs.fastfox.enable = true;
     };
@@ -87,7 +86,6 @@ in
         web = {
           enable = mkDefault false;
           tools.enable = mkDefault false;
-          floorp.enable = mkDefault false;
           prefs.fastfox.enable = mkDefault false;
         };
         emulators.retroarch.full = mkDefault false;
@@ -102,7 +100,6 @@ in
           enable = mkDefault true;
           tools.enable = mkDefault true;
           default = mkDefault "zen";
-          floorp.enable = mkDefault true;
           zen.enable = mkDefault true;
 
           prefs.fastfox.enable = mkDefault true;
@@ -123,7 +120,6 @@ in
       features = {
         web = {
           tools.enable = mkDefault false;
-          floorp.enable = mkDefault false;
           prefs.fastfox.enable = mkDefault false;
         };
         gui.qt.enable = mkDefault false;
@@ -137,7 +133,6 @@ in
       # Parent off must force-disable children to avoid priority conflicts
       features.web = {
         tools.enable = mkForce false;
-        floorp.enable = mkForce false;
         prefs.fastfox.enable = mkForce false;
       };
     })
@@ -217,7 +212,6 @@ in
             cfg.web.enable
             || (
               !cfg.web.tools.enable
-              && !cfg.web.floorp.enable
             );
           message = "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)";
         }
