@@ -59,14 +59,6 @@ pick_secret() {
   printf '%s\n' "$listing" | "$vicinae_bin" dmenu --placeholder "gopass ❯❯" --navigation-title "gopass" --section-title "Entries {count}"
 }
 
-fetch_window() {
-  if ! command -v pypr-client > /dev/null 2>&1; then
-    log "pypr-client helper not found"
-    return 1
-  fi
-  pypr-client fetch_client_menu
-}
-
 open_socket_reader() {
   local sig
   sig="$(require_signature)" || return 1
@@ -94,7 +86,6 @@ update_password() {
 }
 
 choices=(
-  "Fetch window"
   "Hyprland socket"
   "Hyprland logs"
   "Copy password"
@@ -103,9 +94,6 @@ choices=(
 
 selection="$(printf '%s\n' "${choices[@]}" | vicinae_menu)" || exit 0
 case "$selection" in
-  "Fetch window")
-    fetch_window
-    ;;
   "Hyprland socket")
     open_socket_reader
     ;;
