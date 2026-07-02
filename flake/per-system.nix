@@ -60,16 +60,6 @@ in
 
   checks = { };
   devShells = {
-    ai = pkgs.mkShell {
-      nativeBuildInputs = [
-        (pkgs.ai-studio or pkgs.lmstudio) # LM Studio is an easy to use desktop app for experimenting...
-        pkgs.aichat
-        pkgs.aider-chat
-        pkgs.openai # Python client library for the OpenAI API
-        pkgs.code-cursor-fhs # AI code editor (VS Code)
-      ];
-    };
-
     default = pkgs.mkShell {
       inherit (preCommit) shellHook;
       packages = [

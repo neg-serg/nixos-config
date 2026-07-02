@@ -32,7 +32,13 @@ in
       netrc-file = config.sops.secrets."github-netrc".path;
       system-features = [
         "big-parallel"
+        "nixos-test"
+        "benchmark"
+        "kvm"
       ];
+      # Keep build outputs/derivations between GCs for faster rebuilds
+      keep-outputs = true;
+      keep-derivations = true;
       fallback = true;
       experimental-features = [
         "auto-allocate-uids" # allow nix to automatically pick UIDs, rather than creating nixbld* user accounts
@@ -40,6 +46,8 @@ in
         "nix-command" # new nix interface
         "parallel-eval" # parallel nix evaluation (Determinate Nix)
         "pipe-operators" # |> syntax for cleaner function chains
+        "ca-derivations" # content-addressed derivations: store paths identified by output hash
+        "blake3-hashes" # BLAKE3: faster parallel hashing for store paths
       ];
       eval-cache = true;
       allow-import-from-derivation = false;
@@ -48,14 +56,15 @@ in
         (config.users.main.name or "neg")
       ];
       connect-timeout = 15;
-      stalled-download-timeout = 10;
-      http-connections = 8;
+      stalled-download-timeout = 120;
+      http-connections = 32;
       cores = 0; # Auto per-job cores — nix balances across max-jobs
-      max-jobs = 16; # Parallel builds (1 per physical core on 9950X3D)
+      max-jobs = 32; # Parallel builds (all SMT threads on 9950X3D)
+      min-free = 512; # MB reserved for ZFS during builds
       use-xdg-base-directories = true;
       warn-dirty = false; # Disable annoying dirty warn
       download-attempts = 5;
-      narinfo-cache-negative-ttl = 0; # Always re-check for previously missing paths
+      # narinfo-cache-negative-ttl default is 3600 (1 hour)
       # Deduplication via weekly nix.optimise timer instead of per-write
       auto-optimise-store = false;
       preallocate-contents = true; # Reduce ZFS CoW fragmentation by pre-allocating store paths
