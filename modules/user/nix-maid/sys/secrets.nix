@@ -1,19 +1,15 @@
 {
   lib,
   config,
-  neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
   secretsDir = ../../../../secrets/home;
   hasGitHubToken = builtins.pathExists "${secretsDir}/github-token.sops.yaml";
   hasCachixEnv = builtins.pathExists "${secretsDir}/cachix.env";
   hasVdirsyncerGoogle = builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml";
   hasWorkWireguard = builtins.pathExists "${secretsDir}/wireguard/work-wg.conf.sops";
   hasVlessRealitySingboxTun = builtins.pathExists "${secretsDir}/vless/reality-singbox-tun.json.sops";
-  hasXrayProxyPassword = builtins.pathExists "${secretsDir}/xray-proxy-password.sops.yaml";
   hasDeepseekApi = builtins.pathExists "${secretsDir}/deepseek-api.sops.yaml";
 in
 lib.mkMerge [
