@@ -208,11 +208,7 @@ in
           message = "features.gui.quickshell.enable requires features.gui.enable = true";
         }
         {
-          assertion =
-            cfg.web.enable
-            || (
-              !cfg.web.tools.enable
-            );
+          assertion = cfg.web.enable || (!cfg.web.tools.enable);
           message = "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)";
         }
         {
