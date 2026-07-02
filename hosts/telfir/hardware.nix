@@ -69,6 +69,7 @@
         zfs_2_4 = super.zfs_2_4.overrideAttrs (old: {
           version = pkgs.zfs.version;
           src = inputs.openzfs;
+          patches = [ ]; # OpenZFS master already has kernel compat
           meta = (old.meta or { }) // { broken = false; };
         });
       })
