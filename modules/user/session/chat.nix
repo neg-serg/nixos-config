@@ -6,8 +6,7 @@
 }:
 let
   cfg = config.features.web.chat or {};
-  hasXrayConfig = builtins.pathExists /home/neg/.config/sing-box-tun/config.json;
-  proxyEnabled = hasXrayConfig;
+  proxyEnabled = config.features.net.proxy.enable or false;
 in
 lib.mkIf (cfg.enable or true) {
   environment.systemPackages =
