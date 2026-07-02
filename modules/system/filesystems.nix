@@ -172,6 +172,7 @@ in
                    -o quota=150G \
                    tank/nix-cache
       fi
+      mkdir -p /tank/nix-cache/nginx
     '';
   };
 
