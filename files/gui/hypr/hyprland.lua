@@ -404,13 +404,13 @@ hl.window_rule({ name = "telegram-org", match = { class = m.telegram_org }, floa
 hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, tag = "utility" })
 hl.window_rule({ name = "mpd-add", match = { class = m.mpd_add }, float = true, size = "35% 35%", move = "64% 59%", tag = "mpd-add" })
 
--- Scratchpad rules: float + send to named special workspace
-hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, workspace = "special:im silent" })
-hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, workspace = "special:music silent" })
-hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, workspace = "special:mail silent" })
-hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, workspace = "special:mixer silent" })
-hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, workspace = "special:torrment silent" })
-hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, workspace = "special:teardown silent" })
+-- Scratchpad rules: float + size + send to named special workspace
+hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, size = "30% 95%", move = "69% 2%", workspace = "special:im silent" })
+hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, size = "70% 40%", move = "15% 50%", workspace = "special:music silent" })
+hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, size = "50% 50%", workspace = "special:mail silent" })
+hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, size = "40% 90%", workspace = "special:mixer silent" })
+hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, size = "98% 40%", move = "1% 0%", workspace = "special:torrment silent" })
+hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, size = "98% 50%", move = "1% 0%", workspace = "special:teardown silent" })
 
 -- Wine / Steam
 hl.window_rule({ name = "wine-exe", match = { title = ".*\\.exe" }, immediate = true, tag = "wine-exe" })
