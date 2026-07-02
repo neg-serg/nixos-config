@@ -45,7 +45,20 @@ let
     ];
   };
 
-  # Theme builder script
+  # Theme init: copy read-only Theme symlink to writable cache dir before quickshell starts.
+  # Runs as a user oneshot (so files are owned by the user, not root).
+  quickshellThemeInitScript = pkgs.writeShellScript "quickshell-theme-init" ''
+    theme_dir="$HOME/.config/quickshell/Theme"
+    cache_dir="$HOME/.cache/quickshell-theme"
+    if [ -L "$theme_dir" ] && [ ! -w "$theme_dir" ]; then
+      mkdir -p "$cache_dir"
+      if [ -z "$(ls -A "$cache_dir" 2>/dev/null)" ]; then
+        cp -r "$theme_dir"/* "$cache_dir"/ 2>/dev/null || true
+      fi
+      rm -f "$theme_dir"
+      ln -sf "$cache_dir" "$theme_dir"
+    fi
+  '';
 in
 lib.mkIf quickshellEnabled (
   lib.mkMerge [
@@ -69,14 +82,6 @@ lib.mkIf quickshellEnabled (
           RestartSec = 1;
         };
       };
-
-      # Theme watch service — disabled because the Theme directory is immutable
-      # (linked from the nix store via nix-maid impurity). The theme is pre-built
-      # during nix build and .theme.json is read from the store.
-      # systemd.user.services.quickshell-theme-watch = {
-      #   enable = true;
-      #   ...
-      # };
     }
 
     (n.mkHomeFiles {
@@ -84,21 +89,17 @@ lib.mkIf quickshellEnabled (
       ".config/quickshell".source = n.linkImpure quickshellSrc;
     })
     {
-      # Replace read-only Theme symlink with a writable copy at every activation
-      system.activationScripts.quickshellTheme = ''
-        theme_dir="/home/neg/.config/quickshell/Theme"
-        cache_dir="/home/neg/.cache/quickshell-theme"
-        if [ -L "$theme_dir" ] && [ ! -w "$theme_dir" ]; then
-          mkdir -p "$cache_dir"
-          if [ -z "$(ls -A "$cache_dir" 2>/dev/null)" ]; then
-            cp -r "$theme_dir"/* "$cache_dir"/ 2>/dev/null || true
-          fi
-          rm -f "$theme_dir"
-          chown -R neg:users "$cache_dir" 2>/dev/null || true
-          chmod -R 0755 "$cache_dir"
-          ln -sf "$cache_dir" "$theme_dir"
-        fi
-      '';
+      systemd.user.services.quickshell-theme-init = {
+        description = "Copy read-only Theme to writable cache dir before quickshell starts";
+        after = [ "maid-activation.service" ];
+        before = [ "quickshell.service" ];
+        requiredBy = [ "quickshell.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${lib.getExe' quickshellThemeInitScript "quickshell-theme-init"}";
+        };
+      };
+
       systemd.user.services.quickshell.after = lib.mkForce [ "graphical-session-pre.target" "maid-activation.service" ];
       systemd.user.services.quickshell.wants = [ "maid-activation.service" ];
     }
