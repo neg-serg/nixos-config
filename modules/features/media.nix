@@ -42,6 +42,14 @@ in
       proAudio.enable = mkBool "enable professional audio tools (REW, OpenSoundMeter, rtcqs)" false;
       cider.enable = mkBool "enable Cider (Apple Music client)" false;
       spicetify.enable = mkBool "enable Spicetify (Spotify customization)" false;
+      beets = {
+        enable = mkBool "enable Beets music library manager" true;
+        mode = lib.mkOption {
+          type = lib.types.enum [ "native" "distrobox" ];
+          default = "distrobox";
+          description = "Beets runtime mode: native (Nixpkgs) or distrobox (CachyOS container)";
+        };
+      };
     };
     photo.enable = mkBool "enable photography workflow (darktable, rawtherapee, testdisk)" false;
     webcam.enable = mkBool "enable virtual webcam support (v4l2loopback)" false;
