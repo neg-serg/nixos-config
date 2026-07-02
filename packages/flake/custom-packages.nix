@@ -9,7 +9,6 @@
 
   surfingkeys-pkg = pkgs.surfingkeys-pkg;
   rofi-config = pkgs.neg.rofi-config;
-  pipemixer = pkgs.pipemixer;
 
   wiremix = pkgs.wiremix;
 }
