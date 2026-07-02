@@ -1,14 +1,53 @@
 {
   lib,
   pkgs,
+  inputs ? null,
   ...
 }:
+let
+  hyprscratchLuaPatch = pkgs.writeText "hyprscratch-lua.patch" ''
+    --- a/src/dispatchers.rs
+    +++ b/src/dispatchers.rs
+    @@ -24,6 +24,20 @@ fn call_lua(expr: &str) -> Result<()> {
+         Dispatch::call(DispatchType::Custom(expr, ""))
+     }
+
+    +/// Strip Hyprland window rules prefix '[rule1; rule2; ...]' from an exec command
+    +/// because hl.dsp.exec_cmd passes the string directly to the shell and doesn't
+    +/// parse Hyprland window rules.
+    +fn strip_rules(cmd: &str) -> &str {
+    +    if let Some(rest) = cmd.strip_prefix('[') {
+    +        if let Some(idx) = rest.find("] ") {
+    +            return &rest[idx + 2..];
+    +        }
+    +    }
+    +    cmd
+    +}
+    +
+     impl Dispatchers {
+         fn init() -> Self {
+             Self {
+    @@ -34,7 +48,7 @@ impl Dispatchers {
+         pub fn exec(&self, cmd: &str) -> Result<()> {
+             match self.lang {
+                 ConfigLanguage::Hyprlang => call("exec", cmd),
+    -            ConfigLanguage::Lua => call_lua(&format!("hl.dsp.exec_cmd({})", lua_str(cmd))),
+    +            ConfigLanguage::Lua => call_lua(&format!("hl.dsp.exec_cmd({})", lua_str(strip_rules(cmd)))),
+             }
+         }
+  '';
+  hyprscratchPkg = inputs.hyprscratch.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
+    patches = (old.patches or []) ++ [ hyprscratchLuaPatch ];
+  });
+in
 {
   packages = [
       pkgs.hyprlock # Hyprland's GPU-accelerated screen locking utility
       pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
       pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
       pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
+
+      hyprscratchPkg # sashetophizika/hyprscratch with Lua exec fix
 
       # hyprmusic script
       (pkgs.writeScriptBin "hyprmusic" ''
@@ -27,31 +66,6 @@
           --dest="org.mpris.MediaPlayer2.$(${lib.getExe pkgs.playerctl} -l | head -n 1)" \
           /org/mpris/MediaPlayer2 \
           "org.mpris.MediaPlayer2.Player.$MEMBER"
-      '')
-      # hypr-scratch-toggle script (native Hyprland special workspaces)
-      (pkgs.writeShellScriptBin "hypr-scratch-toggle" ''
-        set -euo pipefail
-        name="$1"
-        has_window()   { hyprctl clients -j 2>/dev/null | grep -qF "\"class\":\"$1\""; }
-        toggle()       { hyprctl dispatch "hl.dsp.workspace.toggle_special(\"$1\")" 2>/dev/null; }
-        launch()       { hyprctl dispatch "hl.dsp.exec_cmd(\"$1\")" 2>/dev/null; sleep 0.6; }
-        find_addr()    { hyprctl clients -j 2>/dev/null | grep -F "\"class\":\"$1\"" | grep -o '"address":"[^"]*"' | head -1 | cut -d'"' -f4; }
-        move_special() { addr=$(find_addr "$1"); [ -n "$addr" ] && hyprctl dispatch "hl.dsp.window.move({ window = \"$addr\", workspace = \"special:$2\" })" 2>/dev/null; }
-        case "$name" in
-          im)
-            if has_window "org.telegram.desktop"; then toggle im; else launch "Telegram" && move_special "org.telegram.desktop" im && toggle im; fi ;;
-          music)
-            if has_window "music"; then toggle music; else launch "kitty --class music -e rmpc" && move_special "music" music && toggle music; fi ;;
-          torrment)
-            if has_window "torrment"; then toggle torrment; else launch "kitty --class torrment -e rustmission" && move_special "torrment" torrment && toggle torrment; fi ;;
-          teardown)
-            if has_window "teardown"; then toggle teardown; else launch "kitty --class teardown -e btop" && move_special "teardown" teardown && toggle teardown; fi ;;
-          mixer)
-            if has_window "mixer"; then toggle mixer; else launch "kitty --class mixer -e ncpamixer" && move_special "mixer" mixer && toggle mixer; fi ;;
-          vpn)
-            if has_window "vpn"; then toggle vpn; else launch "kitty --class vpn -e sing-box tun" && move_special "vpn" vpn && toggle vpn; fi ;;
-          *) echo "Unknown scratchpad: $name"; exit 1 ;;
-        esac
       '')
       # hypr-fix script (Reload Hyprland config)
       (pkgs.writeShellScriptBin "hypr-fix" ''
