@@ -150,6 +150,7 @@ in
 
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"
+    "d /cache 0775 root nixbld -" # ccache for sandboxed Nix builds
   ];
 
   # ---- Local Nix binary cache proxy ----
