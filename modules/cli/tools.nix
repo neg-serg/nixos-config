@@ -48,7 +48,7 @@ in
     pkgs.eza # modern 'ls' replacement
     pkgs.libnotify # notify-send helper used by CLI scripts
     pkgs.moreutils # assorted unix utils (sponge, etc.)
-    pkgs.ncdu # interactive du
+    pkgs.ncdu_1 # interactive du (C version, no zig/LLVM dep)
     pkgs.neg.duf # better df (fork with plain style support)
     pkgs.pwgen # password generator
   ]
