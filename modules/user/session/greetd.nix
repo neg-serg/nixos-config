@@ -49,6 +49,7 @@ let
     misc {
       disable_hyprland_logo = true
       disable_splash_rendering = true
+      disable_watchdog_warning = true
       background_color = 0x000000
       key_press_enables_dpms = true
       mouse_move_enables_dpms = true
@@ -65,6 +66,13 @@ in
         user = "greeter";
       };
     };
+    # Wait for input devices before starting greetd to avoid keyboard/mouse
+    # not working during the first few seconds after greeter appears.
+    systemd.services.greetd.preStart = ''
+      while ! ls /dev/input/event* >/dev/null 2>&1; do
+        sleep 0.2
+      done
+    '';
     security.pam.services.greetd.enableGnomeKeyring = true;
     users.users.greeter = {
       home = "/home/greeter";
