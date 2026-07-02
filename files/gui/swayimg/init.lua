@@ -83,6 +83,11 @@ swayimg.viewer.on_key("0", function() swayimg.viewer.set_fix_scale("real") end)
 -- Exit
 swayimg.viewer.on_key("q", function() swayimg.exit(0) end)
 
+-- Mode switching
+swayimg.viewer.on_key("Return", function() swayimg.set_mode("gallery") end)
+swayimg.viewer.on_key("Escape", function() swayimg.set_mode("gallery") end)
+swayimg.viewer.on_key("Space", function() swayimg.viewer.open("next") end)
+
 -- Toggle fullscreen / antialiasing / info
 swayimg.viewer.on_key("f", function() swayimg.toggle_fullscreen() end)
 swayimg.viewer.on_key("a", function()
@@ -208,6 +213,14 @@ swayimg.gallery.on_key("j", function() swayimg.gallery.select("down") end)
 -- Grid paging
 swayimg.gallery.on_key("Prior", function() swayimg.gallery.select("pgup") end)
 swayimg.gallery.on_key("Next", function() swayimg.gallery.select("pgdown") end)
+
+-- Sequential browse (same muscle memory as viewer)
+swayimg.gallery.on_key("n", function() swayimg.gallery.select("next") end)
+swayimg.gallery.on_key("p", function() swayimg.gallery.select("prev") end)
+
+-- Open selected in viewer / go back to gallery
+swayimg.gallery.on_key("Return", function() swayimg.set_mode("viewer") end)
+swayimg.gallery.on_key("f", function() swayimg.toggle_fullscreen() end)
 
 -- Image info
 swayimg.gallery.on_key("i", function() swayimg.text.show() end)
