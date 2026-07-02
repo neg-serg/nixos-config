@@ -33,7 +33,7 @@
   xxd,
 }:
 
-stdenv.mkDerivation (finalAttrs: {
+stdenv.mkDerivation (_finalAttrs: {
   pname = "swayimg";
   version = "0-unstable-fork";
 
