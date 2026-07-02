@@ -8,10 +8,9 @@ let
   gui = importOv ./overlays/gui.nix;
   dev = importOv ./overlays/dev.nix;
   fixTinycc = importOv ./overlays/fix-tinycc.nix;
-  zfs = importOv ./overlays/zfs.nix;
 in
 # Standard overlay pattern: merge top-level attributes
-(functions // tools // media // dev // gui // fixTinycc // zfs)
+(functions // tools // media // dev // gui // fixTinycc)
 // {
   # Merge all pkgs.neg sub-attributes from individual overlays
   neg =
