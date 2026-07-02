@@ -18,4 +18,6 @@ isn't a step-by-step runbook.
 
 - DeepFaceLab via Docker (RU): [deepfacelab-docker.ru.md](./deepfacelab-docker.ru.md)
 
+- Build performance analysis: [build-optimization.md](./build-optimization.md)
+
 - Options/modules reference: [modules.md](./modules.md)
