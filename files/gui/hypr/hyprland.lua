@@ -179,14 +179,14 @@ hl.bind(M4 .. "+mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 hl.bind(M4 .. "+mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(M4 .. "+mouse:273", hl.dsp.window.resize(), { mouse = true })
 
--- --- Scratchpads (hyprscratch via hypr-scratch-toggle) ---
+-- --- Scratchpads (native Hyprland special workspaces) ---
 hl.bind(M4 .. "+d", hl.dsp.exec_cmd("hypr-scratch-toggle teardown"))
 hl.bind(M4 .. "+e", hl.dsp.exec_cmd("hypr-scratch-toggle im"))
 hl.bind(M4 .. "+f", hl.dsp.exec_cmd("hypr-scratch-toggle music"))
 hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hypr-scratch-toggle torrment"))
 hl.bind(M4 .. "+u", hl.dsp.exec_cmd("hypr-scratch-toggle vpn"))
 hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hypr-scratch-toggle mixer"))
-hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("hyprscratch hide-all"))
+-- hl.bind(M4 .. "+" .. SH .. "+h", ...) — removed (pyprland/hyprscratch hide-all no longer needed)
 
 -- --- App launchers (apps.conf) ---
 hl.bind(M4 .. "+w", hl.dsp.exec_cmd('raise --match "class:regex=' .. m.browser .. '" --launch ' .. browser))
@@ -404,13 +404,13 @@ hl.window_rule({ name = "telegram-org", match = { class = m.telegram_org }, floa
 hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, tag = "utility" })
 hl.window_rule({ name = "mpd-add", match = { class = m.mpd_add }, float = true, size = "35% 35%", move = "64% 59%", tag = "mpd-add" })
 
--- Scratchpad float rules
-hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true })
-hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true })
-hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true })
-hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true })
-hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true })
-hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true })
+-- Scratchpad rules: float + send to named special workspace
+hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, workspace = "special:im silent" })
+hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, workspace = "special:music silent" })
+hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, workspace = "special:mail silent" })
+hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, workspace = "special:mixer silent" })
+hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, workspace = "special:torrment silent" })
+hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, workspace = "special:teardown silent" })
 
 -- Wine / Steam
 hl.window_rule({ name = "wine-exe", match = { title = ".*\\.exe" }, immediate = true, tag = "wine-exe" })
@@ -532,7 +532,6 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("~/.local/bin/unlock")
   hl.exec_cmd("hypr-start")
   hl.exec_cmd("wl init")
-  hl.exec_cmd("hyprscratch init config /home/neg/src/cfg/dotfiles/dot_config/hypr/hyprscratch.conf")
   hl.exec_cmd("kitty --single-instance --class term")
   hl.exec_cmd("wl-clip-persist --clipboard regular")
   hl.exec_cmd("zsh -c 'pkill \"wl-paste --watch cliphist store\"; wl-paste --watch cliphist store'")

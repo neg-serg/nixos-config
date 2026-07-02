@@ -28,17 +28,18 @@
           /org/mpris/MediaPlayer2 \
           "org.mpris.MediaPlayer2.Player.$MEMBER"
       '')
-      # hypr-scratch-toggle script
+      # hypr-scratch-toggle script (native Hyprland special workspaces)
       (pkgs.writeShellScriptBin "hypr-scratch-toggle" ''
         set -euo pipefail
         name="$1"
+        toggle() { hyprctl dispatch "hl.dsp.workspace.toggle_special(\"$1\")" 2>/dev/null; }
         case "$name" in
-          im)       exec hyprscratch im "Telegram" shiny ;;
-          music)    exec hyprscratch music "kitty --class music -e rmpc" persist ;;
-          torrment) exec hyprscratch torrment "kitty --class torrment -e rustmission" ;;
-          teardown) exec hyprscratch teardown "kitty --class teardown -e btop" persist shiny ;;
-          mixer)    exec hyprscratch mixer "kitty --class mixer -e ncpamixer" shiny ;;
-          vpn)      exec hyprscratch vpn "kitty --class vpn -e sing-box tun" shiny ;;
+          im)       toggle im; hyprctl dispatch 'hl.dsp.exec_cmd("Telegram")' 2>/dev/null & ;;
+          music)    toggle music; hyprctl dispatch 'hl.dsp.exec_cmd("kitty --class music -e rmpc")' 2>/dev/null & ;;
+          torrment) toggle torrment; hyprctl dispatch 'hl.dsp.exec_cmd("kitty --class torrment -e rustmission")' 2>/dev/null & ;;
+          teardown) toggle teardown; hyprctl dispatch 'hl.dsp.exec_cmd("kitty --class teardown -e btop")' 2>/dev/null & ;;
+          mixer)    toggle mixer; hyprctl dispatch 'hl.dsp.exec_cmd("kitty --class mixer -e ncpamixer")' 2>/dev/null & ;;
+          vpn)      toggle vpn; hyprctl dispatch 'hl.dsp.exec_cmd("kitty --class vpn -e sing-box tun")' 2>/dev/null & ;;
           *)        echo "Unknown scratchpad: $name"; exit 1 ;;
         esac
       '')
