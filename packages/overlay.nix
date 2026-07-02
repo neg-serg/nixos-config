@@ -31,9 +31,6 @@ in
       });
     };
 
-  # Use LLVM 22 instead of default 21 (newer, fewer LLVM versions in closure)
-  llvmPackages = final.llvmPackages_22;
-
   # Python with LTO optimizations
   python3-lto = finalPrev.python3.override {
     packageOverrides = _pythonSelf: _pythonSuper: {
