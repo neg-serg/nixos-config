@@ -46,25 +46,6 @@ let
   };
 
   # Theme builder script
-  buildTheme = pkgs.writeShellApplication {
-    name = "quickshell-build-theme";
-    runtimeInputs = [
-      pkgs.coreutils # basic file operations
-      pkgs.nodejs_24 # javascript runtime for build script
-      pkgs.systemd # systemd utilities
-    ];
-    text = ''
-      set -euo pipefail
-      # For mutable config, we build theme directly in the impurity source if valid,
-      # or formatted output to ~/.config/quickshell/Theme/.theme.json
-      # Actually, since we are linking, we can run this against the linked path.
-
-      confdir="$HOME/.config/quickshell/Theme"
-      mkdir -p "$confdir"
-      # The build script presumably writes to --out
-      ${pkgs.nodejs_24}/bin/node "$HOME"/.config/quickshell/Tools/build-theme.mjs --dir "$confdir" --out "$confdir/.theme.json" --quiet # Event-driven I/O framework for the V8 JavaScript engine
-    '';
-  };
 in
 lib.mkIf quickshellEnabled (
   lib.mkMerge [
