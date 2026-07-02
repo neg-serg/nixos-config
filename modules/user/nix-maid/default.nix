@@ -54,6 +54,7 @@
 
     # Web & Browsing
     ./web/browsing.nix
+    ./web/zen.nix
 
     ./web/aria.nix
     ./web/misc.nix
