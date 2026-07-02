@@ -30,7 +30,6 @@ in
         '';
       });
     };
-  };
 
   # Use LLVM 22 instead of default 21 (newer, fewer LLVM versions in closure)
   llvmPackages = final.llvmPackages_22;
