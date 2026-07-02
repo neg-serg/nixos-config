@@ -21,6 +21,21 @@ let
     +            }
              }
          }
+     
+    --- a/src/dispatchers.rs
+    +++ b/src/dispatchers.rs
+    @@ -20,6 +20,6 @@
+     impl Dispatchers {
+    -    fn init() -> Self {
+    -        Self {
+    -            lang: detect_config_language(),
+    -        }
+    -    }
+    +    fn init() -> Self {
+    +        Self {
+    +            lang: ConfigLanguage::Lua,
+    +        }
+    +    }
   '';
   hyprscratchPkg = inputs.hyprscratch.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
     patches = (old.patches or []) ++ [ hyprscratchLuaPatch ];
