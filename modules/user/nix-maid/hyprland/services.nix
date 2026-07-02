@@ -13,6 +13,7 @@
       pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
 
       pkgs.pyprland # Python plugin system for Hyprland
+      pkgs.hyprscratch # Rust scratchpad manager for Hyprland
       # hyprmusic script
       (pkgs.writeScriptBin "hyprmusic" ''
         #!/bin/sh
@@ -33,16 +34,16 @@
       '')
       # hypr-scratch-toggle script
       (pkgs.writeShellScriptBin "hypr-scratch-toggle" ''
-        target="$1"
-        active_class=$(${lib.getExe' pkgs.hyprland "hyprctl"} activewindow -j | ${lib.getExe pkgs.jq} -r '.class')
-
-        case "$active_class" in
-          ${lib.concatStringsSep "\n          " (
-            lib.mapAttrsToList (
-              name: cfg: ''"${cfg.class}") ${lib.getExe pkgs.pyprland} toggle "${name}" ;;''
-            ) pyprlandConfig.scratchpads
-          )}
-          *) ${lib.getExe pkgs.pyprland} toggle "$target" ;;
+        set -euo pipefail
+        name="$1"
+        case "$name" in
+          im)       exec hyprscratch im "telegram-desktop" shiny ;;
+          music)    exec hyprscratch music "kitty --class music -e rmpc" persist ;;
+          torrment) exec hyprscratch torrment "kitty --class torrment -e rustmission" ;;
+          teardown) exec hyprscratch teardown "kitty --class teardown -e btop" persist shiny ;;
+          mixer)    exec hyprscratch mixer "kitty --class mixer -e ncpamixer" shiny ;;
+          vpn)      exec hyprscratch vpn "kitty --class vpn -e sing-box tun" shiny ;;
+          *)        echo "Unknown scratchpad: $name"; exit 1 ;;
         esac
       '')
       # hypr-fix script (Reset Pyprland and Hyprland state)
