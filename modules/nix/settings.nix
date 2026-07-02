@@ -69,6 +69,8 @@ in
       auto-optimise-store = false;
       preallocate-contents = true; # Reduce ZFS CoW fragmentation by pre-allocating store paths
       lazy-locks = true; # Lazy flake.lock loading for faster eval
+      # Expose ccache directory to sandboxed builds
+      extra-sandbox-paths = [ "/cache" ];
     }
     // caches;
     gc = {
