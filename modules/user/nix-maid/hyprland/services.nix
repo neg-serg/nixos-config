@@ -13,7 +13,6 @@
       pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
 
       pkgs.pyprland # Python plugin system for Hyprland
-      pkgs.hyprscratch # Rust scratchpad manager for Hyprland
       # hyprmusic script
       (pkgs.writeScriptBin "hyprmusic" ''
         #!/bin/sh
