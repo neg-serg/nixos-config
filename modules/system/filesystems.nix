@@ -184,6 +184,9 @@ in
     recommendedOptimisation = false;
     recommendedTlsSettings = false;
 
+    # Use flat pid path to avoid RuntimeDirectory creation order issue
+    pid = "/run/nginx.pid";
+
     proxyCachePath."/tank/nix-cache/nginx" = {
       enable = true;
       keysZoneName = "nixcache";
