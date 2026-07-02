@@ -63,17 +63,8 @@
 
   # Host-specific kernel parameters and boot tuning
   boot = {
-    # Use latest kernel with ZFS from OpenZFS master (overlay provides 7.x compat)
-    kernelPackages = lib.mkForce (
-      pkgs.linuxPackages_latest.extend (_self: super: {
-        zfs_2_4 = super.zfs_2_4.overrideAttrs (_old: {
-          version = pkgs.zfs.version;
-          src = inputs.openzfs;
-          patches = [ ]; # OpenZFS master already has kernel compat
-          meta = { broken = false; };
-        });
-      })
-    );
+    # Use LTS kernel (ZFS doesn't build with latest 7.x)
+    kernelPackages = lib.mkForce pkgs.linuxPackages;
 
     kernelParams = [
       "acpi_osi=!"                             # Fix ACPI compatibility on ASUS boards
