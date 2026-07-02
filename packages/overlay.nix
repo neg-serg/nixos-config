@@ -53,7 +53,7 @@ in
   });
 
   # Disable flaky OpenLDAP tests (fails on syncreplication)
-  openldap = finalPrev.openldap.overrideAttrs (old: {
+  openldap = finalPrev.openldap.overrideAttrs (_old: {
     doCheck = false;
   });
 
@@ -64,17 +64,17 @@ in
   });
 
   # Disable rsync tests (fails on hardlinks test)
-  rsync = finalPrev.rsync.overrideAttrs (old: {
+  rsync = finalPrev.rsync.overrideAttrs (_old: {
     doCheck = false;
   });
 
   # Disable flaky libuv tests
-  libuv = finalPrev.libuv.overrideAttrs (old: {
+  libuv = finalPrev.libuv.overrideAttrs (_old: {
     doCheck = false;
   });
 
   # Disable flaky lua-language-server tests
-  lua-language-server = finalPrev.lua-language-server.overrideAttrs (old: {
+  lua-language-server = finalPrev.lua-language-server.overrideAttrs (_old: {
     doCheck = false;
   });
 
@@ -97,21 +97,21 @@ in
 
   # XFS breaks nix-util readLinkAt test on kernel 7.0+
   # Build failures on nixpkgs-unstable
-  valkey = finalPrev.valkey.overrideAttrs (old: {
+  valkey = finalPrev.valkey.overrideAttrs (_old: {
     doCheck = false;
     # Note: if valkey still fails to build, it's a transient nixpkgs issue
   });
-  notmuch = finalPrev.notmuch.overrideAttrs (old: {
+  notmuch = finalPrev.notmuch.overrideAttrs (_old: {
     doCheck = false;
   });
 
-  nix = finalPrev.nix.overrideAttrs (old: {
+  nix = finalPrev.nix.overrideAttrs (_old: {
     doCheck = false;
     doInstallCheck = false;
   });
 
   nixVersions = finalPrev.nixVersions // {
-    stable = finalPrev.nixVersions.stable.overrideAttrs (old: {
+    stable = finalPrev.nixVersions.stable.overrideAttrs (_old: {
       doCheck = false;
       doInstallCheck = false;
     });
@@ -119,14 +119,14 @@ in
 
   # Disable flaky pytest-xdist tests
   pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
-    (python-final: python-prev: {
-      pytest-xdist = python-prev.pytest-xdist.overrideAttrs (old: {
+    (_python-final: python-prev: {
+      pytest-xdist = python-prev.pytest-xdist.overrideAttrs (_old: {
         doCheck = false;
       });
-      uvloop = python-prev.uvloop.overrideAttrs (old: {
+      uvloop = python-prev.uvloop.overrideAttrs (_old: {
         doCheck = false; # flaky timing test
       });
-      pylint = python-prev.pylint.overrideAttrs (old: {
+      pylint = python-prev.pylint.overrideAttrs (_old: {
         doCheck = false; # flaky primer test (network-dependent)
       });
     })
