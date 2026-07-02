@@ -133,6 +133,12 @@ in
       pylint = python-prev.pylint.overrideAttrs (_old: {
         doCheck = false; # flaky primer test (network-dependent)
       });
+      rich = python-prev.rich.overrideAttrs (_old: {
+        doCheck = false; # flaky test_brokenpipeerror
+      });
+      aiohttp = python-prev.aiohttp.overrideAttrs (_old: {
+        doCheck = false; # flaky tests
+      });
     })
   ];
 }
