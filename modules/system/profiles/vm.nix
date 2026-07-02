@@ -21,8 +21,6 @@ in
       kernelPatches = lib.mkDefault [ ];
       extraModulePackages = lib.mkDefault [ ];
       kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
-      # Secure Boot stack generally unnecessary in throwaway VMs
-      lanzaboote.enable = lib.mkDefault false;
     };
   };
 }
