@@ -120,6 +120,7 @@ hl.config({
     active_opacity = opacity_active, inactive_opacity = opacity_inactive,
     shadow = { enabled = false, range = 4, render_power = 1, color = shadow_color },
     blur = { enabled = true, size = blur_size, passes = blur_passes, vibrancy = blur_vibrancy },
+    dim_special = false,
   },
   input = {
     kb_layout = "us,ru", kb_variant = "", kb_model = "", kb_options = "", kb_rules = "",
@@ -411,6 +412,7 @@ hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }
 hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, size = "monitor_w*0.4 monitor_h*0.9", no_dim = true })
 hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, size = "monitor_w*0.98 monitor_h*0.4", move = "monitor_w*0.01 0", no_dim = true })
 hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, size = "monitor_w*0.98 monitor_h*0.5", move = "monitor_w*0.01 0", no_dim = true })
+hl.window_rule({ name = "vpn-scratchpad", match = { class = "^(vpn)$" }, float = true, size = "monitor_w*0.5 monitor_h*0.3", center = true, no_dim = true })
 
 -- Wine / Steam
 hl.window_rule({ name = "wine-exe", match = { title = ".*\\.exe" }, immediate = true, tag = "wine-exe" })
