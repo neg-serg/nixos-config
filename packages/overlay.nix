@@ -135,6 +135,9 @@ in
       aiohttp = python-prev.aiohttp.overrideAttrs (_old: {
         doCheck = false; # flaky tests
       });
+      django = python-prev.django.overrideAttrs (_old: {
+        doCheck = false; # flaky test DB teardown
+      });
     })
   ];
 }

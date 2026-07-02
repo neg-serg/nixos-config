@@ -40,7 +40,7 @@ let
 
     # -- Tagging --
     pkgs.id3v2 # low-level ID3 tag editor
-    pkgs.picard # MusicBrainz tagging GUI
+    # pkgs.picard # MusicBrainz tagging GUI (removed — flaky Django test dep)
 
     # -- Recording --
     pkgs.screenkey # show keystrokes when recording tutorials
