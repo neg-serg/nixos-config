@@ -184,18 +184,17 @@ in
     recommendedOptimisation = false;
     recommendedTlsSettings = false;
 
-    # Use flat pid path to avoid RuntimeDirectory creation order issue
-    pid = "/run/nginx.pid";
 
-    proxyCachePath."/tank/nix-cache/nginx" = {
-      enable = true;
-      keysZoneName = "nixcache";
-      keysZoneSize = "100m";
-      levels = "1:2";
-      useTempPath = false;
-      inactive = "30d";
-      maxSize = "100G";
-    };
+
+    # Cache path set via extraConfig to avoid systemd CacheDirectory prefix
+    commonHttpConfig = ''
+      proxy_cache_path /tank/nix-cache/nginx
+        keys_zone=nixcache:100m
+        levels=1:2
+        use_temp_path=off
+        inactive=30d
+        max_size=100G;
+    '';
 
     virtualHosts."nix-cache" = {
       listen = [
