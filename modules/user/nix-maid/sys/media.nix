@@ -8,6 +8,21 @@
 }:
 let
   n = neg impurity;
+
+  # --- Beets distrobox wrapper ---
+  beetWrapper = pkgs.writeShellScriptBin "beet" ''
+    set -euo pipefail
+    CONTAINER="cachyos-beets"
+    if ! distrobox list 2>/dev/null | grep -qw "$CONTAINER"; then
+      distrobox create \
+        --image "cachyos/cachyos:latest" \
+        --name "$CONTAINER" \
+        --yes
+      distrobox enter "$CONTAINER" -- sudo pacman -S --noconfirm beets
+    fi
+    exec distrobox enter "$CONTAINER" -- beet "$@"
+  '';
+
   # --- Beets Config ---
   beetsSettings = {
     plugins = [
@@ -94,9 +109,14 @@ let
 in
 lib.mkMerge [
   {
-    environment.systemPackages = [
+    environment.systemPackages =
+      (lib.optionals (config.features.media.audio.beets.enable or true) (
+        if config.features.media.audio.beets.mode == "distrobox"
+        then [ beetWrapper ] # Music library manager and tagger (via distrobox/CachyOS)
+        else [ pkgs.beets ] # Music library manager and tagger (native)
+      ))
+      ++ [
       # Audio
-      pkgs.beets # Music library manager and tagger
       pkgs.mpc # A minimalist command line interface to MPD
       pkgs.rmpc # Rust Music Player Client
       pkgs.rescrobbled # MPRIS Scrobbler # MPRIS Scrobbler
