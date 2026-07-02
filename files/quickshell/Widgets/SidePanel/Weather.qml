@@ -245,7 +245,7 @@ Rectangle {
                         color: Theme.textOn(card.color)
                     }
                     Text {
-                        text: WeatherIcons.formatWindFull(weatherRoot._cur.wind_speed_10m, weatherRoot._cur.wind_direction_10m)
+                        text: weatherRoot._cur ? WeatherIcons.formatWindFull(weatherRoot._cur.wind_speed_10m, weatherRoot._cur.wind_direction_10m) : ""
                         font.family: Theme.fontFamily
                         font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen))
                         color: Theme.textOn(card.color)
@@ -261,7 +261,7 @@ Rectangle {
                         color: Theme.textOn(card.color)
                     }
                     Text {
-                        text: Math.round(weatherRoot._cur.relative_humidity_2m) + "%"
+                        text: weatherRoot._cur ? Math.round(weatherRoot._cur.relative_humidity_2m) + "%" : ""
                         font.family: Theme.fontFamily
                         font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen))
                         color: Theme.textOn(card.color)
