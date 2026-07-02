@@ -179,14 +179,14 @@ hl.bind(M4 .. "+mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 hl.bind(M4 .. "+mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(M4 .. "+mouse:273", hl.dsp.window.resize(), { mouse = true })
 
--- --- Scratchpads (pyprland via hypr-scratch-toggle) (apps.conf) ---
+-- --- Scratchpads (hyprscratch via hypr-scratch-toggle) ---
 hl.bind(M4 .. "+d", hl.dsp.exec_cmd("hypr-scratch-toggle teardown"))
 hl.bind(M4 .. "+e", hl.dsp.exec_cmd("hypr-scratch-toggle im"))
 hl.bind(M4 .. "+f", hl.dsp.exec_cmd("hypr-scratch-toggle music"))
 hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hypr-scratch-toggle torrment"))
 hl.bind(M4 .. "+u", hl.dsp.exec_cmd("hypr-scratch-toggle vpn"))
 hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hypr-scratch-toggle mixer"))
-hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("/etc/nixos/packages/local-bin/bin/pypr-hide-all"))
+hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("hyprscratch hide-all"))
 
 -- --- App launchers (apps.conf) ---
 hl.bind(M4 .. "+w", hl.dsp.exec_cmd('raise --match "class:regex=' .. m.browser .. '" --launch ' .. browser))

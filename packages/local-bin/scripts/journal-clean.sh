@@ -31,14 +31,4 @@ if [[ -n "${XDG_RUNTIME_DIR:-}" && -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; the
   fi
 fi
 
-# Pyprland cache log (if present)
-if [[ -n "${XDG_CACHE_HOME:-}" ]]; then
-  for f in "${XDG_CACHE_HOME}/pyprland.log" "${XDG_CACHE_HOME}/pyprland/pyprland.log"; do
-    if [[ -f "${f}" ]]; then
-      : > "${f}"
-      echo "Truncated ${f}"
-    fi
-  done
-fi
-
 echo "Done."

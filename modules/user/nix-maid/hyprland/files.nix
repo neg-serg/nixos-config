@@ -26,13 +26,11 @@ in
     {
       hyprlandConfText,
       permissionsConfText,
-      pyprlandToml,
     }:
     n.mkHomeFiles (
       {
         ".config/hypr/hyprland.conf".text = hyprlandConfText;
         ".config/hypr/permissions.conf".text = permissionsConfText;
-        ".config/pypr/config.toml".source = pyprlandToml;
 
         ".config/hypr/hyprland.lua".source = n.linkImpure (hyprConfDir + /hyprland.lua);
         ".config/hypr/xdph.conf".source = n.linkImpure (hyprConfDir + /xdph.conf);
