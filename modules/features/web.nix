@@ -17,7 +17,7 @@ in
     tools.enable = mkBool "enable web tools (aria2, yt-dlp, misc)" true;
     aria2.service.enable = mkBool "run aria2 download manager as a user service (graphical preset)" false;
     floorp = {
-      enable = mkBool "enable Floorp browser" true;
+      enable = mkBool "enable Floorp browser" false;
     };
 
     zen.enable = mkBool "enable Zen browser (package only; profile managed manually)" true;
