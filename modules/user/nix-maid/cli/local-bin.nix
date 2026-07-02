@@ -107,13 +107,8 @@ in
         vidInfoTpl = builtins.readFile (scriptsDir + "/vid-info.py");
         vidInfoText = lib.replaceStrings [ "@LIBPP@" "@LIBCOLORED@" ] [ libpp libcolored ] vidInfoTpl;
 
-        # 4. New scripts (pypr-run, mount-drive)
+        # 4. New scripts (mount-drive)
         # These are now in modules/user/nix-maid/scripts/
-
-        # pypr-run: Use the robust wrapper which handles the hyprland socket signature
-        pyprExe = lib.getExe' pkgs.pyprland "pypr";
-        pyprRunTpl = builtins.readFile ../scripts/pypr-run;
-        pyprRunText = lib.replaceStrings [ "exec pypr" ] [ "exec ${pyprExe}" ] pyprRunTpl;
 
         # mount-drive: Uses rclone.
         rcloneExe = lib.getExe pkgs.rclone; # Command line program to sync files and directories to and...
@@ -136,10 +131,6 @@ in
         ".local/bin/vid-info" = {
           executable = true;
           text = vidInfoText;
-        };
-        ".local/bin/pypr-run" = {
-          executable = true;
-          text = pyprRunText;
         };
         ".local/bin/mount-drive" = {
           executable = true;

@@ -4,15 +4,12 @@
   ...
 }:
 {
-  packages =
-    pyprlandConfig:
-    [
+  packages = [
       pkgs.hyprlock # Hyprland's GPU-accelerated screen locking utility
       pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
       pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
       pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
 
-      pkgs.pyprland # Python plugin system for Hyprland
       # hyprmusic script
       (pkgs.writeScriptBin "hyprmusic" ''
         #!/bin/sh
@@ -36,7 +33,7 @@
         set -euo pipefail
         name="$1"
         case "$name" in
-          im)       exec hyprscratch im "telegram-desktop" shiny ;;
+          im)       exec hyprscratch im "Telegram" shiny ;;
           music)    exec hyprscratch music "kitty --class music -e rmpc" persist ;;
           torrment) exec hyprscratch torrment "kitty --class torrment -e rustmission" ;;
           teardown) exec hyprscratch teardown "kitty --class teardown -e btop" persist shiny ;;
@@ -45,12 +42,12 @@
           *)        echo "Unknown scratchpad: $name"; exit 1 ;;
         esac
       '')
-      # hypr-fix script (Reset Pyprland and Hyprland state)
+      # hypr-fix script (Reload Hyprland config)
       (pkgs.writeShellScriptBin "hypr-fix" ''
         set -euo pipefail
-        ${lib.getExe pkgs.libnotify} "System Fix" "Restarting Pyprland and reloading config..."
-        systemctl --user restart pyprland.service
+        ${lib.getExe pkgs.libnotify} "System Fix" "Reloading Hyprland config..."
         hyprctl reload
+        sleep 1
         ${lib.getExe pkgs.libnotify} "System Fix" "Done."
       '')
       # hypr-reload script
@@ -125,18 +122,6 @@
         ];
         Restart = "on-failure";
         RestartSec = "2s";
-      };
-    };
-
-    # Pyprland service
-    pyprland = {
-      description = "Pyprland - Hyprland plugin system";
-      wantedBy = [ "graphical-session.target" ];
-      after = [ "graphical-session-pre.target" ];
-      serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.pyprland}";
-        Restart = "always";
-        RestartSec = "1";
       };
     };
   };
