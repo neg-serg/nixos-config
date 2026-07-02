@@ -8,7 +8,6 @@ in
     enable = mkBool "enable Web stack (browsers + tools)" true;
     default = mkOption {
       type = types.enum [
-        "floorp"
         "zen"
       ];
       default = "zen";
