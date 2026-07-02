@@ -1,6 +1,9 @@
 {
   description = "Neg-Serg configuration";
-  nixConfig.extra-experimental-features = "pipe-operators";
+  nixConfig = {
+    extra-experimental-features = "pipe-operators";
+    substituters = "";
+  };
   inputs = {
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
