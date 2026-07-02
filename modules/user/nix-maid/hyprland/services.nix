@@ -135,6 +135,18 @@ in
   };
 
   systemdServices = {
+    # Hyprscratch daemon (scratchpad manager)
+    hyprscratch = {
+      description = "Hyprscratch - improved scratchpad functionality for Hyprland";
+      wantedBy = [ "graphical-session.target" ];
+      after = [ "graphical-session-pre.target" ];
+      serviceConfig = {
+        ExecStart = "${lib.getExe hyprscratchPkg} init spotless";
+        Restart = "always";
+        RestartSec = "2";
+      };
+    };
+
     # Hyprland Polkit Agent
     hyprpolkitagent = {
       description = "Hyprland Polkit Agent";
