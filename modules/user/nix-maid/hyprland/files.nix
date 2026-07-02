@@ -1,5 +1,4 @@
 {
-  lib,
   neg,
   impurity ? null,
   ...

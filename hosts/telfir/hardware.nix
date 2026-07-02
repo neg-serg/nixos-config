@@ -65,7 +65,7 @@
   boot = {
     # Use latest kernel with ZFS from OpenZFS master (overlay provides 7.x compat)
     kernelPackages = lib.mkForce (
-      pkgs.linuxPackages_latest.extend (self: super: {
+      pkgs.linuxPackages_latest.extend (_self: super: {
         zfs_2_4 = super.zfs_2_4.overrideAttrs (old: {
           version = pkgs.zfs.version;
           src = inputs.openzfs;

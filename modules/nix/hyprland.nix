@@ -6,7 +6,7 @@
     nixpkgs.overlays = [
       inputs.hyprland.overlays.hyprland-packages # Hyprland with all deps (aquamarine, hyprlang, hyprcursor, guiutils, etc.)
       inputs.xdg-desktop-portal-hyprland.overlays.default # XDG portal backend for Hyprland
-      (_: prev: let inherit (prev.stdenv.hostPlatform) system; in {
+      (_: prev: {
         hyprlandPlugins = prev.hyprlandPlugins // {};
       })
     ];
