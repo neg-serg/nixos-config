@@ -38,7 +38,7 @@ in
           linear-downscaling=no
           scale=ewa_lanczos
           temporal-dither=no
-          fbo-format=rgba16hf
+          fbo-format=rgba16f
           cscale-antiring=0.7
           dscale-antiring=0.7
           scale-antiring=0.7
