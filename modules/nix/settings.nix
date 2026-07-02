@@ -84,8 +84,6 @@ in
     };
     registry.nixpkgs.flake = inputs.nixpkgs;
     daemonCPUSchedPolicy = "batch";
-    daemonIOSchedClass = "idle";
-    daemonIOSchedPriority = 7;
   };
 
   # Determinate Nix overrides netrc-file in /etc/nix/nix.conf after including
