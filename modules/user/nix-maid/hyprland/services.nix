@@ -34,20 +34,30 @@
         name="$1"
         has_window() { hyprctl clients -j 2>/dev/null | ${lib.getExe pkgs.python3} -c "import json,sys; clients=json.load(sys.stdin); sys.exit(0 if any(c['class']=='"$1"' for c in clients) else 1)"; }
         toggle() { hyprctl dispatch "hl.dsp.workspace.toggle_special(\"$1\")" 2>/dev/null; }
-        launch() { hyprctl dispatch "hl.dsp.exec_cmd(\"$1\")" 2>/dev/null; sleep 0.5; }
+        launch() { hyprctl dispatch "hl.dsp.exec_cmd(\"$1\")" 2>/dev/null; sleep 0.6; }
+        move_to_special() {
+          addr=$(hyprctl clients -j 2>/dev/null | ${lib.getExe pkgs.python3} -c "import json,sys; clients=json.load(sys.stdin); print(next((c['address'] for c in clients if c['class']=='"$1"'), ''))")
+          [ -n "$addr" ] && hyprctl dispatch "hl.dsp.window.move({ window = \"$addr\", workspace = \"special:$2\" })" 2>/dev/null
+        }
         case "$name" in
           im)
-            if has_window "org.telegram.desktop"; then toggle im; else launch "Telegram" && toggle im; fi ;;
+            class="org.telegram.desktop"
+            if has_window "$class"; then toggle im; else launch "Telegram" && move_to_special "$class" im && toggle im; fi ;;
           music)
-            if has_window "music"; then toggle music; else launch "kitty --class music -e rmpc" && toggle music; fi ;;
+            class="music"
+            if has_window "$class"; then toggle music; else launch "kitty --class music -e rmpc" && move_to_special "$class" music && toggle music; fi ;;
           torrment)
-            if has_window "torrment"; then toggle torrment; else launch "kitty --class torrment -e rustmission" && toggle torrment; fi ;;
+            class="torrment"
+            if has_window "$class"; then toggle torrment; else launch "kitty --class torrment -e rustmission" && move_to_special "$class" torrment && toggle torrment; fi ;;
           teardown)
-            if has_window "teardown"; then toggle teardown; else launch "kitty --class teardown -e btop" && toggle teardown; fi ;;
+            class="teardown"
+            if has_window "$class"; then toggle teardown; else launch "kitty --class teardown -e btop" && move_to_special "$class" teardown && toggle teardown; fi ;;
           mixer)
-            if has_window "mixer" || has_window "ncpamixer"; then toggle mixer; else launch "kitty --class mixer -e ncpamixer" && toggle mixer; fi ;;
+            class="mixer"
+            if has_window "$class"; then toggle mixer; else launch "kitty --class mixer -e ncpamixer" && move_to_special "$class" mixer && toggle mixer; fi ;;
           vpn)
-            if has_window "vpn"; then toggle vpn; else launch "kitty --class vpn -e sing-box tun" && toggle vpn; fi ;;
+            class="vpn"
+            if has_window "$class"; then toggle vpn; else launch "kitty --class vpn -e sing-box tun" && move_to_special "$class" vpn && toggle vpn; fi ;;
           *) echo "Unknown scratchpad: $name"; exit 1 ;;
         esac
       '')
