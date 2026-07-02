@@ -50,7 +50,11 @@
           "tpm_crb"
           "tpm_tis"
         ];
-        kernelModules = [ ];
+        kernelModules = [
+          "usbhid"
+          "xhci_hcd"
+          "xhci_pci"
+        ];
       }
       (lib.mkIf (config.profiles.performance.optimizeInitrdCompression or false) {
         compressor = "zstd";
