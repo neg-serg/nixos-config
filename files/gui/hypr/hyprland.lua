@@ -404,13 +404,13 @@ hl.window_rule({ name = "telegram-org", match = { class = m.telegram_org }, floa
 hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, tag = "utility" })
 hl.window_rule({ name = "mpd-add", match = { class = m.mpd_add }, float = true, size = "35% 35%", move = "64% 59%", tag = "mpd-add" })
 
--- Scratchpad rules: float + size (monitor-relative expressions — percentages broken in 0.55)
-hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, size = "monitor_w*0.3 monitor_h*0.95", move = "monitor_w*0.69 monitor_h*0.02" })
-hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.5" })
-hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, size = "monitor_w*0.5 monitor_h*0.5" })
-hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, size = "monitor_w*0.4 monitor_h*0.9" })
-hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, size = "monitor_w*0.98 monitor_h*0.4", move = "monitor_w*0.01 0" })
-hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, size = "monitor_w*0.98 monitor_h*0.5", move = "monitor_w*0.01 0" })
+-- Scratchpad rules: float + size + no dim (monitor-relative expressions)
+hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, size = "monitor_w*0.3 monitor_h*0.95", move = "monitor_w*0.69 monitor_h*0.02", no_dim = true })
+hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.5", no_dim = true })
+hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, size = "monitor_w*0.5 monitor_h*0.5", no_dim = true })
+hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, size = "monitor_w*0.4 monitor_h*0.9", no_dim = true })
+hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, size = "monitor_w*0.98 monitor_h*0.4", move = "monitor_w*0.01 0", no_dim = true })
+hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, size = "monitor_w*0.98 monitor_h*0.5", move = "monitor_w*0.01 0", no_dim = true })
 
 -- Wine / Steam
 hl.window_rule({ name = "wine-exe", match = { title = ".*\\.exe" }, immediate = true, tag = "wine-exe" })
