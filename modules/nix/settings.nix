@@ -58,8 +58,8 @@ in
       connect-timeout = 15;
       stalled-download-timeout = 120;
       http-connections = 32;
-      cores = 0; # Auto per-job cores — nix balances across max-jobs
-      max-jobs = 32; # Parallel builds (all SMT threads on 9950X3D)
+      cores = 2; # per build — each build gets 2 threads
+      max-jobs = 16; # 16 physical cores × 2 threads = full utilisation
       min-free = 512; # MB reserved for ZFS during builds
       use-xdg-base-directories = true;
       warn-dirty = false; # Disable annoying dirty warn
