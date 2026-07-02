@@ -114,8 +114,6 @@
     # Lower console log level during/after boot; messages stay in journalctl
     consoleLogLevel = 3;
 
-    # Disable lanzaboote — Secure Boot is off, PKI bundle not provisioned
-    lanzaboote.enable = false;
     loader = {
       timeout = 2; # seconds
       # Use systemd-boot instead of lanzaboote
@@ -127,6 +125,18 @@
 
     # Enable AutoFDO (requires building kernel with Clang)
     kernel.autofdo.enable = false;
+
+    blacklistedKernelModules = [
+      "tpm"
+      "tpm_crb"
+      "tpm_tis"
+      "tpm_tis_core"
+      "8250"
+      "serial8250"
+      "snd-hdspm" # Replaced by out-of-tree snd-hdspe
+    ];
+    # No separate initrd blacklist option; TPM modules are excluded from initrd
+    # via modules/system/boot.nix when security.tpm2.enable = false
   };
 
   # Avoid double compression for swap
@@ -141,17 +151,6 @@
 
   # Disable TPM entirely on this host to remove tpmrm device wait
   security.tpm2.enable = false;
-  boot.blacklistedKernelModules = [
-    "tpm"
-    "tpm_crb"
-    "tpm_tis"
-    "tpm_tis_core"
-    "8250"
-    "serial8250"
-    "snd-hdspm" # Replaced by out-of-tree snd-hdspe
-  ];
-  # No separate initrd blacklist option; TPM modules are excluded from initrd
-  # via modules/system/boot.nix when security.tpm2.enable = false
 
   # NIC link renames
   systemd = {
