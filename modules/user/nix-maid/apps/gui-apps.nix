@@ -72,7 +72,6 @@ in
         pkgs.wlogout # Logout menu
         pkgs.gimp # GNU Image Manipulation Program
         pkgs.obs-studio # Live streaming and recording software
-        pkgs.obsidian # Knowledge base on local Markdown files
       ];
     }
     (n.mkHomeFiles {
