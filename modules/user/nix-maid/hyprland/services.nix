@@ -8,31 +8,17 @@ let
   hyprscratchLuaPatch = pkgs.writeText "hyprscratch-lua.patch" ''
     --- a/src/dispatchers.rs
     +++ b/src/dispatchers.rs
-    @@ -24,6 +24,20 @@ fn call_lua(expr: &str) -> Result<()> {
-         Dispatch::call(DispatchType::Custom(expr, ""))
-     }
-
-    +/// Strip Hyprland window rules prefix '[rule1; rule2; ...]' from an exec command
-    +/// because hl.dsp.exec_cmd passes the string directly to the shell and doesn't
-    +/// parse Hyprland window rules.
-    +fn strip_rules(cmd: &str) -> &str {
-    +    if let Some(rest) = cmd.strip_prefix('[') {
-    +        if let Some(idx) = rest.find("] ") {
-    +            return &rest[idx + 2..];
-    +        }
-    +    }
-    +    cmd
-    +}
-    +
-     impl Dispatchers {
-         fn init() -> Self {
-             Self {
-    @@ -34,7 +48,7 @@ impl Dispatchers {
+    @@ -31,7 +31,12 @@
          pub fn exec(&self, cmd: &str) -> Result<()> {
              match self.lang {
                  ConfigLanguage::Hyprlang => call("exec", cmd),
     -            ConfigLanguage::Lua => call_lua(&format!("hl.dsp.exec_cmd({})", lua_str(cmd))),
-    +            ConfigLanguage::Lua => call_lua(&format!("hl.dsp.exec_cmd({})", lua_str(strip_rules(cmd)))),
+    +            ConfigLanguage::Lua => {
+    +                let clean = if let Some(rest) = cmd.strip_prefix('[') {
+    +                    rest.find("] ").map(|i| &rest[i+2..]).unwrap_or(cmd)
+    +                } else { cmd };
+    +                call_lua(&format!("hl.dsp.exec_cmd({})", lua_str(clean)))
+    +            }
              }
          }
   '';
