@@ -32,15 +32,23 @@
       (pkgs.writeShellScriptBin "hypr-scratch-toggle" ''
         set -euo pipefail
         name="$1"
+        has_window() { hyprctl clients -j 2>/dev/null | ${lib.getExe pkgs.python3} -c "import json,sys; clients=json.load(sys.stdin); sys.exit(0 if any(c['class']=='"$1"' for c in clients) else 1)"; }
         toggle() { hyprctl dispatch "hl.dsp.workspace.toggle_special(\"$1\")" 2>/dev/null; }
+        launch() { hyprctl dispatch "hl.dsp.exec_cmd(\"$1\")" 2>/dev/null; sleep 0.5; }
         case "$name" in
-          im)       toggle im; hyprctl dispatch 'hl.dsp.exec_cmd("Telegram")' 2>/dev/null & ;;
-          music)    toggle music; hyprctl dispatch 'hl.dsp.exec_cmd("kitty --class music -e rmpc")' 2>/dev/null & ;;
-          torrment) toggle torrment; hyprctl dispatch 'hl.dsp.exec_cmd("kitty --class torrment -e rustmission")' 2>/dev/null & ;;
-          teardown) toggle teardown; hyprctl dispatch 'hl.dsp.exec_cmd("kitty --class teardown -e btop")' 2>/dev/null & ;;
-          mixer)    toggle mixer; hyprctl dispatch 'hl.dsp.exec_cmd("kitty --class mixer -e ncpamixer")' 2>/dev/null & ;;
-          vpn)      toggle vpn; hyprctl dispatch 'hl.dsp.exec_cmd("kitty --class vpn -e sing-box tun")' 2>/dev/null & ;;
-          *)        echo "Unknown scratchpad: $name"; exit 1 ;;
+          im)
+            if has_window "org.telegram.desktop"; then toggle im; else launch "Telegram" && toggle im; fi ;;
+          music)
+            if has_window "music"; then toggle music; else launch "kitty --class music -e rmpc" && toggle music; fi ;;
+          torrment)
+            if has_window "torrment"; then toggle torrment; else launch "kitty --class torrment -e rustmission" && toggle torrment; fi ;;
+          teardown)
+            if has_window "teardown"; then toggle teardown; else launch "kitty --class teardown -e btop" && toggle teardown; fi ;;
+          mixer)
+            if has_window "mixer" || has_window "ncpamixer"; then toggle mixer; else launch "kitty --class mixer -e ncpamixer" && toggle mixer; fi ;;
+          vpn)
+            if has_window "vpn"; then toggle vpn; else launch "kitty --class vpn -e sing-box tun" && toggle vpn; fi ;;
+          *) echo "Unknown scratchpad: $name"; exit 1 ;;
         esac
       '')
       # hypr-fix script (Reload Hyprland config)
