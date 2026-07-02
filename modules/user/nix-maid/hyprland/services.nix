@@ -39,37 +39,27 @@ let
     
     --- a/src/scratchpad.rs
     +++ b/src/scratchpad.rs
-    @@ -148,11 +148,25 @@
-     
-         fn summon_special(&self, state: &HyprlandState) -> Result<()> {
-             let special_with_title: Vec<&Client> = state
-                 .clients_with_title
-                 .iter()
-                 .filter(|cl| is_on_special(cl))
-                 .collect();
-     
+    @@ -153,6 +153,21 @@
              if state.clients_with_title.is_empty() {
                  self.spawn_special(state);
-    +            // Wait for window to appear, then capture + toggle to show immediately
-    +            use std::{thread, time::Duration};
+    +            // Poll for the window to appear, then show immediately (single-press)
     +            for _ in 0..15 {
-    +                thread::sleep(Duration::from_millis(200));
-    +                if let Ok(clients) = Clients::get() {
-    +                    if clients.iter().any(|c| self.matches_client(c)) {
-    +                        let new_state = HyprlandState::new(&self.title, &state.special_workspace)?;
-    +                        self.capture_special(&new_state)?;
+    +                std::thread::sleep(std::time::Duration::from_millis(200));
+    +                if let Ok(all_clients) = hyprland::data::Clients::get() {
+    +                    if all_clients.iter().any(|c| self.matches_client(c)) {
+    +                        let fresh = HyprlandState::new(&self.title, &state.special_workspace)?;
+    +                        move_to_special(
+    +                            &all_clients.iter().find(|c| self.matches_client(c)).unwrap(),
+    +                            &state.special_workspace,
+    +                        );
+    +                        fresh.toggle_special()?;
     +                        return Ok(());
     +                    }
     +                }
     +            }
-    +            state.toggle_special()?;
              } else if special_with_title.is_empty() {
                  self.capture_special(state)?;
              } else {
-                 self.toggle_special(state)?;
-             }
-             Ok(())
-         }
   '';
   hyprscratchPkg = inputs.hyprscratch.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
     patches = (old.patches or []) ++ [ hyprscratchLuaPatch ];
