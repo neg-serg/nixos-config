@@ -616,6 +616,25 @@
         "type": "github"
       }
     },
+    "hyprscratch": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1782324103,
+        "owner": "sashetophizika",
+        "repo": "hyprscratch",
+        "rev": "72756c23a9bf4e8f183bbc894321954159944449",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sashetophizika",
+        "repo": "hyprscratch",
+        "type": "github"
+      }
+    },
     "hyprtoolkit": {
       "inputs": {
         "aquamarine": [
@@ -1092,6 +1111,7 @@
       "inputs": {
         "determinate": "determinate",
         "hyprland": "hyprland",
+        "hyprscratch": "hyprscratch",
         "iosevka-neg": "iosevka-neg",
         "lanzaboote": "lanzaboote",
         "nix": [
