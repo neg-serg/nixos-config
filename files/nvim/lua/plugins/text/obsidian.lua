@@ -2,7 +2,10 @@
 -- │ █▓▒░ obsidian-nvim/obsidian.nvim                                                 │
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {'obsidian-nvim/obsidian.nvim', version='*', ft='markdown',
-        dependencies={'nvim-lua/plenary.nvim'},
+        dependencies={
+            'nvim-lua/plenary.nvim',
+            'ibhagwan/fzf-lua', -- picker backend for Obsidian commands
+        },
         config=function()
             local obsidian = require('obsidian')
 
