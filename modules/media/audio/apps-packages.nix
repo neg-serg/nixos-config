@@ -18,7 +18,6 @@ let
   ]
   ++ (lib.optionals (config.features.media.audio.proAudio.enable or false) [
     pkgs.opensoundmeter # FFT/RT60 analysis for calibration
-    pkgs.roomeqwizard # REW acoustic measurement suite
   ])
   ++ [
 

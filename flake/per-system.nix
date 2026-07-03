@@ -500,7 +500,6 @@ in
     "pro-audio" = pkgs.mkShell {
       # professional audio production environment (DAWs, editors, synths)
       nativeBuildInputs = [
-        pkgs.reaper # Digital Audio Workstation
         pkgs.glicol-cli # audio DSL for generative compositions
         pkgs.ocenaudio # lightweight waveform editor
         pkgs.vital # spectral wavetable synth
