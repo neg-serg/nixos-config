@@ -61,7 +61,7 @@ return {
         },
       },
       input = { enabled = true },
-      notifier = { enabled = true },
+      notifier = { enabled = false }, -- noice.nvim handles notifications
       quickfile = { enabled = has_args },
       scroll = { enabled = false },
       terminal = { enabled = true },
