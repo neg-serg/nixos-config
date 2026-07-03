@@ -13,7 +13,7 @@ let
   telegram = "org.telegram.desktop.desktop";
   torrent = "org.transmissionbt.Transmission.desktop";
   video = "mpv.desktop";
-  image = "swayimg.desktop";
+  image = "swayimg.desktop;mpv.desktop";
   editor = "nvim.desktop";
 
   associations = {
