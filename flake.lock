@@ -919,6 +919,25 @@
         "type": "github"
       }
     },
+    "opencode": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783104143,
+        "owner": "anomalyco",
+        "repo": "opencode",
+        "rev": "436cd39d14d395fe7612b5648369739966e7c3b3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "anomalyco",
+        "repo": "opencode",
+        "type": "github"
+      }
+    },
     "pre-commit": {
       "inputs": {
         "flake-compat": "flake-compat_3",
@@ -1038,6 +1057,7 @@
         ],
         "nix-maid": "nix-maid",
         "nixpkgs": "nixpkgs_3",
+        "opencode": "opencode",
         "pre-commit-hooks": "pre-commit-hooks_2",
         "quickshell": "quickshell",
         "raise": "raise",
