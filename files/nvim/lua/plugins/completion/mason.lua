@@ -27,7 +27,6 @@ return {
         'just',
         'lemminx',
         'lua_ls',
-        'marksman',
         'pyright',
         'qmlls',
         'taplo',
