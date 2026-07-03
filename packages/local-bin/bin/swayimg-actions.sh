@@ -119,15 +119,16 @@ rotate() { # modifies file in-place
 }
 
 choose_dest() {
-  # Fuzzy-pick a destination dir using zoxide history, limited to XDG_PICTURES_DIR
+  # Fuzzy-pick a destination dir using zoxide history + file's parent dir
   local prompt="$1"
+  local file="${2:-}"
   local entries
 
   entries="$(
     {
       command -v zoxide > /dev/null 2>&1 && zoxide query -l 2> /dev/null || true
+      [ -n "$file" ] && dirname "$(realpath "$file")" 2>/dev/null || true
     } \
-      | awk -v pic="$pics_dir" 'index($0, pic) == 1' \
       | sed "s:^$HOME:~:" \
       | awk 'NF' \
       | sort -u
@@ -137,10 +138,12 @@ choose_dest() {
     entries="$(
       {
         printf '%s\n' "$pics_dir"
+        printf '%s\n' "$HOME"
+        [ -n "$file" ] && dirname "$(realpath "$file")" 2>/dev/null || true
         if command -v fd > /dev/null 2>&1; then
-          fd -td -d 3 . "$pics_dir" 2> /dev/null
+          fd -td -d 3 . "$HOME" 2> /dev/null
         else
-          find "$pics_dir" -maxdepth 3 -type d -print 2> /dev/null
+          find "$HOME" -maxdepth 3 -type d -print 2> /dev/null
         fi
       } \
         | sed "s:^$HOME:~:" \
@@ -161,7 +164,7 @@ proc() { # mv/cp with remembered last dest
   printf '%s\n' "$file" | tee "$ff" > /dev/null
 
   if [ -z "${dest}" ]; then
-    dest="$(choose_dest "$cmd" || true)"
+    dest="$(choose_dest "$cmd" "$file" || true)"
   fi
   [ -z "${dest}" ] && exit 0
   if [ -d "$dest" ]; then
@@ -286,6 +289,7 @@ case "$action" in
     anchor="$(cat "$range_file" 2>/dev/null)" || { echo "No range mark set" >&2; exit 1; }
     files="$(_range_files "$anchor" "$file")" || exit 1
     _ipc_send "prev_file"
+    mkdir -p "$trash"
     printf '%s\n' "$files" | while read -r f; do
       mv "$f" "$trash"
     done
@@ -293,7 +297,7 @@ case "$action" in
     ;;
   range-cp)
     anchor="$(cat "$range_file" 2>/dev/null)" || { echo "No range mark set" >&2; exit 1; }
-    dest="$(choose_dest "cp" || true)"
+    dest="$(choose_dest "cp" "$file" || true)"
     [ -z "$dest" ] && exit 0
     files="$(_range_files "$anchor" "$file")" || exit 1
     printf '%s\n' "$files" | while read -r f; do
@@ -303,10 +307,11 @@ case "$action" in
     ;;
   range-mv)
     anchor="$(cat "$range_file" 2>/dev/null)" || { echo "No range mark set" >&2; exit 1; }
-    dest="$(choose_dest "mv" || true)"
+    dest="$(choose_dest "mv" "$file" || true)"
     [ -z "$dest" ] && exit 0
     files="$(_range_files "$anchor" "$file")" || exit 1
     _ipc_send "prev_file"
+    mkdir -p "$dest"
     printf '%s\n' "$files" | while read -r f; do
       mv "$f" "$dest"
     done
