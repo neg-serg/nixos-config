@@ -99,6 +99,7 @@ in
             FileDescriptorName = "ssh";
             SocketMode = "0600";
             DirectoryMode = "0700";
+            Service = "gpg-agent.service";
           };
           wantedBy = [ "sockets.target" ];
         };
