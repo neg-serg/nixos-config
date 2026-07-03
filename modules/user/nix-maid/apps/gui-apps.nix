@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  config,
   neg,
   impurity ? null,
   ...
@@ -65,14 +66,17 @@ in
       };
 
       # Packages
-      environment.systemPackages = [
-        pkgs.neg.rofi-config # Custom scripts (launcher, powermenu)
-        pkgs.swayosd # OSD for volume/brightness on Wayland
-        pkgs.wallust # Color palette generator
-        pkgs.wlogout # Logout menu
-        pkgs.gimp # GNU Image Manipulation Program
-        pkgs.obs-studio # Live streaming and recording software
-      ];
+      environment.systemPackages =
+        [
+          pkgs.neg.rofi-config # Custom scripts (launcher, powermenu)
+          pkgs.swayosd # OSD for volume/brightness on Wayland
+          pkgs.wallust # Color palette generator
+          pkgs.wlogout # Logout menu
+        ]
+        ++ lib.optionals (config.features.apps.guiAppsFull.enable or false) [
+          pkgs.gimp # GNU Image Manipulation Program
+          pkgs.obs-studio # Live streaming and recording software
+        ];
     }
     (n.mkHomeFiles {
       # Rofi configuration directory (symlink to nix store)

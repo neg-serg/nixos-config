@@ -227,6 +227,10 @@ in
           assertion = cfg.gui.enable || (!cfg.apps.winapps.enable);
           message = "features.apps.winapps.enable requires features.gui.enable = true";
         }
+        {
+          assertion = cfg.gui.enable || (!cfg.apps.guiAppsFull.enable);
+          message = "features.apps.guiAppsFull.enable requires features.gui.enable = true";
+        }
       ];
     }
   ];
