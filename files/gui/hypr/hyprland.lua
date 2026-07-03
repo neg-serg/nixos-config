@@ -37,7 +37,7 @@ local m = {
   pip                = "^([Pp]icture[-\\s]?[Ii]n[-\\s]?[Pp]icture)(.*)$",
   telegram_wrapped   = "^(.telegram-desktop-wrapped)$",
   telegram_org       = "^(org\\.telegram.desktop)$",
-  utility            = "^(qt5ct|wine|steamwebhelper|sun-awt-X11-XFramePeer|install4j-roomeqwizard-RoomEQ_Wizard|xdg-desktop-portal-gtk)$",
+  utility            = "^(qt5ct|wine|steamwebhelper|sun-awt-X11-XFramePeer|xdg-desktop-portal-gtk)$",
   mpd_add            = "^(mpd-add)(.*)$",
   steam_app          = "^(steam_app)",
   file_manager       = "^(nemo)$",
@@ -64,7 +64,7 @@ local cls = {
   vm          = "^(.virt-manager-wrapped|qemu-system-x86_64|Qemu-system-x86_64)$",
   wine        = "^(com.usebottles.bottles)$",
   patchbay    = "^(qpwgraph|Carla2)$",
-  daw         = "^(REAPER|Renoise)$",
+  daw         = "^(Renoise)$",
   dw          = "^(org.nicotine_plus.Nicotine)$",
   keyboard    = "^(Bazecor|wootility-lekker|Vial|via)$",
   im          = "^(im.riot.Riot)$",
@@ -282,7 +282,6 @@ end)
 hl.bind(M1 .. "+e", hl.dsp.submap("special"))
 hl.define_submap("special", "reset", function()
   submap_resets()
-  binde_reset("r", hl.dsp.exec_cmd('raise --match "class:regex=^REAPER$" --launch "GDK_BACKEND=x11 reaper"'))
   binde_reset("q", hl.dsp.exec_cmd('raise --match "class:regex=^qpwgraph$" --launch "qpwgraph"'))
   binde_reset("d", hl.dsp.exec_cmd('raise --match "class:regex=^org\\.nicotine_plus\\.Nicotine$" --launch "nicotine"'))
   binde_reset(SH .. "+q", hl.dsp.exec_cmd('raise --match "class:regex=^Carla2$" --launch "carla"'))
