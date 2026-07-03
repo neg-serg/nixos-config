@@ -138,12 +138,11 @@ choose_dest() {
     entries="$(
       {
         printf '%s\n' "$pics_dir"
-        printf '%s\n' "$HOME"
         [ -n "$file" ] && dirname "$(realpath "$file")" 2>/dev/null || true
         if command -v fd > /dev/null 2>&1; then
-          fd -td -d 3 . "$HOME" 2> /dev/null
+          fd -td -d 3 . "$pics_dir" 2> /dev/null
         else
-          find "$HOME" -maxdepth 3 -type d -print 2> /dev/null
+          find "$pics_dir" -maxdepth 3 -type d -print 2> /dev/null
         fi
       } \
         | sed "s:^$HOME:~:" \

@@ -14,6 +14,7 @@ lib.mkIf (cfg.enable or false) {
     # Pic dirs notifier
     "pic-dirs" = {
       description = "Pic dirs notification";
+      path = [ pkgs.inotify-tools pkgs.zoxide ];
       serviceConfig = {
         ExecStart = "%h/.local/bin/pic-dirs-list";
         PassEnvironment = [
