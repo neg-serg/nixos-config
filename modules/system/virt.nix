@@ -5,62 +5,49 @@
   ...
 }:
 let
-  cfg = config.profiles.vm or { enable = false; };
   mainUser = config.users.main.name or "neg";
   mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
 in
 {
-  options.features.virt.docker.enable = mkBool "enable docker/podman virtualization" false;
+  options.features.virt = {
+    docker.enable = mkBool "enable docker/podman virtualization" false;
+    libvirtd.enable = mkBool "enable libvirtd (KVM/QEMU) virtualization" false;
+  };
 
-  # Keep imports at top-level; guard heavy config below
-  imports = [
+  config = {
+    users.users."${mainUser}".extraGroups =
+      [ "video" "render" ]
+      ++ lib.optional (config.features.virt.docker.enable or false) "docker";
 
-  ];
+    virtualisation = {
+      containers.enable = true;
 
-  config = lib.mkIf (!cfg.enable) {
-    users.users = {
-      "${mainUser}" = {
-        extraGroups = [
-          "video"
-          "render"
-        ]
-        ++ (lib.optional (config.features.virt.docker.enable or false) "docker"); # Add docker group here if needed, usually 'docker' group is for real docker
+      libvirtd = lib.mkIf (config.features.virt.libvirtd.enable or false) {
+        enable = true;
+        qemu = {
+          package = pkgs.qemu_kvm;
+          runAsRoot = true;
+          vhostUserPackages = [ pkgs.virtiofsd ];
+          swtpm.enable = false;
+        };
+      };
+    }
+    // lib.optionalAttrs (config.features.virt.docker.enable or false) {
+      podman = {
+        enable = true;
+        dockerCompat = lib.mkDefault true;
+        dockerSocket.enable = lib.mkDefault true;
+        defaultNetwork.settings.dns_enabled = true;
+      };
+      oci-containers.backend = "podman";
+      docker = {
+        enable = lib.mkDefault false;
+        autoPrune = {
+          enable = true;
+          dates = "weekly";
+          flags = [ "--all" ];
+        };
       };
     };
-    virtualisation = lib.mkMerge [
-      {
-        containers.enable = true;
-        libvirtd = {
-          enable = true;
-          qemu = {
-            package = pkgs.qemu_kvm; # Generic and open source machine emulator and virtualizer
-            runAsRoot = true;
-            vhostUserPackages = [ pkgs.virtiofsd ]; # vhost-user virtio-fs device backend written in Rust
-            swtpm.enable = false;
-          };
-        };
-      }
-      (lib.mkIf (config.features.virt.docker.enable or false) {
-        podman = {
-          enable = true;
-          dockerCompat = lib.mkDefault true; # Create a `docker` alias for podman, to use it as a drop-in replacement
-          dockerSocket.enable = lib.mkDefault true; # Create docker alias for compatibility
-          defaultNetwork.settings.dns_enabled = true; # Required for containers under podman-compose to be able to talk to each other.
-        };
-
-        oci-containers.backend = "podman";
-
-        docker = {
-          enable = lib.mkDefault false;
-          autoPrune = {
-            enable = true;
-            dates = "weekly";
-            flags = [ "--all" ];
-          };
-        };
-      })
-      # No TPM device available — libvirtd 12.x fails without it
-      { libvirtd.enable = lib.mkForce false; }
-    ];
   };
 }
