@@ -160,10 +160,13 @@ in
 
   systemdServices = {
     # Hyprscratch daemon (scratchpad manager)
+    # NOTE: wantedBy+after on the same target creates an ordering cycle with
+    # hyprland-session.target BindsTo=graphical-session.target, so we drop
+    # "after" and let Restart=always handle any Hyprland IPC race.
     hyprscratch = {
       description = "Hyprscratch - improved scratchpad functionality for Hyprland";
-      wantedBy = [ "graphical-session.target" ];
-      after = [ "graphical-session-pre.target" ];
+      wantedBy = [ "hyprland-session.target" ];
+      partOf = [ "hyprland-session.target" ];
       serviceConfig = {
         ExecStart = "${lib.getExe hyprscratchPkg} init spotless";
         Restart = "always";
