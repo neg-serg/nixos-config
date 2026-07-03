@@ -119,37 +119,40 @@ rotate() { # modifies file in-place
 }
 
 choose_dest() {
-  # Fuzzy-pick a destination dir using zoxide history + file's parent dir
+  # Fuzzy-pick a destination dir: XDG_PICTURES_DIR subdirs + relevant zoxide + parent dir
   local prompt="$1"
   local file="${2:-}"
   local entries
 
-  entries="$(
+  # Always include all subdirs of pics_dir (fresh scan)
+  pics_subdirs="$(
+    find "$pics_dir" -maxdepth 3 -type d 2>/dev/null \
+      | sed "s:^$HOME:~:"
+  )"
+
+  # Zoxide entries under $HOME or /mnt/one, excluding system paths
+  zoxide_dirs="$(
     {
       command -v zoxide > /dev/null 2>&1 && zoxide query -l 2> /dev/null || true
-      [ -n "$file" ] && dirname "$(realpath "$file")" 2>/dev/null || true
     } \
-      | sed "s:^$HOME:~:" \
+      | grep -E "^($HOME|/mnt/one)" \
+      | grep -v '/\.' \
+      | sed "s:^$HOME:~:"
+  )"
+
+  # Current file's parent dir
+  parent_dir=""
+  [ -n "$file" ] && parent_dir="$(dirname "$(realpath "$file")" | sed "s:^$HOME:~:")" 2>/dev/null || true
+
+  entries="$(
+    {
+      printf '%s\n' "$pics_subdirs"
+      printf '%s\n' "$zoxide_dirs"
+      [ -n "$parent_dir" ] && printf '%s\n' "$parent_dir"
+    } \
       | awk 'NF' \
       | sort -u
   )"
-
-  if [ -z "$entries" ]; then
-    entries="$(
-      {
-        printf '%s\n' "$pics_dir"
-        [ -n "$file" ] && dirname "$(realpath "$file")" 2>/dev/null || true
-        if command -v fd > /dev/null 2>&1; then
-          fd -td -d 3 . "$pics_dir" 2> /dev/null
-        else
-          find "$pics_dir" -maxdepth 3 -type d -print 2> /dev/null
-        fi
-      } \
-        | sed "s:^$HOME:~:" \
-        | awk 'NF' \
-        | sort -u
-    )"
-  fi
 
   printf '%s\n' "$entries" \
     | sh -c "$rofi_cmd -p \"⟬$prompt⟭ ❯>\"" \
@@ -285,7 +288,13 @@ case "$action" in
   range-mark) range_mark_fn "$file" ;;
   range-clear) range_clear_fn ;;
   range-trash)
-    anchor="$(cat "$range_file" 2>/dev/null)" || { echo "No range mark set" >&2; exit 1; }
+    anchor="$(cat "$range_file" 2>/dev/null)" || {
+      # No range mark: trash single file
+      mkdir -p "$trash"
+      _ipc_send "prev_file"
+      mv "$file" "$trash"
+      exit 0
+    }
     files="$(_range_files "$anchor" "$file")" || exit 1
     _ipc_send "prev_file"
     mkdir -p "$trash"
