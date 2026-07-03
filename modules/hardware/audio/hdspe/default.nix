@@ -63,7 +63,6 @@ let
       sink_id="$(echo "$status" | ${pkgs.gnused}/bin/sed -n '/RME AIO Pro/{s/^[│ ]*\([0-9]\+\).*/\1/p;q}')"
       if [ -n "$sink_id" ]; then
         "$wpctl_bin" set-default "$sink_id" || true
-        ${pwRouteScript}/bin/pw-route aes || true
         exit 0
       fi
       sleep 1
@@ -143,6 +142,24 @@ in
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${hdspeAsyncScript}";
+      };
+    };
+
+    # User-level: route audio to AES output by default
+    systemd.user.services."pw-route-aes" = {
+      description = "Route PipeWire audio to RME AES output";
+      after = [
+        "wireplumber.service"
+        "pipewire.service"
+      ];
+      partOf = [ "wireplumber.service" ];
+      wantedBy = [ "default.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.writeShellScript "pw-route-aes" ''
+          export PATH="${lib.makeBinPath [ pkgs.zsh pkgs.pipewire pkgs.gawk ]}:$PATH"
+          exec ${pwRouteScript}/bin/pw-route aes
+        ''}";
       };
     };
   };
