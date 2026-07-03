@@ -87,6 +87,7 @@ with rec {
           "audio"
           "dialout"
           "docker"
+          "greeter"
           "i2c"
           "input"
           "libvirtd"
