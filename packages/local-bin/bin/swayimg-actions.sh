@@ -304,7 +304,14 @@ case "$action" in
     range_clear_fn
     ;;
   range-cp)
-    anchor="$(cat "$range_file" 2>/dev/null)" || { echo "No range mark set" >&2; exit 1; }
+    anchor="$(cat "$range_file" 2>/dev/null)" || {
+      # No range mark: copy single file
+      dest="$(choose_dest "cp" "$file" || true)"
+      [ -z "$dest" ] && exit 0
+      mkdir -p "$dest"
+      cp "$file" "$dest"
+      exit 0
+    }
     dest="$(choose_dest "cp" "$file" || true)"
     [ -z "$dest" ] && exit 0
     files="$(_range_files "$anchor" "$file")" || exit 1
@@ -314,7 +321,15 @@ case "$action" in
     range_clear_fn
     ;;
   range-mv)
-    anchor="$(cat "$range_file" 2>/dev/null)" || { echo "No range mark set" >&2; exit 1; }
+    anchor="$(cat "$range_file" 2>/dev/null)" || {
+      # No range mark: move single file
+      dest="$(choose_dest "mv" "$file" || true)"
+      [ -z "$dest" ] && exit 0
+      _ipc_send "prev_file"
+      mkdir -p "$dest"
+      mv "$file" "$dest"
+      exit 0
+    }
     dest="$(choose_dest "mv" "$file" || true)"
     [ -z "$dest" ] && exit 0
     files="$(_range_files "$anchor" "$file")" || exit 1
