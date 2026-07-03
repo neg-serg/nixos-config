@@ -106,7 +106,7 @@ in
           description = "IMAP Notify (gmail)";
           path = [
             passPkg # password manager for passwordCmd
-            # gnupg is installed via gpg.nix
+            pkgs.gnupg # gpg binary for pass decryption
           ];
           serviceConfig = {
             Type = "simple";
@@ -114,7 +114,12 @@ in
             Restart = "on-failure";
             RestartSec = "20";
           };
-          after = [ "network-online.target" ];
+          requires = [ "gpg-agent.socket" ];
+          after = [
+            "gpg-agent.service"
+            "gpg-agent.socket"
+            "network-online.target"
+          ];
           wants = [ "network-online.target" ];
           wantedBy = [ "default.target" ]; # Using standard unwantedBy since we don't have the wrapper handy or want simple start
         };
