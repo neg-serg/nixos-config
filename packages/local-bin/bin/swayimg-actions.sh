@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# swayimg-actions: move/copy/rotate/wallpaper for swayimg; dests limited to $XDG_PICTURES_DIR; before mv send prev_file via IPC to avoid end-of-list crash
+# swayimg-actions: move/copy/rotate/wallpaper/range for swayimg; dests limited to $XDG_PICTURES_DIR; before mv send prev_file via IPC to avoid end-of-list crash
 
 IFS=$'\n\t'
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
@@ -203,6 +203,61 @@ wall() { # wall <mode> <file> via swww
   echo "$file" >> "${XDG_DATA_HOME:-$HOME/.local/share}/wl/wallpaper.list" 2> /dev/null || true
 }
 
+# ---- range operations -------------------------------------------------------
+range_file="${XDG_DATA_HOME:-$HOME/.local/share}/swayimg/range_mark"
+
+range_mark_fn() {
+  mkdir -p "$(dirname "$range_file")"
+  realpath "$1" > "$range_file"
+}
+
+range_clear_fn() {
+  rm -f "$range_file"
+}
+
+# Replicate sx ordering: list images in parent dir sorted by ctime descending
+_list_images() {
+  local dir="$1"
+  if command -v ug >/dev/null 2>&1; then
+    find -L "$dir" -maxdepth 1 -type f -printf '%C@ %p\n' \
+      | sort -rn \
+      | cut -d ' ' -f 2- \
+      | ug -iE '\.(jpe?g|png|gif|svg|webp|tiff|heif|heic|avif|ico|bmp)$'
+  else
+    find -L "$dir" -maxdepth 1 -type f -printf '%C@ %p\n' \
+      | sort -rn \
+      | cut -d ' ' -f 2- \
+      | grep -Ei '\.(jpe?g|png|gif|svg|webp|tiff|heif|heic|avif|ico|bmp)$'
+  fi
+}
+
+# Print files on [anchor, current] inclusive, in display order
+_range_files() {
+  local anchor="$1" current="$2"
+  local dir
+  dir="$(dirname "$current")"
+
+  local tmp
+  tmp="$(mktemp)"
+  _list_images "$dir" > "$tmp"
+
+  local a_line c_line
+  a_line="$(grep -nFx "$(realpath "$anchor")" "$tmp" | cut -d: -f1)"
+  c_line="$(grep -nFx "$(realpath "$current")" "$tmp" | cut -d: -f1)"
+
+  if [ -z "$a_line" ]; then
+    echo "Range mark not found in current directory" >&2
+    rm -f "$tmp"
+    return 1
+  fi
+
+  local start=$a_line end=$c_line
+  [ "$a_line" -gt "$c_line" ] && start=$c_line && end=$a_line
+
+  sed -n "${start},${end}p" "$tmp"
+  rm -f "$tmp"
+}
+
 finish() { rm -f "$ff" "$tmp_wall" 2> /dev/null || true; }
 trap finish EXIT
 
@@ -225,6 +280,38 @@ case "$action" in
   wall-tile) wall tile "$file" ;;
   wall-center) wall center "$file" ;;
   wall-cover) wall cover "$file" ;;
+  range-mark) range_mark_fn "$file" ;;
+  range-clear) range_clear_fn ;;
+  range-trash)
+    anchor="$(cat "$range_file" 2>/dev/null)" || { echo "No range mark set" >&2; exit 1; }
+    files="$(_range_files "$anchor" "$file")" || exit 1
+    _ipc_send "prev_file"
+    printf '%s\n' "$files" | while read -r f; do
+      mv "$f" "$trash"
+    done
+    range_clear_fn
+    ;;
+  range-cp)
+    anchor="$(cat "$range_file" 2>/dev/null)" || { echo "No range mark set" >&2; exit 1; }
+    dest="$(choose_dest "cp" || true)"
+    [ -z "$dest" ] && exit 0
+    files="$(_range_files "$anchor" "$file")" || exit 1
+    printf '%s\n' "$files" | while read -r f; do
+      cp "$f" "$dest"
+    done
+    range_clear_fn
+    ;;
+  range-mv)
+    anchor="$(cat "$range_file" 2>/dev/null)" || { echo "No range mark set" >&2; exit 1; }
+    dest="$(choose_dest "mv" || true)"
+    [ -z "$dest" ] && exit 0
+    files="$(_range_files "$anchor" "$file")" || exit 1
+    _ipc_send "prev_file"
+    printf '%s\n' "$files" | while read -r f; do
+      mv "$f" "$dest"
+    done
+    range_clear_fn
+    ;;
   *)
     echo "Unknown action: $action" >&2
     exit 2
