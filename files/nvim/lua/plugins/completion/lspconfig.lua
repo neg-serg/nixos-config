@@ -49,6 +49,8 @@ return {
     configure('cmake', {})
     configure('systemd_ls', {})
 
+    configure('marksman', {})
+
     configure('lua_ls', {
       settings = {
         Lua = {

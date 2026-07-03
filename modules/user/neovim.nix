@@ -66,6 +66,7 @@ lib.mkIf devEnabled (
         pkgs.ripgrep # project-wide search backend
         pkgs.fd # fast file finder
         pkgs.fzf # fuzzy finder binary (for fzf-lua)
+        pkgs.marksman # Markdown LSP (mason build fails on NixOS — use nixpkgs instead)
       ];
     }
     (n.mkHomeFiles {
