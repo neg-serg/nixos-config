@@ -27,7 +27,6 @@ let
   opencodeConfig = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
     model = "deepseek/deepseek-v4-flash";
-    plugin = [ ];
     provider = {
       deepseek = {
         npm = "@ai-sdk/openai-compatible";
@@ -55,73 +54,7 @@ let
           };
         };
       };
-      google = {
-        npm = "@ai-sdk/google";
-        models = {
-          gemini-2-5-flash = {
-            name = "Gemini 2.5 Flash (Gemini CLI)";
-            limit = {
-              context = 1048576;
-              output = 65536;
-            };
-            modalities = {
-              input = [
-                "text"
-                "image"
-                "pdf"
-              ];
-              output = [ "text" ];
-            };
-          };
-          gemini-2-5-pro = {
-            name = "Gemini 2.5 Pro (Gemini CLI)";
-            limit = {
-              context = 1048576;
-              output = 65536;
-            };
-            modalities = {
-              input = [
-                "text"
-                "image"
-                "pdf"
-              ];
-              output = [ "text" ];
-            };
-          };
-          gemini-3-flash-preview = {
-            name = "Gemini 3 Flash Preview (Gemini CLI)";
-            limit = {
-              context = 1048576;
-              output = 65536;
-            };
-            modalities = {
-              input = [
-                "text"
-                "image"
-                "pdf"
-              ];
-              output = [ "text" ];
-            };
-          };
-          gemini-3-pro-preview = {
-            name = "Gemini 3 Pro Preview (Gemini CLI)";
-            limit = {
-              context = 1048576;
-              output = 65535;
-            };
-            modalities = {
-              input = [
-                "text"
-                "image"
-                "pdf"
-              ];
-              output = [ "text" ];
-            };
-          };
-        };
-      };
     };
-    # MCP (Model Context Protocol) servers configuration
     mcp = {
       # MCP test server with various tools
       mcp_everything = {
