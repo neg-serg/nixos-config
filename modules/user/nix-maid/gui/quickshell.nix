@@ -96,7 +96,7 @@ lib.mkIf quickshellEnabled (
         requiredBy = [ "quickshell.service" ];
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = "${lib.getExe' quickshellThemeInitScript "quickshell-theme-init"}";
+          ExecStart = "${quickshellThemeInitScript}";
         };
       };
 
