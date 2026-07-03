@@ -70,6 +70,10 @@ let
     done
     exit 0
   '';
+  # Async wrapper to avoid blocking systemd job queue during switch
+  hdspeAsyncScript = pkgs.writeShellScript "wpctl-set-hdspe-async" ''
+    exec ${hdspeDefaultScript} &
+  '';
 
   # pw-route: switch RME AIO Pro output between an/aes/spdif/phones
   pwRouteScript = pkgs.writeScriptBin "pw-route" (builtins.readFile ./pw-route.sh);
@@ -138,7 +142,7 @@ in
       wantedBy = [ "default.target" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${hdspeDefaultScript}";
+        ExecStart = "${hdspeAsyncScript}";
       };
     };
   };
