@@ -51,6 +51,7 @@
     ./sys/nekoray.nix
     ./sys/mail.nix
     ./sys/misc.nix
+    ./sys/wallpaper-sync.nix
 
     # Web & Browsing
     ./web/browsing.nix
