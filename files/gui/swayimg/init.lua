@@ -278,8 +278,8 @@ swayimg.gallery.on_key("Prior", function() swayimg.gallery.select("pgup") end)
 swayimg.gallery.on_key("Next", function() swayimg.gallery.select("pgdown") end)
 
 -- Sequential browse (same muscle memory as viewer)
-swayimg.gallery.on_key("n", function() swayimg.gallery.select("next") end)
-swayimg.gallery.on_key("p", function() swayimg.gallery.select("prev") end)
+swayimg.gallery.on_key("n", function() swayimg.gallery.select("right") end)
+swayimg.gallery.on_key("p", function() swayimg.gallery.select("left") end)
 
 -- Open selected in viewer / go back to gallery
 swayimg.gallery.on_key("Return", function() swayimg.set_mode("viewer") end)
