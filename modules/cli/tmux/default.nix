@@ -59,7 +59,6 @@
 
       # 24-bit color support
       set-option -ga terminal-overrides ",tmux*:Tc"
-      set-option -ga terminal-overrides ",alacritty*:Tc"
       set-option -ga terminal-overrides ",kitty*:Tc"
       set-option -ga terminal-overrides ",xterm*:Tc"
       set -ga terminal-overrides ",$\{TERM\}:Tc"
