@@ -44,8 +44,20 @@ let
   # Set HDSPe pro-audio output as default PipeWire sink
   hdspeDefaultScript = pkgs.writeShellScript "wpctl-set-hdspe-default" ''
     set -euo pipefail
+    amixer_bin=${pkgs.alsa-utils}/bin/amixer
     wpctl_bin=${pkgs.pipewire}/bin/wpctl
-    tries=30
+
+    # Check if HDSPe card is present first — avoid waiting if hardware absent
+    found=""
+    for card in "RMEAIO" "HDSPeAIO" "HDSPe" "AIO" "RME_AIO" "HDSPe24048964"; do
+      if $amixer_bin -c "$card" info >/dev/null 2>&1; then
+        found="$card"
+        break
+      fi
+    done
+    [ -n "$found" ] || exit 0
+
+    tries=10
     for i in $(seq 1 "$tries"); do
       status="$("$wpctl_bin" status 2>/dev/null || true)"
       sink_id="$(echo "$status" | ${pkgs.gnused}/bin/sed -n '/RME AIO Pro/{s/^[│ ]*\([0-9]\+\).*/\1/p;q}')"
