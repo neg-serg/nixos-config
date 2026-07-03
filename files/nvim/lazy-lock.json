@@ -1,8 +1,4 @@
 {
-  "Comment.nvim": {
-    "branch": "master",
-    "commit": "e30b7f2008e52442154b66f7c519bfd2f1e32acb"
-  },
   "LuaSnip": {
     "branch": "master",
     "commit": "118263867197a111717b5f13d954cd1ab8124387"
@@ -19,10 +15,6 @@
     "branch": "main",
     "commit": "4516612fe98ff56ae0415a259ff6361a89419b0a"
   },
-  "dotfyle-metadata.nvim": {
-    "branch": "main",
-    "commit": "923fbb50a519144899e94906a0ee330c3bddcbf5"
-  },
   "ex-colors.nvim": {
     "branch": "main",
     "commit": "76a20ce29d160a4eb9f275a615dc8257cb15c58c"
@@ -30,14 +22,6 @@
   "fastaction.nvim": {
     "branch": "main",
     "commit": "b147d91727cb35be4f722f17e7d4ed5b4a5801d8"
-  },
-  "fidget.nvim": {
-    "branch": "main",
-    "commit": "e32b672d8fd343f9d6a76944fedb8c61d7d8111a"
-  },
-  "flatten.nvim": {
-    "branch": "main",
-    "commit": "72527798e75b5e34757491947c2cb853ce21dc0e"
   },
   "flit.nvim": {
     "branch": "main",
@@ -54,10 +38,6 @@
   "grug-far.nvim": {
     "branch": "main",
     "commit": "b58b2d65863f4ebad88b10a1ddd519e5380466e0"
-  },
-  "harpoon": {
-    "branch": "harpoon2",
-    "commit": "87b1a3506211538f460786c23f98ec63ad9af4e5"
   },
   "heirline.nvim": {
     "branch": "master",
@@ -147,21 +127,9 @@
     "branch": "master",
     "commit": "8dcb311b0c92d460fac00eac706abd43d94d68af"
   },
-  "officer.nvim": {
-    "branch": "main",
-    "commit": "29df3cd138bbc453ab71303f8f64ff04a599fc90"
-  },
   "orgmode": {
     "branch": "master",
     "commit": "b7bcb90ef446a3e846ac7e0a84391fd737e9b793"
-  },
-  "overseer.nvim": {
-    "branch": "master",
-    "commit": "2fe35c4282c35179fb615acbf52881f22924e7ad"
-  },
-  "paperplanes.nvim": {
-    "branch": "master",
-    "commit": "dfe43f895ec6f43f4a0a2af006ee74c79e5e1028"
   },
   "plenary.nvim": {
     "branch": "master",
@@ -174,10 +142,6 @@
   "quickfix.nvim": {
     "branch": "main",
     "commit": "78a07821f1bb121fe67d9396fdf3497875e4c4d6"
-  },
-  "rainbow-delimiters.nvim": {
-    "branch": "master",
-    "commit": "3277ad5f96eb03c9d618c88e24f683e4364e578c"
   },
   "render-markdown.nvim": {
     "branch": "main",
@@ -195,49 +159,13 @@
     "branch": "master",
     "commit": "c492741b4679b3cdd4d9e34138209784e061d916"
   },
-  "telescope-file-browser.nvim": {
-    "branch": "master",
-    "commit": "3610dc7dc91f06aa98b11dca5cc30dfa98626b7e"
-  },
-  "telescope-frecency.nvim": {
-    "branch": "master",
-    "commit": "fc6418bf663a182b72427487246b870f2ddbbbe2"
-  },
-  "telescope-fzf-native.nvim": {
-    "branch": "main",
-    "commit": "6fea601bd2b694c6f2ae08a6c6fab14930c60e2c"
-  },
-  "telescope-live-grep-args.nvim": {
-    "branch": "master",
-    "commit": "b80ec2c70ec4f32571478b501218c8979fab5201"
-  },
-  "telescope-pathogen.nvim": {
-    "branch": "main",
-    "commit": "0566cad5dd98ea52fbde98a56b3f40489e9776d8"
-  },
-  "telescope-zoxide": {
-    "branch": "main",
-    "commit": "54bfe630bad08dc9891ec78c7cf8db38dd725c97"
-  },
-  "telescope.nvim": {
-    "branch": "master",
-    "commit": "3a12a853ebf21ec1cce9a92290e3013f8ae75f02"
-  },
   "time-machine.nvim": {
     "branch": "main",
     "commit": "6657a7db8a07ecfa8a266be34bebfb6827bb2eab"
   },
-  "toggleterm.nvim": {
-    "branch": "main",
-    "commit": "9a88eae817ef395952e08650b3283726786fb5fb"
-  },
   "trouble.nvim": {
     "branch": "main",
     "commit": "bd67efe408d4816e25e8491cc5ad4088e708a69a"
-  },
-  "vim-asterisk": {
-    "branch": "master",
-    "commit": "77e97061d6691637a034258cc415d98670698459"
   },
   "vim-fetch": {
     "branch": "master",
@@ -259,10 +187,6 @@
     "branch": "master",
     "commit": "66026b323379c9a712c6169cd43153216acef090"
   },
-  "vim-matchup": {
-    "branch": "master",
-    "commit": "1c276e12b49a83c1bdca74351187b8adea5da4b9"
-  },
   "vim-startuptime": {
     "branch": "master",
     "commit": "b6f0d93f6b8cf6eee0b4c94450198ba2d6a05ff6"
@@ -274,9 +198,5 @@
   "yazi.nvim": {
     "branch": "main",
     "commit": "499d37a19cc0ab2fb103bd7ac2812fe27ddbece0"
-  },
-  "zen-mode.nvim": {
-    "branch": "main",
-    "commit": "8564ce6d29ec7554eb9df578efa882d33b3c23a7"
   }
 }
