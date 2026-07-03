@@ -118,6 +118,7 @@ swayimg.viewer.on_key("q", function() swayimg.exit(0) end)
 swayimg.viewer.on_key("Return", function() swayimg.set_mode("gallery") end)
 swayimg.viewer.on_key("Escape", function() swayimg.set_mode("gallery") end)
 swayimg.viewer.on_key("Space", function() swayimg.viewer.open("next") end)
+swayimg.viewer.on_key("Shift+Space", function() swayimg.viewer.open("prev") end)
 
 -- Toggle fullscreen / antialiasing / info
 swayimg.viewer.on_key("f", function() swayimg.toggle_fullscreen() end)
