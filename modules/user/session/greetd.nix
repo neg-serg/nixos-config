@@ -77,6 +77,7 @@ in
     users.users.greeter = {
       home = "/home/greeter";
       createHome = true;
+      homeMode = "0710";
       isSystemUser = true;
       group = "greeter";
     };
@@ -95,7 +96,8 @@ in
       exec /run/current-system/sw/bin/start-hyprland > /tmp/hyprland-debug.log 2>&1
     '';
     systemd.tmpfiles.rules = lib.mkAfter [
-      "d /home/greeter/.cache 0755 greeter greeter -"
+      "d /home/greeter 0710 greeter greeter -"
+      "d /home/greeter/.cache 0775 greeter greeter -"
       "d /home/greeter/.config/quickshell/Theme 0755 greeter greeter -"
     ];
     system.activationScripts.greetdWallpaper = ''

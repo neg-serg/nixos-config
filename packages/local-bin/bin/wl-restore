@@ -10,3 +10,12 @@ fi
 if ! wl restore 2>/dev/null; then
   wl random ~/pic/wl ~/pic/black
 fi
+
+# Sync current wallpaper to greeter cache for smooth lock/login transitions
+notify_file="$HOME/.cache/quickshell-wallpaper-path"
+if [ -f "$notify_file" ]; then
+  wallpaper_path="$(head -1 "$notify_file" 2>/dev/null || true)"
+  if [ -n "$wallpaper_path" ] && [ -f "$wallpaper_path" ]; then
+    install -Dm644 "$wallpaper_path" /home/greeter/.cache/greeter-wallpaper 2>/dev/null || true
+  fi
+fi
