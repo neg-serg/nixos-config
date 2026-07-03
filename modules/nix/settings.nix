@@ -56,10 +56,13 @@ in
       ];
       connect-timeout = 15;
       stalled-download-timeout = 120;
-      http-connections = 32;
-      cores = 4; # per build — each build gets 4 threads
-      max-jobs = 16; # 16 physical cores × 2 threads = full utilisation
-      min-free = 512; # MB reserved for ZFS during builds
+      http-connections = 12;
+      cores = 0; # auto — Nix detects available cores
+      max-jobs = "auto"; # auto — Nix sets max parallel jobs based on cores
+      min-free = 4096; # MB reserved for ZFS during builds (ARC + build pressure)
+      build-poll-interval = 3; # seconds between polling for finished builds
+      log-lines = 50; # lines of build output to show on failure
+      max-silent-time = 1200; # kill stuck builders after 20 min of no output
       use-xdg-base-directories = true;
       warn-dirty = false; # Disable annoying dirty warn
       download-attempts = 5;
