@@ -11,6 +11,23 @@ local function cp(file)
   return '"' .. file:gsub("'", "'\\''") .. '"'
 end
 
+-- Helper: bind the same action to multiple key names (for dual layout support)
+local function key2(layouts, fn)
+  for _, k in ipairs(layouts) do
+    swayimg.viewer.on_key(k, fn)
+  end
+end
+local function key2g(layouts, fn)
+  for _, k in ipairs(layouts) do
+    swayimg.gallery.on_key(k, fn)
+  end
+end
+local function key2s(layouts, fn)
+  for _, k in ipairs(layouts) do
+    swayimg.slideshow.on_key(k, fn)
+  end
+end
+
 -- ── General ──────────────────────────────────────────────────────────────
 swayimg.enable_decoration(false)
 swayimg.enable_overlay(true)
@@ -188,6 +205,31 @@ swayimg.viewer.on_key("Ctrl-w", function()
   exec(actions .. " wall-cover " .. cp(img['path']))
 end)
 
+-- Viewer: Russian layout duplicates (ЙЦУКЕН)
+key2({"р"}, function() local x,y=swayimg.viewer.get_position() swayimg.viewer.set_abs_position(x-50,y) end)
+key2({"о"}, function() local x,y=swayimg.viewer.get_position() swayimg.viewer.set_abs_position(x+50,y) end)
+key2({"л"}, function() local x,y=swayimg.viewer.get_position() swayimg.viewer.set_abs_position(x,y-50) end)
+key2({"д"}, function() local x,y=swayimg.viewer.get_position() swayimg.viewer.set_abs_position(x,y+50) end)
+key2({"т"}, function() swayimg.viewer.open("next") end)
+key2({"з"}, function() swayimg.viewer.open("prev") end)
+key2({"п"}, function() swayimg.viewer.open("first") end)
+key2({"й"}, function() swayimg.exit(0) end)
+key2({"а"}, function() swayimg.toggle_fullscreen() end)
+key2({"ф"}, function() swayimg.enable_antialiasing(not swayimg.enable_antialiasing(true)) end)
+key2({"ш"}, function() swayimg.text.show() end)
+key2({"с"}, function() local i=swayimg.viewer.current_image() exec(actions.." copyname "..cp(i['path'])) end)
+key2({"в"}, function() local i=swayimg.viewer.current_image() exec(actions.." mv "..cp(i['path']).." "..os.getenv("HOME").."/trash/1st-level/pic") end)
+key2({"м"}, function() local i=swayimg.viewer.current_image() exec(actions.." mv "..cp(i['path'])) end)
+key2({"к"}, function() local i=swayimg.viewer.current_image() exec(actions.." repeat "..cp(i['path'])) end)
+key2({"С"}, function() local i=swayimg.viewer.current_image() exec(actions.." range-cp "..cp(i['path'])) end)
+key2({"В"}, function() local i=swayimg.viewer.current_image() exec(actions.." range-trash "..cp(i['path'])) end)
+key2({"Ь"}, function() local i=swayimg.viewer.current_image() exec(actions.." range-mark "..cp(i['path'])) end)
+key2({"К"}, function() local i=swayimg.viewer.current_image() exec(actions.." range-clear "..cp(i['path'])) end)
+key2({"М"}, function() local i=swayimg.viewer.current_image() exec(actions.." range-mv "..cp(i['path'])) end)
+key2({"Ctrl-с"}, function() local i=swayimg.viewer.current_image() exec(actions.." cp "..cp(i['path'])) end)
+key2({"Ctrl-в"}, function() local i=swayimg.viewer.current_image() exec(actions.." mv "..cp(i['path']).." "..os.getenv("HOME").."/trash/1st-level/pic") end)
+key2({"Ctrl-ц"}, function() local i=swayimg.viewer.current_image() exec(actions.." wall-cover "..cp(i['path'])) end)
+
 -- ── Gallery ──────────────────────────────────────────────────────────────
 swayimg.gallery.set_thumb_size(200)
 swayimg.gallery.set_cache_size(100000)
@@ -327,6 +369,30 @@ swayimg.gallery.on_key("Minus", function()
   swayimg.gallery.set_thumb_size(math.max(32, s - 16))
 end)
 
+-- Gallery: Russian layout duplicates (ЙЦУКЕН)
+key2g({"й"}, function() swayimg.exit(0) end)
+key2g({"п"}, function() swayimg.gallery.select("first") end)
+key2g({"р"}, function() swayimg.gallery.select("left") end)
+key2g({"д"}, function() swayimg.gallery.select("right") end)
+key2g({"л"}, function() swayimg.gallery.select("up") end)
+key2g({"о"}, function() swayimg.gallery.select("down") end)
+key2g({"т"}, function() swayimg.gallery.select("next") end)
+key2g({"з"}, function() swayimg.gallery.select("prev") end)
+key2g({"а"}, function() swayimg.toggle_fullscreen() end)
+key2g({"ш"}, function() swayimg.text.show() end)
+key2g({"с"}, function() local i=swayimg.gallery.current_image() exec(actions.." copyname "..cp(i['path'])) end)
+key2g({"в"}, function() local i=swayimg.gallery.current_image() exec(actions.." mv "..cp(i['path']).." "..os.getenv("HOME").."/trash/1st-level/pic") end)
+key2g({"м"}, function() local i=swayimg.gallery.current_image() exec(actions.." mv "..cp(i['path'])) end)
+key2g({"к"}, function() local i=swayimg.gallery.current_image() exec(actions.." repeat "..cp(i['path'])) end)
+key2g({"С"}, function() local i=swayimg.gallery.current_image() exec(actions.." range-cp "..cp(i['path'])) end)
+key2g({"В"}, function() local i=swayimg.gallery.current_image() exec(actions.." range-trash "..cp(i['path'])) end)
+key2g({"Ь"}, function() local i=swayimg.gallery.current_image() exec(actions.." range-mark "..cp(i['path'])) end)
+key2g({"К"}, function() local i=swayimg.gallery.current_image() exec(actions.." range-clear "..cp(i['path'])) end)
+key2g({"М"}, function() local i=swayimg.gallery.current_image() exec(actions.." range-mv "..cp(i['path'])) end)
+key2g({"Ctrl-с"}, function() local i=swayimg.gallery.current_image() exec(actions.." cp "..cp(i['path'])) end)
+key2g({"Ctrl-в"}, function() local i=swayimg.gallery.current_image() exec(actions.." mv "..cp(i['path']).." "..os.getenv("HOME").."/trash/1st-level/pic") end)
+key2g({"Ctrl-ц"}, function() local i=swayimg.gallery.current_image() exec(actions.." wall-cover "..cp(i['path'])) end)
+
 -- ── Slideshow ────────────────────────────────────────────────────────────
 swayimg.slideshow.set_timeout(3)
 
@@ -375,3 +441,14 @@ swayimg.slideshow.on_key("Space", function()
     swayimg.set_mode("slideshow")
   end
 end)
+
+-- Slideshow: Russian layout duplicates (ЙЦУКЕН)
+key2s({"й"}, function() swayimg.exit(0) end)
+key2s({"а"}, function() swayimg.toggle_fullscreen() end)
+key2s({"в"}, function() local i=swayimg.slideshow.current_image() exec(actions.." mv "..cp(i['path']).." "..os.getenv("HOME").."/trash/1st-level/pic") end)
+key2s({"Ctrl-в"}, function() local i=swayimg.slideshow.current_image() exec(actions.." mv "..cp(i['path']).." "..os.getenv("HOME").."/trash/1st-level/pic") end)
+key2s({"С"}, function() local i=swayimg.slideshow.current_image() exec(actions.." range-cp "..cp(i['path'])) end)
+key2s({"В"}, function() local i=swayimg.slideshow.current_image() exec(actions.." range-trash "..cp(i['path'])) end)
+key2s({"Ь"}, function() local i=swayimg.slideshow.current_image() exec(actions.." range-mark "..cp(i['path'])) end)
+key2s({"К"}, function() local i=swayimg.slideshow.current_image() exec(actions.." range-clear "..cp(i['path'])) end)
+key2s({"М"}, function() local i=swayimg.slideshow.current_image() exec(actions.." range-mv "..cp(i['path'])) end)
