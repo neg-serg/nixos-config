@@ -12,7 +12,7 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption mkIf mkOption types;
+  inherit (lib) mkEnableOption mkIf;
   cfg = config.features.net.zapret2 or { };
 
   zapret2HostlistDomains = [
@@ -79,16 +79,6 @@ let
   '';
 in
 {
-  options.features.net.zapret2 = {
-    enable = mkEnableOption "Enable Zapret2 DPI bypass (nfqueue).";
-
-    hostlistDomains = mkOption {
-      type = types.listOf types.str;
-      default = zapret2HostlistDomains;
-      description = "Domains to route through zapret2 hostlist filter.";
-    };
-  };
-
   config = mkIf cfg.enable {
     environment.systemPackages = [ pkgs.ipset ];
 
