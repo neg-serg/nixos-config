@@ -12,6 +12,17 @@ in
 # Standard overlay pattern: merge top-level attributes
 (functions // tools // media // dev // gui // fixTinycc)
 // {
+  # Override opencode to build from flake input source (latest git)
+  opencode = (final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { }).overrideAttrs (old: {
+    src = inputs.opencode;
+    version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
+    node_modules = old.node_modules.overrideAttrs (nmOld: {
+      outputHash = "sha256-Z3ZDYxUHCcmEaYvl8qlKqkBGOPvZaKzTZ8fiXzbXm48=";
+      outputHashAlgo = "sha256";
+      outputHashMode = "recursive";
+    });
+  });
+
   # Merge all pkgs.neg sub-attributes from individual overlays
   neg =
     (functions.neg or { })
@@ -21,7 +32,7 @@ in
     // (gui.neg or { })
     // {
       rofi-config = final.callPackage ./rofi-config { };
-      opencode = (final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { }).overrideAttrs (old: {
+      opencode-dev = (final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { }).overrideAttrs (old: {
         src = inputs.opencode;
         version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
       });
