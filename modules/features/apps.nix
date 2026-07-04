@@ -5,6 +5,9 @@ let
 in
 {
   options.features.apps = {
+    obsidian = {
+      enable = mkBool "enable Obsidian knowledge base app + vault" false;
+    };
     obsidian.autostart.enable = mkBool "autostart Obsidian at GUI login (systemd user service)" false;
     hiddify.enable = mkBool "enable Hiddify VPN client" false;
     winapps.enable = mkBool "enable WinApps integration (KVM/libvirt Windows VM, RDP bridge)" false;
