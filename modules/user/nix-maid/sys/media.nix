@@ -98,14 +98,6 @@ let
     }
   '';
 
-  # --- RMPC Source ---
-  rmpcSrc = ../../../../files/rmpc;
-
-  # --- Swayimg Source ---
-  swayimgSrc = ../../../../files/gui/swayimg;
-
-  # --- NCPAMixer Source ---
-  ncpamixerConf = ../../../../files/gui/ncpamixer.conf;
 in
 lib.mkMerge [
   {
@@ -178,17 +170,70 @@ lib.mkMerge [
       can_quit = True
     '';
 
-    # RMPC
-    ".config/rmpc".source = n.linkImpure rmpcSrc;
+    ".config/rmpc".source = ../../../../files/rmpc;
 
-    # Swayimg
-    ".config/swayimg".source = n.linkImpure swayimgSrc;
+    ".config/swayimg".source = ../../../../files/gui/swayimg;
 
-    # NCPAMixer
-    ".config/ncpamixer.conf".source = n.linkImpure ncpamixerConf;
+    ".config/ncpamixer.conf".text = ''
+      theme = "c0r73x"
 
-    # Wiremix
-    ".config/wiremix/wiremix.toml".source = n.linkImpure ../../../../files/wiremix/wiremix.toml;
+      [theme-c0r73x]
+      bar-start = "|"
+      bar-normal = "."
+      bar-end = "|"
+      color-state = "blue"
+
+      [settings]
+      appearance = "auto"
+      mouse-wheel-step = 1
+
+      [keybindings]
+      up = "k"
+      down = "j"
+      mute-toggle = "m"
+      tab-next = "n"
+      tab-prev = "p"
+      volume-up = "+"
+      volume-down = "-"
+      volume-up-1 = "K"
+      volume-down-1 = "J"
+      volume-up-5 = "5"
+      volume-down-5 = "6"
+      volume-set-0 = "0"
+      volume-set-10 = "1"
+      volume-set-20 = "2"
+      volume-set-30 = "3"
+      volume-set-40 = "4"
+      volume-set-50 = "5"
+      volume-set-60 = "6"
+      volume-set-70 = "7"
+      volume-set-80 = "8"
+      volume-set-90 = "9"
+      volume-set-100 = "0"
+      set-default = "d"
+      tab-playback = "F1"
+      tab-recording = "F2"
+      tab-output = "F3"
+      tab-input = "F4"
+      tab-config = "F5"
+    '';
+
+    ".config/wiremix/wiremix.toml".text = ''
+      # Wiremix Configuration
+      theme = "nocolor"
+      char_set = "compat"
+
+      [names]
+      stream = [ "{node:node.name}: {node:media.name}" ]
+
+      keybindings = [
+       { key = { F = 1 }, action = { SelectTab = 0 } },
+       { key = { F = 2 }, action = { SelectTab = 1 } },
+       { key = { F = 3 }, action = { SelectTab = 2 } },
+       { key = { F = 4 }, action = { SelectTab = 3 } },
+       { key = { F = 5 }, action = { SelectTab = 4 } },
+      ]
+    '';
 
     # Spicetify Config (partial management)
     ".config/spicetify/config-xpui.ini" =
@@ -229,7 +274,7 @@ lib.mkMerge [
         executable = true;
         text = builtins.readFile ../scripts/ai-upscale-video.sh;
       };
-      ".config/mpv/scripts/realesrgan.vpy".source = n.linkImpure ../scripts/realesrgan.vpy;
+      ".config/mpv/scripts/realesrgan.vpy".text = builtins.readFile ../scripts/realesrgan.vpy;
     }
   ))
 ]
