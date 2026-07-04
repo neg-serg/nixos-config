@@ -30,18 +30,18 @@ in
   sf-pro-display = mkFont {
     pname = "sf-pro-display";
     url = "https://font.download/dl/font/sf-pro-display.zip";
-    hash = "sha256-Vp8j4/i82rcJgkr1trbfpKSqmGTktANLcJcLSO428vI=";
+    hash = "sha256-XnP+Q77XdU4bGGn7s7Vzpexpe8VxikjBK0Yv6gzisqo=";
   };
 
   anurati = mkFont {
     pname = "anurati";
     url = "https://font.download/dl/font/anurati.zip";
-    hash = "sha256-ipNtWaXd61Pfmu5kETfY4+gb0mA5XIeEwHIxs/0lwQk=";
+    hash = "sha256-dmZpAWkryDUYA7YBc2D/T8s2KQVnEgJbtGHJr6arDj4=";
   };
 
   alfa-slab-one = mkFont {
     pname = "alfa-slab-one";
     url = "https://font.download/dl/font/alfa-slab-one.zip";
-    hash = "sha256-0JKU1Pf/Zxfew6SGp0BZBwvyanSoIVmOYA6OzAFbmlE=";
+    hash = "sha256-nqU5fzlVEgHf0JR0zsV5fIuD7beEd8bTW+3SjOuf5m8=";
   };
 }
