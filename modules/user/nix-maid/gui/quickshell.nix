@@ -9,8 +9,15 @@
 }:
 let
   n = neg impurity;
-  # Source path (Nix path for linkImpure)
-  quickshellSrc = ../../../../files/quickshell;
+
+  # Flavor: selects which quickshell config to deploy
+  flavor = config.features.gui.quickshell.flavor or "default";
+  isOctashell = flavor == "octashell";
+
+  # Source path based on flavor
+  quickshellSrc = if isOctashell
+    then ../../../../files/octashell
+    else ../../../../files/quickshell;
 
   # Feature flags check
   quickshellEnabled =
@@ -42,13 +49,20 @@ let
       pkgs.gawk # GNU awk: used by SystemMonitor probes parsing /proc/{meminfo,swaps,diskstats}
       pkgs.hyprland # dynamic tiling Wayland compositor
       pkgs.neg.rsmetrx # custom metrics exporter
+    ] ++ lib.optionals isOctashell [
+      pkgs.brightnessctl # backlight control
+      pkgs.cliphist # clipboard history
+      pkgs.wl-clipboard # wl-copy for clipboard
+      pkgs.uwsm # universal Wayland session manager
     ];
   };
 
-  # Theme init: copy read-only Theme symlink to writable cache dir before quickshell starts.
-  # Runs as a user oneshot (so files are owned by the user, not root).
+  # Theme init: copy read-only theme dir to writable cache dir before quickshell starts.
+  # The directory name differs between flavors: octashell uses "theme", default uses "Theme".
+  quickshellThemeDir = if isOctashell then "theme" else "Theme";
+
   quickshellThemeInitScript = pkgs.writeShellScript "quickshell-theme-init" ''
-    theme_dir="$HOME/.config/quickshell/Theme"
+    theme_dir="$HOME/.config/quickshell/${quickshellThemeDir}"
     cache_dir="$HOME/.cache/quickshell-theme"
     if [ -L "$theme_dir" ] && [ ! -w "$theme_dir" ]; then
       mkdir -p "$cache_dir"
@@ -66,6 +80,8 @@ lib.mkIf quickshellEnabled (
       # Wrapped quickshell package
       environment.systemPackages = [
         quickshellWrapped # Wrapped Quickshell with dependencies and environment
+      ] ++ lib.optionals isOctashell [
+        pkgs.papirus-icon-theme # icon theme used by octashell
       ];
 
       # Quickshell panel service
@@ -85,8 +101,7 @@ lib.mkIf quickshellEnabled (
     }
 
     (n.mkHomeFiles {
-      # Link Quickshell config mutably via impurity
-      ".config/quickshell".source = n.linkImpure quickshellSrc;
+      ".config/quickshell".source = quickshellSrc;
     })
     {
       systemd.user.services.quickshell-theme-init = {
