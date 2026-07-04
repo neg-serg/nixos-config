@@ -12,26 +12,10 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption mkIf mkOption types;
+  inherit (lib) mkEnableOption mkIf;
   cfg = config.features.net.awgTunnel or { };
 in
 {
-  options.features.net.awgTunnel = {
-    enable = mkEnableOption "Enable AmneziaWG obfuscated tunnel.";
-
-    privateKeyFile = mkOption {
-      type = types.nullOr types.path;
-      default = null;
-      description = "Path to SOPS-decrypted AmneziaWG private key file.";
-    };
-
-    presharedKeyFile = mkOption {
-      type = types.nullOr types.path;
-      default = null;
-      description = "Path to SOPS-decrypted preshared key file.";
-    };
-  };
-
   config = mkIf cfg.enable {
     environment.etc."wireguard/awg-tunnel.conf" = {
       mode = "0600";
