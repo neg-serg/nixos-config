@@ -80,12 +80,12 @@ let
   quickshellThemeInitScript = pkgs.writeShellScript "quickshell-theme-init" ''
     theme_dir="$HOME/.config/quickshell/${quickshellThemeDir}"
     cache_dir="$HOME/.cache/quickshell-theme"
-    if [ -L "$theme_dir" ] && [ ! -w "$theme_dir" ] && [ -d "$theme_dir" ]; then
+    if [ -d "$theme_dir" ] && [ ! -w "$theme_dir" ]; then
       mkdir -p "$cache_dir"
       if [ -z "$(ls -A "$cache_dir" 2>/dev/null)" ]; then
-        cp -r "$theme_dir"/* "$cache_dir"/ 2>/dev/null || true
+        cp -rT "$theme_dir" "$cache_dir" 2>/dev/null || true
       fi
-      rm -f "$theme_dir"
+      rm -rf "$theme_dir"
       ln -sf "$cache_dir" "$theme_dir"
     fi
   '';
@@ -108,7 +108,8 @@ lib.mkIf quickshellEnabled (
         description = "Quickshell - QtQuick based shell for Wayland";
         documentation = [ "https://github.com/outfoxxed/quickshell" ];
         partOf = [ "graphical-session.target" ];
-        after = [ "graphical-session-pre.target" ];
+        after = [ "graphical-session-pre.target" "pipewire.service" ];
+        wants = [ "pipewire.service" ];
         wantedBy = [ "graphical-session.target" ];
         serviceConfig = {
           ExecStart = "${lib.getExe quickshellWrapped} -p %h/.config/quickshell/shell.qml";
@@ -133,7 +134,7 @@ lib.mkIf quickshellEnabled (
         };
       };
 
-      systemd.user.services.quickshell.after = lib.mkForce [ "graphical-session-pre.target" "maid-activation.service" ];
+      systemd.user.services.quickshell.after = lib.mkForce [ "graphical-session-pre.target" "maid-activation.service" "pipewire.service" ];
       systemd.user.services.quickshell.wants = [ "maid-activation.service" ];
     })
   ]
