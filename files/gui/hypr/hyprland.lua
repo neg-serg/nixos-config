@@ -100,7 +100,7 @@ hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 hl.env("QT_STYLE_OVERRIDE", "kvantum")
 hl.env("QT_XDG_DESKTOP_PORTAL", "1")
 hl.env("GTK_USE_PORTAL", "1")
-hl.env("GTK_THEME", "Flight-Dark-GTK")
+hl.env("GTK_THEME", "@gtkTheme@")
 hl.env("XCURSOR_THEME", "Alkano-aio")
 
 -- ---------------------------------------------------------------------
