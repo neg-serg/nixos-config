@@ -36,7 +36,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprscratch = {
-      url = "github:sashetophizika/hyprscratch";
+      url = "github:neg-serg/hyprscratch";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     quickshell = {

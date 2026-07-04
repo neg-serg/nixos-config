@@ -587,14 +587,14 @@
         ]
       },
       "locked": {
-        "lastModified": 1782324103,
-        "owner": "sashetophizika",
+        "lastModified": 1783125727,
+        "owner": "neg-serg",
         "repo": "hyprscratch",
-        "rev": "72756c23a9bf4e8f183bbc894321954159944449",
+        "rev": "19cfa34003741e5fe39d380ad9021ecee003130b",
         "type": "github"
       },
       "original": {
-        "owner": "sashetophizika",
+        "owner": "neg-serg",
         "repo": "hyprscratch",
         "type": "github"
       }
