@@ -9,4 +9,5 @@
   rofi-config = pkgs.neg.rofi-config;
 
   wiremix = pkgs.wiremix;
+  palettum = pkgs.neg.palettum;
 }
