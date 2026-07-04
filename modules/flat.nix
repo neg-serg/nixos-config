@@ -2,6 +2,7 @@
 {
   imports = [
     ./appimage/default.nix
+    ./apps/obsidian/default.nix
     ./cli/default.nix
     ./core/neg.nix
     ./dev/android/default.nix

@@ -12,6 +12,7 @@
   features.web.enable = true;
   # features.web.floorp.enable = false; # Floorp disabled by default now
   # features.hardware.amdgpu.rocm.enable = false; # ROCm disabled (heavy, unused)
+  features.apps.obsidian.enable = true;
   features.mail.vdirsyncer.enable = false;
   features.optimization = {
     enable = true;
