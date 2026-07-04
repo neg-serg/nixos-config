@@ -8,6 +8,8 @@
 let
   n = neg impurity;
   # Vicinae theme definition (neg)
+  # Vicinae Flight-Dark theme (ported from legacy Salt config: flight-dark.toml)
+  # Color palette harmonized with Flight-Dark-GTK, Rofi, and Kitty.
   vicinaeThemeNeg =
     let
       font = "Outfit";
@@ -22,12 +24,15 @@ let
         padding = 10;
       };
       colors = {
-        background = "#04141C";
+        background = "#000000";
         border = "#0B2536";
-        text = "#4f5d78";
-        accent = "#005faf";
-        selected_background = "#0B2536";
-        selected_text = "#8DA6B2";
+        text = "#CBD6E5";
+        accent = "#006FCC";
+        selected_background = "#122337";
+        selected_text = "#E2EBF5";
+        urgent = "#8A2F58"; # error red from theme palette
+        scrollbar = "#1c334e";
+        loading_bar = "#006FCC";
       };
       fonts = {
         main = "${font} 13";
