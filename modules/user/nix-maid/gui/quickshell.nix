@@ -72,23 +72,45 @@ let
     ];
   };
 
-  # Theme init: copy read-only theme dir to writable cache dir before quickshell starts.
+  # Theme init: deploy Theme from source to writable ~/.config/quickshell directory.
   # The directory name differs between flavors: octashell uses "theme", default uses "Theme".
   # Not needed for sshell.
   quickshellThemeDir = if isOctashell then "theme" else "Theme";
 
+  # Theme source path (resolved to Nix store at build time)
+  quickshellThemeSrc = "${quickshellSrc}/${quickshellThemeDir}";
+
   quickshellThemeInitScript = pkgs.writeShellScript "quickshell-theme-init" ''
     theme_dir="$HOME/.config/quickshell/${quickshellThemeDir}"
-    cache_dir="$HOME/.cache/quickshell-theme"
-    if [ -d "$theme_dir" ] && [ ! -w "$theme_dir" ]; then
-      mkdir -p "$cache_dir"
-      if [ -z "$(ls -A "$cache_dir" 2>/dev/null)" ]; then
-        cp -rT "$theme_dir" "$cache_dir" 2>/dev/null || true
-      fi
-      rm -rf "$theme_dir"
-      ln -sf "$cache_dir" "$theme_dir"
+    theme_src="${quickshellThemeSrc}"
+    if [ ! -d "$theme_dir" ]; then
+      mkdir -p "$theme_dir"
+      cp -rT "$theme_src" "$theme_dir" 2>/dev/null || true
     fi
   '';
+
+  # Build individual nix-maid entries for source dir top-level contents,
+  # excluding immutable paths (Theme, .github).  This makes ~/.config/quickshell
+  # a real writable directory so that theme-init can create Theme/ as writable.
+  quickshellSrcEntries =
+    if isSshell
+    then { } # sshell uses whole-directory deployment (no theme-init needed)
+    else builtins.readDir quickshellSrc;
+
+  quickshellSrcNames =
+    if isSshell
+    then [ ]
+    else builtins.filter
+      (name: name != "Theme" && name != "theme" && name != ".github")
+      (builtins.attrNames quickshellSrcEntries);
+
+  quickshellHomeFiles =
+    if isSshell
+    then { ".config/quickshell".source = quickshellSrc; }
+    else builtins.listToAttrs (map (name: {
+      name = ".config/quickshell/${name}";
+      value = { source = "${quickshellSrc}/${name}"; };
+    }) quickshellSrcNames);
 in
 lib.mkIf quickshellEnabled (
   lib.mkMerge [
@@ -119,12 +141,10 @@ lib.mkIf quickshellEnabled (
       };
     }
 
-    (n.mkHomeFiles {
-      ".config/quickshell".source = quickshellSrc;
-    })
+    (n.mkHomeFiles quickshellHomeFiles)
     (lib.mkIf (!isSshell) {
       systemd.user.services.quickshell-theme-init = {
-        description = "Copy read-only Theme to writable cache dir before quickshell starts";
+        description = "Deploy writable Theme directory before quickshell starts";
         after = [ "maid-activation.service" ];
         before = [ "quickshell.service" ];
         requiredBy = [ "quickshell.service" ];
