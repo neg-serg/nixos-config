@@ -46,6 +46,7 @@ let
     set -euo pipefail
     amixer_bin=${pkgs.alsa-utils}/bin/amixer
     wpctl_bin=${pkgs.pipewire}/bin/wpctl
+    pwlink_bin=${pkgs.pipewire}/bin/pw-link
 
     # Check if HDSPe card is present first — avoid waiting if hardware absent
     found=""
@@ -57,12 +58,20 @@ let
     done
     [ -n "$found" ] || exit 0
 
-    tries=10
+    tries=30
     for i in $(seq 1 "$tries"); do
       status="$("$wpctl_bin" status 2>/dev/null || true)"
-      sink_id="$(echo "$status" | ${pkgs.gnused}/bin/sed -n '/RME AIO Pro/{s/^[│ ]*\([0-9]\+\).*/\1/p;q}')"
-      if [ -n "$sink_id" ]; then
-        "$wpctl_bin" set-default "$sink_id" || true
+
+      # Find HDSPe hardware sink and game-stereo virtual sink
+      hdspe_sink_id="$(echo "$status" | ${pkgs.gnused}/bin/sed -n '/RME AIO Pro/{s/^[│ ]*\([0-9]\+\).*/\1/p;q}')"
+      game_sink_id="$(echo "$status" | ${pkgs.gnused}/bin/sed -n '/Game Stereo/{s/^[│ ]*\([0-9]\+\).*/\1/p;q}')"
+
+      # Route game-stereo → HDSPe AUX0/AUX1 and set game-stereo as default
+      if [ -n "$hdspe_sink_id" ] && [ -n "$game_sink_id" ]; then
+        "$wpctl_bin" set-default "$game_sink_id" || true
+        # Connect virtual sink playback to HDSPe AUX0/AUX1
+        $pwlink_bin game-stereo:playback_FL alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX0 2>/dev/null || true
+        $pwlink_bin game-stereo:playback_FR alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX1 2>/dev/null || true
         exit 0
       fi
       sleep 1
