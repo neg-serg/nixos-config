@@ -65,6 +65,25 @@ in
           general = {
             softrealtime = "on";
             renice = -10;
+            reaper_freq = 5;
+            desiredgov = "performance";
+            inhibit_screensaver = 1;
+            ioprio = 0; # realtime I/O
+          };
+          gpu = {
+            apply_gpu_optimisations = 1;
+            gpu_device = 0;
+            amd_performance_level = "high";
+          };
+          custom = {
+            start = "${pkgs.writeShellScript "gamemode-start" ''
+              # GameMode start: GPU performance high, CPU governor performance
+              echo high | tee /sys/class/drm/card*/device/power_dpm_force_performance_level >/dev/null 2>&1 || true
+            ''}";
+            end = "${pkgs.writeShellScript "gamemode-end" ''
+              # GameMode end: restore GPU power profile
+              echo auto | tee /sys/class/drm/card*/device/power_dpm_force_performance_level >/dev/null 2>&1 || true
+            ''}";
           };
         };
       };

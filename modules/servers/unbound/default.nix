@@ -118,6 +118,16 @@ in
         }
         // lib.optionalAttrs (mkForwardZone != null) {
           "forward-zone" = [ mkForwardZone ];
+        }
+        # Tailscale MagicDNS stub zone — forwards ts.net queries to Tailscale's resolver.
+        # Ported from legacy Salt config (tailscale-dns-stub.conf.j2).
+        // lib.optionalAttrs (config.services.tailscale.enable or false) {
+          "stub-zone" = [
+            {
+              name = "ts.net.";
+              "stub-addr" = "100.100.100.100@53";
+            }
+          ];
         };
       };
 

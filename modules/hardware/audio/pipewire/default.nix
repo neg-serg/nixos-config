@@ -27,14 +27,72 @@ in
         "92-low-latency" = {
           "context.properties" = {
             "default.clock.rate" = 48000;
+            "default.clock.allowed-rates" = [ 44100 48000 88200 96000 176400 192000 ];
             "default.clock.quantum" = 128;
             "default.clock.min-quantum" = 32;
-            "default.clock.max-quantum" = 2048;
+            "default.clock.max-quantum" = 4096;
+            "link.max-buffers" = 16;
+            "cpu.zero.denormals" = true;
+            "clock.power-of-two-quantum" = true;
+          };
+          "stream.properties" = {
+            "resample.quality" = 14;
+          };
+          "pulse.properties" = {
+            "server.address" = [ "unix:native" ];
           };
         };
+        # Harman Target sub-shelf EQ — boosts 55Hz +2.24dB for loudness compensation.
+        # Ported from legacy Salt config (99-harman-subshelf.conf).
+        "93-harman-eq" = {
+          "context.modules" = [
+            {
+              name = "libpipewire-module-filter-chain";
+              args = {
+                "node.description" = "Harman Sub Shelf EQ";
+                "media.name" = "Harman EQ";
+                "filter.graph" = {
+                  nodes = [
+                    {
+                      type = "lv2";
+                      name = "eq";
+                      plugin = "${pkgs.lsp-plugins}/lib/lv2/lsp-plugins.lv2/para_equalizer_x32_stereo.ttl";
+                      control = {
+                        "enabled" = 1;
+                        "g_in" = 1.0;
+                        "g_out" = 1.0;
+                        "ft_0" = 5;
+                        "fm_0" = 0;
+                        "f_0" = 55.0;
+                        "g_0" = 2.239;
+                        "q_0" = 0.707;
+                        "s_0" = 0;
+                      };
+                    }
+                  ];
+                  inputs = [ "eq:in_l" "eq:in_r" ];
+                  outputs = [ "eq:out_l" "eq:out_r" ];
+                };
+                "capture.props" = {
+                  "node.name" = "harman_shelf_sink";
+                  "media.class" = "Audio/Sink";
+                  "audio.channels" = 2;
+                  "audio.position" = [ "FL" "FR" ];
+                };
+                "playback.props" = {
+                  "node.name" = "harman_shelf_source";
+                  "media.class" = "Audio/Source";
+                  "audio.channels" = 2;
+                  "audio.position" = [ "FL" "FR" ];
+                };
+              };
+            }
+          ];
+        };
+
         # Game audio null sink — for Unity/FMOD games that can't handle pro-audio mode.
         # Creates a 16-bit stereo null sink at 48kHz (ported from legacy Salt config).
-        "93-game-audio" = {
+        "94-game-audio" = {
           "context.objects" = [
             {
               factory = "adapter";
