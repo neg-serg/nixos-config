@@ -1,0 +1,257 @@
+# Ghostty config — ported from kitty for feature parity
+# vim:ft=ini
+
+# ── Font ──────────────────────────────────────────────────────────────
+font-family = Iosevka Medium
+font-family-bold = Iosevka Bold
+font-family-italic = Iosevka Italic
+font-family-bold-italic = Iosevka Bold Italic
+font-size = 13
+font-thicken = false
+# Nerd Font symbols — Ghostty auto-detects fallback, but explicit map
+# ensures the same glyphs kitty uses via symbol_map
+font-codepoint-map = U+F313,U+E21E,U+E256,U+E271,U+F440,U+F410,U+F43A,U+E610,U+E7AF,U+F1DA=Fira Code Nerd Font Mono
+# Match kitty undercurl_style thin-dense
+adjust-underline-thickness = 2
+adjust-cursor-thickness = 2
+
+# ── Performance (maximum) ─────────────────────────────────────────────
+# No vsync: uncapped frame rate, lowest input latency
+window-vsync = false
+
+# ── Cursor ────────────────────────────────────────────────────────────
+cursor-color = #4842ff
+cursor-text = #000000
+cursor-style = block
+cursor-style-blink = false
+cursor-opacity = 1
+
+# ── Scrollback ────────────────────────────────────────────────────────
+scrollback-limit = 4000
+
+# ── Mouse / selection ─────────────────────────────────────────────────
+copy-on-select = clipboard
+mouse-hide-while-typing = true
+mouse-scroll-multiplier = 5
+focus-follows-mouse = false
+
+# ── URL handling ──────────────────────────────────────────────────────
+link-url = true
+
+# ── Window ────────────────────────────────────────────────────────────
+window-padding-x = 2
+window-padding-y = 2
+window-padding-balance = true
+window-padding-color = background
+window-decoration = server
+confirm-close-surface = false
+resize-overlay = never
+window-inherit-working-directory = true
+window-inherit-font-size = true
+
+# ── Background / transparency ─────────────────────────────────────────
+# Match kitty: background_opacity 0.88, background #000000
+background-opacity = 0.88
+# Blur behind transparent areas (Hyprland supports this natively)
+background-blur = true
+
+# ── Shell integration ─────────────────────────────────────────────────
+shell-integration = zsh
+shell-integration-features = cursor,sudo,title
+
+# ── Clipboard ─────────────────────────────────────────────────────────
+clipboard-read = allow
+clipboard-write = allow
+clipboard-trim-trailing-spaces = true
+clipboard-paste-protection = false
+
+# ── Tab bar ───────────────────────────────────────────────────────────
+gtk-tabs-location = bottom
+
+# ── Theme (dark — ported from kitty theme.conf) ───────────────────────
+foreground = #6C7E96
+background = #000000
+selection-foreground = #367bbf
+selection-background = #0d1824
+
+palette = 0=#020202
+palette = 1=#8A2F58
+palette = 2=#287373
+palette = 3=#914E89
+palette = 4=#395573
+palette = 5=#5E468C
+palette = 6=#31658C
+palette = 7=#899CA1
+palette = 8=#3D3D3D
+palette = 9=#CF4F88
+palette = 10=#53A6A6
+palette = 11=#BF85CC
+palette = 12=#477AB3
+palette = 13=#7E62B3
+palette = 14=#6096BF
+palette = 15=#617287
+
+# Extended palette (16-255): dark gradient + accent ramp
+palette = 16=#040408
+palette = 17=#01004C
+palette = 18=#00006C
+palette = 19=#000090
+palette = 20=#0000BA
+palette = 21=#0000FE
+palette = 22=#002B00
+palette = 23=#004E4E
+palette = 24=#005f87
+palette = 25=#005faf
+palette = 26=#005fd7
+palette = 27=#0090FF
+palette = 28=#005200
+palette = 29=#007A51
+palette = 30=#357B63
+palette = 31=#285981
+palette = 32=#367CB0
+palette = 33=#4FB3FF
+palette = 34=#007C00
+palette = 35=#00AE73
+palette = 36=#3CAF88
+palette = 37=#00ACAC
+palette = 38=#7BC6FF
+palette = 39=#A2D7FF
+palette = 40=#00AE00
+palette = 41=#00FFA9
+palette = 42=#7DFF7E
+palette = 43=#00d7af
+palette = 44=#4FFFFF
+palette = 46=#00FF01
+palette = 47=#50FFC4
+palette = 48=#A1FFA1
+palette = 49=#00ffaf
+palette = 50=#00ffd7
+palette = 51=#00FFFF
+palette = 52=#380001
+palette = 53=#330021
+palette = 54=#320031
+palette = 55=#260039
+palette = 56=#245361
+palette = 57=#0a3749
+palette = 64=#547D55
+palette = 65=#80AE80
+palette = 66=#8D74B6
+palette = 67=#7C59B5
+palette = 68=#C5A2FE
+palette = 69=#DBC3FF
+palette = 70=#367C36
+palette = 71=#61AD62
+palette = 73=#367CB0
+palette = 74=#5788B0
+palette = 75=#7095B0
+palette = 76=#3FAD88
+palette = 77=#62AE94
+palette = 80=#29626E
+palette = 82=#86DB24
+palette = 83=#55AE24
+palette = 88=#5C0100
+palette = 89=#590038
+palette = 90=#570055
+palette = 91=#3D005D
+palette = 94=#531E00
+palette = 100=#4E3608
+palette = 101=#AC9563
+palette = 104=#AE7CFF
+palette = 105=#D37CFF
+palette = 110=#5B5BBB
+palette = 111=#7778BB
+palette = 112=#95DB18
+palette = 113=#9AEF45
+palette = 114=#C7FE40
+palette = 115=#05C390
+palette = 116=#7CD6EF
+palette = 117=#90EAFE
+palette = 124=#850001
+palette = 125=#810052
+palette = 126=#810081
+palette = 127=#570083
+palette = 130=#7F2E01
+palette = 136=#795000
+palette = 137=#AD893F
+palette = 141=#DBC3FF
+palette = 154=#C3FF01
+palette = 155=#FFFF7D
+palette = 156=#E0FF7D
+palette = 157=#EAFFA2
+palette = 160=#B40001
+palette = 161=#B20072
+palette = 162=#B100B0
+palette = 163=#7700B2
+palette = 166=#B04000
+palette = 172=#AC7300
+palette = 173=#FFC44E
+palette = 177=#E1A1FF
+palette = 196=#FE0000
+palette = 197=#FF01A2
+palette = 198=#FF00FE
+palette = 199=#AA00FF
+palette = 202=#FF5F01
+palette = 208=#FFAA01
+palette = 209=#FFD37C
+palette = 213=#EBC3FF
+palette = 232=#000408
+palette = 233=#010912
+palette = 234=#040f1c
+palette = 235=#071526
+palette = 236=#0c1c30
+palette = 237=#10233a
+palette = 238=#162b44
+palette = 239=#1c334e
+palette = 240=#233b58
+palette = 241=#2b4462
+palette = 242=#344d6c
+palette = 243=#3f5876
+palette = 244=#496280
+palette = 245=#546c8a
+palette = 246=#607794
+palette = 247=#6d839e
+palette = 248=#7c90a8
+palette = 249=#8d9eb2
+palette = 250=#95a7bc
+palette = 251=#a4b3c6
+palette = 252=#b7c2d0
+palette = 253=#bfc8d0
+palette = 254=#dbdfe4
+palette = 255=#EEEEEE
+
+# ── Keybindings (ported from kitty key.conf) ──────────────────────────
+# Reset defaults, build from scratch
+keybind = clear
+
+# Paste
+keybind = insert=paste_from_clipboard
+keybind = ctrl+shift+v=paste_from_clipboard
+
+# Scrollback prompt navigation
+keybind = ctrl+shift+z=jump_to_prompt:-1
+keybind = ctrl+shift+x=jump_to_prompt:1
+
+# Tabs
+keybind = ctrl+shift+alt+t=prompt_tab_title
+keybind = ctrl+shift+comma=move_tab:-1
+keybind = ctrl+shift+period=move_tab:1
+keybind = ctrl+shift+q=close_tab:this
+keybind = ctrl+arrow_left=previous_tab
+keybind = ctrl+arrow_right=next_tab
+keybind = alt+n=new_tab
+
+# Font size
+keybind = ctrl+equal=increase_font_size:0.5
+keybind = ctrl+minus=decrease_font_size:0.5
+keybind = ctrl+0=reset_font_size
+
+# Splits / windows
+keybind = ctrl+shift+right_bracket=goto_split:next
+keybind = ctrl+shift+left_bracket=goto_split:previous
+keybind = ctrl+shift+w=close_surface
+
+# Config
+keybind = ctrl+shift+r>r=reload_config
+
+# Copy/paste
+keybind = ctrl+shift+c=copy_to_clipboard:mixed
