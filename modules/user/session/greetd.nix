@@ -27,6 +27,10 @@ let
       output = DP-1
       disabled = true
     }
+    env = HOME,/home/greeter
+    env = XDG_CACHE_HOME,/home/greeter/.cache
+    env = XDG_CONFIG_HOME,/home/greeter/.config
+    env = XDG_DATA_HOME,/home/greeter/.local/share
     exec-once = ${
       lib.getExe pkgs.bash
     } -c "HOME=/home/greeter QML2_IMPORT_PATH=/etc/greetd/quickshell ${
