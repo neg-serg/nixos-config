@@ -10,11 +10,12 @@ in
     quickshell = {
       enable = mkBool "enable Quickshell (panel) at login" true;
       flavor = lib.mkOption {
-        type = types.enum [ "default" "octashell" ];
+        type = types.enum [ "default" "octashell" "sshell" ];
         default = "default";
-        description = "Which quickshell configuration flavor to use (default or octashell).";
+        description = "Which quickshell configuration flavor to use (default, octashell, or sshell).";
       };
     };
+    skwd.enable = mkBool "enable Skwd desktop shell (bar, launcher, music, notifications, settings, switcher) and skwd-daemon" false;
     gtkTheme = lib.mkOption {
       type = types.enum [ "Flight-Dark-GTK" "Andromeda" ];
       default = "Flight-Dark-GTK";
