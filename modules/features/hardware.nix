@@ -8,5 +8,8 @@ in
     hardware = {
       bluetooth.enable = mkBool "enable Bluetooth support" false;
     };
+    input = {
+      kanata.enable = mkBool "enable Kanata keyboard remapper (requires uinput module)" false;
+    };
   };
 }

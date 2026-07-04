@@ -5,6 +5,7 @@
     ./distros.nix
     ./enchant.nix
     ./gpg.nix
+    ./kanata.nix
     ./khal.nix
     ./mail.nix
     ./media.nix

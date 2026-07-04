@@ -100,7 +100,9 @@
     ./system/irqbalance.nix
     ./system/kernel/default.nix
     ./system/net/default.nix
+    ./system/net/rkn/default.nix
     ./system/net/vpn/default.nix
+    ./system/net/zapret2/default.nix
     ./system/oomd.nix
     ./system/pkgs.nix # Nix package manager
     ./system/preserve-flake.nix
@@ -110,6 +112,7 @@
     ./system/tailscale.nix
     ./system/users.nix
     ./system/virt.nix
+    ./system/vm/definitions.nix
     ./system/winapps.nix
     ./system/zram.nix
 
