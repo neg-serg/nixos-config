@@ -68,6 +68,22 @@
       url = "github:anomalyco/opencode";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    skwd = {
+      url = "github:liixini/skwd";
+      flake = false;
+    };
+    skwd-daemon = {
+      url = "github:liixini/skwd-daemon";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    sqlit = {
+      url = "github:Maxteabag/sqlit";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    sshell = {
+      url = "path:/home/neg/src/sshell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
