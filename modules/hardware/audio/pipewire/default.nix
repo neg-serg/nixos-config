@@ -56,7 +56,7 @@ in
                     {
                       type = "lv2";
                       name = "eq";
-                      plugin = "${pkgs.lsp-plugins}/lib/lv2/lsp-plugins.lv2/para_equalizer_x32_stereo.ttl";
+                      plugin = "http://lsp-plug.in/plugins/lv2/para_equalizer_x32_stereo";
                       control = {
                         "enabled" = 1;
                         "g_in" = 1.0;
@@ -158,6 +158,10 @@ in
     };
     # run pipewire on default.target, this fixes xdg-portal startup delay
     systemd.user.services.pipewire.wantedBy = [ "default.target" ];
+
+    # Extend LV2_PATH to include lsp-plugins (needed for Harman EQ filter-chain)
+    systemd.user.services.pipewire.environment.LV2_PATH =
+      lib.mkForce "${pkgs.lsp-plugins}/lib/lv2:${config.services.pipewire.package}/lib/lv2";
 
     # Try to make RNNoise the default source automatically once WirePlumber is up
     systemd.user.services."wp-rnnoise-default" = lib.mkIf (cfg.enable or false) (
