@@ -5,65 +5,7 @@
   ...
 }:
 let
-  hyprscratchLuaPatch = pkgs.writeText "hyprscratch-lua.patch" ''
-    --- a/src/dispatchers.rs
-    +++ b/src/dispatchers.rs
-    @@ -31,7 +31,12 @@
-         pub fn exec(&self, cmd: &str) -> Result<()> {
-             match self.lang {
-                 ConfigLanguage::Hyprlang => call("exec", cmd),
-    -            ConfigLanguage::Lua => call_lua(&format!("hl.dsp.exec_cmd({})", lua_str(cmd))),
-    +            ConfigLanguage::Lua => {
-    +                let clean = if let Some(rest) = cmd.strip_prefix('[') {
-    +                    rest.find("] ").map(|i| &rest[i+2..]).unwrap_or(cmd)
-    +                } else { cmd };
-    +                call_lua(&format!("hl.dsp.exec_cmd({})", lua_str(clean)))
-    +            }
-             }
-         }
-     
-    --- a/src/dispatchers.rs
-    +++ b/src/dispatchers.rs
-    @@ -20,6 +20,6 @@
-     impl Dispatchers {
-    -    fn init() -> Self {
-    -        Self {
-    -            lang: detect_config_language(),
-    -        }
-    -    }
-    +    fn init() -> Self {
-    +        Self {
-    +            lang: ConfigLanguage::Lua,
-    +        }
-    +    }
-    
-    --- a/src/scratchpad.rs
-    +++ b/src/scratchpad.rs
-    @@ -153,6 +153,21 @@
-             if state.clients_with_title.is_empty() {
-                 self.spawn_special(state);
-    +            // Poll for the window to appear, then show immediately (single-press)
-    +            for _ in 0..15 {
-    +                std::thread::sleep(std::time::Duration::from_millis(200));
-    +                if let Ok(all_clients) = hyprland::data::Clients::get() {
-    +                    if all_clients.iter().any(|c| self.matches_client(c)) {
-    +                        let fresh = HyprlandState::new(&self.title, &state.special_workspace)?;
-    +                        move_to_special(
-    +                            &all_clients.iter().find(|c| self.matches_client(c)).unwrap(),
-    +                            &state.special_workspace,
-    +                        );
-    +                        fresh.toggle_special()?;
-    +                        return Ok(());
-    +                    }
-    +                }
-    +            }
-             } else if special_with_title.is_empty() {
-                 self.capture_special(state)?;
-             } else {
-  '';
-  hyprscratchPkg = inputs.hyprscratch.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
-    patches = (old.patches or []) ++ [ hyprscratchLuaPatch ];
-  });
+  hyprscratchPkg = inputs.hyprscratch.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in
 {
   packages = [
