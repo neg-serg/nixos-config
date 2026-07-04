@@ -32,6 +32,26 @@ in
             "default.clock.max-quantum" = 2048;
           };
         };
+        # Game audio null sink — for Unity/FMOD games that can't handle pro-audio mode.
+        # Creates a 16-bit stereo null sink at 48kHz (ported from legacy Salt config).
+        "93-game-audio" = {
+          "context.objects" = [
+            {
+              factory = "adapter";
+              args = {
+                "factory.name" = "support.null-audio-sink";
+                "node.name" = "game_output";
+                "node.description" = "Game Audio Output (16-bit Stereo)";
+                "media.class" = "Audio/Sink";
+                "audio.position" = [ "FL" "FR" ];
+                "audio.format" = "S16LE";
+                "audio.rate" = 48000;
+                "audio.channels" = 2;
+                "object.linger" = true;
+              };
+            }
+          ];
+        };
       }
       // lib.optionalAttrs (cfg.enable or false) {
         "95-rnnoise-filter-chain" = {

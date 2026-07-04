@@ -1,6 +1,7 @@
 { ... }:
 {
   imports = [
+    ./alertmanager
     ./logs
     ./loki
     ./netdata
