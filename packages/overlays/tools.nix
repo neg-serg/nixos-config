@@ -19,6 +19,9 @@ in
 
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
 
+    # A terminal UI for SQL databases
+    sqlit = callPkg (packagesRoot + "/sqlit") { };
+
     # Music album metadata CLI (used by music-rename script)
     albumdetails = callPkg (packagesRoot + "/albumdetails") { };
 
@@ -47,6 +50,9 @@ in
 
     # Image/GIF/video recolor tool with custom palettes
     palettum = callPkg (packagesRoot + "/palettum") { };
+
+    # Run GUI windows inside your terminal (Wayland compositor → ANSI)
+    termeverything = callPkg (packagesRoot + "/termeverything") { };
 
     # ncpamixer with custom config
     ncpamixer-wrapped =
