@@ -1,0 +1,255 @@
+#!/usr/bin/env zsh
+# gamescope-app: run desktop apps inside gamescope with pixel-perfect scaling.
+# Designed for 4K monitors where you want a lower effective resolution
+# without interpolation artifacts.
+#
+# NixOS dependencies: ensure the following are available in your configuration:
+#   pkgs.gamescope, pkgs.hyprland (or pkgs.hyprctl), pkgs.jq, pkgs.zsh
+#
+# Usage:
+#   gamescope-app [OPTIONS] -- <command...>
+#   gamescope-app -r 1080 -- firefox
+#   gamescope-app -r 1440 -f fsr -- blender
+#   gamescope-app -r 1080 -f nearest -- retroarch
+#   gamescope-app --list
+#
+# Presets (-r):
+#   1080   1920x1080  integer 2x on 4K (pixel-perfect)
+#   1440   2560x1440  FSR upscale (clean, slight sharpening)
+#   720    1280x720   integer 3x on 4K (large UI, pixel-perfect)
+#
+# Filters (-f):
+#   nearest  pixel-perfect, no interpolation (default for 1080/720)
+#   fsr      AMD FidelityFX Super Resolution (default for 1440)
+#   nis      NVIDIA Image Scaling (works on AMD too)
+#   linear   bilinear interpolation (soft)
+#   pixel    integer nearest + linear for remainder
+
+# Strict mode: exit on error, unset variable, or broken pipe.
+setopt ERR_EXIT NOUNSET PIPE_FAIL
+
+# ── Defaults ────────────────────────────────────────────────────────
+# inner_w/h  — resolution the app renders at (gamescope -w/-h)
+# outer_w/h  — physical monitor resolution (gamescope -W/-H), detected at runtime
+# filter     — upscaling algorithm (nearest/fsr/nis/linear/pixel), "" = auto per preset
+# scaler     — how gamescope fits inner into outer (integer/fit/fill/stretch)
+
+typeset -i inner_w=1920 inner_h=1080
+typeset -i outer_w=0 outer_h=0 refresh=0
+typeset filter=""
+typeset scaler="integer"
+typeset -i fsr_sharpness=3  # FSR/NIS sharpness: 0 = maximum, 20 = minimum
+typeset -i fullscreen=0
+typeset -i dry_run=0
+
+# ── Monitor detection ───────────────────────────────────────────────
+
+detect_monitor() {
+    # Query Hyprland IPC for the focused monitor's native resolution and refresh rate.
+    # Falls back to 3840x2160@240 if hyprctl is unavailable (e.g. running from TTY).
+    # Uses jq to parse JSON; the `// value` syntax provides defaults.
+    local mon_json
+    mon_json=$(hyprctl monitors -j 2>/dev/null) || return 1
+
+    outer_w=$(printf '%s' "$mon_json" | jq -r '[.[] | select(.focused)][0].width // 3840')
+    outer_h=$(printf '%s' "$mon_json" | jq -r '[.[] | select(.focused)][0].height // 2160')
+    refresh=$(printf '%s' "$mon_json" | jq -r '[.[] | select(.focused)][0].refreshRate // 240 | floor')
+}
+
+# ── Resolution presets ──────────────────────────────────────────────
+
+apply_preset() {
+    # Set inner resolution and pick sensible defaults for filter & scaler.
+    # Filter is only auto-selected if not already set via -f flag (allows override).
+    #
+    # Integer ratios (1080, 720) → nearest-neighbor for zero interpolation.
+    # Non-integer ratios (1440) → FSR for edge-aware upscaling with sharpening.
+    case $1 in
+        1080)
+            # 3840/1920 = 2x exactly → pixel-perfect integer scaling
+            inner_w=1920 inner_h=1080
+            [[ -z $filter ]] && filter="nearest"
+            scaler="integer"
+            ;;
+        1440)
+            # 3840/2560 = 1.5x → not integer, use FSR to minimize artifacts.
+            # scaler=fit preserves aspect ratio (no black bars on 16:9→16:9).
+            inner_w=2560 inner_h=1440
+            [[ -z $filter ]] && filter="fsr"
+            scaler="fit"
+            ;;
+        720)
+            # 3840/1280 = 3x exactly → pixel-perfect, very large UI
+            inner_w=1280 inner_h=720
+            [[ -z $filter ]] && filter="nearest"
+            scaler="integer"
+            ;;
+        *x*)
+            # Custom WxH (e.g. 1600x900). Parse width/height from "WxH" string.
+            inner_w=${1%%x*} inner_h=${1##*x}
+            [[ -z $filter ]] && filter="fsr"
+            # Auto-detect if the ratio is integer: if both axes divide evenly,
+            # nearest-neighbor will be artifact-free → prefer it over FSR.
+            if (( outer_w > 0 && outer_w % inner_w == 0 && outer_h % inner_h == 0 )); then
+                scaler="integer"
+                [[ $filter == "fsr" ]] && filter="nearest"
+            else
+                scaler="fit"
+            fi
+            ;;
+        *)
+            echo "gamescope-app: unknown resolution preset '$1'" >&2
+            echo "  use: 1080, 1440, 720, or WIDTHxHEIGHT (e.g. 1600x900)" >&2
+            exit 1
+            ;;
+    esac
+}
+
+# ── Help ────────────────────────────────────────────────────────────
+
+show_help() {
+    cat <<'EOF'
+Usage: gamescope-app [OPTIONS] -- <command...>
+
+Run a desktop application inside gamescope with pixel-perfect or
+FSR-enhanced scaling. Auto-detects monitor from Hyprland.
+
+Options:
+  -r PRESET    Resolution: 1080 (default), 1440, 720, or WxH
+  -f FILTER    Filter: nearest, fsr, nis, linear, pixel
+  -s SCALER    Scaler: integer (default), fit, fill, stretch
+  -S SHARPNESS FSR sharpness 0-20 (0=max sharp, default: 3)
+  -F           Run gamescope fullscreen (default: windowed)
+  -n           Dry run: print command without executing
+  -l, --list   List presets and exit
+  -h, --help   Show this help
+
+Examples:
+  gamescope-app -- firefox                    # 1080p integer, nearest
+  gamescope-app -r 1440 -- blender            # 1440p FSR upscale
+  gamescope-app -r 1080 -F -- retroarch       # 1080p fullscreen
+  gamescope-app -r 1440 -f nis -S 5 -- krita  # 1440p NIS, custom sharpness
+  gamescope-app -r 1600x900 -- mpv            # custom resolution
+EOF
+}
+
+show_presets() {
+    cat <<EOF
+Resolution presets (on ${outer_w}x${outer_h} monitor):
+
+  1080   1920x1080   scale ${outer_w}/1920 = $(printf '%.1f' $((outer_w * 10 / 1920))e-1)x   filter: nearest
+  1440   2560x1440   scale ${outer_w}/2560 = $(printf '%.1f' $((outer_w * 10 / 2560))e-1)x   filter: fsr
+  720    1280x720    scale ${outer_w}/1280 = $(printf '%.1f' $((outer_w * 10 / 1280))e-1)x   filter: nearest
+
+Filters:
+  nearest   Pixel duplication, zero interpolation (best for integer ratios)
+  fsr       AMD FidelityFX Super Resolution (smart upscale + sharpen)
+  nis       NVIDIA Image Scaling (similar to FSR, works on AMD)
+  linear    Bilinear interpolation (soft, not recommended)
+  pixel     Integer nearest + bilinear for non-integer remainder
+EOF
+}
+
+# ── Argument parsing ────────────────────────────────────────────────
+
+typeset preset_arg=""
+
+# Parse options before the "--" separator. Everything after "--" is the app command.
+# -f is parsed early so apply_preset() can check if user already chose a filter.
+while (( $# > 0 )); do
+    case $1 in
+        -r) preset_arg=$2; shift 2 ;;   # resolution preset (1080/1440/720/WxH)
+        -f) filter=$2; shift 2 ;;       # upscale filter override
+        -s) scaler=$2; shift 2 ;;       # scaler mode override
+        -S) fsr_sharpness=$2; shift 2 ;; # FSR/NIS sharpness (0=max, 20=min)
+        -F) fullscreen=1; shift ;;       # gamescope fullscreen (-f flag)
+        -n) dry_run=1; shift ;;          # print command, don't execute
+        -l|--list)
+            detect_monitor
+            show_presets
+            exit 0
+            ;;
+        -h|--help) show_help; exit 0 ;;
+        --) shift; break ;;              # end of options, rest is the app command
+        -*) echo "gamescope-app: unknown option '$1'" >&2; show_help >&2; exit 1 ;;
+        *)  break ;;                     # bare argument = start of command (no --)
+    esac
+done
+
+if (( $# == 0 )); then
+    echo "gamescope-app: no command specified" >&2
+    show_help >&2
+    exit 1
+fi
+
+# ── Build command ───────────────────────────────────────────────────
+# Detect the physical monitor, apply the chosen resolution preset,
+# then assemble the gamescope CLI flags in order.
+
+detect_monitor
+
+# Apply user's preset or default to 1080p (integer 2x on 4K).
+[[ -n $preset_arg ]] && apply_preset "$preset_arg" || apply_preset 1080
+
+typeset -a cmd=(gamescope)
+
+# -w/-h: the resolution the app sees (its "virtual" display)
+cmd+=(-w "$inner_w" -h "$inner_h")
+
+# -W/-H: the resolution gamescope outputs to (should match the physical monitor)
+cmd+=(-W "$outer_w" -H "$outer_h")
+
+# -r: max refresh rate passed to gamescope (matches monitor for VRR/smoothness)
+cmd+=(-r "$refresh")
+
+# -S: how to map inner→outer when sizes differ
+#   integer — only whole multipliers (2x, 3x); black bars if non-integer
+#   fit     — scale to fit preserving aspect ratio (may letterbox)
+#   fill    — scale to fill (may crop edges)
+#   stretch — ignore aspect ratio (distorts image)
+cmd+=(-S "$scaler")
+
+# -F: pixel filter used during upscaling
+#   nearest — duplicate pixels, zero blur (ideal for integer ratios)
+#   fsr     — AMD FidelityFX: edge-aware upscale + sharpening (good for 1.5x)
+#   nis     — NVIDIA Image Scaling: similar to FSR, vendor-agnostic
+#   linear  — bilinear interpolation (soft/blurry, rarely desired)
+#   pixel   — integer nearest for the whole part + linear for the fractional rest
+cmd+=(-F "$filter")
+
+# --fsr-sharpness: controls FSR/NIS post-upscale sharpening (0=max, 20=min).
+# Only meaningful when using fsr or nis filter; ignored by nearest/linear.
+if [[ $filter == fsr || $filter == nis ]]; then
+    cmd+=(--fsr-sharpness "$fsr_sharpness")
+fi
+
+# -f: tell gamescope to acquire an exclusive fullscreen video mode.
+# Without this flag, gamescope runs as a regular window inside Hyprland.
+if (( fullscreen )); then
+    cmd+=(-f)
+fi
+
+# --expose-wayland: allow Wayland-native apps (GTK4, Qt6) to connect directly
+# to gamescope's internal Wayland compositor. Without this, apps fall back to
+# XWayland inside gamescope, adding an unnecessary X11 translation layer.
+cmd+=(--expose-wayland)
+
+# Everything after "--" is the application command and its arguments.
+cmd+=(-- "$@")
+
+# ── Execute ─────────────────────────────────────────────────────────
+
+if (( dry_run )); then
+    # Print the resolved configuration for debugging without launching anything.
+    echo "[gamescope-app] monitor: ${outer_w}x${outer_h}@${refresh}Hz"
+    echo "[gamescope-app] inner:   ${inner_w}x${inner_h}"
+    echo "[gamescope-app] scaler:  $scaler, filter: $filter"
+    if [[ $filter == fsr || $filter == nis ]]; then
+        echo "[gamescope-app] sharpness: $fsr_sharpness"
+    fi
+    echo "[gamescope-app] exec: ${cmd[*]}"
+    exit 0
+fi
+
+# Replace this process with gamescope (no extra shell process lingers).
+exec "${cmd[@]}"

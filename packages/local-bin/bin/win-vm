@@ -1,0 +1,635 @@
+#!/usr/bin/env zsh
+#
+# win-vm — Windows 11 VM lifecycle manager for libvirt/QEMU/KVM
+#
+# Provides a declarative, config-driven interface on top of virt-install and
+# virsh. The idea is to capture all VM customization (RAM, CPU topology, ISOs,
+# GPU passthrough, Looking Glass, CPU pinning, USB devices, hugepages) in a
+# single shell config file and let this script generate the right libvirt XML.
+#
+# Why not just use virt-manager?
+#   virt-manager is fine for one-off setup but gives no reproducibility — if
+#   you need to recreate the VM after a disk failure, reinstall, or a machine
+#   change, you start from scratch. This script lets you redefine the VM from
+#   config with one command.
+#
+# Workflow:
+#
+#   1. win-vm init              # create ~/.config/win-vm/config.sh
+#   2. <edit config, set ISO paths>
+#   3. win-vm check             # verify prerequisites (packages, groups, OVMF)
+#   4. win-vm prepare           # download virtio-win ISO, create disk image
+#   5. win-vm define            # create libvirt VM from config
+#   6. win-vm start             # start VM
+#   7. <install Windows via virt-viewer>
+#   8. win-vm eject-install     # remove install ISOs from CD drives
+#
+# Optional extras (after Windows is installed):
+#
+#   win-vm gpu-add              # add GPU via PCI passthrough
+#   win-vm lg-enable            # add IVSHMEM device for Looking Glass
+#   win-vm cpupin               # pin vCPUs to host cores (avoids X3D CCD)
+#   win-vm hugepages            # enable hugepages-backed memory
+#   win-vm usb-add 0951:16ae    # hot-attach a USB device
+#   win-vm looking-glass        # run looking-glass-client against the VM
+#
+# Lifecycle:
+#
+#   win-vm status               # show state
+#   win-vm stop                 # ACPI shutdown (graceful)
+#   win-vm kill                 # force off (like unplugging power)
+#   win-vm edit                 # open virsh edit $VM_NAME
+#   win-vm undefine             # remove from libvirt (keeps disk and nvram)
+#   win-vm destroy-all          # remove VM + disk + nvram (DESTRUCTIVE, prompts)
+#
+# Configuration:
+#
+#   All knobs are shell variables sourced from $XDG_CONFIG_HOME/win-vm/config.sh
+#   (defaults to ~/.config/win-vm/config.sh). Any value not set there falls
+#   back to the default baked into this script — see the "Configuration" block
+#   below for the full list.
+#
+# Prerequisites on NixOS:
+#   Enable virtualisation.libvirtd, add OVMF to environment.systemPackages,
+#   and install Looking Glass client if needed.
+#
+# Dependencies: virt-install, virt-xml, virsh, qemu-img, curl
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+setopt ERR_EXIT NO_UNSET PIPE_FAIL extended_glob
+
+# Cache the script path before entering any function, because inside zsh
+# functions $0 is the function name, not the script file.
+readonly SCRIPT_PATH="${(%):-%x}"
+
+# ═══ Configuration (defaults — override in ~/.config/win-vm/config.sh) ═══════
+
+# Identity
+: "${VM_NAME:=win11}"
+: "${VM_OS_VARIANT:=win11}"          # virt-install --os-variant (osinfo-query os)
+
+# Resources
+: "${VM_RAM_MB:=16384}"
+: "${VM_CPU_SOCKETS:=1}"
+: "${VM_CPU_CORES:=4}"
+: "${VM_CPU_THREADS:=2}"
+: "${VM_CPU_MODEL:=host-passthrough}"
+
+# Storage
+: "${VM_DISK_PATH:=/var/lib/libvirt/images/${VM_NAME}.qcow2}"
+: "${VM_DISK_SIZE_GB:=80}"
+: "${VM_DISK_BUS:=virtio}"           # virtio (fast, needs driver) or sata
+: "${VM_DISK_CACHE:=writeback}"
+
+# ISOs
+: "${VM_WINDOWS_ISO:=${HOME}/Downloads/Win11.iso}"
+: "${VM_VIRTIO_ISO:=/var/lib/libvirt/images/virtio-win.iso}"
+: "${VM_VIRTIO_ISO_URL:=https://github.com/virtio-win/virtio-win-pkg-scripts/releases/latest/download/virtio-win.iso}"
+
+# Firmware (UEFI Secure Boot for Windows 11)
+# NixOS: these paths are created by virtualisation.libvirtd at runtime.
+# If using system-level OVMF packages, override in config.sh.
+: "${VM_OVMF_CODE:=/run/libvirt/nix-ovmf/OVMF_CODE.secboot.fd}"
+: "${VM_OVMF_VARS_TEMPLATE:=/run/libvirt/nix-ovmf/OVMF_VARS.fd}"
+
+# Network (libvirt network name, e.g. "default" for NAT or "br0" for bridge)
+: "${VM_NETWORK:=default}"
+: "${VM_NETWORK_TYPE:=network}"      # "network" or "bridge"
+
+# Graphics (spice during install, switch to "none" for Looking Glass later)
+: "${VM_GRAPHICS:=spice}"            # spice | none
+
+# GPU Passthrough (optional — leave empty to disable)
+: "${VM_GPU_PCI_BDF:=}"              # e.g. "0000:03:00.0" (VGA)
+: "${VM_GPU_AUDIO_BDF:=}"            # e.g. "0000:03:00.1" (HDMI Audio)
+
+# Looking Glass (requires GPU passthrough)
+: "${VM_LOOKING_GLASS_SIZE_MB:=128}" # must be power of 2, ≥ w*h*4*2
+
+# CPU pinning (optional — space-separated cpuset, one per vCPU)
+: "${VM_CPU_PIN_SET:=}"              # e.g. "16 17 18 19 20 21 22 23"
+
+# Hugepages (optional)
+: "${VM_HUGEPAGES:=no}"              # yes | no
+
+# USB passthrough (space-separated vendor:product IDs)
+: "${VM_USB_DEVICES:=}"              # e.g. "0951:16ae 046d:c52b"
+
+# Connection URI
+: "${VM_URI:=qemu:///system}"
+
+# ═══ Load user config ════════════════════════════════════════════════════════
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/win-vm"
+CONFIG_FILE="${CONFIG_DIR}/config.sh"
+if [[ -f "$CONFIG_FILE" ]]; then
+    # shellcheck source=/dev/null
+    source "$CONFIG_FILE"
+fi
+
+VIRSH=(virsh --connect "$VM_URI")
+
+# ═══ Helpers ═════════════════════════════════════════════════════════════════
+
+die()  { print -u2 "error: $*"; exit 1; }
+info() { print    "==> $*"; }
+warn() { print -u2 "warn: $*"; }
+ask()  {
+    local prompt="$1" reply
+    read -q "reply?${prompt} [y/N] " || true
+    print
+    [[ "$reply" == "y" ]]
+}
+
+vm_exists()  { ${VIRSH[@]} dominfo "$VM_NAME" >/dev/null 2>&1; }
+vm_running() { [[ "$(${VIRSH[@]} domstate "$VM_NAME" 2>/dev/null)" == "running" ]]; }
+
+require_defined() {
+    vm_exists || die "VM '$VM_NAME' is not defined — run 'win-vm define' first"
+}
+
+require_stopped() {
+    if vm_running; then
+        die "VM '$VM_NAME' is running — stop it first"
+    fi
+}
+
+# ═══ Subcommands ═════════════════════════════════════════════════════════════
+
+cmd_init() {
+    # Create an annotated default config file.
+    mkdir -p "$CONFIG_DIR"
+    if [[ -f "$CONFIG_FILE" ]]; then
+        die "config already exists at $CONFIG_FILE (delete it to regenerate)"
+    fi
+    cat > "$CONFIG_FILE" <<'CONFIG'
+# Windows VM configuration — sourced by ~/.local/bin/win-vm
+#
+# All values are optional. Uncomment to override the defaults baked into the
+# script. After changes, run `win-vm define` (if not yet defined) or re-apply
+# individual pieces via `win-vm gpu-add`, `win-vm cpupin`, etc.
+
+# ─── Identity ───
+# VM_NAME="win11"
+# VM_OS_VARIANT="win11"          # see: osinfo-query os
+
+# ─── Resources ───
+# VM_RAM_MB=16384
+# VM_CPU_SOCKETS=1
+# VM_CPU_CORES=4
+# VM_CPU_THREADS=2
+
+# ─── Storage ───
+# VM_DISK_PATH="/var/lib/libvirt/images/win11.qcow2"
+# VM_DISK_SIZE_GB=80
+
+# ─── ISOs ───
+# Put your Windows 11 ISO path here. virtio-win is auto-downloaded.
+VM_WINDOWS_ISO="${HOME}/Downloads/Win11.iso"
+# VM_VIRTIO_ISO="/var/lib/libvirt/images/virtio-win.iso"
+
+# ─── Network ───
+# "default"  = libvirt NAT (virbr0)
+# "br0"      = host bridge (set VM_NETWORK_TYPE="bridge")
+# VM_NETWORK="default"
+# VM_NETWORK_TYPE="network"
+
+# ─── Firmware (UEFI Secure Boot) ───
+# NixOS default paths use /run/libvirt/nix-ovmf/ (created by libvirtd module).
+# Override if using manually installed OVMF.
+# VM_OVMF_CODE="/run/libvirt/nix-ovmf/OVMF_CODE.secboot.fd"
+# VM_OVMF_VARS_TEMPLATE="/run/libvirt/nix-ovmf/OVMF_VARS.fd"
+
+# ─── GPU Passthrough (optional) ───
+# Find BDFs with: iommu-info
+# VM_GPU_PCI_BDF="0000:03:00.0"    # VGA function
+# VM_GPU_AUDIO_BDF="0000:03:00.1"  # HDMI audio function
+
+# ─── Looking Glass (requires GPU passthrough) ───
+# After `win-vm gpu-add`, run `win-vm lg-enable` and set:
+# VM_GRAPHICS="none"
+# VM_LOOKING_GLASS_SIZE_MB=128     # w * h * 4 * 2, rounded up to power of 2
+
+# ─── CPU pinning (9950X3D: non-V-cache CCD) ───
+# Check which cores to pin: lscpu --all --extended
+# VM_CPU_PIN_SET="16 17 18 19 20 21 22 23"
+
+# ─── Hugepages ───
+# VM_HUGEPAGES="yes"
+# Pre-allocate on host: echo 8192 | sudo tee /proc/sys/vm/nr_hugepages
+
+# ─── USB passthrough ───
+# Space-separated vendor:product IDs (find via lsusb)
+# VM_USB_DEVICES="0951:16ae 046d:c52b"
+CONFIG
+    info "created $CONFIG_FILE"
+    info "edit it, then run: win-vm check && win-vm define"
+}
+
+cmd_check() {
+    info "checking prerequisites..."
+    local -a missing=()
+
+    for bin in virt-install virt-xml virsh qemu-img curl; do
+        command -v "$bin" >/dev/null 2>&1 || missing+=("$bin")
+    done
+    [[ -f "$VM_OVMF_CODE" ]]          || missing+=("OVMF_CODE: $VM_OVMF_CODE")
+    [[ -f "$VM_OVMF_VARS_TEMPLATE" ]] || missing+=("OVMF_VARS: $VM_OVMF_VARS_TEMPLATE")
+
+    (( ${#missing} == 0 )) || die "missing: ${(j:, :)missing}"
+
+    # Group membership — needed to talk to qemu:///system without sudo
+    if ! id -nG | tr ' ' '\n' | grep -qx libvirtd; then
+        warn "user not in 'libvirtd' group; run: sudo usermod -aG libvirtd $USER && relogin"
+    fi
+
+    # libvirtd service
+    if ! systemctl is-active --quiet libvirtd.service 2>/dev/null; then
+        warn "libvirtd.service not active; run: sudo systemctl enable --now libvirtd.service"
+    fi
+
+    # Network
+    local net_state
+    net_state=$(${VIRSH[@]} net-info "$VM_NETWORK" 2>/dev/null | awk '/^Active:/{print $2}')
+    if [[ "$net_state" != "yes" ]]; then
+        warn "libvirt network '$VM_NETWORK' is not active — will be started on 'define'"
+    fi
+
+    # swtpm binary (libvirt spawns it per-VM)
+    command -v swtpm >/dev/null 2>&1 || warn "swtpm not installed — Win11 TPM will fail"
+
+    info "checks passed"
+}
+
+cmd_prepare() {
+    cmd_check
+
+    # Ensure libvirt network is up
+    local net_state
+    net_state=$(${VIRSH[@]} net-info "$VM_NETWORK" 2>/dev/null | awk '/^Active:/{print $2}')
+    if [[ "$net_state" != "yes" ]]; then
+        info "starting libvirt network '$VM_NETWORK'"
+        ${VIRSH[@]} net-start "$VM_NETWORK"
+        ${VIRSH[@]} net-autostart "$VM_NETWORK" || true
+    fi
+
+    # virtio-win ISO (auto-download)
+    if [[ ! -f "$VM_VIRTIO_ISO" ]]; then
+        info "downloading virtio-win ISO → $VM_VIRTIO_ISO"
+        sudo mkdir -p "${VM_VIRTIO_ISO:h}"
+        sudo curl -fL --progress-bar "$VM_VIRTIO_ISO_URL" -o "$VM_VIRTIO_ISO"
+    fi
+
+    # Windows ISO (user-provided)
+    [[ -f "$VM_WINDOWS_ISO" ]] || die "Windows ISO not found: $VM_WINDOWS_ISO
+    download it from https://www.microsoft.com/software-download/windows11
+    and set VM_WINDOWS_ISO in $CONFIG_FILE"
+
+    # Disk image
+    if [[ ! -f "$VM_DISK_PATH" ]]; then
+        info "creating disk image ${VM_DISK_PATH} (${VM_DISK_SIZE_GB} GB)"
+        sudo mkdir -p "${VM_DISK_PATH:h}"
+        sudo qemu-img create -f qcow2 -o preallocation=off \
+            "$VM_DISK_PATH" "${VM_DISK_SIZE_GB}G" >/dev/null
+        # NixOS: libvirtd runs QEMU as root by default (runAsRoot = true),
+        # so root ownership is correct.
+        sudo chown root:root "$VM_DISK_PATH" 2>/dev/null || true
+    fi
+}
+
+cmd_define() {
+    cmd_prepare
+
+    if vm_exists; then
+        die "VM '$VM_NAME' already defined — 'win-vm undefine' first, or 'win-vm edit' to modify"
+    fi
+
+    info "defining VM '$VM_NAME' via virt-install"
+
+    local -a args=(
+        --connect "$VM_URI"
+        --name "$VM_NAME"
+        --memory "$VM_RAM_MB"
+        --vcpus "sockets=${VM_CPU_SOCKETS},cores=${VM_CPU_CORES},threads=${VM_CPU_THREADS}"
+        --cpu "$VM_CPU_MODEL"
+        --os-variant "$VM_OS_VARIANT"
+        --machine q35
+        --features "smm.state=on"
+        --boot "loader=${VM_OVMF_CODE},loader.readonly=yes,loader.type=pflash,loader.secure=yes,nvram.template=${VM_OVMF_VARS_TEMPLATE}"
+        --tpm "model=tpm-tis,backend.type=emulator,backend.version=2.0"
+        --sound ich9
+        # Main disk (virtio, user installs driver from virtio-win CD during setup)
+        --disk "path=${VM_DISK_PATH},bus=${VM_DISK_BUS},cache=${VM_DISK_CACHE},discard=unmap"
+        # Windows installer — this also sets boot order to CDROM first
+        --cdrom "$VM_WINDOWS_ISO"
+        # virtio-win drivers as a second CDROM (so installer can load viostor)
+        --disk "path=${VM_VIRTIO_ISO},device=cdrom,bus=sata"
+        --network "${VM_NETWORK_TYPE}=${VM_NETWORK},model=virtio"
+        --noautoconsole
+        --noreboot
+        --wait 0
+    )
+
+    case "$VM_GRAPHICS" in
+        spice) args+=(--graphics "spice,listen=none" --video virtio) ;;
+        none)  args+=(--graphics none) ;;
+        *)     die "unknown VM_GRAPHICS: $VM_GRAPHICS (expected: spice | none)" ;;
+    esac
+
+    if [[ "$VM_HUGEPAGES" == "yes" ]]; then
+        args+=(--memorybacking hugepages=yes)
+    fi
+
+    virt-install "${args[@]}"
+
+    info "VM defined."
+    info ""
+    info "Next steps:"
+    info "  win-vm start                 # boot the VM"
+    info "  virt-viewer -c $VM_URI $VM_NAME   # view the console / run installer"
+    info ""
+    info "After Windows install completes:"
+    info "  win-vm eject-install         # remove install ISOs"
+    [[ -n "$VM_GPU_PCI_BDF" ]] && info "  win-vm gpu-add               # attach GPU"
+    [[ -n "$VM_CPU_PIN_SET" ]] && info "  win-vm cpupin                # pin vCPUs"
+}
+
+cmd_start() {
+    require_defined
+    if vm_running; then
+        info "VM '$VM_NAME' is already running"
+        return 0
+    fi
+    ${VIRSH[@]} start "$VM_NAME"
+    info "VM '$VM_NAME' started"
+}
+
+cmd_stop() {
+    require_defined
+    vm_running || { info "VM '$VM_NAME' is already stopped"; return 0; }
+    ${VIRSH[@]} shutdown "$VM_NAME"
+    info "ACPI shutdown sent; use 'win-vm kill' to force off"
+}
+
+cmd_kill() {
+    require_defined
+    vm_running || { info "VM '$VM_NAME' is already stopped"; return 0; }
+    ${VIRSH[@]} destroy "$VM_NAME"
+    info "VM '$VM_NAME' forced off"
+}
+
+cmd_status() {
+    vm_exists || { print "VM '$VM_NAME': not defined"; return 0; }
+    ${VIRSH[@]} dominfo "$VM_NAME"
+}
+
+cmd_edit()      { require_defined; ${VIRSH[@]} edit "$VM_NAME"; }
+
+cmd_console() {
+    require_defined
+    if [[ "$VM_GRAPHICS" == "none" && -e /dev/shm/looking-glass ]]; then
+        cmd_looking_glass
+        return
+    fi
+    local uri
+    uri=$(${VIRSH[@]} domdisplay "$VM_NAME" 2>/dev/null) || {
+        exec virt-viewer --connect "$VM_URI" "$VM_NAME"
+        return
+    }
+    if command -v spicy >/dev/null 2>&1; then
+        exec spicy --uri "$uri"
+    elif command -v remote-viewer >/dev/null 2>&1; then
+        exec remote-viewer "$uri"
+    else
+        exec virt-viewer --connect "$VM_URI" "$VM_NAME"
+    fi
+}
+
+cmd_undefine() {
+    require_defined
+    require_stopped
+    ask "Undefine VM '$VM_NAME' (disk and nvram will be kept)?" || return 0
+    ${VIRSH[@]} undefine --nvram "$VM_NAME"
+    info "VM '$VM_NAME' undefined"
+}
+
+cmd_destroy_all() {
+    require_stopped
+    print -u2 "This will REMOVE the VM, its disk ($VM_DISK_PATH), and its nvram."
+    ask "Are you absolutely sure?" || return 0
+    if vm_exists; then
+        ${VIRSH[@]} undefine --nvram --remove-all-storage "$VM_NAME" 2>/dev/null \
+            || ${VIRSH[@]} undefine --nvram "$VM_NAME"
+    fi
+    [[ -f "$VM_DISK_PATH" ]] && sudo rm -f "$VM_DISK_PATH"
+    info "VM '$VM_NAME' and its storage removed"
+}
+
+cmd_eject_install() {
+    # Detach install ISOs after Windows setup is complete.
+    # Leaves only the main disk attached.
+    require_defined
+    info "ejecting install ISOs from VM '$VM_NAME'"
+    # Eject by matching source file paths
+    for iso in "$VM_WINDOWS_ISO" "$VM_VIRTIO_ISO"; do
+        # Find the target device (e.g. sda, sdb) that has this source
+        local target
+        target=$(${VIRSH[@]} domblklist "$VM_NAME" --details \
+            | awk -v src="$iso" '$1=="cdrom" && $4==src {print $3}')
+        if [[ -n "$target" ]]; then
+            info "  ejecting $target ($iso)"
+            ${VIRSH[@]} change-media "$VM_NAME" "$target" --eject --config \
+                || warn "  failed to eject $target"
+        fi
+    done
+}
+
+# Convert "0000:03:00.0" to libvirt nodedev name "pci_0000_03_00_0".
+# virt-xml --hostdev accepts this form to add a PCI passthrough device.
+bdf_to_nodedev() {
+    local bdf="$1"
+    print "pci_${bdf//[:.]/_}"
+}
+
+cmd_gpu_add() {
+    require_defined
+    require_stopped
+    [[ -n "$VM_GPU_PCI_BDF" ]] || die "VM_GPU_PCI_BDF is empty; set it in $CONFIG_FILE"
+
+    info "attaching GPU $VM_GPU_PCI_BDF to VM '$VM_NAME'"
+    virt-xml --connect "$VM_URI" "$VM_NAME" --add-device \
+        --hostdev "$(bdf_to_nodedev "$VM_GPU_PCI_BDF")"
+
+    if [[ -n "$VM_GPU_AUDIO_BDF" ]]; then
+        info "attaching GPU audio function $VM_GPU_AUDIO_BDF"
+        virt-xml --connect "$VM_URI" "$VM_NAME" --add-device \
+            --hostdev "$(bdf_to_nodedev "$VM_GPU_AUDIO_BDF")"
+    fi
+    info "GPU added. Next: win-vm lg-enable (for Looking Glass) or set VM_GRAPHICS=none"
+}
+
+cmd_gpu_remove() {
+    require_defined
+    require_stopped
+    [[ -n "$VM_GPU_PCI_BDF" ]] || die "VM_GPU_PCI_BDF is empty"
+    info "detaching GPU from VM '$VM_NAME'"
+    virt-xml --connect "$VM_URI" "$VM_NAME" --remove-device \
+        --hostdev "$(bdf_to_nodedev "$VM_GPU_PCI_BDF")" || true
+    if [[ -n "$VM_GPU_AUDIO_BDF" ]]; then
+        virt-xml --connect "$VM_URI" "$VM_NAME" --remove-device \
+            --hostdev "$(bdf_to_nodedev "$VM_GPU_AUDIO_BDF")" || true
+    fi
+}
+
+cmd_lg_enable() {
+    # Add IVSHMEM device for Looking Glass frame relay.
+    # /dev/shm/looking-glass is created by systemd-tmpfiles on NixOS,
+    # typically configured via services.tmpfiles.settings or a tmpfiles.d drop-in.
+    require_defined
+    require_stopped
+
+    info "adding IVSHMEM shmem device (${VM_LOOKING_GLASS_SIZE_MB} MB)"
+
+    local shmem_xml="/tmp/win-vm-shmem-$$.xml"
+    cat > "$shmem_xml" <<XML
+<shmem name='looking-glass'>
+  <model type='ivshmem-plain'/>
+  <size unit='M'>${VM_LOOKING_GLASS_SIZE_MB}</size>
+</shmem>
+XML
+    ${VIRSH[@]} attach-device "$VM_NAME" "$shmem_xml" --config
+    rm -f "$shmem_xml"
+
+    # Ensure /dev/shm file exists
+    if [[ ! -e /dev/shm/looking-glass ]]; then
+        warn "/dev/shm/looking-glass missing — run: sudo systemd-tmpfiles --create"
+    fi
+
+    info "IVSHMEM added. Install the Looking Glass host app inside Windows:"
+    info "  https://looking-glass.io/downloads"
+    info "Then set VM_GRAPHICS=none in $CONFIG_FILE and run: win-vm looking-glass"
+}
+
+cmd_cpupin() {
+    require_defined
+    require_stopped
+    [[ -n "$VM_CPU_PIN_SET" ]] || die "VM_CPU_PIN_SET is empty; set it in $CONFIG_FILE"
+
+    local -a pin_set=(${=VM_CPU_PIN_SET})
+    local total=$(( VM_CPU_SOCKETS * VM_CPU_CORES * VM_CPU_THREADS ))
+    if (( ${#pin_set} != total )); then
+        die "VM_CPU_PIN_SET has ${#pin_set} entries, expected $total (sockets*cores*threads)"
+    fi
+
+    info "pinning $total vCPUs to host cores: ${pin_set[*]}"
+    local i host_cpu
+    for (( i = 0; i < total; i++ )); do
+        host_cpu="${pin_set[$((i + 1))]}"
+        ${VIRSH[@]} vcpupin "$VM_NAME" "$i" "$host_cpu" --config
+    done
+}
+
+cmd_hugepages() {
+    require_defined
+    require_stopped
+    virt-xml --connect "$VM_URI" "$VM_NAME" --edit \
+        --memorybacking hugepages=yes
+    info "hugepages enabled. Pre-allocate on host: sudo sysctl vm.nr_hugepages=$(( VM_RAM_MB / 2 ))"
+}
+
+cmd_usb_add() {
+    require_defined
+    local id="${1:-}"
+    [[ -n "$id" ]] || die "usage: win-vm usb-add VENDOR:PRODUCT (e.g. 0951:16ae)"
+    [[ "$id" == *:* ]] || die "bad format: expected VENDOR:PRODUCT"
+    local vendor="0x${id%:*}" product="0x${id#*:}"
+
+    local xml="/tmp/win-vm-usb-$$.xml"
+    cat > "$xml" <<XML
+<hostdev mode='subsystem' type='usb' managed='yes'>
+  <source>
+    <vendor id='${vendor}'/>
+    <product id='${product}'/>
+  </source>
+</hostdev>
+XML
+    # If the VM is running, hot-attach; otherwise persistent attach.
+    if vm_running; then
+        ${VIRSH[@]} attach-device "$VM_NAME" "$xml" --live
+    else
+        ${VIRSH[@]} attach-device "$VM_NAME" "$xml" --config
+    fi
+    rm -f "$xml"
+    info "USB $id attached to VM '$VM_NAME'"
+}
+
+cmd_usb_remove() {
+    require_defined
+    local id="${1:-}"
+    [[ -n "$id" ]] || die "usage: win-vm usb-remove VENDOR:PRODUCT"
+    local vendor="0x${id%:*}" product="0x${id#*:}"
+
+    local xml="/tmp/win-vm-usb-$$.xml"
+    cat > "$xml" <<XML
+<hostdev mode='subsystem' type='usb' managed='yes'>
+  <source>
+    <vendor id='${vendor}'/>
+    <product id='${product}'/>
+  </source>
+</hostdev>
+XML
+    if vm_running; then
+        ${VIRSH[@]} detach-device "$VM_NAME" "$xml" --live
+    else
+        ${VIRSH[@]} detach-device "$VM_NAME" "$xml" --config
+    fi
+    rm -f "$xml"
+}
+
+cmd_looking_glass() {
+    require_defined
+    [[ -e /dev/shm/looking-glass ]] || die "/dev/shm/looking-glass missing; run 'win-vm lg-enable' first"
+    exec looking-glass-client \
+        -f /dev/shm/looking-glass \
+        -F \
+        -s \
+        "$@"
+}
+
+cmd_help() {
+    # Print the header doc block (everything between "# win-vm" and the first
+    # "# ───" separator) as plain text.
+    sed -n '/^# win-vm/,/^# ─\{5,\}/p' "$SCRIPT_PATH" | sed 's/^# \{0,1\}//'
+}
+
+# ═══ Dispatcher ══════════════════════════════════════════════════════════════
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+    init)          cmd_init "$@" ;;
+    check)         cmd_check "$@" ;;
+    prepare)       cmd_prepare "$@" ;;
+    define)        cmd_define "$@" ;;
+    start)         cmd_start "$@" ;;
+    stop)          cmd_stop "$@" ;;
+    kill)          cmd_kill "$@" ;;
+    status)        cmd_status "$@" ;;
+    edit)          cmd_edit "$@" ;;
+    console)       cmd_console "$@" ;;
+    undefine)      cmd_undefine "$@" ;;
+    destroy-all)   cmd_destroy_all "$@" ;;
+    eject-install) cmd_eject_install "$@" ;;
+    gpu-add)       cmd_gpu_add "$@" ;;
+    gpu-remove)    cmd_gpu_remove "$@" ;;
+    lg-enable)     cmd_lg_enable "$@" ;;
+    cpupin)        cmd_cpupin "$@" ;;
+    hugepages)     cmd_hugepages "$@" ;;
+    usb-add)       cmd_usb_add "$@" ;;
+    usb-remove)    cmd_usb_remove "$@" ;;
+    looking-glass) cmd_looking_glass "$@" ;;
+    help|-h|--help) cmd_help ;;
+    *) print -u2 "unknown command: $cmd"; cmd_help; exit 1 ;;
+esac
