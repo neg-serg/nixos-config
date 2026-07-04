@@ -37,8 +37,6 @@ let
   '';
 in
 {
-  options.features.net.rknDomains.enable = mkEnableOption "RKN domain blocklist fetcher.";
-
   config = mkIf cfg.enable {
     environment.systemPackages = [ pkgs.curl ];
 
