@@ -17,4 +17,6 @@
   skwd = pkgs.skwd;
 
   termeverything = pkgs.neg.termeverything;
+
+  brrtfetch = pkgs.neg.brrtfetch;
 }
