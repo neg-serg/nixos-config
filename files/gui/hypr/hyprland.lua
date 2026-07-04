@@ -127,6 +127,9 @@ hl.config({
     follow_mouse = 1, sensitivity = 0, repeat_rate = 35, repeat_delay = 250,
     touchpad = { natural_scroll = true, disable_while_typing = true, clickfinger_behavior = true },
   },
+  debug = {
+    disable_logs = true,
+  },
   misc = {
     disable_hyprland_logo = false, enable_anr_dialog = false, force_default_wallpaper = 0,
     font_family = "Iosevka", splash_font_family = "Iosevka",
