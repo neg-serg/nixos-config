@@ -60,6 +60,7 @@ in
     ./misc.nix
     ./hardware.nix
     ./optimization.nix
+    ./skwd.nix
   ];
 
   # Apply profile defaults. Users can still override flags after this.
@@ -230,6 +231,10 @@ in
         {
           assertion = cfg.gui.enable || (!cfg.apps.guiAppsFull.enable);
           message = "features.apps.guiAppsFull.enable requires features.gui.enable = true";
+        }
+        {
+          assertion = cfg.gui.enable || (!cfg.gui.skwd.enable);
+          message = "features.gui.skwd.enable requires features.gui.enable = true";
         }
       ];
     }
