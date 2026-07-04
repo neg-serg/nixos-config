@@ -42,6 +42,12 @@ in
     # Native Rust-based zsh syntax highlighting engine
     zsh-native-syntax = callPkg (packagesRoot + "/zsh-native-syntax") { };
 
+    # Random solar system simulator for the terminal
+    solarust = callPkg (packagesRoot + "/solarust") { };
+
+    # Image/GIF/video recolor tool with custom palettes
+    palettum = callPkg (packagesRoot + "/palettum") { };
+
     # ncpamixer with custom config
     ncpamixer-wrapped =
       let
