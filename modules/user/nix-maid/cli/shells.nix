@@ -210,10 +210,10 @@ in
       # --- Terminal & Specific Shell Configs ---
 
       # Kitty Config
-      ".config/kitty".source = n.linkImpure kittyConf;
+      ".config/kitty".source = kittyConf;
 
       # Tmux Config
-      ".config/tmux".source = n.linkImpure tmuxConfDir;
+      ".config/tmux".source = tmuxConfDir;
 
     })
   ];
