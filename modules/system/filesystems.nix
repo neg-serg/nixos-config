@@ -86,7 +86,7 @@ in
     "/tank" = {
       device = "tank";
       fsType = "zfs";
-      options = [ "nofail" "x-systemd.automount" ];
+      options = [ "nofail" ];
     };
 
     # Argon 3.6TiB LV (nvme1n1 + nvme3n1)
