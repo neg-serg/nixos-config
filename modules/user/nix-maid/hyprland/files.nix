@@ -1,4 +1,5 @@
 {
+  lib,
   neg,
   impurity ? null,
   ...
@@ -16,7 +17,7 @@ let
     |> map (f: {
       name = "${destDir}/${f}";
       value = {
-        source = n.linkImpure (sourceDir + "/${f}");
+        source = sourceDir + "/${f}";
       };
     })
     |> builtins.listToAttrs;
@@ -26,16 +27,24 @@ in
     {
       hyprlandConfText,
       permissionsConfText,
+      hyprlandLuaText,
     }:
     n.mkHomeFiles (
       {
         ".config/hypr/hyprland.conf".text = hyprlandConfText;
         ".config/hypr/permissions.conf".text = permissionsConfText;
 
-        ".config/hypr/hyprland.lua".source = n.linkImpure (hyprConfDir + /hyprland.lua);
-        ".config/hypr/xdph.conf".source = n.linkImpure (hyprConfDir + /xdph.conf);
+        ".config/hypr/hyprland.lua".text = hyprlandLuaText;
+        ".config/hypr/xdph.conf".text = ''
+          screencopy {
+              max_fps = 60
+          }
+        '';
 
-        ".config/hypr/hyprlock.conf".source = n.linkImpure (hyprConfDir + /hyprlock/init.conf);
+        ".config/hypr/hyprlock.conf".text = ''
+          # Hyprlock Configuration
+          source = ~/.config/hypr/hyprlock/theme.conf
+        '';
 
         # Wallust generates this file at runtime; provide a fallback with known-good defaults so hyprlock never fails on source
         ".cache/wallust/hyprland.conf".text = ''
