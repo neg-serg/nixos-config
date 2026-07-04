@@ -9,6 +9,7 @@
   rofi-config = pkgs.neg.rofi-config;
   sqlit = pkgs.neg.sqlit;
 
+  waves = pkgs.waves;
   wiremix = pkgs.wiremix;
   palettum = pkgs.neg.palettum;
 

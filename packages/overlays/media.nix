@@ -7,4 +7,5 @@ _inputs: _final: prev:
 
   hdspeconf = prev.callPackage ../hdspeconf { };
 
+  waves = prev.callPackage ../waves { };
 }
