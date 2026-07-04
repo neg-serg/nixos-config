@@ -13,9 +13,12 @@ let
   # Flavor: selects which quickshell config to deploy
   flavor = config.features.gui.quickshell.flavor or "default";
   isOctashell = flavor == "octashell";
+  isSshell = flavor == "sshell";
 
   # Source path based on flavor
-  quickshellSrc = if isOctashell
+  quickshellSrc = if isSshell
+    then "${inputs.sshell.packages.${pkgs.stdenv.hostPlatform.system}.default}/share/sshell"
+    else if isOctashell
     then ../../../../files/octashell
     else ../../../../files/quickshell;
 
@@ -54,17 +57,30 @@ let
       pkgs.cliphist # clipboard history
       pkgs.wl-clipboard # wl-copy for clipboard
       pkgs.uwsm # universal Wayland session manager
+    ] ++ lib.optionals isSshell [
+      pkgs.brightnessctl # backlight control
+      pkgs.cliphist # clipboard history
+      pkgs.playerctl # MPRIS media player control
+      pkgs.wireplumber # audio control (wpctl)
+      pkgs.networkmanager # nmcli for network
+      pkgs.cava # audio visualizer
+      pkgs.jq # JSON processor
+      pkgs.matugen # Material You color generator
+      pkgs.imagemagick # image processing
+      pkgs.findutils # find command
+      pkgs.bc # calculator for battery script
     ];
   };
 
   # Theme init: copy read-only theme dir to writable cache dir before quickshell starts.
   # The directory name differs between flavors: octashell uses "theme", default uses "Theme".
+  # Not needed for sshell.
   quickshellThemeDir = if isOctashell then "theme" else "Theme";
 
   quickshellThemeInitScript = pkgs.writeShellScript "quickshell-theme-init" ''
     theme_dir="$HOME/.config/quickshell/${quickshellThemeDir}"
     cache_dir="$HOME/.cache/quickshell-theme"
-    if [ -L "$theme_dir" ] && [ ! -w "$theme_dir" ]; then
+    if [ -L "$theme_dir" ] && [ ! -w "$theme_dir" ] && [ -d "$theme_dir" ]; then
       mkdir -p "$cache_dir"
       if [ -z "$(ls -A "$cache_dir" 2>/dev/null)" ]; then
         cp -r "$theme_dir"/* "$cache_dir"/ 2>/dev/null || true
@@ -82,6 +98,8 @@ lib.mkIf quickshellEnabled (
         quickshellWrapped # Wrapped Quickshell with dependencies and environment
       ] ++ lib.optionals isOctashell [
         pkgs.papirus-icon-theme # icon theme used by octashell
+      ] ++ lib.optionals isSshell [
+        pkgs.material-symbols # Material Symbols icon font used by sshell
       ];
 
       # Quickshell panel service
@@ -103,7 +121,7 @@ lib.mkIf quickshellEnabled (
     (n.mkHomeFiles {
       ".config/quickshell".source = quickshellSrc;
     })
-    {
+    (lib.mkIf (!isSshell) {
       systemd.user.services.quickshell-theme-init = {
         description = "Copy read-only Theme to writable cache dir before quickshell starts";
         after = [ "maid-activation.service" ];
@@ -117,6 +135,6 @@ lib.mkIf quickshellEnabled (
 
       systemd.user.services.quickshell.after = lib.mkForce [ "graphical-session-pre.target" "maid-activation.service" ];
       systemd.user.services.quickshell.wants = [ "maid-activation.service" ];
-    }
+    })
   ]
 )
