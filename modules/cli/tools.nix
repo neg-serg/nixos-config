@@ -50,6 +50,7 @@ in
     pkgs.moreutils # assorted unix utils (sponge, etc.)
     pkgs.ncdu_1 # interactive du (C version, no zig/LLVM dep)
     pkgs.neg.duf # better df (fork with plain style support)
+    pkgs.neg.termeverything # Wayland compositor that renders GUI windows in the terminal
     pkgs.pwgen # password generator
   ]
   ++ lib.optional (hishtoryPkg != null) hishtoryPkg; # sync shell history w/ encryption, better than zsh-histdb

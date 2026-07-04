@@ -7,7 +7,14 @@
 
   surfingkeys-pkg = pkgs.surfingkeys-pkg;
   rofi-config = pkgs.neg.rofi-config;
+  sqlit = pkgs.neg.sqlit;
 
   wiremix = pkgs.wiremix;
   palettum = pkgs.neg.palettum;
+
+  gituserchrome = pkgs.gituserchrome;
+
+  skwd = pkgs.skwd;
+
+  termeverything = pkgs.neg.termeverything;
 }
