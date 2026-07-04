@@ -8,18 +8,16 @@
 }:
 let
   n = neg impurity;
-  fastfetchSrc = ../../../../files/fastfetch;
 in
 lib.mkMerge [
   {
     environment.systemPackages = [
-      pkgs.aliae # Cross-shell configuration manager
-      pkgs.fastfetch # Like neofetch, but much faster (C)
-      pkgs.tealdeer # A fast tldr client in Rust
-      pkgs.nodejs # For npx and npm
+      pkgs.aliae
+      pkgs.fastfetch
+      pkgs.tealdeer
+      pkgs.nodejs
     ];
 
-    # --- Environment Variables ---
     environment.variables = {
       HTTPIE_CONFIG_DIR = "${config.users.users.neg.home}/.config/httpie";
       PARALLEL_HOME = "${config.users.users.neg.home}/.config/parallel";
@@ -27,14 +25,103 @@ lib.mkMerge [
   }
 
   (n.mkHomeFiles {
-    # Fastfetch Configs (Source from repo)
-    ".config/fastfetch/config.jsonc".source = n.linkImpure (fastfetchSrc + /config.jsonc);
-    ".config/fastfetch/skull".source = n.linkImpure (fastfetchSrc + /skull); # Custom logo
+    ".config/fastfetch/config.jsonc".text = ''
+      {
+        "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+        "logo": {
+          "source": "$XDG_CONFIG_HOME/fastfetch/skull",
+          "padding": {
+            "left": 4,
+            "right": 4
+          }
+        },
+        "display": {
+          "separator": " ",
+          "size": {
+            "maxPrefix": "TB"
+          },
+          "percent": {
+            "type": 1
+          },
+          "color": {
+            "output": "01;38;5;248",
+            "keys": "38;5;24;1"
+          }
+        },
+        "modules": [
+          { "type": "os", "key": "", "format": "{3}" },
+          { "type": "kernel", "key": "", "format": "{1} {2} ({4})" },
+          { "type": "uptime", "key": "" },
+          { "type": "wm", "key": "" },
+          { "type": "command", "key": "", "text": "(nix-store --query --requisites /run/current-system | wc -l | tr -d '\\n') && echo ' (nix; /run/current-system)'" },
+          { "type": "host", "key": "" },
+          { "type": "monitor", "key": "" },
+          { "type": "theme", "key": "" },
+          { "type": "icons", "key": "" },
+          { "type": "cursor", "key": "" },
+          { "type": "shell", "key": "" },
+          { "type": "terminal", "key": "" },
+          { "type": "terminalfont", "key": "" },
+          { "type": "terminalsize", "key": "" },
+          { "type": "cpu", "key": "" },
+          { "type": "physicalmemory", "key": "" },
+          { "type": "board", "key": "" },
+          { "type": "bios", "key": "" },
+          { "type": "gpu", "key": "󰢮", "driverSpecific": true },
+          { "type": "vulkan", "key": "󰢮" },
+          { "type": "physicaldisk", "key": "" },
+          { "type": "sound", "key": "" },
+          { "type": "player", "key": "" },
+          { "type": "users", "key": "" },
+          { "type": "locale", "key": "" },
+          { "type": "weather", "key": "" }
+        ]
+      }
+    '';
 
-    # Amfora Config
+    ".config/fastfetch/skull".text = builtins.readFile ../../../../files/fastfetch/skull;
+
     ".config/amfora".source = ../../../../files/config/amfora;
 
-    # Tealdeer Config
-    ".config/tealdeer/config.toml".source = n.linkImpure ../../../../files/tealdeer/config.toml;
+    ".config/tealdeer/config.toml".text = ''
+      [style.description]
+      underline = false
+      bold = false
+      italic = true
+
+      [style.command_name]
+      foreground = "cyan"
+      underline = false
+      bold = false
+      italic = false
+
+      [style.example_text]
+      foreground = "green"
+      underline = false
+      bold = false
+      italic = false
+
+      [style.example_code]
+      foreground = "yellow"
+      underline = false
+      bold = false
+      italic = true
+
+      [style.example_variable]
+      foreground = "blue"
+      underline = false
+      bold = true
+      italic = false
+
+      [display]
+      compact = false
+      use_pager = false
+
+      [updates]
+      auto_update = true
+      auto_update_interval_hours = 720
+
+      [directories]
+    '';
   })
 ]
