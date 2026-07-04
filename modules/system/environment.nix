@@ -22,6 +22,13 @@
       XDG_SESSION_TYPE = "wayland";
       # Prefer Mesa VAAPI on AMD (radeonsi)
       LIBVA_DRIVER_NAME = "radeonsi";
+      # Gaming performance (ported from legacy Salt config)
+      DXVK_ASYNC = "1";
+      DXVK_STATE_CACHE = "1";
+      WINE_FULLSCREEN_FSR = "1";
+      mesa_glthread = "true";
+      MESA_SHADER_CACHE_MAX_SIZE = "10G";
+      STEAM_RUNTIME_PREFER_HOST_LIBRARIES = "1";
       XDG_CACHE_HOME = "$HOME/.cache";
       XDG_CONFIG_HOME = "$HOME/.config";
       XDG_DATA_HOME = "$HOME/.local/share";
