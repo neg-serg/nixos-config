@@ -167,7 +167,14 @@ in
         Type = "oneshot";
         ExecStart = "${pkgs.writeShellScript "pw-route-aes" ''
           export PATH="${lib.makeBinPath [ pkgs.zsh pkgs.pipewire pkgs.gawk ]}:$PATH"
-          exec ${pwRouteScript}/bin/pw-route aes
+          tries=30
+          for i in $(seq 1 "$tries"); do
+            if ${pwRouteScript}/bin/pw-route aes 2>/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 0
         ''}";
       };
     };
