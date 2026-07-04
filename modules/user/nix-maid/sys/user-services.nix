@@ -119,6 +119,19 @@ lib.mkIf (cfg.enable or false) {
       wantedBy = [ "graphical-session.target" ];
     };
 
+    # OpenRGB profile — applies saved "neg" profile after daemon starts (ported from legacy Salt config)
+    openrgb-profile = {
+      description = "Apply OpenRGB neg profile";
+      after = [ "openrgb.service" ];
+      requires = [ "openrgb.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${lib.getExe pkgs.openrgb} --profile neg";
+        RemainAfterExit = false;
+      };
+      wantedBy = [ "default.target" ];
+    };
+
     # Local AI (Ollama)
     "local-ai" = lib.mkIf (config.features.llm.enable or false) {
       description = "Local AI (Ollama)";
