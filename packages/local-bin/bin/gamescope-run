@@ -1,0 +1,373 @@
+#!/usr/bin/env python3
+"""Unified gamescope launcher with named presets and per-game configuration.
+
+Replaces gamescope-perf, gamescope-quality, gamescope-hdr, gamescope-targetfps,
+gamescope-pinned, and gamescope-unity with a single data-driven script.
+
+Usage (Steam launch options):
+    gamescope-run %command%                    # auto-select preset from config
+    gamescope-run --preset perf %command%      # explicit preset
+    gamescope-run --dry-run --preset unity %command%  # debug without launching
+
+Per-game config: ~/.config/gamescope-run/games.toml
+"""
+
+import argparse
+import json
+import math
+import os
+import shlex
+import shutil
+import subprocess
+import sys
+import tomllib
+from pathlib import Path
+from typing import NamedTuple
+
+# ── Monitor info ─────────────────────────────────────────────────────
+
+class MonitorInfo(NamedTuple):
+    width: int
+    height: int
+    refresh_rate: int
+    scale: float
+
+
+def detect_monitor() -> MonitorInfo:
+    """Detect monitor resolution, refresh rate, and scale from Hyprland."""
+    target_mon = os.environ.get("GAMESCOPE_MON")
+
+    try:
+        raw = subprocess.run(
+            ["hyprctl", "monitors", "-j"],
+            capture_output=True, text=True, timeout=5,
+        ).stdout
+        monitors = json.loads(raw)
+    except (FileNotFoundError, subprocess.TimeoutExpired, json.JSONDecodeError):
+        monitors = []
+
+    chosen = None
+    if monitors:
+        if target_mon:
+            chosen = next((m for m in monitors if m.get("name") == target_mon), None)
+        if not chosen:
+            # Focused monitor (focusedWorkspace exists), else best by refresh*pixels
+            focused = [m for m in monitors if m.get("focused")]
+            if focused:
+                chosen = focused[0]
+            else:
+                chosen = max(
+                    monitors,
+                    key=lambda m: (m.get("refreshRate", 0), m.get("width", 0) * m.get("height", 0)),
+                )
+
+    # Apply env overrides or monitor values or fallbacks
+    w = int(os.environ.get("GAMESCOPE_OUT_W") or (chosen["width"] if chosen else 3840))
+    h = int(os.environ.get("GAMESCOPE_OUT_H") or (chosen["height"] if chosen else 2160))
+    rate = int(os.environ.get("GAMESCOPE_RATE") or round(chosen["refreshRate"] if chosen else 240))
+    scale = chosen.get("scale", 2.0) if chosen else 2.0
+
+    return MonitorInfo(width=w, height=h, refresh_rate=rate, scale=scale)
+
+
+# ── Preset definitions ───────────────────────────────────────────────
+
+PRESETS = {
+    "perf": {
+        "description": "Performance: 66% render + FSR upscaling",
+        "mode": "fullscreen",
+        "base_flags": ["-f", "--adaptive-sync"],
+        "game_scale": 2.0 / 3.0,
+        "fsr_sharpness": 3,
+        "extra_flags": [],
+        "scale_method": "fixed",
+    },
+    "quality": {
+        "description": "Native resolution, no upscaling (default)",
+        "mode": "fullscreen",
+        "base_flags": ["-f", "--adaptive-sync"],
+        "game_scale": None,
+        "fsr_sharpness": None,
+        "extra_flags": [],
+        "scale_method": None,
+    },
+    "hdr": {
+        "description": "Native resolution + HDR enabled",
+        "mode": "fullscreen",
+        "base_flags": ["-f", "--adaptive-sync", "--hdr-enabled"],
+        "game_scale": None,
+        "fsr_sharpness": None,
+        "extra_flags": [],
+        "scale_method": None,
+    },
+    "targetfps": {
+        "description": "Dynamic resolution based on target FPS",
+        "mode": "fullscreen",
+        "base_flags": ["-f", "--adaptive-sync"],
+        "game_scale": None,  # computed dynamically
+        "fsr_sharpness": 3,
+        "extra_flags": [],
+        "scale_method": "targetfps",
+    },
+    "pinned": {
+        "description": "Minimal flags (env-overridable)",
+        "mode": "fullscreen",
+        "base_flags": [],  # populated from GAMESCOPE_FLAGS env
+        "game_scale": None,
+        "fsr_sharpness": None,
+        "extra_flags": [],
+        "scale_method": None,
+    },
+    "unity": {
+        "description": "Nested mode for Unity/Wayland games",
+        "mode": "nested",
+        "base_flags": [],
+        "game_scale": 1.0,
+        "fsr_sharpness": None,
+        "extra_flags": ["--expose-wayland", "--force-grab-cursor"],
+        "scale_method": "fixed",
+        # Disable gamescope WSI layer in nested mode: the layer expects an
+        # XWayland gamescope surface, but --expose-wayland creates a Wayland
+        # surface instead → "CreateSwapchainKHR: non-Gamescope swapchain" error.
+        "env": {"DISABLE_GAMESCOPE_WSI": "1"},
+    },
+}
+
+
+# ── Per-game config ──────────────────────────────────────────────────
+
+CONFIG_PATH = Path.home() / ".config" / "gamescope-run" / "games.toml"
+
+
+def load_game_config() -> dict:
+    """Load per-game preset mappings from TOML config."""
+    if not CONFIG_PATH.exists():
+        return {}
+    try:
+        return tomllib.loads(CONFIG_PATH.read_text())
+    except (tomllib.TOMLDecodeError, OSError) as e:
+        print(f"[gamescope-run] warning: config error: {e}", file=sys.stderr)
+        return {}
+
+
+def resolve_preset(args, game_config: dict) -> tuple[str, str, dict]:
+    """Resolve which preset to use. Returns (preset_name, source, game_overrides)."""
+    # 1. CLI --preset (highest priority)
+    if args.preset:
+        return args.preset, "cli", {}
+
+    # 2. Per-game config via SteamAppId
+    app_id = os.environ.get("SteamAppId")
+    if app_id and "games" in game_config:
+        entry = game_config["games"].get(app_id) or game_config["games"].get(str(app_id))
+        if entry and isinstance(entry, dict):
+            overrides = {k: v for k, v in entry.items() if k != "preset"}
+            return entry.get("preset", "quality"), f"games.toml (app_id: {app_id})", overrides
+
+    # 3. Fallback: extract app ID from command line paths
+    if not app_id:
+        for arg in args.command:
+            # Steam paths contain /steamapps/compatdata/APPID/ or /steam_app_APPID/
+            import re
+            m = re.search(r"(?:compatdata|steam_app_)[/\\]?(\d+)", arg)
+            if m:
+                app_id = m.group(1)
+                if "games" in game_config:
+                    entry = game_config["games"].get(app_id)
+                    if entry and isinstance(entry, dict):
+                        overrides = {k: v for k, v in entry.items() if k != "preset"}
+                        return entry.get("preset", "quality"), f"games.toml (app_id: {app_id})", overrides
+                break
+
+    # 4. Default from config or hardcoded
+    default = game_config.get("default", "quality")
+    return default, "default", {}
+
+
+# ── Flag assembly ────────────────────────────────────────────────────
+
+def build_gamescope_cmd(
+    preset: dict,
+    monitor: MonitorInfo,
+    cli_scale: float | None = None,
+    cli_fsr: int | None = None,
+    cli_target_fps: int | None = None,
+    game_overrides: dict | None = None,
+) -> list[str]:
+    """Assemble the gamescope command-line flags."""
+    flags = []
+    overrides = game_overrides or {}
+
+    mode = preset["mode"]
+
+    # Base flags (pinned uses env override)
+    if preset is PRESETS.get("pinned"):
+        env_flags = os.environ.get("GAMESCOPE_FLAGS", "-f --adaptive-sync")
+        flags.extend(shlex.split(env_flags))
+    else:
+        flags.extend(preset["base_flags"])
+
+    # Refresh rate
+    flags.extend(["-r", str(monitor.refresh_rate)])
+
+    # Output resolution
+    if mode == "nested":
+        # Logical resolution for nested compositor
+        logical_w = int(monitor.width / int(monitor.scale))
+        logical_h = int(monitor.height / int(monitor.scale))
+        flags.extend(["-W", str(logical_w), "-H", str(logical_h)])
+    else:
+        # Physical resolution for fullscreen
+        flags.extend(["-W", str(monitor.width), "-H", str(monitor.height)])
+
+    # Game render resolution (scaling)
+    game_scale = cli_scale or overrides.get("scale") or preset["game_scale"]
+    scale_method = preset["scale_method"]
+
+    if scale_method == "targetfps" and game_scale is None:
+        # Dynamic sqrt heuristic
+        target_fps = cli_target_fps or int(os.environ.get("TARGET_FPS", "0"))
+        base_fps = int(os.environ.get("NATIVE_BASE_FPS", "60"))
+        if target_fps > 0:
+            scale_factor = max(0.5, min(1.0, math.sqrt(base_fps / target_fps)))
+            game_w = int(monitor.width * scale_factor)
+            game_h = int(monitor.height * scale_factor)
+            flags.extend(["-w", str(game_w), "-h", str(game_h)])
+        # If no TARGET_FPS, render at native (no -w/-h)
+    elif game_scale is not None and game_scale < 1.0:
+        game_w = int(monitor.width * game_scale)
+        game_h = int(monitor.height * game_scale)
+        flags.extend(["-w", str(game_w), "-h", str(game_h)])
+    elif mode == "nested" and game_scale is not None:
+        # Unity: game renders at native physical pixels
+        flags.extend(["-w", str(monitor.width), "-h", str(monitor.height)])
+
+    # FSR sharpness
+    fsr = cli_fsr if cli_fsr is not None else overrides.get("fsr_sharpness", preset["fsr_sharpness"])
+    if fsr is not None and fsr > 0:
+        flags.extend(["--fsr-sharpness", str(fsr)])
+
+    # Extra preset flags
+    flags.extend(preset["extra_flags"])
+
+    # Per-game extra flags
+    if "extra_flags" in overrides:
+        flags.extend(shlex.split(str(overrides["extra_flags"])))
+
+    # GAMESCOPE_EXTRA_FLAGS env var
+    extra_env = os.environ.get("GAMESCOPE_EXTRA_FLAGS")
+    if extra_env:
+        flags.extend(shlex.split(extra_env))
+
+    return flags
+
+
+# ── Main ─────────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="gamescope-run",
+        description="Unified gamescope launcher with named presets.",
+    )
+    parser.add_argument("--preset", choices=list(PRESETS) + ["skip"], help="Named preset")
+    parser.add_argument("--scale", type=float, help="Override game render scale (0.5-1.0)")
+    parser.add_argument("--fsr", type=int, help="Override FSR sharpness (1-5, 0=disable)")
+    parser.add_argument("--target-fps", type=int, help="Target FPS for targetfps preset")
+    parser.add_argument("--dry-run", action="store_true", help="Print command without executing")
+    parser.add_argument("--list-presets", action="store_true", help="List presets and exit")
+    parser.add_argument("--no-game-run", action="store_true", help="Skip game-run wrapper")
+    parser.add_argument("command", nargs=argparse.REMAINDER, metavar="COMMAND")
+
+    args = parser.parse_args()
+
+    # --list-presets
+    if args.list_presets:
+        print("Available presets:")
+        for name, p in PRESETS.items():
+            print(f"  {name:<12} {p['description']}")
+        sys.exit(0)
+
+    # Need a command to run
+    # Strip leading '--' if present
+    if args.command and args.command[0] == "--":
+        args.command = args.command[1:]
+    if not args.command and not args.dry_run:
+        parser.error("no command specified")
+
+    # Check gamescope is available
+    if not shutil.which("gamescope"):
+        print("[gamescope-run] error: gamescope not found on PATH", file=sys.stderr)
+        sys.exit(1)
+
+    # Resolve preset
+    game_config = load_game_config()
+    preset_name, source, game_overrides = resolve_preset(args, game_config)
+
+    # Handle "skip" — run game directly without gamescope
+    if preset_name == "skip":
+        if args.dry_run:
+            print(f"[gamescope-run] preset: skip (from: {source})")
+            print(f"[gamescope-run] exec: {' '.join(args.command)}")
+            sys.exit(0)
+        os.execvp(args.command[0], args.command)
+
+    # Validate preset
+    if preset_name not in PRESETS:
+        print(f"[gamescope-run] error: unknown preset '{preset_name}'", file=sys.stderr)
+        sys.exit(2)
+
+    preset = PRESETS[preset_name]
+    monitor = detect_monitor()
+
+    # Build gamescope flags
+    gs_flags = build_gamescope_cmd(
+        preset=preset,
+        monitor=monitor,
+        cli_scale=args.scale,
+        cli_fsr=args.fsr,
+        cli_target_fps=args.target_fps,
+        game_overrides=game_overrides,
+    )
+
+    # Full command: gamescope [flags] -- [game command]
+    full_cmd = ["gamescope"] + gs_flags + ["--"] + args.command
+
+    # Prepend game-run if available
+    use_game_run = not args.no_game_run and shutil.which("game-run")
+    if use_game_run:
+        full_cmd = ["game-run"] + full_cmd
+
+    # --dry-run
+    if args.dry_run:
+        app_id = os.environ.get("SteamAppId", "?")
+        print(f"[gamescope-run] preset: {preset_name} (from: {source})")
+        print(f"[gamescope-run] monitor: {monitor.width}x{monitor.height}@{monitor.refresh_rate}, scale={monitor.scale}")
+        # Compute game render info
+        game_scale = args.scale or game_overrides.get("scale") or preset["game_scale"]
+        if game_scale and game_scale < 1.0:
+            gw, gh = int(monitor.width * game_scale), int(monitor.height * game_scale)
+            print(f"[gamescope-run] game render: {gw}x{gh} (scale={game_scale:.3f})")
+        elif preset["mode"] == "nested":
+            print(f"[gamescope-run] game render: {monitor.width}x{monitor.height} (native)")
+            lw = int(monitor.width / int(monitor.scale))
+            lh = int(monitor.height / int(monitor.scale))
+            print(f"[gamescope-run] output window: {lw}x{lh} (logical)")
+        else:
+            print(f"[gamescope-run] game render: {monitor.width}x{monitor.height} (native)")
+        preset_env = preset.get("env", {})
+        if preset_env:
+            env_str = " ".join(f"{k}={v}" for k, v in preset_env.items())
+            print(f"[gamescope-run] env: {env_str}")
+        print(f"[gamescope-run] exec: {' '.join(full_cmd)}")
+        sys.exit(0)
+
+    # Apply preset environment variables (e.g. DISABLE_GAMESCOPE_WSI for nested mode)
+    for key, val in preset.get("env", {}).items():
+        os.environ[key] = val
+
+    # Execute
+    os.execvp(full_cmd[0], full_cmd)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,37 @@
+#!/usr/bin/env zsh
+# sys-relief: drop caches + reduce IO/swap pressure when system is lagging
+# Restores original sysctl values automatically after 5 minutes.
+#
+# Requires: sudo sysctl (NOPASSWD), notify-send
+
+set -eu
+
+_notify() { notify-send -a sys-relief "$@" 2>/dev/null || true }
+
+_notify -u low "Relief..." "Syncing dirty pages..."
+
+# Flush dirty pages to disk first (prevents data loss on cache drop)
+sync
+
+# Drop page cache + dentries + inodes → immediate RAM freed
+sudo sysctl -w vm.drop_caches=3
+
+# Compact memory zones → reduces fragmentation, may free more contiguous RAM
+sudo sysctl -w vm.compact_memory=1 2>/dev/null || true
+
+# Reduce pressure: stop new swapping, cut IO writeback thresholds
+sudo sysctl -w vm.swappiness=1
+sudo sysctl -w vm.dirty_background_bytes=16777216
+sudo sysctl -w vm.dirty_bytes=67108864
+
+_notify "Relief applied" "Caches dropped, IO reduced.\nRestoring in 5 min."
+
+# Restore original values after 5 minutes
+{
+    sleep 300
+    sudo sysctl -w \
+        vm.swappiness=10 \
+        vm.dirty_background_bytes=67108864 \
+        vm.dirty_bytes=268435456
+    notify-send -a sys-relief -u low "Relief" "Sysctl restored to normal." 2>/dev/null || true
+} &!

@@ -1,0 +1,172 @@
+#!/usr/bin/env zsh
+# gen-video — unified CLI for local video generation via ComfyUI
+# See: specs/022-video-ai-models/contracts/gen-video-cli.md
+
+setopt ERR_EXIT NO_UNSET PIPE_FAIL
+
+typeset -r VIDEO_AI_DIR="${VIDEO_AI_DIR:-/mnt/one/video-ai}"
+typeset -r COMFYUI_DIR="${COMFYUI_DIR:-${VIDEO_AI_DIR}/comfyui}"
+typeset -r GENERATE_SH="${VIDEO_AI_DIR}/generate.sh"
+typeset -r MODELS_DIR="${VIDEO_AI_DIR}/models"
+typeset -r WORKFLOWS_DIR="${VIDEO_AI_DIR}/workflows"
+typeset -r OUTPUT_DIR="${VIDEO_AI_DIR}/output"
+
+# ── Resolution presets ───────────────────────────────────────────────
+typeset -A RES_WIDTH RES_HEIGHT
+RES_WIDTH=(480p 854 540p 960 720p 1280)
+RES_HEIGHT=(480p 480 540p 540 720p 720)
+
+# ── Defaults ─────────────────────────────────────────────────────────
+typeset model_id=""
+typeset image_path=""
+typeset resolution="480p"
+typeset duration=4
+typeset output_dir="${OUTPUT_DIR}"
+typeset compat_flag=""
+typeset dry_run=false
+typeset list_mode=false
+typeset prompt_text=""
+
+usage() {
+    cat >&2 <<'EOF'
+Usage: gen-video [OPTIONS] "PROMPT"
+       gen-video [OPTIONS] --image PATH "PROMPT"
+
+Generate video from text (and optionally an image) using local AI models.
+
+Options:
+  -m, --model ID       Model ID (default: registry default)
+  -i, --image PATH     Reference image for image-to-video
+  -r, --resolution RES Output resolution: 480p, 540p, 720p (default: 480p)
+  -d, --duration SEC   Video duration in seconds (default: 4)
+  -o, --output DIR     Output directory (default: /mnt/one/video-ai/output/)
+      --compat         Encode as H.264 instead of H.265
+      --dry-run        Show what would run without executing
+  -l, --list           List installed models and exit
+  -h, --help           Show this help
+
+Examples:
+  gen-video "a cat walking on the moon at sunset"
+  gen-video -m hunyuanvideo-15 "cyberpunk city in rain"
+  gen-video -i ~/pic/ref.png "animate this scene"
+  gen-video --list
+EOF
+    exit "${1:-0}"
+}
+
+# ── Parse arguments ──────────────────────────────────────────────────
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -m|--model)      model_id="$2"; shift 2 ;;
+        -i|--image)      image_path="$2"; shift 2 ;;
+        -r|--resolution) resolution="$2"; shift 2 ;;
+        -d|--duration)   duration="$2"; shift 2 ;;
+        -o|--output)     output_dir="$2"; shift 2 ;;
+        --compat)        compat_flag="--compat"; shift ;;
+        --dry-run)       dry_run=true; shift ;;
+        -l|--list)       list_mode=true; shift ;;
+        -h|--help)       usage 0 ;;
+        -*)              echo "Unknown option: $1" >&2; usage 1 ;;
+        *)               prompt_text="$1"; shift ;;
+    esac
+done
+
+# ── List mode ────────────────────────────────────────────────────────
+if $list_mode; then
+    printf "%-20s %-8s %-8s %-10s %s\n" "MODEL" "VRAM" "MODES" "RESOLUTION" "STATUS"
+    printf "%-20s %-8s %-8s %-10s %s\n" "────────────────────" "────────" "────────" "──────────" "──────"
+
+    typeset mid="" model_state="" has_workflow=false vram="" modes="" max_res=""
+    for model_dir in "${MODELS_DIR}"/*(N/); do
+        mid="${model_dir:t}"
+        model_state="installed"
+
+        # Check if any workflow exists for this model
+        has_workflow=false
+        for wf in "${WORKFLOWS_DIR}"/*.json(N); do
+            [[ "${wf:t:r}" == *"${mid%%[-_]*}"* ]] && has_workflow=true && break
+        done
+        $has_workflow || model_state="no workflow"
+
+        # Try to read metadata from the YAML (best effort)
+        vram="?"
+        modes="?"
+        max_res="?"
+
+        printf "%-20s %-8s %-8s %-10s %s\n" "$mid" "${vram}GB" "$modes" "$max_res" "$model_state"
+    done
+
+    # Show if no models installed
+    [[ -d "${MODELS_DIR}" ]] && (( $(ls -d "${MODELS_DIR}"/*/ 2>/dev/null | wc -l) > 0 )) || {
+        echo "No models installed. Enable models in states/data/video_ai.yaml and run: just apply video_ai" >&2
+    }
+    exit 0
+fi
+
+# ── Validate ─────────────────────────────────────────────────────────
+[[ -n "${prompt_text}" ]] || { echo "Error: prompt is required" >&2; usage 1; }
+[[ -f "${GENERATE_SH}" ]] || { echo "Error: generate.sh not found at ${GENERATE_SH}" >&2; echo "Run: just apply video_ai" >&2; exit 4; }
+
+# Resolve resolution
+typeset width="${RES_WIDTH[$resolution]:-}"
+typeset height="${RES_HEIGHT[$resolution]:-}"
+[[ -n "${width}" ]] || { echo "Error: unknown resolution '${resolution}'. Use: 480p, 540p, 720p" >&2; exit 1; }
+
+# Calculate frames from duration (assuming 24fps for most models)
+typeset fps=24
+typeset frames=$(( duration * fps + 1 ))
+
+# Find default model if none specified
+if [[ -z "${model_id}" ]]; then
+    # Prefer ltx-23-fp8 (best quality safetensors model)
+    if [[ -d "${MODELS_DIR}/ltx-23-fp8" || -L "${MODELS_DIR}/ltx-23-fp8" ]]; then
+        model_id="ltx-23-fp8"
+    else
+        # Fallback to first installed model
+        for model_dir in "${MODELS_DIR}"/*(N/); do
+            model_id="${model_dir:t}"
+            break
+        done
+    fi
+    [[ -n "${model_id}" ]] || { echo "Error: no models installed" >&2; echo "Enable models in states/data/video_ai.yaml and run: just apply video_ai" >&2; exit 2; }
+fi
+
+# Validate model exists
+[[ -d "${MODELS_DIR}/${model_id}" ]] || { echo "Error: model '${model_id}' not installed" >&2; echo "Available: $(ls "${MODELS_DIR}" 2>/dev/null | tr '\n' ' ')" >&2; exit 2; }
+
+# Validate image if provided
+typeset image_flag=""
+if [[ -n "${image_path}" ]]; then
+    [[ -f "${image_path}" ]] || { echo "Error: image not found: ${image_path}" >&2; exit 1; }
+    image_flag="--image ${image_path}"
+fi
+
+# ── Build command ────────────────────────────────────────────────────
+typeset -a cmd_args=(
+    "${GENERATE_SH}"
+    --model "${model_id}"
+    --prompt "${prompt_text}"
+    --width "${width}"
+    --height "${height}"
+    --frames "${frames}"
+)
+[[ -n "${image_flag}" ]] && cmd_args+=(--image "${image_path}")
+[[ -n "${compat_flag}" ]] && cmd_args+=(--compat)
+
+# ── Dry run ──────────────────────────────────────────────────────────
+if $dry_run; then
+    echo "Would execute:" >&2
+    echo "  ${cmd_args[*]}" >&2
+    echo "" >&2
+    echo "Model:      ${model_id}" >&2
+    echo "Resolution: ${width}x${height} (${resolution})" >&2
+    echo "Frames:     ${frames} (~${duration}s at ${fps}fps)" >&2
+    echo "Encoding:   $(if [[ -n "${compat_flag}" ]]; then echo H.264; else echo H.265; fi)" >&2
+    echo "Output:     ${output_dir}/" >&2
+    [[ -n "${image_path}" ]] && echo "Image:      ${image_path}" >&2
+    exit 0
+fi
+
+# ── Execute ──────────────────────────────────────────────────────────
+export VIDEO_AI_DIR
+exec "${cmd_args[@]}"
