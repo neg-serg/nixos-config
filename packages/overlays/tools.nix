@@ -54,6 +54,9 @@ in
     # Run GUI windows inside your terminal (Wayland compositor → ANSI)
     termeverything = callPkg (packagesRoot + "/termeverything") { };
 
+    # Animated ASCII art GIF renderer alongside sysinfo output
+    brrtfetch = callPkg (packagesRoot + "/brrtfetch") { };
+
     # ncpamixer with custom config
     ncpamixer-wrapped =
       let
