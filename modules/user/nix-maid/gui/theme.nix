@@ -11,6 +11,12 @@ let
   n = neg impurity;
   alkano-aio = pkgs.callPackage ./alkano-aio.nix { };
 
+  gtkThemeName = config.features.gui.gtkTheme or "Flight-Dark-GTK";
+  gtkThemePkg = {
+    "Flight-Dark-GTK" = pkgs.flight-gtk-theme;
+    "Andromeda" = pkgs.andromeda-gtk-theme;
+  }.${gtkThemeName} or pkgs.flight-gtk-theme;
+
   # GTK Settings
   gtkSettings = {
     "gtk-application-prefer-dark-theme" = 1;
@@ -18,7 +24,7 @@ let
     "gtk-cursor-theme-size" = 23;
     "gtk-font-name" = "Iosevka 10";
     "gtk-icon-theme-name" = "kora";
-    "gtk-theme-name" = "Flight-Dark-GTK";
+    "gtk-theme-name" = gtkThemeName;
   };
 
   gtkIni = lib.generators.toINI { } { Settings = gtkSettings; };
@@ -33,14 +39,14 @@ in
         # 1. Packages
         environment.systemPackages = [
           alkano-aio # Animated cursor theme
-          pkgs.flight-gtk-theme # Dark GTK theme
+          gtkThemePkg # GTK theme (selected via features.gui.gtkTheme)
           pkgs.kora-icon-theme # Modern icon theme
           iosevkaNeg.nerd-font # Personalized Iosevka fonts with Nerd Font icons
         ];
 
         # 2. Environment Variables (Cursor + Theme)
         environment.sessionVariables = {
-          GTK_THEME = "Flight-Dark-GTK"; # Force GTK theme for all apps
+          GTK_THEME = gtkThemeName; # GTK theme for all apps
           XCURSOR_THEME = "Alkano-aio";
           XCURSOR_SIZE = "23";
           HYPRCURSOR_THEME = "Alkano-aio";
@@ -59,7 +65,7 @@ in
         ".config/gtk-4.0/gtk.css".text = cssContent;
 
         ".gtkrc-2.0".text = ''
-          gtk-theme-name="Flight-Dark-GTK"
+          gtk-theme-name="${gtkThemeName}"
           gtk-icon-theme-name="kora"
           gtk-font-name="Iosevka 10"
           gtk-cursor-theme-name="Alkano-aio"
