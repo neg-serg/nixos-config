@@ -37,4 +37,9 @@ in
     nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.wrapGAppsHook ];
     buildInputs = (old.buildInputs or [ ]) ++ [ prev.dconf ];
   });
+
+  skwd = prev.callPackage (inputs.self + "/packages/skwd") {
+    skwd-src = inputs.skwd;
+    skwd-daemon = inputs.skwd-daemon.packages.${prev.stdenv.hostPlatform.system}.default;
+  };
 }
