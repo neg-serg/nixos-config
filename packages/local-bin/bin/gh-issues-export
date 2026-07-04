@@ -1,0 +1,303 @@
+#!/usr/bin/env zsh
+# Export GitHub issues (with comments) as Markdown files with YAML frontmatter for RAG ingestion.
+# Usage: gh-issues-export [OPTIONS] <owner/repo | github-url>
+
+setopt NO_UNSET PIPE_FAIL
+
+# ── Defaults ──────────────────────────────────────────────────────────────────
+output_dir=""
+issue_state="all"
+force_full=false
+repo_slug=""               # owner/repo
+
+# ── Usage ─────────────────────────────────────────────────────────────────────
+usage() {
+    cat <<'EOF'
+Usage: gh-issues-export [OPTIONS] <owner/repo | github-url>
+
+Export GitHub issues as Markdown files with YAML frontmatter for RAG ingestion.
+
+Arguments:
+  repository    GitHub repo as owner/repo or full URL
+
+Options:
+  --output DIR   Output directory (default: ./gh-issues/<owner>-<repo>/)
+  --state STATE  Filter by issue state: open, closed, all (default: all)
+  --full         Force full re-export, ignore previous timestamp
+  --help         Show this help and exit
+
+Exit codes:
+  0  Success
+  1  Invalid arguments or missing repository
+  2  gh CLI not found or not authenticated
+  3  Repository not found or access denied
+  4  Network/API error
+EOF
+}
+
+# ── Argument parsing ──────────────────────────────────────────────────────────
+parse_args() {
+    while (( $# )); do
+        case $1 in
+            --output)
+                [[ -z ${2:-} ]] && { print -u2 "error: --output requires a directory argument"; exit 1; }
+                output_dir=$2; shift 2 ;;
+            --state)
+                [[ -z ${2:-} ]] && { print -u2 "error: --state requires open|closed|all"; exit 1; }
+                case $2 in
+                    open|closed|all) issue_state=$2; shift 2 ;;
+                    *) print -u2 "error: --state must be open, closed, or all"; exit 1 ;;
+                esac ;;
+            --full)
+                force_full=true; shift ;;
+            --help|-h)
+                usage; exit 0 ;;
+            -*)
+                print -u2 "error: unknown option $1"; usage >&2; exit 1 ;;
+            *)
+                [[ -n $repo_slug ]] && { print -u2 "error: unexpected argument '$1'"; exit 1; }
+                repo_slug=$1; shift ;;
+        esac
+    done
+    [[ -z $repo_slug ]] && { print -u2 "error: repository argument required"; usage >&2; exit 1; }
+}
+
+# ── Normalize repo identifier ─────────────────────────────────────────────────
+normalize_repo() {
+    # Strip full GitHub URL to owner/repo
+    repo_slug=${repo_slug#https://github.com/}
+    repo_slug=${repo_slug#http://github.com/}
+    repo_slug=${repo_slug%.git}
+    repo_slug=${repo_slug%/}
+
+    # Validate owner/repo format
+    if [[ ! $repo_slug =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]]; then
+        print -u2 "error: invalid repository format '$repo_slug' (expected owner/repo)"
+        exit 1
+    fi
+}
+
+# ── Dependency checks ─────────────────────────────────────────────────────────
+check_deps() {
+    if ! command -v gh &>/dev/null; then
+        print -u2 "error: gh CLI not found (add to environment.systemPackages: pkgs.gh)"
+        exit 2
+    fi
+    if ! gh auth token &>/dev/null; then
+        print -u2 "error: gh CLI not authenticated (run: gh auth login)"
+        exit 2
+    fi
+    if ! command -v jq &>/dev/null; then
+        print -u2 "error: jq not found (add to environment.systemPackages: pkgs.jq)"
+        exit 2
+    fi
+}
+
+# ── Repository validation ─────────────────────────────────────────────────────
+validate_repo() {
+    if ! gh api "repos/$repo_slug" --silent 2>/dev/null; then
+        print -u2 "error: repository '$repo_slug' not found or access denied"
+        exit 3
+    fi
+}
+
+# ── Rate limit check ─────────────────────────────────────────────────────────
+check_rate_limit() {
+    local rate_json remaining reset_epoch now_epoch wait_secs
+    rate_json=$(gh api /rate_limit 2>/dev/null) || return 0
+    remaining=$(print -r -- "$rate_json" | jq -r '.resources.core.remaining')
+    reset_epoch=$(print -r -- "$rate_json" | jq -r '.resources.core.reset')
+
+    if (( remaining < 50 )); then
+        now_epoch=$(date +%s)
+        wait_secs=$(( reset_epoch - now_epoch + 1 ))
+        if (( wait_secs > 0 )); then
+            print "Rate limit low ($remaining remaining). Waiting ${wait_secs}s for reset..."
+            sleep "$wait_secs"
+        fi
+    fi
+}
+
+# ── Fetch issues ──────────────────────────────────────────────────────────────
+fetch_issues() {
+    local since_param=""
+    [[ -n ${1:-} ]] && since_param="&since=$1"
+
+    gh api --paginate "/repos/$repo_slug/issues?state=$issue_state&per_page=100&sort=created&direction=asc${since_param}" \
+        | jq -c '[.[] | select(.pull_request == null)] | .[]'
+}
+
+# ── Fetch comments ────────────────────────────────────────────────────────────
+fetch_comments() {
+    local issue_number=$1
+    gh api --paginate "/repos/$repo_slug/issues/$issue_number/comments?per_page=100" \
+        | jq -c '.[]'
+}
+
+# ── YAML frontmatter generation ───────────────────────────────────────────────
+generate_frontmatter() {
+    local issue_json=$1
+    print -r -- "$issue_json" | jq -r '
+        "---",
+        "number: \(.number)",
+        "title: \(.title | @json)",
+        "state: \(.state)",
+        "author: \(.user.login)",
+        "labels: [\([.labels[].name] | map(@json) | join(", "))]",
+        "assignees: [\([.assignees[].login] | map(@json) | join(", "))]",
+        (if .milestone then "milestone: \(.milestone.title | @json)" else empty end),
+        "created_at: \"\(.created_at)\"",
+        "updated_at: \"\(.updated_at)\"",
+        (if .closed_at then "closed_at: \"\(.closed_at)\"" else empty end),
+        "url: \"\(.html_url)\"",
+        "comments_count: \(.comments)",
+        "---"
+    '
+}
+
+# ── Comment formatting ────────────────────────────────────────────────────────
+format_comments() {
+    local comments_json=$1
+    # comments_json is newline-delimited JSON objects
+    local line author created_at body
+    while IFS= read -r line; do
+        [[ -z $line ]] && continue
+        author=$(print -r -- "$line" | jq -r '.user.login')
+        created_at=$(print -r -- "$line" | jq -r '.created_at')
+        body=$(print -r -- "$line" | jq -r '.body // ""')
+        print ""
+        print "## Comment by $author on $created_at"
+        print ""
+        print -r -- "$body"
+    done <<< "$comments_json"
+}
+
+# ── Single issue export ───────────────────────────────────────────────────────
+export_issue() {
+    local issue_json=$1
+    local target_dir=$2
+
+    local issue_number issue_body comments_raw outfile
+    issue_number=$(print -r -- "$issue_json" | jq -r '.number')
+    issue_body=$(print -r -- "$issue_json" | jq -r '.body // ""')
+    # Strip HTML comments from body
+    issue_body=$(print -r -- "$issue_body" | sed 's/<!--.*-->//g')
+
+    outfile="$target_dir/$issue_number.md"
+
+    {
+        generate_frontmatter "$issue_json"
+        print ""
+        print -r -- "$issue_body"
+
+        local comment_count
+        comment_count=$(print -r -- "$issue_json" | jq -r '.comments')
+        if (( comment_count > 0 )); then
+            check_rate_limit
+            comments_raw=$(fetch_comments "$issue_number" 2>/dev/null) || {
+                print -u2 "  warning: failed to fetch comments for issue #$issue_number"
+                comments_raw=""
+            }
+            if [[ -n $comments_raw ]]; then
+                format_comments "$comments_raw"
+            fi
+        fi
+    } > "$outfile"
+}
+
+# ── Export metadata (incremental support) ─────────────────────────────────────
+read_export_meta() {
+    local meta_file="$1/.export-meta.json"
+    if [[ -f $meta_file ]]; then
+        jq -r '.last_export_iso // empty' "$meta_file"
+    fi
+}
+
+write_export_meta() {
+    local target_dir=$1 total=$2
+    local meta_file="$target_dir/.export-meta.json"
+    local now_iso
+    now_iso=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+    jq -n \
+        --arg repo "$repo_slug" \
+        --arg ts "$now_iso" \
+        --argjson total "$total" \
+        '{repo: $repo, last_export_iso: $ts, total_issues: $total, export_version: 1}' \
+        > "$meta_file"
+}
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+main() {
+    parse_args "$@"
+    normalize_repo
+    check_deps
+    validate_repo
+
+    # Resolve output directory
+    if [[ -z $output_dir ]]; then
+        local owner_repo_dir=${repo_slug//\//-}
+        output_dir="./gh-issues/$owner_repo_dir"
+    fi
+    mkdir -p "$output_dir"
+
+    # Incremental mode
+    local since_ts=""
+    if [[ $force_full == false ]]; then
+        since_ts=$(read_export_meta "$output_dir")
+        if [[ -n $since_ts ]]; then
+            print "Incremental export: fetching issues updated since $since_ts"
+        fi
+    else
+        print "Full export mode (--full)"
+    fi
+
+    # Fetch all issues
+    print "Fetching issues from $repo_slug (state=$issue_state)..."
+    local issues_raw
+    issues_raw=$(fetch_issues "$since_ts" 2>/dev/null) || {
+        print -u2 "error: failed to fetch issues from $repo_slug"
+        exit 4
+    }
+
+    # Count issues
+    local total=0
+    local issues_array=()
+    while IFS= read -r line; do
+        [[ -z $line ]] && continue
+        issues_array+=("$line")
+        (( total++ ))
+    done <<< "$issues_raw"
+
+    if (( total == 0 )); then
+        print "No issues found."
+        write_export_meta "$output_dir" 0
+        exit 0
+    fi
+
+    print "Found $total issues. Exporting..."
+
+    # Export loop
+    local current=0 failed=0 title num
+    for issue_json in "${issues_array[@]}"; do
+        (( current++ ))
+        title=$(print -r -- "$issue_json" | jq -r '.title')
+        num=$(print -r -- "$issue_json" | jq -r '.number')
+        print "[$current/$total] Exporting issue #$num: $title"
+
+        if ! export_issue "$issue_json" "$output_dir"; then
+            print -u2 "  warning: failed to export issue #$num, skipping"
+            (( failed++ ))
+        fi
+    done
+
+    # Write export metadata
+    write_export_meta "$output_dir" "$total"
+
+    # Summary
+    print ""
+    print "Export complete: $((total - failed))/$total issues exported to $output_dir"
+    (( failed > 0 )) && print "  ($failed issues failed — re-run to retry)"
+}
+
+main "$@"

@@ -1,0 +1,236 @@
+#!/usr/bin/env zsh
+# music-tui: fzf-based TUI for music similarity, classification, and browsing
+# Usage: music-tui [similar|classify|profile|interactive]
+#   similar      Find similar tracks for current or selected track
+#   classify     Run highlevel classification on a selected file
+#   profile      Show music collection profile
+#   interactive  Browse music files with similarity previews
+
+IFS=' 	
+'
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+  sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'; exit 0
+fi
+
+MUSIC_DIR="${MUSIC_DIR:-$HOME/music}"
+INDEX_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/music-index"
+
+die() { print -u2 "music-tui: $*"; exit 1; }
+need() { command -v "$1" >/dev/null 2>&1 || die "command not found: $1"; }
+
+_find_audio() {
+  fd -t f -e mp3 -e flac -e wav -e ogg -e m4a -e opus -e aac -e aiff -e wma . "$MUSIC_DIR" "$@"
+}
+
+# === Mode 1: similar ===
+mode_similar() {
+  need music-similar
+  need mpv
+  local k="${1:-15}" audio="" current=""
+
+  if playerctl -l >/dev/null 2>&1; then
+    current=$(playerctl metadata --format "{{artist}} - {{title}}" 2>/dev/null) || current=""
+  fi
+
+  if [[ -z "$current" ]]; then
+    audio=$(_find_audio 2>/dev/null | fzf --prompt="Pick track > " --header="No track playing")
+    [[ -z "$audio" ]] && return 0
+  fi
+
+  local results
+  if [[ -n "$audio" && -f "$audio" ]]; then
+    printf "Analyzing similarities for %s…\n" "${audio:t}" >&2
+    results=$(music-similar -k "$k" "$audio" 2>/dev/null) || results=""
+  else
+    printf "Analyzing similarities for current track…\n" >&2
+    results=$(music-similar -k "$k" 2>/dev/null) || results=""
+  fi
+
+  [[ -z "$results" ]] && { print -u2 "music-tui: no similar tracks (run music-index first?)"; return 0; }
+
+  local selection
+  selection=$(
+    printf '%s\n' "$results" \
+    | fzf --prompt="Similar > " \
+          --header "Enter=play | ESC=cancel" \
+          --preview 'p="$(echo {} | cut -f2-)"; [ -n "$p" ] && music-highlevel "$p" 2>/dev/null | head -25' \
+          --preview-window=up:45%
+  )
+  [[ -z "$selection" ]] && return 0
+
+  local selected_path="${selection#*	}"
+  if [[ -f "$selected_path" ]]; then
+    mpv --no-video "$selected_path"
+  else
+    print -u2 "music-tui: file not found: $selected_path"
+  fi
+}
+
+# === Mode 2: classify ===
+mode_classify() {
+  need music-highlevel
+  local file="$1"
+
+  if [[ -z "$file" ]]; then
+    file=$(_find_audio 2>/dev/null | fzf --prompt="Pick track to classify > ")
+    [[ -z "$file" ]] && return 0
+  fi
+
+  [[ -f "$file" ]] || die "file not found: $file"
+
+  printf "Classifying %s…\n" "${file:t}" >&2
+  music-highlevel "$file" 2>/dev/null \
+  | fzf --prompt="Classification" \
+        --header "$file" \
+        --no-hscroll
+}
+
+# === Mode 3: profile ===
+mode_profile() {
+  printf '=== Music Collection Profile ===\n\n'
+
+  printf 'Music directory: %s\n' "$MUSIC_DIR"
+  if [[ -d "$MUSIC_DIR" ]]; then
+    local nfiles
+    nfiles=$(_find_audio 2>/dev/null | wc -l)
+    printf '  Files:  %s\n' "$nfiles"
+    local size
+    size=$(_find_audio --exec du -ch '{}' + 2>/dev/null | tail -1 | awk '{print $1}')
+    printf '  Size:   %s\n' "${size:-?}"
+  else
+    printf '  (not found)\n'
+  fi
+
+  printf '\nSimilarity index: %s\n' "$INDEX_DIR"
+  if [[ -f "$INDEX_DIR/meta.json" ]]; then
+    local count dim
+    count=$(python3 -c "import json; print(json.load(open('$INDEX_DIR/meta.json')).get('count', '?'))")
+    dim=$(python3 -c "import json; print(json.load(open('$INDEX_DIR/meta.json')).get('dim', '?'))")
+    printf '  Tracks: %s\n' "$count"
+    printf '  Dims:   %s\n' "$dim"
+  fi
+  if [[ -f "$INDEX_DIR/index.ann" ]]; then
+    local idxsize idxdate
+    idxsize=$(du -h "$INDEX_DIR/index.ann" 2>/dev/null | awk '{print $1}')
+    idxdate=$(stat -c '%y' "$INDEX_DIR/index.ann" 2>/dev/null | cut -d. -f1)
+    printf '  Size:   %s\n' "$idxsize"
+    printf '  Date:   %s\n' "$idxdate"
+  else
+    printf '  (not built — run music-index)\n'
+  fi
+
+  if [[ -f "$INDEX_DIR/tracks.jsonl" ]]; then
+    local artists
+    artists=$(python3 -c "
+import json
+a = set()
+with open('$INDEX_DIR/tracks.jsonl') as f:
+    for line in f:
+        p = json.loads(line).get('path', '')
+        parts = p.strip('/').split('/')
+        if len(parts) >= 2:
+            a.add(parts[-2])
+print(len(a))
+" 2>/dev/null || echo '?')
+    printf '  Artists: %s\n' "$artists"
+  fi
+
+  printf '\n'
+  if playerctl -l >/dev/null 2>&1; then
+    local now
+    now=$(playerctl metadata --format "{{artist}} - {{title}}" 2>/dev/null) || now="(unknown)"
+    printf 'Now playing: %s\n' "$now"
+  else
+    printf 'Now playing: (none detected)\n'
+  fi
+}
+
+# === Mode 4: interactive ===
+mode_interactive() {
+  need music-similar
+  need music-highlevel
+  need mpv
+
+  local file=""
+  while true; do
+    file=$(
+      _find_audio 2>/dev/null \
+      | fzf --prompt="Browse > " \
+            --header "Enter=show similars | Ctrl-P=play | ?=toggle preview | ESC=exit" \
+            --bind 'ctrl-p:execute-silent(mpv --no-video {} &>/dev/null &)' \
+            --bind '?:toggle-preview' \
+            --preview '
+f="{}"
+echo "=== Similar tracks ==="
+music-similar "$f" 2>/dev/null | head -8
+echo ""
+echo "=== Highlevel ==="
+music-highlevel "$f" 2>/dev/null | head -15
+' \
+            --preview-window=up:60%:hidden
+    )
+    [[ -z "$file" ]] && break
+
+    local current="$file"
+    while true; do
+      local results
+      results=$(music-similar "$current" 2>/dev/null) || results=""
+      [[ -z "$results" ]] && { print -u2 "music-tui: no similar tracks for ${current:t}"; break; }
+
+      local drill
+      drill=$(
+        printf '%s\n' "$results" \
+        | fzf --prompt="Similar: ${current:t} > " \
+              --header "Enter=drill in | Ctrl-P=play | ESC=back" \
+              --bind 'ctrl-p:execute-silent(echo {} | cut -f2- | xargs -I % mpv --no-video "%" &>/dev/null &)' \
+              --preview '
+p="$(echo {} | cut -f2-)"
+if [ -n "$p" ] && [ -f "$p" ]; then
+  echo "=== $p ==="
+  music-highlevel "$p" 2>/dev/null | head -20
+fi
+' \
+              --preview-window=up:50%
+      )
+      [[ -z "$drill" ]] && break
+
+      current="${drill#*	}"
+      [[ -f "$current" ]] || { print -u2 "music-tui: file not found: $current"; break; }
+    done
+  done
+}
+
+# === Dispatch ===
+MODE="${1:-}"
+shift 2>/dev/null || true
+
+case "$MODE" in
+  similar|s)
+    mode_similar "$@";;
+  classify|c)
+    mode_classify "$@";;
+  profile|p|stats)
+    mode_profile;;
+  interactive|i|browse|b)
+    mode_interactive;;
+  "")
+    local choice
+    choice=$(
+      printf 'similar\nclassify\nprofile\ninteractive\n' \
+      | fzf --prompt="music-tui > " \
+            --header "similar | classify | profile | interactive" \
+            --preview '
+case {} in
+  similar)     echo "Find similar tracks for current or selected track";;
+  classify)    echo "Run Essentia highlevel classification on a file";;
+  profile)     echo "Show collection statistics";;
+  interactive) echo "Browse music with similarity previews";;
+esac' \
+            --preview-window=up:2
+    )
+    [[ -z "$choice" ]] && exit 0
+    "mode_$choice"
+    ;;
+  *)
+    die "unknown mode: $MODE (see -h for help)";;
+esac

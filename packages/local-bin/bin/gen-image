@@ -1,0 +1,336 @@
+#!/usr/bin/env zsh
+# gen-image: generate images via free AI providers with priority-based failover
+#
+# Reads provider config from ~/.config/image-gen/providers.yaml.
+# Tries providers in priority order for the requested model alias.
+# Supports 4 API types: openai, huggingface, cloudflare, comfyui.
+#
+# Usage:
+#   gen-image "a cat on a rainbow"
+#   gen-image "cyberpunk city" --model flux-quality
+#   gen-image "landscape" --size 1024x768 --output ~/pic/landscape.png
+#
+# Dependencies: curl, jq, yq, base64, xdg-open, file
+
+CONFIG_FILE="${HOME}/.config/image-gen/providers.yaml"
+DEFAULT_ALIAS="flux-fast"
+DEFAULT_SIZE="1024x1024"
+DEFAULT_OUTPUT_DIR="${HOME}/pic"
+
+# ── Argument parsing ──────────────────────────────────────────────────────────
+local prompt=""
+local model_alias="${DEFAULT_ALIAS}"
+local img_size="${DEFAULT_SIZE}"
+local output_file=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --model|-m)   model_alias="$2"; shift 2 ;;
+        --size|-s)    img_size="$2"; shift 2 ;;
+        --output|-o)  output_file="$2"; shift 2 ;;
+        --help|-h)
+            echo "Usage: gen-image [OPTIONS] PROMPT"
+            echo ""
+            echo "Options:"
+            echo "  -m, --model ALIAS   Model alias (default: ${DEFAULT_ALIAS})"
+            echo "  -s, --size WxH      Image size (default: ${DEFAULT_SIZE})"
+            echo "  -o, --output PATH   Output file path (default: ~/pic/gen-image-TIMESTAMP.png)"
+            echo "  -h, --help          Show this help"
+            echo ""
+            echo "Available aliases (from config):"
+            if [[ -f "$CONFIG_FILE" ]]; then
+                yq -r '.providers[].models[].alias' "$CONFIG_FILE" 2>/dev/null | sort -u | while IFS= read -r a; do
+                    echo "  ${a}"
+                done
+            else
+                echo "  (config not found — create ${CONFIG_FILE})"
+            fi
+            exit 0
+            ;;
+        -*)           echo "error: unknown option: $1" >&2; exit 1 ;;
+        *)            prompt="$1"; shift ;;
+    esac
+done
+
+if [[ -z "$prompt" ]]; then
+    echo "error: no prompt provided" >&2
+    echo "usage: gen-image \"your prompt here\" [--model alias]" >&2
+    exit 1
+fi
+
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    echo "error: config not found at ${CONFIG_FILE}" >&2
+    echo "  create ${CONFIG_FILE} with your API providers" >&2
+    exit 1
+fi
+
+# ── Set output path ──────────────────────────────────────────────────────────
+if [[ -z "$output_file" ]]; then
+    zmodload zsh/datetime
+    mkdir -p "$DEFAULT_OUTPUT_DIR"
+    output_file="${DEFAULT_OUTPUT_DIR}/gen-image-${EPOCHSECONDS}.png"
+fi
+
+# Parse size
+local img_width="${img_size%%x*}"
+local img_height="${img_size##*x}"
+
+# ── Provider dispatch functions ──────────────────────────────────────────────
+
+_call_openai() {
+    local base_url="$1" api_key="$2" model_name="$3"
+    local response
+    response=$(curl -fsSL --max-time 120 \
+        -X POST "${base_url}/images/generations" \
+        -H "Authorization: Bearer ${api_key}" \
+        -H "Content-Type: application/json" \
+        -d "$(jq -n \
+            --arg model "$model_name" \
+            --arg prompt "$prompt" \
+            --argjson width "$img_width" \
+            --argjson height "$img_height" \
+            '{model: $model, prompt: $prompt, width: $width, height: $height, n: 1, response_format: "b64_json"}'
+        )" 2>&1) || return 1
+
+    # Extract base64 image data
+    local b64_data
+    b64_data=$(echo "$response" | jq -r '.data[0].b64_json // empty' 2>/dev/null)
+    if [[ -n "$b64_data" ]]; then
+        echo "$b64_data" | base64 -d > "$output_file"
+        return 0
+    fi
+
+    # Try URL response format
+    local img_url
+    img_url=$(echo "$response" | jq -r '.data[0].url // empty' 2>/dev/null)
+    if [[ -n "$img_url" ]]; then
+        curl -fsSL --max-time 60 -o "$output_file" "$img_url" 2>/dev/null
+        return $?
+    fi
+
+    echo "  openai: unexpected response format" >&2
+    return 1
+}
+
+_call_huggingface() {
+    local base_url="$1" api_key="$2" model_name="$3"
+    # HF Inference API returns raw image bytes
+    curl -fsSL --max-time 120 \
+        -X POST "${base_url}/models/${model_name}" \
+        -H "Authorization: Bearer ${api_key}" \
+        -H "Content-Type: application/json" \
+        -d "$(jq -n --arg prompt "$prompt" '{inputs: $prompt}')" \
+        -o "$output_file" 2>&1 || return 1
+
+    # Verify the output is actually an image (not an error JSON)
+    local file_type
+    file_type=$(file -b --mime-type "$output_file" 2>/dev/null)
+    if [[ "$file_type" == image/* ]]; then
+        return 0
+    fi
+
+    # Error response — print it and clean up
+    echo "  huggingface: $(cat "$output_file" 2>/dev/null)" >&2
+    rm -f "$output_file"
+    return 1
+}
+
+_call_cloudflare() {
+    local base_url="$1" api_key="$2" model_name="$3" account_id="$4"
+    if [[ -z "$account_id" ]]; then
+        echo "  cloudflare: account_id not set" >&2
+        return 1
+    fi
+
+    # CF Workers AI returns raw image bytes
+    curl -fsSL --max-time 120 \
+        -X POST "${base_url}/accounts/${account_id}/ai/run/${model_name}" \
+        -H "Authorization: Bearer ${api_key}" \
+        -H "Content-Type: application/json" \
+        -d "$(jq -n \
+            --arg prompt "$prompt" \
+            --argjson width "$img_width" \
+            --argjson height "$img_height" \
+            '{prompt: $prompt, width: $width, height: $height}'
+        )" \
+        -o "$output_file" 2>&1 || return 1
+
+    local file_type
+    file_type=$(file -b --mime-type "$output_file" 2>/dev/null)
+    if [[ "$file_type" == image/* ]]; then
+        return 0
+    fi
+
+    echo "  cloudflare: $(cat "$output_file" 2>/dev/null)" >&2
+    rm -f "$output_file"
+    return 1
+}
+
+_call_comfyui() {
+    local base_url="$1" api_key="$2" model_name="$3"
+    # ComfyUI simple txt2img via the /api/prompt endpoint
+    # This is a minimal workflow — advanced users should customize
+    local workflow
+    workflow=$(jq -n \
+        --arg model "$model_name" \
+        --arg prompt "$prompt" \
+        --argjson width "$img_width" \
+        --argjson height "$img_height" \
+        '{
+            prompt: {
+                "3": {
+                    class_type: "KSampler",
+                    inputs: {
+                        seed: (now | floor),
+                        steps: 20,
+                        cfg: 7,
+                        sampler_name: "euler",
+                        scheduler: "normal",
+                        denoise: 1,
+                        model: ["4", 0],
+                        positive: ["6", 0],
+                        negative: ["7", 0],
+                        latent_image: ["5", 0]
+                    }
+                },
+                "4": {
+                    class_type: "CheckpointLoaderSimple",
+                    inputs: { ckpt_name: $model }
+                },
+                "5": {
+                    class_type: "EmptyLatentImage",
+                    inputs: { width: $width, height: $height, batch_size: 1 }
+                },
+                "6": {
+                    class_type: "CLIPTextEncode",
+                    inputs: { text: $prompt, clip: ["4", 1] }
+                },
+                "7": {
+                    class_type: "CLIPTextEncode",
+                    inputs: { text: "", clip: ["4", 1] }
+                },
+                "8": {
+                    class_type: "VAEDecode",
+                    inputs: { samples: ["3", 0], vae: ["4", 2] }
+                },
+                "9": {
+                    class_type: "SaveImage",
+                    inputs: { filename_prefix: "gen-image", images: ["8", 0] }
+                }
+            }
+        }')
+
+    local response
+    response=$(curl -fsSL --max-time 300 \
+        -X POST "${base_url}/api/prompt" \
+        -H "Content-Type: application/json" \
+        -d "$workflow" 2>&1) || return 1
+
+    local prompt_id
+    prompt_id=$(echo "$response" | jq -r '.prompt_id // empty' 2>/dev/null)
+    if [[ -z "$prompt_id" ]]; then
+        echo "  comfyui: failed to queue prompt" >&2
+        return 1
+    fi
+
+    # Poll for completion (max 5 minutes)
+    local elapsed=0
+    while [[ $elapsed -lt 300 ]]; do
+        sleep 2
+        elapsed=$((elapsed + 2))
+        local history
+        history=$(curl -fsSL "${base_url}/api/history/${prompt_id}" 2>/dev/null)
+        local status
+        status=$(echo "$history" | jq -r ".[\"${prompt_id}\"].status.completed // false" 2>/dev/null)
+        if [[ "$status" == "true" ]]; then
+            # Get the output image filename
+            local img_name
+            img_name=$(echo "$history" | jq -r ".[\"${prompt_id}\"].outputs.\"9\".images[0].filename // empty" 2>/dev/null)
+            if [[ -n "$img_name" ]]; then
+                curl -fsSL "${base_url}/api/view?filename=${img_name}" -o "$output_file" 2>/dev/null
+                return $?
+            fi
+            echo "  comfyui: no output image found" >&2
+            return 1
+        fi
+    done
+
+    echo "  comfyui: generation timed out after 5 minutes" >&2
+    return 1
+}
+
+# ── Main: iterate providers by priority ──────────────────────────────────────
+
+local provider_count
+provider_count=$(yq -r "[.providers[] | select(.models[].alias == \"${model_alias}\")] | length" "$CONFIG_FILE" 2>/dev/null)
+
+if [[ "$provider_count" -eq 0 || -z "$provider_count" ]]; then
+    echo "error: no providers found for alias '${model_alias}'" >&2
+    echo "  available aliases:" >&2
+    yq -r '.providers[].models[].alias' "$CONFIG_FILE" 2>/dev/null | sort -u | while IFS= read -r a; do
+        echo "    ${a}" >&2
+    done
+    exit 1
+fi
+
+echo "Generating image with alias '${model_alias}' (${img_size})..."
+
+local errors=()
+local success=false
+
+# Get providers sorted by priority that have the requested alias
+local providers_json
+providers_json=$(yq -o=json -r "[.providers[] | select(.models[].alias == \"${model_alias}\")] | sort_by(.priority)" "$CONFIG_FILE" 2>/dev/null)
+
+local num_providers
+num_providers=$(echo "$providers_json" | jq 'length' 2>/dev/null)
+
+for i in $(seq 0 $((num_providers - 1))); do
+    local p_name p_base_url p_api_type p_api_key p_account_id p_model_name
+    p_name=$(echo "$providers_json" | jq -r ".[$i].name" 2>/dev/null)
+    p_base_url=$(echo "$providers_json" | jq -r ".[$i].base_url" 2>/dev/null)
+    p_api_type=$(echo "$providers_json" | jq -r ".[$i].api_type" 2>/dev/null)
+    p_api_key=$(echo "$providers_json" | jq -r ".[$i].api_key" 2>/dev/null)
+    p_account_id=$(echo "$providers_json" | jq -r ".[$i].account_id // empty" 2>/dev/null)
+
+    # Find the model name for the requested alias within this provider
+    p_model_name=$(echo "$providers_json" | jq -r ".[$i].models[] | select(.alias == \"${model_alias}\") | .name" 2>/dev/null | head -1)
+
+    echo "  trying ${p_name} (${p_model_name})..."
+
+    case "$p_api_type" in
+        openai)      _call_openai "$p_base_url" "$p_api_key" "$p_model_name" ;;
+        huggingface) _call_huggingface "$p_base_url" "$p_api_key" "$p_model_name" ;;
+        cloudflare)  _call_cloudflare "$p_base_url" "$p_api_key" "$p_model_name" "$p_account_id" ;;
+        comfyui)     _call_comfyui "$p_base_url" "$p_api_key" "$p_model_name" ;;
+        *)
+            echo "  ${p_name}: unknown api_type '${p_api_type}'" >&2
+            errors+=("${p_name}: unknown api_type '${p_api_type}'")
+            continue
+            ;;
+    esac
+
+    if [[ $? -eq 0 && -f "$output_file" ]]; then
+        local file_size
+        file_size=$(stat -c%s "$output_file" 2>/dev/null || echo 0)
+        if [[ "$file_size" -gt 100 ]]; then
+            success=true
+            echo "Saved: ${output_file} ($(( file_size / 1024 ))KB via ${p_name})"
+            command -v handlr >/dev/null 2>&1 && handlr open "$output_file" 2>/dev/null &!
+            command -v xdg-open >/dev/null 2>&1 && xdg-open "$output_file" 2>/dev/null &!
+            break
+        fi
+        rm -f "$output_file"
+        errors+=("${p_name}: output file too small (${file_size} bytes)")
+    else
+        errors+=("${p_name}: request failed")
+    fi
+done
+
+if ! $success; then
+    echo "error: all providers failed for alias '${model_alias}'" >&2
+    for err in "${errors[@]}"; do
+        echo "  - ${err}" >&2
+    done
+    exit 1
+fi
