@@ -5,6 +5,7 @@
     ./broot.nix
     ./emulators.nix
     ./envs.nix
+    ./espanso.nix
     ./ghostty.nix
     ./git.nix
     ./helix.nix
