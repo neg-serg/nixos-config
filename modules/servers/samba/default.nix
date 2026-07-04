@@ -29,15 +29,20 @@ in
           workgroup = "WORKGROUP";
           "server string" = "NixOS Samba Server";
           "netbios name" = host;
-          "map to guest" = "Bad User";
+          "map to guest" = "Never";
           security = "user"; # replaces securityType
+          "bind interfaces only" = "yes";
+          interfaces = "lo";
         };
-        # Share section (top-level INI section named "shared")
+        # Share section (ported from legacy Salt config: smb.conf.j2)
         shared = {
           path = sharePath;
           browseable = "yes";
           "read only" = "no";
-          "guest ok" = "yes"; # allow guest access
+          "guest ok" = "no";
+          "valid users" = "neg";
+          "force user" = "neg";
+          "force group" = "neg";
         };
       };
     };
