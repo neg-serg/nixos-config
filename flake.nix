@@ -22,6 +22,10 @@
     };
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
 
+    gitfetch = {
+      url = "path:/home/neg/src/gitfetch";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     iosevka-neg = {
       url = "github:neg-serg/iosevka-neg";
       inputs.nixpkgs.follows = "nixpkgs";

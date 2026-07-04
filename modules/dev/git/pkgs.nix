@@ -2,11 +2,13 @@
   lib,
   pkgs,
   config,
+  inputs,
   ...
 }:
 let
   wantHxtools = config.features.dev.pkgs.misc or false;
   monitoringEnabled = config.roles.monitoring.enable or false;
+  gitfetchPkg = inputs.gitfetch.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in
 {
   environment.systemPackages = [
@@ -19,6 +21,7 @@ in
     pkgs.act # run GitHub Actions locally
     pkgs.gh # GitHub CLI
     pkgs.gist # manage GitHub gists
+    gitfetchPkg # git fetch visualizer
   ]
   ++ lib.optionals (wantHxtools && (!monitoringEnabled)) [
     pkgs.hxtools # hx* git and stats helpers (git-forest, git-blame-stats, git-logsortbychgsize)
