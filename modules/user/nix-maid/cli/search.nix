@@ -13,17 +13,16 @@ in
   config = lib.mkMerge [
     {
       environment.systemPackages = [
-        pkgs.bat # A cat(1) clone with wings (syntax highlighting)
-        pkgs.fzf # A command-line fuzzy finder
-        pkgs.fd # A simple, fast and user-friendly alternative to 'find'
-        pkgs.ripgrep # Line-oriented search tool (grep alternative)
+        pkgs.bat
+        pkgs.fzf
+        pkgs.fd
+        pkgs.ripgrep
       ];
 
-      # --- Environment Variables ---
       environment.variables = {
         RIPGREP_CONFIG_PATH = "${config.users.users.neg.home}/.config/ripgrep/ripgreprc";
 
-        FZF_DEFAULT_COMMAND = "${lib.getExe pkgs.fd} --type=f --hidden --exclude=.git"; # Simple, fast and user-friendly alternative to find
+        FZF_DEFAULT_COMMAND = "${lib.getExe pkgs.fd} --type=f --hidden --exclude=.git";
         FZF_DEFAULT_OPTS = builtins.concatStringsSep " " (
           builtins.filter (x: builtins.typeOf x == "string") [
             "--bind='alt-p:toggle-preview,alt-a:select-all,alt-s:toggle-sort'"
@@ -56,7 +55,6 @@ in
             "--pointer=▶"
             "--marker=✓"
             "--with-nth=1.."
-            # Colors
             "--color=preview-bg:-1"
             "--color=gutter:#000000"
             "--color=bg:#000000"
@@ -98,14 +96,31 @@ in
     }
 
     (n.mkHomeFiles {
-      # Bat Config (syntaxes disabled due to HM batCache conflict)
-      ".config/bat/config".source = n.linkImpure ../../../../files/search/bat-config;
+      ".config/bat/config".text = ''
+        --theme="ansi"
+        --italic-text="always"
+        --paging="never"
+        --decorations="never"
+      '';
 
-      # FD Ignore
-      ".config/fd/ignore".source = n.linkImpure ../../../../files/search/fd-ignore;
+      ".config/fd/ignore".text = ''
+        .git/
+      '';
 
-      # Ripgrep Config
-      ".config/ripgrep/ripgreprc".source = n.linkImpure ../../../../files/search/ripgreprc;
+      ".config/ripgrep/ripgreprc".text = ''
+        --no-heading
+        --smart-case
+        --follow
+        --hidden
+        --glob=!.git/
+        --glob=!node_modules/
+        --glob=!yarn.lock
+        --glob=!package-lock.json
+        --glob=!.yarn/
+        --glob=!_build/
+        --glob=!tags
+        --glob=!.pub-cache
+      '';
     })
   ];
 }
