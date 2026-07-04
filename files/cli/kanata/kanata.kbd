@@ -1,0 +1,17 @@
+;; Kanata keyboard remapper configuration
+;; Docs: https://github.com/jtroo/kanata/blob/main/docs/config.adoc
+;;
+;; All unmapped keys pass through unchanged.
+;; Add key codes to (defsrc) and corresponding actions to (deflayer).
+;;
+;; Example — caps-lock as escape on tap, ctrl on hold:
+;;   (defsrc caps)
+;;   (deflayer base (tap-hold 200 200 esc lctl))
+
+(defcfg
+  process-unmapped-keys yes
+)
+
+(defsrc)
+
+(deflayer base)

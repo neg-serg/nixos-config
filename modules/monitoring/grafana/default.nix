@@ -102,6 +102,9 @@ in
       // (lib.optionalAttrs (cfg.adminPasswordFile != null) {
         admin_password = "${"$"}__file{${cfg.adminPasswordFile}}";
       });
+      # Provisioning path — Grafana looks for provisioning config files here
+      settings.paths.provisioning = "/etc/grafana/provisioning";
+
       # Provision a Loki datasource so Explore works out of the box
       provision = {
         enable = true;
@@ -117,6 +120,28 @@ in
           }
         ];
       };
+    };
+
+    # Dashboard provider — tells Grafana where to find dashboard JSON files
+    environment.etc."grafana/provisioning/dashboards/salt.yaml" = {
+      target = "/etc/grafana/provisioning/dashboards/salt.yaml";
+      text = ''
+        apiVersion: 1
+        providers:
+          - name: salt
+            type: file
+            options:
+              path: /etc/grafana/provisioning/dashboards/json
+              foldersFromFilesStructure: false
+            updateIntervalSeconds: 30
+            allowUiUpdates: true
+      '';
+    };
+
+    # ProxyPilot AI proxy monitoring dashboard (ported from legacy Salt config)
+    environment.etc."grafana/provisioning/dashboards/json/proxypilot.json" = {
+      target = "/etc/grafana/provisioning/dashboards/json/proxypilot.json";
+      source = ./dashboards/proxypilot.json;
     };
 
     # Per-interface firewall openings (Grafana port and, optionally, Caddy proxy ports)
@@ -168,8 +193,9 @@ in
       '';
     };
 
-    # Ensure Caddy can write access logs directory
+    # tmpfiles rules for Grafana dashboard provisioning and Caddy logs
     systemd.tmpfiles.rules = lib.mkAfter [
+      "d /etc/grafana/provisioning/dashboards/json 0755 grafana grafana - -"
       "d /var/lib/caddy/logs 0750 caddy caddy - -"
     ];
 
