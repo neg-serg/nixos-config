@@ -44,8 +44,13 @@ in
         PermitRootLogin = "no";
         UseDns = true;
 
-        # Hardening: disable X11 forwarding
+        # Hardening (ported from legacy Salt config: sshd-hardening.conf)
         X11Forwarding = false;
+        MaxAuthTries = 3;
+        ClientAliveInterval = 300;
+        ClientAliveCountMax = 2;
+        LoginGraceTime = 30;
+        MaxSessions = 5;
 
         # Modern ciphers only (AES-GCM preferred)
         Ciphers = [
