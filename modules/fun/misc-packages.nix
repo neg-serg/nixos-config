@@ -35,6 +35,8 @@ let
     pkgs.taoup # The Tao of Unix Programming
     pkgs.toilet # text banners
 
+    pkgs.neg.brrtfetch # animated ASCII art GIF renderer for sysinfo
+
   ];
 in
 {
