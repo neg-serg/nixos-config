@@ -299,6 +299,24 @@
         "type": "github"
       }
     },
+    "flake-utils_5": {
+      "inputs": {
+        "systems": "systems_6"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
     "git-hooks-nix": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -1062,7 +1080,11 @@
         "quickshell": "quickshell",
         "raise": "raise",
         "rsmetrx": "rsmetrx",
+        "skwd": "skwd",
+        "skwd-daemon": "skwd-daemon",
         "sops-nix": "sops-nix",
+        "sqlit": "sqlit",
+        "sshell": "sshell",
         "tailray": "tailray",
         "winapps": "winapps",
         "wl": "wl",
@@ -1132,6 +1154,41 @@
         "type": "github"
       }
     },
+    "skwd": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778842854,
+        "narHash": "sha256-xbxbLXodxu9N9RV54INpPOGmpfAHRpzc0uSUVgi7P08=",
+        "owner": "liixini",
+        "repo": "skwd",
+        "rev": "c4928efc0666bd4a0c7b73e083014f4594e3238c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "liixini",
+        "repo": "skwd",
+        "type": "github"
+      }
+    },
+    "skwd-daemon": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1782927628,
+        "owner": "liixini",
+        "repo": "skwd-daemon",
+        "rev": "36f165a68611dfc55f1878ddd34491cdb6e22a44",
+        "type": "github"
+      },
+      "original": {
+        "owner": "liixini",
+        "repo": "skwd-daemon",
+        "type": "github"
+      }
+    },
     "sops-nix": {
       "inputs": {
         "nixpkgs": [
@@ -1149,6 +1206,42 @@
         "owner": "Mic92",
         "repo": "sops-nix",
         "type": "github"
+      }
+    },
+    "sqlit": {
+      "inputs": {
+        "flake-utils": "flake-utils_4",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1781791907,
+        "owner": "Maxteabag",
+        "repo": "sqlit",
+        "rev": "a77d420e737b594df96ec013b546d82e220e5bb5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Maxteabag",
+        "repo": "sqlit",
+        "type": "github"
+      }
+    },
+    "sshell": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "narHash": "sha256-FfAPx01SBB19QGzYqsWXO+D/ypTCuVPiz+dyQqCbkxw=",
+        "path": "/home/neg/src/sshell",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/neg/src/sshell",
+        "type": "path"
       }
     },
     "systems": {
@@ -1226,6 +1319,21 @@
         "type": "github"
       }
     },
+    "systems_6": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
     "tailray": {
       "inputs": {
         "nixpkgs": [
@@ -1248,7 +1356,7 @@
     "winapps": {
       "inputs": {
         "flake-compat": "flake-compat_5",
-        "flake-utils": "flake-utils_4",
+        "flake-utils": "flake-utils_5",
         "nix-filter": "nix-filter",
         "nixpkgs": [
           "nixpkgs"
