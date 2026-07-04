@@ -142,6 +142,25 @@ lib.mkIf quickshellEnabled (
     }
 
     (n.mkHomeFiles quickshellHomeFiles)
+    {
+      # Remove old whole-directory quickshell symlink before nix-maid
+      # activation deploys individual entries.  Without this, systemd-tmpfiles
+      # hits "unsafe path transition" when trying to create symlinks inside a
+      # symlinked parent directory (systemd >=252).
+      systemd.user.services.quickshell-cleanup-symlink = lib.mkIf (!isSshell) {
+        description = "Remove old quickshell symlink before nix-maid activation";
+        before = [ "maid-activation.service" ];
+        wantedBy = [ "maid-activation.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = pkgs.writeShellScript "quickshell-cleanup-symlink" ''
+            if [ -L "$HOME/.config/quickshell" ]; then
+              rm "$HOME/.config/quickshell"
+            fi
+          '';
+        };
+      };
+    }
     (lib.mkIf (!isSshell) {
       systemd.user.services.quickshell-theme-init = {
         description = "Deploy writable Theme directory before quickshell starts";
