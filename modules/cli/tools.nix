@@ -50,6 +50,7 @@ in
     pkgs.moreutils # assorted unix utils (sponge, etc.)
     pkgs.ncdu_1 # interactive du (C version, no zig/LLVM dep)
     pkgs.neg.duf # better df (fork with plain style support)
+    pkgs.neg.talktype # push-to-talk voice typing (F9 record, transcribe, paste)
     pkgs.neg.termeverything # Wayland compositor that renders GUI windows in the terminal
     pkgs.pwgen # password generator
   ]
