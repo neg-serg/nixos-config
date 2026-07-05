@@ -42,6 +42,7 @@ in
           gtkThemePkg # GTK theme (selected via features.gui.gtkTheme)
           pkgs.kora-icon-theme # Modern icon theme
           iosevkaNeg.nerd-font # Personalized Iosevka fonts with Nerd Font icons
+          # pkgs.pixora-icons # Icon theme
         ];
 
         # 2. Environment Variables (Cursor + Theme)

@@ -13,5 +13,6 @@ in
     pkgs.voxinput # voice→text via LocalAI/OpenAI + dotool/uinput (system-level utility)
     pkgs.neg.proxypilot # local AI proxy for Claude Code/OpenCode
     pkgs.neg.sidecar # AI agent tool for code assistance
+    # pkgs.ollama-vulkan # Ollama with Vulkan backend (alternative to CPU-only ollama)
   ];
 }
