@@ -10,7 +10,6 @@
     ./gdb
     ./git
     ./hack
-    ./openxr
     ./python
     ./unreal
     ./pkgs

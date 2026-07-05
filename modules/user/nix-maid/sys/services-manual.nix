@@ -68,49 +68,5 @@ in
       environment.systemPackages = [ ]; # command-line tool for controlling media players
     })
 
-    (lib.mkIf
-      (
-        (config.features.dev.openxr.enable or false)
-        && (config.features.dev.openxr.runtime.service.enable or false)
-      )
-      (
-        lib.mkMerge [
-          {
-            systemd.user.services.monado-service = {
-              description = "Monado OpenXR Runtime Service";
-              wantedBy = [ "graphical-session.target" ];
-              serviceConfig = {
-                ExecStart = "${lib.getExe' pkgs.monado "monado-service"}"; # Open source XR runtime
-              };
-            };
-          }
-          (n.mkHomeFiles {
-            ".config/monado/config.example.jsonc".text = ''
-              // Monado user configuration (example).
-              // Rename to config.json to activate.
-              {
-                "settings": { "log": { "level": "info" } }
-              }
-            '';
-            ".config/monado/basalt.config.example.jsonc".text = ''
-              // Basalt + Monado example.
-              {
-                "drivers": {
-                  "basalt": {
-                    "enable": true,
-                    "cams": [ { "name": "/dev/video0", "resolution": [1280, 720], "fps": 60 } ],
-                    "imu": "icm20602",
-                    "calibration": {
-                      "intrinsics": "${config.users.users.neg.home}/.config/monado/calib/intrinsics.yaml",
-                      "cam_to_imu": "${config.users.users.neg.home}/.config/monado/calib/cam_to_imu.yaml"
-                    }
-                  }
-                }
-              }
-            '';
-          })
-        ]
-      )
-    )
   ];
 }
