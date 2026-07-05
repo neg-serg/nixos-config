@@ -9,9 +9,10 @@ let
   dev = importOv ./overlays/dev.nix;
   fonts = importOv ./overlays/fonts.nix;
   fixTinycc = importOv ./overlays/fix-tinycc.nix;
+  aurPorted = import ./overlays/aur-ported.nix final finalPrev;
 in
 # Standard overlay pattern: merge top-level attributes
-(functions // tools // media // dev // gui // fonts // fixTinycc)
+(functions // tools // media // dev // gui // fonts // fixTinycc // aurPorted)
 // {
   # Override opencode to build from flake input source (latest git)
   opencode = (final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { }).overrideAttrs (old: {
