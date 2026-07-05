@@ -1,8 +1,8 @@
 ##
 # Module: system/boot
-# Purpose: Bootloader (EFI, lanzaboote), initrd modules.
+# Purpose: Bootloader (EFI, GRUB), initrd modules.
 # Key options: none (uses config.boot.* directly).
-# Dependencies: pkgs (efibootmgr/efivar/os-prober/sbctl), lanzaboote.
+# Dependencies: pkgs (efibootmgr/efivar/os-prober/sbctl).
 {
   lib,
   config,
@@ -16,15 +16,10 @@
   boot = {
     loader = {
       efi.canTouchEfiVariables = true;
-      # With lanzaboote enabled, default systemd-boot to disabled; hosts may override.
-      systemd-boot = {
+      grub = {
         enable = lib.mkDefault false;
-        # Use the highest available UEFI console resolution (often Full HD on 1080p displays).
-        # If you need exactly 1920x1080, set a numeric mode ("0".."5") that matches your firmware's 1080p mode.
-        # You can try values 0–5 and pick the one that renders at 1920x1080.
-        consoleMode = lib.mkDefault "max";
-        # Keep only a few generations in the boot menu to reduce loader work
-        configurationLimit = lib.mkDefault 3;
+        device = lib.mkDefault "nodev"; # EFI only
+        efiSupport = lib.mkDefault true;
       };
       # Skip boot menu unless a key is pressed; speeds up loader phase
       timeout = lib.mkDefault 0;
