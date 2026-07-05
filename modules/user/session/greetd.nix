@@ -66,7 +66,7 @@ in
       enable = true;
       restart = false;
       settings.default_session = {
-        command = "${lib.getExe pkgs.hyprland} -c ${hyprlandConfig}";
+        command = "${lib.getExe pkgs.hyprland} -c ${hyprlandConfig} > /dev/null 2>&1";
         user = "greeter";
       };
     };
