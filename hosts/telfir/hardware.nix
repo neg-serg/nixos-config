@@ -74,7 +74,8 @@ in
     kernelParams = [
       "acpi_osi=!"                             # Fix ACPI compatibility on ASUS boards
       "acpi_osi=Linux"                         # Report Linux-compatible ACPI interface
-      "video=3840x2160@240"                    # Set display resolution for early KMS
+      # video=3840x2160@240 removed: simpledrm rejects custom modelines, causes "User-defined mode not supported"
+      # GRUB gfxmodeEfi = "3840x2160" covers the bootloader resolution instead
       "lru_gen=1"                              # Enable multi-gen LRU page reclaim
       "lru_gen.min_ttl_ms=1000"                # Min TTL for multi-gen LRU
       "mem_sleep_default=deep"                 # Prefer deep sleep (S3) for suspend
@@ -128,7 +129,7 @@ in
         gfxmodeEfi = "3840x2160";
         gfxpayloadEfi = "keep";
         splashImage = null;
-        font = null; #grubFont; # FIXME: re-enable when nixpkgs fetchurl/boot.nix bug is fixed
+        font = null; #grubFont; # FIXME: fetchurl/boot.nix still broken in nixpkgs (passes nativeBuildInputs unexpectedly)
         backgroundColor = "#000000";
         extraConfig = ''
           set menu_color_normal=white/black
