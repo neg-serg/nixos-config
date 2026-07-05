@@ -1068,6 +1068,22 @@
         "type": "github"
       }
     },
+    "openagentscontrol": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774390579,
+        "narHash": "sha256-H5O08YjxzJMYva1sjMgCl5GTDrx9pR1ELBtO5bqGV/Y=",
+        "owner": "darrenhinde",
+        "repo": "OpenAgentsControl",
+        "rev": "ef3836efd659e451b6dbb8eee7d3213ba39f5aec",
+        "type": "github"
+      },
+      "original": {
+        "owner": "darrenhinde",
+        "repo": "OpenAgentsControl",
+        "type": "github"
+      }
+    },
     "opencode": {
       "inputs": {
         "nixpkgs": [
@@ -1230,6 +1246,7 @@
         ],
         "nix-maid": "nix-maid",
         "nixpkgs": "nixpkgs_4",
+        "openagentscontrol": "openagentscontrol",
         "opencode": "opencode",
         "pre-commit-hooks": "pre-commit-hooks_2",
         "quickshell": "quickshell_2",
