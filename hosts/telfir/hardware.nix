@@ -116,10 +116,17 @@
 
     loader = {
       timeout = 2; # seconds
-      # Use systemd-boot instead of lanzaboote
-      systemd-boot = {
+      grub = {
         enable = true;
-        editor = true;
+        device = "nodev"; # EFI only
+        efiSupport = true;
+        gfxmodeEfi = "1920x1080";
+        fontSize = 18;
+        backgroundColor = "#000000";
+        extraConfig = ''
+          set menu_color_normal=white/black
+          set menu_color_highlight=black/cyan
+        '';
       };
     };
 
