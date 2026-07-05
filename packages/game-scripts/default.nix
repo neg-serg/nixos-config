@@ -58,10 +58,4 @@ in
       builtins.readFile (scriptsDir + "/game_run.py")
     )
   );
-
-  # SteamVR launcher
-  steamvr = pkgs.writeShellApplication {
-    name = "steamvr";
-    text = builtins.readFile (scriptsDir + "/steamvr.sh");
-  };
 }

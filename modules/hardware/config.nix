@@ -7,52 +7,8 @@
 }:
 let
   cfg = config.hardware.storage.autoMount;
-  valveIndexModule =
-    {
-      lib,
-      pkgs,
-      config,
-      ...
-    }:
-    let
-      vrCfg = config.hardware.vr.valveIndex;
-    in
-    {
-      options.hardware.vr.valveIndex.enable =
-        lib.mkEnableOption "Enable the Valve Index VR stack (OpenXR/SteamVR helpers, udev rules).";
-
-      config = lib.mkIf vrCfg.enable {
-        assertions = [
-          {
-            assertion = config.hardware.graphics.enable or false;
-            message = "Valve Index VR requires hardware.graphics.enable = true.";
-          }
-        ];
-
-        hardware.steam-hardware.enable = lib.mkDefault true;
-
-        # Provide udev rules for XR devices (generic XR rules)
-        services.udev.packages = lib.mkAfter [ pkgs.xr-hardware ]; # Hardware description for XR devices
-
-        environment = {
-          systemPackages = lib.mkAfter [
-            pkgs.opencomposite # bridge OpenXR to OpenVR applications
-            pkgs.openvr # OpenVR API library and headers
-            pkgs.openxr-loader # OpenXR loader library
-            pkgs.steam # Steam gaming platform
-            pkgs.steamcmd # Steam command-line client
-            pkgs.vulkan-tools # Vulkan diagnostic and testing tools
-          ];
-
-          # No default OpenXR runtime enforced; user/SteamVR may set it explicitly if desired.
-          sessionVariables = { };
-        };
-        # No extra user services; SteamVR runtime is expected to be used directly.
-      };
-    };
 in
 {
-  imports = [ valveIndexModule ];
 
   options.hardware.storage.autoMount.enable = lib.mkOption {
     type = lib.types.nullOr lib.types.bool;

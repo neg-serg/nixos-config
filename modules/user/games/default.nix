@@ -7,7 +7,6 @@
   imports = [
     ./launchers.nix
     ./performance.nix
-    ./vr.nix
   ];
 
   options.profiles.games = {

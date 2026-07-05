@@ -83,19 +83,6 @@ in
         description = "Wrap Unreal Editor launch via steam-run to provide FHS runtime libraries.";
       };
     };
-    openxr = {
-      enable = mkBool "enable OpenXR development stack" false;
-      envision.enable = mkBool "install Envision UI for Monado" true;
-      runtime = {
-        enable = mkBool "install Monado OpenXR runtime" true;
-        vulkanLayers.enable = mkBool "install Monado Vulkan layers" true;
-        service.enable = mkBool "run monado-service as a user systemd service (graphical preset)" false;
-      };
-      tools = {
-        motoc.enable = mkBool "install motoc (Monado Tracking Origin Calibration)" true;
-        basaltMonado.enable = mkBool "install optional basalt-monado tools" false;
-      };
-    };
     bpf.enable = mkBool "enable BPF tracing tools (bpftrace, below)" false;
   };
 
