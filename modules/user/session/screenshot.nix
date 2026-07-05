@@ -7,5 +7,6 @@
     pkgs.slurp # select regions for grim/wlroots compositors
     pkgs.swappy # screenshot editor (optional)
     pkgs.wf-recorder # screen recording
+    # pkgs.satty # screenshot annotation (used in wlr-which-key bindings but not installed)
   ];
 }
