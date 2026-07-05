@@ -5,8 +5,6 @@ let
     hyprlandPlugins = prev.hyprlandPlugins // {};
   });
 
-  # Minimal-bootstrap uses `isFromMinBootstrap` but stdenv stage2
-  # expects `isFromBootstrapFiles` on bintools passthru.
   bintoolsBootstrapFix = final: prev: {
     bintools = prev.bintools // {
       passthru = (prev.bintools.passthru or { }) // {
@@ -15,10 +13,6 @@ let
           || (prev.bintools.passthru.bintools.passthru.isFromBootstrapFiles or false);
       };
     };
-    # Ensure fetchurl stays the regular one (not boot) in the final pkgset.
-    # The stdenv boot pipeline may otherwise leak `stdenv.fetchurlBoot` into
-    # the package set.
-    fetchurl = prev.fetchurl;
   };
 
   mkPkgs = system:
@@ -27,9 +21,6 @@ let
       overlays = [
         bintoolsBootstrapFix
         (hyprlandOverlay system)
-        (final: prev: {
-          ignis = inputs.ignis.packages.${final.stdenv.hostPlatform.system}.ignis;
-        })
         ((import ../packages/overlay.nix) inputs)
       ];
       config = {
