@@ -102,13 +102,14 @@ in
 
   systemdServices = {
     # Hyprscratch daemon (scratchpad manager)
-    # NOTE: wantedBy+after on the same target creates an ordering cycle with
-    # hyprland-session.target BindsTo=graphical-session.target, so we drop
-    # "after" and let Restart=always handle any Hyprland IPC race.
+    # bindsTo ensures hyprscratch stops when the session target stops.
+    # After hyprland reload/suspend the IPC socket changes, so
+    # hyprland.lua restarts this service on hyprland.start (below).
     hyprscratch = {
       description = "Hyprscratch - improved scratchpad functionality for Hyprland";
       wantedBy = [ "hyprland-session.target" ];
-      partOf = [ "hyprland-session.target" ];
+      bindsTo = [ "hyprland-session.target" ];
+      after = [ "hyprland-session.target" ];
       serviceConfig = {
         ExecStart = "${lib.getExe hyprscratchPkg} init spotless";
         Restart = "always";

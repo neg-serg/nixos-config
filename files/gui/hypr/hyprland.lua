@@ -532,6 +532,8 @@ hl.layer_rule({ name = "slide-right", match = { namespace = "sideright.*" }, ani
 hl.on("hyprland.start", function()
   hl.exec_cmd("~/.local/bin/unlock")
   hl.exec_cmd("hypr-start")
+  -- Restart hyprscratch after Hyprland reload/suspend so it picks up the new IPC socket
+  hl.exec_cmd("systemctl --user restart hyprscratch.service")
   hl.exec_cmd("wl init")
   hl.exec_cmd("kitty --single-instance --class term")
   hl.exec_cmd("wl-clip-persist --clipboard regular")
