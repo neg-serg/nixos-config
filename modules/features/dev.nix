@@ -1,8 +1,5 @@
-{ lib, ... }:
+{ lib, mkBool, ... }:
 with lib;
-let
-  mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
-in
 {
   options.features.dev = {
     enable = mkBool "enable Dev stack (toolchains, editors, hack tooling)" true;
