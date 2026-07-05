@@ -5,6 +5,14 @@
   inputs,
   ...
 }:
+let
+  iosevkaFont = inputs.iosevka-neg.packages.${pkgs.system}.nerd-font or pkgs.nerd-fonts.iosevka;
+  grubFont = pkgs.runCommand "iosevka-36.pf2" {
+    nativeBuildInputs = [ pkgs.grub2 ];
+  } ''
+    grub-mkfont -s 36 -o $out ${iosevkaFont}/share/fonts/truetype/Iosevka-Regular.ttf
+  '';
+in
 {
   # Hardware and performance tuning specific to host 'telfir'
   hardware = {
@@ -123,7 +131,7 @@
         gfxmodeEfi = "3840x2160";
         gfxpayloadEfi = "keep";
         splashImage = null;
-        fontSize = 112;
+        font = grubFont;
         backgroundColor = "#000000";
         extraConfig = ''
           set menu_color_normal=white/black
