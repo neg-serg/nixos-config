@@ -6,6 +6,6 @@
       builtins.readFile ../scripts/game-session-mangohud.sh
     )) # Game session launcher with MangoHud
 
-    pkgs.dualsensectl # DualSense controller configuration
+    # dualsensectl — installed by modules/games/controllers.nix
   ];
 }
