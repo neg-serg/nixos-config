@@ -8,5 +8,14 @@
     pkgs.sf-pro-display # Apple SF Pro Display (ported from legacy Salt config)
     pkgs.anurati # Geometric display font
     pkgs.alfa-slab-one # Bold slab-serif display font
+
+    # Available but not enabled:
+    # pkgs.inter
+    # pkgs.nerd-fonts.jetbrains-mono
+    # pkgs.ibm-plex
+    # pkgs.noto-fonts
+    # pkgs.noto-fonts-cjk
+    # pkgs.noto-fonts-emoji
+    # pkgs.noto-fonts-extra
   ];
 }

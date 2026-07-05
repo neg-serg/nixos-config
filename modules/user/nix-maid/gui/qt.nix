@@ -19,6 +19,7 @@ in
           pkgs.kdePackages.qt6ct # Qt 6 configuration tool
           pkgs.kdePackages.qtwayland # Wayland support for Qt 6
           pkgs.kdePackages.svgpart # SVG part for KDE
+          # pkgs.qt5ct # Qt 5 configuration tool
         ];
 
         environment.sessionVariables = {
