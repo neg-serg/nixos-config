@@ -84,6 +84,10 @@
       url = "path:/home/neg/src/sshell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    talktype = {
+      url = "github:lmacan1/talktype";
+      flake = false;
+    };
   };
 
   outputs =
