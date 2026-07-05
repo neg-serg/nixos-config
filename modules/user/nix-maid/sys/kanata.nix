@@ -7,11 +7,10 @@
   lib,
   config,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   cfg = config.features.input.kanata or { };
 in
 lib.mkIf (cfg.enable or false) {

@@ -8,8 +8,15 @@
 }:
 {
   imports = [
-    ./modules
+    ./modules/flat.nix
   ];
+  # Speed up rebuild: skip unused doc formats (info, HTML manual, nixos-help)
+  documentation = {
+    info.enable = false;
+    doc.enable = false;
+    nixos.enable = false;
+  };
+
   system = {
     stateVersion = lib.mkDefault "23.11"; # (man configuration.nix or on https://nixos.org/nixos/options.html).
     autoUpgrade = {

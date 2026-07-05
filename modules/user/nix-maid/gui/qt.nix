@@ -3,11 +3,10 @@
   config,
   lib,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   qtEnabled = config.features.gui.qt.enable or false;
 in
 {

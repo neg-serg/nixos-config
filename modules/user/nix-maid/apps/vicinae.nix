@@ -2,11 +2,10 @@
   pkgs,
   lib,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   # Vicinae theme definition (neg)
   # Vicinae Flight-Dark theme (ported from legacy Salt config: flight-dark.toml)
   # Color palette harmonized with Flight-Dark-GTK, Rofi, and Kitty.

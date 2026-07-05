@@ -3,11 +3,10 @@
   lib,
   config,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   cfg = config.features.media.audio.core;
   rnnoiseEnabled = config.hardware.audio.rnnoise.enable or false;
   filesRoot = ../../../../files;

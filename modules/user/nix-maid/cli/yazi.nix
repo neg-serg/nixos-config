@@ -4,11 +4,10 @@
   config,
 
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   cfg = config.features.cli.yazi;
   tomlFormat = pkgs.formats.toml { };
 

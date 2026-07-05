@@ -2,11 +2,10 @@
   config,
   lib,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
 in
 {
   config = lib.mkIf (config.features.gui.enable or false) (

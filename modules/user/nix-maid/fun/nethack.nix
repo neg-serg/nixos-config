@@ -3,11 +3,10 @@
   lib,
   pkgs,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   cfg = config.features.games.nethack;
 in
 {

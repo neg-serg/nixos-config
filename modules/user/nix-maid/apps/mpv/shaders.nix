@@ -3,11 +3,10 @@
   lib,
   config,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
 
   # --- Shaders Sources ---
   fsrcnnx = pkgs.fetchurl {

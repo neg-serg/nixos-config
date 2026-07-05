@@ -3,11 +3,10 @@
   lib,
   pkgs,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   cfg = config.features.mail;
   passPkg = pkgs.pass.withExtensions (exts: [ exts.pass-otp ]); # Stores, retrieves, generates, and synchronizes passwords ...
 
