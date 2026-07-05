@@ -74,6 +74,7 @@
     ./nix/default.nix
 
     ./profiles/services.nix
+    ./profiles/default.nix
     ./roles/default.nix
     ./secrets/pass/default.nix
     ./secrets/pkgs.nix # Nix package manager

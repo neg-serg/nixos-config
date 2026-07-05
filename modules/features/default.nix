@@ -23,56 +23,13 @@ with lib;
 
   # Apply profile defaults. Users can still override flags after this.
   config = mkMerge [
-    (mkIf (config.features.profile == "lite") {
-      # Slim defaults for lite profile
-      features = {
-        torrent.enable = mkDefault false;
-        gui.enable = mkDefault false;
-        mail.enable = mkDefault false;
-        hack.enable = mkDefault false;
-        dev = {
-          enable = mkDefault false;
-          ai.enable = mkDefault false;
-        };
-        # Explicitly disable Unreal tooling in lite to avoid asserts
-        dev.unreal.enable = mkForce false;
-        media.audio = {
-          core.enable = mkDefault false;
-          apps.enable = mkDefault false;
-          creation.enable = mkDefault false;
-          mpd.enable = mkDefault false;
-        };
-        web = {
-          enable = mkDefault false;
-          tools.enable = mkDefault false;
-          prefs.fastfox.enable = mkDefault false;
-        };
-        emulators.retroarch.full = mkDefault false;
-        fun.enable = mkDefault false;
-      };
-    })
-    (mkIf (config.features.profile == "full") {
-      # Rich defaults for full profile
-      features = {
-        torrent.enable = mkDefault true;
-        web = {
-          enable = mkDefault true;
-          tools.enable = mkDefault true;
-          default = mkDefault "zen";
-          zen.enable = mkDefault true;
-
-          prefs.fastfox.enable = mkDefault true;
-        };
-        media.audio = {
-          core.enable = mkDefault true;
-          apps.enable = mkDefault true;
-          creation.enable = mkDefault true;
-          mpd.enable = mkDefault true;
-        };
-        emulators.retroarch.full = mkDefault true;
-        fun.enable = mkDefault true;
-        dev.ai.enable = mkDefault true;
-      };
+    # Backward compat: map old `features.profile` (string) to new `features.profiles` (list).
+    # The new composable profile system (modules/profiles/) handles actual defaults via mkDefault.
+    (mkIf (config.features ? profile && !(config.features ? profiles)) {
+      features.profiles = mkDefault (
+        if config.features.profile == "lite" then [ "lite" ]
+        else [ "desktop" "dev" ]
+      );
     })
     # When dev-speed is enabled, prefer lean defaults for heavy subfeatures
     (mkIf config.features.devSpeed.enable {

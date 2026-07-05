@@ -26,6 +26,8 @@
       DXVK_ASYNC = "1";
       DXVK_STATE_CACHE = "1";
       WINE_FULLSCREEN_FSR = "1";
+      # HDR support
+      DXVK_HDR = if config.features.gui.hdr.enable then "1" else "0";
       mesa_glthread = "true";
       MESA_SHADER_CACHE_MAX_SIZE = "10G";
       STEAM_RUNTIME_PREFER_HOST_LIBRARIES = "1";
