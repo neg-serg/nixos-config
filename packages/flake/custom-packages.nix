@@ -25,4 +25,6 @@
   talktype = pkgs.neg.talktype;
 
   proteinview = pkgs.neg.proteinview; # Terminal protein structure viewer with interactive 3D visualization
+
+  openagentscontrol = pkgs.neg.openagentscontrol; # AI agent framework for plan-first development (agents + contexts for OpenCode)
 }
