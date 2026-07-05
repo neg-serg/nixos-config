@@ -21,5 +21,6 @@
     ./dev.nix
     ./lite.nix
     ./server.nix
+    ./services.nix # per-service enable toggles (profiles.services.*)
   ];
 }

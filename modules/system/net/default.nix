@@ -11,7 +11,9 @@
     ./transparent-tun.nix
     ./ssh.nix
     ./wifi.nix
+    ./rkn # Roskomnadzor block bypass
     ./vpn
     ./vpn-scripts
+    ./zapret2 # DPI circumvention
   ];
 }

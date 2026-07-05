@@ -5,11 +5,9 @@
     ./ansible.nix
     ./benchmarks
     ./editor
-    ./elf
     ./gcc
     ./gdb
     ./git
-    ./hack
     ./python
     ./unreal
     ./pkgs
