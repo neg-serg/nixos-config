@@ -2,7 +2,6 @@
 {
   imports = [
     ./amd
-    ./nvidia
     ./pkgs
   ];
 }
