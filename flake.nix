@@ -80,6 +80,9 @@
       url = "github:Maxteabag/sqlit";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    caelestia-shell = {
+      url = "path:/home/neg/src/shell";
+    };
     sshell = {
       url = "path:/home/neg/src/sshell";
       inputs.nixpkgs.follows = "nixpkgs";
