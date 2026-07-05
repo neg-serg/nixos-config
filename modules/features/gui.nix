@@ -1,8 +1,5 @@
-{ lib, ... }:
+{ lib, mkBool, ... }:
 with lib;
-let
-  mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
-in
 {
   options.features.gui = {
     enable = mkBool "enable GUI stack (wayland/hyprland, quickshell, etc.)" true;
