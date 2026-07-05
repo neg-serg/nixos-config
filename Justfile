@@ -10,7 +10,7 @@ gen-options:
 # Generate interactive module dependency graph (HTML)
 module-graph:
     repo_root="$(git rev-parse --show-toplevel)"; \
-    cd "$$repo_root" && python3 scripts/dev/module-graph.py
+    cd "$repo_root" && python3 scripts/dev/module-graph.py
 
 # Generate and commit options docs if there are changes
 gen-options-commit:
