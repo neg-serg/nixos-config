@@ -2,7 +2,6 @@
   description = "Neg-Serg configuration";
   nixConfig = {
     extra-experimental-features = "pipe-operators";
-    substituters = "";
   };
   inputs = {
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
@@ -102,6 +101,10 @@
     exo = {
       url = "github:debuggyo/Exo";
       flake = false;
+    };
+    noctalia = {
+      url = "github:noctalia-dev/noctalia";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
