@@ -50,7 +50,10 @@ in
       systemd.user.services.apply-zen-config = {
         description = "Apply Zen browser user.js and chrome CSS to default profiles";
         after = [ "maid-activation.service" ];
-        wantedBy = [ "default.target" ];
+        wantedBy = [ "maid-activation.service" ];
+        unitConfig = {
+          DefaultDependencies = "no";
+        };
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${applyZenConfig}";
