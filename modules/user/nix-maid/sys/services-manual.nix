@@ -3,11 +3,10 @@
   lib,
   pkgs,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   webEnabled = config.features.web.enable or false;
   mediaEnabled = config.features.media.audio.apps.enable or false;
 

@@ -3,11 +3,10 @@
   pkgs,
   config,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   devEnabled = config.features.dev.enable or false;
   nvimConf = ../../files/nvim;
 in

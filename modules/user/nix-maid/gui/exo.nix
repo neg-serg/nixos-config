@@ -4,11 +4,10 @@
   config,
   inputs,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
 
   exoEnabled =
     config.features.gui.enable or false

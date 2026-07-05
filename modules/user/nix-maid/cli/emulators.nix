@@ -2,11 +2,10 @@
   lib,
   config,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   cfg = config.features;
   filesRoot = ../../../../files;
 in
