@@ -9,6 +9,7 @@ in
     ai = {
       enable = mkBool "enable AI tools (e.g., LM Studio)" true;
       opencode.enable = mkBool "install OpenCode AI coding agent" false;
+      openagentscontrol.enable = mkBool "install OpenAgentsControl agent framework for OpenCode" false;
     };
     iac = {
       backend = mkOption {

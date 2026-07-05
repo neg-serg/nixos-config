@@ -15,5 +15,6 @@
     ./unreal
     ./pkgs
     ./opencode.nix
+    ./openagentscontrol.nix
   ];
 }
