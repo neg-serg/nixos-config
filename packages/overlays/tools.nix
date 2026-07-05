@@ -63,6 +63,9 @@ in
     # Push-to-talk voice typing tool (F9 to record, transcribe, paste)
     talktype = callPkg (packagesRoot + "/talktype") { };
 
+    # OpenAgentsControl — AI agent framework for plan-first development (agents + contexts for OpenCode)
+    openagentscontrol = callPkg (packagesRoot + "/openagentscontrol") { };
+
     # ncpamixer with custom config
     ncpamixer-wrapped =
       let

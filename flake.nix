@@ -68,6 +68,10 @@
       url = "github:anomalyco/opencode";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    openagentscontrol = {
+      url = "github:darrenhinde/OpenAgentsControl";
+      flake = false;
+    };
     skwd = {
       url = "github:liixini/skwd";
       flake = false;
