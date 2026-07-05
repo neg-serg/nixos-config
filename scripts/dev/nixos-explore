@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+# nixos-explore — Interactive NixOS config explorer
+#
+# Usage:
+#   nixos-explore list              List all feature flags with values
+#   nixos-explore list --json       Output as JSON
+#   nixos-explore diff <flag> <on|off>  Show packages that change when toggling a flag
+#   nixos-explore size              Count packages by domain
+#   nixos-explore size --by-domain  Detailed breakdown
+#
+# All commands run against the current flake in the current directory.
+
+set -euo pipefail
+
+FLAKE_DIR="${FLAKE_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+HOST="${HOST:-telfir}"
+FLAKE="${FLAKE:-$FLAKE_DIR#$HOST}"
+EXPLORE_TMP="${XDG_CACHE_HOME:-$HOME/.cache}/nixos-explore"
+mkdir -p "$EXPLORE_TMP"
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+  list)
+    # List all feature flags with current values
+    json_flag=false
+    for arg in "$@"; do
+      [ "$arg" = "--json" ] && json_flag=true
+    done
+
+    if $json_flag; then
+      nix eval ".#nixosConfigurations.$HOST.config.features" --json 2>/dev/null
+    else
+      echo "=== Feature Flags for $HOST ==="
+      nix eval ".#nixosConfigurations.$HOST.config.features" --json 2>/dev/null \
+        | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+
+def flatten(obj, prefix=''):
+    for k, v in obj.items():
+        if isinstance(v, dict):
+            flatten(v, f'{prefix}{k}.')
+        elif isinstance(v, bool):
+            print(f'  {prefix}{k:<40} {v}')
+        elif v is None:
+            print(f'  {prefix}{k:<40} null')
+        else:
+            print(f'  {prefix}{k:<40} {str(v)[:50]}')
+
+flatten(data)
+"
+    fi
+    ;;
+
+  diff)
+    # Show what packages change when toggling a feature flag
+    flag="${1:-}"
+    value="${2:-}"
+    if [ -z "$flag" ] || [ -z "$value" ]; then
+      echo "Usage: nixos-explore diff <feature.flag> <true|false>"
+      echo "Example: nixos-explore diff gui false"
+      exit 1
+    fi
+
+    echo "=== Feature: $flag = $value ==="
+    
+    # Evaluate current packages
+    echo "🔵 Current packages:"
+    current_pkgs=$(mktemp)
+    nix eval ".#nixosConfigurations.$HOST.config.environment.systemPackages" --json 2>/dev/null \
+      | python3 -c "
+import json, sys
+pkgs = json.load(sys.stdin)
+names = set()
+for p in pkgs:
+    n = p.get('name', '') if isinstance(p, dict) else str(p)
+    parts = n.split('-')
+    if parts:
+        names.add(parts[0])
+for n in sorted(names):
+    print(n)
+" > "$current_pkgs"
+    echo "  $(wc -l < "$current_pkgs") unique packages"
+
+    # This simulates the flag change. For boolean flags we override via --argstr.
+    # TODO: more accurate eval with flag override
+    echo ""
+    echo "⚪ Diff not yet available (requires nix eval with override)."
+    echo "   Packages detected: $(wc -l < "$current_pkgs")"
+    
+    rm -f "$current_pkgs"
+    ;;
+
+  size)
+    # Count packages, optionally by domain
+    by_domain=false
+    for arg in "$@"; do
+      [ "$arg" = "--by-domain" ] && by_domain=true
+    done
+
+    pkgs_json=$(nix eval ".#nixosConfigurations.$HOST.config.environment.systemPackages" --json 2>/dev/null)
+    total=$(echo "$pkgs_json" | python3 -c "
+import json, sys
+print(len(json.load(sys.stdin)))
+")
+    
+    echo "=== Package Count ==="
+    echo "Total packages in environment.systemPackages: $total"
+    
+    if $by_domain; then
+      echo ""
+      echo "=== By module domain ==="
+      echo "(Approximate — counts pkgs.* references in each domain)"
+      for dir in cli dev system gui media games fun web shell hardware; do
+        count=$(grep -roh 'pkgs\.[a-zA-Z0-9_-]*' "$FLAKE_DIR/modules/$dir" 2>/dev/null \
+          | grep -vE '^(neg|python3Packages|writeScriptBin|writeShellScript|writeText|makeWrapper|fetchurl|runCommand|stdenv|lib|systemd)$' \
+          | sort -u | wc -l)
+        echo "  $dir: $count"
+      done
+    fi
+    ;;
+
+  help|*)
+    echo "nixos-explore — Interactive NixOS config explorer"
+    echo ""
+    echo "Usage:"
+    echo "  nixos-explore list              Show all feature flags with values"
+    echo "  nixos-explore list --json       Output as JSON"
+    echo "  nixos-explore diff <flag> <val> Package diff when toggling flag"
+    echo "  nixos-explore size              Total package count"
+    echo "  nixos-explore size --by-domain  Package count by domain"
+    echo ""
+    echo "Environment:"
+    echo "  FLAKE_DIR  Path to flake root (default: git root or pwd)"
+    echo "  HOST       NixOS host name (default: telfir)"
+    exit 1
+    ;;
+esac
