@@ -233,6 +233,10 @@ in
           message = "features.apps.guiAppsFull.enable requires features.gui.enable = true";
         }
         {
+          assertion = cfg.gui.enable || (!cfg.gui.caelestia-shell.enable);
+          message = "features.gui.caelestia-shell.enable requires features.gui.enable = true";
+        }
+        {
           assertion = cfg.gui.enable || (!cfg.gui.skwd.enable);
           message = "features.gui.skwd.enable requires features.gui.enable = true";
         }
