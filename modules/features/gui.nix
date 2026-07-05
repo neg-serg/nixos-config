@@ -16,6 +16,7 @@ with lib;
     skwd.enable = mkBool "enable Skwd desktop shell (bar, launcher, music, notifications, settings, switcher) and skwd-daemon" false;
     exo.enable = mkBool "Exo desktop shell (Material 3 deskbar for Ignis/Hyprland/Niri)" false;
     noctalia.enable = mkBool "enable Noctalia Wayland shell (bar/panel)" false;
+    hdr.enable = mkBool "enable HDR support (env vars for DXVK, Gamescope, Wine)" false;
     gtkTheme = lib.mkOption {
       type = types.enum [ "Flight-Dark-GTK" "Andromeda" ];
       default = "Flight-Dark-GTK";
