@@ -24,10 +24,13 @@
   features.dev.cpp.enable = true; # Enable C++ toolchain (ccache, gcc, cmake)
   boot.plymouth = {
     enable = true;
-    theme = "black_hud";
+    theme = "lone";
     themePackages = [
       (pkgs.adi1090x-plymouth-themes.override {
-        selected_themes = [ "black_hud" ];
+        selected_themes = [
+          "lone"
+          "green_blocks"
+        ];
       })
     ];
   };
