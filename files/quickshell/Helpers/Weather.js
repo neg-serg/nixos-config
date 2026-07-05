@@ -222,7 +222,9 @@ function _fetchWttrIn(latitude, longitude, callback, errorCallback, options) {
     // Go straight to the tiny pipe-separated text format (~80 bytes) which
     // completes before any connection can be dropped.  The side effect is
     // no daily forecast in the side panel when this provider is active.
-    console.warn("[Weather] Open-Meteo unreachable, falling back to wttr.in text for", coords);
+    if (_openMeteoFailures <= _OPEN_METEO_SKIP_THRESHOLD) {
+        console.warn("[Weather] Open-Meteo unreachable, falling back to wttr.in text for", coords);
+    }
     var textUrl = "https://wttr.in/" + coords + "?format=%c|%t|%h|%w|%C|%p|%P|%u";
     _fetchWttrText(textUrl, timeoutMs, _ua, callback, errorCallback);
 }
@@ -337,6 +339,12 @@ function _httpGetJson(url, timeoutMs, success, fail, userAgent) {
 }
 
 
+// ── Open-Meteo persistent failure tracking ─────────────────────────────
+// After N consecutive Open-Meteo failures, skip it entirely for the
+// session and go straight to wttr.in. Reset on any successful fetch.
+var _openMeteoFailures = 0;
+var _OPEN_METEO_SKIP_THRESHOLD = 5;
+
 // Defaults (can be overridden via options argument)
 var DEFAULTS = {
     geocodeTtlMs: 24 * 60 * 60 * 1000,   // 24h
@@ -431,6 +439,26 @@ function fetchWeather(latitude, longitude, callback, errorCallback, options) {
         }
     }
 
+    // After N consecutive failures, skip Open-Meteo entirely and go
+    // straight to wttr.in. Resets on any successful Open-Meteo fetch.
+    var skipOpenMeteo = _openMeteoFailures >= _OPEN_METEO_SKIP_THRESHOLD;
+
+    if (skipOpenMeteo) {
+        // Open-Meteo persistently failing — use wttr.in directly
+        _fetchWttrIn(latitude, longitude, function(fbData) {
+            if (cacheKey) _writeCacheSuccess(_weatherCache, cacheKey, fbData, cfg.weatherTtlMs);
+            callback(fbData);
+        }, function(fbErr) {
+            if (cacheKey && fbErr) {
+                var backoff = (fbErr.retryAfter && fbErr.retryAfter > 0) ? fbErr.retryAfter : 0;
+                if (!backoff && (fbErr.status === 429 || (fbErr.status >= 500 && fbErr.status <= 599))) backoff = cfg.errorTtlMs;
+                if (backoff) _writeCacheError(_weatherCache, cacheKey, backoff);
+            }
+            errorCallback && errorCallback("Weather fetch error: " + (fbErr.status || fbErr.type || "unknown"));
+        }, options);
+        return;
+    }
+
     // Open-Meteo forecast API (free, no key required)
     var weatherBase = (options && options.weatherApiBaseUrl) ? String(options.weatherApiBaseUrl) : "https://api.open-meteo.com/v1";
     var url = _buildUrl(weatherBase + "/forecast", {
@@ -444,10 +472,13 @@ function fetchWeather(latitude, longitude, callback, errorCallback, options) {
     var _ua = (options && options.userAgent) ? String(options.userAgent) : "Quickshell";
     var dbg = !!(options && options.debug);
     _httpGetJson(url, cfg.timeoutMs, function(weatherData) {
+        // Open-Meteo succeeded — reset failure counter
+        _openMeteoFailures = 0;
         if (cacheKey) _writeCacheSuccess(_weatherCache, cacheKey, weatherData, cfg.weatherTtlMs);
         callback(weatherData);
     }, function(err) {
-        // Primary (Open-Meteo) failed → try fallback provider (wttr.in)
+        // Open-Meteo failed — increment counter, try fallback (wttr.in)
+        _openMeteoFailures++;
         _fetchWttrIn(latitude, longitude, function(fbData) {
             if (cacheKey) _writeCacheSuccess(_weatherCache, cacheKey, fbData, cfg.weatherTtlMs);
             callback(fbData);
