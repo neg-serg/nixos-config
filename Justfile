@@ -213,4 +213,25 @@ clean-caches:
     : "${XDG_STATE_HOME:=$HOME/.local/state}"
     rm -rf "$XDG_CACHE_HOME/zsh" || true
 
+# --- Package flake sync (git-subtree) -------------------------------------------------
+# Push packages/ subtree to standalone nixos-pkgs repo
+subtree-push-packages:
+    repo_root="$(git rev-parse --show-toplevel)"; \
+    cd "$$repo_root"; \
+    if ! git remote | grep -q neg-pkgs; then \
+      echo "Adding remote: git remote add neg-pkgs git@github.com:neg-serg/nixos-pkgs.git"; \
+      git remote add neg-pkgs git@github.com:neg-serg/nixos-pkgs.git; \
+    fi; \
+    git subtree push --prefix=packages/ neg-pkgs main
+
+# Pull updates from standalone nixos-pkgs repo back into packages/ subtree
+subtree-pull-packages:
+    repo_root="$(git rev-parse --show-toplevel)"; \
+    cd "$$repo_root"; \
+    if ! git remote | grep -q neg-pkgs; then \
+      echo "Error: remote 'neg-pkgs' not configured. Run: git remote add neg-pkgs git@github.com:neg-serg/nixos-pkgs.git"; \
+      exit 1; \
+    fi; \
+    git subtree pull --prefix=packages/ neg-pkgs main
+
 
