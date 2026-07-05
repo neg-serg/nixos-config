@@ -7,6 +7,11 @@ gen-options:
     repo_root="$(git rev-parse --show-toplevel)"; \
     cd "$repo_root" && scripts/dev/gen-options.sh
 
+# Generate interactive module dependency graph (HTML)
+module-graph:
+    repo_root="$(git rev-parse --show-toplevel)"; \
+    cd "$$repo_root" && python3 scripts/dev/module-graph.py
+
 # Generate and commit options docs if there are changes
 gen-options-commit:
     set -euo pipefail
