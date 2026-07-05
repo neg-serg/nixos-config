@@ -43,8 +43,7 @@ let
           ;
         iosevkaNeg = inputs.iosevka-neg.packages.${linuxSystem};
 
-        neg = _: {
-          # impurity ignored
+        neg = {
           # Core structural helpers (no config dependency)
           mkHomeFiles = files: {
             users.users.neg.maid.file.home = files;

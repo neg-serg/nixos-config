@@ -4,7 +4,6 @@
   config,
   neg,
   inputs ? null,
-  impurity ? null,
   ...
 }:
 let
@@ -13,7 +12,7 @@ let
 
   environment = import ./environment.nix { inherit lib pkgs; };
   services = import ./services.nix { inherit lib pkgs inputs; };
-  files = import ./files.nix { inherit lib neg impurity; };
+  files = import ./files.nix { inherit lib neg; };
 
   hyprlandLuaSrc = builtins.readFile ../../../../files/gui/hypr/hyprland.lua;
   hyprlandLuaText = builtins.replaceStrings [ "@gtkTheme@" ] [ gtkTheme ] hyprlandLuaSrc;

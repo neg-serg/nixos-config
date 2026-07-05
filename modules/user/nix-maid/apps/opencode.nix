@@ -3,11 +3,10 @@
   pkgs,
   config,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   enable =
     (config.features.dev.enable or false)
     && (config.features.dev.ai.enable or false)

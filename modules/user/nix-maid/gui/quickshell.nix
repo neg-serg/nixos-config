@@ -4,11 +4,10 @@
   config,
   inputs,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
 
   # Flavor: selects which quickshell config to deploy
   flavor = config.features.gui.quickshell.flavor or "default";

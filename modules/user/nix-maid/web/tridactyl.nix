@@ -2,11 +2,10 @@
   lib,
   config,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
 in
 lib.mkIf config.features.web.enable (
   n.mkHomeFiles (

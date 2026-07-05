@@ -1,12 +1,11 @@
 {
   lib,
   neg,
-  impurity ? null,
   ...
 }:
 with lib;
 let
-  n = neg impurity;
+  n = neg;
 in
 {
   imports = [

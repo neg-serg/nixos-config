@@ -2,11 +2,10 @@
   pkgs,
   lib,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   # Browser/App Definitions
   browser = "zen-beta.desktop";
   pdfreader = "org.pwmt.zathura.desktop";
