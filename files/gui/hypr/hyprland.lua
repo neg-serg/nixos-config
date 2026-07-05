@@ -546,6 +546,9 @@ end)
 
 -- Keep the primary monitor as the home for all workspaces
 hl.on("monitor.added", function(monitor_name)
+  -- Restart hyprscratch after GPU D3cold resume (monitor re-detect) so it
+  -- picks up the new special-workspace persistent state.
+  hl.exec_cmd("systemctl --user restart hyprscratch.service")
   if monitor_name == "DP-2" then
     hl.exec_cmd("zsh -c 'hyprctl workspaces -j | jq -r \".[] | select(.monitor != \\\"DP-2\\\") | .id\" | while read ws; do hyprctl dispatch moveworkspacetomonitor \"$ws\" DP-2; done'")
   end
