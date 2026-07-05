@@ -250,6 +250,9 @@ final: prev: {
       hash = "sha256-AZHW8fO3FrXFWCADJgXQX8PBzb9YHr7/ZVAZ5d0VJMA=";
     };
 
+    # Binary tarball extracts flat (no source root directory)
+    sourceRoot = ".";
+
     nativeBuildInputs = [
       final.autoPatchelfHook
     ];
