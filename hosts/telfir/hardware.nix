@@ -6,7 +6,7 @@
   ...
 }:
 let
-  iosevkaFont = inputs.iosevka-neg.packages.${pkgs.system}.nerd-font or pkgs.nerd-fonts.iosevka;
+  iosevkaFont = inputs.iosevka-neg.packages.${pkgs.stdenv.hostPlatform.system}.nerd-font or pkgs.nerd-fonts.iosevka;
   grubFont = pkgs.runCommand "iosevka-36.pf2" {
     nativeBuildInputs = [ pkgs.grub2 ];
   } ''
