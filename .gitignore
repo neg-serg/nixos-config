@@ -14,3 +14,4 @@ docs/howto/options*.md
 .pre-commit-config.yaml
 __pycache__/
 benchmarks/
+.omo/
