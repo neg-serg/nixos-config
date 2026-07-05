@@ -35,8 +35,8 @@ let
 
     tmpfile=""
     if [ "$save" = "1" ]; then
-      tmpfile=$(/usr/bin/mktemp)
-      /usr/bin/printf '%s' 'xdg-desktop-portal-termfilechooser saving files tutorial
+      tmpfile=$(${pkgs.coreutils}/bin/mktemp)
+      ${pkgs.coreutils}/bin/printf '%s' 'xdg-desktop-portal-termfilechooser saving files tutorial
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!                 === WARNING! ===                 !!!
@@ -66,10 +66,10 @@ Notes:
 
     cleanup() {
       if [ -f "$tmpfile" ]; then
-        /usr/bin/rm -f "$tmpfile" || :
+        ${pkgs.coreutils}/bin/rm -f "$tmpfile" || :
       fi
       if [ "$save" = "1" ] && [ ! -s "$out" ]; then
-        /usr/bin/rm -f "$path" || :
+        ${pkgs.coreutils}/bin/rm -f "$path" || :
       fi
     }
     trap cleanup EXIT HUP INT QUIT ABRT TERM
@@ -77,9 +77,9 @@ Notes:
     ${pkgs.kitty}/bin/kitty --title "$TITLE" -- ${pkgs.yazi}/bin/yazi "$@"
 
     if [ "$save" = "1" ] && [ -s "$tmpfile" ]; then
-      selected_file=$(/usr/bin/head -n 1 "$tmpfile")
-      if [ -f "$selected_file" ] && /usr/bin/grep -qi "^xdg-desktop-portal-termfilechooser saving files tutorial" "$selected_file" 2>/dev/null; then
-        /usr/bin/printf '%s' "$selected_file" >"$out"
+      selected_file=$(${pkgs.coreutils}/bin/head -n 1 "$tmpfile")
+      if [ -f "$selected_file" ] && ${pkgs.gnugrep}/bin/grep -qi "^xdg-desktop-portal-termfilechooser saving files tutorial" "$selected_file" 2>/dev/null; then
+        ${pkgs.coreutils}/bin/printf '%s' "$selected_file" >"$out"
       fi
     fi
   '';
