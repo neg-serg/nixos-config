@@ -18,6 +18,8 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [ go ];
 
+  patches = [ ./kitty-fix.patch ];
+
   buildPhase = ''
     export GOCACHE=$TMPDIR/go-cache
     go build -o brrtfetch ./go/main.go
