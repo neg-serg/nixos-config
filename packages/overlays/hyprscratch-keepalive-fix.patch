@@ -1,0 +1,29 @@
+--- a/src/event.rs
++++ b/src/event.rs
+@@ -94,13 +94,22 @@
+ }
+ 
+ fn keep_alive(mut handle: JoinHandle<()>, options: Arc<DaemonOptions>, config: ConfigMutex) {
++    let mut failures: u32 = 0;
+     loop {
+         let _ = handle.join();
++        failures += 1;
+ 
+         sleep(Duration::from_secs(2));
+         let _ = log("Event listener disconnected, restarting...".to_string(), Warn);
+ 
+-        let config = config.clone();
+-        let options = options.clone();
+-        handle = spawn(|| start_events(options, config).log_err(file!(), line!()));
++        if failures >= 3 {
++            let _ = log(
++                "Event listener failed 3 times, exiting for systemd restart.".to_string(),
++                Error,
++            );
++            std::process::exit(1);
++        }
++
++        let (config_c, options_c) = (config.clone(), options.clone());
++        handle = spawn(|| start_events(options_c, config_c).log_err(file!(), line!()));
+     }
+ }
