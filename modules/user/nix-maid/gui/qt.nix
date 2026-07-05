@@ -38,8 +38,17 @@ in
 
         ".config/qt6ct/qt6ct.conf".text = ''
           [Appearance]
+          style=kvantum
           standard_dialogs=xdgdesktopportal
         '';
+
+        # Kvantum не видит темы из nix store через XDG_DATA_DIRS (share/Kvantum
+        # не пробрасывается в /run/current-system/sw/share/),
+        # поэтому линкуем тему напрямую в ~/.local/share/Kvantum/.
+        ".local/share/Kvantum/KvantumAlt/KvantumAlt.kvconfig".source =
+          "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvantumAlt/KvantumAlt.kvconfig";
+        ".local/share/Kvantum/KvantumAlt/KvantumAlt.svg".source =
+          "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvantumAlt/KvantumAlt.svg";
       })
     ]
   );
