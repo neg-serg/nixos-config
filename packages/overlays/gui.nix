@@ -42,4 +42,8 @@ in
     skwd-src = inputs.skwd;
     skwd-daemon = inputs.skwd-daemon.packages.${prev.stdenv.hostPlatform.system}.default;
   };
+
+  exo = prev.callPackage (inputs.self + "/packages/exo") {
+    exo-src = inputs.exo;
+  };
 }

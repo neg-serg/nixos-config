@@ -188,6 +188,7 @@ in
         gui = {
           qt.enable = mkForce false;
           quickshell.enable = mkForce false;
+          exo.enable = mkForce false;
         };
       };
     })
@@ -239,6 +240,10 @@ in
         {
           assertion = cfg.gui.enable || (!cfg.gui.skwd.enable);
           message = "features.gui.skwd.enable requires features.gui.enable = true";
+        }
+        {
+          assertion = cfg.gui.enable || (!cfg.gui.exo.enable);
+          message = "features.gui.exo.enable requires features.gui.enable = true";
         }
       ];
     }
