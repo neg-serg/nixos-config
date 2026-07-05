@@ -17,6 +17,8 @@
 
   skwd = pkgs.skwd;
 
+  exo = pkgs.exo; # Material 3 desktop shell for Ignis/Hyprland/Niri
+
   termeverything = pkgs.neg.termeverything;
 
   brrtfetch = pkgs.neg.brrtfetch;
