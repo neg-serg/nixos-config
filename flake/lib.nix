@@ -15,6 +15,10 @@ let
           || (prev.bintools.passthru.bintools.passthru.isFromBootstrapFiles or false);
       };
     };
+    # Ensure fetchurl stays the regular one (not boot) in the final pkgset.
+    # The stdenv boot pipeline may otherwise leak `stdenv.fetchurlBoot` into
+    # the package set.
+    fetchurl = prev.fetchurl;
   };
 
   mkPkgs = system:
