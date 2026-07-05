@@ -44,12 +44,7 @@ lib.mkMerge [
     features.dev.tla.enable = true;
     features.hardware.usbAutomount.enable = true;
     features.net.tailscale.enable = true;
-
-    features.dev.openxr = {
-      enable = false;
-      envision.enable = false;
-      runtime.service.enable = true;
-    };
+    features.input.warpd.enable = true; # warpd: keyboard-driven pointer control
 
     # Roles enabled for this host
     roles = {
@@ -79,8 +74,6 @@ lib.mkMerge [
     #         dockerSocket.enable = lib.mkForce false;
     #       };
     #     };
-
-    # Remove experimental mpv OpenVR overlay
 
     # Service profiles toggles for this host
     servicesProfiles = {
@@ -502,9 +495,6 @@ lib.mkMerge [
       owner = "rslsync";
       mode = "0400";
     };
-
-    # Avoid forcing pkexec as setuid; Steam/SteamVR misbehaves when invoked with elevated EUID.
-    # Use polkit rules if specific privileges are required instead of global setuid pkexec.
 
     # Games autoscale defaults for this host
     profiles.games = {
