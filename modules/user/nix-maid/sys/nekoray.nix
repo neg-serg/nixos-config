@@ -5,5 +5,6 @@
   ...
 }:
 {
-  environment.systemPackages = lib.optional (config.features.apps.throne.enable or false) pkgs.throne;
+  # throne — installed by modules/system/net/vpn/pkgs.nix (behind the same feature flag)
+  environment.systemPackages = [ ];
 }

@@ -21,11 +21,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    nixpkgs.hostPlatform = {
-      system = "x86_64-linux";
-      gcc.arch = "znver5"; # AMD Zen 5 (Ryzen 9000 series)
-      gcc.tune = "znver5";
-    };
+    nixpkgs.hostPlatform.system = "x86_64-linux";
 
     # Enable sched_ext (SCX) scheduler
     services.scx = {
