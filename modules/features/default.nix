@@ -24,6 +24,7 @@ let
       ai = {
         enable = true;
         opencode.enable = false;
+        openagentscontrol.enable = false;
       };
       rust.enable = true;
       cpp.enable = true;
@@ -220,6 +221,10 @@ in
         {
           assertion = cfg.dev.ai.enable || (!cfg.dev.ai.opencode.enable);
           message = "features.dev.ai.opencode.enable requires features.dev.ai.enable = true";
+        }
+        {
+          assertion = cfg.dev.ai.enable || (!cfg.dev.ai.openagentscontrol.enable);
+          message = "features.dev.ai.openagentscontrol.enable requires features.dev.ai.enable = true";
         }
         {
           assertion = cfg.gui.enable || (!cfg.apps.obsidian.autostart.enable);
