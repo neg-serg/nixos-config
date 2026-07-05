@@ -8,7 +8,7 @@
 }:
 {
   imports = [
-    ./modules/flat.nix
+    ./modules/default.nix
   ];
   # Speed up rebuild: skip unused doc formats (info, HTML manual, nixos-help)
   documentation = {

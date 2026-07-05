@@ -6,7 +6,7 @@
     ./net
     ./profiles
     ./systemd
-    ./virt
+    ./vm/definitions.nix # libvirt domain XML definitions (gentoo, nixos, win11)
     ./boot.nix
     ./environment.nix
     ./filesystems.nix
