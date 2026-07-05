@@ -4,11 +4,10 @@
   lib,
   config,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   # --- Config Sources ---
   shellFiles = ../../../../files/shell;
   kittyConf = ../../../../files/kitty;
@@ -182,7 +181,7 @@ in
         pkgs.btop # Resource monitor (CPU, memory, disks, network)
         pkgs.cava # Console audio visualizer
         pkgs.peaclock # Customizable clock for terminal
-        pkgs.curl # HTTP client for weather fetching
+        # curl — installed by modules/system/net/pkgs.nix
         pkgs.mtr # Network diagnostic tool
       ];
 
