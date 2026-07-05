@@ -16,6 +16,7 @@
       inherit (pkgs) pkcs11helper;
     }) # OpenVPN with PKCS#11 support
     pkgs.update-resolv-conf # apply pushed DNS options to resolv.conf
+    pkgs.sing-box # universal proxy platform
   ]
   ++ lib.optional (config.features.apps.throne.enable or false) pkgs.throne;
 }

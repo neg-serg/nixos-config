@@ -38,4 +38,16 @@ in
       environment.systemPackages = lib.mkAfter quickshellExtras;
     })
   ];
+
+  # Available GUI tools (from stone-recipes, ported for future use):
+  # pkgs.adw-gtk-theme # Libadwaita GTK theme
+  # pkgs.blender # 3D creation suite
+  # pkgs.goverlay # Mangohud configuration GUI
+  # pkgs.helvum # GTK patchbay for PipeWire
+  # pkgs.iverilog # Verilog simulator
+  # pkgs.system-config-printer # CUPS printer configuration GUI
+  # pkgs.virt-viewer # SPICE/VNC remote viewer
+  # pkgs.wlr-randr # wlroots output management
+  # pkgs.wofi # Wayland launcher (rofi alternative)
+  # pkgs.ytop # TUI system monitor written in Rust
 }
