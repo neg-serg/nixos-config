@@ -1,8 +1,5 @@
-{ lib, ... }:
+{ lib, mkBool, ... }:
 with lib;
-let
-  mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
-in
 {
   options.features.cli = {
     broot.enable = mkBool "enable broot file manager and shell integration" false;
