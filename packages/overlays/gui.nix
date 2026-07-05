@@ -46,4 +46,10 @@ in
   exo = prev.callPackage (inputs.self + "/packages/exo") {
     exo-src = inputs.exo;
   };
+
+  # hyprscratch: patched to exit after 5 event-listener failures
+  # so systemd Restart=always can restart it with fresh Hyprland IPC env.
+  hyprscratch = inputs.hyprscratch.packages.${prev.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
+    patches = (old.patches or []) ++ [ ./hyprscratch-keepalive-fix.patch ];
+  });
 }
