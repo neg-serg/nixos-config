@@ -90,26 +90,12 @@ in
           ];
         };
 
-        # Game audio null sink — for Unity/FMOD games that can't handle pro-audio mode.
-        # Creates a 16-bit stereo null sink at 48kHz (ported from legacy Salt config).
-        "94-game-audio" = {
-          "context.objects" = [
-            {
-              factory = "adapter";
-              args = {
-                "factory.name" = "support.null-audio-sink";
-                "node.name" = "game_output";
-                "node.description" = "Game Audio Output (16-bit Stereo)";
-                "media.class" = "Audio/Sink";
-                "audio.position" = [ "FL" "FR" ];
-                "audio.format" = "S16LE";
-                "audio.rate" = 48000;
-                "audio.channels" = 2;
-                "object.linger" = true;
-              };
-            }
-          ];
-        };
+        # Game audio virtual stereo sink is now in
+        # files/media/pipewire/pipewire.conf.d/20-game-stereo.conf — a loopback
+        # that creates actual playback ports (playback_FL/playback_FR) routable
+        # to hardware via pw-link (see modules/hardware/audio/hdspe/default.nix).
+        # The loopback is created unconditionally (no hardcoded ALSA target),
+        # so it's always visible to games even before hardware ALSA nodes are up.
       }
       // lib.optionalAttrs (cfg.enable or false) {
         "95-rnnoise-filter-chain" = {
