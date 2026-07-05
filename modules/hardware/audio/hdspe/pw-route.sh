@@ -105,7 +105,6 @@ route_target() {
   local right_monitor="$sink_name:monitor_AUX1"
   route_monitor_pair "$left_monitor" "$right_monitor" "$sink_name" "$pair[1]" "$pair[2]"
   print -- "$target_name -> AUX$pair[1]/AUX$pair[2]"
-  command -v pactl >/dev/null 2>&1 && pactl set-default-sink "$sink_name" 2>/dev/null || true
 }
 
 port_has_link_to() {
