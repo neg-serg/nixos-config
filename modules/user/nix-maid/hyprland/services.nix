@@ -1,12 +1,8 @@
 {
   lib,
   pkgs,
-  inputs ? null,
   ...
 }:
-let
-  hyprscratchPkg = inputs.hyprscratch.packages.${pkgs.stdenv.hostPlatform.system}.default;
-in
 {
   packages = [
       pkgs.hyprlock # Hyprland's GPU-accelerated screen locking utility
@@ -14,7 +10,7 @@ in
       pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
       pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
 
-      hyprscratchPkg # sashetophizika/hyprscratch with Lua exec fix
+      pkgs.hyprscratch # sashetophizika/hyprscratch with event-listener keep-alive fix
 
       # hyprmusic script
       (pkgs.writeScriptBin "hyprmusic" ''
@@ -111,7 +107,7 @@ in
       bindsTo = [ "hyprland-session.target" ];
       after = [ "hyprland-session.target" ];
       serviceConfig = {
-        ExecStart = "${lib.getExe hyprscratchPkg} init spotless";
+        ExecStart = "${lib.getExe pkgs.hyprscratch} init spotless";
         Restart = "always";
         RestartSec = "2";
       };
