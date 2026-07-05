@@ -3,11 +3,10 @@
   lib,
   pkgs,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   guiEnabled = config.features.gui.enable or false;
 
   # Browser helper logic from original HM module
@@ -142,7 +141,7 @@ lib.mkIf guiEnabled (
       environment.systemPackages = [
         pkgs.dunst # lightweight notification daemon for X11 and Wayland
         pkgs.kora-icon-theme # colorful icon theme for Linux desktops
-        pkgs.libnotify # library for sending desktop notifications (provides notify-send)
+        # libnotify — installed by modules/cli/tools.nix
       ];
     }
 
