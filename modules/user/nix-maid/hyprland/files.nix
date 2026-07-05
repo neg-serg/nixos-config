@@ -1,11 +1,10 @@
 {
   lib,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
 
   hyprConfDir = ../../../../files/gui/hypr;
   animDir = ../../../../files/gui/hypr/animations;

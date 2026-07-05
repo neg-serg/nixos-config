@@ -3,11 +3,10 @@
   lib,
   config,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   cfg = config.features.dev;
   enableIac = cfg.enable && (cfg.pkgs.iac or false);
 

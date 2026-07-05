@@ -2,11 +2,10 @@
   pkgs,
   lib,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   gitSettings = {
     user = {
       name = "Sergey Miroshnichenko";

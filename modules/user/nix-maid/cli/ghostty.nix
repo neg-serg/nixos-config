@@ -5,11 +5,10 @@
 {
   lib,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
 in
 {
   config = n.mkHomeFiles {

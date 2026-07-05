@@ -3,11 +3,10 @@
   lib,
   neg,
   config,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
 in
 {
   config = lib.mkMerge [

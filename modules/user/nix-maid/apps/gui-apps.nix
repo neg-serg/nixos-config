@@ -3,11 +3,10 @@
   lib,
   config,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
 
   # Rofi with plugins (file-browser-extended)
   rofiWithPlugins = pkgs.rofi.override {

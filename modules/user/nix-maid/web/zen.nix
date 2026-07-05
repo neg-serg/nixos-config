@@ -3,11 +3,10 @@
   lib,
   pkgs,
   neg,
-  impurity ? null,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   cfg = config.features.web.zen;
   webEnabled = config.features.web.enable or false;
   guiEnabled = config.features.gui.enable or false;

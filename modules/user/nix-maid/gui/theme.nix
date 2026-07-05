@@ -3,12 +3,11 @@
   lib,
   config,
   neg,
-  impurity ? null,
   iosevkaNeg,
   ...
 }:
 let
-  n = neg impurity;
+  n = neg;
   alkano-aio = pkgs.callPackage ./alkano-aio.nix { };
 
   gtkThemeName = config.features.gui.gtkTheme or "Flight-Dark-GTK";

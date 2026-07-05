@@ -20,8 +20,10 @@
   };
 
   config = {
+    _module.args.mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
+
     # Expose helpers under lib.neg for legacy or non-structural use.
     # We use the neg function from specialArgs.
-    lib.neg = neg null; # impurity removed
+    lib.neg = neg;
   };
 }
