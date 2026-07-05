@@ -42,16 +42,15 @@ let
   '';
 
   # Set HDSPe pro-audio output as default PipeWire sink
+  # NOTE: uses bare command names (amixer/wpctl/pw-link/sed) — PATH is
+  # set by the systemd service config below via config.services.pipewire.package.
   hdspeDefaultScript = pkgs.writeShellScript "wpctl-set-hdspe-default" ''
     set -euo pipefail
-    amixer_bin=${pkgs.alsa-utils}/bin/amixer
-    wpctl_bin=${pkgs.pipewire}/bin/wpctl
-    pwlink_bin=${pkgs.pipewire}/bin/pw-link
 
     # Check if HDSPe card is present first — avoid waiting if hardware absent
     found=""
     for card in "RMEAIO" "HDSPeAIO" "HDSPe" "AIO" "RME_AIO" "HDSPe24048964"; do
-      if $amixer_bin -c "$card" info >/dev/null 2>&1; then
+      if amixer -c "$card" info >/dev/null 2>&1; then
         found="$card"
         break
       fi
@@ -60,28 +59,25 @@ let
 
     tries=30
     for i in $(seq 1 "$tries"); do
-      status="$("$wpctl_bin" status 2>/dev/null || true)"
+      status="$(wpctl status 2>/dev/null || true)"
 
       # Find HDSPe hardware sink and game-stereo virtual sink
-      hdspe_sink_id="$(echo "$status" | ${pkgs.gnused}/bin/sed -n '/RME AIO Pro/{s/^[│ ]*\([0-9]\+\).*/\1/p;q}')"
-      game_sink_id="$(echo "$status" | ${pkgs.gnused}/bin/sed -n '/Game Stereo/{s/^[│ ]*\([0-9]\+\).*/\1/p;q}')"
+      hdspe_sink_id="$(echo "$status" | sed -n '/RME AIO Pro.*Pro/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
+      game_sink_id="$(echo "$status" | sed -n '/game-stereo/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
 
       # Route game-stereo → HDSPe AUX0/AUX1 and set game-stereo as default
       if [ -n "$hdspe_sink_id" ] && [ -n "$game_sink_id" ]; then
-        "$wpctl_bin" set-default "$game_sink_id" || true
+        wpctl set-default "$game_sink_id" || true
         # Connect virtual sink playback to HDSPe AUX0/AUX1
-        $pwlink_bin game-stereo:playback_FL alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX0 2>/dev/null || true
-        $pwlink_bin game-stereo:playback_FR alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX1 2>/dev/null || true
+        pw-link playback.game-stereo:output_FL alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX0 2>/dev/null || true
+        pw-link playback.game-stereo:output_FR alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX1 2>/dev/null || true
         exit 0
       fi
       sleep 1
     done
     exit 0
   '';
-  # Async wrapper to avoid blocking systemd job queue during switch
-  hdspeAsyncScript = pkgs.writeShellScript "wpctl-set-hdspe-async" ''
-    exec ${hdspeDefaultScript} &
-  '';
+
 
   # pw-route: switch RME AIO Pro output between an/aes/spdif/phones
   pwRouteScript = pkgs.writeScriptBin "pw-route" (builtins.readFile ./pw-route.sh);
@@ -150,7 +146,8 @@ in
       wantedBy = [ "default.target" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${hdspeAsyncScript}";
+        ExecStart = "${hdspeDefaultScript}";
+        Environment = "PATH=${lib.makeBinPath [ config.services.pipewire.package pkgs.alsa-utils pkgs.gnused pkgs.coreutils ]}";
       };
     };
 
@@ -158,16 +155,18 @@ in
     systemd.user.services."pw-route-aes" = {
       description = "Route PipeWire audio to RME AES output";
       after = [
+        "wp-hdspe-default.service"
         "wireplumber.service"
         "pipewire.service"
       ];
+      requires = [ "wp-hdspe-default.service" ];
       partOf = [ "wireplumber.service" ];
       wantedBy = [ "default.target" ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${pkgs.writeShellScript "pw-route-aes" ''
           export PATH="${lib.makeBinPath [ pkgs.zsh pkgs.pipewire pkgs.gawk ]}:$PATH"
-          tries=30
+          tries=60
           for i in $(seq 1 "$tries"); do
             if ${pwRouteScript}/bin/pw-route aes 2>/dev/null; then
               exit 0
