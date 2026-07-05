@@ -1086,6 +1086,7 @@
         "sqlit": "sqlit",
         "sshell": "sshell",
         "tailray": "tailray",
+        "talktype": "talktype",
         "winapps": "winapps",
         "wl": "wl",
         "wrapper-manager": "wrapper-manager",
@@ -1350,6 +1351,22 @@
       "original": {
         "owner": "NotAShelf",
         "repo": "tailray",
+        "type": "github"
+      }
+    },
+    "talktype": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1773657345,
+        "narHash": "sha256-kp5QgVwyBVjX+UG+X8PxGyJeD/ASHoz44CYcZtR/tmA=",
+        "owner": "lmacan1",
+        "repo": "talktype",
+        "rev": "5b8d32586736fbc5b490e9edf778753116d14799",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lmacan1",
+        "repo": "talktype",
         "type": "github"
       }
     },
