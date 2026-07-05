@@ -21,7 +21,10 @@ let
       overlays = [
         bintoolsBootstrapFix
         (hyprlandOverlay system)
+        # Local overlay first (for packages not yet migrated)
         ((import ../packages/overlay.nix) inputs)
+        # External package flake (github:neg-serg/nixos-pkgs)
+        inputs.neg-pkgs.overlays.default
       ];
       config = {
         allowAliases = false;
