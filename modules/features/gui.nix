@@ -15,6 +15,7 @@ in
         description = "Which quickshell configuration flavor to use (default, octashell, or sshell).";
       };
     };
+    caelestia-shell.enable = mkBool "enable Caelestia Desktop Shell (built on Quickshell)" false;
     skwd.enable = mkBool "enable Skwd desktop shell (bar, launcher, music, notifications, settings, switcher) and skwd-daemon" false;
     gtkTheme = lib.mkOption {
       type = types.enum [ "Flight-Dark-GTK" "Andromeda" ];
