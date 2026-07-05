@@ -250,6 +250,10 @@ in
           assertion = cfg.gui.enable || (!cfg.gui.exo.enable);
           message = "features.gui.exo.enable requires features.gui.enable = true";
         }
+        {
+          assertion = cfg.gui.enable || (!cfg.gui.noctalia.enable);
+          message = "features.gui.noctalia.enable requires features.gui.enable = true";
+        }
       ];
     }
   ];
