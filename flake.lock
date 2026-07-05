@@ -146,6 +146,22 @@
         "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.2/x86_64-linux"
       }
     },
+    "exo": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1768606981,
+        "narHash": "sha256-080NIKZa8GhNNMAF7wmUkORetSd4NraPAOIcLw0cgAk=",
+        "owner": "debuggyo",
+        "repo": "Exo",
+        "rev": "d8ca44a3c4e71777ec70eef3f886b3fdd0b5f614",
+        "type": "github"
+      },
+      "original": {
+        "owner": "debuggyo",
+        "repo": "Exo",
+        "type": "github"
+      }
+    },
     "fenix": {
       "inputs": {
         "nixpkgs": [
@@ -789,6 +805,47 @@
         "type": "github"
       }
     },
+    "ignis": {
+      "inputs": {
+        "ignis-gvc": "ignis-gvc",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1767456002,
+        "owner": "ignis-sh",
+        "repo": "ignis",
+        "rev": "5fd140227c0f2d9d65a98d4af78b95b1558966da",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ignis-sh",
+        "repo": "ignis",
+        "type": "github"
+      }
+    },
+    "ignis-gvc": {
+      "inputs": {
+        "nixpkgs": [
+          "ignis",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1754064086,
+        "narHash": "sha256-ft5KvY2OYrWF+jEsfBL/Zx8Iuo2C10C6COk8wHwZw34=",
+        "owner": "ignis-sh",
+        "repo": "ignis-gvc",
+        "rev": "f2c9f10d8b49cc38106a2f07a51ea959c6aa4e63",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ignis-sh",
+        "repo": "ignis-gvc",
+        "type": "github"
+      }
+    },
     "iosevka-neg": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -998,10 +1055,10 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1782959384,
+        "lastModified": 1783148766,
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "65179426c83bb3f6bc14898b42ea1c6f01d374b0",
+        "rev": "a50de1b7d8a586adc18d2395c19de7d6058e6030",
         "type": "github"
       },
       "original": {
@@ -1161,8 +1218,10 @@
       "inputs": {
         "caelestia-shell": "caelestia-shell",
         "determinate": "determinate",
+        "exo": "exo",
         "hyprland": "hyprland",
         "hyprscratch": "hyprscratch",
+        "ignis": "ignis",
         "iosevka-neg": "iosevka-neg",
         "lanzaboote": "lanzaboote",
         "nix": [

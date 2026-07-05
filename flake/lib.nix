@@ -5,11 +5,27 @@ let
     hyprlandPlugins = prev.hyprlandPlugins // {};
   });
 
+  # Minimal-bootstrap uses `isFromMinBootstrap` but stdenv stage2
+  # expects `isFromBootstrapFiles` on bintools passthru.
+  bintoolsBootstrapFix = final: prev: {
+    bintools = prev.bintools // {
+      passthru = (prev.bintools.passthru or { }) // {
+        isFromBootstrapFiles =
+          (prev.bintools.passthru.bintools.passthru.isFromMinBootstrap or false)
+          || (prev.bintools.passthru.bintools.passthru.isFromBootstrapFiles or false);
+      };
+    };
+  };
+
   mkPkgs = system:
     import nixpkgs {
       inherit system;
       overlays = [
+        bintoolsBootstrapFix
         (hyprlandOverlay system)
+        (final: prev: {
+          ignis = inputs.ignis.packages.${final.stdenv.hostPlatform.system}.ignis;
+        })
         ((import ../packages/overlay.nix) inputs)
       ];
       config = {
