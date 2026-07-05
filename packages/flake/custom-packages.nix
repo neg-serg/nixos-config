@@ -20,4 +20,5 @@
   termeverything = pkgs.neg.termeverything;
 
   brrtfetch = pkgs.neg.brrtfetch;
+  talktype = pkgs.neg.talktype;
 }

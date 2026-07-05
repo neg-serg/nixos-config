@@ -57,6 +57,9 @@ in
     # Animated ASCII art GIF renderer alongside sysinfo output
     brrtfetch = callPkg (packagesRoot + "/brrtfetch") { };
 
+    # Push-to-talk voice typing tool (F9 to record, transcribe, paste)
+    talktype = callPkg (packagesRoot + "/talktype") { };
+
     # ncpamixer with custom config
     ncpamixer-wrapped =
       let
