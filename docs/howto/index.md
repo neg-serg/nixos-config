@@ -13,9 +13,6 @@ isn't a step-by-step runbook.
 - Swayimg hotkeys: [swayimg-hotkeys.md](./swayimg-hotkeys.md),
   [swayimg-hotkeys.ru.md](./swayimg-hotkeys.ru.md)
 
-- Valve Index VR setup: [valve-index-vr.md](./valve-index-vr.md),
-  [valve-index-vr.ru.md](./valve-index-vr.ru.md)
-
 - DeepFaceLab via Docker (RU): [deepfacelab-docker.ru.md](./deepfacelab-docker.ru.md)
 
 - Build performance analysis: [build-optimization.md](./build-optimization.md)

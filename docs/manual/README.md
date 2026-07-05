@@ -40,7 +40,7 @@ configuration.
 - Feature definitions live in `modules/features.nix`; documentation: `OPTIONS.md`.
 - Key flags:
   - GUI (`features.gui.*`), Web (`features.web.*`), Secrets (`features.secrets.enable`)
-  - Dev stacks (`features.dev.*`, `features.dev.openxr.*`, `features.dev.unreal.*`)
+  - Dev stacks (`features.dev.*`, `features.dev.unreal.*`)
   - Media/Torrent (`features.media.*`, `features.torrent.enable`)
   - Fun extras (`features.fun.enable`)
   - Package exclusions by pname via `features.excludePkgs`

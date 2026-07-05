@@ -7,17 +7,14 @@
 }:
 let
   iosevkaFont = inputs.iosevka-neg.packages.${pkgs.stdenv.hostPlatform.system}.nerd-font or pkgs.nerd-fonts.iosevka;
-  grubFont = pkgs.runCommand "iosevka-36.pf2" {
-    nativeBuildInputs = [ pkgs.grub2 ];
-  } ''
-    grub-mkfont -s 36 -o $out ${iosevkaFont}/share/fonts/truetype/Iosevka-Regular.ttf
+  grubFont = pkgs.runCommand "iosevka-36.pf2" {} ''
+    ${pkgs.grub2}/bin/grub-mkfont -s 36 -o $out ${iosevkaFont}/share/fonts/truetype/Iosevka-Regular.ttf
   '';
 in
 {
   # Hardware and performance tuning specific to host 'telfir'
   hardware = {
     storage.autoMount.enable = true;
-    vr.valveIndex.enable = false;
     graphics = {
       enable = true;
       enable32Bit = true; # required for Proton/32-bit games (GL/Vulkan i686)
@@ -131,7 +128,7 @@ in
         gfxmodeEfi = "3840x2160";
         gfxpayloadEfi = "keep";
         splashImage = null;
-        font = grubFont;
+        font = null; #grubFont; # FIXME: re-enable when nixpkgs fetchurl/boot.nix bug is fixed
         backgroundColor = "#000000";
         extraConfig = ''
           set menu_color_normal=white/black
