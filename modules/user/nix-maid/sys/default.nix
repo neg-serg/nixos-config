@@ -16,5 +16,6 @@
     ./services-manual.nix
     ./user-services.nix
     ./vdirsyncer.nix
+    ./warpd.nix
   ];
 }

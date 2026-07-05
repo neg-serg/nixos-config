@@ -1068,6 +1068,25 @@
         "type": "github"
       }
     },
+    "noctalia": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783220299,
+        "owner": "noctalia-dev",
+        "repo": "noctalia",
+        "rev": "10b2007088ba2e1b94e96b01aec4631bc6266d1a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "noctalia-dev",
+        "repo": "noctalia",
+        "type": "github"
+      }
+    },
     "openagentscontrol": {
       "flake": false,
       "locked": {
@@ -1246,6 +1265,7 @@
         ],
         "nix-maid": "nix-maid",
         "nixpkgs": "nixpkgs_4",
+        "noctalia": "noctalia",
         "openagentscontrol": "openagentscontrol",
         "opencode": "opencode",
         "pre-commit-hooks": "pre-commit-hooks_2",
