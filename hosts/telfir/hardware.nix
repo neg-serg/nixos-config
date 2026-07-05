@@ -122,10 +122,11 @@
         efiSupport = true;
         gfxmodeEfi = "3840x2160";
         gfxpayloadEfi = "keep";
-        fontSize = 36;
+        splashImage = null;
+        fontSize = 48;
         backgroundColor = "#000000";
         extraConfig = ''
-          set menu_color_normal=light-gray/black
+          set menu_color_normal=cyan/black
           set menu_color_highlight=black/cyan
         '';
       };
