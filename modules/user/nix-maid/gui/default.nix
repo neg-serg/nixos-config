@@ -7,5 +7,6 @@
     ./theme.nix
     ./wlr-which-key.nix
     ./xdg.nix
+    ./noctalia.nix
   ];
 }
