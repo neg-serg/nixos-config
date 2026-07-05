@@ -39,6 +39,9 @@ in
     # Local AI proxy for Claude Code / OpenCode
     proxypilot = callPkg (packagesRoot + "/proxypilot") { };
 
+    # Terminal protein structure viewer — interactive 3D visualization of PDB/mmCIF
+    proteinview = callPkg (packagesRoot + "/proteinview") { };
+
     # AI agent tool for code assistance
     sidecar = callPkg (packagesRoot + "/sidecar") { };
 
