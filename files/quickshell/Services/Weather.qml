@@ -40,6 +40,7 @@ Item {
         }
         function _onError(err) {
             root.errorString = String(err || "Weather error");
+            root.lastFetchTime = now; // prevent tight retry loops when both providers fail
             root.isLoading = false;
         }
 
