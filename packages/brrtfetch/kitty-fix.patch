@@ -1,0 +1,38 @@
+diff --git a/go/main.go b/go/main.go
+index 4ae1b3c..244cf73 100644
+--- a/go/main.go
++++ b/go/main.go
+@@ -11,6 +11,7 @@ import (
+ 	"os"
+ 	"os/exec"
+ 	"os/signal"
++	"regexp"
+ 	"runtime"
+ 	"strings"
+ 	"sync"
+@@ -335,13 +336,24 @@ func runCommand(commandLine string) string {
+ 	return out
+ }
+ 
++var (
++	dcsRe  = regexp.MustCompile(`\x1bP.*?\x1b\\`)
++	csiTRe = regexp.MustCompile(`\x1b\[\d+(?:;\d+)*t`)
++)
++
++func stripTerminalResponses(s string) string {
++	s = dcsRe.ReplaceAllString(s, "")
++	s = csiTRe.ReplaceAllString(s, "")
++	return s
++}
++
+ // getCommandOutputLines executes the command and returns trimmed lines
+ func getCommandOutputLines(commandLine string) []string {
+ 	output := runCommand(commandLine)
++	output = stripTerminalResponses(output)
+ 	lines := strings.Split(output, "\n")
+ 	var cleanLines []string
+ 	for _, line := range lines {
+-		// Trim trailing CR/LF
+ 		line = strings.TrimRight(line, "\r\n")
+ 		if line != "" {
+ 			cleanLines = append(cleanLines, line)
