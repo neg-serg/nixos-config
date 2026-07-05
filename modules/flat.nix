@@ -52,7 +52,6 @@
     ./hardware/uinput.nix
     ./hardware/usb-automount.nix
     ./hardware/video/amd/default.nix
-    ./hardware/video/nvidia/rtx5090.nix
     ./hardware/video/pkgs/default.nix
     ./hardware/webcam/pkgs.nix # Nix package manager
 
