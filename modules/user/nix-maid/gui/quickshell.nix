@@ -87,6 +87,8 @@ let
       mkdir -p "$theme_dir"
       cp -rT "$theme_src" "$theme_dir" 2>/dev/null || true
     fi
+    # Ensure quickshell can write to theme files (Nix store sources are read-only)
+    chmod -R u+w "$theme_dir" 2>/dev/null || true
   '';
 
   # Build individual nix-maid entries for source dir top-level contents,
