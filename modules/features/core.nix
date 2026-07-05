@@ -1,8 +1,7 @@
-{ lib, ... }:
+{ lib, mkBool, ... }:
 with lib;
 let
   presets = import ../features-data/unfree-presets.nix;
-  mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
 in
 {
   options.features = {
