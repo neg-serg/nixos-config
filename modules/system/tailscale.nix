@@ -29,7 +29,11 @@ let
 in
 {
   config = lib.mkIf enabled {
-    services.tailscale.enable = true;
+    services.tailscale = {
+      enable = true;
+      operator = "neg"; # allow non-root tailscale commands after auth
+      openFirewall = true; # open UDP port 41641 for peer discovery
+    };
 
     environment.systemPackages = [
       tailrayPkg # GUI client for Tailscale
