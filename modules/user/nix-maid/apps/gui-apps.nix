@@ -70,7 +70,6 @@ in
           pkgs.neg.rofi-config # Custom scripts (launcher, powermenu)
           pkgs.swayosd # OSD for volume/brightness on Wayland
           pkgs.wallust # Color palette generator
-          pkgs.wlogout # Logout menu
         ]
         ++ lib.optionals (config.features.apps.guiAppsFull.enable or false) [
           pkgs.gimp # GNU Image Manipulation Program
@@ -87,8 +86,6 @@ in
         selector = "vicinae dmenu -p 'Open With: ❯>'"
       '';
 
-      # wlogout config
-      ".config/wlogout".source = ../../../../files/config/wlogout;
 
     })
   ];
