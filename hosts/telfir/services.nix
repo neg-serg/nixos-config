@@ -40,6 +40,7 @@ lib.mkMerge [
     };
     # Host-specific feature toggles
     features.dev.ai.opencode.enable = true;
+    features.dev.ai.pi.enable = true;
     features.cli.broot.enable = true;
     features.dev.tla.enable = true;
     features.hardware.usbAutomount.enable = true;
