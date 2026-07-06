@@ -22,8 +22,6 @@ let
   rofiPackages = [
     config.neg.rofi.package # main themed rofi build for this profile
     pkgs.gopass # password store with extensions
-    pkgs.rofi-pass-wayland # Wayland-friendly pass launcher backend
-    pkgs.rofi-systemd # systemd unit picker for rofi
   ];
   quickshellExtras = lib.optionals (rsmetrxPkg != null) [
     rsmetrxPkg # rsmetrx shader pack for Quickshell HUDs
