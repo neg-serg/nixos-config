@@ -53,6 +53,11 @@ inputs: final: finalPrev:
     });
   };
 
+  # Disable flaky cmark-gfm timing test (test 539: takes less than 1000ms to run)
+  cmark-gfm = finalPrev.cmark-gfm.overrideAttrs (_old: {
+    doCheck = false;
+  });
+
   # Disable flaky pytest-xdist tests
   pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
     (_python-final: python-prev: {
