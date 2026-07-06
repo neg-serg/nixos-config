@@ -145,10 +145,10 @@ in
                 command: hyde-selector animation
                 title: Animation
               - key: e
-                command: rofi -show emoji
+                command: vicinae toggle
                 title: Emoji
               - key: c
-                command: rofi -show calc
+                command: vicinae toggle
                 title: Calculator
 
           - mod: SUPER
