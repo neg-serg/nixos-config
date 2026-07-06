@@ -99,6 +99,7 @@ with rec {
           "wheel"
           "adbusers"
           "kvm"
+          "tailscale"
         ];
       };
       defaultUserShell = pkgs.zsh; # Z shell
