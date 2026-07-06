@@ -12,11 +12,7 @@ let
   browsers = import ./browsers-table.nix {
     inherit lib pkgs;
   }; # Updated import path
-  browser =
-    let
-      key = cfg.default or "zen";
-    in
-    lib.attrByPath [ key ] browsers.zen browsers;
+  browser = { };
 in
 {
   config = {
