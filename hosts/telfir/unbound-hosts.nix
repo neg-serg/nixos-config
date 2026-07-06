@@ -17,7 +17,6 @@
   "ntc.party. A 130.255.77.28"
   "rutor.info. A 172.64.33.155"
   "rutor.is. A 173.245.59.155"
-  "controlplane.tailscale.com. A 185.87.51.182"
   "d.rutor.info. A 172.64.33.155"
   "chatgpt.com. A 185.246.223.127"
   "ab.chatgpt.com. A 185.246.223.127"
