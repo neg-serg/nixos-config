@@ -11,8 +11,8 @@ let
 
   # Custom Pinentry Wrapper
   # Injects Wayland/DBus env vars for reliable GUI prompting
-  pinentryRofi = pkgs.writeShellApplication {
-    name = "pinentry-rofi-with-env";
+  pinentryQt = pkgs.writeShellApplication {
+    name = "pinentry-qt-with-env";
     checkPhase = "true";
     text = ''
       # shellcheck disable=SC2012,SC2155
@@ -31,17 +31,17 @@ let
         export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
       fi
 
-      # Ensure rofi and coreutils are in path
-      PATH="$PATH:${pkgs.coreutils}/bin:${pkgs.rofi}/bin" # GNU Core Utilities | Window switcher, run dialog and dmenu replacement
+      # Ensure coreutils are in path
+      PATH="$PATH:${pkgs.coreutils}/bin" # GNU Core Utilities
 
-      "${lib.getExe pkgs.pinentry-rofi}" "$@" # Rofi frontend to pinentry
+      "${lib.getExe pkgs.pinentry-qt}" "$@" # Qt-native pinentry (Wayland-compatible)
     '';
   };
 
   # GPG Agent Config
   # Note: pinentry-program path must be absolute
   agentConf = ''
-    pinentry-program ${lib.getExe pinentryRofi}
+    pinentry-program ${lib.getExe pinentryQt}
     allow-loopback-pinentry
     default-cache-ttl 60480000
     max-cache-ttl 60480000
@@ -106,8 +106,8 @@ in
         # Include packages
         environment.systemPackages = [
           pkgs.gnupg # GNU Privacy Guard - encryption and signing tool
-          pkgs.pinentry-rofi # Rofi-based pinentry for GPG
-          pinentryRofi # custom wrapper script for pinentry-rofi with env injection
+          pkgs.pinentry-qt # Qt-native pinentry for GPG
+          pinentryQt # custom wrapper script for pinentry-qt with env injection
         ];
       }
 

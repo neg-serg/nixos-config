@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import json
-import math
 import os
 import subprocess
 import sys
@@ -191,34 +190,15 @@ def build_entries() -> tuple[list[str], dict[str, dict[str, str]]]:
 
 
 def rofi_command(count: int) -> list[str]:
-    columns = max(1, min(3, count))
-    if count > 3:
-        columns = 3
-    lines = max(1, min(6, math.ceil(count / columns)))
     base = [
-        "rofi",
-        "-dmenu",
-        "-matching",
-        "fuzzy",
-        "-i",
-        "-p",
-        " Windows",
-        "-kb-accept-alt",
-        "Alt+Return",
-        "-kb-custom-1",
-        "Alt+1",
-        "-kb-custom-2",
-        "Alt+2",
-        "-theme",
-        "menu-columns",
-        "-columns",
-        str(columns),
-        "-lines",
-        str(lines),
+        "vicinae",
+        "dmenu",
+        "-s",
+        "\U000f1b67 Windows",
     ]
     if DEBUG:
         print(
-            f"[hypr-win-list] rofi columns={columns} lines={lines} count={count}",
+            f"[hypr-win-list] vicinae dmenu count={count}",
             file=sys.stderr,
         )
     return base
@@ -245,19 +225,13 @@ def main() -> int:
         return 0
 
     code, selection = run_rofi(entries)
-    if code not in (0, 10):
+    if code != 0:
         return 0
     if not selection or " — " not in selection:
         return 0
 
     display, addr = selection.split(" — ", 1)
     addr = addr.strip()
-    info = meta.get(addr, {})
-
-    if code == 10:
-        title = info.get("title") or strip_hidden(display)
-        subprocess.run(["wl-copy"], input=title, text=True, check=False)
-        return 0
 
     subprocess.run(
         [HYPRCTL, "dispatch", "focuswindow", f"address:{addr}"],
