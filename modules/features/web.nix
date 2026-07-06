@@ -4,10 +4,8 @@ with lib;
   options.features.web = {
     enable = mkBool "enable Web stack (browsers + tools)" true;
     default = mkOption {
-      type = types.enum [
-        "zen"
-      ];
-      default = "zen";
+      type = types.str;
+      default = null;
       description = "Default browser used for XDG handlers, \$BROWSER, and integrations.";
     };
     tools.enable = mkBool "enable web tools (aria2, yt-dlp, misc)" true;
