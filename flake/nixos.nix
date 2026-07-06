@@ -28,6 +28,38 @@ let
     in
     lib.optional (builtins.pathExists extraPath) (/. + extraPath);
 
+  # -------------------------------------------------------------------------
+  # Domain filter — enables parallel eval by skipping unused module domains.
+  # Each domain maps to a subdirectory under modules/. The filter
+  # `domainFilter :: string -> bool` is passed via specialArgs to every module.
+  # modules/default.nix uses it to conditionally import domain aggregators.
+  # -------------------------------------------------------------------------
+
+  # Core: always needed (feature flags, profiles, roles, security, system foundation).
+  coreDomains = [
+    "core" "features" "profiles" "roles" "nix" "security" "secrets"
+    "shell" "system" "hardware" "flake-preflight" "diff-closures"
+  ];
+
+  # Basic: core + CLI / text-mode tools. Enough for a minimal interactive system.
+  basicDomains = coreDomains ++ [
+    "cli" "tools" "text" "fonts" "documentation"
+  ];
+
+  # Lite: basic + SSH server. No GUI, no desktop apps.
+  liteDomains = basicDomains ++ [ "servers" ];
+
+  # Server: lite + service management + monitoring. Headless server profile.
+  serverDomains = basicDomains ++ [ "servers" "monitoring" ];
+
+  # Full desktop: everything imported (current default).
+  allDomains = basicDomains ++ [
+    "appimage" "apps" "dev" "emulators" "fun" "games"
+    "llm" "media" "servers" "monitoring" "torrent" "user" "web"
+  ];
+
+  mkDomainFilter = domains: name: builtins.elem name domains;
+
   # Shared specialArgs for all NixOS configurations.
   mkSpecialArgs = {
     inherit
@@ -38,6 +70,9 @@ let
       filteredSource
       ;
     iosevkaNeg = inputs.iosevka-neg.packages.${linuxSystem};
+
+    # Default: import all domains (full workstation).
+    domainFilter = mkDomainFilter allDomains;
 
     neg = {
       # Core structural helpers (no config dependency)
@@ -90,6 +125,22 @@ let
     };
   };
 
+  # Profile → domain filter map. Key = test profile name, value = domain list.
+  profileDomainSets = {
+    lite = liteDomains;
+    server = serverDomains;
+    # gaming / audio-pro / desktop: use allDomains (full GUI stack).
+  };
+
+  mkTestSpecialArgs =
+    testProfile:
+    let
+      domains = profileDomainSets.${testProfile} or allDomains;
+    in
+    mkSpecialArgs // {
+      domainFilter = mkDomainFilter domains;
+    };
+
   mkHost =
     name:
     lib.nixosSystem {
@@ -102,13 +153,19 @@ let
   # A/B test configurations: same base host but WITH ONLY THE TEST PROFILE ACTIVE.
   # This replaces the base profiles entirely (via mkForce) so the comparison is clean:
   # base config vs single-profile test config, no priority conflicts.
+  #
+  # Parallel-eval refactoring (Jul 2026): each test config uses a restrictive
+  # domainFilter (liteDomains / serverDomains) to skip importing unused module
+  # domains (GUI, nix-maid, games, etc.), producing smaller eval trees for
+  # nix-eval-jobs to process in parallel.
+  #
   # NEVER evaluated during normal `nixos-rebuild switch --flake .#telfir`.
   # Build explicitly: nixos-rebuild switch --flake '.#telfir-lite'
   mkTestHost =
     baseName: testProfile:
     lib.nixosSystem {
       inherit pkgs;
-      specialArgs = mkSpecialArgs;
+      specialArgs = mkTestSpecialArgs testProfile;
       modules = commonModules
         ++ [ (import ((builtins.toString hostsDir) + "/" + baseName)) ]
         ++ (hostExtras baseName)

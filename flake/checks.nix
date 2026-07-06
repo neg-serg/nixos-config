@@ -48,7 +48,7 @@ let
     name: extraModules: domainFilter:
     let
       result = lib.evalModules {
-        specialArgs = mkStubArgs (domainFilter or (_: true));
+        specialArgs = mkStubArgs domainFilter;
         modules =
           [
             { _module.check = false; }
