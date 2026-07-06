@@ -38,6 +38,7 @@ in
     pkgs.file # detect file type by content
     pkgs.massren # massive rename utility
     pkgs.nnn # CLI file manager
+    pkgs.superfile # fancy terminal file manager with TUI
     pkgs.stow # manage farms of symlinks
     pkgs.zoxide # smarter cd with ranking
 
