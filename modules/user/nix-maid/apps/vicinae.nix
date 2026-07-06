@@ -55,7 +55,6 @@ lib.mkMerge [
   {
     environment.systemPackages = [
       pkgs.vicinae # Wayland-native application runner and window switcher
-      pkgs.rofi-pass-wayland # Rofi frontend for pass (password store)
     ];
 
     # Vicinae Systemd Service
