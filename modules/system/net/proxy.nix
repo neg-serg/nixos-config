@@ -16,6 +16,7 @@ lib.mkIf cfg.enable {
     format = "yaml";
     sopsFile = ../../../secrets/home/xray-proxy-password.sops.yaml;
     key = "xray_proxy_password";
+    restartUnits = [ "xray-proxy-env.service" ];
   };
 
   systemd.services.xray = {
@@ -38,6 +39,9 @@ lib.mkIf cfg.enable {
     description = "Generate proxy environment file from sops secret";
     before = [ "nix-daemon.service" ];
     wantedBy = [ "multi-user.target" ];
+    # Если sops секрет ещё не создан (активация при холодной загрузке),
+    # сервис отработает вхолостую. Когда секрет появится (при nixos-rebuild),
+    # restartUnits перезапустит сервис автоматически.
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
