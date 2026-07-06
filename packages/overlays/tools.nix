@@ -36,9 +36,6 @@ in
     # duf fork with --style plain, --no-header, --no-bars flags
     duf = callPkg (packagesRoot + "/duf") { };
 
-    # Local AI proxy for Claude Code / OpenCode
-    proxypilot = callPkg (packagesRoot + "/proxypilot") { };
-
     # Terminal protein structure viewer — interactive 3D visualization of PDB/mmCIF
     proteinview = callPkg (packagesRoot + "/proteinview") { };
 
