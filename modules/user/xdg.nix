@@ -22,19 +22,16 @@ in
     extraPortals = [
       # Hyprland portal is provided via programs.hyprland.portalPackage
       pkgs.xdg-desktop-portal-termfilechooser # TUI file picker portal used in rofi/CLI tools
-      pkgs.xdg-desktop-portal-gtk # fallback portal for apps expecting GTK implementation
     ];
     config = {
       common.default = [
         "hyprland"
-        "gtk"
       ];
-      common."org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+      common."org.freedesktop.impl.portal.FileChooser" = [ ];
       hyprland.default = [
         "hyprland"
-        "gtk"
       ];
-      hyprland."org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+      hyprland."org.freedesktop.impl.portal.FileChooser" = [ ];
     };
   };
 
