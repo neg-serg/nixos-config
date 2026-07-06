@@ -62,6 +62,10 @@
       url = "github:winapps-org/winapps";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    steam-config-nix = {
+      url = "github:unazikx/steam-config-nix/feat/winetricks";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     wrapper-manager.url = "github:viperML/wrapper-manager";
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
