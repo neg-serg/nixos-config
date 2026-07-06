@@ -13,6 +13,7 @@ in
       # -- Bluetooth --
       pkgs.bluez-tools # command line bluetooth manager
       pkgs.overskride # bluetooth and obex client
+      pkgs.bluetui # TUI bluetooth client
     ])
     ++ (lib.optionals wifiEnabled [
       # -- Network --

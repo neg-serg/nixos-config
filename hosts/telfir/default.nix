@@ -15,6 +15,7 @@
   # Host-specific overrides (above profile defaults)
   features.apps.obsidian.enable = true;
   features.mail.vdirsyncer.enable = false;
+  features.hardware.bluetooth.enable = true;
   features.net.proxy.enable = true;
   features.net.lan-proxy.enable = true;
   features.net.transparent-proxy.enable = true;
