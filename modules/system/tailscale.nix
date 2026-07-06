@@ -31,7 +31,8 @@ in
   config = lib.mkIf enabled {
     services.tailscale = {
       enable = true;
-      operator = "neg"; # allow non-root tailscale commands after auth
+      # operator option not available in this nixpkgs revision;
+      # user is added to tailscale group via users.nix extraGroups instead
       openFirewall = true; # open UDP port 41641 for peer discovery
     };
 
