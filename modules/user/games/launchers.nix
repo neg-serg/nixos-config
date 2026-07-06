@@ -5,12 +5,17 @@
   pkgs,
   lib,
   config,
+  inputs,
   ...
 }:
 let
   cfg = config.profiles.games or { };
 in
 {
+  imports = [
+    inputs.steam-config-nix.nixosModules.default
+  ];
+
   config = lib.mkIf cfg.enable {
     programs.steam = {
       enable = true;
