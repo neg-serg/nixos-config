@@ -20,11 +20,14 @@ in
     src = inputs.opencode;
     version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
     node_modules = old.node_modules.overrideAttrs (nmOld: {
-      outputHash = "sha256-Z3ZDYxUHCcmEaYvl8qlKqkBGOPvZaKzTZ8fiXzbXm48=";
+      outputHash = "sha256-9oSXcvvISB6WAqI6f/GBZ3i9IBwYrRQvKs82SLibJNo=";
       outputHashAlgo = "sha256";
       outputHashMode = "recursive";
     });
   });
+
+  # Agent multiplexer for AI coding agents (herdr)
+  herdr = inputs.herdr.packages.${final.system}.default;
 
   # Merge all pkgs.neg sub-attributes from individual overlays
   neg =
