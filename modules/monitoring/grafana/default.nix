@@ -138,12 +138,6 @@ in
       '';
     };
 
-    # ProxyPilot AI proxy monitoring dashboard (ported from legacy Salt config)
-    environment.etc."grafana/provisioning/dashboards/json/proxypilot.json" = {
-      target = "/etc/grafana/provisioning/dashboards/json/proxypilot.json";
-      source = ./dashboards/proxypilot.json;
-    };
-
     # Per-interface firewall openings (Grafana port and, optionally, Caddy proxy ports)
     networking.firewall.interfaces = lib.mkMerge [
       (mkIf cfg.openFirewall (
