@@ -1,11 +1,13 @@
 {
   pkgs,
   lib,
+  config,
   neg,
   ...
 }:
 let
   n = neg;
+  iconTheme = config.features.gui.iconTheme or "kora";
   # Vicinae theme definition (neg)
   # Vicinae Flight-Dark theme (ported from legacy Salt config: flight-dark.toml)
   # Color palette harmonized with Flight-Dark-GTK, Rofi, and Kitty.
@@ -44,7 +46,7 @@ let
     terminal = "kitty";
     launcher = {
       show_icons = true;
-      icon_theme = "Papirus-Dark";
+      icon_theme = iconTheme;
       scan_desktop_files = true;
     };
   };
