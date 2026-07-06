@@ -205,6 +205,8 @@ in
         proxyPass = "https://cache.nixos.org";
         recommendedProxySettings = true;
         extraConfig = ''
+          # SNI обязателен — Fastly сбрасывает соединение без него
+          proxy_ssl_server_name on;
           proxy_cache nixcache;
           proxy_cache_key "$uri";
 
