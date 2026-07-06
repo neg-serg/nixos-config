@@ -50,25 +50,10 @@ in
       # Override rofi package to use wrapped version with custom config
       neg.rofi.package = rofiWrapped;
 
-      # Systemd user services
-      systemd.user.services = {
-        # SwayOSD server (shows volume/brightness OSD on client commands)
-        swayosd-server = {
-          description = "SwayOSD Server";
-          after = [ "graphical-session.target" ];
-          wantedBy = [ "graphical-session.target" ];
-          serviceConfig = {
-            ExecStart = "${lib.getExe' pkgs.swayosd "swayosd-server"}"; # GTK based on screen display
-            Restart = "on-failure";
-          };
-        };
-      };
-
       # Packages
       environment.systemPackages =
         [
           pkgs.neg.rofi-config # Custom scripts (launcher, powermenu)
-          pkgs.swayosd # OSD for volume/brightness on Wayland
           pkgs.wallust # Color palette generator
         ];
     }
