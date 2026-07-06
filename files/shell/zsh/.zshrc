@@ -14,28 +14,9 @@ if [[ -z "$DISTROBOX_ENTER_PATH" ]] && ! zmodload -F zsh_native_syntax 2>/dev/nu
   zi ice depth'1' lucid atinit'typeset -gA FAST_HIGHLIGHT; FAST_HIGHLIGHT[use_async]=1 FAST_HIGHLIGHT[BIND_VI_WIDGETS]=0 FAST_HIGHLIGHT[WIDGETS_MODE]=minimal' wait'0'
   zi load neg-serg/F-Sy-H
 fi
-# P10k removed in favor of oh-my-posh
-
-# Oh-My-Posh prompt initialization (Cached)
-if command -v oh-my-posh >/dev/null 2>&1; then
-  omp_config="${XDG_CONFIG_HOME:-$HOME/.config}/zsh/neg.omp.json"
-  omp_cache="${XDG_CACHE_HOME:-$HOME/.cache}/oh-my-posh-init.zsh"
-  
-  if [[ -r "$omp_config" ]]; then
-    # Rebuild cache if config content has changed (robust against NixOS 1970 mtimes)
-    local config_hash
-    config_hash=$(md5sum "$omp_config" 2>/dev/null | awk '{print $1}')
-    local cache_hash_file="${omp_cache}.md5"
-    local stored_hash
-    [[ -f "$cache_hash_file" ]] && stored_hash=$(<"$cache_hash_file")
-
-    if [[ ! -r "$omp_cache" || -z "$stored_hash" || "$config_hash" != "$stored_hash" ]]; then
-      oh-my-posh init zsh --config "$omp_config" --print > "$omp_cache"
-      echo "$config_hash" > "$cache_hash_file"
-    fi
-    source "$omp_cache"
-  fi
-fi
+# Powerlevel10k prompt (via zinit)
+zi ice depth'1' lucid atload'source ${ZDOTDIR}/.p10k.zsh'
+zi load romkatv/powerlevel10k
 # Utilities (deferred)
 zi ice depth'1' lucid wait'0'
 zi light QuarticCat/zsh-smartcache
