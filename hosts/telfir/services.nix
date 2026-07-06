@@ -46,6 +46,7 @@ lib.mkMerge [
     features.hardware.usbAutomount.enable = true;
     features.net.tailscale.enable = true;
     features.input.warpd.enable = true; # warpd: keyboard-driven pointer control
+    features.web.zen.enable = false; # Disable Zen browser (Firefox-based, depends on GTK)
 
     # Roles enabled for this host
     roles = {
