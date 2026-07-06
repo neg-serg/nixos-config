@@ -17,7 +17,6 @@ let
     "enable-vpn-hybrid" = "enable-vpn-hybrid.sh";
     "start-hybrid-vpn" = "start-hybrid-vpn.sh";
     "test-browser-vpn" = "test-browser-vpn.sh";
-    "proxypilot-recover" = "proxypilot_recover.py";
   };
 
   scriptsSourcingPrettySh = [
@@ -28,7 +27,6 @@ let
 
   scriptsNeedingPyYaml = [
     "vpn-split-router"
-    "proxypilot-recover"
   ];
 
   vpnScriptsPkg = pkgs.stdenv.mkDerivation {
