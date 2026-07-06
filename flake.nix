@@ -75,6 +75,10 @@
       url = "github:anomalyco/opencode";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    herdr = {
+      url = "github:ogulcancelik/herdr";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     openagentscontrol = {
       url = "github:darrenhinde/OpenAgentsControl";
       flake = false;
