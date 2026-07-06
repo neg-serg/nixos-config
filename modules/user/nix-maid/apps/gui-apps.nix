@@ -84,7 +84,7 @@ in
       # Handlr Config
       ".config/handlr/handlr.toml".text = ''
         enable_selector = false
-        selector = "rofi -dmenu -p 'Open With: ❯>'"
+        selector = "vicinae dmenu -p 'Open With: ❯>'"
       '';
 
       # wlogout config
