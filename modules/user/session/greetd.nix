@@ -14,8 +14,9 @@ let
     else
       "/home/${mainUser}";
   greeterCache = "/home/greeter/.cache";
-  greeterWallpaperSrc = "${mainHome}/pic/wl/waterfall_jungle_dark_150290_3840x2400.jpg";
   greeterWallpaperDst = "${greeterCache}/greeter-wallpaper";
+  # Fallback when no dynamic source yields a file at activation time.
+  greeterWallpaperFallback = "${mainHome}/pic/wl/waterfall_jungle_dark_150290_3840x2400.jpg";
   hyprlandConfig = pkgs.writeText "greetd-hyprland-config" ''
     monitorv2 {
       output = DP-2
@@ -104,12 +105,50 @@ in
       "d /home/greeter/.cache 0775 greeter greeter -"
       "d /home/greeter/.config/quickshell/Theme 0755 greeter greeter -"
     ];
-    system.activationScripts.greetdWallpaper = ''
-      if [ -f "${greeterWallpaperSrc}" ]; then
-        install -Dm644 "${greeterWallpaperSrc}" "${greeterWallpaperDst}"
-      else
-        echo "greetd wallpaper missing: ${greeterWallpaperSrc}" >&2
+    system.activationScripts.greetdWallpaper = let
+      jq = lib.getExe' pkgs.jq "jq";
+    in ''
+      WALLPAPER_SRC=""
+
+      # Source 1: quickshell wallpaper path file (most up-to-date)
+      qs_notify="${mainHome}/.cache/quickshell-wallpaper-path"
+      if [ -f "$qs_notify" ]; then
+        candidate="$(head -1 "$qs_notify" 2>/dev/null || true)"
+        if [ -n "$candidate" ] && [ -f "$candidate" ]; then
+          WALLPAPER_SRC="$candidate"
+        fi
       fi
+
+      # Source 2: wl daemon state (current wallpaper from last session)
+      if [ -z "$WALLPAPER_SRC" ]; then
+        wl_state="${mainHome}/.local/state/wl/state.json"
+        if [ -f "$wl_state" ]; then
+          candidate="$(${jq} -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$wl_state" 2>/dev/null || true)"
+          if [ -n "$candidate" ] && [ -f "$candidate" ]; then
+            WALLPAPER_SRC="$candidate"
+          fi
+        fi
+      fi
+
+      # Source 3: first image from the wl wallpaper directory
+      if [ -z "$WALLPAPER_SRC" ]; then
+        candidate="$(find ${mainHome}/pic/wl -maxdepth 1 -type f 2>/dev/null | sort -R | head -1 || true)"
+        if [ -n "$candidate" ]; then
+          WALLPAPER_SRC="$candidate"
+        fi
+      fi
+
+      # Source 4: hardcoded fallback
+      if [ -z "$WALLPAPER_SRC" ]; then
+        WALLPAPER_SRC="${greeterWallpaperFallback}"
+      fi
+
+      if [ -f "$WALLPAPER_SRC" ]; then
+        install -Dm644 "$WALLPAPER_SRC" "${greeterWallpaperDst}"
+      else
+        echo "greetd wallpaper: no source found (tried wl state, qs notify, pic/wl/, fallback)" >&2
+      fi
+
       install -Dm644 ${pkgs.writeText "greeter-theme.json" "{}"} /home/greeter/.config/quickshell/Theme/.theme.json
     '';
   };
