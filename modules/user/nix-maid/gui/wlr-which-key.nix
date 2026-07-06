@@ -31,16 +31,7 @@ in
         margin_top: 160
 
         keys:
-          - mod: SUPER
-            separator: "  "
-            key: w
-            command: raise --match 'class:regex=^(floorp|one\\.ablaze\\.floorp|floorpdeveloperedition|zen-beta|zen|zen-browser|Zen)$' --launch zen-beta
-            title: Browser
-          - mod: SUPER
-            separator: "  "
-            key: W
-            command: raise --match 'class:regex=^(floorp|one\\.ablaze\\.floorp|floorpdeveloperedition)$' --launch floorp
-            title: Floorp
+          # Browsers removed (were Firefox-based, required GTK)
           - mod: SUPER
             separator: "  "
             key: x

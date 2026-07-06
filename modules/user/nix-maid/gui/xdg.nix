@@ -7,7 +7,8 @@
 let
   n = neg;
   # Browser/App Definitions
-  browser = "zen-beta.desktop";
+  # No browser installed; MIME associations use xdg-open fallback
+  browser = "xdg-open.desktop";
   pdfreader = "org.pwmt.zathura.desktop";
   telegram = "org.telegram.desktop.desktop";
   torrent = "org.transmissionbt.Transmission.desktop";

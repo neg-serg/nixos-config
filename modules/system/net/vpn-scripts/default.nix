@@ -6,7 +6,6 @@ let
   libDir = ./lib;
 
   scripts = {
-    "zen-vpn" = "zen-vpn.sh";
     "cdn-proxy" = "cdn-proxy.py";
     "cdn-forward" = "cdn-forward.sh";
     "socks5-forward" = "socks5-forward.py";
@@ -83,9 +82,6 @@ let
 
         wrapProgram "$out/bin/check-vpn-status" \
           --prefix PATH : "${pkgs.curl}/bin:${pkgs.procps}/bin"
-
-        wrapProgram "$out/bin/zen-vpn" \
-          --set-default ZEN_BIN "${lib.getExe' pkgs.zen-browser "zen-beta"}"
       '';
   };
 in
