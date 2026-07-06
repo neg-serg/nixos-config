@@ -12,11 +12,7 @@
       default = "/etc/nixos";
       description = "Path to the root of the configuration repository.";
     };
-    rofi.package = lib.mkOption {
-      type = lib.types.package;
-      default = pkgs.rofi; # Window switcher, run dialog and dmenu replacement
-      description = "The rofi package to use for the system.";
-    };
+
   };
 
   config = {
