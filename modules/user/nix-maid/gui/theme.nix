@@ -10,28 +10,7 @@ let
   n = neg;
   alkano-aio = pkgs.callPackage ./alkano-aio.nix { };
 
-  gtkThemeName = config.features.gui.gtkTheme or "Flight-Dark-GTK";
-  gtkThemePkg = {
-    "Flight-Dark-GTK" = pkgs.flight-gtk-theme;
-    "Andromeda" = pkgs.andromeda-gtk-theme;
-  }.${gtkThemeName} or pkgs.flight-gtk-theme;
-
   iconTheme = config.features.gui.iconTheme or "kora";
-
-  # GTK Settings
-  gtkSettings = {
-    "gtk-application-prefer-dark-theme" = 1;
-    "gtk-cursor-theme-name" = "Alkano-aio";
-    "gtk-cursor-theme-size" = 23;
-    "gtk-font-name" = "Iosevka 10";
-    "gtk-icon-theme-name" = iconTheme;
-    "gtk-theme-name" = gtkThemeName;
-  };
-
-  gtkIni = lib.generators.toINI { } { Settings = gtkSettings; };
-
-  # CSS to importing colors if needed
-  cssContent = "/* @import 'colors.css'; */";
 in
 {
   config = lib.mkIf (config.features.gui.enable or false) (
@@ -40,16 +19,12 @@ in
         # 1. Packages
         environment.systemPackages = [
           alkano-aio # Animated cursor theme
-          gtkThemePkg # GTK theme (selected via features.gui.gtkTheme)
           pkgs.kora-icon-theme # Modern icon theme
-          pkgs.adwaita-icon-theme # Base fallback icons for apps Kora doesn't cover
           iosevkaNeg.nerd-font # Personalized Iosevka fonts with Nerd Font icons
-          # pkgs.pixora-icons # Icon theme
         ];
 
-        # 2. Environment Variables (Cursor + Theme)
+        # 2. Environment Variables (Cursor)
         environment.sessionVariables = {
-          GTK_THEME = gtkThemeName; # GTK theme for all apps
           XCURSOR_THEME = "Alkano-aio";
           XCURSOR_SIZE = "23";
           HYPRCURSOR_THEME = "Alkano-aio";
@@ -61,35 +36,7 @@ in
           enable = true;
         };
       }
-
-      # 5. GSettings/dconf: set icon theme for apps that read via gsettings (Electron, GNOME, etc.)
-      {
-        systemd.user.services.neg-icon-theme = {
-          description = "Set icon theme via gsettings";
-          after = [ "graphical-session-pre.target" ];
-          partOf = [ "graphical-session.target" ];
-          wantedBy = [ "graphical-session.target" ];
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = true;
-            ExecStart = "${lib.getExe' pkgs.glib "gsettings"} set org.gnome.desktop.interface icon-theme '${iconTheme}'";
-          };
-        };
-      }
       (n.mkHomeFiles {
-        ".config/gtk-3.0/settings.ini".text = gtkIni;
-        ".config/gtk-3.0/gtk.css".text = cssContent;
-        ".config/gtk-4.0/settings.ini".text = gtkIni;
-        ".config/gtk-4.0/gtk.css".text = cssContent;
-
-        ".gtkrc-2.0".text = ''
-          gtk-theme-name="${gtkThemeName}"
-          gtk-icon-theme-name="${iconTheme}"
-          gtk-font-name="Iosevka 10"
-          gtk-cursor-theme-name="Alkano-aio"
-          gtk-cursor-theme-size=23
-          gtk-application-prefer-dark-theme=1
-        '';
 
         # Wallust Config
         ".config/wallust/wallust.toml".source = ../../../../files/wallust/wallust.toml;
