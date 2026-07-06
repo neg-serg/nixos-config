@@ -8,6 +8,7 @@
 let
   n = neg;
   qtEnabled = config.features.gui.qt.enable or false;
+  iconTheme = config.features.gui.iconTheme or "kora";
 in
 {
   config = lib.mkIf qtEnabled (
@@ -39,6 +40,7 @@ in
         ".config/qt6ct/qt6ct.conf".text = ''
           [Appearance]
           style=kvantum
+          icon_theme=${iconTheme}
           standard_dialogs=xdgdesktopportal
         '';
 
