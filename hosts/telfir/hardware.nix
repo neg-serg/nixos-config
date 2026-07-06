@@ -6,10 +6,16 @@
   ...
 }:
 let
-  iosevkaFont = inputs.iosevka-neg.packages.${pkgs.stdenv.hostPlatform.system}.nerd-font or pkgs.nerd-fonts.iosevka;
-  grubFont = pkgs.runCommand "iosevka-36.pf2" {} ''
-    ${pkgs.grub2}/bin/grub-mkfont -s 36 -o $out ${iosevkaFont}/share/fonts/truetype/Iosevka-Regular.ttf
-  '';
+  grubFont = derivation {
+    name = "iosevka-36.pf2";
+    system = pkgs.stdenv.hostPlatform.system;
+    builder = "${pkgs.bash}/bin/bash";
+    args = [
+      "-c"
+      "${pkgs.grub2}/bin/grub-mkfont -s 36 -o \"\$out\" \"\$FONT\""
+    ];
+    FONT = "${inputs.iosevka-neg.packages.x86_64-linux.nerd-font}/share/fonts/truetype/IosevkaNerdFont-Regular.ttf";
+  };
 in
 {
   # Hardware and performance tuning specific to host 'telfir'
@@ -128,8 +134,8 @@ in
         efiSupport = true;
         gfxmodeEfi = "3840x2160";
         gfxpayloadEfi = "keep";
-        splashImage = null;
-        font = null; #grubFont; # FIXME: fetchurl/boot.nix still broken in nixpkgs (passes nativeBuildInputs unexpectedly)
+        splashImage = ../../files/grub-splash.jpg;
+        font = grubFont;
         backgroundColor = "#000000";
         extraConfig = ''
           set menu_color_normal=white/black
