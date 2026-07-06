@@ -434,6 +434,9 @@ end
 hl.window_rule({ name = "soulstone-survivors", match = { class = "^(steam_app_2066020)$" }, render_unfocused = true, no_blur = true })
 hl.window_rule({ name = "gaming-immediate", match = { class = "^(osu!|cs2)$" }, immediate = true })
 
+-- Float all windows on the games workspace (id 4) — games don't tile well
+hl.window_rule({ name = "games-float", match = { workspace = "4" }, float = true })
+
 -- Floats / misc
 hl.window_rule({ name = "bitwarden", match = { title = "^(.*Bitwarden Password Manager.*)$" }, float = true })
 hl.window_rule({ name = "calculator", match = { class = "^(org.gnome.Calculator)$" }, float = true, size = "360 490" })
