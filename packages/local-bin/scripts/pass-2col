@@ -19,7 +19,7 @@ lines=$(( (count + 1) / 2 ))
 if [ "$lines" -gt 12 ]; then lines=12; fi
 
 sel=$(printf '%s\n' "${entries[@]}" \
-  | rofi -dmenu -p 'pass ❯>' -columns 2 -lines "$lines" -theme pass)
+  | vicinae dmenu -p 'pass ❯>')
 
 [ -n "${sel:-}" ] || exit 0
 
