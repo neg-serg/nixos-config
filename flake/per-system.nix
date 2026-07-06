@@ -58,7 +58,9 @@ in
     '';
   };
 
-  checks = { };
+  checks = import ./checks.nix {
+    inherit nixpkgs self inputs;
+  } system pkgs;
   devShells = {
     default = pkgs.mkShell {
       inherit (preCommit) shellHook;
