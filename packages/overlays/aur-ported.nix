@@ -8,7 +8,8 @@ final: prev: {
       owner = "sdushantha";
       repo = "oports";
       rev = "0000000000000000000000000000000000000000";
-      hash = "sha256-0000000000000000000000000000000000000000000=";
+      # TODO: set real hash; package never completed/unused
+      hash = final.lib.fakeHash;
     };
 
     dontBuild = true;
@@ -35,7 +36,8 @@ final: prev: {
       owner = "Morganamilo";
       repo = "paru";
       rev = "0000000000000000000000000000000000000000";
-      hash = "sha256-0000000000000000000000000000000000000000000=";
+      # TODO: set real hash; package never completed/unused
+      hash = final.lib.fakeHash;
     };
 
     nativeBuildInputs = with final; [
@@ -76,7 +78,8 @@ final: prev: {
       owner = "heather7283";
       repo = "pipemixer";
       rev = "0000000000000000000000000000000000000000";
-      hash = "sha256-0000000000000000000000000000000000000000000=";
+      # TODO: set real hash; package never completed/unused
+      hash = final.lib.fakeHash;
     };
 
     nativeBuildInputs = with final; [
@@ -107,7 +110,8 @@ final: prev: {
       owner = "marvinkreis";
       repo = "rofi-file-browser-extended";
       rev = "0000000000000000000000000000000000000000";
-      hash = "sha256-0000000000000000000000000000000000000000000=";
+      # TODO: set real hash; package never completed/unused
+      hash = final.lib.fakeHash;
     };
 
     nativeBuildInputs = with final; [
@@ -133,7 +137,8 @@ final: prev: {
     src = final.fetchgit {
       url = "https://git.sr.ht/~steef/snixembed";
       rev = "0000000000000000000000000000000000000000";
-      hash = "sha256-0000000000000000000000000000000000000000000=";
+      # TODO: set real hash; package never completed/unused
+      hash = final.lib.fakeHash;
     };
 
     nativeBuildInputs = with final; [
@@ -169,7 +174,8 @@ final: prev: {
       owner = "AnonMiraj";
       repo = "Tanin";
       rev = "0000000000000000000000000000000000000000";
-      hash = "sha256-0000000000000000000000000000000000000000000=";
+      # TODO: set real hash; package never completed/unused
+      hash = final.lib.fakeHash;
     };
 
     nativeBuildInputs = with final; [
@@ -212,7 +218,8 @@ final: prev: {
       owner = "hunkyburrito";
       repo = "xdg-desktop-portal-termfilechooser";
       rev = "0000000000000000000000000000000000000000";
-      hash = "sha256-0000000000000000000000000000000000000000000=";
+      # TODO: set real hash; package never completed/unused
+      hash = final.lib.fakeHash;
     };
 
     nativeBuildInputs = with final; [
