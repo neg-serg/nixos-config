@@ -27,7 +27,7 @@ in
   });
 
   # Agent multiplexer for AI coding agents (herdr)
-  herdr = inputs.herdr.packages.${final.system}.default;
+  herdr = inputs.herdr.packages.${final.stdenv.hostPlatform.system}.default;
 
   # Merge all pkgs.neg sub-attributes from individual overlays
   neg =
