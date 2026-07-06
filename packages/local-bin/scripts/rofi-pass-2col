@@ -1,12 +1,58 @@
 #!/usr/bin/env bash
-# Wrapper for rofi-pass with 2-column layout
+# Pass launcher via vicinae dmenu
 
-# Determine executable
-CMD="rofi-pass"
-if command -v rofi-pass-wayland &> /dev/null; then
-    CMD="rofi-pass-wayland"
+set -euo pipefail
+
+store_dir="${PASSWORD_STORE_DIR:-$HOME/.password-store}"
+[ -d "$store_dir" ] || exit 0
+
+# Collect entries: strip .gpg and leading ./, ignore .gpg-id files
+mapfile -t entries < <(cd "$store_dir" && \
+  find . -type f -name '*.gpg' ! -path './.git/*' -printf '%P\n' 2>/dev/null \
+  | grep -vE '(^|/)\.gpg-id$' \
+  | sed 's#^\./##; s/\.gpg$//' \
+  | LC_ALL=C sort)
+
+count=${#entries[@]}
+[ "$count" -gt 0 ] || exit 0
+
+sel=$(printf '%s\n' "${entries[@]}" \
+  | vicinae dmenu -p 'pass ❯>')
+
+[ -n "${sel:-}" ] || exit 0
+
+# Prefer OTP codes when present to avoid pasting otpauth URIs
+if otp_raw=$(pass otp code -- "$sel" 2>/dev/null); then
+  otp_code=$(printf '%s' "$otp_raw" | head -n1 | tr -d '\r\n')
+  if [ -n "$otp_code" ]; then
+    if command -v wl-copy >/dev/null 2>&1; then
+      printf '%s' "$otp_code" | wl-copy
+    else
+      pass otp -c -- "$sel" >/dev/null 2>&1 || true
+    fi
+    command -v notify-send >/dev/null 2>&1 && notify-send "pass" "OTP copied: $sel" || true
+    exit 0
+  fi
 fi
 
-# Execute with 2-column overrides
-# We inject a theme string to force 2 columns in the listview
-exec "$CMD" -theme-str 'listview { columns: 2; lines: 10; } window { width: 40%; }' "$@"
+# Capture first line for password fallback and to detect raw otpauth secrets
+pw=$(pass show -- "$sel" 2>/dev/null | head -n1 || true)
+pw=$(printf '%s' "$pw" | tr -d '\r\n')
+
+# Guard against leaking otpauth URIs if pass-otp is unavailable
+if [ -n "$pw" ] && [[ "$pw" == otpauth://* ]]; then
+  if ! pass otp -c -- "$sel" >/dev/null 2>&1; then
+    command -v notify-send >/dev/null 2>&1 && notify-send "pass" "OTP entry needs pass-otp: $sel" || true
+  fi
+  exit 0
+fi
+
+# Copy password (first line of pass show) to clipboard
+if [ -n "$pw" ]; then
+  if command -v wl-copy >/dev/null 2>&1; then
+    printf '%s' "$pw" | wl-copy
+  else
+    pass -c -- "$sel" >/dev/null 2>&1 || true
+  fi
+  command -v notify-send >/dev/null 2>&1 && notify-send "pass" "Copied: $sel" || true
+fi
