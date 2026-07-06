@@ -70,10 +70,6 @@ in
           pkgs.neg.rofi-config # Custom scripts (launcher, powermenu)
           pkgs.swayosd # OSD for volume/brightness on Wayland
           pkgs.wallust # Color palette generator
-        ]
-        ++ lib.optionals (config.features.apps.guiAppsFull.enable or false) [
-          pkgs.gimp # GNU Image Manipulation Program
-          pkgs.obs-studio # Live streaming and recording software
         ];
     }
     (n.mkHomeFiles {
