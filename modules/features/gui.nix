@@ -22,5 +22,11 @@ with lib;
       default = "Flight-Dark-GTK";
       description = "GTK theme to apply system-wide.";
     };
+
+    iconTheme = lib.mkOption {
+      type = types.str;
+      default = "kora";
+      description = "Icon theme to apply system-wide (GTK + Qt).";
+    };
   };
 }

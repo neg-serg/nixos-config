@@ -18,6 +18,7 @@ let
     gtkThemePkg # GTK theme (selected via features.gui.gtkTheme)
     pkgs.kdePackages.qtstyleplugin-kvantum # Qt6 Kvantum bridge for GTK-like theming
     pkgs.kora-icon-theme # sharp icon pack w/ dark + light variants
+    pkgs.adwaita-icon-theme # base fallback icons for apps Kora doesn't cover
     pkgs.libsForQt5.qtstyleplugin-kvantum # Qt5 Kvantum plugin for old apps
   ];
 in

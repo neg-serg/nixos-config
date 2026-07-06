@@ -16,13 +16,15 @@ let
     "Andromeda" = pkgs.andromeda-gtk-theme;
   }.${gtkThemeName} or pkgs.flight-gtk-theme;
 
+  iconTheme = config.features.gui.iconTheme or "kora";
+
   # GTK Settings
   gtkSettings = {
     "gtk-application-prefer-dark-theme" = 1;
     "gtk-cursor-theme-name" = "Alkano-aio";
     "gtk-cursor-theme-size" = 23;
     "gtk-font-name" = "Iosevka 10";
-    "gtk-icon-theme-name" = "kora";
+    "gtk-icon-theme-name" = iconTheme;
     "gtk-theme-name" = gtkThemeName;
   };
 
@@ -40,6 +42,7 @@ in
           alkano-aio # Animated cursor theme
           gtkThemePkg # GTK theme (selected via features.gui.gtkTheme)
           pkgs.kora-icon-theme # Modern icon theme
+          pkgs.adwaita-icon-theme # Base fallback icons for apps Kora doesn't cover
           iosevkaNeg.nerd-font # Personalized Iosevka fonts with Nerd Font icons
           # pkgs.pixora-icons # Icon theme
         ];
@@ -58,6 +61,21 @@ in
           enable = true;
         };
       }
+
+      # 5. GSettings/dconf: set icon theme for apps that read via gsettings (Electron, GNOME, etc.)
+      {
+        systemd.user.services.neg-icon-theme = {
+          description = "Set icon theme via gsettings";
+          after = [ "graphical-session-pre.target" ];
+          partOf = [ "graphical-session.target" ];
+          wantedBy = [ "graphical-session.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            ExecStart = "${lib.getExe' pkgs.glib "gsettings"} set org.gnome.desktop.interface icon-theme '${iconTheme}'";
+          };
+        };
+      }
       (n.mkHomeFiles {
         ".config/gtk-3.0/settings.ini".text = gtkIni;
         ".config/gtk-3.0/gtk.css".text = cssContent;
@@ -66,7 +84,7 @@ in
 
         ".gtkrc-2.0".text = ''
           gtk-theme-name="${gtkThemeName}"
-          gtk-icon-theme-name="kora"
+          gtk-icon-theme-name="${iconTheme}"
           gtk-font-name="Iosevka 10"
           gtk-cursor-theme-name="Alkano-aio"
           gtk-cursor-theme-size=23
