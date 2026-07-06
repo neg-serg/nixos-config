@@ -12,11 +12,21 @@ let
   # Flavor: selects which quickshell config to deploy
   flavor = config.features.gui.quickshell.flavor or "default";
   isOctashell = flavor == "octashell";
-  isSshell = flavor == "sshell";
+  isSshell = flavor == "sshell" && (config.features.gui.sshell.enable or false);
+
+  # Package sshell from raw source (sshell input uses flake = false)
+  sshellPkg = pkgs.stdenv.mkDerivation {
+    name = "sshell";
+    src = inputs.sshell;
+    installPhase = ''
+      mkdir -p $out/share/sshell
+      cp -r . $out/share/sshell/
+    '';
+  };
 
   # Source path based on flavor
   quickshellSrc = if isSshell
-    then "${inputs.sshell.packages.${pkgs.stdenv.hostPlatform.system}.default}/share/sshell"
+    then "${sshellPkg}/share/sshell"
     else if isOctashell
     then ../../../../files/octashell
     else ../../../../files/quickshell;

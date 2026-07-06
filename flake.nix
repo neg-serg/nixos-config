@@ -5,7 +5,7 @@
   };
   inputs = {
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    nixpkgs.url = "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0.1";
     nix.follows = "determinate/nix";
     hyprland = {
       url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.55.4";
@@ -92,11 +92,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     caelestia-shell = {
-      url = "path:/home/neg/src/shell";
+      url = "github:caelestia-dots/shell";
     };
     sshell = {
-      url = "path:/home/neg/src/sshell";
-      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:stormy-soul/sshell";
+      flake = false;
     };
     talktype = {
       url = "github:lmacan1/talktype";

@@ -65,13 +65,16 @@
         "quickshell": "quickshell"
       },
       "locked": {
-        "narHash": "sha256-s203TGX34uYRKAyY+iLoJHYdefThOK6Q9ELxWeGFKcU=",
-        "path": "/home/neg/src/shell",
-        "type": "path"
+        "lastModified": 1783219767,
+        "owner": "caelestia-dots",
+        "repo": "shell",
+        "rev": "2b5eb204b267f1568666de83438798cca59fdcd1",
+        "type": "github"
       },
       "original": {
-        "path": "/home/neg/src/shell",
-        "type": "path"
+        "owner": "caelestia-dots",
+        "repo": "shell",
+        "type": "github"
       }
     },
     "crane": {
@@ -547,11 +550,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781497404,
-        "narHash": "sha256-9GAF8sSsnkyCVCWkomXR0T+zdSxyUlfPt6neQidimdg=",
+        "lastModified": 1782839684,
+        "narHash": "sha256-vzs4SBgPsK4aNzlJR2PpFwtARazXMOxZonQnDz0YHxk=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "1285cd3d6882a9847f2d56ed5541b3350c8a6162",
+        "rev": "2a37d71bbe69e1522ddabf03a4cea0374958bdbe",
         "type": "github"
       },
       "original": {
@@ -971,10 +974,10 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1782160136,
+        "lastModified": 1783187991,
         "owner": "nix-community",
         "repo": "lanzaboote",
-        "rev": "6650fb7c6b48177c8200e21ffac99a4adc72b08d",
+        "rev": "0368b35d4677854d897951d35b0bfd3649664383",
         "type": "github"
       },
       "original": {
@@ -1179,17 +1182,16 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1783148766,
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "a50de1b7d8a586adc18d2395c19de7d6058e6030",
-        "type": "github"
+        "lastModified": 1781577229,
+        "narHash": "sha256-lrp67w8AulE9Ks53n27I45ADSzbOCn4H+CNW1Ck8B+8=",
+        "rev": "567a49d1913ce81ac6e9582e3553dd90a955875f",
+        "revCount": 1017464,
+        "type": "tarball",
+        "url": "https://api.flakehub.com/f/pinned/DeterminateSystems/nixpkgs-weekly/0.1.1017464%2Brev-567a49d1913ce81ac6e9582e3553dd90a955875f/019f1749-32d6-7283-9e9a-861bd8478e6a/source.tar.gz"
       },
       "original": {
-        "owner": "NixOS",
-        "ref": "nixos-26.05",
-        "repo": "nixpkgs",
-        "type": "github"
+        "type": "tarball",
+        "url": "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0.1"
       }
     },
     "noctalia": {
@@ -1199,10 +1201,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1783220299,
+        "lastModified": 1783357432,
         "owner": "noctalia-dev",
         "repo": "noctalia",
-        "rev": "10b2007088ba2e1b94e96b01aec4631bc6266d1a",
+        "rev": "7a30ffa420b46a02ceab71aee948648c2c87c7c6",
         "type": "github"
       },
       "original": {
@@ -1251,10 +1253,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1783261846,
+        "lastModified": 1783363851,
         "owner": "anomalyco",
         "repo": "opencode",
-        "rev": "f14eafe9db38a487681f76d12e8c469a7826fa0d",
+        "rev": "203885d241d0d51dae9d39271662043cab27c7b8",
         "type": "github"
       },
       "original": {
@@ -1270,10 +1272,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1783123163,
+        "lastModified": 1783363851,
         "owner": "anomalyco",
         "repo": "opencode",
-        "rev": "933dbfdb36262abef40882600eaad646adf12f51",
+        "rev": "203885d241d0d51dae9d39271662043cab27c7b8",
         "type": "github"
       },
       "original": {
@@ -1376,10 +1378,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1782811879,
+        "lastModified": 1783212316,
         "ref": "refs/heads/master",
-        "rev": "1661ef100a431a470ed2c42e6d06539b77edf826",
-        "revCount": 825,
+        "rev": "4f2c62486b0c939f7fc1f7cea68037173813dbfe",
+        "revCount": 826,
         "type": "git",
         "url": "https://git.outfoxxed.me/quickshell/quickshell"
       },
@@ -1517,11 +1519,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782012058,
-        "narHash": "sha256-9mWUnReOUXfKjZuJAL/bAFH3LUyECTRtXgSNVjRw3UY=",
+        "lastModified": 1783144302,
+        "narHash": "sha256-NQnzmXwpEAd5tjMBh2+P/y9NknF+WHv5+6yoXoN4h/Y=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "8534567325bd8a8d2928e6afd81e0a87d19efd3c",
+        "rev": "fe5aee0952e8e1525533d61defd9e36513db811b",
         "type": "github"
       },
       "original": {
@@ -1608,10 +1610,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1782165805,
+        "lastModified": 1783174389,
         "owner": "Mic92",
         "repo": "sops-nix",
-        "rev": "56b24064fdcaedca53553b1a6d607fd23b613a24",
+        "rev": "f1406619a3884cd5c47992a70b8b35c9c0fcb4c9",
         "type": "github"
       },
       "original": {
@@ -1662,19 +1664,19 @@
       }
     },
     "sshell": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
+      "flake": false,
       "locked": {
-        "narHash": "sha256-FfAPx01SBB19QGzYqsWXO+D/ypTCuVPiz+dyQqCbkxw=",
-        "path": "/home/neg/src/sshell",
-        "type": "path"
+        "lastModified": 1778040804,
+        "narHash": "sha256-/V7f2kB6dneYAd8NsuBdG97RtfvlWrIRpEKes9KxTvE=",
+        "owner": "stormy-soul",
+        "repo": "sshell",
+        "rev": "fb59fa6f6bade33cf9fb18d9804238d88ee3e161",
+        "type": "github"
       },
       "original": {
-        "path": "/home/neg/src/sshell",
-        "type": "path"
+        "owner": "stormy-soul",
+        "repo": "sshell",
+        "type": "github"
       }
     },
     "steam-config-nix": {
@@ -1895,10 +1897,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1780830314,
+        "lastModified": 1783340356,
         "owner": "winapps-org",
         "repo": "winapps",
-        "rev": "abc2c3da1a7980a8e87c616f7387bd898aadfeb3",
+        "rev": "b5a602fb3499dfac1b44bde4a532331e639ad73a",
         "type": "github"
       },
       "original": {
@@ -2023,10 +2025,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1783033669,
+        "lastModified": 1783190846,
         "owner": "0xc000022070",
         "repo": "zen-browser-flake",
-        "rev": "0cd53b6953919cb6858db24fd7dc95714dcab2e7",
+        "rev": "0758bc86f7a55bbe002f0cede9e1a49e5a6e34d9",
         "type": "github"
       },
       "original": {
