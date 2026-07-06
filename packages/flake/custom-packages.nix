@@ -6,7 +6,6 @@
   rmpc = pkgs.rmpc; # TUI music player client for MPD with album art support vi...
 
   surfingkeys-pkg = pkgs.surfingkeys-pkg;
-  rofi-config = pkgs.neg.rofi-config;
   sqlit = pkgs.neg.sqlit;
 
   waves = pkgs.waves;

@@ -37,7 +37,7 @@ in
     // (dev.neg or { })
     // (gui.neg or { })
     // {
-      rofi-config = final.callPackage ./rofi-config { };
+
       opencode-dev = (final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { }).overrideAttrs (old: {
         src = inputs.opencode;
         version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
