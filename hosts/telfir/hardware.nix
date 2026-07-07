@@ -198,6 +198,6 @@ in
     SUBSYSTEM=="usb", ATTR{idVendor}=="35ef", ATTR{idProduct}=="0108", MODE="0666"
   '';
   environment.systemPackages = [
-    # pkgs.neg.bazecor # Dygma keyboard configurator (AppImage) — temporarily removed, fetch issues
+    pkgs.neg.bazecor # Dygma keyboard configurator (AppImage)
   ];
 }
