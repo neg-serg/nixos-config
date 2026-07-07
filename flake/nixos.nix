@@ -76,6 +76,7 @@ let
     "apps"
     "dev"
     "emulators"
+    "flatpak"
     "fun"
     "games"
     "llm"
