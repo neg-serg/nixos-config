@@ -10,65 +10,27 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
   - Profile influences defaults via `modules/default.nix`.
   - You can still override any option after the profile is set.
 
-## Web Stack (`modules/user/web`)
+## Web Stack (`modules/user/nix-maid/web`)
 
 - `features.web.enable` (default: true in full, false in lite)
 - `features.web.tools.enable` (aria2, yt‑dlp, misc tools)
   - Default: true in full, false in lite
-- `features.web.floorp.enable` (Floorp browser)
-  - Default: true in full, false in lite
-- `features.web.zen.enable` (Zen browser)
-  - Default: true
-  - Note: profile migrated manually to `~/.config/zen/`; symlink `~/.zen` created via systemd tmpfiles
+- `features.web.vivaldi.enable` (Vivaldi browser)
+  - Default: false
+  - Installs `pkgs.vivaldi` with Wayland flags via `--ozone-platform-hint=wayland`
+  - Extensions force‑installed via Chromium managed policies: uBlock Origin, AdBlock, Dark Reader,
+    Stylus, LanguageTool, Keepa
+  - Chromium policies applied: disabled password manager, blocked notifications, no metrics,
+    standard safe browsing, disabled search suggestions, no sync, home button shown
 - `features.web.chat.enable` (Telegram chat client)
   - Default: true
   - Installs `telegram-desktop` and `tdl`, pulls in webkitgtk
-- `features.web.prefs.fastfox.enable` (FastFox‑like Mozilla prefs)
-  - Default: true in full, false in lite
-  - Summary: increases parallelism, enables site isolation (Fission), lazy tab restore, forces
-    WebRender, disables inline PDF.
-  - Caveats: higher memory usage, possible AMO/RFP interaction, inline PDF disabled.
 - `features.web.default` (default browser)
-  - Type: one of `"floorp" | "firefox" | "librewolf" | "zen" | "chrome" | "brave" | "vivaldi" | "edge"`
-  - Default: `"floorp"`
+  - Type: one of `"vivaldi" | "chrome" | "brave" | "edge"`
+  - Default: `null` (no default set)
   - Selected browser record is exposed at `config.lib.neg.web.defaultBrowser` with fields
     `{ name, pkg, bin, desktop, newTabArg }`.
   - The full table is available as `config.lib.neg.web.browsers`.
-
-Notes
-
-
-  See `flake.nix` and usage in `modules/user/web/browsing.nix`.
-- Floorp profile and prefs live in `modules/user/web/floorp.nix`.
-
-Mozilla browsers
-
-- Firefox, LibreWolf and Floorp share a unified constructor in
-  `modules/user/web/mozilla-common-lib.nix`:
-  - Signature:
-
-    ```nix
-    mkBrowser {
-      name,
-      package,
-      profileId ? "default",
-      settingsExtra ? {},
-      defaults ? {},
-      addonsExtra ? [],
-      nativeMessagingExtra ? [],
-      policiesExtra ? {},
-      profileExtra ? {},
-      userChromeExtra ? "",
-      bottomNavbar ? true,
-    }
-    ```
-
-  - Browser modules call this to produce their `programs.<name>` blocks, avoiding duplication.
-
-  - Use the `*Extra` fields to extend settings/policies/addons per browser.
-
-  - `bottomNavbar` toggles optional CSS that moves the navigation bar to the bottom. Defaults to
-    `true`; Floorp overrides it to `false`.
 
 ## Audio Stack (`modules/media/audio`)
 

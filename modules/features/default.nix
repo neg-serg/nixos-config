@@ -41,7 +41,6 @@ with lib;
       features = {
         web = {
           tools.enable = mkDefault false;
-          prefs.fastfox.enable = mkDefault false;
         };
         gui.qt.enable = mkDefault false;
         fun.enable = mkDefault false;
@@ -54,7 +53,6 @@ with lib;
       # Parent off must force-disable children to avoid priority conflicts
       features.web = {
         tools.enable = mkForce false;
-        prefs.fastfox.enable = mkForce false;
       };
     })
     # When a parent feature is disabled, force-disable children to avoid priority conflicts

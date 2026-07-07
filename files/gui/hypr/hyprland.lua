@@ -32,7 +32,7 @@ local blur_vibrancy          = 0.1696
 -- NOTE: in Lua strings "\\." == regex "\." (a literal dot)
 -- ---------------------------------------------------------------------
 local m = {
-  browser            = "^(floorp|one\\.ablaze\\.floorp|floorpdeveloperedition|zen-beta|zen|zen-browser|Zen)$",
+  browser            = "^(vivaldi-stable|vivaldi)$",
   file_dialog        = "^(Open File|Select a File|Choose wallpaper|Open Folder|Save As|Library|File Upload)(.*)$",
   pip                = "^([Pp]icture[-\\s]?[Ii]n[-\\s]?[Pp]icture)(.*)$",
   telegram_wrapped   = "^(.telegram-desktop-wrapped)$",
@@ -54,7 +54,7 @@ local m = {
 -- Workspace routing classes (from classes.conf)
 local cls = {
   term        = "^(term)$",
-  web         = "^(floorp|one\\.ablaze\\.floorp|floorpdeveloperedition|zen-beta|zen|zen-browser|Zen)$",
+  web         = "^(vivaldi-stable|vivaldi)$",
   dev         = "^(nwim)$",
   games       = "^(steam|Steam)$",
   doc         = "^(org.pwmt.zathura)$",
