@@ -11,9 +11,10 @@ let
   fixTinycc = importOv ./overlays/fix-tinycc.nix;
   aurPorted = import ./overlays/aur-ported.nix final finalPrev;
   disableChecks = import ./overlays/disable-checks.nix inputs final finalPrev;
+  ca = importOv ./overlays/ca.nix;
 in
 # Standard overlay pattern: merge top-level attributes
-(functions // tools // media // dev // gui // fonts // fixTinycc // aurPorted // disableChecks)
+(functions // tools // media // dev // gui // fonts // fixTinycc // aurPorted // disableChecks // ca)
 // {
   # Override opencode to build from flake input source (latest git)
   opencode =
