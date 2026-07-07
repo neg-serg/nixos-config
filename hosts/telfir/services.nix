@@ -257,7 +257,6 @@ lib.mkMerge [
 
     # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
     environment.systemPackages = lib.mkAfter [
-      pkgs.winboat # Windows VM support
       pkgs.openrgb # per-device RGB controller UI
       (pkgs.writeShellScriptBin "cpu-boost" (
         builtins.readFile (inputs.self + "/scripts/hw/cpu-boost.sh")
