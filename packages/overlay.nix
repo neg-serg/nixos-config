@@ -27,6 +27,11 @@ in
           outputHashAlgo = "sha256";
           outputHashMode = "recursive";
         });
+        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.uv ];
+        postFixup = ''
+          wrapProgram $out/bin/opencode \
+            --prefix PATH : ${final.lib.makeBinPath [ final.uv ]}
+        '';
       });
 
   # Agent multiplexer for AI coding agents (herdr)
