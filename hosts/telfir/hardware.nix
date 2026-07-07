@@ -2,21 +2,8 @@
   pkgs,
   lib,
   config,
-  inputs,
   ...
 }:
-let
-  grubFont = derivation {
-    name = "iosevka-36.pf2";
-    system = pkgs.stdenv.hostPlatform.system;
-    builder = "${pkgs.bash}/bin/bash";
-    args = [
-      "-c"
-      "${pkgs.grub2}/bin/grub-mkfont -s 36 -o \"\$out\" \"\$FONT\""
-    ];
-    FONT = "${inputs.iosevka-neg.packages.x86_64-linux.nerd-font}/share/fonts/truetype/IosevkaNerdFont-Regular.ttf";
-  };
-in
 {
   # Hardware and performance tuning specific to host 'telfir'
   hardware = {
@@ -81,7 +68,7 @@ in
       "acpi_osi=!" # Fix ACPI compatibility on ASUS boards
       "acpi_osi=Linux" # Report Linux-compatible ACPI interface
       # video=3840x2160@240 removed: simpledrm rejects custom modelines, causes "User-defined mode not supported"
-      # GRUB gfxmodeEfi = "3840x2160" covers the bootloader resolution instead
+      # Limine resolution = "3840x2160" covers the bootloader resolution instead
       "lru_gen=1" # Enable multi-gen LRU page reclaim
       "lru_gen.min_ttl_ms=1000" # Min TTL for multi-gen LRU
       "mem_sleep_default=deep" # Prefer deep sleep (S3) for suspend
@@ -129,18 +116,25 @@ in
 
     loader = {
       timeout = 2; # seconds
-      grub = {
+      limine = {
         enable = true;
-        device = "nodev"; # EFI only
-        efiSupport = true;
-        gfxmodeEfi = "3840x2160";
-        gfxpayloadEfi = "keep";
-        splashImage = ../../files/grub-splash.jpg;
-        font = grubFont;
-        backgroundColor = "#000000";
+        resolution = "3840x2160";
+        enableEditor = true;
+        style = {
+          interface = {
+            branding = "NixOS";
+            brandingColor = "00D9FF";
+            # Match autoboot countdown colour to the branding accent
+            helpColor = "00AAAA";
+            helpColorBright = "55FF55";
+          };
+          wallpapers = [ ../../files/grub-splash.jpg ];
+          wallpaperStyle = "stretched";
+          backdrop = "000000";
+        };
         extraConfig = ''
-          set menu_color_normal=white/black
-          set menu_color_highlight=black/white
+          # Show boot entries
+          DEFAULT_ENTRY=1
         '';
       };
     };

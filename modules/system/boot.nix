@@ -1,6 +1,6 @@
 ##
 # Module: system/boot
-# Purpose: Bootloader (EFI, GRUB), initrd modules.
+# Purpose: Bootloader (Limine/EFI), initrd modules.
 # Key options: none (uses config.boot.* directly).
 # Dependencies: pkgs (efibootmgr/efivar/os-prober/sbctl).
 {
@@ -16,13 +16,9 @@
   boot = {
     loader = {
       efi.canTouchEfiVariables = true;
-      grub = {
-        enable = lib.mkDefault false;
-        device = lib.mkDefault "nodev"; # EFI only
-        efiSupport = lib.mkDefault true;
-      };
-      # Skip boot menu unless a key is pressed; speeds up loader phase
-      timeout = lib.mkDefault 0;
+      # Limine is the primary bootloader (enabled in host hardware.nix)
+      # GRUB and systemd-boot remain available as mkDefault=false fallbacks
+      timeout = lib.mkDefault 0; # Skip boot menu unless key pressed; speeds up loader phase
     };
     # Boot-specific options only; no activation scripts touching /boot
     initrd = lib.mkMerge [
