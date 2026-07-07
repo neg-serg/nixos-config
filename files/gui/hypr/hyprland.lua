@@ -98,8 +98,6 @@ hl.env("SDL_VIDEODRIVER", "wayland,x11")
 hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 hl.env("QT_STYLE_OVERRIDE", "kvantum")
 hl.env("QT_XDG_DESKTOP_PORTAL", "1")
-hl.env("GTK_USE_PORTAL", "1")
-hl.env("GTK_THEME", "@gtkTheme@")
 hl.env("XCURSOR_THEME", "Alkano-aio")
 
 -- ---------------------------------------------------------------------
@@ -498,7 +496,6 @@ end
 
 -- blur with per-namespace ignore_alpha
 local blur_layers = {
-  { ns = "gtk-layer-shell", ia = 0 },
   { ns = "vicinae",         ia = 0.6 },
   { ns = "launcher",        ia = 0.5 },
   { ns = "notifications",   ia = 0.69 },
@@ -537,8 +534,8 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("wl-clip-persist --clipboard regular")
   hl.exec_cmd("zsh -c 'pkill \"wl-paste --watch cliphist store\"; wl-paste --watch cliphist store'")
   hl.exec_cmd("systemctl --user start --no-block vicinae.service")
-  hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL GTK_THEME QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
-  hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL GTK_THEME QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
+  hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
+  hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
 end)
 
 -- Keep the primary monitor as the home for all workspaces
