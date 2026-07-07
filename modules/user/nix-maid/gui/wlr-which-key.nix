@@ -54,8 +54,8 @@ in
             title: Steam
           - mod: SUPER
             key: o
-            command: raise --match 'class:regex=^(org.pwmt.zathura)$' --launch zathura
-            title: Zathura
+                command: raise --match 'class:regex=^sioyek$' --launch sioyek
+                title: Sioyek
 
           - mod: SUPER
             key: s

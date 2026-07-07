@@ -394,7 +394,7 @@ lib.mkMerge [
         # nginx is enabled in modules/system/filesystems.nix as a local
         # Nix cache proxy on 127.0.0.1:3210 — no port conflict with Caddy.
 
-        # GVFS disabled — was pulling GTK; enable if Nemo needs MTP/SMB
+        # GVFS disabled — pulls GTK; re-enable if file manager needs MTP/SMB
         # gvfs.enable = true;
 
         # Resilio Sync (interactive Web UI, auth via SOPS)
