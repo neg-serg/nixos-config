@@ -101,4 +101,13 @@ in
       }
     );
 
+  # Flatpak: drop gtk3 from buildInputs — upstream meson.build doesn't require it.
+  # Note: postInstall still wraps gtk-icon-cache.trigger with gtk3; the reference
+  # may persist in the closure but this is negligible (~10MB) vs what was removed.
+  flatpak = finalPrev.flatpak.overrideAttrs (old: {
+    buildInputs = builtins.filter
+      (pkg: (pkg.pname or "") != "gtk3")
+      (old.buildInputs or [ ]);
+  });
+
 }
