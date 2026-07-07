@@ -46,7 +46,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     if env is None:
                         raise RuntimeError("No Hyprland socket found")
                     subprocess.run(
-                        ["hyprctl", "dispatch", 'hl.dsp.send_shortcut({mods="CTRL",key="L"})'],
+                        ["hyprctl", "dispatch", 'hl.dsp.send_shortcut({mods="CTRL",key="T"})'],
                         env=env,
                         check=True,
                     )
