@@ -17,5 +17,6 @@ mkIf (builtins.elem "desktop" (config.features.profiles or [ ])) {
     };
     emulators.retroarch.full = mkDefault true;
     dev.ai.enable = mkDefault true;
+    gui.vicinae.enable = mkDefault true;
   };
 }

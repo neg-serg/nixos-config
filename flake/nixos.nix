@@ -48,6 +48,7 @@ let
     "shell"
     "system"
     "hardware"
+    "monitoring"
     "flake-preflight"
     "diff-closures"
   ];
@@ -67,7 +68,6 @@ let
   # Server: lite + service management + monitoring. Headless server profile.
   serverDomains = basicDomains ++ [
     "servers"
-    "monitoring"
   ];
 
   # Full desktop: everything imported (current default).
@@ -81,7 +81,6 @@ let
     "llm"
     "media"
     "servers"
-    "monitoring"
     "torrent"
     "user"
     "web"

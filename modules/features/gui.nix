@@ -23,7 +23,7 @@ with lib;
     noctalia.enable = mkBool "enable Noctalia Wayland shell (bar/panel)" false;
     hdr.enable = mkBool "enable HDR support (env vars for DXVK, Gamescope, Wine)" false;
     vicinae = {
-      enable = mkBool "enable Vicinae (Wayland app runner + window switcher)" true;
+      enable = mkBool "enable Vicinae (Wayland app runner + window switcher)" false;
       manageConfig = mkBool "let Nix manage vicinae theme/settings (disable for interactive config)" false;
     };
     gtkTheme = lib.mkOption {
