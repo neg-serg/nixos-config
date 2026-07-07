@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""List Hyprland windows in a multi-column rofi picker."""
+"""List Hyprland windows in a vicinae dmenu picker."""
 
 from __future__ import annotations
 
@@ -189,7 +189,7 @@ def build_entries() -> tuple[list[str], dict[str, dict[str, str]]]:
     return entries, meta_by_addr
 
 
-def rofi_command(count: int) -> list[str]:
+def dmenu_cmd(count: int) -> list[str]:
     base = [
         "vicinae",
         "dmenu",
@@ -204,15 +204,15 @@ def rofi_command(count: int) -> list[str]:
     return base
 
 
-def run_rofi(entries: list[str]) -> tuple[int, str]:
+def run_dmenu(entries: list[str]) -> tuple[int, str]:
     input_data = "\n".join(entries) + "\n"
-    rofi = subprocess.run(
-        rofi_command(len(entries)),
+    proc = subprocess.run(
+        dmenu_cmd(len(entries)),
         input=input_data,
         capture_output=True,
         text=True,
     )
-    return rofi.returncode, rofi.stdout.strip()
+    return proc.returncode, proc.stdout.strip()
 
 
 def strip_hidden(text: str) -> str:
@@ -224,7 +224,7 @@ def main() -> int:
     if not entries:
         return 0
 
-    code, selection = run_rofi(entries)
+    code, selection = run_dmenu(entries)
     if code != 0:
         return 0
     if not selection or " — " not in selection:
@@ -234,13 +234,7 @@ def main() -> int:
     addr = addr.strip()
 
     subprocess.run(
-        [HYPRCTL, "dispatch", "focuswindow", f"address:{addr}"],
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    subprocess.run(
-        [HYPRCTL, "dispatch", "bringactivetotop"],
+        [HYPRCTL, "dispatch", f'hl.dsp.focus({{window="address:{addr}"}})'],
         check=False,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
