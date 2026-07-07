@@ -175,6 +175,10 @@ with lib;
           assertion = config.features.gui.enable || (!config.features.gui.noctalia.enable);
           message = "features.gui.noctalia.enable requires features.gui.enable = true";
         }
+        {
+          assertion = config.features.gui.enable || (!config.features.gui.vicinae.enable);
+          message = "features.gui.vicinae.enable requires features.gui.enable = true";
+        }
       ];
     }
   ];
