@@ -9,6 +9,24 @@ let
 
   cfg = config.features.dev;
   enableIac = cfg.enable && (cfg.pkgs.iac or false);
+  enableCpp = cfg.enable && (cfg.cpp.enable or false);
+
+  # ccache-aware compiler wrappers (bash scripts that exec ccache /real/gcc)
+  # Scripts — NOT symlinks — so ccache can always resolve the real compiler path.
+  ccacheGcc = pkgs.runCommand "ccache-gcc" {
+    meta.priority = 4; # higher priority than default (5), so gcc/g++/c++ wrappers win over raw gcc
+    inherit (pkgs) gcc ccache bash;
+  } ''
+    mkdir -p "$out/bin"
+    for comp in gcc g++ c++; do
+      realComp="$gcc/bin/$comp"
+      cat > "$out/bin/$comp" << WRAPPER
+  #!$bash/bin/bash -e
+  exec "$ccache/bin/ccache" "$realComp" "\$@"
+  WRAPPER
+      chmod +x "$out/bin/$comp"
+    done
+  '';
 
 in
 {
@@ -23,15 +41,25 @@ in
           pkgs.process-compose # Process orchestrator (docker-compose but for processes)
           pkgs.nix-search-tv # TUI for searching libraries on search.nixos.org
         ]
-        ++ lib.optionals enableIac [
-          # Ansible moved to separate feature (features.dev.ansible)
+        ++ lib.optionals enableIac [ ]
+        ++ lib.optionals enableCpp [
+          # C/C++ toolchain with ccache
+          ccacheGcc # ccache-wrapper for gcc/g++/c++ (higher priority via symlinkJoin)
+          pkgs.ccache # ccache CLI binary itself
+          pkgs.gcc # compiler runtime libs
+          pkgs.cmake # build system
+          pkgs.ninja # fast build tool
         ];
 
         # Environment Variables
         environment.variables = {
-          # General Dev
-          CCACHE_CONFIGPATH = "${config.users.users.neg.home}/.config/ccache.config";
-          CCACHE_DIR = "${config.users.users.neg.home}/.cache/ccache";
+          # C/C++ compilation cache
+          CCACHE_DIR = "/cache";
+          CCACHE_COMPRESS = "1";
+          CCACHE_MAXSIZE = "50G";
+          CCACHE_SLOPPINESS = "file_macro,time_macros,include_file_ctime,include_file_mtime";
+          CMAKE_C_COMPILER_LAUNCHER = "ccache";
+          CMAKE_CXX_COMPILER_LAUNCHER = "ccache";
 
           # Rust
           CARGO_HOME = "${config.users.users.neg.home}/.local/share/cargo";
