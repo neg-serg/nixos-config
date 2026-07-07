@@ -81,7 +81,6 @@
           repl $XDG_CONFIG_HOME/aspell/en.prepl;
         '';
         DSSI_PATH = makePluginPath "dssi";
-        GTK_USE_PORTAL = 1;
         HISTFILE = "$XDG_DATA_HOME/bash/history";
         INPUTRC = "$XDG_CONFIG_HOME/readline/inputrc";
         LADSPA_PATH = makePluginPath "ladspa";

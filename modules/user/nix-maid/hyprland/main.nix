@@ -8,14 +8,12 @@
 }:
 let
   guiEnabled = config.features.gui.enable or false;
-  gtkTheme = config.features.gui.gtkTheme or "Flight-Dark-GTK";
 
   environment = import ./environment.nix { inherit lib pkgs; };
   services = import ./services.nix { inherit lib pkgs inputs; };
   files = import ./files.nix { inherit lib neg; };
 
-  hyprlandLuaSrc = builtins.readFile ../../../../files/gui/hypr/hyprland.lua;
-  hyprlandLuaText = builtins.replaceStrings [ "@gtkTheme@" ] [ gtkTheme ] hyprlandLuaSrc;
+  hyprlandLuaText = builtins.readFile ../../../../files/gui/hypr/hyprland.lua;
 in
 lib.mkIf guiEnabled (
   lib.mkMerge [

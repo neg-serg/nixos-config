@@ -50,7 +50,6 @@ in
     ANDROID_USER_HOME = "${dataHome}/android";
 
     GNUPGHOME = "${dataHome}/gnupg";
-    GTK2_RC_FILES = "${configHome}/gtk-2.0/gtkrc";
     NPM_CONFIG_CACHE = "${cacheHome}/npm";
     NPM_CONFIG_INIT_MODULE = "${configHome}/npm/config/npm-init.js";
     NPM_CONFIG_TMP = "$XDG_RUNTIME_DIR/npm";
