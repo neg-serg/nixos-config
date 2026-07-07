@@ -14,7 +14,6 @@ let
     pkgs.supercollider # SuperCollider IDE and audio engine
     pkgs.supercolliderPlugins.sc3-plugins # extra SuperCollider plugins (UGens)
     # -- Session Management --
-    pkgs.carla # Audio plugin host
     pkgs.raysession # Session manager
 
     # -- Noise Processing --

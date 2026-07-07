@@ -6,6 +6,5 @@
     pkgs.exiftool # EXIF inspector for screenshot helpers
     pkgs.mpv # multimedia player
     pkgs.sox # audio swiss-army knife for CLI helpers
-    pkgs.zbar # QR/barcode scanner
   ];
 }
