@@ -16,6 +16,10 @@
         appId = "md.obsidian.Obsidian";
         origin = "flathub";
       }
+      {
+        appId = "org.telegram.desktop";
+        origin = "flathub";
+      }
     ];
     update.onActivation = true;
   };
