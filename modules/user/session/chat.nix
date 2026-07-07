@@ -10,6 +10,7 @@ let
 in
 lib.mkIf (cfg.enable or true) {
   environment.systemPackages = [
+    pkgs.neg.telegram-static # Telegram Desktop (official static binary, GTK-free)
     pkgs.tdl # Telegram CLI downloader/uploader
   ]
   ++ lib.optionals proxyEnabled [
@@ -17,7 +18,7 @@ lib.mkIf (cfg.enable or true) {
 
     (pkgs.writeShellScriptBin "telegram-desktop-proxy" ''
       exec ${pkgs.proxychains}/bin/proxychains4 -q \
-        flatpak run org.telegram.desktop "$@"
+        ${pkgs.neg.telegram-static}/bin/telegram "$@"
     '')
 
     (pkgs.makeDesktopItem {

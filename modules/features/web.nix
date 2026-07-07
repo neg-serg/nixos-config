@@ -13,7 +13,7 @@ with lib;
 
     vivaldi.enable = mkBool "enable Vivaldi browser" false;
     chat = {
-      enable = mkBool "enable Telegram chat client (installed via flatpak)" true;
+      enable = mkBool "enable Telegram chat client (static binary, GTK-free)" true;
     };
   };
 }
