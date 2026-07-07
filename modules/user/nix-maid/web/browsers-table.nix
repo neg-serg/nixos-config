@@ -3,7 +3,6 @@
   pkgs,
 
   ...
-}:
-{
+}: {
   # No browsers currently installed
 }
