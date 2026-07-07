@@ -41,7 +41,6 @@ let
     # pkgs.picard # MusicBrainz tagging GUI (removed — flaky Django test dep)
 
     # -- Recording --
-    pkgs.screenkey # show keystrokes when recording tutorials
   ];
 in
 {

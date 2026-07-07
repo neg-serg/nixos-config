@@ -12,7 +12,6 @@ in
     (lib.optionals (config.features.hardware.bluetooth.enable or false) [
       # -- Bluetooth --
       pkgs.bluez-tools # command line bluetooth manager
-      pkgs.overskride # bluetooth and obex client
       pkgs.bluetui # TUI bluetooth client
     ])
     ++ (lib.optionals wifiEnabled [
