@@ -7,8 +7,8 @@ Development tools, languages, and security research utilities.
 | Directory | Purpose | |-----------|---------| | `android/` | Android SDK and tools | |
 `benchmarks/` | System benchmarking | | `editor/` | Code editors | | `elf/` | ELF binary analysis |
 | `gcc/` | GCC toolchain | | `gdb/` | GDB debugger | | `git/` | Git configuration | | `hack/` |
-Security research (19 modules) | | `pkgs/` | Development packages
-| | `python/` | Python ecosystem | | `unreal/` | Unreal Engine |
+Security research (19 modules) | | `pkgs/` | Development packages | | `python/` | Python ecosystem |
+| `unreal/` | Unreal Engine |
 
 ## Key Submodules
 

@@ -8,74 +8,77 @@ let
   cfg = config.features.gui;
   alertmanagerWebhook = pkgs.writeShellApplication {
     name = "alertmanager-webhook";
-    runtimeInputs = [ pkgs.curl pkgs.python3 ];
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.python3
+    ];
     text = ''
-    # mpdas — Last.fm AudioScrobbler (ported from legacy Salt config)
-    # Routes via SOCKS5 proxy if available (127.0.0.1:10808)
-    mpdas = lib.mkIf (config.features.media.audio.mpd.enable or false) {
-      description = "MPD AudioScrobbler (Last.fm)";
-      after = [ "mpd.service" "network-online.target" ];
-      serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.mpdas}";
-        Environment = [
-          "ALL_PROXY=socks5h://127.0.0.1:10808"
-          "MPD_HOST=127.0.0.1"
-          "MPD_PORT=6600"
-        ];
-        Restart = "on-failure";
-        RestartSec = 10;
-      };
-      wantedBy = [ "default.target" ];
-    };
+          # mpdas — Last.fm AudioScrobbler (ported from legacy Salt config)
+          # Routes via SOCKS5 proxy if available (127.0.0.1:10808)
+          mpdas = lib.mkIf (config.features.media.audio.mpd.enable or false) {
+            description = "MPD AudioScrobbler (Last.fm)";
+            after = [ "mpd.service" "network-online.target" ];
+            serviceConfig = {
+              ExecStart = "${lib.getExe pkgs.mpdas}";
+              Environment = [
+                "ALL_PROXY=socks5h://127.0.0.1:10808"
+                "MPD_HOST=127.0.0.1"
+                "MPD_PORT=6600"
+              ];
+              Restart = "on-failure";
+              RestartSec = 10;
+            };
+            wantedBy = [ "default.target" ];
+          };
 
-    # Alertmanager Telegram webhook bridge
-      # Receives alerts from Alertmanager at 127.0.0.1:9094/alert,
-      # formats and forwards to Telegram
-      TELEGRAM_BOT_TOKEN="''${TELEGRAM_BOT_TOKEN:-}"
-      TELEGRAM_CHAT_ID="''${TELEGRAM_CHAT_ID:-}"
+          # Alertmanager Telegram webhook bridge
+            # Receives alerts from Alertmanager at 127.0.0.1:9094/alert,
+            # formats and forwards to Telegram
+            TELEGRAM_BOT_TOKEN="''${TELEGRAM_BOT_TOKEN:-}"
+            TELEGRAM_CHAT_ID="''${TELEGRAM_CHAT_ID:-}"
 
-      if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-        echo "Error: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set"
-        exit 1
-      fi
+            if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+              echo "Error: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set"
+              exit 1
+            fi
 
-      exec python3 -c '
-import os, json, sys
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.request import urlopen, Request
+            exec python3 -c '
+      import os, json, sys
+      from http.server import HTTPServer, BaseHTTPRequestHandler
+      from urllib.request import urlopen, Request
 
-TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+      TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+      CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
-class Handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        length = int(self.headers.get("Content-Length", 0))
-        body = self.rfile.read(length)
-        data = json.loads(body)
-        for alert in data.get("alerts", []):
-            status = alert.get("status", "UNKNOWN").upper()
-            labels = alert.get("labels", {})
-            annotations = alert.get("annotations", {})
-            name = labels.get("alertname", "Unknown")
-            severity = labels.get("severity", "unknown")
-            summary = annotations.get("summary", "No summary")
-            msg = f"[{status}] [{severity}] {name}: {summary}"
-            if TOKEN and CHAT_ID:
-                req = Request(
-                    f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-                    data=f"chat_id={CHAT_ID}&text={msg}".encode(),
-                    headers={"Content-Type": "application/x-www-form-urlencoded"}
-                )
-                urlopen(req)
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"OK")
+      class Handler(BaseHTTPRequestHandler):
+          def do_POST(self):
+              length = int(self.headers.get("Content-Length", 0))
+              body = self.rfile.read(length)
+              data = json.loads(body)
+              for alert in data.get("alerts", []):
+                  status = alert.get("status", "UNKNOWN").upper()
+                  labels = alert.get("labels", {})
+                  annotations = alert.get("annotations", {})
+                  name = labels.get("alertname", "Unknown")
+                  severity = labels.get("severity", "unknown")
+                  summary = annotations.get("summary", "No summary")
+                  msg = f"[{status}] [{severity}] {name}: {summary}"
+                  if TOKEN and CHAT_ID:
+                      req = Request(
+                          f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+                          data=f"chat_id={CHAT_ID}&text={msg}".encode(),
+                          headers={"Content-Type": "application/x-www-form-urlencoded"}
+                      )
+                      urlopen(req)
+              self.send_response(200)
+              self.end_headers()
+              self.wfile.write(b"OK")
 
-    def log_message(self, format, *args):
-        pass
+          def log_message(self, format, *args):
+              pass
 
-HTTPServer(("127.0.0.1", 9094), Handler).serve_forever()
-'
+      HTTPServer(("127.0.0.1", 9094), Handler).serve_forever()
+      '
     '';
   };
 in
@@ -86,7 +89,10 @@ lib.mkIf (cfg.enable or false) {
     # Pic dirs notifier
     "pic-dirs" = {
       description = "Pic dirs notification";
-      path = [ pkgs.inotify-tools pkgs.zoxide ];
+      path = [
+        pkgs.inotify-tools
+        pkgs.zoxide
+      ];
       serviceConfig = {
         ExecStart = "%h/.local/bin/pic-dirs-list";
         PassEnvironment = [

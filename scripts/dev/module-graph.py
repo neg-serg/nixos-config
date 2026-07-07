@@ -29,30 +29,30 @@ def parse_imports(nix_file):
     """Extract all import paths from a Nix file."""
     text = nix_file.read_text()
     imports = []
-    
+
     # Match: ./some/path
     for m in re.finditer(r'\./([^\s"\']+)', text):
         path_str = m.group(1).strip()
         # Normalize: remove trailing quotes, comments
-        path_str = re.sub(r'["\';,].*$', '', path_str).strip()
+        path_str = re.sub(r'["\';,].*$', "", path_str).strip()
         if path_str:
             imports.append(path_str)
-    
+
     # Match: ./some/path/default.nix (already includes .nix)
     # Match: ./some/path (without .nix — could be a directory)
-    return [p for p in imports if p != '.']
+    return [p for p in imports if p != "."]
 
 
 def resolve_import(base_dir, import_path):
     """Resolve a relative import path to an actual file."""
-    if import_path.endswith('.nix'):
+    if import_path.endswith(".nix"):
         return (base_dir / import_path).resolve()
     else:
         # Could be a directory with default.nix
         dir_path = base_dir / import_path
         if dir_path.is_dir():
             return dir_path / "default.nix"
-        f = dir_path.with_suffix('.nix')
+        f = dir_path.with_suffix(".nix")
         if f.exists():
             return f
         return dir_path
@@ -72,21 +72,21 @@ def build_import_graph(flat_nix):
     graph = {}  # file -> [dependencies]
     visited = set()
     queue = [flat_nix.resolve()]
-    
+
     while queue:
         current = queue.pop(0)
         if current in visited:
             continue
         visited.add(current)
-        
+
         if not current.exists():
             continue
-        
+
         try:
             deps = parse_imports(current)
         except Exception:
             continue
-        
+
         resolved_deps = []
         for dep in deps:
             resolved = resolve_import(current.parent, dep)
@@ -94,9 +94,9 @@ def build_import_graph(flat_nix):
                 resolved_deps.append(str(resolved))
                 if resolved not in visited and resolved not in queue:
                     queue.append(resolved)
-        
+
         graph[str(current)] = resolved_deps
-    
+
     return graph, visited
 
 
@@ -104,77 +104,77 @@ def detect_orphans(all_files, imported_files):
     """Find .nix files that are NOT imported by anything."""
     imported_set = set(str(p) for p in imported_files)
     orphans = []
-    
+
     for rel_path, abs_path in all_files.items():
         # Skip files that are explicitly imported
         if str(abs_path) in imported_set:
             continue
-        
+
         # Skip flat.nix itself and the top-level default.nix (deleted now but handle missing)
         basename = abs_path.name
         if rel_path == "modules/flat.nix":
             continue
         if basename == "README.md":
             continue
-            
+
         # Some files might be data, not modules
         # Check if they're referenced implicitly
         orphans.append(rel_path)
-    
+
     return orphans
 
 
 def domain_from_path(rel_path):
     """Extract domain/category from path."""
-    parts = rel_path.split('/')
+    parts = rel_path.split("/")
     if len(parts) >= 2:
         return parts[1]  # e.g., 'cli', 'gui', 'system'
-    return 'root'
+    return "root"
 
 
 def color_for_domain(domain):
     """Assign a color to each domain."""
     colors = {
-        'cli': '#4A90D9',
-        'dev': '#7B61FF',
-        'system': '#E8634A',
-        'gui': '#2ECC71',
-        'features': '#F39C12',
-        'hardware': '#1ABC9C',
-        'media': '#E91E63',
-        'security': '#34495E',
-        'user': '#8E44AD',
-        'servers': '#2980B9',
-        'web': '#16A085',
-        'shell': '#95A5A6',
-        'core': '#F1C40F',
-        'profiles': '#E67E22',
-        'games': '#FF6B6B',
-        'monitoring': '#636E72',
-        'fun': '#FD79A8',
-        'tools': '#00B894',
-        'nix': '#0984E3',
-        'text': '#6C5CE7',
-        'torrent': '#00CEC9',
-        'db': '#A29BFE',
-        'emulators': '#FDCB6E',
-        'appimage': '#E17055',
-        'llm': '#D63031',
-        'documentation': '#74B9FF',
-        'fonts': '#55EFC4',
-        'finance': '#FFEAA7',
-        'secrets': '#B2BEC3',
-        'roles': '#DFE6E9',
-        'root': '#636E72',
+        "cli": "#4A90D9",
+        "dev": "#7B61FF",
+        "system": "#E8634A",
+        "gui": "#2ECC71",
+        "features": "#F39C12",
+        "hardware": "#1ABC9C",
+        "media": "#E91E63",
+        "security": "#34495E",
+        "user": "#8E44AD",
+        "servers": "#2980B9",
+        "web": "#16A085",
+        "shell": "#95A5A6",
+        "core": "#F1C40F",
+        "profiles": "#E67E22",
+        "games": "#FF6B6B",
+        "monitoring": "#636E72",
+        "fun": "#FD79A8",
+        "tools": "#00B894",
+        "nix": "#0984E3",
+        "text": "#6C5CE7",
+        "torrent": "#00CEC9",
+        "db": "#A29BFE",
+        "emulators": "#FDCB6E",
+        "appimage": "#E17055",
+        "llm": "#D63031",
+        "documentation": "#74B9FF",
+        "fonts": "#55EFC4",
+        "finance": "#FFEAA7",
+        "secrets": "#B2BEC3",
+        "roles": "#DFE6E9",
+        "root": "#636E72",
     }
-    return colors.get(domain, '#636E72')
+    return colors.get(domain, "#636E72")
 
 
 def generate_html(graph, all_files, orphans):
     """Generate interactive HTML with mermaid.js."""
     # Build mermaid graph
     mermaid_lines = ["graph TD"]
-    
+
     # Node IDs — use short hashes
     node_id_map = {}
     for i, (f, _) in enumerate(sorted(graph.items())):
@@ -184,19 +184,19 @@ def generate_html(graph, all_files, orphans):
         color = color_for_domain(domain)
         name = str(rel)
         node_id_map[f] = short
-        mermaid_lines.append(
-            f'    {short}["{name}"]'
-        )
-    
+        mermaid_lines.append(f'    {short}["{name}"]')
+
     # Edges
     for source, deps in graph.items():
         if source in node_id_map:
             for dep in deps:
                 if dep in node_id_map:
-                    mermaid_lines.append(f'    {node_id_map[source]} --> {node_id_map[dep]}')
-    
+                    mermaid_lines.append(
+                        f"    {node_id_map[source]} --> {node_id_map[dep]}"
+                    )
+
     mermaid_code = "\n".join(mermaid_lines)
-    
+
     # Orphans section
     orphans_html = ""
     if orphans:
@@ -204,29 +204,31 @@ def generate_html(graph, all_files, orphans):
         for o in orphans:
             d = domain_from_path(o)
             orphans_by_domain[d].append(o)
-        
+
         for domain, files in sorted(orphans_by_domain.items()):
             file_list = "\n".join(
                 f'<li><code>{f}</code> <span class="badge">{domain}</span></li>'
                 for f in sorted(files)
             )
-            orphans_html += f"<h3>{domain} ({len(files)})</h3><ul>{file_list}</ul>"
+            orphans_html += (
+                f"<h3>{domain} ({len(files)})</h3><ul>{file_list}</ul>"
+            )
     else:
         orphans_html = "<p class='clean'>✅ No orphan modules found.</p>"
-    
+
     # Stats
     domains = defaultdict(int)
     for f in graph:
         rel = Path(f).relative_to(REPO_ROOT)
         d = domain_from_path(str(rel))
         domains[d] += 1
-    
+
     stats_rows = "".join(
         f'<tr><td>{d}</td><td style="color:{color_for_domain(d)}">{c}</td></tr>'
         for d, c in sorted(domains.items(), key=lambda x: -x[1])
     )
-    
-    html = f'''<!DOCTYPE html>
+
+    html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -346,34 +348,36 @@ function resetZoom() {{
 }}
 </script>
 </body>
-</html>'''
-    
+</html>"""
+
     OUTPUT_HTML.write_text(html)
     print(f"✅ Module graph written to {OUTPUT_HTML}")
-    print(f"   Modules: {len(graph)}, Orphans: {len(orphans)}, Edges: {sum(len(d) for d in graph.values())}")
+    print(
+        f"   Modules: {len(graph)}, Orphans: {len(orphans)}, Edges: {sum(len(d) for d in graph.values())}"
+    )
 
 
 def main():
     if not FLAT_NIX.exists():
         print(f"❌ Not a NixOS config repo: {FLAT_NIX} not found")
         sys.exit(1)
-    
+
     print("🔍 Parsing module imports...")
     graph, imported = build_import_graph(FLAT_NIX)
-    
+
     print(f"   {len(graph)} modules imported from flat.nix")
-    
+
     print("🔍 Collecting all .nix files...")
     all_files = collect_all_nix_files()
     print(f"   {len(all_files)} .nix files under modules/")
-    
+
     print("🔍 Detecting orphan modules...")
     orphans = detect_orphans(all_files, imported)
     print(f"   {len(orphans)} orphan files found")
-    
+
     print("📊 Generating HTML report...")
     generate_html(graph, all_files, orphans)
-    
+
     print(f"✅ Done! Open file://{OUTPUT_HTML} in your browser.")
 
 

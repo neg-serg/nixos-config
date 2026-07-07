@@ -10,10 +10,14 @@
 
   system.preserveFlake = false;
   # Composable profiles: order matters, last wins on conflicts
-  features.profiles = [ "desktop" "dev" "gaming" ];
+  features.profiles = [
+    "desktop"
+    "dev"
+    "gaming"
+  ];
 
   # Host-specific overrides (above profile defaults)
-  features.apps.obsidian.enable = true;
+  # Obsidian installed via Flatpak (to avoid Electron in Nix closure)
   features.mail.vdirsyncer.enable = false;
   features.hardware.bluetooth.enable = true;
   features.net.proxy.enable = true;

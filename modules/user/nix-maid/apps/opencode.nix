@@ -14,9 +14,10 @@ let
 
   deepseekSecretPath = "/run/secrets/deepseek-api";
   deepseekApiKey =
-    if builtins.pathExists deepseekSecretPath
-    then lib.strings.removeSuffix "\n" (builtins.readFile deepseekSecretPath)
-    else "{env:DEEPSEEK_API_KEY}";
+    if builtins.pathExists deepseekSecretPath then
+      lib.strings.removeSuffix "\n" (builtins.readFile deepseekSecretPath)
+    else
+      "{env:DEEPSEEK_API_KEY}";
   opencodeConfig = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
     model = "deepseek/deepseek-v4-flash";
@@ -39,10 +40,18 @@ let
               reasoningEffort = "high";
             };
             variants = {
-              none = { reasoningEffort = "none"; };
-              low = { reasoningEffort = "low"; };
-              medium = { reasoningEffort = "medium"; };
-              high = { reasoningEffort = "high"; };
+              none = {
+                reasoningEffort = "none";
+              };
+              low = {
+                reasoningEffort = "low";
+              };
+              medium = {
+                reasoningEffort = "medium";
+              };
+              high = {
+                reasoningEffort = "high";
+              };
             };
           };
         };
@@ -68,24 +77,26 @@ lib.mkIf enable (
       ".config/opencode/opencode.json".text = opencodeConfig;
     })
     {
-      systemd.user.services.opencode-daemon = let
-        opencodeServe = pkgs.writeShellScript "opencode-serve" ''
-          export DEEPSEEK_API_KEY="$(${pkgs.coreutils}/bin/cat /run/secrets/deepseek-api 2>/dev/null || true)"
-          export GITHUB_TOKEN="$(${pkgs.coreutils}/bin/cat /run/secrets/github-token 2>/dev/null || true)"
-          exec ${pkgs.opencode}/bin/opencode serve
-        '';
-      in {
-        description = "OpenCode AI coding agent daemon";
-        after = [ "network.target" ];
-        wantedBy = [ "default.target" ];
-        serviceConfig = {
-          Type = "simple";
-          Restart = "on-failure";
-          RestartSec = 10;
-          ExecStart = "${opencodeServe}";
-          Environment = "HOME=%h";
+      systemd.user.services.opencode-daemon =
+        let
+          opencodeServe = pkgs.writeShellScript "opencode-serve" ''
+            export DEEPSEEK_API_KEY="$(${pkgs.coreutils}/bin/cat /run/secrets/deepseek-api 2>/dev/null || true)"
+            export GITHUB_TOKEN="$(${pkgs.coreutils}/bin/cat /run/secrets/github-token 2>/dev/null || true)"
+            exec ${pkgs.opencode}/bin/opencode serve
+          '';
+        in
+        {
+          description = "OpenCode AI coding agent daemon";
+          after = [ "network.target" ];
+          wantedBy = [ "default.target" ];
+          serviceConfig = {
+            Type = "simple";
+            Restart = "on-failure";
+            RestartSec = 10;
+            ExecStart = "${opencodeServe}";
+            Environment = "HOME=%h";
+          };
         };
-      };
     }
   ]
 )

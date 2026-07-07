@@ -21,9 +21,15 @@ buildGoModule rec {
   vendorHash = null; # no external Go dependencies
 
   nativeBuildInputs = [ pkg-config ];
-  buildInputs = [ chafa glib ];
+  buildInputs = [
+    chafa
+    glib
+  ];
 
-  ldflags = [ "-s" "-w" ];
+  ldflags = [
+    "-s"
+    "-w"
+  ];
 
   subPackages = [ "." ];
 

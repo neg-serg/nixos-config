@@ -42,7 +42,10 @@ with lib;
       beets = {
         enable = mkBool "enable Beets music library manager" true;
         mode = lib.mkOption {
-          type = lib.types.enum [ "native" "distrobox" ];
+          type = lib.types.enum [
+            "native"
+            "distrobox"
+          ];
           default = "distrobox";
           description = "Beets runtime mode: native (Nixpkgs) or distrobox (CachyOS container)";
         };

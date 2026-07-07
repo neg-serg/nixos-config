@@ -19,15 +19,31 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.pretty import pretty
 
-DEFAULT_CONFIG_PATH = Path.home() / ".config" / "vpn-split-router" / "config.yaml"
-DEFAULT_STATE_PATH = Path.home() / ".local" / "state" / "vpn-split-router" / "state.json"
-DEFAULT_OBSERVED_PATH = (
-    Path.home() / ".local" / "state" / "vpn-split-router" / "observed-domains.txt"
+DEFAULT_CONFIG_PATH = (
+    Path.home() / ".config" / "vpn-split-router" / "config.yaml"
 )
-DEFAULT_VPN_DOMAINS_PATH = Path.home() / ".local" / "state" / "vpn-split-router" / "vpn-domains.txt"
-DEFAULT_RUNTIME_CONFIG_PATH = Path.home() / ".config" / "sing-box-tun" / "config.json"
-DEFAULT_POLICY_PATH = Path.home() / ".config" / "vpn-split-router" / "policy.yaml"
-DEFAULT_POLICY_ROLLBACK_PATH = Path.home() / ".config" / "vpn-split-router" / "policy.yaml.rollback"
+DEFAULT_STATE_PATH = (
+    Path.home() / ".local" / "state" / "vpn-split-router" / "state.json"
+)
+DEFAULT_OBSERVED_PATH = (
+    Path.home()
+    / ".local"
+    / "state"
+    / "vpn-split-router"
+    / "observed-domains.txt"
+)
+DEFAULT_VPN_DOMAINS_PATH = (
+    Path.home() / ".local" / "state" / "vpn-split-router" / "vpn-domains.txt"
+)
+DEFAULT_RUNTIME_CONFIG_PATH = (
+    Path.home() / ".config" / "sing-box-tun" / "config.json"
+)
+DEFAULT_POLICY_PATH = (
+    Path.home() / ".config" / "vpn-split-router" / "policy.yaml"
+)
+DEFAULT_POLICY_ROLLBACK_PATH = (
+    Path.home() / ".config" / "vpn-split-router" / "policy.yaml.rollback"
+)
 
 
 def now_utc() -> datetime:
@@ -71,7 +87,9 @@ def write_text_if_changed(path: Path, content: str) -> bool:
 
 
 def write_json(path: Path, payload: dict) -> bool:
-    return write_text_if_changed(path, json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    return write_text_if_changed(
+        path, json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    )
 
 
 def ensure_record(domain: str, source: str, now_value: str) -> dict:
@@ -109,21 +127,31 @@ def clear_observed_domains(path: Path) -> bool:
     return write_text_if_changed(path, "")
 
 
-def collect_candidates(config: dict, state: dict, observed: list[str], now_value: str) -> dict:
+def collect_candidates(
+    config: dict, state: dict, observed: list[str], now_value: str
+) -> dict:
     domains = state.setdefault("domains", {})
     for domain in config.get("seed_domains", []):
-        record = domains.setdefault(domain, ensure_record(domain, "seed", now_value))
+        record = domains.setdefault(
+            domain, ensure_record(domain, "seed", now_value)
+        )
         record["source"] = "seed"
         record["last_seen"] = now_value
     for domain in observed:
-        record = domains.setdefault(domain, ensure_record(domain, "observed", now_value))
+        record = domains.setdefault(
+            domain, ensure_record(domain, "observed", now_value)
+        )
         record["last_seen"] = now_value
     return state
 
 
-def prune_stale_observed_domains(state: dict, config: dict, now_value: str | None = None) -> None:
+def prune_stale_observed_domains(
+    state: dict, config: dict, now_value: str | None = None
+) -> None:
     current = parse_iso(now_value) if now_value else now_utc()
-    stale_after = config.get("settings", {}).get("observed_stale_after_seconds")
+    stale_after = config.get("settings", {}).get(
+        "observed_stale_after_seconds"
+    )
     if not stale_after:
         return
 
@@ -202,7 +230,10 @@ def resolve_vpn_outbound(payload: dict) -> str:
 
 def load_policy(path: Path) -> dict:
     if not path.exists():
-        return {"always_direct": {"domains": []}, "always_vpn": {"domains": []}}
+        return {
+            "always_direct": {"domains": []},
+            "always_vpn": {"domains": []},
+        }
     payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     payload.setdefault("always_direct", {"domains": []})
     payload.setdefault("always_vpn", {"domains": []})
@@ -228,8 +259,16 @@ def policy_sync_to_routing(
     payload = json.loads(runtime_config_path.read_text(encoding="utf-8"))
     route = payload.setdefault("route", {})
 
-    managed_tags = {"vpn-policy-direct", "vpn-policy-vpn", "vpn-split-router-managed"}
-    rules = [rule for rule in route.get("rules", []) if rule.get("tag") not in managed_tags]
+    managed_tags = {
+        "vpn-policy-direct",
+        "vpn-policy-vpn",
+        "vpn-split-router-managed",
+    }
+    rules = [
+        rule
+        for rule in route.get("rules", [])
+        if rule.get("tag") not in managed_tags
+    ]
 
     outbound_tag = resolve_vpn_outbound(payload)
 
@@ -238,7 +277,11 @@ def policy_sync_to_routing(
     if direct_domains:
         rules.insert(
             0,
-            {"tag": "vpn-policy-direct", "domain_suffix": direct_domains, "outbound": "direct"},
+            {
+                "tag": "vpn-policy-direct",
+                "domain_suffix": direct_domains,
+                "outbound": "direct",
+            },
         )
 
     # Policy always-vpn
@@ -246,7 +289,11 @@ def policy_sync_to_routing(
     if vpn_domains:
         rules.insert(
             0,
-            {"tag": "vpn-policy-vpn", "domain_suffix": vpn_domains, "outbound": outbound_tag},
+            {
+                "tag": "vpn-policy-vpn",
+                "domain_suffix": vpn_domains,
+                "outbound": outbound_tag,
+            },
         )
 
     # Probe-based managed rules
@@ -262,7 +309,8 @@ def policy_sync_to_routing(
 
     route["rules"] = rules
     return write_text_if_changed(
-        runtime_config_path, json.dumps(payload, indent=2, sort_keys=True) + "\n"
+        runtime_config_path,
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
     )
 
 
@@ -271,8 +319,16 @@ def sync_runtime_config(config_path: Path, vpn_domains: list[str]) -> bool:
         return False
     payload = json.loads(config_path.read_text(encoding="utf-8"))
     route = payload.setdefault("route", {})
-    managed_tags = {"vpn-policy-direct", "vpn-policy-vpn", "vpn-split-router-managed"}
-    rules = [rule for rule in route.get("rules", []) if rule.get("tag") not in managed_tags]
+    managed_tags = {
+        "vpn-policy-direct",
+        "vpn-policy-vpn",
+        "vpn-split-router-managed",
+    }
+    rules = [
+        rule
+        for rule in route.get("rules", [])
+        if rule.get("tag") not in managed_tags
+    ]
     if vpn_domains:
         outbound_tag = resolve_vpn_outbound(payload)
         rules.insert(
@@ -284,13 +340,17 @@ def sync_runtime_config(config_path: Path, vpn_domains: list[str]) -> bool:
             },
         )
     route["rules"] = rules
-    return write_text_if_changed(config_path, json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    return write_text_if_changed(
+        config_path, json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    )
 
 
 def probe_domain(domain: str, timeout_seconds: float) -> dict:
     started = time.perf_counter()
     try:
-        with socket.create_connection((domain, 443), timeout=timeout_seconds) as sock:
+        with socket.create_connection(
+            (domain, 443), timeout=timeout_seconds
+        ) as sock:
             context = ssl.create_default_context()
             with context.wrap_socket(sock, server_hostname=domain):
                 latency_ms = int((time.perf_counter() - started) * 1000)
@@ -300,7 +360,11 @@ def probe_domain(domain: str, timeout_seconds: float) -> dict:
     except ssl.SSLError as exc:
         return {"status": "tls_error", "latency_ms": None, "error": str(exc)}
     except OSError as exc:
-        return {"status": "connect_error", "latency_ms": None, "error": str(exc)}
+        return {
+            "status": "connect_error",
+            "latency_ms": None,
+            "error": str(exc),
+        }
 
 
 def current_vpn_domains(state: dict) -> list[str]:
@@ -328,11 +392,17 @@ def refresh_outputs(
         for domain, record in sorted(state.get("domains", {}).items())
         if record.get("source") == "observed"
     ]
-    write_text_if_changed(observed_path, "".join(f"{domain}\n" for domain in observed))
-    write_text_if_changed(vpn_domains_path, "".join(f"{domain}\n" for domain in vpn_domains))
+    write_text_if_changed(
+        observed_path, "".join(f"{domain}\n" for domain in observed)
+    )
+    write_text_if_changed(
+        vpn_domains_path, "".join(f"{domain}\n" for domain in vpn_domains)
+    )
     sync_runtime_config(runtime_config_path, vpn_domains)
     if policy_path:
-        policy_sync_to_routing(policy_path, runtime_config_path, probe_vpn_domains=vpn_domains)
+        policy_sync_to_routing(
+            policy_path, runtime_config_path, probe_vpn_domains=vpn_domains
+        )
 
 
 def command_status(args: argparse.Namespace) -> int:
@@ -341,9 +411,17 @@ def command_status(args: argparse.Namespace) -> int:
     domains = state.get("domains", {})
     payload = {
         "total": len(domains),
-        "vpn": sum(1 for record in domains.values() if record.get("route") == "vpn"),
-        "direct": sum(1 for record in domains.values() if record.get("route") == "direct"),
-        "probing": sum(1 for record in domains.values() if record.get("route") == "probing"),
+        "vpn": sum(
+            1 for record in domains.values() if record.get("route") == "vpn"
+        ),
+        "direct": sum(
+            1 for record in domains.values() if record.get("route") == "direct"
+        ),
+        "probing": sum(
+            1
+            for record in domains.values()
+            if record.get("route") == "probing"
+        ),
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0
@@ -354,7 +432,9 @@ def command_list(args: argparse.Namespace) -> int:
     expire_routes(state)
     for domain in sorted(state.get("domains", {})):
         record = state["domains"][domain]
-        print(f"{domain}\t{record.get('route', 'probing')}\t{record.get('reason', '')}")
+        print(
+            f"{domain}\t{record.get('route', 'probing')}\t{record.get('reason', '')}"
+        )
     return 0
 
 
@@ -374,7 +454,8 @@ def command_recheck(args: argparse.Namespace) -> int:
     prune_stale_observed_domains(state, config)
     for record in state["domains"].values():
         probe = probe_domain(
-            record["domain"], timeout_seconds=config["settings"]["probe_timeout_seconds"]
+            record["domain"],
+            timeout_seconds=config["settings"]["probe_timeout_seconds"],
         )
         apply_probe_result(record, config, probe)
     write_json(state_path, state)
@@ -420,7 +501,9 @@ def command_mark_vpn(args: argparse.Namespace) -> int:
         record["route"] = "vpn"
         record["reason"] = "manual_vpn"
         record["confidence"] = "high"
-        record["ttl_until"] = (now_utc() + timedelta(seconds=ttl_seconds)).isoformat()
+        record["ttl_until"] = (
+            now_utc() + timedelta(seconds=ttl_seconds)
+        ).isoformat()
     write_json(args.state, state)
     refresh_outputs(
         state,
@@ -447,7 +530,9 @@ def command_mark_direct(args: argparse.Namespace) -> int:
         record["route"] = "direct"
         record["reason"] = "manual_direct"
         record["confidence"] = "high"
-        record["ttl_until"] = (now_utc() + timedelta(seconds=ttl_seconds)).isoformat()
+        record["ttl_until"] = (
+            now_utc() + timedelta(seconds=ttl_seconds)
+        ).isoformat()
     write_json(args.state, state)
     refresh_outputs(
         state,
@@ -470,13 +555,19 @@ def command_observe(args: argparse.Namespace) -> int:
             continue
         seen.add(normalized)
         merged.append(normalized)
-    write_text_if_changed(args.observed, "".join(f"{domain}\n" for domain in merged))
+    write_text_if_changed(
+        args.observed, "".join(f"{domain}\n" for domain in merged)
+    )
     return 0
 
 
 def command_policy_show(args: argparse.Namespace) -> int:
     policy = load_policy(args.policy)
-    print(yaml.safe_dump(policy, default_flow_style=False, sort_keys=False).strip())
+    print(
+        yaml.safe_dump(
+            policy, default_flow_style=False, sort_keys=False
+        ).strip()
+    )
     return 0
 
 
@@ -521,9 +612,9 @@ def command_policy_remove(args: argparse.Namespace) -> int:
 
 def command_policy_apply(args: argparse.Namespace) -> int:
     policy = load_policy(args.policy)
-    if not policy.get("always_direct", {}).get("domains") and not policy.get("always_vpn", {}).get(
-        "domains"
-    ):
+    if not policy.get("always_direct", {}).get("domains") and not policy.get(
+        "always_vpn", {}
+    ).get("domains"):
         pretty.warn("Policy is empty, nothing to apply")
         return 1
     shutil.copy2(args.policy, args.policy_rollback)
@@ -583,10 +674,16 @@ def add_shared_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
     parser.add_argument("--state", type=Path, default=DEFAULT_STATE_PATH)
     parser.add_argument("--observed", type=Path, default=DEFAULT_OBSERVED_PATH)
-    parser.add_argument("--vpn-domains", type=Path, default=DEFAULT_VPN_DOMAINS_PATH)
-    parser.add_argument("--runtime-config", type=Path, default=DEFAULT_RUNTIME_CONFIG_PATH)
+    parser.add_argument(
+        "--vpn-domains", type=Path, default=DEFAULT_VPN_DOMAINS_PATH
+    )
+    parser.add_argument(
+        "--runtime-config", type=Path, default=DEFAULT_RUNTIME_CONFIG_PATH
+    )
     parser.add_argument("--policy", type=Path, default=DEFAULT_POLICY_PATH)
-    parser.add_argument("--policy-rollback", type=Path, default=DEFAULT_POLICY_ROLLBACK_PATH)
+    parser.add_argument(
+        "--policy-rollback", type=Path, default=DEFAULT_POLICY_ROLLBACK_PATH
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -626,7 +723,9 @@ def build_parser() -> argparse.ArgumentParser:
     observe_parser.set_defaults(func=command_observe)
 
     policy_parser = subparsers.add_parser("policy")
-    policy_sub = policy_parser.add_subparsers(dest="policy_command", required=True)
+    policy_sub = policy_parser.add_subparsers(
+        dest="policy_command", required=True
+    )
 
     show_parser = policy_sub.add_parser("show")
     add_shared_arguments(show_parser)

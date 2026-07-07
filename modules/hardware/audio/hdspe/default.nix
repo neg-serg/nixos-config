@@ -78,7 +78,6 @@ let
     exit 0
   '';
 
-
   # pw-route: switch RME AIO Pro output between an/aes/spdif/phones
   pwRouteScript = pkgs.writeScriptBin "pw-route" (builtins.readFile ./pw-route.sh);
 
@@ -119,7 +118,10 @@ in
 
   config = lib.mkIf cfg.enable {
     # Install pw-route script
-    environment.systemPackages = [ pwRouteScript pkgs.zsh ];
+    environment.systemPackages = [
+      pwRouteScript
+      pkgs.zsh
+    ];
 
     # Symlink routing.yaml for pw-route
     environment.etc."audio/routing.yaml".source = routingYaml;
@@ -127,7 +129,10 @@ in
     # System-level: initialize HDSPe hardware mixer on boot
     systemd.services."hdspe-init-mixer" = {
       description = "Initialize RME HDSPe hardware mixer levels";
-      after = [ "alsa-store.service" "sound.target" ];
+      after = [
+        "alsa-store.service"
+        "sound.target"
+      ];
       wantedBy = [ "sound.target" ];
       serviceConfig = {
         Type = "oneshot";
@@ -147,7 +152,14 @@ in
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${hdspeDefaultScript}";
-        Environment = "PATH=${lib.makeBinPath [ config.services.pipewire.package pkgs.alsa-utils pkgs.gnused pkgs.coreutils ]}";
+        Environment = "PATH=${
+          lib.makeBinPath [
+            config.services.pipewire.package
+            pkgs.alsa-utils
+            pkgs.gnused
+            pkgs.coreutils
+          ]
+        }";
       };
     };
 
@@ -165,7 +177,13 @@ in
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${pkgs.writeShellScript "pw-route-aes" ''
-          export PATH="${lib.makeBinPath [ pkgs.zsh pkgs.pipewire pkgs.gawk ]}:$PATH"
+          export PATH="${
+            lib.makeBinPath [
+              pkgs.zsh
+              pkgs.pipewire
+              pkgs.gawk
+            ]
+          }:$PATH"
           tries=60
           for i in $(seq 1 "$tries"); do
             if ${pwRouteScript}/bin/pw-route aes 2>/dev/null; then

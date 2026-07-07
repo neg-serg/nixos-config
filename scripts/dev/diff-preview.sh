@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel 2> /dev/null || pwd)"
 HOST="telfir"
 NEW_ONLY=false
 KEEP_RESULT=false
@@ -13,7 +13,7 @@ for arg in "$@"; do
   case "$arg" in
     --new-only) NEW_ONLY=true ;;
     --keep-result) KEEP_RESULT=true ;;
-    -h|--help)
+    -h | --help)
       sed -n '2,3p' "$0" | sed 's/^# *//'
       echo ""
       echo "Arguments:"
@@ -30,7 +30,7 @@ for arg in "$@"; do
   esac
 done
 
-if ! command -v nvd >/dev/null 2>&1; then
+if ! command -v nvd > /dev/null 2>&1; then
   echo "diff-preview: nvd not found. Install it or use: nix run nixpkgs#nvd"
   exit 1
 fi

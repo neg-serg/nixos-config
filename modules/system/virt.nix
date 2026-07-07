@@ -15,9 +15,11 @@ in
   };
 
   config = {
-    users.users."${mainUser}".extraGroups =
-      [ "video" "render" ]
-      ++ lib.optional (config.features.virt.docker.enable or false) "docker";
+    users.users."${mainUser}".extraGroups = [
+      "video"
+      "render"
+    ]
+    ++ lib.optional (config.features.virt.docker.enable or false) "docker";
 
     virtualisation = {
       containers.enable = true;

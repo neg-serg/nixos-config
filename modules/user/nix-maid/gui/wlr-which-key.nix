@@ -176,7 +176,7 @@ in
                 command: raise --match 'class:regex=^Carla2$' --launch carla
                 title: Carla
               - key: o
-                command: raise --match 'class:regex=^(Obsidian|md\\.obsidian\\.Obsidian)$' --launch obsidian
+                command: raise --match 'class:regex=^(Obsidian|md\\.obsidian\\.Obsidian)$' --launch 'flatpak run md.obsidian.Obsidian'
                 title: Obsidian
               - key: O
                 command: raise --match 'class:regex=^(obs|com\\.obsproject\\.Studio)$' --launch obs

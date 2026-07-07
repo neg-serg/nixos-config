@@ -21,30 +21,30 @@ lib.mkIf cfg.enable {
       RemainAfterExit = true;
     };
     script = ''
-      PW=$(cat /run/secrets/xray_proxy_password 2>/dev/null || true)
-      if [ -n "$PW" ]; then
-        cat > /run/redsocks.conf <<EOF
-base {
-    log_debug = off;
-    log_info = off;
-    daemon = off;
-    redirector = iptables;
-}
-redsocks {
-    local_ip = 127.0.0.1;
-    local_port = 12345;
-    ip = 127.0.0.1;
-    port = 10808;
-    type = socks5;
-    login = "phone";
-    password = "$PW";
-}
-EOF
-        chmod 600 /run/redsocks.conf
-      else
-        echo "transparent-proxy-env: xray_proxy_password secret not available" >&2
-        exit 1
-      fi
+            PW=$(cat /run/secrets/xray_proxy_password 2>/dev/null || true)
+            if [ -n "$PW" ]; then
+              cat > /run/redsocks.conf <<EOF
+      base {
+          log_debug = off;
+          log_info = off;
+          daemon = off;
+          redirector = iptables;
+      }
+      redsocks {
+          local_ip = 127.0.0.1;
+          local_port = 12345;
+          ip = 127.0.0.1;
+          port = 10808;
+          type = socks5;
+          login = "phone";
+          password = "$PW";
+      }
+      EOF
+              chmod 600 /run/redsocks.conf
+            else
+              echo "transparent-proxy-env: xray_proxy_password secret not available" >&2
+              exit 1
+            fi
     '';
   };
 
@@ -104,7 +104,10 @@ EOF
   # Toggle target — systemctl start/stop to enable/disable transparent proxy
   systemd.targets.transparent-proxy = {
     description = "Transparent proxy via nftables + redsocks → Xray SOCKS5";
-    after = [ "network-online.target" "xray.service" ];
+    after = [
+      "network-online.target"
+      "xray.service"
+    ];
     wants = [
       "network-online.target"
       "redsocks.service"

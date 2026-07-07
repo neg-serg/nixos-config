@@ -39,7 +39,12 @@ pyPkgs.buildPythonApplication {
 
   postFixup = ''
     wrapProgram $out/bin/talktype \
-      --prefix PATH : ${lib.makeBinPath [ xdotool xclip ]}
+      --prefix PATH : ${
+        lib.makeBinPath [
+          xdotool
+          xclip
+        ]
+      }
   '';
 
   doInstallCheck = false;

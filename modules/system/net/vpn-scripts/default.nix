@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.features.net.vpn-scripts;
@@ -31,27 +36,36 @@ let
   vpnScriptsPkg = pkgs.stdenv.mkDerivation {
     name = "vpn-scripts";
 
-    buildInputs = with pkgs; [ python3 makeWrapper ];
+    buildInputs = with pkgs; [
+      python3
+      makeWrapper
+    ];
 
     dontUnpack = true;
 
     installPhase =
       let
-        installScripts = lib.concatStringsSep "\n" (lib.mapAttrsToList (binName: fileName: ''
-          install -D -m755 ${scriptDir + "/${fileName}"} "$out/share/vpn-scripts/${fileName}"
-          patchShebangs "$out/share/vpn-scripts/${fileName}"
-          ln -sf "../share/vpn-scripts/${fileName}" "$out/bin/${binName}"
-        '') scripts);
-        fixPrettyShSources = lib.concatStringsSep "\n" (map (name: ''
-          substituteInPlace "$out/share/vpn-scripts/${scripts.${name}}" \
-            --replace-fail 'source "''${SCRIPT_DIR}/lib/pretty.sh"' \
-                           'source "$out/share/vpn-scripts/lib/pretty.sh"'
-        '') scriptsSourcingPrettySh);
-        wrapPyYamlScripts = lib.concatStringsSep "\n" (map (name: ''
-          wrapProgram "$out/bin/${name}" \
-            --prefix PYTHONPATH : "${pkgs.python3Packages.pyyaml}/${pkgs.python3.sitePackages}" \
-            --prefix PYTHONPATH : "$out/share/vpn-scripts/lib"
-        '') scriptsNeedingPyYaml);
+        installScripts = lib.concatStringsSep "\n" (
+          lib.mapAttrsToList (binName: fileName: ''
+            install -D -m755 ${scriptDir + "/${fileName}"} "$out/share/vpn-scripts/${fileName}"
+            patchShebangs "$out/share/vpn-scripts/${fileName}"
+            ln -sf "../share/vpn-scripts/${fileName}" "$out/bin/${binName}"
+          '') scripts
+        );
+        fixPrettyShSources = lib.concatStringsSep "\n" (
+          map (name: ''
+            substituteInPlace "$out/share/vpn-scripts/${scripts.${name}}" \
+              --replace-fail 'source "''${SCRIPT_DIR}/lib/pretty.sh"' \
+                             'source "$out/share/vpn-scripts/lib/pretty.sh"'
+          '') scriptsSourcingPrettySh
+        );
+        wrapPyYamlScripts = lib.concatStringsSep "\n" (
+          map (name: ''
+            wrapProgram "$out/bin/${name}" \
+              --prefix PYTHONPATH : "${pkgs.python3Packages.pyyaml}/${pkgs.python3.sitePackages}" \
+              --prefix PYTHONPATH : "$out/share/vpn-scripts/lib"
+          '') scriptsNeedingPyYaml
+        );
       in
       ''
         mkdir -p "$out/bin" "$out/share/vpn-scripts/lib"
