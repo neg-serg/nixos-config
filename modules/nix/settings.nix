@@ -47,6 +47,8 @@ in
         "pipe-operators" # |> syntax for cleaner function chains
         "ca-derivations" # content-addressed derivations: store paths identified by output hash
         "blake3-hashes" # BLAKE3: faster parallel hashing for store paths
+        "wasm-builtin" # builtins.wasm: call WebAssembly functions from Nix evaluation
+        "wasm-derivations" # system = "wasm32-wasip1": platform-independent derivations
       ];
       eval-cache = true;
       allow-import-from-derivation = false;
