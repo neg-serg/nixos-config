@@ -101,6 +101,7 @@ in
         gameScripts.gamescope-targetfps
         gameScripts.game-run
         gameScripts.game-affinity-exec
+        gameScripts.optiscaler-install
         # Desktop entries
         gamescopePerfDesktop
         gamescopeQualityDesktop
