@@ -20,7 +20,6 @@
 
   # Packages moved to modules/user/locale-pkgs.nix
 
-  location.provider = "geoclue2";
-  services.geoclue2.enable = true;
+  # Geoclue2 removed — pulls GTK, location not needed
   time.hardwareClockInLocalTime = true;
 }
