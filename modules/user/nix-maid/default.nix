@@ -33,7 +33,6 @@
     ./cli/broot.nix
     ./cli/tig.nix
     # ./cli/yazi.nix is imported via ./cli
-    ./cli/television.nix
     ./cli/envs.nix
     ./cli/emulators.nix
     ./cli/asciinema.nix
