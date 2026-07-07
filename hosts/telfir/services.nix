@@ -211,7 +211,7 @@ lib.mkMerge [
     };
     # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
 
-    monitoring = {
+    monitoring = lib.mkIf config.roles.monitoring.enable {
       netdata.enable = false; # Disable Netdata on this host
       logs.enable = false; # Disable centralized logs (Loki + Promtail) for this host
       grafana = {
@@ -498,23 +498,19 @@ lib.mkMerge [
       mode = "0400";
     };
 
-    # Games autoscale defaults for this host
-    profiles.games = {
-      autoscaleDefault = false;
-      targetFps = 240;
-      nativeBaseFps = 240;
-    };
-
     environment.variables.GAME_PIN_AUTO_LIMIT = "8"; # Limit auto-picked V-Cache CPU set size for game-run pinning
-    dev.gcc.autofdo.enable = false; # AutoFDO tooling disabled on this host (module kept)
 
     systemd = {
       # Ensure auxiliary data directories exist with correct ownership
-      tmpfiles.rules = lib.mkAfter [
-        # Resilio state / license storage (service runs as rslsync)
-        "d /zero/sync/.state 0700 rslsync rslsync - -"
-        "d /zero/sync/upload-next 0755 neg neg - -"
-      ];
+      tmpfiles.rules = lib.mkAfter (
+        [
+          "d /zero/sync/upload-next 0755 neg neg - -"
+        ]
+        ++ lib.optionals (hasResilioSecret && config.services.resilio.enable) [
+          # Resilio state / license storage (service runs as rslsync)
+          "d /zero/sync/.state 0700 rslsync rslsync - -"
+        ]
+      );
       services = {
         # Power saving by default for less heat/noise
         "power-profiles-default" = {
