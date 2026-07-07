@@ -104,7 +104,6 @@ in
       environment.systemPackages = [
         pkgs.btop # A monitor of resources (CPU, Memory, Network)
         pkgs.hwatch # Modern alternative to watch command with history
-        pkgs.s-tui # Stress terminal UI for CPU monitoring
         pkgs.sysdig # System-wide visibility tool
       ]
       ++ (lib.optionals

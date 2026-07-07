@@ -180,7 +180,6 @@ in
         # Tools needed for kitty-panel
         pkgs.btop # Resource monitor (CPU, memory, disks, network)
         pkgs.cava # Console audio visualizer
-        pkgs.peaclock # Customizable clock for terminal
         # curl — installed by modules/system/net/pkgs.nix
         pkgs.mtr # Network diagnostic tool
       ];
