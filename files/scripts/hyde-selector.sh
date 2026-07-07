@@ -3,7 +3,7 @@
 # HyDE-style Selector Script for NixOS
 # Mimics the visual behavior of HyDE's selectors
 
-ROFI_THEME="neg"
+# Rofi migration: using vicinae dmenu instead
 
 usage() {
   echo "Usage: $0 [wallpaper|theme|animation]"
@@ -19,9 +19,8 @@ case "$1" in
       WP_DIR="$HOME/Pictures/Wallpapers"
     fi
 
-    selected=$(find "$WP_DIR" -type f \( -iname "*.jpg" -o -iname "*.png" -o -iname "*.jpeg" \) | while read -r wp; do
-      echo -en "$(basename "$wp")\0icon\x1f$wp\n"
-    done | rofi -dmenu -theme "$ROFI_THEME" -p "Wallpaper")
+    selected=$(find "$WP_DIR" -type f \( -iname "*.jpg" -o -iname "*.png" -o -iname "*.jpeg" \) -printf '%f\n' | sort \
+      | vicinae dmenu -p "Wallpaper")
 
     if [ -n "$selected" ]; then
       # Assuming swww is used
@@ -57,9 +56,8 @@ case "$1" in
   animation)
     ANIM_DIR="$HOME/.config/hypr/animations"
     if [ -d "$ANIM_DIR" ]; then
-      selected=$(find "$ANIM_DIR" -maxdepth 1 -name "*.conf" ! -name "selected.conf" | sort | while read -r anim; do
-        echo -en "$(basename "$anim" .conf)\0icon\x1fvideo-display\n"
-      done | rofi -dmenu -theme "$ROFI_THEME" -p "Animation")
+      selected=$(find "$ANIM_DIR" -maxdepth 1 -name "*.conf" ! -name "selected.conf" -printf '%f\n' | sed 's/\.conf$//' | sort \
+        | vicinae dmenu -p "Animation")
 
       if [ -n "$selected" ]; then
         target="$ANIM_DIR/${selected}.conf"
@@ -78,10 +76,8 @@ case "$1" in
     # We can list available themes in ~/.config/hyde/themes or similar if they exist
     THEME_DIR="$HOME/.config/hyde/themes"
     if [ -d "$THEME_DIR" ]; then
-      selected=$(find "$THEME_DIR" -maxdepth 1 -mindepth 1 -type d | while read -r th; do
-        logo=$(find "$th" -name "logo.png" -o -name "logo.jpg" | head -n 1)
-        echo -en "$(basename "$th")\0icon\x1f${logo:-}\n"
-      done | rofi -dmenu -theme "$ROFI_THEME" -p "Theme")
+      selected=$(find "$THEME_DIR" -maxdepth 1 -mindepth 1 -type d -printf '%f\n' | sort \
+        | vicinae dmenu -p "Theme")
 
       if [ -n "$selected" ]; then
         # Handle theme switch

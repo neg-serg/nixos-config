@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
-# pl: fuzzy-pick and play videos (fzf/rofi -> mpv + vid-info)
+# pl: fuzzy-pick and play videos (fzf/vicinae dmenu -> mpv + vid-info)
 # Usage:
-#   pl [rofi|video|1st_level] [DIR]
+#   pl [rofi|vicinae|dmenu|video|1st_level] [DIR]
 #   pl cmd <playerctl-args>
 #   pl vol {mute|unmute}
 
@@ -80,7 +80,7 @@ pl_fzf() {
     (( ${#targets[@]} )) && mp "${targets[@]}"
 }
 
-pl_rofi() {
+pl_dmenu() {
     local dir="${1:-${XDG_VIDEOS_DIR:-$HOME/vid}}"
     dir="${~dir}"
     local maxd="${2:-}"
@@ -90,7 +90,7 @@ pl_rofi() {
         return 0
     fi
     if (( ${#${(f)list}[@]} > 1 )); then
-        sel=$(print -r -- "$list" | rofi -theme clip -p '⟬vid⟭ ❯>' -i -dmenu)
+        sel=$(print -r -- "$list" | vicinae dmenu -p '⟬vid⟭ ❯>')
     else
         sel="$list"
     fi
@@ -108,19 +108,18 @@ main() {
     local maxd=""
     local mode="fzf"
     local dir=""
-    if [[ "${1:-}" == "rofi" ]]; then
-        mode="rofi"; shift
+    if [[ "${1:-}" == "rofi" || "${1:-}" == "vicinae" || "${1:-}" == "dmenu" ]]; then
+        mode="dmenu"; shift
     fi
     if [[ "${1:-}" == "video" ]]; then
-        # Keep legacy rofi file-browser path
+        # Legacy rofi file-browser path replaced with fd + vicinae dmenu
         shift
-        rofi -modi file-browser-extended -show file-browser-extended \
-            -file-browser-dir "~/vid/new" -file-browser-depth 1 \
-            -file-browser-open-multi-key "kb-accept-alt" \
-            -file-browser-open-custom-key "kb-custom-11" \
-            -file-browser-hide-hidden-symbol "" \
-            -file-browser-path-sep "/" -theme clip \
-            -file-browser-cmd 'mpv --input-ipc-server=/tmp/mpvsocket --vo=gpu'
+        local dir="${1:-$HOME/vid/new}"
+        local sel
+        sel=$(fd -t f -d 1 . "$dir" 2>/dev/null | vicinae dmenu -p '⟬vid⟭ ❯>' || true)
+        [[ -z "$sel" ]] && return 0
+        print -r -- "$sel" | wl-copy || true
+        mpv --input-ipc-server=/tmp/mpvsocket --vo=gpu "$sel"
         return
     fi
     if [[ "${1:-}" == "1st_level" ]]; then
@@ -128,8 +127,8 @@ main() {
     fi
     dir="${1:-}"
     if [[ "$set_maxdepth" == true ]]; then maxd=1; fi
-    if [[ "$mode" == rofi ]]; then
-        pl_rofi "${dir:-}" "$maxd"
+    if [[ "$mode" == dmenu ]]; then
+        pl_dmenu "${dir:-}" "$maxd"
     else
         pl_fzf "${dir:-}" "$maxd"
     fi
