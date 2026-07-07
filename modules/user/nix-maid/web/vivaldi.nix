@@ -22,6 +22,7 @@ let
 
   vivaldi-pkg = pkgs.vivaldi.override {
     commandLineArgs = "--ozone-platform-hint=wayland";
+    proprietaryCodecs = true;
   };
 in
 {
