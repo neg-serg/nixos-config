@@ -18,6 +18,8 @@
 
   # Host-specific overrides (above profile defaults)
   # Obsidian installed via Flatpak (to avoid Electron in Nix closure)
+  features.web.vivaldi.enable = true;
+  features.web.default = "vivaldi";
   features.mail.vdirsyncer.enable = false;
   features.hardware.bluetooth.enable = true;
   features.net.proxy.enable = true;
