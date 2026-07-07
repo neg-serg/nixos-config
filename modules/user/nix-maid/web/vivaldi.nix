@@ -45,6 +45,14 @@ in
         "SyncDisabled" = false;
         "ShowHomeButton" = true;
         "BookmarkBarEnabled" = false;
+
+        # Default font: Iosevka everywhere (matches system-wide fontconfig default)
+        "StandardFontFamily" = "Iosevka";
+        "SerifFontFamily" = "Iosevka";
+        "SansSerifFontFamily" = "Iosevka";
+        "FixedFontFamily" = "Iosevka";
+        "DefaultFontSize" = 15;
+        "DefaultFixedFontSize" = 13;
       };
     };
   };
