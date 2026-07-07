@@ -9,7 +9,7 @@ Usage: screenshot [-r|-c|-d|-m|-o]
   -r         Rectangular selection (interactive)
   -c         Current window
   -d         Delayed shot (5s)
-  -m         Show menu (rofi)
+  -m         Show menu (vicinae dmenu)
   -o         OCR region to clipboard (tesseract)
   -h, --help Show this help
 EOF
@@ -47,7 +47,7 @@ menu() {
         "Rectangular selection" \
         "Current window" \
         "Delayed (5s)" \
-        | rofi -dmenu -theme clip -p '⟬shot⟭ ❯>' || true)
+        | vicinae dmenu -p '⟬shot⟭ ❯>' || true)
     case "$sel" in
         "Full screen") full "$@" ;;
         "Rectangular selection") select_region "$@" ;;
