@@ -11,7 +11,6 @@ let
     iosevkaFont # patched Iosevka Nerd Font for UI monospace
     pkgs.kdePackages.qtstyleplugin-kvantum # Qt6 Kvantum bridge for theme consistency
     pkgs.kora-icon-theme # sharp icon pack w/ dark + light variants
-    pkgs.libsForQt5.qtstyleplugin-kvantum # Qt5 Kvantum plugin for old apps
   ];
 in
 {
