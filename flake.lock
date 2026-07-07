@@ -1168,10 +1168,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1783402039,
+        "lastModified": 1783408969,
         "owner": "anomalyco",
         "repo": "opencode",
-        "rev": "c5fe32fbb1aaabe9521a535db4daa9f14e89cb1a",
+        "rev": "516f0266b88850309d7058251dcacc676c171263",
         "type": "github"
       },
       "original": {
@@ -1187,10 +1187,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1783401135,
+        "lastModified": 1783408969,
         "owner": "anomalyco",
         "repo": "opencode",
-        "rev": "c48b77d6f961f3573d720d3e22b971e43d907c6e",
+        "rev": "516f0266b88850309d7058251dcacc676c171263",
         "type": "github"
       },
       "original": {
@@ -1270,10 +1270,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1783212316,
+        "lastModified": 1783409646,
         "ref": "refs/heads/master",
-        "rev": "4f2c62486b0c939f7fc1f7cea68037173813dbfe",
-        "revCount": 826,
+        "rev": "ead3b00afdf603bb6d4c30fc9c9f582d8f712168",
+        "revCount": 827,
         "type": "git",
         "url": "https://git.outfoxxed.me/quickshell/quickshell"
       },
