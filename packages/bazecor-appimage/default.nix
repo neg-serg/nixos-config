@@ -1,31 +1,18 @@
 {
-  stdenv,
-  lib,
+  appimageTools,
   fetchurl,
+  lib,
 }:
 let
   version = "1.9.0";
-  pname = "bazecor-appimage";
-in
-stdenv.mkDerivation {
-  inherit pname version;
-
+  pname = "bazecor";
   src = fetchurl {
     url = "https://github.com/Dygmalab/Bazecor/releases/download/v${version}/Bazecor-${version}-x64.AppImage";
-    hash = "sha256-DAUqQf6Sku4oz3vR+bxAXfPtu2sJREbp5a6Mpj90dM0=";
+    hash = "sha256-PSzcUirHoUJtNRSHw/53f+eGK7IgU1JnRcLuArMZJ+w=";
   };
-
-  dontUnpack = true;
-
-  installPhase = ''
-    runHook preInstall
-    mkdir -p $out/bin
-    cp $src $out/bin/bazecor.appimage
-    chmod +x $out/bin/bazecor.appimage
-    # AppImage binfmt registration handles execution transparently
-    ln -s bazecor.appimage $out/bin/bazecor
-    runHook postInstall
-  '';
+in
+appimageTools.wrapType2 {
+  inherit pname version src;
 
   meta = {
     description = "Bazecor — Dygma keyboard configurator (AppImage)";
