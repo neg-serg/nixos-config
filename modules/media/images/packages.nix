@@ -42,11 +42,9 @@ let
 
     # -- QR / Barcode --
     pkgs.qrencode # generate QR codes for wallpaper/text overlays
-    pkgs.zbar # CLI barcode/QR scanner for verification
 
     # -- Viewer --
     pkgs.swayimg # primary image viewer with IPC hooks
-    pkgs.viu # terminal image preview helper for scripts
     swayimgFirst # wrapper that ensures swayimg session state
     # pkgs.resvg # SVG renderer (for rendering SVG to raster)
     # pkgs.rygel # DLNA/UPnP media server
