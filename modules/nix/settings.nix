@@ -60,8 +60,8 @@ in
       connect-timeout = 15;
       stalled-download-timeout = 120;
       http-connections = 12;
-      cores = 0; # auto — Nix detects available cores
-      max-jobs = "auto"; # auto — Nix sets max parallel jobs based on cores
+      cores = 4; # limit per-build cores to keep per-job RAM usage sane (32c/60GB)
+      max-jobs = 8; # limit parallel builds to avoid OOM (14GB ZFS ARC + 60GB total)
       min-free = 4096; # MB reserved for ZFS during builds (ARC + build pressure)
       build-poll-interval = 3; # seconds between polling for finished builds
       log-lines = 50; # lines of build output to show on failure
@@ -90,6 +90,12 @@ in
     };
     registry.nixpkgs.flake = inputs.nixpkgs;
     daemonCPUSchedPolicy = "batch";
+  };
+
+  # Memory protection: prevent OOM killer from taking down the system.
+  systemd.services.nix-daemon.serviceConfig = {
+    MemoryHigh = "45G"; # start throttling at 75% of RAM
+    MemoryMax = "52G";  # hard kill, leaves headroom for OS + ZFS ARC
   };
 
   # Determinate Nix overrides netrc-file in /etc/nix/nix.conf after including
