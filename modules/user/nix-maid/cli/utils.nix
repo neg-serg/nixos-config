@@ -14,7 +14,6 @@ lib.mkMerge [
       pkgs.aliae
       pkgs.fastfetch
       pkgs.tealdeer
-      pkgs.nodejs
     ];
 
     environment.variables = {
