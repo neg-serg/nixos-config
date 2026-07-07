@@ -10,15 +10,14 @@ let
 in
 lib.mkIf (cfg.enable or true) {
   environment.systemPackages = [
-    pkgs.telegram-desktop # Telegram Desktop messenger
-    pkgs.tdl # Telegram CLI uploader/downloader
+    pkgs.tdl # Telegram CLI downloader/uploader
   ]
   ++ lib.optionals proxyEnabled [
     pkgs.proxychains # Force any app through SOCKS5 proxy via LD_PRELOAD
 
     (pkgs.writeShellScriptBin "telegram-desktop-proxy" ''
       exec ${pkgs.proxychains}/bin/proxychains4 -q \
-        ${pkgs.telegram-desktop}/bin/telegram-desktop "$@"
+        flatpak run org.telegram.desktop "$@"
     '')
 
     (pkgs.makeDesktopItem {

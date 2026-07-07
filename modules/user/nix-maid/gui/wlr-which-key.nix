@@ -68,7 +68,7 @@ in
                 command: hyprscratch teardown 'kitty --class teardown -e btop' special
                 title: Teardown
               - key: e
-                command: hyprscratch org.telegram.desktop 'Telegram' special
+                command: hyprscratch org.telegram.desktop 'flatpak run org.telegram.desktop' special
                 title: IM
               - key: f
                 command: hyprscratch music 'kitty --class music -e rmpc' special
