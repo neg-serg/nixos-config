@@ -13,7 +13,6 @@
     ./monitoring.nix
     ./search.nix
     ./shells.nix
-    ./television.nix
     ./tig.nix
     ./utils.nix
     ./yazi.nix
