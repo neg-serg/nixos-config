@@ -51,6 +51,7 @@ in
         "wasm-derivations" # system = "wasm32-wasip1": platform-independent derivations
       ];
       eval-cache = true;
+      eval-system = "x86_64-linux"; # only evaluate for host platform, skip aarch64
       allow-import-from-derivation = false;
       trusted-users = [
         "root"
