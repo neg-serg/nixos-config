@@ -34,6 +34,7 @@ in
     ];
 
     # Chromium managed policies — Vivaldi reads from /etc/chromium/policies/managed/
+    # (Vivaldi is Chromium-based, shares the same policy infrastructure)
     programs.chromium = {
       enable = true;
       inherit extensions;
@@ -54,6 +55,20 @@ in
         "FixedFontFamily" = "Iosevka";
         "DefaultFontSize" = 15;
         "DefaultFixedFontSize" = 13;
+      };
+    };
+
+    # Vivaldi-specific managed policies (Vivaldi 8.x reads from /etc/vivaldi on some installs)
+    # Write a separate copy for Vivaldi to ensure policies are picked up.
+    environment.etc."vivaldi/policies/managed/vivaldi-fonts.json" = {
+      mode = "0444";
+      text = builtins.toJSON {
+        StandardFontFamily = "Iosevka";
+        SerifFontFamily = "Iosevka";
+        SansSerifFontFamily = "Iosevka";
+        FixedFontFamily = "Iosevka";
+        DefaultFontSize = 15;
+        DefaultFixedFontSize = 13;
       };
     };
   };
