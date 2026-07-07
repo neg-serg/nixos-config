@@ -141,10 +141,7 @@ hl.config({
   master = { new_status = "master", mfact = 0.6, orientation = "left", allow_small_split = true, smart_resizing = true },
 })
 
--- XDPH: screencopy { max_fps = 60 } stays in ~/.config/hypr/xdph.conf
--- Portal permissions (informational; managed in a trusted permissions file):
---   permission = .*/(grim|grimblast),     screencopy, allow
---   permission = .*/hyprlock,             screencopy, allow
+-- Screencopy and permissions now handled natively by Hyprland Lua API
 
 -- =====================================================================
 -- Keybindings (from bindings.conf and bindings/*)
