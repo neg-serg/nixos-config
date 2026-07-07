@@ -68,6 +68,9 @@ lib.mkMerge [
       settings.auto-optimise-store = false;
     };
 
+    # Enable Docker for distrobox (simpler deps than podman+crun+libkrun)
+    virtualisation.docker.enable = true;
+
     # Enable Docker engine for WinBoat and use real docker socket
     #     virtualisation = {
     #       docker.enable = true;
@@ -257,6 +260,7 @@ lib.mkMerge [
 
     # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
     environment.systemPackages = lib.mkAfter [
+      pkgs.distrobox # containerized distros
       pkgs.winboat # Windows VM support
       pkgs.openrgb # per-device RGB controller UI
       (pkgs.writeShellScriptBin "cpu-boost" (
