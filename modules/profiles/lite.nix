@@ -20,7 +20,6 @@ mkIf (builtins.elem "lite" (config.features.profiles or [ ])) {
     web = {
       enable = mkDefault false;
       tools.enable = mkDefault false;
-      prefs.fastfox.enable = mkDefault false;
     };
     emulators.retroarch.full = mkDefault false;
     fun.enable = mkDefault false;
