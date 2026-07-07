@@ -26,15 +26,6 @@ with lib;
       enable = mkBool "enable Vicinae (Wayland app runner + window switcher)" false;
       manageConfig = mkBool "let Nix manage vicinae theme/settings (disable for interactive config)" false;
     };
-    gtkTheme = lib.mkOption {
-      type = types.enum [
-        "Flight-Dark-GTK"
-        "Andromeda"
-      ];
-      default = "Flight-Dark-GTK";
-      description = "GTK theme to apply system-wide.";
-    };
-
     iconTheme = lib.mkOption {
       type = types.str;
       default = "kora";
