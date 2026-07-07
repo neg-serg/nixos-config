@@ -34,7 +34,6 @@ in
       fsType = "zfs";
       options = [
         "noatime"
-        "nofail"
       ];
     };
     "/boot" = {
@@ -164,7 +163,7 @@ in
     {
       device = "/mnt/zero/swapfile";
       priority = -1;
-      size = 102400;
+      size = 65536; # 64 GiB — matches system.swapfile.sizeGiB in hardware.nix
     }
   ];
 
