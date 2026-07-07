@@ -20,15 +20,18 @@ init_config() {
   done
 }
 
-die() { print -u2 -- "pw-route: $*"; exit 1; }
-need() { command -v "$1" >/dev/null 2>&1 || die "missing dependency: $1"; }
+die() {
+  print -u2 -- "pw-route: $*"
+  exit 1
+}
+need() { command -v "$1" > /dev/null 2>&1 || die "missing dependency: $1"; }
 
 usage() {
   local route_list=""
   for k in "${route_order[@]}"; do
     route_list+=$(printf '  %-8s -> AUX%s/AUX%s  (%s)\n' "$k" "${targets[$k]%% *}" "${targets[$k]##* }" "${labels[$k]}")
   done
-  cat <<EOF
+  cat << EOF
 Usage: pw-route <$(echo "${route_order[@]}" | tr ' ' '|')|toggle|current|status|list>
 
 Route active stereo PipeWire streams on the RME AIO Pro pro-audio sink:
@@ -80,7 +83,7 @@ disconnect_stream_port_links() {
   )
   for port in "${ports[@]}"; do
     [[ -n "$port" ]] || continue
-    pw-link -d "$stream_port" "$port" 2>/dev/null || true
+    pw-link -d "$stream_port" "$port" 2> /dev/null || true
   done
 }
 
@@ -100,7 +103,7 @@ route_target() {
   local target_name="$1"
   local sink_name="$2"
   local -a pair
-  pair=( ${(s: :)targets[$target_name]} )
+  pair=(${(s: :)targets[$target_name]})
   local left_monitor="$sink_name:monitor_AUX0"
   local right_monitor="$sink_name:monitor_AUX1"
   route_monitor_pair "$left_monitor" "$right_monitor" "$sink_name" "$pair[1]" "$pair[2]"
@@ -127,9 +130,9 @@ get_current_target() {
   local link_dump
   link_dump="$(pw-link -l)"
   for target_name in "${route_order[@]}"; do
-    local -a pair=( ${(s: :)targets[$target_name]} )
-    if port_has_link_to "$sink_name:monitor_AUX0" "$sink_name:playback_AUX${pair[1]}" "$link_dump" &&
-        port_has_link_to "$sink_name:monitor_AUX1" "$sink_name:playback_AUX${pair[2]}" "$link_dump"; then
+    local -a pair=(${(s: :)targets[$target_name]})
+    if port_has_link_to "$sink_name:monitor_AUX0" "$sink_name:playback_AUX${pair[1]}" "$link_dump" \
+      && port_has_link_to "$sink_name:monitor_AUX1" "$sink_name:playback_AUX${pair[2]}" "$link_dump"; then
       print -- "$target_name"
       return
     fi
@@ -153,9 +156,9 @@ list_routes() {
   print -n "["
   local first=1
   for k in "${route_order[@]}"; do
-    (( first )) || print -n ","
+    ((first)) || print -n ","
     first=0
-    local -a pair=( ${(s: :)targets[$k]} )
+    local -a pair=(${(s: :)targets[$k]})
     print -n "{\"key\":\"$k\",\"label\":\"${labels[$k]}\",\"left\":$pair[1],\"right\":$pair[2]}"
   done
   print "]"
@@ -165,8 +168,8 @@ main() {
   local command="${1:-}"
   local sink_name
   init_config
-  local -a valid_cmds=( toggle current status list -h --help help )
-  valid_cmds+=( "${route_order[@]}" )
+  local -a valid_cmds=(toggle current status list -h --help help)
+  valid_cmds+=("${route_order[@]}")
   if [[ -z "$command" ]] || [[ -z "${valid_cmds[(r)$command]}" ]]; then
     usage >&2
     exit 1
@@ -175,12 +178,12 @@ main() {
   need pw-cli
   sink_name="$(find_rme_sink)"
   case "$command" in
-    status)    show_status "$sink_name" ;;
-    current)   get_current_target "$sink_name" ;;
-    toggle)    toggle_target "$sink_name" ;;
-    list)      list_routes ;;
-    help|--help|-h) usage ;;
-    *)         route_target "$command" "$sink_name" ;;
+    status) show_status "$sink_name" ;;
+    current) get_current_target "$sink_name" ;;
+    toggle) toggle_target "$sink_name" ;;
+    list) list_routes ;;
+    help | --help | -h) usage ;;
+    *) route_target "$command" "$sink_name" ;;
   esac
 }
 

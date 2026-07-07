@@ -204,7 +204,9 @@ else:
     }
 
 _SPINNER = (
-    ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] if _HAS_UTF8 else ["/", "-", "\\", "|"]
+    ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+    if _HAS_UTF8
+    else ["/", "-", "\\", "|"]
 )
 
 
@@ -257,13 +259,17 @@ class _Pretty:
         inner = w - 4
         pad_left = max((inner - _visible_len(text)) // 2, 0)
         pad_right = max(inner - _visible_len(text) - pad_left, 0)
-        print(f"{C['magenta_b']}{I['box_tl']}{C['cyan_b']}{_repeat(I['box_h'], w - 2)}{C['magenta_b']}{I['box_tr']}{C['reset']}")
+        print(
+            f"{C['magenta_b']}{I['box_tl']}{C['cyan_b']}{_repeat(I['box_h'], w - 2)}{C['magenta_b']}{I['box_tr']}{C['reset']}"
+        )
         print(
             f"{C['cyan_b']}{I['box_v']}{C['reset']}{' ' * pad_left}"
             f"{C['white_b']}{text}{C['reset']}{' ' * pad_right} "
             f"{C['cyan_b']}{I['box_v']}{C['reset']}"
         )
-        print(f"{C['cyan_b']}{I['box_bl']}{C['magenta_b']}{_repeat(I['box_h'], w - 2)}{C['magenta_b']}{I['box_br']}{C['reset']}")
+        print(
+            f"{C['cyan_b']}{I['box_bl']}{C['magenta_b']}{_repeat(I['box_h'], w - 2)}{C['magenta_b']}{I['box_br']}{C['reset']}"
+        )
 
     def ok(self, text: str):
         print(f"{C['green_b']} {I['ok']} {C['green']}{text}{C['reset']}")
@@ -279,7 +285,9 @@ class _Pretty:
 
     def phase(self, text: str, n: int | None = None, total: int | None = None):
         if n is not None and total is not None:
-            print(f"{C['cyan_b']} {I['phase']} {C['subtleyellow']}[{n}/{total}]{C['cyan_b']} {text}{C['reset']}")
+            print(
+                f"{C['cyan_b']} {I['phase']} {C['subtleyellow']}[{n}/{total}]{C['cyan_b']} {text}{C['reset']}"
+            )
         else:
             print(f"{C['cyan_b']} {I['phase']} {text}{C['reset']}")
 
@@ -297,13 +305,18 @@ class _Pretty:
         filled = bar_w * current // max(total, 1)
         empty = bar_w - filled
         bar = f"{C['green']}{_repeat('█', filled)}{C['grey']}{_repeat('░', empty)}"
-        print(f"\r{bar} {C['white_b']}{pct:3d}%{C['reset']}  ({current}/{total})", end="")
+        print(
+            f"\r{bar} {C['white_b']}{pct:3d}%{C['reset']}  ({current}/{total})",
+            end="",
+        )
 
     def summary_line(self, passed: int, failed: int, label: str = "Results"):
         w = _width()
         passed_s = f"{C['green_b']}{passed} passed"
         if failed:
-            text = f"{label}: {passed_s}{C['bold']}, {C['red_b']}{failed} failed"
+            text = (
+                f"{label}: {passed_s}{C['bold']}, {C['red_b']}{failed} failed"
+            )
         else:
             text = f"{label}: {passed_s}"
         plain = re.sub(r"\033\[[0-9;]*m", "", text)
@@ -325,7 +338,9 @@ class _Pretty:
                 f"{C['reset']} {C['red']}failed{C['reset']}"
             )
         else:
-            print(f"{C['yellow']} {I['warn']} {C['reset']}{name:<40}{C['reset']} {status}")
+            print(
+                f"{C['yellow']} {I['warn']} {C['reset']}{name:<40}{C['reset']} {status}"
+            )
 
     # ── Badges ────────────────────────────────────────────────────────────
 
@@ -347,7 +362,12 @@ class _Pretty:
 
     # ── Table ─────────────────────────────────────────────────────────────
 
-    def table(self, headers: list[str], rows: list[list[str]], aligns: list[str] | None = None):
+    def table(
+        self,
+        headers: list[str],
+        rows: list[list[str]],
+        aligns: list[str] | None = None,
+    ):
         """Print an aligned table with colored headers.
 
         aligns: list of '<' (left), '>' (right), '^' (center) per column.
@@ -369,29 +389,36 @@ class _Pretty:
                 return _pad_left(s, col_w[ci])
             elif al == "^":
                 remaining = col_w[ci] - _visible_len(s)
-                return " " * (remaining // 2) + s + " " * ((remaining + 1) // 2)
+                return (
+                    " " * (remaining // 2) + s + " " * ((remaining + 1) // 2)
+                )
             return _pad_right(s, col_w[ci])
 
         # Header
         header_line = "  ".join(
-            f"{C['white_b']}{_fmt_cell(h, i)}{C['reset']}" for i, h in enumerate(headers[:n_cols])
+            f"{C['white_b']}{_fmt_cell(h, i)}{C['reset']}"
+            for i, h in enumerate(headers[:n_cols])
         )
         print(header_line)
         # Separator
         sep_line = "  ".join(
-            f"{C['dim']}{_repeat('─', col_w[i])}{C['reset']}" for i in range(n_cols)
+            f"{C['dim']}{_repeat('─', col_w[i])}{C['reset']}"
+            for i in range(n_cols)
         )
         print(sep_line)
         # Rows
         for row in rows:
             line = "  ".join(
-                _fmt_cell(str(row[i]) if i < len(row) else "", i) for i in range(n_cols)
+                _fmt_cell(str(row[i]) if i < len(row) else "", i)
+                for i in range(n_cols)
             )
             print(line)
 
     # ── Key-value pairs ───────────────────────────────────────────────────
 
-    def key_value(self, pairs: dict[str, str] | list[tuple[str, str]], indent: int = 2):
+    def key_value(
+        self, pairs: dict[str, str] | list[tuple[str, str]], indent: int = 2
+    ):
         """Print aligned key: value pairs."""
         items = list(pairs.items()) if isinstance(pairs, dict) else pairs
         if not items:
@@ -426,7 +453,9 @@ class _Pretty:
                 f"{C['darkgrey']}{I['box_v']}{C['reset']}"
             )
 
-        print(f"{C['darkgrey']}{I['box_bl']}{_repeat(I['box_h'], box_w)}{I['box_br']}{C['reset']}")
+        print(
+            f"{C['darkgrey']}{I['box_bl']}{_repeat(I['box_h'], box_w)}{I['box_br']}{C['reset']}"
+        )
 
     # ── Rule (horizontal divider with optional title) ─────────────────────
 
@@ -575,7 +604,11 @@ class _Pretty:
             i = 0
             while not stop.is_set():
                 elapsed_s = int((time.monotonic_ns() - start_ns) / 1e9)
-                ts = self.elapsed(elapsed_s) if hasattr(self, "elapsed") else f"{elapsed_s}s"
+                ts = (
+                    self.elapsed(elapsed_s)
+                    if hasattr(self, "elapsed")
+                    else f"{elapsed_s}s"
+                )
                 print(
                     f"\r{C['cyan_b']} {_SPINNER[i % len(_SPINNER)]} "
                     f"{C['white']}{text}{C['reset']}  {ts}",
@@ -598,7 +631,9 @@ class _Pretty:
     def capture(self, label: str, cmd: list[str], **kwargs) -> tuple[str, int]:
         """Run a command, capture output, print a one-line status. Returns (stdout, returncode)."""
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, **kwargs)
+            proc = subprocess.run(
+                cmd, capture_output=True, text=True, **kwargs
+            )
             out = (proc.stdout + proc.stderr).strip()
             rc = proc.returncode
         except Exception as e:

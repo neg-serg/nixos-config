@@ -1,4 +1,10 @@
-{ lib, stdenv, kernel, fetchFromGitHub, python3 }:
+{
+  lib,
+  stdenv,
+  kernel,
+  fetchFromGitHub,
+  python3,
+}:
 
 stdenv.mkDerivation rec {
   pname = "snd-hdspe";
@@ -13,7 +19,10 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = kernel.moduleBuildDependencies ++ [ python3 ];
 
-  hardeningDisable = [ "pic" "format" ];
+  hardeningDisable = [
+    "pic"
+    "format"
+  ];
 
   # Fix for kernel >= 6.8: pci_set_dma_mask / pci_set_consistent_dma_mask removed
   postPatch = ''

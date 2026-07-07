@@ -26,7 +26,10 @@ lib.mkIf cfg.enable {
       Type = "oneshot";
       RemainAfterExit = true;
     };
-    path = [ pkgs.iproute2 pkgs.gawk ];
+    path = [
+      pkgs.iproute2
+      pkgs.gawk
+    ];
     script = ''
       # Find the TUN interface (awg, tun, wg — anything with a default route)
       TUN_IFACE=""

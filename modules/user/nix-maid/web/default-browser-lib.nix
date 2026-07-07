@@ -12,7 +12,4 @@ let
     inherit lib pkgs;
   };
 in
-if key == null || browsers ? ${key} then
-  lib.attrByPath [ (key or null) ] { } browsers
-else
-  { }
+if key == null || browsers ? ${key} then lib.attrByPath [ (key or null) ] { } browsers else { }

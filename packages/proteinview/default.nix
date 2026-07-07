@@ -22,8 +22,14 @@ rustPlatform.buildRustPackage rec {
   nativeBuildInputs = [ pkg-config ];
   buildInputs = [ openssl ];
 
-  cargoBuildFlags = [ "--features" "fetch" ];
-  cargoTestFlags = [ "--features" "fetch" ];
+  cargoBuildFlags = [
+    "--features"
+    "fetch"
+  ];
+  cargoTestFlags = [
+    "--features"
+    "fetch"
+  ];
 
   doCheck = false; # test_nmr_multimodel_loads_single_model expects examples/*.pdb which are excluded from the package
 

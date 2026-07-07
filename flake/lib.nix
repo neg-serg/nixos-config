@@ -1,9 +1,11 @@
 { inputs, nixpkgs, ... }:
 let
-  hyprlandOverlay = system: (_: prev: {
-    inherit (inputs.xdg-desktop-portal-hyprland.packages.${system}) xdg-desktop-portal-hyprland;
-    hyprlandPlugins = prev.hyprlandPlugins // {};
-  });
+  hyprlandOverlay =
+    system:
+    (_: prev: {
+      inherit (inputs.xdg-desktop-portal-hyprland.packages.${system}) xdg-desktop-portal-hyprland;
+      hyprlandPlugins = prev.hyprlandPlugins // { };
+    });
 
   bintoolsBootstrapFix = final: prev: {
     bintools = prev.bintools // {
@@ -15,7 +17,8 @@ let
     };
   };
 
-  mkPkgs = system:
+  mkPkgs =
+    system:
     import nixpkgs {
       inherit system;
       overlays = [

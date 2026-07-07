@@ -40,7 +40,10 @@ rustPlatform.buildRustPackage rec {
   LIBCLANG_PATH = "${libclang.lib}/lib";
   BINDGEN_EXTRA_CLANG_ARGS = "-isystem ${lib.getDev ffmpeg_7}/include";
 
-  cargoBuildFlags = [ "-p" "cli" ];
+  cargoBuildFlags = [
+    "-p"
+    "cli"
+  ];
 
   meta = with lib; {
     description = "Web app and CLI tool that lets you recolor images, GIFs, and videos with any custom palette";

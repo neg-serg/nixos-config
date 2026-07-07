@@ -1,4 +1,10 @@
-{ lib, stdenv, fetchFromGitHub, alsa-lib, wxwidgets_3_2 }: 
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  alsa-lib,
+  wxwidgets_3_2,
+}:
 
 stdenv.mkDerivation rec {
   pname = "hdspeconf";

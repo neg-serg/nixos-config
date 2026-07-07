@@ -7,7 +7,11 @@ with lib;
     quickshell = {
       enable = mkBool "enable Quickshell (panel) at login" true;
       flavor = lib.mkOption {
-        type = types.enum [ "default" "octashell" "sshell" ];
+        type = types.enum [
+          "default"
+          "octashell"
+          "sshell"
+        ];
         default = "default";
         description = "Which quickshell configuration flavor to use (default, octashell, or sshell).";
       };
@@ -19,7 +23,10 @@ with lib;
     noctalia.enable = mkBool "enable Noctalia Wayland shell (bar/panel)" false;
     hdr.enable = mkBool "enable HDR support (env vars for DXVK, Gamescope, Wine)" false;
     gtkTheme = lib.mkOption {
-      type = types.enum [ "Flight-Dark-GTK" "Andromeda" ];
+      type = types.enum [
+        "Flight-Dark-GTK"
+        "Andromeda"
+      ];
       default = "Flight-Dark-GTK";
       description = "GTK theme to apply system-wide.";
     };

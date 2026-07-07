@@ -17,7 +17,7 @@ ENABLE_FLAGS=false
 APPLY_STATES=false
 
 usage() {
-    cat <<EOF
+  cat << EOF
 Enable hybrid VPN (Xray + sing-box TUN) configuration via Salt.
 
 Usage: $0 [options]
@@ -37,51 +37,51 @@ EOF
 }
 
 while [[ $# -gt 0 ]]; do
-    case $1 in
-        --enable-flags)
-            ENABLE_FLAGS=true
-            shift
-            ;;
-        --apply)
-            APPLY_STATES=true
-            shift
-            ;;
-        --help)
-            usage
-            exit 0
-            ;;
-        *)
-            echo "Unknown option: $1" >&2
-            usage >&2
-            exit 1
-            ;;
-    esac
+  case $1 in
+    --enable-flags)
+      ENABLE_FLAGS=true
+      shift
+      ;;
+    --apply)
+      APPLY_STATES=true
+      shift
+      ;;
+    --help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
 done
 
 if [[ $ENABLE_FLAGS == false && $APPLY_STATES == false ]]; then
-    echo "No actions specified. Use --enable-flags and/or --apply."
-    echo
-    usage
-    exit 0
+  echo "No actions specified. Use --enable-flags and/or --apply."
+  echo
+  usage
+  exit 0
 fi
 
 # Step 1: Enable flags in hosts.yaml
 if [[ $ENABLE_FLAGS == true ]]; then
-    echo "Enabling VPN hybrid flags in hosts.yaml for host: $CURRENT_HOST"
-    
-    # Check if hosts.yaml exists
-    if [[ ! -f "$HOSTS_YAML" ]]; then
-        echo "Error: hosts.yaml not found at $HOSTS_YAML" >&2
-        exit 1
-    fi
-    
-    # Create a backup
-    BACKUP="$HOSTS_YAML.backup.$(date +%Y%m%d_%H%M%S)"
-    cp "$HOSTS_YAML" "$BACKUP"
-    echo "Backup created: $BACKUP"
-    
-    # Use Python to update the YAML
-    python3 - "$HOSTS_YAML" "$CURRENT_HOST" <<'PY'
+  echo "Enabling VPN hybrid flags in hosts.yaml for host: $CURRENT_HOST"
+
+  # Check if hosts.yaml exists
+  if [[ ! -f "$HOSTS_YAML" ]]; then
+    echo "Error: hosts.yaml not found at $HOSTS_YAML" >&2
+    exit 1
+  fi
+
+  # Create a backup
+  BACKUP="$HOSTS_YAML.backup.$(date +%Y%m%d_%H%M%S)"
+  cp "$HOSTS_YAML" "$BACKUP"
+  echo "Backup created: $BACKUP"
+
+  # Use Python to update the YAML
+  python3 - "$HOSTS_YAML" "$CURRENT_HOST" << 'PY'
 import sys
 import yaml
 import copy
@@ -125,28 +125,28 @@ with open(hosts_yaml_path, 'w') as f:
 
 print(f"Updated hosts.yaml: enabled vpn_hybrid, xray, and singbox for host '{current_host}'")
 PY
-    
-    echo "Flags enabled. Please review the changes in $HOSTS_YAML"
+
+  echo "Flags enabled. Please review the changes in $HOSTS_YAML"
 fi
 
 # Step 2: Apply Salt states
 if [[ $APPLY_STATES == true ]]; then
-    echo "Applying Salt states..."
-    
-    # Check if we can run salt-call
-    if ! command -v salt-call >/dev/null 2>&1; then
-        echo "Error: salt-call not found. Install Salt first." >&2
-        exit 1
-    fi
-    
-    # Apply network and services states
-    sudo salt-call --local state.apply network,services
-    
-    echo "Salt states applied."
+  echo "Applying Salt states..."
+
+  # Check if we can run salt-call
+  if ! command -v salt-call > /dev/null 2>&1; then
+    echo "Error: salt-call not found. Install Salt first." >&2
+    exit 1
+  fi
+
+  # Apply network and services states
+  sudo salt-call --local state.apply network,services
+
+  echo "Salt states applied."
 fi
 
 # Print next steps
-cat <<EOF
+cat << EOF
 
 Next steps:
 1. Import AmneziaVPN configuration (if not already done):

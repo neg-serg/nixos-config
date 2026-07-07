@@ -41,7 +41,12 @@ async def socks5_connect(reader, writer, addr, port, atyp=3):
 async def socks5_auth(reader, writer, user, passw):
     ulen = len(user)
     plen = len(passw)
-    auth_msg = struct.pack("!BB", 1, ulen) + user.encode() + struct.pack("!B", plen) + passw.encode()
+    auth_msg = (
+        struct.pack("!BB", 1, ulen)
+        + user.encode()
+        + struct.pack("!B", plen)
+        + passw.encode()
+    )
     writer.write(auth_msg)
     await writer.drain()
 
@@ -50,8 +55,12 @@ async def socks5_auth(reader, writer, user, passw):
         raise ConnectionError("Upstream SOCKS5 authentication failed")
 
 
-async def upstream_connect(upstream_host, upstream_port, upstream_auth, target_addr, target_port):
-    ureader, uwriter = await asyncio.open_connection(upstream_host, upstream_port)
+async def upstream_connect(
+    upstream_host, upstream_port, upstream_auth, target_addr, target_port
+):
+    ureader, uwriter = await asyncio.open_connection(
+        upstream_host, upstream_port
+    )
 
     methods = b"\x00" if not upstream_auth else b"\x00\x02"
     uwriter.write(struct.pack("!BB", SOCKS_VERSION, len(methods)) + methods)
@@ -109,14 +118,19 @@ class Socks5Handler:
         await writer.drain()
 
         try:
-            ver, cmd, rsv, atyp = struct.unpack("!BBBB", await reader.readexactly(4))
+            ver, cmd, rsv, atyp = struct.unpack(
+                "!BBBB", await reader.readexactly(4)
+            )
         except (asyncio.IncompleteReadError, OSError):
             writer.close()
             return
 
         if cmd != 1:
-            writer.write(struct.pack("!BBBB", SOCKS_VERSION, 7, 0, 1)
-                         + socket.inet_aton("0.0.0.0") + struct.pack("!H", 0))
+            writer.write(
+                struct.pack("!BBBB", SOCKS_VERSION, 7, 0, 1)
+                + socket.inet_aton("0.0.0.0")
+                + struct.pack("!H", 0)
+            )
             await writer.drain()
             writer.close()
             return
@@ -127,7 +141,9 @@ class Socks5Handler:
             length = (await reader.readexactly(1))[0]
             addr = (await reader.readexactly(length)).decode()
         elif atyp == 4:
-            addr = socket.inet_ntop(socket.AF_INET6, await reader.readexactly(16))
+            addr = socket.inet_ntop(
+                socket.AF_INET6, await reader.readexactly(16)
+            )
         else:
             writer.close()
             return
@@ -137,29 +153,49 @@ class Socks5Handler:
         try:
             if self.upstream:
                 remote_reader, remote_writer = await upstream_connect(
-                    self.upstream[0], self.upstream[1], self.upstream_auth, addr, port
+                    self.upstream[0],
+                    self.upstream[1],
+                    self.upstream_auth,
+                    addr,
+                    port,
                 )
             else:
-                remote_reader, remote_writer = await asyncio.open_connection(addr, port)
+                remote_reader, remote_writer = await asyncio.open_connection(
+                    addr, port
+                )
         except (ConnectionError, OSError, socket.gaierror) as e:
-            writer.write(struct.pack("!BBBB", SOCKS_VERSION, 1, 0, 1)
-                         + socket.inet_aton("0.0.0.0") + struct.pack("!H", 0))
+            writer.write(
+                struct.pack("!BBBB", SOCKS_VERSION, 1, 0, 1)
+                + socket.inet_aton("0.0.0.0")
+                + struct.pack("!H", 0)
+            )
             await writer.drain()
             writer.close()
             return
 
         bind_ip = socket.inet_aton(remote_writer.get_extra_info("sockname")[0])
         bind_port = remote_writer.get_extra_info("sockname")[1]
-        writer.write(struct.pack("!BBBB", SOCKS_VERSION, 0, 0, 1) + bind_ip + struct.pack("!H", bind_port))
+        writer.write(
+            struct.pack("!BBBB", SOCKS_VERSION, 0, 0, 1)
+            + bind_ip
+            + struct.pack("!H", bind_port)
+        )
         await writer.drain()
 
-        await asyncio.gather(relay(reader, remote_writer, "up"), relay(remote_reader, writer, "down"))
+        await asyncio.gather(
+            relay(reader, remote_writer, "up"),
+            relay(remote_reader, writer, "down"),
+        )
 
 
-async def main(host="127.0.0.1", port=10809, upstream=None, upstream_auth=None):
+async def main(
+    host="127.0.0.1", port=10809, upstream=None, upstream_auth=None
+):
     handler = Socks5Handler(upstream=upstream, upstream_auth=upstream_auth)
     server = await asyncio.start_server(handler.handle, host, port)
-    upstream_str = f" -> {upstream[0]}:{upstream[1]}" if upstream else " (direct)"
+    upstream_str = (
+        f" -> {upstream[0]}:{upstream[1]}" if upstream else " (direct)"
+    )
     print(f"SOCKS5 proxy: {host}:{port}{upstream_str}")
     async with server:
         await server.serve_forever()

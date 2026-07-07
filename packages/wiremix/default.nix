@@ -18,7 +18,7 @@ rustPlatform.buildRustPackage rec {
     owner = "tsowell";
     repo = "wiremix";
     rev = "master";
-      sha256 = "sha256-DnRK/v4gBz99ngrKWGbn4saLQVDlBymQI8QIMGaUvNA=";
+    sha256 = "sha256-DnRK/v4gBz99ngrKWGbn4saLQVDlBymQI8QIMGaUvNA=";
   };
 
   cargoHash = "sha256-QT96vzK0PirBn4nf40SEghcbAt+aRplETUREONZtY3I=";
