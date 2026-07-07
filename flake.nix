@@ -30,10 +30,6 @@
       url = "github:neg-serg/nixos-pkgs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    lanzaboote = {
-      url = "github:nix-community/lanzaboote";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     nix-maid.url = "github:viperML/nix-maid";
     pre-commit-hooks = {
       url = "github:cachix/git-hooks.nix";

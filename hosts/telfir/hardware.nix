@@ -128,7 +128,7 @@
             helpColor = "00AAAA";
             helpColorBright = "55FF55";
           };
-          wallpapers = [ ../../files/grub-splash.jpg ];
+          wallpapers = [ ../../files/boot-splash.jpg ];
           wallpaperStyle = "stretched";
           backdrop = "000000";
         };

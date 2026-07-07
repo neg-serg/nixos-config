@@ -1,6 +1,6 @@
 ##
 # Module: system/profiles/vm
-# Purpose: VM profile — simpler kernel/packages and disable Secure Boot by default.
+# Purpose: VM profile — simpler kernel/packages profile.
 # Key options: cfg = config.profiles.vm.enable
 # Dependencies: Affects boot.*; complements hosts/*/vm/*.nix.
 {

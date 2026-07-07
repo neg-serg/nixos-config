@@ -4,7 +4,7 @@ Core system configuration.
 
 ## Includes
 
-- Boot configuration (Lanzaboote, systemd-boot)
+- Boot configuration (Limine)
 - Kernel and modules
 - Networking
 - Services (greetd, systemd units)
