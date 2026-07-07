@@ -33,7 +33,6 @@ let
   ++ [
 
     # -- Network --
-    pkgs.nicotine-plus # Soulseek client
     pkgs.waves # keyboard-driven terminal music player with Soulseek/Last.fm
     pkgs.scdl # SoundCloud downloader
 
