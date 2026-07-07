@@ -16,6 +16,12 @@
     "gaming"
   ];
 
+  # Console font (visible before plymouth and on tty1-6)
+  console = {
+    earlySetup = true;
+    font = "${pkgs.terminus_font}/share/consolefonts/ter-124n.psf.gz";
+  };
+
   # Host-specific overrides (above profile defaults)
   # Obsidian installed via Flatpak (to avoid Electron in Nix closure)
   features.web.vivaldi.enable = true;
