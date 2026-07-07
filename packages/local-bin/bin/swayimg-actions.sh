@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# swayimg-actions: move/copy/rotate/wallpaper/range for swayimg; dests limited to $XDG_PICTURES_DIR; before mv send prev_file via IPC to avoid end-of-list crash
+# swayimg-actions: move/copy/rotate/wallpaper/range for swayimg; dests limited to $XDG_PICTURES_DIR; before mv send prev_file via IPC to avoid end-of-list crash; picker via vicinae dmenu
 
 IFS=$'\n\t'
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
@@ -14,7 +14,7 @@ tmp_wall="${cache}/wall_swww.$$"
 mkdir -p ${XDG_DATA_HOME:-$HOME/.local/share}/swayimg
 last_file="${XDG_DATA_HOME:-$HOME/.local/share}/swayimg/last"
 trash="${HOME}/trash/1st-level/pic"
-rofi_cmd='rofi -dmenu -sort -matching fuzzy -no-plugins -auto-select -theme swayimg -custom'
+vicinae_cmd='vicinae dmenu'
 pics_dir_default="$HOME/Pictures"
 pics_dir="${XDG_PICTURES_DIR:-$pics_dir_default}"
 
@@ -155,7 +155,7 @@ choose_dest() {
   )"
 
   printf '%s\n' "$entries" \
-    | sh -c "$rofi_cmd -p \"⟬$prompt⟭ ❯>\"" \
+    | $vicinae_cmd -p "⟬$prompt⟭ ❯>" \
     | sed "s:^~:$HOME:"
 }
 
