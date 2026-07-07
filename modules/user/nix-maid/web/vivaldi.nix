@@ -71,5 +71,21 @@ in
         DefaultFixedFontSize = 13;
       };
     };
+
+    # Browser UI font override via Vivaldi Custom UI Modifications.
+    # Managed policies above only affect webpage fonts, not the browser chrome.
+    # This CSS overrides the hardcoded Linux UI font-family in Vivaldi's common.css
+    # (Cantarell / Noto Sans → Iosevka).
+    # To activate: enable "Allow for using CSS modifications" in vivaldi://experiments,
+    # then set Settings → Appearance → Custom UI Modifications → /etc/vivaldi/custom-ui/
+    environment.etc."vivaldi/custom-ui/vivaldi-ui-font.css" = {
+      mode = "0444";
+      text = ''
+        /* Override Vivaldi browser UI font on Linux — Iosevka everywhere */
+        *, *:before, *:after {
+          font-family: "Iosevka" !important;
+        }
+      '';
+    };
   };
 }
