@@ -1,7 +1,6 @@
----
-name: ast
-description: AST-based code search and structural code analysis
----
+______________________________________________________________________
+
+## name: ast description: AST-based code search and structural code analysis
 
 # AST Code Search
 
@@ -10,6 +9,7 @@ Use CLI tools for AST-based code search instead of MCP ast-grep server.
 ## ast-grep CLI
 
 ### Pattern search
+
 ```bash
 # Search for function calls
 ast-grep --pattern 'os.system($ARG)' --lang python .
@@ -22,6 +22,7 @@ ast-grep --lang python .
 ```
 
 ### Using rule files
+
 ```yaml
 # rule.yaml
 id: insecure-deserialization
@@ -31,11 +32,13 @@ rule:
 message: "Potentially unsafe deserialization"
 severity: WARNING
 ```
+
 ```bash
 ast-grep --rule rule.yaml .
 ```
 
 ### Replace/rewrite
+
 ```bash
 # Find and rewrite
 ast-grep --pattern 'var x = $VAL' --rewrite 'let x = $VAL' --lang javascript src/
@@ -67,9 +70,6 @@ tree-sitter query query.scm file.py
 
 ## When to use each tool
 
-| Task | Tool |
-|------|------|
-| Simple text/regex search | `rg` / opencode `<Grep>` |
-| Structural pattern matching | `ast-grep` |
-| Complex AST queries | `tree-sitter` |
-| Multi-language refactors | `ast-grep --rewrite` |
+| Task | Tool | |------|------| | Simple text/regex search | `rg` / opencode `<Grep>` | | Structural
+pattern matching | `ast-grep` | | Complex AST queries | `tree-sitter` | | Multi-language refactors |
+`ast-grep --rewrite` |

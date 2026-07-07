@@ -1,7 +1,6 @@
----
-name: spreadsheet
-description: CSV, TSV, Excel, and tabular data processing via csvkit, xsv, and Python
----
+______________________________________________________________________
+
+## name: spreadsheet description: CSV, TSV, Excel, and tabular data processing via csvkit, xsv, and Python
 
 # Spreadsheet & Tabular Data
 
@@ -10,6 +9,7 @@ Use CLI tools instead of MCP spreadsheet server.
 ## csvkit
 
 ### Inspection
+
 ```bash
 # Pretty print
 csvlook data.csv
@@ -22,6 +22,7 @@ csvstat data.csv
 ```
 
 ### Selection & Filtering
+
 ```bash
 # Select columns
 csvcut -c name,age,email data.csv
@@ -31,6 +32,7 @@ csvsql --query "SELECT * FROM data WHERE age > 18" data.csv
 ```
 
 ### Conversion
+
 ```bash
 # Excel to CSV
 in2csv file.xlsx > file.csv
@@ -43,6 +45,7 @@ csvformat data.csv | in2csv -f xlsx > file.xlsx
 ```
 
 ### Join & Merge
+
 ```bash
 csvjoin -c id a.csv b.csv > merged.csv
 csvstack a.csv b.csv > combined.csv

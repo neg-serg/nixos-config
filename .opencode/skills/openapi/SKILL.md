@@ -1,7 +1,6 @@
----
-name: openapi
-description: OpenAPI/Swagger spec validation, generation, and tooling
----
+______________________________________________________________________
+
+## name: openapi description: OpenAPI/Swagger spec validation, generation, and tooling
 
 # OpenAPI Tools
 
@@ -21,23 +20,27 @@ npx openapi-diff old-spec.yaml new-spec.yaml
 ## Generation
 
 ### From code (server stubs)
+
 ```bash
 npx @openapitools/openapi-generator-cli generate -i spec.yaml -g python-flask -o ./server
 npx @openapitools/openapi-generator-cli generate -i spec.yaml -g typescript-axios -o ./client
 ```
 
 ### From API traffic
+
 Use `mitmproxy2swagger` or `openapi-to-graphql` for reverse engineering.
 
 ## Format & Bundle
 
 ### Split/merge multi-file specs
+
 ```bash
 npx @redocly/cli split spec.yaml --outDir ./spec-parts
 npx @redocly/cli bundle spec-parts/openapi.yaml -o bundled.yaml
 ```
 
 ### YAML to JSON
+
 ```bash
 yq -Poj eval '.' spec.yaml > spec.json
 ```
@@ -54,6 +57,7 @@ npx @redocly/cli preview-docs spec.yaml
 ```
 
 ## Querying
+
 ```bash
 # Extract paths
 yq '.paths | keys' spec.yaml
@@ -66,6 +70,7 @@ yq '.paths | to_entries | map(select(.value.get)) | .[].key' spec.yaml
 ```
 
 ## Mock Server
+
 ```bash
 npx @stoplight/prism-cli mock spec.yaml
 ```

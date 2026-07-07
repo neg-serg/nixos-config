@@ -1,7 +1,6 @@
----
-name: color
-description: Color space conversion between HEX, RGB, HSL, CMYK formats using CLI and bash
----
+______________________________________________________________________
+
+## name: color description: Color space conversion between HEX, RGB, HSL, CMYK formats using CLI and bash
 
 # Color Conversion
 
@@ -25,6 +24,7 @@ printf "#%02X%02X%02X\n" $r $g $b
 ## RGB ↔ HSL
 
 Use Python:
+
 ```python
 python3 -c "
 import colorsys
@@ -37,11 +37,13 @@ print(f'HSL: {h*360:.0f}°, {s*100:.0f}%, {l*100:.0f}%')
 ## Color Palette Generation
 
 ### From an image (using ImageMagick)
+
 ```bash
 convert image.png -colors 5 -unique-colors txt:- | tail -n +2
 ```
 
 ### Terminal-safe palette
+
 ```bash
 for code in {0..255}; do
   printf "\033[48;5;%sm %3d \033[0m" "$code" "$code"
@@ -63,6 +65,7 @@ print(f'#{int(r*255):02X}{int(g*255):02X}{int(b*255):02X}')
 ```
 
 ## CSS Named Colors
+
 ```bash
 # Convert CSS name to hex
 python3 -c "import matplotlib.colors as mc; print(mc.to_hex('tomato'))"
