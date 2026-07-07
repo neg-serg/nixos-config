@@ -274,11 +274,13 @@ def _font_names_from_file(font_path: Path) -> Tuple[str, str]:
 def _portablize_font_path(file_path: str) -> str:
     """Replace absolute home dir prefix with $XDG_DATA_HOME or ~ for portability."""
     home = os.path.expanduser("~")
-    xdg_data = os.environ.get("XDG_DATA_HOME", os.path.join(home, ".local", "share"))
+    xdg_data = os.environ.get(
+        "XDG_DATA_HOME", os.path.join(home, ".local", "share")
+    )
     if file_path.startswith(xdg_data + "/"):
-        return "$XDG_DATA_HOME/" + file_path[len(xdg_data) + 1:]
+        return "$XDG_DATA_HOME/" + file_path[len(xdg_data) + 1 :]
     if file_path.startswith(home + "/"):
-        return "~/" + file_path[len(home) + 1:]
+        return "~/" + file_path[len(home) + 1 :]
     return file_path
 
 
