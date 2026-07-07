@@ -1,4 +1,3 @@
----
-creation date: <%tp.date.now("DD.MM.YYYY")%> <%tp.date.now("HH:mm")%>
-cssclasses:
----
+______________________________________________________________________
+
+## creation date: \<%tp.date.now("DD.MM.YYYY")%> \<%tp.date.now("HH:mm")%> cssclasses:
