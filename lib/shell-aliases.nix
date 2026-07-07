@@ -187,7 +187,7 @@ let
     cpufetch = "nix shell nixpkgs#cpufetch -c cpufetch";
     ramfetch = "nix shell nixpkgs#ramfetch -c ramfetch";
     rhash = "nix shell nixpkgs#rhash -c rhash";
-    borgbackup = "nix shell nixpkgs#borgbackup -c borgbackup";
+    borgbackup = "nix run nixpkgs#borgbackup";
     fclones = "nix shell nixpkgs#fclones -c fclones";
     jdupes = "nix shell nixpkgs#jdupes -c jdupes";
     miller = "nix shell nixpkgs#miller -c miller";
