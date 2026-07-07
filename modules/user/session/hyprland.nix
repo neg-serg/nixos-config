@@ -8,7 +8,7 @@
 let
   guiEnabled = config.features.gui.enable or true;
   hyprWinList = pkgs.writeShellApplication {
-    name = "hypr-win-list"; # Hyprland window list via rofi
+    name = "hypr-win-list"; # Hyprland window list via vicinae
     runtimeInputs = [
       pkgs.python3 # Python interpreter
       pkgs.wl-clipboard # clipboard manager for Wayland
@@ -31,7 +31,7 @@ in
 {
   config = lib.mkIf guiEnabled {
     environment.systemPackages = [
-      hyprWinList # Hyprland window list via rofi
+      hyprWinList # Hyprland window list via vicinae
       inputs.raise.defaultPackage.${pkgs.stdenv.hostPlatform.system} # run-or-raise for Hyprland
       pkgs.hyprcursor # modern cursor theme format for Hyprland
       pkgs.hypridle # idle daemon for Hyprland
