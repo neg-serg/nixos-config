@@ -16,15 +16,17 @@ in
 (functions // tools // media // dev // gui // fonts // fixTinycc // aurPorted // disableChecks)
 // {
   # Override opencode to build from flake input source (latest git)
-  opencode = (final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { }).overrideAttrs (old: {
-    src = inputs.opencode;
-    version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
-    node_modules = old.node_modules.overrideAttrs (nmOld: {
-      outputHash = "sha256-9oSXcvvISB6WAqI6f/GBZ3i9IBwYrRQvKs82SLibJNo=";
-      outputHashAlgo = "sha256";
-      outputHashMode = "recursive";
-    });
-  });
+  opencode =
+    (final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { }).overrideAttrs
+      (old: {
+        src = inputs.opencode;
+        version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
+        node_modules = old.node_modules.overrideAttrs (nmOld: {
+          outputHash = "sha256-9oSXcvvISB6WAqI6f/GBZ3i9IBwYrRQvKs82SLibJNo=";
+          outputHashAlgo = "sha256";
+          outputHashMode = "recursive";
+        });
+      });
 
   # Agent multiplexer for AI coding agents (herdr)
   herdr = inputs.herdr.packages.${final.stdenv.hostPlatform.system}.default;
@@ -37,11 +39,14 @@ in
     // (dev.neg or { })
     // (gui.neg or { })
     // {
+      bazecor = final.callPackage ./bazecor-appimage { };
 
-      opencode-dev = (final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { }).overrideAttrs (old: {
-        src = inputs.opencode;
-        version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
-      });
+      opencode-dev =
+        (final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { }).overrideAttrs
+          (old: {
+            src = inputs.opencode;
+            version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
+          });
       raysession = finalPrev.raysession.overrideAttrs (old: {
         postPatch = (old.postPatch or "") + ''
           substituteInPlace src/gui/patchbay/patchcanvas/portgroup_widget.py \
@@ -61,7 +66,8 @@ in
 
   # Fix keyutils patch download failing (upstream lore.kernel.org 403)
   keyutils = finalPrev.keyutils.overrideAttrs (old: {
-    patches = (old.patches or [ ])
+    patches =
+      (old.patches or [ ])
       |> builtins.map (
         p:
         if builtins.isAttrs p && (p.name or "") == "raw" then
@@ -71,19 +77,21 @@ in
       );
   });
 
-
-
   # Fix /sbin/ldconfig symlink in FHS envs (Steam pressure-vessel nested container fix).
   # Symlinking /sbin/ldconfig -> /bin/ldconfig creates a resolution loop when
   # pressure-vessel tries to set up a nested bwrap container for Proton.
   # Copy the binary instead, as SteamRT3 expects.
-  buildFHSEnv = args: finalPrev.buildFHSEnv (args // {
-    extraBuildCommands = (args.extraBuildCommands or "") + ''
-      if [ -L $out/usr/sbin/ldconfig ] && [ -f $out/usr/bin/ldconfig ]; then
-        cp -f $out/usr/bin/ldconfig $out/usr/sbin/ldconfig
-      fi
-    '';
-  });
-
+  buildFHSEnv =
+    args:
+    finalPrev.buildFHSEnv (
+      args
+      // {
+        extraBuildCommands = (args.extraBuildCommands or "") + ''
+          if [ -L $out/usr/sbin/ldconfig ] && [ -f $out/usr/bin/ldconfig ]; then
+            cp -f $out/usr/bin/ldconfig $out/usr/sbin/ldconfig
+          fi
+        '';
+      }
+    );
 
 }

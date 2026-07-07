@@ -27,8 +27,13 @@ with lib;
     # The new composable profile system (modules/profiles/) handles actual defaults via mkDefault.
     (mkIf (config.features ? profile && !(config.features ? profiles)) {
       features.profiles = mkDefault (
-        if config.features.profile == "lite" then [ "lite" ]
-        else [ "desktop" "dev" ]
+        if config.features.profile == "lite" then
+          [ "lite" ]
+        else
+          [
+            "desktop"
+            "dev"
+          ]
       );
     })
     # When dev-speed is enabled, prefer lean defaults for heavy subfeatures

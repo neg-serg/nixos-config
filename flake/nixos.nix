@@ -18,6 +18,7 @@ let
   commonModules = [
     ../init.nix
     inputs.determinate.nixosModules.default
+    inputs.nix-flatpak.nixosModules.nix-flatpak
     inputs.sops-nix.nixosModules.sops
   ];
 
@@ -37,25 +38,53 @@ let
 
   # Core: always needed (feature flags, profiles, roles, security, system foundation).
   coreDomains = [
-    "core" "features" "profiles" "roles" "nix" "security" "secrets"
-    "shell" "system" "hardware" "flake-preflight" "diff-closures"
+    "core"
+    "features"
+    "profiles"
+    "roles"
+    "nix"
+    "security"
+    "secrets"
+    "shell"
+    "system"
+    "hardware"
+    "flake-preflight"
+    "diff-closures"
   ];
 
   # Basic: core + CLI / text-mode tools. Enough for a minimal interactive system.
   basicDomains = coreDomains ++ [
-    "cli" "tools" "text" "fonts" "documentation"
+    "cli"
+    "tools"
+    "text"
+    "fonts"
+    "documentation"
   ];
 
   # Lite: basic + SSH server. No GUI, no desktop apps.
   liteDomains = basicDomains ++ [ "servers" ];
 
   # Server: lite + service management + monitoring. Headless server profile.
-  serverDomains = basicDomains ++ [ "servers" "monitoring" ];
+  serverDomains = basicDomains ++ [
+    "servers"
+    "monitoring"
+  ];
 
   # Full desktop: everything imported (current default).
   allDomains = basicDomains ++ [
-    "appimage" "apps" "dev" "emulators" "fun" "games"
-    "llm" "media" "servers" "monitoring" "torrent" "user" "web"
+    "appimage"
+    "apps"
+    "dev"
+    "emulators"
+    "fun"
+    "games"
+    "llm"
+    "media"
+    "servers"
+    "monitoring"
+    "torrent"
+    "user"
+    "web"
   ];
 
   mkDomainFilter = domains: name: builtins.elem name domains;
@@ -137,7 +166,8 @@ let
     let
       domains = profileDomainSets.${testProfile} or allDomains;
     in
-    mkSpecialArgs // {
+    mkSpecialArgs
+    // {
       domainFilter = mkDomainFilter domains;
     };
 
@@ -166,7 +196,8 @@ let
     lib.nixosSystem {
       inherit pkgs;
       specialArgs = mkTestSpecialArgs testProfile;
-      modules = commonModules
+      modules =
+        commonModules
         ++ [ (import ((builtins.toString hostsDir) + "/" + baseName)) ]
         ++ (hostExtras baseName)
         ++ [
@@ -184,10 +215,12 @@ let
   ];
 
   # Keys like "telfir-gaming", "telfir-audio-pro", etc.
-  prefixedTestConfigs = lib.listToAttrs (map (p: {
-    name = "telfir-${p}";
-    value = mkTestHost "telfir" p;
-  }) testProfiles);
+  prefixedTestConfigs = lib.listToAttrs (
+    map (p: {
+      name = "telfir-${p}";
+      value = mkTestHost "telfir" p;
+    }) testProfiles
+  );
 
 in
 lib.genAttrs hostNamesEnabled mkHost // prefixedTestConfigs

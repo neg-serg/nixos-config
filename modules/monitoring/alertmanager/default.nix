@@ -21,7 +21,10 @@ let
     global = { };
     route = {
       receiver = "telegram";
-      group_by = [ "alertname" "severity" ];
+      group_by = [
+        "alertname"
+        "severity"
+      ];
       group_wait = "10s";
       group_interval = "1m";
       repeat_interval = "1h";

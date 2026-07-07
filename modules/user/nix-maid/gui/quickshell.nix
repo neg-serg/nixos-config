@@ -25,11 +25,13 @@ let
   };
 
   # Source path based on flavor
-  quickshellSrc = if isSshell
-    then "${sshellPkg}/share/sshell"
-    else if isOctashell
-    then ../../../../files/octashell
-    else ../../../../files/quickshell;
+  quickshellSrc =
+    if isSshell then
+      "${sshellPkg}/share/sshell"
+    else if isOctashell then
+      ../../../../files/octashell
+    else
+      ../../../../files/quickshell;
 
   # Feature flags check
   quickshellEnabled =
@@ -61,12 +63,14 @@ let
       pkgs.gawk # GNU awk: used by SystemMonitor probes parsing /proc/{meminfo,swaps,diskstats}
       pkgs.hyprland # dynamic tiling Wayland compositor
       pkgs.neg.rsmetrx # custom metrics exporter
-    ] ++ lib.optionals isOctashell [
+    ]
+    ++ lib.optionals isOctashell [
       pkgs.brightnessctl # backlight control
       pkgs.cliphist # clipboard history
       pkgs.wl-clipboard # wl-copy for clipboard
       pkgs.uwsm # universal Wayland session manager
-    ] ++ lib.optionals isSshell [
+    ]
+    ++ lib.optionals isSshell [
       pkgs.brightnessctl # backlight control
       pkgs.cliphist # clipboard history
       pkgs.playerctl # MPRIS media player control
@@ -104,24 +108,31 @@ let
   # excluding immutable paths (Theme, .github).  This makes ~/.config/quickshell
   # a real writable directory so that theme-init can create Theme/ as writable.
   quickshellSrcEntries =
-    if isSshell
-    then { } # sshell uses whole-directory deployment (no theme-init needed)
-    else builtins.readDir quickshellSrc;
+    if isSshell then
+      { } # sshell uses whole-directory deployment (no theme-init needed)
+    else
+      builtins.readDir quickshellSrc;
 
   quickshellSrcNames =
-    if isSshell
-    then [ ]
-    else builtins.filter
-      (name: name != "Theme" && name != "theme" && name != ".github")
-      (builtins.attrNames quickshellSrcEntries);
+    if isSshell then
+      [ ]
+    else
+      builtins.filter (name: name != "Theme" && name != "theme" && name != ".github") (
+        builtins.attrNames quickshellSrcEntries
+      );
 
   quickshellHomeFiles =
-    if isSshell
-    then { ".config/quickshell".source = quickshellSrc; }
-    else builtins.listToAttrs (map (name: {
-      name = ".config/quickshell/${name}";
-      value = { source = "${quickshellSrc}/${name}"; };
-    }) quickshellSrcNames);
+    if isSshell then
+      { ".config/quickshell".source = quickshellSrc; }
+    else
+      builtins.listToAttrs (
+        map (name: {
+          name = ".config/quickshell/${name}";
+          value = {
+            source = "${quickshellSrc}/${name}";
+          };
+        }) quickshellSrcNames
+      );
 in
 lib.mkIf quickshellEnabled (
   lib.mkMerge [
@@ -129,9 +140,11 @@ lib.mkIf quickshellEnabled (
       # Wrapped quickshell package
       environment.systemPackages = [
         quickshellWrapped # Wrapped Quickshell with dependencies and environment
-      ] ++ lib.optionals isOctashell [
+      ]
+      ++ lib.optionals isOctashell [
         pkgs.papirus-icon-theme # icon theme used by octashell
-      ] ++ lib.optionals isSshell [
+      ]
+      ++ lib.optionals isSshell [
         pkgs.material-symbols # Material Symbols icon font used by sshell
       ];
 
@@ -141,7 +154,10 @@ lib.mkIf quickshellEnabled (
         description = "Quickshell - QtQuick based shell for Wayland";
         documentation = [ "https://github.com/outfoxxed/quickshell" ];
         partOf = [ "graphical-session.target" ];
-        after = [ "graphical-session-pre.target" "pipewire.service" ];
+        after = [
+          "graphical-session-pre.target"
+          "pipewire.service"
+        ];
         wants = [ "pipewire.service" ];
         wantedBy = [ "graphical-session.target" ];
         serviceConfig = {
@@ -184,7 +200,11 @@ lib.mkIf quickshellEnabled (
         };
       };
 
-      systemd.user.services.quickshell.after = lib.mkForce [ "graphical-session-pre.target" "maid-activation.service" "pipewire.service" ];
+      systemd.user.services.quickshell.after = lib.mkForce [
+        "graphical-session-pre.target"
+        "maid-activation.service"
+        "pipewire.service"
+      ];
       systemd.user.services.quickshell.wants = [ "maid-activation.service" ];
     })
   ]

@@ -32,9 +32,7 @@ let
     env = XDG_CACHE_HOME,/home/greeter/.cache
     env = XDG_CONFIG_HOME,/home/greeter/.config
     env = XDG_DATA_HOME,/home/greeter/.local/share
-    exec-once = ${
-      lib.getExe pkgs.bash
-    } -c "HOME=/home/greeter QML2_IMPORT_PATH=/etc/greetd/quickshell ${
+    exec-once = ${lib.getExe pkgs.bash} -c "HOME=/home/greeter QML2_IMPORT_PATH=/etc/greetd/quickshell ${
       lib.getExe inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
     } -p /etc/greetd/quickshell/greeter/greeter.qml > /tmp/qs-greeter.log 2>&1 && pkill Hyprland"
     input {
@@ -105,51 +103,53 @@ in
       "d /home/greeter/.cache 0775 greeter greeter -"
       "d /home/greeter/.config/quickshell/Theme 0755 greeter greeter -"
     ];
-    system.activationScripts.greetdWallpaper = let
-      jq = lib.getExe' pkgs.jq "jq";
-    in ''
-      WALLPAPER_SRC=""
+    system.activationScripts.greetdWallpaper =
+      let
+        jq = lib.getExe' pkgs.jq "jq";
+      in
+      ''
+        WALLPAPER_SRC=""
 
-      # Source 1: quickshell wallpaper path file (most up-to-date)
-      qs_notify="${mainHome}/.cache/quickshell-wallpaper-path"
-      if [ -f "$qs_notify" ]; then
-        candidate="$(head -1 "$qs_notify" 2>/dev/null || true)"
-        if [ -n "$candidate" ] && [ -f "$candidate" ]; then
-          WALLPAPER_SRC="$candidate"
-        fi
-      fi
-
-      # Source 2: wl daemon state (current wallpaper from last session)
-      if [ -z "$WALLPAPER_SRC" ]; then
-        wl_state="${mainHome}/.local/state/wl/state.json"
-        if [ -f "$wl_state" ]; then
-          candidate="$(${jq} -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$wl_state" 2>/dev/null || true)"
+        # Source 1: quickshell wallpaper path file (most up-to-date)
+        qs_notify="${mainHome}/.cache/quickshell-wallpaper-path"
+        if [ -f "$qs_notify" ]; then
+          candidate="$(head -1 "$qs_notify" 2>/dev/null || true)"
           if [ -n "$candidate" ] && [ -f "$candidate" ]; then
             WALLPAPER_SRC="$candidate"
           fi
         fi
-      fi
 
-      # Source 3: first image from the wl wallpaper directory
-      if [ -z "$WALLPAPER_SRC" ]; then
-        candidate="$(find ${mainHome}/pic/wl -maxdepth 1 -type f 2>/dev/null | sort -R | head -1 || true)"
-        if [ -n "$candidate" ]; then
-          WALLPAPER_SRC="$candidate"
+        # Source 2: wl daemon state (current wallpaper from last session)
+        if [ -z "$WALLPAPER_SRC" ]; then
+          wl_state="${mainHome}/.local/state/wl/state.json"
+          if [ -f "$wl_state" ]; then
+            candidate="$(${jq} -r '.outputs | to_entries | .[0].value.wallpaper_path // empty' "$wl_state" 2>/dev/null || true)"
+            if [ -n "$candidate" ] && [ -f "$candidate" ]; then
+              WALLPAPER_SRC="$candidate"
+            fi
+          fi
         fi
-      fi
 
-      # Source 4: hardcoded fallback
-      if [ -z "$WALLPAPER_SRC" ]; then
-        WALLPAPER_SRC="${greeterWallpaperFallback}"
-      fi
+        # Source 3: first image from the wl wallpaper directory
+        if [ -z "$WALLPAPER_SRC" ]; then
+          candidate="$(find ${mainHome}/pic/wl -maxdepth 1 -type f 2>/dev/null | sort -R | head -1 || true)"
+          if [ -n "$candidate" ]; then
+            WALLPAPER_SRC="$candidate"
+          fi
+        fi
 
-      if [ -f "$WALLPAPER_SRC" ]; then
-        install -Dm644 "$WALLPAPER_SRC" "${greeterWallpaperDst}"
-      else
-        echo "greetd wallpaper: no source found (tried wl state, qs notify, pic/wl/, fallback)" >&2
-      fi
+        # Source 4: hardcoded fallback
+        if [ -z "$WALLPAPER_SRC" ]; then
+          WALLPAPER_SRC="${greeterWallpaperFallback}"
+        fi
 
-      install -Dm644 ${pkgs.writeText "greeter-theme.json" "{}"} /home/greeter/.config/quickshell/Theme/.theme.json
-    '';
+        if [ -f "$WALLPAPER_SRC" ]; then
+          install -Dm644 "$WALLPAPER_SRC" "${greeterWallpaperDst}"
+        else
+          echo "greetd wallpaper: no source found (tried wl state, qs notify, pic/wl/, fallback)" >&2
+        fi
+
+        install -Dm644 ${pkgs.writeText "greeter-theme.json" "{}"} /home/greeter/.config/quickshell/Theme/.theme.json
+      '';
   };
 }

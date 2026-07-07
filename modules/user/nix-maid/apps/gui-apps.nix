@@ -12,10 +12,9 @@ in
   config = lib.mkMerge [
     {
       # Packages
-      environment.systemPackages =
-        [
-          pkgs.wallust # Color palette generator
-        ];
+      environment.systemPackages = [
+        pkgs.wallust # Color palette generator
+      ];
     }
     (n.mkHomeFiles {
       # Handlr Config

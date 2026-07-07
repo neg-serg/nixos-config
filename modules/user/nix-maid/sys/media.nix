@@ -102,26 +102,27 @@ lib.mkMerge [
   {
     environment.systemPackages =
       (lib.optionals (config.features.media.audio.beets.enable or true) (
-        if config.features.media.audio.beets.mode == "distrobox"
-        then [ beetWrapper ] # Music library manager and tagger (via distrobox/CachyOS)
-        else [ pkgs.beets ] # Music library manager and tagger (native)
+        if config.features.media.audio.beets.mode == "distrobox" then
+          [ beetWrapper ] # Music library manager and tagger (via distrobox/CachyOS)
+        else
+          [ pkgs.beets ] # Music library manager and tagger (native)
       ))
       ++ [
-      # Audio
-      pkgs.mpc # A minimalist command line interface to MPD
-      pkgs.rmpc # Rust Music Player Client
-      pkgs.rescrobbled # MPRIS Scrobbler # MPRIS Scrobbler
-      pkgs.ncpamixer # An ncurses mixer for PulseAudio
-      pkgs.playerctl # Command-line controller for MPC-capable players
+        # Audio
+        pkgs.mpc # A minimalist command line interface to MPD
+        pkgs.rmpc # Rust Music Player Client
+        pkgs.rescrobbled # MPRIS Scrobbler # MPRIS Scrobbler
+        pkgs.ncpamixer # An ncurses mixer for PulseAudio
+        pkgs.playerctl # Command-line controller for MPC-capable players
 
-      # Images
-      pkgs.swayimg # Lightweight image viewer for Wayland
-      pkgs.mpdas # Audio Scrobbler client for MPD
-      pkgs.mpdris2 # MPRIS 2 support for MPD
-    ]
-    ++ lib.optionals (config.features.media.audio.spicetify.enable or false) [
-      pkgs.spicetify-cli # Spotify customization tool
-    ];
+        # Images
+        pkgs.swayimg # Lightweight image viewer for Wayland
+        pkgs.mpdas # Audio Scrobbler client for MPD
+        pkgs.mpdris2 # MPRIS 2 support for MPD
+      ]
+      ++ lib.optionals (config.features.media.audio.spicetify.enable or false) [
+        pkgs.spicetify-cli # Spotify customization tool
+      ];
 
     # MPD Service
     # Note: MPD is enabled system-wide in modules/servers/mpd/default.nix

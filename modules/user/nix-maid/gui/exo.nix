@@ -29,22 +29,27 @@ let
   ignisWrapped = pkgs.symlinkJoin {
     name = "ignis-wrapped";
     paths = [
-      (pkgs.runCommand "ignis-wrapper" {
-        nativeBuildInputs = [ pkgs.makeWrapper ];
-      } ''
-        mkdir -p $out/bin
-        makeWrapper ${lib.getExe pkgs.ignis} $out/bin/ignis \
-          --prefix PATH : ${lib.makeBinPath ignisRuntimeDeps} \
-          --prefix GI_TYPELIB_PATH : ${lib.makeSearchPath "lib/girepository-1.0" [
-            pkgs.gtk4
-            pkgs.libadwaita
-            pkgs.gobject-introspection
-            pkgs.glib
-            pkgs.pango
-            pkgs.gdk-pixbuf
-            pkgs.graphene
-          ]}
-      '')
+      (pkgs.runCommand "ignis-wrapper"
+        {
+          nativeBuildInputs = [ pkgs.makeWrapper ];
+        }
+        ''
+          mkdir -p $out/bin
+          makeWrapper ${lib.getExe pkgs.ignis} $out/bin/ignis \
+            --prefix PATH : ${lib.makeBinPath ignisRuntimeDeps} \
+            --prefix GI_TYPELIB_PATH : ${
+              lib.makeSearchPath "lib/girepository-1.0" [
+                pkgs.gtk4
+                pkgs.libadwaita
+                pkgs.gobject-introspection
+                pkgs.glib
+                pkgs.pango
+                pkgs.gdk-pixbuf
+                pkgs.graphene
+              ]
+            }
+        ''
+      )
     ];
   };
 
@@ -62,14 +67,18 @@ let
     "colors.scss"
   ];
 
-  ignisSrcNames = builtins.filter
-    (name: !(builtins.elem name protectedIgnisFiles))
-    (builtins.attrNames ignisSrcEntries);
+  ignisSrcNames = builtins.filter (name: !(builtins.elem name protectedIgnisFiles)) (
+    builtins.attrNames ignisSrcEntries
+  );
 
-  ignisHomeFiles = builtins.listToAttrs (map (name: {
-    name = ".config/ignis/${name}";
-    value = { source = "${ignisConfigSrc}/${name}"; };
-  }) ignisSrcNames);
+  ignisHomeFiles = builtins.listToAttrs (
+    map (name: {
+      name = ".config/ignis/${name}";
+      value = {
+        source = "${ignisConfigSrc}/${name}";
+      };
+    }) ignisSrcNames
+  );
 
   matugenHomeFiles = {
     ".config/matugen".source = matugenConfigSrc;
@@ -124,7 +133,10 @@ lib.mkIf exoEnabled (
         description = "Ignis - Exo desktop shell (Material 3)";
         documentation = [ "https://github.com/debuggyo/Exo" ];
         partOf = [ "graphical-session.target" ];
-        after = [ "graphical-session-pre.target" "pipewire.service" ];
+        after = [
+          "graphical-session-pre.target"
+          "pipewire.service"
+        ];
         wants = [ "pipewire.service" ];
         wantedBy = [ "graphical-session.target" ];
         serviceConfig = {
@@ -188,7 +200,10 @@ lib.mkIf exoEnabled (
         "swww-daemon.service"
         "exo-init.service"
       ];
-      systemd.user.services.ignis.wants = [ "maid-activation.service" "exo-init.service" ];
+      systemd.user.services.ignis.wants = [
+        "maid-activation.service"
+        "exo-init.service"
+      ];
     }
   ]
 )

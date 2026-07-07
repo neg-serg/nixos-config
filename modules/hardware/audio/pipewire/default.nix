@@ -27,7 +27,14 @@ in
         "92-low-latency" = {
           "context.properties" = {
             "default.clock.rate" = 48000;
-            "default.clock.allowed-rates" = [ 44100 48000 88200 96000 176400 192000 ];
+            "default.clock.allowed-rates" = [
+              44100
+              48000
+              88200
+              96000
+              176400
+              192000
+            ];
             "default.clock.quantum" = 128;
             "default.clock.min-quantum" = 32;
             "default.clock.max-quantum" = 4096;
@@ -70,20 +77,32 @@ in
                       };
                     }
                   ];
-                  inputs = [ "eq:in_l" "eq:in_r" ];
-                  outputs = [ "eq:out_l" "eq:out_r" ];
+                  inputs = [
+                    "eq:in_l"
+                    "eq:in_r"
+                  ];
+                  outputs = [
+                    "eq:out_l"
+                    "eq:out_r"
+                  ];
                 };
                 "capture.props" = {
                   "node.name" = "harman_shelf_sink";
                   "media.class" = "Audio/Sink";
                   "audio.channels" = 2;
-                  "audio.position" = [ "FL" "FR" ];
+                  "audio.position" = [
+                    "FL"
+                    "FR"
+                  ];
                 };
                 "playback.props" = {
                   "node.name" = "harman_shelf_source";
                   "media.class" = "Audio/Source";
                   "audio.channels" = 2;
-                  "audio.position" = [ "FL" "FR" ];
+                  "audio.position" = [
+                    "FL"
+                    "FR"
+                  ];
                 };
               };
             }

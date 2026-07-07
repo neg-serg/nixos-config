@@ -1,11 +1,21 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   mainUser = config.users.main.name or "neg";
   homeDir = "/home/${mainUser}";
   isTelfir = config.networking.hostName == "telfir";
 in
 {
-  boot.supportedFilesystems = [ "exfat" "xfs" "udf" "zfs" ];
+  boot.supportedFilesystems = [
+    "exfat"
+    "xfs"
+    "udf"
+    "zfs"
+  ];
   boot.initrd.supportedFilesystems = [ "zfs" ];
   boot.initrd.kernelModules = [ "zfs" ];
   boot.zfs.forceImportRoot = true;
@@ -14,62 +24,109 @@ in
     "/" = {
       device = "tank/nixos";
       fsType = "zfs";
-      options = [ "rw" "noatime" ];
+      options = [
+        "rw"
+        "noatime"
+      ];
     };
     "/nix/store" = {
       device = "tank/store";
       fsType = "zfs";
-      options = [ "noatime" "nofail" ];
+      options = [
+        "noatime"
+        "nofail"
+      ];
     };
     "/boot" = {
       device = "/dev/nvme0n1p5";
       fsType = "vfat";
-      options = [ "x-systemd.automount" "nofail" "fmask=0177" "dmask=0077" ];
+      options = [
+        "x-systemd.automount"
+        "nofail"
+        "fmask=0177"
+        "dmask=0077"
+      ];
     };
     "${homeDir}/music" = {
       device = "/mnt/one/music";
       fsType = "none";
-      options = [ "bind" "nofail" "x-systemd.automount" ];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/torrent" = {
       device = "/mnt/one/torrent";
       fsType = "none";
-      options = [ "bind" "nofail" "x-systemd.automount" ];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/vid" = {
       device = "/mnt/one/vid";
       fsType = "none";
-      options = [ "bind" "nofail" "x-systemd.automount" ];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/games" = {
       device = "/mnt/zero/games";
       fsType = "none";
-      options = [ "bind" "nofail" "x-systemd.automount" ];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/doc" = {
       device = "/mnt/one/doc";
       fsType = "none";
-      options = [ "bind" "nofail" "x-systemd.automount" ];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/.local/mail" = {
       device = "/mnt/zero/mail";
       fsType = "none";
-      options = [ "bind" "nofail" "x-systemd.automount" ];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/.local/share/Steam/userdata" = {
       device = "/mnt/zero/userdata_steam";
       fsType = "none";
-      options = [ "bind" "nofail" "x-systemd.automount" ];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/.local/share/wineprefixes" = {
       device = "/mnt/zero/wineprefixes";
       fsType = "none";
-      options = [ "bind" "nofail" "x-systemd.automount" ];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
     "${homeDir}/.cache/winetricks" = {
       device = "/mnt/zero/winetricks_cache";
       fsType = "none";
-      options = [ "bind" "nofail" "x-systemd.automount" ];
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
 
     # ---- Bulk storage LVs ----
@@ -78,7 +135,10 @@ in
     "/mnt/one" = {
       device = "/dev/mapper/xenon-one";
       fsType = "xfs";
-      options = [ "nofail" "x-systemd.automount" ];
+      options = [
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
 
     # ---- ZFS ----
@@ -93,12 +153,19 @@ in
     "/mnt/zero" = {
       device = "/dev/mapper/argon-zero";
       fsType = "xfs";
-      options = [ "nofail" "x-systemd.automount" ];
+      options = [
+        "nofail"
+        "x-systemd.automount"
+      ];
     };
   };
 
   swapDevices = lib.mkIf isTelfir [
-    { device = "/mnt/zero/swapfile"; priority = -1; size = 102400; }
+    {
+      device = "/mnt/zero/swapfile";
+      priority = -1;
+      size = 102400;
+    }
   ];
 
   # Cache both metadata and data for /nix/store — ARC has room (60 GB RAM),
@@ -184,8 +251,6 @@ in
     recommendedOptimisation = false;
     recommendedTlsSettings = false;
 
-
-
     # Cache path set via extraConfig to avoid systemd CacheDirectory prefix
     commonHttpConfig = ''
       proxy_cache_path /tank/nix-cache/nginx
@@ -198,7 +263,10 @@ in
 
     virtualHosts."nix-cache" = {
       listen = [
-        { addr = "127.0.0.1"; port = 3210; }
+        {
+          addr = "127.0.0.1";
+          port = 3210;
+        }
       ];
       serverName = "nix-cache";
       locations."/" = {

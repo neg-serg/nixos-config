@@ -11,15 +11,19 @@ let
     inherit (prev.config) rewriteURL;
   };
 
-  fixedFetchurl = args:
+  fixedFetchurl =
+    args:
     let
       url = args.url or "";
     in
     if lib.hasPrefix "https://repo.or.cz/tinycc.git/snapshot/" url then
-      bootFetchurl (args // {
-        url = "https://github.com/TinyCC/tinycc/archive/${lib.removePrefix "https://repo.or.cz/tinycc.git/snapshot/" url}";
-        hash = "sha256-c4H5RKqSVc1WDoGSxbAkEkbSyD7qVLjrMXECmS/h4rs=";
-      })
+      bootFetchurl (
+        args
+        // {
+          url = "https://github.com/TinyCC/tinycc/archive/${lib.removePrefix "https://repo.or.cz/tinycc.git/snapshot/" url}";
+          hash = "sha256-c4H5RKqSVc1WDoGSxbAkEkbSyD7qVLjrMXECmS/h4rs=";
+        }
+      )
     else
       bootFetchurl args;
 in

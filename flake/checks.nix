@@ -49,18 +49,15 @@ let
     let
       result = lib.evalModules {
         specialArgs = mkStubArgs domainFilter;
-        modules =
-          [
-            { _module.check = false; }
-            ../modules/features
-          ]
-          ++ extraModules;
+        modules = [
+          { _module.check = false; }
+          ../modules/features
+        ]
+        ++ extraModules;
       };
     in
     pkgs.runCommand "check-${name}" { } ''
-      echo "check: ${name} OK (${
-        toString (builtins.length (builtins.attrNames result.options))
-      } options)"
+      echo "check: ${name} OK (${toString (builtins.length (builtins.attrNames result.options))} options)"
       touch $out
     '';
 

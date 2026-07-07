@@ -19,7 +19,8 @@ let
   domain = name: elem: lib.optional (domainFilter name) elem;
 in
 {
-  imports = [ ]
+  imports =
+    [ ]
     ++ domain "appimage" ./appimage/default.nix
     ++ domain "apps" ./apps/default.nix
     ++ domain "cli" ./cli/default.nix
@@ -29,6 +30,7 @@ in
     ++ domain "documentation" ./documentation/default.nix
     ++ domain "emulators" ./emulators/default.nix
     ++ domain "features" ./features/default.nix
+    ++ domain "flatpak" ./flatpak/default.nix
     ++ domain "flake-preflight" ./flake-preflight.nix
     ++ domain "fonts" ./fonts/default.nix
     ++ domain "fun" ./fun/default.nix
@@ -49,6 +51,5 @@ in
     ++ domain "tools" ./tools/default.nix
     ++ domain "torrent" ./torrent/default.nix
     ++ domain "user" ./user/default.nix
-    ++ domain "web" ./web/default.nix
-    ;
+    ++ domain "web" ./web/default.nix;
 }
