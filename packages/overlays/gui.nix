@@ -51,4 +51,6 @@ in
       (old: {
         patches = (old.patches or [ ]) ++ [ ./hyprscratch-keepalive-fix.patch ];
       });
+
+  optiscaler = prev.callPackage (inputs.self + "/packages/optiscaler") { };
 }
