@@ -205,17 +205,9 @@ api.Hints.style(`
 
 // ========== Navigation ==========
 
-// Unmap Omnibar-related default bindings to prevent accidental triggering
-// Map 't' to new tab via local server (Ctrl+T — opens new tab with address bar focused)
+// Map 't' to open a fresh new tab via browser API (no server required)
 api.mapkey('t', 'Open new tab', function () {
-  fetch('http://localhost:18888/focus')
-    .then(r => {
-      if (!r.ok) api.Front.showBanner("New Tab Error: " + r.statusText);
-    })
-    .catch(e => {
-      api.Front.showBanner("New Tab Failed: Is surfingkeys-server running?");
-      console.error(e);
-    });
+  api.tabOpenLink('about:newtab');
 });
 
 api.unmap('b');
@@ -244,14 +236,7 @@ api.unmap('E');  // Default: scroll page down
 api.map('E', 'gT');  // Previous tab
 api.map('e', 'R');  // Next tab (R is default next tab)
 api.mapkey('d', 'Close current tab', function () {
-  fetch('http://localhost:18888/close')
-    .then(r => {
-      if (!r.ok) api.Front.showBanner("Close Error: " + r.statusText);
-    })
-    .catch(e => {
-      api.Front.showBanner("Close Failed: Is surfingkeys-server running?");
-      console.error(e);
-    });
+  api.RUNTIME('closeTab');
 });
 api.map('u', 'X');  // Restore tab
 api.map('w', 'T');  // Tab list
