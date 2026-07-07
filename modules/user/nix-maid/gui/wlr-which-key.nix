@@ -169,9 +169,6 @@ in
               - key: q
                 command: raise --match 'class:regex=^qpwgraph$' --launch qpwgraph
                 title: QPWGraph
-              - key: d
-                command: raise --match 'class:regex=^org\\.nicotine_plus\\.Nicotine$' --launch nicotine
-                title: Nicotine+
               - key: Q
                 command: raise --match 'class:regex=^Carla2$' --launch carla
                 title: Carla
