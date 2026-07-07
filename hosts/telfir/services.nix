@@ -357,10 +357,7 @@ lib.mkMerge [
         # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
         unbound.settings.server."local-data" = map (s: "\"${s}\"") unboundLocalData;
 
-        gnome = {
-          localsearch.enable = true;
-          tinysparql.enable = true;
-        };
+        # GNOME Tracker removed — pulls GTK, no search indexing needed
 
         udev.packages = lib.mkAfter [ pkgs.openrgb ]; # Open source RGB lighting control
         power-profiles-daemon.enable = true;
@@ -397,8 +394,8 @@ lib.mkMerge [
         # nginx is enabled in modules/system/filesystems.nix as a local
         # Nix cache proxy on 127.0.0.1:3210 — no port conflict with Caddy.
 
-        # Enable GVFS (virtual filesystem) support for file managers (MTP, SMB, etc.)
-        gvfs.enable = true;
+        # GVFS disabled — was pulling GTK; enable if Nemo needs MTP/SMB
+        # gvfs.enable = true;
 
         # Resilio Sync (interactive Web UI, auth via SOPS)
         resilio = lib.mkIf hasResilioSecret {
