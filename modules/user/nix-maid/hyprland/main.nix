@@ -28,7 +28,6 @@ lib.mkIf guiEnabled (
 
     (files.generateFileLinks {
       hyprlandConfText = environment.hyprlandConf;
-      permissionsConfText = environment.permissionsConf;
       inherit hyprlandLuaText;
     })
   ]

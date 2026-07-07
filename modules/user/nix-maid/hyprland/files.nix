@@ -25,20 +25,13 @@ in
   generateFileLinks =
     {
       hyprlandConfText,
-      permissionsConfText,
       hyprlandLuaText,
     }:
     n.mkHomeFiles (
       {
         ".config/hypr/hyprland.conf".text = hyprlandConfText;
-        ".config/hypr/permissions.conf".text = permissionsConfText;
 
         ".config/hypr/hyprland.lua".text = hyprlandLuaText;
-        ".config/hypr/xdph.conf".text = ''
-          screencopy {
-              max_fps = 60
-          }
-        '';
 
         ".config/hypr/hyprlock.conf".text = ''
           # Hyprlock Configuration
