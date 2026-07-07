@@ -40,7 +40,7 @@ ShellRoot {
 
 		WlSessionLockSurface {
 			id: lockSurface
-			color: "darkgreen"
+			color: "#000000"
 
 			BackgroundImage {
 				id: backgroundImage
@@ -63,7 +63,7 @@ ShellRoot {
 	FloatingWindow {
 		id: cageWindow
 		visible: !root.useSessionLock
-		color: "darkgreen"
+		color: "#000000"
 
 		BackgroundImage {
 			anchors.fill: parent
