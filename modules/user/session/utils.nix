@@ -26,7 +26,7 @@ in
     pkgs.libxml2 # xmllint for SVG validation
 
     # -- Viewer --
-    (pkgs.zathura.override { plugins = [ pkgs.zathuraPkgs.zathura_pdf_mupdf ]; }) # lightweight document viewer (PDF only)
+    pkgs.sioyek # PDF viewer for research papers (OpenGL, GTK-free zathura alternative)
 
     # -- Wayland Utils --
     pkgs.networkmanager # CLI nmcli helper for panels
