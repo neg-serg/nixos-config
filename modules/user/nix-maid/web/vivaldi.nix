@@ -18,6 +18,7 @@ let
     "clngdbkpkpeebahjckkjfobafhncgmne" # Stylus
     "oldceeleldhonbafppcapldpdifcinji" # LanguageTool
     "liecbpablbhkpakedmddhodofcncejka" # Keepa
+    "gfbliohnnapiefjpjlpjnehglfpaknnc" # SurfingKeys (vim-like keybindings)
   ];
 
   vivaldi-pkg = pkgs.vivaldi.override {
