@@ -3,7 +3,6 @@
 # purpose: Source: ~/.config/AmneziaVPN.ORG/AmneziaVPN.conf
 #
 
-
 set -euo pipefail
 
 # Source: ~/.config/AmneziaVPN.ORG/AmneziaVPN.conf
@@ -16,7 +15,7 @@ SHARED_PY_DIR="$(mktemp -d)"
 trap 'rm -rf "${SHARED_PY_DIR}"' EXIT
 SHARED_PY="${SHARED_PY_DIR}/_extract_payload.py"
 
-cat > "${SHARED_PY}" <<'PY'
+cat > "${SHARED_PY}" << 'PY'
 import base64
 import json
 import re
@@ -57,11 +56,11 @@ def extract_payload(data):
 PY
 
 usage() {
-	printf '%s\n' 'Usage: amnezia-import-tun-config.sh import|show-path|check'
+  printf '%s\n' 'Usage: amnezia-import-tun-config.sh import|show-path|check'
 }
 
 write_runtime_config() {
-	python3 - "$SRC_CONFIG" "$OUT_CONFIG" "$SHARED_PY" <<'PY'
+  python3 - "$SRC_CONFIG" "$OUT_CONFIG" "$SHARED_PY" << 'PY'
 import json
 import sys
 from pathlib import Path
@@ -76,12 +75,12 @@ payload = extract_payload(data)
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 PY
-	chmod 600 "$OUT_CONFIG"
-	printf '%s\n' "$OUT_CONFIG"
+  chmod 600 "$OUT_CONFIG"
+  printf '%s\n' "$OUT_CONFIG"
 }
 
 check_runtime_config() {
-	python3 - "$SRC_CONFIG" "$OUT_CONFIG" "$SHARED_PY" <<'PY'
+  python3 - "$SRC_CONFIG" "$OUT_CONFIG" "$SHARED_PY" << 'PY'
 import json
 import sys
 from pathlib import Path
@@ -117,21 +116,21 @@ PY
 }
 
 case "${1:-import}" in
-import)
-	if [[ ! -f "$SRC_CONFIG" ]]; then
-		printf 'ERROR: missing source config: %s\n' "$SRC_CONFIG" >&2
-		exit 1
-	fi
-	write_runtime_config
-	;;
-show-path)
-	printf '%s\n' "$OUT_CONFIG"
-	;;
-check)
-	check_runtime_config
-	;;
-*)
-	usage >&2
-	exit 2
-	;;
+  import)
+    if [[ ! -f "$SRC_CONFIG" ]]; then
+      printf 'ERROR: missing source config: %s\n' "$SRC_CONFIG" >&2
+      exit 1
+    fi
+    write_runtime_config
+    ;;
+  show-path)
+    printf '%s\n' "$OUT_CONFIG"
+    ;;
+  check)
+    check_runtime_config
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
 esac

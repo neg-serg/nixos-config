@@ -1109,6 +1109,20 @@
         "type": "github"
       }
     },
+    "nix-flatpak": {
+      "locked": {
+        "lastModified": 1783368811,
+        "owner": "gmodena",
+        "repo": "nix-flatpak",
+        "rev": "20d42f0ee98c9fe9f85e8d1de474f1409ed10d05",
+        "type": "github"
+      },
+      "original": {
+        "owner": "gmodena",
+        "repo": "nix-flatpak",
+        "type": "github"
+      }
+    },
     "nix-maid": {
       "locked": {
         "lastModified": 1775372244,
@@ -1447,6 +1461,7 @@
           "determinate",
           "nix"
         ],
+        "nix-flatpak": "nix-flatpak",
         "nix-maid": "nix-maid",
         "nixpkgs": "nixpkgs_4",
         "noctalia": "noctalia",

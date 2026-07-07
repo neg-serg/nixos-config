@@ -187,18 +187,18 @@ in
         lib.filter (s: s != "") (
           map (
             w:
-              if (w.var or null) != null then
-                ''
-                  windowrule {
-                      name = route-${w.var}
-                      match:class = $$${w.var}
-                      no_blur = yes
-                      tag = ${w.var}
-                      workspace = ${toString w.id}
-                  }
-                ''
-              else
-                ""
+            if (w.var or null) != null then
+              ''
+                windowrule {
+                    name = route-${w.var}
+                    match:class = $$${w.var}
+                    no_blur = yes
+                    tag = ${w.var}
+                    workspace = ${toString w.id}
+                }
+              ''
+            else
+              ""
           ) workspaces
         )
       );

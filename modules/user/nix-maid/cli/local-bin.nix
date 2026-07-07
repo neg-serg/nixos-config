@@ -91,10 +91,7 @@ in
           };
         };
 
-        appsEntries =
-          builtins.attrNames appsFiles
-          |> map mkAppAuto
-          |> builtins.listToAttrs;
+        appsEntries = builtins.attrNames appsFiles |> map mkAppAuto |> builtins.listToAttrs;
 
         # 4. Special cases (Substitutions)
 

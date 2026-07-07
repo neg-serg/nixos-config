@@ -62,7 +62,10 @@ let
 
   # Helper: create a wrapped quickshell binary for a skwd component
   mkSkwdComponent =
-    { name, extraData ? [ ] }:
+    {
+      name,
+      extraData ? [ ],
+    }:
     let
       componentDir = "$out/share/skwd/${name}";
     in
@@ -81,7 +84,9 @@ let
         --prefix QML2_IMPORT_PATH : ${qtQmlPaths} \
         --prefix PATH : ${lib.makeBinPath allRuntimeDeps} \
         --set SKWD_INSTALL "$out/share/skwd" \
-        --set SKWD_${lib.toUpper (builtins.replaceStrings [ "-" ] [ "_" ] name)}_INSTALL "$out/share/skwd/${name}" \
+        --set SKWD_${
+          lib.toUpper (builtins.replaceStrings [ "-" ] [ "_" ] name)
+        }_INSTALL "$out/share/skwd/${name}" \
         --set QT_QPA_PLATFORM wayland \
         --set QML_XHR_ALLOW_FILE_READ 1 \
         --add-flags "-p $out/share/skwd/${name}/shell.qml"
@@ -97,7 +102,10 @@ stdenv.mkDerivation {
   dontBuild = true;
 
   installPhase = ''
-    ${mkSkwdComponent { name = "skwd-bar"; extraData = [ ]; }}
+    ${mkSkwdComponent {
+      name = "skwd-bar";
+      extraData = [ ];
+    }}
     ${mkSkwdComponent { name = "skwd-launch"; }}
     ${mkSkwdComponent { name = "skwd-music"; }}
     ${mkSkwdComponent { name = "skwd-notification"; }}

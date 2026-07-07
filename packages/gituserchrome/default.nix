@@ -1,6 +1,15 @@
-{ lib, buildGoModule, webkitgtk_4_1, gtk3, libsoup_3
-, glib-networking, gsettings-desktop-schemas, librsvg
-, pkg-config, nodejs, fetchFromGitHub
+{
+  lib,
+  buildGoModule,
+  webkitgtk_4_1,
+  gtk3,
+  libsoup_3,
+  glib-networking,
+  gsettings-desktop-schemas,
+  librsvg,
+  pkg-config,
+  nodejs,
+  fetchFromGitHub,
 }:
 
 buildGoModule rec {
@@ -16,16 +25,25 @@ buildGoModule rec {
 
   vendorHash = "sha256-SqC64ztN1TeGpoVZyeM9b+0FF+AOLSasZuancKDP7WA=";
 
-  tags = [ "desktop" "production" ];
+  tags = [
+    "desktop"
+    "production"
+  ];
 
-  ldflags = [ "-s" "-w" ];
+  ldflags = [
+    "-s"
+    "-w"
+  ];
 
   # Prevent frontend build from leaking into goModules
   overrideModAttrs = old: {
     preBuild = "";
   };
 
-  nativeBuildInputs = [ pkg-config nodejs ];
+  nativeBuildInputs = [
+    pkg-config
+    nodejs
+  ];
 
   buildInputs = [
     webkitgtk_4_1

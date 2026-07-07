@@ -26,8 +26,7 @@ in
 {
   config = lib.mkMerge [
     (lib.mkIf guiEnabled {
-      environment.systemPackages =
-        lib.mkAfter [ pkgs.gopass ]; # password store with extensions
+      environment.systemPackages = lib.mkAfter [ pkgs.gopass ]; # password store with extensions
     })
     (lib.mkIf quickshellEnabled {
       environment.systemPackages = lib.mkAfter quickshellExtras;

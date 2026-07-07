@@ -78,20 +78,20 @@ in
     kernelPackages = lib.mkForce pkgs.linuxPackages;
 
     kernelParams = [
-      "acpi_osi=!"                             # Fix ACPI compatibility on ASUS boards
-      "acpi_osi=Linux"                         # Report Linux-compatible ACPI interface
+      "acpi_osi=!" # Fix ACPI compatibility on ASUS boards
+      "acpi_osi=Linux" # Report Linux-compatible ACPI interface
       # video=3840x2160@240 removed: simpledrm rejects custom modelines, causes "User-defined mode not supported"
       # GRUB gfxmodeEfi = "3840x2160" covers the bootloader resolution instead
-      "lru_gen=1"                              # Enable multi-gen LRU page reclaim
-      "lru_gen.min_ttl_ms=1000"                # Min TTL for multi-gen LRU
-      "mem_sleep_default=deep"                 # Prefer deep sleep (S3) for suspend
-      "8250.nr_uarts=0"                        # Skip legacy UART probing
+      "lru_gen=1" # Enable multi-gen LRU page reclaim
+      "lru_gen.min_ttl_ms=1000" # Min TTL for multi-gen LRU
+      "mem_sleep_default=deep" # Prefer deep sleep (S3) for suspend
+      "8250.nr_uarts=0" # Skip legacy UART probing
       # nvme_core.* / pcie_aspm / usbcore.autosuspend already covered by performance profile in params.nix
-      "nvme_core.io_timeout=4294967295"        # Max NVMe I/O timeout
-      "amdgpu.ppfeaturemask=0xffffffff"        # Enable all AMD GPU overdrive features
-      "udev.children_max=32"                   # Parallelize udev device init
-      "udev.event_timeout=10"                  # Kill stuck udev workers after 10s
-      "rd.udev.event_timeout=10"               # Same for initrd udev
+      "nvme_core.io_timeout=4294967295" # Max NVMe I/O timeout
+      "amdgpu.ppfeaturemask=0xffffffff" # Enable all AMD GPU overdrive features
+      "udev.children_max=32" # Parallelize udev device init
+      "udev.event_timeout=10" # Kill stuck udev workers after 10s
+      "rd.udev.event_timeout=10" # Same for initrd udev
       "usbcore.initial_descriptor_timeout=2000" # Cut USB descriptor timeout from 5s to 2s (phantom port 8 on ASUS AM5)
     ];
 
@@ -110,8 +110,9 @@ in
       in
       lib.optional (builtins.hasAttr "asus-ec-sensors" config.boot.kernelPackages)
         config.boot.kernelPackages."asus-ec-sensors"
-      ++ lib.optional (builtins.hasAttr pkgs.zfs.kernelModuleAttribute config.boot.kernelPackages)
-        config.boot.kernelPackages.${pkgs.zfs.kernelModuleAttribute}
+      ++
+        lib.optional (builtins.hasAttr pkgs.zfs.kernelModuleAttribute config.boot.kernelPackages)
+          config.boot.kernelPackages.${pkgs.zfs.kernelModuleAttribute}
       ++ [ snd-hdspe ]
     );
 
@@ -189,8 +190,14 @@ in
   };
 
   # Host-specific hardware tools
-  services.udev.packages = [ pkgs.bazecor ];
+  # Bakecore udev rules for Dygma keyboards
+  services.udev.extraRules = ''
+    # Dygma Raise
+    SUBSYSTEM=="usb", ATTR{idVendor}=="35ef", ATTR{idProduct}=="0105", MODE="0666"
+    # Dygma Defy
+    SUBSYSTEM=="usb", ATTR{idVendor}=="35ef", ATTR{idProduct}=="0108", MODE="0666"
+  '';
   environment.systemPackages = [
-    pkgs.bazecor # Dygma keyboard configurator
+    pkgs.neg.bazecor # Dygma keyboard configurator (AppImage)
   ];
 }

@@ -12,10 +12,10 @@ PROXY="socks5://127.0.0.1:10808"
 ZEN_BIN="${ZEN_BIN:-zen-browser}"
 
 # Check if VPN is running
-if ! curl --max-time 2 --socks5 127.0.0.1:10808 --silent https://httpbin.org/ip >/dev/null 2>&1; then
-    echo "❌ VPN SOCKS5 proxy not working on 127.0.0.1:10808"
-    echo "Start VPN first: just vpn-start"
-    exit 1
+if ! curl --max-time 2 --socks5 127.0.0.1:10808 --silent https://httpbin.org/ip > /dev/null 2>&1; then
+  echo "❌ VPN SOCKS5 proxy not working on 127.0.0.1:10808"
+  echo "Start VPN first: just vpn-start"
+  exit 1
 fi
 
 echo "🚀 Starting zen-browser with VPN proxy ($PROXY)"
