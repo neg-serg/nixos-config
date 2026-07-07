@@ -40,7 +40,6 @@ local m = {
   utility            = "^(qt5ct|wine|steamwebhelper|sun-awt-X11-XFramePeer|xdg-desktop-portal-gtk)$",
   mpd_add            = "^(mpd-add)(.*)$",
   steam_app          = "^(steam_app)",
-  file_manager       = "^(nemo)$",
   xwaylandvideobridge = "^(xwaylandvideobridge)$",
   -- scratchpad classes
   im_scratchpad      = "^(KotatogramDesktop|Skype|Slack|TelegramDesktop|org\\.telegram\\.desktop|zoom)$",
@@ -57,7 +56,7 @@ local cls = {
   web         = "^([Vv]ivaldi-stable|[Vv]ivaldi)$",
   dev         = "^(nwim)$",
   games       = "^(steam|Steam)$",
-  doc         = "^(org.pwmt.zathura)$",
+  doc         = "^(sioyek)$",
   vid         = "^(mpv)$",
   obs         = "^(obs)$",
   pic         = "^swayimg$",
