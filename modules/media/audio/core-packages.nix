@@ -24,7 +24,6 @@ in
 
       # -- GUI Patchbays --
       pkgs.coppwr # PipeWire CLI to copy/paste complex graphs
-      pkgs.open-music-kontrollers.patchmatrix # advanced patch matrix for LV2/JACK bridging
     ];
 
     services.udev.extraRules = ''
