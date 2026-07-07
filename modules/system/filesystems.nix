@@ -247,13 +247,13 @@ in
   # After first download, subsequent builds hit the local cache.
   services.nginx = lib.mkIf isTelfir {
     enable = true;
-    recommendedProxySettings = true;
+    recommendedProxySettings = false; # manual in nix-cache location — conflicts with cache.nixos.org Host
     recommendedOptimisation = false;
     recommendedTlsSettings = false;
 
     # Cache path set via extraConfig to avoid systemd CacheDirectory prefix
     commonHttpConfig = ''
-      proxy_cache_path /tank/nix-cache/nginx
+      proxy_cache_path /var/cache/nginx/nix
         keys_zone=nixcache:100m
         levels=1:2
         use_temp_path=off
@@ -271,10 +271,17 @@ in
       serverName = "nix-cache";
       locations."/" = {
         proxyPass = "https://cache.nixos.org";
-        recommendedProxySettings = true;
         extraConfig = ''
           # SNI обязателен — Fastly сбрасывает соединение без него
           proxy_ssl_server_name on;
+          proxy_ssl_name cache.nixos.org;
+
+          # Minimal proxy headers — Host must match cache.nixos.org
+          proxy_set_header Host cache.nixos.org;
+
+          # Force IPv4 — IPv6 is unreachable on this host
+          resolver 127.0.0.1 ipv6=off valid=300s;
+
           proxy_cache nixcache;
           proxy_cache_key "$uri";
 
