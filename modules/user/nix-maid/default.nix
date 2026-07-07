@@ -57,6 +57,7 @@
     # Web & Browsing
     ./web/browsing.nix
 
+    ./web/vivaldi.nix
     ./web/aria.nix
     ./web/misc.nix
     ./web/yt-dlp.nix
