@@ -2,8 +2,6 @@
   stdenv,
   lib,
   fetchurl,
-  makeWrapper,
-  appimage-run,
 }:
 let
   version = "1.9.0";
@@ -14,10 +12,8 @@ stdenv.mkDerivation {
 
   src = fetchurl {
     url = "https://github.com/Dygmalab/Bazecor/releases/download/v${version}/Bazecor-${version}-x64.AppImage";
-    hash = lib.fakeHash; # FIXME: replace with real hash after first build (bazecor-1.9.0 AppImage, ~132MB)
+    hash = "sha256-DAUqQf6Sku4oz3vR+bxAXfPtu2sJREbp5a6Mpj90dM0=";
   };
-
-  nativeBuildInputs = [ makeWrapper ];
 
   dontUnpack = true;
 
@@ -34,7 +30,7 @@ stdenv.mkDerivation {
   meta = {
     description = "Bazecor — Dygma keyboard configurator (AppImage)";
     homepage = "https://github.com/Dygmalab/Bazecor";
-    license = stdenv.lib.licenses.gpl3Only;
+    license = lib.licenses.gpl3Only;
     platforms = [ "x86_64-linux" ];
     mainProgram = "bazecor";
   };
