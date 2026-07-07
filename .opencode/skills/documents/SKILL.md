@@ -1,7 +1,6 @@
----
-name: documents
-description: Document conversion (pandoc), PDF manipulation, and spreadsheet/CSV processing via CLI tools
----
+______________________________________________________________________
+
+## name: documents description: Document conversion (pandoc), PDF manipulation, and spreadsheet/CSV processing via CLI tools
 
 # Document Tools
 
@@ -10,6 +9,7 @@ Use CLI tools instead of MCP pandoc, pdf, and spreadsheet servers.
 ## Pandoc — Document Conversion
 
 ### Common conversions
+
 ```bash
 # Markdown to PDF
 pandoc input.md -o output.pdf --pdf-engine=xelatex
@@ -31,11 +31,13 @@ pandoc input.epub -o output.md
 ```
 
 ### With bibliography
+
 ```bash
 pandoc input.md --bibliography=refs.bib --citeproc -o output.pdf
 ```
 
 ### Templates & metadata
+
 ```bash
 pandoc input.md -o output.pdf --template=mytemplate.latex --metadata title="My Title"
 ```
@@ -43,28 +45,33 @@ pandoc input.md -o output.pdf --template=mytemplate.latex --metadata title="My T
 ## PDF Manipulation
 
 ### Merge PDFs
+
 ```bash
 pdftk a.pdf b.pdf cat output merged.pdf
 qpdf --empty --pages a.pdf b.pdf -- merged.pdf
 ```
 
 ### Split pages
+
 ```bash
 pdftk input.pdf burst
 qpdf --split-pages=2 input.pdf output_%d.pdf
 ```
 
 ### Extract text
+
 ```bash
 pdftotext input.pdf output.txt
 ```
 
 ### Rotate
+
 ```bash
 pdftk input.pdf rotate 1-endeast output rotated.pdf
 ```
 
 ### Compress
+
 ```bash
 gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dNOPAUSE -dQUIET -dBATCH -sOutputFile=compressed.pdf input.pdf
 ```
@@ -72,6 +79,7 @@ gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dNOPAUSE -dQ
 ## Spreadsheet / CSV
 
 ### csvkit
+
 ```bash
 # View CSV
 csvlook data.csv
@@ -87,6 +95,7 @@ csvstat data.csv
 ```
 
 ### xsv
+
 ```bash
 # Select columns
 xsv select name,age data.csv
