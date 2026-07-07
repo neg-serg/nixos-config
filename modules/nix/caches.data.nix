@@ -2,9 +2,8 @@
   # Shared binary caches and public keys for both flake.nix (nixConfig)
   # and modules/nix/settings.nix (nix.settings).
   # Official cache and community mirrors.
-  substituters = [
-    "http://127.0.0.1:3210" # local nginx Nix cache proxy
-  ];
+  # Local nginx cache proxy (127.0.0.1:3210) disabled — was returning empty responses.
+  substituters = [ ];
 
   trusted-public-keys = [
     # Official NixOS cache

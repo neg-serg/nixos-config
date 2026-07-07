@@ -13,6 +13,8 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [ p7zip ];
 
+  dontUnpack = true;
+
   installPhase = ''
     runHook preInstall
 
