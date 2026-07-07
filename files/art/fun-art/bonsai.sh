@@ -258,7 +258,7 @@ init() {
   # fill grid full of spaces
   for ((row = 0; row < $rows; row++)); do
     for ((col = 0; col < $cols; col++)); do
-      grid[$row, $col]=' '
+      grid[$row,$col]=' '
     done
   done
 
@@ -337,7 +337,8 @@ branch() {
           [2-5]) dx=-1 ;;
           [6-8]) dx=0 ;;
           [9]) dx=1 ;;
-        esac ;;
+        esac
+        ;;
 
       shootRight) # tend right: dx=[-1,2]
         case $((RANDOM % 10)) in
@@ -345,13 +346,16 @@ branch() {
           [2-5]) dx=1 ;;
           [6-8]) dx=0 ;;
           [9]) dx=-1 ;;
-        esac ;;
+        esac
+        ;;
 
       dying) # tend left/right: dx=[-3,3]
-        dx=$(((RANDOM % 7) - 3)) ;;
+        dx=$(((RANDOM % 7) - 3))
+        ;;
 
       *) # tend equal: dx=[-1,1]
-        dx=$(((RANDOM % 3) - 1)) ;;
+        dx=$(((RANDOM % 3) - 1))
+        ;;
 
     esac
 
@@ -389,9 +393,11 @@ branch() {
           else
             case $tmpType in
               shootLeft) # last shoot was left, shoot right
-                tmpType=shootRight ;;
+                tmpType=shootRight
+                ;;
               shootRight) # last shoot was right, shoot left
-                tmpType=shootLeft ;;
+                tmpType=shootLeft
+                ;;
             esac
           fi
           branch $x $y $tmpType $tmpLife
@@ -467,7 +473,7 @@ branch() {
     [ $life -lt 4 ] && char="${leafchar}"
 
     # put character in grid
-    grid[$y, $x]="${color}${char}${R}"
+    grid[$y,$x]="${color}${char}${R}"
 
     # if live, print what we have so far and let the user see it
     if [ $live = true ]; then
@@ -490,7 +496,7 @@ print() {
       [ $live = true ] && echo -ne "\e[0;0H "
 
       # grab the character from our grid
-      line+="${grid[$row, $col]}"
+      line+="${grid[$row,$col]}"
     done
 
     # add our message

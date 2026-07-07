@@ -6,27 +6,27 @@ THUMB_DIR="${2:-}"
 
 # Validate arguments
 if [[ -z "$WALL_DIR" || -z "$THUMB_DIR" ]]; then
-    echo "Usage: $0 <wall_dir> <thumb_dir>" >&2
-    exit 1
+  echo "Usage: $0 <wall_dir> <thumb_dir>" >&2
+  exit 1
 fi
 
 if [[ ! -d "$WALL_DIR" ]]; then
-    echo "Wall dir does not exist: $WALL_DIR" >&2
-    exit 1
+  echo "Wall dir does not exist: $WALL_DIR" >&2
+  exit 1
 fi
 
 # Check for ffmpeg
-if ! command -v ffmpeg >/dev/null 2>&1; then
-    if command -v notify-send >/dev/null 2>&1; then
-        notify-send -u critical "Wallpaper Widget" "ffmpeg is missing! Please install it to generate thumbnails."
-    fi
-    exit 0
+if ! command -v ffmpeg > /dev/null 2>&1; then
+  if command -v notify-send > /dev/null 2>&1; then
+    notify-send -u critical "Wallpaper Widget" "ffmpeg is missing! Please install it to generate thumbnails."
+  fi
+  exit 0
 fi
 
 mkdir -p "$THUMB_DIR" || exit 1
 
 # Lock to prevent concurrent runs
-exec 200>"$THUMB_DIR/.thumb_lock"
+exec 200> "$THUMB_DIR/.thumb_lock"
 flock -n 200 || exit 0
 
 # Clean up stale tmp files from crashed encodes
@@ -37,23 +37,23 @@ find "$THUMB_DIR" -maxdepth 1 -name "*.tmp.jpg" -delete
 declare -A valid_thumbs
 
 while IFS= read -r -d '' wallfile; do
-    filename="${wallfile##*/}"
-    valid_thumbs["${filename}.jpg"]=1
+  filename="${wallfile##*/}"
+  valid_thumbs["${filename}.jpg"]=1
 done < <(find "$WALL_DIR" -maxdepth 1 -type f \
-    \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.webp" \) -print0)
+  \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.webp" \) -print0)
 
 while IFS= read -r -d '' thumb; do
-    thumbname="${thumb##*/}"
-    if [[ -z "${valid_thumbs[$thumbname]+_}" ]]; then
-        rm -f "$thumb"
-    fi
+  thumbname="${thumb##*/}"
+  if [[ -z "${valid_thumbs[$thumbname]+_}" ]]; then
+    rm -f "$thumb"
+  fi
 done < <(find "$THUMB_DIR" -maxdepth 1 -name "*.jpg" -print0)
 
 # Generate thumbnails for missing entries
 export THUMB_DIR
 find "$WALL_DIR" -maxdepth 1 -type f \
-    \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.webp" \) -print0 | \
-    xargs -0 -n 1 -P 4 bash -c '
+  \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.webp" \) -print0 \
+  | xargs -0 -n 1 -P 4 bash -c '
         set -euo pipefail
         img="$1"
         filename="${img##*/}"
