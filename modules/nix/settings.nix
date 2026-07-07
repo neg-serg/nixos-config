@@ -60,8 +60,8 @@ in
       connect-timeout = 15;
       stalled-download-timeout = 120;
       http-connections = 12;
-      cores = 4; # limit per-build cores to keep per-job RAM usage sane (32c/60GB)
-      max-jobs = 8; # limit parallel builds to avoid OOM (14GB ZFS ARC + 60GB total)
+      cores = 32; # all threads on 9950X3D per build, linking is single-threaded anyway
+      max-jobs = 2; # 2 parallel builds, ~30-35GB peak — fits 40GB MemoryMax
       min-free = 4096; # MB reserved for ZFS during builds (ARC + build pressure)
       build-poll-interval = 3; # seconds between polling for finished builds
       log-lines = 50; # lines of build output to show on failure
