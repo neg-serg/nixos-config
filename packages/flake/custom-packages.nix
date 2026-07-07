@@ -12,8 +12,6 @@
   wiremix = pkgs.wiremix;
   palettum = pkgs.neg.palettum;
 
-  gituserchrome = pkgs.gituserchrome;
-
   skwd = pkgs.skwd;
 
   exo = pkgs.exo; # Material 3 desktop shell for Ignis/Hyprland/Niri
