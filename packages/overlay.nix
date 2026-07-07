@@ -46,6 +46,7 @@ in
     // (gui.neg or { })
     // {
       bazecor = final.callPackage ./bazecor-appimage { };
+      telegram-static = final.callPackage ./telegram-static { };
 
       opencode-dev =
         (final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { }).overrideAttrs
