@@ -68,19 +68,12 @@ fi
 
 echo
 echo "5. Testing browser proxy configuration..."
-echo "   Current proxy settings for Zen browser:"
-if [ -f ~/.config/zen-browser/profiles.ini ]; then
-  echo "   ✅ Zen browser profile found"
-  # Check if proxy is configured
-  if grep -q "network.proxy" ~/.config/zen-browser/*.js 2> /dev/null; then
-    echo "   ✅ Proxy settings found in browser config"
-  else
-    echo "   ⚠️  No proxy settings found in browser config"
-    echo "   Note: Browser may need manual proxy configuration"
-  fi
-else
-  echo "   ⚠️  Zen browser config not found"
+echo "   Checking Chromium/Vivaldi proxy config..."
+if command -v vivaldi &> /dev/null; then
+  echo "   ✅ Vivaldi browser found"
 fi
+echo "   Note: Vivaldi proxy can be set via:"
+echo "   Settings → Privacy and Security → Proxy"
 
 echo
 echo "=== Summary ==="
@@ -90,10 +83,10 @@ echo "2. Configure browser to use SOCKS5 proxy: 127.0.0.1:10808"
 echo "3. Or use system proxy settings"
 echo "4. Test with blocked site (e.g., twitter.com)"
 echo
-echo "To configure Zen browser proxy:"
-echo "  about:preferences#general → Network Settings → Settings..."
+echo "To configure Vivaldi proxy:"
+echo "  Settings → Privacy and Security → Proxy"
 echo "  Select 'Manual proxy configuration'"
 echo "  SOCKS Host: 127.0.0.1, Port: 10808"
 echo "  Check 'Proxy DNS when using SOCKS v5'"
 echo
-echo "Alternative: Use the zen-vpn.sh helper script"
+echo "Alternative: Use the vpn-vivaldi.sh helper script"
