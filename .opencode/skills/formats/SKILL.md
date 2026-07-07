@@ -1,7 +1,6 @@
----
-name: formats
-description: Convert between JSON, YAML, TOML, XML and other config formats using CLI tools
----
+______________________________________________________________________
+
+## name: formats description: Convert between JSON, YAML, TOML, XML and other config formats using CLI tools
 
 # Format Conversion
 
@@ -10,6 +9,7 @@ Use CLI tools for format conversion instead of MCP json-yaml-toml server.
 ## JSON ↔ YAML ↔ TOML
 
 ### yq (universal converter)
+
 ```bash
 # JSON to YAML
 yq -Poy eval '.' data.json > data.yaml
@@ -25,6 +25,7 @@ yq -Poj eval '.' data.toml > data.json
 ```
 
 ### dasel (alternative)
+
 ```bash
 # JSON to YAML
 dasel -r json -w yaml < data.json
@@ -33,12 +34,14 @@ dasel -r yaml -w toml < data.yaml
 ```
 
 ### jq + yq combination
+
 ```bash
 # Extract and transform
 cat data.json | jq '.items[] | {name, value}' | yq -Poy eval '.'
 ```
 
 ## JSON Operations (jq)
+
 ```bash
 # Pretty print
 jq '.' file.json
@@ -51,6 +54,7 @@ jq -s 'add' a.json b.json
 ```
 
 ## YAML Operations (yq)
+
 ```bash
 # Set a value
 yq -i '.key = "value"' file.yaml
@@ -59,6 +63,7 @@ yq -i 'del(.key)' file.yaml
 ```
 
 ## INI/HCL/XML
+
 ```bash
 # INI to JSON
 dasel -r ini -w json < config.ini
@@ -68,7 +73,9 @@ yq -Poj eval '.' - < file.xml
 ```
 
 ## Nix-specific
+
 For Nix expressions, use `nix eval --json`:
+
 ```bash
 nix eval --json -f default.nix
 ```

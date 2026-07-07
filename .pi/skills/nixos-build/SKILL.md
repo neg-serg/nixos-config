@@ -1,7 +1,6 @@
----
-name: nixos-build
-description: Build and switch NixOS configurations with validation. Use when building, switching, testing, or deploying NixOS config changes.
----
+______________________________________________________________________
+
+## name: nixos-build description: Build and switch NixOS configurations with validation. Use when building, switching, testing, or deploying NixOS config changes.
 
 # NixOS Build
 

@@ -1,7 +1,6 @@
----
-name: sops
-description: SOPS-encrypted secrets management for NixOS. Use when creating, editing, or viewing encrypted secrets.
----
+______________________________________________________________________
+
+## name: sops description: SOPS-encrypted secrets management for NixOS. Use when creating, editing, or viewing encrypted secrets.
 
 # SOPS Secrets
 
@@ -26,11 +25,13 @@ sops updatekeys secrets/my-secret.sops.yaml
 ## Adding a New Secret
 
 1. Create the encrypted file:
+
    ```bash
    sops secrets/new-secret.sops.yaml
    ```
 
-2. Reference it in NixOS config:
+1. Reference it in NixOS config:
+
    ```nix
    sops.secrets."new-secret" = {
      sopsFile = ./secrets/new-secret.sops.yaml;
@@ -39,7 +40,8 @@ sops updatekeys secrets/my-secret.sops.yaml
    };
    ```
 
-3. Use it in config or services:
+1. Use it in config or services:
+
    ```nix
    config.sops.secrets."new-secret".path
    ```

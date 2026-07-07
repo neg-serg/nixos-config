@@ -1,7 +1,6 @@
----
-name: security
-description: Network scanning (nmap), vulnerability scanning (nuclei), code analysis (semgrep), secret detection (gitleaks), and network diagnostics
----
+______________________________________________________________________
+
+## name: security description: Network scanning (nmap), vulnerability scanning (nuclei), code analysis (semgrep), secret detection (gitleaks), and network diagnostics
 
 # Security Tools
 
@@ -111,6 +110,7 @@ openssl s_client -connect example.com:443 -servername example.com
 ```
 
 ## Usage Notes
+
 - Port scanning requires appropriate permissions (sudo for SYN scan)
 - Nuclei and semgrep need updated templates/rules databases
 - Respect scope and authorization when scanning
