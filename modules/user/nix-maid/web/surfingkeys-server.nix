@@ -14,16 +14,14 @@ mkIf (config.features.web.enable or false) {
   systemd.user.services.surfingkeys-server =
     let
       preset = systemdUser.mkUnitFromPresets { };
-      serverScript = pkgs.writeShellApplication {
-        name = "surfingkeys-server";
-        runtimeInputs = [ pkgs.python3 pkgs.hyprland ];
-        text = builtins.readFile (self + "/packages/local-bin/bin/surfingkeys-server");
-      };
+      serverScript = pkgs.writeText "surfingkeys-server.py" (
+        builtins.readFile (self + "/packages/local-bin/bin/surfingkeys-server")
+      );
     in
     {
       description = "HTTP server for Surfingkeys configuration (focus/close/proxy)";
       serviceConfig = {
-        ExecStart = "${serverScript}/bin/surfingkeys-server";
+        ExecStart = "${pkgs.python3}/bin/python3 -u ${serverScript}";
         Restart = "on-failure";
         RestartSec = "5";
         Slice = "background.slice";
