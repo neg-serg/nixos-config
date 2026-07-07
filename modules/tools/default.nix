@@ -6,7 +6,6 @@ let
 in
 {
   imports = [
-    ./hiddify.nix
     ./pkgs.nix # Nix package manager
   ];
 
