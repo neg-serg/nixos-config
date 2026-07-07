@@ -57,25 +57,19 @@ let
     done
     [ -n "$found" ] || exit 0
 
-    tries=5
-    for i in $(seq 1 "$tries"); do
-      status="$(wpctl status 2>/dev/null || true)"
+    status="$(wpctl status 2>/dev/null || true)"
 
-      # Find HDSPe hardware sink and game-stereo virtual sink
-      hdspe_sink_id="$(echo "$status" | sed -n '/RME AIO Pro.*Pro/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
-      game_sink_id="$(echo "$status" | sed -n '/game-stereo/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
+    # Find HDSPe hardware sink and game-stereo virtual sink
+    hdspe_sink_id="$(echo "$status" | sed -n '/RME AIO Pro.*Pro/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
+    game_sink_id="$(echo "$status" | sed -n '/game-stereo/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
 
-      # Route game-stereo → HDSPe AUX0/AUX1 and set game-stereo as default
-      if [ -n "$hdspe_sink_id" ] && [ -n "$game_sink_id" ]; then
-        wpctl set-default "$game_sink_id" || true
-        # Connect virtual sink playback to HDSPe AUX0/AUX1
-        pw-link playback.game-stereo:output_FL alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX0 2>/dev/null || true
-        pw-link playback.game-stereo:output_FR alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX1 2>/dev/null || true
-        exit 0
-      fi
-      sleep 1
-    done
-    exit 0
+    # Route game-stereo → HDSPe AUX0/AUX1 and set game-stereo as default
+    if [ -n "$hdspe_sink_id" ] && [ -n "$game_sink_id" ]; then
+      wpctl set-default "$game_sink_id" || true
+      # Connect virtual sink playback to HDSPe AUX0/AUX1
+      pw-link playback.game-stereo:output_FL alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX0 2>/dev/null || true
+      pw-link playback.game-stereo:output_FR alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX1 2>/dev/null || true
+    fi
   '';
 
   # pw-route: switch RME AIO Pro output between an/aes/spdif/phones
@@ -184,14 +178,7 @@ in
               pkgs.gawk
             ]
           }:$PATH"
-          tries=5
-          for i in $(seq 1 "$tries"); do
-            if ${pwRouteScript}/bin/pw-route aes 2>/dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          exit 0
+          ${pwRouteScript}/bin/pw-route aes 2>/dev/null || true
         ''}";
       };
     };
