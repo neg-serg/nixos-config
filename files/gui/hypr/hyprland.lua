@@ -32,7 +32,7 @@ local blur_vibrancy          = 0.1696
 -- NOTE: in Lua strings "\\." == regex "\." (a literal dot)
 -- ---------------------------------------------------------------------
 local m = {
-  browser            = "^(vivaldi-stable|vivaldi)$",
+  browser            = "^([Vv]ivaldi-stable|[Vv]ivaldi)$",
   file_dialog        = "^(Open File|Select a File|Choose wallpaper|Open Folder|Save As|Library|File Upload)(.*)$",
   pip                = "^([Pp]icture[-\\s]?[Ii]n[-\\s]?[Pp]icture)(.*)$",
   telegram_wrapped   = "^(.telegram-desktop-wrapped)$",
@@ -54,7 +54,7 @@ local m = {
 -- Workspace routing classes (from classes.conf)
 local cls = {
   term        = "^(term)$",
-  web         = "^(vivaldi-stable|vivaldi)$",
+  web         = "^([Vv]ivaldi-stable|[Vv]ivaldi)$",
   dev         = "^(nwim)$",
   games       = "^(steam|Steam)$",
   doc         = "^(org.pwmt.zathura)$",
@@ -154,7 +154,7 @@ local M1 = "ALT"
 local C  = "CTRL"
 local SH = "SHIFT"
 
-local browser = "zen-beta"
+local browser = "vivaldi"
 local menu    = "vicinae toggle"
 
 -- Raw dispatch helper for dispatchers without a dedicated hl.dsp.* helper
