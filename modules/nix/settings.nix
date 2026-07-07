@@ -92,10 +92,11 @@ in
     daemonCPUSchedPolicy = "batch";
   };
 
-  # Memory protection: prevent OOM killer from taking down the system.
+  # Memory protection: cgroups v2 caps RAM+swap for nix-daemon.
+  # Without MemorySwapMax, swap is unlimited — builds thrash instead of dying.
   systemd.services.nix-daemon.serviceConfig = {
-    MemoryHigh = "45G"; # start throttling at 75% of RAM
-    MemoryMax = "52G";  # hard kill, leaves headroom for OS + ZFS ARC
+    MemoryMax = "40G";      # hard physical RAM cap (~2/3 of 60GB)
+    MemorySwapMax = "42G";  # RAM+swap cap: only 2GB swap allowed
   };
 
   # Determinate Nix overrides netrc-file in /etc/nix/nix.conf after including
