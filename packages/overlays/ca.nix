@@ -12,11 +12,9 @@ _: _: prev:
     acpi = ca prev.acpi;
     adguardian = ca prev.adguardian;
     advancecomp = ca prev.advancecomp;
-    adw-gtk3 = ca prev.adw-gtk3;
     age = ca prev.age;
     airshipper = ca prev.airshipper;
     alertmanager = ca prev.alertmanager;
-    alfa-slab-one = ca prev.alfa-slab-one;
     aliae = ca prev.aliae;
     alsa-tools = ca prev.alsa-tools;
     alsa-utils = ca prev.alsa-utils;
@@ -30,7 +28,6 @@ _: _: prev:
     angband = ca prev.angband;
     ansible = ca prev.ansible;
     antiword = ca prev.antiword;
-    anurati = ca prev.anurati;
     apparmor-profiles = ca prev.apparmor-profiles;
     apparmor-utils = ca prev.apparmor-utils;
     appimage-run = ca prev.appimage-run;
@@ -51,7 +48,6 @@ _: _: prev:
     bluetui = ca prev.bluetui;
     bluez-tools = ca prev.bluez-tools;
     bottles = ca prev.bottles;
-    bpftrace = ca prev.bpftrace;
     brightnessctl = ca prev.brightnessctl;
     brogue-ce = ca prev.brogue-ce;
     broot = ca prev.broot;
@@ -74,7 +70,6 @@ _: _: prev:
     convmv = ca prev.convmv;
     coppwr = ca prev.coppwr;
     corectrl = ca prev.corectrl;
-    crawl = ca prev.crawl;
     crawlTiles = ca prev.crawlTiles;
     curlie = ca prev.curlie;
     czkawka = ca prev.czkawka;
@@ -121,7 +116,6 @@ _: _: prev:
     exfatprogs = ca prev.exfatprogs;
     exiftool = ca prev.exiftool;
     exiv2 = ca prev.exiv2;
-    exo = ca prev.exo;
     expect = ca prev.expect;
     eza = ca prev.eza;
     fd = ca prev.fd;
@@ -170,8 +164,6 @@ _: _: prev:
     gtk4 = ca prev.gtk4;
     gzdoom = ca prev.gzdoom;
     handlr = ca prev.handlr;
-    hdspeconf = ca prev.hdspeconf;
-    herdr = ca prev.herdr;
     himalaya = ca prev.himalaya;
     hishtory = ca prev.hishtory;
     hostPlatform = ca prev.hostPlatform;
@@ -188,14 +180,11 @@ _: _: prev:
     hyphen = ca prev.hyphen;
     hyprcursor = ca prev.hyprcursor;
     hypridle = ca prev.hypridle;
-    hyprland = ca prev.hyprland;
     hyprland-qt-support = ca prev.hyprland-qt-support;
-    hyprland-qtutils = ca prev.hyprland-qtutils;
     hyprlock = ca prev.hyprlock;
     hyprpicker = ca prev.hyprpicker;
     hyprpolkitagent = ca prev.hyprpolkitagent;
     hyprprop = ca prev.hyprprop;
-    hyprscratch = ca prev.hyprscratch;
     hyprutils = ca prev.hyprutils;
     iac = ca prev.iac;
     id3v2 = ca prev.id3v2;
@@ -253,7 +242,6 @@ _: _: prev:
     massren = ca prev.massren;
     material-symbols = ca prev.material-symbols;
     matugen = ca prev.matugen;
-    matugen-themes = ca prev.matugen-themes;
     mediainfo = ca prev.mediainfo;
     media-player-info = ca prev.media-player-info;
     memtester = ca prev.memtester;
@@ -310,10 +298,8 @@ _: _: prev:
     obsidian = ca prev.obsidian;
     oh-my-posh = ca prev.oh-my-posh;
     oils-for-unix = ca prev.oils-for-unix;
-    oldschool-pc-font-pack = ca prev.oldschool-pc-font-pack;
     ollama = ca prev.ollama;
     ollama-rocm = ca prev.ollama-rocm;
-    opencode = ca prev.opencode;
     open-music-kontrollers = ca prev.open-music-kontrollers;
     openmw = ca prev.openmw;
     openocd = ca prev.openocd;
@@ -366,7 +352,6 @@ _: _: prev:
     pv = ca prev.pv;
     pwgen = ca prev.pwgen;
     pw-volume = ca prev.pw-volume;
-    python3-lto = ca prev.python3-lto;
     python3Packages = ca prev.python3Packages;
     pzip = ca prev.pzip;
     qemu_kvm = ca prev.qemu_kvm;
@@ -405,12 +390,10 @@ _: _: prev:
     schedtool = ca prev.schedtool;
     scour = ca prev.scour;
     screenkey = ca prev.screenkey;
-    sf-pro-display = ca prev.sf-pro-display;
     shattered-pixel-dungeon = ca prev.shattered-pixel-dungeon;
     shellcheck = ca prev.shellcheck;
     shfmt = ca prev.shfmt;
     sing-box = ca prev.sing-box;
-    skwd = ca prev.skwd;
     slurp = ca prev.slurp;
     smartmontools = ca prev.smartmontools;
     socat = ca prev.socat;
@@ -436,7 +419,6 @@ _: _: prev:
     superTuxKart = ca prev.superTuxKart;
     swappy = ca prev.swappy;
     swaybg = ca prev.swaybg;
-    swayimg = ca prev.swayimg;
     swww = ca prev.swww;
     sysdig = ca prev.sysdig;
     sysstat = ca prev.sysstat;
@@ -486,7 +468,6 @@ _: _: prev:
     wallust = ca prev.wallust;
     warpd = ca prev.warpd;
     wavemon = ca prev.wavemon;
-    waves = ca prev.waves;
     waypipe = ca prev.waypipe;
     wayvnc = ca prev.wayvnc;
     wesnoth = ca prev.wesnoth;
@@ -498,16 +479,13 @@ _: _: prev:
     wineWowPackages = ca prev.wineWowPackages;
     wireguard-tools = ca prev.wireguard-tools;
     wirelesstools = ca prev.wirelesstools;
-    wiremix = ca prev.wiremix;
     wireplumber = ca prev.wireplumber;
-    wl = ca prev.wl;
     wl-clipboard = ca prev.wl-clipboard;
     wl-clip-persist = ca prev.wl-clip-persist;
     wlr-which-key = ca prev.wlr-which-key;
     wrk2 = ca prev.wrk2;
     wtype = ca prev.wtype;
     xaos = ca prev.xaos;
-    xdg-desktop-portal-hyprland = ca prev.xdg-desktop-portal-hyprland;
     xdg-desktop-portal-termfilechooser = ca prev.xdg-desktop-portal-termfilechooser;
     xdg-ninja = ca prev.xdg-ninja;
     xdg-utils = ca prev.xdg-utils;
