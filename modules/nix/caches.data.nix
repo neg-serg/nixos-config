@@ -3,8 +3,7 @@
   # and modules/nix/settings.nix (nix.settings).
   # Official cache and community mirrors.
   substituters = [
-    "https://cache.nixos.org/"
-    "https://nix-community.cachix.org"
+    "http://127.0.0.1:3210" # local nginx Nix cache proxy
   ];
 
   trusted-public-keys = [
