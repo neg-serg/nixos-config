@@ -148,7 +148,7 @@ in
         "pipewire.service"
       ];
       partOf = [ "wireplumber.service" ];
-      wantedBy = [ "default.target" ];
+      wantedBy = [ "graphical-session.target" ]; # don't block default.target/maid activation
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${hdspeDefaultScript}";
@@ -173,7 +173,7 @@ in
       ];
       requires = [ "wp-hdspe-default.service" ];
       partOf = [ "wireplumber.service" ];
-      wantedBy = [ "default.target" ];
+      wantedBy = [ "graphical-session.target" ]; # don't block default.target
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${pkgs.writeShellScript "pw-route-aes" ''
