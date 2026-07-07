@@ -57,7 +57,7 @@ let
     done
     [ -n "$found" ] || exit 0
 
-    tries=30
+    tries=5
     for i in $(seq 1 "$tries"); do
       status="$(wpctl status 2>/dev/null || true)"
 
@@ -184,7 +184,7 @@ in
               pkgs.gawk
             ]
           }:$PATH"
-          tries=60
+          tries=5
           for i in $(seq 1 "$tries"); do
             if ${pwRouteScript}/bin/pw-route aes 2>/dev/null; then
               exit 0
