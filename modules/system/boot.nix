@@ -1,8 +1,8 @@
 ##
 # Module: system/boot
-# Purpose: Bootloader (Limine/EFI), initrd modules.
+# Purpose: Bootloader (Limine/EFI), initrd modules, kexec.
 # Key options: none (uses config.boot.* directly).
-# Dependencies: pkgs (efibootmgr/efivar/os-prober/sbctl).
+# Dependencies: pkgs (efibootmgr/efivar/os-prober).
 {
   lib,
   config,
@@ -14,10 +14,11 @@
     ./boot/autofdo.nix
   ];
   boot = {
+    # Full kexec/kdump support — enables prepare-kexec.service for systemctl kexec
+    kexec.enable = true;
+
     loader = {
       efi.canTouchEfiVariables = true;
-      # Limine is the primary bootloader (enabled in host hardware.nix)
-      # GRUB and systemd-boot remain available as mkDefault=false fallbacks
       timeout = lib.mkDefault 0; # Skip boot menu unless key pressed; speeds up loader phase
     };
     # Boot-specific options only; no activation scripts touching /boot
