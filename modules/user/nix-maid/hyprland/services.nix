@@ -35,7 +35,9 @@
       set -euo pipefail
       ${lib.getExe pkgs.libnotify} "System Fix" "Reloading Hyprland config..."
       hyprctl reload
-      sleep 1
+      sleep 0.3
+      # Restart quickshell to reconnect Wayland protocols after hypr reload
+      systemctl --user restart quickshell.service > /dev/null 2>&1 || true
       ${lib.getExe pkgs.libnotify} "System Fix" "Done."
     '')
     # hypr-reload script
