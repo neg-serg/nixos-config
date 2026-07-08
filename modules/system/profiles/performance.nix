@@ -126,6 +126,13 @@ in
       example = "14,15,30,31";
     };
 
+    # Housekeeping CPU set (complement of gamingCpuSet)
+    housekeepingCpuSet = mkStrOpt {
+      default = "";
+      description = "Comma-separated CPU list for housekeeping (kernel threads, IRQs) — the complement of gamingCpuSet. Must be set alongside gamingCpuSet for irqaffinity/kthread_cpus.";
+      example = "8-15,24-31";
+    };
+
     # Enable CONFIG_SCHED_DEADLINE in the kernel (requires rebuild).
     # Helpful for desktop/workloads that benefit from SCHED_DEADLINE and
     # 6.8+ deadline-server improvements.
