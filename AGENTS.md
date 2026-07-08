@@ -17,9 +17,9 @@ General guidance
 - For WireGuard/VPN host vs user-level setup, see `docs/manual/manual.ru.md` (section “WireGuard VPN (host / user)”) for prior research and patterns.
 
 Commit style
-- Use a bracketed scope prefix consistent with existing history, for example: `[media/audio] …`, `[hosts/telfir] …`, `[dev/pkgs] …`, `[docs] …`.
+- Use a bracketed scope prefix consistent with existing history, for example: `[media/audio] …`, `[hosts/odin] …`, `[dev/pkgs] …`, `[docs] …`.
 - Subjects must be in imperative mood, short and specific, without a trailing period.
 - Examples:
   - `[media/audio] Add TidalCycles live-coding stack`
-  - `[hosts/telfir] Tune cooling profile`
+  - `[hosts/odin] Tune cooling profile`
   - `[docs] Document audio creation stack`

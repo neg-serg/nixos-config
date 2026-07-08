@@ -292,9 +292,9 @@ Profile/hostname passed to nh os switch --hostname.
 
 *Type:* string
 
-*Default:* `"telfir"`
+*Default:* `"odin"`
 
-*Example:* `"telfir"`
+*Example:* `"odin"`
 
 *Declared by:*
 

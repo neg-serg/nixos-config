@@ -17,7 +17,7 @@ production-collected profiles.
 First, you need to build the kernel with AutoFDO support enabled but without a profile. This ensures
 the kernel has the necessary build flags to match the future profile.
 
-In your host configuration (e.g., `hosts/telfir/hardware.nix`):
+In your host configuration (e.g., `hosts/odin/hardware.nix`):
 
 ```nix
 boot.kernel.autofdo.enable = true;
@@ -83,7 +83,7 @@ boot.kernel.autofdo.profile = ./path/to/kernel.afdo; # e.g. ../../files/profiles
 Rebuild your system:
 
 ```bash
-sudo nixos-rebuild switch --flake .#telfir
+sudo nixos-rebuild switch --flake .#odin
 ```
 
 The new kernel is now PGO-optimized for your workload.
