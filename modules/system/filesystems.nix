@@ -92,7 +92,7 @@ in
       ];
     };
     "${homeDir}/.local/mail" = {
-      device = "/mnt/zero/mail";
+      device = "/mnt/one/mail";
       fsType = "none";
       options = [
         "bind"
@@ -148,24 +148,24 @@ in
       options = [ "nofail" ];
     };
 
-    # Argon 3.6TiB LV (nvme1n1 + nvme3n1)
-    "/mnt/zero" = {
-      device = "/dev/mapper/argon-zero";
-      fsType = "xfs";
-      options = [
-        "nofail"
-        "x-systemd.automount"
-      ];
+    # Pool 3.6TiB ZFS RAID0 (nvme1n1 + nvme3n1) — dismantled from old XFS argon-zero
+    "/pool" = {
+      device = "pool";
+      fsType = "zfs";
+      options = [ "nofail" ];
     };
+
+    # /mnt/zero removed: argon-zero LVM volume being dismantled, replaced by ZFS pool `pool`
   };
 
-  swapDevices = lib.mkIf isOdin [
-    {
-      device = "/mnt/zero/swapfile";
-      priority = -1;
-      size = 65536; # 64 GiB — matches system.swapfile.sizeGiB in hardware.nix
-    }
-  ];
+  # swapDevices = lib.mkIf isOdin [
+  #   {
+  #     device = "/mnt/zero/swapfile";
+  #     priority = -1;
+  #     size = 65536; # 64 GiB
+  #   }
+  # ];
+  # Swap removed: /mnt/zero volume being dismantled
 
   # Cache both metadata and data for /nix/store — ARC has room (60 GB RAM),
   # and repeated builds read the same store paths.

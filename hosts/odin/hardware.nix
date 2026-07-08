@@ -162,12 +162,8 @@
   # Avoid double compression for swap
   zramSwap.enable = false;
 
-  # Ensure the on-disk swapfile exists if missing (64G on /mnt/zero)
-  system.swapfile = {
-    enable = true;
-    path = "/mnt/zero/swapfile";
-    sizeGiB = 64;
-  };
+  # Swap disabled: /mnt/zero volume being dismantled, swap was inactive anyway
+  system.swapfile.enable = false;
 
   # Disable TPM entirely on this host to remove tpmrm device wait
   security.tpm2.enable = false;
