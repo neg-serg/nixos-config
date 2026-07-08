@@ -79,13 +79,36 @@ in
             start = "${pkgs.writeShellScript "gamemode-start" ''
               # GameMode start: GPU performance high, CPU governor performance
               echo high | tee /sys/class/drm/card*/device/power_dpm_force_performance_level >/dev/null 2>&1 || true
+              # Disable NUMA balancing (page migration jitter not wanted during gaming)
+              echo 0 | tee /proc/sys/kernel/numa_balancing 2>/dev/null || true
+              # Set energy performance preference to performance
+              echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference 2>/dev/null || true
+              # Set energy performance bias to 0 (max performance)
+              echo 0 | tee /sys/devices/system/cpu/cpu*/power/energy_perf_bias 2>/dev/null || true
             ''}";
             end = "${pkgs.writeShellScript "gamemode-end" ''
               # GameMode end: restore GPU power profile
               echo auto | tee /sys/class/drm/card*/device/power_dpm_force_performance_level >/dev/null 2>&1 || true
+              # Restore NUMA balancing
+              echo 1 | tee /proc/sys/kernel/numa_balancing 2>/dev/null || true
+              # Restore energy performance preference to default
+              echo default | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference 2>/dev/null || true
+              # Restore energy performance bias to 6 (normal — balanced)
+              echo 6 | tee /sys/devices/system/cpu/cpu*/power/energy_perf_bias 2>/dev/null || true
             ''}";
           };
         };
+      };
+    };
+
+    # Systemd slice for game processes — CPU set scoped to gaming cores
+    systemd.slices.games = {
+      sliceConfig = {
+        CPUAccounting = true;
+        MemoryAccounting = true;
+        TasksAccounting = true;
+        AllowedCPUs = config.profiles.performance.gamingCpuSet;
+        # NO AllowedMemoryNodes — let kernel auto-select (V-Cache CCD can be node 0 or 1 on dual-CCD X3D)
       };
     };
 
