@@ -74,7 +74,7 @@ in
       ];
     };
     "${homeDir}/games" = {
-      device = "/mnt/zero/games";
+      device = "/tank/games";
       fsType = "none";
       options = [
         "bind"
@@ -101,7 +101,7 @@ in
       ];
     };
     "${homeDir}/.local/share/Steam/userdata" = {
-      device = "/mnt/zero/userdata_steam";
+      device = "/tank/games/userdata_steam";
       fsType = "none";
       options = [
         "bind"
@@ -110,7 +110,7 @@ in
       ];
     };
     "${homeDir}/.local/share/wineprefixes" = {
-      device = "/mnt/zero/wineprefixes";
+      device = "/tank/games/wineprefixes";
       fsType = "none";
       options = [
         "bind"
@@ -119,7 +119,7 @@ in
       ];
     };
     "${homeDir}/.cache/winetricks" = {
-      device = "/mnt/zero/winetricks_cache";
+      device = "/tank/games/winetricks_cache";
       fsType = "none";
       options = [
         "bind"

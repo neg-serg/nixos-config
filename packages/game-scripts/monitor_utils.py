@@ -1,5 +1,5 @@
 import json
-import math
+import math  # noqa: F401 — used by concatenated scripts
 import os
 import shlex
 import subprocess
