@@ -22,6 +22,8 @@ in
           --embed-subs
           --embed-thumbnail
           --sub-langs all
+          --cookies-from-browser vivaldi
+          --proxy socks5://127.0.0.1:10808
         '';
       })
     ]
