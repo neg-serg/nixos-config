@@ -17,7 +17,7 @@
         origin = "flathub";
       }
     ];
-    update.onActivation = true;
+    update.onActivation = false;
   };
 
   systemd.services.flatpak-managed-install.environment = {
