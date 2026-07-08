@@ -45,8 +45,6 @@ in
 
     # Proxies (if enabled)
     caddy = lib.mkIf (config.services.caddy.enable or false) (mkPostBoot "caddy");
-    nginx = lib.mkIf (config.services.nginx.enable or false) (mkPostBoot "nginx");
-
     # Local DNS stack
     unbound = lib.mkIf (config.services.unbound.enable or false) (mkPostBoot "unbound");
     adguardhome = lib.mkIf (config.services.adguardhome.enable or false) (
