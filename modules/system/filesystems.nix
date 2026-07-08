@@ -148,14 +148,14 @@ in
       options = [ "nofail" ];
     };
 
-    # Pool 3.6TiB ZFS RAID0 (nvme1n1 + nvme3n1) — dismantled from old XFS argon-zero
-    "/pool" = {
-      device = "pool";
+    # Gamez 3.6TiB ZFS RAID0 (nvme1n1 + nvme3n1)
+    "/gamez/main" = {
+      device = "gamez/main";
       fsType = "zfs";
       options = [ "nofail" ];
     };
 
-    # /mnt/zero removed: argon-zero LVM volume being dismantled, replaced by ZFS pool `pool`
+    # /mnt/zero removed: argon-zero LVM volume being dismantled, replaced by ZFS pool gamez
   };
 
   # swapDevices = lib.mkIf isOdin [
