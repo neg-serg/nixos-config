@@ -255,12 +255,11 @@ let
     (mkAliasIf hasPlocate "locate" "plocate")
     (mkAliasIf hasMpvc "mpvc" "${mkCmd "mpvc"} -S ${mkEnvVar "XDG_CONFIG_HOME"}/mpv/socket")
     (mkAliasIf hasWget2 "wget" "wget2 --hsts-file ${mkEnvVar "XDG_DATA_HOME"}/wget-hsts")
+    # Sync with yt-dlp.nix config (proxy + cookies)
     (mkAliasIf hasYtDlp "yt"
-      "yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all"
+      "yt-dlp --proxy socks5://127.0.0.1:10808 --cookies-from-browser vivaldi"
     )
-    (mkAliasIf hasYtDlp "yta"
-      "yt-dlp --downloader aria2c --embed-metadata --embed-thumbnail --embed-subs --sub-langs=all --write-info-json"
-    )
+    # yta removed; equivalent: yt --write-info-json
     (mkAliasIf hasCurl "moon" "curl wttr.in/Moon")
     (mkAliasIf hasCurl "we" "curl 'wttr.in/?T'")
     (mkAliasIf hasCurl "wem" "curl wttr.in/Moscow?lang=ru")
