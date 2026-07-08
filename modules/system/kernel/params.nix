@@ -140,6 +140,26 @@ let
       "zswap.max_pool_percent=${builtins.toString config.profiles.performance.zswap.maxPoolPercent}"
       "zswap.zpool=${config.profiles.performance.zswap.zpool}"
     ];
+
+  # CPU isolation params for gaming (gated by gamingCpuSet)
+  gameCpuSet = config.profiles.performance.gamingCpuSet or "";
+  houseCpuSet = config.profiles.performance.housekeepingCpuSet or "";
+
+  game_isolation_params =
+    let
+      # Helper: ensure rcu_nocb_poll is enabled when rcu_nocbs is used
+      isolation_params = [
+        "isolcpus=domain,managed,${gameCpuSet}"
+        "nohz_full=${gameCpuSet}"
+        "rcu_nocbs=${gameCpuSet}"
+        "rcu_nocb_poll=1"
+      ]
+      ++ lib.optionals (houseCpuSet != "") [
+        "irqaffinity=${houseCpuSet}"
+        "kthread_cpus=${houseCpuSet}"
+      ];
+    in
+    lib.optionals (gameCpuSet != "") isolation_params;
 in
 {
   # Use mkMerge to contribute to boot.kernelParams in two phases:
@@ -199,6 +219,7 @@ in
 
         kernelParams =
           lib.optionals perfEnabled perf_params
+          ++ game_isolation_params
           ++ extra_security
           ++ lib.optionals (config.profiles.security.enable or false) [ "page_poison=1" ];
       };
