@@ -101,6 +101,7 @@ in
     systemd.tmpfiles.rules = lib.mkAfter [
       "d /home/greeter 0710 greeter greeter -"
       "d /home/greeter/.cache 0775 greeter greeter -"
+      "d /home/greeter/.config/quickshell 0755 greeter greeter -"
       "d /home/greeter/.config/quickshell/Theme 0755 greeter greeter -"
     ];
     system.activationScripts.greetdWallpaper =
@@ -144,12 +145,12 @@ in
         fi
 
         if [ -f "$WALLPAPER_SRC" ]; then
-          install -Dm644 "$WALLPAPER_SRC" "${greeterWallpaperDst}"
+          install -Dm644 -o greeter -g greeter "$WALLPAPER_SRC" "${greeterWallpaperDst}"
         else
           echo "greetd wallpaper: no source found (tried wl state, qs notify, pic/wl/, fallback)" >&2
         fi
 
-        install -Dm644 ${pkgs.writeText "greeter-theme.json" "{}"} /home/greeter/.config/quickshell/Theme/.theme.json
+        install -Dm644 -o greeter -g greeter ${pkgs.writeText "greeter-theme.json" "{}"} /home/greeter/.config/quickshell/Theme/.theme.json
       '';
   };
 }
