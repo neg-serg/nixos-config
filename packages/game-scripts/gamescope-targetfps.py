@@ -1,8 +1,3 @@
-import math
-import shlex
-import sys
-
-
 target = os.environ.get("TARGET_FPS")
 base = float(os.environ.get("NATIVE_BASE_FPS", "60"))
 autoscale = os.environ.get("GAMESCOPE_AUTOSCALE") == "1"
