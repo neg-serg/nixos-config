@@ -1,10 +1,10 @@
 _: {
   networking = {
-    hostName = "telfir";
+    hostName = "odin";
     hostId = "ab0cd1ef"; # Required for ZFS pool import
     hosts."192.168.2.240" = [
-      "telfir"
-      "telfir.local"
+      "odin"
+      "odin.local"
     ];
 
     # NAT from the local bridge (br0, 192.168.122.0/24) to the main uplink

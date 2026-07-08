@@ -34,7 +34,7 @@ cpu-masks:
 
 # Rebuild and switch to the new system configuration
 # Usage: just deploy [host]
-deploy host="telfir":
+deploy host="odin":
     # Build system closure with network tuning
     nix build .#nixosConfigurations.{{host}}.config.system.build.toplevel \
       --out-link result \
@@ -48,15 +48,15 @@ deploy host="telfir":
     sudo ./result/bin/switch-to-configuration switch
 
 # Deploy (Legacy/Slow) - keeps nh features like pretty print
-deploy-nh host="telfir":
+deploy-nh host="odin":
     nh os switch . --hostname {{host}}
 
 # Deploy with maximum verbosity (logs + trace + verbose)
-deploy-debug host="telfir":
+deploy-debug host="odin":
     nh os switch . --hostname {{host}} -L -t -v
 
 # Alias for deploy
-switch host="telfir":
+switch host="odin":
     just deploy {{host}}
 
 # Show diff between last two generations
@@ -65,11 +65,11 @@ diff:
     nix run nixpkgs#nvd -- diff $files
 
 # Build new closure and preview diff against current system
-diff-preview host="telfir":
+diff-preview host="odin":
     bash scripts/dev/diff-preview.sh {{host}}
 
 # Same as diff-preview, but only show newly added packages
-diff-preview-new host="telfir":
+diff-preview-new host="odin":
     bash scripts/dev/diff-preview.sh {{host}} --new-only
 
 # --- Repo-wide workflows ---------------------------------------------------------
@@ -175,7 +175,7 @@ hooks-enable:
 show-features:
     # Print flattened features for given check names
     # Pass items via env var:
-    #   NAMES="nixos-eval-telfir" just show-features
+    #   NAMES="nixos-eval-odin" just show-features
     # Filter only true values:
     #   ONLY_TRUE=1 just show-features
     set -eu
@@ -183,7 +183,7 @@ show-features:
     if [ -n "${NAMES:-}" ]; then \
     items=(${NAMES}); \
     else \
-    items=(nixos-eval-telfir); \
+    items=(nixos-eval-odin); \
     fi
     for name in "${items[@]}"; do \
       echo "== ${name} (system=${sys}) =="; \

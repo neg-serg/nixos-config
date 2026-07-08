@@ -7,7 +7,7 @@
 #
 # Domain filter refactoring (Jul 2026):
 #   modules/default.nix now accepts domainFilter via specialArgs. The
-#   nixosConfiguration A/B test configs (telfir-lite, telfir-server) use
+#   nixosConfiguration A/B test configs (odin-lite, odin-server) use
 #   restrictive filters to produce smaller eval trees. These module checks
 #   validate that the filter mechanism works correctly.
 # ---------------------------------------------------------------------------

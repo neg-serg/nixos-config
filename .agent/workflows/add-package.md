@@ -32,7 +32,7 @@ ______________________________________________________________________
 1. **Rebuild**:
 
    ```bash
-   sudo nixos-rebuild switch --flake .#telfir
+   sudo nixos-rebuild switch --flake .#odin
    ```
 
 ## Best Practices

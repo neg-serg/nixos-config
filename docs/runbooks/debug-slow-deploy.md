@@ -14,7 +14,7 @@ Run to confirm the raw Nix evaluation time:
 rm -rf ~/.cache/nix/eval-cache-v*
 
 # Measure pure evaluation time (no build, no activation)
-time nix build .#nixosConfigurations.telfir.config.system.build.toplevel --dry-run
+time nix build .#nixosConfigurations.odin.config.system.build.toplevel --dry-run
 ```
 
 If this command is fast (< 1s), the bottleneck is **`nh` itself** (likely its Git operations). If
@@ -27,7 +27,7 @@ what `nh` is doing.
 
 ```bash
 # Trace file operations and child processes
-strace -f -e trace=file,process -o trace.log nh os switch . --hostname telfir --dry-run
+strace -f -e trace=file,process -o trace.log nh os switch . --hostname odin --dry-run
 ```
 
 Analyze `trace.log` (or Use `strace -c` for summary) to see if it's walking the entire `.git`
@@ -42,7 +42,7 @@ If raw Nix is slow, we need to profile the Nix expression evaluator.
 See which files are being loaded or copied to store.
 
 ```bash
-nix build .#nixosConfigurations.telfir.config.system.build.toplevel --dry-run -vvv
+nix build .#nixosConfigurations.odin.config.system.build.toplevel --dry-run -vvv
 ```
 
 Look for pauses in the output or repeated copying of sources to `/nix/store`.
@@ -52,7 +52,7 @@ Look for pauses in the output or repeated copying of sources to `/nix/store`.
 Check if Nix is hammering the filesystem (e.g., reading 10k files).
 
 ```bash
-strace -c nix build .#nixosConfigurations.telfir.config.system.build.toplevel --dry-run
+strace -c nix build .#nixosConfigurations.odin.config.system.build.toplevel --dry-run
 ```
 
 ### C. Valgrind / Callgrind (Deep Profiling)
@@ -67,7 +67,7 @@ To see exactly which C++ functions in Nix (or which usage of `builtins`) are con
    # Note: This will be VERY slow to run (10-50x slower), but precise.
    valgrind --tool=callgrind --callgrind-out-file=callgrind.nix.out \
      nix-instantiate --eval --strict --json \
-     .#nixosConfigurations.telfir.config.system.build.toplevel > /dev/null
+     .#nixosConfigurations.odin.config.system.build.toplevel > /dev/null
    ```
 
 1. **Analyze Results:** Open the output file in KCachegrind:

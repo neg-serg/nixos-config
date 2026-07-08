@@ -5,7 +5,7 @@
   ...
 }:
 {
-  # Hardware and performance tuning specific to host 'telfir'
+  # Hardware and performance tuning specific to host 'odin'
   hardware = {
     storage.autoMount.enable = true;
     graphics = {

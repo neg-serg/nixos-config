@@ -456,7 +456,7 @@ Example:
   # Globally (module default is true)
   hardware.audio.rnnoise.enable = true;
 
-  # Per-host override (e.g., hosts/telfir/services.nix)
+  # Per-host override (e.g., hosts/odin/services.nix)
   hardware.audio.rnnoise.enable = false;
 }
 ```
@@ -526,7 +526,7 @@ Additionally, a Markdown language policy is enforced:
   - `profiles.games.enable = false;` to disable Steam/Gamescope wrappers/MangoHud system‑wide.
   - Defaults to `true` to preserve current behavior.
 
-- Isolated CPUs: host `telfir` reserves cores `14,15,30,31` for low‑latency gaming. System services
+- Isolated CPUs: host `odin` reserves cores `14,15,30,31` for low‑latency gaming. System services
   are kept on housekeeping CPUs.
 
 - Transient scope runner: `game-run` launches any command in a user systemd scope and pins it to the
@@ -593,7 +593,7 @@ Notes:
 - Do not wrap the entire Steam client; prefer per‑game Launch Options to keep downloads/tooling on
   housekeeping CPUs.
 - To change the default isolated cores system‑wide, set `GAME_PIN_CPUSET` in the environment or
-  adjust host CPU isolation in `modules/hardware/host/telfir.nix`.
+  adjust host CPU isolation in `modules/hardware/host/odin.nix`.
 
 ## Gaming Recommendations
 
@@ -694,7 +694,7 @@ Tuning tips:
 
 - Netdata (local, very light):
 
-  - Enable per-host: set `monitoring.netdata.enable = true;` (see hosts/telfir/services.nix).
+  - Enable per-host: set `monitoring.netdata.enable = true;` (see hosts/odin/services.nix).
   - Opens a local UI at `http://127.0.0.1:19999` with CPU/GPU/sensors/disks/net.
   - Service is de‑prioritized (nice/CPU/IO weights) to minimize impact.
   - Extend via `services.netdata.config` if you need extra collectors.
@@ -766,12 +766,12 @@ Prometheus PHP‑FPM Exporter
   - Enabling multiple proxies: don’t enable multiple reverse proxies for the same backend (such as
     both nginx and Caddy for the same socket/port); pick a single proxy per backend.
 
-Nextcloud on telfir (clean install)
+Nextcloud on odin (clean install)
 
-- Host `telfir` uses the stock `services.nextcloud` module without custom profiles; the web frontend
+- Host `odin` uses the stock `services.nextcloud` module without custom profiles; the web frontend
   is Caddy (`services.caddy`) in front of the Nextcloud PHP‑FPM pool.
-- Nextcloud is served at `https://telfir` with initial credentials: user `admin`, password
-  `Admin123!ChangeMe` (see `hosts/telfir/services.nix:services.nextcloud.config`).
+- Nextcloud is served at `https://odin` with initial credentials: user `admin`, password
+  `Admin123!ChangeMe` (see `hosts/odin/services.nix:services.nextcloud.config`).
 - The data directory is isolated from any previous installs (`/zero/sync/nextcloud`), and the
   MariaDB/MySQL database is created locally under the default user `nextcloud`
   (`database.createLocally = true;`).

@@ -3,7 +3,7 @@
 Goal: gather reasons for Grafana’s outbound connections in one place and decide what to block vs.
 explicitly allow.
 
-Current state (host telfir)
+Current state (host odin)
 
 - Disabled: analytics, update checks, news feed, external snapshots, alpha plugins.
 - Gravatar disabled (no external avatars).

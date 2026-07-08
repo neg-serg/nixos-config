@@ -11,7 +11,7 @@ These are blocks of code that define services, interfaces, or imports but are cu
 `modules/user/nix-maid/sys/nekoray.nix` | `systemd.user.services.nekoray` | [REMOVED] Entire local
 GUI proxy service cleaned up. | | `modules/nix/nixindex.nix` | `systemd.services.nixindex` & timer |
 [REMOVED] Periodic database updates for `nix-index` cleaned up. | |
-`hosts/telfir/virtualisation/lxc.nix` | `systemd.services."lxc-zero-sandbox"` | [REMOVED] LXC
+`hosts/odin/virtualisation/lxc.nix` | `systemd.services."lxc-zero-sandbox"` | [REMOVED] LXC
 container management service cleaned up. | | `modules/system/net/vpn/wireguard.nix` |
 `networking.wg-quick.interfaces.wg0` | [REMOVED] Interface cleaned up (duplicate of SOPS setup). | |
 `modules/system/virt.nix` | `imports = [ ./virt/macos-vm.nix ];` | [REMOVED] macOS VM integration
@@ -37,7 +37,7 @@ activation.
   - `index.js`: `// Minimal Vicinae extension placeholder.`
   - `README.md`: `This is a minimal, no-op placeholder extension...`
 - **System Activation**:
-  - `hosts/telfir/services.nix`: Uses `placeholder_login` and `placeholder_pass` as targets for
+  - `hosts/odin/services.nix`: Uses `placeholder_login` and `placeholder_pass` as targets for
     `sed` replacement in `resilio` config.
 - **SOPS**:
   - `modules/user/nix-maid/sys/vdirsyncer.nix`:
@@ -57,7 +57,7 @@ Comments that explain why something is staying "old" or "weird".
 ## Recommendations
 
 1. **Clean up `wireguard.nix`**: Once it's confirmed that `wg0` is no longer needed (replaced by
-   SOPS `telfir-wg-quick`), the file can be deleted or the block removed.
+   SOPS `odin-wg-quick`), the file can be deleted or the block removed.
 1. **Review `nixindex.nix`**: If periodic indexing is not desired, the file should probably be
    removed or the options explicitly set to `enable = false`.
 1. **Address `nekoray.nix`**: If `pkgs.throne` (the successor) is working well as a standalone

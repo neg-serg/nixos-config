@@ -7,7 +7,7 @@ ______________________________________________________________________
 ## Quick Command
 
 ```bash
-sudo nixos-rebuild switch --flake .#telfir
+sudo nixos-rebuild switch --flake .#odin
 ```
 
 ## Steps
@@ -21,13 +21,13 @@ sudo nixos-rebuild switch --flake .#telfir
 1. **Build without switching**:
 
    ```bash
-   nixos-rebuild build --flake .#telfir
+   nixos-rebuild build --flake .#odin
    ```
 
 1. **Switch to new generation**:
 
    ```bash
-   sudo nixos-rebuild switch --flake .#telfir
+   sudo nixos-rebuild switch --flake .#odin
    ```
 
 ## Options

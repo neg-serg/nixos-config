@@ -9,11 +9,11 @@ Build, switch, and validate NixOS configurations for this repository.
 ## Quick Build & Switch
 
 ```bash
-# Full switch (default host: telfir)
-sudo nixos-rebuild switch --flake .#telfir
+# Full switch (default host: odin)
+sudo nixos-rebuild switch --flake .#odin
 
 # Build only (no switch)
-nixos-rebuild build --flake .#telfir
+nixos-rebuild build --flake .#odin
 
 # With nh (fast alternative)
 nh os switch
