@@ -1,12 +1,12 @@
 # NixOS Configuration (/etc/nixos)
 
-Host: telfir — Primary workstation (AMD Ryzen 9 7950X3D, Radeon RX 7900 XTX)
+Host: odin — Primary workstation (AMD Ryzen 9 7950X3D, Radeon RX 7900 XTX)
 
 ## Quick Commands
 
-- **Build & switch**: `sudo nixos-rebuild switch --flake .#telfir`
+- **Build & switch**: `sudo nixos-rebuild switch --flake .#odin`
 - **Quick switch**: `nh os switch`
-- **Build only**: `nixos-rebuild build --flake .#telfir`
+- **Build only**: `nixos-rebuild build --flake .#odin`
 - **Format all**: `just fmt`
 - **Full check**: `just check` (format + lint + build)
 - **Update flake**: `just update`
@@ -19,18 +19,18 @@ Host: telfir — Primary workstation (AMD Ryzen 9 7950X3D, Radeon RX 7900 XTX)
 
 Examples:
   [media/audio] Add TidalCycles live-coding stack
-  [hosts/telfir] Tune cooling profile
+  [hosts/odin] Tune cooling profile
   [dev/pkgs] Fix herdr package access
 ```
 
-Scopes: nixpkgs, core/modules, flake/eval, hosts/telfir, dev/*, cli/*, hardware/*, media/*, docs,
+Scopes: nixpkgs, core/modules, flake/eval, hosts/odin, dev/*, cli/*, hardware/*, media/*, docs,
 etc.
 
 ## Project Structure
 
 - `flake.nix` — Entry point (NixOS + home-manager)
 - `modules/` — System modules (features/, cli/, dev/, servers/, etc.)
-- `hosts/telfir/` — Host-specific config (services.nix, hardware.nix, networking.nix...)
+- `hosts/odin/` — Host-specific config (services.nix, hardware.nix, networking.nix...)
 - `packages/` — Custom overlays and packages
 - `secrets/` — SOPS-encrypted secrets
 - `files/` — Config files (Hyprland, Quickshell panel, scripts)

@@ -28,7 +28,7 @@ git log -5 --oneline
 `[flake/eval] Wire per-profile domainFilter specialArgs; add module checks` | | dev/ai |
 `[dev/ai] Add herdr agent multiplexer` | | dev/opencode | `[dev/opencode] Add Pi coding agent` | |
 hardware/bluetooth | `[hardware/bluetooth] Enable bluetooth and add bluetui TUI client` | | docs |
-`[docs] Document audio creation stack` | | hosts/telfir | `[hosts/telfir] Tune cooling profile` |
+`[docs] Document audio creation stack` | | hosts/odin | `[hosts/odin] Tune cooling profile` |
 
 ### Common scopes
 

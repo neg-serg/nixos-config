@@ -5,7 +5,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel 2> /dev/null || pwd)"
-HOST="telfir"
+HOST="odin"
 NEW_ONLY=false
 KEEP_RESULT=false
 
@@ -17,7 +17,7 @@ for arg in "$@"; do
       sed -n '2,3p' "$0" | sed 's/^# *//'
       echo ""
       echo "Arguments:"
-      echo "  host          Hostname to build (default: telfir)"
+      echo "  host          Hostname to build (default: odin)"
       echo "  --new-only    Show only newly added packages"
       echo "  --keep-result Keep result symlink after diff"
       exit 0

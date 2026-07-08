@@ -7,7 +7,7 @@
 let
   mainUser = config.users.main.name or "neg";
   homeDir = "/home/${mainUser}";
-  isTelfir = config.networking.hostName == "telfir";
+  isOdin = config.networking.hostName == "odin";
 in
 {
   boot.supportedFilesystems = [
@@ -20,7 +20,7 @@ in
   boot.initrd.kernelModules = [ "zfs" ];
   boot.zfs.forceImportRoot = true;
 
-  fileSystems = lib.mkIf isTelfir {
+  fileSystems = lib.mkIf isOdin {
     "/" = {
       device = "tank/nixos";
       fsType = "zfs";
@@ -159,7 +159,7 @@ in
     };
   };
 
-  swapDevices = lib.mkIf isTelfir [
+  swapDevices = lib.mkIf isOdin [
     {
       device = "/mnt/zero/swapfile";
       priority = -1;
@@ -212,7 +212,7 @@ in
   # ZFS auto-scrub and trim
   services.zfs.autoScrub.enable = true;
   services.zfs.trim.enable = true;
-  services.fstrim = lib.mkIf isTelfir { enable = true; };
+  services.fstrim = lib.mkIf isOdin { enable = true; };
 
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"
@@ -222,7 +222,7 @@ in
   # ---- Local Nix binary cache proxy ----
 
   # Dataset for nginx cache storage. Created once; safe to run repeatedly.
-  systemd.services.zfs-nix-cache-create = lib.mkIf isTelfir {
+  systemd.services.zfs-nix-cache-create = lib.mkIf isOdin {
     description = "Create tank/nix-cache dataset if absent";
     wantedBy = [ "zfs.target" ];
     after = [ "zfs.target" ];
@@ -244,7 +244,7 @@ in
 
   # nginx reverse proxy that caches cache.nixos.org responses locally.
   # After first download, subsequent builds hit the local cache.
-  services.nginx = lib.mkIf isTelfir {
+  services.nginx = lib.mkIf isOdin {
     enable = true;
     recommendedProxySettings = false; # manual in nix-cache location — conflicts with cache.nixos.org Host
     recommendedOptimisation = false;

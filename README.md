@@ -65,14 +65,14 @@ git clone https://github.com/neg-serg/nixos-config /etc/nixos
 cd /etc/nixos
 
 # 2️⃣ Build and switch (with flakes)
-sudo nixos-rebuild switch --flake .#telfir
+sudo nixos-rebuild switch --flake .#odin
 
 # 3️⃣ Or use the helper (if zcli is enabled)
 nh os switch
 ```
 
 > [!NOTE]
-> Replace `telfir` with your hostname if you're setting up a different machine.
+> Replace `odin` with your hostname if you're setting up a different machine.
 
 ---
 
@@ -104,7 +104,7 @@ graph TB
     end
     
     subgraph "🖥️ Host Configuration"
-        B[hosts/telfir]
+        B[hosts/odin]
     end
     
     subgraph "📦 System Modules"
@@ -233,7 +233,7 @@ flowchart LR
 📦 nixos-config/
 ├── 📄 flake.nix                      # 🎯 Flake entry point
 ├── 📂 hosts/                         # 🖥️ Host configurations
-│   └── 📁 telfir/                    # Primary workstation
+│   └── 📁 odin/                    # Primary workstation
 │       ├── hardware.nix
 │       ├── networking.nix
 │       └── services.nix

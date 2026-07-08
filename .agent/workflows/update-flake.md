@@ -25,7 +25,7 @@ nix flake lock --update-input home-manager
 ## Rebuild After Update
 
 ```bash
-sudo nixos-rebuild switch --flake .#telfir
+sudo nixos-rebuild switch --flake .#odin
 ```
 
 ## Rollback
