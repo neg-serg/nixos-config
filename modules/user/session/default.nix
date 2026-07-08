@@ -7,7 +7,6 @@
     ./hyprland.nix
     ./media.nix
     ./qt.nix
-    ./quickshell.nix
     ./screenshot.nix
     ./terminal.nix
     ./theme.nix
