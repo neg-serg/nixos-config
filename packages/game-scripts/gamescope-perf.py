@@ -1,7 +1,3 @@
-import shlex
-import sys
-
-
 out_w, out_h, rate = display_info()
 
 game_w = os.environ.get("GAMESCOPE_GAME_W")

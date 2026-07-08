@@ -1,7 +1,3 @@
-import shlex
-import sys
-
-
 out_w, out_h, rate = display_info()
 
 flags = ["-f", "--adaptive-sync", "--hdr-enabled"]
