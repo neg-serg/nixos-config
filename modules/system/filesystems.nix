@@ -46,51 +46,6 @@ in
         "dmask=0077"
       ];
     };
-    "${homeDir}/music" = {
-      device = "/bulk/music";
-      fsType = "none";
-      options = [
-        "bind"
-        "nofail"
-        "x-systemd.automount"
-      ];
-    };
-    "${homeDir}/torrent" = {
-      device = "/bulk/torrent";
-      fsType = "none";
-      options = [
-        "bind"
-        "nofail"
-        "x-systemd.automount"
-      ];
-    };
-    "${homeDir}/vid" = {
-      device = "/bulk/vid";
-      fsType = "none";
-      options = [
-        "bind"
-        "nofail"
-        "x-systemd.automount"
-      ];
-    };
-    "${homeDir}/doc" = {
-      device = "/bulk/doc";
-      fsType = "none";
-      options = [
-        "bind"
-        "nofail"
-        "x-systemd.automount"
-      ];
-    };
-    "${homeDir}/.local/mail" = {
-      device = "/bulk/mail";
-      fsType = "none";
-      options = [
-        "bind"
-        "nofail"
-        "x-systemd.automount"
-      ];
-    };
     "${homeDir}/.local/share/Steam/userdata" = {
       device = "/gamez/main/userdata_steam";
       fsType = "none";
