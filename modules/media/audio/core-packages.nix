@@ -14,8 +14,9 @@ in
 {
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter [
-      # -- CLI --
-      pkgs.alsa-utils # amixer/alsamixer fallback when PipeWire fails
+      # -- Volume control --
+      pkgs.ncpamixer # ncurses mixer, keyboard-driven pavucontrol alternative
+      pkgs.pamixer # CLI pulseaudio/pipewire volume control for scripts
       pkgs.pw-volume # minimal PipeWire volume controller for scripts
 
       # -- RME HDSPe --
@@ -24,6 +25,7 @@ in
 
       # -- GUI Patchbays --
       pkgs.coppwr # PipeWire CLI to copy/paste complex graphs
+      pkgs.pwvucontrol # Qt6 PipeWire volume control (pavucontrol alternative, no GTK)
     ];
 
     services.udev.extraRules = ''
