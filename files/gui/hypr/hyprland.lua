@@ -175,7 +175,7 @@ hl.bind(M4 .. "+mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 -- --- Scratchpads (sashetophizika/hyprscratch with special workspace) ---
 hl.bind(M4 .. "+d", hl.dsp.exec_cmd("hyprscratch teardown 'kitty --class teardown -e btop' special"))
-hl.bind(M4 .. "+e", hl.dsp.exec_cmd("hyprscratch org.telegram.desktop 'telegram' special"))
+hl.bind(M4 .. "+e", hl.dsp.exec_cmd("hyprscratch org.telegram.desktop 'Telegram' special"))
 hl.bind(M4 .. "+f", hl.dsp.exec_cmd("hyprscratch music 'kitty --class music -e rmpc' special"))
 hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hyprscratch torrment 'kitty --class torrment -e rustmission' special"))
 hl.bind(M4 .. "+u", hl.dsp.exec_cmd("hyprscratch vpn 'kitty --class vpn -e sing-box tun' special"))
