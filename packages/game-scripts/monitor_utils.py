@@ -45,7 +45,7 @@ def pick_monitor(mon_name, mons):
 def display_info():
     """Resolve display parameters for gamescope wrappers.
 
-    Priority: env vars (GAMESCOPE_OUT_W/OUT_H/RATE) → hyprctl monitor auto-detect.
+    Priority: env vars (GAMESCOPE_OUT_W/OUT_H/RATE) → hyprctl auto-detect.
     Focuses the monitor specified in GAMESCOPE_MON if set.
     Returns (width, height, rate) — all strings or None.
     """
