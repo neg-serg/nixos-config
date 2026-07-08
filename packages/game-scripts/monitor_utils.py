@@ -1,6 +1,9 @@
 import json
+import math
 import os
+import shlex
 import subprocess
+import sys
 
 H = {
     "HYPRCTL": "hyprctl",

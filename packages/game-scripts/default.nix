@@ -31,22 +31,22 @@ in
   );
 
   gamescope-perf = pkgs.writers.writePython3Bin "gamescope-perf" { } (
-    builtins.readFile (scriptsDir + "/monitor_utils.py") + "\n" +
+    builtins.readFile (scriptsDir + "/monitor_utils.py") + "\n\n" +
     builtins.readFile (scriptsDir + "/gamescope-perf.py")
   );
 
   gamescope-quality = pkgs.writers.writePython3Bin "gamescope-quality" { } (
-    builtins.readFile (scriptsDir + "/monitor_utils.py") + "\n" +
+    builtins.readFile (scriptsDir + "/monitor_utils.py") + "\n\n" +
     builtins.readFile (scriptsDir + "/gamescope-quality.py")
   );
 
   gamescope-hdr = pkgs.writers.writePython3Bin "gamescope-hdr" { } (
-    builtins.readFile (scriptsDir + "/monitor_utils.py") + "\n" +
+    builtins.readFile (scriptsDir + "/monitor_utils.py") + "\n\n" +
     builtins.readFile (scriptsDir + "/gamescope-hdr.py")
   );
 
   gamescope-targetfps = pkgs.writers.writePython3Bin "gamescope-targetfps" { } (
-    builtins.readFile (scriptsDir + "/monitor_utils.py") + "\n" +
+    builtins.readFile (scriptsDir + "/monitor_utils.py") + "\n\n" +
     builtins.readFile (scriptsDir + "/gamescope-targetfps.py")
   );
 
