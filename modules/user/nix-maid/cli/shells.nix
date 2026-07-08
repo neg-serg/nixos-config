@@ -136,13 +136,10 @@ in
 {
   config = lib.mkMerge [
     {
-      # Pre-establish shell config dirs with correct ownership so that
-      # nix-maid's later symlink-layer (into the nix store) doesn't trip
-      # systemd-tmpfiles' unsafe-path-transition check (systemd >=252).
-      systemd.tmpfiles.rules = [
-        "d /home/neg/.config/zsh 0755 neg neg -"
-        "d /home/neg/.config/zsh-native-syntax 0755 neg neg -"
-      ];
+      # NOTE: nix-maid creates symlinks to the nix store at these paths via
+      # mkHomeFiles below.  Do NOT add systemd-tmpfiles 'd' rules here — they
+      # will fail on every subsequent boot because nix-maid's symlinks persist
+      # and tmpfiles cannot create directories on top of existing symlinks.
 
       # --- Interactive Shell Config (Bash) ---
       programs.bash = {
