@@ -47,7 +47,7 @@ in
       ];
     };
     "${homeDir}/music" = {
-      device = "/mnt/one/music";
+      device = "/bulk/music";
       fsType = "none";
       options = [
         "bind"
@@ -56,7 +56,7 @@ in
       ];
     };
     "${homeDir}/torrent" = {
-      device = "/mnt/one/torrent";
+      device = "/bulk/torrent";
       fsType = "none";
       options = [
         "bind"
@@ -65,16 +65,7 @@ in
       ];
     };
     "${homeDir}/vid" = {
-      device = "/mnt/one/vid";
-      fsType = "none";
-      options = [
-        "bind"
-        "nofail"
-        "x-systemd.automount"
-      ];
-    };
-    "${homeDir}/games" = {
-      device = "/gamez/main";
+      device = "/bulk/vid";
       fsType = "none";
       options = [
         "bind"
@@ -83,7 +74,7 @@ in
       ];
     };
     "${homeDir}/doc" = {
-      device = "/mnt/one/doc";
+      device = "/bulk/doc";
       fsType = "none";
       options = [
         "bind"
@@ -92,7 +83,7 @@ in
       ];
     };
     "${homeDir}/.local/mail" = {
-      device = "/mnt/one/mail";
+      device = "/bulk/mail";
       fsType = "none";
       options = [
         "bind"
@@ -128,18 +119,6 @@ in
       ];
     };
 
-    # ---- Bulk storage LVs ----
-
-    # One 7TiB LV (nvme2n1)
-    "/mnt/one" = {
-      device = "/dev/mapper/xenon-one";
-      fsType = "xfs";
-      options = [
-        "nofail"
-        "x-systemd.automount"
-      ];
-    };
-
     # ---- ZFS ----
 
     "/tank" = {
@@ -151,6 +130,13 @@ in
     # Gamez 3.6TiB ZFS RAID0 (nvme1n1 + nvme3n1)
     "/gamez/main" = {
       device = "gamez/main";
+      fsType = "zfs";
+      options = [ "nofail" ];
+    };
+
+    # Bulk 7TiB storage pool (nvme2n1)
+    "/bulk" = {
+      device = "bulk";
       fsType = "zfs";
       options = [ "nofail" ];
     };
