@@ -391,9 +391,6 @@ lib.mkMerge [
         # Remove SDDM/Plasma additions; keep Hyprland-only setup
         # Temporarily disable Ollama on this host
         ollama.enable = false;
-        # nginx is enabled in modules/system/filesystems.nix as a local
-        # Nix cache proxy on 127.0.0.1:3210 — no port conflict with Caddy.
-
         # GVFS disabled — pulls GTK; re-enable if file manager needs MTP/SMB
         # gvfs.enable = true;
 
