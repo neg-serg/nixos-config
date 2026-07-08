@@ -9,7 +9,7 @@
 let
   inherit (nixpkgs) lib;
   hostsDir = ../hosts;
-  hostNamesEnabled = [ "telfir" ];
+  hostNamesEnabled = [ "odin" ];
 
   linuxSystem = "x86_64-linux";
   locale = "en_US.UTF-8";
@@ -189,8 +189,8 @@ let
   # domains (GUI, nix-maid, games, etc.), producing smaller eval trees for
   # nix-eval-jobs to process in parallel.
   #
-  # NEVER evaluated during normal `nixos-rebuild switch --flake .#telfir`.
-  # Build explicitly: nixos-rebuild switch --flake '.#telfir-lite'
+  # NEVER evaluated during normal `nixos-rebuild switch --flake .#odin`.
+  # Build explicitly: nixos-rebuild switch --flake '.#odin-lite'
   mkTestHost =
     baseName: testProfile:
     lib.nixosSystem {
@@ -214,11 +214,11 @@ let
     "server"
   ];
 
-  # Keys like "telfir-gaming", "telfir-audio-pro", etc.
+  # Keys like "odin-gaming", "odin-audio-pro", etc.
   prefixedTestConfigs = lib.listToAttrs (
     map (p: {
-      name = "telfir-${p}";
-      value = mkTestHost "telfir" p;
+      name = "odin-${p}";
+      value = mkTestHost "odin" p;
     }) testProfiles
   );
 

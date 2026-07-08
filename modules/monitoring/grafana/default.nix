@@ -65,7 +65,7 @@ in
         type = types.str;
         default =
           let
-            hn = config.networking.hostName or "telfir";
+            hn = config.networking.hostName or "odin";
           in
           "grafana." + hn;
         description = "Domain name to serve Grafana on via Caddy.";

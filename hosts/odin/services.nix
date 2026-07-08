@@ -8,7 +8,7 @@
 let
   grafanaEnabled = config.services.grafana.enable or false;
   hasResilioSecret = builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml");
-  wireguardSopsFile = inputs.self + "/secrets/telfir-wireguard-wg-quick.sops";
+  wireguardSopsFile = inputs.self + "/secrets/odin-wireguard-wg-quick.sops";
   duckdnsEnvSecret = inputs.self + "/secrets/duckdns.env.sops";
   hasDuckdnsSecret = builtins.pathExists duckdnsEnvSecret;
   unboundLocalData = import ./unbound-hosts.nix;
@@ -82,11 +82,11 @@ lib.mkMerge [
       # Local DNS rewrites for LAN names (service enable comes from roles)
       adguardhome.rewrites = [
         {
-          domain = "telfir";
+          domain = "odin";
           answer = "192.168.2.240";
         }
         {
-          domain = "telfir.local";
+          domain = "odin.local";
           answer = "192.168.2.240";
         }
       ];
@@ -368,7 +368,7 @@ lib.mkMerge [
           enable = true;
           openFirewall = true;
           settings.general = {
-            name = "Telfir AirPlay";
+            name = "Odin AirPlay";
             output_backend = "pipewire";
           };
         };
@@ -659,9 +659,9 @@ lib.mkMerge [
       };
   })
   (lib.mkIf (builtins.pathExists wireguardSopsFile) {
-    # On-demand WireGuard VPN for telfir, configured via wg-quick config stored in sops.
+    # On-demand WireGuard VPN for odin, configured via wg-quick config stored in sops.
     # The tunnel is not started automatically; use systemctl start/stop to control it.
-    sops.secrets."wireguard/telfir-wg-quick" = {
+    sops.secrets."wireguard/odin-wg-quick" = {
       sopsFile = wireguardSopsFile;
       format = "binary"; # keep original wg-quick config format
       owner = "root";
@@ -669,8 +669,8 @@ lib.mkMerge [
       mode = "0600";
     };
 
-    systemd.services."wg-quick-vpn-telfir" = {
-      description = "On-demand WireGuard VPN (telfir, wg-quick)";
+    systemd.services."wg-quick-vpn-odin" = {
+      description = "On-demand WireGuard VPN (odin, wg-quick)";
       wants = [ "network-online.target" ];
       after = [ "network-online.target" ];
       wantedBy = [ ]; # do not autostart; manual systemctl only
@@ -679,11 +679,11 @@ lib.mkMerge [
         RemainAfterExit = true;
         ExecStart = "${pkgs.wireguard-tools}/bin/wg-quick up ${
           # Tools for the WireGuard secure network tunnel
-          config.sops.secrets."wireguard/telfir-wg-quick".path
+          config.sops.secrets."wireguard/odin-wg-quick".path
         }";
         ExecStop = "${pkgs.wireguard-tools}/bin/wg-quick down ${
           # Tools for the WireGuard secure network tunnel
-          config.sops.secrets."wireguard/telfir-wg-quick".path
+          config.sops.secrets."wireguard/odin-wg-quick".path
         }";
       };
     };

@@ -13,7 +13,7 @@
 set -euo pipefail
 
 FLAKE_DIR="${FLAKE_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-HOST="${HOST:-telfir}"
+HOST="${HOST:-odin}"
 FLAKE="${FLAKE:-$FLAKE_DIR#$HOST}"
 EXPLORE_TMP="${XDG_CACHE_HOME:-$HOME/.cache}/nixos-explore"
 mkdir -p "$EXPLORE_TMP"
@@ -134,7 +134,7 @@ print(len(json.load(sys.stdin)))
     echo ""
     echo "Environment:"
     echo "  FLAKE_DIR  Path to flake root (default: git root or pwd)"
-    echo "  HOST       NixOS host name (default: telfir)"
+    echo "  HOST       NixOS host name (default: odin)"
     exit 1
     ;;
 esac

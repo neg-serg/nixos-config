@@ -91,7 +91,7 @@ These are passed from `flake.nix` into modules for convenience (camelCase):
 
 Switch examples:
 
-- `sudo nixos-rebuild switch --flake .#telfir`
+- `sudo nixos-rebuild switch --flake .#odin`
 
 ## Developer Notes
 
