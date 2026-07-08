@@ -23,11 +23,10 @@ in
   config = lib.mkIf cfg.enable {
     nixpkgs.hostPlatform.system = "x86_64-linux";
 
-    # Enable sched_ext (SCX) scheduler
-    services.scx = {
-      enable = true;
-      scheduler = cfg.scx.scheduler;
-    };
+    # SCX disabled: conflicts with isolcpus (kernel CPU isolation for gaming)
+    # and scx_lavd does not support dual-CCD X3D topology on LTS kernels.
+    # Use ananicy-cpp + isolcpus + GAME_PIN_CPUSET instead.
+    # To re-enable: set services.scx.enable = true; in host config
 
     # Enable Ananicy-cpp for process auto-prioritization
     services.ananicy = {
