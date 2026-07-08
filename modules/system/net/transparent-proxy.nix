@@ -11,9 +11,9 @@ lib.mkIf cfg.enable {
   # Must have the base Xray SOCKS5 proxy running
   features.net.proxy.enable = lib.mkDefault true;
 
-  # Generate redsocks.conf with proxy auth from SOPS secret
+  # Generate redsocks.conf pointing at the local Xray SOCKS5 proxy
   systemd.services.transparent-proxy-env = {
-    description = "Generate redsocks.conf from sops proxy secret";
+    description = "Generate redsocks.conf for transparent proxy";
     before = [ "redsocks.service" ];
     wantedBy = [ "transparent-proxy.target" ];
     serviceConfig = {
@@ -21,9 +21,7 @@ lib.mkIf cfg.enable {
       RemainAfterExit = true;
     };
     script = ''
-            PW=$(cat /run/secrets/xray_proxy_password 2>/dev/null || true)
-            if [ -n "$PW" ]; then
-              cat > /run/redsocks.conf <<EOF
+      cat > /run/redsocks.conf <<EOF
       base {
           log_debug = off;
           log_info = off;
@@ -36,15 +34,9 @@ lib.mkIf cfg.enable {
           ip = 127.0.0.1;
           port = 10808;
           type = socks5;
-          login = "phone";
-          password = "$PW";
       }
       EOF
-              chmod 600 /run/redsocks.conf
-            else
-              echo "transparent-proxy-env: xray_proxy_password secret not available" >&2
-              exit 1
-            fi
+      chmod 600 /run/redsocks.conf
     '';
   };
 
