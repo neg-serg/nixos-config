@@ -36,6 +36,8 @@
       skipCryptoSelftests = false;
       lowLatencyScheduling = false; # With PREEMPT_RT enabled, drop extra low-latency cmdline toggles
       noreplaceSmp = false; # Allow SMP alternatives patching on Zen 5 dual-CCD (9950X3D)
+      # ASUS AM5 + NVMe D3cold workaround: disable ASPM + PCIe port PM
+      pciePerformance = false;
       # V-Cache CCD (96MB L3) cores for gaming isolation
       gamingCpuSet = "0-7,16-23";
       # Standard CCD (32MB L3) for kernel/IRQ housekeeping
@@ -77,7 +79,8 @@
       "lru_gen.min_ttl_ms=1000" # Min TTL for multi-gen LRU
       "mem_sleep_default=deep" # Prefer deep sleep (S3) for suspend
       "8250.nr_uarts=0" # Skip legacy UART probing
-      # nvme_core.* / pcie_aspm / usbcore.autosuspend already covered by performance profile in params.nix
+      "pcie_aspm=off" # Disable ASPM entirely — prevents NVMe D3cold wake delays on AMD/X670E
+      "pcie_port_pm=off" # Disable PCIe port power management — keeps NVMe accessible during import
       "nvme_core.io_timeout=4294967295" # Max NVMe I/O timeout
       "amdgpu.ppfeaturemask=0xffffffff" # Enable all AMD GPU overdrive features
       "udev.children_max=32" # Parallelize udev device init
