@@ -14,7 +14,7 @@ tmp_wall="${cache}/wall_swww.$$"
 mkdir -p ${XDG_DATA_HOME:-$HOME/.local/share}/swayimg
 last_file="${XDG_DATA_HOME:-$HOME/.local/share}/swayimg/last"
 trash="${HOME}/trash/1st-level/pic"
-vicinae_cmd='vicinae dmenu'
+vicinae_cmd=(vicinae dmenu)
 pics_dir_default="$HOME/Pictures"
 pics_dir="${XDG_PICTURES_DIR:-$pics_dir_default}"
 
@@ -155,7 +155,7 @@ choose_dest() {
   )"
 
   printf '%s\n' "$entries" \
-    | $vicinae_cmd -p "⟬$prompt⟭ ❯>" \
+    | "${vicinae_cmd[@]}" -p "⟬$prompt⟭ ❯>" \
     | sed "s:^~:$HOME:"
 }
 
