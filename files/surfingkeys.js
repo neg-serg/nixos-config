@@ -230,16 +230,40 @@ api.mapkey('v', 'Scroll half page up', () => {
   api.Normal.scroll("pageUp");
 });
 
-// Tabs (unmap default scroll first)
+// Address bar (Ctrl-L emulation — open URL in current tab)
 api.unmap('e');  // Default: scroll page up
+api.mapkey('e', 'Open URL bar (Ctrl-L)', function() {
+  api.Front.openOmnibar({type: "URLs", tabbed: false});
+});
+
+// Tabs
 api.unmap('E');  // Default: scroll page down
 api.map('E', 'gT');  // Previous tab
-api.map('e', 'R');  // Next tab (R is default next tab)
 api.mapkey('d', 'Close current tab', function () {
   api.RUNTIME('closeTab');
 });
 api.map('u', 'X');  // Restore tab
 api.map('w', 'T');  // Tab list
+
+// Free up o — move all hotkeys off it
+api.unmap('o');
+
+// Disable SurfingKeys own UI menus (poor autocomplete). w-related kept.
+api.unmap(':');   // Commands omnibar
+api.unmap('A');   // LLM chat omnibar
+api.unmap('Q');   // Word translation popup
+api.unmap('go');  // Open URL in current tab (e does this now)
+api.unmap('oh');  // Open URL from history
+api.unmap('om');  // Open VIMarks
+api.unmap('ab');  // Add bookmark
+api.unmap(';x');  // Close tabs by URL
+api.unmap(';gt'); // Gather filtered tabs into current window
+api.unmap(';u');  // Edit URL with vim editor (history autocomplete)
+api.unmap('?');   // Show usage popup
+// Remaining search aliases via o (now freed)
+api.unmap('os');  // stackoverflow search
+api.unmap('ob');  // baidu search
+api.unmap('oe');  // wikipedia search
 
 // History
 api.map('H', 'S');  // Back
@@ -289,8 +313,8 @@ const quickmarks = {
 };
 
 Object.entries(quickmarks).forEach(([key, site]) => {
-  // Open in current tab
-  api.mapkey('o' + key, 'Open ' + site.name, () => {
+  // Open in current tab (prefix J — was o, freed up)
+  api.mapkey('J' + key, 'Open ' + site.name, () => {
     window.location.href = site.url;
   });
   // Open in new tab
