@@ -3,13 +3,8 @@ let
   # Common extension list for all Chromium browsers
   commonExtensions = [
     "cjpalhdlnbpafiamejdnhcphjbkeiagm" # uBlock Origin
-    "gighmmpiobklfepjocanfajhashmkbed" # AdBlock
     "nngceckbapebfimnlniiiahkandclblb" # Bitwarden
-    "gmbmikajjgocabecnoocmodnpiogccbe" # Dark Reader
-    "clngdbkpkpeebahjckkjfobafhncgmne" # Stylus
     "pkehgijimnmhlpjocpleijbhhmbhiclc" # Sidebery placeholder
-    "oldceeleldhonbafppcapldpdifcinji" # LanguageTool
-    "liecbpablbhkpakedmddhodofcncejka" # Keepa
   ];
 
   # Helper to build the final module result

@@ -18,8 +18,7 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
 - `features.web.vivaldi.enable` (Vivaldi browser)
   - Default: false
   - Installs `pkgs.vivaldi` with Wayland flags via `--ozone-platform-hint=wayland`
-  - Extensions force‑installed via Chromium managed policies: uBlock Origin, AdBlock, Dark Reader,
-    Stylus, LanguageTool, Keepa
+  - Extensions force‑installed via Chromium managed policies: uBlock Origin
   - Chromium policies applied: disabled password manager, blocked notifications, no metrics,
     standard safe browsing, disabled search suggestions, no sync, home button shown
 - `features.web.chat.enable` (Telegram chat client)
