@@ -526,7 +526,7 @@ Additionally, a Markdown language policy is enforced:
   - `profiles.games.enable = false;` to disable Steam/Gamescope wrappers/MangoHud system‑wide.
   - Defaults to `true` to preserve current behavior.
 
-- Isolated CPUs: host `odin` reserves cores `14,15,30,31` for low‑latency gaming. System services
+- Isolated CPUs: host `odin` reserves cores `0-3,16-19` for low‑latency gaming. System services
   are kept on housekeeping CPUs.
 
 - Transient scope runner: `game-run` launches any command in a user systemd scope and pins it to the
@@ -539,7 +539,7 @@ Additionally, a Markdown language policy is enforced:
 
 - Basic: `game-run %command%`
 - With Gamescope (fullscreen + VRR): `game-run gamescope -f --adaptive-sync -- %command%`
-- Override CPU set for a game: `GAME_PIN_CPUSET=14,15,30,31 game-run %command%`
+- Override CPU set for a game: `GAME_PIN_CPUSET=0-3,16-19 game-run %command%`
 - Disable GameMode for a game: `GAME_RUN_USE_GAMEMODE=0 game-run %command%`
 
 ### Non‑Steam games
@@ -553,7 +553,7 @@ Additionally, a Markdown language policy is enforced:
 
 ### Environment knobs
 
-- `GAME_PIN_CPUSET`: CPU list or ranges (default `14,15,30,31`). Examples: `14,30` or `14-15,30-31`.
+- `GAME_PIN_CPUSET`: CPU list or ranges (default `0-3,16-19`). Examples: `14,30` or `14-15,30-31`.
 - `GAME_RUN_USE_GAMEMODE`: `1` (default) to run via `gamemoderun`, set `0` to disable.
 - `GAMESCOPE_FLAGS`: extra flags appended to gamescope in `gamescope-pinned`.
 - `GAMESCOPE_RATE`, `GAMESCOPE_OUT_W`, `GAMESCOPE_OUT_H`: override refresh and output size for
@@ -610,7 +610,7 @@ Notes:
 
 - Latency and stability:
 
-  - Prefer per‑game CPU set: `GAME_PIN_CPUSET=14,15,30,31 game-run %command%`. If a game spawns many
+  - Prefer per‑game CPU set: `GAME_PIN_CPUSET=0-3,16-19 game-run %command%`. If a game spawns many
     threads, widen (e.g. `14-15,28-31`).
   - Keep VRR on: `--adaptive-sync`. If tearing or sync issues, test without it and/or cap FPS
     slightly below max (e.g. 237 on 240 Hz) via in‑game limiter or MangoHud.
@@ -651,7 +651,7 @@ points and tweak for your rig/game.
 - Competitive FPS (lowest latency, 240 Hz VRR):
 
   - Steam Launch Options:
-    - `GAME_PIN_CPUSET=14,15,30,31 MANGOHUD=1 MANGOHUD_CONFIG=fps_limit=237 game-run gamescope -f --adaptive-sync -r 240 -- %command%`
+    - `GAME_PIN_CPUSET=0-3,16-19 MANGOHUD=1 MANGOHUD_CONFIG=fps_limit=237 game-run gamescope -f --adaptive-sync -r 240 -- %command%`
   - Notes: cap below max refresh (237/240) for steadier frametimes; try adding `--rt` to Gamescope
     if stability is OK; turn off in‑game V‑Sync.
 
