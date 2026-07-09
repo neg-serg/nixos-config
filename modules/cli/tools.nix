@@ -104,5 +104,4 @@ in
   # pkgs.v2raya # web GUI for V2Ray proxy
   # pkgs.watchtower # TUI system resource watcher
   # pkgs.witr # TUI for WireGuard connections
-  # pkgs.xdg-desktop-portal-termfilechooser-hunkyburrito # terminal file chooser portal
 }

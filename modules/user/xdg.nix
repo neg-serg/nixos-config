@@ -21,7 +21,8 @@ in
     xdgOpenUsePortal = true;
     extraPortals = [
       # Hyprland portal is provided via programs.hyprland.portalPackage
-      pkgs.xdg-desktop-portal-termfilechooser # TUI file picker portal used in rofi/CLI tools
+      pkgs.xdg-desktop-portal-shana # filechooser portal redirector (to KDE/Qt backend)
+      pkgs.kdePackages.xdg-desktop-portal-kde # KDE/Qt file picker portal backend for shana
     ];
     config = {
       common.default = [
@@ -31,7 +32,9 @@ in
       hyprland.default = [
         "hyprland"
       ];
-      hyprland."org.freedesktop.impl.portal.FileChooser" = [ ];
+      hyprland."org.freedesktop.impl.portal.FileChooser" = [
+        "shana"
+      ];
     };
   };
 
