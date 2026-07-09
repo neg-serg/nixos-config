@@ -210,42 +210,6 @@ final: prev: {
     };
   };
 
-  xdg-desktop-portal-termfilechooser-hunkyburrito = final.stdenv.mkDerivation {
-    pname = "xdg-desktop-portal-termfilechooser-hunkyburrito";
-    version = "0.1-git";
-
-    src = final.fetchFromGitHub {
-      owner = "hunkyburrito";
-      repo = "xdg-desktop-portal-termfilechooser";
-      rev = "0000000000000000000000000000000000000000";
-      # TODO: set real hash; package never completed/unused
-      hash = final.lib.fakeHash;
-    };
-
-    nativeBuildInputs = with final; [
-      meson
-      ninja
-      pkg-config
-      scdoc
-    ];
-
-    buildInputs = with final; [
-      inih
-      systemd
-      xdg-desktop-portal
-    ];
-
-    mesonFlags = [
-      "-Dsd-bus-provider=libsystemd"
-    ];
-
-    meta = with final.lib; {
-      description = "xdg-desktop-portal backend for terminal file choosers (hunkyburrito fork)";
-      homepage = "https://github.com/hunkyburrito/xdg-desktop-portal-termfilechooser";
-      license = licenses.mit;
-    };
-  };
-
   # AUR-bin
 
   act = final.stdenv.mkDerivation {
