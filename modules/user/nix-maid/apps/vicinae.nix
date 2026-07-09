@@ -62,10 +62,17 @@ in
           description = "Vicinae - Wayland application runner and window switcher";
           partOf = [ "graphical-session.target" ];
           wantedBy = [ "graphical-session.target" ];
+          after = [ "graphical-session.target" ];
+          # Set Qt platform to Wayland explicitly — avoids crash when DISPLAY/Wayland
+          # socket isn't inherited properly from the session scope.
           serviceConfig = {
             ExecStart = "${lib.getExe pkgs.vicinae} server";
             Restart = "always";
             RestartSec = 2;
+            Environment = [
+              "QT_QPA_PLATFORM=wayland"
+              "WAYLAND_DISPLAY=wayland-1"
+            ];
           };
         };
       }
