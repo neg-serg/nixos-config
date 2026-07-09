@@ -45,11 +45,14 @@
         ];
       }
       (lib.mkIf (config.profiles.performance.optimizeInitrdCompression or false) {
-        compressor = "zstd";
+        # Use function form to avoid nixpkgs initrd-compressor-meta bug
+        # where pkgs.lz4 resolves to the dev output (no binary)
+        compressor = pkgs: "${lib.getBin pkgs.lz4}/bin/lz4";
         compressorArgs = [
-          "-19"
-          "-T0"
+          "-l" # legacy format required by kernel's LZ4 decompressor
         ];
+        # lz4 decompresses ~5x faster than zstd -19, trading ~30% larger initrd
+        # for ~0.5-1s faster initrd load on NVMe (decompress > read speed)
       })
     ];
   };
