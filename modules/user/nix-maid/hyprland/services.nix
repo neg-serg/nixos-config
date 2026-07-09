@@ -125,6 +125,7 @@
         Environment = [
           "QT_QPA_PLATFORM=wayland"
           "XDG_SESSION_TYPE=wayland"
+          "XDG_CURRENT_DESKTOP=Hyprland"
         ];
         Restart = "on-failure";
         RestartSec = "2s";
