@@ -558,10 +558,6 @@ in
       ];
     };
 
-    ranger = pkgs.mkShell {
-      packages = [ pkgs.ranger ];
-    };
-
     "stress-ng" = pkgs.mkShell {
       packages = [ pkgs.stress-ng ];
     };
