@@ -47,10 +47,10 @@ in
   config = lib.mkIf (cfg.enable or false) (
     lib.mkMerge [
       (lib.mkIf (cfg.swappiness.enable or false) {
-        boot.kernel.sysctl."vm.swappiness" = lib.mkDefault cfg.swappiness.value;
+        boot.kernel.sysctl."vm.swappiness" = lib.mkForce cfg.swappiness.value;
       })
       (lib.mkIf (cfg.maxMapCount.enable or false) {
-        boot.kernel.sysctl."vm.max_map_count" = lib.mkDefault cfg.maxMapCount.value;
+        boot.kernel.sysctl."vm.max_map_count" = lib.mkForce cfg.maxMapCount.value;
       })
     ]
   );
