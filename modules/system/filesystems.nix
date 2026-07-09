@@ -13,10 +13,11 @@ in {
     "xfs"
     "udf"
     "zfs"
+    "vfat"
   ];
-  boot.initrd.supportedFilesystems = ["zfs"];
+  boot.initrd.supportedFilesystems = ["zfs" "vfat"];
   boot.initrd.kernelModules = ["zfs"];
-  boot.zfs.extraPools = ["gamez" "bulk"];
+  boot.zfs.extraPools = ["gamez" "bulk" "tank"];
   # Scan /dev directly (raw block devices) instead of /dev/disk/by-id.
   # Raw NVMe device nodes (/dev/nvmeXn1, /dev/nvmeXn1p1) appear at kernel probe time,
   # while by-id symlinks need udev — which isn't ready yet when the import script runs.
