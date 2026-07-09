@@ -136,7 +136,7 @@ let
     ]
     ++ [
       "amd_pstate=active"
-      "nvme_core.default_ps_max_latency_us=0"
+      "nvme_core.default_ps_max_latency_us=200"
     ]
     ++ lib.optionals (config.profiles.performance.zswap.enable or false) [
       "zswap.enabled=1"
