@@ -104,6 +104,13 @@ with rec {
       };
       defaultUserShell = pkgs.zsh; # Z shell
       groups.${mainGroup}.gid = mainGid;
+      groups.netdev = { }; # Referenced by avahi-dbus.conf policy
+      groups.sing-box = { }; # Referenced by sing-box-split-dns.conf policy
+      users.sing-box = {
+        isSystemUser = true;
+        group = "sing-box";
+        description = "sing-box proxy platform (dbus policy)";
+      };
     };
   };
 }
