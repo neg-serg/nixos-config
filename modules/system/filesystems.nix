@@ -56,7 +56,7 @@ in {
       ];
     };
     "/boot" = {
-      device = "/dev/nvme0n1p5";
+      device = "/dev/disk/by-uuid/3D2F-1F3A";
       fsType = "vfat";
       options = [
         "x-systemd.automount"
