@@ -202,7 +202,6 @@ lib.mkIf quickshellEnabled (
 
       systemd.user.services.quickshell.after = lib.mkForce [
         "graphical-session-pre.target"
-        "hyprland-session.target"
         "maid-activation.service"
         "pipewire.service"
       ];
