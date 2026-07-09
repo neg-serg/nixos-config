@@ -3,22 +3,21 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   mainUser = config.users.main.name or "neg";
   homeDir = "/home/${mainUser}";
   isOdin = config.networking.hostName == "odin";
-in
-{
+in {
   boot.supportedFilesystems = [
     "exfat"
     "xfs"
     "udf"
     "zfs"
   ];
-  boot.initrd.supportedFilesystems = [ "zfs" ];
-  boot.initrd.kernelModules = [ "zfs" ];
+  boot.initrd.supportedFilesystems = ["zfs"];
+  boot.initrd.kernelModules = ["zfs"];
   boot.zfs.forceImportRoot = true;
+  boot.zfs.extraPools = ["gamez" "bulk"];
 
   fileSystems = lib.mkIf isOdin {
     "/" = {
@@ -27,6 +26,7 @@ in
       options = [
         "rw"
         "noatime"
+        "zfsutil"
       ];
     };
     "/nix/store" = {
@@ -34,6 +34,7 @@ in
       fsType = "zfs";
       options = [
         "noatime"
+        "zfsutil"
       ];
     };
     "/boot" = {
@@ -53,6 +54,7 @@ in
         "bind"
         "nofail"
         "x-systemd.automount"
+        "x-systemd.after=zfs.target"
       ];
     };
     "${homeDir}/.local/share/wineprefixes" = {
@@ -62,6 +64,7 @@ in
         "bind"
         "nofail"
         "x-systemd.automount"
+        "x-systemd.after=zfs.target"
       ];
     };
     "${homeDir}/.cache/winetricks" = {
@@ -71,30 +74,11 @@ in
         "bind"
         "nofail"
         "x-systemd.automount"
+        "x-systemd.after=zfs.target"
       ];
     };
 
-    # ---- ZFS ----
-
-    "/tank" = {
-      device = "tank";
-      fsType = "zfs";
-      options = [ "nofail" ];
-    };
-
-    # Gamez 3.6TiB ZFS RAID0 (nvme1n1 + nvme3n1)
-    "/gamez/main" = {
-      device = "gamez/main";
-      fsType = "zfs";
-      options = [ "nofail" ];
-    };
-
-    # Bulk 7TiB storage pool (nvme2n1)
-    "/bulk" = {
-      device = "bulk";
-      fsType = "zfs";
-      options = [ "nofail" ];
-    };
+    # ZFS pools imported via boot.zfs.extraPools
 
     # /mnt/zero removed: argon-zero LVM volume being dismantled, replaced by ZFS pool gamez
   };
@@ -112,11 +96,11 @@ in
   # and repeated builds read the same store paths.
   systemd.services.zfs-store-props = {
     description = "Set optimal ZFS properties on tank/store";
-    wantedBy = [ "zfs.target" ];
-    after = [ "zfs.target" ];
+    wantedBy = ["zfs.target"];
+    after = ["zfs.target"];
     serviceConfig.Type = "oneshot";
     serviceConfig.RemainAfterExit = true;
-    path = [ pkgs.zfs ];
+    path = [pkgs.zfs];
     script = ''
       if zfs list tank/store >/dev/null 2>&1; then
         zfs set compression=lz4 tank/store
@@ -137,11 +121,11 @@ in
   # Tune tank/nixos (root) for OS workloads and Nix xattr compatibility.
   systemd.services.zfs-nixos-props = {
     description = "Set optimal ZFS properties on tank/nixos";
-    wantedBy = [ "zfs.target" ];
-    after = [ "zfs.target" ];
+    wantedBy = ["zfs.target"];
+    after = ["zfs.target"];
     serviceConfig.Type = "oneshot";
     serviceConfig.RemainAfterExit = true;
-    path = [ pkgs.zfs ];
+    path = [pkgs.zfs];
     script = ''
       if zfs list tank/nixos >/dev/null 2>&1; then
         zfs set dnodesize=auto tank/nixos
@@ -153,11 +137,10 @@ in
   # ZFS auto-scrub and trim
   services.zfs.autoScrub.enable = true;
   services.zfs.trim.enable = true;
-  services.fstrim = lib.mkIf isOdin { enable = true; };
+  services.fstrim = lib.mkIf isOdin {enable = true;};
 
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"
     "d /cache 0775 root nixbld -" # ccache for sandboxed Nix builds
   ];
-
 }
