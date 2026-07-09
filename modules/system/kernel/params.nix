@@ -177,6 +177,7 @@ in
           "kvm-amd"
           "tcp_bbr"
           "ntsync"
+          "i2c-dev" # needed by OpenRGB for RGB controller access via /dev/i2c-*
         ];
         blacklistedKernelModules = [
           "sp5100_tco"
