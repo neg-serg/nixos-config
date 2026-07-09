@@ -79,6 +79,26 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write(str(e).encode())
 
+            elif path == '/addressbar':
+                print("Entering /addressbar handler", flush=True)
+                try:
+                    env = hyprland_env()
+                    if env is None:
+                        raise RuntimeError("No Hyprland socket found")
+                    subprocess.run(
+                        ["hyprctl", "dispatch", 'hl.dsp.send_shortcut({mods="CTRL",key="L"})'],
+                        env=env,
+                        check=True,
+                    )
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(b'OK')
+                except Exception as e:
+                    print(f"Error: {e}", flush=True)
+                    self.send_response(500)
+                    self.end_headers()
+                    self.wfile.write(str(e).encode())
+
             elif path == '/proxy':
                 print("Entering /proxy handler", flush=True)
                 try:
