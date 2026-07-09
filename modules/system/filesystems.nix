@@ -17,6 +17,7 @@ in {
   boot.initrd.supportedFilesystems = ["zfs"];
   boot.initrd.kernelModules = ["zfs"];
   boot.zfs.forceImportRoot = true;
+  boot.zfs.extraPools = ["gamez" "bulk"];
 
   fileSystems = lib.mkIf isOdin {
     "/" = {
