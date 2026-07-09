@@ -153,13 +153,13 @@ lib.mkIf quickshellEnabled (
         enable = true;
         description = "Quickshell - QtQuick based shell for Wayland";
         documentation = [ "https://github.com/outfoxxed/quickshell" ];
-        partOf = [ "graphical-session.target" ];
+        partOf = [ "hyprland-session.target" ];
         after = [
           "graphical-session-pre.target"
           "pipewire.service"
         ];
         wants = [ "pipewire.service" ];
-        wantedBy = [ "graphical-session.target" ];
+        wantedBy = [ "hyprland-session.target" ];
         serviceConfig = {
           ExecStart = "${lib.getExe quickshellWrapped} -p %h/.config/quickshell/shell.qml";
           Restart = "on-failure";
