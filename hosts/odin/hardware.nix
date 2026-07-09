@@ -86,10 +86,25 @@
       "pcie_port_pm=off" # Disable PCIe port power management — keeps NVMe accessible during import
       "nvme_core.io_timeout=4294967295" # Max NVMe I/O timeout
       "amdgpu.ppfeaturemask=0xffffffff" # Enable all AMD GPU overdrive features
-      "udev.children_max=32" # Parallelize udev device init
+      "udev.children_max=64" # Parallelize udev device init
       "udev.event_timeout=10" # Kill stuck udev workers after 10s
       "rd.udev.event_timeout=10" # Same for initrd udev
       "usbcore.initial_descriptor_timeout=2000" # Cut USB descriptor timeout from 5s to 2s (phantom port 8 on ASUS AM5)
+
+      # Boot speed: skip unnecessary hardware probing
+      "pci=noaer" # Skip AER (Advanced Error Reporting) — prevents NVMe probe timeouts on AMD/X670E
+      "noresume" # Skip hibernation image search (no hibernate on this host)
+
+      # Systemd boot optimizations: explicit config reduces probing delays
+      "systemd.gpt_auto=0" # Skip GPT partition auto-discovery (fstab+ZFS are explicit)
+      "systemd.default_device_timeout_sec=30" # Reduce device job timeout from 90s default
+
+      # ZFS NVMe I/O tuning: parallelize metadata reads, batch writes, cap ARC
+      "zfs.zfs_vdev_async_read_max_active=8" # 2.7x default (3): parallel metadata reads for NVMe pool import
+      "zfs.zfs_vdev_aggregation_limit_non_rotating=1048576" # 8x default (128K): 1MB I/O aggregation for NVMe
+      "zfs.zfs_async_block_max_blocks=100000" # Cap async destroy to prevent OOM on post-crash pool import
+      "zfs.zfs_vdev_async_read_min_active=2" # 2x default (1): minimum concurrent async reads
+      "zfs.zfs_arc_max=17179869184" # Cap ARC at 16GB on 64GB system (default: ~32GB auto)
     ];
 
     # Load ASUS EC sensor driver for detailed telemetry + OpenRGB access
@@ -200,6 +215,10 @@
     # (saves ~1-2s per ZFS disk on boot).
     SUBSYSTEM=="block", ENV{ID_PART_ENTRY_TYPE}=="6a898cc3-1dd2-11b2-99a6-080020736631", \
       ENV{ID_FS_TYPE}=="zfs_member", OPTIONS+="nowatch"
+
+    # Disable writeback throttling on NVMe — conflicts with ZFS's own I/O scheduler.
+    # WBT adds latency jitter that ZFS doesn't need (ZFS schedules I/O internally).
+    ACTION=="add|change", SUBSYSTEM=="block", KERNEL=="nvme*n*", ATTR{queue/wbt_lat_usec}="0"
   '';
   environment.systemPackages = [
     pkgs.neg.bazecor # Dygma keyboard configurator (AppImage)
