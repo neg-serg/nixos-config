@@ -17,7 +17,7 @@ in {
   ];
   boot.initrd.supportedFilesystems = ["zfs" "vfat"];
   boot.initrd.kernelModules = ["zfs"];
-  boot.zfs.extraPools = ["gamez" "bulk" "tank"];
+  boot.zfs.extraPools = ["tank"]; # gamez/bulk imported after boot via systemd services
   # Scan /dev directly (raw block devices) instead of /dev/disk/by-id.
   # Raw NVMe device nodes (/dev/nvmeXn1, /dev/nvmeXn1p1) appear at kernel probe time,
   # while by-id symlinks need udev — which isn't ready yet when the import script runs.
@@ -139,17 +139,36 @@ in {
     '';
   };
 
-  # Non-root ZFS pool import reliability: bind to the right NVMe devices
-  # so systemd waits for the block devices before starting pool import.
+  # Non-root ZFS pool import services (imported after boot, not in initrd).
   # gamez = mirror of nvme2n1 + nvme3n1 (Samsung 990 PRO 2TB)
   # bulk  = single nvme1n1              (Samsung PM9A3 7TB)
   systemd.services."zfs-import-gamez" = {
+    description = "Import ZFS pool gamez";
+    wantedBy = ["multi-user.target"];
+    after = ["zfs.target" "dev-nvme2n1.device" "dev-nvme3n1.device"];
     bindsTo = ["dev-nvme2n1.device" "dev-nvme3n1.device"];
-    after = ["dev-nvme2n1.device" "dev-nvme3n1.device"];
+    serviceConfig.Type = "oneshot";
+    serviceConfig.RemainAfterExit = true;
+    path = [pkgs.zfs];
+    script = ''
+      if ! zpool list gamez >/dev/null 2>&1; then
+        zpool import -N gamez
+      fi
+    '';
   };
   systemd.services."zfs-import-bulk" = {
+    description = "Import ZFS pool bulk";
+    wantedBy = ["multi-user.target"];
+    after = ["zfs.target" "dev-nvme1n1.device"];
     bindsTo = ["dev-nvme1n1.device"];
-    after = ["dev-nvme1n1.device"];
+    serviceConfig.Type = "oneshot";
+    serviceConfig.RemainAfterExit = true;
+    path = [pkgs.zfs];
+    script = ''
+      if ! zpool list bulk >/dev/null 2>&1; then
+        zpool import -N bulk
+      fi
+    '';
   };
 
 
