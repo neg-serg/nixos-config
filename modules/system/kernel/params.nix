@@ -100,6 +100,10 @@ let
   base_params = [
     # Keep classic interface names for consistency
     "net.ifnames=0"
+  ]
+  # Verbose boot params — excluded when quietBoot is active to avoid
+  # duplicate/conflicting entries (quietBoot adds the quiet variants).
+  ++ lib.optionals (!config.profiles.performance.quietBoot or false) [
     # Kernel and early userspace verbosity
     "loglevel=7"
     # Show systemd unit status during boot (stage-1 and stage-2)
