@@ -194,6 +194,12 @@
     SUBSYSTEM=="usb", ATTR{idVendor}=="35ef", ATTR{idProduct}=="0105", MODE="0666"
     # Dygma Defy
     SUBSYSTEM=="usb", ATTR{idVendor}=="35ef", ATTR{idProduct}=="0108", MODE="0666"
+
+    # Speed up NVMe boot: skip blkid probing for ZFS member partitions.
+    # ZFS has its own label system — udev's blkid scan is wasted time
+    # (saves ~1-2s per ZFS disk on boot).
+    SUBSYSTEM=="block", ENV{ID_PART_ENTRY_TYPE}=="6a898cc3-1dd2-11b2-99a6-080020736631", \
+      ENV{ID_FS_TYPE}=="zfs_member", OPTIONS+="nowatch"
   '';
   environment.systemPackages = [
     pkgs.neg.bazecor # Dygma keyboard configurator (AppImage)
