@@ -46,7 +46,7 @@ in
     }
     (lib.mkIf (config.features.hardware.bluetooth.enable or false) {
       hardware.bluetooth = {
-        enable = true; # disable bluetooth
+        enable = true; # enable bluetooth
         powerOnBoot = false;
         settings = {
           General.Enable = "Source,Sink,Media,Socket";
