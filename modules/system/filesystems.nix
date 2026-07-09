@@ -22,6 +22,22 @@ in {
   # while by-id symlinks need udev — which isn't ready yet when the import script runs.
   boot.zfs.devNodes = "/dev";
 
+  # Pstore/ramoops: reserve RAM to capture kernel logs across reboots.
+  # After a crash/boot failure, the last boot's logs appear in /sys/fs/pstore/
+  # and are copied to /var/log/pstore/ by the pstore-cleanup service.
+  # Requires kernel rebuild with PSTORE_CONSOLE/PSTORE_PMSG.
+  boot.kernelPatches = [{
+    name = "enable-pstore-features";
+    patch = null;
+    structuredExtraConfig = with lib.kernel; {
+      PSTORE_CONSOLE = yes;
+      PSTORE_PMSG = yes;
+      PSTORE_FTRACE = yes;
+    };
+  }];
+  boot.kernelParams = ["ramoops.mem_size=0x200000"];
+  boot.kernelModules = ["ramoops"];
+
   fileSystems = lib.mkIf isOdin {
     "/" = {
       device = "tank/nixos";
@@ -50,6 +66,13 @@ in {
         "dmask=0077"
       ];
     };
+    # Pstore: kernel crash/panic log storage (ephemeral — shows last boot logs)
+    "/sys/fs/pstore" = {
+      device = "pstore";
+      fsType = "pstore";
+      options = ["nofail"];
+    };
+
     "${homeDir}/.local/share/Steam/userdata" = {
       device = "/gamez/main/userdata_steam";
       fsType = "none";
@@ -148,6 +171,23 @@ in {
   systemd.services."zfs-import-bulk" = {
     bindsTo = ["dev-nvme1n1.device"];
     after = ["dev-nvme1n1.device"];
+  };
+
+  # Preserve pstore (crash logs) to /var/log/pstore/ on every boot.
+  systemd.services.pstore-cleanup = {
+    description = "Preserve pstore crash logs to /var/log/pstore";
+    wantedBy = ["multi-user.target"];
+    after = ["var-log.mount"];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      dir=/var/log/pstore/''$(date +%Y%m%d-%H%M%S)
+      mkdir -p "$dir"
+      if mountpoint -q /sys/fs/pstore; then
+        cp -a /sys/fs/pstore/* "$dir/" 2>/dev/null || true
+      fi
+      # Clear pstore to free reserved memory for next capture
+      rm -f /sys/fs/pstore/* 2>/dev/null || true
+    '';
   };
 
   # ZFS auto-scrub and trim
