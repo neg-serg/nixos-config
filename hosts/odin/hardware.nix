@@ -34,14 +34,14 @@
       disableMitigations = false;
       disableAudit = false;
       skipCryptoSelftests = false;
-      lowLatencyScheduling = false; # With PREEMPT_RT enabled, drop extra low-latency cmdline toggles
+      lowLatencyScheduling = true; # threadirqs + preempt=full — reduces IRQ jitter for audio/gaming
       noreplaceSmp = false; # Allow SMP alternatives patching on Zen 5 dual-CCD (9950X3D)
       # ASUS AM5 + NVMe D3cold workaround: disable ASPM + PCIe port PM
       pciePerformance = false;
       # V-Cache CCD (96MB L3) cores for gaming isolation
-      gamingCpuSet = "0-7,16-23";
+      gamingCpuSet = "0-3,16-19";
       # Standard CCD (32MB L3) for kernel/IRQ housekeeping
-      housekeepingCpuSet = "8-15,24-31";
+      housekeepingCpuSet = "4-15,20-31";
     };
     # Do not enable PREEMPT_RT on this host
     performance.preemptRt.enable = false;
