@@ -45,7 +45,7 @@ let
     userName = "serg.zorg@gmail.com";
     realName = "Sergey Miroshnichenko";
     address = "serg.zorg@gmail.com";
-    passCmd = "pass show gmail/mbsync-app";
+    passCmd = "pass show mail/gmail/serg.zorg@gmail.com/mbsync-app";
     imap = {
       host = "imap.gmail.com";
       port = 993;
