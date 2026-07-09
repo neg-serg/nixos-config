@@ -13,11 +13,6 @@ let
   # Extensions to force-install via managed policy
   extensions = [
     "cjpalhdlnbpafiamejdnhcphjbkeiagm" # uBlock Origin
-    "gighmmpiobklfepjocanfajhashmkbed" # AdBlock
-    "gmbmikajjgocabecnoocmodnpiogccbe" # Dark Reader
-    "clngdbkpkpeebahjckkjfobafhncgmne" # Stylus
-    "oldceeleldhonbafppcapldpdifcinji" # LanguageTool
-    "liecbpablbhkpakedmddhodofcncejka" # Keepa
     "gfbliohnnapiefjpjlpjnehglfpaknnc" # SurfingKeys (vim-like keybindings)
   ];
 
