@@ -17,6 +17,7 @@ in {
   boot.initrd.supportedFilesystems = ["zfs"];
   boot.initrd.kernelModules = ["zfs"];
   boot.zfs.forceImportRoot = true;
+  boot.zfs.forceImportAll = true;
   boot.zfs.extraPools = ["gamez" "bulk"];
   # Scan /dev directly — raw NVMe block devices appear at kernel probe time,
   # long before udev creates /dev/disk/by-* symlinks.
