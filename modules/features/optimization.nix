@@ -25,14 +25,9 @@ in
 
     # SCX disabled: conflicts with isolcpus (kernel CPU isolation for gaming)
     # and scx_lavd does not support dual-CCD X3D topology on LTS kernels.
-    # Use ananicy-cpp + isolcpus + GAME_PIN_CPUSET instead.
     # To re-enable: set services.scx.enable = true; in host config
 
-    # Enable Ananicy-cpp for process auto-prioritization
-    services.ananicy = {
-      enable = true;
-      package = pkgs.ananicy-cpp;
-      rulesProvider = pkgs.ananicy-rules-cachyos;
-    };
+    # Ananicy-cpp removed — was causing cgroup v2 errors in current boot.
+    # Process auto-prioritization is handled by CPU isolation + GAME_PIN_CPUSET instead.
   };
 }
