@@ -164,6 +164,10 @@ in
     # run pipewire on default.target, this fixes xdg-portal startup delay
     systemd.user.services.pipewire.wantedBy = [ "default.target" ];
 
+    # WirePlumber queries UPower for battery info; make sure UPower is up first
+    systemd.user.services.wireplumber.after = [ "upower.service" ];
+    systemd.user.services.wireplumber.wants = [ "upower.service" ];
+
     # Extend LV2_PATH to include lsp-plugins (needed for Harman EQ filter-chain)
     systemd.user.services.pipewire.environment.LV2_PATH =
       lib.mkForce "${pkgs.lsp-plugins}/lib/lv2:${config.services.pipewire.package}/lib/lv2";
