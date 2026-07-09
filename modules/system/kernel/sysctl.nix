@@ -11,7 +11,10 @@
     # Kernel security
     "kernel.dmesg_restrict" = 1; # Restrict dmesg to root only
     "kernel.unprivileged_bpf_disabled" = 1; # Restrict eBPF to CAP_BPF
-    "net.core.bpf_jit_harden" = 2; # Harden eBPF JIT against spraying attacks
+    # Value 2 fully hardens eBPF JIT (JIT constification + blinding) against spraying attacks.
+    # Trade-off: ~10-15% eBPF program throughput reduction. Acceptable for gaming/desktop;
+    # only matters for high-throughput eBPF packet processing.
+    "net.core.bpf_jit_harden" = 2;
 
     # IP forwarding (required for VPN/Docker/containers)
     "net.ipv4.ip_forward" = 1;
@@ -51,5 +54,13 @@
     "net.core.wmem_max" = 4194304;
     "net.core.netdev_max_backlog" = 32768;
     "net.core.somaxconn" = 8192;
+
+    # VFS cache pressure: retain dentry/inode caches longer
+    # Beneficial on 64GB RAM systems — reduces disk I/O for frequently-used paths
+    "vm.vfs_cache_pressure" = 50;
+
+    # Scheduler migration cost (5ms): reduces unnecessary task migration between CCDs
+    # On dual-CCD 9950X3D, keeps processes on their current CCD longer for better cache locality
+    "kernel.sched_migration_cost_ns" = 5000000;
   };
 }
