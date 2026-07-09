@@ -125,7 +125,7 @@
     consoleLogLevel = 3;
 
     loader = {
-      timeout = 2; # seconds
+      timeout = 1; # seconds (1s to press any key, then boots immediately)
       limine = {
         enable = true;
         resolution = "3840x2160";
