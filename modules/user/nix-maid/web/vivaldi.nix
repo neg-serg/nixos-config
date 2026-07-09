@@ -17,7 +17,7 @@ let
   ];
 
   vivaldi-pkg = pkgs.vivaldi.override {
-    commandLineArgs = "--ozone-platform-hint=wayland";
+    commandLineArgs = "--ozone-platform-hint=wayland --disable-features=Vulkan";
     proprietaryCodecs = true;
   };
 in
