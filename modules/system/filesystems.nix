@@ -17,10 +17,26 @@ in {
   boot.initrd.supportedFilesystems = ["zfs"];
   boot.initrd.kernelModules = ["zfs"];
   boot.zfs.forceImportRoot = true;
+  # Import ALL pools in initrd — NVMe devices are fully available there,
+  # unlike stage-2 where udev-created symlinks aren't ready yet.
+  boot.initrd.systemd.services.zfs-import-all = {
+    description = "Import all ZFS pools (in addition to root)";
+    wantedBy = ["initrd.target"];
+    after = ["zfs-import-tank.service"];
+    unitConfig.DefaultDependencies = "no";
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    path = [pkgs.zfs];
+    script = ''
+      zpool import -a -N || true
+    '';
+  };
   boot.zfs.extraPools = ["gamez" "bulk"];
-  # Scan /dev/disk/by-path instead of /dev/disk/by-id — PCIe paths appear
-  # earlier in the kernel device init sequence on this AMD/X670E chipset.
-  boot.zfs.devNodes = "/dev/disk/by-path";
+  # Scan /dev directly (raw block devices) instead of udev-created symlink
+  # directories — raw NVMe device nodes appear at kernel probe time.
+  boot.zfs.devNodes = "/dev";
 
   fileSystems = lib.mkIf isOdin {
     "/" = {
