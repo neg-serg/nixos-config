@@ -122,15 +122,15 @@ in
     # CPU set for game pinning (used by modules/user/games game-run wrapper)
     gamingCpuSet = mkStrOpt {
       default = "";
-      description = "Comma-separated CPU list for pinning game processes (e.g., 14,15,30,31). Empty disables default pinning.";
-      example = "14,15,30,31";
+      description = "Comma-separated CPU list for pinning game processes (e.g., 0-3,16-19). Empty disables default pinning.";
+      example = "0-3,16-19";
     };
 
     # Housekeeping CPU set (complement of gamingCpuSet)
     housekeepingCpuSet = mkStrOpt {
       default = "";
       description = "Comma-separated CPU list for housekeeping (kernel threads, IRQs) — the complement of gamingCpuSet. Must be set alongside gamingCpuSet for irqaffinity/kthread_cpus.";
-      example = "8-15,24-31";
+      example = "4-15,20-31";
     };
 
     # Enable CONFIG_SCHED_DEADLINE in the kernel (requires rebuild).
