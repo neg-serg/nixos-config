@@ -1,11 +1,17 @@
 { lib, pkgs, ... }:
 
 let
-  # Build a minimal kernel using our localmodconfig-derived .config
-  # configfile is a checked-in path (no IFD needed)
+  baseKernel = pkgs.linuxPackages.kernel;
+  configfile = ./localmodconfig.config;
+  # Plain path preserves path type (builtins.isPath=true) needed by
+  # build.nix for isModular detection → dev/modules outputs.
+  # Content tracking for rebuilds: include hash in extraMakeFlags
+  # so derivation hash changes when .config content changes.
+  configHash = builtins.hashFile "sha256" configfile;
   minimalKernel = pkgs.linuxManualConfig {
-    inherit (pkgs.linuxPackages.kernel) version src modDirVersion;
-    configfile = ./localmodconfig.config;
+    inherit (baseKernel) version src modDirVersion features;
+    inherit configfile;
+    extraMakeFlags = [ "LOCALMODCONFIG_HASH=${configHash}" ];
     allowImportFromDerivation = false;
   };
 in
