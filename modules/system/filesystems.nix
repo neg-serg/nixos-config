@@ -17,9 +17,27 @@ in {
   boot.initrd.supportedFilesystems = ["zfs"];
   boot.initrd.kernelModules = ["zfs"];
   boot.zfs.forceImportRoot = true;
+  # Import ALL pools in initrd — NVMe devices are fully available there,
+  # unlike stage-2 where udev-created symlinks aren't ready yet.
+  boot.initrd.systemd.services.zfs-import-all = {
+    description = "Import all ZFS pools (in addition to root)";
+    wantedBy = ["initrd.target"];
+    after = ["zfs-import-tank.service"];
+    unitConfig.DefaultDependencies = "no";
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    path = [pkgs.zfs];
+    script = ''
+      zpool import -a -N || true
+    '';
+  };
+  boot.zfs.extraPools = ["gamez" "bulk"];
+  # Scan /dev directly (raw block devices) instead of udev-created symlink
+  # directories — raw NVMe device nodes appear at kernel probe time.
+  boot.zfs.devNodes = "/dev";
 
-  # Stage-1 (initrd): only / and /nix/store — required for boot.
-  # Non-root pools imported later via postBootCommands.
   fileSystems = lib.mkIf isOdin {
     "/" = {
       device = "tank/nixos";
@@ -48,7 +66,6 @@ in {
         "dmask=0077"
       ];
     };
-    # Bind mounts — automount on first access (Steam/Wine/winetricks)
     "${homeDir}/.local/share/Steam/userdata" = {
       device = "/gamez/main/userdata_steam";
       fsType = "none";
@@ -56,6 +73,7 @@ in {
         "bind"
         "nofail"
         "x-systemd.automount"
+        "x-systemd.after=zfs.target"
       ];
     };
     "${homeDir}/.local/share/wineprefixes" = {
@@ -65,6 +83,7 @@ in {
         "bind"
         "nofail"
         "x-systemd.automount"
+        "x-systemd.after=zfs.target"
       ];
     };
     "${homeDir}/.cache/winetricks" = {
@@ -74,17 +93,23 @@ in {
         "bind"
         "nofail"
         "x-systemd.automount"
+        "x-systemd.after=zfs.target"
       ];
     };
+
+    # ZFS pools imported via boot.zfs.extraPools
+
+    # /mnt/zero removed: argon-zero LVM volume being dismantled, replaced by ZFS pool gamez
   };
 
-  # ---- ZFS ----
-  # Non-root pools and datasets are managed entirely by ZFS:
-  #   - mountpoint=/tank, /gamez/main, /bulk (non-legacy)
-  #   - imported and mounted via postBootCommands (runs AFTER
-  #     activation when all NVMe devices are fully available)
-  #   - zfs-mount.service skips already-mounted datasets on
-  #     subsequent boots (mountpoint=non-legacy handled by zfsutil)
+  # swapDevices = lib.mkIf isOdin [
+  #   {
+  #     device = "/mnt/zero/swapfile";
+  #     priority = -1;
+  #     size = 65536; # 64 GiB
+  #   }
+  # ];
+  # Swap removed: /mnt/zero volume being dismantled
 
   # Cache both metadata and data for /nix/store — ARC has room (60 GB RAM),
   # and repeated builds read the same store paths.
@@ -128,17 +153,25 @@ in {
     '';
   };
 
+  # Non-root ZFS pool import reliability: add raw NVMe device dependencies
+  # so systemd waits for the block devices before starting pool import.
+  systemd.services."zfs-import-gamez" = {
+    bindsTo = ["dev-nvme1n1.device" "dev-nvme3n1.device"];
+    after = ["dev-nvme1n1.device" "dev-nvme3n1.device"];
+  };
+  systemd.services."zfs-import-bulk" = {
+    bindsTo = ["dev-nvme2n1.device"];
+    after = ["dev-nvme2n1.device"];
+  };
+
   # ZFS auto-scrub and trim
   services.zfs.autoScrub.enable = true;
   services.zfs.trim.enable = true;
   services.fstrim = lib.mkIf isOdin {enable = true;};
 
-  # --- Pool import & dataset mount ---
-  # Runs after stage-2 activation (all NVMe devices ready) but before
-  # systemd starts. Imports ALL visible pools in one shot, then mounts
-  # all datasets with configured mountpoints.
-  # Works because: / and /nix/store are already mounted from initrd;
-  # non-root pools (gamez, bulk) are now reliably detectable here.
+  # Safety net: unconditional pool import + dataset mount after boot completes.
+  # If zfs-import-* services missed pools due to device timing, this catches them.
+  # Safe to run unconditionally — already-imported/mounted pools are no-ops.
   boot.postBootCommands = lib.mkIf isOdin ''
     ${pkgs.zfs}/bin/zpool import -a -N || true
     ${pkgs.zfs}/bin/zfs mount -a || true

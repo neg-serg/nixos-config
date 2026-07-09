@@ -13,15 +13,6 @@
     ./boot/pkgs.nix # Nix package manager
     ./boot/autofdo.nix
   ];
-
-  # Ensure bootctl random-seed refresh waits for /boot to be
-  # actually mounted, not just automount listener registered.
-  # Avoids "Failed to open parent directory /boot: No such device"
-  # race when NVMe takes longer to init than the service start.
-  systemd.services.systemd-boot-random-seed = {
-    unitConfig.RequiresMountsFor = "/boot";
-  };
-
   boot = {
     # Full kexec/kdump support — enables prepare-kexec.service for systemctl kexec
     kexec.enable = true;
