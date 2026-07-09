@@ -32,6 +32,8 @@ let
         models = {
           deepseek-v4-flash = {
             name = "DeepSeek V4 Flash";
+            reasoning = true;
+            options.reasoningEffort = "high";
           };
           deepseek-v4-pro = {
             name = "DeepSeek V4 Pro";
@@ -40,18 +42,9 @@ let
               reasoningEffort = "high";
             };
             variants = {
-              none = {
-                reasoningEffort = "none";
-              };
-              low = {
-                reasoningEffort = "low";
-              };
-              medium = {
-                reasoningEffort = "medium";
-              };
-              high = {
-                reasoningEffort = "high";
-              };
+              none = { reasoningEffort = "none"; };
+              high = { reasoningEffort = "high"; };
+              max = { reasoningEffort = "max"; };
             };
           };
         };
