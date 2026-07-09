@@ -149,14 +149,11 @@
     # Enable AutoFDO (requires building kernel with Clang)
     kernel.autofdo.enable = false;
 
+    # tpm/tpm_crb/tpm_tis and snd-hdspm already blacklisted in modules/system/kernel/params.nix
     blacklistedKernelModules = [
-      "tpm"
-      "tpm_crb"
-      "tpm_tis"
       "tpm_tis_core"
       "8250"
       "serial8250"
-      "snd-hdspm" # Replaced by out-of-tree snd-hdspe
     ];
     # No separate initrd blacklist option; TPM modules are excluded from initrd
     # via modules/system/boot.nix when security.tpm2.enable = false
