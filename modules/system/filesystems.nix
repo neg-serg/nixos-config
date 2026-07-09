@@ -45,7 +45,6 @@ in {
       options = [
         "rw"
         "noatime"
-        "zfsutil"
       ];
     };
     "/nix/store" = {
@@ -53,7 +52,6 @@ in {
       fsType = "zfs";
       options = [
         "noatime"
-        "zfsutil"
       ];
     };
     "/boot" = {
