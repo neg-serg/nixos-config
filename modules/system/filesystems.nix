@@ -17,6 +17,7 @@ in {
   boot.initrd.supportedFilesystems = ["zfs"];
   boot.initrd.kernelModules = ["zfs"];
   boot.zfs.forceImportRoot = true;
+  boot.zfs.forceImportAll = true; # Force-import non-root pools (gamez, bulk) to work around NVMe device discovery timing
   boot.zfs.extraPools = ["gamez" "bulk"];
 
   fileSystems = lib.mkIf isOdin {
@@ -133,6 +134,11 @@ in {
       fi
     '';
   };
+
+  # Wait for udev to settle before importing non-root ZFS pools
+  # (gamez/bulk on separate NVMe drives may not be visible early in stage-2)
+  systemd.services."zfs-import-gamez".after = ["systemd-udev-settle.service"];
+  systemd.services."zfs-import-bulk".after = ["systemd-udev-settle.service"];
 
   # ZFS auto-scrub and trim
   services.zfs.autoScrub.enable = true;
