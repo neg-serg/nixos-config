@@ -183,6 +183,7 @@ in
           "sp5100_tco"
           "snd_hdspm" # conflicts with DKMS snd-hdspe (RME HDSPe AIO Pro)
           "snd_aloop" # races with USB audio, PipeWire provides loopback
+          "snd_hda_intel" # не используется — GPU аудио не нужно
           "tpm"
           "tpm_crb"
           "tpm_tis"
