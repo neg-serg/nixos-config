@@ -18,6 +18,9 @@ in {
   boot.initrd.kernelModules = ["zfs"];
   boot.zfs.forceImportRoot = true;
   boot.zfs.extraPools = ["gamez" "bulk"];
+  # Scan /dev directly — raw NVMe block devices appear at kernel probe time,
+  # long before udev creates /dev/disk/by-* symlinks.
+  boot.zfs.devNodes = "/dev";
 
   fileSystems = lib.mkIf isOdin {
     "/" = {
@@ -26,6 +29,7 @@ in {
       options = [
         "rw"
         "noatime"
+        "zfsutil"
       ];
     };
     "/nix/store" = {
@@ -33,6 +37,7 @@ in {
       fsType = "zfs";
       options = [
         "noatime"
+        "zfsutil"
       ];
     };
     "/boot" = {
@@ -52,6 +57,7 @@ in {
         "bind"
         "nofail"
         "x-systemd.automount"
+        "x-systemd.after=zfs.target"
       ];
     };
     "${homeDir}/.local/share/wineprefixes" = {
@@ -61,6 +67,7 @@ in {
         "bind"
         "nofail"
         "x-systemd.automount"
+        "x-systemd.after=zfs.target"
       ];
     };
     "${homeDir}/.cache/winetricks" = {
@@ -70,42 +77,12 @@ in {
         "bind"
         "nofail"
         "x-systemd.automount"
+        "x-systemd.after=zfs.target"
       ];
     };
 
-    # ---- ZFS ----
-
-    "/tank" = {
-      device = "tank";
-      fsType = "zfs";
-      options = [ "nofail" ];
-    };
-
-    # Gamez 3.6TiB ZFS RAID0 (nvme1n1 + nvme3n1)
-    "/gamez/main" = {
-      device = "gamez/main";
-      fsType = "zfs";
-      options = [ "nofail" ];
-    };
-
-    # Bulk 7TiB storage pool (nvme2n1)
-    "/bulk" = {
-      device = "bulk";
-      fsType = "zfs";
-      options = [ "nofail" ];
-    };
-
-    # /mnt/zero removed: argon-zero LVM volume being dismantled, replaced by ZFS pool gamez
+    # ZFS pools imported via boot.zfs.extraPools + devNodes=/dev
   };
-
-  # swapDevices = lib.mkIf isOdin [
-  #   {
-  #     device = "/mnt/zero/swapfile";
-  #     priority = -1;
-  #     size = 65536; # 64 GiB
-  #   }
-  # ];
-  # Swap removed: /mnt/zero volume being dismantled
 
   # Cache both metadata and data for /nix/store — ARC has room (60 GB RAM),
   # and repeated builds read the same store paths.
@@ -149,10 +126,26 @@ in {
     '';
   };
 
+  # Wait for raw NVMe block devices before importing non-root pools.
+  systemd.services."zfs-import-gamez" = {
+    bindsTo = ["dev-nvme1n1.device" "dev-nvme3n1.device"];
+    after = ["dev-nvme1n1.device" "dev-nvme3n1.device"];
+  };
+  systemd.services."zfs-import-bulk" = {
+    bindsTo = ["dev-nvme2n1.device"];
+    after = ["dev-nvme2n1.device"];
+  };
+
   # ZFS auto-scrub and trim
   services.zfs.autoScrub.enable = true;
   services.zfs.trim.enable = true;
   services.fstrim = lib.mkIf isOdin {enable = true;};
+
+  # Safety net: unconditional pool import + mount after boot completes.
+  boot.postBootCommands = lib.mkIf isOdin ''
+    ${pkgs.zfs}/bin/zpool import -a -N || true
+    ${pkgs.zfs}/bin/zfs mount -a || true
+  '';
 
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"
