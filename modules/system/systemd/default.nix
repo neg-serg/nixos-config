@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  config,
   ...
 }:
 let
@@ -31,9 +32,9 @@ in
     IdleAction = "ignore";
   };
 
-  # Verbose boot logging for crash diagnostics
-  boot.kernelParams = [
-    # Show systemd unit status on console during boot (overrides quietBoot on systemd side)
+  # Verbose boot logging for crash diagnostics (only when quietBoot is disabled)
+  boot.kernelParams = lib.mkIf (!config.profiles.performance.quietBoot or false) [
+    # Show systemd unit status on console during boot
     "systemd.show_status=true"
     # Increase systemd's internal log level for debug info
     "systemd.log_level=info"
