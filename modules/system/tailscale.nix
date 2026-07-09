@@ -15,7 +15,7 @@ let
   tailrayWrapped = pkgs.writeShellScriptBin "tailray-wrapped" ''
     set -euo pipefail
     TAILRAY="${lib.getExe tailrayPkg}"
-    for i in $(seq 12); do
+    for i in $(seq 60); do
       state="$(${lib.getExe' pkgs.tailscale "tailscale"} status --json 2>/dev/null \
         | ${lib.getExe' pkgs.jq "jq"} -r '.BackendState // "Unknown"')"
       if [ "$state" = "Running" ]; then
@@ -44,7 +44,11 @@ in
     # so it waits for graphical session (tray icon requirement)
     systemd.user.services.tailray = {
       wantedBy = [ "graphical-session.target" ];
-      after = lib.mkForce [ "graphical-session.target" ];
+      after = lib.mkForce [
+        "graphical-session.target"
+        "tailscaled.service"
+        "network-online.target"
+      ];
       serviceConfig = {
         ExecStart = "${lib.getExe' tailrayWrapped "tailray-wrapped"}";
         Restart = "on-failure";
