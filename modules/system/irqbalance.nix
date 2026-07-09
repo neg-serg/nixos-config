@@ -59,6 +59,13 @@ in
         serviceConfig = {
           RuntimeDirectory = "irqbalance";
           EnvironmentFile = [ "-/run/irqbalance/irqbalance.env" ];
+          # Override restrictive defaults so irqbalance can actually change IRQ affinity.
+          # PrivateUsers runs the process in a user namespace where writes to
+          # /proc/irq/N/smp_affinity are denied by the kernel (checked against initial
+          # namespace capabilities).  Disable it and grant CAP_SYS_NICE explicitly.
+          PrivateUsers = lib.mkForce false;
+          CapabilityBoundingSet = [ "CAP_SYS_NICE" "CAP_SETPCAP" ];
+          AmbientCapabilities = [ "CAP_SYS_NICE" ];
         };
       };
     })
