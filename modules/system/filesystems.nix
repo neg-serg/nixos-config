@@ -17,8 +17,10 @@ in {
   boot.initrd.supportedFilesystems = ["zfs"];
   boot.initrd.kernelModules = ["zfs"];
   boot.zfs.forceImportRoot = true;
-  boot.zfs.forceImportAll = true; # Force-import non-root pools (gamez, bulk) to work around NVMe device discovery timing
   boot.zfs.extraPools = ["gamez" "bulk"];
+  # Scan /dev/disk/by-path instead of /dev/disk/by-id — PCIe paths appear
+  # earlier in the kernel device init sequence on this AMD/X670E chipset.
+  boot.zfs.devNodes = "/dev/disk/by-path";
 
   fileSystems = lib.mkIf isOdin {
     "/" = {
@@ -135,15 +137,29 @@ in {
     '';
   };
 
-  # Wait for udev to settle before importing non-root ZFS pools
-  # (gamez/bulk on separate NVMe drives may not be visible early in stage-2)
-  systemd.services."zfs-import-gamez".after = ["systemd-udev-settle.service"];
-  systemd.services."zfs-import-bulk".after = ["systemd-udev-settle.service"];
+  # Non-root ZFS pool import reliability: add raw NVMe device dependencies
+  # so systemd waits for the block devices before starting pool import.
+  systemd.services."zfs-import-gamez" = {
+    bindsTo = ["dev-nvme1n1.device" "dev-nvme3n1.device"];
+    after = ["dev-nvme1n1.device" "dev-nvme3n1.device"];
+  };
+  systemd.services."zfs-import-bulk" = {
+    bindsTo = ["dev-nvme2n1.device"];
+    after = ["dev-nvme2n1.device"];
+  };
 
   # ZFS auto-scrub and trim
   services.zfs.autoScrub.enable = true;
   services.zfs.trim.enable = true;
   services.fstrim = lib.mkIf isOdin {enable = true;};
+
+  # Safety net: unconditional pool import + dataset mount after boot completes.
+  # If zfs-import-* services missed pools due to device timing, this catches them.
+  # Safe to run unconditionally — already-imported/mounted pools are no-ops.
+  boot.postBootCommands = lib.mkIf isOdin ''
+    ${pkgs.zfs}/bin/zpool import -a -N || true
+    ${pkgs.zfs}/bin/zfs mount -a || true
+  '';
 
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"
