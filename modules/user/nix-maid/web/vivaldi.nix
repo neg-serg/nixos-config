@@ -76,9 +76,11 @@ in
     environment.etc."vivaldi/custom-ui/vivaldi-ui-font.css" = {
       mode = "0444";
       text = ''
-        /* Override Vivaldi browser UI font on Linux — Iosevka everywhere */
+        /* Override Vivaldi browser UI font on Linux — Iosevka, bigger and bolder */
         *, *:before, *:after {
           font-family: "Iosevka" !important;
+          font-size: 15px !important;
+          font-weight: 600 !important;
         }
       '';
     };
