@@ -81,20 +81,21 @@ in
       Group = "adguardhome";
     };
 
-    # Make systemd-resolved act as a stub resolver and forward to AdGuardHome
-    # - dns = ["127.0.0.1"] forces forwarding to AdGuardHome on localhost:53
-    # - fallbackDns = [] avoids bypassing AdGuard via system defaults
-    # - domains = ["~."] ensures all lookups go through the configured DNS
+    # Make systemd-resolved forward directly to Unbound (127.0.0.1#5353) instead of
+    # AdGuardHome (127.0.0.1:53). This avoids the degraded-feature-set cycle caused by
+    # DNSSEC trust-anchor probes ('. DNSKEY') whose large responses trigger TC-bit
+    # truncation through the proxy hop — 6000+ warnings/day in resolved logs.
+    # AdGuardHome on :53 stays available for any app that connects explicitly.
     services.resolved = {
       enable = lib.mkDefault true;
-      # Keep local resolver deterministic: disable LLMNR and mDNS broadcast resolution
       settings.Resolve = {
         Domains = [ "~." ];
+        DNS = [ "127.0.0.1#5353" ];
         LLMNR = "no";
         MulticastDNS = "no";
       };
     };
     # Keep resolv.conf compatibility for tools that read networking.nameservers directly
-    networking.nameservers = [ "127.0.0.1" ];
+    networking.nameservers = [ "127.0.0.1#5353" ];
   };
 }
