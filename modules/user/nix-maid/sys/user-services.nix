@@ -89,6 +89,9 @@ lib.mkIf (cfg.enable or false) {
     # Pic dirs notifier
     "pic-dirs" = {
       description = "Pic dirs notification";
+      unitConfig = {
+        ConditionUser = "!greeter";
+      };
       path = [
         pkgs.inotify-tools
         pkgs.zoxide
