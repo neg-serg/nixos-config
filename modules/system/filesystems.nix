@@ -16,26 +16,10 @@ in {
   ];
   boot.initrd.supportedFilesystems = ["zfs"];
   boot.initrd.kernelModules = ["zfs"];
-  boot.zfs.forceImportRoot = true;
-  # Import ALL pools in initrd — NVMe devices are fully available there,
-  # unlike stage-2 where udev-created symlinks aren't ready yet.
-  boot.initrd.systemd.services.zfs-import-all = {
-    description = "Import all ZFS pools (in addition to root)";
-    wantedBy = ["initrd.target"];
-    after = ["zfs-import-tank.service"];
-    unitConfig.DefaultDependencies = "no";
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-    };
-    path = [pkgs.zfs];
-    script = ''
-      zpool import -a -N || true
-    '';
-  };
   boot.zfs.extraPools = ["gamez" "bulk"];
-  # Scan /dev directly (raw block devices) instead of udev-created symlink
-  # directories — raw NVMe device nodes appear at kernel probe time.
+  # Scan /dev directly (raw block devices) instead of /dev/disk/by-id.
+  # Raw NVMe device nodes (/dev/nvmeXn1, /dev/nvmeXn1p1) appear at kernel probe time,
+  # while by-id symlinks need udev — which isn't ready yet when the import script runs.
   boot.zfs.devNodes = "/dev";
 
   fileSystems = lib.mkIf isOdin {
@@ -153,29 +137,23 @@ in {
     '';
   };
 
-  # Non-root ZFS pool import reliability: add raw NVMe device dependencies
+  # Non-root ZFS pool import reliability: bind to the right NVMe devices
   # so systemd waits for the block devices before starting pool import.
+  # gamez = mirror of nvme2n1 + nvme3n1 (Samsung 990 PRO 2TB)
+  # bulk  = single nvme1n1              (Samsung PM9A3 7TB)
   systemd.services."zfs-import-gamez" = {
-    bindsTo = ["dev-nvme1n1.device" "dev-nvme3n1.device"];
-    after = ["dev-nvme1n1.device" "dev-nvme3n1.device"];
+    bindsTo = ["dev-nvme2n1.device" "dev-nvme3n1.device"];
+    after = ["dev-nvme2n1.device" "dev-nvme3n1.device"];
   };
   systemd.services."zfs-import-bulk" = {
-    bindsTo = ["dev-nvme2n1.device"];
-    after = ["dev-nvme2n1.device"];
+    bindsTo = ["dev-nvme1n1.device"];
+    after = ["dev-nvme1n1.device"];
   };
 
   # ZFS auto-scrub and trim
   services.zfs.autoScrub.enable = true;
   services.zfs.trim.enable = true;
   services.fstrim = lib.mkIf isOdin {enable = true;};
-
-  # Safety net: unconditional pool import + dataset mount after boot completes.
-  # If zfs-import-* services missed pools due to device timing, this catches them.
-  # Safe to run unconditionally — already-imported/mounted pools are no-ops.
-  boot.postBootCommands = lib.mkIf isOdin ''
-    ${pkgs.zfs}/bin/zpool import -a -N || true
-    ${pkgs.zfs}/bin/zfs mount -a || true
-  '';
 
   systemd.tmpfiles.rules = [
     "d /boot 0700 root root -"
