@@ -140,13 +140,13 @@ in {
   };
 
   # Non-root ZFS pool import services (imported after boot, not in initrd).
-  # gamez = mirror of nvme2n1 + nvme3n1 (Samsung 990 PRO 2TB)
-  # bulk  = single nvme1n1              (Samsung PM9A3 7TB)
+  # gamez = mirror of nvme1n1 + nvme3n1 (Samsung 990 PRO 2TB)
+  # bulk  = single nvme2n1              (Samsung PM9A3 7TB)
   systemd.services."zfs-import-gamez" = {
     description = "Import ZFS pool gamez";
     wantedBy = ["multi-user.target"];
-    after = ["zfs.target" "dev-nvme2n1.device" "dev-nvme3n1.device"];
-    bindsTo = ["dev-nvme2n1.device" "dev-nvme3n1.device"];
+    after = ["zfs.target" "dev-nvme1n1.device" "dev-nvme3n1.device"];
+    bindsTo = ["dev-nvme1n1.device" "dev-nvme3n1.device"];
     serviceConfig.Type = "oneshot";
     serviceConfig.RemainAfterExit = true;
     path = [pkgs.zfs];
@@ -154,13 +154,14 @@ in {
       if ! zpool list gamez >/dev/null 2>&1; then
         zpool import -N gamez
       fi
+      zfs mount -a
     '';
   };
   systemd.services."zfs-import-bulk" = {
     description = "Import ZFS pool bulk";
     wantedBy = ["multi-user.target"];
-    after = ["zfs.target" "dev-nvme1n1.device"];
-    bindsTo = ["dev-nvme1n1.device"];
+    after = ["zfs.target" "dev-nvme2n1.device"];
+    bindsTo = ["dev-nvme2n1.device"];
     serviceConfig.Type = "oneshot";
     serviceConfig.RemainAfterExit = true;
     path = [pkgs.zfs];
@@ -168,6 +169,7 @@ in {
       if ! zpool list bulk >/dev/null 2>&1; then
         zpool import -N bulk
       fi
+      zfs mount -a
     '';
   };
 
