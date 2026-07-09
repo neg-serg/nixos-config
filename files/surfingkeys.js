@@ -230,11 +230,9 @@ api.mapkey('v', 'Scroll half page up', () => {
   api.Normal.scroll("pageUp");
 });
 
-// Address bar (Ctrl-L emulation — open URL in current tab)
+// e — next tab (gt)
 api.unmap('e');  // Default: scroll page up
-api.mapkey('e', 'Open URL bar (Ctrl-L)', function() {
-  api.Front.openOmnibar({type: "URLs", tabbed: false});
-});
+api.map('e', 'gt');
 
 // Tabs
 api.unmap('E');  // Default: scroll page down
@@ -245,14 +243,16 @@ api.mapkey('d', 'Close current tab', function () {
 api.map('u', 'X');  // Restore tab
 api.map('w', 'T');  // Tab list
 
-// Free up o — move all hotkeys off it
-api.unmap('o');
+// o — native Ctrl+L (focus browser address bar) via native messaging server
+api.mapkey('o', 'Focus address bar (native Ctrl-L)', function() {
+  fetch('http://localhost:18888/addressbar');
+});
 
 // Disable SurfingKeys own UI menus (poor autocomplete). w-related kept.
 api.unmap(':');   // Commands omnibar
 api.unmap('A');   // LLM chat omnibar
 api.unmap('Q');   // Word translation popup
-api.unmap('go');  // Open URL in current tab (e does this now)
+api.unmap('go');  // Open URL in current tab
 api.unmap('oh');  // Open URL from history
 api.unmap('om');  // Open VIMarks
 api.unmap('ab');  // Add bookmark
