@@ -40,6 +40,17 @@ in
       tailrayPkg # GUI client for Tailscale
     ];
 
+    # Fix tailscaled ordering: wait for systemd-networkd instead of network-online.target
+    # (wait-online is disabled in host networking for faster boot, so network-online fires
+    # immediately before networking is actually ready).
+    systemd.services.tailscaled = {
+      after = lib.mkForce [
+        "systemd-networkd.service"
+        "systemd-resolved.service"
+      ];
+      wants = [ "systemd-networkd.service" ];
+    };
+
     # Override start ordering for Tailray systemd user service
     # so it waits for graphical session (tray icon requirement)
     systemd.user.services.tailray = {
