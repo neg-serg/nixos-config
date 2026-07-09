@@ -172,7 +172,7 @@ flowchart LR
 <details open>
 <summary><h3>🎮 Performance & Gaming</h3></summary>
 
-- ⚡ **CPU Isolation** - Dedicated cores (14,15,30,31) for gaming
+- ⚡ **CPU Isolation** - Dedicated cores (0-3,16-19) for gaming
 - 🎯 **Custom Launch Scripts** - `game-run`, `gamescope-perf`, `gamescope-quality`, `gamescope-hdr`
 - 🚀 **Low-Latency Optimizations** - Kernel parameters, scheduler tweaks
 - 🖥️ **VRR Support** - Variable Refresh Rate via Gamescope
@@ -181,7 +181,7 @@ flowchart LR
 > [!TIP]
 > **Steam Launch Options Example:**
 > ```bash
-> GAME_PIN_CPUSET=14,15,30,31 MANGOHUD=1 game-run gamescope -f --adaptive-sync -- %command%
+> GAME_PIN_CPUSET=0-3,16-19 MANGOHUD=1 game-run gamescope -f --adaptive-sync -- %command%
 > ```
 
 </details>
@@ -443,15 +443,13 @@ graph LR
 ```mermaid
 graph TB
     subgraph "🖥️ CPU Core Layout"
-        subgraph "🏠 Housekeeping Cores"
-            A[Core 0-13]
-            B[Core 16-29]
+        subgraph "🏠 Housekeeping Cores (24 threads)"
+            A[Core 4-15]
+            B[Core 20-31]
         end
-        subgraph "🎮 Gaming Cores ISOLATED"
-            C[Core 14]
-            D[Core 15]
-            E[Core 30]
-            F[Core 31]
+        subgraph "🎮 Gaming Cores ISOLATED (8 threads)"
+            C[Core 0-3]
+            D[Core 16-19]
         end
     end
     
@@ -459,13 +457,9 @@ graph TB
     G --> B
     H[🎮 Games] --> C
     H --> D
-    H --> E
-    H --> F
     
     style C fill:#4CAF50,color:#fff
     style D fill:#4CAF50,color:#fff
-    style E fill:#4CAF50,color:#fff
-    style F fill:#4CAF50,color:#fff
     style H fill:#FF6B35,color:#fff
 ```
 
@@ -491,14 +485,14 @@ gamescope-hdr %command%
 > [!NOTE]
 > **Steam Launch Options Example (Competitive FPS):**
 > ```bash
-> GAME_PIN_CPUSET=14,15,30,31 MANGOHUD=1 game-run gamescope -f --adaptive-sync -- %command%
+> GAME_PIN_CPUSET=0-3,16-19 MANGOHUD=1 game-run gamescope -f --adaptive-sync -- %command%
 > ```
 
 ### 🎛️ Environment Variables
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
-| `GAME_PIN_CPUSET` | Override CPU cores | `14,15,30,31` |
+| `GAME_PIN_CPUSET` | Override CPU cores | `0-3,16-19` |
 | `GAME_RUN_USE_GAMEMODE` | Toggle gamemode | `0` or `1` |
 | `MANGOHUD` | Performance overlay | `1` |
 
