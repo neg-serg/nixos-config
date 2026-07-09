@@ -71,7 +71,7 @@
   # Host-specific kernel parameters and boot tuning
   boot = {
     # Use LTS kernel (ZFS doesn't build with latest 7.x)
-    kernelPackages = lib.mkForce pkgs.linuxPackages;
+    kernelPackages = lib.mkDefault pkgs.linuxPackages;
 
     kernelParams = [
       "acpi_osi=!" # Fix ACPI compatibility on ASUS boards
