@@ -36,16 +36,5 @@
   features.apps.guiAppsFull.enable = false; # Disable heavy GUI apps (GIMP, OBS); gaming profile enables it by default
   features.gui.hdr.enable = false; # Disable HDR (DXVK_HDR) — Hyprland not configured for it, causes washed-out fullscreen
   features.dev.cpp.enable = true; # Enable C++ toolchain (ccache, gcc, cmake)
-  boot.plymouth = {
-    enable = true;
-    theme = "lone";
-    themePackages = [
-      (pkgs.adi1090x-plymouth-themes.override {
-        selected_themes = [
-          "lone"
-          "green_blocks"
-        ];
-      })
-    ];
-  };
+  boot.plymouth.enable = false; # Plymouth removed — adds boot delay, splash not needed on this host
 }

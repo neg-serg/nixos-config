@@ -65,6 +65,9 @@
     };
   };
 
+  # Reduce ZFS forceImport risk: don't always force import on boot
+  boot.zfs.forceImportRoot = false;
+
   # Host-specific kernel parameters and boot tuning
   boot = {
     # Use LTS kernel (ZFS doesn't build with latest 7.x)
@@ -154,6 +157,7 @@
       "tpm_tis_core"
       "8250"
       "serial8250"
+      "thunderbolt" # No Thunderbolt hardware connected; probe times out (-110) at boot
     ];
     # No separate initrd blacklist option; TPM modules are excluded from initrd
     # via modules/system/boot.nix when security.tpm2.enable = false
