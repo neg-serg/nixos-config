@@ -414,12 +414,12 @@ Example (quiet, safe defaults):
 
 ### Fan stop capability test
 
-- Utility: `fan-stop-capability-test` checks which motherboard PWM channels can fully stop at 0%.
+- Utility: `hwctl fan test-stop` checks which motherboard PWM channels can fully stop at 0%.
 - Safe by default: skips CPU/PUMP/AIO headers; restores original settings after probing.
 - Usage examples:
-  - List channels only: `sudo fan-stop-capability-test --list`
-  - Test chassis fans: `sudo fan-stop-capability-test`
-  - Include CPU/PUMP (at your own risk): `sudo fan-stop-capability-test --include-cpu`
+  - List channels only: `sudo hwctl fan test-stop --list`
+  - Test chassis fans: `sudo hwctl fan test-stop`
+  - Include CPU/PUMP (at your own risk): `sudo hwctl fan test-stop --include-cpu`
 - Options: `--device <hwmonN|nct6798>`, `--wait <sec>` (default 6), `--threshold <rpm>` (default
   50).
 - Note: stop `fancontrol` during the test for accurate results: `sudo systemctl stop fancontrol`.
