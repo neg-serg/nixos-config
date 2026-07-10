@@ -48,7 +48,7 @@ in
         save_absolute_paths_in_playlists = "yes";
         follow_inside_symlinks = "yes";
         replaygain = "off";
-        auto_update = "yes";
+        auto_update = "no";
         # Use a per-application (software) mixer so MPD can
         # control volume independently of the system master.
         mixer_type = "software";
