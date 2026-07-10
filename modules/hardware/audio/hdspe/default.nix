@@ -72,10 +72,9 @@ let
     fi
   '';
 
-  # pw-route: switch RME AIO Pro output between an/aes/spdif/phones
-  pwRouteScript = pkgs.pwroute;
+  # pwroute: switch RME AIO Pro output between an/aes/spdif/phones
 
-  # routing config for pw-route
+  # routing config for pwroute
   routingYaml = pkgs.writeText "routing.yaml" ''
     ---
     rme:
@@ -106,18 +105,17 @@ in
     enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "Enable RME HDSPe support (mixer init, default PipeWire sink, pw-route).";
+      description = "Enable RME HDSPe support (mixer init, default PipeWire sink, pwroute).";
     };
   };
 
   config = lib.mkIf cfg.enable {
-    # Install pw-route script
+    # Install pwroute binary
     environment.systemPackages = [
-      pwRouteScript
-      pkgs.zsh
+      pkgs.pwroute
     ];
 
-    # Symlink routing.yaml for pw-route
+    # Symlink routing.yaml for pwroute
     environment.etc."audio/routing.yaml".source = routingYaml;
 
     # System-level: initialize HDSPe hardware mixer on boot
@@ -158,7 +156,7 @@ in
     };
 
     # User-level: route audio to AES output by default
-    systemd.user.services."pw-route-aes" = {
+    systemd.user.services."pwroute-aes" = {
       description = "Route PipeWire audio to RME AES output";
       after = [
         "wp-hdspe-default.service"
@@ -170,16 +168,9 @@ in
       wantedBy = [ "graphical-session.target" ]; # don't block default.target
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${pkgs.writeShellScript "pw-route-aes" ''
-          export PATH="${
-            lib.makeBinPath [
-              pkgs.zsh
-              pkgs.pipewire
-              pkgs.gawk
-            ]
-          }:$PATH"
-          ${pkgs.pwroute}/bin/pwroute aes 2>/dev/null || true
-        ''}";
+        ExecStart = "${pkgs.pwroute}/bin/pwroute aes";
+        # pwroute needs pw-cli and pw-link from PipeWire in PATH
+        Environment = "PATH=${config.services.pipewire.package}/bin";
       };
     };
   };
