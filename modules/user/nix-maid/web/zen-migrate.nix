@@ -264,7 +264,7 @@ HELP
 
       set -euo pipefail
 
-      export LD_LIBRARY_PATH="${pkgs.nss}/lib''${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH-}"
+      export LD_LIBRARY_PATH="${pkgs.nss}/lib''${LD_LIBRARY_PATH:+:}''${LD_LIBRARY_PATH-}"
 
       # ── State ─────────────────────────────────────────────────────────────────
       ZEN_PROFILE=""
