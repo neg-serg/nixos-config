@@ -259,13 +259,13 @@ lib.mkMerge [
     environment.systemPackages = lib.mkAfter [
       pkgs.openrgb # per-device RGB controller UI
       (pkgs.writeShellScriptBin "cpu-boost" ''
-        exec ${pkgs.hwctl}/bin/hwctl cpu boost "$@"
+        exec ${pkgs.neg.hwctl}/bin/hwctl cpu boost "$@"
       '') # CLI toggle for AMD Precision Boost
       (pkgs.writeShellScriptBin "fan-manual" ''
-        exec ${pkgs.hwctl}/bin/hwctl fan manual ''${1:-}
+        exec ${pkgs.neg.hwctl}/bin/hwctl fan manual ''${1:-}
       '') # Switch fans to manual control
       (pkgs.writeShellScriptBin "fan-auto" ''
-        exec ${pkgs.hwctl}/bin/hwctl fan auto
+        exec ${pkgs.neg.hwctl}/bin/hwctl fan auto
       '') # Switch fans to automatic control
     ];
     environment.etc = {
