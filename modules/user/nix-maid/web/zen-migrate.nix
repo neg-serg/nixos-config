@@ -424,13 +424,13 @@ HELP
           echo "→ Backing up Vivaldi Default profile..."
           BACKUP_PATH="$HOME/zen-to-vivaldi-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
           tar czf "$BACKUP_PATH" \
-            -C "$HOME/.config/vivaldi/Default" . \
             --exclude='Cache' \
             --exclude='Code Cache' \
             --exclude='GPUCache' \
             --exclude='DawnCache' \
             --exclude='*.wal' \
-            --exclude='*.shm'
+            --exclude='*.shm' \
+            -C "$HOME/.config/vivaldi/Default" .
           echo "  ✓ Backup created: $BACKUP_PATH"
         else
           echo "  → Vivaldi profile does not exist yet; backup skipped"
