@@ -1777,7 +1777,6 @@ _comps=(
 'w3m' '_w3m'
 'wait' '_wait'
 'wajig' '_wajig'
-'wallust' '_wallust'
 'wanna-build' '_wanna-build'
 'watch' '_watch'
 'watcher' '_openstack'
@@ -2054,14 +2053,14 @@ autoload -Uz _aliae _bat _beet _br _broot \
             _distrobox-upgrade _dunst _dunstctl _email-notmuch _fd \
             _flameshot _hwatch _hx _khal _kubecolor \
             _mpv _notmuch _rg _tray-tui _visidata \
-            _wallust _yazi _yt-dlp _zathura _aliae \
+            _yazi _yt-dlp _zathura _aliae \
             _bat _beet _br _broot _distrobox \
             _distrobox-assemble _distrobox_containers _distrobox-create _distrobox-enter _distrobox-ephemeral \
             _distrobox-export _distrobox-generate-entry _distrobox-host-exec _distrobox_images _distrobox-init \
             _distrobox-list _distrobox-rm _distrobox_running_containers _distrobox-stop _distrobox-upgrade \
             _dunst _dunstctl _email-notmuch _fd _flameshot \
             _hwatch _hx _khal _kubecolor _mpv \
-            _notmuch _rg _tray-tui _visidata _wallust \
+            _notmuch _rg _tray-tui _visidata \
             _yazi _yt-dlp _zathura _aliae _bat \
             _beet _br _broot _distrobox _distrobox-assemble \
             _distrobox_containers _distrobox-create _distrobox-enter _distrobox-ephemeral _distrobox-export \
@@ -2069,7 +2068,7 @@ autoload -Uz _aliae _bat _beet _br _broot \
             _distrobox-rm _distrobox_running_containers _distrobox-stop _distrobox-upgrade _dunst \
             _dunstctl _email-notmuch _fd _flameshot _hwatch \
             _hx _khal _kubecolor _mpv _notmuch \
-            _rg _tray-tui _visidata _wallust _yazi \
+            _rg _tray-tui _visidata _yazi \
             _yt-dlp _zathura _aliae _bat _beet \
             _br _broot _distrobox _distrobox-assemble _distrobox_containers \
             _distrobox-create _distrobox-enter _distrobox-ephemeral _distrobox-export _distrobox-generate-entry \
@@ -2077,7 +2076,7 @@ autoload -Uz _aliae _bat _beet _br _broot \
             _distrobox_running_containers _distrobox-stop _distrobox-upgrade _dunst _dunstctl \
             _email-notmuch _fd _flameshot _hwatch _hx \
             _khal _kubecolor _mpv _notmuch _rg \
-            _tray-tui _visidata _wallust _yazi _yt-dlp \
+            _tray-tui _visidata _yazi _yt-dlp \
             _zathura _abduco _aichat _ast-grep _autoconf-language-server \
             _autotools-language-server _bacon _bandwhich _bluetoothctl _bootctl \
             _busctl _cargo _chafa _codex _coredumpctl \

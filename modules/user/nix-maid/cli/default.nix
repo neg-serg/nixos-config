@@ -8,7 +8,6 @@
     ./espanso.nix
     ./ghostty.nix
     ./git.nix
-    ./helix.nix
     ./local-bin.nix
     ./monitoring.nix
     ./search.nix

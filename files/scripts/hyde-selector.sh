@@ -30,15 +30,7 @@ case "$1" in
         mkdir -p "$HOME/.cache/hyde"
         ln -sf "$WP_DIR/$selected" "$HOME/.cache/hyde/wall.set.png"
 
-        # Trigger Wallbash
-        if command -v wallust > /dev/null; then
-          wallust run "$WP_DIR/$selected" > /dev/null 2>&1 &
-          notify-send "Wallbash" "Applying colors from $selected..."
-
-          # Wait a bit for wallust to finish (could be improved)
-          sleep 1
-
-          # Reload Kitty
+        # Reload Kitty
           pkill -USR1 kitty || true
 
           # Reload Dunst

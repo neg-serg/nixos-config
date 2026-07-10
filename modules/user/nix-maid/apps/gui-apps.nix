@@ -13,7 +13,6 @@ in
     {
       # Packages
       environment.systemPackages = [
-        pkgs.wallust # Color palette generator
       ];
     }
     (n.mkHomeFiles {
