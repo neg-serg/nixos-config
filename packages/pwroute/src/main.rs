@@ -63,21 +63,21 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Route to AES/EBU output (playback_AUX2/AUX3)
+    /// Route stereo output to AES/EBU digital (AUX2/AUX3)
     Aes,
-    /// Route to analog output (playback_AUX0/AUX1)
+    /// Route stereo output to Analog line out (AUX0/AUX1)
     An,
-    /// Route to SPDIF output (playback_AUX4/AUX5)
+    /// Route stereo output to SPDIF digital (AUX4/AUX5)
     Spdif,
-    /// Route to headphones output (playback_AUX6/AUX7)
+    /// Route stereo output to Headphones (AUX6/AUX7)
     Phones,
-    /// Toggle between AES and Analog
+    /// Toggle active route between AES and Analog
     Toggle,
-    /// Print which route is currently active
+    /// Print the currently active route key (an|aes|spdif|phones)
     Current,
-    /// Show current PipeWire links for the RME sink
+    /// Show current pw-link connections for the RME sink
     Status,
-    /// List all available routes as JSON
+    /// List all routes as JSON array (for QML UI integration)
     List,
 }
 
