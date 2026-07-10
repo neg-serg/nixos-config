@@ -71,32 +71,6 @@ let
     };
   };
 
-  # --- MPD Config ---
-  mpdConfig = ''
-    music_directory    "~/music"
-    playlist_directory "~/.config/mpd/playlists"
-    db_file            "~/.config/mpd/database"
-    log_file           "syslog"
-    pid_file           "~/.config/mpd/pid"
-    state_file         "~/.config/mpd/state"
-    sticker_file       "~/.config/mpd/sticker.sql"
-
-    auto_update "no"
-    bind_to_address "any"
-
-    audio_output {
-      type "pipewire"
-      name "PipeWire Output"
-    }
-
-    audio_output {
-      type   "fifo"
-      name   "my_fifo"
-      path   "/tmp/mpd.fifo"
-      format "44100:16:2"
-    }
-  '';
-
 in
 lib.mkMerge [
   {
@@ -154,8 +128,6 @@ lib.mkMerge [
     # Beets
     ".config/beets/config.yaml".text = builtins.toJSON beetsSettings;
 
-    # MPD
-    ".config/mpd/mpd.conf".text = mpdConfig;
     ".config/mpd/playlists/.keep".text = "";
 
     # MPD RIS2 Config
