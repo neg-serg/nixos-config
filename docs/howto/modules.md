@@ -184,20 +184,6 @@ Whether to enable enable fast zsh command-not-found handler powered by nix-index
 
 - [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
 
-## features.cli.television.enable
-
-Whether to enable enable television (blazingly fast fuzzy finder).
-
-*Type:* boolean
-
-*Default:* `true`
-
-*Example:* `true`
-
-*Declared by:*
-
-- [/modules/features/cli.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/cli.nix)
-
 ## features.cli.tewi.enable
 
 Whether to enable enable tewi tui torrent client configuration.
