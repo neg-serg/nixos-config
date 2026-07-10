@@ -31,13 +31,10 @@ case "$1" in
         ln -sf "$WP_DIR/$selected" "$HOME/.cache/hyde/wall.set.png"
 
         # Reload Kitty
-          pkill -USR1 kitty || true
+        pkill -USR1 kitty || true
 
-          # Reload Dunst
-          # killall dunst; notify-send "Dunst reloaded" # Restarting might be abrupt
-          # Dunst hot reloads config changes if running? No, usually needs restart.
-          systemctl --user restart dunst || true
-        fi
+        # Reload Dunst
+        systemctl --user restart dunst || true
       elif command -v hyprpaper > /dev/null; then
         # This requires hyprctl hyprpaper commands
         true
