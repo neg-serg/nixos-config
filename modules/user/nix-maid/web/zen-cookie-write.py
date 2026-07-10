@@ -192,12 +192,12 @@ def _load_or_create_encryption_key(local_state_path: str) -> bytes:
         if not decoded.startswith(b"v10"):
             print(
                 "Error: Unsupported OSCrypt version in encrypted_key "
-                f"(expected 'v10', got {decoded[:2]!r})",
+                f"(expected 'v10', got {decoded[:3]!r})",
                 file=sys.stderr,
             )
             sys.exit(5)
 
-        wrapped = decoded[2:]  # strip "v10" prefix
+        wrapped = decoded[3:]  # strip "v10" prefix (3 bytes)
         wrapping_key = _derive_wrapping_key()
         try:
             raw_key = aes_key_unwrap(wrapping_key, wrapped)
@@ -213,18 +213,30 @@ def _load_or_create_encryption_key(local_state_path: str) -> bytes:
             )
             sys.exit(5)
 
+        # Remove portal entry to force Vivaldi to use encrypted_key
+        if "portal" in os_crypt:
+            del os_crypt["portal"]
+            # Write back updated Local State
+            try:
+                tmp_path = ls_path.with_name(ls_path.name + ".tmp")
+                tmp_path.write_text(json.dumps(ls_data, indent=2), "utf-8")
+                tmp_path.rename(ls_path)
+            except OSError as exc:
+                print(f"Error: Failed to write Local State — {exc}", file=sys.stderr)
+                sys.exit(4)
+
         return raw_key
 
     # ── Generate new key ─────────────────────────────────────────────────────
     raw_key, stored_key = _generate_encryption_key()
     os_crypt["encrypted_key"] = stored_key
 
-    # Preserve existing portal entry; create default if absent
-    if "portal" not in os_crypt:
-        os_crypt["portal"] = {
-            "prev_desktop": "Hyprland",
-            "prev_init_success": False,
-        }
+    # Remove portal entry to force Vivaldi to use encrypted_key mode.
+    # Vivaldi 8.0 prefers portal-based encryption, but on Hyprland
+    # portal init fails (prev_init_success: false). If portal is present,
+    # Vivaldi keeps trying it and ignores encrypted_key entirely.
+    if "portal" in os_crypt:
+        del os_crypt["portal"]
 
     # Write Local State atomically (temp file + rename)
     try:
