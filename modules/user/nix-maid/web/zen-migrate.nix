@@ -233,25 +233,28 @@ HELP
   });
 
   # Python cookie pipeline scripts (read → decrypt → write)
-  zenCookieRead = pkgs.writeTextFile {
+  zenCookieRead = pkgs.writeShellApplication {
     name = "zen-cookie-read";
-    executable = true;
-    destination = "/bin/zen-cookie-read";
-    text = builtins.readFile ./zen-cookie-read.py;
+    runtimeInputs = with pkgs; [ python3 ];
+    text = ''
+      exec python3 ${./zen-cookie-read.py} "$@"
+    '';
   };
 
-  zenCookieDecrypt = pkgs.writeTextFile {
+  zenCookieDecrypt = pkgs.writeShellApplication {
     name = "zen-cookie-decrypt";
-    executable = true;
-    destination = "/bin/zen-cookie-decrypt";
-    text = builtins.readFile ./zen-cookie-decrypt.py;
+    runtimeInputs = with pkgs; [ python3 nss ];
+    text = ''
+      exec python3 ${./zen-cookie-decrypt.py} "$@"
+    '';
   };
 
-  zenCookieWrite = pkgs.writeTextFile {
+  zenCookieWrite = pkgs.writeShellApplication {
     name = "zen-cookie-write";
-    executable = true;
-    destination = "/bin/zen-cookie-write";
-    text = builtins.readFile ./zen-cookie-write.py;
+    runtimeInputs = with pkgs; [ (python3.withPackages (ps: [ ps.cryptography ])) ];
+    text = ''
+      exec python3 ${./zen-cookie-write.py} "$@"
+    '';
   };
 
   # CDP-based cookie writer: uses Vivaldi's Chrome DevTools Protocol instead of
@@ -486,7 +489,7 @@ HELP
 
       if [ "$DRY_RUN" -eq 0 ]; then
         echo "→ Decrypting and writing cookies to Vivaldi..."
-        zen-cookie-decrypt --profile "$PROFILE_DIR" < "$COOKIE_TMP" | zen-cookie-write --profile "$HOME/.config/vivaldi/Default"
+        zen-cookie-decrypt --profile "$PROFILE_DIR" < "$COOKIE_TMP" | zen-cookie-write --profile "$HOME/.config/vivaldi/Default" --local-state "$HOME/.config/vivaldi/Local State"
         echo "  ✓ Cookies written to Vivaldi profile"
       else
         echo "  → Cookie decrypt/write skipped (dry-run)"
