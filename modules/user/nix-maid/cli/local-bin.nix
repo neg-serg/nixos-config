@@ -34,6 +34,7 @@ in
         autoSkip = [
           "ren"
           "kitty-scrollback-nvim"
+          "hypr-focus-hist"
         ];
 
         # Helper to generate the home.file entry
@@ -103,14 +104,6 @@ in
         vidInfoTpl = builtins.readFile (scriptsDir + "/vid-info.py");
         vidInfoText = lib.replaceStrings [ "@LIBPP@" "@LIBCOLORED@" ] [ libpp libcolored ] vidInfoTpl;
 
-        # 4. New scripts (mount-drive)
-        # These are now in modules/user/nix-maid/scripts/
-
-        # mount-drive: Uses rclone.
-        rcloneExe = lib.getExe pkgs.rclone; # Command line program to sync files and directories to and...
-        mountDriveTpl = builtins.readFile ../scripts/mount-drive;
-        mountDriveText = lib.replaceStrings [ "rclone mount" ] [ "${rcloneExe} mount" ] mountDriveTpl;
-
         # kitty-scrollback-nvim substitution
         nixKsbPath = "${pkgs.vimPlugins.kitty-scrollback-nvim}/python/kitty_scrollback_nvim.py";
         ksbTpl = builtins.readFile (binDir + "/kitty-scrollback-nvim");
@@ -128,13 +121,13 @@ in
           executable = true;
           text = vidInfoText;
         };
-        ".local/bin/mount-drive" = {
-          executable = true;
-          text = mountDriveText;
-        };
         ".local/bin/kitty-scrollback-nvim" = {
           executable = true;
           text = ksbText;
+        };
+        ".local/bin/hypr-focus-hist" = {
+          executable = true;
+          source = "${pkgs.neg.hypr-focus}/bin/hypr-focus";
         };
       }
     )
