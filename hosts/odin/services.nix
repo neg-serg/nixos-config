@@ -258,13 +258,15 @@ lib.mkMerge [
     # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
     environment.systemPackages = lib.mkAfter [
       pkgs.openrgb # per-device RGB controller UI
-      (pkgs.writeShellScriptBin "cpu-boost" (
-        builtins.readFile (inputs.self + "/scripts/hw/cpu-boost.sh")
-      )) # CLI toggle for AMD Precision Boost
-      (pkgs.writeShellScriptBin "fan-manual" (
-        builtins.readFile (inputs.self + "/scripts/hw/fan-manual.sh")
-      )) # Switch fans to manual control
-      (pkgs.writeShellScriptBin "fan-auto" (builtins.readFile (inputs.self + "/scripts/hw/fan-auto.sh"))) # Switch fans to automatic control
+      (pkgs.writeShellScriptBin "cpu-boost" ''
+        exec ${pkgs.hwctl}/bin/hwctl cpu boost "$@"
+      '') # CLI toggle for AMD Precision Boost
+      (pkgs.writeShellScriptBin "fan-manual" ''
+        exec ${pkgs.hwctl}/bin/hwctl fan manual ''${1:-}
+      '') # Switch fans to manual control
+      (pkgs.writeShellScriptBin "fan-auto" ''
+        exec ${pkgs.hwctl}/bin/hwctl fan auto
+      '') # Switch fans to automatic control
     ];
     environment.etc = {
       "avahi/services/smb.service".text = ''
