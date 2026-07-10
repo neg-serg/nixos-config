@@ -21,6 +21,8 @@ let
   opencodeConfig = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
     model = "deepseek/deepseek-v4-flash";
+    plugin = [ "oh-my-openagent@latest" ];
+    enabled_providers = [ "deepseek" ];
     provider = {
       deepseek = {
         npm = "@ai-sdk/openai-compatible";
@@ -51,15 +53,40 @@ let
       };
     };
     mcp = {
-      mcp_everything = {
+      filesystem = {
         type = "local";
         command = [
           "npx"
           "-y"
-          "@modelcontextprotocol/server-everything"
+          "@modelcontextprotocol/server-filesystem"
+          "/home/neg"
+          "/etc/nixos"
         ];
         enabled = true;
-        timeout = 5000;
+        timeout = 30000;
+      };
+      github = {
+        type = "local";
+        command = [
+          "npx"
+          "-y"
+          "@modelcontextprotocol/server-github"
+        ];
+        enabled = true;
+        timeout = 30000;
+        environment = {
+          GITHUB_PERSONAL_ACCESS_TOKEN = "{env:GITHUB_TOKEN}";
+        };
+      };
+      puppeteer = {
+        type = "local";
+        command = [
+          "npx"
+          "-y"
+          "@modelcontextprotocol/server-puppeteer"
+        ];
+        enabled = true;
+        timeout = 30000;
       };
     };
   };
@@ -75,6 +102,7 @@ lib.mkIf enable (
           opencodeServe = pkgs.writeShellScript "opencode-serve" ''
             export DEEPSEEK_API_KEY="$(${pkgs.coreutils}/bin/cat /run/secrets/deepseek-api 2>/dev/null || true)"
             export GITHUB_TOKEN="$(${pkgs.coreutils}/bin/cat /run/secrets/github-token 2>/dev/null || true)"
+            export PATH="${pkgs.nodejs}/bin:$PATH"
             exec ${pkgs.opencode}/bin/opencode serve
           '';
         in
