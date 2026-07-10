@@ -5,8 +5,8 @@ with the Hyprland compositor without hopping across multiple files.
 
 ## Source of Truth and Pinning
 
-- The flake pins Hyprland to v0.52.1 while `hy3` stays on tag `hl0.51.0`, the last stable ABI for
-  the plugin (`flake.nix`:12-39). The lock file pins the exact commits under that release.
+- The flake pins Hyprland to v0.55.4 while `hy3` is pinned via the flake inputs (`flake.nix`:12-39).
+  The lock file pins the exact commits under that release.
 - Supporting inputs (`hyprland-protocols`, `xdg-desktop-portal-hyprland`) follow Hyprland's inputs,
   so once the Hyprland pin is bumped the portal + protocol packages move in lockstep
   (`flake.nix`:22-25).
@@ -23,20 +23,20 @@ with the Hyprland compositor without hopping across multiple files.
 ## Package Delivery to User Sessions
 
 - The workstation session profile keeps the plugin derivation in the system profile
-  (`modules/user/session/pkgs.nix`:60-83). This guarantees the `libhy3.so` payload exists in the
+  (via the system profile). This guarantees the `libhy3.so` payload exists in the
   store even if a user never installs extra Wayland packages manually.
 
 ## Home Configuration Wiring
 
-- `home/modules/user/gui/hyprland/core.nix` builds `~/.config/hypr/plugins.conf` dynamically and
+- `modules/user/nix-maid/hyprland/main.nix` builds `~/.config/hypr/plugins.conf` dynamically and
   injects `plugin = ${pkgs.hyprlandPlugins.hy3}/lib/libhy3.so` so Hyprland loads hy3 on every
   graphical login. Hyprsplit support piggybacks on the same helper when that feature flag is on
-  (`home/modules/user/gui/hyprland/core.nix`:38-116).
+  (`modules/user/nix-maid/hyprland/main.nix`:38-116).
 - The same module also writes the `permission = ..., plugin, allow` stanza directly into
   `hyprland.conf`, ensuring hy3 can register without triggering the ecosystem permission guard.
-- For wlroots screencopy hardening, `home/modules/user/gui/hyprland/permissions.nix` keeps a
+- For wlroots screencopy hardening, `modules/user/nix-maid/hyprland/files.nix` keeps a
   dedicated `permissions.conf` that includes both the hy3 and hyprsplit plugin paths (if enabled)
-  alongside grim/hyprlock permissions (`home/modules/user/gui/hyprland/permissions.nix`:12-38).
+  alongside grim/hyprlock permissions (`modules/user/nix-maid/hyprland/files.nix`:12-38).
 
 ## Updating Hyprland + hy3
 
