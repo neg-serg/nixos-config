@@ -213,23 +213,30 @@ range_file="${XDG_DATA_HOME:-$HOME/.local/share}/swayimg/range_mark"
 
 range_mark_fn() {
   mkdir -p "$(dirname "$range_file")"
-  realpath "$1" > "$range_file"
+  if [ ! -f "$1" ] && [ ! -L "$1" ]; then
+    print -u2 "swayimg-actions: range-mark: file not found: $1"
+    return 1
+  fi
+  realpath "$1" > "$range_file" 2>/dev/null || {
+    print -u2 "swayimg-actions: range-mark: realpath failed for: $1"
+    return 1
+  }
 }
 
 range_clear_fn() {
   rm -f "$range_file"
 }
 
-# Replicate sx ordering: list images in parent dir sorted by ctime descending
+# Replicate sx ordering: list images sorted by ctime descending (recursive, same as sx)
 _list_images() {
   local dir="$1"
   if command -v ug >/dev/null 2>&1; then
-    find -L "$dir" -maxdepth 1 -type f -printf '%C@ %p\n' \
+    find -L "$dir" -type f -printf '%C@ %p\n' \
       | sort -rn \
       | cut -d ' ' -f 2- \
       | ug -iE '\.(jpe?g|png|gif|svg|webp|tiff|heif|heic|avif|ico|bmp)$'
   else
-    find -L "$dir" -maxdepth 1 -type f -printf '%C@ %p\n' \
+    find -L "$dir" -type f -printf '%C@ %p\n' \
       | sort -rn \
       | cut -d ' ' -f 2- \
       | grep -Ei '\.(jpe?g|png|gif|svg|webp|tiff|heif|heic|avif|ico|bmp)$'
@@ -240,15 +247,27 @@ _list_images() {
 _range_files() {
   local anchor="$1" current="$2"
   local dir
+
+  if [ -z "$anchor" ]; then
+    print -u2 "swayimg-actions: no range mark set (range_mark is empty)"
+    return 1
+  fi
+
   dir="$(dirname "$current")"
 
   local tmp
   tmp="$(mktemp)"
   _list_images "$dir" > "$tmp"
 
-  local a_line c_line
-  a_line="$(grep -nFx "$(realpath "$anchor")" "$tmp" | cut -d: -f1)"
-  c_line="$(grep -nFx "$(realpath "$current")" "$tmp" | cut -d: -f1)"
+  local a_line c_line a_resolved c_resolved
+  a_resolved="$(realpath "$anchor" 2>/dev/null)" || {
+    print -u2 "swayimg-actions: range anchor not found (was deleted?): $anchor"
+    rm -f "$tmp"
+    return 1
+  }
+  c_resolved="$(realpath "$current" 2>/dev/null)"
+
+  a_line="$(grep -nFx "$a_resolved" "$tmp" | cut -d: -f1)"
 
   if [ -z "$a_line" ]; then
     echo "Range mark not found in current directory" >&2
@@ -257,7 +276,7 @@ _range_files() {
   fi
 
   local start=$a_line end=$c_line
-  [ "$a_line" -gt "$c_line" ] && start=$c_line && end=$a_line
+  [ -n "$c_line" ] && [ "$a_line" -gt "$c_line" ] && start=$c_line && end=$a_line
 
   sed -n "${start},${end}p" "$tmp"
   rm -f "$tmp"
