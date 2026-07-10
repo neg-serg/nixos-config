@@ -1,6 +1,10 @@
 // AmneziaVPN config decoder — extracts sing-box compatible JSON from
-// AmneziaVPN.ORG configuration files. Handles both the @ByteArray base64
-// format and the serversList JSON fallback.
+// AmneziaVPN.ORG configuration files.
+//
+// Handles three formats:
+//   1. last_config = @ByteArray(<base64>)          — base64-decoded JSON
+//   2. serversList = "@ByteArray(<escaped JSON>)"  — Qt QSettings escaped JSON
+//   3. serversList = "<raw JSON>"                  — plain JSON (legacy)
 
 use anyhow::{Context, Result, bail};
 use base64::Engine;
@@ -52,46 +56,55 @@ fn out_path() -> PathBuf {
 // ---------------------------------------------------------------------------
 
 /// Extract the sing-box config payload from AmneziaVPN.conf content.
-///
-/// Strategy (mirrors the Python original):
-/// 1. Try `last_config=@ByteArray(...)` — base64-decode and parse as JSON.
-/// 2. Fall back to `serversList="..."` — parse outer JSON, walk to
-///    `containers[0].xray.last_config`, unescape via serde_json.
 fn extract_payload(data: &str) -> Result<Value> {
-    // Primary: last_config = @ByteArray(<base64>)
-    let re_primary =
+    // --- 1. Primary: last_config = @ByteArray(<base64>) ---
+    let re_b64 =
         Regex::new(r"(?s)last_config\s*=\s*@ByteArray\(([^)]*)\)").unwrap();
-    if let Some(caps) = re_primary.captures(data) {
-        // Strip all whitespace (same as Python: ''.join(match.group(1).split()))
+    if let Some(caps) = re_b64.captures(data) {
         let blob: String = caps[1].chars().filter(|c| !c.is_whitespace()).collect();
-        // Add base64 padding
         let padding = (4 - blob.len() % 4) % 4;
         let padded = format!("{}{}", blob, "=".repeat(padding));
         let decoded = base64::engine::general_purpose::STANDARD
             .decode(&padded)
             .context("invalid base64 in last_config payload")?;
-        let payload: Value =
-            serde_json::from_slice(&decoded).context("invalid JSON in last_config payload")?;
+        let payload: Value = serde_json::from_slice(&decoded)
+            .context("invalid JSON in last_config payload")?;
         return Ok(payload);
     }
 
-    // Fallback: serversList = "<JSON>"
-    let re_fallback =
-        Regex::new(r#"(?s)serversList="(.*?)"\n"#).unwrap();
-    let caps = re_fallback
-        .captures(data)
-        .context("could not locate serversList in AmneziaVPN.conf")?;
-    let raw = &caps[1];
+    // --- 2. serversList with @ByteArray wrapper (Qt QSettings format) ---
+    let re_ba =
+        Regex::new(r#"(?s)serversList="@ByteArray\(([^)]*)\)"#).unwrap();
+    if let Some(caps) = re_ba.captures(data) {
+        let inner = &caps[1];
+        // Unescape Qt-style escapes via serde_json (handles \n, \", \\, etc.)
+        let unescaped: String =
+            serde_json::from_str(&format!("\"{}\"", inner))
+                .context("invalid @ByteArray content in serversList")?;
+        let payload = parse_server_last_config(&unescaped)?;
+        return Ok(payload);
+    }
 
-    // Replicate Python's unescape pipeline via serde_json:
-    //   Python: replace('\\n','') → replace('\\"','"') → unicode_escape → json.loads
-    //   Rust:   replace("\\n", "") → wrap in quotes → serde_json::from_str<String>
-    //           serde_json handles \" and all other JSON escapes natively.
-    let cleaned = raw.replace("\\n", "");
-    let unescaped: String =
-        serde_json::from_str(&format!("\"{}\"", cleaned)).context("invalid serversList string")?;
-    let servers: Value =
-        serde_json::from_str(&unescaped).context("invalid serversList JSON")?;
+    // --- 3. Legacy fallback: serversList = "<plain JSON>" ---
+    let re_fallback =
+        Regex::new(r#"(?s)serversList="(.*?)"\s*$"#).unwrap();
+    if let Some(caps) = re_fallback.captures(data) {
+        let cleaned = caps[1].replace("\\n", "");
+        let unescaped: String =
+            serde_json::from_str(&format!("\"{}\"", cleaned))
+                .context("invalid serversList string")?;
+        let payload = parse_server_last_config(&unescaped)?;
+        return Ok(payload);
+    }
+
+    bail!("could not locate valid config in AmneziaVPN.conf");
+}
+
+/// Given the servers list JSON string, navigate to containers[0].xray.last_config
+/// and parse the double-encoded inner JSON.
+fn parse_server_last_config(servers_json: &str) -> Result<Value> {
+    let servers: Value = serde_json::from_str(servers_json)
+        .context("invalid serversList JSON")?;
 
     let container = servers[0]
         .get("containers")
@@ -105,8 +118,8 @@ fn extract_payload(data: &str) -> Result<Value> {
         .context("last_config not found in xray container")?;
 
     // The last_config value is a JSON-encoded string; parse it.
-    let payload: Value =
-        serde_json::from_str(last_config_str).context("invalid last_config JSON")?;
+    let payload: Value = serde_json::from_str(last_config_str)
+        .context("invalid last_config JSON")?;
     Ok(payload)
 }
 
@@ -130,7 +143,6 @@ fn cmd_import() -> Result<()> {
     std::fs::write(&out, json_str + "\n")
         .with_context(|| format!("failed to write {}", out.display()))?;
 
-    // Set permissions to 0o600 (owner rw only)
     std::fs::set_permissions(&out, std::fs::Permissions::from_mode(0o600))
         .with_context(|| format!("failed to set permissions on {}", out.display()))?;
 
@@ -153,8 +165,8 @@ fn cmd_check() -> Result<()> {
         bail!("missing runtime config: {}", out.display());
     }
 
-    let data =
-        std::fs::read_to_string(&src).with_context(|| format!("failed to read {}", src.display()))?;
+    let data = std::fs::read_to_string(&src)
+        .with_context(|| format!("failed to read {}", src.display()))?;
     let expected = extract_payload(&data)?;
 
     let current: Value = serde_json::from_str(
@@ -170,7 +182,9 @@ fn cmd_check() -> Result<()> {
         .and_then(|r| r.get_mut("rules"))
         .and_then(|r| r.as_array_mut())
     {
-        rules.retain(|rule| rule.get("tag") != Some(&Value::String("vpn-split-router-managed".into())));
+        rules.retain(|rule| {
+            rule.get("tag") != Some(&Value::String("vpn-split-router-managed".into()))
+        });
     }
 
     // Ensure expected has at least an empty rules array in route (matches Python)
