@@ -4,31 +4,34 @@
 #        separate Python package beyond scope.
 
 """zen-cookie-write: Write decrypted cookies to a Vivaldi Cookies SQLite database
-with OSCrypt v10 encryption.
+with OSCrypt v11 encryption (AES-128-CBC).
 
 Reads decrypted JSON from stdin (output of zen-cookie-decrypt.py), transforms
 Firefox cookie fields to Vivaldi 8.0 (Chromium ~130) schema, encrypts values
-with OSCrypt v10 (AES-256-GCM), and writes atomically to the target Cookies
-database.
+with OSCrypt v11 (AES-128-CBC, PBKDF2 key derivation), and writes atomically
+to the target Cookies database.
+
+The encryption key is derived from a secret in gnome-keyring (Chrome Safe
+Storage) via PBKDF2-HMAC-SHA1; no Local State file is consulted or updated.
 
 Usage:
     python3 zen-cookie-read.py --profile /zen/ \\
         | python3 zen-cookie-decrypt.py --profile /zen/ \\
-        | python3 zen-cookie-write.py --profile /vivaldi/Default/ \\
-            --local-state /vivaldi/Local\\ State
+        | python3 zen-cookie-write.py --profile /vivaldi/Default/
 """
 
 import argparse
 import base64
-import hashlib
 import json
 import os
 import sqlite3
+import subprocess
 import sys
 from pathlib import Path
 
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.keywrap import aes_key_unwrap, aes_key_wrap
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes, padding
 
 
 # ── Vivaldi 8.0 (Chromium ~130) Cookies table schema ─────────────────────────
@@ -114,164 +117,214 @@ def _map_samesite(firefox_samesite: int, is_secure: int) -> int:
     return -1  # UNSPECIFIED fallback
 
 
-# ── OSCrypt v10 encryption helpers ───────────────────────────────────────────
+# ── OSCrypt v11 encryption helpers ───────────────────────────────────────────
 
-_OSCRYPT_FIXED = b"peanuts"
-
-
-def _derive_wrapping_key() -> bytes:
-    """Derive the 16-byte AES-128 key-wrap key from Chromium's fixed string.
-
-    Chromium OSCrypt v10 uses ``SHA-256("peanuts")[:16]`` as the RFC 3394
-    AES Key Wrap key that protects the encryption master key in Local State.
-    """
-    return hashlib.sha256(_OSCRYPT_FIXED).digest()[:16]
+# Chromium OSCrypt v11 uses deliberately weak PBKDF2 parameters for fast
+# startup: 1 iteration, SHA1, fixed salt "saltysalt", 16-byte AES-128 key.
+_SALT = b"saltysalt"
+_ITERATIONS = 1
+_KEY_LENGTH = 16  # AES-128
+_PBKDF2_HASH = hashes.SHA1()
 
 
-def _generate_encryption_key() -> tuple[bytes, str]:
-    """Generate a fresh 32-byte AES-256 key, wrapped in OSCrypt v10 format.
+def _derive_key_from_secret(secret: bytes) -> bytes:
+    """Derive a 16-byte AES-128 key from the keyring secret using PBKDF2.
 
-    Returns:
-        Tuple of ``(raw_key, base64_encoded_stored_key)``.
+    Chromium OSCrypt v11:
+        PBKDF2-HMAC-SHA1(secret, salt=b"saltysalt", iterations=1, length=16)
 
-    The stored key format is::
-
-        base64("v10" + AES_KW(wrapping_key, raw_key))
-
-    where ``wrapping_key = SHA-256("peanuts")[:16]``.
-    """
-    raw_key = os.urandom(32)
-    wrapping_key = _derive_wrapping_key()
-    wrapped = aes_key_wrap(wrapping_key, raw_key)
-    stored_key = base64.b64encode(b"v10" + wrapped).decode("ascii")
-    return raw_key, stored_key
-
-
-def _load_or_create_encryption_key(local_state_path: str) -> bytes:
-    """Load existing or create new OSCrypt v10 encryption key in Local State.
-
-    Reads ``os_crypt.encrypted_key`` from the Vivaldi ``Local State`` JSON
-    file.  If the key already exists, it is unwrapped and returned.
-    Otherwise a fresh 32-byte key is generated, wrapped with AES-128 Key
-    Wrap (RFC 3394), written to ``Local State``, and returned.
-
-    The ``portal`` entry in ``os_crypt`` is preserved if present; a default
-    is created only when the entire ``os_crypt`` section is absent.
+    Args:
+        secret: The raw secret bytes from gnome-keyring (any length).
 
     Returns:
-        The 32-byte raw AES-256 key for cookie encryption.
+        16-byte AES-128-CBC key.
+    """
+    kdf = PBKDF2HMAC(
+        algorithm=_PBKDF2_HASH,
+        length=_KEY_LENGTH,
+        salt=_SALT,
+        iterations=_ITERATIONS,
+    )
+    return kdf.derive(secret)
+
+
+# ── Gnome-keyring helpers ──────────────────────────────────────────────────
+
+# Attribute sets to try when looking up the key in gnome-keyring, in order
+# of specificity. Vivaldi 8.0 stores the key under "Chrome Safe Storage"
+# with ``application=vivaldi`` and one of several possible schema attributes.
+_KEYRING_ATTR_SETS: list[list[str]] = [
+    ["application", "vivaldi", "xdg:schema", "org.chromium.Chromium"],
+    ["application", "vivaldi", "xdg:schema", "chrome_libsecret_os_crypt_password_v2"],
+    ["application", "vivaldi"],
+    ["xdg:schema", "org.chromium.Chromium"],
+    ["xdg:schema", "chrome_libsecret_os_crypt_password_v2"],
+]
+
+
+def _get_secret_from_keyring() -> bytes | None:
+    """Read the raw OSCrypt v11 secret from gnome-keyring.
+
+    Vivaldi 8.0 / Chromium stores the OSCrypt v11 encryption seed in
+    gnome-keyring under the ``Chrome Safe Storage`` label.  The PBKDF2
+    key is derived from this secret (any length — typically 32 random bytes).
+
+    Returns:
+        The raw secret bytes if found, ``None`` otherwise.
+    """
+    for attrs in _KEYRING_ATTR_SETS:
+        try:
+            result = subprocess.run(
+                ["secret-tool", "lookup", *attrs],
+                capture_output=True,
+                timeout=5,
+            )
+        except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+            continue
+
+        if result.returncode != 0 or not result.stdout:
+            continue
+
+        secret_data = result.stdout.rstrip(b"\n\r")
+
+        # Try base64 decoding first (common Chromium storage format);
+        # if it fails, treat as raw bytes.
+        try:
+            return base64.b64decode(secret_data)
+        except Exception:
+            return secret_data
+
+    return None
+
+
+def _store_secret_in_keyring(secret: bytes) -> bool:
+    """Store a raw OSCrypt v11 secret in gnome-keyring.
+
+    Uses the same schema as Vivaldi/Chromium:
+        Label: ``Chrome Safe Storage``
+        Attributes: ``application=vivaldi``, ``xdg:schema=org.chromium.Chromium``
+
+    The secret is stored as raw bytes (not base64-encoded) for maximum
+    compatibility with Chromium's own keyring read.
+
+    Returns:
+        ``True`` if stored successfully, ``False`` otherwise.
+    """
+    try:
+        result = subprocess.run(
+            [
+                "secret-tool", "store",
+                "--label", "Chrome Safe Storage",
+                "application", "vivaldi",
+                "xdg:schema", "org.chromium.Chromium",
+            ],
+            input=secret,
+            capture_output=True,
+            timeout=5,
+        )
+        return result.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return False
+
+
+def _load_or_create_encryption_key() -> bytes:
+    """Load or create the OSCrypt v11 encryption key via gnome-keyring + PBKDF2.
+
+    Vivaldi 8.0 / Chromium 80+ stores a random seed in the OS keyring and
+    derives the actual AES-128-CBC key via:
+        PBKDF2-HMAC-SHA1(secret, salt=b"saltysalt", iterations=1, length=16)
+
+    Resolution order:
+
+    1. **Gnome-keyring** – Look up the secret under ``Chrome Safe Storage``.
+       If found, derive the 16-byte key and return it.
+    2. **Generate new** – Create a fresh 32-byte random secret, store it in
+       gnome-keyring with the proper Vivaldi attributes, derive the key.
+
+    Returns:
+        The 16-byte AES-128-CBC key derived from the OSCrypt v11 secret.
 
     Raises:
-        SystemExit: On Local State read/write failures or key errors.
+        SystemExit: On keyring storage failure (exit code 5).
+    """
+    # ── Step 1: Gnome-keyring ───────────────────────────────────────────────
+    secret = _get_secret_from_keyring()
+    if secret is not None:
+        return _derive_key_from_secret(secret)
+
+    # ── Step 2: Generate new secret ──────────────────────────────────────────
+    new_secret = os.urandom(32)
+    if not _store_secret_in_keyring(new_secret):
+        print(
+            "Error: Failed to store new OSCrypt v11 secret in gnome-keyring",
+            file=sys.stderr,
+        )
+        sys.exit(5)
+
+    return _derive_key_from_secret(new_secret)
+
+
+def _lock_portal(local_state_path: str) -> None:
+    """Lock the portal in Vivaldi Local State to prevent key reset on startup.
+
+    Vivaldi 8.0 always tries to (re-)create the portal on startup. If
+    ``prev_init_success`` is missing or ``false``, Vivaldi overwrites
+    ``encrypted_key`` with garbage, which destroys all our cookies.
+
+    By setting ``prev_init_success: true`` in the ``portal`` section of
+    ``os_crypt``, we signal that the portal already exists and is valid.
+    Vivaldi skips the re-init, keeping our encryption key intact.
+
+    Args:
+        local_state_path: Path to Vivaldi's ``Local State`` JSON file.
     """
     ls_path = Path(local_state_path)
-    ls_data: dict = {}
+    if not ls_path.is_file():
+        return
 
-    # Load existing Local State if present and non-empty
-    if ls_path.exists() and ls_path.stat().st_size > 0:
-        try:
-            ls_data = json.loads(ls_path.read_text("utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
-            print(f"Error: Failed to read Local State at {ls_path} — {exc}", file=sys.stderr)
-            sys.exit(4)
-
-    # Ensure os_crypt section exists
-    if "os_crypt" not in ls_data:
-        ls_data["os_crypt"] = {}
-    os_crypt = ls_data["os_crypt"]
-
-    # ── Reuse existing encrypted_key ─────────────────────────────────────────
-    if "encrypted_key" in os_crypt and os_crypt["encrypted_key"]:
-        stored = os_crypt["encrypted_key"]
-        try:
-            decoded = base64.b64decode(stored)
-        except Exception as exc:
-            print(f"Error: Failed to decode os_crypt.encrypted_key — {exc}", file=sys.stderr)
-            sys.exit(5)
-
-        if not decoded.startswith(b"v10"):
-            print(
-                "Error: Unsupported OSCrypt version in encrypted_key "
-                f"(expected 'v10', got {decoded[:3]!r})",
-                file=sys.stderr,
-            )
-            sys.exit(5)
-
-        wrapped = decoded[3:]  # strip "v10" prefix (3 bytes)
-        wrapping_key = _derive_wrapping_key()
-        try:
-            raw_key = aes_key_unwrap(wrapping_key, wrapped)
-        except Exception as exc:
-            print(f"Error: Failed to unwrap encryption key — {exc}", file=sys.stderr)
-            sys.exit(5)
-
-        if len(raw_key) != 32:
-            print(
-                f"Error: Unexpected unwrapped key length {len(raw_key)} "
-                f"(expected 32)",
-                file=sys.stderr,
-            )
-            sys.exit(5)
-
-        # Remove portal entry to force Vivaldi to use encrypted_key
-        if "portal" in os_crypt:
-            del os_crypt["portal"]
-            # Write back updated Local State
-            try:
-                tmp_path = ls_path.with_name(ls_path.name + ".tmp")
-                tmp_path.write_text(json.dumps(ls_data, indent=2), "utf-8")
-                tmp_path.rename(ls_path)
-            except OSError as exc:
-                print(f"Error: Failed to write Local State — {exc}", file=sys.stderr)
-                sys.exit(4)
-
-        return raw_key
-
-    # ── Generate new key ─────────────────────────────────────────────────────
-    raw_key, stored_key = _generate_encryption_key()
-    os_crypt["encrypted_key"] = stored_key
-
-    # Remove portal entry to force Vivaldi to use encrypted_key mode.
-    # Vivaldi 8.0 prefers portal-based encryption, but on Hyprland
-    # portal init fails (prev_init_success: false). If portal is present,
-    # Vivaldi keeps trying it and ignores encrypted_key entirely.
-    if "portal" in os_crypt:
-        del os_crypt["portal"]
-
-    # Write Local State atomically (temp file + rename)
     try:
-        ls_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp_path = ls_path.with_name(ls_path.name + ".tmp")
-        tmp_path.write_text(json.dumps(ls_data, indent=2), "utf-8")
-        tmp_path.rename(ls_path)
-    except OSError as exc:
-        print(f"Error: Failed to write Local State to {ls_path} — {exc}", file=sys.stderr)
-        sys.exit(4)
+        ls = json.loads(ls_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return
 
-    return raw_key
+    os_crypt: dict = ls.get("os_crypt", {})
+    if "portal" not in os_crypt:
+        os_crypt["portal"] = {
+            "prev_desktop": "Hyprland",
+            "prev_init_success": True,
+        }
+        ls["os_crypt"] = os_crypt
+        try:
+            ls_path.write_text(json.dumps(ls, indent=2))
+        except OSError:
+            pass
 
 
 def encrypt_cookie_value(plaintext: str, key: bytes) -> bytes:
-    """Encrypt a cookie value using OSCrypt v10 (AES-256-GCM).
+    """Encrypt a cookie value using OSCrypt v11 (AES-128-CBC, PKCS7 padding).
 
     Format::
 
-        v10 (2 bytes) + nonce (12 bytes) + ciphertext+tag (variable)
+        v11 (3 bytes) + ciphertext (variable, AES-128-CBC)
 
-    The GCM authentication tag (16 bytes) is appended by the ``AESGCM``
-    implementation automatically.
+    Uses the Chromium-standard static IV of 16 ASCII spaces and PKCS7
+    padding.  The key is the 16-byte AES-128 key derived from the
+    keyring secret via PBKDF2.
 
     Args:
         plaintext: The cookie value to encrypt.
-        key: The 32-byte AES-256 key.
+        key: The 16-byte AES-128-CBC key.
 
     Returns:
-        The v10-encrypted blob ready for ``encrypted_value``.
+        The v11-encrypted blob ready for ``encrypted_value``.
     """
-    nonce = os.urandom(12)
-    aesgcm = AESGCM(key)
-    ciphertext = aesgcm.encrypt(nonce, plaintext.encode("utf-8"), None)
-    return b"v10" + nonce + ciphertext
+    iv = b" " * 16
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
+    encryptor = cipher.encryptor()
+    padder = padding.PKCS7(128).padder()
+    padded = padder.update(plaintext.encode("utf-8")) + padder.finalize()
+    ciphertext = encryptor.update(padded) + encryptor.finalize()
+    return b"v11" + ciphertext
 
 
 # ── Cookie transformation ────────────────────────────────────────────────────
@@ -284,12 +337,12 @@ def transform_cookie(cookie: dict, enc_key: bytes) -> tuple:
         cookie: Decoded Firefox cookie dict with fields:
             host, name, value, path, expiry, creationTime,
             isSecure, isHttpOnly, sameSite.
-        enc_key: The 32-byte AES-256 key for value encryption.
+        enc_key: The 16-byte AES-128-CBC key for value encryption.
 
     Returns:
         A 20-element tuple matching ``INSERT_COOKIE_SQL`` parameters.
     """
-    host_key = cookie.get("host", "").lstrip(".")
+    host_key = cookie.get("host", "")  # Keep leading dot for domain cookies
     name = cookie.get("name", "")
     value = cookie.get("value", "")
     path = cookie.get("path", "/")
@@ -307,19 +360,19 @@ def transform_cookie(cookie: dict, enc_key: bytes) -> tuple:
     samesite = _map_samesite(firefox_samesite, is_secure)
     has_expires = 1 if expiry > 0 else 0
 
-    # Encrypt the cookie value using OSCrypt v10
+    # Encrypt the cookie value using OSCrypt v11
     encrypted_value = encrypt_cookie_value(value, enc_key)
 
     # Column order matches INSERT_COOKIE_SQL.
     # Note: Chromium stores both value (plaintext, backwards compat) and
-    #       encrypted_value (v10 ciphertext, authoritative).
+    #       encrypted_value (v11 ciphertext, authoritative).
     return (
         creation_utc,
         host_key,
         "",  # top_frame_site_key (no CHIPS support needed)
         name,
         value,  # plaintext (fallback for older Chromium versions)
-        encrypted_value,  # OSCrypt v10 AES-256-GCM blob
+        encrypted_value,  # OSCrypt v11 AES-128-CBC blob
         path,
         expires_utc,
         is_secure,
@@ -349,13 +402,13 @@ def write_cookies(
 
     Creates a temporary ``Cookies.new`` SQLite file with the full Vivaldi 8.0
     schema (20 columns + ``meta`` table), encrypts each cookie value with
-    OSCrypt v10, inserts all cookies, verifies integrity, then atomically
-    renames to ``Cookies``.
+    OSCrypt v11 (AES-128-CBC), inserts all cookies, verifies integrity, then
+    atomically renames to ``Cookies``.
 
     Args:
         cookies: List of decrypted cookie dicts.
         profile_dir: Path to Vivaldi profile directory.
-        enc_key: 32-byte AES-256-GCM encryption key.
+        enc_key: 16-byte AES-128-CBC encryption key.
 
     Returns:
         Number of cookies written.
@@ -423,23 +476,12 @@ def write_cookies(
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 
-def resolve_local_state(profile_dir: str) -> str:
-    """Derive Local State path from a profile directory.
-
-    Chromium-based browsers store ``Local State`` in the user-data directory,
-    one level above the profile directory::
-
-        ~/.config/vivaldi/Default/  →  ~/.config/vivaldi/Local State
-    """
-    profile = Path(profile_dir).resolve()
-    return str(profile.parent / "Local State")
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
             "Write decrypted cookies to a Vivaldi Cookies database with "
-            "OSCrypt v10 encryption (AES-256-GCM). Reads a JSON array from stdin."
+            "OSCrypt v11 encryption (AES-128-CBC, PBKDF2 key derivation). "
+            "Reads a JSON array from stdin."
         ),
     )
     parser.add_argument(
@@ -447,18 +489,7 @@ def main() -> None:
         required=True,
         help="Path to a Vivaldi profile directory (e.g. ~/.config/vivaldi/Default/)",
     )
-    parser.add_argument(
-        "--local-state",
-        default=None,
-        help=(
-            "Path to Vivaldi's Local State file. "
-            "Default: ``<profile_parent>/Local State``"
-        ),
-    )
     args = parser.parse_args()
-
-    # Resolve Local State path
-    local_state = args.local_state or resolve_local_state(args.profile)
 
     # Read and parse JSON array from stdin
     raw = sys.stdin.read()
@@ -476,16 +507,21 @@ def main() -> None:
         print("Error: Expected a JSON array on stdin", file=sys.stderr)
         sys.exit(1)
 
-    # Load or generate the OSCrypt v10 encryption key (stored in Local State)
-    enc_key = _load_or_create_encryption_key(local_state)
+    # Load or derive the OSCrypt v11 encryption key from gnome-keyring
+    enc_key = _load_or_create_encryption_key()
 
-    # Write cookies with OSCrypt v10 encryption
+    # Lock the portal in Local State so Vivaldi does not regenerate the
+    # encryption key on next startup (which would invalidate our cookies).
+    local_state = str(Path(args.profile).resolve().parent / "Local State")
+    _lock_portal(local_state)
+
+    # Write cookies with OSCrypt v11 encryption
     count = write_cookies(cookies, args.profile, enc_key)
 
     profile_path = Path(args.profile).resolve()
     print(
         f"Wrote {count} cookies to {profile_path}/Cookies "
-        f"(encrypted with v10, key stored in Local State)"
+        f"(encrypted with v11, key derived from gnome-keyring via PBKDF2)"
     )
 
 
