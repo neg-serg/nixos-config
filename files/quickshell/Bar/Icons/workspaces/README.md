@@ -15,13 +15,13 @@ Files:
 Run from the repo root:
 
 ```
-just workspace-icons
+python3 Tools/workspace-icons/generate.py
 ```
 
-The recipe wraps `quickshell/.config/quickshell/Tools/workspace-icons/generate.py`. Requires:
+Regenerate via `python3 Tools/workspace-icons/generate.py`. Requires:
 `python`, `python-fonttools`, `libxml2` (xmllint), `librsvg` (rsvg-convert). The script:
 
-1. Parses `modules/user/gui/hypr/conf/workspaces.conf` for workspace ids/labels.
+1. Parses `modules/user/nix-maid/hyprland/workspaces.nix` for workspace ids/labels.
 1. Uses `icon-map.json` to map slugs to glyph codepoints and preferred fonts. If you removed glyphs
    from Hypr, make sure `icon-map.json` still lists the correct codepoints.
 1. Exports each glyph to `workspaces/<id>-<slug>.svg`, normalizing to a square 1024 viewBox.
@@ -30,10 +30,10 @@ The recipe wraps `quickshell/.config/quickshell/Tools/workspace-icons/generate.p
 
 ## Adding or changing a glyph
 
-1. Update `modules/user/gui/hypr/conf/workspaces.conf` so the workspace name reflects the new
+1. Update `modules/user/nix-maid/hyprland/workspaces.nix` so the workspace name reflects the new
    slug/label (no need to embed glyphs).
 1. Edit `icon-map.json` to point the slug at the desired codepoint(s) and, if necessary, a different
    `fontPattern` (e.g., `Iosevka` if Nerd Font lacks the glyph).
-1. Run `just workspace-icons` and commit the updated manifest + SVG(s).
+1. Run `python3 Tools/workspace-icons/generate.py` and commit the updated manifest + SVG(s).
 
 Keep SVG edits automated — manual tweaks should go into upstream font sources, not here.

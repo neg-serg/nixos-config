@@ -1,7 +1,6 @@
 # Panel Background Transparency
 
-This short doc explains how to control the panels’ background transparency via Settings. For the
-Russian translation see `PANELS.ru.md`.
+This short doc explains how to control the panels’ background transparency via Settings.
 
 ______________________________________________________________________
 

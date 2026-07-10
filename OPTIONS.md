@@ -42,7 +42,7 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
 - `features.media.audio.mpd.enable` (mpd, mpdris2, clients)
   - Default: true in full, false in lite
 
-## Emulators / RetroArch (`modules/user/fun/emulators.nix`)
+## Emulators / RetroArch (`modules/emulators/default.nix`)
 
 - `features.emulators.retroarch.full` (use `retroarchFull` with extended cores)
   - Default: true in full, false in lite (and false by default outside profiles)
@@ -52,7 +52,7 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
 
 The central unfree policy and presets live in:
 
-- `modules/misc/unfree.nix` (wires `nixpkgs.config.allowUnfreePredicate`)
+- `modules/features/core.nix` (defines `features.allowUnfree` options)
 - `modules/features-data/unfree-presets.nix` (presets)
   - Preset `desktop` currently includes: `abuse`, `ocenaudio`, `vcv-rack`, `vital`,
     `stegsolve`, `volatility3`,
@@ -60,7 +60,7 @@ The central unfree policy and presets live in:
 
 Libretro allowlist (gated by RetroArch mode) lives in:
 
-- `modules/misc/unfree-libretro.nix`
+- `modules/emulators/pkgs.nix`
   - Adds common libretro cores to `features.allowUnfree.extra` only when
     `features.emulators.retroarch.full = true`.
 

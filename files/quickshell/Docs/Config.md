@@ -34,7 +34,6 @@ Date & Time
 
 UI & Typography
 
-- dimPanels: boolean, default true. Dim panels appearance.
 - fontSizeMultiplier: number, default 1.0. Global font multiplier (e.g. 1.2 = +20%).
 
 Bar/Widgets

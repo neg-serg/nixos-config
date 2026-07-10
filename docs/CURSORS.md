@@ -1,6 +1,6 @@
 # Cursor Notes
 
-- Current theme: Alkano-aio, size 23 set in `home/modules/user/theme/default.nix`
+- Current theme: Alkano-aio, size 23 set in `modules/user/nix-maid/gui/theme.nix`
   (XCURSOR/HYPRCURSOR/GTK/Stylix all aligned).
 - Extracted pointer frames: `docs/cursors/alkano/left-main_000.png`…`left-main_029.png` with
   metadata `docs/cursors/alkano/left-main.conf` (sizes/hotspots) plus reports
@@ -13,4 +13,4 @@
   `000000ce`: 37,48; `fbfbfbcc`: 16,24; `0021006a`: 20; `2121216a`: 21; `2121216c`: 23; `1826286a`:
   17; `b2a53fed`: 18; `65a230ed`: 19; `aa2525ed`: 22; `aaaaaaed`: 25.
 - Re-generate locally:
-  `nix build -E 'with import <nixpkgs> {}; callPackage ./home/modules/user/theme/alkano-aio.nix {}' -o /tmp/alkano && nix shell nixpkgs#xcur2png -c xcur2png -d docs/cursors/alkano -c docs/cursors/alkano/left-main.conf /tmp/alkano/share/icons/Alkano-aio/cursors/left-main`.
+  `nix build -E 'with import <nixpkgs> {}; callPackage ./modules/user/nix-maid/gui/alkano-aio.nix {}' -o /tmp/alkano && nix shell nixpkgs#xcur2png -c xcur2png -d docs/cursors/alkano -c docs/cursors/alkano/left-main.conf /tmp/alkano/share/icons/Alkano-aio/cursors/left-main`.

@@ -1,7 +1,6 @@
 # Documentation
 
-- Manuals (canonical workflows, both langs): [manual/manual.en.md](./manual/manual.en.md),
-  [manual/manual.ru.md](./manual/manual.ru.md)
+- Manuals (canonical workflows): [manual/README.md](./manual/README.md)
 - How-tos and reference (focused guides, pinning notes, hotkeys): [howto/index.md](./howto/index.md)
 - Runbooks and scripts (operational steps, credentials, maintenance helpers):
   [runbooks/index.md](./runbooks/index.md)
