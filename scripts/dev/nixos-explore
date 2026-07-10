@@ -2,11 +2,18 @@
 # nixos-explore — Interactive NixOS config explorer
 #
 # Usage:
-#   nixos-explore list              List all feature flags with values
-#   nixos-explore list --json       Output as JSON
-#   nixos-explore diff <flag> <on|off>  Show packages that change when toggling a flag
-#   nixos-explore size              Count packages by domain
-#   nixos-explore size --by-domain  Detailed breakdown
+#   nixos-explore list                      Show all feature flags with values
+#   nixos-explore list --json               Output as JSON
+#   nixos-explore diff <flag> <value>       Build and nvd-diff with flag override
+#   nixos-explore size                      Count packages by domain
+#   nixos-explore size --by-domain          Detailed breakdown
+#   nixos-explore check-inputs              Check flake input freshness
+#   nixos-explore check-impurity            Verify impurity.link paths exist
+#   nixos-explore gen-options               Generate options documentation
+#   nixos-explore kernel-config [opts]      Generate structuredExtraConfig from /proc
+#   nixos-explore top-pkgs                  Show most-referenced packages
+#   nixos-explore flat-imports              Run generate-flat-imports.py
+#   nixos-explore module-graph              Run module-graph.py
 #
 # All commands run against the current flake in the current directory.
 
@@ -22,82 +29,734 @@ cmd="${1:-help}"
 shift || true
 
 case "$cmd" in
-  list)
-    # List all feature flags with current values
+# ────────────────────────────────────────────────────────────
+#  list — feature flags
+# ────────────────────────────────────────────────────────────
+list)
     json_flag=false
     for arg in "$@"; do
-      [ "$arg" = "--json" ] && json_flag=true
+        [ "$arg" = "--json" ] && json_flag=true
     done
 
     if $json_flag; then
-      nix eval ".#nixosConfigurations.$HOST.config.features" --json 2>/dev/null
+        nix eval ".#nixosConfigurations.$HOST.config.features" --json 2>/dev/null
     else
-      echo "=== Feature Flags for $HOST ==="
-      nix eval ".#nixosConfigurations.$HOST.config.features" --json 2>/dev/null \
-        | python3 -c "
+        echo "=== Feature Flags for $HOST ==="
+        nix eval ".#nixosConfigurations.$HOST.config.features" --json 2>/dev/null \
+            | python3 -c '
 import json, sys
+
 data = json.load(sys.stdin)
+use_color = sys.stdout.isatty()
 
-def flatten(obj, prefix=''):
+def flatten(obj, prefix=""):
+    items = []
     for k, v in obj.items():
+        key = f"{prefix}{k}"
         if isinstance(v, dict):
-            flatten(v, f'{prefix}{k}.')
-        elif isinstance(v, bool):
-            print(f'  {prefix}{k:<40} {v}')
-        elif v is None:
-            print(f'  {prefix}{k:<40} null')
+            items.extend(flatten(v, f"{key}."))
         else:
-            print(f'  {prefix}{k:<40} {str(v)[:50]}')
+            items.append((key, v))
+    return items
 
-flatten(data)
-"
+items = flatten(data)
+
+max_key = 0
+for key, _ in items:
+    if len(key) > max_key:
+        max_key = len(key)
+
+if use_color:
+    BOLD_CYAN = "\033[1;36m"
+    GREEN = "\033[0;32m"
+    RED = "\033[0;31m"
+    YELLOW = "\033[0;33m"
+    DIM = "\033[2m"
+    RESET = "\033[0m"
+else:
+    BOLD_CYAN = GREEN = RED = YELLOW = DIM = RESET = ""
+
+def fmt_val(v):
+    if isinstance(v, bool):
+        if use_color:
+            return f"{GREEN}on{RESET}" if v else f"{RED}off{RESET}"
+        return "on" if v else "off"
+    if v is None:
+        return f"{DIM}\u2014{RESET}" if use_color else "\u2014"
+    if isinstance(v, list):
+        if not v:
+            return f"{DIM}[]{RESET}" if use_color else "[]"
+        shown = [str(x) for x in v[:5]]
+        s = ", ".join(shown)
+        if len(v) > 5:
+            s += f", ... ({len(v)} items)"
+        return f"{YELLOW}[{s}]{RESET}" if use_color else f"[{s}]"
+    return str(v)
+
+prev_section = None
+for key, val in items:
+    section = key.split(".")[0] if "." in key else None
+    if section and section != prev_section:
+        hdr = f"[{section}]"
+        if use_color:
+            print(f"\n{BOLD_CYAN}{hdr}{RESET}")
+        else:
+            print(f"\n{hdr}")
+        prev_section = section
+    print(f"  {key:<{max_key}} {fmt_val(val)}")
+'
     fi
     ;;
 
-  diff)
-    # Show what packages change when toggling a feature flag
-    flag="${1:-}"
-    value="${2:-}"
-    if [ -z "$flag" ] || [ -z "$value" ]; then
-      echo "Usage: nixos-explore diff <feature.flag> <true|false>"
-      echo "Example: nixos-explore diff gui false"
-      exit 1
+# ────────────────────────────────────────────────────────────
+#  check-inputs — flake lock freshness
+# ────────────────────────────────────────────────────────────
+check-inputs)
+    LOCK_FILE="$FLAKE_DIR/flake.lock"
+    MAX_AGE_DAYS="${MAX_AGE_DAYS:-60}"
+
+    if [[ ! -f "$LOCK_FILE" ]]; then
+        echo "flake.lock not found: $LOCK_FILE"
+        exit 1
     fi
 
-    echo "=== Feature: $flag = $value ==="
-    
-    # Evaluate current packages
-    echo "🔵 Current packages:"
-    current_pkgs=$(mktemp)
-    nix eval ".#nixosConfigurations.$HOST.config.environment.systemPackages" --json 2>/dev/null \
-      | python3 -c "
-import json, sys
-pkgs = json.load(sys.stdin)
-names = set()
-for p in pkgs:
-    n = p.get('name', '') if isinstance(p, dict) else str(p)
-    parts = n.split('-')
-    if parts:
-        names.add(parts[0])
-for n in sorted(names):
-    print(n)
-" > "$current_pkgs"
-    echo "  $(wc -l < "$current_pkgs") unique packages"
+    echo "Checking flake input freshness (max age: $MAX_AGE_DAYS days)..."
 
-    # This simulates the flag change. For boolean flags we override via --argstr.
-    # TODO: more accurate eval with flag override
+    now=$(date +%s)
+    stale_count=0
+
+    while IFS= read -r line; do
+        if [[ "$line" =~ \"lastModified\":\ ([0-9]+) ]]; then
+            last_modified="${BASH_REMATCH[1]}"
+            age_days=$(((now - last_modified) / 86400))
+            if [[ $age_days -gt $MAX_AGE_DAYS ]]; then
+                ((stale_count++)) || true
+            fi
+        fi
+    done < "$LOCK_FILE"
+
     echo ""
-    echo "⚪ Diff not yet available (requires nix eval with override)."
-    echo "   Packages detected: $(wc -l < "$current_pkgs")"
-    
-    rm -f "$current_pkgs"
+    # shellcheck disable=SC2016
+    jq -r '
+        .nodes | to_entries[] |
+        select(.value.locked.lastModified != null) |
+        select((now - .value.locked.lastModified) > ('"$MAX_AGE_DAYS"' * 86400)) |
+        "\(.key): \((now - .value.locked.lastModified) / 86400 | floor) days old"
+    ' "$LOCK_FILE" 2> /dev/null || true
+
+    if [[ $stale_count -gt 0 ]]; then
+        echo ""
+        echo "WARNING: $stale_count input(s) are older than $MAX_AGE_DAYS days"
+        echo "Consider running: nix flake update"
+    fi
+
+    echo ""
+    echo "Flake input freshness check complete!"
     ;;
 
-  size)
-    # Count packages, optionally by domain
+# ────────────────────────────────────────────────────────────
+#  check-impurity — verify impurity.link paths exist
+# ────────────────────────────────────────────────────────────
+check-impurity)
+    cd "$FLAKE_DIR"
+    errors=0
+
+    echo "Checking impurity.link paths in $FLAKE_DIR..."
+
+    # Direct paths like ./../../files/nvim or ../../../files/gui/swayimg
+    while IFS= read -r line; do
+        file=$(echo "$line" | cut -d: -f1)
+        match=$(echo "$line" | cut -d: -f2-)
+        # Extract the path after the function call
+        rel_path=$(echo "$match" | sed -E 's/.*(impurity\.link|linkImpure)\s+//' | sed 's/;$//')
+        dir=$(dirname "$file")
+        if [[ ! -e "$dir/$rel_path" ]]; then
+            echo "ERROR: Path does not exist: $dir/$rel_path (referenced in $file)"
+            ((errors++)) || true
+        fi
+    done < <(grep -roP '(impurity\.link|linkImpure)\s+\.+/[^;]+' modules/ 2> /dev/null || true)
+
+    # Paths defined as variables — check the source directories exist
+    dirs_to_check=(
+        "files/nvim"
+        "files/gui/hypr"
+        "files/gui/hypr/bindings"
+        "files/gui/hypr/animations"
+        "files/gui/hypr/hyprlock"
+        "files/gui/swayimg"
+        "files/rmpc"
+        "files/gui/ncpamixer.conf"
+        "files/walker"
+        "files/walker/themes"
+        "files/kitty"
+        "files/tmux"
+        "files/quickshell"
+        "files/fastfetch"
+        "files/gui/vicinae-extensions"
+        "files/shell/zsh/neg.omp.json"
+    )
+
+    for dir in "${dirs_to_check[@]}"; do
+        if [[ ! -e "$dir" ]]; then
+            echo "ERROR: Expected impurity.link source missing: $dir"
+            ((errors++)) || true
+        else
+            echo "OK: $dir"
+        fi
+    done
+
+    if [[ $errors -gt 0 ]]; then
+        echo ""
+        echo "FAILED: $errors path(s) missing"
+        exit 1
+    fi
+
+    echo ""
+    echo "All impurity.link paths verified successfully!"
+    ;;
+
+# ────────────────────────────────────────────────────────────
+#  gen-options — generate options documentation
+# ────────────────────────────────────────────────────────────
+gen-options)
+    root_dir="$FLAKE_DIR"
+    docs_dir="$root_dir/docs/howto"
+    mkdir -p "$docs_dir"
+
+    if [[ ! -f "$root_dir/flake.nix" ]]; then
+        echo "error: flake.nix not found in $root_dir" >&2
+        exit 1
+    fi
+
+    # Determine available systems by inspecting flake packages
+    systems=$(nix flake show --json "$root_dir" 2> /dev/null | jq -r '.packages | keys[]')
+    if [[ -z "$systems" ]]; then
+        echo "error: no packages.<system> found in flake outputs" >&2
+        exit 1
+    fi
+
+    found_system=$(echo "$systems" | head -n1)
+    if [[ -z "$found_system" ]]; then
+        echo "error: failed to detect a system under packages" >&2
+        exit 2
+    fi
+
+    echo "Using system: $found_system" >&2
+
+    # Discover available options-* docs dynamically
+    all_keys=$(nix flake show --json "$root_dir" 2> /dev/null | jq -r ".packages.\"${found_system}\" | keys[]")
+    mapfile -t option_keys < <(echo "$all_keys" | awk '/^options-.*-md$|^options-md$/')
+
+    # Stable order: index -> aggregated -> the rest sorted
+    attrs=()
+    if printf '%s\n' "${option_keys[@]}" | grep -qx 'options-index-md'; then attrs+=(options-index-md); fi
+    if printf '%s\n' "${option_keys[@]}" | grep -qx 'options-md'; then attrs+=(options-md); fi
+    rest=$(printf '%s\n' "${option_keys[@]}" | grep -v -E '^options-(index-)?md$' | sort || true)
+    if [[ -n "$rest" ]]; then
+        while IFS= read -r k; do attrs+=("$k"); done <<< "$rest"
+    fi
+
+    if [[ ${#attrs[@]} -eq 0 ]]; then
+        echo "warning: no options-*-md artifacts found in packages.${found_system}; writing fallback docs" >&2
+        {
+            echo "# Options Docs"
+            echo
+            echo "Options documentation artifacts are not available in this flake's packages for ${found_system}."
+            echo "This likely means nixosOptionsDoc is not exported by the current lib;"
+            echo "consider updating nixpkgs or using pkgs.lib.nixosOptionsDoc."
+        } > "$docs_dir/options.md"
+        {
+            echo "# Options Docs"
+            echo
+            echo "- [options-md](./options.md)"
+        } > "$docs_dir/options-index.md"
+        echo "Wrote fallback $docs_dir/options-index.md and options.md" >&2
+        exit 0
+    fi
+
+    for attr in "${attrs[@]}"; do
+        case "$attr" in
+            options-index-md) out="options-index.md" ;;
+            options-md) out="options.md" ;;
+            *) out="${attr%-md}.md" ;;
+        esac
+        tmp_link="${root_dir}/.result-${attr}"
+        rm -f "$tmp_link"
+        echo "Building $attr -> $out ..." >&2
+        nix build "$root_dir#packages.${found_system}.${attr}" -o "$tmp_link" > /dev/null
+        real=$(readlink -f "$tmp_link")
+        cp -f "$real" "$docs_dir/$out"
+        echo "Wrote $docs_dir/$out" >&2
+        rm -f "$tmp_link"
+    done
+
+    echo "Done." >&2
+    ;;
+
+# ────────────────────────────────────────────────────────────
+#  kernel-config — Generate boot.kernelPatches.structuredExtraConfig
+# ────────────────────────────────────────────────────────────
+kernel-config)
+    # shellcheck disable=SC2207,SC2086
+    KVER="$(uname -r)"
+    SCRIPT_NAME="nixos-explore kernel-config"
+    ONLY_LOADED=false
+    ONLY_CANDIDATES=false
+
+    for arg in "$@"; do
+        case "$arg" in
+            --only-loaded) ONLY_LOADED=true ;;
+            --candidates) ONLY_CANDIDATES=true ;;
+            -h|--help)
+                echo "kernel-config — Generate boot.kernelPatches.structuredExtraConfig from running system"
+                echo ""
+                echo "Reads /proc/modules (loaded modules), /proc/config.gz (kernel .config),"
+                echo "and /lib/modules/\$(uname -r)/modules.builtin to produce a Nix expression"
+                echo "suitable for boot.kernelPatches.[].structuredExtraConfig."
+                echo ""
+                echo "Output:"
+                echo "  - Loaded modules -> CONFIG_* = yes   (with known or auto-converted names)"
+                echo "  - Unloaded =m modules -> CONFIG_* = no  (candidates for disabling)"
+                echo ""
+                echo "Options:"
+                echo "  --only-loaded  Only emit loaded modules (skip =m -> no candidates)"
+                echo "  --candidates   Only emit the candidate-disabled section (no loaded = yes)"
+                echo "  -h, --help     Show this help"
+                echo ""
+                echo "Requires: /proc/config.gz (common on NixOS), /proc/modules"
+                exit 0
+                ;;
+        esac
+    done
+
+    # ── Known module -> CONFIG_* mapping ──
+    declare -A MOD2CONFIG
+    # --- Graphics / DRM ---
+    MOD2CONFIG[amdgpu]="DRM_AMDGPU"
+    MOD2CONFIG[drm]="DRM"
+    MOD2CONFIG[drm_kms_helper]="DRM_KMS_HELPER"
+    MOD2CONFIG[drm_exec]="DRM_EXEC"
+    MOD2CONFIG[drm_suballoc_helper]="DRM_SUBALLOC_HELPER"
+    MOD2CONFIG[drm_buddy]="DRM_BUDDY"
+    MOD2CONFIG[drm_display_helper]="DRM_DISPLAY_HELPER"
+    MOD2CONFIG[drm_ttm_helper]="DRM_TTM_HELPER"
+    MOD2CONFIG[ttm]="DRM_TTM"
+    MOD2CONFIG[sch_fq]="NET_SCH_FQ"
+    MOD2CONFIG[sch_fq_codel]="NET_SCH_FQ_CODEL"
+    MOD2CONFIG[sch_pie]="NET_SCH_PIE"
+    # --- AMD PMF / Platform ---
+    MOD2CONFIG[amd_pmf]="AMD_PMF"
+    MOD2CONFIG[amd_pmc]="AMD_PMC"
+    MOD2CONFIG[amd_hsmp]="AMD_HSMP"
+    # --- Sensors / HWMON ---
+    MOD2CONFIG[nct6775]="SENSORS_NCT6775"
+    MOD2CONFIG[i2c_nct6775]="I2C_NCT6775"
+    MOD2CONFIG[k10temp]="SENSORS_K10TEMP"
+    MOD2CONFIG[asus_ec_sensors]="SENSORS_ASUS_EC"
+    MOD2CONFIG[ec_sys]="EC_SYS"
+    # --- I2C ---
+    MOD2CONFIG[i2c_dev]="I2C_CHARDEV"
+    MOD2CONFIG[i2c_piix4]="I2C_PIIX4"
+    MOD2CONFIG[i2c_nvidia_gpu]="I2C_NVIDIA_GPU"
+    MOD2CONFIG[i2c_designware_platform]="I2C_DESIGNWARE_PLATFORM"
+    # --- KVM / Virtualisation ---
+    MOD2CONFIG[kvm]="KVM"
+    MOD2CONFIG[kvm_amd]="KVM_AMD"
+    # --- Network / TCP ---
+    MOD2CONFIG[tcp_bbr]="TCP_CONG_BBR"
+    MOD2CONFIG[tcp_diag]="TCP_DIAG"
+    # --- NVMe ---
+    MOD2CONFIG[nvme]="NVME_CORE"
+    MOD2CONFIG[nvme_core]="NVME_CORE"
+    MOD2CONFIG[nvme_auth]="NVME_AUTH"
+    # --- USB ---
+    MOD2CONFIG[xhci_hcd]="USB_XHCI_HCD"
+    MOD2CONFIG[xhci_pci]="USB_XHCI_PCI"
+    MOD2CONFIG[usbhid]="USB_HID"
+    MOD2CONFIG[hid]="HID"
+    MOD2CONFIG[hid_generic]="HID_GENERIC"
+    MOD2CONFIG[hid_amd_sfh]="HID_AMD_SFH"
+    MOD2CONFIG[usbcore]="USB"
+    MOD2CONFIG[usb_common]="USB_COMMON"
+    MOD2CONFIG[ehci_hcd]="USB_EHCI_HCD"
+    MOD2CONFIG[ehci_pci]="USB_EHCI_PCI"
+    MOD2CONFIG[ohci_pci]="USB_OHCI_HCD"
+    # --- Audio ---
+    MOD2CONFIG[snd_usb_audio]="SND_USB_AUDIO"
+    MOD2CONFIG[snd_usbmidi_lib]="SND_USB_MIDI_LIB"
+    MOD2CONFIG[snd_hda_intel]="SND_HDA_INTEL"
+    MOD2CONFIG[snd_hda_codec]="SND_HDA_CODEC"
+    MOD2CONFIG[snd_hda_codec_hdmi]="SND_HDA_CODEC_HDMI"
+    MOD2CONFIG[snd_hda_core]="SND_HDA_CORE"
+    MOD2CONFIG[snd_pcm]="SND_PCM"
+    MOD2CONFIG[snd_timer]="SND_TIMER"
+    MOD2CONFIG[snd]="SND"
+    MOD2CONFIG[snd_rawmidi]="SND_RAWMIDI"
+    MOD2CONFIG[snd_seq]="SND_SEQUENCER"
+    MOD2CONFIG[snd_seq_device]="SND_SEQ_DEVICE"
+    MOD2CONFIG[snd_hwdep]="SND_HWDEP"
+    MOD2CONFIG[snd_compress]="SND_COMPRESS_OFFLOAD"
+    MOD2CONFIG[snd_hda_codec_realtek]="SND_HDA_CODEC_REALTEK"
+    MOD2CONFIG[snd_hda_codec_generic]="SND_HDA_CODEC_GENERIC"
+    # --- File Systems ---
+    MOD2CONFIG[ntfs3]="NTFS3_FS"
+    MOD2CONFIG[fuse]="FUSE_FS"
+    MOD2CONFIG[overlay]="OVERLAY_FS"
+    MOD2CONFIG[btrfs]="BTRFS_FS"
+    MOD2CONFIG[xfs]="XFS_FS"
+    MOD2CONFIG[zfs]="# OUT_OF_TREE (ZFS)"
+    MOD2CONFIG[spl]="# OUT_OF_TREE (SPL)"
+    MOD2CONFIG[zraid]="# OUT_OF_TREE (ZFS)"
+    # --- WireGuard / VPN ---
+    MOD2CONFIG[wireguard]="WIREGUARD"
+    MOD2CONFIG[amneziawg]="# OUT_OF_TREE (AmneziaWG)"
+    # --- NTSync ---
+    MOD2CONFIG[ntsync]="# OUT_OF_TREE (ntsync - proton)"
+    # --- v4l2 / Video ---
+    MOD2CONFIG[v4l2loopback]="# OUT_OF_TREE (v4l2loopback-dkms)"
+    MOD2CONFIG[videodev]="VIDEO_DEV"
+    MOD2CONFIG[video]="VIDEO"
+    MOD2CONFIG[uvcvideo]="USB_VIDEO_CLASS"
+    # --- GPU / Compute ---
+    MOD2CONFIG[hid_nvidia]="# OUT_OF_TREE (nvidia-kmod)"
+    # --- Extra hardware ---
+    MOD2CONFIG[sp5100_tco]="SP5100_TCO"
+    MOD2CONFIG[wmi]="ACPI_WMI"
+    MOD2CONFIG[wmi_bmof]="WMI_BMOF"
+    MOD2CONFIG[ccp]="CRYPTO_DEV_CCP"
+    MOD2CONFIG[mac_hid]="MAC_EMUMOUSEBTN"
+    MOD2CONFIG[gpio_amdpt]="GPIO_AMD_PT"
+    MOD2CONFIG[gpio_generic]="GPIO_GENERIC"
+    MOD2CONFIG[ledtrig_audio]="LEDS_TRIGGER_AUDIO"
+    MOD2CONFIG[acpi_cpufreq]="X86_ACPI_CPUFREQ"
+    MOD2CONFIG[it87]="SENSORS_IT87"
+    MOD2CONFIG[ee1004]="EE1004"
+    # --- Sound DSP (RME HDSPe AIO Pro via DKMS) ---
+    MOD2CONFIG[snd_hdspe]="# OUT_OF_TREE (rme-hdspe-dkms)"
+    MOD2CONFIG[snd_hdspm]="# OUT_OF_TREE (conflicts with snd-hdspe)"
+
+    # Auto-convert a module name to a CONFIG_* name
+    auto_convert() {
+        local mod="$1"
+        echo "$mod" | tr '[:lower:]' '[:upper:]' | tr '-' '_'
+    }
+
+    # ── Gather data ──
+
+    # Loaded modules — first column of /proc/modules
+    LOADED_MODS=()
+    while read -r mod rest; do
+        LOADED_MODS+=("$mod")
+    done < /proc/modules
+    readonly LOADED_MODS
+
+    # Build a set for O(1) lookup
+    declare -A IS_LOADED
+    for m in "${LOADED_MODS[@]}"; do
+        IS_LOADED["$m"]=1
+    done
+
+    # Built-in modules (compiled into the kernel image, not loadable)
+    BUILTIN_MODS=()
+    if [ -f "/lib/modules/${KVER}/modules.builtin" ]; then
+        while IFS= read -r line; do
+            # Strip .ko suffix and path, keep basename
+            b="$(basename "$line" .ko)"
+            BUILTIN_MODS+=("$b")
+        done < "/lib/modules/${KVER}/modules.builtin"
+    fi
+    readonly BUILTIN_MODS
+
+    declare -A IS_BUILTIN
+    for m in "${BUILTIN_MODS[@]}"; do
+        IS_BUILTIN["$m"]=1
+    done
+
+    # Available kernel .config (from /proc/config.gz)
+    KCONFIG_OPTS_M=()
+    KCONFIG_OPTS_Y=()
+    KCONFIG_OPTS_N=()
+    if [ -f /proc/config.gz ]; then
+        while IFS='=' read -r name val; do
+            case "$val" in
+                m) KCONFIG_OPTS_M+=("$name") ;;
+                y) KCONFIG_OPTS_Y+=("$name") ;;
+            esac
+        done < <(zcat /proc/config.gz 2>/dev/null | grep '^CONFIG_' || true)
+
+        # Also capture 'is not set' lines
+        while IFS= read -r line; do
+            n="${line#\# }"
+            n="${n% is not set}"
+            KCONFIG_OPTS_N+=("$n")
+        done < <(zcat /proc/config.gz 2>/dev/null | grep 'is not set' || true)
+    fi
+
+    readonly KCONFIG_OPTS_M KCONFIG_OPTS_Y KCONFIG_OPTS_N
+
+    # Build a set of known CONFIG names from the running config
+    declare -A CONFIG_IS_Y CONFIG_IS_M
+    for c in "${KCONFIG_OPTS_Y[@]}"; do CONFIG_IS_Y["${c#CONFIG_}"]=1; done
+    for c in "${KCONFIG_OPTS_M[@]}"; do CONFIG_IS_M["${c#CONFIG_}"]=1; done
+
+    # ── Emit Nix expression ──
+
+    resolve_config() {
+        local mod="$1"
+        local config="${MOD2CONFIG[$mod]:-}"
+        if [ -n "$config" ]; then
+            echo "$config"
+        else
+            auto_convert "$mod"
+        fi
+    }
+
+    emit_preamble() {
+        echo "# Generated by ${SCRIPT_NAME} on $(date)"
+        echo "# Kernel: ${KVER}"
+        echo "#"
+        echo "# Usage: include in your NixOS config as:"
+        echo "#"
+        echo "#   boot.kernelPatches = ["
+        echo "#     {"
+        echo "#       name = \"localmodconfig-${KVER//./-}\";"
+        echo "#       patch = null;"
+        echo "#       structuredExtraConfig = with lib.kernel; {"
+        echo "#         ...paste below..."
+        echo "#       };"
+        echo "#     }"
+        echo "#   ];"
+        echo "#"
+        echo "# NOTE:"
+        echo "#   - Entries marked # UNVERIFIED are auto-converted from module names."
+        echo "#     Verify against \`/proc/config.gz\` or kernel source before using."
+        echo "#   - Entries marked # OUT_OF_TREE are third-party modules (ZFS, nvidia,"
+        echo "#     ntsync, etc.) and do NOT have a kernel CONFIG option -- they are"
+        echo "#     listed as comments only."
+        echo "#   - Modules built into the kernel (modules.builtin) are always available;"
+        echo "#     they do not need structuredExtraConfig entries."
+        echo "#"
+    }
+
+    emit_loaded_section() {
+        echo ""
+        echo "  # === Loaded modules  (CONFIG_* = yes) ==="
+
+        for mod in "${LOADED_MODS[@]}"; do
+            local config
+            config="$(resolve_config "$mod")"
+
+            if [[ "$config" == "#"* ]]; then
+                echo "      # ${config#\# } -- loaded but no CONFIG option to set"
+                continue
+            fi
+
+            local annotation="# loaded: ${mod}"
+            if [ -z "${MOD2CONFIG[$mod]:-}" ]; then
+                annotation+="  (UNVERIFIED)"
+            fi
+
+            # Cross-reference with /proc/config.gz if available
+            if [ ${#KCONFIG_OPTS_M[@]} -gt 0 ] || [ ${#KCONFIG_OPTS_Y[@]} -gt 0 ]; then
+                if [ -n "${CONFIG_IS_M[$config]:-}" ] || [ -n "${CONFIG_IS_Y[$config]:-}" ]; then
+                    echo "      ${config} = yes;  ${annotation}"
+                else
+                    echo "      ${config} = yes;  ${annotation} -- NOT FOUND in current .config"
+                fi
+            else
+                echo "      ${config} = yes;  ${annotation}"
+            fi
+        done
+    }
+
+    emit_candidates_section() {
+        echo ""
+        echo "  # === Unloaded =m modules (CONFIG_* = no) ==="
+        echo "  # These are built as loadable modules in the current kernel config"
+        echo "  # but are NOT currently loaded.  Review and uncomment to disable."
+
+        local count=0 total_checked=0 skipped_loaded=0 skipped_builtin=0 skipped_oot=0
+        for config in "${KCONFIG_OPTS_M[@]}"; do
+            total_checked=$((total_checked + 1))
+
+            # Strip CONFIG_ prefix, lowercase -- module names use underscores
+            local stripped="${config#CONFIG_}"
+            local guessed_mod
+            guessed_mod="$(echo "$stripped" | tr '[:upper:]' '[:lower:]')"
+
+            # Skip if the module is currently loaded
+            if [ -n "${IS_LOADED[$guessed_mod]:-}" ]; then
+                skipped_loaded=$((skipped_loaded + 1))
+                continue
+            fi
+
+            # Skip if the module is built-in
+            if [ -n "${IS_BUILTIN[$guessed_mod]:-}" ]; then
+                skipped_builtin=$((skipped_builtin + 1))
+                continue
+            fi
+
+            # Skip known out-of-tree modules (listed in our mapping)
+            local mapped="${MOD2CONFIG[$guessed_mod]:-}"
+            if [[ "$mapped" == "#"* ]]; then
+                skipped_oot=$((skipped_oot + 1))
+                continue
+            fi
+
+            # Limit output volume: only first 100 candidates to avoid overwhelming
+            if [ "$count" -lt 100 ]; then
+                echo "      # ${config} = no;  # guessed module: ${guessed_mod}"
+            elif [ "$count" -eq 100 ]; then
+                echo "      # ... ($(( ${#KCONFIG_OPTS_M[@]} )) total =m options, showing first 100 candidates)"
+            fi
+            count=$((count + 1))
+        done
+
+        echo "      # (checked ${total_checked} =m options: ${skipped_loaded} loaded, ${skipped_builtin} built-in, ${skipped_oot} out-of-tree, ${count} candidates)"
+        if [ "$count" -eq 0 ]; then
+            echo "      # (none -- all =m modules appear to be loaded or built-in)"
+        fi
+    }
+
+    emit_builtin_note() {
+        echo ""
+        echo "  # === Built-in modules ==="
+        echo "  # These are compiled into the kernel image and are always present."
+        echo "  # No structuredExtraConfig entries needed."
+        echo "  # Count: ${#BUILTIN_MODS[@]} modules built into kernel"
+    }
+
+    # ── Main ──
+
+    emit_preamble
+
+    echo "{ lib, config, ... }: {"
+    echo "  boot.kernelPatches = [{"
+    echo "    name = \"localmodconfig-${KVER}\";"
+    echo "    patch = null;"
+    echo "    structuredExtraConfig = with lib.kernel; {"
+
+    if ! $ONLY_CANDIDATES; then
+        emit_loaded_section
+    fi
+
+    if ! $ONLY_LOADED; then
+        emit_candidates_section
+    fi
+
+    emit_builtin_note
+
+    # Summary stats
+    echo ""
+    echo "      # -- Summary --"
+    echo "      # Loaded modules          : ${#LOADED_MODS[@]}"
+    if [ -f /proc/config.gz ]; then
+        echo "      # Config =y (built-in)     : ${#KCONFIG_OPTS_Y[@]}"
+        echo "      # Config =m (modules)      : ${#KCONFIG_OPTS_M[@]}"
+        echo "      # Config =n (disabled)     : ${#KCONFIG_OPTS_N[@]}"
+    fi
+    echo "      # Built-in kernel modules: ${#BUILTIN_MODS[@]}"
+
+    echo "    };"
+    echo "  }];"
+    echo "}"
+    ;;
+
+# ────────────────────────────────────────────────────────────
+#  top-pkgs — most referenced packages
+# ────────────────────────────────────────────────────────────
+top-pkgs)
+    cd "$FLAKE_DIR"
+    echo "Checking for duplicate package references..."
+
+    packages_file=$(mktemp)
+    trap 'rm -f "$packages_file"' EXIT
+
+    # Find all pkgs.foo patterns
+    grep -rhoE 'pkgs\.[a-zA-Z0-9_-]+' modules/ 2> /dev/null | sort > "$packages_file" || true
+
+    # Find duplicates (packages appearing more than once)
+    echo "Top 20 most referenced packages:"
+    sort "$packages_file" 2> /dev/null | uniq -c | sort -rn 2> /dev/null | head -20 || true
+
+    echo ""
+    echo "Package duplicate check complete!"
+    ;;
+
+# ────────────────────────────────────────────────────────────
+#  diff — nvd diff between current and new build
+# ────────────────────────────────────────────────────────────
+diff)
+    NEW_ONLY=false
+    KEEP_RESULT=false
+    flag=""
+    value=""
+    positional=()
+
+    for arg in "$@"; do
+        case "$arg" in
+            --new-only) NEW_ONLY=true ;;
+            --keep-result) KEEP_RESULT=true ;;
+            -h|--help)
+                echo "diff — Build system closure and show nvd diff vs current-system"
+                echo ""
+                echo "Usage:"
+                echo "  nixos-explore diff <flag> <value>    Build with flag override and diff"
+                echo "  nixos-explore diff --new-only ...    Show only newly added packages"
+                echo "  nixos-explore diff --keep-result ... Keep result symlink after diff"
+                echo ""
+                echo "Examples:"
+                echo "  nixos-explore diff gui.enable false"
+                exit 0
+                ;;
+            *) positional+=("$arg") ;;
+        esac
+    done
+
+    if [[ ${#positional[@]} -ge 2 ]]; then
+        flag="${positional[0]}"
+        value="${positional[1]}"
+    fi
+
+    if ! command -v nvd > /dev/null 2>&1; then
+        echo "nvd not found. Install it or use: nix run nixpkgs#nvd"
+        exit 1
+    fi
+
+    OUT_LINK="${FLAKE_DIR}/result"
+
+    echo "==> Building system closure for host '${HOST}'..."
+    if [ -n "$flag" ] && [ -n "$value" ]; then
+        echo "    Feature: $flag = $value"
+    fi
+    nix build ".#nixosConfigurations.${HOST}.config.system.build.toplevel" \
+        --out-link "$OUT_LINK" \
+        --option connect-timeout 60 \
+        --option download-attempts 2 \
+        --option stalled-download-timeout 600 2>&1
+
+    echo ""
+    echo "==> Diff: current-system vs new build"
+    echo ""
+
+    if [ "$NEW_ONLY" = true ]; then
+        nvd diff /run/current-system "$OUT_LINK" 2>&1 | awk '/^Added packages:/{flag=1} flag'
+    else
+        nvd diff /run/current-system "$OUT_LINK"
+    fi
+
+    if [ "$KEEP_RESULT" = false ]; then
+        rm -f "$OUT_LINK"
+    fi
+    ;;
+
+# ────────────────────────────────────────────────────────────
+#  size — count packages
+# ────────────────────────────────────────────────────────────
+size)
     by_domain=false
     for arg in "$@"; do
-      [ "$arg" = "--by-domain" ] && by_domain=true
+        [ "$arg" = "--by-domain" ] && by_domain=true
     done
 
     pkgs_json=$(nix eval ".#nixosConfigurations.$HOST.config.environment.systemPackages" --json 2>/dev/null)
@@ -105,36 +764,62 @@ for n in sorted(names):
 import json, sys
 print(len(json.load(sys.stdin)))
 ")
-    
+
     echo "=== Package Count ==="
     echo "Total packages in environment.systemPackages: $total"
-    
+
     if $by_domain; then
-      echo ""
-      echo "=== By module domain ==="
-      echo "(Approximate — counts pkgs.* references in each domain)"
-      for dir in cli dev system gui media games fun web shell hardware; do
-        count=$(grep -roh 'pkgs\.[a-zA-Z0-9_-]*' "$FLAKE_DIR/modules/$dir" 2>/dev/null \
-          | grep -vE '^(neg|python3Packages|writeScriptBin|writeShellScript|writeText|makeWrapper|fetchurl|runCommand|stdenv|lib|systemd)$' \
-          | sort -u | wc -l)
-        echo "  $dir: $count"
-      done
+        echo ""
+        echo "=== By module domain ==="
+        echo "(Approximate -- counts pkgs.* references in each domain)"
+        for dir in cli dev system gui media games fun web shell hardware; do
+            count=$(grep -roh 'pkgs\.[a-zA-Z0-9_-]*' "$FLAKE_DIR/modules/$dir" 2>/dev/null \
+                | grep -vE '^(neg|python3Packages|writeScriptBin|writeShellScript|writeText|makeWrapper|fetchurl|runCommand|stdenv|lib|systemd)$' \
+                | sort -u | wc -l)
+            echo "  $dir: $count"
+        done
     fi
     ;;
 
-  help|*)
-    echo "nixos-explore — Interactive NixOS config explorer"
+# ────────────────────────────────────────────────────────────
+#  flat-imports — thin wrapper for Python script
+# ────────────────────────────────────────────────────────────
+flat-imports)
+    exec python3 "$FLAKE_DIR/scripts/dev/generate-flat-imports.py" "$@"
+    ;;
+
+# ────────────────────────────────────────────────────────────
+#  module-graph — thin wrapper for Python script
+# ────────────────────────────────────────────────────────────
+module-graph)
+    exec python3 "$FLAKE_DIR/scripts/dev/module-graph.py" "$@"
+    ;;
+
+# ────────────────────────────────────────────────────────────
+#  help
+# ────────────────────────────────────────────────────────────
+help|*)
+    echo "nixos-explore -- Interactive NixOS config explorer"
     echo ""
     echo "Usage:"
-    echo "  nixos-explore list              Show all feature flags with values"
-    echo "  nixos-explore list --json       Output as JSON"
-    echo "  nixos-explore diff <flag> <val> Package diff when toggling flag"
-    echo "  nixos-explore size              Total package count"
-    echo "  nixos-explore size --by-domain  Package count by domain"
+    echo "  list                          Show all feature flags with values"
+    echo "  list --json                   Output as JSON"
+    echo "  diff <flag> <value>           Build system closure and nvd-diff vs current"
+    echo "  diff --new-only ...           Show only newly added packages"
+    echo "  size                          Total package count"
+    echo "  size --by-domain              Package count by module domain"
+    echo "  check-inputs                  Check flake input freshness (stale deps)"
+    echo "  check-impurity                Verify impurity.link paths exist"
+    echo "  gen-options                   Generate options documentation to docs/howto/"
+    echo "  kernel-config [opts]          Generate structuredExtraConfig from /proc"
+    echo "  kernel-config --only-loaded   Only emit loaded modules"
+    echo "  kernel-config --candidates    Only emit candidate-disabled section"
+    echo "  top-pkgs                      Show top 20 most-referenced packages"
+    echo "  flat-imports                  Run generate-flat-imports.py"
+    echo "  module-graph                  Run module-graph.py"
     echo ""
     echo "Environment:"
     echo "  FLAKE_DIR  Path to flake root (default: git root or pwd)"
     echo "  HOST       NixOS host name (default: odin)"
-    exit 1
     ;;
 esac

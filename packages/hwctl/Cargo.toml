@@ -1,0 +1,10 @@
+[package]
+name = "hwctl"
+version = "0.1.0"
+edition = "2021"
+description = "Hardware control CLI for NixOS — CPU boost, V-Cache masks, fan control via sysfs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+anyhow = "1"
+libc = "0.2"
