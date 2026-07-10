@@ -63,6 +63,9 @@ in
     # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
     hwctl = callPkg (packagesRoot + "/hwctl") { };
 
+    # AmneziaVPN config decoder — extracts sing-box compatible JSON
+    amnezia-tun = callPkg (packagesRoot + "/amnezia-tun") { };
+
     # OpenAgentsControl — AI agent framework for plan-first development (agents + contexts for OpenCode)
     openagentscontrol = callPkg (packagesRoot + "/openagentscontrol") { };
 

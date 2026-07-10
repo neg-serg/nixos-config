@@ -19,12 +19,12 @@ use std::process::Command;
 #[derive(Parser)]
 #[command(name = "rofiw", version, trailing_var_arg = true)]
 struct Cli {
-    /// Path to rofi binary
-    #[arg(long, default_value = "rofi", hide = true)]
+    /// Path to rofi binary (env: ROFIW_ROFI)
+    #[arg(long, env = "ROFIW_ROFI", default_value = "rofi", hide = true)]
     rofi_bin: String,
 
-    /// Path to hyprctl binary
-    #[arg(long, default_value = "hyprctl", hide = true)]
+    /// Path to hyprctl binary (env: ROFIW_HYPRCTL)
+    #[arg(long, env = "ROFIW_HYPRCTL", default_value = "hyprctl", hide = true)]
     hyprctl_bin: String,
 
     /// Arguments to pass through to rofi
