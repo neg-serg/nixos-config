@@ -205,8 +205,10 @@ let
         "rsync -az --compress-choice=zstd --info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS"
     }")
     (mkAlias "nrb" "sudo nixos-rebuild")
+    (mkAlias "nrs" "nixos-rebuild switch --no-reexec") # fast rebuild, skip nixos-rebuild self-eval
     (mkAlias "j" "journalctl")
-    (mkAlias "emptydir" "${mkCmd "emptydir"}")
+    (mkAlias "beet-update" "beet update -F field_that_isnt -M") # beets rescan without moving files
+    (mkAlias "wl-restart" "pkill -x wl-daemon 2>/dev/null; wl init; wl random ~/pic/wl ~/pic/black") # restart wallpaper daemon
     (mkAlias "jl" "jupyter lab --no-browser")
     (mkAlias "dosbox" "${mkCmd "dosbox"} -conf ${mkEnvVar "XDG_CONFIG_HOME"}/dosbox/dosbox.conf")
     (mkAlias "gdb" "${mkCmd "gdb"} -nh -x ${mkEnvVar "XDG_CONFIG_HOME"}/gdb/gdbinit")
@@ -234,8 +236,8 @@ let
     # Optional aliases
     (mkAliasIf hasMpv "mpv" "${mkCmd "mpv"}")
     (mkAliasIf hasMpv "mp" "${mkCmd "mpv"}")
-    (mkAliasIf hasMpv "mpa" "${mkCmd "mpa"}")
-    (mkAliasIf hasMpv "mpi" "${mkCmd "mpi"}")
+    (mkAliasIf hasMpv "mpa" "mpv -mute") # mpv audio-only
+    (mkAliasIf hasMpv "mpi" "mpv --interpolation=yes --tscale=oversample --video-sync=display-resample") # mpv interpolated
     (mkAliasIf hasRg "rg"
       "${mkCmd "rg"} --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden"
     )
