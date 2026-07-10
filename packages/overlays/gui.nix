@@ -53,6 +53,4 @@ in
       });
 
   optiscaler = prev.callPackage (inputs.self + "/packages/optiscaler") { };
-
-  rofiw = callPkg (inputs.self + "/packages/rofiw") { };
 }
