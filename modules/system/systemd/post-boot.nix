@@ -43,8 +43,6 @@ in
     # Ollama model server
     ollama = lib.mkIf (config.services.ollama.enable or false) (mkPostBoot "ollama");
 
-    # Proxies (if enabled)
-    caddy = lib.mkIf (config.services.caddy.enable or false) (mkPostBoot "caddy");
     # Local DNS stack
     unbound = lib.mkIf (config.services.unbound.enable or false) (mkPostBoot "unbound");
     adguardhome = lib.mkIf (config.services.adguardhome.enable or false) (
