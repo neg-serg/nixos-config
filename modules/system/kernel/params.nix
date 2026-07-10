@@ -153,7 +153,7 @@ let
     let
       # Helper: ensure rcu_nocb_poll is enabled when rcu_nocbs is used
       isolation_params = [
-        "isolcpus=domain,${gameCpuSet}"
+        "isolcpus=domain,managed_irq,${gameCpuSet}"
         "nohz_full=${gameCpuSet}"
         "rcu_nocbs=${gameCpuSet}"
         "rcu_nocb_poll=1"
