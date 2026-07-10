@@ -81,7 +81,7 @@ let
     state_file         "~/.config/mpd/state"
     sticker_file       "~/.config/mpd/sticker.sql"
 
-    auto_update "yes"
+    auto_update "no"
     bind_to_address "any"
 
     audio_output {
