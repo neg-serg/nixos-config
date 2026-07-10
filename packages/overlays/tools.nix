@@ -66,6 +66,9 @@ in
     # OpenAgentsControl — AI agent framework for plan-first development (agents + contexts for OpenCode)
     openagentscontrol = callPkg (packagesRoot + "/openagentscontrol") { };
 
+    # AmneziaVPN config decoder — extracts sing-box compatible JSON
+    amnezia-tun = callPkg (packagesRoot + "/amnezia-tun") { };
+
     # ncpamixer with custom config
     ncpamixer-wrapped =
       let

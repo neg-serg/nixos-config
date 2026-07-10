@@ -73,7 +73,7 @@ let
   '';
 
   # pw-route: switch RME AIO Pro output between an/aes/spdif/phones
-  pwRouteScript = pkgs.writeScriptBin "pw-route" (builtins.readFile ./pw-route.sh);
+  pwRouteScript = pkgs.pwroute;
 
   # routing config for pw-route
   routingYaml = pkgs.writeText "routing.yaml" ''
@@ -178,7 +178,7 @@ in
               pkgs.gawk
             ]
           }:$PATH"
-          ${pwRouteScript}/bin/pw-route aes 2>/dev/null || true
+          ${pkgs.pwroute}/bin/pwroute aes 2>/dev/null || true
         ''}";
       };
     };
