@@ -121,10 +121,10 @@ if [[ "$PROXY_LISTENING" -eq 0 ]]; then
   echo "1. Start VPN: ~/.local/bin/xray run -config ~/.config/sing-box-tun/config.json &"
 elif [[ -z "$VPN_IP" ]]; then
   echo "1. VPN not responding - check logs: ~/.local/bin/xray run -config ~/.config/sing-box-tun/config.json"
-  echo "2. Re-import config: scripts/amnezia-import-tun-config.sh import"
+  echo "2. Re-import config: amnezia-tun import"
 elif [[ "$VPN_IP" == "$DIRECT_IP" ]]; then
   echo "1. IP unchanged - try different VPN server in AmneziaVPN"
-  echo "2. Re-import config: scripts/amnezia-import-tun-config.sh import"
+  echo "2. Re-import config: amnezia-tun import"
 else
   echo "1. VPN working correctly! Use:"
   echo "   curl --socks5 127.0.0.1:10808 https://any-site.com"

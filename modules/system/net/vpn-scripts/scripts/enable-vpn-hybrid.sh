@@ -150,7 +150,7 @@ cat << EOF
 
 Next steps:
 1. Import AmneziaVPN configuration (if not already done):
-   amnezia-import-tun-config import
+    amnezia-tun import
    
 2. Start the services:
    sudo systemctl start xray
