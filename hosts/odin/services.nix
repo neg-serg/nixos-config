@@ -361,6 +361,12 @@ lib.mkMerge [
 
         # GNOME Tracker removed — pulls GTK, no search indexing needed
 
+        # gnome-keyring — D-Bus Secret Service for browser cookie encryption (Vivaldi 8.x)
+        gnome.gnome-keyring.enable = true;
+        # Disable gcr SSH agent — conflicts with programs.ssh.startAgent, and we only
+        # need gnome-keyring for its D-Bus Secret Service (browser cookie encryption).
+        gnome.gcr-ssh-agent.enable = false;
+
         udev.packages = lib.mkAfter [ pkgs.openrgb ]; # Open source RGB lighting control
         power-profiles-daemon.enable = true;
         # Do not expose AdGuard Home Prometheus metrics on this host
