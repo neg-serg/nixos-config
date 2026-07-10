@@ -82,6 +82,16 @@ in {
         "x-systemd.after=zfs.target"
       ];
     };
+    "${homeDir}/.local/share/Steam/steamapps" = {
+      device = "/gamez/main/steamapps";
+      fsType = "none";
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.automount"
+        "x-systemd.after=zfs.target"
+      ];
+    };
 
     # ZFS pools imported via boot.zfs.extraPools
 
