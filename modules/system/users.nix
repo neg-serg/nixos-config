@@ -74,6 +74,13 @@ with rec {
   };
 
   config = {
+    # Simplify group NSS lookup: remove systemd module + [success=merge].
+    # The systemd NSS module can interfere early in boot (chicken-and-egg
+    # with PID 1), causing getgrnam() to fail for static groups like
+    # "netdev".  Static groups are served by files(5) only.
+    # See also: https://github.com/bus1/dbus-broker/wiki/Policy#credentials
+    system.nssDatabases.group = [ "files" ];
+
     users = {
       users.root.hashedPassword = lib.mkDefault "*"; # lock root account
       users.${mainName} = {
