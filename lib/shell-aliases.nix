@@ -239,8 +239,10 @@ let
       else
         "rsync -az --compress-choice=zstd --info=FLIST,COPY,DEL,REMOVE,SKIP,SYMSAFE,MISC,NAME,PROGRESS,STATS";
     nrb = "sudo nixos-rebuild";
+    nrs = "nixos-rebuild switch --no-reexec"; # fast rebuild, skip nixos-rebuild self-eval
     j = "journalctl";
-    emptydir = "${mkCmd "emptydir"}";
+    beet-update = "beet update -F field_that_isnt -M"; # beets rescan without moving files
+    wl-restart = "pkill -x wl-daemon 2>/dev/null; wl init; wl random ~/pic/wl ~/pic/black"; # restart wallpaper daemon
     jl = "jupyter lab --no-browser";
     dosbox = "${mkCmd "dosbox"} -conf ${mkEnvVar "XDG_CONFIG_HOME"}/dosbox/dosbox.conf";
     gdb = "${mkCmd "gdb"} -nh -x ${mkEnvVar "XDG_CONFIG_HOME"}/gdb/gdbinit";
@@ -271,8 +273,8 @@ let
     (optionalAlias hasMpv {
       mpv = "${mkCmd "mpv"}";
       mp = "${mkCmd "mpv"}";
-      mpa = "${mkCmd "mpa"}";
-      mpi = "${mkCmd "mpi"}";
+      mpa = "mpv -mute"; # mpv audio-only
+      mpi = "mpv --interpolation=yes --tscale=oversample --video-sync=display-resample"; # mpv interpolated
     })
     (optionalAlias hasRg {
       rg = "${mkCmd "rg"} --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden";

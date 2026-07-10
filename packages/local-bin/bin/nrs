@@ -1,3 +1,0 @@
-#!/bin/sh
-# nrs: Fast nixos-rebuild switch (skips nixos-rebuild self-build eval)
-exec nixos-rebuild switch --no-reexec "$@"
