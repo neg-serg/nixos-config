@@ -745,7 +745,7 @@ Prometheus PHP‑FPM Exporter
   `unix:///run/phpfpm/app.sock;/status`). Ensure the PHP‑FPM pool socket is group‑readable by a
   shared web group and the exporter joins it:
   - Configure the PHP‑FPM pool: set `"listen.group" = "nginx";` and `"listen.mode" = "0660"`.
-  - Add both `caddy` and `prometheus` users to the `nginx` group via
+  - Add the `prometheus` user to the `nginx` group via
     `users.users.<name>.extraGroups = [ "nginx" ];`.
 - Unit sandboxing: the upstream exporter unit can prohibit UNIX sockets with
   `RestrictAddressFamilies`.
@@ -760,16 +760,14 @@ Prometheus PHP‑FPM Exporter
   and re‑enable after fixing permissions/ordering.
 - Common mistakes to avoid:
   - Misplacing user group options: within the `users = { ... }` attrset, set
-    `users.caddy.extraGroups = [ "nginx" ];` and `users.prometheus.extraGroups = [ "nginx" ];` (this
-    maps to `users.users.<name>.extraGroups`). Don’t write `users.users.caddy` again inside
-    `users = { ... }` — that becomes `users.users.users.caddy` and fails evaluation.
-  - Enabling multiple proxies: don’t enable multiple reverse proxies for the same backend (such as
-    both nginx and Caddy for the same socket/port); pick a single proxy per backend.
+    `users.prometheus.extraGroups = [ "nginx" ];` (this
+    maps to `users.users.<name>.extraGroups`).
+  - Enabling multiple proxies: don’t enable multiple reverse proxies for the same backend; pick a single proxy per backend.
 
 Nextcloud on odin (clean install)
 
 - Host `odin` uses the stock `services.nextcloud` module without custom profiles; the web frontend
-  is Caddy (`services.caddy`) in front of the Nextcloud PHP‑FPM pool.
+  is served directly by Nextcloud's built-in PHP‑FPM.
 - Nextcloud is served at `https://odin` with initial credentials: user `admin`, password
   `Admin123!ChangeMe` (see `hosts/odin/services.nix:services.nextcloud.config`).
 - The data directory is isolated from any previous installs (`/zero/sync/nextcloud`), and the
