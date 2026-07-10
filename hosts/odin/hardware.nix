@@ -200,6 +200,9 @@
         linkConfig.Name = "net1";
       };
     };
+    # Disable systemd-boot-random-seed: saves ~1.024s blocking sysinit.target
+    # Modern AMD CRNG initializes fast from RDRAND + jitter entropy w/o a saved seed
+    services.systemd-boot-random-seed.enable = false;
   };
 
   # Host-specific hardware tools
