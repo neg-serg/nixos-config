@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# cht: query cheat.sh with proper URL encoding.
+# cht: query cheat.sh with local filesystem caching.
 # Usage:
 #   cht topic [subtopic...]
+#   cht --refresh topic [subtopic...]
 
 if ! command -v curl >/dev/null 2>&1; then
   echo "cht: curl not found in PATH" >&2
@@ -15,6 +16,13 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 1
 fi
 
+# Handle --refresh flag
+refresh=0
+if [ "$#" -gt 0 ] && [ "$1" = "--refresh" ]; then
+  refresh=1
+  shift
+fi
+
 if [ "$#" -eq 0 ]; then
   query="."
 else
@@ -22,5 +30,32 @@ else
 fi
 
 encoded="$(printf '%s' "$query" | jq -sRr @uri)"
-exec curl -s "https://cheat.sh/${encoded}"
 
+# Cache setup
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/cht"
+mkdir -p "$CACHE_DIR"
+
+cache_key="$(printf '%s' "$query" | sha256sum | cut -d' ' -f1)"
+CACHE_FILE="$CACHE_DIR/$cache_key"
+
+# Force refresh: remove cached file
+if [ "$refresh" -eq 1 ] && [ -f "$CACHE_FILE" ]; then
+  rm -f "$CACHE_FILE"
+fi
+
+# Check cache hit (non-expired)
+if [ -f "$CACHE_FILE" ]; then
+  # Check if expired (older than 7 days)
+  if [ "$(find "$CACHE_FILE" -mtime +7 2>/dev/null || echo '')" != "" ]; then
+    rm -f "$CACHE_FILE"
+  else
+    cat "$CACHE_FILE"
+    exit 0
+  fi
+fi
+
+# Cache miss: fetch from network, save on success
+tmp="$(mktemp)"
+curl -s "https://cheat.sh/${encoded}" > "$tmp"
+mv "$tmp" "$CACHE_FILE"
+cat "$CACHE_FILE"
