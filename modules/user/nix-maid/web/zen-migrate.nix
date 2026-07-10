@@ -343,7 +343,16 @@ HELP
       # STEP 1 — Check Zen is not running
       # ══════════════════════════════════════════════════════════════════════════
       echo "→ Checking Zen browser..."
-      if pgrep -f zen >/dev/null 2>&1; then
+
+      ZEN_RUNNING=0
+      for bin in zen zen-browser firefox firefox-bin; do
+        if pgrep -x "$bin" >/dev/null 2>&1; then
+          ZEN_RUNNING=1
+          break
+        fi
+      done
+
+      if [ "$ZEN_RUNNING" -eq 1 ]; then
         echo "Error: Zen browser is running. Close it first." >&2
         exit 1
       fi
@@ -457,23 +466,11 @@ HELP
 
       zen-cookie-read --profile "$PROFILE_DIR" > "$COOKIE_TMP"
 
-      COOKIE_TOTAL=$(python3 -c "
-      import json
-      data = json.load(open('$COOKIE_TMP'))
-      print(len(data))
-      ")
+      COOKIE_TOTAL=$(python3 -c "import json,sys; data=json.load(open('$COOKIE_TMP')); print(len(data))")
 
-      COOKIE_PLAINTEXT=$(python3 -c "
-      import json
-      data = json.load(open('$COOKIE_TMP'))
-      print(sum(1 for c in data if not c.get('needs_decryption')))
-      ")
+      COOKIE_PLAINTEXT=$(python3 -c "import json,sys; data=json.load(open('$COOKIE_TMP')); print(sum(1 for c in data if not c.get('needs_decryption')))")
 
-      COOKIE_DECRYPTED=$(python3 -c "
-      import json
-      data = json.load(open('$COOKIE_TMP'))
-      print(sum(1 for c in data if c.get('needs_decryption')))
-      ")
+      COOKIE_DECRYPTED=$(python3 -c "import json,sys; data=json.load(open('$COOKIE_TMP')); print(sum(1 for c in data if c.get('needs_decryption')))")
 
       echo "  Cookies read: $COOKIE_TOTAL total ($COOKIE_PLAINTEXT plaintext, $COOKIE_DECRYPTED encrypted)"
 
