@@ -128,7 +128,7 @@ in
           let
             gpuChannelArgs = builtins.concatStringsSep " " (map (c: "--gpu-pwm-channels ${builtins.toString c}") cfg.autoFancontrol.gpuPwmChannels or [ ]);
           in
-          "${pkgs.neg.hwctl}/bin/hwctl fan setup \
+          "${pkgs.hwctl}/bin/hwctl fan setup \
             --min-temp ${builtins.toString cfg.autoFancontrol.minTemp} \
             --max-temp ${builtins.toString cfg.autoFancontrol.maxTemp} \
             --min-pwm ${builtins.toString cfg.autoFancontrol.minPwm} \
