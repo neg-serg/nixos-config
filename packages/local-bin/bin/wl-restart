@@ -1,5 +1,0 @@
-#!/usr/bin/env zsh
-setopt ERR_EXIT NOUNSET PIPE_FAIL
-pkill -x wl-daemon 2>/dev/null || true
-wl init
-wl random ~/pic/wl ~/pic/black
