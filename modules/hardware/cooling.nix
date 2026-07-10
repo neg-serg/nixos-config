@@ -126,32 +126,16 @@ in
         Type = "oneshot";
         ExecStart =
           let
-            script = pkgs.writeShellScript "fancontrol-setup" (
-              builtins.readFile (inputs.self + "/scripts/hw/fancontrol-setup.sh")
-            );
+            gpuChannelArgs = builtins.concatStringsSep " " (map (c: "--gpu-pwm-channels ${builtins.toString c}") cfg.autoFancontrol.gpuPwmChannels or [ ]);
           in
-          "${script}";
-        Environment = [
-          "MIN_TEMP=${builtins.toString cfg.autoFancontrol.minTemp}"
-          "MAX_TEMP=${builtins.toString cfg.autoFancontrol.maxTemp}"
-          "MIN_PWM=${builtins.toString cfg.autoFancontrol.minPwm}"
-          "MAX_PWM=${builtins.toString cfg.autoFancontrol.maxPwm}"
-          "HYST=${builtins.toString cfg.autoFancontrol.hysteresis}"
-          "INTERVAL=${builtins.toString cfg.autoFancontrol.interval}"
-          "ALLOW_STOP=${lib.boolToString (cfg.autoFancontrol.allowStop or false)}"
-          "GPU_PWM_CHANNELS=${
-            builtins.concatStringsSep "," (map builtins.toString (cfg.autoFancontrol.gpuPwmChannels or [ ]))
-          }"
-          "GPU_ENABLE=${lib.boolToString (cfg.gpuFancontrol.enable or false)}"
-          "GPU_MIN_TEMP=${builtins.toString cfg.gpuFancontrol.minTemp}"
-          "GPU_MAX_TEMP=${builtins.toString cfg.gpuFancontrol.maxTemp}"
-          "GPU_MIN_PWM=${builtins.toString cfg.gpuFancontrol.minPwm}"
-          "GPU_MAX_PWM=${builtins.toString cfg.gpuFancontrol.maxPwm}"
-          "GPU_HYST=${builtins.toString cfg.gpuFancontrol.hysteresis}"
-        ]
-        ++ lib.optional (cfg.autoFancontrol.minStartOverride != null) (
-          "MIN_START_OVERRIDE=" + builtins.toString cfg.autoFancontrol.minStartOverride
-        );
+          "${pkgs.neg.hwctl}/bin/hwctl fan setup \
+            --min-temp ${builtins.toString cfg.autoFancontrol.minTemp} \
+            --max-temp ${builtins.toString cfg.autoFancontrol.maxTemp} \
+            --min-pwm ${builtins.toString cfg.autoFancontrol.minPwm} \
+            --max-pwm ${builtins.toString cfg.autoFancontrol.maxPwm} \
+            ${lib.optionalString cfg.autoFancontrol.allowStop "--allow-stop"} \
+            ${lib.optionalString cfg.gpuFancontrol.enable "--gpu-enable"} \
+            ${gpuChannelArgs}";
         RemainAfterExit = true;
       };
     };
@@ -179,15 +163,10 @@ in
     environment.etc."systemd/system-sleep/99-fancontrol-reapply" =
       lib.mkIf (cfg.autoFancontrol.enable or false)
         {
-          source =
-            let
-              txt =
-                builtins.replaceStrings
-                  [ "@GPU_ENABLE@" ]
-                  [ (lib.boolToString (cfg.gpuFancontrol.enable or false)) ]
-                  (builtins.readFile (inputs.self + "/scripts/hw/fancontrol-reapply.sh"));
-            in
-            pkgs.writeShellScript "fancontrol-reapply" txt; # shell helper to reapply fan curves
+          source = pkgs.writeShellScript "fancontrol-reapply" ''
+            exec ${pkgs.neg.hwctl}/bin/hwctl fan reapply \
+              ${lib.optionalString cfg.gpuFancontrol.enable "--gpu"}
+          '';
           mode = "0755";
         };
 
