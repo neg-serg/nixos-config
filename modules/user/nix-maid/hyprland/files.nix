@@ -38,13 +38,6 @@ in
           source = ~/.config/hypr/hyprlock/theme.conf
         '';
 
-        # Wallust generates this file at runtime; provide a fallback with known-good defaults so hyprlock never fails on source
-        ".cache/wallust/hyprland.conf".text = ''
-          $col_border_active_base = rgba(00285981)
-          $col_border_inactive   = rgba(00000000)
-          $shadow_color          = rgba(005fafaa)
-        '';
-
         # Hyprscratch config: Telegram scratchpad (name without dots — togglespecialworkspace ломается на '.')
         ".config/hypr/hyprscratch.conf".text = ''
           telegram {

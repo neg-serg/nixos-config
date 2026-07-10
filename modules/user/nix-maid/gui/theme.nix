@@ -36,15 +36,6 @@ in
           enable = true;
         };
       }
-      (n.mkHomeFiles {
-
-        # Wallust Config
-        ".config/wallust/wallust.toml".source = ../../../../files/wallust/wallust.toml;
-        ".config/wallust/templates/hyprland.conf".source =
-          ../../../../files/wallust/templates/hyprland.conf;
-        ".config/wallust/templates/kitty.conf".source = ../../../../files/wallust/templates/kitty.conf;
-        ".config/wallust/templates/dunstrc".source = ../../../../files/wallust/templates/dunstrc;
-      })
     ]
   );
 }
