@@ -118,7 +118,7 @@ let
         in
         "${key}=${v}";
     } settings
-    + "\ninclude = ~/.cache/wallust/dunstrc\n";
+    + "\n";
 in
 lib.mkIf guiEnabled (
   lib.mkMerge [
