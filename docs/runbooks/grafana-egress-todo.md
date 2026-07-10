@@ -48,7 +48,7 @@ TODO (decide and/or document)
   receivers.
 - [ ] Panels with maps/external resources: note in README that this is browser traffic and not
   controlled by Grafana service settings.
-- [ ] CSP/Headers via Caddy: add a stricter CSP if needed to avoid external scripts/fonts/images in
+- [ ] CSP/Headers: add a stricter CSP if needed to avoid external scripts/fonts/images in
   UI.
 - [ ] Plugins: define install policy — only via Nix/derivations, or one‑off install followed by
   “freezing” the directory (tmpfiles wipes plugins on activation).
@@ -61,7 +61,7 @@ Diagnostics
 - Unit network limits: `systemctl show -p IPAddressDeny -p IPAddressAllow grafana.service`
 - Service logs: `journalctl -u grafana -b`
 - Process sockets/conns: `sudo ss -tpn | rg grafana`
-- Incoming traffic (Caddy): `sudo tail -f /var/lib/caddy/logs/grafana_access.log`
+- Incoming traffic: check Grafana logs via `journalctl -u grafana -b`
 
 Notes
 

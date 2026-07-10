@@ -358,7 +358,6 @@ pie title Module Categories Distribution
 |---------|---------|
 | 🔒 adguardhome | DNS-level ad blocking |
 | 📡 avahi | mDNS/DNS-SD |
-| 🌐 caddy | Web server & reverse proxy |
 | 🎬 jellyfin | Media streaming |
 | 🎵 mpd | Music Player Daemon |
 | ☁️ nextcloud | Cloud storage & sync |
