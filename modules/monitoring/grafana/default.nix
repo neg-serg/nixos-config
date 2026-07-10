@@ -59,33 +59,7 @@ in
       description = "Interfaces where Grafana port is allowed when openFirewall is true.";
     };
 
-    caddyProxy = {
-      enable = mkEnableOption "Serve Grafana via Caddy with HTTPS (TLS internal).";
-      domain = mkOption {
-        type = types.str;
-        default =
-          let
-            hn = config.networking.hostName or "odin";
-          in
-          "grafana." + hn;
-        description = "Domain name to serve Grafana on via Caddy.";
-      };
-      tlsInternal = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Use Caddy internal CA for LAN HTTPS.";
-      };
-      openFirewall = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Open firewall for 80/443 when proxying via Caddy.";
-      };
-      firewallInterfaces = mkOption {
-        type = types.listOf types.str;
-        default = [ "br0" ];
-        description = "Interfaces where 80/443 are allowed when openFirewall is true.";
-      };
-    };
+
   };
 
   config = mkIf (cfg.enable or false) {
@@ -138,59 +112,20 @@ in
       '';
     };
 
-    # Per-interface firewall openings (Grafana port and, optionally, Caddy proxy ports)
+    # Per-interface firewall openings
     networking.firewall.interfaces = lib.mkMerge [
       (mkIf cfg.openFirewall (
         lib.genAttrs cfg.firewallInterfaces (_iface: {
           allowedTCPPorts = [ cfg.port ];
         })
       ))
-      (mkIf (cfg.caddyProxy.enable && cfg.caddyProxy.openFirewall) (
-        lib.genAttrs cfg.caddyProxy.firewallInterfaces (_iface: {
-          allowedTCPPorts = [
-            80
-            443
-          ];
-        })
-      ))
     ];
 
-    # Optional: Caddy reverse proxy with HTTPS
-    # Opens 80/443 per-interface and sets up a vhost that proxies to Grafana
-    # on localhost:port with TLS internal for LAN trust.
-    services.caddy = mkIf cfg.caddyProxy.enable {
-      enable = true;
-      virtualHosts."${cfg.caddyProxy.domain}".extraConfig = ''
-        encode zstd gzip
-        # Access log for troubleshooting traffic to Grafana
-        log {
-          output file /var/lib/caddy/logs/grafana_access.log {
-            roll_size 50mb
-            roll_keep 3
-            roll_keep_for 48h
-          }
-          format json
-        }
-        header {
-          Strict-Transport-Security "max-age=15768000; includeSubDomains; preload"
-          X-Content-Type-Options "nosniff"
-          X-Frame-Options "SAMEORIGIN"
-          Referrer-Policy "no-referrer"
-          Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=(), fullscreen=(self), picture-in-picture=(self)"
-        }
-        reverse_proxy 127.0.0.1:${toString cfg.port}
-        ${lib.optionalString cfg.caddyProxy.tlsInternal "tls internal"}
-        handle /ca.crt {
-          root * /var/lib/caddy
-          file_server
-        }
-      '';
-    };
 
-    # tmpfiles rules for Grafana dashboard provisioning and Caddy logs
+
+    # tmpfiles rules for Grafana dashboard provisioning
     systemd.tmpfiles.rules = lib.mkAfter [
       "d /etc/grafana/provisioning/dashboards/json 0755 grafana grafana - -"
-      "d /var/lib/caddy/logs 0750 caddy caddy - -"
     ];
 
     # nothing else

@@ -622,7 +622,7 @@ lib.mkMerge [
         };
 
         # Restrict Grafana network egress to loopback only.
-        # Caddy proxies from LAN to 127.0.0.1, and datasources (Loki/Prometheus) are local.
+        # All datasources (Loki/Prometheus) are local, no external egress needed.
         # This blocks accidental outbound calls (updates, gravatar, external plugins, etc.).
         serviceConfig = {
           IPAddressDeny = "any";
