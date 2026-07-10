@@ -1,73 +1,65 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
+{ lib, config, pkgs, ... }:
+
 let
-  inherit (lib) mkIf mkMerge types;
+  inherit (lib) mkIf types;
   cfg = config.profiles.performance.irqbalance;
+
+  gawkBin = "${pkgs.gawk}/bin/awk";
+  fixScript = pkgs.writeText "irq-affinity-fix.sh" ''
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ISOLATED=$(cat /sys/devices/system/cpu/isolated 2>/dev/null || echo "")
+    HOUSECPUS=$(cat /proc/cmdline | tr ' ' '\n' | sed -n 's/^irqaffinity=//p' | head -n1)
+    [ -n "$HOUSECPUS" ] || HOUSECPUS="4-15,20-31"
+    echo "IRQ affinity fix: isolated=$ISOLATED house=$HOUSECPUS"
+
+    MASK=$(echo "$HOUSECPUS" | tr ',' '\n' | while IFS=- read -r a b; do
+      if [ -n "$b" ]; then seq "$a" "$b"; else echo "$a"; fi
+    done | sort -n | uniq | ${gawkBin} '{for(i=1;i<=NF;i++) m=or(m,lshift(1,$i))} END{printf "0x%X\n",m}')
+
+    echo "$MASK" > /proc/irq/default_smp_affinity 2>/dev/null \
+      && echo "default_smp_affinity set to $MASK" \
+      || echo "default_smp_affinity: FAILED"
+
+    for f in /proc/irq/*/smp_affinity_list; do
+      echo "$HOUSECPUS" > "$f" 2>/dev/null || true
+    done
+    echo "IRQ affinity fix done"
+  '';
+
+  # Custom package containing only the systemd unit (no drop-ins generated)
+  fixUnit = pkgs.runCommandLocal "irq-affinity-unit" { } ''
+    mkdir -p $out/lib/systemd/system
+    cat > $out/lib/systemd/system/irq-affinity-fix.service << UNIT
+[Unit]
+Description=Move IRQs off isolated CPUs
+After=systemd-udevd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=${pkgs.bash}/bin/bash ${fixScript}
+Environment=PATH=/run/wrappers/bin:/nix/store/sr26flm2nkfa12dkrwj2630kqsfakky4-coreutils-9.11/bin:/nix/store/w8xlvapzxcz23ba312q119p57bnc7200-gnugrep-3.12/bin:/nix/store/0hamsiy8hsyfw1hmizbc3bf93ad7fa1v-gnused-4.9/bin:/nix/store/arcwm5lynrra8yjn5wvbj5mr3rikmb30-systemd-260.2/bin:${pkgs.gawk}/bin
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+  '';
 in
 {
   options.profiles.performance.irqbalance.autoBannedFromIsolated = lib.mkOption {
     type = types.bool;
     default = true;
     description = ''
-      Automatically set IRQBALANCE_BANNED_CPUS based on CPUs listed in
-      kernel params nohz_full= and isolcpus=. This avoids stale masks when
-      CPU isolation changes.
+      Set up IRQ affinity at boot to keep interrupts off isolated CPUs.
+      Replaces irqbalance which is broken on systemd 260.2 (CapBnd=0 bug).
     '';
   };
 
-  config = mkMerge [
-    {
-      # Balance hardware interrupts across CPU cores to reduce spikes on a single core
-      services.irqbalance.enable = true;
-    }
-    (mkIf cfg.autoBannedFromIsolated {
-      # Compute banned CPU mask at runtime from /proc/cmdline and expose via EnvironmentFile
-      systemd.services.irqbalance = {
-        # Ensure tools used in preStart are available
-        path = [ pkgs.gawk ]; # used for bitwise mask calculation in preStart
-        preStart = ''
-          set -euo pipefail
-          CMDLINE=$(cat /proc/cmdline)
-          get_param() {
-            printf '%s' "$CMDLINE" | tr ' ' '\n' | sed -n "s/^$1=//p" | head -n1
-          }
-          NOHZ=$(get_param nohz_full || true)
-          ISOL=$(get_param isolcpus || true)
-          RAW=''${NOHZ}''${NOHZ:+,}''${ISOL}
-          tmpdir=/run/irqbalance
-          install -d -m 0755 "$tmpdir"
-          # Expand CPU list (e.g., 14-15,30-31) to individual indices
-          cpus=$(printf '%s' "$RAW" | tr ',' '\n' | while read -r tok; do
-            [ -n "$tok" ] || continue
-            if ! printf '%s' "$tok" | grep -Eq '^[0-9]+(-[0-9]+)?$'; then continue; fi
-            if printf '%s' "$tok" | grep -q -- '-'; then
-              a=''${tok%-*}; b=''${tok#*-}; seq "$a" "$b"
-            else
-              printf '%s\n' "$tok"
-            fi
-          done | sort -n | uniq)
-          # Build hex mask using gawk bitwise ops
-          mask=$(printf '%s\n' $cpus | awk 'NF{ for (i=1;i<=NF;i++) { cpu=$i; m = or(m, lshift(1, cpu)); } } END{ printf "0x%X\n", m+0 }')
-          # Fallback to 0x0 if none parsed
-          [ -n "$mask" ] || mask=0x0
-          printf 'IRQBALANCE_BANNED_CPUS=%s\n' "$mask" > "$tmpdir/irqbalance.env"
-        '';
-        serviceConfig = {
-          RuntimeDirectory = "irqbalance";
-          EnvironmentFile = [ "-/run/irqbalance/irqbalance.env" ];
-          # Override restrictive defaults so irqbalance can actually change IRQ affinity.
-          # PrivateUsers runs the process in a user namespace where writes to
-          # /proc/irq/N/smp_affinity are denied by the kernel (checked against initial
-          # namespace capabilities).  Disable it and grant CAP_SYS_NICE explicitly.
-          PrivateUsers = lib.mkForce false;
-          CapabilityBoundingSet = [ "CAP_SYS_NICE" "CAP_SETPCAP" ];
-          AmbientCapabilities = [ "CAP_SYS_NICE" ];
-        };
-      };
-    })
-  ];
+  config = mkIf cfg.autoBannedFromIsolated {
+    # Install the custom unit via systemd.packages — no systemd.services
+    # definitions, so NixOS generates NO drop-ins, avoiding CapBnd=0 bug.
+    systemd.packages = [ fixUnit ];
+    systemd.targets.multi-user.wants = [ "irq-affinity-fix.service" ];
+  };
 }
