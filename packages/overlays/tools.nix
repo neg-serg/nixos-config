@@ -63,6 +63,9 @@ in
     # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
     hwctl = callPkg (packagesRoot + "/hwctl") { };
 
+    # Rust-based window focus CLI — set window class on focused Hyprland window
+    hypr-focus = callPkg (packagesRoot + "/hypr-focus") { };
+
     # OpenAgentsControl — AI agent framework for plan-first development (agents + contexts for OpenCode)
     openagentscontrol = callPkg (packagesRoot + "/openagentscontrol") { };
 
