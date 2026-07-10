@@ -39,7 +39,7 @@
       # ASUS AM5 + NVMe D3cold workaround: disable ASPM + PCIe port PM
       pciePerformance = false;
       # V-Cache CCD (96MB L3) cores for gaming isolation
-      gamingCpuSet = "0-3,16-19";
+      gamingCpuSet = "1-3,16-19";
       # Standard CCD (32MB L3) for kernel/IRQ housekeeping
       housekeepingCpuSet = "4-15,20-31";
     };
