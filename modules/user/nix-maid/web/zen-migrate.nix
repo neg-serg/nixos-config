@@ -254,10 +254,20 @@ HELP
     text = builtins.readFile ./zen-cookie-write.py;
   };
 
+  # CDP-based cookie writer: uses Vivaldi's Chrome DevTools Protocol instead of
+  # direct SQLite writes. Vivaldi handles OSCrypt encryption internally.
+  zenCookieCdpWrite = pkgs.writeShellApplication {
+    name = "zen-cookie-cdp-write";
+    runtimeInputs = with pkgs; [ (python3.withPackages (ps: [ ps.websocket-client ])) xvfb-run ];
+    text = ''
+      exec python3 "${./zen-cookie-cdp-write.py}" "$@"
+    '';
+  };
+
   # Orchestrator: migrates cookies from Zen to Vivaldi as a single step
   zenProfileMigrate = (pkgs.writeShellApplication {
     name = "zen-profile-migrate";
-    runtimeInputs = with pkgs; [ sqlite (python3.withPackages (ps: [ ps.cryptography ])) nss procps coreutils findutils gnugrep gnused gnutar zenCookieRead zenCookieDecrypt zenCookieWrite ];
+    runtimeInputs = with pkgs; [ sqlite (python3.withPackages (ps: [ ps.cryptography ps.websocket-client ])) nss procps coreutils findutils gnugrep gnused gnutar zenCookieRead zenCookieDecrypt zenCookieWrite zenCookieCdpWrite libsecret ];
     text = ''
       # zen-profile-migrate — Orchestrate Zen → Vivaldi profile migration
       # Part of nix-maid web migration suite
@@ -476,7 +486,7 @@ HELP
 
       if [ "$DRY_RUN" -eq 0 ]; then
         echo "→ Decrypting and writing cookies to Vivaldi..."
-        zen-cookie-decrypt --profile "$PROFILE_DIR" < "$COOKIE_TMP" | zen-cookie-write --profile "$HOME/.config/vivaldi/Default" --local-state "$HOME/.config/vivaldi/Local State"
+        zen-cookie-decrypt --profile "$PROFILE_DIR" < "$COOKIE_TMP" | zen-cookie-write --profile "$HOME/.config/vivaldi/Default"
         echo "  ✓ Cookies written to Vivaldi profile"
       else
         echo "  → Cookie decrypt/write skipped (dry-run)"
@@ -525,7 +535,8 @@ in
       zenProfileMigrate # Orchestrate Zen → Vivaldi profile migration (bookmarks + cookies)
       zenCookieRead # Read cookies from Firefox/Zen cookies.sqlite as JSON
       zenCookieDecrypt # Decrypt NSS-encrypted cookies via libnss3
-      zenCookieWrite # Write decrypted cookies to Chromium/Vivaldi Cookies DB
+      zenCookieWrite # Write decrypted cookies to Chromium/Vivaldi Cookies DB (direct SQLite)
+      zenCookieCdpWrite # Write decrypted cookies to Vivaldi via Chrome DevTools Protocol (CDP)
     ];
   };
 }
