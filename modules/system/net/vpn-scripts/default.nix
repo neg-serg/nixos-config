@@ -17,7 +17,6 @@ let
     "check-vpn-status" = "check-vpn-status.sh";
     "manual-tun-routes" = "manual-tun-routes.sh";
     "vpn-split-router" = "vpn_split_router.py";
-    "amnezia-import-tun-config" = "amnezia-import-tun-config.sh";
     "enable-vpn-hybrid" = "enable-vpn-hybrid.sh";
     "start-hybrid-vpn" = "start-hybrid-vpn.sh";
     "test-browser-vpn" = "test-browser-vpn.sh";
@@ -101,5 +100,5 @@ let
 in
 
 lib.mkIf cfg.enable {
-  environment.systemPackages = [ vpnScriptsPkg ];
+  environment.systemPackages = [ vpnScriptsPkg pkgs.amnezia-tun ];
 }
