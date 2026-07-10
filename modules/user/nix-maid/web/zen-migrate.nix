@@ -257,7 +257,7 @@ HELP
   # Orchestrator: migrates cookies from Zen to Vivaldi as a single step
   zenProfileMigrate = (pkgs.writeShellApplication {
     name = "zen-profile-migrate";
-    runtimeInputs = with pkgs; [ sqlite python3 nss procps coreutils findutils gnugrep gnused gnutar zenCookieRead zenCookieDecrypt zenCookieWrite ];
+    runtimeInputs = with pkgs; [ sqlite (python3.withPackages (ps: [ ps.cryptography ])) nss procps coreutils findutils gnugrep gnused gnutar zenCookieRead zenCookieDecrypt zenCookieWrite ];
     text = ''
       # zen-profile-migrate — Orchestrate Zen → Vivaldi profile migration
       # Part of nix-maid web migration suite
@@ -476,7 +476,7 @@ HELP
 
       if [ "$DRY_RUN" -eq 0 ]; then
         echo "→ Decrypting and writing cookies to Vivaldi..."
-        zen-cookie-decrypt --profile "$PROFILE_DIR" < "$COOKIE_TMP" | zen-cookie-write --profile "$HOME/.config/vivaldi/Default"
+        zen-cookie-decrypt --profile "$PROFILE_DIR" < "$COOKIE_TMP" | zen-cookie-write --profile "$HOME/.config/vivaldi/Default" --local-state "$HOME/.config/vivaldi/Local State"
         echo "  ✓ Cookies written to Vivaldi profile"
       else
         echo "  → Cookie decrypt/write skipped (dry-run)"
