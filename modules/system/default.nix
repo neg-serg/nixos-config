@@ -11,6 +11,7 @@
     ./environment.nix
     ./filesystems.nix
     ./irqbalance.nix
+    ./log-ttys.nix
     ./oomd.nix
     ./pkgs.nix # Nix package manager
     ./preserve-flake.nix

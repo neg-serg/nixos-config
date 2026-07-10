@@ -16,10 +16,7 @@ in
   # Journald: keep logs across reboots to inspect boot output
   services.journald.extraConfig = ''
     Storage=persistent
-    # Forward journal messages to console for real-time boot debugging
-    ForwardToConsole=yes
-    # Increase console log level to show info messages during boot
-    MaxLevelConsole=info
+    # Console forwarding is now handled by modules/system/log-ttys.nix (8 per-category TTY viewers)
     # Limit log write bursts to reduce IO spikes
     RateLimitIntervalSec=30s
     RateLimitBurst=2000

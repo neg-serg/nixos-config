@@ -19,6 +19,7 @@ with lib;
     ./hardware.nix
     ./optimization.nix
     ./skwd.nix
+    ./system.nix
   ];
 
   # Apply profile defaults. Users can still override flags after this.
