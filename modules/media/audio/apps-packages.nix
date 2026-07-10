@@ -23,8 +23,6 @@ let
 
     # -- CLI --
     pkgs.sox # swiss-army audio CLI for conversions/effects
-    pkgs.wiremix # PipeWire mixer for the terminal
-
     # -- Codecs / Ripping / Players --
     pkgs.cdparanoia # secure CD ripper w/ jitter correction
     pkgs.unflac # convert FLAC cuesheets quickly

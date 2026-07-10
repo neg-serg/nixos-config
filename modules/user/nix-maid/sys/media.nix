@@ -218,23 +218,6 @@ lib.mkMerge [
       tab-config = "F5"
     '';
 
-    ".config/wiremix/wiremix.toml".text = ''
-      # Wiremix Configuration
-      theme = "nocolor"
-      char_set = "compat"
-
-      [names]
-      stream = [ "{node:node.name}: {node:media.name}" ]
-
-      keybindings = [
-       { key = { F = 1 }, action = { SelectTab = 0 } },
-       { key = { F = 2 }, action = { SelectTab = 1 } },
-       { key = { F = 3 }, action = { SelectTab = 2 } },
-       { key = { F = 4 }, action = { SelectTab = 3 } },
-       { key = { F = 5 }, action = { SelectTab = 4 } },
-      ]
-    '';
-
     # Spicetify Config (partial management)
     ".config/spicetify/config-xpui.ini" =
       lib.mkIf (config.features.media.audio.spicetify.enable or false)
