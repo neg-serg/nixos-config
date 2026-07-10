@@ -36,5 +36,12 @@
   features.apps.guiAppsFull.enable = false; # Disable heavy GUI apps (GIMP, OBS); gaming profile enables it by default
   features.gui.hdr.enable = false; # Disable HDR (DXVK_HDR) — Hyprland not configured for it, causes washed-out fullscreen
   features.dev.cpp.enable = true; # Enable C++ toolchain (ccache, gcc, cmake)
+  # Override default networkUnits: odin uses systemd-networkd, not NetworkManager
+  features.system.logTtys.networkUnits = [
+    "systemd-networkd.service"   # Primary network configuration
+    "sshd.service"               # SSH daemon
+    "tailscaled.service"         # Tailscale VPN
+    "nftables.service"           # Firewall
+  ];
   boot.plymouth.enable = false; # Plymouth removed — adds boot delay, splash not needed on this host
 }
