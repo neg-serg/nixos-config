@@ -9,8 +9,7 @@
   sqlit = pkgs.neg.sqlit;
 
   waves = pkgs.waves;
-  wiremix = pkgs.wiremix;
-  palettum = pkgs.neg.palettum;
+palettum = pkgs.neg.palettum;
 
   skwd = pkgs.skwd;
 
