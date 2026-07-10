@@ -16,7 +16,7 @@ All system modules now follow a consistent pattern:
 
 ## Legacy Files
 
-- `args.nix`, `features.nix`, `neg.nix` remain as shared wiring.
+- `neg.nix` moved to `modules/core/neg.nix`
 
 ## Adding Modules
 

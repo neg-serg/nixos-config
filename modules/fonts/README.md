@@ -9,6 +9,4 @@ Font packages and configuration.
 - Icon fonts (Font Awesome)
 - CJK fonts
 
-## Font Directories
 
-Custom fonts in `files/fonts/` are auto-installed.

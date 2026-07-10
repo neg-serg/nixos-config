@@ -4,7 +4,7 @@ Networking configuration and VPN.
 
 ## Documentation
 
-- Sing-box tun service notes: `../../docs/runbooks/sing-box-tun-notes.ru.md`
+
 
 ## Includes
 
