@@ -190,16 +190,23 @@ impl HwmonDevice {
     }
 
     /// Resolve the real device path relative to /sys/ (for fancontrol config).
+    ///
+    /// fancontrol(8) from lm_sensors validates DEVPATH at startup by running
+    /// `readlink -f $hwmon/device`, which resolves symlinks to their canonical
+    /// path (e.g. `devices/platform/nct6775.656`).  We must match that format
+    /// exactly or fancontrol refuses to start with "Device path has changed".
     pub fn device_path(&self) -> String {
         let devlink = self.path.join("device");
-        if let Ok(target) = fs::read_link(&devlink) {
-            target
+        // canonicalize resolves the full chain of symlinks, matching readlink -f
+        if let Ok(canonical) = devlink.canonicalize() {
+            canonical
                 .to_string_lossy()
                 .to_string()
                 .trim_start_matches("/sys/")
                 .to_string()
-        } else if let Ok(full) = fs::read_link(&self.path) {
-            full.to_string_lossy()
+        } else if let Ok(canonical) = self.path.canonicalize() {
+            canonical
+                .to_string_lossy()
                 .to_string()
                 .trim_start_matches("/sys/")
                 .to_string()
