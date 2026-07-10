@@ -8,7 +8,7 @@ import Quickshell.Io
 Item {
     id: root
 
-    readonly property string _pwRouteCommand: "PATH=\"$HOME/.local/bin:$PATH\" pw-route"
+    readonly property string _pwRouteCommand: "pwroute"
 
     property var defaultAudioSink: Pipewire.defaultAudioSink
     onDefaultAudioSinkChanged: {
@@ -133,7 +133,7 @@ Item {
         }
     }
 
-    // ---- RME AIO Pro route detection (data-driven via pw-route list) ----
+    // ---- RME AIO Pro route detection (data-driven via pwroute list) ----
 
     property var routeNames: ({})
     property var routeKeys: []
