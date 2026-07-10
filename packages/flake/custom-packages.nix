@@ -23,4 +23,6 @@ palettum = pkgs.neg.palettum;
   proteinview = pkgs.neg.proteinview; # Terminal protein structure viewer with interactive 3D visualization
 
   openagentscontrol = pkgs.neg.openagentscontrol; # AI agent framework for plan-first development (agents + contexts for OpenCode)
+
+  hwctl = pkgs.neg.hwctl; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
 }
