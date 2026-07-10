@@ -231,12 +231,304 @@ HELP
     pname = "zen-bookmarks-export";
     name = "zen-bookmarks-export";
   });
+
+  # Python cookie pipeline scripts (read → decrypt → write)
+  zenCookieRead = pkgs.writeTextFile {
+    name = "zen-cookie-read";
+    executable = true;
+    destination = "/bin/zen-cookie-read";
+    text = builtins.readFile ./zen-cookie-read.py;
+  };
+
+  zenCookieDecrypt = pkgs.writeTextFile {
+    name = "zen-cookie-decrypt";
+    executable = true;
+    destination = "/bin/zen-cookie-decrypt";
+    text = builtins.readFile ./zen-cookie-decrypt.py;
+  };
+
+  zenCookieWrite = pkgs.writeTextFile {
+    name = "zen-cookie-write";
+    executable = true;
+    destination = "/bin/zen-cookie-write";
+    text = builtins.readFile ./zen-cookie-write.py;
+  };
+
+  # Orchestrator: migrates cookies from Zen to Vivaldi as a single step
+  zenProfileMigrate = (pkgs.writeShellApplication {
+    name = "zen-profile-migrate";
+    runtimeInputs = with pkgs; [ sqlite python3 nss procps coreutils findutils gnugrep gnused gnutar zenCookieRead zenCookieDecrypt zenCookieWrite ];
+    text = ''
+      # zen-profile-migrate — Orchestrate Zen → Vivaldi profile migration
+      # Part of nix-maid web migration suite
+
+      set -euo pipefail
+
+      export LD_LIBRARY_PATH="${pkgs.nss}/lib''${LD_LIBRARY_PATH:+:}$LD_LIBRARY_PATH"
+
+      # ── State ─────────────────────────────────────────────────────────────────
+      ZEN_PROFILE=""
+      YES=0
+      DRY_RUN=0
+
+      # Temp file for cookie JSON (cleaned up on exit)
+      COOKIE_TMP=""
+      cleanup() {
+        [ -n "$COOKIE_TMP" ] && [ -f "$COOKIE_TMP" ] && rm -f "$COOKIE_TMP"
+      }
+      trap cleanup EXIT
+
+      # ── Help ──────────────────────────────────────────────────────────────────
+      show_help() {
+        cat <<'HELP'
+    Usage: zen-profile-migrate [OPTIONS]
+
+    Orchestrate migration of Zen browser profile data to Vivaldi.
+    Migrates bookmarks and cookies from the most recently used Zen profile
+    to the Vivaldi Default profile.
+
+    Options:
+      --profile PATH  Explicit path to Zen profile directory (skip auto-detection)
+      --yes           Skip confirmation prompt (required for non-interactive use)
+      --dry-run       Print planned actions without writing anything
+      --help, -h      Show this help message and exit
+
+    Examples:
+      zen-profile-migrate --dry-run
+      zen-profile-migrate --yes
+      zen-profile-migrate --profile ~/.zen/abc123.default/ --yes
+    HELP
+        exit 0
+      }
+
+      # ── Flag parsing ──────────────────────────────────────────────────────────
+      while [[ $# -gt 0 ]]; do
+        case "$1" in
+          --profile)
+            if [ -z "''${2-}" ]; then
+              echo "Error: --profile requires a path argument" >&2
+              exit 1
+            fi
+            ZEN_PROFILE="$2"
+            shift 2
+            ;;
+          --yes)
+            YES=1
+            shift
+            ;;
+          --dry-run)
+            DRY_RUN=1
+            shift
+            ;;
+          --help|-h)
+            show_help
+            ;;
+          *)
+            echo "Error: Unknown option: $1" >&2
+            echo "Usage: zen-profile-migrate [OPTIONS]" >&2
+            echo "Try 'zen-profile-migrate --help' for more information." >&2
+            exit 1
+            ;;
+        esac
+      done
+
+      # ── Confirmation guard ────────────────────────────────────────────────────
+      # --dry-run and --help are self-confirming; real migration requires --yes.
+      if [ "$YES" -eq 0 ] && [ "$DRY_RUN" -eq 0 ]; then
+        echo "Error: Use --yes to confirm migration" >&2
+        exit 2
+      fi
+
+      # ══════════════════════════════════════════════════════════════════════════
+      # STEP 1 — Check Zen is not running
+      # ══════════════════════════════════════════════════════════════════════════
+      echo "→ Checking Zen browser..."
+      if pgrep -f zen >/dev/null 2>&1; then
+        echo "Error: Zen browser is running. Close it first." >&2
+        exit 1
+      fi
+      echo "  ✓ Zen is not running"
+
+      # ══════════════════════════════════════════════════════════════════════════
+      # STEP 2 — Resolve Zen profile
+      # ══════════════════════════════════════════════════════════════════════════
+      echo "→ Resolving Zen profile..."
+
+      if [ -n "$ZEN_PROFILE" ]; then
+        PROFILE_DIR="$ZEN_PROFILE"
+        if [ ! -f "$PROFILE_DIR/places.sqlite" ]; then
+          echo "Error: places.sqlite not found at: $PROFILE_DIR/places.sqlite" >&2
+          exit 1
+        fi
+        echo "  Using explicit profile: $PROFILE_DIR"
+      else
+        SEARCH_DIRS=()
+        [ -d "$HOME/.zen" ]           && SEARCH_DIRS+=("$HOME/.zen")
+        [ -d "$HOME/.config/zen" ]    && SEARCH_DIRS+=("$HOME/.config/zen")
+
+        if [ "''${#SEARCH_DIRS[@]}" -eq 0 ]; then
+          echo "Error: No Zen profile directories found" >&2
+          exit 1
+        fi
+
+        PROFILES=()
+        for base in "''${SEARCH_DIRS[@]}"; do
+          while IFS= read -r -d $'\0' d; do
+            PROFILES+=("$d")
+          done < <(find "$base" -maxdepth 2 -name 'places.sqlite' -printf '%h\0' 2>/dev/null || true)
+        done
+
+        if [ "''${#PROFILES[@]}" -eq 0 ]; then
+          echo "Error: No Zen profile found with places.sqlite" >&2
+          exit 1
+        fi
+
+        BEST=""; BEST_TIME=0
+        for p in "''${PROFILES[@]}"; do
+          MTIME=$(stat -c '%Y' "$p/places.sqlite" 2>/dev/null || echo 0)
+          if [ "$MTIME" -gt "$BEST_TIME" ]; then
+            BEST_TIME="$MTIME"
+            BEST="$p"
+          fi
+        done
+        PROFILE_DIR="$BEST"
+        echo "  Detected profile: $PROFILE_DIR (most recently used)"
+      fi
+
+      # ══════════════════════════════════════════════════════════════════════════
+      # STEP 3 — Check Vivaldi is not running
+      # ══════════════════════════════════════════════════════════════════════════
+      echo "→ Checking Vivaldi browser..."
+      if pgrep -f vivaldi >/dev/null 2>&1; then
+        echo "Error: Vivaldi is running. Close it first." >&2
+        exit 1
+      fi
+      echo "  ✓ Vivaldi is not running"
+
+      # ══════════════════════════════════════════════════════════════════════════
+      # STEP 4 — Backup Vivaldi profile
+      # ══════════════════════════════════════════════════════════════════════════
+      BACKUP_PATH=""
+
+      if [ "$DRY_RUN" -eq 0 ]; then
+        if [ -d "$HOME/.config/vivaldi/Default" ]; then
+          echo "→ Backing up Vivaldi Default profile..."
+          BACKUP_PATH="$HOME/zen-to-vivaldi-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
+          tar czf "$BACKUP_PATH" \
+            -C "$HOME/.config/vivaldi/Default" . \
+            --exclude='Cache' \
+            --exclude='Code Cache' \
+            --exclude='GPUCache' \
+            --exclude='DawnCache' \
+            --exclude='*.wal' \
+            --exclude='*.shm'
+          echo "  ✓ Backup created: $BACKUP_PATH"
+        else
+          echo "  → Vivaldi profile does not exist yet; backup skipped"
+        fi
+      else
+        echo "  → Backup skipped (dry-run)"
+      fi
+
+      # ══════════════════════════════════════════════════════════════════════════
+      # STEP 5 — Export bookmarks
+      # ══════════════════════════════════════════════════════════════════════════
+      echo "→ Exporting bookmarks..."
+
+      BOOKMARK_OUTPUT="$HOME/zen-bookmarks-$(date +%Y-%m-%d).html"
+
+      if [ "$DRY_RUN" -eq 0 ]; then
+        zen-bookmarks-export --profile "$PROFILE_DIR"
+        BOOKMARK_COUNT=$(sqlite3 "$PROFILE_DIR/places.sqlite" \
+          "SELECT COUNT(*) FROM moz_bookmarks WHERE type = 1;" 2>/dev/null || echo 0)
+        echo "  ✓ $BOOKMARK_COUNT bookmarks exported → $BOOKMARK_OUTPUT"
+      else
+        BOOKMARK_COUNT=$(sqlite3 "$PROFILE_DIR/places.sqlite" \
+          "SELECT COUNT(*) FROM moz_bookmarks WHERE type = 1;" 2>/dev/null || echo 0)
+        echo "  → $BOOKMARK_COUNT bookmarks would be exported (dry-run, file not written)"
+      fi
+
+      # ══════════════════════════════════════════════════════════════════════════
+      # STEP 6 — Cookie migration pipeline
+      # ══════════════════════════════════════════════════════════════════════════
+      echo "→ Processing cookies..."
+
+      COOKIE_TMP=$(mktemp)
+
+      zen-cookie-read --profile "$PROFILE_DIR" > "$COOKIE_TMP"
+
+      COOKIE_TOTAL=$(python3 -c "
+      import json
+      data = json.load(open('$COOKIE_TMP'))
+      print(len(data))
+      ")
+
+      COOKIE_PLAINTEXT=$(python3 -c "
+      import json
+      data = json.load(open('$COOKIE_TMP'))
+      print(sum(1 for c in data if not c.get('needs_decryption')))
+      ")
+
+      COOKIE_DECRYPTED=$(python3 -c "
+      import json
+      data = json.load(open('$COOKIE_TMP'))
+      print(sum(1 for c in data if c.get('needs_decryption')))
+      ")
+
+      echo "  Cookies read: $COOKIE_TOTAL total ($COOKIE_PLAINTEXT plaintext, $COOKIE_DECRYPTED encrypted)"
+
+      if [ "$DRY_RUN" -eq 0 ]; then
+        echo "→ Decrypting and writing cookies to Vivaldi..."
+        zen-cookie-decrypt --profile "$PROFILE_DIR" < "$COOKIE_TMP" | zen-cookie-write --profile "$HOME/.config/vivaldi/Default"
+        echo "  ✓ Cookies written to Vivaldi profile"
+      else
+        echo "  → Cookie decrypt/write skipped (dry-run)"
+      fi
+
+      # ══════════════════════════════════════════════════════════════════════════
+      # STEP 7 — Post-migration report
+      # ══════════════════════════════════════════════════════════════════════════
+      echo ""
+      echo "============================================================"
+      if [ "$DRY_RUN" -eq 1 ]; then
+        echo " DRY RUN — no changes were made"
+      fi
+      echo " ZEN → VIVALDI PROFILE MIGRATION REPORT"
+      echo "============================================================"
+      echo " Zen profile:         $PROFILE_DIR (left untouched)"
+      echo " Vivaldi profile:     ~/.config/vivaldi/Default"
+      if [ -n "$BACKUP_PATH" ]; then
+        echo " Backup:              $BACKUP_PATH"
+      else
+        echo " Backup:              (none — profile did not exist or dry-run)"
+      fi
+      echo ""
+      echo " Bookmarks exported:  $BOOKMARK_COUNT bookmarks → $BOOKMARK_OUTPUT"
+      echo " Cookies migrated:    $COOKIE_TOTAL total ($COOKIE_PLAINTEXT plaintext, $COOKIE_DECRYPTED NSS-decrypted)"
+      echo ""
+      if [ -n "$BACKUP_PATH" ]; then
+        echo " RESTORE BACKUP: tar xzf $BACKUP_PATH -C \"\$HOME/.config/vivaldi/\""
+        echo ""
+      fi
+      echo " MANUAL STEPS:"
+      echo "  1. Passwords: Export from Zen: about:logins → 'Export Logins...' → CSV"
+      echo "     Import to Vivaldi: vivaldi --enable-features=PasswordImport"
+      echo "     then vivaldi://password-manager/settings → Import"
+      echo "  2. History & Autofill: vivaldi://settings/importData → select Firefox"
+      echo "  3. Extensions: Reinstall from Chrome Web Store"
+      echo "============================================================"
+    '';
+  });
 in
 {
   config = lib.mkIf webEnabled {
     environment.systemPackages = [
       pkgs.sqlite # SQLite database engine (for reading Zen/Firefox places.sqlite)
       zenBookmarksExport # Export Zen browser bookmarks to Netscape HTML for Vivaldi import
+      zenProfileMigrate # Orchestrate Zen → Vivaldi profile migration (bookmarks + cookies)
+      zenCookieRead # Read cookies from Firefox/Zen cookies.sqlite as JSON
+      zenCookieDecrypt # Decrypt NSS-encrypted cookies via libnss3
+      zenCookieWrite # Write decrypted cookies to Chromium/Vivaldi Cookies DB
     ];
   };
 }
