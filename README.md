@@ -13,7 +13,7 @@
 **Performance-Tuned • Developer-Focused • Gaming-Optimized**
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge&logo=github)](https://github.com/neg-serg/nixos-config)
-[![NixOS](https://img.shields.io/badge/NixOS-24.11-5277C3?style=for-the-badge&logo=nixos&logoColor=white)](https://nixos.org)
+[![NixOS](https://img.shields.io/badge/NixOS-26.05-5277C3?style=for-the-badge&logo=nixos&logoColor=white)](https://nixos.org)
 [![Hyprland](https://img.shields.io/badge/Hyprland-Dynamic_Tiling-00D9FF?style=for-the-badge&logo=wayland&logoColor=white)](https://hyprland.org)
 [![Commits](https://img.shields.io/badge/commits-4000+-FF6B35?style=for-the-badge&logo=git&logoColor=white)](https://github.com/neg-serg/nixos-config/commits)
 [![Stars](https://img.shields.io/github/stars/neg-serg/nixos-config?style=for-the-badge&logo=github)](https://github.com/neg-serg/nixos-config/stargazers)
@@ -43,7 +43,7 @@
 ## ✨ Highlights
 
 > [!TIP]
-> **New to NixOS?** Check out the [User Manual](docs/manual/manual.en.md) for a comprehensive guide!
+> **New to NixOS?** Check out the [User Manual](docs/manual/README.md) for a comprehensive guide!
 
 🎯 **What makes this configuration special:**
 
@@ -51,8 +51,8 @@
 - 🎮 **Gaming-First Design** - CPU isolation, low-latency optimizations, VRR support
 - 🔧 **Developer Paradise** - Multi-language support (Rust, C++, Haskell, Python), AI tools
 - 🎨 **Beautiful Hyprland** - 21 workspaces, 6 scratchpads, custom Quickshell panel
-- 📦 **52 Custom Packages** - Tailored tools for productivity and performance
-- 🧩 **Modular Architecture** - 32 categories, 404 files, crystal-clear organization
+- 📦 **34 Custom Packages** - Tailored tools for productivity and performance
+- 🧩 **Modular Architecture** - 32 categories, 427 files, crystal-clear organization
 - 🔄 **Continuous Integration** - Automated formatting, linting, and testing
 
 ---
@@ -85,10 +85,10 @@ nh os switch
 | 📁 Category | 🔢 Count | 📊 Progress |
 |-------------|----------|-------------|
 | **Module Categories** | 32 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Nix Files** | 404 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Custom Packages** | 52 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Active Modules** | 376 | ![](https://geps.dev/progress/93?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Archived Modules** | 28 | ![](https://geps.dev/progress/7?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Nix Files** | 427 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Custom Packages** | 34 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Active Modules** | 427 | ![](https://geps.dev/progress/93?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+
 | **Total Commits** | 4000+ | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 
 </div>
@@ -207,7 +207,7 @@ flowchart LR
 <summary><h3>🪟 Window Management</h3></summary>
 
 - 🎨 **Hyprland** - Dynamic tiling Wayland compositor
-- 🧩 **hy3 Plugin** - i3-inspired tiling behavior
+
 - 📐 **21 Workspaces** - Semantic routing (term, web, dev, games, etc.)
 - 💾 **6 Scratchpads** - Telegram, Discord, Music, Torrents, System, Mixer
 - 🎛️ **Quickshell Panel** - Custom status bar with system info
@@ -238,27 +238,26 @@ flowchart LR
 │       ├── networking.nix
 │       └── services.nix
 ├── 📂 modules/                       # 🧩 System modules (32 categories)
-│   ├── 📁 features/                  # ⚙️ Feature flags (10 files)
+│   ├── 📁 features/                  # ⚙️ Feature flags (15 files)
 │   │   ├── core.nix                 # Profile & unfree packages
 │   │   ├── gui.nix                  # GUI stack options
 │   │   ├── dev.nix                  # Development tools
 │   │   └── ...
-│   ├── 📁 cli/                       # 💻 CLI tools (11 files)
+│   ├── 📁 cli/                       # 💻 CLI tools (10 files)
 │   │   ├── tools.nix                # 65 packages
 │   │   ├── dev.nix                  # Git, encoding, fetch
 │   │   └── ...
 │   ├── 📁 user/nix-maid/             # 👤 User configuration
-│   │   ├── 📁 hyprland/              # 🌊 Hyprland (6 modules)
+│   │   ├── 📁 hyprland/              # 🌊 Hyprland (5 modules)
 │   │   │   ├── main.nix
 │   │   │   ├── workspaces.nix      # 21 workspaces
 │   │   │   ├── scratchpads.nix     # 6 scratchpads
 │   │   │   └── ...
 │   │   └── ...
 │   ├── 📁 servers/                   # 🖧 Server services
-│   │   ├── active services/         # 7 active
-│   │   └── 📁 _archive/              # 28 archived
+│   │   ├── active/                   # 11 active
 │   └── ...
-├── 📂 packages/                      # 🎁 Custom overlays (52)
+├── 📂 packages/                      # 🎁 Custom overlays (34)
 │   ├── game-run/
 │   ├── gamescope-*/
 │   ├── rmpc/
@@ -300,7 +299,7 @@ pie title Module Categories Distribution
 | Module | Description | Files |
 |--------|-------------|-------|
 | 🎛️ **args** | Module arguments & impurity | 1 |
-| ⚙️ **features** | Feature flags system | 10 |
+| ⚙️ **features** | Feature flags system | 15 |
 | 📚 **neg** | Custom library helpers | 1 |
 | 👥 **profiles** | Service profiles | 1 |
 | 🎭 **roles** | Role configs (homelab, workstation, media) | 4 |
@@ -351,7 +350,7 @@ pie title Module Categories Distribution
 </details>
 
 <details>
-<summary><h3>🖧 Server Modules (7 active + 28 archived)</h3></summary>
+<summary><h3>🖧 Server Modules (11 active)</h3></summary>
 
 **🟢 Active Services:**
 | Service | Purpose |
@@ -363,13 +362,7 @@ pie title Module Categories Distribution
 | ☁️ nextcloud | Cloud storage & sync |
 | 🔑 openssh | Remote access |
 
-**🔴 Archived** (in `_archive/`, 28 modules):
-- 📦 **Media Stack:** plex, sonarr, radarr, prowlarr, sabnzbd, qbittorrent-vpn
-- 🤖 **AI/LLM:** vllm, whisper, open-webui, tts-webui, wyoming-openai
-- 🛠️ **Services:** gitea, portainer, syncthing, seafile, qdrant
 
-> [!CAUTION]
-> Archived modules are preserved but not evaluated during builds to improve performance.
 
 </details>
 
@@ -529,7 +522,7 @@ gamescope-hdr %command%
 
 </div>
 
-### 💾 6 Pyprland Scratchpads
+### 💾 Hyprscratch Scratchpads
 
 Quick-access overlays for common applications:
 
@@ -546,9 +539,10 @@ Quick-access overlays for common applications:
 
 ## 🛠️ Custom Packages
 
-**52 Custom Packages** tailored for productivity and performance:
+**34 Custom Packages** tailored for productivity and performance:
 
-### 🎮 Gaming Tools
+### 🎮 Game Scripts
+Python-based launcher wrappers in `packages/game-scripts/`:
 - `game-run` - CPU isolation wrapper
 - `gamescope-perf` - Performance preset launcher
 - `gamescope-quality` - Quality preset launcher
@@ -573,8 +567,8 @@ Quick-access overlays for common applications:
 
 | Resource | Description |
 |----------|-------------|
-| 📖 [User Manual](docs/manual/manual.en.md) | Comprehensive guide |
-| 🎯 [Walkthrough](https://github.com/neg-serg/nixos-config/tree/master/.gemini) | Recent improvements |
+| 📖 [User Manual](docs/manual/README.md) | Comprehensive guide |
+
 | 💬 [Package Annotations](modules/) | Inline comments |
 | 🔧 [CI Scripts](scripts/dev/) | Development tools |
 
@@ -632,7 +626,7 @@ Special thanks to:
 
 ### 🌟 Star this repo if you find it useful!
 
-**Last Updated:** December 2025 • **Version:** 24.11 • **Commits:** 4000+
+**Last Updated:** July 2026 • **Version:** 26.05 • **Commits:** 4000+
 
 Made with ❤️ and ☕ by [neg-serg](https://github.com/neg-serg)
 

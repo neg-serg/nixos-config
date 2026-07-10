@@ -5,7 +5,7 @@ Hyprland or the QuickShell theme changes.
 
 ## Source of truth
 
-- Hypr names live in `modules/user/gui/hypr/conf/workspaces.conf`. Names keep the Gothic/Coptic
+- Hypr names live in `modules/user/nix-maid/hyprland/workspaces.nix`. Names keep the Gothic/Coptic
   prefixes (e.g. `𐌰:term`) but **do not** include Private Use Area glyphs any more.
 - Glyph metadata (codepoints + preferred font) is stored in
   `quickshell/.config/quickshell/Bar/Icons/workspaces/icon-map.json`. This lets us keep the icon
@@ -20,11 +20,11 @@ Hyprland or the QuickShell theme changes.
 1. From the repo root run:
 
    ```bash
-   just workspace-icons
+   python3 Tools/workspace-icons/generate.py
    ```
 
-   The `just` recipe launches `quickshell/.config/quickshell/Tools/workspace-icons/generate.py`
-   inside a `nix shell` with python 3.13, `fonttools`, `xmllint`, and `rsvg-convert`.
+   Run `python3 Tools/workspace-icons/generate.py` from the repo root. Requires
+   python 3.13, `fonttools`, `xmllint`, and `rsvg-convert` (available via `nix shell`).
 
 1. The script will:
 
@@ -55,7 +55,7 @@ Hyprland or the QuickShell theme changes.
    - `codepoints` can list multiple values (e.g., glyph + variation selector).
    - `fontPattern` is optional; omit it to use the global default.
 
-1. Run `just workspace-icons` to generate the SVG and manifest entry.
+1. Regenerate icons via `python3 Tools/workspace-icons/generate.py`.
 
 1. Update docs / QML if the new workspace needs bespoke behavior.
 
