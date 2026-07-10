@@ -30,7 +30,7 @@ Options:
 Steps:
 1. Enable flags in hosts.yaml (--enable-flags)
 2. Apply Salt states: sudo salt-call --local state.apply network,services
-3. Import AmneziaVPN config: amnezia-import-tun-config import
+  3. Import AmneziaVPN config: amnezia-tun import
 4. Start services: sudo systemctl start xray && sudo systemctl start sing-box-tun-hybrid
 
 EOF

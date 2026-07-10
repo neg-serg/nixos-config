@@ -29,8 +29,6 @@ in
   };
   wl = callPkg (inputs.self + "/packages/wl") { };
 
-  rofiw = callPkg (inputs.self + "/packages/rofiw") { };
-
   # Fix GSettings schema lookup and GTK wrapping for PipeWire graph GUI
   crosspipe = prev.crosspipe.overrideAttrs (old: {
     nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.wrapGAppsHook ];
