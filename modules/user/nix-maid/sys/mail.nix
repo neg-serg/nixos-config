@@ -55,7 +55,7 @@ let
       port = 587;
     };
   };
-  # TODO(sisyphus): re-enable imapnotify after fixing Gmail credentials
+  # TODO: re-enable imapnotify after fixing Gmail credentials
   # Password/token for serg.zorg@gmail.com expired — goimapnotify gets "Invalid credentials (Failure)".
   # Steps to fix:
   #   1. Generate a new app password in Google Account > Security > App Passwords
