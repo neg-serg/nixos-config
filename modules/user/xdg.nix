@@ -28,7 +28,7 @@ in
       common.default = [
         "hyprland"
       ];
-      common."org.freedesktop.impl.portal.FileChooser" = [ ];
+      common."org.freedesktop.impl.portal.FileChooser" = [ "shana" ];
       hyprland.default = [
         "hyprland"
       ];
