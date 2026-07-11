@@ -17,7 +17,10 @@ let
   ];
 
   vivaldi-pkg = pkgs.vivaldi.override {
-    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=Vulkan";
+    # Wayland Ozone + Skia renderer (stable colors, no Vulkan video-overlay bug) +
+    # VA-API hardware video decoding on AMD (radeonsi). Vulkan is disabled for rendering
+    # and video — it causes a white-screen video overlay on Wayland (Chromium bug).
+    commandLineArgs = "--ozone-platform-hint=wayland --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks --disable-features=Vulkan";
     proprietaryCodecs = true;
   };
 in
