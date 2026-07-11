@@ -25,6 +25,13 @@ in
           "--bind"
           "/zero"
           "/zero"
+          # Portal file dialog (xdg-desktop-portal) requires access to the
+          # document portal socket to avoid hangs in file-chooser dialogs
+          # (e.g. Steam "Add Drive").  --ro-bind-try so it is a no-op when
+          # the path does not exist.
+          "--ro-bind-try"
+          "/run/user/$UID/doc"
+          "/run/user/$UID/doc"
         ];
         extraPkgs =
           pkgs':
