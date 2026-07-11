@@ -23,7 +23,10 @@ let
     # --force-color-profile=srgb is needed for fullscreen: Hyprland direct_scanout
     # bypasses compositor color management (cm=auto), so the GPU outputs in native
     # display gamut.  sRGB clamp keeps colors consistent windowed ↔ fullscreen.
-    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks --disable-features=Vulkan";
+    # --disable-features=WaylandWpColorManagerV1: Chromium's wp_color_manager_v1
+    # protocol handshake with Hyprland cm=auto can fail on AMD, causing overbright
+    # gamma and incorrect colors (vs Firefox which doesn't use this protocol).
+    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks --disable-features=Vulkan,WaylandWpColorManagerV1";
     proprietaryCodecs = true;
   };
 in
