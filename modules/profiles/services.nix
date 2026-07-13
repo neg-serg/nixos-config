@@ -248,7 +248,6 @@ in
     openssh.enable = opts.mkEnableOption "OpenSSH (and mosh) profile.";
     mpd.enable = opts.mkEnableOption "MPD (Music Player Daemon) profile.";
     avahi.enable = opts.mkEnableOption "Avahi (mDNS) profile.";
-    jellyfin.enable = opts.mkEnableOption "Jellyfin media server profile.";
     samba.enable = opts.mkEnableOption "Samba (SMB/CIFS) fileshare profile.";
     seafile = {
       enable = opts.mkEnableOption "Seafile file sync and sharing server profile (Podman containers + optional Caddy proxy).";
