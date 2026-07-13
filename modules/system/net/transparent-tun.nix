@@ -27,8 +27,8 @@ lib.mkIf cfg.enable {
       RemainAfterExit = true;
     };
     path = [
-      pkgs.iproute2
-      pkgs.gawk
+      pkgs.iproute2 # ip, ss, tc networking tools
+      pkgs.gawk # GNU Awk
     ];
     script = ''
       # Find the TUN interface (awg, tun, wg — anything with a default route)
