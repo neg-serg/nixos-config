@@ -112,7 +112,7 @@ in
   config = lib.mkIf cfg.enable {
     # Install pwroute binary
     environment.systemPackages = [
-      pkgs.pwroute
+      pkgs.pwroute # PipeWire audio routing tool
     ];
 
     # Symlink routing.yaml for pwroute
@@ -147,9 +147,9 @@ in
         Environment = "PATH=${
           lib.makeBinPath [
             config.services.pipewire.package
-            pkgs.alsa-utils
-            pkgs.gnused
-            pkgs.coreutils
+            pkgs.alsa-utils # ALSA utilities (amixer, aplay, etc.)
+            pkgs.gnused # GNU sed
+            pkgs.coreutils # GNU core utilities
           ]
         }";
       };

@@ -9,8 +9,8 @@ let
   alertmanagerWebhook = pkgs.writeShellApplication {
     name = "alertmanager-webhook";
     runtimeInputs = [
-      pkgs.curl
-      pkgs.python3
+      pkgs.curl # HTTP data transfer utility
+      pkgs.python3 # Python interpreter
     ];
     text = ''
           # mpdas — Last.fm AudioScrobbler (ported from legacy Salt config)
@@ -93,8 +93,8 @@ lib.mkIf (cfg.enable or false) {
         ConditionUser = "!greeter";
       };
       path = [
-        pkgs.inotify-tools
-        pkgs.zoxide
+        pkgs.inotify-tools # Filesystem event monitor
+        pkgs.zoxide # Smarter cd command
       ];
       serviceConfig = {
         ExecStart = "%h/.local/bin/pic-dirs-list";

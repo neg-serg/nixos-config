@@ -13,7 +13,7 @@ let
 in
 {
   imports = [
-    inputs.steam-config-nix.nixosModules.default
+    inputs.steam-config-nix.nixosModules.default # Steam declarative config injection
   ];
 
   config = lib.mkIf cfg.enable {
