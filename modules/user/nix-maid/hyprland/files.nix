@@ -155,6 +155,28 @@ in
           }
         '';
 
+        ".config/hypr/hypridle.conf".text = ''
+          # Hypridle — OLED-friendly idle configuration
+          # 2 min idle → auto-lock
+          # 3 min idle → DPMS off (OLED pixels fully off)
+          # Any input wakes the display back to the lock screen
+
+          general {
+              lock_cmd = pidof hyprlock || hyprlock
+          }
+
+          listener {
+              timeout = 120
+              on-timeout = pidof hyprlock || hyprlock
+          }
+
+          listener {
+              timeout = 180
+              on-timeout = hyprctl dispatch dpms off
+              on-resume = hyprctl dispatch dpms on
+          }
+        '';
+
         # Hyprscratch config: Telegram scratchpad (name without dots — togglespecialworkspace ломается на '.')
         ".config/hypr/hyprscratch.conf".text = ''
           telegram {
