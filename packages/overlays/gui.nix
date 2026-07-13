@@ -28,14 +28,7 @@ in
     customConfig = inputs.self + "/files/surfingkeys.js";
   };
   wl = callPkg (inputs.self + "/packages/wl") { };
-
   rofiw = callPkg (inputs.self + "/packages/rofiw") { };
-
-  # Fix GSettings schema lookup and GTK wrapping for PipeWire graph GUI
-  crosspipe = prev.crosspipe.overrideAttrs (old: {
-    nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.wrapGAppsHook ];
-    buildInputs = (old.buildInputs or [ ]) ++ [ prev.dconf ];
-  });
 
   skwd = prev.callPackage (inputs.self + "/packages/skwd") {
     skwd-src = inputs.skwd;
