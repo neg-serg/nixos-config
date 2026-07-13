@@ -36,6 +36,17 @@ in
           enable = true;
         };
       }
+      # 5. GTK settings — tell apps/browsers system prefers dark
+      (n.mkHomeFiles {
+        ".config/gtk-3.0/settings.ini".text = ''
+          [Settings]
+          gtk-application-prefer-dark-theme = 1
+        '';
+        ".config/gtk-4.0/settings.ini".text = ''
+          [Settings]
+          gtk-application-prefer-dark-theme = 1
+        '';
+      })
     ]
   );
 }
