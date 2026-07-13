@@ -224,7 +224,6 @@
     ACTION=="add|change", SUBSYSTEM=="block", KERNEL=="nvme*n*", ATTR{queue/wbt_lat_usec}="0"
   '';
   environment.systemPackages = [
-    pkgs.neg.bazecor # Dygma keyboard configurator (AppImage)
   ];
 
   # Skip unnecessary boot-time services (~1s saved)
