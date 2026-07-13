@@ -21,7 +21,6 @@ let
     "openssh"
     "mpd"
     "avahi"
-    "jellyfin"
     "samba"
     "seafile"
   ];

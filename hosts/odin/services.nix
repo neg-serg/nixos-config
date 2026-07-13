@@ -187,8 +187,6 @@ lib.mkMerge [
           enabled = true;
         }
       ];
-      # Explicitly override media role to keep Jellyfin off on this host
-      jellyfin.enable = false;
       # Enable Avahi (mDNS) so iOS/macOS can resolve *.local and discover SMB shares
       avahi.enable = true;
       # Enable Samba profile on this host (guest-access share under /zero/sync/smb)
