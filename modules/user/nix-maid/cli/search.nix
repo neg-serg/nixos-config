@@ -12,10 +12,10 @@ in
   config = lib.mkMerge [
     {
       environment.systemPackages = [
-        pkgs.bat
-        pkgs.fzf
-        pkgs.fd
-        pkgs.ripgrep
+        pkgs.bat # cat with syntax highlighting
+        pkgs.fzf # Fuzzy finder
+        pkgs.fd # Fast file finder
+        pkgs.ripgrep # Recursive grep tool
       ];
 
       environment.variables = {
