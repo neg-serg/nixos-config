@@ -83,11 +83,11 @@ lib.mkMerge [
       adguardhome.rewrites = [
         {
           domain = "odin";
-          answer = "192.168.2.240";
+          answer = "10.0.2.140";
         }
         {
           domain = "odin.local";
-          answer = "192.168.2.240";
+          answer = "10.0.2.140";
         }
       ];
       # Enable curated AdGuardHome filter lists
