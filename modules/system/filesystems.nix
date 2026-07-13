@@ -115,7 +115,7 @@ in {
     after = ["zfs.target"];
     serviceConfig.Type = "oneshot";
     serviceConfig.RemainAfterExit = true;
-    path = [pkgs.zfs];
+    path = [pkgs.zfs]; # ZFS filesystem utilities
     script = ''
       if zfs list tank/store >/dev/null 2>&1; then
         zfs set compression=lz4 tank/store
@@ -140,7 +140,7 @@ in {
     after = ["zfs.target"];
     serviceConfig.Type = "oneshot";
     serviceConfig.RemainAfterExit = true;
-    path = [pkgs.zfs];
+    path = [pkgs.zfs]; # ZFS filesystem utilities
     script = ''
       if zfs list tank/nixos >/dev/null 2>&1; then
         zfs set dnodesize=auto tank/nixos
@@ -159,7 +159,7 @@ in {
     bindsTo = ["dev-nvme1n1.device" "dev-nvme3n1.device"];
     serviceConfig.Type = "oneshot";
     serviceConfig.RemainAfterExit = true;
-    path = [pkgs.zfs];
+    path = [pkgs.zfs]; # ZFS filesystem utilities
     script = ''
       if ! zpool list gamez >/dev/null 2>&1; then
         zpool import -N gamez
@@ -174,7 +174,7 @@ in {
     bindsTo = ["dev-nvme2n1.device"];
     serviceConfig.Type = "oneshot";
     serviceConfig.RemainAfterExit = true;
-    path = [pkgs.zfs];
+    path = [pkgs.zfs]; # ZFS filesystem utilities
     script = ''
       if ! zpool list zero >/dev/null 2>&1; then
         zpool import -N zero
