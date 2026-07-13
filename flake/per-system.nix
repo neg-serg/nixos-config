@@ -73,7 +73,7 @@ in
         pkgs.just # command runner
         pkgs.jq # json processor
         # Linters/Formatters required by 'just lint' (moved from system pkgs)
-        pkgs.black
+        pkgs.black # Python code formatter
         pkgs.ruff # Extremely fast Python linter and code formatter
         pkgs.mypy # Optional static typing for Python
         pkgs.stylua # Opinionated Lua code formatter
@@ -81,15 +81,15 @@ in
     };
 
     difftastic = pkgs.mkShell {
-      packages = [ pkgs.difftastic ];
+      packages = [ pkgs.difftastic ];  # structural diff tool
     };
 
     doggo = pkgs.mkShell {
-      packages = [ pkgs.doggo ];
+      packages = [ pkgs.doggo ];  # modern dig replacement for DNS lookups
     };
 
     rclone = pkgs.mkShell {
-      packages = [ pkgs.rclone ];
+      packages = [ pkgs.rclone ];  # rsync for cloud storage
     };
 
 
@@ -139,7 +139,7 @@ in
         pkgs.cmake # Cross-platform, open-source build system generator
         pkgs.cmake-format # CMake file formatter
         pkgs.ninja # Small build system with a focus on speed
-        pkgs.bear
+        pkgs.bear # compilation database generator for clang
         pkgs.ccache # Compiler cache for fast recompilation of C/C++ code
         pkgs.gdb # GNU Project debugger
         pkgs.gcc # explicitly available in devshell
@@ -160,19 +160,19 @@ in
     };
 
     numbat = pkgs.mkShell {
-      packages = [ pkgs.numbat ];
+      packages = [ pkgs.numbat ];  # scientific calculator with unit conversion
     };
 
     openconnect = pkgs.mkShell {
-      packages = [ pkgs.openconnect ];
+      packages = [ pkgs.openconnect ];  # Cisco AnyConnect VPN client
     };
 
     nurl = pkgs.mkShell {
-      packages = [ pkgs.nurl ];
+      packages = [ pkgs.nurl ];  # Nix URL derivation helper
     };
 
     nchat = pkgs.mkShell {
-      packages = [ pkgs.nchat ];
+      packages = [ pkgs.nchat ];  # terminal-based chat client
     };
 
     vlang = pkgs.mkShell {
@@ -182,11 +182,11 @@ in
     };
 
     viddy = pkgs.mkShell {
-      packages = [ pkgs.viddy ];
+      packages = [ pkgs.viddy ];  # modern watch command with history
     };
 
     uni = pkgs.mkShell {
-      packages = [ pkgs.uni ];
+      packages = [ pkgs.uni ];  # Unicode query tool
     };
 
     re = pkgs.mkShell {
@@ -205,7 +205,7 @@ in
       in
       pkgs.mkShell {
         nativeBuildInputs = [
-          pkgs.ansible
+          pkgs.ansible # IT automation platform
           pkgs.terraform # Tool for building, changing, and versioning infrastructure
           pkgs.opentofu # Tool for building, changing, and versioning infrastructure
         ]
@@ -242,7 +242,7 @@ in
         nativeBuildInputs = [
           pythonEnv
           pkgs.pipx # Install and run Python applications in isolated environments
-          pkgs.black
+          pkgs.black # Python code formatter
           pkgs.ruff # Extremely fast Python linter and code formatter
           pkgs.mypy # Optional static typing for Python
         ];
@@ -256,28 +256,28 @@ in
 
     android = pkgs.mkShell {
       nativeBuildInputs = [
-        pkgs.android-tools
+        pkgs.android-tools # Android ADB and fastboot tools
         pkgs.scrcpy # Display and control Android devices over USB or TCP/IP
-        pkgs.adbfs-rootless
-        pkgs.adbtuifm
+        pkgs.adbfs-rootless # Mount Android devices via FUSE filesystem
+        pkgs.adbtuifm # TUI file manager for Android over ADB
       ]
       ++ lib.optionals (pkgs ? fuse3) [ pkgs.fuse3 ]; # Library that allows filesystems to be implemented in user...
     };
 
     ape = pkgs.mkShell {
-      packages = [ pkgs.ape ];
+      packages = [ pkgs.ape ];  # APE file parser and emulator
     };
 
     "ast-grep" = pkgs.mkShell {
-      packages = [ pkgs.ast-grep ];
+      packages = [ pkgs.ast-grep ];  # AST-based structural code search
     };
 
     bespokesynth = pkgs.mkShell {
-      packages = [ pkgs.bespokesynth ];
+      packages = [ pkgs.bespokesynth ];  # modular software synthesizer
     };
 
     fabric-ai = pkgs.mkShell {
-      packages = [ pkgs.fabric-ai ];
+      packages = [ pkgs.fabric-ai ];  # AI-powered CLI workflow tool
     };
 
     qmk = pkgs.mkShell {
@@ -308,7 +308,7 @@ in
         pkgs.netdiscover # Network address discovering tool, developed mainly for th...
         pkgs.enum4linux # Tool for enumerating information from Windows and Samba s...
         pkgs.onesixtyone # Fast SNMP Scanner
-        pkgs.arping
+        pkgs.arping # ARP-level ping utility
         pkgs.cloudbrute # Cloud enumeration tool
         pkgs.sn0int # Semi-automatic OSINT framework and package manager
         pkgs.netmask # IP address formatting tool
@@ -331,7 +331,7 @@ in
         pkgs.john # John the Ripper password cracker
         pkgs.hashcat # Fast password cracker
         pkgs.thc-hydra # Very fast network logon cracker which support many differ...
-        pkgs.brutespray
+        pkgs.brutespray # brute force spray tool
         pkgs.crowbar # Brute forcing tool that can be used during penetration tests
         pkgs.crunch # Wordlist generator
         pkgs.chntpw # Utility to reset the password of any user that has a vali...
@@ -350,7 +350,7 @@ in
         pkgs.tshark # Powerful network protocol analyzer
         pkgs.termshark # Terminal UI for wireshark-cli, inspired by Wireshark
         pkgs.tcpdump # Network sniffer
-        pkgs.bettercap
+        pkgs.bettercap # MITM attack framework
         pkgs.mitmproxy # Man-in-the-middle proxy
         pkgs.dsniff # Collection of tools for network auditing and penetration ...
         pkgs.rshijack # TCP connection hijacker
@@ -369,12 +369,12 @@ in
         pkgs.zsteg # Detect stegano-hidden data in PNG & BMP
         pkgs.stegsolve # Steganographic image analyzer, solver and data extractor ...
         pkgs.ghidra-bin # Software reverse engineering (SRE) suite of tools develop...
-        pkgs.capstone
+        pkgs.capstone # disassembly framework
         pkgs.pdf-parser # Parse a PDF document
         pkgs.p0f # Passive network reconnaissance and fingerprinting tool
 
         # Wireless
-        pkgs.aircrack-ng
+        pkgs.aircrack-ng # wireless security assessment tools
         pkgs.impala # TUI for managing wifi
 
         # Misc Network
@@ -422,7 +422,7 @@ in
     };
 
     lnav = pkgs.mkShell {
-      packages = [ pkgs.lnav ];
+      packages = [ pkgs.lnav ];  # log file navigator with SQL queries
     };
 
     music-learning = pkgs.mkShell {
@@ -432,15 +432,15 @@ in
     };
 
     neonmodem = pkgs.mkShell {
-      packages = [ pkgs.neonmodem ];
+      packages = [ pkgs.neonmodem ];  # terminal-based LLM API client
     };
 
     "netsniff-ng" = pkgs.mkShell {
-      packages = [ pkgs.netsniff-ng ];
+      packages = [ pkgs.netsniff-ng ];  # high-performance network packet sniffer
     };
 
     netbird = pkgs.mkShell {
-      packages = [ pkgs.netbird ];
+      packages = [ pkgs.netbird ];  # zero-config VPN mesh network
     };
 
     misc = pkgs.mkShell {
@@ -461,7 +461,7 @@ in
     };
 
     "mesa-demos" = pkgs.mkShell {
-      packages = [ pkgs.mesa-demos ];
+      packages = [ pkgs.mesa-demos ];  # Mesa 3D graphics demo applications
     };
 
     virt = pkgs.mkShell {
@@ -519,15 +519,15 @@ in
     };
 
     speech = pkgs.mkShell {
-      packages = [ pkgs.speechd ];
+      packages = [ pkgs.speechd ];  # speech synthesis daemon and client
     };
 
     bcc = pkgs.mkShell {
-      packages = [ pkgs.bcc ];
+      packages = [ pkgs.bcc ];  # BPF Compiler Collection tools
     };
 
     slskd = pkgs.mkShell {
-      packages = [ pkgs.slskd ];
+      packages = [ pkgs.slskd ];  # Soulseek P2P music sharing daemon
     };
 
     db = pkgs.mkShell {
@@ -553,27 +553,27 @@ in
     };
 
     "stress-ng" = pkgs.mkShell {
-      packages = [ pkgs.stress-ng ];
+      packages = [ pkgs.stress-ng ];  # system stress testing tool
     };
 
     pueue = pkgs.mkShell {
-      packages = [ pkgs.pueue ];
+      packages = [ pkgs.pueue ];  # shell command queue daemon
     };
 
     gron = pkgs.mkShell {
-      packages = [ pkgs.gron ];
+      packages = [ pkgs.gron ];  # JSON to greppable flat format converter
     };
 
     lzbench = pkgs.mkShell {
-      packages = [ pkgs.lzbench ];
+      packages = [ pkgs.lzbench ];  # compression algorithm benchmark
     };
 
     vulkan = pkgs.mkShell {
-      packages = [ pkgs.vulkan-extension-layer ];
+      packages = [ pkgs.vulkan-extension-layer ];  # Vulkan extension validation layer
     };
 
     amfora = pkgs.mkShell {
-      packages = [ pkgs.amfora ];
+      packages = [ pkgs.amfora ];  # terminal Gemini protocol browser
     };
 
     freeze = pkgs.mkShell {
@@ -621,7 +621,7 @@ in
         name = "fmt";
         runtimeInputs = [
           nixfmtPkg
-          pkgs.black
+          pkgs.black # Python code formatter
           pkgs.python3Packages.mdformat
           pkgs.shfmt # Shell parser and formatter
           pkgs.treefmt # One CLI to format the code tree
