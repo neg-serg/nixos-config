@@ -2,7 +2,6 @@
 {
   imports = [
     ./archives
-    ./tmux
     ./dev.nix
     ./file-ops.nix
     ./media.nix
