@@ -14,7 +14,6 @@ let
   extraEnabled = config.features.emulators.extra.enable or false;
 
   extraPackages = [
-    pkgs.dosbox # DOS emulator
     pkgs.dosbox-staging # modernized DOSBox fork with better latency
     pkgs.dosbox-x # DOSBox fork focused on historical accuracy
     pkgs.pcem # IBM PC emulator
