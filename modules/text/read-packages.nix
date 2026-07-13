@@ -12,7 +12,6 @@ let
   packages = [
     pkgs.antiword # convert MS Word documents to text, PostScript and XML
     pkgs.epr # CLI Epub reader
-    pkgs.glow # terminal based markdown reader
     pkgs.lowdown # simple markdown translator
   ];
 in
