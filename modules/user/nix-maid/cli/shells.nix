@@ -11,7 +11,6 @@ let
   # --- Config Sources ---
   shellFiles = ../../../../files/shell;
   kittyConf = ../../../../files/kitty;
-  tmuxConfDir = ../../../../files/tmux;
   dircolorsConfig = "${inputs.self}/files/shell/dircolors/dircolors";
 
   # --- Inputrc ---
@@ -166,24 +165,16 @@ in
       };
 
       environment.systemPackages = [
-        # Terminals
-        pkgs.kitty # GPU-accelerated terminal with ligatures and image support
-
-        # Shells
-        pkgs.tmux # Terminal multiplexer for session management
-        pkgs.oh-my-posh # Cross-shell prompt theme engine
-        pkgs.zinit # Zsh plugin manager (zi)
-
-        # Tools needed for kitty-panel
         pkgs.btop # Resource monitor (CPU, memory, disks, network)
         pkgs.cava # Console audio visualizer
-        # curl — installed by modules/system/net/pkgs.nix
+        pkgs.kitty # GPU-accelerated terminal with ligatures and image support
         pkgs.mtr # Network diagnostic tool
+        pkgs.oh-my-posh # Cross-shell prompt theme engine
+        pkgs.zinit # Zsh plugin manager (zi)
       ];
 
       environment.sessionVariables = {
         ZDOTDIR = "$HOME/.config/zsh";
-
         TERMINAL = "kitty";
         MANWIDTH = "80";
         GREP_COLOR = "37;45";
@@ -201,15 +192,8 @@ in
       ".config/bash/oh-my-posh.bash".source = "${shellFiles}/bash/oh-my-posh.bash";
       ".config/f-sy-h".source = "${shellFiles}/f-sy-h";
       ".config/zsh-native-syntax".source = "${shellFiles}/zsh-native-syntax";
-
       # --- Terminal & Specific Shell Configs ---
-
-      # Kitty Config
-      ".config/kitty".source = kittyConf;
-
-      # Tmux Config
-      ".config/tmux".source = tmuxConfDir;
-
+      ".config/kitty".source = kittyConf; # Kitty Config
     })
   ];
 }
