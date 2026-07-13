@@ -2,7 +2,7 @@ _: {
   networking = {
     hostName = "odin";
     hostId = "ab0cd1ef"; # Required for ZFS pool import
-    hosts."192.168.2.240" = [
+    hosts."10.0.2.140" = [
       "odin"
       "odin.local"
     ];
@@ -27,12 +27,20 @@ _: {
 
   systemd.network = {
     networks = {
-      "10-lan" = {
+      # Old LAN config — kept for reference, replaced by 10-lan-v2 below
+      # "10-lan" = {
+      #   matchConfig.Name = "net0";
+      #   address = [ "192.168.2.240/24" ];
+      #   gateway = [ "192.168.2.1" ];
+      #   dns = [ "192.168.2.1" ];
+      #   linkConfig.RequiredForOnline = "routable";
+      # };
+      "10-lan-v2" = {
         matchConfig.Name = "net0";
         # Static IP configuration (faster boot, no DHCP wait)
-        address = [ "192.168.2.240/24" ];
-        gateway = [ "192.168.2.1" ];
-        dns = [ "192.168.2.1" ];
+        address = [ "10.0.2.140/27" ];
+        gateway = [ "10.0.2.129" ];
+        dns = [ "10.0.2.129" ];
         # net0 is our main link, we want to wait for it
         linkConfig.RequiredForOnline = "routable";
       };
