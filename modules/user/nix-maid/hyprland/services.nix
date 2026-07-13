@@ -5,6 +5,7 @@
 }:
 {
   packages = [
+    pkgs.hypridle # idle daemon (triggers DPMS off for OLED safety)
     pkgs.hyprlock # Hyprland's GPU-accelerated screen locking utility
     pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
     pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
@@ -111,6 +112,19 @@
       serviceConfig = {
         ExecStart = "${lib.getExe pkgs.hyprscratch} init spotless";
         Restart = "always";
+        RestartSec = "2";
+      };
+    };
+
+    # Hypridle — idle daemon (OLED safety: turns off display after 3 min)
+    hypridle = {
+      description = "Hyprland idle daemon";
+      wantedBy = [ "hyprland-session.target" ];
+      bindsTo = [ "hyprland-session.target" ];
+      after = [ "hyprland-session.target" ];
+      serviceConfig = {
+        ExecStart = "${lib.getExe pkgs.hypridle}";
+        Restart = "on-failure";
         RestartSec = "2";
       };
     };
