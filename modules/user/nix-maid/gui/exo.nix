@@ -39,13 +39,13 @@ let
             --prefix PATH : ${lib.makeBinPath ignisRuntimeDeps} \
             --prefix GI_TYPELIB_PATH : ${
               lib.makeSearchPath "lib/girepository-1.0" [
-                pkgs.gtk4
-                pkgs.libadwaita
-                pkgs.gobject-introspection
-                pkgs.glib
-                pkgs.pango
-                pkgs.gdk-pixbuf
-                pkgs.graphene
+                pkgs.gtk4 # GTK4 toolkit
+                pkgs.libadwaita # GTK4 Libadwaita widget library
+                pkgs.gobject-introspection # GObject introspection bindings
+                pkgs.glib # GLib core library
+                pkgs.pango # Pango text layout library
+                pkgs.gdk-pixbuf # GDK Pixbuf image loader
+                pkgs.graphene # Graphics primitive types library
               ]
             }
         ''

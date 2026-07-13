@@ -11,9 +11,9 @@ in
 lib.mkMerge [
   {
     environment.systemPackages = [
-      pkgs.aliae
-      pkgs.fastfetch
-      pkgs.tealdeer
+      pkgs.aliae # Shell alias manager
+      pkgs.fastfetch # System info tool (neofetch successor)
+      pkgs.tealdeer # Fast tldr client
     ];
 
     environment.variables = {
