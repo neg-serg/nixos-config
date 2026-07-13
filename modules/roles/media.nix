@@ -1,8 +1,8 @@
 ##
 # Module: roles/media
-# Purpose: Media role (Jellyfin/MPD etc).
+# Purpose: Media role (MPD etc).
 # Key options: cfg = config.roles.media.enable
-# Dependencies: Enables profiles.services.* (jellyfin, mpd, avahi, openssh).
+# Dependencies: Enables profiles.services.* (mpd, avahi, openssh).
 {
   lib,
   config,
@@ -16,7 +16,6 @@ in
 
   config = lib.mkIf cfg.enable {
     profiles.services = {
-      jellyfin.enable = lib.mkDefault true;
       mpd.enable = lib.mkDefault true;
       avahi.enable = lib.mkDefault true;
       openssh.enable = lib.mkDefault true;

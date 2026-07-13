@@ -6,7 +6,6 @@
     ./bitcoind
     ./duckdns
     ./geoclue
-    ./jellyfin
     ./mpd
     ./netdata
     ./openssh
