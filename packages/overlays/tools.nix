@@ -11,63 +11,26 @@ let
     prev.callPackage path (autoArgs // extraArgs);
 in
 {
-
   neg = (prev.neg or { }) // rec {
-    # Surfingkeys configuration
-    surfingkeys_conf = callPkg (packagesRoot + "/surfingkeys-conf") { };
-    "surfingkeys-conf" = surfingkeys_conf;
-
+    albumdetails = callPkg (packagesRoot + "/albumdetails") { }; # Music album metadata CLI (used by music-rename script)
+    brrtfetch = callPkg (packagesRoot + "/brrtfetch") { }; # Animated ASCII art GIF renderer alongside sysinfo output
+    duf = callPkg (packagesRoot + "/duf") { }; # duf fork with --style plain, --no-header, --no-bars flags
+    hwctl = callPkg (packagesRoot + "/hwctl") { }; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
+    hypr-focus = callPkg (packagesRoot + "/hypr-focus") { }; # Rust-based window focus CLI — set window class on focused Hyprland window
+    openagentscontrol = callPkg (packagesRoot + "/openagentscontrol") { }; # OpenAgentsControl — AI agent framework for plan-first development (agents + contexts for OpenCode)
+    palettum = callPkg (packagesRoot + "/palettum") { }; # Image/GIF/video recolor tool with custom palettes
+    pretty_printer = callPkg (packagesRoot + "/pretty-printer") { }; # Pretty-printer library + CLI (ppinfo)
+    proteinview = callPkg (packagesRoot + "/proteinview") { }; # Terminal protein structure viewer — interactive 3D visualization of PDB/mmCIF
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
+    solarust = callPkg (packagesRoot + "/solarust") { }; # Random solar system simulator for the terminal
+    sqlit = callPkg (packagesRoot + "/sqlit") { }; # A terminal UI for SQL databases
+    surfingkeys_conf = callPkg (packagesRoot + "/surfingkeys-conf") { }; # Surfingkeys configuration    
+    talktype = callPkg (packagesRoot + "/talktype") { }; # Push-to-talk voice typing tool (F9 to record, transcribe, paste)
+    termeverything = callPkg (packagesRoot + "/termeverything") { }; # Run GUI windows inside your terminal (Wayland compositor → ANSI)
+    zsh-native-syntax = callPkg (packagesRoot + "/zsh-native-syntax") { }; # Native Rust-based zsh syntax highlighting engine
 
-    # A terminal UI for SQL databases
-    sqlit = callPkg (packagesRoot + "/sqlit") { };
-
-    # Music album metadata CLI (used by music-rename script)
-    albumdetails = callPkg (packagesRoot + "/albumdetails") { };
-
-    # Pretty-printer library + CLI (ppinfo)
-    pretty_printer = callPkg (packagesRoot + "/pretty-printer") { };
+    "surfingkeys-conf" = surfingkeys_conf;
     "pretty-printer" = pretty_printer;
-
-    # Better Shell History - Git-aware predictive terminal history tool
-
-    # Trader Workstation (IBKR) packaged from upstream installer
-
-    # duf fork with --style plain, --no-header, --no-bars flags
-    duf = callPkg (packagesRoot + "/duf") { };
-
-    # Terminal protein structure viewer — interactive 3D visualization of PDB/mmCIF
-    proteinview = callPkg (packagesRoot + "/proteinview") { };
-
-    # AI agent tool for code assistance
-    sidecar = callPkg (packagesRoot + "/sidecar") { };
-
-    # Native Rust-based zsh syntax highlighting engine
-    zsh-native-syntax = callPkg (packagesRoot + "/zsh-native-syntax") { };
-
-    # Random solar system simulator for the terminal
-    solarust = callPkg (packagesRoot + "/solarust") { };
-
-    # Image/GIF/video recolor tool with custom palettes
-    palettum = callPkg (packagesRoot + "/palettum") { };
-
-    # Run GUI windows inside your terminal (Wayland compositor → ANSI)
-    termeverything = callPkg (packagesRoot + "/termeverything") { };
-
-    # Animated ASCII art GIF renderer alongside sysinfo output
-    brrtfetch = callPkg (packagesRoot + "/brrtfetch") { };
-
-    # Push-to-talk voice typing tool (F9 to record, transcribe, paste)
-    talktype = callPkg (packagesRoot + "/talktype") { };
-
-    # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
-    hwctl = callPkg (packagesRoot + "/hwctl") { };
-
-    # Rust-based window focus CLI — set window class on focused Hyprland window
-    hypr-focus = callPkg (packagesRoot + "/hypr-focus") { };
-
-    # OpenAgentsControl — AI agent framework for plan-first development (agents + contexts for OpenCode)
-    openagentscontrol = callPkg (packagesRoot + "/openagentscontrol") { };
 
     # ncpamixer with custom config
     ncpamixer-wrapped =
