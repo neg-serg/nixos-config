@@ -1097,16 +1097,16 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1784065544,
+        "lastModified": 1784069699,
         "owner": "neg-serg",
         "repo": "nixpkgs-slim",
-        "rev": "827854d9ec625f0d4d4bc1ddff74f94799ecd7c7",
+        "rev": "c43763c256030cac02b3c5517187777b1c2c2e4d",
         "type": "github"
       },
       "original": {
         "owner": "neg-serg",
         "repo": "nixpkgs-slim",
-        "rev": "827854d9ec625f0d4d4bc1ddff74f94799ecd7c7",
+        "rev": "c43763c256030cac02b3c5517187777b1c2c2e4d",
         "type": "github"
       }
     },
