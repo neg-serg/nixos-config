@@ -28,10 +28,10 @@ local function key2s(layouts, fn)
   end
 end
 
--- Safe position accessor (get_position() may return nil coords in edge cases)
+-- Safe position accessor (fork returns tuple x,y; upstream returns table {x=..., y=...})
 local function get_pos()
-  local pos = swayimg.viewer.get_position()
-  return { x = pos.x or 0, y = pos.y or 0 }
+  local x, y = swayimg.viewer.get_position()
+  return { x = x or 0, y = y or 0 }
 end
 
 -- Antialiasing state (API has no getter)
@@ -70,6 +70,7 @@ swayimg.viewer.set_image_background(0xff000000)    -- #000000ff (transparent bg)
 swayimg.viewer.enable_loop(false)
 swayimg.viewer.set_preload_limit(16)
 swayimg.viewer.set_history_limit(4)
+swayimg.viewer.enable_freemove(true)  -- allow panning when image fits entirely in window
 
 -- Text layout: bottom-left=path, bottom-right=index/status
 swayimg.viewer.set_text_bl({"{path}"})
@@ -201,6 +202,10 @@ swayimg.viewer.on_key("Ctrl-Shift-comma", function()
   local img = swayimg.viewer.current_image()
   exec(actions .. " rotate-ccw " .. cp(img['path']))
 end)
+swayimg.viewer.on_key("Ctrl-Shift-less", function()
+  local img = swayimg.viewer.current_image()
+  exec(actions .. " rotate-ccw " .. cp(img['path']))
+end)
 swayimg.viewer.on_key("Ctrl-period", function()
   local img = swayimg.viewer.current_image()
   exec(actions .. " rotate-right " .. cp(img['path']))
@@ -268,6 +273,11 @@ key2({"Ctrl-с"}, function() local i=swayimg.viewer.current_image() exec(actions
 key2({"Ctrl-в"}, function() local i=swayimg.viewer.current_image() exec(actions.." mv "..cp(i['path']).." "..os.getenv("HOME").."/trash/1st-level/pic") end)
 key2({"Ctrl-ц"}, function() local i=swayimg.viewer.current_image() exec(actions.." wall-cover "..cp(i['path'])) end)
 
+-- Zoom and reset (restored after bind_reset())
+swayimg.viewer.on_key("Equal", function() local s = swayimg.viewer.get_scale() swayimg.viewer.set_abs_scale(s + s/10) end)
+swayimg.viewer.on_key("Minus", function() local s = swayimg.viewer.get_scale() swayimg.viewer.set_abs_scale(s - s/10) end)
+swayimg.viewer.on_key("BackSpace", function() swayimg.viewer.reset_scale() end)
+
 -- ── Gallery ──────────────────────────────────────────────────────────────
 swayimg.gallery.set_thumb_size(200)
 swayimg.gallery.set_cache_size(100000)
@@ -291,6 +301,8 @@ swayimg.gallery.on_key("k", function() swayimg.gallery.select("up") end)
 swayimg.gallery.on_key("j", function() swayimg.gallery.select("down") end)
 swayimg.gallery.on_key("Up", function() swayimg.gallery.select("up") end)
 swayimg.gallery.on_key("Down", function() swayimg.gallery.select("down") end)
+swayimg.gallery.on_key("Left", function() swayimg.gallery.select("left") end)
+swayimg.gallery.on_key("Right", function() swayimg.gallery.select("right") end)
 swayimg.gallery.on_key("J", function() swayimg.gallery.select("down") end)
 
 -- Grid paging
@@ -513,15 +525,15 @@ swayimg.slideshow.on_key("BackSpace", function() swayimg.slideshow.open("prev") 
 swayimg.slideshow.on_key("Return", function() swayimg.set_mode("gallery") end)
 swayimg.slideshow.on_key("Escape", function() swayimg.set_mode("gallery") end)
 swayimg.slideshow.on_key("i", function() swayimg.text.show() end)
--- Pan navigation
-swayimg.slideshow.on_key("h", function() local p=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position(p.x-50,p.y) end)
-swayimg.slideshow.on_key("l", function() local p=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position(p.x+50,p.y) end)
-swayimg.slideshow.on_key("k", function() local p=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position(p.x,p.y-50) end)
-swayimg.slideshow.on_key("j", function() local p=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position(p.x,p.y+50) end)
-swayimg.slideshow.on_key("Left", function() local p=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position(p.x-50,p.y) end)
-swayimg.slideshow.on_key("Right", function() local p=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position(p.x+50,p.y) end)
-swayimg.slideshow.on_key("Up", function() local p=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position(p.x,p.y-50) end)
-swayimg.slideshow.on_key("Down", function() local p=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position(p.x,p.y+50) end)
+-- Pan navigation (fork returns tuple x,y, not table)
+swayimg.slideshow.on_key("h", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0)-50,(py or 0)) end)
+swayimg.slideshow.on_key("l", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0)+50,(py or 0)) end)
+swayimg.slideshow.on_key("k", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0),(py or 0)-50) end)
+swayimg.slideshow.on_key("j", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0),(py or 0)+50) end)
+swayimg.slideshow.on_key("Left", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0)-50,(py or 0)) end)
+swayimg.slideshow.on_key("Right", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0)+50,(py or 0)) end)
+swayimg.slideshow.on_key("Up", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0),(py or 0)-50) end)
+swayimg.slideshow.on_key("Down", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0),(py or 0)+50) end)
 
 -- Slideshow: Russian layout duplicates (ЙЦУКЕН)
 key2s({"й"}, function() swayimg.exit(0) end)
@@ -536,8 +548,8 @@ key2s({"К"}, function() local i=swayimg.slideshow.current_image() exec(actions.
 key2s({"М"}, function() local i=swayimg.slideshow.current_image() exec(actions.." range-mv "..cp(i['path'])) end)
 key2s({"т"}, function() swayimg.slideshow.open("next") end)
 key2s({"з"}, function() swayimg.slideshow.open("prev") end)
-key2s({"р"}, function() local p=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position(p.x-50,p.y) end)
-key2s({"о"}, function() local p=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position(p.x,p.y+50) end)
-key2s({"л"}, function() local p=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position(p.x,p.y-50) end)
-key2s({"д"}, function() local p=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position(p.x+50,p.y) end)
+key2s({"р"}, function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0)-50,(py or 0)) end)
+key2s({"о"}, function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0),(py or 0)+50) end)
+key2s({"л"}, function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0),(py or 0)-50) end)
+key2s({"д"}, function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0)+50,(py or 0)) end)
 key2s({"ш"}, function() swayimg.text.show() end)
