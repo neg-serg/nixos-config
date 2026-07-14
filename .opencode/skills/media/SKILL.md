@@ -1,6 +1,7 @@
-______________________________________________________________________
-
-## name: media description: Audio/video processing, conversion, and analysis via ffmpeg CLI
+---
+name: media
+description: "Audio/video processing, conversion, and analysis via ffmpeg CLI"
+---
 
 # Media Processing
 
