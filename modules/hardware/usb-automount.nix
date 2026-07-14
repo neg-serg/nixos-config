@@ -107,10 +107,6 @@ let
   '';
 in
 {
-  options.features.hardware.usbAutomount.enable = lib.mkEnableOption ''
-    Enable udev-driven USB storage auto-mount via systemd service (mounts under /mnt/<label>).
-  '';
-
   config = lib.mkIf cfg.enable {
     # Avoid double-automount with udisks/devmon
     services.devmon.enable = lib.mkForce false;
