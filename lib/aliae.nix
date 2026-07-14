@@ -20,34 +20,11 @@ let
   # Helper for recursive aliases/standard commands in Nushell (force external)
   mkCmd = name: if isNushell then "^${name}" else name;
 
-  hasRg = pkgs ? ripgrep;
-  hasNmap = pkgs ? nmap;
-  hasCurl = pkgs ? curl;
-  hasJq = pkgs ? jq;
-  hasUg = pkgs ? ugrep;
-  hasErd = pkgs ? erdtree;
-  hasPrettyping = pkgs ? prettyping;
-  hasDuf = pkgs ? neg && pkgs.neg ? duf;
-  hasDust = pkgs ? dust;
-  hasHandlr = pkgs ? handlr;
-  hasWget2 = pkgs ? wget2;
-  hasPlocate = pkgs ? plocate;
-  hasOuch = pkgs ? ouch;
-  hasPigz = pkgs ? pigz;
-  hasPbzip2 = pkgs ? pbzip2;
-  hasHxd = pkgs ? hexyl || pkgs ? hxd;
-  hasMpvc = pkgs ? mpvc;
-  hasMpv = pkgs ? mpv;
-  hasRlwrap = pkgs ? rlwrap;
-  hasYtDlp = pkgs ? yt-dlp;
-  hasKhal = pkgs ? khal;
-  hasBtm = pkgs ? btm;
-  hasIotop = pkgs ? iotop;
-  hasLsof = pkgs ? lsof;
-  hasKmon = pkgs ? kmon;
-  hasFd = pkgs ? fd;
-  hasMpc = pkgs ? mpc;
-  hasFlatpak = pkgs ? flatpak;
+  checks = import ./package-checks.nix { inherit pkgs; };
+  inherit (checks) hasRg hasNmap hasCurl hasJq hasUg hasErd hasPrettyping hasDuf
+    hasDust hasHandlr hasWget2 hasPlocate hasOuch hasPigz hasPbzip2 hasHxd
+    hasMpvc hasMpv hasRlwrap hasYtDlp hasKhal hasBtm hasIotop hasLsof hasKmon
+    hasFd hasMpc hasFlatpak;
 
   content = lib.concatStrings [
     "# Aliae aliases (cross-shell)\n"

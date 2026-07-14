@@ -6,7 +6,7 @@
   ...
 }:
 let
-  n = neg;
+  inherit (config.users.users.neg) home;
 
   # --- Beets distrobox wrapper ---
   beetWrapper = pkgs.writeShellScriptBin "beet" ''
@@ -62,7 +62,7 @@ let
   spiceSettings = {
     Setting = {
       spotify_path = "${pkgs.spotify}/share/spotify"; # Path to Spotify desktop files
-      prefs_path = "${config.users.users.neg.home}/.config/spotify/prefs";
+      prefs_path = "${home}/.config/spotify/prefs";
       current_theme = "Ziro";
       color_scheme = "rose-pine-moon";
       inject_css = true;
@@ -124,7 +124,7 @@ lib.mkMerge [
     };
   }
 
-  (n.mkHomeFiles {
+  (neg.mkHomeFiles {
     # Beets
     ".config/beets/config.yaml".text = builtins.toJSON beetsSettings;
 
@@ -135,7 +135,7 @@ lib.mkMerge [
       [Connection]
       host = localhost
       port = 6600
-      music_dir = ${config.users.users.neg.home}/music
+      music_dir = ${home}/music
       [Bling]
       notify = False
       mmkeys = True
@@ -214,7 +214,7 @@ lib.mkMerge [
     # mpdas service lives in sys/user-services.nix (with ALL_PROXY via SOCKS5).
   })
   (lib.mkIf (config.features.media.aiUpscale.enable or false) (
-    n.mkHomeFiles {
+    neg.mkHomeFiles {
       ".local/bin/ai-upscale-video" = {
         executable = true;
         text = builtins.readFile ../scripts/ai-upscale-video.sh;

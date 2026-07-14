@@ -6,7 +6,6 @@
   ...
 }:
 let
-  n = neg;
   devEnabled = config.features.dev.enable or false;
   nvimConf = ../../files/nvim;
 in
@@ -68,8 +67,8 @@ lib.mkIf devEnabled (
         pkgs.marksman # Markdown LSP (mason build fails on NixOS — use nixpkgs instead)
       ];
     }
-    (n.mkHomeFiles {
-      ".config/nvim".source = n.linkImpure nvimConf;
+    (neg.mkHomeFiles {
+      ".config/nvim".source = neg.linkImpure nvimConf;
     })
   ]
 )

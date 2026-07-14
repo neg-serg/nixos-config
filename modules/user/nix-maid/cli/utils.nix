@@ -6,7 +6,7 @@
   ...
 }:
 let
-  n = neg;
+  inherit (config.users.users.neg) home;
 in
 lib.mkMerge [
   {
@@ -17,12 +17,12 @@ lib.mkMerge [
     ];
 
     environment.variables = {
-      HTTPIE_CONFIG_DIR = "${config.users.users.neg.home}/.config/httpie";
-      PARALLEL_HOME = "${config.users.users.neg.home}/.config/parallel";
+      HTTPIE_CONFIG_DIR = "${home}/.config/httpie";
+      PARALLEL_HOME = "${home}/.config/parallel";
     };
   }
 
-  (n.mkHomeFiles {
+  (neg.mkHomeFiles {
     ".config/fastfetch/config.jsonc".text = ''
       {
         "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",

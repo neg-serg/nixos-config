@@ -6,12 +6,11 @@
   ...
 }:
 let
-  n = neg;
   cfg = config.features.games.nethack;
 in
 {
   config = lib.mkIf (cfg.enable or false) (
-    n.mkHomeFiles {
+    neg.mkHomeFiles {
       ".nethackrc".text = ''
         OPTIONS=windowtype:curses
         OPTIONS=popup_dialog

@@ -6,7 +6,6 @@
   ...
 }:
 let
-  n = neg;
   cfg = config.features.dev;
 in
 {
@@ -15,7 +14,7 @@ in
       {
         environment.systemPackages = [ pkgs.tig ]; # Text-mode interface for git
       }
-      (n.mkHomeFiles {
+      (neg.mkHomeFiles {
         ".config/tig/config".text = ''
           #--[ View settings ]-----------------------------------------------------------------------------------------------
           set main-view = line-number:no,interval=5 id:no date:relative author:full commit-title:yes,graph,refs,overflow=no

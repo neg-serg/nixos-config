@@ -5,7 +5,6 @@
   ...
 }:
 let
-  n = neg;
   gitSettings = {
     user = {
       name = "Sergey Miroshnichenko";
@@ -135,7 +134,7 @@ let
   };
 in
 {
-  config = n.mkHomeFiles {
+  config = neg.mkHomeFiles {
     ".config/git/config" = {
       text = lib.generators.toGitINI gitSettings;
     };

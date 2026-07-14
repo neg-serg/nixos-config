@@ -7,7 +7,6 @@
   ...
 }:
 let
-  n = neg;
   # --- Config Sources ---
   shellFiles = ../../../../files/shell;
   kittyConf = ../../../../files/kitty;
@@ -183,7 +182,7 @@ in
       };
     }
 
-    (n.mkHomeFiles {
+    (neg.mkHomeFiles {
       # --- General Shell Configs ---
       ".config/inputrc".text = inputrc;
       ".config/aliae/config.yaml".text = aliaeConfig;

@@ -6,7 +6,6 @@
   ...
 }:
 let
-  n = neg;
   cfg = config.features.media.audio.core;
   rnnoiseEnabled = config.hardware.audio.rnnoise.enable or false;
   filesRoot = ../../../../files;
@@ -64,7 +63,7 @@ in
 {
   config = lib.mkIf (cfg.enable or false) (
     lib.mkMerge [
-      (n.mkHomeFiles {
+      (neg.mkHomeFiles {
         ".config/wireplumber" = {
           source = "${filesRoot}/media/wireplumber";
         };
