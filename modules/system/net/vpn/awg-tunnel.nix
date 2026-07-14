@@ -55,8 +55,8 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = "${pkgs.wireguard-tools}/bin/wg-quick up awg-tunnel";
-        ExecStop = "${pkgs.wireguard-tools}/bin/wg-quick down awg-tunnel";
+        ExecStart = "${lib.getExe' pkgs.wireguard-tools "wg-quick"} up awg-tunnel";
+        ExecStop = "${lib.getExe' pkgs.wireguard-tools "wg-quick"} down awg-tunnel";
         Restart = "on-failure";
         RestartSec = 10;
       };

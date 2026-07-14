@@ -4,15 +4,10 @@
   ...
 }:
 let
-  mkPostBoot =
-    _:
-    lib.mkIf true {
-      # Defer the unit under the post-boot target without introducing
-      # ordering cycles. Do not add After=graphical.target here because
-      # these units are indirectly wanted by graphical.target via the
-      # post-boot target itself.
-      wantedBy = lib.mkForce [ "post-boot.target" ];
-    };
+  # Defer the unit under the post-boot target.
+  mkPostBoot = {
+    wantedBy = lib.mkForce [ "post-boot.target" ];
+  };
 in
 {
   # Define a target for non-critical background services that can start after desktop is up.
