@@ -5,12 +5,6 @@
 }:
 let
   secretsDir = ../../../../secrets/home;
-  hasGitHubToken = builtins.pathExists "${secretsDir}/github-token.sops.yaml";
-  hasCachixEnv = builtins.pathExists "${secretsDir}/cachix.env";
-  hasVdirsyncerGoogle = builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml";
-  hasWorkWireguard = builtins.pathExists "${secretsDir}/wireguard/work-wg.conf.sops";
-  hasVlessRealitySingboxTun = builtins.pathExists "${secretsDir}/vless/reality-singbox-tun.json.sops";
-  hasDeepseekApi = builtins.pathExists "${secretsDir}/deepseek-api.sops.yaml";
 in
 lib.mkMerge [
   {
@@ -19,59 +13,47 @@ lib.mkMerge [
       defaultSopsFile = "${secretsDir}/all.yaml";
       secrets = {
         # github-netrc, mpdas, musicbrainz are managed elsewhere
-      }
-      // lib.optionalAttrs hasCachixEnv {
-        "cachix_env" = {
+        "cachix_env" = lib.mkIf (builtins.pathExists "${secretsDir}/cachix.env") {
           format = "dotenv";
           sopsFile = "${secretsDir}/cachix.env";
           path = "/run/user/1000/secrets/cachix.env";
           mode = "0400";
           owner = "neg";
         };
-      }
-      // lib.optionalAttrs hasGitHubToken {
-        "github-token" = {
+        "github-token" = lib.mkIf (builtins.pathExists "${secretsDir}/github-token.sops.yaml") {
           format = "yaml";
           sopsFile = "${secretsDir}/github-token.sops.yaml";
           key = "token";
           mode = "0400";
           owner = "neg";
         };
-      }
-      // lib.optionalAttrs hasVdirsyncerGoogle {
-        "vdirsyncer_google_client_id" = {
+        "vdirsyncer_google_client_id" = lib.mkIf (builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml") {
           format = "yaml";
           sopsFile = "${secretsDir}/vdirsyncer/google.sops.yaml";
           key = "client_id";
           owner = "neg";
         };
-        "vdirsyncer_google_client_secret" = {
+        "vdirsyncer_google_client_secret" = lib.mkIf (builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml") {
           format = "yaml";
           sopsFile = "${secretsDir}/vdirsyncer/google.sops.yaml";
           key = "client_secret";
           owner = "neg";
         };
-      }
-      // lib.optionalAttrs hasWorkWireguard {
-        "wireguard/work-wg.conf" = {
+        "wireguard/work-wg.conf" = lib.mkIf (builtins.pathExists "${secretsDir}/wireguard/work-wg.conf.sops") {
           format = "binary";
           sopsFile = "${secretsDir}/wireguard/work-wg.conf.sops";
           path = "/run/user/1000/secrets/wireguard/work-wg.conf";
           mode = "0600";
           owner = "neg";
         };
-      }
-      // lib.optionalAttrs hasVlessRealitySingboxTun {
-        "vless/reality-singbox-tun.json" = {
+        "vless/reality-singbox-tun.json" = lib.mkIf (builtins.pathExists "${secretsDir}/vless/reality-singbox-tun.json.sops") {
           format = "binary";
           sopsFile = "${secretsDir}/vless/reality-singbox-tun.json.sops";
           path = "/run/user/1000/secrets/vless-reality-singbox-tun.json";
           mode = "0600";
           owner = "neg";
         };
-      }
-      // lib.optionalAttrs hasDeepseekApi {
-        "deepseek-api" = {
+        "deepseek-api" = lib.mkIf (builtins.pathExists "${secretsDir}/deepseek-api.sops.yaml") {
           format = "yaml";
           sopsFile = "${secretsDir}/deepseek-api.sops.yaml";
           key = "DEEPSEEK_API_KEY";
