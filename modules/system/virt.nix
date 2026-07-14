@@ -2,18 +2,12 @@
   pkgs,
   lib,
   config,
-  mkBool,
   ...
 }:
 let
   mainUser = config.users.main.name or "neg";
 in
 {
-  options.features.virt = {
-    docker.enable = mkBool "enable docker/podman virtualization" false;
-    libvirtd.enable = mkBool "enable libvirtd (KVM/QEMU) virtualization" false;
-  };
-
   config = {
     users.users."${mainUser}".extraGroups = [
       "video"
