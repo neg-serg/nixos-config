@@ -1096,16 +1096,16 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1783148766,
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "a50de1b7d8a586adc18d2395c19de7d6058e6030",
+        "lastModified": 1784052126,
+        "owner": "neg-serg",
+        "repo": "nixpkgs-slim",
+        "rev": "90a0a7b27e1496388359bd41cc35280196aabea5",
         "type": "github"
       },
       "original": {
-        "owner": "NixOS",
-        "ref": "nixos-26.05",
-        "repo": "nixpkgs",
+        "owner": "neg-serg",
+        "ref": "main",
+        "repo": "nixpkgs-slim",
         "type": "github"
       }
     },
