@@ -125,4 +125,36 @@ in
       echo "modules/default.nix + all filter: OK"
       touch $out
     '';
+
+  # ── NixOS test config checks ───────────────────────────────────────
+  # Each evaluates a profile-specific NixOS configuration for "odin"
+  # via the exported mkTestHost from nixosConfigurations. These ensure
+  # the A/B test configurations evaluate without errors.
+
+  "test-odin-gaming" =
+    let
+      cfg = self.nixosConfigurations.mkTestHost "odin" "gaming";
+    in
+    pkgs.runCommand "check-test-odin-gaming" { } ''
+      echo "check: test-odin-gaming OK (${toString (builtins.length (builtins.attrNames cfg.options))} options)"
+      touch $out
+    '';
+
+  "test-odin-lite" =
+    let
+      cfg = self.nixosConfigurations.mkTestHost "odin" "lite";
+    in
+    pkgs.runCommand "check-test-odin-lite" { } ''
+      echo "check: test-odin-lite OK (${toString (builtins.length (builtins.attrNames cfg.options))} options)"
+      touch $out
+    '';
+
+  "test-odin-audio-pro" =
+    let
+      cfg = self.nixosConfigurations.mkTestHost "odin" "audio-pro";
+    in
+    pkgs.runCommand "check-test-odin-audio-pro" { } ''
+      echo "check: test-odin-audio-pro OK (${toString (builtins.length (builtins.attrNames cfg.options))} options)"
+      touch $out
+    '';
 }
