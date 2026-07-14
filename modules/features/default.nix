@@ -4,6 +4,13 @@
   ...
 }:
 with lib;
+let
+  # Child feature requires parent feature
+  assertParent = parentCond: childCond: msg: {
+    assertion = parentCond || (!childCond);
+    message = msg;
+  };
+in
 {
   imports = [
     ./core.nix
@@ -122,13 +129,6 @@ with lib;
       features.hack = { };
     })
     # Consistency assertions for nested flags
-    let
-      # Child feature requires parent feature
-      assertParent = parentCond: childCond: msg: {
-        assertion = parentCond || (!childCond);
-        message = msg;
-      };
-    in
     {
       assertions =
         let
