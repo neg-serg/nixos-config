@@ -84,7 +84,7 @@
       echo "Restarting maid-activation for user 1000..."
 
       # Async restart: run in background to not block deploy, use --no-block to avoid waiting, and silence output
-      (${pkgs.util-linux}/bin/runuser -u neg -- ${pkgs.bash}/bin/bash -c "XDG_RUNTIME_DIR=/run/user/1000 ${pkgs.systemd}/bin/systemctl --user restart --no-block maid-activation.service" >/dev/null 2>&1 &) || true # System and service manager for Linux | Set of system utilities for Linux
+      (${lib.getExe' pkgs.util-linux "runuser"} -u neg -- ${lib.getExe' pkgs.bash "bash"} -c "XDG_RUNTIME_DIR=/run/user/1000 ${lib.getExe' pkgs.systemd "systemctl"} --user restart --no-block maid-activation.service" >/dev/null 2>&1 &) || true # System and service manager for Linux | Set of system utilities for Linux
     fi
   '';
 }
