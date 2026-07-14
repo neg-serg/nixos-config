@@ -57,6 +57,11 @@ inputs: final: finalPrev: {
     doCheck = false;
   });
 
+  # Disable flaky rescrobbled test (test_filter_script: broken pipe on subprocess spawn)
+  rescrobbled = finalPrev.rescrobbled.overrideAttrs (_old: {
+    doCheck = false;
+  });
+
   # Disable flaky pytest-xdist tests
   pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
     (_python-final: python-prev: {
