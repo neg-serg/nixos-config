@@ -475,10 +475,10 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1784050880,
+        "lastModified": 1784064628,
         "owner": "ogulcancelik",
         "repo": "herdr",
-        "rev": "5b91dae12ffa09f5842a0c852ef06299c31fe342",
+        "rev": "c9676e46ad9298c49bcc66981b2c405936433809",
         "type": "github"
       },
       "original": {
@@ -1097,16 +1097,16 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1784055071,
+        "lastModified": 1784065544,
         "owner": "neg-serg",
         "repo": "nixpkgs-slim",
-        "rev": "c7d1622e014264683f7be7c2e642e295a1b36eb4",
+        "rev": "827854d9ec625f0d4d4bc1ddff74f94799ecd7c7",
         "type": "github"
       },
       "original": {
         "owner": "neg-serg",
         "repo": "nixpkgs-slim",
-        "rev": "c7d1622e014264683f7be7c2e642e295a1b36eb4",
+        "rev": "827854d9ec625f0d4d4bc1ddff74f94799ecd7c7",
         "type": "github"
       }
     },
@@ -1169,10 +1169,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1784050074,
+        "lastModified": 1784065071,
         "owner": "anomalyco",
         "repo": "opencode",
-        "rev": "bfddf057823deaf464e72cc1e27b702517c12d39",
+        "rev": "888dd26e1df844f82cf0568bedc8e905161c5609",
         "type": "github"
       },
       "original": {
@@ -1188,10 +1188,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1784050074,
+        "lastModified": 1784065071,
         "owner": "anomalyco",
         "repo": "opencode",
-        "rev": "bfddf057823deaf464e72cc1e27b702517c12d39",
+        "rev": "888dd26e1df844f82cf0568bedc8e905161c5609",
         "type": "github"
       },
       "original": {
@@ -1524,10 +1524,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1784050897,
+        "lastModified": 1784055823,
         "owner": "Maxteabag",
         "repo": "sqlit",
-        "rev": "74dea205d2f9dac94218df26ac45bad8a6c73e5f",
+        "rev": "9e52a50c408f5354654e02559619472717f1f095",
         "type": "github"
       },
       "original": {
@@ -1544,10 +1544,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1784050897,
+        "lastModified": 1784055823,
         "owner": "Maxteabag",
         "repo": "sqlit",
-        "rev": "74dea205d2f9dac94218df26ac45bad8a6c73e5f",
+        "rev": "9e52a50c408f5354654e02559619472717f1f095",
         "type": "github"
       },
       "original": {
