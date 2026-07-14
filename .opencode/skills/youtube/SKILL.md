@@ -1,6 +1,7 @@
-______________________________________________________________________
-
-## name: youtube description: YouTube video search, metadata, and downloads via yt-dlp CLI and WebFetch
+---
+name: youtube
+description: "YouTube video search, metadata, and downloads via yt-dlp CLI and WebFetch"
+---
 
 # YouTube Operations
 

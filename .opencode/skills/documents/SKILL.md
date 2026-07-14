@@ -1,6 +1,7 @@
-______________________________________________________________________
-
-## name: documents description: Document conversion (pandoc), PDF manipulation, and spreadsheet/CSV processing via CLI tools
+---
+name: documents
+description: "Document conversion (pandoc), PDF manipulation, and spreadsheet/CSV processing via CLI tools"
+---
 
 # Document Tools
 
