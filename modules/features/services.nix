@@ -13,10 +13,6 @@ with lib;
       prometheus.enable = mkBool "enable Prometheus exporter for Transmission (transmission-exporter)" false;
     };
 
-    finance = {
-
-    };
-
     net = {
       tailscale.enable = mkBool "enable Tailscale mesh VPN and Tailray GUI" false;
       wifi.enable = mkBool "enable Wi-Fi stack and management tools (iwd, wavemon, etc.)" false;
