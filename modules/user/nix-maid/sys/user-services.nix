@@ -108,37 +108,34 @@ lib.mkIf (cfg.enable or false) {
       wantedBy = [ "default.target" ];
     };
 
-    # OpenRGB daemon
+    # OpenRGB daemon — starts the SDK server so clients (profile service, GUI) can connect.
+    # The profile is NOT loaded on daemon startup (it may not exist yet); the
+    # openrgb-profile oneshot applies the saved "neg" profile after the server is ready.
     openrgb = {
-      description = "OpenRGB daemon with profile";
+      description = "OpenRGB SDK server";
       partOf = [ "graphical-session.target" ];
       serviceConfig = {
-        ExecStart =
-          let
-            exe = lib.getExe pkgs.openrgb; # Open source RGB lighting control
-            args = [
-              "--server"
-              "-p"
-              "neg.orp"
-            ];
-          in
-          "${exe} ${lib.escapeShellArgs args}";
+        ExecStart = "${lib.getExe pkgs.openrgb} --server"; # SDK server for RGB control
+        Restart = "on-failure";
         RestartSec = "30";
       };
       wantedBy = [ "graphical-session.target" ];
     };
 
-    # OpenRGB profile — applies saved "neg" profile after daemon starts (ported from legacy Salt config)
+    # OpenRGB profile — applies saved "neg" profile after daemon starts.
+    # If no profile has been saved yet (first run), this will produce a "Profile
+    # failed to load" message but does NOT fail the unit — status=0 is expected.
+    # Save a profile named "neg" via the GUI or CLI to make this effective.
     openrgb-profile = {
       description = "Apply OpenRGB neg profile";
       after = [ "openrgb.service" ];
       requires = [ "openrgb.service" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${lib.getExe pkgs.openrgb} --profile neg";
+        ExecStart = "${lib.getExe pkgs.openrgb} -p %h/.config/openrgb/neg.orp";
         RemainAfterExit = false;
       };
-      wantedBy = [ "default.target" ];
+      wantedBy = [ "graphical-session.target" ];
     };
 
     # Local AI (Ollama)
