@@ -5,9 +5,6 @@
   config,
   ...
 }:
-let
-  n = neg;
-in
 {
   config = lib.mkMerge [
     {
@@ -39,7 +36,7 @@ in
       ];
     })
 
-    (n.mkHomeFiles {
+    (neg.mkHomeFiles {
       # Mangohud Config
       ".config/MangoHud/MangoHud.conf".text = lib.generators.toKeyValue { } {
         cpu_stats = true;

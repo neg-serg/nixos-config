@@ -10,11 +10,10 @@
   ...
 }:
 let
-  n = neg;
   cfg = config.features.input.kanata or { };
 in
 lib.mkIf (cfg.enable or false) {
-  config = n.mkHomeFiles {
+  config = neg.mkHomeFiles {
     ".config/kanata/kanata.kbd".source = ../../../../files/cli/kanata/kanata.kbd;
   };
 
