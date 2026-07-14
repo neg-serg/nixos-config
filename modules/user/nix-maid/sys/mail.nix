@@ -6,7 +6,7 @@
   ...
 }:
 let
-  n = neg;
+  inherit (config.users.users.neg) home;
   cfg = config.features.mail;
   passPkg = pkgs.pass.withExtensions (exts: [ exts.pass-otp ]); # Stores, retrieves, generates, and synchronizes passwords ...
 
@@ -26,8 +26,8 @@ let
 
     MaildirStore ${acct.name}-local
     Subfolders Verbatim
-    Path ${config.users.users.neg.home}/.local/mail/${acct.name}/
-    Inbox ${config.users.users.neg.home}/.local/mail/${acct.name}/INBOX/
+    Path ${home}/.local/mail/${acct.name}/
+    Inbox ${home}/.local/mail/${acct.name}/INBOX/
 
     Channel ${acct.name}
     Far :${acct.name}-remote:
@@ -106,7 +106,7 @@ in
 
 
 
-      (n.mkHomeFiles {
+      (neg.mkHomeFiles {
         # ========================================================================
         # MUTT / NEOMUTT
         # ========================================================================
@@ -152,17 +152,17 @@ in
       })
 
       {
-        environment.variables.NOTMUCH_CONFIG = "${config.users.users.neg.home}/.config/notmuch/notmuchrc";
+        environment.variables.NOTMUCH_CONFIG = "${home}/.config/notmuch/notmuchrc";
       }
 
-      (n.mkHomeFiles {
+      (neg.mkHomeFiles {
         # ... (existing files)
         # ========================================================================
         # NOTMUCH
         # ========================================================================
         ".config/notmuch/notmuchrc".text = ''
           [database]
-          path=${config.users.users.neg.home}/.local/mail
+          path=${home}/.local/mail
 
           [user]
           name=${account.realName}
@@ -191,7 +191,7 @@ in
           };
           username = account.userName;
           passwordCmd = account.passCmd;
-          onNewMail = "${config.users.users.neg.home}/.config/mutt/scripts/sync_mail";
+          onNewMail = "${home}/.config/mutt/scripts/sync_mail";
           boxes = [ "INBOX" ];
         };
       })

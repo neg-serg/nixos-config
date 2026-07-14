@@ -5,11 +5,10 @@
   ...
 }:
 let
-  n = neg;
 in
 {
   config = lib.mkIf (config.features.gui.enable or false) (
-    n.mkHomeFiles {
+    neg.mkHomeFiles {
       ".config/mpv/profiles.conf".text = ''
         term-osd-bar=yes
 

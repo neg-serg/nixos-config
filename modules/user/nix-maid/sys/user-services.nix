@@ -5,6 +5,7 @@
   ...
 }:
 let
+  inherit (config.users.users.neg) home;
   cfg = config.features.gui;
   alertmanagerWebhook = pkgs.writeShellApplication {
     name = "alertmanager-webhook";
@@ -147,9 +148,9 @@ lib.mkIf (cfg.enable or false) {
         ExecStart = "${lib.getExe pkgs.ollama} serve"; # Get up and running with large language models locally
         Environment = [
           # For LocalAI compatibility
-          "MODELS_PATH=${config.users.users.neg.home}/.local/share/localai/models"
+          "MODELS_PATH=${home}/.local/share/localai/models"
           # Effective for Ollama
-          "OLLAMA_MODELS=${config.users.users.neg.home}/.local/share/ollama"
+          "OLLAMA_MODELS=${home}/.local/share/ollama"
           "OLLAMA_HOST=127.0.0.1:11434"
         ];
         Restart = "on-failure";

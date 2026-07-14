@@ -6,7 +6,6 @@
   ...
 }:
 let
-  n = neg;
   cfg = config.features.mail; # Tie to mail feature as we're using it for calendars
 in
 {
@@ -15,7 +14,7 @@ in
       {
         environment.systemPackages = [ pkgs.khal ]; # CLI calendar application
       }
-      (n.mkHomeFiles {
+      (neg.mkHomeFiles {
         ".config/khal/config".text = ''
           [calendars]
           [[calendars_discovery]]

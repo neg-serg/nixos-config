@@ -7,8 +7,6 @@
   ...
 }:
 let
-  n = neg;
-
   # Flavor: selects which quickshell config to deploy
   flavor = config.features.gui.quickshell.flavor or "default";
   isOctashell = flavor == "octashell";
@@ -168,7 +166,7 @@ lib.mkIf quickshellEnabled (
       };
     }
 
-    (n.mkHomeFiles quickshellHomeFiles)
+    (neg.mkHomeFiles quickshellHomeFiles)
     {
       # Remove old whole-directory quickshell symlink before nix-maid
       # activation deploys individual entries.  Without this, systemd-tmpfiles

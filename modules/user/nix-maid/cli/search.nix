@@ -5,9 +5,7 @@
   neg,
   ...
 }:
-let
-  n = neg;
-in
+
 {
   config = lib.mkMerge [
     {
@@ -94,7 +92,7 @@ in
       };
     }
 
-    (n.mkHomeFiles {
+    (neg.mkHomeFiles {
       ".config/bat/config".text = ''
         --theme="ansi"
         --italic-text="always"

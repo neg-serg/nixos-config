@@ -5,9 +5,7 @@
   neg,
   ...
 }:
-let
-  n = neg;
-in
+
 {
   config = lib.mkMerge [
     {
@@ -16,7 +14,7 @@ in
       ];
     }
 
-    (n.mkHomeFiles {
+    (neg.mkHomeFiles {
       ".config/espanso/config/default.yml".text = ''
         backend: Clipboard
         search_shortcut: ALT+SPACE

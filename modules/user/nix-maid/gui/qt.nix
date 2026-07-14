@@ -6,7 +6,6 @@
   ...
 }:
 let
-  n = neg;
   qtEnabled = config.features.gui.qt.enable or false;
   iconTheme = config.features.gui.iconTheme or "kora";
   kvantumTheme = "KvDark"; # Default dark theme — change after interactive selection via kvantummanager
@@ -32,7 +31,7 @@ in
           QT_STYLE_OVERRIDE = "kvantum"; # Force kvantum style if possible
         };
       }
-      (n.mkHomeFiles {
+      (neg.mkHomeFiles {
         ".config/Kvantum/kvantum.kvconfig".text = ''
           [General]
           theme=${kvantumTheme}
