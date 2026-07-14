@@ -1,6 +1,7 @@
-______________________________________________________________________
-
-## name: ast description: AST-based code search and structural code analysis
+---
+name: ast
+description: "AST-based code search and structural code analysis"
+---
 
 # AST Code Search
 
