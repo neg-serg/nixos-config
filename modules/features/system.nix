@@ -19,4 +19,9 @@ in
       description = "Systemd units to monitor on tty15 (network TTY). Override per-host.";
     };
   };
+
+  options.features.virt = {
+    docker.enable = mkBool "enable docker/podman virtualization" false;
+    libvirtd.enable = mkBool "enable libvirtd (KVM/QEMU) virtualization" false;
+  };
 }
