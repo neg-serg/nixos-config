@@ -16,27 +16,29 @@ let
   iconTheme = config.features.gui.iconTheme or "kora";
   vicinaeTheme = {
     window = {
-      width = 750;
-      height = 420;
-      border_width = 1;
-      border_radius = 1;
-      margin = 10;
-      padding = 10;
+      # Squarer, more compact proportions — neg-style strict geometry
+      width = 620;
+      height = 540;
+      border_width = 2;   # thicker frame = stricter look
+      border_radius = 0;  # zero rounding = strict square
+      margin = 8;         # tighter outer spacing
+      padding = 12;       # more internal breathing room for large font
     };
+    # Palette adapted from neg.nvim — pure-dark with signature deep-blue accents
     colors = {
-      background = "#000000";
-      border = "#0B2536";
-      text = "#CBD6E5";
-      accent = "#006FCC";
-      selected_background = "#122337";
-      selected_text = "#E2EBF5";
-      urgent = "#8A2F58";
-      scrollbar = "#1c334e";
-      loading_bar = "#006FCC";
+      background = "#000000";   # neg.bclr — pure black
+      border = "#005faf";       # neg.ops3 — signature deep blue accent
+      text = "#6c7e96";         # neg.norm — muted blue-gray foreground
+      accent = "#005faf";       # neg.ops3 — deep blue accent
+      selected_background = "#0d1824"; # neg.selection_bg — very dark blue
+      selected_text = "#d1e5ff";       # neg.whit — light blue-white
+      urgent = "#6b0f2a";       # neg.dred — dark burgundy for errors
+      scrollbar = "#1c334e";    # neg.col8 — dark blue-gray
+      loading_bar = "#005faf";  # neg.ops3 — accent blue
     };
     fonts = {
-      main = "Outfit 13";
-      secondary = "Outfit 11";
+      main = "Outfit 20";      # was 13 — much larger, bold presence
+      secondary = "Outfit 16";  # was 11 — much larger
     };
   };
 
