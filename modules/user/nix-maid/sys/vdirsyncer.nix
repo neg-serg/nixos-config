@@ -6,7 +6,7 @@
   ...
 }:
 let
-  n = neg;
+  inherit (config.users.users.neg) home;
   cfg = config.features.mail.vdirsyncer;
 in
 {
@@ -49,9 +49,9 @@ in
 
         # Ensure directories exist
         systemd.tmpfiles.rules = [
-          "d ${config.users.users.neg.home}/.config/vdirsyncer/calendars 0700 neg users -"
-          "d ${config.users.users.neg.home}/.config/vdirsyncer/contacts 0700 neg users -"
-          "d ${config.users.users.neg.home}/.local/state/vdirsyncer 0700 neg users -"
+          "d ${home}/.config/vdirsyncer/calendars 0700 neg users -"
+          "d ${home}/.config/vdirsyncer/contacts 0700 neg users -"
+          "d ${home}/.local/state/vdirsyncer 0700 neg users -"
         ];
 
         # User service and timer
@@ -75,7 +75,7 @@ in
         };
       }
 
-      (n.mkHomeFiles {
+      (neg.mkHomeFiles {
         # Link the template to ~/.config/vdirsyncer/config
         ".config/vdirsyncer/config".source = config.sops.templates."vdirsyncer-config".path;
       })

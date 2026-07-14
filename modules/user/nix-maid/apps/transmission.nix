@@ -6,7 +6,6 @@
   ...
 }:
 let
-  n = neg;
   cfg = config.features.torrent;
   filesRoot = ../../../../files;
 
@@ -118,7 +117,7 @@ lib.mkIf (cfg.enable or false) (
     }
 
     # Config files linked via maid
-    (n.mkHomeFiles {
+    (neg.mkHomeFiles {
       ".config/transmission-daemon/settings.json".source = "${filesRoot}/transmission/settings.json";
       ".config/transmission-daemon/bandwidth-groups.json".source =
         "${filesRoot}/transmission/bandwidth-groups.json";

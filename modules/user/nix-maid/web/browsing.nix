@@ -5,7 +5,6 @@
 }:
 with lib;
 let
-  n = neg;
 in
 {
   imports = [
@@ -14,7 +13,7 @@ in
   ];
 
   config = lib.mkMerge [
-    (n.mkHomeFiles {
+    (neg.mkHomeFiles {
       ".config/surfingkeys.js".source = ../../../../files/surfingkeys.js;
     })
   ];

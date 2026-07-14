@@ -6,7 +6,7 @@
   ...
 }:
 let
-  n = neg;
+  inherit (config.users.users.neg) home;
   cfg = config.features.dev;
   enableIac = cfg.enable && (cfg.pkgs.iac or false);
 
@@ -53,10 +53,10 @@ in
       ];
 
       environment.variables = {
-        ANSIBLE_HOME = "${config.users.users.neg.home}/.local/share/ansible"; # From envs.nix
-        ANSIBLE_CONFIG = "${config.users.users.neg.home}/.config/ansible/ansible.cfg";
-        ANSIBLE_ROLES_PATH = "${config.users.users.neg.home}/.local/share/ansible/roles";
-        ANSIBLE_GALAXY_COLLECTIONS_PATHS = "${config.users.users.neg.home}/.local/share/ansible/collections";
+        ANSIBLE_HOME = "${home}/.local/share/ansible"; # From envs.nix
+        ANSIBLE_CONFIG = "${home}/.config/ansible/ansible.cfg";
+        ANSIBLE_ROLES_PATH = "${home}/.local/share/ansible/roles";
+        ANSIBLE_GALAXY_COLLECTIONS_PATHS = "${home}/.local/share/ansible/collections";
       };
 
       # Nix-maid configuration files
@@ -66,15 +66,15 @@ in
 
       # We use lib.mkMerge to attach to user configuration if needed, but since this is a system module,
       # we might need to route this into the user profile correctly if it uses home-manager module sytle.
-      # However, the original code used `n.mkHomeFiles`. Let's verify if we can simply use it here.
+      # However, the original code used `neg.mkHomeFiles`. Let's verify if we can simply use it here.
 
       # original dev.nix:
-      # config = lib.mkIf ... ( lib.mkMerge [ ... (n.mkHomeFiles ...) ] )
+      # config = lib.mkIf ... ( lib.mkMerge [ ... (neg.mkHomeFiles ...) ] )
 
       # Here we are in a standard module. We can use the same pattern.
     }
     // (lib.mkIf enableIac (
-      n.mkHomeFiles {
+      neg.mkHomeFiles {
         ".config/ansible/ansible.cfg".text = ansibleCfg;
         ".config/ansible/hosts".text = ansibleHosts;
 

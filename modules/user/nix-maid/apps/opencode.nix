@@ -6,7 +6,6 @@
   ...
 }:
 let
-  n = neg;
   enable =
     (config.features.dev.enable or false)
     && (config.features.dev.ai.enable or false)
@@ -93,7 +92,7 @@ let
 in
 lib.mkIf enable (
   lib.mkMerge [
-    (n.mkHomeFiles {
+    (neg.mkHomeFiles {
       ".config/opencode/opencode.json".text = opencodeConfig;
     })
     {

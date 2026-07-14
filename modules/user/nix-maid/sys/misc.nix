@@ -6,7 +6,6 @@
   ...
 }:
 let
-  n = neg;
   cfg = config.features;
 
   # Fun Art Scripts
@@ -39,7 +38,7 @@ in
       ];
     })
     (lib.mkIf (cfg.fun.enable or false) (
-      n.mkHomeFiles (
+      neg.mkHomeFiles (
         lib.mkMerge [
           # Hack Art
           (lib.mapAttrs' (

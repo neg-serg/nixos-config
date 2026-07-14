@@ -6,7 +6,6 @@
   ...
 }:
 let
-  n = neg;
   guiEnabled = config.features.gui.enable or false;
 
   # Browser helper logic from original HM module
@@ -146,7 +145,7 @@ lib.mkIf guiEnabled (
     }
 
     # 1. Config file via nix-maid
-    (n.mkHomeFiles {
+    (neg.mkHomeFiles {
       ".config/dunst/dunstrc".text = dunstrc;
     })
   ]

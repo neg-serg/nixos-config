@@ -5,12 +5,9 @@
   neg,
   ...
 }:
-let
-  n = neg;
-in
 {
   config = lib.mkIf (config.features.gui.enable or false) (
-    n.mkHomeFiles (
+    neg.mkHomeFiles (
       let
         # Path to the source directories
         binDir = ../../../../packages/local-bin/bin;

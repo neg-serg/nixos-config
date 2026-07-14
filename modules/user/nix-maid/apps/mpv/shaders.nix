@@ -6,8 +6,6 @@
   ...
 }:
 let
-  n = neg;
-
   # --- Shaders Sources ---
   fsrcnnx = pkgs.fetchurl {
     url = "https://github.com/igv/FSRCNN-TensorFlow/releases/download/1.1/FSRCNNX_x2_8-0-4-1.glsl";
@@ -28,7 +26,7 @@ let
 in
 {
   config = lib.mkIf (config.features.gui.enable or false) (
-    n.mkHomeFiles {
+    neg.mkHomeFiles {
       ".config/mpv/shaders/FSRCNNX_x2_8-0-4-1.glsl".source = fsrcnnx;
       ".config/mpv/shaders/KrigBilateral.glsl".source = krig;
       ".config/mpv/shaders/Anime4K_Upscale_CNN_x2_S.glsl".source = anime4k;

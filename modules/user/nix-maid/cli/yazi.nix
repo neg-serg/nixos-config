@@ -7,7 +7,6 @@
   ...
 }:
 let
-  n = neg;
   cfg = config.features.cli.yazi;
   tomlFormat = pkgs.formats.toml { };
 
@@ -390,7 +389,7 @@ in
 lib.mkIf (cfg.enable or false) (
   lib.mkMerge [
     { environment.systemPackages = [ pkgs.yazi ]; }
-    (n.mkHomeFiles {
+    (neg.mkHomeFiles {
       ".config/yazi/yazi.toml".source = tomlFormat.generate "yazi.toml" settings;
       ".config/yazi/theme.toml".source = tomlFormat.generate "theme.toml" theme;
       ".config/yazi/keymap.toml".source = tomlFormat.generate "keymap.toml" keymap;

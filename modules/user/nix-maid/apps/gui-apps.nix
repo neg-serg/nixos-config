@@ -6,7 +6,6 @@
   ...
 }:
 let
-  n = neg;
 in
 {
   config = lib.mkMerge [
@@ -15,7 +14,7 @@ in
       environment.systemPackages = [
       ];
     }
-    (n.mkHomeFiles {
+    (neg.mkHomeFiles {
       # Handlr Config
       ".config/handlr/handlr.toml".text = ''
         enable_selector = false

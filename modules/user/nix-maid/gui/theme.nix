@@ -7,7 +7,6 @@
   ...
 }:
 let
-  n = neg;
   alkano-aio = pkgs.callPackage ./alkano-aio.nix { };
 
   iconTheme = config.features.gui.iconTheme or "kora";
@@ -37,7 +36,7 @@ in
         };
       }
       # 5. GTK settings — tell apps/browsers system prefers dark
-      (n.mkHomeFiles {
+      (neg.mkHomeFiles {
         ".config/gtk-3.0/settings.ini".text = ''
           [Settings]
           gtk-application-prefer-dark-theme = 1

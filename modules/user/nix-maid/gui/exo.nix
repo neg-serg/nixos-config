@@ -7,8 +7,6 @@
   ...
 }:
 let
-  n = neg;
-
   exoEnabled =
     config.features.gui.enable or false
     && config.features.gui.exo.enable or false
@@ -162,7 +160,7 @@ lib.mkIf exoEnabled (
       };
     }
 
-    (n.mkHomeFiles (ignisHomeFiles // matugenHomeFiles))
+    (neg.mkHomeFiles (ignisHomeFiles // matugenHomeFiles))
 
     {
       # Remove old whole-directory symlinks before nix-maid deploys individual entries
