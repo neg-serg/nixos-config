@@ -5,7 +5,7 @@
 }:
 let
   # Defer the unit under the post-boot target.
-  mkPostBoot = {
+  mkPostBoot = _: {
     wantedBy = lib.mkForce [ "post-boot.target" ];
   };
 in
