@@ -1,157 +1,50 @@
 { lib, config, pkgs, ... }:
 let
-  inherit (lib) mkIf mkMerge concatStringsSep;
+  inherit (lib) mkIf concatStringsSep;
   cfg = config.features.system.logTtys;
+
+  # Data-driven log TTY definitions
+  logServices = {
+    crit = { tty = "tty8";  prio = "2";  desc = "emerg..crit"; };
+    err  = { tty = "tty10"; prio = "3";  desc = "errors"; };
+    warn = { tty = "tty11"; prio = "4";  desc = "warnings"; };
+    kernel = { tty = "tty12"; desc = "kernel messages"; filter = "_TRANSPORT=kernel"; };
+    auth = { tty = "tty13"; desc = "auth messages";    filter = "SYSLOG_FACILITY=4 SYSLOG_FACILITY=10"; };
+    systemd = { tty = "tty14"; desc = "systemd messages"; filter = "_PID=1"; };
+    network = { tty = "tty15"; desc = "network daemons"; };
+    full = { tty = "tty16"; prio = "7";  desc = "all messages"; };
+  };
+
+  mkLogService = name: { tty, prio ? null, desc, filter ? null }: mkIf (cfg.${name}.enable or false) {
+    systemd.services."log-${name}" = {
+      description = "Journal viewer: ${desc} on ${tty}";
+      after = [ "systemd-journald.service" ];
+      requires = [ "systemd-journald.service" ];
+      serviceConfig = {
+        ExecStart =
+          if name == "network" then
+            concatStringsSep " " (
+              [ "${lib.getExe' pkgs.systemd "journalctl"}" "-f" "-o" "short-monotonic" ]
+              ++ map (u: "-u ${u}") cfg.networkUnits
+            )
+          else
+            "${lib.getExe' pkgs.systemd "journalctl"} -f${
+              if prio != null then " -p ${prio}" else ""
+            }${if filter != null then " ${filter}" else ""} -o short-monotonic";
+        StandardOutput = "tty";
+        TTYPath = "/dev/${tty}";
+        TTYReset = true;
+        Restart = "always";
+        RestartSec = 5;
+        StartLimitIntervalSec = 30;
+        StartLimitBurst = 5;
+      };
+      wantedBy = [ "multi-user.target" ];
+    };
+  };
 in
 {
-  config = mkIf cfg.enable (mkMerge [
-    (mkIf cfg.crit.enable {
-      systemd.services.log-crit = {
-        description = "Journal viewer: emerg..crit on tty8";
-        after = [ "systemd-journald.service" ];
-        requires = [ "systemd-journald.service" ];
-        serviceConfig = {
-          ExecStart = "${lib.getExe' pkgs.systemd "journalctl"} -f -p 2 -o short-monotonic";
-          StandardOutput = "tty";
-          TTYPath = "/dev/tty8";
-          TTYReset = true;
-          Restart = "always";
-          RestartSec = 5;
-          StartLimitIntervalSec = 30;
-          StartLimitBurst = 5;
-        };
-        wantedBy = [ "multi-user.target" ];
-      };
-    })
-    (mkIf cfg.err.enable {
-      systemd.services.log-err = {
-        description = "Journal viewer: errors on tty10";
-        after = [ "systemd-journald.service" ];
-        requires = [ "systemd-journald.service" ];
-        serviceConfig = {
-          ExecStart = "${lib.getExe' pkgs.systemd "journalctl"} -f -p 3 -o short-monotonic";
-          StandardOutput = "tty";
-          TTYPath = "/dev/tty10";
-          TTYReset = true;
-          Restart = "always";
-          RestartSec = 5;
-          StartLimitIntervalSec = 30;
-          StartLimitBurst = 5;
-        };
-        wantedBy = [ "multi-user.target" ];
-      };
-    })
-    (mkIf cfg.warn.enable {
-      systemd.services.log-warn = {
-        description = "Journal viewer: warnings on tty11";
-        after = [ "systemd-journald.service" ];
-        requires = [ "systemd-journald.service" ];
-        serviceConfig = {
-          ExecStart = "${lib.getExe' pkgs.systemd "journalctl"} -f -p 4 -o short-monotonic";
-          StandardOutput = "tty";
-          TTYPath = "/dev/tty11";
-          TTYReset = true;
-          Restart = "always";
-          RestartSec = 5;
-          StartLimitIntervalSec = 30;
-          StartLimitBurst = 5;
-        };
-        wantedBy = [ "multi-user.target" ];
-      };
-    })
-    (mkIf cfg.kernel.enable {
-      systemd.services.log-kernel = {
-        description = "Journal viewer: kernel messages on tty12";
-        after = [ "systemd-journald.service" ];
-        requires = [ "systemd-journald.service" ];
-        serviceConfig = {
-          ExecStart = "${lib.getExe' pkgs.systemd "journalctl"} -f _TRANSPORT=kernel -o short-monotonic";
-          StandardOutput = "tty";
-          TTYPath = "/dev/tty12";
-          TTYReset = true;
-          Restart = "always";
-          RestartSec = 5;
-          StartLimitIntervalSec = 30;
-          StartLimitBurst = 5;
-        };
-        wantedBy = [ "multi-user.target" ];
-      };
-    })
-    (mkIf cfg.auth.enable {
-      systemd.services.log-auth = {
-        description = "Journal viewer: auth messages on tty13";
-        after = [ "systemd-journald.service" ];
-        requires = [ "systemd-journald.service" ];
-        serviceConfig = {
-          ExecStart = "${lib.getExe' pkgs.systemd "journalctl"} -f SYSLOG_FACILITY=4 SYSLOG_FACILITY=10 -o short-monotonic";
-          StandardOutput = "tty";
-          TTYPath = "/dev/tty13";
-          TTYReset = true;
-          Restart = "always";
-          RestartSec = 5;
-          StartLimitIntervalSec = 30;
-          StartLimitBurst = 5;
-        };
-        wantedBy = [ "multi-user.target" ];
-      };
-    })
-    (mkIf cfg.systemd.enable {
-      systemd.services.log-systemd = {
-        description = "Journal viewer: systemd messages on tty14";
-        after = [ "systemd-journald.service" ];
-        requires = [ "systemd-journald.service" ];
-        serviceConfig = {
-          # `_PID=1` = systemd-pid1 messages (unit lifecycle, targets, failures)
-          ExecStart = "${lib.getExe' pkgs.systemd "journalctl"} -f _PID=1 -o short-monotonic";
-          StandardOutput = "tty";
-          TTYPath = "/dev/tty14";
-          TTYReset = true;
-          Restart = "always";
-          RestartSec = 5;
-          StartLimitIntervalSec = 30;
-          StartLimitBurst = 5;
-        };
-        wantedBy = [ "multi-user.target" ];
-      };
-    })
-    (mkIf cfg.network.enable {
-      systemd.services.log-network = mkIf (cfg.networkUnits != []) {
-        description = "Journal viewer: network daemons on tty15";
-        after = [ "systemd-journald.service" ];
-        requires = [ "systemd-journald.service" ];
-        serviceConfig = {
-          ExecStart = concatStringsSep " " (
-            [ "${lib.getExe' pkgs.systemd "journalctl"}" "-f" "-o" "short-monotonic" ]
-            ++ map (u: "-u ${u}") cfg.networkUnits
-          );
-          StandardOutput = "tty";
-          TTYPath = "/dev/tty15";
-          TTYReset = true;
-          Restart = "always";
-          RestartSec = 5;
-          StartLimitIntervalSec = 30;
-          StartLimitBurst = 5;
-        };
-        wantedBy = [ "multi-user.target" ];
-      };
-    })
-    (mkIf cfg.full.enable {
-      systemd.services.log-full = {
-        description = "Journal viewer: all messages on tty16";
-        after = [ "systemd-journald.service" ];
-        requires = [ "systemd-journald.service" ];
-        serviceConfig = {
-          ExecStart = "${lib.getExe' pkgs.systemd "journalctl"} -f -p 7 -o short-monotonic";
-          StandardOutput = "tty";
-          TTYPath = "/dev/tty16";
-          TTYReset = true;
-          Restart = "always";
-          RestartSec = 5;
-          StartLimitIntervalSec = 30;
-          StartLimitBurst = 5;
-        };
-        wantedBy = [ "multi-user.target" ];
-      };
-    })
-  ]);
+  config = mkIf cfg.enable (
+    lib.mkMerge (map (name: mkLogService name logServices.${name}) (builtins.attrNames logServices))
+  );
 }
