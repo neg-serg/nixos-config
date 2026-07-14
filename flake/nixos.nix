@@ -223,4 +223,7 @@ let
   );
 
 in
-lib.genAttrs hostNamesEnabled mkHost // prefixedTestConfigs
+{
+  odin = mkHost "odin";
+  inherit mkTestHost testProfiles;
+}
