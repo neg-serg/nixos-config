@@ -7,10 +7,6 @@
 }:
 let
   grafanaEnabled = config.services.grafana.enable or false;
-  hasResilioSecret = builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml");
-  wireguardSopsFile = inputs.self + "/secrets/odin-wireguard-wg-quick.sops";
-  duckdnsEnvSecret = inputs.self + "/secrets/duckdns.env.sops";
-  hasDuckdnsSecret = builtins.pathExists duckdnsEnvSecret;
   unboundLocalData = import ./unbound-hosts.nix;
   resilioAuthScript = pkgs.writeShellScript "resilio-auth" ''
     CONFIG_FILE="/run/rslsync/config.json"
@@ -188,7 +184,7 @@ lib.mkMerge [
         enable = false;
         dataDir = "/zero/bitcoin-node";
       };
-      duckdns = lib.mkIf hasDuckdnsSecret {
+      duckdns = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/duckdns.env.sops")) {
         enable = true;
         domain = "${config.networking.hostName}.duckdns.org";
         environmentFile = config.sops.secrets."duckdns/env".path;
@@ -392,7 +388,7 @@ lib.mkMerge [
         # gvfs.enable = true;
 
         # Resilio Sync (interactive Web UI, auth via SOPS)
-        resilio = lib.mkIf hasResilioSecret {
+        resilio = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml")) {
           enable = false;
 
           # state / DB
@@ -469,20 +465,20 @@ lib.mkMerge [
     # when rotating files under non-standard paths or missing until first run.
 
     # DuckDNS token (EnvironmentFile with DUCKDNS_TOKEN)
-    sops.secrets."duckdns/env" = lib.mkIf hasDuckdnsSecret {
-      sopsFile = duckdnsEnvSecret;
+    sops.secrets."duckdns/env" = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/duckdns.env.sops")) {
+      sopsFile = inputs.self + "/secrets/duckdns.env.sops";
       format = "dotenv";
       owner = "root";
       mode = "0400";
     };
 
     # Resilio Sync: Web UI auth via SOPS, data under /zero/sync
-    sops.secrets."resilio/http-login" = lib.mkIf (hasResilioSecret && config.services.resilio.enable) {
+    sops.secrets."resilio/http-login" = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable) {
       sopsFile = inputs.self + "/secrets/resilio.sops.yaml";
       owner = "rslsync";
       mode = "0400";
     };
-    sops.secrets."resilio/http-pass" = lib.mkIf (hasResilioSecret && config.services.resilio.enable) {
+    sops.secrets."resilio/http-pass" = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable) {
       sopsFile = inputs.self + "/secrets/resilio.sops.yaml";
       owner = "rslsync";
       mode = "0400";
@@ -496,7 +492,7 @@ lib.mkMerge [
         [
           "d /zero/sync/upload-next 0755 neg neg - -"
         ]
-        ++ lib.optionals (hasResilioSecret && config.services.resilio.enable) [
+        ++ lib.optionals (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable) [
           # Resilio state / license storage (service runs as rslsync)
           "d /zero/sync/.state 0700 rslsync rslsync - -"
         ]
@@ -591,7 +587,7 @@ lib.mkMerge [
         logrotate-checkconf.enable = false;
 
         # Inject Resilio Web UI credentials from SOPS into generated config.json
-        resilio = lib.mkIf (hasResilioSecret && config.services.resilio.enable) {
+        resilio = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable) {
           serviceConfig.ExecStartPre = lib.mkAfter [ resilioAuthScript ];
         };
       };
@@ -652,11 +648,11 @@ lib.mkMerge [
         restartUnits = [ "grafana.service" ];
       };
   })
-  (lib.mkIf (builtins.pathExists wireguardSopsFile) {
+  (lib.mkIf (builtins.pathExists (inputs.self + "/secrets/odin-wireguard-wg-quick.sops")) {
     # On-demand WireGuard VPN for odin, configured via wg-quick config stored in sops.
     # The tunnel is not started automatically; use systemctl start/stop to control it.
     sops.secrets."wireguard/odin-wg-quick" = {
-      sopsFile = wireguardSopsFile;
+      sopsFile = inputs.self + "/secrets/odin-wireguard-wg-quick.sops";
       format = "binary"; # keep original wg-quick config format
       owner = "root";
       group = "root";
