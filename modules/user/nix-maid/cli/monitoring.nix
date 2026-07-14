@@ -6,7 +6,6 @@
   ...
 }:
 let
-  n = neg;
   # Btop config generator — produces key = "value" format
   mkBtopConf = attrs:
     lib.generators.toKeyValue {
@@ -104,7 +103,7 @@ in
         ]
       );
     }
-    (n.mkHomeFiles {
+    (neg.mkHomeFiles {
       # Btop Config
       ".config/btop/btop.conf".text = mkBtopConf btopSettings;
       ".config/btop/themes/midnight-ocean.theme".source =

@@ -6,7 +6,7 @@
   ...
 }:
 let
-  n = neg;
+  inherit (config.users.users.neg) home;
   webEnabled = config.features.web.enable or false;
   mediaEnabled = config.features.media.audio.apps.enable or false;
 
@@ -14,11 +14,11 @@ let
 
   # Aria2 Settings
   aria2Settings = {
-    dir = "${config.users.users.neg.home}/dw/aria";
+    dir = "${home}/dw/aria";
     enable-rpc = "true";
     # Store session in XDG data
-    save-session = "${config.users.users.neg.home}/.local/share/aria2/session";
-    input-file = "${config.users.users.neg.home}/.local/share/aria2/session";
+    save-session = "${home}/.local/share/aria2/session";
+    input-file = "${home}/.local/share/aria2/session";
     save-session-interval = "1800";
     # Additional Aria2 defaults often useful
     continue = "true";
@@ -43,7 +43,7 @@ in
           };
           # aria2 is installed via cli/file-ops.nix
         }
-        (n.mkHomeFiles {
+        (neg.mkHomeFiles {
           ".config/aria2/aria2.conf".text = aria2ConfText;
           # Ensure session file exists (empty init)
           ".local/share/aria2/session".text = "";

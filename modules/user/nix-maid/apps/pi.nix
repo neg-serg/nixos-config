@@ -6,26 +6,31 @@
   ...
 }:
 let
-  n = neg;
   enable =
     (config.features.dev.enable or false)
     && (config.features.dev.ai.enable or false)
     && (config.features.dev.ai.pi.enable or false);
 
-  # npm-based pi 0.80.3 (updated from nixpkgs 0.75.4 for extension compatibility).
-  # Installed via: npm install --prefix ~/.local @earendil-works/pi-coding-agent@0.80.3
+  # Globally installed pi via npm (prefix ~/.npm-global, not in PATH so nix wrapper takes priority).
+  # Update with: pi update
+  # Note: .npmrc sets prefix=$HOME/.npm-global so `pi update` works without PATH conflicts.
+  piGlobal = "~/.npm-global/lib/node_modules/@earendil-works/pi-coding-agent/dist/cli.js";
+
+  # Raw wrapper — no provider defaults, no secrets. Uses the global install for updatability.
   piLatest = pkgs.writeShellScriptBin "pi-latest" ''
-    exec ${lib.getExe' pkgs.nodejs "node"} /home/neg/.local/node_modules/@earendil-works/pi-coding-agent/dist/cli.js "$@"
+    exec ${lib.getExe' pkgs.nodejs "node"} ${piGlobal} "$@"
   '';
 
-  # Wrapper that defaults to DeepSeek provider and injects secrets.
+  # Wrapper that injects secrets. Provider/model defaults come from settings.json
+  # (defaultProvider: deepseek, defaultModel: deepseek/deepseek-v4-flash).
+  # Flags deliberately omitted: they break `pi update`/`pi install` etc.
   # Takes precedence over the system-wide `pi` from pi.nix.
   piWrapper = pkgs.writeShellScriptBin "pi" ''
     set -a
     DEEPSEEK_API_KEY="$(${pkgs.coreutils}/bin/cat /run/secrets/deepseek-api 2>/dev/null || echo "''${DEEPSEEK_API_KEY:-}")"
     GITHUB_TOKEN="$(${pkgs.coreutils}/bin/cat /run/secrets/github-token 2>/dev/null || echo "''${GITHUB_TOKEN:-}")"
     set +a
-    exec ${lib.getExe' pkgs.nodejs "node"} /home/neg/.local/node_modules/@earendil-works/pi-coding-agent/dist/cli.js --provider deepseek --model deepseek/deepseek-v4-flash "$@"
+    exec ${lib.getExe' pkgs.nodejs "node"} ${piGlobal} "$@"
   '';
 
   # Subagent extension and prompts are now provided by npm:pi-subagents package.
@@ -46,11 +51,13 @@ lib.mkIf enable (
       users.users.neg.packages = [ piWrapper piLatest ];
     }
     # Ensure .pi agent directory structure exists
-    (n.mkHomeFiles (
+    (neg.mkHomeFiles (
       {
         ".pi/agent/auth.json".text = "{}";
+        # npm global prefix — writable, *not* in default PATH, so nix wrapper stays primary.
+        # pi update uses this via its own path detection.
+        ".npmrc".text = "prefix=\${HOME}/.npm-global\n";
       }
-      # Subagent agents and prompts (extensions now from npm:pi-subagents)
       // mkSubagentDirLinks "agents" subagentAgents
       // mkSubagentDirLinks "prompts" subagentPrompts
     ))
