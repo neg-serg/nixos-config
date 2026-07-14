@@ -21,7 +21,7 @@ in
         src = inputs.opencode;
         version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
         node_modules = old.node_modules.overrideAttrs (nmOld: {
-          outputHash = "sha256-9oSXcvvISB6WAqI6f/GBZ3i9IBwYrRQvKs82SLibJNo=";
+          outputHash = "sha256-1NUtprMH8GnSUqQ+mHQSC+JLU7lwzHe6XXYHe129WmE=";
           outputHashAlgo = "sha256";
           outputHashMode = "recursive";
         });
