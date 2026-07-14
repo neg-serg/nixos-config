@@ -55,7 +55,7 @@ lib.mkIf cfg.enable {
     wantedBy = [ "transparent-proxy.target" ];
     serviceConfig = {
       Type = "simple";
-      ExecStart = "${pkgs.redsocks}/bin/redsocks -c /run/redsocks.conf";
+      ExecStart = "${lib.getExe pkgs.redsocks} -c /run/redsocks.conf";
       Restart = "on-failure";
       RestartSec = 5;
     };
@@ -74,7 +74,7 @@ lib.mkIf cfg.enable {
       RemainAfterExit = true;
     };
     script = ''
-      ${pkgs.nftables}/bin/nft -f - <<'NFT'
+      ${lib.getExe' pkgs.nftables "nft"} -f - <<'NFT'
       table inet transparent-proxy {
           chain output {
               type nat hook output priority 0;
@@ -89,7 +89,7 @@ lib.mkIf cfg.enable {
       NFT
     '';
     preStop = ''
-      ${pkgs.nftables}/bin/nft delete table inet transparent-proxy 2>/dev/null || true
+      ${lib.getExe' pkgs.nftables "nft"} delete table inet transparent-proxy 2>/dev/null || true
     '';
   };
 
@@ -114,12 +114,12 @@ lib.mkIf cfg.enable {
       set -euo pipefail
       cleanup() {
         echo "[rebuild-proxied] stopping transparent proxy..."
-        ${pkgs.systemd}/bin/systemctl stop transparent-proxy.target 2>/dev/null || true
+        ${lib.getExe' pkgs.systemd "systemctl"} stop transparent-proxy.target 2>/dev/null || true
         echo "[rebuild-proxied] done."
       }
       trap cleanup EXIT
       echo "[rebuild-proxied] starting transparent proxy..."
-      ${pkgs.systemd}/bin/systemctl start transparent-proxy.target
+      ${lib.getExe' pkgs.systemd "systemctl"} start transparent-proxy.target
       echo "[rebuild-proxied] running nixos-rebuild..."
       ${config.system.build.nixos-rebuild}/bin/nixos-rebuild "$@"
     '')
@@ -127,14 +127,14 @@ lib.mkIf cfg.enable {
       set -euo pipefail
       cleanup() {
         echo "[nh-proxied] stopping transparent proxy..."
-        ${pkgs.systemd}/bin/systemctl stop transparent-proxy.target 2>/dev/null || true
+        ${lib.getExe' pkgs.systemd "systemctl"} stop transparent-proxy.target 2>/dev/null || true
         echo "[nh-proxied] done."
       }
       trap cleanup EXIT
       echo "[nh-proxied] starting transparent proxy..."
-      ${pkgs.systemd}/bin/systemctl start transparent-proxy.target
+      ${lib.getExe' pkgs.systemd "systemctl"} start transparent-proxy.target
       echo "[nh-proxied] running nh..."
-      ${pkgs.nh}/bin/nh "$@"
+      ${lib.getExe pkgs.nh} "$@"
     '')
   ];
 }

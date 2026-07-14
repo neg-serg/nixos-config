@@ -26,7 +26,7 @@ lib.mkIf caelestiaShellEnabled {
     wantedBy = [ "graphical-session.target" ];
     serviceConfig = {
       Type = "exec";
-      ExecStart = "${shellPkg}/bin/caelestia-shell";
+      ExecStart = "${lib.getExe shellPkg}";
       Restart = "on-failure";
       RestartSec = "5s";
       TimeoutStopSec = "5s";
