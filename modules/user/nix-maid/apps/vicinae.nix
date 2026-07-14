@@ -3,6 +3,7 @@
   lib,
   config,
   neg,
+  iosevkaNeg,
   ...
 }:
 with lib;
@@ -13,17 +14,18 @@ let
 
   # Declarative theme (only when manageConfig = true)
   iconTheme = config.features.gui.iconTheme or "kora";
+
   vicinaeTheme = {
     window = {
       # Squarer, more compact proportions — neg-style strict geometry
-      width = 620;
-      height = 540;
+      width = 680;        # slightly wider for proportional Iosevka
+      height = 580;       # taller to match
       border_width = 2;   # thicker frame = stricter look
-      border_radius = 0;  # zero rounding = strict square
-      margin = 8;         # tighter outer spacing
-      padding = 12;       # more internal breathing room for large font
+      border_radius = 0;  # zero rounding = strict square — neg.nvim signature
+      margin = 10;        # comfortable outer spacing
+      padding = 14;       # breathing room for large font
     };
-    # Palette adapted from neg.nvim — pure-dark with signature deep-blue accents
+    # neg.nvim authentic palette — pure-dark with signature deep-blue accents
     colors = {
       background = "#000000";   # neg.bclr — pure black
       border = "#005faf";       # neg.ops3 — signature deep blue accent
@@ -36,8 +38,8 @@ let
       loading_bar = "#005faf";  # neg.ops3 — accent blue
     };
     fonts = {
-      main = "Outfit 20";      # was 13 — much larger, bold presence
-      secondary = "Outfit 16";  # was 11 — much larger
+      main = "Iosevka Proportional Medium 20";   # neg-style: large, medium-weight proportional
+      secondary = "Iosevka Proportional 16";      # matching proportional for details
     };
   };
 
