@@ -13,24 +13,6 @@ let
       pkgs.python3 # Python interpreter
     ];
     text = ''
-          # mpdas — Last.fm AudioScrobbler (ported from legacy Salt config)
-          # Routes via SOCKS5 proxy if available (127.0.0.1:10808)
-          mpdas = lib.mkIf (config.features.media.audio.mpd.enable or false) {
-            description = "MPD AudioScrobbler (Last.fm)";
-            after = [ "mpd.service" "network-online.target" ];
-            serviceConfig = {
-              ExecStart = "${lib.getExe pkgs.mpdas}";
-              Environment = [
-                "ALL_PROXY=socks5h://127.0.0.1:10808"
-                "MPD_HOST=127.0.0.1"
-                "MPD_PORT=6600"
-              ];
-              Restart = "on-failure";
-              RestartSec = 10;
-            };
-            wantedBy = [ "default.target" ];
-          };
-
           # Alertmanager Telegram webhook bridge
             # Receives alerts from Alertmanager at 127.0.0.1:9094/alert,
             # formats and forwards to Telegram
@@ -86,6 +68,26 @@ lib.mkIf (cfg.enable or false) {
   # User systemd services
 
   systemd.user.services = {
+    # mpdas — Last.fm AudioScrobbler for MPD.
+    # Routes via SOCKS5 proxy (127.0.0.1:10808). Credentials from sops secret.
+    mpdas = lib.mkIf ((config.features.media.audio.mpd.enable or false)
+      && builtins.pathExists ../../../../secrets/home/mpdas/neg.rc) {
+      description = "MPD AudioScrobbler (Last.fm)";
+      after = [ "network-online.target" "mpd.service" ];
+      wants = [ "mpd.service" ];
+      serviceConfig = {
+        ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
+        Environment = [
+          "ALL_PROXY=socks5h://127.0.0.1:10808"
+          "MPD_HOST=127.0.0.1"
+          "MPD_PORT=6600"
+        ];
+        Restart = "on-failure";
+        RestartSec = 10;
+      };
+      wantedBy = [ "default.target" ];
+    };
+
     # Pic dirs notifier
     "pic-dirs" = {
       description = "Pic dirs notification";
