@@ -338,3 +338,21 @@ api.mapkey('zi', 'Download image without dialog', function() {
     });
 });
 
+// ========== Proxy ==========
+// — Toggle: ;pt  switches between direct ↔ always (on/off)
+// — Individual: ;pd direct, ;pa always, ;pb byhost, ;ps system, ;pc clear
+api.mapkey(';pt', 'Toggle proxy on/off (direct ↔ always)', function() {
+    api.RUNTIME('getSettings', {key: ['proxyMode']}, function(resp) {
+        var current = resp.settings.proxyMode;
+        var next = (current === 'always') ? 'direct' : 'always';
+        api.RUNTIME('updateProxy', {mode: next}, function(rs) {
+            api.Front.showBanner('Proxy: ' + rs.proxyMode);
+        });
+    });
+});
+api.map(';pd', ':setProxyMode direct', 0, 'Proxy: direct (no proxy)');
+api.map(';pa', ':setProxyMode always', 0, 'Proxy: always (all sites)');
+api.map(';pb', ':setProxyMode byhost', 0, 'Proxy: byhost (selected sites)');
+api.map(';ps', ':setProxyMode system', 0, 'Proxy: system');
+api.map(';pc', ':setProxyMode clear', 0, 'Proxy: clear (no control)');
+
