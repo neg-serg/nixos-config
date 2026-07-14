@@ -1,15 +1,10 @@
 let
-  audio = import ./unfree/categories/audio.nix;
-  ai = import ./unfree/categories/ai-tools.nix;
-  browsers = import ./unfree/categories/browsers.nix;
-  forensicsStego = import ./unfree/categories/forensics-stego.nix;
-  forensicsAnalysis = import ./unfree/categories/forensics-analysis.nix;
-  misc = import ./unfree/categories/misc.nix;
-  forensics = forensicsStego ++ forensicsAnalysis;
+  cat = import ./unfree/categories.nix;
+  forensics = cat."forensics-stego" ++ cat."forensics-analysis";
 in
 {
   # Desktop-oriented unfree packages (composed from categories)
-  desktop = audio ++ ai ++ browsers ++ forensics ++ misc;
+  desktop = cat.audio ++ cat."ai-tools" ++ cat.browsers ++ forensics ++ cat.misc;
 
   # Headless/server preset: no unfree packages allowed
   headless = [ ];

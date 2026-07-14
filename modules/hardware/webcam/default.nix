@@ -1,4 +1,6 @@
-{ ... }:
+{ pkgs, ... }:
 {
-  imports = [ ./pkgs.nix ]; # Nix package manager
+  environment.systemPackages = [
+    pkgs.scrcpy # Android device display/control over USB/TCP (GTK-free replacement for droidcam)
+  ];
 }
