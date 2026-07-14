@@ -15,3 +15,4 @@ docs/howto/options*.md
 __pycache__/
 benchmarks/
 .omo/
+.opencode/
