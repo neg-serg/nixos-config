@@ -31,19 +31,6 @@ in
 
   # Apply profile defaults. Users can still override flags after this.
   config = mkMerge [
-    # Backward compat: map old `features.profile` (string) to new `features.profiles` (list).
-    # The new composable profile system (modules/profiles/) handles actual defaults via mkDefault.
-    (mkIf (config.features ? profile && !(config.features ? profiles)) {
-      features.profiles = mkDefault (
-        if config.features.profile == "lite" then
-          [ "lite" ]
-        else
-          [
-            "desktop"
-            "dev"
-          ]
-      );
-    })
     # When dev-speed is enabled, prefer lean defaults for heavy subfeatures
     (mkIf config.features.devSpeed.enable {
       features = {
@@ -77,41 +64,14 @@ in
         };
       };
     })
-    (mkIf (!config.features.dev.haskell.enable) {
-      # When Haskell tooling is disabled, proactively exclude common Haskell tool pnames
-      # from curated package lists that honor features.excludePkgs via config.lib.neg.pkgsList.
-      features.excludePkgs = mkAfter [
-        "ghc"
-        "cabal-install"
-        "stack"
-        "haskell-language-server"
-        "hlint"
-        "ormolu"
-        "fourmolu"
-        "hindent"
-        "ghcid"
-      ];
-    })
-    (mkIf (!config.features.dev.rust.enable) {
-      # When Rust tooling is disabled, exclude common Rust tool pnames
-      features.excludePkgs = mkAfter [
-        "rustup"
-        "rust-analyzer"
-        "cargo"
-        "rustc"
-        "clippy"
-        "rustfmt"
-      ];
-    })
-    (mkIf (!config.features.dev.cpp.enable) {
-      # When C/C++ tooling is disabled, exclude typical C/C++ tool pnames
-      features.excludePkgs = mkAfter [
-        "gcc"
-        "cmake"
-        "ninja"
-        "ccache"
-        "lldb"
-      ];
+    (mkIf (!config.features.dev.haskell.enable || !config.features.dev.rust.enable || !config.features.dev.cpp.enable) {
+      # When dev language tooling is disabled, exclude their pnames from curated package lists
+      # that honor features.excludePkgs via config.lib.neg.pkgsList.
+      features.excludePkgs = mkAfter (
+        lib.optionals (!config.features.dev.haskell.enable) [ "ghc" "cabal-install" "stack" "haskell-language-server" "hlint" "ormolu" "fourmolu" "hindent" "ghcid" ]
+        ++ lib.optionals (!config.features.dev.rust.enable) [ "rustup" "rust-analyzer" "cargo" "rustc" "clippy" "rustfmt" ]
+        ++ lib.optionals (!config.features.dev.cpp.enable) [ "gcc" "cmake" "ninja" "ccache" "lldb" ]
+      );
     })
     (mkIf (!config.features.gui.enable) {
       features = {
@@ -124,9 +84,6 @@ in
     })
     (mkIf (!config.features.mail.enable) {
       features.mail.vdirsyncer.enable = mkForce false;
-    })
-    (mkIf (!config.features.hack.enable) {
-      features.hack = { };
     })
     # Consistency assertions for nested flags
     {
