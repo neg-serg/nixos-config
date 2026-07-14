@@ -67,12 +67,11 @@ in
     pkgs.iputils # Networking utilities (ping, arping, etc.)
     pkgs.netcat-openbsd # TCP/IP swiss army knife (OpenBSD variant)
     pkgs.w3m # Text-mode web browser and pager
+  ] ++ lib.optionals wifiEnabled [
+    pkgs.iwd # Wireless daemon for Linux
   ];
 
   # WiFi — expose iwd packages and units, startable manually when needed
-  (lib.mkIf wifiEnabled {
-    environment.systemPackages = [ pkgs.iwd ]; # Wireless daemon for Linux
-    systemd.packages = [ pkgs.iwd ]; # iwd systemd unit
-    services.dbus.packages = [ pkgs.iwd ]; # iwd D-Bus service definition
-  })
+  systemd.packages = lib.mkIf wifiEnabled [ pkgs.iwd ]; # iwd systemd unit
+  services.dbus.packages = lib.mkIf wifiEnabled [ pkgs.iwd ]; # iwd D-Bus service definition
 }
