@@ -4,12 +4,9 @@
   neg,
   ...
 }:
-let
-  n = neg;
-in
 {
   config = lib.mkMerge [
-    (n.mkHomeFiles {
+    (neg.mkHomeFiles {
       ".config/enchant/enchant.ordering".text = ''
         default:nuspell,hunspell
         en_US:nuspell,hunspell

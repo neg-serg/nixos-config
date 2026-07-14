@@ -7,11 +7,9 @@
   neg,
   ...
 }:
-let
-  n = neg;
-in
+
 {
-  config = n.mkHomeFiles {
+  config = neg.mkHomeFiles {
     ".config/ghostty/config".source = ../../../../files/cli/ghostty/config;
   };
 }

@@ -7,7 +7,6 @@
 }:
 with lib;
 let
-  n = neg;
   cfg = config.features.gui.vicinae;
   guiEnabled = config.features.gui.enable or false;
   enabled = guiEnabled && cfg.enable;
@@ -119,7 +118,7 @@ in
       # Declarative config — only when manageConfig is true.
       # When false, vicinae manages its own theme/settings interactively.
       (mkIf cfg.manageConfig (
-        n.mkHomeFiles {
+        neg.mkHomeFiles {
           ".config/vicinae/theme.json".text = builtins.toJSON vicinaeTheme;
           ".config/vicinae/settings.json".text = builtins.toJSON vicinaeSettings;
         }

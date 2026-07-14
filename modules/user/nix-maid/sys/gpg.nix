@@ -6,7 +6,6 @@
   ...
 }:
 let
-  n = neg;
   cfg = config.features.gpg;
 
   # Custom Pinentry Wrapper
@@ -112,7 +111,7 @@ in
       }
 
       # 1. Config Files via Maid
-      (n.mkHomeFiles {
+      (neg.mkHomeFiles {
         ".gnupg/gpg-agent.conf".text = agentConf;
         ".gnupg/scdaemon.conf".text = scdaemonConf;
         # Ensure permissions for GPG dir? Maid handles file creation, but usually gnupg handles dir perms on run.

@@ -5,7 +5,6 @@
   ...
 }:
 let
-  n = neg;
   # Browser/App Definitions
   # No browser installed; MIME associations use xdg-open fallback
   browser = "xdg-open.desktop";
@@ -151,7 +150,7 @@ pkgs.writeShellScript "create-xdg-dirs" ''
         };
       };
     }
-    (n.mkHomeFiles {
+    (neg.mkHomeFiles {
       ".config/mimeapps.list".text = mimeAppsList;
       ".config/user-dirs.dirs".text = userDirs;
 

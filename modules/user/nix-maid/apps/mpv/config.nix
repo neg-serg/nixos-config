@@ -5,19 +5,19 @@
   ...
 }:
 let
-  n = neg;
+  inherit (config.users.users.neg) home;
 in
 {
   config = lib.mkIf (config.features.gui.enable or false) (
     lib.mkMerge [
       {
-        environment.variables.MPV_HOME = "${config.users.users.neg.home}/.config/mpv";
+        environment.variables.MPV_HOME = "${home}/.config/mpv";
       }
-      (n.mkHomeFiles {
+      (neg.mkHomeFiles {
         ".config/mpv/mpv.conf".text = ''
-          input-ipc-server=${config.users.users.neg.home}/.config/mpv/socket
+          input-ipc-server=${home}/.config/mpv/socket
           cache=no
-          gpu-shader-cache-dir=${config.users.users.neg.home}/.config/mpv/
+          gpu-shader-cache-dir=${home}/.config/mpv/
           hwdec=auto-copy
           profile=gpu-hq
           vd-lavc-dr=yes

@@ -5,11 +5,10 @@
   ...
 }:
 let
-  n = neg;
 in
 {
   config = lib.mkIf (config.features.gui.enable or false) (
-    n.mkHomeFiles {
+    neg.mkHomeFiles {
       ".config/mpv/script-opts/osc.conf".text = ''
         deadzonesize=0
         scalewindowed=0.666

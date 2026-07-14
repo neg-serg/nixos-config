@@ -4,8 +4,6 @@
   ...
 }:
 let
-  n = neg;
-
   hyprConfDir = ../../../../files/gui/hypr;
   animDir = ../../../../files/gui/hypr/animations;
   lockDir = ../../../../files/gui/hypr/hyprlock;
@@ -27,7 +25,7 @@ in
       hyprlandConfText,
       hyprlandLuaText,
     }:
-    n.mkHomeFiles (
+    neg.mkHomeFiles (
       {
         ".config/hypr/hyprland.conf".text = hyprlandConfText;
 

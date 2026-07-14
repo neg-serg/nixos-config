@@ -5,11 +5,10 @@
   ...
 }:
 let
-  n = neg;
 in
 {
   config = lib.mkIf (config.features.gui.enable or false) (
-    n.mkHomeFiles {
+    neg.mkHomeFiles {
       ".config/mpv/input.conf".text = ''
         + add panscan +0.1
         - add panscan -0.1
