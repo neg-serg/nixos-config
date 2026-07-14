@@ -10,10 +10,10 @@ let
   mkBtopConf = attrs:
     lib.generators.toKeyValue {
       listsAsDuplicateKeys = true;
-      mkValueString = v:
-        if builtins.isBool v then boolToString v
-        else if builtins.isInt v then toString v
-        else ''"${toString v}"'';
+      mkKeyValue = key: v:
+        if builtins.isBool v then "${key} = ${lib.boolToString v}"
+        else if builtins.isInt v then "${key} = ${toString v}"
+        else ''${key} = "${toString v}"'';
     } attrs;
 
   btopSettings = {
