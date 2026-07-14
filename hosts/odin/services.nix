@@ -378,8 +378,7 @@ lib.mkMerge [
             RateLimitBurst=1000
           '';
         };
-        # Keep Plasma/X11 off for this host
-        desktopManager.plasma6.enable = lib.mkForce false;
+        # Keep X11 off for this host
         xserver.enable = lib.mkForce false;
         # Remove SDDM/Plasma additions; keep Hyprland-only setup
         # Temporarily disable Ollama on this host
