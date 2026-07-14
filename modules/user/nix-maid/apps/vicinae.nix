@@ -153,6 +153,9 @@ in
             Environment = [
               "QT_QPA_PLATFORM=wayland"
               "WAYLAND_DISPLAY=wayland-1"
+              # Include system PATH so launched apps (e.g. kvantummanager)
+              # are found via their desktop-file Exec= command.
+              "PATH=/run/current-system/sw/bin"
             ];
           };
         };
