@@ -42,12 +42,49 @@ let
     };
   };
 
+  # Full config sent to ~/.config/vicinae/settings.json.
+  # Merged-on-top of vicinae's built-in defaults (see `vicinae config default`).
+  # Tab / Shift+Tab navigation between sections is built into the Qt UI and
+  # works out of the box — no extra keybind needed.
   vicinaeSettings = {
     terminal = "kitty";
+
+    # ── navigation —─────────────
+    # "default" (Tab between sections) vs "emacs" (Ctrl+N/P)
+    keybinding = "default";
+    escape_key_behavior = "navigate_back";
+    pop_on_backspace = true;
+    pop_to_root_on_close = true;   # reset section on window close
+
     launcher = {
       show_icons = true;
       icon_theme = iconTheme;
       scan_desktop_files = true;
+    };
+
+    # ── common shortcuts —───────
+    # Listed explicitly so they survive a `manageConfig = true` reset.
+    # Only keys listed here are recognised by vicinae; there is no
+    # "next-section" key — use Tab / Shift+Tab for that.
+    keybinds = {
+      open-search-filter     = "control+P";
+      open-settings          = "control+,";
+      toggle-action-panel    = "control+B";
+
+      action.copy            = "control+shift+C";
+      action.copy-name       = "control+shift+.";
+      action.copy-path       = "control+shift+,";
+      action.duplicate       = "control+D";
+      action.edit            = "control+E";
+      action.edit-secondary  = "control+shift+E";
+      action.move-down       = "control+shift+ARROWDOWN";
+      action.move-up         = "control+shift+ARROWUP";
+      action.new             = "control+N";
+      action.open            = "control+O";
+      action.pin             = "control+shift+P";
+      action.refresh         = "control+R";
+      action.remove          = "control+X";
+      action.save            = "control+S";
     };
   };
 in
