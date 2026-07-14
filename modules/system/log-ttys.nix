@@ -11,7 +11,7 @@ in
         after = [ "systemd-journald.service" ];
         requires = [ "systemd-journald.service" ];
         serviceConfig = {
-          ExecStart = "${pkgs.systemd}/bin/journalctl -f -p 2 -o short-monotonic";
+          ExecStart = "${lib.getExe' pkgs.systemd "journalctl"} -f -p 2 -o short-monotonic";
           StandardOutput = "tty";
           TTYPath = "/dev/tty8";
           TTYReset = true;
@@ -29,7 +29,7 @@ in
         after = [ "systemd-journald.service" ];
         requires = [ "systemd-journald.service" ];
         serviceConfig = {
-          ExecStart = "${pkgs.systemd}/bin/journalctl -f -p 3 -o short-monotonic";
+          ExecStart = "${lib.getExe' pkgs.systemd "journalctl"} -f -p 3 -o short-monotonic";
           StandardOutput = "tty";
           TTYPath = "/dev/tty10";
           TTYReset = true;
@@ -47,7 +47,7 @@ in
         after = [ "systemd-journald.service" ];
         requires = [ "systemd-journald.service" ];
         serviceConfig = {
-          ExecStart = "${pkgs.systemd}/bin/journalctl -f -p 4 -o short-monotonic";
+          ExecStart = "${lib.getExe' pkgs.systemd "journalctl"} -f -p 4 -o short-monotonic";
           StandardOutput = "tty";
           TTYPath = "/dev/tty11";
           TTYReset = true;
@@ -65,7 +65,7 @@ in
         after = [ "systemd-journald.service" ];
         requires = [ "systemd-journald.service" ];
         serviceConfig = {
-          ExecStart = "${pkgs.systemd}/bin/journalctl -f _TRANSPORT=kernel -o short-monotonic";
+          ExecStart = "${lib.getExe' pkgs.systemd "journalctl"} -f _TRANSPORT=kernel -o short-monotonic";
           StandardOutput = "tty";
           TTYPath = "/dev/tty12";
           TTYReset = true;
@@ -83,7 +83,7 @@ in
         after = [ "systemd-journald.service" ];
         requires = [ "systemd-journald.service" ];
         serviceConfig = {
-          ExecStart = "${pkgs.systemd}/bin/journalctl -f SYSLOG_FACILITY=4 SYSLOG_FACILITY=10 -o short-monotonic";
+          ExecStart = "${lib.getExe' pkgs.systemd "journalctl"} -f SYSLOG_FACILITY=4 SYSLOG_FACILITY=10 -o short-monotonic";
           StandardOutput = "tty";
           TTYPath = "/dev/tty13";
           TTYReset = true;
@@ -102,7 +102,7 @@ in
         requires = [ "systemd-journald.service" ];
         serviceConfig = {
           # `_PID=1` = systemd-pid1 messages (unit lifecycle, targets, failures)
-          ExecStart = "${pkgs.systemd}/bin/journalctl -f _PID=1 -o short-monotonic";
+          ExecStart = "${lib.getExe' pkgs.systemd "journalctl"} -f _PID=1 -o short-monotonic";
           StandardOutput = "tty";
           TTYPath = "/dev/tty14";
           TTYReset = true;
@@ -121,7 +121,7 @@ in
         requires = [ "systemd-journald.service" ];
         serviceConfig = {
           ExecStart = concatStringsSep " " (
-            [ "${pkgs.systemd}/bin/journalctl" "-f" "-o" "short-monotonic" ]
+            [ "${lib.getExe' pkgs.systemd "journalctl"}" "-f" "-o" "short-monotonic" ]
             ++ map (u: "-u ${u}") cfg.networkUnits
           );
           StandardOutput = "tty";
@@ -141,7 +141,7 @@ in
         after = [ "systemd-journald.service" ];
         requires = [ "systemd-journald.service" ];
         serviceConfig = {
-          ExecStart = "${pkgs.systemd}/bin/journalctl -f -p 7 -o short-monotonic";
+          ExecStart = "${lib.getExe' pkgs.systemd "journalctl"} -f -p 7 -o short-monotonic";
           StandardOutput = "tty";
           TTYPath = "/dev/tty16";
           TTYReset = true;

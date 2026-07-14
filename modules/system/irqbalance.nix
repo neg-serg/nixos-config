@@ -4,7 +4,7 @@ let
   inherit (lib) mkIf types;
   cfg = config.profiles.performance.irqbalance;
 
-  gawkBin = "${pkgs.gawk}/bin/awk";
+  gawkBin = lib.getExe' pkgs.gawk "awk";
   fixScript = pkgs.writeText "irq-affinity-fix.sh" ''
     #!/usr/bin/env bash
     set -euo pipefail
@@ -38,7 +38,7 @@ After=systemd-udevd.service
 [Service]
 Type=oneshot
 RemainAfterExit=true
-ExecStart=${pkgs.bash}/bin/bash ${fixScript}
+ExecStart=${lib.getExe pkgs.bash} ${fixScript}
 Environment=PATH=/run/wrappers/bin:/nix/store/sr26flm2nkfa12dkrwj2630kqsfakky4-coreutils-9.11/bin:/nix/store/w8xlvapzxcz23ba312q119p57bnc7200-gnugrep-3.12/bin:/nix/store/0hamsiy8hsyfw1hmizbc3bf93ad7fa1v-gnused-4.9/bin:/nix/store/arcwm5lynrra8yjn5wvbj5mr3rikmb30-systemd-260.2/bin:${pkgs.gawk}/bin
 
 [Install]

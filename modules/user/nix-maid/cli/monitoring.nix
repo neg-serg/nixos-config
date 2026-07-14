@@ -7,24 +7,15 @@
 }:
 let
   n = neg;
-  # --- Btop Config Generator ---
-  mkBtopConf =
-    attrs:
-    lib.concatStringsSep "\n" (
-      lib.mapAttrsToList (
-        k: v:
-        let
-          val =
-            if builtins.isBool v then
-              (if v then "true" else "false")
-            else if builtins.isInt v then
-              builtins.toString v
-            else
-              ''"${builtins.toString v}"'';
-        in
-        "${k} = ${val}"
-      ) attrs
-    );
+  # Btop config generator — produces key = "value" format
+  mkBtopConf = attrs:
+    lib.generators.toKeyValue {
+      listsAsDuplicateKeys = true;
+      mkValueString = v:
+        if builtins.isBool v then boolToString v
+        else if builtins.isInt v then toString v
+        else ''"${toString v}"'';
+    } attrs;
 
   btopSettings = {
     color_theme = "midnight-ocean";

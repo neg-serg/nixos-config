@@ -26,7 +26,7 @@ let
 
     for url in "''${SOURCES[@]}"; do
       name=$(basename "$url" | sed 's/\.lst$//;s/\.txt$//')
-      ${pkgs.curl}/bin/curl -fsSL --retry 3 --max-time 60 "$url" \
+      ${lib.getExe pkgs.curl} -fsSL --retry 3 --max-time 60 "$url" \
         | grep -E '^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}$' \
         | sort -u > "$BLOCKLIST_DIR/$name.txt"
     done

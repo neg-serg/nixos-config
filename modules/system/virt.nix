@@ -2,11 +2,11 @@
   pkgs,
   lib,
   config,
+  mkBool,
   ...
 }:
 let
   mainUser = config.users.main.name or "neg";
-  mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
 in
 {
   options.features.virt = {
