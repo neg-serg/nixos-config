@@ -58,7 +58,7 @@ in
   # Activation script to ensure profile links (legacy support)
   system.activationScripts.negProfileLinks = lib.stringAfter [ "users" ] ''
     echo "Ensuring legacy profile links for user neg..."
-    ${pkgs.util-linux}/bin/runuser -u neg -- ${pkgs.bash}/bin/bash -c ' # Set of system utilities for Linux
+    ${lib.getExe' pkgs.util-linux "runuser"} -u neg -- ${lib.getExe' pkgs.bash "bash"} -c ' # Set of system utilities for Linux
       set -eu
       mkdir -p "$HOME/.local/state/nix/profiles"
       PROFILE_TARGET="/etc/profiles/per-user/neg"

@@ -24,10 +24,8 @@ let
     continue = "true";
   };
 
-  # Aria2 config text generator (key=value)
-  aria2ConfText = lib.concatStringsSep "\n" (
-    lib.mapAttrsToList (k: v: "${k}=${toString v}") aria2Settings
-  );
+  # Aria2 config in key=value format
+  aria2ConfText = lib.generators.toKeyValue {} aria2Settings;
 in
 {
   config = lib.mkMerge [

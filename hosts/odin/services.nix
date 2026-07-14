@@ -25,8 +25,8 @@ let
     LOGIN=$(cat ${config.sops.secrets."resilio/http-login".path})
     PASS=$(cat ${config.sops.secrets."resilio/http-pass".path})
 
-    ${pkgs.gnused}/bin/sed -i "s|placeholder_login|$LOGIN|" "$CONFIG_FILE" # GNU sed, a batch stream editor
-    ${pkgs.gnused}/bin/sed -i "s|placeholder_pass|$PASS|" "$CONFIG_FILE" # GNU sed, a batch stream editor
+    ${lib.getExe' pkgs.gnused "sed"} -i "s|placeholder_login|$LOGIN|" "$CONFIG_FILE" # GNU sed, a batch stream editor
+    ${lib.getExe' pkgs.gnused "sed"} -i "s|placeholder_pass|$PASS|" "$CONFIG_FILE" # GNU sed, a batch stream editor
   '';
 in
 lib.mkMerge [
@@ -67,15 +67,6 @@ lib.mkMerge [
       settings.auto-optimise-store = false;
     };
 
-
-    # Enable Docker engine for WinBoat and use real docker socket
-    #     virtualisation = {
-    #       docker.enable = true;
-    #       podman = {
-    #         dockerCompat = lib.mkForce false;
-    #         dockerSocket.enable = lib.mkForce false;
-    #       };
-    #     };
 
     # Service profiles toggles for this host
     servicesProfiles = {
@@ -257,13 +248,13 @@ lib.mkMerge [
     environment.systemPackages = lib.mkAfter [
       pkgs.openrgb # per-device RGB controller UI
       (pkgs.writeShellScriptBin "cpu-boost" ''
-        exec ${pkgs.neg.hwctl}/bin/hwctl cpu boost "$@"
+        exec ${lib.getExe pkgs.neg.hwctl} cpu boost "$@"
       '') # CLI toggle for AMD Precision Boost
       (pkgs.writeShellScriptBin "fan-manual" ''
-        exec ${pkgs.neg.hwctl}/bin/hwctl fan manual ''${1:-}
+        exec ${lib.getExe pkgs.neg.hwctl} fan manual ''${1:-}
       '') # Switch fans to manual control
       (pkgs.writeShellScriptBin "fan-auto" ''
-        exec ${pkgs.neg.hwctl}/bin/hwctl fan auto
+        exec ${lib.getExe pkgs.neg.hwctl} fan auto
       '') # Switch fans to automatic control
     ];
     environment.etc = {
@@ -537,19 +528,19 @@ lib.mkMerge [
               TMPFILE="$(mktemp)"
               ts() { date +%s; }
 
-              CLI="${pkgs.bitcoind}/bin/bitcoin-cli -datadir ${lib.escapeShellArg dataDir}"
+              CLI="${lib.getExe' pkgs.bitcoind "bitcoin-cli"} -datadir ${lib.escapeShellArg dataDir}"
 
               # Basic info (avoid heavy calls)
               blocks=$($CLI getblockcount 2>/dev/null || echo 0)
               # headers and chain via blockchaininfo
               info=$($CLI getblockchaininfo 2>/dev/null || echo '{}')
-              headers=$(printf '%s\n' "$info" | ${pkgs.jq}/bin/jq -r '.headers // 0' 2>/dev/null || echo 0) # Lightweight and flexible command-line JSON processor
-              chain=$(printf '%s\n' "$info" | ${pkgs.jq}/bin/jq -r '.chain // "unknown"' 2>/dev/null || echo unknown) # Lightweight and flexible command-line JSON processor
+              headers=$(printf '%s\n' "$info" | ${lib.getExe pkgs.jq} -r '.headers // 0' 2>/dev/null || echo 0) # Lightweight and flexible command-line JSON processor
+              chain=$(printf '%s\n' "$info" | ${lib.getExe pkgs.jq} -r '.chain // "unknown"' 2>/dev/null || echo unknown) # Lightweight and flexible command-line JSON processor
 
               # Determine best block time for staleness metric
               besthash=$($CLI getbestblockhash 2>/dev/null || echo)
               if [ -n "$besthash" ]; then
-                block_time=$($CLI getblockheader "$besthash" 2>/dev/null | ${pkgs.jq}/bin/jq -r '.time // 0' 2>/dev/null || echo 0) # Lightweight and flexible command-line JSON processor
+                block_time=$($CLI getblockheader "$besthash" 2>/dev/null | ${lib.getExe pkgs.jq} -r '.time // 0' 2>/dev/null || echo 0) # Lightweight and flexible command-line JSON processor
               else
                 block_time=0
               fi
@@ -561,7 +552,7 @@ lib.mkMerge [
               fi
 
               # Peer connections
-              peers=$($CLI getnetworkinfo 2>/dev/null | ${pkgs.jq}/bin/jq -r '.connections // 0' 2>/dev/null || echo 0) # Lightweight and flexible command-line JSON processor
+              peers=$($CLI getnetworkinfo 2>/dev/null | ${lib.getExe pkgs.jq} -r '.connections // 0' 2>/dev/null || echo 0) # Lightweight and flexible command-line JSON processor
 
               cat > "$TMPFILE" <<EOF
               # HELP bitcoin_block_height Current block height as reported by bitcoind
@@ -680,11 +671,11 @@ lib.mkMerge [
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = "${pkgs.wireguard-tools}/bin/wg-quick up ${
+        ExecStart = "${lib.getExe' pkgs.wireguard-tools "wg-quick"} up ${
           # Tools for the WireGuard secure network tunnel
           config.sops.secrets."wireguard/odin-wg-quick".path
         }";
-        ExecStop = "${pkgs.wireguard-tools}/bin/wg-quick down ${
+        ExecStop = "${lib.getExe' pkgs.wireguard-tools "wg-quick"} down ${
           # Tools for the WireGuard secure network tunnel
           config.sops.secrets."wireguard/odin-wg-quick".path
         }";

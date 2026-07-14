@@ -55,12 +55,6 @@ let
       port = 587;
     };
   };
-  # TODO: re-enable imapnotify after fixing Gmail credentials
-  # Password/token for serg.zorg@gmail.com expired — goimapnotify gets "Invalid credentials (Failure)".
-  # Steps to fix:
-  #   1. Generate a new app password in Google Account > Security > App Passwords
-  #   2. Update the password in `pass mail/gmail/serg.zorg@gmail.com/mbsync-app`
-  #   3. Set `enableImapnotify = true` below
   enableImapnotify = false;
 
 in
@@ -110,30 +104,7 @@ in
         };
       }
 
-      # Conditional: imapnotify service (disabled by default — Gmail credentials expired)
-      (lib.mkIf enableImapnotify {
-        systemd.user.services."imapnotify-gmail" = {
-          description = "IMAP Notify (gmail)";
-          path = [
-            passPkg # password manager for passwordCmd
-            pkgs.gnupg # gpg binary for pass decryption
-          ];
-          serviceConfig = {
-            Type = "simple";
-            ExecStart = "${lib.getExe pkgs.goimapnotify} -conf %h/.config/imapnotify/gmail.json"; # Execute scripts on IMAP mailbox changes (new/deleted/upda...
-            Restart = "on-failure";
-            RestartSec = "20";
-          };
-          requires = [ "gpg-agent.socket" ];
-          after = [
-            "gpg-agent.service"
-            "gpg-agent.socket"
-            "network-online.target"
-          ];
-          wants = [ "network-online.target" ];
-          wantedBy = [ "default.target" ];
-        };
-      })
+
 
       (n.mkHomeFiles {
         # ========================================================================

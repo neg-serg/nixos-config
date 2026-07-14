@@ -27,14 +27,6 @@ _: {
 
   systemd.network = {
     networks = {
-      # Old LAN config — kept for reference, replaced by 10-lan-v2 below
-      # "10-lan" = {
-      #   matchConfig.Name = "net0";
-      #   address = [ "192.168.2.240/24" ];
-      #   gateway = [ "192.168.2.1" ];
-      #   dns = [ "192.168.2.1" ];
-      #   linkConfig.RequiredForOnline = "routable";
-      # };
       "10-lan-v2" = {
         matchConfig.Name = "net0";
         # Static IP configuration (faster boot, no DHCP wait)

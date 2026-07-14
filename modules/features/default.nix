@@ -122,65 +122,37 @@ with lib;
       features.hack = { };
     })
     # Consistency assertions for nested flags
+    let
+      # Child feature requires parent feature
+      assertParent = parentCond: childCond: msg: {
+        assertion = parentCond || (!childCond);
+        message = msg;
+      };
+    in
     {
-      assertions = [
-        {
-          assertion = config.features.gui.enable || (!config.features.gui.qt.enable);
-          message = "features.gui.qt.enable requires features.gui.enable = true";
-        }
-        {
-          assertion = config.features.gui.enable || (!config.features.gui.quickshell.enable);
-          message = "features.gui.quickshell.enable requires features.gui.enable = true";
-        }
-        {
-          assertion = config.features.web.enable || (!config.features.web.tools.enable);
-          message = "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)";
-        }
-        {
-          assertion = config.features.dev.enable || (!config.features.dev.ai.enable);
-          message = "features.dev.ai.enable requires features.dev.enable = true";
-        }
-        {
-          assertion = config.features.dev.ai.enable || (!config.features.dev.ai.opencode.enable);
-          message = "features.dev.ai.opencode.enable requires features.dev.ai.enable = true";
-        }
-        {
-          assertion = config.features.dev.ai.enable || (!config.features.dev.ai.openagentscontrol.enable);
-          message = "features.dev.ai.openagentscontrol.enable requires features.dev.ai.enable = true";
-        }
-        {
-          assertion = config.features.gui.enable || (!config.features.apps.obsidian.autostart.enable);
-          message = "features.apps.obsidian.autostart.enable requires features.gui.enable = true";
-        }
-        {
-          assertion = config.features.gui.enable || (!config.features.apps.winapps.enable);
-          message = "features.apps.winapps.enable requires features.gui.enable = true";
-        }
-        {
-          assertion = config.features.gui.enable || (!config.features.apps.guiAppsFull.enable);
-          message = "features.apps.guiAppsFull.enable requires features.gui.enable = true";
-        }
-        {
-          assertion = config.features.gui.enable || (!config.features.gui.caelestia-shell.enable);
-          message = "features.gui.caelestia-shell.enable requires features.gui.enable = true";
-        }
-        {
-          assertion = config.features.gui.enable || (!config.features.gui.skwd.enable);
-          message = "features.gui.skwd.enable requires features.gui.enable = true";
-        }
-        {
-          assertion = config.features.gui.enable || (!config.features.gui.exo.enable);
-          message = "features.gui.exo.enable requires features.gui.enable = true";
-        }
-        {
-          assertion = config.features.gui.enable || (!config.features.gui.noctalia.enable);
-          message = "features.gui.noctalia.enable requires features.gui.enable = true";
-        }
-        {
-          assertion = config.features.gui.enable || (!config.features.gui.vicinae.enable);
-          message = "features.gui.vicinae.enable requires features.gui.enable = true";
-        }
-      ];
+      assertions =
+        let
+          gui = config.features.gui;
+          dev = config.features.dev;
+          devAi = dev.ai;
+          guiApps = config.features.apps;
+        in
+        [
+          (assertParent gui.enable gui.qt.enable "features.gui.qt.enable requires features.gui.enable = true")
+          (assertParent gui.enable gui.quickshell.enable "features.gui.quickshell.enable requires features.gui.enable = true")
+          (assertParent gui.enable gui.caelestia-shell.enable "features.gui.caelestia-shell.enable requires features.gui.enable = true")
+          (assertParent gui.enable gui.skwd.enable "features.gui.skwd.enable requires features.gui.enable = true")
+          (assertParent gui.enable gui.exo.enable "features.gui.exo.enable requires features.gui.enable = true")
+          (assertParent gui.enable gui.noctalia.enable "features.gui.noctalia.enable requires features.gui.enable = true")
+          (assertParent gui.enable gui.vicinae.enable "features.gui.vicinae.enable requires features.gui.enable = true")
+          (assertParent gui.enable guiApps.obsidian.autostart.enable "features.apps.obsidian.autostart.enable requires features.gui.enable = true")
+          (assertParent gui.enable guiApps.winapps.enable "features.apps.winapps.enable requires features.gui.enable = true")
+          (assertParent gui.enable guiApps.guiAppsFull.enable "features.apps.guiAppsFull.enable requires features.gui.enable = true")
+          (assertParent config.features.web.enable config.features.web.tools.enable "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)")
+          (assertParent dev.enable devAi.enable "features.dev.ai.enable requires features.dev.enable = true")
+          (assertParent devAi.enable devAi.opencode.enable "features.dev.ai.opencode.enable requires features.dev.ai.enable = true")
+          (assertParent devAi.enable devAi.openagentscontrol.enable "features.dev.ai.openagentscontrol.enable requires features.dev.ai.enable = true")
+        ];
     }
   ];
 }

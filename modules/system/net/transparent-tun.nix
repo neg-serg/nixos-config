@@ -102,14 +102,14 @@ lib.mkIf cfg.enable {
       set -euo pipefail
       cleanup() {
         echo "[nh-tun] cleaning up..."
-        ${pkgs.systemd}/bin/systemctl stop transparent-tun.target 2>/dev/null || true
+        ${lib.getExe' pkgs.systemd "systemctl"} stop transparent-tun.target 2>/dev/null || true
         echo "[nh-tun] routing restored."
       }
       trap cleanup EXIT
       echo "[nh-tun] enabling TUN routing for nix..."
-      ${pkgs.systemd}/bin/systemctl start transparent-tun.target
+      ${lib.getExe' pkgs.systemd "systemctl"} start transparent-tun.target
       echo "[nh-tun] running nh..."
-      ${pkgs.nh}/bin/nh "$@"
+      ${lib.getExe pkgs.nh} "$@"
     '')
   ];
 }

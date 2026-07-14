@@ -98,15 +98,6 @@ in {
     # /mnt/zero removed: argon-zero LVM volume being dismantled, replaced by ZFS pool gamez
   };
 
-  # swapDevices = lib.mkIf isOdin [
-  #   {
-  #     device = "/mnt/zero/swapfile";
-  #     priority = -1;
-  #     size = 65536; # 64 GiB
-  #   }
-  # ];
-  # Swap removed: /mnt/zero volume being dismantled
-
   # Cache both metadata and data for /nix/store — ARC has room (60 GB RAM),
   # and repeated builds read the same store paths.
   systemd.services.zfs-store-props = {
