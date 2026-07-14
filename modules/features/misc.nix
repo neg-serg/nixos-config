@@ -10,6 +10,8 @@ with lib;
       espanso.enable = mkBool "enable espanso text expander" false;
     };
 
+    flatpak.builder.enable = mkBool "enable flatpak-builder" false;
+
     llm.enable = mkBool "enable local LLM stack (Ollama, local-ai)" false;
 
     # Fun/extras (e.g., curated art assets) that are nice-to-have
