@@ -17,16 +17,11 @@ let
     }:
     {
       description =
-        if notes == null then
-          description
-        else
-          concatStringsSep "\n" [
-            description
-            notes
-          ];
+        if notes == null then description
+        else concatStringsSep "\n" [ description notes ];
     }
-    // (if example == null then { } else { inherit example; })
-    // (if defaultText == null then { } else { inherit defaultText; });
+    // lib.optionalAttrs (example != null) { inherit example; }
+    // lib.optionalAttrs (defaultText != null) { inherit defaultText; };
 
   # Base option constructor
   mkOpt =

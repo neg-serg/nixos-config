@@ -20,7 +20,7 @@ lib.mkIf cfg.enable {
     serviceConfig = {
       Type = "simple";
       User = "neg";
-      ExecStart = "${pkgs.xray}/bin/xray run -config /home/neg/.config/sing-box-tun/config.json";
+      ExecStart = "${lib.getExe pkgs.xray} run -config /home/neg/.config/sing-box-tun/config.json";
       Restart = "on-failure";
       RestartSec = 5;
     };

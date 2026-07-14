@@ -100,10 +100,10 @@ lib.mkIf enable (
       systemd.user.services.opencode-daemon =
         let
           opencodeServe = pkgs.writeShellScript "opencode-serve" ''
-            export DEEPSEEK_API_KEY="$(${pkgs.coreutils}/bin/cat /run/secrets/deepseek-api 2>/dev/null || true)"
-            export GITHUB_TOKEN="$(${pkgs.coreutils}/bin/cat /run/secrets/github-token 2>/dev/null || true)"
+            export DEEPSEEK_API_KEY="$(${lib.getExe' pkgs.coreutils "cat"} /run/secrets/deepseek-api 2>/dev/null || true)"
+            export GITHUB_TOKEN="$(${lib.getExe' pkgs.coreutils "cat"} /run/secrets/github-token 2>/dev/null || true)"
             export PATH="${pkgs.nodejs}/bin:$PATH"
-            exec ${pkgs.opencode}/bin/opencode serve
+            exec ${lib.getExe pkgs.opencode} serve
           '';
         in
         {

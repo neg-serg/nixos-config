@@ -19,16 +19,19 @@ in
       # Optional filter list catalog to be written into AdGuardHome.yaml
       filterLists =
         opts.mkListOpt
-          (types.submodule (_: {
-            options = {
-              name = opts.mkStrOpt { description = "Human-friendly filter list name"; };
-              url = opts.mkStrOpt { description = "URL to the filter list"; };
-              enabled = opts.mkBoolOpt {
-                default = true;
-                description = "Enable this list";
+          (types.submoduleWith {
+            shorthandOnlyDefinesConfig = true;
+            modules = [{
+              options = {
+                name = opts.mkStrOpt { description = "Human-friendly filter list name"; };
+                url = opts.mkStrOpt { description = "URL to the filter list"; };
+                enabled = opts.mkBoolOpt {
+                  default = true;
+                  description = "Enable this list";
+                };
               };
-            };
-          }))
+            }];
+          })
           {
             default = [ ];
             description = "List of upstream filter lists for AdGuardHome.";
@@ -41,12 +44,15 @@ in
           };
       rewrites =
         opts.mkListOpt
-          (types.submodule (_: {
-            options = {
-              domain = opts.mkStrOpt { description = "Domain to rewrite"; };
-              answer = opts.mkStrOpt { description = "Rewrite answer (IP or hostname)"; };
-            };
-          }))
+          (types.submoduleWith {
+            shorthandOnlyDefinesConfig = true;
+            modules = [{
+              options = {
+                domain = opts.mkStrOpt { description = "Domain to rewrite"; };
+                answer = opts.mkStrOpt { description = "Rewrite answer (IP or hostname)"; };
+              };
+            }];
+          })
           {
             default = [ ];
             description = "List of DNS rewrite rules for AdGuard Home.";
@@ -182,7 +188,7 @@ in
           default = true;
           description = "Require DNSSEC-capable upstreams in dnscrypt-proxy2.";
         };
-        sources = opts.mkOpt types.attrs { } {
+        sources = opts.mkOpt (types.attrsOf types.anything) { } {
           description = "Optional dnscrypt-proxy2 sources object to override default public-resolvers.";
           example = {
             public-resolvers = {

@@ -1,7 +1,6 @@
-{ lib, config, ... }:
+{ lib, config, mkBool, ... }:
 let
   cfg = config.features.system.logTtys;
-  mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
 in
 {
   options.features.system.logTtys = {

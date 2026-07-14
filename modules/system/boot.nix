@@ -47,7 +47,7 @@
       (lib.mkIf (config.profiles.performance.optimizeInitrdCompression or false) {
         # Use function form to avoid nixpkgs initrd-compressor-meta bug
         # where pkgs.lz4 resolves to the dev output (no binary)
-        compressor = pkgs: "${lib.getBin pkgs.lz4}/bin/lz4";
+        compressor = pkgs: lib.getExe pkgs.lz4;
         compressorArgs = [
           "-l" # legacy format required by kernel's LZ4 decompressor
         ];
