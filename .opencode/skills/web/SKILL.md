@@ -1,6 +1,7 @@
-______________________________________________________________________
-
-## name: web description: Browser automation, web scraping, and page fetching via WebFetch and headless browser CLI
+---
+name: web
+description: "Browser automation, web scraping, and page fetching via WebFetch and headless browser CLI"
+---
 
 # Web Operations
 
