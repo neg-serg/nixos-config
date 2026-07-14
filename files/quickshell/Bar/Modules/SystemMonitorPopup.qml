@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Components
 import qs.Settings
-import qs.Services as Services
 import "../../Helpers/SystemMonitorUi.js" as SysUi
 
 PanelOverlaySurface {
@@ -23,99 +22,83 @@ PanelOverlaySurface {
     readonly property int _fontSizeTiny: Math.round(9 * overlayScale)
     readonly property int _pad: Math.round(10 * overlayScale)
     readonly property int _spacing: Math.round(6 * overlayScale)
-    readonly property string _lokiBase: "http://127.0.0.1:3100"
     readonly property string _grafanaBase: "http://127.0.0.1:3030"
 
-    property string grafanaToken: ""
     property var logEntries: []
     property int totalLogs: 0
     property int errorCount: 0
     property int serviceCount: 0
-    property bool lokiReady: false
-    property bool grafanaReady: false
+    property bool journalReady: false
 
+    // Fetch logs from journald directly via journalctl
     ProcessRunner {
-        id: tokenFetcher
-        cmd: ["bash", "-lc", "gopass show monitoring/grafana-sysmon-token 2>/dev/null || true"]
+        id: journalCtl
+        cmd: ["/run/current-system/sw/bin/journalctl", "--no-pager", "-n", "80", "--output=json", "--since", "10 minutes ago"]
         autoStart: true
         restartOnExit: false
-        property string _buf: ""
-        onLine: (s) => { _buf += s }
+        onLine: (s) => { root._parseJournalLine(s) }
         onExited: {
-            root.grafanaToken = _buf.trim()
-            _buf = ""
+            root._finalizeJournalEntries()
         }
     }
 
-    function fetchLokiLogs() {
-        var xhr = new XMLHttpRequest()
-        var query = encodeURIComponent('{job="systemd-journal"}')
-        var now = new Date().getTime() * 1000000
-        var start = now - 300000000000
-        var url = _lokiBase + "/loki/api/v1/query_range?query=" + query +
-                  "&start=" + start + "&end=" + now + "&limit=50&direction=backward"
-        xhr.open("GET", url, true)
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200) {
-                    root.parseLokiResponse(JSON.parse(xhr.responseText))
-                    root.lokiReady = true
-                } else {
-                    root.lokiReady = false
-                }
-            }
+    property var _pendingEntries: []
+    property var _pendingServices: ({})
+
+    function _parseJournalLine(raw) {
+        var s = String(raw).trim()
+        if (!s) return
+        var obj
+        try { obj = JSON.parse(s) } catch (e) { return }
+
+        // Extract fields
+        var tsMicro = obj.__REALTIME_TIMESTAMP || "0"
+        var date = new Date(parseInt(tsMicro.substring(0, 13), 10))
+        var timeStr = ("0" + date.getHours()).slice(-2) + ":" +
+                      ("0" + date.getMinutes()).slice(-2) + ":" +
+                      ("0" + date.getSeconds()).slice(-2)
+
+        var ident = obj.SYSLOG_IDENTIFIER || obj._SYSTEMD_UNIT || obj._COMM || "?"
+        if (ident && ident.length > 0) root._pendingServices[ident] = true
+
+        // Map priority 0..7 to level string
+        var prio = parseInt(obj.PRIORITY, 10)
+        var level = "info"
+        if (!isNaN(prio)) {
+            if (prio <= 3) level = "error"
+            else if (prio === 4) level = "warn"
+            else if (prio >= 7) level = "debug"
+        } else {
+            // Fallback: heuristic level detection from message content
+            var msgLower = String(obj.MESSAGE || "").toLowerCase()
+            if (msgLower.indexOf("error") >= 0 || msgLower.indexOf("fail") >= 0 ||
+                msgLower.indexOf("fatal") >= 0) level = "error"
+            else if (msgLower.indexOf("warn") >= 0) level = "warn"
+            else if (msgLower.indexOf("debug") >= 0) level = "debug"
         }
-        xhr.send()
+
+        var msg = String(obj.MESSAGE || "")
+        root._pendingEntries.push({
+            time: timeStr,
+            level: level,
+            service: ident,
+            message: msg.length > 150 ? msg.substring(0, 150) + "..." : msg
+        })
     }
 
-    function parseLokiResponse(data) {
-        var result = data.data && data.data.result ? data.data.result : []
-        var entries = []
+    function _finalizeJournalEntries() {
+        // Ignore empty results (e.g. from a killed/stopped process during refresh)
+        if (!root._pendingEntries || root._pendingEntries.length === 0) return
+
         var errors = 0
-        var services = {}
-
-        for (var si = 0; si < result.length; si++) {
-            var stream = result[si]
-            var ident = stream.stream && stream.stream.syslog_identifier
-                ? stream.stream.syslog_identifier : "?"
-            if (ident && ident.length > 0) services[ident] = true
-
-            var values = stream.values || []
-            for (var vi = 0; vi < values.length; vi++) {
-                var val = values[vi]
-                var ts = val[0]
-                var msg = val[1] || ""
-                var date = new Date(parseInt(ts.substring(0, 13)))
-                var timeStr = ("0" + date.getHours()).slice(-2) + ":" +
-                              ("0" + date.getMinutes()).slice(-2) + ":" +
-                              ("0" + date.getSeconds()).slice(-2)
-
-                var level = "info"
-                var msgLower = msg.toLowerCase()
-                if (msgLower.indexOf("error") >= 0 || msgLower.indexOf("fail") >= 0 ||
-                    msgLower.indexOf("fatal") >= 0) {
-                    level = "error"
-                    errors++
-                } else if (msgLower.indexOf("warn") >= 0) {
-                    level = "warn"
-                } else if (msgLower.indexOf("debug") >= 0) {
-                    level = "debug"
-                }
-
-                entries.push({
-                    time: timeStr,
-                    level: level,
-                    service: ident,
-                    message: msg.length > 150 ? msg.substring(0, 150) + "..." : msg
-                })
-            }
+        for (var i = 0; i < root._pendingEntries.length; i++) {
+            if (root._pendingEntries[i].level === "error") errors++
         }
-
-        entries.sort(function(a, b) { return b.time.localeCompare(a.time) })
-        root.logEntries = entries.slice(0, 80)
-        root.totalLogs = entries.length
+        root.logEntries = root._pendingEntries
+        root.totalLogs = root._pendingEntries.length
         root.errorCount = errors
-        root.serviceCount = Object.keys(services).length
+        root.serviceCount = Object.keys(root._pendingServices).length
+        root.journalReady = true
     }
 
     function openGrafana() {
@@ -127,13 +110,15 @@ PanelOverlaySurface {
     }
 
     function refreshAll() {
-        fetchLokiLogs()
+        root._pendingEntries = []
+        root._pendingServices = ({})
+        root.journalReady = false
+        // Restart journalctl process
+        journalCtl.stop()
+        journalCtl.start()
     }
 
-    Component.onCompleted: {
-        refreshAll()
-    }
-
+    // journalCtl auto-starts via autoStart:true — no need to kick it manually
     Timer {
         interval: 15000
         repeat: true
@@ -177,14 +162,14 @@ PanelOverlaySurface {
                     width: Math.round(8 * overlayScale)
                     height: width
                     radius: width / 2
-                    color: root.lokiReady ? "#4ade80" : "#ef4444"
+                    color: root.journalReady ? "#4ade80" : "#ef4444"
                     Layout.alignment: Qt.AlignVCenter
                 }
                 Text {
-                    text: "Loki"
+                    text: "Journal"
                     font.family: Theme.fontFamily
                     font.pixelSize: root._fontSizeSmall
-                    color: root.lokiReady ? Theme.textSecondary : "#ef4444"
+                    color: root.journalReady ? Theme.textSecondary : "#ef4444"
                     Layout.alignment: Qt.AlignVCenter
                 }
             }
@@ -496,8 +481,7 @@ PanelOverlaySurface {
             }
 
             Text {
-                text: "API: loki-ready=" + root.lokiReady + " grafana-token=" +
-                      (root.grafanaToken.length > 0 ? "yes" : "no")
+                text: "journal-ready=" + root.journalReady + " entries=" + root.totalLogs
                 font.family: Theme.fontFamily
                 font.pixelSize: root._fontSizeTiny
                 color: Theme.textSecondary
