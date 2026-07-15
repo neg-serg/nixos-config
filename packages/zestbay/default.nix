@@ -1,4 +1,5 @@
 { lib
+, stdenv
 , rustPlatform
 , fetchFromGitHub
 , cmake
@@ -6,8 +7,10 @@
 , clang
 , pipewire
 , qt6
+, gtk3
 , lilv
 , lv2
+, serd
 , suil
 , libx11
 , dbus
@@ -32,15 +35,18 @@ rustPlatform.buildRustPackage rec {
     clang
     qt6.qtbase
     qt6.qtdeclarative
+    qt6.wrapQtAppsHook
   ];
 
   buildInputs = [
     pipewire
+    gtk3
     qt6.qtbase
     qt6.qtdeclarative
     qt6.qtwayland
     lilv
     lv2
+    serd
     suil
     libx11
     dbus
@@ -48,6 +54,28 @@ rustPlatform.buildRustPackage rec {
 
   # CXX-Qt needs to find Qt6 via pkg-config at build time
   QT_SELECT = "6";
+
+  # bindgen needs libclang.so for pipewire-sys and libspa-sys
+  LIBCLANG_PATH = "${clang.cc.lib}/lib";
+
+  # CXX-Qt's qt-build-utils v0.8.1 uses qmake/QMAKE to find tools like
+  # qmlcachegen. In nixpkgs's split Qt6, qmake from qtbase only knows
+  # about qtbase paths, but qmlcachegen lives in qtdeclarative/libexec.
+  # Create a wrapper that overrides QT_INSTALL_LIBEXECS to point there.
+  preBuild = ''
+    qmakeWrapper="$PWD/qmake-wrapper"
+    cat > "$qmakeWrapper" << 'WRAPPER'
+    #!${stdenv.shell}
+    for arg; do
+      case "$arg" in
+        QT_INSTALL_LIBEXECS) echo ${qt6.qtdeclarative}/libexec; exit 0;;
+      esac
+    done
+    exec ${qt6.qtbase}/bin/qmake "$@"
+    WRAPPER
+    chmod +x "$qmakeWrapper"
+    export QMAKE="$qmakeWrapper"
+  '';
 
   meta = with lib; {
     description = "PipeWire patchbay with LV2/VST3/CLAP plugin hosting and auto-connect rules";
