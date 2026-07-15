@@ -33,9 +33,9 @@ info() {
 
 # ---- 1. check perf_event_paranoid ----
 
-PARANOID=$(cat /proc/sys/kernel/perf_event_paranoid 2>/dev/null || echo 2)
+PARANOID=$(cat /proc/sys/kernel/perf_event_paranoid 2> /dev/null || echo 2)
 if [ "$PARANOID" -gt 1 ]; then
-  cat >&2 <<EOF
+  cat >&2 << EOF
 Error: kernel.perf_event_paranoid=$PARANOID — must be ≤ 1 for perf record.
 Options:
   (a) Run this script as root (sudo).
@@ -53,16 +53,16 @@ COLLAPSE_CMD=""
 FLAMEGRAPH_CMD=""
 TOOL_SOURCE=""
 
-if command -v inferno-collapse-perf &>/dev/null && command -v inferno-flamegraph &>/dev/null; then
+if command -v inferno-collapse-perf &> /dev/null && command -v inferno-flamegraph &> /dev/null; then
   COLLAPSE_CMD="inferno-collapse-perf"
   FLAMEGRAPH_CMD="inferno-flamegraph"
   TOOL_SOURCE="inferno"
-elif command -v stackcollapse-perf.pl &>/dev/null && command -v flamegraph.pl &>/dev/null; then
+elif command -v stackcollapse-perf.pl &> /dev/null && command -v flamegraph.pl &> /dev/null; then
   COLLAPSE_CMD="stackcollapse-perf.pl"
   FLAMEGRAPH_CMD="flamegraph.pl"
   TOOL_SOURCE="flamegraph.pl (Perl)"
 else
-  cat >&2 <<EOF
+  cat >&2 << EOF
 Error: no flamegraph toolchain found.
 Install one of:
   (a) Inferno — nix shell '.#inferno'
@@ -97,7 +97,7 @@ PERF_CMD="perf"
 CHOWN_NEEDED=false
 
 if [ "$EUID" -ne 0 ]; then
-  if command -v sudo &>/dev/null; then
+  if command -v sudo &> /dev/null; then
     info "Non-root — wrapping perf with sudo"
     PERF_CMD="sudo perf"
     CHOWN_NEEDED=true
@@ -119,7 +119,7 @@ echo "Command: ${PERF_CMD} record -g --call-graph dwarf -F 99 -o \"$PERF_DATA\" 
 $PERF_CMD record -g --call-graph dwarf -F 99 -o "$PERF_DATA" -- "${NIX_COMMAND[@]}"
 
 # If dwarf produced [unknown] symbols, re-run with frame-pointer
-if perf script -i "$PERF_DATA" 2>/dev/null | head -100 | grep -q '\[unknown\]'; then
+if perf script -i "$PERF_DATA" 2> /dev/null | head -100 | grep -q '\[unknown\]'; then
   echo ""
   echo "Note: DWARF unwinding produced [unknown] symbols in some frames."
   echo "Re-running with --call-graph fp for better native frames..."

@@ -63,8 +63,11 @@ def get_page_ws(port: int) -> tuple[WebSocket, str]:
     pages = http_get_json(port, "/json")
 
     # Filter to page-type targets with WS URLs
-    pages = [p for p in pages if p.get("type") == "page"
-             and p.get("webSocketDebuggerUrl")]
+    pages = [
+        p
+        for p in pages
+        if p.get("type") == "page" and p.get("webSocketDebuggerUrl")
+    ]
 
     if not pages:
         # Try creating one via HTTP endpoint
@@ -85,8 +88,10 @@ def get_page_ws(port: int) -> tuple[WebSocket, str]:
     target_id = target.get("id", "?")
     ws_url = target["webSocketDebuggerUrl"]
 
-    print(f"  Using page target: {target_id[:8] if target_id != '?' else '?'}...",
-          file=sys.stderr)
+    print(
+        f"  Using page target: {target_id[:8] if target_id != '?' else '?'}...",
+        file=sys.stderr,
+    )
     print(f"  Connecting to page WS: {ws_url[:60]}...", file=sys.stderr)
 
     page_ws = create_connection(ws_url, timeout=15)
@@ -164,8 +169,9 @@ def stop_vivaldi(proc: subprocess.Popen) -> None:
 # ── CDP cookie setting ───────────────────────────────────────────────────────
 
 
-def send_cmd(ws: WebSocket, method: str, params: dict | None = None,
-             msg_id: int = 1) -> dict:
+def send_cmd(
+    ws: WebSocket, method: str, params: dict | None = None, msg_id: int = 1
+) -> dict:
     """Send a raw CDP command and wait for matching response by ID.
 
     Discards any event messages that arrive between sending and response.
@@ -185,7 +191,9 @@ def enable_network(ws: WebSocket) -> None:
     """Enable the Network domain so we can call Network methods."""
     resp = send_cmd(ws, "Network.enable", msg_id=1)
     if "error" in resp:
-        print(f"Warning: Network.enable error: {resp['error']}", file=sys.stderr)
+        print(
+            f"Warning: Network.enable error: {resp['error']}", file=sys.stderr
+        )
 
 
 def set_cookie_via_cdp(ws: WebSocket, cookie: dict, msg_id: int) -> dict:
@@ -284,16 +292,20 @@ def main() -> None:
         print("No cookies to write.")
         return
 
-    print(f"Starting Vivaldi in CDP mode via xvfb (port {port})...",
-          file=sys.stderr)
+    print(
+        f"Starting Vivaldi in CDP mode via xvfb (port {port})...",
+        file=sys.stderr,
+    )
 
     # ── Start Vivaldi ─────────────────────────────────────────────────────────
     vivaldi_proc = start_vivaldi(port, profile_dir)
 
     try:
         if not wait_for_port(port, timeout=args.timeout):
-            print("Error: Vivaldi did not start within the timeout period",
-                  file=sys.stderr)
+            print(
+                "Error: Vivaldi did not start within the timeout period",
+                file=sys.stderr,
+            )
             sys.exit(2)
 
         # Connect to a page target's WS directly
@@ -314,8 +326,9 @@ def main() -> None:
                 resp = set_cookie_via_cdp(ws, cookie, msg_id)
                 msg_id += 1
 
-                if ("error" not in resp
-                        and resp.get("result", {}).get("success")):
+                if "error" not in resp and resp.get("result", {}).get(
+                    "success"
+                ):
                     success += 1
                 else:
                     failed += 1
@@ -338,12 +351,16 @@ def main() -> None:
 
             if (i + 1) % 500 == 0 or (i + 1) == total:
                 pct = (i + 1) / total * 100
-                print(f"  {i+1}/{total} ({pct:.0f}%) — {success} OK, "
-                      f"{failed} failed",
-                      file=sys.stderr)
+                print(
+                    f"  {i+1}/{total} ({pct:.0f}%) — {success} OK, "
+                    f"{failed} failed",
+                    file=sys.stderr,
+                )
 
-        print(f"Done: {success}/{total} cookies set successfully",
-              file=sys.stderr)
+        print(
+            f"Done: {success}/{total} cookies set successfully",
+            file=sys.stderr,
+        )
         if failed > 0:
             print(f"  {failed} cookies failed", file=sys.stderr)
 
@@ -351,7 +368,9 @@ def main() -> None:
         if success > 0:
             print("  Flushing cookies...", file=sys.stderr)
             # Navigate to trigger cookie store flush
-            send_cmd(ws, "Page.navigate", {"url": "about:blank"}, msg_id=msg_id)
+            send_cmd(
+                ws, "Page.navigate", {"url": "about:blank"}, msg_id=msg_id
+            )
             # Wait generously for async cookie store writes to complete
             time.sleep(10.0)
 
