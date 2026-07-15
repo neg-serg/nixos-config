@@ -129,7 +129,12 @@ def _map_samesite(firefox_samesite: int, is_secure: int) -> int:
 # with ``application=vivaldi`` and one of several possible schema attributes.
 _KEYRING_ATTR_SETS: list[list[str]] = [
     ["application", "vivaldi", "xdg:schema", "org.chromium.Chromium"],
-    ["application", "vivaldi", "xdg:schema", "chrome_libsecret_os_crypt_password_v2"],
+    [
+        "application",
+        "vivaldi",
+        "xdg:schema",
+        "chrome_libsecret_os_crypt_password_v2",
+    ],
     ["application", "vivaldi"],
     ["xdg:schema", "org.chromium.Chromium"],
     ["xdg:schema", "chrome_libsecret_os_crypt_password_v2"],
@@ -186,10 +191,14 @@ def _store_secret_in_keyring(secret: bytes) -> bool:
     try:
         result = subprocess.run(
             [
-                "secret-tool", "store",
-                "--label", "Chrome Safe Storage",
-                "application", "vivaldi",
-                "xdg:schema", "org.chromium.Chromium",
+                "secret-tool",
+                "store",
+                "--label",
+                "Chrome Safe Storage",
+                "application",
+                "vivaldi",
+                "xdg:schema",
+                "org.chromium.Chromium",
             ],
             input=secret,
             capture_output=True,
