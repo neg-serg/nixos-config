@@ -22,9 +22,9 @@ with the Hyprland compositor without hopping across multiple files.
 
 ## Package Delivery to User Sessions
 
-- The workstation session profile keeps the plugin derivation in the system profile
-  (via the system profile). This guarantees the `libhy3.so` payload exists in the
-  store even if a user never installs extra Wayland packages manually.
+- The workstation session profile keeps the plugin derivation in the system profile (via the system
+  profile). This guarantees the `libhy3.so` payload exists in the store even if a user never
+  installs extra Wayland packages manually.
 
 ## Home Configuration Wiring
 
@@ -34,9 +34,9 @@ with the Hyprland compositor without hopping across multiple files.
   (`modules/user/nix-maid/hyprland/main.nix`:38-116).
 - The same module also writes the `permission = ..., plugin, allow` stanza directly into
   `hyprland.conf`, ensuring hy3 can register without triggering the ecosystem permission guard.
-- For wlroots screencopy hardening, `modules/user/nix-maid/hyprland/files.nix` keeps a
-  dedicated `permissions.conf` that includes both the hy3 and hyprsplit plugin paths (if enabled)
-  alongside grim/hyprlock permissions (`modules/user/nix-maid/hyprland/files.nix`:12-38).
+- For wlroots screencopy hardening, `modules/user/nix-maid/hyprland/files.nix` keeps a dedicated
+  `permissions.conf` that includes both the hy3 and hyprsplit plugin paths (if enabled) alongside
+  grim/hyprlock permissions (`modules/user/nix-maid/hyprland/files.nix`:12-38).
 
 ## Updating Hyprland + hy3
 

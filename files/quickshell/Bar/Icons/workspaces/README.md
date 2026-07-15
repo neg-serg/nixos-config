@@ -18,8 +18,8 @@ Run from the repo root:
 python3 Tools/workspace-icons/generate.py
 ```
 
-Regenerate via `python3 Tools/workspace-icons/generate.py`. Requires:
-`python`, `python-fonttools`, `libxml2` (xmllint), `librsvg` (rsvg-convert). The script:
+Regenerate via `python3 Tools/workspace-icons/generate.py`. Requires: `python`, `python-fonttools`,
+`libxml2` (xmllint), `librsvg` (rsvg-convert). The script:
 
 1. Parses `modules/user/nix-maid/hyprland/workspaces.nix` for workspace ids/labels.
 1. Uses `icon-map.json` to map slugs to glyph codepoints and preferred fonts. If you removed glyphs
