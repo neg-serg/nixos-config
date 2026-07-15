@@ -9,7 +9,7 @@
   sqlit = pkgs.neg.sqlit;
 
   waves = pkgs.waves;
-palettum = pkgs.neg.palettum;
+  palettum = pkgs.neg.palettum;
 
   skwd = pkgs.skwd;
 
@@ -21,6 +21,8 @@ palettum = pkgs.neg.palettum;
   talktype = pkgs.neg.talktype;
 
   proteinview = pkgs.neg.proteinview; # Terminal protein structure viewer with interactive 3D visualization
+
+  omp = pkgs.neg.omp; # Oh My Pi (omp) — AI coding agent with LSP, DAP, subagents
 
   openagentscontrol = pkgs.neg.openagentscontrol; # AI agent framework for plan-first development (agents + contexts for OpenCode)
 

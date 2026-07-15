@@ -9,7 +9,12 @@ let
   # so derivation hash changes when .config content changes.
   configHash = builtins.hashFile "sha256" configfile;
   minimalKernel = pkgs.linuxManualConfig {
-    inherit (baseKernel) version src modDirVersion features;
+    inherit (baseKernel)
+      version
+      src
+      modDirVersion
+      features
+      ;
     inherit configfile;
     extraMakeFlags = [ "LOCALMODCONFIG_HASH=${configHash}" ];
     allowImportFromDerivation = false;

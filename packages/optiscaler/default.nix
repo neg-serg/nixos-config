@@ -1,4 +1,9 @@
-{ lib, stdenv, fetchurl, p7zip }:
+{
+  lib,
+  stdenv,
+  fetchurl,
+  p7zip,
+}:
 
 let
   version = "0.9.3";
