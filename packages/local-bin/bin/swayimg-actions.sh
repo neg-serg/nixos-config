@@ -314,6 +314,16 @@ case "$action" in
       mv "$file" "$trash"
       exit 0
     }
+    # Stale anchor guard: if the anchor file no longer exists, clear the mark
+    # and fall back to single-file trash.
+    if [ ! -e "$anchor" ] && [ ! -L "$anchor" ]; then
+      print -u2 "swayimg-actions: stale range mark cleared ($anchor no longer exists)"
+      range_clear_fn
+      mkdir -p "$trash"
+      _ipc_send "prev_file"
+      mv "$file" "$trash"
+      exit 0
+    fi
     files="$(_range_files "$anchor" "$file")" || exit 1
     _ipc_send "prev_file"
     mkdir -p "$trash"
@@ -331,6 +341,16 @@ case "$action" in
       cp "$file" "$dest"
       exit 0
     }
+    # Stale anchor guard: clear stale mark and fall back to single-file copy
+    if [ ! -e "$anchor" ] && [ ! -L "$anchor" ]; then
+      print -u2 "swayimg-actions: stale range mark cleared ($anchor no longer exists)"
+      range_clear_fn
+      dest="$(choose_dest "cp" "$file" || true)"
+      [ -z "$dest" ] && exit 0
+      mkdir -p "$dest"
+      cp "$file" "$dest"
+      exit 0
+    fi
     dest="$(choose_dest "cp" "$file" || true)"
     [ -z "$dest" ] && exit 0
     files="$(_range_files "$anchor" "$file")" || exit 1
@@ -349,6 +369,17 @@ case "$action" in
       mv "$file" "$dest"
       exit 0
     }
+    # Stale anchor guard: clear stale mark and fall back to single-file mv
+    if [ ! -e "$anchor" ] && [ ! -L "$anchor" ]; then
+      print -u2 "swayimg-actions: stale range mark cleared ($anchor no longer exists)"
+      range_clear_fn
+      dest="$(choose_dest "mv" "$file" || true)"
+      [ -z "$dest" ] && exit 0
+      _ipc_send "prev_file"
+      mkdir -p "$dest"
+      mv "$file" "$dest"
+      exit 0
+    fi
     dest="$(choose_dest "mv" "$file" || true)"
     [ -z "$dest" ] && exit 0
     files="$(_range_files "$anchor" "$file")" || exit 1
