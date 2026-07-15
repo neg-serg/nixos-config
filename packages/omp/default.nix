@@ -1,30 +1,41 @@
 {
   lib,
-  stdenvNoCC,
+  buildNpmPackage,
   fetchurl,
-  autoPatchelfHook,
+  makeWrapper,
+  bun,
 }:
 
 let
-  version = "16.5.2";
-  tag = "v${version}";
+  version = "17.0.0";
 in
-stdenvNoCC.mkDerivation {
+buildNpmPackage {
   pname = "omp";
   inherit version;
 
   src = fetchurl {
-    url = "https://github.com/can1357/oh-my-pi/releases/download/${tag}/omp-linux-x64";
-    hash = "sha256-zCyKlY4JrcNDKGBVUXTXDxy84L6Khq9BP/3PLsGMsQ4=";
+    url = "https://registry.npmjs.org/@oh-my-pi/pi-coding-agent/-/pi-coding-agent-${version}.tgz";
+    hash = "sha256-MXd6v2uGMajtdCTjDdpLHAoSHE89/bMIkNmVbGersJI=";
   };
 
-  dontUnpack = true;
+  npmDepsHash = "sha256-7r7P+3HS69hh6S9FuJiVHqNef9xqOQhiTLJk8IqOTRs=";
 
-  nativeBuildInputs = [ autoPatchelfHook ];
+  dontNpmBuild = true;
+
+  nativeBuildInputs = [ makeWrapper ];
+
+  postPatch = ''
+    # Patch bun version check (nixpkgs bun 1.3.13, omp wants >=1.3.14)
+    sed -i 's/1\.3\.14/1.3.13/g' dist/cli.js
+  '';
 
   installPhase = ''
     runHook preInstall
-    install -Dm755 "$src" "$out/bin/omp"
+    mkdir -p $out/share/omp $out/bin
+    cp -r . $out/share/omp/
+    # Use bun as runtime (omp uses bun-specific APIs)
+    makeWrapper ${lib.getExe bun} $out/bin/omp \
+      --add-flags "run $out/share/omp/dist/cli.js"
     runHook postInstall
   '';
 
