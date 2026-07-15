@@ -23,8 +23,8 @@ Hyprland or the QuickShell theme changes.
    python3 Tools/workspace-icons/generate.py
    ```
 
-   Run `python3 Tools/workspace-icons/generate.py` from the repo root. Requires
-   python 3.13, `fonttools`, `xmllint`, and `rsvg-convert` (available via `nix shell`).
+   Run `python3 Tools/workspace-icons/generate.py` from the repo root. Requires python 3.13,
+   `fonttools`, `xmllint`, and `rsvg-convert` (available via `nix shell`).
 
 1. The script will:
 
