@@ -8,5 +8,3 @@ Font packages and configuration.
 - System fonts
 - Icon fonts (Font Awesome)
 - CJK fonts
-
-

@@ -37,8 +37,8 @@ activation.
   - `index.js`: `// Minimal Vicinae extension placeholder.`
   - `README.md`: `This is a minimal, no-op placeholder extension...`
 - **System Activation**:
-  - `hosts/odin/services.nix`: Uses `placeholder_login` and `placeholder_pass` as targets for
-    `sed` replacement in `resilio` config.
+  - `hosts/odin/services.nix`: Uses `placeholder_login` and `placeholder_pass` as targets for `sed`
+    replacement in `resilio` config.
 - **SOPS**:
   - `modules/user/nix-maid/sys/vdirsyncer.nix`:
     `config.sops.placeholder.vdirsyncer_google_client_id` (Standard SOPS pattern).
