@@ -66,7 +66,6 @@
       },
       "locked": {
         "lastModified": 1783823128,
-        "narHash": "sha256-dTZTugdT2qdk6gDOsMYtqOgAyFSXYrIwMsmKcEqaA6o=",
         "owner": "caelestia-dots",
         "repo": "shell",
         "rev": "aa836f2a29bf48b403c57af4bec224aed0412878",
@@ -477,7 +476,6 @@
       },
       "locked": {
         "lastModified": 1784079774,
-        "narHash": "sha256-ZBLO/HbZYN5sFjA4cIW1/6CH6NxBIaYgEC+lURQgPBk=",
         "owner": "ogulcancelik",
         "repo": "herdr",
         "rev": "a0678a38b9426b011f66e1b88ff7aaa9bf877104",
@@ -567,7 +565,6 @@
       },
       "locked": {
         "lastModified": 1781197804,
-        "narHash": "sha256-JbXqVzLlFp4hVD8AMl9vk3vJRN40o2DVOcZLPqGvBOk=",
         "ref": "refs/tags/v0.55.4",
         "rev": "a0136d8c04687bb36eb8a28eb9d1ff92aea99704",
         "revCount": 7378,
@@ -688,7 +685,6 @@
       },
       "locked": {
         "lastModified": 1783125727,
-        "narHash": "sha256-1UAsVmbF2+kavFUdey117ebKAbr8IfEcCvRKLdbUVeo=",
         "owner": "neg-serg",
         "repo": "hyprscratch",
         "rev": "19cfa34003741e5fe39d380ad9021ecee003130b",
@@ -840,7 +836,6 @@
       },
       "locked": {
         "lastModified": 1767456002,
-        "narHash": "sha256-q+ZYdTMLr0RCfN5qxOl56CbZBj702hYY2H5dOLynW+o=",
         "owner": "ignis-sh",
         "repo": "ignis",
         "rev": "5fd140227c0f2d9d65a98d4af78b95b1558966da",
@@ -882,7 +877,6 @@
       },
       "locked": {
         "lastModified": 1783227438,
-        "narHash": "sha256-5+6e9gDqN+XTn2pD4M03PWxZYFtCyl/NJdjbtJf81fk=",
         "owner": "neg-serg",
         "repo": "iosevka-neg",
         "rev": "800b5c8310967b14a6b82486de832d922a3d5a57",
@@ -950,7 +944,6 @@
       },
       "locked": {
         "lastModified": 1783403338,
-        "narHash": "sha256-eL9vovLX8jAngSzjCKjDLgxaePT+eiI7nCfrUlT6Sis=",
         "owner": "neg-serg",
         "repo": "nixos-pkgs",
         "rev": "e09d5bd2c43d7a38bd499c569833b37798c6f1eb",
@@ -1001,7 +994,6 @@
     "nix-flatpak": {
       "locked": {
         "lastModified": 1783368811,
-        "narHash": "sha256-0H8jDwR4Kegb3heaTrH1ftbgKfZVDT8JE+46uXxDy/Q=",
         "owner": "gmodena",
         "repo": "nix-flatpak",
         "rev": "20d42f0ee98c9fe9f85e8d1de474f1409ed10d05",
@@ -1016,7 +1008,6 @@
     "nix-maid": {
       "locked": {
         "lastModified": 1783804358,
-        "narHash": "sha256-SxgdtD4DBslk8u5MIzh4Hs/7vcuPHn4cD2h5I3Mufz4=",
         "owner": "viperML",
         "repo": "nix-maid",
         "rev": "0e0feba21016c1285382e32ea894ace731f49d3b",
@@ -1106,17 +1097,16 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1784081535,
-        "narHash": "sha256-IPOTMO6048rU5wyxlNCO1VzaLbW12i5r/VPkFCyj9EI=",
+        "lastModified": 1784082895,
         "owner": "neg-serg",
         "repo": "nixpkgs-slim",
-        "rev": "9ea0d54b1ff0323832a8c5fbb4cbfedc5a8027db",
+        "rev": "ec5da056bf66be3996478edd763701d148fdf281",
         "type": "github"
       },
       "original": {
         "owner": "neg-serg",
         "repo": "nixpkgs-slim",
-        "rev": "9ea0d54b1ff0323832a8c5fbb4cbfedc5a8027db",
+        "rev": "ec5da056bf66be3996478edd763701d148fdf281",
         "type": "github"
       }
     },
@@ -1128,7 +1118,6 @@
       },
       "locked": {
         "lastModified": 1784080987,
-        "narHash": "sha256-6/eXXOhqzug4TNFnzW1qb/v7Jz8AlZTUmaRp/M0mhJk=",
         "owner": "noctalia-dev",
         "repo": "noctalia",
         "rev": "68045963d5ac8e12278a9a1c375c157a486c7050",
@@ -1181,7 +1170,6 @@
       },
       "locked": {
         "lastModified": 1784076724,
-        "narHash": "sha256-djSnsO/xwgloCyef+/aIvof8SERQZP0WpdABeDdhsCo=",
         "owner": "anomalyco",
         "repo": "opencode",
         "rev": "b6478dcebf1da4a559055c702c62b9294c41afdb",
@@ -1201,7 +1189,6 @@
       },
       "locked": {
         "lastModified": 1784076724,
-        "narHash": "sha256-djSnsO/xwgloCyef+/aIvof8SERQZP0WpdABeDdhsCo=",
         "owner": "anomalyco",
         "repo": "opencode",
         "rev": "b6478dcebf1da4a559055c702c62b9294c41afdb",
@@ -1245,7 +1232,6 @@
       },
       "locked": {
         "lastModified": 1783008725,
-        "narHash": "sha256-jGiy6+sxjNWXSjp25uoJuNfyH9zBK1PEDY0lVoL4ibQ=",
         "owner": "cachix",
         "repo": "git-hooks.nix",
         "rev": "bca82caa46d5ec0f5d422c61fb1e30bc51313cbe",
@@ -1286,7 +1272,6 @@
       },
       "locked": {
         "lastModified": 1783673918,
-        "narHash": "sha256-cFG5vnmjJcZRVCSUaqQLOdwkX6iqF6bY8IvvmBSGSRs=",
         "ref": "refs/heads/master",
         "rev": "4df562dfb2475a9057f0f33a8db75808efad8670",
         "revCount": 830,
@@ -1308,7 +1293,6 @@
       },
       "locked": {
         "lastModified": 1782832607,
-        "narHash": "sha256-YF/RjlCm+cbYlEwKfDD0i95MSPX/BUigo6cwXnNaftY=",
         "owner": "neg-serg",
         "repo": "raise",
         "rev": "5768c9dd9f1f125aa51ab6d244e37b1ae9de7973",
@@ -1372,7 +1356,6 @@
       },
       "locked": {
         "lastModified": 1754748767,
-        "narHash": "sha256-Kg9xoDl3YaTG8aV6kmOq/vX8/74JfO/QJET5m9s6hDw=",
         "owner": "neg-serg",
         "repo": "rsmetrx",
         "rev": "f7516fc27d2fff0c7362158b063ae6ee79af445c",
@@ -1393,7 +1376,6 @@
       },
       "locked": {
         "lastModified": 1754748767,
-        "narHash": "sha256-Kg9xoDl3YaTG8aV6kmOq/vX8/74JfO/QJET5m9s6hDw=",
         "owner": "neg-serg",
         "repo": "rsmetrx",
         "rev": "f7516fc27d2fff0c7362158b063ae6ee79af445c",
@@ -1468,7 +1450,6 @@
       },
       "locked": {
         "lastModified": 1782927628,
-        "narHash": "sha256-4TIN7vihllOfoYuGkJx8qdlsDnXU/U1fZLTniqpLWks=",
         "owner": "liixini",
         "repo": "skwd-daemon",
         "rev": "36f165a68611dfc55f1878ddd34491cdb6e22a44",
@@ -1488,7 +1469,6 @@
       },
       "locked": {
         "lastModified": 1782927628,
-        "narHash": "sha256-4TIN7vihllOfoYuGkJx8qdlsDnXU/U1fZLTniqpLWks=",
         "owner": "liixini",
         "repo": "skwd-daemon",
         "rev": "36f165a68611dfc55f1878ddd34491cdb6e22a44",
@@ -1524,7 +1504,6 @@
       },
       "locked": {
         "lastModified": 1783174389,
-        "narHash": "sha256-aCWC8ngycU7OdJrU2+Je3qf+1a2ykuBvpPhZT/9tXMc=",
         "owner": "Mic92",
         "repo": "sops-nix",
         "rev": "f1406619a3884cd5c47992a70b8b35c9c0fcb4c9",
@@ -1546,7 +1525,6 @@
       },
       "locked": {
         "lastModified": 1784055823,
-        "narHash": "sha256-iulDsbqO0cL+lm/+YLHvbIvlQKFuC/1VEt+fQwl2gyk=",
         "owner": "Maxteabag",
         "repo": "sqlit",
         "rev": "9e52a50c408f5354654e02559619472717f1f095",
@@ -1567,7 +1545,6 @@
       },
       "locked": {
         "lastModified": 1784055823,
-        "narHash": "sha256-iulDsbqO0cL+lm/+YLHvbIvlQKFuC/1VEt+fQwl2gyk=",
         "owner": "Maxteabag",
         "repo": "sqlit",
         "rev": "9e52a50c408f5354654e02559619472717f1f095",
@@ -1605,7 +1582,6 @@
       },
       "locked": {
         "lastModified": 1782871859,
-        "narHash": "sha256-V8GUQTtwYrwHFQ5eWQh2LYnMj/ecx5JtQVo1qJ1wZAA=",
         "owner": "unazikx",
         "repo": "steam-config-nix",
         "rev": "daf3974684309d5b445dbc51d3aa9ca53c1b27fe",
@@ -1761,7 +1737,6 @@
       },
       "locked": {
         "lastModified": 1772897782,
-        "narHash": "sha256-u02NOF0wsJzkT3E5yEc4MXw7R4LVzMPTV9tF3n9VAH4=",
         "owner": "NotAShelf",
         "repo": "tailray",
         "rev": "1720e0ab21f7739e0f994728a93623123ea1318e",
@@ -1816,7 +1791,6 @@
       },
       "locked": {
         "lastModified": 1783436030,
-        "narHash": "sha256-mx3ag4EJdosy90FEwMwtQftrSCCyP+TYyJ2tephvRgU=",
         "owner": "winapps-org",
         "repo": "winapps",
         "rev": "5cbf7381f9a12af630e5a289d6dab5f7adc70e5d",
@@ -1863,7 +1837,6 @@
     "wrapper-manager": {
       "locked": {
         "lastModified": 1783493101,
-        "narHash": "sha256-LqqlRrZVLdCr/fmfXj/j7bUpvv02Ct3TVInWRxs20a8=",
         "owner": "viperML",
         "repo": "wrapper-manager",
         "rev": "531d7752716f5097f05c709d6727299d70c69b62",
