@@ -21,19 +21,18 @@ in
     xdgOpenUsePortal = true;
     extraPortals = [
       # Hyprland portal is provided via programs.hyprland.portalPackage
-      pkgs.xdg-desktop-portal-shana # filechooser portal redirector (to KDE/Qt backend)
-      pkgs.kdePackages.xdg-desktop-portal-kde # KDE/Qt file picker portal backend for shana
+      pkgs.xdg-desktop-portal-gtk # GTK file picker portal backend (generic, works on any DE/WM)
     ];
     config = {
       common.default = [
         "hyprland"
       ];
-      common."org.freedesktop.impl.portal.FileChooser" = [ "shana" ];
+      common."org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
       hyprland.default = [
         "hyprland"
       ];
       hyprland."org.freedesktop.impl.portal.FileChooser" = [
-        "shana"
+        "gtk"
       ];
     };
   };
