@@ -16,6 +16,7 @@ in
     brrtfetch = callPkg (packagesRoot + "/brrtfetch") { }; # Animated ASCII art GIF renderer alongside sysinfo output
     duf = callPkg (packagesRoot + "/duf") { }; # duf fork with --style plain, --no-header, --no-bars flags
     hwctl = callPkg (packagesRoot + "/hwctl") { }; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
+    inferno = callPkg (packagesRoot + "/inferno") { }; # Rust port of the FlameGraph performance profiling tool suite (flamegraph + collapse scripts)
     hypr-focus = callPkg (packagesRoot + "/hypr-focus") { }; # Rust-based window focus CLI — set window class on focused Hyprland window
     openagentscontrol = callPkg (packagesRoot + "/openagentscontrol") { }; # OpenAgentsControl — AI agent framework for plan-first development (agents + contexts for OpenCode)
     palettum = callPkg (packagesRoot + "/palettum") { }; # Image/GIF/video recolor tool with custom palettes
