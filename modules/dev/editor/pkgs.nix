@@ -1,15 +1,12 @@
 {
   lib,
-  pkgs,
   config,
   ...
 }:
 let
   devEnabled = config.features.dev.enable or false;
 
-  devPackages = [
-    pkgs.helix # Modal text editor (Rust, built-in LSP)
-  ];
+  devPackages = [ ];
 in
 {
   config = lib.mkMerge [
