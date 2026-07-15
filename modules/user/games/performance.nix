@@ -9,46 +9,6 @@
 }:
 let
   cfg = config.profiles.games or { };
-
-  # Import consolidated game scripts from packages/game-scripts
-  gameScripts = import ../../../packages/game-scripts {
-    inherit pkgs lib config;
-  };
-
-  # Desktop entries for gamescope presets
-  gamescopePerfDesktop = pkgs.makeDesktopItem {
-    name = "gamescope-perf";
-    desktopName = "Gamescope (Performance)";
-    comment = "Run a command via Gamescope with FSR downscale (2560x1440→3840x2160) and CPU pinning";
-    exec = "gamescope-perf";
-    terminal = false;
-    categories = [
-      "Game"
-      "Utility"
-    ];
-  };
-  gamescopeQualityDesktop = pkgs.makeDesktopItem {
-    name = "gamescope-quality";
-    desktopName = "Gamescope (Quality)";
-    comment = "Run a command via Gamescope at native resolution with CPU pinning";
-    exec = "gamescope-quality";
-    terminal = false;
-    categories = [
-      "Game"
-      "Utility"
-    ];
-  };
-  gamescopeHDRDesktop = pkgs.makeDesktopItem {
-    name = "gamescope-hdr";
-    desktopName = "Gamescope (HDR)";
-    comment = "Run a command via Gamescope with HDR enabled and CPU pinning";
-    exec = "gamescope-hdr";
-    terminal = false;
-    categories = [
-      "Game"
-      "Utility"
-    ];
-  };
 in
 {
   config = lib.mkIf cfg.enable {
@@ -115,20 +75,7 @@ in
     environment = {
       systemPackages = [
         pkgs.mangohud # Vulkan/OpenGL overlay for FPS/frametime telemetry
-        # Game scripts from consolidated package
-        gameScripts.gamescope-pinned
-        gameScripts.game-pinned
-        gameScripts.gamescope-perf
-        gameScripts.gamescope-quality
-        gameScripts.gamescope-hdr
-        gameScripts.gamescope-targetfps
-        gameScripts.game-run
-        gameScripts.game-affinity-exec
-        gameScripts.optiscaler-install
-        # Desktop entries
-        gamescopePerfDesktop
-        gamescopeQualityDesktop
-        gamescopeHDRDesktop
+        pkgs.neg.game # Unified game launcher — CPU pinning, Gamescope, sessions
       ];
 
       # Global defaults for wrappers
