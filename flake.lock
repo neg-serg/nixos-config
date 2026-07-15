@@ -477,10 +477,10 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1784133391,
+        "lastModified": 1784151142,
         "owner": "ogulcancelik",
         "repo": "herdr",
-        "rev": "0aeb37b6c2628cb13c28deb5749e144f3f759fd2",
+        "rev": "a22454f27ce096585e19d1787dba43f56d1505cf",
         "type": "github"
       },
       "original": {
@@ -1103,10 +1103,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1784137710,
+        "lastModified": 1784149351,
         "owner": "noctalia-dev",
         "repo": "noctalia",
-        "rev": "1f326124dca85a285730e5da435109261ee6140d",
+        "rev": "4bf957f4c16272016da0e9dab47612828b09e322",
         "type": "github"
       },
       "original": {
@@ -1155,10 +1155,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1784132134,
+        "lastModified": 1784149253,
         "owner": "anomalyco",
         "repo": "opencode",
-        "rev": "4394b324c972c17952a3c890c608b71739b343c3",
+        "rev": "888c4cb50476aaecaad48e6a448759da3040ed2e",
         "type": "github"
       },
       "original": {
@@ -1174,10 +1174,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1784132134,
+        "lastModified": 1784149253,
         "owner": "anomalyco",
         "repo": "opencode",
-        "rev": "4394b324c972c17952a3c890c608b71739b343c3",
+        "rev": "888c4cb50476aaecaad48e6a448759da3040ed2e",
         "type": "github"
       },
       "original": {

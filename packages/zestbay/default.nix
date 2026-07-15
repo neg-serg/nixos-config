@@ -21,7 +21,7 @@ rustPlatform.buildRustPackage rec {
     owner = "lemonxah";
     repo = "zestbay";
     rev = "v${version}";
-    hash = lib.fakeHash;
+    hash = "sha256-+G4OJUatQ9KSUstU62XlCV2GbFF4ciwv+V/JhFHSfpY=";
   };
 
   cargoHash = lib.fakeHash;
@@ -38,7 +38,6 @@ rustPlatform.buildRustPackage rec {
     pipewire
     qt6.qtbase
     qt6.qtdeclarative
-    qt6.qtquickcontrols2
     qt6.qtwayland
     lilv
     lv2
