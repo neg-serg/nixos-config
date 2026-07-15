@@ -1,7 +1,6 @@
----
-name: github
-description: "GitHub operations — issues, PRs, repos, releases, search via gh CLI and API"
----
+______________________________________________________________________
+
+## name: github description: "GitHub operations — issues, PRs, repos, releases, search via gh CLI and API"
 
 # GitHub Operations
 
