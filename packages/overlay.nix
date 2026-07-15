@@ -51,6 +51,8 @@ in
             src = inputs.opencode;
             version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
           });
+      game = final.callPackage ./game { };
+
       raysession = finalPrev.raysession.overrideAttrs (old: {
         postPatch = (old.postPatch or "") + ''
           substituteInPlace src/gui/patchbay/patchcanvas/portgroup_widget.py \
@@ -102,9 +104,7 @@ in
   # Note: postInstall still wraps gtk-icon-cache.trigger with gtk3; the reference
   # may persist in the closure but this is negligible (~10MB) vs what was removed.
   flatpak = finalPrev.flatpak.overrideAttrs (old: {
-    buildInputs = builtins.filter
-      (pkg: (pkg.pname or "") != "gtk3")
-      (old.buildInputs or [ ]);
+    buildInputs = builtins.filter (pkg: (pkg.pname or "") != "gtk3") (old.buildInputs or [ ]);
   });
 
 }
