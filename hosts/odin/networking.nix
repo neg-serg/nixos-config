@@ -29,12 +29,15 @@ _: {
     networks = {
       "10-lan-v2" = {
         matchConfig.Name = "net0";
-        # Static IP configuration (faster boot, no DHCP wait)
-        address = [ "10.0.2.140/27" ];
-        gateway = [ "10.0.2.129" ];
-        dns = [ "10.0.2.129" ];
-        # net0 is our main link, we want to wait for it
-        linkConfig.RequiredForOnline = "routable";
+        # Try DHCP first to discover MikroTik's network
+        networkConfig.DHCP = "ipv4";
+        # Fallback: common MikroTik subnets if DHCP fails
+        address = [
+          "10.0.2.140/27"
+          "192.168.88.140/24"
+        ];
+        # Don't block boot waiting for net0 (MikroTik may boot later)
+        linkConfig.RequiredForOnline = "no";
       };
       "11-lan" = {
         matchConfig.Name = "net1";
