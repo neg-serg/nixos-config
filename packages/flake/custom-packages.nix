@@ -28,5 +28,6 @@
 
   hwctl = pkgs.neg.hwctl; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
   inferno = pkgs.neg.inferno; # Rust port of the FlameGraph profiling tool suite
-
+  zestbay = pkgs.zestbay; # PipeWire patchbay with LV2/VST3/CLAP plugin hosting
+  pw-audioshare = pkgs.pw-audioshare; # GTK4 PipeWire patchbay with auto-connect presets
 }
