@@ -10,11 +10,6 @@ let
   cfg = config.features.cli.yazi;
   tomlFormat = pkgs.formats.toml { };
 
-  shanaConfig = tomlFormat.generate "shana-config.toml" {
-    open_file = "Kde";
-    save_file = "Kde";
-  };
-
   settings = {
     mgr = {
       show_hidden = true;
@@ -396,7 +391,6 @@ lib.mkIf (cfg.enable or false) (
       ".config/yazi/plugins/smart-paste.yazi".source = "${yazi-plugins}/smart-paste.yazi";
       ".config/yazi/plugins/paste-to-select.yazi/main.lua".text = paste-to-select-plugin;
       ".config/yazi/plugins/save-file.yazi/main.lua".text = save-file-plugin;
-      ".config/xdg-desktop-portal-shana/config.toml".source = shanaConfig;
     })
   ]
 )
