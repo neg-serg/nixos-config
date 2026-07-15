@@ -4,8 +4,6 @@ Networking configuration and VPN.
 
 ## Documentation
 
-
-
 ## Includes
 
 - NetworkManager

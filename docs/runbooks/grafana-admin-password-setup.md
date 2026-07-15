@@ -61,4 +61,5 @@ git commit -m "[secrets] grafana admin password (sops binary)"
 - Resulting secret is installed to a root-only path referenced by Grafana's
   `services.grafana.settings.security.admin_password = "$__file{...}"`.
 - You can rotate the password by re-encrypting the file and switching the system.
-- Grafana is served on the configured port (default `3030`). For LAN access, connect to `http://odin:<port>`.
+- Grafana is served on the configured port (default `3030`). For LAN access, connect to
+  `http://odin:<port>`.

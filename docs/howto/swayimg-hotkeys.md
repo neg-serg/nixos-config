@@ -28,14 +28,16 @@ monitor with the image (crop as needed) and set it as wallpaper. | | `Ctrl+c` | 
 into a directory picked via the rofi prompt. | | `c` | `copyname` | Copy the absolute file path to
 the clipboard and show `pic-notify` when available. | | `Ctrl+d`, `d` |
 `mv … $HOME/trash/1st-level/pic` | Move the file into the staged trash folder. | | `v` | `mv` | Move
-the file into a directory selected via the rofi prompt. | | `Ctrl+comma` | `rotate-left` | Rotate the file 270° using ImageMagick (`mogrify`). Russian: `Ctrl+б`. | | `Ctrl+Shift+,` | `rotate-ccw` | Rotate the file 90°
-counter-clockwise. Russian: `Ctrl+Shift+б`. | | `Ctrl+period` | `rotate-right` | Rotate the file 90° clockwise. Russian: `Ctrl+ю`. | |
-`Ctrl+slash` | `rotate-180` | Rotate the file 180°. Russian: `Ctrl+.`. | | `r` | `repeat` | Replay the last `mv`/`cp`
-destination (uses the cached directory recorded by `proc`). | | `Shift+m` | `range-mark` | Mark the
-current file as the start/end anchor for range operations. | | `Shift+r` | `range-clear` | Drop the
-saved range anchor. | | `Shift+d` | `range-trash` | Move every file between the mark and the current
-file into the staged trash. | | `Shift+v` | `range-mv` | Prompt for a directory and move the marked
-range there. | | `Shift+c` | `range-cp` | Prompt for a directory and copy the marked range there. |
+the file into a directory selected via the rofi prompt. | | `Ctrl+comma` | `rotate-left` | Rotate
+the file 270° using ImageMagick (`mogrify`). Russian: `Ctrl+б`. | | `Ctrl+Shift+,` | `rotate-ccw` |
+Rotate the file 90° counter-clockwise. Russian: `Ctrl+Shift+б`. | | `Ctrl+period` | `rotate-right` |
+Rotate the file 90° clockwise. Russian: `Ctrl+ю`. | | `Ctrl+slash` | `rotate-180` | Rotate the file
+180°. Russian: `Ctrl+.`. | | `r` | `repeat` | Replay the last `mv`/`cp` destination (uses the cached
+directory recorded by `proc`). | | `Shift+m` | `range-mark` | Mark the current file as the start/end
+anchor for range operations. | | `Shift+r` | `range-clear` | Drop the saved range anchor. | |
+`Shift+d` | `range-trash` | Move every file between the mark and the current file into the staged
+trash. | | `Shift+v` | `range-mv` | Prompt for a directory and move the marked range there. | |
+`Shift+c` | `range-cp` | Prompt for a directory and copy the marked range there. |
 
 ## Gallery Mode
 
@@ -44,10 +46,12 @@ highlighted file’s absolute path to the clipboard. | | `Ctrl+c` | `cp` | Copy 
 into a rofi-selected directory. | | `Ctrl+d`, `d` | `mv … $HOME/trash/1st-level/pic` | Send the
 highlighted file to the staged trash. | | `r` | `repeat` | Repeat the previous `mv`/`cp` to its
 cached destination. | | `v` | `mv` | Move the highlighted file via a rofi prompt. | | `Ctrl+comma` |
-`rotate-left` | Rotate the highlighted file 270°. Russian: `Ctrl+б`. | | `Ctrl+Shift+,` | `rotate-ccw` | Rotate the highlighted file 90° counter-clockwise. Russian: `Ctrl+Shift+б`. | | `Ctrl+period` | `rotate-right` | Rotate the highlighted
-file 90° clockwise. Russian: `Ctrl+ю`. | | `Ctrl+slash` | `rotate-180` | Rotate the highlighted file 180°. Russian: `Ctrl+.`. | | `Ctrl+1`
-| `wall-mono` | Push the highlighted image to `swww` in monochrome mode. | | `Ctrl+2` | `wall-fill`
-| Fill the monitor with the highlighted image and set it as wallpaper. | | `Ctrl+3` | `wall-full` |
+`rotate-left` | Rotate the highlighted file 270°. Russian: `Ctrl+б`. | | `Ctrl+Shift+,` |
+`rotate-ccw` | Rotate the highlighted file 90° counter-clockwise. Russian: `Ctrl+Shift+б`. | |
+`Ctrl+period` | `rotate-right` | Rotate the highlighted file 90° clockwise. Russian: `Ctrl+ю`. | |
+`Ctrl+slash` | `rotate-180` | Rotate the highlighted file 180°. Russian: `Ctrl+.`. | | `Ctrl+1` |
+`wall-mono` | Push the highlighted image to `swww` in monochrome mode. | | `Ctrl+2` | `wall-fill` |
+Fill the monitor with the highlighted image and set it as wallpaper. | | `Ctrl+3` | `wall-full` |
 Alias for `wall-fill`. | | `Ctrl+4` | `wall-tile` | Tile the highlighted image and set it as
 wallpaper. | | `Ctrl+5` | `wall-center` | Center the highlighted image on the wallpaper canvas. | |
 `Ctrl+w` | `wall-cover` | Cover the monitor with the highlighted image and set it as wallpaper. | |
@@ -61,20 +65,14 @@ marked range there. |
 
 ### Navigation
 
-| Key | Action | Effect |
-| --- | ------ | ------ |
-| `n` / `т` (RU) | `open("next")` | Next slide. |
-| `p` / `з` (RU) | `open("prev")` | Previous slide. |
-| `BackSpace` | `open("prev")` | Previous slide (alias). |
-| `h` / `Left` / `р` (RU) | pan left | Pan image 50px left. |
-| `l` / `Right` / `д` (RU) | pan right | Pan image 50px right. |
-| `k` / `Up` / `л` (RU) | pan up | Pan image 50px up. |
-| `j` / `Down` / `о` (RU) | pan down | Pan image 50px down. |
-| `i` / `ш` (RU) | `text.show()` | Show image info overlay. |
-| `Return` / `Escape` | `set_mode("gallery")` | Switch to gallery. |
-| `Space` | toggle | Pause/resume (toggles viewer↔slideshow). |
-| `f` / `а` (RU) | `toggle_fullscreen()` | Toggle fullscreen. |
-| `q` / `й` (RU) | `exit(0)` | Quit. |
+| Key | Action | Effect | | --- | ------ | ------ | | `n` / `т` (RU) | `open("next")` | Next slide.
+| | `p` / `з` (RU) | `open("prev")` | Previous slide. | | `BackSpace` | `open("prev")` | Previous
+slide (alias). | | `h` / `Left` / `р` (RU) | pan left | Pan image 50px left. | | `l` / `Right` / `д`
+(RU) | pan right | Pan image 50px right. | | `k` / `Up` / `л` (RU) | pan up | Pan image 50px up. | |
+`j` / `Down` / `о` (RU) | pan down | Pan image 50px down. | | `i` / `ш` (RU) | `text.show()` | Show
+image info overlay. | | `Return` / `Escape` | `set_mode("gallery")` | Switch to gallery. | | `Space`
+| toggle | Pause/resume (toggles viewer↔slideshow). | | `f` / `а` (RU) | `toggle_fullscreen()` |
+Toggle fullscreen. | | `q` / `й` (RU) | `exit(0)` | Quit. |
 
 ### File Operations
 
@@ -88,11 +86,17 @@ and copy the marked range there. |
 
 ### Notes
 
-- **Antialiasing toggle** (`a`/`ф`): now correctly toggles on/off (previously was always-on due to API limitation; fixed with Lua state variable).
-- **Gallery navigation**: Russian `т`/`з` keys navigate the grid (right/left), matching their Latin `n`/`p` equivalents. The gallery API (`gdir_t`) only supports grid movement, not sequential file navigation.
-- **Viewer Russian arrows**: `о`=down (j position), `д`=right (l position) — now consistent with gallery mapping.
+- **Antialiasing toggle** (`a`/`ф`): now correctly toggles on/off (previously was always-on due to
+  API limitation; fixed with Lua state variable).
+- **Gallery navigation**: Russian `т`/`з` keys navigate the grid (right/left), matching their Latin
+  `n`/`p` equivalents. The gallery API (`gdir_t`) only supports grid movement, not sequential file
+  navigation.
+- **Viewer Russian arrows**: `о`=down (j position), `д`=right (l position) — now consistent with
+  gallery mapping.
 - **Last file**: `П` (Shift+п) opens the last file in both viewer and gallery, mirroring Latin `G`.
-- **Rotate keys**: all four directions now have Russian ЙЦУКЕН duplicates (`Ctrl+б`/`Ctrl+Shift+б`/`Ctrl+ю`/`Ctrl+.`). `Ctrl+Shift+,` replaces the former `Ctrl+<` binding for rotate-ccw.
+- **Rotate keys**: all four directions now have Russian ЙЦУКЕН duplicates
+  (`Ctrl+б`/`Ctrl+Shift+б`/`Ctrl+ю`/`Ctrl+.`). `Ctrl+Shift+,` replaces the former `Ctrl+<` binding
+  for rotate-ccw.
 - All file moves/copies are blocked on VCS directories by `_is_vcs_path` to keep repo trees intact.
 - Wallpaper helpers rely on `swww`. The script starts the daemon on demand and serializes calls via
   a lock directory so multiple instances do not collide.

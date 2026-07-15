@@ -526,8 +526,8 @@ Additionally, a Markdown language policy is enforced:
   - `profiles.games.enable = false;` to disable Steam/Gamescope wrappers/MangoHud system‑wide.
   - Defaults to `true` to preserve current behavior.
 
-- Isolated CPUs: host `odin` reserves cores `0-3,16-19` for low‑latency gaming. System services
-  are kept on housekeeping CPUs.
+- Isolated CPUs: host `odin` reserves cores `0-3,16-19` for low‑latency gaming. System services are
+  kept on housekeeping CPUs.
 
 - Transient scope runner: `game-run` launches any command in a user systemd scope and pins it to the
   isolated CPUs via `game-affinity-exec`.
@@ -760,9 +760,9 @@ Prometheus PHP‑FPM Exporter
   and re‑enable after fixing permissions/ordering.
 - Common mistakes to avoid:
   - Misplacing user group options: within the `users = { ... }` attrset, set
-    `users.prometheus.extraGroups = [ "nginx" ];` (this
-    maps to `users.users.<name>.extraGroups`).
-  - Enabling multiple proxies: don’t enable multiple reverse proxies for the same backend; pick a single proxy per backend.
+    `users.prometheus.extraGroups = [ "nginx" ];` (this maps to `users.users.<name>.extraGroups`).
+  - Enabling multiple proxies: don’t enable multiple reverse proxies for the same backend; pick a
+    single proxy per backend.
 
 Nextcloud on odin (clean install)
 

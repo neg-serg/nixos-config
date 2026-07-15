@@ -48,8 +48,7 @@ TODO (decide and/or document)
   receivers.
 - [ ] Panels with maps/external resources: note in README that this is browser traffic and not
   controlled by Grafana service settings.
-- [ ] CSP/Headers: add a stricter CSP if needed to avoid external scripts/fonts/images in
-  UI.
+- [ ] CSP/Headers: add a stricter CSP if needed to avoid external scripts/fonts/images in UI.
 - [ ] Plugins: define install policy — only via Nix/derivations, or one‑off install followed by
   “freezing” the directory (tmpfiles wipes plugins on activation).
 - [ ] Document how to temporarily relax egress for local debugging (temporary `IPAddressAllow` +
