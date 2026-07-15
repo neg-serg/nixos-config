@@ -5,9 +5,10 @@
 
 set -euo pipefail
 
-# Use path: prefix to bypass git status scanning (Hot-path #1: 8-9% eval time)
-# path: tells nix to treat the input as a plain filesystem path, skipping git operations.
-NIXPKGS_PATH="${NIXPKGS_SLIM_PATH:-path:/tmp/nixpkgs-slim}"
+# To bypass git status scanning (Hot-path #1, 8-9% eval time), set
+# NIXPKGS_SLIM_PATH=path:/tmp/nixpkgs-slim which tells nix to treat the
+# input as a plain filesystem path, skipping git operations entirely.
+NIXPKGS_PATH="${NIXPKGS_SLIM_PATH:-/tmp/nixpkgs-slim}"
 DATE=$(date +%Y-%m-%d_%H-%M-%S)
 BENCH_DIR="benchmarks"
 mkdir -p "$BENCH_DIR"
@@ -15,8 +16,8 @@ mkdir -p "$BENCH_DIR"
 # ---- helpers ----
 
 bench() {
-  local label="$1"  # short label for filename
-  local cmd="$2"    # full nix command to benchmark
+  local label="$1" # short label for filename
+  local cmd="$2"   # full nix command to benchmark
 
   local json_out="$BENCH_DIR/bench_${label}_${DATE}.json"
 
@@ -42,9 +43,9 @@ SCENARIO_LITE="nix build .#nixosConfigurations.odin-lite.config.system.build.top
 # Upstream uses NIXPKGS_UPSTREAM (or raw nixpkgs without override) — stability baseline that should NOT change across optimization rounds
 SCENARIO_UPSTREAM="nix eval ${NIXPKGS_UPSTREAM:-nixpkgs}#legacyPackages.x86_64-linux.hello.outPath --raw"
 
-bench "full_odin"   "$SCENARIO_FULL"
-bench "odin_lite"   "$SCENARIO_LITE"
-bench "upstream"    "$SCENARIO_UPSTREAM"
+bench "full_odin" "$SCENARIO_FULL"
+bench "odin_lite" "$SCENARIO_LITE"
+bench "upstream" "$SCENARIO_UPSTREAM"
 
 # ---- summary ----
 
@@ -54,7 +55,7 @@ echo "============================================"
 
 extract_mean() {
   local json="$1"
-  jq -r '.results[0].mean' "$json" 2>/dev/null || echo "N/A"
+  jq -r '.results[0].mean' "$json" 2> /dev/null || echo "N/A"
 }
 
 for label in full_odin odin_lite upstream; do
