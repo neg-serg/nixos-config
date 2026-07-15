@@ -23,8 +23,7 @@ Examples:
   [dev/pkgs] Fix herdr package access
 ```
 
-Scopes: nixpkgs, core/modules, flake/eval, hosts/odin, dev/*, cli/*, hardware/*, media/*, docs,
-etc.
+Scopes: nixpkgs, core/modules, flake/eval, hosts/odin, dev/*, cli/*, hardware/*, media/*, docs, etc.
 
 ## Project Structure
 
