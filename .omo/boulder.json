@@ -1,0 +1,57 @@
+{
+  "schema_version": 2,
+  "active_work_id": "nix-cpp-flamegraph-opt-6bc9c2c3",
+  "works": {
+    "nixpkgs-slim-flamegraph-b6479ef5": {
+      "work_id": "nixpkgs-slim-flamegraph-b6479ef5",
+      "active_plan": "/etc/nixos/.omo/plans/nixpkgs-slim-flamegraph.md",
+      "plan_name": "nixpkgs-slim-flamegraph",
+      "status": "completed",
+      "started_at": "2026-07-15T07:30:28.784Z",
+      "updated_at": "2026-07-15T09:41:21.583Z",
+      "session_ids": [
+        "opencode:ses_09b796c5fffeJNzNDhE8B8w4xv"
+      ],
+      "session_origins": {
+        "opencode:ses_09b796c5fffeJNzNDhE8B8w4xv": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {},
+      "ended_at": "2026-07-15T09:41:21.583Z",
+      "elapsed_ms": 7852799
+    },
+    "nix-cpp-flamegraph-opt-6bc9c2c3": {
+      "work_id": "nix-cpp-flamegraph-opt-6bc9c2c3",
+      "active_plan": "/etc/nixos/.omo/plans/nix-cpp-flamegraph-opt.md",
+      "plan_name": "nix-cpp-flamegraph-opt",
+      "status": "completed",
+      "started_at": "2026-07-15T10:10:35.358Z",
+      "updated_at": "2026-07-15T12:53:01.097Z",
+      "session_ids": [
+        "opencode:ses_09b796c5fffeJNzNDhE8B8w4xv"
+      ],
+      "session_origins": {
+        "opencode:ses_09b796c5fffeJNzNDhE8B8w4xv": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {},
+      "ended_at": "2026-07-15T12:53:01.097Z",
+      "elapsed_ms": 9745739
+    }
+  },
+  "active_plan": "/etc/nixos/.omo/plans/nix-cpp-flamegraph-opt.md",
+  "started_at": "2026-07-15T10:10:35.358Z",
+  "status": "completed",
+  "updated_at": "2026-07-15T12:53:01.097Z",
+  "session_ids": [
+    "opencode:ses_09b796c5fffeJNzNDhE8B8w4xv"
+  ],
+  "session_origins": {
+    "opencode:ses_09b796c5fffeJNzNDhE8B8w4xv": "direct"
+  },
+  "plan_name": "nix-cpp-flamegraph-opt",
+  "task_sessions": {},
+  "agent": "atlas",
+  "ended_at": "2026-07-15T12:53:01.097Z",
+  "elapsed_ms": 9745739
+}
