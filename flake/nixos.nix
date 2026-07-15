@@ -22,9 +22,11 @@ let
     inputs.sops-nix.nixosModules.sops
   ];
 
-  hostExtras = name:
-    lib.optional (builtins.pathExists (hostsDir + "/" + name + "/extra.nix"))
-      (hostsDir + "/" + name + "/extra.nix");
+  hostExtras =
+    name:
+    lib.optional (builtins.pathExists (hostsDir + "/" + name + "/extra.nix")) (
+      hostsDir + "/" + name + "/extra.nix"
+    );
 
   # -------------------------------------------------------------------------
   # Domain filter — enables parallel eval by skipping unused module domains.
@@ -217,6 +219,29 @@ let
         ++ [
           # mkForce: replace host profiles entirely so the test profile is the sole active one
           { features.profiles = lib.mkForce [ testProfile ]; }
+          # Test profile compat: provide stubs for users/features that the
+          # restricted domain filter would otherwise leave unconfigured.
+          # lite/server profiles skip "user" and "flatpak" domains,
+          # so greetd's greeter and nix-flatpak's user assertions fail.
+          ({ config, lib, ... }: {
+            config = lib.mkMerge [
+              (lib.mkIf (!config.features.gui.enable) {
+                features.gui.vicinae.enable = lib.mkForce false;
+              })
+              {
+                users.users.greeter = {
+                  isSystemUser = lib.mkDefault true;
+                  group = lib.mkDefault "greeter";
+                };
+                users.groups.greeter = { };
+                users.users.flatpak = {
+                  isSystemUser = lib.mkDefault true;
+                  group = lib.mkDefault "flatpak";
+                };
+                users.groups.flatpak = { };
+              }
+            ];
+          })
         ];
     };
 
@@ -239,5 +264,8 @@ let
 in
 {
   odin = mkHost "odin";
+}
+// prefixedTestConfigs
+// {
   inherit mkTestHost testProfiles;
 }
