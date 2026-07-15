@@ -32,7 +32,11 @@ let
     icon = "telegram";
     terminal = false;
     type = "Application";
-    categories = [ "Network" "InstantMessaging" "Chat" ];
+    categories = [
+      "Network"
+      "InstantMessaging"
+      "Chat"
+    ];
     mimeTypes = [ "x-scheme-handler/tg" ];
     startupWMClass = "org.telegram.desktop";
   };
@@ -68,13 +72,15 @@ stdenv.mkDerivation {
 
     # Qt6 and bundled libs need these at runtime (dlopen'd, not linked)
     wrapProgram $out/bin/telegram \
-      --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [
-        wayland
-        libxkbcommon
-        libglvnd
-        libpulseaudio
-        alsa-lib
-      ]}
+      --prefix LD_LIBRARY_PATH : ${
+        lib.makeLibraryPath [
+          wayland
+          libxkbcommon
+          libglvnd
+          libpulseaudio
+          alsa-lib
+        ]
+      }
 
     runHook postInstall
   '';

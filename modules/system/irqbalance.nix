@@ -1,4 +1,9 @@
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib) mkIf types;
@@ -29,21 +34,21 @@ let
 
   # Custom package containing only the systemd unit (no drop-ins generated)
   fixUnit = pkgs.runCommandLocal "irq-affinity-unit" { } ''
-    mkdir -p $out/lib/systemd/system
-    cat > $out/lib/systemd/system/irq-affinity-fix.service << UNIT
-[Unit]
-Description=Move IRQs off isolated CPUs
-After=systemd-udevd.service
+        mkdir -p $out/lib/systemd/system
+        cat > $out/lib/systemd/system/irq-affinity-fix.service << UNIT
+    [Unit]
+    Description=Move IRQs off isolated CPUs
+    After=systemd-udevd.service
 
-[Service]
-Type=oneshot
-RemainAfterExit=true
-ExecStart=${lib.getExe pkgs.bash} ${fixScript}
-Environment=PATH=/run/wrappers/bin:/nix/store/sr26flm2nkfa12dkrwj2630kqsfakky4-coreutils-9.11/bin:/nix/store/w8xlvapzxcz23ba312q119p57bnc7200-gnugrep-3.12/bin:/nix/store/0hamsiy8hsyfw1hmizbc3bf93ad7fa1v-gnused-4.9/bin:/nix/store/arcwm5lynrra8yjn5wvbj5mr3rikmb30-systemd-260.2/bin:${pkgs.gawk}/bin
+    [Service]
+    Type=oneshot
+    RemainAfterExit=true
+    ExecStart=${lib.getExe pkgs.bash} ${fixScript}
+    Environment=PATH=/run/wrappers/bin:/nix/store/sr26flm2nkfa12dkrwj2630kqsfakky4-coreutils-9.11/bin:/nix/store/w8xlvapzxcz23ba312q119p57bnc7200-gnugrep-3.12/bin:/nix/store/0hamsiy8hsyfw1hmizbc3bf93ad7fa1v-gnused-4.9/bin:/nix/store/arcwm5lynrra8yjn5wvbj5mr3rikmb30-systemd-260.2/bin:${pkgs.gawk}/bin
 
-[Install]
-WantedBy=multi-user.target
-UNIT
+    [Install]
+    WantedBy=multi-user.target
+    UNIT
   '';
 in
 {

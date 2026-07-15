@@ -14,13 +14,16 @@
   lib,
   config,
   ...
-}: {
+}:
+{
   # ZSTD kernel compression — fastest decompression + excellent compression ratio
-  boot.kernelPatches = [{
-    name = "kernel-zstd";
-    patch = null;
-    structuredExtraConfig = with lib.kernel; {
-      KERNEL_ZSTD = yes;
-    };
-  }];
+  boot.kernelPatches = [
+    {
+      name = "kernel-zstd";
+      patch = null;
+      structuredExtraConfig = with lib.kernel; {
+        KERNEL_ZSTD = yes;
+      };
+    }
+  ];
 }

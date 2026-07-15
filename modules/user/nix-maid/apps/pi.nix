@@ -36,19 +36,35 @@ let
   # Subagent extension and prompts are now provided by npm:pi-subagents package.
   # Sample subagent definitions (scout, planner, reviewer, worker)
   subagentSrc = "${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo/examples/extensions/subagent";
-  subagentAgents = [ "scout.md" "planner.md" "reviewer.md" "worker.md" ];
-  subagentPrompts = [ "implement.md" "scout-and-plan.md" "implement-and-review.md" ];
+  subagentAgents = [
+    "scout.md"
+    "planner.md"
+    "reviewer.md"
+    "worker.md"
+  ];
+  subagentPrompts = [
+    "implement.md"
+    "scout-and-plan.md"
+    "implement-and-review.md"
+  ];
 
-  mkSubagentDirLinks = dir: files: builtins.listToAttrs (builtins.map (f: {
-    name = ".pi/agent/${dir}/${f}";
-    value.source = "${subagentSrc}/${dir}/${f}";
-  }) files);
+  mkSubagentDirLinks =
+    dir: files:
+    builtins.listToAttrs (
+      builtins.map (f: {
+        name = ".pi/agent/${dir}/${f}";
+        value.source = "${subagentSrc}/${dir}/${f}";
+      }) files
+    );
 in
 lib.mkIf enable (
   lib.mkMerge [
     # User-local pi wrapper (deepseek by default + secrets)
     {
-      users.users.neg.packages = [ piWrapper piLatest ];
+      users.users.neg.packages = [
+        piWrapper
+        piLatest
+      ];
     }
     # Ensure .pi agent directory structure exists
     (neg.mkHomeFiles (

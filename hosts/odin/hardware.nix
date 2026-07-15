@@ -227,6 +227,6 @@
   ];
 
   # Skip unnecessary boot-time services (~1s saved)
-  systemd.timers."fwupd-refresh".enable = false;        # fwupdmgr refresh timer — manual refresh still works
+  systemd.timers."fwupd-refresh".enable = false; # fwupdmgr refresh timer — manual refresh still works
   systemd.services.systemd-networkd-persistent-storage.enable = false; # declarative .link files handle naming
 }

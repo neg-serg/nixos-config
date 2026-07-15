@@ -49,10 +49,12 @@ let
   allUsers = systemUsers ++ nixbldUsers;
 
   # Map each user name to a shell override (nologin path instead of package)
-  shellOverrides = builtins.listToAttrs (map (name: {
-    inherit name;
-    value.shell = "${pkgs.shadow}/bin/nologin";
-  }) allUsers);
+  shellOverrides = builtins.listToAttrs (
+    map (name: {
+      inherit name;
+      value.shell = "${pkgs.shadow}/bin/nologin";
+    }) allUsers
+  );
 in
 {
   config.users.users = shellOverrides;
