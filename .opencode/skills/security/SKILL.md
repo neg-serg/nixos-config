@@ -1,7 +1,6 @@
----
-name: security
-description: "Network scanning (nmap), vulnerability scanning (nuclei), code analysis (semgrep), secret detection (gitleaks), and network diagnostics"
----
+______________________________________________________________________
+
+## name: security description: "Network scanning (nmap), vulnerability scanning (nuclei), code analysis (semgrep), secret detection (gitleaks), and network diagnostics"
 
 # Security Tools
 
