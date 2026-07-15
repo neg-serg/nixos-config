@@ -91,7 +91,7 @@ let
     font = {
       normal = {
         family = "Iosevka Proportional Medium";
-        size = 16;
+        size = 14;
       };
     };
 
