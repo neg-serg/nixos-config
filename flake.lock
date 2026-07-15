@@ -1097,16 +1097,16 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1784082895,
+        "lastModified": 1784085041,
         "owner": "neg-serg",
         "repo": "nixpkgs-slim",
-        "rev": "ec5da056bf66be3996478edd763701d148fdf281",
+        "rev": "47ec8b0206b6307a2d458d388e4dd17a6aea8bdd",
         "type": "github"
       },
       "original": {
         "owner": "neg-serg",
         "repo": "nixpkgs-slim",
-        "rev": "ec5da056bf66be3996478edd763701d148fdf281",
+        "rev": "47ec8b0206b6307a2d458d388e4dd17a6aea8bdd",
         "type": "github"
       }
     },
@@ -1117,10 +1117,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1784080987,
+        "lastModified": 1784083947,
         "owner": "noctalia-dev",
         "repo": "noctalia",
-        "rev": "68045963d5ac8e12278a9a1c375c157a486c7050",
+        "rev": "3e4bd26b5f411ef5f03849c150963b1c2709fde9",
         "type": "github"
       },
       "original": {
@@ -1169,10 +1169,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1784076724,
+        "lastModified": 1784084569,
         "owner": "anomalyco",
         "repo": "opencode",
-        "rev": "b6478dcebf1da4a559055c702c62b9294c41afdb",
+        "rev": "05c3e40a4e641732b991499000ca479e5dad4b02",
         "type": "github"
       },
       "original": {
@@ -1188,10 +1188,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1784076724,
+        "lastModified": 1784084569,
         "owner": "anomalyco",
         "repo": "opencode",
-        "rev": "b6478dcebf1da4a559055c702c62b9294c41afdb",
+        "rev": "05c3e40a4e641732b991499000ca479e5dad4b02",
         "type": "github"
       },
       "original": {
