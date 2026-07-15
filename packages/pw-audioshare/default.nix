@@ -16,7 +16,7 @@ rustPlatform.buildRustPackage rec {
     owner = "destructatron";
     repo = "pw-audioshare";
     rev = "v${version}";
-    hash = lib.fakeHash;
+    hash = "sha256-JDhxJSZkHzWqJTHBvGlzQk6RM9YwQo5tSxiakRHF2ho=";
   };
 
   cargoHash = lib.fakeHash;
