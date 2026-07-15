@@ -8,6 +8,7 @@
     ./systemd
     ./vm/definitions.nix # libvirt domain XML definitions (gentoo, nixos, win11)
     ./boot.nix
+    ./deduplicate-shadow.nix
     ./environment.nix
     ./filesystems.nix
     ./irqbalance.nix

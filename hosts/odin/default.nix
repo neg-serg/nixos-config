@@ -66,6 +66,33 @@
     "services/misc/matrix-synapse.nix"
     "services/misc/paperless.nix"
     "services/misc/grocy.nix"
+
+    # Display managers — odin uses greetd with autologin
+    "services/display-managers/gdm.nix"
+    "services/display-managers/sddm.nix"
+    "services/display-managers/ly.nix"
+    "services/display-managers/lemurs.nix"
+    "services/display-managers/cosmic-greeter.nix"
+    "services/display-managers/dms-greeter.nix"
+    "services/display-managers/plasma-login-manager.nix"
+
+    # GNOME desktop submodules — odin uses Hyprland, not GNOME
+    # (gnome-keyring.nix and gcr-ssh-agent.nix kept — used for D-Bus Secret Service)
+    "services/desktops/gnome/at-spi2-core.nix"
+    "services/desktops/gnome/evolution-data-server.nix"
+    "services/desktops/gnome/glib-networking.nix"
+    "services/desktops/gnome/gnome-browser-connector.nix"
+    "services/desktops/gnome/gnome-initial-setup.nix"
+    "services/desktops/gnome/gnome-online-accounts.nix"
+    "services/desktops/gnome/gnome-online-miners.nix"
+    "services/desktops/gnome/gnome-remote-desktop.nix"
+    "services/desktops/gnome/gnome-settings-daemon.nix"
+    "services/desktops/gnome/gnome-software.nix"
+    "services/desktops/gnome/gnome-user-share.nix"
+    "services/desktops/gnome/localsearch.nix"
+    "services/desktops/gnome/rygel.nix"
+    "services/desktops/gnome/sushi.nix"
+    "services/desktops/gnome/tinysparql.nix"
   ];
 
   system.preserveFlake = false;
