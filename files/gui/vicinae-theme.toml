@@ -1,0 +1,37 @@
+# Neg Dark — pure black, neutral gray borders, muted accents
+[meta]
+version = 1
+name = "Neg Dark"
+description = "Pure dark with neutral gray borders and muted accents."
+variant = "dark"
+
+[colors.core]
+background = "#000000"
+foreground = "#9FABBA"
+secondary_background = "#080808"
+border = "#333333"
+accent = "#4a4a4a"
+
+[colors.accents]
+blue = "#4a5555"
+green = "#3a6a51"
+magenta = "#7a6a8a"
+orange = "#8a6a40"
+purple = "#6a6a7a"
+red = "#5a2020"
+yellow = "#8a7a50"
+cyan = "#3a6a6a"
+
+[colors.list.item.selection]
+background = "#111111"
+secondary_background = "#1a1a1a"
+
+[colors.scrollbars]
+background = "#2a2a2a"
+
+[colors.loading]
+bar = "#555555"
+
+[colors.input]
+border = "#444444"
+border_focus = "#555555"
