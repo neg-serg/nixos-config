@@ -100,5 +100,8 @@ let
 in
 
 lib.mkIf cfg.enable {
-  environment.systemPackages = [ vpnScriptsPkg pkgs.amnezia-tun ];
+  environment.systemPackages = [
+    vpnScriptsPkg
+    pkgs.amnezia-tun
+  ];
 }

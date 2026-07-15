@@ -133,19 +133,19 @@ in
         serviceConfig = {
           Type = "oneshot";
           ExecStart = toString (
-pkgs.writeShellScript "create-xdg-dirs" ''
-  mkdir -p \
-    $HOME/.local/desktop \
-    $HOME/doc \
-    $HOME/dw \
-    $HOME/music \
-    $HOME/pic \
-    $HOME/.local/public \
-    $HOME/.local/templates \
-    $HOME/vid \
-    $HOME/.local/bin \
-    $HOME/.local/mail/gmail/INBOX
-''
+            pkgs.writeShellScript "create-xdg-dirs" ''
+              mkdir -p \
+                $HOME/.local/desktop \
+                $HOME/doc \
+                $HOME/dw \
+                $HOME/music \
+                $HOME/pic \
+                $HOME/.local/public \
+                $HOME/.local/templates \
+                $HOME/vid \
+                $HOME/.local/bin \
+                $HOME/.local/mail/gmail/INBOX
+            ''
           );
         };
       };

@@ -3,7 +3,8 @@
   pkgs,
 
   ...
-}: {
+}:
+{
   vivaldi = {
     name = "Vivaldi";
     pkg = pkgs.vivaldi;
