@@ -6,6 +6,10 @@
     ./networking.nix
     ./services.nix
     ./virtualisation/lxc.nix
+    # nixpkgs-slim compat: provides stub for services.mail.sendmailSetuidWrapper
+    # (removed from slim nixpkgs together with the services/mail/ dir, but referenced
+    #  by the zfs module's default for services.zfs.zed.enableMail).
+    ./compat/mail-stub.nix
   ];
 
   # Disable unused nixpkgs service modules to reduce evaluation time and closure size.
@@ -93,6 +97,10 @@
     "services/desktops/gnome/rygel.nix"
     "services/desktops/gnome/sushi.nix"
     "services/desktops/gnome/tinysparql.nix"
+
+    # Auto-detection (facter) — disabled because nixpkgs-slim removed hyperv-guest.nix
+    # which facter's virtualisation module references. Odin is bare metal; no auto-detection needed.
+    "hardware/facter"
   ];
 
   system.preserveFlake = false;
