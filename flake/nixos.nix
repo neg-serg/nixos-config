@@ -22,12 +22,9 @@ let
     inputs.sops-nix.nixosModules.sops
   ];
 
-  hostExtras =
-    name:
-    let
-      extraPath = (builtins.toString hostsDir) + "/" + name + "/extra.nix";
-    in
-    lib.optional (builtins.pathExists extraPath) (/. + extraPath);
+  hostExtras = name:
+    lib.optional (builtins.pathExists (hostsDir + "/" + name + "/extra.nix"))
+      (hostsDir + "/" + name + "/extra.nix");
 
   # -------------------------------------------------------------------------
   # Domain filter — enables parallel eval by skipping unused module domains.
@@ -85,6 +82,21 @@ let
     "torrent"
     "user"
     "web"
+  ];
+
+  # Odin: full desktop minus domains with zero odin references.
+  # Excluded: appimage (no odin usage), apps (obsidian via flatpak),
+  #           llm (ollama disabled), web (empty module).
+  odinDomains = basicDomains ++ [
+    "dev"
+    "emulators"
+    "flatpak"
+    "fun"
+    "games"
+    "media"
+    "servers"
+    "torrent"
+    "user"
   ];
 
   mkDomainFilter = domains: name: builtins.elem name domains;
@@ -175,7 +187,9 @@ let
     name:
     lib.nixosSystem {
       inherit pkgs;
-      specialArgs = mkSpecialArgs;
+      specialArgs = mkSpecialArgs // {
+        domainFilter = mkDomainFilter (if name == "odin" then odinDomains else allDomains);
+      };
       modules =
         commonModules ++ [ (import ((builtins.toString hostsDir) + "/" + name)) ] ++ (hostExtras name);
     };
