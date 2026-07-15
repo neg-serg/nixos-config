@@ -53,12 +53,6 @@ in
           });
       game = final.callPackage ./game { };
 
-      raysession = finalPrev.raysession.overrideAttrs (old: {
-        postPatch = (old.postPatch or "") + ''
-          substituteInPlace src/gui/patchbay/patchcanvas/portgroup_widget.py \
-            --replace-fail "from cgitb import text" ""
-        '';
-      });
     };
 
   # Python with LTO optimizations
