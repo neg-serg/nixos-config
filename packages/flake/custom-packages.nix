@@ -28,4 +28,5 @@
 
   hwctl = pkgs.neg.hwctl; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
   inferno = pkgs.neg.inferno; # Rust port of the FlameGraph profiling tool suite
+
 }
