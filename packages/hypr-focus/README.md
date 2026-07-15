@@ -1,32 +1,35 @@
 # hypr-focus
 
-Hyprland focus history tracker and window management CLI. A fast Rust replacement for the Python `hypr-focus-hist` daemon, with a full suite of window management commands built in.
+Hyprland focus history tracker and window management CLI. A fast Rust replacement for the Python
+`hypr-focus-hist` daemon, with a full suite of window management commands built in.
 
-The binary is named `hypr-focus` in the Nix store. A symlink named `hypr-focus-hist` in `~/.local/bin/` points to it for backward compatibility with existing keybindings and scripts.
+The binary is named `hypr-focus` in the Nix store. A symlink named `hypr-focus-hist` in
+`~/.local/bin/` points to it for backward compatibility with existing keybindings and scripts.
 
 ## Commands
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `daemon` | Start background focus tracking | `hypr-focus daemon` |
-| `switch` | Focus the previously focused window | `hypr-focus switch` |
-| `workspace <ID>` | Jump to a workspace by ID or name | `hypr-focus workspace 3` |
-| `move-to-workspace <ID> [--follow]` | Move the active window to a workspace, optionally follow | `hypr-focus move-to-workspace 5 --follow` |
-| `float` | Toggle floating for the active window | `hypr-focus float` |
-| `fullscreen` | Toggle fullscreen for the active window | `hypr-focus fullscreen` |
-| `pin` | Toggle pin across workspaces | `hypr-focus pin` |
-| `layout [master\|dwindle]` | Set or toggle the layout | `hypr-focus layout dwindle` |
-| `orientation` | Cycle master orientation | `hypr-focus orientation` |
-| `split-ratio <VAL>` | Adjust or set the master split ratio | `hypr-focus split-ratio +0.1` or `hypr-focus split-ratio 0.6` |
-| `swap-master` | Swap the active window with the master window | `hypr-focus swap-master` |
-| `add-master` | Add the active window to the master list | `hypr-focus add-master` |
-| `remove-master` | Remove the active window from the master list | `hypr-focus remove-master` |
-| `toggle-split` | Toggle dwindle split direction | `hypr-focus toggle-split` |
-| `preselect <l\|r\|u\|d>` | Preselect a split direction for the next window | `hypr-focus preselect r` |
+| Command | Description | Example | |---------|-------------|---------| | `daemon` | Start
+background focus tracking | `hypr-focus daemon` | | `switch` | Focus the previously focused window |
+`hypr-focus switch` | | `workspace <ID>` | Jump to a workspace by ID or name |
+`hypr-focus workspace 3` | | `move-to-workspace <ID> [--follow]` | Move the active window to a
+workspace, optionally follow | `hypr-focus move-to-workspace 5 --follow` | | `float` | Toggle
+floating for the active window | `hypr-focus float` | | `fullscreen` | Toggle fullscreen for the
+active window | `hypr-focus fullscreen` | | `pin` | Toggle pin across workspaces | `hypr-focus pin`
+| | `layout [master\|dwindle]` | Set or toggle the layout | `hypr-focus layout dwindle` | |
+`orientation` | Cycle master orientation | `hypr-focus orientation` | | `split-ratio <VAL>` | Adjust
+or set the master split ratio | `hypr-focus split-ratio +0.1` or `hypr-focus split-ratio 0.6` | |
+`swap-master` | Swap the active window with the master window | `hypr-focus swap-master` | |
+`add-master` | Add the active window to the master list | `hypr-focus add-master` | |
+`remove-master` | Remove the active window from the master list | `hypr-focus remove-master` | |
+`toggle-split` | Toggle dwindle split direction | `hypr-focus toggle-split` | |
+`preselect <l\|r\|u\|d>` | Preselect a split direction for the next window |
+`hypr-focus preselect r` |
 
 ## Daemon Setup
 
-The daemon listens to Hyprland IPC events, tracks window focus history (LRU, max 20 entries), and writes the previous window address to a state file for the `switch` command. On connection loss it automatically reconnects after 2 seconds. Logs go to `/tmp/hypr-focus-hist.log`.
+The daemon listens to Hyprland IPC events, tracks window focus history (LRU, max 20 entries), and
+writes the previous window address to a state file for the `switch` command. On connection loss it
+automatically reconnects after 2 seconds. Logs go to `/tmp/hypr-focus-hist.log`.
 
 ### Hyprland autostart (hyprland.lua)
 
@@ -99,7 +102,8 @@ nix build .#neg.hypr-focus
 
 ## Logs
 
-The daemon writes a timestamped log to `/tmp/hypr-focus-hist.log`. Desktop notifications (via `notify-send`) alert on connection loss.
+The daemon writes a timestamped log to `/tmp/hypr-focus-hist.log`. Desktop notifications (via
+`notify-send`) alert on connection loss.
 
 ## License
 
