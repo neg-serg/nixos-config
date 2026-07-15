@@ -5,7 +5,7 @@
   };
   inputs = {
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nix-flatpak.url = "github:gmodena/nix-flatpak";
     nix.follows = "determinate/nix";
     hyprland = {
