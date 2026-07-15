@@ -20,10 +20,9 @@ USER_AGENT = "find-equiv-rev/1.0"
 
 def timestamp_to_iso8601(ts: int) -> str:
     """Convert a Unix timestamp to ISO8601 UTC string."""
-    return (
-        datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc)
-        .isoformat()
-    )
+    return datetime.datetime.fromtimestamp(
+        ts, tz=datetime.timezone.utc
+    ).isoformat()
 
 
 def query_api(until: str) -> str | None:
@@ -54,7 +53,8 @@ def fallback_git_ls_remote() -> str | None:
     try:
         result = subprocess.run(
             [
-                "git", "ls-remote",
+                "git",
+                "ls-remote",
                 "https://github.com/NixOS/nixpkgs.git",
                 "refs/heads/nixos-unstable",
             ],
@@ -70,7 +70,10 @@ def fallback_git_ls_remote() -> str | None:
         return None
 
     if result.returncode != 0:
-        print(f"error: git ls-remote failed: {result.stderr.strip()}", file=sys.stderr)
+        print(
+            f"error: git ls-remote failed: {result.stderr.strip()}",
+            file=sys.stderr,
+        )
         return None
 
     sha = result.stdout.split(maxsplit=1)[0] if result.stdout.strip() else None
