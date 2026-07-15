@@ -25,4 +25,5 @@ palettum = pkgs.neg.palettum;
   openagentscontrol = pkgs.neg.openagentscontrol; # AI agent framework for plan-first development (agents + contexts for OpenCode)
 
   hwctl = pkgs.neg.hwctl; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
+  inferno = pkgs.neg.inferno; # Rust port of the FlameGraph profiling tool suite
 }
