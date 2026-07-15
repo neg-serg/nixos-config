@@ -1083,16 +1083,16 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1784094885,
-        "owner": "neg-serg",
-        "repo": "nixpkgs-slim",
-        "rev": "ffdb45b479e4d17e2dce0c5cc174c9a2ca087bff",
+        "lastModified": 1784115452,
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "35d3407a3816f3b341d8cf1d60abaf2b7b8166ac",
         "type": "github"
       },
       "original": {
-        "owner": "neg-serg",
-        "repo": "nixpkgs-slim",
-        "rev": "ffdb45b479e4d17e2dce0c5cc174c9a2ca087bff",
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
         "type": "github"
       }
     },
