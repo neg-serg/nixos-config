@@ -19,12 +19,21 @@ rustPlatform.buildRustPackage rec {
     hash = "sha256-JDhxJSZkHzWqJTHBvGlzQk6RM9YwQo5tSxiakRHF2ho=";
   };
 
-  cargoHash = lib.fakeHash;
+  cargoLock = {
+    lockFile = ./Cargo.lock;
+  };
+
+  postPatch = ''
+    cp ${./Cargo.lock} Cargo.lock
+  '';
 
   nativeBuildInputs = [
     pkg-config
     clang
   ];
+
+  # bindgen needs to find libclang.so
+  LIBCLANG_PATH = "${clang.cc.lib}/lib";
 
   buildInputs = [
     gtk4
