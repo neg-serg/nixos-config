@@ -2,6 +2,7 @@
   lib,
   inputs,
   config,
+  pkgs,
   ...
 }:
 let
@@ -78,6 +79,32 @@ in
       extra-sandbox-paths = [ "/cache" ];
     }
     // caches;
+
+    # Override Determinate Nix with patched binary (opt/cpp-hotpaths:
+    #   - git status skip for unmodified flake sources
+    #   - coerceToString cache per derivation
+    #   - attr name memoization)
+    package = lib.mkForce (
+      pkgs.runCommand "nix-patched-3.21.5" {
+        pname = "nix";
+        version = "3.21.5";
+      } ''
+        src=${builtins.path {
+          path = /home/neg/src/nix-src/build/src;
+          name = "nix-patched-build";
+        }}
+        mkdir -p $out/bin
+
+        cp $src/nix/nix $out/bin/nix
+
+        for dir in libutil libstore libexpr libfetchers libflake libmain libcmd; do
+          mkdir -p $out/$dir
+          # Copy only .so files/symlinks, skip .p/ directories with .o files
+          find $src/$dir -maxdepth 1 \( -type f -o -type l \) -name '*.so*' \
+            -exec cp -d --no-preserve=mode {} $out/$dir/ \;
+        done
+      ''
+    );
     gc = {
       automatic = lib.mkDefault true;
       dates = "weekly";
