@@ -14,7 +14,11 @@ let
     pkgs.supercollider # SuperCollider IDE and audio engine
     pkgs.supercolliderPlugins.sc3-plugins # extra SuperCollider plugins (UGens)
     # -- Session Management --
-    pkgs.raysession # Session manager
+    pkgs.new-session-manager # NSM — session manager for audio apps (JACK/PipeWire)
+
+    # -- Patchbays --
+    pkgs.zestbay # PipeWire patchbay with LV2/VST3/CLAP plugin hosting (Qt6)
+    pkgs.pw-audioshare # GTK4 PipeWire patchbay with auto-connect presets
 
     # -- Noise Processing --
     pkgs.noisetorch # PulseAudio/PipeWire microphone noise gate
