@@ -22,7 +22,8 @@ fi
 
 filter_ext() {
   if command -v ug >/dev/null 2>&1; then
-    ug -iE '\.(jpe?g|png|gif|svg|webp|tiff|heif|heic|avif|ico|bmp)$'
+    ug -iE '\.(jpe?g|png|gif|svg|webp|tiff|heif|heic|avif|ico|bmp)$' 2>/dev/null \
+      || grep -Ei '\.(jpe?g|png|gif|svg|webp|tiff|heif|heic|avif|ico|bmp)$'
   else
     grep -Ei '\.(jpe?g|png|gif|svg|webp|tiff|heif|heic|avif|ico|bmp)$'
   fi
