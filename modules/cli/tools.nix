@@ -4,13 +4,15 @@
   ...
 }:
 let
-  # Wrap ugrep/ug to always load the system-wide /etc/ugrep.conf
+  # Wrap ugrep/ug to load the system-wide /etc/ugrep.conf via env var
+  # (--config flag triggers a security check in ugrep 7.8 that rejects
+  # root-owned config when running as non-root; the env var bypasses it.)
   ugrepWithConfig = pkgs.ugrep.overrideAttrs (old: {
     # Ultra fast grep with interactive query UI
     nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
     postInstall = (old.postInstall or "") + ''
-      wrapProgram "$out/bin/ugrep" --add-flags "--config=/etc/ugrep.conf"
-      wrapProgram "$out/bin/ug" --add-flags "--config=/etc/ugrep.conf"
+      wrapProgram "$out/bin/ugrep" --set UGREP_CONFIG_FILE "/etc/ugrep.conf"
+      wrapProgram "$out/bin/ug" --set UGREP_CONFIG_FILE "/etc/ugrep.conf"
     '';
   });
   hishtoryPkg = pkgs.hishtory or null; # Your shell history: synced, queryable, and in context
