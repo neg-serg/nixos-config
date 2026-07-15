@@ -1,4 +1,9 @@
-{ lib, pkgs, mkBool, ... }:
+{
+  lib,
+  pkgs,
+  mkBool,
+  ...
+}:
 with lib;
 {
   options.features = {

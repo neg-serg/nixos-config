@@ -135,10 +135,10 @@
   features.dev.cpp.enable = true; # Enable C++ toolchain (ccache, gcc, cmake)
   # Override default networkUnits: odin uses systemd-networkd, not NetworkManager
   features.system.logTtys.networkUnits = [
-    "systemd-networkd.service"   # Primary network configuration
-    "sshd.service"               # SSH daemon
-    "tailscaled.service"         # Tailscale VPN
-    "nftables.service"           # Firewall
+    "systemd-networkd.service" # Primary network configuration
+    "sshd.service" # SSH daemon
+    "tailscaled.service" # Tailscale VPN
+    "nftables.service" # Firewall
   ];
   boot.plymouth.enable = false; # Plymouth removed — adds boot delay, splash not needed on this host
 }

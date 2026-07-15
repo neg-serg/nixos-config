@@ -52,23 +52,23 @@ let
 
     # Flat keys — vicinae doesn't accept nested `action: { copy: … }`
     keybinds = {
-      open-search-filter     = "control+P";
-      open-settings          = "control+,";
-      toggle-action-panel    = "control+B";
-      "action.copy"            = "control+shift+C";
-      "action.copy-name"       = "control+shift+.";
-      "action.copy-path"       = "control+shift+,";
-      "action.duplicate"       = "control+D";
-      "action.edit"            = "control+E";
-      "action.edit-secondary"  = "control+shift+E";
-      "action.move-down"       = "Tab";
-      "action.move-up"         = "shift+Tab";
-      "action.new"             = "control+N";
-      "action.open"            = "control+O";
-      "action.pin"             = "control+shift+P";
-      "action.refresh"         = "control+R";
-      "action.remove"          = "control+X";
-      "action.save"            = "control+S";
+      open-search-filter = "control+P";
+      open-settings = "control+,";
+      toggle-action-panel = "control+B";
+      "action.copy" = "control+shift+C";
+      "action.copy-name" = "control+shift+.";
+      "action.copy-path" = "control+shift+,";
+      "action.duplicate" = "control+D";
+      "action.edit" = "control+E";
+      "action.edit-secondary" = "control+shift+E";
+      "action.move-down" = "Tab";
+      "action.move-up" = "shift+Tab";
+      "action.new" = "control+N";
+      "action.open" = "control+O";
+      "action.pin" = "control+shift+P";
+      "action.refresh" = "control+R";
+      "action.remove" = "control+X";
+      "action.save" = "control+S";
     };
   };
 
@@ -76,39 +76,37 @@ let
   settingsFile = pkgs.writeText "vicinae-settings.json" (builtins.toJSON vicinaeSettings);
 in
 {
-  config = mkIf enabled (
-    mkMerge [
-      {
-        environment.systemPackages = [
-          pkgs.vicinae # Wayland-native app runner + window switcher
-        ];
+  config = mkIf enabled (mkMerge [
+    {
+      environment.systemPackages = [
+        pkgs.vicinae # Wayland-native app runner + window switcher
+      ];
 
-        systemd.user.services.vicinae = {
-          enable = true;
-          description = "Vicinae - Wayland application runner and window switcher";
-          partOf = [ "graphical-session.target" ];
-          wantedBy = [ "graphical-session.target" ];
-          after = [ "graphical-session.target" ];
-          serviceConfig = {
-            ExecStart = "${lib.getExe pkgs.vicinae} server";
-            Restart = "always";
-            RestartSec = 2;
-            Environment = [
-              "QT_QPA_PLATFORM=wayland"
-              "WAYLAND_DISPLAY=wayland-1"
-              "PATH=/run/current-system/sw/bin"
-            ];
-          };
+      systemd.user.services.vicinae = {
+        enable = true;
+        description = "Vicinae - Wayland application runner and window switcher";
+        partOf = [ "graphical-session.target" ];
+        wantedBy = [ "graphical-session.target" ];
+        after = [ "graphical-session.target" ];
+        serviceConfig = {
+          ExecStart = "${lib.getExe pkgs.vicinae} server";
+          Restart = "always";
+          RestartSec = 2;
+          Environment = [
+            "QT_QPA_PLATFORM=wayland"
+            "WAYLAND_DISPLAY=wayland-1"
+            "PATH=/run/current-system/sw/bin"
+          ];
         };
-      }
+      };
+    }
 
-      (mkIf cfg.manageConfig {
-        # Deploy config via tmpfiles to user home — pure NixOS, no nix-maid
-        systemd.user.tmpfiles.rules = [
-          "L+ %h/.local/share/vicinae/themes/neg-dark.toml - - - - ${themeFile}"
-          "L+ %h/.config/vicinae/settings.json - - - - ${settingsFile}"
-        ];
-      })
-    ]
-  );
+    (mkIf cfg.manageConfig {
+      # Deploy config via tmpfiles to user home — pure NixOS, no nix-maid
+      systemd.user.tmpfiles.rules = [
+        "L+ %h/.local/share/vicinae/themes/neg-dark.toml - - - - ${themeFile}"
+        "L+ %h/.config/vicinae/settings.json - - - - ${settingsFile}"
+      ];
+    })
+  ]);
 }

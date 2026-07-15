@@ -71,23 +71,31 @@ lib.mkIf (cfg.enable or false) {
   systemd.user.services = {
     # mpdas — Last.fm AudioScrobbler for MPD.
     # Routes via SOCKS5 proxy (127.0.0.1:10808). Credentials from sops secret.
-    mpdas = lib.mkIf ((config.features.media.audio.mpd.enable or false)
-      && builtins.pathExists ../../../../secrets/home/mpdas/neg.rc) {
-      description = "MPD AudioScrobbler (Last.fm)";
-      after = [ "network-online.target" "mpd.service" ];
-      wants = [ "mpd.service" ];
-      serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
-        Environment = [
-          "ALL_PROXY=socks5h://127.0.0.1:10808"
-          "MPD_HOST=127.0.0.1"
-          "MPD_PORT=6600"
-        ];
-        Restart = "on-failure";
-        RestartSec = 10;
-      };
-      wantedBy = [ "default.target" ];
-    };
+    mpdas =
+      lib.mkIf
+        (
+          (config.features.media.audio.mpd.enable or false)
+          && builtins.pathExists ../../../../secrets/home/mpdas/neg.rc
+        )
+        {
+          description = "MPD AudioScrobbler (Last.fm)";
+          after = [
+            "network-online.target"
+            "mpd.service"
+          ];
+          wants = [ "mpd.service" ];
+          serviceConfig = {
+            ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
+            Environment = [
+              "ALL_PROXY=socks5h://127.0.0.1:10808"
+              "MPD_HOST=127.0.0.1"
+              "MPD_PORT=6600"
+            ];
+            Restart = "on-failure";
+            RestartSec = 10;
+          };
+          wantedBy = [ "default.target" ];
+        };
 
     # Pic dirs notifier
     "pic-dirs" = {

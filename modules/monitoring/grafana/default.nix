@@ -59,7 +59,6 @@ in
       description = "Interfaces where Grafana port is allowed when openFirewall is true.";
     };
 
-
   };
 
   config = mkIf (cfg.enable or false) {
@@ -120,8 +119,6 @@ in
         })
       ))
     ];
-
-
 
     # tmpfiles rules for Grafana dashboard provisioning
     systemd.tmpfiles.rules = lib.mkAfter [
