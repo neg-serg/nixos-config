@@ -23,6 +23,7 @@ from pathlib import Path
 
 class SECItem(ctypes.Structure):
     """NSS SECItem structure for passing data to/from NSS crypto functions."""
+
     _fields_: list[tuple[str, type]] = [
         ("type", ctypes.c_uint),
         ("data", ctypes.POINTER(ctypes.c_ubyte)),
@@ -34,7 +35,10 @@ def _load_nss() -> ctypes.CDLL:
     """Load libnss3.so and set up all function argument/return types."""
     lib_path = ctypes.util.find_library("nss3")
     if lib_path is None:
-        print("Error: libnss3.so not found. Install nss (Mozilla NSS) first.", file=sys.stderr)
+        print(
+            "Error: libnss3.so not found. Install nss (Mozilla NSS) first.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     nss: ctypes.CDLL = ctypes.CDLL(lib_path)
@@ -61,7 +65,11 @@ def _load_nss() -> ctypes.CDLL:
     nss.PK11_CheckUserPassword.restype = ctypes.c_int
 
     # PK11_Authenticate(PK11SlotInfo*, PRBool loadCerts, void *wincx) -> SECStatus
-    nss.PK11_Authenticate.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p]
+    nss.PK11_Authenticate.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_int,
+        ctypes.c_void_p,
+    ]
     nss.PK11_Authenticate.restype = ctypes.c_int
 
     # PK11SDR_Decrypt(SECItem *data, SECItem *result, void *cx) -> SECStatus
@@ -88,7 +96,10 @@ def _check_profile(profile_dir: str) -> None:
     """
     profile = Path(profile_dir)
     if not profile.is_dir():
-        print(f"Error: profile directory not found: {profile_dir}", file=sys.stderr)
+        print(
+            f"Error: profile directory not found: {profile_dir}",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     has_key4 = (profile / "key4.db").is_file()
@@ -158,13 +169,18 @@ def decrypt_cookies(cookies: list[dict], profile_dir: str) -> list[dict]:
     # The argument is the profile directory (containing key4.db + cert9.db).
     rc = nss.NSS_Init(profile_dir.encode("utf-8"))
     if rc != 0:
-        print(f"Error: NSS_Init failed for profile: {profile_dir}", file=sys.stderr)
+        print(
+            f"Error: NSS_Init failed for profile: {profile_dir}",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     try:
         slot = nss.PK11_GetInternalKeySlot()
         if not slot:
-            print("Error: PK11_GetInternalKeySlot returned NULL", file=sys.stderr)
+            print(
+                "Error: PK11_GetInternalKeySlot returned NULL", file=sys.stderr
+            )
             sys.exit(1)
 
         # Check whether the token needs authentication.
