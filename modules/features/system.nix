@@ -1,4 +1,9 @@
-{ lib, config, mkBool, ... }:
+{
+  lib,
+  config,
+  mkBool,
+  ...
+}:
 let
   cfg = config.features.system.logTtys;
 in
@@ -15,7 +20,12 @@ in
     full.enable = mkBool "FULL log viewer on tty16 (all messages)" true;
     networkUnits = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ "NetworkManager.service" "sshd.service" "tailscaled.service" "nftables.service" ];
+      default = [
+        "NetworkManager.service"
+        "sshd.service"
+        "tailscaled.service"
+        "nftables.service"
+      ];
       description = "Systemd units to monitor on tty15 (network TTY). Override per-host.";
     };
   };

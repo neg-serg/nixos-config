@@ -27,32 +27,40 @@ lib.mkMerge [
           mode = "0400";
           owner = "neg";
         };
-        "vdirsyncer_google_client_id" = lib.mkIf (builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml") {
-          format = "yaml";
-          sopsFile = "${secretsDir}/vdirsyncer/google.sops.yaml";
-          key = "client_id";
-          owner = "neg";
-        };
-        "vdirsyncer_google_client_secret" = lib.mkIf (builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml") {
-          format = "yaml";
-          sopsFile = "${secretsDir}/vdirsyncer/google.sops.yaml";
-          key = "client_secret";
-          owner = "neg";
-        };
-        "wireguard/work-wg.conf" = lib.mkIf (builtins.pathExists "${secretsDir}/wireguard/work-wg.conf.sops") {
-          format = "binary";
-          sopsFile = "${secretsDir}/wireguard/work-wg.conf.sops";
-          path = "/run/user/1000/secrets/wireguard/work-wg.conf";
-          mode = "0600";
-          owner = "neg";
-        };
-        "vless/reality-singbox-tun.json" = lib.mkIf (builtins.pathExists "${secretsDir}/vless/reality-singbox-tun.json.sops") {
-          format = "binary";
-          sopsFile = "${secretsDir}/vless/reality-singbox-tun.json.sops";
-          path = "/run/user/1000/secrets/vless-reality-singbox-tun.json";
-          mode = "0600";
-          owner = "neg";
-        };
+        "vdirsyncer_google_client_id" =
+          lib.mkIf (builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml")
+            {
+              format = "yaml";
+              sopsFile = "${secretsDir}/vdirsyncer/google.sops.yaml";
+              key = "client_id";
+              owner = "neg";
+            };
+        "vdirsyncer_google_client_secret" =
+          lib.mkIf (builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml")
+            {
+              format = "yaml";
+              sopsFile = "${secretsDir}/vdirsyncer/google.sops.yaml";
+              key = "client_secret";
+              owner = "neg";
+            };
+        "wireguard/work-wg.conf" =
+          lib.mkIf (builtins.pathExists "${secretsDir}/wireguard/work-wg.conf.sops")
+            {
+              format = "binary";
+              sopsFile = "${secretsDir}/wireguard/work-wg.conf.sops";
+              path = "/run/user/1000/secrets/wireguard/work-wg.conf";
+              mode = "0600";
+              owner = "neg";
+            };
+        "vless/reality-singbox-tun.json" =
+          lib.mkIf (builtins.pathExists "${secretsDir}/vless/reality-singbox-tun.json.sops")
+            {
+              format = "binary";
+              sopsFile = "${secretsDir}/vless/reality-singbox-tun.json.sops";
+              path = "/run/user/1000/secrets/vless-reality-singbox-tun.json";
+              mode = "0600";
+              owner = "neg";
+            };
         "deepseek-api" = lib.mkIf (builtins.pathExists "${secretsDir}/deepseek-api.sops.yaml") {
           format = "yaml";
           sopsFile = "${secretsDir}/deepseek-api.sops.yaml";

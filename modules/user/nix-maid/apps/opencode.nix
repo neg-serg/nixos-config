@@ -45,9 +45,15 @@ lib.mkIf enable (
                 reasoningEffort = "high";
               };
               variants = {
-                none = { reasoningEffort = "none"; };
-                high = { reasoningEffort = "high"; };
-                max = { reasoningEffort = "max"; };
+                none = {
+                  reasoningEffort = "none";
+                };
+                high = {
+                  reasoningEffort = "high";
+                };
+                max = {
+                  reasoningEffort = "max";
+                };
               };
             };
           };

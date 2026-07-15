@@ -25,7 +25,7 @@ let
   };
 
   # Aria2 config in key=value format
-  aria2ConfText = lib.generators.toKeyValue {} aria2Settings;
+  aria2ConfText = lib.generators.toKeyValue { } aria2Settings;
 in
 {
   config = lib.mkMerge [
