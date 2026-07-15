@@ -36,6 +36,7 @@ lib.mkMerge [
     };
     # Host-specific feature toggles
     features.dev.ai.opencode.enable = true;
+    features.dev.ai.omp.enable = true;
     features.dev.ai.pi.enable = true;
     features.cli.broot.enable = true;
     features.dev.tla.enable = true;
@@ -62,7 +63,6 @@ lib.mkMerge [
       optimise.automatic = false;
       settings.auto-optimise-store = false;
     };
-
 
     # Service profiles toggles for this host
     servicesProfiles = {
@@ -464,24 +464,32 @@ lib.mkMerge [
     # when rotating files under non-standard paths or missing until first run.
 
     # DuckDNS token (EnvironmentFile with DUCKDNS_TOKEN)
-    sops.secrets."duckdns/env" = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/duckdns.env.sops")) {
-      sopsFile = inputs.self + "/secrets/duckdns.env.sops";
-      format = "dotenv";
-      owner = "root";
-      mode = "0400";
-    };
+    sops.secrets."duckdns/env" =
+      lib.mkIf (builtins.pathExists (inputs.self + "/secrets/duckdns.env.sops"))
+        {
+          sopsFile = inputs.self + "/secrets/duckdns.env.sops";
+          format = "dotenv";
+          owner = "root";
+          mode = "0400";
+        };
 
     # Resilio Sync: Web UI auth via SOPS, data under /zero/sync
-    sops.secrets."resilio/http-login" = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable) {
-      sopsFile = inputs.self + "/secrets/resilio.sops.yaml";
-      owner = "rslsync";
-      mode = "0400";
-    };
-    sops.secrets."resilio/http-pass" = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable) {
-      sopsFile = inputs.self + "/secrets/resilio.sops.yaml";
-      owner = "rslsync";
-      mode = "0400";
-    };
+    sops.secrets."resilio/http-login" =
+      lib.mkIf
+        (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable)
+        {
+          sopsFile = inputs.self + "/secrets/resilio.sops.yaml";
+          owner = "rslsync";
+          mode = "0400";
+        };
+    sops.secrets."resilio/http-pass" =
+      lib.mkIf
+        (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable)
+        {
+          sopsFile = inputs.self + "/secrets/resilio.sops.yaml";
+          owner = "rslsync";
+          mode = "0400";
+        };
 
     environment.variables.GAME_PIN_AUTO_LIMIT = "8"; # Limit auto-picked V-Cache CPU set size for game-run pinning
 
@@ -491,10 +499,13 @@ lib.mkMerge [
         [
           "d /zero/sync/upload-next 0755 neg neg - -"
         ]
-        ++ lib.optionals (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable) [
-          # Resilio state / license storage (service runs as rslsync)
-          "d /zero/sync/.state 0700 rslsync rslsync - -"
-        ]
+        ++
+          lib.optionals
+            (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable)
+            [
+              # Resilio state / license storage (service runs as rslsync)
+              "d /zero/sync/.state 0700 rslsync rslsync - -"
+            ]
       );
       services = {
         # Power saving by default for less heat/noise
@@ -586,9 +597,12 @@ lib.mkMerge [
         logrotate-checkconf.enable = false;
 
         # Inject Resilio Web UI credentials from SOPS into generated config.json
-        resilio = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable) {
-          serviceConfig.ExecStartPre = lib.mkAfter [ resilioAuthScript ];
-        };
+        resilio =
+          lib.mkIf
+            (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml") && config.services.resilio.enable)
+            {
+              serviceConfig.ExecStartPre = lib.mkAfter [ resilioAuthScript ];
+            };
       };
 
       timers."bitcoind-textfile-metrics" = {
