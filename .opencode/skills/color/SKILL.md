@@ -1,7 +1,6 @@
----
-name: color
-description: "Color space conversion between HEX, RGB, HSL, CMYK formats using CLI and bash"
----
+______________________________________________________________________
+
+## name: color description: "Color space conversion between HEX, RGB, HSL, CMYK formats using CLI and bash"
 
 # Color Conversion
 
