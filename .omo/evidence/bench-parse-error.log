@@ -1,0 +1,56 @@
+evaluation warning: The option `services.ollama.models' defined in `/nix/store/g5ibf3a7nrqn6s6mj632lac8bj6mrmi2-source/modules/llm/default.nix' has been renamed to `services.ollama.modelsDir'.
+{
+  "cpuTime": 5.430616855621338,
+  "envs": {
+    "bytes": 122947288,
+    "elements": 9399667,
+    "number": 5968744
+  },
+  "gc": {
+    "cycles": 1,
+    "heapSize": 4295229440,
+    "totalBytes": 1075690352
+  },
+  "list": {
+    "bytes": 20032320,
+    "concats": 335695,
+    "elements": 2504040
+  },
+  "maxWaiting": 6,
+  "nrAvoided": 8004844,
+  "nrExprs": 1896074,
+  "nrFunctionCalls": 5067717,
+  "nrLookups": 2781762,
+  "nrOpUpdateValuesCopied": 20037625,
+  "nrOpUpdates": 532057,
+  "nrPrimOpCalls": 2957258,
+  "nrSpuriousWakeups": 0,
+  "nrThunks": 8534050,
+  "nrThunksAwaited": 528,
+  "nrThunksAwaitedSlow": 517,
+  "sets": {
+    "bytes": 532354800,
+    "elements": 30578271,
+    "number": 1795936
+  },
+  "sizes": {
+    "Attr": 16,
+    "Bindings": 24,
+    "Env": 8,
+    "Value": 16
+  },
+  "symbols": {
+    "bytes": 5023584,
+    "number": 111678
+  },
+  "time": {
+    "cpu": 5.430616855621338,
+    "gc": 0.038,
+    "gcFraction": 0.006997363469062535
+  },
+  "values": {
+    "bytes": 247173248,
+    "number": 15448328
+  },
+  "waitingTime": 1.174064
+}
