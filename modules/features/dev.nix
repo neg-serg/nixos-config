@@ -6,6 +6,7 @@ with lib;
     ai = {
       enable = mkBool "enable AI tools (e.g., LM Studio)" true;
       opencode.enable = mkBool "install OpenCode AI coding agent" false;
+      omp.enable = mkBool "install Oh My Pi (omp) AI coding agent (fork of Pi)" false;
       pi.enable = mkBool "install Pi coding agent CLI" false;
       openagentscontrol.enable = mkBool "install OpenAgentsControl agent framework for OpenCode" false;
     };
