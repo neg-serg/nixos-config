@@ -25,7 +25,9 @@ def read_cookies(db_path: str) -> list[dict[str, object]]:
     """Read moz_cookies table and return a list of cookie dicts."""
     db_path_obj = Path(db_path)
     if not db_path_obj.is_file():
-        print(f"Error: cookies.sqlite not found at: {db_path}", file=sys.stderr)
+        print(
+            f"Error: cookies.sqlite not found at: {db_path}", file=sys.stderr
+        )
         sys.exit(1)
 
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
@@ -35,8 +37,14 @@ def read_cookies(db_path: str) -> list[dict[str, object]]:
 
         # Build column list from what exists in the schema
         always_columns: list[str] = [
-            "name", "value", "host", "path",
-            "expiry", "creationTime", "isSecure", "isHttpOnly",
+            "name",
+            "value",
+            "host",
+            "path",
+            "expiry",
+            "creationTime",
+            "isSecure",
+            "isHttpOnly",
         ]
         selected: list[str] = [c for c in always_columns if c in existing]
         has_same_site = "sameSite" in existing
