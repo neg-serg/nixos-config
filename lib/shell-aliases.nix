@@ -16,10 +16,35 @@ let
 
   # Package availability checks
   checks = import ./package-checks.nix { inherit pkgs; };
-  inherit (checks) hasRg hasNmap hasCurl hasJq hasUg hasErd hasPrettyping hasDuf
-    hasDust hasHandlr hasWget2 hasPlocate hasOuch hasPigz hasPbzip2 hasHxd
-    hasMpvc hasMpv hasRlwrap hasKhal hasBtm hasIotop hasLsof hasKmon hasFd
-    hasMpc hasFlatpak;
+  inherit (checks)
+    hasRg
+    hasNmap
+    hasCurl
+    hasJq
+    hasUg
+    hasErd
+    hasPrettyping
+    hasDuf
+    hasDust
+    hasHandlr
+    hasWget2
+    hasPlocate
+    hasOuch
+    hasPigz
+    hasPbzip2
+    hasHxd
+    hasMpvc
+    hasMpv
+    hasRlwrap
+    hasKhal
+    hasBtm
+    hasIotop
+    hasLsof
+    hasKmon
+    hasFd
+    hasMpc
+    hasFlatpak
+    ;
 
   # Conditional alias helper
   optionalAlias = cond: attrs: if cond then attrs else { };

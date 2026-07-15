@@ -21,10 +21,36 @@ let
   mkCmd = name: if isNushell then "^${name}" else name;
 
   checks = import ./package-checks.nix { inherit pkgs; };
-  inherit (checks) hasRg hasNmap hasCurl hasJq hasUg hasErd hasPrettyping hasDuf
-    hasDust hasHandlr hasWget2 hasPlocate hasOuch hasPigz hasPbzip2 hasHxd
-    hasMpvc hasMpv hasRlwrap hasYtDlp hasKhal hasBtm hasIotop hasLsof hasKmon
-    hasFd hasMpc hasFlatpak;
+  inherit (checks)
+    hasRg
+    hasNmap
+    hasCurl
+    hasJq
+    hasUg
+    hasErd
+    hasPrettyping
+    hasDuf
+    hasDust
+    hasHandlr
+    hasWget2
+    hasPlocate
+    hasOuch
+    hasPigz
+    hasPbzip2
+    hasHxd
+    hasMpvc
+    hasMpv
+    hasRlwrap
+    hasYtDlp
+    hasKhal
+    hasBtm
+    hasIotop
+    hasLsof
+    hasKmon
+    hasFd
+    hasMpc
+    hasFlatpak
+    ;
 
   content = lib.concatStrings [
     "# Aliae aliases (cross-shell)\n"
@@ -214,7 +240,9 @@ let
     (mkAliasIf hasMpv "mpv" "${mkCmd "mpv"}")
     (mkAliasIf hasMpv "mp" "${mkCmd "mpv"}")
     (mkAliasIf hasMpv "mpa" "mpv -mute") # mpv audio-only
-    (mkAliasIf hasMpv "mpi" "mpv --interpolation=yes --tscale=oversample --video-sync=display-resample") # mpv interpolated
+    (mkAliasIf hasMpv "mpi"
+      "mpv --interpolation=yes --tscale=oversample --video-sync=display-resample"
+    ) # mpv interpolated
     (mkAliasIf hasRg "rg"
       "${mkCmd "rg"} --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden"
     )
@@ -235,9 +263,7 @@ let
     (mkAliasIf hasMpvc "mpvc" "${mkCmd "mpvc"} -S ${mkEnvVar "XDG_CONFIG_HOME"}/mpv/socket")
     (mkAliasIf hasWget2 "wget" "wget2 --hsts-file ${mkEnvVar "XDG_DATA_HOME"}/wget-hsts")
     # Sync with yt-dlp.nix config (proxy + cookies)
-    (mkAliasIf hasYtDlp "yt"
-      "yt-dlp --proxy socks5://127.0.0.1:10808 --cookies-from-browser vivaldi"
-    )
+    (mkAliasIf hasYtDlp "yt" "yt-dlp --proxy socks5://127.0.0.1:10808 --cookies-from-browser vivaldi")
     # yta removed; equivalent: yt --write-info-json
     (mkAliasIf hasCurl "moon" "curl wttr.in/Moon")
     (mkAliasIf hasCurl "we" "curl 'wttr.in/?T'")

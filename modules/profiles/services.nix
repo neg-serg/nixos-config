@@ -21,16 +21,18 @@ in
         opts.mkListOpt
           (types.submoduleWith {
             shorthandOnlyDefinesConfig = true;
-            modules = [{
-              options = {
-                name = opts.mkStrOpt { description = "Human-friendly filter list name"; };
-                url = opts.mkStrOpt { description = "URL to the filter list"; };
-                enabled = opts.mkBoolOpt {
-                  default = true;
-                  description = "Enable this list";
+            modules = [
+              {
+                options = {
+                  name = opts.mkStrOpt { description = "Human-friendly filter list name"; };
+                  url = opts.mkStrOpt { description = "URL to the filter list"; };
+                  enabled = opts.mkBoolOpt {
+                    default = true;
+                    description = "Enable this list";
+                  };
                 };
-              };
-            }];
+              }
+            ];
           })
           {
             default = [ ];
@@ -46,12 +48,14 @@ in
         opts.mkListOpt
           (types.submoduleWith {
             shorthandOnlyDefinesConfig = true;
-            modules = [{
-              options = {
-                domain = opts.mkStrOpt { description = "Domain to rewrite"; };
-                answer = opts.mkStrOpt { description = "Rewrite answer (IP or hostname)"; };
-              };
-            }];
+            modules = [
+              {
+                options = {
+                  domain = opts.mkStrOpt { description = "Domain to rewrite"; };
+                  answer = opts.mkStrOpt { description = "Rewrite answer (IP or hostname)"; };
+                };
+              }
+            ];
           })
           {
             default = [ ];

@@ -83,17 +83,16 @@ in
     };
 
     difftastic = pkgs.mkShell {
-      packages = [ pkgs.difftastic ];  # structural diff tool
+      packages = [ pkgs.difftastic ]; # structural diff tool
     };
 
     doggo = pkgs.mkShell {
-      packages = [ pkgs.doggo ];  # modern dig replacement for DNS lookups
+      packages = [ pkgs.doggo ]; # modern dig replacement for DNS lookups
     };
 
     rclone = pkgs.mkShell {
-      packages = [ pkgs.rclone ];  # rsync for cloud storage
+      packages = [ pkgs.rclone ]; # rsync for cloud storage
     };
-
 
     haskell =
       let
@@ -162,19 +161,19 @@ in
     };
 
     numbat = pkgs.mkShell {
-      packages = [ pkgs.numbat ];  # scientific calculator with unit conversion
+      packages = [ pkgs.numbat ]; # scientific calculator with unit conversion
     };
 
     openconnect = pkgs.mkShell {
-      packages = [ pkgs.openconnect ];  # Cisco AnyConnect VPN client
+      packages = [ pkgs.openconnect ]; # Cisco AnyConnect VPN client
     };
 
     nurl = pkgs.mkShell {
-      packages = [ pkgs.nurl ];  # Nix URL derivation helper
+      packages = [ pkgs.nurl ]; # Nix URL derivation helper
     };
 
     nchat = pkgs.mkShell {
-      packages = [ pkgs.nchat ];  # terminal-based chat client
+      packages = [ pkgs.nchat ]; # terminal-based chat client
     };
 
     vlang = pkgs.mkShell {
@@ -184,11 +183,11 @@ in
     };
 
     viddy = pkgs.mkShell {
-      packages = [ pkgs.viddy ];  # modern watch command with history
+      packages = [ pkgs.viddy ]; # modern watch command with history
     };
 
     uni = pkgs.mkShell {
-      packages = [ pkgs.uni ];  # Unicode query tool
+      packages = [ pkgs.uni ]; # Unicode query tool
     };
 
     re = pkgs.mkShell {
@@ -267,19 +266,19 @@ in
     };
 
     ape = pkgs.mkShell {
-      packages = [ pkgs.ape ];  # APE file parser and emulator
+      packages = [ pkgs.ape ]; # APE file parser and emulator
     };
 
     "ast-grep" = pkgs.mkShell {
-      packages = [ pkgs.ast-grep ];  # AST-based structural code search
+      packages = [ pkgs.ast-grep ]; # AST-based structural code search
     };
 
     bespokesynth = pkgs.mkShell {
-      packages = [ pkgs.bespokesynth ];  # modular software synthesizer
+      packages = [ pkgs.bespokesynth ]; # modular software synthesizer
     };
 
     fabric-ai = pkgs.mkShell {
-      packages = [ pkgs.fabric-ai ];  # AI-powered CLI workflow tool
+      packages = [ pkgs.fabric-ai ]; # AI-powered CLI workflow tool
     };
 
     qmk = pkgs.mkShell {
@@ -424,7 +423,7 @@ in
     };
 
     lnav = pkgs.mkShell {
-      packages = [ pkgs.lnav ];  # log file navigator with SQL queries
+      packages = [ pkgs.lnav ]; # log file navigator with SQL queries
     };
 
     music-learning = pkgs.mkShell {
@@ -434,15 +433,15 @@ in
     };
 
     neonmodem = pkgs.mkShell {
-      packages = [ pkgs.neonmodem ];  # terminal-based LLM API client
+      packages = [ pkgs.neonmodem ]; # terminal-based LLM API client
     };
 
     "netsniff-ng" = pkgs.mkShell {
-      packages = [ pkgs.netsniff-ng ];  # high-performance network packet sniffer
+      packages = [ pkgs.netsniff-ng ]; # high-performance network packet sniffer
     };
 
     netbird = pkgs.mkShell {
-      packages = [ pkgs.netbird ];  # zero-config VPN mesh network
+      packages = [ pkgs.netbird ]; # zero-config VPN mesh network
     };
 
     misc = pkgs.mkShell {
@@ -463,7 +462,7 @@ in
     };
 
     "mesa-demos" = pkgs.mkShell {
-      packages = [ pkgs.mesa-demos ];  # Mesa 3D graphics demo applications
+      packages = [ pkgs.mesa-demos ]; # Mesa 3D graphics demo applications
     };
 
     virt = pkgs.mkShell {
@@ -521,15 +520,15 @@ in
     };
 
     speech = pkgs.mkShell {
-      packages = [ pkgs.speechd ];  # speech synthesis daemon and client
+      packages = [ pkgs.speechd ]; # speech synthesis daemon and client
     };
 
     bcc = pkgs.mkShell {
-      packages = [ pkgs.bcc ];  # BPF Compiler Collection tools
+      packages = [ pkgs.bcc ]; # BPF Compiler Collection tools
     };
 
     slskd = pkgs.mkShell {
-      packages = [ pkgs.slskd ];  # Soulseek P2P music sharing daemon
+      packages = [ pkgs.slskd ]; # Soulseek P2P music sharing daemon
     };
 
     db = pkgs.mkShell {
@@ -555,27 +554,27 @@ in
     };
 
     "stress-ng" = pkgs.mkShell {
-      packages = [ pkgs.stress-ng ];  # system stress testing tool
+      packages = [ pkgs.stress-ng ]; # system stress testing tool
     };
 
     pueue = pkgs.mkShell {
-      packages = [ pkgs.pueue ];  # shell command queue daemon
+      packages = [ pkgs.pueue ]; # shell command queue daemon
     };
 
     gron = pkgs.mkShell {
-      packages = [ pkgs.gron ];  # JSON to greppable flat format converter
+      packages = [ pkgs.gron ]; # JSON to greppable flat format converter
     };
 
     lzbench = pkgs.mkShell {
-      packages = [ pkgs.lzbench ];  # compression algorithm benchmark
+      packages = [ pkgs.lzbench ]; # compression algorithm benchmark
     };
 
     vulkan = pkgs.mkShell {
-      packages = [ pkgs.vulkan-extension-layer ];  # Vulkan extension validation layer
+      packages = [ pkgs.vulkan-extension-layer ]; # Vulkan extension validation layer
     };
 
     amfora = pkgs.mkShell {
-      packages = [ pkgs.amfora ];  # terminal Gemini protocol browser
+      packages = [ pkgs.amfora ]; # terminal Gemini protocol browser
     };
 
     freeze = pkgs.mkShell {

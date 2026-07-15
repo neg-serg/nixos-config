@@ -14,20 +14,23 @@ let
 
   # ccache-aware compiler wrappers (bash scripts that exec ccache /real/gcc)
   # Scripts — NOT symlinks — so ccache can always resolve the real compiler path.
-  ccacheGcc = pkgs.runCommand "ccache-gcc" {
-    meta.priority = 4; # higher priority than default (5), so gcc/g++/c++ wrappers win over raw gcc
-    inherit (pkgs) gcc ccache bash;
-  } ''
-    mkdir -p "$out/bin"
-    for comp in gcc g++ c++; do
-      realComp="$gcc/bin/$comp"
-      cat > "$out/bin/$comp" << WRAPPER
-  #!$bash/bin/bash -e
-  exec "$ccache/bin/ccache" "$realComp" "\$@"
-  WRAPPER
-      chmod +x "$out/bin/$comp"
-    done
-  '';
+  ccacheGcc =
+    pkgs.runCommand "ccache-gcc"
+      {
+        meta.priority = 4; # higher priority than default (5), so gcc/g++/c++ wrappers win over raw gcc
+        inherit (pkgs) gcc ccache bash;
+      }
+      ''
+          mkdir -p "$out/bin"
+          for comp in gcc g++ c++; do
+            realComp="$gcc/bin/$comp"
+            cat > "$out/bin/$comp" << WRAPPER
+        #!$bash/bin/bash -e
+        exec "$ccache/bin/ccache" "$realComp" "\$@"
+        WRAPPER
+            chmod +x "$out/bin/$comp"
+          done
+      '';
 
 in
 {

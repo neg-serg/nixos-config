@@ -7,13 +7,18 @@
 }:
 let
   # Btop config generator — produces key = "value" format
-  mkBtopConf = attrs:
+  mkBtopConf =
+    attrs:
     lib.generators.toKeyValue {
       listsAsDuplicateKeys = true;
-      mkKeyValue = key: v:
-        if builtins.isBool v then "${key} = ${lib.boolToString v}"
-        else if builtins.isInt v then "${key} = ${toString v}"
-        else ''${key} = "${toString v}"'';
+      mkKeyValue =
+        key: v:
+        if builtins.isBool v then
+          "${key} = ${lib.boolToString v}"
+        else if builtins.isInt v then
+          "${key} = ${toString v}"
+        else
+          ''${key} = "${toString v}"'';
     } attrs;
 
   btopSettings = {

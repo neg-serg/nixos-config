@@ -17,8 +17,13 @@ let
     }:
     {
       description =
-        if notes == null then description
-        else concatStringsSep "\n" [ description notes ];
+        if notes == null then
+          description
+        else
+          concatStringsSep "\n" [
+            description
+            notes
+          ];
     }
     // lib.optionalAttrs (example != null) { inherit example; }
     // lib.optionalAttrs (defaultText != null) { inherit defaultText; };

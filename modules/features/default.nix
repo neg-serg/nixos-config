@@ -64,15 +64,45 @@ in
         };
       };
     })
-    (mkIf (!config.features.dev.haskell.enable || !config.features.dev.rust.enable || !config.features.dev.cpp.enable) {
-      # When dev language tooling is disabled, exclude their pnames from curated package lists
-      # that honor features.excludePkgs via config.lib.neg.pkgsList.
-      features.excludePkgs = mkAfter (
-        lib.optionals (!config.features.dev.haskell.enable) [ "ghc" "cabal-install" "stack" "haskell-language-server" "hlint" "ormolu" "fourmolu" "hindent" "ghcid" ]
-        ++ lib.optionals (!config.features.dev.rust.enable) [ "rustup" "rust-analyzer" "cargo" "rustc" "clippy" "rustfmt" ]
-        ++ lib.optionals (!config.features.dev.cpp.enable) [ "gcc" "cmake" "ninja" "ccache" "lldb" ]
-      );
-    })
+    (mkIf
+      (
+        !config.features.dev.haskell.enable
+        || !config.features.dev.rust.enable
+        || !config.features.dev.cpp.enable
+      )
+      {
+        # When dev language tooling is disabled, exclude their pnames from curated package lists
+        # that honor features.excludePkgs via config.lib.neg.pkgsList.
+        features.excludePkgs = mkAfter (
+          lib.optionals (!config.features.dev.haskell.enable) [
+            "ghc"
+            "cabal-install"
+            "stack"
+            "haskell-language-server"
+            "hlint"
+            "ormolu"
+            "fourmolu"
+            "hindent"
+            "ghcid"
+          ]
+          ++ lib.optionals (!config.features.dev.rust.enable) [
+            "rustup"
+            "rust-analyzer"
+            "cargo"
+            "rustc"
+            "clippy"
+            "rustfmt"
+          ]
+          ++ lib.optionals (!config.features.dev.cpp.enable) [
+            "gcc"
+            "cmake"
+            "ninja"
+            "ccache"
+            "lldb"
+          ]
+        );
+      }
+    )
     (mkIf (!config.features.gui.enable) {
       features = {
         gui = {
@@ -96,19 +126,43 @@ in
         in
         [
           (assertParent gui.enable gui.qt.enable "features.gui.qt.enable requires features.gui.enable = true")
-          (assertParent gui.enable gui.quickshell.enable "features.gui.quickshell.enable requires features.gui.enable = true")
-          (assertParent gui.enable gui.caelestia-shell.enable "features.gui.caelestia-shell.enable requires features.gui.enable = true")
-          (assertParent gui.enable gui.skwd.enable "features.gui.skwd.enable requires features.gui.enable = true")
-          (assertParent gui.enable gui.exo.enable "features.gui.exo.enable requires features.gui.enable = true")
-          (assertParent gui.enable gui.noctalia.enable "features.gui.noctalia.enable requires features.gui.enable = true")
-          (assertParent gui.enable gui.vicinae.enable "features.gui.vicinae.enable requires features.gui.enable = true")
-          (assertParent gui.enable guiApps.obsidian.autostart.enable "features.apps.obsidian.autostart.enable requires features.gui.enable = true")
-          (assertParent gui.enable guiApps.winapps.enable "features.apps.winapps.enable requires features.gui.enable = true")
-          (assertParent gui.enable guiApps.guiAppsFull.enable "features.apps.guiAppsFull.enable requires features.gui.enable = true")
-          (assertParent config.features.web.enable config.features.web.tools.enable "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)")
+          (assertParent gui.enable gui.quickshell.enable
+            "features.gui.quickshell.enable requires features.gui.enable = true"
+          )
+          (assertParent gui.enable gui.caelestia-shell.enable
+            "features.gui.caelestia-shell.enable requires features.gui.enable = true"
+          )
+          (assertParent gui.enable gui.skwd.enable
+            "features.gui.skwd.enable requires features.gui.enable = true"
+          )
+          (assertParent gui.enable gui.exo.enable
+            "features.gui.exo.enable requires features.gui.enable = true"
+          )
+          (assertParent gui.enable gui.noctalia.enable
+            "features.gui.noctalia.enable requires features.gui.enable = true"
+          )
+          (assertParent gui.enable gui.vicinae.enable
+            "features.gui.vicinae.enable requires features.gui.enable = true"
+          )
+          (assertParent gui.enable guiApps.obsidian.autostart.enable
+            "features.apps.obsidian.autostart.enable requires features.gui.enable = true"
+          )
+          (assertParent gui.enable guiApps.winapps.enable
+            "features.apps.winapps.enable requires features.gui.enable = true"
+          )
+          (assertParent gui.enable guiApps.guiAppsFull.enable
+            "features.apps.guiAppsFull.enable requires features.gui.enable = true"
+          )
+          (assertParent config.features.web.enable config.features.web.tools.enable
+            "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)"
+          )
           (assertParent dev.enable devAi.enable "features.dev.ai.enable requires features.dev.enable = true")
-          (assertParent devAi.enable devAi.opencode.enable "features.dev.ai.opencode.enable requires features.dev.ai.enable = true")
-          (assertParent devAi.enable devAi.openagentscontrol.enable "features.dev.ai.openagentscontrol.enable requires features.dev.ai.enable = true")
+          (assertParent devAi.enable devAi.opencode.enable
+            "features.dev.ai.opencode.enable requires features.dev.ai.enable = true"
+          )
+          (assertParent devAi.enable devAi.openagentscontrol.enable
+            "features.dev.ai.openagentscontrol.enable requires features.dev.ai.enable = true"
+          )
         ];
     }
   ];

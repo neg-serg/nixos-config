@@ -67,7 +67,8 @@ in
     pkgs.iputils # Networking utilities (ping, arping, etc.)
     pkgs.netcat-openbsd # TCP/IP swiss army knife (OpenBSD variant)
     pkgs.w3m # Text-mode web browser and pager
-  ] ++ lib.optionals wifiEnabled [
+  ]
+  ++ lib.optionals wifiEnabled [
     pkgs.iwd # Wireless daemon for Linux
   ];
 
