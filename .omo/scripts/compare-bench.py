@@ -156,16 +156,23 @@ def print_terminal_table(table, upstream_label, slim_label, source_notes):
     for label, up, sl, delta, delta_pct, fmt_type in table:
         if delta is not None and delta_pct is not None:
             direction = "reduced" if delta < 0 else "increased"
-            summary_parts.append(f"{label} {direction} by {abs(delta_pct):.1f}%")
+            summary_parts.append(
+                f"{label} {direction} by {abs(delta_pct):.1f}%"
+            )
     if summary_parts:
-        print(f"\nSummary: {summary_parts[0]}" + "".join(f", {g}" for g in summary_parts[1:]))
+        print(
+            f"\nSummary: {summary_parts[0]}"
+            + "".join(f", {g}" for g in summary_parts[1:])
+        )
 
 
 def build_markdown(table, upstream_label, slim_label, source_notes):
     """Build markdown table content."""
     lines = []
     lines.append("# Benchmark Comparison\n")
-    lines.append(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+    lines.append(
+        f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+    )
     lines.append(f"**Comparing:** {upstream_label} vs {slim_label}\n")
 
     if source_notes:
@@ -209,7 +216,9 @@ def main():
 
     source_notes = []
     if upstream_rows is None:
-        source_notes.append("Upstream benchmark CSV not found (eval may have crashed earlier).")
+        source_notes.append(
+            "Upstream benchmark CSV not found (eval may have crashed earlier)."
+        )
     if slim_rows is None:
         source_notes.append("Slim benchmark CSV not found.")
 
