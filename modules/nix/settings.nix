@@ -84,27 +84,28 @@ in
     #   - git status skip for unmodified flake sources
     #   - coerceToString cache per derivation
     #   - attr name memoization)
-    package = lib.mkForce (
-      pkgs.runCommand "nix-patched-3.21.5" {
-        pname = "nix";
-        version = "3.21.5";
-      } ''
-        src=${builtins.path {
-          path = /home/neg/src/nix-src/build/src;
-          name = "nix-patched-build";
-        }}
-        mkdir -p $out/bin
-
-        cp $src/nix/nix $out/bin/nix
-
-        for dir in libutil libstore libexpr libfetchers libflake libmain libcmd; do
-          mkdir -p $out/$dir
-          # Copy only .so files/symlinks, skip .p/ directories with .o files
-          find $src/$dir -maxdepth 1 \( -type f -o -type l \) -name '*.so*' \
-            -exec cp -d --no-preserve=mode {} $out/$dir/ \;
-        done
-      ''
-    );
+    # Disabled during benchmarks to avoid --impure overhead from builtins.path
+    # package = lib.mkForce (
+    #   pkgs.runCommand "nix-patched-3.21.5" {
+    #     pname = "nix";
+    #     version = "3.21.5";
+    #   } ''
+    #     src=${builtins.path {
+    #       path = /home/neg/src/nix-src/build/src;
+    #       name = "nix-patched-build";
+    #     }}
+    #     mkdir -p $out/bin
+    #
+    #     cp $src/nix/nix $out/bin/nix
+    #
+    #     for dir in libutil libstore libexpr libfetchers libflake libmain libcmd; do
+    #       mkdir -p $out/$dir
+    #       # Copy only .so files/symlinks, skip .p/ directories with .o files
+    #       find $src/$dir -maxdepth 1 \( -type f -o -type l \) -name '*.so*' \
+    #         -exec cp -d --no-preserve=mode {} $out/$dir/ \;
+    #     done
+    #   ''
+    # );
     gc = {
       automatic = lib.mkDefault true;
       dates = "weekly";
@@ -122,8 +123,8 @@ in
   # Memory protection: cgroups v2 caps RAM+swap for nix-daemon.
   # Without MemorySwapMax, swap is unlimited — builds thrash instead of dying.
   systemd.services.nix-daemon.serviceConfig = {
-    MemoryMax = "40G";      # hard physical RAM cap (~2/3 of 60GB)
-    MemorySwapMax = "42G";  # RAM+swap cap: only 2GB swap allowed
+    MemoryMax = "40G"; # hard physical RAM cap (~2/3 of 60GB)
+    MemorySwapMax = "42G"; # RAM+swap cap: only 2GB swap allowed
   };
 
   # Determinate Nix overrides netrc-file in /etc/nix/nix.conf after including
