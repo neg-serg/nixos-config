@@ -10,6 +10,27 @@ let
   alkano-aio = pkgs.callPackage ./alkano-aio.nix { };
 
   iconTheme = config.features.gui.iconTheme or "kora";
+
+  gtkThemeName = config.features.gui.gtkTheme or "Flight-Dark-GTK";
+  gtkThemePkg = {
+    "Flight-Dark-GTK" = pkgs.flight-gtk-theme;
+    "Andromeda" = pkgs.andromeda-gtk-theme;
+  }.${gtkThemeName} or pkgs.flight-gtk-theme;
+
+  # GTK Settings
+  gtkSettings = {
+    "gtk-application-prefer-dark-theme" = 1;
+    "gtk-cursor-theme-name" = "Alkano-aio";
+    "gtk-cursor-theme-size" = 23;
+    "gtk-font-name" = "Iosevka 10";
+    "gtk-icon-theme-name" = iconTheme;
+    "gtk-theme-name" = gtkThemeName;
+  };
+
+  gtkIni = lib.generators.toINI { } { Settings = gtkSettings; };
+
+  # CSS stub for importing colors if needed
+  cssContent = "/* @import 'colors.css'; */";
 in
 {
   config = lib.mkIf (config.features.gui.enable or false) (
@@ -18,12 +39,14 @@ in
         # 1. Packages
         environment.systemPackages = [
           alkano-aio # Animated cursor theme
+          gtkThemePkg # GTK theme (selected via features.gui.gtkTheme)
           pkgs.kora-icon-theme # Modern icon theme
           iosevkaNeg.nerd-font # Personalized Iosevka fonts with Nerd Font icons
         ];
 
-        # 2. Environment Variables (Cursor)
+        # 2. Environment Variables (Cursor + Theme)
         environment.sessionVariables = {
+          GTK_THEME = gtkThemeName; # GTK theme for all apps
           XCURSOR_THEME = "Alkano-aio";
           XCURSOR_SIZE = "23";
           HYPRCURSOR_THEME = "Alkano-aio";
@@ -35,15 +58,20 @@ in
           enable = true;
         };
       }
-      # 5. GTK settings — tell apps/browsers system prefers dark
+      # 5. GTK settings — theme, icons, cursors, fonts
       (neg.mkHomeFiles {
-        ".config/gtk-3.0/settings.ini".text = ''
-          [Settings]
-          gtk-application-prefer-dark-theme = 1
-        '';
-        ".config/gtk-4.0/settings.ini".text = ''
-          [Settings]
-          gtk-application-prefer-dark-theme = 1
+        ".config/gtk-3.0/settings.ini".text = gtkIni;
+        ".config/gtk-3.0/gtk.css".text = cssContent;
+        ".config/gtk-4.0/settings.ini".text = gtkIni;
+        ".config/gtk-4.0/gtk.css".text = cssContent;
+
+        ".gtkrc-2.0".text = ''
+          gtk-theme-name="${gtkThemeName}"
+          gtk-icon-theme-name="${iconTheme}"
+          gtk-font-name="Iosevka 10"
+          gtk-cursor-theme-name="Alkano-aio"
+          gtk-cursor-theme-size=23
+          gtk-application-prefer-dark-theme=1
         '';
       })
     ]
