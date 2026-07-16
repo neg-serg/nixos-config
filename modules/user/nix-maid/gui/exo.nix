@@ -18,7 +18,7 @@ let
   ignisRuntimeDeps = [
     pkgs.matugen # Material You color generator for wallpaper-based theming
     pkgs.dart-sass # SASS/SCSS compiler for ignis CSS styles
-    pkgs.swww # animated wallpaper daemon for Wayland
+    pkgs.awww # animated wallpaper daemon for Wayland
     pkgs.gnome-bluetooth # Bluetooth support for quick settings
     pkgs.material-symbols # Material Symbols icon font
   ];
@@ -119,7 +119,7 @@ lib.mkIf exoEnabled (
     {
       environment.systemPackages = [
         ignisWrapped # Ignis shell framework with runtime deps (for Exo)
-        pkgs.swww # animated wallpaper daemon for Wayland
+        pkgs.awww # animated wallpaper daemon for Wayland
         pkgs.dart-sass # SASS/SCSS compiler for ignis CSS styles
         pkgs.matugen # Material You color generator
         pkgs.adw-gtk3 # GTK3 theme for Adwaita-based apps
@@ -144,16 +144,16 @@ lib.mkIf exoEnabled (
         };
       };
 
-      # swww-daemon service (required for wallpaper animations)
-      systemd.user.services.swww-daemon = {
+      # awww-daemon service (required for wallpaper animations)
+      systemd.user.services.awww-daemon = {
         enable = true;
-        description = "swww wallpaper daemon";
+        description = "awww wallpaper daemon";
         partOf = [ "graphical-session.target" ];
         after = [ "graphical-session-pre.target" ];
         before = [ "ignis.service" ];
         wantedBy = [ "graphical-session.target" ];
         serviceConfig = {
-          ExecStart = "${lib.getExe pkgs.swww}-daemon";
+          ExecStart = "${lib.getExe pkgs.awww}-daemon";
           Restart = "on-failure";
           RestartSec = 1;
         };
@@ -195,7 +195,7 @@ lib.mkIf exoEnabled (
         "graphical-session-pre.target"
         "maid-activation.service"
         "pipewire.service"
-        "swww-daemon.service"
+        "awww-daemon.service"
         "exo-init.service"
       ];
       systemd.user.services.ignis.wants = [
