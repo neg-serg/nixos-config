@@ -2,7 +2,7 @@ diff --git a/src/server/src/qml/qml/SearchBar.qml b/src/server/src/qml/qml/Searc
 index e505bbc..69106f3 100644
 --- a/src/server/src/qml/qml/SearchBar.qml
 +++ b/src/server/src/qml/qml/SearchBar.qml
-@@ -211,16 +211,43 @@ Item {
+@@ -211,16 +211,36 @@ Item {
                  Keys.onPressed: event => {
                      if (_handleEmacsEditing(event)) {
                          event.accepted = true;
