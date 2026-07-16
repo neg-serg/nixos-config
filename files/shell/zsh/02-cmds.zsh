@@ -35,7 +35,7 @@ _exists curl && {
     sprunge(){ curl -F "sprunge=<-" http://sprunge.us <"$1" ;}
 }
 if [[ -e /etc/NIXOS ]]; then
-    # thx to @oni: https://discourse.nixos.org/t/nvd-simple-nix-nixos-version-diff-tool/12397/3
+    # nvd/dix: diff closures: https://discourse.nixos.org/t/nvd-simple-nix-nixos-version-diff-tool/12397/3
     hash -d nix-now="/run/current-system"
     hash -d nix-boot="/nix/var/nix/profiles/system"
     _exists nixos-rebuild && {
