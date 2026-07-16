@@ -31,5 +31,10 @@ with lib;
       default = "kora";
       description = "Icon theme to apply system-wide (GTK + Qt).";
     };
+    gtkTheme = lib.mkOption {
+      type = types.enum [ "Flight-Dark-GTK" "Andromeda" ];
+      default = "Flight-Dark-GTK";
+      description = "GTK theme to apply system-wide.";
+    };
   };
 }
