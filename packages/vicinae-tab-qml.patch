@@ -1,24 +1,8 @@
-Allow Tab and Shift+Tab to navigate the item list by directly calling
-commandStack.currentItem.moveDown() / moveUp(), matching the same pattern
-used by the Up/Down arrow keys in the SearchBar QML.
-
-Tab is intercepted by Qt's QML focus navigation system before it reaches
-the C++ eventFilter or the action binding system. The Up/Down arrows
-bypass this by calling moveDown/moveUp directly in QML — Tab should do
-the same.
-
-Note: the launcher.forwardKey() fallback in Keys.onPressed does not work
-for bare Tab because activateBoundAction never matches user-configured
-keybind shortcuts (they use a different registration path).
-
-Keys.onBacktabPressed is changed to accept the event so Backtab can
-reach Keys.onPressed where we handle it alongside Tab.
-
 diff --git a/src/server/src/qml/qml/SearchBar.qml b/src/server/src/qml/qml/SearchBar.qml
 index 16be339..c328237 100644
 --- a/src/server/src/qml/qml/SearchBar.qml
 +++ b/src/server/src/qml/qml/SearchBar.qml
-@@ -198,7 +198,7 @@ Item {
+@@ -198,8 +198,19 @@ Item {
                  Keys.onBacktabPressed: event => {
 -                    event.accepted = false;
 +                    event.accepted = true;
