@@ -1,39 +1,28 @@
 {
   "schema_version": 2,
-  "active_work_id": "vicinae-settings-update-ab2c968e",
+  "active_work_id": "fix-vicinae-ext-deps-6524b178",
   "works": {
-    "vicinae-settings-update-ab2c968e": {
-      "work_id": "vicinae-settings-update-ab2c968e",
-      "active_plan": "/etc/nixos/.omo/plans/vicinae-settings-update.md",
-      "plan_name": "vicinae-settings-update",
+    "fix-vicinae-ext-deps-6524b178": {
+      "work_id": "fix-vicinae-ext-deps-6524b178",
+      "active_plan": "/etc/nixos/.omo/plans/fix-vicinae-ext-deps.md",
+      "plan_name": "fix-vicinae-ext-deps",
       "status": "completed",
-      "started_at": "2026-07-16T00:49:45.954Z",
-      "updated_at": "2026-07-16T00:54:32.736Z",
+      "started_at": "2026-07-16T15:52:00.179Z",
+      "updated_at": "2026-07-16T15:52:00.179Z",
+      "ended_at": "2026-07-16T16:25:00.000Z",
       "session_ids": [
-        "opencode:ses_097b2817affeD8b6r1g1HtC4Lu"
+        "opencode:ses_094f54f3cffeKF12ogjzSO1Vg4"
       ],
-      "session_origins": {
-        "opencode:ses_097b2817affeD8b6r1g1HtC4Lu": "direct"
-      },
       "agent": "atlas",
-      "task_sessions": {},
-      "ended_at": "2026-07-16T00:54:32.736Z",
-      "elapsed_ms": 286782
+      "task_sessions": {
+        "flake-input": "ses_0945ed794ffecPbByyT3g30BNn",
+        "nixos-specialargs": "ses_0945ecf43ffebDGPFzRAymruA0",
+        "vicinae-packages": "ses_0945e43eaffeODBM6M061pt61B",
+        "build": "ses_0945d795dffeojiU41Wt0r09Zb"
+      }
     }
   },
-  "active_plan": "/etc/nixos/.omo/plans/vicinae-settings-update.md",
-  "started_at": "2026-07-16T00:49:45.954Z",
   "status": "completed",
-  "updated_at": "2026-07-16T00:54:32.736Z",
-  "session_ids": [
-    "opencode:ses_097b2817affeD8b6r1g1HtC4Lu"
-  ],
-  "session_origins": {
-    "opencode:ses_097b2817affeD8b6r1g1HtC4Lu": "direct"
-  },
-  "plan_name": "vicinae-settings-update",
-  "task_sessions": {},
-  "agent": "atlas",
-  "ended_at": "2026-07-16T00:54:32.736Z",
-  "elapsed_ms": 286782
+  "active_plan": "/etc/nixos/.omo/plans/fix-vicinae-ext-deps.md",
+  "plan_name": "fix-vicinae-ext-deps"
 }

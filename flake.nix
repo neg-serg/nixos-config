@@ -63,6 +63,10 @@
       url = "github:unazikx/steam-config-nix/feat/winetricks";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    goldfish = {
+      url = "github:sameoldlab/goldfish";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     wrapper-manager.url = "github:viperML/wrapper-manager";
     opencode = {
       url = "github:anomalyco/opencode";
