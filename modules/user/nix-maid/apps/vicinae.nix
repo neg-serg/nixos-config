@@ -242,8 +242,10 @@ in
       # Settings.json is NOT symlinked here — it's writable for vicinae GUI edits.
       # Instead, nix-overrides.json (read-only) is imported by settings.json.
       systemd.user.tmpfiles.rules = [
-        "L+ %h/.local/share/vicinae/themes/neg-dark.toml - - - - ${themeFile}"
-        "L+ %h/.local/share/vicinae/themes/neg-kitty.toml - - - - ${themeFileKitty}"
+        # C (copy) for themes: writable copy (mode 0644) so "Open Theme File" works.
+        # Won't overwrite user edits (source has epoch mtime, dest is newer).
+        "C %h/.local/share/vicinae/themes/neg-dark.toml 0644 - - - ${themeFile}"
+        "C %h/.local/share/vicinae/themes/neg-kitty.toml 0644 - - - ${themeFileKitty}"
         "L+ %h/.config/vicinae/nix-overrides.json - - - - ${nixOverridesFile}"
       ];
 
