@@ -63,6 +63,38 @@ rustPlatform.buildRustPackage rec {
   # bindgen needs libclang.so for pipewire-sys and libspa-sys
   LIBCLANG_PATH = "${clang.cc.lib}/lib";
 
+  # CXX-Qt's call-init library uses +whole-archive to ensure its static
+  # initializers (QML type registration) run at startup.  The +whole-archive
+  # modifier does not always survive the Nix/Rust link step, so the QML
+  # engine never sees "AppController" and fails with:
+  #   "AppController is not a type"
+  #
+  # Workaround: add an explicit FFI call to cxx_qt_init_crate_zestbay()
+  # from main().  This forces the linker to pull in the entire initializer
+  # chain:
+  #   main → cxx_qt_init_crate_zestbay → cxx_qt_init_qml_module_Zestbay
+  #     → Q_IMPORT_PLUGIN(Zestbay_plugin) → qml_register_types_Zestbay
+  postPatch = ''
+    # Insert unsafe extern "C" block after the line declaring NO_PROBE.
+    # The doc-comment warning from rustdoc is suppressed by using // not ///.
+    sed -ri '/^pub static NO_PROBE:/a\
+\
+    // CXX-Qt crate-level initializer -- registered by cxx-qt-build\
+    // but only linked when +whole-archive reaches the linker.\
+    // Calling it explicitly at startup forces the linker to include the\
+    // entire plugin / qmltyperegistrar / Q_IMPORT_PLUGIN chain.\
+    unsafe extern "C" {\
+        fn cxx_qt_init_crate_zestbay() -> bool;\
+    }' src/main.rs
+
+    # Insert the call after NO_PROBE.store(...)
+    sed -ri '/NO_PROBE[.]store(true, Ordering::SeqCst);/a\
+\
+        // Force-link CXX-Qt static initialisers (QML type registration,\
+        // plugin, resource init).  Guarded by std::call_once internally.\
+        unsafe { cxx_qt_init_crate_zestbay(); }' src/main.rs
+  '';
+
   # CXX-Qt's qt-build-utils v0.8.1 uses qmake/QMAKE to find tools like
   # qmlcachegen. In nixpkgs's split Qt6, qmake from qtbase only knows
   # about qtbase paths, but qmlcachegen lives in qtdeclarative/libexec.
