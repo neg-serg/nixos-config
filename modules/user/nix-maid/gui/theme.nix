@@ -15,6 +15,7 @@ let
   gtkThemePkg = {
     "Flight-Dark-GTK" = pkgs.flight-gtk-theme;
     "Andromeda" = pkgs.andromeda-gtk-theme;
+    "Flat-Remix-GTK-Blue-Darkest" = pkgs.flat-remix-gtk;
   }.${gtkThemeName} or pkgs.flight-gtk-theme;
 
   # GTK Settings
