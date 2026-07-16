@@ -12,6 +12,6 @@ need() { command -v "$1" >/dev/null 2>&1 || { printf 'nix-updates: missing %s\n'
 need nix
 
 nix profile diff-closures --profile /nix/var/nix/profiles/system || true
-if command -v nvd >/dev/null 2>&1; then
-  nvd diff /run/booted-system /run/current-system || true
+if command -v dix >/dev/null 2>&1; then
+  dix /run/booted-system /run/current-system || true
 fi
