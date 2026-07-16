@@ -52,8 +52,8 @@ in
       vivaldi-fixed # Vivaldi browser (Chromium-based, with Wayland flags, patched libffmpeg.so rpath)
     ];
 
-    # Chromium managed policies — Vivaldi reads from /etc/chromium/policies/managed/
-    # (Vivaldi is Chromium-based, shares the same policy infrastructure)
+    # Chromium managed policies — most Chromium-based browsers read from here.
+    # Vivaldi may or may not pick them up depending on the version (8.x sometimes ignores it).
     programs.chromium = {
       enable = true;
       inherit extensions;
@@ -77,8 +77,16 @@ in
       };
     };
 
-    # Vivaldi-specific managed policies (Vivaldi 8.x reads from /etc/vivaldi on some installs)
-    # Write a separate copy for Vivaldi to ensure policies are picked up.
+    # Vivaldi-specific managed policies.
+    # Vivaldi 8.x reads from /etc/vivaldi/policies/managed/ but sometimes ignores
+    # /etc/chromium/policies/managed/.  Duplicate the relevant policies here.
+    environment.etc."vivaldi/policies/managed/extensions.json" = {
+      mode = "0444";
+      text = builtins.toJSON {
+        ExtensionInstallForcelist = extensions;
+      };
+    };
+
     environment.etc."vivaldi/policies/managed/vivaldi-fonts.json" = {
       mode = "0444";
       text = builtins.toJSON {
