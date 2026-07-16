@@ -189,7 +189,22 @@ let
   };
 
   themeFile = ./../../../../files/gui/vicinae-theme.toml;
-  settingsFile = pkgs.writeText "vicinae-settings.json" (builtins.toJSON vicinaeSettings);
+
+  # Nix-managed overrides — read-only, imported by the writable settings.json
+  nixOverridesFile = pkgs.writeText "vicinae-nix-overrides.json" (builtins.toJSON vicinaeSettings);
+
+  # Bootstrap script: creates a writable settings.json that imports the nix overrides.
+  # Run once via ExecStartPre; after that, vicinae owns the file for GUI changes.
+  vicinaeBootstrap = pkgs.writeShellScript "vicinae-bootstrap-settings" ''
+    SETTINGS="$HOME/.config/vicinae/settings.json"
+    if [ ! -f "$SETTINGS" ]; then
+      cat > "$SETTINGS" << JSONEOF
+{
+  "imports": ["$HOME/.config/vicinae/nix-overrides.json"]
+}
+JSONEOF
+    fi
+  '';
 in
 {
   config = mkIf enabled (mkMerge [
@@ -223,11 +238,18 @@ in
     }
 
     (mkIf cfg.manageConfig {
-      # Deploy config via tmpfiles to user home — pure NixOS, no nix-maid
+      # Deploy config via tmpfiles to user home — pure NixOS, no nix-maid.
+      # Settings.json is NOT symlinked here — it's writable for vicinae GUI edits.
+      # Instead, nix-overrides.json (read-only) is imported by settings.json.
       systemd.user.tmpfiles.rules = [
         "L+ %h/.local/share/vicinae/themes/neg-dark.toml - - - - ${themeFile}"
         "L+ %h/.local/share/vicinae/themes/neg-kitty.toml - - - - ${themeFileKitty}"
-        "L+ %h/.config/vicinae/settings.json - - - - ${settingsFile}"
+        "L+ %h/.config/vicinae/nix-overrides.json - - - - ${nixOverridesFile}"
+      ];
+
+      # Create writable settings.json on first service start
+      systemd.user.services.vicinae.serviceConfig.ExecStartPre = [
+        "${vicinaeBootstrap}"
       ];
     })
   ]);
