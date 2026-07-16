@@ -62,7 +62,7 @@ local cls = {
   pic         = "^swayimg$",
   vm          = "^(.virt-manager-wrapped|qemu-system-x86_64|Qemu-system-x86_64)$",
   wine        = "^(com.usebottles.bottles)$",
-  patchbay    = "^(qpwgraph|Carla2)$",
+  patchbay    = "^(zestbay|Carla2)$",
   daw         = "^(Renoise)$",
   keyboard    = "^(Bazecor|wootility-lekker|Vial|via)$",
   im          = "^(im.riot.Riot)$",
@@ -275,7 +275,7 @@ end)
 hl.bind(M1 .. "+e", hl.dsp.submap("special"))
 hl.define_submap("special", "reset", function()
   submap_resets()
-  binde_reset("q", hl.dsp.exec_cmd('raise --match "class:regex=^qpwgraph$" --launch "qpwgraph"'))
+  binde_reset("q", hl.dsp.exec_cmd('raise --match "class:regex=^zestbay$" --launch "zestbay"'))
   binde_reset(SH .. "+q", hl.dsp.exec_cmd('raise --match "class:regex=^Carla2$" --launch "carla"'))
   binde_reset(SH .. "+l", hl.dsp.exec_cmd("hyprctl switchxkblayout current 0 && hyprlock"))
   binde_reset("e", hl.dsp.window.float({ action = "toggle" }))
