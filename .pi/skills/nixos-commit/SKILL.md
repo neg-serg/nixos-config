@@ -1,6 +1,9 @@
 ______________________________________________________________________
 
-## name: nixos-commit description: "Commit NixOS config changes with proper bracketed scope format. Use after making changes that need to be committed."
+---
+name: nixos-commit
+description: "Commit NixOS config changes with proper bracketed scope format. Use after making changes that need to be committed."
+---
 
 # NixOS Commit
 
