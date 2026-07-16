@@ -13,9 +13,10 @@
         environment.systemPackages = [ pkgs.yt-dlp ]; # Command-line program to download videos from YouTube and other sites
       }
       (neg.mkHomeFiles {
+        # Note: native downloader used intentionally — aria2c's --all-proxy
+        # doesn't support socks5:// scheme. If you want aria2c back, pass
+        # the socks proxy via --downloader-args --socks-proxy=… separately.
         ".config/yt-dlp/config".text = ''
-          --downloader aria2c
-          --downloader-args aria2c:'-c -x8 -s8 -k1M'
           --embed-metadata
           --embed-subs
           --embed-thumbnail
