@@ -16,6 +16,12 @@ let
     "gfbliohnnapiefjpjlpjnehglfpaknnc" # SurfingKeys (vim-like keybindings)
   ];
 
+  # Vivaldi bundles its own libffmpeg.so with all codecs (proprietary browser).
+  # nixpkgs proprietaryCodecs=true replaces it with an outdated chromium-codecs-ffmpeg-extra
+  # snap that lacks av_dynamic_hdr_smpte2094_app5_to_t35 → symbol lookup error.
+  # We keep proprietaryCodecs=false (no snap download), but vivaldi-bin has libffmpeg.so
+  # as DT_NEEDED and its RUNPATH only covers opt/vivaldi/lib/, not opt/vivaldi/ where
+  # the bundled libffmpeg.so lives. So we patch the RUNPATH to include opt/vivaldi/.
   vivaldi-pkg = pkgs.vivaldi.override {
     # Wayland Ozone + Skia renderer (stable colors, no Vulkan video-overlay bug) +
     # VA-API hardware video decoding on AMD (radeonsi). Vulkan is disabled — it causes
@@ -27,14 +33,23 @@ let
     # protocol handshake with Hyprland cm=auto can fail on AMD, causing overbright
     # gamma and incorrect colors (vs Firefox which doesn't use this protocol).
     commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks --disable-features=Vulkan,WaylandWpColorManagerV1";
-    proprietaryCodecs = true;
+    proprietaryCodecs = false;
   };
+
+  # Patch RUNPATH on vivaldi-bin so the NEEDED libffmpeg.so (bundled, opt/vivaldi/)
+  # is findable. nixpkgs's libPath only adds opt/vivaldi/lib but Vivaldi ships
+  # libffmpeg.so in opt/vivaldi/ directly.
+  vivaldi-fixed = vivaldi-pkg.overrideAttrs (old: {
+    buildPhase = old.buildPhase + ''
+      patchelf --add-rpath "$out/opt/vivaldi" opt/vivaldi/vivaldi-bin
+    '';
+  });
 in
 {
   config = mkIf (webEnabled && guiEnabled && cfg.enable) {
 
     environment.systemPackages = [
-      vivaldi-pkg # Vivaldi browser (Chromium-based, with Wayland flags)
+      vivaldi-fixed # Vivaldi browser (Chromium-based, with Wayland flags, patched libffmpeg.so rpath)
     ];
 
     # Chromium managed policies — Vivaldi reads from /etc/chromium/policies/managed/
