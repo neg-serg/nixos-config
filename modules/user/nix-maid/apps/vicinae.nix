@@ -16,7 +16,7 @@ let
   # Only keys set here override the defaults.
   vicinaeSettings = {
     terminal = "kitty";
-    keybinding = "default";
+    keybinding = "emacs";
     escape_key_behavior = "navigate_back";
     pop_on_backspace = true;
     pop_to_root_on_close = true;
