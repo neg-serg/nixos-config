@@ -1,12 +1,8 @@
 diff --git a/src/server/src/qml/qml/SearchBar.qml b/src/server/src/qml/qml/SearchBar.qml
-index 16be339..c328237 100644
+index e505bbc..69106f3 100644
 --- a/src/server/src/qml/qml/SearchBar.qml
 +++ b/src/server/src/qml/qml/SearchBar.qml
-@@ -198,8 +198,19 @@ Item {
-                 Keys.onBacktabPressed: event => {
--                    event.accepted = false;
-+                    event.accepted = true;
-                 }
+@@ -211,16 +211,43 @@ Item {
                  Keys.onPressed: event => {
                      if (_handleEmacsEditing(event)) {
                          event.accepted = true;
@@ -21,5 +17,25 @@ index 16be339..c328237 100644
 +                        } else {
 +                            event.accepted = launcher.forwardKey(event.key, event.modifiers);
 +                        }
++                    } else if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier) && !(event.modifiers & ~(Qt.ControlModifier | Qt.KeypadModifier | Qt.GroupSwitchModifier))) {
++                        // Ctrl+C closes the launcher window (dismiss).
++                        // Ctrl+C is explicitly excluded from forwardKey() at the C++ level
++                        // (launcher-window.cpp: reserved as "shortcuts that actions cannot override"),
++                        // so it falls through all existing handlers unhandled.
++                        // We intercept it here to close the window instead of doing nothing.
++                        // The action.copy is bound to Ctrl+Shift+C, so plain Ctrl+C is free.
++                        Nav.closeWindow();
++                        event.accepted = true;
                      } else if (_handleNavigation(event)) {
                          event.accepted = true;
+                     } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && launcher.showBackButton && launcher.popOnBackspace) {
+                         launcher.goBack();
+                         event.accepted = true;
+                     } else if (event.key === Qt.Key_Space && event.modifiers === Qt.NoModifier && searchInput.text.length > 0 && launcher.commandViewHost?.tryAliasFastTrack()) {
+                         event.accepted = true;
+                     } else if (launcher.forwardKey(event.key, event.modifiers)) {
+                         if (launcher.compacted)
+                             launcher.expand();
+                         event.accepted = true;
+                    }
+                }
