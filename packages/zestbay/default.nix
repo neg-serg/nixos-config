@@ -52,6 +52,11 @@ rustPlatform.buildRustPackage rec {
     dbus
   ];
 
+  # Install .desktop file for app launcher visibility
+  postInstall = ''
+    install -Dm644 ${./zestbay.desktop} $out/share/applications/zestbay.desktop
+  '';
+
   # CXX-Qt needs to find Qt6 via pkg-config at build time
   QT_SELECT = "6";
 
