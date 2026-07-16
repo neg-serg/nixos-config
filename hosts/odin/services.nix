@@ -36,7 +36,7 @@ lib.mkMerge [
     };
     # Host-specific feature toggles
     features.dev.ai.opencode.enable = true;
-    # features.dev.ai.omp.enable = true; # disabled: omp needs npm lockfile, fails on nixos-26.05
+    features.dev.ai.omp.enable = true; # Oh My Pi (omp) — AI coding agent fork with LSP, DAP, subagents
     features.dev.ai.pi.enable = true;
     features.cli.broot.enable = true;
     features.dev.tla.enable = true;
