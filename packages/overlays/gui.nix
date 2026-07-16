@@ -62,10 +62,10 @@ in
     prev.vicinae.overrideAttrs (old: {
       version = "0.23.1";
       inherit src;
-      patches = (old.patches or [ ]) ++ [
+      patches = prev.lib.unique ((old.patches or [ ]) ++ [
         # Allow Tab/Shift+Tab for item list navigation (action.move-down/up)
         ./../vicinae-tab-navigation.patch
-      ];
+      ]);
       apiDeps = prev.fetchNpmDeps {
         src = "${src}/src/typescript/api";
         hash = "sha256-Im8fSG9sbaSynrN5gLsWVaPgH5g4Zp+x+FUPIBXrKjg=";
