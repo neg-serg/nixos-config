@@ -18,13 +18,19 @@ buildNpmPackage {
     hash = "sha256-MXd6v2uGMajtdCTjDdpLHAoSHE89/bMIkNmVbGersJI=";
   };
 
-  npmDepsHash = "sha256-7r7P+3HS69hh6S9FuJiVHqNef9xqOQhiTLJk8IqOTRs=";
+  npmDepsHash = "sha256-zuyj+Um4ukVUeL9lD/682B7eJP66Vw/YFCpdh5xy46Q=";
 
   dontNpmBuild = true;
+  # onnxruntime-node tries to download native binaries from nuget.org in its install script
+  npmInstallFlags = [ "--ignore-scripts" ];
+  # Prevent node-gyp rebuild from also triggering scripts
+  npmRebuildFlags = [ "--ignore-scripts" ];
 
   nativeBuildInputs = [ makeWrapper ];
 
   postPatch = ''
+    # Inject package-lock.json (not bundled in the npm tarball)
+    cp ${./package-lock.json} package-lock.json
     # Patch bun version check (nixpkgs bun 1.3.13, omp wants >=1.3.14)
     sed -i 's/1\.3\.14/1.3.13/g' dist/cli.js
   '';
