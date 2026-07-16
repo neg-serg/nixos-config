@@ -63,8 +63,9 @@ in
       version = "0.23.1";
       inherit src;
       patches = prev.lib.unique ((old.patches or [ ]) ++ [
-        # Allow Tab/Shift+Tab for item list navigation (action.move-down/up)
-        ./../vicinae-tab-navigation.patch
+        # Tab/Shift+Tab navigate item list (dmenu/rofi style) — handled in QML
+        # because Qt's QML focus navigation intercepts bare Tab before C++
+        ./../vicinae-tab-qml.patch
       ]);
       apiDeps = prev.fetchNpmDeps {
         src = "${src}/src/typescript/api";
