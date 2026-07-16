@@ -16,7 +16,7 @@ let
   # Only keys set here override the defaults.
   vicinaeSettings = {
     terminal = "kitty";
-    keybinding = "default";
+    keybinding = "emacs";
     escape_key_behavior = "navigate_back";
     pop_on_backspace = true;
     pop_to_root_on_close = true;
@@ -32,11 +32,12 @@ let
         border_width = 0;
         shadow_size = 8;
       };
+      compact_mode = { enabled = true; };
     };
 
     font.normal = {
       family = "Iosevka Proportional Medium";
-      size = 11;
+      size = 12;
     };
 
     theme = {
@@ -70,6 +71,20 @@ let
       "action.remove" = "control+X";
       "action.save" = "control+S";
     };
+
+    providers = {
+      system = {
+        entrypoints = {
+          browse-apps = { enabled = true; };
+        };
+      };
+    };
+
+    favorites = [
+      "clipboard:history"
+      "system:run"
+      "system:browse-apps"
+    ];
   };
 
   themeFile = ./../../../../files/gui/vicinae-theme.toml;
