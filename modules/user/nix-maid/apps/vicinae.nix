@@ -94,8 +94,8 @@ let
       "action.duplicate" = "control+D";
       "action.edit" = "control+E";
       "action.edit-secondary" = "control+shift+E";
-      "action.move-down" = "Tab";
-      "action.move-up" = "shift+Tab";
+      "action.move-down" = "Down";       # Emacs Tab → Down
+      "action.move-up" = "Up";           # Emacs Shift+Tab → Up
       "action.new" = "control+N";
       "action.open" = "control+O";
       "action.pin" = "control+shift+P";
