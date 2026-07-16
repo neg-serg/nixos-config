@@ -32,8 +32,8 @@ with lib;
       description = "Icon theme to apply system-wide (GTK + Qt).";
     };
     gtkTheme = lib.mkOption {
-      type = types.enum [ "Flight-Dark-GTK" "Andromeda" ];
-      default = "Flight-Dark-GTK";
+      type = types.enum [ "Flight-Dark-GTK" "Andromeda" "Flat-Remix-GTK-Blue-Darkest" ];
+      default = "Flat-Remix-GTK-Blue-Darkest";
       description = "GTK theme to apply system-wide.";
     };
   };
