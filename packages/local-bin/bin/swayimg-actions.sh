@@ -196,7 +196,7 @@ repeat_action() { # repeat last mv/cp to same dir
 copy_name() { # copy absolute path to clipboard
   file="$1"
   printf '%s\n' "$(realpath "$file")" | wl-copy
-  [ -x "$HOME/bin/pic-notify" ] && "$HOME/bin/pic-notify" "$file" || true
+  [ -x "$HOME/.local/bin/pic-notify" ] && "$HOME/.local/bin/pic-notify" "$file" || true
 }
 
 wall() { # wall <mode> <file> via swww
