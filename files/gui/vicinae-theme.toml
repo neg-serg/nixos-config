@@ -22,16 +22,73 @@ red = "#5a2020"
 yellow = "#8a7a50"
 cyan = "#3a6a6a"
 
+[colors.main_window]
+border = "#333333"
+
+[colors.main_window.footer]
+background = "#080808"
+
+[colors.settings_window]
+border = "#333333"
+
+[colors.shortcut]
+border = "#444444"
+
+[colors.text]
+default = "#9FABBA"
+muted = "#6a7a8a"
+danger = "#8a3030"
+success = "#3a7a51"
+placeholder = "#4a5a6a"
+
+[colors.text.links]
+default = "#6a9aba"
+visited = "#8a7aba"
+
+[colors.text.selection]
+background = "#222222"
+foreground = "#9FABBA"
+
+[colors.button.primary]
+background = "#333333"
+foreground = "#9FABBA"
+
+[colors.button.primary.hover]
+background = "#444444"
+foreground = "#b0c0d0"
+
+[colors.button.primary.focus]
+outline = "#555555"
+
+[colors.list.item.hover]
+background = "#151515"
+foreground = "#b0bcc8"
+secondary_foreground = "#8a9aaa"
+
 [colors.list.item.selection]
 background = "#111111"
 secondary_background = "#1a1a1a"
+secondary_foreground = "#9FABBA"
+
+[colors.grid.item]
+background = "#0d0d0d"
+selection = { outline = "#444444" }
+hover = { outline = "#333333" }
+
+[colors.tooltip]
+background = "#111111"
+foreground = "#9FABBA"
+border = "#333333"
 
 [colors.scrollbars]
 background = "#2a2a2a"
+secondary_background = "#1a1a1a"
 
 [colors.loading]
 bar = "#555555"
+spinner = "#555555"
 
 [colors.input]
 border = "#444444"
 border_focus = "#555555"
+border_error = "#5a2020"
