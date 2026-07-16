@@ -9,6 +9,7 @@ let
   cfg = config.features.gui.vicinae;
   guiEnabled = config.features.gui.enable or false;
   enabled = guiEnabled && cfg.enable;
+  proxyEnabled = config.features.net.proxy.enable or false;
 
   iconTheme = config.features.gui.iconTheme or "kora";
   themeFileKitty = ./../../../../files/gui/vicinae-theme-kitty.toml;
@@ -43,7 +44,9 @@ let
         border_width = 0;
         shadow_size = 8;
       };
-      compact_mode = { enabled = true; };
+      compact_mode = {
+        enabled = true;
+      };
       opacity = 0.92;
       material = "blur";
       layer_shell = {
@@ -69,8 +72,12 @@ let
       };
     };
 
-    header = { height = 60; };
-    footer = { height = 40; };
+    header = {
+      height = 60;
+    };
+    footer = {
+      height = 40;
+    };
 
     # search
     search_files_in_root = true;
@@ -81,8 +88,12 @@ let
     ];
 
     # global shortcuts
-    globalShortcuts = { toggle = "super+control+space"; };
-    input_server = { enabled = true; };
+    globalShortcuts = {
+      toggle = "super+control+space";
+    };
+    input_server = {
+      enabled = true;
+    };
 
     # Flat keys — vicinae doesn't accept nested `action: { copy: … }`
     keybinds = {
@@ -108,9 +119,13 @@ let
     providers = {
       system = {
         entrypoints = {
-          browse-apps = { enabled = true; };
+          browse-apps = {
+            enabled = true;
+          };
           run = {
-            preferences = { default-action = "run-in-terminal"; };
+            preferences = {
+              default-action = "run-in-terminal";
+            };
           };
         };
       };
@@ -124,8 +139,11 @@ let
       files = {
         preferences = {
           autoIndexing = true;
-          indexingPaths = ["/home/neg"];
-          excludedIndexingPaths = ["/home/neg/.cache" "/home/neg/.local/share/Trash"];
+          indexingPaths = [ "/home/neg" ];
+          excludedIndexingPaths = [
+            "/home/neg/.cache"
+            "/home/neg/.local/share/Trash"
+          ];
         };
       };
       calculator = {
@@ -143,9 +161,21 @@ let
       };
       power = {
         entrypoints = {
-          lock = { preferences = { confirm = false; }; };
-          reboot = { preferences = { confirm = true; }; };
-          power-off = { preferences = { confirm = true; }; };
+          lock = {
+            preferences = {
+              confirm = false;
+            };
+          };
+          reboot = {
+            preferences = {
+              confirm = true;
+            };
+          };
+          power-off = {
+            preferences = {
+              confirm = true;
+            };
+          };
         };
       };
     };
@@ -181,7 +211,8 @@ in
             "QT_QPA_PLATFORM=wayland"
             "WAYLAND_DISPLAY=wayland-1"
             "PATH=/run/current-system/sw/bin"
-          ];
+          ]
+          ++ lib.optional proxyEnabled "ALL_PROXY=socks5://127.0.0.1:10808";
         };
       };
     }
