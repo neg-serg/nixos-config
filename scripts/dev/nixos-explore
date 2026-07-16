@@ -4,7 +4,7 @@
 # Usage:
 #   nixos-explore list                      Show all feature flags with values
 #   nixos-explore list --json               Output as JSON
-#   nixos-explore diff <flag> <value>       Build and nvd-diff with flag override
+#   nixos-explore diff <flag> <value>       Build and dix-diff with flag override
 #   nixos-explore size                      Count packages by domain
 #   nixos-explore size --by-domain          Detailed breakdown
 #   nixos-explore check-inputs              Check flake input freshness
@@ -684,7 +684,7 @@ top-pkgs)
     ;;
 
 # ────────────────────────────────────────────────────────────
-#  diff — nvd diff between current and new build
+#  diff — dix diff between current and new build
 # ────────────────────────────────────────────────────────────
 diff)
     NEW_ONLY=false
@@ -698,7 +698,7 @@ diff)
             --new-only) NEW_ONLY=true ;;
             --keep-result) KEEP_RESULT=true ;;
             -h|--help)
-                echo "diff — Build system closure and show nvd diff vs current-system"
+                echo "diff — Build system closure and show dix diff vs current-system"
                 echo ""
                 echo "Usage:"
                 echo "  nixos-explore diff <flag> <value>    Build with flag override and diff"
@@ -718,8 +718,8 @@ diff)
         value="${positional[1]}"
     fi
 
-    if ! command -v nvd > /dev/null 2>&1; then
-        echo "nvd not found. Install it or use: nix run nixpkgs#nvd"
+    if ! command -v dix > /dev/null 2>&1; then
+        echo "dix not found. Install it or use: nix run nixpkgs#dix"
         exit 1
     fi
 
@@ -740,9 +740,9 @@ diff)
     echo ""
 
     if [ "$NEW_ONLY" = true ]; then
-        nvd diff /run/current-system "$OUT_LINK" 2>&1 | awk '/^Added packages:/{flag=1} flag'
+        dix /run/current-system "$OUT_LINK" 2>&1 | awk '/^Added packages:/{flag=1} flag'
     else
-        nvd diff /run/current-system "$OUT_LINK"
+        dix /run/current-system "$OUT_LINK"
     fi
 
     if [ "$KEEP_RESULT" = false ]; then
@@ -804,7 +804,7 @@ help|*)
     echo "Usage:"
     echo "  list                          Show all feature flags with values"
     echo "  list --json                   Output as JSON"
-    echo "  diff <flag> <value>           Build system closure and nvd-diff vs current"
+    echo "  diff <flag> <value>           Build system closure and dix-diff vs current"
     echo "  diff --new-only ...           Show only newly added packages"
     echo "  size                          Total package count"
     echo "  size --by-domain              Package count by module domain"

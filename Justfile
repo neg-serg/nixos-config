@@ -62,7 +62,7 @@ switch host="odin":
 # Show diff between last two generations
 diff:
     @files=$(find /nix/var/nix/profiles -maxdepth 1 -name "system-*-link" | sort -V | tail -n 2); \
-    nix run nixpkgs#nvd -- diff $files
+    nix run nixpkgs#dix -- $files
 
 # Build new closure and preview diff against current system
 diff-preview host="odin":
