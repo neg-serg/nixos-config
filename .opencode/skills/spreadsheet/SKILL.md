@@ -1,6 +1,9 @@
 ______________________________________________________________________
 
-## name: spreadsheet description: "CSV, TSV, Excel, and tabular data processing via csvkit, xsv, and Python"
+---
+name: spreadsheet
+description: "CSV, TSV, Excel, and tabular data processing via csvkit, xsv, and Python"
+---
 
 # Spreadsheet & Tabular Data
 
