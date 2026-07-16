@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Zestbay
+Comment=PipeWire patchbay with LV2/VST3/CLAP plugin hosting
+Categories=AudioVideo;Audio;Mixer;
+Exec=zestbay
+StartupWMClass=zestbay
+Terminal=false
