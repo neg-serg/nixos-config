@@ -1,0 +1,95 @@
+# Neg Kitty — Neg Dark with kitty color25 accent and selection
+[meta]
+version = 1
+name = "Neg Kitty"
+description = "Neg Dark with kitty color25 accent and selection."
+variant = "dark"
+
+[colors.core]
+background = "#000000"
+foreground = "#9FABBA"
+secondary_background = "#080808"
+border = "#333333"
+accent = "#4a4a4a"
+
+[colors.accents]
+blue = "#4a5555"
+green = "#3a6a51"
+magenta = "#7a6a8a"
+orange = "#8a6a40"
+purple = "#6a6a7a"
+red = "#5a2020"
+yellow = "#8a7a50"
+cyan = "#3a6a6a"
+
+[colors.main_window]
+border = "#333333"
+
+[colors.main_window.footer]
+background = "#080808"
+
+[colors.settings_window]
+border = "#333333"
+
+[colors.shortcut]
+border = "#444444"
+
+[colors.text]
+default = "#9FABBA"
+muted = "#6a7a8a"
+danger = "#8a3030"
+success = "#3a7a51"
+placeholder = "#4a5a6a"
+
+[colors.text.links]
+default = "#6a9aba"
+visited = "#8a7aba"
+
+[colors.text.selection]
+background = "#222222"
+foreground = "#9FABBA"
+
+[colors.button.primary]
+background = "#005faf"
+foreground = "#ffffff"
+
+[colors.button.primary.hover]
+background = "#0070cc"
+foreground = "#ffffff"
+
+[colors.button.primary.focus]
+outline = "#367bbf"
+
+[colors.list.item.hover]
+background = "#111a28"
+foreground = "#4a8fcf"
+secondary_foreground = "#7a9abf"
+
+[colors.list.item.selection]
+background = "#0d1824"
+foreground = "#367bbf"
+secondary_background = "#0e1928"
+secondary_foreground = "#367bbf"
+
+[colors.grid.item]
+background = "#0d0d0d"
+selection = { outline = "#367bbf" }
+hover = { outline = "#005faf" }
+
+[colors.tooltip]
+background = "#111111"
+foreground = "#9FABBA"
+border = "#333333"
+
+[colors.scrollbars]
+background = "#2a2a2a"
+secondary_background = "#1a1a1a"
+
+[colors.loading]
+bar = "#555555"
+spinner = "#555555"
+
+[colors.input]
+border = "#444444"
+border_focus = "#555555"
+border_error = "#5a2020"
