@@ -49,5 +49,5 @@ If update breaks something:
 After updating nixpkgs:
 
 ```bash
-nvd diff /run/current-system result
+dix /run/current-system result
 ```
