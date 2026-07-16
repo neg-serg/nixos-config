@@ -48,4 +48,27 @@ in
       });
 
   optiscaler = prev.callPackage (inputs.self + "/packages/optiscaler") { };
+
+  # Bump vicinae to latest stable (v0.23.1) — locked nixpkgs has v0.22.3
+  vicinae =
+    let
+      src = prev.fetchFromGitHub {
+        owner = "vicinaehq";
+        repo = "vicinae";
+        tag = "v0.23.1";
+        hash = "sha256-qFDb6I9w9F/KfRVHmwezykv7y/Tb8BjJQD2v5AxlEfU=";
+      };
+    in
+    prev.vicinae.overrideAttrs (old: {
+      version = "0.23.1";
+      inherit src;
+      apiDeps = prev.fetchNpmDeps {
+        src = "${src}/src/typescript/api";
+        hash = "sha256-Im8fSG9sbaSynrN5gLsWVaPgH5g4Zp+x+FUPIBXrKjg=";
+      };
+      extensionManagerDeps = prev.fetchNpmDeps {
+        src = "${src}/src/typescript/extension-manager";
+        hash = "sha256-pEgqFgvdz7Bcc+LznCI+KlD1XEfUuWFWjS24MJ7sx3k=";
+      };
+    });
 }
