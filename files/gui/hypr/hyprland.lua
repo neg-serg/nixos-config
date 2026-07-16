@@ -293,8 +293,7 @@ hl.define_submap("selectors", "reset", function()
   bind_reset("w", hl.dsp.exec_cmd("hyde-selector wallpaper"))
   bind_reset("t", hl.dsp.exec_cmd("hyde-selector theme"))
   bind_reset("a", hl.dsp.exec_cmd("hyde-selector animation"))
-  bind_reset("e", hl.dsp.exec_cmd("vicinae toggle"))
-  bind_reset("c", hl.dsp.exec_cmd("vicinae toggle"))
+
   hl.bind("Return", hl.dsp.submap("reset"))
   hl.bind("escape", hl.dsp.submap("reset"))
 end)
@@ -378,8 +377,8 @@ hl.animation({ leaf = "windowsIn",        enabled = true, speed = 0.1875, bezier
 hl.animation({ leaf = "windowsOut",       enabled = true, speed = 0.1875, bezier = "md3_accel",  style = "popin 60%" })
 hl.animation({ leaf = "border",           enabled = true, speed = 0.625,  bezier = "default" })
 hl.animation({ leaf = "fade",             enabled = true, speed = 0.1875, bezier = "md3_decel" })
-hl.animation({ leaf = "layersIn",         enabled = true, speed = 0.1875, bezier = "menu_decel", style = "slide" })
-hl.animation({ leaf = "layersOut",        enabled = true, speed = 0.1,    bezier = "menu_accel" })
+hl.animation({ leaf = "layersIn",         enabled = true, speed = 0.35,   bezier = "menu_decel", style = "slide" })
+hl.animation({ leaf = "layersOut",        enabled = true, speed = 0.125,  bezier = "menu_accel" })
 hl.animation({ leaf = "fadeLayersIn",     enabled = true, speed = 0.125,  bezier = "menu_decel" })
 hl.animation({ leaf = "fadeLayersOut",    enabled = true, speed = 0.03125, bezier = "menu_accel" })
 hl.animation({ leaf = "workspaces",       enabled = true, speed = 0.125,  bezier = "menu_decel", style = "slide" })
@@ -489,7 +488,7 @@ end
 hl.layer_rule({ name = "xray-all", match = { namespace = ".*" }, xray = true })
 
 -- no animation
-for _, ns in ipairs({ "vicinae", "selection", "indicator.*", "hyprpicker" }) do
+for _, ns in ipairs({ "selection", "indicator.*", "hyprpicker" }) do
   hl.layer_rule({ name = "noanim-" .. ns, match = { namespace = ns }, no_anim = true })
 end
 
