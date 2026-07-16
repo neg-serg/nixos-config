@@ -16,10 +16,20 @@ let
   # Only keys set here override the defaults.
   vicinaeSettings = {
     terminal = "kitty";
-    keybinding = "emacs";
+    keybinding = "default";
     escape_key_behavior = "navigate_back";
     pop_on_backspace = true;
     pop_to_root_on_close = true;
+
+    # core behavior
+    close_on_focus_loss = false;
+    activate_on_single_click = false;
+    consider_preedit = true;
+
+    # telemetry + cache + encryption
+    telemetry.system_info = false;
+    pixmapCacheMb = 128;
+    encryptSensitiveData = true;
 
     launcher_window = {
       size = {
@@ -33,12 +43,19 @@ let
         shadow_size = 8;
       };
       compact_mode = { enabled = true; };
+      opacity = 0.92;
+      material = "blur";
+      layer_shell = {
+        layer = "top";
+        keyboard_interactivity = "on_demand";
+      };
     };
 
     font.normal = {
       family = "Iosevka Proportional Medium";
       size = 12;
     };
+    font.rendering = "qt";
 
     theme = {
       dark = {
@@ -50,6 +67,21 @@ let
         icon_theme = iconTheme;
       };
     };
+
+    header = { height = 60; };
+    footer = { height = 40; };
+
+    # search
+    search_files_in_root = true;
+    favicon_service = "twenty";
+    fallbacks = [
+      "files:search"
+      "clipboard:history"
+    ];
+
+    # global shortcuts
+    globalShortcuts = { toggle = "super+control+space"; };
+    input_server = { enabled = true; };
 
     # Flat keys — vicinae doesn't accept nested `action: { copy: … }`
     keybinds = {
@@ -76,6 +108,43 @@ let
       system = {
         entrypoints = {
           browse-apps = { enabled = true; };
+          run = {
+            preferences = { default-action = "run-in-terminal"; };
+          };
+        };
+      };
+      clipboard = {
+        preferences = {
+          monitoring = true;
+          ignorePasswords = true;
+          eraseOnStartup = false;
+        };
+      };
+      files = {
+        preferences = {
+          autoIndexing = true;
+          indexingPaths = ["/home/neg"];
+          excludedIndexingPaths = ["/home/neg/.cache" "/home/neg/.local/share/Trash"];
+        };
+      };
+      calculator = {
+        preferences = {
+          refreshRatesOnStartup = false;
+        };
+      };
+      snippets = {
+        preferences = {
+          enabled = true;
+          undo = true;
+          keyDelay = "2";
+          prePasteDelay = "0";
+        };
+      };
+      power = {
+        entrypoints = {
+          lock = { preferences = { confirm = false; }; };
+          reboot = { preferences = { confirm = true; }; };
+          power-off = { preferences = { confirm = true; }; };
         };
       };
     };
