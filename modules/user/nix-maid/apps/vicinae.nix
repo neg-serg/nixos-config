@@ -11,6 +11,7 @@ let
   enabled = guiEnabled && cfg.enable;
 
   iconTheme = config.features.gui.iconTheme or "kora";
+  themeFileKitty = ./../../../../files/gui/vicinae-theme-kitty.toml;
 
   # Vicinae merges settings.json over built-in defaults.
   # Only keys set here override the defaults.
@@ -59,7 +60,7 @@ let
 
     theme = {
       dark = {
-        name = "neg-dark";
+        name = "neg-kitty";
         icon_theme = iconTheme;
       };
       light = {
@@ -94,8 +95,8 @@ let
       "action.duplicate" = "control+D";
       "action.edit" = "control+E";
       "action.edit-secondary" = "control+shift+E";
-      "action.move-down" = "Down";       # Emacs Tab → Down
-      "action.move-up" = "Up";           # Emacs Shift+Tab → Up
+      "action.move-down" = "Tab";
+      "action.move-up" = "shift+Tab";
       "action.new" = "control+N";
       "action.open" = "control+O";
       "action.pin" = "control+shift+P";
@@ -189,6 +190,7 @@ in
       # Deploy config via tmpfiles to user home — pure NixOS, no nix-maid
       systemd.user.tmpfiles.rules = [
         "L+ %h/.local/share/vicinae/themes/neg-dark.toml - - - - ${themeFile}"
+        "L+ %h/.local/share/vicinae/themes/neg-kitty.toml - - - - ${themeFileKitty}"
         "L+ %h/.config/vicinae/settings.json - - - - ${settingsFile}"
       ];
     })
