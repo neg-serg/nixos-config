@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  goldfish,
   ...
 }:
 with lib;
@@ -195,6 +196,10 @@ in
     {
       environment.systemPackages = [
         pkgs.vicinae # Wayland-native app runner + window switcher
+        goldfish # fuzzy file-search IPC backend (vicinae fuzzy-files extension dep)
+        pkgs.pulseaudio # PulseAudio client utilities for pactl (vicinae pulseaudio extension dep)
+        pkgs.awww # animated wallpaper daemon for Wayland (vicinae awww-switcher extension dep)
+        pkgs.skate # key-value store CLI (vicinae skate extension dep)
       ];
 
       systemd.user.services.vicinae = {
