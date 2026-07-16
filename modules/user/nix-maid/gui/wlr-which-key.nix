@@ -165,8 +165,8 @@
             title: Special
             children:
               - key: q
-                command: raise --match 'class:regex=^qpwgraph$' --launch qpwgraph
-                title: QPWGraph
+                command: raise --match 'class:regex=^zestbay$' --launch zestbay
+                title: Zestbay
               - key: Q
                 command: raise --match 'class:regex=^Carla2$' --launch carla
                 title: Carla
