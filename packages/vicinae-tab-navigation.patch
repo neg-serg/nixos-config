@@ -1,27 +1,9 @@
-Allow Tab and Shift+Tab to navigate the item list via action.move-down /
-action.move-up keybinds, matching dmenu/rofi behavior.
-
-Tab is normally blocked by two gates in LauncherWindow:
-1. The window eventFilter only forwards keys *with* modifiers to forwardKey()
-2. forwardKey() rejects unmodified non-Return keys before they reach
-   activateBoundAction()
-
-Shift+Tab (Qt::Key_Backtab) reaches forwardKey() thanks to its Shift
-modifier, but activateBoundAction() does not match it against the
-user-configured "shift+Tab" keybind because the physical key is
-Qt::Key_Backtab rather than Qt::Key_Tab.
-
-Fixes:
-1. eventFilter: allow bare Tab through to forwardKey()
-2. forwardKey: exempt Tab from the unmodified-key rejection
-3. forwardKey: convert Backtab → Tab with ShiftModifier before calling
-   activateBoundAction(), so "shift+Tab" keybinds match
-
 diff --git a/src/server/src/qml/launcher-window.cpp b/src/server/src/qml/launcher-window.cpp
-index f1f73042..0ae2fcb1 100644
+index 17d89f4..cf8909f 100644
 --- a/src/server/src/qml/launcher-window.cpp
 +++ b/src/server/src/qml/launcher-window.cpp
 @@ -349,7 +349,7 @@ bool LauncherWindow::eventFilter(QObject *obj, QEvent *event) {
+     // unmodified keys (return included) belong to the focused component: forwarding
      // them globally would steal text input or returns meant for local widgets such as
      // text areas, overlays or the opened action panel.
 -    if (ke->modifiers() != Qt::NoModifier && forwardKey(ke->key(), static_cast<int>(ke->modifiers()))) {
@@ -29,7 +11,8 @@ index f1f73042..0ae2fcb1 100644
        return true;
      }
    }
-@@ -460,7 +460,7 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
+@@ -457,7 +457,7 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
+ 
    // unmodified keys are regular text input, except return which the action panel
    // knows how to handle
 -  if (unmodified && !isReturn) return false;
@@ -37,13 +20,11 @@ index f1f73042..0ae2fcb1 100644
  
    if (unmodified && m_compacted) {
      expand();
-@@ -489,6 +489,14 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
+@@ -487,6 +487,12 @@ bool LauncherWindow::forwardKey(int key, int modifiers) {
      }
    }
  
-+  // Convert Backtab to Tab — Shift+Tab emits Qt::Key_Backtab in Qt, but
-+  // user-configured keybinds use "shift+Tab" which the parser maps to
-+  // Qt::Key_Tab + Qt::ShiftModifier.
++  // Convert Backtab to Tab for shift+Tab keybind matching
 +  if (key == Qt::Key_Backtab) {
 +    key = Qt::Key_Tab;
 +    mods = Qt::ShiftModifier;
