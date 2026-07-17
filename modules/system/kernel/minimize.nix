@@ -10,11 +10,7 @@
 # resolve any Kconfig dependency issues.
 #
 # Future: may use linuxManualConfig with a localmodconfig-derived .config.
-{
-  lib,
-  config,
-  ...
-}:
+{ lib, ... }:
 {
   # ZSTD kernel compression — fastest decompression + excellent compression ratio
   boot.kernelPatches = [

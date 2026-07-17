@@ -14,10 +14,9 @@
 {
   nixpkgs,
   self,
-  inputs,
   ...
 }:
-system: pkgs:
+pkgs:
 let
   inherit (nixpkgs) lib;
 
@@ -28,7 +27,7 @@ let
     # Required by nix/settings.nix, modules/system/default.nix, etc.
     inputs = {
       inherit self;
-      nixpkgs = nixpkgs;
+      inherit nixpkgs;
     };
     locale = "C";
     timeZone = "UTC";
@@ -76,51 +75,12 @@ in
   # These create INDEPENDENT eval trees for nix-eval-jobs to process in parallel.
 
   "dom-lite" =
-    let
-      liteDomains = [
-        "cli"
-        "core"
-        "diff-closures"
-        "documentation"
-        "features"
-        "flake-preflight"
-        "fonts"
-        "hardware"
-        "nix"
-        "profiles"
-        "roles"
-        "secrets"
-        "security"
-        "servers"
-        "shell"
-        "system"
-        "text"
-        "tools"
-      ];
-      filter = domain: builtins.elem domain liteDomains;
-      result = lib.evalModules {
-        specialArgs = mkStubArgs filter;
-        modules = [
-          { _module.check = false; }
-          ../modules/default.nix
-        ];
-      };
-    in
     pkgs.runCommand "check-dom-lite" { } ''
       echo "modules/default.nix + lite filter: OK"
       touch $out
     '';
 
   "dom-all" =
-    let
-      result = lib.evalModules {
-        specialArgs = mkStubArgs (_: true);
-        modules = [
-          { _module.check = false; }
-          ../modules/default.nix
-        ];
-      };
-    in
     pkgs.runCommand "check-dom-all" { } ''
       echo "modules/default.nix + all filter: OK"
       touch $out

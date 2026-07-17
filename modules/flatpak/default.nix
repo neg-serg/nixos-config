@@ -1,5 +1,4 @@
-{ config, lib, ... }:
-{
+{ ... }: {
   imports = [ ./pkgs.nix ];
   services.flatpak = {
     enable = true;

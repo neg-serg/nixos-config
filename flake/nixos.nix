@@ -9,7 +9,6 @@
 let
   inherit (nixpkgs) lib;
   hostsDir = ../hosts;
-  hostNamesEnabled = [ "odin" ];
 
   linuxSystem = "x86_64-linux";
   locale = "en_US.UTF-8";

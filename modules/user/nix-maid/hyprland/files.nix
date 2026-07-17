@@ -1,10 +1,8 @@
 {
-  lib,
   neg,
   ...
 }:
 let
-  hyprConfDir = ../../../../files/gui/hypr;
   animDir = ../../../../files/gui/hypr/animations;
   lockDir = ../../../../files/gui/hypr/hyprlock;
 

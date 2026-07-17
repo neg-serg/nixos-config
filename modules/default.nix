@@ -20,8 +20,7 @@ let
 in
 {
   imports =
-    [ ]
-    ++ domain "appimage" ./appimage/default.nix
+    domain "appimage" ./appimage/default.nix
     ++ domain "apps" ./apps/default.nix
     ++ domain "cli" ./cli/default.nix
     ++ domain "core" ./core/default.nix
