@@ -13,10 +13,9 @@ let
   fixScript = pkgs.writeText "irq-affinity-fix.sh" ''
     #!/usr/bin/env bash
     set -euo pipefail
-    ISOLATED=$(cat /sys/devices/system/cpu/isolated 2>/dev/null || echo "")
     HOUSECPUS=$(cat /proc/cmdline | tr ' ' '\n' | sed -n 's/^irqaffinity=//p' | head -n1)
     [ -n "$HOUSECPUS" ] || HOUSECPUS="4-15,20-31"
-    echo "IRQ affinity fix: isolated=$ISOLATED house=$HOUSECPUS"
+    echo "IRQ affinity fix: house=$HOUSECPUS"
 
     MASK=$(echo "$HOUSECPUS" | tr ',' '\n' | while IFS=- read -r a b; do
       if [ -n "$b" ]; then seq "$a" "$b"; else echo "$a"; fi
@@ -37,7 +36,7 @@ let
         mkdir -p $out/lib/systemd/system
         cat > $out/lib/systemd/system/irq-affinity-fix.service << UNIT
     [Unit]
-    Description=Move IRQs off isolated CPUs
+    Description=Move IRQs off gaming CPUs
     After=systemd-udevd.service
 
     [Service]
@@ -56,7 +55,7 @@ in
     type = types.bool;
     default = true;
     description = ''
-      Set up IRQ affinity at boot to keep interrupts off isolated CPUs.
+      Set up IRQ affinity at boot to keep interrupts off gaming CPUs.
       Replaces irqbalance which is broken on systemd 260.2 (CapBnd=0 bug).
     '';
   };
