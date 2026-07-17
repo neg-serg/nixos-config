@@ -1,15 +1,5 @@
 {
   "mcpServers": {
-    "serena": {
-      "type": "stdio",
-      "command": "/usr/bin/env",
-      "args": [
-        "bash",
-        "-lc",
-        "exec /usr/bin/uvx serena start-mcp-server --project \"$HOME/src/cfg\""
-      ],
-      "env": {}
-    },
     "ollama": {
       "type": "stdio",
       "command": "npx",
@@ -57,51 +47,11 @@
         "EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2"
       }
     },
-    "code-rag": {
-      "type": "stdio",
-      "command": "/usr/bin/env",
-      "args": [
-        "bash",
-        "-lc",
-        "exec \"$HOME/.local/share/pipx/venvs/code-rag/bin/python\" -m code_rag.server"
-      ],
-      "env": {}
-    },
     "blender": {
       "type": "stdio",
       "command": "/usr/bin/uvx",
       "args": [
         "blender-mcp"
-      ],
-      "env": {}
-    },
-    "mpd": {
-      "type": "stdio",
-      "command": "/usr/bin/env",
-      "args": [
-        "bash",
-        "-lc",
-        "exec \"$HOME/.local/bin/mpd-mcp-server\""
-      ],
-      "env": {}
-    },
-    "hyprland": {
-      "type": "stdio",
-      "command": "/usr/bin/env",
-      "args": [
-        "bash",
-        "-lc",
-        "exec \"$HOME/.local/bin/hyprland-mcp\""
-      ],
-      "env": {}
-    },
-    "language-server": {
-      "type": "stdio",
-      "command": "/usr/bin/env",
-      "args": [
-        "bash",
-        "-lc",
-        "exec \"$HOME/.local/bin/mcp-language-server\" --workspace \"$HOME/src/cfg\" --lsp lua-language-server"
       ],
       "env": {}
     },
