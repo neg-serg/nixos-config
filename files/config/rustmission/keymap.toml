@@ -8,6 +8,7 @@ keybindings = [
   { on = "Enter", action = "Confirm" },
   { on = " ", action = "Select" },
   { on = "Tab", action = "SwitchFocus" },
+  { modifier = "Ctrl", on = "Space", action = "SwitchFocus" },
   { on = "/", action = "Search" },
   { on = "o", action = "XdgOpen" },
   
