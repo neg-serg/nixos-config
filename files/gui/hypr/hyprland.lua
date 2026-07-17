@@ -425,6 +425,10 @@ end
 hl.window_rule({ name = "soulstone-survivors", match = { class = "^(steam_app_2066020)$" }, render_unfocused = true, no_blur = true })
 hl.window_rule({ name = "gaming-immediate", match = { class = "^(osu!|cs2)$" }, immediate = true })
 
+-- Fullscreen video/gpu-heavy apps: force immediate rendering for direct scanout
+hl.window_rule({ name = "video-immediate", match = { class = "^(mpv)$" }, immediate = true })
+hl.window_rule({ name = "gamescope-immediate", match = { class = "^(gamescope)$" }, immediate = true })
+
 -- Float all windows on the games workspace (id 4) — games don't tile well
 hl.window_rule({ name = "games-float", match = { workspace = "4" }, float = true })
 
