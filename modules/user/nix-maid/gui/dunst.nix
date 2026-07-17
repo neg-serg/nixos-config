@@ -33,7 +33,7 @@ let
       height = "(0, 350)";
       hide_duplicate_count = true;
       horizontal_padding = 6;
-      icon_path = "${pkgs.kora-icon-theme}/share/icons/kora/apps/scalable:${pkgs.kora-icon-theme}/share/icons/kora/status/scalable"; # Explicitly adding icon path helps if theme not globally set
+      icon_path = "${pkgs.kora-icon-theme}/share/icons/kora-pgrey/apps/scalable:${pkgs.kora-icon-theme}/share/icons/kora-pgrey/status/scalable"; # Explicitly adding icon path helps if theme not globally set
       icon_position = "left";
       idle_threshold = 0;
       ignore_dbusclose = false;

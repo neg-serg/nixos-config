@@ -7,7 +7,7 @@
 }:
 let
   qtEnabled = config.features.gui.qt.enable or false;
-  iconTheme = config.features.gui.iconTheme or "kora";
+  iconTheme = config.features.gui.iconTheme or "kora-pgrey";
   kvantumTheme = "KvDark"; # Default dark theme — change after interactive selection via kvantummanager
 in
 {
