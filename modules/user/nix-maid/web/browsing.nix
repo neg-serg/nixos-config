@@ -4,8 +4,6 @@
   ...
 }:
 with lib;
-let
-in
 {
   imports = [
     ./defaults.nix

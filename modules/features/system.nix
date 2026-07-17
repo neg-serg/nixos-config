@@ -1,13 +1,4 @@
-{
-  lib,
-  config,
-  mkBool,
-  ...
-}:
-let
-  cfg = config.features.system.logTtys;
-in
-{
+{ lib, mkBool, ... }: {
   options.features.system.logTtys = {
     enable = mkBool "Per-TTY log classification (journalctl viewers on tty8,tty10-tty16)" true;
     crit.enable = mkBool "CRIT log viewer on tty8 (emerg..crit)" true;

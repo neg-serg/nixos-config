@@ -1,10 +1,4 @@
-{
-  lib,
-  pkgs,
-  neg,
-  # impurity ? null, # Deprecated
-  ...
-}:
+{ lib, neg, ... }:
 {
   options.neg = {
     repoRoot = lib.mkOption {
