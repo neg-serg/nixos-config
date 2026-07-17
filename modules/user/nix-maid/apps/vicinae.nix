@@ -12,7 +12,7 @@ let
   enabled = guiEnabled && cfg.enable;
   proxyEnabled = config.features.net.proxy.enable or false;
 
-  iconTheme = config.features.gui.iconTheme or "kora";
+  iconTheme = config.features.gui.iconTheme or "kora-pgrey";
   themeFileKitty = ./../../../../files/gui/vicinae-theme-kitty.toml;
 
   # Vicinae merges settings.json over built-in defaults.

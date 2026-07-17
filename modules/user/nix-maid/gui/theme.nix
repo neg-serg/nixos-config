@@ -9,10 +9,13 @@
 let
   alkano-aio = pkgs.callPackage ./alkano-aio.nix { };
 
-  iconTheme = config.features.gui.iconTheme or "kora";
+  negGtkCss = builtins.readFile ../../../../files/gui/neg-gtk.css;
 
-  gtkThemeName = config.features.gui.gtkTheme or "Flight-Dark-GTK";
+  iconTheme = config.features.gui.iconTheme or "kora-pgrey";
+
+  gtkThemeName = config.features.gui.gtkTheme or "neg-gtk";
   gtkThemePkg = {
+    "neg-gtk" = pkgs.flat-remix-gtk; # base widget structure, colors overridden via gtk.css
     "Flight-Dark-GTK" = pkgs.flight-gtk-theme;
     "Andromeda" = pkgs.andromeda-gtk-theme;
     "Flat-Remix-GTK-Blue-Darkest" = pkgs.flat-remix-gtk;
@@ -30,8 +33,8 @@ let
 
   gtkIni = lib.generators.toINI { } { Settings = gtkSettings; };
 
-  # CSS stub for importing colors if needed
-  cssContent = "/* @import 'colors.css'; */";
+  # GTK CSS override: neg.nvim colors for neg-gtk theme, else empty
+  cssContent = if gtkThemeName == "neg-gtk" then negGtkCss else "/* @import 'colors.css'; */";
 in
 {
   config = lib.mkIf (config.features.gui.enable or false) (
