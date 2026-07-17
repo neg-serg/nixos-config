@@ -62,14 +62,10 @@ let
 
   # Helper: create a wrapped quickshell binary for a skwd component
   mkSkwdComponent =
-    {
-      name,
-      extraData ? [ ],
-    }:
-    let
-      componentDir = "$out/share/skwd/${name}";
-    in
-    ''
+  {
+    name,
+  }:
+  ''
       mkdir -p $out/share/skwd/${name}
       cp -a ${skwd-src}/${name}/shell.qml $out/share/skwd/${name}/shell.qml
       cp -a ${skwd-src}/${name}/qml       $out/share/skwd/${name}/qml

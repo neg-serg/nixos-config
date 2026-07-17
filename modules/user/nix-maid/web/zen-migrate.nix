@@ -229,7 +229,7 @@ let
               echo "Done."
       '';
     }).overrideAttrs
-      (old: {
+      (_: {
         pname = "zen-bookmarks-export";
         name = "zen-bookmarks-export";
       });
