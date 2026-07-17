@@ -1,5 +1,3 @@
-______________________________________________________________________
-
 ---
 name: ast
 description: "AST-based code search and structural code analysis"

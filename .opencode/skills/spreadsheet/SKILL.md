@@ -1,5 +1,3 @@
-______________________________________________________________________
-
 ---
 name: spreadsheet
 description: "CSV, TSV, Excel, and tabular data processing via csvkit, xsv, and Python"
