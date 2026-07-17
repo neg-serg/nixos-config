@@ -76,13 +76,13 @@ pub fn run_masks() -> Result<()> {
 
     println!("VCACHE_CPUSET={vcache_str}");
     println!();
-    println!("Suggested kernel params:");
-    println!("  nohz_full={vcache_str}");
-    println!("  rcu_nocbs={vcache_str}");
-    println!("  isolcpus=managed,domain,{vcache_str}");
-    if !non_vcache_str.is_empty() {
-        println!("  irqaffinity={non_vcache_str}");
-    }
+    println!("Suggested NixOS config (hybrid SCX + cpuset):");
+    println!("  gamingCpuSet = \"{vcache_str}\";");
+    if !non_vcache_str.is_empty() {{
+        println!("  housekeepingCpuSet = \"{non_vcache_str}\";");
+    }}
+    println!("  features.optimization.scx.enable = true;");
+    println!("  features.optimization.scx.scheduler = \"scx_lavd\";");
     Ok(())
 }
 
