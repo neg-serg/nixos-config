@@ -77,8 +77,7 @@ in
           '') # Helper script to trigger mail synchronization
         ];
 
-        # Services
-        systemd.user.services."mbsync-gmail" = {
+        systemd.user.services."mbsync-gmail" = lib.mkIf cfg.mbsync.enable {
           description = "Sync mail via mbsync (gmail)";
           path = [
             passPkg # password manager for PassCmd
@@ -93,7 +92,7 @@ in
           wants = [ "network-online.target" ];
         };
 
-        systemd.user.timers."mbsync-gmail" = {
+        systemd.user.timers."mbsync-gmail" = lib.mkIf cfg.mbsync.enable {
           description = "Timer: mbsync gmail";
           timerConfig = {
             OnBootSec = "2m";
