@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  goldfish,
   ...
 }:
 with lib;
@@ -80,10 +81,16 @@ let
     };
 
     # search
-    search_files_in_root = false;
+    search_files_in_root = true;
     favicon_service = "twenty";
     fallbacks = [
+      "files:search"
       "clipboard:history"
+    ];
+    indexingPaths = [ "/home/neg" ];
+    excludedIndexingPaths = [
+      "/home/neg/.cache"
+      "/home/neg/.local/share/Trash"
     ];
 
     # global shortcuts
@@ -137,7 +144,7 @@ let
       };
       files = {
         preferences = {
-          autoIndexing = false;
+          autoIndexing = true;
         };
       };
       calculator = {
@@ -204,6 +211,7 @@ in
     {
       environment.systemPackages = [
         pkgs.vicinae # Wayland-native app runner + window switcher
+        goldfish # fuzzy file-search IPC backend (vicinae fuzzy-files extension dep)
         pkgs.pulseaudio # PulseAudio client utilities for pactl (vicinae pulseaudio extension dep)
         pkgs.awww # animated wallpaper daemon for Wayland (vicinae awww-switcher extension dep)
         pkgs.skate # key-value store CLI (vicinae skate extension dep)
