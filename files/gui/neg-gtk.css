@@ -1,0 +1,171 @@
+/* neg-gtk: GTK3/4 color override based on neg.nvim palette
+ *
+ * Background: pure black (#000000) → very dark navy (#040f1c → #0c1c30)
+ * Text:       muted blue-grey (#a4b3c6) with #6d839e secondary
+ * Accent:     deep blue (#005faf → #367cb0)
+ * Success:    teal (#007a66)
+ * Error:      burgundy (#6b0f2a)
+ * Warning:    lilac (#c8a8ef)
+ *
+ * Designed to work on top of Flat-Remix-GTK theme structure.
+ */
+
+/* ── Base palette ─────────────────────────────────────────────────── */
+
+@define-color neg_bg        #040f1c; /* shade_03 — surface/page bg */
+@define-color neg_bg_dark   #000000; /* pure black — deep bg */
+@define-color neg_bg_card   #0c1c30; /* shade_05 — card/sidebar bg */
+@define-color neg_bg_widget #10233a; /* shade_06 — widget/button bg */
+@define-color neg_bg_hover  #1c334e; /* shade_08 — hover state */
+@define-color neg_bg_active #005faf; /* ops3 — selected/active */
+@define-color neg_border    #2b4462; /* shade_10 — borders */
+@define-color neg_border_dim #1c334e; /* shade_08 — dim borders */
+
+@define-color neg_fg        #a4b3c6; /* shade_20 — primary text */
+@define-color neg_fg_dim    #6d839e; /* shade_16 — secondary text */
+@define-color neg_fg_bright #d1e5ff; /* whit — bright/highlight text */
+@define-color neg_fg_accent #367bbf; /* selection_fg — accent text */
+
+@define-color neg_accent    #005faf; /* ops3 — primary accent */
+@define-color neg_accent2   #367cb0; /* ops1 — secondary accent */
+@define-color neg_select_bg #0d1824; /* selection_bg — selection bg */
+
+@define-color neg_success   #007a66; /* dadd — success */
+@define-color neg_error     #6b0f2a; /* dred — error/destructive */
+@define-color neg_warning   #c8a8ef; /* dwarn — warning */
+
+/* ── GTK named colors ─────────────────────────────────────────────── */
+
+@define-color theme_bg_color             @neg_bg;
+@define-color theme_fg_color             @neg_fg;
+@define-color theme_base_color           @neg_bg_dark;
+@define-color theme_text_color           @neg_fg;
+@define-color theme_selected_bg_color    @neg_accent;
+@define-color theme_selected_fg_color    @neg_fg_bright;
+@define-color theme_unfocused_bg_color   @neg_bg_card;
+@define-color theme_unfocused_fg_color   @neg_fg_dim;
+@define-color theme_unfocused_base_color @neg_bg;
+@define-color theme_unfocused_text_color @neg_fg_dim;
+@define-color borders                    @neg_border;
+@define-color unfocused_borders          @neg_border_dim;
+
+@define-color theme_tooltip_bg_color     @neg_bg_card;
+@define-color theme_tooltip_fg_color     @neg_fg;
+
+@define-color theme_titlebar_bg_color        @neg_bg;
+@define-color theme_titlebar_fg_color        @neg_fg;
+@define-color theme_titlebar_button_background @neg_bg_widget;
+
+@define-color content_view_bg @neg_bg_dark;
+
+/* ── Widget colors ────────────────────────────────────────────────── */
+
+@define-color button_bg_color       @neg_bg_widget;
+@define-color button_hover_bg_color @neg_bg_hover;
+@define-color button_active_bg_color @neg_accent;
+@define-color button_fg_color       @neg_fg;
+
+@define-color entry_bg_color @neg_bg_dark;
+@define-color entry_fg_color @neg_fg;
+@define-color entry_border_color @neg_border;
+
+@define-color menu_bg_color @neg_bg;
+@define-color menu_fg_color @neg_fg;
+@define-color menu_selected_bg_color @neg_accent;
+@define-color menu_selected_fg_color @neg_fg_bright;
+@define-color menu_bar_bg_color @neg_bg;
+@define-color menu_bar_fg_color @neg_fg;
+
+@define-color scrollbar_bg_color @neg_bg_card;
+@define-color scrollbar_slider_color @neg_border;
+
+@define-color progressbar_bg_color @neg_accent;
+@define-color progressbar_fg_color @neg_fg_bright;
+
+@define-color switch_bg_color @neg_bg_widget;
+@define-color switch_active_bg_color @neg_accent;
+@define-color switch_slider_color @neg_fg;
+
+@define-color sidebar_bg_color @neg_bg_card;
+@define-color sidebar_fg_color @neg_fg;
+@define-color sidebar_selected_bg_color @neg_accent;
+@define-color sidebar_selected_fg_color @neg_fg_bright;
+
+@define-color view_bg_color @neg_bg_dark;
+@define-color view_fg_color @neg_fg;
+@define-color view_selected_bg_color @neg_select_bg;
+@define-color view_selected_fg_color @neg_fg_accent;
+
+@define-color dialog_bg_color @neg_bg;
+@define-color dialog_fg_color @neg_fg;
+
+/* ── Status colors ────────────────────────────────────────────────── */
+
+@define-color success_color @neg_success;
+@define-color warning_color @neg_warning;
+@define-color error_color   @neg_error;
+@define-color destructive_bg_color @neg_error;
+
+/* ── Specific widget overrides ────────────────────────────────────── */
+
+scrollbar.vertical slider,
+scrollbar.horizontal slider {
+  background-color: @scrollbar_slider_color;
+  border-radius: 2px;
+  min-width: 4px;
+  min-height: 4px;
+}
+
+scrollbar.vertical slider:hover,
+scrollbar.horizontal slider:hover {
+  background-color: lighter(@scrollbar_slider_color);
+}
+
+entry {
+  background-color: @entry_bg_color;
+  color: @entry_fg_color;
+  border-color: @entry_border_color;
+}
+
+entry:focus {
+  border-color: @neg_accent;
+}
+
+button {
+  background-color: @button_bg_color;
+  color: @button_fg_color;
+  border-color: @neg_border;
+}
+
+button:hover {
+  background-color: @button_hover_bg_color;
+}
+
+button:active,
+button:checked {
+  background-color: @button_active_bg_color;
+  color: @neg_fg_bright;
+}
+
+/* ── Nautilus / file manager ──────────────────────────────────────── */
+
+.nautilus-window .sidebar {
+  background-color: @sidebar_bg_color;
+}
+
+.nautilus-window .sidebar .view {
+  background-color: @sidebar_bg_color;
+  color: @sidebar_fg_color;
+}
+
+.nautilus-window .sidebar .view:selected {
+  background-color: @sidebar_selected_bg_color;
+  color: @sidebar_selected_fg_color;
+}
+
+/* ── Selection box consistency ─────────────────────────────────────── */
+
+selection {
+  background-color: @neg_select_bg;
+  color: @neg_fg_accent;
+}
