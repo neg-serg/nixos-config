@@ -145,25 +145,22 @@ let
       "zswap.zpool=${config.profiles.performance.zswap.zpool}"
     ];
 
-  # CPU isolation params for gaming (gated by gamingCpuSet)
+  # CPU pinning params for gaming (SCX + cpuset, no kernel isolation)
+  # SCX scx_lavd handles V-Cache CCD awareness at the scheduler level;
+  # systemd-run AllowedCPUs pins games to V-Cache CCD via cgroup cpuset.
+  # Kernel-level isolcpus/nohz_full are removed to allow SCX coexistence.
   gameCpuSet = config.profiles.performance.gamingCpuSet or "";
   houseCpuSet = config.profiles.performance.housekeepingCpuSet or "";
 
-  game_isolation_params =
+  game_affinity_params =
     let
-      # Helper: ensure rcu_nocb_poll is enabled when rcu_nocbs is used
-      isolation_params = [
-        "isolcpus=domain,managed_irq,${gameCpuSet}"
-        "nohz_full=${gameCpuSet}"
-        "rcu_nocbs=${gameCpuSet}"
-        "rcu_nocb_poll=1"
-      ]
-      ++ lib.optionals (houseCpuSet != "") [
-        "irqaffinity=${houseCpuSet}"
-        "kthread_cpus=${houseCpuSet}"
-      ];
+      affinity_params =
+        lib.optionals (houseCpuSet != "") [
+          "irqaffinity=${houseCpuSet}"
+          "kthread_cpus=${houseCpuSet}"
+        ];
     in
-    lib.optionals (gameCpuSet != "") isolation_params;
+    lib.optionals (gameCpuSet != "") affinity_params;
 in
 {
   # Use mkMerge to contribute to boot.kernelParams in two phases:
@@ -225,11 +222,10 @@ in
 
         kernelParams =
           lib.optionals perfEnabled perf_params
-          ++ game_isolation_params
+          ++ game_affinity_params
           ++ extra_security
           ++ lib.optionals (config.profiles.security.enable or false) [ "page_poison=1" ];
       };
-      security.protectKernelImage = false;
     }
   ];
 }

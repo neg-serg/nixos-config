@@ -119,17 +119,18 @@ in
           defaultText = "kernel default";
         };
 
-    # CPU set for game pinning (used by modules/user/games game-run wrapper)
+    # CPU set for game pinning via cgroup cpuset (systemd-run AllowedCPUs).
+    # No longer requires kernel isolcpus — SCX scx_lavd handles scheduling.
     gamingCpuSet = mkStrOpt {
       default = "";
-      description = "Comma-separated CPU list for pinning game processes (e.g., 0-3,16-19). Empty disables default pinning.";
+      description = "Comma-separated CPU list for pinning game processes (e.g., 0-3,16-19). Empty disables default pinning via systemd-run.";
       example = "0-3,16-19";
     };
 
     # Housekeeping CPU set (complement of gamingCpuSet)
     housekeepingCpuSet = mkStrOpt {
       default = "";
-      description = "Comma-separated CPU list for housekeeping (kernel threads, IRQs) — the complement of gamingCpuSet. Must be set alongside gamingCpuSet for irqaffinity/kthread_cpus.";
+      description = "Comma-separated CPU list for IRQ/kthread affinity — the complement of gamingCpuSet. Passed as irqaffinity= and kthread_cpus= kernel params.";
       example = "4-15,20-31";
     };
 
