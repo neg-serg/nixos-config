@@ -1,5 +1,3 @@
-______________________________________________________________________
-
 ---
 name: openapi
 description: "OpenAPI/Swagger spec validation, generation, and tooling"

@@ -1,5 +1,3 @@
-______________________________________________________________________
-
 ---
 name: github
 description: "GitHub operations — issues, PRs, repos, releases, search via gh CLI and API"
