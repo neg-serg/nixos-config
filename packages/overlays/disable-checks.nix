@@ -1,4 +1,4 @@
-finalPrev: {
+inputs: final: finalPrev: {
   # Disable flaky OpenLDAP tests (fails on syncreplication)
   openldap = finalPrev.openldap.overrideAttrs (_old: {
     doCheck = false;
