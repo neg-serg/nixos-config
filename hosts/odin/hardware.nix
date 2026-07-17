@@ -221,7 +221,7 @@
 
     # Disable writeback throttling on NVMe — conflicts with ZFS's own I/O scheduler.
     # WBT adds latency jitter that ZFS doesn't need (ZFS schedules I/O internally).
-    ACTION=="add|change", SUBSYSTEM=="block", KERNEL=="nvme*n*", ATTR{queue/wbt_lat_usec}="0"
+    ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", KERNEL=="nvme*n*", ATTR{queue/wbt_lat_usec}="0"
   '';
   environment.systemPackages = [
   ];
