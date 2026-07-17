@@ -20,7 +20,7 @@ in
       (old: {
         src = inputs.opencode;
         version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
-        node_modules = old.node_modules.overrideAttrs (nmOld: {
+        node_modules = old.node_modules.overrideAttrs (_: {
           outputHash = "sha256-1NUtprMH8GnSUqQ+mHQSC+JLU7lwzHe6XXYHe129WmE=";
           outputHashAlgo = "sha256";
           outputHashMode = "recursive";
@@ -47,7 +47,7 @@ in
 
       opencode-dev =
         (final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { }).overrideAttrs
-          (old: {
+          (_: {
             src = inputs.opencode;
             version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
           });
