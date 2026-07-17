@@ -1,8 +1,4 @@
-{
-  lib,
-  pkgs,
-  ...
-}:
+{ ... }:
 {
   hyprlandConf = ''
     source = ~/.config/hypr/hyprland.lua

@@ -55,7 +55,6 @@ let
       port = 587;
     };
   };
-  enableImapnotify = false;
 
 in
 {

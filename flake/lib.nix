@@ -7,7 +7,7 @@ let
       hyprlandPlugins = prev.hyprlandPlugins // { };
     });
 
-  bintoolsBootstrapFix = final: prev: {
+  bintoolsBootstrapFix = prev: {
     bintools = prev.bintools // {
       passthru = (prev.bintools.passthru or { }) // {
         isFromBootstrapFiles =

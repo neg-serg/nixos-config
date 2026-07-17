@@ -1,13 +1,4 @@
-{
-  pkgs,
-  lib,
-  config,
-  neg,
-  ...
-}:
-let
-in
-{
+{ lib, neg, ... }: {
   config = lib.mkMerge [
     {
       # Packages

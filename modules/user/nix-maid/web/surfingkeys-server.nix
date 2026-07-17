@@ -7,7 +7,6 @@
 }:
 let
   systemdUser = import ../../../lib/systemd-user.nix { inherit lib; };
-  port = 18888;
 in
 with lib;
 mkIf (config.features.web.enable or false) {

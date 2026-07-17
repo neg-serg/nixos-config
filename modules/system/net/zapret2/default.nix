@@ -12,7 +12,7 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption mkIf;
+  inherit (lib) mkIf;
   cfg = config.features.net.zapret2 or { };
 
   zapret2HostlistDomains = [
@@ -29,11 +29,6 @@ let
     "yt3.ggpht.com"
     "lh3.googleusercontent.com"
     "registry.ollama.ai"
-  ];
-
-  vpnDomains = [
-    "xeovo.com"
-    "my.xeovo.com"
   ];
 
   hostlistFile = pkgs.writeText "zapret-hosts-user.txt" (
@@ -77,8 +72,7 @@ let
         ;;
     esac
   '';
-in
-{
+in {
   config = mkIf cfg.enable {
     environment.systemPackages = [ pkgs.ipset ];
 
