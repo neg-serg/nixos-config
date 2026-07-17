@@ -517,7 +517,7 @@ Additionally, a Markdown language policy is enforced:
 - This repo favors a consistent module pattern and provides helpers in `lib/opts.nix`.
 - See aggregated options and module examples in generated docs under flake outputs.
 
-## Gaming: Per‑Game CPU Isolation & Launchers
+## Gaming: Hybrid CPU Scheduling (SCX + cpuset)
 
 ### Games Stack Toggle
 
@@ -526,34 +526,45 @@ Additionally, a Markdown language policy is enforced:
   - `profiles.games.enable = false;` to disable Steam/Gamescope wrappers/MangoHud system‑wide.
   - Defaults to `true` to preserve current behavior.
 
-- Isolated CPUs: host `odin` reserves cores `0-3,16-19` for low‑latency gaming. System services are
-  kept on housekeeping CPUs.
+- **Hybrid approach**: instead of kernel-level `isolcpus` (which blocks SCX schedulers),
+  we use **SCX `scx_lavd`** (dual-CCD X3D-aware BPF scheduler) plus **cgroup cpuset**
+  (`systemd-run -p AllowedCPUs=…`) to pin games to the V-Cache CCD.
 
-- Transient scope runner: `game-run` launches any command in a user systemd scope and pins it to the
-  isolated CPUs via `game-affinity-exec`.
+- Host `odin` pins games to V-Cache CCD cores `1-3,16-19` (96MB L3) via `systemd-run`.
+  Kernel threads and IRQs stay on the housekeeping CCD `4-15,20-31` (32MB L3)
+  via `irqaffinity=` and `kthread_cpus=` boot params.
+
+- Transient scope runner: `game run` (Rust binary) launches any command in a user systemd
+  scope and pins it to the gaming CPUs via `AllowedCPUs`.
 
 - Gamescope helpers: `gamescope-pinned`, `gamescope-perf`, `gamescope-quality`, `gamescope-hdr`, and
-  `gamescope-targetfps` wrap `game-run`.
+  `gamescope-targetfps` wrap `game run`.
+
+### Verifying SCX and affinity
+
+- Check SCX scheduler: `cat /sys/kernel/sched_ext/state` → expect `enabled`, `ops` = `scx_lavd`
+- Show CPU mask of current shell: `grep Cpus_allowed_list /proc/$$/status`
+- Check a game run: `game run --dry-run -- /bin/true`
 
 ### Steam (per‑game Launch Options)
 
-- Basic: `game-run %command%`
-- With Gamescope (fullscreen + VRR): `game-run gamescope -f --adaptive-sync -- %command%`
-- Override CPU set for a game: `GAME_PIN_CPUSET=0-3,16-19 game-run %command%`
-- Disable GameMode for a game: `GAME_RUN_USE_GAMEMODE=0 game-run %command%`
+- Basic: `game run -- %command%`
+- With Gamescope (fullscreen + VRR): `game run -- gamescope -f --adaptive-sync -- %command%`
+- Override CPU set for a game: `GAME_PIN_CPUSET=0-3,16-19 game run -- %command%`
+- Disable pinning: `game run --no-pin -- %command%`
+- Disable GameMode: `game run --no-gamemode -- %command%`
 
 ### Non‑Steam games
 
-- Run directly: `game-run /path/to/game`
+- Run directly: `game run -- /path/to/game`
 - With Gamescope presets:
-  - Performance: `gamescope-perf <game | command-with-args>`
-  - Quality: `gamescope-quality <game | command-with-args>`
-  - HDR: `gamescope-hdr <game | command-with-args>`
-  - Target FPS autoscale: `TARGET_FPS=120 gamescope-targetfps <cmd>`
+  - Performance: `game scope --preset perf -- %command%`
+  - Quality: `game scope --preset quality -- %command%`
+  - HDR: `game scope --hdr -- %command%`
 
 ### Environment knobs
 
-- `GAME_PIN_CPUSET`: CPU list or ranges (default `0-3,16-19`). Examples: `14,30` or `14-15,30-31`.
+- `GAME_PIN_CPUSET`: CPU list or ranges (default `1-3,16-19`). Examples: `14,30` or `14-15,30-31`.
 - `GAME_RUN_USE_GAMEMODE`: `1` (default) to run via `gamemoderun`, set `0` to disable.
 - `GAMESCOPE_FLAGS`: extra flags appended to gamescope in `gamescope-pinned`.
 - `GAMESCOPE_RATE`, `GAMESCOPE_OUT_W`, `GAMESCOPE_OUT_H`: override refresh and output size for
@@ -561,45 +572,18 @@ Additionally, a Markdown language policy is enforced:
 - `TARGET_FPS`, `NATIVE_BASE_FPS`, `GAMESCOPE_AUTOSCALE`: control autoscaling in
   `gamescope-targetfps`.
 
-### Verifying affinity and scope
-
-- Show CPU mask of current shell: `grep Cpus_allowed_list /proc/$$/status`
-- Check a game run: `game-run bash -lc 'grep Cpus_allowed_list /proc/$$/status; sleep 1'`
-
-## Main User (single source of truth)
-
-- Configure the primary account via `users.main.*` in modules:
-  - `users.main.name`: login name (default `neg`).
-  - `users.main.uid` / `users.main.gid`: IDs for user/group (default `1000`).
-  - `users.main.group`: primary group name (defaults to `users.main.name`).
-  - `users.main.description`, `users.main.opensshAuthorizedKeys`, `users.main.hashedPassword`.
-- Modules use this instead of hardcoded names/IDs:
-  - MPD runs as `users.main.name` and sets `XDG_RUNTIME_DIR` from `users.main.uid`.
-  - Filesystem bind mounts under the main home instead of `/home/neg/...`.
-  - Extra groups and PAM limits reference the main user/group.
-- Inspect transient scope: `systemctl --user list-units 'app-*scope' --no-pager`
-
-### Advanced: Nested Wayland (expose-wayland)
-
-- To run native Wayland clients inside Gamescope (or even nested Hyprland), use `--expose-wayland`.
-- Command: `game-run gamescope --expose-wayland -- %command%`
-- Use case: running applications that require a Wayland socket (like some SDL3 apps or development
-  tools) or for testing.
-- Note: Experimental. detailed input/focus issues may occur. Not needed for typical Steam/Proton
-  gaming.
-
 Notes:
 
 - Do not wrap the entire Steam client; prefer per‑game Launch Options to keep downloads/tooling on
   housekeeping CPUs.
-- To change the default isolated cores system‑wide, set `GAME_PIN_CPUSET` in the environment or
-  adjust host CPU isolation in `modules/hardware/host/odin.nix`.
+- To change the default gaming cores system‑wide, adjust `gamingCpuSet` in
+  `hosts/odin/hardware.nix`.
 
 ## Gaming Recommendations
 
 - 4K/240 Hz (VRR): use Gamescope with fullscreen and VRR to improve frame pacing on Wayland.
 
-  - Typical: `game-run gamescope -f --adaptive-sync -r 240 -- %command%`
+  - Typical: `game run -- gamescope -f --adaptive-sync -r 240 -- %command%`
   - If GPU‑limited, upscale: render lower, output native. Example 1440p→4K:
     `-w 2560 -h 1440 -W 3840 -H 2160 --fsr-sharpness 3`.
 
@@ -610,7 +594,7 @@ Notes:
 
 - Latency and stability:
 
-  - Prefer per‑game CPU set: `GAME_PIN_CPUSET=0-3,16-19 game-run %command%`. If a game spawns many
+  - Prefer per‑game CPU set: `GAME_PIN_CPUSET=1-3,16-19 game run -- %command%`. If a game spawns many
     threads, widen (e.g. `14-15,28-31`).
   - Keep VRR on: `--adaptive-sync`. If tearing or sync issues, test without it and/or cap FPS
     slightly below max (e.g. 237 on 240 Hz) via in‑game limiter or MangoHud.
@@ -624,7 +608,7 @@ Notes:
 - MangoHud overlay:
 
   - Toggle with `MANGOHUD=1`. FPS limit example:
-    `MANGOHUD=1 MANGOHUD_CONFIG=fps_limit=237 game-run %command%`.
+    `MANGOHUD=1 MANGOHUD_CONFIG=fps_limit=237 game run -- %command%`.
 
 - Mesa/AMD specifics:
 
@@ -641,7 +625,7 @@ Notes:
 - Useful commands:
 
   - Show current process CPU set: `grep Cpus_allowed_list /proc/<pid>/status`.
-  - Reuse per‑game launch: `game-run %command%` (Steam), `game-run <path>` (outside Steam).
+  - Reuse per‑game launch: `game run -- %command%` (Steam), `game run -- <path>` (outside Steam).
 
 ### Opinionated Presets (my own picks)
 
@@ -651,36 +635,36 @@ points and tweak for your rig/game.
 - Competitive FPS (lowest latency, 240 Hz VRR):
 
   - Steam Launch Options:
-    - `GAME_PIN_CPUSET=0-3,16-19 MANGOHUD=1 MANGOHUD_CONFIG=fps_limit=237 game-run gamescope -f --adaptive-sync -r 240 -- %command%`
+    - `GAME_PIN_CPUSET=1-3,16-19 MANGOHUD=1 MANGOHUD_CONFIG=fps_limit=237 game run -- gamescope -f --adaptive-sync -r 240 -- %command%`
   - Notes: cap below max refresh (237/240) for steadier frametimes; try adding `--rt` to Gamescope
     if stability is OK; turn off in‑game V‑Sync.
 
 - Cinematic Single‑Player (quality first, steady 120 FPS feel):
 
-  - If native 4K sustainable: `game-run gamescope -f --adaptive-sync -r 120 -- %command%`
+  - If native 4K sustainable: `game run -- gamescope -f --adaptive-sync -r 120 -- %command%`
   - If GPU‑bound: 1800p→4K upscale:
-    `game-run gamescope -f --adaptive-sync -r 120 -w 3200 -h 1800 -W 3840 -H 2160 --fsr-sharpness 3 -- %command%`
+    `game run -- gamescope -f --adaptive-sync -r 120 -w 3200 -h 1800 -W 3840 -H 2160 --fsr-sharpness 3 -- %command%`
   - Notes: on 240 Hz panel 120 FPS also feels smooth with VRR and frees headroom for HDR/RT.
 
 - Heavy DX12/Open‑World (e.g., RT heavy):
 
-  - Start conservative: `TARGET_FPS=110 game-run gamescope -f --adaptive-sync -- %command%`
+  - Start conservative: `TARGET_FPS=110 game run -- gamescope -f --adaptive-sync -- %command%`
   - Optional RADV toggles (may change with Mesa versions): `RADV_PERFTEST=gpl shadercache` — only if
     you know what you're doing.
 
 - Strategy/Sim With Many Worker Threads:
 
-  - Widen CPU set for the game: `GAME_PIN_CPUSET=12-15,28-31 game-run %command%`
+  - Widen CPU set for the game: `GAME_PIN_CPUSET=12-15,28-31 game run -- %command%`
   - If stutters from background tasks — keep Gamescope and MangoHud, but drop `--rt`.
 
 - Emulators / Older GL Titles:
 
-  - `MESA_GLTHREAD=true game-run %command%`
+  - `MESA_GLTHREAD=true game run -- %command%`
   - For strict frame pacing, prefer integer scale in Gamescope or cap FPS to native rate divisors.
 
 - HDR Titles:
 
-  - `game-run gamescope --hdr-enabled -f --adaptive-sync -- %command%`
+  - `game run -- gamescope --hdr-enabled -f --adaptive-sync -- %command%`
   - In‑game HDR must be toggled; verify monitor HDR OSD and Gamescope logs.
 
 Tuning tips:
