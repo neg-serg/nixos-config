@@ -5,6 +5,7 @@ with lib;
     mail = {
       enable = mkBool "enable Mail stack (notmuch, isync, vdirsyncer, etc.)" true;
       vdirsyncer.enable = mkBool "enable Vdirsyncer sync service/timer" true;
+      mbsync.enable = mkBool "enable mbsync IMAP sync service/timer" true;
     };
 
     # Torrent stack (Transmission and related tools/services)
