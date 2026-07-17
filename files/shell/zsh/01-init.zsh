@@ -104,8 +104,7 @@ autoload -Uz run-help ${^fpath}/run-help-*(N:t) || return
 (( $+aliases[run-help] )) && unalias run-help # make run-help more useful
 
 
-autoload -Uz url-quote-magic
-zle -N self-insert url-quote-magic
+# bracketed-paste-magic handles URL quoting AND paste handling (supersedes url-quote-magic)
 autoload -Uz bracketed-paste-magic
 zle -N bracketed-paste bracketed-paste-magic
 autoload -Uz fzf-on-tab
