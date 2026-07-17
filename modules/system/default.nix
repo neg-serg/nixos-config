@@ -15,6 +15,7 @@
     ./log-ttys.nix
     ./oomd.nix
     ./pkgs.nix # Nix package manager
+    ./scx.nix
     ./preserve-flake.nix
     ./swapfile.nix
     ./tailscale.nix
