@@ -1,5 +1,3 @@
-______________________________________________________________________
-
 ---
 name: sops
 description: "SOPS-encrypted secrets management for NixOS. Use when creating, editing, or viewing encrypted secrets."
