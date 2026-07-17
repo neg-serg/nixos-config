@@ -1,5 +1,3 @@
-______________________________________________________________________
-
 ---
 name: formats
 description: "Convert between JSON, YAML, TOML, XML and other config formats using CLI tools"
