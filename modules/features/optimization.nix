@@ -18,11 +18,12 @@ in
   config = lib.mkIf cfg.enable {
     nixpkgs.hostPlatform.system = "x86_64-linux";
 
-    # SCX disabled: conflicts with isolcpus (kernel CPU isolation for gaming)
-    # and scx_lavd does not support dual-CCD X3D topology on LTS kernels.
-    # To re-enable: set services.scx.enable = true; in host config
+    # SCX BPF scheduler replaces kernel CPU isolation.
+    # scx_lavd is dual-CCD X3D-aware — it detects V-Cache CCD at runtime
+    # and favours it for latency-sensitive tasks without isolcpus.
+    features.optimization.scx.enable = lib.mkDefault true;
 
     # Ananicy-cpp removed — was causing cgroup v2 errors in current boot.
-    # Process auto-prioritization is handled by CPU isolation + GAME_PIN_CPUSET instead.
+    # Process prioritization is handled by SCX + cpuset pinning.
   };
 }
