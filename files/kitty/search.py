@@ -258,7 +258,7 @@ class Search(Handler):
 
             self.line_edit.right(end - 1)
             self.refresh()
-        elif key_event.matches("tab"):
+        elif key_event.matches("tab") or key_event.matches("ctrl+space"):
             self.switch_mode()
             self.refresh()
         elif key_event.matches("up"):
