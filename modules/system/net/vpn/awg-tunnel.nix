@@ -12,10 +12,9 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption mkIf;
+  inherit (lib) mkIf;
   cfg = config.features.net.awgTunnel or { };
-in
-{
+in {
   config = mkIf cfg.enable {
     environment.etc."wireguard/awg-tunnel.conf" = {
       mode = "0600";
