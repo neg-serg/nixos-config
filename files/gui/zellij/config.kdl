@@ -45,9 +45,9 @@ plugins {
         path "tab-bar"
         // Shows open tabs at the top of the screen
     }
-    status-bar {
-        path "status-bar"
-        // Shows mode, session name, pane info at the bottom
+    compact-bar {
+        path "compact-bar"
+        // Minimal status bar — saves vertical space
     }
     strider {
         path "strider"

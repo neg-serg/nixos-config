@@ -65,8 +65,10 @@
     };
   };
 
-  # Reduce ZFS forceImport risk: don't always force import on boot
-  boot.zfs.forceImportRoot = false;
+  # forceImportRoot needed for kexec: ZFS pools aren't cleanly exported
+  # during systemctl kexec (no orderly pool export on kexec reboot).
+  # Without -f the new kernel's initrd would fail to import tank.
+  boot.zfs.forceImportRoot = true;
 
   # Host-specific kernel parameters and boot tuning
   boot = {
@@ -178,6 +180,37 @@
     # via modules/system/boot.nix when security.tpm2.enable = false
   };
 
+  # kexec preparation hooks
+  systemd.services.prepare-kexec = {
+    serviceConfig.ExecStartPre = [
+      # Export non-root ZFS pools before kexec so the new kernel imports
+      # them cleanly (without -f). Skip pools that still have mounted
+      # datasets (common for gamez during gameplay).
+      (pkgs.writeShellScript "kexec-prepare-zfs" ''
+        for pool in gamez zero; do
+          if zpool status "$pool" >/dev/null 2>&1; then
+            mounted="$(zfs list -H -o mounted "$pool" 2>/dev/null | grep -c yes || true)"
+            if [ "$mounted" -eq 0 ]; then
+              zpool export "$pool" 2>/dev/null || true
+            fi
+          fi
+        done
+      '')
+      # Unbind discrete GPU (Radeon RX 9070 XT, Navi 48) from amdgpu
+      # before kexec to force clean re-initialisation in the new kernel.
+      # Without this, amdgpu may fail to reset GPU firmware/VRAM state
+      # on kexec, causing lockup during initrd module load.
+      (pkgs.writeShellScript "kexec-prepare-gpu" ''
+        for slot in 0000:03:00.0 0000:7c:00.0; do
+          path="/sys/bus/pci/drivers/amdgpu/$slot"
+          if [ -e "$path" ]; then
+            echo "$slot" > /sys/bus/pci/drivers/amdgpu/unbind 2>/dev/null || true
+          fi
+        done
+      '')
+    ];
+  };
+
   # Avoid double compression for swap
   zramSwap.enable = false;
 
@@ -224,6 +257,19 @@
     ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", KERNEL=="nvme*n*", ATTR{queue/wbt_lat_usec}="0"
   '';
   environment.systemPackages = [
+    (pkgs.writeShellScriptBin "kexec-rebuild" ''
+      set -eu
+      # Atomically rebuild the system and kexec into the new generation.
+      # Passes any extra arguments (e.g. --flake, --use-remote-sudo) through.
+      if [ "$${EUID:-}" -ne 0 ] && [ "$${UID:-}" -ne 0 ]; then
+        echo "kexec-rebuild: must be run as root" >&2
+        exit 1
+      fi
+      echo "=== Rebuilding NixOS ==="
+      nixos-rebuild switch "$@"
+      echo "=== kexec'ing into new generation ==="
+      systemctl kexec
+    '')
   ];
 
   # Skip unnecessary boot-time services (~1s saved)
