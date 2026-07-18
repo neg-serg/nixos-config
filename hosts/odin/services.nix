@@ -272,6 +272,7 @@ lib.mkMerge [
       (pkgs.writeShellScriptBin "fan-auto" ''
         exec ${lib.getExe pkgs.neg.hwctl} fan auto
       '') # Switch fans to automatic control
+      pkgs.neg.term39 # Retro-styled terminal multiplexer (MS-DOS aesthetic)
     ];
     environment.etc = {
       "avahi/services/smb.service".text = ''
