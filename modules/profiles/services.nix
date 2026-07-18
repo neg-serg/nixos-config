@@ -259,6 +259,103 @@ in
     mpd.enable = opts.mkEnableOption "MPD (Music Player Daemon) profile.";
     avahi.enable = opts.mkEnableOption "Avahi (mDNS) profile.";
     samba.enable = opts.mkEnableOption "Samba (SMB/CIFS) fileshare profile.";
+    wyoming-openai = {
+      enable = opts.mkEnableOption "Wyoming OpenAI proxy — STT/TTS bridge for Home Assistant.";
+      uri = opts.mkStrOpt {
+        default = "tcp://0.0.0.0:10300";
+        description = "Wyoming server URI to bind to.";
+      };
+      logLevel = opts.mkStrOpt {
+        default = "INFO";
+        description = "Logging level (INFO, DEBUG, etc.).";
+      };
+      languages = opts.mkListOpt types.str {
+        default = [ "en" ];
+        description = "Space-separated list of supported languages to advertise.";
+      };
+      stt = {
+        enable = opts.mkBoolOpt {
+          default = false;
+          description = "Enable STT (speech-to-text) endpoint.";
+        };
+        key = opts.mkStrOpt {
+          default = "";
+          description = "API key for OpenAI-compatible STT service. WARNING: stored in world-readable Nix store; use sops-nix or env file.";
+          notes = "For production, pass via SOPS secret or environment file instead of plain-text.";
+        };
+        url = opts.mkStrOpt {
+          default = "https://api.openai.com/v1";
+          description = "Base URL for OpenAI-compatible STT API.";
+        };
+        models = opts.mkListOpt types.str {
+          default = [ ];
+          description = "STT models to advertise (e.g. whisper-1, gpt-4o-transcribe).";
+        };
+        streamingModels = opts.mkListOpt types.str {
+          default = [ ];
+          description = "STT models supporting streaming (e.g. gpt-4o-transcribe).";
+        };
+        backend = opts.mkStrOpt {
+          default = "";
+          description = "Backend type for STT (OPENAI, SPEACHES, LOCALAI). Auto-detected when empty.";
+        };
+        temperature = opts.mkStrOpt {
+          default = "";
+          description = "Sampling temperature for STT (0.0 to 1.0).";
+        };
+        prompt = opts.mkStrOpt {
+          default = "";
+          description = "Optional prompt to guide STT model style.";
+        };
+      };
+      tts = {
+        enable = opts.mkBoolOpt {
+          default = false;
+          description = "Enable TTS (text-to-speech) endpoint.";
+        };
+        key = opts.mkStrOpt {
+          default = "";
+          description = "API key for OpenAI-compatible TTS service. WARNING: stored in world-readable Nix store; use sops-nix or env file.";
+          notes = "For production, pass via SOPS secret or environment file instead of plain-text.";
+        };
+        url = opts.mkStrOpt {
+          default = "https://api.openai.com/v1";
+          description = "Base URL for OpenAI-compatible TTS API.";
+        };
+        models = opts.mkListOpt types.str {
+          default = [ ];
+          description = "TTS models to advertise (e.g. tts-1, gpt-4o-mini-tts).";
+        };
+        voices = opts.mkListOpt types.str {
+          default = [ ];
+          description = "TTS voices to advertise (e.g. alloy, echo, fable, onyx, nova, shimmer).";
+        };
+        streamingModels = opts.mkListOpt types.str {
+          default = [ ];
+          description = "TTS models to enable incremental streaming (via pySBD sentence chunking).";
+        };
+        backend = opts.mkStrOpt {
+          default = "";
+          description = "Backend type for TTS (OPENAI, KOKORO_FASTAPI). Auto-detected when empty.";
+        };
+        speed = opts.mkStrOpt {
+          default = "";
+          description = "Speed of TTS output (0.25 to 4.0).";
+        };
+        instructions = opts.mkStrOpt {
+          default = "";
+          description = "Instructions to control TTS voice style.";
+        };
+        streamingMinWords = opts.mkStrOpt {
+          default = "";
+          description = "Minimum words per text chunk for incremental TTS streaming.";
+        };
+        streamingMaxChars = opts.mkStrOpt {
+          default = "";
+          description = "Maximum characters per text chunk for incremental TTS streaming.";
+        };
+      };
+    };
     seafile = {
       enable = opts.mkEnableOption "Seafile file sync and sharing server profile (Podman containers + optional Caddy proxy).";
       hostName = opts.mkStrOpt {

@@ -193,6 +193,26 @@ lib.mkMerge [
           device = "net1";
         };
       };
+      # Wyoming OpenAI proxy — bridges Wyoming protocol with OpenAI-compatible STT/TTS
+      # Uncomment and configure to enable:
+      # wyoming-openai = {
+      #   enable = true;
+      #   stt = {
+      #     enable = true;
+      #     key = "...";  # Or use SOPS secret + environment file
+      #     url = "https://api.openai.com/v1";
+      #     models = [ "whisper-1" "gpt-4o-transcribe" ];
+      #     streamingModels = [ "gpt-4o-transcribe" ];
+      #   };
+      #   tts = {
+      #     enable = true;
+      #     key = "...";
+      #     url = "https://api.openai.com/v1";
+      #     models = [ "tts-1" "gpt-4o-mini-tts" ];
+      #     voices = [ "alloy" "echo" "fable" "onyx" "nova" "shimmer" ];
+      #     streamingModels = [ "tts-1" ];
+      #   };
+      # };
     };
     # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
 
