@@ -20,6 +20,7 @@
   brrtfetch = pkgs.neg.brrtfetch;
   talktype = pkgs.neg.talktype;
 
+  term39 = pkgs.neg.term39; # Retro-styled terminal multiplexer
   proteinview = pkgs.neg.proteinview; # Terminal protein structure viewer with interactive 3D visualization
 
   omp = pkgs.neg.omp; # Oh My Pi (omp) — AI coding agent with LSP, DAP, subagents
