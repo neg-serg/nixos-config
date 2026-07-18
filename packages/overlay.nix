@@ -43,6 +43,7 @@ in
     // (dev.neg or { })
     // (gui.neg or { })
     // {
+      wyoming-openai = final.callPackage ./wyoming-openai { };
       telegram-static = final.callPackage ./telegram-static { };
 
       opencode-dev =
