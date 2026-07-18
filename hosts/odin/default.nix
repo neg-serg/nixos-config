@@ -122,4 +122,11 @@
     "nftables.service" # Firewall
   ];
   boot.plymouth.enable = false; # Plymouth removed — adds boot delay, splash not needed on this host
+
+  # Zellij terminal multiplexer
+  environment.systemPackages = [
+    pkgs.zellij # Terminal workspace with batteries included (Rust)
+  ];
+
+  environment.etc."zellij/config.kdl".text = builtins.readFile ./../../files/gui/zellij/config.kdl;
 }

@@ -1,0 +1,126 @@
+// Zellij configuration — managed by NixOS
+// https://zellij.dev/documentation/configuration.html
+
+// ============================================================
+// Theme
+// ============================================================
+theme "catppuccin-mocha"
+
+// ============================================================
+// Default plugins — included in the zellij binary
+// ============================================================
+plugins {
+    tab-bar {
+        path "tab-bar"
+        // Shows open tabs at the top of the screen
+    }
+    status-bar {
+        path "status-bar"
+        // Shows mode, session name, pane info at the bottom
+    }
+    strider {
+        path "strider"
+        // File tree browser — toggle with Ctrl+o or mouse click on the left edge
+    }
+    session-manager {
+        path "session-manager"
+        // Session list/switcher
+    }
+}
+
+// ============================================================
+// Simplified keybindings (Ctrl+B prefix, like tmux)
+// ============================================================
+keybinds {
+    normal {
+        // --- Prefix: Ctrl+B (clears terminal for zellij commands) ---
+        bind "Ctrl b" {
+            SwitchToMode "locked"; // Releases Ctrl+B for zellij
+            FocusNextPane;
+        }
+
+        // --- Pane management ---
+        bind "Ctrl v" { SwitchToMode "resize"; }
+        bind "Ctrl n" { NewPane; SwitchToMode "normal"; }
+        bind "Ctrl w" { CloseFocus; SwitchToMode "normal"; }
+
+        // --- Tabs ---
+        bind "Ctrl t" { SwitchToMode "tab"; }
+
+        // --- Session ---
+        bind "Ctrl s" { SwitchToMode "session"; }
+
+        // --- Search/scroll ---
+        bind "Ctrl f" { SwitchToMode "scroll"; }
+
+        // --- Plugins ---
+        bind "Ctrl o" { LaunchOrFocusPlugin "strider" { floating true }; SwitchToMode "normal"; }
+        bind "Ctrl p" { LaunchOrFocusPlugin "session-manager" { floating true }; SwitchToMode "normal"; }
+
+        // --- Move focus ---
+        bind "Alt h" { MoveFocus "left"; }
+        bind "Alt j" { MoveFocus "down"; }
+        bind "Alt k" { MoveFocus "up"; }
+        bind "Alt l" { MoveFocus "right"; }
+
+        // --- Mouse ---
+        mouse {
+            bind "LeftClick" { LeftClick; }
+            bind "RightClick" { RightClick; }
+            bind "MiddleClick" { SwitchToMode "normal"; }
+        }
+    }
+
+    // --- Locked mode (Ctrl+B passthrough for kitty/terminal shortcuts) ---
+    locked {
+        bind "Ctrl b" { SwitchToMode "normal"; }
+    }
+
+    // --- Resize mode ---
+    resize {
+        bind "h" { Resize "left"; }
+        bind "j" { Resize "down"; }
+        bind "k" { Resize "up"; }
+        bind "l" { Resize "right"; }
+        bind "Enter" { SwitchToMode "normal"; }
+        bind "Escape" { SwitchToMode "normal"; }
+    }
+
+    // --- Tab mode ---
+    tab {
+        bind "l" { GoToNextTab; }
+        bind "h" { GoToPreviousTab; }
+        bind "n" { NewTab; SwitchToMode "normal"; }
+        bind "r" { SwitchToMode "rename-tab"; }
+        bind "Enter" { SwitchToMode "normal"; }
+        bind "Escape" { SwitchToMode "normal"; }
+        bind "Tab" { GoToNextTab; }
+        bind "Left" { GoToPreviousTab; }
+        bind "Right" { GoToNextTab; }
+    }
+
+    // --- Scroll mode ---
+    scroll {
+        bind "j" { ScrollDown; }
+        bind "k" { ScrollUp; }
+        bind "Ctrl f" { PageScrollDown; }
+        bind "Ctrl b" { PageScrollUp; }
+        bind "Escape" { SwitchToMode "normal"; }
+        bind "Enter" { SwitchToMode "normal"; }
+    }
+
+    // --- Session mode ---
+    session {
+        bind "Enter" { SwitchToMode "normal"; }
+        bind "Escape" { SwitchToMode "normal"; }
+    }
+}
+
+// ============================================================
+// Options
+// ============================================================
+pane_frames true         // Border around each pane
+mouse_mode true          // Enable mouse support
+copy_command "wl-copy"   // Kitty/Wayland clipboard
+scroll_buffer_size 10000 // Lines of scrollback per pane
+simplified_ui false      // Show full UI (borders, tabs, status)
