@@ -29,6 +29,7 @@ in
     surfingkeys_conf = callPkg (packagesRoot + "/surfingkeys-conf") { }; # Surfingkeys configuration
     talktype = callPkg (packagesRoot + "/talktype") { }; # Push-to-talk voice typing tool (F9 to record, transcribe, paste)
     termeverything = callPkg (packagesRoot + "/termeverything") { }; # Run GUI windows inside your terminal (Wayland compositor → ANSI)
+    term39 = callPkg (packagesRoot + "/term39") { }; # Retro-styled terminal multiplexer (MS-DOS aesthetic)
     zsh-native-syntax = callPkg (packagesRoot + "/zsh-native-syntax") { }; # Native Rust-based zsh syntax highlighting engine
 
     "surfingkeys-conf" = surfingkeys_conf;
