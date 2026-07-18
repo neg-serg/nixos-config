@@ -2,9 +2,40 @@
 // https://zellij.dev/documentation/configuration.html
 
 // ============================================================
-// Theme
+// Neg Dark theme — matches neg.nvim colorscheme palette
+// Background:  #040f1c  (very dark navy)
+// Card:        #0c1c30
+// Text:        #a4b3c6  (muted blue-grey)
+// Accent:      #005faf  (deep blue)
+// Success:     #007a66  (teal)
+// Error:       #6b0f2a  (burgundy)
+// Warning:     #c8a8ef  (lilac)
 // ============================================================
-theme "catppuccin-mocha"
+themes {
+    neg-dark {
+        bg 4 15 28
+        fg 164 179 198
+        black 0 0 0
+        red 107 15 42
+        green 0 122 102
+        yellow 138 122 80
+        blue 0 95 175
+        magenta 122 106 138
+        cyan 58 106 106
+        white 209 229 255
+        light-black 12 28 48
+        light-red 160 40 70
+        light-green 0 160 130
+        light-yellow 200 168 239
+        light-blue 54 124 176
+        light-magenta 150 130 160
+        light-cyan 80 140 140
+        light-white 209 229 255
+        orange 138 106 64
+    }
+}
+
+theme "neg-dark"
 
 // ============================================================
 // Default plugins — included in the zellij binary
@@ -33,10 +64,10 @@ plugins {
 // ============================================================
 keybinds {
     normal {
-        // --- Prefix: Ctrl+B (clears terminal for zellij commands) ---
+        // --- Prefix: Ctrl+B ---
         bind "Ctrl b" {
-            SwitchToMode "locked"; // Releases Ctrl+B for zellij
-            FocusNextPane;
+            SwitchToMode "locked"
+            FocusNextPane
         }
 
         // --- Pane management ---
@@ -57,7 +88,7 @@ keybinds {
         bind "Ctrl o" { LaunchOrFocusPlugin "strider" { floating true }; SwitchToMode "normal"; }
         bind "Ctrl p" { LaunchOrFocusPlugin "session-manager" { floating true }; SwitchToMode "normal"; }
 
-        // --- Move focus ---
+        // --- Move focus (Alt + hjkl, like herdr) ---
         bind "Alt h" { MoveFocus "left"; }
         bind "Alt j" { MoveFocus "down"; }
         bind "Alt k" { MoveFocus "up"; }
@@ -71,7 +102,7 @@ keybinds {
         }
     }
 
-    // --- Locked mode (Ctrl+B passthrough for kitty/terminal shortcuts) ---
+    // --- Locked mode (Ctrl+B pass-through) ---
     locked {
         bind "Ctrl b" { SwitchToMode "normal"; }
     }
