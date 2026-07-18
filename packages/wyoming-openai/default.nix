@@ -3,18 +3,17 @@
 # Purpose: Wyoming protocol proxy for OpenAI-compatible STT/TTS endpoints.
 # Source: https://github.com/roryeckel/wyoming-openai
 # Dependencies: openai, wyoming, pysbd (all from python3Packages)
-#
-# Build from local source at ~/src/wyoming_openai.
-# For production, replace src with a fetchFromGitHub call or flake input.
 {
   lib,
   python3,
+  fetchFromGitHub,
   writeShellScript,
   ...
 }:
 let
   pyPkgs = python3.pkgs;
   pythonBin = lib.getExe python3;
+  version = "0.3.10";
 
   # Upstream has no console_scripts entry point; create a wrapper for `python -m wyoming_openai`
   wrapper = writeShellScript "wyoming-openai" ''
@@ -23,10 +22,14 @@ let
 in
 pyPkgs.buildPythonApplication {
   pname = "wyoming-openai";
-  version = "0.3.10";
+  inherit version;
 
-  # Local source checkout — replace with fetchFromGitHub for pinned builds
-  src = /home/neg/src/wyoming_openai;
+  src = fetchFromGitHub {
+    owner = "roryeckel";
+    repo = "wyoming-openai";
+    rev = "v${version}";
+    hash = lib.fakeHash; # Set real hash: nix build 2>&1 | grep "got:\|expected:"
+  };
 
   pyproject = true;
 
