@@ -80,5 +80,11 @@ in
       };
     };
     programs.mosh.enable = true; # Opens the relevant UDP ports.
+    systemd.services.sshd.serviceConfig = {
+      # Hardening
+      ProtectSystem = "strict";
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+    };
   };
 }

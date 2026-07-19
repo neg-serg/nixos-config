@@ -24,5 +24,13 @@ in
         isSystem = false;
       };
     };
+
+    systemd.services.geoclue-agent.serviceConfig = {
+      # Hardening
+      ProtectSystem = "strict";
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+      CapabilityBoundingSet = "";
+    };
   };
 }
