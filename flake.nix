@@ -4,10 +4,13 @@
     extra-experimental-features = "pipe-operators";
   };
   inputs = {
-    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
+    determinate = {
+      url = "github:DeterminateSystems/determinate";
+      inputs.nix.follows = "nix-src";
+    };
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nix-flatpak.url = "github:gmodena/nix-flatpak";
-    nix.follows = "determinate/nix";
+    nix-src.url = "github:DeterminateSystems/nix-src";
     hyprland = {
       url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.55.4";
       inputs.nixpkgs.follows = "nixpkgs";
