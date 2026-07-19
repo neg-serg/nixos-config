@@ -45,6 +45,15 @@ in
           su = "bitcoind-${cfg.instance} bitcoind-${cfg.instance}";
         };
       }
+      {
+        systemd.services."bitcoind-${cfg.instance}".serviceConfig = {
+          # Hardening
+          ProtectSystem = "strict";
+          PrivateTmp = true;
+          NoNewPrivileges = true;
+          CapabilityBoundingSet = "";
+        };
+      }
     ]
   );
 }
