@@ -6,11 +6,10 @@
 {
   lib,
   config,
-  inputs,
+  opts,
   ...
 }:
 let
-  opts = import (inputs.self + "/lib/opts.nix") { inherit lib; };
   cfg = config.profiles.performance.memExtras;
 in
 {

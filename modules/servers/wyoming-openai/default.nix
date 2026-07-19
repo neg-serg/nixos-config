@@ -10,12 +10,11 @@
   lib,
   config,
   pkgs,
-  inputs,
+  opts,
   ...
 }:
 let
   cfg = config.servicesProfiles.wyoming-openai or { enable = false; };
-  opts = import (inputs.self + "/lib/opts.nix") { inherit lib; };
   inherit (lib) types;
   ep = lib.escapeShellArg;
 
