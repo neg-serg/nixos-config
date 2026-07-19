@@ -66,11 +66,10 @@ in
     }) cfg.services);
 
     systemd.services.avahi-daemon.serviceConfig = {
-      # Hardening
+      # Hardening (keep default capabilities — avahi needs CAP_SETUID + CAP_SETGID)
       ProtectSystem = "strict";
       PrivateTmp = true;
       NoNewPrivileges = true;
-      CapabilityBoundingSet = "";
     };
   };
 }
