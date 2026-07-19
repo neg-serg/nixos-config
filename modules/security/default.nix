@@ -129,7 +129,7 @@ in
       enable = true;
       package = pkgs.sudo;
       extraConfig = ''
-        Defaults timestamp_timeout = 300 # makes sudo ask for password less often
+        Defaults timestamp_timeout = 15 # makes sudo ask for password less often
         Defaults passprompt="🔐 "
       '';
       extraRules = [

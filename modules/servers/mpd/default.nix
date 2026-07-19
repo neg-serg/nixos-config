@@ -38,7 +38,7 @@ in
 
       settings = {
         music_directory = "${myHome}/music";
-        bind_to_address = "any";
+        bind_to_address = "127.0.0.1";
         port = 6600;
         log_file = "/dev/null";
         max_output_buffer_size = 131072;
