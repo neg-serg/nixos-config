@@ -6,6 +6,7 @@
   lib,
   rustPlatform,
   fetchFromGitHub,
+  clang,
 }:
 let
   version = "1.5.2";
@@ -20,8 +21,10 @@ in
 rustPlatform.buildRustPackage {
   pname = "term39";
   inherit version src;
-
   cargoLock.lockFile = "${src}/Cargo.lock";
+
+  # clang-sys needs libclang at build time (transitive dep via "full" features)
+  nativeBuildInputs = [ clang ];
 
   # Full feature set: clipboard, framebuffer-backend, battery, PAM lockscreen
   buildFeatures = [ "full" ];
