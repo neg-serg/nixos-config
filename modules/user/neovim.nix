@@ -79,6 +79,8 @@ lib.mkIf devEnabled (
         pkgs.autotools-language-server # Autotools/Make
         pkgs.dot-language-server # DOT graphs
         pkgs.yaml-language-server # YAML
+        pkgs.nil # Nix (fast LSP with built-in nixpkgs docs)
+        pkgs.docker-language-server # Dockerfile LSP
 
         # Formatters/linters (for conform.nvim and nvim-lint)
         pkgs.prettierd # Multi-language formatter (JS/TS/CSS/HTML)
