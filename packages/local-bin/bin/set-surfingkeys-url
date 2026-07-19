@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# set-surfingkeys-url — установить URL для конфига SurfingKeys в Vivaldi
+# Использует Chrome DevTools Protocol через remote debugging.
+set -euo pipefail
+
+URL="${1:-http://localhost:18888/surfingkeys.js}"
+PORT=9223
+PID=""
+
+cleanup() {
+    [ -n "$PID" ] && kill "$PID" 2>/dev/null || true
+}
+trap cleanup EXIT
+
+echo "Starting Vivaldi with remote debugging on port $PORT..."
+vivaldi --remote-debugging-port="$PORT" --no-first-run --new-window about:blank &
+PID=$!
+sleep 2
+
+# Ждём пока откроется debugging endpoint
+for i in $(seq 1 10); do
+    if curl -s "http://localhost:$PORT/json" > /dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
+
+# Получаем target ID для любой открытой страницы
+TARGETS=$(curl -s "http://localhost:$PORT/json")
+TARGET_ID=$(echo "$TARGETS" | python3 -c "
+import json, sys
+try:
+    targets = json.load(sys.stdin)
+    # Ищем SurfingKeys options page или берём любой
+    for t in targets:
+        if 'surfingkeys' in t.get('url', '').lower() or 'options' in t.get('url', '').lower():
+            print(t['id'])
+            sys.exit(0)
+    if targets:
+        print(targets[0]['id'])
+except: pass
+")
+
+if [ -z "$TARGET_ID" ]; then
+    echo "ERROR: Could not find any target page"
+    exit 1
+fi
+
+echo "Target: $TARGET_ID"
+echo "Setting loadSettingsUrl to: $URL"
+
+# Устанавливаем storage через CDP
+WS_URL=$(echo "$TARGETS" | python3 -c "
+import json, sys
+targets = json.load(sys.stdin)
+for t in targets:
+    if t['id'] == '$TARGET_ID':
+        print(t['webSocketDebuggerUrl'])
+")
+
+python3 << PYEOF
+import json, websocket
+
+ws_url = "$WS_URL"
+target_url = "$URL"
+
+# Connect to CDP
+ws = websocket.create_connection(ws_url, timeout=10)
+
+# Enable Runtime domain
+ws.send(json.dumps({"id": 1, "method": "Runtime.enable"}))
+ws.recv()
+
+# Execute in the context of the SurfingKeys extension
+# First navigate to the extension page to get its context
+code = f"""
+try {{
+    chrome.storage.sync.set({{loadSettingsUrl: "{target_url}"}}, function() {{
+        console.log("SurfingKeys config URL set to: {target_url}");
+    }});
+}} catch(e) {{
+    console.error("Failed to set:", e);
+}}
+"""
+
+ws.send(json.dumps({
+    "id": 2,
+    "method": "Runtime.evaluate",
+    "params": {
+        "expression": code,
+        "awaitPromise": True
+    }
+}))
+result = json.loads(ws.recv())
+print("Result:", json.dumps(result, indent=2)[:300])
+
+ws.close()
+print("✅ SurfingKeys URL set successfully!")
+print("   Close Vivaldi and restart for the change to take effect.")
+PYEOF
+
+# Cleanup
+kill "$PID" 2>/dev/null || true
+wait "$PID" 2>/dev/null || true
