@@ -1,6 +1,6 @@
 ______________________________________________________________________
 
-## description: Quickshell and Rofi theming
+## description: Quickshell theming
 
 # Theming
 
@@ -33,36 +33,6 @@ Edit `files/quickshell/Theme/panel.jsonc`:
 
 ```bash
 quickshell --quit && quickshell &
-```
-
-## Rofi
-
-### Theme Files:
-
-```
-packages/rofi-config/
-├── colors.rasi    # Color definitions
-├── common.rasi    # Shared styles
-├── askpass.rasi   # Password prompt
-└── menu-*.rasi    # Menu styles
-```
-
-### Modify Theme:
-
-Edit `packages/rofi-config/colors.rasi`:
-
-```css
-* {
-    primary: #c1c1ff;
-    surface: #131318;
-    on-surface: #e4e1e9;
-}
-```
-
-### Test Theme:
-
-```bash
-rofi -show drun -theme ~/.config/rofi/config.rasi
 ```
 
 ## Hot Reload
