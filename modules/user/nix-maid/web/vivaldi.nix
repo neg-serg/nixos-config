@@ -98,20 +98,6 @@ in
       };
     };
 
-    # SurfingKeys extension: load config from local server
-    # Sets chrome.storage.managed.loadSettingsUrl via 3rdparty policy
-    environment.etc."vivaldi/policies/managed/surfingkeys.json" = {
-      mode = "0444";
-      text = builtins.toJSON {
-        "3rdparty" = {
-          extensions = {
-            "gfbliohnnapiefjpjlpjnehglfpaknnc" = {
-              loadSettingsUrl = "http://localhost:18888/surfingkeys.js";
-            };
-          };
-        };
-      };
-    };
 
     # Browser UI font override via Vivaldi Custom UI Modifications.
     # Managed policies above only affect webpage fonts, not the browser chrome.
