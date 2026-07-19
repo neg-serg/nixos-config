@@ -5,8 +5,8 @@
   makeWrapper,
   bun,
   python3,
+  stdenv,
 }:
-
 let
   version = "17.0.1";
 in
@@ -30,6 +30,7 @@ buildNpmPackage {
 
   makeCacheWritable = true;
 
+  buildInputs = [ stdenv.cc.cc.lib ];
   nativeBuildInputs = [ makeWrapper ];
 
   postPatch = ''
@@ -57,7 +58,8 @@ with open('package.json', 'w') as f:
     cp -r . $out/share/omp/
     # Use bun as runtime (omp uses bun-specific APIs)
     makeWrapper ${lib.getExe bun} $out/bin/omp \
-      --add-flags "run $out/share/omp/dist/cli.js"
+      --add-flags "run $out/share/omp/dist/cli.js" \
+      --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ stdenv.cc.cc.lib ]}
     runHook postInstall
   '';
 
