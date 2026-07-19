@@ -12,7 +12,6 @@ let
 
   # Extensions to force-install via managed policy
   extensions = [
-    "cjpalhdlnbpafiamejdnhcphjbkeiagm" # uBlock Origin
     "gfbliohnnapiefjpjlpjnehglfpaknnc" # SurfingKeys (vim-like keybindings)
   ];
 
