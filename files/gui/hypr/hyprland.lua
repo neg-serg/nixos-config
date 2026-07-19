@@ -321,26 +321,26 @@ end)
 -- Workspaces (workspaces.conf / workspaces.nix)
 -- =====================================================================
 local workspaces = {
-  { id = 1,  name = "𐌰:term" },
-  { id = 2,  name = "𐌱:web" },
-  { id = 3,  name = "𐌲:dev" },
-  { id = 4,  name = "𐌸:games" },
-  { id = 5,  name = "𐌳:doc" },
-  { id = 6,  name = "𐌴:draw" },
-  { id = 7,  name = "𐌵:vid" },
-  { id = 8,  name = "𐌶:obs" },
-  { id = 9,  name = "𐌷:pic" },
-  { id = 10, name = "𐌹:sys" },
-  { id = 11, name = "𐌺:vm" },
-  { id = 12, name = "𐌻:wine" },
-  { id = 13, name = "𐌼:patchbay" },
-  { id = 14, name = "𐌽:daw" },
-  { id = 15, name = "𐌾:dw" },
-  { id = 16, name = "𐌿:keyboard" },
-  { id = 17, name = "𐍀:im" },
-  { id = 18, name = "𐍁:remote" },
-  { id = 19, name = "Ⲣ:notes" },
-  { id = 20, name = "𐍅:winboat" },
+  { id = 1,  name = "𐌰:term",   layout = "scrolling" },
+  { id = 2,  name = "𐌱:web",    layout = "scrolling" },
+  { id = 3,  name = "𐌲:dev",    layout = "scrolling" },
+  { id = 4,  name = "𐌸:games" }, -- master (gaming)
+  { id = 5,  name = "𐌳:doc",    layout = "scrolling" },
+  { id = 6,  name = "𐌴:draw",   layout = "scrolling" },
+  { id = 7,  name = "𐌵:vid" },  -- master (media)
+  { id = 8,  name = "𐌶:obs" },  -- master (media)
+  { id = 9,  name = "𐌷:pic",    layout = "scrolling" },
+  { id = 10, name = "𐌹:sys",    layout = "scrolling" },
+  { id = 11, name = "𐌺:vm",     layout = "scrolling" },
+  { id = 12, name = "𐌻:wine" }, -- master (wine/games)
+  { id = 13, name = "𐌼:patchbay", layout = "scrolling" },
+  { id = 14, name = "𐌽:daw" },  -- master (media/audio)
+  { id = 15, name = "𐌾:dw",     layout = "scrolling" },
+  { id = 16, name = "𐌿:keyboard", layout = "scrolling" },
+  { id = 17, name = "𐍀:im",     layout = "scrolling" },
+  { id = 18, name = "𐍁:remote", layout = "scrolling" },
+  { id = 19, name = "Ⲣ:notes",   layout = "scrolling" },
+  { id = 20, name = "𐍅:winboat", layout = "scrolling" },
 }
 
 for _, w in ipairs(workspaces) do
