@@ -209,7 +209,11 @@ start() {
 
 stop() {
     pkill -f 'sing-box.*trojan' 2>/dev/null || true
-    echo "  Stopped. Restore xray: sudo systemctl start xray"
+    if ! systemctl is-active --quiet xray.service 2>/dev/null; then
+        echo "  Restoring xray..."
+        sudo systemctl start xray.service
+    fi
+    echo "  Proxy off"
 }
 
 # ============================================================
