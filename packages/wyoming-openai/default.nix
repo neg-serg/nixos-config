@@ -28,7 +28,7 @@ pyPkgs.buildPythonApplication {
     owner = "roryeckel";
     repo = "wyoming-openai";
     rev = "v${version}";
-    hash = lib.fakeHash; # Set real hash: nix build 2>&1 | grep "got:\|expected:"
+    hash = "sha256-d5uWJvPVKoxomZwokOKh93EL+lrwOdeZ9srmC3gi6+g=";
   };
 
   pyproject = true;
