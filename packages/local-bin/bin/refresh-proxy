@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+# refresh-proxy — regenerate sing-box config with fresh nodes and restart
+# Usage: refresh-proxy
+set -euo pipefail
+
+CONFIG="$HOME/.config/sing-box-trojan/config.json"
+LOG="/tmp/refresh-proxy.log"
+
+echo "[$(date '+%H:%M:%S')] Updating proxy nodes..." | tee -a "$LOG"
+
+# Fallback nodes that work
+KNOWN_NODES=$(cat << 'NODES'
+hysteria2://35415e5e-3666-4454-8c45-903af0fcddf4@85.120.228.208:47257?insecure=1&sni=www.bing.com
+vless://96fdf2ec-8f42-4735-a176-1578c5d5ea67@84.32.45.56:8443?encryption=none&security=reality&sni=www.yahoo.com&fp=chrome&pbk=V2DnHta7YKXsdC6St2X2seosnXJe08070FAT-nNVLUg&sid=7585110041ceb2c1
+vless://a468ba45-559c-46cc-8b51-a2f0b86b21d4@216.126.238.95:443?encryption=none&security=reality&sni=icloud.com&fp=chrome&pbk=9xSqgLlPxZJIIOBdBvRTWmIXJRG5Z9hj1uQWEvfNlUM&sid=46ed
+NODES
+)
+
+# Try to fetch fresh nodes
+NEW_NODES=""
+for url in \
+  "https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/protocols/vless.txt" \
+  "https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/everything.txt"; do
+    data=$(curl --noproxy '*' -sL --connect-timeout 5 --max-time 10 "$url" 2>/dev/null | \
+      grep -E '^(vless|hysteria2)://' | head -10 || true)
+    if [ -n "$data" ]; then
+        echo "  Fresh: $(echo "$data" | wc -l) nodes from $(basename $url)" | tee -a "$LOG"
+        NEW_NODES="$NEW_NODES"$'\n'"$data"
+    fi
+done
+
+ALL_NODES="$KNOWN_NODES"
+[ -n "$NEW_NODES" ] && ALL_NODES="$KNOWN_NODES"$'\n'"$NEW_NODES"
+
+export CFG_PATH="$CONFIG"
+export NODES="$ALL_NODES"
+python3 << 'PYEOF'
+import json, os, urllib.parse
+
+config_path = os.environ["CFG_PATH"]
+nodes_text = os.environ["NODES"]
+outbounds = []
+
+for line in nodes_text.strip().split('\n'):
+    line = line.strip()
+    if not line:
+        continue
+    try:
+        if line.startswith('hysteria2://'):
+            rest = line.split('hysteria2://')[1]
+            pwd = rest.split('@')[0] if '@' in rest else rest.split('?')[0]
+            after = rest.split('@', 1)[1] if '@' in rest else rest
+            host = after.split(':')[0]
+            ps = after.split(':')[1].split('?')[0]
+            port = int(ps) if ps.isdigit() else 443
+            params = urllib.parse.parse_qs(after.split('?')[1]) if '?' in after else {}
+            outbounds.append({
+                "type": "hysteria2", "tag": f"hy2-{len(outbounds)}",
+                "server": host, "server_port": port, "password": pwd,
+                "tls": {"enabled": True, "insecure": True,
+                        "server_name": params.get('sni', [host])[0]}
+            })
+        elif line.startswith('vless://'):
+            rest = line.split('vless://')[1]
+            uuid = rest.split('@')[0]
+            after = rest.split('@', 1)[1] if '@' in rest else rest
+            hp = after.split('?')[0]
+            host = hp.rsplit(':', 1)[0]; port = int(hp.rsplit(':', 1)[1])
+            params = urllib.parse.parse_qs(after.split('?', 1)[1]) if '?' in after else {}
+            ob = {"type": "vless", "tag": f"vl-{len(outbounds)}",
+                  "server": host, "server_port": port, "uuid": uuid,
+                  "packet_encoding": "xudp"}
+            tls = {"enabled": True, "server_name": params.get('sni', [host])[0],
+                   "utls": {"enabled": True,
+                            "fingerprint": params.get('fp', ['chrome'])[0]}}
+            if params.get('security', [''])[0] == 'reality':
+                tls["reality"] = {"enabled": True,
+                                 "public_key": params.get('pbk', [''])[0],
+                                 "short_id": params.get('sid', [''])[0]}
+            ob["tls"] = tls
+            outbounds.append(ob)
+    except:
+        pass
+
+tags = [o["tag"] for o in outbounds]
+if tags:
+    outbounds.append({"type": "urltest", "tag": "auto",
+                      "outbounds": tags, "interval": "5m", "tolerance": 50})
+outbounds.append({"type": "direct", "tag": "direct"})
+
+cfg = {
+    "log": {"level": "error"}, "dns": {},
+    "inbounds": [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port": 10808}],
+    "outbounds": outbounds,
+    "route": {"rules": [{"ip_is_private": True, "outbound": "direct"}],
+              "final": "auto", "auto_detect_interface": True}
+}
+os.makedirs(os.path.dirname(config_path), exist_ok=True)
+with open(config_path, "w") as f:
+    json.dump(cfg, f, indent=2)
+print(f"  Config: {len(outbounds)-2} outbounds + urltest")
+PYEOF
+
+# Restart proxy
+if systemctl is-active --quiet xray.service 2>/dev/null; then
+    echo "  Stopping xray..." | tee -a "$LOG"
+    sudo systemctl stop xray.service 2>/dev/null || true
+fi
+pkill -f 'sing-box.*trojan' 2>/dev/null || true
+sleep 1
+export ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true
+nohup sing-box run -c "$CONFIG" > /tmp/sing-box-trojan.log 2>&1 &
+sleep 2
+
+if pgrep -f 'sing-box.*trojan' > /dev/null 2>&1; then
+    echo "  Proxy running on 127.0.0.1:10808" | tee -a "$LOG"
+else
+    echo "  FAILED to start" | tee -a "$LOG"
+    tail -3 /tmp/sing-box-trojan.log 2>/dev/null || true
+fi
