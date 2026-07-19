@@ -40,7 +40,6 @@ in
         usb-modeswitch.enable = true; # mode switching tool for controlling 'multi-mode' USB devices.
       };
 
-      # Packages moved to ./pkgs.nix
 
       powerManagement.cpuFreqGovernor = "performance";
     }

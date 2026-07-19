@@ -28,7 +28,6 @@ in
     customConfig = inputs.self + "/files/surfingkeys.js";
   };
   wl = callPkg (inputs.self + "/packages/wl") { };
-  rofiw = callPkg (inputs.self + "/packages/rofiw") { };
 
   skwd = prev.callPackage (inputs.self + "/packages/skwd") {
     skwd-src = inputs.skwd;

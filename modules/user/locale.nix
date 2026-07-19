@@ -18,7 +18,6 @@
     LC_TIME = locale;
   };
 
-  # Packages moved to modules/user/locale-pkgs.nix
 
   # Geoclue2 removed — pulls GTK, location not needed
   time.hardwareClockInLocalTime = true;
