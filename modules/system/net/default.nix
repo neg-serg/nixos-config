@@ -15,5 +15,6 @@
     ./vpn
     ./vpn-scripts
     ./zapret2 # DPI circumvention
+    ./bbrv3.nix # TCP BBRv3 congestion control
   ];
 }
