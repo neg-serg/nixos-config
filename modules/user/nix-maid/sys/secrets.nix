@@ -69,6 +69,14 @@ lib.mkMerge [
           mode = "0400";
           owner = "neg";
         };
+        "proxy-fallback" = lib.mkIf (builtins.pathExists "${secretsDir}/proxy-fallback.sops.yaml") {
+          format = "yaml";
+          sopsFile = "${secretsDir}/proxy-fallback.sops.yaml";
+          key = "fallback_nodes";
+          path = "/run/user/1000/secrets/proxy-fallback";
+          mode = "0400";
+          owner = "neg";
+        };
       };
     };
 
