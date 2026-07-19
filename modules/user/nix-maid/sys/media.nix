@@ -197,14 +197,19 @@ lib.mkMerge [
           text = lib.generators.toINI { } spiceSettings;
         };
 
-    # Rescrobbled Config
-    ".config/rescrobbled/config.toml".text = ''
-      [lastfm]
-      api_key = "d374b5a27d6536dc09e105eefad6530c"
-      secret = "ef5ec843f664b52332b61b5884b8d0dd"
-      # session_key = "" # Generated via `rescrobbled` auth
-    '';
+    # Rescrobbled Config (from SOPS)
+    ".config/rescrobbled/config.toml".source =
+      config.sops.secrets."lastfm/rescrobbled".path;
+
   })
+  {
+    sops.secrets."lastfm/rescrobbled" = {
+      sopsFile = ../../../../secrets/home/lastfm-rescrobbled.sops;
+      format = "binary";
+      owner = "neg";
+    };
+    # Rescrobbled config sourced from SOPS above.
+  }
   (lib.mkIf (builtins.pathExists ../../../../secrets/home/mpdas/neg.rc) {
     sops.secrets."mpdas_negrc" = {
       sopsFile = ../../../../secrets/home/mpdas/neg.rc;
