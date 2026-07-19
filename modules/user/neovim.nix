@@ -59,12 +59,36 @@ lib.mkIf devEnabled (
             "text/x-c++"
           ];
         })
-
         # Search tools for fzf-lua and telescope
         pkgs.ripgrep # project-wide search backend
         pkgs.fd # fast file finder
         pkgs.fzf # fuzzy finder binary (for fzf-lua)
-        pkgs.marksman # Markdown LSP (mason build fails on NixOS — use nixpkgs instead)
+
+        # LSP servers — via nixpkgs, not Mason (Mason binaries break on NixOS:
+        # ELF binaries lack /lib64/ld-linux, npm shebangs lack /usr/bin/env)
+        pkgs.marksman # Markdown
+        pkgs.lua-language-server # Lua
+        pkgs.clang-tools # C/C++ (provides clangd + clang-format)
+        pkgs.lemminx # XML
+        pkgs.bash-language-server # Bash
+        pkgs.pyright # Python
+        pkgs.typescript-language-server # TypeScript/JavaScript
+        pkgs.vscode-langservers-extracted # CSS + HTML + JSON
+        pkgs.taplo # TOML
+        pkgs.just-lsp # Justfiles
+        pkgs.autotools-language-server # Autotools/Make
+        pkgs.dot-language-server # DOT graphs
+        pkgs.yaml-language-server # YAML
+
+        # Formatters/linters (for conform.nvim and nvim-lint)
+        pkgs.prettierd # Multi-language formatter (JS/TS/CSS/HTML)
+        pkgs.ruff # Python formatter + linter
+        pkgs.shellcheck # Shell linter
+        pkgs.shfmt # Shell formatter
+        pkgs.stylua # Lua formatter
+        pkgs.vale # Prose linter
+        pkgs.yamllint # YAML linter
+        pkgs.cmake-format # CMake formatter
       ];
     }
     (neg.mkHomeFiles {
