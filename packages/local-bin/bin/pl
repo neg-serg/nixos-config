@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # pl: fuzzy-pick and play videos (fzf/vicinae dmenu -> mpv + vid-info)
 # Usage:
-#   pl [rofi|vicinae|dmenu|video|1st_level] [DIR]
+#   pl [vicinae|dmenu|video|1st_level] [DIR]
 #   pl cmd <playerctl-args>
 #   pl vol {mute|unmute}
 
@@ -108,11 +108,11 @@ main() {
     local maxd=""
     local mode="fzf"
     local dir=""
-    if [[ "${1:-}" == "rofi" || "${1:-}" == "vicinae" || "${1:-}" == "dmenu" ]]; then
+    if [[ "${1:-}" == "vicinae" || "${1:-}" == "dmenu" ]]; then
         mode="dmenu"; shift
     fi
     if [[ "${1:-}" == "video" ]]; then
-        # Legacy rofi file-browser path replaced with fd + vicinae dmenu
+        # Legacy file-browser path replaced with fd + vicinae dmenu
         shift
         local dir="${1:-$HOME/vid/new}"
         local sel
