@@ -104,10 +104,6 @@
       url = "github:lmacan1/talktype";
       flake = false;
     };
-    ignis = {
-      url = "github:ignis-sh/ignis";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     exo = {
       url = "github:debuggyo/Exo";
       flake = false;
