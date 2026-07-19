@@ -1,54 +1,70 @@
 #!/usr/bin/env bash
-# trojan-proxy — toggle temporary proxy on/off (Hysteria2 + VLESS Reality)
+# trojan-proxy — start/stop/status temporary proxy (Hysteria2 + VLESS Reality)
 # Usage: trojan-proxy [on|off|status]
 set -euo pipefail
 
 CONFIG="$HOME/.config/sing-box-trojan/config.json"
 LOG="/tmp/sing-box-trojan.log"
 
-# Bootstrap: create config with known-working fallback nodes
+# Bootstrap: create config if missing
 if [ ! -f "$CONFIG" ]; then
     echo "  First run: creating fallback config..."
     mkdir -p "$(dirname "$CONFIG")"
-    CFG_PATH="$CONFIG"
-    python3 << PYEOF
-import json, os
+    python3 << 'PYEOF'
+import json, os, urllib.parse
+
+cfg_path = os.path.expanduser("~/.config/sing-box-trojan/config.json")
+
+def p(url):
+    s = url.split('?')[1] if '?' in url else ''
+    if '#' in s: s = s.split('#')[0]
+    return {k: v[0].split('#')[0] for k, v in urllib.parse.parse_qs(s).items()}
+
+ob = []
+
+# Hysteria2
+ob.append({"type": "hysteria2", "tag": "h2-ro",
+           "server": "85.120.228.208", "server_port": 47257,
+           "password": "35415e5e-3666-4454-8c45-903af0fcddf4",
+           "tls": {"enabled": True, "insecure": True,
+                   "server_name": "www.bing.com"}})
+
+# VLESS Reality Dallas
+ob.append({"type": "vless", "tag": "vl-dallas",
+           "server": "84.32.45.56", "server_port": 8443,
+           "uuid": "96fdf2ec-8f42-4735-a176-1578c5d5ea67",
+           "packet_encoding": "xudp",
+           "tls": {"enabled": True, "server_name": "www.yahoo.com",
+                   "utls": {"enabled": True, "fingerprint": "chrome"},
+                   "reality": {"enabled": True,
+                              "public_key": "V2DnHta7YKXsdC6St2X2seosnXJe08070FAT-nNVLUg",
+                              "short_id": "7585110041ceb2c1"}}})
+
+# VLESS Reality Houston
+ob.append({"type": "vless", "tag": "vl-houston",
+           "server": "216.126.238.95", "server_port": 443,
+           "uuid": "a468ba45-559c-46cc-8b51-a2f0b86b21d4",
+           "packet_encoding": "xudp",
+           "tls": {"enabled": True, "server_name": "icloud.com",
+                   "utls": {"enabled": True, "fingerprint": "chrome"},
+                   "reality": {"enabled": True,
+                              "public_key": "9xSqgLlPxZJIIOBdBvRTWmIXJRG5Z9hj1uQWEvfNlUM",
+                              "short_id": "46ed"}}})
+
+ob.append({"type": "urltest", "tag": "auto",
+           "outbounds": [o["tag"] for o in ob],
+           "interval": "5m", "tolerance": 50})
+ob.append({"type": "direct", "tag": "direct"})
+
 cfg = {
     "log": {"level": "error"}, "dns": {},
     "inbounds": [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port": 10808}],
-    "outbounds": [
-        {"type": "hysteria2", "tag": "hy2-ro",
-         "server": "85.120.228.208", "server_port": 47257,
-         "password": "35415e5e-3666-4454-8c45-903af0fcddf4",
-         "tls": {"enabled": True, "insecure": True, "server_name": "www.bing.com"}},
-        {"type": "vless", "tag": "vl-dallas",
-         "server": "84.32.45.56", "server_port": 8443,
-         "uuid": "96fdf2ec-8f42-4735-a176-1578c5d5ea67",
-         "packet_encoding": "xudp",
-         "tls": {"enabled": True, "server_name": "www.yahoo.com",
-                 "utls": {"enabled": True, "fingerprint": "chrome"},
-                 "reality": {"enabled": True,
-                            "public_key": "V2DnHta7YKXsdC6St2X2seosnXJe08070FAT-nNVLUg",
-                            "short_id": "7585110041ceb2c1"}}},
-        {"type": "vless", "tag": "vl-houston",
-         "server": "216.126.238.95", "server_port": 443,
-         "uuid": "a468ba45-559c-46cc-8b51-a2f0b86b21d4",
-         "packet_encoding": "xudp",
-         "tls": {"enabled": True, "server_name": "icloud.com",
-                 "utls": {"enabled": True, "fingerprint": "chrome"},
-                 "reality": {"enabled": True,
-                            "public_key": "9xSqgLlPxZJIIOBdBvRTWmIXJRG5Z9hj1uQWEvfNlUM",
-                            "short_id": "46ed"}}},
-        {"type": "urltest", "tag": "auto",
-         "outbounds": ["hy2-ro", "vl-dallas", "vl-houston"],
-         "interval": "5m", "tolerance": 50},
-        {"type": "direct", "tag": "direct"}
-    ],
+    "outbounds": ob,
     "route": {"rules": [{"ip_is_private": True, "outbound": "direct"}],
               "final": "auto", "auto_detect_interface": True}
 }
-os.makedirs(os.path.dirname("$CFG_PATH"), exist_ok=True)
-with open("$CFG_PATH", "w") as f:
+os.makedirs(os.path.dirname(cfg_path), exist_ok=True)
+with open(cfg_path, "w") as f:
     json.dump(cfg, f, indent=2)
 print("  Done: 1 Hysteria2 + 2 VLESS Reality")
 PYEOF
