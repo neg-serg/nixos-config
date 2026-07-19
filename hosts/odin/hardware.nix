@@ -46,10 +46,11 @@
     # Do not enable PREEMPT_RT on this host
     performance.preemptRt.enable = false;
   };
-
   # Performance profile comes from the workstation role
+  profiles.performance.enable = true;
 
-  # Writeback tuning: reduce IO bursts during gameplay/builds
+  # ZRAM: zstd compressor (Zen 5 has hw-accelerated zstd, better ratio than lzo-rle)
+  zramSwap.compressor = "zstd";
   profiles.performance.writeback.enable = true;
   # Safe memory extras: lower swappiness and raise max_map_count for heavy apps/games
   profiles.performance.memExtras = {
@@ -85,6 +86,7 @@
       "mem_sleep_default=deep" # Prefer deep sleep (S3) for suspend
       "8250.nr_uarts=0" # Skip legacy UART probing
       "pcie_aspm=off" # Disable ASPM entirely — prevents NVMe D3cold wake delays on AMD/X670E
+      "amd_pstate=guided" # AMD P-State guided mode: firmware hints + performance governor
       "pcie_port_pm=off" # Disable PCIe port power management — keeps NVMe accessible during import
       "nvme_core.io_timeout=4294967295" # Max NVMe I/O timeout
       "amdgpu.ppfeaturemask=0xffffffff" # Enable all AMD GPU overdrive features

@@ -135,7 +135,6 @@ let
       "transparent_hugepage=${config.profiles.performance.thpMode}"
     ]
     ++ [
-      "amd_pstate=active"
       "nvme_core.default_ps_max_latency_us=200"
     ]
     ++ lib.optionals (config.profiles.performance.zswap.enable or false) [
