@@ -24,6 +24,11 @@ in
   config = lib.mkIf cfg.enable {
     systemd.services.mpd.serviceConfig = {
       Environment = "XDG_RUNTIME_DIR=/run/user/${builtins.toString myUID}";
+      # Hardening
+      ProtectSystem = "strict";
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+      CapabilityBoundingSet = "";
     };
 
     services.mpd = {
