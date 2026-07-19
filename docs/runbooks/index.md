@@ -7,6 +7,7 @@ Operational docs for one-off tasks (password rotation, migrations) and recurring
 - Grafana admin password rotation:
   [grafana-admin-password-setup.md](./grafana-admin-password-setup.md)
 - Grafana egress hardening TODO: [grafana-egress-todo.md](./grafana-egress-todo.md)
+- Proxy (Xray / sing-box): [proxy.md](./proxy.md)
 - Unbound metrics/dashboards: [unbound-metrics.md](./unbound-metrics.md)
 - Vaultix migration: [vaultix-migration.md](./vaultix-migration.md)
 - Script catalog: [scripts.md](./scripts.md)
