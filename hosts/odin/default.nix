@@ -33,6 +33,8 @@
   features.net.proxy.enable = true;
   features.net.lan-proxy.enable = true;
   features.net.transparent-proxy.enable = false; # Disabled: upstream dead, using proxy script fallback
+  # Xray upstream dead — disable the service (keep features.net.proxy for env/packages)
+  systemd.services.xray.enable = false;
   features.dev.haskell.enable = false; # Disable Haskell toolchain (saves ~1GB)
   features.virt.libvirtd.enable = false; # Disable KVM/QEMU (not needed on this host)
   features.apps.guiAppsFull.enable = false; # Disable heavy GUI apps (GIMP, OBS); gaming profile enables it by default
