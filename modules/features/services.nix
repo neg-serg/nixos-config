@@ -27,8 +27,5 @@ with lib;
       rknDomains.enable = mkBool "enable RKN domain blocklist fetcher with daily timer" false;
     };
 
-    hardware = {
-      amdgpu.rocm.enable = mkBool "enable AMDGPU ROCm support" false;
-    };
   };
 }
