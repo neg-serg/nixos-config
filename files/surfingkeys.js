@@ -241,7 +241,7 @@ api.mapkey('d', 'Close current tab', function () {
   api.RUNTIME('closeTab');
 });
 api.map('u', 'X');  // Restore tab
-api.map('w', 'T');  // Tab list
+api.map('w', 'W');  # Window list
 
 // o — native Ctrl+L (focus browser address bar) via native messaging server
 api.mapkey('o', 'Focus address bar (native Ctrl-L)', function() {
