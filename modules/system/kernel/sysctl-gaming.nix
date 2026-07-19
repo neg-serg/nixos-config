@@ -18,6 +18,15 @@
       # option. Low-latency apps (games with custom networking, some RPC frameworks) benefit;
       # most apps are unaffected. Trade-off: marginally higher CPU use on polled sockets.
       "net.core.busy_poll" = 50;
+      # CachyOS desktop scheduler tuning — reduce scheduling latency
+      # Autogroup conflicts with SCX cgroup-aware scheduling (scx_lavd manages its own groups)
+      "kernel.sched_autogroup_enabled" = 0;
+      # Reduce preemption latency from 18ms to 6ms (CachyOS default)
+      "kernel.sched_latency_ns" = 6000000;
+      # Reduce minimum task runtime from 3ms to 1ms — faster context switch for interactive tasks
+      "kernel.sched_min_granularity_ns" = 1000000;
+      # Reduce wakeup preemption granularity — CachyOS desktop tuning
+      "kernel.sched_wakeup_granularity_ns" = 2000000;
     };
   };
 }
