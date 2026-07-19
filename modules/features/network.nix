@@ -25,6 +25,7 @@ with lib;
       awgTunnel.enable = mkBool "enable AmneziaWG obfuscated WireGuard tunnel (requires amneziawg-dkms)" false;
       zapret2.enable = mkBool "enable Zapret2 DPI bypass via nfqueue (requires zapret2 package)" false;
       rknDomains.enable = mkBool "enable RKN domain blocklist fetcher with daily timer" false;
+      bbrv3.enable = mkBool "enable TCP BBRv3 congestion control (kernel >= 6.18)" true;
     };
 
     hardware = {
