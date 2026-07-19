@@ -6,6 +6,7 @@
     ./greetd.nix
     ./hyprland.nix
     ./media.nix
+    ./hypr-bindings.nix
     ./qt.nix
     ./screenshot.nix
     ./terminal.nix
