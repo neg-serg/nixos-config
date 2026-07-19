@@ -6,7 +6,6 @@
   ...
 }:
 let
-  grafanaEnabled = config.services.grafana.enable or false;
   unboundLocalData = import ./unbound-hosts.nix;
   resilioAuthScript = pkgs.writeShellScript "resilio-auth" ''
     CONFIG_FILE="/run/rslsync/config.json"
@@ -431,41 +430,6 @@ lib.mkMerge [
 
         # Bitcoind instance is now managed by modules/servers/bitcoind
       }
-      (lib.mkIf grafanaEnabled {
-        # Harden Grafana: avoid external calls and too-frequent refreshes
-        grafana.settings = {
-          analytics = {
-            reporting_enabled = false;
-            check_for_updates = false;
-          };
-          users = {
-            # Do not fetch avatars from Gravatar (external egress from clients/Server)
-            allow_gravatar = false;
-          };
-          news.news_feed_enabled = false;
-          dashboards.min_refresh_interval = "10s";
-          snapshots.external_enabled = false;
-          # Conservative plugin settings (no alpha, keep install API default)
-          plugins = {
-            enable_alpha = false;
-            disable_install_api = true;
-          };
-        };
-
-        # (Grafana env + tmpfiles rules are defined at top-level below)
-
-        # Provision local dashboards (Unbound)
-        grafana.provision.dashboards.settings.providers = lib.mkAfter [
-          {
-            name = "local-json";
-            orgId = 1;
-            type = "file";
-            disableDeletion = false;
-            editable = true;
-            options.path = inputs.self + "/files/dashboards";
-          }
-        ];
-      })
     ];
 
     # (php-fpm settings)
@@ -638,50 +602,6 @@ lib.mkMerge [
       };
     };
   }
-  (lib.mkIf grafanaEnabled {
-    systemd = {
-      services.grafana = {
-        # Disable preinstall/auto-update feature toggle explicitly via env (Grafana 10/11/12)
-        environment = {
-          GF_FEATURE_TOGGLES_DISABLE = "preinstallAutoUpdate";
-        };
-
-        # Restrict Grafana network egress to loopback only.
-        # All datasources (Loki/Prometheus) are local, no external egress needed.
-        # This blocks accidental outbound calls (updates, gravatar, external plugins, etc.).
-        serviceConfig = {
-          IPAddressDeny = "any";
-          IPAddressAllow = [
-            "127.0.0.0/8"
-            "::1/128"
-          ];
-        };
-      };
-
-      # Ensure plugins directory is clean on activation
-      tmpfiles.rules = lib.mkAfter [
-        "R /var/lib/grafana/plugins - - - - -"
-        "d /var/lib/grafana/plugins 0750 grafana grafana - -"
-      ];
-    };
-
-    # SOPS secret for Grafana admin password
-    sops.secrets."grafana/admin_password" =
-      let
-        yaml = inputs.self + "/secrets/grafana-admin-password.sops.yaml";
-        bin = inputs.self + "/secrets/grafana-admin-password.sops";
-      in
-      lib.mkIf (builtins.pathExists yaml || builtins.pathExists bin) {
-        sopsFile = if builtins.pathExists yaml then yaml else bin;
-        format = "binary"; # provide plain string to $__file provider
-        # Ensure grafana can read the secret when referenced via $__file{}
-        owner = "grafana";
-        group = "grafana";
-        mode = "0400";
-        # Restart Grafana if the secret changes
-        restartUnits = [ "grafana.service" ];
-      };
-  })
   (lib.mkIf (builtins.pathExists (inputs.self + "/secrets/odin-wireguard-wg-quick.sops")) {
     # On-demand WireGuard VPN for odin, configured via wg-quick config stored in sops.
     # The tunnel is not started automatically; use systemctl start/stop to control it.

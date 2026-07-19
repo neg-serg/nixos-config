@@ -6,6 +6,7 @@
 {
   lib,
   config,
+  inputs,
   ...
 }:
 let
@@ -95,6 +96,52 @@ in
       };
     };
 
+    # Grafana hardening: disable external calls and telemetry
+    # (moved from hosts/odin/services.nix)
+    services.grafana.settings = {
+      analytics = {
+        reporting_enabled = false;
+        check_for_updates = false;
+      };
+      users.allow_gravatar = false;
+      news.news_feed_enabled = false;
+      dashboards.min_refresh_interval = "10s";
+      snapshots.external_enabled = false;
+      plugins = {
+        enable_alpha = false;
+      };
+    };
+
+    # Restrict Grafana to loopback-only egress
+    systemd.services.grafana = {
+      environment.GF_FEATURE_TOGGLES_DISABLE = "preinstallAutoUpdate";
+      serviceConfig = {
+        IPAddressDeny = "any";
+        IPAddressAllow = [
+          "127.0.0.0/8"
+          "::1/128"
+        ];
+      };
+    };
+    # Clean plugins directory and provisioning JSON dir on activation
+    systemd.tmpfiles.rules = lib.mkAfter [
+      "R /var/lib/grafana/plugins - - - - -"
+      "d /var/lib/grafana/plugins 0750 grafana grafana - -"
+      "d /etc/grafana/provisioning/dashboards/json 0755 grafana grafana - -"
+    ];
+
+    # Provision local dashboards (repo-level dashboard JSON files)
+    services.grafana.provision.dashboards.settings.providers = lib.mkAfter [
+      {
+        name = "local-json";
+        orgId = 1;
+        type = "file";
+        disableDeletion = false;
+        editable = true;
+        options.path = inputs.self + "/files/dashboards";
+      }
+    ];
+
     # Dashboard provider — tells Grafana where to find dashboard JSON files
     environment.etc."grafana/provisioning/dashboards/salt.yaml" = {
       target = "/etc/grafana/provisioning/dashboards/salt.yaml";
@@ -120,11 +167,7 @@ in
       ))
     ];
 
-    # tmpfiles rules for Grafana dashboard provisioning
-    systemd.tmpfiles.rules = lib.mkAfter [
-      "d /etc/grafana/provisioning/dashboards/json 0755 grafana grafana - -"
-    ];
-
     # nothing else
   };
 }
+
