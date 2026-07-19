@@ -75,7 +75,6 @@ in
         "--name=netdata"
         "--network=host"
         "--cap-add=SYS_PTRACE"
-        "--cap-add=SYS_ADMIN"
       ];
     };
 
