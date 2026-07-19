@@ -88,8 +88,6 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
 
 - Hyprland autoreload stays off; reload manually via the keybinding.
 - Hypr config is split under `files/gui/hypr/*` and linked via nix-maid.
-- `~/.local/bin/rofi` wrapper enforces consistent flags, auto-select, and theme lookup in XDG paths;
-  disable auto-select per call with `-no-auto-select`.
 - Quickshell keyboard layout indicator listens to Hyprland `keyboard-layout` events, prefers the
   `main: true` device, shows the current submap as an accent pictogram before the keyboard glyph and
   layout (e.g., `★ ⌨ en`), and uses `hyprctl switchxkblayout current next` on click.
@@ -156,15 +154,6 @@ Use the same expectations regardless of whether you work under `modules/` or
 - Examples:
   - Service: preset `["defaultWanted"]`
   - Timer: preset `["timers"]`
-
-### Rofi Wrapper Notes
-
-- `~/.local/bin/rofi` injects safe defaults: `-no-config`, `-auto-select`, Ctrl+C cancel bindings,
-  theme resolution relative to XDG paths, Hyprland/Quickshell offset detection.
-- Keep per-call options minimal; if you need custom keybindings pass them explicitly (the wrapper
-  will respect overrides).
-- Pinentry uses `pinentry-rofi` with the `askpass` theme by default; override via
-  `PINENTRY_ROFI_ARGS` if you need custom flags.
 
 ### Editor Shim
 

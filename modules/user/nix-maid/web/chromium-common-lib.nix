@@ -2,7 +2,6 @@
 let
   # Common extension list for all Chromium browsers
   commonExtensions = [
-    "cjpalhdlnbpafiamejdnhcphjbkeiagm" # uBlock Origin
     "nngceckbapebfimnlniiiahkandclblb" # Bitwarden
     "pkehgijimnmhlpjocpleijbhhmbhiclc" # Sidebery placeholder
   ];

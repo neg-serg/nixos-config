@@ -3,7 +3,7 @@
 # HyDE-style Selector Script for NixOS
 # Mimics the visual behavior of HyDE's selectors
 
-# Rofi migration: using vicinae dmenu instead
+# Uses vicinae dmenu instead of rofi for directory selection
 
 usage() {
   echo "Usage: $0 [wallpaper|theme|animation]"

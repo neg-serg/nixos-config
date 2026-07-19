@@ -6,8 +6,7 @@ Custom packages and overlays for the configuration.
 
 | Directory | Purpose | |---------------------|---------------------------------------| |
 `overlay.nix` | Main overlay entry | | `overlays/` | Overlay helpers (functions, tools, media, dev)
-| | `game-scripts/` | Gaming launchers and CPU pinning | | `rofi-config/` | Rofi themes and wrappers
-| | `local-bin/` | User scripts for `~/.local/bin` | | `flight-gtk-theme/` | GTK theme package |
+| | `game-scripts/` | Gaming launchers and CPU pinning | | `local-bin/` | User scripts for `~/.local/bin` | | `flight-gtk-theme/` | GTK theme package |
 
 ## Usage
 
