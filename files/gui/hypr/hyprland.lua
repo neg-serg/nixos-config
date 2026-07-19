@@ -159,7 +159,7 @@ hl.bind(M1 .. "+Tab", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(M4 .. "+slash", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(M4 .. "+" .. C .. "+backslash", hl.dsp.window.resize({ x = 640, y = 480 }))
 hl.bind(M4 .. "+Tab", hl.dsp.window.cycle_next({ next = true }))
-hl.bind(M4 .. "+c", hl.dsp.exec_cmd("~/.local/bin/clip"))
+hl.bind(M4 .. "+c", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/clipboard/history"))
 hl.bind(M4 .. "+Escape", hl.dsp.window.close())
 hl.bind(M4 .. "+r", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 hl.bind(M4 .. "+h", hl.dsp.exec_cmd("hyprctl dispatch movefocus l"))
@@ -213,7 +213,7 @@ hl.bind(M4 .. "+" .. SH .. "+o", hl.dsp.exec_cmd("~/.local/bin/pl vol unmute"), 
 hl.bind(M4 .. "+m", hl.dsp.exec_cmd("~/.local/bin/music-rename current"), { locked = true })
 
 -- --- Misc (misc.conf) ---
-hl.bind(M1 .. "+g", hl.dsp.exec_cmd("vicinae deeplink vicinae:toggle?system:browse-apps"))
+hl.bind(M1 .. "+g", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/wm/switch-windows"))
 hl.bind(M4 .. "+" .. SH .. "+m", hl.dsp.exec_cmd("~/.local/bin/main-menu"))
 hl.bind(M4 .. "+" .. SH .. "+p", hl.dsp.exec_cmd("~/.local/bin/hypr-shortcuts"))
 hl.bind(M4 .. "+" .. SH .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/satty-$(date \'+%Y%m%d-%H.%M.%S\').png"; grimblast save screen "$shot" && pic-info "$shot"'))
