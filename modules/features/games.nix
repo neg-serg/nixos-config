@@ -6,7 +6,6 @@ with lib;
       enable = mkBool "enable Games stack" true;
       nethack.enable = mkBool "enable Nethack" true;
       dosemu.enable = mkBool "enable Dosemu" true;
-      launchers = { };
       oss.enable = mkBool "enable OSS Games (SuperTux, Wesnoth, etc.)" false;
       openmw.enable = mkBool "enable OpenMW (Morrowind Engine)" false;
     };
