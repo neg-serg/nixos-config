@@ -1042,7 +1042,7 @@ Whether to enable enable AMDGPU ROCm support.
 
 *Declared by:*
 
-- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
 ## features.hardware.bluetooth.enable
 
@@ -1084,7 +1084,7 @@ Whether to enable enable Mail stack (notmuch, isync, vdirsyncer, etc.).
 
 *Declared by:*
 
-- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
 ## features.mail.vdirsyncer.enable
 
@@ -1098,7 +1098,7 @@ Whether to enable enable Vdirsyncer sync service/timer.
 
 *Declared by:*
 
-- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
 ## features.media.aiUpscale.enable
 
@@ -1344,7 +1344,7 @@ Whether to enable enable Tailscale mesh VPN and Tailray GUI.
 
 *Declared by:*
 
-- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
 ## features.net.wifi.enable
 
@@ -1358,7 +1358,7 @@ Whether to enable enable Wi-Fi stack and management tools (iwd, wavemon, etc.).
 
 *Declared by:*
 
-- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
 ## features.profile
 
@@ -1468,7 +1468,7 @@ Whether to enable enable Torrent stack (Transmission, tools, services).
 
 *Declared by:*
 
-- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
 ## features.torrent.prometheus.enable
 
@@ -1482,7 +1482,7 @@ Whether to enable enable Prometheus exporter for Transmission (transmission-expo
 
 *Declared by:*
 
-- [/modules/features/services.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/services.nix)
+- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
 ## features.web.enable
 
