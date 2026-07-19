@@ -10,18 +10,19 @@
   ...
 }:
 let
+  inherit (lib.strings) escapeXML;
   cfg = config.servicesProfiles.avahi or { enable = false; };
 
   mkServiceXML = { name, type, port, txtRecords ? [] }:
     let
-      txtLines = map (r: "        <txt-record>${r}</txt-record>") txtRecords;
+      txtLines = map (r: "        <txt-record>${escapeXML r}</txt-record>") txtRecords;
     in ''
       <?xml version="1.0" standalone='no'?>
       <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
       <service-group>
-        <name replace-wildcards="yes">%h ${name}</name>
+        <name replace-wildcards="yes">%h ${escapeXML name}</name>
         <service>
-          <type>_${type}._tcp</type>
+          <type>_${escapeXML type}._tcp</type>
           <port>${toString port}</port>${lib.optionalString (txtLines != []) "\n${lib.concatStringsSep "\n" txtLines}"}
         </service>
       </service-group>
