@@ -6,12 +6,11 @@
   lib,
   config,
   pkgs,
-  inputs,
+  opts,
   ...
 }:
 let
   inherit (lib) mkIf mkEnableOption;
-  opts = import (inputs.self + "/lib/opts.nix") { inherit lib; };
   cfg = config.system.swapfile;
 in
 {

@@ -5,12 +5,11 @@
 # Dependencies: Referenced by service modules under modules/servers/*.
 {
   lib,
-  inputs,
+  opts,
   ...
 }:
 let
   inherit (lib) types;
-  opts = import (inputs.self + "/lib/opts.nix") { inherit lib; };
 in
 {
   options.servicesProfiles = {

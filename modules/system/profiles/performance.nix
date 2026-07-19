@@ -6,7 +6,7 @@
 {
   lib,
   config,
-  inputs,
+  opts,
   ...
 }:
 # This module defines a feature flag and granular toggles to apply
@@ -14,9 +14,7 @@
 #
 # WARNING: These options may reduce security and/or stability.
 # Enable only what you need and understand.
-let
-  opts = import (inputs.self + "/lib/opts.nix") { inherit lib; };
-in
+
 {
   options.profiles.performance = with opts; {
     enable = mkEnableOption "Performance-oriented kernel/boot tweaks (reduces security; use with care).";

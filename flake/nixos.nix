@@ -19,6 +19,7 @@ let
     inputs.determinate.nixosModules.default
     inputs.nix-flatpak.nixosModules.nix-flatpak
     inputs.sops-nix.nixosModules.sops
+    ../modules/system/disabled-modules.nix
   ];
 
   hostExtras =
@@ -116,6 +117,7 @@ let
 
     # Default: import all domains (full workstation).
     domainFilter = mkDomainFilter allDomains;
+    opts = import (self + "/lib/opts.nix") { inherit lib; };
 
     neg = {
       # Core structural helpers (no config dependency)

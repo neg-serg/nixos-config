@@ -81,17 +81,50 @@ in
         pkgs.stylua # Opinionated Lua code formatter
       ];
     };
-
-    difftastic = pkgs.mkShell {
-      packages = [ pkgs.difftastic ]; # structural diff tool
-    };
-
-    doggo = pkgs.mkShell {
-      packages = [ pkgs.doggo ]; # modern dig replacement for DNS lookups
-    };
-
-    rclone = pkgs.mkShell {
-      packages = [ pkgs.rclone ]; # rsync for cloud storage
+    tools = pkgs.mkShell {
+      # single-purpose tools consolidated for eval efficiency
+      packages = [
+        pkgs.difftastic # structural diff tool
+        pkgs.doggo # modern dig replacement for DNS lookups
+        pkgs.rclone # rsync for cloud storage
+        pkgs.numbat # scientific calculator with unit conversion
+        pkgs.openconnect # Cisco AnyConnect VPN client
+        pkgs.nurl # Nix URL derivation helper
+        pkgs.nchat # terminal-based chat client
+        pkgs.nodejs_24 # Event-driven I/O framework for the V8 JavaScript engine
+        pkgs.viddy # modern watch command with history
+        pkgs.uni # Unicode query tool
+        pkgs.vlang # Simple, fast, safe, compiled language for developing main...
+        pkgs.ape # APE file parser and emulator
+        pkgs.ast-grep # AST-based structural code search
+        pkgs.bespokesynth # modular software synthesizer
+        pkgs.fabric-ai # AI-powered CLI workflow tool
+        pkgs.stylua # Opinionated Lua code formatter
+        pkgs.lnav # log file navigator with SQL queries
+        pkgs.neonmodem # terminal-based LLM API client
+        pkgs.netsniff-ng # high-performance network packet sniffer
+        pkgs.netbird # zero-config VPN mesh network
+        pkgs.mesa-demos # Mesa 3D graphics demo applications
+        pkgs.speechd # speech synthesis daemon and client
+        pkgs.bcc # BPF Compiler Collection tools
+        pkgs.slskd # Soulseek P2P music sharing daemon
+        pkgs.lldb # LLVM debugger
+        pkgs.stress-ng # system stress testing tool
+        pkgs.pueue # shell command queue daemon
+        pkgs.gron # JSON to greppable flat format converter
+        pkgs.lzbench # compression algorithm benchmark
+        pkgs.vulkan-extension-layer # Vulkan extension validation layer
+        pkgs.amfora # terminal Gemini protocol browser
+        pkgs.freeze # render source files to images
+        pkgs.hexyl # hexdump viewer
+        pkgs.license-generator # CLI license boilerplates
+        pkgs.plow # HTTP benchmarking tool
+        pkgs.git-annex # manage files with git, without checking their contents in...
+        pkgs.solfege # ear training program
+        pkgs.vrrtest # validate VRR timings on Wayland
+        pkgs.babashka # native Clojure scripting runtime for shell scripts
+        pkgs.visidata # Terminal spreadsheet multitool for data discovery
+      ];
     };
 
     haskell =
@@ -154,42 +187,6 @@ in
       ];
     };
 
-    node = pkgs.mkShell {
-      nativeBuildInputs = [
-        pkgs.nodejs_24 # Event-driven I/O framework for the V8 JavaScript engine
-      ];
-    };
-
-    numbat = pkgs.mkShell {
-      packages = [ pkgs.numbat ]; # scientific calculator with unit conversion
-    };
-
-    openconnect = pkgs.mkShell {
-      packages = [ pkgs.openconnect ]; # Cisco AnyConnect VPN client
-    };
-
-    nurl = pkgs.mkShell {
-      packages = [ pkgs.nurl ]; # Nix URL derivation helper
-    };
-
-    nchat = pkgs.mkShell {
-      packages = [ pkgs.nchat ]; # terminal-based chat client
-    };
-
-    vlang = pkgs.mkShell {
-      nativeBuildInputs = [
-        pkgs.vlang # Simple, fast, safe, compiled language for developing main...
-      ];
-    };
-
-    viddy = pkgs.mkShell {
-      packages = [ pkgs.viddy ]; # modern watch command with history
-    };
-
-    uni = pkgs.mkShell {
-      packages = [ pkgs.uni ]; # Unicode query tool
-    };
-
     re = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.radare2 # UNIX-like reverse engineering framework and command-line ...
@@ -249,12 +246,6 @@ in
         ];
       };
 
-    lua = pkgs.mkShell {
-      nativeBuildInputs = [
-        pkgs.stylua # Opinionated Lua code formatter
-      ];
-    };
-
     android = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.android-tools # Android ADB and fastboot tools
@@ -263,22 +254,6 @@ in
         pkgs.adbtuifm # TUI file manager for Android over ADB
       ]
       ++ lib.optionals (pkgs ? fuse3) [ pkgs.fuse3 ]; # Library that allows filesystems to be implemented in user...
-    };
-
-    ape = pkgs.mkShell {
-      packages = [ pkgs.ape ]; # APE file parser and emulator
-    };
-
-    "ast-grep" = pkgs.mkShell {
-      packages = [ pkgs.ast-grep ]; # AST-based structural code search
-    };
-
-    bespokesynth = pkgs.mkShell {
-      packages = [ pkgs.bespokesynth ]; # modular software synthesizer
-    };
-
-    fabric-ai = pkgs.mkShell {
-      packages = [ pkgs.fabric-ai ]; # AI-powered CLI workflow tool
     };
 
     qmk = pkgs.mkShell {
@@ -396,12 +371,6 @@ in
       ];
     };
 
-    gitops = pkgs.mkShell {
-      nativeBuildInputs = [
-        pkgs.git-annex # manage files with git, without checking their contents in...
-      ];
-    };
-
     graphics = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.librsvg # Small library to render SVG images to Cairo surfaces
@@ -422,28 +391,6 @@ in
       ];
     };
 
-    lnav = pkgs.mkShell {
-      packages = [ pkgs.lnav ]; # log file navigator with SQL queries
-    };
-
-    music-learning = pkgs.mkShell {
-      nativeBuildInputs = [
-        pkgs.solfege # ear training program
-      ];
-    };
-
-    neonmodem = pkgs.mkShell {
-      packages = [ pkgs.neonmodem ]; # terminal-based LLM API client
-    };
-
-    "netsniff-ng" = pkgs.mkShell {
-      packages = [ pkgs.netsniff-ng ]; # high-performance network packet sniffer
-    };
-
-    netbird = pkgs.mkShell {
-      packages = [ pkgs.netbird ]; # zero-config VPN mesh network
-    };
-
     misc = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.xephem # astronomy application
@@ -461,10 +408,6 @@ in
       ];
     };
 
-    "mesa-demos" = pkgs.mkShell {
-      packages = [ pkgs.mesa-demos ]; # Mesa 3D graphics demo applications
-    };
-
     virt = pkgs.mkShell {
       nativeBuildInputs = [
         pkgs.guestfs-tools # tools for accessing and modifying virtual machine disk images
@@ -480,20 +423,6 @@ in
       ];
     };
 
-    vrr = pkgs.mkShell {
-      # tools for VRR (Variable Refresh Rate) testing
-      nativeBuildInputs = [
-        pkgs.vrrtest # validate VRR timings on Wayland
-      ];
-    };
-
-    clojure = pkgs.mkShell {
-      # Clojure development and scripting environment
-      nativeBuildInputs = [
-        pkgs.babashka # native Clojure scripting runtime for shell scripts
-      ];
-    };
-
     "pro-audio" = pkgs.mkShell {
       # professional audio production environment (DAWs, editors, synths)
       nativeBuildInputs = [
@@ -506,29 +435,11 @@ in
       ];
     };
 
-    visidata = pkgs.mkShell {
-      nativeBuildInputs = [
-        pkgs.visidata # Terminal spreadsheet multitool for data discovery
-      ];
-    };
-
     "web-archive" = pkgs.mkShell {
       packages = [
         pkgs.gallery-dl # download image galleries
         pkgs.monolith # single-file webpage archiver
       ];
-    };
-
-    speech = pkgs.mkShell {
-      packages = [ pkgs.speechd ]; # speech synthesis daemon and client
-    };
-
-    bcc = pkgs.mkShell {
-      packages = [ pkgs.bcc ]; # BPF Compiler Collection tools
-    };
-
-    slskd = pkgs.mkShell {
-      packages = [ pkgs.slskd ]; # Soulseek P2P music sharing daemon
     };
 
     db = pkgs.mkShell {
@@ -539,10 +450,6 @@ in
       ];
     };
 
-    lldb = pkgs.mkShell {
-      packages = [ pkgs.lldb ]; # LLVM debugger
-    };
-
     k8s = pkgs.mkShell {
       packages = [
         pkgs.kubectl # Kubernetes CLI
@@ -551,46 +458,6 @@ in
         pkgs.scaleway-cli # Scaleway cloud CLI
         pkgs.kubecolor # Colorize kubectl output
       ];
-    };
-
-    "stress-ng" = pkgs.mkShell {
-      packages = [ pkgs.stress-ng ]; # system stress testing tool
-    };
-
-    pueue = pkgs.mkShell {
-      packages = [ pkgs.pueue ]; # shell command queue daemon
-    };
-
-    gron = pkgs.mkShell {
-      packages = [ pkgs.gron ]; # JSON to greppable flat format converter
-    };
-
-    lzbench = pkgs.mkShell {
-      packages = [ pkgs.lzbench ]; # compression algorithm benchmark
-    };
-
-    vulkan = pkgs.mkShell {
-      packages = [ pkgs.vulkan-extension-layer ]; # Vulkan extension validation layer
-    };
-
-    amfora = pkgs.mkShell {
-      packages = [ pkgs.amfora ]; # terminal Gemini protocol browser
-    };
-
-    freeze = pkgs.mkShell {
-      packages = [ pkgs.freeze ]; # render source files to images
-    };
-
-    hexyl = pkgs.mkShell {
-      packages = [ pkgs.hexyl ]; # hexdump viewer
-    };
-
-    license = pkgs.mkShell {
-      packages = [ pkgs.license-generator ]; # CLI license boilerplates
-    };
-
-    plow = pkgs.mkShell {
-      packages = [ pkgs.plow ]; # HTTP benchmarking tool
     };
 
     wine = pkgs.mkShell {

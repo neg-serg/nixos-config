@@ -10,11 +10,10 @@
   lib,
   pkgs,
   config,
-  inputs,
+  opts,
   ...
 }:
 let
-  opts = import (inputs.self + "/lib/opts.nix") { inherit lib; };
   cfg = config.profiles.debug or { enable = false; };
 in
 {

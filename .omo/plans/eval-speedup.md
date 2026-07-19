@@ -123,14 +123,14 @@
 - **QA**: `nix eval '.#packages.x86_64-linux.docs-modules'` — генерация OPTIONS.md всё ещё работает
 
 ### 7. Удалить пустые домены
-- **Файлы**: `modules/finance/` (директория), `modules/db/` (директория), `modules/features/services.nix`
+- **Файлы**: `modules/finance/` (директория), `modules/db/` (директория), `modules/features/network.nix`
 - **Проблема**: 
   - `finance/default.nix` — 4 строки, `imports = [];` — ничего не делает
   - `db/` — директория без `.nix` файлов
-  - `services.nix` строка ~16: `features.finance = { };` — пустая опция
+  - `network.nix` строка ~16: `features.finance = { };` — пустая опция
 - **Фикс**:
   1. Удалить `modules/finance/` и `modules/db/`
-  2. Удалить `features.finance = { };` из `modules/features/services.nix`
+  2. Удалить `features.finance = { };` из `modules/features/network.nix`
   3. Проверить: ни `modules/default.nix`, ни `flake/nixos.nix` НЕ содержат ссылок на finance/db (уже проверено — не содержат)
 - **Acceptance**: сборка без ошибок, `grep -r "finance\|modules/db" modules/ flake/ hosts/` → только безвредные упоминания (комментарии/README)
 - **QA**: `nh os switch --dry-run`
