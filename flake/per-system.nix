@@ -21,7 +21,7 @@ let
         package = nixfmtPkg;
         excludes = [ "flake.nix" ];
       };
-      statix.enable = false;
+      statix.enable = true;
       deadnix.enable = true;
     };
   };
