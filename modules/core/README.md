@@ -11,5 +11,3 @@ configuration.
 ### Options
 
 | Option | Type | Description | |--------|------|-------------| | `neg.repoRoot` | string | Path to
-the configuration repository root (default: `/etc/nixos`) | | `neg.rofi.package` | package | The
-rofi package to use system-wide |
