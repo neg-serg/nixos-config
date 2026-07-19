@@ -156,6 +156,46 @@ settings.theme = `
   color: var(--fg) !important;
   border: 1px solid var(--border) !important;
 }
+
+/* Omnibar / Tab list (T command) */
+#sk_omnibar {
+  background: var(--bg) !important;
+  color: var(--fg) !important;
+  border: 1px solid var(--border) !important;
+}
+
+#sk_omnibar .omnibar_tab {
+  background: var(--bg) !important;
+  color: var(--fg) !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 4px 8px !important;
+}
+
+#sk_omnibar .omnibar_tab:hover,
+#sk_omnibar .omnibar_tab:focus {
+  background: var(--bg-highlight) !important;
+}
+
+#sk_omnibar .omnibar_tab .title {
+  color: var(--fg) !important;
+}
+
+#sk_omnibar .omnibar_tab .url {
+  color: var(--fg-muted) !important;
+}
+
+#sk_omnibar .omnibar_tab span {
+  color: var(--accent) !important;
+}
+
+#sk_omnibar input {
+  font-family: var(--font-mono) !important;
+  font-size: var(--font-size) !important;
+  color: var(--fg) !important;
+  background: var(--hint-bg) !important;
+  border: 1px solid var(--border) !important;
+  padding: 6px 8px !important;
+}
 `;
 
 // ========== Hints Styling (Shadow DOM) ==========
@@ -241,7 +281,7 @@ api.mapkey('d', 'Close current tab', function () {
   api.RUNTIME('closeTab');
 });
 api.map('u', 'X');  // Restore tab
-api.map('w', 'W');  # Window list
+api.map('w', 'T');  // Tab list
 
 // o — native Ctrl+L (focus browser address bar) via native messaging server
 api.mapkey('o', 'Focus address bar (native Ctrl-L)', function() {
