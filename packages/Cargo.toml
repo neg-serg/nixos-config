@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "game",
+    "hypr-focus",
+    "pwroute",
+    "hwctl",
+    "amnezia-tun",
+]
+resolver = "2"
