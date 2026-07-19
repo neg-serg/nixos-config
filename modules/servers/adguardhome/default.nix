@@ -79,6 +79,10 @@ in
       DynamicUser = lib.mkForce false;
       User = "adguardhome";
       Group = "adguardhome";
+      # Hardening
+      ProtectSystem = "strict";
+      PrivateTmp = true;
+      NoNewPrivileges = true;
     };
 
     # Make systemd-resolved forward directly to Unbound (127.0.0.1#5353) instead of

@@ -64,5 +64,13 @@ in
       name = "avahi/services/${svc.name}.service";
       value.text = mkServiceXML svc;
     }) cfg.services);
+
+    systemd.services.avahi-daemon.serviceConfig = {
+      # Hardening
+      ProtectSystem = "strict";
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+      CapabilityBoundingSet = "";
+    };
   };
 }

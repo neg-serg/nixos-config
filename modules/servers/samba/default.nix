@@ -52,5 +52,23 @@ in
     systemd.services.samba-smbd.wantedBy = lib.mkForce [ ];
     systemd.services.samba-nmbd.wantedBy = lib.mkForce [ ];
     systemd.services.samba-winbindd.wantedBy = lib.mkForce [ ];
+    systemd.services.samba-smbd.serviceConfig = {
+      # Hardening
+      ProtectSystem = "strict";
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+    };
+    systemd.services.samba-nmbd.serviceConfig = {
+      # Hardening
+      ProtectSystem = "strict";
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+    };
+    systemd.services.samba-winbindd.serviceConfig = {
+      # Hardening
+      ProtectSystem = "strict";
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+    };
   };
 }
