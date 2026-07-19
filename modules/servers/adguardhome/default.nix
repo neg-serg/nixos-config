@@ -66,10 +66,10 @@ in
           ipv6 = false;
           port = 53;
           upstream_dns = [ "127.0.0.1:5353" ];
-          bootstrap_dns = [
-            "1.1.1.1"
-            "8.8.8.8"
-          ];
+          # Upstream (Unbound) is IP-based (127.0.0.1:5353), so bootstrap DNS
+          # is only a fallback for hostname-based upstreams. Single privacy-first
+          # resolver is sufficient; Google 8.8.8.8 removed for privacy.
+          bootstrap_dns = [ "1.1.1.1" ];
           inherit (cfg) rewrites;
         };
       };
