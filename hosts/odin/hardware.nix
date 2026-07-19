@@ -46,11 +46,9 @@
     # Do not enable PREEMPT_RT on this host
     performance.preemptRt.enable = false;
   };
-  # Performance profile comes from the workstation role
-  profiles.performance.enable = true;
 
   # ZRAM: zstd compressor (Zen 5 has hw-accelerated zstd, better ratio than lzo-rle)
-  zramSwap.compressor = "zstd";
+  zramSwap.algorithm = "zstd";
   profiles.performance.writeback.enable = true;
   # Safe memory extras: lower swappiness and raise max_map_count for heavy apps/games
   profiles.performance.memExtras = {
