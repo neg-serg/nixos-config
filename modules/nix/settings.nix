@@ -49,10 +49,12 @@ in
         "blake3-hashes" # BLAKE3: faster parallel hashing for store paths
         "wasm-builtin" # builtins.wasm: call WebAssembly functions from Nix evaluation
         "wasm-derivations" # system = "wasm32-wasip1": platform-independent derivations
+        "recursive-nix" # allow Nix builds to call nix (nested evaluation)
+        "fetch-closure" # fetch store paths from binary caches by closure hash
       ];
       eval-cache = true;
       eval-system = "x86_64-linux"; # only evaluate for host platform, skip aarch64
-      allow-import-from-derivation = false;
+      allow-import-from-derivation = true;
       trusted-users = [
         "root"
         (config.users.main.name or "neg")
