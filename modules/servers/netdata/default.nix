@@ -1,47 +1,39 @@
 ##
 # Module: servers/netdata
 # Purpose: Netdata real-time performance monitoring container via Podman.
-# Key options: profiles.services.netdata (enable, dataDir, httpPort).
+# Key options: servicesProfiles.netdata (enable, dataDir, httpPort).
 # Dependencies: virtualisation.oci-containers (backend = podman).
 # Note: Uses host network mode and privileged capabilities for full system monitoring.
 {
   lib,
   config,
+  opts,
   ...
 }:
 let
-  cfg = config.profiles.services.netdata;
-  inherit (lib)
-    mkEnableOption
-    mkOption
-    types
-    mkIf
-    ;
+  cfg = config.servicesProfiles.netdata;
 in
 {
-  options.profiles.services.netdata = {
-    enable = mkEnableOption "Netdata real-time performance monitoring container";
+  options.servicesProfiles.netdata = {
+    enable = opts.mkEnableOption "Netdata real-time performance monitoring container";
 
-    dataDir = mkOption {
-      type = types.path;
+    dataDir = opts.mkStrOpt {
       default = "/var/lib/netdata";
       description = "Directory for Netdata configuration and data";
     };
 
-    httpPort = mkOption {
-      type = types.port;
+    httpPort = opts.mkIntOpt {
       default = 19999;
       description = "Port for Netdata web UI";
     };
 
-    timezone = mkOption {
-      type = types.str;
+    timezone = opts.mkStrOpt {
       default = config.time.timeZone;
       description = "Container timezone";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     # Ensure data directories exist
     systemd.tmpfiles.rules = [
       "d ${cfg.dataDir} 0755 root root -"

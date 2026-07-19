@@ -358,16 +358,6 @@ lib.mkMerge [
 
     # (php-fpm settings)
 
-    # Bitcoind minimal metrics → node_exporter textfile collector
-    # Exposes:
-    #   bitcoin_block_height{instance="main",chain="<chain>"} <n>
-    #   bitcoin_headers{instance="main",chain="<chain>"} <n>
-    #   bitcoin_time_since_last_block_seconds{instance} <seconds>
-    #   bitcoin_peers_connected{instance} <n>
-    # Directory for textfile collector is ensured above via tmpfiles rules
-
-    # Periodic metric collection service + timer
-    # Firewall port for bitcoind is opened by the bitcoind server module
 
     # Disable runtime logrotate check (build-time check remains). Avoids false negatives
     # when rotating files under non-standard paths or missing until first run.
@@ -430,76 +420,6 @@ lib.mkMerge [
           wantedBy = [ "graphical.target" ];
         };
 
-        # Periodic metric collection service + timer
-        "bitcoind-textfile-metrics" =
-          let
-            bitcoindInstance = config.servicesProfiles.bitcoind.instance or "main";
-            bitcoindUser = "bitcoind-${bitcoindInstance}";
-            dataDir = config.servicesProfiles.bitcoind.dataDir or "/var/lib/bitcoind/${bitcoindInstance}";
-            textfileDir = "/var/lib/node_exporter/textfile_collector";
-            metricsFile = "${textfileDir}/bitcoind_${bitcoindInstance}.prom";
-            metricsScript = pkgs.writeShellScript "bitcoind-textfile-metrics.sh" ''
-              set -euo pipefail
-              TMPFILE="$(mktemp)"
-              ts() { date +%s; }
-
-              CLI="${lib.getExe' pkgs.bitcoind "bitcoin-cli"} -datadir ${lib.escapeShellArg dataDir}"
-
-              # Basic info (avoid heavy calls)
-              blocks=$($CLI getblockcount 2>/dev/null || echo 0)
-              # headers and chain via blockchaininfo
-              info=$($CLI getblockchaininfo 2>/dev/null || echo '{}')
-              headers=$(printf '%s\n' "$info" | ${lib.getExe pkgs.jq} -r '.headers // 0' 2>/dev/null || echo 0) # Lightweight and flexible command-line JSON processor
-              chain=$(printf '%s\n' "$info" | ${lib.getExe pkgs.jq} -r '.chain // "unknown"' 2>/dev/null || echo unknown) # Lightweight and flexible command-line JSON processor
-
-              # Determine best block time for staleness metric
-              besthash=$($CLI getbestblockhash 2>/dev/null || echo)
-              if [ -n "$besthash" ]; then
-                block_time=$($CLI getblockheader "$besthash" 2>/dev/null | ${lib.getExe pkgs.jq} -r '.time // 0' 2>/dev/null || echo 0) # Lightweight and flexible command-line JSON processor
-              else
-                block_time=0
-              fi
-              now=$(ts)
-              if [ "$block_time" -gt 0 ] 2>/dev/null; then
-                since=$(( now - block_time ))
-              else
-                since=0
-              fi
-
-              # Peer connections
-              peers=$($CLI getnetworkinfo 2>/dev/null | ${lib.getExe pkgs.jq} -r '.connections // 0' 2>/dev/null || echo 0) # Lightweight and flexible command-line JSON processor
-
-              cat > "$TMPFILE" <<EOF
-              # HELP bitcoin_block_height Current block height as reported by bitcoind
-              # TYPE bitcoin_block_height gauge
-              bitcoin_block_height{instance="${bitcoindInstance}",chain="$chain"} $blocks
-              # HELP bitcoin_headers Current header height as reported by bitcoind
-              # TYPE bitcoin_headers gauge
-              bitcoin_headers{instance="${bitcoindInstance}",chain="$chain"} $headers
-              # HELP bitcoin_time_since_last_block_seconds Seconds since the best block time
-              # TYPE bitcoin_time_since_last_block_seconds gauge
-              bitcoin_time_since_last_block_seconds{instance="${bitcoindInstance}"} $since
-              # HELP bitcoin_peers_connected Number of peer connections
-              # TYPE bitcoin_peers_connected gauge
-              bitcoin_peers_connected{instance="${bitcoindInstance}"} $peers
-              EOF
-
-              install -m 0644 -D "$TMPFILE" ${lib.escapeShellArg metricsFile}
-              rm -f "$TMPFILE"
-            '';
-          in
-          {
-            enable = false;
-            description = "Export bitcoind minimal metrics to node_exporter textfile collector";
-            serviceConfig = {
-              Type = "oneshot";
-              User = bitcoindUser;
-              Group = bitcoindUser;
-              ExecStart = metricsScript;
-            };
-            wants = [ "bitcoind-${bitcoindInstance}.service" ];
-            after = [ "bitcoind-${bitcoindInstance}.service" ];
-          };
 
         # Disable runtime logrotate check (build-time check remains). Avoids false negatives
         # when rotating files under non-standard paths or missing until first run.
@@ -514,16 +434,6 @@ lib.mkMerge [
             };
       };
 
-      timers."bitcoind-textfile-metrics" = {
-        enable = false;
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnBootSec = "2m";
-          OnUnitActiveSec = "30s";
-          AccuracySec = "5s";
-          Unit = "bitcoind-textfile-metrics.service";
-        };
-      };
     };
   }
   (lib.mkIf (builtins.pathExists (inputs.self + "/secrets/odin-wireguard-wg-quick.sops")) {
