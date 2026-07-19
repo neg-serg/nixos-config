@@ -14,7 +14,7 @@ let
     owner = "alejandroqh";
     repo = "term39";
     rev = "v${version}";
-    hash = lib.fakeHash; # Set after first build: nix build 2>&1 | grep "got:"
+    hash = "sha256-DjseOO3oSNdsYvl+L+x9g45cwwbEWKf33w5CIj/iEI4=";
   };
 in
 rustPlatform.buildRustPackage {
