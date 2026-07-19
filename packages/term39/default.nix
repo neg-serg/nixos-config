@@ -24,11 +24,9 @@ rustPlatform.buildRustPackage {
 
   cargoLock.lockFile = "${src}/Cargo.lock";
 
-  # clang-sys needs llvm-config (in dev output) + libclang at build time
-  nativeBuildInputs = [
-    llvmPackages.llvm.dev
-    llvmPackages.clang
-  ];
+  # clang-sys needs llvm-config (dev output) + libclang at build time
+  nativeBuildInputs = [ llvmPackages.llvm.dev llvmPackages.clang ];
+  LLVM_CONFIG_PATH = "${llvmPackages.llvm.dev}/bin/llvm-config";
 
   meta = with lib; {
     description = "Modern retro-styled terminal multiplexer with MS-DOS aesthetic";
