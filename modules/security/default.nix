@@ -157,10 +157,7 @@ in
             }
             {
               command = "/run/current-system/sw/bin/nixos-rebuild";
-              options = [
-                "NOPASSWD"
-                "SETENV"
-              ];
+              options = [ "NOPASSWD" ];
             }
           ];
           groups = [ mainGroup ];
