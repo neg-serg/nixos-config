@@ -262,6 +262,8 @@ lib.mkMerge [
     # Install helper to toggle CPU boost quickly (cpu-boost {status|on|off|toggle})
     environment.systemPackages = lib.mkAfter [
       pkgs.openrgb # per-device RGB controller UI
+      pkgs.rustup # Rust toolchain manager (rustc, cargo, rust-analyzer via rustup)
+      pkgs.rust-analyzer # Rust LSP server
       (pkgs.writeShellScriptBin "cpu-boost" ''
         exec ${lib.getExe pkgs.neg.hwctl} cpu boost "$@"
       '') # CLI toggle for AMD Precision Boost
