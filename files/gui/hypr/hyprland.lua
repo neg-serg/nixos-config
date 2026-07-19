@@ -213,7 +213,7 @@ hl.bind(M4 .. "+" .. SH .. "+o", hl.dsp.exec_cmd("~/.local/bin/pl vol unmute"), 
 hl.bind(M4 .. "+m", hl.dsp.exec_cmd("~/.local/bin/music-rename current"), { locked = true })
 
 -- --- Misc (misc.conf) ---
-hl.bind(M1 .. "+g", hl.dsp.exec_cmd("vicinae toggle"))
+hl.bind(M1 .. "+g", hl.dsp.exec_cmd("vicinae deeplink vicinae:toggle?system:browse-apps"))
 hl.bind(M4 .. "+" .. SH .. "+m", hl.dsp.exec_cmd("~/.local/bin/main-menu"))
 hl.bind(M4 .. "+" .. SH .. "+p", hl.dsp.exec_cmd("~/.local/bin/hypr-shortcuts"))
 hl.bind(M4 .. "+" .. SH .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/satty-$(date \'+%Y%m%d-%H.%M.%S\').png"; grimblast save screen "$shot" && pic-info "$shot"'))
