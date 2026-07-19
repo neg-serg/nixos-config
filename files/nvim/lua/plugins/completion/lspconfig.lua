@@ -82,6 +82,9 @@ return {
     configure('autotools_ls', {})
     configure('dotls', {})
     configure('lemminx', {})
+    configure('nil', {})
+    configure('dockerls', {})
+
 
     configure('lua_ls', {
       settings = {
