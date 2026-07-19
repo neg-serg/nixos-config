@@ -43,7 +43,7 @@ settings.theme = `
 
 /* Hints */
 #sk_hints .begin {
-  color: var(--accent) !important;
+  color: #89cdd2 !important;
 }
 
 /* Status bar / Banner */
