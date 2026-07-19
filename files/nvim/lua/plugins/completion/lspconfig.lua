@@ -45,11 +45,43 @@ return {
       vim.lsp.config[server] = vim.tbl_deep_extend('force', { capabilities = capabilities }, opts or {})
       vim.lsp.enable(server)
     end
-
     configure('cmake', {})
     configure('systemd_ls', {})
 
     configure('marksman', {})
+
+    configure('bashls', {})
+    configure('pyright', {
+      settings = {
+        python = {
+          analysis = {
+            typeCheckingMode = 'basic',
+            autoImportCompletions = true,
+          },
+        },
+      },
+    })
+    configure('ts_ls', {})
+
+    -- vscode-langservers-extracted: cssls, html, jsonls
+    configure('cssls', {})
+    configure('html', {})
+    configure('jsonls', {
+      filetypes = { 'json', 'jsonc', 'json5' },
+    })
+
+    configure('yamlls', {
+      settings = {
+        yaml = {
+          keyOrdering = false,
+        },
+      },
+    })
+    configure('taplo', {})
+    configure('just_ls', {})
+    configure('autotools_ls', {})
+    configure('dotls', {})
+    configure('lemminx', {})
 
     configure('lua_ls', {
       settings = {
@@ -68,19 +100,6 @@ return {
     configure('clangd', {
       cmd = { 'clangd', '--background-index', '--clang-tidy', '--completion-style=detailed', '--header-insertion=never' },
       init_options = { clangdFileStatus = true },
-    })
-    configure('jsonls', {
-      filetypes = { 'json', 'jsonc', 'json5' },
-    })
-    configure('pyright', {
-      settings = {
-        python = {
-          analysis = {
-            typeCheckingMode = 'basic',
-            autoImportCompletions = true,
-          },
-        },
-      },
     })
   end,
 }
