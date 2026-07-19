@@ -14,7 +14,10 @@ SECRET="/run/user/1000/secrets/proxy-fallback"
 load_fallback() {
     if [ -f "$SECRET" ]; then
         cat "$SECRET"
+        return
     fi
+    # Hardcoded fallback before SOPS is deployed
+    echo 'hysteria2://35415e5e-3666-4454-8c45-903af0fcddf4@85.120.228.208:47257?insecure=1&sni=www.bing.com'
 }
 
 # ============================================================
@@ -72,7 +75,7 @@ for line in text.strip().split('\n'):
                   "packet_encoding": "xudp"}
             tls = {"enabled": True, "server_name": p.get('sni', host),
                    "utls": {"enabled": True, "fingerprint": p.get('fp', 'chrome')}}
-            if p.get('security') == 'reality':
+            if p.get('security') == 'reality' and len(p.get('pbk', '')) >= 32:
                 tls["reality"] = {"enabled": True,
                                  "public_key": p.get('pbk', ''),
                                  "short_id": p.get('sid', '')}
@@ -106,7 +109,7 @@ refresh() {
       "https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/protocols/vless.txt" \
       "https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/everything.txt"; do
         data=$(curl --noproxy '*' -sL --connect-timeout 5 --max-time 10 "$url" 2>/dev/null | \
-          grep -E '^(vless|hysteria2)://' | head -10 || true)
+          grep -E '^(vless|hysteria2)://' | shuf | head -30 || true)
         if [ -n "$data" ]; then
             echo "    $(echo "$data" | wc -l) from $(basename $url)"
             NEW_NODES="$NEW_NODES"$'\n'"$data"
@@ -162,7 +165,7 @@ for line in text.strip().split('\n'):
                   "packet_encoding": "xudp"}
             tls = {"enabled": True, "server_name": p.get('sni', host),
                    "utls": {"enabled": True, "fingerprint": p.get('fp', 'chrome')}}
-            if p.get('security') == 'reality':
+            if p.get('security') == 'reality' and len(p.get('pbk', '')) >= 32:
                 tls["reality"] = {"enabled": True,
                                  "public_key": p.get('pbk', ''),
                                  "short_id": p.get('sid', '')}
