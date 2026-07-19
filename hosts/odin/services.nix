@@ -273,91 +273,15 @@ lib.mkMerge [
       '') # Switch fans to automatic control
       # pkgs.neg.term39 # term39 commented out — clang-sys build failure, fix separately
     ];
-    environment.etc = {
-      "avahi/services/smb.service".text = ''
-        <?xml version="1.0" standalone='no'?>
-        <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-        <service-group>
-          <name replace-wildcards="yes">%h SMB share</name>
-          <service>
-            <type>_smb._tcp</type>
-            <port>445</port>
-            <txt-record>path=/zero/sync/smb</txt-record>
-            <txt-record>share=shared</txt-record>
-          </service>
-        </service-group>
-      '';
-      "avahi/services/afp.service".text = ''
-        <?xml version="1.0" standalone='no'?>
-        <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-        <service-group>
-          <name replace-wildcards="yes">%h AFP share</name>
-          <service>
-            <type>_afpovertcp._tcp</type>
-            <port>548</port>
-            <txt-record>path=/zero/sync/smb</txt-record>
-          </service>
-        </service-group>
-      '';
-      "avahi/services/nfs.service".text = ''
-        <?xml version="1.0" standalone='no'?>
-        <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-        <service-group>
-          <name replace-wildcards="yes">%h NFS export</name>
-          <service>
-            <type>_nfs._tcp</type>
-            <port>2049</port>
-            <txt-record>path=/zero/sync/smb</txt-record>
-          </service>
-        </service-group>
-      '';
-      "avahi/services/ssh.service".text = ''
-        <?xml version="1.0" standalone='no'?>
-        <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-        <service-group>
-          <name replace-wildcards="yes">%h SSH</name>
-          <service>
-            <type>_ssh._tcp</type>
-            <port>22</port>
-          </service>
-        </service-group>
-      '';
-      "avahi/services/sftp.service".text = ''
-        <?xml version="1.0" standalone='no'?>
-        <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-        <service-group>
-          <name replace-wildcards="yes">%h SFTP</name>
-          <service>
-            <type>_sftp-ssh._tcp</type>
-            <port>22</port>
-          </service>
-        </service-group>
-      '';
-      "avahi/services/airplay.service".text = ''
-        <?xml version="1.0" standalone='no'?>
-        <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-        <service-group>
-          <name replace-wildcards="yes">%h AirPlay</name>
-          <service>
-            <type>_airplay._tcp</type>
-            <port>7000</port>
-            <txt-record>device=shairport-sync</txt-record>
-          </service>
-        </service-group>
-      '';
-      "avahi/services/raop.service".text = ''
-        <?xml version="1.0" standalone='no'?>
-        <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-        <service-group>
-          <name replace-wildcards="yes">%h RAOP</name>
-          <service>
-            <type>_raop._tcp</type>
-            <port>5000</port>
-            <txt-record>device=shairport-sync</txt-record>
-          </service>
-        </service-group>
-      '';
-    };
+    servicesProfiles.avahi.services = [
+      { name = "smb";    type = "smb";        port = 445;  txtRecords = [ "path=/zero/sync/smb" "share=shared" ]; }
+      { name = "afp";    type = "afpovertcp"; port = 548;  txtRecords = [ "path=/zero/sync/smb" ]; }
+      { name = "nfs";    type = "nfs";        port = 2049; txtRecords = [ "path=/zero/sync/smb" ]; }
+      { name = "ssh";    type = "ssh";        port = 22; }
+      { name = "sftp";   type = "sftp-ssh";   port = 22; }
+      { name = "airplay"; type = "airplay";   port = 7000; txtRecords = [ "device=shairport-sync" ]; }
+      { name = "raop";   type = "raop";       port = 5000; txtRecords = [ "device=shairport-sync" ]; }
+    ];
 
     services = lib.mkMerge [
       {
