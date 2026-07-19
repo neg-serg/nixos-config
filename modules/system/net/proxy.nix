@@ -20,9 +20,8 @@ lib.mkIf cfg.enable {
     serviceConfig = {
       Type = "simple";
       User = "neg";
+      ExecStartPre = "${lib.getExe' pkgs.coreutils "env"} sh -c '${lib.getExe' pkgs.psmisc "fuser"} -k 10808/tcp 2>/dev/null; true'";
       ExecStart = "${lib.getExe pkgs.xray} run -config /home/neg/.config/sing-box-tun/config.json";
-      Restart = "on-failure";
-      RestartSec = 5;
     };
   };
 
