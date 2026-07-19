@@ -1,15 +1,18 @@
 creation_rules:
   - path_regex: secrets/.*\.sops.yaml$
+    creation_age: "30d"
     key_groups:
     - age:
       - age1et3dh7wm5pdr7f8h5e6damqmtpzenze6acpwx9tyql5h0qzhj9fq2mlfl5 # from ~/.config/sops/age/keys.txt
       - age1mvk4tj7kp9spfftefhlr25xrr4dsrxetcmyldpnmv8sulv90lunq20fjj0 # from ssh-to-age (ssh_host_ed25519_key)
   - path_regex: secrets/.*\.env\.sops$
+    creation_age: "30d"
     key_groups:
     - age:
       - age1et3dh7wm5pdr7f8h5e6damqmtpzenze6acpwx9tyql5h0qzhj9fq2mlfl5 # from ~/.config/sops/age/keys.txt
       - age1mvk4tj7kp9spfftefhlr25xrr4dsrxetcmyldpnmv8sulv90lunq20fjj0 # from ssh-to-age (ssh_host_ed25519_key)
-  - path_regex: secrets/home/.*
+  - path_regex: secrets/home/.*\.sops\.(yaml|env)$
+    creation_age: "30d"
     key_groups:
     - age:
       - age1et3dh7wm5pdr7f8h5e6damqmtpzenze6acpwx9tyql5h0qzhj9fq2mlfl5 # from ~/.config/sops/age/keys.txt
