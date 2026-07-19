@@ -20,7 +20,7 @@ in
     ./web.nix
     ./media.nix
     ./games.nix
-    ./services.nix
+    ./network.nix
     ./apps.nix
     ./misc.nix
     ./hardware.nix
