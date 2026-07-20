@@ -9,6 +9,7 @@ let
   qtEnabled = config.features.gui.qt.enable or false;
   iconTheme = config.features.gui.iconTheme or "kora-pgrey";
   kvantumTheme = "KvCurves3d1";
+in
 {
   config = lib.mkIf qtEnabled (
     lib.mkMerge [
