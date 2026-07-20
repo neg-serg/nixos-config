@@ -14,10 +14,18 @@
     (pkgs.writeShellApplication {
       name = "kvantummanager";
       runtimeInputs = [ pkgs.kdePackages.qtstyleplugin-kvantum ];
-      text = ''
-        export QT_PLUGIN_PATH="${pkgs.qt6.qtsvg}/${pkgs.qt6.qtbase.qtPluginPrefix}${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
-        exec ${lib.getExe' pkgs.kdePackages.qtstyleplugin-kvantum "kvantummanager"}
-      '';
+      text =
+        let
+          svgPluginPath = "${pkgs.qt6.qtsvg}/${pkgs.qt6.qtbase.qtPluginPrefix}";
+        in
+        ''
+          if [ -n "$QT_PLUGIN_PATH" ]; then
+            export QT_PLUGIN_PATH="${svgPluginPath}:$QT_PLUGIN_PATH"
+          else
+            export QT_PLUGIN_PATH="${svgPluginPath}"
+          fi
+          exec ${lib.getExe' pkgs.kdePackages.qtstyleplugin-kvantum "kvantummanager"}
+        '';
     })
   ];
 }
