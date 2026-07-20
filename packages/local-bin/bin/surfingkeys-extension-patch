@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Ensure SurfingKeys extension has the local config URL patched in
+set -euo pipefail
+
+EXT_BASE="$HOME/.config/vivaldi/Default/Extensions/gfbliohnnapiefjpjlpjnehglfpaknnc"
+URL="http://localhost:18888/surfingkeys.js"
+
+# Find the latest version directory
+VER_DIR=$(ls -d "$EXT_BASE"/*/ 2>/dev/null | sort -V | tail -1)
+[ -z "$VER_DIR" ] && exit 0
+
+BG_JS="$VER_DIR/background.js"
+[ ! -f "$BG_JS" ] && exit 0
+
+# Check if already patched
+if grep -q 'NEG_SK_URL' "$BG_JS" 2>/dev/null; then
+    exit 0  # Already patched
+fi
+
+# Apply patch
+cp "$BG_JS" "$BG_JS.orig"
+sed -i "s|^(()=>{\"use strict\"|const NEG_SK_URL=\"$URL\";\nchrome.storage.sync.set({loadSettingsUrl:NEG_SK_URL});\nchrome.storage.local.set({loadSettingsUrl:NEG_SK_URL});\n(()=>{\"use strict\"|" "$BG_JS"
+
+logger "surfingkeys-patch: Patched $BG_JS"
