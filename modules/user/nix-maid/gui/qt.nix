@@ -53,76 +53,74 @@ in
         #   5. To lock in declaratively: change `kvantumTheme` variable above and rebuild
         #
         # Default theme: KvDark (pure dark, no white elements)
-        # Built-in dark themes for interactive browsing:
-        ".local/share/Kvantum/KvDark/KvDark.kvconfig".source =
+        # Built-in dark themes — deployed to ~/.config/Kvantum/ for KvantumManager discoverability
+        ".config/Kvantum/KvDark/KvDark.kvconfig".source =
           "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvDark/KvDark.kvconfig";
-        ".local/share/Kvantum/KvDark/KvDark.svg".source =
+        ".config/Kvantum/KvDark/KvDark.svg".source =
           "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvDark/KvDark.svg";
-        ".local/share/Kvantum/KvArcDark/KvArcDark.kvconfig".source =
+        ".config/Kvantum/KvArcDark/KvArcDark.kvconfig".source =
           "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvArcDark/KvArcDark.kvconfig";
-        ".local/share/Kvantum/KvArcDark/KvArcDark.svg".source =
+        ".config/Kvantum/KvArcDark/KvArcDark.svg".source =
           "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvArcDark/KvArcDark.svg";
-        ".local/share/Kvantum/KvSimplicityDark/KvSimplicityDark.kvconfig".source =
+        ".config/Kvantum/KvSimplicityDark/KvSimplicityDark.kvconfig".source =
           "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvSimplicityDark/KvSimplicityDark.kvconfig";
-        ".local/share/Kvantum/KvSimplicityDark/KvSimplicityDark.svg".source =
+        ".config/Kvantum/KvSimplicityDark/KvSimplicityDark.svg".source =
           "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvSimplicityDark/KvSimplicityDark.svg";
-
-        # Catppuccin Mocha themes for interactive browsing:
-        ".local/share/Kvantum/Catppuccin-Mocha-Blue/Catppuccin-Mocha-Blue.kvconfig".source = "${
+        ".config/Kvantum/Catppuccin-Mocha-Blue/Catppuccin-Mocha-Blue.kvconfig".source = "${
           (pkgs.catppuccin-kvantum.override {
             variant = "mocha";
             accent = "blue";
           })
         }/share/Kvantum/Catppuccin-Mocha-Blue/Catppuccin-Mocha-Blue.kvconfig";
-        ".local/share/Kvantum/Catppuccin-Mocha-Blue/Catppuccin-Mocha-Blue.svg".source = "${
+        ".config/Kvantum/Catppuccin-Mocha-Blue/Catppuccin-Mocha-Blue.svg".source = "${
           (pkgs.catppuccin-kvantum.override {
             variant = "mocha";
             accent = "blue";
           })
         }/share/Kvantum/Catppuccin-Mocha-Blue/Catppuccin-Mocha-Blue.svg";
-        ".local/share/Kvantum/Catppuccin-Mocha-Mauve/Catppuccin-Mocha-Mauve.kvconfig".source = "${
+        ".config/Kvantum/Catppuccin-Mocha-Mauve/Catppuccin-Mocha-Mauve.kvconfig".source = "${
           (pkgs.catppuccin-kvantum.override {
             variant = "mocha";
             accent = "mauve";
           })
         }/share/Kvantum/Catppuccin-Mocha-Mauve/Catppuccin-Mocha-Mauve.kvconfig";
-        ".local/share/Kvantum/Catppuccin-Mocha-Mauve/Catppuccin-Mocha-Mauve.svg".source = "${
+        ".config/Kvantum/Catppuccin-Mocha-Mauve/Catppuccin-Mocha-Mauve.svg".source = "${
           (pkgs.catppuccin-kvantum.override {
             variant = "mocha";
             accent = "mauve";
           })
         }/share/Kvantum/Catppuccin-Mocha-Mauve/Catppuccin-Mocha-Mauve.svg";
-        ".local/share/Kvantum/Catppuccin-Mocha-Lavender/Catppuccin-Mocha-Lavender.kvconfig".source = "${
+        ".config/Kvantum/Catppuccin-Mocha-Lavender/Catppuccin-Mocha-Lavender.kvconfig".source = "${
           (pkgs.catppuccin-kvantum.override {
             variant = "mocha";
             accent = "lavender";
           })
         }/share/Kvantum/Catppuccin-Mocha-Lavender/Catppuccin-Mocha-Lavender.kvconfig";
-        ".local/share/Kvantum/Catppuccin-Mocha-Lavender/Catppuccin-Mocha-Lavender.svg".source = "${
+        ".config/Kvantum/Catppuccin-Mocha-Lavender/Catppuccin-Mocha-Lavender.svg".source = "${
           (pkgs.catppuccin-kvantum.override {
             variant = "mocha";
             accent = "lavender";
           })
         }/share/Kvantum/Catppuccin-Mocha-Lavender/Catppuccin-Mocha-Lavender.svg";
-        ".local/share/Kvantum/Catppuccin-Mocha-Sky/Catppuccin-Mocha-Sky.kvconfig".source = "${
+        ".config/Kvantum/Catppuccin-Mocha-Sky/Catppuccin-Mocha-Sky.kvconfig".source = "${
           (pkgs.catppuccin-kvantum.override {
             variant = "mocha";
             accent = "sky";
           })
         }/share/Kvantum/Catppuccin-Mocha-Sky/Catppuccin-Mocha-Sky.kvconfig";
-        ".local/share/Kvantum/Catppuccin-Mocha-Sky/Catppuccin-Mocha-Sky.svg".source = "${
+        ".config/Kvantum/Catppuccin-Mocha-Sky/Catppuccin-Mocha-Sky.svg".source = "${
           (pkgs.catppuccin-kvantum.override {
             variant = "mocha";
             accent = "sky";
           })
         }/share/Kvantum/Catppuccin-Mocha-Sky/Catppuccin-Mocha-Sky.svg";
-        ".local/share/Kvantum/Catppuccin-Mocha-Green/Catppuccin-Mocha-Green.kvconfig".source = "${
+        ".config/Kvantum/Catppuccin-Mocha-Green/Catppuccin-Mocha-Green.kvconfig".source = "${
           (pkgs.catppuccin-kvantum.override {
             variant = "mocha";
             accent = "green";
           })
         }/share/Kvantum/Catppuccin-Mocha-Green/Catppuccin-Mocha-Green.kvconfig";
-        ".local/share/Kvantum/Catppuccin-Mocha-Green/Catppuccin-Mocha-Green.svg".source = "${
+        ".config/Kvantum/Catppuccin-Mocha-Green/Catppuccin-Mocha-Green.svg".source = "${
           (pkgs.catppuccin-kvantum.override {
             variant = "mocha";
             accent = "green";
