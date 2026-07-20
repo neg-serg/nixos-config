@@ -19,12 +19,10 @@ in
           pkgs.kdePackages.qtwayland
           pkgs.kdePackages.svgpart
         ];
-
         environment.sessionVariables = {
           QT_QPA_PLATFORMTHEME = "qt6ct";
           QT_XDG_DESKTOP_PORTAL = "1";
         };
-
         environment.variables = {
           QT_STYLE_OVERRIDE = "kvantum";
         };
@@ -32,25 +30,21 @@ in
       {
         # Wrapped kvantummanager: set QT_PLUGIN_PATH for Wayland + SVG
         environment.systemPackages = let
-          svg = "${pkgs.qt6.qtsvg}/${pkgs.qt6.qtbase.qtPluginPrefix}";
-          wl = "${pkgs.kdePackages.qtwayland}/${pkgs.qt6.qtbase.qtPluginPrefix}";
-          base = "${pkgs.qt6.qtbase}/${pkgs.qt6.qtbase.qtPluginPrefix}";
+          svgPlugin = "${pkgs.qt6.qtsvg}/${pkgs.qt6.qtbase.qtPluginPrefix}";
+          waylandPlugin = "${pkgs.kdePackages.qtwayland}/${pkgs.qt6.qtbase.qtPluginPrefix}";
+          basePlugin = "${pkgs.qt6.qtbase}/${pkgs.qt6.qtbase.qtPluginPrefix}";
         in [
           (pkgs.writeShellApplication {
             name = "kvantummanager";
             runtimeInputs = [ pkgs.kdePackages.qtstyleplugin-kvantum ];
             text = ''
-              export QT_PLUGIN_PATH="${svg}:${wl}:${base}"
+              export QT_PLUGIN_PATH="${svgPlugin}:${waylandPlugin}:${basePlugin}"
               exec ${lib.getExe' pkgs.kdePackages.qtstyleplugin-kvantum "kvantummanager"}
             '';
           })
         ];
       }
       (neg.mkHomeFiles {
-        ".config/Kvantum/kvantum.kvconfig".text = ''
-          [General]
-          theme=${kvantumTheme}
-        '';
         ".config/qt6ct/qt6ct.conf".text = ''
           [Appearance]
           style=kvantum
@@ -58,7 +52,7 @@ in
           standard_dialogs=xdgdesktopportal
         '';
 
-        # Built-in themes
+        # Kvantum themes for KvantumManager discovery (read-only symlinks is OK)
         ".config/Kvantum/KvDark/KvDark.kvconfig".source =
           "${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/KvDark/KvDark.kvconfig";
         ".config/Kvantum/KvDark/KvDark.svg".source =
@@ -104,6 +98,20 @@ in
           (pkgs.catppuccin-kvantum.override { variant = "mocha"; accent = "green"; })
         }/share/Kvantum/Catppuccin-Mocha-Green/Catppuccin-Mocha-Green.svg";
       })
+      # Bootstrap writable kvantum.kvconfig (not a nix store symlink)
+      # so KvantumManager can change the active theme via "Use this theme".
+      {
+        systemd.user.services.kvantum-bootstrap = {
+          description = "Create writable Kvantum config (replace nix store symlink)";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${pkgs.bash}/bin/bash -c 'KVC=\"$HOME/.config/Kvantum/kvantum.kvconfig\"; [ -L \"$KVC\" ] && rm -f \"$KVC\"; if [ ! -f \"$KVC\" ]; then mkdir -p \"$(dirname \"$KVC\")\"; printf \"[General]\\ntheme=${kvantumTheme}\\n\" > \"$KVC\"; fi'";
+          };
+          after = [ "graphical-session.target" ];
+          wants = [ "graphical-session.target" ];
+          wantedBy = [ "graphical-session.target" ];
+        };
+      }
     ]
   );
 }
