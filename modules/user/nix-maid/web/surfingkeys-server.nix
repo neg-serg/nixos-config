@@ -31,4 +31,20 @@ mkIf (config.features.web.enable or false) {
       partOf = preset.Unit.PartOf or [ ] ++ [ "graphical-session.target" ];
       wantedBy = preset.Install.WantedBy or [ ] ++ [ "graphical-session.target" ];
     };
-}
+
+  systemd.user.services.surfingkeys-extension-patch =
+    let
+      patchScript = pkgs.writeScript "surfingkeys-extension-patch" (
+        builtins.readFile (self + "/packages/local-bin/bin/surfingkeys-extension-patch")
+      );
+    in
+    {
+      description = "Patch SurfingKeys extension to auto-load config from local server";
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = patchScript;
+      };
+      after = [ "graphical-session.target" ];
+      wants = [ "graphical-session.target" ];
+      wantedBy = [ "graphical-session.target" ];
+    };
