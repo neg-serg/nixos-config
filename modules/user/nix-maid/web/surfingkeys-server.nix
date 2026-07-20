@@ -48,3 +48,4 @@ mkIf (config.features.web.enable or false) {
       wants = [ "graphical-session.target" ];
       wantedBy = [ "graphical-session.target" ];
     };
+}
