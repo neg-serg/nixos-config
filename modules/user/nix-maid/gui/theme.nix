@@ -57,7 +57,7 @@ in
 
         # 2. Environment Variables
         environment.sessionVariables = {
-          GTK_THEME = gtkThemeName;
+          GTK_THEME = realThemeName;
           XCURSOR_THEME = "Alkano-aio";
           XCURSOR_SIZE = "23";
           HYPRCURSOR_THEME = "Alkano-aio";
