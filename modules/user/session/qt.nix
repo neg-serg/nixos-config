@@ -17,10 +17,13 @@
       text =
         let
           svgPluginPath = "${pkgs.qt6.qtsvg}/${pkgs.qt6.qtbase.qtPluginPrefix}";
+          # Break $ and { so Nix doesn't parse `${...}` as interpolation
+          d = "$";
         in
         ''
+          : "''${QT_PLUGIN_PATH:=}"
           if [ -n "$QT_PLUGIN_PATH" ]; then
-            export QT_PLUGIN_PATH="${svgPluginPath}:$QT_PLUGIN_PATH"
+            export QT_PLUGIN_PATH="${svgPluginPath}:${d}{QT_PLUGIN_PATH}"
           else
             export QT_PLUGIN_PATH="${svgPluginPath}"
           fi
