@@ -77,6 +77,11 @@ inputs: final: finalPrev: {
     doCheck = false;
   });
 
+  # Disable flaky pylint tests (primer output diff, network-dependent)
+  pylint = finalPrev.pylint.overrideAttrs (_old: {
+    doCheck = false;
+  });
+
   # Disable flaky pytest-xdist tests
   pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
     (_python-final: python-prev: {
@@ -88,6 +93,7 @@ inputs: final: finalPrev: {
       });
       pylint = python-prev.pylint.overrideAttrs (_old: {
         doCheck = false; # flaky primer test (network-dependent)
+        pytestCheckPhase = "true"; # also skip pytest in case doCheck doesn't propagate
       });
       rich = python-prev.rich.overrideAttrs (_old: {
         doCheck = false; # flaky test_brokenpipeerror
