@@ -12,14 +12,8 @@ in
       description = "List of package names (pname) to exclude from curated home.packages lists.";
     };
 
-    profile = mkOption {
-      type = types.enum [
-        "full"
-        "lite"
-      ];
-      default = "full";
-      description = "Profile preset that adjusts feature defaults: full or lite.";
-    };
+    # NOTE: `features.profile` (singular) removed — was dead code.
+    # Use `features.profiles` (plural, list) for profile composition.
 
     allowUnfree = {
       preset = mkOption {
