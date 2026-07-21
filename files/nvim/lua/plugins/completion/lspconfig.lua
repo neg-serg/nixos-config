@@ -86,7 +86,6 @@ return {
     configure('dockerls', {})
     configure('hls', {})
 
-
     configure('lua_ls', {
       settings = {
         Lua = {
