@@ -74,7 +74,7 @@ local cls = {
 -- ---------------------------------------------------------------------
 -- Monitors (from init.conf)
 -- ---------------------------------------------------------------------
-hl.monitor({ output = "DP-2", mode = "3840x2160@240", position = "0x0", scale = 2, vrr = 0, bitdepth = 10, cm = "auto" })
+hl.monitor({ output = "DP-2", mode = "3840x2160@240", position = "0x0", scale = 2, vrr = 0, bitdepth = 10, cm = "auto", hdr = true })
 hl.monitor({ output = "DP-1", disabled = true })
 
 -- ---------------------------------------------------------------------
