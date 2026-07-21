@@ -424,8 +424,8 @@ for _, app in ipairs({
 end
 hl.window_rule({ name = "soulstone-survivors", match = { class = "^(steam_app_2066020)$" }, render_unfocused = true, no_blur = true })
 hl.window_rule({ name = "gaming-immediate", match = { class = "^(osu!|cs2)$" }, immediate = true })
--- No blur on terminal (kitty has background_opacity 0.88, shows blurred bg underneath)
-hl.window_rule({ name = "no-blur-term", match = { class = "^(kitty|term)$" }, no_blur = true })
+-- Exclude kitty from hyprglass glass effect
+hl.window_rule({ name = "hyprglass-off-term", match = { class = "^(kitty|term)$" }, tag = "hyprglass_disabled" })
 
 -- Fullscreen video/gpu-heavy apps: force immediate rendering for direct scanout
 hl.window_rule({ name = "video-immediate", match = { class = "^(mpv)$" }, immediate = true })
