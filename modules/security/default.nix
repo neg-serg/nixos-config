@@ -31,7 +31,7 @@ in
       ];
     };
     pki.useCompatibleBundle = true;
-    lockKernelModules = false;
+    lockKernelModules = true;
     polkit = {
       enable = true;
     };
