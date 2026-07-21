@@ -84,7 +84,7 @@
       "mem_sleep_default=deep" # Prefer deep sleep (S3) for suspend
       "8250.nr_uarts=0" # Skip legacy UART probing
       "pcie_aspm=off" # Disable ASPM entirely — prevents NVMe D3cold wake delays on AMD/X670E
-      "amd_pstate=guided" # AMD P-State guided mode: firmware hints + performance governor
+      "amd_pstate=active" # AMD P-State active mode: fastest transitions, native Zen 5 support
       "pcie_port_pm=off" # Disable PCIe port power management — keeps NVMe accessible during import
       "nvme_core.io_timeout=4294967295" # Max NVMe I/O timeout
       "amdgpu.ppfeaturemask=0xffffffff" # Enable all AMD GPU overdrive features
@@ -92,6 +92,8 @@
       "udev.event_timeout=10" # Kill stuck udev workers after 10s
       "rd.udev.event_timeout=10" # Same for initrd udev
       "usbcore.initial_descriptor_timeout=2000" # Cut USB descriptor timeout from 5s to 2s (phantom port 8 on ASUS AM5)
+  # Zen 5: disable idle=nomwait — MWAIT C-states are optimal for Ryzen 9000
+  profiles.performance.idleNoMwait = lib.mkForce false;
 
       # Boot speed: skip unnecessary hardware probing
       "pci=noaer" # Skip AER (Advanced Error Reporting) — prevents NVMe probe timeouts on AMD/X670E
