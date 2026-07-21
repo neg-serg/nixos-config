@@ -69,6 +69,7 @@
         tone-mapping-param=auto
         gamut-mapping-mode=relative
         target-peak=auto
+      '';
     }
   );
 }
