@@ -23,9 +23,6 @@ in
           QT_QPA_PLATFORMTHEME = "qt6ct";
           QT_XDG_DESKTOP_PORTAL = "1";
         };
-        environment.variables = {
-          QT_STYLE_OVERRIDE = "kvantum";
-        };
       }
       {
         # Wrapped kvantummanager: set QT_PLUGIN_PATH for Wayland + SVG
