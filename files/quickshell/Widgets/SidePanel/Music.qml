@@ -295,7 +295,7 @@ Rectangle {
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: detailsCol.implicitHeight
-                        color: card.color
+                        color: "transparent"
                         radius: Theme.sidePanelInnerRadius
                         border.width: Theme.uiBorderNone
                         anchors.leftMargin: Theme.uiMarginNone
