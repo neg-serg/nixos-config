@@ -62,6 +62,11 @@ inputs: final: finalPrev: {
     doCheck = false;
   });
 
+  # Disable flac tests (segfault on --threads 63, flaky threaded encoder test)
+  flac = finalPrev.flac.overrideAttrs (_old: {
+    doCheck = false;
+  });
+
   # Disable flaky pytest-xdist tests
   pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
     (_python-final: python-prev: {
