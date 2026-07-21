@@ -7,6 +7,7 @@ let
   cfg = config.features.net.lan-proxy;
 in
 {
+  options.features.net.lan-proxy.allowedSubnets = lib.mkOption {
     type = lib.types.listOf lib.types.str;
     default = [
       "10.0.0.0/8"
