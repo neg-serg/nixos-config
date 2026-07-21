@@ -36,7 +36,7 @@
     "musicPopupEdgeMargin": 4,
     "musicPopupHeight": 250,
     "musicPopupPadding": 12,
-    "musicPopupWidth": 840,
+    "musicPopupWidth": 420,
     "networkNoInternetColor": "#FF6E00",
     "networkNoLinkColor": "#D81B60",
     "networkPingIntervalMs": 30000,
