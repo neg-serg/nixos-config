@@ -11,7 +11,7 @@ buildNpmPackage {
   src = fetchFromGitHub {
     owner = "b0o";
     repo = "surfingkeys-conf";
-    rev = "master"; # Using master as it's a config repo, often ahead of releases
+    rev = "23f5953d8f53dae6662d5d974bc5e90c5fea9e16"; # pinned — was "master" (impure)
     hash = "sha256-udcgfQczvx6ZVr2RqdXdD5u0+lZTDf+SakxGGM7Rk3Q=";
   };
 
