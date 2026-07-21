@@ -226,7 +226,6 @@ Rectangle {
 
             RowLayout {
                 spacing: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(screen))
-                Layout.fillWidth: true
 
                 Item {
                     id: albumArtContainer
@@ -289,14 +288,13 @@ Rectangle {
 
                 // Track metadata
                 ColumnLayout {
-                    Layout.fillWidth: true
                     spacing: Math.round(Theme.sidePanelSpacingSmall * 0.5 * Theme.scale(screen))
 
                     // Details block: time + identity + metadata
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: detailsCol.implicitHeight
-                        color: "transparent"
+                        implicitWidth: detailsCol.implicitWidth
                         radius: Theme.sidePanelInnerRadius
                         border.width: Theme.uiBorderNone
                         anchors.leftMargin: Theme.uiMarginNone
