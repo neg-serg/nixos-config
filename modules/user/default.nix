@@ -15,6 +15,5 @@
     ./psd
     ./theme-packages.nix
     ./xdg.nix
-    ./wrappers
   ];
 }
