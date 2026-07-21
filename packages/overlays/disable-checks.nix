@@ -107,9 +107,8 @@ inputs: final: finalPrev: {
     })
   ];
 
-  # Limit WebKit parallel linking to avoid OOM on 32-thread workstation
-  webkitgtk = finalPrev.webkitgtk.overrideAttrs (_old: {
-    cmakeFlags = (_old.cmakeFlags or []) ++ [ "-DUSE_LD_GOLD=OFF" ];
-    NIX_BUILD_CORES = 16;
+  # Limit WebKit parallelism: unified builds + 32 cores OOMs on 64GB
+  webkitgtk_4_1 = finalPrev.webkitgtk_4_1.overrideAttrs (_old: {
+    NIX_BUILD_CORES = 4;
   });
 }
