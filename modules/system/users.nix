@@ -21,6 +21,7 @@ let
     ];
   mainHashedPasswordFile =
     cfg.hashedPasswordFile;
+in
 with rec {
   groupExists = grp: builtins.hasAttr grp config.users.groups;
   groupsIfExist = builtins.filter groupExists;
