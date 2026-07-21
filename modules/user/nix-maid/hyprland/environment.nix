@@ -1,5 +1,4 @@
-{ ... }:
-{
+{ ... }: {
   hyprlandConf = ''
     source = ~/.config/hypr/hyprland.lua
     source = ~/.config/hypr/animations/selected.conf
