@@ -1,5 +1,4 @@
-{ pkgs, ... }:
-{
+{ pkgs, config, ... }:
 
   imports = [
     ./hardware.nix
@@ -18,6 +17,15 @@
     "dev"
     "gaming"
   ];
+  # Password hash from SOPS (kept out of Nix store).
+  # sops-nix with key="password_hash" extracts just the hash value from the YAML file.
+  sops.secrets."user-password-hash" = {
+    sopsFile = ../../secrets/home/user-password-hash.sops.yaml;
+    format = "yaml";
+    key = "password_hash";
+    mode = "0400";
+  };
+  users.main.hashedPasswordFile = config.sops.secrets."user-password-hash".path;
 
   # Console font (visible before plymouth and on tty1-6)
   console = {
