@@ -40,6 +40,7 @@ in
       keep-derivations = true;
       fallback = true;
       experimental-features = [
+        "auto-allocate-uids" # allow nix to automatically pick UIDs, rather than creating nixbld* user accounts
         "flakes" # flakes for reproducibility
         "nix-command" # new nix interface
         "parallel-eval" # parallel nix evaluation (Determinate Nix)
@@ -51,7 +52,6 @@ in
         "recursive-nix" # allow Nix builds to call nix (nested evaluation)
         "fetch-closure" # fetch store paths from binary caches by closure hash
       ];
-      auto-allocate-uids = true; # moved from experimental-features — Nix 2.26+ setting
       eval-cache = true;
       eval-system = "x86_64-linux"; # only evaluate for host platform, skip aarch64
       allow-import-from-derivation = true;
