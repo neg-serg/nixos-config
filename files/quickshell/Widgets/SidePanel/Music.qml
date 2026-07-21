@@ -17,6 +17,7 @@ Rectangle {
     property var screen: (Window.window && Window.window.screen) ? Window.window.screen : Screen
     color: "transparent"
     implicitHeight: playerUI.implicitHeight
+    implicitWidth: playerUI.implicitWidth + Math.round(Theme.sidePanelSpacingMedium * Theme.scale(screen))
 
     function warnContrast(bg, fg, label) {
         try {
