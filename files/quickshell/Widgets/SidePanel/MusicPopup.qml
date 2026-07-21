@@ -21,6 +21,7 @@ Item {
 
     PopupWindow {
         id: toast
+        namespace: "quickshell-music"
         // We draw our own rounded background
         color: "transparent"
         visible: false
