@@ -41,10 +41,8 @@ let
     "vnstatd"
   ];
 
-  # nixbld users (default: 32 — see nix-daemon.nix nix.nrBuildUsers)
-  nixbldUsers = builtins.genList (nr: "nixbld${toString (nr + 1)}") 32;
-
-  allUsers = systemUsers ++ nixbldUsers;
+  # nixbld users removed — auto-allocate-uids handles build users dynamically
+  allUsers = systemUsers;
 
   # Map each user name to a shell override (nologin path instead of package)
   shellOverrides = builtins.listToAttrs (
