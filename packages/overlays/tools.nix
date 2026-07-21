@@ -31,21 +31,6 @@ in
     "surfingkeys-conf" = surfingkeys_conf;
     "pretty-printer" = pretty_printer;
 
-    # ncpamixer with custom config
-    ncpamixer-wrapped =
-      let
-        ncpaConfig = prev.writeText "ncpamixer.conf" (
-          builtins.readFile (inputs.self + "/files/gui/ncpamixer.conf")
-        );
-      in
-      prev.symlinkJoin {
-        name = "ncpamixer-wrapped";
-        paths = [ prev.ncpamixer ];
-        buildInputs = [ prev.makeWrapper ];
-        postBuild = ''
-          wrapProgram $out/bin/ncpamixer \
-            --add-flags "-c ${ncpaConfig}"
-        '';
-      };
+    # ncpamixer-wrapped removed — nix-maid manages config via ~/.config/ncpamixer.conf
   };
 }
