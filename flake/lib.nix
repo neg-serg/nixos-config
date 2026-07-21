@@ -24,10 +24,12 @@ let
       overlays = [
         bintoolsBootstrapFix
         (hyprlandOverlay system)
-        # External package flake (github:neg-serg/nixos-pkgs) — base package set
-        inputs.neg-pkgs.overlays.default
-        # Local overlay last — overrides neg-pkgs for custom builds (e.g. opencode from flake source)
+        # Local overlay first (for packages not yet migrated)
         ((import ../packages/overlay.nix) inputs)
+        # External package flake (github:neg-serg/nixos-pkgs)
+        inputs.neg-pkgs.overlays.default
+        # Fix opencode: neg-pkgs has stale node_modules hash, use ours
+        (import ../packages/overlays/fix-opencode.nix) inputs
       ];
       config = {
         allowAliases = false;
