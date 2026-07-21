@@ -67,6 +67,20 @@ in
         fonts.fontconfig = {
           enable = true;
         };
+
+        # dconf/GSettings — xdg-desktop-portal-gtk reads icon theme from here,
+        # NOT from settings.ini (which only affects GTK apps directly)
+        programs.dconf = {
+          enable = true;
+          profiles.user.databases = [{
+            settings."org/gnome/desktop/interface" = {
+              icon-theme = "'${iconTheme}'";
+              gtk-theme = "'${realThemeName}'";
+              cursor-theme = "'Alkano-aio'";
+              font-name = "'Iosevka 10'";
+            };
+          }];
+        };
       }
       # 3. GTK settings + CSS + gtkrc
       (neg.mkHomeFiles {
