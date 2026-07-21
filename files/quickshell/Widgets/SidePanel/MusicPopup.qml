@@ -80,10 +80,12 @@ Item {
 
         // --- Sizing (scaled by per-screen factor)
         property real computedHeightPx: -1
-        property real musicWidthPx: Settings.settings.musicPopupWidth * Theme.scale(Screen)
+        property real musicWidthPx: musicWidget && musicWidget.implicitWidth > 0
+            ? Math.round(musicWidget.implicitWidth)
+            : Math.round(Settings.settings.musicPopupWidth * Theme.scale(Screen))
         property real musicHeightPx: (musicWidget && musicWidget.implicitHeight > 0)
-                                     ? Math.round(musicWidget.implicitHeight)
-                                     : Math.round(Settings.settings.musicPopupHeight * Theme.scale(Screen))
+            ? Math.round(musicWidget.implicitHeight)
+            : Math.round(Settings.settings.musicPopupHeight * Theme.scale(Screen))
         property int contentPaddingPx:Math.round(Settings.settings.musicPopupPadding * Theme.scale(Screen))
 
         implicitWidth: Math.round(musicWidthPx)
@@ -228,7 +230,6 @@ Item {
                 anchors.leftMargin: toast.contentPaddingPx
                 anchors.rightMargin: 0
                 anchors.topMargin: toast.contentPaddingPx
-                anchors.bottomMargin: toast.contentPaddingPx
                 spacing: Theme.sidePanelPopupSpacing
 
                 RowLayout {
@@ -238,7 +239,6 @@ Item {
 
                     Music {
                         id: musicWidget
-                        width: toast.musicWidthPx
                         height: toast.musicHeightPx
                         Layout.alignment: Qt.AlignRight
                     }
