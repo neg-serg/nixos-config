@@ -14,6 +14,28 @@
 let
   inherit (lib) mkIf;
   cfg = config.features.net.awgTunnel or { };
+  # nftables ruleset for VPN kill-switch: lock all traffic to tunnel interface
+  # PostUp: allow only awg-tunnel, block everything else (kill-switch)
+  # PostDown: restore normal routing
+  killSwitchRules = pkgs.writeText "awg-kill-switch.nft" ''
+    flush ruleset
+    table inet filter {
+      chain output {
+        type filter hook output priority filter; policy drop;
+        oifname "awg-tunnel" accept
+        oifname "lo" accept
+        ct state established,related accept
+        udp dport 45735 accept # AmneziaWG endpoint
+      }
+      chain input {
+        type filter hook input priority filter; policy drop;
+        iifname "awg-tunnel" accept
+        iifname "lo" accept
+        ct state established,related accept
+        udp dport 45735 accept
+      }
+    }
+  '';
 in {
   config = mkIf cfg.enable {
     environment.etc."wireguard/awg-tunnel.conf" = {
@@ -54,8 +76,10 @@ in {
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
+        ExecStartPre = "-${lib.getExe' pkgs.nftables "nft"} -f ${killSwitchRules}";
         ExecStart = "${lib.getExe' pkgs.wireguard-tools "wg-quick"} up awg-tunnel";
         ExecStop = "${lib.getExe' pkgs.wireguard-tools "wg-quick"} down awg-tunnel";
+        ExecStopPost = "-${lib.getExe' pkgs.nftables "nft"} delete table inet filter";
         Restart = "on-failure";
         RestartSec = 10;
       };
