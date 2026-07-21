@@ -23,6 +23,7 @@ Item {
         id: toast
         // We draw our own rounded background
         color: "transparent"
+        WlrLayershell.namespace: "quickshell"
         visible: false
 
         // --- Auto-hide with pause on hover/focus and while cursor is on panel
