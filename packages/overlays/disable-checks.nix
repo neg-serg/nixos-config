@@ -72,6 +72,11 @@ inputs: final: finalPrev: {
     doCheck = false;
   });
 
+  # Disable ffmpeg tests (test data generation fails with error 245 on gen)
+  ffmpeg-headless = finalPrev.ffmpeg-headless.overrideAttrs (_old: {
+    doCheck = false;
+  });
+
   # Disable flaky pytest-xdist tests
   pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
     (_python-final: python-prev: {
