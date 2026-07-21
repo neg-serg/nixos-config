@@ -129,6 +129,18 @@
       };
     };
 
+    # Lock screen before system sleep (lid close / systemctl suspend)
+    hyprlock-sleep = {
+      description = "Lock screen before sleep";
+      before = [ "sleep.target" ];
+      wantedBy = [ "sleep.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${lib.getExe' pkgs.hyprlock "hyprlock"} --immediate";
+        Environment = "HYPRLAND_INSTANCE_SIGNATURE";
+      };
+    };
+
     # Hyprland Polkit Agent
     hyprpolkitagent = {
       description = "Hyprland Polkit Agent";
