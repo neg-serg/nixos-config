@@ -67,6 +67,11 @@ inputs: final: finalPrev: {
     doCheck = false;
   });
 
+  # Disable flaky pulseaudio test (once-test hangs indefinitely on 32-thread machine)
+  libpulseaudio = finalPrev.libpulseaudio.overrideAttrs (_old: {
+    doCheck = false;
+  });
+
   # Disable flaky pytest-xdist tests
   pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
     (_python-final: python-prev: {
