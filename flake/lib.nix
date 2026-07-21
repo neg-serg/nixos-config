@@ -29,7 +29,7 @@ let
         # External package flake (github:neg-serg/nixos-pkgs)
         inputs.neg-pkgs.overlays.default
         # Fix opencode: neg-pkgs has stale node_modules hash, use ours
-        (import ../packages/overlays/fix-opencode.nix) inputs
+        (import ../packages/overlays/fix-opencode.nix)
       ];
       config = {
         allowAliases = false;
