@@ -60,7 +60,7 @@ let
       sort = true;
       stack_duplicates = true;
       sticky_history = true;
-      transparency = 14;
+      transparency = 25;
       vertical_alignment = "center";
       width = "(300, 500)";
       word_wrap = true;
