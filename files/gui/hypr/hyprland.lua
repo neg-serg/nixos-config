@@ -526,6 +526,7 @@ hl.layer_rule({ name = "slide-right", match = { namespace = "sideright.*" }, ani
 -- =====================================================================
 -- Autostart (autostart.conf / env.conf) -- NixOS-appropriate
 -- =====================================================================
+hl.on("hyprland.start", function()
   hl.exec_cmd("hyprctl output DP-2 hdr yes")
   hl.exec_cmd("~/.local/bin/unlock")
   hl.exec_cmd("hypr-start")
