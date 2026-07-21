@@ -74,7 +74,7 @@ local cls = {
 -- ---------------------------------------------------------------------
 -- Monitors (from init.conf)
 -- ---------------------------------------------------------------------
-hl.monitor({ output = "DP-2", mode = "3840x2160@240", position = "0x0", scale = 2, vrr = 0, bitdepth = 10, cm = "auto", hdr = true })
+hl.monitor({ output = "DP-2", mode = "3840x2160@240", position = "0x0", scale = 2, vrr = 0, bitdepth = 10, cm = "auto" })
 hl.monitor({ output = "DP-1", disabled = true })
 
 -- ---------------------------------------------------------------------
@@ -527,6 +527,7 @@ hl.layer_rule({ name = "slide-right", match = { namespace = "sideright.*" }, ani
 -- Autostart (autostart.conf / env.conf) -- NixOS-appropriate
 -- =====================================================================
 hl.on("hyprland.start", function()
+  hl.exec_cmd("hyprctl output DP-2 hdr yes")
   hl.exec_cmd("~/.local/bin/unlock")
   hl.exec_cmd("hypr-start")
   -- Restart quickshell after Hyprland (re)start so it reconnects Wayland protocols
@@ -546,10 +547,9 @@ end)
 
 -- Keep the primary monitor as the home for all workspaces
 hl.on("monitor.added", function(monitor_name)
-  -- Restart hyprscratch after GPU D3cold resume (monitor re-detect) so it
-  -- picks up the new special-workspace persistent state.
-  hl.exec_cmd("systemctl --user restart hyprscratch.service")
   if monitor_name == "DP-2" then
+    hl.exec_cmd("hyprctl output DP-2 hdr yes")
+    hl.exec_cmd("systemctl --user restart hyprscratch.service")
     hl.exec_cmd("zsh -c 'hyprctl workspaces -j | jq -r \".[] | select(.monitor != \\\"DP-2\\\") | .id\" | while read ws; do hyprctl dispatch moveworkspacetomonitor \"$ws\" DP-2; done'")
   end
 end)
