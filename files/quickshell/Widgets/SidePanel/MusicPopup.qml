@@ -21,7 +21,6 @@ Item {
 
     PopupWindow {
         id: toast
-        namespace: "qs-music"
         // We draw our own rounded background
         color: "transparent"
         visible: false
