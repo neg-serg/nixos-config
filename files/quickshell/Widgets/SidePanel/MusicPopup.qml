@@ -79,12 +79,15 @@ Item {
         }
 
         // --- Sizing (scaled by per-screen factor)
-        property real musicWidthPx: musicWidget && musicWidget.implicitWidth > 0
-                                     ? Math.round(musicWidget.implicitWidth)
-                                     : Math.round(Settings.settings.musicPopupWidth * Theme.scale(Screen))
+        property real computedHeightPx: -1
+        property real musicWidthPx: Settings.settings.musicPopupWidth * Theme.scale(Screen)
         property real musicHeightPx: (musicWidget && musicWidget.implicitHeight > 0)
                                      ? Math.round(musicWidget.implicitHeight)
                                      : Math.round(Settings.settings.musicPopupHeight * Theme.scale(Screen))
+        property int contentPaddingPx:Math.round(Settings.settings.musicPopupPadding * Theme.scale(Screen))
+
+        implicitWidth: Math.round(musicWidthPx)
+        implicitHeight: Math.round((computedHeightPx >= 0) ? computedHeightPx : musicHeightPx)
 
         // --- Slide animation (animate inner content, not the window)
         property bool _hiding: false
@@ -232,6 +235,7 @@ Item {
                     spacing: Math.round(Theme.sidePanelSpacingMedium * Theme.scale(Screen))
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignRight
+
                     Music {
                         id: musicWidget
                         width: toast.musicWidthPx
