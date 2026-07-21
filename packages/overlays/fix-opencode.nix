@@ -14,7 +14,7 @@ in {
 
   # Limit WebKit + QtWebEngine parallelism to avoid OOM on 32-thread 64GB
   webkitgtk_4_1 = prev.webkitgtk_4_1.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
-  qtwebengine = prev.qtwebengine.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
+  qt6 = prev.qt6 // { qtwebengine = prev.qt6.qtwebengine.overrideAttrs (_: { NIX_BUILD_CORES = 4; }); };
 
   # Flaky tests — caught by neg-pkgs override, re-disable here
   libpulseaudio = checkOff prev.libpulseaudio;
