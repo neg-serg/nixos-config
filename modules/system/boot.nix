@@ -15,6 +15,7 @@
   ];
   boot = {
     # Full kexec/kdump support — enables prepare-kexec.service for systemctl kexec
+    # Protected by kernel.kexec_load_disabled=0 (kexec enabled, but gated by CAP_SYS_BOOT)
     kexec.enable = true;
 
     loader = {
@@ -56,4 +57,6 @@
       })
     ];
   };
+  # kexec protection: available but gated behind CAP_SYS_BOOT (root-only)
+  boot.kernel.sysctl."kernel.kexec_load_disabled" = lib.mkDefault 0;
 }
