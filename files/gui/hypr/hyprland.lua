@@ -530,7 +530,7 @@ hl.layer_rule({ name = "slide-right", match = { namespace = "sideright.*" }, ani
 hl.on("hyprland.start", function()
   hl.exec_cmd("hyprctl output DP-2 hdr yes")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.enabled\"] = true })'")
-  hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.manage_window_blur\"] = 1 })'")
+  hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.manage_window_blur\"] = 0 })'")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.layers.enabled\"] = true })'")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.layers.namespaces\"] = \"qs-panel,qs-content-left,qs-content-right,quickshell-bar-reserve,quickshell\" })'")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.blur_strength\"] = 1 })'")
