@@ -84,6 +84,7 @@ return {
     configure('lemminx', {})
     configure('nil', {})
     configure('dockerls', {})
+    configure('hls', {})
 
 
     configure('lua_ls', {
