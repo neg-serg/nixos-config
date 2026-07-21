@@ -424,8 +424,8 @@ for _, app in ipairs({
 end
 hl.window_rule({ name = "soulstone-survivors", match = { class = "^(steam_app_2066020)$" }, render_unfocused = true, no_blur = true })
 hl.window_rule({ name = "gaming-immediate", match = { class = "^(osu!|cs2)$" }, immediate = true })
--- Exclude kitty from hyprglass glass effect
-hl.window_rule({ name = "hyprglass-off-term", match = { class = "^(kitty|term)$" }, tag = "hyprglass_disabled" })
+-- Exclude kitty from hyprglass glass shader
+hl.window_rule({ name = "hgrm-term", match = { class = "^(kitty|term)$" }, tag = "hyprglass_disabled" })
 
 -- Fullscreen video/gpu-heavy apps: force immediate rendering for direct scanout
 hl.window_rule({ name = "video-immediate", match = { class = "^(mpv)$" }, immediate = true })
@@ -532,7 +532,7 @@ hl.layer_rule({ name = "slide-right", match = { namespace = "sideright.*" }, ani
 hl.on("hyprland.start", function()
   hl.exec_cmd("hyprctl output DP-2 hdr yes")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.enabled\"] = true })'")
-  hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.manage_window_blur\"] = 0 })'")
+  hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.manage_window_blur\"] = true })'")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.layers.enabled\"] = true })'")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.layers.namespaces\"] = \"qs-panel,qs-content-left,qs-content-right,quickshell-bar-reserve,quickshell,notifications\" })'")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.blur_strength\"] = 3 })'")
