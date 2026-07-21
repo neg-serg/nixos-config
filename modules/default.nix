@@ -50,5 +50,4 @@ in
     ++ domain "tools" ./tools/default.nix
     ++ domain "torrent" ./torrent/default.nix
     ++ domain "user" ./user/default.nix
-    ++ domain "web" ./web/default.nix;
 }

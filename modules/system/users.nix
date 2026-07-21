@@ -19,10 +19,8 @@ let
     cfg.opensshAuthorizedKeys or [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPKg+t07fFxKPqtDR3rRpvS6Tc9Rrh5yv7fC5GFrBtyK neg@odin"
     ];
-  mainHashedPassword =
-    cfg.hashedPassword
-      or "$6$dy0VIe3yFCwdxh2q$CkgfitafpeqFwYn7fqmR/CRP29G/h9sBcN8sOPSXfgkCeraXA6B8VOoJLrsaktUsSnfHbC0RqDHcnnUCtICF4.";
-in
+  mainHashedPasswordFile =
+    cfg.hashedPasswordFile;
 with rec {
   groupExists = grp: builtins.hasAttr grp config.users.groups;
   groupsIfExist = builtins.filter groupExists;
@@ -66,10 +64,10 @@ with rec {
       ];
       description = "Authorized SSH public keys for the primary user.";
     };
-    hashedPassword = lib.mkOption {
-      type = lib.types.str;
-      default = "$6$dy0VIe3yFCwdxh2q$CkgfitafpeqFwYn7fqmR/CRP29G/h9sBcN8sOPSXfgkCeraXA6B8VOoJLrsaktUsSnfHbC0RqDHcnnUCtICF4.";
-      description = "Shadow-compatible password hash for the primary user (use mkpasswd -m sha-512).";
+    hashedPasswordFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "Path to file containing shadow-compatible password hash for the primary user. Prefer this over hashedPassword to avoid storing the hash in the Nix store. SOPS-managed path recommended.";
     };
   };
 
@@ -88,7 +86,7 @@ with rec {
         uid = mainUid;
         group = mainGroup;
         openssh.authorizedKeys.keys = mainAuthorizedKeys;
-        hashedPassword = mainHashedPassword;
+        hashedPasswordFile = lib.mkIf (mainHashedPasswordFile != null) mainHashedPasswordFile;
         description = mainDesc;
         extraGroups = groupsIfExist [
           "audio"

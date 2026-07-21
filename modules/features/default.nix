@@ -50,6 +50,10 @@ in
         tools.enable = mkForce false;
       };
     })
+    # features.hack requires features.dev — top-level hack flag from features/dev.nix
+    (mkIf (!config.features.dev.enable && config.features.hack.enable) {
+      features.hack.enable = mkForce false;
+    })
     # When a parent feature is disabled, force-disable children to avoid priority conflicts
     (mkIf (!config.features.dev.enable) {
       features = {
