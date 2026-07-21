@@ -71,10 +71,10 @@
     },
     "computedFontScale": 0.6,
     "seam": {
-      "opacity": 0.6536
+      "opacity": 0.88
     },
     "backdrop": {
-      "opacity": 0.15
+      "opacity": 0.88
     },
     "slideTimerTickMs": 50
   }
