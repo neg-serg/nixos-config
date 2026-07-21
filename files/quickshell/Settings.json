@@ -1,4 +1,8 @@
 {
+    "widgetBackgrounds": {
+        "default": "#000000d8"
+    },
+
     "activeVisualizerProfile": "classic",
     "barMonitors": [],
     "cavaBars": 86,
