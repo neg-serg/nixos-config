@@ -6,7 +6,9 @@
 let
   devEnabled = config.features.dev.enable or false;
 
-  devPackages = [ ];
+  devPackages = [
+    pkgs.nix-tree # Interactive nix store dependency graph browser
+  ];
 in
 {
   config = lib.mkMerge [
