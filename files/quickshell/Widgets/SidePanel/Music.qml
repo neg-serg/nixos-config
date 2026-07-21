@@ -16,8 +16,8 @@ Rectangle {
     // Use attached Window.window when available; fallback to Screen
     property var screen: (Window.window && Window.window.screen) ? Window.window.screen : Screen
     color: "transparent"
-    implicitHeight: playerUI.implicitHeight
     implicitWidth: playerUI.implicitWidth + Math.round(Theme.sidePanelSpacingMedium * Theme.scale(screen))
+    implicitHeight: playerUI.implicitHeight
 
     function warnContrast(bg, fg, label) {
         try {
@@ -226,6 +226,7 @@ Rectangle {
 
             RowLayout {
                 spacing: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(screen))
+                Layout.fillWidth: true
 
                 Item {
                     id: albumArtContainer
@@ -288,6 +289,7 @@ Rectangle {
 
                 // Track metadata
                 ColumnLayout {
+                    Layout.fillWidth: true
                     spacing: Math.round(Theme.sidePanelSpacingSmall * 0.5 * Theme.scale(screen))
 
                     // Details block: time + identity + metadata
@@ -295,6 +297,7 @@ Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: detailsCol.implicitHeight
                         implicitWidth: detailsCol.implicitWidth
+                        color: "transparent"
                         radius: Theme.sidePanelInnerRadius
                         border.width: Theme.uiBorderNone
                         anchors.leftMargin: Theme.uiMarginNone
