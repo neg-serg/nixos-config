@@ -137,6 +137,36 @@ hl.config({
   master = { new_status = "master", mfact = 0.6, orientation = "left", allow_small_split = true, smart_resizing = true },
 })
 
+-- ── hyprglass (glass effect plugin) ────────────────────────────────────────
+hyprglass.config({
+    enabled = true,
+    manage_window_blur = true,
+    layers = {
+        enabled = true,
+        namespaces = "qs-.*",
+    },
+
+    -- Detail quality
+    blur_strength = 6.0,
+    blur_iterations = 6,
+
+    -- Max visual effects
+    refraction_strength = 8.0,
+    chromatic_aberration = 1.5,
+    fresnel_strength = 2.0,
+    specular_strength = 1.5,
+    glass_opacity = 0.85,
+    edge_thickness = 0.15,
+    lens_distortion = 1.5,
+
+    -- Color tuning
+    brightness = 0.9,
+    contrast = 1.1,
+    saturation = 1.0,
+    vibrancy = 0.3,
+    adaptive_dim = 0.2,
+})
+
 -- Screencopy and permissions now handled natively by Hyprland Lua API
 
 -- =====================================================================
