@@ -412,7 +412,7 @@ Scope {
                     exclusiveZone: 0
                     property real s: Theme.scale(backdropPanel.screen)
                     property int barHeightPx: Math.round(Theme.panelHeight * s)
-                    property real nonTerminalOpacity: 0.5
+                    property real nonTerminalOpacity: 1.0
                     implicitHeight: barHeightPx
 
                     Item {
