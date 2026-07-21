@@ -7,10 +7,13 @@ let
   cfg = config.features.net.lan-proxy;
 in
 {
-  options.features.net.lan-proxy.allowedSubnets = lib.mkOption {
     type = lib.types.listOf lib.types.str;
-    default = [ "0.0.0.0/0" ];
-    description = "Subnets allowed to use the LAN SOCKS5 proxy (port 10809). Default 0.0.0.0/0 = open to all.";
+    default = [
+      "10.0.0.0/8"
+      "172.16.0.0/12"
+      "192.168.0.0/16"
+    ];
+    description = "Subnets allowed to use the LAN SOCKS5 proxy (port 10809). Default: RFC 1918 private ranges only.";
   };
 
   config = lib.mkIf cfg.enable {

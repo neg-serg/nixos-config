@@ -16,14 +16,14 @@ in
   options.servicesProfiles.openssh = {
     allowTcpForwarding = lib.mkOption {
       type = lib.types.bool;
-      default = true;
-      description = "Allow TCP forwarding. Disable for maximum security.";
+      default = false;
+      description = "Allow TCP forwarding. Default false for security.";
     };
 
     permitTunnel = lib.mkOption {
       type = lib.types.bool;
-      default = true;
-      description = "Allow tunnel forwarding. Disable for maximum security.";
+      default = false;
+      description = "Allow tunnel forwarding. Default false for security.";
     };
   };
 
