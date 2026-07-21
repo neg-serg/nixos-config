@@ -40,8 +40,7 @@ in
       keep-derivations = true;
       fallback = true;
       experimental-features = [
-        "auto-allocate-uids" # allow nix to automatically pick UIDs, rather than creating nixbld* user accounts
-        "flakes" # flakes for reprodusability
+        "flakes" # flakes for reproducibility
         "nix-command" # new nix interface
         "parallel-eval" # parallel nix evaluation (Determinate Nix)
         "pipe-operators" # |> syntax for cleaner function chains
@@ -52,6 +51,7 @@ in
         "recursive-nix" # allow Nix builds to call nix (nested evaluation)
         "fetch-closure" # fetch store paths from binary caches by closure hash
       ];
+      auto-allocate-uids = true; # moved from experimental-features — Nix 2.26+ setting
       eval-cache = true;
       eval-system = "x86_64-linux"; # only evaluate for host platform, skip aarch64
       allow-import-from-derivation = true;
@@ -64,7 +64,7 @@ in
       http-connections = 12;
       cores = 32; # all threads on 9950X3D per build, linking is single-threaded anyway
       max-jobs = 2; # 2 parallel builds, ~30-35GB peak — fits 40GB MemoryMax
-      min-free = 4096; # MB reserved for ZFS during builds (ARC + build pressure)
+      min-free = 8192; # MB reserved for ZFS ARC (~32GB) + 2 parallel builds (~35GB peak) on 64GB system
       build-poll-interval = 3; # seconds between polling for finished builds
       log-lines = 50; # lines of build output to show on failure
       max-silent-time = 1200; # kill stuck builders after 20 min of no output
@@ -77,7 +77,7 @@ in
       preallocate-contents = true; # Reduce ZFS CoW fragmentation by pre-allocating store paths
       lazy-locks = true; # Lazy flake.lock loading for faster eval
       # Expose ccache directory to sandboxed builds
-      extra-sandbox-paths = [ "/cache" ];
+      extra-sandbox-paths = [ "/cache=/cache:ro" ]; # ccache dir mounted read-only — writable would escape sandbox
     }
     // caches;
 
