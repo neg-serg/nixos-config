@@ -62,12 +62,8 @@ let
   ];
 
   # Lite: basic + SSH server. No GUI, no desktop apps.
+  # Also used by the "server" test profile (same domain set as lite).
   liteDomains = basicDomains ++ [ "servers" ];
-
-  # Server: lite + service management + monitoring. Headless server profile.
-  serverDomains = basicDomains ++ [
-    "servers"
-  ];
 
   # Full desktop: everything imported (current default).
   allDomains = basicDomains ++ [
@@ -83,12 +79,11 @@ let
     "servers"
     "torrent"
     "user"
-    "web"
   ];
 
   # Odin: full desktop minus domains with zero odin references.
   # Excluded: appimage (no odin usage), apps (obsidian via flatpak),
-  #           llm (ollama disabled), web (empty module).
+  #           llm (ollama disabled).
   odinDomains = basicDomains ++ [
     "dev"
     "emulators"
@@ -173,7 +168,7 @@ let
   # Profile → domain filter map. Key = test profile name, value = domain list.
   profileDomainSets = {
     lite = liteDomains;
-    server = serverDomains;
+    server = liteDomains; # consolidated: lite + servers, same domain set
     # gaming / audio-pro / desktop: use allDomains (full GUI stack).
   };
 

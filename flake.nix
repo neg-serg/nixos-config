@@ -10,8 +10,14 @@
       inputs.nix.follows = "nix-src";
     };
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    nix-flatpak.url = "github:gmodena/nix-flatpak";
-    nix-src.url = "github:DeterminateSystems/nix-src";
+    nix-flatpak = {
+      url = "github:gmodena/nix-flatpak";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-src = {
+      url = "github:DeterminateSystems/nix-src";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     hyprland = {
       url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.55.4";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -34,7 +40,10 @@
       url = "github:neg-serg/nixos-pkgs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-maid.url = "github:viperML/nix-maid";
+    nix-maid = {
+      url = "github:viperML/nix-maid";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     pre-commit-hooks = {
       url = "github:cachix/git-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -71,7 +80,10 @@
       url = "github:sameoldlab/goldfish";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    wrapper-manager.url = "github:viperML/wrapper-manager";
+    wrapper-manager = {
+      url = "github:viperML/wrapper-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     opencode = {
       url = "github:anomalyco/opencode";
       inputs.nixpkgs.follows = "nixpkgs";
