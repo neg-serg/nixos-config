@@ -13,6 +13,7 @@ let
     # -- Live Coding --
     pkgs.supercollider # SuperCollider IDE and audio engine
     pkgs.supercolliderPlugins.sc3-plugins # extra SuperCollider plugins (UGens)
+    pkgs.haskellPackages.tidal # TidalCycles live coding environment (SuperCollider-based)
     # -- Session Management --
     pkgs.new-session-manager # NSM — session manager for audio apps (JACK/PipeWire)
 
