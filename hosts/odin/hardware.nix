@@ -5,6 +5,8 @@
   ...
 }:
 {
+  # Zen 5: disable idle=nomwait — MWAIT C-states are optimal for Ryzen 9000
+  profiles.performance.idleNoMwait = lib.mkForce false;
   # Hardware and performance tuning specific to host 'odin'
   hardware = {
     storage.autoMount.enable = true;
@@ -92,8 +94,6 @@
       "udev.event_timeout=10" # Kill stuck udev workers after 10s
       "rd.udev.event_timeout=10" # Same for initrd udev
       "usbcore.initial_descriptor_timeout=2000" # Cut USB descriptor timeout from 5s to 2s (phantom port 8 on ASUS AM5)
-  # Zen 5: disable idle=nomwait — MWAIT C-states are optimal for Ryzen 9000
-  profiles.performance.idleNoMwait = lib.mkForce false;
 
       # Boot speed: skip unnecessary hardware probing
       "pci=noaer" # Skip AER (Advanced Error Reporting) — prevents NVMe probe timeouts on AMD/X670E

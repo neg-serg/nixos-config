@@ -49,5 +49,5 @@ in
     ++ domain "text" ./text/default.nix
     ++ domain "tools" ./tools/default.nix
     ++ domain "torrent" ./torrent/default.nix
-    ++ domain "user" ./user/default.nix
+    ++ domain "user" ./user/default.nix;
 }

@@ -1,5 +1,5 @@
-{ pkgs, config, ... }:
-
+{ pkgs, lib, config, ... }:
+{
   imports = [
     ./hardware.nix
     ./networking.nix
