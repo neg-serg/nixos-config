@@ -137,36 +137,6 @@ hl.config({
   master = { new_status = "master", mfact = 0.6, orientation = "left", allow_small_split = true, smart_resizing = true },
 })
 
--- ── hyprglass (glass effect plugin) ────────────────────────────────────────
-hyprglass.config({
-    enabled = true,
-    manage_window_blur = true,
-    layers = {
-        enabled = true,
-        namespaces = "qs-.*",
-    },
-
-    -- Detail quality
-    blur_strength = 6.0,
-    blur_iterations = 6,
-
-    -- Max visual effects
-    refraction_strength = 8.0,
-    chromatic_aberration = 1.5,
-    fresnel_strength = 2.0,
-    specular_strength = 1.5,
-    glass_opacity = 0.85,
-    edge_thickness = 0.15,
-    lens_distortion = 1.5,
-
-    -- Color tuning
-    brightness = 0.9,
-    contrast = 1.1,
-    saturation = 1.0,
-    vibrancy = 0.3,
-    adaptive_dim = 0.2,
-})
-
 -- Screencopy and permissions now handled natively by Hyprland Lua API
 
 -- =====================================================================
@@ -559,6 +529,19 @@ hl.layer_rule({ name = "slide-right", match = { namespace = "sideright.*" }, ani
 -- =====================================================================
 hl.on("hyprland.start", function()
   hl.exec_cmd("hyprctl output DP-2 hdr yes")
+  hl.exec_cmd("hyprctl keyword plugin:hyprglass:enabled true")
+  hl.exec_cmd("hyprctl keyword plugin:hyprglass:manage_window_blur true")
+  hl.exec_cmd("hyprctl keyword plugin:hyprglass:layers:enabled true")
+  hl.exec_cmd("hyprctl keyword plugin:hyprglass:layers:namespaces 'qs-.*'")
+  hl.exec_cmd("hyprctl keyword plugin:hyprglass:blur_strength 6")
+  hl.exec_cmd("hyprctl keyword plugin:hyprglass:blur_iterations 6")
+  hl.exec_cmd("hyprctl keyword plugin:hyprglass:refraction_strength 8")
+  hl.exec_cmd("hyprctl keyword plugin:hyprglass:chromatic_aberration 1.5")
+  hl.exec_cmd("hyprctl keyword plugin:hyprglass:fresnel_strength 2")
+  hl.exec_cmd("hyprctl keyword plugin:hyprglass:specular_strength 1.5")
+  hl.exec_cmd("hyprctl keyword plugin:hyprglass:glass_opacity 0.85")
+  hl.exec_cmd("hyprctl keyword plugin:hyprglass:edge_thickness 0.15")
+  hl.exec_cmd("hyprctl keyword plugin:hyprglass:lens_distortion 1.5")
   hl.exec_cmd("~/.local/bin/unlock")
   hl.exec_cmd("hypr-start")
   -- Restart quickshell after Hyprland (re)start so it reconnects Wayland protocols
