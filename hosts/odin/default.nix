@@ -10,6 +10,8 @@
 
 
   system.preserveFlake = false;
+  roles.workstation.enable = true;
+
   # Composable profiles: order matters, last wins on conflicts
   features.profiles = [
     "desktop"
