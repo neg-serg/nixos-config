@@ -2,7 +2,6 @@
   description = "Neg-Serg configuration";
   nixConfig = {
     extra-experimental-features = "pipe-operators";
-    substitute = false;
   };
   inputs = {
     determinate = {
