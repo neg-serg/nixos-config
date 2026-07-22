@@ -21,14 +21,7 @@ in {
     });
   };
 
-  # pyside6: skip qtwebengine dep — avoids OOM on 32-thread builds
-  python3Packages = prev.python3Packages // {
-    pyside6 = prev.python3Packages.pyside6.overridePythonAttrs (_: {
-      cmakeFlags = [ "-DPYTHON_EXECUTABLE=${prev.python3}/bin/python" ];
-      NIX_BUILD_CORES = 4;
-      buildInputs = builtins.filter (p: !(builtins.hasAttr "pname" p && p.pname == "qtwebengine")) (prev.python3Packages.pyside6.buildInputs or []);
-    });
-  };
+  # Flaky tests — caught by neg-pkgs override, re-disable here
   # Flaky tests — caught by neg-pkgs override, re-disable here
   libpulseaudio = checkOff prev.libpulseaudio;
   flac = checkOff prev.flac;
