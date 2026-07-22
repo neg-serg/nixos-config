@@ -19,7 +19,6 @@ in {
       NIX_BUILD_CORES = 4;
       CMAKE_BUILD_PARALLEL_LEVEL = "4";
     });
-    });
   };
 
   # pyside6: skip qtwebengine dep — avoids OOM on 32-thread builds
