@@ -19,6 +19,7 @@ in {
       NIX_BUILD_CORES = 2;
     });
   };
+
   # Force-rebuild KDE packages that reference old qtwebengine output
   kdePackages = prev.kdePackages // {
     kcoreaddons = prev.kdePackages.kcoreaddons.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
