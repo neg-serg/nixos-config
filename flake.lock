@@ -44,11 +44,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783740617,
-        "narHash": "sha256-PpiT7xNxRbgwid42rPGQJnLZYpyPaqwPAqLwYl7O3U8=",
+        "lastModified": 1784343464,
+        "narHash": "sha256-nCbqEHtKdC+K7Nm55s1NtvW8pjMkN/ln9y53DJWnfVY=",
         "owner": "caelestia-dots",
         "repo": "cli",
-        "rev": "d2aaa733bebe5feec6cc44173a5d10c7e4e09a17",
+        "rev": "0f20487cba585950de850d76e5ced63628453a36",
         "type": "github"
       },
       "original": {
@@ -67,10 +67,10 @@
         "quickshell": "quickshell"
       },
       "locked": {
-        "lastModified": 1784112656,
+        "lastModified": 1784655919,
         "owner": "caelestia-dots",
         "repo": "shell",
-        "rev": "172fdd3b662eeae94b32bac27d7fc669e6061e8f",
+        "rev": "b8d874bcbf8bfdc6c2ffdc1c800afc55efd45751",
         "type": "github"
       },
       "original": {
@@ -90,10 +90,10 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1784134975,
+        "lastModified": 1784594853,
         "owner": "DeterminateSystems",
         "repo": "determinate",
-        "rev": "e2a0eb345bf5d9c2ac0d2df26907e0881b99d6a3",
+        "rev": "73b3bdb962a070aa088ac310e606ff760bcc0cf7",
         "type": "github"
       },
       "original": {
@@ -105,37 +105,37 @@
     "determinate-nixd-aarch64-darwin": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-GNBW3JQlaPp5QIvUSZnMfSbPhdEIWI5AQ4wiga/pb14=",
+        "narHash": "sha256-k3TvVP0x97ao/aI8+8HRQhC4277gqgGxn1nudH6xe9c=",
         "type": "file",
-        "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.7/macOS"
+        "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.8/macOS"
       },
       "original": {
         "type": "file",
-        "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.7/macOS"
+        "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.8/macOS"
       }
     },
     "determinate-nixd-aarch64-linux": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-/lYx8SGAuuNw0V1nlhyuRym3tkZAH+Oj1/CUdzgz0+s=",
+        "narHash": "sha256-WHcb+sQEhTjyQqtgrmGknchVP4eMU7X+vSXBveW5M4o=",
         "type": "file",
-        "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.7/aarch64-linux"
+        "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.8/aarch64-linux"
       },
       "original": {
         "type": "file",
-        "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.7/aarch64-linux"
+        "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.8/aarch64-linux"
       }
     },
     "determinate-nixd-x86_64-linux": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-3JrcXRdrFvWsll/cnPLxSjrud5z6iRpxWGv1f44Tfkg=",
+        "narHash": "sha256-n4yqmhHyGB8s5nGzgweyLCpSAkr/CJC6Kn/wG1guUy0=",
         "type": "file",
-        "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.7/x86_64-linux"
+        "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.8/x86_64-linux"
       },
       "original": {
         "type": "file",
-        "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.7/x86_64-linux"
+        "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.8/x86_64-linux"
       }
     },
     "exo": {
@@ -514,10 +514,10 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1784151142,
+        "lastModified": 1784657490,
         "owner": "ogulcancelik",
         "repo": "herdr",
-        "rev": "a22454f27ce096585e19d1787dba43f56d1505cf",
+        "rev": "c5293af6909eebea7adb08ac17be03329606235c",
         "type": "github"
       },
       "original": {
@@ -1139,10 +1139,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1784149253,
+        "lastModified": 1784653189,
         "owner": "anomalyco",
         "repo": "opencode",
-        "rev": "888c4cb50476aaecaad48e6a448759da3040ed2e",
+        "rev": "0317531906d3f3bb01cf33c16319870cfde9170c",
         "type": "github"
       },
       "original": {
@@ -1158,10 +1158,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1784149253,
+        "lastModified": 1784653189,
         "owner": "anomalyco",
         "repo": "opencode",
-        "rev": "888c4cb50476aaecaad48e6a448759da3040ed2e",
+        "rev": "0317531906d3f3bb01cf33c16319870cfde9170c",
         "type": "github"
       },
       "original": {
@@ -1241,10 +1241,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1783673918,
+        "lastModified": 1784600537,
         "ref": "refs/heads/master",
-        "rev": "4df562dfb2475a9057f0f33a8db75808efad8670",
-        "revCount": 830,
+        "rev": "e649d247498512464457aefcd05b73038c4e65a1",
+        "revCount": 832,
         "type": "git",
         "url": "https://git.outfoxxed.me/quickshell/quickshell"
       },
