@@ -28,6 +28,8 @@
   users.main.hashedPasswordFile = config.sops.secrets."user-password-hash".path;
 
   # Console font (visible before plymouth and on tty1-6)
+  # TEMP: telegram disabled — its qtwebengine dependency OOMs on 32-thread build
+  features.web.chat.enable = false;
   console = {
     earlySetup = true;
     font = "${pkgs.terminus_font}/share/consolefonts/ter-124n.psf.gz";
