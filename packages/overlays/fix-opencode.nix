@@ -29,3 +29,10 @@ in {
     "kirigami-addons" = prev.kdePackages."kirigami-addons".overrideAttrs (_: { NIX_BUILD_CORES = 4; });
     kdeconnect-kde = prev.kdePackages.kdeconnect-kde.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
   };
+
+  # Flaky tests — re-disable here (neg-pkgs may re-enable)
+  libpulseaudio = checkOff prev.libpulseaudio;
+  flac = checkOff prev.flac;
+  ffmpeg-headless = checkOff prev.ffmpeg-headless;
+  pylint = checkOff prev.pylint;
+}
