@@ -13,23 +13,8 @@ in
 # Standard overlay pattern: merge top-level attributes
 (functions // tools // media // dev // gui // fixTinycc // aurPorted // disableChecks)
 // {
-  # Override opencode to build from flake input source (latest git)
-  opencode =
-    (final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { }).overrideAttrs
-      (old: {
-        src = inputs.opencode;
-        version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
-        node_modules = old.node_modules.overrideAttrs (_: {
-          outputHash = "sha256-1NUtprMH8GnSUqQ+mHQSC+JLU7lwzHe6XXYHe129WmE=";
-          outputHashAlgo = "sha256";
-          outputHashMode = "recursive";
-        });
-        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.uv ];
-        postFixup = ''
-          wrapProgram $out/bin/opencode \
-            --prefix PATH : ${final.lib.makeBinPath [ final.uv ]}
-        '';
-      });
+  # opencode removed: was overriding to flake source — node_modules builds hung.
+  # Use nixpkgs' opencode directly.
 
   # Agent multiplexer for AI coding agents (herdr)
   herdr = inputs.herdr.packages.${final.stdenv.hostPlatform.system}.default;
