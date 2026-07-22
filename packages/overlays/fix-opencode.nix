@@ -19,10 +19,13 @@ in {
       NIX_BUILD_CORES = 2;
     });
   };
-
-  # Flaky tests — re-disable here (neg-pkgs may re-enable)
-  libpulseaudio = checkOff prev.libpulseaudio;
-  flac = checkOff prev.flac;
-  ffmpeg-headless = checkOff prev.ffmpeg-headless;
-  pylint = checkOff prev.pylint;
-}
+  # Force-rebuild KDE packages that reference old qtwebengine output
+  kdePackages = prev.kdePackages // {
+    kcoreaddons = prev.kdePackages.kcoreaddons.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
+    kguiaddons = prev.kdePackages.kguiaddons.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
+    knotifications = prev.kdePackages.knotifications.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
+    kwidgetsaddons = prev.kdePackages.kwidgetsaddons.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
+    kauth = prev.kdePackages.kauth.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
+    "kirigami-addons" = prev.kdePackages."kirigami-addons".overrideAttrs (_: { NIX_BUILD_CORES = 4; });
+    kdeconnect-kde = prev.kdePackages.kdeconnect-kde.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
+  };
