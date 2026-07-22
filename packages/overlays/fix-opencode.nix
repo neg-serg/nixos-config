@@ -1,5 +1,5 @@
-# Final overlay — applied AFTER neg-pkgs. Fixes hashes, OOM limits, flaky tests
-# that neg-pkgs would otherwise override back to broken defaults.
+# Final overlay — applied AFTER neg-pkgs.
+# Fixes hashes, OOM limits, flaky tests that neg-pkgs would otherwise override.
 _final: prev: let
   checkOff = pkg: pkg.overrideAttrs (_: { doCheck = false; });
 in {
@@ -12,17 +12,15 @@ in {
     });
   });
 
-  # Limit WebKit + QtWebEngine parallelism to avoid OOM on 32-thread 64GB
+  # Limit parallelism for OOM-prone builds on 32-thread 64GB
   webkitgtk_4_1 = prev.webkitgtk_4_1.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
   qt6 = prev.qt6 // {
     qtwebengine = prev.qt6.qtwebengine.overrideAttrs (_: {
-      NIX_BUILD_CORES = 4;
-      CMAKE_BUILD_PARALLEL_LEVEL = "4";
+      NIX_BUILD_CORES = 2;
     });
   };
 
-  # Flaky tests — caught by neg-pkgs override, re-disable here
-  # Flaky tests — caught by neg-pkgs override, re-disable here
+  # Flaky tests — re-disable here (neg-pkgs may re-enable)
   libpulseaudio = checkOff prev.libpulseaudio;
   flac = checkOff prev.flac;
   ffmpeg-headless = checkOff prev.ffmpeg-headless;
