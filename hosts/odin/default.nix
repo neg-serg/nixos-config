@@ -1,6 +1,8 @@
 { pkgs, lib, config, ... }:
 {
   imports = [
+  # TEMP: telegram disabled — qtwebengine OOMs on 32-thread builds
+  features.web.chat.enable = false;
     ./hardware.nix
     ./networking.nix
     ./services.nix
