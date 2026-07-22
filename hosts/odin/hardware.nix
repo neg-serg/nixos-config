@@ -213,11 +213,13 @@
     ];
   };
 
-  # Avoid double compression for swap
-  zramSwap.enable = false;
-
-  # Swap disabled: /mnt/zero volume being dismantled, swap was inactive anyway
-  system.swapfile.enable = false;
+  # Swap file on tank/nixos (root ZFS) — 80GB for OOM-prone builds (qtwebengine, webkitgtk)
+  # ZFS swapfiles need: no compression on dataset, which tank/nixos doesn't have explicitly.
+  system.swapfile = {
+    enable = true;
+    path = "/swapfile";
+    sizeGiB = 80;
+  };
 
   # Disable TPM entirely on this host to remove tpmrm device wait
   security.tpm2.enable = false;
