@@ -216,7 +216,11 @@
   # Avoid double compression for swap
   zramSwap.enable = false;
 
-  # Swap disabled: ZFS doesn't support swapfiles; use zvol if needed
+  # Swap via ZFS zvol for OOM-prone builds (qtwebengine, webkitgtk)
+  # Created manually: zfs create -V 80G tank/swap && mkswap /dev/zvol/tank/swap
+  swapDevices = [{
+    device = "/dev/zvol/tank/swap";
+  }];
   system.swapfile.enable = false;
 
   # Disable TPM entirely on this host to remove tpmrm device wait
