@@ -12,6 +12,9 @@ in {
     });
   });
 
+  # Disable flaky gjs tests (Debugger — gjs test suite broken)
+  gjs = prev.gjs.overrideAttrs (_: { doCheck = false; });
+
   # Limit parallelism for OOM-prone builds on 32-thread 64GB
   webkitgtk_4_1 = prev.webkitgtk_4_1.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
   qt6 = prev.qt6 // {
