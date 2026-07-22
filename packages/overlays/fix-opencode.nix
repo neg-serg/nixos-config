@@ -19,7 +19,11 @@ in {
       NIX_BUILD_CORES = 4;
       CMAKE_BUILD_PARALLEL_LEVEL = "4";
     });
+    });
   };
+
+  # pyside6: skip qtwebengine dep — avoids OOM on 32-thread builds
+  pyside6 = prev.pyside6.override { qtwebengine = null; };
 
   # Flaky tests — caught by neg-pkgs override, re-disable here
   libpulseaudio = checkOff prev.libpulseaudio;
