@@ -3,14 +3,8 @@
 _final: prev: let
   checkOff = pkg: pkg.overrideAttrs (_: { doCheck = false; });
 in {
-  # Fix opencode node_modules hash — neg-pkgs has a stale hash
-  opencode = prev.opencode.overrideAttrs (old: {
-    node_modules = old.node_modules.overrideAttrs (_: {
-      outputHash = "sha256-1NUtprMH8GnSUqQ+mHQSC+JLU7lwzHe6XXYHe129WmE=";
-      outputHashAlgo = "sha256";
-      outputHashMode = "recursive";
-    });
-  });
+  # opencode removed from fixes overlay — let neg-pkgs handle it
+  # (our node_modules hash was stale after flake input update)
 
   # Disable flaky gjs tests (Debugger — gjs test suite broken)
   gjs = prev.gjs.overrideAttrs (_: { doCheck = false; });
