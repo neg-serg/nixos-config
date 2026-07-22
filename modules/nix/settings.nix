@@ -67,7 +67,7 @@ in
       min-free = 8192; # MB reserved for ZFS ARC (~32GB) + 2 parallel builds (~35GB peak) on 64GB system
       build-poll-interval = 3; # seconds between polling for finished builds
       log-lines = 50; # lines of build output to show on failure
-      max-silent-time = 1200; # kill stuck builders after 20 min of no output
+      max-silent-time = 3600; # 1h for slow npm/node_modules builds
       use-xdg-base-directories = true;
       warn-dirty = false; # Disable annoying dirty warn
       download-attempts = 5;
