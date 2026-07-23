@@ -41,6 +41,7 @@ lib.mkMerge [
     features.dev.tla.enable = true;
     features.hardware.usbAutomount.enable = true;
     features.net.tailscale.enable = true;
+    features.input.kanata.enable = true; # Caps→Ctrl via kanata
     features.input.warpd.enable = true; # warpd: keyboard-driven pointer control
 
     # Roles enabled for this host
