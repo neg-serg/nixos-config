@@ -5,6 +5,7 @@
   imports = [
     ./audio
     ./cpu
+    ./input
     ./io
     ./qmk
     ./udev-rules
