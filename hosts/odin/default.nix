@@ -44,7 +44,7 @@
   # Xray upstream dead — disable the service (keep features.net.proxy for env/packages)
   systemd.services.xray.enable = false;
   features.dev.haskell.enable = true; # Enable Haskell toolchain (GHC, cabal, stack, HLS)
-  features.virt.libvirtd.enable = true; # KVM/QEMU for WinApps
+  features.virt.libvirtd.enable = false; # disabled — ISOEnts.zip from web.archive.org blocked by proxy
   features.apps.winapps.enable = false; # ISOEnts.zip download fails via proxy
   features.apps.guiAppsFull.enable = false; # Disable heavy GUI apps (GIMP, OBS); gaming profile enables it by default
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
