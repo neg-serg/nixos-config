@@ -28,9 +28,11 @@ in {
   # Fix docbook ISOEnts.zip: use local store copy (proxy corrupts download)
   docbook_sgml_dtd_41 = prev.docbook_sgml_dtd_41.overrideAttrs (_: {
     src = ./../../files/ISOEnts.zip;
+    srcs = [ ./../../files/ISOEnts.zip ];
   });
   docbook_sgml_dtd_45 = prev.docbook_sgml_dtd_45.overrideAttrs (_: {
     src = ./../../files/ISOEnts.zip;
+    srcs = [ ./../../files/ISOEnts.zip ];
   });
 
   # Flaky tests — re-disable here (neg-pkgs may re-enable)
