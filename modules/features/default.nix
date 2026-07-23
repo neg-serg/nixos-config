@@ -73,6 +73,7 @@ in
         !config.features.dev.haskell.enable
         || !config.features.dev.rust.enable
         || !config.features.dev.cpp.enable
+        || !config.features.dev.java.enable
       )
       {
         # When dev language tooling is disabled, exclude their pnames from curated package lists
@@ -103,6 +104,10 @@ in
             "ninja"
             "ccache"
             "lldb"
+          ]
+          ++ lib.optionals (!config.features.dev.java.enable) [
+            "jdk"
+            "maven"
           ]
         );
       }
