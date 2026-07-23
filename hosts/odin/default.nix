@@ -6,9 +6,6 @@
     ./services.nix
     ./virtualisation/lxc.nix
   ];
-
-  # TEMP: telegram disabled — qtwebengine OOMs on 32-thread builds
-  features.web.chat.enable = lib.mkForce false;
   system.preserveFlake = false;
   roles.workstation.enable = true;
 
