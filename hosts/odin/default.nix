@@ -66,5 +66,20 @@
     pkgs.zellij # Terminal workspace with batteries included (Rust)
     pkgs.kanata # keyboard remapper (Caps→Ctrl, etc.)
   ];
+
+  # Kanata keyboard remapper — systemd user service
+  systemd.user.services.kanata = {
+    enable = true;
+    description = "Kanata keyboard remapper (Caps→Ctrl)";
+    after = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${lib.getExe pkgs.kanata} --cfg %h/.config/kanata/kanata.kbd";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+    wantedBy = [ "graphical-session.target" ];
+  };
   environment.etc."zellij/config.kdl".text = builtins.readFile ./../../files/gui/zellij/config.kdl;
 }
