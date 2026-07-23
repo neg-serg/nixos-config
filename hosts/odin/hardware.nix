@@ -216,10 +216,9 @@
   # Avoid double compression for swap
   zramSwap.enable = false;
 
-  # Swap via ZFS zvol — disabled. Re-enable with caution:
-  #   zfs create -V 80G tank/swap && mkswap /dev/zvol/tank/swap
-  # swapDevices = [{ device = "/dev/zvol/tank/swap"; }];
-  swapDevices = [ ];
+  # Swap on nvme0n1p2 (507G) — created manually:
+  #   sudo mkswap /dev/nvme0n1p2 && sudo swapon /dev/nvme0n1p2
+  swapDevices = [{ device = "/dev/nvme0n1p2"; }];
 
   # Disable TPM entirely on this host to remove tpmrm device wait
   security.tpm2.enable = false;
