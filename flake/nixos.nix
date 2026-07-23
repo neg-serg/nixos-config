@@ -20,6 +20,7 @@ let
     inputs.nix-flatpak.nixosModules.nix-flatpak
     inputs.sops-nix.nixosModules.sops
     ../modules/system/disabled-modules.nix
+    inputs.extra-container.nixosModules.default
   ];
 
   hostExtras =
