@@ -216,12 +216,10 @@
   # Avoid double compression for swap
   zramSwap.enable = false;
 
-  # Swap via ZFS zvol for OOM-prone builds (qtwebengine, webkitgtk)
-  # Created manually: zfs create -V 80G tank/swap && mkswap /dev/zvol/tank/swap
-  swapDevices = [{
-    device = "/dev/zvol/tank/swap";
-  }];
-  system.swapfile.enable = false;
+  # Swap via ZFS zvol — disabled. Re-enable with caution:
+  #   zfs create -V 80G tank/swap && mkswap /dev/zvol/tank/swap
+  # swapDevices = [{ device = "/dev/zvol/tank/swap"; }];
+  swapDevices = [ ];
 
   # Disable TPM entirely on this host to remove tpmrm device wait
   security.tpm2.enable = false;
