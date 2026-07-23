@@ -154,7 +154,7 @@ local menu    = "vicinae toggle"
 local function dispatch(args) return hl.dsp.exec_cmd("hyprctl dispatch " .. args) end
 
 -- --- Top-level binds (bindings.conf) ---
-hl.bind(M4 .. "+code:39", hl.dsp.exec_cmd("hyprctl switchxkblayout current next"))
+hl.bind("SUPER, code:31", hl.dsp.exec_cmd("hyprctl switchxkblayout current next"))
 hl.bind(M1 .. "+Tab", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(M4 .. "+slash", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(M4 .. "+" .. C .. "+backslash", hl.dsp.window.resize({ x = 640, y = 480 }))
