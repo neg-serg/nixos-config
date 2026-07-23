@@ -77,7 +77,7 @@ in
       preallocate-contents = true; # Reduce ZFS CoW fragmentation by pre-allocating store paths
       lazy-locks = true; # Lazy flake.lock loading for faster eval
       # Expose ccache directory to sandboxed builds
-      extra-sandbox-paths = [ "/cache=/cache:ro" ]; # ccache dir mounted read-only — writable would escape sandbox
+      extra-sandbox-paths = [ "/cache" ]; # ccache dir for builds (optional — ignored if missing)
     }
     // caches;
 
