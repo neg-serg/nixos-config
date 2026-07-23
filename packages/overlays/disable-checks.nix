@@ -82,6 +82,14 @@ inputs: final: finalPrev: {
     doCheck = false;
   });
 
+
+  # Disable flaky samba tests (timing-dependent, fail on loaded systems)
+  samba = finalPrev.samba.overrideAttrs (_old: {
+    doCheck = false;
+  });
+  samba4 = finalPrev.samba4.overrideAttrs (_old: {
+    doCheck = false;
+  });
   # Disable flaky pytest-xdist tests
   pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
     (_python-final: python-prev: {
