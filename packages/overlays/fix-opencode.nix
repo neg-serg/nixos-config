@@ -28,19 +28,23 @@ in {
     kdeconnect-kde = prev.kdePackages.kdeconnect-kde.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
   };
 
-  # Fix docbook ISOEnts.zip — single source, proxy-compatible hash, cached
+  # Fix docbook ISOEnts.zip: overrideAttrs can't fix duplicate srcs,
+  # so we bypass the standard unpack with a single-unzip installPhase.
   docbook_sgml_dtd_41 = prev.docbook_sgml_dtd_41.overrideAttrs (_: {
     src = isoEnts;
-    srcs = [ isoEnts ];
+    dontUnpack = true;
+    installPhase = ''
+      mkdir -p $out/sgml
+      cd $out/sgml
+      ${prev.unzip}/bin/unzip ${isoEnts}
+    '';
   });
   docbook_sgml_dtd_45 = prev.docbook_sgml_dtd_45.overrideAttrs (_: {
     src = isoEnts;
-    srcs = [ isoEnts ];
+    dontUnpack = true;
+    installPhase = ''
+      mkdir -p $out/sgml
+      cd $out/sgml
+      ${prev.unzip}/bin/unzip ${isoEnts}
+    '';
   });
-
-  # Flaky tests
-  libpulseaudio = checkOff prev.libpulseaudio;
-  flac = checkOff prev.flac;
-  ffmpeg-headless = checkOff prev.ffmpeg-headless;
-  pylint = checkOff prev.pylint;
-}
