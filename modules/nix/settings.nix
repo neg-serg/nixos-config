@@ -43,12 +43,9 @@ in
         "auto-allocate-uids" # allow nix to automatically pick UIDs, rather than creating nixbld* user accounts
         "flakes" # flakes for reproducibility
         "nix-command" # new nix interface
-        "parallel-eval" # parallel nix evaluation (Determinate Nix)
         "pipe-operators" # |> syntax for cleaner function chains
         "ca-derivations" # content-addressed derivations: store paths identified by output hash
         "blake3-hashes" # BLAKE3: faster parallel hashing for store paths
-        "wasm-builtin" # builtins.wasm: call WebAssembly functions from Nix evaluation
-        "wasm-derivations" # system = "wasm32-wasip1": platform-independent derivations
         "recursive-nix" # allow Nix builds to call nix (nested evaluation)
         "fetch-closure" # fetch store paths from binary caches by closure hash
       ];
@@ -75,7 +72,7 @@ in
       # Deduplication via weekly nix.optimise timer instead of per-write
       auto-optimise-store = false;
       preallocate-contents = true; # Reduce ZFS CoW fragmentation by pre-allocating store paths
-      lazy-locks = true; # Lazy flake.lock loading for faster eval
+      # lazy-locks removed — not supported by current Determinate Nix
       # Expose ccache directory to sandboxed builds
       extra-sandbox-paths = [ "/cache" ]; # ccache dir for builds (optional — ignored if missing)
     }
