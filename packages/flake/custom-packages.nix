@@ -29,4 +29,5 @@
   zestbay = pkgs.zestbay; # PipeWire patchbay with LV2/VST3/CLAP plugin hosting
   pw-audioshare = pkgs.pw-audioshare; # GTK4 PipeWire patchbay with auto-connect presets
   wyoming-openai = pkgs.neg.wyoming-openai; # Wyoming OpenAI proxy — STT/TTS bridge for Home Assistant
+  praxislive = pkgs.neg.praxislive; # PraxisLIVE — hybrid visual live programming IDE for creative coding
 }
