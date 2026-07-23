@@ -37,6 +37,14 @@ in {
     };
   });
 
+  # Same fix for docbook_sgml_dtd_45 (also downloads ISOEnts.zip)
+  docbook_sgml_dtd_45 = prev.docbook_sgml_dtd_45.overrideAttrs (_: {
+    src = prev.fetchurl {
+      url = "https://xml.coverpages.org/ISOEnts.zip";
+      hash = "sha256-LNe6NDfxEB7L3S/ZYz1fXhTFQJKcQxINvlrxV1soAK0=";
+    };
+  });
+
   # Flaky tests — re-disable here (neg-pkgs may re-enable)
   libpulseaudio = checkOff prev.libpulseaudio;
   flac = checkOff prev.flac;
