@@ -8,6 +8,7 @@ mkIf (builtins.elem "dev" (config.features.profiles or [ ])) {
       rust.enable = mkDefault true;
       cpp.enable = mkDefault true;
       haskell.enable = mkDefault true;
+      java.enable = mkDefault true; # enable Java/JVM toolchain (JDK, Maven, PraxisLIVE)
       pkgs.formatters = mkDefault true; # enable code formatters (alejandra, shfmt, stylua, treefmt)
       pkgs.codecount = mkDefault true; # enable code counting tools (cloc, gocloc)
       pkgs.analyzers = mkDefault true; # enable static analysis tools (shellcheck, deadnix, statix)

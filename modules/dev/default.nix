@@ -8,6 +8,7 @@
     ./gcc
     ./gdb
     ./git
+    ./java
     ./python
     ./unreal
     ./pkgs
