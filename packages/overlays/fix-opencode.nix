@@ -34,8 +34,8 @@ in {
     src = isoEnts;
     dontUnpack = true;
     installPhase = ''
-      mkdir -p $out/sgml
-      cd $out/sgml
+      mkdir -p $out
+      cd $out
       ${prev.unzip}/bin/unzip ${isoEnts}
     '';
   });
@@ -43,8 +43,8 @@ in {
     src = isoEnts;
     dontUnpack = true;
     installPhase = ''
-      mkdir -p $out/sgml
-      cd $out/sgml
+      mkdir -p $out
+      cd $out
       ${prev.unzip}/bin/unzip ${isoEnts}
     '';
   });
