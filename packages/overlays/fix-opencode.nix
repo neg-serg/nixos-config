@@ -3,9 +3,6 @@
 _final: prev: let
   checkOff = pkg: pkg.overrideAttrs (_: { doCheck = false; });
 in {
-  # opencode removed from fixes overlay — let neg-pkgs handle it
-  # (our node_modules hash was stale after flake input update)
-
   # Disable flaky gjs tests (Debugger — gjs test suite broken)
   gjs = prev.gjs.overrideAttrs (_: { doCheck = false; });
 
@@ -28,21 +25,12 @@ in {
     kdeconnect-kde = prev.kdePackages.kdeconnect-kde.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
   };
 
-
-  # Fix docbook_sgml_dtd_41: use xml.coverpages.org instead of blocked web.archive.org
+  # Fix docbook ISOEnts.zip: use local store copy (proxy corrupts download)
   docbook_sgml_dtd_41 = prev.docbook_sgml_dtd_41.overrideAttrs (_: {
-    src = prev.fetchurl {
-      url = "https://xml.coverpages.org/ISOEnts.zip";
-      hash = "sha256-LNe6NDfxEB7L3S/ZYz1fXhTFQJKcQxINvlrxV1soAK0=";
-    };
+    src = /nix/store/4jncb41dmw4gp7dykhl0pigbn39fnrkl-ISOEnts.zip;
   });
-
-  # Same fix for docbook_sgml_dtd_45 (also downloads ISOEnts.zip)
   docbook_sgml_dtd_45 = prev.docbook_sgml_dtd_45.overrideAttrs (_: {
-    src = prev.fetchurl {
-      url = "https://xml.coverpages.org/ISOEnts.zip";
-      hash = "sha256-LNe6NDfxEB7L3S/ZYz1fXhTFQJKcQxINvlrxV1soAK0=";
-    };
+    src = /nix/store/4jncb41dmw4gp7dykhl0pigbn39fnrkl-ISOEnts.zip;
   });
 
   # Flaky tests — re-disable here (neg-pkgs may re-enable)
