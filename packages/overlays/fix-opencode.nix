@@ -28,25 +28,12 @@ in {
     kdeconnect-kde = prev.kdePackages.kdeconnect-kde.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
   };
 
-  # Fix docbook ISOEnts.zip: overrideAttrs can't fix duplicate srcs,
-  # so we bypass the standard unpack with a single-unzip installPhase.
+  # Fix docbook ISOEnts.zip: keep original src (docbk DTD), only override srcs
   docbook_sgml_dtd_41 = prev.docbook_sgml_dtd_41.overrideAttrs (_: {
-    src = isoEnts;
-    dontUnpack = true;
-    installPhase = ''
-      mkdir -p $out
-      cd $out
-      ${prev.unzip}/bin/unzip ${isoEnts}
-    '';
+    srcs = [ isoEnts ];
   });
   docbook_sgml_dtd_45 = prev.docbook_sgml_dtd_45.overrideAttrs (_: {
-    src = isoEnts;
-    dontUnpack = true;
-    installPhase = ''
-      mkdir -p $out
-      cd $out
-      ${prev.unzip}/bin/unzip ${isoEnts}
-    '';
+    srcs = [ isoEnts ];
   });
 
   # Flaky tests — re-disable here (neg-pkgs may re-enable)
