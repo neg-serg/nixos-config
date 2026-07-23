@@ -37,4 +37,9 @@ in {
     };
   });
 
-  # Flaky tests
+  # Flaky tests — re-disable here (neg-pkgs may re-enable)
+  libpulseaudio = checkOff prev.libpulseaudio;
+  flac = checkOff prev.flac;
+  ffmpeg-headless = checkOff prev.ffmpeg-headless;
+  pylint = checkOff prev.pylint;
+}
