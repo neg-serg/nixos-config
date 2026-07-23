@@ -12,6 +12,10 @@
   process-unmapped-keys yes
 )
 
-(defsrc)
+(defsrc
+  caps
+)
 
-(deflayer base)
+(deflayer base
+  lctl
+)
