@@ -61,10 +61,10 @@
   ];
   boot.plymouth.enable = false; # Plymouth removed — adds boot delay, splash not needed on this host
 
-  # Zellij terminal multiplexer
+  # Zellij terminal multiplexer + kanata keyboard remapper
   environment.systemPackages = [
     pkgs.zellij # Terminal workspace with batteries included (Rust)
+    pkgs.kanata # keyboard remapper (Caps→Ctrl, etc.)
   ];
-
   environment.etc."zellij/config.kdl".text = builtins.readFile ./../../files/gui/zellij/config.kdl;
 }
