@@ -199,21 +199,6 @@ copy_name() { # copy absolute path to clipboard
   [ -x "$HOME/.local/bin/pic-notify" ] && "$HOME/.local/bin/pic-notify" "$file" || true
 }
 
-copy_info() { # copy image metadata (dimensions, size, format) to clipboard
-  file="$1"
-  local dims="" size="" fmt="" mod=""
-  dims="$(identify -format '%wx%h' "$file" 2>/dev/null)" || dims="?"
-  size="$(stat -c %s "$file" 2>/dev/null | numfmt --to=iec 2>/dev/null)" || size="?"
-  fmt="$(identify -format '%m' "$file" 2>/dev/null)" || fmt="?"
-  mod="$(date -Iseconds -r "$file" 2>/dev/null)" || mod="?"
-  printf '%s\n%s\n%s\n%s\n' \
-    "File: $(realpath "$file")" \
-    "Dimensions: ${dims}" \
-    "Size: ${size}" \
-    "Format: ${fmt}" \
-    "Modified: ${mod}" | wl-copy
-}
-
 wall() { # wall <mode> <file> via swww
   local mode="$1" file="$2"
   ensure_swww
@@ -310,8 +295,6 @@ case "$action" in
   rotate-180) printf '%s\n' "$file" | rotate 180 ;;
   rotate-ccw) printf '%s\n' "$file" | rotate -90 ;;
   copyname) copy_name "$file" ;;
-  copy_info) copy_info "$file" ;;
-  repeat) repeat_action "$file" ;;
   mv) proc mv "$file" "${3:-}" ;;
   cp) proc cp "$file" "${3:-}" ;;
   wall-mono) wall mono "$file" ;;
