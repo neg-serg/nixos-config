@@ -28,9 +28,13 @@ in {
     kdeconnect-kde = prev.kdePackages.kdeconnect-kde.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
   };
 
-  # Flaky tests — re-disable here (neg-pkgs may re-enable)
-  libpulseaudio = checkOff prev.libpulseaudio;
-  flac = checkOff prev.flac;
-  ffmpeg-headless = checkOff prev.ffmpeg-headless;
-  pylint = checkOff prev.pylint;
-}
+
+  # Fix docbook_sgml_dtd_41: use xml.coverpages.org instead of blocked web.archive.org
+  docbook_sgml_dtd_41 = prev.docbook_sgml_dtd_41.overrideAttrs (_: {
+    src = prev.fetchurl {
+      url = "https://xml.coverpages.org/ISOEnts.zip";
+      hash = "sha256-LNe6NDfxEB7L3S/ZYz1fXhTFQJKcQxINvlrxV1soAK0=";
+    };
+  });
+
+  # Flaky tests
