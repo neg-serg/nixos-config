@@ -45,7 +45,7 @@
   systemd.services.xray.enable = false;
   features.dev.haskell.enable = true; # Enable Haskell toolchain (GHC, cabal, stack, HLS)
   features.virt.libvirtd.enable = true; # KVM/QEMU for WinApps
-  features.apps.winapps.enable = true; # Run Windows apps as native windows (RDP + KVM)
+  features.apps.winapps.enable = false; # ISOEnts.zip download fails via proxy
   features.apps.guiAppsFull.enable = false; # Disable heavy GUI apps (GIMP, OBS); gaming profile enables it by default
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
   features.dev.cpp.enable = true; # Enable C++ toolchain (ccache, gcc, cmake)
