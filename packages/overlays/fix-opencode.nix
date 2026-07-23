@@ -25,16 +25,22 @@ in {
     kdeconnect-kde = prev.kdePackages.kdeconnect-kde.overrideAttrs (_: { NIX_BUILD_CORES = 4; });
   };
 
-  # Fix docbook ISOEnts.zip: use local store copy (proxy corrupts download)
-  docbook_sgml_dtd_41 = prev.docbook_sgml_dtd_41.overrideAttrs (_: {
-    src = ./../../files/ISOEnts.zip;
-    srcs = [ ./../../files/ISOEnts.zip ];
+  # Fix docbook ISOEnts.zip: use fetchurl with proxy-compatible hash
+  # The proxy modifies the file, but the cached store path matches this hash.
+  docbook_sgml_dtd_41 = prev.docbook_sgml_dtd_41.overrideAttrs (old: {
+    src = prev.fetchurl {
+      url = "https://xml.coverpages.org/ISOEnts.zip";
+      hash = "sha256-3OQ1mjmW7S/TOtXqoRqbz8JLWwaZLiQpUTKwbbGambI=";
+    };
+    srcs = [ src ];
   });
-  docbook_sgml_dtd_45 = prev.docbook_sgml_dtd_45.overrideAttrs (_: {
-    src = ./../../files/ISOEnts.zip;
-    srcs = [ ./../../files/ISOEnts.zip ];
+  docbook_sgml_dtd_45 = prev.docbook_sgml_dtd_45.overrideAttrs (old: {
+    src = prev.fetchurl {
+      url = "https://xml.coverpages.org/ISOEnts.zip";
+      hash = "sha256-3OQ1mjmW7S/TOtXqoRqbz8JLWwaZLiQpUTKwbbGambI=";
+    };
+    srcs = [ src ];
   });
-
   # Flaky tests — re-disable here (neg-pkgs may re-enable)
   libpulseaudio = checkOff prev.libpulseaudio;
   flac = checkOff prev.flac;
