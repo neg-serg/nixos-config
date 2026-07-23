@@ -176,13 +176,17 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "narHash": "sha256-NkwlLv0fzf+R9azSQmywwZe+MidwuqzXKDbxdU6TG5I=",
-        "path": "/home/neg/src/extra-container",
-        "type": "path"
+        "lastModified": 1766155727,
+        "narHash": "sha256-XGp4HHH6D6ZKiO5RnMzqYJYnZB538EnEflvlTsOKpvo=",
+        "ref": "refs/heads/master",
+        "rev": "b450bdb24fca1076973c852d87bcb49b8eb5fd49",
+        "revCount": 155,
+        "type": "git",
+        "url": "https://github.com/erikarvstedt/extra-container.git"
       },
       "original": {
-        "path": "/home/neg/src/extra-container",
-        "type": "path"
+        "type": "git",
+        "url": "https://github.com/erikarvstedt/extra-container.git"
       }
     },
     "fenix": {

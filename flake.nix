@@ -118,7 +118,7 @@
       url = "github:noctalia-dev/noctalia";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    extra-container.url = "path:/home/neg/src/extra-container";
+    extra-container.url = "git+https://github.com/erikarvstedt/extra-container.git";
   };
 
   outputs =
