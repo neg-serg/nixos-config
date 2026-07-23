@@ -61,11 +61,10 @@
   ];
   boot.plymouth.enable = false; # Plymouth removed — adds boot delay, splash not needed on this host
 
-  # Zellij terminal multiplexer + kanata keyboard remapper
   environment.systemPackages = [
+    pkgs.nodejs # Node.js — required by npx, MCP servers, git hooks
     pkgs.zellij # Terminal workspace with batteries included (Rust)
     pkgs.kanata # keyboard remapper (Caps→Ctrl, etc.)
   ];
-  # Kanata keyboard remapper — through hardware/input/kanata module
   environment.etc."zellij/config.kdl".text = builtins.readFile ./../../files/gui/zellij/config.kdl;
 }
