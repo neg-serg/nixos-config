@@ -82,9 +82,6 @@
         "W503"
       ];
     } (builtins.readFile ../scripts/hypr/hypr-rearrange.py))
-    (pkgs.writeShellScriptBin "hyde-selector" (
-      builtins.readFile ../../../../files/scripts/hyde-selector.sh
-    ))
   ];
 
   systemdTargets = {
