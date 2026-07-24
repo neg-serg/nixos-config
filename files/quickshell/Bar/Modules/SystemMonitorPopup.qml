@@ -9,7 +9,7 @@ PanelOverlaySurface {
 
     backgroundColor: Color.withAlpha(Theme.surface, 0.85)
     borderColor: "transparent"
-    borderWidth: 1
+    borderWidth: 0
     cornerRadiusOverride: Math.round(Theme.cornerRadiusLarge / 3)
 
     anchors.centerIn: parent
