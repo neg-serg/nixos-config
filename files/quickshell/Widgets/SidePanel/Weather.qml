@@ -40,7 +40,9 @@ Rectangle {
     }
 
     Rectangle {
-        color: Color.withAlpha(Theme.surface, 0.85)
+        id: card
+        anchors.fill: parent
+        color: Color.withAlpha("#000000", 0.85)
         border.color: Color.withAlpha(Theme.accentPrimary, 0.15)
         border.width: 1
         radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(Screen))
