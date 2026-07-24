@@ -521,6 +521,11 @@ end
 hl.layer_rule({ name = "slide-left", match = { namespace = "sideleft.*" }, animation = "slide left" })
 hl.layer_rule({ name = "slide-right", match = { namespace = "sideright.*" }, animation = "slide right" })
 
+-- bottom-up slide for overlay popups
+hl.layer_rule({ name = "slide-up", match = { namespace = "quickshell$" }, animation = "slide bottom" })
+hl.layer_rule({ name = "slide-up-cal", match = { namespace = "qs-calendar" }, animation = "slide bottom" })
+hl.layer_rule({ name = "slide-up-mon", match = { namespace = "qs-monitor" }, animation = "slide bottom" })
+
 -- =====================================================================
 -- Autostart (autostart.conf / env.conf) -- NixOS-appropriate
 -- =====================================================================
