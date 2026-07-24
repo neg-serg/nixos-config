@@ -31,7 +31,7 @@ Rectangle {
         Rectangle {
             id: card
             anchors.fill: parent
-            color: "#000000"
+            color: Color.withAlpha("#000000", 0.85)
             border.color: "transparent"
             border.width: Theme.uiBorderNone
             radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(Screen))
