@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import Quickshell
+import Quickshell.Wayland
 import qs.Components
 import qs.Settings
 import "../../Helpers/Utils.js" as Utils
@@ -10,7 +11,7 @@ Item {
     // Reflect window visibility for external checks (buttons, etc.)
     visible: toast.visible
 
-    // Anchor: panel/bar window for correct positioning relative to exclusive zones
+    // Anchor: panel/bar window for margin calculation
     property var anchorWindow: null
     // Panel edge: "top" | "bottom" | "left" | "right"
     property string panelEdge: "bottom"
@@ -19,10 +20,25 @@ Item {
     function showAt()   { toast.showAt(); }
     function hidePopup(){ toast.hidePopup(); }
 
-    PopupWindow {
+    // ── Music popup as WlrLayershell window for compositor blur (hyprglass) ──
+    Window {
         id: toast
-        // We draw our own rounded background
         color: "transparent"
+        visible: false
+
+        // WlrLayershell — enables compositor blur matching qs-.* layer rule
+        WlrLayershell.namespace: "qs-music"
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.anchor: WlrLayer.BottomEdge | WlrLayer.RightEdge
+
+        // Dynamic margins set in showAt() based on panel height and edge margin
+        property real _marginRight: 0
+        property real _marginBottom: 0
+        WlrLayershell.margins {
+            right: toast._marginRight
+            bottom: toast._marginBottom
+        }
 
         // --- Auto-hide with pause on hover/focus and while cursor is on panel
         property int autoHideTotalMs: Theme.sidePanelPopupAutoHideMs
@@ -50,12 +66,12 @@ Item {
             autoHideTimer.interval = toast._autoHideRemainingMs;
             autoHideTimer.restart();
         }
-            function pauseAutoHide() {
-                if (!autoHideTimer.running) return;
+        function pauseAutoHide() {
+            if (!autoHideTimer.running) return;
             const elapsed = Utils.clamp(Date.now() - toast._autoHideStartedAtMs, 0, 3600000);
             toast._autoHideRemainingMs = Utils.clamp(toast._autoHideRemainingMs - elapsed, 0, 3600000);
-                autoHideTimer.stop();
-            }
+            autoHideTimer.stop();
+        }
         function resumeAutoHide() {
             if (toast._autoHideRemainingMs <= 0) { toast.hidePopup(); return; }
             toast._autoHideStartedAtMs = Date.now();
@@ -105,56 +121,21 @@ Item {
             }
         }
 
-        // --- Anchor to panel window for robust positioning
-        anchor.window: sidebarPopup.anchorWindow
+        // Keep anchor in sync with panel window changes (for margin recalculation)
         Connections {
-            // Recalculate anchor rect before each placement
-            target: toast.anchor
-            function onAnchoring() {
+            target: sidebarPopup.anchorWindow
+            ignoreUnknownSignals: true
+            function onHeightChanged() {
+                if (!toast.visible) return;
                 const scale = Theme.scale(Screen);
                 const cfgMargin = (Settings.settings && Settings.settings.musicPopupEdgeMargin !== undefined)
                                   ? Settings.settings.musicPopupEdgeMargin
                                   : Theme.sidePanelPopupOuterMargin;
                 const baseMargin = Math.max(0, Math.round(cfgMargin * scale));
-                const marginX = baseMargin;
-                const marginY = baseMargin;
-
-                // Align to the right edge of the panel window
-                const px = sidebarPopup.anchorWindow
-                         ? (sidebarPopup.anchorWindow.width - toast.implicitWidth - marginX)
-                         : 0;
-
-                // Vertical offset depending on panel edge
-                var py;
-                switch (String(sidebarPopup.panelEdge || "bottom").toLowerCase()) {
-                case "top":
-                    // Panel at top → popup below it
-                    py = (sidebarPopup.anchorWindow ? sidebarPopup.anchorWindow.height : 0) + marginY;
-                    break;
-                case "bottom":
-                    // Panel at bottom → popup above it
-                    py = -toast.implicitHeight - marginY;
-                    break;
-                case "left":
-                    py = marginY;
-                    break;
-                case "right":
-                    py = marginY;
-                    break;
-                default:
-                    py = marginY;
+                if (sidebarPopup.panelEdge === "bottom") {
+                    toast._marginBottom = (sidebarPopup.anchorWindow ? sidebarPopup.anchorWindow.height : 0) + baseMargin;
                 }
-
-                toast.anchor.rect.x = px;
-                toast.anchor.rect.y = py;
             }
-        }
-        // Keep anchor in sync with panel window changes
-        Connections {
-            target: sidebarPopup.anchorWindow
-            ignoreUnknownSignals: true
-            function onWidthChanged()  { toast.anchor.updateAnchor(); }
-            function onHeightChanged() { toast.anchor.updateAnchor(); }
             function onPanelHoveringChanged() {
                 if (!sidebarPopup.anchorWindow) return;
                 if (sidebarPopup.anchorWindow.panelHovering) toast.pauseAutoHide();
@@ -164,18 +145,33 @@ Item {
         Connections {
             target: Settings.settings
             ignoreUnknownSignals: true
-            function onMusicPopupEdgeMarginChanged() { toast.anchor.updateAnchor(); }
+            function onMusicPopupEdgeMarginChanged() {
+                if (toast.visible) toast.showAt(); // reposition
+            }
         }
 
         // --- Public control
         function showAt() {
             const scale = Theme.scale(Screen);
+            const cfgMargin = (Settings.settings && Settings.settings.musicPopupEdgeMargin !== undefined)
+                              ? Settings.settings.musicPopupEdgeMargin
+                              : Theme.sidePanelPopupOuterMargin;
+            const baseMargin = Math.max(0, Math.round(cfgMargin * scale));
+
             if (computedHeightPx < 0) {
                 var ih = (musicWidget && musicWidget.implicitHeight > 0)
                          ? musicWidget.implicitHeight
                          : (Settings.settings.musicPopupHeight * scale);
                 const guardMax = Utils.clamp(Math.round(Screen.height * 0.7), 1, Screen.height);
                 computedHeightPx = Utils.clamp(Math.round(ih), 1, guardMax);
+            }
+
+            // Set WlrLayershell margins for positioning: right edge + above panel
+            toast._marginRight = baseMargin;
+            if (sidebarPopup.panelEdge === "bottom") {
+                toast._marginBottom = (sidebarPopup.anchorWindow ? sidebarPopup.anchorWindow.height : 0) + baseMargin;
+            } else {
+                toast._marginBottom = baseMargin;
             }
 
             if (!visible) {
