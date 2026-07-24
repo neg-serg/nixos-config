@@ -490,6 +490,7 @@ end
 -- blur with per-namespace ignore_alpha
 local blur_layers = {
   { ns = "qs-.*",           ia = 0.6 },
+  { ns = "quickshell",      ia = 0.5 },
   { ns = "vicinae",         ia = 0.6 },
   { ns = "launcher",        ia = 0.5 },
   { ns = "notifications",   ia = 0.69 },
