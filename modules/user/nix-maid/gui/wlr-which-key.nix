@@ -119,25 +119,6 @@
             command: wl random ~/pic/wl ~/pic/black
             title: Wallpaper
 
-          - mod: SUPER
-            key: e
-            title: Selectors
-            children:
-              - key: w
-                command: hyde-selector wallpaper
-                title: Wallpaper
-              - key: t
-                command: hyde-selector theme
-                title: Theme
-              - key: a
-                command: hyde-selector animation
-                title: Animation
-              - key: e
-                command: vicinae toggle
-                title: Emoji
-              - key: c
-                command: vicinae toggle
-                title: Calculator
 
           - mod: SUPER
             key: m
