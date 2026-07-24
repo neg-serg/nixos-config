@@ -5,6 +5,7 @@ import qs.Settings
 import "../../Helpers/RichText.js" as Rich
 import "../../Helpers/WsIconMap.js" as WsMap
 import "../../Helpers/WorkspaceIcons.js" as WorkspaceIcons
+import Quickshell
 CenteredCapsuleRow {
     interactive: true
     onClicked: Quickshell.execDetached(["vicinae"])
