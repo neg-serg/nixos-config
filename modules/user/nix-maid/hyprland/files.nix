@@ -180,6 +180,10 @@ in
               command = Telegram
               options = special
           }
+          music {
+              class = music
+              offset = 0 30%
+          }
         '';
 
         # Ensure local.d directory exists with at least one .conf file so the glob never fails
