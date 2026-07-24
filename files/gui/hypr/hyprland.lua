@@ -129,7 +129,7 @@ hl.config({
     vrr = 3, enable_swallow = true, middle_click_paste = false, disable_autoreload = 1,
   },
   cursor = {
-    sync_gsettings_theme = true, min_refresh_rate = 240, inactive_timeout = 3.0,
+    sync_gsettings_theme = true, min_refresh_rate = 240, inactive_timeout = 0,
     hide_on_key_press = true, warp_on_change_workspace = false,
   },
   render = { direct_scanout = 2 },
