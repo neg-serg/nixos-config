@@ -118,12 +118,12 @@ OverlayToggleCapsule {
 
                         width: Math.round(26*Theme.scale(root.screen)); height: Math.round(26*Theme.scale(root.screen))
                         radius: Math.round(Theme.cornerRadius*0.33)
-                        color: { if(isToday)return Color.withAlpha(root.goldAccent,0.3); if(isHoliday)return Color.withAlpha(Theme.error,0.1); if(isWeekend)return Color.withAlpha(root.goldAccent,0.06); if(dayMouse.containsMouse)return Color.withAlpha(root.goldAccent,0.15); return"transparent" }
+                        color: { if(isToday)return Color.withAlpha(root.goldAccent,0.3); if(isHoliday)return Color.withAlpha(Theme.error,0.1); if(isWeekend)return Color.withAlpha(root.goldAccent,0.12); if(dayMouse.containsMouse)return Color.withAlpha(root.goldAccent,0.15); return"transparent" }
                         border.color: isToday?root.goldAccent:"transparent"; border.width: isToday?1.5:0
 
                         Text {
                             anchors.centerIn: parent; text: model.day
-                            color: { if(isToday)return root.goldAccent; if(isHoliday)return Theme.error; if(isWeekend)return Color.withAlpha(root.textWarmDim,0.5); return root.textWarm }
+                            color: { if(isToday)return root.goldAccent; if(isHoliday)return Theme.error; if(isWeekend)return Color.withAlpha(root.textWarmDim,0.75); return root.textWarm }
                             opacity: isCurrentMonth?0.9:0.3; font.family: Theme.fontFamily; font.pixelSize: Math.round(13*Theme.scale(root.screen)); font.weight: isToday?Font.Bold:Font.Normal }
 
                         Rectangle { visible:isHoliday; width:4*Theme.scale(root.screen); height:width; radius:width/2; color:Theme.error; anchors.top:parent.top; anchors.right:parent.right; anchors.margins:2 }
