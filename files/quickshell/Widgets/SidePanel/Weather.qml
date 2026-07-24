@@ -44,7 +44,7 @@ Rectangle {
 
         Rectangle { anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right; height: 1; color: Color.withAlpha(Theme.accentPrimary, 0.25); z: 2 }
 
-        Canvas { id: moonTex; width: 256; height: 256; visible: false; property real _cachedPhase: -1; property bool _ready: false }
+        Canvas { id: moonTex; width: 256; height: 256; opacity: 0; property real _cachedPhase: -1; property bool _ready: false }
         Canvas {
             id: weatherDecor
             anchors.fill: parent; z: 0
