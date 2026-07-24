@@ -116,18 +116,22 @@ return {
     end,
   },
 
-  -- │ █▓▒░ grddavies/tidal.nvim                                                    │
+  -- | tidal.nvim                                                    |
   {
     'grddavies/tidal.nvim',
     event = { 'BufRead *.tidal', 'BufNewFile *.tidal' },
     keys = {
-      { '<C-CR>', '<Cmd>TidalLaunch<CR>', ft = 'haskell', desc = 'Launch Tidal + SuperDirt' },
-      { '<C-S-CR>', '<Cmd>TidalQuit<CR>', ft = 'haskell', desc = 'Quit Tidal' },
+      { '<C-CR>', '<Cmd>TidalLaunch<CR>', ft = 'tidal', desc = 'Launch Tidal + SuperDirt' },
+      { '<C-S-CR>', '<Cmd>TidalQuit<CR>', ft = 'tidal', desc = 'Quit Tidal' },
+      { '<M-CR>', '<Cmd>TidalSend<CR>', ft = 'tidal', desc = 'Send line to Tidal' },
     },
     opts = {
       boot = {
-        tidal = { file = '/usr/share/haskell-tidal/BootTidal.hs' },
-        sclang = { enabled = true, file = '~/.config/SuperCollider/boot_noop.scd' },
+        tidal = { file = vim.fn.expand '~/.config/tidal/BootTidal.hs' },
+        sclang = {
+          enabled = true,
+          file = vim.fn.expand '~/.config/SuperCollider/superdirt_startup.scd',
+        },
       },
     },
   },
