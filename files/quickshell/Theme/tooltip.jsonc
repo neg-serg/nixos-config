@@ -6,7 +6,7 @@
     "padding": 8,
     "borderWidth": 1,
     "radius": 2,
-    "fontPx": 14,
+    "fontPx": 12,
     "opacity": 0.98,
     "smallScaleRatio": 0.71
   }
