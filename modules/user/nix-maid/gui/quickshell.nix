@@ -18,6 +18,8 @@ let
     installPhase = ''
       mkdir -p $out/share/sshell
       cp -r . $out/share/sshell/
+      # Remove broken symlinks (upstream has dangling icon links)
+      find $out -xtype l -delete
     '';
   };
 
