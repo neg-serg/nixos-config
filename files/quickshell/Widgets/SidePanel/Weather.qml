@@ -51,18 +51,13 @@ Rectangle {
 
             onPaint: {
                 var ctx=getContext("2d");ctx.reset();ctx.globalAlpha=0.07;var w=width,h=height
-                if(wcode===0)drawSunRays(ctx,w,h)
-                else if(wcode>=1&&wcode<=3){drawSunRays(ctx,w,h);drawClouds(ctx,w,h)}
+                if(wcode===0){}
+                else if(wcode>=1&&wcode<=3)drawClouds(ctx,w,h)
                 else if(wcode>=45&&wcode<=48)drawFog(ctx,w,h)
                 else if(wcode>=51&&wcode<=67||wcode>=80&&wcode<=82)drawRain(ctx,w,h)
                 else if(wcode>=71&&wcode<=77)drawSnow(ctx,w,h)
                 else if(wcode>=95&&wcode<=99){drawRain(ctx,w,h);drawStormBolt(ctx,w,h)}
-                drawMoon(ctx,w,h)
             }
-
-            function drawSunRays(ctx,w,h){var cx=w*0.7,cy=h*0.3,r=Math.min(w,h)*0.1;ctx.globalCompositeOperation="lighter";for(var i=0;i<360;i++){var a=Math.PI*2*i/360;var len=r*(1.2+Math.abs(Math.sin(i*4.7))*0.8+Math.abs(Math.sin(i*13))*0.4);var al=0.3+Math.abs(Math.sin(i*7))*0.4+Math.abs(Math.sin(i*19))*0.3;ctx.globalAlpha=al*0.3;ctx.strokeStyle=Theme.accentPrimary;ctx.lineWidth=1+Math.random()*2;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*r*0.7,cy+Math.sin(a)*r*0.7);ctx.lineTo(cx+Math.cos(a)*len,cy+Math.sin(a)*len);ctx.stroke()}ctx.globalAlpha=0.9;ctx.fillStyle=Color.withAlpha("#ffffff",0.95);ctx.beginPath();ctx.arc(cx,cy,r*0.35,0,Math.PI*2);ctx.fill();var grd=ctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r*1.1);grd.addColorStop(0,Color.withAlpha(Theme.accentPrimary,0.9));grd.addColorStop(0.3,Color.withAlpha(Theme.accentPrimary,0.6));grd.addColorStop(0.6,Color.withAlpha(Theme.accentPrimary,0.2));grd.addColorStop(1,"transparent");ctx.globalAlpha=0.7;ctx.fillStyle=grd;ctx.beginPath();ctx.arc(cx,cy,r*1.1,0,Math.PI*2);ctx.fill();ctx.globalCompositeOperation="source-over"}
-
-            function drawMoon(ctx,w,h){var age=WeatherIcons.moonAge(new Date());var cx=w*0.78,cy=h*0.72,r=Math.min(w,h)*0.13;ctx.globalCompositeOperation="source-over";ctx.globalAlpha=0.06;for(var i=0;i<80;i++){var a=Math.random()*Math.PI*2;var d=r*(1.1+Math.random()*0.7);var sz=1+Math.random()*3;ctx.fillStyle=Theme.accentPrimary;ctx.beginPath();ctx.arc(cx+Math.cos(a)*d,cy+Math.sin(a)*d,sz,0,Math.PI*2);ctx.fill()}var surf=ctx.createRadialGradient(cx-r*0.25,cy-r*0.25,r*0.05,cx,cy,r);surf.addColorStop(0,Color.withAlpha("#f0e8d8",0.95));surf.addColorStop(0.5,Color.withAlpha("#c8b898",0.9));surf.addColorStop(1,Color.withAlpha("#706050",0.7));ctx.globalAlpha=1;ctx.fillStyle=surf;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();var craters=[[-0.35,-0.15,0.11],[-0.05,-0.45,0.08],[0.3,0.1,0.09],[-0.2,0.35,0.07],[0.5,-0.25,0.06],[0.15,0.45,0.05],[-0.5,0.2,0.05],[0,-0.05,0.03],[0.4,-0.5,0.04],[-0.3,-0.35,0.04],[0.55,0,0.04],[-0.45,-0.4,0.03],[0.25,0.3,0.06],[-0.1,0.15,0.05],[0.35,-0.1,0.04]];craters.forEach(function(c){ctx.globalAlpha=0.06;ctx.fillStyle="#000000";ctx.beginPath();ctx.arc(cx+r*c[0]+1,cy+r*c[1]+1,r*c[2],0,Math.PI*2);ctx.fill();ctx.globalAlpha=0.04;ctx.fillStyle="#ffffff";ctx.beginPath();ctx.arc(cx+r*c[0]-1,cy+r*c[1]-1,r*c[2]*0.7,0,Math.PI*2);ctx.fill()});var sa=age*Math.PI*2;var sx=cx+Math.cos(sa)*r*1.05;var sg=ctx.createRadialGradient(sx,cy,r*0.05,sx,cy,r*1.1);sg.addColorStop(0,Color.withAlpha("#000000",0.92));sg.addColorStop(0.6,Color.withAlpha("#000000",0.4));sg.addColorStop(1,"transparent");ctx.globalAlpha=1;ctx.fillStyle=sg;ctx.beginPath();ctx.arc(sx,cy,r*1.1,0,Math.PI*2);ctx.fill();ctx.globalAlpha=0.15;ctx.strokeStyle=Color.withAlpha(Theme.accentPrimary,0.6);ctx.lineWidth=0.5;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke()}
 
             function drawClouds(ctx,w,h){ctx.fillStyle="#AABBCC";drawCloud(ctx,w*0.65,h*0.18,40);drawCloud(ctx,w*0.78,h*0.12,35);drawCloud(ctx,w*0.55,h*0.22,30)}
             function drawCloud(ctx,cx,cy,r){ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.arc(cx+r*0.7,cy-r*0.25,r*0.75,0,Math.PI*2);ctx.arc(cx+r*1.2,cy,r*0.7,0,Math.PI*2);ctx.arc(cx-r*0.6,cy+r*0.1,r*0.6,0,Math.PI*2);ctx.arc(cx+r*0.5,cy-r*0.5,r*0.55,0,Math.PI*2);ctx.fill()}
@@ -71,6 +66,26 @@ Rectangle {
             function drawSnow(ctx,w,h){ctx.fillStyle="#CCDDEE";for(var i=0;i<30;i++){var x=(i*47+13)%w;var y=(i*59+7)%h;var r2=1.5+(i%3)*1;ctx.beginPath();ctx.arc(x,y,r2,0,Math.PI*2);ctx.fill()}}
             function drawStormBolt(ctx,w,h){ctx.strokeStyle="#FFD040";ctx.lineWidth=2.5;ctx.beginPath();var bx=w*0.75,by=h*0.08;ctx.moveTo(bx,by);ctx.lineTo(bx-10,by+22);ctx.lineTo(bx+4,by+22);ctx.lineTo(bx-8,by+44);ctx.stroke()}
         }
+
+        // GPU shader sun — particle corona + granulation
+        ShaderEffect {
+            anchors.fill: parent; z: 0
+            fragmentShader: Qt.resolvedUrl("../../shaders/sun.frag")
+            property real iTime: Date.now() * 0.001
+            property color iColor: Theme.accentPrimary
+            property real cx: card.width * 0.7
+            property real cy: card.height * 0.3
+            property real iRadius: Math.min(card.width, card.height) * 0.1
+            Timer { interval: 33; repeat: true; running: true; onTriggered: parent.iTime = Date.now() * 0.001 } }
+
+        ShaderEffect {
+            anchors.fill: parent; z: 0
+            fragmentShader: Qt.resolvedUrl("../../shaders/moon.frag")
+            property real iPhase: WeatherIcons.moonAge(new Date())
+            property color iColor: Theme.accentPrimary
+            property real cx: card.width * 0.78
+            property real cy: card.height * 0.72
+            property real iRadius: Math.min(card.width, card.height) * 0.13 }
 
         ColumnLayout {
             anchors.fill: parent
