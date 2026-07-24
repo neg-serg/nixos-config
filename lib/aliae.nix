@@ -211,7 +211,7 @@ let
     (mkAlias "nrs" "nixos-rebuild switch --no-reexec") # fast rebuild, skip nixos-rebuild self-eval
     (mkAlias "j" "journalctl")
     (mkAlias "beet-update" "beet update -F field_that_isnt -M") # beets rescan without moving files
-    (mkAlias "wl-restart" "pkill -x wl-daemon 2>/dev/null; wl init; wl random ~/pic/wl ~/pic/black") # restart wallpaper daemon
+    (mkAlias "wl-restart" "pkill -x wl-daemon 2>/dev/null; wl init; wl random ~/pic/wl") # restart wallpaper daemon
     (mkAlias "jl" "jupyter lab --no-browser")
     (mkAlias "dosbox" "${mkCmd "dosbox"} -conf ${mkEnvVar "XDG_CONFIG_HOME"}/dosbox/dosbox.conf")
     (mkAlias "gdb" "${mkCmd "gdb"} -nh -x ${mkEnvVar "XDG_CONFIG_HOME"}/gdb/gdbinit")
