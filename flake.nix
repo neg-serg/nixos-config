@@ -105,10 +105,6 @@
       url = "github:caelestia-dots/shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    sshell = {
-      url = "github:stormy-soul/sshell";
-      flake = false;
-    };
     talktype = {
       url = "github:lmacan1/talktype";
       flake = false;
