@@ -9,8 +9,8 @@ import qs.Services as Services
 
 Rectangle {
     id: weatherRoot
-    width: Math.round(Theme.sidePanelWeatherWidth * 2 * Theme.scale(Screen))
-    height: Math.round(Theme.sidePanelWeatherHeight * 2 * Theme.scale(Screen))
+    width: Math.round(Theme.sidePanelWeatherWidth * 2 * Theme.scale(Screen) * weatherRoot.wscale)
+    height: Math.round(Theme.sidePanelWeatherHeight * 2 * Theme.scale(Screen) * weatherRoot.wscale)
     color: "transparent"
     anchors.horizontalCenterOffset: Theme.weatherCenterOffset
     readonly property real wscale: 2.0
@@ -46,7 +46,7 @@ Rectangle {
         color: Color.withAlpha("#000000", 0.85)
         border.color: Color.withAlpha(Theme.accentPrimary, 0.15)
         border.width: 1
-        radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(Screen))
+        radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(Screen) * weatherRoot.wscale)
         clip: true
 
         Rectangle { anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right; height: 1; color: Color.withAlpha(Theme.accentPrimary, 0.25); z: 2 }
@@ -85,23 +85,53 @@ Rectangle {
             }
 
             function drawSunRays(ctx, w, h) {
-                var cx = w * 0.75, cy = h * 0.32;
-                ctx.strokeStyle = Theme.accentPrimary;
-                for (var i = 0; i < 14; i++) {
-                    var angle = (i / 14) * Math.PI * 2 - Math.PI * 0.2;
-                    var innerR = 24;
-                    var outerR = innerR + 18 + (i % 3) * 16;
-                    var op = 0.3 + (i % 3) * 0.25;
-                    ctx.globalAlpha = 0.07 * op * 2;
-                    ctx.lineWidth = 1.5;
-                    ctx.beginPath();
-                    ctx.moveTo(cx + Math.cos(angle) * innerR, cy + Math.sin(angle) * innerR);
-                    ctx.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
-                    ctx.stroke();
-                }
-                ctx.globalAlpha = 0.07;
+                var cx = w*0.7, cy = h*0.3, r = Math.min(w,h)*0.12;
+                ctx.globalAlpha = 1.0;
+                // Solar corona — multi-layer radial gradient
+                var grad = ctx.createRadialGradient(cx,cy,r*0.3,cx,cy,r*2.5);
+                grad.addColorStop(0,Color.withAlpha(Theme.accentPrimary,0.9));
+                grad.addColorStop(0.15,Color.withAlpha(Theme.accentPrimary,0.6));
+                grad.addColorStop(0.4,Color.withAlpha(Theme.accentPrimary,0.2));
+                grad.addColorStop(0.7,Color.withAlpha(Theme.accentPrimary,0.04));
+                grad.addColorStop(1,"transparent");
+                ctx.fillStyle=grad;ctx.beginPath();ctx.arc(cx,cy,r*2.5,0,Math.PI*2);ctx.fill();
+                // Bright core
+                var core=ctx.createRadialGradient(cx-2,cy-2,r*0.05,cx,cy,r);
+                core.addColorStop(0,"#ffffff");core.addColorStop(0.3,Color.withAlpha(Theme.accentPrimary,0.95));
+                core.addColorStop(0.7,Color.withAlpha(Theme.accentPrimary,0.5));core.addColorStop(1,Color.withAlpha(Theme.accentPrimary,0.1));
+                ctx.fillStyle=core;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+                // Solar flares (rays)
+                ctx.globalAlpha=0.15;ctx.strokeStyle=Theme.accentPrimary;ctx.lineWidth=1;
+                for(var i=0;i<20;i++){var a=Math.PI*2*i/20;var len=r*(1.4+Math.sin(i*7)*0.3);
+                    ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+                    ctx.lineTo(cx+Math.cos(a)*len,cy+Math.sin(a)*len);ctx.stroke();}
             }
 
+            function drawMoon(ctx, w, h) {
+                var age=WeatherIcons.moonAge(new Date());
+                var cx=w*0.78,cy=h*0.72,r=Math.min(w,h)*0.13;
+                ctx.globalAlpha=1.0;
+                // Moon glow (outer halo)
+                var glow=ctx.createRadialGradient(cx,cy,r*0.8,cx,cy,r*1.8);
+                glow.addColorStop(0,Color.withAlpha(Theme.accentPrimary,0.5));glow.addColorStop(0.5,Color.withAlpha(Theme.accentPrimary,0.1));glow.addColorStop(1,"transparent");
+                ctx.fillStyle=glow;ctx.beginPath();ctx.arc(cx,cy,r*1.8,0,Math.PI*2);ctx.fill();
+                // Moon surface (gradient for 3D feel)
+                var surf=ctx.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.1,cx,cy,r);
+                surf.addColorStop(0,Color.withAlpha("#e8dcc8",0.95));surf.addColorStop(0.6,Color.withAlpha("#c0b090",0.9));surf.addColorStop(1,Color.withAlpha("#806050",0.7));
+                ctx.fillStyle=surf;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+                // Crater details
+                ctx.globalAlpha=0.12;ctx.fillStyle="#000000";
+                var craters=[[-0.4,-0.2,0.12],[-0.1,-0.5,0.08],[0.3,0.1,0.10],[-0.2,0.4,0.07],[0.5,-0.3,0.06],[0.2,0.5,0.05],[-0.5,0.2,0.04],[0.0,0.0,0.03],[0.4,-0.5,0.05],[-0.3,-0.4,0.04]];
+                craters.forEach(function(c){ctx.beginPath();ctx.arc(cx+r*c[0],cy+r*c[1],r*c[2],0,Math.PI*2);ctx.fill();});
+                // Phase shadow
+                var shadowAngle=age*Math.PI*2;var sx=cx+Math.cos(shadowAngle)*r*1.1;
+                var shadowGrad=ctx.createRadialGradient(sx,cy,r*0.1,sx,cy,r*1.05);
+                shadowGrad.addColorStop(0,Color.withAlpha("#000000",0.9));shadowGrad.addColorStop(0.7,Color.withAlpha("#000000",0.5));shadowGrad.addColorStop(1,Color.withAlpha("#000000",0.0));
+                ctx.fillStyle=shadowGrad;ctx.beginPath();ctx.arc(sx,cy,r*1.05,0,Math.PI*2);ctx.fill();
+                // Bright limb
+                ctx.globalAlpha=0.3;ctx.strokeStyle=Color.withAlpha(Theme.accentPrimary,0.8);ctx.lineWidth=1;
+                ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
+            }
             function drawClouds(ctx, w, h) {
                 ctx.fillStyle = "#AABBCC";
                 drawCloud(ctx, w * 0.65, h * 0.18, 40);
@@ -170,42 +200,24 @@ Rectangle {
                 ctx.stroke();
             }
 
-            function drawMoon(ctx, w, h) {
-                var age = WeatherIcons.moonAge(new Date());
-                var cx = w * 0.78, cy = h * 0.72, r = Math.min(w,h) * 0.13;
-                ctx.globalAlpha = 0.18;
-                // Full moon disc
-                ctx.fillStyle = Theme.accentPrimary;
-                ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
-                // Dark shadow based on phase
-                var shadowAngle = age * Math.PI * 2;
-                var shadowCx = cx + Math.cos(shadowAngle) * r;
-                ctx.fillStyle = Color.withAlpha("#000000", 0.6);
-                ctx.beginPath(); ctx.arc(shadowCx, cy, r, 0, Math.PI*2); ctx.fill();
-                // Bright rim
-                ctx.globalAlpha = 0.25;
-                ctx.strokeStyle = Theme.accentPrimary;
-                ctx.lineWidth = 1.5;
-                ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
-            }
         }
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: Math.round(Theme.panelSideMargin * 0.9 * Theme.scale * weatherRoot.wscale(Screen))
-            spacing: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(Screen))
+            anchors.margins: Math.round(Theme.panelSideMargin * 0.9 * Theme.scale(Screen) * weatherRoot.wscale)
+            spacing: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(Screen) * weatherRoot.wscale)
             z: 1
 
             RowLayout {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.round(Theme.uiIconSizeLarge * Theme.scale(Screen))
-                spacing: Math.round(Theme.sidePanelSpacing * Theme.scale * weatherRoot.wscale(Screen))
+                Layout.preferredHeight: Math.round(Theme.uiIconSizeLarge * Theme.scale(Screen) * weatherRoot.wscale)
+                spacing: Math.round(Theme.sidePanelSpacing * Theme.scale(Screen) * weatherRoot.wscale)
 
                 Spinner {
                     id: loadingSpinner
                     running: isLoading
                     color: Theme.accentPrimary
-                    size: Math.round(Theme.uiIconSizeLarge * Theme.scale(Screen))
+                    size: Math.round(Theme.uiIconSizeLarge * Theme.scale(Screen) * weatherRoot.wscale)
                     visible: isLoading
                     Layout.alignment: Qt.AlignVCenter
                 }
@@ -214,7 +226,7 @@ Rectangle {
                     id: weatherIcon
                     visible: !isLoading
                     icon: weatherRoot._wicon
-                    size: Math.round(Theme.uiIconSizeLarge * 1.1 * Theme.scale * weatherRoot.wscale(Screen))
+                    size: Math.round(Theme.uiIconSizeLarge * 1.1 * Theme.scale(Screen) * weatherRoot.wscale)
                     color: Theme.accentPrimary
                     Layout.alignment: Qt.AlignVCenter
                 }
@@ -224,7 +236,7 @@ Rectangle {
                         ? (_useF ? Math.round(weatherData.current.temperature_2m * 9/5 + 32) + "°F" : Math.round(weatherData.current.temperature_2m) + "°C")
                         : (_useF ? "--°F" : "--°C")
                     font.family: Theme.fontFamily
-                    font.pixelSize: Math.round(Theme.fontSizeHeader * Theme.weatherHeaderScale * 1.15 * Theme.scale * weatherRoot.wscale(Screen))
+                    font.pixelSize: Math.round(Theme.fontSizeHeader * Theme.weatherHeaderScale * 1.15 * Theme.scale(Screen) * weatherRoot.wscale)
                     font.bold: true
                     color: Theme.textOn(card.color)
                     Layout.alignment: Qt.AlignVCenter
@@ -238,7 +250,7 @@ Rectangle {
                     Text {
                         text: city.length > 18 ? city.slice(0, 17) + "\u2026" : city
                         font.family: Theme.fontFamily
-                        font.pixelSize: Math.round(Theme.fontSizeSmall * Theme.scale * weatherRoot.wscale(Screen))
+                        font.pixelSize: Math.round(Theme.fontSizeSmall * Theme.scale(Screen) * weatherRoot.wscale)
                         font.bold: true
                         color: Theme.textOn(card.color)
                         elide: Text.ElideRight
@@ -246,7 +258,7 @@ Rectangle {
                     Text {
                         text: weatherData && weatherData.timezone_abbreviation ? weatherData.timezone_abbreviation : ""
                         font.family: Theme.fontFamily
-                        font.pixelSize: Math.round(Theme.tooltipFontPx * Theme.tooltipSmallScaleRatio * Theme.scale(Screen))
+                        font.pixelSize: Math.round(Theme.tooltipFontPx * Theme.tooltipSmallScaleRatio * Theme.scale(Screen) * weatherRoot.wscale)
                         color: Theme.textSecondary
                         visible: text !== ""
                     }
@@ -257,7 +269,7 @@ Rectangle {
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: Math.round(Theme.sidePanelSpacing * Theme.scale * weatherRoot.wscale(Screen))
+                spacing: Math.round(Theme.sidePanelSpacing * Theme.scale(Screen) * weatherRoot.wscale)
                 visible: weatherData && weatherData.current
 
                 RowLayout {
@@ -266,13 +278,13 @@ Rectangle {
                     MaterialIcon {
                         icon: "navigation"
                         rotationAngle: WeatherIcons.windRotation(weatherRoot._cur ? weatherRoot._cur.wind_direction_10m : 0)
-                        size: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen))
+                        size: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen) * weatherRoot.wscale)
                         color: Theme.textOn(card.color)
                     }
                     Text {
                         text: weatherRoot._cur ? WeatherIcons.formatWindFull(weatherRoot._cur.wind_speed_10m, weatherRoot._cur.wind_direction_10m) : ""
                         font.family: Theme.fontFamily
-                        font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen))
+                        font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen) * weatherRoot.wscale)
                         color: Theme.textOn(card.color)
                     }
                 }
@@ -282,13 +294,13 @@ Rectangle {
                     visible: weatherRoot._cur && typeof weatherRoot._cur.relative_humidity_2m === 'number'
                     MaterialIcon {
                         icon: "water_drop"
-                        size: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen))
+                        size: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen) * weatherRoot.wscale)
                         color: Theme.textOn(card.color)
                     }
                     Text {
                         text: weatherRoot._cur ? Math.round(weatherRoot._cur.relative_humidity_2m) + "%" : ""
                         font.family: Theme.fontFamily
-                        font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen))
+                        font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen) * weatherRoot.wscale)
                         color: Theme.textOn(card.color)
                     }
                 }
@@ -296,20 +308,20 @@ Rectangle {
                 RowLayout {
                     spacing: 4
                     MoonPhaseIcon {
-                        size: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen))
+                        size: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen) * weatherRoot.wscale)
                         moonColor: Theme.textOn(card.color)
                         rimColor: Color.withAlpha(Theme.textOn(card.color), 0.5)
                     }
                     Text {
                         text: WeatherIcons.moonName(new Date())
                         font.family: Theme.fontFamily
-                        font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen))
+                        font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen) * weatherRoot.wscale)
                         color: Theme.textOn(card.color)
                     }
                     Text {
                         text: Math.round(WeatherIcons.moonIllumination(new Date())) + "%"
                         font.family: Theme.fontFamily
-                        font.pixelSize: Math.round(Theme.fontSizeSmall * 0.7 * Theme.scale(Screen))
+                        font.pixelSize: Math.round(Theme.fontSizeSmall * 0.7 * Theme.scale(Screen) * weatherRoot.wscale)
                         color: Theme.textSecondary
                     }
                 }
@@ -318,7 +330,7 @@ Rectangle {
             }
 
             RowLayout {
-                spacing: Math.round(Theme.sidePanelSpacing * Theme.scale * weatherRoot.wscale(Screen))
+                spacing: Math.round(Theme.sidePanelSpacing * Theme.scale(Screen) * weatherRoot.wscale)
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: 2
@@ -333,7 +345,7 @@ Rectangle {
                         Text {
                             text: weatherData.daily.time[index] ? Qt.formatDateTime(new Date(weatherData.daily.time[index]), "ddd") : ""
                             font.family: Theme.fontFamily
-                            font.pixelSize: Math.round(Theme.fontSizeCaption * Theme.scale(Screen))
+                            font.pixelSize: Math.round(Theme.fontSizeCaption * Theme.scale(Screen) * weatherRoot.wscale)
                             color: Theme.textOn(card.color)
                             horizontalAlignment: Text.AlignHCenter
                             Layout.alignment: Qt.AlignHCenter
@@ -342,7 +354,7 @@ Rectangle {
                         MaterialIcon {
                             icon: weatherData.daily.weathercode && weatherData.daily.weathercode[index] !== undefined
                                 ? WeatherIcons.materialSymbolForCode(weatherData.daily.weathercode[index]) : "cloud"
-                            size: Math.round(Theme.panelPillIconSize * 0.9 * Theme.scale(Screen))
+                            size: Math.round(Theme.panelPillIconSize * 0.9 * Theme.scale(Screen) * weatherRoot.wscale)
                             color: Theme.accentPrimary
                             Layout.alignment: Qt.AlignHCenter
                         }
@@ -352,7 +364,7 @@ Rectangle {
                                 ? (_useF ? Math.round(weatherData.daily.temperature_2m_max[index] * 9/5 + 32) + "°" : Math.round(weatherData.daily.temperature_2m_max[index]) + "°")
                                 : "--°"
                             font.family: Theme.fontFamily
-                            font.pixelSize: Math.round(Theme.fontSizeCaption * Theme.scale(Screen))
+                            font.pixelSize: Math.round(Theme.fontSizeCaption * Theme.scale(Screen) * weatherRoot.wscale)
                             font.bold: true
                             color: Theme.textPrimary
                             horizontalAlignment: Text.AlignHCenter
@@ -364,7 +376,7 @@ Rectangle {
                                 ? (_useF ? Math.round(weatherData.daily.temperature_2m_min[index] * 9/5 + 32) + "°" : Math.round(weatherData.daily.temperature_2m_min[index]) + "°")
                                 : "--°"
                             font.family: Theme.fontFamily
-                            font.pixelSize: Math.round(Theme.fontSizeCaption * 0.85 * Theme.scale(Screen))
+                            font.pixelSize: Math.round(Theme.fontSizeCaption * 0.85 * Theme.scale(Screen) * weatherRoot.wscale)
                             color: Color.withAlpha(Theme.textPrimary, 0.65)
                             horizontalAlignment: Text.AlignHCenter
                             Layout.alignment: Qt.AlignHCenter
@@ -378,7 +390,7 @@ Rectangle {
                 color: Theme.error
                 visible: errorString !== ""
                 font.family: Theme.fontFamily
-                font.pixelSize: Math.round(Theme.tooltipFontPx * 0.71 * Theme.scale(Screen))
+                font.pixelSize: Math.round(Theme.tooltipFontPx * 0.71 * Theme.scale(Screen) * weatherRoot.wscale)
                 horizontalAlignment: Text.AlignHCenter
                 Layout.alignment: Qt.AlignHCenter
             }
