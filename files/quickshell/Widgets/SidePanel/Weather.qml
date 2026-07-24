@@ -36,7 +36,7 @@ Rectangle {
     Rectangle {
         id: card
         anchors.fill: parent
-        color: Color.withAlpha("#000000", 0.85)
+        color: Color.withAlpha(Theme.surface, 0.85)
         border.color: "transparent"
         radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(Screen) * weatherRoot.wscale)
         clip: true
