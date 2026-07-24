@@ -40,13 +40,13 @@ Rectangle {
     }
 
     Rectangle {
-        id: card
-        anchors.fill: parent
-        color: Color.withAlpha(Theme.accentDarkStrong, Theme.weatherCardOpacity)
-        border.color: Theme.borderSubtle
-        border.width: Theme.uiBorderWidth
+        color: Color.withAlpha(Theme.surface, 0.85)
+        border.color: Color.withAlpha(Theme.accentPrimary, 0.15)
+        border.width: 1
         radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(Screen))
         clip: true
+
+        Rectangle { anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right; height: 1; color: Color.withAlpha(Theme.accentPrimary, 0.25); z: 2 }
 
         Canvas {
             id: weatherDecor
