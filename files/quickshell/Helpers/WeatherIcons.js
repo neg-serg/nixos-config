@@ -54,6 +54,12 @@ function moonAge(date) {
     return frac < 0 ? frac + 1 : frac;
 }
 
+// Returns illumination percentage 0..100 (0=new, 100=full)
+function moonIllumination(date) {
+    var age = moonAge(date);
+    return Math.round(50 * (1 - Math.cos(2 * Math.PI * age)));
+}
+
 // 8-phase index: 0=new, 1=waxing crescent, …, 7=waning crescent
 function moonPhaseIndex(date) {
     return Math.round(moonAge(date) * 8) % 8;
