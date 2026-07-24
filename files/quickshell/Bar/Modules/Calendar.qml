@@ -15,11 +15,13 @@ OverlayToggleCapsule {
     capsuleVisible: false
     autoToggleOnTap: true
 
-    readonly property color parchmentBg: Color.withAlpha("#1a1410", 0.92)
-    readonly property color goldAccent: Color.withAlpha(Theme.accentPrimary, 0.85)
-    readonly property color goldDim: Color.withAlpha(Theme.accentPrimary, 0.35)
-    readonly property color textWarm: Theme.textPrimary
-    readonly property color textWarmDim: Theme.textSecondary
+    overlayNamespace: "qs-calendar"
+
+    property color parchmentBg: Color.withAlpha(Theme.surface, 0.85)
+    property color goldAccent: Color.withAlpha(Theme.accentPrimary, 0.85)
+    property color goldDim: Color.withAlpha(Theme.accentPrimary, 0.35)
+    property color textWarm: Theme.textPrimary
+    property color textWarmDim: Theme.textSecondary
 
     property var holidays: []
     property var prodCal: []
