@@ -303,8 +303,8 @@ Rectangle {
                         anchors.leftMargin: Theme.uiMarginNone
                         anchors.rightMargin: Theme.uiMarginNone
 
+                        ColumnLayout {
                             id: detailsCol
-                            clip: true
                             anchors.fill: parent
                             anchors.leftMargin: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(screen))
                             anchors.rightMargin: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(screen))
