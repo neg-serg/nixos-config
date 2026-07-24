@@ -9,13 +9,11 @@ with lib;
       flavor = lib.mkOption {
         type = types.enum [
           "default"
-          "sshell"
         ];
         default = "default";
         description = "Which quickshell configuration flavor to use.";
       };
     };
-    sshell.enable = mkBool "enable Sshell quickshell flavor (stormy-soul/sshell)" false;
     caelestia-shell.enable = mkBool "enable Caelestia Desktop Shell (built on Quickshell)" false;
     skwd.enable = mkBool "enable Skwd desktop shell (bar, launcher, music, notifications, settings, switcher) and skwd-daemon" false;
     exo.enable = mkBool "Exo desktop shell (Material 3 deskbar for Ignis/Hyprland/Niri)" false;
