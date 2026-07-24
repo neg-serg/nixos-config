@@ -46,8 +46,8 @@ OverlayToggleCapsule {
             id: sf
             screen: root.screen
             backgroundColor: "transparent"
-            borderColor: Color.withAlpha(root.goldAccent, 0.15)
-            borderWidth: 1
+            borderColor: "transparent"
+            borderWidth: 0
             cornerRadiusOverride: Math.round(Theme.cornerRadiusLarge / 3)
             width: Math.round(380 * Theme.scale(root.screen))
             height: Math.round(480 * Theme.scale(root.screen))
@@ -60,8 +60,7 @@ OverlayToggleCapsule {
                 anchors.fill: parent
                 radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(root.screen))
                 color: root.parchmentBg
-                border.color: Color.withAlpha(root.goldAccent, 0.2)
-                border.width: 1
+                border.color: "transparent"
                 Rectangle { anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right; height: 1; color: Color.withAlpha(root.goldAccent, 0.25) }
             }
 
@@ -85,7 +84,6 @@ OverlayToggleCapsule {
                 // ── Illustration (2x larger, compact spacing) ──
                 Rectangle {
                     Layout.fillWidth: true; Layout.preferredHeight: Math.round(140*Theme.scale(root.screen))
-                    radius: Math.round(4*Theme.scale(root.screen)); color: Color.withAlpha(root.goldDim,0.06); border.color: Color.withAlpha(root.goldDim,0.12); border.width: 1
                     HiDpiImage {
                         id: monthIllustration
                         anchors.centerIn: parent; width: parent.width-16; height: parent.height-8; fillMode: Image.PreserveAspectFit
