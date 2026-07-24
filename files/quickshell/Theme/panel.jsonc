@@ -24,8 +24,9 @@
       "color": "#000000"
     },
     "animations": {
-      "stdMs": 250,
-      "fastMs": 200
+      "stdMs": 200,
+      "fastMs": 150,
+      "overlayMs": 180
     },
     "tray": {
       "longHoldMs": 2500,
@@ -76,6 +77,6 @@
     "backdrop": {
       "opacity": 0.88
     },
-    "slideTimerTickMs": 50
+    "slideTimerTickMs": 16
   }
 }
