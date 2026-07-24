@@ -798,7 +798,7 @@ Singleton {
     property int cornerRadius: val('shape.cornerRadius', 0)
     property int cornerRadiusSmall: val('shape.cornerRadiusSmall', 0)
     // Tooltip
-    property int tooltipDelayMs: val('tooltip.delayMs', 1500)
+    property int tooltipDelayMs: val('tooltip.delayMs', 400)
     property int tooltipMinSize: val('tooltip.minSize', 20)
     property int tooltipMargin: val('tooltip.margin', 12)
     property int tooltipPadding: val('tooltip.padding', 8)
