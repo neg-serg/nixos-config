@@ -21,10 +21,10 @@ PanelOverlaySurface {
     readonly property color accentColor: Color.withAlpha(Theme.accentPrimary, 0.85)
     readonly property color accentDim: Color.withAlpha(Theme.accentPrimary, 0.35)
     readonly property color cardBg: Color.withAlpha(Theme.accentPrimary, 0.06)
-    readonly property color sepColor: Color.withAlpha(Theme.accentPrimary, 0.15)
-    readonly property int _fontSizeSmall: Math.round(Theme.fontSizeSmall * 0.95)
-    readonly property int _fontSizeMedium: Math.round(Theme.fontSizeMedium * 1.2)
-    readonly property real _pad: 14
+    readonly property int _iconSz: Math.round(Theme.fontSizeSmall * 1.2) || 18
+    readonly property int _fontSize: Math.round(Theme.fontSizeSmall * 1.2) || 14
+    readonly property int _fontSizeSmall: Math.round(Theme.fontSizeSmall * 0.95) || 12
+    readonly property int _fontSizeMedium: Math.round(Theme.fontSizeMedium * 1.2) || 18
     readonly property real _spacing: 8
     readonly property string _grafanaBase: "http://127.0.0.1:3030"
     readonly property real _cardH: 56
