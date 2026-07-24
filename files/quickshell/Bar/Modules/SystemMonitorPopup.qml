@@ -75,12 +75,15 @@ PanelOverlaySurface {
         Rectangle{width:parent.width;height:1;color:root.sepColor}
 
         Row { width:parent.width; spacing:10
+            Rectangle{id:c1;width:(parent.width-parent.spacing*2)/3;height:root._cardH;radius:6;color:root.cardBg
                 Column{anchors.centerIn:parent;spacing:2
                     Text{text:root.totalLogs.toString();font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeMedium);color:Theme.textPrimary;font.bold:true;anchors.horizontalCenter:parent.horizontalCenter}
                     Text{text:"Log Lines";font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeSmall);color:Theme.textSecondary;anchors.horizontalCenter:parent.horizontalCenter}}}
+            Rectangle{id:c2;width:(parent.width-parent.spacing*2)/3;height:root._cardH;radius:6;color:root.cardBg
                 Column{anchors.centerIn:parent;spacing:2
                     Text{text:root.errorCount.toString();font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeMedium);color:root.errorCount>0?Theme.error:Theme.textPrimary;font.bold:true;anchors.horizontalCenter:parent.horizontalCenter}
                     Text{text:"Errors";font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeSmall);color:Theme.textSecondary;anchors.horizontalCenter:parent.horizontalCenter}}}
+            Rectangle{id:c3;width:(parent.width-parent.spacing*2)/3;height:root._cardH;radius:6;color:root.cardBg
                 Column{anchors.centerIn:parent;spacing:2
                     Text{text:root.serviceCount.toString();font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeMedium);color:Theme.textPrimary;font.bold:true;anchors.horizontalCenter:parent.horizontalCenter}
                     Text{text:"Services";font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeSmall);color:Theme.textSecondary;anchors.horizontalCenter:parent.horizontalCenter}}} }
@@ -89,8 +92,8 @@ PanelOverlaySurface {
 
         Text{text:"Recent Logs";font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSize);color:Theme.textPrimary;font.bold:true}
 
+        Rectangle { width:parent.width; height:parent.height-220; radius:6; color:root.cardBg; clip:true
             ListView {
-                anchors.fill:parent; anchors.margins:4; spacing:2
                 model:root.logEntries
                 header: RowLayout { width:parent?parent.width:800
                     Text{text:"Time";font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeSmall);color:Theme.textSecondary;font.bold:true;Layout.preferredWidth:70}
@@ -103,15 +106,16 @@ PanelOverlaySurface {
                         Text{text:modelData.message;font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeSmall);color:Theme.textSecondary;Layout.fillWidth:true;elide:Text.ElideRight} } } } }
 
         RowLayout { width:parent.width; spacing:8; Item{Layout.fillWidth:true}
+            Rectangle { id:btnRect1; radius:4; color:root.cardBg
                 implicitWidth:btn1.implicitWidth+16; implicitHeight:btn1.implicitHeight+8
                 Text{id:btn1;anchors.centerIn:parent;text:"Grafana · System";font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeSmall);color:root.accentColor}
                 MouseArea{id:ma1;anchors.fill:parent;hoverEnabled:true;acceptedButtons:Qt.LeftButton
                     onClicked:{Qt.openUrlExternally(root._grafanaBase+"/d/system-journal")}} }
+            Rectangle { id:btnRect2; radius:4; color:root.cardBg
                 implicitWidth:btn2.implicitWidth+16; implicitHeight:btn2.implicitHeight+8
                 Text{id:btn2;anchors.centerIn:parent;text:"Grafana · Home";font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeSmall);color:root.accentColor}
                 MouseArea{id:ma2;anchors.fill:parent;hoverEnabled:true;acceptedButtons:Qt.LeftButton
                     onClicked:{Qt.openUrlExternally(root._grafanaBase)}} } }
-        // Tooltips (declared outside buttons for proper z-order)
         PanelTooltip{text:root._grafanaBase+"/d/system-journal";targetItem:btnRect1;visibleWhen:ma1.containsMouse}
         PanelTooltip{text:root._grafanaBase;targetItem:btnRect2;visibleWhen:ma2.containsMouse}
     }
