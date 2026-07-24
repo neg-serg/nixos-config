@@ -84,58 +84,64 @@ Rectangle {
             }
 
             function drawSunRays(ctx, w, h) {
-                var cx = w*0.7, cy = h*0.3, r = Math.min(w,h)*0.12;
-                ctx.globalAlpha = 1.0;
-                // Solar corona — multi-layer radial gradient
-                var grad = ctx.createRadialGradient(cx,cy,r*0.3,cx,cy,r*2.5);
-                grad.addColorStop(0,Color.withAlpha(Theme.accentPrimary,0.9));
-                grad.addColorStop(0.15,Color.withAlpha(Theme.accentPrimary,0.6));
-                grad.addColorStop(0.4,Color.withAlpha(Theme.accentPrimary,0.2));
-                grad.addColorStop(0.7,Color.withAlpha(Theme.accentPrimary,0.04));
-                grad.addColorStop(1,"transparent");
-                ctx.fillStyle=grad;ctx.beginPath();ctx.arc(cx,cy,r*2.5,0,Math.PI*2);ctx.fill();
-                // Bright core
-                var core=ctx.createRadialGradient(cx-2,cy-2,r*0.05,cx,cy,r);
-                core.addColorStop(0,"#ffffff");core.addColorStop(0.3,Color.withAlpha(Theme.accentPrimary,0.95));
-                core.addColorStop(0.7,Color.withAlpha(Theme.accentPrimary,0.5));core.addColorStop(1,Color.withAlpha(Theme.accentPrimary,0.1));
-                ctx.fillStyle=core;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
-                // Solar flares (rays)
-                ctx.globalAlpha=0.15;ctx.strokeStyle=Theme.accentPrimary;ctx.lineWidth=1;
-                for(var i=0;i<20;i++){var a=Math.PI*2*i/20;var len=r*(1.4+Math.sin(i*7)*0.3);
-                    ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+                var cx=w*0.7,cy=h*0.3,r=Math.min(w,h)*0.1;
+                ctx.globalCompositeOperation="lighter";
+                // Particle corona — 360 radial beams
+                for(var i=0;i<360;i++){
+                    var a=Math.PI*2*i/360;
+                    var len=r*(1.2+Math.abs(Math.sin(i*4.7))*0.8+Math.abs(Math.sin(i*13))*0.4);
+                    var al=0.3+Math.abs(Math.sin(i*7))*0.4+Math.abs(Math.sin(i*19))*0.3;
+                    ctx.globalAlpha=al*0.3;
+                    ctx.strokeStyle=Theme.accentPrimary;ctx.lineWidth=1+Math.random()*2;
+                    ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*r*0.7,cy+Math.sin(a)*r*0.7);
                     ctx.lineTo(cx+Math.cos(a)*len,cy+Math.sin(a)*len);ctx.stroke();}
-            }
+                // Core glow
+                ctx.globalAlpha=0.9;ctx.fillStyle=Color.withAlpha("#ffffff",0.95);
+                ctx.beginPath();ctx.arc(cx,cy,r*0.35,0,Math.PI*2);ctx.fill();
+                var grd=ctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r*1.1);
+                grd.addColorStop(0,Color.withAlpha(Theme.accentPrimary,0.9));
+                grd.addColorStop(0.3,Color.withAlpha(Theme.accentPrimary,0.6));
+                grd.addColorStop(0.6,Color.withAlpha(Theme.accentPrimary,0.2));
+                grd.addColorStop(1,"transparent");
+                ctx.globalAlpha=0.7;ctx.fillStyle=grd;
+                ctx.beginPath();ctx.arc(cx,cy,r*1.1,0,Math.PI*2);ctx.fill();
+                ctx.globalCompositeOperation="source-over";}
 
             function drawMoon(ctx, w, h) {
                 var age=WeatherIcons.moonAge(new Date());
                 var cx=w*0.78,cy=h*0.72,r=Math.min(w,h)*0.13;
-                ctx.globalAlpha=1.0;
-                // Moon glow (outer halo)
-                var glow=ctx.createRadialGradient(cx,cy,r*0.8,cx,cy,r*1.8);
-                glow.addColorStop(0,Color.withAlpha(Theme.accentPrimary,0.5));glow.addColorStop(0.5,Color.withAlpha(Theme.accentPrimary,0.1));glow.addColorStop(1,"transparent");
-                ctx.fillStyle=glow;ctx.beginPath();ctx.arc(cx,cy,r*1.8,0,Math.PI*2);ctx.fill();
-                // Moon surface (gradient for 3D feel)
-                var surf=ctx.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.1,cx,cy,r);
-                surf.addColorStop(0,Color.withAlpha("#e8dcc8",0.95));surf.addColorStop(0.6,Color.withAlpha("#c0b090",0.9));surf.addColorStop(1,Color.withAlpha("#806050",0.7));
-                ctx.fillStyle=surf;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
-                // Crater details
-                ctx.globalAlpha=0.12;ctx.fillStyle="#000000";
-                var craters=[[-0.4,-0.2,0.12],[-0.1,-0.5,0.08],[0.3,0.1,0.10],[-0.2,0.4,0.07],[0.5,-0.3,0.06],[0.2,0.5,0.05],[-0.5,0.2,0.04],[0.0,0.0,0.03],[0.4,-0.5,0.05],[-0.3,-0.4,0.04]];
-                craters.forEach(function(c){ctx.beginPath();ctx.arc(cx+r*c[0],cy+r*c[1],r*c[2],0,Math.PI*2);ctx.fill();});
+                ctx.globalCompositeOperation="source-over";
+                // Outer glow — scattered particles
+                ctx.globalAlpha=0.06;
+                for(var i=0;i<80;i++){
+                    var a=Math.random()*Math.PI*2;
+                    var d=r*(1.1+Math.random()*0.7);
+                    var sz=1+Math.random()*3;
+                    ctx.fillStyle=Theme.accentPrimary;
+                    ctx.beginPath();ctx.arc(cx+Math.cos(a)*d,cy+Math.sin(a)*d,sz,0,Math.PI*2);ctx.fill();}
+                // Moon surface
+                var surf=ctx.createRadialGradient(cx-r*0.25,cy-r*0.25,r*0.05,cx,cy,r);
+                surf.addColorStop(0,Color.withAlpha("#f0e8d8",0.95));
+                surf.addColorStop(0.5,Color.withAlpha("#c8b898",0.9));
+                surf.addColorStop(1,Color.withAlpha("#706050",0.7));
+                ctx.globalAlpha=1;ctx.fillStyle=surf;
+                ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+                // Detailed craters
+                var craters=[[-0.35,-0.15,0.11],[-0.05,-0.45,0.08],[0.3,0.1,0.09],[-0.2,0.35,0.07],[0.5,-0.25,0.06],[0.15,0.45,0.05],[-0.5,0.2,0.05],[0,-0.05,0.03],[0.4,-0.5,0.04],[-0.3,-0.35,0.04],[0.55,0,0.04],[-0.45,-0.4,0.03],[0.25,0.3,0.06],[-0.1,0.15,0.05],[0.35,-0.1,0.04]];
+                craters.forEach(function(c){
+                    ctx.globalAlpha=0.06;ctx.fillStyle="#000000";
+                    ctx.beginPath();ctx.arc(cx+r*c[0]+1,cy+r*c[1]+1,r*c[2],0,Math.PI*2);ctx.fill();
+                    ctx.globalAlpha=0.04;ctx.fillStyle="#ffffff";
+                    ctx.beginPath();ctx.arc(cx+r*c[0]-1,cy+r*c[1]-1,r*c[2]*0.7,0,Math.PI*2);ctx.fill();});
                 // Phase shadow
-                var shadowAngle=age*Math.PI*2;var sx=cx+Math.cos(shadowAngle)*r*1.1;
-                var shadowGrad=ctx.createRadialGradient(sx,cy,r*0.1,sx,cy,r*1.05);
-                shadowGrad.addColorStop(0,Color.withAlpha("#000000",0.9));shadowGrad.addColorStop(0.7,Color.withAlpha("#000000",0.5));shadowGrad.addColorStop(1,Color.withAlpha("#000000",0.0));
-                ctx.fillStyle=shadowGrad;ctx.beginPath();ctx.arc(sx,cy,r*1.05,0,Math.PI*2);ctx.fill();
-                // Bright limb
-                ctx.globalAlpha=0.3;ctx.strokeStyle=Color.withAlpha(Theme.accentPrimary,0.8);ctx.lineWidth=1;
-                ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
-            }
-            function drawClouds(ctx, w, h) {
-                ctx.fillStyle = "#AABBCC";
-                drawCloud(ctx, w * 0.65, h * 0.18, 40);
-                drawCloud(ctx, w * 0.78, h * 0.12, 35);
-                drawCloud(ctx, w * 0.55, h * 0.22, 30);
+                var sa=age*Math.PI*2;var sx=cx+Math.cos(sa)*r*1.05;
+                var sg=ctx.createRadialGradient(sx,cy,r*0.05,sx,cy,r*1.1);
+                sg.addColorStop(0,Color.withAlpha("#000000",0.92));sg.addColorStop(0.6,Color.withAlpha("#000000",0.4));sg.addColorStop(1,"transparent");
+                ctx.globalAlpha=1;ctx.fillStyle=sg;
+                ctx.beginPath();ctx.arc(sx,cy,r*1.1,0,Math.PI*2);ctx.fill();
+                // Limb highlight
+                ctx.globalAlpha=0.15;ctx.strokeStyle=Color.withAlpha(Theme.accentPrimary,0.6);ctx.lineWidth=0.5;
+                ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();}
             }
 
             function drawCloud(ctx, cx, cy, r) {
