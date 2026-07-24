@@ -83,13 +83,16 @@ Item {
         property real musicWidthPx: musicWidget && musicWidget.implicitWidth > 0
             ? Math.round(musicWidget.implicitWidth)
             : Math.round(Settings.settings.musicPopupWidth * Theme.scale(Screen))
+
+        // Cap popup width at 35% of screen to prevent long track titles
+        // from stretching it across the whole display.
+        property real maxPopupWidth: Math.round(Screen.width * 0.35)
         property real musicHeightPx: (musicWidget && musicWidget.implicitHeight > 0)
             ? Math.round(musicWidget.implicitHeight)
             : Math.round(Settings.settings.musicPopupHeight * Theme.scale(Screen))
         property int contentPaddingPx:Math.round(Settings.settings.musicPopupPadding * Theme.scale(Screen))
 
-        implicitWidth: Math.round(musicWidthPx)
-        implicitHeight: Math.round((computedHeightPx >= 0) ? computedHeightPx : musicHeightPx)
+        implicitWidth: Math.min(Math.round(musicWidthPx), maxPopupWidth)
 
         // --- Slide animation (animate inner content, not the window)
         property bool _hiding: false
