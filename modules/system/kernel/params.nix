@@ -151,6 +151,8 @@ let
   gameCpuSet = config.profiles.performance.gamingCpuSet or "";
   houseCpuSet = config.profiles.performance.housekeepingCpuSet or "";
 
+  cpuAffinityEnable = config.profiles.performance.cpuAffinity or true;
+
   game_affinity_params =
     let
       affinity_params =
@@ -159,7 +161,7 @@ let
           "kthread_cpus=${houseCpuSet}"
         ];
     in
-    lib.optionals (gameCpuSet != "") affinity_params;
+    lib.optionals (gameCpuSet != "" && cpuAffinityEnable) affinity_params;
 in
 {
   # Use mkMerge to contribute to boot.kernelParams in two phases:
