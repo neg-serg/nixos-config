@@ -48,7 +48,16 @@ in
 
   config = lib.mkIf cfg.enable {
     # scx schedulers need the sched_ext kernel feature;
-    # ensure the BPF JIT is enabled.
+    # ensure CONFIG_SCHED_CLASS_EXT=y is set.
+    boot.kernelPatches = [{
+      name = "sched-ext";
+      patch = null;
+      structuredExtraConfig = with lib.kernel; {
+        SCHED_CLASS_EXT = yes;
+      };
+    }];
+
+    # Ensure the BPF JIT is enabled.
     boot.kernel.sysctl = {
       "kernel.bpf_stats_enabled" = false;
     };
