@@ -45,7 +45,8 @@ Item {
         // --- Auto-hide with pause on hover/focus and while cursor is on panel
         property int autoHideTotalMs: Theme.sidePanelPopupAutoHideMs
         property int _autoHideRemainingMs: autoHideTotalMs
-        property double _autoHideStartedAtMs: 0
+        implicitWidth: Math.round(musicWidthPx)
+        implicitHeight: Math.round((computedHeightPx >= 0) ? computedHeightPx : musicHeightPx)
         Timer {
             id: autoHideTimer
             interval: toast._autoHideRemainingMs
@@ -178,7 +179,7 @@ Item {
 
             if (!visible) {
                 visible = true;
-                slideX = toast.width; // start fully to the right
+                slideX = toast.implicitWidth; // start fully to the right
             }
             slide.stop();
             _hiding = false;
@@ -191,7 +192,7 @@ Item {
             slide.stop();
             _hiding = true;
             slide.from = slideX;
-            slide.to   = toast.width;
+            slide.to   = toast.implicitWidth;
             slide.start();
         }
 
