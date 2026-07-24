@@ -283,6 +283,12 @@ Rectangle {
                         font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85 * Theme.scale(Screen))
                         color: Theme.textOn(card.color)
                     }
+                    Text {
+                        text: Math.round(WeatherIcons.moonIllumination(new Date())) + "%"
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Math.round(Theme.fontSizeSmall * 0.7 * Theme.scale(Screen))
+                        color: Theme.textSecondary
+                    }
                 }
 
                 Item { Layout.fillWidth: true }
