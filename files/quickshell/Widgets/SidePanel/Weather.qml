@@ -43,7 +43,7 @@ Rectangle {
         radius: 0
         clip: true
 
-        Rectangle { anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right; height: 1; color: Color.withAlpha(Theme.accentPrimary, 0.25); z: 2 }
+        Rectangle { anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right; height: 1; color: Color.withAlpha(Theme.accentPrimary, 0.25); z: 3 }
 
         Canvas {
             id: weatherDecor
@@ -80,58 +80,88 @@ Rectangle {
             readonly property real cardPad: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(Screen) * weatherRoot.wscale)
             readonly property real cardRadius: 3
 
-            RowLayout {
-                id: currentRow
+            // ── Current conditions card ──
+            Item {
                 Layout.fillWidth: true
-                spacing: Math.round(Theme.sidePanelSpacing * Theme.scale(Screen) * weatherRoot.wscale)
-                Layout.topMargin: contentLayout.cardPad
-                Layout.bottomMargin: contentLayout.cardPad
-                Layout.leftMargin: contentLayout.cardPad
-                Layout.rightMargin: contentLayout.cardPad
-                Spinner { id: loadingSpinner; running: isLoading; color: Theme.accentPrimary; size: Math.round(Theme.uiIconSizeLarge * Theme.scale(Screen) * weatherRoot.wscale); visible: isLoading; Layout.alignment: Qt.AlignVCenter }
+                implicitWidth: currentRow.implicitWidth + 2 * contentLayout.cardPad
+                implicitHeight: currentRow.implicitHeight + 2 * contentLayout.cardPad
+                Rectangle {
+                    anchors.fill: parent
+                    color: weatherRoot.cardBg
+                    radius: contentLayout.cardRadius
+                    z: 0
+                }
+                RowLayout {
+                    id: currentRow
+                    anchors.fill: parent
+                    anchors.margins: contentLayout.cardPad
+                    spacing: Math.round(Theme.sidePanelSpacing * Theme.scale(Screen) * weatherRoot.wscale)
+                    z: 1
+                    Spinner { id: loadingSpinner; running: isLoading; color: Theme.accentPrimary; size: Math.round(Theme.uiIconSizeLarge * Theme.scale(Screen) * weatherRoot.wscale); visible: isLoading; Layout.alignment: Qt.AlignVCenter }
                 Canvas { id: sunIcon; visible: !isLoading; width: Math.round(Theme.uiIconSizeLarge*1.5*Theme.scale(Screen)*weatherRoot.wscale); height: width; Layout.alignment: Qt.AlignVCenter; onPaint: {var ctx=getContext("2d");ctx.reset();var s=width,r=s*0.30;var cx=s/2,cy=s/2;var t=Date.now()*0.001;var grd=ctx.createRadialGradient(cx,cy,r*0.05,cx,cy,r*1.5);grd.addColorStop(0,"rgba(255,255,255,1)");grd.addColorStop(0.12,"rgba(255,255,240,0.95)");grd.addColorStop(0.35,Color.withAlpha(Theme.accentPrimary,0.5));grd.addColorStop(0.65,Color.withAlpha(Theme.accentPrimary,0.1));grd.addColorStop(1,"transparent");ctx.fillStyle=grd;ctx.beginPath();ctx.arc(cx,cy,r*1.5,0,Math.PI*2);ctx.fill();ctx.globalCompositeOperation="lighter";for(var i=0;i<360;i++){var a=Math.PI*2*i/360;var wig=Math.sin(i*4.7+t*0.8)*0.35+Math.sin(i*13.3-t*0.5)*0.2+Math.sin(i*21.1+t*1.1)*0.12;var len=r*(0.5+wig);var al=0.15+Math.abs(wig)*0.7;ctx.globalAlpha=al*0.3;ctx.strokeStyle=Theme.accentPrimary;ctx.lineWidth=0.4+Math.abs(Math.sin(i*23.7+t*3.1))*1.0;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*r*0.25,cy+Math.sin(a)*r*0.25);ctx.lineTo(cx+Math.cos(a)*len,cy+Math.sin(a)*len);ctx.stroke()}ctx.globalCompositeOperation="source-over"} Timer { interval: 50; repeat: true; running: true; onTriggered: sunIcon.requestPaint() } }
-                Text { text: weatherData&&weatherData.current?(_useF?Math.round(weatherData.current.temperature_2m*9/5+32)+"°F":Math.round(weatherData.current.temperature_2m)+"°C"):(_useF?"--°F":"--°C"); font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeHeader*Theme.weatherHeaderScale*1.15*Theme.scale(Screen)*weatherRoot.wscale); font.bold: true; color: Theme.textOn(card.color); Layout.alignment: Qt.AlignVCenter; Component.onCompleted: weatherRoot.warnContrast(card.color,color,'weather.temp') }
-                ColumnLayout { spacing: 1; Layout.alignment: Qt.AlignVCenter
-                    Text { text: city.length>18?city.slice(0,17)+"\u2026":city; font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall*Theme.scale(Screen)*weatherRoot.wscale); font.bold: true; color: Theme.textOn(card.color); elide: Text.ElideRight }
-                    Text { text: weatherData&&weatherData.timezone_abbreviation?weatherData.timezone_abbreviation:""; font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.tooltipFontPx*Theme.tooltipSmallScaleRatio*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textSecondary; visible: text!=="" } }
+                    Text { text: weatherData&&weatherData.current?(_useF?Math.round(weatherData.current.temperature_2m*9/5+32)+"°F":Math.round(weatherData.current.temperature_2m)+"°C"):(_useF?"--°F":"--°C"); font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeHeader*Theme.weatherHeaderScale*1.15*Theme.scale(Screen)*weatherRoot.wscale); font.bold: true; color: Theme.textOn(card.color); Layout.alignment: Qt.AlignVCenter; Component.onCompleted: weatherRoot.warnContrast(card.color,color,'weather.temp') }
+                    ColumnLayout { spacing: 1; Layout.alignment: Qt.AlignVCenter
+                        Text { text: city.length>18?city.slice(0,17)+"\u2026":city; font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall*Theme.scale(Screen)*weatherRoot.wscale); font.bold: true; color: Theme.textOn(card.color); elide: Text.ElideRight }
+                        Text { text: weatherData&&weatherData.timezone_abbreviation?weatherData.timezone_abbreviation:""; font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.tooltipFontPx*Theme.tooltipSmallScaleRatio*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textSecondary; visible: text!=="" } }
+                }
             }
 
-            RowLayout {
-                id: detailsRow
+            // ── Details card (wind/humidity/moon) ──
+            Item {
                 Layout.fillWidth: true
                 visible: weatherData&&weatherData.current
-                spacing: Math.round(Theme.sidePanelSpacing*2.0*Theme.scale(Screen)*weatherRoot.wscale)
-                Layout.topMargin: contentLayout.cardPad
-                Layout.bottomMargin: contentLayout.cardPad
-                Layout.leftMargin: contentLayout.cardPad
-                Layout.rightMargin: contentLayout.cardPad
-                RowLayout { spacing: Math.round(Theme.sidePanelSpacing * Theme.scale(Screen) * weatherRoot.wscale); visible: weatherRoot._cur&&typeof weatherRoot._cur.wind_speed_10m==='number'&&weatherRoot._cur.wind_speed_10m>0.1
-                    MaterialIcon { icon: "navigation"; rotationAngle: WeatherIcons.windRotation(weatherRoot._cur?weatherRoot._cur.wind_direction_10m:0); size: Math.round(Theme.fontSizeSmall*0.85*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color) }
-                    Text { text: weatherRoot._cur?WeatherIcons.formatWindFull(weatherRoot._cur.wind_speed_10m,weatherRoot._cur.wind_direction_10m):""; font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall*0.85*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color) } }
-                RowLayout { spacing: Math.round(Theme.sidePanelSpacing * Theme.scale(Screen) * weatherRoot.wscale); visible: weatherRoot._cur&&typeof weatherRoot._cur.relative_humidity_2m==='number'
-                    MaterialIcon { icon: "water_drop"; size: Math.round(Theme.fontSizeSmall*0.85*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color) }
-                    Text { text: weatherRoot._cur?Math.round(weatherRoot._cur.relative_humidity_2m)+"%":""; font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall*0.85*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color) } }
-                RowLayout { spacing: Math.round(Theme.sidePanelSpacing * Theme.scale(Screen) * weatherRoot.wscale)
-                    MoonPhaseIcon { size: Math.round(Theme.fontSizeSmall*0.85*Theme.scale(Screen)*weatherRoot.wscale); moonColor: Theme.textOn(card.color); rimColor: Color.withAlpha(Theme.textOn(card.color),0.5) }
-                    Text { text: WeatherIcons.moonName(new Date()); font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall*0.85*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color) }
-                    Text { text: Math.round(WeatherIcons.moonIllumination(new Date()))+"%"; font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall*0.7*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textSecondary } }
+                implicitWidth: detailsRow.implicitWidth + 2 * contentLayout.cardPad
+                implicitHeight: detailsRow.implicitHeight + 2 * contentLayout.cardPad
+                Rectangle {
+                    anchors.fill: parent
+                    color: weatherRoot.cardBg
+                    radius: contentLayout.cardRadius
+                    z: 0
+                }
+                RowLayout {
+                    id: detailsRow
+                    anchors.fill: parent
+                    anchors.margins: contentLayout.cardPad
+                    spacing: Math.round(Theme.sidePanelSpacing*2.0*Theme.scale(Screen)*weatherRoot.wscale)
+                    z: 1
+                    RowLayout { spacing: Math.round(Theme.sidePanelSpacing * Theme.scale(Screen) * weatherRoot.wscale); visible: weatherRoot._cur&&typeof weatherRoot._cur.wind_speed_10m==='number'&&weatherRoot._cur.wind_speed_10m>0.1
+                        MaterialIcon { icon: "navigation"; rotationAngle: WeatherIcons.windRotation(weatherRoot._cur?weatherRoot._cur.wind_direction_10m:0); size: Math.round(Theme.fontSizeSmall*0.85*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color) }
+                        Text { text: weatherRoot._cur?WeatherIcons.formatWindFull(weatherRoot._cur.wind_speed_10m,weatherRoot._cur.wind_direction_10m):""; font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall*0.85*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color) } }
+                    RowLayout { spacing: Math.round(Theme.sidePanelSpacing * Theme.scale(Screen) * weatherRoot.wscale); visible: weatherRoot._cur&&typeof weatherRoot._cur.relative_humidity_2m==='number'
+                        MaterialIcon { icon: "water_drop"; size: Math.round(Theme.fontSizeSmall*0.85*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color) }
+                        Text { text: weatherRoot._cur?Math.round(weatherRoot._cur.relative_humidity_2m)+"%":""; font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall*0.85*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color) } }
+                    RowLayout { spacing: Math.round(Theme.sidePanelSpacing * Theme.scale(Screen) * weatherRoot.wscale)
+                        MoonPhaseIcon { size: Math.round(Theme.fontSizeSmall*0.85*Theme.scale(Screen)*weatherRoot.wscale); moonColor: Theme.textOn(card.color); rimColor: Color.withAlpha(Theme.textOn(card.color),0.5) }
+                        Text { text: WeatherIcons.moonName(new Date()); font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall*0.85*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color) }
+                        Text { text: Math.round(WeatherIcons.moonIllumination(new Date()))+"%"; font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall*0.7*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textSecondary } }
+                }
             }
 
-            RowLayout {
-                id: forecastRow
+            // ── Forecast card ──
+            Item {
                 Layout.fillWidth: true
                 visible: weatherData&&weatherData.daily&&weatherData.daily.time
-                spacing: Math.round(Theme.sidePanelSpacing*2.0*Theme.scale(Screen)*weatherRoot.wscale)
-                Layout.topMargin: contentLayout.cardPad
-                Layout.bottomMargin: contentLayout.cardPad
-                Layout.leftMargin: contentLayout.cardPad
-                Layout.rightMargin: contentLayout.cardPad
-                Repeater { model: weatherData&&weatherData.daily&&weatherData.daily.time?Math.min(5,weatherData.daily.time.length):0
-                    delegate: ColumnLayout { spacing: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(Screen) * weatherRoot.wscale); Layout.alignment: Qt.AlignHCenter
-                        Text { text: { try { var d=new Date(weatherData.daily.time[index]); var days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]; return days[d.getDay()] } catch(e) { return "" } } font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeCaption*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textSecondary; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
-                        MaterialIcon { icon: WeatherIcons.materialSymbolForCode((weatherData.daily.weather_code||[])[index]!==undefined?(weatherData.daily.weather_code||[])[index]:-1); size: Math.round(Theme.panelPillIconSize*0.9*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color); Layout.alignment: Qt.AlignHCenter }
-                        Text { text: { try { var hi=weatherData.daily.temperature_2m_max[index]; var lo=weatherData.daily.temperature_2m_min[index]; return _useF?Math.round(hi*9/5+32)+"°":Math.round(hi)+"°" } catch(e) { return "--" } } font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeCaption*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color); horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
-                        Text { text: { try { var lo=weatherData.daily.temperature_2m_min[index]; return _useF?Math.round(lo*9/5+32)+"°":Math.round(lo)+"°" } catch(e) { return "" } } font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.tooltipFontPx*0.71*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textSecondary; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter } } }
+                implicitWidth: forecastRow.implicitWidth + 2 * contentLayout.cardPad
+                implicitHeight: forecastRow.implicitHeight + 2 * contentLayout.cardPad
+                Rectangle {
+                    anchors.fill: parent
+                    color: weatherRoot.cardBg
+                    radius: contentLayout.cardRadius
+                    z: 0
+                }
+                RowLayout {
+                    id: forecastRow
+                    anchors.fill: parent
+                    anchors.margins: contentLayout.cardPad
+                    spacing: Math.round(Theme.sidePanelSpacing*2.0*Theme.scale(Screen)*weatherRoot.wscale)
+                    z: 1
+                    Repeater { model: weatherData&&weatherData.daily&&weatherData.daily.time?Math.min(5,weatherData.daily.time.length):0
+                        delegate: ColumnLayout { spacing: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(Screen) * weatherRoot.wscale); Layout.alignment: Qt.AlignHCenter
+                            Text { text: { try { var d=new Date(weatherData.daily.time[index]); var days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]; return days[d.getDay()] } catch(e) { return "" } } font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeCaption*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textSecondary; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
+                            MaterialIcon { icon: WeatherIcons.materialSymbolForCode((weatherData.daily.weather_code||[])[index]!==undefined?(weatherData.daily.weather_code||[])[index]:-1); size: Math.round(Theme.panelPillIconSize*0.9*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color); Layout.alignment: Qt.AlignHCenter }
+                            Text { text: { try { var hi=weatherData.daily.temperature_2m_max[index]; var lo=weatherData.daily.temperature_2m_min[index]; return _useF?Math.round(hi*9/5+32)+"°":Math.round(hi)+"°" } catch(e) { return "--" } } font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeCaption*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color); horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
+                            Text { text: { try { var lo=weatherData.daily.temperature_2m_min[index]; return _useF?Math.round(lo*9/5+32)+"°":Math.round(lo)+"°" } catch(e) { return "" } } font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.tooltipFontPx*0.71*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textSecondary; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter } } }
+                }
             }
         }
     }
