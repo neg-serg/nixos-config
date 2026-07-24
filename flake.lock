@@ -1572,25 +1572,6 @@
         "type": "github"
       }
     },
-    "noctalia": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1784149351,
-        "owner": "noctalia-dev",
-        "repo": "noctalia",
-        "rev": "4bf957f4c16272016da0e9dab47612828b09e322",
-        "type": "github"
-      },
-      "original": {
-        "owner": "noctalia-dev",
-        "repo": "noctalia",
-        "type": "github"
-      }
-    },
     "openagentscontrol": {
       "flake": false,
       "locked": {
@@ -1806,7 +1787,6 @@
         "nix-maid": "nix-maid",
         "nix-src": "nix-src",
         "nixpkgs": "nixpkgs_4",
-        "noctalia": "noctalia",
         "openagentscontrol": "openagentscontrol_2",
         "opencode": "opencode_2",
         "pre-commit-hooks": "pre-commit-hooks_3",
@@ -1826,7 +1806,8 @@
         "xdg-desktop-portal-hyprland": [
           "hyprland",
           "xdph"
-        ]
+        ],
+        "sshell": "sshell"
       }
     },
     "rsmetrx": {
@@ -2445,6 +2426,22 @@
       "original": {
         "owner": "hyprwm",
         "repo": "xdg-desktop-portal-hyprland",
+        "type": "github"
+      }
+    },
+    "sshell": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778040804,
+        "narHash": "sha256-/V7f2kB6dneYAd8NsuBdG97RtfvlWrIRpEKes9KxTvE=",
+        "owner": "stormy-soul",
+        "repo": "sshell",
+        "rev": "fb59fa6f6bade33cf9fb18d9804238d88ee3e161",
+        "type": "github"
+      },
+      "original": {
+        "owner": "stormy-soul",
+        "repo": "sshell",
         "type": "github"
       }
     }
