@@ -69,7 +69,7 @@ Rectangle {
 
         // GPU shader sun — particle corona + granulation
         ShaderEffect {
-            anchors.fill: parent; z: 0
+            anchors.fill: parent; z: -1
             fragmentShader: Qt.resolvedUrl("../../shaders/sun.frag")
             property real iTime: Date.now() * 0.001
             property color iColor: Theme.accentPrimary
@@ -77,9 +77,8 @@ Rectangle {
             property real cy: card.height * 0.3
             property real iRadius: Math.min(card.width, card.height) * 0.1
             Timer { interval: 33; repeat: true; running: true; onTriggered: parent.iTime = Date.now() * 0.001 } }
-
         ShaderEffect {
-            anchors.fill: parent; z: 0
+            anchors.fill: parent; z: -1
             fragmentShader: Qt.resolvedUrl("../../shaders/moon.frag")
             property real iPhase: WeatherIcons.moonAge(new Date())
             property color iColor: Theme.accentPrimary
@@ -122,10 +121,10 @@ Rectangle {
             RowLayout { spacing: Math.round(Theme.sidePanelSpacing*Theme.scale(Screen)*weatherRoot.wscale); Layout.fillWidth: true; Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 2; visible: weatherData&&weatherData.daily&&weatherData.daily.time
                 Repeater { model: weatherData&&weatherData.daily&&weatherData.daily.time?Math.min(5,weatherData.daily.time.length):0
                     delegate: ColumnLayout { spacing: 1; Layout.alignment: Qt.AlignHCenter
-                        Text { text: { try { var d=new Date(weatherData.daily.time[index]); var days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]; return days[d.getDay()] } catch(e) { return "" } } font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeCaption*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textSecondary; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
-                        MaterialIcon { icon: WeatherIcons.materialSymbolForCode(weatherData.daily.weather_code[index]!==undefined?weatherData.daily.weather_code[index]:-1); size: Math.round(Theme.panelPillIconSize*0.9*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color); Layout.alignment: Qt.AlignHCenter }
-                        Text { text: { try { var hi=weatherData.daily.temperature_2m_max[index]; var lo=weatherData.daily.temperature_2m_min[index]; return _useF?Math.round(hi*9/5+32)+"°":Math.round(hi)+"°" } catch(e) { return "--" } } font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeCaption*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color); horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
-                        Text { text: { try { var lo=weatherData.daily.temperature_2m_min[index]; return _useF?Math.round(lo*9/5+32)+"°":Math.round(lo)+"°" } catch(e) { return "" } } font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.tooltipFontPx*0.71*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textSecondary; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter } } } }
+                        Text { text: { try { var d=new Date(weatherDataweatherData.daily.time[index]weatherData.daily.time[index]weatherData.dailyweatherData.daily.time[index]weatherData.daily.time[index]weatherData.daily.time?weatherData.daily.time[index]:null); var days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]; return days[d.getDay()] } catch(e) { return "" } } font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeCaption*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textSecondary; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
+                        MaterialIcon { icon: WeatherIcons.materialSymbolForCode(weatherData&&weatherData.daily&&weatherData.daily.weather_code?weatherData.daily.weather_code[index]:-1!==undefined?weatherData&&weatherData.daily&&weatherData.daily.weather_code?weatherData.daily.weather_code[index]:-1:-1); size: Math.round(Theme.panelPillIconSize*0.9*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color); Layout.alignment: Qt.AlignHCenter }
+                        Text { text: { try { var hi=weatherData&&weatherData.daily&&weatherData.daily.temperature_2m_max?weatherData.daily.temperature_2m_max[index]:null; var lo=weatherData&&weatherData.daily&&weatherData.daily.temperature_2m_min?weatherData.daily.temperature_2m_min[index]:null; return _useF?Math.round(hi*9/5+32)+"°":Math.round(hi)+"°" } catch(e) { return "--" } } font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeCaption*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textOn(card.color); horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter }
+                        Text { text: { try { var lo=weatherData&&weatherData.daily&&weatherData.daily.temperature_2m_min?weatherData.daily.temperature_2m_min[index]:null; return _useF?Math.round(lo*9/5+32)+"°":Math.round(lo)+"°" } catch(e) { return "" } } font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.tooltipFontPx*0.71*Theme.scale(Screen)*weatherRoot.wscale); color: Theme.textSecondary; horizontalAlignment: Text.AlignHCenter; Layout.alignment: Qt.AlignHCenter } } } }
         }
     }
 }
