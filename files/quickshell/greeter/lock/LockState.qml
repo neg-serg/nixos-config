@@ -55,7 +55,7 @@ Scope {
 
 	Process {
 		id: wlRestart
-		command: ["bash", "-c", "pkill -x wl-daemon 2>/dev/null; wl init; wl random ~/pic/wl ~/pic/black"]
+		command: ["bash", "-c", "pkill -x wl-daemon 2>/dev/null; wl init; wl random ~/pic/wl"]
 		running: false
 	}
 
