@@ -32,6 +32,7 @@ MouseArea {
         anchors.fill: parent
         radius: cornerRadius
         color: root.hovering ? root.accentColor : "transparent"
+        Behavior on color { ColorAnimation { duration: 150 } }
     }
     MaterialIcon {
         id: iconText
@@ -39,6 +40,7 @@ MouseArea {
         icon: root.icon
         size: root.size
         color: root.hovering ? root.iconHoverColor : root.iconNormalColor
+        Behavior on color { ColorAnimation { duration: 150 } }
         opacity: root.enabled ? 1.0 : 0.5
         rotationAngle: root.iconRotation
         rounded: root.rounded
