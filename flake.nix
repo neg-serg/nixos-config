@@ -113,10 +113,6 @@
       url = "github:debuggyo/Exo";
       flake = false;
     };
-    sshell = {
-      url = "github:stormy-soul/sshell";
-      flake = false;
-    };
     extra-container.url = "git+https://github.com/erikarvstedt/extra-container.git";
   };
 
