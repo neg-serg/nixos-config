@@ -34,11 +34,13 @@ Item {
         anchors.right: true
         anchors.bottom: true
 
-        // Dynamic margins set in showAt() based on panel height and edge margin
+        // Dynamic margins set in showAt() — right edge + above panel
         property real _marginRight: 0
         property real _marginBottom: 0
-        margins.right: toast._marginRight
-        margins.bottom: toast._marginBottom
+        WlrLayershell.margins {
+            right: toast._marginRight
+            bottom: toast._marginBottom
+        }
 
         // --- Auto-hide with pause on hover/focus and while cursor is on panel
         property int autoHideTotalMs: Theme.sidePanelPopupAutoHideMs
