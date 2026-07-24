@@ -18,8 +18,6 @@ OverlayToggleCapsule {
     autoToggleOnTap: true
     overlayNamespace: "quickshell"
 
-    property bool overlayContainsMouse: false
-
     Component.onCompleted: Services.Weather.start()
 
     readonly property var _weatherData: Services.Weather.weatherData
@@ -124,19 +122,6 @@ OverlayToggleCapsule {
 
     HoverHandler {
         id: hoverArea
-        onHoveredChanged: {
-            if (hovered) { root.open("hover") }
-            else { weatherHoverClose.restart() }
-        }
-    }
-
-    Timer {
-        id: weatherHoverClose
-        interval: 250
-        onTriggered: {
-            if (!hoverArea.hovered && !root.overlayContainsMouse)
-                root.close("hover")
-        }
     }
 
     overlayChildren: [
@@ -149,8 +134,6 @@ OverlayToggleCapsule {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: Math.round((Theme.panelModuleHeight + 4) * capsuleScale)
-
-            HoverHandler { onHoveredChanged: root.overlayContainsMouse = hovered }
 
             Weather {
                 id: weather
