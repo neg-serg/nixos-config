@@ -9,8 +9,8 @@ import qs.Services as Services
 
 Rectangle {
     id: weatherRoot
-    width: Math.round(Theme.sidePanelWeatherWidth * Theme.scale(Screen))
-    height: Math.round(Theme.sidePanelWeatherHeight * Theme.scale(Screen))
+    width: Math.round(Theme.sidePanelWeatherWidth * 2 * Theme.scale(Screen))
+    height: Math.round(Theme.sidePanelWeatherHeight * 2 * Theme.scale(Screen))
     color: "transparent"
     anchors.horizontalCenterOffset: Theme.weatherCenterOffset
 
