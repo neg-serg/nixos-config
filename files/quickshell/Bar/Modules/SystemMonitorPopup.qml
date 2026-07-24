@@ -8,7 +8,7 @@ PanelOverlaySurface {
     id: root
 
     backgroundColor: Color.withAlpha(Theme.surface, 0.85)
-    borderColor: Color.withAlpha(Theme.accentPrimary, 0.15)
+    borderColor: "transparent"
     borderWidth: 1
     cornerRadiusOverride: Math.round(Theme.cornerRadiusLarge / 3)
 
@@ -75,15 +75,12 @@ PanelOverlaySurface {
         Rectangle{width:parent.width;height:1;color:root.sepColor}
 
         Row { width:parent.width; spacing:10
-            Rectangle{width:(parent.width-parent.spacing*2)/3;height:root._cardH;radius:6;color:root.cardBg;border.color:root.cardBorder;border.width:1
                 Column{anchors.centerIn:parent;spacing:2
                     Text{text:root.totalLogs.toString();font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeMedium);color:Theme.textPrimary;font.bold:true;anchors.horizontalCenter:parent.horizontalCenter}
                     Text{text:"Log Lines";font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeSmall);color:Theme.textSecondary;anchors.horizontalCenter:parent.horizontalCenter}}}
-            Rectangle{width:(parent.width-parent.spacing*2)/3;height:root._cardH;radius:6;color:root.cardBg;border.color:root.cardBorder;border.width:1
                 Column{anchors.centerIn:parent;spacing:2
                     Text{text:root.errorCount.toString();font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeMedium);color:root.errorCount>0?Theme.error:Theme.textPrimary;font.bold:true;anchors.horizontalCenter:parent.horizontalCenter}
                     Text{text:"Errors";font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeSmall);color:Theme.textSecondary;anchors.horizontalCenter:parent.horizontalCenter}}}
-            Rectangle{width:(parent.width-parent.spacing*2)/3;height:root._cardH;radius:6;color:root.cardBg;border.color:root.cardBorder;border.width:1
                 Column{anchors.centerIn:parent;spacing:2
                     Text{text:root.serviceCount.toString();font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeMedium);color:Theme.textPrimary;font.bold:true;anchors.horizontalCenter:parent.horizontalCenter}
                     Text{text:"Services";font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeSmall);color:Theme.textSecondary;anchors.horizontalCenter:parent.horizontalCenter}}} }
@@ -92,7 +89,6 @@ PanelOverlaySurface {
 
         Text{text:"Recent Logs";font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSize);color:Theme.textPrimary;font.bold:true}
 
-        Rectangle { width:parent.width; height:parent.height-220; radius:6; color:root.cardBg; border.color:root.cardBorder; border.width:1; clip:true
             ListView {
                 anchors.fill:parent; anchors.margins:4; spacing:2
                 model:root.logEntries
@@ -107,12 +103,10 @@ PanelOverlaySurface {
                         Text{text:modelData.message;font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeSmall);color:Theme.textSecondary;Layout.fillWidth:true;elide:Text.ElideRight} } } } }
 
         RowLayout { width:parent.width; spacing:8; Item{Layout.fillWidth:true}
-            Rectangle { id:btnRect1; radius:4; color:root.cardBg; border.color:root.cardBorder; border.width:1
                 implicitWidth:btn1.implicitWidth+16; implicitHeight:btn1.implicitHeight+8
                 Text{id:btn1;anchors.centerIn:parent;text:"Grafana · System";font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeSmall);color:root.accentColor}
                 MouseArea{id:ma1;anchors.fill:parent;hoverEnabled:true;acceptedButtons:Qt.LeftButton
                     onClicked:{Qt.openUrlExternally(root._grafanaBase+"/d/system-journal")}} }
-            Rectangle { id:btnRect2; radius:4; color:root.cardBg; border.color:root.cardBorder; border.width:1
                 implicitWidth:btn2.implicitWidth+16; implicitHeight:btn2.implicitHeight+8
                 Text{id:btn2;anchors.centerIn:parent;text:"Grafana · Home";font.family:Theme.fontFamily;font.pixelSize:Math.round(root._fontSizeSmall);color:root.accentColor}
                 MouseArea{id:ma2;anchors.fill:parent;hoverEnabled:true;acceptedButtons:Qt.LeftButton
