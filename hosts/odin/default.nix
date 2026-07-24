@@ -47,8 +47,8 @@
   features.virt.libvirtd.enable = true;
   features.apps.winapps.enable = true;
   features.apps.guiAppsFull.enable = false; # Disable heavy GUI apps (GIMP, OBS); gaming profile enables it by default
-  features.gui.noctalia.enable = true; # Noctalia Wayland shell (bar/panel)
-  features.gui.quickshell.enable = false; # Disabled while testing noctalia
+  features.gui.sshell.enable = true; # Sshell quickshell flavor (stormy-soul)
+  features.gui.quickshell.enable = true; # Quickshell panel (sshell flavor)
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
   features.dev.cpp.enable = true; # Enable C++ toolchain (ccache, gcc, cmake)
   # Override default networkUnits: odin uses systemd-networkd, not NetworkManager

@@ -113,9 +113,9 @@
       url = "github:debuggyo/Exo";
       flake = false;
     };
-    noctalia = {
-      url = "github:noctalia-dev/noctalia";
-      inputs.nixpkgs.follows = "nixpkgs";
+    sshell = {
+      url = "github:stormy-soul/sshell";
+      flake = false;
     };
     extra-container.url = "git+https://github.com/erikarvstedt/extra-container.git";
   };
