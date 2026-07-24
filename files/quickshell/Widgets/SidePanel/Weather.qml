@@ -14,6 +14,7 @@ Rectangle {
     color: "transparent"
     anchors.horizontalCenterOffset: Theme.weatherCenterOffset
     readonly property real wscale: 1.4
+    readonly property color cardBg: Color.withAlpha(Theme.accentPrimary, 0.06)
 
     property string city: Settings.settings.weatherCity !== undefined ? Settings.settings.weatherCity : ""
     property var weatherData: Services.Weather.weatherData
@@ -44,7 +45,6 @@ Rectangle {
 
         Rectangle { anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right; height: 1; color: Color.withAlpha(Theme.accentPrimary, 0.25); z: 2 }
 
-
         Canvas {
             id: weatherDecor
             anchors.fill: parent; z: 0
@@ -62,7 +62,6 @@ Rectangle {
             }
             Timer { interval: 33; repeat: true; running: true; onTriggered: weatherDecor.requestPaint() }
 
-
             function drawClouds(ctx,w,h){ctx.fillStyle="rgba(170,187,204,0.85)";drawCloud(ctx,w*0.15,h*0.16,8);drawCloud(ctx,w*0.13,h*0.14,7);drawCloud(ctx,w*0.16,h*0.15,6)}
             function drawCloud(ctx,cx,cy,r){ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.arc(cx+r*0.7,cy-r*0.25,r*0.75,0,Math.PI*2);ctx.arc(cx+r*1.2,cy,r*0.7,0,Math.PI*2);ctx.arc(cx-r*0.6,cy+r*0.1,r*0.6,0,Math.PI*2);ctx.arc(cx+r*0.5,cy-r*0.5,r*0.55,0,Math.PI*2);ctx.fill()}
             function drawFog(ctx,w,h){ctx.strokeStyle="#8899AA";ctx.lineWidth=2;for(var i=0;i<6;i++){var y=h*0.2+i*h*0.1;ctx.globalAlpha=0.04+i*0.006;ctx.beginPath();ctx.moveTo(w*0.1,y);ctx.lineTo(w*0.9,y);ctx.stroke()}ctx.globalAlpha=0.07}
@@ -71,23 +70,21 @@ Rectangle {
             function drawStormBolt(ctx,w,h){ctx.strokeStyle="#FFD040";ctx.lineWidth=2;ctx.beginPath();var bx=w*0.75,by=h*0.20;ctx.moveTo(bx,by);ctx.lineTo(bx-8,by+16);ctx.lineTo(bx+3,by+16);ctx.lineTo(bx-6,by+32);ctx.stroke()}
         }
 
-
-
-
         ColumnLayout {
             id: contentLayout
             anchors.fill: parent
-            anchors.margins: Math.round(Theme.panelSideMargin * 1.5 * Theme.scale(Screen) * weatherRoot.wscale)
+            anchors.margins: Math.round(Theme.panelSideMargin * 2.0 * Theme.scale(Screen) * weatherRoot.wscale)
             spacing: Math.round(Theme.sidePanelSpacing * Theme.scale(Screen) * weatherRoot.wscale)
             z: 2
 
             readonly property real cardPad: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(Screen) * weatherRoot.wscale)
-            readonly property real cardRadius: 6
+            readonly property real cardRadius: 3
 
             // ── Current conditions card ──
             Rectangle {
                 Layout.fillWidth: true
-                color: root.cardBg; radius: contentLayout.cardRadius
+                color: weatherRoot.cardBg
+                radius: contentLayout.cardRadius
                 implicitWidth: currentRow.implicitWidth + 2 * contentLayout.cardPad
                 implicitHeight: currentRow.implicitHeight + 2 * contentLayout.cardPad
 
@@ -97,7 +94,7 @@ Rectangle {
                     anchors.margins: contentLayout.cardPad
                     spacing: Math.round(Theme.sidePanelSpacing * Theme.scale(Screen) * weatherRoot.wscale)
                     Spinner { id: loadingSpinner; running: isLoading; color: Theme.accentPrimary; size: Math.round(Theme.uiIconSizeLarge * Theme.scale(Screen) * weatherRoot.wscale); visible: isLoading; Layout.alignment: Qt.AlignVCenter }
-                    Canvas { id: sunIcon; visible: !isLoading; width: Math.round(Theme.uiIconSizeLarge*1.5*Theme.scale(Screen)*weatherRoot.wscale); height: width; Layout.alignment: Qt.AlignVCenter; onPaint: {var ctx=getContext("2d");ctx.reset();var s=width,r=s*0.30;var cx=s/2,cy=s/2;var t=Date.now()*0.001;var grd=ctx.createRadialGradient(cx,cy,r*0.05,cx,cy,r*1.5);grd.addColorStop(0,"rgba(255,255,255,1)");grd.addColorStop(0.12,"rgba(255,255,240,0.95)");grd.addColorStop(0.35,Color.withAlpha(Theme.accentPrimary,0.5));grd.addColorStop(0.65,Color.withAlpha(Theme.accentPrimary,0.1));grd.addColorStop(1,"transparent");ctx.fillStyle=grd;ctx.beginPath();ctx.arc(cx,cy,r*1.5,0,Math.PI*2);ctx.fill();ctx.globalCompositeOperation="lighter";for(var i=0;i<360;i++){var a=Math.PI*i/180;var dx=Math.cos(a)*r*0.9;var dy=Math.sin(a)*r*0.9;var len=r*0.15*(1+0.5*Math.sin(t*3+i*0.3));ctx.strokeStyle=Color.withAlpha(Theme.accentPrimary,0.15+0.1*Math.sin(t*2+i*0.7));ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx+dx,cy+dy);ctx.lineTo(cx+dx+Math.cos(a)*len,cy+dy+Math.sin(a)*len);ctx.stroke()}}
+                Canvas { id: sunIcon; visible: !isLoading; width: Math.round(Theme.uiIconSizeLarge*1.5*Theme.scale(Screen)*weatherRoot.wscale); height: width; Layout.alignment: Qt.AlignVCenter; onPaint: {var ctx=getContext("2d");ctx.reset();var s=width,r=s*0.30;var cx=s/2,cy=s/2;var t=Date.now()*0.001;var grd=ctx.createRadialGradient(cx,cy,r*0.05,cx,cy,r*1.5);grd.addColorStop(0,"rgba(255,255,255,1)");grd.addColorStop(0.12,"rgba(255,255,240,0.95)");grd.addColorStop(0.35,Color.withAlpha(Theme.accentPrimary,0.5));grd.addColorStop(0.65,Color.withAlpha(Theme.accentPrimary,0.1));grd.addColorStop(1,"transparent");ctx.fillStyle=grd;ctx.beginPath();ctx.arc(cx,cy,r*1.5,0,Math.PI*2);ctx.fill();ctx.globalCompositeOperation="lighter";for(var i=0;i<360;i++){var a=Math.PI*2*i/360;var wig=Math.sin(i*4.7+t*0.8)*0.35+Math.sin(i*13.3-t*0.5)*0.2+Math.sin(i*21.1+t*1.1)*0.12;var len=r*(0.5+wig);var al=0.15+Math.abs(wig)*0.7;ctx.globalAlpha=al*0.3;ctx.strokeStyle=Theme.accentPrimary;ctx.lineWidth=0.4+Math.abs(Math.sin(i*23.7+t*3.1))*1.0;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*r*0.25,cy+Math.sin(a)*r*0.25);ctx.lineTo(cx+Math.cos(a)*len,cy+Math.sin(a)*len);ctx.stroke()}ctx.globalCompositeOperation="source-over"} Timer { interval: 50; repeat: true; running: true; onTriggered: sunIcon.requestPaint() } }
                     Text { text: weatherData&&weatherData.current?(_useF?Math.round(weatherData.current.temperature_2m*9/5+32)+"°F":Math.round(weatherData.current.temperature_2m)+"°C"):(_useF?"--°F":"--°C"); font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeHeader*Theme.weatherHeaderScale*1.15*Theme.scale(Screen)*weatherRoot.wscale); font.bold: true; color: Theme.textOn(card.color); Layout.alignment: Qt.AlignVCenter; Component.onCompleted: weatherRoot.warnContrast(card.color,color,'weather.temp') }
                     ColumnLayout { spacing: 1; Layout.alignment: Qt.AlignVCenter
                         Text { text: city.length>18?city.slice(0,17)+"\u2026":city; font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall*Theme.scale(Screen)*weatherRoot.wscale); font.bold: true; color: Theme.textOn(card.color); elide: Text.ElideRight }
@@ -108,7 +105,8 @@ Rectangle {
             // ── Details card (wind/humidity/moon) ──
             Rectangle {
                 Layout.fillWidth: true
-                color: root.cardBg; radius: contentLayout.cardRadius
+                color: weatherRoot.cardBg
+                radius: contentLayout.cardRadius
                 visible: weatherData&&weatherData.current
                 implicitWidth: detailsRow.implicitWidth + 2 * contentLayout.cardPad
                 implicitHeight: detailsRow.implicitHeight + 2 * contentLayout.cardPad
@@ -134,7 +132,8 @@ Rectangle {
             // ── Forecast card ──
             Rectangle {
                 Layout.fillWidth: true
-                color: root.cardBg; radius: contentLayout.cardRadius
+                color: weatherRoot.cardBg
+                radius: contentLayout.cardRadius
                 visible: weatherData&&weatherData.daily&&weatherData.daily.time
                 implicitWidth: forecastRow.implicitWidth + 2 * contentLayout.cardPad
                 implicitHeight: forecastRow.implicitHeight + 2 * contentLayout.cardPad
