@@ -15,7 +15,6 @@ OverlayToggleCapsule {
     visible: false
     capsuleVisible: false
     autoToggleOnTap: true
-
     overlayNamespace: "qs-calendar"
 
     property color parchmentBg: Color.withAlpha(Theme.surface, 0.85)
@@ -50,8 +49,8 @@ OverlayToggleCapsule {
             borderColor: Color.withAlpha(root.goldAccent, 0.15)
             borderWidth: 1
             cornerRadiusOverride: Math.round(Theme.cornerRadiusLarge / 3)
-            width: Math.round(420 * Theme.scale(root.screen))
-            height: Math.round(540 * Theme.scale(root.screen))
+            width: Math.round(380 * Theme.scale(root.screen))
+            height: Math.round(480 * Theme.scale(root.screen))
             anchors.bottom: parent.bottom
             anchors.right: parent.right
             anchors.bottomMargin: Theme.calendarPopupMargin
@@ -68,23 +67,24 @@ OverlayToggleCapsule {
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: Math.round(12 * Theme.scale(root.screen))
-                spacing: Math.round(8 * Theme.scale(root.screen))
+                anchors.margins: Math.round(8 * Theme.scale(root.screen))
+                spacing: Math.round(6 * Theme.scale(root.screen))
 
                 RowLayout {
-                    Layout.fillWidth: true; spacing: 4
-                    PanelIconButton { icon: "chevron_left";
+                    Layout.fillWidth: true; spacing: 2
+                    PanelIconButton { icon: "chevron_left"
                         onClicked: { var d=new Date(root.currentYear,root.currentMonth-1,1); root.currentYear=d.getFullYear(); root.currentMonth=d.getMonth(); root.updateAll() } }
                     Text {
                         Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter
                         text: { var m=["January","February","March","April","May","June","July","August","September","October","November","December"]; return m[root.currentMonth]+"  ·  "+root.currentYear }
-                        color: root.goldAccent; font.family: Theme.fontFamily; font.pixelSize: Math.round(18*Theme.scale(root.screen)); font.weight: Font.DemiBold; font.letterSpacing: 1.2 }
-                    PanelIconButton { icon: "chevron_right";
+                        color: root.goldAccent; font.family: Theme.fontFamily; font.pixelSize: Math.round(16*Theme.scale(root.screen)); font.weight: Font.DemiBold; font.letterSpacing: 1.2 }
+                    PanelIconButton { icon: "chevron_right"
                         onClicked: { var d=new Date(root.currentYear,root.currentMonth+1,1); root.currentYear=d.getFullYear(); root.currentMonth=d.getMonth(); root.updateAll() } }
                 }
 
+                // ── Illustration (2x larger, compact spacing) ──
                 Rectangle {
-                    Layout.fillWidth: true; Layout.preferredHeight: Math.round(70*Theme.scale(root.screen))
+                    Layout.fillWidth: true; Layout.preferredHeight: Math.round(140*Theme.scale(root.screen))
                     radius: Math.round(4*Theme.scale(root.screen)); color: Color.withAlpha(root.goldDim,0.06); border.color: Color.withAlpha(root.goldDim,0.12); border.width: 1
                     HiDpiImage {
                         id: monthIllustration
@@ -93,23 +93,26 @@ OverlayToggleCapsule {
                         Behavior on source { NumberAnimation { target:monthFade; property:"opacity"; from:0.3; to:1.0; duration:400 } }
                         Rectangle { id:monthFade; anchors.fill:parent; color:"transparent"; opacity:1.0 }
                         layer.enabled: true
-                        layer.effect: MultiEffect {
-                            colorization: 1.0
-                            colorizationColor: root.goldAccent
-                        }
+                        layer.effect: MultiEffect { colorization: 1.0; colorizationColor: root.goldAccent }
                     }
                 }
 
                 DayOfWeekRow {
-                    Layout.fillWidth: true; spacing: 0; Layout.leftMargin: Math.round(4*Theme.scale(root.screen)); Layout.rightMargin: Math.round(4*Theme.scale(root.screen))
+                    Layout.fillWidth: true; spacing: 0
+                    Layout.leftMargin: Math.round(2*Theme.scale(root.screen))
+                    Layout.rightMargin: Math.round(2*Theme.scale(root.screen))
                     delegate: Text {
-                        required property string shortName; text: shortName; color: root.textWarmDim; opacity: 0.7
-                        font.family: Theme.fontFamily; font.pixelSize: Math.round(13*Theme.scale(root.screen)); font.italic: true; horizontalAlignment: Text.AlignHCenter; width: Theme.calendarCellSize }
+                        required property string shortName
+                        text: shortName; color: root.textWarmDim; opacity: 0.7
+                        font.family: Theme.fontFamily; font.pixelSize: Math.round(12*Theme.scale(root.screen)); font.italic: true
+                        horizontalAlignment: Text.AlignHCenter; width: Math.round(26*Theme.scale(root.screen)) }
                 }
 
                 MonthGrid {
                     id: calendarGrid
-                    Layout.fillWidth: true; spacing: 0; Layout.leftMargin: Math.round(4*Theme.scale(root.screen)); Layout.rightMargin: Math.round(4*Theme.scale(root.screen))
+                    Layout.fillWidth: true; spacing: 0
+                    Layout.leftMargin: Math.round(2*Theme.scale(root.screen))
+                    Layout.rightMargin: Math.round(2*Theme.scale(root.screen))
                     month: root.currentMonth; year: root.currentYear
 
                     delegate: Rectangle {
@@ -121,14 +124,15 @@ OverlayToggleCapsule {
                         property bool isHoliday: holidayInfos.length>0
                         property bool isWeekend: model.dayOfWeek===0||model.dayOfWeek===6
 
-                        width: Theme.calendarCellSize; height: Theme.calendarCellSize; radius: Math.round(Theme.cornerRadius*0.33)
+                        width: Math.round(26*Theme.scale(root.screen)); height: Math.round(26*Theme.scale(root.screen))
+                        radius: Math.round(Theme.cornerRadius*0.33)
                         color: { if(isToday)return Color.withAlpha(root.goldAccent,0.3); if(dayMouse.containsMouse)return Color.withAlpha(root.goldAccent,0.15); return"transparent" }
                         border.color: isToday?root.goldAccent:"transparent"; border.width: isToday?1.5:0
 
                         Text {
                             anchors.centerIn: parent; text: model.day
                             color: { if(isToday)return root.goldAccent; if(isHoliday)return Theme.error; if(isWeekend)return root.textWarmDim; return root.textWarm }
-                            opacity: isCurrentMonth?0.9:0.3; font.family: Theme.fontFamily; font.pixelSize: Math.round(15*Theme.scale(root.screen)); font.weight: isToday?Font.Bold:Font.Normal }
+                            opacity: isCurrentMonth?0.9:0.3; font.family: Theme.fontFamily; font.pixelSize: Math.round(13*Theme.scale(root.screen)); font.weight: isToday?Font.Bold:Font.Normal }
 
                         Rectangle { visible:isHoliday; width:4*Theme.scale(root.screen); height:width; radius:width/2; color:Theme.error; anchors.top:parent.top; anchors.right:parent.right; anchors.margins:2 }
 
