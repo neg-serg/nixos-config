@@ -38,6 +38,7 @@ Rectangle {
         anchors.fill: parent
         color: Color.withAlpha(Theme.surface, 0.85)
         border.color: "transparent"
+        border.width: 0
         radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(Screen) * weatherRoot.wscale)
         clip: true
 
@@ -45,7 +46,7 @@ Rectangle {
 
         Canvas {
             id: weatherDecor
-            anchors.fill: parent; z: 0
+            anchors.fill: parent; z: -1
             property int wcode: weatherRoot._wcode
             onWcodeChanged: requestPaint()
 
@@ -72,32 +73,32 @@ Rectangle {
 
         // GPU shader sun — 8-ray corona, granulation, sparkle particles
         ShaderEffect {
-            anchors.fill: parent; z: -1
+            anchors.fill: parent; z: 0
             fragmentShader: Qt.resolvedUrl("../../shaders/sun.frag.qsb")
             property real iTime: Date.now() * 0.001
             property color iColor: Theme.accentPrimary
-            property real iRadius: Math.min(card.width, card.height) * 0.1
-            property real cx: card.width * 0.7
-            property real cy: card.height * 0.3
+            property real iRadius: 0.1
+            property real cx: 0.7
+            property real cy: 0.3
             Timer { interval: 33; repeat: true; running: true; onTriggered: parent.iTime = Date.now() * 0.001 }
         }
 
         // GPU shader moon — 18 procedural craters, maria noise, phase shadow
         ShaderEffect {
-            anchors.fill: parent; z: -1
+            anchors.fill: parent; z: 0
             fragmentShader: Qt.resolvedUrl("../../shaders/moon.frag.qsb")
             property real iPhase: WeatherIcons.moonAge(new Date())
             property color iColor: Theme.accentPrimary
-            property real iRadius: Math.min(card.width, card.height) * 0.13
-            property real cx: card.width * 0.78
-            property real cy: card.height * 0.72
+            property real iRadius: 0.13
+            property real cx: 0.78
+            property real cy: 0.72
         }
 
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: Math.round(Theme.panelSideMargin * 0.9 * Theme.scale(Screen) * weatherRoot.wscale)
             spacing: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(Screen) * weatherRoot.wscale)
-            z: 1
+            z: 2
 
             RowLayout {
                 Layout.fillWidth: true
