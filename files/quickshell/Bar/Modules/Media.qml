@@ -488,15 +488,9 @@ Item {
                                 color: Theme.textPrimary
                                 font.family: Theme.fontFamily
                                 font.weight: Font.Medium
-                                font.pixelSize: {
-                                    var base = mediaControl.musicTextPx;
-                                    var mw = titleMeasure.paintedWidth;
-                                    var aw = width;
-                                    if (mw <= 0 || aw <= 0) return base;
-                                    if (mw <= aw) return base;
-                                    return Math.max(Math.round(base * 0.55), Math.round(base * aw / mw));
-                                }
+                                font.pixelSize: mediaControl.musicTextPx
                                 maximumLineCount: 1
+                                elide: Text.ElideRight
                                 z: 2
                             }
                         }
