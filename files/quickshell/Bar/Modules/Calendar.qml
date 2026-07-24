@@ -65,13 +65,13 @@ OverlayToggleCapsule {
 
                 RowLayout {
                     Layout.fillWidth: true; spacing: 2
-                    PanelIconButton { icon: "chevron_left"; iconNormalColor: root.textWarm; accentColor: root.goldAccent; iconHoverColor: root.parchmentBg
+                    PanelIconButton { icon: "chevron_left"
                         onClicked: { var d=new Date(root.currentYear,root.currentMonth-1,1); root.currentYear=d.getFullYear(); root.currentMonth=d.getMonth(); root.updateAll() } }
                     Text {
                         Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter
                         text: { var m=["January","February","March","April","May","June","July","August","September","October","November","December"]; return m[root.currentMonth]+"  ·  "+root.currentYear }
                         color: root.goldAccent; font.family: Theme.fontFamily; font.pixelSize: Math.round(16*Theme.scale(root.screen)); font.weight: Font.DemiBold; font.letterSpacing: 1.2 }
-                    PanelIconButton { icon: "chevron_right"; iconNormalColor: root.textWarm; accentColor: root.goldAccent; iconHoverColor: root.parchmentBg
+                    PanelIconButton { icon: "chevron_right"
                         onClicked: { var d=new Date(root.currentYear,root.currentMonth+1,1); root.currentYear=d.getFullYear(); root.currentMonth=d.getMonth(); root.updateAll() } }
                 }
 
