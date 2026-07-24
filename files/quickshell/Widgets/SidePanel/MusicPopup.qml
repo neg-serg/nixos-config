@@ -45,8 +45,7 @@ Item {
         // --- Auto-hide with pause on hover/focus and while cursor is on panel
         property int autoHideTotalMs: Theme.sidePanelPopupAutoHideMs
         property int _autoHideRemainingMs: autoHideTotalMs
-        implicitWidth: Math.round(musicWidthPx)
-        implicitHeight: Math.round((computedHeightPx >= 0) ? computedHeightPx : musicHeightPx)
+        property real _autoHideStartedAtMs: 0
         Timer {
             id: autoHideTimer
             interval: toast._autoHideRemainingMs
@@ -104,8 +103,8 @@ Item {
             : Math.round(Settings.settings.musicPopupHeight * Theme.scale(Screen))
         property int contentPaddingPx:Math.round(Settings.settings.musicPopupPadding * Theme.scale(Screen))
 
-        width: Math.round(musicWidthPx)
-        height: Math.round((computedHeightPx >= 0) ? computedHeightPx : musicHeightPx)
+        implicitWidth: Math.round(musicWidthPx)
+        implicitHeight: Math.round((computedHeightPx >= 0) ? computedHeightPx : musicHeightPx)
 
         // --- Slide animation (animate inner content, not the window)
         property bool _hiding: false
