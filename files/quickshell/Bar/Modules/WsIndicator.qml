@@ -6,6 +6,8 @@ import "../../Helpers/RichText.js" as Rich
 import "../../Helpers/WsIconMap.js" as WsMap
 import "../../Helpers/WorkspaceIcons.js" as WorkspaceIcons
 CenteredCapsuleRow {
+    interactive: true
+    onClicked: Quickshell.execDetached(["vicinae"])
     id: root
     property string wsName: "?"
     property int wsId: -1
