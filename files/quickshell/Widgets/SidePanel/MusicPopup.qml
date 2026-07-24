@@ -101,8 +101,8 @@ Item {
             : Math.round(Settings.settings.musicPopupHeight * Theme.scale(Screen))
         property int contentPaddingPx:Math.round(Settings.settings.musicPopupPadding * Theme.scale(Screen))
 
-        implicitWidth: Math.round(musicWidthPx)
-        implicitHeight: Math.round((computedHeightPx >= 0) ? computedHeightPx : musicHeightPx)
+        width: Math.round(musicWidthPx)
+        height: Math.round((computedHeightPx >= 0) ? computedHeightPx : musicHeightPx)
 
         // --- Slide animation (animate inner content, not the window)
         property bool _hiding: false
@@ -176,7 +176,7 @@ Item {
 
             if (!visible) {
                 visible = true;
-                slideX = toast.implicitWidth; // start fully to the right
+                slideX = toast.width; // start fully to the right
             }
             slide.stop();
             _hiding = false;
@@ -189,7 +189,7 @@ Item {
             slide.stop();
             _hiding = true;
             slide.from = slideX;
-            slide.to   = toast.implicitWidth;
+            slide.to   = toast.width;
             slide.start();
         }
 
