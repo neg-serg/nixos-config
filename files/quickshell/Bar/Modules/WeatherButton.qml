@@ -16,7 +16,7 @@ OverlayToggleCapsule {
     capsule.implicitWidth: capsule.horizontalPadding * 2 + weatherContent.implicitWidth
     capsuleVisible: true
     autoToggleOnTap: true
-    overlayNamespace: "sideleft-weather"
+    overlayNamespace: "quickshell"
 
     Component.onCompleted: Services.Weather.start()
 
@@ -129,14 +129,14 @@ OverlayToggleCapsule {
             id: popup
             screen: root.screen
             scaleHint: capsuleScale
+            cornerRadiusOverride: 0
+            borderWidth: 0
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: Math.round((Theme.panelModuleHeight + 4) * capsuleScale)
 
             Weather {
                 id: weather
-                width: Math.round(Theme.sidePanelWeatherWidth * capsuleScale * 2)
-                height: Math.round(Theme.sidePanelWeatherHeight * capsuleScale * 2)
             }
         }
     ]
