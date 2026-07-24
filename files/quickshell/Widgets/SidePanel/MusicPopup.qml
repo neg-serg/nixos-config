@@ -23,7 +23,8 @@ Item {
         id: toast
         // We draw our own rounded background
         color: "transparent"
-        visible: false
+        // WlrLayershell namespace for compositor blur (hyprglass)
+        WlrLayershell.namespace: "qs-music"
 
         // --- Auto-hide with pause on hover/focus and while cursor is on panel
         property int autoHideTotalMs: Theme.sidePanelPopupAutoHideMs
