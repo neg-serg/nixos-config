@@ -89,6 +89,8 @@
 
     "showMediaVisualizer": { "type": "boolean", "default": false },
 
+    "showIphoneVisualizer": { "type": "boolean", "default": false },
+
     "playerSelectionPriority": {
       "type": "array",
       "default": ["mpdPlaying","anyPlaying","mpdRecent","recent","manual","first"],
