@@ -22,7 +22,7 @@ OverlayToggleCapsule {
     // Tooltip on capsule hover
     PanelTooltip{text:"Open system dashboard";targetItem:root;visibleWhen:capsHov.containsMouse}
     MouseArea{id:capsHov;z:-1;anchors.fill:parent;hoverEnabled:true;acceptedButtons:Qt.NoButton}
-    overlayNamespace: "sysmon-popup"
+    overlayNamespace: "qs-monitor"
 
     // ── Settings ──
     readonly property bool _hideIdle: Settings.settings.systemMonitorHideIdle !== false
