@@ -303,6 +303,7 @@ Rectangle {
                         anchors.leftMargin: Theme.uiMarginNone
                         anchors.rightMargin: Theme.uiMarginNone
 
+                        ColumnLayout {
                             id: detailsCol
                             clip: true
                             anchors.fill: parent
