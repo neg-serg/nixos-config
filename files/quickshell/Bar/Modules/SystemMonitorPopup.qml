@@ -110,8 +110,18 @@ PanelOverlaySurface {
                         Text{text:modelData.message;font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall;color:Theme.textSecondary;Layout.fillWidth:true;elide:Text.ElideRight} } } } }
 
         RowLayout { width:parent.width; spacing:8; Item{Layout.fillWidth:true}
-            Rectangle { radius:4; color:root.cardBg; border.color:root.cardBorder; border.width:1; implicitWidth:tx.implicitWidth+16; implicitHeight:tx.implicitHeight+8
-                Text{id:tx;anchors.centerIn:parent;text:"Grafana ↗";font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall;color:root.accentColor}
-                MouseArea{anchors.fill:parent;onClicked:{Qt.openUrlExternally(root._grafanaBase)}} } }
+            Rectangle { id:btnRect1; radius:4; color:root.cardBg; border.color:root.cardBorder; border.width:1
+                implicitWidth:btn1.implicitWidth+16; implicitHeight:btn1.implicitHeight+8
+                Text{id:btn1;anchors.centerIn:parent;text:"Grafana · System";font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall;color:root.accentColor}
+                MouseArea{id:ma1;anchors.fill:parent;hoverEnabled:true;acceptedButtons:Qt.LeftButton
+                    onClicked:{Qt.openUrlExternally(root._grafanaBase+"/d/system-journal")}} }
+            Rectangle { id:btnRect2; radius:4; color:root.cardBg; border.color:root.cardBorder; border.width:1
+                implicitWidth:btn2.implicitWidth+16; implicitHeight:btn2.implicitHeight+8
+                Text{id:btn2;anchors.centerIn:parent;text:"Grafana · Home";font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall;color:root.accentColor}
+                MouseArea{id:ma2;anchors.fill:parent;hoverEnabled:true;acceptedButtons:Qt.LeftButton
+                    onClicked:{Qt.openUrlExternally(root._grafanaBase)}} } }
+        // Tooltips (declared outside buttons for proper z-order)
+        PanelTooltip{text:root._grafanaBase+"/d/system-journal";targetItem:btnRect1;visibleWhen:ma1.containsMouse}
+        PanelTooltip{text:root._grafanaBase;targetItem:btnRect2;visibleWhen:ma2.containsMouse}
     }
 }
