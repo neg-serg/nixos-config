@@ -396,7 +396,7 @@ hl.window_rule({ name = "utility", match = { class = m.utility }, float = true, 
 hl.window_rule({ name = "mpd-add", match = { class = m.mpd_add }, float = true, size = "35% 35%", move = "64% 59%", tag = "mpd-add" })
 
 -- Scratchpad rules: float + size + no dim (monitor-relative expressions)
-hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, size = "monitor_w*0.3 monitor_h-60", move = "monitor_w - monitor_w*0.3 - 8 8", no_dim = true })
+hl.window_rule({ name = "im-scratchpad", match = { class = m.im_scratchpad }, float = true, size = "monitor_w*0.3 monitor_h-60", move = "monitor_w*0.7 - 8 8", no_dim = true })
 hl.window_rule({ name = "music-scratchpad", match = { class = m.music_scratchpad }, float = true, size = "monitor_w*0.7 monitor_h*0.4", move = "monitor_w*0.15 monitor_h*0.5", no_dim = true })
 hl.window_rule({ name = "mail-scratchpad", match = { class = m.mail_scratchpad }, float = true, size = "monitor_w*0.5 monitor_h*0.5", no_dim = true })
 hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad }, float = true, size = "monitor_w*0.4 monitor_h*0.9", no_dim = true })
