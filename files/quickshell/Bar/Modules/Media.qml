@@ -279,6 +279,35 @@ Item {
                 }
 
                 Item {
+                    id: iphoneSpectrumHost
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.preferredWidth: iphoneSpectrum.visible ? iphoneSpectrum.implicitWidth : 0
+                    Layout.fillHeight: true
+                    implicitWidth: iphoneSpectrum.visible ? iphoneSpectrum.implicitWidth : 0
+                    implicitHeight: mediaControl.baseHeight
+
+                    IPhoneSpectrum {
+                        id: iphoneSpectrum
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: Settings.settings.showIphoneVisualizer === true
+                                 && MusicManager.visualizerAllowed
+                                 && MusicManager.isPlaying
+                                 && MusicManager.cavaValues.length > 0
+                        implicitWidth: Math.round(mediaControl.baseHeight * 1.6)
+                        implicitHeight: Math.round(mediaControl.baseHeight * 0.55)
+                        height: implicitHeight
+                        width: implicitWidth
+                        values: MusicManager.cavaValues
+                        targetBars: Math.max(12, Math.min(32, Math.round(implicitWidth / 2.5)))
+                        accentColor: mediaControl.accentReady ? mediaControl.mediaAccent : Theme.accentPrimary
+                        fillOpacity: 0.8
+                        barGap: Math.max(1, Math.round(capsuleScale * 1.0))
+                        minBarWidth: Math.max(1, Math.round(capsuleScale * 1.5))
+                        animDurationMs: 70
+                    }
+                }
+
+                Item {
                     id: compactTrackHost
                     Layout.alignment: Qt.AlignVCenter
                     Layout.fillWidth: true
@@ -350,9 +379,8 @@ Item {
                                         .filter(function(x){ return !!x; })
                                         .join(" — ")
                                   : ""
-                            font.family: Theme.fontFamily
+                            font.pixelSize: mediaControl.musicTextPx
                             font.weight: Font.Medium
-                            font.pixelSize: Theme.fontSizeSmall * mediaControl.capsuleScale
                         }
 
                         LinearSpectrum {
@@ -460,7 +488,14 @@ Item {
                                 color: Theme.textPrimary
                                 font.family: Theme.fontFamily
                                 font.weight: Font.Medium
-                                font.pixelSize: mediaControl.musicTextPx
+                                font.pixelSize: {
+                                    var base = mediaControl.musicTextPx;
+                                    var mw = titleMeasure.paintedWidth;
+                                    var aw = width;
+                                    if (mw <= 0 || aw <= 0) return base;
+                                    if (mw <= aw) return base;
+                                    return Math.max(Math.round(base * 0.55), Math.round(base * aw / mw));
+                                }
                                 maximumLineCount: 1
                                 z: 2
                             }
