@@ -63,7 +63,7 @@ Rectangle {
             Timer { interval: 33; repeat: true; running: true; onTriggered: weatherDecor.requestPaint() }
 
 
-            function drawClouds(ctx,w,h){ctx.fillStyle="rgba(170,187,204,0.85)";drawCloud(ctx,w*0.28,h*0.22,22);drawCloud(ctx,w*0.45,h*0.16,18);drawCloud(ctx,w*0.20,h*0.10,16)}
+            function drawClouds(ctx,w,h){ctx.fillStyle="rgba(170,187,204,0.85)";drawCloud(ctx,w*0.35,h*0.19,11);drawCloud(ctx,w*0.39,h*0.16,9);drawCloud(ctx,w*0.32,h*0.14,8)}
             function drawCloud(ctx,cx,cy,r){ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.arc(cx+r*0.7,cy-r*0.25,r*0.75,0,Math.PI*2);ctx.arc(cx+r*1.2,cy,r*0.7,0,Math.PI*2);ctx.arc(cx-r*0.6,cy+r*0.1,r*0.6,0,Math.PI*2);ctx.arc(cx+r*0.5,cy-r*0.5,r*0.55,0,Math.PI*2);ctx.fill()}
             function drawFog(ctx,w,h){ctx.strokeStyle="#8899AA";ctx.lineWidth=2;for(var i=0;i<6;i++){var y=h*0.2+i*h*0.1;ctx.globalAlpha=0.04+i*0.006;ctx.beginPath();ctx.moveTo(w*0.1,y);ctx.lineTo(w*0.9,y);ctx.stroke()}ctx.globalAlpha=0.07}
             function drawRain(ctx,w,h){ctx.strokeStyle="#88AACC";ctx.lineWidth=1;for(var i=0;i<40;i++){var x=(i*37+13)%w;var y=(i*53+7)%h;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-3,y+8);ctx.stroke()}}
