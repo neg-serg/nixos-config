@@ -1,6 +1,6 @@
 {
   "tooltip": {
-    "delayMs": 1500,
+    "delayMs": 150,
     "minSize": 20,
     "margin": 12,
     "padding": 8,

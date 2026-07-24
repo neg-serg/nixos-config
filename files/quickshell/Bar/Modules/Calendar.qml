@@ -17,6 +17,8 @@ OverlayToggleCapsule {
     autoToggleOnTap: true
     overlayNamespace: "qs-calendar"
 
+    property bool overlayContainsMouse: false
+
     property color parchmentBg: Color.withAlpha(Theme.surface, 0.85)
     property color goldAccent: Color.withAlpha(Theme.accentPrimary, 0.85)
     property color goldDim: Color.withAlpha(Theme.accentPrimary, 0.35)
@@ -56,6 +58,8 @@ OverlayToggleCapsule {
             anchors.bottomMargin: Theme.calendarPopupMargin
             anchors.rightMargin: Theme.calendarPopupMargin
 
+            HoverHandler { onHoveredChanged: root.overlayContainsMouse = hovered }
+
             Rectangle { anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right; height: 1; color: Color.withAlpha(root.goldAccent, 0.25) }
 
             ColumnLayout {
@@ -75,7 +79,7 @@ OverlayToggleCapsule {
                         onClicked: { var d=new Date(root.currentYear,root.currentMonth+1,1); root.currentYear=d.getFullYear(); root.currentMonth=d.getMonth(); root.updateAll() } }
                 }
 
-                // ── Illustration (2x larger, compact spacing) ──
+                // --- Illustration ---
                 Rectangle {
                     Layout.fillWidth: true; Layout.preferredHeight: Math.round(140*Theme.scale(root.screen)); color: "transparent"
                     HiDpiImage {
