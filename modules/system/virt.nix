@@ -6,8 +6,7 @@
 }:
 let
   mainUser = config.users.main.name or "neg";
-in
-{
+in {
   config = {
     users.users."${mainUser}".extraGroups = [
       "video"
@@ -45,5 +44,9 @@ in
         };
       };
     };
+
+    # Clear LoadCredentialEncrypted — TPM2 is disabled on this host,
+    # so systemd can't set up encrypted credentials (no /dev/tpmrm0).
+    systemd.services.libvirtd.serviceConfig.LoadCredentialEncrypted = lib.mkForce [ ];
   };
 }
