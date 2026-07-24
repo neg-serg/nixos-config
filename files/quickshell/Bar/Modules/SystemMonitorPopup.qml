@@ -25,9 +25,11 @@ PanelOverlaySurface {
     readonly property int _fontSize: Math.round(Theme.fontSizeSmall * 1.2) || 14
     readonly property int _fontSizeSmall: Math.round(Theme.fontSizeSmall * 0.95) || 12
     readonly property int _fontSizeMedium: Math.round(Theme.fontSizeMedium * 1.2) || 18
+    readonly property real _pad: 14
     readonly property real _spacing: 8
     readonly property string _grafanaBase: "http://127.0.0.1:3030"
     readonly property real _cardH: 56
+    readonly property color sepColor: "transparent"
 
     property var logEntries: []
     property int totalLogs: 0
