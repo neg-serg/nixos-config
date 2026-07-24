@@ -5,6 +5,7 @@
     ./networking.nix
     ./services.nix
     ./virtualisation/lxc.nix
+    ./flavor-override.nix
   ];
   system.preserveFlake = false;
   roles.workstation.enable = true;
