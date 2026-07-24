@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.Components
 import qs.Settings
 import "../../Helpers/Color.js" as Color
@@ -30,6 +31,10 @@ PanelOverlaySurface {
     readonly property string _grafanaBase: "http://127.0.0.1:3030"
     readonly property real _cardH: 56
     readonly property color sepColor: "transparent"
+    readonly property string _ttyLogDir: {
+        var home = Quickshell.env("HOME") || "/tmp";
+        return home + "/.cache/quickshell/tty-logs";
+    }
 
     property var logEntries: []
     property int totalLogs: 0
@@ -38,7 +43,10 @@ PanelOverlaySurface {
     property bool journalReady: false
     property var _pendingEntries: []
     property var _pendingServices: ({})
+    // TTY log output
+    property var ttyOutput: []
 
+    // ── Journal ──
     ProcessRunner {
         id: journalCtl
         cmd: ["/run/current-system/sw/bin/journalctl","--no-pager","-n","120","--output=json","--since","15 minutes ago"]
@@ -62,6 +70,42 @@ PanelOverlaySurface {
 
     function refreshAll(){root._pendingEntries=[];root._pendingServices=({});root.journalReady=false;journalCtl.stop();journalCtl.start()}
     Timer{interval:15000;repeat:true;running:true;triggeredOnStart:false;onTriggered:root.refreshAll()}
+
+    // ── TTY log scanner ──
+    ProcessRunner {
+        id: ttyScanner
+        cmd: ["bash","-c","for f in " + root._ttyLogDir + "/*.log; do [ -f \"$f\" ] || continue; echo \"===TTY===\" \"$(basename \"$f\" .log)\"; tail -n 25 \"$f\" | sed 's/\\x1b\\[[0-9;]*[a-zA-Z]//g'; done"]
+        autoStart:false; restartOnExit:false
+        onLine:(s)=>{root._parseTtyLine(s)}
+        onExited:{root._flushTtySection(); root.ttyOutput = root.ttyOutput}
+    }
+
+    property var _pendingTty: []
+    property string _currentTtyName: ""
+    function _parseTtyLine(raw) {
+        var s = String(raw);
+        if (s.indexOf("===TTY===") === 0) {
+            if (_currentTtyName) root._flushTtySection();
+            _currentTtyName = s.substring(10).trim();
+            _pendingTty = [];
+        } else {
+            var trimmed = s.trim();
+            if (trimmed) _pendingTty.push(trimmed);
+        }
+    }
+    function _flushTtySection() {
+        if (!_currentTtyName) return;
+        var existing = root.ttyOutput.find(function(e) { return e.name === root._currentTtyName; });
+        if (existing) {
+            existing.lines = _pendingTty;
+        } else {
+            root.ttyOutput.push({name: root._currentTtyName, lines: _pendingTty});
+        }
+        _currentTtyName = "";
+        _pendingTty = [];
+    }
+
+    Timer { id: ttyPoll; interval: 3000; repeat: true; running: true; onTriggered: { if (!ttyScanner.running) ttyScanner.start() } }
 
     Column {
         anchors.fill:parent; anchors.margins:root._pad; spacing:root._spacing
@@ -93,7 +137,7 @@ PanelOverlaySurface {
 
         Text{text:"Recent Logs";font.family:Theme.fontFamily;font.pixelSize:root._fontSize | 0;color:Theme.textPrimary;font.bold:true}
 
-        Rectangle { width:parent.width; height:parent.height-220; radius:6; color:root.cardBg; clip:true
+        Rectangle { width:parent.width; height:Math.max(60, (parent.height-340)/2); radius:6; color:root.cardBg; clip:true
             ListView {
                 model:root.logEntries
                 header: RowLayout { width:parent?parent.width:800
@@ -104,7 +148,39 @@ PanelOverlaySurface {
                     RowLayout { anchors.fill:parent; anchors.margins:2
                         Text{text:modelData.time;font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall | 0;color:modelData.level==="error"?Theme.error:modelData.level==="warn"?Theme.warning:Theme.textSecondary;Layout.preferredWidth:70;elide:Text.ElideRight}
                         Text{text:modelData.service;font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall | 0;color:Theme.textPrimary;Layout.preferredWidth:140;elide:Text.ElideRight}
-                        Text{text:modelData.message;font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall | 0;color:Theme.textSecondary;Layout.fillWidth:true;elide:Text.ElideRight} } } } }
+                        Text{text:modelData.message;font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall | 0;color:Theme.textSecondary;Layout.fillWidth:true;elide:Text.ElideRight} } } }
+        }
+
+        // ── TTY Output section ──
+        Text{text:"TTY Output";font.family:Theme.fontFamily;font.pixelSize:root._fontSize | 0;color:Theme.textPrimary;font.bold:true;visible:root.ttyOutput.length>0}
+
+        Repeater {
+            model: root.ttyOutput
+            delegate: Rectangle {
+                width: parent.width
+                height: Math.min(120, 22 * Math.max(1, (modelData.lines || []).length))
+                radius: 6; color: root.cardBg; clip: true
+                Column {
+                    anchors.fill: parent; anchors.margins: 4
+                    Text {
+                        text: modelData.name
+                        font.family: Theme.fontFamily
+                        font.pixelSize: root._fontSizeSmall | 0
+                        color: root.accentColor
+                        font.bold: true
+                    }
+                    Text {
+                        text: (modelData.lines || []).join("\n")
+                        font.family: "monospace"
+                        font.pixelSize: Math.round(root._fontSizeSmall * 0.85) | 0
+                        color: Theme.textSecondary
+                        width: parent.width
+                        elide: Text.ElideNone
+                        wrapMode: Text.WrapAnywhere
+                    }
+                }
+            }
+        }
 
         RowLayout { width:parent.width; spacing:8; Item{Layout.fillWidth:true}
             Rectangle { id:btnRect1; radius:4; color:root.cardBg
