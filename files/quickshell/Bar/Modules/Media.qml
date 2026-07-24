@@ -55,7 +55,7 @@ Item {
         return 0.6;
     })()
     readonly property color panelOverlayBgColor: Color.withAlpha(Theme.surface, mediaControl.panelOverlayBgOpacity)
-    readonly property real mediaRowSpacing: Math.max(4, Math.round(Theme.panelWidgetSpacing * mediaControl.capsuleScale * 0.6))
+    readonly property real mediaRowSpacing: Math.max(4, Math.round(Theme.panelWidgetSpacing * mediaControl.capsuleScale * 0.9))
     readonly property real stretchTrackHeightHint: Math.max(mediaControl.musicTextPx * 1.6, Math.round(mediaControl.baseHeight * Math.max(0, Math.min(1, 1 - mediaControl.iconStretchShare))))
     readonly property real compactContentWidth: mediaRow
         ? Math.max(mediaRow.implicitWidth, mediaControl.iconPreferredWidth + mediaControl.mediaRowSpacing + Math.max(trackContainer.implicitWidth, 1))
@@ -173,6 +173,7 @@ Item {
     }
     WidgetCapsule {
         id: capsule
+        paddingScale: 1.5
         anchors.fill: parent
         backgroundKey: "media"
         centerContent: false
