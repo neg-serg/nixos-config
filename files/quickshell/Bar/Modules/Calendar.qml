@@ -77,7 +77,7 @@ OverlayToggleCapsule {
 
                 // ── Illustration (2x larger, compact spacing) ──
                 Rectangle {
-                    Layout.fillWidth: true; Layout.preferredHeight: Math.round(140*Theme.scale(root.screen))
+                    Layout.fillWidth: true; Layout.preferredHeight: Math.round(140*Theme.scale(root.screen)); color: "transparent"
                     HiDpiImage {
                         id: monthIllustration
                         anchors.centerIn: parent; width: parent.width-16; height: parent.height-8; fillMode: Image.PreserveAspectFit
@@ -85,7 +85,7 @@ OverlayToggleCapsule {
                         Behavior on source { NumberAnimation { target:monthFade; property:"opacity"; from:0.3; to:1.0; duration:400 } }
                         Rectangle { id:monthFade; anchors.fill:parent; color:"transparent"; opacity:1.0 }
                         layer.enabled: true
-                        layer.effect: MultiEffect { colorization: 1.0; colorizationColor: root.goldAccent }
+                        layer.effect: MultiEffect { colorization: 0.85; colorizationColor: root.goldAccent }
                     }
                 }
 
