@@ -4,6 +4,7 @@ import "../../Helpers/ProductionCalendar.js" as ProdCal
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Effects
 import qs.Components
 import qs.Settings
 import "../../Helpers/Color.js" as Color
@@ -86,10 +87,16 @@ OverlayToggleCapsule {
                     Layout.fillWidth: true; Layout.preferredHeight: Math.round(70*Theme.scale(root.screen))
                     radius: Math.round(4*Theme.scale(root.screen)); color: Color.withAlpha(root.goldDim,0.06); border.color: Color.withAlpha(root.goldDim,0.12); border.width: 1
                     HiDpiImage {
+                        id: monthIllustration
                         anchors.centerIn: parent; width: parent.width-16; height: parent.height-8; fillMode: Image.PreserveAspectFit
                         source: Qt.resolvedUrl("../../art/calendar/"+(root.currentMonth+1)+".svg")
                         Behavior on source { NumberAnimation { target:monthFade; property:"opacity"; from:0.3; to:1.0; duration:400 } }
                         Rectangle { id:monthFade; anchors.fill:parent; color:"transparent"; opacity:1.0 }
+                        layer.enabled: true
+                        layer.effect: MultiEffect {
+                            colorization: 1.0
+                            colorizationColor: root.goldAccent
+                        }
                     }
                 }
 
