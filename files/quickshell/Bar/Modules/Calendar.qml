@@ -123,8 +123,8 @@ OverlayToggleCapsule {
 
                         Text {
                             anchors.centerIn: parent; text: model.day
-                            color: { if(isToday)return root.goldAccent; if(isHoliday)return Theme.error; if(isWeekend)return Color.withAlpha(root.textWarmDim,0.75); return root.textWarm }
-                            opacity: isCurrentMonth?0.9:0.3; font.family: Theme.fontFamily; font.pixelSize: Math.round(13*Theme.scale(root.screen)); font.weight: isToday?Font.Bold:Font.Normal }
+                            color: { if(isToday)return root.goldAccent; if(isHoliday)return Theme.error; if(isWeekend){ if(isCurrentMonth)return root.goldAccent; return Color.mix(root.textWarm,root.goldAccent,0.35) } return root.textWarm }
+                            opacity: isCurrentMonth?0.9:0.3; font.family: Theme.fontFamily; font.pixelSize: Math.round(13*Theme.scale(root.screen)); font.weight: (isToday||(isWeekend&&isCurrentMonth))?Font.Bold:Font.Normal }
 
                         Rectangle { visible:isHoliday; width:4*Theme.scale(root.screen); height:width; radius:width/2; color:Theme.error; anchors.top:parent.top; anchors.right:parent.right; anchors.margins:2 }
 
