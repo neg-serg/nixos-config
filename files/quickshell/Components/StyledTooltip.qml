@@ -152,11 +152,10 @@ Window {
     Rectangle {
         id: tooltipBg
         anchors.fill: parent
-        radius: Theme.tooltipRadius * scaleFactor
-        color: Theme.surfaceActive
+        radius: Theme.panelMenuRadius * scaleFactor
+        color: Theme.background
         border.color: Theme.borderSubtle
-        border.width: Theme.tooltipBorderWidth * scaleFactor
-        opacity: Theme.tooltipOpacity
+        border.width: Theme.uiBorderWidth * scaleFactor
         z: 1
     }
 
