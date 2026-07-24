@@ -45,7 +45,7 @@ OverlayToggleCapsule {
         PanelOverlaySurface {
             id: sf
             screen: root.screen
-            backgroundColor: "transparent"
+            backgroundColor: root.parchmentBg
             borderColor: "transparent"
             borderWidth: 0
             cornerRadiusOverride: Math.round(Theme.cornerRadiusLarge / 3)
@@ -56,13 +56,7 @@ OverlayToggleCapsule {
             anchors.bottomMargin: Theme.calendarPopupMargin
             anchors.rightMargin: Theme.calendarPopupMargin
 
-            Rectangle {
-                anchors.fill: parent
-                radius: Math.round(Theme.sidePanelCornerRadius * Theme.scale(root.screen))
-                color: root.parchmentBg
-                border.color: "transparent"
-                Rectangle { anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right; height: 1; color: Color.withAlpha(root.goldAccent, 0.25) }
-            }
+            Rectangle { anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right; height: 1; color: Color.withAlpha(root.goldAccent, 0.25) }
 
             ColumnLayout {
                 anchors.fill: parent
