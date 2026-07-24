@@ -86,7 +86,7 @@ OverlayToggleCapsule {
                         id: monthIllustration
                         anchors.centerIn: parent; width: parent.width-16; height: parent.height-8; fillMode: Image.PreserveAspectFit
                         source: Qt.resolvedUrl("../../art/calendar/"+(root.currentMonth+1)+".svg")
-                        Behavior on source { NumberAnimation { target:monthFade; property:"opacity"; from:0.3; to:1.0; duration:400 } }
+                        Behavior on source { NumberAnimation { target:monthFade; property:"opacity"; from:0.3; to:1.0; duration: Theme.panelAnimStdMs } }
                         Rectangle { id:monthFade; anchors.fill:parent; color:"transparent"; opacity:1.0 }
                         layer.enabled: true
                         layer.effect: MultiEffect { colorization: 0.85; colorizationColor: root.goldAccent }
