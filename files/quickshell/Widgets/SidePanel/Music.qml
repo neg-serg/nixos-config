@@ -296,7 +296,6 @@ Rectangle {
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: detailsCol.implicitHeight
-                        implicitWidth: detailsCol.implicitWidth
                         color: "transparent"
                         radius: Theme.sidePanelInnerRadius
                         border.width: Theme.uiBorderNone
@@ -305,6 +304,7 @@ Rectangle {
 
                         ColumnLayout {
                             id: detailsCol
+                            clip: true
                             anchors.fill: parent
                             anchors.leftMargin: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(screen))
                             anchors.rightMargin: Math.round(Theme.sidePanelSpacingSmall * Theme.scale(screen))
