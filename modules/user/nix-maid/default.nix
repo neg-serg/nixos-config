@@ -72,6 +72,7 @@
     # Media & Audio
     ./sys/media.nix
     ./sys/pipewire.nix
+    ./apps/supercollider.nix
   ];
 
   users.users.neg.maid = { };
