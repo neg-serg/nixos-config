@@ -40,6 +40,9 @@
       noreplaceSmp = false; # Allow SMP alternatives patching on Zen 5 dual-CCD (9950X3D)
       # ASUS AM5 + NVMe D3cold workaround: disable ASPM + PCIe port PM
       pciePerformance = false;
+      # CPU affinity kernel params (irqaffinity, kthread_cpus) — disabled.
+      # Use cgroup cpuset (game-run) instead for more flexible pinning.
+      cpuAffinity = false;
       # V-Cache CCD (96MB L3) cores for gaming isolation
       gamingCpuSet = "1-3,16-19";
       # Standard CCD (32MB L3) for kernel/IRQ housekeeping
