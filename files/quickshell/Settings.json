@@ -55,7 +55,7 @@
     "reverseDayMonth": false,
     "showMediaInBar": true,
     "showMediaVisualizer": false,
-    "showIphoneVisualizer": true,
+    "showIphoneVisualizer": false,
     "showSpectrumTopHalf": false,
     "showWeatherInBar": true,
     "spectrumBarGap": 1,
