@@ -44,7 +44,7 @@ Rectangle {
 
         Rectangle { anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right; height: 1; color: Color.withAlpha(Theme.accentPrimary, 0.25); z: 2 }
 
-        Image { id: moonImg; source: "../../illustrations/moon_nasa.png"; visible: false; cache: false }
+        Image { id: moonImg; source: "../../illustrations/moon_nasa.jpg"; visible: false; cache: false }
         Canvas {
             id: weatherDecor
             anchors.fill: parent; z: 0
