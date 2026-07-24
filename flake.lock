@@ -1817,7 +1817,6 @@
         "skwd-daemon": "skwd-daemon_2",
         "sops-nix": "sops-nix",
         "sqlit": "sqlit_2",
-        "sshell": "sshell",
         "steam-config-nix": "steam-config-nix",
         "tailray": "tailray",
         "talktype": "talktype_2",
@@ -2037,22 +2036,6 @@
       "original": {
         "owner": "Maxteabag",
         "repo": "sqlit",
-        "type": "github"
-      }
-    },
-    "sshell": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1778040804,
-        "narHash": "sha256-/V7f2kB6dneYAd8NsuBdG97RtfvlWrIRpEKes9KxTvE=",
-        "owner": "stormy-soul",
-        "repo": "sshell",
-        "rev": "fb59fa6f6bade33cf9fb18d9804238d88ee3e161",
-        "type": "github"
-      },
-      "original": {
-        "owner": "stormy-soul",
-        "repo": "sshell",
         "type": "github"
       }
     },
