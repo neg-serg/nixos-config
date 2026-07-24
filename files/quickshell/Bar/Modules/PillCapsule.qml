@@ -40,8 +40,8 @@ OverlayToggleCapsule {
             id: pulseAnimation
             running: Services.PillTracker.reminderActive && !(Settings.settings.reducedMotion)
             loops: Animation.Infinite
-            PropertyAnimation { to: 0.3; duration: 800; easing.type: Easing.InOutSine }
-            PropertyAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
+            PropertyAnimation { to: 0.3; duration: 500; easing.type: Easing.InOutSine }
+            PropertyAnimation { to: 1.0; duration: 500; easing.type: Easing.InOutSine }
             onRunningChanged: if (!running) pillIcon.opacity = 1.0
         }
     }
