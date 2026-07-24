@@ -286,17 +286,6 @@ hl.define_submap("special", "reset", function()
   binde_reset("o", hl.dsp.exec_cmd('raise --match "title:regex=' .. m.file_dialog .. '"'))
 end)
 
--- Submap: selectors (selectors.conf)
-hl.bind(M4 .. "+" .. M1 .. "+S", hl.dsp.submap("selectors"))
-hl.define_submap("selectors", "reset", function()
-  submap_resets()
-  bind_reset("w", hl.dsp.exec_cmd("hyde-selector wallpaper"))
-  bind_reset("t", hl.dsp.exec_cmd("hyde-selector theme"))
-  bind_reset("a", hl.dsp.exec_cmd("hyde-selector animation"))
-
-  hl.bind("Return", hl.dsp.submap("reset"))
-  hl.bind("escape", hl.dsp.submap("reset"))
-end)
 
 -- Submap: wallpaper (wallpaper.conf)
 hl.bind(M4 .. "+" .. SH .. "+y", hl.dsp.submap("wallpaper"))
