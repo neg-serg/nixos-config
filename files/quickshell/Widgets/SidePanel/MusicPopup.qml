@@ -21,7 +21,7 @@ Item {
     function hidePopup(){ toast.hidePopup(); }
 
     // ── Music popup as WlrLayershell window for compositor blur (hyprglass) ──
-    Window {
+    PanelWindow {
         id: toast
         color: "transparent"
         visible: false
