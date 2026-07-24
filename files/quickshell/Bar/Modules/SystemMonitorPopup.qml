@@ -78,15 +78,15 @@ PanelOverlaySurface {
         Rectangle{width:parent.width;height:1;color:root.sepColor}
 
         Row { width:parent.width; spacing:10
-            Rectangle{w:(parent.width-parent.spacing*2)/3;h:root._cardH;radius:6;color:root.cardBg;border.color:root.cardBorder;border.width:1
+            Rectangle{width:(parent.width-parent.spacing*2)/3;height:root._cardH;radius:6;color:root.cardBg;border.color:root.cardBorder;border.width:1
                 Column{anchors.centerIn:parent;spacing:2
                     Text{text:root.totalLogs.toString();font.family:Theme.fontFamily;font.pixelSize:root._fontSizeMedium;color:Theme.textPrimary;font.bold:true;anchors.horizontalCenter:parent.horizontalCenter}
                     Text{text:"Log Lines";font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall;color:Theme.textSecondary;anchors.horizontalCenter:parent.horizontalCenter}}}
-            Rectangle{w:(parent.width-parent.spacing*2)/3;h:root._cardH;radius:6;color:root.cardBg;border.color:root.cardBorder;border.width:1
+            Rectangle{width:(parent.width-parent.spacing*2)/3;height:root._cardH;radius:6;color:root.cardBg;border.color:root.cardBorder;border.width:1
                 Column{anchors.centerIn:parent;spacing:2
                     Text{text:root.errorCount.toString();font.family:Theme.fontFamily;font.pixelSize:root._fontSizeMedium;color:root.errorCount>0?Theme.error:Theme.textPrimary;font.bold:true;anchors.horizontalCenter:parent.horizontalCenter}
                     Text{text:"Errors";font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall;color:Theme.textSecondary;anchors.horizontalCenter:parent.horizontalCenter}}}
-            Rectangle{w:(parent.width-parent.spacing*2)/3;h:root._cardH;radius:6;color:root.cardBg;border.color:root.cardBorder;border.width:1
+            Rectangle{width:(parent.width-parent.spacing*2)/3;height:root._cardH;radius:6;color:root.cardBg;border.color:root.cardBorder;border.width:1
                 Column{anchors.centerIn:parent;spacing:2
                     Text{text:root.serviceCount.toString();font.family:Theme.fontFamily;font.pixelSize:root._fontSizeMedium;color:Theme.textPrimary;font.bold:true;anchors.horizontalCenter:parent.horizontalCenter}
                     Text{text:"Services";font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall;color:Theme.textSecondary;anchors.horizontalCenter:parent.horizontalCenter}}} }
