@@ -256,12 +256,12 @@ profile-eval: bench-eval flamegraph-eval
 
 # --- TidalCycles Live Coding --------------------------------------------------
 
-# Launch SC server + SuperDirt in background (~18s to ready)
+# Launch SC server + SuperDirt in background (~2s until audio ready)
 tidal-start:
     @echo "TidalCycles: booting engine..."
-    @(sleep 18; echo 'try { ~dirt = SuperDirt(2, s); ~dirt.loadSoundFiles; ~dirt.start(57120, 0 ! 12); "SUPERDIRT READY".postln; } { |err| ("FAIL: " ++ err.what).postln; };') | \
+    @(echo 'try { ~dirt = SuperDirt(2, s); ~dirt.loadSoundFiles; ~dirt.start(57120, 0 ! 12); "SUPERDIRT READY".postln; } { |err| ("FAIL: " ++ err.what).postln; };') | \
       sclang -l ~/.config/SuperCollider/superdirt_startup.scd &
-    @echo "Engine starting — open nvim to code: just tidal"
+    @echo "Engine booting — open nvim to code: just tidal"
 
 # Open nvim for Tidal coding
 tidal:
