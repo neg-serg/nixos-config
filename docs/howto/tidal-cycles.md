@@ -15,14 +15,14 @@ You (nvim .tidal) → GHCi (tidal-ghci) → OSC :57120 → SuperDirt (sclang) �
 ## Quick Start
 
 ```bash
-# 1. Open a Tidal session
+# One command — launches SC server + SuperDirt in background
+just tidal-start     # ~2s until audio ready
+
+# Open nvim for live coding
 just tidal
 
-# 2. In nvim, press Ctrl+Enter to launch SuperDirt + GHCi
-#    Wait for "SuperDirt: listening to Tidal on port 57120"
-
-# 3. Type a pattern and press Alt+Enter to send:
-d1 $ sound "bd sn"
+# In nvim, Ctrl+Enter to launch GHCi, then type patterns:
+d1 $ sound "bd sn"   # Alt+Enter to send line
 
 # If you hear a kick and snare → everything works!
 ```
