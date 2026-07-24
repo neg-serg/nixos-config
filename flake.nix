@@ -18,6 +18,9 @@
       url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.55.4";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    hy3 = {
+      url = "github:outfoxxed/hy3";
+    };
     raise = {
       url = "github:neg-serg/raise";
       inputs.nixpkgs.follows = "nixpkgs";
