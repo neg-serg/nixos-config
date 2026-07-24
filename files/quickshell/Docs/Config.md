@@ -55,6 +55,8 @@ Monitors & Scaling
 Media & Visualizer
 
 - showMediaVisualizer: boolean, default false. Enable visualizer (spectrum) next to track.
+- showIphoneVisualizer: boolean, default false. Enable iPhone-style spectrum visualizer next to
+  album art icon in compact mode. Uses accent color from current track's cover art.
 - activeVisualizerProfile: string, default "classic". Active visualizer profile name.
 - visualizerProfiles: object of profiles keyed by name. Each profile can override CAVA/spectrum
   parameters below.
