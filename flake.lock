@@ -1806,8 +1806,7 @@
         "xdg-desktop-portal-hyprland": [
           "hyprland",
           "xdph"
-        ],
-        "sshell": "sshell"
+        ]
       }
     },
     "rsmetrx": {
@@ -2426,22 +2425,6 @@
       "original": {
         "owner": "hyprwm",
         "repo": "xdg-desktop-portal-hyprland",
-        "type": "github"
-      }
-    },
-    "sshell": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1778040804,
-        "narHash": "sha256-/V7f2kB6dneYAd8NsuBdG97RtfvlWrIRpEKes9KxTvE=",
-        "owner": "stormy-soul",
-        "repo": "sshell",
-        "rev": "fb59fa6f6bade33cf9fb18d9804238d88ee3e161",
-        "type": "github"
-      },
-      "original": {
-        "owner": "stormy-soul",
-        "repo": "sshell",
         "type": "github"
       }
     }
