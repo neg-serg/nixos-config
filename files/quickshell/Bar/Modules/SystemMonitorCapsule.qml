@@ -19,6 +19,9 @@ OverlayToggleCapsule {
     capsule.implicitWidth: capsule.horizontalPadding * 2 + metricsRow.implicitWidth
     capsuleVisible: _anyVisible
     autoToggleOnTap: true
+    // Tooltip on capsule hover
+    PanelTooltip{text:"Open system dashboard";targetItem:root;visibleWhen:capsHov.containsMouse}
+    MouseArea{id:capsHov;z:-1;anchors.fill:parent;hoverEnabled:true;acceptedButtons:Qt.NoButton}
     overlayNamespace: "sysmon-popup"
 
     // ── Settings ──
