@@ -41,9 +41,15 @@ _: {
       };
       "11-lan" = {
         matchConfig.Name = "net1";
-        networkConfig.DHCP = "ipv4";
+        networkConfig = {
+          DHCP = "ipv4";
+          KeepConfiguration = "yes";
+        };
         # net1 is optional (e.g. unplugged 10G), don't wait for it
-        linkConfig.RequiredForOnline = "no";
+        linkConfig = {
+          RequiredForOnline = "no";
+          ActivationPolicy = "always-up";
+        };
         dhcpV4Config = {
           UseDNS = true;
           UseRoutes = true;

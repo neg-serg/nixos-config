@@ -14,3 +14,4 @@ singleton SystemMonitor 1.0 SystemMonitor.qml
 singleton Weather 1.0 Weather.qml
 singleton PillTracker 1.0 PillTracker.qml
 singleton WidgetRegistry 1.0 WidgetRegistry.qml
+singleton OverlayManager 1.0 OverlayManager.qml
