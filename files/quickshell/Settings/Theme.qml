@@ -532,6 +532,7 @@ Singleton {
         'panel.animations.stdMs': 'panelAnimStdMs',
         'panel.animations.fastMs': 'panelAnimFastMs',
         'panel.animations.slideMs': 'panelSlideMs',
+        'panel.animations.overlayMs': 'panelAnimOverlayMs',
         'panel.tray.longHoldMs': 'panelTrayLongHoldMs',
         'panel.tray.shortHoldMs': 'panelTrayShortHoldMs',
         'panel.tray.guardMs': 'panelTrayGuardMs',
@@ -822,9 +823,10 @@ Singleton {
     property int panelPillAutoHidePauseMs: val('panel.pill.autoHidePauseMs', 2500)
     property color panelPillColor: val('panel.pill.color', "#000000")
     // Animation timings
-    property int panelAnimStdMs: val('panel.animations.stdMs', 250)
-    property int panelAnimFastMs: val('panel.animations.fastMs', 200)
-    property int panelSlideMs: val('panel.animations.slideMs', 700)
+    property int panelAnimStdMs: val('panel.animations.stdMs', 200)
+    property int panelAnimFastMs: val('panel.animations.fastMs', 150)
+    property int panelSlideMs: val('panel.animations.slideMs', 280)
+    property int panelAnimOverlayMs: val('panel.animations.overlayMs', 180)
     // Tray behavior timings
     property int panelTrayLongHoldMs: val('panel.tray.longHoldMs', 2500)
     property int panelTrayShortHoldMs: val('panel.tray.shortHoldMs', 1500)
@@ -1071,7 +1073,7 @@ Singleton {
     // Generic tick timer (UI dedupe)
     property int genericTickMs: val('timers.genericTickMs', 2000)
     // Bar slide debounce timer
-    property int panelSlideTimerTickMs: val('panel.slideTimerTickMs', 50)
+    property int panelSlideTimerTickMs: val('panel.slideTimerTickMs', 16)
     // Weather HTTP timeout
     property int weatherHttpTimeoutMs: val('weather.httpTimeoutMs', 8000)
     // Greeter timing tokens
