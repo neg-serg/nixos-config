@@ -2,11 +2,8 @@
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform qt_ubuf {
-    vec4 iPhase;
+    vec4 params0; // x=iPhase, y=iRadius, z=cx, w=cy
     vec4 iColor;
-    vec4 iRadius;
-    vec4 cx;
-    vec4 cy;
 };
 
 float hash(vec2 p) { return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
@@ -14,11 +11,11 @@ float noise(vec2 p) { vec2 i=floor(p); vec2 f=fract(p); f=f*f*(3.0-2.0*f); retur
 float fbm(vec2 p) { float v=0.0,a=0.5; for(int i=0;i<5;i++){v+=a*noise(p);p*=2.0;a*=0.5;} return v; }
 
 void main() {
-    vec2 center = vec2(cx.x, cy.x);
+    float phase = params0.x;
+    float r = params0.y;
+    vec2 center = vec2(params0.z, params0.w);
     vec2 pos = qt_TexCoord0 - center;
     float dist = length(pos);
-    float phase = iPhase.x;
-    float r = iRadius.x;
 
     if (dist > r) { fragColor = vec4(0.0); return; }
 
@@ -31,7 +28,7 @@ void main() {
         float cd = length(pos - cp);
         if (cd < cr) { float rim = smoothstep(cr, cr*0.85, cd); float depth = (1.0 - cd/cr) * 0.5; crater += rim*0.15; craterDepth += depth*0.3; }
         else if (cd < cr*1.5) { float rd = abs(cd-cr); float rim = exp(-rd*12.0/cr)*0.2; crater += rim; craterDepth -= rim*0.15; }
-        float la = atan(pos.y - cp.y, pos.x - cp.x);
+        float la = atan(pos.y - cp.y + 1e-6, pos.x - cp.x + 1e-6);
         if (cd < cr*1.5 && cd > cr*0.7) crater += max(0.0, cos(la-0.8))*0.08;
     }
 
@@ -47,6 +44,6 @@ void main() {
     vec3 col = mix(vec3(0.82,0.80,0.78), vec3(0.76,0.74,0.72), maria*3.0);
     col = mix(col, vec3(0.55,0.53,0.50), ps);
     col = mix(col, iColor.rgb*0.3, crater*2.0);
-    col += smoothstep(r, r*0.92, dist)*0.1;
+    col += smoothstep(r * 0.92, r, dist) * 0.1;
     fragColor = vec4(col, 1.0);
 }
