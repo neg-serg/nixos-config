@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# tty-log — wrap a command with 'script' to capture output for quickshell dashboard.
+# Usage: tty-log <name> [command...]
+#   tty-log htop htop
+#   tty-log build nix build .#foo
+#   tty-log tty1          # captures entire shell session (run once per TTY)
+
+set -euo pipefail
+NAME="${1:?Usage: tty-log <name> [command...]}"
+shift
+LOGDIR="$HOME/.cache/quickshell/tty-logs"
+mkdir -p "$LOGDIR"
+LOGFILE="$LOGDIR/${NAME}.log"
+
+# Truncate old log to avoid unbounded growth (keep last ~200KB)
+tail -c 204800 "$LOGFILE" 2>/dev/null > "$LOGFILE.tmp" && mv "$LOGFILE.tmp" "$LOGFILE" || true
+
+if [ $# -gt 0 ]; then
+    exec script -f -c "$*" "$LOGFILE"
+else
+    exec script -f "$LOGFILE"
+fi
