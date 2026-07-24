@@ -16,10 +16,10 @@ OverlayToggleCapsule {
     autoToggleOnTap: true
 
     readonly property color parchmentBg: Color.withAlpha("#1a1410", 0.92)
-    readonly property color goldAccent: Color.withAlpha("#c9a050", 0.9)
-    readonly property color goldDim: Color.withAlpha("#8b7332", 0.6)
-    readonly property color textWarm: "#e8dcc8"
-    readonly property color textWarmDim: "#a09880"
+    readonly property color goldAccent: Color.withAlpha(Theme.accentPrimary, 0.85)
+    readonly property color goldDim: Color.withAlpha(Theme.accentPrimary, 0.35)
+    readonly property color textWarm: Theme.textPrimary
+    readonly property color textWarmDim: Theme.textSecondary
 
     property var holidays: []
     property var prodCal: []
@@ -118,10 +118,10 @@ OverlayToggleCapsule {
 
                         Text {
                             anchors.centerIn: parent; text: model.day
-                            color: { if(isToday)return root.goldAccent; if(isHoliday)return"#ff6b6b"; if(isWeekend)return root.textWarmDim; return root.textWarm }
+                            color: { if(isToday)return root.goldAccent; if(isHoliday)return Theme.error; if(isWeekend)return root.textWarmDim; return root.textWarm }
                             opacity: isCurrentMonth?0.9:0.3; font.family: Theme.fontFamily; font.pixelSize: Math.round(15*Theme.scale(root.screen)); font.weight: isToday?Font.Bold:Font.Normal }
 
-                        Rectangle { visible:isHoliday; width:4*Theme.scale(root.screen); height:width; radius:width/2; color:"#ff6b6b"; anchors.top:parent.top; anchors.right:parent.right; anchors.margins:2 }
+                        Rectangle { visible:isHoliday; width:4*Theme.scale(root.screen); height:width; radius:width/2; color:Theme.error; anchors.top:parent.top; anchors.right:parent.right; anchors.margins:2 }
 
                         MouseArea { id:dayMouse; anchors.fill:dayCell; hoverEnabled:true
                             onEntered:{ if(isHoliday&&holidayInfos.length>0){ holidayTooltip.text=holidayInfos.map(function(h){return h.localName||h.label||""}).join(" · "); holidayTooltip.targetItem=dayCell; holidayTooltip.visibleWhen=true } }
