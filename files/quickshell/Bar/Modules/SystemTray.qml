@@ -6,6 +6,7 @@ import qs.Settings
 import qs.Components
 import qs.Services as Services
 import "../../Helpers/CapsuleMetrics.js" as CapsuleMetrics
+import "../../Helpers/Color.js" as Color
 
 Row {
     id: root
@@ -140,11 +141,17 @@ Row {
                         width: trayIconFrame
                         height: trayIconFrame
                         radius: Theme.cornerRadiusSmall
-                        // Keep idle background opaque to avoid transparency halo; hover still uses overlay tint
-                        color: trayItemMouseArea.containsMouse ? Theme.overlayWeak : Theme.surfaceHover
+                        color: expanded ? Color.withAlpha(Theme.accentPrimary, 0.15) : (trayItemMouseArea.containsMouse ? Theme.overlayWeak : Theme.surfaceHover)
                         border.width: 0
                         border.color: "transparent"
                         clip: true
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            height: Math.max(1, Math.round(Theme.uiBorderWidth))
+                            color: expanded ? Theme.accentPrimary : "transparent"
+                        }
                         TrayIcon {
                             id: icon
                             anchors.centerIn: parent
