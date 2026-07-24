@@ -74,7 +74,7 @@ for line in text.strip().split('\n'):
                   "server": host, "server_port": port, "uuid": uuid,
                   "packet_encoding": "xudp"}
             tls = {"enabled": True, "server_name": p.get('sni', host),
-                   "utls": {"enabled": True, "fingerprint": p.get('fp', 'chrome')}}
+                   "utls": {"enabled": True, "fingerprint": p.get('fp', 'chrome') if p.get('fp', 'chrome') in ['chrome','firefox','ios','android','edge','safari','360','random','randomized'] else 'chrome'}}
             if p.get('security') == 'reality' and len(p.get('pbk', '')) >= 32:
                 tls["reality"] = {"enabled": True,
                                  "public_key": p.get('pbk', ''),
@@ -164,7 +164,7 @@ for line in text.strip().split('\n'):
                   "server": host, "server_port": port, "uuid": uuid,
                   "packet_encoding": "xudp"}
             tls = {"enabled": True, "server_name": p.get('sni', host),
-                   "utls": {"enabled": True, "fingerprint": p.get('fp', 'chrome')}}
+                   "utls": {"enabled": True, "fingerprint": p.get('fp', 'chrome') if p.get('fp', 'chrome') in ['chrome','firefox','ios','android','edge','safari','360','random','randomized'] else 'chrome'}}
             if p.get('security') == 'reality' and len(p.get('pbk', '')) >= 32:
                 tls["reality"] = {"enabled": True,
                                  "public_key": p.get('pbk', ''),
