@@ -19,6 +19,11 @@ in
   # Agent multiplexer for AI coding agents (herdr)
   herdr = inputs.herdr.packages.${final.stdenv.hostPlatform.system}.default;
 
+  # GHCi with TidalCycles library preloaded — used by tidal.nvim
+  tidal-ghci = final.writeShellScriptBin "tidal-ghci" ''
+    exec ${final.ghc.withPackages (ps: [ ps.tidal ])}/bin/ghci "$@" # TidalCycles GHCi wrapper
+  '';
+
   # Merge all pkgs.neg sub-attributes from individual overlays
   neg =
     (functions.neg or { })
@@ -36,7 +41,8 @@ in
             version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
           });
       game = final.callPackage ./game { };
-
+      superdirt = final.callPackage ./superdirt { }; # SuperDirt SC quark for TidalCycles audio engine
+      dirt-samples = final.callPackage ./dirt-samples { }; # audio sample library for SuperDirt
     };
 
   # Python with LTO optimizations

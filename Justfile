@@ -253,3 +253,29 @@ flamegraph-eval host="odin":
 profile-eval: bench-eval flamegraph-eval
 
 
+
+# --- TidalCycles Live Coding --------------------------------------------------
+
+# Launch SC server + SuperDirt in background (~18s to ready)
+tidal-start:
+    @echo "TidalCycles: booting engine..."
+    @(sleep 18; echo 'try { ~dirt = SuperDirt(2, s); ~dirt.loadSoundFiles; ~dirt.start(57120, 0 ! 12); "SUPERDIRT READY".postln; } { |err| ("FAIL: " ++ err.what).postln; };') | \
+      sclang -l ~/.config/SuperCollider/superdirt_startup.scd &
+    @echo "Engine starting — open nvim to code: just tidal"
+
+# Open nvim for Tidal coding
+tidal:
+    nvim ~/code/tidal/
+
+# Create new .tidal file
+tidal-new name:
+    mkdir -p ~/code/tidal
+    nvim ~/code/tidal/{{name}}.tidal
+
+# PipeWire patchbay for audio routing
+tidal-patch:
+    pw-audioshare
+
+# Real-time audio monitor
+tidal-rt:
+    watch -n 0.5 pw-top
