@@ -130,13 +130,13 @@ OverlayToggleCapsule {
             screen: root.screen
             scaleHint: capsuleScale
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: Math.round((Theme.panelModuleHeight + 4) * capsuleScale)
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: Math.round((Theme.panelModuleHeight + 4) * capsuleScale)
 
             Weather {
                 id: weather
-                width: Math.round(Theme.sidePanelWeatherWidth * capsuleScale)
-                height: Math.round(Theme.sidePanelWeatherHeight * capsuleScale)
+                width: Math.round(Theme.sidePanelWeatherWidth * capsuleScale * 2)
+                height: Math.round(Theme.sidePanelWeatherHeight * capsuleScale * 2)
             }
         }
     ]
