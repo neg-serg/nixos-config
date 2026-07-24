@@ -16,6 +16,7 @@ HiDpiImage 1.0 HiDpiImage.qml
 IconButton 1.0 IconButton.qml
 InlineTrayCapsule 1.0 InlineTrayCapsule.qml
 LinearSpectrum 1.0 LinearSpectrum.qml
+IPhoneSpectrum 1.0 IPhoneSpectrum.qml
 MaterialIcon 1.0 MaterialIcon.qml
 MoonPhaseIcon 1.0 MoonPhaseIcon.qml
 MonitorBar 1.0 MonitorBar.qml

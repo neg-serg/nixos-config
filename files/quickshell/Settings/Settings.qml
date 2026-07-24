@@ -128,6 +128,9 @@ Singleton {
             // Media visualizer (CAVA/LinearSpectrum) toggle
             property bool showMediaVisualizer: false
 
+            // iPhone-style visualizer beside album art in bar
+            property bool showIphoneVisualizer: false
+
             // Player selection priority
             property var playerSelectionPriority: [
                 "mpdPlaying",
