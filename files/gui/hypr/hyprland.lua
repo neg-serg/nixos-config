@@ -160,7 +160,7 @@ hl.bind(M4 .. "+slash", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(M4 .. "+" .. C .. "+backslash", hl.dsp.window.resize({ x = 640, y = 480 }))
 hl.bind(M4 .. "+Tab", hl.dsp.window.cycle_next({ next = true }))
 hl.bind(M4 .. "+c", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/clipboard/history"))
-hl.bind(M4 .. "+Escape", hl.dsp.exec_cmd("touch ~/.cache/quickshell/dismiss-overlay && hyprctl dispatch closewindow"), { locked = true })
+hl.bind(M4 .. "+Escape", hl.dsp.exec_cmd("sh -c 'touch $HOME/.cache/quickshell/dismiss-overlay; hyprctl dispatch closewindow'"), { locked = true })
 hl.bind(M4 .. "+r", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 hl.bind(M4 .. "+h", hl.dsp.exec_cmd("hyprctl dispatch movefocus l"))
 hl.bind(M4 .. "+j", hl.dsp.exec_cmd("hyprctl dispatch movefocus d"))
@@ -229,10 +229,9 @@ hl.bind(M4 .. "+n", hl.dsp.exec_cmd("dunstctl history-pop"))
 hl.bind(M4 .. "+space", hl.dsp.exec_cmd("dunstctl close-all"), { locked = true })
 
 -- --- Overlay dismissal (quickshell widgets) ---
--- k/d work when overlay has keyboard focus (FocusScope in PanelWithOverlay).
 -- Global fallback: M4+Escape or M4+Shift+K / M4+Shift+D
-hl.bind(M4 .. "+" .. SH .. "+k", hl.dsp.exec_cmd("touch ~/.cache/quickshell/dismiss-overlay"))
-hl.bind(M4 .. "+" .. SH .. "+d", hl.dsp.exec_cmd("touch ~/.cache/quickshell/dismiss-overlay"))
+hl.bind(M4 .. "+" .. SH .. "+k", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/dismiss-overlay"))
+hl.bind(M4 .. "+" .. SH .. "+d", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/dismiss-overlay"))
 
 -- --- Split ratio helpers (tiling-helpers.conf) ---
 hl.bind(M4 .. "+" .. C .. "+d", dispatch("splitratio -0.1"), { repeating = true })
