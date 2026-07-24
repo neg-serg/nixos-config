@@ -7,29 +7,8 @@
   ...
 }:
 let
-  # Flavor: selects which quickshell config to deploy
-  flavor = config.features.gui.quickshell.flavor or "default";
-  isOctashell = flavor == "octashell";
-  isSshell = flavor == "sshell" && (config.features.gui.sshell.enable or false);
-
-  # Package sshell from raw source (sshell input uses flake = false)
-  sshellPkg = pkgs.stdenv.mkDerivation {
-    name = "sshell";
-    src = inputs.sshell;
-    installPhase = ''
-      mkdir -p $out/share/sshell
-      cp -r . $out/share/sshell/
-    '';
-  };
-
-  # Source path based on flavor
-  quickshellSrc =
-    if isSshell then
-      "${sshellPkg}/share/sshell"
-    else if isOctashell then
-      ../../../../files/octashell
-    else
-      ../../../../files/quickshell;
+  # Source path
+  quickshellSrc = ../../../../files/quickshell;
 
   # Feature flags check
   quickshellEnabled =
@@ -61,32 +40,11 @@ let
       pkgs.gawk # GNU awk: used by SystemMonitor probes parsing /proc/{meminfo,swaps,diskstats}
       pkgs.hyprland # dynamic tiling Wayland compositor
       pkgs.neg.rsmetrx # custom metrics exporter
-    ]
-    ++ lib.optionals isOctashell [
-      pkgs.brightnessctl # backlight control
-      pkgs.cliphist # clipboard history
-      pkgs.wl-clipboard # wl-copy for clipboard
-      pkgs.uwsm # universal Wayland session manager
-    ]
-    ++ lib.optionals isSshell [
-      pkgs.brightnessctl # backlight control
-      pkgs.cliphist # clipboard history
-      pkgs.playerctl # MPRIS media player control
-      pkgs.wireplumber # audio control (wpctl)
-      pkgs.networkmanager # nmcli for network
-      pkgs.cava # audio visualizer
-      pkgs.jq # JSON processor
-      pkgs.matugen # Material You color generator
-      pkgs.imagemagick # image processing
-      pkgs.findutils # find command
-      pkgs.bc # calculator for battery script
     ];
   };
 
   # Theme init: deploy Theme from source to writable ~/.config/quickshell directory.
-  # The directory name differs between flavors: octashell uses "theme", default uses "Theme".
-  # Not needed for sshell.
-  quickshellThemeDir = if isOctashell then "theme" else "Theme";
+  quickshellThemeDir = "Theme";
 
   # Theme source path (resolved to Nix store at build time)
   quickshellThemeSrc = "${quickshellSrc}/${quickshellThemeDir}";
@@ -105,32 +63,20 @@ let
   # Build individual nix-maid entries for source dir top-level contents,
   # excluding immutable paths (Theme, .github).  This makes ~/.config/quickshell
   # a real writable directory so that theme-init can create Theme/ as writable.
-  quickshellSrcEntries =
-    if isSshell then
-      { } # sshell uses whole-directory deployment (no theme-init needed)
-    else
-      builtins.readDir quickshellSrc;
+  quickshellSrcEntries = builtins.readDir quickshellSrc;
 
-  quickshellSrcNames =
-    if isSshell then
-      [ ]
-    else
-      builtins.filter (name: name != "Theme" && name != "theme" && name != ".github") (
-        builtins.attrNames quickshellSrcEntries
-      );
+  quickshellSrcNames = builtins.filter (name: name != "Theme" && name != "theme" && name != ".github") (
+    builtins.attrNames quickshellSrcEntries
+  );
 
-  quickshellHomeFiles =
-    if isSshell then
-      { ".config/quickshell".source = quickshellSrc; }
-    else
-      builtins.listToAttrs (
-        map (name: {
-          name = ".config/quickshell/${name}";
-          value = {
-            source = "${quickshellSrc}/${name}";
-          };
-        }) quickshellSrcNames
-      );
+  quickshellHomeFiles = builtins.listToAttrs (
+    map (name: {
+      name = ".config/quickshell/${name}";
+      value = {
+        source = "${quickshellSrc}/${name}";
+      };
+    }) quickshellSrcNames
+  );
 in
 lib.mkIf quickshellEnabled (
   lib.mkMerge [
@@ -138,12 +84,6 @@ lib.mkIf quickshellEnabled (
       # Wrapped quickshell package
       environment.systemPackages = [
         quickshellWrapped # Wrapped Quickshell with dependencies and environment
-      ]
-      ++ lib.optionals isOctashell [
-        pkgs.papirus-icon-theme # icon theme used by octashell
-      ]
-      ++ lib.optionals isSshell [
-        pkgs.material-symbols # Material Symbols icon font used by sshell
       ];
 
       # Quickshell panel service
@@ -172,7 +112,7 @@ lib.mkIf quickshellEnabled (
       # activation deploys individual entries.  Without this, systemd-tmpfiles
       # hits "unsafe path transition" when trying to create symlinks inside a
       # symlinked parent directory (systemd >=252).
-      systemd.user.services.quickshell-cleanup-symlink = lib.mkIf (!isSshell) {
+      systemd.user.services.quickshell-cleanup-symlink = {
         description = "Remove old quickshell symlink before nix-maid activation";
         before = [ "maid-activation.service" ];
         wantedBy = [ "maid-activation.service" ];
@@ -186,7 +126,7 @@ lib.mkIf quickshellEnabled (
         };
       };
     }
-    (lib.mkIf (!isSshell) {
+    {
       systemd.user.services.quickshell-theme-init = {
         description = "Deploy writable Theme directory before quickshell starts";
         after = [ "maid-activation.service" ];
@@ -204,6 +144,6 @@ lib.mkIf quickshellEnabled (
         "pipewire.service"
       ];
       systemd.user.services.quickshell.wants = [ "maid-activation.service" ];
-    })
+    }
   ]
 )
