@@ -80,10 +80,6 @@ PanelWindow {
     color: "transparent"
     visible: false
 
-    Behavior on opacity {
-        NumberAnimation { duration: Theme.panelAnimOverlayMs; easing.type: Theme.uiEasingStdOut }
-    }
-    opacity: visible ? 1.0 : 0.0
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     screen: (typeof modelData !== 'undefined' ? modelData : null)
     anchors.top: true
