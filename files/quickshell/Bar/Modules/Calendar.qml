@@ -52,9 +52,9 @@ OverlayToggleCapsule {
             width: Math.round(380 * Theme.scale(root.screen))
             height: Math.round(480 * Theme.scale(root.screen))
             anchors.bottom: parent.bottom
-            anchors.right: parent.right
+            anchors.left: parent.left
             anchors.bottomMargin: Theme.calendarPopupMargin
-            anchors.rightMargin: Theme.calendarPopupMargin
+            anchors.leftMargin: Theme.calendarPopupMargin
 
             Rectangle { anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right; height: 1; color: Color.withAlpha(root.goldAccent, 0.25) }
 
