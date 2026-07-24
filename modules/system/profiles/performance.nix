@@ -132,6 +132,16 @@
       example = "4-15,20-31";
     };
 
+    # CPU affinity kernel params (irqaffinity, kthread_cpus).
+    # When disabled, kernel does not restrict IRQs/kthreads to housekeeping CPUs.
+    # Gating this separately from cpu set values allows toggling kernel params
+    # without losing the configured CPU masks for game-run/cgroup pinning.
+    cpuAffinity =
+      mkBoolOpt {
+        default = true;
+        description = "Set irqaffinity= and kthread_cpus= kernel params to housekeeping CPU set.";
+      };
+
     # Enable CONFIG_SCHED_DEADLINE in the kernel (requires rebuild).
     # Helpful for desktop/workloads that benefit from SCHED_DEADLINE and
     # 6.8+ deadline-server improvements.
