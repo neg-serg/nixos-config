@@ -16,6 +16,7 @@
     ./gui/dunst.nix
     ./gui/quickshell.nix
     ./gui/exo.nix
+    ./gui/noctalia.nix
     ./hyprland/main.nix
 
     # Applications (GUI/TUI)
