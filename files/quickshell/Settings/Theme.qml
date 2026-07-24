@@ -943,8 +943,8 @@ Singleton {
     property real sidePanelButtonHoverRadiusFactor: val('sidePanel.buttonHoverRadiusFactor', 0)
     // Side panel selector minimal width
     property int sidePanelSelectorMinWidth: val('sidePanel.selector.minWidth', 120)
-    property int sidePanelWeatherWidth: val('sidePanel.weather.width', 440)
-    property int sidePanelWeatherHeight: val('sidePanel.weather.height', 180)
+    property int sidePanelWeatherWidth: val('sidePanel.weather.width', 310)
+    property int sidePanelWeatherHeight: val('sidePanel.weather.height', 130)
     property real sidePanelWeatherLeftColumnRatio: val('sidePanel.weather.leftColumnRatio', 0.32)
     property int uiIconSizeLarge: val('ui.iconSizeLarge', 28)
     // Overlay radius and larger corner
