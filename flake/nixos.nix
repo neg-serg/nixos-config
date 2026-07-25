@@ -21,7 +21,6 @@ let
     inputs.sops-nix.nixosModules.sops
     ../modules/system/disabled-modules.nix
     inputs.extra-container.nixosModules.default
-    ../modules/user/codex-stellarium/vivaldi.nix
   ];
 
   hostExtras =
