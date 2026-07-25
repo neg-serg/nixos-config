@@ -84,6 +84,8 @@ let
     search_files_in_root = true;
     favicon_service = "twenty";
     fallbacks = [
+      "@neg/wl-switcher:wprandom"
+      "@neg/wl-switcher:wpgrid"
       "files:search"
       "clipboard:history"
     ];
@@ -121,8 +123,21 @@ let
       "action.remove" = "control+X";
       "action.save" = "control+S";
     };
-
     providers = {
+      "@neg/wl-switcher" = {
+        preferences = {
+          wallpaperPath = "~/pic/wl";
+          transitionType = "random";
+          transitionDuration = "0.5";
+          transitionStep = "90";
+          transitionFPS = "60";
+          resize = "crop";
+          upscale = "never";
+          colorGenTool = "none";
+          toggleVicinaeSetting = true;
+          showImageDetails = true;
+        };
+      };
       system = {
         entrypoints = {
           browse-apps = {
@@ -212,6 +227,8 @@ in
       environment.systemPackages = [
         pkgs.vicinae # Wayland-native app runner + window switcher
         pkgs.awww # animated wallpaper daemon for Wayland (vicinae awww-switcher extension dep)
+        pkgs.wl # Vulkan wallpaper daemon (used by wl-switcher extension)
+        pkgs.wl-switcher # vicinae extension for wl wallpaper switching
         pkgs.skate # key-value store CLI (vicinae skate extension dep)
       ];
 
@@ -244,12 +261,8 @@ in
         # Won't overwrite user edits (source has epoch mtime, dest is newer).
         "C %h/.local/share/vicinae/themes/neg-dark.toml 0644 - - - ${themeFile}"
         "C %h/.local/share/vicinae/themes/neg-kitty.toml 0644 - - - ${themeFileKitty}"
+        "L+ %h/.local/share/vicinae/extensions/wl-switcher - - - - ${pkgs.wl-switcher}"
         "L+ %h/.config/vicinae/nix-overrides.json - - - - ${nixOverridesFile}"
-      ];
-
-      # Create writable settings.json on first service start
-      systemd.user.services.vicinae.serviceConfig.ExecStartPre = [
-        "${vicinaeBootstrap}"
       ];
     })
   ]);
