@@ -1,52 +1,26 @@
 "use strict";
 
+// Vicinae patches Module.prototype.require to provide these.
+// MUST use CommonJS (not ESM) for the patch to work.
 var cp = require("child_process");
 var api = require("@vicinae/api");
 var path = require("path");
 var fs = require("fs");
 
-/**
- * Build the wl img command arguments from user preferences.
- */
 function buildWlArgs(prefs) {
   var args = [];
-
-  // Resize mode
-  if (prefs.resize && prefs.resize !== "crop") {
-    args.push("--resize", prefs.resize);
-  }
-
-  // Upscale
-  if (prefs.upscale && prefs.upscale !== "never") {
-    args.push("--upscale", prefs.upscale);
-  }
-
-  // Transition type
-  if (prefs.transitionType && prefs.transitionType !== "random") {
+  if (prefs.resize && prefs.resize !== "crop") args.push("--resize", prefs.resize);
+  if (prefs.upscale && prefs.upscale !== "never") args.push("--upscale", prefs.upscale);
+  if (prefs.transitionType && prefs.transitionType !== "random")
     args.push("--transition-type", prefs.transitionType);
-  }
-
-  // Transition duration
-  if (prefs.transitionDuration) {
-    args.push("--transition-duration", prefs.transitionDuration);
-  }
-
-  // Transition step
-  if (prefs.transitionStep && prefs.transitionStep !== "90") {
+  if (prefs.transitionDuration) args.push("--transition-duration", prefs.transitionDuration);
+  if (prefs.transitionStep && prefs.transitionStep !== "90")
     args.push("--transition-step", prefs.transitionStep);
-  }
-
-  // Transition FPS
-  if (prefs.transitionFPS && prefs.transitionFPS !== "60" && prefs.transitionFPS !== "30") {
+  if (prefs.transitionFPS && prefs.transitionFPS !== "60" && prefs.transitionFPS !== "30")
     args.push("--transition-fps", prefs.transitionFPS);
-  }
-
   return args;
 }
 
-/**
- * Run a color generation tool on the new wallpaper.
- */
 function runColorGen(imagePath, tool) {
   if (!tool || tool === "none") return;
   try {
@@ -66,9 +40,6 @@ function runColorGen(imagePath, tool) {
   }
 }
 
-/**
- * Run a post command after setting wallpaper.
- */
 function runPostCommand(imagePath, cmd) {
   if (!cmd) return;
   try {
@@ -82,9 +53,6 @@ function runPostCommand(imagePath, cmd) {
   }
 }
 
-/**
- * wprandom: Pick a random wallpaper and set it with wl.
- */
 function command() {
   return Promise.resolve().then(function () {
     var prefs = api.getPreferenceValues();
@@ -102,11 +70,9 @@ function command() {
       });
     }
 
-    // Find images
     var exts = [".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"];
     var files = fs.readdirSync(wallpaperPath).filter(function (f) {
-      var ext = path.extname(f).toLowerCase();
-      return exts.indexOf(ext) !== -1;
+      return exts.indexOf(path.extname(f).toLowerCase()) !== -1;
     });
 
     if (files.length === 0) {
@@ -120,29 +86,18 @@ function command() {
     var randomFile = files[Math.floor(Math.random() * files.length)];
     var imagePath = path.join(wallpaperPath, randomFile);
 
-    // Build wl command
     var args = buildWlArgs(prefs);
     var cmd = 'wl img "' + imagePath + '" ' + args.join(" ");
 
     try {
       cp.execSync(cmd, { stdio: "ignore", timeout: 30000 });
 
-      // Run color gen
-      if (prefs.colorGenTool) {
-        runColorGen(imagePath, prefs.colorGenTool);
-      }
+      if (prefs.colorGenTool) runColorGen(imagePath, prefs.colorGenTool);
+      if (prefs.postCommand) runPostCommand(imagePath, prefs.postCommand);
 
-      // Run post command
-      if (prefs.postCommand) {
-        runPostCommand(imagePath, prefs.postCommand);
-      }
-
-      // Toggle vicinae after setting
       if (prefs.toggleVicinaeSetting !== false) {
         setTimeout(function () {
-          try {
-            cp.execSync("vicinae toggle", { stdio: "ignore", timeout: 5000 });
-          } catch (_) {}
+          try { cp.execSync("vicinae toggle", { stdio: "ignore", timeout: 5000 }); } catch (_) {}
         }, 300);
       }
 

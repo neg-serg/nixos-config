@@ -48,10 +48,10 @@ PanelOverlaySurface {
 
     // ── Journal ──
     ProcessRunner {
-
         id: journalCtl
-        cmd: ["journalctl","--no-pager","-n","120","--output=json","--since","10 minutes ago"]
+        cmd: ["/run/current-system/sw/bin/journalctl","--no-pager","-n","120","--output=json","--since","10 minutes ago"]
         autoStart:true; restartOnExit:false
+        onLine:(s)=>{root._parseJournalLine(s)}
         onExited:{root._finalizeJournalEntries()}
     }
 
