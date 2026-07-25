@@ -9,6 +9,7 @@ settings.focusFirstCandidate = false;
 settings.scrollStepSize = 120;
 settings.smoothScroll = true;
 settings.modeAfterYank = "Normal";
+settings.tabsThreshold = 0;
 
 // ========== Theme ==========
 settings.theme = `
