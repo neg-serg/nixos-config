@@ -13,6 +13,11 @@ in
 # Standard overlay pattern: merge top-level attributes
 (functions // tools // media // dev // gui // fixTinycc // aurPorted // disableChecks)
 // {
+  # Vicinae: enable browser native host for tab search integration
+  vicinae = finalPrev.vicinae.overrideAttrs (old: {
+    cmakeFlags = builtins.filter (f: f != "-DINSTALL_BROWSER_NATIVE_HOST:STRING=OFF") (old.cmakeFlags or []) ++ [ "-DINSTALL_BROWSER_NATIVE_HOST:STRING=ON" ];
+  });
+
   # Carla: use local source (GitHub blocked by proxy)
   carla = finalPrev.carla.overrideAttrs (old: {
     src = builtins.fetchurl { url = "file:///tmp/carla.tar.gz"; sha256 = "sha256-rig1sSCB9ycaawsl00uH02sCLEA3ACjKShD5D87fpmE="; };
