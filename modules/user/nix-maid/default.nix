@@ -77,22 +77,14 @@
 
   users.users.neg.maid = { };
 
-  users.users.greeter.maid = { };
 
-
-  # Activation script to force restart maid-activation for 'neg' and 'greeter'.
+  # Activation script to force restart maid-activation for 'neg'.
   # This ensures user configs are reapplied on every switch, working around
   # NixOS's behavior of not automatically restarting user services reliably.
   system.activationScripts.maidForceRestart = lib.stringAfter [ "users" ] ''
     if [ -e /run/user/1000 ]; then
       echo "Restarting maid-activation for user 1000..."
       (${lib.getExe' pkgs.util-linux "runuser"} -u neg -- ${lib.getExe' pkgs.bash "bash"} -c "XDG_RUNTIME_DIR=/run/user/1000 ${lib.getExe' pkgs.systemd "systemctl"} --user restart --no-block maid-activation.service" >/dev/null 2>&1 &) || true
-    fi
-
-    GREETER_UID=$(id -u greeter 2>/dev/null || echo 994)
-    if [ -e "/run/user/$GREETER_UID" ]; then
-      echo "Restarting maid-activation for user greeter..."
-      (${lib.getExe' pkgs.util-linux "runuser"} -u greeter -- ${lib.getExe' pkgs.bash "bash"} -c "XDG_RUNTIME_DIR=/run/user/$GREETER_UID ${lib.getExe' pkgs.systemd "systemctl"} --user restart --no-block maid-activation.service" >/dev/null 2>&1 &) || true
     fi
   '';
 }

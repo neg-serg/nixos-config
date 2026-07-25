@@ -58,6 +58,7 @@ let
       mouse_move_enables_dpms = true
     }
   '';
+
 in
 {
   config = lib.mkIf guiEnabled {
@@ -76,6 +77,12 @@ in
         sleep 0.2
       done
     '';
+    # Prevent nix-maid's maid-activation.service from running for the greeter user.
+    # The greeter runs a minimal Hyprland+quickshell session and does not need
+    # user config management (tmpfiles, sd-switch, nix-store). Adding
+    # ConditionUser=!greeter skips the service on greeter login, avoiding
+    # unnecessary nix-store calls that delay greeter start.
+    systemd.user.services.maid-activation.unitConfig.ConditionUser = "!greeter";
     security.pam.services.greetd.enableGnomeKeyring = true;
     users.users.greeter = {
       home = "/home/greeter";
