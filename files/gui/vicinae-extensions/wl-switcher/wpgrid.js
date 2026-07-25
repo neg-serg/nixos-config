@@ -1,5 +1,7 @@
 "use strict";
 
+// Vicinae patches Module.prototype.require to provide these.
+// MUST use CommonJS (not ESM) for the patch to work.
 var React = require("react");
 var cp = require("child_process");
 var api = require("@vicinae/api");
@@ -13,8 +15,7 @@ var fs = require("fs");
 var IMG_EXTS = [".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".tiff", ".tif", ".avif"];
 
 function isImageFile(name) {
-  var ext = path.extname(name).toLowerCase();
-  return IMG_EXTS.indexOf(ext) !== -1;
+  return IMG_EXTS.indexOf(path.extname(name).toLowerCase()) !== -1;
 }
 
 function expandPath(p) {
@@ -84,22 +85,24 @@ function setWallpaper(filePath, prefs) {
 }
 
 // ---------------------------------------------------------------------------
-// Component (no JSX — React.createElement)
+// Component (no JSX — React.createElement, compatible with _jsx globals)
 // ---------------------------------------------------------------------------
 
 function WallpaperGrid() {
   var _a = React.useState([]), images = _a[0], setImages = _a[1];
   var _b = React.useState(""), searchText = _b[0], setSearchText = _b[1];
+  var _c = React.useState(false), loaded = _c[0], setLoaded = _c[1];
   var prefs = api.getPreferenceValues();
+  var gridRows = parseInt(prefs.gridRows) || 4;
 
   var wallpaperPath = React.useMemo(function () {
     return expandPath(prefs.wallpaperPath || "~/pic/wl");
   }, [prefs.wallpaperPath]);
 
-  // Load image list on mount
   React.useEffect(function () {
+    setLoaded(false);
     try {
-      if (!fs.existsSync(wallpaperPath)) { setImages([]); return; }
+      if (!fs.existsSync(wallpaperPath)) { setImages([]); setLoaded(true); return; }
       var entries = fs.readdirSync(wallpaperPath).filter(isImageFile);
       var mapped = entries.map(function (name) {
         var fullPath = path.join(wallpaperPath, name);
@@ -109,10 +112,8 @@ function WallpaperGrid() {
       });
       mapped.sort(function (a, b) { return (b.mtime || 0) - (a.mtime || 0); });
       setImages(mapped);
-    } catch (e) {
-      console.error(e);
-      setImages([]);
-    }
+    } catch (e) { console.error(e); setImages([]); }
+    setLoaded(true);
   }, [wallpaperPath]);
 
   var filtered = React.useMemo(function () {
@@ -121,64 +122,59 @@ function WallpaperGrid() {
     return images.filter(function (img) { return img.name.toLowerCase().indexOf(q) !== -1; });
   }, [images, searchText]);
 
-  var items = filtered.map(function (img) {
-    var showDetails = prefs.showImageDetails !== false;
-    return React.createElement(api.List.Item, {
-      key: img.name,
-      icon: { source: img.fullPath },
-      title: img.name,
-      subtitle: showDetails ? formatSize(img.size) : undefined,
-      accessories: showDetails ? [{ text: formatSize(img.size) }] : undefined,
-      actions: React.createElement(api.ActionPanel, null,
-        React.createElement(api.Action, {
-          title: "Set as Wallpaper",
-          icon: api.Icon.Image,
-          onAction: function () {
-            return Promise.resolve().then(function () {
-              setWallpaper(img.fullPath, prefs);
-              if (prefs.toggleVicinaeSetting !== false) {
-                setTimeout(function () {
-                  try { cp.execSync("vicinae toggle", { stdio: "ignore", timeout: 5000 }); } catch (_) {}
-                }, 300);
-              }
-              return api.showToast({ style: api.Toast.Style.Success, title: "Wallpaper set", message: img.name });
-            }).catch(function (e) {
-              return api.showToast({ style: api.Toast.Style.Failure, title: "Failed", message: e.message });
-            });
-          }
-        }),
-        React.createElement(api.Action, {
-          title: "Set & Stay",
-          icon: api.Icon.Window,
-          onAction: function () {
-            return Promise.resolve().then(function () {
-              setWallpaper(img.fullPath, prefs);
-              return api.showToast({ style: api.Toast.Style.Success, title: "Wallpaper set", message: img.name });
-            }).catch(function (e) {
-              return api.showToast({ style: api.Toast.Style.Failure, title: "Failed", message: e.message });
-            });
-          }
-        }),
-        React.createElement(api.Action.OpenInBrowser, { title: "Open File", url: img.fullPath }),
-        React.createElement(api.Action.CopyToClipboard, { title: "Copy Path", content: img.fullPath })
-      )
-    });
-  });
+  var showDetails = prefs.showImageDetails !== false;
 
-  if (images.length === 0 && !searchText) {
-    items = React.createElement(api.List.EmptyView, {
-      icon: api.Icon.Image,
-      title: "No wallpapers found",
-      description: "Place images in " + wallpaperPath
-    });
-  }
-
-  return React.createElement(api.List, {
-    isLoading: images.length === 0,
+  return React.createElement(api.Grid, {
     searchBarPlaceholder: "Search wallpapers...",
     onSearchTextChange: setSearchText,
+    isLoading: !loaded,
+    columns: gridRows,
+    aspectRatio: "16/9",
+    fit: api.Grid.Fit.Fill,
     throttle: true
-  }, items);
+  },
+    loaded && images.length === 0 && !searchText
+      ? React.createElement(api.List.EmptyView, {
+          icon: api.Icon.Image,
+          title: "No wallpapers found",
+          description: "Place images in " + wallpaperPath
+        })
+      : filtered.map(function (img) {
+          return React.createElement(api.Grid.Item, {
+            key: img.name,
+            content: { source: img.fullPath },
+            title: img.name,
+            subtitle: showDetails ? formatSize(img.size) : undefined,
+            accessories: showDetails ? [{ text: formatSize(img.size) }] : undefined,
+            actions: React.createElement(api.ActionPanel, null,
+              React.createElement(api.Action, {
+                title: "Set as Wallpaper",
+                icon: api.Icon.Image,
+                onAction: function () {
+                  return Promise.resolve().then(function () {
+                    setWallpaper(img.fullPath, prefs);
+                    return api.showToast({ style: api.Toast.Style.Success, title: "Wallpaper set", message: img.name });
+                  }).catch(function (e) {
+                    return api.showToast({ style: api.Toast.Style.Failure, title: "Failed", message: e.message });
+                  });
+                }
+              }),
+              React.createElement(api.Action, {
+                title: "Set & Stay",
+                icon: api.Icon.Window,
+                onAction: function () {
+                  return Promise.resolve().then(function () {
+                    setWallpaper(img.fullPath, prefs);
+                    return api.showToast({ style: api.Toast.Style.Success, title: "Wallpaper set", message: img.name });
+                  }).catch(function (e) {
+                    return api.showToast({ style: api.Toast.Style.Failure, title: "Failed", message: e.message });
+                  });
+                }
+              })
+            )
+          });
+        })
+  );
 }
 
 module.exports = { default: WallpaperGrid };
