@@ -13,6 +13,10 @@ in
 # Standard overlay pattern: merge top-level attributes
 (functions // tools // media // dev // gui // fixTinycc // aurPorted // disableChecks)
 // {
+  # Carla: use local source (GitHub blocked by proxy)
+  carla = finalPrev.carla.overrideAttrs (old: {
+    src = builtins.storePath /nix/store/z8l3ap3ghabqn3b1yvx4wfzfavpknw7g-carla.tar.gz;
+  });
   # opencode removed: was overriding to flake source — node_modules builds hung.
   # Use nixpkgs' opencode directly.
 
