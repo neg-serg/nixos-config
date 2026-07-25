@@ -265,12 +265,12 @@ tidal-start:
 
 # Open nvim for Tidal coding
 tidal:
-    nvim ~/code/tidal/
+    nvim ~/src/music/tidal/
 
 # Create new .tidal file
 tidal-new name:
-    mkdir -p ~/code/tidal
-    nvim ~/code/tidal/{{name}}.tidal
+    mkdir -p ~/src/music/tidal
+    nvim ~/src/music/tidal/{{name}}.tidal
 
 # Open ZestBay patchbay (via distrobox Arch container)
 tidal-patch:
