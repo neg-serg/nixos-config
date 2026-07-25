@@ -226,7 +226,6 @@ in
     {
       environment.systemPackages = [
         pkgs.vicinae # Wayland-native app runner + window switcher
-        pkgs.awww # animated wallpaper daemon for Wayland (vicinae awww-switcher extension dep)
         pkgs.wl # Vulkan wallpaper daemon (used by wl-switcher extension)
         pkgs.wl-switcher # vicinae extension for wl wallpaper switching
         pkgs.skate # key-value store CLI (vicinae skate extension dep)
