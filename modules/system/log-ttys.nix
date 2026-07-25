@@ -64,6 +64,10 @@ let
         description = "Journal viewer: ${desc} on ${tty}";
         after = [ "systemd-journald.service" ];
         requires = [ "systemd-journald.service" ];
+        unitConfig = {
+          StartLimitIntervalSec = 30;
+          StartLimitBurst = 5;
+        };
         serviceConfig = {
           ExecStart =
             if name == "network" then
@@ -85,8 +89,6 @@ let
           TTYReset = true;
           Restart = "always";
           RestartSec = 5;
-          StartLimitIntervalSec = 30;
-          StartLimitBurst = 5;
         };
         wantedBy = [ "multi-user.target" ];
       };
