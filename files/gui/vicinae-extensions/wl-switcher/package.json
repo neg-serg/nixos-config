@@ -3,9 +3,13 @@
   "name": "wl-switcher",
   "title": "WL Switcher",
   "description": "Switch your wallpaper with wl (Vulkan-accelerated wallpaper daemon) and call a color gen to update color palettes",
-  "categories": ["System"],
+  "categories": [
+    "System"
+  ],
   "license": "MIT",
-  "platforms": ["Linux"],
+  "platforms": [
+    "Linux"
+  ],
   "author": "neg",
   "contributors": [],
   "pastContributors": [],
@@ -42,10 +46,22 @@
       "required": false,
       "type": "dropdown",
       "data": [
-        { "title": "3", "value": "3" },
-        { "title": "4", "value": "4" },
-        { "title": "5", "value": "5" },
-        { "title": "6", "value": "6" }
+        {
+          "title": "3",
+          "value": "3"
+        },
+        {
+          "title": "4",
+          "value": "4"
+        },
+        {
+          "title": "5",
+          "value": "5"
+        },
+        {
+          "title": "6",
+          "value": "6"
+        }
       ],
       "default": "4"
     },
@@ -56,32 +72,110 @@
       "required": false,
       "type": "dropdown",
       "data": [
-        { "title": "Random", "value": "random" },
-        { "title": "None", "value": "none" },
-        { "title": "Wipe", "value": "wipe" },
-        { "title": "Wave", "value": "wave" },
-        { "title": "Outer", "value": "outer" },
-        { "title": "Pixelate", "value": "pixelate" },
-        { "title": "Burn", "value": "burn" },
-        { "title": "Glitch", "value": "glitch" },
-        { "title": "Disintegrate", "value": "disintegrate" },
-        { "title": "Dreamy", "value": "dreamy" },
-        { "title": "Glitch Memories", "value": "glitch-memories" },
-        { "title": "Morph", "value": "morph" },
-        { "title": "Hexagonalize", "value": "hexagonalize" },
-        { "title": "Cross Zoom", "value": "cross-zoom" },
-        { "title": "Fluid Distortion", "value": "fluid-distortion" },
-        { "title": "Fluid Drain", "value": "fluid-drain" },
-        { "title": "Fluid Ripple", "value": "fluid-ripple" },
-        { "title": "Fluid Vortex", "value": "fluid-vortex" },
-        { "title": "Fluid Wave", "value": "fluid-wave" },
-        { "title": "Ink Bleed", "value": "ink-bleed" },
-        { "title": "Lava Lamp", "value": "lava-lamp" },
-        { "title": "Chromatic Aberration", "value": "chromatic-aberration" },
-        { "title": "Lens Distortion", "value": "lens-distortion" },
-        { "title": "CRT Shutdown", "value": "crt-shutdown" },
-        { "title": "Perlin Wipe", "value": "perlin-wipe" },
-        { "title": "Radial Blur", "value": "radial-blur" }
+        {
+          "title": "Random",
+          "value": "random"
+        },
+        {
+          "title": "None",
+          "value": "none"
+        },
+        {
+          "title": "Wipe",
+          "value": "wipe"
+        },
+        {
+          "title": "Wave",
+          "value": "wave"
+        },
+        {
+          "title": "Outer",
+          "value": "outer"
+        },
+        {
+          "title": "Pixelate",
+          "value": "pixelate"
+        },
+        {
+          "title": "Burn",
+          "value": "burn"
+        },
+        {
+          "title": "Glitch",
+          "value": "glitch"
+        },
+        {
+          "title": "Disintegrate",
+          "value": "disintegrate"
+        },
+        {
+          "title": "Dreamy",
+          "value": "dreamy"
+        },
+        {
+          "title": "Glitch Memories",
+          "value": "glitch-memories"
+        },
+        {
+          "title": "Morph",
+          "value": "morph"
+        },
+        {
+          "title": "Hexagonalize",
+          "value": "hexagonalize"
+        },
+        {
+          "title": "Cross Zoom",
+          "value": "cross-zoom"
+        },
+        {
+          "title": "Fluid Distortion",
+          "value": "fluid-distortion"
+        },
+        {
+          "title": "Fluid Drain",
+          "value": "fluid-drain"
+        },
+        {
+          "title": "Fluid Ripple",
+          "value": "fluid-ripple"
+        },
+        {
+          "title": "Fluid Vortex",
+          "value": "fluid-vortex"
+        },
+        {
+          "title": "Fluid Wave",
+          "value": "fluid-wave"
+        },
+        {
+          "title": "Ink Bleed",
+          "value": "ink-bleed"
+        },
+        {
+          "title": "Lava Lamp",
+          "value": "lava-lamp"
+        },
+        {
+          "title": "Chromatic Aberration",
+          "value": "chromatic-aberration"
+        },
+        {
+          "title": "Lens Distortion",
+          "value": "lens-distortion"
+        },
+        {
+          "title": "CRT Shutdown",
+          "value": "crt-shutdown"
+        },
+        {
+          "title": "Perlin Wipe",
+          "value": "perlin-wipe"
+        },
+        {
+          "title": "Radial Blur",
+          "value": "radial-blur"
+        }
       ],
       "default": "random"
     },
@@ -92,13 +186,34 @@
       "required": false,
       "type": "dropdown",
       "data": [
-        { "title": "0.25s", "value": "0.25" },
-        { "title": "0.5s", "value": "0.5" },
-        { "title": "1s", "value": "1" },
-        { "title": "2s", "value": "2" },
-        { "title": "3s", "value": "3" },
-        { "title": "5s", "value": "5" },
-        { "title": "8s", "value": "8" }
+        {
+          "title": "0.25s",
+          "value": "0.25"
+        },
+        {
+          "title": "0.5s",
+          "value": "0.5"
+        },
+        {
+          "title": "1s",
+          "value": "1"
+        },
+        {
+          "title": "2s",
+          "value": "2"
+        },
+        {
+          "title": "3s",
+          "value": "3"
+        },
+        {
+          "title": "5s",
+          "value": "5"
+        },
+        {
+          "title": "8s",
+          "value": "8"
+        }
       ],
       "default": "0.5"
     },
@@ -109,12 +224,30 @@
       "required": false,
       "type": "dropdown",
       "data": [
-        { "title": "Slowest (1)", "value": "1" },
-        { "title": "Slow (30)", "value": "30" },
-        { "title": "Default (90)", "value": "90" },
-        { "title": "Quick (120)", "value": "120" },
-        { "title": "Fast (200)", "value": "200" },
-        { "title": "Instant (255)", "value": "255" }
+        {
+          "title": "Slowest (1)",
+          "value": "1"
+        },
+        {
+          "title": "Slow (30)",
+          "value": "30"
+        },
+        {
+          "title": "Default (90)",
+          "value": "90"
+        },
+        {
+          "title": "Quick (120)",
+          "value": "120"
+        },
+        {
+          "title": "Fast (200)",
+          "value": "200"
+        },
+        {
+          "title": "Instant (255)",
+          "value": "255"
+        }
       ],
       "default": "90"
     },
@@ -133,10 +266,22 @@
       "required": false,
       "type": "dropdown",
       "data": [
-        { "title": "Crop", "value": "crop" },
-        { "title": "Fit", "value": "fit" },
-        { "title": "Center (no resize)", "value": "center" },
-        { "title": "No resize", "value": "no" }
+        {
+          "title": "Crop",
+          "value": "crop"
+        },
+        {
+          "title": "Fit",
+          "value": "fit"
+        },
+        {
+          "title": "Center (no resize)",
+          "value": "center"
+        },
+        {
+          "title": "No resize",
+          "value": "no"
+        }
       ],
       "default": "crop"
     },
@@ -147,9 +292,18 @@
       "required": false,
       "type": "dropdown",
       "data": [
-        { "title": "Never", "value": "never" },
-        { "title": "Once (this image)", "value": "once" },
-        { "title": "Always", "value": "always" }
+        {
+          "title": "Never",
+          "value": "never"
+        },
+        {
+          "title": "Once (this image)",
+          "value": "once"
+        },
+        {
+          "title": "Always",
+          "value": "always"
+        }
       ],
       "default": "never"
     },
@@ -160,10 +314,22 @@
       "required": false,
       "type": "dropdown",
       "data": [
-        { "title": "None", "value": "none" },
-        { "title": "Matugen", "value": "matugen" },
-        { "title": "Pywal", "value": "pywal" },
-        { "title": "Wallust", "value": "wallust" }
+        {
+          "title": "None",
+          "value": "none"
+        },
+        {
+          "title": "Matugen",
+          "value": "matugen"
+        },
+        {
+          "title": "Pywal",
+          "value": "pywal"
+        },
+        {
+          "title": "Wallust",
+          "value": "wallust"
+        }
       ],
       "default": "none"
     },
@@ -193,5 +359,7 @@
       "type": "textfield"
     }
   ],
-  "dependencies": {}
+  "dependencies": {
+    "@vicinae/api": "^1.0.0"
+  }
 }
