@@ -2,6 +2,7 @@
   imports = [
     ./aria.nix
     ./browsing.nix
+    ./codex-stellarium.nix
     ./defaults.nix
     ./misc.nix
     ./surfingkeys-server.nix

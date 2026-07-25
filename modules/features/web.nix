@@ -12,6 +12,10 @@ with lib;
     aria2.service.enable = mkBool "run aria2 download manager as a user service (graphical preset)" false;
 
     vivaldi.enable = mkBool "enable Vivaldi browser" false;
+
+    codexStellarium = {
+      enable = mkBool "enable Codex-Stellarium new tab page for Vivaldi" false;
+    };
     chat = {
       enable = mkBool "enable Telegram chat client (static binary, GTK-free)" true;
     };
