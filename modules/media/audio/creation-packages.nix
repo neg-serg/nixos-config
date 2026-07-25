@@ -22,7 +22,7 @@ let
     pkgs.new-session-manager # NSM — session manager for audio apps (JACK/PipeWire)
 
     # -- Patchbays --
-    pkgs.zestbay # PipeWire patchbay with LV2/VST3/CLAP plugin hosting (Qt6)
+    # zestbay moved to distrobox (CXX-Qt broken in Nix): `distrobox-enter arch-zestbay -- zestbay`
     pkgs.pw-audioshare # GTK4 PipeWire patchbay with auto-connect presets
 
     # -- Noise Processing --
