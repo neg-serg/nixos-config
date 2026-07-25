@@ -144,19 +144,19 @@ in
   };
 
   # Non-root ZFS pool import services (imported after boot, not in initrd).
-  # gamez = mirror of nvme1n1 + nvme3n1 (Samsung 990 PRO 2TB)
-  # zero  = single nvme2n1              (Samsung PM9A3 7TB)
+  # gamez = mirror of nvme0n1 + nvme2n1 (Samsung 990 PRO 2TB each)
+  # zero  = single nvme3n1              (Samsung PM9A3 7TB)
   systemd.services."zfs-import-gamez" = {
     description = "Import ZFS pool gamez";
     wantedBy = [ "multi-user.target" ];
     after = [
       "zfs.target"
-      "dev-nvme1n1.device"
-      "dev-nvme3n1.device"
+      "dev-nvme0n1.device"
+      "dev-nvme2n1.device"
     ];
     bindsTo = [
-      "dev-nvme1n1.device"
-      "dev-nvme3n1.device"
+      "dev-nvme0n1.device"
+      "dev-nvme2n1.device"
     ];
     serviceConfig.Type = "oneshot";
     serviceConfig.RemainAfterExit = true;
@@ -173,9 +173,9 @@ in
     wantedBy = [ "multi-user.target" ];
     after = [
       "zfs.target"
-      "dev-nvme2n1.device"
+      "dev-nvme3n1.device"
     ];
-    bindsTo = [ "dev-nvme2n1.device" ];
+    bindsTo = [ "dev-nvme3n1.device" ];
     serviceConfig.Type = "oneshot";
     serviceConfig.RemainAfterExit = true;
     path = [ pkgs.zfs ]; # ZFS filesystem utilities
