@@ -19,6 +19,7 @@ let
       state="$(${lib.getExe' pkgs.tailscale "tailscale"} status --json 2>/dev/null \
         | ${lib.getExe' pkgs.jq "jq"} -r '.BackendState // "Unknown"')"
       if [ "$state" = "Running" ]; then
+        export PATH="${pkgs.tailscale}/bin:$PATH"
         exec "$TAILRAY"
       fi
       sleep 5
