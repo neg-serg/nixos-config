@@ -272,9 +272,9 @@ tidal-new name:
     mkdir -p ~/code/tidal
     nvim ~/code/tidal/{{name}}.tidal
 
-# PipeWire patchbay for audio routing
+# Open ZestBay patchbay (via distrobox Arch container)
 tidal-patch:
-    pw-audioshare
+    distrobox-enter arch-zestbay -- zestbay &
 
 # Real-time audio monitor
 tidal-rt:
