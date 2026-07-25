@@ -21,10 +21,10 @@ let
     # -- Session Management --
     pkgs.new-session-manager # NSM — session manager for audio apps (JACK/PipeWire)
 
-    # -- Patchbays --
+    # -- Patchbays & Plugin Hosts --
+    pkgs.carla # Full-featured JACK/PipeWire patchbay + LV2/VST plugin host
     # zestbay moved to distrobox (CXX-Qt broken in Nix): `distrobox-enter arch-zestbay -- zestbay`
     pkgs.pw-audioshare # GTK4 PipeWire patchbay with auto-connect presets
-
     # -- Noise Processing --
     pkgs.noisetorch # PulseAudio/PipeWire microphone noise gate
     pkgs.rnnoise # WebRTC RNNoise denoiser CLI for mic chains
