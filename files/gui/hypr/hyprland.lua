@@ -233,8 +233,7 @@ hl.bind(M4 .. "+space", hl.dsp.exec_cmd("dunstctl close-all"), { locked = true }
 hl.bind(M4 .. "+" .. SH .. "+k", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/dismiss-overlay"))
 hl.bind(M4 .. "+" .. SH .. "+d", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/dismiss-overlay"))
 
--- --- Close all windows except active ---
-hl.bind(M4 .. "+escape", hl.dsp.exec_cmd("$HOME/.config/hypr/scripts/close-all-but-current.sh"))
+
 
 -- --- Split ratio helpers (tiling-helpers.conf) ---
 hl.bind(M4 .. "+" .. C .. "+d", dispatch("splitratio -0.1"), { repeating = true })
