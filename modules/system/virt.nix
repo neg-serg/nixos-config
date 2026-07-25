@@ -6,7 +6,8 @@
 }:
 let
   mainUser = config.users.main.name or "neg";
-in {
+in
+{
   config = {
     users.users."${mainUser}".extraGroups = [
       "video"
@@ -19,6 +20,7 @@ in {
 
       libvirtd = lib.mkIf (config.features.virt.libvirtd.enable or false) {
         enable = true;
+        firewallBackend = "nftables";
         qemu = {
           package = pkgs.qemu_kvm;
           runAsRoot = true;
@@ -48,5 +50,37 @@ in {
     # Clear LoadCredentialEncrypted — TPM2 is disabled on this host,
     # so systemd can't set up encrypted credentials (no /dev/tpmrm0).
     systemd.services.libvirtd.serviceConfig.LoadCredentialEncrypted = lib.mkForce [ "" ];
+
+    # RDPWindows VM — auto-defined on boot via systemd oneshot
+    systemd.services."virsh-define-RDPWindows" =
+      lib.mkIf (config.features.virt.libvirtd.enable or false)
+        {
+          description = "Define RDPWindows libvirt domain from XML";
+          after = [ "libvirtd.service" ];
+          wants = [ "libvirtd.service" ];
+          wantedBy = [ "multi-user.target" ];
+          unitConfig.ConditionPathExists = "/var/lib/libvirt/images/RDPWindows.qcow2";
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            StateDirectory = "libvirt/images libvirt/iso";
+          };
+          path = [
+            pkgs.libvirt
+            pkgs.qemu_kvm
+          ];
+          script = ''
+            if ! virsh dominfo RDPWindows >/dev/null 2>&1; then
+              virsh define ${./../../files/virt/RDPWindows.xml}
+              virsh autostart RDPWindows
+            fi
+          '';
+        };
+
+    # VM storage directories
+    systemd.tmpfiles.rules = lib.mkIf (config.features.virt.libvirtd.enable or false) [
+      "d /var/lib/libvirt/images 0755 root root -"
+      "d /var/lib/libvirt/iso 0755 root root -"
+    ];
   };
 }
