@@ -48,10 +48,10 @@ PanelOverlaySurface {
 
     // ── Journal ──
     ProcessRunner {
+
         id: journalCtl
         cmd: ["journalctl","--no-pager","-n","120","--output=json","--since","10 minutes ago"]
         autoStart:true; restartOnExit:false
-        onLine:(s)=>{root._parseJournalLine(s)}
         onExited:{root._finalizeJournalEntries()}
     }
 
@@ -69,7 +69,9 @@ PanelOverlaySurface {
         root.logEntries=root._pendingEntries;root.totalLogs=root._pendingEntries.length;root.errorCount=e;root.serviceCount=Object.keys(root._pendingServices).length;root.journalReady=true}
 
     function refreshAll(){root._pendingEntries=[];root._pendingServices=({});root.journalReady=false;journalCtl.stop();journalCtl.start()}
-    Timer{interval:15000;repeat:true;running:true;triggeredOnStart:false;onTriggered:root.refreshAll()}
+    Timer{interval:15000;repeat:true;running:true;triggeredOnStart:true;onTriggered:root.refreshAll()}
+
+    Component.onCompleted: { refreshAll() }
 
     // ── TTY log scanner ──
     ProcessRunner {
