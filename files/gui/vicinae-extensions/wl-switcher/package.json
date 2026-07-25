@@ -1,0 +1,197 @@
+{
+  "$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
+  "name": "wl-switcher",
+  "title": "WL Switcher",
+  "description": "Switch your wallpaper with wl (Vulkan-accelerated wallpaper daemon) and call a color gen to update color palettes",
+  "categories": ["System"],
+  "license": "MIT",
+  "platforms": ["Linux"],
+  "author": "neg",
+  "contributors": [],
+  "pastContributors": [],
+  "icon": "extension_icon.png",
+  "commands": [
+    {
+      "name": "wpgrid",
+      "title": "Wallpaper Grid",
+      "subtitle": "Browse and set wallpapers",
+      "description": "Browse wallpapers in a grid and set them using wl",
+      "mode": "view"
+    },
+    {
+      "name": "wprandom",
+      "title": "Random Wallpaper",
+      "subtitle": "Let RNG choose your style",
+      "description": "Pick a random wallpaper from your directory and set it using wl",
+      "mode": "no-view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "wallpaperPath",
+      "title": "Wallpaper Path",
+      "description": "The path containing the wallpaper images",
+      "required": true,
+      "type": "textfield",
+      "default": "~/pic/wl"
+    },
+    {
+      "name": "gridRows",
+      "title": "Grid Rows",
+      "description": "How many rows do you want to see in the grid?",
+      "required": false,
+      "type": "dropdown",
+      "data": [
+        { "title": "3", "value": "3" },
+        { "title": "4", "value": "4" },
+        { "title": "5", "value": "5" },
+        { "title": "6", "value": "6" }
+      ],
+      "default": "4"
+    },
+    {
+      "name": "transitionType",
+      "title": "WL Transition Type",
+      "description": "The animation type for wallpaper transitions",
+      "required": false,
+      "type": "dropdown",
+      "data": [
+        { "title": "Random", "value": "random" },
+        { "title": "None", "value": "none" },
+        { "title": "Wipe", "value": "wipe" },
+        { "title": "Wave", "value": "wave" },
+        { "title": "Outer", "value": "outer" },
+        { "title": "Pixelate", "value": "pixelate" },
+        { "title": "Burn", "value": "burn" },
+        { "title": "Glitch", "value": "glitch" },
+        { "title": "Disintegrate", "value": "disintegrate" },
+        { "title": "Dreamy", "value": "dreamy" },
+        { "title": "Glitch Memories", "value": "glitch-memories" },
+        { "title": "Morph", "value": "morph" },
+        { "title": "Hexagonalize", "value": "hexagonalize" },
+        { "title": "Cross Zoom", "value": "cross-zoom" },
+        { "title": "Fluid Distortion", "value": "fluid-distortion" },
+        { "title": "Fluid Drain", "value": "fluid-drain" },
+        { "title": "Fluid Ripple", "value": "fluid-ripple" },
+        { "title": "Fluid Vortex", "value": "fluid-vortex" },
+        { "title": "Fluid Wave", "value": "fluid-wave" },
+        { "title": "Ink Bleed", "value": "ink-bleed" },
+        { "title": "Lava Lamp", "value": "lava-lamp" },
+        { "title": "Chromatic Aberration", "value": "chromatic-aberration" },
+        { "title": "Lens Distortion", "value": "lens-distortion" },
+        { "title": "CRT Shutdown", "value": "crt-shutdown" },
+        { "title": "Perlin Wipe", "value": "perlin-wipe" },
+        { "title": "Radial Blur", "value": "radial-blur" }
+      ],
+      "default": "random"
+    },
+    {
+      "name": "transitionDuration",
+      "title": "WL Transition Duration",
+      "description": "Duration of the transition in seconds",
+      "required": false,
+      "type": "dropdown",
+      "data": [
+        { "title": "0.25s", "value": "0.25" },
+        { "title": "0.5s", "value": "0.5" },
+        { "title": "1s", "value": "1" },
+        { "title": "2s", "value": "2" },
+        { "title": "3s", "value": "3" },
+        { "title": "5s", "value": "5" },
+        { "title": "8s", "value": "8" }
+      ],
+      "default": "0.5"
+    },
+    {
+      "name": "transitionStep",
+      "title": "WL Transition Step",
+      "description": "The amount of steps from old wallpaper RGB to new wallpaper RGB (1-255)",
+      "required": false,
+      "type": "dropdown",
+      "data": [
+        { "title": "Slowest (1)", "value": "1" },
+        { "title": "Slow (30)", "value": "30" },
+        { "title": "Default (90)", "value": "90" },
+        { "title": "Quick (120)", "value": "120" },
+        { "title": "Fast (200)", "value": "200" },
+        { "title": "Instant (255)", "value": "255" }
+      ],
+      "default": "90"
+    },
+    {
+      "name": "transitionFPS",
+      "title": "WL Transition FPS",
+      "description": "The target FPS to play the animation at",
+      "type": "textfield",
+      "required": false,
+      "default": "60"
+    },
+    {
+      "name": "resize",
+      "title": "WL Resize Mode",
+      "description": "How to fit the image to the screen",
+      "required": false,
+      "type": "dropdown",
+      "data": [
+        { "title": "Crop", "value": "crop" },
+        { "title": "Fit", "value": "fit" },
+        { "title": "Center (no resize)", "value": "center" },
+        { "title": "No resize", "value": "no" }
+      ],
+      "default": "crop"
+    },
+    {
+      "name": "upscale",
+      "title": "WL Neural Upscale",
+      "description": "Use neural upscaling for low-resolution images",
+      "required": false,
+      "type": "dropdown",
+      "data": [
+        { "title": "Never", "value": "never" },
+        { "title": "Once (this image)", "value": "once" },
+        { "title": "Always", "value": "always" }
+      ],
+      "default": "never"
+    },
+    {
+      "name": "colorGenTool",
+      "title": "Color Generator",
+      "description": "Which color generation tool do you use?",
+      "required": false,
+      "type": "dropdown",
+      "data": [
+        { "title": "None", "value": "none" },
+        { "title": "Matugen", "value": "matugen" },
+        { "title": "Pywal", "value": "pywal" },
+        { "title": "Wallust", "value": "wallust" }
+      ],
+      "default": "none"
+    },
+    {
+      "label": "Toggle Vicinae",
+      "name": "toggleVicinaeSetting",
+      "title": "Toggle Vicinae",
+      "description": "Set to true to toggle vicinae on wallpaper selection",
+      "type": "checkbox",
+      "required": false,
+      "default": true
+    },
+    {
+      "label": "Show Image Details",
+      "name": "showImageDetails",
+      "title": "Show Image Details",
+      "description": "Set to true to show image dimensions and size in MB.",
+      "type": "checkbox",
+      "required": false,
+      "default": true
+    },
+    {
+      "name": "postCommand",
+      "title": "Post Command",
+      "description": "Run a command or script after setting a new wallpaper",
+      "required": false,
+      "type": "textfield"
+    }
+  ],
+  "dependencies": {}
+}
