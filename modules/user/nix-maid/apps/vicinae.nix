@@ -230,7 +230,19 @@ in
         pkgs.wl # Vulkan wallpaper daemon (used by wl-switcher extension)
         pkgs.wl-switcher # vicinae extension for wl wallpaper switching
         pkgs.skate # key-value store CLI (vicinae skate extension dep)
+        # Wrapper: expose vicinae-browser-link from libexec to PATH
+        (pkgs.writeShellScriptBin "vicinae-browser-link" ''
+          exec ${pkgs.vicinae}/libexec/vicinae/vicinae-browser-link "$@"
+        '')
       ];
+
+      environment.etc."chromium/native-messaging-hosts/com.vicinae.vicinae.json".text = builtins.toJSON {
+        name = "com.vicinae.vicinae";
+        description = "Vicinae Native Messaging Host";
+        path = "${pkgs.vicinae}/libexec/vicinae/vicinae-browser-link";
+        type = "stdio";
+        allowed_origins = [ "chrome-extension://chgfefjpcobfbnpmiokfjjaglahmnded/" ];
+      };
 
       systemd.user.services.vicinae = {
         enable = true;
