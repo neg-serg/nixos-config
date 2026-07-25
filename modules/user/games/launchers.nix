@@ -45,6 +45,7 @@ in
                 glib # core application building block
                 libpng # PNG image format library
                 libpulseaudio # PulseAudio client library
+                pulseaudio # pactl CLI for PulseAudio volume/device control
                 libvorbis # Vorbis audio codec
                 libkrb5 # Kerberos 5 library
                 keyutils # kernel key management utilities
