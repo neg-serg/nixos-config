@@ -15,7 +15,7 @@ in
 // {
   # Carla: use local source (GitHub blocked by proxy)
   carla = finalPrev.carla.overrideAttrs (old: {
-    src = builtins.storePath /nix/store/z8l3ap3ghabqn3b1yvx4wfzfavpknw7g-carla.tar.gz;
+    src = builtins.fetchurl { url = "file:///tmp/carla.tar.gz"; sha256 = "sha256-rig1sSCB9ycaawsl00uH02sCLEA3ACjKShD5D87fpmE="; };
   });
   # opencode removed: was overriding to flake source — node_modules builds hung.
   # Use nixpkgs' opencode directly.
