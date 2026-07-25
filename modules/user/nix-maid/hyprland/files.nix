@@ -186,6 +186,20 @@ in
           }
         '';
 
+        ".config/hypr/scripts/close-all-but-current.sh" = {
+          text = ''
+            #!/usr/bin/env sh
+            # Close all Hyprland windows except the currently active one.
+            # Bound to M4+Escape (SUPER+ESC) in hyprland.lua.
+            active=$(hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty')
+            [ -z "$active" ] && exit 0
+            hyprctl clients -j 2>/dev/null | jq -r '.[].address' | while read -r addr; do
+              [ "$addr" != "$active" ] && hyprctl dispatch closewindow address:"$addr"
+            done
+          '';
+          executable = true;
+        };
+
         # Ensure local.d directory exists with at least one .conf file so the glob never fails
         ".config/hypr/local.d/00-override.conf".text =
           "# Local Hyprland overrides (Lua API)\n# Use hl.env(), hl.config(), hl.bind(), hl.window_rule() etc.\n# See ~/.config/hypr/hyprland.lua for reference\n";
