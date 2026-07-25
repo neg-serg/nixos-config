@@ -8,7 +8,7 @@ keybindings = [
   { on = "Enter", action = "Confirm" },
   { on = " ", action = "Select" },
   { on = "Tab", action = "SwitchFocus" },
-  { on = "Ctrl+Space", action = "SwitchFocus" },
+
   { on = "/", action = "Search" },
   { on = "o", action = "XdgOpen" },
   
@@ -20,8 +20,8 @@ keybindings = [
   { on = "PageUp", action = "ScrollPageUp", show_in_help = false },
   { on = "PageDown", action = "ScrollPageDown", show_in_help = false },
 
-  { modifier = "Ctrl", on = "u", action = "ScrollPageUp" },
-  { modifier = "Ctrl", on = "d", action = "ScrollPageDown" },
+
+
 
   # Arrows
   { on = "Left", action = "Left" },
