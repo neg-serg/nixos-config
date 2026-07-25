@@ -109,6 +109,7 @@ let
       open-settings = "control+,";
       toggle-action-panel = "control+B";
       "action.copy" = "control+shift+C";
+      toggle = "control+Return";
       "action.copy-name" = "control+shift+.";
       "action.copy-path" = "control+shift+,";
       "action.duplicate" = "control+D";
