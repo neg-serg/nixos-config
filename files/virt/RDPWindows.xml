@@ -1,0 +1,66 @@
+<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+  <name>RDPWindows</name>
+  <uuid>50f121b4-93e7-46b5-b302-902d022dfa9c</uuid>
+  <title>Windows VM for WinApps</title>
+  <description>Windows 10/11 KVM for running Windows applications via RDP seamless mode (WinApps)</description>
+  <memory unit='KiB'>4194304</memory>
+  <currentMemory unit='KiB'>4194304</currentMemory>
+  <vcpu placement='static'>4</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc-q35-6.2'>hvm</type>
+    <boot dev='hd'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <hyperv>
+      <relaxed state='on'/>
+      <vapic state='on'/>
+      <spinlocks state='on' retries='8191'/>
+    </hyperv>
+  </features>
+  <cpu mode='host-passthrough' check='none'/>
+  <clock offset='localtime'>
+    <timer name='hypervclock' present='yes'/>
+  </clock>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>destroy</on_crash>
+  <devices>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/RDPWindows.qcow2'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <source file='/var/lib/libvirt/iso/Windows.iso'/>
+      <target dev='sdb' bus='sata'/>
+      <readonly/>
+    </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <source file='/var/lib/libvirt/iso/virtio-win.iso'/>
+      <target dev='sdc' bus='sata'/>
+      <readonly/>
+    </disk>
+    <interface type='user'>
+      <mac address='52:54:00:40:9c:f6'/>
+    </interface>
+    <graphics type='spice' port='5900' autoport='yes' listen='127.0.0.1'>
+      <listen type='address' address='127.0.0.1'/>
+    </graphics>
+    <sound model='ich9'/>
+    <video>
+      <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>
+    </video>
+    <memballoon model='virtio'/>
+    <rng model='virtio'>
+      <backend model='random'>/dev/urandom</backend>
+    </rng>
+  </devices>
+  <qemu:commandline>
+    <qemu:arg value='-nic'/>
+    <qemu:arg value='user,hostfwd=tcp::3389-:3389,hostfwd=tcp::5000-:5000'/>
+  </qemu:commandline>
+</domain>

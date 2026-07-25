@@ -33,5 +33,19 @@ in
       pkgs.qemu_kvm # QEMU with KVM support
       pkgs.virt-manager # GUI for managing virtual machines
     ];
+
+    # Default winapps config — user can override in ~/.config/winapps/winapps.conf
+    environment.etc."winapps/winapps.conf".text = ''
+      # WinApps configuration (default)
+      # Override in ~/.config/winapps/winapps.conf
+      RDP_USER="neg"
+      RDP_PASS="neg"
+      RDP_DOMAIN=""
+      RDP_IP="127.0.0.1"
+      RDP_SCALE=100
+      MULTIMON="false"
+      DEBUG="false"
+      RDP_FLAGS="/network:auto /sound:auto /microphone:auto /gfx:avc444 /bpp:32"
+    '';
   };
 }
