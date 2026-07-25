@@ -116,6 +116,22 @@
         "type": "github"
       }
     },
+    "codex-stellarium": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "narHash": "sha256-IO/q9JeZnYBG3jveRKaR8J0++BBmRrSJT86vBrL09fc=",
+        "path": "/home/neg/src/1st-level/look-for-firefox-customizations",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/neg/src/1st-level/look-for-firefox-customizations",
+        "type": "path"
+      }
+    },
     "determinate": {
       "inputs": {
         "determinate-nixd-aarch64-darwin": "determinate-nixd-aarch64-darwin",
@@ -1773,6 +1789,7 @@
     "root": {
       "inputs": {
         "caelestia-shell": "caelestia-shell",
+        "codex-stellarium": "codex-stellarium",
         "determinate": "determinate",
         "exo": "exo",
         "extra-container": "extra-container",

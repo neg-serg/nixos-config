@@ -113,6 +113,10 @@
       url = "github:debuggyo/Exo";
       flake = false;
     };
+    codex-stellarium = {
+      url = "path:/home/neg/src/1st-level/look-for-firefox-customizations";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     extra-container.url = "git+https://github.com/erikarvstedt/extra-container.git";
   };
 

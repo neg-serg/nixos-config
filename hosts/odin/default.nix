@@ -35,6 +35,7 @@
   # Obsidian installed via Flatpak (to avoid Electron in Nix closure)
   features.web.vivaldi.enable = true;
   features.web.default = "vivaldi";
+  vivaldi.codexStellarium.enable = true;
   features.mail.vdirsyncer.enable = false;
   features.mail.mbsync.enable = false;
   features.hardware.bluetooth.enable = false;
