@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ ... }:
 {
   imports = [
     ./boot
@@ -23,6 +23,5 @@
     ./virt.nix
     ./winapps.nix
     ./zram.nix
-    (inputs.self + "/modules/hardware/uinput.nix")
   ];
 }

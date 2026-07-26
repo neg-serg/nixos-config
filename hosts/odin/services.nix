@@ -26,31 +26,6 @@ let
 in
 lib.mkMerge [
   {
-    # Primary user (single source of truth for name/ids)
-    users.main = {
-      name = "neg";
-      uid = 1000;
-      gid = 1000;
-      description = "Neg";
-    };
-    # Host-specific feature toggles
-    features.dev.ai.opencode.enable = lib.mkForce false; # TEMP: npm install hangs
-    features.dev.ai.omp.enable = true; # Oh My Pi (omp) — AI coding agent fork with LSP, DAP, subagents
-    features.dev.ai.pi.enable = true;
-    features.cli.broot.enable = true;
-    features.dev.tla.enable = true;
-    features.hardware.usbAutomount.enable = true;
-    features.net.tailscale.enable = true;
-    features.input.kanata.enable = true; # Caps→Ctrl via kanata
-    features.input.warpd.enable = true; # warpd: keyboard-driven pointer control
-
-    # Roles enabled for this host
-    roles = {
-      workstation.enable = true;
-      homelab.enable = true;
-      media.enable = true;
-      monitoring.enable = true;
-    };
 
     # Reduce microphone background noise system-wide (PipeWire RNNoise filter)
     # Enabled via modules/hardware/audio/noise by default for this host
