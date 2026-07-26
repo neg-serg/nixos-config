@@ -108,13 +108,13 @@ Singleton {
                 root.available = true;
                 root._activeProc = null;
             }
-        }
+        };
         proc.onFailed = function(code) {
             root.busy = false;
             root.available = false;
             root._activeProc = null;
             console.warn("[Genelec] genlc failed with code:", code);
-        }
+        };
         proc.running = true;
     }
 
