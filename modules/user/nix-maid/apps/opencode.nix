@@ -13,7 +13,7 @@ let
 in
 lib.mkIf enable (
   let
-    deepseekSecretPath = "/run/secrets/deepseek-api";
+    deepseekSecretPath = "/run/user/1000/secrets/deepseek-api";
     deepseekApiKey =
       if builtins.pathExists deepseekSecretPath then
         lib.strings.removeSuffix "\n" (builtins.readFile deepseekSecretPath)
@@ -106,7 +106,7 @@ lib.mkIf enable (
       systemd.user.services.opencode-daemon =
         let
           opencodeServe = pkgs.writeShellScript "opencode-serve" ''
-            export DEEPSEEK_API_KEY="$(${lib.getExe' pkgs.coreutils "cat"} /run/secrets/deepseek-api 2>/dev/null || true)"
+            export DEEPSEEK_API_KEY="$(${lib.getExe' pkgs.coreutils "cat"} /run/user/1000/secrets/deepseek-api 2>/dev/null || true)"
             export GITHUB_TOKEN="$(${lib.getExe' pkgs.coreutils "cat"} /run/secrets/github-token 2>/dev/null || true)"
             export PATH="${pkgs.nodejs}/bin:$PATH"
             exec ${lib.getExe pkgs.opencode} serve

@@ -1819,7 +1819,6 @@
         "talktype": "talktype_2",
         "winapps": "winapps",
         "wl": "wl_2",
-        "wrapper-manager": "wrapper-manager",
         "xdg-desktop-portal-hyprland": [
           "hyprland",
           "xdph"
@@ -2340,20 +2339,6 @@
       "original": {
         "owner": "neg-serg",
         "repo": "wl",
-        "type": "github"
-      }
-    },
-    "wrapper-manager": {
-      "locked": {
-        "lastModified": 1783493101,
-        "owner": "viperML",
-        "repo": "wrapper-manager",
-        "rev": "531d7752716f5097f05c709d6727299d70c69b62",
-        "type": "github"
-      },
-      "original": {
-        "owner": "viperML",
-        "repo": "wrapper-manager",
         "type": "github"
       }
     },
