@@ -19,10 +19,11 @@ import "../Helpers/Color.js" as Color
  */
 RowLayout {
     id: root
+    visible: true
+    opacity: 0
 
-    Timer { id: hideTimer; interval: 3000; repeat: false; onTriggered: { root.visible = false } }
-    visible: false
-
+    Behavior on opacity { NumberAnimation { duration: 200 } }
+    Timer { id: hideTimer; interval: 3000; repeat: false; onTriggered: { root.opacity = 0 } }
     // ---- Configuration ----
     readonly property int minVolume: -95
     property int maxVolume: {
@@ -66,7 +67,7 @@ RowLayout {
         id: volSlider
         from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
         Layout.preferredWidth: Math.round(46 * Theme.scale(Screen))
-        onMoved: { root.visible = true; hideTimer.restart(); root.pendingDb = root.sliderToDb(value); root.displayDb = root.pendingDb; sliderDebounce.restart(); }
+        onMoved: { root.opacity = 1; hideTimer.restart(); root.pendingDb = root.sliderToDb(value); root.displayDb = root.pendingDb; sliderDebounce.restart(); }
         background: Rectangle {
             x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 1
             width: volSlider.availableWidth; height: 1.5; radius: 1
@@ -174,7 +175,7 @@ RowLayout {
                     root._syncedVolume = v;
                     root.displayDb = v;
                     root._cliPendingDb = v;
-                    root.visible = true;
+                    root.opacity = 1;
                     hideTimer.restart();
                     cliDebounce.restart();
                 }
