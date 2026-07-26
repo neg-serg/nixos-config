@@ -21,7 +21,7 @@ lib.mkIf enable (
         "{env:DEEPSEEK_API_KEY}";
     opencodeConfig = builtins.toJSON {
       "$schema" = "https://opencode.ai/config.json";
-      model = "deepseek/deepseek-v4-flash";
+      model = "claude/claude-sonnet-5";
       plugin = [ "oh-my-openagent@latest" ];
       enabled_providers = [ "deepseek" "proxied" ];
       provider = {
