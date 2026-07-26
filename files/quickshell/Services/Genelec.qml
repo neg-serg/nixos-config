@@ -23,7 +23,7 @@ RowLayout {
     readonly property int minVolume: -95
     property int maxVolume: {
         if (!Settings.settings || Settings.settings.genelecMaxVolume === undefined)
-            return -35;
+            return -25;
         return Settings.settings.genelecMaxVolume;
     }
     onMaxVolumeChanged: { if (volume > maxVolume) setVolume(maxVolume); }
