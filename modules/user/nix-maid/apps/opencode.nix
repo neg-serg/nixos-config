@@ -71,6 +71,14 @@ lib.mkIf enable (
               reasoning = true;
               options.reasoningEffort = "high";
             };
+            "claude/claude-sonnet-5" = {
+              name = "Claude Sonnet 5 (via proxy)";
+              options.maxTokens = 8192;
+            };
+            "claude/claude-opus-4-5" = {
+              name = "Claude Opus 4.5 (via proxy)";
+              options.maxTokens = 8192;
+            };
         };
       };
           };
