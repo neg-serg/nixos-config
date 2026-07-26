@@ -13,7 +13,8 @@
 }:
 let
   cfg = config.servicesProfiles.bitcoind or { enable = false; };
-  mkMetricsScript = instance: dataDir: textfileDir:
+  mkMetricsScript =
+    instance: dataDir: textfileDir:
     let
       metricsFile = "${textfileDir}/bitcoind_${instance}.prom";
     in

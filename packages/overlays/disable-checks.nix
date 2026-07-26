@@ -82,7 +82,6 @@ inputs: final: finalPrev: {
     doCheck = false;
   });
 
-
   # Disable flaky samba tests (timing-dependent, fail on loaded systems)
   samba = finalPrev.samba.overrideAttrs (_old: {
     doCheck = false;

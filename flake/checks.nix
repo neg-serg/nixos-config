@@ -74,17 +74,15 @@ in
   # Validate that modules/default.nix works with different domain filters.
   # These create INDEPENDENT eval trees for nix-eval-jobs to process in parallel.
 
-  "dom-lite" =
-    pkgs.runCommand "check-dom-lite" { } ''
-      echo "modules/default.nix + lite filter: OK"
-      touch $out
-    '';
+  "dom-lite" = pkgs.runCommand "check-dom-lite" { } ''
+    echo "modules/default.nix + lite filter: OK"
+    touch $out
+  '';
 
-  "dom-all" =
-    pkgs.runCommand "check-dom-all" { } ''
-      echo "modules/default.nix + all filter: OK"
-      touch $out
-    '';
+  "dom-all" = pkgs.runCommand "check-dom-all" { } ''
+    echo "modules/default.nix + all filter: OK"
+    touch $out
+  '';
 
   # ── NixOS test config checks ───────────────────────────────────────
   # Each evaluates a profile-specific NixOS configuration for "odin"

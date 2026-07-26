@@ -198,8 +198,7 @@ lib.mkMerge [
         };
 
     # Rescrobbled Config (from SOPS)
-    ".config/rescrobbled/config.toml".source =
-      config.sops.secrets."lastfm/rescrobbled".path;
+    ".config/rescrobbled/config.toml".source = config.sops.secrets."lastfm/rescrobbled".path;
 
   })
   {

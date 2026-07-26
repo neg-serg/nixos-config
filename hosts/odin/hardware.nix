@@ -214,7 +214,7 @@
 
   # Swap on nvme1n1p2 (507G) — created manually:
   #   sudo mkswap /dev/nvme1n1p2 && sudo swapon /dev/nvme1n1p2
-  swapDevices = [{ device = "/dev/nvme1n1p2"; }];
+  swapDevices = [ { device = "/dev/nvme1n1p2"; } ];
 
   # Disable TPM entirely on this host to remove tpmrm device wait
   security.tpm2.enable = false;

@@ -36,7 +36,8 @@ let
       }
     }
   '';
-in {
+in
+{
   config = mkIf cfg.enable {
     environment.etc."wireguard/awg-tunnel.conf" = {
       mode = "0600";

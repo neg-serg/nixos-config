@@ -76,7 +76,6 @@
 
   users.users.neg.maid = { };
 
-
   # Activation script to force restart maid-activation for 'neg'.
   # This ensures user configs are reapplied on every switch, working around
   # NixOS's behavior of not automatically restarting user services reliably.

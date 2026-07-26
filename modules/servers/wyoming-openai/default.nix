@@ -21,25 +21,37 @@ let
     prefix: epCfg:
     lib.optionals epCfg.enable (
       (lib.optional (epCfg ? "url") "--${prefix}-openai-url ${ep epCfg.url}")
-      ++ (lib.optional (epCfg ? "models" && epCfg.models != [ ]) "--${prefix}-models ${lib.concatStringsSep " " (map ep epCfg.models)}")
-      ++ (lib.optional (epCfg ? "streamingModels" && epCfg.streamingModels != [ ]) "--${prefix}-streaming-models ${lib.concatStringsSep " " (map ep epCfg.streamingModels)}")
+      ++ (lib.optional (
+        epCfg ? "models" && epCfg.models != [ ]
+      ) "--${prefix}-models ${lib.concatStringsSep " " (map ep epCfg.models)}")
+      ++ (lib.optional (
+        epCfg ? "streamingModels" && epCfg.streamingModels != [ ]
+      ) "--${prefix}-streaming-models ${lib.concatStringsSep " " (map ep epCfg.streamingModels)}")
       ++ (lib.optional (epCfg ? "backend") "--${prefix}-backend ${ep epCfg.backend}")
       ++ (lib.optional (epCfg ? "temperature") "--${prefix}-temperature ${toString epCfg.temperature}")
       ++ (lib.optional (epCfg ? "prompt") "--${prefix}-prompt ${ep epCfg.prompt}")
     );
 
   ttsArgs = lib.optionals cfg.tts.enable (
-    (lib.optional (cfg.tts ? "voices" && cfg.tts.voices != [ ]) "--tts-voices ${lib.concatStringsSep " " (map ep cfg.tts.voices)}")
+    (lib.optional (
+      cfg.tts ? "voices" && cfg.tts.voices != [ ]
+    ) "--tts-voices ${lib.concatStringsSep " " (map ep cfg.tts.voices)}")
     ++ (lib.optional (cfg.tts ? "speed") "--tts-speed ${toString cfg.tts.speed}")
     ++ (lib.optional (cfg.tts ? "instructions") "--tts-instructions ${ep cfg.tts.instructions}")
-    ++ (lib.optional (cfg.tts ? "streamingMinWords") "--tts-streaming-min-words ${toString cfg.tts.streamingMinWords}")
-    ++ (lib.optional (cfg.tts ? "streamingMaxChars") "--tts-streaming-max-chars ${toString cfg.tts.streamingMaxChars}")
+    ++ (lib.optional (
+      cfg.tts ? "streamingMinWords"
+    ) "--tts-streaming-min-words ${toString cfg.tts.streamingMinWords}")
+    ++ (lib.optional (
+      cfg.tts ? "streamingMaxChars"
+    ) "--tts-streaming-max-chars ${toString cfg.tts.streamingMaxChars}")
   );
 
   cliArgs = lib.concatStringsSep " " (
     [ "--uri ${ep cfg.uri}" ]
     ++ lib.optional (cfg.logLevel != "") "--log-level ${ep cfg.logLevel}"
-    ++ lib.optional (cfg.languages != [ ]) "--languages ${lib.concatStringsSep " " (map ep cfg.languages)}"
+    ++ lib.optional (
+      cfg.languages != [ ]
+    ) "--languages ${lib.concatStringsSep " " (map ep cfg.languages)}"
     ++ mkEndpointArgs "stt" cfg.stt
     ++ mkEndpointArgs "tts" cfg.tts
     ++ ttsArgs
