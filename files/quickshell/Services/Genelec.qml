@@ -144,6 +144,6 @@ RowLayout {
     Component.onCompleted: {
         volume = _lastSetVolume;
         available = true;
-        console.log("[Genelec] initialized, volume=" + volume + "dB, implicitWidth=" + implicitWidth + ", implicitHeight=" + implicitHeight);
+        console.log("[Genelec] init: vol=" + volume + "dB, w=" + implicitWidth + ", h=" + implicitHeight + ", visible=" + visible + ", parent=" + (parent ? "yes" : "null") + ", opacity=" + opacity);
     }
 }
