@@ -64,7 +64,7 @@ RowLayout {
         from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
         Layout.preferredWidth: Math.round(46 * Theme.scale(Screen))
         Layout.alignment: Qt.AlignVCenter
-        onMoved: { root.pendingDb = root.sliderToDb(value); root.displayDb = root.pendingDb; debounce.restart(); }
+        onMoved: { root.pendingDb = root.sliderToDb(value); root.displayDb = root.pendingDb; sliderDebounce.restart(); }
         background: Rectangle {
             x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 1
             width: volSlider.availableWidth; height: 1.5; radius: 1
@@ -90,10 +90,10 @@ RowLayout {
             }
         }
     }
-    Timer { id: debounce; interval: 2000; repeat: false; onTriggered: { if (root.pendingDb !== undefined) root.setVolume(root.pendingDb); } }
+    Timer { id: sliderDebounce; interval: 2000; repeat: false; onTriggered: { if (root.pendingDb !== undefined && root.pendingDb !== root.volume) root.setVolume(root.pendingDb); } }
     Text {
         id: volLabel
-        text: root.muted ? "MUTED" : (root.displayDb < 0 ? "-" : "") + (Math.abs(root.displayDb) < 10 ? "0" : "") + Math.abs(root.displayDb).toFixed(1).replace(/\.0$/,'') + "dB"
+        text: root.muted ? "MUTED" : "<font color='" + Color.formatCss(Theme.accentPrimary, 1) + "'>-</font>" + (Math.abs(root.displayDb) < 10 ? "0" : "") + Math.abs(root.displayDb).toFixed(1).replace(/\.0$/,'') + "<font color='" + Color.formatCss(Theme.accentPrimary, 1) + "'>dB</font>"
         font { family: Theme.fontFamily; pixelSize: Math.round(Theme.fontSizeSmall * 1.05); weight: Font.DemiBold; italic: true }
         color: Theme.textSecondary
         Layout.alignment: Qt.AlignVCenter
@@ -156,7 +156,9 @@ RowLayout {
 
     // ---- Sync with CLI (genlc-media.sh writes /tmp/genlc-volume) ----
     property real _syncedVolume: -40
+    property real _cliPendingDb: volume
     Timer {
+        id: cliSync
         interval: 10; repeat: true; running: true
         onTriggered: {
             if (root.busy) return;
@@ -168,10 +170,16 @@ RowLayout {
                 if (!isNaN(v) && v !== root._syncedVolume) {
                     root._syncedVolume = v;
                     root.displayDb = v;
-                    if (!root.busy) root.volume = v;
+                    root._cliPendingDb = v;
+                    cliDebounce.restart();
                 }
             } catch(e) {}
         }
+    }
+    Timer {
+        id: cliDebounce
+        interval: 2000; repeat: false
+        onTriggered: { if (root._cliPendingDb !== root.volume && !root.busy) root.setVolume(root._cliPendingDb); }
     }
 
     Component.onCompleted: {
