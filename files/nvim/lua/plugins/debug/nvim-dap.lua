@@ -111,5 +111,78 @@ return {'mfussenegger/nvim-dap', -- neovim debugger protocol support
                 },
             }
         end
+
+        -- Python adapter: debugpy
+        if vim.fn.executable('python3') == 1 then
+          local python_path = vim.fn.exepath('python3')
+          dap.adapters.python = {
+            type = 'executable',
+            command = python_path,
+            args = { '-m', 'debugpy.adapter' },
+          }
+          dap.configurations.python = {
+            {
+              type = 'python',
+              request = 'launch',
+              name = 'Launch file',
+              program = '${file}',
+              python = python_path,
+            },
+            {
+              type = 'python',
+              request = 'launch',
+              name = 'Launch with args',
+              program = '${file}',
+              python = python_path,
+              args = function()
+                local args_str = vim.fn.input('Program arguments: ')
+                return vim.split(args_str or '', ' ', { plain = true })
+              end,
+            },
+            {
+              type = 'python',
+              request = 'attach',
+              name = 'Attach (debugpy listen)',
+              connect = {
+                host = '127.0.0.1',
+                port = 5678,
+              },
+            },
+          }
+        end
+
+        -- Go adapter: delve
+        if vim.fn.executable('dlv') == 1 then
+          dap.adapters.go = {
+            type = 'executable',
+            command = 'dlv',
+            args = { 'dap', '--log', '-l', '127.0.0.1:38697' },
+          }
+          dap.configurations.go = {
+            {
+              type = 'go',
+              name = 'Debug (current file/package)',
+              request = 'launch',
+              program = '${fileDirname}',
+            },
+            {
+              type = 'go',
+              name = 'Debug (with args)',
+              request = 'launch',
+              program = '${fileDirname}',
+              args = function()
+                local args_str = vim.fn.input('Program arguments: ')
+                return vim.split(args_str or '', ' ', { plain = true })
+              end,
+            },
+            {
+              type = 'go',
+              name = 'Attach (delve listen)',
+              request = 'attach',
+              mode = 'remote',
+              substitutePath = { { from = '${workspaceFolder}', to = '${workspaceFolder}' } },
+            },
+          }
+        end
         -- vim: fdm=marker
     end}
