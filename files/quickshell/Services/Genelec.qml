@@ -123,7 +123,7 @@ RowLayout {
         busy = true;
         _lastSetVolume = dB;
         _saveState();
-        genlcProc.cmd = ["genlc", "set-volume", "--volume=" + dB + "dB"];
+        genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "set-volume", "--volume=" + dB + "dB"];
         genlcProc.start();
         var xhr = new XMLHttpRequest();
         xhr.open("PUT", "file:///tmp/genlc-volume", false);
@@ -132,7 +132,7 @@ RowLayout {
 
     function _sendMute() {
         if (busy) return;
-        genlcProc.cmd = ["genlc", "set-mute"];
+        genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "set-mute"];
         genlcProc.start();
     }
 
