@@ -109,7 +109,6 @@ let
       filteredSource
       ;
     iosevkaNeg = inputs.iosevka-neg.packages.${linuxSystem};
-    goldfish = inputs.goldfish.packages.${linuxSystem}.goldfish;
 
     # Default: import all domains (full workstation).
     domainFilter = mkDomainFilter allDomains;
