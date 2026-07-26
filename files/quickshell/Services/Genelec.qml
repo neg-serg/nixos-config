@@ -138,4 +138,14 @@ RowLayout {
         volume = _lastSetVolume;
         available = true;
     }
+
+    // ---- Sync with CLI (genlc-media.sh writes /tmp/genlc-volume) ----
+    Timer {
+        interval: 500; repeat: true; running: true
+        onTriggered: {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "file:///tmp/genlc-volume", false);
+            try { xhr.send(); var v = parseInt(xhr.responseText); if (!isNaN(v) && v !== root.volume) root.volume = v; } catch(e) {}
+        }
+    }
 }
