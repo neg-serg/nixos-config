@@ -51,6 +51,7 @@ RowLayout {
 
     // ---- UI ----
     property real pendingDb: -40
+    property real displayDb: volume  // instant visual, no debounce
     MaterialIcon {
         id: volIcon
         icon: root.muted || root.volume <= root.minVolume ? "volume_off" : root.volume >= -20 ? "volume_up" : "volume_down"
@@ -63,7 +64,7 @@ RowLayout {
         from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
         Layout.preferredWidth: Math.round(46 * Theme.scale(Screen))
         Layout.alignment: Qt.AlignVCenter
-        onMoved: { root.pendingDb = root.sliderToDb(value); debounce.restart(); }
+        onMoved: { root.pendingDb = root.sliderToDb(value); root.displayDb = root.pendingDb; debounce.restart(); }
         background: Rectangle {
             x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 1
             width: volSlider.availableWidth; height: 1.5; radius: 1
@@ -92,7 +93,7 @@ RowLayout {
     Timer { id: debounce; interval: 200; repeat: false; onTriggered: { if (root.pendingDb !== undefined) root.setVolume(root.pendingDb); } }
     Text {
         id: volLabel
-        text: root.muted ? "MUTED" : root.volume + "dB"
+        text: root.muted ? "MUTED" : root.displayDb.toFixed(1).replace(/\.0$/,'') + "dB"
         font { family: Theme.fontFamily; pixelSize: Math.round(Theme.fontSizeSmall * 1.05); weight: Font.DemiBold }
         color: Theme.textOn(root.backgroundColor)
         Layout.alignment: Qt.AlignVCenter
