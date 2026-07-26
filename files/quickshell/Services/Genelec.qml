@@ -102,7 +102,7 @@ Singleton {
         proc.command = ["genlc", "set-volume", "--volume=" + dB + "dB"];
         proc.stderr = StderrCollector { waitForEnd: true };
         proc.stdout = StdioCollector {
-            waitForEnd: true
+            waitForEnd: true;
             onStreamFinished: {
                 root.busy = false;
                 root.available = true;
