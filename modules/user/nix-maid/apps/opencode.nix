@@ -57,7 +57,6 @@ lib.mkIf enable (
               };
             };
           };
-          };
         };
         proxied = {
           npm = "@ai-sdk/openai-compatible";
@@ -72,6 +71,8 @@ lib.mkIf enable (
               reasoning = true;
               options.reasoningEffort = "high";
             };
+        };
+      };
           };
       mcp = {
         filesystem = {
