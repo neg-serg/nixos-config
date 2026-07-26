@@ -7,4 +7,5 @@ _inputs: _final: prev:
   pwroute = prev.callPackage ../pwroute { };
   zestbay = prev.callPackage ../zestbay { };
   pw-audioshare = prev.callPackage ../pw-audioshare { };
+  genlc = prev.callPackage ../genlc { };
 }

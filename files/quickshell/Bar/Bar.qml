@@ -1008,6 +1008,12 @@ Scope {
                                 Layout.alignment: Qt.AlignVCenter
                                 panelHovering: rightPanel.panelHovering
                             }
+                            Genelec {
+                                id: widgetsGenelec
+                                visible: WidgetRegistry.isVisible("genelec")
+                                Layout.alignment: Qt.AlignVCenter
+                                panelHovering: rightPanel.panelHovering
+                            }
                         }
 
                         // Wallpaper accent sampler — inside visible panel so Canvas can paint
