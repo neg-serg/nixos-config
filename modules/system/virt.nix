@@ -77,10 +77,5 @@ in
           '';
         };
 
-    # VM storage directories
-    systemd.tmpfiles.rules = lib.mkIf (config.features.virt.libvirtd.enable or false) [
-      "d /var/lib/libvirt/images 0755 root root -"
-      "d /var/lib/libvirt/iso 0755 root root -"
-    ];
   };
 }
