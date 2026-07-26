@@ -515,16 +515,16 @@ Additionally, a Markdown language policy is enforced:
   - `profiles.games.enable = false;` to disable Steam/Gamescope wrappers/MangoHud system‑wide.
   - Defaults to `true` to preserve current behavior.
 
-- **Hybrid approach**: instead of kernel-level `isolcpus` (which blocks SCX schedulers),
-  we use **SCX `scx_lavd`** (dual-CCD X3D-aware BPF scheduler) plus **cgroup cpuset**
+- **Hybrid approach**: instead of kernel-level `isolcpus` (which blocks SCX schedulers), we use
+  **SCX `scx_lavd`** (dual-CCD X3D-aware BPF scheduler) plus **cgroup cpuset**
   (`systemd-run -p AllowedCPUs=…`) to pin games to the V-Cache CCD.
 
-- Host `odin` pins games to V-Cache CCD cores `1-3,16-19` (96MB L3) via `systemd-run`.
-  Kernel threads and IRQs stay on the housekeeping CCD `4-15,20-31` (32MB L3)
-  via `irqaffinity=` and `kthread_cpus=` boot params.
+- Host `odin` pins games to V-Cache CCD cores `1-3,16-19` (96MB L3) via `systemd-run`. Kernel
+  threads and IRQs stay on the housekeeping CCD `4-15,20-31` (32MB L3) via `irqaffinity=` and
+  `kthread_cpus=` boot params.
 
-- Transient scope runner: `game run` (Rust binary) launches any command in a user systemd
-  scope and pins it to the gaming CPUs via `AllowedCPUs`.
+- Transient scope runner: `game run` (Rust binary) launches any command in a user systemd scope and
+  pins it to the gaming CPUs via `AllowedCPUs`.
 
 - Gamescope helpers: `gamescope-pinned`, `gamescope-perf`, `gamescope-quality`, `gamescope-hdr`, and
   `gamescope-targetfps` wrap `game run`.
@@ -583,8 +583,8 @@ Notes:
 
 - Latency and stability:
 
-  - Prefer per‑game CPU set: `GAME_PIN_CPUSET=1-3,16-19 game run -- %command%`. If a game spawns many
-    threads, widen (e.g. `14-15,28-31`).
+  - Prefer per‑game CPU set: `GAME_PIN_CPUSET=1-3,16-19 game run -- %command%`. If a game spawns
+    many threads, widen (e.g. `14-15,28-31`).
   - Keep VRR on: `--adaptive-sync`. If tearing or sync issues, test without it and/or cap FPS
     slightly below max (e.g. 237 on 240 Hz) via in‑game limiter or MangoHud.
   - Optional: test Gamescope `--rt` (realtime scheduling). If audio/input jitter occurs, remove it.

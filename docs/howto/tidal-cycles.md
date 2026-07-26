@@ -11,13 +11,11 @@ flowchart LR
     C --> F["Dirt-Samples<br/>~170MB wav"]
 ```
 
-| Слой | Что | Порт |
-|---|---|---|
-| TidalCycles | Haskell DSL, паттерны ритма/звука | отправляет OSC на :57120 |
-| tidal-ghci | GHCi с предзагруженным Tidal | — |
-| SuperDirt | SuperCollider-синтезатор, загружает сэмплы | слушает OSC :57120 |
-| scsynth | Аудиосервер SuperCollider | OSC :57110, аудио через JACK |
-| PipeWire JACK | Низколатентная аудиоподсистема | квант 128 (2.6ms) |
+| Слой | Что | Порт | |---|---|---| | TidalCycles | Haskell DSL, паттерны ритма/звука | отправляет
+OSC на :57120 | | tidal-ghci | GHCi с предзагруженным Tidal | — | | SuperDirt |
+SuperCollider-синтезатор, загружает сэмплы | слушает OSC :57120 | | scsynth | Аудиосервер
+SuperCollider | OSC :57110, аудио через JACK | | PipeWire JACK | Низколатентная аудиоподсистема |
+квант 128 (2.6ms) |
 
 ## Быстрый старт
 
@@ -31,6 +29,7 @@ just tidal          # открывает nvim для кодинга
 ```
 
 В nvim:
+
 - `Ctrl+Enter` — запустить GHCi
 - Написать паттерн: `d1 $ sound "bd sn"`
 - `Alt+Enter` — отправить строку в Tidal
@@ -40,22 +39,24 @@ just tidal          # открывает nvim для кодинга
 
 ## Клавиши в nvim
 
-| Клавиша | Действие | Контекст |
-|---|---|---|
-| `Ctrl+Enter` | Запустить Tidal + SuperDirt | `.tidal` файл |
-| `Ctrl+Shift+Enter` | Остановить Tidal | `.tidal` файл |
-| `Alt+Enter` | Отправить строку в Tidal | `.tidal` файл |
-| `Ctrl+Enter` | Запустить GHCi | из `just tidal` |
+| Клавиша | Действие | Контекст | |---|---|---| | `Ctrl+Enter` | Запустить Tidal + SuperDirt |
+`.tidal` файл | | `Ctrl+Shift+Enter` | Остановить Tidal | `.tidal` файл | | `Alt+Enter` | Отправить
+строку в Tidal | `.tidal` файл | | `Ctrl+Enter` | Запустить GHCi | из `just tidal` |
 
 ## Как это устроено (детали реализации)
 
 ### Компоненты
 
-1. **`tidal-ghci`** — враппер `/run/current-system/sw/bin/tidal-ghci`. Запускает GHCi с пакетом Tidal, использует `BootTidal.hs` для автоимпорта.
-2. **`just tidal-start`** — пайплайн `echo 'команды' | sclang -l startup.scd`, который запускает SuperDirt мгновенно.
-3. **`sclang -l ~/.config/SuperCollider/superdirt_startup.scd`** — загружает сервер SC с 1M буферов, 256 wire buffers, 64K нод.
-4. **PipeWire JACK** — библиотека `libjack.so` из `pkgs.pipewire.jack` подменяет оригинальный JACK, направляя аудио в PipeWire. Квант 128 на 48kHz даёт задержку ~2.6ms.
-5. **Dirt-Samples** — Nix-деривация `pkgs.neg.dirt-samples` (~170MB), симлинк в `~/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples/`.
+1. **`tidal-ghci`** — враппер `/run/current-system/sw/bin/tidal-ghci`. Запускает GHCi с пакетом
+   Tidal, использует `BootTidal.hs` для автоимпорта.
+1. **`just tidal-start`** — пайплайн `echo 'команды' | sclang -l startup.scd`, который запускает
+   SuperDirt мгновенно.
+1. **`sclang -l ~/.config/SuperCollider/superdirt_startup.scd`** — загружает сервер SC с 1M буферов,
+   256 wire buffers, 64K нод.
+1. **PipeWire JACK** — библиотека `libjack.so` из `pkgs.pipewire.jack` подменяет оригинальный JACK,
+   направляя аудио в PipeWire. Квант 128 на 48kHz даёт задержку ~2.6ms.
+1. **Dirt-Samples** — Nix-деривация `pkgs.neg.dirt-samples` (~170MB), симлинк в
+   `~/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples/`.
 
 ### Почему запуск мгновенный (0.2с)
 
@@ -65,7 +66,9 @@ just tidal          # открывает nvim для кодинга
 (echo 'SuperDirt-команды') | sclang -l superdirt_startup.scd
 ```
 
-`sclang` немедленно читает команды из stdin. `s.waitForBoot` в стартовом скрипте запускает аудиосервер асинхронно. OSC-порт 57120 открывается мгновенно, аудио становится доступно через ~2 секунды. Никаких фиксированных sleep'ов.
+`sclang` немедленно читает команды из stdin. `s.waitForBoot` в стартовом скрипте запускает
+аудиосервер асинхронно. OSC-порт 57120 открывается мгновенно, аудио становится доступно через ~2
+секунды. Никаких фиксированных sleep'ов.
 
 ## Паттерны Tidal: шпаргалка
 
@@ -228,10 +231,10 @@ d1 $ midi $ note "c d e f" # sound "midi"
 ### Нет звука
 
 1. Проверить, что SuperDirt запущен: `ss -tuln | grep 57120` должен показать `0.0.0.0:57120`
-2. Проверить, что scsynth запущен: `ss -tuln | grep 57110`
-3. Проверить цепочку OSC: `tidal-ghci` должен отправлять на `localhost:57120`
-4. Проверить аудиоподключения: `pw-link -l | grep SuperDirt`
-5. Проверить громкость: в паттерне `# gain 1.5`, в системе `pwvucontrol`
+1. Проверить, что scsynth запущен: `ss -tuln | grep 57110`
+1. Проверить цепочку OSC: `tidal-ghci` должен отправлять на `localhost:57120`
+1. Проверить аудиоподключения: `pw-link -l | grep SuperDirt`
+1. Проверить громкость: в паттерне `# gain 1.5`, в системе `pwvucontrol`
 
 ### Потрескивания / xruns
 
@@ -239,9 +242,9 @@ d1 $ midi $ note "c d e f" # sound "midi"
    ```
    context.properties = { default.clock.quantum = 512 }
    ```
-2. Проверить загрузку CPU: `pw-top`
-3. Закрыть тяжёлые приложения (браузер, компиляция)
-4. Проверить `threadirqs` в параметрах ядра: `cat /proc/cmdline | grep threadirqs`
+1. Проверить загрузку CPU: `pw-top`
+1. Закрыть тяжёлые приложения (браузер, компиляция)
+1. Проверить `threadirqs` в параметрах ядра: `cat /proc/cmdline | grep threadirqs`
 
 ### SuperDirt не видит сэмплы
 
@@ -255,16 +258,19 @@ ls ~/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples/
 ### "ghci not found"
 
 Убедиться, что `tidal-ghci` в PATH:
+
 ```bash
 which tidal-ghci
 # Если нет — nixos-rebuild не завершён: sudo nixos-rebuild switch --flake /etc/nixos#odin
 ```
 
-`LD_LIBRARY_PATH` должен содержать путь к PipeWire JACK. После перезахода в систему выставляется автоматически. Проверить: `echo $LD_LIBRARY_PATH | grep pipewire`.
+`LD_LIBRARY_PATH` должен содержать путь к PipeWire JACK. После перезахода в систему выставляется
+автоматически. Проверить: `echo $LD_LIBRARY_PATH | grep pipewire`.
 
 ### SuperDirt запускается, но scsynth падает
 
 Проверить, что PipeWire JACK запущен:
+
 ```bash
 pw-cli ls Module | grep jack
 # Должен показать: libpipewire-module-jackdbus-detect
@@ -274,10 +280,13 @@ pw-cli ls Module | grep jack
 
 ### "No more buffer numbers" при загрузке сэмплов
 
-Слишком много сэмплов для заданного лимита. Увеличить в `~/.config/SuperCollider/superdirt_startup.scd`:
+Слишком много сэмплов для заданного лимита. Увеличить в
+`~/.config/SuperCollider/superdirt_startup.scd`:
+
 ```
 s.options.numBuffers = 1024 * 2048;  -- 2M буферов
 ```
+
 Затем `sudo nixos-rebuild switch`.
 
 ## Советы
@@ -289,6 +298,7 @@ s.options.numBuffers = 1024 * 2048;  -- 2M буферов
 ### Быстрый перезапуск
 
 Если паттерн «залип» (не обновляется):
+
 - `Ctrl+Shift+Enter` — убить GHCi
 - `Ctrl+Enter` — перезапустить
 - Заново отправить паттерны
@@ -296,13 +306,15 @@ s.options.numBuffers = 1024 * 2048;  -- 2M буферов
 ### Несколько окон
 
 Держите три терминала:
+
 1. Окно с `just tidal-start` (логи SC)
-2. Окно с `just tidal` (nvim)
-3. Окно с `just tidal-rt` (мониторинг аудио)
+1. Окно с `just tidal` (nvim)
+1. Окно с `just tidal-rt` (мониторинг аудио)
 
 ### Автозапуск при логине
 
 Добавить в автозапуск (через quickshell или systemd user service):
+
 ```bash
 systemctl --user enable --now tidal.service
 ```
@@ -311,16 +323,14 @@ systemctl --user enable --now tidal.service
 
 ## Файлы
 
-| Путь | Назначение |
-|---|---|
-| `~/.config/SuperCollider/superdirt_startup.scd` | Конфигурация SC сервера (1M буферов) |
-| `~/.config/SuperCollider/boot_noop.scd` | Минимальная загрузка сервера |
-| `~/.config/tidal/BootTidal.hs` | Импорты и настройки GHCi |
-| `~/.local/share/SuperCollider/downloaded-quarks/SuperDirt/` | Классы SuperDirt (Quark) |
-| `~/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples/` | Банк сэмплов (~170MB) |
-| `/run/current-system/sw/bin/tidal-ghci` | GHCi враппер |
-| `/etc/nixos/modules/user/nix-maid/apps/supercollider.nix` | Модуль NixOS |
-| `/etc/nixos/docs/howto/tidal-cycles.md` | Этот документ |
+| Путь | Назначение | |---|---| | `~/.config/SuperCollider/superdirt_startup.scd` | Конфигурация SC
+сервера (1M буферов) | | `~/.config/SuperCollider/boot_noop.scd` | Минимальная загрузка сервера | |
+`~/.config/tidal/BootTidal.hs` | Импорты и настройки GHCi | |
+`~/.local/share/SuperCollider/downloaded-quarks/SuperDirt/` | Классы SuperDirt (Quark) | |
+`~/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples/` | Банк сэмплов (~170MB) | |
+`/run/current-system/sw/bin/tidal-ghci` | GHCi враппер | |
+`/etc/nixos/modules/user/nix-maid/apps/supercollider.nix` | Модуль NixOS | |
+`/etc/nixos/docs/howto/tidal-cycles.md` | Этот документ |
 
 ## Ссылки
 

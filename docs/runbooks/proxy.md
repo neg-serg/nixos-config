@@ -1,34 +1,33 @@
 # Proxy (Xray / sing-box SOCKS5)
 
-There are two tunneling systems that share port `10808` for local SOCKS5 proxy access.
-This document explains how they coexist, how to use the `proxy` CLI, and how to
-troubleshoot when the internet is unreachable.
+There are two tunneling systems that share port `10808` for local SOCKS5 proxy access. This document
+explains how they coexist, how to use the `proxy` CLI, and how to troubleshoot when the internet is
+unreachable.
 
 ## Architecture
 
 ### Xray (systemd service)
 
-Managed by NixOS directly via `modules/system/net/proxy.nix`. Defined as a
-systemd service `xray.service` with static config at
-`~/.config/sing-box-tun/config.json`. The config points to a single hardcoded
-VLESS+REALITY server (`204.152.223.171:8443`) which is **currently dead**.
+Managed by NixOS directly via `modules/system/net/proxy.nix`. Defined as a systemd service
+`xray.service` with static config at `~/.config/sing-box-tun/config.json`. The config points to a
+single hardcoded VLESS+REALITY server (`204.152.223.171:8443`) which is **currently dead**.
 
 - Starts automatically on boot via `default.target`.
 - Runs under user `neg`.
-- Config: `~/.config/sing-box-tun/config.json` (not to be confused with
-  sing-box-trojan below — the dir name is historical).
-- `ExecStartPre` runs `fuser -k 10808/tcp` to kill any process holding port 10808
-  before starting — prevents port conflicts at boot.
+- Config: `~/.config/sing-box-tun/config.json` (not to be confused with sing-box-trojan below — the
+  dir name is historical).
+- `ExecStartPre` runs `fuser -k 10808/tcp` to kill any process holding port 10808 before starting —
+  prevents port conflicts at boot.
 - Logs: `journalctl -u xray.service`.
 
-Xray also generates a proxy env file for `nix-daemon` at
-`/run/secrets/xray-proxy-env`, sourced by zsh init as `ALL_PROXY`.
+Xray also generates a proxy env file for `nix-daemon` at `/run/secrets/xray-proxy-env`, sourced by
+zsh init as `ALL_PROXY`.
 
 ### sing-box (via `proxy` CLI)
 
-A separate sing-box instance managed entirely by the `~/.local/bin/proxy` script.
-Uses **dynamically generated** config at `~/.config/sing-box-trojan/config.json`
-with multiple auto-fetched or manually configured nodes (Hysteria2 + VLESS).
+A separate sing-box instance managed entirely by the `~/.local/bin/proxy` script. Uses **dynamically
+generated** config at `~/.config/sing-box-trojan/config.json` with multiple auto-fetched or manually
+configured nodes (Hysteria2 + VLESS).
 
 - Does **not** start on boot. Only started via `proxy on` or `proxy refresh`.
 - Uses the **same port 10808** — the `proxy on` command stops Xray first.
@@ -38,22 +37,18 @@ with multiple auto-fetched or manually configured nodes (Hysteria2 + VLESS).
 
 ### Why both exist
 
-Xray was the original tunneling solution. When its hardcoded server became
-unreachable, sing-box was added as a more flexible alternative that can pull
-fresh node lists from subscription URLs and use SOPS-encrypted fallback nodes.
-Both are kept because Xray can still be restored if the server comes back, and
-it handles nix-daemon's proxy env on boot.
-| Aspect | Xray (systemd) | sing-box (proxy CLI) |
-|---|---|---|
-| Management | NixOS module `modules/system/net/proxy.nix` | `~/.local/bin/proxy` script |
-| Config | Static (`~/.config/sing-box-tun/config.json`) | Dynamic (`~/.config/sing-box-trojan/config.json`) |
-| Start | Auto on boot via `default.target` | `proxy on` / `proxy refresh` only |
-| Port 10808 | `ExecStartPre` kills existing holder via `fuser -k` | `proxy on` stops Xray first |
-| Off behavior | — | `proxy off` restarts Xray |
-| Logs | `journalctl -u xray.service` | `/tmp/sing-box-trojan.log` |
-| Dashboard | None | `http://127.0.0.1:9090` (secret: `neg`) |
-| Purpose | Boot-time proxy for nix-daemon | Flexible proxy with auto-refreshing nodes |
-
+Xray was the original tunneling solution. When its hardcoded server became unreachable, sing-box was
+added as a more flexible alternative that can pull fresh node lists from subscription URLs and use
+SOPS-encrypted fallback nodes. Both are kept because Xray can still be restored if the server comes
+back, and it handles nix-daemon's proxy env on boot. | Aspect | Xray (systemd) | sing-box (proxy
+CLI) | |---|---|---| | Management | NixOS module `modules/system/net/proxy.nix` |
+`~/.local/bin/proxy` script | | Config | Static (`~/.config/sing-box-tun/config.json`) | Dynamic
+(`~/.config/sing-box-trojan/config.json`) | | Start | Auto on boot via `default.target` | `proxy on`
+/ `proxy refresh` only | | Port 10808 | `ExecStartPre` kills existing holder via `fuser -k` |
+`proxy on` stops Xray first | | Off behavior | — | `proxy off` restarts Xray | | Logs |
+`journalctl -u xray.service` | `/tmp/sing-box-trojan.log` | | Dashboard | None |
+`http://127.0.0.1:9090` (secret: `neg`) | | Purpose | Boot-time proxy for nix-daemon | Flexible
+proxy with auto-refreshing nodes |
 
 ## proxy CLI
 
@@ -80,10 +75,9 @@ proxy on
 ```
 
 1. Stops `xray.service` if it is running.
-2. Generates `~/.config/sing-box-trojan/config.json` from fallback nodes
-   (first-run bootstrap).
-3. Starts sing-box in the background on port `10808`.
-4. Launches dashboard on port `9090`.
+1. Generates `~/.config/sing-box-trojan/config.json` from fallback nodes (first-run bootstrap).
+1. Starts sing-box in the background on port `10808`.
+1. Launches dashboard on port `9090`.
 
 ### off
 
@@ -91,8 +85,8 @@ proxy on
 proxy off
 ```
 
-Stops sing-box. Xray is **restarted automatically** — `xray.service` takes over
-port 10808 again, keeping the nix-daemon proxy env working.
+Stops sing-box. Xray is **restarted automatically** — `xray.service` takes over port 10808 again,
+keeping the nix-daemon proxy env working.
 
 ### refresh
 
@@ -101,10 +95,10 @@ proxy refresh
 ```
 
 1. Fetches fresh nodes from subscription URLs (see "Subscription refresh" below).
-2. Merges with any fallback nodes from the SOPS secret.
-3. Regenerates `~/.config/sing-box-trojan/config.json`.
-4. Stops the current sing-box (and Xray, if running).
-5. Starts sing-box with the new config.
+1. Merges with any fallback nodes from the SOPS secret.
+1. Regenerates `~/.config/sing-box-trojan/config.json`.
+1. Stops the current sing-box (and Xray, if running).
+1. Starts sing-box with the new config.
 
 ### Dashboard
 
@@ -127,13 +121,14 @@ proxy status
 
 **Possible causes:**
 
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| Xray is running (hardcoded server is dead) | Xray started on boot but its server is unreachable | `proxy on` to switch to sing-box |
-| Neither Xray nor sing-box is running | No proxy active | `proxy on` or `sudo systemctl start xray` |
-| sing-box is running but internet still fails | All nodes are stale | `proxy refresh` to fetch fresh nodes |
-| `Connection refused` on 10808 | Nothing is listening | Start a proxy |
-| `curl --noproxy '*' -s https://example.com` fails but `proxy status` shows RUNNING | sing-box nodes are all dead; or no fallback + no subscriptions available | `proxy refresh` and check the log at `/tmp/sing-box-trojan.log` |
+| Symptom | Likely cause | Fix | |---|---|---| | Xray is running (hardcoded server is dead) | Xray
+started on boot but its server is unreachable | `proxy on` to switch to sing-box | | Neither Xray
+nor sing-box is running | No proxy active | `proxy on` or `sudo systemctl start xray` | | sing-box
+is running but internet still fails | All nodes are stale | `proxy refresh` to fetch fresh nodes | |
+`Connection refused` on 10808 | Nothing is listening | Start a proxy | |
+`curl --noproxy '*' -s https://example.com` fails but `proxy status` shows RUNNING | sing-box nodes
+are all dead; or no fallback + no subscriptions available | `proxy refresh` and check the log at
+`/tmp/sing-box-trojan.log` |
 
 ### Verifying the proxy works
 
@@ -150,29 +145,27 @@ tail -20 /tmp/sing-box-trojan.log
 
 ### Xray vs sing-box confusion
 
-- **Xray** starts automatically at boot. If Xray is running when you type
-  `proxy on`, the script stops Xray first.
+- **Xray** starts automatically at boot. If Xray is running when you type `proxy on`, the script
+  stops Xray first.
 - **Xray** stayed running = the hardcoded server is alive (unlikely at the moment).
-- **Port 10808** is no longer a conflict: Xray's `ExecStartPre` runs
-  `fuser -k 10808/tcp` before starting, which kills whatever (e.g. sing-box) had
-  the port. Similarly, `proxy on` stops Xray before starting sing-box — the two
-  are cooperative.
+- **Port 10808** is no longer a conflict: Xray's `ExecStartPre` runs `fuser -k 10808/tcp` before
+  starting, which kills whatever (e.g. sing-box) had the port. Similarly, `proxy on` stops Xray
+  before starting sing-box — the two are cooperative.
 - After `proxy off`, Xray is restarted automatically.
 - The nix-daemon proxy env (`/run/secrets/xray-proxy-env`) is only generated by
-  `xray-proxy-env.service`, which runs at boot. If you switch to sing-box after
-  boot, nix-daemon still talks to 10808 — whichever proxy is there handles it.
+  `xray-proxy-env.service`, which runs at boot. If you switch to sing-box after boot, nix-daemon
+  still talks to 10808 — whichever proxy is there handles it.
 
 ### Config file confusion
 
-- `~/.config/sing-box-tun/config.json` — **Xray's** static config (the
-  directory name is misleading; Xray reads this file via its `ExecStart`).
-- `~/.config/sing-box-trojan/config.json` — **sing-box's** dynamic config
-  (managed by the `proxy` script).
+- `~/.config/sing-box-tun/config.json` — **Xray's** static config (the directory name is misleading;
+  Xray reads this file via its `ExecStart`).
+- `~/.config/sing-box-trojan/config.json` — **sing-box's** dynamic config (managed by the `proxy`
+  script).
 
 ## Subscription refresh
 
-When you run `proxy refresh`, the script fetches nodes from two subscription
-URLs hosted on GitHub:
+When you run `proxy refresh`, the script fetches nodes from two subscription URLs hosted on GitHub:
 
 - `https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/protocols/vless.txt`
 - `https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/everything.txt`
@@ -180,30 +173,27 @@ URLs hosted on GitHub:
 Each URL is queried with a 10-second timeout. The script:
 
 1. Fetches up to 10 VLESS and Hysteria2 links from each URL.
-2. Merges them with any fallback nodes from the SOPS secret (fallback nodes are
-   always included at the top of the list).
-3. Generates a sing-box config with all nodes as outbounds under an `urltest`
-   group (`auto`) that pings all nodes every 5 minutes and routes to the lowest
-   latency.
-4. Private IPs are routed direct.
+1. Merges them with any fallback nodes from the SOPS secret (fallback nodes are always included at
+   the top of the list).
+1. Generates a sing-box config with all nodes as outbounds under an `urltest` group (`auto`) that
+   pings all nodes every 5 minutes and routes to the lowest latency.
+1. Private IPs are routed direct.
 
-If both subscription URLs fail **and** there are no fallback nodes, the command
-errors out with:
+If both subscription URLs fail **and** there are no fallback nodes, the command errors out with:
 
 ```
 ERROR: no fallback nodes and no subscription nodes available
 ```
 
-The subscription URLs are publicly available repos — the project owner's
-`rtwo2/FastNodes` repository.
+The subscription URLs are publicly available repos — the project owner's `rtwo2/FastNodes`
+repository.
 
 ## Adding fallback nodes
 
-Fallback nodes are encrypted with SOPS at
-`secrets/home/proxy-fallback.sops.yaml` and decrypted at runtime to
-`/run/user/1000/secrets/proxy-fallback`. They are included in every config
-generation (first-run bootstrap, `proxy on`, `proxy refresh`) and serve as a
-backup when subscription URLs are unreachable.
+Fallback nodes are encrypted with SOPS at `secrets/home/proxy-fallback.sops.yaml` and decrypted at
+runtime to `/run/user/1000/secrets/proxy-fallback`. They are included in every config generation
+(first-run bootstrap, `proxy on`, `proxy refresh`) and serve as a backup when subscription URLs are
+unreachable.
 
 ### Format
 
@@ -224,12 +214,11 @@ Supported protocols: `hysteria2://` and `vless://`.
 sops secrets/home/proxy-fallback.sops.yaml
 ```
 
-2. Edit the `fallback_nodes` value — add, remove, or replace node URLs, one per
-   line.
+2. Edit the `fallback_nodes` value — add, remove, or replace node URLs, one per line.
 
-3. Save and exit. SOPS re-encrypts in place.
+1. Save and exit. SOPS re-encrypts in place.
 
-4. Commit:
+1. Commit:
 
 ```sh
 git add secrets/home/proxy-fallback.sops.yaml
@@ -264,6 +253,5 @@ git add secrets/home/proxy-fallback.sops.yaml
 git commit -m "[secrets] proxy fallback nodes (initial)"
 ```
 
-> **Note:** The secret is decrypted at runtime by a systemd oneshot service.
-> The decrypted file is placed at `/run/user/1000/secrets/proxy-fallback` and
-> is readable only by the `neg` user.
+> **Note:** The secret is decrypted at runtime by a systemd oneshot service. The decrypted file is
+> placed at `/run/user/1000/secrets/proxy-fallback` and is readable only by the `neg` user.

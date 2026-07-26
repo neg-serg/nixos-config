@@ -25,7 +25,10 @@ rustPlatform.buildRustPackage {
   cargoLock.lockFile = "${src}/Cargo.lock";
 
   # clang-sys needs llvm-config (dev output) + libclang at build time
-  nativeBuildInputs = [ llvmPackages.llvm.dev llvmPackages.clang ];
+  nativeBuildInputs = [
+    llvmPackages.llvm.dev
+    llvmPackages.clang
+  ];
   LLVM_CONFIG_PATH = "${llvmPackages.llvm.dev}/bin/llvm-config";
 
   meta = with lib; {

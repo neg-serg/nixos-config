@@ -1,11 +1,12 @@
-{ lib
-, rustPlatform
-, fetchFromGitHub
-, pkg-config
-, clang
-, gtk4
-, libadwaita
-, pipewire
+{
+  lib,
+  rustPlatform,
+  fetchFromGitHub,
+  pkg-config,
+  clang,
+  gtk4,
+  libadwaita,
+  pipewire,
 }:
 
 rustPlatform.buildRustPackage rec {

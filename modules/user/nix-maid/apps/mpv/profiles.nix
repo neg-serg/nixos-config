@@ -3,7 +3,8 @@
   lib,
   neg,
   ...
-}: {
+}:
+{
   config = lib.mkIf (config.features.gui.enable or false) (
     neg.mkHomeFiles {
       ".config/mpv/profiles.conf".text = ''

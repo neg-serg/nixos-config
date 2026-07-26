@@ -49,13 +49,15 @@ in
   config = lib.mkIf cfg.enable {
     # scx schedulers need the sched_ext kernel feature;
     # ensure CONFIG_SCHED_CLASS_EXT=y is set.
-    boot.kernelPatches = [{
-      name = "sched-ext";
-      patch = null;
-      structuredExtraConfig = with lib.kernel; {
-        SCHED_CLASS_EXT = yes;
-      };
-    }];
+    boot.kernelPatches = [
+      {
+        name = "sched-ext";
+        patch = null;
+        structuredExtraConfig = with lib.kernel; {
+          SCHED_CLASS_EXT = yes;
+        };
+      }
+    ];
 
     # Ensure the BPF JIT is enabled.
     boot.kernel.sysctl = {
@@ -75,8 +77,16 @@ in
         RestartSec = "5s";
         # Needs CAP_SYS_ADMIN + CAP_BPF for BPF prog load,
         # CAP_SYS_NICE for scheduler ops.
-        AmbientCapabilities = [ "CAP_SYS_ADMIN" "CAP_BPF" "CAP_SYS_NICE" ];
-        CapabilityBoundingSet = [ "CAP_SYS_ADMIN" "CAP_BPF" "CAP_SYS_NICE" ];
+        AmbientCapabilities = [
+          "CAP_SYS_ADMIN"
+          "CAP_BPF"
+          "CAP_SYS_NICE"
+        ];
+        CapabilityBoundingSet = [
+          "CAP_SYS_ADMIN"
+          "CAP_BPF"
+          "CAP_SYS_NICE"
+        ];
         NoNewPrivileges = true;
         ProtectSystem = "strict";
         ProtectHome = true;

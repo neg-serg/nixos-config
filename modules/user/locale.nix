@@ -18,7 +18,6 @@
     LC_TIME = locale;
   };
 
-
   # Geoclue2 removed — pulls GTK, location not needed
   time.hardwareClockInLocalTime = true;
 }

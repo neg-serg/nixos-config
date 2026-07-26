@@ -35,7 +35,8 @@ let
     cat "$BLOCKLIST_DIR"/*.txt | sort -u > "$BLOCKLIST_DIR/domains_all.txt"
     echo "Updated $(wc -l < "$BLOCKLIST_DIR/domains_all.txt") domains"
   '';
-in {
+in
+{
   config = mkIf cfg.enable {
     environment.systemPackages = [ pkgs.curl ];
 
