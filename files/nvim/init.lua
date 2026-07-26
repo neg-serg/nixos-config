@@ -4,6 +4,7 @@ end
 vim.loader.enable()
 vim.g.mapleader = ','
 vim.g.maplocalleader = ','
+vim.g.startup_logo = true
 require'00-settings'
 require'01-plugins'
 
