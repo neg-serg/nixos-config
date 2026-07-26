@@ -146,15 +146,6 @@ Item {
     // ---- Startup ----
     Component.onCompleted: {
         volume = _lastSetVolume;
-        // Probe availability
-        var probe = new Process();
-        probe.command = ["genlc", "--help"];
-        probe.stderr = null;
-        probe.stdout = null;
-        probe.onFailed = function(code) {
-            root.available = false;
-            console.warn("[Genelec] genlc not available, code:", code);
-        }
-        probe.running = true;
+        available = true;  // genlc is always available on odin
     }
 }
