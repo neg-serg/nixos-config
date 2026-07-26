@@ -93,12 +93,14 @@ RowLayout {
     Timer { id: sliderDebounce; interval: 2000; repeat: false; onTriggered: { if (root.pendingDb !== undefined && root.pendingDb !== root.volume) root.setVolume(root.pendingDb); } }
     Text {
         id: volLabel
-        text: root.muted ? "MUTED" : "<font color='" + Color.formatCss(Theme.accentPrimary, 1) + "'>-</font>" + (Math.abs(root.displayDb) < 10 ? "0" : "") + Math.abs(root.displayDb).toFixed(1).replace(/\.0$/,'') + "<font color='" + Color.formatCss(Theme.accentPrimary, 1) + "'>dB</font>"
+        text: root.muted ? "MUTED" : "<font color='" + Theme.accentPrimary + "'>-</font>" + (Math.abs(root.displayDb) < 10 ? "0" : "") + Math.abs(root.displayDb).toFixed(1).replace(/\.0$/,'') + "<font color='" + Theme.accentPrimary + "'>dB</font>"
         font { family: Theme.fontFamily; pixelSize: Math.round(Theme.fontSizeSmall * 1.05); weight: Font.DemiBold; italic: true }
         color: Theme.textSecondary
         Layout.alignment: Qt.AlignVCenter
     }
 
+
+    function clamp(v) { return v < minVolume ? minVolume : v > maxVolume ? maxVolume : v; }
     function setVolume(dB) {
         var clamped = clamp(Number(dB));
         if (clamped === volume && !busy) return;
