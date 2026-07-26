@@ -117,7 +117,6 @@ in
         gui = {
           qt.enable = mkForce false;
           quickshell.enable = mkForce false;
-          exo.enable = mkForce false;
         };
       };
     })
@@ -143,9 +142,6 @@ in
           )
           (assertParent gui.enable gui.skwd.enable
             "features.gui.skwd.enable requires features.gui.enable = true"
-          )
-          (assertParent gui.enable gui.exo.enable
-            "features.gui.exo.enable requires features.gui.enable = true"
           )
           (assertParent gui.enable gui.vicinae.enable
             "features.gui.vicinae.enable requires features.gui.enable = true"

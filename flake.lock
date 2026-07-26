@@ -207,22 +207,6 @@
         "type": "github"
       }
     },
-    "exo_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1768606981,
-        "narHash": "sha256-080NIKZa8GhNNMAF7wmUkORetSd4NraPAOIcLw0cgAk=",
-        "owner": "debuggyo",
-        "repo": "Exo",
-        "rev": "d8ca44a3c4e71777ec70eef3f886b3fdd0b5f614",
-        "type": "github"
-      },
-      "original": {
-        "owner": "debuggyo",
-        "repo": "Exo",
-        "type": "github"
-      }
-    },
     "extra-container": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -1403,7 +1387,7 @@
     },
     "neg-pkgs": {
       "inputs": {
-        "exo": "exo_2",
+        "exo": "exo",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -1791,7 +1775,6 @@
         "caelestia-shell": "caelestia-shell",
         "codex-stellarium": "codex-stellarium",
         "determinate": "determinate",
-        "exo": "exo",
         "extra-container": "extra-container",
         "goldfish": "goldfish",
         "herdr": "herdr",
