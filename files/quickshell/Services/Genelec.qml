@@ -16,7 +16,7 @@ import "../Helpers/Utils.js" as Utils
  *  - To raise the cap: change genelecMaxVolume in Settings.json.
  *  - State (last-set volume) is persisted via StateCache.
  */
-Item {
+RowLayout {
     id: root
 
     // ---- Configuration ----
@@ -49,29 +49,26 @@ Item {
     function sliderToDb(pos) { return Math.round(minVolume + pos * (maxVolume - minVolume)); }
 
     // ---- UI ----
-    implicitWidth: row.implicitWidth; implicitHeight: row.implicitHeight
-
-    RowLayout {
-        id: row
-        spacing: 2
-        MaterialIcon {
-            icon: root.muted || root.volume <= root.minVolume ? "volume_off" : root.volume >= -20 ? "volume_up" : "volume_down"
-            size: Math.round(Theme.fontSizeSmall * 1.2); color: root.available ? Theme.accentPrimary : Theme.textDisabled
-            Layout.alignment: Qt.AlignVCenter
-            MouseArea { anchors.fill: parent; onClicked: root.toggleMute() }
-        }
-        Slider {
-            id: volSlider
-            from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
-            Layout.preferredWidth: Math.round(80 * Theme.scale(Screen))
-            Layout.alignment: Qt.AlignVCenter
-            onMoved: root.setVolume(root.sliderToDb(value))
-        }
-        Text {
-            text: root.muted ? "MUTED" : root.volume + " dB"
-            font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85); color: Theme.textSecondary
-            Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Math.round(48 * Theme.scale(Screen))
-        }
+    spacing: 2
+    MaterialIcon {
+        id: volIcon
+        icon: root.muted || root.volume <= root.minVolume ? "volume_off" : root.volume >= -20 ? "volume_up" : "volume_down"
+        size: Math.round(Theme.fontSizeSmall * 1.2); color: root.available ? Theme.accentPrimary : Theme.textDisabled
+        Layout.alignment: Qt.AlignVCenter
+        MouseArea { anchors.fill: parent; onClicked: root.toggleMute() }
+    }
+    Slider {
+        id: volSlider
+        from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
+        Layout.preferredWidth: Math.round(80 * Theme.scale(Screen))
+        Layout.alignment: Qt.AlignVCenter
+        onMoved: root.setVolume(root.sliderToDb(value))
+    }
+    Text {
+        id: volLabel
+        text: root.muted ? "MUTED" : root.volume + " dB"
+        font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85); color: Theme.textSecondary
+        Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Math.round(48 * Theme.scale(Screen))
     }
 
 
@@ -146,6 +143,7 @@ Item {
     // ---- Startup ----
     Component.onCompleted: {
         volume = _lastSetVolume;
-        available = true;  // genlc is always available on odin
+        available = true;
+        console.log("[Genelec] initialized, volume=" + volume + "dB, implicitWidth=" + implicitWidth + ", implicitHeight=" + implicitHeight);
     }
 }
