@@ -7,7 +7,6 @@
     ./virtualisation/lxc.nix
   ];
   system.preserveFlake = false;
-  roles.workstation.enable = true;
 
   # Composable profiles: order matters, last wins on conflicts
   features.profiles = [
@@ -49,6 +48,7 @@
   features.apps.winapps.enable = true;
   features.apps.guiAppsFull.enable = false; # Disable heavy GUI apps (GIMP, OBS); gaming profile enables it by default
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
+  hardware.gpu.corectrl.enable = true;
   features.dev.cpp.enable = true; # Enable C++ toolchain (ccache, gcc, cmake)
   # Override default networkUnits: odin uses systemd-networkd, not NetworkManager
   features.system.logTtys.networkUnits = [
@@ -57,6 +57,33 @@
     "tailscaled.service" # Tailscale VPN
     "nftables.service" # Firewall
   ];
+
+  # Primary user (single source of truth for name/ids)
+  users.main = {
+    name = "neg";
+    uid = 1000;
+    gid = 1000;
+    description = "Neg";
+  };
+
+  # Host-specific feature toggles
+  features.dev.ai.opencode.enable = false; # TEMP: npm install hangs
+  features.dev.ai.omp.enable = true; # Oh My Pi (omp) — AI coding agent fork with LSP, DAP, subagents
+  features.dev.ai.pi.enable = true;
+  features.cli.broot.enable = true;
+  features.dev.tla.enable = true;
+  features.hardware.usbAutomount.enable = true;
+  features.net.tailscale.enable = true;
+  features.input.kanata.enable = true; # Caps→Ctrl via kanata
+  features.input.warpd.enable = true; # warpd: keyboard-driven pointer control
+
+  # Roles enabled for this host
+  roles = {
+    workstation.enable = true;
+    homelab.enable = true;
+    media.enable = true;
+    monitoring.enable = true;
+  };
   boot.plymouth.enable = false; # Plymouth removed — adds boot delay, splash not needed on this host
 
   environment.systemPackages = [

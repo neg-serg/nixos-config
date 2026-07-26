@@ -8,18 +8,9 @@
   # Zen 5: disable idle=nomwait — MWAIT C-states are optimal for Ryzen 9000
   profiles.performance.idleNoMwait = lib.mkForce false;
   # Hardware and performance tuning specific to host 'odin'
-  hardware = {
-    storage.autoMount.enable = true;
-    graphics = {
-      enable = true;
-      enable32Bit = true; # required for Proton/32-bit games (GL/Vulkan i686)
-    };
-
-    # Enable CoreCtrl with polkit rule for wheel
-    gpu.corectrl = {
-      enable = true;
-      group = "wheel";
-    };
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true; # required for Proton/32-bit games (GL/Vulkan i686)
   };
 
   # Enable AMD-oriented kernel structured config for this host and tune performance
