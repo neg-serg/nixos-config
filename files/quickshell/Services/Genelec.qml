@@ -42,7 +42,7 @@ RowLayout {
         return -40;
     }
 
-    function _saveState() { if (!StateCache.state) return; StateCache.state.genelecVolume = _lastSetVolume; StateCache.stateFileView.writeAdapter(); }
+    function _saveState() { if (StateCache.state) StateCache.state.genelecVolume = _lastSetVolume; }
 
     // ---- Normalized 0..1 for slider ----
     readonly property real sliderPos: (volume - minVolume) / (maxVolume - minVolume)
