@@ -67,9 +67,9 @@
   };
 
   # Host-specific feature toggles
-  features.dev.ai.opencode.enable = true;
+  features.dev.ai.opencode.enable = false; # npm install hangs without network
   features.dev.ai.omp.enable = true; # Oh My Pi (omp) — AI coding agent fork with LSP, DAP, subagents
-  features.dev.ai.pi.enable = true;
+  features.dev.ai.pi.enable = false;
   features.cli.broot.enable = true;
   features.dev.tla.enable = true;
   features.hardware.usbAutomount.enable = true;
