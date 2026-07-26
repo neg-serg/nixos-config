@@ -102,5 +102,38 @@ Singleton {
         proc.command = ["genlc", "set-volume", "--volume=" + dB + "dB"];
         proc.stderr = null;
         proc.stdout = null;
+        proc.onFailed = function(code) {
+            root.busy = false;
+            root.available = false;
+            root._activeProc = null;
+            console.warn("[Genelec] genlc failed with code:", code);
+        };
+        proc.running = true;
+    }
+
+    function _sendMute() {
+        // Mute by setting to minimum (-95 dB effectively silent)
+        var proc = new Process();
+        proc.command = ["genlc", "set-volume", "--volume=-95dB"];
+        proc.stderr = null;
+        proc.onFailed = function(code) {
+            console.warn("[Genelec] mute failed with code:", code);
+        }
+        proc.running = true;
+    }
+
+    // ---- Startup ----
+    Component.onCompleted: {
+        volume = _lastSetVolume;
+        // Probe availability
+        var probe = new Process();
+        probe.command = ["genlc", "--help"];
+        probe.stderr = null;
         probe.stdout = null;
+        probe.onFailed = function(code) {
+            root.available = false;
+            console.warn("[Genelec] genlc not available, code:", code);
+        }
+        probe.running = true;
+    }
 }
