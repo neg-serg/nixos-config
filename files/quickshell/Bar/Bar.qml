@@ -1010,7 +1010,7 @@ Scope {
                             }
                             Genelec {
                                 id: widgetsGenelec
-                                visible: WidgetRegistry.isVisible("genelec")
+                                visible: true
                                 Layout.alignment: Qt.AlignVCenter
                             }
                         }
