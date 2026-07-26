@@ -62,10 +62,9 @@ RowLayout {
         from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
         Layout.preferredWidth: Math.round(80 * Theme.scale(Screen))
         Layout.alignment: Qt.AlignVCenter
-        onMoved: { _pendingDb = root.sliderToDb(value); debounce.restart(); }
+        onMoved: { var db = root.sliderToDb(value); console.log("[Genelec] slider moved → " + db + "dB"); _pendingDb = db; debounce.restart(); }
     }
-    Timer { id: debounce; interval: 200; repeat: false; onTriggered: { if (_pendingDb !== undefined) root.setVolume(_pendingDb); } }
-    property real _pendingDb: -40
+    Timer { id: debounce; interval: 200; repeat: false; onTriggered: { console.log("[Genelec] debounce fired, _pendingDb=" + _pendingDb); if (_pendingDb !== undefined) root.setVolume(_pendingDb); } }
     Text {
         id: volLabel
         text: root.muted ? "MUTED" : root.volume + " dB"
@@ -107,26 +106,31 @@ RowLayout {
 
     // ---- Hardware communication ----
 
-    property var _activeProc: null
     ProcessRunner {
         id: genlcProc
         autoStart: false
+        onStarted: { console.log("[Genelec] genlc process started"); }
         onExited: function(code, status) {
+            console.log("[Genelec] genlc exited: code=" + code + ", status=" + status);
             root.busy = false;
             root.available = code === 0;
         }
     }
 
     function _sendToHardware(dB) {
-        if (busy) genlcProc.stop();
+        console.log("[Genelec] _sendToHardware(" + dB + "dB), busy=" + busy);
+        if (busy) { console.log("[Genelec] skipping — still busy"); return; }
         busy = true;
         _lastSetVolume = dB;
         _saveState();
         genlcProc.cmd = ["genlc", "set-volume", "--volume=" + dB + "dB"];
+        console.log("[Genelec] starting genlc:", JSON.stringify(genlcProc.cmd));
         genlcProc.start();
     }
 
     function _sendMute() {
+        console.log("[Genelec] _sendMute, busy=" + busy);
+        if (busy) { console.log("[Genelec] skipping mute — busy"); return; }
         genlcProc.cmd = ["genlc", "set-mute"];
         genlcProc.start();
     }
