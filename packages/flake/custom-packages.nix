@@ -10,8 +10,6 @@
 
   waves = pkgs.waves;
 
-  skwd = pkgs.skwd;
-
 
   termeverything = pkgs.neg.termeverything;
 
