@@ -30,14 +30,14 @@ RowLayout {
     onMaxVolumeChanged: { if (volume > maxVolume) setVolume(maxVolume); }
 
     // ---- Runtime state ----
-    property int volume: -40
+    property real volume: -40
     property bool muted: false
-    property int preMuteVolume: -40
+    property real preMuteVolume: -40
     property bool available: false
     property bool busy: false
 
     // ---- Persisted state ----
-    property int _lastSetVolume: {
+    property real _lastSetVolume: {
         if (StateCache.state && StateCache.state.genelecVolume !== undefined)
             return StateCache.state.genelecVolume;
         return -40;
@@ -47,10 +47,10 @@ RowLayout {
 
     // ---- Normalized 0..1 for slider ----
     readonly property real sliderPos: (volume - minVolume) / (maxVolume - minVolume)
-    function sliderToDb(pos) { return Math.round(minVolume + pos * (maxVolume - minVolume)); }
+    function sliderToDb(pos) { return +(minVolume + pos * (maxVolume - minVolume)).toFixed(1); }
 
     // ---- UI ----
-    spacing: 2
+    property real pendingDb: -40
     MaterialIcon {
         id: volIcon
         icon: root.muted || root.volume <= root.minVolume ? "volume_off" : root.volume >= -20 ? "volume_up" : "volume_down"
@@ -100,7 +100,7 @@ RowLayout {
     }
 
     function setVolume(dB) {
-        var clamped = clamp(Math.round(dB));
+        var clamped = clamp(Number(dB));
         if (clamped === volume && !busy) return;
         volume = clamped;
         muted = false;
