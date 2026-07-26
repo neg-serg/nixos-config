@@ -35,9 +35,6 @@ in
     skwd-daemon = inputs.skwd-daemon.packages.${prev.stdenv.hostPlatform.system}.default;
   };
 
-  exo = prev.callPackage (inputs.self + "/packages/exo") {
-    exo-src = inputs.exo;
-  };
 
   # hyprscratch: patched to exit after 5 event-listener failures
   # so systemd Restart=always can restart it with fresh Hyprland IPC env.
