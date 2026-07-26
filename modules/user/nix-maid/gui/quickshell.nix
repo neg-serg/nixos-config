@@ -102,7 +102,10 @@ lib.mkIf quickshellEnabled (
           ExecStart = "${lib.getExe quickshellWrapped} -p %h/.config/quickshell/shell.qml";
           Restart = "on-failure";
           RestartSec = 1;
-          Environment = [ "QML_XHR_ALLOW_FILE_WRITE=1" ];
+          Environment = [
+            "QML_XHR_ALLOW_FILE_WRITE=1"
+            "PATH=/run/current-system/sw/bin:''${PATH}"
+          ];
         };
       };
     }
