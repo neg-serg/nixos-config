@@ -61,12 +61,12 @@ RowLayout {
     Slider {
         id: volSlider
         from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
-        Layout.preferredWidth: Math.round(40 * Theme.scale(Screen))
+        Layout.preferredWidth: Math.round(46 * Theme.scale(Screen))
         Layout.alignment: Qt.AlignVCenter
         onMoved: { root.pendingDb = root.sliderToDb(value); debounce.restart(); }
         background: Rectangle {
             x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 1
-            width: volSlider.availableWidth; height: 1; radius: 1
+            width: volSlider.availableWidth; height: 1.5; radius: 1
             color: Color.withAlpha(Theme.accentPrimary, 0.12)
             Rectangle {
                 width: volSlider.visualPosition * parent.width; height: parent.height; radius: 1
@@ -94,13 +94,9 @@ RowLayout {
     Text {
         id: volLabel
         text: root.muted ? "MUTED" : root.volume + "dB"
-        font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall * 0.95); color: Theme.textSecondary
+        font { family: Theme.fontFamily; pixelSize: Math.round(Theme.fontSizeSmall * 1.05); weight: Font.DemiBold }
+        color: Theme.textOn(root.backgroundColor)
         Layout.alignment: Qt.AlignVCenter
-    }
-
-
-    function clamp(v) {
-        return Utils.clamp(v, minVolume, maxVolume);
     }
 
     function setVolume(dB) {
