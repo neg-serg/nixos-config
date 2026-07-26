@@ -2,7 +2,6 @@
   pkgs,
   lib,
   config,
-  goldfish,
   ...
 }:
 with lib;
@@ -211,16 +210,6 @@ let
 
   # Bootstrap script: creates a writable settings.json that imports the nix overrides.
   # Run once via ExecStartPre; after that, vicinae owns the file for GUI changes.
-  vicinaeBootstrap = pkgs.writeShellScript "vicinae-bootstrap-settings" ''
-    SETTINGS="$HOME/.config/vicinae/settings.json"
-    if [ ! -f "$SETTINGS" ]; then
-      cat > "$SETTINGS" << JSONEOF
-{
-  "imports": ["$HOME/.config/vicinae/nix-overrides.json"]
-}
-JSONEOF
-    fi
-  '';
 in
 {
   config = mkIf enabled (mkMerge [
