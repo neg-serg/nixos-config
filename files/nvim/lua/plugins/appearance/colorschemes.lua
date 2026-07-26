@@ -13,17 +13,48 @@ return {
     'nvim-treesitter/nvim-treesitter',
     event = { 'BufReadPost', 'BufNewFile' },
     config = function()
-      require('nvim-treesitter').setup()
-      -- Incremental selection: expand/shrink visual selection by syntax tree
-      vim.keymap.set('n', '<C-space>', function()
-        require('nvim-treesitter.incremental_selection').init_selection()
-      end, { desc = 'TS: init selection' })
-      vim.keymap.set('x', '<C-space>', function()
-        require('nvim-treesitter.incremental_selection').node_incremental()
-      end, { desc = 'TS: expand selection' })
-      vim.keymap.set('x', '<BS>', function()
-        require('nvim-treesitter.incremental_selection').node_decremental()
-      end, { desc = 'TS: shrink selection' })
+      require('nvim-treesitter.configs').setup({
+        ensure_installed = {
+          'bash', 'c', 'cpp', 'cmake', 'css', 'dockerfile', 'dot',
+          'html', 'json', 'jsonc', 'lua', 'luadoc', 'make', 'markdown',
+          'markdown_inline', 'python', 'regex', 'rust', 'toml',
+          'typescript', 'vim', 'vimdoc', 'yaml',
+        },
+        auto_install = false,
+        highlight = { enable = true },
+        incremental_selection = {
+          enable = true,
+          keymaps = {
+            init_selection = '<C-space>',
+            node_incremental = '<C-space>',
+            node_decremental = '<BS>',
+          },
+        },
+        textobjects = {
+          select = {
+            enable = true,
+            lookahead = true,
+            keymaps = {
+              ['af'] = '@function.outer',
+              ['if'] = '@function.inner',
+              ['ac'] = '@class.outer',
+              ['ic'] = '@class.inner',
+            },
+          },
+          move = {
+            enable = true,
+            set_jumps = true,
+            goto_next_start = {
+              [']f'] = '@function.outer',
+              [']c'] = '@class.outer',
+            },
+            goto_previous_start = {
+              ['[f'] = '@function.outer',
+              ['[c'] = '@class.outer',
+            },
+          },
+        },
+      })
     end,
   },
 }
