@@ -27,8 +27,8 @@ in
     # Restrict access per allowedSubnets via iptables rules instead of
     # blanket allowedTCPPorts. Uses nixos-fw-accept so matched traffic
     # is accepted; unmatched traffic hits the default INPUT DROP policy.
-    networking.firewall.extraCommands = lib.concatMapStringsSep "\n" (subnet:
-      "iptables -A nixos-fw -p tcp --dport 10809 -s ${subnet} -j nixos-fw-accept"
+    networking.firewall.extraCommands = lib.concatMapStringsSep "\n" (
+      subnet: "iptables -A nixos-fw -p tcp --dport 10809 -s ${subnet} -j nixos-fw-accept"
     ) cfg.allowedSubnets;
   };
 }

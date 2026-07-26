@@ -155,11 +155,10 @@ let
 
   game_affinity_params =
     let
-      affinity_params =
-        lib.optionals (houseCpuSet != "") [
-          "irqaffinity=${houseCpuSet}"
-          "kthread_cpus=${houseCpuSet}"
-        ];
+      affinity_params = lib.optionals (houseCpuSet != "") [
+        "irqaffinity=${houseCpuSet}"
+        "kthread_cpus=${houseCpuSet}"
+      ];
     in
     lib.optionals (gameCpuSet != "" && cpuAffinityEnable) affinity_params;
 in

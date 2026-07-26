@@ -1,7 +1,6 @@
----
-name: openapi
-description: "OpenAPI/Swagger spec validation, generation, and tooling"
----
+______________________________________________________________________
+
+## name: openapi description: "OpenAPI/Swagger spec validation, generation, and tooling"
 
 # OpenAPI Tools
 

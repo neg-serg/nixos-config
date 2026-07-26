@@ -40,7 +40,6 @@ in
         usb-modeswitch.enable = true; # mode switching tool for controlling 'multi-mode' USB devices.
       };
 
-
       powerManagement.cpuFreqGovernor = "performance";
     }
     (lib.mkIf (config.features.hardware.bluetooth.enable or false) {

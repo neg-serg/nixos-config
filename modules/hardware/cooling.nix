@@ -125,7 +125,9 @@ in
         Type = "oneshot";
         ExecStart =
           let
-            gpuChannelArgs = map (c: "--gpu-pwm-channels ${builtins.toString c}") (cfg.autoFancontrol.gpuPwmChannels or [ ]);
+            gpuChannelArgs = map (c: "--gpu-pwm-channels ${builtins.toString c}") (
+              cfg.autoFancontrol.gpuPwmChannels or [ ]
+            );
             args = [
               "${pkgs.neg.hwctl}/bin/hwctl"
               "fan"
@@ -134,9 +136,10 @@ in
               "--max-temp ${builtins.toString cfg.autoFancontrol.maxTemp}"
               "--min-pwm ${builtins.toString cfg.autoFancontrol.minPwm}"
               "--max-pwm ${builtins.toString cfg.autoFancontrol.maxPwm}"
-            ] ++ lib.optional cfg.autoFancontrol.allowStop "--allow-stop"
-              ++ lib.optional cfg.gpuFancontrol.enable "--gpu-enable"
-              ++ gpuChannelArgs;
+            ]
+            ++ lib.optional cfg.autoFancontrol.allowStop "--allow-stop"
+            ++ lib.optional cfg.gpuFancontrol.enable "--gpu-enable"
+            ++ gpuChannelArgs;
           in
           lib.concatStringsSep " " args;
         RemainAfterExit = true;

@@ -1,4 +1,10 @@
-{ config, lib, pkgs, inputs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
 with lib;
 let
   cfg = config.features.web.codexStellarium;
@@ -8,7 +14,8 @@ let
   extPkg = import "${inputs.codex-stellarium}/pkgs/codex-stellarium-vivaldi" {
     inherit (pkgs) stdenvNoCC lib;
   };
-in {
+in
+{
   config = mkIf (webEnabled && guiEnabled && cfg.enable) {
     environment.systemPackages = [ extPkg ];
 

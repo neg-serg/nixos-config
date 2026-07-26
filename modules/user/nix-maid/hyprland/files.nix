@@ -186,8 +186,6 @@ in
           }
         '';
 
-
-
         # Ensure local.d directory exists with at least one .conf file so the glob never fails
         ".config/hypr/local.d/00-override.conf".text =
           "# Local Hyprland overrides (Lua API)\n# Use hl.env(), hl.config(), hl.bind(), hl.window_rule() etc.\n# See ~/.config/hypr/hyprland.lua for reference\n";

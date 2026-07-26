@@ -19,8 +19,7 @@ let
     cfg.opensshAuthorizedKeys or [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPKg+t07fFxKPqtDR3rRpvS6Tc9Rrh5yv7fC5GFrBtyK neg@odin"
     ];
-  mainHashedPasswordFile =
-    cfg.hashedPasswordFile;
+  mainHashedPasswordFile = cfg.hashedPasswordFile;
 in
 with rec {
   groupExists = grp: builtins.hasAttr grp config.users.groups;

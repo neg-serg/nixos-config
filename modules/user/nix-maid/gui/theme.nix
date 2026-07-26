@@ -16,17 +16,21 @@ let
   gtkThemeName = config.features.gui.gtkTheme or "neg-gtk";
 
   # Map neg-gtk to real flat-remix variant; other names are their own themes
-  realThemeName = {
-    "neg-gtk" = "Flat-Remix-GTK-Blue-Darkest";
-    "Flat-Remix-GTK-Blue-Darkest" = "Flat-Remix-GTK-Blue-Darkest";
-  }.${gtkThemeName} or gtkThemeName;
+  realThemeName =
+    {
+      "neg-gtk" = "Flat-Remix-GTK-Blue-Darkest";
+      "Flat-Remix-GTK-Blue-Darkest" = "Flat-Remix-GTK-Blue-Darkest";
+    }
+    .${gtkThemeName} or gtkThemeName;
 
-  gtkThemePkg = {
-    "neg-gtk" = pkgs.flat-remix-gtk;
-    "Flat-Remix-GTK-Blue-Darkest" = pkgs.flat-remix-gtk;
-    "Flight-Dark-GTK" = pkgs.flight-gtk-theme;
-    "Andromeda" = pkgs.andromeda-gtk-theme;
-  }.${gtkThemeName} or pkgs.flight-gtk-theme;
+  gtkThemePkg =
+    {
+      "neg-gtk" = pkgs.flat-remix-gtk;
+      "Flat-Remix-GTK-Blue-Darkest" = pkgs.flat-remix-gtk;
+      "Flight-Dark-GTK" = pkgs.flight-gtk-theme;
+      "Andromeda" = pkgs.andromeda-gtk-theme;
+    }
+    .${gtkThemeName} or pkgs.flight-gtk-theme;
 
   # GTK Settings — use the real theme name so GTK finds the theme directory
   gtkSettings = {
@@ -72,14 +76,16 @@ in
         # NOT from settings.ini (which only affects GTK apps directly)
         programs.dconf = {
           enable = true;
-          profiles.user.databases = [{
-            settings."org/gnome/desktop/interface" = {
-              icon-theme = "'${iconTheme}'";
-              gtk-theme = "'${realThemeName}'";
-              cursor-theme = "'Alkano-aio'";
-              font-name = "'Iosevka 10'";
-            };
-          }];
+          profiles.user.databases = [
+            {
+              settings."org/gnome/desktop/interface" = {
+                icon-theme = "'${iconTheme}'";
+                gtk-theme = "'${realThemeName}'";
+                cursor-theme = "'Alkano-aio'";
+                font-name = "'Iosevka 10'";
+              };
+            }
+          ];
         };
       }
       # 3. GTK settings + CSS + gtkrc

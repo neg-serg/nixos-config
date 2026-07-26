@@ -30,7 +30,6 @@ in
   wl = callPkg (inputs.self + "/packages/wl") { };
   wl-switcher = prev.callPackage (inputs.self + "/packages/wl-switcher") { };
 
-
   # hyprscratch: patched to exit after 5 event-listener failures
   # so systemd Restart=always can restart it with fresh Hyprland IPC env.
   hyprscratch =
@@ -54,11 +53,14 @@ in
     prev.vicinae.overrideAttrs (old: {
       version = "0.23.1";
       inherit src;
-      patches = prev.lib.unique ((old.patches or [ ]) ++ [
-        # Tab/Shift+Tab navigate item list (dmenu/rofi style) — handled in QML
-        # because Qt's QML focus navigation intercepts bare Tab before C++
-        ./../vicinae-tab-qml.patch
-      ]);
+      patches = prev.lib.unique (
+        (old.patches or [ ])
+        ++ [
+          # Tab/Shift+Tab navigate item list (dmenu/rofi style) — handled in QML
+          # because Qt's QML focus navigation intercepts bare Tab before C++
+          ./../vicinae-tab-qml.patch
+        ]
+      );
       apiDeps = prev.fetchNpmDeps {
         src = "${src}/src/typescript/api";
         hash = "sha256-Im8fSG9sbaSynrN5gLsWVaPgH5g4Zp+x+FUPIBXrKjg=";
