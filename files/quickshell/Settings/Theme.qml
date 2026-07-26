@@ -823,10 +823,10 @@ Singleton {
     property int panelPillAutoHidePauseMs: val('panel.pill.autoHidePauseMs', 2500)
     property color panelPillColor: val('panel.pill.color', "#000000")
     // Animation timings
-    property int panelAnimStdMs: val('panel.animations.stdMs', 200)
-    property int panelAnimFastMs: val('panel.animations.fastMs', 150)
-    property int panelSlideMs: val('panel.animations.slideMs', 280)
-    property int panelAnimOverlayMs: val('panel.animations.overlayMs', 180)
+    property int panelAnimStdMs: val('panel.animations.stdMs', 280)
+    property int panelAnimFastMs: val('panel.animations.fastMs', 200)
+    property int panelSlideMs: val('panel.animations.slideMs', 380)
+    property int panelAnimOverlayMs: val('panel.animations.overlayMs', 240)
     // Tray behavior timings
     property int panelTrayLongHoldMs: val('panel.tray.longHoldMs', 2500)
     property int panelTrayShortHoldMs: val('panel.tray.shortHoldMs', 1500)
@@ -1007,9 +1007,9 @@ Singleton {
     property real vpnAccentLightenTowardWhite: val('vpn.accent.lightenTowardWhite', 0.20)
     property real vpnDesaturateAmount: val('vpn.desaturateAmount', 0.45)
     // UI animation timings
-    property int uiAnimQuickMs: val('ui.anim.quickMs', 120)
-    property int uiAnimRotateMs: val('ui.anim.rotateMs', 160)
-    property int uiAnimRippleMs: val('ui.anim.rippleMs', 320)
+    property int uiAnimQuickMs: val('ui.anim.quickMs', 160)
+    property int uiAnimRotateMs: val('ui.anim.rotateMs', 220)
+    property int uiAnimRippleMs: val('ui.anim.rippleMs', 420)
     // UI spinner
     property int uiSpinnerDurationMs: val('ui.spinner.durationMs', 1000)
     // Media album art fallback icon opacity
@@ -1024,12 +1024,12 @@ Singleton {
     property int timeFontWeight: val('time.font.weight', Font.Medium)
     property color timeTextColor: val('time.text.color', textPrimary)
     // UI easing (configurable via string names)
-    property int uiEasingQuick: easingType(val('ui.anim.easing.quick', 'OutQuad'), 'OutQuad')
-    property int uiEasingRotate: easingType(val('ui.anim.easing.rotate', 'OutCubic'), 'OutCubic')
+    property int uiEasingQuick: easingType(val('ui.anim.easing.quick', 'OutCubic'), 'OutCubic')
+    property int uiEasingRotate: easingType(val('ui.anim.easing.rotate', 'OutExpo'), 'OutExpo')
     property int uiEasingRipple: easingType(val('ui.anim.easing.ripple', 'InOutCubic'), 'InOutCubic')
-    property int uiEasingStdOut: easingType(val('ui.anim.easing.stdOut', 'OutCubic'), 'OutCubic')
-    property int uiEasingStdIn: easingType(val('ui.anim.easing.stdIn', 'InCubic'), 'InCubic')
-    property int uiEasingInOut: easingType(val('ui.anim.easing.inOut', 'InOutQuad'), 'InOutQuad')
+    property int uiEasingStdOut: easingType(val('ui.anim.easing.stdOut', 'OutExpo'), 'OutExpo')
+    property int uiEasingStdIn: easingType(val('ui.anim.easing.stdIn', 'InExpo'), 'InExpo')
+    property int uiEasingInOut: easingType(val('ui.anim.easing.inOut', 'InOutCubic'), 'InOutCubic')
     // Calendar popup sizing
     property int calendarWidth: val('calendar.size.width', 280)
     property int calendarHeight: val('calendar.size.height', 320)
