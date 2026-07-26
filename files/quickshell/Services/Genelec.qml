@@ -62,8 +62,10 @@ RowLayout {
         from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
         Layout.preferredWidth: Math.round(80 * Theme.scale(Screen))
         Layout.alignment: Qt.AlignVCenter
-        onMoved: root.setVolume(root.sliderToDb(value))
+        onMoved: { _pendingDb = root.sliderToDb(value); debounce.restart(); }
     }
+    Timer { id: debounce; interval: 200; repeat: false; onTriggered: { if (_pendingDb !== undefined) root.setVolume(_pendingDb); } }
+    property real _pendingDb: -40
     Text {
         id: volLabel
         text: root.muted ? "MUTED" : root.volume + " dB"
