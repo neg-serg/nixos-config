@@ -23,7 +23,7 @@ RowLayout {
     readonly property int minVolume: -95
     property int maxVolume: {
         if (!Settings.settings || Settings.settings.genelecMaxVolume === undefined)
-            return -25;
+            return -30;
         return Settings.settings.genelecMaxVolume;
     }
     onMaxVolumeChanged: { if (volume > maxVolume) setVolume(maxVolume); }
@@ -125,6 +125,9 @@ RowLayout {
         _saveState();
         genlcProc.cmd = ["genlc", "set-volume", "--volume=" + dB + "dB"];
         genlcProc.start();
+        var xhr = new XMLHttpRequest();
+        xhr.open("PUT", "file:///tmp/genlc-volume", false);
+        try { xhr.send(String(dB)); } catch(e) {}
     }
 
     function _sendMute() {
@@ -143,9 +146,16 @@ RowLayout {
     Timer {
         interval: 500; repeat: true; running: true
         onTriggered: {
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", "file:///tmp/genlc-volume", false);
-            try { xhr.send(); var v = parseInt(xhr.responseText); if (!isNaN(v) && v !== root.volume) root.volume = v; } catch(e) {}
+            try {
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "file:///tmp/genlc-volume", false);
+                xhr.send();
+                var v = parseInt(xhr.responseText);
+                if (!isNaN(v) && v !== root.volume && root.busy === false) {
+                    console.log("[Genelec] sync from CLI: " + v + "dB (was " + root.volume + "dB)");
+                    root.volume = v;
+                }
+            } catch(e) { /* file not ready yet */ }
         }
     }
 }
