@@ -39,9 +39,7 @@ Singleton {
 
     // Returns true if the widget should be visible in the bar
     function isVisible(widgetId) {
-        var r = !!_activeSet[widgetId];
-        if (widgetId === "genelec") console.log("[WidgetRegistry] isVisible(genelec)=" + r + ", keys=" + JSON.stringify(Object.keys(_activeSet)));
-        return r;
+        return !!_activeSet[widgetId];
     }
 
     // Returns the sort index for a widget in a given section ("left" or "right").

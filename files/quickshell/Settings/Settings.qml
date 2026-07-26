@@ -156,7 +156,7 @@ Singleton {
             // Panel layout: ordered widget identifiers per section
             property var panelLayout: ({
                 left: ["clock", "workspaces", "keyboard", "network", "weather"],
-                right: ["media", "mpdFlags", "sysmon", "pills", "systray", "microphone", "volume"]
+                right: ["media", "mpdFlags", "sysmon", "pills", "systray", "microphone", "volume", "genelec"]
             })
 
             // Weather/geocoding API base URLs (configurable for proxies/firewalls)
