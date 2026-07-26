@@ -19,11 +19,8 @@ import "../Helpers/Color.js" as Color
  */
 RowLayout {
     id: root
-    visible: opacity > 0
-    opacity: 0
-
-    Behavior on opacity { NumberAnimation { duration: 200 } }
-    Timer { id: hideTimer; interval: 3000; repeat: false; onTriggered: { root.opacity = 0 } }
+    visible: true
+    opacity: 1
     // ---- Configuration ----
     readonly property int minVolume: -95
     property int maxVolume: {
@@ -67,7 +64,7 @@ RowLayout {
         id: volSlider
         from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
         Layout.preferredWidth: Math.round(46 * Theme.scale(Screen))
-        onMoved: { root.opacity = 1; hideTimer.restart(); root.pendingDb = root.sliderToDb(value); root.displayDb = root.pendingDb; sliderDebounce.restart(); }
+        Layout.alignment: Qt.AlignVCenter
         background: Rectangle {
             x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 1
             width: volSlider.availableWidth; height: 1.5; radius: 1
@@ -82,7 +79,6 @@ RowLayout {
             y: volSlider.topPadding + volSlider.availableHeight / 2 - 4
             implicitWidth: 8; implicitHeight: 8
             opacity: volSlider.hovered || volSlider.pressed ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 120 } }
             Rectangle {
                 anchors.fill: parent; radius: 4
                 color: "#00000000"; border { width: 1; color: Color.withAlpha(Theme.accentPrimary, 0.7) }
@@ -175,8 +171,6 @@ RowLayout {
                     root._syncedVolume = v;
                     root.displayDb = v;
                     root._cliPendingDb = v;
-                    root.opacity = 1;
-                    hideTimer.restart();
                     cliDebounce.restart();
                 }
             } catch(e) {}
