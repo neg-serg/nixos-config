@@ -9,7 +9,9 @@
       inputs.nix.follows = "nix-src";
     };
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    nix-flatpak.url = "github:gmodena/nix-flatpak";
+    nix-flatpak = {
+      url = "github:gmodena/nix-flatpak";
+    };
     nix-src = {
       url = "github:DeterminateSystems/nix-src";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -76,7 +78,6 @@
       url = "github:sameoldlab/goldfish";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    wrapper-manager.url = "github:viperML/wrapper-manager";
     opencode = {
       url = "github:anomalyco/opencode";
       inputs.nixpkgs.follows = "nixpkgs";
