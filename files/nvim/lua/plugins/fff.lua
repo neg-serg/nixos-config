@@ -5,6 +5,7 @@ return {
   "dmtrKovalenko/fff",
   cmd = { "Fff", "FffGrep" },
   keys = {
+    { "<leader>e", function() require("fff").find_files() end, desc = "Find files (fff)" },
     { "<leader>ff", function() require("fff").find_files() end, desc = "Find files (fff)" },
     { "<leader>fg", function() require("fff").live_grep() end, desc = "Live grep (fff)" },
     { "<leader>fG", function() require("fff").live_grep_under_cursor() end, desc = "Grep word (fff)" },
