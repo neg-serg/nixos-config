@@ -163,6 +163,21 @@ RowLayout {
         genlcProc.start();
     }
 
+    // ---- Sync with CLI (genlc-media.sh writes /tmp/genlc-volume) ----
+    Timer {
+        interval: 750; repeat: true; running: true
+        onTriggered: {
+            if (root.busy) return; // don't fight QML-initiated changes
+            try {
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "file:///tmp/genlc-volume", false);
+                xhr.send();
+                var v = parseInt(xhr.responseText);
+                if (!isNaN(v) && v !== root.volume) root.volume = v;
+            } catch(e) {}
+        }
+    }
+
     // ---- Startup ----
     Component.onCompleted: {
         volume = _lastSetVolume;
