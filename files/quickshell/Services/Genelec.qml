@@ -65,18 +65,12 @@ RowLayout {
         onMoved: { root.pendingDb = root.sliderToDb(value); debounce.restart(); }
 
         background: Rectangle {
-            x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 2
+            x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 1
             width: volSlider.availableWidth; height: 1
-            radius: 1; color: Color.withAlpha(Theme.accentPrimary, 0.15)
+            radius: 1; color: Color.withAlpha(Theme.accentPrimary, 0.10)
             Rectangle {
                 width: volSlider.visualPosition * parent.width; height: parent.height
-                radius: 1
-                color: Color.withAlpha(Theme.accentPrimary, volSlider.hovered ? 0.6 : 0.35)
-                Rectangle {
-                    anchors.fill: parent; radius: 1
-                    color: "transparent"
-                    Rectangle { anchors.fill: parent; radius: 1; color: Color.withAlpha(Theme.accentPrimary, 0.9); opacity: 0.4; layer.enabled: true; layer.effect: FastBlur { radius: 2 } }
-                }
+                radius: 1; color: Color.withAlpha(Theme.accentPrimary, volSlider.hovered ? 0.6 : 0.35)
             }
         }
         handle: Item {
@@ -86,10 +80,11 @@ RowLayout {
             opacity: volSlider.hovered || volSlider.pressed ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: 150 } }
             Rectangle {
-                anchors.centerIn: parent; width: 10; height: 10; radius: 5
-                color: Color.withAlpha(Theme.accentPrimary, 0.15)
-                border { width: 1; color: Color.withAlpha(Theme.accentPrimary, 0.5) }
-                Rectangle { anchors.fill: parent; radius: 5; color: Color.withAlpha(Theme.accentPrimary, 0.8); opacity: 0.5; layer.enabled: true; layer.effect: FastBlur { radius: 3 } }
+                anchors.fill: parent; radius: 5; color: "#00000000"; border { width: 1; color: Color.withAlpha(Theme.accentPrimary, 0.6) }
+            }
+            Rectangle {
+                anchors.centerIn: parent; width: 6; height: 6; radius: 3
+                color: Color.withAlpha(Theme.accentPrimary, 0.7)
             }
         }
     }
