@@ -109,9 +109,9 @@ RowLayout {
     ProcessRunner {
         id: genlcProc
         autoStart: false
-        onExited: {
+        onExited: function(code, status) {
             root.busy = false;
-            root.available = exitCode === 0;
+            root.available = code === 0;
         }
     }
 
