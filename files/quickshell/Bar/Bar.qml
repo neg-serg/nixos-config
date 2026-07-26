@@ -1012,7 +1012,6 @@ Scope {
                                 id: widgetsGenelec
                                 visible: WidgetRegistry.isVisible("genelec")
                                 Layout.alignment: Qt.AlignVCenter
-                                panelHovering: rightPanel.panelHovering
                             }
                         }
 
