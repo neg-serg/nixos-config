@@ -163,13 +163,12 @@ RowLayout {
                 var xhr = new XMLHttpRequest();
                 xhr.open("GET", "file:///tmp/genlc-volume", false);
                 xhr.send();
-                var v = parseInt(xhr.responseText);
+                var v = parseFloat(xhr.responseText);
                 if (!isNaN(v) && v !== root.volume) root.volume = v;
             } catch(e) {}
         }
     }
 
-    // ---- Startup ----
     Component.onCompleted: {
         volume = _lastSetVolume;
         available = true;
