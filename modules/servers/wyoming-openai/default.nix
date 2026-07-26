@@ -10,12 +10,10 @@
   lib,
   config,
   pkgs,
-  opts,
   ...
 }:
 let
   cfg = config.servicesProfiles.wyoming-openai or { enable = false; };
-  inherit (lib) types;
   ep = lib.escapeShellArg;
 
   # Build CLI args for an endpoint (stt or tts)
