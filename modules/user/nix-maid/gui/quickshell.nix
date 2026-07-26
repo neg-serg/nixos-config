@@ -104,7 +104,7 @@ lib.mkIf quickshellEnabled (
           RestartSec = 1;
           Environment = [
             "QML_XHR_ALLOW_FILE_WRITE=1"
-            "PATH=/run/current-system/sw/bin:''${PATH}"
+            "PATH=/run/current-system/sw/bin:\${PATH}"
           ];
         };
       };
