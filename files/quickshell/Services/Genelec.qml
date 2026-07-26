@@ -6,6 +6,7 @@ import Quickshell.Io
 import qs.Settings
 import qs.Components
 import "../Helpers/Utils.js" as Utils
+import "../../Helpers/Color.js" as Color
 
 /*!
  * Genelec — hardware volume control for Genelec SAM monitors via GLM adapter.
@@ -65,12 +66,18 @@ RowLayout {
         onMoved: { root.pendingDb = root.sliderToDb(value); debounce.restart(); }
 
         background: Rectangle {
-            x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 1
+            x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 2
             width: volSlider.availableWidth; height: 1
-            radius: 1; color: Color.withAlpha(Theme.accentPrimary, 0.10)
+            radius: 1; color: Color.withAlpha(Theme.accentPrimary, 0.15)
             Rectangle {
                 width: volSlider.visualPosition * parent.width; height: parent.height
-                radius: 1; color: Color.withAlpha(Theme.accentPrimary, volSlider.hovered ? 0.6 : 0.35)
+                radius: 1
+                color: Color.withAlpha(Theme.accentPrimary, volSlider.hovered ? 0.6 : 0.35)
+                Rectangle {
+                    anchors.fill: parent; radius: 1
+                    color: "transparent"
+                    Rectangle { anchors.fill: parent; radius: 1; color: Color.withAlpha(Theme.accentPrimary, 0.9); opacity: 0.4; layer.enabled: true; layer.effect: FastBlur { radius: 2 } }
+                }
             }
         }
         handle: Item {
@@ -80,11 +87,10 @@ RowLayout {
             opacity: volSlider.hovered || volSlider.pressed ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: 150 } }
             Rectangle {
-                anchors.fill: parent; radius: 5; color: "#00000000"; border { width: 1; color: Color.withAlpha(Theme.accentPrimary, 0.6) }
-            }
-            Rectangle {
-                anchors.centerIn: parent; width: 6; height: 6; radius: 3
-                color: Color.withAlpha(Theme.accentPrimary, 0.7)
+                anchors.centerIn: parent; width: 10; height: 10; radius: 5
+                color: Color.withAlpha(Theme.accentPrimary, 0.15)
+                border { width: 1; color: Color.withAlpha(Theme.accentPrimary, 0.5) }
+                Rectangle { anchors.fill: parent; radius: 5; color: Color.withAlpha(Theme.accentPrimary, 0.8); opacity: 0.5; layer.enabled: true; layer.effect: FastBlur { radius: 3 } }
             }
         }
     }
@@ -94,7 +100,7 @@ RowLayout {
         id: volLabel
         text: root.muted ? "MUTED" : root.volume + "dB"
         font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall * 0.95); color: Theme.textSecondary
-        Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Math.round(36 * Theme.scale(Screen))
+        Layout.alignment: Qt.AlignVCenter
     }
 
 
@@ -149,9 +155,6 @@ RowLayout {
         _saveState();
         genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "set-volume", "--volume=" + dB + "dB"];
         genlcProc.start();
-        var xhr = new XMLHttpRequest();
-        xhr.open("PUT", "file:///tmp/genlc-volume", false);
-        try { xhr.send(String(dB)); } catch(e) {}
     }
 
     function _sendMute() {
@@ -166,20 +169,4 @@ RowLayout {
         available = true;
     }
 
-    // ---- Sync with CLI (genlc-media.sh writes /tmp/genlc-volume) ----
-    Timer {
-        interval: 500; repeat: true; running: true
-        onTriggered: {
-            try {
-                var xhr = new XMLHttpRequest();
-                xhr.open("GET", "file:///tmp/genlc-volume", false);
-                xhr.send();
-                var v = parseInt(xhr.responseText);
-                if (!isNaN(v) && v !== root.volume && root.busy === false) {
-                    console.log("[Genelec] sync from CLI: " + v + "dB (was " + root.volume + "dB)");
-                    root.volume = v;
-                }
-            } catch(e) { /* file not ready yet */ }
-        }
-    }
 }
