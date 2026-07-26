@@ -1,41 +1,41 @@
 #!/usr/bin/env bash
-# Genelec SAM volume control via media keys
-# Rate-limited: max 1 command per 200ms to prevent GLM adapter overload
+# Genelec SAM volume control — debounced: only fires when wheel stops
+# Accumulates delta, applies once after 250ms of inactivity
 STEP=3
 STATE=/tmp/genlc-volume
-LOCK=/tmp/genlc-media.lock
-
-# Rate limit: skip if last call was <200ms ago
-now=$(date +%s%3N)  # milliseconds
-if [ -f "$LOCK" ]; then
-  last=$(cat "$LOCK" 2>/dev/null || echo 0)
-  if [ $((now - last)) -lt 200 ]; then
-    exit 0  # too soon, skip
-  fi
-fi
-echo "$now" > "$LOCK"
+DEBOUNCE=/tmp/genlc-debounce
+PIDFILE=/tmp/genlc-debounce.pid
 
 case "${1:-}" in
-  up|down|mute) ;;
-  *) echo "Usage: $0 {up|down|mute}" >&2; exit 1 ;;
+  up)   ;;
+  down) ;;
+  mute) genlc mute 2>/dev/null; exit 0 ;;
+  *)    exit 1 ;;
 esac
 
-# Read current volume, default -40
-current=-40
-[ -f "$STATE" ] && current=$(cat "$STATE" 2>/dev/null) || true
-if [ -z "$current" ] || ! [ "$current" -eq "$current" ] 2>/dev/null; then current=-40; fi
+# Kill previous pending timer
+[ -f "$PIDFILE" ] && kill "$(cat "$PIDFILE")" 2>/dev/null
 
-if [ "$1" = "mute" ]; then
-  genlc mute 2>/dev/null
-  exit 0
-fi
+# Accumulate delta
+delta=0
+[ -f "$DEBOUNCE" ] && delta=$(cat "$DEBOUNCE" 2>/dev/null || echo 0)
+[ "$1" = "up" ] && echo $((delta + STEP)) > "$DEBOUNCE"
+[ "$1" = "down" ] && echo $((delta - STEP)) > "$DEBOUNCE"
 
-if [ "$1" = "up" ]; then
-  target=$((current + STEP))
+# Fork debounce timer
+(
+  sleep 0.25
+  d=$(cat "$DEBOUNCE" 2>/dev/null || echo 0)
+  [ "$d" = "0" ] && exit 0
+  echo 0 > "$DEBOUNCE"
+  
+  current=-40
+  [ -f "$STATE" ] && current=$(cat "$STATE" 2>/dev/null || true)
+  if [ -z "$current" ] || ! [ "$current" -eq "$current" ] 2>/dev/null; then current=-40; fi
+  
+  target=$((current + d))
   [ "$target" -gt -30 ] && target=-30
-else
-  target=$((current - STEP))
   [ "$target" -lt -95 ] && target=-95
-fi
-
-genlc set-volume --volume="${target}dB" 2>/dev/null && echo "$target" > "$STATE"
+  genlc set-volume --volume="${target}dB" 2>/dev/null && echo "$target" > "$STATE"
+) &
+echo $! > "$PIDFILE"
