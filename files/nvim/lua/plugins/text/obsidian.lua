@@ -24,16 +24,17 @@ return {'obsidian-nvim/obsidian.nvim', version='*', ft='markdown',
                         return tostring(os.date('%Y%m%d%H%M'))
                     end
                 end,
-
-                note_frontmatter_func = function(note)
-                    local out = { id = note.id, aliases = note.aliases, tags = note.tags }
-                    if note.metadata ~= nil and not vim.tbl_isempty(note.metadata) then
-                        for k, v in pairs(note.metadata) do
-                            out[k] = v
+                frontmatter = {
+                    func = function(note)
+                        local out = { id = note.id, aliases = note.aliases, tags = note.tags }
+                        if note.metadata ~= nil and not vim.tbl_isempty(note.metadata) then
+                            for k, v in pairs(note.metadata) do
+                                out[k] = v
+                            end
                         end
-                    end
-                    return out
-                end,
+                        return out
+                    end,
+                },
 
                 link={style='wiki', prepend_note_path=true},
                 attachments={folder=''},
@@ -45,10 +46,6 @@ return {'obsidian-nvim/obsidian.nvim', version='*', ft='markdown',
                 },
                 templates={folder=''},
                 search={sort_by='path', sort_reversed=false},
-                completion={nvim_cmp=false}, -- blink.cmp handles completion
-                follow_url_func=function(url)
-                    vim.fn.jobstart({'xdg-open', url}, {detach=true})
-                end,
             })
 
             local function yank_notelink()
