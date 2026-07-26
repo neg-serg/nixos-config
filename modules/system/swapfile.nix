@@ -17,9 +17,9 @@ in
   options.system.swapfile = with opts; {
     enable = mkEnableOption "Create the swap file if missing before swap.target.";
     path = mkStrOpt {
-      default = "/mnt/zero/swapfile";
+      default = "/zero/swapfile";
       description = "Absolute path to the swap file to ensure.";
-      example = "/mnt/zero/swapfile";
+      example = "/zero/swapfile";
     };
     sizeGiB = mkIntOpt {
       default = 100;
