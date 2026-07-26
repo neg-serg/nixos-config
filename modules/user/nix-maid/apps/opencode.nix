@@ -23,7 +23,7 @@ lib.mkIf enable (
       "$schema" = "https://opencode.ai/config.json";
       model = "deepseek/deepseek-v4-flash";
       plugin = [ "oh-my-openagent@latest" ];
-      enabled_providers = [ "deepseek" ];
+      enabled_providers = [ "deepseek" "proxied" ];
       provider = {
         deepseek = {
           npm = "@ai-sdk/openai-compatible";
@@ -57,8 +57,22 @@ lib.mkIf enable (
               };
             };
           };
+          };
         };
-      };
+        proxied = {
+          npm = "@ai-sdk/openai-compatible";
+          name = "Proxied";
+          options = {
+            baseURL = "http://204.152.223.171:20128/v1";
+            apiKey = "REDACTED-API-KEY";
+          };
+          models = {
+            "deepseek/deepseek-v4-pro" = {
+              name = "DeepSeek V4 Pro (via proxy)";
+              reasoning = true;
+              options.reasoningEffort = "high";
+            };
+          };
       mcp = {
         filesystem = {
           type = "local";
