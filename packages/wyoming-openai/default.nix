@@ -38,9 +38,9 @@ pyPkgs.buildPythonApplication {
   ];
 
   dependencies = [
-    pyPkgs.openai          # == 2.8.1 (nixpkgs: 2.33.0 — compatible)
-    pyPkgs.wyoming         # == 1.8.0 (nixpkgs: 1.9.0 — compatible)
-    pyPkgs.pysbd           # == 0.3.4 (nixpkgs: 0.3.4 — exact)
+    pyPkgs.openai # == 2.8.1 (nixpkgs: 2.33.0 — compatible)
+    pyPkgs.wyoming # == 1.8.0 (nixpkgs: 1.9.0 — compatible)
+    pyPkgs.pysbd # == 0.3.4 (nixpkgs: 0.3.4 — exact)
   ];
 
   postInstall = ''

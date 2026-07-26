@@ -1,4 +1,9 @@
-{ lib, pkgs, iosevkaNeg, ... }:
+{
+  lib,
+  pkgs,
+  iosevkaNeg,
+  ...
+}:
 let
   iosevkaFont = iosevkaNeg.nerd-font or pkgs.nerd-fonts.iosevka; # fallback iosevka font
   packages = [

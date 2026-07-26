@@ -34,22 +34,22 @@ buildNpmPackage {
   nativeBuildInputs = [ makeWrapper ];
 
   postPatch = ''
-    # Inject package-lock.json (not bundled in the npm tarball)
-    cp ${./package-lock.json} package-lock.json
-    # Downgrade @oh-my-pi/* deps in package.json to match lockfile (17.0.0)
-    ${lib.getExe python3} -c "
-import json
-with open('package.json') as f:
-    pkg = json.load(f)
-for dep in list(pkg.get('dependencies', {})):
-    if dep.startswith('@oh-my-pi/'):
-        pkg['dependencies'][dep] = '17.0.0'
-with open('package.json', 'w') as f:
-    json.dump(pkg, f, indent=2)
-    f.write('\n')
-"
-    # Patch bun version check (nixpkgs bun 1.3.13, omp wants >=1.3.14)
-    sed -i 's/1\.3\.14/1.3.13/g' dist/cli.js
+        # Inject package-lock.json (not bundled in the npm tarball)
+        cp ${./package-lock.json} package-lock.json
+        # Downgrade @oh-my-pi/* deps in package.json to match lockfile (17.0.0)
+        ${lib.getExe python3} -c "
+    import json
+    with open('package.json') as f:
+        pkg = json.load(f)
+    for dep in list(pkg.get('dependencies', {})):
+        if dep.startswith('@oh-my-pi/'):
+            pkg['dependencies'][dep] = '17.0.0'
+    with open('package.json', 'w') as f:
+        json.dump(pkg, f, indent=2)
+        f.write('\n')
+    "
+        # Patch bun version check (nixpkgs bun 1.3.13, omp wants >=1.3.14)
+        sed -i 's/1\.3\.14/1.3.13/g' dist/cli.js
   '';
 
   installPhase = ''

@@ -9,7 +9,6 @@ in
     ./pkgs.nix # Nix package manager
   ];
 
-
   # create an overlay for nix-output-monitor to match the inconsistent
   # and frankly ugly icons with nerdfonts ones. they look a little larger
   # than before, but overall consistency is better in general.

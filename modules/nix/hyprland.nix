@@ -3,7 +3,8 @@
   inputs,
   lib,
   ...
-}: {
+}:
+{
   # Route Hyprland and its portal to the flake-pinned versions
   # Gated behind features.gui.enable to avoid pkgs.hyprland evaluation on headless hosts
   config = lib.mkIf config.features.gui.enable {
@@ -23,10 +24,31 @@
 
           nativeBuildInputs = with final; [ pkg-config ];
           buildInputs = with final; [
-            hyprland hyprland.dev aquamarine hyprutils hyprgraphics hyprcursor hyprlang
-            hyprland-protocols wayland wayland-protocols pixman libdrm libinput
-            libGL libglvnd cairo libxkbcommon libxcb libxcb-util libxcb-wm
-            libxcb-image libxcb-render-util libxcb-errors glslang lua
+            hyprland
+            hyprland.dev
+            aquamarine
+            hyprutils
+            hyprgraphics
+            hyprcursor
+            hyprlang
+            hyprland-protocols
+            wayland
+            wayland-protocols
+            pixman
+            libdrm
+            libinput
+            libGL
+            libglvnd
+            cairo
+            libxkbcommon
+            libxcb
+            libxcb-util
+            libxcb-wm
+            libxcb-image
+            libxcb-render-util
+            libxcb-errors
+            glslang
+            lua
           ];
           env.PKG_CONFIG_PATH = "${final.hyprland.dev}/share/pkgconfig";
 

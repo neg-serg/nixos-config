@@ -65,9 +65,9 @@ let
   # a real writable directory so that theme-init can create Theme/ as writable.
   quickshellSrcEntries = builtins.readDir quickshellSrc;
 
-  quickshellSrcNames = builtins.filter (name: name != "Theme" && name != "theme" && name != ".github") (
-    builtins.attrNames quickshellSrcEntries
-  );
+  quickshellSrcNames = builtins.filter (
+    name: name != "Theme" && name != "theme" && name != ".github"
+  ) (builtins.attrNames quickshellSrcEntries);
 
   quickshellHomeFiles = builtins.listToAttrs (
     map (name: {
