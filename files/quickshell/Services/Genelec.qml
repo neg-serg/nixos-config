@@ -90,7 +90,7 @@ RowLayout {
             }
         }
     }
-    Timer { id: sliderDebounce; interval: 2000; repeat: false; onTriggered: { if (root.pendingDb !== undefined && root.pendingDb !== root.volume) root.setVolume(root.pendingDb); } }
+    Timer { id: sliderDebounce; interval: 1000; repeat: false; onTriggered: { if (root.pendingDb !== undefined && root.pendingDb !== root.volume) root.setVolume(root.pendingDb); } }
     Text {
         id: volLabel
         text: root.muted ? "MUTED" : "<font color='" + Theme.accentPrimary + "'>-</font>" + (Math.abs(root.displayDb) < 10 ? "0" : "") + Math.abs(root.displayDb).toFixed(1).replace(/\.0$/,'') + "<font color='" + Theme.accentPrimary + "'>dB</font>"
@@ -180,7 +180,7 @@ RowLayout {
     }
     Timer {
         id: cliDebounce
-        interval: 2000; repeat: false
+        interval: 1000; repeat: false
         onTriggered: { if (root._cliPendingDb !== root.volume && !root.busy) root.setVolume(root._cliPendingDb); }
     }
 
