@@ -64,33 +64,28 @@ RowLayout {
         Layout.preferredWidth: Math.round(40 * Theme.scale(Screen))
         Layout.alignment: Qt.AlignVCenter
         onMoved: { root.pendingDb = root.sliderToDb(value); debounce.restart(); }
-
         background: Rectangle {
-            x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 2
-            width: volSlider.availableWidth; height: 1
-            radius: 1; color: Color.withAlpha(Theme.accentPrimary, 0.15)
+            x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 1
+            width: volSlider.availableWidth; height: 1; radius: 1
+            color: Color.withAlpha(Theme.accentPrimary, 0.12)
             Rectangle {
-                width: volSlider.visualPosition * parent.width; height: parent.height
-                radius: 1
-                color: Color.withAlpha(Theme.accentPrimary, volSlider.hovered ? 0.6 : 0.35)
-                Rectangle {
-                    anchors.fill: parent; radius: 1
-                    color: "transparent"
-                    Rectangle { anchors.fill: parent; radius: 1; color: Color.withAlpha(Theme.accentPrimary, 0.9); opacity: 0.4; layer.enabled: true; layer.effect: FastBlur { radius: 2 } }
-                }
+                width: volSlider.visualPosition * parent.width; height: parent.height; radius: 1
+                color: Color.withAlpha(Theme.accentPrimary, volSlider.hovered ? 0.65 : 0.40)
             }
         }
         handle: Item {
-            x: volSlider.leftPadding + volSlider.visualPosition * (volSlider.availableWidth - 10) - 5
-            y: volSlider.topPadding + volSlider.availableHeight / 2 - 5
-            implicitWidth: 10; implicitHeight: 10
+            x: volSlider.leftPadding + volSlider.visualPosition * (volSlider.availableWidth - 8) - 4
+            y: volSlider.topPadding + volSlider.availableHeight / 2 - 4
+            implicitWidth: 8; implicitHeight: 8
             opacity: volSlider.hovered || volSlider.pressed ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 150 } }
+            Behavior on opacity { NumberAnimation { duration: 120 } }
             Rectangle {
-                anchors.centerIn: parent; width: 10; height: 10; radius: 5
-                color: Color.withAlpha(Theme.accentPrimary, 0.15)
-                border { width: 1; color: Color.withAlpha(Theme.accentPrimary, 0.5) }
-                Rectangle { anchors.fill: parent; radius: 5; color: Color.withAlpha(Theme.accentPrimary, 0.8); opacity: 0.5; layer.enabled: true; layer.effect: FastBlur { radius: 3 } }
+                anchors.fill: parent; radius: 4
+                color: "#00000000"; border { width: 1; color: Color.withAlpha(Theme.accentPrimary, 0.7) }
+            }
+            Rectangle {
+                anchors.centerIn: parent; width: 5; height: 5; radius: 2.5
+                color: Color.withAlpha(Theme.accentPrimary, 0.8)
             }
         }
     }
