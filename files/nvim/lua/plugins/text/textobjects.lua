@@ -1,11 +1,5 @@
--- ┌───────────────────────────────────────────────────────────────────────────────────┐
--- │ █▓▒░ chrisgrieser/nvim-various-textobjs                                           │
--- └───────────────────────────────────────────────────────────────────────────────────┘
 return {
-  'chrisgrieser/nvim-various-textobjs',
+  'nvim-treesitter/nvim-treesitter-textobjects',
   event = { 'BufReadPost', 'BufNewFile' },
-  opts = {
-    useDefaultKeymaps = true,
-    disabledKeymaps = {},
-  },
+  dependencies = { 'nvim-treesitter/nvim-treesitter' },
 }
