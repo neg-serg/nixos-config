@@ -81,6 +81,7 @@ lib.mkIf devEnabled (
         pkgs.yaml-language-server # YAML
         pkgs.nil # Nix (fast LSP with built-in nixpkgs docs)
         pkgs.docker-language-server # Dockerfile LSP
+        pkgs.rust-analyzer # Rust LSP (for rustaceanvim)
 
         # Formatters/linters (for conform.nvim and nvim-lint)
         pkgs.prettierd # Multi-language formatter (JS/TS/CSS/HTML)
@@ -88,6 +89,8 @@ lib.mkIf devEnabled (
         pkgs.shellcheck # Shell linter
         pkgs.shfmt # Shell formatter
         pkgs.stylua # Lua formatter
+        pkgs.selene # Lua linter (blazing fast, Rust)
+        pkgs.hadolint # Dockerfile linter
         pkgs.vale # Prose linter
         pkgs.yamllint # YAML linter
         pkgs.cmake-format # CMake formatter

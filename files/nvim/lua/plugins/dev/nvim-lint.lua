@@ -10,6 +10,10 @@ return {
           bash = {'shellcheck'},
           zsh = {'shellcheck'},
           yaml = {'yamllint'},
+          python = {'ruff'},
+          lua = {'selene'},
+          dockerfile = {'hadolint'},
+          markdown = {'vale'},
         }
         vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufWritePost', 'InsertLeave' }, {
           group = vim.api.nvim_create_augroup('NegNvimLint', { clear = true }),
