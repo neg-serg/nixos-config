@@ -20,14 +20,14 @@ abbrev('Wq', 'wq')
 abbrev('WQ', 'wq')
 abbrev('wQ', 'wq')
 
--- Git shortcuts
+-- Git shortcuts (!git / diffview)
 abbrev('gb', 'FzfLua git_branches')
-abbrev('gc', 'Git commit -v -m')
-abbrev('gca', 'Git commit --amend -v')
-abbrev('gcc', 'Git checkout')
-abbrev('gd', 'Gvdiffsplit')
+abbrev('gc', '!git commit -v')
+abbrev('gca', '!git commit --amend -v')
+abbrev('gcc', '!git checkout ')
+abbrev('gd', 'DiffviewOpen')
 abbrev('gl', 'FzfLua git_commits')
-abbrev('gp', 'Git push')
+abbrev('gp', '!git push')
 abbrev('gs', 'FzfLua git_status')
 
 -- Misc

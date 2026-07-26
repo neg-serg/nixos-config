@@ -1,4 +1,4 @@
--- DCVS plugins: diffview, flog, gitsigns, neogit
+-- DCVS plugins: diffview, gitsigns
 return {
   -- │ █▓▒░ sindrets/diffview.nvim                                                   │
   {'sindrets/diffview.nvim',
@@ -66,17 +66,6 @@ return {
     dependencies={'nvim-tree/nvim-web-devicons','nvim-lua/plenary.nvim'},
     keys={'<C-S-G>','\\a','\\c','\\r','\\f','\\0','\\1','\\2','\\3','\\4'}, lazy=true},
 
-  -- │ █▓▒░ rbong/vim-flog                                                           │
-  {
-    "rbong/vim-flog",
-    dependencies = { "tpope/vim-fugitive" },
-    cmd = { "Flog", "G", "GBrowse", "GDelete", "GMove", "GRemove",
-      "GRename", "GUnlink", "Gcd", "Gclog", "Gdiffsplit", "Gdrop",
-      "Gedit", "Ggrep", "Ghdiffsplit", "Git", "Glcd", "Glgrep", "Gllog",
-      "Gpedit", "Gread", "Gsplit", "Gtabedit", "Gvdiffsplit", "Gvsplit",
-      "Gwq", "Gwrite",
-    },
-  },
 
   -- │ █▓▒░ lewis6991/gitsigns.nvim                                                  │
   {'lewis6991/gitsigns.nvim',
@@ -126,13 +115,4 @@ return {
     end,
     event={'BufReadPost','BufNewFile'}},
 
-  -- │ █▓▒░ NeogitOrg/neogit                                                         │
-  {'NeogitOrg/neogit',
-    dependencies = {
-      'nvim-lua/plenary.nvim',
-      'sindrets/diffview.nvim',
-      'ibhagwan/fzf-lua',
-    },
-    cmd = "Neogit",
-    config = true},
 }
