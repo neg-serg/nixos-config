@@ -23,18 +23,10 @@ Item {
             return -35;
         return Settings.settings.genelecMaxVolume;
     }
-    onMaxVolumeChanged: {
-        // Re-clamp current volume if cap was lowered
-        if (volume > maxVolume) {
-            setVolume(maxVolume);
-        }
-    }
+    onMaxVolumeChanged: { if (volume > maxVolume) setVolume(maxVolume); }
 
     // ---- Runtime state ----
-    property int volume: -40 // current dB value
-    property int step: 1     // dB per scroll tick (2.5)
-    readonly property real displayStep: 2.5
-    readonly property int roundedVolume: Math.round(volume / displayStep) * displayStep
+    property int volume: -40
     property bool muted: false
     property int preMuteVolume: -40
     property bool available: false
@@ -47,11 +39,38 @@ Item {
         return -40;
     }
 
-    function _saveState() {
-        if (!StateCache.state) return;
-        StateCache.state.genelecVolume = _lastSetVolume;
-        StateCache.stateFileView.writeAdapter();
+    function _saveState() { if (!StateCache.state) return; StateCache.state.genelecVolume = _lastSetVolume; StateCache.stateFileView.writeAdapter(); }
+
+    // ---- Normalized 0..1 for slider ----
+    readonly property real sliderPos: (volume - minVolume) / (maxVolume - minVolume)
+    function sliderToDb(pos) { return Math.round(minVolume + pos * (maxVolume - minVolume)); }
+
+    // ---- UI ----
+    implicitWidth: row.implicitWidth; implicitHeight: row.implicitHeight
+
+    RowLayout {
+        id: row
+        spacing: 2
+        MaterialIcon {
+            icon: root.muted || root.volume <= root.minVolume ? "volume_off" : root.volume >= -20 ? "volume_up" : "volume_down"
+            size: Math.round(Theme.fontSizeSmall * 1.2); color: root.available ? Theme.accentPrimary : Theme.textDisabled
+            Layout.alignment: Qt.AlignVCenter
+            MouseArea { anchors.fill: parent; onClicked: root.toggleMute() }
+        }
+        Slider {
+            id: volSlider
+            from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
+            Layout.preferredWidth: Math.round(80 * Theme.scale(Screen))
+            Layout.alignment: Qt.AlignVCenter
+            onMoved: root.setVolume(root.sliderToDb(value))
+        }
+        Text {
+            text: root.muted ? "MUTED" : root.volume + " dB"
+            font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85); color: Theme.textSecondary
+            Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Math.round(48 * Theme.scale(Screen))
+        }
     }
+
 
     function clamp(v) {
         return Utils.clamp(v, minVolume, maxVolume);
