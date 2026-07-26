@@ -13,7 +13,7 @@ Singleton {
     // Default layout used when Settings.panelLayout is absent/invalid
     readonly property var _defaultLayout: ({
         left: ["clock", "workspaces", "keyboard", "network", "weather"],
-        right: ["media", "mpdFlags", "sysmon", "pills", "systray", "microphone", "volume"]
+        right: ["media", "mpdFlags", "sysmon", "pills", "systray", "microphone", "volume", "genelec"]
     })
 
     // Resolved layout: Settings override or default

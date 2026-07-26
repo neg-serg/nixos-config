@@ -172,6 +172,9 @@ Singleton {
 
             // Wallpaper accent extraction
             property bool wallpaperAccent: true
+
+            // Genelec SAM hardware volume cap (dB, negative). Raise above -35 at own risk.
+            property int genelecMaxVolume: -35
         }
     }
 
