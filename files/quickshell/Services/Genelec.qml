@@ -19,7 +19,7 @@ import "../Helpers/Color.js" as Color
  */
 RowLayout {
     id: root
-    visible: true
+    visible: opacity > 0
     opacity: 0
 
     Behavior on opacity { NumberAnimation { duration: 200 } }
