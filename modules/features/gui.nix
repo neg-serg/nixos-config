@@ -15,7 +15,6 @@ with lib;
       };
     };
     caelestia-shell.enable = mkBool "enable Caelestia Desktop Shell (built on Quickshell)" false;
-    skwd.enable = mkBool "enable Skwd desktop shell (bar, launcher, music, notifications, settings, switcher) and skwd-daemon" false;
     hdr.enable = mkBool "enable HDR support (env vars for DXVK, Gamescope, Wine)" false;
     vicinae = {
       enable = mkBool "enable Vicinae (Wayland app runner + window switcher)" false;
