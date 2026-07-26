@@ -1,4 +1,3 @@
-pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -14,7 +13,7 @@ import "../Helpers/Utils.js" as Utils
  *  - To raise the cap: change genelecMaxVolume in Settings.json.
  *  - State (last-set volume) is persisted via StateCache.
  */
-Singleton {
+Item {
     id: root
 
     // ---- Configuration ----
