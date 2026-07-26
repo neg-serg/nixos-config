@@ -90,12 +90,12 @@ RowLayout {
             }
         }
     }
-    Timer { id: debounce; interval: 200; repeat: false; onTriggered: { if (root.pendingDb !== undefined) root.setVolume(root.pendingDb); } }
+    Timer { id: debounce; interval: 400; repeat: false; onTriggered: { if (root.pendingDb !== undefined) root.setVolume(root.pendingDb); } }
     Text {
         id: volLabel
         text: root.muted ? "MUTED" : root.displayDb.toFixed(1).replace(/\.0$/,'') + "dB"
-        font { family: Theme.fontFamily; pixelSize: Math.round(Theme.fontSizeSmall * 1.05); weight: Font.DemiBold }
-        color: Theme.textOn(root.backgroundColor)
+        font { family: Theme.fontFamily; pixelSize: Math.round(Theme.fontSizeSmall * 1.05); weight: Font.DemiBold; italic: true }
+        color: Color.withAlpha(Theme.accentPrimary, 0.9)
         Layout.alignment: Qt.AlignVCenter
     }
 
@@ -155,16 +155,21 @@ RowLayout {
     }
 
     // ---- Sync with CLI (genlc-media.sh writes /tmp/genlc-volume) ----
+    property real _syncedVolume: -40
     Timer {
-        interval: 750; repeat: true; running: true
+        interval: 100; repeat: true; running: true
         onTriggered: {
-            if (root.busy) return; // don't fight QML-initiated changes
+            if (root.busy) return;
             try {
                 var xhr = new XMLHttpRequest();
                 xhr.open("GET", "file:///tmp/genlc-volume", false);
                 xhr.send();
                 var v = parseFloat(xhr.responseText);
-                if (!isNaN(v) && v !== root.volume) root.volume = v;
+                if (!isNaN(v) && v !== root._syncedVolume) {
+                    root._syncedVolume = v;
+                    root.displayDb = v;
+                    if (!root.busy) root.volume = v;
+                }
             } catch(e) {}
         }
     }
