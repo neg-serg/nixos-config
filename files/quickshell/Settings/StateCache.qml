@@ -29,6 +29,7 @@ Singleton {
             console.warn("[StateCache] load failed:", error, "— resetting to defaults")
             stateAdapter.lastActivePlayers = []
             stateAdapter.audioOffReminderLastShownAt = 0
+            stateAdapter.genelecVolume = -40
             writeAdapter()
         }
         JsonAdapter {
@@ -38,6 +39,7 @@ Singleton {
             // Last active music players (LIFO stack)
             property var lastActivePlayers: []
             property double audioOffReminderLastShownAt: 0
+            property int genelecVolume: -40 // Last-set Genelec SAM hardware volume (dB)
         }
     }
 }

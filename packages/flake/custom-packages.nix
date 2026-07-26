@@ -10,7 +10,6 @@
 
   waves = pkgs.waves;
 
-
   termeverything = pkgs.neg.termeverything;
 
   brrtfetch = pkgs.neg.brrtfetch;
@@ -27,4 +26,5 @@
   pw-audioshare = pkgs.pw-audioshare; # GTK4 PipeWire patchbay with auto-connect presets
   wyoming-openai = pkgs.neg.wyoming-openai; # Wyoming OpenAI proxy — STT/TTS bridge for Home Assistant
   praxislive = pkgs.neg.praxislive; # PraxisLIVE — hybrid visual live programming IDE for creative coding
+  genlc = pkgs.genlc; # Genelec SAM loudspeaker CLI volume control via GLM USB adapter
 }
