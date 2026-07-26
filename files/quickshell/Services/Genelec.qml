@@ -110,6 +110,7 @@ RowLayout {
     ProcessRunner {
         id: genlcProc
         autoStart: false
+        restartOnExit: false
         onStarted: {}
         onExited: function(code, status) {
             root.busy = false;
