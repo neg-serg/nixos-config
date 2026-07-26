@@ -1,6 +1,7 @@
 module qs.Services
 singleton Audio 1.0 Audio.qml
 singleton Connectivity 1.0 Connectivity.qml
+singleton Genelec 1.0 Genelec.qml
 singleton HyprlandWatcher 1.0 HyprlandWatcher.qml
 singleton MusicManager 1.0 MusicManager.qml
 CoverResolver 1.0 CoverResolver.qml
