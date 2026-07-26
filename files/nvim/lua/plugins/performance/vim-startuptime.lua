@@ -2,4 +2,6 @@
 -- │ █▓▒░ dstein64/vim-startuptime                                                     │
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {'dstein64/vim-startuptime', -- startup time measurement
-    cmd='StartupTime'} 
+  enabled = function() return vim.env.NVIM_PROFILE == '1' end,
+  cmd = 'StartupTime',
+}
