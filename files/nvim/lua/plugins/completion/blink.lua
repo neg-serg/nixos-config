@@ -3,7 +3,6 @@
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {'saghen/blink.cmp',
   event = { "BufReadPre", "BufNewFile", "CmdlineEnter" },
-  dependencies = { 'rafamadriz/friendly-snippets' }, -- optional: provides snippets for the snippet source
   version = '1.*', -- use a release tag to download pre-built binaries
   opts = {
     keymap = {

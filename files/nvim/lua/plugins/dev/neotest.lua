@@ -7,6 +7,7 @@ return {
     'nvim-lua/plenary.nvim',
     'nvim-treesitter/nvim-treesitter',
     'mrcjkb/rustaceanvim',
+    'nvim-neotest/neotest-python',
   },
   cmd = { 'Neotest' },
   keys = {
@@ -20,6 +21,7 @@ return {
     if not ok then return end
     neotest.setup({
       adapters = {
+        require('neotest-python')({ runner = 'pytest' }),
         require('rustaceanvim.neotest'),
       },
     })
