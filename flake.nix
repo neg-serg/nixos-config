@@ -74,10 +74,6 @@
       url = "github:unazikx/steam-config-nix/feat/winetricks";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    goldfish = {
-      url = "github:sameoldlab/goldfish";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     opencode = {
       url = "github:anomalyco/opencode";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -89,14 +85,6 @@
     openagentscontrol = {
       url = "github:darrenhinde/OpenAgentsControl";
       flake = false;
-    };
-    skwd = {
-      url = "github:liixini/skwd";
-      flake = false;
-    };
-    skwd-daemon = {
-      url = "github:liixini/skwd-daemon";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     sqlit = {
       url = "github:Maxteabag/sqlit";
