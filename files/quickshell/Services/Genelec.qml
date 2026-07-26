@@ -89,7 +89,6 @@ RowLayout {
             }
         }
     }
-    property real pendingDb: -40
     Timer { id: debounce; interval: 200; repeat: false; onTriggered: { if (root.pendingDb !== undefined) root.setVolume(root.pendingDb); } }
     Text {
         id: volLabel
