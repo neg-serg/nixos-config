@@ -62,9 +62,10 @@ RowLayout {
         from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
         Layout.preferredWidth: Math.round(80 * Theme.scale(Screen))
         Layout.alignment: Qt.AlignVCenter
-        onMoved: { var db = root.sliderToDb(value); console.log("[Genelec] slider moved → " + db + "dB"); _pendingDb = db; debounce.restart(); }
+        onMoved: { var db = root.sliderToDb(value); console.log("[Genelec] slider moved → " + db + "dB"); root.pendingDb = db; debounce.restart(); }
     }
-    Timer { id: debounce; interval: 200; repeat: false; onTriggered: { console.log("[Genelec] debounce fired, _pendingDb=" + _pendingDb); if (_pendingDb !== undefined) root.setVolume(_pendingDb); } }
+    property real pendingDb: -40
+    Timer { id: debounce; interval: 200; repeat: false; onTriggered: { console.log("[Genelec] debounce fired, pendingDb=" + root.pendingDb); if (root.pendingDb !== undefined) root.setVolume(root.pendingDb); } }
     Text {
         id: volLabel
         text: root.muted ? "MUTED" : root.volume + " dB"
