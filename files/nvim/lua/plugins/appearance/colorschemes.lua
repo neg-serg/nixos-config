@@ -7,13 +7,13 @@ return {
     cmd = { 'ExColors' },
     opts = {},
   },
-
   -- │ █▓▒░ nvim-treesitter/nvim-treesitter                                           │
   {
     'nvim-treesitter/nvim-treesitter',
     event = { 'BufReadPost', 'BufNewFile' },
+    build = ':TSUpdate',
     config = function()
-      require('nvim-treesitter.configs').setup({
+      require('nvim-treesitter.config').setup({
         ensure_installed = {
           'bash', 'c', 'cpp', 'cmake', 'css', 'dockerfile', 'dot',
           'html', 'json', 'jsonc', 'lua', 'luadoc', 'make', 'markdown',
@@ -28,30 +28,6 @@ return {
             init_selection = '<C-space>',
             node_incremental = '<C-space>',
             node_decremental = '<BS>',
-          },
-        },
-        textobjects = {
-          select = {
-            enable = true,
-            lookahead = true,
-            keymaps = {
-              ['af'] = '@function.outer',
-              ['if'] = '@function.inner',
-              ['ac'] = '@class.outer',
-              ['ic'] = '@class.inner',
-            },
-          },
-          move = {
-            enable = true,
-            set_jumps = true,
-            goto_next_start = {
-              [']f'] = '@function.outer',
-              [']c'] = '@class.outer',
-            },
-            goto_previous_start = {
-              ['[f'] = '@function.outer',
-              ['[c'] = '@class.outer',
-            },
           },
         },
       })
