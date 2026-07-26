@@ -11,20 +11,23 @@ let
   cfg = config.features.media.audio.creation or { };
   enabled = cfg.enable or false;
 
-  installQuark = pkgs.runCommand "install-superdirt-quark" {
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-  } ''
-    mkdir -p $out/bin
-    cat > $out/bin/install-superdirt-quark << 'SCRIPT'
-    #!/bin/sh
-    set -eu
-    echo "Installing SuperDirt quark (one-time)..."
-    ${pkgs.supercollider}/bin/sclang << 'EOF'
-    try { Quarks.install("https://codeberg.org/musikinformatik/SuperDirt"); "OK".postln; } { |err| ("FAIL: " ++ err.what).postln; }; 0.exit;
-    EOF
-    SCRIPT
-    chmod +x $out/bin/install-superdirt-quark
-  '';
+  installQuark =
+    pkgs.runCommand "install-superdirt-quark"
+      {
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+      }
+      ''
+        mkdir -p $out/bin
+        cat > $out/bin/install-superdirt-quark << 'SCRIPT'
+        #!/bin/sh
+        set -eu
+        echo "Installing SuperDirt quark (one-time)..."
+        ${pkgs.supercollider}/bin/sclang << 'EOF'
+        try { Quarks.install("https://codeberg.org/musikinformatik/SuperDirt"); "OK".postln; } { |err| ("FAIL: " ++ err.what).postln; }; 0.exit;
+        EOF
+        SCRIPT
+        chmod +x $out/bin/install-superdirt-quark
+      '';
 
   superdirtStartup = ''
     s.options.numBuffers = 1024 * 1024;
@@ -54,8 +57,7 @@ let
 in
 {
   config = lib.mkIf enabled {
-    environment.sessionVariables.LD_LIBRARY_PATH =
-      [ "${pkgs.pipewire.jack}/lib" ];
+    environment.sessionVariables.LD_LIBRARY_PATH = [ "${pkgs.pipewire.jack}/lib" ];
     environment.systemPackages = [ installQuark ];
     environment.etc = {
       "skel/.config/SuperCollider/superdirt_startup.scd".text = superdirtStartup;

@@ -2,22 +2,34 @@
 
 ## TL;DR (For humans)
 
-**Что вы получите:** KvantumManager для интерактивного выбора тёмной Qt-темы + 8 предустановленных тёмных тем (3 встроенных: KvDark, KvArcDark, KvSimplicityDark; 5 Catppuccin Mocha: Blue, Mauve, Lavender, Sky, Green). Дефолтная тема — KvDark (чисто тёмная). После выбора темы через GUI — меняете одну переменную в `qt.nix` и пересобираете.
+**Что вы получите:** KvantumManager для интерактивного выбора тёмной Qt-темы + 8 предустановленных
+тёмных тем (3 встроенных: KvDark, KvArcDark, KvSimplicityDark; 5 Catppuccin Mocha: Blue, Mauve,
+Lavender, Sky, Green). Дефолтная тема — KvDark (чисто тёмная). После выбора темы через GUI — меняете
+одну переменную в `qt.nix` и пересобираете.
 
-**Почему такой подход:** `kvantummanager` уже есть в системе (из `qtstyleplugin-kvantum`), но не видит тёмные темы — они не засимлинкованы в `~/.local/share/Kvantum/`. План добавляет недостающие симлинки и Catppuccin-пакеты. После интерактивного выбора — фиксация через переменную `kvantumTheme`.
+**Почему такой подход:** `kvantummanager` уже есть в системе (из `qtstyleplugin-kvantum`), но не
+видит тёмные темы — они не засимлинкованы в `~/.local/share/Kvantum/`. План добавляет недостающие
+симлинки и Catppuccin-пакеты. После интерактивного выбора — фиксация через переменную
+`kvantumTheme`.
 
-**Что НЕ будет сделано:** Qt5-теминг (отказ), GTK-теминг, home-manager, стилизация панели/rofi/dunst (это отдельная тема).
+**Что НЕ будет сделано:** Qt5-теминг (отказ), GTK-теминг, home-manager, стилизация панели/rofi/dunst
+(это отдельная тема).
 
 **Объём:** 2 файла, 4 todo, ~80 строк изменений. Одна волна, один коммит.
 
-**Риски:** Catppuccin-пакеты добавляют 5 override'ов → +5 оценок derivations при nixos-rebuild eval (~1-2 сек). Если accent-имена изменятся в nixpkgs, билд упадёт с понятной ошибкой `lib.checkListOfEnum`.
+**Риски:** Catppuccin-пакеты добавляют 5 override'ов → +5 оценок derivations при nixos-rebuild eval
+(~1-2 сек). Если accent-имена изменятся в nixpkgs, билд упадёт с понятной ошибкой
+`lib.checkListOfEnum`.
 
-**Решения:** KvDark как дефолт (самый тёмный из встроенных); 5 Catppuccin-акцентов (достаточно для выбора, не перегружает); переменная `kvantumTheme` для лёгкой смены темы.
+**Решения:** KvDark как дефолт (самый тёмный из встроенных); 5 Catppuccin-акцентов (достаточно для
+выбора, не перегружает); переменная `kvantumTheme` для лёгкой смены темы.
 
 ## Scope
 
 **IN:**
-- Interactive Kvantum theme browsing via `kvantummanager` (already on PATH from `qtstyleplugin-kvantum`)
+
+- Interactive Kvantum theme browsing via `kvantummanager` (already on PATH from
+  `qtstyleplugin-kvantum`)
 - Declarative NixOS config to lock in chosen dark Kvantum theme for Qt6
 - 3 built-in dark themes symlinked for browsing: `KvDark`, `KvArcDark`, `KvSimplicityDark`
 - 5 Catppuccin Mocha accents symlinked for browsing: Blue, Mauve, Lavender, Sky, Green
@@ -25,6 +37,7 @@
 - Maintain existing `QT_STYLE_OVERRIDE=kvantum` enforcement
 
 **OUT:**
+
 - Qt5 theming (explicitly declined)
 - GTK theming
 - Home-manager integration
@@ -35,20 +48,20 @@
 
 **Agent-executed QA (tests-after)** — every todo has executable shell assertions:
 
-| Check | Command | Expected |
-|-------|---------|----------|
-| kvantummanager binary | `which kvantummanager` | `/run/current-system/sw/bin/kvantummanager` |
-| KvDark theme files | `test -f ~/.local/share/Kvantum/KvDark/KvDark.kvconfig` | exit 0 |
-| KvArcDark theme files | `test -f ~/.local/share/Kvantum/KvArcDark/KvArcDark.kvconfig` | exit 0 |
-| Catppuccin symlinks | `ls ~/.local/share/Kvantum/Catppuccin-Mocha-Blue/` | directory exists |
-| kvantum.kvconfig | `grep 'theme=KvDark' ~/.config/Kvantum/kvantum.kvconfig` | match |
-| qt6ct.conf style | `grep 'style=kvantum' ~/.config/qt6ct/qt6ct.conf` | match |
-| QT_STYLE_OVERRIDE | `echo $QT_STYLE_OVERRIDE` | `kvantum` |
-| No white fallback in qt6ct | `grep -v '^#' ~/.config/qt6ct/qt6ct.conf \| grep -i 'style'` | only `kvantum` |
+| Check | Command | Expected | |-------|---------|----------| | kvantummanager binary |
+`which kvantummanager` | `/run/current-system/sw/bin/kvantummanager` | | KvDark theme files |
+`test -f ~/.local/share/Kvantum/KvDark/KvDark.kvconfig` | exit 0 | | KvArcDark theme files |
+`test -f ~/.local/share/Kvantum/KvArcDark/KvArcDark.kvconfig` | exit 0 | | Catppuccin symlinks |
+`ls ~/.local/share/Kvantum/Catppuccin-Mocha-Blue/` | directory exists | | kvantum.kvconfig |
+`grep 'theme=KvDark' ~/.config/Kvantum/kvantum.kvconfig` | match | | qt6ct.conf style |
+`grep 'style=kvantum' ~/.config/qt6ct/qt6ct.conf` | match | | QT_STYLE_OVERRIDE |
+`echo $QT_STYLE_OVERRIDE` | `kvantum` | | No white fallback in qt6ct |
+`grep -v '^#' ~/.config/qt6ct/qt6ct.conf \| grep -i 'style'` | only `kvantum` |
 
 ## Execution strategy
 
 Single wave — all changes in two files:
+
 - `modules/user/theme-packages.nix` (package additions)
 - `modules/user/nix-maid/gui/qt.nix` (theme symlinks + config)
 
@@ -59,9 +72,11 @@ Single wave — all changes in two files:
 - [x] **Todo 1** — `modules/user/theme-packages.nix`: Add Catppuccin Mocha packages
 
 **References:**
+
 - Current file: `/etc/nixos/modules/user/theme-packages.nix` (18 lines)
 - Package API: `pkgs.catppuccin-kvantum.override { variant = "Mocha"; accent = "<Accent>"; }`
-- Accents: Blue, Mauve, Lavender, Sky, Green per nixpkgs `pkgs/by-name/ca/catppuccin-kvantum/package.nix`
+- Accents: Blue, Mauve, Lavender, Sky, Green per nixpkgs
+  `pkgs/by-name/ca/catppuccin-kvantum/package.nix`
 
 **Change:** Add 5 Catppuccin overrides to the `packages` list in `let` block:
 
@@ -77,6 +92,7 @@ Single wave — all changes in two files:
 **Acceptance:** `nixos-rebuild dry-build` succeeds. Each override evaluates without error.
 
 **QA (happy):**
+
 ```bash
 # Verify each package installed to nix store
 nix eval --raw .#nixosConfigurations.odin.config.environment.systemPackages | grep catppuccin-kvantum | wc -l
@@ -87,24 +103,29 @@ nix eval --raw .#nixosConfigurations.odin.config.environment.systemPackages | gr
 
 **Commit:** `[gui/qt] Add Catppuccin Mocha Kvantum themes for interactive browsing`
 
----
+______________________________________________________________________
 
-- [x] **Todo 2** — `modules/user/nix-maid/gui/qt.nix`: Add theme variable + built-in dark theme symlinks
+- [x] **Todo 2** — `modules/user/nix-maid/gui/qt.nix`: Add theme variable + built-in dark theme
+  symlinks
 
 **References:**
+
 - Current file: `/etc/nixos/modules/user/nix-maid/gui/qt.nix` (57 lines)
 - kvantumTheme variable: replaces hardcoded "KvantumAlt"
 - Built-in themes source: `${pkgs.kdePackages.qtstyleplugin-kvantum}/share/Kvantum/`
 - Available dark themes: KvDark, KvArcDark, KvSimplicityDark (verified via `ls` of package output)
 
 **Change:** Add to `let` block:
+
 ```nix
 kvantumTheme = "KvDark"; # Default dark theme — change after interactive selection via kvantummanager
 ```
 
-**Change:** In `(n.mkHomeFiles { ... })` block — replace KvantumAlt symlinks with KvDark, KvArcDark, KvSimplicityDark:
+**Change:** In `(n.mkHomeFiles { ... })` block — replace KvantumAlt symlinks with KvDark, KvArcDark,
+KvSimplicityDark:
 
 Replace lines 50-53 with:
+
 ```nix
 # Built-in dark Kvantum themes for interactive browsing via kvantummanager
 ".local/share/Kvantum/KvDark/KvDark.kvconfig".source =
@@ -124,6 +145,7 @@ Replace lines 50-53 with:
 **Acceptance:** 3 dark themes symlinked. User can browse them in kvantummanager.
 
 **QA (happy):**
+
 ```bash
 for theme in KvDark KvArcDark KvSimplicityDark; do
   test -f ~/.local/share/Kvantum/$theme/$theme.kvconfig && echo "$theme: OK"
@@ -133,14 +155,17 @@ done
 
 **QA (failure):** Source path typo → nix eval fails with "Source file doesn't exist."
 
-**Commit:** `[gui/qt] Replace KvantumAlt with dark built-in themes (KvDark, KvArcDark, KvSimplicityDark)`
+**Commit:**
+`[gui/qt] Replace KvantumAlt with dark built-in themes (KvDark, KvArcDark, KvSimplicityDark)`
 
----
+______________________________________________________________________
 
 - [x] **Todo 3** — `modules/user/nix-maid/gui/qt.nix`: Add Catppuccin Mocha theme symlinks
 
 **References:**
-- Package pattern: `${(pkgs.catppuccin-kvantum.override { variant = "Mocha"; accent = "Blue"; })}/share/Kvantum/Catppuccin-Mocha-Blue/`
+
+- Package pattern:
+  `${(pkgs.catppuccin-kvantum.override { variant = "Mocha"; accent = "Blue"; })}/share/Kvantum/Catppuccin-Mocha-Blue/`
 - Theme directory content: `Catppuccin-Mocha-Blue.kvconfig` + `Catppuccin-Mocha-Blue.svg`
 - Symlink target: `~/.local/share/Kvantum/Catppuccin-Mocha-<Accent>/`
 
@@ -173,6 +198,7 @@ done
 **Acceptance:** 5 Catppuccin Mocha themes symlinked. User sees them in kvantummanager.
 
 **QA (happy):**
+
 ```bash
 ls ~/.local/share/Kvantum/ | grep Catppuccin-Mocha | wc -l
 # Expected: 5
@@ -182,17 +208,19 @@ ls ~/.local/share/Kvantum/ | grep Catppuccin-Mocha | wc -l
 
 **Commit:** `[gui/qt] Add Catppuccin Mocha Kvantum themes (Blue, Mauve, Lavender, Sky, Green)`
 
----
+______________________________________________________________________
 
 - [x] **Todo 4** — `modules/user/nix-maid/gui/qt.nix`: Update kvantum.kvconfig to use theme variable
 
 **References:**
+
 - Current line 35-38: hardcoded `theme=KvantumAlt`
 - New variable: `kvantumTheme = "KvDark"` (from Todo 2)
 
 **Change:** Line 37: Replace `theme=KvantumAlt` with `theme=${kvantumTheme}`
 
 Also add a comment block before the mkHomeFiles call explaining the workflow:
+
 ```nix
 # === Kvantum Theme Configuration ===
 # Interactive selection workflow:
@@ -205,9 +233,11 @@ Also add a comment block before the mkHomeFiles call explaining the workflow:
 # Default theme: KvDark (pure dark, no white elements)
 ```
 
-**Acceptance:** `kvantum.kvconfig` references `${kvantumTheme}` variable. Changing the variable changes the active theme.
+**Acceptance:** `kvantum.kvconfig` references `${kvantumTheme}` variable. Changing the variable
+changes the active theme.
 
 **QA (happy):**
+
 ```bash
 grep 'theme=KvDark' ~/.config/Kvantum/kvantum.kvconfig
 # Expected: theme=KvDark
@@ -219,13 +249,13 @@ grep 'theme=KvDark' ~/.config/Kvantum/kvantum.kvconfig
 
 ## Final verification wave
 
-| Check | Method | Expected |
-|-------|--------|----------|
-| F1 — Plan compliance | Diff plan vs changed files | 4 todos matching, no extra files changed |
-| F2 — Code quality | `statix check modules/user/nix-maid/gui/qt.nix modules/user/theme-packages.nix` | No statix errors |
-| F3 — Interactive browsing | `kvantummanager` → GUI shows 8+ dark themes (3 built-in + 5 Catppuccin) | Themes visible and selectable |
-| F4 — Scope fidelity | Grep for `qt5`, `gtk`, `home-manager` in diff | Zero new references |
-| F5 — No white/default | `grep -r 'KvantumAlt' modules/user/nix-maid/gui/qt.nix` | No matches (fully removed) |
+| Check | Method | Expected | |-------|--------|----------| | F1 — Plan compliance | Diff plan vs
+changed files | 4 todos matching, no extra files changed | | F2 — Code quality |
+`statix check modules/user/nix-maid/gui/qt.nix modules/user/theme-packages.nix` | No statix errors |
+| F3 — Interactive browsing | `kvantummanager` → GUI shows 8+ dark themes (3 built-in + 5
+Catppuccin) | Themes visible and selectable | | F4 — Scope fidelity | Grep for `qt5`, `gtk`,
+`home-manager` in diff | Zero new references | | F5 — No white/default |
+`grep -r 'KvantumAlt' modules/user/nix-maid/gui/qt.nix` | No matches (fully removed) |
 
 ## Commit strategy
 
@@ -233,7 +263,8 @@ Single commit: `[gui/qt] Interactive Kvantum theme selection with Catppuccin + b
 
 ## Success criteria
 
-- `kvantummanager` shows 8+ dark themes: KvDark, KvArcDark, KvSimplicityDark, Catppuccin-Mocha-{Blue,Mauve,Lavender,Sky,Green}
+- `kvantummanager` shows 8+ dark themes: KvDark, KvArcDark, KvSimplicityDark,
+  Catppuccin-Mocha-{Blue,Mauve,Lavender,Sky,Green}
 - Default active theme: KvDark (pure dark)
 - User changes `kvantumTheme` variable → `nixos-rebuild switch` → theme updates
 - `QT_STYLE_OVERRIDE=kvantum` enforced globally (existing, maintained)

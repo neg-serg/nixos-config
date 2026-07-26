@@ -1,19 +1,20 @@
-{ lib
-, stdenv
-, rustPlatform
-, fetchFromGitHub
-, cmake
-, pkg-config
-, clang
-, pipewire
-, qt6
-, gtk3
-, lilv
-, lv2
-, serd
-, suil
-, libx11
-, dbus
+{
+  lib,
+  stdenv,
+  rustPlatform,
+  fetchFromGitHub,
+  cmake,
+  pkg-config,
+  clang,
+  pipewire,
+  qt6,
+  gtk3,
+  lilv,
+  lv2,
+  serd,
+  suil,
+  libx11,
+  dbus,
 }:
 
 rustPlatform.buildRustPackage rec {
@@ -30,15 +31,26 @@ rustPlatform.buildRustPackage rec {
   cargoHash = "sha256-yGtpOOrfY+7NybFZic7Q6z5yjaCvCF7ATOgfipRED/k=";
 
   nativeBuildInputs = [
-    cmake pkg-config clang
-    qt6.qtbase qt6.qtdeclarative
+    cmake
+    pkg-config
+    clang
+    qt6.qtbase
+    qt6.qtdeclarative
     qt6.wrapQtAppsHook
   ];
 
   buildInputs = [
-    pipewire gtk3
-    qt6.qtbase qt6.qtdeclarative qt6.qtwayland
-    lilv lv2 serd suil libx11 dbus
+    pipewire
+    gtk3
+    qt6.qtbase
+    qt6.qtdeclarative
+    qt6.qtwayland
+    lilv
+    lv2
+    serd
+    suil
+    libx11
+    dbus
   ];
 
   postInstall = ''

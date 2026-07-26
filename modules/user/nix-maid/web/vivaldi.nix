@@ -99,7 +99,6 @@ in
       };
     };
 
-
     # Browser UI font override via Vivaldi Custom UI Modifications.
     # Managed policies above only affect webpage fonts, not the browser chrome.
     # This CSS overrides the hardcoded Linux UI font-family in Vivaldi's common.css

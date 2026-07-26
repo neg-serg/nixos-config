@@ -2,7 +2,10 @@
 
 ## TL;DR
 
-Создать форк nixpkgs, из которого выброшены ВСЕ модули и пакеты, не используемые конфигурацией odin. Сейчас nixpkgs загружает 2047 модулей, из которых реально нужны ~100-150. Удаление 90%+ модулей напрямую сократит `applyModuleArgs`, `binaryMerge`, и другие eval-hotspots которые по flamegraph-у занимают ~30% времени.
+Создать форк nixpkgs, из которого выброшены ВСЕ модули и пакеты, не используемые конфигурацией odin.
+Сейчас nixpkgs загружает 2047 модулей, из которых реально нужны ~100-150. Удаление 90%+ модулей
+напрямую сократит `applyModuleArgs`, `binaryMerge`, и другие eval-hotspots которые по flamegraph-у
+занимают ~30% времени.
 
 **Ожидаемый эффект**: 4.3s → 2.0-2.5s (экономия ~2s на инфраструктуре модулей nixpkgs)
 
@@ -11,7 +14,8 @@
 ## Подход
 
 ### Шаг 1: Создать форк nixpkgs
-- Взять тот же коммит, что в `flake.lock` 
+
+- Взять тот же коммит, что в `flake.lock`
 - Создать репозиторий `github:neg-serg/nixpkgs-slim`
 - Настроить CI для автообновления (pull upstream, re-apply stripping)
 
@@ -19,34 +23,29 @@
 
 Из 2047 модулей в module-list.nix определить какие нужны:
 
-| Категория | Файлов | Нужно? | Пример |
-|-----------|--------|--------|--------|
-| config/* | ~50 | ВСЕ | system-path.nix, users-groups.nix, ...
-| hardware/* | ~80 | ~30 | cpu/amd.nix ✅, printer/cupsd.nix ❌ |
-| services/* | ~1477 | ~40 | openssh ✅, postgresql ❌ |
-| system/boot/* | ~100 | ~50 | loader/systemd-boot ✅ |
-| system/etc/* | ~6 | ВСЕ | etc.nix, nix.nix |
-| virtualisation/* | ~40 | ~5 | none for odin except LXC |
-| programs/* | ~60 | ~15 | zsh ✅, ssh ✅, kdeconnect ✅ |
-| security/* | ~30 | ~10 | polkit ✅, sudo ✅ |
-| tasks/* | ~15 | ~8 | filesystems ✅, swap ✅ |
-| misc/* | ~15 | ~5 | nixpkgs.nix, version.nix |
-| testing/* | ~10 | 0 | только для CI |
-| profiles/* | ~10 | ~3 | qemu-guest ❌ (мы не VM) |
-| installer/* | ~15 | 0 | не нужны |
+| Категория | Файлов | Нужно? | Пример | |-----------|--------|--------|--------| | config/\* | ~50
+| ВСЕ | system-path.nix, users-groups.nix, ... | hardware/\* | ~80 | ~30 | cpu/amd.nix ✅,
+printer/cupsd.nix ❌ | | services/\* | ~1477 | ~40 | openssh ✅, postgresql ❌ | | system/boot/\* |
+~100 | ~50 | loader/systemd-boot ✅ | | system/etc/\* | ~6 | ВСЕ | etc.nix, nix.nix | |
+virtualisation/\* | ~40 | ~5 | none for odin except LXC | | programs/\* | ~60 | ~15 | zsh ✅, ssh ✅,
+kdeconnect ✅ | | security/\* | ~30 | ~10 | polkit ✅, sudo ✅ | | tasks/\* | ~15 | ~8 | filesystems ✅,
+swap ✅ | | misc/\* | ~15 | ~5 | nixpkgs.nix, version.nix | | testing/\* | ~10 | 0 | только для CI |
+| profiles/\* | ~10 | ~3 | qemu-guest ❌ (мы не VM) | | installer/\* | ~15 | 0 | не нужны |
 
 **Итого нужно**: ~100-150 модулей из 2047 (~5-7%)
 
 ### Шаг 3: Методология проверки
 
 Итеративный процесс:
+
 1. Начинаем с ПОЛНОГО module-list.nix
-2. Комментируем один файл
-3. `nix eval --refresh --offline` — проверяем что eval работает
-4. Если ошибка «attribute X missing» или «option not found» — раскомментируем
-5. Повторяем для каждого файла
+1. Комментируем один файл
+1. `nix eval --refresh --offline` — проверяем что eval работает
+1. Если ошибка «attribute X missing» или «option not found» — раскомментируем
+1. Повторяем для каждого файла
 
 Автоматизация через скрипт:
+
 ```bash
 for module in $(find nixos/modules -name "*.nix" -path "*/services/*"); do
   # temporary remove, test, restore if fails
@@ -63,6 +62,7 @@ nixpkgs.url = "github:neg-serg/nixpkgs-slim/main";
 ### Шаг 5: Автообновление
 
 CI pipeline:
+
 - Каждую неделю pull из upstream nixpkgs
 - Re-apply stripping скрипт
 - Проверить что `nh os switch --dry` проходит
@@ -110,7 +110,9 @@ CI pipeline:
 - `nix build .#nixosConfigurations.odin.config.system.build.toplevel`
 
 ## Must-NOT-Have
+
 - Не удалять модули от которых зависит systemd target default
 - Не удалять модули от которых зависит stage-1/initrd
-- Не пропускать модули которые нужны транзитивно (e.g. networking.firewall нужен даже если явно не referenced)
+- Не пропускать модули которые нужны транзитивно (e.g. networking.firewall нужен даже если явно не
+  referenced)
 - Не коммитить в nixpkgs-slim без проверки

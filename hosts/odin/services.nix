@@ -252,13 +252,49 @@ lib.mkMerge [
       # pkgs.neg.term39 # term39 commented out — clang-sys build failure, fix separately
     ];
     servicesProfiles.avahi.services = [
-      { name = "smb";    type = "smb";        port = 445;  txtRecords = [ "path=/zero/sync/smb" "share=shared" ]; }
-      { name = "afp";    type = "afpovertcp"; port = 548;  txtRecords = [ "path=/zero/sync/smb" ]; }
-      { name = "nfs";    type = "nfs";        port = 2049; txtRecords = [ "path=/zero/sync/smb" ]; }
-      { name = "ssh";    type = "ssh";        port = 22; }
-      { name = "sftp";   type = "sftp-ssh";   port = 22; }
-      { name = "airplay"; type = "airplay";   port = 7000; txtRecords = [ "device=shairport-sync" ]; }
-      { name = "raop";   type = "raop";       port = 5000; txtRecords = [ "device=shairport-sync" ]; }
+      {
+        name = "smb";
+        type = "smb";
+        port = 445;
+        txtRecords = [
+          "path=/zero/sync/smb"
+          "share=shared"
+        ];
+      }
+      {
+        name = "afp";
+        type = "afpovertcp";
+        port = 548;
+        txtRecords = [ "path=/zero/sync/smb" ];
+      }
+      {
+        name = "nfs";
+        type = "nfs";
+        port = 2049;
+        txtRecords = [ "path=/zero/sync/smb" ];
+      }
+      {
+        name = "ssh";
+        type = "ssh";
+        port = 22;
+      }
+      {
+        name = "sftp";
+        type = "sftp-ssh";
+        port = 22;
+      }
+      {
+        name = "airplay";
+        type = "airplay";
+        port = 7000;
+        txtRecords = [ "device=shairport-sync" ];
+      }
+      {
+        name = "raop";
+        type = "raop";
+        port = 5000;
+        txtRecords = [ "device=shairport-sync" ];
+      }
     ];
 
     services = lib.mkMerge [
@@ -336,7 +372,6 @@ lib.mkMerge [
 
     # (php-fpm settings)
 
-
     # Disable runtime logrotate check (build-time check remains). Avoids false negatives
     # when rotating files under non-standard paths or missing until first run.
 
@@ -397,7 +432,6 @@ lib.mkMerge [
           # Defer to post-boot to avoid interfering with activation and to follow repo policy
           wantedBy = [ "graphical.target" ];
         };
-
 
         # Disable runtime logrotate check (build-time check remains). Avoids false negatives
         # when rotating files under non-standard paths or missing until first run.

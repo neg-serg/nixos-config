@@ -12,7 +12,9 @@ eval: 4.6s (1.23 GB)
 
 ## Корень проблемы (одно предложение)
 
-`types.package.check` в `lib/types.nix` вызывает `isDerivation(x)` который лезет в `getAttr(x, "name")`, `getAttr(x, "drvPath")`, `getAttr(x, "outputs")` — и это для **каждой** опции с типом `types.package` × **каждый** модуль который её определяет. 24% времени.
+`types.package.check` в `lib/types.nix` вызывает `isDerivation(x)` который лезет в
+`getAttr(x, "name")`, `getAttr(x, "drvPath")`, `getAttr(x, "outputs")` — и это для **каждой** опции
+с типом `types.package` × **каждый** модуль который её определяет. 24% времени.
 
 ## Что делаем (конкретные правки)
 
@@ -23,6 +25,7 @@ eval: 4.6s (1.23 GB)
 **Найти:** `isDerivation` в определении `types.package` (~строка 540-560)
 
 **Сейчас:**
+
 ```nix
 types.package = mkOptionType {
   name = "package";
@@ -32,6 +35,7 @@ types.package = mkOptionType {
 ```
 
 **Заменить на:**
+
 ```nix
 types.package = mkOptionType {
   name = "package";
@@ -40,7 +44,8 @@ types.package = mkOptionType {
 };
 ```
 
-**Почему безопасно:** Nix сам проверит что деривация валидная когда начнёт собирать `system.build.toplevel`. Типобезопасность сохраняется на build-фазе, экономится на eval-фазе.
+**Почему безопасно:** Nix сам проверит что деривация валидная когда начнёт собирать
+`system.build.toplevel`. Типобезопасность сохраняется на build-фазе, экономится на eval-фазе.
 
 **Ожидаемый эффект:** −24% eval времени (3103 сэмпла → ~0)
 
@@ -50,9 +55,12 @@ types.package = mkOptionType {
 
 **Найти:** `dischargeProperties` (~строка 1149-1230)
 
-**Проблема:** для каждого определения опции вызывается `dischargeProperties` который оборачивает значение в `addErrorContext`. Даже для опций с одним определением (нет конфликта) — overhead от `addErrorContext` остаётся.
+**Проблема:** для каждого определения опции вызывается `dischargeProperties` который оборачивает
+значение в `addErrorContext`. Даже для опций с одним определением (нет конфликта) — overhead от
+`addErrorContext` остаётся.
 
 **Сейчас (псевдокод):**
+
 ```nix
 dischargeProperties = def:
   if def._type == "if" then
@@ -62,7 +70,8 @@ dischargeProperties = def:
   else addErrorContext "while evaluating..." def.value;
 ```
 
-**Оптимизация:** добавить fast-path для самого частого случая — простое значение без `mkIf`/`mkMerge`/`mkOverride`:
+**Оптимизация:** добавить fast-path для самого частого случая — простое значение без
+`mkIf`/`mkMerge`/`mkOverride`:
 
 ```nix
 dischargeProperties = def:
@@ -79,6 +88,7 @@ dischargeProperties = def:
 **Файл:** `/tmp/nixpkgs-slim/nixos/modules/services/networking/ssh/sshd.nix`
 
 **Строка 13-17 — убрать cross-compile check:**
+
 ```nix
 # Было:
 validationPackage =
@@ -90,6 +100,7 @@ validationPackage = cfg.package;
 ```
 
 **Строка 38 — заменить `pkgs.formats` на `lib.generators`:**
+
 ```nix
 # Было:
 base = pkgs.formats.keyValue { ... };
@@ -106,9 +117,11 @@ base = lib.generators.toKeyValue {
 
 **Файл:** `/tmp/nixpkgs-slim/pkgs/top-level/all-packages.nix`
 
-**Что:** Из 3720 атрибутов оставить только ~149 которые реально нужны (из нашего конфига) + infrastructure (~300 атрибутов). Остальные ~3271 атрибут — удалить.
+**Что:** Из 3720 атрибутов оставить только ~149 которые реально нужны (из нашего конфига) +
+infrastructure (~300 атрибутов). Остальные ~3271 атрибут — удалить.
 
-**Как:** берём список из 149 пакетов (уже собран раньше). Для каждого атрибута в all-packages.nix который НЕ в списке и НЕ infrastructure — удаляем строку.
+**Как:** берём список из 149 пакетов (уже собран раньше). Для каждого атрибута в all-packages.nix
+который НЕ в списке и НЕ infrastructure — удаляем строку.
 
 **Ожидаемый эффект:** меньше `callPackage` при построении pkgs, меньше `functionArgs` (5.7%).
 
@@ -116,9 +129,11 @@ base = lib.generators.toKeyValue {
 
 **Файлы:** `/tmp/nixpkgs-slim/pkgs/by-name/*/`
 
-**Подход:** не удалять пакетные директории (это сломало build в прошлый раз), а сделать `by-name-overlay.nix` чтобы он ПРОПУСКАЛ пакеты не из whitelist. 
+**Подход:** не удалять пакетные директории (это сломало build в прошлый раз), а сделать
+`by-name-overlay.nix` чтобы он ПРОПУСКАЛ пакеты не из whitelist.
 
 **Как:** в `by-name-overlay.nix` перед `callPackage` добавить фильтр:
+
 ```nix
 # Только если пакет в whitelist
 if builtins.elem name whitelist then callPackage ... else null
@@ -136,15 +151,21 @@ if builtins.elem name whitelist then callPackage ... else null
 Правка 5 (by-name)       → замер: должно быть ~2.5s (−10%)
 ```
 
-Каждая правка коммитится отдельно в `nixpkgs-slim`. После каждой — `nix eval --refresh --offline` для замера.
+Каждая правка коммитится отдельно в `nixpkgs-slim`. После каждой — `nix eval --refresh --offline`
+для замера.
 
 ## Риски
 
-1. **Правка 1:** `types.package.check = x: true` — если какой-то модуль полагается на `check` для ранней валидации. **Митигация:** оставить `check = x: isStorePath x || true` — минимальная проверка без `isDerivation`.
+1. **Правка 1:** `types.package.check = x: true` — если какой-то модуль полагается на `check` для
+   ранней валидации. **Митигация:** оставить `check = x: isStorePath x || true` — минимальная
+   проверка без `isDerivation`.
 
-2. **Правка 2:** fast-path для `dischargeProperties` — может пропустить edge-case где `_type` установлен неявно. **Митигация:** тестировать на полном `nh os switch --dry`.
+1. **Правка 2:** fast-path для `dischargeProperties` — может пропустить edge-case где `_type`
+   установлен неявно. **Митигация:** тестировать на полном `nh os switch --dry`.
 
-3. **Правка 5:** whitelist для by-name — нужно точно знать какие имена пакетов в by-name матчатся с именами из конфига. **Митигация:** начать с консервативного whitelist (500 пакетов), потом сужать.
+1. **Правка 5:** whitelist для by-name — нужно точно знать какие имена пакетов в by-name матчатся с
+   именами из конфига. **Митигация:** начать с консервативного whitelist (500 пакетов), потом
+   сужать.
 
 ## Не делаем
 

@@ -26,20 +26,22 @@ in
       }
       {
         # Wrapped kvantummanager: set QT_PLUGIN_PATH for Wayland + SVG
-        environment.systemPackages = let
-          svgPlugin = "${pkgs.qt6.qtsvg}/${pkgs.qt6.qtbase.qtPluginPrefix}";
-          waylandPlugin = "${pkgs.kdePackages.qtwayland}/${pkgs.qt6.qtbase.qtPluginPrefix}";
-          basePlugin = "${pkgs.qt6.qtbase}/${pkgs.qt6.qtbase.qtPluginPrefix}";
-        in [
-          (pkgs.writeShellApplication {
-            name = "kvantummanager";
-            runtimeInputs = [ pkgs.kdePackages.qtstyleplugin-kvantum ];
-            text = ''
-              export QT_PLUGIN_PATH="${svgPlugin}:${waylandPlugin}:${basePlugin}"
-              exec ${lib.getExe' pkgs.kdePackages.qtstyleplugin-kvantum "kvantummanager"}
-            '';
-          })
-        ];
+        environment.systemPackages =
+          let
+            svgPlugin = "${pkgs.qt6.qtsvg}/${pkgs.qt6.qtbase.qtPluginPrefix}";
+            waylandPlugin = "${pkgs.kdePackages.qtwayland}/${pkgs.qt6.qtbase.qtPluginPrefix}";
+            basePlugin = "${pkgs.qt6.qtbase}/${pkgs.qt6.qtbase.qtPluginPrefix}";
+          in
+          [
+            (pkgs.writeShellApplication {
+              name = "kvantummanager";
+              runtimeInputs = [ pkgs.kdePackages.qtstyleplugin-kvantum ];
+              text = ''
+                export QT_PLUGIN_PATH="${svgPlugin}:${waylandPlugin}:${basePlugin}"
+                exec ${lib.getExe' pkgs.kdePackages.qtstyleplugin-kvantum "kvantummanager"}
+              '';
+            })
+          ];
       }
       (neg.mkHomeFiles {
         ".config/qt6ct/qt6ct.conf".text = ''
@@ -65,34 +67,64 @@ in
 
         # Catppuccin themes
         ".config/Kvantum/Catppuccin-Mocha-Blue/Catppuccin-Mocha-Blue.kvconfig".source = "${
-          (pkgs.catppuccin-kvantum.override { variant = "mocha"; accent = "blue"; })
+          (pkgs.catppuccin-kvantum.override {
+            variant = "mocha";
+            accent = "blue";
+          })
         }/share/Kvantum/Catppuccin-Mocha-Blue/Catppuccin-Mocha-Blue.kvconfig";
         ".config/Kvantum/Catppuccin-Mocha-Blue/Catppuccin-Mocha-Blue.svg".source = "${
-          (pkgs.catppuccin-kvantum.override { variant = "mocha"; accent = "blue"; })
+          (pkgs.catppuccin-kvantum.override {
+            variant = "mocha";
+            accent = "blue";
+          })
         }/share/Kvantum/Catppuccin-Mocha-Blue/Catppuccin-Mocha-Blue.svg";
         ".config/Kvantum/Catppuccin-Mocha-Mauve/Catppuccin-Mocha-Mauve.kvconfig".source = "${
-          (pkgs.catppuccin-kvantum.override { variant = "mocha"; accent = "mauve"; })
+          (pkgs.catppuccin-kvantum.override {
+            variant = "mocha";
+            accent = "mauve";
+          })
         }/share/Kvantum/Catppuccin-Mocha-Mauve/Catppuccin-Mocha-Mauve.kvconfig";
         ".config/Kvantum/Catppuccin-Mocha-Mauve/Catppuccin-Mocha-Mauve.svg".source = "${
-          (pkgs.catppuccin-kvantum.override { variant = "mocha"; accent = "mauve"; })
+          (pkgs.catppuccin-kvantum.override {
+            variant = "mocha";
+            accent = "mauve";
+          })
         }/share/Kvantum/Catppuccin-Mocha-Mauve/Catppuccin-Mocha-Mauve.svg";
         ".config/Kvantum/Catppuccin-Mocha-Lavender/Catppuccin-Mocha-Lavender.kvconfig".source = "${
-          (pkgs.catppuccin-kvantum.override { variant = "mocha"; accent = "lavender"; })
+          (pkgs.catppuccin-kvantum.override {
+            variant = "mocha";
+            accent = "lavender";
+          })
         }/share/Kvantum/Catppuccin-Mocha-Lavender/Catppuccin-Mocha-Lavender.kvconfig";
         ".config/Kvantum/Catppuccin-Mocha-Lavender/Catppuccin-Mocha-Lavender.svg".source = "${
-          (pkgs.catppuccin-kvantum.override { variant = "mocha"; accent = "lavender"; })
+          (pkgs.catppuccin-kvantum.override {
+            variant = "mocha";
+            accent = "lavender";
+          })
         }/share/Kvantum/Catppuccin-Mocha-Lavender/Catppuccin-Mocha-Lavender.svg";
         ".config/Kvantum/Catppuccin-Mocha-Sky/Catppuccin-Mocha-Sky.kvconfig".source = "${
-          (pkgs.catppuccin-kvantum.override { variant = "mocha"; accent = "sky"; })
+          (pkgs.catppuccin-kvantum.override {
+            variant = "mocha";
+            accent = "sky";
+          })
         }/share/Kvantum/Catppuccin-Mocha-Sky/Catppuccin-Mocha-Sky.kvconfig";
         ".config/Kvantum/Catppuccin-Mocha-Sky/Catppuccin-Mocha-Sky.svg".source = "${
-          (pkgs.catppuccin-kvantum.override { variant = "mocha"; accent = "sky"; })
+          (pkgs.catppuccin-kvantum.override {
+            variant = "mocha";
+            accent = "sky";
+          })
         }/share/Kvantum/Catppuccin-Mocha-Sky/Catppuccin-Mocha-Sky.svg";
         ".config/Kvantum/Catppuccin-Mocha-Green/Catppuccin-Mocha-Green.kvconfig".source = "${
-          (pkgs.catppuccin-kvantum.override { variant = "mocha"; accent = "green"; })
+          (pkgs.catppuccin-kvantum.override {
+            variant = "mocha";
+            accent = "green";
+          })
         }/share/Kvantum/Catppuccin-Mocha-Green/Catppuccin-Mocha-Green.kvconfig";
         ".config/Kvantum/Catppuccin-Mocha-Green/Catppuccin-Mocha-Green.svg".source = "${
-          (pkgs.catppuccin-kvantum.override { variant = "mocha"; accent = "green"; })
+          (pkgs.catppuccin-kvantum.override {
+            variant = "mocha";
+            accent = "green";
+          })
         }/share/Kvantum/Catppuccin-Mocha-Green/Catppuccin-Mocha-Green.svg";
       })
       # Bootstrap writable kvantum.kvconfig (not a nix store symlink)

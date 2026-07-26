@@ -2,16 +2,21 @@
 
 ## TL;DR (For humans)
 
-Сейчас nixpkgs загружает **~1000 модулей** (веб-серверы, БД, CI/CD, X11, печать, VoIP, ...) которые никогда не используются на odin. Каждый модуль добавляет option-декларации (даже если сервис выключен), и система тратит ~3s только на их слияние. Наши 350 модулей — лишь ~12% от этого времени.
+Сейчас nixpkgs загружает **~1000 модулей** (веб-серверы, БД, CI/CD, X11, печать, VoIP, ...) которые
+никогда не используются на odin. Каждый модуль добавляет option-декларации (даже если сервис
+выключен), и система тратит ~3s только на их слияние. Наши 350 модулей — лишь ~12% от этого времени.
 
 **План — 2 волны:**
 
-1. **disabledModules** — явно отключить загрузку категорий nixpkgs, которые гарантированно не нужны. Самый сильный рычаг (~1-1.5s), но требует осторожности.
-2. **Остальное** — сократить flake inputs (20 из 24 используются только в devShells), уменьшить персональный nix.settings overhead, убрать лишние eval-опции.
+1. **disabledModules** — явно отключить загрузку категорий nixpkgs, которые гарантированно не нужны.
+   Самый сильный рычаг (~1-1.5s), но требует осторожности.
+1. **Остальное** — сократить flake inputs (20 из 24 используются только в devShells), уменьшить
+   персональный nix.settings overhead, убрать лишние eval-опции.
 
 ### 1. disabledModules: отключить ненужные категории nixpkgs
 
-Список категорий, которые гарантированно не нужны на odin (Wayland, домашняя рабочая станция, нет веб-серверов/БД/печати/X11/VoIP):
+Список категорий, которые гарантированно не нужны на odin (Wayland, домашняя рабочая станция, нет
+веб-серверов/БД/печати/X11/VoIP):
 
 ```
 ## Веб-серверы и прокси
@@ -85,20 +90,24 @@
 
 ### 2. Flake inputs — 20 из 24 только для devShells
 
-При `--refresh --offline` eval не качает сеть, но каждый input всё равно резолвится из lockfile. Можно:
+При `--refresh --offline` eval не качает сеть, но каждый input всё равно резолвится из lockfile.
+Можно:
 
 - Вынести devShell-только inputs в отдельный `outputs.devShells` с ленивой загрузкой
-- Или просто удалить неиспользуемые (caelestia-shell, sshell, wrapper-manager — не используются в nixosConfigs)
+- Или просто удалить неиспользуемые (caelestia-shell, sshell, wrapper-manager — не используются в
+  nixosConfigs)
 
 ### 3. nix.settings тюнинг
 
 Уже включено, но проверить:
+
 - `eval-cache = true` ✅
 - `eval-system = "x86_64-linux"` ✅
 - `allow-import-from-derivation = false` ✅
 - `lazy-locks = true` ✅ (Determinate Nix)
 
 Добавить:
+
 - `pure-eval = true` ✅ (уже)
 - Проверить что нет лишних `nix.settings` которые форсят eval
 
@@ -106,7 +115,8 @@
 
 ### 1. Запустить eval-profiler flamegraph для точного профилирования
 
-- **Что**: `nix eval --option eval-profiler flamegraph --option eval-profile-file /tmp/nix-flamegraph.folded '.#nixosConfigurations.odin.config.system.build.toplevel.name'`
+- **Что**:
+  `nix eval --option eval-profiler flamegraph --option eval-profile-file /tmp/nix-flamegraph.folded '.#nixosConfigurations.odin.config.system.build.toplevel.name'`
 - **Результат**: файл `/tmp/nix-flamegraph.folded` — прочитать и найти топ-10 функций по времени
 - **Acceptance**: Получен список самых дорогих модулей/функций
 - **QA**: `head -20 /tmp/nix-flamegraph.folded`
@@ -115,7 +125,8 @@
 
 - **Файл**: `hosts/odin/default.nix` (или `modules/nix/disabled.nix`)
 - **Что**: Добавить `disabledModules` с категориями, которые гарантированно не нужны
-- **Метод**: Итеративный — добавлять по 5-10 модулей, проверять `nh os switch --dry`, если падает — выяснять транзитивную зависимость
+- **Метод**: Итеративный — добавлять по 5-10 модулей, проверять `nh os switch --dry`, если падает —
+  выяснять транзитивную зависимость
 - **Acceptance**: eval падает ≥0.5s за каждые 50 отключённых модулей
 - **QA**: `nh os switch --dry` проходит без ошибок
 
@@ -131,7 +142,8 @@
 
 ### F1. Замер времени после disabledModules
 
-- **Что**: `time nix eval --refresh --offline '.#nixosConfigurations.odin.config.system.build.toplevel.name'`
+- **Что**:
+  `time nix eval --refresh --offline '.#nixosConfigurations.odin.config.system.build.toplevel.name'`
 - **Target**: ≤3.5s после добавления disabledModules
 
 ### F2. Regression: nh os switch --dry
@@ -143,6 +155,8 @@
 - **QA**: `nix flake check` — все проверки проходят
 
 ## Must-NOT-Have
-- Не отключать модули, которые используются транзитивно (systemd unit dependencies, option defaults для включённых сервисов)
+
+- Не отключать модули, которые используются транзитивно (systemd unit dependencies, option defaults
+  для включённых сервисов)
 - Не ломать `nh os switch` и `nix flake check`
 - Не удалять flake inputs, которые используются в nixosConfigurations
