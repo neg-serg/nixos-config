@@ -106,38 +106,27 @@ RowLayout {
     // ---- Hardware communication ----
 
     property var _activeProc: null
+    ProcessRunner {
+        id: genlcProc
+        autoStart: false
+        onExited: {
+            root.busy = false;
+            root.available = exitCode === 0;
+        }
+    }
 
     function _sendToHardware(dB) {
-        if (busy && _activeProc) {
-            _activeProc.kill();
-        }
+        if (busy) genlcProc.stop();
         busy = true;
         _lastSetVolume = dB;
         _saveState();
-
-        var proc = new Process();
-        _activeProc = proc;
-        proc.command = ["genlc", "set-volume", "--volume=" + dB + "dB"];
-        proc.stderr = null;
-        proc.stdout = null;
-        proc.onFailed = function(code) {
-            root.busy = false;
-            root.available = false;
-            root._activeProc = null;
-            console.warn("[Genelec] genlc failed with code:", code);
-        };
-        proc.running = true;
+        genlcProc.cmd = ["genlc", "set-volume", "--volume=" + dB + "dB"];
+        genlcProc.start();
     }
 
     function _sendMute() {
-        // Mute by setting to minimum (-95 dB effectively silent)
-        var proc = new Process();
-        proc.command = ["genlc", "set-volume", "--volume=-95dB"];
-        proc.stderr = null;
-        proc.onFailed = function(code) {
-            console.warn("[Genelec] mute failed with code:", code);
-        }
-        proc.running = true;
+        genlcProc.cmd = ["genlc", "set-mute"];
+        genlcProc.start();
     }
 
     // ---- Startup ----
