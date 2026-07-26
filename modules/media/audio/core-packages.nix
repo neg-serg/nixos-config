@@ -15,8 +15,7 @@ in
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter [
       # -- Volume control --
-      pkgs.ncpamixer # ncurses mixer, keyboard-driven pavucontrol alternative
-      pkgs.pamixer # CLI pulseaudio/pipewire volume control for scripts
+      pkgs.genlc # Genelec SAM monitor volume control via GLM USB adapter
       pkgs.pw-volume # minimal PipeWire volume controller for scripts
 
       # -- RME HDSPe --
