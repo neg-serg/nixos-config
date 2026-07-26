@@ -195,9 +195,9 @@ hl.bind(M4 .. "+" .. C .. "+o", hl.dsp.exec_cmd('raise --match "class:regex=^(ob
 hl.bind(M4 .. "+" .. C .. "+n", hl.dsp.exec_cmd('raise --match "class:regex=^(Obsidian|md\\.obsidian\\.Obsidian)$" --launch "obsidian"'))
 
 -- --- Media (media.conf) ---
-hl.bind("XF86AudioNext", hl.dsp.exec_cmd("genlc-media up"), { repeating = true })
-hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("genlc-media down"), { repeating = true })
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("genlc-media mute"), { repeating = true })
+hl.bind("XF86AudioNext", hl.dsp.exec_cmd("genlc-media up; swayosd-client --output-volume +5"), { repeating = true })
+hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("genlc-media down; swayosd-client --output-volume -5"), { repeating = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd("genlc-media mute; swayosd-client --output-volume mute-toggle"), { repeating = true })
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("swayosd-client --output-volume +5; genlc-media up"), { repeating = true })
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("swayosd-client --output-volume -5; genlc-media down"), { repeating = true })
 hl.bind("XF86AudioMute", hl.dsp.exec_cmd("swayosd-client --output-volume mute-toggle; genlc-media mute"), { repeating = true })
