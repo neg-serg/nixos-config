@@ -19,8 +19,7 @@ import "../Helpers/Color.js" as Color
  */
 RowLayout {
     id: root
-    visible: true
-    opacity: 1
+
     // ---- Configuration ----
     readonly property int minVolume: -95
     property int maxVolume: {
@@ -65,6 +64,7 @@ RowLayout {
         from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
         Layout.preferredWidth: Math.round(46 * Theme.scale(Screen))
         Layout.alignment: Qt.AlignVCenter
+        onMoved: { root.pendingDb = root.sliderToDb(value); root.displayDb = root.pendingDb; sliderDebounce.restart(); }
         background: Rectangle {
             x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 1
             width: volSlider.availableWidth; height: 1.5; radius: 1
@@ -79,6 +79,7 @@ RowLayout {
             y: volSlider.topPadding + volSlider.availableHeight / 2 - 4
             implicitWidth: 8; implicitHeight: 8
             opacity: volSlider.hovered || volSlider.pressed ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 120 } }
             Rectangle {
                 anchors.fill: parent; radius: 4
                 color: "#00000000"; border { width: 1; color: Color.withAlpha(Theme.accentPrimary, 0.7) }
@@ -167,6 +168,7 @@ RowLayout {
                 var xhr = new XMLHttpRequest();
                 xhr.open("GET", "file:///tmp/genlc-volume", false);
                 xhr.send();
+                var v = parseFloat(xhr.responseText);
                 if (!isNaN(v) && v !== root._syncedVolume) {
                     root._syncedVolume = v;
                     root.displayDb = v;
