@@ -6,7 +6,7 @@ import Quickshell.Io
 import qs.Settings
 import qs.Components
 import "../Helpers/Utils.js" as Utils
-import "../../Helpers/Color.js" as Color
+import "../Helpers/Color.js" as Color
 
 /*!
  * Genelec — hardware volume control for Genelec SAM monitors via GLM adapter.
