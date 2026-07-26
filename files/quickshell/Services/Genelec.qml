@@ -60,17 +60,46 @@ RowLayout {
     Slider {
         id: volSlider
         from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
-        Layout.preferredWidth: Math.round(80 * Theme.scale(Screen))
+        Layout.preferredWidth: Math.round(40 * Theme.scale(Screen))
         Layout.alignment: Qt.AlignVCenter
         onMoved: { root.pendingDb = root.sliderToDb(value); debounce.restart(); }
+
+        background: Rectangle {
+            x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 2
+            width: volSlider.availableWidth; height: 1
+            radius: 1; color: Color.withAlpha(Theme.accentPrimary, 0.15)
+            Rectangle {
+                width: volSlider.visualPosition * parent.width; height: parent.height
+                radius: 1
+                color: Color.withAlpha(Theme.accentPrimary, volSlider.hovered ? 0.6 : 0.35)
+                Rectangle {
+                    anchors.fill: parent; radius: 1
+                    color: "transparent"
+                    Rectangle { anchors.fill: parent; radius: 1; color: Color.withAlpha(Theme.accentPrimary, 0.9); opacity: 0.4; layer.enabled: true; layer.effect: FastBlur { radius: 2 } }
+                }
+            }
+        }
+        handle: Item {
+            x: volSlider.leftPadding + volSlider.visualPosition * (volSlider.availableWidth - 10) - 5
+            y: volSlider.topPadding + volSlider.availableHeight / 2 - 5
+            implicitWidth: 10; implicitHeight: 10
+            opacity: volSlider.hovered || volSlider.pressed ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 150 } }
+            Rectangle {
+                anchors.centerIn: parent; width: 10; height: 10; radius: 5
+                color: Color.withAlpha(Theme.accentPrimary, 0.15)
+                border { width: 1; color: Color.withAlpha(Theme.accentPrimary, 0.5) }
+                Rectangle { anchors.fill: parent; radius: 5; color: Color.withAlpha(Theme.accentPrimary, 0.8); opacity: 0.5; layer.enabled: true; layer.effect: FastBlur { radius: 3 } }
+            }
+        }
     }
     property real pendingDb: -40
     Timer { id: debounce; interval: 200; repeat: false; onTriggered: { if (root.pendingDb !== undefined) root.setVolume(root.pendingDb); } }
     Text {
         id: volLabel
-        text: root.muted ? "MUTED" : root.volume + " dB"
-        font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85); color: Theme.textSecondary
-        Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Math.round(48 * Theme.scale(Screen))
+        text: root.muted ? "MUTED" : root.volume + "dB"
+        font.family: Theme.fontFamily; font.pixelSize: Math.round(Theme.fontSizeSmall * 0.95); color: Theme.textSecondary
+        Layout.alignment: Qt.AlignVCenter; Layout.preferredWidth: Math.round(36 * Theme.scale(Screen))
     }
 
 
