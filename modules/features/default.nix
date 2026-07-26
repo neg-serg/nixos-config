@@ -147,9 +147,6 @@ in
           (assertParent gui.enable gui.exo.enable
             "features.gui.exo.enable requires features.gui.enable = true"
           )
-          (assertParent gui.enable gui.noctalia.enable
-            "features.gui.noctalia.enable requires features.gui.enable = true"
-          )
           (assertParent gui.enable gui.vicinae.enable
             "features.gui.vicinae.enable requires features.gui.enable = true"
           )
