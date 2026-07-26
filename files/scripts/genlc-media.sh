@@ -21,7 +21,7 @@ fi
 
 if [ "$1" = "up" ]; then
   target=$((current + STEP))
-  [ "$target" -gt -25 ] && target=-25
+  [ "$target" -gt -30 ] && target=-30
 else
   target=$((current - STEP))
   [ "$target" -lt -95 ] && target=-95
