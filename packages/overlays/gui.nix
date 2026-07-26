@@ -30,11 +30,6 @@ in
   wl = callPkg (inputs.self + "/packages/wl") { };
   wl-switcher = prev.callPackage (inputs.self + "/packages/wl-switcher") { };
 
-  skwd = prev.callPackage (inputs.self + "/packages/skwd") {
-    skwd-src = inputs.skwd;
-    skwd-daemon = inputs.skwd-daemon.packages.${prev.stdenv.hostPlatform.system}.default;
-  };
-
 
   # hyprscratch: patched to exit after 5 event-listener failures
   # so systemd Restart=always can restart it with fresh Hyprland IPC env.

@@ -25,7 +25,6 @@ in
     ./misc.nix
     ./hardware.nix
     ./optimization.nix
-    ./skwd.nix
     ./system.nix
   ];
 
@@ -139,9 +138,6 @@ in
           )
           (assertParent gui.enable gui.caelestia-shell.enable
             "features.gui.caelestia-shell.enable requires features.gui.enable = true"
-          )
-          (assertParent gui.enable gui.skwd.enable
-            "features.gui.skwd.enable requires features.gui.enable = true"
           )
           (assertParent gui.enable gui.vicinae.enable
             "features.gui.vicinae.enable requires features.gui.enable = true"
