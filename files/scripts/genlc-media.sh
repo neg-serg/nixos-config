@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
 # Genelec SAM volume control via media keys
-# Stores volume in /tmp/genlc-volume (initialized from last set)
+# Rate-limited: max 1 command per 200ms to prevent GLM adapter overload
 STEP=3
 STATE=/tmp/genlc-volume
+LOCK=/tmp/genlc-media.lock
+
+# Rate limit: skip if last call was <200ms ago
+now=$(date +%s%3N)  # milliseconds
+if [ -f "$LOCK" ]; then
+  last=$(cat "$LOCK" 2>/dev/null || echo 0)
+  if [ $((now - last)) -lt 200 ]; then
+    exit 0  # too soon, skip
+  fi
+fi
+echo "$now" > "$LOCK"
 
 case "${1:-}" in
   up|down|mute) ;;
@@ -15,7 +26,7 @@ current=-40
 if [ -z "$current" ] || ! [ "$current" -eq "$current" ] 2>/dev/null; then current=-40; fi
 
 if [ "$1" = "mute" ]; then
-  genlc mute
+  genlc mute 2>/dev/null
   exit 0
 fi
 
