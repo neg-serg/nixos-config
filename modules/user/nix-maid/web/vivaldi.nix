@@ -13,6 +13,7 @@ let
   # Extensions to force-install via managed policy
   extensions = [
     "gfbliohnnapiefjpjlpjnehglfpaknnc" # SurfingKeys (vim-like keybindings)
+    "dhdgffkkebhmkfjojejmpbldmpobfkfo" # Tampermonkey (userscript manager)
   ];
 
   # Vivaldi bundles its own libffmpeg.so with all codecs (proprietary browser).
