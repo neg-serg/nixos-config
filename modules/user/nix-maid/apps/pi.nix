@@ -27,7 +27,7 @@ let
   # Takes precedence over the system-wide `pi` from pi.nix.
   piWrapper = pkgs.writeShellScriptBin "pi" ''
     set -a
-    DEEPSEEK_API_KEY="$(${pkgs.coreutils}/bin/cat /run/secrets/deepseek-api 2>/dev/null || echo "''${DEEPSEEK_API_KEY:-}")"
+    DEEPSEEK_API_KEY="$(${pkgs.coreutils}/bin/cat /run/user/1000/secrets/deepseek-api 2>/dev/null || echo "''${DEEPSEEK_API_KEY:-}")"
     GITHUB_TOKEN="$(${pkgs.coreutils}/bin/cat /run/secrets/github-token 2>/dev/null || echo "''${GITHUB_TOKEN:-}")"
     set +a
     exec ${lib.getExe' pkgs.nodejs "node"} ${piGlobal} "$@"

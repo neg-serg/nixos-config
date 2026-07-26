@@ -33,7 +33,7 @@ let
     auth = {
       tty = "tty13";
       desc = "auth messages";
-      filter = "SYSLOG_FACILITY=4 SYSLOG_FACILITY=10";
+      filter = "SYSLOG_FACILITY=4 + SYSLOG_FACILITY=10";
     };
     systemd = {
       tty = "tty14";

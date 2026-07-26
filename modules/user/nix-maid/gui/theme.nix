@@ -11,7 +11,7 @@ let
 
   negGtkCss = builtins.readFile ../../../../files/gui/neg-gtk.css;
 
-  iconTheme = config.features.gui.iconTheme or "kora";
+  iconTheme = config.features.gui.iconTheme or "kora-pgrey";
 
   gtkThemeName = config.features.gui.gtkTheme or "neg-gtk";
 

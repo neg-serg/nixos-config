@@ -62,7 +62,7 @@ in
         "bind"
         "nofail"
         "x-systemd.automount"
-        "x-systemd.after=zfs.target"
+        "x-systemd.after=zfs-import-gamez.service"
       ];
     };
     "${homeDir}/.local/share/wineprefixes" = {
@@ -72,7 +72,7 @@ in
         "bind"
         "nofail"
         "x-systemd.automount"
-        "x-systemd.after=zfs.target"
+        "x-systemd.after=zfs-import-gamez.service"
       ];
     };
     "${homeDir}/.cache/winetricks" = {
@@ -82,7 +82,7 @@ in
         "bind"
         "nofail"
         "x-systemd.automount"
-        "x-systemd.after=zfs.target"
+        "x-systemd.after=zfs-import-gamez.service"
       ];
     };
     "${homeDir}/.local/share/Steam/steamapps" = {
@@ -92,13 +92,14 @@ in
         "bind"
         "nofail"
         "x-systemd.automount"
-        "x-systemd.after=zfs.target"
+        "x-systemd.after=zfs-import-gamez.service"
       ];
     };
 
     # ZFS pools imported via boot.zfs.extraPools
 
-    # /mnt/zero removed: argon-zero LVM volume being dismantled, replaced by ZFS pool gamez
+    # /mnt/zero removed: argon-zero LVM volume being dismantled
+    # gamez = mirror (nvme0n1+nvme2n1), zero = single (nvme3n1) — still separately imported
   };
 
   # Cache both metadata and data for /nix/store — ARC has room (60 GB RAM),
