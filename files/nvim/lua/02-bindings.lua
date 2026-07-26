@@ -1,5 +1,4 @@
 local map = vim.keymap.set
-map('i', '<C-j>', '<ESC>', {nowait = true, desc = 'Escape'})
 map('v', '<C-j>', '<ESC>', {nowait = true, desc = 'Escape'})
 for _, key in ipairs({ 'j', 'k', 'l', 'h' }) do
   map('n', '<leader>' .. key, '<C-w>' .. key, { nowait = true, desc = 'Window ' .. key })
