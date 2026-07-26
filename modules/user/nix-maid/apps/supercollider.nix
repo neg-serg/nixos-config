@@ -4,17 +4,12 @@
 {
   lib,
   config,
-  neg,
   pkgs,
   ...
 }:
 let
   cfg = config.features.media.audio.creation or { };
   enabled = cfg.enable or false;
-
-  superdirtCommands = pkgs.writeText "superdirt-commands.scd" ''
-    try { ~dirt = SuperDirt(2, s); ~dirt.loadSoundFiles; ~dirt.start(57120, 0 ! 12); "SUPERDIRT READY :57120".postln; } { |err| ("SuperDirt ERROR: " ++ err.what).postln; };
-  '';
 
   installQuark = pkgs.runCommand "install-superdirt-quark" {
     nativeBuildInputs = [ pkgs.makeWrapper ];
