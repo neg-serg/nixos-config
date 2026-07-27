@@ -23,6 +23,7 @@ in
   ];
   boot.initrd.kernelModules = [ "zfs" ];
   boot.zfs.extraPools = [ "tank" ]; # gamez/zero imported after boot via systemd services
+
   # Scan /dev directly (raw block devices) instead of /dev/disk/by-id.
   # Raw NVMe device nodes (/dev/nvmeXn1, /dev/nvmeXn1p1) appear at kernel probe time,
   # while by-id symlinks need udev — which isn't ready yet when the import script runs.
@@ -95,11 +96,6 @@ in
         "x-systemd.after=zfs-import-gamez.service"
       ];
     };
-
-    # ZFS pools imported via boot.zfs.extraPools
-
-    # /mnt/zero removed: argon-zero LVM volume being dismantled
-    # gamez = mirror (nvme0n1+nvme2n1), zero = single (nvme3n1) — still separately imported
   };
 
   # Cache both metadata and data for /nix/store — ARC has room (60 GB RAM),
@@ -144,9 +140,6 @@ in
     '';
   };
 
-  # Non-root ZFS pool import services (imported after boot, not in initrd).
-  # gamez = mirror of nvme0n1 + nvme2n1 (Samsung 990 PRO 2TB each)
-  # zero  = single nvme3n1              (Samsung PM9A3 7TB)
   systemd.services."zfs-import-gamez" = {
     description = "Import ZFS pool gamez";
     wantedBy = [ "multi-user.target" ];
@@ -188,7 +181,6 @@ in
     '';
   };
 
-  # ZFS auto-scrub and trim
   services.zfs.autoScrub.enable = true;
   services.zfs.trim.enable = true;
   services.fstrim = lib.mkIf isOdin { enable = true; };

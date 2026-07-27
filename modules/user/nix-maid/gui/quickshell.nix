@@ -123,11 +123,8 @@ lib.mkIf quickshellEnabled (
         serviceConfig = {
           Type = "oneshot";
           ExecStart = pkgs.writeShellScript "quickshell-cleanup-symlink" ''
-            if [ -L "$HOME/.config/quickshell" ]; then
-              rm "$HOME/.config/quickshell"
-            elif [ -d "$HOME/.config/quickshell" ]; then
-              rm -rf "$HOME/.config/quickshell"
-            fi
+            rm -rf "$HOME/.config/quickshell" 2>/dev/null || true
+            rm -rf "$HOME/.local/state/nix-maid/static/.config/quickshell" 2>/dev/null || true
           '';
         };
       };
