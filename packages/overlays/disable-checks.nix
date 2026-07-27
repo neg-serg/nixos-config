@@ -1,4 +1,9 @@
 inputs: final: finalPrev: {
+  # Disable flaky openexr tests (testMultiPartThreading, testCompositeDeepScanLine abort with EAGAIN)
+  openexr = finalPrev.openexr.overrideAttrs (_old: {
+    doCheck = false;
+  });
+
   # Disable flaky OpenLDAP tests (fails on syncreplication)
   openldap = finalPrev.openldap.overrideAttrs (_old: {
     doCheck = false;
