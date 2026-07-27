@@ -164,7 +164,7 @@ Singleton {
             property string weatherGeocodingBaseUrl: "https://geocoding-api.open-meteo.com/v1"
 
             // Pill tracker reminder deadline (HH:MM format)
-            property string pillReminderDeadline: "10:00"
+            property string pillReminderDeadline: "12:00"
 
             // Audio off reminder cooldown override in milliseconds.
             // -1 means: use Theme.panelVolumeOffReminderCooldownMs.
