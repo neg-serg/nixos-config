@@ -131,4 +131,9 @@ inputs: final: finalPrev: {
   qt3d = finalPrev.qt3d.overrideAttrs (_old: {
     NIX_BUILD_CORES = 4;
   });
+
+  # qtwebengine: V8 Chromium build OOM-killed on 32-thread (~24K compile units)
+  qtwebengine = finalPrev.qtwebengine.overrideAttrs (_old: {
+    NIX_BUILD_CORES = 4;
+  });
 }
