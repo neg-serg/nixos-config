@@ -121,6 +121,7 @@ in
         pkgs.freerdp
         pkgs.qemu_kvm
         pkgs.virt-manager
+        pkgs.virt-viewer
       ] ++ lib.optional (desktopApps != []) desktopFiles
     );
     environment.etc."winapps/winapps.conf".text = ''
