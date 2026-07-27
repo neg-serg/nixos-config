@@ -54,7 +54,7 @@ impl HidTransport {
         let copy_len = payload_len.min(63);
         buf[2..2 + copy_len].copy_from_slice(&stuffed[..copy_len]);
 
-        std::thread::sleep(std::time::Duration::from_millis(150));
+        std::thread::sleep(std::time::Duration::from_millis(300));
         self.device.write(&buf[..65])?;
         Ok(())
     }
