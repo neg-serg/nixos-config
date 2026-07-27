@@ -131,6 +131,26 @@ lib.mkIf quickshellEnabled (
       };
     }
     {
+      # Remove old copy so L+ symlink rule can take effect
+      systemd.user.services.quickshell-fix-genelec = {
+        description = "Remove stale Genelec.qml copy before tmpfiles creates symlink";
+        before = [ "maid-activation.service" ];
+        wantedBy = [ "maid-activation.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = pkgs.writeShellScript "quickshell-fix-genelec" ''
+            if [ -f "$HOME/.config/quickshell/Services/Genelec.qml" ] && ! [ -L "$HOME/.config/quickshell/Services/Genelec.qml" ]; then
+              rm -f "$HOME/.config/quickshell/Services/Genelec.qml"
+            fi
+          '';
+        };
+      };
+      # Force Genelec.qml as symlink so updates take effect immediately
+      systemd.user.tmpfiles.rules = [
+        "L+ %h/.config/quickshell/Services/Genelec.qml - - - - ${quickshellSrc}/Services/Genelec.qml"
+      ];
+    }
+    {
       systemd.user.services.quickshell-theme-init = {
         description = "Deploy writable Theme directory before quickshell starts";
         after = [ "maid-activation.service" ];
