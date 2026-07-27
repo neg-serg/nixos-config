@@ -1,4 +1,4 @@
-# Unbound DNS Metrics: Prometheus + Grafana
+# Unbound DNS Metrics: Prometheus
 
 Purpose: instrument the local Unbound resolver for quality monitoring — response time, DNSSEC
 validation rate, cache hits/miss and related DNS health signals. Works with the DNS stack in this
@@ -65,15 +65,7 @@ To collect metrics, enable the exporter and scrape job and add Prometheus to Gra
   };
 
   # Grafana: add Prometheus datasource (Loki is provisioned elsewhere)
-  services.grafana.provision.datasources.settings.datasources = [
-    {
-      name = "Prometheus";
-      type = "prometheus";
-      access = "proxy";
-      url = "http://127.0.0.1:${toString config.services.prometheus.port}";
-      isDefault = false;
-    }
-  ];
+  # Grafana provisioning removed — use Prometheus datasource directly
 }
 ```
 

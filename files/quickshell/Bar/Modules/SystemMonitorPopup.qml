@@ -28,7 +28,6 @@ PanelOverlaySurface {
     readonly property int _fontSizeMedium: Math.round(Theme.fontSizeMedium * 1.2) || 18
     readonly property real _pad: 14
     readonly property real _spacing: 8
-    readonly property string _grafanaBase: "http://127.0.0.1:3030"
     readonly property real _cardH: 56
     readonly property color sepColor: "transparent"
     readonly property string _ttyLogDir: {
@@ -184,18 +183,6 @@ PanelOverlaySurface {
             }
         }
 
-        RowLayout { width:parent.width; spacing:8; Item{Layout.fillWidth:true}
-            Rectangle { id:btnRect1; radius:4; color:root.cardBg
-                implicitWidth:btn1.implicitWidth+16; implicitHeight:btn1.implicitHeight+8
-                Text{id:btn1;anchors.centerIn:parent;text:"Grafana · System";font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall | 0;color:root.accentColor}
-                MouseArea{id:ma1;anchors.fill:parent;hoverEnabled:true;acceptedButtons:Qt.LeftButton
-                    onClicked:{Qt.openUrlExternally(root._grafanaBase+"/d/system-journal")}} }
-            Rectangle { id:btnRect2; radius:4; color:root.cardBg
-                implicitWidth:btn2.implicitWidth+16; implicitHeight:btn2.implicitHeight+8
-                Text{id:btn2;anchors.centerIn:parent;text:"Grafana · Home";font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall | 0;color:root.accentColor}
-                MouseArea{id:ma2;anchors.fill:parent;hoverEnabled:true;acceptedButtons:Qt.LeftButton
-                    onClicked:{Qt.openUrlExternally(root._grafanaBase)}} } }
-        PanelTooltip{text:root._grafanaBase+"/d/system-journal";targetItem:btnRect1;visibleWhen:ma1.containsMouse}
-        PanelTooltip{text:root._grafanaBase;targetItem:btnRect2;visibleWhen:ma2.containsMouse}
+        RowLayout { width:parent.width; spacing:8; Item{Layout.fillWidth:true} }
     }
 }
