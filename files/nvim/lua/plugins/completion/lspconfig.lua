@@ -49,23 +49,11 @@ return {
       group = vim.api.nvim_create_augroup('NegLspAttach', { clear = true }),
       callback = function(event)
         local buf = event.buf
-        vim.keymap.set('n', '<leader>D', vim.lsp.buf.type_definition, { buffer = buf, silent = true, desc = 'LSP: type definition' })
         vim.keymap.set('n', '<leader>ws', vim.lsp.buf.workspace_symbol, { buffer = buf, silent = true, desc = 'LSP: workspace symbol' })
         vim.keymap.set('n', '<leader>uh', function()
           local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = buf })
           vim.lsp.inlay_hint.enable(not enabled, { bufnr = buf })
         end, { buffer = buf, silent = true, desc = 'Inlay Hints: toggle' })
-        -- Extended LSP: selection ranges (expand/shrink selection)
-        vim.keymap.set('n', '<leader>vs', function() vim.lsp.buf.document_range_formatting() end, { buffer = buf, silent = true, desc = 'LSP: selection range' })
-        -- Document links (navigate to URLs in document)
-        vim.keymap.set('n', 'gx', function()
-          local links = vim.lsp.buf.document_link()
-          if links and #links > 0 then
-            vim.ui.open(links[1].target)
-          end
-        end, { buffer = buf, silent = true, desc = 'LSP: open document link' })
-        -- Linked editing (sync rename matching tags)
-        vim.lsp.buf.linked_editing_range()
       end,
     })
 
