@@ -93,7 +93,7 @@ RowLayout {
             }
         }
     }
-    Timer { id: sliderDebounce; interval: 150; repeat: false; onTriggered: {
+    Timer { id: sliderDebounce; interval: 300; repeat: false; onTriggered: {
         if (root.pendingDb !== root.volume) root._sendNow(root.pendingDb); }}
     Text {
         id: volLabel
