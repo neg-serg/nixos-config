@@ -6,6 +6,8 @@ const VID: u16 = 0x1781;
 const PID: u16 = 0x0E39;
 const GNET_BROADCAST: u8 = 0xFF;
 const CID_VOLUME_GLM: u8 = 0x1F;
+const CID_START_VOLUME: u8 = 0x21;
+const CID_VOLUME_IF: u8 = 0x1D;
 const CID_WAKEUP: u8 = 0x3A;
 const GNET_TERM: u8 = 0x7E;
 const MAX_PACKET_LEN: usize = 64;
@@ -119,10 +121,14 @@ impl SamGroup {
     pub fn new(transport: HidTransport) -> Self {
         Self { transport }
     }
-
     pub fn set_volume(&self, db: f64) -> Result<()> {
+        self.set_volume_cid(db, CID_VOLUME_GLM)
+    }
+
+    /// Set volume with explicit CID — try CID_START_VOLUME for smooth ramp
+    pub fn set_volume_cid(&self, db: f64, cid: u8) -> Result<()> {
         let sint24 = db_to_sint24(db);
-        let mut msg = GNetMessage::new(GNET_BROADCAST, CID_VOLUME_GLM);
+        let mut msg = GNetMessage::new(GNET_BROADCAST, cid);
         msg.set_sint24(sint24);
         self.transport.send(&msg)?;
         Ok(())
