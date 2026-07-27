@@ -29,6 +29,9 @@ enum Commands {
         /// Volume in dB (e.g., -40dB)
         #[arg(long = "volume", value_name = "VOLUME", allow_hyphen_values = true)]
         volume: String,
+        /// Volume CID: glm (0x1F, default), start (0x21, possible smooth ramp), if (0x1D)
+        #[arg(long = "cid", value_name = "CID", default_value = "glm")]
+        cid: String,
     },
     /// Mute all SAM monitors
     Mute,
@@ -63,10 +66,15 @@ fn main() -> Result<()> {
     let mut group = protocol::SamGroup::new(transport);
 
     match cli.command {
-        Commands::SetVolume { volume } => {
+        Commands::SetVolume { volume, cid } => {
             let db = parse_volume(&volume)?;
-            eprintln!("Setting volume to {db:.2} dB");
-            group.set_volume(db)?;
+            let cid_byte = match cid.as_str() {
+                "start" => 0x21u8,
+                "if" => 0x1Du8,
+                _ => 0x1Fu8,
+            };
+            eprintln!("Setting volume to {db:.2} dB (CID 0x{cid_byte:02X})");
+            group.set_volume_cid(db, cid_byte)?;
             let _ = std::fs::write("/tmp/genlc-volume", format!("{:.1}", db));
         }
         Commands::Mute => group.mute()?,
