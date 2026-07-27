@@ -18,3 +18,4 @@ benchmarks/
 .opencode/
 .pi/
 cache.db
+packages/target/
