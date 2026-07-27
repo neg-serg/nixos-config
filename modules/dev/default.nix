@@ -12,7 +12,6 @@
     ./python
     ./unreal
     ./pkgs
-    ./opencode.nix
     ./omp.nix
     ./pi.nix
     ./openagentscontrol.nix

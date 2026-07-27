@@ -27,9 +27,6 @@ in
       sha256 = "sha256-rig1sSCB9ycaawsl00uH02sCLEA3ACjKShD5D87fpmE=";
     };
   });
-  # opencode removed: was overriding to flake source — node_modules builds hung.
-  # Use nixpkgs' opencode directly.
-
   # Agent multiplexer for AI coding agents (herdr)
   herdr = inputs.herdr.packages.${final.stdenv.hostPlatform.system}.default;
 
@@ -47,13 +44,6 @@ in
     // (gui.neg or { })
     // {
       wyoming-openai = final.callPackage ./wyoming-openai { };
-
-      opencode-dev =
-        (final.callPackage "${inputs.nixpkgs}/pkgs/by-name/op/opencode/package.nix" { }).overrideAttrs
-          (_: {
-            src = inputs.opencode;
-            version = inputs.opencode.shortRev or "dev-${inputs.opencode.lastModifiedDate}";
-          });
       game = final.callPackage ./game { };
       superdirt = final.callPackage ./superdirt { }; # SuperDirt SC quark for TidalCycles audio engine
       dirt-samples = final.callPackage ./dirt-samples { }; # audio sample library for SuperDirt
