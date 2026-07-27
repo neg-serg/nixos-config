@@ -78,6 +78,18 @@ map({'n', 't'}, xk[[<C-/>]], function()
   Snacks.terminal.toggle()
 end, {silent=true, desc = 'Toggle terminal'})
 
+-- LSP: gr-prefix mappings (LSP saga / helix-style)
+map('n', 'gra', vim.lsp.buf.code_action, { desc = 'LSP: code action' })
+map('n', 'gri', vim.lsp.buf.implementation, { desc = 'LSP: implementations' })
+map('n', 'grn', function() return ':IncRename ' .. vim.fn.expand('<cword>') end,
+  { expr = true, desc = 'LSP: rename' })
+map('n', 'grr', vim.lsp.buf.references, { desc = 'LSP: references' })
+map('n', 'grt', vim.lsp.buf.type_definition, { desc = 'LSP: type definition' })
+map('n', 'grx', vim.lsp.buf.code_lens_run, { desc = 'LSP: run codelens' })
+map('n', 'gO', function() require('fzf-lua').lsp_document_symbols() end, { desc = 'LSP: document symbols' })
+-- Insert mode: signature help
+map('i', '<C-S>', vim.lsp.buf.signature_help, { desc = 'LSP: signature help' })
+
 -- Code: C-S-r rename, C-S-a code action, C-S-o symbols outline
 map('n', xk[[<C-S-r>]], function() return ':IncRename ' .. vim.fn.expand('<cword>') end,
   {expr=true, desc = 'Rename symbol'})
