@@ -6,20 +6,10 @@
   ...
 }:
 let
-  # Helper to generate alias entry
   mkAlias = name: value: "  - name: ${name}\n    value: ${builtins.toJSON value}\n";
-
-  # Conditional alias
-  mkAliasIf =
-    cond: name: value:
-    if cond then mkAlias name value else "";
-
-  # Helper for environment variables (Nushell needs $env.VAR)
+  mkAliasIf = cond: name: value: if cond then mkAlias name value else "";
   mkEnvVar = name: if isNushell then "$env.${name}" else "$${name}";
-
-  # Helper for recursive aliases/standard commands in Nushell (force external)
   mkCmd = name: if isNushell then "^${name}" else name;
-
   checks = import ./package-checks.nix { inherit pkgs; };
   inherit (checks)
     hasRg
@@ -28,7 +18,6 @@ let
     hasJq
     hasUg
     hasErd
-    hasPrettyping
     hasDuf
     hasDust
     hasHandlr
@@ -165,7 +154,6 @@ let
     (mkAlias "grup" "git remote update")
     (mkAlias "gsh" "git show")
     (mkAlias "gsi" "git submodule init")
-    (mkAlias "gsps" "git show --pretty=short --show-signature")
     (mkAlias "gsta" "git stash save")
     (mkAlias "gstaa" "git stash apply")
     (mkAlias "gstall" "git stash --all")
@@ -184,7 +172,6 @@ let
     (mkAliasIf (!isNushell) "gupa" "git pull --rebase --autostash")
     (mkAliasIf (!isNushell) "gupav" "git pull --rebase --autostash -v")
     (mkAliasIf (!isNushell) "gupv" "git pull --rebase -v")
-    (mkAlias "gwch" "git whatchanged -p --abbrev-commit --pretty=medium")
     (mkAlias "pull" "git pull")
     (mkAlias "push" "git push")
     (mkAlias "resolve" "git mergetool --tool=nwim")
@@ -236,22 +223,14 @@ let
     (mkAlias "un" "systemctl --user stop")
     (mkAlias "up" "sudo systemctl start")
     (mkAlias "dn" "sudo systemctl stop")
-    # Optional aliases
     (mkAliasIf hasMpv "mpv" "${mkCmd "mpv"}")
     (mkAliasIf hasMpv "mp" "${mkCmd "mpv"}")
     (mkAliasIf hasMpv "mpa" "mpv -mute") # mpv audio-only
-    (mkAliasIf hasMpv "mpi"
-      "mpv --interpolation=yes --tscale=oversample --video-sync=display-resample"
-    ) # mpv interpolated
-    (mkAliasIf hasRg "rg"
-      "${mkCmd "rg"} --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden"
-    )
+    (mkAliasIf hasMpv "mpi" "mpv --interpolation=yes --tscale=oversample --video-sync=display-resample")
+    (mkAliasIf hasRg "rg" "${mkCmd "rg"} --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden")
     (mkAliasIf hasNmap "nmap-vulners" "nmap -sV --script=vulners/vulners.nse")
     (mkAliasIf hasNmap "nmap-vulscan" "nmap -sV --script=vulscan/vulscan.nse")
-    (mkAliasIf hasPrettyping "ping" "prettyping")
-    (mkAliasIf hasDuf "df"
-      "duf --theme neg --style plain --no-header --bar-style modern --hide special --hide-mp '${homeDir}/*,/var/lib/*,/nix/store'"
-    )
+    (mkAliasIf hasDuf "df" "duf --theme neg --style plain --no-header --bar-style modern --hide special --hide-mp '${homeDir}/*,/var/lib/*,/nix/store'")
     (mkAliasIf hasDust "sp" "dust -r")
     (mkAliasIf hasKhal "cal" "khal calendar")
     (mkAliasIf hasHxd "hexdump" "hxd")
@@ -262,9 +241,7 @@ let
     (mkAliasIf hasPlocate "locate" "plocate")
     (mkAliasIf hasMpvc "mpvc" "${mkCmd "mpvc"} -S ${mkEnvVar "XDG_CONFIG_HOME"}/mpv/socket")
     (mkAliasIf hasWget2 "wget" "wget2 --hsts-file ${mkEnvVar "XDG_DATA_HOME"}/wget-hsts")
-    # Sync with yt-dlp.nix config (proxy + cookies)
     (mkAliasIf hasYtDlp "yt" "yt-dlp --proxy socks5://127.0.0.1:10808 --cookies-from-browser vivaldi")
-    # yta removed; equivalent: yt --write-info-json
     (mkAliasIf hasCurl "moon" "curl wttr.in/Moon")
     (mkAliasIf hasCurl "we" "curl 'wttr.in/?T'")
     (mkAliasIf hasCurl "wem" "curl wttr.in/Moscow?lang=ru")
@@ -283,32 +260,12 @@ let
     (mkAliasIf hasMpc "unlove" "mpc sendmessage mpdas unlove")
     (mkAliasIf hasHandlr "e" "handlr open")
     (mkAliasIf hasErd "tree" "erd")
-    (mkAliasIf hasFlatpak "bottles" "flatpak run com.usebottles.bottles")
-    (mkAliasIf hasFlatpak "obs" "flatpak run com.obsproject.Studio")
-    (mkAliasIf (
-      hasFlatpak && !isNushell
-    ) "onlyoffice" "QT_QPA_PLATFORM=xcb flatpak run org.onlyoffice.desktopeditors")
-    (mkAliasIf hasFlatpak "zoom" "flatpak run us.zoom.Zoom")
-    # ugrep aliases
     (mkAliasIf hasUg "grep" "ug -G")
     (mkAliasIf hasUg "egrep" "ug -E")
     (mkAliasIf hasUg "epgrep" "ug -P")
     (mkAliasIf hasUg "fgrep" "ug -F")
     (mkAliasIf hasUg "xgrep" "ug -W")
     (mkAliasIf hasUg "zgrep" "ug -zG")
-    (mkAliasIf hasUg "zegrep" "ug -zE")
-    (mkAliasIf hasUg "zfgrep" "ug -zF")
-    (mkAliasIf hasUg "zpgrep" "ug -zP")
-    (mkAliasIf hasUg "zxgrep" "ug -zW")
-    "\nfunction:\n"
-    "  - name: y\n"
-    "    value: |\n"
-    "      local tmp=\"$(mktemp -t \"yazi-cwd.XXXXXX\")\"\n"
-    "      yazi \"$@\" --cwd-file=\"$tmp\"\n"
-    "      if cwd=\"$(cat -- \"$tmp\")\" && [ -n \"$cwd\" ] && [ \"$cwd\" != \"$PWD\" ]; then\n"
-    "        builtin cd -- \"$cwd\"\n"
-    "      fi\n"
-    "      rm -f -- \"$tmp\"\n"
   ];
 in
 content
