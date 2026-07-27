@@ -149,7 +149,7 @@ RowLayout {
         if (busy) return;
         busy = true;
         _lastSetVolume = dB;
-        genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "set-volume", "--volume", dB + "dB", "--cid", "if"];
+        genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "set-volume", "--volume", dB + "dB"];
         genlcProc.start();
     }
     function _sendMute() {
