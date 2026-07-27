@@ -7,6 +7,7 @@
 mod protocol;
 
 use anyhow::{Context, Result};
+use std::str::FromStr;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -29,9 +30,6 @@ enum Commands {
         /// Volume in dB (e.g., -40dB)
         #[arg(long = "volume", value_name = "VOLUME", allow_hyphen_values = true)]
         volume: String,
-        /// Volume CID: glm (0x1F, default), start (0x21, possible smooth ramp), if (0x1D)
-        #[arg(long = "cid", value_name = "CID", default_value = "glm")]
-        cid: String,
     },
     /// Mute all SAM monitors
     Mute,
@@ -45,6 +43,15 @@ enum Commands {
     Wakeup,
     /// Shutdown all SAM monitors
     Shutdown,
+    /// Poll device status
+    Status {
+        #[arg(long = "addr", default_value = "0xFF")]
+        addr: String,
+    },
+}
+
+fn parse_addr(s: &str) -> Result<u8> {
+    u8::from_str_radix(s.trim_start_matches("0x"), 16).context("Invalid hex address")
 }
 
 fn parse_volume(s: &str) -> Result<f64> {
@@ -66,23 +73,19 @@ fn main() -> Result<()> {
     let mut group = protocol::SamGroup::new(transport);
 
     match cli.command {
-        Commands::SetVolume { volume, cid } => {
+        Commands::SetVolume { volume } => {
             let db = parse_volume(&volume)?;
-            let cid_byte = match cid.as_str() {
-                "start" => 0x21u8,
-                "if" => 0x1Du8,
-                _ => 0x1Fu8,
-            };
-            eprintln!("Setting volume to {db:.2} dB (CID 0x{cid_byte:02X})");
-            group.set_volume_cid(db, cid_byte)?;
+            eprintln!("Setting volume to {db:.2} dB");
+            group.set_volume(db)?;
             let _ = std::fs::write("/tmp/genlc-volume", format!("{:.1}", db));
         }
-        Commands::Mute => group.mute()?,
-        Commands::Unmute => group.unmute()?,
-        Commands::SetMute => group.toggle_mute()?,
         Commands::Discover => group.discover()?,
         Commands::Wakeup => group.wakeup()?,
         Commands::Shutdown => group.shutdown()?,
+        Commands::Status { addr } => group.poll(parse_addr(&addr)?)?,
+        Commands::Mute => group.mute()?,
+        Commands::Unmute => group.unmute()?,
+        Commands::SetMute => group.toggle_mute()?,
     }
     Ok(())
 }

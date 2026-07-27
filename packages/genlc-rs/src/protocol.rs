@@ -41,22 +41,68 @@ impl HidTransport {
         out
     }
 
-    /// Send a GNet message. 150ms delay before write — required by GLM adapter (ref: genelec-wake-sleep).
-    /// Format: [0x00] [0x80+len] [PPP-stuffed message] [zero-pad to 65]
+    /// Send a GNet message. Matches Python USBTransport.send().
+    /// Format: [0x00] [0x80+len] [PPP-stuffed message]
     pub fn send(&self, msg: &GNetMessage) -> Result<()> {
         let raw = msg.encode();
         let stuffed = Self::ppp_escape(&raw);
-        let payload_len = stuffed.len();
 
-        let mut buf = vec![0u8; 65];
-        buf[0] = 0x00;
-        buf[1] = 0x80 + payload_len as u8;
-        let copy_len = payload_len.min(63);
-        buf[2..2 + copy_len].copy_from_slice(&stuffed[..copy_len]);
+        let mut payload = vec![0x00, 0x80 + stuffed.len() as u8];
+        payload.extend_from_slice(&stuffed);
 
-        std::thread::sleep(std::time::Duration::from_millis(300));
-        self.device.write(&buf[..65])?;
+        self.device.write(&payload)?;
         Ok(())
+    }
+
+    /// Read one or more 64-byte HID reports, reassemble, PPP-destuff.
+    /// Matches Python USBTransport._read().
+    pub fn receive(&self) -> Result<Vec<u8>> {
+        let mut segments: Vec<Vec<u8>> = Vec::new();
+        loop {
+            if segments.len() >= 3 {
+                anyhow::bail!("Max response segments (3) exceeded");
+            }
+            let mut buf = vec![0u8; 64];
+            let n = self.device.read_timeout(&mut buf, 500)?;
+            if n != 64 {
+                anyhow::bail!("Short HID read: {} bytes (expected 64)", n);
+            }
+            // First byte = remaining payload len in this packet (always 63)
+            if buf[0] != 63 {
+                anyhow::bail!("Unexpected segment header: {} (expected 63)", buf[0]);
+            }
+            // Join segments (skip first byte of each)
+            let mut joined = Vec::new();
+            for seg in &segments {
+                joined.extend_from_slice(&seg[1..]);
+            }
+            joined.extend_from_slice(&buf[1..]);
+            // Strip trailing nulls
+            while joined.last() == Some(&0) {
+                joined.pop();
+            }
+            // Check for terminator
+            if joined.last() == Some(&GNET_TERM) {
+                // PPP destuff
+                let mut destuffed = Vec::new();
+                let mut i = 0;
+                while i < joined.len() {
+                    if joined[i] == 0x7D && i + 1 < joined.len() {
+                        match joined[i + 1] {
+                            0x5E => destuffed.push(0x7E),
+                            0x5D => destuffed.push(0x7D),
+                            _ => anyhow::bail!("Invalid PPP escape: 0x7D 0x{:02X}", joined[i + 1]),
+                        }
+                        i += 2;
+                    } else {
+                        destuffed.push(joined[i]);
+                        i += 1;
+                    }
+                }
+                return Ok(destuffed);
+            }
+            segments.push(buf);
+        }
     }
 }
 
@@ -78,7 +124,7 @@ impl GNetMessage {
 
     pub fn set_sint24(&mut self, value: i32) {
         let bytes = value.to_be_bytes();
-        self.data = bytes[1..].to_vec(); // lower 3 bytes of i32 BE
+        self.data = bytes[1..].to_vec();
     }
 
     pub fn encode(&self) -> Vec<u8> {
@@ -106,10 +152,9 @@ fn gsm16(data: &[u8]) -> u16 {
     crc ^ 0xFFFF
 }
 
-/// Convert dB to 24-bit signed integer (GLM volume format)
 fn db_to_sint24(db: f64) -> i32 {
     let ratio = 10_f64.powf(db / 20.0);
-    (ratio * 8_388_607.0) as i32 // 2^23 - 1
+    (ratio * 8_388_607.0) as i32
 }
 
 pub struct SamGroup {
@@ -120,43 +165,34 @@ impl SamGroup {
     pub fn new(transport: HidTransport) -> Self {
         Self { transport }
     }
-    pub fn set_volume(&self, db: f64) -> Result<()> {
-        self.set_volume_cid(db, CID_VOLUME_GLM)
-    }
 
-    /// Set volume with explicit CID — try CID_START_VOLUME for smooth ramp
-    pub fn set_volume_cid(&self, db: f64, cid: u8) -> Result<()> {
+    pub fn set_volume(&self, db: f64) -> Result<()> {
         let sint24 = db_to_sint24(db);
-        let mut msg = GNetMessage::new(GNET_BROADCAST, cid);
+        let mut msg = GNetMessage::new(GNET_BROADCAST, CID_VOLUME_GLM);
         msg.set_sint24(sint24);
         self.transport.send(&msg)?;
         Ok(())
     }
 
     pub fn mute(&self) -> Result<()> {
-        // Python genlc sends per-monitor mute. For broadcast, send mute via CID_POLL
-        let msg = GNetMessage::new(GNET_BROADCAST, 0x08)
-            .with_data(vec![0x01]);
+        let msg = GNetMessage::new(GNET_BROADCAST, 0x08).with_data(vec![0x01]);
         self.transport.send(&msg)?;
         Ok(())
     }
 
     pub fn unmute(&self) -> Result<()> {
-        let msg = GNetMessage::new(GNET_BROADCAST, 0x08)
-            .with_data(vec![0x00]);
+        let msg = GNetMessage::new(GNET_BROADCAST, 0x08).with_data(vec![0x00]);
         self.transport.send(&msg)?;
         Ok(())
     }
 
     pub fn toggle_mute(&self) -> Result<()> {
-        // Send both — hardware will toggle based on state
         self.mute()
     }
 
     pub fn wakeup(&self) -> Result<()> {
         for data in [vec![3, 0x7F], vec![3, 1]] {
-            let msg = GNetMessage::new(GNET_BROADCAST, CID_WAKEUP)
-                .with_data(data.clone());
+            let msg = GNetMessage::new(GNET_BROADCAST, CID_WAKEUP).with_data(data.clone());
             self.transport.send(&msg)?;
             self.transport.send(&msg)?;
         }
@@ -165,8 +201,7 @@ impl SamGroup {
 
     pub fn shutdown(&self) -> Result<()> {
         for data in [vec![3, 2], vec![3, 0]] {
-            let msg = GNetMessage::new(GNET_BROADCAST, CID_WAKEUP)
-                .with_data(data.clone());
+            let msg = GNetMessage::new(GNET_BROADCAST, CID_WAKEUP).with_data(data.clone());
             self.transport.send(&msg)?;
             self.transport.send(&msg)?;
         }
@@ -174,9 +209,33 @@ impl SamGroup {
     }
 
     pub fn discover(&self) -> Result<()> {
-        let msg = GNetMessage::new(GNET_BROADCAST, 0xFE); // CID_RACE
+        let msg = GNetMessage::new(GNET_BROADCAST, 0xFE);
         self.transport.send(&msg)?;
-        eprintln!("Discovery message sent — check GLM adapter");
+        for _ in 0..10 {
+            match self.transport.receive() {
+                Ok(raw) => {
+                    if raw.len() < 5 { continue; }
+                    let addr = raw[0];
+                    let cmd = raw[1];
+                    let data = &raw[2..raw.len() - 3];
+                    println!("[{addr}] 0x{cmd:02X}: {}", String::from_utf8_lossy(data));
+                }
+                Err(_) => break,
+            }
+        }
+        Ok(())
+    }
+
+    pub fn poll(&self, addr: u8) -> Result<()> {
+        let msg = GNetMessage::new(addr, 0x08);
+        self.transport.send(&msg)?;
+        match self.transport.receive() {
+            Ok(raw) => {
+                if raw.len() < 2 { anyhow::bail!("Short response"); }
+                println!("[{}] {} bytes: {:02x?}", raw[0], raw.len(), &raw);
+            }
+            Err(e) => eprintln!("no response: {e}"),
+        }
         Ok(())
     }
 }

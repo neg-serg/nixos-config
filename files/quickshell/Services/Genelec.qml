@@ -35,8 +35,6 @@ RowLayout {
     property real preMuteVolume: -40
     property bool available: false
     property bool busy: false
-    property real _lastSentDb: -40
-    property real _lastSentTime: 0
 
     // ---- Persisted state ----
     property real _lastSetVolume: {
@@ -67,7 +65,6 @@ RowLayout {
         Layout.preferredWidth: Math.round(46 * Theme.scale(Screen))
         Layout.alignment: Qt.AlignVCenter
         onMoved: { _requestVolume(root.sliderToDb(value)); }
-        onPressedChanged: { if (!pressed && root.pendingDb !== root.volume) _sendNow(root.pendingDb); }
         background: Rectangle {
             x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 1
             width: volSlider.availableWidth; height: 1.5; radius: 1
@@ -93,8 +90,22 @@ RowLayout {
             }
         }
     }
-    Timer { id: sliderDebounce; interval: 300; repeat: false; onTriggered: {
-        if (root.pendingDb !== root.volume) root._sendNow(root.pendingDb); }}
+    // Cooldown + debounce: genlc max 1 per 3000ms, waits 2500ms after last input
+    property real _lastRequestMs: 0
+    property real _lastGenlcMs: 0
+    Timer {
+        id: commitTimer
+        interval: 100; repeat: true; running: true
+        onTriggered: {
+            var now = Date.now();
+            if (root.busy) return;
+            if (now - root._lastRequestMs < 2500) return;       // debounce
+            if (now - root._lastGenlcMs < 3000) return;         // cooldown
+            if (root.pendingDb === root.volume) return;
+            root._lastGenlcMs = now;
+            root.setVolume(root.pendingDb);
+        }
+    }
     Text {
         id: volLabel
         text: root.muted ? "MUTED" : "<font color='" + Theme.accentPrimary + "'>-</font>" + Math.abs(root.displayDb).toFixed(1).padStart(4,"0") + "<font color='" + Theme.accentPrimary + "'>dB</font>"
@@ -162,19 +173,7 @@ RowLayout {
     function _requestVolume(dB) {
         root.displayDb = dB;
         root.pendingDb = dB;
-        var now = Date.now();
-        if (now - root._lastSentTime >= 80 && !root.busy) {
-            _sendNow(dB);
-        } else {
-            sliderDebounce.restart();
-        }
-    }
-
-    function _sendNow(dB) {
-        root._lastSentTime = Date.now();
-        root._lastSentDb = dB;
-        sliderDebounce.stop();
-        root.setVolume(dB);
+        root._lastRequestMs = Date.now();
     }
 
     // CLI sync — poll state file for external volume changes
