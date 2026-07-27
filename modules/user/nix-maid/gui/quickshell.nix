@@ -125,6 +125,8 @@ lib.mkIf quickshellEnabled (
           ExecStart = pkgs.writeShellScript "quickshell-cleanup-symlink" ''
             if [ -L "$HOME/.config/quickshell" ]; then
               rm "$HOME/.config/quickshell"
+            elif [ -d "$HOME/.config/quickshell" ]; then
+              rm -rf "$HOME/.config/quickshell"
             fi
           '';
         };
