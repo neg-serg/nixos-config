@@ -193,10 +193,6 @@ lib.mkMerge [
 
     monitoring = lib.mkIf config.roles.monitoring.enable {
       netdata.enable = false; # Disable Netdata on this host
-      logs.enable = false; # Disable centralized logs (Loki + Promtail) for this host
-      grafana = {
-        enable = false;
-      }; # Keep Grafana wiring available but disabled on this host
     };
 
     # Disable RNNoise virtual mic for this host by default
