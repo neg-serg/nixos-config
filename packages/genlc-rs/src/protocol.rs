@@ -10,7 +10,6 @@ const CID_START_VOLUME: u8 = 0x21;
 const CID_VOLUME_IF: u8 = 0x1D;
 const CID_WAKEUP: u8 = 0x3A;
 const GNET_TERM: u8 = 0x7E;
-const MAX_PACKET_LEN: usize = 64;
 
 pub struct HidTransport {
     device: HidDevice,
@@ -42,21 +41,21 @@ impl HidTransport {
         out
     }
 
-    /// Send a GNet message. Matches Python USBTransport.send().
-    /// Format: [0x00] [0x80+len] [PPP-stuffed message]
+    /// Send a GNet message. 150ms delay before write — required by GLM adapter (ref: genelec-wake-sleep).
+    /// Format: [0x00] [0x80+len] [PPP-stuffed message] [zero-pad to 65]
     pub fn send(&self, msg: &GNetMessage) -> Result<()> {
         let raw = msg.encode();
         let stuffed = Self::ppp_escape(&raw);
         let payload_len = stuffed.len();
 
-        // Prefix: 0x00 + (0x80 + length), matching Python genlc
-        let mut buf = vec![0u8; MAX_PACKET_LEN];
+        let mut buf = vec![0u8; 65];
         buf[0] = 0x00;
         buf[1] = 0x80 + payload_len as u8;
-        let copy_len = payload_len.min(MAX_PACKET_LEN - 2);
+        let copy_len = payload_len.min(63);
         buf[2..2 + copy_len].copy_from_slice(&stuffed[..copy_len]);
 
-        self.device.write(&buf[..MAX_PACKET_LEN])?;
+        std::thread::sleep(std::time::Duration::from_millis(150));
+        self.device.write(&buf[..65])?;
         Ok(())
     }
 }
