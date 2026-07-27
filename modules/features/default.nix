@@ -59,7 +59,6 @@ in
         dev = {
           ai = {
             enable = mkForce false;
-            opencode.enable = mkForce false;
             openagentscontrol.enable = mkForce false;
           };
           rust.enable = mkForce false;
@@ -155,12 +154,6 @@ in
             "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)"
           )
           (assertParent dev.enable devAi.enable "features.dev.ai.enable requires features.dev.enable = true")
-          (assertParent devAi.enable devAi.opencode.enable
-            "features.dev.ai.opencode.enable requires features.dev.ai.enable = true"
-          )
-          (assertParent devAi.enable devAi.openagentscontrol.enable
-            "features.dev.ai.openagentscontrol.enable requires features.dev.ai.enable = true"
-          )
         ];
     }
   ];

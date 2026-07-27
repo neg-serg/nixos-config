@@ -1,6 +1,5 @@
 {
   imports = [
-    ./opencode.nix
     ./pi.nix
     ./gui-apps.nix
     ./mpv
