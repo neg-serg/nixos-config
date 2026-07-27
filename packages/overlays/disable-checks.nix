@@ -78,6 +78,9 @@ inputs: final: finalPrev: {
   });
 
   # Disable ffmpeg tests (test data generation fails with error 245 on gen)
+  ffmpeg = finalPrev.ffmpeg.overrideAttrs (_old: {
+    doCheck = false;
+  });
   ffmpeg-headless = finalPrev.ffmpeg-headless.overrideAttrs (_old: {
     doCheck = false;
   });
