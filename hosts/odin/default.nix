@@ -46,6 +46,7 @@
   features.dev.haskell.enable = true; # Enable Haskell toolchain (GHC, cabal, stack, HLS)
   features.virt.libvirtd.enable = true;
   features.apps.winapps.enable = true;
+  features.apps.winapps.desktopApps = [ "excel" "word" "outlook" "cmd" "powershell" "vscode" ];
   features.apps.guiAppsFull.enable = false; # Disable heavy GUI apps (GIMP, OBS); gaming profile enables it by default
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
   hardware.gpu.corectrl.enable = true;
