@@ -1,0 +1,14 @@
+# GNOME shortcut name
+NAME="VS Code"
+
+# Used for descriptions and window class
+FULL_NAME="Visual Studio Code"
+
+# The executable inside windows
+WIN_EXECUTABLE="C:\Users\Quickemu\AppData\Local\Programs\Microsoft VS Code\Code.exe"
+
+# GNOME categories
+CATEGORIES="WinApps;Development"
+
+# GNOME mimetypes
+MIME_TYPES="text/plain;text/x-c++;text/x-c;text/x-python;text/javascript;text/html;text/css;text/xml;application/json;"
