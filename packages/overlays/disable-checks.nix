@@ -126,4 +126,9 @@ inputs: final: finalPrev: {
   webkitgtk_4_1 = finalPrev.webkitgtk_4_1.overrideAttrs (_old: {
     NIX_BUILD_CORES = 4;
   });
+
+  # qt3d: GCC OOM-killed during PCH compilation on 32-thread machine
+  qt3d = finalPrev.qt3d.overrideAttrs (_old: {
+    NIX_BUILD_CORES = 4;
+  });
 }
