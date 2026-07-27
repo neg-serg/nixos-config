@@ -10,6 +10,7 @@ Singleton {
 
     readonly property string stateDir: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/quickshell/"
     readonly property string stateFile: stateDir + "pill-tracker.json"
+    readonly property string calDir: (Quickshell.env("HOME") || "/home/neg") + "/.local/share/calendars/pills/"
 
     // Public reactive properties
     readonly property bool taken: _adapter.taken
@@ -27,10 +28,11 @@ Singleton {
     property bool _deadlinePassed: false
     property string _lastMinuteCheck: ""
 
-    // Ensure state directory exists
+    // Ensure state and calendar directories exist
     Item {
         Component.onCompleted: {
             Quickshell.execDetached(["mkdir", "-p", root.stateDir]);
+            Quickshell.execDetached(["mkdir", "-p", root.calDir]);
         }
     }
 
@@ -44,6 +46,7 @@ Singleton {
             reload()
             root._checkDate()
             root._checkDeadline()
+            root._syncFromCalendar()
         }
         onLoadFailed: function(error) {
             console.warn("[PillTracker] load failed:", error, "— resetting to defaults")
@@ -62,13 +65,68 @@ Singleton {
         }
     }
 
+    // Calendar ICS path for today
+    function _todayIcsPath() {
+        return root.calDir + "pill-" + PillHistory.currentDateStr() + ".ics";
+    }
+
+    // Write a VEVENT to the calendar dir when pill is taken
+    function _writeCalendarEvent() {
+        var path = _todayIcsPath();
+        var now = new Date();
+        var today = PillHistory.currentDateStr();
+        var dtstart = today.replace(/-/g, "");
+        var summary = "Pill taken at " + _adapter.takenAt;
+        // All-day event with description
+        var ics = [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Neg//PillTracker//EN",
+            "BEGIN:VEVENT",
+            "DTSTART;VALUE=DATE:" + dtstart,
+            "DTEND;VALUE=DATE:" + dtstart,
+            "SUMMARY:Pill \u2705",
+            "DESCRIPTION:Taken at " + _adapter.takenAt,
+            "CATEGORIES:Health",
+            "END:VEVENT",
+            "END:VCALENDAR",
+            ""
+        ].join("\r\n");
+        var file = Quickshell.createFile(path);
+        file.write(ics);
+        file.close();
+    }
+
+    // Delete today's ICS file when pill is untoggled
+    function _deleteCalendarEvent() {
+        var path = _todayIcsPath();
+        Quickshell.execDetached(["rm", "-f", path]);
+    }
+
+    // On startup, check if a calendar event exists for today
+    function _syncFromCalendar() {
+        var path = _todayIcsPath();
+        var file = Quickshell.createFile(path);
+        if (file.exists()) {
+            // Calendar says pill was taken today — restore state if not already set
+            if (!_adapter.taken) {
+                _adapter.taken = true;
+                _adapter.takenAt = PillHistory.currentTimeStr();
+                stateFileView.writeAdapter();
+            }
+        }
+        file.close();
+    }
+
     function toggle() {
         if (_adapter.taken) {
             _adapter.taken = false;
             _adapter.takenAt = "";
+            _deleteCalendarEvent();
         } else {
             _adapter.taken = true;
             _adapter.takenAt = PillHistory.currentTimeStr();
+            _writeCalendarEvent();
         }
         stateFileView.writeAdapter();
     }
@@ -90,6 +148,8 @@ Singleton {
             _adapter.taken = false;
             _adapter.takenAt = "";
             stateFileView.writeAdapter();
+            // Check if calendar already has today's event
+            root._syncFromCalendar();
         }
     }
 
@@ -97,8 +157,8 @@ Singleton {
         var now = PillHistory.currentTimeStr();
         if (now === root._lastMinuteCheck) return;
         root._lastMinuteCheck = now;
-        var deadline = Settings.settings ? Settings.settings.pillReminderDeadline : "10:00";
-        root._deadlinePassed = PillHistory.isDeadlinePassed(deadline || "10:00");
+        var deadline = Settings.settings ? Settings.settings.pillReminderDeadline : "12:00";
+        root._deadlinePassed = PillHistory.isDeadlinePassed(deadline || "12:00");
     }
 
     Connections {
