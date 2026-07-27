@@ -104,18 +104,16 @@ in
           if [ -n "$FILE" ]; then
             WIN_FILE=$(echo "$FILE" | ${pkgs.gnused}/bin/sed 's|'"$HOME"'|\\\\tsclient\\home|;s|/|\\|g;s|\\|\\\\|g')
             exec ${pkgs.freerdp}/bin/xfreerdp \
-              $RDP_FLAGS /d:"$RDP_DOMAIN" /u:"$RDP_USER" /p:"$RDP_PASS" \
-              /v:"$RDP_IP" +auto-reconnect +clipboard +home-drive -wallpaper \
+              /v:"$RDP_IP" /u:"$RDP_USER" /p:"$RDP_PASS" \
+              /cert:tofu +auto-reconnect +clipboard +home-drive \
               /scale:"$RDP_SCALE" /dynamic-resolution \
-              /wm-class:"$FULL_NAME" /app:"$WIN_EXECUTABLE" \
-              /app-icon:"$ICON" /app-cmd:"\"$WIN_FILE\""
+              /app:"program:$WIN_EXECUTABLE,cmd:\"$WIN_FILE\",icon:$ICON,name:$FULL_NAME"
           else
             exec ${pkgs.freerdp}/bin/xfreerdp \
-              $RDP_FLAGS /d:"$RDP_DOMAIN" /u:"$RDP_USER" /p:"$RDP_PASS" \
-              /v:"$RDP_IP" +auto-reconnect +clipboard +home-drive -wallpaper \
+              /v:"$RDP_IP" /u:"$RDP_USER" /p:"$RDP_PASS" \
+              /cert:tofu +auto-reconnect +clipboard +home-drive \
               /scale:"$RDP_SCALE" /dynamic-resolution \
-              /wm-class:"$FULL_NAME" /app:"$WIN_EXECUTABLE" \
-              /app-icon:"$ICON"
+              /app:"program:$WIN_EXECUTABLE,icon:$ICON,name:$FULL_NAME"
           fi
         '')
         pkgs.freerdp
