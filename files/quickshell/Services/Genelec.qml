@@ -59,6 +59,8 @@ RowLayout {
         icon: root.muted || root.volume <= root.minVolume ? "volume_off" : root.volume >= -20 ? "volume_up" : "volume_down"
         size: Math.round(Theme.fontSizeSmall * 1.2); color: root.available ? Theme.accentPrimary : Theme.textDisabled
         Layout.alignment: Qt.AlignVCenter
+        MouseArea { anchors.fill: parent; onClicked: root.toggleMute() }
+    }
     Slider {
         id: volSlider
         from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
@@ -89,6 +91,8 @@ RowLayout {
                 anchors.centerIn: parent; width: 5; height: 5; radius: 2.5
                 color: Color.withAlpha(Theme.accentPrimary, 0.8)
             }
+        }
+    }
     Timer { id: sliderDebounce; interval: 150; repeat: false; onTriggered: {
         if (root.pendingDb !== root.volume) root._sendNow(root.pendingDb); }}
     Text {
@@ -145,8 +149,7 @@ RowLayout {
         if (busy) return;
         busy = true;
         _lastSetVolume = dB;
-        _saveState();
-        genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "set-volume", "--volume", dB + "dB"];
+        genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "set-volume", "--volume", dB + "dB", "--cid", "if"];
         genlcProc.start();
     }
     function _sendMute() {
@@ -173,6 +176,9 @@ RowLayout {
         sliderDebounce.stop();
         root.setVolume(dB);
     }
+
+    // CLI sync — poll state file for external volume changes
+    ProcessRunner {
         id: stateReader
         cmd: ["/run/current-system/sw/bin/cat", "/tmp/genlc-volume"]
         intervalMs: 15
