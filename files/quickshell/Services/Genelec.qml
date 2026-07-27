@@ -35,6 +35,8 @@ RowLayout {
     property real preMuteVolume: -40
     property bool available: false
     property bool busy: false
+    property real _lastSentDb: -40
+    property real _lastSentTime: 0
 
     // ---- Persisted state ----
     property real _lastSetVolume: {
@@ -57,14 +59,13 @@ RowLayout {
         icon: root.muted || root.volume <= root.minVolume ? "volume_off" : root.volume >= -20 ? "volume_up" : "volume_down"
         size: Math.round(Theme.fontSizeSmall * 1.2); color: root.available ? Theme.accentPrimary : Theme.textDisabled
         Layout.alignment: Qt.AlignVCenter
-        MouseArea { anchors.fill: parent; onClicked: root.toggleMute() }
-    }
     Slider {
         id: volSlider
         from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
         Layout.preferredWidth: Math.round(46 * Theme.scale(Screen))
         Layout.alignment: Qt.AlignVCenter
         onMoved: { _requestVolume(root.sliderToDb(value)); }
+        onPressedChanged: { if (!pressed && root.pendingDb !== root.volume) _sendNow(root.pendingDb); }
         background: Rectangle {
             x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 1
             width: volSlider.availableWidth; height: 1.5; radius: 1
@@ -88,10 +89,8 @@ RowLayout {
                 anchors.centerIn: parent; width: 5; height: 5; radius: 2.5
                 color: Color.withAlpha(Theme.accentPrimary, 0.8)
             }
-        }
-    }
-    Timer { id: sliderDebounce; interval: 1400; repeat: false; onTriggered: {
-        if (root.pendingDb !== undefined && root.pendingDb !== root.volume) root.setVolume(root.pendingDb); }}
+    Timer { id: sliderDebounce; interval: 150; repeat: false; onTriggered: {
+        if (root.pendingDb !== root.volume) root._sendNow(root.pendingDb); }}
     Text {
         id: volLabel
         text: root.muted ? "MUTED" : "<font color='" + Theme.accentPrimary + "'>-</font>" + Math.abs(root.displayDb).toFixed(1).padStart(4,"0") + "<font color='" + Theme.accentPrimary + "'>dB</font>"
@@ -156,16 +155,24 @@ RowLayout {
         genlcProc.start();
     }
 
-    // ---- Unified input pipeline: slider + CLI wheel → single debounce → genlc ----
+    // ---- Unified input pipeline: slider + CLI wheel → throttle → genlc ----
     function _requestVolume(dB) {
         root.displayDb = dB;
         root.pendingDb = dB;
-        sliderDebounce.restart();
+        var now = Date.now();
+        if (now - root._lastSentTime >= 80 && !root.busy) {
+            _sendNow(dB);
+        } else {
+            sliderDebounce.restart();
+        }
     }
 
-    // CLI sync handled by _requestVolume() — genlc-media.sh writes state file
-    // Poll state file via ProcessRunner — XHR GET broken in Quickshell
-    ProcessRunner {
+    function _sendNow(dB) {
+        root._lastSentTime = Date.now();
+        root._lastSentDb = dB;
+        sliderDebounce.stop();
+        root.setVolume(dB);
+    }
         id: stateReader
         cmd: ["/run/current-system/sw/bin/cat", "/tmp/genlc-volume"]
         intervalMs: 15
