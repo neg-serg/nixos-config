@@ -1,36 +1,36 @@
 #!/usr/bin/env bash
 # Genelec SAM volume control — keyboard wheel
-# Only updates state files. QML handles genlc dispatch.
+# Snaps to nearest 0.5dB, applies step, calls genlc instantly.
+# Writes state file for QML display sync.
 set -euo pipefail
 
-HALF_STEP=1       # 0.5dB per click  
-STATE=/tmp/genlc-volume-halves
+STATE=/tmp/genlc-volume
+STEP_DB=0.5
 LOG=/tmp/genlc-media.log
-MAX_HALF=-60      # -30dB
-MIN_HALF=-190     # -95dB
 
 log() { echo "[$(date +%H:%M:%S)] $*" >> "$LOG"; }
 
 case "${1:-}" in
   up|down)
-    current=-80
-    [ -f "$STATE" ] && current=$(cat "$STATE" 2>/dev/null || echo -80) || true
-    
+    current=-40.0
+    [ -f "$STATE" ] && current=$(cat "$STATE" 2>/dev/null || echo -40.0) || true
+
+    # Snap current to nearest 0.5 before applying step
+    current=$(awk "BEGIN { printf \"%.1f\", int($current * 2 + ($current < 0 ? -0.5 : 0.5)) / 2 }")
+
     if [ "$1" = "up" ]; then
-      target=$((current + HALF_STEP))
+      target=$(awk "BEGIN { printf \"%.1f\", $current + $STEP_DB }")
+      capped=$(awk "BEGIN { printf \"%.1f\", ($target > -30.0) ? -30.0 : $target }")
     else
-      target=$((current - HALF_STEP))
+      target=$(awk "BEGIN { printf \"%.1f\", $current - $STEP_DB }")
+      capped=$(awk "BEGIN { printf \"%.1f\", ($target < -95.0) ? -95.0 : $target }")
     fi
-    
-    [ "$target" -gt "$MAX_HALF" ] && target=$MAX_HALF
-    [ "$target" -lt "$MIN_HALF" ] && target=$MIN_HALF
-    
-    echo "$target" > "$STATE"
-    awk "BEGIN { printf \"%.1f\", $target / 2 }" > /tmp/genlc-volume
-    log "wheel: $(awk "BEGIN { printf \"%.1f\", $target / 2 }")dB"
+    echo "$capped" > "$STATE"
+    log "$1: ${capped}dB"
     ;;
   mute)
-    genlc mute >> "$LOG" 2>&1 || true
+    # Mute goes directly to genlc — instant
+    genlc set-volume --volume -95dB 2>/dev/null
     log "mute"
     ;;
   *) exit 1 ;;

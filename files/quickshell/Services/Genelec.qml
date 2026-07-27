@@ -43,10 +43,10 @@ RowLayout {
         return -40;
     }
 
-    function _saveState() { if (StateCache.state) StateCache.state.genelecVolume = _lastSetVolume; }
+    function _saveState() { if (StateCache.state) { StateCache.state.genelecVolume = _lastSetVolume; try { StateCache.stateFileView.writeAdapter(); } catch(e) {} } }
 
     // ---- Normalized 0..1 for slider ----
-    readonly property real sliderPos: (volume - minVolume) / (maxVolume - minVolume)
+    readonly property real sliderPos: (displayDb - minVolume) / (maxVolume - minVolume)
     function sliderToDb(pos) { return +(minVolume + pos * (maxVolume - minVolume)).toFixed(1); }
 
     // ---- UI ----
@@ -64,7 +64,7 @@ RowLayout {
         from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
         Layout.preferredWidth: Math.round(46 * Theme.scale(Screen))
         Layout.alignment: Qt.AlignVCenter
-        onMoved: { root.pendingDb = root.sliderToDb(value); root.displayDb = root.pendingDb; sliderDebounce.restart(); }
+        onMoved: { _requestVolume(root.sliderToDb(value)); }
         background: Rectangle {
             x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 1
             width: volSlider.availableWidth; height: 1.5; radius: 1
@@ -90,10 +90,11 @@ RowLayout {
             }
         }
     }
-    Timer { id: sliderDebounce; interval: 1000; repeat: false; onTriggered: { if (root.pendingDb !== undefined && root.pendingDb !== root.volume) root.setVolume(root.pendingDb); } }
+    Timer { id: sliderDebounce; interval: 1400; repeat: false; onTriggered: {
+        if (root.pendingDb !== undefined && root.pendingDb !== root.volume) root.setVolume(root.pendingDb); }}
     Text {
         id: volLabel
-        text: root.muted ? "MUTED" : "<font color='" + Theme.accentPrimary + "'>-</font>" + (Math.abs(root.displayDb) < 10 ? "0" : "") + Math.abs(root.displayDb).toFixed(1).replace(/\.0$/,'') + "<font color='" + Theme.accentPrimary + "'>dB</font>"
+        text: root.muted ? "MUTED" : "<font color='" + Theme.accentPrimary + "'>-</font>" + Math.abs(root.displayDb).toFixed(1).padStart(4,"0") + "<font color='" + Theme.accentPrimary + "'>dB</font>"
         font { family: Theme.fontFamily; pixelSize: Math.round(Theme.fontSizeSmall * 1.05); weight: Font.DemiBold; italic: true }
         color: Theme.textSecondary
         Layout.alignment: Qt.AlignVCenter
@@ -146,44 +147,38 @@ RowLayout {
         busy = true;
         _lastSetVolume = dB;
         _saveState();
-        genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "set-volume", "--volume=" + dB + "dB"];
+        genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "set-volume", "--volume", dB + "dB"];
         genlcProc.start();
     }
-
     function _sendMute() {
         if (busy) return;
         genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "set-mute"];
         genlcProc.start();
     }
 
-    // ---- Sync with CLI (genlc-media.sh writes /tmp/genlc-volume) ----
-    property real _syncedVolume: -40
-    property real _cliPendingDb: volume
-    Timer {
-        id: cliSync
-        interval: 10; repeat: true; running: true
-        onTriggered: {
-            if (root.busy) return;
-            try {
-                var xhr = new XMLHttpRequest();
-                xhr.open("GET", "file:///tmp/genlc-volume", false);
-                xhr.send();
-                var v = parseFloat(xhr.responseText);
-                if (!isNaN(v) && v !== root._syncedVolume) {
-                    root._syncedVolume = v;
-                    root.displayDb = v;
-                    root._cliPendingDb = v;
-                    cliDebounce.restart();
-                }
-            } catch(e) {}
-        }
-    }
-    Timer {
-        id: cliDebounce
-        interval: 1000; repeat: false
-        onTriggered: { if (root._cliPendingDb !== root.volume && !root.busy) root.setVolume(root._cliPendingDb); }
+    // ---- Unified input pipeline: slider + CLI wheel → single debounce → genlc ----
+    function _requestVolume(dB) {
+        root.displayDb = dB;
+        root.pendingDb = dB;
+        sliderDebounce.restart();
     }
 
+    // CLI sync handled by _requestVolume() — genlc-media.sh writes state file
+    // Poll state file via ProcessRunner — XHR GET broken in Quickshell
+    ProcessRunner {
+        id: stateReader
+        cmd: ["/run/current-system/sw/bin/cat", "/tmp/genlc-volume"]
+        intervalMs: 15
+        autoStart: true
+        restartOnExit: false
+        onLine: function(line) {
+            if (root.busy) return;
+            var v = parseFloat(line);
+            if (!isNaN(v) && v !== root.displayDb && !volSlider.pressed) {
+                root._requestVolume(v);
+            }
+        }
+    }
     Component.onCompleted: {
         volume = _lastSetVolume;
         available = true;
