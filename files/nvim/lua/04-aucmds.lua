@@ -146,3 +146,10 @@ do
     end,
   })
 end
+
+-- ── Fancy diagnostics (OXY2DEV scripts) ──────────────────────────────
+do
+  local ok, hl = pcall(require, 'scripts.highlights')
+  if ok then hl.setup() end
+  pcall(require, 'scripts.diagnostics').setup()
+end
