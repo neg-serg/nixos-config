@@ -41,7 +41,6 @@ let
     "core"
     "features"
     "profiles"
-    "roles"
     "nix"
     "security"
     "secrets"

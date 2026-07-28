@@ -1,7 +1,7 @@
 ##
 # Module: media/audio/apps-packages
 # Purpose: Install audio application helpers (players, analyzers, tagging tools) at the system level.
-# Trigger: Enabled automatically for workstation role hosts.
+# Trigger: always enabled (was gated behind roles.workstation which is always true on the only host).
 {
   lib,
   config,
@@ -9,7 +9,6 @@
   ...
 }:
 let
-  enabled = config.roles.workstation.enable or false;
   packages = [
     # -- Analysis --
     pkgs.dr14_tmeter # measure dynamic range DR14 style
@@ -36,13 +35,10 @@ let
 
     # -- Tagging --
     pkgs.id3v2 # low-level ID3 tag editor
-    # pkgs.picard # MusicBrainz tagging GUI (removed — flaky Django test dep)
 
     # -- Recording --
   ];
 in
 {
-  config = lib.mkIf enabled {
-    environment.systemPackages = lib.mkAfter packages;
-  };
+  environment.systemPackages = lib.mkAfter packages;
 }

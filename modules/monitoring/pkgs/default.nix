@@ -4,9 +4,6 @@
   config,
   ...
 }:
-let
-  rolesMonitoringEnabled = config.roles.monitoring.enable or false;
-in
 {
   programs = {
     mtr = {
@@ -28,8 +25,6 @@ in
     pkgs.procdump # procdump for linux
     pkgs.sysstat # sar, iostat, mpstat, pidstat and friends
     pkgs.vmtouch # portable file system cache diagnostics and control
-  ]
-  ++ lib.optionals rolesMonitoringEnabled [
     pkgs.hxtools # misc hx* admin/git/media utilities (hxnetload, git-forest, qplay)
   ];
 }
