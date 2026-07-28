@@ -15,7 +15,6 @@ let
       [ "servicesProfiles" "adguardhome" "rewrites" ];
   services = [
     "adguardhome"
-    "bitcoind"
     "unbound"
     "openssh"
     "mpd"
