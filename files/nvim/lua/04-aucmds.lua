@@ -151,5 +151,6 @@ end
 do
   local ok, hl = pcall(require, 'scripts.highlights')
   if ok then hl.setup() end
-  pcall(require, 'scripts.diagnostics').setup()
+  local _, diag = pcall(require, 'scripts.diagnostics')
+  if diag then diag.setup() end
 end
