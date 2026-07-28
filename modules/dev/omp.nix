@@ -25,10 +25,14 @@ let
     export PI_SMOL_MODEL="''${PI_SMOL_MODEL:-${smolModel}}"
     export PI_SLOW_MODEL="''${PI_SLOW_MODEL:-${slowModel}}"
     export PI_PLAN_MODEL="''${PI_PLAN_MODEL:-${planModel}}"
-    # Default: enable prewalk (plan with slow, implement with smol). Disable with --no-prewalk.
+    # Default: enable prewalk (plan with slow, implement with smol) — but only for `launch`,
+    # never for subcommands (config, update, doctor, login, etc.).
+    _omp_cmd="$(printf '%s\n' "$1" | sed -n '/^[a-z][a-z-]*$/p')"
     case " $* " in
       *" --no-prewalk "*|*" --no-prewalk") ;;
-      *) set -- --prewalk "$@" ;;
+      *) case "$_omp_cmd" in
+           ""|launch) set -- --prewalk "$@" ;;
+         esac ;;
     esac
     exec ${lib.getExe pkgs.neg.omp} "$@"
   '';
