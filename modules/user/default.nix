@@ -12,7 +12,6 @@
     ./locate.nix
     ./mail.nix
     ./neovim.nix
-    ./psd
     ./theme-packages.nix
     ./xdg.nix
   ];
