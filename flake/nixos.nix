@@ -16,7 +16,7 @@ let
 
   commonModules = [
     ../init.nix
-    inputs.determinate.nixosModules.default
+    # inputs.determinate.nixosModules.default  # BROKEN: requires xorg in nix/default.nix:40
     inputs.nix-flatpak.nixosModules.nix-flatpak
     inputs.sops-nix.nixosModules.sops
     ../modules/system/disabled-modules.nix
