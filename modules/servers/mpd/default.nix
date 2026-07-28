@@ -9,7 +9,7 @@
   ...
 }:
 let
-  cfg = config.servicesProfiles.mpd or { enable = false; };
+  cfg = config.features.media.audio.mpd or { enable = false; };
   myUser = config.users.main.name or "neg";
   myUID = config.users.main.uid or 1000;
   myGroup =
