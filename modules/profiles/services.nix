@@ -205,53 +205,6 @@ in
         };
       };
     };
-    duckdns = {
-      enable = opts.mkEnableOption "DuckDNS dynamic DNS updater (Nyx module).";
-      domain = opts.mkStrOpt {
-        default = "";
-        description = "Full DuckDNS domain to update (e.g., example.duckdns.org).";
-      };
-      environmentFile = opts.mkStrOpt {
-        default = "";
-        description = "Path to EnvironmentFile providing DUCKDNS_TOKEN for updates.";
-        notes = "Prefer a sops-nix secret rendered as a dotenv file.";
-        example = "/run/secrets/duckdns.env";
-      };
-      ipv6 = {
-        enable = opts.mkBoolOpt {
-          default = false;
-          description = "Also publish an IPv6 address to DuckDNS.";
-        };
-        device = opts.mkStrOpt {
-          default = "eth0";
-          description = "Network interface used to read the global IPv6 address when ipv6.enable = true.";
-        };
-      };
-      onCalendar = opts.mkStrOpt {
-        default = "*:0/5";
-        description = "systemd.timer schedule controlling update frequency.";
-        notes = "Syntax follows systemd.time(7). Default: every 5 minutes.";
-      };
-      certs = {
-        enable = opts.mkBoolOpt {
-          default = false;
-          description = "Issue a certificate for the DuckDNS domain via ACME/lego.";
-          notes = "Uses the duckdns DNS-01 provider by default unless useHttpServer = true.";
-        };
-        useHttpServer = opts.mkBoolOpt {
-          default = false;
-          description = "Use lego's built-in HTTP server instead of DuckDNS DNS-01 verification.";
-        };
-        group = opts.mkStrOpt {
-          default = "acme";
-          description = "Group that owns the generated cert artifacts (PFX bundle).";
-        };
-        httpPort = opts.mkIntOpt {
-          default = 80;
-          description = "Port served by lego when useHttpServer = true (must be reachable for HTTP-01).";
-        };
-      };
-    };
     geoclue.enable = opts.mkEnableOption "Geoclue2 location service (BeaconDB provider).";
     openssh.enable = opts.mkEnableOption "OpenSSH (and mosh) profile.";
     mpd.enable = opts.mkEnableOption "MPD (Music Player Daemon) profile.";
@@ -352,37 +305,6 @@ in
           default = "";
           description = "Maximum characters per text chunk for incremental TTS streaming.";
         };
-      };
-    };
-    seafile = {
-      enable = opts.mkEnableOption "Seafile file sync and sharing server profile (Podman containers + optional Caddy proxy).";
-      hostName = opts.mkStrOpt {
-        default = "localhost";
-        description = "Public host name for Seafile, used by clients and reverse proxy.";
-      };
-      dataDir = opts.mkStrOpt {
-        default = "/seafile";
-        description = "Host directory for Seafile data (shared volume mapped into the main container).";
-      };
-      adminEmail = opts.mkStrOpt {
-        default = "admin@example.com";
-        description = "Initial Seafile admin account email.";
-      };
-      adminPassword = opts.mkStrOpt {
-        default = "change-me";
-        description = "Initial Seafile admin account password (used for SEAFILE_ADMIN_PASSWORD).";
-      };
-      dbRootPassword = opts.mkStrOpt {
-        default = "change-me";
-        description = "MariaDB root password used by the Seafile stack (DB_ROOT_PASSWD / MYSQL_ROOT_PASSWORD).";
-      };
-      httpPort = opts.mkIntOpt {
-        default = 8082;
-        description = "Local TCP port where the Seafile HTTP endpoint is exposed (proxied by Caddy when enabled).";
-      };
-      useCaddy = opts.mkBoolOpt {
-        default = true;
-        description = "Serve Seafile via Caddy with automatic HTTPS on hostName.";
       };
     };
   };
