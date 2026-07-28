@@ -22,6 +22,11 @@ let
     export PI_SMOL_MODEL="''${PI_SMOL_MODEL:-${smolModel}}"
     export PI_SLOW_MODEL="''${PI_SLOW_MODEL:-${slowModel}}"
     export PI_PLAN_MODEL="''${PI_PLAN_MODEL:-${planModel}}"
+    # Default: enable prewalk (plan with slow, implement with smol). Disable with --no-prewalk.
+    case " $* " in
+      *" --no-prewalk "*|*" --no-prewalk") ;;
+      *) set -- --prewalk "$@" ;;
+    esac
     exec ${lib.getExe pkgs.neg.omp} "$@"
   '';
 in
