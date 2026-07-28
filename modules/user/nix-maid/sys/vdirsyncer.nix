@@ -40,8 +40,8 @@ in
             [storage neg_calendar_remote]
             type = "google_calendar"
             token_file = "~/.config/vdirsyncer/token_stuff"
-            client_id = "${config.sops.placeholder.vdirsyncer_google_client_id}"
-            client_secret = "${config.sops.placeholder.vdirsyncer_google_client_secret}"
+            client_id = "${config.sops.placeholder.vdirsyncer_google_client_id or ""}"
+            client_secret = "${config.sops.placeholder.vdirsyncer_google_client_secret or ""}"
           '';
           owner = "neg";
           mode = "0600";
