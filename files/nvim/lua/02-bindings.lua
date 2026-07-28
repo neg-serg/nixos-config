@@ -85,7 +85,7 @@ map('n', 'grn', function() return ':IncRename ' .. vim.fn.expand('<cword>') end,
   { expr = true, desc = 'LSP: rename' })
 map('n', 'grr', vim.lsp.buf.references, { desc = 'LSP: references' })
 map('n', 'grt', vim.lsp.buf.type_definition, { desc = 'LSP: type definition' })
-map('n', 'grx', vim.lsp.buf.code_lens_run, { desc = 'LSP: run codelens' })
+map('n', 'grx', vim.lsp.codelens.run, { desc = 'LSP: run codelens' })
 map('n', 'gO', function() require('fzf-lua').lsp_document_symbols() end, { desc = 'LSP: document symbols' })
 -- Insert mode: signature help
 map('i', '<C-S>', vim.lsp.buf.signature_help, { desc = 'LSP: signature help' })
