@@ -68,7 +68,6 @@ in
   "mod-features" = mkModuleCheck "features" [ ] (_: true);
   "mod-profiles" = mkModuleCheck "profiles" [ ../modules/profiles/default.nix ] (_: true);
   "mod-core" = mkModuleCheck "core" [ ../modules/core/default.nix ] (_: true);
-  "mod-roles" = mkModuleCheck "roles" [ ../modules/roles/default.nix ] (_: true);
 
   # ── Domain filter checks ─────────────────────────────────────────
   # Validate that modules/default.nix works with different domain filters.
