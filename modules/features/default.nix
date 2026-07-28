@@ -16,7 +16,7 @@ in
     builtins.readDir ./.
     |> builtins.attrNames
     |> builtins.filter (n: n != "default.nix" && lib.hasSuffix ".nix" n)
-    |> map (n: ./. + "/${n}");
+    |> builtins.map (n: ./. + "/${n}");
 
   # Apply profile defaults. Users can still override flags after this.
   config = mkMerge [

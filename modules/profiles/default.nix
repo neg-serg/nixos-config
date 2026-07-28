@@ -18,5 +18,5 @@
     builtins.readDir ./.
     |> builtins.attrNames
     |> builtins.filter (n: n != "default.nix" && lib.hasSuffix ".nix" n)
-    |> map (n: ./. + "/${n}");
+    |> builtins.map (n: ./. + "/${n}");
 }
