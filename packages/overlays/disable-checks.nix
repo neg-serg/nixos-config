@@ -37,6 +37,7 @@ inputs: final: finalPrev: {
 
   # XFS breaks nix-util readLinkAt test on kernel 7.0+
   # Build failures on nixpkgs-unstable
+  # AUDIT: likely fixed in nixpkgs 26.05 — try removing
   valkey = finalPrev.valkey.overrideAttrs (_old: {
     doCheck = false;
   });
@@ -85,14 +86,17 @@ inputs: final: finalPrev: {
   });
 
   # Disable flaky pylint tests (primer output diff, network-dependent)
+  # AUDIT: likely fixed in nixpkgs 26.05 — try removing (also duplicated in pythonPackagesExtensions below)
   pylint = finalPrev.pylint.overrideAttrs (_old: {
     doCheck = false;
   });
 
   # Disable flaky samba tests (timing-dependent, fail on loaded systems)
+  # AUDIT: likely fixed in nixpkgs 26.05 — try removing
   samba = finalPrev.samba.overrideAttrs (_old: {
     doCheck = false;
   });
+  # AUDIT: likely fixed in nixpkgs 26.05 — try removing
   samba4 = finalPrev.samba4.overrideAttrs (_old: {
     doCheck = false;
   });
@@ -105,16 +109,20 @@ inputs: final: finalPrev: {
       uvloop = python-prev.uvloop.overrideAttrs (_old: {
         doCheck = false; # flaky timing test
       });
+      # AUDIT: likely fixed in nixpkgs 26.05 — try removing
       pylint = python-prev.pylint.overrideAttrs (_old: {
         doCheck = false; # flaky primer test (network-dependent)
         pytestCheckPhase = "true"; # also skip pytest in case doCheck doesn't propagate
       });
+      # AUDIT: likely fixed in nixpkgs 26.05 — try removing
       rich = python-prev.rich.overrideAttrs (_old: {
         doCheck = false; # flaky test_brokenpipeerror
       });
+      # AUDIT: likely fixed in nixpkgs 26.05 — try removing
       aiohttp = python-prev.aiohttp.overrideAttrs (_old: {
         doCheck = false; # flaky tests
       });
+      # AUDIT: likely fixed in nixpkgs 26.05 — try removing
       django = python-prev.django.overrideAttrs (_old: {
         doCheck = false; # flaky test DB teardown
       });
