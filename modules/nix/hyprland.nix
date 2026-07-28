@@ -9,9 +9,9 @@
   # Gated behind features.gui.enable to avoid pkgs.hyprland evaluation on headless hosts
   config = lib.mkIf config.features.gui.enable {
     nixpkgs.overlays = [
-      # Hyprland + XDPH from flake (pinned to latest)
-      inputs.hyprland.overlays.hyprland-packages
-      inputs.xdg-desktop-portal-hyprland.overlays.default
+      # Hyprland overlays disabled — nixpkgs 0.55.4 is stable and compatible with hyprlock/hypridle
+      # inputs.hyprland.overlays.hyprland-packages  # disabled: hyprutils 0.14.0 breaks hyprlock/hypridle
+      # inputs.xdg-desktop-portal-hyprland.overlays.default  # disabled: see above
       (final: prev: {
         hyprglass = final.stdenv.mkDerivation {
           pname = "hyprglass";
