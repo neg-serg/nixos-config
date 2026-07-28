@@ -2,7 +2,7 @@
   imports =
     builtins.readDir ./.
     |> builtins.attrNames
-    |> builtins.filter (n: n != "default.nix" && n != "README.md")
+    |> builtins.filter (n: n != "default.nix")
     |> map (n: ./. + "/${n}");
   services.flatpak = {
     enable = true;
