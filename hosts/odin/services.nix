@@ -159,15 +159,6 @@ lib.mkMerge [
         enable = false;
         dataDir = "/zero/bitcoin-node";
       };
-      duckdns = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/duckdns.env.sops")) {
-        enable = true;
-        domain = "${config.networking.hostName}.duckdns.org";
-        environmentFile = config.sops.secrets."duckdns/env".path;
-        ipv6 = {
-          enable = false;
-          device = "net1";
-        };
-      };
       # Wyoming OpenAI proxy — bridges Wyoming protocol with OpenAI-compatible STT/TTS
       # Uncomment and configure to enable:
       # wyoming-openai = {
@@ -371,15 +362,6 @@ lib.mkMerge [
     # Disable runtime logrotate check (build-time check remains). Avoids false negatives
     # when rotating files under non-standard paths or missing until first run.
 
-    # DuckDNS token (EnvironmentFile with DUCKDNS_TOKEN)
-    sops.secrets."duckdns/env" =
-      lib.mkIf (builtins.pathExists (inputs.self + "/secrets/duckdns.env.sops"))
-        {
-          sopsFile = inputs.self + "/secrets/duckdns.env.sops";
-          format = "dotenv";
-          owner = "root";
-          mode = "0400";
-        };
 
     # Resilio Sync: Web UI auth via SOPS, data under /zero/sync
     sops.secrets."resilio/http-login" =
