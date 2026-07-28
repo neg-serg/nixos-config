@@ -152,6 +152,13 @@ in
         NoNewPrivileges = true;
         CapabilityBoundingSet = "";
       };
+
+      # nixpkgs 26.05: user assertions require explicit isSystemUser + group
+      users.users.unbound = {
+        isSystemUser = true;
+        group = "unbound";
+      };
+      users.groups.unbound = { };
     }
   );
 }
