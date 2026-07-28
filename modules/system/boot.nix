@@ -21,7 +21,7 @@
     loader = {
       efi.canTouchEfiVariables = true;
       timeout = lib.mkDefault 0; # Skip boot menu unless key pressed; speeds up loader phase
-      limine.configurationLimit = 25; # Keep at most 25 generations in boot menu
+      limine.maxGenerations = 25; # Keep at most 25 generations in boot menu
     };
     # Boot-specific options only; no activation scripts touching /boot
     initrd = lib.mkMerge [
