@@ -3,7 +3,7 @@
     builtins.readDir ./.
     |> builtins.attrNames
     |> builtins.filter (n: n != "default.nix")
-    |> map (n: ./. + "/${n}");
+    |> builtins.map (n: ./. + "/${n}");
   services.flatpak = {
     enable = true;
     overrides = {
