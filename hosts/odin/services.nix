@@ -153,38 +153,9 @@ lib.mkMerge [
       avahi.enable = true;
       # Enable Samba profile on this host (guest-access share under /zero/sync/smb)
       samba.enable = false;
-      # Run a Bitcoin Core node with data stored under /zero/bitcoin-node
-      # Temporarily disabled
-      bitcoind = {
-        enable = false;
-        dataDir = "/zero/bitcoin-node";
-      };
-      # Wyoming OpenAI proxy — bridges Wyoming protocol with OpenAI-compatible STT/TTS
-      # Uncomment and configure to enable:
-      # wyoming-openai = {
-      #   enable = true;
-      #   stt = {
-      #     enable = true;
-      #     key = "...";  # Or use SOPS secret + environment file
-      #     url = "https://api.openai.com/v1";
-      #     models = [ "whisper-1" "gpt-4o-transcribe" ];
-      #     streamingModels = [ "gpt-4o-transcribe" ];
-      #   };
-      #   tts = {
-      #     enable = true;
-      #     key = "...";
-      #     url = "https://api.openai.com/v1";
-      #     models = [ "tts-1" "gpt-4o-mini-tts" ];
-      #     voices = [ "alloy" "echo" "fable" "onyx" "nova" "shimmer" ];
-      #     streamingModels = [ "tts-1" ];
-      #   };
-      # };
     };
     # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
 
-    monitoring = lib.mkIf config.roles.monitoring.enable {
-      netdata.enable = false; # Disable Netdata on this host
-    };
 
     # Disable RNNoise virtual mic for this host by default
     hardware.audio.rnnoise.enable = false;
@@ -353,7 +324,6 @@ lib.mkMerge [
           useUpnp = false;
         };
 
-        # Bitcoind instance is now managed by modules/servers/bitcoind
       }
     ];
 
