@@ -40,7 +40,6 @@ in
     ++ domain "monitoring" ./monitoring/default.nix
     ++ domain "nix" ./nix/default.nix
     ++ domain "profiles" ./profiles/default.nix
-    ++ domain "roles" ./roles/default.nix
     ++ domain "secrets" ./secrets/default.nix
     ++ domain "security" ./security/default.nix
     ++ domain "servers" ./servers/default.nix

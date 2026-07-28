@@ -13,5 +13,5 @@ Guidelines
   (`OPTIONS.md`/generated outputs) when behavior changes.
 - Reuse existing helpers (`lib.neg.*`, `mkDefault`/`mkForce` patterns) instead of ad-hoc wiring;
   avoid drive-by refactors.
-- Prefer feature flags/roles for host-specific tweaks; keep secrets out of modules (source from
+- Prefer feature flags for host-specific tweaks; keep secrets out of modules (source from
   `secrets/` imports instead).

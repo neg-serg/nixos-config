@@ -267,18 +267,19 @@ Auto‑update (optional): if `system.autoUpgrade` with flakes is enabled, add
 `--update-input hyprland --update-input hy3` when you deliberately move to the next Hyprland
 release. We usually bump manually to keep ABI changes under control.
 
-## Roles & Profiles
+## Profiles
 
-- Roles: enable bundles via `modules/roles/{workstation,homelab,media}.nix`.
-  - `roles.workstation.enable = true;` → desktop defaults (performance profile, SSH, Avahi).
-  - `roles.homelab.enable = true;` → self‑hosting defaults (security profile, DNS, SSH, MPD).
-  - `roles.media.enable = true;` → media servers (Jellyfin, MPD, Avahi, SSH).
-- Profiles: feature flags under `modules/system/profiles/`:
-  - `profiles.performance.enable` and `profiles.security.enable` are toggled by roles; override per
-    host if needed.
+- Profiles: feature-flag bundles under `modules/profiles/`:
+  - `profiles.desktop` — GUI defaults (features.gui.* = mkDefault true)
+  - `profiles.gaming` — gaming optimizations + GUI apps
+  - `profiles.server` — headless defaults
+  - `profiles.audio-pro` — pro-audio (pipewire realtime, limits)
+  - `profiles.dev` — development toolchains
+  - `profiles.lite` — minimal (disables most features)
 - Service profiles: toggle per‑service via `profiles.services.<name>.enable` (alias to
   `servicesProfiles.<name>.enable`).
-  - Roles set `mkDefault true`; hosts can disable with plain `false` (no mkForce needed).
+  - Hosts set desired values directly (no mkForce needed).
+
 - Host‑specific config: keep concrete settings under `hosts/<host>/*.nix`.
   - Examples: NIC names, local DNS rewrites.
 

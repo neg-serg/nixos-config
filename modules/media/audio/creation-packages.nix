@@ -8,7 +8,7 @@
   ...
 }:
 let
-  enabled = config.roles.workstation.enable or false;
+  enabled = config.features.media.audio.creation.enable or false;
   packages = [
     # -- Live Coding --
     pkgs.supercollider # SuperCollider IDE and audio engine
