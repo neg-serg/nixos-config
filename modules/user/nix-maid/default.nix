@@ -60,7 +60,6 @@
     ./web/aria.nix
     ./web/misc.nix
     ./web/yt-dlp.nix
-    ./web/zen-migrate.nix
 
     # Fun & Games
     ./fun/nethack.nix
