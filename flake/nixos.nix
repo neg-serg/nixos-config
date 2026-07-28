@@ -262,6 +262,4 @@ in
   odin = mkHost "odin";
 }
 // prefixedTestConfigs
-// {
-  inherit mkTestHost testProfiles;
-}
+
