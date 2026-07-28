@@ -75,6 +75,29 @@
   features.input.kanata.enable = true; # Caps→Ctrl via kanata
   features.input.warpd.enable = true; # warpd: keyboard-driven pointer control
 
+
+  # nixpkgs 26.05: service users need explicit isSystemUser + group.
+  # Defined at host level because server modules gate behind mkIf cfg.enable,
+  # which may be false while the NixOS service module still defines the user.
+  users.users = {
+    sshd = {
+      isSystemUser = true;
+      group = "sshd";
+    };
+    adguardhome = {
+      isSystemUser = true;
+      group = "adguardhome";
+    };
+    unbound = {
+      isSystemUser = true;
+      group = "unbound";
+    };
+  };
+  users.groups = {
+    sshd = { };
+    adguardhome = { };
+    unbound = { };
+  };
   boot.plymouth.enable = false; # Plymouth removed — adds boot delay, splash not needed on this host
 
   environment.systemPackages = [
