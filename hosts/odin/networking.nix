@@ -1,7 +1,7 @@
-_: {
+{ config, ... }: {
   networking = {
     hostName = "odin";
-    hostId = "ab0cd1ef"; # Required for ZFS pool import
+    hostId = config.networking.hostName |> builtins.hashString "sha1" |> builtins.substring 0 8; # Required for ZFS pool import
     hosts."10.0.2.140" = [
       "odin"
       "odin.local"
