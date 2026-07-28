@@ -524,7 +524,7 @@ hl.layer_rule({ name = "slide-left", match = { namespace = "sideleft.*" }, anima
 hl.layer_rule({ name = "slide-right", match = { namespace = "sideright.*" }, animation = "slide right" })
 
 -- bottom-up slide for overlay popups
-hl.layer_rule({ name = "slide-up", match = { namespace = "quickshell$" }, animation = "slide bottom" })
+hl.layer_rule({ name = "slide-up", match = { namespace = "qs-weather" }, animation = "slide bottom" })
 hl.layer_rule({ name = "slide-up-cal", match = { namespace = "qs-calendar" }, animation = "slide bottom" })
 hl.layer_rule({ name = "slide-up-mon", match = { namespace = "qs-monitor" }, animation = "slide bottom" })
 
@@ -536,7 +536,7 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.enabled\"] = true })'")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.manage_window_blur\"] = true })'")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.layers.enabled\"] = true })'")
-  hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.layers.namespaces\"] = \"qs-panel,qs-content-left,qs-content-right,quickshell-bar-reserve,quickshell,notifications,qs-music,qs-calendar,qs-monitor,sideleft-weather,sysmon-popup\" })'")
+  hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.layers.namespaces\"] = \"qs-panel,qs-content-left,qs-content-right,quickshell-bar-reserve,quickshell,notifications,qs-music,qs-calendar,qs-monitor,qs-weather,sideleft-weather,sysmon-popup\" })')
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.blur_strength\"] = 3 })'")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.blur_iterations\"] = 6 })'")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.refraction_strength\"] = 0.5 })'")
