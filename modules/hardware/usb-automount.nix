@@ -108,8 +108,6 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    # Avoid double-automount with udisks/devmon
-    services.devmon.enable = lib.mkForce false;
 
     services.udev.extraRules = ''
       KERNEL=="sd[a-z][0-9]", SUBSYSTEMS=="usb", ACTION=="add", RUN+="/bin/sh -c 'systemctl --no-block start automount-usbdrive@%k.service'"
