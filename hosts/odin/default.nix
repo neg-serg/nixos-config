@@ -41,8 +41,6 @@
   features.net.proxy.enable = true;
   features.net.lan-proxy.enable = true;
   features.net.transparent-proxy.enable = false; # Disabled: upstream dead, using proxy script fallback
-  # Xray upstream dead — disable the service (keep features.net.proxy for env/packages)
-  systemd.services.xray.enable = false;
   features.dev.haskell.enable = true; # Enable Haskell toolchain (GHC, cabal, stack, HLS)
   features.virt.libvirtd.enable = true;
   features.apps.winapps.enable = true;
@@ -77,13 +75,6 @@
   features.input.kanata.enable = true; # Caps→Ctrl via kanata
   features.input.warpd.enable = true; # warpd: keyboard-driven pointer control
 
-  # Roles enabled for this host
-  roles = {
-    workstation.enable = true;
-    homelab.enable = true;
-    media.enable = true;
-    monitoring.enable = true;
-  };
   boot.plymouth.enable = false; # Plymouth removed — adds boot delay, splash not needed on this host
 
   environment.systemPackages = [

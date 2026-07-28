@@ -7,7 +7,7 @@
 let
   mainUser = config.users.main.name or "neg";
   homeDir = "/home/${mainUser}";
-  enabled = config.roles.media.enable or false;
+  enabled = config.features.media.enable or false;
 
   deepfacelabRoot = "${homeDir}/vid/deepfacelab";
   dataDir = "${deepfacelabRoot}/data";
