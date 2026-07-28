@@ -12,21 +12,11 @@ let
   };
 in
 {
-  imports = [
-    ./core.nix
-    ./gui.nix
-    ./cli.nix
-    ./dev.nix
-    ./web.nix
-    ./media.nix
-    ./games.nix
-    ./network.nix
-    ./apps.nix
-    ./misc.nix
-    ./hardware.nix
-    ./optimization.nix
-    ./system.nix
-  ];
+  imports =
+    builtins.readDir ./.
+    |> builtins.attrNames
+    |> builtins.filter (n: n != "default.nix" && lib.hasSuffix ".nix" n)
+    |> map (n: ./. + "/${n}");
 
   # Apply profile defaults. Users can still override flags after this.
   config = mkMerge [

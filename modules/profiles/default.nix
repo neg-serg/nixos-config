@@ -14,13 +14,9 @@
   };
 
   # All profiles always imported (Nix is lazy — they only run when mkIf condition passes).
-  imports = [
-    ./desktop.nix
-    ./gaming.nix
-    ./audio-pro.nix
-    ./dev.nix
-    ./lite.nix
-    ./server.nix
-    ./services.nix # per-service enable toggles (profiles.services.*)
-  ];
+  imports =
+    builtins.readDir ./.
+    |> builtins.attrNames
+    |> builtins.filter (n: n != "default.nix" && lib.hasSuffix ".nix" n)
+    |> map (n: ./. + "/${n}");
 }
