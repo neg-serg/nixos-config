@@ -13,7 +13,8 @@
       url = "github:gmodena/nix-flatpak";
     };
     nix-src = {
-      url = "github:DeterminateSystems/nix-src/b1123363e07a216333222d483cfe8e682b95d7c1";
+      url = "github:DeterminateSystems/nix-src?ref=b1123363e07a216333222d483cfe8e682b95d7c1";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland = {
       url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.50.0&submodules=1";
@@ -27,7 +28,6 @@
     };
     wl = {
       url = "github:neg-serg/wl";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
 
@@ -85,11 +85,6 @@
     };
     talktype = {
       url = "github:lmacan1/talktype";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    codex-stellarium = {
-      url = "path:/home/neg/src/1st-level/look-for-firefox-customizations";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     extra-container.url = "git+https://github.com/erikarvstedt/extra-container.git";
   };
