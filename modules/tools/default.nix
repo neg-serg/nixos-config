@@ -9,7 +9,7 @@ in
     builtins.readDir ./.
     |> builtins.attrNames
     |> builtins.filter (n: n != "default.nix")
-    |> map (n: ./. + "/${n}");
+    |> builtins.map (n: ./. + "/${n}");
 
   # create an overlay for nix-output-monitor to match the inconsistent
   # and frankly ugly icons with nerdfonts ones. they look a little larger
