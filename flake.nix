@@ -28,6 +28,7 @@
     };
     wl = {
       url = "github:neg-serg/wl";
+      flake = false;
     };
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
 
