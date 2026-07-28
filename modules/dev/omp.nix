@@ -18,6 +18,9 @@ let
   ompWrapped = pkgs.writeShellScriptBin "omp" ''
     export OPENAI_API_KEY="$(${lib.getExe' pkgs.coreutils "cat"} /run/user/1000/secrets/deepseek-api 2>/dev/null || true)"
     export OPENAI_BASE_URL="${proxyUrl}"
+    # omp resolves deepseek/deepseek-chat (etc.) under the "kilo" provider,
+    # which reads KILO_API_KEY — not OPENAI_API_KEY.
+    export KILO_API_KEY="$OPENAI_API_KEY"
     # Model roles: env vars set defaults; omp config or --smol/--slow/--plan flags override
     export PI_SMOL_MODEL="''${PI_SMOL_MODEL:-${smolModel}}"
     export PI_SLOW_MODEL="''${PI_SLOW_MODEL:-${slowModel}}"
