@@ -27,22 +27,18 @@ lib.mkMerge [
           mode = "0400";
           owner = "neg";
         };
-        "vdirsyncer_google_client_id" =
-          lib.mkIf (builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml")
-            {
-              format = "yaml";
-              sopsFile = "${secretsDir}/vdirsyncer/google.sops.yaml";
-              key = "client_id";
-              owner = "neg";
-            };
-        "vdirsyncer_google_client_secret" =
-          lib.mkIf (builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml")
-            {
-              format = "yaml";
-              sopsFile = "${secretsDir}/vdirsyncer/google.sops.yaml";
-              key = "client_secret";
-              owner = "neg";
-            };
+        "vdirsyncer_google_client_id" = {
+          format = "yaml";
+          sopsFile = "${secretsDir}/vdirsyncer/google.sops.yaml";
+          key = "client_id";
+          owner = "neg";
+        };
+        "vdirsyncer_google_client_secret" = {
+          format = "yaml";
+          sopsFile = "${secretsDir}/vdirsyncer/google.sops.yaml";
+          key = "client_secret";
+          owner = "neg";
+        };
         "wireguard/work-wg.conf" =
           lib.mkIf (builtins.pathExists "${secretsDir}/wireguard/work-wg.conf.sops")
             {
