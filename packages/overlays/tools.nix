@@ -19,7 +19,6 @@ in
     praxislive = callPkg (packagesRoot + "/praxislive") { }; # PraxisLIVE — hybrid visual live programming IDE for creative coding
     omp = callPkg (packagesRoot + "/omp") { }; # Oh My Pi (omp) — AI coding agent with LSP, DAP, subagents
     hypr-focus = callPkg (packagesRoot + "/hypr-focus") { }; # Rust-based window focus CLI — set window class on focused Hyprland window
-    openagentscontrol = callPkg (packagesRoot + "/openagentscontrol") { }; # OpenAgentsControl — AI agent framework for plan-first development (agents + contexts for OpenCode)
     pretty_printer = callPkg (packagesRoot + "/pretty-printer") { }; # Pretty-printer library + CLI (ppinfo)
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
     sqlit = callPkg (packagesRoot + "/sqlit") { }; # A terminal UI for SQL databases
