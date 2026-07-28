@@ -51,7 +51,5 @@ in
       }
     );
 
-    # Monitoring
-    netdata = lib.mkIf (config.services.netdata.enable or false) (mkPostBoot "netdata");
   };
 }
