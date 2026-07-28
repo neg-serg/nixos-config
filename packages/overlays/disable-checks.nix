@@ -132,8 +132,10 @@ inputs: final: finalPrev: {
     NIX_BUILD_CORES = 4;
   });
 
-  # qtwebengine: V8 Chromium build OOM-killed on 32-thread (~24K compile units)
-  qtwebengine = finalPrev.qtwebengine.overrideAttrs (_old: {
+  # qtwebengine: V8 Chromium build OOM-killed on 32-thread (~24K compile units).
+  # PATCH: override CMAKE_BUILD_PARALLEL_LEVEL so ninja -jN respects NIX_BUILD_CORES
+  qtwebengine = finalPrev.qtwebengine.overrideAttrs (old: {
     NIX_BUILD_CORES = 4;
+    cmakeFlags = (old.cmakeFlags or []) ++ [ "-DCMAKE_BUILD_PARALLEL_LEVEL=4" ];
   });
 }
