@@ -16,7 +16,7 @@ OverlayToggleCapsule {
     capsule.implicitWidth: capsule.horizontalPadding * 2 + weatherContent.implicitWidth
     capsuleVisible: true
     autoToggleOnTap: true
-    overlayNamespace: "quickshell"
+    overlayNamespace: "qs-weather"
 
     Component.onCompleted: Services.Weather.start()
 
