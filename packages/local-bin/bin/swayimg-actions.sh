@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# swayimg-actions: move/copy/rotate/wallpaper/range for swayimg; dests limited to $XDG_PICTURES_DIR; before mv send prev_file via IPC to avoid end-of-list crash; picker via vicinae dmenu
+# swayimg-actions: move/copy/rotate/wallpaper/range for swayimg; dests limited to $XDG_PICTURES_DIR; before mv send next_file via IPC to avoid cursor jumping to start; picker via vicinae dmenu
 
 IFS=$'\n\t'
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
@@ -172,7 +172,7 @@ proc() { # mv/cp with remembered last dest
   if [ -d "$dest" ]; then
     # Avoid swayimg crash when current list ends after move: switch away first
     if [ "$cmd" = "mv" ]; then
-      _ipc_send "prev_file"
+      _ipc_send "next_file"
     fi
     while read -r line; do
       "$cmd" "$(realpath "$line")" "$dest"
