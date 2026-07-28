@@ -4,17 +4,9 @@
     extra-experimental-features = "pipe-operators";
   };
   inputs = {
-    determinate = {
-      url = "github:DeterminateSystems/determinate";
-      inputs.nix.follows = "nix-src";
-    };
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nix-flatpak = {
       url = "github:gmodena/nix-flatpak";
-    };
-    nix-src = {
-      url = "github:DeterminateSystems/nix-src?ref=b1123363e07a216333222d483cfe8e682b95d7c1";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland = {
       url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.50.0&submodules=1";
