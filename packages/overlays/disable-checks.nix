@@ -39,7 +39,6 @@ inputs: final: finalPrev: {
   # Build failures on nixpkgs-unstable
   valkey = finalPrev.valkey.overrideAttrs (_old: {
     doCheck = false;
-    # Note: if valkey still fails to build, it's a transient nixpkgs issue
   });
   notmuch = finalPrev.notmuch.overrideAttrs (_old: {
     doCheck = false;
@@ -132,10 +131,19 @@ inputs: final: finalPrev: {
     NIX_BUILD_CORES = 4;
   });
 
-  # qtwebengine: V8 Chromium build OOM-killed on 32-thread (~24K compile units).
-  # PATCH: override CMAKE_BUILD_PARALLEL_LEVEL so ninja -jN respects NIX_BUILD_CORES
+  # qtwebengine: V8 Chromium OOM on 32-thread (~24K compile units).
+  # Build invokes ninja -j32 via cmake -E env — NIX_BUILD_CORES is ignored.
+  # Use a preBuild wrapper that limits ninja parallelism.
   qtwebengine = finalPrev.qtwebengine.overrideAttrs (old: {
-    NIX_BUILD_CORES = 4;
-    cmakeFlags = (old.cmakeFlags or []) ++ [ "-DCMAKE_BUILD_PARALLEL_LEVEL=4" ];
+    preBuild = (old.preBuild or "") + ''
+      # Wrap ninja to enforce 4-core limit
+      real_ninja=$(type -P ninja)
+      cat > $TMPDIR/ninja-wrapper << WRAP
+      #!/bin/sh
+      exec $real_ninja -j4 "$@"
+      WRAP
+      chmod +x $TMPDIR/ninja-wrapper
+      export PATH=$TMPDIR/ninja-wrapper:$PATH
+    '';
   });
 }
