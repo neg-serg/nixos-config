@@ -78,10 +78,6 @@
       url = "github:ogulcancelik/herdr";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    openagentscontrol = {
-      url = "github:darrenhinde/OpenAgentsControl";
-      flake = false;
-    };
     sqlit = {
       url = "github:Maxteabag/sqlit";
       inputs.nixpkgs.follows = "nixpkgs";

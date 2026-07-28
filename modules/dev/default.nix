@@ -14,6 +14,5 @@
     ./pkgs
     ./omp.nix
     ./pi.nix
-    ./openagentscontrol.nix
   ];
 }
