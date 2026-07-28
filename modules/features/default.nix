@@ -59,7 +59,6 @@ in
         dev = {
           ai = {
             enable = mkForce false;
-            openagentscontrol.enable = mkForce false;
           };
           rust.enable = mkForce false;
           cpp.enable = mkForce false;

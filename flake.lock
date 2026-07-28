@@ -1353,7 +1353,6 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "openagentscontrol": "openagentscontrol",
         "rsmetrx": "rsmetrx",
         "skwd": "skwd",
         "skwd-daemon": "skwd-daemon",
@@ -1533,38 +1532,6 @@
         "type": "github"
       }
     },
-    "openagentscontrol": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1784073206,
-        "narHash": "sha256-bXT6xQiffomu05nbSkmBDBVU9PIpmT/b/FNU9o2PDKo=",
-        "owner": "darrenhinde",
-        "repo": "OpenAgentsControl",
-        "rev": "37ca233fa5597a5abb90cba73165deafffe0344f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "darrenhinde",
-        "repo": "OpenAgentsControl",
-        "type": "github"
-      }
-    },
-    "openagentscontrol_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1784073206,
-        "narHash": "sha256-bXT6xQiffomu05nbSkmBDBVU9PIpmT/b/FNU9o2PDKo=",
-        "owner": "darrenhinde",
-        "repo": "OpenAgentsControl",
-        "rev": "37ca233fa5597a5abb90cba73165deafffe0344f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "darrenhinde",
-        "repo": "OpenAgentsControl",
-        "type": "github"
-      }
-    },
     "pre-commit-hooks": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -1708,7 +1675,6 @@
         "nix-maid": "nix-maid",
         "nix-src": "nix-src",
         "nixpkgs": "nixpkgs_4",
-        "openagentscontrol": "openagentscontrol_2",
         "pre-commit-hooks": "pre-commit-hooks_3",
         "quickshell": "quickshell_2",
         "raise": "raise",
