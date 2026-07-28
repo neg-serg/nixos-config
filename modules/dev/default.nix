@@ -1,18 +1,8 @@
 { ... }:
 {
-  imports = [
-    ./android
-    ./ansible.nix
-    ./benchmarks
-    ./editor
-    ./gcc
-    ./gdb
-    ./git
-    ./java
-    ./python
-    ./unreal
-    ./pkgs
-    ./omp.nix
-    ./pi.nix
-  ];
+  imports =
+    builtins.readDir ./.
+    |> builtins.attrNames
+    |> builtins.filter (n: n != "default.nix" && n != "README.md")
+    |> map (n: ./. + "/${n}");
 }

@@ -2,22 +2,9 @@
 # Config and options moved to ./config.nix for flat-import compatibility
 { ... }:
 {
-  imports = [
-    ./audio
-    ./cpu
-    ./input
-    ./io
-    ./qmk
-    ./udev-rules
-    ./video
-    ./webcam
-    ./amdgpu.nix
-    ./config.nix
-    ./cooling.nix
-    ./gpu-corectrl.nix
-    ./liquidctl.nix
-    ./pkgs.nix # Nix package manager
-    ./uinput.nix
-    ./usb-automount.nix
-  ];
+  imports =
+    builtins.readDir ./.
+    |> builtins.attrNames
+    |> builtins.filter (n: n != "default.nix" && n != "README.md")
+    |> map (n: ./. + "/${n}");
 }

@@ -1,12 +1,8 @@
 { ... }:
 {
-  imports = [
-    ./adguardhome
-    ./avahi
-    ./geoclue
-    ./mpd
-    ./openssh
-    ./samba
-    ./unbound
-  ];
+  imports =
+    builtins.readDir ./.
+    |> builtins.attrNames
+    |> builtins.filter (n: n != "default.nix" && n != "README.md")
+    |> map (n: ./. + "/${n}");
 }
