@@ -1,18 +1,14 @@
 { ... }:
 {
-  imports = [
-    ./session
-    ./nix-maid
-    ./games
-    ./dbus.nix
-    ./fonts.nix
-    ./gui-packages.nix
-    ./locale.nix
-    ./locale-pkgs.nix # Nix package manager
-    ./locate.nix
-    ./mail.nix
-    ./neovim.nix
-    ./theme-packages.nix
-    ./xdg.nix
-  ];
+  imports =
+    let
+      excludes = [
+        "psd"      # empty placeholder dir
+        "wrappers" # empty placeholder dir
+      ];
+    in
+      builtins.readDir ./.
+      |> builtins.attrNames
+      |> builtins.filter (n: n != "default.nix" && n != "README.md" && !builtins.elem n excludes)
+      |> map (n: ./. + "/${n}");
 }

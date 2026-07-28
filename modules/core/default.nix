@@ -1,6 +1,8 @@
 { ... }:
 {
-  imports = [
-    ./neg.nix # Core NixOS helpers (lib.neg, args, etc.)
-  ];
+  imports =
+    builtins.readDir ./.
+    |> builtins.attrNames
+    |> builtins.filter (n: n != "default.nix" && n != "README.md")
+    |> map (n: ./. + "/${n}");
 }

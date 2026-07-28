@@ -5,9 +5,11 @@ let
   inherit (lib.strings) escapeShellArg;
 in
 {
-  imports = [
-    ./pkgs.nix # Nix package manager
-  ];
+  imports =
+    builtins.readDir ./.
+    |> builtins.attrNames
+    |> builtins.filter (n: n != "default.nix" && n != "README.md")
+    |> map (n: ./. + "/${n}");
 
   # create an overlay for nix-output-monitor to match the inconsistent
   # and frankly ugly icons with nerdfonts ones. they look a little larger
