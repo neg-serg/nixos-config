@@ -62,8 +62,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     tailray = {
-      url = "github:neg-serg/tailray";
-      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:NotAShelf/tailray";
     };
     winapps = {
       url = "github:winapps-org/winapps";
@@ -86,7 +85,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     talktype = {
-      url = "github:neg-serg/talktype";
+      url = "github:lmacan1/talktype";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     codex-stellarium = {
