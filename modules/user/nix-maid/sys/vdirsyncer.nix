@@ -50,8 +50,8 @@ in
         # Ensure directories exist
         systemd.tmpfiles.rules = [
           "d ${home}/.config/vdirsyncer/calendars 0700 neg users -"
+          "d ${home}/.config/vdirsyncer/calendars/pills 0700 neg users -"
           "d ${home}/.config/vdirsyncer/contacts 0700 neg users -"
-          "d ${home}/.local/state/vdirsyncer 0700 neg users -"
         ];
 
         # User service and timer

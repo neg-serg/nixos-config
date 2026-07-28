@@ -35,7 +35,7 @@
   features.web.vivaldi.enable = true;
   features.web.default = "vivaldi";
   features.web.codexStellarium.enable = true;
-  features.mail.vdirsyncer.enable = false;
+  features.mail.vdirsyncer.enable = true;
   features.mail.mbsync.enable = false;
   features.hardware.bluetooth.enable = false;
   features.net.proxy.enable = true;
