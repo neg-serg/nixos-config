@@ -28,6 +28,13 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+
+    # nixpkgs 26.05: user assertions require explicit isSystemUser + group
+    users.users.sshd = {
+      isSystemUser = true;
+      group = "sshd";
+    };
+    users.groups.sshd = { };
     services.openssh = {
       enable = true;
       extraConfig = ''
