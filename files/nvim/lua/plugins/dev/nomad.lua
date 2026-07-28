@@ -1,10 +1,9 @@
 -- ┌───────────────────────────────────────────────────────────────────────────────────┐
--- │ █▓▒░ nomad/nomad — collaborative editing                                           │
+-- │ █▓▒░ nomad/nomad — collaborative editing (disabled: needs Rust build)              │
 -- └───────────────────────────────────────────────────────────────────────────────────┘
 return {
   'nomad/nomad',
-  build = 'cargo xtask neovim build --release',
-  cmd = { 'Mad' },
+  enabled = false, -- requires nightly Rust + internet: cd plugin-dir && cargo xtask neovim build --release
   keys = {
     { '<leader>ms', '<cmd>Mad collab start<cr>', desc = 'Nomad: start session' },
     { '<leader>mj', '<cmd>Mad collab join<cr>', desc = 'Nomad: join session' },
