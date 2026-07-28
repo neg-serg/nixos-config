@@ -18,8 +18,8 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    users.groups.adguardhome = { };
-    users.users.adguardhome = {
+    users.groups.adguardhome = lib.mkForce { };
+    users.users.adguardhome = lib.mkForce {
       isSystemUser = true;
       group = "adguardhome";
       home = "/var/lib/AdGuardHome";
