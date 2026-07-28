@@ -16,6 +16,7 @@ let
 
   commonModules = [
     ../init.nix
+    inputs.determinate.nixosModules.default
     inputs.nix-flatpak.nixosModules.nix-flatpak
     inputs.sops-nix.nixosModules.sops
     ../modules/system/disabled-modules.nix
