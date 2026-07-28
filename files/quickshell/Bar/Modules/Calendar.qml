@@ -118,7 +118,7 @@ OverlayToggleCapsule {
 
                         width: Math.round(26*Theme.scale(root.screen)); height: Math.round(26*Theme.scale(root.screen))
                         radius: Math.round(Theme.cornerRadius*0.33)
-                        color: { if(isToday)return Color.withAlpha(root.goldAccent,0.3); if(isHoliday)return Color.withAlpha(Theme.error,0.1); if(isWeekend)return Color.withAlpha(root.goldAccent,0.12); if(dayMouse.containsMouse)return Color.withAlpha(root.goldAccent,0.15); return"transparent" }
+                        color: { if(isToday)return Color.withAlpha(root.goldAccent,0.3); if(isHoliday)return Color.withAlpha(Theme.error,0.1); if(isWeekend)return Color.withAlpha(root.goldAccent,0.22); if(dayMouse.containsMouse)return Color.withAlpha(root.goldAccent,0.15); return"transparent" }
                         border.color: isToday?root.goldAccent:"transparent"; border.width: isToday?1.5:0
 
                         Text {
