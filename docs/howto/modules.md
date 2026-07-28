@@ -1470,19 +1470,6 @@ Whether to enable enable Torrent stack (Transmission, tools, services).
 
 - [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
-## features.torrent.prometheus.enable
-
-Whether to enable enable Prometheus exporter for Transmission (transmission-exporter).
-
-*Type:* boolean
-
-*Default:* `false`
-
-*Example:* `true`
-
-*Declared by:*
-
-- [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
 ## features.web.enable
 

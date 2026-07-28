@@ -14,8 +14,7 @@ docs/howto/options*.md
 .pre-commit-config.yaml
 __pycache__/
 benchmarks/
-.omo/
-.opencode/
 .pi/
 cache.db
 packages/target/
+.omo/

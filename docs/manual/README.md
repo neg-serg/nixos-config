@@ -715,28 +715,9 @@ Wi‑Fi via iwd profile
 
 Prometheus PHP‑FPM Exporter
 
-- Socket access: the exporter scrapes a PHP‑FPM unix socket (for example,
-  `unix:///run/phpfpm/app.sock;/status`). Ensure the PHP‑FPM pool socket is group‑readable by a
-  shared web group and the exporter joins it:
-  - Configure the PHP‑FPM pool: set `"listen.group" = "nginx";` and `"listen.mode" = "0660"`.
-  - Add the `prometheus` user to the `nginx` group via
-    `users.users.<name>.extraGroups = [ "nginx" ];`.
-- Unit sandboxing: the upstream exporter unit can prohibit UNIX sockets with
-  `RestrictAddressFamilies`.
-  - Allow AF_UNIX: set `RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];`.
-  - Ensure the unit has access to the socket group: `SupplementaryGroups = [ "nginx" ];`.
-- DynamicUser vs. real user: the upstream module may use `DynamicUser=true` and
-  `Group=php-fpm-exporter`. If you need the exporter to inherit static group membership, override
-  with higher priority:
-  - `DynamicUser = lib.mkForce false; User = lib.mkForce "prometheus"; Group = lib.mkForce "prometheus";`.
-- Emergency switch safety: if activation is blocked by the exporter while debugging, temporarily
-  disable it to unblock a `switch`: set `services.prometheus.exporters."php-fpm".enable = false;`
-  and re‑enable after fixing permissions/ordering.
-- Common mistakes to avoid:
-  - Misplacing user group options: within the `users = { ... }` attrset, set
-    `users.prometheus.extraGroups = [ "nginx" ];` (this maps to `users.users.<name>.extraGroups`).
-  - Enabling multiple proxies: don’t enable multiple reverse proxies for the same backend; pick a
-    single proxy per backend.
+- The `php-fpm-exporter` monitoring module has been removed. Prometheus server is disabled in this
+  configuration, and the exporter depended on `config.services.prometheus`.
+
 
 Nextcloud on odin (clean install)
 

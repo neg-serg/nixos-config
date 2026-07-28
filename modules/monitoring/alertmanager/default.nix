@@ -1,6 +1,6 @@
 ##
 # Module: monitoring/alertmanager
-# Purpose: Prometheus Alertmanager — routes Loki alert rules to Telegram via local webhook bridge.
+# Purpose: Prometheus Alertmanager — routes alerts to Telegram via local webhook bridge.
 # Ported from legacy Salt config (alertmanager.yml.j2).
 {
   lib,
@@ -47,7 +47,7 @@ let
 in
 {
   options.monitoring.alertmanager = {
-    enable = mkEnableOption "Enable Prometheus Alertmanager (routes Loki alerts).";
+    enable = mkEnableOption "Enable Prometheus Alertmanager (routes alerts).";
 
     port = mkOption {
       type = types.port;

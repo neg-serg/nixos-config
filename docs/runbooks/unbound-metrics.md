@@ -10,8 +10,7 @@ repo: apps → systemd‑resolved (127.0.0.53) → AdGuardHome (127.0.0.1:53) �
   scraping.
 - Runs Prometheus Unbound exporter (default: 127.0.0.1:9167) to translate Unbound stats into
   Prometheus metrics.
-- Adds a Prometheus scrape job `unbound` and a Grafana Prometheus datasource so metrics are
-  queryable out of the box.
+- Adds a Prometheus scrape job `unbound`. Grafana and Loki have been removed from this configuration.
 
 This keeps all control and scrape endpoints bound to localhost by default. No firewall exposure is
 required.
@@ -40,7 +39,7 @@ servicesProfiles.unbound = {
 
 ### Metrics collection
 
-To collect metrics, enable the exporter and scrape job and add Prometheus to Grafana:
+To collect metrics, enable the exporter and scrape job:
 
 ```nix
 { lib, config, ... }: {
@@ -64,9 +63,8 @@ To collect metrics, enable the exporter and scrape job and add Prometheus to Gra
     ];
   };
 
-  # Grafana: add Prometheus datasource (Loki is provisioned elsewhere)
-  # Grafana provisioning removed — use Prometheus datasource directly
-}
+  # Grafana and Loki have been removed from this configuration.
+  # Query Prometheus directly at http://<host>:9090.
 ```
 
 Repo module details:
@@ -82,9 +80,9 @@ Repo module details:
 - Unbound control (no reset): `unbound-control -c /etc/unbound/unbound.conf stats_noreset | head`
 - Prometheus target up: open `http://<host>:9090/targets` and check the `unbound` job.
 
-## Grafana: panels and example queries
+## Prometheus: panels and example queries
 
-Metric names vary by exporter and Unbound version. Use Grafana’s query autocomplete for the
+Metric names vary by exporter and Unbound version. Use the Prometheus UI query autocomplete for the
 `unbound_` prefix and adapt these examples to what you see.
 
 - Response time (p50/p95). If histogram buckets are available as
