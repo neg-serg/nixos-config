@@ -19,12 +19,12 @@ let
   vicinaeSettings = {
     terminal = "kitty";
     keybinding = "emacs";
-    escape_key_behavior = "navigate_back";
+    escape_key_behavior = "close_window";
     pop_on_backspace = true;
     pop_to_root_on_close = true;
 
     # core behavior
-    close_on_focus_loss = false;
+    close_on_focus_loss = true;
     activate_on_single_click = false;
     consider_preedit = true;
 
