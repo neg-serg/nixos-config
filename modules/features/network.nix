@@ -11,7 +11,6 @@ with lib;
     # Torrent stack (Transmission and related tools/services)
     torrent = {
       enable = mkBool "enable Torrent stack (Transmission, tools, services)" true;
-      prometheus.enable = mkBool "enable Prometheus exporter for Transmission (transmission-exporter)" false;
     };
 
     net = {

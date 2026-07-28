@@ -7,63 +7,6 @@
 let
   inherit (config.users.users.neg) home;
   cfg = config.features.gui;
-  alertmanagerWebhook = pkgs.writeShellApplication {
-    name = "alertmanager-webhook";
-    runtimeInputs = [
-      pkgs.curl # HTTP data transfer utility
-      pkgs.python3 # Python interpreter
-    ];
-    text = ''
-          # Alertmanager Telegram webhook bridge
-            # Receives alerts from Alertmanager at 127.0.0.1:9094/alert,
-            # formats and forwards to Telegram
-            TELEGRAM_BOT_TOKEN="''${TELEGRAM_BOT_TOKEN:-}"
-            TELEGRAM_CHAT_ID="''${TELEGRAM_CHAT_ID:-}"
-
-            if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-              echo "Error: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set"
-              exit 1
-            fi
-
-            exec python3 -c '
-      import os, json, sys
-      from http.server import HTTPServer, BaseHTTPRequestHandler
-      from urllib.request import urlopen, Request
-
-      TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-      CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
-
-      class Handler(BaseHTTPRequestHandler):
-          def do_POST(self):
-              length = int(self.headers.get("Content-Length", 0))
-              body = self.rfile.read(length)
-              data = json.loads(body)
-              for alert in data.get("alerts", []):
-                  status = alert.get("status", "UNKNOWN").upper()
-                  labels = alert.get("labels", {})
-                  annotations = alert.get("annotations", {})
-                  name = labels.get("alertname", "Unknown")
-                  severity = labels.get("severity", "unknown")
-                  summary = annotations.get("summary", "No summary")
-                  msg = f"[{status}] [{severity}] {name}: {summary}"
-                  if TOKEN and CHAT_ID:
-                      req = Request(
-                          f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-                          data=f"chat_id={CHAT_ID}&text={msg}".encode(),
-                          headers={"Content-Type": "application/x-www-form-urlencoded"}
-                      )
-                      urlopen(req)
-              self.send_response(200)
-              self.end_headers()
-              self.wfile.write(b"OK")
-
-          def log_message(self, format, *args):
-              pass
-
-      HTTPServer(("127.0.0.1", 9094), Handler).serve_forever()
-      '
-    '';
-  };
 in
 lib.mkIf (cfg.enable or false) {
   # User systemd services
@@ -183,21 +126,5 @@ lib.mkIf (cfg.enable or false) {
       wantedBy = [ "graphical-session.target" ];
     };
 
-    # Alertmanager Telegram webhook bridge
-    # Forwards alerts from Alertmanager (127.0.0.1:9093) to Telegram.
-    # Requires TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID environment variables
-    # (set via SOPS secret or environment). Ported from legacy Salt config.
-    alertmanager-webhook = lib.mkIf (config.monitoring.logs.enable or false) {
-      description = "Alertmanager Telegram webhook bridge";
-      documentation = [ "https://prometheus.io/docs/alerting/latest/configuration/#webhook_config" ];
-      after = [ "network-online.target" ];
-      partOf = [ "alertmanager.service" ];
-      serviceConfig = {
-        ExecStart = "${lib.getExe alertmanagerWebhook}";
-        Restart = "on-failure";
-        RestartSec = 5;
-      };
-      wantedBy = [ "default.target" ];
-    };
   };
 }
