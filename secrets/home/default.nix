@@ -93,7 +93,7 @@ in
       };
     }
     // lib.optionalAttrs hasDeepseekApi {
-      # DeepSeek API key for OpenCode DeepSeek provider
+      # DeepSeek API key for OMP + other AI agents
       "deepseek-api" = {
         format = "yaml";
         sopsFile = ./deepseek-api.sops.yaml;
