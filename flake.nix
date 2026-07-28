@@ -24,8 +24,7 @@
       url = "github:outfoxxed/hy3";
     };
     raise = {
-      url = "github:vicinaehq/raise";
-      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:neg-serg/raise";
     };
     wl = {
       url = "github:neg-serg/wl";
