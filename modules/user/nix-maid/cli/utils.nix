@@ -14,6 +14,7 @@ lib.mkMerge [
       pkgs.aliae # Shell alias manager
       pkgs.fastfetch # System info tool (neofetch successor)
       pkgs.tealdeer # Fast tldr client
+      pkgs.nxv # Find any version of any Nix package instantly
     ];
 
     environment.variables = {
