@@ -92,9 +92,9 @@ Singleton {
             "END:VCALENDAR",
             ""
         ].join("\r\n");
-        var file = Quickshell.createFile(path);
-        file.write(ics);
-        file.close();
+        Quickshell.execDetached(["sh", "-c", "cat > '" + path.replace(/'/g, "'\''") + "' << 'ICS_EOF'
+" + ics + "
+ICS_EOF"]);
     }
 
     // Delete today's ICS file when pill is untoggled
@@ -106,8 +106,10 @@ Singleton {
     // On startup, check if a calendar event exists for today
     function _syncFromCalendar() {
         var path = _todayIcsPath();
-        var file = Quickshell.createFile(path);
-        if (file.exists()) {
+        var fileText = "";
+        var reader = Qt.createQmlObject('import Quickshell.Io; FileView { path: "' + path.replace(/'/g, "\'") + '"; preload: false }', root, "pillReader");
+        if (reader) { fileText = reader.text() || ""; reader.destroy(); }
+        if (fileText.indexOf("Pill") >= 0) {
             // Calendar says pill was taken today — restore state if not already set
             if (!_adapter.taken) {
                 _adapter.taken = true;
@@ -115,7 +117,6 @@ Singleton {
                 stateFileView.writeAdapter();
             }
         }
-        file.close();
     }
 
     function toggle() {
