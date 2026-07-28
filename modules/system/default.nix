@@ -9,7 +9,7 @@
     in
       builtins.readDir ./.
       |> builtins.attrNames
-      |> builtins.filter (n: n != "default.nix" && n != "README.md" && !builtins.elem n excludes)
+      |> builtins.filter (n: n != "default.nix" && !builtins.elem n excludes)
       |> map (n: ./. + "/${n}")
       ++ [ ./vm/definitions.nix ];
 }
