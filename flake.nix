@@ -120,13 +120,37 @@
             ;
           pkgs = sharedPackages.${system};
         } system;
+
+      perSystemDevShells =
+        system:
+        import ./flake/devshells.nix {
+          inherit
+            self
+            inputs
+            nixpkgs
+            flakeLib
+            ;
+          pkgs = sharedPackages.${system};
+        } system;
+
+      perSystemApps =
+        system:
+        import ./flake/apps.nix {
+          inherit
+            self
+            inputs
+            nixpkgs
+            flakeLib
+            ;
+          pkgs = sharedPackages.${system};
+        } system;
     in
     {
       packages = lib.genAttrs supportedSystems (s: (perSystem s).packages);
       formatter = lib.genAttrs supportedSystems (s: (perSystem s).formatter);
       checks = lib.genAttrs supportedSystems (s: (perSystem s).checks);
-      devShells = lib.genAttrs supportedSystems (s: (perSystem s).devShells);
-      apps = lib.genAttrs supportedSystems (s: (perSystem s).apps);
+      devShells = lib.genAttrs supportedSystems (s: (perSystemDevShells s).devShells);
+      apps = lib.genAttrs supportedSystems (s: (perSystemApps s).apps);
       nixosConfigurations = import ./flake/nixos.nix {
         inherit inputs nixpkgs self;
         pkgs = sharedPackages.x86_64-linux;
