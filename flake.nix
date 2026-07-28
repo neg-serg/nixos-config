@@ -85,6 +85,7 @@
     };
     talktype = {
       url = "github:lmacan1/talktype";
+      flake = false;
     };
     extra-container.url = "git+https://github.com/erikarvstedt/extra-container.git";
   };
