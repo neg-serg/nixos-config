@@ -8,5 +8,4 @@ System monitoring and observability stack.
 
 ## Includes
 
-- Prometheus
 - Alertmanager
