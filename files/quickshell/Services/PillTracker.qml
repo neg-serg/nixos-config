@@ -10,7 +10,7 @@ Singleton {
 
     readonly property string stateDir: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/quickshell/"
     readonly property string stateFile: stateDir + "pill-tracker.json"
-    readonly property string calDir: (Quickshell.env("HOME") || "/home/neg") + "/.local/share/calendars/pills/"
+    readonly property string calDir: (Quickshell.env("HOME") || "/home/neg") + "/.config/vdirsyncer/calendars/pills/"
 
     // Public reactive properties
     readonly property bool taken: _adapter.taken
