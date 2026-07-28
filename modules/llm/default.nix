@@ -8,11 +8,14 @@ let
   cfg = config.services.ollama;
 in
 {
-  imports = [
-    ./ollama.nix
-    # ./open-webui.nix
-    ./pkgs.nix # Nix package manager
-  ];
+  imports =
+    let
+      excludes = [ "open-webui.nix" ]; # disabled — not wired yet
+    in
+      builtins.readDir ./.
+      |> builtins.attrNames
+      |> builtins.filter (n: n != "default.nix" && n != "README.md" && !builtins.elem n excludes)
+      |> map (n: ./. + "/${n}");
   config = lib.mkMerge [
     {
       services.ollama = {
