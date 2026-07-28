@@ -8,7 +8,7 @@ in
   imports =
     builtins.readDir ./.
     |> builtins.attrNames
-    |> builtins.filter (n: n != "default.nix" && n != "README.md")
+    |> builtins.filter (n: n != "default.nix")
     |> map (n: ./. + "/${n}");
 
   # create an overlay for nix-output-monitor to match the inconsistent
