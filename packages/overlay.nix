@@ -8,6 +8,9 @@ let
   dev = importOv ./overlays/dev.nix;
   fixTinycc = importOv ./overlays/fix-tinycc.nix;
   aurPorted = import ./overlays/aur-ported.nix final finalPrev;
+
+  # WARNING: disableChecks MUST be last in the merge chain (//) below.
+  # It calls overrideAttrs which resets any prior overrides on the same package.
   disableChecks = import ./overlays/disable-checks.nix inputs final finalPrev;
 in
 # Standard overlay pattern: merge top-level attributes
