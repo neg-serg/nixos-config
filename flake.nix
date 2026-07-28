@@ -9,7 +9,7 @@
       url = "github:gmodena/nix-flatpak";
     };
     hyprland = {
-      url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.50.0&submodules=1";
+      url = "github:hyprwm/Hyprland";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hy3 = {
