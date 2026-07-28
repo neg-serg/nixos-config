@@ -4,7 +4,6 @@
     ./adguardhome
     ./avahi
     ./bitcoind
-    ./duckdns
     ./geoclue
     ./mpd
     ./netdata

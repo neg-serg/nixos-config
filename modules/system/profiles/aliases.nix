@@ -15,14 +15,12 @@ let
       [ "servicesProfiles" "adguardhome" "rewrites" ];
   services = [
     "adguardhome"
-    "duckdns"
     "bitcoind"
     "unbound"
     "openssh"
     "mpd"
     "avahi"
     "samba"
-    "seafile"
   ];
 in
 {
