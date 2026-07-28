@@ -10,6 +10,5 @@
     ./openssh
     ./samba
     ./unbound
-    ./wyoming-openai
   ];
 }
