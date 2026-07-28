@@ -13,8 +13,7 @@
       url = "github:gmodena/nix-flatpak";
     };
     nix-src = {
-      url = "github:NixOS/nix";
-      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:DeterminateSystems/nix-src/b1123363e07a216333222d483cfe8e682b95d7c1";
     };
     hyprland = {
       url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.50.0&submodules=1";
