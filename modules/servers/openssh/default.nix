@@ -30,11 +30,12 @@ in
   config = lib.mkIf cfg.enable {
 
     # nixpkgs 26.05: user assertions require explicit isSystemUser + group
-    users.users.sshd = {
+    # (mkForce: override nixpkgs service module defaults which lack these)
+    users.users.sshd = lib.mkForce {
       isSystemUser = true;
       group = "sshd";
     };
-    users.groups.sshd = { };
+    users.groups.sshd = lib.mkForce { };
     services.openssh = {
       enable = true;
       extraConfig = ''

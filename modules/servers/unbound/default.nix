@@ -154,11 +154,12 @@ in
       };
 
       # nixpkgs 26.05: user assertions require explicit isSystemUser + group
-      users.users.unbound = {
+      # (mkForce: override nixpkgs service module defaults which lack these)
+      users.users.unbound = lib.mkForce {
         isSystemUser = true;
         group = "unbound";
       };
-      users.groups.unbound = { };
+      users.groups.unbound = lib.mkForce { };
     }
   );
 }
