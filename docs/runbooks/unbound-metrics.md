@@ -18,8 +18,8 @@ required.
 
 ## Enabling (NixOS snippets)
 
-If you use the `roles.homelab` role in this repo, Unbound is already enabled and configured as
-upstream for AdGuardHome.
+Unbound is enabled via `servicesProfiles.unbound.enable = true` (set in
+`hosts/odin/services.nix`).
 
 ### Using Comss.one DNS (optional)
 
