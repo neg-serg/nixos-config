@@ -1,11 +1,14 @@
 { ... }:
 {
-  imports = [
-    ./clblast.nix # OpenCL BLAS for GPU-accelerated compute
-    ./hyprland.nix
-    ./multimon-ng.nix
-    # packages-overlay.nix removed — overlay already applied via flake/lib.nix mkPkgs
-    ./settings.nix
-    ./wb32-dfu-updater.nix
-  ];
+  imports =
+    let
+      excludes = [
+        "caches.data.nix" # data file, not a module
+        "packages-overlay.nix" # removed — overlay already applied via flake/lib.nix mkPkgs
+      ];
+    in
+      builtins.readDir ./.
+      |> builtins.attrNames
+      |> builtins.filter (n: n != "default.nix" && n != "README.md" && !builtins.elem n excludes)
+      |> map (n: ./. + "/${n}");
 }

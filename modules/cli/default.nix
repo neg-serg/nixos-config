@@ -1,15 +1,8 @@
 { ... }:
 {
-  imports = [
-    ./archives
-    ./dev.nix
-    ./file-ops.nix
-    ./media.nix
-    ./monitoring.nix
-    ./network.nix
-    ./system.nix
-    ./text.nix
-    ./tools.nix
-    ./ugrep.nix
-  ];
+  imports =
+    builtins.readDir ./.
+    |> builtins.attrNames
+    |> builtins.filter (n: n != "default.nix" && n != "README.md")
+    |> map (n: ./. + "/${n}");
 }

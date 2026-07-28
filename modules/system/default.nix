@@ -1,27 +1,15 @@
 { ... }:
 {
-  imports = [
-    ./boot
-    ./kernel
-    ./net
-    ./profiles
-    ./systemd
-    ./vm/definitions.nix # libvirt domain XML definitions (gentoo, nixos, win11)
-    ./boot.nix
-    ./deduplicate-shadow.nix
-    ./environment.nix
-    ./filesystems.nix
-    ./irqbalance.nix
-    ./log-ttys.nix
-    ./oomd.nix
-    ./pkgs.nix # Nix package manager
-    ./scx.nix
-    ./preserve-flake.nix
-    ./swapfile.nix
-    ./tailscale.nix
-    ./users.nix
-    ./virt.nix
-    ./winapps.nix
-    ./zram.nix
-  ];
+  imports =
+    let
+      excludes = [
+        "disabled-modules.nix" # dead code — not imported anywhere
+        "vm"           # imported explicitly below as ./vm/definitions.nix
+      ];
+    in
+      builtins.readDir ./.
+      |> builtins.attrNames
+      |> builtins.filter (n: n != "default.nix" && n != "README.md" && !builtins.elem n excludes)
+      |> map (n: ./. + "/${n}")
+      ++ [ ./vm/definitions.nix ];
 }
