@@ -13,23 +13,23 @@
       url = "github:gmodena/nix-flatpak";
     };
     nix-src = {
-      url = "github:DeterminateSystems/nix-src";
+      url = "github:NixOS/nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland = {
-      url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.55.4";
+      url = "git+https://github.com/hyprwm/Hyprland?ref=refs/tags/v0.50.0&submodules=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hy3 = {
       url = "github:outfoxxed/hy3";
     };
     raise = {
-      url = "github:neg-serg/raise";
+      url = "github:vicinaehq/raise";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     wl = {
       url = "github:neg-serg/wl";
-      flake = false;
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
 
@@ -47,11 +47,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprscratch = {
-      url = "github:neg-serg/hyprscratch";
+      url = "github:outfoxxed/hyprscratch";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     quickshell = {
-      url = "git+https://git.outfoxxed.me/quickshell/quickshell";
+      url = "github:quickshell-mirror/quickshell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rsmetrx = {
@@ -63,7 +63,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     tailray = {
-      url = "github:NotAShelf/tailray";
+      url = "github:neg-serg/tailray";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     winapps = {
@@ -87,8 +87,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     talktype = {
-      url = "github:lmacan1/talktype";
-      flake = false;
+      url = "github:neg-serg/talktype";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     codex-stellarium = {
       url = "path:/home/neg/src/1st-level/look-for-firefox-customizations";
@@ -109,48 +109,23 @@
       };
       supportedSystems = [ "x86_64-linux" ];
       sharedPackages = lib.genAttrs supportedSystems (system: flakeLib.mkPkgs system);
-      perSystem =
-        system:
-        import ./flake/per-system.nix {
-          inherit
-            self
-            inputs
-            nixpkgs
-            flakeLib
-            ;
-          pkgs = sharedPackages.${system};
-        } system;
 
-      perSystemDevShells =
-        system:
-        import ./flake/devshells.nix {
-          inherit
-            self
-            inputs
-            nixpkgs
-            flakeLib
-            ;
-          pkgs = sharedPackages.${system};
-        } system;
-
-      perSystemApps =
-        system:
-        import ./flake/apps.nix {
-          inherit
-            self
-            inputs
-            nixpkgs
-            flakeLib
-            ;
+      # Dendritic per-system output: each output imports from its own file.
+      # mkPerSystem is a thin closure-builder — each invocation creates an
+      # independent eval unit for nix-eval-jobs parallelism.
+      mkPerSystem =
+        path: system:
+        import path {
+          inherit self inputs nixpkgs flakeLib;
           pkgs = sharedPackages.${system};
         } system;
     in
     {
-      packages = lib.genAttrs supportedSystems (s: (perSystem s).packages);
-      formatter = lib.genAttrs supportedSystems (s: (perSystem s).formatter);
-      checks = lib.genAttrs supportedSystems (s: (perSystem s).checks);
-      devShells = lib.genAttrs supportedSystems (s: (perSystemDevShells s).devShells);
-      apps = lib.genAttrs supportedSystems (s: (perSystemApps s).apps);
+      packages = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/per-system.nix s).packages);
+      formatter = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/per-system.nix s).formatter);
+      checks = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/per-system.nix s).checks);
+      devShells = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/devshells.nix s).devShells);
+      apps = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/apps.nix s).apps);
       nixosConfigurations = import ./flake/nixos.nix {
         inherit inputs nixpkgs self;
         pkgs = sharedPackages.x86_64-linux;
