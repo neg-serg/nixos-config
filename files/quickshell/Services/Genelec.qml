@@ -35,7 +35,7 @@ RowLayout {
     property real preMuteVolume: -40
     property bool available: false
     property bool busy: false
-
+    property bool _userInputActive: false  // blocks stateReader overwrite during user interaction
     // ---- Persisted state ----
     property real _lastSetVolume: {
         if (StateCache.state && StateCache.state.genelecVolume !== undefined)
@@ -74,21 +74,7 @@ RowLayout {
                 color: Color.withAlpha(Theme.accentPrimary, volSlider.hovered ? 0.65 : 0.40)
             }
         }
-        handle: Item {
-            x: volSlider.leftPadding + volSlider.visualPosition * (volSlider.availableWidth - 8) - 4
-            y: volSlider.topPadding + volSlider.availableHeight / 2 - 4
-            implicitWidth: 8; implicitHeight: 8
-            opacity: volSlider.hovered || volSlider.pressed ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 120 } }
-            Rectangle {
-                anchors.fill: parent; radius: 4
-                color: "#00000000"; border { width: 1; color: Color.withAlpha(Theme.accentPrimary, 0.7) }
-            }
-            Rectangle {
-                anchors.centerIn: parent; width: 5; height: 5; radius: 2.5
-                color: Color.withAlpha(Theme.accentPrimary, 0.8)
-            }
-        }
+
     }
     // Cooldown + debounce: genlc max 1 per 3000ms, waits 2500ms after last input
     property real _lastRequestMs: 0
@@ -98,6 +84,9 @@ RowLayout {
         interval: 100; repeat: true; running: true
         onTriggered: {
             var now = Date.now();
+            // Clear user-input guard after debounce window
+            if (root._userInputActive && now - root._lastRequestMs >= 2500)
+                root._userInputActive = false;
             if (root.busy) return;
             if (now - root._lastRequestMs < 2500) return;       // debounce
             if (now - root._lastGenlcMs < 3000) return;         // cooldown
@@ -171,6 +160,7 @@ RowLayout {
 
     // ---- Unified input pipeline: slider + CLI wheel → throttle → genlc ----
     function _requestVolume(dB) {
+        _userInputActive = true;
         root.displayDb = dB;
         root.pendingDb = dB;
         root._lastRequestMs = Date.now();
@@ -179,12 +169,8 @@ RowLayout {
     // CLI sync — poll state file for external volume changes
     ProcessRunner {
         id: stateReader
-        cmd: ["/run/current-system/sw/bin/cat", "/tmp/genlc-volume"]
-        intervalMs: 15
-        autoStart: true
-        restartOnExit: false
         onLine: function(line) {
-            if (root.busy) return;
+            if (root.busy || root._userInputActive) return;
             var v = parseFloat(line);
             if (!isNaN(v) && v !== root.displayDb && !volSlider.pressed) {
                 root._requestVolume(v);
