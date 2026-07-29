@@ -10,15 +10,15 @@ repo: apps → systemd‑resolved (127.0.0.53) → AdGuardHome (127.0.0.1:53) �
   scraping.
 - Runs Prometheus Unbound exporter (default: 127.0.0.1:9167) to translate Unbound stats into
   Prometheus metrics.
-- Adds a Prometheus scrape job `unbound`. Grafana and Loki have been removed from this configuration.
+- Adds a Prometheus scrape job `unbound`. Grafana and Loki have been removed from this
+  configuration.
 
 This keeps all control and scrape endpoints bound to localhost by default. No firewall exposure is
 required.
 
 ## Enabling (NixOS snippets)
 
-Unbound is enabled via `servicesProfiles.unbound.enable = true` (set in
-`hosts/odin/services.nix`).
+Unbound is enabled via `servicesProfiles.unbound.enable = true` (set in `hosts/odin/services.nix`).
 
 ### Using Comss.one DNS (optional)
 

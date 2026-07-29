@@ -270,17 +270,21 @@ release. We usually bump manually to keep ABI changes under control.
 ## Profiles
 
 - Profiles: feature-flag bundles under `modules/profiles/`:
-  - `profiles.desktop` — GUI defaults (features.gui.* = mkDefault true)
+
+  - `profiles.desktop` — GUI defaults (features.gui.\* = mkDefault true)
   - `profiles.gaming` — gaming optimizations + GUI apps
   - `profiles.server` — headless defaults
   - `profiles.audio-pro` — pro-audio (pipewire realtime, limits)
   - `profiles.dev` — development toolchains
   - `profiles.lite` — minimal (disables most features)
+
 - Service profiles: toggle per‑service via `profiles.services.<name>.enable` (alias to
   `servicesProfiles.<name>.enable`).
+
   - Hosts set desired values directly (no mkForce needed).
 
 - Host‑specific config: keep concrete settings under `hosts/<host>/*.nix`.
+
   - Examples: NIC names, local DNS rewrites.
 
 Example (host):
@@ -717,7 +721,6 @@ Prometheus PHP‑FPM Exporter
 
 - The `php-fpm-exporter` monitoring module has been removed. Prometheus server is disabled in this
   configuration, and the exporter depended on `config.services.prometheus`.
-
 
 Nextcloud on odin (clean install)
 

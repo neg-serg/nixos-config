@@ -7,8 +7,8 @@
         "packages-overlay.nix" # removed — overlay already applied via flake/lib.nix mkPkgs
       ];
     in
-      builtins.readDir ./.
-      |> builtins.attrNames
-      |> builtins.filter (n: n != "default.nix" && !builtins.elem n excludes)
-      |> builtins.map (n: ./. + "/${n}");
+    builtins.readDir ./.
+    |> builtins.attrNames
+    |> builtins.filter (n: n != "default.nix" && !builtins.elem n excludes)
+    |> builtins.map (n: ./. + "/${n}");
 }

@@ -13,13 +13,18 @@ let
   # App configs from local files
   appDir = ../../files/winapps/apps;
 
-  parseAppInfo = name:
+  parseAppInfo =
+    name:
     let
       raw = builtins.readFile "${appDir}/${name}/info";
-      getVar = var: let
-        matches = builtins.match ".*${var}=\"([^\"]*)\".*" raw;
-      in if matches == null then "" else builtins.elemAt matches 0;
-    in {
+      getVar =
+        var:
+        let
+          matches = builtins.match ".*${var}=\"([^\"]*)\".*" raw;
+        in
+        if matches == null then "" else builtins.elemAt matches 0;
+    in
+    {
       name = getVar "NAME";
       fullName = getVar "FULL_NAME";
       executable = getVar "WIN_EXECUTABLE";
@@ -28,13 +33,17 @@ let
     };
 
   # Desktop entries for selected apps
-  desktopApps = winappsCfg.desktopApps or [];
-  desktopFiles = pkgs.runCommand "winapps-desktop" {} (
+  desktopApps = winappsCfg.desktopApps or [ ];
+  desktopFiles = pkgs.runCommand "winapps-desktop" { } (
     ''
       mkdir -p $out/share/applications
     ''
-    + lib.concatMapStrings (appName:
-      let app = parseAppInfo appName; in ''
+    + lib.concatMapStrings (
+      appName:
+      let
+        app = parseAppInfo appName;
+      in
+      ''
         cat > "$out/share/applications/winapps-${appName}.desktop" << 'DESKTOP'
         [Desktop Entry]
         Type=Application
@@ -45,7 +54,11 @@ let
         Exec=${pkgs.writeShellScriptBin "winapps-${appName}" ''
           exec winapps ${appName} "''${1:-}"
         ''}/bin/winapps-${appName} %F
-        Categories=${builtins.replaceStrings ["WinApps;"] [""] (if app.categories == "" then "Office" else app.categories)}
+        Categories=${
+          builtins.replaceStrings [ "WinApps;" ] [ "" ] (
+            if app.categories == "" then "Office" else app.categories
+          )
+        }
         MimeType=${app.mimeTypes}
         Terminal=false
         NoDisplay=false
@@ -120,7 +133,8 @@ in
         pkgs.qemu_kvm
         pkgs.virt-manager
         pkgs.virt-viewer
-      ] ++ lib.optional (desktopApps != []) desktopFiles
+      ]
+      ++ lib.optional (desktopApps != [ ]) desktopFiles
     );
     environment.etc."winapps/winapps.conf".text = ''
       # WinApps configuration (default)
