@@ -104,7 +104,6 @@
     pkgs.zellij # Terminal workspace with batteries included (Rust)
     pkgs.kanata # keyboard remapper (Caps→Ctrl, etc.)
     pkgs.podman # container management for distrobox (Docker-compatible)
-    (pkgs.writeShellScriptBin "genlc-media" (builtins.readFile ./../../files/scripts/genlc-media.sh))
   ];
   environment.etc."zellij/config.kdl".text = builtins.readFile ./../../files/gui/zellij/config.kdl;
 }
