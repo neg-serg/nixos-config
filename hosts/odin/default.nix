@@ -35,7 +35,7 @@
   features.web.vivaldi.enable = true;
   features.web.default = "vivaldi";
   features.web.codexStellarium.enable = true;
-  features.mail.vdirsyncer.enable = true;
+  features.mail.vdirsyncer.enable = false; # Disabled: no Google OAuth credentials (missing secrets/home/vdirsyncer/google.sops.yaml)
   features.mail.mbsync.enable = false;
   features.hardware.bluetooth.enable = false;
   features.net.proxy.enable = true;
