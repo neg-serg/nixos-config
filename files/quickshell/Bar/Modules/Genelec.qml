@@ -53,7 +53,7 @@ LocalMods.AudioEndpointTile {
     function _serviceStep() {
         // Override: Genelec uses dB steps, not percentage
         // Convert our scroll direction to dB delta
-        return Services.Genelec ? Services.Genelec.displayStep : 2.5;
+        return 2.5;
     }
 
     function invokeChange(direction) {
