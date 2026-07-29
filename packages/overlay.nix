@@ -30,8 +30,6 @@ in
       sha256 = "sha256-rig1sSCB9ycaawsl00uH02sCLEA3ACjKShD5D87fpmE=";
     };
   });
-  # Agent multiplexer for AI coding agents (herdr)
-  herdr = inputs.herdr.packages.${final.stdenv.hostPlatform.system}.default;
 
   # GHCi with TidalCycles library preloaded — used by tidal.nvim
   tidal-ghci = final.writeShellScriptBin "tidal-ghci" ''
