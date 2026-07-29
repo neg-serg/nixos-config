@@ -86,7 +86,7 @@ PopupWindow {
                     TextInput {
                         id: searchField
                         Layout.fillWidth: true
-                        implicitHeight: subMenu._searchBarH
+                        Layout.preferredHeight: subMenu._searchBarH;
                         color: Theme.textPrimary
                         font.family: Theme.fontFamily
                         font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85)
