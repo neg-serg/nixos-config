@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# genlc-diagnose: check why genlc can't talk to Genelec GLM adapter
+set -euo pipefail
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
+ok() { echo -e "  ${GREEN}✓${NC} $1"; }
+warn() { echo -e "  ${YELLOW}⚠${NC} $1"; }
+fail() { echo -e "  ${RED}✗${NC} $1"; }
+
+echo "=== Genelec GLM Adapter Diagnostics ==="
+echo ""
+
+# 1. Check genlc binary
+echo "1. genlc binary"
+if command -v genlc &>/dev/null; then
+  ok "genlc found: $(which genlc) ($(genlc --version 2>&1))"
+else
+  fail "genlc not in PATH"
+fi
+echo ""
+
+# 2. Check HID devices
+echo "2. USB/HID devices"
+if ls /dev/hidraw* &>/dev/null; then
+  ok "$(ls /dev/hidraw* | wc -l) hidraw device(s)"
+  # Try to find Genelec VID/PID
+  for dev in /dev/hidraw*; do
+    info=$(udevadm info "$dev" 2>/dev/null | grep -i -E 'genelec|0400|1689|ID_VENDOR|ID_MODEL' | head -5 || true)
+    if [ -n "$info" ]; then
+      ok "Genelec device: $dev"
+      echo "$info"
+    fi
+  done
+else
+  fail "No /dev/hidraw* devices found"
+fi
+echo ""
+
+# 3. Check permissions
+echo "3. Permissions"
+for dev in /dev/hidraw*; do
+  perms=$(stat -c '%A %U:%G' "$dev" 2>/dev/null || true)
+  if echo "$perms" | grep -q 'rw'; then
+    ok "$dev: $perms"
+  else
+    warn "$dev: $perms (genlc may not have access)"
+  fi
+done
+echo ""
+
+# 4. Check udev rules
+echo "4. udev rules"
+if [ -f /etc/udev/rules.d/99-genelec.rules ] || [ -f /etc/udev/rules.d/99-genlc.rules ]; then
+  ok "Genelec udev rules found"
+  cat /etc/udev/rules.d/99-genelec.rules 2>/dev/null || cat /etc/udev/rules.d/99-genlc.rules 2>/dev/null
+else
+  warn "No Genelec udev rules found — may cause permission issues"
+  echo "  Expected: /etc/udev/rules.d/99-genelec.rules"
+fi
+echo ""
+
+# 5. Try genlc discover
+echo "5. GLM network discovery"
+genlc discover 2>&1 && ok "GLM devices discovered" || fail "No GLM devices found (adapter may be unplugged)"
+echo ""
+
+# 6. Try genlc status
+echo "6. genlc status"
+genlc status 2>&1 | head -5 && ok "status OK" || fail "status failed (see error above)"
+echo ""
+
+echo "=== Summary ==="
+echo "Run the diagnostics above to identify the issue."
