@@ -43,9 +43,10 @@ let
     ];
   };
 
-  # Pre-start init: deploy writable copies of Theme/, Settings/, Settings.json.
-  # These 3 items must be user-writable. Everything else is managed by nix-maid
-  # as read-only symlinks.
+  # Pre-start init: deploy writable config directories before quickshell starts.
+  # Theme, Settings — copy-once so user edits persist.
+  # Components, Bar — force-copied on every start so dev edits under
+  # /etc/nixos/files/quickshell/ take effect immediately.
   quickshellPreStart = pkgs.writeShellScript "quickshell-pre-start" ''
     qs_dir="$HOME/.config/quickshell"
     src="${quickshellSrc}"
@@ -69,8 +70,17 @@ let
       cp "$src/Settings.json" "$qs_dir/Settings.json" 2>/dev/null || true
       chmod u+w "$qs_dir/Settings.json" 2>/dev/null || true
     fi
-  '';
 
+    # Components/ — force-copy on every start for dev iteration
+    mkdir -p "$qs_dir/Components"
+    cp -rfT "$src/Components" "$qs_dir/Components" 2>/dev/null || true
+    chmod -R u+w "$qs_dir/Components" 2>/dev/null || true
+
+    # Bar/ — force-copy on every start for dev iteration
+    mkdir -p "$qs_dir/Bar"
+    cp -rfT "$src/Bar" "$qs_dir/Bar" 2>/dev/null || true
+    chmod -R u+w "$qs_dir/Bar" 2>/dev/null || true
+  '';
   # Build individual nix-maid entries for source dir top-level contents,
   # excluding writable paths (Theme, Settings, Settings.json, .github).
   quickshellSrcEntries = builtins.readDir quickshellSrc;
