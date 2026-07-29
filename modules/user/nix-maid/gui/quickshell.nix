@@ -43,30 +43,40 @@ let
     ];
   };
 
-  # Theme init: deploy Theme from source to writable ~/.config/quickshell directory.
-  quickshellThemeDir = "Theme";
+  # Pre-start init: deploy writable copies of Theme/, Settings/, Settings.json.
+  # These 3 items must be user-writable. Everything else is managed by nix-maid
+  # as read-only symlinks.
+  quickshellPreStart = pkgs.writeShellScript "quickshell-pre-start" ''
+    qs_dir="$HOME/.config/quickshell"
+    src="${quickshellSrc}"
 
-  # Theme source path (resolved to Nix store at build time)
-  quickshellThemeSrc = "${quickshellSrc}/${quickshellThemeDir}";
-
-  quickshellThemeInitScript = pkgs.writeShellScript "quickshell-theme-init" ''
-    theme_dir="$HOME/.config/quickshell/${quickshellThemeDir}"
-    theme_src="${quickshellThemeSrc}"
-    if [ ! -d "$theme_dir" ]; then
-      mkdir -p "$theme_dir"
-      cp -rT "$theme_src" "$theme_dir" 2>/dev/null || true
+    # Theme/ — copy-once from Nix store, make writable
+    if [ ! -d "$qs_dir/Theme" ]; then
+      mkdir -p "$qs_dir/Theme"
+      cp -rT "$src/Theme" "$qs_dir/Theme" 2>/dev/null || true
+      chmod -R u+w "$qs_dir/Theme" 2>/dev/null || true
     fi
-    # Ensure quickshell can write to theme files (Nix store sources are read-only)
-    chmod -R u+w "$theme_dir" 2>/dev/null || true
+
+    # Settings/ — copy-once, make writable (Settings.qml, Theme.qml, StateCache.qml)
+    if [ ! -d "$qs_dir/Settings" ]; then
+      mkdir -p "$qs_dir/Settings"
+      cp -rT "$src/Settings" "$qs_dir/Settings" 2>/dev/null || true
+      chmod -R u+w "$qs_dir/Settings" 2>/dev/null || true
+    fi
+
+    # Settings.json — copy-once, user-editable
+    if [ ! -f "$qs_dir/Settings.json" ]; then
+      cp "$src/Settings.json" "$qs_dir/Settings.json" 2>/dev/null || true
+      chmod u+w "$qs_dir/Settings.json" 2>/dev/null || true
+    fi
   '';
 
   # Build individual nix-maid entries for source dir top-level contents,
-  # excluding immutable paths (Theme, .github).  This makes ~/.config/quickshell
-  # a real writable directory so that theme-init can create Theme/ as writable.
+  # excluding writable paths (Theme, Settings, Settings.json, .github).
   quickshellSrcEntries = builtins.readDir quickshellSrc;
 
   quickshellSrcNames = builtins.filter (
-    name: name != "Theme" && name != "theme" && name != ".github"
+    name: name != "Theme" && name != "theme" && name != ".github" && name != "Settings.json" && name != "Settings"
   ) (builtins.attrNames quickshellSrcEntries);
 
   quickshellHomeFiles = builtins.listToAttrs (
@@ -86,7 +96,7 @@ lib.mkIf quickshellEnabled (
         quickshellWrapped # Wrapped Quickshell with dependencies and environment
       ];
 
-      # Quickshell panel service
+      # Quickshell panel service — ExecStartPre deploys writable config before start
       systemd.user.services.quickshell = {
         enable = true;
         description = "Quickshell - QtQuick based shell for Wayland";
@@ -99,6 +109,7 @@ lib.mkIf quickshellEnabled (
         wants = [ "pipewire.service" ];
         wantedBy = [ "hyprland-session.target" ];
         serviceConfig = {
+          ExecStartPre = "${quickshellPreStart}";
           ExecStart = "${lib.getExe quickshellWrapped} -p %h/.config/quickshell/shell.qml";
           Restart = "on-failure";
           RestartSec = 1;
@@ -112,35 +123,28 @@ lib.mkIf quickshellEnabled (
 
     (neg.mkHomeFiles quickshellHomeFiles)
     {
-      # Remove old whole-directory quickshell symlink before nix-maid
-      # activation deploys individual entries.  Without this, systemd-tmpfiles
-      # hits "unsafe path transition" when trying to create symlinks inside a
-      # symlinked parent directory (systemd >=252).
+      # Remove old quickshell symlinks before nix-maid activation deploys new ones.
+      # Only deletes symlinks — preserves writable dirs (Theme, Settings)
+      # and writable files (Settings.json) created by ExecStartPre.
       systemd.user.services.quickshell-cleanup-symlink = {
-        description = "Remove old quickshell symlink before nix-maid activation";
+        description = "Remove old quickshell symlinks before nix-maid activation";
         before = [ "maid-activation.service" ];
         wantedBy = [ "maid-activation.service" ];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = pkgs.writeShellScript "quickshell-cleanup-symlink" ''
-            rm -rf "$HOME/.config/quickshell" 2>/dev/null || true
+            qs="$HOME/.config/quickshell"
+            if [ -L "$qs" ]; then
+              rm -f "$qs" 2>/dev/null || true
+            elif [ -d "$qs" ]; then
+              find "$qs" -maxdepth 1 -type l -delete 2>/dev/null || true
+            fi
             rm -rf "$HOME/.local/state/nix-maid/static/.config/quickshell" 2>/dev/null || true
           '';
         };
       };
     }
     {
-      systemd.user.services.quickshell-theme-init = {
-        description = "Deploy writable Theme directory before quickshell starts";
-        after = [ "maid-activation.service" ];
-        before = [ "quickshell.service" ];
-        requiredBy = [ "quickshell.service" ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${quickshellThemeInitScript}";
-        };
-      };
-
       systemd.user.services.quickshell.after = lib.mkForce [
         "graphical-session-pre.target"
         "maid-activation.service"
