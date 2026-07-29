@@ -18,6 +18,13 @@ for name in dirs:
     d = os.path.join(MUSIC, name)
     if not os.path.isdir(d):
         continue
+
+    # Only process dirs matching Artist-⟨code⟩-Album format
+    m = PATTERN.match(name)
+    if not m:
+        continue
+
+    # Skip dirs that already have a cover image
     try:
         files = os.listdir(d)
     except PermissionError:
@@ -29,17 +36,10 @@ for name in dirs:
     if has_cover:
         continue
 
-    m = PATTERN.match(name)
-    if m:
-        artist, album = m.group(1), m.group(2)
-    else:
-        parts = name.split('-', 1)
-        artist = parts[0]
-        album = parts[1] if len(parts) > 1 else name
-
+    artist, album = m.group(1), m.group(2)
     missing.append((name, artist.strip(), album.strip()))
 
-print(f"Albums without covers: {len(missing)}/{len(dirs)}")
+print(f"Albums without covers: {len(missing)}/{sum(1 for n in dirs if PATTERN.match(n))}")
 print()
 
 success = 0
