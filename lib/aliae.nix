@@ -7,7 +7,9 @@
 }:
 let
   mkAlias = name: value: "  - name: ${name}\n    value: ${builtins.toJSON value}\n";
-  mkAliasIf = cond: name: value: if cond then mkAlias name value else "";
+  mkAliasIf =
+    cond: name: value:
+    if cond then mkAlias name value else "";
   mkEnvVar = name: if isNushell then "$env.${name}" else "$${name}";
   mkCmd = name: if isNushell then "^${name}" else name;
   checks = import ./package-checks.nix { inherit pkgs; };
@@ -227,10 +229,14 @@ let
     (mkAliasIf hasMpv "mp" "${mkCmd "mpv"}")
     (mkAliasIf hasMpv "mpa" "mpv -mute") # mpv audio-only
     (mkAliasIf hasMpv "mpi" "mpv --interpolation=yes --tscale=oversample --video-sync=display-resample")
-    (mkAliasIf hasRg "rg" "${mkCmd "rg"} --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden")
+    (mkAliasIf hasRg "rg"
+      "${mkCmd "rg"} --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden"
+    )
     (mkAliasIf hasNmap "nmap-vulners" "nmap -sV --script=vulners/vulners.nse")
     (mkAliasIf hasNmap "nmap-vulscan" "nmap -sV --script=vulscan/vulscan.nse")
-    (mkAliasIf hasDuf "df" "duf --theme neg --style plain --no-header --bar-style modern --hide special --hide-mp '${homeDir}/*,/var/lib/*,/nix/store'")
+    (mkAliasIf hasDuf "df"
+      "duf --theme neg --style plain --no-header --bar-style modern --hide special --hide-mp '${homeDir}/*,/var/lib/*,/nix/store'"
+    )
     (mkAliasIf hasDust "sp" "dust -r")
     (mkAliasIf hasKhal "cal" "khal calendar")
     (mkAliasIf hasHxd "hexdump" "hxd")

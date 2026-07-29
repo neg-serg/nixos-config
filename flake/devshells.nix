@@ -27,6 +27,11 @@ let
 in
 {
   devShells = import ./devshells/default.nix {
-    inherit pkgs lib preCommit nixfmtPkg;
+    inherit
+      pkgs
+      lib
+      preCommit
+      nixfmtPkg
+      ;
   };
 }

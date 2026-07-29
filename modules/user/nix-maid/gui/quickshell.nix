@@ -76,7 +76,12 @@ let
   quickshellSrcEntries = builtins.readDir quickshellSrc;
 
   quickshellSrcNames = builtins.filter (
-    name: name != "Theme" && name != "theme" && name != ".github" && name != "Settings.json" && name != "Settings"
+    name:
+    name != "Theme"
+    && name != "theme"
+    && name != ".github"
+    && name != "Settings.json"
+    && name != "Settings"
   ) (builtins.attrNames quickshellSrcEntries);
 
   quickshellHomeFiles = builtins.listToAttrs (
