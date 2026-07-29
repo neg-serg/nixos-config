@@ -65,6 +65,7 @@ RowLayout {
         Layout.preferredWidth: Math.round(46 * Theme.scale(Screen))
         Layout.alignment: Qt.AlignVCenter
         onMoved: { _requestVolume(root.sliderToDb(value)); }
+        handle: Item {}  // remove default square handle — only scroll wheel used
         background: Rectangle {
             x: volSlider.leftPadding; y: volSlider.topPadding + volSlider.availableHeight / 2 - 1
             width: volSlider.availableWidth; height: 1.5; radius: 1
@@ -74,9 +75,8 @@ RowLayout {
                 color: Color.withAlpha(Theme.accentPrimary, volSlider.hovered ? 0.65 : 0.40)
             }
         }
-
     }
-    // Cooldown + debounce: genlc max 1 per 3000ms, waits 2500ms after last input
+
     property real _lastRequestMs: 0
     property real _lastGenlcMs: 0
     Timer {
