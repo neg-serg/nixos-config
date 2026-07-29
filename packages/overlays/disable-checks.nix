@@ -110,11 +110,6 @@ inputs: final: finalPrev: {
         doCheck = false; # flaky timing test
       });
       # AUDIT: likely fixed in nixpkgs 26.05 — try removing
-      pylint = python-prev.pylint.overrideAttrs (_old: {
-        doCheck = false; # flaky primer test (network-dependent)
-        pytestCheckPhase = "true"; # also skip pytest in case doCheck doesn't propagate
-      });
-      # AUDIT: likely fixed in nixpkgs 26.05 — try removing
       rich = python-prev.rich.overrideAttrs (_old: {
         doCheck = false; # flaky test_brokenpipeerror
       });
