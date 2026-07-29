@@ -6,7 +6,6 @@ with lib;
     ai = {
       enable = mkBool "enable AI tools (e.g., LM Studio)" true;
       omp.enable = mkBool "install Oh My Pi (omp) AI coding agent (fork of Pi)" false;
-      pi.enable = mkBool "install Pi coding agent CLI" false;
     };
     iac = {
       backend = mkOption {
