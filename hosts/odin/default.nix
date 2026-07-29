@@ -67,7 +67,6 @@
 
   # Host-specific feature toggles
   features.dev.ai.omp.enable = true; # Oh My Pi (omp) — AI coding agent fork with LSP, DAP, subagents
-  features.dev.ai.pi.enable = false;
   features.cli.broot.enable = true;
   features.dev.tla.enable = true;
   features.hardware.usbAutomount.enable = true;
