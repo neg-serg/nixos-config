@@ -26,7 +26,7 @@ required property var entryData
 
     
     // Theming
-    property color hoverBaseColor: Theme.surfaceHover
+    property color hoverBaseColor: Qt.rgba(Theme.accentPrimary.r, Theme.accentPrimary.g, Theme.accentPrimary.b, 0.1)
     property int itemRadius:Theme.panelMenuItemRadius
 
     width: listViewRef.width
@@ -44,7 +44,7 @@ required property var entryData
         radius: itemRadius
         // Pick readable hover text color using guard (use menu base background, not semi-transparent hover overlay)
         ContrastGuard { id: menuCg; bg: Theme.background; label: 'MenuItem' }
-        property color hoverTextColor: mouseArea.containsMouse ? menuCg.fg : Theme.textPrimary
+        property color hoverTextColor: mouseArea.containsMouse ? Theme.accentPrimary : Theme.textPrimary
 
         RowLayout {
             anchors.fill: parent

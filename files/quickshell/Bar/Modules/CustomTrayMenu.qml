@@ -4,6 +4,7 @@ import QtQuick.Controls 2.15
 import Quickshell
 import qs.Settings
 import qs.Components
+import "../../Helpers/Color.js" as Color
 import "../../Helpers/Utils.js" as Utils
 import "../../Helpers/MenuUtils.js" as MenuUtils
 
@@ -67,7 +68,7 @@ import "../../Helpers/MenuUtils.js" as MenuUtils
         id: bg;
         anchors.fill: parent;
         color: Theme.background;
-        border.color: Theme.borderSubtle;
+        border.color: Color.withAlpha(Theme.accentPrimary, 0.3);
         border.width: Theme.uiBorderWidth;
         radius: Theme.panelMenuRadius;
         z: 0;
