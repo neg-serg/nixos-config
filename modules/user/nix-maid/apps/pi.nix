@@ -21,13 +21,11 @@ let
     exec ${lib.getExe' pkgs.nodejs "node"} ${piGlobal} "$@"
   '';
 
-  # Wrapper that injects secrets. Provider/model defaults come from settings.json
-  # (defaultProvider: deepseek, defaultModel: deepseek/deepseek-v4-flash).
+  # Wrapper that injects secrets. Provider/model defaults come from pi config.
   # Flags deliberately omitted: they break `pi update`/`pi install` etc.
   # Takes precedence over the system-wide `pi` from pi.nix.
   piWrapper = pkgs.writeShellScriptBin "pi" ''
     set -a
-    DEEPSEEK_API_KEY="$(${pkgs.coreutils}/bin/cat /run/user/1000/secrets/deepseek-api 2>/dev/null || echo "''${DEEPSEEK_API_KEY:-}")"
     GITHUB_TOKEN="$(${pkgs.coreutils}/bin/cat /run/secrets/github-token 2>/dev/null || echo "''${GITHUB_TOKEN:-}")"
     set +a
     exec ${lib.getExe' pkgs.nodejs "node"} ${piGlobal} "$@"
@@ -59,7 +57,7 @@ let
 in
 lib.mkIf enable (
   lib.mkMerge [
-    # User-local pi wrapper (deepseek by default + secrets)
+    # User-local pi wrapper with GitHub token injection
     {
       users.users.neg.packages = [
         piWrapper
