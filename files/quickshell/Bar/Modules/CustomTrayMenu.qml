@@ -113,7 +113,7 @@ import "../../Helpers/MenuUtils.js" as MenuUtils
                     TextInput {
                         id: searchField;
                         Layout.fillWidth: true;
-                        implicitHeight: trayMenu._searchBarH;
+                        Layout.preferredHeight: trayMenu._searchBarH;
                         color: Theme.textPrimary;
                         font.family: Theme.fontFamily;
                         font.pixelSize: Math.round(Theme.fontSizeSmall * 0.85);
