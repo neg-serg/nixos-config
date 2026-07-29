@@ -1470,7 +1470,6 @@ Whether to enable enable Torrent stack (Transmission, tools, services).
 
 - [/modules/features/network.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
 
-
 ## features.web.enable
 
 Whether to enable enable Web stack (browsers + tools).

@@ -7,8 +7,8 @@ Scope
 
 Guidelines
 
-- Keep changes isolated to the relevant host directory; share logic via modules/profiles
-  instead of copy-pasting between hosts.
+- Keep changes isolated to the relevant host directory; share logic via modules/profiles instead of
+  copy-pasting between hosts.
 - Match the existing split files (`hardware.nix`, `networking.nix`, `services.nix`, `extra.nix`,
   `virtualisation/`) and keep host glue light.
 - Do not embed secrets; pull them from `secrets/` or options.

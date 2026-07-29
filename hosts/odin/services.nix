@@ -156,7 +156,6 @@ lib.mkMerge [
     };
     # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
 
-
     # Disable RNNoise virtual mic for this host by default
     hardware.audio.rnnoise.enable = false;
 
@@ -331,7 +330,6 @@ lib.mkMerge [
 
     # Disable runtime logrotate check (build-time check remains). Avoids false negatives
     # when rotating files under non-standard paths or missing until first run.
-
 
     # Resilio Sync: Web UI auth via SOPS, data under /zero/sync
     sops.secrets."resilio/http-login" =
