@@ -126,7 +126,7 @@ hl.config({
   misc = {
     disable_hyprland_logo = false, enable_anr_dialog = false, force_default_wallpaper = 0,
     font_family = "Iosevka", splash_font_family = "Iosevka",
-    vrr = 3, enable_swallow = true, middle_click_paste = false, disable_autoreload = 1,
+    vrr = 1, disable_autoreload = 1,
   },
   cursor = {
     sync_gsettings_theme = true, min_refresh_rate = 240, inactive_timeout = 0,
