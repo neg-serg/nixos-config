@@ -81,6 +81,7 @@ lib.mkMerge [
         else
           [ pkgs.beets ] # Music library manager and tagger (native)
       ))
+      ++ [ pkgs.sacad ] # Standalone cover art downloader for music library
       ++ [
         # Audio
         pkgs.mpc # A minimalist command line interface to MPD
