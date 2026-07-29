@@ -15,6 +15,10 @@ in
     sshKeyPaths = [ ];
   };
 
+  # ramfs does not support chown, causing sops-install-secrets to fail silently
+  # during activation (the error is swallowed by a subshell wrapper). tmpfs works.
+  sops.useTmpfs = true;
+
   sops.secrets."github-netrc" = {
     sopsFile = repoRoot + "/secrets/github-netrc.sops.yaml";
     owner = config.users.main.name or "neg";
