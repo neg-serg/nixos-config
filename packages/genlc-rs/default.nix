@@ -1,4 +1,11 @@
-{ lib, rustPlatform, pkg-config, udev, libusb1, hidapi }:
+{
+  lib,
+  rustPlatform,
+  pkg-config,
+  udev,
+  libusb1,
+  hidapi,
+}:
 
 rustPlatform.buildRustPackage {
   pname = "genlc";
@@ -11,7 +18,11 @@ rustPlatform.buildRustPackage {
   };
 
   nativeBuildInputs = [ pkg-config ];
-  buildInputs = [ udev libusb1 hidapi ];
+  buildInputs = [
+    udev
+    libusb1
+    hidapi
+  ];
 
   postFixup = ''
     patchelf --add-rpath ${lib.makeLibraryPath [ libusb1 ]} $out/bin/genlc

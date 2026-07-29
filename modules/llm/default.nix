@@ -12,10 +12,10 @@ in
     let
       excludes = [ "open-webui.nix" ]; # disabled — not wired yet
     in
-      builtins.readDir ./.
-      |> builtins.attrNames
-      |> builtins.filter (n: n != "default.nix" && !builtins.elem n excludes)
-      |> builtins.map (n: ./. + "/${n}");
+    builtins.readDir ./.
+    |> builtins.attrNames
+    |> builtins.filter (n: n != "default.nix" && !builtins.elem n excludes)
+    |> builtins.map (n: ./. + "/${n}");
   config = lib.mkMerge [
     {
       services.ollama = {
