@@ -92,6 +92,8 @@ let
     && name != ".github"
     && name != "Settings.json"
     && name != "Settings"
+    && name != "Components"
+    && name != "Bar"
   ) (builtins.attrNames quickshellSrcEntries);
 
   quickshellHomeFiles = builtins.listToAttrs (
