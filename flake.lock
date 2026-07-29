@@ -544,26 +544,6 @@
         "type": "github"
       }
     },
-    "herdr": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "rust-overlay": "rust-overlay"
-      },
-      "locked": {
-        "lastModified": 1784657490,
-        "owner": "ogulcancelik",
-        "repo": "herdr",
-        "rev": "c5293af6909eebea7adb08ac17be03329606235c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ogulcancelik",
-        "repo": "herdr",
-        "type": "github"
-      }
-    },
     "hy3": {
       "inputs": {
         "hyprland": "hyprland"
@@ -1684,7 +1664,6 @@
         "caelestia-shell": "caelestia-shell",
         "determinate": "determinate",
         "extra-container": "extra-container",
-        "herdr": "herdr",
         "hy3": "hy3",
         "hyprland": "hyprland_2",
         "hyprscratch": "hyprscratch",
