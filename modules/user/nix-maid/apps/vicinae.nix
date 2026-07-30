@@ -85,6 +85,7 @@ let
     fallbacks = [
       "@neg/wl-switcher:wprandom"
       "@neg/wl-switcher:wpgrid"
+      "@neg/unsplash:wallpaper"
       "files:search"
       "clipboard:history"
     ];
@@ -124,6 +125,11 @@ let
       "action.save" = "control+S";
     };
     providers = {
+      "@neg/unsplash" = {
+        preferences = {
+          wallpaperPath = "~/pic/wl";
+        };
+      };
       "@neg/wl-switcher" = {
         preferences = {
           wallpaperPath = "~/pic/wl";
@@ -218,6 +224,7 @@ in
         pkgs.vicinae # Wayland-native app runner + window switcher
         pkgs.wl # Vulkan wallpaper daemon (used by wl-switcher extension)
         pkgs.wl-switcher # vicinae extension for wl wallpaper switching
+        pkgs.unsplash # vicinae extension for Unsplash wallpapers
         pkgs.skate # key-value store CLI (vicinae skate extension dep)
         # Wrapper: expose vicinae-browser-link from libexec to PATH
         (pkgs.writeShellScriptBin "vicinae-browser-link" ''
@@ -263,6 +270,7 @@ in
         "C %h/.local/share/vicinae/themes/neg-dark.toml 0644 - - - ${themeFile}"
         "C %h/.local/share/vicinae/themes/neg-kitty.toml 0644 - - - ${themeFileKitty}"
         "L+ %h/.local/share/vicinae/extensions/wl-switcher - - - - ${pkgs.wl-switcher}"
+        "L+ %h/.local/share/vicinae/extensions/unsplash - - - - ${pkgs.unsplash}"
         "L+ %h/.config/vicinae/nix-overrides.json - - - - ${nixOverridesFile}"
       ];
     })
