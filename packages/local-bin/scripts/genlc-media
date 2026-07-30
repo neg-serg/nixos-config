@@ -26,6 +26,7 @@ case "${1:-}" in
       capped=$(awk "BEGIN { printf \"%.1f\", ($target < -95.0) ? -95.0 : $target }")
     fi
     echo "$capped" > "$STATE"
+    genlc set-volume --volume "${capped}dB" 2>/dev/null
     log "$1: ${capped}dB"
     ;;
   mute)

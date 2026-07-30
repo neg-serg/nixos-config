@@ -78,10 +78,6 @@ LocalMods.AudioEndpointTile {
         function onAvailableChanged() { root._maybeHandle("available"); }
     }
 
-    Connections {
-        target: root
-        function onWheelStep(direction) { root.invokeChange(direction); }
-    }
 
     Component.onCompleted: refreshFromService()
 
