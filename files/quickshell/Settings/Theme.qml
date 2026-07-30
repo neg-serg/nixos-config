@@ -851,7 +851,7 @@ Singleton {
     property int volumeIconDownThreshold: val('volume.icon.downThreshold', 30)
     property int volumeIconUpThreshold: val('volume.icon.upThreshold', 50)
     // Volume-specific pill override (falls back to panel.pill.autoHidePauseMs)
-    property int volumePillAutoHidePauseMs: val('volume.pill.autoHidePauseMs', panelPillAutoHidePauseMs)
+    property int volumePillAutoHidePauseMs: val('volume.pill.autoHidePauseMs', 180000)
     // Volume-specific show delay override (falls back to panel.pill.showDelayMs)
     property int volumePillShowDelayMs: val('volume.pill.showDelayMs', panelPillShowDelayMs)
     // Core module timings
