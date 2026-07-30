@@ -118,4 +118,5 @@ in
   };
 
   # nixpkgs.config.rocmSupport moved to flake/pkgs-config.nix
+
 }
