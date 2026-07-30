@@ -38,13 +38,17 @@ let
   '';
 in
 lib.mkIf (cfg.enable or false) {
-  systemd.user.services."wl-greeter-sync" = {
-    description = "Sync current wallpaper to greeter cache for smooth transitions";
+  # wl-daemon: auto-restart on crash (DPMS output removal kills it)
+  systemd.user.services."wl-daemon" = {
+    description = "wl wallpaper daemon (Vulkan)";
     after = [ "graphical-session-pre.target" ];
     partOf = [ "graphical-session.target" ];
+    wantedBy = [ "graphical-session.target" ];
     serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${wlGreeterSync}";
+      Type = "simple";
+      ExecStart = "${lib.getExe pkgs.wl}-daemon";
+      Restart = "on-failure";
+      RestartSec = 2;
     };
   };
 
@@ -63,7 +67,7 @@ lib.mkIf (cfg.enable or false) {
   # which the wl-greeter-sync path unit above picks up.
   systemd.user.services."wl-state-sync" = {
     description = "Extract current wallpaper path from wl state and notify quickshell";
-    after = [ "graphical-session-pre.target" ];
+    after = [ "wl-daemon.service" "graphical-session-pre.target" ];
     partOf = [ "graphical-session.target" ];
     serviceConfig = {
       Type = "oneshot";
