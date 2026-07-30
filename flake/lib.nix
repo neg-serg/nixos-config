@@ -35,6 +35,7 @@ let
         allowAliases = false;
         allowUnfree = true;
         doCheckByDefault = false;
+        permittedInsecurePackages = [ "pzip-0.2.0" ];
       };
     };
 
