@@ -37,6 +37,7 @@ RowLayout {
     property bool busy: false
     property bool _userInputActive: false  // blocks stateReader overwrite during user interaction
     property bool _sliderVisible: false     // auto-hide when idle
+    property bool _sliderExpanded: false    // width collapse after opacity
     // ---- Persisted state ----
     property real _lastSetVolume: {
         if (StateCache.state && StateCache.state.genelecVolume !== undefined)
@@ -53,14 +54,26 @@ RowLayout {
     // ---- UI ----
     property real pendingDb: -40
     property real displayDb: volume  // instant visual, no debounce
+    property real _animDb: volume    // smoothly animated display value
+    Behavior on _animDb { NumberAnimation { duration: 80 } }
 
     // Auto-hide slider after inactivity
     Timer {
         id: hideSliderTimer
         interval: 2000
-        onTriggered: root._sliderVisible = false
+        onTriggered: { root._sliderVisible = false; _hidePhase2.start(); }
     }
-    function _showSlider() { root._sliderVisible = true; hideSliderTimer.restart(); }
+    Timer {
+        id: _hidePhase2
+        interval: 220
+        onTriggered: root._sliderExpanded = false
+    }
+    function _showSlider() {
+        _hidePhase2.stop();
+        root._sliderVisible = true;
+        root._sliderExpanded = true;
+        hideSliderTimer.restart();
+    }
     MaterialIcon {
         id: volIcon
         icon: root.muted || root.volume <= root.minVolume ? "volume_off" : root.volume >= -20 ? "volume_up" : "volume_down"
@@ -70,11 +83,12 @@ RowLayout {
     }
     Slider {
         id: volSlider
-        visible: root._sliderVisible
+        visible: root._sliderVisible || root._sliderExpanded
         opacity: root._sliderVisible ? 1.0 : 0.0
-        Behavior on opacity { NumberAnimation { duration: 120 } }
-        from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
-        Layout.preferredWidth: Math.round(46 * Theme.scale(Screen))
+        Layout.preferredWidth: volSlider.implicitWidth
+        implicitWidth: root._sliderExpanded ? Math.round(46 * Theme.scale(Screen)) : 0
+        Behavior on implicitWidth { NumberAnimation { duration: 100 } }
+        Behavior on opacity { NumberAnimation { duration: 200 } }
         Layout.alignment: Qt.AlignVCenter
         onMoved: { _requestVolume(root.sliderToDb(value)); }
         handle: Item {}  // remove default square handle — only scroll wheel used
@@ -109,7 +123,7 @@ RowLayout {
     }
     Text {
         id: volLabel
-        text: root.muted ? "MUTED" : "<font color='" + Theme.accentPrimary + "'>-</font>" + Math.abs(root.displayDb).toFixed(1).padStart(4,"0") + "<font color='" + Theme.accentPrimary + "'>dB</font>"
+        text: root.muted ? "MUTED" : "<font color='" + Theme.accentPrimary + "'>-</font>" + Math.abs(root._animDb).toFixed(1).padStart(4,"0") + "<font color='" + Theme.accentPrimary + "'>dB</font>"
         font { family: Theme.fontFamily; pixelSize: Math.round(Theme.fontSizeSmall * 1.05); weight: Font.DemiBold; italic: true }
         color: Theme.textSecondary
         Layout.alignment: Qt.AlignVCenter
@@ -171,14 +185,18 @@ RowLayout {
     ProcessRunner {
         id: stateReader
         cmd: ["/run/current-system/sw/bin/cat", "/tmp/genlc-volume"]
-        intervalMs: 500
+        intervalMs: 150
         autoStart: true
         restartOnExit: false
         onLine: function(line) {
             if (root.busy || root._userInputActive) return;
             var v = parseFloat(line);
             if (!isNaN(v) && v !== root.displayDb && !volSlider.pressed) {
-                root._requestVolume(v);
+                root._showSlider();
+                root.displayDb = v;
+                root.pendingDb = v;
+                root.volume = v;
+                root._animDb = v;
             }
         }
     }
