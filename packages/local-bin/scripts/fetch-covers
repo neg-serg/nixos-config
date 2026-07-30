@@ -55,12 +55,16 @@ for i, (dirname, artist, album) in enumerate(missing):
             ["timeout", "25", "sacad", artist, album, str(SIZE), outpath],
             capture_output=True, text=True, timeout=30
         )
-        if result.returncode == 0:
+        # sacad exits 0 even on "No results" — check actual file
+        if os.path.isfile(outpath) and os.path.getsize(outpath) > 0:
             print(f"  ✓ saved to {dirname}/cover.jpg")
             success += 1
         else:
-            err = result.stderr.strip().split('\n')[-1] if result.stderr else "unknown"
-            print(f"  ✗ {err}")
+            msg = result.stderr.strip().split('\n')[-1] if result.stderr else "No results"
+            print(f"  ✗ {msg}")
+            # Clean up empty/invalid files
+            if os.path.exists(outpath):
+                os.remove(outpath)
     except subprocess.TimeoutExpired:
         print("  ✗ timeout")
     except Exception as e:
