@@ -38,6 +38,52 @@ LocalMods.AudioEndpointTile {
     ]
     enableAdvancedToggle: false
     autoHideWhenMuted: false
+    property bool _expanded: false
+
+    // Click toggles embedded slider visibility
+    onClicked: { _expanded = !_expanded; }
+
+    // Expanded slider — inline below the capsule content
+    Rectangle {
+        id: expandedSlider
+        anchors.bottom: parent.top
+        anchors.topMargin: -Math.round(Theme.panelMenuItemHeight * 3)
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: Math.round(200 * Theme.scale(Screen))
+        height: _expanded ? Math.round(Theme.panelMenuItemHeight * 2.5) : 0
+        clip: true
+        color: Theme.background
+        border.color: Color.withAlpha(Theme.accentPrimary, 0.3)
+        border.width: _expanded ? Theme.uiBorderWidth : 0
+        radius: 4
+        Behavior on height { NumberAnimation { duration: 150 } }
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.margins: _expanded ? 6 : 0
+            spacing: 6
+            opacity: _expanded ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 100 } }
+
+            MaterialIcon {
+                icon: Services.Genelec.muted ? "volume_off" : "volume_up"
+                size: Math.round(Theme.fontSizeSmall * 1.2)
+                color: Theme.accentPrimary
+            }
+            Slider {
+                from: 0; to: 1
+                value: (Services.Genelec.volume - Services.Genelec.minVolume) / (Services.Genelec.maxVolume - Services.Genelec.minVolume)
+                stepSize: 0.01
+                Layout.preferredWidth: Math.round(100 * Theme.scale(Screen))
+                onMoved: { Services.Genelec.setVolumeDb(Services.Genelec.minVolume + value * (Services.Genelec.maxVolume - Services.Genelec.minVolume)); }
+            }
+            Text {
+                text: Math.abs(Services.Genelec.volume).toFixed(1) + "dB"
+                color: Theme.textSecondary
+                font.pixelSize: Math.round(Theme.fontSizeSmall * 0.9)
+            }
+        }
+    }
 
     // Override level display to show dB instead of percentage
     function refreshFromService() {

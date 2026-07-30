@@ -1,21 +1,19 @@
 #!/usr/bin/env bash
 # Genelec SAM volume control — keyboard wheel
-# Snaps to nearest 0.5dB, applies step, calls genlc instantly.
-# Writes state file for QML display sync.
+# Writes state file instantly for QML sync. Batches genlc calls via debounce.
 set -euo pipefail
 
 STATE=/tmp/genlc-volume
 STEP_DB=0.5
-LOG=/tmp/genlc-media.log
-
-log() { echo "[$(date +%H:%M:%S)] $*" >> "$LOG"; }
+DEBOUNCE_PID=/tmp/genlc-media.debounce.pid
+DEBOUNCE_MS=60
 
 case "${1:-}" in
   up|down)
     current=-40.0
     [ -f "$STATE" ] && current=$(cat "$STATE" 2>/dev/null || echo -40.0) || true
 
-    # Snap current to nearest 0.5 before applying step
+    # Snap to nearest 0.5
     current=$(awk "BEGIN { printf \"%.1f\", int($current * 2 + ($current < 0 ? -0.5 : 0.5)) / 2 }")
 
     if [ "$1" = "up" ]; then
@@ -25,14 +23,20 @@ case "${1:-}" in
       target=$(awk "BEGIN { printf \"%.1f\", $current - $STEP_DB }")
       capped=$(awk "BEGIN { printf \"%.1f\", ($target < -95.0) ? -95.0 : $target }")
     fi
+
+    # Write state instantly — QML picks up via stateReader, display updates immediately
     echo "$capped" > "$STATE"
-    genlc set-volume --volume "${capped}dB" 2>/dev/null
-    log "$1: ${capped}dB"
+
+    # Kill any pending genlc, schedule new one after debounce
+    [ -f "$DEBOUNCE_PID" ] && kill "$(cat "$DEBOUNCE_PID")" 2>/dev/null || true
+    (
+      sleep 0.06
+      genlc set-volume --volume "$(cat "$STATE")dB" 2>/dev/null
+    ) &
+    echo $! > "$DEBOUNCE_PID"
     ;;
   mute)
-    # Mute goes directly to genlc — instant
-    genlc set-volume --volume -95dB 2>/dev/null
-    log "mute"
+    genlc set-volume --volume -95dB 2>/dev/null &
     ;;
   *) exit 1 ;;
 esac
