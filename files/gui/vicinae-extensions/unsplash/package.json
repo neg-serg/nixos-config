@@ -1,0 +1,47 @@
+{
+  "$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
+  "name": "unsplash",
+  "title": "Unsplash",
+  "description": "Search and set wallpapers from Unsplash",
+  "categories": ["System"],
+  "license": "MIT",
+  "platforms": ["Linux"],
+  "author": "neg",
+  "icon": "icon.png",
+  "commands": [
+    {
+      "name": "wallpaper",
+      "title": "Get Unsplash Wallpaper",
+      "subtitle": "Download and set an image from Unsplash",
+      "description": "Search Unsplash for a wallpaper and set it via wl",
+      "mode": "no-view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "query",
+      "title": "Search Query",
+      "description": "Keywords for the Unsplash search (e.g. landscape, nature, abstract)",
+      "required": true,
+      "type": "textfield",
+      "default": "nature landscape"
+    },
+    {
+      "name": "orientation",
+      "title": "Orientation",
+      "description": "Image orientation",
+      "required": false,
+      "type": "dropdown",
+      "data": [
+        { "title": "Any", "value": "" },
+        { "title": "Landscape", "value": "landscape" },
+        { "title": "Portrait", "value": "portrait" },
+        { "title": "Squarish", "value": "squarish" }
+      ],
+      "default": "landscape"
+    }
+  ],
+  "dependencies": {
+    "@vicinae/api": "^1.0.0"
+  }
+}
