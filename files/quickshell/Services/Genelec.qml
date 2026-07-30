@@ -36,6 +36,7 @@ RowLayout {
     property bool available: false
     property bool busy: false
     property bool _userInputActive: false  // blocks stateReader overwrite during user interaction
+    property bool _sliderVisible: false     // auto-hide when idle
     // ---- Persisted state ----
     property real _lastSetVolume: {
         if (StateCache.state && StateCache.state.genelecVolume !== undefined)
@@ -52,6 +53,14 @@ RowLayout {
     // ---- UI ----
     property real pendingDb: -40
     property real displayDb: volume  // instant visual, no debounce
+
+    // Auto-hide slider after inactivity
+    Timer {
+        id: hideSliderTimer
+        interval: 2000
+        onTriggered: root._sliderVisible = false
+    }
+    function _showSlider() { root._sliderVisible = true; hideSliderTimer.restart(); }
     MaterialIcon {
         id: volIcon
         icon: root.muted || root.volume <= root.minVolume ? "volume_off" : root.volume >= -20 ? "volume_up" : "volume_down"
@@ -61,6 +70,9 @@ RowLayout {
     }
     Slider {
         id: volSlider
+        visible: root._sliderVisible
+        opacity: root._sliderVisible ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { duration: 120 } }
         from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
         Layout.preferredWidth: Math.round(46 * Theme.scale(Screen))
         Layout.alignment: Qt.AlignVCenter
@@ -118,10 +130,13 @@ RowLayout {
     }
 
     function changeVolume(delta) {
-        setVolume(volume + (Number(delta) || 0));
+        var newVol = volume + (Number(delta) || 0);
+        _requestVolume(newVol);
+        setVolume(newVol);
     }
 
     function toggleMute() {
+        root._showSlider();
         if (muted) {
             setVolume(preMuteVolume);
             muted = false;
@@ -152,23 +167,13 @@ RowLayout {
         genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "set-volume", "--volume", dB + "dB"];
         genlcProc.start();
     }
-    function _sendMute() {
-        if (busy) return;
-        genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "set-mute"];
-        genlcProc.start();
-    }
-
-    // ---- Unified input pipeline: slider + CLI wheel → throttle → genlc ----
-    function _requestVolume(dB) {
-        _userInputActive = true;
-        root.displayDb = dB;
-        root.pendingDb = dB;
-        root._lastRequestMs = Date.now();
-    }
-
     // CLI sync — poll state file for external volume changes
     ProcessRunner {
         id: stateReader
+        cmd: ["/run/current-system/sw/bin/cat", "/tmp/genlc-volume"]
+        intervalMs: 500
+        autoStart: true
+        restartOnExit: false
         onLine: function(line) {
             if (root.busy || root._userInputActive) return;
             var v = parseFloat(line);
