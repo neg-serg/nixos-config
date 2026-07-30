@@ -86,6 +86,7 @@ RowLayout {
         visible: root._sliderVisible || root._sliderExpanded
         opacity: root._sliderVisible ? 1.0 : 0.0
         Layout.preferredWidth: volSlider.implicitWidth
+        from: 0; to: 1; value: root.sliderPos; stepSize: 0.01
         implicitWidth: root._sliderExpanded ? Math.round(46 * Theme.scale(Screen)) : 0
         Behavior on implicitWidth { NumberAnimation { duration: 100 } }
         Behavior on opacity { NumberAnimation { duration: 200 } }
@@ -201,8 +202,15 @@ RowLayout {
         }
     }
     Component.onCompleted: {
-        volume = _lastSetVolume;
         available = true;
+        var f = new XMLHttpRequest();
+        f.open("GET", "file:///tmp/genlc-volume", false);
+        try { f.send(); } catch (e) {}
+        var v = parseFloat(f.responseText);
+        volume = isNaN(v) ? _lastSetVolume : v;
+        displayDb = volume;
+        pendingDb = volume;
+        _animDb = volume;
     }
 
 }
