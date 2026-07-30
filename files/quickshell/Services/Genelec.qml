@@ -150,6 +150,13 @@ RowLayout {
         setVolume(newVol);
     }
 
+    function _requestVolume(dB) {
+        _userInputActive = true;
+        root.displayDb = dB;
+        root.pendingDb = dB;
+        root._lastRequestMs = Date.now();
+    }
+
     function toggleMute() {
         root._showSlider();
         if (muted) {
