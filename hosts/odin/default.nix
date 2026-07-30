@@ -108,6 +108,7 @@
   environment.systemPackages = [
     pkgs.nodejs # Node.js — required by npx, MCP servers, git hooks
     pkgs.zellij # Terminal workspace with batteries included (Rust)
+    pkgs.wtype # Wayland keyboard input simulator (Ctrl+Space→Tab)
     pkgs.kanata # keyboard remapper (Caps→Ctrl, etc.)
     pkgs.podman # container management for distrobox (Docker-compatible)
   ];
