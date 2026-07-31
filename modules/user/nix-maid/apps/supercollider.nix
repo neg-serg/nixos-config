@@ -36,7 +36,14 @@ let
     s.options.maxNodes = 1024 * 64;
     s.options.numOutputBusChannels = 2;
     s.options.numInputBusChannels = 2;
-    s.waitForBoot { "Server ready — SuperDirt loading...".postln; };
+    s.waitForBoot {
+      try {
+        ~dirt = SuperDirt(2, s);
+        ~dirt.loadSoundFiles;
+        ~dirt.start(57120, 0 ! 12);
+        "SUPERDIRT READY".postln;
+      } { |err| ("SuperDirt ERROR: " ++ err.what).postln; };
+    };
   '';
 
   bootNoop = ''
