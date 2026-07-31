@@ -58,12 +58,11 @@ let
       chmod -R u+w "$qs_dir/Theme" 2>/dev/null || true
     fi
 
-    # Settings/ — copy-once, make writable (Settings.qml, Theme.qml, StateCache.qml)
-    if [ ! -d "$qs_dir/Settings" ]; then
-      mkdir -p "$qs_dir/Settings"
-      cp -rT "$src/Settings" "$qs_dir/Settings" 2>/dev/null || true
-      chmod -R u+w "$qs_dir/Settings" 2>/dev/null || true
-    fi
+    # Settings/ — force-copy on every start so repo changes (Theme.qml, Settings.qml)
+    # propagate; dir stays writable for qs runtime state.
+    mkdir -p "$qs_dir/Settings"
+    cp -rfT "$src/Settings" "$qs_dir/Settings" 2>/dev/null || true
+    chmod -R u+w "$qs_dir/Settings" 2>/dev/null || true
 
     # Settings.json — copy-once, user-editable
     if [ ! -f "$qs_dir/Settings.json" ]; then
