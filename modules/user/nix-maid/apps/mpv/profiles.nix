@@ -67,7 +67,6 @@
         target-colorspace-hint=yes
         hdr-compute-peak=yes
         tone-mapping=bt.2390
-        tone-mapping-param=auto
         gamut-mapping-mode=relative
         target-peak=auto
       '';
