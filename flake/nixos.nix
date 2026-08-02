@@ -82,14 +82,14 @@ let
   ];
 
   # Odin: full desktop minus domains with zero odin references.
-  # Excluded: appimage (no odin usage), apps (obsidian via flatpak),
-  #           llm (ollama disabled).
+  # Excluded: appimage (no odin usage), apps (obsidian via flatpak).
   odinDomains = basicDomains ++ [
     "dev"
     "emulators"
     "flatpak"
     "fun"
     "games"
+    "llm"
     "media"
     "servers"
     "torrent"

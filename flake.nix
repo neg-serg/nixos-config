@@ -85,6 +85,10 @@
       flake = false;
     };
     extra-container.url = "git+https://github.com/erikarvstedt/extra-container.git";
+    colibri = {
+      url = "github:JustVugg/colibri";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
