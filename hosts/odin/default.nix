@@ -39,6 +39,7 @@
   features.mail.mbsync.enable = false;
   features.hardware.bluetooth.enable = false;
   features.net.proxy.enable = true;
+  features.net.zapret2.enable = true; # Zapret2 DPI bypass (nfqws2)
   features.net.lan-proxy.enable = true;
   features.net.transparent-proxy.enable = false; # Disabled: upstream dead, using proxy script fallback
   features.dev.haskell.enable = true; # Enable Haskell toolchain (GHC, cabal, stack, HLS)
