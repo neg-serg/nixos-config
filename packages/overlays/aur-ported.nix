@@ -288,4 +288,6 @@ final: finalPrev: {
     };
   };
 
+  zapret2 = final.callPackage ../zapret2 { };
+
 }

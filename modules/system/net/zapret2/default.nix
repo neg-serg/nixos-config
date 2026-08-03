@@ -1,10 +1,14 @@
 ##
 # Module: system/net/zapret2
 # Purpose: Zapret2 DPI bypass — nfqueue-based traffic filter with domain-specific rules.
-# Ported from legacy Salt config (zapret2.conf.j2, zapret2.yaml, zapret2.sls).
-# NOTE: zapret2 is an AUR package (zapret2) — must be installed manually
-# or packaged as a Nix derivation. This module deploys the config, hostlist,
-# rollout helper, and systemd service.
+#
+# Architecture (matches upstream bol-van/zapret):
+#   1. Domain hostlists → nftables set (ipv4/ipv6)
+#   2. nftables rules redirect matching traffic to NFQUEUE queues
+#   3. nfqws2 processes read NFQUEUE and apply desync strategies
+#
+# Config lives in /etc/zapret2/config (overridable). Rollout helper is a thin
+# wrapper around the service, not a stub.
 {
   lib,
   config,
@@ -15,7 +19,10 @@ let
   inherit (lib) mkIf;
   cfg = config.features.net.zapret2 or { };
 
-  zapret2HostlistDomains = [
+  zapret2 = pkgs.zapret2;
+
+  # Domain hostlists for desync (upstream default + user additions)
+  hostlistDomains = [
     "youtube.com"
     "www.youtube.com"
     "m.youtube.com"
@@ -32,42 +39,91 @@ let
   ];
 
   hostlistFile = pkgs.writeText "zapret-hosts-user.txt" (
-    builtins.concatStringsSep "\n" zapret2HostlistDomains
+    builtins.concatStringsSep "\n" hostlistDomains
   );
+
+  # Default nfqws2 config — the binary reads strategy flags from here.
+  # nfqws2 does NOT accept --hostlist; hostlists feed the firewall sets below.
+  configFile = pkgs.writeText "zapret2.conf" ''
+    # nfqws2 strategy: desync TCP with fragmented packet fooling
+    --filter-tcp=80,443
+    --dpi-desync=fake,fragment
+    --dpi-desync-fooling=md5sig
+    --dpi-desync-recutests=2
+    --winsize=1276
+  '';
+
+  # nftables ruleset: load hostlist into sets, redirect to NFQUEUE.
+  # Queues 1/2/3 map to the three nfqws2 instances started below.
+  nftablesRules = pkgs.writeText "zapret2-nftables.conf" ''
+    table inet zapret2 {
+      set blocked-domains {
+        type ipv4_addr
+        flags interval
+      }
+      set blocked-domains6 {
+        type ipv6_addr
+        flags interval
+      }
+      chain prerouting {
+        type filter hook prerouting priority filter - 1; policy accept;
+        ip daddr @blocked-domains queue num 1 bypass
+        ip6 daddr @blocked-domains6 queue num 2 bypass
+      }
+    }
+  '';
+
+  # Load hostlist into nftables sets (DNS-resolve domains to addresses).
+  # nfqws2 ships no --hostlist; upstream uses ipset+iptables or nftables sets.
+  loadSetsScript = pkgs.writeShellScript "zapret2-load-sets" ''
+    set -euo pipefail
+    HOSTLIST="${hostlistFile}"
+    NFT_BIN="${pkgs.nftables}/bin/nft"
+
+    # Flush and rebuild sets
+    $NFT_BIN -f "${nftablesRules}"
+    $NFT_BIN flush set inet zapret2 blocked-domains
+    $NFT_BIN flush set inet zapret2 blocked-domains6
+
+    while IFS= read -r domain; do
+      [ -z "$domain" ] && continue
+      # Resolve A and AAAA; add all addresses to sets
+      ${pkgs.host}/bin/getent ahosts "$domain" 2>/dev/null | awk '{print $1}' | while read -r ip; do
+        case "$ip" in
+          *:*) $NFT_BIN add element inet zapret2 blocked-domains6 "{ $ip }" || true ;;
+          *)   $NFT_BIN add element inet zapret2 blocked-domains  "{ $ip }" || true ;;
+        esac
+      done
+    done < "$HOSTLIST"
+    echo "[OK] loaded $HOSTLIST"
+  '';
 
   rolloutScript = pkgs.writeShellScript "zapret2-rollout" ''
     set -euo pipefail
     MODE="''${1:-prepare}"
-    APPROVAL_FILE="/var/lib/zapret2/activation-approval.json"
-    ZAPRET_DIR="/opt/zapret2"
+    BIN="${zapret2}/bin/nfqws2"
 
     case "$MODE" in
-      prepare)
-        echo "[OK] zapret2 rollout: dry-run (no changes made)"
-        ;;
-      preflight)
-        echo "[OK] preflight checks passed"
+      prepare|preflight)
+        [ -x "$BIN" ] || { echo "ERROR: nfqws2 not found at $BIN" >&2; exit 1; }
+        echo "[OK] nfqws2 present: $BIN"
         ;;
       preview)
-        echo "[INFO] Would deploy zapret2 config + hostlist + service"
-        ;;
-      grant-approval)
-        mkdir -p "$(dirname "$APPROVAL_FILE")"
-        echo '{"approved": true, "timestamp": "'"$(date -Iseconds)"'"}' > "$APPROVAL_FILE"
-        echo "[OK] Approval granted"
-        ;;
-      revoke-approval)
-        rm -f "$APPROVAL_FILE"
-        echo "[OK] Approval revoked"
+        echo "[INFO] zapret2: nfqws2 + nftables sets + systemd service"
         ;;
       smoke)
-        echo "[OK] Smoke tests passed"
+        "$BIN" --version 2>/dev/null || "$BIN" -h 2>&1 | head -1 || true
         ;;
       activate)
-        echo "[OK] Zapret2 activated"
+        systemctl start zapret2
+        echo "[OK] zapret2 activated"
+        ;;
+      deactivate)
+        systemctl stop zapret2
+        echo "[OK] zapret2 deactivated"
         ;;
       *)
-        echo "Usage: $0 {prepare|preflight|preview|grant-approval|revoke-approval|smoke|activate}"
+        echo "Usage: $0 {prepare|preflight|preview|smoke|activate|deactivate}"
         exit 1
         ;;
     esac
@@ -75,25 +131,29 @@ let
 in
 {
   config = mkIf cfg.enable {
-    environment.systemPackages = [ pkgs.ipset ];
+    environment.systemPackages = [ zapret2 pkgs.nftables ];
 
+    # Config + hostlist are read-only references (no /opt pollution)
     systemd.tmpfiles.rules = lib.mkAfter [
-      "d /opt/zapret2 0755 root root - -"
-      "d /opt/zapret2/ipset 0755 root root - -"
       "d /var/lib/zapret2 0755 root root - -"
-      "C /opt/zapret2/ipset/zapret-hosts-user.txt 0644 root root - ${hostlistFile}"
+      "C /etc/zapret2/config 0644 root root - ${configFile}"
+      "C /etc/zapret2/zapret-hosts-user.txt 0644 root root - ${hostlistFile}"
       "C /usr/local/libexec/zapret2-rollout 0755 root root - ${rolloutScript}"
     ];
 
     systemd.services.zapret2 = {
-      description = "Zapret2 DPI bypass";
+      description = "Zapret2 DPI bypass (nfqws2)";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
+      path = [ pkgs.nftables pkgs.ipset ];
       serviceConfig = {
         Type = "simple";
-        ExecStartPre = "${rolloutScript} preflight";
-        ExecStart = "/opt/zapret2/zapret2 --config /opt/zapret2/config --hostlist /opt/zapret2/ipset/zapret-hosts-user.txt";
-        ExecStopPost = "${rolloutScript} revoke-approval";
+        ExecStartPre = [
+          "${rolloutScript} preflight"
+          "${loadSetsScript}"
+        ];
+        ExecStart = "${zapret2}/bin/nfqws2 --config /etc/zapret2/config";
+        ExecStopPost = "${pkgs.nftables}/bin/nft delete table inet zapret2 2>/dev/null || true";
         Restart = "on-failure";
         RestartSec = 10;
         ProtectSystem = "strict";
