@@ -41,7 +41,16 @@ let
     builtins.concatStringsSep "\n" hostlistDomains
   );
 
-  # nfqws strategy flags (verified against nfqws -h)
+  # Redirect matching traffic to NFQUEUE queue 1 (nfqws --qnum=1).
+  # Without a queue rule, nfqws fails with nfq_unbind_pf(): Invalid argument.
+  nftablesRules = pkgs.writeText "zapret2-nftables.conf" ''
+    table inet zapret2 {
+      chain prerouting {
+        type filter hook prerouting priority filter - 1; policy accept;
+        tcp dport { 80, 443 } queue num 1 bypass
+      }
+    }
+  
   strategyFlags = [
     "--qnum=1"
     "--filter-tcp=80,443"
@@ -98,9 +107,13 @@ in
       description = "Zapret2 DPI bypass (nfqws)";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
+      path = [ pkgs.nftables ];
       serviceConfig = {
         Type = "simple";
-        ExecStartPre = "${rolloutScript} preflight";
+        ExecStartPre = [
+          "${rolloutScript} preflight"
+          "${pkgs.nftables}/bin/nft -f ${nftablesRules}"
+        ];
         ExecStart = "${nfqws} ${builtins.concatStringsSep " " strategyFlags}";
         Restart = "on-failure";
         RestartSec = 10;
