@@ -50,7 +50,8 @@ let
         tcp dport { 80, 443 } queue num 1 bypass
       }
     }
-  
+  '';
+
   strategyFlags = [
     "--qnum=1"
     "--filter-tcp=80,443"
