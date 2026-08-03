@@ -96,6 +96,20 @@ let
 in
 {
   config = mkIf cfg.enable {
+    # nfqws requires nfqueue in-kernel: CONFIG_NETFILTER_NETLINK_QUEUE,
+    # CONFIG_NFNETLINK_QUEUE, CONFIG_NFT_QUEUE. Apply as kernel patch.
+    boot.kernelPatches = [
+      {
+        name = "zapret2-nfqueue";
+        patch = null;
+        structuredExtraConfig = with lib.kernel; {
+          NETFILTER_NETLINK_QUEUE = yes;
+          NFNETLINK_QUEUE = module;
+          NFT_QUEUE = module;
+        };
+      }
+    ];
+
     environment.systemPackages = [ zapret2 ];
 
     systemd.tmpfiles.rules = lib.mkAfter [
