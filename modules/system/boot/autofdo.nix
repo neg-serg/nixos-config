@@ -46,10 +46,11 @@ in
       {
         name = "autofdo-config";
         patch = null;
-        extraConfig = ''
           AUTOFDO_CLANG y
           DEBUG_INFO y
-        '';
+          NETFILTER_NETLINK_QUEUE y
+          NFNETLINK_QUEUE m
+          NFT_QUEUE m
       }
     ];
   };
