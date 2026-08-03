@@ -159,6 +159,14 @@ in
               command = "/run/current-system/sw/bin/nixos-rebuild";
               options = [ "NOPASSWD" ];
             }
+            {
+              command = "/run/current-system/sw/bin/systemctl stop xray.service";
+              options = [ "NOPASSWD" ];
+            }
+            {
+              command = "/run/current-system/sw/bin/systemctl start xray.service";
+              options = [ "NOPASSWD" ];
+            }
           ];
           groups = [ mainGroup ];
         }
