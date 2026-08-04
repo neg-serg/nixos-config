@@ -28,9 +28,20 @@ local function key2s(layouts, fn)
   end
 end
 
--- Safe position accessor (fork returns tuple x,y; upstream returns table {x=..., y=...})
+-- Position accessors. Fork returns table {x=..., y=...} (viewer); slideshow may
+-- return a tuple. Handle both shapes.
 local function get_pos()
   local x, y = swayimg.viewer.get_position()
+  if type(x) == "table" then
+    return { x = x.x or 0, y = x.y or 0 }
+  end
+  return { x = x or 0, y = y or 0 }
+end
+local function get_slideshow_pos()
+  local x, y = swayimg.slideshow.get_position()
+  if type(x) == "table" then
+    return { x = x.x or 0, y = x.y or 0 }
+  end
   return { x = x or 0, y = y or 0 }
 end
 
@@ -526,14 +537,14 @@ swayimg.slideshow.on_key("Return", function() swayimg.set_mode("gallery") end)
 swayimg.slideshow.on_key("Escape", function() swayimg.set_mode("gallery") end)
 swayimg.slideshow.on_key("i", function() swayimg.text.show() end)
 -- Pan navigation (fork returns tuple x,y, not table)
-swayimg.slideshow.on_key("h", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0)-50,(py or 0)) end)
-swayimg.slideshow.on_key("l", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0)+50,(py or 0)) end)
-swayimg.slideshow.on_key("k", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0),(py or 0)-50) end)
-swayimg.slideshow.on_key("j", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0),(py or 0)+50) end)
-swayimg.slideshow.on_key("Left", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0)-50,(py or 0)) end)
-swayimg.slideshow.on_key("Right", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0)+50,(py or 0)) end)
-swayimg.slideshow.on_key("Up", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0),(py or 0)-50) end)
-swayimg.slideshow.on_key("Down", function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0),(py or 0)+50) end)
+swayimg.slideshow.on_key("h", function() local p=get_slideshow_pos() swayimg.slideshow.set_abs_position(p.x-50,p.y) end)
+swayimg.slideshow.on_key("l", function() local p=get_slideshow_pos() swayimg.slideshow.set_abs_position(p.x+50,p.y) end)
+swayimg.slideshow.on_key("k", function() local p=get_slideshow_pos() swayimg.slideshow.set_abs_position(p.x,p.y-50) end)
+swayimg.slideshow.on_key("j", function() local p=get_slideshow_pos() swayimg.slideshow.set_abs_position(p.x,p.y+50) end)
+swayimg.slideshow.on_key("Left", function() local p=get_slideshow_pos() swayimg.slideshow.set_abs_position(p.x-50,p.y) end)
+swayimg.slideshow.on_key("Right", function() local p=get_slideshow_pos() swayimg.slideshow.set_abs_position(p.x+50,p.y) end)
+swayimg.slideshow.on_key("Up", function() local p=get_slideshow_pos() swayimg.slideshow.set_abs_position(p.x,p.y-50) end)
+swayimg.slideshow.on_key("Down", function() local p=get_slideshow_pos() swayimg.slideshow.set_abs_position(p.x,p.y+50) end)
 
 -- Slideshow: Russian layout duplicates (ЙЦУКЕН)
 key2s({"й"}, function() swayimg.exit(0) end)
@@ -548,8 +559,8 @@ key2s({"К"}, function() local i=swayimg.slideshow.current_image() exec(actions.
 key2s({"М"}, function() local i=swayimg.slideshow.current_image() exec(actions.." range-mv "..cp(i['path'])) end)
 key2s({"т"}, function() swayimg.slideshow.open("next") end)
 key2s({"з"}, function() swayimg.slideshow.open("prev") end)
-key2s({"р"}, function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0)-50,(py or 0)) end)
-key2s({"о"}, function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0),(py or 0)+50) end)
-key2s({"л"}, function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0),(py or 0)-50) end)
-key2s({"д"}, function() local px,py=swayimg.slideshow.get_position() swayimg.slideshow.set_abs_position((px or 0)+50,(py or 0)) end)
+key2s({"р"}, function() local p=get_slideshow_pos() swayimg.slideshow.set_abs_position(p.x-50,p.y) end)
+key2s({"о"}, function() local p=get_slideshow_pos() swayimg.slideshow.set_abs_position(p.x,p.y+50) end)
+key2s({"л"}, function() local p=get_slideshow_pos() swayimg.slideshow.set_abs_position(p.x,p.y-50) end)
+key2s({"д"}, function() local p=get_slideshow_pos() swayimg.slideshow.set_abs_position(p.x+50,p.y) end)
 key2s({"ш"}, function() swayimg.text.show() end)
