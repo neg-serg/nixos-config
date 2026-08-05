@@ -1,7 +1,8 @@
 #!/bin/sh
-# pic-notify: send image preview notification and copy path to clipboard
+# pic-notify: screenshot notification + clipboard copy
 # Usage: pic-notify IMAGE
-#   Shows a notification with basic EXIF and copies path (png extension) to clipboard.
+#   Extracts dimensions, size, format from PNG header (identify -ping, fast).
+#   Copies path to clipboard and sends a rich dunst notification.
 
 
 IFS=' 	
@@ -11,38 +12,78 @@ if [ -z "${img}" ] || [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
   sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//'
   exit 1
 fi
-send_notify() {
-    c1="<span weight='bold' color='#395573'>"
-    c2="<span weight='bold' color='#245361'>"
-    b="<span weight='bold'>"
-    clear="</span>"
-    header="⟬$(echo "$img"|sed -e "s/.bmp$/.png/")⟭"
-    header="$(echo "$header" | sed -e "s:$HOME:~:" \
-                -e "s:\/:$c1/$clear:g" \
-                -e "s:\(⟬\|⟭\):$c1\1$clear:g" -e "s:~:$c2~$clear:g")"
-    if command -v identify >/dev/null 2>&1; then
-        inf="$(identify -ping -format 'ImageSize: %wx%h\nMIMEType: image/png\nMegapixels: %[fx:w*h/1000000]\n' "$img" 2>/dev/null)"
-        [ -z "$inf" ] && inf="ImageSize: N/A\nMIMEType: N/A\nMegapixels: N/A"
-    elif command -v exiftool >/dev/null 2>&1; then
-        inf="$(exiftool -ImageSize -MIMEType -Megapixels "$img")"
-    else
-        inf="ImageSize: N/A\nMIMEType: N/A\nMegapixels: N/A"
-    fi
-    output=$(echo "$inf" | xargs -n4 \
-        | sed -e 's/^/⟬/' -e 's/$/⟭/' \
-        -e "s;\(.*\):;$b\\1$c1:$clear$clear;" \
-        -e "s:\(⟬\|⟭\):$c1\1$clear:g"
-    )
-    if command -v notify-send >/dev/null 2>&1; then
-        notify-send -h "string:fgcolor:#6C7E96" -a "pic" -i "$img" ' ' "$header\n$output"
-    fi
-}
 
-main() {
-    shots_pikz="$HOME/tmp/shots"
-    [ ! -d "$shots_pikz" ] && mkdir -p "$shots_pikz"
-    echo "$img" | sed -e "s/.bmp$/.png/" | wl-copy
-    send_notify
-}
+# ── Clipboard ──────────────────────────────────────────────────────────────
+echo "$img" | sed -e "s/.bmp$/.png/" | wl-copy
 
-main "$@"
+# ── Metadata (fast: header-only) ───────────────────────────────────────────
+if command -v identify >/dev/null 2>&1; then
+  read -r w h depth chan_raw _ < <(
+    identify -ping -format '%w %h %z %[channels]' "$img" 2>/dev/null
+  )
+  [ -z "$w" ] && { w=0; h=0; depth=0; chan_raw=0; }
+  chan=$(echo "$chan_raw" | awk '{print $NF}')  # %[channels] includes colorspace prefix
+  mp=$(awk "BEGIN { printf \"%.1f\", ($w * $h) / 1000000 }")
+fi
+
+# ── File size (human-readable) ─────────────────────────────────────────────
+size_bytes=$(stat -c %s "$img" 2>/dev/null || echo 0)
+if   [ "$size_bytes" -ge 1073741824 ]; then
+  size_hr=$(awk "BEGIN { printf \"%.1f GB\", $size_bytes / 1073741824 }")
+elif [ "$size_bytes" -ge 1048576 ]; then
+  size_hr=$(awk "BEGIN { printf \"%.1f MB\", $size_bytes / 1048576 }")
+else
+  size_hr=$(awk "BEGIN { printf \"%.0f KB\", $size_bytes / 1024 }")
+fi
+
+# ── Timestamp from filename ────────────────────────────────────────────────
+ts=""
+base=$(basename "$img")
+if echo "$base" | grep -qE '[0-9]{8}-[0-9]{2}\.[0-9]{2}\.[0-9]{2}'; then
+  raw=$(echo "$base" | grep -oE '[0-9]{8}-[0-9]{2}\.[0-9]{2}\.[0-9]{2}')
+  ts=$(echo "$raw" | sed 's/\(....\)\(..\)\(..\)-\(..\)\.\(..\)\.\(..\)/\1-\2-\3 \4:\5:\6/')
+fi
+[ -z "$ts" ] && ts=$(date -d "@$(stat -c %Y "$img" 2>/dev/null)" '+%F %T' 2>/dev/null || echo "")
+
+# ── Short path for display ─────────────────────────────────────────────────
+short_path=$(echo "$img" | sed "s|$HOME|~|")
+
+# ── Color helpers (Pango markup for dunst) ─────────────────────────────────
+c_dim='<span color="#6C7E96">'
+c_bright='<span color="#A0B4CC">'
+c_accent='<span color="#7AA2F7">'
+c_label='<span color="#395573">'
+b='<span weight="bold">'
+end='</span>'
+
+# ── Format depth/colour description ────────────────────────────────────────
+chan_name=""
+case "$chan" in
+  1) chan_name="Gray";;
+  2) chan_name="Gray+Alpha";;
+  3) chan_name="RGB";;
+  4) chan_name="RGBA";;
+  *) chan_name="${chan}ch";;
+esac
+depth_str="${depth}-bit ${chan_name}"
+
+# ── Build notification body ────────────────────────────────────────────────
+body="${c_dim}${w}${end}${c_label}×${end}${c_dim}${h}${end}  ·  ${c_dim}${mp}${end} ${c_label}MP${end}"
+body="${body}  ·  ${c_dim}${size_hr}${end}"
+body="${body}  ·  ${c_dim}${depth_str}${end}"
+[ -n "$ts" ] && body="${body}\n${c_label}🕐${end} ${c_dim}${ts}${end}"
+body="${body}\n${c_label}📁${end} ${c_dim}${short_path}${end}"
+body="${body}\n${c_label}📋${end} ${c_dim}Copied to clipboard${end}"
+
+# ── Title ──────────────────────────────────────────────────────────────────
+title="${c_accent}📸${end} ${b}Screenshot${end}"
+
+# ── Send ───────────────────────────────────────────────────────────────────
+if command -v notify-send >/dev/null 2>&1; then
+  notify-send \
+    -h "string:fgcolor:#6C7E96" \
+    -a "screenshot" \
+    -i "$img" \
+    "$title" \
+    "$body"
+fi
