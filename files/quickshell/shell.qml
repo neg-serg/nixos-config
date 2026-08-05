@@ -29,7 +29,7 @@ Scope {
 
     // ── Screenshot feedback toast (watches pic-notify trigger file) ──────
     Loader {
-        source: "../Widgets/ScreenshotToast.qml"
+        source: "file://" + root.quickshell.env("HOME") + "/.config/quickshell/Widgets/ScreenshotToast.qml"
     }
 
     Connections {
