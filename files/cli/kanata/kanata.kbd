@@ -30,14 +30,14 @@
 
 (defalias
   ;; home row: tap = letter, hold = mod (Achordion-like)
-  a (tap-hold-tap-keys 150 200 a lctl (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
+  a a  ;; no mod
   s (tap-hold-tap-keys 150 200 s lalt (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
   d (tap-hold-tap-keys 150 200 d lmet (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
   f (tap-hold-tap-keys 150 200 f lsft (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
   j (tap-hold-tap-keys 150 200 j lsft (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
   k (tap-hold-tap-keys 150 200 k lmet (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
   l (tap-hold-tap-keys 150 200 l lalt (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
-  ; (tap-hold-tap-keys 150 200 ; rctl (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
+  ; ;  ;; no mod
   ;; caps: esc on tap, ctrl on hold
   caps (tap-hold 150 150 esc lctl)
   ;; '\' — tap = backslash, hold = number layer
