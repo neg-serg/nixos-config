@@ -20,7 +20,10 @@ send_notify() {
     header="$(echo "$header" | sed -e "s:$HOME:~:" \
                 -e "s:\/:$c1/$clear:g" \
                 -e "s:\(⟬\|⟭\):$c1\1$clear:g" -e "s:~:$c2~$clear:g")"
-    if command -v exiftool >/dev/null 2>&1; then
+    if command -v identify >/dev/null 2>&1; then
+        inf="$(identify -ping -format 'ImageSize: %wx%h\nMIMEType: image/png\nMegapixels: %[fx:w*h/1000000]\n' "$img" 2>/dev/null)"
+        [ -z "$inf" ] && inf="ImageSize: N/A\nMIMEType: N/A\nMegapixels: N/A"
+    elif command -v exiftool >/dev/null 2>&1; then
         inf="$(exiftool -ImageSize -MIMEType -Megapixels "$img")"
     else
         inf="ImageSize: N/A\nMIMEType: N/A\nMegapixels: N/A"

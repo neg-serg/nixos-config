@@ -22,18 +22,18 @@ summary_="$scr_dir/$filename"
 
 shot() {
   # Fullscreen screenshot via grim
-  grim "$summary_" && ~/bin/pic-notify "$summary_"
+  grim -l 0 "$summary_" && ~/bin/pic-notify "$summary_"
 }
 select_region() {
   # Region selection via slurp
-  grim -g "$(slurp)" "$summary_" && ~/bin/pic-notify "$summary_"
+  grim -l 0 -g "$(slurp)" "$summary_" && ~/bin/pic-notify "$summary_"
 }
 current_window() {
   # Try Hyprland active window, fall back to selection
   if command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
     geo=$(hyprctl -j activewindow | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"') || geo=""
     if [ -n "$geo" ]; then
-      grim -g "$geo" "$summary_" && ~/bin/pic-notify "$summary_" && return 0
+      grim -l 0 -g "$geo" "$summary_" && ~/bin/pic-notify "$summary_" && return 0
     fi
   fi
   Select "$@"
