@@ -113,10 +113,10 @@
             title: Screenshots
             children:
               - key: r
-                command: 'shot="$HOME/pic/shots/satty-$(date +%Y%m%d-%H.%M.%S).png"; grimblast save screen "$shot" && pic-info "$shot"'
+                command: 'shot="$HOME/pic/shots/satty-$(date +%Y%m%d-%H.%M.%S).png"; grim -l 0 "$shot" && pic-info "$shot"'
                 title: Screen
               - key: R
-                command: 'shot="$HOME/pic/shots/satty-$(date +%Y%m%d-%H.%M.%S).png"; grimblast save area "$shot" && pic-info "$shot"'
+                command: 'shot="$HOME/pic/shots/satty-$(date +%Y%m%d-%H.%M.%S).png"; grim -l 0 -g "$(slurp)" "$shot" && pic-info "$shot"'
                 title: Area
               - key: v
                 command: screenrec screen
