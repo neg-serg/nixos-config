@@ -2,15 +2,15 @@
 # pic-notify: screenshot notification bridge to quickshell ScreenshotToast.
 # Usage: pic-notify IMAGE
 #   Extracts dimensions, size, depth from PNG header (identify -ping, fast).
-#   Copies path to clipboard and writes a JSON event for quickshell.
-#   quickshell ScreenshotToast watches the event file and shows the card UI.
+#   Copies path to clipboard, writes JSON data + touches semaphore for quickshell.
+#   Falls back to dunst notify-send if quickshell is not running.
 
 
 IFS=' 	
 '
 img="${1:-}"
 if [ -z "${img}" ] || [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
-  sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'
   exit 1
 fi
 
@@ -24,7 +24,7 @@ if command -v identify >/dev/null 2>&1; then
 	$(identify -ping -format '%w %h %z %[channels]' "$img" 2>/dev/null)
 	EOF
   [ -z "$w" ] && { w=0; h=0; depth=""; chan_raw=0; }
-  chan=$(echo "$chan_raw" | awk '{print $NF}')  # %[channels] includes colorspace prefix
+  chan=$(echo "$chan_raw" | awk '{print $NF}')
   [ -z "$chan" ] && chan=-1
 fi
 
@@ -62,14 +62,12 @@ if echo "$base" | grep -qE '[0-9]{8}-[0-9]{2}\.[0-9]{2}\.[0-9]{2}'; then
 fi
 [ -z "$ts" ] && ts=$(date -d "@$(stat -c %Y "$img" 2>/dev/null)" '+%F %T' 2>/dev/null || echo "")
 
-# ── Write JSON event for quickshell ScreenshotToast ────────────────────────
+# ── Write JSON event + semaphore for quickshell ScreenshotToast ────────────
 event_dir="${HOME}/.cache/quickshell"
 mkdir -p "$event_dir"
 
-# Escape path for JSON (only backslash and double-quote need escaping for the path field)
 escaped_path=$(printf '%s' "$img" | sed 's/\\/\\\\/g; s/"/\\"/g')
 
-# Write JSON atomically via temp + mv so FileView sees a single change
 tmp="${event_dir}/.screenshot-event.json.tmp"
 cat > "$tmp" <<JSON
 {
@@ -82,13 +80,17 @@ cat > "$tmp" <<JSON
 }
 JSON
 mv "$tmp" "${event_dir}/screenshot-event.json"
+touch "${event_dir}/screenshot-event"   # semaphore for FileView
 
-# ── Fallback: also send via dunst if quickshell not running ───────────────
-if ! pgrep -f "quickshell" >/dev/null 2>&1; then
+# ── Fallback: dunst if quickshell is not running ───────────────────────────
+if ! pgrep -f quickshell >/dev/null 2>&1; then
   if command -v notify-send >/dev/null 2>&1; then
     short=$(echo "$img" | sed "s|$HOME|~|")
+    body="${w}×${h}  ·  ${size_hr}"
+    [ -n "$depth_str" ] && body="${body}  ·  ${depth_str}"
+    body="${body}\n${short}"
+    [ -n "$ts" ] && body="${body}\n${ts}"
     notify-send -h "string:fgcolor:#6C7E96" -a "screenshot" -i "$img" \
-      "📸 Screenshot" \
-      "${w}×${h}  ·  ${size_hr}${depth_str:+  ·  ${depth_str}}\n${short}"
+      "📸 Screenshot" "$body"
   fi
 fi
