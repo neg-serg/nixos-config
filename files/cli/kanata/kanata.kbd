@@ -22,7 +22,7 @@
   esc
   1 2 3 4
   7 8 9 0
-  bksl
+  _
 )
 
 (defalias
@@ -37,8 +37,6 @@
   ; ;  ;; no mod
   ;; caps: esc on tap, ctrl on hold
   caps (tap-hold 150 150 esc lctl)
-  ;; '\' — tap = backslash, hold = number layer (while held)
-  bsl (tap-hold 150 150 bksl (layer-while-held num))
 )
 
 (defsrc
@@ -52,5 +50,5 @@
   @caps
   @a @s @d @f
   @j @k @l @;
-  @bsl
+  (layer-while-held num)
 )
