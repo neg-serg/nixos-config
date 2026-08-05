@@ -189,6 +189,9 @@ hl.bind(M4 .. "+q", hl.dsp.exec_cmd('raise --match "class:regex=^nwim$" --launch
 hl.bind(M4 .. "+b", hl.dsp.exec_cmd('raise --match "class:regex=^mpv$" --launch "~/.local/bin/pl video"'))
 hl.bind(M4 .. "+" .. C .. "+c", hl.dsp.exec_cmd('raise --match "class:regex=^swayimg$" --launch "swayimg ~/dw"'))
 hl.bind(M4 .. "+" .. SH .. "+c", hl.dsp.exec_cmd("wl random ~/pic/wl"))
+
+-- --- System ────────────────────────────────────────────────────────────
+hl.bind(M4 .. "+" .. SH .. "+n", hl.dsp.exec_cmd("kitty --class rebuild -e nh os switch '/etc/nixos#odin'"))
 hl.bind("C+Space", hl.dsp.exec_cmd("wtype -k Tab"))
 hl.bind(M4 .. "+" .. C .. "+v", hl.dsp.exec_cmd('raise --match "class:regex=^Bazecor$" --launch "bazecor"'))
 hl.bind(M4 .. "+g", hl.dsp.exec_cmd('raise --match "class:regex=^(steam|com\\.valvesoftware\\.Steam|steam_app.*|gamescope)$" --launch "steam"'))
