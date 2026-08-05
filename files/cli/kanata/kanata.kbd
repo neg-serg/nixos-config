@@ -21,8 +21,8 @@
   a a  ;; no mod
   s (tap-hold-tap-keys 150 200 s lalt (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
   d d  ;; no mod (Win on d misfires while typing)
-  f (tap-hold-tap-keys 150 200 f lsft (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
-  j (tap-hold-tap-keys 150 200 j lsft (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
+  f (tap-hold-tap-keys 150 200 f lmet (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
+  j (tap-hold-tap-keys 150 200 j lmet (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
   k k  ;; no mod
   l (tap-hold-tap-keys 150 200 l lalt (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
   ; ;  ;; no mod
