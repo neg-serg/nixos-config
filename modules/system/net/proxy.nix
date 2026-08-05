@@ -16,7 +16,9 @@ lib.mkIf cfg.enable {
     description = "Xray local SOCKS5 proxy (127.0.0.1:10808)";
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
-    wantedBy = [ "default.target" ];
+    # No autostart: xray's ExecStartPre kills the sing-box proxy on 10808
+    # every activation (nh os switch). User proxy is sing-box via ~/.local/bin/proxy.
+    wantedBy = lib.mkForce [ ];
     serviceConfig = {
       Type = "simple";
       User = "neg";

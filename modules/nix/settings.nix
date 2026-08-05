@@ -43,6 +43,11 @@ in
       keep-outputs = true;
       keep-derivations = true;
       fallback = true;
+      # Determinate's default substituter (install.determinate.systems) is
+      # broken on this host (auth failure → 15s timeouts per narinfo, stalls
+      # every rebuild). Force cache.nixos.org only.
+      substituters = [ "https://cache.nixos.org/" ];
+      extra-substituters = [ ];
       experimental-features = [
         "auto-allocate-uids" # allow nix to automatically pick UIDs, rather than creating nixbld* user accounts
         "flakes" # flakes for reproducibility
