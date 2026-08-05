@@ -8,24 +8,12 @@
 ;;   of QMK's Achordion "don't misfire while typing" heuristic.
 ;;   Mods still work when held with non-letter keys (space, enter, arrows…).
 ;;
-;; Number layer: hold '\' → home row becomes digits (a=1 s=2 d=3 f=4 j=7 k=8
-;;   l=9 ;=0); Shift+digit on that layer gives symbols as usual.
-;;
 ;; Physical positions in defsrc → layout-independent (works for RU/EN).
 ;; Unmapped keys pass through (process-unmapped-keys yes).
 
 (defcfg
   process-unmapped-keys yes
   concurrent-tap-hold yes          ;; rolling home-row chords
-)
-
-;; Number layer: digits on home row (must be declared before the alias that
-;; references it). Positions match defsrc order: caps, a s d f, j k l ;, bksl.
-(deflayer num
-  esc
-  1 2 3 4
-  7 8 9 0
-  bksl
 )
 
 (defalias
@@ -40,8 +28,6 @@
   ; ;  ;; no mod
   ;; caps: esc on tap, ctrl on hold
   caps (tap-hold 150 150 esc lctl)
-  ;; '\' — tap = backslash, hold = number layer
-  bsl (tap-hold 150 150 bksl (layer-toggle num))
 )
 
 (defsrc
@@ -55,5 +41,5 @@
   @caps
   @a @s @d @f
   @j @k @l @;
-  @bsl
+  bksl
 )
