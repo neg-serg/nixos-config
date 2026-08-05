@@ -1,21 +1,41 @@
-;; Kanata keyboard remapper configuration
+;; Kanata keyboard remapper
 ;; Docs: https://github.com/jtroo/kanata/blob/main/docs/config.adoc
 ;;
-;; All unmapped keys pass through unchanged.
-;; Add key codes to (defsrc) and corresponding actions to (deflayer).
-;;
-;; Example — caps-lock as escape on tap, ctrl on hold:
-;;   (defsrc caps)
-;;   (deflayer base (tap-hold 200 200 esc lctl))
+;; Home row mods: tap = letter, hold = modifier (timeout 200ms, quick-tap 200ms).
+;; Physical positions in defsrc → layout-independent (works for RU/EN).
+;; All unmapped keys pass through unchanged (process-unmapped-keys yes).
 
 (defcfg
   process-unmapped-keys yes
+  concurrent-tap-hold yes          ;; allow rolling home-row chords
+)
+(defalias
+  ;; home row: tap = letter, hold = mod
+  a (tap-hold 200 200 a lctl)
+  s (tap-hold 200 200 s lalt)
+  d (tap-hold 200 200 d lmet)
+  f (tap-hold 200 200 f lsft)
+  j (tap-hold 200 200 j lsft)
+  k (tap-hold 200 200 k lmet)
+  l (tap-hold 200 200 l lalt)
+  ; (tap-hold 200 200 ; rctl)
+  ;; caps: esc on tap, ctrl on hold (upgrade of former caps→lctl)
+  caps (tap-hold 200 200 esc lctl)
 )
 
 (defsrc
   caps
+  a s d f
+  j k l ;
+  spc
 )
 
 (deflayer base
-  lctl
+  @caps
+  @a @s @d @f
+  @j @k @l @;
+  spc
 )
+
+;; Keep HRM alive across layer switches (kanata 1.11 deflayermap):
+;; (deflayermap (nav sym) a (tap-hold 200 200 a lctl) s (tap-hold 200 200 s lalt) d (tap-hold 200 200 d lmet) f (tap-hold 200 200 f lsft) j (tap-hold 200 200 j lsft) k (tap-hold 200 200 k lmet) l (tap-hold 200 200 l lalt) ; (tap-hold 200 200 ; rctl))
