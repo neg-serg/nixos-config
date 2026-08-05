@@ -19,12 +19,12 @@
 (defalias
   ;; home row: tap = letter, hold = mod (Achordion-like)
   a a  ;; no mod
-  s (tap-hold-tap-keys 150 200 s lalt (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
+  s (tap-hold-tap-keys 150 180 s lalt (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
   d d  ;; no mod (Win on d misfires while typing)
-  f (tap-hold-tap-keys 150 200 f lmet (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
-  j (tap-hold-tap-keys 150 200 j lmet (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
+  f (tap-hold-tap-keys 150 180 f lmet (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
+  j (tap-hold-tap-keys 150 180 j lmet (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
   k k  ;; no mod
-  l (tap-hold-tap-keys 150 200 l lalt (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
+  l (tap-hold-tap-keys 150 180 l lalt (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
   ; ;  ;; no mod
   ;; caps: esc on tap, ctrl on hold
   caps (tap-hold 150 150 esc lctl)
