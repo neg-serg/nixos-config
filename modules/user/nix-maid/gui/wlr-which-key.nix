@@ -125,6 +125,13 @@
                 command: screenrec area
                 title: Record Area
 
+          # ── Rebuild (SUPER+SHIFT) ───────────────────────────────────
+          - mod: SUPER
+            modifier: SHIFT
+            key: n
+            command: kitty --class rebuild -e nh os switch '/etc/nixos#odin'
+            title: Rebuild NixOS
+
           # ── Power (SUPER) ────────────────────────────────────────
           - mod: SUPER
             key: Escape
