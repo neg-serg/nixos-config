@@ -3,10 +3,6 @@ import QtQuick.Layouts 1.15
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
-import qs.Components
-import qs.Theme 1.0
-import "../Helpers/Utils.js" as Utils
-
 /*!
  * ScreenshotToast — macOS-style floating screenshot feedback card.
  * Watches ~/.cache/quickshell/screenshot-event for JSON metadata
