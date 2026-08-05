@@ -6,21 +6,20 @@ import Quickshell.Io
 
 /*!
  * ScreenshotToast — macOS-style floating screenshot feedback card.
- * Watches ~/.cache/quickshell/screenshot-event (touched by pic-notify)
- * and reads sibling JSON file for metadata. Auto-dismisses after 5s.
+ * FileView watches the semaphore ~/.cache/quickshell/screenshot-event.
+ * On trigger, reads JSON data via XMLHttpRequest (local file:// URL).
+ * Auto-dismisses after 5s.
  */
 Item {
     id: root
     visible: false
 
-    // ── Semaphore file (touched by pic-notify, same pattern as OverlayManager) ──
     readonly property string _home: {
         var h = Quickshell.env("HOME");
         return (h && h !== "") ? h : "/tmp";
     }
-
     readonly property string _triggerPath: root._home + "/.cache/quickshell/screenshot-event"
-    readonly property string _dataPath:    root._home + "/.cache/quickshell/screenshot-event.json"
+    readonly property string _dataUrl:    "file://" + root._home + "/.cache/quickshell/screenshot-event.json"
 
     FileView {
         id: triggerFile
@@ -41,25 +40,28 @@ Item {
     property string shotTs: ""
 
     function loadAndShow() {
-        // Read JSON via subprocess (reliable across Quickshell versions)
-        var proc = Quickshell.exec("cat", [root._dataPath]);
-        if (!proc || proc.exitCode !== 0) return;
-        try {
-            var data = JSON.parse(proc.stdout);
-            root.shotPath   = data.path   || "";
-            root.shotW      = data.w      || 0;
-            root.shotH      = data.h      || 0;
-            root.shotSizeHr = data.sizeHr || "";
-            root.shotDepth  = data.depth  || "";
-            root.shotTs     = data.ts     || "";
-            toast.show();
-        } catch (e) {
-            // malformed JSON — ignore
-        }
-        proc.deleteLater();
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", root._dataUrl);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200 || xhr.status === 0) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        root.shotPath   = data.path   || "";
+                        root.shotW      = data.w      || 0;
+                        root.shotH      = data.h      || 0;
+                        root.shotSizeHr = data.sizeHr || "";
+                        root.shotDepth  = data.depth  || "";
+                        root.shotTs     = data.ts     || "";
+                        toast.show();
+                    } catch (e) {}
+                }
+            }
+        };
+        xhr.send();
     }
 
-    // ── Toast window (overlay layer for compositor blur) ─────────────────
+    // ── Toast window ─────────────────────────────────────────────────────
     PanelWindow {
         id: toast
         color: "transparent"
@@ -69,18 +71,13 @@ Item {
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
 
-        // Bottom-right corner
         anchors.right: true
         anchors.bottom: true
-        WlrLayershell.margins {
-            right: 24
-            bottom: 24
-        }
+        WlrLayershell.margins { right: 24; bottom: 24 }
 
         implicitWidth: 360
         implicitHeight: 160
 
-        // ── Auto-hide timer ──────────────────────────────────────────────
         property int autoHideMs: 5000
         Timer {
             id: autoHide
@@ -90,181 +87,108 @@ Item {
         }
 
         function show() {
-            slide.stop()
-            _hiding = false
-            visible = true
-            slide.from = 40
-            slide.to   = 0
-            slide.start()
-            autoHide.restart()
+            slide.stop(); _hiding = false; visible = true;
+            slide.from = 40; slide.to = 0; slide.start();
+            autoHide.restart();
         }
-
         function hide() {
-            slide.stop()
-            _hiding = true
-            slide.from = slideY
-            slide.to   = 40
-            slide.start()
+            slide.stop(); _hiding = true;
+            slide.from = slideY; slide.to = 40; slide.start();
         }
 
-        // ── Slide animation ───────────────────────────────────────────────
         property real slideY: 40
         property bool _hiding: false
         NumberAnimation {
             id: slide
-            target: toast
-            property: "slideY"
-            duration: 200
-            easing.type: Easing.OutCubic
-            onStopped: {
-                if (toast._hiding) {
-                    toast.visible = false
-                    toast._hiding = false
-                }
-            }
+            target: toast; property: "slideY"
+            duration: 200; easing.type: Easing.OutCubic
+            onStopped: { if (toast._hiding) { toast.visible = false; toast._hiding = false; } }
         }
 
-        // ── Card content ──────────────────────────────────────────────────
         Rectangle {
             anchors.fill: parent
             radius: 12
             color: Qt.rgba(0.11, 0.11, 0.16, 0.92)
             border.width: 1
             border.color: Qt.rgba(0.30, 0.35, 0.45, 0.30)
-
             transform: Translate { y: toast.slideY }
 
             HoverHandler {
-                onActiveChanged: {
-                    if (active) autoHide.stop()
-                    else autoHide.restart()
-                }
+                onActiveChanged: { if (active) autoHide.stop(); else autoHide.restart(); }
             }
-
             TapHandler {
                 onTapped: {
-                    Quickshell.execDetached(["xdg-open", root.shotPath])
-                    toast.hide()
+                    Quickshell.execDetached(["xdg-open", root.shotPath]);
+                    toast.hide();
                 }
             }
 
             ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 16
-                spacing: 8
+                anchors.fill: parent; anchors.margins: 16; spacing: 8
 
-                // ── Header row ────────────────────────────────────────────
                 RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
+                    Layout.fillWidth: true; spacing: 10
 
-                    // Thumbnail
                     Rectangle {
-                        Layout.preferredWidth: 56
-                        Layout.preferredHeight: 42
+                        Layout.preferredWidth: 56; Layout.preferredHeight: 42
                         radius: 8
                         color: Qt.rgba(0.18, 0.18, 0.26, 0.60)
                         border.width: 1
                         border.color: Qt.rgba(0.35, 0.40, 0.50, 0.25)
-
                         Image {
-                            anchors.fill: parent
-                            anchors.margins: 2
+                            anchors.fill: parent; anchors.margins: 2
                             source: root.shotPath ? "file://" + root.shotPath : ""
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
                             visible: root.shotPath !== ""
                         }
-
                         Text {
                             anchors.centerIn: parent
-                            text: "\uD83D\uDCF8"
-                            font.pixelSize: 20
+                            text: "\uD83D\uDCF8"; font.pixelSize: 20
                             visible: root.shotPath === ""
                         }
                     }
 
                     ColumnLayout {
                         spacing: 2
-                        Text {
-                            text: "Screenshot captured"
-                            color: "#C8D6E5"
-                            font.pixelSize: 13
-                            font.weight: Font.DemiBold
-                        }
+                        Text { text: "Screenshot captured"; color: "#C8D6E5"; font.pixelSize: 13; font.weight: Font.DemiBold }
                         Text {
                             text: root.shotW + "\u202F\u00D7\u202F" + root.shotH
                                  + "  \u00B7  " + root.shotSizeHr
                                  + (root.shotDepth !== "" ? "  \u00B7  " + root.shotDepth : "")
-                            color: "#8395A7"
-                            font.pixelSize: 11
+                            color: "#8395A7"; font.pixelSize: 11
                         }
                     }
 
                     Item { Layout.fillWidth: true }
-
-                    Text {
-                        text: "\u2715"
-                        color: "#576574"
-                        font.pixelSize: 14
-                        TapHandler { onTapped: toast.hide() }
-                    }
+                    Text { text: "\u2715"; color: "#576574"; font.pixelSize: 14; TapHandler { onTapped: toast.hide() } }
                 }
 
-                // ── Footer: path + timestamp ──────────────────────────────
                 RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
+                    Layout.fillWidth: true; spacing: 6
                     Text {
-                        text: root.shotPath ? root.shotPath.replace(
-                            root._home, "~"
-                        ) : ""
-                        color: "#576574"
-                        font.pixelSize: 10
-                        elide: Text.ElideMiddle
-                        Layout.fillWidth: true
+                        text: root.shotPath ? root.shotPath.replace(root._home, "~") : ""
+                        color: "#576574"; font.pixelSize: 10
+                        elide: Text.ElideMiddle; Layout.fillWidth: true
                     }
-                    Text {
-                        text: root.shotTs
-                        color: "#576574"
-                        font.pixelSize: 10
-                    }
+                    Text { text: root.shotTs; color: "#576574"; font.pixelSize: 10 }
                 }
 
-                // ── Action buttons ────────────────────────────────────────
                 RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
+                    Layout.fillWidth: true; spacing: 6
                     Repeater {
                         model: [
-                            { label: "\uD83D\uDCCB Copy",   action: function() {
-                                Quickshell.execDetached(["wl-copy", root.shotPath])
-                                toast.hide()
-                            }},
-                            { label: "\uD83D\uDCC2 Open",   action: function() {
-                                Quickshell.execDetached(["xdg-open", root.shotPath])
-                                toast.hide()
-                            }},
-                            { label: "\uD83D\uDDD1  Dismiss", action: function() { toast.hide() }}
+                            { label: "\uD83D\uDCCB Copy",   action: function() { Quickshell.execDetached(["wl-copy", root.shotPath]); toast.hide(); } },
+                            { label: "\uD83D\uDCC2 Open",   action: function() { Quickshell.execDetached(["xdg-open", root.shotPath]); toast.hide(); } },
+                            { label: "\uD83D\uDDD1  Dismiss", action: function() { toast.hide(); } }
                         ]
                         delegate: Rectangle {
                             Layout.preferredWidth: btnText.implicitWidth + 20
-                            Layout.preferredHeight: 28
-                            radius: 6
-                            color: hoverHnd.hovered
-                                   ? Qt.rgba(0.30, 0.35, 0.50, 0.30)
-                                   : Qt.rgba(0.18, 0.22, 0.30, 0.40)
-                            border.width: 1
-                            border.color: Qt.rgba(0.35, 0.40, 0.50, 0.20)
-                            Text {
-                                id: btnText
-                                anchors.centerIn: parent
-                                text: modelData.label
-                                color: "#A0B4CC"
-                                font.pixelSize: 11
-                                font.weight: Font.Medium
-                            }
-                            HoverHandler { id: hoverHnd }
+                            Layout.preferredHeight: 28; radius: 6
+                            color: hh.hovered ? Qt.rgba(0.30, 0.35, 0.50, 0.30) : Qt.rgba(0.18, 0.22, 0.30, 0.40)
+                            border.width: 1; border.color: Qt.rgba(0.35, 0.40, 0.50, 0.20)
+                            Text { id: btnText; anchors.centerIn: parent; text: modelData.label; color: "#A0B4CC"; font.pixelSize: 11; font.weight: Font.Medium }
+                            HoverHandler { id: hh }
                             TapHandler { onTapped: modelData.action() }
                         }
                     }
