@@ -27,6 +27,11 @@ Scope {
     IdleInhibitor { id: idleInhibitor; }
     IPCHandlers { idleInhibitor: root.idleInhibitor; }
 
+    // ── Screenshot feedback toast (watches pic-notify trigger file) ──────
+    Loader {
+        source: "../Widgets/ScreenshotToast.qml"
+    }
+
     Connections {
         function onReloadCompleted() { root.quickshell.inhibitReloadPopup(); }
         function onReloadFailed() { root.quickshell.inhibitReloadPopup(); }
