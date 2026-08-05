@@ -3,29 +3,32 @@ import QtQuick.Layouts 1.15
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
+
 /*!
  * ScreenshotToast — macOS-style floating screenshot feedback card.
- * Watches ~/.cache/quickshell/screenshot-event for JSON metadata
- * written by pic-notify. Shows dimensions, size, format, thumbnail,
- * and auto-dismisses after a configurable timeout.
+ * Watches ~/.cache/quickshell/screenshot-event (touched by pic-notify)
+ * and reads sibling JSON file for metadata. Auto-dismisses after 5s.
  */
 Item {
     id: root
     visible: false
 
-    // ── Trigger file (written by pic-notify) ─────────────────────────────
-    readonly property string _eventPath: {
-        var home = Quickshell.env("HOME") || "/tmp";
-        return home + "/.cache/quickshell/screenshot-event.json";
+    // ── Semaphore file (touched by pic-notify, same pattern as OverlayManager) ──
+    readonly property string _home: {
+        var h = Quickshell.env("HOME");
+        return (h && h !== "") ? h : "/tmp";
     }
 
+    readonly property string _triggerPath: root._home + "/.cache/quickshell/screenshot-event"
+    readonly property string _dataPath:    root._home + "/.cache/quickshell/screenshot-event.json"
+
     FileView {
-        id: eventWatcher
-        path: root._eventPath
+        id: triggerFile
+        path: root._triggerPath
         watchChanges: true
         onFileChanged: {
             root.loadAndShow();
-            reload(); // reset watch for next event
+            reload();
         }
     }
 
@@ -38,9 +41,11 @@ Item {
     property string shotTs: ""
 
     function loadAndShow() {
+        // Read JSON via subprocess (reliable across Quickshell versions)
+        var proc = Quickshell.exec("cat", [root._dataPath]);
+        if (!proc || proc.exitCode !== 0) return;
         try {
-            var raw = Quickshell.readFileText(root._eventPath);
-            var data = JSON.parse(raw);
+            var data = JSON.parse(proc.stdout);
             root.shotPath   = data.path   || "";
             root.shotW      = data.w      || 0;
             root.shotH      = data.h      || 0;
@@ -51,6 +56,7 @@ Item {
         } catch (e) {
             // malformed JSON — ignore
         }
+        proc.deleteLater();
     }
 
     // ── Toast window (overlay layer for compositor blur) ─────────────────
@@ -71,7 +77,6 @@ Item {
             bottom: 24
         }
 
-        // Fixed size — card-style
         implicitWidth: 360
         implicitHeight: 160
 
@@ -88,7 +93,7 @@ Item {
             slide.stop()
             _hiding = false
             visible = true
-            slide.from = 40  // start slightly below
+            slide.from = 40
             slide.to   = 0
             slide.start()
             autoHide.restart()
@@ -129,7 +134,6 @@ Item {
 
             transform: Translate { y: toast.slideY }
 
-            // Pause auto-hide on hover
             HoverHandler {
                 onActiveChanged: {
                     if (active) autoHide.stop()
@@ -137,7 +141,6 @@ Item {
                 }
             }
 
-            // Click to dismiss (or open file)
             TapHandler {
                 onTapped: {
                     Quickshell.execDetached(["xdg-open", root.shotPath])
@@ -150,12 +153,12 @@ Item {
                 anchors.margins: 16
                 spacing: 8
 
-                // ── Header row: 📸 + dimensions ──────────────────────────
+                // ── Header row ────────────────────────────────────────────
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 10
 
-                    // Thumbnail placeholder (actual image if available)
+                    // Thumbnail
                     Rectangle {
                         Layout.preferredWidth: 56
                         Layout.preferredHeight: 42
@@ -175,7 +178,7 @@ Item {
 
                         Text {
                             anchors.centerIn: parent
-                            text: "📸"
+                            text: "\uD83D\uDCF8"
                             font.pixelSize: 20
                             visible: root.shotPath === ""
                         }
@@ -183,18 +186,16 @@ Item {
 
                     ColumnLayout {
                         spacing: 2
-
                         Text {
                             text: "Screenshot captured"
                             color: "#C8D6E5"
                             font.pixelSize: 13
                             font.weight: Font.DemiBold
                         }
-
                         Text {
-                            text: root.shotW + " × " + root.shotH
-                                 + "  ·  " + root.shotSizeHr
-                                 + (root.shotDepth !== "" ? "  ·  " + root.shotDepth : "")
+                            text: root.shotW + "\u202F\u00D7\u202F" + root.shotH
+                                 + "  \u00B7  " + root.shotSizeHr
+                                 + (root.shotDepth !== "" ? "  \u00B7  " + root.shotDepth : "")
                             color: "#8395A7"
                             font.pixelSize: 11
                         }
@@ -202,14 +203,11 @@ Item {
 
                     Item { Layout.fillWidth: true }
 
-                    // Close button
                     Text {
-                        text: "✕"
+                        text: "\u2715"
                         color: "#576574"
                         font.pixelSize: 14
-                        TapHandler {
-                            onTapped: toast.hide()
-                        }
+                        TapHandler { onTapped: toast.hide() }
                     }
                 }
 
@@ -217,17 +215,15 @@ Item {
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 6
-
                     Text {
                         text: root.shotPath ? root.shotPath.replace(
-                            Quickshell.env("HOME") || "/home", "~"
+                            root._home, "~"
                         ) : ""
                         color: "#576574"
                         font.pixelSize: 10
                         elide: Text.ElideMiddle
                         Layout.fillWidth: true
                     }
-
                     Text {
                         text: root.shotTs
                         color: "#576574"
@@ -239,18 +235,17 @@ Item {
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 6
-
                     Repeater {
                         model: [
-                            { label: "📋 Copy",   action: function() {
+                            { label: "\uD83D\uDCCB Copy",   action: function() {
                                 Quickshell.execDetached(["wl-copy", root.shotPath])
                                 toast.hide()
                             }},
-                            { label: "📂 Open",   action: function() {
+                            { label: "\uD83D\uDCC2 Open",   action: function() {
                                 Quickshell.execDetached(["xdg-open", root.shotPath])
                                 toast.hide()
                             }},
-                            { label: "🗑  Dismiss", action: function() { toast.hide() }}
+                            { label: "\uD83D\uDDD1  Dismiss", action: function() { toast.hide() }}
                         ]
                         delegate: Rectangle {
                             Layout.preferredWidth: btnText.implicitWidth + 20
@@ -261,7 +256,6 @@ Item {
                                    : Qt.rgba(0.18, 0.22, 0.30, 0.40)
                             border.width: 1
                             border.color: Qt.rgba(0.35, 0.40, 0.50, 0.20)
-
                             Text {
                                 id: btnText
                                 anchors.centerIn: parent
@@ -270,7 +264,6 @@ Item {
                                 font.pixelSize: 11
                                 font.weight: Font.Medium
                             }
-
                             HoverHandler { id: hoverHnd }
                             TapHandler { onTapped: modelData.action() }
                         }
