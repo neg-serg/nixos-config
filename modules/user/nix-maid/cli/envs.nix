@@ -54,8 +54,10 @@ in
     NPM_CONFIG_INIT_MODULE = "${configHome}/npm/config/npm-init.js";
     NPM_CONFIG_TMP = "$XDG_RUNTIME_DIR/npm";
     # Proxy bypass — don't route local/lan through SOCKS5
-    no_proxy = "localhost,127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10";
-    NO_PROXY = "localhost,127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10";
+    # mkForce: nixpkgs shells-environment auto-generates a narrower NO_PROXY
+    # when http_proxy/https_proxy are set in the session env.
+    no_proxy = lib.mkForce "localhost,127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10";
+    NO_PROXY = lib.mkForce "localhost,127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10";
   };
 
   # Activation script to ensure profile links (legacy support)
