@@ -191,7 +191,7 @@ hl.bind(M4 .. "+" .. C .. "+c", hl.dsp.exec_cmd('raise --match "class:regex=^swa
 hl.bind(M4 .. "+" .. SH .. "+c", hl.dsp.exec_cmd("wl random ~/pic/wl"))
 
 -- --- System ────────────────────────────────────────────────────────────
-hl.bind(M4 .. "+" .. SH .. "+n", hl.dsp.exec_cmd("kitty --class rebuild -e nh os switch '/etc/nixos#odin' --option substitute false"))
+hl.bind(M4 .. "+" .. SH .. "+n", hl.dsp.exec_cmd("hyprscratch rebuild 'kitty --class rebuild -e nh os switch /etc/nixos#odin --option substitute false' special"))
 hl.bind(M4 .. "+Space", hl.dsp.exec_cmd("wtype -k Tab")) -- SUPER+Space→Tab: moved off Ctrl+Space (kanata home-row mods produce Ctrl on hold)
 hl.bind(M4 .. "+" .. C .. "+v", hl.dsp.exec_cmd('raise --match "class:regex=^Bazecor$" --launch "bazecor"'))
 hl.bind(M4 .. "+g", hl.dsp.exec_cmd('raise --match "class:regex=^(steam|com\\.valvesoftware\\.Steam|steam_app.*|gamescope)$" --launch "steam"'))
