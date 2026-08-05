@@ -227,7 +227,7 @@ let
     (mkAlias "dn" "sudo systemctl stop")
     (mkAliasIf hasMpv "mpv" "${mkCmd "mpv"}")
     (mkAliasIf hasMpv "mp" "${mkCmd "mpv"}")
-    (mkAliasIf hasMpv "mpa" "mpv -mute") # mpv audio-only
+    (mkAliasIf hasMpv "mpa" "mpv --mute=yes") # mpv audio-only (--mute=yes, not -mute: works in all mpv versions)
     (mkAliasIf hasMpv "mpi" "mpv --interpolation=yes --tscale=oversample --video-sync=display-resample")
     (mkAliasIf hasRg "rg"
       "${mkCmd "rg"} --max-columns=0 --max-columns-preview --glob '!*.git*' --glob '!*.obsidian' --colors=match:fg:25 --colors=match:style:underline --colors=line:fg:cyan --colors=line:style:bold --colors=path:fg:249 --colors=path:style:bold --smart-case --hidden"
