@@ -1,6 +1,16 @@
 # zapret2 — DPI bypass via nfqueue (nfqws2)
 # Upstream: https://github.com/bol-van/zapret
-{ lib, stdenv, fetchFromGitHub, libnetfilter_queue, libnfnetlink, libmnl, zlib, luajit, libcap }:
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  libnetfilter_queue,
+  libnfnetlink,
+  libmnl,
+  zlib,
+  luajit,
+  libcap,
+}:
 
 stdenv.mkDerivation rec {
   pname = "zapret2";
@@ -13,7 +23,14 @@ stdenv.mkDerivation rec {
     hash = "sha256-fwwfEEH0fE4mRapN2Q3Xc7QGAmBM1un1P0tdDzmJnRk=";
   };
 
-  buildInputs = [ libnetfilter_queue libnfnetlink libmnl zlib luajit libcap ];
+  buildInputs = [
+    libnetfilter_queue
+    libnfnetlink
+    libmnl
+    zlib
+    luajit
+    libcap
+  ];
 
   # Root Makefile: `make all` builds binaries into binaries/my
   buildPhase = ''
