@@ -98,6 +98,7 @@ let
       smudge = "git-lfs smudge -- %f";
       process = "git-lfs filter-process";
     };
+    push.autoSetupRemote = true; # auto-set upstream for branches without tracking (e.g. fresh main)
     push.default = "simple";
     pull.rebase = true;
     rebase = {
