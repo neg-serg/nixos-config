@@ -1,3 +1,8 @@
+# Requires: secrets/home/vdirsyncer/google.sops.yaml
+# Format:
+#   client_id: "<google-oauth-client-id>"
+#   client_secret: "<google-oauth-client-secret>"
+
 {
   pkgs,
   lib,

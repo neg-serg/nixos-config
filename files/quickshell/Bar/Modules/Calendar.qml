@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import "../../Helpers/Holidays.js" as Holidays
 import "../../Helpers/ProductionCalendar.js" as ProdCal
+import "../../Helpers/CalendarEvents.js" as CalendarEvents
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -24,6 +25,7 @@ OverlayToggleCapsule {
     property color textWarmDim: Theme.textSecondary
 
     property var holidays: []
+    property var calendarEvents: []
     property var prodCal: []
     property int currentYear: Time.date.getFullYear()
     property int currentMonth: Time.date.getMonth()
@@ -33,12 +35,23 @@ OverlayToggleCapsule {
         holidays = []
         prodCal = ProdCal.getHolidays(currentYear, currentMonth)
         Holidays.getHolidaysForMonth(currentYear, currentMonth, function(data) { holidays = data })
+        CalendarEvents.getEvents(currentYear, currentMonth, function(data) { calendarEvents = data })
     }
 
     onOpened: {
         currentYear = Time.date.getFullYear()
         currentMonth = Time.date.getMonth()
         updateAll()
+        eventRefreshTimer.start()
+    }
+
+    // Refresh calendar events every 5 min while overlay is open
+    Timer {
+        id: eventRefreshTimer
+        interval: 300000
+        repeat: true
+        running: false
+        onTriggered: CalendarEvents.refresh(root.currentYear, root.currentMonth)
     }
 
     overlayChildren: [
@@ -112,27 +125,74 @@ OverlayToggleCapsule {
                         required property var model
                         property bool isToday: model.today
                         property bool isCurrentMonth: model.month===calendarGrid.month
-                        property var holidayInfos: { var all=[]; for (var i=0;i<root.holidays.length;i++){var h=root.holidays[i];var d=new Date(h.date);if(d.getDate()===model.day&&d.getMonth()===model.month&&d.getFullYear()===model.year)all.push(h)} for(var j=0;j<root.prodCal.length;j++){var pc=root.prodCal[j];if(pc.day===model.day)all.push({localName:pc.label,type:pc.type})} return all }
+                        property var holidayInfos: { var all=[]; for (var i=0;i<root.holidays.length;i++){var h=root.holidays[i];var d=new Date(h.date);if(d.getDate()===model.day&&d.getMonth()===model.month&&d.getFullYear()===model.year)all.push(h)} for(var j=0;j<root.prodCal.length;j++){var pc=root.prodCal[j];if(pc.day===model.day)all.push({localName:pc.label,type:pc.type})} for(var k=0;k<root.calendarEvents.length;k++){var ce=root.calendarEvents[k];if(ce.day===model.day)all.push({localName:ce.title,type:"event",calendar:ce.calendar})} return all }
+                        property bool hasRealHoliday: { for(var n=0;n<holidayInfos.length;n++){if(holidayInfos[n].type!=="event")return true} return false }
                         property bool isHoliday: holidayInfos.length>0
                         property bool isWeekend: model.dayOfWeek===0||model.dayOfWeek===6
 
                         width: Math.round(26*Theme.scale(root.screen)); height: Math.round(26*Theme.scale(root.screen))
                         radius: Math.round(Theme.cornerRadius*0.33)
-                        color: { if(isToday)return Color.withAlpha(root.goldAccent,0.3); if(isHoliday)return Color.withAlpha(Theme.error,0.1); if(isWeekend)return Color.withAlpha(root.goldAccent,0.22); if(dayMouse.containsMouse)return Color.withAlpha(root.goldAccent,0.15); return"transparent" }
+                        color: { if(isToday)return Color.withAlpha(root.goldAccent,0.3); if(hasRealHoliday)return Color.withAlpha(Theme.error,0.1); if(isHoliday)return Color.withAlpha(root.goldAccent,0.22); if(isWeekend)return Color.withAlpha(root.goldAccent,0.22); if(dayMouse.containsMouse)return Color.withAlpha(root.goldAccent,0.15); return"transparent" }
                         border.color: isToday?root.goldAccent:"transparent"; border.width: isToday?1.5:0
 
                         Text {
                             anchors.centerIn: parent; text: model.day
-                            color: { if(isToday)return root.goldAccent; if(isHoliday)return Theme.error; if(isWeekend){ if(isCurrentMonth)return root.goldAccent; return Color.mix(root.textWarm,root.goldAccent,0.35) } return root.textWarm }
+                            color: { if(isToday)return root.goldAccent; if(hasRealHoliday)return Theme.error; if(isWeekend){ if(isCurrentMonth)return root.goldAccent; return Color.mix(root.textWarm,root.goldAccent,0.35) } return root.textWarm }
                             opacity: isCurrentMonth?0.9:0.3; font.family: Theme.fontFamily; font.pixelSize: Math.round(13*Theme.scale(root.screen)); font.weight: (isToday||(isWeekend&&isCurrentMonth))?Font.Bold:Font.Normal }
 
-                        Rectangle { visible:isHoliday; width:4*Theme.scale(root.screen); height:width; radius:width/2; color:Theme.error; anchors.top:parent.top; anchors.right:parent.right; anchors.margins:2 }
+                        Rectangle { visible:isHoliday; width:4*Theme.scale(root.screen); height:width; radius:width/2; color:hasRealHoliday?Theme.error:root.goldAccent; anchors.top:parent.top; anchors.right:parent.right; anchors.margins:2 }
 
                         MouseArea { id:dayMouse; anchors.fill:dayCell; hoverEnabled:true
                             onEntered:{ if(isHoliday&&holidayInfos.length>0){ holidayTooltip.text=holidayInfos.map(function(h){return h.localName||h.label||""}).join(" · "); holidayTooltip.targetItem=dayCell; holidayTooltip.visibleWhen=true } }
                             onExited:{ holidayTooltip.visibleWhen=false }
                             onClicked:{ root.selectedDay=model.day } }
                         PanelTooltip { id:holidayTooltip; text:""; targetItem:null; visibleWhen:false }
+                    }
+                }
+
+                // --- Selected day events ---
+                Item {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.round(60 * Theme.scale(root.screen))
+                    visible: root.selectedDay >= 0 && _selectedEvents.length > 0
+                    property var _selectedEvents: {
+                        if (root.selectedDay < 0) return [];
+                        var result = [];
+                        for (var i = 0; i < root.calendarEvents.length && result.length < 3; i++) {
+                            if (root.calendarEvents[i].day === root.selectedDay)
+                                result.push(root.calendarEvents[i]);
+                        }
+                        return result;
+                    }
+                    Column {
+                        anchors.fill: parent
+                        spacing: Math.round(2 * Theme.scale(root.screen))
+                        Repeater {
+                            model: parent.parent._selectedEvents
+                            RowLayout {
+                                spacing: Math.round(4 * Theme.scale(root.screen))
+                                Rectangle {
+                                    width: 5 * Theme.scale(root.screen); height: width
+                                    radius: width / 2
+                                    color: root.goldAccent
+                                }
+                                Text {
+                                    text: modelData.title
+                                    color: root.textWarmDim
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Math.round(11 * Theme.scale(root.screen))
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                }
+                                Text {
+                                    text: modelData.calendar
+                                    color: root.goldDim
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Math.round(10 * Theme.scale(root.screen))
+                                    visible: modelData.calendar !== ""
+                                }
+                            }
+                        }
                     }
                 }
 
