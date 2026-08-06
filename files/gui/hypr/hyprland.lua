@@ -47,6 +47,7 @@ local m = {
   mail_scratchpad    = "^(mutterfox|neomutt)$",
   mixer_scratchpad   = "^(ncpamixer|com\\.saivert\\.pwvucontrol)$",
   torrment_scratchpad = "^(torrment)$",
+  rebuild_scratchpad = "^(rebuild)$",
   teardown_scratchpad = "^(teardown)$",
 }
 
@@ -402,6 +403,7 @@ hl.window_rule({ name = "mixer-scratchpad", match = { class = m.mixer_scratchpad
 hl.window_rule({ name = "torrment-scratchpad", match = { class = m.torrment_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.4", move = "8 8", no_dim = true })
 hl.window_rule({ name = "teardown-scratchpad", match = { class = m.teardown_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
 hl.window_rule({ name = "vpn-scratchpad", match = { class = "^(vpn)$" }, float = true, size = "monitor_w*0.5 monitor_h*0.3", center = true, no_dim = true })
+hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
 
 -- Wine / Steam
 hl.window_rule({ name = "wine-exe", match = { title = ".*\\.exe" }, immediate = true, tag = "wine-exe" })
@@ -535,7 +537,6 @@ hl.layer_rule({ name = "slide-up-mon", match = { namespace = "qs-monitor" }, ani
 -- Autostart (autostart.conf / env.conf) -- NixOS-appropriate
 -- =====================================================================
 hl.on("hyprland.start", function()
-  hl.exec_cmd("hyprctl output DP-2 hdr yes")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.enabled\"] = true })'")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.manage_window_blur\"] = true })'")
   hl.exec_cmd("hyprctl eval 'hl.config({ [\"plugin.hyprglass.layers.enabled\"] = true })'")
@@ -567,7 +568,6 @@ end)
 -- Keep the primary monitor as the home for all workspaces
 hl.on("monitor.added", function(monitor_name)
   if monitor_name == "DP-2" then
-    hl.exec_cmd("hyprctl output DP-2 hdr yes")
     hl.exec_cmd("systemctl --user restart hyprscratch.service")
     hl.exec_cmd("zsh -c 'hyprctl workspaces -j | jq -r \".[] | select(.monitor != \\\"DP-2\\\") | .id\" | while read ws; do hyprctl dispatch moveworkspacetomonitor \"$ws\" DP-2; done'")
   end
