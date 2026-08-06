@@ -100,9 +100,11 @@ in
       #!/bin/sh
       # Give the previous compositor time to release DRM master after greetd
       # transitions from the greeter session to the user session.
-      sleep 0.3
-      # AQ_NO_ATOMIC=1 avoids atomic KMS issues on newer AMD GPUs (RDNA4 / RX 9070)
-      export AQ_NO_ATOMIC=1
+      # Atomic KMS is required for HDR metadata (hdr_output_metadata only works
+      # through atomic commits; the legacy interface has no HDR support).
+      # If atomic KMS misbehaves on RDNA4, investigate before re-enabling
+      # AQ_NO_ATOMIC — it silently disables HDR.
+      # export AQ_NO_ATOMIC=1
       exec /run/current-system/sw/bin/start-hyprland > /tmp/hyprland-debug.log 2>&1
     '';
     systemd.tmpfiles.rules = lib.mkAfter [
