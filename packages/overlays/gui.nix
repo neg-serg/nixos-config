@@ -30,6 +30,7 @@ in
   wl = callPkg (inputs.self + "/packages/wl") { };
   wl-switcher = prev.callPackage (inputs.self + "/packages/wl-switcher") { };
   unsplash = prev.callPackage (inputs.self + "/packages/unsplash") { };
+  fd-search = prev.callPackage (inputs.self + "/packages/fd-search") { };
 
   # hyprscratch: patched to exit after 5 event-listener failures
   # so systemd Restart=always can restart it with fresh Hyprland IPC env.
