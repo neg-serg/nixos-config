@@ -1,45 +1,17 @@
 ;; Kanata keyboard remapper
 ;; Docs: https://github.com/jtroo/kanata/blob/main/docs/config.adoc
 ;;
-;; Achordion-like home row mods:
-;;   tap-hold-tap-keys — when another letter key is pressed while a home-row
-;;   key is held, the tap action activates immediately and the modifier does
-;;   NOT fire (fast typing never triggers mods). This is kanata's equivalent
-;;   of QMK's Achordion "don't misfire while typing" heuristic.
-;;   Mods still work when held with non-letter keys (space, enter, arrows…).
-;;
-;; Physical positions in defsrc → layout-independent (works for RU/EN).
-;; Unmapped keys pass through (process-unmapped-keys yes).
+;; All unmapped keys pass through unchanged.
+;; Add key codes to (defsrc) and corresponding actions to (deflayer).
 
 (defcfg
   process-unmapped-keys yes
-  concurrent-tap-hold yes          ;; rolling home-row chords
-)
-
-(defalias
-  ;; home row: tap = letter, hold = mod (Achordion-like)
-  a a  ;; no mod
-  s (tap-hold-tap-keys 150 180 s lalt (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
-  d d  ;; no mod (Win on d misfires while typing)
-  f (tap-hold-tap-keys 150 180 f lmet (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
-  j (tap-hold-tap-keys 150 180 j lmet (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
-  k k  ;; no mod
-  l (tap-hold-tap-keys 150 180 l lalt (a b c d e f g h i j k l m n o p q r s t u v w x y z spc))
-  ; ;  ;; no mod
-  ;; caps: esc on tap, ctrl on hold
-  caps (tap-hold 150 150 esc lctl)
 )
 
 (defsrc
   caps
-  a s d f
-  j k l ;
-  bksl
 )
 
 (deflayer base
-  @caps
-  @a @s @d @f
-  @j @k @l @;
-  bksl
+  lctl
 )
