@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import Quickshell
 import qs.Components
 import qs.Settings
@@ -138,14 +139,17 @@ PanelOverlaySurface {
 
         Text{text:"Recent Logs";font.family:Theme.fontFamily;font.pixelSize:root._fontSize | 0;color:Theme.textPrimary;font.bold:true}
 
-        Rectangle { width:parent.width; height:Math.max(60, (parent.height-340)/2); radius:6; color:root.cardBg; clip:true
+        Rectangle { width:parent.width; height:Math.max(120, root.height-320); radius:6; color:root.cardBg; clip:true
             ListView {
+                anchors.fill: parent
                 model:root.logEntries
+                clip: true
+                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded; }
                 header: RowLayout { width:parent?parent.width:800
                     Text{text:"Time";font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall | 0;color:Theme.textSecondary;font.bold:true;Layout.preferredWidth:70}
                     Text{text:"Service";font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall | 0;color:Theme.textSecondary;font.bold:true;Layout.preferredWidth:140}
                     Text{text:"Message";font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall | 0;color:Theme.textSecondary;font.bold:true;Layout.fillWidth:true;elide:Text.ElideRight} }
-                delegate: Rectangle { width:parent?parent.width:800; height:22; radius:2; color:index%2===0?Color.withAlpha(root.accentDim,0.05):"transparent"
+                delegate: Rectangle { width:parent?parent.width:800; height:24; radius:2; color:index%2===0?Color.withAlpha(root.accentDim,0.05):"transparent"
                     RowLayout { anchors.fill:parent; anchors.margins:2
                         Text{text:modelData.time;font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall | 0;color:modelData.level==="error"?Theme.error:modelData.level==="warn"?Theme.warning:Theme.textSecondary;Layout.preferredWidth:70;elide:Text.ElideRight}
                         Text{text:modelData.service;font.family:Theme.fontFamily;font.pixelSize:root._fontSizeSmall | 0;color:Theme.textPrimary;Layout.preferredWidth:140;elide:Text.ElideRight}
