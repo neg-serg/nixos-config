@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # proxy — запуск/остановка/обновление Hysteria2 + VLESS Reality прокси
 # Usage: proxy [on|off|status|refresh]
-# Credentials: from /run/user/1000/secrets/proxy-fallback (SOPS-encrypted)
+# Credentials: from /run/secrets/proxy-fallback (SOPS-encrypted)
 set -euo pipefail
 
 CONFIG="$HOME/.config/sing-box-trojan/config.json"
 LOG="/tmp/sing-box-trojan.log"
-SECRET="/run/user/1000/secrets/proxy-fallback"
+SECRET="/run/secrets/proxy-fallback"
 
 # ============================================================
 # load_fallback — прочитать fallback-ноды из sops
@@ -73,13 +73,39 @@ for line in text.strip().split('\n'):
             ob = {"type": "vless", "tag": f"vl-{len(outbounds)}",
                   "server": host, "server_port": port, "uuid": uuid,
                   "packet_encoding": "xudp"}
-            tls = {"enabled": True, "server_name": p.get('sni', host),
-                   "utls": {"enabled": True, "fingerprint": p.get('fp', 'chrome') if p.get('fp', 'chrome') in ['chrome','firefox','ios','android','edge','safari','360','random','randomized'] else 'chrome'}}
-            if p.get('security') == 'reality' and len(p.get('pbk', '')) >= 32:
-                tls["reality"] = {"enabled": True,
-                                 "public_key": p.get('pbk', ''),
-                                 "short_id": p.get('sid', '')}
-            ob["tls"] = tls; outbounds.append(ob)
+            sec = p.get('security', '')
+            if sec in ('tls', 'reality', 'xtls'):
+                tls = {"enabled": True, "server_name": p.get('sni', host),
+                       "utls": {"enabled": True, "fingerprint": p.get('fp', 'chrome') if p.get('fp', 'chrome') in ['chrome','firefox','ios','android','edge','safari','360','random','randomized'] else 'chrome'}}
+                if sec == 'reality' and len(p.get('pbk', '')) >= 32:
+                    tls["reality"] = {"enabled": True,
+                                     "public_key": p.get('pbk', ''),
+                                     "short_id": p.get('sid', '')}
+                ob["tls"] = tls
+            tp = p.get('type', '').lower()
+            if tp in ('xhttp', 'splithttp'):
+                continue  # sing-box 1.13 has no xhttp transport
+            if tp == 'ws':
+                tr = {"type": "ws"}
+                if p.get('path'): tr["path"] = p['path']
+                if p.get('host'): tr["headers"] = {"Host": p['host']}
+                ob["transport"] = tr
+            elif tp == 'grpc':
+                tr = {"type": "grpc"}
+                if p.get('serviceName'): tr["service_name"] = p['serviceName']
+                ob["transport"] = tr
+            elif tp == 'httpupgrade':
+                tr = {"type": "httpupgrade"}
+                if p.get('host'): tr["host"] = p['host']
+                if p.get('path'): tr["path"] = p['path']
+                ob["transport"] = tr
+            elif tp == 'http':
+                tr = {"type": "http"}
+                if p.get('host'): tr["host"] = [p['host']]
+                if p.get('path'): tr["path"] = p['path']
+                ob["transport"] = tr
+            # tcp/raw/none → no transport
+            outbounds.append(ob)
     except: pass
 tags = [o["tag"] for o in outbounds]
 if tags:
@@ -106,8 +132,8 @@ refresh() {
     FALLBACK=$(load_fallback)
     NEW_NODES=""
     for url in \
-      "https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/protocols/vless.txt" \
-      "https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/everything.txt"; do
+      "https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/protocols/vless.txt" \
+      "https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/everything.txt"; do
         data=$(curl --noproxy '*' -sL --connect-timeout 5 --max-time 10 "$url" 2>/dev/null | \
           grep -E '^(vless|hysteria2)://' | shuf | head -30 || true)
         if [ -n "$data" ]; then
@@ -163,13 +189,39 @@ for line in text.strip().split('\n'):
             ob = {"type": "vless", "tag": f"vl-{len(outbounds)}",
                   "server": host, "server_port": port, "uuid": uuid,
                   "packet_encoding": "xudp"}
-            tls = {"enabled": True, "server_name": p.get('sni', host),
-                   "utls": {"enabled": True, "fingerprint": p.get('fp', 'chrome') if p.get('fp', 'chrome') in ['chrome','firefox','ios','android','edge','safari','360','random','randomized'] else 'chrome'}}
-            if p.get('security') == 'reality' and len(p.get('pbk', '')) >= 32:
-                tls["reality"] = {"enabled": True,
-                                 "public_key": p.get('pbk', ''),
-                                 "short_id": p.get('sid', '')}
-            ob["tls"] = tls; outbounds.append(ob)
+            sec = p.get('security', '')
+            if sec in ('tls', 'reality', 'xtls'):
+                tls = {"enabled": True, "server_name": p.get('sni', host),
+                       "utls": {"enabled": True, "fingerprint": p.get('fp', 'chrome') if p.get('fp', 'chrome') in ['chrome','firefox','ios','android','edge','safari','360','random','randomized'] else 'chrome'}}
+                if sec == 'reality' and len(p.get('pbk', '')) >= 32:
+                    tls["reality"] = {"enabled": True,
+                                     "public_key": p.get('pbk', ''),
+                                     "short_id": p.get('sid', '')}
+                ob["tls"] = tls
+            tp = p.get('type', '').lower()
+            if tp in ('xhttp', 'splithttp'):
+                continue  # sing-box 1.13 has no xhttp transport
+            if tp == 'ws':
+                tr = {"type": "ws"}
+                if p.get('path'): tr["path"] = p['path']
+                if p.get('host'): tr["headers"] = {"Host": p['host']}
+                ob["transport"] = tr
+            elif tp == 'grpc':
+                tr = {"type": "grpc"}
+                if p.get('serviceName'): tr["service_name"] = p['serviceName']
+                ob["transport"] = tr
+            elif tp == 'httpupgrade':
+                tr = {"type": "httpupgrade"}
+                if p.get('host'): tr["host"] = p['host']
+                if p.get('path'): tr["path"] = p['path']
+                ob["transport"] = tr
+            elif tp == 'http':
+                tr = {"type": "http"}
+                if p.get('host'): tr["host"] = [p['host']]
+                if p.get('path'): tr["path"] = p['path']
+                ob["transport"] = tr
+            # tcp/raw/none → no transport
+            outbounds.append(ob)
     except: pass
 tags = [o["tag"] for o in outbounds]
 if tags:
@@ -194,7 +246,11 @@ PYEOF
 start() {
     if systemctl is-active --quiet xray.service 2>/dev/null; then
         echo "  Stopping xray..."
-        sudo systemctl stop xray.service
+        if ! sudo -n systemctl stop xray.service 2>/dev/null; then
+            # xray runs as neg — pkill works without root; systemd then marks the unit inactive
+            pkill -f 'xray.*config.json' 2>/dev/null || true
+            echo "  (no passwordless sudo — xray stopped via pkill)"
+        fi
     fi
     pkill -f 'sing-box.*trojan' 2>/dev/null || true
     sleep 1
@@ -214,7 +270,8 @@ stop() {
     pkill -f 'sing-box.*trojan' 2>/dev/null || true
     if ! systemctl is-active --quiet xray.service 2>/dev/null; then
         echo "  Restoring xray..."
-        sudo systemctl start xray.service
+        sudo -n systemctl start xray.service 2>/dev/null \
+            || echo "  (no passwordless sudo — run: sudo systemctl start xray.service)"
     fi
     echo "  Proxy off"
 }
