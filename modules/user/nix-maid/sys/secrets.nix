@@ -20,6 +20,13 @@ lib.mkMerge [
           mode = "0400";
           owner = "neg";
         };
+        "proxy-fallback" = lib.mkIf (builtins.pathExists "${secretsDir}/proxy-fallback.sops.yaml") {
+          format = "yaml";
+          sopsFile = "${secretsDir}/proxy-fallback.sops.yaml";
+          key = "fallback_nodes";
+          mode = "0400";
+          owner = "neg";
+        };
         "vdirsyncer_google_client_id" =
           lib.mkIf (builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml")
             {
