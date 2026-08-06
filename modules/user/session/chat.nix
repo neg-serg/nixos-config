@@ -40,7 +40,9 @@ lib.mkIf (cfg.enable or true) {
     https_proxy = "socks5://127.0.0.1:10808";
     HTTP_PROXY = "socks5://127.0.0.1:10808";
     HTTPS_PROXY = "socks5://127.0.0.1:10808";
-    no_proxy = "localhost,127.0.0.1,::1";
-    NO_PROXY = "localhost,127.0.0.1,::1";
+    # Steam/CEF break through SOCKS5 (CM WebSocket ports reset); route them
+    # direct while keeping Telegram on the proxy.
+    no_proxy = "localhost,127.0.0.1,::1,steamstatic.com,steamserver.net,steampowered.com,steamconnecttest.com";
+    NO_PROXY = "localhost,127.0.0.1,::1,steamstatic.com,steamserver.net,steampowered.com,steamconnecttest.com";
   };
 }
