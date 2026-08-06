@@ -256,8 +256,8 @@ profile-eval: bench-eval flamegraph-eval
 
 # --- TidalCycles Live Coding --------------------------------------------------
 
- # Launch SC server + SuperDirt in background (~5s until audio ready)
- tidal-start:
+# Launch SC server + SuperDirt in background (~5s until audio ready)
+tidal-start:
      @echo "TidalCycles: booting engine..."
      @env LD_LIBRARY_PATH="/run/current-system/sw/lib" \
        sclang -l ~/.config/SuperCollider/sclang_conf.yaml \
