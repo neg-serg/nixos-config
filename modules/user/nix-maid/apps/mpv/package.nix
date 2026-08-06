@@ -13,6 +13,17 @@ let
     pkgs.mpvScripts.sponsorblock # skip sponsors on YouTube videos
     pkgs.mpvScripts.thumbfast # instant thumbnails in seek bar
     pkgs.mpvScripts.uosc # modern minimalist UI with controls
+    (pkgs.stdenv.mkDerivation {
+      pname = "mpv-hdr-auto-switch";
+      version = "0.1.0";
+      src = ../../../../../files/mpv/hdr-auto-switch.lua;
+      scriptName = "hdr-auto-switch.lua"; # auto-switch Hyprland cm to HDR on HDR content
+      dontUnpack = true;
+      installPhase = ''
+        mkdir -p $out/share/mpv/scripts
+        cp $src $out/share/mpv/scripts/$scriptName
+      '';
+    })
   ];
 
   mpvUnwrapped =
