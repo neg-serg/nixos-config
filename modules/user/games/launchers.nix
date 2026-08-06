@@ -26,8 +26,10 @@ in
           "/zero"
           "/zero"
           # Route ALL Steam traffic (incl. native CM WebSocket on 27018-27036)
-          # through the local SOCKS5 proxy via proxychains LD_PRELOAD. Env
-          # proxies are cleared so Steam/CEF don't double-route or go direct.
+          # through the local SOCKS5 proxy via proxychains LD_PRELOAD — only
+          # when features.games.steamProxy is enabled. Env proxies are cleared
+          # so Steam/CEF don't double-route or go direct.
+        ] ++ lib.optionals config.features.games.steamProxy.enable [
           "--unsetenv"
           "ALL_PROXY"
           "--unsetenv"
@@ -48,6 +50,7 @@ in
           "--ro-bind"
           "/etc/proxychains/proxychains.conf"
           "/etc/proxychains/proxychains.conf"
+        ] ++ [
           # (e.g. Steam "Add Drive").  --ro-bind-try so it is a no-op when
           # the path does not exist.
           "--ro-bind-try"
@@ -103,20 +106,22 @@ in
     };
 
     # Steam cannot route its native CM connections (WebSocket 27018-27036)
-    # through SOCKS5 via env vars — it ignores ALL_PROXY. The steam launcher
-    # above is wrapped with proxychains LD_PRELOAD so all outbound TCP goes
-    # through the local SOCKS5 proxy. Env proxies are stripped inside to
-    # avoid double-routing.
-    environment.etc."proxychains/proxychains.conf".text = ''
-      strict_chain
-      proxy_dns
-      remote_dns_subnet 224
-      tcp_read_time_out 15000
-      tcp_connect_time_out 8000
-      localnet 127.0.0.0/255.0.0.0
-      [ProxyList]
-      socks5 127.0.0.1 10808
-    '';
+    # through SOCKS5 via env vars — it ignores ALL_PROXY. When
+    # features.games.steamProxy is enabled, the launcher above is wrapped with
+    # proxychains LD_PRELOAD so all outbound TCP goes through the local SOCKS5
+    # proxy. Env proxies are stripped inside to avoid double-routing.
+    environment.etc."proxychains/proxychains.conf" = lib.mkIf config.features.games.steamProxy.enable {
+      text = ''
+        strict_chain
+        proxy_dns
+        remote_dns_subnet 224
+        tcp_read_time_out 15000
+        tcp_connect_time_out 8000
+        localnet 127.0.0.0/255.0.0.0
+        [ProxyList]
+        socks5 127.0.0.1 10808
+      '';
+    };
 
     environment.systemPackages = [
       pkgs.protontricks # winetricks-like helper tailored for Steam Proton
