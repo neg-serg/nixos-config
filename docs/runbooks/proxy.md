@@ -254,5 +254,5 @@ git commit -m "[secrets] proxy fallback nodes (initial)"
 ```
 
 > **Note:** The secret is declared as `sops.secrets."proxy-fallback"` in
-> `modules/user/nix-maid/sys/secrets.nix` and decrypted by sops-nix to `/run/secrets/proxy-fallback`,
-> readable only by the `neg` user.
+> `modules/user/nix-maid/sys/secrets.nix` and decrypted by sops-nix to
+> `/run/secrets/proxy-fallback`, readable only by the `neg` user.

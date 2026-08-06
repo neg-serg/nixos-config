@@ -9,17 +9,21 @@ let
   enabled = config.features.llm.enable or false;
   cfg = config.services.colibri;
 
-  pythonEnv = pkgs.python3.withPackages (ps: with ps; [
-    torch
-    safetensors
-    huggingface-hub
-    numpy
-    tokenizers
-    datasets
-  ]);
+  pythonEnv = pkgs.python3.withPackages (
+    ps: with ps; [
+      torch
+      safetensors
+      huggingface-hub
+      numpy
+      tokenizers
+      datasets
+    ]
+  );
 
   mkColibri =
-    { arch ? "x86-64-v3" }:
+    {
+      arch ? "x86-64-v3",
+    }:
     pkgs.stdenv.mkDerivation {
       pname = "colibri";
       version = "1.0";
@@ -170,76 +174,82 @@ in
     };
   };
 
-  config = lib.mkIf enabled {
-    services.colibri = {
-      arch = lib.mkDefault "native";
-      modelDir = lib.mkDefault "/zero/llm/glm52_i4";
-      ramBudget = lib.mkDefault 45;
+  config =
+    lib.mkIf enabled {
+      services.colibri = {
+        arch = lib.mkDefault "native";
+        modelDir = lib.mkDefault "/zero/llm/glm52_i4";
+        ramBudget = lib.mkDefault 45;
 
-      settings = lib.mkDefault {
-        DIRECT = "1";
-        PIPE_WORKERS = "16";
-        PREFETCH = "1";
-        MTP = "3";
+        settings = lib.mkDefault {
+          DIRECT = "1";
+          PIPE_WORKERS = "16";
+          PREFETCH = "1";
+          MTP = "3";
+        };
       };
-    };
-  }
-  // (lib.mkIf (enabled && cfg.enable) (
-    let
-      pkg = mkColibri { arch = cfg.arch; };
-      env = cfg.settings // {
-        COLI_MODEL = cfg.modelDir;
-      } // lib.optionalAttrs (cfg.ramBudget != null) {
-        RAM_GB = toString cfg.ramBudget;
-      };
-      envList = lib.mapAttrsToList (k: v: "${k}=${v}") env;
-      wrappedColi = pkgs.writeShellScriptBin "coli" ''
-        export ${lib.concatStringsSep " " envList}
-        exec ${pkg}/bin/coli "$@"
-      '';
-    in
-    {
-      environment.systemPackages = [
-        pkg
-        wrappedColi
-      ];
-
-      systemd.services.colibri-serve = lib.mkIf cfg.serve.enable (
-        let
-          apiKeyArgs = lib.optionalString (cfg.serve.apiKeyFile != null)
-            "--api-key-file ${cfg.serve.apiKeyFile}";
-        in
-        {
-          description = "colibrì OpenAI-compatible API server";
-          wantedBy = [ "multi-user.target" ];
-          after = [ "network.target" ];
-          environment = env // lib.optionalAttrs (cfg.serve.apiKeyFile != null) {
-            COLI_API_KEY = "$(cat ${cfg.serve.apiKeyFile})";
-          };
-          serviceConfig = {
-            ExecStart = "${pkg}/bin/coli serve"
-              + " --host ${cfg.serve.host}"
-              + " --port ${toString cfg.serve.port}"
-              + " --model-id ${cfg.serve.modelId}"
-              + " ${apiKeyArgs}";
-            Restart = "on-failure";
-            RestartSec = "10";
-            DynamicUser = true;
-            StateDirectory = "colibri";
-            WorkingDirectory = "/var/lib/colibri";
-            LimitNOFILE = 65536;
-            MemoryHigh = if cfg.ramBudget != null
-            then "${toString (cfg.ramBudget + 4)}G"
-            else "50G";
-          };
-        }
-      );
-
-      networking.firewall = lib.mkIf cfg.serve.enable (
-        lib.mkIf (cfg.serve.host != "127.0.0.1") {
-          allowedTCPPorts = [ cfg.serve.port ];
-        }
-      );
     }
-  ));
+    // (lib.mkIf (enabled && cfg.enable) (
+      let
+        pkg = mkColibri { arch = cfg.arch; };
+        env =
+          cfg.settings
+          // {
+            COLI_MODEL = cfg.modelDir;
+          }
+          // lib.optionalAttrs (cfg.ramBudget != null) {
+            RAM_GB = toString cfg.ramBudget;
+          };
+        envList = lib.mapAttrsToList (k: v: "${k}=${v}") env;
+        wrappedColi = pkgs.writeShellScriptBin "coli" ''
+          export ${lib.concatStringsSep " " envList}
+          exec ${pkg}/bin/coli "$@"
+        '';
+      in
+      {
+        environment.systemPackages = [
+          pkg
+          wrappedColi
+        ];
+
+        systemd.services.colibri-serve = lib.mkIf cfg.serve.enable (
+          let
+            apiKeyArgs = lib.optionalString (
+              cfg.serve.apiKeyFile != null
+            ) "--api-key-file ${cfg.serve.apiKeyFile}";
+          in
+          {
+            description = "colibrì OpenAI-compatible API server";
+            wantedBy = [ "multi-user.target" ];
+            after = [ "network.target" ];
+            environment =
+              env
+              // lib.optionalAttrs (cfg.serve.apiKeyFile != null) {
+                COLI_API_KEY = "$(cat ${cfg.serve.apiKeyFile})";
+              };
+            serviceConfig = {
+              ExecStart =
+                "${pkg}/bin/coli serve"
+                + " --host ${cfg.serve.host}"
+                + " --port ${toString cfg.serve.port}"
+                + " --model-id ${cfg.serve.modelId}"
+                + " ${apiKeyArgs}";
+              Restart = "on-failure";
+              RestartSec = "10";
+              DynamicUser = true;
+              StateDirectory = "colibri";
+              WorkingDirectory = "/var/lib/colibri";
+              LimitNOFILE = 65536;
+              MemoryHigh = if cfg.ramBudget != null then "${toString (cfg.ramBudget + 4)}G" else "50G";
+            };
+          }
+        );
+
+        networking.firewall = lib.mkIf cfg.serve.enable (
+          lib.mkIf (cfg.serve.host != "127.0.0.1") {
+            allowedTCPPorts = [ cfg.serve.port ];
+          }
+        );
+      }
+    ));
 }
