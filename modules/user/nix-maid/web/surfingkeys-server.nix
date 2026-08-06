@@ -34,7 +34,7 @@ mkIf (config.features.web.enable or false) {
 
   systemd.user.services.surfingkeys-extension-patch =
     let
-      patchScript = pkgs.writeScript "surfingkeys-extension-patch" (
+      patchScript = pkgs.writeShellScript "surfingkeys-extension-patch" (
         builtins.readFile (self + "/packages/local-bin/bin/surfingkeys-extension-patch")
       );
     in
