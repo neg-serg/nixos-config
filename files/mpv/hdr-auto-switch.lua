@@ -60,6 +60,14 @@ mp.register_event("shutdown", function()
   end
 end)
 
+-- On script start, restore SDR cm: a previous mpv run may have been killed
+-- (SIGKILL) while HDR was active, leaving the monitor stuck in HDR.
+mp.register_event("start-file", function()
+  if not currentHdr then
+    setMonitorCm(SDR_CM)
+  end
+end)
+
 mp.observe_property("video-params/gamma", "string", function(_, gamma)
   updateHdr(gamma == "pq" or gamma == "hlg")
 end)
