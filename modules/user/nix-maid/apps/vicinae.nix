@@ -271,6 +271,7 @@ in
         "C %h/.local/share/vicinae/themes/neg-kitty.toml 0644 - - - ${themeFileKitty}"
         "L+ %h/.local/share/vicinae/extensions/wl-switcher - - - - ${pkgs.wl-switcher}"
         "L+ %h/.local/share/vicinae/extensions/unsplash - - - - ${pkgs.unsplash}"
+        "L+ %h/.local/share/vicinae/extensions/fd-search - - - - ${pkgs.fd-search}"
         "L+ %h/.config/vicinae/nix-overrides.json - - - - ${nixOverridesFile}"
       ];
     })
