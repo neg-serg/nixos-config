@@ -155,11 +155,13 @@ in
     serviceConfig.Type = "oneshot";
     serviceConfig.RemainAfterExit = true;
     path = [ pkgs.zfs ]; # ZFS filesystem utilities
+    # Import before the stock zfs-mount service so it mounts our datasets;
+    # a redundant `zfs mount -a` here races with zfs-mount and fails (busy).
+    before = [ "zfs-mount.service" ];
     script = ''
       if ! zpool list gamez >/dev/null 2>&1; then
         zpool import -N gamez
       fi
-      zfs mount -a
     '';
   };
   systemd.services."zfs-import-zero" = {
@@ -173,11 +175,12 @@ in
     serviceConfig.Type = "oneshot";
     serviceConfig.RemainAfterExit = true;
     path = [ pkgs.zfs ]; # ZFS filesystem utilities
+    # Import before zfs-mount so it mounts our datasets (see zfs-import-gamez).
+    before = [ "zfs-mount.service" ];
     script = ''
       if ! zpool list zero >/dev/null 2>&1; then
         zpool import -N zero
       fi
-      zfs mount -a
     '';
   };
 
