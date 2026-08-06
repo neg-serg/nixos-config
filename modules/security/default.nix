@@ -160,6 +160,14 @@ in
               options = [ "NOPASSWD" ];
             }
             {
+              command = "/run/current-system/sw/bin/ryzenadj";
+              options = [ "NOPASSWD" ];
+            }
+            {
+              command = "/run/current-system/sw/bin/gpu-oc";
+              options = [ "NOPASSWD" ];
+            }
+            {
               command = "/run/current-system/sw/bin/systemctl stop xray.service";
               options = [ "NOPASSWD" ];
             }
