@@ -64,7 +64,11 @@ let
 in
 {
   config = lib.mkIf enabled {
-    environment.sessionVariables.LD_LIBRARY_PATH = [ "${pkgs.pipewire.jack}/lib" ];
+    environment.sessionVariables = {
+      LD_LIBRARY_PATH = [ "${pkgs.pipewire.jack}/lib" ];
+      # Server-side SC3-Plugins UGens (.so) — scsynth ищет их через SC_PLUGIN_PATH
+      SC_PLUGIN_PATH = "${pkgs.supercolliderPlugins.sc3-plugins}/lib/SuperCollider/plugins";
+    };
     environment.systemPackages = [ installQuark ];
     environment.etc = {
       "skel/.config/SuperCollider/superdirt_startup.scd".text = superdirtStartup;
@@ -76,6 +80,9 @@ in
       ".config/tidal/BootTidal.hs".text = bootTidal;
       ".local/share/SuperCollider/downloaded-quarks/Dirt-Samples".source =
         "${pkgs.neg.dirt-samples}/share/Dirt-Samples";
+      # SC3-Plugins классы (DynKlank, SwitchDelay, …) — нужны SuperDirt default-synths
+      ".local/share/SuperCollider/Extensions/SC3plugins".source =
+        "${pkgs.supercolliderPlugins.sc3-plugins}/share/SuperCollider/Extensions/SC3plugins";
     };
   };
 }
