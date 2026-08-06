@@ -122,19 +122,6 @@ in
 lib.mkIf guiEnabled (
   lib.mkMerge [
     {
-      # 2. Systemd user service
-      systemd.user.services.dunst = {
-        description = "Dunst notification daemon";
-        after = [ "graphical-session-pre.target" ];
-        partOf = [ "graphical-session.target" ];
-        wantedBy = [ "graphical-session.target" ];
-        serviceConfig = {
-          Type = "dbus";
-          BusName = "org.freedesktop.Notifications";
-          ExecStart = "${lib.getExe pkgs.dunst} -config %h/.config/dunst/dunstrc"; # Lightweight and customizable notification daemon
-          Restart = "on-failure";
-        };
-      };
 
       # Ensure packages are available
       environment.systemPackages = [
