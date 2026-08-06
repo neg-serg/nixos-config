@@ -191,7 +191,7 @@ repository.
 ## Adding fallback nodes
 
 Fallback nodes are encrypted with SOPS at `secrets/home/proxy-fallback.sops.yaml` and decrypted at
-runtime to `/run/user/1000/secrets/proxy-fallback`. They are included in every config generation
+runtime by sops-nix to `/run/secrets/proxy-fallback`. They are included in every config generation
 (first-run bootstrap, `proxy on`, `proxy refresh`) and serve as a backup when subscription URLs are
 unreachable.
 
@@ -253,5 +253,6 @@ git add secrets/home/proxy-fallback.sops.yaml
 git commit -m "[secrets] proxy fallback nodes (initial)"
 ```
 
-> **Note:** The secret is decrypted at runtime by a systemd oneshot service. The decrypted file is
-> placed at `/run/user/1000/secrets/proxy-fallback` and is readable only by the `neg` user.
+> **Note:** The secret is declared as `sops.secrets."proxy-fallback"` in
+> `modules/user/nix-maid/sys/secrets.nix` and decrypted by sops-nix to `/run/secrets/proxy-fallback`,
+> readable only by the `neg` user.
