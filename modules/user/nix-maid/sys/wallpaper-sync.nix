@@ -67,7 +67,10 @@ lib.mkIf (cfg.enable or false) {
   # which the wl-greeter-sync path unit above picks up.
   systemd.user.services."wl-state-sync" = {
     description = "Extract current wallpaper path from wl state and notify quickshell";
-    after = [ "wl-daemon.service" "graphical-session-pre.target" ];
+    after = [
+      "wl-daemon.service"
+      "graphical-session-pre.target"
+    ];
     partOf = [ "graphical-session.target" ];
     serviceConfig = {
       Type = "oneshot";
