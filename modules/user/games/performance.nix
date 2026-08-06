@@ -9,6 +9,33 @@
 }:
 let
   cfg = config.profiles.games or { };
+
+  # gpu-oc: write AMD GPU overclock settings to pp_od_clk_voltage (root)
+  # Usage: gpu-oc <sclk-offset> <vddgfx-offset>  (e.g. gpu-oc 300 -100)
+  #        gpu-oc reset                          (reset to stock)
+  gpuOc = pkgs.writeShellScriptBin "gpu-oc" ''
+    set -e
+    DEV=/sys/class/drm/card1/device/pp_od_clk_voltage
+    # Wait for the GPU sysfs interface to appear (amdgpu probe may lag boot)
+    for i in $(seq 1 30); do
+      [ -w "$DEV" ] && break
+      sleep 1
+    done
+    [ -w "$DEV" ] || { echo "gpu-oc: $DEV not writable after 30s" >&2; exit 1; }
+    case "$1" in
+      reset)
+        echo "r" > "$DEV"
+        echo "c" > "$DEV"
+        ;;
+      *)
+        SCLK="''${1:?usage: gpu-oc <sclk-offset> <vddgfx-offset>|reset}"
+        VDDG="''${2:?usage: gpu-oc <sclk-offset> <vddgfx-offset>|reset}"
+        echo "s $SCLK" > "$DEV"
+        echo "vo $VDDG" > "$DEV"
+        echo "c" > "$DEV"
+        ;;
+    esac
+  '';
 in
 {
   config = lib.mkIf cfg.enable {
@@ -71,11 +98,33 @@ in
         # NO AllowedMemoryNodes — let kernel auto-select (V-Cache CCD can be node 0 or 1 on dual-CCD X3D)
       };
     };
+    # auto-oc: apply persistent CPU + GPU overclock at boot
+    # CPU: PBO 230W, TDC 190A, Tctl 95C, Curve Optimizer -20 (9950X3D)
+    # GPU: sclk +300MHz, vddgfx -100mV (RX 9070 XT optimum from OC sweep)
+    systemd.services.auto-oc = {
+      description = "Apply persistent CPU/GPU overclock";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "systemd-modules-load.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.ryzenadj}/bin/ryzenadj -a 230000 -b 230000 -c 230000 -g 190000 -f 95 --set-coall=-20 && ${gpuOc}/bin/gpu-oc 300 -100'";
+      };
+    };
 
     environment = {
+
       systemPackages = [
         pkgs.mangohud # Vulkan/OpenGL overlay for FPS/frametime telemetry
         pkgs.neg.game # Unified game launcher — CPU pinning, Gamescope, sessions
+        pkgs.corectrl # GUI for AMD GPU overclocking and fan control
+        pkgs.ryzenadj # AMD CPU overclocking (PBO, curve optimizer) via SMU
+        pkgs.stress-ng # CPU/RAM stress testing for stability verification
+        pkgs.glmark2 # OpenGL benchmark for GPU stability/performance
+        pkgs.vkmark # Vulkan benchmark for GPU stability/performance
+        # gpu-oc: write AMD GPU overclock settings to pp_od_clk_voltage (root)
+        # Usage: gpu-oc <sclk-offset> <vddgfx-offset>  (e.g. gpu-oc 150 -50)
+        #        gpu-oc reset                          (reset to stock)
+        gpuOc # GPU overclock/undervolt helper (root via NOPASSWD)
       ];
 
       # Global defaults for wrappers
