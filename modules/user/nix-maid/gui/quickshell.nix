@@ -40,6 +40,7 @@ let
       pkgs.gawk # GNU awk: used by SystemMonitor probes parsing /proc/{meminfo,swaps,diskstats}
       pkgs.hyprland # dynamic tiling Wayland compositor
       pkgs.neg.rsmetrx # custom metrics exporter
+      pkgs.khal # CLI calendar (used by CalendarEvents.js for khal list)
     ];
   };
 
@@ -79,9 +80,15 @@ let
     mkdir -p "$qs_dir/Bar"
     cp -rfT "$src/Bar" "$qs_dir/Bar" 2>/dev/null || true
     chmod -R u+w "$qs_dir/Bar" 2>/dev/null || true
+
+    # Helpers/ — force-copy on every start for dev iteration
+    mkdir -p "$qs_dir/Helpers"
+    cp -rfT "$src/Helpers" "$qs_dir/Helpers" 2>/dev/null || true
+    chmod -R u+w "$qs_dir/Helpers" 2>/dev/null || true
   '';
   # Build individual nix-maid entries for source dir top-level contents,
-  # excluding writable paths (Theme, Settings, Settings.json, .github).
+  # excluding writable paths (Theme, Settings, Settings.json, .github)
+  # and force-copied paths (Components, Bar, Helpers).
   quickshellSrcEntries = builtins.readDir quickshellSrc;
 
   quickshellSrcNames = builtins.filter (
@@ -93,6 +100,7 @@ let
     && name != "Settings"
     && name != "Components"
     && name != "Bar"
+    && name != "Helpers"
   ) (builtins.attrNames quickshellSrcEntries);
 
   quickshellHomeFiles = builtins.listToAttrs (
