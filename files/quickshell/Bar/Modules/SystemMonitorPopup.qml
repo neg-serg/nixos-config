@@ -7,6 +7,20 @@ import qs.Settings
 import "../../Helpers/Color.js" as Color
 
 PanelOverlaySurface {
+
+    onVisibleChanged: {
+        if (visible) root._copyLogsToClipboard();
+    }
+
+    function _copyLogsToClipboard() {
+        var entries = root.logEntries || [];
+        var lines = [];
+        for (var i = 0; i < entries.length; i++) {
+            var e = entries[i];
+            lines.push("[" + e.time + "] " + e.service + ": " + e.message);
+        }
+        if (lines.length > 0) Quickshell.clipboardText = lines.join("\n");
+    }
     id: root
 
     backgroundColor: Color.withAlpha(Theme.surface, 0.85)
