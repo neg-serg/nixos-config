@@ -192,7 +192,6 @@ hl.bind(M4 .. "+" .. SH .. "+c", hl.dsp.exec_cmd("wl random ~/pic/wl"))
 
 -- --- System ────────────────────────────────────────────────────────────
 hl.bind(M4 .. "+" .. SH .. "+n", hl.dsp.exec_cmd("hyprscratch rebuild 'kitty --class rebuild -e nh os switch /etc/nixos#odin --option substitute false' special"))
-hl.bind("C+Space", hl.dsp.exec_cmd("wtype -k Tab")) -- Ctrl+Space→Tab (HRM removed, no home-row Ctrl to clash)
 hl.bind(M4 .. "+" .. C .. "+v", hl.dsp.exec_cmd('raise --match "class:regex=^Bazecor$" --launch "bazecor"'))
 hl.bind(M4 .. "+g", hl.dsp.exec_cmd('raise --match "class:regex=^(steam|com\\.valvesoftware\\.Steam|steam_app.*|gamescope)$" --launch "steam"'))
 hl.bind(M4 .. "+" .. C .. "+o", hl.dsp.exec_cmd('raise --match "class:regex=^(obs|com\\.obsproject\\.Studio)$" --launch "obs"'))
