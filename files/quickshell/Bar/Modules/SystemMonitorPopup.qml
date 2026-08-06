@@ -15,8 +15,8 @@ PanelOverlaySurface {
     cornerRadiusOverride: Math.round(Theme.cornerRadiusLarge / 3)
 
     anchors.centerIn: parent
-    implicitWidth: Math.round(Math.min(960, parent.width * 0.85))
-    implicitHeight: Math.round(Math.min(640, parent.height * 0.85))
+    implicitWidth: Math.round(Math.min(1040, parent.width * 0.92))
+    implicitHeight: Math.round(Math.max(480, parent.height - 60))
 
     Rectangle { anchors.top:parent.top; anchors.left:parent.left; anchors.right:parent.right; height:1; color:Color.withAlpha(Theme.accentPrimary,0.25) }
 
@@ -138,8 +138,7 @@ PanelOverlaySurface {
         Rectangle{width:parent.width;height:1;color:root.sepColor}
 
         Text{text:"Recent Logs";font.family:Theme.fontFamily;font.pixelSize:root._fontSize | 0;color:Theme.textPrimary;font.bold:true}
-
-        Rectangle { width:parent.width; height:Math.max(120, root.height-320); radius:6; color:root.cardBg; clip:true
+        Rectangle { width:parent.width; height:Math.max(200, root.height-240); radius:6; color:root.cardBg; clip:true
             ListView {
                 anchors.fill: parent
                 model:root.logEntries
