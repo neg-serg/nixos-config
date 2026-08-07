@@ -52,6 +52,19 @@ let
     qs_dir="$HOME/.config/quickshell"
     src="${quickshellSrc}"
 
+    # Self-heal nix-maid symlinks: during `nixos-rebuild switch` the cleanup
+    # service deletes the static dir while quickshell can restart before
+    # maid-activation recreates it. If shell.qml is gone, wait for activation.
+    if [ ! -e "$qs_dir/shell.qml" ] && [ -d "$qs_dir" ]; then
+      systemctl --user start --wait maid-activation.service 2>/dev/null || true
+      # Fallback: run the activation script directly if the unit didn't help.
+      if [ ! -e "$qs_dir/shell.qml" ]; then
+        for a in /nix/store/*-all-maid/nix-maid-neg/bin/activate; do
+          [ -x "$a" ] && "$a" && break
+        done
+      fi
+    fi
+
     # Theme/ — copy-once from Nix store, make writable
     if [ ! -d "$qs_dir/Theme" ]; then
       mkdir -p "$qs_dir/Theme"
