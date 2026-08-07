@@ -205,11 +205,11 @@
           # ── Notifications ────────────────────────────────────────
           - mod: SUPER
             key: n
-            command: dunstctl history-pop
+            command: touch ~/.cache/quickshell/notif-center-toggle
             title: Notifications
           - mod: SUPER
             key: space
-            command: dunstctl close-all
+            command: touch ~/.cache/quickshell/notif-close-all
             title: Close all
       '';
     })
