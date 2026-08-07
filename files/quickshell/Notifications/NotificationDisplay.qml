@@ -14,6 +14,22 @@ Item {
     // NotificationCard component factory
     property Component notifCardComponent: NotificationCard {}
 
+    // Input mask height: total height of the notification cards still present
+    // (used by NotificationOverlay to restrict the click-capturing region).
+    // Harnesses stay in `notifications` until their fade-out finishes, so the
+    // mask shrinks smoothly instead of cutting the animation.
+    readonly property real contentMaskHeight: {
+        let total = 0;
+        let count = 0;
+        for (const n of root.notifications) {
+            if (n) {
+                total += n.implicitHeight;
+                count++;
+            }
+        }
+        return total + Math.max(0, count - 1) * 4;
+    }
+
     function addNotification(notification) {
         const harness = harnessComponent.createObject(contentCol, {
             backer: notification,
