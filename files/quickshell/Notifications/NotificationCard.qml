@@ -29,22 +29,13 @@ Rectangle {
     // Dynamic width like dunst's (300, 500): content-driven, clamped.
     // 32 = 2*(frame 10 + hpad 6)
     width: Math.min(root._maxW, Math.max(root._minW, mainLayout.implicitWidth + 32))
-    height: mainLayout.implicitHeight + root._frameW * 2
+    // Minimum height guard: without it a stale build lost the height binding
+    // and cards rendered at 0px (invisible). 40 = frame 20 + minimal content.
+    height: Math.max(mainLayout.implicitHeight + root._frameW * 2, 40)
     color: Qt.rgba(0, 0, 0, 0.6)
     radius: root._radius
     border.width: root._frameW
     border.color: "#000000"
-
-    Timer {
-        interval: 400
-        repeat: false
-        running: true
-        onTriggered: {
-            console.log("[Card] h=", root.height, "mainLayout.implicitHeight=", mainLayout.implicitHeight,
-                        "summary=", root.notif.summary, "body=", root.notif.body,
-                        "iconVisible=", iconImage.visible);
-        }
-    }
 
     // ── Main: icon left of full content column ─────────────────────
     RowLayout {
