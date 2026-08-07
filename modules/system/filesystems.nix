@@ -63,6 +63,9 @@ in
         "bind"
         "nofail"
         "x-systemd.automount"
+        # Wait for the real gamez/main mount before binding; otherwise the
+        # bind pins the empty dir on tank/nixos and Steam loses its library.
+        "x-systemd.requires-mounts-for=/gamez/main"
         "x-systemd.after=zfs-import-gamez.service"
       ];
     };
@@ -73,6 +76,7 @@ in
         "bind"
         "nofail"
         "x-systemd.automount"
+        "x-systemd.requires-mounts-for=/gamez/main"
         "x-systemd.after=zfs-import-gamez.service"
       ];
     };
@@ -83,6 +87,7 @@ in
         "bind"
         "nofail"
         "x-systemd.automount"
+        "x-systemd.requires-mounts-for=/gamez/main"
         "x-systemd.after=zfs-import-gamez.service"
       ];
     };
@@ -93,10 +98,12 @@ in
         "bind"
         "nofail"
         "x-systemd.automount"
+        "x-systemd.requires-mounts-for=/gamez/main"
         "x-systemd.after=zfs-import-gamez.service"
       ];
     };
   };
+
 
   # Cache both metadata and data for /nix/store — ARC has room (60 GB RAM),
   # and repeated builds read the same store paths.
