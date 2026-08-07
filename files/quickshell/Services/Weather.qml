@@ -27,7 +27,7 @@ Item {
         var opts = {
             userAgent: Settings.settings.userAgent,
             debug: Settings.settings.debugNetwork,
-            timeoutMs: Theme.weatherHttpTimeoutMs,
+            timeoutMs: Theme.weather.httpTimeoutMs,
             weatherApiBaseUrl: Settings.settings.weatherApiBaseUrl || undefined,
             geocodingApiBaseUrl: Settings.settings.weatherGeocodingBaseUrl || undefined
         };
