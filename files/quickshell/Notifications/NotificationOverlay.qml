@@ -25,8 +25,8 @@ PanelWindow {
         bottom: 54
     }
 
-    implicitWidth: 520
-    implicitHeight: 600
+    implicitWidth: 620
+    implicitHeight: 800
 
     NotificationDisplay {
         id: display
