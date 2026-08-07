@@ -14,8 +14,12 @@ Singleton {
     property bool showTrayNotifs: false;
     property bool dnd: false;
     property bool hasNotifs: root.notifications.length !== 0
+    // Dismissed notifications, kept for the center's history (Android-style).
+    property list<TrackedNotification> history;
+    property int maxHistory: 50
 
     property int maxToastCount: 2
+
 
     signal notif(notif: TrackedNotification);
     signal showAll(notifications: list<TrackedNotification>);
@@ -49,8 +53,12 @@ Singleton {
             target: notificationConnection.modelData;
 
             function onDiscarded() {
-                root.notifications = root.notifications.filter(n => n !== notificationConnection.target);
-                notificationConnection.modelData.untrack();
+                const n = notificationConnection.target;
+                root.notifications = root.notifications.filter(x => x !== n);
+                // Keep it for the history section instead of dropping it.
+                const capped = root.history.length >= root.maxHistory ? root.history.slice(1) : root.history;
+                root.history = [...capped, n];
+                n.untrack();
             }
 
             function onDiscard() {
@@ -86,5 +94,6 @@ Singleton {
 
     function sendDiscardAll() {
         root.discardAll(root.notifications);
+        root.history = [];
     }
 }
