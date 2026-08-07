@@ -25,11 +25,11 @@ in
           "--bind"
           "/zero"
           "/zero"
-          # Route ALL Steam traffic (incl. native CM WebSocket on 27018-27036)
-          # through the local SOCKS5 proxy via proxychains LD_PRELOAD — only
-          # when features.games.steamProxy is enabled. Env proxies are cleared
-          # so Steam/CEF don't double-route or go direct.
-        ] ++ lib.optionals config.features.games.steamProxy.enable [
+          # CEF/Steam break through SOCKS5 (CM WebSocket ports reset, RSA-key
+          # fetch fails): strip session proxy env vars (chat.nix sets
+          # ALL_PROXY/HTTP(S)_PROXY to the sing-box SOCKS5 on 10808) so Steam
+          # always goes direct. no_proxy does not help — Chromium ignores it
+          # for SOCKS5.
           "--unsetenv"
           "ALL_PROXY"
           "--unsetenv"
@@ -42,6 +42,11 @@ in
           "HTTPS_PROXY"
           "--unsetenv"
           "all_proxy"
+          # Route ALL Steam traffic (incl. native CM WebSocket on 27018-27036)
+          # through the local SOCKS5 proxy via proxychains LD_PRELOAD — only
+          # when features.games.steamProxy is enabled (re-injects the proxy
+          # stripped above).
+        ] ++ lib.optionals config.features.games.steamProxy.enable [
           "--setenv"
           "LD_PRELOAD"
           "${pkgs.proxychains}/lib/libproxychains4.so"
