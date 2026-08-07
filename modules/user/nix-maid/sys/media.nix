@@ -216,7 +216,7 @@ lib.mkMerge [
       format = "binary";
       owner = "neg";
     };
-    # mpdas service lives in sys/user-services.nix (with ALL_PROXY via SOCKS5).
+    # mpdas service lives in sys/user-services.nix.
   })
   (lib.mkIf (config.features.media.aiUpscale.enable or false) (
     neg.mkHomeFiles {
