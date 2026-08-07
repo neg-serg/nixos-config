@@ -67,8 +67,8 @@ Item {
         anchors.bottom: true
         WlrLayershell.margins { right: 24; bottom: 24 }
 
-        implicitWidth: 380
-        implicitHeight: 360
+        implicitWidth: 460
+        implicitHeight: 440
 
         property int autoHideMs: 8000
         Timer {
@@ -109,12 +109,12 @@ Item {
             }
 
             ColumnLayout {
-                anchors.fill: parent; anchors.margins: 12; spacing: 8
+                anchors.fill: parent; anchors.margins: 16; spacing: 10
 
                 // ── Large preview ───────────────────────────────────
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 240
+                    Layout.preferredHeight: 300
                     radius: 4
                     color: "#181C24"
                     border.width: 1
@@ -130,7 +130,7 @@ Item {
                     }
                     Text {
                         anchors.centerIn: parent
-                        text: "\uD83D\uDCF8"; font.pixelSize: 40
+                        text: "\uD83D\uDCF8"; font.pixelSize: 56
                         visible: root.shotPath === ""
                     }
                     // Click preview to open
@@ -151,14 +151,14 @@ Item {
                         spacing: 2
                         Text {
                             text: "Screenshot captured"
-                            font.family: "Iosevka"; font.weight: Font.Medium; font.pointSize: 11
+                            font.family: "Iosevka"; font.weight: Font.Medium; font.pointSize: 14
                             color: "#BFCAD0"
                         }
                         Text {
                             text: root.shotW + "\u202F\u00D7\u202F" + root.shotH
                                  + "  \u00B7  " + root.shotSizeHr
                                  + (root.shotDepth !== "" ? "  \u00B7  " + root.shotDepth : "")
-                            font.family: "Iosevka"; font.pointSize: 10
+                            font.family: "Iosevka"; font.pointSize: 12
                             color: "#AEB9C8"
                         }
                     }
@@ -176,13 +176,13 @@ Item {
                     Layout.fillWidth: true; spacing: 6
                     Text {
                         text: root.shotPath ? root.shotPath.replace(root._home, "~") : ""
-                        font.family: "Iosevka"; font.pointSize: 9
+                        font.family: "Iosevka"; font.pointSize: 11
                         color: "#6B718A"
                         elide: Text.ElideMiddle; Layout.fillWidth: true
                     }
                     Text {
                         text: root.shotTs
-                        font.family: "Iosevka"; font.pointSize: 9
+                        font.family: "Iosevka"; font.pointSize: 11
                         color: "#6B718A"
                     }
                 }
@@ -198,14 +198,14 @@ Item {
                         ]
                         delegate: Rectangle {
                             Layout.preferredWidth: btnText.implicitWidth + 20
-                            Layout.preferredHeight: 28; radius: 4
+                            Layout.preferredHeight: 36; radius: 6
                             color: hh.hovered ? "#242A35" : "#181C24"
                             border.width: 1; border.color: "#3B4C5C"
                             Text {
                                 id: btnText
                                 anchors.centerIn: parent
                                 text: modelData.label
-                                font.family: "Iosevka"; font.weight: Font.Medium; font.pointSize: 10
+                                font.family: "Iosevka"; font.weight: Font.Medium; font.pointSize: 12
                                 color: "#BFCAD0"
                             }
                             HoverHandler { id: hh }

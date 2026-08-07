@@ -5,8 +5,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Services.Notifications
 
-// NotificationCard — compact panel-style card.
-// Single-row header (icon 32px + summary), body below, thin frame.
+// NotificationCard — compact panel-style card, larger UI.
 
 Rectangle {
     id: root
@@ -16,16 +15,16 @@ Rectangle {
     // ── Metrics ────────────────────────────────────────────────────
     readonly property int _frameW: 1
     readonly property int _radius: 4
-    readonly property int _hpad: 8
-    readonly property int _iconSize: 32
-    readonly property int _minW: 260
-    readonly property int _maxW: 480
+    readonly property int _hpad: 12
+    readonly property int _iconSize: 48
+    readonly property int _minW: 340
+    readonly property int _maxW: 600
     readonly property color _fg: "#BFCAD0"
     readonly property color _frame: "#3B4C5C"
 
-    // Compact panel-like size: 16 = 2*(frame 1 + hpad 8)
-    width: Math.min(root._maxW, Math.max(root._minW, mainLayout.implicitWidth + 16))
-    height: Math.max(mainLayout.implicitHeight + root._frameW * 2, 44)
+    // 26 = 2*(frame 1 + hpad 12)
+    width: Math.min(root._maxW, Math.max(root._minW, mainLayout.implicitWidth + 26))
+    height: Math.max(mainLayout.implicitHeight + root._frameW * 2, 64)
     color: Qt.rgba(0, 0, 0, 0.75)
     radius: root._radius
     border.width: root._frameW
@@ -36,9 +35,9 @@ Rectangle {
         x: root._frameW + root._hpad
         y: root._frameW
         width: root.width - root._frameW * 2 - root._hpad * 2
-        spacing: 8
+        spacing: 10
 
-        // Icon — small, left
+        // Icon — left
         Image {
             id: iconImage
             visible: iconSource !== ""
@@ -59,12 +58,12 @@ Rectangle {
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 2
+            spacing: 3
 
             // Summary row
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: 8
 
                 Label {
                     id: summaryLabel
@@ -72,7 +71,7 @@ Rectangle {
                     text: root.notif.summary
                     font.family: "Iosevka"
                     font.weight: Font.Medium
-                    font.pointSize: 10
+                    font.pointSize: 13
                     color: root._fg
                     elide: Text.ElideRight
                     Layout.fillWidth: true
@@ -80,14 +79,14 @@ Rectangle {
 
                 // Close ×
                 Item {
-                    Layout.preferredWidth: 18
-                    Layout.preferredHeight: 18
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
 
                     Label {
                         anchors.centerIn: parent
                         text: "\u00D7"
                         font.family: "Iosevka"
-                        font.pointSize: 11
+                        font.pointSize: 15
                         color: root._fg
                         opacity: closeMa.containsMouse ? 1.0 : 0.6
                         Behavior on opacity { NumberAnimation { duration: 120 } }
@@ -109,7 +108,7 @@ Rectangle {
                 visible: root.notif.body !== ""
                 text: root.notif.body
                 font.family: "Iosevka"
-                font.pointSize: 9
+                font.pointSize: 12
                 color: root._fg
                 opacity: 0.85
                 wrapMode: Text.Wrap
@@ -134,7 +133,7 @@ Rectangle {
                 required property NotificationAction modelData;
                 required property int index;
                 Layout.fillWidth: true
-                implicitHeight: 24
+                implicitHeight: 34
 
                 Rectangle {
                     anchors {
@@ -154,7 +153,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: modelData.text
                         font.family: "Iosevka"
-                        font.pointSize: 9
+                        font.pointSize: 12
                         color: root._fg
                     }
                 }
