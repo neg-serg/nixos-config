@@ -26,6 +26,9 @@ Rectangle {
 
     // Panel-dark: ~0.9 alpha like the bar backdrop (0.88)
     width: Math.min(root._maxW, Math.max(root._minW, content.implicitWidth + 2 * (root._frameW + root._pad)))
+    // Explicit height: without it the card renders at 0px and is invisible
+    // (regression from "[gui/quickshell] Darken card bg and frame").
+    height: Math.max(content.implicitHeight + 2 * (root._frameW + root._vpad), 64)
     color: Qt.rgba(0, 0, 0, 0.95)
     radius: root._radius
     border.width: root._frameW
