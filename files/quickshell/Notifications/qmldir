@@ -1,0 +1,8 @@
+module qs.Notifications
+singleton NotificationManager 1.0 NotificationManager.qml
+NotificationCard 1.0 NotificationCard.qml
+NotificationDisplay 1.0 NotificationDisplay.qml
+NotificationOverlay 1.0 NotificationOverlay.qml
+NotificationCenter 1.0 NotificationCenter.qml
+TrackedNotification 1.0 TrackedNotification.qml
+DaemonNotification 1.0 DaemonNotification.qml

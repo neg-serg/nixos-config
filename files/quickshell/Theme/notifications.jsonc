@@ -1,0 +1,12 @@
+{
+  "notifications": {
+    "background": "#000000",
+    "foreground": "#BFCAD0",
+    "frameColor": "#000000",
+    "accentColor": "#6C7E96",
+    "radius": 4,
+    "padding": 6,
+    "maxWidth": 500,
+    "maxToastCount": 2
+  }
+}

@@ -16,5 +16,6 @@
   "vpn.jsonc",
   "time.jsonc",
   "volume.jsonc",
-  "greeter.jsonc"
+  "greeter.jsonc",
+  "notifications.jsonc"
 ]
