@@ -41,6 +41,8 @@ lib.mkMerge [
 
     # Service profiles toggles for this host
     servicesProfiles = {
+      unbound.enable = true;
+      adguardhome.enable = true;
       # Local DNS rewrites for LAN names (service enable comes from roles)
       adguardhome.rewrites = [
         {
