@@ -167,6 +167,7 @@ Singleton {
             // Declare nested group roots so nested tokens in Theme/.theme.json are readable
             property var colors: ({})
             property var panel: ({})
+            property var notifications: ({})
             property var shape: ({})
             property var tooltip: ({})
             property var weather: ({})
