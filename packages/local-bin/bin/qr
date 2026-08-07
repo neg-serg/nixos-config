@@ -27,26 +27,26 @@ case "${1:-}" in
     -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     gen) need qrencode; mkdir -p "$HOME/tmp"; qrencode -l H -d 75 -s 10 -o - "$(wl-paste)" > "$HOME/tmp/qrcode.png" ;;
     # select a region to screenshot (or click to screenshot window)
-    select) maimselect | clip -t image/png; dunstify "Screenshot" "Screenshot taken" ;;
+    select) maimselect | clip -t image/png; notify-send "Screenshot" "Screenshot taken" ;;
     # scan a QR code
     qr)
         need zbarimg; tmp_file=$(mktemp -t maimscript-XXXXXX)
         if ! grim -g "$(slurp)" "$tmp_file"; then rm -f "$tmp_file"; exit 1; fi
         scanresult=$(zbarimg --quiet --raw "$tmp_file" | tr -d '\n' || true)
         if [ -z "$scanresult" ]; then
-            if command -v dunstify >/dev/null 2>&1; then dunstify "Screenshot" "No scan data found"; fi
+            notify-send "Screenshot" "No scan data found"
         else
             echo "$scanresult" | clip
             if command -v convert >/dev/null 2>&1; then
                 convert "$tmp_file" -resize 75x75 "$tmp_file"
             fi
-            if command -v dunstify >/dev/null 2>&1; then dunstify -i "$tmp_file" "QR" "$scanresult\n(copied to clipboard)"; fi
+            notify-send -i "$tmp_file" "QR" "$scanresult\n(copied to clipboard)"
         fi
         rm -f "$tmp_file"
         ;;
     # screenshot the entire desktop
     *)
         grim - | clip -t image/png
-        if command -v dunstify >/dev/null 2>&1; then dunstify "Screenshot" "Screenshot taken"; fi
+        notify-send "Screenshot" "Screenshot taken"
         ;;
 esac
