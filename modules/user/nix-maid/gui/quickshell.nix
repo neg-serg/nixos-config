@@ -159,10 +159,6 @@ lib.mkIf quickshellEnabled (
           Environment = [
             "QML_XHR_ALLOW_FILE_WRITE=1"
             "PATH=/run/current-system/sw/bin:\${PATH}"
-            # Session exports HTTP(S)_PROXY=socks5://127.0.0.1:10808, but the
-            # proxy is only up on demand — bypass it for weather so XHR works.
-            "NO_PROXY=localhost,127.0.0.1,::1,api.open-meteo.com,wttr.in,geocoding-api.open-meteo.com"
-            "no_proxy=localhost,127.0.0.1,::1,api.open-meteo.com,wttr.in,geocoding-api.open-meteo.com"
           ];
         };
       };
