@@ -15,6 +15,7 @@ Item {
     property Component notifCardComponent: NotificationCard {}
 
     function addNotification(notification) {
+        console.log("[Display] addNotification:", notification.notif.summary, "notifications:", root.notifications.length);
         const harness = harnessComponent.createObject(contentCol, {
             backer: notification,
         });
@@ -24,6 +25,7 @@ Item {
             backer: notification,
         });
         root.notifications = [...root.notifications, harness];
+        console.log("[Display] card created, w:", harness.contentItem.width, "h:", harness.contentItem.height);
 
         // Enforce max toast count — dismiss oldest if exceeding
         var active = root.notifications.filter(function(h) { return h && !h._dismissed; });
