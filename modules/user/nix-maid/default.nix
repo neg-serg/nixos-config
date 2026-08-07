@@ -13,7 +13,6 @@
     ./gui/theme.nix
     ./gui/xdg.nix
     ./gui/qt.nix
-    ./gui/dunst.nix
     ./gui/quickshell.nix
     ./hyprland/main.nix
 
