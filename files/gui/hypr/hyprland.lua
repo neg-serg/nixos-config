@@ -228,9 +228,9 @@ hl.bind(M1 .. "+q", hl.dsp.exec_cmd(menu))
 hl.bind("Caps_Lock", hl.dsp.exec_cmd("swayosd-client --caps-lock"))
 hl.bind(M4 .. "+apostrophe", hl.dsp.exec_cmd("hypr-fix"))
 
--- --- Notifications (notify.conf) ---
-hl.bind(M4 .. "+n", hl.dsp.exec_cmd("dunstctl history-pop"))
-hl.bind(M4 .. "+space", hl.dsp.exec_cmd("dunstctl close-all"), { locked = true })
+-- --- Notifications (quickshell notification center) ---
+hl.bind(M4 .. "+n", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/notif-center-toggle"))
+hl.bind(M4 .. "+space", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/notif-close-all"), { locked = true })
 
 -- --- Overlay dismissal (quickshell widgets) ---
 -- Global fallback: M4+Escape or M4+Shift+K / M4+Shift+D
