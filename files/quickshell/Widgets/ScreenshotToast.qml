@@ -4,12 +4,8 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
 
-/*!
- * ScreenshotToast — macOS-style floating screenshot feedback card.
- * FileView watches the semaphore ~/.cache/quickshell/screenshot-event.
- * On trigger, reads JSON data via XMLHttpRequest (local file:// URL).
- * Auto-dismisses after 5s.
- */
+// ScreenshotToast — screenshot feedback card with large preview, dunst-matched style.
+
 Item {
     id: root
     visible: false
@@ -25,13 +21,9 @@ Item {
         id: triggerFile
         path: root._triggerPath
         watchChanges: true
-        onFileChanged: {
-            root.loadAndShow();
-            reload();
-        }
+        onFileChanged: { root.loadAndShow(); reload(); }
     }
 
-    // ── Parsed metadata ──────────────────────────────────────────────────
     property string shotPath: ""
     property int shotW: 0
     property int shotH: 0
@@ -61,7 +53,7 @@ Item {
         xhr.send();
     }
 
-    // ── Toast window ─────────────────────────────────────────────────────
+    // ── Toast window ─────────────────────────────────────────────────
     PanelWindow {
         id: toast
         color: "transparent"
@@ -75,10 +67,10 @@ Item {
         anchors.bottom: true
         WlrLayershell.margins { right: 24; bottom: 24 }
 
-        implicitWidth: 360
-        implicitHeight: 160
+        implicitWidth: 380
+        implicitHeight: 360
 
-        property int autoHideMs: 5000
+        property int autoHideMs: 8000
         Timer {
             id: autoHide
             interval: toast.autoHideMs
@@ -107,73 +99,95 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            radius: 12
-            color: Qt.rgba(0.11, 0.11, 0.16, 0.92)
+            radius: 4
             border.width: 1
-            border.color: Qt.rgba(0.30, 0.35, 0.45, 0.30)
+            color: Qt.rgba(0, 0, 0, 0.85)
             transform: Translate { y: toast.slideY }
 
             HoverHandler {
                 onActiveChanged: { if (active) autoHide.stop(); else autoHide.restart(); }
             }
-            TapHandler {
-                onTapped: {
-                    Quickshell.execDetached(["xdg-open", root.shotPath]);
-                    toast.hide();
-                }
-            }
 
             ColumnLayout {
-                anchors.fill: parent; anchors.margins: 16; spacing: 8
+                anchors.fill: parent; anchors.margins: 12; spacing: 8
 
-                RowLayout {
-                    Layout.fillWidth: true; spacing: 10
+                // ── Large preview ───────────────────────────────────
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 240
+                    radius: 4
+                    color: "#181C24"
+                    border.width: 1
+                    border.color: "#3B4C5C"
 
-                    Rectangle {
-                        Layout.preferredWidth: 56; Layout.preferredHeight: 42
-                        radius: 8
-                        color: Qt.rgba(0.18, 0.18, 0.26, 0.60)
-                        border.width: 1
-                        border.color: Qt.rgba(0.35, 0.40, 0.50, 0.25)
-                        Image {
-                            anchors.fill: parent; anchors.margins: 2
-                            source: root.shotPath ? "file://" + root.shotPath : ""
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            visible: root.shotPath !== ""
-                        }
-                        Text {
-                            anchors.centerIn: parent
-                            text: "\uD83D\uDCF8"; font.pixelSize: 20
-                            visible: root.shotPath === ""
+                    Image {
+                        anchors.fill: parent; anchors.margins: 3
+                        source: root.shotPath ? "file://" + root.shotPath : ""
+                        fillMode: Image.PreserveAspectFit
+                        asynchronous: true
+                        cache: false
+                        visible: root.shotPath !== ""
+                    }
+                    Text {
+                        anchors.centerIn: parent
+                        text: "\uD83D\uDCF8"; font.pixelSize: 40
+                        visible: root.shotPath === ""
+                    }
+                    // Click preview to open
+                    TapHandler {
+                        onTapped: {
+                            Quickshell.execDetached(["xdg-open", root.shotPath]);
+                            toast.hide();
                         }
                     }
+                }
+
+                // ── Title row ───────────────────────────────────────
+                RowLayout {
+                    Layout.fillWidth: true; spacing: 8
 
                     ColumnLayout {
+                        Layout.fillWidth: true
                         spacing: 2
-                        Text { text: "Screenshot captured"; color: "#C8D6E5"; font.pixelSize: 13; font.weight: Font.DemiBold }
+                        Text {
+                            text: "Screenshot captured"
+                            font.family: "Iosevka"; font.weight: Font.Medium; font.pointSize: 11
+                            color: "#BFCAD0"
+                        }
                         Text {
                             text: root.shotW + "\u202F\u00D7\u202F" + root.shotH
                                  + "  \u00B7  " + root.shotSizeHr
                                  + (root.shotDepth !== "" ? "  \u00B7  " + root.shotDepth : "")
-                            color: "#8395A7"; font.pixelSize: 11
+                            font.family: "Iosevka"; font.pointSize: 10
+                            color: "#AEB9C8"
                         }
                     }
 
-                    Item { Layout.fillWidth: true }
-                    Text { text: "\u2715"; color: "#576574"; font.pixelSize: 14; TapHandler { onTapped: toast.hide() } }
+                    Text {
+                        text: "\u2715"
+                        font.pointSize: 14
+                        color: "#6B718A"
+                        TapHandler { onTapped: toast.hide() }
+                    }
                 }
 
+                // ── Path row ────────────────────────────────────────
                 RowLayout {
                     Layout.fillWidth: true; spacing: 6
                     Text {
                         text: root.shotPath ? root.shotPath.replace(root._home, "~") : ""
-                        color: "#576574"; font.pixelSize: 10
+                        font.family: "Iosevka"; font.pointSize: 9
+                        color: "#6B718A"
                         elide: Text.ElideMiddle; Layout.fillWidth: true
                     }
-                    Text { text: root.shotTs; color: "#576574"; font.pixelSize: 10 }
+                    Text {
+                        text: root.shotTs
+                        font.family: "Iosevka"; font.pointSize: 9
+                        color: "#6B718A"
+                    }
                 }
 
+                // ── Actions ─────────────────────────────────────────
                 RowLayout {
                     Layout.fillWidth: true; spacing: 6
                     Repeater {
@@ -184,10 +198,16 @@ Item {
                         ]
                         delegate: Rectangle {
                             Layout.preferredWidth: btnText.implicitWidth + 20
-                            Layout.preferredHeight: 28; radius: 6
-                            color: hh.hovered ? Qt.rgba(0.30, 0.35, 0.50, 0.30) : Qt.rgba(0.18, 0.22, 0.30, 0.40)
-                            border.width: 1; border.color: Qt.rgba(0.35, 0.40, 0.50, 0.20)
-                            Text { id: btnText; anchors.centerIn: parent; text: modelData.label; color: "#A0B4CC"; font.pixelSize: 11; font.weight: Font.Medium }
+                            Layout.preferredHeight: 28; radius: 4
+                            color: hh.hovered ? "#242A35" : "#181C24"
+                            border.width: 1; border.color: "#3B4C5C"
+                            Text {
+                                id: btnText
+                                anchors.centerIn: parent
+                                text: modelData.label
+                                font.family: "Iosevka"; font.weight: Font.Medium; font.pointSize: 10
+                                color: "#BFCAD0"
+                            }
                             HoverHandler { id: hh }
                             TapHandler { onTapped: modelData.action() }
                         }
