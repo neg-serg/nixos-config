@@ -104,7 +104,6 @@ in
     };
   };
 
-
   # Cache both metadata and data for /nix/store — ARC has room (60 GB RAM),
   # and repeated builds read the same store paths.
   systemd.services.zfs-store-props = {
@@ -149,15 +148,15 @@ in
 
   systemd.services."zfs-import-gamez" = {
     description = "Import ZFS pool gamez";
-    wantedBy = [ "multi-user.target" ];
+    # gamez is a mirror on nvme1n1 + nvme3n1 (nvme0n1/nvme2n1 are tank/zero).
+    wantedBy = [ "zfs.target" ];
     after = [
-      "zfs.target"
-      "dev-nvme0n1.device"
-      "dev-nvme2n1.device"
+      "dev-nvme1n1.device"
+      "dev-nvme3n1.device"
     ];
     bindsTo = [
-      "dev-nvme0n1.device"
-      "dev-nvme2n1.device"
+      "dev-nvme1n1.device"
+      "dev-nvme3n1.device"
     ];
     serviceConfig.Type = "oneshot";
     serviceConfig.RemainAfterExit = true;
@@ -173,12 +172,12 @@ in
   };
   systemd.services."zfs-import-zero" = {
     description = "Import ZFS pool zero";
-    wantedBy = [ "multi-user.target" ];
+    # zero lives on nvme2n1.
+    wantedBy = [ "zfs.target" ];
     after = [
-      "zfs.target"
-      "dev-nvme3n1.device"
+      "dev-nvme2n1.device"
     ];
-    bindsTo = [ "dev-nvme3n1.device" ];
+    bindsTo = [ "dev-nvme2n1.device" ];
     serviceConfig.Type = "oneshot";
     serviceConfig.RemainAfterExit = true;
     path = [ pkgs.zfs ]; # ZFS filesystem utilities
