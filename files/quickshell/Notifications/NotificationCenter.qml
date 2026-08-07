@@ -46,6 +46,7 @@ PanelWindow {
 
     // ── Content ─────────────────────────────────────────────────────
     ColumnLayout {
+        anchors.fill: parent
         anchors.margins: 10
         spacing: 6
 
@@ -72,9 +73,8 @@ PanelWindow {
                 id: delegateRoot
                 width: notifList.width
                 required property var item;      // TrackedNotification | null (header)
-                required property bool isHeader;
                 implicitHeight: delegateRoot.isHeader ? 28
-                    : (cardLoader.item ? cardLoader.item.implicitHeight : 0)
+                    : (cardLoader.item ? cardLoader.item.height : 0)
 
                 // "Earlier" section header
                 Label {
