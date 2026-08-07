@@ -132,34 +132,59 @@ PanelWindow {
             Layout.fillHeight: true
             spacing: 4
             clip: true
-            model: NotificationManager.notifications
+            // Active notifications first, dismissed ones below with an
+            // "Earlier" header (Android-style history).
+            model: {
+                const out = NotificationManager.notifications.map(n => ({ item: n, isHeader: false }));
+                if (NotificationManager.history.length > 0) {
+                    out.push({ item: null, isHeader: true });
+                    for (const n of NotificationManager.history) out.push({ item: n, isHeader: false });
+                }
+                return out;
+            }
 
             delegate: Item {
                 id: delegateRoot
                 width: notifList.width
-                implicitHeight: cardLoader.item ? cardLoader.item.implicitHeight : 0
-                required property TrackedNotification modelData;
+                required property var item;      // TrackedNotification | null (header)
+                required property bool isHeader;
+                implicitHeight: delegateRoot.isHeader ? 28
+                    : (cardLoader.item ? cardLoader.item.implicitHeight : 0)
+
+                // "Earlier" section header
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: delegateRoot.isHeader
+                    text: "Earlier"
+                    font.pointSize: 10
+                    font.weight: Font.DemiBold
+                    color: root._fg
+                    opacity: 0.6
+                }
 
                 Loader {
                     id: cardLoader
                     anchors.fill: parent
+                    active: !delegateRoot.isHeader
                     asynchronous: false
                     sourceComponent: NotificationCard {
-                        notif: delegateRoot.modelData.notif
-                        backer: delegateRoot.modelData
+                        notif: delegateRoot.item.notif
+                        backer: delegateRoot.item
                     }
                 }
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: delegateRoot.modelData.discard()
+                    onClicked: {
+                        if (!delegateRoot.isHeader) delegateRoot.item.discard();
+                    }
                 }
             }
         }
 
         // Empty state
         Label {
-            visible: NotificationManager.notifications.length === 0
+            visible: NotificationManager.notifications.length === 0 && NotificationManager.history.length === 0
             text: "No notifications"
             color: root._fg
             opacity: 0.5

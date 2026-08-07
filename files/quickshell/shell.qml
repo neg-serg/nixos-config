@@ -39,15 +39,6 @@ Scope {
         return (h && h !== "") ? h : "/tmp";
     }
 
-    FileView {
-        id: notifCenterToggle
-        path: root._home + "/.cache/quickshell/notif-center-toggle"
-        watchChanges: true
-        onFileChanged: {
-            NotificationManager.openHistory();
-            reload();
-        }
-    }
 
     FileView {
         id: notifCloseAll

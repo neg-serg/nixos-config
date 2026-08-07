@@ -229,7 +229,7 @@ hl.bind("Caps_Lock", hl.dsp.exec_cmd("swayosd-client --caps-lock"))
 hl.bind(M4 .. "+apostrophe", hl.dsp.exec_cmd("hypr-fix"))
 
 -- --- Notifications (quickshell notification center) ---
-hl.bind(M4 .. "+n", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/notif-center-toggle"))
+hl.bind(M4 .. "+n", hl.dsp.exec_cmd("quickshell ipc call globalIPC toggleNotificationCenter"))
 hl.bind(M4 .. "+space", hl.dsp.exec_cmd("touch $HOME/.cache/quickshell/notif-close-all"), { locked = true })
 
 -- --- Overlay dismissal (quickshell widgets) ---
