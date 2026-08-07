@@ -16,9 +16,6 @@ in
     pkgs.wtype # fake typing for Wayland automation
     pkgs.ydotool # uinput automation helper (autoclicker, etc.)
 
-    # -- Notifications --
-    pkgs.dunst # notification daemon + dunstctl
-
     # -- Power --
     pkgs.upower # power management daemon for laptops/desktops
 
