@@ -70,45 +70,18 @@ Rectangle {
                 Layout.fillWidth: true
                 spacing: 3
 
-                // Summary row: label + close (right-aligned)
-                RowLayout {
+                // Summary: label only — close button is corner-anchored (top-right).
+                Label {
+                    id: summaryLabel
+                    visible: root.notif.summary !== ""
+                    text: root.notif.summary
+                    font.family: "Iosevka"
+                    font.weight: Font.DemiBold
+                    font.pointSize: 11
+                    color: root._fg
+                    elide: Text.ElideRight
                     Layout.fillWidth: true
-                    spacing: 8
-
-                    Label {
-                        id: summaryLabel
-                        visible: root.notif.summary !== ""
-                        text: root.notif.summary
-                        font.family: "Iosevka"
-                        font.weight: Font.Medium
-                        font.pointSize: 13
-                        color: root._fg
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-
-                    Item {
-                        Layout.preferredWidth: 24
-                        Layout.preferredHeight: 24
-                        Layout.alignment: Qt.AlignVCenter
-
-                        Label {
-                            anchors.centerIn: parent
-                            text: "\u00D7"
-                            font.family: "Iosevka"
-                            font.pointSize: 15
-                            color: root._fg
-                            opacity: closeMa.containsMouse ? 1.0 : 0.6
-                            Behavior on opacity { NumberAnimation { duration: 70 } }
-                        }
-
-                        MouseArea {
-                            id: closeMa
-                            hoverEnabled: true
-                            onClicked: root.backer.discard()
-                        }
-                    }
+                    Layout.rightMargin: 24 // keep clear of the corner close button
                 }
 
                 // Body
@@ -117,8 +90,8 @@ Rectangle {
                     Layout.fillWidth: true
                     visible: root.notif.body !== ""
                     text: root.notif.body
-                    font.family: "Iosevka"
-                    font.pointSize: 12
+                    font.weight: Font.Medium
+                    font.pointSize: 10
                     color: root._fg
                     opacity: 0.85
                     wrapMode: Text.Wrap
@@ -159,13 +132,42 @@ Rectangle {
                         Label {
                             anchors.centerIn: parent
                             text: modelData.text
-                            font.family: "Iosevka"
-                            font.pointSize: 12
+                            font.weight: Font.Medium
+                            font.pointSize: 10
                             color: root._fg
                         }
                     }
                 }
             }
+        }
+    }
+
+    // ── Close button: anchored to the card's top-right corner ──
+    Item {
+        id: closeButton
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: root._frameW + 6
+        anchors.rightMargin: root._frameW + 10
+        width: 20
+        height: 20
+        z: 2
+
+        Label {
+            anchors.centerIn: parent
+            text: "\u00D7"
+            font.family: "Iosevka"
+            font.pointSize: 12
+            color: root._fg
+            opacity: closeMa.containsMouse ? 1.0 : 0.6
+            Behavior on opacity { NumberAnimation { duration: 70 } }
+        }
+
+        MouseArea {
+            id: closeMa
+            anchors.fill: parent
+            hoverEnabled: true
+            onClicked: root.backer.discard()
         }
     }
 }
