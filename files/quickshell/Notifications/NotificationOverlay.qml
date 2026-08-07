@@ -34,9 +34,11 @@ PanelWindow {
     }
     mask: Region { item: display }
     Component.onCompleted: {
+        console.log("[Overlay] loaded, connecting");
         NotificationManager.notif.connect(display.addNotification);
         NotificationManager.showAll.connect(display.addSet);
         NotificationManager.dismissAll.connect(display.dismissAll);
         NotificationManager.discardAll.connect(display.discardAll);
+        console.log("[Overlay] connected, window visible:", root.visible);
     }
 }
