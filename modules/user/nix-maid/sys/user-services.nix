@@ -12,8 +12,7 @@ lib.mkIf (cfg.enable or false) {
   # User systemd services
 
   systemd.user.services = {
-    # mpdas — Last.fm AudioScrobbler for MPD.
-    # Routes via SOCKS5 proxy (127.0.0.1:10808). Credentials from sops secret.
+    # mpdas — Last.fm AudioScrobbler for MPD. Credentials from sops secret.
     mpdas =
       lib.mkIf
         (
@@ -30,7 +29,6 @@ lib.mkIf (cfg.enable or false) {
           serviceConfig = {
             ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
             Environment = [
-              "ALL_PROXY=socks5h://127.0.0.1:10808"
               "MPD_HOST=127.0.0.1"
               "MPD_PORT=6600"
             ];
