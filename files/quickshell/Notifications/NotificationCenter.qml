@@ -22,8 +22,8 @@ PanelWindow {
         bottom: true
     }
 
-    // 516 = 500 (card max) + 2×8 (content margins) so cards aren't clipped
-    readonly property int _panelW: 516
+    // 580 = 560 (card max) + 2×10 (content margins) so cards aren't clipped
+    readonly property int _panelW: 580
     implicitWidth: root._panelW
     readonly property color _fg: "#BFCAD0"
     readonly property color _accent: "#6C7E96"
@@ -46,14 +46,20 @@ PanelWindow {
 
     // ── Content ─────────────────────────────────────────────────────
     ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: 8
+        anchors.margins: 10
         spacing: 6
 
         // Header bar
         RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 32
+            Layout.preferredHeight: 40
+
+            Label {
+                text: "Notifications"
+                color: root._fg
+                font.bold: true
+                font.pointSize: 15
+            }
 
             Label {
                 text: "Notifications"
@@ -66,8 +72,8 @@ PanelWindow {
 
             // Clear all
             Rectangle {
-                Layout.preferredWidth: clearLabel.implicitWidth + 16
-                Layout.preferredHeight: 28
+                Layout.preferredWidth: clearLabel.implicitWidth + 20
+                Layout.preferredHeight: 36
                 radius: 4
                 color: clearMa.containsMouse ? "#20ffffff" : "transparent"
 
@@ -76,7 +82,7 @@ PanelWindow {
                     anchors.centerIn: parent
                     text: "Clear all"
                     color: root._fg
-                    font.pointSize: 9
+                    font.pointSize: 12
                 }
 
                 MouseArea {
@@ -89,8 +95,8 @@ PanelWindow {
 
             // Close
             Rectangle {
-                Layout.preferredWidth: 28
-                Layout.preferredHeight: 28
+                Layout.preferredWidth: 36
+                Layout.preferredHeight: 36
                 radius: 4
                 color: closeMa2.containsMouse ? "#20ffffff" : "transparent"
 
@@ -98,7 +104,7 @@ PanelWindow {
                     anchors.centerIn: parent
                     text: "\u00D7"
                     color: root._fg
-                    font.pointSize: 16
+                    font.pointSize: 20
                 }
 
                 MouseArea {
@@ -108,6 +114,7 @@ PanelWindow {
                     onClicked: NotificationManager.closeHistory()
                 }
             }
+
         }
 
         // Divider
@@ -156,7 +163,7 @@ PanelWindow {
             text: "No notifications"
             color: root._fg
             opacity: 0.5
-            font.pointSize: 12
+            font.pointSize: 15
             Layout.alignment: Qt.AlignCenter
             Layout.topMargin: 40
         }
