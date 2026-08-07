@@ -32,7 +32,7 @@ Rectangle {
     color: Qt.rgba(0, 0, 0, 0.95)
     radius: root._radius
     border.width: root._frameW
-    border.color: Color.withAlpha(root._accent, 0.35)
+    border.color: Color.withAlpha(root._accent, 0.12)
 
     // ── Content: single column (main row + actions) ────────────────
     ColumnLayout {
