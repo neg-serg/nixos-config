@@ -29,8 +29,7 @@ Rectangle {
     // Dynamic width like dunst's (300, 500): content-driven, clamped.
     // 32 = 2*(frame 10 + hpad 6)
     width: Math.min(root._maxW, Math.max(root._minW, mainLayout.implicitWidth + 32))
-    height: mainLayout.implicitHeight + root._frameW * 2
-    color: Qt.rgba(0, 0, 0, 0.75)
+    color: Qt.rgba(0, 0, 0, 0.6)
     radius: root._radius
     border.width: root._frameW
     border.color: "#000000"
