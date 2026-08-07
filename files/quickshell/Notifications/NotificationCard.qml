@@ -32,7 +32,7 @@ Rectangle {
     // Minimum height guard: without it a stale build lost the height binding
     // and cards rendered at 0px (invisible). 40 = frame 20 + minimal content.
     height: Math.max(mainLayout.implicitHeight + root._frameW * 2, 40)
-    color: Qt.rgba(0, 0, 0, 0.6)
+    color: Qt.rgba(0, 0, 0, 0.75)
     radius: root._radius
     border.width: root._frameW
     border.color: "#000000"
