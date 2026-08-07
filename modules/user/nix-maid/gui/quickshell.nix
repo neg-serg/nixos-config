@@ -85,10 +85,15 @@ let
     mkdir -p "$qs_dir/Helpers"
     cp -rfT "$src/Helpers" "$qs_dir/Helpers" 2>/dev/null || true
     chmod -R u+w "$qs_dir/Helpers" 2>/dev/null || true
+
+    # Notifications/ — force-copy on every start for dev iteration
+    mkdir -p "$qs_dir/Notifications"
+    cp -rfT "$src/Notifications" "$qs_dir/Notifications" 2>/dev/null || true
+    chmod -R u+w "$qs_dir/Notifications" 2>/dev/null || true
   '';
   # Build individual nix-maid entries for source dir top-level contents,
   # excluding writable paths (Theme, Settings, Settings.json, .github)
-  # and force-copied paths (Components, Bar, Helpers).
+  # and force-copied paths (Components, Bar, Helpers, Notifications).
   quickshellSrcEntries = builtins.readDir quickshellSrc;
 
   quickshellSrcNames = builtins.filter (
@@ -101,6 +106,7 @@ let
     && name != "Components"
     && name != "Bar"
     && name != "Helpers"
+    && name != "Notifications"
   ) (builtins.attrNames quickshellSrcEntries);
 
   quickshellHomeFiles = builtins.listToAttrs (
