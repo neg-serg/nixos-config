@@ -33,7 +33,7 @@ PanelWindow {
     // ── Backdrop ────────────────────────────────────────────────────
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(0, 0, 0, 0.95)
+        color: Qt.rgba(0, 0, 0, 0.92)
     }
 
     // ── Escape + focus ──────────────────────────────────────────────
