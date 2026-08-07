@@ -149,6 +149,9 @@ in
   systemd.services."zfs-import-gamez" = {
     description = "Import ZFS pool gamez";
     # gamez is a mirror on nvme1n1 + nvme3n1 (nvme0n1/nvme2n1 are tank/zero).
+    # No default deps: implicit After=basic.target closed the boot cycle
+    # import → zfs-mount → local-fs.target → bootctl.socket → sockets → basic.target.
+    unitConfig.DefaultDependencies = false;
     wantedBy = [ "zfs.target" ];
     after = [
       "dev-nvme1n1.device"
@@ -173,6 +176,7 @@ in
   systemd.services."zfs-import-zero" = {
     description = "Import ZFS pool zero";
     # zero lives on nvme2n1.
+    unitConfig.DefaultDependencies = false; # see zfs-import-gamez: breaks the boot ordering cycle
     wantedBy = [ "zfs.target" ];
     after = [
       "dev-nvme2n1.device"
