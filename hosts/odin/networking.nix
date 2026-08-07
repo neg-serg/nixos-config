@@ -20,6 +20,11 @@
     useDHCP = false;
   };
 
+  # No global IPv6 upstream: Steam/other apps pick AAAA from DNS and stall
+  # (no Happy-Eyeballs fallback). Keep IPv6 off on the physical uplink only;
+  # tailscale0 (fd7a:) keeps its IPv6 for the tailnet.
+  boot.kernel.sysctl."net.ipv6.conf.net1.disable_ipv6" = 1;
+
   # Enable local bridge (br0) with DHCP server
   profiles.network.bridge.enable = true;
   # Allow Wi-Fi management via reusable feature switch
