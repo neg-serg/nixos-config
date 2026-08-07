@@ -45,8 +45,9 @@ Rectangle {
 
         // Icon — spans the full notification height, centered vertically
         Image {
-            visible: source !== ""
-            source: root.notif.appIcon ? Quickshell.iconPath(root.notif.appIcon) : ""
+            // Icon: appIcon (theme lookup) falls back to image-data hint
+            visible: iconSource !== ""
+            source: iconSource
             fillMode: Image.PreserveAspectFit
             antialiasing: true
             sourceSize.width: root._iconSize
@@ -55,6 +56,12 @@ Rectangle {
             Layout.preferredHeight: root._iconSize
             Layout.maximumWidth: root._iconSize
             Layout.maximumHeight: root._iconSize
+
+            readonly property string iconSource: {
+                if (root.notif.appIcon) return Quickshell.iconPath(root.notif.appIcon);
+                if (root.notif.image) return root.notif.image;
+                return "";
+            }
         }
 
         ColumnLayout {
