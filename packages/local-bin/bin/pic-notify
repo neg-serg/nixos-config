@@ -3,7 +3,7 @@
 # Usage: pic-notify IMAGE
 #   Extracts dimensions, size, depth from PNG header (identify -ping, fast).
 #   Copies path to clipboard, writes JSON data + touches semaphore for quickshell.
-#   Falls back to dunst notify-send if quickshell is not running.
+#   Falls back to notify-send if quickshell is not running.
 
 
 IFS=' 	
@@ -82,7 +82,7 @@ JSON
 mv "$tmp" "${event_dir}/screenshot-event.json"
 touch "${event_dir}/screenshot-event"   # semaphore for FileView
 
-# ── Fallback: dunst if quickshell is not running ───────────────────────────
+# ── Fallback: notify-send if quickshell is not running ─────────────────────
 if ! pgrep -f quickshell >/dev/null 2>&1; then
   if command -v notify-send >/dev/null 2>&1; then
     short=$(echo "$img" | sed "s|$HOME|~|")
