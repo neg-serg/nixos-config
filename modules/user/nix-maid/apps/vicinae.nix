@@ -9,7 +9,6 @@ let
   cfg = config.features.gui.vicinae;
   guiEnabled = config.features.gui.enable or false;
   enabled = guiEnabled && cfg.enable;
-  proxyEnabled = config.features.net.proxy.enable or false;
 
   iconTheme = config.features.gui.iconTheme or "kora-pgrey";
   themeFileKitty = ./../../../../files/gui/vicinae-theme-kitty.toml;
@@ -254,8 +253,7 @@ in
             "QT_QPA_PLATFORM=wayland"
             "WAYLAND_DISPLAY=wayland-1"
             "PATH=/run/current-system/sw/bin"
-          ]
-          ++ lib.optional proxyEnabled "ALL_PROXY=socks5://127.0.0.1:10808";
+          ];
         };
       };
     }
