@@ -26,11 +26,10 @@ Rectangle {
 
     // Panel-dark: ~0.9 alpha like the bar backdrop (0.88)
     width: Math.min(root._maxW, Math.max(root._minW, content.implicitWidth + 2 * (root._frameW + root._pad)))
-    height: Math.max(content.implicitHeight + 2 * (root._frameW + root._vpad), 64)
-    color: Qt.rgba(0, 0, 0, 0.9)
+    color: Qt.rgba(0, 0, 0, 0.95)
     radius: root._radius
     border.width: root._frameW
-    border.color: Color.withAlpha(root._accent, 0.55)
+    border.color: Color.withAlpha(root._accent, 0.35)
 
     // ── Content: single column (main row + actions) ────────────────
     ColumnLayout {
@@ -98,12 +97,11 @@ Rectangle {
                             font.pointSize: 15
                             color: root._fg
                             opacity: closeMa.containsMouse ? 1.0 : 0.6
-                            Behavior on opacity { NumberAnimation { duration: 120 } }
+                            Behavior on opacity { NumberAnimation { duration: 70 } }
                         }
 
                         MouseArea {
                             id: closeMa
-                            anchors.fill: parent
                             hoverEnabled: true
                             onClicked: root.backer.discard()
                         }

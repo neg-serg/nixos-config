@@ -96,13 +96,12 @@ Item {
             NumberAnimation {
                 id: fadeIn
                 target: harness; property: "_contentOpacity"
-                from: 0; to: 1; duration: 200
+                from: 0; to: 1; duration: 90
             }
-
             NumberAnimation {
                 id: fadeOut
                 target: harness; property: "_contentOpacity"
-                from: 1; to: 0; duration: 200
+                from: 1; to: 0; duration: 120
                 onStopped: harness.finishDismiss()
             }
 
