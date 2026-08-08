@@ -49,7 +49,7 @@ Scope {
             // and the notification center.
             NotificationManager.dismissAllActive();
             NotificationManager.showTrayNotifs = false;
-            if (root.screenshotToast.item) root.screenshotToast.item.hide();
+            if (screenshotToast.item) screenshotToast.item.hideRequested = true;
             reload();
         }
     }
