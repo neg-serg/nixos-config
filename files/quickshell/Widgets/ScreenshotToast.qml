@@ -3,6 +3,7 @@ import QtQuick.Layouts 1.15
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
+import qs.Components
 
 // ScreenshotToast — screenshot feedback card with large preview, dunst-matched style.
 
@@ -128,9 +129,11 @@ Item {
                         cache: false
                         visible: root.shotPath !== ""
                     }
-                    Text {
+                    MaterialIcon {
                         anchors.centerIn: parent
-                        text: "\uD83D\uDCF8"; font.pixelSize: 56
+                        icon: "photo_camera"
+                        size: 44
+                        color: "#6B718A"
                         visible: root.shotPath === ""
                     }
                     // Click preview to open
@@ -163,9 +166,9 @@ Item {
                         }
                     }
 
-                    Text {
-                        text: "\u2715"
-                        font.pointSize: 14
+                    MaterialIcon {
+                        icon: "close"
+                        size: 14
                         color: "#6B718A"
                         TapHandler { onTapped: toast.hide() }
                     }
@@ -192,21 +195,29 @@ Item {
                     Layout.fillWidth: true; spacing: 6
                     Repeater {
                         model: [
-                            { label: "\uD83D\uDCCB Copy",   action: function() { Quickshell.execDetached(["wl-copy", root.shotPath]); toast.hide(); } },
-                            { label: "\uD83D\uDCC2 Open",   action: function() { Quickshell.execDetached(["xdg-open", root.shotPath]); toast.hide(); } },
-                            { label: "\uD83D\uDDD1  Dismiss", action: function() { toast.hide(); } }
+                            { icon: "content_copy", label: "Copy",     action: function() { Quickshell.execDetached(["wl-copy", root.shotPath]); toast.hide(); } },
+                            { icon: "folder_open",  label: "Open",     action: function() { Quickshell.execDetached(["xdg-open", root.shotPath]); toast.hide(); } },
+                            { icon: "delete",       label: "Dismiss",  action: function() { toast.hide(); } }
                         ]
                         delegate: Rectangle {
-                            Layout.preferredWidth: btnText.implicitWidth + 20
+                            Layout.preferredWidth: btnRow.implicitWidth + 20
                             Layout.preferredHeight: 36; radius: 6
                             color: hh.hovered ? "#242A35" : "#181C24"
                             border.width: 1; border.color: "#3B4C5C"
-                            Text {
-                                id: btnText
+                            RowLayout {
+                                id: btnRow
                                 anchors.centerIn: parent
-                                text: modelData.label
-                                font.family: "Iosevka"; font.weight: Font.Medium; font.pointSize: 12
-                                color: "#BFCAD0"
+                                spacing: 5
+                                MaterialIcon {
+                                    icon: modelData.icon
+                                    size: 14
+                                    color: "#BFCAD0"
+                                }
+                                Text {
+                                    text: modelData.label
+                                    font.family: "Iosevka"; font.weight: Font.Medium; font.pointSize: 12
+                                    color: "#BFCAD0"
+                                }
                             }
                             HoverHandler { id: hh }
                             TapHandler { onTapped: modelData.action() }
