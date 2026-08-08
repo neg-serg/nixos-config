@@ -34,6 +34,29 @@ Rectangle {
     border.width: root._frameW
     border.color: Color.withAlpha(root._accent, 0.12)
 
+    // Pictogram for an action label — same style as ScreenshotToast's buttons.
+    function actionPictogram(label: string): string {
+        const l = label.toLowerCase();
+        if (l.includes("open"))      return "\uD83D\uDCC2"; // 📂
+        if (l.includes("reply"))     return "\uD83D\uDCAC"; // 💬
+        if (l.includes("read"))      return "\u2713";       // ✓
+        if (l.includes("dismiss") || l.includes("delete") || l.includes("clear") || l.includes("remove"))
+                                     return "\uD83D\uDDD1"; // 🗑
+        if (l.includes("accept") || l.includes("approve") || l === "yes")
+                                     return "\u2705";       // ✅
+        if (l.includes("decline") || l.includes("reject") || l === "no")
+                                     return "\u274C";       // ❌
+        if (l.includes("snooze"))    return "\u23F0";       // ⏰
+        if (l.includes("mute"))      return "\uD83D\uDD15"; // 🔕
+        if (l.includes("call"))      return "\uD83D\uDCDE"; // 📞
+        if (l.includes("video"))     return "\uD83D\uDCF9"; // 📹
+        if (l.includes("view"))      return "\uD83D\uDC41"; // 👁
+        if (l.includes("download"))  return "\u2B07";       // ⬇
+        if (l.includes("send"))      return "\uD83D\uDCE4"; // 📤
+        if (l.includes("like"))      return "\uD83D\uDC4D"; // 👍
+        return "";
+    }
+
     // ── Content: single column (main row + actions) ────────────────
     ColumnLayout {
         id: content
@@ -101,41 +124,41 @@ Rectangle {
             }
         }
 
-        // ── Actions (counted in height — inside the column) ────────
+        // ── Actions (toast-style buttons with pictograms, like ScreenshotToast) ──
         RowLayout {
             Layout.fillWidth: true
-            spacing: 0
+            spacing: 6
             visible: root.notif.actions.length !== 0
 
             Repeater {
                 model: root.notif.actions
-                Item {
+                Rectangle {
                     required property NotificationAction modelData;
-                    required property int index;
-                    Layout.fillWidth: true
-                    implicitHeight: 34
+                    Layout.preferredWidth: actText.implicitWidth + 20
+                    Layout.preferredHeight: 30
+                    radius: 6
+                    color: actMa.containsMouse ? "#242A35" : "#181C24"
+                    border.width: 1
+                    border.color: "#3B4C5C"
 
-                    Rectangle {
-                        anchors {
-                            top: parent.top; bottom: parent.bottom
-                            left: parent.left; leftMargin: -0.5
+                    Text {
+                        id: actText
+                        anchors.centerIn: parent
+                        text: {
+                            const pic = root.actionPictogram(modelData.text);
+                            return pic !== "" ? pic + "  " + modelData.text : modelData.text;
                         }
-                        visible: index !== 0
-                        width: 1
-                        color: Color.withAlpha(root._accent, 0.4)
+                        font.family: "Iosevka"
+                        font.weight: Font.Medium
+                        font.pointSize: 10
+                        color: root._fg
                     }
 
                     MouseArea {
+                        id: actMa
                         anchors.fill: parent
+                        hoverEnabled: true
                         onClicked: { modelData.invoke(); root.backer.discard(); }
-
-                        Label {
-                            anchors.centerIn: parent
-                            text: modelData.text
-                            font.weight: Font.Medium
-                            font.pointSize: 10
-                            color: root._fg
-                        }
                     }
                 }
             }
@@ -155,7 +178,7 @@ Rectangle {
 
         Label {
             anchors.centerIn: parent
-            text: "\u00D7"
+            text: "\u2715"
             font.family: "Iosevka"
             font.pointSize: 12
             color: root._fg
