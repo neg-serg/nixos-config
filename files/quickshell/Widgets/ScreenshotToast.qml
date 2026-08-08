@@ -32,6 +32,8 @@ Item {
     property string shotDepth: ""
     property string shotTs: ""
 
+    function hide() { toast.hide(); }
+
     function loadAndShow() {
         var xhr = new XMLHttpRequest();
         xhr.open("GET", root._dataUrl);
