@@ -37,6 +37,17 @@ let
     fi
   '';
 
+
+  # Retry `wl restore` after the daemon starts — its auto-restore can race
+  # the compositor becoming ready (see daemon/src/main.rs).
+  wlRestoreRetry = pkgs.writeShellScript "wl-restore-retry" ''
+    set -euo pipefail
+    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.wl ]}"
+    for i in 1 2 3 4 5; do
+      wl restore && break
+      sleep 1
+    done
+  '';
   # Watch hyprland events; when a monitor (re)connects, re-apply wallpapers.
   # A lost display signal (cable / DPMS) removes the output and can kill the
   # wl-daemon (see wl-daemon.service); on re-add the daemon's surfaces are
@@ -52,7 +63,8 @@ let
         sleep 3
         continue
       fi
-      # Read events; on monitor loss notify, on (re)connect restore wallpapers.
+      # Read events; on monitor loss notify, on (re)connect ensure the daemon
+      # is alive (DPMS removal can kill it) and restore the wallpapers.
       socat -u UNIX-CONNECT:"$sock" STDOUT | while read -r line; do
         case "$line" in
           monitoradded*|monitorremoved*)
@@ -63,13 +75,15 @@ let
                 "$HYPRCTL" notify -1 6000 "rgb(ff5555)" "Monitor lost: $mon" >/dev/null 2>&1 || true
                 ;;
               *)
+                "/run/current-system/sw/bin/systemctl" --user is-active wl-daemon.service >/dev/null 2>&1 \
+                  || "/run/current-system/sw/bin/systemctl" --user restart wl-daemon.service
+                sleep 1
                 wl restore || true
                 ;;
             esac
             ;;
         esac
       done
-      # Socket closed (hyprland restart) — reconnect.
       sleep 2
     done
   '';
@@ -84,6 +98,7 @@ lib.mkIf (cfg.enable or false) {
     serviceConfig = {
       Type = "simple";
       ExecStart = "${lib.getExe pkgs.wl}-daemon";
+      ExecStartPost = "${wlRestoreRetry}";
       Restart = "on-failure";
       RestartSec = 2;
     };
