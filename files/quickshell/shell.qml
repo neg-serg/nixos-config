@@ -45,13 +45,18 @@ Scope {
         path: root._home + "/.cache/quickshell/notif-close-all"
         watchChanges: true
         onFileChanged: {
+            // M4+space: dismiss floating overlays — toasts, screenshot toast,
+            // and the notification center.
             NotificationManager.dismissAllActive();
+            NotificationManager.showTrayNotifs = false;
+            if (root.screenshotToast.item) root.screenshotToast.item.hide();
             reload();
         }
     }
 
     // ── Screenshot feedback toast (watches pic-notify trigger file) ──────
     Loader {
+        id: screenshotToast
         source: "file://" + root.quickshell.env("HOME") + "/.config/quickshell/Widgets/ScreenshotToast.qml"
     }
 
