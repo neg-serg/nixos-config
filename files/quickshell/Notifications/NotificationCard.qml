@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Services.Notifications
+import qs.Components
 import "../Helpers/Color.js" as Color
 
 // NotificationCard — panel-dark card, even paddings, accent-tinted frame.
@@ -34,26 +35,27 @@ Rectangle {
     border.width: root._frameW
     border.color: Color.withAlpha(root._accent, 0.12)
 
-    // Pictogram for an action label — same style as ScreenshotToast's buttons.
-    function actionPictogram(label: string): string {
+    // Material icon name for an action label — same glyph set as the bar
+    // and ScreenshotToast ("Material Symbols Outlined").
+    function actionIcon(label: string): string {
         const l = label.toLowerCase();
-        if (l.includes("open"))      return "\uD83D\uDCC2"; // 📂
-        if (l.includes("reply"))     return "\uD83D\uDCAC"; // 💬
-        if (l.includes("read"))      return "\u2713";       // ✓
+        if (l.includes("open"))        return "folder_open";
+        if (l.includes("reply"))       return "reply";
+        if (l.includes("read"))        return "done";
         if (l.includes("dismiss") || l.includes("delete") || l.includes("clear") || l.includes("remove"))
-                                     return "\uD83D\uDDD1"; // 🗑
+                                       return "delete";
         if (l.includes("accept") || l.includes("approve") || l === "yes")
-                                     return "\u2705";       // ✅
+                                       return "check_circle";
         if (l.includes("decline") || l.includes("reject") || l === "no")
-                                     return "\u274C";       // ❌
-        if (l.includes("snooze"))    return "\u23F0";       // ⏰
-        if (l.includes("mute"))      return "\uD83D\uDD15"; // 🔕
-        if (l.includes("call"))      return "\uD83D\uDCDE"; // 📞
-        if (l.includes("video"))     return "\uD83D\uDCF9"; // 📹
-        if (l.includes("view"))      return "\uD83D\uDC41"; // 👁
-        if (l.includes("download"))  return "\u2B07";       // ⬇
-        if (l.includes("send"))      return "\uD83D\uDCE4"; // 📤
-        if (l.includes("like"))      return "\uD83D\uDC4D"; // 👍
+                                       return "cancel";
+        if (l.includes("snooze"))      return "snooze";
+        if (l.includes("mute"))        return "notifications_off";
+        if (l.includes("call"))        return "call";
+        if (l.includes("video"))       return "videocam";
+        if (l.includes("view"))        return "visibility";
+        if (l.includes("download"))    return "download";
+        if (l.includes("send"))        return "send";
+        if (l.includes("like"))        return "thumb_up";
         return "";
     }
 
@@ -124,7 +126,7 @@ Rectangle {
             }
         }
 
-        // ── Actions (toast-style buttons with pictograms, like ScreenshotToast) ──
+        // ── Actions (toast-style buttons with Material icons, like ScreenshotToast) ──
         RowLayout {
             Layout.fillWidth: true
             spacing: 6
@@ -134,24 +136,32 @@ Rectangle {
                 model: root.notif.actions
                 Rectangle {
                     required property NotificationAction modelData;
-                    Layout.preferredWidth: actText.implicitWidth + 20
+                    Layout.preferredWidth: actRow.implicitWidth + 20
                     Layout.preferredHeight: 30
                     radius: 6
                     color: actMa.containsMouse ? "#242A35" : "#181C24"
                     border.width: 1
                     border.color: "#3B4C5C"
 
-                    Text {
-                        id: actText
+                    RowLayout {
+                        id: actRow
                         anchors.centerIn: parent
-                        text: {
-                            const pic = root.actionPictogram(modelData.text);
-                            return pic !== "" ? pic + "  " + modelData.text : modelData.text;
+                        spacing: 5
+
+                        MaterialIcon {
+                            icon: root.actionIcon(modelData.text)
+                            size: 13
+                            color: root._fg
+                            visible: root.actionIcon(modelData.text) !== ""
                         }
-                        font.family: "Iosevka"
-                        font.weight: Font.Medium
-                        font.pointSize: 10
-                        color: root._fg
+
+                        Text {
+                            text: modelData.text
+                            font.family: "Iosevka"
+                            font.weight: Font.Medium
+                            font.pointSize: 10
+                            color: root._fg
+                        }
                     }
 
                     MouseArea {
@@ -176,11 +186,10 @@ Rectangle {
         height: 20
         z: 2
 
-        Label {
+        MaterialIcon {
             anchors.centerIn: parent
-            text: "\u2715"
-            font.family: "Iosevka"
-            font.pointSize: 12
+            icon: "close"
+            size: 12
             color: root._fg
             opacity: closeMa.containsMouse ? 1.0 : 0.6
             Behavior on opacity { NumberAnimation { duration: 70 } }
