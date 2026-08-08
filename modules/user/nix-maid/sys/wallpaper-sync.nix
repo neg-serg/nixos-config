@@ -36,6 +36,34 @@ let
       fi
     fi
   '';
+
+  # Watch hyprland events; when a monitor (re)connects, re-apply wallpapers.
+  # A lost display signal (cable / DPMS) removes the output and can kill the
+  # wl-daemon (see wl-daemon.service); on re-add the daemon's surfaces are
+  # stale, so `wl restore` re-issues them from ~/.local/state/wl/state.json.
+  # NOTE: bash `< file` can't open a unix socket (ENXIO) — use socat.
+  wlMonitorWatch = pkgs.writeShellScript "wl-monitor-watch" ''
+    set -euo pipefail
+    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.socat pkgs.wl ]}"
+    while true; do
+      sock="$(ls -d "''${XDG_RUNTIME_DIR:-/run/user/1000}"/hypr/*/.socket2.sock 2>/dev/null | head -1 || true)"
+      if [ -z "$sock" ]; then
+        sleep 3
+        continue
+      fi
+      # Read events; on monitor (re)connect settle briefly, then restore.
+      socat -u UNIX-CONNECT:"$sock" STDOUT | while read -r line; do
+        case "$line" in
+          monitoradded*|monitorremoved*)
+            sleep 1
+            wl restore || true
+            ;;
+        esac
+      done
+      # Socket closed (hyprland restart) — reconnect.
+      sleep 2
+    done
+  '';
 in
 lib.mkIf (cfg.enable or false) {
   # wl-daemon: auto-restart on crash (DPMS output removal kills it)
@@ -49,6 +77,22 @@ lib.mkIf (cfg.enable or false) {
       ExecStart = "${lib.getExe pkgs.wl}-daemon";
       Restart = "on-failure";
       RestartSec = 2;
+    };
+  };
+
+  systemd.user.services."wl-monitor-watch" = {
+    description = "Re-apply wallpapers when a monitor (re)connects";
+    after = [
+      "wl-daemon.service"
+      "graphical-session-pre.target"
+    ];
+    partOf = [ "graphical-session.target" ];
+    wantedBy = [ "graphical-session.target" ];
+    serviceConfig = {
+      Type = "simple";
+      Restart = "on-failure";
+      RestartSec = 3;
+      ExecStart = "${wlMonitorWatch}";
     };
   };
 
