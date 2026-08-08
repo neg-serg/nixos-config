@@ -32,7 +32,17 @@ Item {
     property string shotDepth: ""
     property string shotTs: ""
 
-    function hide() { toast.hide(); }
+    // External hide signal (shell.qml sets this on M4+space).
+    // Direct visible=false: the slide-based hide() could be interrupted and
+    // left the layer mapped (observed 2026-08-08).
+    property bool hideRequested: false
+    onHideRequestedChanged: {
+        if (root.hideRequested) {
+            root.hideRequested = false;
+            toast.visible = false;
+            toast._hiding = false;
+        }
+    }
 
     function loadAndShow() {
         var xhr = new XMLHttpRequest();
