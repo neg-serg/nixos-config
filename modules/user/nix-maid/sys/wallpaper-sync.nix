@@ -45,18 +45,27 @@ let
   wlMonitorWatch = pkgs.writeShellScript "wl-monitor-watch" ''
     set -euo pipefail
     export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.socat pkgs.wl ]}"
+    HYPRCTL="/run/current-system/sw/bin/hyprctl"
     while true; do
       sock="$(ls -d "''${XDG_RUNTIME_DIR:-/run/user/1000}"/hypr/*/.socket2.sock 2>/dev/null | head -1 || true)"
       if [ -z "$sock" ]; then
         sleep 3
         continue
       fi
-      # Read events; on monitor (re)connect settle briefly, then restore.
+      # Read events; on monitor loss notify, on (re)connect restore wallpapers.
       socat -u UNIX-CONNECT:"$sock" STDOUT | while read -r line; do
         case "$line" in
           monitoradded*|monitorremoved*)
+            mon="''${line#*>>}"
             sleep 1
-            wl restore || true
+            case "$line" in
+              monitorremoved*)
+                "$HYPRCTL" notify -1 6000 "rgb(ff5555)" "Monitor lost: $mon" >/dev/null 2>&1 || true
+                ;;
+              *)
+                wl restore || true
+                ;;
+            esac
             ;;
         esac
       done
