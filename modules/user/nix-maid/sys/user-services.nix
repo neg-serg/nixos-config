@@ -21,11 +21,14 @@ lib.mkIf (cfg.enable or false) {
         )
         {
           description = "MPD AudioScrobbler (Last.fm)";
-          after = [
-            "network-online.target"
-            "mpd.service"
-          ];
-          wants = [ "mpd.service" ];
+          # NOTE: deliberately NO after/wants on mpd.service here. In the user
+          # session that name resolves to the mpd package's config-less unit
+          # (`mpd --systemd`, no config file → "No configuration file found"),
+          # NOT the real system MPD (modules/servers/mpd). mpdas connects to the
+          # system MPD over TCP itself and reconnects on failure via
+          # Restart=on-failure below, so pulling in the user unit only produces
+          # failed-start noise on every mpdas restart.
+          after = [ "network-online.target" ];
           serviceConfig = {
             ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
             Environment = [
@@ -90,23 +93,27 @@ lib.mkIf (cfg.enable or false) {
       wantedBy = [ "graphical-session.target" ];
     };
 
-    # Local AI (Ollama)
-    "local-ai" = lib.mkIf (config.features.llm.enable or false) {
-      description = "Local AI (Ollama)";
-      serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.ollama} serve"; # Get up and running with large language models locally
-        Environment = [
-          # For LocalAI compatibility
-          "MODELS_PATH=${home}/.local/share/localai/models"
-          # Effective for Ollama
-          "OLLAMA_MODELS=${home}/.local/share/ollama"
-          "OLLAMA_HOST=127.0.0.1:11434"
-        ];
-        Restart = "on-failure";
-        RestartSec = "2s";
-      };
-      wantedBy = [ "default.target" ];
-    };
+    # Local AI (Ollama) — user-level fallback for hosts WITHOUT the system
+    # ollama service (which binds the same 11434 port and serves the same
+    # store). Models live on the zero pool, never on the system disk.
+    "local-ai" =
+      lib.mkIf ((config.features.llm.enable or false) && !(config.services.ollama.enable or false))
+        {
+          description = "Local AI (Ollama)";
+          serviceConfig = {
+            ExecStart = "${lib.getExe pkgs.ollama} serve"; # Get up and running with large language models locally
+            Environment = [
+              # For LocalAI compatibility
+              "MODELS_PATH=/zero/ai/localai"
+              # Effective for Ollama
+              "OLLAMA_MODELS=/zero/ai/ollama"
+              "OLLAMA_HOST=127.0.0.1:11434"
+            ];
+            Restart = "on-failure";
+            RestartSec = "2s";
+          };
+          wantedBy = [ "default.target" ];
+        };
 
     # Udiskie (Automounter)
     udiskie = {
