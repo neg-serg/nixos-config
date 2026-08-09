@@ -66,6 +66,9 @@ in
         "SyncDisabled" = false;
         "ShowHomeButton" = true;
         "BookmarkBarEnabled" = false;
+        # Force-installed extensions (SurfingKeys/Tampermonkey) make DevTools
+        # report "Your organization blocked DevTools on this page" — allow it.
+        "DeveloperToolsAvailability" = 0; # Allowed everywhere
 
         # Default font: Iosevka everywhere (matches system-wide fontconfig default)
         "StandardFontFamily" = "Iosevka";
@@ -96,6 +99,13 @@ in
         FixedFontFamily = "Iosevka";
         DefaultFontSize = 15;
         DefaultFixedFontSize = 13;
+      };
+    };
+
+    environment.etc."vivaldi/policies/managed/devtools.json" = {
+      mode = "0444";
+      text = builtins.toJSON {
+        DeveloperToolsAvailability = 0; # Allowed everywhere (blocked by force-installed extensions otherwise)
       };
     };
 
