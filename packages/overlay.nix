@@ -97,4 +97,12 @@ in
     buildInputs = builtins.filter (pkg: (pkg.pname or "") != "gtk3") (old.buildInputs or [ ]);
   });
 
+  # Ollama ROCm: build the ROCm stack for only the local GPU architecture
+  # (gfx1201 — Navi 48 / RX 9070 XT) instead of all 10 default targets.
+  # hipblaslt's Tensile codegen generates ~323k assembly kernels per arch;
+  # scoping to one arch cuts the ROCm build from many hours to a fraction.
+  ollama-rocm = finalPrev.ollama-rocm.override {
+    rocmPackages = finalPrev.rocmPackages.gfx1201;
+  };
+
 }
