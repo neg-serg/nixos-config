@@ -85,7 +85,7 @@ in
 
     modelDir = lib.mkOption {
       type = lib.types.str;
-      default = "/zero/llm/glm52_i4";
+      default = "/zero/ai/glm52_i4";
       description = ''
         Path to the converted int4 model directory (~370 GB).
         Download: `coli convert --model <path>` after installing colibri,
@@ -178,7 +178,7 @@ in
     lib.mkIf enabled {
       services.colibri = {
         arch = lib.mkDefault "native";
-        modelDir = lib.mkDefault "/zero/llm/glm52_i4";
+        modelDir = lib.mkDefault "/zero/ai/glm52_i4";
         ramBudget = lib.mkDefault 45;
 
         settings = lib.mkDefault {
