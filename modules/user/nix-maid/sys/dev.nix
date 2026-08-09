@@ -11,6 +11,7 @@ let
   cfg = config.features.dev;
   enableIac = cfg.enable && (cfg.pkgs.iac or false);
   enableCpp = cfg.enable && (cfg.cpp.enable or false);
+  enableJoern = cfg.enable && (cfg.pkgs.joern or false);
 
   # ccache-aware compiler wrappers (bash scripts that exec ccache /real/gcc)
   # Scripts — NOT symlinks — so ccache can always resolve the real compiler path.
@@ -42,9 +43,8 @@ in
           pkgs.direnv # Extension for your shell to load/unload env vars
           pkgs.nix-direnv # A fast, persistent use_nix implementation for direnv
           pkgs.nh # Yet another nix helper (CLI for NixOS/Home Manager)
-
         ]
-        ++ lib.optionals enableIac [ ]
+        ++ lib.optionals enableJoern [ pkgs.neg.joern ]
         ++ lib.optionals enableCpp [
           # C/C++ toolchain with ccache
           ccacheGcc # ccache-wrapper for gcc/g++/c++ (higher priority via symlinkJoin)
