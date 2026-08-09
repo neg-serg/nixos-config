@@ -297,9 +297,6 @@ lib.mkMerge [
         };
         # Keep X11 off for this host
         xserver.enable = lib.mkForce false;
-        # Remove SDDM/Plasma additions; keep Hyprland-only setup
-        # Temporarily disable Ollama on this host
-        ollama.enable = false;
         # GVFS disabled — pulls GTK; re-enable if file manager needs MTP/SMB
         # gvfs.enable = true;
 

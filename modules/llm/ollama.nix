@@ -13,11 +13,8 @@ in
       enable = lib.mkDefault true;
       host = lib.mkDefault "0.0.0.0";
       port = lib.mkDefault 11434;
-      acceleration = lib.mkDefault "rocm";
-      rocmOverrideGfx = lib.mkDefault "11.0.0"; # Navi 31 / RX 7900 XTX
-      environmentVariables = lib.mkDefault {
-        HCC_AMDGPU_TARGET = "gfx1100"; # RX 7900 XTX
-      };
+      # RX 9070 XT (Navi 48, gfx1201) — the pinned nixpkgs' ROCm ships
+      # gfx1201 code objects, so no HSA_OVERRIDE_GFX_VERSION is needed.
     };
 
     networking.firewall.allowedTCPPorts = lib.mkIf cfg.enable (lib.mkAfter [ 11434 ]);
