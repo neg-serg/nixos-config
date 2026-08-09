@@ -23,6 +23,7 @@ with lib;
       analyzers = mkBool "enable analyzers/linters" true;
       iac = mkBool "enable infrastructure-as-code tooling (Terraform, etc.)" true;
       radicle = mkBool "enable radicle tooling" true;
+      joern = mkBool "enable Joern code analysis platform" true;
       runtime = mkBool "enable general dev runtimes (node etc.)" true;
       misc = mkBool "enable misc dev helpers" true;
     };

@@ -46,6 +46,7 @@ in
     // {
       wyoming-openai = final.callPackage ./wyoming-openai { };
       game = final.callPackage ./game { };
+      joern = final.callPackage ./joern { }; # Open-source code analysis platform
       superdirt = final.callPackage ./superdirt { }; # SuperDirt SC quark for TidalCycles audio engine
       dirt-samples = final.callPackage ./dirt-samples { }; # audio sample library for SuperDirt
     };
