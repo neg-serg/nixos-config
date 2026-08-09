@@ -10,11 +10,10 @@ let
   webEnabled = config.features.web.enable or false;
   guiEnabled = config.features.gui.enable or false;
 
-  # Extensions to force-install via managed policy
-  extensions = [
-    "gfbliohnnapiefjpjlpjnehglfpaknnc" # SurfingKeys (vim-like keybindings)
-    "dhdgffkkebhmkfjojejmpbldmpobfkfo" # Tampermonkey (userscript manager)
-  ];
+  # NOTE: no ExtensionInstallForcelist — force-installed extensions make
+  # Chromium treat pages as "managed by your organization" and block DevTools
+  # everywhere (SurfingKeys/Tampermonkey run on every page). They stay
+  # installed as normal user extensions in the profile.
 
   # Vivaldi bundles its own libffmpeg.so with all codecs (proprietary browser).
   # nixpkgs proprietaryCodecs=true replaces it with an outdated chromium-codecs-ffmpeg-extra
@@ -56,7 +55,6 @@ in
     # Vivaldi may or may not pick them up depending on the version (8.x sometimes ignores it).
     programs.chromium = {
       enable = true;
-      inherit extensions;
       extraOpts = {
         "PasswordManagerEnabled" = false;
         "BuiltInNotificationsSettings" = 2; # Blocked
@@ -83,12 +81,6 @@ in
     # Vivaldi-specific managed policies.
     # Vivaldi 8.x reads from /etc/vivaldi/policies/managed/ but sometimes ignores
     # /etc/chromium/policies/managed/.  Duplicate the relevant policies here.
-    environment.etc."vivaldi/policies/managed/extensions.json" = {
-      mode = "0444";
-      text = builtins.toJSON {
-        ExtensionInstallForcelist = extensions;
-      };
-    };
 
     environment.etc."vivaldi/policies/managed/vivaldi-fonts.json" = {
       mode = "0444";
