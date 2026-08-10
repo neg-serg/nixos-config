@@ -38,9 +38,7 @@
   features.mail.vdirsyncer.enable = false; # Disabled: no Google OAuth credentials (missing secrets/home/vdirsyncer/google.sops.yaml)
   features.mail.mbsync.enable = false;
   features.hardware.bluetooth.enable = false;
-  features.net.proxy.enable = true;
   features.net.zapret2.enable = true; # Zapret2 DPI bypass (nfqws2)
-  features.net.lan-proxy.enable = true;
   features.net.transparent-proxy.enable = false; # Disabled: upstream dead, using proxy script fallback
   features.dev.haskell.enable = true; # Enable Haskell toolchain (GHC, cabal, stack, HLS)
   features.virt.libvirtd.enable = true;
@@ -61,7 +59,6 @@
   features.system.logTtys.networkUnits = [
     "systemd-networkd.service" # Primary network configuration
     "sshd.service" # SSH daemon
-    "tailscaled.service" # Tailscale VPN
     "nftables.service" # Firewall
   ];
 
@@ -79,7 +76,6 @@
   features.cli.broot.enable = true;
   features.dev.tla.enable = true;
   features.hardware.usbAutomount.enable = true;
-  features.net.tailscale.enable = true;
   features.input.kanata.enable = true; # Caps→Ctrl via kanata
   features.input.warpd.enable = true; # warpd: keyboard-driven pointer control
 
