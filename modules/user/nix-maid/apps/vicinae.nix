@@ -224,6 +224,10 @@ in
         pkgs.wl # Vulkan wallpaper daemon (used by wl-switcher extension)
         pkgs.wl-switcher # vicinae extension for wl wallpaper switching
         pkgs.unsplash # vicinae extension for Unsplash wallpapers
+        pkgs.wallhaven # vicinae extension for wallhaven wallpaper browsing
+        pkgs.drive-health # vicinae extension for SMART drive monitoring
+        pkgs.nix-monitor # vicinae extension for NixOS update monitoring
+        pkgs.noctwhspr # vicinae extension for hyprwhspr dictation control
         pkgs.skate # key-value store CLI (vicinae skate extension dep)
         # Wrapper: expose vicinae-browser-link from libexec to PATH
         (pkgs.writeShellScriptBin "vicinae-browser-link" ''
@@ -263,12 +267,17 @@ in
       # Settings.json is NOT symlinked here — it's writable for vicinae GUI edits.
       # Instead, nix-overrides.json (read-only) is imported by settings.json.
       systemd.user.tmpfiles.rules = [
+        # Extension symlinks from Nix store to user vicinae extensions dir
+        "L+ %h/.local/share/vicinae/extensions/wallhaven - - - - ${pkgs.wallhaven}"
+        "L+ %h/.local/share/vicinae/extensions/drive-health - - - - ${pkgs.drive-health}"
+        "L+ %h/.local/share/vicinae/extensions/nix-monitor - - - - ${pkgs.nix-monitor}"
+        "L+ %h/.local/share/vicinae/extensions/noctwhspr - - - - ${pkgs.noctwhspr}"
+        "L+ %h/.local/share/vicinae/extensions/wl-switcher - - - - ${pkgs.wl-switcher}"
+        "L+ %h/.local/share/vicinae/extensions/unsplash - - - - ${pkgs.unsplash}"
         # C (copy) for themes: writable copy (mode 0644) so "Open Theme File" works.
         # Won't overwrite user edits (source has epoch mtime, dest is newer).
         "C %h/.local/share/vicinae/themes/neg-dark.toml 0644 - - - ${themeFile}"
         "C %h/.local/share/vicinae/themes/neg-kitty.toml 0644 - - - ${themeFileKitty}"
-        "L+ %h/.local/share/vicinae/extensions/wl-switcher - - - - ${pkgs.wl-switcher}"
-        "L+ %h/.local/share/vicinae/extensions/unsplash - - - - ${pkgs.unsplash}"
         "L+ %h/.config/vicinae/nix-overrides.json - - - - ${nixOverridesFile}"
       ];
     })
