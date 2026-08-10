@@ -223,7 +223,6 @@ in
         pkgs.vicinae # Wayland-native app runner + window switcher
         pkgs.wl # Vulkan wallpaper daemon (used by wl-switcher extension)
         pkgs.wl-switcher # vicinae extension for wl wallpaper switching
-        pkgs.unsplash # vicinae extension for Unsplash wallpapers
         pkgs.wallhaven # vicinae extension for wallhaven wallpaper browsing
         pkgs.noctwhspr # vicinae extension for hyprwhspr dictation control
         pkgs.skate # key-value store CLI (vicinae skate extension dep)
@@ -269,7 +268,6 @@ in
         "L+ %h/.local/share/vicinae/extensions/wallhaven - - - - ${pkgs.wallhaven}"
         "L+ %h/.local/share/vicinae/extensions/noctwhspr - - - - ${pkgs.noctwhspr}"
         "L+ %h/.local/share/vicinae/extensions/wl-switcher - - - - ${pkgs.wl-switcher}"
-        "L+ %h/.local/share/vicinae/extensions/unsplash - - - - ${pkgs.unsplash}"
         # C (copy) for themes: writable copy (mode 0644) so "Open Theme File" works.
         # Won't overwrite user edits (source has epoch mtime, dest is newer).
         "C %h/.local/share/vicinae/themes/neg-dark.toml 0644 - - - ${themeFile}"
