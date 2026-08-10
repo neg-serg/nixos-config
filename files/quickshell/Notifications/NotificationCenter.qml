@@ -5,6 +5,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
+import "../Helpers/Color.js" as Color
 
 // NotificationCenter — notification history sidebar.
 // Full-height panel on the right edge, displaces other surfaces.
@@ -25,15 +26,15 @@ PanelWindow {
     // 580 = 560 (card max) + 2×10 (content margins) so cards aren't clipped
     readonly property int _panelW: 580
     implicitWidth: root._panelW
-    readonly property color _fg: "#BFCAD0"
-    readonly property color _accent: "#6C7E96"
+    readonly property color _fg: Color.towardsWhite(Theme.textPrimary, 0.4)
+    readonly property color _accent: Color.towardsBlack(Theme.accentPrimary, 0.3)
 
     visible: NotificationManager.showTrayNotifs
 
     // ── Backdrop ────────────────────────────────────────────────────
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(0, 0, 0, 0.92)
+        color: Color.withAlpha(Theme.background, 0.92)
     }
 
     // ── Escape + focus ──────────────────────────────────────────────
