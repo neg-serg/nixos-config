@@ -7,7 +7,7 @@
 let
   imports = [
     ./post-boot.nix
-    ./timesyncd
+    ./timesyncd.nix
   ];
 in
 {
