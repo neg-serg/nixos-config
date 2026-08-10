@@ -3,7 +3,6 @@
 # Purpose: Kanata keyboard remapper — ported from legacy Salt config.
 # Requires uinput kernel module (enabled in hardware/uinput.nix).
 {
-  pkgs,
   lib,
   config,
   neg,

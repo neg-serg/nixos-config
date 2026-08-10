@@ -21,7 +21,6 @@ import sys
 import time
 import urllib.request
 import urllib.error
-from pathlib import Path
 
 from websocket import create_connection, WebSocket
 

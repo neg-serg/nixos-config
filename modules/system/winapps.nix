@@ -2,7 +2,6 @@
   lib,
   pkgs,
   config,
-  inputs,
   ...
 }:
 let
@@ -129,10 +128,10 @@ in
               /app:"program:$WIN_EXECUTABLE,icon:$ICON,name:$FULL_NAME"
           fi
         '')
-        pkgs.freerdp
-        pkgs.qemu_kvm
-        pkgs.virt-manager
-        pkgs.virt-viewer
+        pkgs.freerdp # RDP client for WinApps
+        pkgs.qemu_kvm # KVM virtual machines for WinApps
+        pkgs.virt-manager # VM management GUI
+        pkgs.virt-viewer # SPICE/VNC client for VMs
       ]
       ++ lib.optional (desktopApps != [ ]) desktopFiles
     );
