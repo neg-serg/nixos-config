@@ -9,35 +9,29 @@
   "author": "neg",
   "commands": [
     {
-      "name": "wallpaper",
-      "title": "Get Unsplash Wallpaper",
-      "subtitle": "Download and set an image from Unsplash",
-      "description": "Search Unsplash for a wallpaper and set it via wl",
-      "mode": "no-view"
+      "name": "search",
+      "title": "Search Unsplash Wallpapers",
+      "subtitle": "Browse wallpapers from Unsplash",
+      "description": "Search Unsplash for wallpapers and set them via wl",
+      "mode": "view"
     }
   ],
   "preferences": [
     {
-      "name": "query",
-      "title": "Search Query",
-      "description": "Keywords for the Unsplash search (e.g. landscape, nature, abstract)",
-      "required": true,
+      "name": "access_key",
+      "title": "Unsplash Access Key",
+      "description": "Unsplash API access key (https://unsplash.com/developers). Also read from ~/.gemini/unsplash.key or UNSPLASH_ACCESS_KEY",
+      "required": false,
       "type": "textfield",
-      "default": "nature landscape"
+      "default": ""
     },
     {
-      "name": "orientation",
-      "title": "Orientation",
-      "description": "Image orientation",
+      "name": "download_dir",
+      "title": "Download Directory",
+      "description": "Directory to save downloaded wallpapers",
       "required": false,
-      "type": "dropdown",
-      "data": [
-        { "title": "Any", "value": "" },
-        { "title": "Landscape", "value": "landscape" },
-        { "title": "Portrait", "value": "portrait" },
-        { "title": "Squarish", "value": "squarish" }
-      ],
-      "default": "landscape"
+      "type": "directory",
+      "default": "~/pic/wl"
     }
   ],
   "dependencies": {
