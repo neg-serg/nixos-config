@@ -19,8 +19,7 @@
     pkgs.iperf2 # IP bandwidth measurement
     pkgs.perf # linux profile tools
     pkgs.linuxPackages_latest.turbostat # cpu monitor
-    pkgs.nethogs # network traffic per process
-    pkgs.bandwhich # real-time per-process and per-connection bandwidth monitor (modern nethogs alternative)
+    pkgs.bandwhich # real-time per-process and per-connection bandwidth monitor
     pkgs.adguardian # terminal dashboard for AdGuard Home
     pkgs.powertop # watch for power events
     pkgs.procdump # procdump for linux
