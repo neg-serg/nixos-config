@@ -16,7 +16,6 @@
     ./hyprland/main.nix
 
     # Applications (GUI/TUI)
-    ./apps/default.nix
     ./apps/mpv
     ./apps/gui-apps.nix
     ./apps/vicinae.nix
@@ -26,15 +25,6 @@
 
     # CLI & Shell Environment
     ./cli
-    ./cli/git.nix
-    ./cli/shells.nix
-    ./cli/broot.nix
-    ./cli/tig.nix
-    # ./cli/yazi.nix is imported via ./cli
-    ./cli/envs.nix
-    ./cli/emulators.nix
-    ./cli/asciinema.nix
-    ./cli/local-bin.nix
 
     # System & Services
     ./sys/secrets.nix
