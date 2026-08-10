@@ -67,13 +67,6 @@ in
         # Force-installed extensions (SurfingKeys/Tampermonkey) make DevTools
         # report "Your organization blocked DevTools on this page" — allow it.
         "DeveloperToolsAvailability" = 0; # Allowed everywhere
-        # Reinstall SurfingKeys/Tampermonkey automatically WITHOUT force-install
-        # (force-install makes DevTools report "blocked by your organization").
-        # normal_installed: installed by policy but user-removable.
-        "ExtensionSettings" = {
-          "gfbliohnnapiefjpjlpjnehglfpaknnc" = { installation_mode = "normal_installed"; }; # SurfingKeys
-          "dhdgffkkebhmkfjojejmpbldmpobfkfo" = { installation_mode = "normal_installed"; }; # Tampermonkey
-        };
 
         # Default font: Iosevka everywhere (matches system-wide fontconfig default)
         "StandardFontFamily" = "Iosevka";
@@ -108,15 +101,6 @@ in
       };
     };
 
-    environment.etc."vivaldi/policies/managed/extensions-settings.json" = {
-      mode = "0444";
-      text = builtins.toJSON {
-        ExtensionSettings = {
-          "gfbliohnnapiefjpjlpjnehglfpaknnc" = { installation_mode = "normal_installed"; };
-          "dhdgffkkebhmkfjojejmpbldmpobfkfo" = { installation_mode = "normal_installed"; };
-        };
-      };
-    };
 
     # Browser UI font override via Vivaldi Custom UI Modifications.
     # Managed policies above only affect webpage fonts, not the browser chrome.
