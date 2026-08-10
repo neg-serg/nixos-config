@@ -238,6 +238,13 @@ with open(cfg_path,"w") as f:
     json.dump(cfg, f, indent=2)
 print(f"  Config: {len(outbounds)-2} outbounds + urltest")
 PYEOF
+    echo "  Config: $CONFIG regenerated"
+    if systemctl --user is-active --quiet sing-box-proxy.service 2>/dev/null; then
+        echo "  Restarting proxy service..."
+        systemctl --user restart sing-box-proxy.service 2>/dev/null || start
+    else
+        start
+    fi
 }
 
 # ============================================================
@@ -252,6 +259,16 @@ start() {
             echo "  (no passwordless sudo — xray stopped via pkill)"
         fi
     fi
+    # Preferred: run under the systemd user service (autostarts at login, survives reboot).
+    if systemctl --user start sing-box-proxy.service 2>/dev/null; then
+        sleep 1
+        if systemctl --user is-active --quiet sing-box-proxy.service 2>/dev/null; then
+            echo "  Proxy on 127.0.0.1:10808 (systemd user service)"
+            echo "  Dashboard: http://127.0.0.1:9090 (secret: neg)"
+            return 0
+        fi
+    fi
+    # Fallback (user unit not installed): legacy direct launch
     pkill -f 'sing-box.*trojan' 2>/dev/null || true
     sleep 1
     export ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true
@@ -263,11 +280,15 @@ start() {
     else
         echo "  FAILED"
         tail -3 "$LOG" 2>/dev/null || true
+        return 1
     fi
 }
 
 stop() {
-    pkill -f 'sing-box.*trojan' 2>/dev/null || true
+    if ! systemctl --user stop sing-box-proxy.service 2>/dev/null; then
+        # user unit not installed — legacy pkill
+        pkill -f 'sing-box.*trojan' 2>/dev/null || true
+    fi
     if ! systemctl is-active --quiet xray.service 2>/dev/null; then
         echo "  Restoring xray..."
         sudo -n systemctl start xray.service 2>/dev/null \
@@ -282,9 +303,14 @@ stop() {
 case "${1:-status}" in
     on|start)    bootstrap; start ;;
     off|stop)    stop ;;
-    refresh)     refresh; start ;;
+    refresh)     refresh ;;
+    gen|bootstrap) bootstrap ;;
     status)
-        if pgrep -f 'sing-box.*trojan' > /dev/null 2>&1; then
+        if systemctl --user is-failed --quiet sing-box-proxy.service 2>/dev/null; then
+            echo "Proxy: FAILED (see: journalctl --user -u sing-box-proxy)"
+            ss -tlnp 2>/dev/null | grep -E '10808|10810' || true
+        elif systemctl --user is-active --quiet sing-box-proxy.service 2>/dev/null \
+            || pgrep -f 'sing-box.*trojan' > /dev/null 2>&1; then
             echo "Proxy: RUNNING (Hysteria2 + VLESS Reality)"
             ss -tlnp 2>/dev/null | grep -E '10808|10810' || true
         else
@@ -296,5 +322,5 @@ case "${1:-status}" in
             echo "Xray: STOPPED"
         fi
         ;;
-    *) echo "Usage: $0 {on|off|status|refresh}"; exit 1 ;;
+    *) echo "Usage: $0 {on|off|status|refresh|gen}"; exit 1 ;;
 esac
