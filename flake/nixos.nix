@@ -202,7 +202,7 @@ let
   # nix-eval-jobs to process in parallel.
   #
   # NEVER evaluated during normal `nixos-rebuild switch --flake .#odin`.
-  # Build explicitly: nixos-rebuild switch --flake '.#odin-lite'
+  # Evaluated by flake/checks.nix (test-odin-*) via the exported mkTestHost.
   mkTestHost =
     baseName: testProfile:
     lib.nixosSystem {
@@ -241,18 +241,13 @@ let
         ];
     };
 
-  # Predefined A/B test configurations.
-  testProfiles = [
-    "gaming"
-    "audio-pro"
-    "lite"
-    "server"
-  ];
-
 in
 {
   odin = mkHost "odin";
 }
 // {
-  inherit mkTestHost testProfiles;
+  # mkTestHost is consumed by flake/checks.nix (A/B test configs). flake.nix
+  # strips it from the nixosConfigurations output — flake-schemas requires a
+  # pure machine set there.
+  inherit mkTestHost;
 }

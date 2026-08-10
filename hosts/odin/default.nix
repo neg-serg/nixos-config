@@ -76,7 +76,6 @@
   # Host-specific feature toggles
   features.dev.ai.omp.enable = true; # Oh My Pi (omp) — AI coding agent fork with LSP, DAP, subagents
   features.llm.enable = true; # Local LLM stack: Ollama (ROCm, models on /zero/ai/ollama), colibri engine, voxinput
-  services.colibri.enable = true; # colibri GLM-5.2 engine + CLI (model ~370G: download first, then enable services.colibri.serve)
   features.cli.broot.enable = true;
   features.dev.tla.enable = true;
   features.hardware.usbAutomount.enable = true;
