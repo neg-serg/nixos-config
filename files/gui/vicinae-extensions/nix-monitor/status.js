@@ -14,91 +14,103 @@ function exec(cmd) {
   }
 }
 
+function execAsync(cmd) {
+  return new Promise(function (resolve) {
+    cp.exec(cmd, { timeout: 15000, encoding: "utf8" }, function (err, stdout) {
+      if (err) resolve(null);
+      else resolve(stdout.trim());
+    });
+  });
+}
+
 function NixMonitor() {
-  var _a = React.useState(false), refreshing = _a[0], setRefreshing = _a[1];
-  var _b = React.useState(0), tick = _b[0], setTick = _b[1];
+  var _a = React.useState(true), loading = _a[0], setLoading = _a[1];
+  var _b = React.useState({}), data = _b[0], setData = _b[1];
   var prefs = api.getPreferenceValues();
   var branch = prefs.branch || "nixos-unstable";
 
-  var currentSystem = React.useMemo(function () {
-    return exec("readlink /run/current-system") || "unknown";
-  }, [tick]);
+  var refresh = React.useCallback(function () {
+    setLoading(true);
+    var jobs = [
+      execAsync("readlink /run/current-system"),
+      execAsync("nixos-version"),
+      // df on the /nix/store mount is instant; du -sh would take minutes
+      execAsync("df -B1 --output=used /nix/store 2>/dev/null | tail -1"),
+      execAsync("nix-store --query --requisites /run/current-system 2>/dev/null | wc -l"),
+      execAsync("git ls-remote https://github.com/NixOS/nixpkgs.git " + branch + " 2>/dev/null | cut -f1"),
+    ];
 
-  var genName = React.useMemo(function () {
-    return currentSystem.split("/").pop() || "unknown";
-  }, [currentSystem]);
+    Promise.all(jobs).then(function (r) {
+      var currentSystem = r[0] || "unknown";
+      var nixosVersion = r[1] || "unknown";
+      var storeBytes = parseInt(r[2], 10);
+      var closureCount = r[3] || "?";
+      var remoteRev = r[4] || null;
 
-  var nixosVersion = React.useMemo(function () {
-    return exec("nixos-version") || "unknown";
-  }, [tick]);
-
-  var localRev = React.useMemo(function () {
-    try {
+      var localRev = "unknown";
       var m = nixosVersion.match(/\(([^)]+)\)/);
-      return m ? m[1] : nixosVersion;
-    } catch (_) { return "unknown"; }
-  }, [nixosVersion]);
+      if (m) localRev = m[1];
 
-  var storeSize = React.useMemo(function () {
-    return exec("du -sh /nix/store 2>/dev/null | cut -f1") || "unknown";
-  }, [tick]);
+      var updateStatus = "unknown";
+      if (remoteRev && localRev !== "unknown") {
+        updateStatus = remoteRev.substring(0, 7) === localRev.substring(0, 7)
+          ? "up-to-date"
+          : "update-available";
+      }
 
-  var closureCount = React.useMemo(function () {
-    var count = exec("nix-store --query --requisites /run/current-system 2>/dev/null | wc -l");
-    return count ? count.trim() : "?";
-  }, [tick]);
-
-  var _c = React.useState("unknown"), updateStatus = _c[0], setUpdateStatus = _c[1];
-  var _d = React.useState(null), remoteRev = _d[0], setRemoteRev = _d[1];
+      setData({
+        genName: currentSystem.split("/").pop() || "unknown",
+        nixosVersion: nixosVersion,
+        localRev: localRev,
+        remoteRev: remoteRev,
+        updateStatus: updateStatus,
+        storeSize: storeBytes ? formatBytes(storeBytes) : "unknown",
+        closureCount: closureCount,
+      });
+      setLoading(false);
+    });
+  }, [branch]);
 
   React.useEffect(function () {
-    var remote = exec("git ls-remote https://github.com/NixOS/nixpkgs.git " + branch + " 2>/dev/null | cut -f1");
-    setRemoteRev(remote || null);
-    if (remote && localRev !== "unknown") {
-      setUpdateStatus(remote.trim().substring(0, 7) === localRev.substring(0, 7) ? "up-to-date" : "update-available");
-    }
-  }, [branch, localRev, tick]);
+    refresh();
+  }, []);
 
-  var updateIcon = updateStatus === "up-to-date"
+  var updateIcon = data.updateStatus === "up-to-date"
     ? { source: api.Icon.CheckCircle, tintColor: "#22c55e" }
-    : updateStatus === "update-available"
+    : data.updateStatus === "update-available"
       ? { source: api.Icon.Warning, tintColor: "#ef4444" }
       : { source: api.Icon.QuestionMarkCircle, tintColor: "#6b7280" };
 
-  var updateLabel = updateStatus === "up-to-date"
+  var updateLabel = data.updateStatus === "up-to-date"
     ? "Up to date"
-    : updateStatus === "update-available"
+    : data.updateStatus === "update-available"
       ? "Update available"
       : "Unknown";
 
-  var refresh = function () {
-    setTick(function (t) { return t + 1; });
-  };
-
-  return React.createElement(api.List, { isLoading: refreshing },
+  return React.createElement(api.List, { isLoading: loading },
     React.createElement(api.List.Section, { title: "System" },
       React.createElement(api.List.Item, {
         key: "generation",
         id: "gen",
         title: "Current Generation",
-        subtitle: genName,
+        subtitle: data.genName || "...",
         icon: api.Icon.Tag,
-        accessories: [{ text: nixosVersion }],
+        accessories: data.nixosVersion ? [{ text: data.nixosVersion }] : undefined,
       }),
       React.createElement(api.List.Item, {
         key: "local-rev",
         id: "lrev",
         title: "Nixpkgs Revision (local)",
-        subtitle: localRev,
+        subtitle: data.localRev || "...",
         icon: api.Icon.Code,
       }),
       React.createElement(api.List.Item, {
         key: "remote-rev",
         id: "rrev",
         title: "Remote (" + branch + ")",
-        subtitle: remoteRev ? remoteRev.substring(0, 40) : "unavailable",
+        subtitle: data.remoteRev ? data.remoteRev.substring(0, 40) : "unavailable",
         icon: updateIcon,
-        accessories: [{ text: updateLabel }],
+        accessories: data.updateStatus ? [{ text: updateLabel }] : undefined,
       })
     ),
     React.createElement(api.List.Section, { title: "Store" },
@@ -106,14 +118,14 @@ function NixMonitor() {
         key: "store-size",
         id: "ssize",
         title: "Store Size",
-        subtitle: storeSize,
+        subtitle: data.storeSize || "...",
         icon: api.Icon.HardDrive,
       }),
       React.createElement(api.List.Item, {
         key: "closures",
         id: "closures",
         title: "Closure Count",
-        subtitle: closureCount + " paths",
+        subtitle: data.closureCount ? data.closureCount + " paths" : "...",
         icon: api.Icon.CheckList,
       })
     ),
@@ -183,6 +195,13 @@ function NixMonitor() {
       })
     )
   );
+}
+
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return "0 B";
+  var units = ["B", "KB", "MB", "GB", "TB"];
+  var i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return (bytes / Math.pow(1024, i)).toFixed(1) + " " + units[i];
 }
 
 module.exports = { default: NixMonitor };
