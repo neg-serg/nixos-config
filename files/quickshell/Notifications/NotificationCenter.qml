@@ -71,6 +71,7 @@ PanelWindow {
 
             delegate: Item {
                 id: delegateRoot
+                required property bool isHeader;  // model provides {item, isHeader}
                 width: notifList.width
                 required property var item;      // TrackedNotification | null (header)
                 implicitHeight: delegateRoot.isHeader ? 28

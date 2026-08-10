@@ -107,7 +107,7 @@ ICS_EOF"]);
     function _syncFromCalendar() {
         var path = _todayIcsPath();
         var fileText = "";
-        var reader = Qt.createQmlObject('import Quickshell.Io; FileView { path: "' + path.replace(/'/g, "\'") + '"; preload: false }', root, "pillReader");
+        var reader = Qt.createQmlObject('import Quickshell.Io; FileView { path: "' + path.replace(/'/g, "\'") + '"; preload: false; printErrors: false }', root, "pillReader");
         if (reader) { fileText = reader.text() || ""; reader.destroy(); }
         if (fileText.indexOf("Pill") >= 0) {
             // Calendar says pill was taken today — restore state if not already set
