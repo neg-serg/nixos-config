@@ -7,7 +7,6 @@
 {
   imports = [
     inputs.nix-maid.nixosModules.default # user configuration framework (nix-maid)
-    # ../../core/home-manager-lite.nix # Native replacement (fast eval)
 
     # Core & GUI
     ./gui/theme.nix
