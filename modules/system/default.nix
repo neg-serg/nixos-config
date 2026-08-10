@@ -3,7 +3,7 @@
   imports =
     let
       excludes = [
-        "disabled-modules.nix" # dead code — not imported anywhere
+        "disabled-modules.nix" # imported directly by flake/nixos.nix (commonModules, outside domain filter)
         "vm" # imported explicitly below as ./vm/definitions.nix
       ];
     in
