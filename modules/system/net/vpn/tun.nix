@@ -26,6 +26,7 @@ lib.mkIf cfg.enable {
       Type = "simple";
       ExecStartPre = "${./sing-box-tun-up.sh}";
       ExecStart = "${lib.getExe pkgs.sing-box} run -c /run/sing-box-tun/config.json";
+      ExecStartPost = "${./sing-box-tun-post.sh}";
       ExecStopPost = "${./sing-box-tun-down.sh}";
       Restart = "on-failure";
       RestartSec = 5;
