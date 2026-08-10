@@ -83,6 +83,7 @@ check:
 
 lint:
     set -eu
+    repo_root="$(git rev-parse --show-toplevel)"
     statix check -- .
     deadnix --fail .
     # Guard: discourage `with pkgs; [ ... ]` lists (prefer explicit pkgs.*)
@@ -153,6 +154,11 @@ lint:
     git ls-files -z -- '*.sh' '*.bash' 2>/dev/null \
       | xargs -0 -r grep -lZ -m1 -E '^#!\s*/(usr/)?bin/(env\s+)?(ba)?sh' \
       | xargs -0 -r shellcheck -S warning -x
+    repo_root="$(git rev-parse --show-toplevel)"; \
+    bash "$repo_root/scripts/dev/check-qml-syntax.sh" "$repo_root" && \
+    bash "$repo_root/scripts/dev/check-hyprland-vars.sh" "$repo_root" && \
+    bash "$repo_root/scripts/dev/check-markdown-language.sh" && \
+    bash "$repo_root/scripts/dev/check-all-syntax.sh" "$repo_root"
     just lint-annotations
 
 # Check that all packages in environment.systemPackages have inline annotations
