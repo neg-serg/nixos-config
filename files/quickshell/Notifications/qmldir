@@ -1,4 +1,5 @@
 module qs.Notifications
+singleton NotifColors 1.0 NotifColors.qml
 singleton NotificationManager 1.0 NotificationManager.qml
 NotificationCard 1.0 NotificationCard.qml
 NotificationDisplay 1.0 NotificationDisplay.qml
