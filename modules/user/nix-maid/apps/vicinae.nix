@@ -225,8 +225,6 @@ in
         pkgs.wl-switcher # vicinae extension for wl wallpaper switching
         pkgs.unsplash # vicinae extension for Unsplash wallpapers
         pkgs.wallhaven # vicinae extension for wallhaven wallpaper browsing
-        pkgs.drive-health # vicinae extension for SMART drive monitoring
-        pkgs.nix-monitor # vicinae extension for NixOS update monitoring
         pkgs.noctwhspr # vicinae extension for hyprwhspr dictation control
         pkgs.skate # key-value store CLI (vicinae skate extension dep)
         # Wrapper: expose vicinae-browser-link from libexec to PATH
@@ -269,8 +267,6 @@ in
       systemd.user.tmpfiles.rules = [
         # Extension symlinks from Nix store to user vicinae extensions dir
         "L+ %h/.local/share/vicinae/extensions/wallhaven - - - - ${pkgs.wallhaven}"
-        "L+ %h/.local/share/vicinae/extensions/drive-health - - - - ${pkgs.drive-health}"
-        "L+ %h/.local/share/vicinae/extensions/nix-monitor - - - - ${pkgs.nix-monitor}"
         "L+ %h/.local/share/vicinae/extensions/noctwhspr - - - - ${pkgs.noctwhspr}"
         "L+ %h/.local/share/vicinae/extensions/wl-switcher - - - - ${pkgs.wl-switcher}"
         "L+ %h/.local/share/vicinae/extensions/unsplash - - - - ${pkgs.unsplash}"
