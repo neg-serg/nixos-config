@@ -43,7 +43,7 @@ function downloadFile(url, dest) {
 
 function WallhavenSearch() {
   var _a = React.useState([]), results = _a[0], setResults = _a[1];
-  var _b = React.useState(true), loading = _b[0], setLoading = _b[1];
+  var _b = React.useState(false), loading = _b[0], setLoading = _b[1];
   var _c = React.useState(""), searchText = _c[0], setSearchText = _c[1];
   var _d = React.useState(""), query = _d[0], setQuery = _d[1];
   var _e = React.useState(null), error = _e[0], setError = _e[1];
