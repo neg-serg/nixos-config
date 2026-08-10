@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Enforce Markdown language policy locally before commit
-repo_root="$(git rev-parse --show-toplevel)"
-"$repo_root/scripts/dev/check-markdown-language.sh"
+# Run the full lint suite (includes Markdown language policy, QML, Hyprland
+# variables, and all additional syntax checks). Runs inside `nix develop`,
+# which provides just and every lint tool via the devshell.
+just lint
