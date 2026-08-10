@@ -12,7 +12,7 @@ Managed by NixOS directly via `modules/system/net/proxy.nix`. Defined as a syste
 `xray.service` with static config at `~/.config/sing-box-tun/config.json`. The config points to a
 single hardcoded VLESS+REALITY server (`204.152.223.171:8443`) which is **currently dead**.
 
-- Starts automatically on boot via `default.target`.
+- Does **not** start automatically anymore — the module empties `wantedBy`; start it with `systemctl start xray.service` when needed.
 - Runs under user `neg`.
 - Config: `~/.config/sing-box-tun/config.json` (not to be confused with sing-box-trojan below — the
   dir name is historical).
@@ -29,7 +29,7 @@ A separate sing-box instance managed entirely by the `~/.local/bin/proxy` script
 generated** config at `~/.config/sing-box-trojan/config.json` with multiple auto-fetched or manually
 configured nodes (Hysteria2 + VLESS).
 
-- Does **not** start on boot. Only started via `proxy on` or `proxy refresh`.
+- Autostarts at login via the `sing-box-proxy` systemd **user** service (`systemctl --user status sing-box-proxy`). Manual `proxy on` / `proxy refresh` still work and take precedence.
 - Uses the **same port 10808** — the `proxy on` command stops Xray first.
 - `proxy off` restarts Xray automatically.
 - Dashboard: `http://127.0.0.1:9090` (secret: `neg`).
@@ -43,8 +43,7 @@ SOPS-encrypted fallback nodes. Both are kept because Xray can still be restored 
 back, and it handles nix-daemon's proxy env on boot. | Aspect | Xray (systemd) | sing-box (proxy
 CLI) | |---|---|---| | Management | NixOS module `modules/system/net/proxy.nix` |
 `~/.local/bin/proxy` script | | Config | Static (`~/.config/sing-box-tun/config.json`) | Dynamic
-(`~/.config/sing-box-trojan/config.json`) | | Start | Auto on boot via `default.target` | `proxy on`
-/ `proxy refresh` only | | Port 10808 | `ExecStartPre` kills existing holder via `fuser -k` |
+(`~/.config/sing-box-trojan/config.json`) | | Start | Manual (`systemctl start xray.service`) | Autostart via `sing-box-proxy` user service; `proxy on` / `proxy refresh` for manual control | | Port 10808 | `ExecStartPre` kills existing holder via `fuser -k` |
 `proxy on` stops Xray first | | Off behavior | — | `proxy off` restarts Xray | | Logs |
 `journalctl -u xray.service` | `/tmp/sing-box-trojan.log` | | Dashboard | None |
 `http://127.0.0.1:9090` (secret: `neg`) | | Purpose | Boot-time proxy for nix-daemon | Flexible
@@ -76,7 +75,7 @@ proxy on
 
 1. Stops `xray.service` if it is running.
 1. Generates `~/.config/sing-box-trojan/config.json` from fallback nodes (first-run bootstrap).
-1. Starts sing-box in the background on port `10808`.
+1. Starts sing-box on port `10808` (via the `sing-box-proxy` user service, falling back to a background launch if the unit is not installed).
 1. Launches dashboard on port `9090`.
 
 ### off
@@ -122,8 +121,8 @@ proxy status
 **Possible causes:**
 
 | Symptom | Likely cause | Fix | |---|---|---| | Xray is running (hardcoded server is dead) | Xray
-started on boot but its server is unreachable | `proxy on` to switch to sing-box | | Neither Xray
-nor sing-box is running | No proxy active | `proxy on` or `sudo systemctl start xray` | | sing-box
+was started manually but its server is unreachable | `proxy on` to switch to sing-box | | Neither Xray
+nor sing-box is running | No proxy active (e.g. `proxy off` was run) | `proxy on` | | sing-box
 is running but internet still fails | All nodes are stale | `proxy refresh` to fetch fresh nodes | |
 `Connection refused` on 10808 | Nothing is listening | Start a proxy | |
 `curl --noproxy '*' -s https://example.com` fails but `proxy status` shows RUNNING | sing-box nodes
@@ -141,12 +140,15 @@ ss -tlnp | grep 10808
 
 # Check sing-box log
 tail -20 /tmp/sing-box-trojan.log
+
+# Check the autostart user service
+systemctl --user status sing-box-proxy
 ```
 
 ### Xray vs sing-box confusion
 
-- **Xray** starts automatically at boot. If Xray is running when you type `proxy on`, the script
-  stops Xray first.
+- **Xray** does **not** autostart (module empties `wantedBy`); it runs only if started manually. If
+  Xray is running when you type `proxy on`, the script stops Xray first.
 - **Xray** stayed running = the hardcoded server is alive (unlikely at the moment).
 - **Port 10808** is no longer a conflict: Xray's `ExecStartPre` runs `fuser -k 10808/tcp` before
   starting, which kills whatever (e.g. sing-box) had the port. Similarly, `proxy on` stops Xray
