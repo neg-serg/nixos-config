@@ -16,6 +16,7 @@ lib.mkIf cfg.enable {
     # Manual toggle only — no autostart (would hijack all traffic at boot)
     wantedBy = lib.mkForce [ ];
     path = [
+      pkgs.bash # script shebang (env bash)
       pkgs.iproute2 # ip rules/routes
       pkgs.systemd # resolvectl
       pkgs.python3 # TUN config generation
