@@ -104,13 +104,31 @@
       supportedSystems = [ "x86_64-linux" ];
       sharedPackages = lib.genAttrs supportedSystems (system: flakeLib.mkPkgs system);
 
+      # NixOS configuration builder. mkTestHost is exported for flake/checks.nix
+      # and stripped from the nixosConfigurations output (flake-schemas requires
+      # a pure set of machine configs there).
+      nixosOut = import ./flake/nixos.nix {
+        inherit inputs nixpkgs self;
+        pkgs = sharedPackages.x86_64-linux;
+        filteredSource = lib.cleanSourceWith {
+          filter = name: _type: !(lib.hasSuffix ".md" (builtins.baseNameOf name));
+          src = lib.cleanSource ./.;
+        };
+      };
+
       # Dendritic per-system output: each output imports from its own file.
       # mkPerSystem is a thin closure-builder — each invocation creates an
       # independent eval unit for nix-eval-jobs parallelism.
       mkPerSystem =
         path: system:
         import path {
-          inherit self inputs nixpkgs flakeLib;
+          inherit
+            self
+            inputs
+            nixpkgs
+            flakeLib
+            ;
+          mkTestHost = nixosOut.mkTestHost;
           pkgs = sharedPackages.${system};
         } system;
     in
@@ -120,13 +138,6 @@
       checks = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/per-system.nix s).checks);
       devShells = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/devshells.nix s).devShells);
       apps = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/apps.nix s).apps);
-      nixosConfigurations = import ./flake/nixos.nix {
-        inherit inputs nixpkgs self;
-        pkgs = sharedPackages.x86_64-linux;
-        filteredSource = lib.cleanSourceWith {
-          filter = name: _type: !(lib.hasSuffix ".md" (builtins.baseNameOf name));
-          src = lib.cleanSource ./.;
-        };
-      };
+      nixosConfigurations = builtins.removeAttrs nixosOut [ "mkTestHost" ];
     };
 }
