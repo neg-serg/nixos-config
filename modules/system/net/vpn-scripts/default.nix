@@ -35,9 +35,9 @@ let
   vpnScriptsPkg = pkgs.stdenv.mkDerivation {
     name = "vpn-scripts";
 
-    buildInputs = with pkgs; [
-      python3
-      makeWrapper
+    buildInputs = [
+      pkgs.python3 # Python 3 interpreter
+      pkgs.makeWrapper # wrap binaries with environment/arguments
     ];
 
     dontUnpack = true;
@@ -102,6 +102,6 @@ in
 lib.mkIf cfg.enable {
   environment.systemPackages = [
     vpnScriptsPkg
-    pkgs.amnezia-tun
+    pkgs.amnezia-tun # Amnezia WireGuard userspace TUN device
   ];
 }

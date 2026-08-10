@@ -1,6 +1,5 @@
 {
   pkgs,
-  lib,
   preCommit,
   ...
 }:
@@ -21,5 +20,7 @@ pkgs.mkShell {
     pkgs.ruff # Extremely fast Python linter and code formatter
     pkgs.mypy # Optional static typing for Python
     pkgs.stylua # Opinionated Lua code formatter
+    pkgs.luajit # Lua syntax checker
+    pkgs.qt6.qtdeclarative # qmlformat: QML syntax checker for 'just lint'
   ];
 }

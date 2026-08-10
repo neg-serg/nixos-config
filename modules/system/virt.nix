@@ -67,7 +67,7 @@ in
           };
           path = [
             pkgs.libvirt
-            pkgs.qemu_kvm
+            pkgs.qemu_kvm # KVM virtual machines
           ];
           script = ''
             if ! virsh dominfo RDPWindows >/dev/null 2>&1; then

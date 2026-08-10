@@ -32,8 +32,8 @@ let
       nativeBuildInputs = [ pkgs.makeWrapper ];
 
       buildInputs = [
-        pkgs.gcc
-        pkgs.gmp
+        pkgs.gcc # C compiler
+        pkgs.gmp # GNU multiple precision arithmetic library
       ];
 
       ARCH = arch;
@@ -68,11 +68,11 @@ let
         runHook postInstall
       '';
 
-      meta = with pkgs.lib; {
+      meta = {
         description = "Run GLM-5.2 (744B MoE) on a consumer machine with ~25 GB RAM";
         homepage = "https://github.com/JustVugg/colibri";
-        license = licenses.asl20;
-        platforms = platforms.linux;
+        license = pkgs.lib.licenses.asl20;
+        platforms = pkgs.lib.platforms.linux;
         mainProgram = "glm";
       };
     };
