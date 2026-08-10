@@ -12,16 +12,6 @@ let
   cfg = config.features.dev.java;
 in
 {
-  options.features.dev.java = {
-    enable = lib.mkEnableOption "Java/JVM development tooling (JDK, Maven, PraxisLIVE)";
-    maven = lib.mkEnableOption "Apache Maven build tool" // {
-      default = true;
-    };
-    praxislive = lib.mkEnableOption "PraxisLIVE visual live programming IDE" // {
-      default = true;
-    };
-  };
-
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [
       pkgs.jdk21 # Java 21 LTS (current default in nixpkgs)
