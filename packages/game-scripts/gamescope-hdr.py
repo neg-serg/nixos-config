@@ -1,3 +1,4 @@
+# ruff: noqa: F821 — names injected by concatenation with monitor_utils.py (packages/game-scripts/default.nix)
 out_w, out_h, rate = display_info()
 
 flags = ["-f", "--adaptive-sync", "--hdr-enabled"]

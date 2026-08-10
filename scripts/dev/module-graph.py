@@ -13,9 +13,7 @@ Usage:
 """
 
 import re
-import os
 import sys
-import json
 from pathlib import Path
 from collections import defaultdict
 
@@ -181,7 +179,6 @@ def generate_html(graph, all_files, orphans):
         short = f"m{i}"
         rel = Path(f).relative_to(REPO_ROOT)
         domain = domain_from_path(str(rel))
-        color = color_for_domain(domain)
         name = str(rel)
         node_id_map[f] = short
         mermaid_lines.append(f'    {short}["{name}"]')
