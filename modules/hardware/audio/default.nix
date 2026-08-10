@@ -1,9 +1,9 @@
 { ... }:
 {
   imports = [
-    ./dsp
-    ./hdspe
-    ./pipewire
-    ./pulseaudio
+    ./dsp.nix
+    ./hdspe.nix
+    ./pipewire.nix
+    ./pulseaudio.nix
   ];
 }
