@@ -46,7 +46,17 @@ Rectangle {
 				Image {
 					id: appIconImage
 					visible: appIconImage.source !== ""
-					source: root.notif.appIcon ? Quickshell.iconPath(root.notif.appIcon) : ""
+					source: {
+						const a = root.notif.appIcon;
+						if (a) {
+							// file:// URLs and absolute paths (e.g. Vivaldi) bypass the
+							// theme lookup, which cannot resolve them.
+							if (a.startsWith("file://")) return a;
+							if (a.startsWith("/")) return "file://" + a;
+							return Quickshell.iconPath(a);
+						}
+						return "";
+					}
 					fillMode: Image.PreserveAspectFit
 					antialiasing: true
 					sourceSize.width: 30
