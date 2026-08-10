@@ -1,9 +1,9 @@
 import json
 import math  # noqa: F401 — used by concatenated scripts
 import os
-import shlex
+import shlex  # noqa: F401 — used by concatenated scripts
 import subprocess
-import sys
+import sys  # noqa: F401 — used by concatenated scripts
 
 H = {
     "HYPRCTL": "hyprctl",
