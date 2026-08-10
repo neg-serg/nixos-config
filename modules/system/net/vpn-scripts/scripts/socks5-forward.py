@@ -2,10 +2,8 @@
 """Minimal SOCKS5 proxy (CONNECT only). Optionally chains to upstream SOCKS5."""
 import argparse
 import asyncio
-import base64
 import socket
 import struct
-import sys
 
 SOCKS_VERSION = 5
 
@@ -163,7 +161,7 @@ class Socks5Handler:
                 remote_reader, remote_writer = await asyncio.open_connection(
                     addr, port
                 )
-        except (ConnectionError, OSError, socket.gaierror) as e:
+        except (ConnectionError, OSError, socket.gaierror):
             writer.write(
                 struct.pack("!BBBB", SOCKS_VERSION, 1, 0, 1)
                 + socket.inet_aton("0.0.0.0")

@@ -40,7 +40,6 @@ let
     hasKmon
     hasFd
     hasMpc
-    hasFlatpak
     ;
 
   content = lib.concatStrings [

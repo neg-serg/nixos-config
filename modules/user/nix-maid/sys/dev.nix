@@ -9,7 +9,6 @@ let
   inherit (config.users.users.neg) home;
 
   cfg = config.features.dev;
-  enableIac = cfg.enable && (cfg.pkgs.iac or false);
   enableCpp = cfg.enable && (cfg.cpp.enable or false);
   enableJoern = cfg.enable && (cfg.pkgs.joern or false);
 

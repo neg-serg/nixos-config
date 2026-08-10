@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """CDN on-demand proxy: caches packages on first access through SOCKS5."""
-import socket, threading, subprocess, os, time
+import socket
+import threading
+import subprocess
+import os
+import time
 
 CACHE = "/tmp/cdn-cache"
 PROXY = "socks5://127.0.0.1:10808"  # works with curl --socks5-hostname
@@ -42,7 +46,7 @@ def handle(client):
         if len(parts) < 2:
             client.close()
             return
-        method, path = parts[0], parts[1]
+        path = parts[1]
 
         # Cache key and file
         cache_key = path.replace("/", "_").replace("?", "_")
@@ -77,12 +81,12 @@ def handle(client):
         if data and b"HTTP/" in data:
             try:
                 client.send(b"HTTP/1.1 500\r\n\r\n")
-            except:
+            except Exception:
                 pass
     finally:
         try:
             client.close()
-        except:
+        except Exception:
             pass
 
 

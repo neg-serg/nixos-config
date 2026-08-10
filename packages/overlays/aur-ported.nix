@@ -1,4 +1,4 @@
-final: finalPrev: {
+final: _: {
 
   ghgrab = final.stdenv.mkDerivation {
     pname = "ghgrab";

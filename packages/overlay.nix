@@ -24,7 +24,7 @@ in
   });
 
   # Carla: use local source (GitHub blocked by proxy)
-  carla = finalPrev.carla.overrideAttrs (old: {
+  carla = finalPrev.carla.overrideAttrs (_: {
     src = builtins.fetchurl {
       url = "file:///tmp/carla.tar.gz";
       sha256 = "sha256-rig1sSCB9ycaawsl00uH02sCLEA3ACjKShD5D87fpmE=";

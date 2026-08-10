@@ -7,21 +7,6 @@
 let
   cfg = config.features.gui;
   jq = lib.getExe' pkgs.jq "jq";
-  greeterUser = "greeter";
-  greeterCache = "/home/${greeterUser}/.cache";
-  greeterWallpaper = "${greeterCache}/greeter-wallpaper";
-
-  # When quickshell-wallpaper-path changes, copy to greeter cache.
-  wlGreeterSync = pkgs.writeShellScript "wl-greeter-sync" ''
-    set -euo pipefail
-    notify_file="$HOME/.cache/quickshell-wallpaper-path"
-    if [ -f "$notify_file" ]; then
-      wallpaper_path="$(head -1 "$notify_file" 2>/dev/null || true)"
-      if [ -n "$wallpaper_path" ] && [ -f "$wallpaper_path" ]; then
-        install -Dm644 "$wallpaper_path" "${greeterWallpaper}" 2>/dev/null || true
-      fi
-    fi
-  '';
 
   # When wl daemon changes its state (new wallpaper), write the path
   # to quickshell-wallpaper-path, which triggers the greeter sync above.
@@ -37,12 +22,16 @@ let
     fi
   '';
 
-
   # Retry `wl restore` after the daemon starts — its auto-restore can race
   # the compositor becoming ready (see daemon/src/main.rs).
   wlRestoreRetry = pkgs.writeShellScript "wl-restore-retry" ''
     set -euo pipefail
-    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.wl ]}"
+    export PATH="${
+      lib.makeBinPath [
+        pkgs.coreutils # sleep, head
+        pkgs.wl # wallpaper daemon
+      ]
+    }"
     for i in 1 2 3 4 5; do
       wl restore && break
       sleep 1
@@ -55,7 +44,13 @@ let
   # NOTE: bash `< file` can't open a unix socket (ENXIO) — use socat.
   wlMonitorWatch = pkgs.writeShellScript "wl-monitor-watch" ''
     set -euo pipefail
-    export PATH="${lib.makeBinPath [ pkgs.coreutils pkgs.socat pkgs.wl ]}"
+    export PATH="${
+      lib.makeBinPath [
+        pkgs.coreutils # sleep, head
+        pkgs.socat # socket relay for hyprctl event socket
+        pkgs.wl # wallpaper daemon
+      ]
+    }"
     HYPRCTL="/run/current-system/sw/bin/hyprctl"
     while true; do
       sock="$(ls -d "''${XDG_RUNTIME_DIR:-/run/user/1000}"/hypr/*/.socket2.sock 2>/dev/null | head -1 || true)"

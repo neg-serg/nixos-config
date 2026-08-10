@@ -1,4 +1,4 @@
-inputs: final: finalPrev: {
+_: _: finalPrev: {
   # Disable flaky openexr tests (testMultiPartThreading, testCompositeDeepScanLine abort with EAGAIN)
   openexr = finalPrev.openexr.overrideAttrs (_old: {
     doCheck = false;
