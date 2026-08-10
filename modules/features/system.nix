@@ -14,7 +14,6 @@
       default = [
         "NetworkManager.service"
         "sshd.service"
-        "tailscaled.service"
         "nftables.service"
       ];
       description = "Systemd units to monitor on tty15 (network TTY). Override per-host.";
