@@ -7,7 +7,6 @@
   "license": "MIT",
   "platforms": ["Linux"],
   "author": "neg",
-  "icon": "icon.png",
   "commands": [
     {
       "name": "wallpaper",
