@@ -67,7 +67,8 @@ lib.mkIf (cfg.enable or false) {
     # the proxy survives reboots; previously it only ran after a manual `proxy on`.
     # ExecStartPre regenerates the config from the SOPS secret on first run.
     # Manual control stays in ~/.local/bin/proxy (on|off|refresh|status|gen).
-    sing-box-proxy = lib.mkIf (config.features.net.proxy.enable or false) {
+    # Independent of features.net.proxy.enable (legacy Xray system service).
+    sing-box-proxy = {
       description = "sing-box SOCKS5 proxy (127.0.0.1:10808)";
       after = [ "network-online.target" ];
       serviceConfig = {
