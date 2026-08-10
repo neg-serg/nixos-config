@@ -26,6 +26,10 @@ let
     bind = ALT, g, exec, vicinae toggle
     bind = $M4, g, exec, raise --class "steam" --launch "steam"
     bind = $M4+$C, n, exec, raise --class "Obsidian" --launch "flatpak run md.obsidian.Obsidian"
+
+    # hyprwhspr-rs dictation: hold ALT+` to talk
+    bind = ALT, GRAVE, exec, hyprwhspr-rs record start
+    bindr = ALT, GRAVE, exec, hyprwhspr-rs record stop
   '';
 in
 {

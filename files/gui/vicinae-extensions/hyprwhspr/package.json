@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
-  "name": "noctwhspr",
-  "title": "NoctWhspr",
-  "description": "Monitor and control hyprwhspr speech-to-text dictation",
+  "name": "hyprwhspr",
+  "title": "Hyprwhspr",
+  "description": "Monitor and control hyprwhspr-rs speech-to-text dictation",
   "categories": ["Productivity"],
   "license": "MIT",
   "platforms": ["Linux"],
@@ -10,22 +10,13 @@
   "commands": [
     {
       "name": "status",
-      "title": "NoctWhspr Status",
+      "title": "Hyprwhspr Status",
       "subtitle": "View hyprwhspr dictation status and control recording",
       "description": "Monitor hyprwhspr state, toggle recording, and restart the service",
       "mode": "view"
     }
   ],
-  "preferences": [
-    {
-      "name": "root",
-      "title": "hyprwhspr Root",
-      "description": "hyprwhspr installation directory",
-      "required": false,
-      "type": "textfield",
-      "default": "/usr/lib/hyprwhspr"
-    }
-  ],
+  "preferences": [],
   "dependencies": {
     "@vicinae/api": "^1.0.0"
   }
