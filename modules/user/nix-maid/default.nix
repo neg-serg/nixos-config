@@ -20,6 +20,7 @@
     ./apps/mpv
     ./apps/gui-apps.nix
     ./apps/vicinae.nix
+    ./apps/omnirouter.nix
 
     ./apps/transmission.nix
 
