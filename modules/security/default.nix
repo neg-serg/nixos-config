@@ -175,6 +175,14 @@ in
               command = "/run/current-system/sw/bin/systemctl start xray.service";
               options = [ "NOPASSWD" ];
             }
+            {
+              command = "/run/current-system/sw/bin/systemctl stop sing-box-tun.service";
+              options = [ "NOPASSWD" ];
+            }
+            {
+              command = "/run/current-system/sw/bin/systemctl start sing-box-tun.service";
+              options = [ "NOPASSWD" ];
+            }
           ];
           groups = [ mainGroup ];
         }

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# tun — full-TUN proxy toggle (systemd sing-box-tun service).
+# Routes ALL non-private traffic via the sb0 TUN interface through the
+# working VLESS/Hysteria2 node. Disable with `tun off`.
+set -euo pipefail
+case "${1:-status}" in
+  on|start)
+    sudo systemctl start sing-box-tun.service
+    echo "TUN ON — all internet traffic via sb0"
+    ;;
+  off|stop)
+    sudo systemctl stop sing-box-tun.service
+    echo "TUN OFF"
+    ;;
+  status)
+    if systemctl is-active --quiet sing-box-tun.service 2>/dev/null; then
+      echo "TUN: RUNNING"
+    else
+      echo "TUN: STOPPED"
+    fi
+    ip rule 2>/dev/null | grep -E 'pref (100|150|200)' || true
+    ip route show table 200 2>/dev/null || true
+    ;;
+  *) echo "Usage: tun {on|off|status}"; exit 1 ;;
+esac

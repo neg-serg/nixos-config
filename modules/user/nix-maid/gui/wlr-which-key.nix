@@ -98,7 +98,7 @@
                 command: hyprscratch torrment 'kitty --class torrment -e rustmission' special
                 title: Torrents
               - key: u
-                command: hyprscratch vpn 'kitty --class vpn -e sing-box tun' special
+                command: hyprscratch vpn 'kitty --class vpn -e tun status' special
                 title: VPN
               - key: p
                 command: 'hyprscratch mixer "kitty --class mixer -e ncpamixer" special'
