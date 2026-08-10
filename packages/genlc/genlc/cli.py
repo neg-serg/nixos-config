@@ -160,7 +160,7 @@ def discover():
             monitor.query_hardware()
             monitor.query_software()
             monitor.query_barcode()
-        except gnet.GNetTimeoutException as te:
+        except gnet.GNetTimeoutException:
             click.echo(
                 f"Timeout communicating with monitor {monitor}", err=True
             )
