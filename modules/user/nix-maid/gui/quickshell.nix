@@ -106,10 +106,23 @@ let
     mkdir -p "$qs_dir/Notifications"
     cp -rfT "$src/Notifications" "$qs_dir/Notifications" 2>/dev/null || true
     chmod -R u+w "$qs_dir/Notifications" 2>/dev/null || true
+
+    # art/, shaders/ — force-copy on every start: the static symlink tree is
+    # created by nix-maid activation AFTER the switch, so a shell started
+    # meanwhile reads a half-deployed tree (missing 8.svg, wedge_clip.qsb →
+    # startup warnings). Deterministic deployment, same pattern as above.
+    mkdir -p "$qs_dir/art"
+    cp -rfT "$src/art" "$qs_dir/art" 2>/dev/null || true
+    chmod -R u+w "$qs_dir/art" 2>/dev/null || true
+
+    mkdir -p "$qs_dir/shaders"
+    cp -rfT "$src/shaders" "$qs_dir/shaders" 2>/dev/null || true
+    chmod -R u+w "$qs_dir/shaders" 2>/dev/null || true
   '';
   # Build individual nix-maid entries for source dir top-level contents,
   # excluding writable paths (Theme, Settings, Settings.json, .github)
-  # and force-copied paths (Components, Bar, Helpers, Notifications).
+  # and force-copied paths (Components, Bar, Helpers, Notifications,
+  # art, shaders).
   quickshellSrcEntries = builtins.readDir quickshellSrc;
 
   quickshellSrcNames = builtins.filter (
@@ -123,6 +136,8 @@ let
     && name != "Bar"
     && name != "Helpers"
     && name != "Notifications"
+    && name != "art"
+    && name != "shaders"
   ) (builtins.attrNames quickshellSrcEntries);
 
   quickshellHomeFiles = builtins.listToAttrs (
