@@ -76,8 +76,11 @@ lib.mkIf (cfg.enable or false) {
           serviceConfig = {
             Type = "simple";
             ExecStartPre = "%h/.local/bin/proxy gen";
+            Environment = [
+              "ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true"
+              "PATH=${lib.concatStringsSep ":" config.environment.systemPath}"
+            ];
             ExecStart = "${lib.getExe pkgs.sing-box} run -c %h/.config/sing-box-trojan/config.json";
-            Environment = [ "ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true" ];
             Restart = "on-failure";
             RestartSec = 5;
           };
