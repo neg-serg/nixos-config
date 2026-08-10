@@ -41,12 +41,27 @@ function downloadFile(url, dest) {
   });
 }
 
+// Map MIME type -> file extension (wallhaven returns file_type like "image/jpeg")
+function extFromMime(mime) {
+  if (!mime) return "jpg";
+  var map = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/gif": "gif",
+    "image/webp": "webp",
+    "image/bmp": "bmp",
+    "image/avif": "avif",
+  };
+  return map[mime] || "jpg";
+}
+
 function WallhavenSearch() {
   var _a = React.useState([]), results = _a[0], setResults = _a[1];
   var _b = React.useState(false), loading = _b[0], setLoading = _b[1];
   var _c = React.useState(""), searchText = _c[0], setSearchText = _c[1];
   var _d = React.useState(""), query = _d[0], setQuery = _d[1];
   var _e = React.useState(null), error = _e[0], setError = _e[1];
+  var _f = React.useState({}), thumbs = _f[0], setThumbs = _f[1];
   var prefs = api.getPreferenceValues();
   var home = os.homedir();
   var dlDir = prefs.download_dir ? prefs.download_dir.replace(/^~/, home) : path.join(home, "pic", "wl");
@@ -73,21 +88,38 @@ function WallhavenSearch() {
 
     try { fs.mkdirSync(cacheDir, { recursive: true }); } catch (_) {}
     try { fs.mkdirSync(dlDir, { recursive: true }); } catch (_) {}
-
     fetchJSON("https://wallhaven.cc/api/v1/search?" + params.toString()).then(function (data) {
       if (!data || !data.data) {
         setResults([]);
         setError("No results or API error");
-      } else {
-        setResults(data.data);
+        setLoading(false);
+        return;
       }
+      setResults(data.data);
       setLoading(false);
+
+      // Download thumbnails in parallel for list previews
+      try { fs.mkdirSync(cacheDir, { recursive: true }); } catch (_) {}
+      var seen = {};
+      data.data.forEach(function (img) {
+        var thumbUrl = img.thumbs && (img.thumbs.large || img.thumbs.small);
+        if (!thumbUrl || seen[img.id]) return;
+        seen[img.id] = true;
+        var dest = path.join(cacheDir, img.id + ".jpg");
+        if (fs.existsSync(dest)) {
+          setThumbs(function (t) { var n = {}; n[img.id] = dest; return Object.assign({}, t, n); });
+          return;
+        }
+        downloadFile(thumbUrl, dest).then(function () {
+          setThumbs(function (t) { var n = {}; n[img.id] = dest; return Object.assign({}, t, n); });
+        }).catch(function () {});
+      });
     }).catch(function (e) {
       setError(e.message);
       setResults([]);
       setLoading(false);
     });
-  }, [prefs]);
+  }, [prefs, cacheDir]);
 
   // Debounced search: fire doSearch 800ms after typing stops
   React.useEffect(function () {
@@ -102,13 +134,14 @@ function WallhavenSearch() {
     return results.map(function (img) {
       var resolution = img.resolution || "?";
       var id = img.id || "?";
+      var thumbPath = thumbs[id];
+      var icon = thumbPath ? { source: thumbPath } : api.Icon.Image;
 
       return React.createElement(api.List.Item, {
         key: id,
         id: "wh-" + id,
-        title: resolution,
+        icon: icon,
         subtitle: (img.tags || []).map(function (t) { return t.name; }).join(", ") || "No tags",
-        icon: api.Icon.Image,
         accessories: [
           { text: String(img.favorites || 0), icon: api.Icon.Star }
         ],
@@ -118,7 +151,7 @@ function WallhavenSearch() {
             icon: api.Icon.Desktop,
             onAction: function () {
               return Promise.resolve().then(function () {
-                var filepath = path.join(dlDir, "wallhaven-" + img.id + "." + (img.file_type || "jpg"));
+                var filepath = path.join(dlDir, "wallhaven-" + img.id + "." + extFromMime(img.file_type));
                 return api.showToast({
                   style: api.Toast.Style.Animated,
                   title: "Downloading...",
@@ -156,7 +189,7 @@ function WallhavenSearch() {
         )
       });
     });
-  }, [results, dlDir]);
+  }, [results, dlDir, thumbs]);
 
   return React.createElement(api.List, {
     isLoading: loading,
