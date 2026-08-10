@@ -28,7 +28,7 @@ let
         "provider": "whisper_cpp",
         "request_timeout_secs": 45,
         "whisper_cpp": {
-          "model": "ggml-small.bin",
+          "model": "small",
           "threads": 12,
           "gpu_layers": 0,
           "fallback_cli": true,
