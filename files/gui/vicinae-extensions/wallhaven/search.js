@@ -135,13 +135,14 @@ function WallhavenSearch() {
       var resolution = img.resolution || "?";
       var id = img.id || "?";
       var thumbPath = thumbs[id];
-      var icon = thumbPath ? { source: thumbPath } : api.Icon.Image;
+      var content = thumbPath ? { source: thumbPath } : undefined;
 
-      return React.createElement(api.List.Item, {
+      return React.createElement(api.Grid.Item, {
         key: id,
         id: "wh-" + id,
-        icon: icon,
-        subtitle: (img.tags || []).map(function (t) { return t.name; }).join(", ") || "No tags",
+        content: content,
+        title: id,
+        subtitle: resolution,
         accessories: [
           { text: String(img.favorites || 0), icon: api.Icon.Star }
         ],
@@ -191,10 +192,14 @@ function WallhavenSearch() {
     });
   }, [results, dlDir, thumbs]);
 
-  return React.createElement(api.List, {
+  return React.createElement(api.Grid, {
     isLoading: loading,
     searchBarPlaceholder: "Search Wallhaven...",
-    onSearchTextChange: setSearchText
+    onSearchTextChange: setSearchText,
+    columns: 3,
+    aspectRatio: "16/9",
+    fit: api.Grid.Fit.Fill,
+    throttle: true
   },
     error && !loading
       ? React.createElement(api.List.EmptyView, {
@@ -212,12 +217,11 @@ function WallhavenSearch() {
           ? React.createElement(api.List.EmptyView, {
               icon: api.Icon.MagnifyingGlass,
               title: "Search Wallhaven",
-              description: "Type a query and press Enter to search"
+              description: "Type a query to search"
             })
-          : React.createElement(api.List.Section, { title: query ? "Results: " + query + " (" + results.length + ")" : "Results" },
-              items
-            )
+          : items
   );
 }
+
 
 module.exports = { default: WallhavenSearch };
