@@ -11,7 +11,7 @@ import "../Helpers/Color.js" as Color
 
 Rectangle {
     id: root
-    required property Notification notif;
+    required property var notif;  // TrackedNotification (filtered actions view)
     required property var backer;
 
     // ── Metrics (even: content inset = frame + pad on every side) ──

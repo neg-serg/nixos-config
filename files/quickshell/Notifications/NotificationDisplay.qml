@@ -36,7 +36,7 @@ Item {
         });
         if (!harness) return null;
         harness.contentItem = root.notifCardComponent.createObject(harness, {
-            notif: notification.notif,
+            notif: notification,
             backer: notification,
         });
         root.notifications = [...root.notifications, harness];
