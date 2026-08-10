@@ -94,7 +94,7 @@ PanelWindow {
                     active: !delegateRoot.isHeader
                     asynchronous: false
                     sourceComponent: NotificationCard {
-                        notif: delegateRoot.item.notif
+                        notif: delegateRoot.item
                         backer: delegateRoot.item
                     }
                 }
