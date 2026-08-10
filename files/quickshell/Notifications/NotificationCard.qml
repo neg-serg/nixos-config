@@ -87,7 +87,16 @@ Rectangle {
                 Layout.alignment: Qt.AlignVCenter
 
                 readonly property string iconSource: {
-                    if (root.notif.appIcon) return Quickshell.iconPath(root.notif.appIcon);
+                    const a = root.notif.appIcon;
+                    if (a) {
+                        // Some apps (e.g. Vivaldi) send a file:// URL or an absolute
+                        // path as app icon instead of a theme icon name. The "icon"
+                        // provider (QIcon::fromTheme) cannot resolve those, so load
+                        // them directly as file URLs.
+                        if (a.startsWith("file://")) return a;
+                        if (a.startsWith("/")) return "file://" + a;
+                        return Quickshell.iconPath(a);
+                    }
                     if (root.notif.image) return root.notif.image;
                     return "";
                 }
