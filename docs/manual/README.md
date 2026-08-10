@@ -68,21 +68,27 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
 - Manage services via `systemctl --user start|stop|status <unit>`, logs via
   `journalctl --user -u <unit>`.
 
-### Sing-box Reality TUN (host)
+### Sing-box full-TUN (host)
 
-- Secret lives at `/run/secrets/vless-reality-singbox-tun.json`, rendered by sops-nix from
-  `secrets/home/vless/reality-singbox-tun.json.sops`.
-- Service: `systemctl start sing-box-tun` / `systemctl stop sing-box-tun` (manual). Policy routing
-  in the unit: `pref 100` sends traffic to 204.152.223.171 via `main`; `pref 200` + `table 200`
-  route everything else to `default dev sb0`; DNS via `resolvectl dns sb0 1.1.1.1 1.0.0.1` and
-  `resolvectl domain sb0 "~."`.
-- Requirements: `sing-box` present in `environment.systemPackages`, secret available, needs
-  root/CAP_NET_ADMIN (systemd handles capabilities).
-- Checks: `ip rule`, `ip route show table 200` (expect `default dev sb0`),
-  `curl --interface sb0 https://ifconfig.me`, `ping -I sb0 8.8.8.8`.
-- Xray tun in nixpkgs lacks jsonv5/tun support and was dropped; use sing-box only.
-- For autostart, add `wantedBy = ["multi-user.target"]` and optionally save/restore the previous
-  default route in the unit’s `ExecStartPre`/`ExecStopPost`.
+Full-TUN proxy: routes all non-private traffic through the working VLESS/Hysteria2 node via the
+`sb0` TUN interface. Defined in `modules/system/net/vpn/tun.nix`, gated on `features.net.proxy.enable`.
+
+- Toggle: `tun on` / `tun off` / `tun status` (`packages/local-bin/bin/tun`, NOPASSWD sudo for `neg`
+  on `systemctl start|stop sing-box-tun`). Manual toggle only — **no autostart**, so a rebuild or
+  reboot never hijacks traffic.
+- Config `/run/sing-box-tun/config.json` is generated at start (`sing-box-tun-up.sh`) from the SOCKS5
+  proxy config `~/.config/sing-box-trojan/config.json` — same outbounds/urltest `auto`, so the same
+  working node is used. After `proxy refresh`, restart the service to pick up new nodes.
+- Routing (up: `sing-box-tun-up.sh`, teardown: `sing-box-tun-down.sh` via `ExecStopPost`):
+  - `pref 100`: VPN server IPs → `main` (direct — avoids the tunnel loop);
+  - `pref 150`: private/loopback/CGNAT nets → `main` (LAN, localhost, Tailscale stay local);
+  - `pref 200`: everything else → table `200` → `default dev sb0`;
+  - DNS: `resolvectl dns sb0 1.1.1.1 1.0.0.1` and `resolvectl domain sb0 "~."`.
+- Checks: `tun status`, `ip rule` (expect `pref 100/150/200`), `ip route show table 200` (expect
+  `default dev sb0`), `curl https://ifconfig.me` (whole-system exit IP), `curl --interface sb0 https://ifconfig.me`.
+- Notes: Tailscale mesh traffic to public DERP servers also rides the tunnel while TUN is on
+  (CGNAT peer traffic stays direct via `pref 150`). Xray tun was dropped (no jsonv5/tun support);
+  sing-box only.
 
 ### Hyprland & GUI Notes
 
