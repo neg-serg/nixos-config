@@ -25,10 +25,10 @@ Scale/crop the image to fill the monitor (center crop) and set it as wallpaper. 
 screen-sized tiled pattern from the image and set it as wallpaper. | | `Ctrl+5` | `wall-center` |
 Center the image on the wallpaper canvas with black borders. | | `Ctrl+w` | `wall-cover` | Cover the
 monitor with the image (crop as needed) and set it as wallpaper. | | `Ctrl+c` | `cp` | Copy the file
-into a directory picked via the rofi prompt. | | `c` | `copyname` | Copy the absolute file path to
-the clipboard and show `pic-notify` when available. | | `Ctrl+d`, `d` |
+into a directory picked via the vicinae dmenu prompt. | | `c` | (wl-copy) | Copy the absolute file path to
+the clipboard. | | `s` | `copyname` | Copy the absolute file path via wl-copy and show `pic-notify` when available. | | `Ctrl+d`, `d` |
 `mv … $HOME/trash/1st-level/pic` | Move the file into the staged trash folder. | | `v` | `mv` | Move
-the file into a directory selected via the rofi prompt. | | `Ctrl+comma` | `rotate-left` | Rotate
+the file into a directory selected via the vicinae dmenu prompt. | | `Ctrl+comma` | `rotate-left` | Rotate
 the file 270° using ImageMagick (`mogrify`). Russian: `Ctrl+б`. | | `Ctrl+Shift+,` | `rotate-ccw` |
 Rotate the file 90° counter-clockwise. Russian: `Ctrl+Shift+б`. | | `Ctrl+period` | `rotate-right` |
 Rotate the file 90° clockwise. Russian: `Ctrl+ю`. | | `Ctrl+slash` | `rotate-180` | Rotate the file
@@ -41,11 +41,11 @@ trash. | | `Shift+v` | `range-mv` | Prompt for a directory and move the marked r
 
 ## Gallery Mode
 
-| Key | Script action | Effect | | --- | ------------- | ------ | | `c` | `copyname` | Copy the
-highlighted file’s absolute path to the clipboard. | | `Ctrl+c` | `cp` | Copy the highlighted file
-into a rofi-selected directory. | | `Ctrl+d`, `d` | `mv … $HOME/trash/1st-level/pic` | Send the
+| Key | Script action | Effect | | --- | ------------- | ------ | | `c` | (wl-copy) | Copy the
+highlighted file’s absolute path to the clipboard. | | `s` | `copyname` | Copy the absolute path via wl-copy and show `pic-notify` when available. | | `Ctrl+c` | `cp` | Copy the highlighted file
+into a vicinae dmenu-selected directory. | | `Ctrl+d`, `d` | `mv … $HOME/trash/1st-level/pic` | Send the
 highlighted file to the staged trash. | | `r` | `repeat` | Repeat the previous `mv`/`cp` to its
-cached destination. | | `v` | `mv` | Move the highlighted file via a rofi prompt. | | `Ctrl+comma` |
+cached destination. | | `v` | `mv` | Move the highlighted file via a vicinae dmenu prompt. | | `Ctrl+comma` |
 `rotate-left` | Rotate the highlighted file 270°. Russian: `Ctrl+б`. | | `Ctrl+Shift+,` |
 `rotate-ccw` | Rotate the highlighted file 90° counter-clockwise. Russian: `Ctrl+Shift+б`. | |
 `Ctrl+period` | `rotate-right` | Rotate the highlighted file 90° clockwise. Russian: `Ctrl+ю`. | |
