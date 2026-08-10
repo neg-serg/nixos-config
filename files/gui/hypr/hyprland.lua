@@ -179,7 +179,7 @@ hl.bind(M4 .. "+d", hl.dsp.exec_cmd("hyprscratch teardown 'kitty --class teardow
 hl.bind(M4 .. "+e", hl.dsp.exec_cmd("hyprscratch toggle telegram"))
 hl.bind(M4 .. "+f", hl.dsp.exec_cmd("hyprscratch music 'kitty --class music -e rmpc' special"))
 hl.bind(M4 .. "+t", hl.dsp.exec_cmd("hyprscratch torrment 'kitty --class torrment -e rustmission' special"))
-hl.bind(M4 .. "+u", hl.dsp.exec_cmd("hyprscratch vpn 'kitty --class vpn -e sing-box tun' special"))
+hl.bind(M4 .. "+u", hl.dsp.exec_cmd("hyprscratch vpn 'kitty --class vpn -e tun status' special"))
 hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hyprscratch mixer 'kitty --class mixer -e ncpamixer' special"))
 hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("hyprscratch hide-all"))
 
