@@ -8,7 +8,7 @@ TrackedNotification {
 
 
     renderComponent: NotificationCard {
-        notif: daemon.notif
+        notif: daemon
         backer: daemon
     }
 
