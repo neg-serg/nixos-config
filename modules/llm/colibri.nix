@@ -188,6 +188,7 @@ in
         arch = lib.mkDefault "native";
         modelDir = lib.mkDefault "/zero/ai/glm52_i4";
         ramBudget = lib.mkDefault 45;
+        enable = lib.mkDefault true; # LLM feature on → colibri CLI on (host no longer forces it; avoids dangling option in filtered test configs)
 
         settings = lib.mkDefault {
           DIRECT = "1";

@@ -3,6 +3,7 @@
   inputs,
   nixpkgs,
   flakeLib,
+  mkTestHost,
   pkgs,
   ...
 }:
@@ -45,6 +46,11 @@ in
   };
 
   checks = import ./checks.nix {
-    inherit nixpkgs self inputs;
+    inherit
+      nixpkgs
+      self
+      inputs
+      mkTestHost
+      ;
   } pkgs;
 }

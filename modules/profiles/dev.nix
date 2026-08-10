@@ -1,4 +1,8 @@
-{ lib, config, ... }:
+{
+  lib,
+  config,
+  ...
+}:
 with lib;
 mkIf (builtins.elem "dev" (config.features.profiles or [ ])) {
   features = {

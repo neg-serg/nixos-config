@@ -14,6 +14,7 @@
 {
   nixpkgs,
   self,
+  mkTestHost,
   ...
 }:
 pkgs:
@@ -85,12 +86,13 @@ in
 
   # ── NixOS test config checks ───────────────────────────────────────
   # Each evaluates a profile-specific NixOS configuration for "odin"
-  # via the exported mkTestHost from nixosConfigurations. These ensure
-  # the A/B test configurations evaluate without errors.
+  # via mkTestHost (threaded from flake.nix; stripped from the
+  # nixosConfigurations output so flake-schemas sees a pure machine set).
+  # These ensure the A/B test configurations evaluate without errors.
 
   "test-odin-gaming" =
     let
-      cfg = self.nixosConfigurations.mkTestHost "odin" "gaming";
+      cfg = mkTestHost "odin" "gaming";
     in
     pkgs.runCommand "check-test-odin-gaming" { } ''
       echo "check: test-odin-gaming OK (${toString (builtins.length (builtins.attrNames cfg.options))} options)"
@@ -99,7 +101,7 @@ in
 
   "test-odin-lite" =
     let
-      cfg = self.nixosConfigurations.mkTestHost "odin" "lite";
+      cfg = mkTestHost "odin" "lite";
     in
     pkgs.runCommand "check-test-odin-lite" { } ''
       echo "check: test-odin-lite OK (${toString (builtins.length (builtins.attrNames cfg.options))} options)"
@@ -108,7 +110,7 @@ in
 
   "test-odin-audio-pro" =
     let
-      cfg = self.nixosConfigurations.mkTestHost "odin" "audio-pro";
+      cfg = mkTestHost "odin" "audio-pro";
     in
     pkgs.runCommand "check-test-odin-audio-pro" { } ''
       echo "check: test-odin-audio-pro OK (${toString (builtins.length (builtins.attrNames cfg.options))} options)"
