@@ -5,7 +5,6 @@
   ...
 }:
 let
-  inherit (config.users.users.neg) home;
   cfg = config.features.gui;
 in
 lib.mkIf (cfg.enable or false) {
@@ -68,24 +67,22 @@ lib.mkIf (cfg.enable or false) {
     # the proxy survives reboots; previously it only ran after a manual `proxy on`.
     # ExecStartPre regenerates the config from the SOPS secret on first run.
     # Manual control stays in ~/.local/bin/proxy (on|off|refresh|status|gen).
-    sing-box-proxy =
-      lib.mkIf (config.features.net.proxy.enable or false)
-        {
-          description = "sing-box SOCKS5 proxy (127.0.0.1:10808)";
-          after = [ "network-online.target" ];
-          serviceConfig = {
-            Type = "simple";
-            ExecStartPre = "%h/.local/bin/proxy gen";
-            Environment = [
-              "ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true"
-              "PATH=/run/current-system/sw/bin:/run/current-system/sw/sbin"
-            ];
-            ExecStart = "${lib.getExe pkgs.sing-box} run -c %h/.config/sing-box-trojan/config.json";
-            Restart = "on-failure";
-            RestartSec = 5;
-          };
-          wantedBy = [ "default.target" ];
-        };
+    sing-box-proxy = lib.mkIf (config.features.net.proxy.enable or false) {
+      description = "sing-box SOCKS5 proxy (127.0.0.1:10808)";
+      after = [ "network-online.target" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStartPre = "%h/.local/bin/proxy gen";
+        Environment = [
+          "ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true"
+          "PATH=/run/current-system/sw/bin:/run/current-system/sw/sbin"
+        ];
+        ExecStart = "${lib.getExe pkgs.sing-box} run -c %h/.config/sing-box-trojan/config.json";
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+      wantedBy = [ "default.target" ];
+    };
 
     # OpenRGB daemon — starts the SDK server so clients (profile service, GUI) can connect.
     # The profile is NOT loaded on daemon startup (it may not exist yet); the

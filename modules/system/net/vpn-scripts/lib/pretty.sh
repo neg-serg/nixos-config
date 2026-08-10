@@ -218,7 +218,8 @@ pretty::badge() {
 # ╚══════════════════════════════════════════╝
 pretty::header() {
   local text="$*"
-  local width=$(_pretty_width)
+  local width
+  width=$(_pretty_width)
   local inner_width=$((width - 4))
   local text_len=${#text}
   local pad_left=$(((inner_width - text_len) / 2))
@@ -273,7 +274,8 @@ pretty::phase() {
 # ── section ────────────────────────────────────────────────────────
 pretty::section() {
   local text="$*"
-  local width=$(_pretty_width)
+  local width
+  width=$(_pretty_width)
   local remain=$((width - ${#text} - 6))
   ((remain < 2)) && remain=2
   printf '%b%s %b%s%b ' "${_C_GREY_BOLD}" "$(_pretty_repeat "${_I_SECTION}" 3)" "${_C_CYAN_BOLD}" "$text" "${_C_GREY_BOLD}"
@@ -319,7 +321,8 @@ pretty::spinner() {
 # Box with count: "━━━ Results: 727 passed, 2 failed ━━━"
 pretty::summary_line() {
   local passed="$1" failed="$2" label="${3:-Results}"
-  local width=$(_pretty_width)
+  local width
+  width=$(_pretty_width)
   local text
   text="${label}: "
   if [[ $failed -gt 0 ]]; then

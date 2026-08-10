@@ -4,7 +4,6 @@
 # Trigger: always enabled (was gated behind roles.workstation which is always true on the only host).
 {
   lib,
-  config,
   pkgs,
   ...
 }:
