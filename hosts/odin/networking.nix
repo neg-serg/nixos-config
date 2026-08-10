@@ -56,7 +56,7 @@
           ActivationPolicy = "always-up";
         };
         dhcpV4Config = {
-          UseDNS = true;
+          UseDNS = false; # DNS pinned to local Unbound (127.0.0.1#5353); don't import router DNS
           UseRoutes = true;
           RouteMetric = 10; # lowest metric wins → default route via 10G
         };
