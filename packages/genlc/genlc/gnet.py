@@ -2,6 +2,7 @@
 
 import logging
 from typing import Optional
+from . import const
 
 
 def _gsm16(data: bytes) -> int:
@@ -16,8 +17,6 @@ def _gsm16(data: bytes) -> int:
                 crc = (crc << 1) & 0xFFFF
     return crc ^ 0xFFFF
 
-
-from . import const
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +160,7 @@ class GNetResponseMessage:
 
         if self.msg[-1] != const.GNET_TERM:
             raise GNetException(
-                f"Response message does not end with terminator byte"
+                "Response message does not end with terminator byte"
             )
 
         # Extract the checksum and verify it

@@ -204,7 +204,7 @@ class USBAdapter(BaseDevice):
         if self.serial is None:
             try:
                 self.serial = int(self.group.transport.adapter.serial, base=16)
-            except:
+            except Exception:
                 pass
 
     def query_mic_serial(self) -> None:
