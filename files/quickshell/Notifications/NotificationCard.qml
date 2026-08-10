@@ -117,13 +117,13 @@ Rectangle {
                     color: root._fg
                     elide: Text.ElideRight
                     Layout.fillWidth: true
-                    Layout.rightMargin: 24 // keep clear of the corner close button
+                    Layout.rightMargin: 26 // keep clear of the corner close button (box left = content right - 20)
                 }
 
                 // Body
                 Label {
-                    id: bodyLabel
                     Layout.fillWidth: true
+                    Layout.rightMargin: 26 // same right edge as summary: never under the close button column
                     visible: root.notif.body !== ""
                     text: root.notif.body
                     font.weight: Font.Medium
@@ -191,8 +191,8 @@ Rectangle {
         id: closeButton
         anchors.top: parent.top
         anchors.right: parent.right
-        anchors.topMargin: root._frameW + 6
-        anchors.rightMargin: root._frameW + 10
+        anchors.topMargin: root._frameW + root._vpad
+        anchors.rightMargin: root._frameW + root._pad
         width: 20
         height: 20
         z: 2
