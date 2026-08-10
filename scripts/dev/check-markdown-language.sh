@@ -24,7 +24,9 @@ while IFS= read -r -d '' file; do
   if LC_ALL=C.UTF-8 grep -P "[\x{0400}-\x{04FF}]" -n -- "$file" > /dev/null 2>&1; then
     echo "Markdown language policy violation: Cyrillic found in $file" >&2
     # Show offending lines (up to first 5 for brevity)
-    LC_ALL=C.UTF-8 grep -P "[\x{0400}-\x{04FF}]" -n -- "$file" | head -n 5 >&2
+    # `|| true`: grep can get SIGPIPE when head closes early; this check is
+    # warn-only and must not abort under `set -euo pipefail`.
+    LC_ALL=C.UTF-8 grep -P "[\x{0400}-\x{04FF}]" -n -- "$file" | head -n 5 >&2 || true
     fail=1
   fi
 done < <(find . -name '*.md' -print0)
