@@ -31,7 +31,7 @@ let
     # --disable-features=WaylandWpColorManagerV1: Chromium's wp_color_manager_v1
     # protocol handshake with Hyprland cm=auto can fail on AMD, causing overbright
     # gamma and incorrect colors (vs Firefox which doesn't use this protocol).
-    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks --disable-features=Vulkan,WaylandWpColorManagerV1";
+    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks --disable-features=Vulkan,WaylandWpColorManagerV1 --load-extension=/home/neg/.local/share/vivaldi-extensions/surfingkeys --load-extension=/home/neg/.local/share/vivaldi-extensions/tampermonkey";
     proprietaryCodecs = false;
   };
 
