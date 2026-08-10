@@ -354,12 +354,12 @@ const quickmarks = {
 };
 
 Object.entries(quickmarks).forEach(([key, site]) => {
-  // Open in current tab (prefix J — was o, freed up)
+  // Open in current tab (prefix J — free in SurfingKeys defaults)
   api.mapkey('J' + key, 'Open ' + site.name, () => {
     window.location.href = site.url;
   });
-  // Open in new tab
-  api.mapkey('gn' + key, 'Open ' + site.name + ' in new tab', () => {
+  // Open in new tab (prefix , — free in SurfingKeys defaults; 'gn' is taken by net-internals)
+  api.mapkey(',' + key, 'Open ' + site.name + ' in new tab', () => {
     api.tabOpenLink(site.url);
   });
 });
