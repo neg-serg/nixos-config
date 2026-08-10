@@ -1,0 +1,69 @@
+{
+  "$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
+  "name": "wallhaven",
+  "title": "Wallhaven",
+  "description": "Search and set wallpapers from wallhaven.cc",
+  "categories": ["System"],
+  "license": "MIT",
+  "platforms": ["Linux"],
+  "author": "neg",
+  "commands": [
+    {
+      "name": "search",
+      "title": "Search Wallhaven Wallpapers",
+      "subtitle": "Browse wallpapers from wallhaven.cc",
+      "description": "Search wallhaven.cc for wallpapers and set them via wl",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "api_key",
+      "title": "API Key",
+      "description": "Wallhaven API key (optional, enables NSFW results)",
+      "required": false,
+      "type": "textfield",
+      "default": ""
+    },
+    {
+      "name": "download_dir",
+      "title": "Download Directory",
+      "description": "Directory to save downloaded wallpapers",
+      "required": false,
+      "type": "directory",
+      "default": "~/pic/wl"
+    },
+    {
+      "name": "default_sort",
+      "title": "Default Sort",
+      "description": "Default sort order for search results",
+      "required": false,
+      "type": "dropdown",
+      "data": [
+        { "title": "Random", "value": "random" },
+        { "title": "Relevance", "value": "relevance" },
+        { "title": "Date Added", "value": "date_added" },
+        { "title": "Views", "value": "views" },
+        { "title": "Favorites", "value": "favorites" },
+        { "title": "Toplist", "value": "toplist" },
+        { "title": "Hot", "value": "hot" }
+      ],
+      "default": "random"
+    },
+    {
+      "name": "default_purity",
+      "title": "Default Purity",
+      "description": "Content purity filter (NSFW requires API key)",
+      "required": false,
+      "type": "dropdown",
+      "data": [
+        { "title": "SFW", "value": "sfw" },
+        { "title": "SFW + Sketchy", "value": "sfw+sketchy" }
+      ],
+      "default": "sfw"
+    }
+  ],
+  "dependencies": {
+    "@vicinae/api": "^1.0.0"
+  }
+}
