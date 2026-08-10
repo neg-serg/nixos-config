@@ -63,6 +63,27 @@ lib.mkIf (cfg.enable or false) {
       wantedBy = [ "default.target" ];
     };
 
+    # sing-box proxy — SOCKS5 on 127.0.0.1:10808 for Telegram etc. (apps use
+    # proxychains → this port, see user/session/chat.nix). Autostarts at login so
+    # the proxy survives reboots; previously it only ran after a manual `proxy on`.
+    # ExecStartPre regenerates the config from the SOPS secret on first run.
+    # Manual control stays in ~/.local/bin/proxy (on|off|refresh|status|gen).
+    sing-box-proxy =
+      lib.mkIf (config.features.net.proxy.enable or false)
+        {
+          description = "sing-box SOCKS5 proxy (127.0.0.1:10808)";
+          after = [ "network-online.target" ];
+          serviceConfig = {
+            Type = "simple";
+            ExecStartPre = "%h/.local/bin/proxy gen";
+            ExecStart = "${lib.getExe pkgs.sing-box} run -c %h/.config/sing-box-trojan/config.json";
+            Environment = [ "ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true" ];
+            Restart = "on-failure";
+            RestartSec = 5;
+          };
+          wantedBy = [ "default.target" ];
+        };
+
     # OpenRGB daemon — starts the SDK server so clients (profile service, GUI) can connect.
     # The profile is NOT loaded on daemon startup (it may not exist yet); the
     # openrgb-profile oneshot applies the saved "neg" profile after the server is ready.
