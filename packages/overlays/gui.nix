@@ -31,8 +31,6 @@ in
   wl-switcher = prev.callPackage (inputs.self + "/packages/wl-switcher") { };
   unsplash = prev.callPackage (inputs.self + "/packages/unsplash") { };
   wallhaven = prev.callPackage (inputs.self + "/packages/wallhaven") { };
-  drive-health = prev.callPackage (inputs.self + "/packages/drive-health") { };
-  nix-monitor = prev.callPackage (inputs.self + "/packages/nix-monitor") { };
   noctwhspr = prev.callPackage (inputs.self + "/packages/noctwhspr") { };
 
   # hyprscratch: patched to exit after 5 event-listener failures
