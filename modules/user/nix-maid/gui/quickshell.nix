@@ -59,9 +59,12 @@ let
       systemctl --user start --wait maid-activation.service 2>/dev/null || true
       # Fallback: run the activation script directly if the unit didn't help.
       if [ ! -e "$qs_dir/shell.qml" ]; then
-        for a in /nix/store/*-all-maid/nix-maid-neg/bin/activate; do
-          [ -x "$a" ] && "$a" && break
-        done
+        # Run ONLY the newest activation (ls -t): the glob matches every
+        # generation in the store (dozens); iterating them in hash order
+        # blows the 90s start-pre timeout and wedges the shell in a
+        # restart loop.
+        newest=$(ls -t /nix/store/*-all-maid/nix-maid-neg/bin/activate 2>/dev/null | head -1)
+        [ -n "$newest" ] && [ -x "$newest" ] && "$newest"
       fi
     fi
 
