@@ -18,33 +18,41 @@ function stateIcon(state) {
 }
 
 function getState(root) {
-  try {
-    var trayScript = root + "/config/hyprland/hyprwhspr-tray.sh";
-    var out = cp.execSync('bash "' + trayScript + '" status 2>/dev/null', {
-      timeout: 5000,
-      encoding: "utf8",
-    }).trim();
-
-    var lines = out.split("\n");
-    var state = (lines[0] || "Unknown").replace(/[^a-zA-Z0-9 ]/g, "").trim();
-    var detail = lines.slice(1).join(" \u2022 ").trim();
-
-    return { state: state || "Unknown", detail: detail, raw: out };
-  } catch (e) {
-    return { state: "Error", detail: e.message, raw: "" };
-  }
+  return new Promise(function (resolve) {
+    try {
+      var trayScript = root + "/config/hyprland/hyprwhspr-tray.sh";
+      cp.exec('bash "' + trayScript + '" status 2>/dev/null', { timeout: 5000 }, function (err, stdout) {
+        if (err) return resolve({ state: "Error", detail: err.message || "tray script failed", raw: "" });
+        var out = stdout.trim();
+        var lines = out.split("\n");
+        var state = (lines[0] || "Unknown").replace(/[^a-zA-Z0-9 ]/g, "").trim();
+        var detail = lines.slice(1).join(" \u2022 ").trim();
+        resolve({ state: state || "Unknown", detail: detail, raw: out });
+      });
+    } catch (e) {
+      resolve({ state: "Error", detail: e.message, raw: "" });
+    }
+  });
 }
 
 function NoctWhspr() {
-  var _a = React.useState(0), tick = _a[0], setTick = _a[1];
+  var _a = React.useState("Loading"), state = _a[0], setState = _a[1];
+  var _b = React.useState(""), detail = _b[0], setDetail = _b[1];
+  var _c = React.useState(0), tick = _c[0], setTick = _c[1];
   var prefs = api.getPreferenceValues();
   var root = prefs.root || "/usr/lib/hyprwhspr";
 
-  var info = React.useMemo(function () {
-    return getState(root);
+  React.useEffect(function () {
+    var cancelled = false;
+    getState(root).then(function (info) {
+      if (cancelled) return;
+      setState(info.state);
+      setDetail(info.detail);
+    });
+    return function () { cancelled = true; };
   }, [root, tick]);
 
-  var icon = stateIcon(info.state);
+  var icon = stateIcon(state);
 
   var refresh = function () {
     setTick(function (t) { return t + 1; });
@@ -56,15 +64,15 @@ function NoctWhspr() {
         key: "state",
         id: "state",
         title: "State",
-        subtitle: info.state,
+        subtitle: state,
         icon: icon,
-        accessories: [{ text: info.state }],
+        accessories: [{ text: state }],
       }),
-      info.detail ? React.createElement(api.List.Item, {
+      detail ? React.createElement(api.List.Item, {
         key: "detail",
         id: "detail",
         title: "Detail",
-        subtitle: info.detail,
+        subtitle: detail,
         icon: api.Icon.Info,
       }) : null
     ),
@@ -72,14 +80,14 @@ function NoctWhspr() {
       React.createElement(api.List.Item, {
         key: "toggle",
         id: "toggle",
-        title: info.state === "Recording" ? "Stop Recording" : "Start Recording",
-        subtitle: info.state === "Recording" ? "Stop the current dictation session" : "Begin dictation",
-        icon: info.state === "Recording"
+        title: state === "Recording" ? "Stop Recording" : "Start Recording",
+        subtitle: state === "Recording" ? "Stop the current dictation session" : "Begin dictation",
+        icon: state === "Recording"
           ? { source: api.Icon.StopFilled, tintColor: "#ef4444" }
           : { source: api.Icon.Microphone, tintColor: "#22c55e" },
         actions: React.createElement(api.ActionPanel, null,
           React.createElement(api.Action, {
-            title: info.state === "Recording" ? "Stop Recording" : "Start Recording",
+            title: state === "Recording" ? "Stop Recording" : "Start Recording",
             icon: api.Icon.Microphone,
             onAction: function () {
               return Promise.resolve().then(function () {
@@ -91,7 +99,7 @@ function NoctWhspr() {
                 refresh();
                 return api.showToast({
                   style: api.Toast.Style.Success,
-                  title: info.state === "Recording" ? "Stopped" : "Started",
+                  title: state === "Recording" ? "Stopped" : "Started",
                 });
               }).catch(function (e) {
                 return api.showToast({
