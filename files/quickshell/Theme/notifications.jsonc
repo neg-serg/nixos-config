@@ -1,9 +1,9 @@
 {
   "notifications": {
     "background": "#000000",
-    "foreground": "#BFCAD0",
+    "foreground": "#E0E6EF",
     "frameColor": "#000000",
-    "accentColor": "#6C7E96",
+    "accentColor": "#004E8F",
     "radius": 4,
     "padding": 6,
     "maxWidth": 500,

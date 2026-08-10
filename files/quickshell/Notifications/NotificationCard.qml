@@ -22,15 +22,17 @@ Rectangle {
     readonly property int _iconSize: 48
     readonly property int _minW: 340
     readonly property int _maxW: 600
-    readonly property color _fg: "#BFCAD0"
-    readonly property color _accent: "#006FCC"
+    // Colors derived from the theme via formulas (see Helpers/Color.js):
+    // text = lighten(theme text primary), accent = darken(theme accent primary).
+    readonly property color _fg: Color.towardsWhite(Theme.textPrimary, 0.4)
+    readonly property color _accent: Color.towardsBlack(Theme.accentPrimary, 0.3)
 
     // Panel-dark: ~0.9 alpha like the bar backdrop (0.88)
     width: Math.min(root._maxW, Math.max(root._minW, content.implicitWidth + 2 * (root._frameW + root._pad)))
     // Explicit height: without it the card renders at 0px and is invisible
     // (regression from "[gui/quickshell] Darken card bg and frame").
     height: Math.max(content.implicitHeight + 2 * (root._frameW + root._vpad), 64)
-    color: Qt.rgba(0, 0, 0, 0.95)
+    color: Color.withAlpha(Theme.background, 0.95)
     radius: root._radius
     border.width: root._frameW
     border.color: Color.withAlpha(root._accent, 0.12)
@@ -139,9 +141,9 @@ Rectangle {
                     Layout.preferredWidth: actRow.implicitWidth + 20
                     Layout.preferredHeight: 30
                     radius: 6
-                    color: actMa.containsMouse ? "#242A35" : "#181C24"
+                    color: actMa.containsMouse ? Color.towardsBlack(Theme.outline, 0.42) : Color.towardsBlack(Theme.outline, 0.55)
                     border.width: 1
-                    border.color: "#3B4C5C"
+                    border.color: Theme.outline
 
                     RowLayout {
                         id: actRow
