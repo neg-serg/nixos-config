@@ -1,0 +1,56 @@
+{
+  "$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
+  "name": "drive-health",
+  "title": "Drive Health",
+  "description": "Monitor S.M.A.R.T. drive health, temperatures, and attributes",
+  "categories": ["System"],
+  "license": "MIT",
+  "platforms": ["Linux"],
+  "author": "neg",
+  "commands": [
+    {
+      "name": "drives",
+      "title": "Drive Health",
+      "subtitle": "View drive health, temperature, and SMART data",
+      "description": "List all drives with health status, temperatures, and detailed SMART attributes",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "warning_temp",
+      "title": "Warning Temp (°C)",
+      "description": "Temperature threshold for warning status",
+      "required": false,
+      "type": "textfield",
+      "default": "55"
+    },
+    {
+      "name": "critical_temp",
+      "title": "Critical Temp (°C)",
+      "description": "Temperature threshold for critical status",
+      "required": false,
+      "type": "textfield",
+      "default": "70"
+    },
+    {
+      "name": "life_warning_percent",
+      "title": "SSD Life Warning %",
+      "description": "Remaining SSD life percentage for warning",
+      "required": false,
+      "type": "textfield",
+      "default": "20"
+    },
+    {
+      "name": "show_hdd",
+      "title": "Show HDDs",
+      "description": "Include rotational (HDD) drives",
+      "required": false,
+      "type": "checkbox",
+      "default": true
+    }
+  ],
+  "dependencies": {
+    "@vicinae/api": "^1.0.0"
+  }
+}
