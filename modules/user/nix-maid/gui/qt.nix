@@ -15,9 +15,9 @@ in
     lib.mkMerge [
       {
         environment.systemPackages = [
-          pkgs.kdePackages.qt6ct
-          pkgs.kdePackages.qtwayland
-          pkgs.kdePackages.svgpart
+          pkgs.kdePackages.qt6ct # Qt6 configuration tool
+          pkgs.kdePackages.qtwayland # Qt6 Wayland platform plugin
+          pkgs.kdePackages.svgpart # SVG viewer KPart
         ];
         environment.sessionVariables = {
           QT_QPA_PLATFORMTHEME = "qt6ct";

@@ -55,7 +55,7 @@ in
         environment.systemPackages = [
           alkano-aio
           gtkThemePkg
-          pkgs.kora-icon-theme
+          pkgs.kora-icon-theme # flat icon theme
           iosevkaNeg.nerd-font
         ];
 

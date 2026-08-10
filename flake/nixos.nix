@@ -249,14 +249,6 @@ let
     "server"
   ];
 
-  # Keys like "odin-gaming", "odin-audio-pro", etc.
-  prefixedTestConfigs = lib.listToAttrs (
-    map (p: {
-      name = "odin-${p}";
-      value = mkTestHost "odin" p;
-    }) testProfiles
-  );
-
 in
 {
   odin = mkHost "odin";

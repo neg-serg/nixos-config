@@ -1,14 +1,11 @@
 {
   self,
-  inputs,
   nixpkgs,
-  flakeLib,
   pkgs,
   ...
 }:
 system:
 let
-  inherit (nixpkgs) lib;
   nixfmtPkg = nixpkgs.legacyPackages.${system}.nixfmt;
 
   genOptions = pkgs.writeShellApplication {
