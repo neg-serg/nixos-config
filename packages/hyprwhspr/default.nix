@@ -3,10 +3,10 @@
   lib,
 }:
 stdenv.mkDerivation {
-  pname = "vicinae-noctwhspr";
+  pname = "vicinae-hyprwhspr";
   version = "0.1.0";
 
-  src = ../../files/gui/vicinae-extensions/noctwhspr;
+  src = ../../files/gui/vicinae-extensions/hyprwhspr;
 
   installPhase = ''
     mkdir -p $out

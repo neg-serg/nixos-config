@@ -9,6 +9,7 @@ var api = require("@vicinae/api");
 function stateIcon(state) {
   switch (state) {
     case "Recording": return { source: api.Icon.Microphone, tintColor: "#ef4444" };
+    case "Processing": return { source: api.Icon.Waveform, tintColor: "#f59e0b" };
     case "Ready": return { source: api.Icon.Microphone, tintColor: "#22c55e" };
     case "Stopped": return { source: api.Icon.StopFilled, tintColor: "#6b7280" };
     case "Model Unloaded": return { source: api.Icon.Power, tintColor: "#f59e0b" };
@@ -17,40 +18,49 @@ function stateIcon(state) {
   }
 }
 
-function getState(root) {
+function getState() {
   return new Promise(function (resolve) {
     try {
-      var trayScript = root + "/config/hyprland/hyprwhspr-tray.sh";
-      cp.exec('bash "' + trayScript + '" status 2>/dev/null', { timeout: 5000 }, function (err, stdout) {
-        if (err) return resolve({ state: "Error", detail: err.message || "tray script failed", raw: "" });
-        var out = stdout.trim();
-        var lines = out.split("\n");
-        var state = (lines[0] || "Unknown").replace(/[^a-zA-Z0-9 ]/g, "").trim();
-        var detail = lines.slice(1).join(" \u2022 ").trim();
-        resolve({ state: state || "Unknown", detail: detail, raw: out });
+      cp.exec("hyprwhspr-rs record status 2>&1", { timeout: 5000 }, function (err, stdout) {
+        var out = (stdout || "").trim();
+        if (err || !out) {
+          return resolve({ state: "Error", detail: (err && err.message) || "hyprwhspr-rs not responding", raw: out });
+        }
+        var lower = out.toLowerCase();
+        var state;
+        if (lower.indexOf("recording") !== -1) {
+          state = "Recording";
+        } else if (lower.indexOf("processing") !== -1) {
+          state = "Processing";
+        } else if (lower.indexOf("idle") !== -1 || lower.indexOf("inactive") !== -1 || lower.indexOf("stopped") !== -1 || lower.indexOf("ready") !== -1) {
+          state = "Ready";
+        } else if (lower.indexOf("err") !== -1 || lower.indexOf("fail") !== -1) {
+          state = "Error";
+        } else {
+          state = "Unknown";
+        }
+        resolve({ state: state, detail: detail, raw: out });
       });
     } catch (e) {
       resolve({ state: "Error", detail: e.message, raw: "" });
     }
   });
 }
-
 function NoctWhspr() {
   var _a = React.useState("Loading"), state = _a[0], setState = _a[1];
   var _b = React.useState(""), detail = _b[0], setDetail = _b[1];
   var _c = React.useState(0), tick = _c[0], setTick = _c[1];
-  var prefs = api.getPreferenceValues();
-  var root = prefs.root || "/usr/lib/hyprwhspr";
 
   React.useEffect(function () {
     var cancelled = false;
-    getState(root).then(function (info) {
+    getState().then(function (info) {
       if (cancelled) return;
       setState(info.state);
       setDetail(info.detail);
     });
     return function () { cancelled = true; };
-  }, [root, tick]);
+  }, [tick]);
+
 
   var icon = stateIcon(state);
 
@@ -91,8 +101,7 @@ function NoctWhspr() {
             icon: api.Icon.Microphone,
             onAction: function () {
               return Promise.resolve().then(function () {
-                var trayScript = root + "/config/hyprland/hyprwhspr-tray.sh";
-                cp.execSync('bash "' + trayScript + '" toggle 2>/dev/null', {
+                cp.execSync("hyprwhspr-rs record toggle", {
                   timeout: 5000,
                   stdio: "ignore",
                 });
@@ -121,7 +130,7 @@ function NoctWhspr() {
         key: "restart",
         id: "restart",
         title: "Restart Service",
-        subtitle: "Restart the hyprwhspr systemd service",
+        subtitle: "Restart the hyprwhspr-rs systemd service",
         icon: api.Icon.ArrowClockwise,
         actions: React.createElement(api.ActionPanel, null,
           React.createElement(api.Action, {
@@ -129,7 +138,7 @@ function NoctWhspr() {
             icon: api.Icon.ArrowClockwise,
             onAction: function () {
               return Promise.resolve().then(function () {
-                cp.execSync("systemctl --user restart hyprwhspr.service", {
+                cp.execSync("systemctl --user restart hyprwhspr-rs.service", {
                   timeout: 10000,
                   stdio: "ignore",
                 });

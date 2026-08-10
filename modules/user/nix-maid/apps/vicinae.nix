@@ -224,7 +224,7 @@ in
         pkgs.wl # Vulkan wallpaper daemon (used by wl-switcher extension)
         pkgs.wl-switcher # vicinae extension for wl wallpaper switching
         pkgs.wallhaven # vicinae extension for wallhaven wallpaper browsing
-        pkgs.noctwhspr # vicinae extension for hyprwhspr dictation control
+        pkgs.hyprwhspr # vicinae extension for hyprwhspr dictation control
         pkgs.skate # key-value store CLI (vicinae skate extension dep)
         # Wrapper: expose vicinae-browser-link from libexec to PATH
         (pkgs.writeShellScriptBin "vicinae-browser-link" ''
@@ -266,7 +266,7 @@ in
       systemd.user.tmpfiles.rules = [
         # Extension symlinks from Nix store to user vicinae extensions dir
         "L+ %h/.local/share/vicinae/extensions/wallhaven - - - - ${pkgs.wallhaven}"
-        "L+ %h/.local/share/vicinae/extensions/noctwhspr - - - - ${pkgs.noctwhspr}"
+        "L+ %h/.local/share/vicinae/extensions/hyprwhspr - - - - ${pkgs.hyprwhspr}"
         "L+ %h/.local/share/vicinae/extensions/wl-switcher - - - - ${pkgs.wl-switcher}"
         # C (copy) for themes: writable copy (mode 0644) so "Open Theme File" works.
         # Won't overwrite user edits (source has epoch mtime, dest is newer).
