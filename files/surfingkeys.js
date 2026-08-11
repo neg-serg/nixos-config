@@ -399,3 +399,180 @@ api.map(';pb', ':setProxyMode byhost', 0, 'Proxy: byhost (selected sites)');
 api.map(';ps', ':setProxyMode system', 0, 'Proxy: system');
 api.map(';pc', ':setProxyMode clear', 0, 'Proxy: clear (no control)');
 
+
+// ========== Omnibar Search Engines (ported from b0o/surfingkeys-conf) ==========
+// Hybrid mode: a<alias> opens the SurfingKeys omnibar overlay with the engine
+// (awp = Wikipedia, agh = GitHub, ...); ca<alias> searches clipboard contents.
+// Native address bar and 'o' are untouched. skipMaps keeps 'o<alias>' unbound.
+
+const escHtml = (s) =>
+  String(s).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+  );
+
+const skItem = (props) => (strings, ...vals) => ({
+  html: strings.reduce(
+    (acc, s, i) => acc + s + (i < vals.length ? escHtml(vals[i]) : ''),
+    ''
+  ),
+  props,
+});
+
+const skUrlItem = (title, url) =>
+  skItem({ url: url, query: title })`
+    <div>
+      <div style="font-weight: bold">${title}</div>
+      <div style="opacity: 0.7; line-height: 1.3em">${url}</div>
+    </div>
+  `;
+
+const ddgIcon = (domain) => `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+
+const skEngines = [
+  {
+    alias: 'wp', name: 'wikipedia',
+    search: 'https://en.wikipedia.org/w/index.php?search=',
+    compl: 'https://en.wikipedia.org/w/api.php?action=query&format=json&generator=prefixsearch&prop=info|pageprops%7Cpageimages%7Cdescription&redirects=&ppprop=displaytitle&piprop=thumbnail&pithumbsize=100&pilimit=6&inprop=url&gpssearch=',
+    favicon: ddgIcon('en.wikipedia.org'),
+    cb: (r) => Object.values(JSON.parse(r.text).query.pages).map((p) =>
+      skItem({ url: p.fullurl })`
+        <div style="padding:5px;display:grid;grid-template-columns:60px 1fr;grid-gap:15px">
+          <img style="width:60px" src="${p.thumbnail ? p.thumbnail.source : ''}">
+          <div>
+            <div class="title"><strong>${p.title}</strong></div>
+            <div class="title">${p.description ?? ''}</div>
+          </div>
+        </div>
+      `),
+  },
+  {
+    alias: 'gh', name: 'github',
+    search: 'https://github.com/search?q=',
+    compl: 'https://api.github.com/search/repositories?sort=stars&order=desc&q=',
+    favicon: ddgIcon('github.com'),
+    cb: (r) => JSON.parse(r.text).items.map((s) => {
+      const stars = s.stargazers_count ? `[★${s.stargazers_count}] ` : '';
+      return skUrlItem(stars + s.full_name, s.html_url);
+    }),
+  },
+  {
+    alias: 'yt', name: 'youtube',
+    search: 'https://www.youtube.com/results?search_query=',
+    compl: 'https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&q=',
+    favicon: ddgIcon('youtube.com'),
+    cb: (r) => JSON.parse(r.text)[1],
+  },
+  {
+    alias: 'du', name: 'duckduckgo',
+    search: 'https://duckduckgo.com/?q=',
+    compl: 'https://duckduckgo.com/ac/?q=',
+    favicon: ddgIcon('duckduckgo.com'),
+    cb: (r) => JSON.parse(r.text).map((x) => x.phrase),
+  },
+  {
+    alias: 'D', name: 'duckduckgo-lucky',
+    search: 'https://duckduckgo.com/?q=\\',
+    compl: 'https://duckduckgo.com/ac/?q=\\',
+    favicon: ddgIcon('duckduckgo.com'),
+    cb: (r) => JSON.parse(r.text).map((x) => x.phrase),
+  },
+  {
+    alias: 'go', name: 'google',
+    search: 'https://www.google.com/search?q=',
+    compl: 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=',
+    favicon: ddgIcon('www.google.com'),
+    cb: (r) => JSON.parse(r.text)[1],
+  },
+  {
+    alias: 'so', name: 'stackoverflow',
+    search: 'https://stackoverflow.com/search?q=',
+    compl: 'https://api.stackexchange.com/2.2/search/advanced?pagesize=10&order=desc&sort=relevance&site=stackoverflow&q=',
+    favicon: ddgIcon('stackoverflow.com'),
+    cb: (r) => JSON.parse(r.text).items.map((s) => skUrlItem(`[${s.score}] ${s.title}`, s.link)),
+  },
+  {
+    alias: 're', name: 'reddit',
+    search: 'https://www.reddit.com/search?sort=relevance&t=all&q=',
+    compl: 'https://api.reddit.com/search?syntax=plain&sort=relevance&limit=20&q=',
+    favicon: ddgIcon('reddit.com'),
+    cb: (r) => JSON.parse(r.text).data.children.map(({ data }) => {
+      const thumb = String(data.thumbnail).startsWith('http') ? data.thumbnail : '';
+      return skItem({ url: 'https://reddit.com' + data.permalink })`
+        <div style="display: flex; flex-direction: row">
+          <img style="width: 70px; height: 50px; margin-right: 0.8em" alt="thumbnail" src="${thumb}">
+          <div>
+            <strong>${data.title}</strong>
+            <div style="opacity: 60%">↑${data.score} • r/${data.subreddit}</div>
+          </div>
+        </div>
+      `;
+    }),
+  },
+  {
+    alias: 'aw', name: 'archwiki',
+    search: 'https://wiki.archlinux.org/index.php?go=go&search=',
+    compl: 'https://wiki.archlinux.org/api.php?action=opensearch&format=json&formatversion=2&namespace=0&limit=10&suggest=true&search=',
+    favicon: ddgIcon('wiki.archlinux.org'),
+    cb: (r) => JSON.parse(r.text)[1],
+  },
+  {
+    alias: 'md', name: 'mdn',
+    search: 'https://developer.mozilla.org/search?q=',
+    compl: 'https://developer.mozilla.org/api/v1/search?q=',
+    favicon: ddgIcon('developer.mozilla.org'),
+    cb: (r) => JSON.parse(r.text).documents.map((s) =>
+      skItem({ url: `https://developer.mozilla.org/${s.locale}/docs/${s.slug}` })`
+        <div>
+          <div class="title"><strong>${s.title}</strong></div>
+          <div style="font-size:0.8em"><em>${s.slug}</em></div>
+          <div>${s.summary}</div>
+        </div>
+      `),
+  },
+  {
+    alias: 'nx', name: 'nixpkgs',
+    search: 'https://search.nixos.org/packages?channel=unstable&query=',
+    favicon: ddgIcon('search.nixos.org'),
+  },
+];
+
+skEngines.forEach(({ alias, name, search, compl, favicon, cb }) => {
+  api.addSearchAlias(alias, name, search, '', compl || '', cb, undefined, {
+    favicon_url: favicon,
+    skipMaps: true,
+  });
+  api.mapkey('a' + alias, `#8Search ${name}`, () =>
+    api.Front.openOmnibar({ type: 'SearchEngine', extra: alias })
+  );
+  api.mapkey('ca' + alias, `#8Search ${name} with clipboard`, () =>
+    api.Clipboard.read((c) =>
+      api.Front.openOmnibar({ type: 'SearchEngine', pref: c.data, extra: alias })
+    )
+  );
+});
+
+// ========== Page Utilities (from b0o/surfingkeys-conf) ==========
+// yT (duplicate tab) and gxt/gxT (close tabs left/right) are SurfingKeys defaults.
+
+api.mapkey('yM', 'Copy page as Markdown link', () => {
+  api.Clipboard.write(`[${document.title}](${window.location.href})`);
+});
+
+api.mapkey('=a', 'Open Wayback Machine for page', () => {
+  api.tabOpenLink('https://web.archive.org/web/*/' + window.location.href);
+});
+api.mapkey('=o', 'Open outline.com version of page', () => {
+  api.tabOpenLink('https://outline.com/' + window.location.href);
+});
+api.mapkey('=s', 'Open social discussions for page', () => {
+  api.tabOpenLink('https://discussions.xojoc.pw/?url=' + encodeURIComponent(window.location.href));
+});
+
+api.map('gxE', 'gxt'); // Close tab to left (default gxt)
+api.map('gxR', 'gxT'); // Close tab to right (default gxT)
+
+api.mapkey('g.', 'Go to parent domain', () => {
+  const subdomains = window.location.host.split('.');
+  const parent = (subdomains.length > 2 ? subdomains.slice(1) : subdomains).join('.');
+  api.tabOpenLink(window.location.protocol + '//' + parent);
+});
