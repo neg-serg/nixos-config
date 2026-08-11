@@ -1,22 +1,20 @@
 {
   lib,
+  pkgs,
   config,
   ...
 }:
 {
-  # Prefer native NixOS module logic but manual implementation to hide binary from system path.
-  # programs.adb.enable = true; <-- installs android-tools to systemPackages
-
-  # Enable udev rules for Android devices
-  # Note: android-udev-rules is superseded by systemd built-in rules or handled by programs.adb
-  # services.udev.packages = [ pkgs.android-udev-rules ];
+  # nixpkgs 26.05 removed the programs.adb module (see nixpkgs rename.nix);
+  # systemd 258 uaccess rules grant Android device access automatically.
+  # Extras (adbfs-rootless, adbtuifm) stay in devShells.android.
 
   # Create adbusers group
   users.groups.adbusers = { };
 
   # Add the primary user to 'adbusers' only when this module is imported.
   users.users."${config.users.main.name}".extraGroups = lib.mkAfter [ "adbusers" ];
-
-  # Packages moved to devShells.android
-  environment.systemPackages = [ ];
+  environment.systemPackages = [
+    pkgs.android-tools # Android ADB and fastboot tools
+  ];
 }
