@@ -262,6 +262,8 @@ api.unmap('ox');
 // Mapping for standard browsing
 api.map('j', 'j');
 api.map('k', 'k');
+// Vim classic: Ctrl-[ as Esc
+api.map('<Ctrl-[>', '<Esc>');
 
 // Large Scroll (Half Page)
 api.mapkey('b', 'Scroll half page down', () => {
