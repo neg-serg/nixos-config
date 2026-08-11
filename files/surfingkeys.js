@@ -601,6 +601,81 @@ const skEngines = [
     search: 'https://store.steampowered.com/search/?term=',
     favicon: ddgIcon('store.steampowered.com'),
   },
+  {
+    alias: 'se', name: 'stackexchange',
+    search: 'https://stackexchange.com/search?q=',
+    compl: 'https://duckduckgo.com/ac/?q=!stackexchange%20',
+    favicon: ddgIcon('stackexchange.com'),
+    cb: (r) => JSON.parse(r.text).map((x) => x.phrase.replace(/^!stackexchange /, '')),
+  },
+  {
+    alias: 'wt', name: 'wiktionary',
+    search: 'https://en.wiktionary.org/w/index.php?search=',
+    compl: 'https://en.wiktionary.org/w/api.php?action=query&format=json&generator=prefixsearch&gpssearch=',
+    favicon: ddgIcon('en.wiktionary.org'),
+    cb: (r) => Object.values(JSON.parse(r.text).query.pages).map((p) => p.title),
+  },
+  {
+    alias: 'gs', name: 'google-scholar',
+    search: 'https://scholar.google.com/scholar?q=',
+    compl: 'https://scholar.google.com/scholar_complete?q=',
+    favicon: ddgIcon('scholar.google.com'),
+    cb: (r) => JSON.parse(r.text).l,
+  },
+  {
+    alias: 'di', name: 'duckduckgo-images',
+    search: 'https://duckduckgo.com/?ia=images&iax=images&q=',
+    compl: 'https://duckduckgo.com/ac/?ia=images&iax=images&q=',
+    favicon: ddgIcon('duckduckgo.com'),
+    cb: (r) => JSON.parse(r.text).map((x) => x.phrase),
+  },
+  {
+    alias: 'dv', name: 'duckduckgo-videos',
+    search: 'https://duckduckgo.com/?ia=videos&iax=videos&q=',
+    compl: 'https://duckduckgo.com/ac/?ia=videos&iax=videos&q=',
+    favicon: ddgIcon('duckduckgo.com'),
+    cb: (r) => JSON.parse(r.text).map((x) => x.phrase),
+  },
+  {
+    alias: 'hf', name: 'huggingface',
+    search: 'https://huggingface.co/models?search=',
+    compl: 'https://huggingface.co/api/quicksearch?type=all&q=',
+    favicon: ddgIcon('huggingface.co'),
+    cb: (r) => {
+      const res = JSON.parse(r.text);
+      return [
+        ...res.models.map((m) => skItem({ url: `https://huggingface.co/${m.id}` })`
+          <div>
+            <div><strong>${m.id}</strong></div>
+            <div><span style="font-size: 0.9em; opacity: 70%">model</span></div>
+          </div>
+        `),
+        ...res.datasets.map((d) => skItem({ url: `https://huggingface.co/datasets/${d.id}` })`
+          <div>
+            <div><strong>${d.id}</strong></div>
+            <div><span style="font-size: 0.9em; opacity: 70%">dataset</span></div>
+          </div>
+        `),
+      ];
+    },
+  },
+  {
+    alias: 'ci', name: 'caniuse',
+    search: 'https://caniuse.com/?search=',
+    compl: 'https://caniuse.com/process/query.php?search=',
+    favicon: ddgIcon('caniuse.com'),
+    cb: (r) => JSON.parse(r.text).featureIds.map((id) => skUrlItem(id, `https://caniuse.com/${id}`)),
+  },
+  {
+    alias: 'ts', name: 'typescript',
+    search: 'https://duckduckgo.com/?q=site%3Awww.typescriptlang.org+',
+    compl: 'https://bgcdyoiyz5-dsn.algolia.net/1/indexes/typescriptlang?x-algolia-application-id=BGCDYOIYZ5&x-algolia-api-key=37ee06fa68db6aef451a490df6df7c60&query=',
+    favicon: ddgIcon('www.typescriptlang.org'),
+    cb: (r) => JSON.parse(r.text).hits.map((hit) => {
+      const levels = Object.values(hit.hierarchy).filter(Boolean);
+      return skUrlItem(levels[levels.length - 1] || '', hit.url);
+    }),
+  },
 ];
 
 skEngines.forEach(({ alias, name, search, compl, favicon, cb }) => {
@@ -654,3 +729,99 @@ api.mapkey('g.', 'Go to parent domain', () => {
   const parent = (subdomains.length > 2 ? subdomains.slice(1) : subdomains).join('.');
   api.tabOpenLink(window.location.protocol + '//' + parent);
 });
+
+// ========== Site-Specific Mappings (from b0o/surfingkeys-conf, leader <Space>) ==========
+// <Space> is unbound in SurfingKeys defaults; each mapping is domain-scoped via opts.domain.
+
+// GitHub
+const ghRepoPath = () => {
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  return parts.length >= 2 ? parts.slice(0, 2).join('/') : null;
+};
+api.mapkey('<Space>I', 'Open repository Issues page', () => {
+  const r = ghRepoPath();
+  if (r) window.location.assign(`https://github.com/${r}/issues`);
+}, { domain: /github\.com/i });
+api.mapkey('<Space>P', 'Open repository Pull Requests page', () => {
+  const r = ghRepoPath();
+  if (r) window.location.assign(`https://github.com/${r}/pulls`);
+}, { domain: /github\.com/i });
+api.mapkey('<Space>C', 'Open repository Commits page', () => {
+  const r = ghRepoPath();
+  if (r) window.location.assign(`https://github.com/${r}/commits`);
+}, { domain: /github\.com/i });
+api.mapkey('<Space>A', 'Open repository Actions page', () => {
+  const r = ghRepoPath();
+  if (r) window.location.assign(`https://github.com/${r}/actions`);
+}, { domain: /github\.com/i });
+api.mapkey('<Space>R', 'Open Repository page', () => {
+  const r = ghRepoPath();
+  if (r) window.location.assign(`https://github.com/${r}`);
+}, { domain: /github\.com/i });
+api.mapkey('<Space>N', 'Open notifications page', () => {
+  window.location.assign('https://github.com/notifications');
+}, { domain: /github\.com/i });
+api.mapkey('<Space>yy', 'Copy project path', () => {
+  const r = ghRepoPath();
+  if (r) api.Clipboard.write(r);
+}, { domain: /github\.com/i });
+api.mapkey('<Space>Y', 'Copy project path with domain', () => {
+  const r = ghRepoPath();
+  if (r) api.Clipboard.write(`github.com/${r}`);
+}, { domain: /github\.com/i });
+api.mapkey('<Space>D', 'Open in github.dev', () => {
+  const r = ghRepoPath();
+  if (r) api.tabOpenLink(`https://github.dev/${r}`);
+}, { domain: /github\.com/i });
+api.mapkey('<Space>s', 'Toggle star', () => {
+  const btn = document.querySelector('button[aria-label^="Star this repository"], button[aria-label^="Unstar"]');
+  if (btn) btn.click();
+}, { domain: /github\.com/i });
+api.mapkey('gu', 'Go up one path in URL', () => {
+  const parts = window.location.pathname.split('/').filter(Boolean).slice(0, -1);
+  window.location.assign('https://github.com/' + parts.join('/'));
+}, { domain: /github\.com/i });
+
+// YouTube
+api.mapkey('Yt', 'Copy YouTube link at current time', () => {
+  const t = (document.querySelector('.ytp-time-current')?.innerText || '0:00')
+    .split(':').reverse().map(Number);
+  const secs = t.reduce((acc, n, i) => acc + n * Math.pow(60, i), 0);
+  const v = new URLSearchParams(window.location.search).get('v');
+  if (v) api.Clipboard.write(`https://youtu.be/${v}?t=${secs}`);
+}, { domain: /youtube\.com/i });
+api.mapkey('F', 'Toggle YouTube fullscreen', () => {
+  const btn = document.querySelector('#movie_player .ytp-fullscreen-button');
+  if (btn) btn.click();
+}, { domain: /youtube\.com/i });
+api.mapkey('A', 'Open video', () => api.Hints.create("*[id='video-title']", api.Hints.dispatchMouseClick), { domain: /youtube\.com/i });
+
+// Reddit
+api.mapkey('<Space>x', 'Collapse comment', () => api.Hints.create('.expand', api.Hints.dispatchMouseClick), { domain: /reddit\.com/i });
+api.mapkey('<Space>s', 'Upvote', () => api.Hints.create('.arrow.up', api.Hints.dispatchMouseClick), { domain: /reddit\.com/i });
+api.mapkey('<Space>a', 'View post', () => api.Hints.create('.title', api.Hints.dispatchMouseClick), { domain: /reddit\.com/i });
+api.mapkey('<Space>c', 'View comments', () => api.Hints.create('.comments', api.Hints.dispatchMouseClick), { domain: /reddit\.com/i });
+
+// Hacker News
+api.mapkey('<Space>x', 'Collapse comment', () => api.Hints.create('a.togg', api.Hints.dispatchMouseClick), { domain: /news\.ycombinator\.com/i });
+api.mapkey('<Space>s', 'Upvote', () => api.Hints.create(".votearrow[title='upvote']", api.Hints.dispatchMouseClick), { domain: /news\.ycombinator\.com/i });
+api.mapkey('<Space>a', 'View post', () => api.Hints.create('.titleline>a', api.Hints.dispatchMouseClick), { domain: /news\.ycombinator\.com/i });
+api.mapkey('<Space>c', 'View comments', () => api.Hints.create(".subline>a[href^='item']", api.Hints.dispatchMouseClick), { domain: /news\.ycombinator\.com/i });
+api.mapkey('<Space>e', 'View external link', () => api.Hints.create('a[rel=nofollow]', api.Hints.dispatchMouseClick), { domain: /news\.ycombinator\.com/i });
+
+// Stack Overflow
+api.mapkey('<Space>a', 'View question', () => api.Hints.create('a.s-link', api.Hints.dispatchMouseClick), { domain: /stackoverflow\.com/i });
+
+// AUR
+api.mapkey('<Space>a', 'View package', () => api.Hints.create('a[href^="/packages/"]', api.Hints.dispatchMouseClick), { domain: /aur\.archlinux\.org/i });
+
+// ========== Hint Utilities (from b0o/surfingkeys-conf) ==========
+api.mapkey('yA', 'Copy link as Markdown', () =>
+  api.Hints.create('a[href]', (a) => api.Clipboard.write(`[${a.innerText}](${a.href})`))
+);
+api.mapkey('yI', 'Copy image URL', () =>
+  api.Hints.create('img', (i) => api.Clipboard.write(i.src))
+);
+api.mapkey('gI', 'View image in new tab', () =>
+  api.Hints.create('img', (i) => api.tabOpenLink(i.src))
+);
