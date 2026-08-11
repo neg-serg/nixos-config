@@ -458,7 +458,7 @@ const skEngines = [
   {
     alias: 'yt', name: 'youtube',
     search: 'https://www.youtube.com/results?search_query=',
-    compl: 'https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&q=',
+    compl: 'https://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q=',
     favicon: ddgIcon('youtube.com'),
     cb: (r) => JSON.parse(r.text)[1],
   },
@@ -490,6 +490,8 @@ const skEngines = [
     favicon: ddgIcon('stackoverflow.com'),
     cb: (r) => JSON.parse(r.text).items.map((s) => skUrlItem(`[${s.score}] ${s.title}`, s.link)),
   },
+  // NOTE: reddit blocks api.reddit.com from many IPs (returns HTML) — suggestions
+  // may be empty; Enter still opens the normal reddit search page.
   {
     alias: 're', name: 'reddit',
     search: 'https://www.reddit.com/search?sort=relevance&t=all&q=',
@@ -639,7 +641,7 @@ const skEngines = [
   {
     alias: 'hf', name: 'huggingface',
     search: 'https://huggingface.co/models?search=',
-    compl: 'https://huggingface.co/api/quicksearch?type=all&q=',
+    compl: 'https://huggingface.co/api/quicksearch?q=',
     favicon: ddgIcon('huggingface.co'),
     cb: (r) => {
       const res = JSON.parse(r.text);
