@@ -534,6 +534,73 @@ const skEngines = [
     search: 'https://search.nixos.org/packages?channel=unstable&query=',
     favicon: ddgIcon('search.nixos.org'),
   },
+  {
+    alias: 'np', name: 'npm',
+    search: 'https://www.npmjs.com/search?q=',
+    compl: 'https://api.npms.io/v2/search/suggestions?size=20&q=',
+    favicon: ddgIcon('www.npmjs.com'),
+    cb: (r) => JSON.parse(r.text).map((s) =>
+      skItem({ url: s.package.links.npm })`
+        <div>
+          <div class="title"><strong>${s.highlight}</strong> <span style="font-size:0.8em">v${s.package.version}</span></div>
+          <div>${s.package.description ?? ''}</div>
+        </div>
+      `),
+  },
+  {
+    alias: 'rc', name: 'crates',
+    search: 'https://crates.io/search?q=',
+    compl: 'https://crates.io/api/v1/crates?t=0&q=',
+    favicon: ddgIcon('crates.io'),
+    cb: (r) => JSON.parse(r.text).crates.map((s) => {
+      const meta = (s.downloads ? `[↓${s.downloads}] ` : '') + (s.max_version ? `[v${s.max_version}] ` : '');
+      return skItem({ url: `https://crates.io/crates/${s.name}` })`
+        <div>
+          <div class="title"><strong>${s.name}</strong> ${meta}</div>
+          <div>${s.description ?? ''}</div>
+        </div>
+      `;
+    }),
+  },
+  {
+    alias: 'hn', name: 'hackernews',
+    search: 'https://hn.algolia.com/?query=',
+    compl: 'https://hn.algolia.com/api/v1/search?tags=(story,comment)&query=',
+    favicon: ddgIcon('news.ycombinator.com'),
+    cb: (r) => JSON.parse(r.text).hits.map((s) => {
+      const prefix = (s.points ? `[↑${s.points}] ` : '') + (s.num_comments ? `[↲${s.num_comments}] ` : '');
+      const title = s._tags[0] === 'story' ? s.title : (s._tags[0] === 'comment' ? s.comment_text : s.objectID);
+      return skUrlItem(prefix + title, `https://news.ycombinator.com/item?id=${encodeURIComponent(s.objectID)}`);
+    }),
+  },
+  {
+    alias: 'dh', name: 'dockerhub',
+    search: 'https://hub.docker.com/search?q=',
+    compl: 'https://hub.docker.com/v2/search/repositories/?page_size=20&query=',
+    favicon: ddgIcon('hub.docker.com'),
+    cb: (r) => JSON.parse(r.text).results.map((s) => {
+      const repo = s.repo_name.includes('/') ? s.repo_name : `_/${s.repo_name}`;
+      return skItem({ url: `https://hub.docker.com/r/${repo}` })`
+        <div>
+          <div class="title"><strong>${repo}</strong></div>
+          <div>[★${s.star_count}] [↓${s.pull_count}]</div>
+          <div>${s.short_description ?? ''}</div>
+        </div>
+      `;
+    }),
+  },
+  {
+    alias: 'gi', name: 'google-images',
+    search: 'https://www.google.com/search?tbm=isch&q=',
+    compl: 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&ds=i&q=',
+    favicon: ddgIcon('www.google.com'),
+    cb: (r) => JSON.parse(r.text)[1],
+  },
+  {
+    alias: 'st', name: 'steam',
+    search: 'https://store.steampowered.com/search/?term=',
+    favicon: ddgIcon('store.steampowered.com'),
+  },
 ];
 
 skEngines.forEach(({ alias, name, search, compl, favicon, cb }) => {
@@ -550,6 +617,17 @@ skEngines.forEach(({ alias, name, search, compl, favicon, cb }) => {
     )
   );
 });
+
+// ========== Omnibar-only extras (no normal-mode impact) ==========
+// cmap bindings apply ONLY inside the omnibar overlay — normal-mode keys untouched.
+cmap('<Alt-j>', '<Ctrl-n>'); // next suggestion
+cmap('<Alt-k>', '<Ctrl-p>'); // previous suggestion
+cmap('<Alt-l>', '<Ctrl-.>'); // complete with next tab URL
+cmap('<Alt-h>', '<Ctrl-,>'); // complete with previous tab URL
+
+// Suggestion fetch settings — affect only the omnibar overlay, not the native bar.
+settings.omnibarSuggestionTimeout = 500;
+settings.richHintsForKeystroke = 1;
 
 // ========== Page Utilities (from b0o/surfingkeys-conf) ==========
 // yT (duplicate tab) and gxt/gxT (close tabs left/right) are SurfingKeys defaults.
