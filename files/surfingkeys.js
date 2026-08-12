@@ -23,7 +23,7 @@ settings.theme = `
   --fg-muted: #7387a1;
   --accent: #a5c1e6;
   --border: #223f73;
-  --hint-bg: #005faf;
+  --hint-bg: #1c334e;
 }
 
 /* Global Reset */
@@ -193,7 +193,7 @@ settings.theme = `
   font-family: var(--font-mono) !important;
   font-size: var(--font-size) !important;
   color: var(--fg) !important;
-  background: var(--hint-bg) !important;
+  background: var(--bg) !important;
   border: 1px solid var(--border) !important;
   padding: 6px 8px !important;
 }
@@ -205,7 +205,7 @@ body {
 
 .sk_theme .url {
   color: #7c90a8 !important;
-    background: #1c334e !important;
+    background: #000000 !important;
 
 .sk_theme .annotation {
   color: #607794 !important;
@@ -230,7 +230,7 @@ body {
   font-weight: 600;
 }
 
-    background: #1c334e !important;
+    background: #000000 !important;
   color: #7387a1 !important;
 }
 
