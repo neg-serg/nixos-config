@@ -197,6 +197,101 @@ settings.theme = `
   border: 1px solid var(--border) !important;
   padding: 6px 8px !important;
 }
+
+/* ===== Full neg.nvim coverage of the frontend (.sk_theme defaults are light) ===== */
+body {
+  font-family: var(--font-mono) !important;
+}
+
+.sk_theme .url {
+  color: #7c90a8 !important;
+}
+
+.sk_theme .annotation {
+  color: #607794 !important;
+}
+
+.sk_theme kbd {
+  background: #0d1824 !important;
+  color: #a5c1e6 !important;
+  border: 1px solid #223f73 !important;
+  border-radius: 3px !important;
+  font-family: var(--font-mono) !important;
+}
+
+.sk_theme .frame {
+  background: rgba(165, 193, 230, 0.06) !important;
+  border: 1px solid #223f73 !important;
+  border-radius: 8px !important;
+}
+
+.sk_theme .omnibar_highlight {
+  color: #a5c1e6 !important;
+  font-weight: 600;
+}
+
+.sk_theme .omnibar_folder {
+  color: #7387a1 !important;
+}
+
+.sk_theme .omnibar_timestamp,
+.sk_theme .omnibar_visitcount {
+  color: #607794 !important;
+}
+
+.sk_theme .prompt,
+.sk_theme .resultPage {
+  color: #7387a1 !important;
+}
+
+.sk_theme .feature_name {
+  color: #a5c1e6 !important;
+}
+
+.sk_theme .separator {
+  color: #223f73 !important;
+}
+
+.sk_theme #sk_omnibarSearchResult>ul>li {
+  color: #6c7e96 !important;
+}
+
+.sk_theme #sk_omnibarSearchResult>ul>li:nth-child(odd) {
+  background: #071526 !important;
+}
+
+.sk_theme #sk_omnibarSearchResult>ul>li.focused {
+  background: #0d1824 !important;
+}
+
+.sk_theme #sk_omnibarSearchResult>ul>li.focused div.title {
+  color: #e8f1ff !important;
+}
+
+.sk_theme #sk_omnibarSearchResult>ul>li.window {
+  border: 1px solid #223f73 !important;
+  border-radius: 8px !important;
+}
+
+.sk_theme #sk_omnibarSearchResult>ul>li.window.focused {
+  border: 1px solid #4779b3 !important;
+}
+
+#sk_omnibarSearchResult li div.title {
+  color: #8d9eb2;
+}
+
+#sk_omnibarSearchResult li div.url {
+  color: #7387a1;
+}
+
+#sk_omnibarSearchResult li span.annotation {
+  color: #607794;
+}
+
+.sk_theme div.table>* {
+  color: #6c7e96;
+}
 `;
 
 // ========== Hints Styling (Shadow DOM) ==========
