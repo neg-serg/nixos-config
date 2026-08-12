@@ -204,12 +204,12 @@ api.Hints.style(`div, mask {
     font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
     font-size: 11px !important;
     font-weight: 600 !important;
-    padding: 2px 4px !important;
+    padding: 1px 3px !important;
     background: #004a80 !important;
     background-image: none !important;
-    color: #d1e5ff !important;
-    border: 1px solid #1d4aaf !important;
-    border-radius: 0 !important;
+    color: #e8f1ff !important;
+    border: 1px solid #a5c1e6 !important;
+    border-radius: 3px !important;
     box-shadow: none !important;
   }
   
@@ -229,16 +229,16 @@ api.Hints.style(`div {
     font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
     font-size: 11px !important;
     font-weight: 600 !important;
-    padding: 2px 4px !important;
+    padding: 1px 3px !important;
     background: #004a80 !important;
     background-image: none !important;
-    color: #d1e5ff !important;
-    border: 1px solid #1d4aaf !important;
-    border-radius: 0 !important;
+    color: #e8f1ff !important;
+    border: 1px solid #a5c1e6 !important;
+    border-radius: 3px !important;
     box-shadow: none !important;
   }
   div.begin {
-    color: #d1e5ff !important;
+    color: #e8f1ff !important;
   }
 `, "text");
 
