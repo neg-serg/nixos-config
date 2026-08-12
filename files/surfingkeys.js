@@ -697,10 +697,10 @@ skEngines.forEach(({ alias, name, search, compl, favicon, cb }) => {
 
 // ========== Omnibar-only extras (no normal-mode impact) ==========
 // cmap bindings apply ONLY inside the omnibar overlay — normal-mode keys untouched.
-cmap('<Alt-j>', '<Ctrl-n>'); // next suggestion
-cmap('<Alt-k>', '<Ctrl-p>'); // previous suggestion
-cmap('<Alt-l>', '<Ctrl-.>'); // complete with next tab URL
-cmap('<Alt-h>', '<Ctrl-,>'); // complete with previous tab URL
+api.cmap('<Alt-j>', '<Ctrl-n>'); // next suggestion
+api.cmap('<Alt-k>', '<Ctrl-p>'); // previous suggestion
+api.cmap('<Alt-l>', '<Ctrl-.>'); // complete with next tab URL
+api.cmap('<Alt-h>', '<Ctrl-,>'); // complete with previous tab URL
 
 // Suggestion fetch settings — affect only the omnibar overlay, not the native bar.
 settings.omnibarSuggestionTimeout = 500;
