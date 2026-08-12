@@ -10,7 +10,6 @@ VER_DIR=$(ls -d "$EXT_BASE"/*/ 2>/dev/null | sort -V | tail -1)
 [ -z "$VER_DIR" ] && exit 0
 
 BG_JS="$VER_DIR/background.js"
-CJ_JS="$VER_DIR/content.js"
 OP_JS="$VER_DIR/pages/options.js"
 
 # 1. Config URL injection at worker start. SurfingKeys 1.18 reads the config
@@ -26,27 +25,24 @@ fi
 # browser fetch a stale external config; force the local URL on every load and
 # write it back so storage/options show it too.
 if [ -f "$BG_JS" ] && ! grep -qF '(e.localPath="http://localhost:18888/surfingkeys.js"),chrome.storage.local.set({localPath:e.localPath})' "$BG_JS"; then
-    sed -i 's|e.localPath?g(q(e.localPath),(function(t){e.snippets=t,n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,n(e)})):n(e)|(e.localPath="http://localhost:18888/surfingkeys.js"),chrome.storage.local.set({localPath:e.localPath}),g(q(e.localPath),(function(t){e.snippets=t,n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,e.snippets="",n(e)}))|' "$BG_JS"
+    sed -i 's|e.localPath?g(q(e.localPath),(function(t){e.snippets=t,n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,n(e)})):n(e)|(e.localPath="http://localhost:18888/surfingkeys.js"),chrome.storage.local.set({localPath:e.localPath}),g(q(e.localPath),(function(t){e.snippets=t,F(t),n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,e.snippets="",n(e)}))|' "$BG_JS"
     logger "surfingkeys-patch: Patched $BG_JS (hardcoded config URL)"
 fi
 
-# 3. Kill the settingsSnippets userScript. Vivaldi fails to update it when the
-# config changes (stale rose-pine config stuck in the registration), so the
-# config is executed via the direct content.js path instead (see 4).
-if [ -f "$BG_JS" ] && ! grep -qF 'if(true)return chrome.userScripts.unregister({ids:["settingsSnippets"]}' "$BG_JS"; then
-    sed -i 's|function F(e,t){if(!B())return void(t&&t());|function F(e,t){if(true)return chrome.userScripts.unregister({ids:["settingsSnippets"]},()=>{}),void(t\&\&t());|' "$BG_JS"
-    logger "surfingkeys-patch: Patched $BG_JS (userScript kill)"
+# 3. Auto-register the config userScript on every page load: the page-load
+# getSettings flow never triggered F (Vivaldi kept a stale registration);
+# call F from the fetch callback so the registered config is always current.
+if [ -f "$BG_JS" ] && ! grep -qF '(function(t){e.snippets=t,F(t),n(e)})' "$BG_JS"; then
+    sed -i 's|(function(t){e.snippets=t,n(e)})|(function(t){e.snippets=t,F(t),n(e)})|' "$BG_JS"
+    logger "surfingkeys-patch: Patched $BG_JS (auto-register on load)"
 fi
 
-# 4. Run the config directly in the content script (MV2-style 'new Function'
-# path), so the latest fetched config applies on every page load without
-# depending on userScript registration. Skip silently on pages whose CSP
-# blocks eval instead of showing the error banner.
-if [ -f "$CJ_JS" ] && ! grep -qF 'if(n.snippets&&' "$CJ_JS"; then
-    cp "$CJ_JS" "$CJ_JS.orig"
-    sed -i 's|!n\.isMV3&&n\.snippets&&|n.snippets\&\&|' "$CJ_JS"
-    sed -i 's|try{new Function("settings","api",n.snippets)(i,e)}catch(e){r=e.toString()}|try{new Function("settings","api",n.snippets)(i,e)}catch(e){if(e instanceof EvalError)return console.log("[SurfingKeys] config skipped: page CSP blocks eval");r=e.toString()}|' "$CJ_JS"
-    logger "surfingkeys-patch: Patched $CJ_JS (direct config path)"
+# 4. Force userScript re-registration. Vivaldi sometimes keeps the previously
+# registered settingsSnippets userScript instead of updating it; always
+# unregister+register so the latest fetched config is what runs.
+if [ -f "$BG_JS" ] && ! grep -qF 'chrome.userScripts.unregister({ids:[n]},i)' "$BG_JS"; then
+    sed -i 's|r.length>0?r\[0\].js\[0\].code!==s?chrome.userScripts.unregister({ids:\[n\]},i):t&&t():i()|chrome.userScripts.unregister({ids:[n]},i)|' "$BG_JS"
+    logger "surfingkeys-patch: Patched $BG_JS (forced re-registration)"
 fi
 
 # 5. Options page: stop persisting the 'Load from URL' value into localPath.
