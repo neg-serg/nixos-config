@@ -1,0 +1,11 @@
+--- a/daemon/src/main.rs
++++ b/daemon/src/main.rs
+@@ -442,7 +442,7 @@
+                     .unwrap_or_else(|| format!("output-{idx}"));
+ 
+                 if let Some(output) = daemon.outputs.get_mut(&output_name) {
+-                    warn!(output = %output_name, "recovering lost surface");
++                    debug!(output = %output_name, "recovering lost surface");
+ 
+                     // 1. Tear down stale Vulkan resources for this output.
+                     // SAFETY: GPU is idle (waited above).
