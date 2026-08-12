@@ -49,6 +49,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                         ["hyprctl", "dispatch", 'hl.dsp.send_shortcut({mods="CTRL",key="T"})'],
                         env=env,
                         check=True,
+                        timeout=10,
                     )
                     self.send_response(200)
                     self.end_headers()
@@ -69,6 +70,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                         ["hyprctl", "dispatch", 'hl.dsp.send_shortcut({mods="CTRL",key="W"})'],
                         env=env,
                         check=True,
+                        timeout=10,
                     )
                     self.send_response(200)
                     self.end_headers()
@@ -89,6 +91,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                         ["hyprctl", "dispatch", 'hl.dsp.send_shortcut({mods="CTRL",key="L"})'],
                         env=env,
                         check=True,
+                        timeout=10,
                     )
                     self.send_response(200)
                     self.end_headers()
@@ -115,7 +118,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                         [SET_ZEN_PROXY, mode],
                         capture_output=True,
                         text=True,
-                        check=True
+                        check=True,
+                        timeout=10,
                     )
                     print(f"Command output: {result.stdout}", flush=True)
                     self.send_response(200)
