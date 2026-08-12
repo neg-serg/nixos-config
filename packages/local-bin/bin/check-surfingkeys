@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# check-surfingkeys — diagnose the SurfingKeys config chain (declarative setup)
+# Verifies: server, served config, extension patches, storage localPath,
+# registered userScript, and JS syntax. Exit code 0 = all checks pass.
+set -uo pipefail
+
+EXT_BASE="$HOME/.config/vivaldi/Default/Extensions/gfbliohnnapiefjpjlpjnehglfpaknnc"
+EXT="$(find "$EXT_BASE" -maxdepth 1 -type d -name '[0-9]*' 2>/dev/null | sort -V | tail -1)"
+STORE="$HOME/.config/vivaldi/Default/Local Extension Settings/gfbliohnnapiefjpjlpjnehglfpaknnc"
+SCRIPTDB="$HOME/.config/vivaldi/Default/Extension Scripts/000003.log"
+URL="http://localhost:18888/surfingkeys.js"
+
+pass=0
+fail=0
+ok()  { echo "  [OK]   $1"; pass=$((pass + 1)); }
+bad() { echo "  [FAIL] $1"; fail=$((fail + 1)); }
+
+echo "== SurfingKeys self-diagnostic =="
+
+# 1. Server
+if systemctl --user is-active --quiet surfingkeys-server 2>/dev/null; then
+  ok "server: surfingkeys-server active"
+else
+  bad "server: surfingkeys-server NOT active (systemctl --user start surfingkeys-server)"
+fi
+cfg="$(curl -s -m 5 "$URL" 2>/dev/null || true)"
+if [ "${#cfg}" -gt 10000 ]; then
+  ok "server: serves config (${#cfg} bytes)"
+else
+  bad "server: config not served from $URL (curl returned ${#cfg} bytes)"
+fi
+
+# 2. Served config content
+grep -q '#005faf' <<<"$cfg"   && ok "config: neg.nvim hint colors (#005faf)" || bad "config: #005faf missing"
+grep -q 'Iosevka'  <<<"$cfg"  && ok "config: Iosevka fonts"                    || bad "config: Iosevka missing"
+grep -q 'font-size: 8px' <<<"$cfg" && ok "config: hint font 8px"               || bad "config: hint font not 8px"
+grep -q 'api.cmap'  <<<"$cfg"  && ok "config: api.cmap bindings"               || bad "config: api.cmap missing"
+
+# 3. Extension patches (active version dir)
+if [ -z "$EXT" ]; then
+  bad "extension: version dir not found under $EXT_BASE"
+else
+  grep -q 'e.snippets=t,F(t),n(e)' "$EXT/background.js" \
+    && ok "ext: auto-register on every page load" || bad "ext: auto-register patch missing"
+  grep -q 'chrome.userScripts.unregister({ids:\[n\]},i)' "$EXT/background.js" \
+    && ok "ext: forced re-registration" || bad "ext: forced re-registration missing"
+  grep -q 'e.localPath="http://localhost:18888/surfingkeys.js"' "$EXT/background.js" \
+    && ok "ext: config URL hardcoded to localhost" || bad "ext: hardcoded URL missing"
+  grep -q 'localPath:A(w.value)' "$EXT/pages/options.js" 2>/dev/null \
+    && bad "ext: options page can still write localPath" || ok "ext: options page cannot write localPath"
+fi
+
+# 4. Storage: last localPath write must be localhost
+last_lp="$(grep -aoE 'localPath.{0,110}' "$STORE/000003.log" 2>/dev/null | tail -1)"
+case "$last_lp" in
+  *localhost:18888*) ok "storage: localPath -> localhost" ;;
+  *) bad "storage: localPath = ${last_lp:-<none>}" ;;
+esac
+
+# 5. Registered userScript must embed the current (neg) config
+reg="$(python3 - "$SCRIPTDB" 2>/dev/null <<'PY'
+import sys
+try:
+    data = open(sys.argv[1], 'rb').read()
+except Exception:
+    sys.exit(0)
+i = data.rfind(b"import('./api.js')")
+sys.stdout.write(data[i:].decode('utf-8', 'replace') if i >= 0 else '')
+PY
+)"
+if [ -n "$reg" ] && grep -q '#005faf' <<<"$reg"; then
+  ok "registration: current config (neg theme) is registered"
+else
+  bad "registration: stale config registered (no neg markers)"
+fi
+grep -q 'api.cmap' <<<"$reg" && ok "registration: api.cmap in registered script" || bad "registration: api.cmap missing from registered script"
+
+# 6. JS syntax of patched files + config
+for f in "$EXT/background.js" "$EXT/content.js" "$EXT/pages/options.js" "$HOME/.config/surfingkeys.js"; do
+  if [ -f "$f" ] && node --check "$f" 2>/dev/null; then
+    ok "syntax: $(basename "$f")"
+  else
+    bad "syntax: $(basename "$f")"
+  fi
+done
+
+echo
+echo "== result: $pass ok, $fail fail =="
+[ "$fail" -eq 0 ]
