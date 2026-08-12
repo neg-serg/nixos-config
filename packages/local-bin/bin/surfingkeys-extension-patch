@@ -11,6 +11,7 @@ VER_DIR=$(ls -d "$EXT_BASE"/*/ 2>/dev/null | sort -V | tail -1)
 
 BG_JS="$VER_DIR/background.js"
 CJ_JS="$VER_DIR/content.js"
+OP_JS="$VER_DIR/pages/options.js"
 
 # 1. Config URL injection at worker start. SurfingKeys 1.18 reads the config
 # URL from the 'localPath' storage key, NOT 'loadSettingsUrl' (dead key).
@@ -20,17 +21,18 @@ if [ -f "$BG_JS" ] && ! grep -q 'NEG_SK_URL' "$BG_JS"; then
     logger "surfingkeys-patch: Patched $BG_JS (URL injection)"
 fi
 
-# 2. Hardcode the config URL at the read point. The options page can overwrite
-# the 'localPath' storage key (e.g. 'Load from URL'), making the browser fetch
-# a stale external config; force the local URL regardless of storage.
-if [ -f "$BG_JS" ] && ! grep -qF '(e.localPath="http://localhost:18888/surfingkeys.js")' "$BG_JS"; then
-    sed -i 's|e.localPath?g(q(e.localPath),(function(t){e.snippets=t,n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,n(e)})):n(e)|(e.localPath="http://localhost:18888/surfingkeys.js"),g(q(e.localPath),(function(t){e.snippets=t,n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,e.snippets="",n(e)}))|' "$BG_JS"
+# 2. Hardcode the config URL at the read point and persist it back to storage.
+# The options page can overwrite 'localPath' (e.g. 'Load from URL'), making the
+# browser fetch a stale external config; force the local URL on every load and
+# write it back so storage/options show it too.
+if [ -f "$BG_JS" ] && ! grep -qF '(e.localPath="http://localhost:18888/surfingkeys.js"),chrome.storage.local.set({localPath:e.localPath})' "$BG_JS"; then
+    sed -i 's|e.localPath?g(q(e.localPath),(function(t){e.snippets=t,n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,n(e)})):n(e)|(e.localPath="http://localhost:18888/surfingkeys.js"),chrome.storage.local.set({localPath:e.localPath}),g(q(e.localPath),(function(t){e.snippets=t,n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,e.snippets="",n(e)}))|' "$BG_JS"
     logger "surfingkeys-patch: Patched $BG_JS (hardcoded config URL)"
 fi
 
 # 3. Kill the settingsSnippets userScript. Vivaldi fails to update it when the
-# config changes (stale rose-pine config stuck since 06:48), so the config is
-# executed via the direct content.js path instead (see 4). Never register.
+# config changes (stale rose-pine config stuck in the registration), so the
+# config is executed via the direct content.js path instead (see 4).
 if [ -f "$BG_JS" ] && ! grep -qF 'if(true)return chrome.userScripts.unregister({ids:["settingsSnippets"]}' "$BG_JS"; then
     sed -i 's|function F(e,t){if(!B())return void(t&&t());|function F(e,t){if(true)return chrome.userScripts.unregister({ids:["settingsSnippets"]},()=>{}),void(t\&\&t());|' "$BG_JS"
     logger "surfingkeys-patch: Patched $BG_JS (userScript kill)"
@@ -45,4 +47,16 @@ if [ -f "$CJ_JS" ] && ! grep -qF 'if(n.snippets&&' "$CJ_JS"; then
     sed -i 's|!n\.isMV3&&n\.snippets&&|n.snippets\&\&|' "$CJ_JS"
     sed -i 's|try{new Function("settings","api",n.snippets)(i,e)}catch(e){r=e.toString()}|try{new Function("settings","api",n.snippets)(i,e)}catch(e){if(e instanceof EvalError)return console.log("[SurfingKeys] config skipped: page CSP blocks eval");r=e.toString()}|' "$CJ_JS"
     logger "surfingkeys-patch: Patched $CJ_JS (direct config path)"
+fi
+
+# 5. Options page: stop persisting the 'Load from URL' value into localPath.
+if [ -f "$OP_JS" ] && grep -qF 'localPath:A(w.value)' "$OP_JS"; then
+    sed -i 's|e("updateSettings",{settings:{snippets:t,localPath:A(w.value)}})|e("updateSettings",{settings:{snippets:t}})|' "$OP_JS"
+    logger "surfingkeys-patch: Patched $OP_JS (localPath save dropped)"
+fi
+
+# 6. Worker 'Load from URL' handler: do not write localPath into storage.
+if [ -f "$BG_JS" ] && grep -qF 'E({localPath:o,snippets:e})' "$BG_JS"; then
+    sed -i 's|E({localPath:o,snippets:e})|E({snippets:e})|' "$BG_JS"
+    logger "surfingkeys-patch: Patched $BG_JS (loadFromUrl localPath dropped)"
 fi
