@@ -257,7 +257,7 @@ body {
 }
 
 .sk_theme #sk_omnibarSearchResult>ul>li:nth-child(odd) {
-  background: #071526 !important;
+  background: transparent !important;
 }
 
 .sk_theme #sk_omnibarSearchResult>ul>li.focused {
