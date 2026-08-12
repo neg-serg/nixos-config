@@ -205,7 +205,7 @@ body {
 
 .sk_theme .url {
   color: #7c90a8 !important;
-    background: #000000 !important;
+}
 
 .sk_theme .annotation {
   color: #607794 !important;
@@ -230,7 +230,7 @@ body {
   font-weight: 600;
 }
 
-    background: #000000 !important;
+.sk_theme .omnibar_folder {
   color: #7387a1 !important;
 }
 
@@ -300,11 +300,11 @@ api.Hints.style(`div, mask {
     font-size: 11px !important;
     font-weight: 500 !important;
     padding: 1px 3px !important;
-    background: #004a80 !important;
+    background: #005faf !important;
     background-image: none !important;
     color: #e8f1ff !important;
     border: 1px solid #4779b3 !important;
-    border-radius: 3px !important;
+    border-radius: 4px !important;
     box-shadow: none !important;
   }
   
@@ -325,11 +325,11 @@ api.Hints.style(`div {
     font-size: 11px !important;
     font-weight: 500 !important;
     padding: 1px 3px !important;
-    background: #004a80 !important;
+    background: #005faf !important;
     background-image: none !important;
     color: #e8f1ff !important;
     border: 1px solid #4779b3 !important;
-    border-radius: 3px !important;
+    border-radius: 4px !important;
     box-shadow: none !important;
   }
   div.begin {
