@@ -202,10 +202,10 @@ settings.theme = `
 // ========== Hints Styling (Shadow DOM) ==========
 api.Hints.style(`div, mask {
     font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
-    font-size: 8px !important;
+    font-size: 11px !important;
     font-weight: 600 !important;
     padding: 2px 4px !important;
-    background: #005faf !important;
+    background: #004a80 !important;
     background-image: none !important;
     color: #d1e5ff !important;
     border: 1px solid #1d4aaf !important;
@@ -227,10 +227,10 @@ api.Hints.style(`div, mask {
 // Style for text/visual mode hints
 api.Hints.style(`div {
     font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
-    font-size: 8px !important;
+    font-size: 11px !important;
     font-weight: 600 !important;
     padding: 2px 4px !important;
-    background: #005faf !important;
+    background: #004a80 !important;
     background-image: none !important;
     color: #d1e5ff !important;
     border: 1px solid #1d4aaf !important;
