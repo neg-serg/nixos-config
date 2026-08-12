@@ -194,13 +194,16 @@ settings.theme = `
   font-size: var(--font-size) !important;
   color: var(--fg) !important;
   background: var(--bg) !important;
-  border: 1px solid var(--border) !important;
   padding: 6px 8px !important;
 }
 
 /* ===== Full neg.nvim coverage of the frontend (.sk_theme defaults are light) ===== */
 body {
   font-family: var(--font-mono) !important;
+}
+
+#sk_omnibarSearchArea {
+  border-bottom: none !important;
 }
 
 .sk_theme .url {
