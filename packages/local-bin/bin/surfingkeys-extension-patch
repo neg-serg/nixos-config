@@ -27,3 +27,12 @@ if [ -f "$BG_JS" ] && ! grep -qF 'chrome.userScripts.unregister({ids:[n]},i)' "$
     sed -i 's|r.length>0?r\[0\].js\[0\].code!==s?chrome.userScripts.unregister({ids:\[n\]},i):t&&t():i()|chrome.userScripts.unregister({ids:[n]},i)|' "$BG_JS"
     logger "surfingkeys-patch: Patched $BG_JS (forced re-registration)"
 fi
+
+# 3. Hardcode the config URL at the read point. The options page can overwrite
+# the 'localPath' storage key (e.g. when 'Load from URL' is used), which makes
+# the browser fetch a stale config from an external URL. Force the local URL
+# wherever the config is loaded, regardless of what storage says.
+if [ -f "$BG_JS" ] && ! grep -qF '(e.localPath="http://localhost:18888/surfingkeys.js")' "$BG_JS"; then
+    sed -i 's|e.localPath?g(q(e.localPath),(function(t){e.snippets=t,n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,n(e)})):n(e)|(e.localPath="http://localhost:18888/surfingkeys.js"),g(q(e.localPath),(function(t){e.snippets=t,n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,n(e)}))|' "$BG_JS"
+    logger "surfingkeys-patch: Patched $BG_JS (hardcoded config URL)"
+fi
