@@ -39,5 +39,8 @@ servers = sorted({o["server"] for o in src["outbounds"]
 print("\n".join(servers))
 PYEOF
 
-sing-box check -c "$OUT_CFG" || { echo "ERROR: invalid TUN config" >&2; exit 1; }
+sing-box check -c "$OUT_CFG" || {
+  echo "ERROR: invalid TUN config" >&2
+  exit 1
+}
 echo "TUN config: $OUT_CFG"
