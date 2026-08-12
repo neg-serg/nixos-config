@@ -203,12 +203,12 @@ settings.theme = `
 api.Hints.style(`div, mask {
     font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
     font-size: 11px !important;
-    font-weight: 600 !important;
+    font-weight: 500 !important;
     padding: 1px 3px !important;
     background: #004a80 !important;
     background-image: none !important;
     color: #e8f1ff !important;
-    border: 1px solid #a5c1e6 !important;
+    border: 1px solid #4779b3 !important;
     border-radius: 3px !important;
     box-shadow: none !important;
   }
@@ -228,12 +228,12 @@ api.Hints.style(`div, mask {
 api.Hints.style(`div {
     font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
     font-size: 11px !important;
-    font-weight: 600 !important;
+    font-weight: 500 !important;
     padding: 1px 3px !important;
     background: #004a80 !important;
     background-image: none !important;
     color: #e8f1ff !important;
-    border: 1px solid #a5c1e6 !important;
+    border: 1px solid #4779b3 !important;
     border-radius: 3px !important;
     box-shadow: none !important;
   }
