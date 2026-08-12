@@ -205,7 +205,7 @@ body {
 
 .sk_theme .url {
   color: #7c90a8 !important;
-}
+    background: #1c334e !important;
 
 .sk_theme .annotation {
   color: #607794 !important;
@@ -230,7 +230,7 @@ body {
   font-weight: 600;
 }
 
-.sk_theme .omnibar_folder {
+    background: #1c334e !important;
   color: #7387a1 !important;
 }
 
