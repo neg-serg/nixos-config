@@ -203,7 +203,7 @@ settings.theme = `
 api.Hints.style(`
   div, mask {
     font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
-    font-size: 10px !important;
+    font-size: 8px !important;
     font-weight: 600 !important;
     padding: 2px 4px !important;
     background: #002244 !important;
@@ -229,7 +229,7 @@ api.Hints.style(`
 api.Hints.style(`
   div {
     font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
-    font-size: 10px !important;
+    font-size: 8px !important;
     font-weight: 600 !important;
     padding: 2px 4px !important;
     background: #002244 !important;
