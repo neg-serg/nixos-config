@@ -46,7 +46,8 @@ in
           # through the local SOCKS5 proxy via proxychains LD_PRELOAD — only
           # when features.games.steamProxy is enabled (re-injects the proxy
           # stripped above).
-        ] ++ lib.optionals config.features.games.steamProxy.enable [
+        ]
+        ++ lib.optionals config.features.games.steamProxy.enable [
           "--setenv"
           "LD_PRELOAD"
           "${pkgs.proxychains}/lib/libproxychains4.so"
@@ -55,7 +56,8 @@ in
           "--ro-bind"
           "/etc/proxychains/proxychains.conf"
           "/etc/proxychains/proxychains.conf"
-        ] ++ [
+        ]
+        ++ [
           # (e.g. Steam "Add Drive").  --ro-bind-try so it is a no-op when
           # the path does not exist.
           "--ro-bind-try"
