@@ -47,7 +47,7 @@ if [ -z "$TARGET_ID" ]; then
 fi
 
 echo "Target: $TARGET_ID"
-echo "Setting loadSettingsUrl to: $URL"
+echo "Setting localPath to: $URL"
 
 # Устанавливаем storage через CDP
 WS_URL=$(echo "$TARGETS" | python3 -c "
@@ -75,7 +75,7 @@ ws.recv()
 # First navigate to the extension page to get its context
 code = f"""
 try {{
-    chrome.storage.sync.set({{loadSettingsUrl: "{target_url}"}}, function() {{
+    chrome.storage.sync.set({{localPath: "{target_url}"}}, function() {
         console.log("SurfingKeys config URL set to: {target_url}");
     }});
 }} catch(e) {{
