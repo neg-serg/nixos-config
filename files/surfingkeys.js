@@ -17,13 +17,13 @@ settings.theme = `
   --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-size: 0.875rem;
-  --bg: #020202;
-  --bg-highlight: #13384f;
-  --fg: #f0f1ff;
-  --fg-muted: rgba(240, 241, 255, 0.6);
-  --accent: #89cdd2;
-  --border: #0a3749;
-  --hint-bg: #001742;
+  --bg: #080808;
+  --bg-highlight: #005f87;
+  --fg: #dadada;
+  --fg-muted: rgba(218, 218, 218, 0.5);
+  --accent: #00d7ff;
+  --border: #303030;
+  --hint-bg: #002244;
 }
 
 /* Global Reset */
@@ -44,7 +44,7 @@ settings.theme = `
 
 /* Hints */
 #sk_hints .begin {
-  color: #89cdd2 !important;
+  color: #00d7ff !important;
 }
 
 /* Status bar / Banner */
@@ -206,22 +206,22 @@ api.Hints.style(`
     font-size: 0.875rem !important;
     font-weight: 600 !important;
     padding: 2px 4px !important;
-    background: #001742 !important;
+    background: #002244 !important;
     background-image: none !important;
-    color: #89cdd2 !important;
-    border: 1px solid #0a3749 !important;
+    color: #00d7ff !important;
+    border: 1px solid #303030 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
   }
   
   mask {
-    background: rgba(137, 205, 210, 0.3) !important;
-    border: 1px solid #89cdd2 !important;
+    background: rgba(0, 215, 255, 0.3) !important;
+    border: 1px solid #00d7ff !important;
   }
 
   mask.activeInput {
-    background: rgba(137, 205, 210, 0.6) !important;
-    border: 2px solid #89cdd2 !important;
+    background: rgba(0, 215, 255, 0.6) !important;
+    border: 2px solid #00d7ff !important;
   }
 `);
 
@@ -232,15 +232,15 @@ api.Hints.style(`
     font-size: 0.875rem !important;
     font-weight: 600 !important;
     padding: 2px 4px !important;
-    background: #001742 !important;
+    background: #002244 !important;
     background-image: none !important;
-    color: #89cdd2 !important;
-    border: 1px solid #0a3749 !important;
+    color: #00d7ff !important;
+    border: 1px solid #303030 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
   }
   div.begin {
-    color: #89cdd2 !important;
+    color: #00d7ff !important;
   }
 `, "text");
 
