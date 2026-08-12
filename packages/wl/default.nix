@@ -17,6 +17,11 @@ rustPlatform.buildRustPackage rec {
 
   cargoLock.lockFile = "${inputs.wl}/Cargo.lock";
 
+  # Silence the "recovering lost surface" warning on monitor restore (DPMS
+  # off→on): the recovery itself still runs, the message is just demoted to
+  # debug so it only shows with RUST_LOG=debug.
+  patches = [ ./silence-surface-recovery-log.patch ];
+
   nativeBuildInputs = [
     makeWrapper
     shaderc # for glslc (Vulkan shader compilation)
