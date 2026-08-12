@@ -14,16 +14,16 @@ settings.tabsThreshold = 0;
 // ========== Theme ==========
 settings.theme = `
 :root {
-  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-mono: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-size: 0.875rem;
-  --bg: #080808;
-  --bg-highlight: #005f87;
-  --fg: #dadada;
-  --fg-muted: rgba(218, 218, 218, 0.5);
-  --accent: #00d7ff;
-  --border: #303030;
-  --hint-bg: #002244;
+  --bg: #000000;
+  --bg-highlight: #0d1824;
+  --fg: #6c7e96;
+  --fg-muted: #7387a1;
+  --accent: #a5c1e6;
+  --border: #223f73;
+  --hint-bg: #005faf;
 }
 
 /* Global Reset */
@@ -44,7 +44,7 @@ settings.theme = `
 
 /* Hints */
 #sk_hints .begin {
-  color: #00d7ff !important;
+  color: #a5c1e6 !important;
 }
 
 /* Status bar / Banner */
@@ -206,22 +206,22 @@ api.Hints.style(`
     font-size: 8px !important;
     font-weight: 600 !important;
     padding: 2px 4px !important;
-    background: #002244 !important;
+    background: #005faf !important;
     background-image: none !important;
-    color: #00d7ff !important;
-    border: 1px solid #303030 !important;
+    color: #d1e5ff !important;
+    border: 1px solid #1d4aaf !important;
     border-radius: 0 !important;
     box-shadow: none !important;
   }
   
   mask {
-    background: rgba(0, 215, 255, 0.3) !important;
-    border: 1px solid #00d7ff !important;
+    background: rgba(165, 193, 230, 0.3) !important;
+    border: 1px solid #a5c1e6 !important;
   }
 
   mask.activeInput {
-    background: rgba(0, 215, 255, 0.6) !important;
-    border: 2px solid #00d7ff !important;
+    background: rgba(165, 193, 230, 0.6) !important;
+    border: 2px solid #a5c1e6 !important;
   }
 `);
 
@@ -232,15 +232,15 @@ api.Hints.style(`
     font-size: 8px !important;
     font-weight: 600 !important;
     padding: 2px 4px !important;
-    background: #002244 !important;
+    background: #005faf !important;
     background-image: none !important;
-    color: #00d7ff !important;
-    border: 1px solid #303030 !important;
+    color: #d1e5ff !important;
+    border: 1px solid #1d4aaf !important;
     border-radius: 0 !important;
     box-shadow: none !important;
   }
   div.begin {
-    color: #00d7ff !important;
+    color: #d1e5ff !important;
   }
 `, "text");
 
