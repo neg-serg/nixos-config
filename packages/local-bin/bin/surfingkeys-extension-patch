@@ -56,3 +56,10 @@ if [ -f "$BG_JS" ] && grep -qF 'E({localPath:o,snippets:e})' "$BG_JS"; then
     sed -i 's|E({localPath:o,snippets:e})|E({snippets:e})|' "$BG_JS"
     logger "surfingkeys-patch: Patched $BG_JS (loadFromUrl localPath dropped)"
 fi
+
+# 7. Remove zebra striping from the markdown preview tables.
+MD_JS="$VER_DIR/pages/markdown.css"
+if [ -f "$MD_JS" ] && grep -qF 'background-color: #f8f8f8;' "$MD_JS"; then
+    sed -i 's|background-color: #f8f8f8;|background-color: transparent;|' "$MD_JS"
+    logger "surfingkeys-patch: Patched $MD_JS (no zebra)"
+fi
