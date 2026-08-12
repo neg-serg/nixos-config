@@ -19,6 +19,6 @@ fi
 
 # Apply patch
 cp "$BG_JS" "$BG_JS.orig"
-sed -i "s|^(()=>{\"use strict\"|const NEG_SK_URL=\"$URL\";\nchrome.storage.sync.set({loadSettingsUrl:NEG_SK_URL});\nchrome.storage.local.set({loadSettingsUrl:NEG_SK_URL});\n(()=>{\"use strict\"|" "$BG_JS"
+sed -i "s|^(()=>{\"use strict\"|const NEG_SK_URL=\"$URL\";\nchrome.storage.sync.set({localPath:NEG_SK_URL});\nchrome.storage.local.set({localPath:NEG_SK_URL});\n(()=>{\"use strict\"|" "$BG_JS"
 
 logger "surfingkeys-patch: Patched $BG_JS"
