@@ -25,15 +25,15 @@ fi
 # browser fetch a stale external config; force the local URL on every load and
 # write it back so storage/options show it too.
 if [ -f "$BG_JS" ] && ! grep -qF '(e.localPath="http://localhost:18888/surfingkeys.js"),chrome.storage.local.set({localPath:e.localPath})' "$BG_JS"; then
-    sed -i 's|e.localPath?g(q(e.localPath),(function(t){e.snippets=t,n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,n(e)})):n(e)|(e.localPath="http://localhost:18888/surfingkeys.js"),chrome.storage.local.set({localPath:e.localPath}),g(q(e.localPath),(function(t){e.snippets=t,F(t),n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,e.snippets="",n(e)}))|' "$BG_JS"
+    sed -i 's|e.localPath?g(q(e.localPath),(function(t){e.snippets=t,n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,n(e)})):n(e)|(e.localPath="http://localhost:18888/surfingkeys.js"),chrome.storage.local.set({localPath:e.localPath}),g(q(e.localPath),(function(t){e.snippets=t,setTimeout(function(){F(t)},100),n(e)}),void 0,void 0,(function(t){e.error="Failed to read snippets from "+e.localPath,e.snippets="",n(e)}))|' "$BG_JS"
     logger "surfingkeys-patch: Patched $BG_JS (hardcoded config URL)"
 fi
 
 # 3. Auto-register the config userScript on every page load: the page-load
 # getSettings flow never triggered F (Vivaldi kept a stale registration);
 # call F from the fetch callback so the registered config is always current.
-if [ -f "$BG_JS" ] && ! grep -qF '(function(t){e.snippets=t,F(t),n(e)})' "$BG_JS"; then
-    sed -i 's|(function(t){e.snippets=t,n(e)})|(function(t){e.snippets=t,F(t),n(e)})|' "$BG_JS"
+if [ -f "$BG_JS" ] && ! grep -qF '(function(t){e.snippets=t,setTimeout(function(){F(t)},100),n(e)})' "$BG_JS"; then
+    sed -i 's|(function(t){e.snippets=t,n(e)})|(function(t){e.snippets=t,setTimeout(function(){F(t)},100),n(e)})|' "$BG_JS"
     logger "surfingkeys-patch: Patched $BG_JS (auto-register on load)"
 fi
 
