@@ -133,7 +133,8 @@ if command -v python3 > /dev/null 2>&1; then
   css_count=0
   while IFS= read -r -d '' file; do
     ((css_count++)) || true
-    if ! output=$(python3 - "$file" <<'EOF'
+    if ! output=$(
+      python3 - "$file" << 'EOF'
 import sys
 text = open(sys.argv[1]).read()
 if text.count('{') != text.count('}'):
