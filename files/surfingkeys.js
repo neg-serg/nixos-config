@@ -630,6 +630,38 @@ const skEngines = [
     favicon: ddgIcon('search.nixos.org'),
   },
   {
+    alias: 'no', name: 'nixos-options',
+    search: 'https://search.nixos.org/options?channel=unstable&query=',
+    favicon: ddgIcon('search.nixos.org'),
+  },
+  {
+    alias: 'nw', name: 'nixos-wiki',
+    search: 'https://nixos.wiki/index.php?search=',
+    compl: 'https://nixos.wiki/api.php?action=opensearch&format=json&formatversion=2&namespace=0&limit=10&suggest=true&search=',
+    favicon: ddgIcon('nixos.wiki'),
+    cb: (r) => JSON.parse(r.text)[1],
+  },
+  {
+    alias: 'hb', name: 'habr',
+    search: 'https://habr.com/ru/search/?q=',
+    favicon: ddgIcon('habr.com'),
+  },
+  {
+    alias: 'on', name: 'opennet',
+    search: 'https://www.opennet.ru/search.shtml?words=',
+    favicon: ddgIcon('www.opennet.ru'),
+  },
+  {
+    alias: 'lr', name: 'linux.org.ru',
+    search: 'https://www.linux.org.ru/search.jsp?q=',
+    favicon: ddgIcon('www.linux.org.ru'),
+  },
+  {
+    alias: 'gl', name: 'gitlab',
+    search: 'https://gitlab.com/search?search=',
+    favicon: ddgIcon('gitlab.com'),
+  },
+  {
     alias: 'np', name: 'npm',
     search: 'https://www.npmjs.com/search?q=',
     compl: 'https://api.npms.io/v2/search/suggestions?size=20&q=',
