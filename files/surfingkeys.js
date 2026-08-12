@@ -200,8 +200,7 @@ settings.theme = `
 `;
 
 // ========== Hints Styling (Shadow DOM) ==========
-api.Hints.style(`
-  div, mask {
+api.Hints.style(`div, mask {
     font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
     font-size: 8px !important;
     font-weight: 600 !important;
@@ -226,8 +225,7 @@ api.Hints.style(`
 `);
 
 // Style for text/visual mode hints
-api.Hints.style(`
-  div {
+api.Hints.style(`div {
     font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
     font-size: 8px !important;
     font-weight: 600 !important;
