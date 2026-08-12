@@ -300,7 +300,7 @@ api.Hints.style(`div, mask {
     font-size: 11px !important;
     font-weight: 500 !important;
     padding: 1px 3px !important;
-    background: #005faf !important;
+    background: #003b88 !important;
     background-image: none !important;
     color: #e8f1ff !important;
     border: 1px solid #4779b3 !important;
@@ -325,7 +325,7 @@ api.Hints.style(`div {
     font-size: 11px !important;
     font-weight: 500 !important;
     padding: 1px 3px !important;
-    background: #005faf !important;
+    background: #003b88 !important;
     background-image: none !important;
     color: #e8f1ff !important;
     border: 1px solid #4779b3 !important;
