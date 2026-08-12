@@ -1,4 +1,9 @@
-{ pkgs, lib, config, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 # Full-TUN proxy: routes all non-private traffic through the sing-box
 # VLESS/Hysteria2 node over the sb0 TUN interface. Toggle:
 #   tun on | tun off | tun status   (or systemctl start|stop sing-box-tun)
