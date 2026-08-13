@@ -29,9 +29,7 @@
 
         # Scripts to skip automatic generation for (handled specially below)
         autoSkip = [
-          "ren"
           "kitty-scrollback-nvim"
-          "hypr-focus-hist"
         ];
 
         # Helper to generate the home.file entry

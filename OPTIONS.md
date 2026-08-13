@@ -7,7 +7,7 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
 ## Profiles
 
 - `features.profiles`: list of active profiles (default: `["desktop"]`)
-  - Available: `desktop`, `gaming`, `audio-pro`, `dev`.
+  - Available: `desktop`, `gaming`, `dev`.
   - Each profile sets feature-flag defaults via `modules/profiles/<name>.nix`
     (`mkDefault`); order matters — later profiles override earlier ones.
   - You can still override any option after the profiles are set.
@@ -36,13 +36,13 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
 ## Audio Stack (`modules/media/audio`)
 
 - `features.media.audio.core.enable` (PipeWire routing tools)
-  - Default: true (desktop/audio-pro profiles)
+  - Default: true (desktop profiles)
 - `features.media.audio.apps.enable` (players, tagging, analysis tools)
-  - Default: true (desktop/audio-pro profiles)
+  - Default: true (desktop profiles)
 - `features.media.audio.creation.enable` (DAW, synths)
-  - Default: true (desktop/audio-pro profiles)
+  - Default: true (desktop profiles)
 - `features.media.audio.mpd.enable` (mpd, mpdris2, clients)
-  - Default: true (desktop/audio-pro profiles)
+  - Default: true (desktop profiles)
 
 ## Emulators / RetroArch (`modules/emulators/default.nix`)
 
