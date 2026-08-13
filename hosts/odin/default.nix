@@ -37,6 +37,7 @@
   features.mail.vdirsyncer.enable = false; # Disabled: no Google OAuth credentials (missing secrets/home/vdirsyncer/google.sops.yaml)
   features.mail.mbsync.enable = false;
   features.net.zapret2.enable = true; # Zapret2 DPI bypass (nfqws2)
+  features.net.rknDomains.enable = true; # RKN blocklist -> zapret2 hostlist
   features.virt.libvirtd.enable = true;
   features.apps.winapps.enable = true;
   features.apps.winapps.desktopApps = [
