@@ -11,6 +11,14 @@
 .toolbar-addressbar .button-toolbar {
   font-family: "Iosevka", ui-monospace, monospace !important;
 }
+/* The input has its own base font-family rule (Cantarell); the inherited
+ * toolbar value loses to it. Set the font directly so the focused input
+ * matches the unfocused label. */
+#urlFieldInput,
+#urlFieldInput:focus,
+#urlFieldInput:active {
+  font-family: "Iosevka", ui-monospace, monospace !important;
+}
 #urlFieldInput {
   height: 18px !important;
   min-height: 18px !important;
