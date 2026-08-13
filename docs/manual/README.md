@@ -112,8 +112,9 @@ Use the same expectations regardless of whether you work under `modules/` or
 
 ### Key Locations
 
-- Core helpers: `modules/lib/neg.nix`
-- XDG helpers: `modules/lib/xdg-helpers.nix`
+- Runtime helpers (`config.lib.neg.*`): defined in `flake/nixos.nix` specialArgs, exposed via
+  `modules/core/neg.nix` (`mkHomeFiles`, `mkLocalBin`, `mkXdgText`).
+- systemd-user helpers: `modules/lib/systemd-user.nix` (`mkUnitFromPresets`, legacy `mkSimple*`).
 - Feature definitions/options: `modules/features/`
 
 ### Package Availability Checks
@@ -129,23 +130,13 @@ Use the same expectations regardless of whether you work under `modules/` or
 - Assume Qt 6+ APIs; review the latest Hyprland/Quickshell release notes before suggesting changes.
 - Automated QML linters are currently unavailable, so rely on these conventions.
 
-### XDG Helpers (Preferred)
+### Runtime Helpers (Preferred)
 
-- Use `xdg.mkXdgText`, `xdg.mkXdgSource`, `xdg.mkXdgDataText`, `xdg.mkXdgDataSource`,
-  `xdg.mkXdgCacheText`, and `xdg.mkXdgCacheSource` instead of ad‑hoc `home.file` or shell commands.
-- JSON/TOML shortcuts: `xdg.mkXdgConfigJson`, `xdg.mkXdgDataJson`, `xdg.mkXdgConfigToml`,
-  `xdg.mkXdgDataToml`.
-
-### Conditional Sugar
-
-- `config.lib.neg.mkWhen` / `mkUnless` wrap `lib.mkIf`. Prefer them for readability when enabling
-  chunks under feature flags.
+- Use `config.lib.neg.mkHomeFiles`, `neg.mkLocalBin`, `neg.mkXdgText` instead of ad‑hoc `home.file`
+  or shell commands.
 
 ### Activation Helpers
 
-- `mkEnsureRealDir` / `mkEnsureRealDirsMany` for directories before `linkGeneration`.
-- `mkEnsureAbsent` / `mkEnsureAbsentMany` to delete conflicting paths pre‑activation.
-- `mkEnsureDirsAfterWrite` and `mkEnsureMaildirs` for post‑writeBoundary directory creation.
 - Use per-file `force = true` instead of re‑adding global XDG cleanup.
 - Local scripts: `config.lib.neg.mkLocalBin name text` removes conflicts and marks the file
   executable before linking.
@@ -187,11 +178,10 @@ Use the same expectations regardless of whether you work under `modules/` or
 - Always declare feature options centrally (see `modules/features/`) and gate module fragments via
   the relevant `features.*` flags.
 - Structure modules with `lib.mkMerge [ … ]` and the helper sugar above. Factor package groups into
-  local `groups = { … };` sets and flatten with `config.lib.neg.mkEnabledList`.
+  local `groups = { … };` sets.
 - Systemd user units/paths/sockets should reuse `config.lib.neg.systemdUser.mkUnitFromPresets`.
-- For xdg-managed files prefer the helpers from `modules/lib/xdg-helpers.nix` (text/source/data/
-  cache, JSON/TOML). They ensure parent directories exist as real dirs and remove conflicting paths
-  before linking.
+- For xdg-managed files prefer `config.lib.neg.mkXdgText` (or `home.file` with `force = true` where
+  parent dirs are needed).
 - Use `config.lib.neg.mkLocalBin` for scripts under `~/.local/bin`.
 - Keep warnings actionable via `warnings = lib.optional cond "…";` and ensure the condition is cheap
   (avoid referencing `config.lib.neg` while declaring the warning).
@@ -203,17 +193,13 @@ Use the same expectations regardless of whether you work under `modules/` or
 Keep this manifest updated whenever vendored sources change so that licensing remains clear.
 
 | Component | Source | Revision | License | Notes |
-|-----------|--------|----------|---------|-------| | cantata |
-[github.com/nullobsi/cantata](https://github.com/nullobsi/cantata) |
-`a19efdf9649c50320f8592f07d82734c352ace9c` | GPL-3.0-only | MPD Qt client with extra patches
-(`pkgs.neg.cantata`). | | kitty-kitten-search |
+|-----------|--------|----------|---------|-------| | kitty-kitten-search |
 [github.com/trygveaa/kitty-kitten-search](https://github.com/trygveaa/kitty-kitten-search) |
 `992c1f3d220dc3e1ae18a24b15fcaf47f4e61ff8` | *No license declared upstream* | Provides `search.py` /
 `scroll_mark.py` kittens for Kitty. Verify licensing before distributing binaries. |
 
 ## Open Tasks
 
-- Teach `nix flake check` to build `pkgs.neg.cantata` so the Qt patches stay tested automatically.
 - Document the Firefox multi-profile stack (profiles, desktop entries, addon requirements) once the
   layout stabilises.
 - Populate secrets/env vars for the new MCP stack so `seh` can finish without placeholders. Needed
@@ -271,7 +257,6 @@ release. We usually bump manually to keep ABI changes under control.
 
   - `profiles.desktop` — GUI defaults (features.gui.\* = mkDefault true)
   - `profiles.gaming` — gaming optimizations + GUI apps
-  - `profiles.audio-pro` — pro-audio (pipewire realtime, limits)
   - `profiles.dev` — development toolchains
 
 - Service profiles: toggle per‑service via `profiles.services.<name>.enable` (alias to

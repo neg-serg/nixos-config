@@ -24,7 +24,6 @@
   services = {
     accounts-daemon.enable = true;
     dbus.implementation = "broker";
-    # gvfs.enable = true; # disabled — pulls GTK
     libinput.enable = true;
     ratbagd.enable = true;
   };

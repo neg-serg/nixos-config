@@ -6,15 +6,7 @@ with lib;
     qt.enable = mkBool "enable Qt integrations for GUI (qt6ct, hyprland-qt-*)" true;
     quickshell = {
       enable = mkBool "enable Quickshell (panel) at login" true;
-      flavor = lib.mkOption {
-        type = types.enum [
-          "default"
-        ];
-        default = "default";
-        description = "Which quickshell configuration flavor to use.";
-      };
     };
-    caelestia-shell.enable = mkBool "enable Caelestia Desktop Shell (built on Quickshell)" false;
     hdr.enable = mkBool "enable HDR support (env vars for DXVK, Gamescope, Wine)" false;
     vicinae = {
       enable = mkBool "enable Vicinae (Wayland app runner + window switcher)" false;

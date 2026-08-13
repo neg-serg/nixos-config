@@ -15,9 +15,6 @@ let
     pkgs.essentia-extractor # bulk audio feature extractor (HQ descriptors)
     pkgs.sonic-visualiser # annotate spectra/sonograms
   ]
-  ++ (lib.optionals (config.features.media.audio.proAudio.enable or false) [
-    pkgs.opensoundmeter # FFT/RT60 analysis for calibration
-  ])
   ++ [
 
     # -- CLI --

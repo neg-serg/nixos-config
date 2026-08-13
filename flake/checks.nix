@@ -90,13 +90,4 @@ in
       echo "check: test-odin-gaming OK (${toString (builtins.length (builtins.attrNames cfg.options))} options)"
       touch $out
     '';
-
-  "test-odin-audio-pro" =
-    let
-      cfg = mkTestHost "odin" "audio-pro";
-    in
-    pkgs.runCommand "check-test-odin-audio-pro" { } ''
-      echo "check: test-odin-audio-pro OK (${toString (builtins.length (builtins.attrNames cfg.options))} options)"
-      touch $out
-    '';
 }
