@@ -6,7 +6,6 @@ mkIf (builtins.elem "desktop" (config.features.profiles or [ ])) {
     web.enable = mkDefault true;
     mail.enable = mkDefault true;
     dev.enable = mkDefault true;
-    hack.enable = mkDefault true;
     fun.enable = mkDefault true;
     torrent.enable = mkDefault true;
     media.audio = {

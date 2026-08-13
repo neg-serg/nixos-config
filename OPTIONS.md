@@ -48,28 +48,16 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
 
 - `features.emulators.retroarch.full` (use `retroarchFull` with extended cores)
   - Default: true (desktop profile), false otherwise
-  - When enabled, extra unfree libretro cores are auto‑allowlisted (see below).
 
 ## Unfree Policy
 
-The central unfree policy and presets live in:
+Unfree packages are allowed globally:
 
-- `modules/features/core.nix` (defines `features.allowUnfree` options)
-- `modules/features-data/unfree-presets.nix` (presets)
-  - Preset `desktop` currently includes: `abuse`, `ocenaudio`, `vcv-rack`, `vital`,
-    `stegsolve`, `volatility3`,
-    `ai-studio` (or `lmstudio` on older nixpkgs).
+- `flake/lib.nix` (`config.allowUnfree = true`) — applied to all system `pkgs`.
+- `flake/pkgs-config.nix` — nixpkgs config for the flake's own package builds.
 
-Libretro allowlist (gated by RetroArch mode) lives in:
-
-- `modules/emulators/pkgs.nix`
-  - Adds common libretro cores to `features.allowUnfree.extra` only when
-    `features.emulators.retroarch.full = true`.
-
-You can always extend with your own names via:
-
-- `features.allowUnfree.extra = [ "pkgName1" "pkgName2" ];`
-- Or override entirely via `features.allowUnfree.allowed`.
+The per-feature allowlist (`features.allowUnfree.*` + `features-data/`) was
+removed — it was never read by any module.
 
 ## Package Exclusions
 
@@ -102,6 +90,3 @@ Switch examples:
 ## IaC (Terraform / OpenTofu)
 
 - `features.dev.pkgs.iac` — include Infrastructure-as-Code CLI (default: true — set by the `dev` profile)
-- `features.dev.iac.backend` — choose backend: `"terraform" | "tofu"` (default: `"terraform"`)
-  - When `terraform` is selected, the unfree predicate auto‑allowlists it.
-  - Packages are added via `modules/dev/pkgs/default.nix`.

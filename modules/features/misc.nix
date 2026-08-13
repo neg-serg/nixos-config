@@ -6,8 +6,6 @@ with lib;
       read.enable = mkBool "enable reading stack (CLI/GUI viewers, OCR, Recoll)" true;
       manipulate.enable = mkBool "enable text/markup manipulation CLI tools (jq/yq/htmlq)" true;
       notes.enable = mkBool "enable notes tooling (zk CLI)" true;
-      tex.enable = mkBool "enable TeX/LaTeX stack (TexLive full, rubber)" false;
-      espanso.enable = mkBool "enable espanso text expander" false;
     };
 
     flatpak.builder.enable = mkBool "enable flatpak-builder" false;
