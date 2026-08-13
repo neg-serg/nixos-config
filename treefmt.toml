@@ -19,7 +19,7 @@ excludes = [
   "packages/local-bin/bin/swayimg-actions.sh",
 ]
 
-# Nix files: format with alejandra
+# Nix files: format with nixfmt
 [formatter.nix]
 command = "nixfmt"
 options = []
