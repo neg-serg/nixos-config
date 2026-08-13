@@ -21,19 +21,6 @@ in
           path = ~/.config/vdirsyncer/calendars/
           type = discover
 
-          # Per-calendar color and priority overrides
-          # After vdirsyncer syncs your calendars, add entries like:
-          # [[calendars]]
-          # path = ~/.config/vdirsyncer/calendars/Personal/
-          # color = light green
-          # priority = 10
-          # [[calendars]]
-          # path = ~/.config/vdirsyncer/calendars/Work/
-          # color = dark blue
-          # priority = 5
-
-          # [palette] — uncomment to override calendar colors
-          # highlight = black on green
 
           [locale]
           timeformat = %H:%M

@@ -71,15 +71,6 @@ in
             path = "/tmp/mpd.fifo";
             format = "44100:16:2";
           }
-          # Uncomment and adjust card name after checking `aplay -l`:
-          # {
-          #   type = "alsa";
-          #   name = "RME HDSPe AIO";
-          #   device = "hw:CARD=RMEAIO,DEV=0";
-          #   auto_resample = "no";
-          #   auto_format = "no";
-          #   auto_channels = "no";
-          # }
         ];
       };
     };
