@@ -1,6 +1,5 @@
 {
   pkgs,
-  lib,
   ...
 }:
 # Lightweight devshell for 'just lint' / .githooks/pre-commit.

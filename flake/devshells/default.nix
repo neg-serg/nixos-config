@@ -1,11 +1,11 @@
 {
   pkgs,
   lib,
-  preCommit,
   ...
 }:
 {
-  default = import ./base.nix { inherit pkgs lib preCommit; };
+  default = import ./base.nix { inherit pkgs lib; };
+  lint = import ./lint.nix { inherit pkgs lib; };
   tools = import ./tools.nix { inherit pkgs lib; };
   haskell = import ./haskell.nix { inherit pkgs lib; };
   rust = import ./rust.nix { inherit pkgs lib; };
