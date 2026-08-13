@@ -48,7 +48,6 @@
     "outlook"
     "cmd"
     "powershell"
-    "vscode"
   ];
   features.apps.guiAppsFull.enable = false; # Disable heavy GUI apps (GIMP, OBS); gaming profile enables it by default
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
