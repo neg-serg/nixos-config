@@ -43,7 +43,7 @@ lib.mkMerge [
     servicesProfiles = {
       unbound.enable = true;
       adguardhome.enable = true;
-      # Local DNS rewrites for LAN names (service enable comes from roles)
+      # Local DNS rewrites for LAN names
       adguardhome.rewrites = [
         {
           domain = "odin";

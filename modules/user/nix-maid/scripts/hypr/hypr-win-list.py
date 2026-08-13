@@ -63,7 +63,6 @@ def workspace_label(name: str) -> str:
 def glyph(cls: str) -> str:
     cls = cls.lower()
     table = {
-        "firefox": "",
         "floorp": "",
         "kitty": "",
         "term": "",

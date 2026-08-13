@@ -1,7 +1,7 @@
 ##
 # Module: media/audio/apps-packages
 # Purpose: Install audio application helpers (players, analyzers, tagging tools) at the system level.
-# Trigger: always enabled (was gated behind roles.workstation which is always true on the only host).
+# Trigger: always enabled.
 {
   lib,
   config,

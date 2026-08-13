@@ -1,7 +1,7 @@
 ##
 # Module: media/audio/core-packages
 # Purpose: Provide core PipeWire/ALSA helper tools at the system level so they are available regardless of user profile state.
-# Trigger: always enabled (was gated behind roles.workstation which is always true on the only host).
+# Trigger: always enabled.
 {
   lib,
   pkgs,
