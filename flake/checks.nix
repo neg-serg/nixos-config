@@ -6,10 +6,9 @@
 # alongside nixosConfigurations, devShells, etc.
 #
 # Domain filter refactoring (Jul 2026):
-#   modules/default.nix now accepts domainFilter via specialArgs. The
-#   nixosConfiguration A/B test configs (odin-lite, odin-server) use
-#   restrictive filters to produce smaller eval trees. These module checks
-#   validate that the filter mechanism works correctly.
+#   modules/default.nix now accepts domainFilter via specialArgs, letting
+#   test configurations restrict which module domains are imported (smaller
+#   eval trees). These module checks validate that the filter mechanism works.
 # ---------------------------------------------------------------------------
 {
   nixpkgs,
@@ -71,13 +70,8 @@ in
   "mod-core" = mkModuleCheck "core" [ ../modules/core/default.nix ] (_: true);
 
   # ── Domain filter checks ─────────────────────────────────────────
-  # Validate that modules/default.nix works with different domain filters.
+  # Validate that modules/default.nix works with the domain filter mechanism.
   # These create INDEPENDENT eval trees for nix-eval-jobs to process in parallel.
-
-  "dom-lite" = pkgs.runCommand "check-dom-lite" { } ''
-    echo "modules/default.nix + lite filter: OK"
-    touch $out
-  '';
 
   "dom-all" = pkgs.runCommand "check-dom-all" { } ''
     echo "modules/default.nix + all filter: OK"
@@ -96,15 +90,6 @@ in
     in
     pkgs.runCommand "check-test-odin-gaming" { } ''
       echo "check: test-odin-gaming OK (${toString (builtins.length (builtins.attrNames cfg.options))} options)"
-      touch $out
-    '';
-
-  "test-odin-lite" =
-    let
-      cfg = mkTestHost "odin" "lite";
-    in
-    pkgs.runCommand "check-test-odin-lite" { } ''
-      echo "check: test-odin-lite OK (${toString (builtins.length (builtins.attrNames cfg.options))} options)"
       touch $out
     '';
 

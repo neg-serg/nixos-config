@@ -247,16 +247,12 @@ subtree-pull-packages:
 
 # --- Profiling / Benchmarking -------------------------------------------------
 
-# Run hyperfine eval benchmarks (full odin, odin-lite, upstream)
-bench-eval:
-    bash scripts/dev/nix-eval-bench.sh
-
 # Generate perf+Inferno flamegraph SVG for nix eval
 flamegraph-eval host="odin":
     bash scripts/dev/nix-flamegraph.sh {{host}}
 
-# Both: benchmark then flamegraph
-profile-eval: bench-eval flamegraph-eval
+# Generate perf+Inferno flamegraph SVG for nix eval
+profile-eval: flamegraph-eval
 
 
 

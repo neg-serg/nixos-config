@@ -36,7 +36,8 @@ configuration.
 
 ### Profiles & Feature Flags
 
-- Primary toggle: `features.profile = "full" | "lite"` (lite disables GUI/media/dev stacks).
+- Primary toggle: `features.profiles` (list of active profiles; odin: `["desktop" "dev" "gaming"]`).
+  Each profile sets feature-flag defaults via `modules/profiles/`.
 - Feature definitions live in `modules/features.nix`; documentation: `OPTIONS.md`.
 - Key flags:
   - GUI (`features.gui.*`), Web (`features.web.*`), Secrets (`features.secrets.enable`)
@@ -281,10 +282,8 @@ release. We usually bump manually to keep ABI changes under control.
 
   - `profiles.desktop` — GUI defaults (features.gui.\* = mkDefault true)
   - `profiles.gaming` — gaming optimizations + GUI apps
-  - `profiles.server` — headless defaults
   - `profiles.audio-pro` — pro-audio (pipewire realtime, limits)
   - `profiles.dev` — development toolchains
-  - `profiles.lite` — minimal (disables most features)
 
 - Service profiles: toggle per‑service via `profiles.services.<name>.enable` (alias to
   `servicesProfiles.<name>.enable`).
