@@ -23,13 +23,8 @@ in
   andromeda-gtk-theme = callPkg (inputs.self + "/packages/andromeda-gtk-theme") { };
   flight-gtk-theme = callPkg (inputs.self + "/packages/flight-gtk-theme") { };
   matugen-themes = callPkg (inputs.self + "/packages/matugen-themes") { };
-  oldschool-pc-font-pack = callPkg (inputs.self + "/packages/oldschool-pc-font-pack") { };
-  surfingkeys-pkg = prev.callPackage (inputs.self + "/packages/surfingkeys-conf") {
-    customConfig = inputs.self + "/files/surfingkeys.js";
-  };
   wl = callPkg (inputs.self + "/packages/wl") { };
   wl-switcher = prev.callPackage (inputs.self + "/packages/wl-switcher") { };
-  unsplash = prev.callPackage (inputs.self + "/packages/unsplash") { };
   wallhaven = prev.callPackage (inputs.self + "/packages/wallhaven") { };
   hyprwhspr = prev.callPackage (inputs.self + "/packages/hyprwhspr") { };
 
@@ -40,8 +35,6 @@ in
       (old: {
         patches = (old.patches or [ ]) ++ [ ./hyprscratch-keepalive-fix.patch ];
       });
-
-  optiscaler = prev.callPackage (inputs.self + "/packages/optiscaler") { };
 
   # Bump vicinae to latest stable (v0.23.1) — locked nixpkgs has v0.22.3
   vicinae =
