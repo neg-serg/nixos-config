@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -28,6 +29,8 @@ in
       OPENAI_API_KEY = "ollama";
       OPENAI_BASE_URL = "http://localhost:11434/v1";
       OMNIROUTER_API_KEYS = "omnirouter-local";
+      # grpcio C extension needs the gcc runtime (libstdc++.so.6), absent from NixOS unit env.
+      LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib";
     };
   };
 }
