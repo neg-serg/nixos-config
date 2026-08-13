@@ -33,9 +33,4 @@ in
     })
   ];
 
-  # Available GUI tools (from stone-recipes, ported for future use):
-  # pkgs.blender # 3D creation suite
-  # pkgs.iverilog # Verilog simulator
-  # pkgs.wofi # Wayland launcher (rofi alternative)
-  # pkgs.ytop # TUI system monitor written in Rust
 }
