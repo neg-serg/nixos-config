@@ -40,8 +40,7 @@ let
     };
 
   mkCustomPkgs = pkgs: import ../packages/flake/custom-packages.nix { inherit pkgs; };
-  mkIosevkaNeg = system: inputs."iosevka-neg".packages.${system};
 in
 {
-  inherit mkPkgs mkCustomPkgs mkIosevkaNeg;
+  inherit mkPkgs mkCustomPkgs;
 }
