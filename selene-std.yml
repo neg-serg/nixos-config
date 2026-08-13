@@ -1,0 +1,11 @@
+base: lua51
+globals:
+  # Hyprland config API (loaded into a restricted env)
+  hl:
+    any: true
+  # swayimg config API (swayimg/init.lua)
+  swayimg:
+    any: true
+  # mpv script API
+  mp:
+    any: true

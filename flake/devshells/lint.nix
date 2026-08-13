@@ -22,6 +22,7 @@ pkgs.mkShell {
     # Lua
     pkgs.stylua # Lua formatter
     # QML
+    pkgs.selene # Lua linter
     pkgs.qt6.qtdeclarative # qmlformat: QML syntax checker
     # Shell
     pkgs.shellcheck # shell linter

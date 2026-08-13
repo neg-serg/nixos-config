@@ -94,6 +94,8 @@ lint:
     # Rust formatting (edition-aware via nearest Cargo.toml)
     if command -v rustfmt >/dev/null 2>&1; then bash scripts/dev/check-rustfmt.sh; else echo "rustfmt not found — skipping Rust check"; fi
     # Optional guard: prefer `let exe = lib.getExe' pkgs.pkg "bin"; in "${exe} …" over direct ${pkgs.*}/bin paths
+    # Lua (non-nvim; nvim is a vendored config)
+    if command -v selene >/dev/null 2>&1; then selene files/gui files/mpv; else echo "selene not found — skipping Lua lint"; fi
     # Enable with: EXECSTART_GUARD=1 just lint
     if [ "${EXECSTART_GUARD:-}" = "1" ]; then \
       if grep -R -nE --include='*.nix' 'ExecStart\s*=\s*".*\$\{pkgs\.[^}]+\}/bin/' modules | grep -q .; then \

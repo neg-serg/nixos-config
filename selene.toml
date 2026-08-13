@@ -1,0 +1,5 @@
+std = "selene-std"
+
+# One statement per line is an accepted style in these configs.
+[lints]
+multiple_statements = "allow"

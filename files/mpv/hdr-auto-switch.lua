@@ -9,6 +9,8 @@
 local MONITOR = os.getenv("HDR_MONITOR") or "DP-2"
 local HDR_CM = os.getenv("HDR_CM") or "hdredid"
 local SDR_CM = os.getenv("SDR_CM") or "auto"
+local exited = false
+local currentHdr = nil
 
 local function setMonitorCmSync(cm)
   -- Synchronous: used on shutdown where async subprocess may not complete
