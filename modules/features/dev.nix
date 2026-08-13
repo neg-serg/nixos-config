@@ -7,39 +7,9 @@ with lib;
       enable = mkBool "enable AI tools (e.g., LM Studio)" true;
       omp.enable = mkBool "install Oh My Pi (omp) AI coding agent (fork of Pi)" false;
     };
-    iac = {
-      backend = mkOption {
-        type = types.enum [
-          "terraform"
-          "tofu"
-        ];
-        default = "terraform";
-        description = "Choose IaC backend: HashiCorp Terraform or OpenTofu (tofu).";
-      };
-    };
     pkgs = {
-      formatters = mkBool "enable CLI/code formatters" true;
-      codecount = mkBool "enable code counting tools" true;
-      analyzers = mkBool "enable analyzers/linters" true;
       iac = mkBool "enable infrastructure-as-code tooling (Terraform, etc.)" true;
-      radicle = mkBool "enable radicle tooling" true;
       joern = mkBool "enable Joern code analysis platform" true;
-      runtime = mkBool "enable general dev runtimes (node etc.)" true;
-      misc = mkBool "enable misc dev helpers" true;
-    };
-    hack = {
-      core = {
-        secrets = mkBool "enable git secret scanners" true;
-        reverse = mkBool "enable reverse/disasm helpers" true;
-        crawl = mkBool "enable web crawling tools" true;
-      };
-      forensics = {
-        fs = mkBool "enable filesystem/disk forensics tools" true;
-        stego = mkBool "enable steganography tools" true;
-        analysis = mkBool "enable reverse/binary analysis tools" true;
-        network = mkBool "enable network forensics tools" true;
-      };
-      pentest = mkBool "enable pentest tools" false;
     };
     rust = {
       enable = mkBool "enable Rust tooling (rustup, rust-analyzer)" true;
@@ -88,5 +58,4 @@ with lib;
     bpf.enable = mkBool "enable BPF tracing tools (bpftrace, below)" false;
   };
 
-  options.features.hack.enable = mkBool "enable Hack/security tooling stack" true;
 }
