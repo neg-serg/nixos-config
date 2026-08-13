@@ -47,3 +47,9 @@ includes = ["**/*.py"]
 command = "mdformat"
 options = ["--wrap", "100"]
 includes = ["**/*.md", "**/*.mdown", "**/*.markdown", "**/*.mdx"]
+
+# TOML: format with taplo
+[formatter.taplo]
+command = "taplo"
+options = ["fmt"]
+includes = ["*.toml"]
