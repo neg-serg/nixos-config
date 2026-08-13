@@ -253,10 +253,6 @@ local function submap_resets()
   hl.bind("q", hl.dsp.submap("reset"))
 end
 
-local function bind_reset(key, fn)
-  hl.bind(key, fn)
-  hl.bind(key, hl.dsp.submap("reset"))
-end
 
 local function binde_reset(key, fn)
   hl.bind(key, fn, { repeating = true })
