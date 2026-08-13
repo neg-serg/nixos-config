@@ -59,19 +59,6 @@ in
         ANSIBLE_GALAXY_COLLECTIONS_PATHS = "${home}/.local/share/ansible/collections";
       };
 
-      # Nix-maid configuration files
-      # Note: We need to check if 'neg' is available passed down or if we need to access it differently.
-      # Usually in this repo modules, 'neg' is passed as an argument if defined in specialArgs.
-      # Assuming 'neg' is available as per original file.
-
-      # We use lib.mkMerge to attach to user configuration if needed, but since this is a system module,
-      # we might need to route this into the user profile correctly if it uses home-manager module sytle.
-      # However, the original code used `neg.mkHomeFiles`. Let's verify if we can simply use it here.
-
-      # original dev.nix:
-      # config = lib.mkIf ... ( lib.mkMerge [ ... (neg.mkHomeFiles ...) ] )
-
-      # Here we are in a standard module. We can use the same pattern.
     }
     // (lib.mkIf enableIac (
       neg.mkHomeFiles {

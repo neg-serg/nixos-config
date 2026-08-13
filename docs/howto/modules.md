@@ -56,54 +56,6 @@ For NixOS, the default value for this option includes at least this argument:
 
 - [\<nixpkgs/lib/modules.nix>](https://github.com/NixOS/nixpkgs/blob//lib/modules.nix)
 
-## features.allowUnfree.allowed
-
-Final allowlist of unfree package names (overrides preset if explicitly set).
-
-*Type:* list of string
-
-*Default:*
-
-```nix
-[ ]
-```
-
-*Declared by:*
-
-- [/modules/features/core.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
-
-## features.allowUnfree.extra
-
-Extra unfree package names to allow (in addition to preset).
-
-*Type:* list of string
-
-*Default:*
-
-```nix
-[ ]
-```
-
-*Declared by:*
-
-- [/modules/features/core.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
-
-## features.allowUnfree.preset
-
-Preset allowlist for unfree packages.
-
-*Type:* one of “desktop”, “headless”
-
-*Default:*
-
-```nix
-"desktop"
-```
-
-*Declared by:*
-
-- [/modules/features/core.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/core.nix)
-
 ## features.apps.guiAppsFull.enable
 
 Whether to enable enable heavy GUI apps (GIMP, OBS Studio).
@@ -384,182 +336,6 @@ true
 
 - [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
-## features.dev.hack.core.crawl
-
-Whether to enable enable web crawling tools.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-## features.dev.hack.core.reverse
-
-Whether to enable enable reverse/disasm helpers.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-## features.dev.hack.core.secrets
-
-Whether to enable enable git secret scanners.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-## features.dev.hack.forensics.analysis
-
-Whether to enable enable reverse/binary analysis tools.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-## features.dev.hack.forensics.fs
-
-Whether to enable enable filesystem/disk forensics tools.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-## features.dev.hack.forensics.network
-
-Whether to enable enable network forensics tools.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-## features.dev.hack.forensics.stego
-
-Whether to enable enable steganography tools.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-## features.dev.hack.pentest
-
-Whether to enable enable pentest tools.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-false
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
 ## features.dev.haskell.enable
 
 Whether to enable enable Haskell tooling (ghc, cabal, stack, HLS).
@@ -582,25 +358,9 @@ true
 
 - [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
-## features.dev.iac.backend
-
-Choose IaC backend: HashiCorp Terraform or OpenTofu (tofu).
-
-*Type:* one of “terraform”, “tofu”
-
-*Default:*
-
-```nix
-"terraform"
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
 ## features.dev.java.enable
 
-Whether to enable enable Java/JVM development tooling (JDK, Maven, PraxisLIVE).
+Whether to enable enable Java/JVM development tooling (JDK, Maven).
 
 *Type:* boolean
 
@@ -623,94 +383,6 @@ true
 ## features.dev.java.maven
 
 Whether to enable enable Apache Maven build tool.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-## features.dev.java.praxislive
-
-Whether to enable enable PraxisLIVE visual live programming IDE.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-## features.dev.pkgs.analyzers
-
-Whether to enable enable analyzers/linters.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-## features.dev.pkgs.codecount
-
-Whether to enable enable code counting tools.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-## features.dev.pkgs.formatters
-
-Whether to enable enable CLI/code formatters.
 
 *Type:* boolean
 
@@ -755,72 +427,6 @@ true
 ## features.dev.pkgs.joern
 
 Whether to enable enable Joern code analysis platform.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-## features.dev.pkgs.misc
-
-Whether to enable enable misc dev helpers.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-## features.dev.pkgs.radicle
-
-Whether to enable enable radicle tooling.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
-
-## features.dev.pkgs.runtime
-
-Whether to enable enable general dev runtimes (node etc.).
 
 *Type:* boolean
 
@@ -1523,28 +1129,6 @@ true
 *Declared by:*
 
 - [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
-
-## features.hack.enable
-
-Whether to enable enable Hack/security tooling stack.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/dev.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/dev.nix)
 
 ## features.hardware.amdgpu.rocm.enable
 
@@ -2681,28 +2265,6 @@ true
 
 - [/modules/features/system.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/system.nix)
 
-## features.text.espanso.enable
-
-Whether to enable enable espanso text expander.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-false
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
-
 ## features.text.manipulate.enable
 
 Whether to enable enable text/markup manipulation CLI tools (jq/yq/htmlq).
@@ -2757,28 +2319,6 @@ Whether to enable enable reading stack (CLI/GUI viewers, OCR, Recoll).
 
 ```nix
 true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
-
-## features.text.tex.enable
-
-Whether to enable enable TeX/LaTeX stack (TexLive full, rubber).
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-false
 ```
 
 *Example:*
@@ -2879,28 +2419,6 @@ true
 
 - [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
 
-## features.web.aria2.service.enable
-
-Whether to enable run aria2 download manager as a user service (graphical preset).
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-false
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
-
 ## features.web.chat.enable
 
 Whether to enable enable Telegram chat client (static binary, GTK-free).
@@ -2911,28 +2429,6 @@ Whether to enable enable Telegram chat client (static binary, GTK-free).
 
 ```nix
 true
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
-
-## features.web.codexStellarium.enable
-
-Whether to enable enable Codex-Stellarium new tab page for Vivaldi.
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-false
 ```
 
 *Example:*
