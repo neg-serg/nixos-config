@@ -31,13 +31,13 @@ screensavers | | `games` | System-level gaming config (controllers, etc.) | | `h
 7900 XTX), CLI tools. Models at `/zero/llm/` | | `media` | Audio (PipeWire, MPD), images, video
 (FFmpeg, VapourSynth, AI upscaling) | | `monitoring` | System monitoring — Alertmanager, sysstat,
 vnstat | | `nix` | Nix daemon — caches, GC, nix-ld, Hyprland, settings | | `profiles` | Host
-profiles (desktop, gaming, audio-pro, dev, lite, server) — auto-import | | `secrets` | sops-nix
-secrets — pass, yubikey, pkgs | | `security` | Hardening — AppArmor, sudo, PAM limits, polkit, pcscd
-| | `servers` | Services — AdGuard Home, Avahi, Geoclue, MPD, OpenSSH, Samba, Unbound | | `shell` |
-Shell — Zsh with plugins, Oh My Posh, aliases, env vars | | `system` | Core system — boot (Limine),
-kernel, networking, systemd, users, virtualisation | | `text` | Text processing — editors, PDF
-tools, converters | | `tools` | Miscellaneous — nix-output-monitor (Nerd Font icons), custom wraps |
-| `torrent` | BitTorrent — Transmission daemon, rustmission, stig TUI | | `user` | User-level via
+profiles (desktop, gaming, audio-pro, dev) — auto-import | | `secrets` | sops-nix secrets — pass,
+yubikey, pkgs | | `security` | Hardening — AppArmor, sudo, PAM limits, polkit, pcscd | | `servers` |
+Services — AdGuard Home, Avahi, Geoclue, MPD, OpenSSH, Samba, Unbound | | `shell` | Shell — Zsh with
+plugins, Oh My Posh, aliases, env vars | | `system` | Core system — boot (Limine), kernel,
+networking, systemd, users, virtualisation | | `text` | Text processing — editors, PDF tools,
+converters | | `tools` | Miscellaneous — nix-output-monitor (Nerd Font icons), custom wraps | |
+`torrent` | BitTorrent — Transmission daemon, rustmission, stig TUI | | `user` | User-level via
 nix-maid — session (Hyprland), apps, CLI, games, GUI, web |
 
 ## Key sub-structures
