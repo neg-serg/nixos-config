@@ -14,8 +14,10 @@ let
         { lib, ... }:
         {
           config._module.check = false;
-          # Mock mkBool helper used in features.nix
-          config.lib.neg.mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
+          # Mock module args used by modules/features/*.nix
+          # (real providers: modules/core/neg.nix for mkBool, flake specialArgs for pkgs)
+          config._module.args.mkBool = desc: default: (lib.mkEnableOption desc) // { inherit default; };
+          config._module.args.pkgs = pkgs;
         }
       )
       # Mock assertions to avoid evaluation errors
