@@ -143,5 +143,40 @@ in
       '';
     };
 
+    # Point Vivaldi's CSS mods directory at the profile mods folder so the
+    # compact address bar mod loads. The css_ui_mods_directory pref is empty by
+    # default ("Allow for using CSS modifications" must be enabled); setting it
+    # via the Preferences file is the declarative way (Settings → Appearance →
+    # Custom UI Modifications would do the same). Vivaldi keeps user-set prefs,
+    # so this oneshot only rewrites the file when the value is missing/wrong.
+    systemd.user.services.vivaldi-css-mods-pref =
+      let
+        prefScript = pkgs.writeText "vivaldi-css-mods-pref.py" ''
+          import json, os, sys
+          prefs = os.path.expanduser("~/.config/vivaldi/Default/Preferences")
+          if not os.path.isfile(prefs):
+              sys.exit(0)
+          with open(prefs) as f:
+              p = json.load(f)
+          a = p.setdefault("vivaldi", {}).setdefault("appearance", {})
+          target = os.path.expanduser("~/.config/vivaldi/css-mods")
+          if a.get("css_ui_mods_directory") != target:
+              a["css_ui_mods_directory"] = target
+              with open(prefs, "w") as f:
+                  json.dump(p, f, indent=1)
+              print("css_ui_mods_directory set to", target)
+        '';
+      in
+      {
+        description = "Point Vivaldi CSS mods at the profile mods folder";
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.python3}/bin/python3 ${prefScript}";
+        };
+        after = [ "graphical-session.target" ];
+        wants = [ "graphical-session.target" ];
+        wantedBy = [ "graphical-session.target" ];
+      };
+
   };
 }
