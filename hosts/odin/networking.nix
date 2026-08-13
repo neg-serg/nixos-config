@@ -27,8 +27,6 @@
 
   # Enable local bridge (br0) with DHCP server
   profiles.network.bridge.enable = true;
-  # Allow Wi-Fi management via reusable feature switch
-  features.net.wifi.enable = false;
 
   systemd.network = {
     networks = {

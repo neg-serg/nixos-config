@@ -218,7 +218,7 @@ flowchart LR
 <summary><h3>🎵 Media Stack</h3></summary>
 
 - 🎵 **MPD** - Music Player Daemon + clients (rmpc, ncmpcpp)
-- ⬇️ **Transmission** - Torrent client with custom TUI (tewi)
+- ⬇️ **Transmission** - Torrent client + rustmission TUI
 - 🎨 **AI Upscaling** - Real-time video enhancement (optional)
 - 🔊 **PipeWire** - Modern audio server
 
@@ -520,7 +520,7 @@ Quick-access overlays for common applications:
 | 💬 **im** | Telegram | `Super+I` | 30% × 95% |
 | 🎮 **discord** | Vesktop | `Super+D` | 50% × 40% |
 | 🎵 **music** | RMPC | `Super+M` | 70% × 40% |
-| ⬇️ **torrment** | Tewi | `Super+T` | 98% × 40% |
+| ⬇️ **torrment** | Rustmission | `Super+T` | 98% × 40% |
 | 📊 **teardown** | Btop | `Super+B` | 98% × 50% |
 | 🔊 **mixer** | Pwvucontrol | `Super+V` | 40% × 90% |
 
@@ -535,7 +535,7 @@ Rust launcher wrapper in `packages/game/`:
 - `game-run` - CPU isolation wrapper with gamescope presets
 ### 🎵 Media
 - `rmpc` - Modern MPD client (Rust)
-- `tewi` - Transmission TUI
+- `rustmission` - Transmission TUI
 
 ### 💻 Productivity
 - `two_percent` - Optimized fuzzy finder (skim fork)
