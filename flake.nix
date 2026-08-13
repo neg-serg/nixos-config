@@ -60,16 +60,8 @@
     tailray = {
       url = "github:NotAShelf/tailray";
     };
-    winapps = {
-      url = "github:winapps-org/winapps";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     steam-config-nix = {
       url = "github:unazikx/steam-config-nix/feat/winetricks";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    sqlit = {
-      url = "github:Maxteabag/sqlit";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     caelestia-shell = {
