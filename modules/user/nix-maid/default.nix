@@ -20,6 +20,7 @@
     ./apps/gui-apps.nix
     ./apps/vicinae.nix
     ./apps/omnirouter.nix
+    ./apps/dsh.nix
 
     ./apps/transmission.nix
 
