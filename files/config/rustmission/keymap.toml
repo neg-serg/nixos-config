@@ -11,7 +11,7 @@ keybindings = [
 
   { on = "/", action = "Search" },
   { on = "o", action = "XdgOpen" },
-  
+
   { on = "1", action = "SwitchToTorrents" },
   { on = "2", action = "SwitchToSearch" },
 
@@ -21,12 +21,10 @@ keybindings = [
   { on = "PageDown", action = "ScrollPageDown", show_in_help = false },
 
 
-
-
   # Arrows
   { on = "Left", action = "Left" },
   { on = "Right", action = "Right" },
-  { on = "Up", action = "Up"},
+  { on = "Up", action = "Up" },
   { on = "Down", action = "Down" },
 
   # Vi
@@ -36,8 +34,8 @@ keybindings = [
   { on = "j", action = "Down" },
 
   # Sorting
-  { on = "H", action = "MoveToColumnLeft"},
-  { on = "L", action = "MoveToColumnRight"},
+  { on = "H", action = "MoveToColumnLeft" },
+  { on = "L", action = "MoveToColumnRight" },
 ]
 
 [torrents_tab]
@@ -53,7 +51,4 @@ keybindings = [
 ]
 
 [search_tab]
-keybindings = [
-  { on = "p", action = "ShowProvidersInfo" }
-]
-
+keybindings = [{ on = "p", action = "ShowProvidersInfo" }]

@@ -100,7 +100,11 @@ pub fn build_flags(
             flags.extend_from_slice(&["--fsr-sharpness".into(), sharpness]);
         }
         Preset::Hdr => {
-            flags.extend_from_slice(&["-f".into(), "--adaptive-sync".into(), "--hdr-enabled".into()]);
+            flags.extend_from_slice(&[
+                "-f".into(),
+                "--adaptive-sync".into(),
+                "--hdr-enabled".into(),
+            ]);
             flags.extend_from_slice(&["-W".into(), display.width.to_string()]);
             flags.extend_from_slice(&["-H".into(), display.height.to_string()]);
         }

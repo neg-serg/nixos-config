@@ -3,7 +3,10 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser, Debug)]
-#[command(name = "game", about = "Unified game launcher — CPU pinning, Gamescope presets, session launching")]
+#[command(
+    name = "game",
+    about = "Unified game launcher — CPU pinning, Gamescope presets, session launching"
+)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,

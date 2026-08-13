@@ -30,10 +30,7 @@ pub struct DisplayInfo {
 
 /// Query all monitors from Hyprland.
 pub fn get_monitors() -> Vec<Monitor> {
-    let output = match Command::new("hyprctl")
-        .args(["monitors", "-j"])
-        .output()
-    {
+    let output = match Command::new("hyprctl").args(["monitors", "-j"]).output() {
         Ok(o) if o.status.success() => o,
         _ => return Vec::new(),
     };
@@ -112,10 +109,7 @@ pub fn resolve_display() -> DisplayInfo {
 /// Describe the current display setup.
 pub fn describe_display() -> String {
     let info = resolve_display();
-    let mon_name = info
-        .monitor_name
-        .as_deref()
-        .unwrap_or("unknown");
+    let mon_name = info.monitor_name.as_deref().unwrap_or("unknown");
     format!(
         "Monitor: {mon_name}  {w}x{h}@{rate}Hz  scale={scale}",
         w = info.width,

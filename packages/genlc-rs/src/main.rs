@@ -7,8 +7,8 @@
 mod protocol;
 
 use anyhow::{Context, Result};
-use std::str::FromStr;
 use clap::{Parser, Subcommand};
+use std::str::FromStr;
 
 #[derive(Parser)]
 #[command(name = "genlc", version, about = "Genelec SAM loudspeaker control")]
