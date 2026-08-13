@@ -5,9 +5,6 @@
 
   rmpc = pkgs.rmpc; # TUI music player client for MPD with album art support vi...
 
-  surfingkeys-pkg = pkgs.surfingkeys-pkg;
-  sqlit = pkgs.neg.sqlit;
-
   waves = pkgs.waves;
 
   termeverything = pkgs.neg.termeverything;
@@ -15,14 +12,10 @@
   brrtfetch = pkgs.neg.brrtfetch;
   talktype = pkgs.neg.talktype;
 
-  term39 = pkgs.neg.term39; # Retro-styled terminal multiplexer
-
   omp = pkgs.neg.omp; # Oh My Pi (omp) — AI coding agent with LSP, DAP, subagents
 
   hwctl = pkgs.neg.hwctl; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
-  zestbay = pkgs.zestbay; # PipeWire patchbay with LV2/VST3/CLAP plugin hosting
   pw-audioshare = pkgs.pw-audioshare; # GTK4 PipeWire patchbay with auto-connect presets
-  wyoming-openai = pkgs.neg.wyoming-openai; # Wyoming OpenAI proxy — STT/TTS bridge for Home Assistant
   praxislive = pkgs.neg.praxislive; # PraxisLIVE — hybrid visual live programming IDE for creative coding
   genlc = pkgs.genlc; # Genelec SAM loudspeaker CLI volume control via GLM USB adapter
   dsh = pkgs.neg.dsh;

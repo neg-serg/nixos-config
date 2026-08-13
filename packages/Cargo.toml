@@ -4,6 +4,6 @@ members = [
     "hypr-focus",
     "pwroute",
     "hwctl",
-    "amnezia-tun", "genlc-rs",
+    "genlc-rs",
 ]
 resolver = "2"
