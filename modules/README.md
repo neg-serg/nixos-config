@@ -27,7 +27,7 @@ vars | | `fonts` | Fonts — Iosevka (Nerd Font), Pango, fontconfig defaults | |
 toys, ASCII art, screensavers | | `games` | System-level gaming config (controllers, etc.) | |
 `hardware` | Hardware — GPU (AMD/NVIDIA), audio, cooling, QMK, udev, USB automount | | `lib` |
 Custom Nix library — `mkWhen`, `mkLocalBin`, `mkHomeFiles`, `systemd-user` | | `llm` | Local LLM —
-Ollama (ROCm on RX 7900 XTX), CLI tools. Models at `/zero/llm/` | | `media` | Audio (PipeWire, MPD),
+Ollama (ROCm on RX 9070 XT), CLI tools. Models at `/zero/llm/` | | `media` | Audio (PipeWire, MPD),
 images, video (FFmpeg, VapourSynth, AI upscaling) | | `monitoring` | System monitoring —
 Alertmanager, sysstat, vnstat | | `nix` | Nix daemon — caches, GC, nix-ld, Hyprland, settings | |
 `profiles` | Host profiles (desktop, gaming, audio-pro, dev) — auto-import | | `secrets` | sops-nix

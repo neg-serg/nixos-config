@@ -14,13 +14,12 @@ nix flake update
 
 ```bash
 nix flake lock --update-input nixpkgs
-nix flake lock --update-input home-manager
 ```
 
 ## Common Inputs
 
-| Input | Description | |-------|-------------| | `nixpkgs` | Main package repository | |
-`home-manager` | User config management | | `sops-nix` | Secrets management |
+| Input | Description | |-------|-------------| | `nixpkgs` | Main package repository | | `sops-nix`
+| Secrets management |
 
 ## Rebuild After Update
 

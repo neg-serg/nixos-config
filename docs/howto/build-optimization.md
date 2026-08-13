@@ -26,8 +26,8 @@ VPS | | **CA derivations (`ca-derivations`)** | Content-addressed — перес
 1. **Нет разделения на базу и пользовательское окружение** — home-manager или `nix profile`
    позволили бы пересобирать только пользовательский слой отдельно от системы.
 
-1. **Большое кол-во импортов в `modules/flat.nix`** — каждый import добавляет время оценки. Не
-   критично, но суммарно ~200-300ms.
+1. **Много импортов в `modules/default.nix`** — каждый import добавляет время оценки (частично
+   смягчено domainFilter, который пропускает неиспользуемые домены). Не критично.
 
 ## Рекомендации
 
@@ -52,8 +52,8 @@ feature-флаги) | Меньше пересборок при изменени�
     задача выполняется быстрее за счёт меньшего contention на shared cache)
   - cores=2 → больше накладных расходов на IPC между build-процессами
 
-- `profile = "full"` включает все feature-флаги. `devSpeed = true` выключает web.tools, floorp (уже
-  отключён), fastfox, qt, fun, ai, torrent — остаётся минимум для теста.
+- `profile = "full"` включает все feature-флаги. `devSpeed = true` выключает web.tools, qt, fun, ai,
+  torrent — остаётся минимум для теста.
 
 - Remote builder (`--builders`) переносит сборку тяжёлых derivation'ов (rustc, gcc, webkitgtk) на
   другую машину. Локально собирается только финальная линковка system closure.

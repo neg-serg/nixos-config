@@ -51,8 +51,8 @@
 - 🎮 **Gaming-First Design** - CPU isolation, low-latency optimizations, VRR support
 - 🔧 **Developer Paradise** - Multi-language support (Rust, C++, Haskell, Python), AI tools
 - 🎨 **Beautiful Hyprland** - 21 workspaces, 6 scratchpads, custom Quickshell panel
-- 📦 **34 Custom Packages** - Tailored tools for productivity and performance
-- 🧩 **Modular Architecture** - 32 categories, 427 files, crystal-clear organization
+- 📦 **30 Custom Packages** - Tailored tools for productivity and performance
+- 🧩 **Modular Architecture** - 27 domain modules with feature flags, 403 Nix files
 - 🔄 **Continuous Integration** - Automated formatting, linting, and testing
 
 ---
@@ -84,10 +84,10 @@ nh os switch
 
 | 📁 Category | 🔢 Count | 📊 Progress |
 |-------------|----------|-------------|
-| **Module Categories** | 32 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Nix Files** | 427 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Custom Packages** | 34 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
-| **Active Modules** | 427 | ![](https://geps.dev/progress/93?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Module Domains** | 27 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Nix Files** | 403 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Custom Packages** | 30 | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
+| **Active Modules** | 403 | ![](https://geps.dev/progress/93?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 
 | **Total Commits** | 4000+ | ![](https://geps.dev/progress/100?dangerColor=800000&warningColor=ff9900&successColor=006600) |
 
@@ -173,7 +173,7 @@ flowchart LR
 <summary><h3>🎮 Performance & Gaming</h3></summary>
 
 - ⚡ **CPU Isolation** - Dedicated cores (0-3,16-19) for gaming
-- 🎯 **Custom Launch Scripts** - `game-run`, `gamescope-perf`, `gamescope-quality`, `gamescope-hdr`
+- 🎯 **Custom Launch Scripts** - `game` (Rust): CPU isolation + gamescope presets
 - 🚀 **Low-Latency Optimizations** - Kernel parameters, scheduler tweaks
 - 🖥️ **VRR Support** - Variable Refresh Rate via Gamescope
 - 🎪 **Immediate Mode** - For competitive games (CS2, osu!)
@@ -217,7 +217,6 @@ flowchart LR
 <details>
 <summary><h3>🎵 Media Stack</h3></summary>
 
-- 🎬 **Jellyfin** - Media server
 - 🎵 **MPD** - Music Player Daemon + clients (rmpc, ncmpcpp)
 - ⬇️ **Transmission** - Torrent client with custom TUI (tewi)
 - 🎨 **AI Upscaling** - Real-time video enhancement (optional)
@@ -237,9 +236,9 @@ flowchart LR
 │       ├── hardware.nix
 │       ├── networking.nix
 │       └── services.nix
-├── 📂 modules/                       # 🧩 System modules (32 categories)
-│   ├── 📁 features/                  # ⚙️ Feature flags (15 files)
-│   │   ├── core.nix                 # Profile & unfree packages
+├── 📂 modules/                       # 🧩 System modules (27 domains)
+│   ├── 📁 features/                  # ⚙️ Feature flags (14 files)
+│   │   ├── core.nix                 # Core feature options
 │   │   ├── gui.nix                  # GUI stack options
 │   │   ├── dev.nix                  # Development tools
 │   │   └── ...
@@ -255,21 +254,17 @@ flowchart LR
 │   │   │   └── ...
 │   │   └── ...
 │   ├── 📁 servers/                   # 🖧 Server services
-│   │   ├── active/                   # 11 active
 │   └── ...
-├── 📂 packages/                      # 🎁 Custom overlays (34)
-│   ├── game-run/
-│   ├── gamescope-*/
+├── 📂 packages/                      # 🎁 Custom overlays (30)
+│   ├── game/
 │   ├── rmpc/
 │   └── ...
 ├── 📂 files/                         # 📝 Config files
 │   ├── 📁 gui/hypr/                  # Hyprland configs
 │   ├── 📁 quickshell/                # Panel configuration
-│   └── 📁 scripts/                   # Utility scripts
 ├── 📂 scripts/dev/                   # 🔧 Dev & CI scripts
 ├── 📂 docs/                          # 📚 Documentation
 │   └── 📁 manual/                    # User manual
-└── 📂 .github/workflows/             # ⚙️ CI/CD pipelines
 ```
 
 ---
@@ -302,7 +297,6 @@ pie title Module Categories Distribution
 | ⚙️ **features** | Feature flags system | 15 |
 | 📚 **neg** | Custom library helpers | 1 |
 | 👥 **profiles** | Service profiles | 1 |
-| 🎭 **roles** | Role configs (homelab, workstation, media) | 4 |
 
 </details>
 
@@ -334,7 +328,6 @@ pie title Module Categories Distribution
 - 💻 **dev** - Languages & tools
 - 🤖 **llm** - LLM integration
 - 📝 **text** - Editors & viewers
-- 🗃️ **db** - Databases
 - 📚 **documentation** - Doc generators
 
 </details>
@@ -342,7 +335,7 @@ pie title Module Categories Distribution
 <details>
 <summary><h3>🌐 Web & Communication (4)</h3></summary>
 
-- 🌍 **web** - Browsers (Floorp, Firefox)
+- 🌍 **web** - Web browsing (Vivaldi)
 - 📧 **mail** - Email (notmuch, isync)
 - ⬇️ **torrent** - Torrent clients
 - 💬 **im** - Instant messaging
@@ -357,9 +350,7 @@ pie title Module Categories Distribution
 |---------|---------|
 | 🔒 adguardhome | DNS-level ad blocking |
 | 📡 avahi | mDNS/DNS-SD |
-| 🎬 jellyfin | Media streaming |
 | 🎵 mpd | Music Player Daemon |
-| ☁️ nextcloud | Cloud storage & sync |
 | 🔑 openssh | Remote access |
 
 
@@ -376,21 +367,20 @@ pie title Module Categories Distribution
 # 🐚 Enter development shell with all tools
 nix develop
 
-# 🎨 Format all code (alejandra)
+# 🎨 Format all code (nixfmt/treefmt)
 just fmt
 
 # 🔍 Run all checks (format + lint + build)
 just check
 
 # 🏗️ Build without switching
-just build
+nixos-rebuild build --flake .#odin
 
-# 🔄 Update flake inputs
-just update
+# 🚀 Rebuild and switch
+just deploy
 
-# 🪝 Enable/disable git hooks
+# 🪝 Enable repo git hooks (lint + commit-msg scope check)
 just hooks-enable
-just hooks-disable
 ```
 
 ### 🔄 CI/CD Pipeline
@@ -415,8 +405,7 @@ graph LR
 ```
 
 **Automated Checks:**
-- ✅ Code formatting (alejandra)
-- ✅ Dead code detection (deadnix)
+- ✅ Code formatting (nixfmt/treefmt)
 - ✅ Static analysis (statix)
 - ✅ CSS syntax validation
 - ✅ QML linting
@@ -539,15 +528,11 @@ Quick-access overlays for common applications:
 
 ## 🛠️ Custom Packages
 
-**34 Custom Packages** tailored for productivity and performance:
+**30 Custom Packages** tailored for productivity and performance:
 
-### 🎮 Game Scripts
-Python-based launcher wrappers in `packages/game-scripts/`:
-- `game-run` - CPU isolation wrapper
-- `gamescope-perf` - Performance preset launcher
-- `gamescope-quality` - Quality preset launcher
-- `gamescope-hdr` - HDR-enabled launcher
-
+### 🎮 Game
+Rust launcher wrapper in `packages/game/`:
+- `game-run` - CPU isolation wrapper with gamescope presets
 ### 🎵 Media
 - `rmpc` - Modern MPD client (Rust)
 - `tewi` - Transmission TUI
@@ -589,8 +574,7 @@ Python-based launcher wrappers in `packages/game-scripts/`:
 
 ### 🎨 Code Style
 
-- ✅ Use `alejandra` for formatting
-- ✅ Add comments for all packages
+- ✅ Use `nixfmt` for formatting
 - ✅ Follow existing patterns
 - ✅ Test thoroughly before submitting
 
@@ -615,7 +599,6 @@ This configuration is available under the **MIT License**.
 Special thanks to:
 - 🎯 [NixOS](https://nixos.org) - The reproducible Linux distribution
 - 🌊 [Hyprland](https://hyprland.org) - Dynamic tiling Wayland compositor
-- 🏠 [Home Manager](https://github.com/nix-community/home-manager) - User environment management
 - 👥 [nix-community](https://github.com/nix-community) - Tools and libraries
 
 </div>

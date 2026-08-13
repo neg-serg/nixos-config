@@ -10,13 +10,12 @@ configuration.
 - `modules/`, `packages/`, `docs/`, `hosts/`, … — system configuration and documentation
   (`docs/manual`, `docs/howto`, `docs/runbooks`).
 - `files/` — static config files linked to user homes via nix-maid.
-- `templates/` — developer scaffolding (Rust crane, Python CLI, shell app).
 - `docs/manual/manual.*.md` — canonical guides (this file).
 
 ## Quick Start (System)
 
 - Rebuild: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`
-- Flake options: `nix run .#gen-options`
+- Generated option docs: `just docs-modules`
 - Formatting/lint: `just fmt`, `just lint`, `just check`
 - Hooks (optional): `just hooks-enable`
 
@@ -38,15 +37,13 @@ configuration.
 
 - Primary toggle: `features.profiles` (list of active profiles; odin: `["desktop" "dev" "gaming"]`).
   Each profile sets feature-flag defaults via `modules/profiles/`.
-- Feature definitions live in `modules/features.nix`; documentation: `OPTIONS.md`.
+- Feature definitions live in `modules/features/`; documentation: `OPTIONS.md`.
 - Key flags:
   - GUI (`features.gui.*`), Web (`features.web.*`), Secrets (`features.secrets.enable`)
   - Dev stacks (`features.dev.*`, `features.dev.unreal.*`)
   - Media/Torrent (`features.media.*`, `features.torrent.enable`)
   - Fun extras (`features.fun.enable`)
   - Package exclusions by pname via `features.excludePkgs`
-
-Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false` values).
 
 ### Everyday Commands
 
@@ -60,7 +57,6 @@ Inspect flattened flags: `just show-features` (set `ONLY_TRUE=1` to hide `false`
 - Secrets live under `secrets/` and are wired via sops-nix; vaultix migration docs now live in
   `docs/runbooks/vaultix-migration.{md,ru.md}`.
 - Age keys should reside in `~/.config/sops/age/keys.txt`.
-- Cachix token is tracked via `secrets/cachix.env` (sops file).
 
 ### Systemd (User) Services
 
@@ -100,8 +96,6 @@ Full-TUN proxy: routes all non-private traffic through the working VLESS/Hysteri
 - Quickshell keyboard layout indicator listens to Hyprland `keyboard-layout` events, prefers the
   `main: true` device, shows the current submap as an accent pictogram before the keyboard glyph and
   layout (e.g., `★ ⌨ en`), and uses `hyprctl switchxkblayout current next` on click.
-- Floorp customizations keep the nav bar on top and strip telemetry/Activity Stream noise by
-  default; toggle advanced tweaks in `modules/user/web/floorp.nix` if needed.
 - Swayimg wrappers (`swayimg-first`) land in `~/.local/bin/swayimg` and are tuned via Hyprland
   window rules.
 
@@ -120,7 +114,7 @@ Use the same expectations regardless of whether you work under `modules/` or
 
 - Core helpers: `modules/lib/neg.nix`
 - XDG helpers: `modules/lib/xdg-helpers.nix`
-- Feature definitions/options: `modules/features.nix`
+- Feature definitions/options: `modules/features/`
 
 ### Package Availability Checks
 
@@ -181,17 +175,17 @@ Use the same expectations regardless of whether you work under `modules/` or
 
 ## Coding Style
 
-- Formatting: run `nix fmt`/`just fmt` (treefmt) before committing. It runs `alejandra -q` for Nix
-  and `mdformat --wrap 100` for Markdown. Enable git hooks via `just hooks-enable` to auto-run
+- Formatting: run `nix fmt`/`just fmt` (treefmt) before committing. It runs `nixfmt` for Nix and
+  `mdformat --wrap 100` for Markdown. Enable git hooks via `just hooks-enable` to auto-run
   formatters (`SKIP_NIX_FMT=1` to skip).
-- Indent with 2 spaces; let alejandra control wrapping/spacing. Avoid manual column alignment.
+- Indent with 2 spaces; let nixfmt control wrapping/spacing. Avoid manual column alignment.
 - Lists with complex elements expand one per line; attribute sets become multi-line once they hold
   more than one entry.
 - Keep prose/strings around ~100 columns; move long comments above the expression they describe.
 - Avoid `with pkgs;` around lists—refer to `pkgs.foo` explicitly. Using `with` inside local attrsets
   or helper scopes is fine.
-- Always declare feature options centrally (see `modules/features.nix`) and gate module fragments
-  via the relevant `features.*` flags.
+- Always declare feature options centrally (see `modules/features/`) and gate module fragments via
+  the relevant `features.*` flags.
 - Structure modules with `lib.mkMerge [ … ]` and the helper sugar above. Factor package groups into
   local `groups = { … };` sets and flatten with `config.lib.neg.mkEnabledList`.
 - Systemd user units/paths/sockets should reuse `config.lib.neg.systemdUser.mkUnitFromPresets`.
@@ -247,20 +241,15 @@ Keep this manifest updated whenever vendored sources change so that licensing re
 
 - All local derivations (`pkgs.neg.*`, CLI wrappers, MCP servers, etc.) now live under the top-level
   `packages/` directory.
-- The system modules add this overlay via `modules/nix/home-overlay.nix`; the Home Manager flake
-  reuses it through `../packages/overlay.nix` so both sides see the same package set.
-- When working inside `home/`, remember paths now need one more `../` to reach the shared
-  `packages/` tree.
-- Flake outputs for the custom servers are exposed at the repository root (e.g.
-  `nix build .#mcp-server-filesystem`), so you no longer need to enter `home/` to package or publish
-  them.
+- The overlay is applied in `flake/lib.nix` (`mkPkgs`); flake outputs for the custom packages are
+  exposed via `packages/flake/custom-packages.nix` (e.g. `nix build .#omp`).
 
 ## Hyprland: Single Source of Truth and Updates
 
-- Source of truth: `inputs.hyprland` (compositor) tracks Hyprland v0.52.1 while `inputs.hy3` stays
-  pinned to `hl0.52.0` (last stable plugin tag); `flake.lock` still captures the exact commits.
+- Source of truth: `inputs.hyprland` (compositor) is pinned to the v0.55.4 tag, `inputs.hy3` follows
+  the matching Hyprland release; `flake.lock` captures the exact commits.
 - The NixOS overlay routes `pkgs.hyprland`, `pkgs.xdg-desktop-portal-hyprland`, and
-  `pkgs.hyprlandPlugins.hy3` to those inputs, so Home‑Manager modules can just use `pkgs.*`.
+  `pkgs.hyprlandPlugins.hy3` to those inputs, so modules can just use `pkgs.*`.
 - Supporting inputs stay in lockstep via `follows` (`hyprland-protocols`,
   `xdg-desktop-portal-hyprland`, etc.); no manual portal wiring beyond
   `programs.hyprland.portalPackage = pkgs.xdg-desktop-portal-hyprland`.
@@ -298,29 +287,10 @@ Example (host):
 
 ```nix
 { lib, ... }: {
-  roles = {
-    workstation.enable = true;
-    homelab.enable = true;
-  };
-
-  # Disable heavy services for VMs or minimal builds
+  # Profiles are composed per host; disable heavy services here if needed
   profiles.services = {
     adguardhome.enable = false;
   };
-}
-```
-
-Example (media role):
-
-```nix
-{ lib, ... }: {
-  roles.media.enable = true;
-
-  # This role enables Jellyfin, MPD, Avahi, SSH by default.
-  # Per-host overrides (e.g., disable Jellyfin on this machine):
-  profiles.services.jellyfin.enable = false;
-
-  # Media server host-specific tweaks can live here as well (paths, ports, etc.).
 }
 ```
 
@@ -348,8 +318,8 @@ Service override examples
 
 - params: kernel cmdline and packaging (modules/params) in `modules/system/kernel/params.nix`.
 - sysctl: network/security sysctls in `modules/system/kernel/sysctl.nix`.
-- patches-amd: `boot.kernelPatches` with `extraStructuredConfig` for AMD in
-  `modules/system/kernel/patches-amd.nix`.
+- minimize/localmodconfig: kernel size reduction in
+  `modules/system/kernel/{minimize.nix,localmodconfig.nix}`.
 - Feature toggles: tune via `profiles.performance.*` and `profiles.security.*`; params derive from
   these.
 
@@ -728,22 +698,3 @@ Prometheus PHP‑FPM Exporter
 
 - The `php-fpm-exporter` monitoring module has been removed. Prometheus server is disabled in this
   configuration, and the exporter depended on `config.services.prometheus`.
-
-Nextcloud on odin (clean install)
-
-- Host `odin` uses the stock `services.nextcloud` module without custom profiles; the web frontend
-  is served directly by Nextcloud's built-in PHP‑FPM.
-- Nextcloud is served at `https://odin` with initial credentials: user `admin`, password
-  `Admin123!ChangeMe` (see `hosts/odin/services.nix:services.nextcloud.config`).
-- The data directory is isolated from any previous installs (`/zero/sync/nextcloud`), and the
-  MariaDB/MySQL database is created locally under the default user `nextcloud`
-  (`database.createLocally = true;`).
-- To reset the admin password, use
-  `sudo -u nextcloud /run/current-system/sw/bin/nextcloud-occ user:resetpassword admin`. The current
-  password (`Admin123!ChangeMe` by default) is tracked via the SOPS secret
-  `secrets/nextcloud-admin-password.sops.yaml`.
-  - The password is materialized into `/var/lib/nextcloud/adminpass` (owned by `nextcloud`, mode
-    `0400`) via the `nextcloud-adminpass-from-sops` unit.
-  - The automatic `nextcloud-setup` and `nextcloud-update-db` units are disabled; upgrades are
-    performed manually with `sudo -u nextcloud nextcloud-occ upgrade` after bumping the Nextcloud
-    package version.
