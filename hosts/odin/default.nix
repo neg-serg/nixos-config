@@ -36,10 +36,7 @@
   features.web.default = "vivaldi";
   features.mail.vdirsyncer.enable = false; # Disabled: no Google OAuth credentials (missing secrets/home/vdirsyncer/google.sops.yaml)
   features.mail.mbsync.enable = false;
-  features.hardware.bluetooth.enable = false;
   features.net.zapret2.enable = true; # Zapret2 DPI bypass (nfqws2)
-  features.net.transparent-proxy.enable = false; # Disabled: upstream dead, using proxy script fallback
-  features.dev.haskell.enable = true; # Enable Haskell toolchain (GHC, cabal, stack, HLS)
   features.virt.libvirtd.enable = true;
   features.apps.winapps.enable = true;
   features.apps.winapps.desktopApps = [
@@ -49,10 +46,8 @@
     "cmd"
     "powershell"
   ];
-  features.apps.guiAppsFull.enable = false; # Disable heavy GUI apps (GIMP, OBS); gaming profile enables it by default
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
   hardware.gpu.corectrl.enable = true;
-  features.dev.cpp.enable = true; # Enable C++ toolchain (ccache, gcc, cmake)
   # Override default networkUnits: odin uses systemd-networkd, not NetworkManager
   features.system.logTtys.networkUnits = [
     "systemd-networkd.service" # Primary network configuration
@@ -72,7 +67,6 @@
   features.dev.ai.omp.enable = true; # Oh My Pi (omp) — AI coding agent fork with LSP, DAP, subagents
   features.llm.enable = true; # Local LLM stack: Ollama (ROCm, models on /zero/ai/ollama), colibri engine, voxinput
   features.cli.broot.enable = true;
-  features.dev.tla.enable = true;
   features.hardware.usbAutomount.enable = true;
   features.input.kanata.enable = true; # Caps→Ctrl via kanata
   features.input.warpd.enable = true; # warpd: keyboard-driven pointer control

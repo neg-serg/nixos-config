@@ -120,20 +120,11 @@ in
           (assertParent gui.enable gui.quickshell.enable
             "features.gui.quickshell.enable requires features.gui.enable = true"
           )
-          (assertParent gui.enable gui.caelestia-shell.enable
-            "features.gui.caelestia-shell.enable requires features.gui.enable = true"
-          )
           (assertParent gui.enable gui.vicinae.enable
             "features.gui.vicinae.enable requires features.gui.enable = true"
           )
-          (assertParent gui.enable guiApps.obsidian.autostart.enable
-            "features.apps.obsidian.autostart.enable requires features.gui.enable = true"
-          )
           (assertParent gui.enable guiApps.winapps.enable
             "features.apps.winapps.enable requires features.gui.enable = true"
-          )
-          (assertParent gui.enable guiApps.guiAppsFull.enable
-            "features.apps.guiAppsFull.enable requires features.gui.enable = true"
           )
           (assertParent config.features.web.enable config.features.web.tools.enable
             "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)"

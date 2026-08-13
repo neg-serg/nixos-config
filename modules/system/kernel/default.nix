@@ -1,7 +1,6 @@
 { ... }:
 {
   imports = [
-    ./minimize.nix
     ./localmodconfig.nix
     ./params.nix
     ./sysctl-mem-extras.nix
