@@ -9,8 +9,7 @@ let
 in
 {
   environment.systemPackages = lib.optionals enabled [
-    # Most LLM CLI tools moved to devShells.ai (aichat, aider-chat, codex, openai)
+    # Most LLM CLI tools (aichat, aider-chat, codex) live in dev shells
     pkgs.voxinput # voice→text via LocalAI/OpenAI + dotool/uinput (system-level utility)
-    # pkgs.ollama-vulkan # Ollama with Vulkan backend (alternative to CPU-only ollama)
   ];
 }
