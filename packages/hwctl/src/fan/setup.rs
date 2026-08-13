@@ -39,7 +39,11 @@ pub fn run_setup(flags: SetupFlags) -> Result<()> {
 
     // ── Locate CPU temperature sensor (k10temp preferred, asusec fallback) ──
     let cpu_dev = crate::hwmon::HwmonDevice::find(|d| d.is_k10temp())?
-        .or_else(|| crate::hwmon::HwmonDevice::find(|d| d.is_asusec()).ok().flatten())
+        .or_else(|| {
+            crate::hwmon::HwmonDevice::find(|d| d.is_asusec())
+                .ok()
+                .flatten()
+        })
         .ok_or_else(|| anyhow::anyhow!("no CPU temperature sensor found; skipping"))?;
     let cpu_base = cpu_dev.basename();
 
@@ -114,12 +118,15 @@ pub fn run_setup(flags: SetupFlags) -> Result<()> {
         found_pwm = true;
 
         // Map GPU temp to selected channels
-        let use_gpu = flags.gpu_pwm_channels.contains(&ch)
-            && gpu_dev.is_some()
-            && gpu_temp_name.is_some();
+        let use_gpu =
+            flags.gpu_pwm_channels.contains(&ch) && gpu_dev.is_some() && gpu_temp_name.is_some();
 
         let temp_ref = if use_gpu {
-            format!("{}/{}", gpu_base.as_ref().unwrap(), gpu_temp_name.as_ref().unwrap())
+            format!(
+                "{}/{}",
+                gpu_base.as_ref().unwrap(),
+                gpu_temp_name.as_ref().unwrap()
+            )
         } else {
             format!("{}/{}", cpu_base, cpu_temp_name)
         };

@@ -222,10 +222,7 @@ pub fn run() -> hyprland::Result<()> {
             state.clone(),
         ));
 
-        listener.add_window_closed_handler(make_window_closed_handler(
-            history,
-            state.clone(),
-        ));
+        listener.add_window_closed_handler(make_window_closed_handler(history, state.clone()));
 
         log_msg("starting event listener");
         if let Err(e) = listener.start_listener() {

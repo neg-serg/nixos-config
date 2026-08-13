@@ -70,7 +70,9 @@ fn main() {
         Commands::Daemon => commands::daemon(),
         Commands::Switch => commands::switch_window(),
         Commands::Workspace { target } => commands::workspace(&target),
-        Commands::MoveToWorkspace { target, follow } => commands::move_to_workspace(&target, follow),
+        Commands::MoveToWorkspace { target, follow } => {
+            commands::move_to_workspace(&target, follow)
+        }
         Commands::Float => commands::float(),
         Commands::Fullscreen => commands::fullscreen(),
         Commands::Pin => commands::pin(),

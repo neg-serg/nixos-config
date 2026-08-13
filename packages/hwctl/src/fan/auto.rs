@@ -12,7 +12,10 @@ pub fn run_auto() -> Result<()> {
     if status.success() {
         println!("Automatic fan control restored.");
     } else {
-        anyhow::bail!("Failed to restart fancontrol service (exit code: {:?})", status.code());
+        anyhow::bail!(
+            "Failed to restart fancontrol service (exit code: {:?})",
+            status.code()
+        );
     }
     Ok(())
 }

@@ -89,6 +89,10 @@ lint:
       ruff check -- .; \
       black --check --line-length 79 --extend-exclude '(secrets/home/crypted|modules/user/gui/kitty/conf/tab_bar.py|modules/user/gui/kitty/conf/scroll_mark.py|modules/user/gui/kitty/conf/search.py)' .; \
     fi
+    # TOML syntax/style
+    if command -v taplo >/dev/null 2>&1; then taplo lint; else echo "taplo not found — skipping TOML lint"; fi
+    # Rust formatting (edition-aware via nearest Cargo.toml)
+    if command -v rustfmt >/dev/null 2>&1; then bash scripts/dev/check-rustfmt.sh; else echo "rustfmt not found — skipping Rust check"; fi
     # Optional guard: prefer `let exe = lib.getExe' pkgs.pkg "bin"; in "${exe} …" over direct ${pkgs.*}/bin paths
     # Enable with: EXECSTART_GUARD=1 just lint
     if [ "${EXECSTART_GUARD:-}" = "1" ]; then \
@@ -130,6 +134,11 @@ lint:
 lint-annotations:
     repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; \
     bash "$repo_root/scripts/dev/check-package-annotations.sh" "$repo_root"
+
+# Format Rust sources (edition-aware, via nearest Cargo.toml)
+rustfmt:
+    repo_root="$(git rev-parse --show-toplevel)"; \
+    bash "$repo_root/scripts/dev/check-rustfmt.sh" "$repo_root" fix
 
 docs-modules:
     # Generate modules documentation (opt-in)
