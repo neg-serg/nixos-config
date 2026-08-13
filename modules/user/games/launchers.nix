@@ -26,10 +26,9 @@ in
           "/zero"
           "/zero"
           # CEF/Steam break through SOCKS5 (CM WebSocket ports reset, RSA-key
-          # fetch fails): strip session proxy env vars (chat.nix sets
-          # ALL_PROXY/HTTP(S)_PROXY to the sing-box SOCKS5 on 10808) so Steam
-          # always goes direct. no_proxy does not help — Chromium ignores it
-          # for SOCKS5.
+          # fetch fails): strip session proxy env vars (set manually via the
+          # vpn-vivaldi.sh helper) so Steam always goes direct. no_proxy does
+          # not help — Chromium ignores it for SOCKS5.
           "--unsetenv"
           "ALL_PROXY"
           "--unsetenv"
