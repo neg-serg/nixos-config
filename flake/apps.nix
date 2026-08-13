@@ -8,19 +8,6 @@ system:
 let
   nixfmtPkg = nixpkgs.legacyPackages.${system}.nixfmt;
 
-  genOptions = pkgs.writeShellApplication {
-    name = "gen-options";
-    runtimeInputs = [
-      pkgs.git # version control
-      pkgs.jq # json processor
-      pkgs.nix # nix package manager
-    ];
-    text = ''
-      set -euo pipefail
-      exec "${self}/scripts/dev/gen-options.sh" "$@"
-    '';
-  };
-
   fmtApp = pkgs.writeShellApplication {
     name = "fmt";
     runtimeInputs = [
@@ -47,10 +34,6 @@ let
 in
 {
   apps = {
-    gen-options = {
-      type = "app";
-      program = "${genOptions}/bin/gen-options";
-    };
     fmt = {
       type = "app";
       program = "${fmtApp}/bin/fmt";

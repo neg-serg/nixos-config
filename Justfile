@@ -1,34 +1,6 @@
 # Repository development helpers for NixOS workflows
 set shell := ["bash", "-cu"]
 
-# --- System-level docs/utilities -------------------------------------------------
-# Generate aggregated options docs into docs/howto/*.md
-gen-options:
-    repo_root="$(git rev-parse --show-toplevel)"; \
-    cd "$repo_root" && scripts/dev/gen-options.sh
-
-# Generate interactive module dependency graph (HTML)
-module-graph:
-    repo_root="$(git rev-parse --show-toplevel)"; \
-    cd "$repo_root" && python3 scripts/dev/module-graph.py
-
-# Generate and commit options docs if there are changes
-gen-options-commit:
-    set -euo pipefail
-    repo_root="$(git rev-parse --show-toplevel)"
-    cd "$repo_root"
-    just gen-options
-    if git diff --quiet -- docs; then \
-      echo "No changes in docs"; \
-    else \
-      git add docs; \
-      git commit -m "[docs/options] Regenerate options docs"; \
-    fi
-
-# Detect V-Cache CPU set and print recommended kernel masks
-cpu-masks:
-    repo_root="$(git rev-parse --show-toplevel)"; \
-    cd "$repo_root" && scripts/hw/cpu-recommend-masks.sh
 
 # --- System Management -----------------------------------------------------------
 
@@ -64,13 +36,6 @@ diff:
     @files=$(find /nix/var/nix/profiles -maxdepth 1 -name "system-*-link" | sort -V | tail -n 2); \
     nix run nixpkgs#dix -- $files
 
-# Build new closure and preview diff against current system
-diff-preview host="odin":
-    bash scripts/dev/diff-preview.sh {{host}}
-
-# Same as diff-preview, but only show newly added packages
-diff-preview-new host="odin":
-    bash scripts/dev/diff-preview.sh {{host}} --new-only
 
 # --- Repo-wide workflows ---------------------------------------------------------
 fmt:
@@ -178,33 +143,6 @@ docs-modules:
 hooks-enable:
     git config core.hooksPath .githooks
 
-show-features:
-    # Print flattened features for given check names
-    # Pass items via env var:
-    #   NAMES="nixos-eval-odin" just show-features
-    # Filter only true values:
-    #   ONLY_TRUE=1 just show-features
-    set -eu
-    sys=${SYSTEM:-x86_64-linux}
-    if [ -n "${NAMES:-}" ]; then \
-    items=(${NAMES}); \
-    else \
-    items=(nixos-eval-odin); \
-    fi
-    for name in "${items[@]}"; do \
-      echo "== ${name} (system=${sys}) =="; \
-      out=$(nix build --no-link --print-out-paths ".#checks.${sys}.${name}"); \
-      if command -v jq >/dev/null 2>&1; then \
-        if [ "${ONLY_TRUE:-}" = "1" ]; then \
-          jq -r 'to_entries|map(select(.value==true).key)|.[]' <"$out"; \
-        else \
-          jq . <"$out"; \
-        fi; \
-      else \
-        cat "$out"; \
-      fi; \
-      echo; \
-    done
 
 systemd-status:
     set -eu
