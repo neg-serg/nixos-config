@@ -6,15 +6,17 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
 
 ## Profiles
 
-- `features.profile`: `"full" | "lite"` (default: `"full"`)
-  - Profile influences defaults via `modules/default.nix`.
-  - You can still override any option after the profile is set.
+- `features.profiles`: list of active profiles (default: `["desktop"]`)
+  - Available: `desktop`, `gaming`, `audio-pro`, `dev`.
+  - Each profile sets feature-flag defaults via `modules/profiles/<name>.nix`
+    (`mkDefault`); order matters — later profiles override earlier ones.
+  - You can still override any option after the profiles are set.
 
 ## Web Stack (`modules/user/nix-maid/web`)
 
-- `features.web.enable` (default: true in full, false in lite)
+- `features.web.enable` (default: true — set by the `desktop` profile)
 - `features.web.tools.enable` (aria2, yt‑dlp, misc tools)
-  - Default: true in full, false in lite
+  - Default: true (desktop profile)
 - `features.web.vivaldi.enable` (Vivaldi browser)
   - Default: false
   - Installs `pkgs.vivaldi` with Wayland flags via `--ozone-platform-hint=wayland`
@@ -34,18 +36,18 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
 ## Audio Stack (`modules/media/audio`)
 
 - `features.media.audio.core.enable` (PipeWire routing tools)
-  - Default: true in full, false in lite
+  - Default: true (desktop/audio-pro profiles)
 - `features.media.audio.apps.enable` (players, tagging, analysis tools)
-  - Default: true in full, false in lite
+  - Default: true (desktop/audio-pro profiles)
 - `features.media.audio.creation.enable` (DAW, synths)
-  - Default: true in full, false in lite
+  - Default: true (desktop/audio-pro profiles)
 - `features.media.audio.mpd.enable` (mpd, mpdris2, clients)
-  - Default: true in full, false in lite
+  - Default: true (desktop/audio-pro profiles)
 
 ## Emulators / RetroArch (`modules/emulators/default.nix`)
 
 - `features.emulators.retroarch.full` (use `retroarchFull` with extended cores)
-  - Default: true in full, false in lite (and false by default outside profiles)
+  - Default: true (desktop profile), false otherwise
   - When enabled, extra unfree libretro cores are auto‑allowlisted (see below).
 
 ## Unfree Policy
@@ -99,7 +101,7 @@ Switch examples:
 
 ## IaC (Terraform / OpenTofu)
 
-- `features.dev.pkgs.iac` — include Infrastructure‑as‑Code CLI (default: true in full profile)
+- `features.dev.pkgs.iac` — include Infrastructure-as-Code CLI (default: true — set by the `dev` profile)
 - `features.dev.iac.backend` — choose backend: `"terraform" | "tofu"` (default: `"terraform"`)
   - When `terraform` is selected, the unfree predicate auto‑allowlists it.
   - Packages are added via `modules/dev/pkgs/default.nix`.
