@@ -296,8 +296,6 @@ lib.mkMerge [
         };
         # Keep X11 off for this host
         xserver.enable = lib.mkForce false;
-        # GVFS disabled — pulls GTK; re-enable if file manager needs MTP/SMB
-        # gvfs.enable = true;
 
         # Resilio Sync (interactive Web UI, auth via SOPS)
         resilio = lib.mkIf (builtins.pathExists (inputs.self + "/secrets/resilio.sops.yaml")) {

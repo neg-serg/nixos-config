@@ -46,8 +46,6 @@ let
     # -- Viewer --
     pkgs.swayimg # primary image viewer with IPC hooks
     swayimgFirst # wrapper that ensures swayimg session state
-    # pkgs.resvg # SVG renderer (for rendering SVG to raster)
-    # pkgs.rygel # DLNA/UPnP media server
   ];
 in
 {
