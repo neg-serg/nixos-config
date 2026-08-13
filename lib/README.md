@@ -1,24 +1,17 @@
 # Lib
 
-Custom Nix library functions.
-
-## Provides
-
-Core helpers used across the configuration:
-
-| Function | Purpose | |----------|---------| | `mkWhen` | Conditional merging | | `mkUnless` |
-Inverse conditional | | `mkXdgText` | XDG file creation | | `mkLocalBin` | Script installation | |
-`mkHomeFiles` | Home directory files | | `mkEnsureRealDir` | Directory creation |
+Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and direct imports.
 
 ## Files
 
-- `neg.nix` — Main helper library
-- `xdg-helpers.nix` — XDG-related functions
-- `opts.nix` — Option helpers
+- `opts.nix` — option helpers (`mkOpt`, `mkBoolOpt`, `mkStrOpt`, …); consumed via `opts` specialArg
+  (see `flake/nixos.nix`) and directly by modules.
+- `aliae.nix` — shell alias definitions (`alias`-style helpers for the user's shell).
+- `package-checks.nix` — package sanity checks wired into `aliae.nix`.
+- `quickshell-wrapper.nix` — Quickshell wrapper helpers (used by
+  `modules/user/nix-maid/gui/quickshell.nix`).
+- `default.nix` — import facade.
 
-## Usage
-
-```nix
-config.lib.neg.mkWhen condition { ... }
-config.lib.neg.mkLocalBin "script-name" "script content"
-```
+Runtime helpers (`mkHomeFiles`, `mkLocalBin`, `mkXdgText`, `systemdUser`, …) live on
+`config.lib.neg` (defined in `flake/nixos.nix` specialArgs + exposed via `modules/core/neg.nix`),
+not under `lib/`.
