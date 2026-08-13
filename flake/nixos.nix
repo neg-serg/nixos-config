@@ -48,8 +48,6 @@ let
     "system"
     "hardware"
     "monitoring"
-    "flake-preflight"
-    "diff-closures"
   ];
 
   # Basic: core + CLI / text-mode tools. Enough for a minimal interactive system.

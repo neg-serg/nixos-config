@@ -25,12 +25,10 @@ in
     ++ domain "cli" ./cli/default.nix
     ++ domain "core" ./core/default.nix
     ++ domain "dev" ./dev/default.nix
-    ++ domain "diff-closures" ./diff-closures.nix
     ++ domain "documentation" ./documentation/default.nix
     ++ domain "emulators" ./emulators/default.nix
     ++ domain "features" ./features/default.nix
     ++ domain "flatpak" ./flatpak/default.nix
-    ++ domain "flake-preflight" ./flake-preflight.nix
     ++ domain "fonts" ./fonts/default.nix
     ++ domain "fun" ./fun/default.nix
     ++ domain "games" ./games/default.nix
