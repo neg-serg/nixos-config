@@ -300,8 +300,8 @@ body {
 // ========== Hints Styling (Shadow DOM) ==========
 api.Hints.style(`div, mask {
     font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
-    font-size: 11px !important;
-    font-weight: 500 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
     padding: 1px 3px !important;
     background: #003b88 !important;
     background-image: none !important;
@@ -325,8 +325,8 @@ api.Hints.style(`div, mask {
 // Style for text/visual mode hints
 api.Hints.style(`div {
     font-family: "Iosevka", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
-    font-size: 11px !important;
-    font-weight: 500 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
     padding: 1px 3px !important;
     background: #003b88 !important;
     background-image: none !important;

@@ -31,16 +31,16 @@ else
 fi
 
 # 2. Served config content
-grep -q '#005faf' <<<"$cfg"   && ok "config: neg.nvim hint colors (#005faf)" || bad "config: #005faf missing"
+grep -q '#003b88' <<<"$cfg"   && ok "config: neg.nvim hint colors (#003b88)" || bad "config: #003b88 missing"
 grep -q 'Iosevka'  <<<"$cfg"  && ok "config: Iosevka fonts"                    || bad "config: Iosevka missing"
-grep -q 'font-size: 8px' <<<"$cfg" && ok "config: hint font 8px"               || bad "config: hint font not 8px"
+grep -q 'font-size: 12px' <<<"$cfg" && ok "config: hint font 12px"               || bad "config: hint font not 12px"
 grep -q 'api.cmap'  <<<"$cfg"  && ok "config: api.cmap bindings"               || bad "config: api.cmap missing"
 
 # 3. Extension patches (active version dir)
 if [ -z "$EXT" ]; then
   bad "extension: version dir not found under $EXT_BASE"
 else
-  grep -q 'e.snippets=t,F(t),n(e)' "$EXT/background.js" \
+  grep -q 'e.snippets=t,setTimeout(function(){F(t)},100),n(e)' "$EXT/background.js" \
     && ok "ext: auto-register on every page load" || bad "ext: auto-register patch missing"
   grep -q 'chrome.userScripts.unregister({ids:\[n\]},i)' "$EXT/background.js" \
     && ok "ext: forced re-registration" || bad "ext: forced re-registration missing"
@@ -68,7 +68,7 @@ i = data.rfind(b"import('./api.js')")
 sys.stdout.write(data[i:].decode('utf-8', 'replace') if i >= 0 else '')
 PY
 )"
-if [ -n "$reg" ] && grep -q '#005faf' <<<"$reg"; then
+if [ -n "$reg" ] && grep -q '#003b88' <<<"$reg"; then
   ok "registration: current config (neg theme) is registered"
 else
   bad "registration: stale config registered (no neg markers)"
