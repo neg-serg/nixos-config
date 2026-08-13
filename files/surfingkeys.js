@@ -368,6 +368,10 @@ api.mapkey('b', 'Scroll half page down', () => {
 api.mapkey('v', 'Scroll half page up', () => {
   api.Normal.scroll("pageUp");
 });
+// s — scroll page down like Space (full viewport, instant)
+api.mapkey('s', 'Scroll page down (like Space)', () => {
+  window.scrollBy(0, window.innerHeight);
+});
 
 // e — next tab (gt)
 api.unmap('e');  // Default: scroll page up
@@ -448,7 +452,15 @@ const quickmarks = {
   'u': { name: 'Reddit UnixPorn', url: 'https://reddit.com/r/unixporn' },
   'v': { name: 'VK', url: 'https://vk.com' },
   'y': { name: 'YouTube', url: 'https://youtube.com/' },
-  'z': { name: 'Z-Lib', url: 'https://z-lib.is' }
+  'z': { name: 'Z-Lib', url: 'https://z-lib.is' },
+  // Dev tools (ported from sf-config webDevOpener.js; the o* prefix is
+  // shadowed by the custom 'o' address-bar mapping, so these are quickmarks)
+  'b': { name: 'Localhost:5173', url: 'http://localhost:5173/' },
+  'd': { name: 'DaisyUI (Vite)', url: 'https://daisyui.com/docs/install/vite/' },
+  'm': { name: 'MongoDB Atlas', url: 'https://cloud.mongodb.com' },
+  'n': { name: 'NextJS Docs', url: 'https://nextjs.org/docs' },
+  'p': { name: 'Postman', url: 'https://web.postman.co/home' },
+  't': { name: 'Tailwind (Vite)', url: 'https://tailwindcss.com/docs/installation/using-vite' }
 };
 
 Object.entries(quickmarks).forEach(([key, site]) => {
@@ -1811,3 +1823,285 @@ api.mapkey('<Space>C', 'Open Cart page', () => pOpenLink('/us/en/shoppingcart/')
 api.mapkey('<Space>P', 'Open Profile page', () => pOpenLink('/us/en/profile/login/'), { domain: /ikea\.com/i });
 api.mapkey('<Space>F', 'Open Favorites page', () => pOpenLink('/us/en/favorites/'), { domain: /ikea\.com/i });
 api.mapkey('<Space>O', 'Open Orders page', () => pOpenLink('/us/en/customer-service/track-manage-order/'), { domain: /ikea\.com/i });
+// ========== Ported from sf-config (modular Surfingkeys config) ==========
+// Dependency-free ports of the generally useful parts. Keys were renamed
+// where the originals collide with this config, its search-alias prefixes
+// (a*/ca*), or Surfingkeys 1.18 defaults. Helpers prefixed `sf`.
+
+// ---- Fuzzy history search (from fzfFinder.js) ----
+// The original fuzzy-searched a hardcoded demo array; here the extension's
+// chrome.history permission is used via RUNTIME getHistory, and matching is
+// a dependency-free subsequence fuzzy match (fuse.js is not available in
+// this single-file config).
+
+const sfFuzzyMatch = (q, s) => {
+  q = q.toLowerCase();
+  s = s.toLowerCase();
+  let i = 0;
+  for (let j = 0; i < q.length && j < s.length; j++) {
+    if (q[i] === s[j]) i++;
+  }
+  return i === q.length;
+};
+
+api.mapkey('zz', 'Fuzzy search browsing history (fzf-style)', () => {
+  api.RUNTIME('getHistory', { query: '', maxResults: 500, sortByMostUsed: true }, (response) => {
+    const history = (response && response.history) || [];
+    const overlay = document.createElement('div');
+    Object.assign(overlay.style, {
+      position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)',
+      background: '#0d1824', color: '#6c7e96', borderRadius: '12px',
+      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)', zIndex: '9999',
+      width: '560px', maxHeight: '60vh', padding: '16px', overflow: 'hidden',
+      fontFamily: 'Iosevka, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+      fontSize: '14px',
+    });
+    const input = document.createElement('input');
+    Object.assign(input.style, {
+      width: '100%', padding: '8px 12px', marginBottom: '12px', boxSizing: 'border-box',
+      background: '#000000', color: '#a5c1e6', border: '1px solid #223f73',
+      borderRadius: '6px', outline: 'none', fontSize: '14px',
+    });
+    input.placeholder = 'Search history...';
+    const list = document.createElement('div');
+    Object.assign(list.style, {
+      overflowY: 'auto', maxHeight: '45vh', display: 'flex', flexDirection: 'column', gap: '4px',
+    });
+
+    let entries = [];
+    let selected = 0;
+
+    const highlight = () => {
+      entries.forEach(({ el }, i) => {
+        el.style.background = i === selected ? '#1c334e' : '#0d1824';
+        el.style.color = i === selected ? '#a5c1e6' : '#6c7e96';
+      });
+    };
+
+    const render = (query) => {
+      list.innerHTML = '';
+      const q = query.trim();
+      entries = history
+        .filter((h) => !q || sfFuzzyMatch(q, (h.title || '') + ' ' + (h.url || '')))
+        .slice(0, 15)
+        .map((item) => {
+          const el = document.createElement('div');
+          Object.assign(el.style, {
+            padding: '8px 12px', borderRadius: '6px', cursor: 'pointer',
+            display: 'flex', gap: '8px', alignItems: 'baseline', userSelect: 'none',
+          });
+          const title = document.createElement('span');
+          title.textContent = item.title || item.url || '';
+          title.style.flex = '1';
+          const url = document.createElement('span');
+          url.textContent = item.url || '';
+          url.style.opacity = '0.6';
+          url.style.fontSize = '12px';
+          el.appendChild(title);
+          el.appendChild(url);
+          el.onclick = () => {
+            overlay.remove();
+            window.location.href = item.url;
+          };
+          list.appendChild(el);
+          return { el, item };
+        });
+      selected = 0;
+      highlight();
+    };
+
+    input.oninput = (e) => render(e.target.value);
+    input.onkeydown = (e) => {
+      if (e.key === 'Escape') overlay.remove();
+      else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selected = Math.min(selected + 1, entries.length - 1);
+        highlight();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selected = Math.max(selected - 1, 0);
+        highlight();
+      } else if (e.key === 'Enter' && entries[selected]) {
+        e.preventDefault();
+        overlay.remove();
+        window.location.href = entries[selected].item.url;
+      }
+    };
+
+    overlay.appendChild(input);
+    overlay.appendChild(list);
+    document.body.appendChild(overlay);
+    input.focus();
+    render('');
+  });
+});
+
+// ---- URL yank & clipboard-path helpers (from urlYanker.js) ----
+// y0-y4 copy URL parts without opening the omnibar; p,/p1-p3 rebuild the
+// current URL with a path from the clipboard; pr replaces the URL entirely.
+// (Original ag*/ap*/ar keys collide with the a<alias> search prefixes.)
+
+const sfCopyUrlParts = (n) => {
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  if (n === 0) {
+    api.Clipboard.write(window.location.origin);
+  } else if (parts.length > 0) {
+    api.Clipboard.write(parts.slice(-n).join('/'));
+  }
+};
+api.mapkey('y0', 'Copy origin of current URL', () => sfCopyUrlParts(0));
+api.mapkey('y1', 'Copy last 1 path segment', () => sfCopyUrlParts(1));
+api.mapkey('y2', 'Copy last 2 path segments', () => sfCopyUrlParts(2));
+api.mapkey('y3', 'Copy last 3 path segments', () => sfCopyUrlParts(3));
+api.mapkey('y4', 'Copy last 4 path segments', () => sfCopyUrlParts(4));
+api.mapkey('y,', 'Open origin in new tab', () => {
+  window.open(window.location.origin, '_blank');
+});
+
+const sfClipboardText = (clip) => {
+  if (typeof clip === 'string') return clip;
+  if (clip && typeof clip.data === 'string') return clip.data;
+  return '';
+};
+
+const sfAppendClipboardToPath = (n) => {
+  api.Clipboard.read((clip) => {
+    const tail = sfClipboardText(clip).trim().replace(/^https?:\/\/[^/]*/i, '').replace(/^\/+/, '');
+    if (!tail) return;
+    const kept = n > 0 ? window.location.pathname.split('/').filter(Boolean).slice(0, n) : [];
+    window.location.href = window.location.origin + '/' + kept.concat(tail).join('/');
+  });
+};
+api.mapkey('p,', 'Append clipboard path to root', () => sfAppendClipboardToPath(0));
+api.mapkey('p1', 'Append clipboard path after 1 segment', () => sfAppendClipboardToPath(1));
+api.mapkey('p2', 'Append clipboard path after 2 segments', () => sfAppendClipboardToPath(2));
+api.mapkey('p3', 'Append clipboard path after 3 segments', () => sfAppendClipboardToPath(3));
+
+api.mapkey('pr', 'Replace current URL with clipboard content', () => {
+  api.Clipboard.read((clip) => {
+    let url = sfClipboardText(clip).trim();
+    if (!url) return;
+    if (!url.match(/^https?:\/\//)) {
+      url = url.includes('localhost') || /^\d+\.\d+\.\d+\.\d+/.test(url)
+        ? 'http://' + url
+        : 'https://' + url;
+    }
+    try {
+      new URL(url);
+    } catch (e) {
+      return;
+    }
+    window.location.href = url;
+  });
+});
+
+// ---- Hints utilities (from hoverClick.js) ----
+// cb: persistent click hints; Esc cancels the hint loop.
+api.mapkey('cb', 'Persistent click hints', function sfClickHints() {
+  api.Hints.create(
+    'a, button, select, input, textarea, summary, *[onclick], *[contenteditable=true], *[role=button], *[role=link], *[role=menuitem], *[role=option], *[role=switch], *[role=tab], *[role=checkbox], *[role=combobox], *[role=menuitemcheckbox], *[role=menuitemradio]',
+    (el) => {
+      el.click();
+      setTimeout(sfClickHints, 200);
+    },
+  );
+});
+
+// ch: hover an element via hints (mouseover/mouseenter + focus).
+api.mapkey('ch', 'Hover element via hints', () => {
+  api.Hints.create('*', (el) => {
+    el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, cancelable: true, view: window }));
+    el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true, cancelable: true, view: window }));
+    if (typeof el.focus === 'function') el.focus();
+  });
+});
+
+// cx: reveal hidden elements via hints (renamed from ca — ca is a prefix of
+// the ca<alias> clipboard-search keys).
+api.mapkey('cx', 'Reveal hidden elements via hints', () => {
+  api.Hints.create('*', (el) => {
+    el.style.display = 'block';
+    el.style.visibility = 'visible';
+    el.style.opacity = '1';
+    el.hidden = false;
+  });
+});
+
+// ci: open a link in an incognito window (from hoverClick.js 'of'; 'o' is
+// the custom address-bar mapping, and 's' is now page-scroll).
+api.mapkey('ci', 'Open link in incognito window', () => {
+  api.Hints.create('*[href]', (el) => {
+    api.RUNTIME('openIncognito', { url: el.href });
+  });
+});
+
+// ---- Image yank (from imgYank.js) ----
+api.mapkey('cm', 'Copy image as Markdown', () => {
+  api.Hints.create('img[src]', (el) => {
+    api.Clipboard.write('![' + (el.alt || 'image') + '](' + el.src + ')');
+  });
+});
+
+// ---- YouTube language toggler (from yt.js; URL-param method only) ----
+// ayy toggles captions between Original and English (USA); ayo/ayu set them
+// explicitly; ays shows the current state. (Original ayt dropped — 'ayt' is
+// taken by the a<alias> youtube search prefix.)
+
+const sfYtSetLang = (lang) => {
+  if (!window.location.hostname.includes('youtube.com') || !window.location.pathname.includes('/watch')) {
+    api.Front.showBanner('Only works on YouTube watch pages');
+    return;
+  }
+  const url = new URL(window.location.href);
+  if (lang === 'original') {
+    url.searchParams.delete('cc_load_policy');
+    url.searchParams.delete('cc_lang_pref');
+  } else {
+    url.searchParams.set('cc_load_policy', '1');
+    url.searchParams.set('cc_lang_pref', 'en');
+  }
+  window.location.href = url.toString();
+};
+const sfYtCurrentLang = () => {
+  const p = new URLSearchParams(window.location.search);
+  return p.get('cc_load_policy') === '1' && p.get('cc_lang_pref') === 'en' ? 'en' : 'original';
+};
+api.mapkey('ayy', 'Toggle YouTube captions Original/English', () => {
+  sfYtSetLang(sfYtCurrentLang() === 'en' ? 'original' : 'en');
+});
+api.mapkey('ayo', 'Set YouTube captions to Original', () => sfYtSetLang('original'));
+api.mapkey('ayu', 'Set YouTube captions to English (USA)', () => sfYtSetLang('en'));
+api.mapkey('ays', 'Show current YouTube caption language', () => {
+  api.Front.showBanner('Captions: ' + (sfYtCurrentLang() === 'en' ? 'English (USA)' : 'Original'));
+});
+
+// zx closes every tab on the current host (from tab.js 'sxx'; 's' is now
+// page-scroll, so the key moved to the free z* family).
+api.mapkey('zx', 'Close all tabs from same host', () => {
+  api.RUNTIME('getTabs', { queryInfo: {} }, (response) => {
+    api.RUNTIME('getTabs', { queryInfo: { active: true, currentWindow: true } }, (active) => {
+      const current = active.tabs && active.tabs[0];
+      if (!current) return;
+      let host;
+      try {
+        host = new URL(current.url).hostname;
+      } catch (e) {
+        return;
+      }
+      (response.tabs || []).forEach((tab) => {
+        try {
+          if (new URL(tab.url).hostname === host) {
+            api.RUNTIME('removeTab', { tabId: tab.id });
+          }
+        } catch (e) {
+          // ignore tabs with unparseable URLs
+        }
+      });
+    });
+  });
+});
+
+// ---- Clock (from testDate.js; dayjs replaced with native Date) ----
+api.mapkey('g,', 'Show current date and time', () => {
+  api.Front.showBanner('Now: ' + new Date().toLocaleString());
+});
