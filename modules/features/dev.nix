@@ -21,9 +21,8 @@ with lib;
       enable = mkBool "enable Haskell tooling (ghc, cabal, stack, HLS)" true;
     };
     java = {
-      enable = mkBool "enable Java/JVM development tooling (JDK, Maven, PraxisLIVE)" false;
+      enable = mkBool "enable Java/JVM development tooling (JDK, Maven)" false;
       maven = mkBool "enable Apache Maven build tool" true;
-      praxislive = mkBool "enable PraxisLIVE visual live programming IDE" true;
     };
     python = {
       core = mkBool "enable core Python development packages" true;

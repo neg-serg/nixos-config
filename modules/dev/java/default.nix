@@ -16,7 +16,6 @@ in
     environment.systemPackages = [
       pkgs.jdk21 # Java 21 LTS (current default in nixpkgs)
     ]
-    ++ lib.optionals cfg.maven [ pkgs.maven ]
-    ++ lib.optionals cfg.praxislive [ pkgs.neg.praxislive ];
+    ++ lib.optionals cfg.maven [ pkgs.maven ];
   };
 }
