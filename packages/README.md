@@ -4,10 +4,9 @@ Custom packages and overlays for the configuration.
 
 ## Structure
 
-| Directory | Purpose | |---------------------|---------------------------------------| |
-`overlay.nix` | Main overlay entry | | `overlays/` | Overlay helpers (functions, tools, media, dev)
-| | `game-scripts/` | Gaming launchers and CPU pinning | | `local-bin/` | User scripts for
-`~/.local/bin` | | `flight-gtk-theme/` | GTK theme package |
+| Directory | Purpose | |-----------|---------| | `overlay.nix` | Main overlay entry | | `overlays/`
+| Overlay helpers (functions, tools, media, gui, aur-ported) | | `local-bin/` | User scripts for
+`~/.local/bin` | | `game/` | Rust gaming launcher (CPU pinning, gamescope presets) |
 
 ## Usage
 
