@@ -74,9 +74,9 @@ enum FanAction {
         #[arg(long, default_value_t = false)]
         gpu_enable: bool,
 
-                /// PWM channels that follow GPU temperature (e.g. --gpu-pwm-channels 2 --gpu-pwm-channels 3)
-                #[arg(long)]
-                gpu_pwm_channels: Vec<u8>,
+        /// PWM channels that follow GPU temperature (e.g. --gpu-pwm-channels 2 --gpu-pwm-channels 3)
+        #[arg(long)]
+        gpu_pwm_channels: Vec<u8>,
     },
     /// Post-resume hook: re-enable manual PWM and restart fancontrol
     Reapply {

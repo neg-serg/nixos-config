@@ -126,9 +126,7 @@ fn test_channel(
     let orig_pwm = dev.read_pwm(ch).unwrap_or(0);
     let base_rpm = dev.read_fan_rpm(ch).unwrap_or(0);
 
-    println!(
-        "  [i] pwm{ch} ('{label}'): baseline {base_rpm} RPM; testing 0%"
-    );
+    println!("  [i] pwm{ch} ('{label}'): baseline {base_rpm} RPM; testing 0%");
 
     // Set manual mode
     if dev.set_manual(ch).is_err() {

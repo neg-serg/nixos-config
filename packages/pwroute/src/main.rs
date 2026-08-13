@@ -29,10 +29,30 @@ struct Route {
 
 /// Order matters: iteration order for `current` detection and `toggle` cycling.
 const ROUTES: [Route; 4] = [
-    Route { key: "an",    label: "Analog",       left_aux: 0, right_aux: 1 },
-    Route { key: "aes",   label: "AES/EBU",      left_aux: 2, right_aux: 3 },
-    Route { key: "spdif", label: "SPDIF",        left_aux: 4, right_aux: 5 },
-    Route { key: "phones",label: "Headphones",   left_aux: 6, right_aux: 7 },
+    Route {
+        key: "an",
+        label: "Analog",
+        left_aux: 0,
+        right_aux: 1,
+    },
+    Route {
+        key: "aes",
+        label: "AES/EBU",
+        left_aux: 2,
+        right_aux: 3,
+    },
+    Route {
+        key: "spdif",
+        label: "SPDIF",
+        left_aux: 4,
+        right_aux: 5,
+    },
+    Route {
+        key: "phones",
+        label: "Headphones",
+        left_aux: 6,
+        right_aux: 7,
+    },
 ];
 
 fn find_route(key: &str) -> Option<&'static Route> {
@@ -93,8 +113,11 @@ fn run_cmd(prog: &str, args: &[&str]) -> Result<String> {
         .with_context(|| format!("failed to run {prog}"))?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        anyhow::bail!("{prog} exited with status {:?}: {}",
-            output.status.code(), stderr.trim());
+        anyhow::bail!(
+            "{prog} exited with status {:?}: {}",
+            output.status.code(),
+            stderr.trim()
+        );
     }
     Ok(String::from_utf8(output.stdout)?.trim().to_string())
 }
@@ -170,9 +193,7 @@ fn parse_link_dump(output: &str) -> Vec<(String, String)> {
 fn disconnect_from(links: &[(String, String)], source: &str) {
     for (src, dst) in links {
         if src == source {
-            let _ = Command::new("pw-link")
-                .args(["-d", src, dst])
-                .output();
+            let _ = Command::new("pw-link").args(["-d", src, dst]).output();
         }
     }
 }
@@ -211,8 +232,12 @@ fn detect_current(links: &[(String, String)], sink: &str) -> Option<&'static Rou
         let left_mon = format!("{sink}:monitor_AUX0");
         let right_mon = format!("{sink}:monitor_AUX1");
 
-        let has_left = links.iter().any(|(src, dst)| *src == left_mon && *dst == left_pb);
-        let has_right = links.iter().any(|(src, dst)| *src == right_mon && *dst == right_pb);
+        let has_left = links
+            .iter()
+            .any(|(src, dst)| *src == left_mon && *dst == left_pb);
+        let has_right = links
+            .iter()
+            .any(|(src, dst)| *src == right_mon && *dst == right_pb);
 
         if has_left && has_right {
             return Some(route);
@@ -259,10 +284,12 @@ fn cmd_toggle(sink: &str) -> Result<()> {
         _ => "aes",
     };
 
-    let route = find_route(next_key)
-        .expect("toggle route not found — this is a bug");
+    let route = find_route(next_key).expect("toggle route not found — this is a bug");
     route_to(sink, route)?;
-    println!("{} -> AUX{}/AUX{}", route.key, route.left_aux, route.right_aux);
+    println!(
+        "{} -> AUX{}/AUX{}",
+        route.key, route.left_aux, route.right_aux
+    );
     Ok(())
 }
 
@@ -305,22 +332,34 @@ fn main() -> Result<()> {
         Commands::Aes => {
             let route = find_route("aes").unwrap();
             route_to(&sink, route)?;
-            println!("{} -> AUX{}/AUX{}", route.key, route.left_aux, route.right_aux);
+            println!(
+                "{} -> AUX{}/AUX{}",
+                route.key, route.left_aux, route.right_aux
+            );
         }
         Commands::An => {
             let route = find_route("an").unwrap();
             route_to(&sink, route)?;
-            println!("{} -> AUX{}/AUX{}", route.key, route.left_aux, route.right_aux);
+            println!(
+                "{} -> AUX{}/AUX{}",
+                route.key, route.left_aux, route.right_aux
+            );
         }
         Commands::Spdif => {
             let route = find_route("spdif").unwrap();
             route_to(&sink, route)?;
-            println!("{} -> AUX{}/AUX{}", route.key, route.left_aux, route.right_aux);
+            println!(
+                "{} -> AUX{}/AUX{}",
+                route.key, route.left_aux, route.right_aux
+            );
         }
         Commands::Phones => {
             let route = find_route("phones").unwrap();
             route_to(&sink, route)?;
-            println!("{} -> AUX{}/AUX{}", route.key, route.left_aux, route.right_aux);
+            println!(
+                "{} -> AUX{}/AUX{}",
+                route.key, route.left_aux, route.right_aux
+            );
         }
     }
 

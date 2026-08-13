@@ -25,7 +25,10 @@ pub fn switch_window() {
         exit(1);
     });
     let path = format!("{}/hypr/{}/focus-history", runtime_dir, instance);
-    let addr = fs::read_to_string(&path).unwrap_or_default().trim().to_string();
+    let addr = fs::read_to_string(&path)
+        .unwrap_or_default()
+        .trim()
+        .to_string();
     if addr.is_empty() {
         eprintln!("No focus history yet");
         exit(1);
@@ -50,15 +53,14 @@ pub fn workspace(target: &str) {
 }
 
 pub fn move_to_workspace(target: &str, follow: bool) {
-    Dispatch::call(DispatchType::Custom("movetoworkspacesilent", target))
-        .unwrap_or_else(|e| {
-            eprintln!("Move failed: {}", e);
-            exit(1);
-        });
+    Dispatch::call(DispatchType::Custom("movetoworkspacesilent", target)).unwrap_or_else(|e| {
+        eprintln!("Move failed: {}", e);
+        exit(1);
+    });
     if follow {
-        Dispatch::call(DispatchType::Workspace(WorkspaceIdentifierWithSpecial::Name(
-            target,
-        )))
+        Dispatch::call(DispatchType::Workspace(
+            WorkspaceIdentifierWithSpecial::Name(target),
+        ))
         .unwrap_or_else(|e| {
             eprintln!("Follow failed: {}", e);
             exit(1);
@@ -74,11 +76,10 @@ pub fn float() {
 }
 
 pub fn fullscreen() {
-    Dispatch::call(DispatchType::ToggleFullscreen(FullscreenType::Maximize))
-        .unwrap_or_else(|e| {
-            eprintln!("Fullscreen failed: {}", e);
-            exit(1);
-        });
+    Dispatch::call(DispatchType::ToggleFullscreen(FullscreenType::Maximize)).unwrap_or_else(|e| {
+        eprintln!("Fullscreen failed: {}", e);
+        exit(1);
+    });
 }
 
 pub fn pin() {
@@ -132,11 +133,10 @@ pub fn split_ratio(value: &str) {
 }
 
 pub fn swap_master() {
-    Dispatch::call(DispatchType::SwapWithMaster(SwapWithMasterParam::Auto))
-        .unwrap_or_else(|e| {
-            eprintln!("Swap master failed: {}", e);
-            exit(1);
-        });
+    Dispatch::call(DispatchType::SwapWithMaster(SwapWithMasterParam::Auto)).unwrap_or_else(|e| {
+        eprintln!("Swap master failed: {}", e);
+        exit(1);
+    });
 }
 
 pub fn add_master() {

@@ -41,7 +41,16 @@ fn main() {
             no_pin,
             dry_run,
             command,
-        } => cmd_scope(preset, scale, fsr_sharpness, hdr, no_vrr, no_pin, dry_run, command),
+        } => cmd_scope(
+            preset,
+            scale,
+            fsr_sharpness,
+            hdr,
+            no_vrr,
+            no_pin,
+            dry_run,
+            command,
+        ),
 
         Commands::Session {
             mangohud,
@@ -59,7 +68,9 @@ fn main() {
             no_pin,
             dry_run,
             command,
-        } => cmd_app(resolution, filter, fullscreen, no_wayland, sharpness, no_pin, dry_run, command),
+        } => cmd_app(
+            resolution, filter, fullscreen, no_wayland, sharpness, no_pin, dry_run, command,
+        ),
 
         Commands::Info { json } => cmd_info(json),
     }
@@ -100,7 +111,9 @@ fn resolve_cpuset(cli_arg: &str) -> Vec<usize> {
 
 fn detect_hdr_from_env() -> bool {
     std::env::var("DXVK_HDR").map(|v| v == "1").unwrap_or(false)
-        || std::env::var("ENABLE_HDR_WSI").map(|v| v == "1").unwrap_or(false)
+        || std::env::var("ENABLE_HDR_WSI")
+            .map(|v| v == "1")
+            .unwrap_or(false)
 }
 
 fn resolve_steam_app_id(cmd: &[String]) -> Option<String> {
@@ -114,13 +127,7 @@ fn resolve_steam_app_id(cmd: &[String]) -> Option<String> {
 
 // ── Run ────────────────────────────────────────────────────────────────
 
-fn cmd_run(
-    cpus_arg: String,
-    no_gamemode: bool,
-    no_pin: bool,
-    dry_run: bool,
-    command: Vec<String>,
-) {
+fn cmd_run(cpus_arg: String, no_gamemode: bool, no_pin: bool, dry_run: bool, command: Vec<String>) {
     if command.is_empty() {
         eprintln!("game run: no command specified");
         std::process::exit(1);
@@ -178,7 +185,10 @@ fn cmd_run(
         };
         eprintln!("[game] mode: run");
         eprintln!("[game] cpuset: {cpu_desc}");
-        eprintln!("[game] gamemode: {}", if use_gamemode { "yes" } else { "no" });
+        eprintln!(
+            "[game] gamemode: {}",
+            if use_gamemode { "yes" } else { "no" }
+        );
         eprintln!("[game] exec: {}", cmd_parts.join(" "));
         return;
     }
@@ -251,7 +261,10 @@ fn cmd_scope(
         if dry_run {
             eprintln!("[game] mode: scope");
             eprintln!("[game] preset: {}", resolved_preset.name());
-            eprintln!("[game] display: {}x{}@{}Hz", display.width, display.height, display.refresh_rate);
+            eprintln!(
+                "[game] display: {}x{}@{}Hz",
+                display.width, display.height, display.refresh_rate
+            );
             eprintln!("[game] pinning: disabled");
             eprintln!("[game] exec: {}", full_cmd.join(" "));
             return;
@@ -299,11 +312,22 @@ fn cmd_scope(
 
         if dry_run {
             eprintln!("[game] mode: scope");
-            eprintln!("[game] preset: {} (from {})", resolved_preset.name(),
-                app_id.map(|a| format!("game config for {a}")).unwrap_or_else(|| "cli".into()));
-            eprintln!("[game] display: {}x{}@{}Hz", display.width, display.height, display.refresh_rate);
+            eprintln!(
+                "[game] preset: {} (from {})",
+                resolved_preset.name(),
+                app_id
+                    .map(|a| format!("game config for {a}"))
+                    .unwrap_or_else(|| "cli".into())
+            );
+            eprintln!(
+                "[game] display: {}x{}@{}Hz",
+                display.width, display.height, display.refresh_rate
+            );
             eprintln!("[game] cpuset: {}", format_cpuset(&cpus));
-            eprintln!("[game] gamemode: {}", if use_gamemode { "yes" } else { "no" });
+            eprintln!(
+                "[game] gamemode: {}",
+                if use_gamemode { "yes" } else { "no" }
+            );
             eprintln!("[game] exec: {}", sysd_cmd.join(" "));
             return;
         }
@@ -508,7 +532,13 @@ fn cmd_app(
     let display = display::resolve_display();
 
     let gs_flags = app::build_app_flags(
-        &display, &res, filter, scaler, fullscreen, !no_wayland, sharpness,
+        &display,
+        &res,
+        filter,
+        scaler,
+        fullscreen,
+        !no_wayland,
+        sharpness,
     );
 
     let mut full_cmd: Vec<String> = vec!["gamescope".into()];
@@ -518,10 +548,19 @@ fn cmd_app(
 
     if dry_run {
         eprintln!("[game] mode: app");
-        eprintln!("[game] resolution: inner {}x{} @ {}x{} (outer) @ {}Hz",
-            res.dimensions(&display).0, res.dimensions(&display).1,
-            display.width, display.height, display.refresh_rate);
-        eprintln!("[game] filter: {}, scaler: {}", filter.as_str(), scaler.as_str());
+        eprintln!(
+            "[game] resolution: inner {}x{} @ {}x{} (outer) @ {}Hz",
+            res.dimensions(&display).0,
+            res.dimensions(&display).1,
+            display.width,
+            display.height,
+            display.refresh_rate
+        );
+        eprintln!(
+            "[game] filter: {}, scaler: {}",
+            filter.as_str(),
+            scaler.as_str()
+        );
         eprintln!("[game] exec: {}", full_cmd.join(" "));
         return;
     }
