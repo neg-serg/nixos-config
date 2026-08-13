@@ -38,8 +38,6 @@ let
       mkXdgText = _: _: { };
       mkLocalBin = _: _: { };
       linkImpure = x: x;
-      mkUserJs = _: "";
-      mkProfilesIni = _: "";
     };
   };
 
