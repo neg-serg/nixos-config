@@ -25,4 +25,5 @@
   wyoming-openai = pkgs.neg.wyoming-openai; # Wyoming OpenAI proxy — STT/TTS bridge for Home Assistant
   praxislive = pkgs.neg.praxislive; # PraxisLIVE — hybrid visual live programming IDE for creative coding
   genlc = pkgs.genlc; # Genelec SAM loudspeaker CLI volume control via GLM USB adapter
+  dsh = pkgs.neg.dsh;
 }
