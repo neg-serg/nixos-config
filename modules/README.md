@@ -22,22 +22,21 @@ ops, text processing, networking, compression | | `core` | Core helpers: `lib.ne
 options | | `dev` | Development — Android, C/C++, Python, editor, git, security research | |
 `documentation` | Man pages, info pages, doc viewers | | `emulators` | Console/system emulators
 (RetroArch, standalone) | | `features` | Feature flags (`features.gui.enable`,
-`features.dev.enable`, …) — auto-import | | `features-data` | Static data for feature toggles
-(unfree presets, etc.) | | `flatpak` | Flatpak integration with overrides and env vars | | `fonts` |
-Fonts — Iosevka (Nerd Font), Pango, fontconfig defaults | | `fun` | Terminal toys, ASCII art,
-screensavers | | `games` | System-level gaming config (controllers, etc.) | | `hardware` | Hardware
-— GPU (AMD/NVIDIA), audio, cooling, QMK, udev, USB automount | | `lib` | Custom Nix library —
-`mkWhen`, `mkLocalBin`, `mkHomeFiles`, `systemd-user` | | `llm` | Local LLM — Ollama (ROCm on RX
-7900 XTX), CLI tools. Models at `/zero/llm/` | | `media` | Audio (PipeWire, MPD), images, video
-(FFmpeg, VapourSynth, AI upscaling) | | `monitoring` | System monitoring — Alertmanager, sysstat,
-vnstat | | `nix` | Nix daemon — caches, GC, nix-ld, Hyprland, settings | | `profiles` | Host
-profiles (desktop, gaming, audio-pro, dev) — auto-import | | `secrets` | sops-nix secrets — pass,
-yubikey, pkgs | | `security` | Hardening — AppArmor, sudo, PAM limits, polkit, pcscd | | `servers` |
-Services — AdGuard Home, Avahi, Geoclue, MPD, OpenSSH, Samba, Unbound | | `shell` | Shell — Zsh with
-plugins, Oh My Posh, aliases, env vars | | `system` | Core system — boot (Limine), kernel,
-networking, systemd, users, virtualisation | | `text` | Text processing — editors, PDF tools,
-converters | | `tools` | Miscellaneous — nix-output-monitor (Nerd Font icons), custom wraps | |
-`torrent` | BitTorrent — Transmission daemon, rustmission, stig TUI | | `user` | User-level via
+`features.dev.enable`, …) — auto-import | | `flatpak` | Flatpak integration with overrides and env
+vars | | `fonts` | Fonts — Iosevka (Nerd Font), Pango, fontconfig defaults | | `fun` | Terminal
+toys, ASCII art, screensavers | | `games` | System-level gaming config (controllers, etc.) | |
+`hardware` | Hardware — GPU (AMD/NVIDIA), audio, cooling, QMK, udev, USB automount | | `lib` |
+Custom Nix library — `mkWhen`, `mkLocalBin`, `mkHomeFiles`, `systemd-user` | | `llm` | Local LLM —
+Ollama (ROCm on RX 7900 XTX), CLI tools. Models at `/zero/llm/` | | `media` | Audio (PipeWire, MPD),
+images, video (FFmpeg, VapourSynth, AI upscaling) | | `monitoring` | System monitoring —
+Alertmanager, sysstat, vnstat | | `nix` | Nix daemon — caches, GC, nix-ld, Hyprland, settings | |
+`profiles` | Host profiles (desktop, gaming, audio-pro, dev) — auto-import | | `secrets` | sops-nix
+secrets — pass, yubikey, pkgs | | `security` | Hardening — AppArmor, sudo, PAM limits, polkit, pcscd
+| | `servers` | Services — AdGuard Home, Avahi, Geoclue, MPD, OpenSSH, Samba, Unbound | | `shell` |
+Shell — Zsh with plugins, Oh My Posh, aliases, env vars | | `system` | Core system — boot (Limine),
+kernel, networking, systemd, users, virtualisation | | `text` | Text processing — editors, PDF
+tools, converters | | `tools` | Miscellaneous — nix-output-monitor (Nerd Font icons), custom wraps |
+| `torrent` | BitTorrent — Transmission daemon, rustmission, stig TUI | | `user` | User-level via
 nix-maid — session (Hyprland), apps, CLI, games, GUI, web |
 
 ## Key sub-structures

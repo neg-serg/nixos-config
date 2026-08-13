@@ -9,7 +9,6 @@ with lib;
       description = "Default browser used for XDG handlers, \$BROWSER, and integrations.";
     };
     tools.enable = mkBool "enable web tools (aria2, yt-dlp, misc)" true;
-    aria2.service.enable = mkBool "run aria2 download manager as a user service (graphical preset)" false;
 
     vivaldi.enable = mkBool "enable Vivaldi browser" false;
 
