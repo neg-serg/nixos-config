@@ -41,10 +41,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-maid.url = "github:viperML/nix-maid";
-    pre-commit-hooks = {
-      url = "github:cachix/git-hooks.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     hyprscratch = {
       url = "github:neg-serg/hyprscratch";
       inputs.nixpkgs.follows = "nixpkgs";

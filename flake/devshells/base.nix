@@ -1,10 +1,8 @@
 {
   pkgs,
-  preCommit,
   ...
 }:
 pkgs.mkShell {
-  inherit (preCommit) shellHook;
   packages = [
     pkgs.valgrind # Tool for debugging and profiling
     pkgs.nixfmt # nix formatter
