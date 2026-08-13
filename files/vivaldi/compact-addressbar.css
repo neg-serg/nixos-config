@@ -1,10 +1,15 @@
 /* Compact address bar — Vivaldi 8.x CSS mod
- * Loaded from ~/.config/vivaldi/Default/vivaldi-data/css-mods/css/
- * Verified on 8.1.4087.48: toolbar 34 -> 26px, input 24 -> 18px, font 15 -> 13px.
+ * Loaded from the css_ui_mods_directory (see modules/user/nix-maid/web/vivaldi.nix).
  */
 .toolbar-addressbar {
   height: 26px !important;
   min-height: 26px !important;
+  font-family: "Iosevka", ui-monospace, monospace !important;
+}
+.toolbar-addressbar .ToolbarButton-Button,
+.toolbar-addressbar .button-icon,
+.toolbar-addressbar .button-toolbar {
+  font-family: "Iosevka", ui-monospace, monospace !important;
 }
 #urlFieldInput {
   height: 18px !important;
