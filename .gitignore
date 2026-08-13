@@ -18,3 +18,4 @@ benchmarks/
 cache.db
 packages/target/
 .omo/
+files/shell/zsh/.zcompdump
