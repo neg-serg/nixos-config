@@ -94,6 +94,10 @@ lib.mkIf devEnabled (
         pkgs.vale # Prose linter
         pkgs.yamllint # YAML linter
         pkgs.cmake-format # CMake formatter
+        pkgs.black # Python formatter (conform.nvim + just lint)
+        pkgs.luajit # Lua syntax checker (just lint)
+        pkgs.qt6.qtdeclarative # qmlformat: QML syntax checker (just lint)
+        pkgs.mypy # Optional static typing for Python (nvim-lint)
       ];
     }
     (neg.mkHomeFiles {
