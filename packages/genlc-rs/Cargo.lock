@@ -11,17 +11,6 @@ dependencies = [
  "memchr",
 ]
 
-[[package]]
-name = "amnezia-tun"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64",
- "clap",
- "regex",
- "serde",
- "serde_json",
-]
 
 [[package]]
 name = "anstream"
