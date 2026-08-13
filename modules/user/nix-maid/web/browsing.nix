@@ -13,8 +13,8 @@ with lib;
   config = lib.mkMerge [
     (neg.mkHomeFiles {
       ".config/surfingkeys.js".source = ../../../../files/surfingkeys.js;
-      # Vivaldi CSS mod: compact address bar (loaded from the profile css-mods dir)
-      ".config/vivaldi/Default/vivaldi-data/css-mods/css/compact-addressbar.css".source =
+      # Vivaldi CSS mod: compact address bar (dir is set via css_ui_mods_directory pref)
+      ".config/vivaldi/css-mods/compact-addressbar.css".source =
         ../../../../files/vivaldi/compact-addressbar.css;
     })
   ];
