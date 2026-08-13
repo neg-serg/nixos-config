@@ -7,10 +7,4 @@
 
 ## Options Docs
 
-These docs are generated locally and are not tracked in git. Generate them with:
-
-`nix run .#gen-options`
-
-Index of generated option documentation artifacts:
-
-- [modules.md](./howto/modules.md)
+- [modules.md](./howto/modules.md) — generated via `just docs-modules` (not tracked)
