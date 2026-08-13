@@ -36,7 +36,7 @@ let
   # modules/default.nix uses it to conditionally import domain aggregators.
   # -------------------------------------------------------------------------
 
-  # Core: always needed (feature flags, profiles, roles, security, system foundation).
+  # Core: always needed (feature flags, profiles, security, system foundation).
   coreDomains = [
     "core"
     "features"
@@ -123,38 +123,6 @@ let
       };
       linkImpure = x: x;
 
-      # Browser helpers
-      mkUserJs =
-        prefs:
-        lib.concatStrings (
-          lib.mapAttrsToList (name: value: ''
-            user_pref("${name}", ${builtins.toJSON value});
-          '') prefs
-        );
-      mkProfilesIni =
-        profiles:
-        let
-          sortedProfiles =
-            profiles
-            |> lib.filterAttrs (_: v: v.enable)
-            |> lib.attrValues
-            |> lib.sort (a: b: a.id < b.id);
-          mkSection = index: profile: ''
-            [Profile${toString index}]
-            Name=${profile.name}
-            Path=${profile.path}
-            IsRelative=1
-            Default=${if profile.isDefault then "1" else "0"}
-          '';
-          sections = lib.imap0 mkSection sortedProfiles;
-        in
-        ''
-          [General]
-          StartWithLastProfile=1
-          Version=2
-
-          ${lib.concatStringsSep "\n" sections}
-        '';
     };
   };
 
