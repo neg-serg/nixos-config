@@ -21,10 +21,13 @@ pkgs.mkShell {
     pkgs.python3Packages.pyyaml # YAML syntax check
     # Lua
     pkgs.stylua # Lua formatter
-    pkgs.luajit # Lua syntax checker
     # QML
     pkgs.qt6.qtdeclarative # qmlformat: QML syntax checker
     # Shell
     pkgs.shellcheck # shell linter
+    # Rust
+    pkgs.rustfmt # rust formatting check
+    # TOML
+    pkgs.taplo # TOML formatter/linter
   ];
 }

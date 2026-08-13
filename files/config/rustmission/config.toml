@@ -16,7 +16,17 @@ free_space_refresh = 10
 # password = "CHANGE_ME"
 
 [torrents_tab]
-headers = ["SizeWhenDone", "UploadRatio", "Name", "Eta", "DownloadRate", "UploadRate", "Progress", "SmallStatus", "Category"]
+headers = [
+  "SizeWhenDone",
+  "UploadRatio",
+  "Name",
+  "Eta",
+  "DownloadRate",
+  "UploadRate",
+  "Progress",
+  "SmallStatus",
+  "Category",
+]
 default_sort = "Name"
 default_sort_reverse = false
 # Whether to insert category icon into name as declared in categories.toml.
@@ -45,11 +55,11 @@ success = "✔"                     # ""
 failure = "✖"                     # ""
 searching = "⟳"                   # ""
 verifying = "⟳"                   # "󰑓"
-loading = "⌛"                    # "󱥸"
+loading = "⌛"                     # "󱥸"
 pause = "‖"                       # "󰏤"
 idle = "○"                        # "󱗼"
 magnifying_glass = "[o]"          # ""
-provider_disabled = "⛔"          # "󰪎"
+provider_disabled = "⛔"           # "󰪎"
 provider_category_general = "[G]" # ""
 provider_category_anime = "[A]"   # "󰎁"
 sort_ascending = "↓"              # "󰒼"

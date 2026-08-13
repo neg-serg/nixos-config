@@ -10,8 +10,7 @@ use std::fs;
 use std::path::PathBuf;
 
 /// Global configuration.
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct GameConfig {
     #[serde(default)]
     pub cpu: CpuConfig,
@@ -143,7 +142,10 @@ pub fn resolve_game_preset(app_id: Option<&str>) -> (String, Option<GameEntry>) 
 
     // Try exact match
     if let Some(entry) = games.games.get(app_id) {
-        let preset = entry.preset.clone().unwrap_or_else(|| games.default.clone());
+        let preset = entry
+            .preset
+            .clone()
+            .unwrap_or_else(|| games.default.clone());
         return (preset, Some(entry.clone()));
     }
 

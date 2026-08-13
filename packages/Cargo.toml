@@ -1,9 +1,3 @@
 [workspace]
-members = [
-    "game",
-    "hypr-focus",
-    "pwroute",
-    "hwctl",
-    "genlc-rs",
-]
+members = ["game", "hypr-focus", "pwroute", "hwctl", "genlc-rs"]
 resolver = "2"

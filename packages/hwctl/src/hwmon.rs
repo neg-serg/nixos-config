@@ -89,8 +89,11 @@ impl HwmonDevice {
     }
 
     pub fn write_pwm(&self, channel: u8, value: u8) -> Result<()> {
-        fs::write(self.path.join(format!("pwm{}", channel)), format!("{value}\n"))
-            .context(format!("writing pwm{}", channel))
+        fs::write(
+            self.path.join(format!("pwm{}", channel)),
+            format!("{value}\n"),
+        )
+        .context(format!("writing pwm{}", channel))
     }
 
     pub fn read_pwm_enable(&self, channel: u8) -> Result<u8> {
