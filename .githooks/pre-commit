@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run the full lint suite (includes Markdown language policy, QML, Hyprland
-# variables, and all additional syntax checks). Runs inside `nix develop`,
-# which provides just and every lint tool via the devshell.
-just lint
+# Run the full lint suite (Markdown language policy, QML, Hyprland variables,
+# all additional syntax checks). Runs inside `nix develop`, which provides
+# every lint tool via the devshell; system-wide packages (black, ruff, ...)
+# cover direct `just lint` usage from the terminal too.
+nix develop --command just lint
