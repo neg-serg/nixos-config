@@ -12,9 +12,6 @@ with lib;
 
     vivaldi.enable = mkBool "enable Vivaldi browser" false;
 
-    codexStellarium = {
-      enable = mkBool "enable Codex-Stellarium new tab page for Vivaldi" false;
-    };
     chat = {
       enable = mkBool "enable Telegram chat client (static binary, GTK-free)" true;
     };
