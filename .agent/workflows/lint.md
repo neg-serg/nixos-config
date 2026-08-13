@@ -14,7 +14,7 @@ just fmt     # Format code
 
 ## Available Checks
 
-| Check | Description | |-------|-------------| | `alejandra` | Nix formatter | | `deadnix` | Unused
+| Check | Description | |-------|-------------| | `nixfmt` | Nix formatter | | `deadnix` | Unused
 Nix code | | `statix` | Nix linter | | `ruff` | Python linter | | `black` | Python formatter | |
 `shellcheck` | Shell script linter |
 
@@ -23,7 +23,7 @@ Nix code | | `statix` | Nix linter | | `ruff` | Python linter | | `black` | Pyth
 ### Nix formatting:
 
 ```bash
-alejandra .
+nixfmt .
 ```
 
 ### Python formatting:
@@ -44,12 +44,6 @@ Enable:
 
 ```bash
 just hooks-enable
-```
-
-Disable:
-
-```bash
-just hooks-disable
 ```
 
 ## Package Annotations
