@@ -21,14 +21,10 @@ in
     hypr-focus = callPkg (packagesRoot + "/hypr-focus") { }; # Rust-based window focus CLI — set window class on focused Hyprland window
     pretty_printer = callPkg (packagesRoot + "/pretty-printer") { }; # Pretty-printer library + CLI (ppinfo)
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
-    sqlit = callPkg (packagesRoot + "/sqlit") { }; # A terminal UI for SQL databases
-    surfingkeys_conf = callPkg (packagesRoot + "/surfingkeys-conf") { }; # Surfingkeys configuration
     talktype = callPkg (packagesRoot + "/talktype") { }; # Push-to-talk voice typing tool (F9 to record, transcribe, paste)
     termeverything = callPkg (packagesRoot + "/termeverything") { }; # Run GUI windows inside your terminal (Wayland compositor → ANSI)
-    term39 = callPkg (packagesRoot + "/term39") { }; # Retro-styled terminal multiplexer (MS-DOS aesthetic)
     zsh-native-syntax = callPkg (packagesRoot + "/zsh-native-syntax") { }; # Native Rust-based zsh syntax highlighting engine
 
-    "surfingkeys-conf" = surfingkeys_conf;
     "pretty-printer" = pretty_printer;
 
     # ncpamixer-wrapped removed — nix-maid manages config via ~/.config/ncpamixer.conf
