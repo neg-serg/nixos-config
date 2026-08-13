@@ -20,6 +20,14 @@ let
   zapret2 = pkgs.zapret2;
   nfqws = "${zapret2}/bin/nfqws";
 
+  # Use the runtime RKN blocklist when enabled (fresh, ~56k domains incl.
+  # youtube/google), else the static hostlist below.
+  rknHostlist = "/var/lib/rkn/domains/domains_all.txt";
+  hostlistArg =
+    if (config.features.net.rknDomains.enable or false) then
+      "--hostlist=${rknHostlist}"
+    else
+      "--hostlist=/etc/zapret2/zapret-hosts-user.txt";
   # Domain hostlists for desync (upstream default + user additions)
   hostlistDomains = [
     "youtube.com"
@@ -57,7 +65,7 @@ let
     "--filter-tcp=80,443"
     "--dpi-desync=fake"
     "--dpi-desync-fooling=md5sig"
-    "--hostlist=/etc/zapret2/zapret-hosts-user.txt"
+    hostlistArg
   ];
 
   rolloutScript = pkgs.writeShellScript "zapret2-rollout" ''
@@ -120,7 +128,10 @@ in
 
     systemd.services.zapret2 = {
       description = "Zapret2 DPI bypass (nfqws)";
-      after = [ "network-online.target" ];
+      after = [
+        "network-online.target"
+      ]
+      ++ lib.optionals (config.features.net.rknDomains.enable or false) [ "rkn-domains-fetch.service" ];
       wants = [ "network-online.target" ];
       path = [ pkgs.nftables ];
       serviceConfig = {
