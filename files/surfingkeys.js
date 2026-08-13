@@ -806,6 +806,225 @@ const skEngines = [
       return skUrlItem(levels[levels.length - 1] || '', hit.url);
     }),
   },
+  // ---- Ported from b0o/surfingkeys-conf (missing engines) ----
+  {
+    alias: 'G', name: 'google-lucky',
+    search: 'https://www.google.com/search?btnI=1&q=',
+    compl: 'https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext&oit=1&cp=1&pgcl=7&q=',
+    favicon: ddgIcon('www.google.com'),
+    cb: (r) => JSON.parse(r.text)[1],
+  },
+  {
+    alias: 'at', name: 'alternativeto',
+    search: 'https://alternativeto.net/browse/search/?q=',
+    compl: 'https://www.algolia.com/api/1/search?x-algolia-application-id=HRCBJ9KX2A&x-algolia-api-key=465ab209a0d4f2d4f0f0c1a0c1e8e5d0&x-algolia-index-name=prod_altervisto&query=',
+    favicon: ddgIcon('alternativeto.net'),
+    cb: (r) => {
+      const res = JSON.parse(r.text).hits || [];
+      return res.map((s) => skUrlItem(`${s.Likes ? `[↑${s.Likes}] ` : ''}${s.Name}`, s.Url || `https://alternativeto.net/software/${s.UrlName}/`));
+    },
+  },
+  {
+    alias: 'au', name: 'AUR',
+    search: 'https://aur.archlinux.org/packages/?O=0&SeB=nd&outdated=&SB=v&SO=d&PP=100&do_Search=Go&K=',
+    compl: 'https://aur.archlinux.org/rpc?v=5&type=suggest&arg=',
+    favicon: ddgIcon('aur.archlinux.org'),
+    cb: (r) => JSON.parse(r.text).map((s) => skUrlItem(s, `https://aur.archlinux.org/packages/${s}`)),
+  },
+  {
+    alias: 'az', name: 'amazon',
+    search: 'https://smile.amazon.com/s/?field-keywords=',
+    compl: 'https://completion.amazon.com/search/complete?method=completion&mkt=1&search-alias=aps&q=',
+    favicon: ddgIcon('smile.amazon.com'),
+    cb: (r) => JSON.parse(r.text)[1] || [],
+  },
+  {
+    alias: 'cl', name: 'craigslist',
+    search: 'https://www.craigslist.org/search/sss?query=',
+    compl: 'https://www.craigslist.org/suggest?v=12&type=search&cat=sss&area=1&term=',
+    favicon: ddgIcon('www.craigslist.org'),
+    cb: (r) => JSON.parse(r.text),
+  },
+  {
+    alias: 'co', name: 'crunchbase-orgs',
+    search: 'https://www.crunchbase.com/textsearch?q=',
+    favicon: ddgIcon('www.crunchbase.com'),
+  },
+  {
+    alias: 'cp', name: 'crunchbase-people',
+    search: 'https://www.crunchbase.com/app/search/?q=',
+    favicon: ddgIcon('www.crunchbase.com'),
+  },
+  {
+    alias: 'dd', name: 'duckduckgo',
+    search: 'https://duckduckgo.com/?q=',
+    compl: 'https://duckduckgo.com/ac/?q=',
+    favicon: ddgIcon('duckduckgo.com'),
+    cb: (r) => JSON.parse(r.text).map((x) => x.phrase),
+  },
+  {
+    alias: 'de', name: 'define',
+    search: 'http://onelook.com/?w=',
+    compl: 'https://api.datamuse.com/words?md=d&sp=%s*',
+    favicon: ddgIcon('onelook.com'),
+    cb: (r) => JSON.parse(r.text).map((w) => skUrlItem(w.word, `http://onelook.com/?w=${encodeURIComponent(w.word)}`)),
+  },
+  {
+    alias: 'dm', name: 'duckduckgo-maps',
+    search: 'https://duckduckgo.com/?ia=maps&iax=maps&iaxm=places&q=',
+    compl: 'https://duckduckgo.com/ac/?ia=maps&iax=maps&iaxm=places&q=',
+    favicon: ddgIcon('duckduckgo.com'),
+    cb: (r) => JSON.parse(r.text).map((x) => x.phrase),
+  },
+  {
+    alias: 'dn', name: 'duckduckgo-news',
+    search: 'https://duckduckgo.com/?iar=news&ia=news&q=',
+    compl: 'https://duckduckgo.com/ac/?iar=news&ia=news&q=',
+    favicon: ddgIcon('duckduckgo.com'),
+    cb: (r) => JSON.parse(r.text).map((x) => x.phrase),
+  },
+  {
+    alias: 'do', name: 'domainr',
+    search: 'https://domainr.com/?q=',
+    compl: 'https://5jmgqstc3m.execute-api.us-west-1.amazonaws.com/v1/domainr?q=',
+    favicon: ddgIcon('domainr.com'),
+    cb: (r) => JSON.parse(r.text),
+  },
+  {
+    alias: 'eb', name: 'ebay',
+    search: 'https://www.ebay.com/sch/i.html?_nkw=',
+    compl: 'https://autosug.ebay.com/autosug?callback=0&sId=0&kwd=',
+    favicon: ddgIcon('www.ebay.com'),
+    cb: (r) => JSON.parse(r.text).res.sug.map((s) => s[0]),
+  },
+  {
+    alias: 'fa', name: 'firefox-addons',
+    search: 'https://addons.mozilla.org/firefox/search/?q=',
+    compl: 'https://addons.mozilla.org/api/v4/addons/autocomplete/?q=',
+    favicon: ddgIcon('addons.mozilla.org'),
+    cb: (r) => JSON.parse(r.text).results.map((s) => skUrlItem(s.name, s.url)),
+  },
+  {
+    alias: 'fe', name: 'firefox-extensions',
+    search: 'https://addons.mozilla.org/firefox/search/?q=',
+    compl: 'https://addons.mozilla.org/api/v4/addons/autocomplete/?type=extension&q=',
+    favicon: ddgIcon('addons.mozilla.org'),
+    cb: (r) => JSON.parse(r.text).results.map((s) => skUrlItem(s.name, s.url)),
+  },
+  {
+    alias: 'ft', name: 'firefox-themes',
+    search: 'https://addons.mozilla.org/firefox/search/?q=',
+    compl: 'https://addons.mozilla.org/api/v4/addons/autocomplete/?type=statictheme&q=',
+    favicon: ddgIcon('addons.mozilla.org'),
+    cb: (r) => JSON.parse(r.text).results.map((s) => skUrlItem(s.name, s.url)),
+  },
+  {
+    alias: 'gI', name: 'google-reverse-image',
+    search: 'https://www.google.com/searchbyimage?image_url=',
+    favicon: ddgIcon('www.google.com'),
+  },
+  {
+    alias: 'gd', name: 'godoc',
+    search: 'https://godoc.org/?q=',
+    compl: 'https://api.godoc.org/search?q=',
+    favicon: ddgIcon('godoc.org'),
+    cb: (r) => JSON.parse(r.text).results.map((s) => skUrlItem(s.package, `https://godoc.org/${s.package}`)),
+  },
+  {
+    alias: 'ha', name: 'hackage',
+    search: 'https://hackage.haskell.org/packages/search?terms=',
+    compl: 'https://hackage.haskell.org/packages/search.json?terms=',
+    favicon: ddgIcon('hackage.haskell.org'),
+    cb: (r) => JSON.parse(r.text).map((s) => skUrlItem(s.packageName, `https://hackage.haskell.org/package/${s.packageName}`)),
+  },
+  {
+    alias: 'hd', name: 'hexdocs',
+    search: 'https://hex.pm/packages?sort=downloads&search=',
+    compl: 'https://hex.pm/api/packages?sort=downloads&hd&search=',
+    favicon: ddgIcon('hex.pm'),
+    cb: (r) => JSON.parse(r.text).map((s) => skUrlItem(s.name, `https://hexdocs.pm/${s.name}`)),
+  },
+  {
+    alias: 'ho', name: 'hoogle',
+    search: 'https://www.haskell.org/hoogle/?hoogle=',
+    compl: 'https://www.haskell.org/hoogle/?mode=json&hoogle=',
+    favicon: ddgIcon('www.haskell.org'),
+    cb: (r) => JSON.parse(r.text).map((s) => skUrlItem(s.display, s.url)),
+  },
+  {
+    alias: 'hw', name: 'haskellwiki',
+    search: 'https://wiki.haskell.org/index.php?go=go&search=',
+    compl: 'https://wiki.haskell.org/api.php?action=opensearch&format=json&formatversion=2&namespace=0&limit=10&suggest=true&search=',
+    favicon: ddgIcon('wiki.haskell.org'),
+    cb: (r) => JSON.parse(r.text)[1],
+  },
+  {
+    alias: 'hx', name: 'hex',
+    search: 'https://hex.pm/packages?sort=downloads&search=',
+    compl: 'https://hex.pm/api/packages?sort=downloads&hx&search=',
+    favicon: ddgIcon('hex.pm'),
+    cb: (r) => JSON.parse(r.text).map((s) => skUrlItem(s.name, `https://hex.pm/packages/${s.name}`)),
+  },
+  {
+    alias: 'ka', name: 'kagi',
+    search: 'https://kagi.com/search?q=',
+    compl: 'https://kagi.com/autosuggest?q=',
+    favicon: ddgIcon('kagi.com'),
+    cb: (r) => JSON.parse(r.text).map((x) => skUrlItem(x.t, x.goto || `https://kagi.com/search?q=${encodeURIComponent(x.t)}`)),
+  },
+  {
+    alias: 'ow', name: 'owasp',
+    search: 'https://www.owasp.org/index.php?go=go&search=',
+    compl: 'https://www.owasp.org/api.php?action=opensearch&format=json&formatversion=2&namespace=0&limit=10&suggest=true&search=',
+    favicon: ddgIcon('www.owasp.org'),
+    cb: (r) => JSON.parse(r.text)[1],
+  },
+  {
+    alias: 'th', name: 'thesaurus',
+    search: 'https://www.onelook.com/thesaurus/?s=',
+    compl: 'https://api.datamuse.com/words?md=d&ml=%s',
+    favicon: ddgIcon('www.onelook.com'),
+    cb: (r) => JSON.parse(r.text).map((w) => skUrlItem(w.word, `https://www.onelook.com/thesaurus/?s=${encodeURIComponent(w.word)}`)),
+  },
+  {
+    alias: 'tw', name: 'twitter',
+    search: 'https://twitter.com/search?q=',
+    favicon: ddgIcon('twitter.com'),
+  },
+  {
+    alias: 'vw', name: 'vimwiki',
+    search: 'https://vim.fandom.com/wiki/Special:Search?query=',
+    compl: 'https://vim.fandom.com/api.php?action=opensearch&format=json&formatversion=2&namespace=0&limit=10&suggest=true&search=',
+    favicon: ddgIcon('vim.fandom.com'),
+    cb: (r) => JSON.parse(r.text)[1],
+  },
+  {
+    alias: 'wa', name: 'wolframalpha',
+    search: 'http://www.wolframalpha.com/input/?i=',
+    favicon: ddgIcon('www.wolframalpha.com'),
+  },
+  {
+    alias: 'ws', name: 'wikipedia-simple',
+    search: 'https://simple.wikipedia.org/w/index.php?search=',
+    compl: 'https://simple.wikipedia.org/w/api.php?action=query&format=json&generator=prefixsearch&prop=info|pageprops%7Cpageimages%7Cdescription&redirects=&ppprop=displaytitle&piprop=thumbnail&pithumbsize=100&pilimit=6&inprop=url&gpssearch=',
+    favicon: ddgIcon('simple.wikipedia.org'),
+    cb: (r) => Object.values(JSON.parse(r.text).query.pages).map((p) => p.title),
+  },
+  {
+    alias: 'yp', name: 'yelp',
+    search: 'https://www.yelp.com/search?find_desc=',
+    compl: 'https://www.yelp.com/search_suggest/v2/prefetch?prefix=',
+    favicon: ddgIcon('www.yelp.com'),
+    cb: (r) => {
+      const res = JSON.parse(r.text).response;
+      const words = [];
+      (res || []).forEach((rr) => (rr.suggestions || []).forEach((s) => {
+        const w = s.query;
+        if (words.indexOf(w) === -1) words.push(w);
+      }));
+      return words;
+    },
+  },
 ];
 
 skEngines.forEach(({ alias, name, search, compl, favicon, cb }) => {
@@ -955,3 +1174,640 @@ api.mapkey('yI', 'Copy image URL', () =>
 api.mapkey('gI', 'View image in new tab', () =>
   api.Hints.create('img', (i) => api.tabOpenLink(i.src))
 );
+
+// ================= Ported from b0o/surfingkeys-conf =================
+// Global utilities (compact port of actions.js/util.js — only what the
+// ported mappings use). Prefixed p* to avoid clashes with the config above.
+
+const pOpenLink = (url, { newTab = false, active = true } = {}) => {
+  if (newTab) {
+    api.RUNTIME('openLink', { tab: { tabbed: true, active }, url });
+    return;
+  }
+  window.location.assign(url);
+};
+const pHints = (selector, action = api.Hints.dispatchMouseClick) =>
+  new Promise((resolve) => {
+    api.Hints.create(selector, (...args) => {
+      resolve(...args);
+      if (typeof action === 'function') action(...args);
+    });
+  });
+const pInView = (e) => {
+  const r = e.getBoundingClientRect();
+  return e.offsetHeight > 0 && e.offsetWidth > 0 && !e.getAttribute('disabled') &&
+    r.height > 0 && r.width > 0 && r.bottom >= 0 && r.right >= 0 &&
+    r.top <= (window.innerHeight || document.documentElement.clientHeight) &&
+    r.left <= (window.innerWidth || document.documentElement.clientWidth);
+};
+const pHintsFiltered = (filter, selector = 'a[href]', action = api.Hints.dispatchMouseClick) =>
+  new Promise((resolve) => {
+    const els = [...document.querySelectorAll(selector)].filter(filter);
+    api.Hints.create(els, (...args) => {
+      resolve(...args);
+      if (typeof action === 'function') action(...args);
+    });
+  });
+const pUntil = (check, test = (a) => a, maxAttempts = 50, interval = 50) =>
+  new Promise((resolve, reject) => {
+    const f = (attempts = 0) => {
+      const res = check();
+      if (!test(res)) {
+        if (attempts > maxAttempts) reject(new Error('until: timeout'));
+        else setTimeout(() => f(attempts + 1), interval);
+        return;
+      }
+      resolve(res);
+    };
+    f();
+  });
+const pURLPath = ({ count = 0, domain = false } = {}) => {
+  let path = window.location.pathname.slice(1);
+  if (count) path = path.split('/').slice(0, count).join('/');
+  if (domain) path = `${window.location.hostname}/${path}`;
+  return path;
+};
+const pScrollToHash = () => {
+  const h = document.location.hash.replace('#', '');
+  const e = document.getElementById(h) || document.querySelector(`[name="${h}"]`);
+  if (e) e.scrollIntoView({ behavior: 'smooth' });
+};
+const pOpenAnchor = ({ newTab = false, active = true, prop = 'href' } = {}) =>
+  (a) => pOpenLink(a[prop], { newTab, active });
+
+// --- Site actions ---
+const pFakeSpot = () =>
+  pOpenLink(`https://fakespot.com/analyze?ra=true&url=${window.location.href}`, { newTab: true, active: false });
+
+const pAzViewProduct = () => {
+  const reHost = /^([-\w]+[.])*amazon.\w+$/;
+  const rePath = /^(?:.*\/)*(?:dp|gp\/product)(?:\/(\w{10})).*/;
+  const elements = {};
+  document.querySelectorAll('a[href]').forEach((a) => {
+    const u = new URL(a.href);
+    if (u.hash.length === 0 && reHost.test(u.hostname)) {
+      const m = rePath.exec(u.pathname);
+      if (m === null || m.length !== 2 || !pInView(a)) return;
+      const asin = m[1];
+      if (elements[asin] !== undefined) {
+        if (!(elements[asin].text.trim().length === 0 && a.text.trim().length > 0)) return;
+      }
+      elements[asin] = a;
+    }
+  });
+  api.Hints.create(Object.values(elements), api.Hints.dispatchMouseClick);
+};
+
+const pGoogleLoc = () => {
+  const u = new URL(window.location.href);
+  const q = u.searchParams.get('q');
+  const p = u.pathname.split('/');
+  const res = { type: 'unknown', url: u, query: q };
+  if (u.hostname === 'www.google.com') {
+    if (p.length <= 1) res.type = 'home';
+    else if (p[1] === 'search') {
+      switch (u.searchParams.get('tbm')) {
+      case 'vid': res.type = 'videos'; break;
+      case 'isch': res.type = 'images'; break;
+      case 'nws': res.type = 'news'; break;
+      default: res.type = 'web';
+      }
+    } else if (p[1] === 'maps') {
+      res.type = 'maps';
+      if (p[2] === 'search' && p[3] !== undefined) res.query = p[3];
+      else if (p[2] !== undefined) res.query = p[2];
+    }
+  }
+  return res;
+};
+const pGoDdg = () => {
+  const g = pGoogleLoc();
+  const ddg = new URL('https://duckduckgo.com');
+  if (g.query) ddg.searchParams.set('q', g.query);
+  switch (g.type) {
+  case 'videos': ddg.searchParams.set('ia', 'videos'); ddg.searchParams.set('iax', 'videos'); break;
+  case 'images': ddg.searchParams.set('ia', 'images'); ddg.searchParams.set('iax', 'images'); break;
+  case 'news': ddg.searchParams.set('ia', 'news'); ddg.searchParams.set('iar', 'news'); break;
+  case 'maps': ddg.searchParams.set('iaxm', 'maps'); break;
+  default: ddg.searchParams.set('ia', 'web');
+  }
+  pOpenLink(ddg.href);
+};
+const pDgGoog = () => {
+  let u;
+  try { u = new URL(window.location.href); } catch (e) { return; }
+  const q = u.searchParams.get('q');
+  if (!q) return;
+  const goog = new URL('https://google.com/search');
+  goog.searchParams.set('q', q);
+  const iax = u.searchParams.get('iax');
+  const iaxm = u.searchParams.get('iaxm');
+  const iar = u.searchParams.get('iar');
+  if (iax === 'images') goog.searchParams.set('tbm', 'isch');
+  else if (iax === 'videos') goog.searchParams.set('tbm', 'vid');
+  else if (iar === 'news') goog.searchParams.set('tbm', 'nws');
+  else if (iaxm === 'maps') goog.pathname = '/maps';
+  pOpenLink(goog.href);
+};
+const pDgSiteSearch = (site) => {
+  let u;
+  try { u = new URL(window.location.href); } catch (e) { return; }
+  const siteParam = `site:${site}`;
+  const q = u.searchParams.get('q');
+  if (!q) return;
+  const i = q.indexOf(siteParam);
+  if (i !== -1) u.searchParams.set('q', q.replace(siteParam, ''));
+  else u.searchParams.set('q', `${q} ${siteParam}`);
+  pOpenLink(u.href);
+};
+
+const pGhParseRepo = (url = window.location.href) => {
+  let u;
+  try { u = url instanceof URL ? url : new URL(url); } catch (e) { u = new URL(`https://github.com/${url}`); }
+  const [user, repo, ...rest] = u.pathname.split('/').filter((s) => s !== '');
+  const isRoot = rest.length === 0;
+  if (['github.com', 'gist.github.com', 'raw.githubusercontent.com'].includes(u.hostname) &&
+      user && repo && (isRoot || true) && /^([a-zA-Z0-9]+-?)+$/.test(user || '')) {
+    return { user, repo, repoBase: `${user}/${repo}`, repoRoot: isRoot };
+  }
+  return null;
+};
+const pGhOpenPage = (path) => pOpenLink(`https://github.com/${path}`);
+const pGhOpenRepoPage = (repoPath) => {
+  const repo = pGhParseRepo();
+  if (repo) pGhOpenPage(`${repo.repoBase}${repoPath}`);
+};
+const pGhOpenRepoOwner = () => {
+  const repo = pGhParseRepo();
+  if (repo) pGhOpenPage(repo.owner || repo.user);
+};
+const pGhOpenProfile = () => {
+  const meta = document.querySelector("meta[name='user-login']");
+  if (meta) pGhOpenPage(meta.content);
+};
+const pGhOpenRepo = () => pHintsFiltered((a) => pGhParseRepo(a.href));
+const pGhOpenUser = () => pHintsFiltered((a) => {
+  const u = new URL(a.href);
+  const [user, ...rest] = u.pathname.split('/').filter(Boolean);
+  return u.origin === window.location.origin && user && rest.length === 0 && /^([a-zA-Z0-9]+-?)+$/.test(user);
+});
+const pGhOpenFile = () => pHintsFiltered((a) => {
+  const parts = new URL(a.href).pathname.split('/').filter(Boolean);
+  return parts.length >= 4 && (parts[2] === 'blob' || parts[2] === 'tree');
+});
+const pGhOpenCommit = () => pHintsFiltered((a) => {
+  const parts = new URL(a.href).pathname.split('/').filter(Boolean);
+  return parts.length >= 3 && parts[2] === 'commit';
+});
+const pGhOpenIssue = () => pHintsFiltered((a) => {
+  const parts = new URL(a.href).pathname.split('/').filter(Boolean);
+  return parts.length >= 3 && parts[2] === 'issues';
+});
+const pGhOpenPull = () => pHintsFiltered((a) => {
+  const parts = new URL(a.href).pathname.split('/').filter(Boolean);
+  return parts.length >= 3 && /^pulls?$/.test(parts[2]);
+});
+const pGhOpenSourceFile = () => {
+  const p = window.location.pathname.split('/');
+  pGhOpenPage([...p.slice(1, 3), 'tree', ...p.slice(3)].join('/'));
+};
+const pGhOpenPagesRepo = () => {
+  const user = window.location.hostname.split('.')[0];
+  const repo = window.location.pathname.split('/')[1] || '';
+  pGhOpenPage(`${user}/${repo}`);
+};
+const pGhRaw = () => {
+  const p = window.location.pathname.split('/').filter(Boolean);
+  if (p.length >= 4 && (p[2] === 'blob' || p[2] === 'tree')) {
+    p[2] = p[2] === 'blob' ? 'raw' : 'tree';
+    pOpenLink(`https://raw.githubusercontent.com/${p.join('/')}`);
+  }
+};
+const pGhLangStats = () => {
+  const g = document.querySelector('.repository-lang-stats-graph');
+  if (g) g.click();
+};
+const pGhSourceGraph = () => {
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  const base = parts.slice(0, 2).join('/');
+  pOpenLink(`https://sourcegraph.com/github.com/${base}`, { newTab: true });
+};
+
+const pGlStar = () => {
+  const repo = window.location.pathname.slice(1).split('/').slice(0, 2).join('/');
+  const btn = document.querySelector('.btn.star-btn > span');
+  if (!btn) return;
+  btn.click();
+  const action = `${btn.textContent.toLowerCase()}red`;
+  api.Front.showBanner(`${action === 'starred' ? '★' : '☆'} Repository ${repo} ${action}`);
+};
+const pViewGodoc = () =>
+  pOpenLink(`https://godoc.org/${pURLPath({ count: 2, domain: true })}`, { newTab: true });
+
+const pTwOpenUser = () =>
+  pHints([].concat(
+    [...document.querySelectorAll("a[role='link'] img[src^='https://pbs.twimg.com/profile_images']")]
+      .map((e) => e.closest('a')),
+    [...document.querySelectorAll("a[role='link']")]
+      .filter((e) => e.text.match(/^@/)),
+  ));
+
+const pReCollapseNext = (sel) => {
+  const vis = Array.from(document.querySelectorAll(sel)).filter((e) => pInView(e));
+  if (vis.length > 0) vis[0].click();
+};
+const pHnGoParent = () => {
+  const par = document.querySelector(".navs>a[href^='item']");
+  if (par) pOpenLink(par.href);
+};
+const pHnGoPage = (dist = 1) => {
+  let u;
+  try { u = new URL(window.location.href); } catch (e) { return; }
+  let page = u.searchParams.get('p');
+  if (page === null || page === '') page = '1';
+  const cur = parseInt(page, 10);
+  if (Number.isNaN(cur)) return;
+  const dest = cur + dist;
+  if (dest < 1) return;
+  u.searchParams.set('p', dest);
+  pOpenLink(u.href);
+};
+const pHnOpenLinkAndComments = (e) => {
+  const linkUrl = e.querySelector('.titleline>a');
+  const commentsUrl = e.nextElementSibling && e.nextElementSibling.querySelector("a[href^='item']:not(.titlelink)");
+  if (commentsUrl) pOpenLink(commentsUrl.href, { newTab: true });
+  if (linkUrl) pOpenLink(linkUrl.href, { newTab: true });
+};
+
+const pWpToggleSimple = () => {
+  const u = new URL(window.location.href);
+  u.hostname = u.hostname.split('.').map((s, i) => (i === 0 ? (s === 'simple' ? '' : 'simple') : s))
+    .filter((s) => s !== '').join('.');
+  pOpenLink(u.href);
+};
+const pWpViewWikiRank = () => {
+  const h = document.location.hostname.split('.');
+  const lang = h.length > 2 && h[0] !== 'www' ? h[0] : 'en';
+  const p = document.location.pathname.split('/');
+  if (p.length < 3 || p[1] !== 'wiki') return;
+  pOpenLink(`https://wikirank.net/${lang}/${p.slice(2).join('/')}`, { newTab: true });
+};
+const pWpMarkdownSummary = () => {
+  const clone = document.querySelector('#mw-content-text p:not([class]):not([id])');
+  if (!clone) return;
+  const node = clone.cloneNode(true);
+  [...node.querySelectorAll('sup')].forEach((e) => e.remove());
+  [...node.querySelectorAll('b')].forEach((e) => { e.innerText = `**${e.innerText}**`; });
+  [...node.querySelectorAll('i')].forEach((e) => { e.innerText = `_${e.innerText}_`; });
+  api.Clipboard.write(`> ${node.innerText.trim()}\n\n— [${document.title}](${window.location.href})`);
+};
+
+const pPhOpenExternal = () =>
+  api.Hints.create("ul[class^='postsList_'] > li > div[class^='item_']", (p) => {
+    const a = p.querySelector("div[class^='meta_'] div[class^='actions_'] div[class^='minorActions_'] a:nth-child(1)");
+    if (a) pOpenLink(a.href, { newTab: true });
+  });
+
+const pNtAdjustTemp = (dir) => {
+  const btn = document.querySelector(
+    `button[data-test='thermozilla-controller-controls-${dir > 0 ? 'in' : 'de'}crement-button']`);
+  if (btn) btn.click();
+};
+const pNtSetMode = (mode) => {
+  const click = (sel) => { const b = document.querySelector(sel); if (b) b.click(); };
+  const openPopover = async () => {
+    const existing = document.querySelector("div[data-test='thermozilla-mode-popover']");
+    if (existing) return existing;
+    click("button[data-test='thermozilla-mode-button']");
+    return pUntil(() => document.querySelector("div[data-test='thermozilla-mode-popover']"));
+  };
+  openPopover().then((popover) => {
+    const b = popover.querySelector(`button[data-test='thermozilla-mode-switcher-${mode}-button']`);
+    if (b) b.click();
+  });
+};
+const pNtSetFan = (desired) => {
+  const click = (sel) => { const b = document.querySelector(sel); if (b) b.click(); };
+  const fanRunning = () => document.querySelector("div[data-test='thermozilla-aag-fan-listcell-title']");
+  const openPopover = async () => {
+    const existing = document.querySelector("div[data-test='thermozilla-fan-timer-popover']");
+    if (existing) return existing;
+    click("button[data-test='thermozilla-fan-button']");
+    return pUntil(() => document.querySelector("div[data-test='thermozilla-fan-timer-popover']"));
+  };
+  const stop = async () => {
+    const popover = await openPopover();
+    const b = popover.querySelector("div[data-test='thermozilla-fan-timer-stop-button']");
+    if (b) b.click();
+  };
+  const start = async () => {
+    const popover = await openPopover();
+    const listbox = popover.querySelector("div[role='listbox']");
+    if (listbox) api.Hints.dispatchMouseClick(listbox.querySelector("div[role='option']:last-child"));
+    const b = popover.querySelector("div[data-test='thermozilla-fan-timer-start-button']");
+    if (b) b.click();
+  };
+  if (fanRunning()) { stop(); }
+  if (desired === 1) { start(); }
+};
+
+const pScrollEl = (el, dir) => {
+  if (!el) return;
+  const e = document.createEvent('MouseEvents');
+  e.initEvent('mousedown', true, true);
+  el.dispatchEvent(e);
+  api.Normal.scroll(dir);
+};
+const pDvScrollSidebar = (dir) => pScrollEl(document.querySelector('._list'), dir);
+const pDvScrollContent = (dir) => pScrollEl(document.querySelector('._content'), dir);
+const pReScrollSidebar = (dir) => pScrollEl(document.getElementById('sidebar-content'), dir);
+const pReScrollContent = (dir) => pScrollEl(document.body, dir);
+const pReFocusSearch = () => {
+  const el = document.getElementById('docsearch');
+  if (!el) return;
+  const e = document.createEvent('MouseEvents');
+  e.initEvent('mousedown', true, true);
+  el.dispatchEvent(e);
+  e.initEvent('click', true, true);
+  el.dispatchEvent(e);
+};
+
+const pIkToggleDetails = () => {
+  const close = document.querySelector('.range-revamp-modal-header__close');
+  if (close) { close.click(); return; }
+  const btn = document.querySelector('.range-revamp-product-information-section__button button');
+  if (!btn) return;
+  btn.click();
+  const expand = document.querySelector('.range-revamp-expander__btn');
+  if (expand) expand.click();
+  else pUntil(() => document.querySelector('.range-revamp-expander__btn')).then((e) => e.click());
+};
+const pIkToggleReviews = () => {
+  const btn = document.querySelector('.ugc-rr-pip-fe-modal-header__close') ||
+    document.querySelector('.range-revamp-chunky-header__reviews');
+  if (btn) btn.click();
+};
+
+const pYtTimestampLink = () => {
+  const [ss, mm, hh = 0] = (document.querySelector('#ytd-player .ytp-time-current')
+    ?.innerText?.split(':')?.reverse()?.map(Number)) ?? [0, 0, 0];
+  const secs = (hh * 60 * 60) + (mm * 60) + ss;
+  const v = new URLSearchParams(window.location.search).get('v');
+  return v ? `https://youtu.be/${v}?t=${secs}` : null;
+};
+
+// ---- Global mappings (ported) ----
+api.mapkey('zf', 'Open link URL in vim editor', () =>
+  pHints('a[href]', (a) => api.Front.showEditor(a.href, (url) => pOpenLink(url), 'url'))
+);
+api.mapkey('gh', 'Scroll to element targeted by URL hash', () => pScrollToHash());
+api.mapkey('gi', 'Edit current URL with vim editor', () =>
+  api.Front.showEditor(window.location.href, (url) => pOpenLink(url), 'url')
+);
+api.mapkey('yp', 'Copy URL path of current page', () => api.Clipboard.write(window.location.href));
+api.mapkey('yO', 'Copy page URL/Title as Org-mode link', () =>
+  api.Clipboard.write(`[[${window.location.href}][${document.title}]]`)
+);
+api.mapkey('yT', 'Duplicate current tab (non-active new tab)', () =>
+  pOpenLink(window.location.href, { newTab: true, active: false })
+);
+api.mapkey(';se', 'Edit Settings', () => api.tabOpenLink(chrome.extension.getURL('/pages/options.html')));
+const pDossier = (params) =>
+  `http://centralops.net/co/DomainDossier.aspx?${params}&addr=${window.location.hostname}`;
+api.mapkey('=W', 'Lookup whois information for domain', () => pOpenLink(pDossier('dom_whois=true'), { newTab: true }));
+api.mapkey('=d', 'Lookup dns information for domain', () => pOpenLink(pDossier('dom_dns=true'), { newTab: true }));
+api.mapkey('=D', 'Lookup all information for domain', () =>
+  pOpenLink(pDossier('dom_whois=true&dom_dns=true&traceroute=true&net_whois=true&svc_scan=true'), { newTab: true }));
+api.mapkey('=c', "Show Google's cached version of page", () =>
+  pOpenLink(`https://webcache.googleusercontent.com/search?q=cache:${window.location.href}`, { newTab: true }));
+api.mapkey('=A', 'Show Alexa.com info for domain', () =>
+  pOpenLink(`https://www.alexa.com/siteinfo/${window.location.hostname}`, { newTab: true }));
+api.mapkey('=bw', 'Show BuiltWith report for page', () =>
+  pOpenLink(`https://www.builtwith.com/?${window.location.href}`, { newTab: true }));
+api.mapkey('=wa', 'Show Wappalyzer report for domain', () =>
+  pOpenLink(`https://www.wappalyzer.com/lookup/${window.location.hostname}`, { newTab: true }));
+api.mapkey('\\cgh', "Open clipboard string as GitHub path (e.g. 'torvalds/linux')", async () => {
+  const clip = await navigator.clipboard.readText();
+  const parts = clip.trim().replace(/^https?:\/\/github\.com\//, '').split('/').filter(Boolean);
+  const url = 'https://github.com/' + parts.slice(0, 2).join('/');
+  api.Front.showBanner(`Open ${url}`);
+  pOpenLink(url, { newTab: true });
+});
+
+// ---- Site-specific (ported) ----
+
+// Amazon
+api.mapkey('<Space>fs', 'Fakespot', () => pFakeSpot(), { domain: /amazon\.(com|de|co\.uk|ca|fr|it|es|nl|com\.au|in|jp)\b/i });
+api.mapkey('<Space>a', 'View product', () => pAzViewProduct(), { domain: /amazon\.(com|de|co\.uk|ca|fr|it|es|nl|com\.au|in|jp)\b/i });
+api.mapkey('<Space>c', 'Add to Cart', () => pHints('#add-to-cart-button'), { domain: /amazon\.(com|de|co\.uk|ca|fr|it|es|nl|com\.au|in|jp)\b/i });
+api.mapkey('<Space>R', 'View Product Reviews', () => pHints('#customerReviews'), { domain: /amazon\.(com|de|co\.uk|ca|fr|it|es|nl|com\.au|in|jp)\b/i });
+api.mapkey('<Space>Q', 'View Product Q&A', () => pHints('#Ask'), { domain: /amazon\.(com|de|co\.uk|ca|fr|it|es|nl|com\.au|in|jp)\b/i });
+api.mapkey('<Space>A', 'Open Account page', () => pOpenLink('/gp/css/homepage.html'), { domain: /amazon\.(com|de|co\.uk|ca|fr|it|es|nl|com\.au|in|jp)\b/i });
+api.mapkey('<Space>C', 'Open Cart page', () => pOpenLink('/gp/cart/view.html'), { domain: /amazon\.(com|de|co\.uk|ca|fr|it|es|nl|com\.au|in|jp)\b/i });
+api.mapkey('<Space>O', 'Open Orders page', () => pOpenLink('/gp/css/order-history'), { domain: /amazon\.(com|de|co\.uk|ca|fr|it|es|nl|com\.au|in|jp)\b/i });
+
+// Google
+const pGoogleResultsSel = [
+  'a h3', 'h3 a',
+  "a[href^='/search']:not(.fl):not(#pnnext,#pnprev):not([role]):not(.hide-focus-ring)",
+  'g-scrolling-carousel a', '.rc > div:nth-child(2) a', '.kno-rdesc a', '.kno-fv a',
+  '.isv-r > a:first-child', '.dbsr > a:first-child', '.X5OiLe', '.WlydOe', '.fl',
+].join(',');
+api.mapkey('<Space>a', 'Open search result', () => pHints(pGoogleResultsSel), { domain: /www\.google\.com/i });
+api.mapkey('<Space>A', 'Open search result (new tab)', () => pHints(pGoogleResultsSel, pOpenAnchor({ newTab: true, active: false })), { domain: /www\.google\.com/i });
+api.mapkey('<Space>d', 'Open search in DuckDuckGo', () => pGoDdg(), { domain: /www\.google\.com/i });
+
+// Algolia
+api.mapkey('<Space>a', 'Open search result', () => pHints('.item-main h2>a:first-child'), { domain: /algolia\.com/i });
+
+// DuckDuckGo
+const pDdgSel = [
+  'a[rel=noopener][target=_self]:not([data-testid=result-extras-url-link])',
+  '.js-images-show-more', '.module--images__thumbnails__link', '.tile--img__sub',
+].join(',');
+api.mapkey('<Space>a', 'Open search result', () => pHints(pDdgSel), { domain: /duckduckgo\.com/i });
+api.mapkey('<Space>A', 'Open search result (non-active new tab)', () => pHints(pDdgSel, pOpenAnchor({ newTab: true, active: false })), { domain: /duckduckgo\.com/i });
+api.mapkey(']]', 'Show more results', () => {
+  const b = document.querySelector('.result--more__btn');
+  if (b) b.click();
+}, { domain: /duckduckgo\.com/i });
+api.mapkey('<Space>g', 'Open search in Google', () => pDgGoog(), { domain: /duckduckgo\.com/i });
+api.mapkey('<Space>sgh', 'Search site:github.com', () => pDgSiteSearch('github.com'), { domain: /duckduckgo\.com/i });
+api.mapkey('<Space>sre', 'Search site:reddit.com', () => pDgSiteSearch('reddit.com'), { domain: /duckduckgo\.com/i });
+
+// Yelp
+api.mapkey('<Space>fs', 'Fakespot', () => pFakeSpot(), { domain: /yelp\.com/i });
+
+// YouTube (additions; A/F/Yt already defined above)
+api.mapkey('C', 'Open channel', () => pHints("*[id='byline']"), { domain: /youtube\.com/i });
+api.mapkey('gH', 'Goto homepage', () => pOpenLink('https://www.youtube.com/feed/subscriptions?flow=2'), { domain: /youtube\.com/i });
+api.mapkey('Ym', 'Copy YouTube video markdown link for current time', () => {
+  const link = pYtTimestampLink();
+  if (link) api.Clipboard.write(`[${document.title}](${link})`);
+}, { domain: /youtube\.com/i });
+
+// Vimeo
+api.mapkey('<Space>F', 'Toggle fullscreen', () => {
+  const b = document.querySelector('.fullscreen-icon');
+  if (b) b.click();
+}, { domain: /vimeo\.com/i });
+
+// GitHub (additions; the rest defined above)
+api.mapkey('<Space>S', 'Open repository Settings page', () => pGhOpenRepoPage('/settings'), { domain: /github\.com/i });
+api.mapkey('<Space>W', 'Open repository Wiki page', () => pGhOpenRepoPage('/wiki'), { domain: /github\.com/i });
+api.mapkey('<Space>X', 'Open repository Security page', () => pGhOpenRepoPage('/security'), { domain: /github\.com/i });
+api.mapkey('<Space>O', "Open repository Owner's profile page", () => pGhOpenRepoOwner(), { domain: /github\.com/i });
+api.mapkey('<Space>M', "Open your profile page ('Me')", () => pGhOpenProfile(), { domain: /github\.com/i });
+api.mapkey('<Space>a', 'View Repository', () => pGhOpenRepo(), { domain: /github\.com/i });
+api.mapkey('<Space>u', 'View User', () => pGhOpenUser(), { domain: /github\.com/i });
+api.mapkey('<Space>f', 'View File', () => pGhOpenFile(), { domain: /github\.com/i });
+api.mapkey('<Space>c', 'View Commit', () => pGhOpenCommit(), { domain: /github\.com/i });
+api.mapkey('<Space>i', 'View Issue', () => pGhOpenIssue(), { domain: /github\.com/i });
+api.mapkey('<Space>p', 'View Pull Request', () => pGhOpenPull(), { domain: /github\.com/i });
+api.mapkey('<Space>e', 'View external link', () => pHints("a[href^='http']:not([href*='github.com'])"), { domain: /github\.com/i });
+api.mapkey('<Space>l', 'Toggle repo language stats', () => pGhLangStats(), { domain: /github\.com/i });
+api.mapkey('<Space>G', 'View on SourceGraph', () => pGhSourceGraph(), { domain: /github\.com/i });
+api.mapkey('<Space>r', 'View live raw version of file', () => pGhRaw(), { domain: /github\.com/i });
+api.mapkey('<Space>yr', 'Copy raw link to file', () => {
+  const p = window.location.pathname.split('/').filter(Boolean);
+  if (p.length >= 4 && p[2] === 'blob') {
+    p[2] = 'raw';
+    api.Clipboard.write(`https://raw.githubusercontent.com/${p.join('/')}`);
+  }
+}, { domain: /github\.com/i });
+api.mapkey('<Space>yf', 'Copy link to file', () => api.Clipboard.write(window.location.href), { domain: /github\.com/i });
+api.mapkey('<Space>gcp', 'Open clipboard string as file path in repo', async () => {
+  const clip = await navigator.clipboard.readText();
+  const repo = pGhParseRepo();
+  if (!repo) return;
+  pOpenLink(`https://github.com/${repo.repoBase}/tree/master/${clip}`, { newTab: true });
+}, { domain: /github\.com/i });
+
+// raw.githubusercontent.com
+api.mapkey('<Space>R', 'Open Repository page', () => pGhOpenRepoPage('/'), { domain: /raw\.githubusercontent\.com/i });
+api.mapkey('<Space>F', 'Open Source File', () => pGhOpenSourceFile(), { domain: /raw\.githubusercontent\.com/i });
+
+// github.io
+api.mapkey('<Space>R', 'Open Repository page', () => pGhOpenPagesRepo(), { domain: /\.github\.io$/i });
+
+// GitLab
+api.mapkey('<Space>s', 'Toggle Star', () => pGlStar(), { domain: /gitlab\.com/i });
+api.mapkey('<Space>y', 'Copy Project Path', () => api.Clipboard.write(pURLPath({ count: 2 })), { domain: /gitlab\.com/i });
+api.mapkey('<Space>Y', 'Copy Project Path (including domain)', () => api.Clipboard.write(pURLPath({ count: 2, domain: true })), { domain: /gitlab\.com/i });
+api.mapkey('<Space>D', 'View GoDoc for Project', () => pViewGodoc(), { domain: /gitlab\.com/i });
+
+// Twitter
+api.mapkey('<Space>f', 'Follow user', () => pHints("div[role='button'][data-testid$='follow']"), { domain: /twitter\.com/i });
+api.mapkey('<Space>s', 'Like tweet', () => pHints("div[role='button'][data-testid$='like']"), { domain: /twitter\.com/i });
+api.mapkey('<Space>R', 'Retweet', () => pHints("div[role='button'][data-testid$='retweet']"), { domain: /twitter\.com/i });
+api.mapkey('<Space>c', 'Comment/Reply', () => pHints("div[role='button'][data-testid='reply']"), { domain: /twitter\.com/i });
+api.mapkey('<Space>T', 'New tweet', () => {
+  const b = document.querySelector("a[role='button'][data-testid='SideNav_NewTweet_Button']");
+  if (b) b.click();
+}, { domain: /twitter\.com/i });
+api.mapkey('<Space>u', 'Goto user', () => pTwOpenUser(), { domain: /twitter\.com/i });
+api.mapkey('<Space>t', 'Goto tweet', () =>
+  pHints("article, article div[data-focusable='true'][role='link'][tabindex='0']"), { domain: /twitter\.com/i });
+
+// Reddit (additions)
+api.mapkey('<Space>X', 'Collapse next comment', () => pReCollapseNext('.noncollapsed.comment .expand'), { domain: /reddit\.com/i });
+api.mapkey('<Space>S', 'Downvote', () => pHints('.arrow.down'), { domain: /reddit\.com/i });
+api.mapkey('<Space>e', 'Expand expando', () => pHints('.expando-button'), { domain: /reddit\.com/i });
+api.mapkey('<Space>A', 'View post (link) (non-active new tab)', () => pHints('.title', pOpenAnchor({ newTab: true, active: false })), { domain: /reddit\.com/i });
+api.mapkey('<Space>C', 'View post (comments) (non-active new tab)', () => pHints('.comments', pOpenAnchor({ newTab: true, active: false })), { domain: /reddit\.com/i });
+
+// Hacker News (additions)
+api.mapkey('<Space>X', 'Collapse next comment', () => pReCollapseNext("a.togg"), { domain: /news\.ycombinator\.com/i });
+api.mapkey('<Space>S', 'Downvote', () => pHints(".votearrow[title='downvote']"), { domain: /news\.ycombinator\.com/i });
+api.mapkey('<Space>A', 'View post (link and comments)', () => pHints('.athing', pHnOpenLinkAndComments), { domain: /news\.ycombinator\.com/i });
+api.mapkey('<Space>C', 'View post (comments) (non-active new tab)', () => pHints(".subline>a[href^='item']", pOpenAnchor({ newTab: true, active: false })), { domain: /news\.ycombinator\.com/i });
+api.mapkey('gp', 'Go to parent', () => pHnGoParent(), { domain: /news\.ycombinator\.com/i });
+api.mapkey(']]', 'Next page', () => pHnGoPage(1), { domain: /news\.ycombinator\.com/i });
+api.mapkey('[[', 'Prev page', () => pHnGoPage(-1), { domain: /news\.ycombinator\.com/i });
+
+// Product Hunt
+api.mapkey('<Space>a', 'View product (external)', () => pPhOpenExternal(), { domain: /producthunt\.com/i });
+api.mapkey('<Space>v', 'View product', () => pHints("ul[class^='postsList_'] > li > div[class^='item_'] > a"), { domain: /producthunt\.com/i });
+api.mapkey('<Space>s', 'Upvote product', () => pHints("button[data-test='vote-button']"), { domain: /producthunt\.com/i });
+
+// Behance
+api.mapkey('<Space>s', 'Appreciate project', () => pHints('.appreciation-button'), { domain: /behance\.net/i });
+api.mapkey('<Space>b', 'Add project to collection', () => {
+  const b = document.querySelector('.qa-action-collection');
+  if (b) b.click();
+}, { domain: /behance\.net/i });
+api.mapkey('<Space>a', 'View project', () => pHints('.rf-project-cover__title'), { domain: /behance\.net/i });
+api.mapkey('<Space>A', 'View project (non-active new tab)', () => pHints('.rf-project-cover__title', pOpenAnchor({ newTab: true, active: false })), { domain: /behance\.net/i });
+
+// Adobe Fonts
+api.mapkey('<Space>a', 'Activate font', () => pHints('.spectrum-ToggleSwitch-input'), { domain: /fonts\.adobe\.com/i });
+api.mapkey('<Space>s', 'Favorite font', () => pHints('.favorite-toggle-icon'), { domain: /fonts\.adobe\.com/i });
+
+// Wikipedia (incl. Wikimedia aliases)
+const pWpDom = /^(www\.)?(simple\.)?wikipedia\.org|wiktionary\.org|wikiquote\.org|wikisource\.org|wikimedia\.org|mediawiki\.org|wikivoyage\.org|wikibooks\.org|wikinews\.org|wikiversity\.org|wikidata\.org|wiki\.archlinux\.org/i;
+api.mapkey('<Space>s', 'Toggle simple version of current article', () => pWpToggleSimple(), { domain: pWpDom });
+api.mapkey('<Space>a', 'View page', () => pHints('#bodyContent :not(sup):not(.mw-editsection) > a:not([rel=nofollow])'), { domain: pWpDom });
+api.mapkey('<Space>e', 'View external link', () => pHints('a[rel=nofollow]'), { domain: pWpDom });
+api.mapkey('<Space>ys', 'Copy article summary as Markdown', () => pWpMarkdownSummary(), { domain: pWpDom });
+api.mapkey('<Space>R', 'View WikiRank for current article', () => pWpViewWikiRank(), { domain: pWpDom });
+
+// Craigslist
+api.mapkey('<Space>a', 'View listing', () => pHints('a.result-title'), { domain: /craigslist\.org/i });
+
+// Nest Thermostat (path-scoped)
+// path embedded in domain regex (SurfingKeys matches the full URL)
+api.mapkey('=', 'Increment temperature', () => pNtAdjustTemp(1), { domain: /home\.nest\.com\/thermostat\/DEVICE_.*/i });
+api.mapkey('-', 'Decrement temperature', () => pNtAdjustTemp(-1), { domain: /home\.nest\.com\/thermostat\/DEVICE_.*/i });
+api.mapkey('<Space>h', 'Switch mode to Heat', () => pNtSetMode('heat'), { domain: /home\.nest\.com\/thermostat\/DEVICE_.*/i });
+api.mapkey('<Space>c', 'Switch mode to Cool', () => pNtSetMode('cool'), { domain: /home\.nest\.com\/thermostat\/DEVICE_.*/i });
+api.mapkey('<Space>r', 'Switch mode to Heat/Cool', () => pNtSetMode('range'), { domain: /home\.nest\.com\/thermostat\/DEVICE_.*/i });
+api.mapkey('<Space>o', 'Switch mode to Off', () => pNtSetMode('off'), { domain: /home\.nest\.com\/thermostat\/DEVICE_.*/i });
+api.mapkey('<Space>f', 'Switch fan On', () => pNtSetFan(1), { domain: /home\.nest\.com\/thermostat\/DEVICE_.*/i });
+api.mapkey('<Space>F', 'Switch fan Off', () => pNtSetFan(0), { domain: /home\.nest\.com\/thermostat\/DEVICE_.*/i });
+
+// rescript-lang.org
+// /docs pages only (path embedded in domain regex)
+api.mapkey('i', 'Focus search field', () => pReFocusSearch(), { domain: /rescript-lang\.org(\/docs(\/.*)?)?$/i });
+api.mapkey('<Space>a', 'Open docs link', () => pHints("a[href^='/docs/']"), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('<Space>L', 'Open language manual', () => pOpenLink('/docs/manual/latest/introduction'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('<Space>R', 'Open ReScript + React docs', () => pOpenLink('/docs/react/latest/introduction'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('<Space>G', 'Open GenType docs', () => pOpenLink('/docs/gentype/latest/introduction'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('<Space>P', 'Open package index', () => pOpenLink('/packages'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('<Space>Y', 'Open playground', () => pOpenLink('/try'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('<Space>S', 'Open syntax lookup', () => pOpenLink('/syntax-lookup'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('<Space>F', 'Open community forum', () => pOpenLink('https://forum.rescript-lang.org/'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('<Space>A', 'Open API docs', () => pOpenLink('/docs/manual/latest/api'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('<Space>J', 'Open JS API docs', () => pOpenLink('/docs/js/latest/introduction'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('<Space>B', 'Open Belt API docs', () => pOpenLink('/docs/belt/latest/introduction'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('<Space>D', 'Open DOM API docs', () => pOpenLink('/docs/dom/latest/introduction'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('w', 'Scroll sidebar up', () => pReScrollSidebar('up'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('s', 'Scroll sidebar down', () => pReScrollSidebar('down'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('e', 'Scroll sidebar page up', () => pReScrollSidebar('pageUp'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('d', 'Scroll sidebar page down', () => pReScrollSidebar('pageDown'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('k', 'Scroll body up', () => pReScrollContent('up'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('j', 'Scroll body down', () => pReScrollContent('down'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('K', 'Scroll body page up', () => pReScrollContent('pageUp'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+api.mapkey('J', 'Scroll body page down', () => pReScrollContent('pageDown'), { domain: /rescript-lang\.org\/docs(\/.*)?$/i });
+
+// devdocs.io (sidebar/body scrolls; leader-less, domain-scoped)
+const pDvDom = /devdocs\.io/i;
+api.mapkey('w', 'Scroll sidebar up', () => pDvScrollSidebar('up'), { domain: pDvDom });
+api.mapkey('s', 'Scroll sidebar down', () => pDvScrollSidebar('down'), { domain: pDvDom });
+api.mapkey('e', 'Scroll sidebar page up', () => pDvScrollSidebar('pageUp'), { domain: pDvDom });
+api.mapkey('d', 'Scroll sidebar page down', () => pDvScrollSidebar('pageDown'), { domain: pDvDom });
+api.mapkey('k', 'Scroll body up', () => pDvScrollContent('up'), { domain: pDvDom });
+api.mapkey('j', 'Scroll body down', () => pDvScrollContent('down'), { domain: pDvDom });
+api.mapkey('K', 'Scroll body page up', () => pDvScrollContent('pageUp'), { domain: pDvDom });
+api.mapkey('J', 'Scroll body page down', () => pDvScrollContent('pageDown'), { domain: pDvDom });
+
+// ebay.com
+api.mapkey('<Space>fs', 'Fakespot', () => pFakeSpot(), { domain: /ebay\.com/i });
+
+// ikea.com
+api.mapkey('<Space>d', 'Toggle Product Details', () => pIkToggleDetails(), { domain: /ikea\.com/i });
+api.mapkey('<Space>i', 'Toggle Product Details', () => pIkToggleDetails(), { domain: /ikea\.com/i });
+api.mapkey('<Space>r', 'Toggle Product Reviews', () => pIkToggleReviews(), { domain: /ikea\.com/i });
+api.mapkey('<Space>C', 'Open Cart page', () => pOpenLink('/us/en/shoppingcart/'), { domain: /ikea\.com/i });
+api.mapkey('<Space>P', 'Open Profile page', () => pOpenLink('/us/en/profile/login/'), { domain: /ikea\.com/i });
+api.mapkey('<Space>F', 'Open Favorites page', () => pOpenLink('/us/en/favorites/'), { domain: /ikea\.com/i });
+api.mapkey('<Space>O', 'Open Orders page', () => pOpenLink('/us/en/customer-service/track-manage-order/'), { domain: /ikea\.com/i });
