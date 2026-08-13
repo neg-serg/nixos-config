@@ -9,7 +9,7 @@
     description = ''
       List of enabled system profiles. Each profile sets a bundle of feature-flag defaults
       via mkDefault. Order matters — profiles listed later override earlier ones.
-      Available: desktop, gaming, audio-pro, dev, lite, server.
+      Available: desktop, gaming, audio-pro, dev.
     '';
   };
 

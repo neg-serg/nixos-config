@@ -61,10 +61,6 @@ let
     "documentation"
   ];
 
-  # Lite: basic + SSH server. No GUI, no desktop apps.
-  # Also used by the "server" test profile (same domain set as lite).
-  liteDomains = basicDomains ++ [ "servers" ];
-
   # Full desktop: everything imported (current default).
   allDomains = basicDomains ++ [
     "appimage"
@@ -164,23 +160,6 @@ let
     };
   };
 
-  # Profile → domain filter map. Key = test profile name, value = domain list.
-  profileDomainSets = {
-    lite = liteDomains;
-    server = liteDomains; # consolidated: lite + servers, same domain set
-    # gaming / audio-pro / desktop: use allDomains (full GUI stack).
-  };
-
-  mkTestSpecialArgs =
-    testProfile:
-    let
-      domains = profileDomainSets.${testProfile} or allDomains;
-    in
-    mkSpecialArgs
-    // {
-      domainFilter = mkDomainFilter domains;
-    };
-
   mkHost =
     name:
     lib.nixosSystem {
@@ -196,18 +175,13 @@ let
   # This replaces the base profiles entirely (via mkForce) so the comparison is clean:
   # base config vs single-profile test config, no priority conflicts.
   #
-  # Parallel-eval refactoring (Jul 2026): each test config uses a restrictive
-  # domainFilter (liteDomains / serverDomains) to skip importing unused module
-  # domains (GUI, nix-maid, games, etc.), producing smaller eval trees for
-  # nix-eval-jobs to process in parallel.
-  #
   # NEVER evaluated during normal `nixos-rebuild switch --flake .#odin`.
   # Evaluated by flake/checks.nix (test-odin-*) via the exported mkTestHost.
   mkTestHost =
     baseName: testProfile:
     lib.nixosSystem {
       inherit pkgs;
-      specialArgs = mkTestSpecialArgs testProfile;
+      specialArgs = mkSpecialArgs;
       modules =
         commonModules
         ++ [ (import ((builtins.toString hostsDir) + "/" + baseName)) ]
@@ -215,29 +189,6 @@ let
         ++ [
           # mkForce: replace host profiles entirely so the test profile is the sole active one
           { features.profiles = lib.mkForce [ testProfile ]; }
-          # Test profile compat: provide stubs for users/features that the
-          # restricted domain filter would otherwise leave unconfigured.
-          # lite/server profiles skip "user" and "flatpak" domains,
-          # so greetd's greeter and nix-flatpak's user assertions fail.
-          ({ config, lib, ... }: {
-            config = lib.mkMerge [
-              (lib.mkIf (!config.features.gui.enable) {
-                features.gui.vicinae.enable = lib.mkForce false;
-              })
-              {
-                users.users.greeter = {
-                  isSystemUser = lib.mkDefault true;
-                  group = lib.mkDefault "greeter";
-                };
-                users.groups.greeter = { };
-                users.users.flatpak = {
-                  isSystemUser = lib.mkDefault true;
-                  group = lib.mkDefault "flatpak";
-                };
-                users.groups.flatpak = { };
-              }
-            ];
-          })
         ];
     };
 
