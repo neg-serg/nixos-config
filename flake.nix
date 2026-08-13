@@ -64,10 +64,6 @@
       url = "github:unazikx/steam-config-nix/feat/winetricks";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    caelestia-shell = {
-      url = "github:caelestia-dots/shell";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     talktype = {
       url = "github:lmacan1/talktype";
       flake = false;

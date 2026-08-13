@@ -29,7 +29,6 @@ with lib;
       tools = mkBool "enable Python tooling (LSP, utilities)" true;
     };
 
-    tla.enable = mkBool "enable TLA+ tooling (toolbox, formatter)" false;
     unreal = {
       enable = mkBool "enable Unreal Engine 5 tooling" false;
       root = mkOption {

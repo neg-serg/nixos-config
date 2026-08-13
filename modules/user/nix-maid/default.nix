@@ -38,7 +38,6 @@
     ./sys/vdirsyncer.nix
     ./sys/khal.nix
     ./sys/autoclick.nix
-    ./sys/nekoray.nix
     ./sys/mail.nix
     ./sys/misc.nix
     ./sys/wallpaper-sync.nix
