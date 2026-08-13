@@ -153,7 +153,6 @@
             helpColor = "00AAAA";
             helpColorBright = "55FF55";
           };
-          wallpapers = [ ../../files/boot-splash.jpg ];
           wallpaperStyle = "stretched";
           backdrop = "000000";
         };
