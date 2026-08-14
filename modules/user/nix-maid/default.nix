@@ -47,14 +47,12 @@
 
     ./web/vivaldi.nix
     ./web/aria.nix
-    ./web/misc.nix
     ./web/yt-dlp.nix
 
     # Fun & Games
     ./fun/nethack.nix
     ./fun/oss-games.nix
     ./fun/openmw.nix
-    ./fun/steam.nix
 
     # Media & Audio
     ./sys/media.nix
