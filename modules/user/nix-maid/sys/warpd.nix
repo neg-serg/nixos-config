@@ -22,9 +22,14 @@ lib.mkIf (cfg.enable or false) {
     after = [ "graphical-session.target" ];
     partOf = [ "graphical-session.target" ];
     serviceConfig = {
-      ExecStart = "${lib.getExe pkgs.warpd}";
+      # warpd double-forks by default (parent exits 0) — systemd would kill
+      # the orphaned daemon with the cgroup; --foreground keeps it tracked.
+      # Its Wayland backend errors against Hyprland (wl_display invalid object
+      # 19) — unset WAYLAND_DISPLAY to select the X11 backend via XWayland.
+      ExecStart = "${lib.getExe pkgs.warpd} --foreground";
       Restart = "on-failure";
       RestartSec = 2;
+      UnsetEnvironment = "WAYLAND_DISPLAY";
     };
     wantedBy = [ "graphical-session.target" ];
   };
