@@ -73,7 +73,7 @@ in
           description = "Create writable Kvantum config (replace nix store symlink)";
           serviceConfig = {
             Type = "oneshot";
-            ExecStart = "${pkgs.bash}/bin/bash -c 'KVC=\"$HOME/.config/Kvantum/kvantum.kvconfig\"; [ -L \"$KVC\" ] && rm -f \"$KVC\"; if [ ! -f \"$KVC\" ]; then mkdir -p \"$(dirname \"$KVC\")\"; printf \"[General]\\ntheme=${kvantumTheme}\\n\" > \"$KVC\"; fi'";
+            ExecStart = "${lib.getExe pkgs.bash} -c 'KVC=\"$HOME/.config/Kvantum/kvantum.kvconfig\"; [ -L \"$KVC\" ] && rm -f \"$KVC\"; if [ ! -f \"$KVC\" ]; then mkdir -p \"$(dirname \"$KVC\")\"; printf \"[General]\\ntheme=${kvantumTheme}\\n\" > \"$KVC\"; fi'";
           };
           after = [ "graphical-session.target" ];
           wants = [ "graphical-session.target" ];
