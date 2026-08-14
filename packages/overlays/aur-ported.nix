@@ -206,7 +206,7 @@ final: _: {
 
     src = final.fetchurl {
       url = "https://github.com/v2rayA/v2rayA/releases/download/v2.2.7.5/v2raya_linux_x64_2.2.7.5";
-      hash = "sha256-IuntzxicN1uqx21ZNTsqMp/QVS/gg8OTuntb+bkLIBE="; # FIXME: stone had file:// upstream; GitHub release URL needs verification
+      hash = "sha256-M7wfTu4PIbBqjhOTswZoO2ISM8MSPyup1/QFDOfVXTM="; # verified against the v2.2.7.5 GitHub release asset
     };
 
     dontUnpack = true;
