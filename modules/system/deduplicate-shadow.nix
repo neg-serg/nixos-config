@@ -42,14 +42,13 @@ let
   ];
 
   # nixbld users removed — auto-allocate-uids handles build users dynamically
-  allUsers = systemUsers;
 
   # Map each user name to a shell override (nologin path instead of package)
   shellOverrides = builtins.listToAttrs (
     map (name: {
       inherit name;
       value.shell = "${pkgs.shadow}/bin/nologin";
-    }) allUsers
+    }) systemUsers
   );
 in
 {
