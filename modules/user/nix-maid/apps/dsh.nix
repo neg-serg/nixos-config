@@ -21,7 +21,7 @@ in
       Type = "simple";
       WorkingDirectory = homeDir;
       # HMR plugin requires node --expose-internals (not allowed in NODE_OPTIONS)
-      ExecStart = "${pkgs.nodejs}/bin/node --expose-internals ${pkgs.neg.dsh}/lib/node_modules/@deepseek-ai/dsh/lib/bin.js web";
+      ExecStart = "${lib.getExe pkgs.nodejs} --expose-internals ${pkgs.neg.dsh}/lib/node_modules/@deepseek-ai/dsh/lib/bin.js web";
       Restart = "on-failure";
       RestartSec = 3;
     };
