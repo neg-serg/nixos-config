@@ -41,6 +41,7 @@
     ./sys/mail.nix
     ./sys/misc.nix
     ./sys/wallpaper-sync.nix
+    ./sys/warpd.nix
 
     # Web & Browsing
     ./web/browsing.nix
