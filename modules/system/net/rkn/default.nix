@@ -13,19 +13,31 @@ let
   inherit (lib) mkIf;
   cfg = config.features.net.rknDomains or { };
 
-  # Community-maintained RKN blocklist. Former second source
-  # (CipherOps/RKN-checker, zapret-info dump.csv) is dead — this one is
-  # updated daily and covers youtube/google domains used by zapret2.
-  blocklistUrl = "https://raw.githubusercontent.com/1andrevich/Re-filter-lists/main/domains_all.lst";
+  # Community-maintained RKN blocklists (family 1andrevich/Re-filter-lists,
+  # updated daily; the only live family of clean domain lists — covers
+  # youtube/google domains used by zapret2). Researched and rejected:
+  # CipherOps/RKN-checker (404), zapret-info dump.csv (IP registry, not
+  # domains), itdoginfo/allow-domains (allowlist of opposite semantics),
+  # ipsum.lst (IP addresses, for --ipset, not hostlist).
+  blocklistUrls = [
+    "https://raw.githubusercontent.com/1andrevich/Re-filter-lists/main/domains_all.lst" # main list, ~1.3 MB, ~56k domains
+    "https://raw.githubusercontent.com/1andrevich/Re-filter-lists/main/community.lst" # supplement, 11 KB, clean domains
+    "https://raw.githubusercontent.com/1andrevich/Re-filter-lists/main/ooni_domains.lst" # supplement, 12.5 KB, domains+IPs (IPs filtered out)
+  ];
 
   rknScript = pkgs.writeShellScript "rkn-domains-fetch" ''
     set -euo pipefail
     BLOCKLIST_DIR="''${BLOCKLIST_DIR:-/var/lib/rkn/domains}"
     mkdir -p "$BLOCKLIST_DIR"
 
-    ${lib.getExe pkgs.curl} -fsSL --retry 3 --max-time 120 "${blocklistUrl}" \
-      | grep -E '^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}$' \
-      | sort -u > "$BLOCKLIST_DIR/domains_all.txt"
+    : > "$BLOCKLIST_DIR/domains_all.tmp"
+    for url in ${builtins.concatStringsSep " " blocklistUrls}; do
+      ${lib.getExe pkgs.curl} -fsSL --retry 3 --max-time 120 "$url" \
+        | grep -E '^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}$' \
+        | sort -u >> "$BLOCKLIST_DIR/domains_all.tmp"
+    done
+    sort -u "$BLOCKLIST_DIR/domains_all.tmp" > "$BLOCKLIST_DIR/domains_all.txt"
+    rm -f "$BLOCKLIST_DIR/domains_all.tmp"
 
     echo "Updated $(wc -l < "$BLOCKLIST_DIR/domains_all.txt") domains"
   '';
@@ -40,12 +52,20 @@ in
       # with a fresh list; Before is a no-op when zapret2 is not enabled.
       wantedBy = [ "multi-user.target" ];
       before = [ "zapret2.service" ];
+      # curl must resolve raw.githubusercontent.com — at boot DNS is not up
+      # yet, so wait for network-online (same as zapret2 does).
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${rknScript}";
         # nfqws reads --hostlist only at start, so restart it to apply
-        # the refreshed list. `|| true` — zapret2 may be disabled.
-        ExecStartPost = "${pkgs.systemd}/bin/systemctl restart zapret2.service || true";
+        # the refreshed list. `--no-block` is REQUIRED: a synchronous
+        # restart waits for zapret2 to start, but zapret2 has
+        # After=rkn-domains-fetch — a synchronous call deadlocks the boot.
+        # `|| true` — zapret2 may be disabled. Needs an explicit shell:
+        # ExecStart lines are split on whitespace, no `||`/`--` handling.
+        ExecStartPost = "${pkgs.bash}/bin/bash -c 'systemctl restart --no-block zapret2.service || true'";
         StateDirectory = "rkn/domains";
         Environment = "BLOCKLIST_DIR=/var/lib/rkn/domains";
       };

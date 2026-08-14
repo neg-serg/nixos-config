@@ -38,6 +38,7 @@
   features.mail.mbsync.enable = false;
   features.net.zapret2.enable = true; # Zapret2 DPI bypass (nfqws2)
   features.net.rknDomains.enable = true; # RKN blocklist -> zapret2 hostlist
+  features.net.netHealth.enable = true; # Periodic net/DNS/zapret2 health check with self-heal + ntfy
   features.virt.libvirtd.enable = true;
   features.apps.winapps.enable = true;
   features.apps.winapps.desktopApps = [
