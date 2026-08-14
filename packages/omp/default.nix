@@ -4,11 +4,10 @@
   fetchurl,
   makeWrapper,
   bun,
-  python3,
   stdenv,
 }:
 let
-  version = "17.0.1";
+  version = "17.3.4";
 in
 buildNpmPackage {
   pname = "omp";
@@ -16,10 +15,10 @@ buildNpmPackage {
 
   src = fetchurl {
     url = "https://registry.npmjs.org/@oh-my-pi/pi-coding-agent/-/pi-coding-agent-${version}.tgz";
-    hash = "sha256-bJ3s6uLJW0Eb9xQr+2wDBrBC2FLfj6hoPQ3Lbvog6H4=";
+    hash = "sha256-2bRsv9r8FGqL4hrTEJQW/qViU7eDwOmYSzqZgaIj5r0=";
   };
 
-  npmDepsHash = "sha256-SJ5PZciUVGB09CKR3jXk6Ey5PeDmo0bJkwPUAleSP3U=";
+  npmDepsHash = "sha256-u1kVT5PBZIKqNxsTSuVbcV+k2+NFEXuPl7njWT9PU2w=";
   npmDepsFetcherVersion = 2;
 
   dontNpmBuild = true;
@@ -34,22 +33,10 @@ buildNpmPackage {
   nativeBuildInputs = [ makeWrapper ];
 
   postPatch = ''
-        # Inject package-lock.json (not bundled in the npm tarball)
-        cp ${./package-lock.json} package-lock.json
-        # Downgrade @oh-my-pi/* deps in package.json to match lockfile (17.0.0)
-        ${lib.getExe python3} -c "
-    import json
-    with open('package.json') as f:
-        pkg = json.load(f)
-    for dep in list(pkg.get('dependencies', {})):
-        if dep.startswith('@oh-my-pi/'):
-            pkg['dependencies'][dep] = '17.0.0'
-    with open('package.json', 'w') as f:
-        json.dump(pkg, f, indent=2)
-        f.write('\n')
-    "
-        # Patch bun version check (nixpkgs bun 1.3.13, omp wants >=1.3.14)
-        sed -i 's/1\.3\.14/1.3.13/g' dist/cli.js
+    # Inject package-lock.json (not bundled in the npm tarball)
+    cp ${./package-lock.json} package-lock.json
+    # Patch bun version check (nixpkgs bun 1.3.13, omp wants >=1.3.14)
+    sed -i 's/1\.3\.14/1.3.13/g' dist/cli.js
   '';
 
   installPhase = ''
