@@ -26,4 +26,9 @@ in
       RestartSec = 3;
     };
   };
+
+  # Install the dsh CLI into the environment (PATH).
+  environment.systemPackages = [
+    pkgs.neg.dsh # DeepSeek Harness agent CLI (dsh)
+  ];
 }
