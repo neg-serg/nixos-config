@@ -171,7 +171,7 @@ in
         description = "Point Vivaldi CSS mods at the profile mods folder";
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = "${pkgs.python3}/bin/python3 ${prefScript}";
+          ExecStart = "${lib.getExe' pkgs.python3 "python3"} ${prefScript}";
         };
         after = [ "graphical-session.target" ];
         wants = [ "graphical-session.target" ];
