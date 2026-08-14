@@ -107,7 +107,7 @@ in
       after = [ "systemd-modules-load.service" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.ryzenadj}/bin/ryzenadj -a 230000 -b 230000 -c 230000 -g 190000 -f 95 --set-coall=-20 && ${gpuOc}/bin/gpu-oc 300 -100'";
+        ExecStart = "${lib.getExe pkgs.bash} -c '${lib.getExe pkgs.ryzenadj} -a 230000 -b 230000 -c 230000 -g 190000 -f 95 --set-coall=-20 && ${gpuOc}/bin/gpu-oc 300 -100'";
       };
     };
 

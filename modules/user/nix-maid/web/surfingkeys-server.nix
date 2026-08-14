@@ -20,7 +20,7 @@ mkIf (config.features.web.enable or false) {
     {
       description = "HTTP server for Surfingkeys configuration (focus/close/addressbar/proxy)";
       serviceConfig = {
-        ExecStart = "${pkgs.python3}/bin/python3 -u ${serverScript}";
+        ExecStart = "${lib.getExe' pkgs.python3 "python3"} -u ${serverScript}";
         Environment = "PATH=${pkgs.hyprland}/bin:$PATH";
         Restart = "on-failure";
         RestartSec = "5";

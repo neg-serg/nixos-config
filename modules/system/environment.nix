@@ -70,6 +70,15 @@
             "$HOME/.local/state/nix/profile/lib"
           ])
           + ":$HOME/.${format}";
+        # *_PATH vars for audio plugin formats (NAME_PATH → lowercase dir)
+        pluginPaths = lib.genAttrs [
+          "DSSI_PATH"
+          "LADSPA_PATH"
+          "LV2_PATH"
+          "LXVST_PATH"
+          "VST3_PATH"
+          "VST_PATH"
+        ] (name: makePluginPath (lib.toLower (lib.removeSuffix "_PATH" name)));
       in
       {
         # Encourage Wayland backends where supported
@@ -80,16 +89,11 @@
           personal $XDG_CONFIG_HOME/aspell/en_US.pws;
           repl $XDG_CONFIG_HOME/aspell/en.prepl;
         '';
-        DSSI_PATH = makePluginPath "dssi";
         HISTFILE = "$XDG_DATA_HOME/bash/history";
         INPUTRC = "$XDG_CONFIG_HOME/readline/inputrc";
-        LADSPA_PATH = makePluginPath "ladspa";
         LESSHISTFILE = "$XDG_CACHE_HOME/lesshst";
-        LV2_PATH = makePluginPath "lv2";
-        LXVST_PATH = makePluginPath "lxvst";
-        VST3_PATH = makePluginPath "vst3";
-        VST_PATH = makePluginPath "vst";
         WGETRC = "$XDG_CONFIG_HOME/wgetrc";
-      };
+      }
+      // pluginPaths;
   };
 }
