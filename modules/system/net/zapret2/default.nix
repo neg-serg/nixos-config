@@ -53,19 +53,55 @@ let
   # Without a queue rule, nfqws fails with nfq_unbind_pf(): Invalid argument.
   nftablesRules = pkgs.writeText "zapret2-nftables.conf" ''
     table inet zapret2 {
+      # Outbound (client->server) direction — nfqws must see the TLS
+      # ClientHello / HTTP request to desync it. postrouting (not output)
+      # so nfqws can resolve the egress interface for generated packets.
+      chain postrouting {
+        type filter hook postrouting priority mangle; policy accept;
+        # Skip local/LAN/loopback destinations — don't touch local HTTP(S).
+        ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8 } return
+        # Exclude nfqws-generated packets (fwmark 0x40000000) to avoid loops.
+        meta mark and 0x40000000 == 0 tcp dport { 80, 443 } queue num 1 bypass
+        meta mark and 0x40000000 == 0 udp dport 443 queue num 1 bypass
+      }
+      # Inbound (server->client) replies for response-side desync.
       chain prerouting {
-        type filter hook prerouting priority filter - 1; policy accept;
-        tcp dport { 80, 443 } queue num 1 bypass
+        type filter hook prerouting priority filter; policy accept;
+        # Skip local/LAN/loopback destinations — don't touch local HTTP(S).
+        ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8 } return
+        meta mark and 0x40000000 == 0 tcp sport { 80, 443 } queue num 1 bypass
       }
     }
   '';
 
+  # Multi-strategy (nfqws applies the first strategy whose port filter
+  # matches; common flags --qnum/hostlist must precede the first --new):
+  #   TCP-TLS:  --filter-tcp=443 hostfakesplit/md5sig
+  #   --new     TCP-HTTP: --filter-tcp=80 hostfakesplit/md5sig
+  #   --new     UDP-QUIC: --filter-udp=443 fake/badsum
+  # hostfakesplit verified live against the provider DPI: plain fake is
+  # detected (the fake ClientHello still carries the real SNI), split
+  # modes hide the hostname from DPI reassembly.
+  # Auto modes: --dpi-desync-autottl (adaptive fake-packet TTL),
+  # --bind-fix4 (correct egress iface for generated packets),
+  # --hostlist-auto (nfqws appends domains on repeated failures).
   strategyFlags = [
     "--qnum=1"
-    "--filter-tcp=80,443"
-    "--dpi-desync=fake"
-    "--dpi-desync-fooling=md5sig"
     hostlistArg
+    "--filter-tcp=443"
+    "--dpi-desync=hostfakesplit"
+    "--dpi-desync-fooling=md5sig"
+    "--new"
+    "--filter-tcp=80"
+    "--dpi-desync=hostfakesplit"
+    "--dpi-desync-fooling=md5sig"
+    "--new"
+    "--filter-udp=443"
+    "--dpi-desync=fake"
+    "--dpi-desync-fooling=badsum"
+    "--dpi-desync-autottl"
+    "--bind-fix4"
+    "--hostlist-auto=/var/lib/zapret2/hostlist-auto.txt"
   ];
 
   rolloutScript = pkgs.writeShellScript "zapret2-rollout" ''
@@ -138,11 +174,15 @@ in
         Type = "simple";
         ExecStartPre = [
           "${rolloutScript} preflight"
+          # nft -f appends to existing chains; drop the table first so
+          # restarting the service cannot accumulate duplicate rules.
+          "${pkgs.bash}/bin/bash -c '${pkgs.nftables}/bin/nft delete table inet zapret2 2>/dev/null || true'"
           "${pkgs.nftables}/bin/nft -f ${nftablesRules}"
         ];
         ExecStart = "${nfqws} ${builtins.concatStringsSep " " strategyFlags}";
         Restart = "on-failure";
         RestartSec = 10;
+        StateDirectory = "zapret2";
         ProtectSystem = "strict";
         ProtectHome = true;
         NoNewPrivileges = true;
