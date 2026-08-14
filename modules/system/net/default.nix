@@ -11,6 +11,7 @@
     ./rkn # Roskomnadzor block bypass
     ./vpn
     ./zapret2 # DPI circumvention
+    ./net-health
     ./bbrv3.nix # TCP BBRv3 congestion control
   ];
 }
