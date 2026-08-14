@@ -23,12 +23,9 @@ in
       ++ [ "-DINSTALL_BROWSER_NATIVE_HOST:STRING=ON" ];
   });
 
-  # Carla: use local source (GitHub blocked by proxy)
+  # Carla: vendored source tarball (GitHub fetch unreliable behind the proxy)
   carla = finalPrev.carla.overrideAttrs (_: {
-    src = builtins.fetchurl {
-      url = "file:///tmp/carla.tar.gz";
-      sha256 = "sha256-rig1sSCB9ycaawsl00uH02sCLEA3ACjKShD5D87fpmE=";
-    };
+    src = ./../files/sources/carla-2.5.10.tar.gz;
   });
 
   # GHCi with TidalCycles library preloaded — used by tidal.nvim
