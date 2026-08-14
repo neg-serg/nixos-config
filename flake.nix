@@ -39,6 +39,9 @@
     neg-pkgs = {
       url = "github:neg-serg/nixos-pkgs";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.talktype.follows = "talktype";
+      inputs.wl.follows = "wl";
+      inputs.rsmetrx.follows = "rsmetrx";
     };
     nix-maid.url = "github:viperML/nix-maid";
     hyprscratch = {
