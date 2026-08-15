@@ -21,6 +21,7 @@
     ./apps/vicinae.nix
     ./apps/omnirouter.nix
     ./apps/dsh.nix
+    ./apps/dsh-tui-ru.nix
 
     ./apps/transmission.nix
 
