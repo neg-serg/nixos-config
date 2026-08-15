@@ -507,6 +507,17 @@ api.map(';pb', ':setProxyMode byhost', 0, 'Proxy: byhost (selected sites)');
 api.map(';ps', ':setProxyMode system', 0, 'Proxy: system');
 api.map(';pc', ':setProxyMode clear', 0, 'Proxy: clear (no control)');
 
+// ========== Russian layout (ЙЦУКЕН) ==========
+// SurfingKeys matches vim keys by event.key, so under the ru layout every
+// latin-letter bind breaks. Map each Cyrillic letter to its Latin command
+// (api.map rhs is a key sequence dispatched to the command handler, no DOM
+// key event is re-created, so this cannot loop).
+// Reference table: docs/howto/hotkeys-ru-layout.ru.md
+const ru2en = { 'й':'q','ц':'w','у':'e','к':'r','е':'t','н':'y','г':'u','ш':'i','щ':'o','з':'p',
+  'х':'[','ъ':']','ф':'a','ы':'s','в':'d','а':'f','п':'g','р':'h','о':'j','л':'k','д':'l',
+  'ж':';','э':"'",'я':'z','ч':'x','с':'c','м':'v','и':'b','т':'n','ь':'m','б':',','ю':'.' };
+Object.entries(ru2en).forEach(([ru, en]) => api.map(ru, en));
+
 
 // ========== Omnibar Search Engines (ported from b0o/surfingkeys-conf) ==========
 // Hybrid mode: a<alias> opens the SurfingKeys omnibar overlay with the engine
