@@ -12,7 +12,14 @@ let
   browsers = import ./browsers-table.nix {
     inherit lib pkgs;
   }; # Updated import path
-  browser = { };
+  # Select the record named by features.web.default; {} (→ xdg-open fallback)
+  # when unset or unknown. Previously hardcoded to {} — the option was set on
+  # the host but never read. NB: `or` after an attrpath only covers *missing*
+  # attributes, so null must be guarded explicitly (browsers.${null} is an
+  # eval error, not a lookup miss).
+  browser =
+    if (cfg.default or null) == null then { }
+    else (browsers.${cfg.default} or { });
 in
 {
   config = {
