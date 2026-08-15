@@ -7,7 +7,7 @@
 with lib;
 let
   cfg = config.features.gui.vicinae;
-  guiEnabled = config.features.gui.enable or false;
+  guiEnabled = config.lib.neg.enabled "gui";
   enabled = guiEnabled && cfg.enable;
 
   iconTheme = config.features.gui.iconTheme or "kora-pgrey";

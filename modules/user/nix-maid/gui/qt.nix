@@ -6,7 +6,7 @@
   ...
 }:
 let
-  qtEnabled = config.features.gui.qt.enable or false;
+  qtEnabled = config.lib.neg.enabled "gui.qt";
   iconTheme = config.features.gui.iconTheme or "kora-pgrey";
   kvantumTheme = "KvCurves3d1";
 in

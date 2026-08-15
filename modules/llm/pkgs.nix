@@ -5,7 +5,7 @@
   ...
 }:
 let
-  enabled = config.features.llm.enable or false;
+  enabled = config.lib.neg.enabled "llm";
 in
 {
   environment.systemPackages = lib.optionals enabled [

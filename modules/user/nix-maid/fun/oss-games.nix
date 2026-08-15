@@ -12,7 +12,7 @@
         pkgs.mangohud # Gaming HUD (was zen5 opt)
       ];
     }
-    (lib.mkIf config.features.games.oss.enable {
+    (lib.mkIf (config.lib.neg.enabled "games.oss") {
       environment.systemPackages = [
         pkgs.abuse # classic side-scrolling shooter customizable with LISP
         pkgs.airshipper # Veloren voxel client/launcher

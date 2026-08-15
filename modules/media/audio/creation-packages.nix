@@ -8,7 +8,7 @@
   ...
 }:
 let
-  enabled = config.features.media.audio.creation.enable or false;
+  enabled = config.lib.neg.enabled "media.audio.creation";
   packages = [
     # -- Live Coding --
     pkgs.supercollider # SuperCollider IDE and audio engine

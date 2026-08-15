@@ -6,7 +6,7 @@
   ...
 }:
 let
-  guiEnabled = config.features.gui.enable or false;
+  guiEnabled = config.lib.neg.enabled "gui";
 
   iosevkaNerd = iosevkaNeg.nerd-font or pkgs.nerd-fonts.iosevka;
   iosevkaNerdQuasi = iosevkaNeg.nerd-font-quasi or iosevkaNerd;

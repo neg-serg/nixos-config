@@ -8,7 +8,7 @@ let
   systemdUser = import ../../../../lib/systemd-user.nix { inherit lib; };
 in
 with lib;
-mkIf (config.features.gui.enable or false) (
+mkIf (config.lib.neg.enabled "gui") (
   lib.mkMerge [
     {
       systemd.user.services.ydotoold =

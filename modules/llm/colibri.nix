@@ -6,7 +6,7 @@
   ...
 }:
 let
-  enabled = config.features.llm.enable or false;
+  enabled = config.lib.neg.enabled "llm";
   cfg = config.services.colibri;
 
   pythonEnv = pkgs.python3.withPackages (

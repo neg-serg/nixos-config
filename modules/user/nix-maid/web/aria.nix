@@ -8,7 +8,7 @@ let
   inherit (config.users.users.neg) home;
 in
 {
-  config = lib.mkIf (config.features.web.enable && config.features.web.tools.enable) (
+  config = lib.mkIf (config.lib.neg.enabled "web" && config.lib.neg.enabled "web.tools") (
     lib.mkMerge [
       {
         # aria2 is installed via cli/file-ops.nix
