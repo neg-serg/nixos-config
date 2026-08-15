@@ -96,9 +96,8 @@
       supportedSystems = [ "x86_64-linux" ];
       sharedPackages = lib.genAttrs supportedSystems (system: flakeLib.mkPkgs system);
 
-      # NixOS configuration builder. mkTestHost is exported for flake/checks.nix
-      # and stripped from the nixosConfigurations output (flake-schemas requires
-      # a pure set of machine configs there).
+      # NixOS configuration builder: `nixosOut.configurations` is the pure
+      # machine set (flake-schemas), `nixosOut.mkTestHost` serves flake/checks.nix.
       nixosOut = import ./flake/nixos.nix {
         inherit inputs nixpkgs self;
         pkgs = sharedPackages.x86_64-linux;
@@ -130,6 +129,6 @@
       checks = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/per-system.nix s).checks);
       devShells = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/devshells.nix s).devShells);
       apps = lib.genAttrs supportedSystems (s: (mkPerSystem ./flake/apps.nix s).apps);
-      nixosConfigurations = builtins.removeAttrs nixosOut [ "mkTestHost" ];
+      nixosConfigurations = nixosOut.configurations;
     };
 }
