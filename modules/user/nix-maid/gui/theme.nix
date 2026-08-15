@@ -9,7 +9,7 @@
 let
   alkano-aio = pkgs.callPackage ./alkano-aio.nix { };
 
-  negGtkCss = builtins.readFile ../../../../files/gui/neg-gtk.css;
+  negGtkCss = builtins.readFile (config.lib.neg.path "files/gui/neg-gtk.css");
 
   iconTheme = config.features.gui.iconTheme or "kora-pgrey";
 

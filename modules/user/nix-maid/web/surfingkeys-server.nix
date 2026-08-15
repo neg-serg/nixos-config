@@ -2,11 +2,10 @@
   lib,
   config,
   pkgs,
-  self,
   ...
 }:
 let
-  systemdUser = import ../../../../lib/systemd-user.nix { inherit lib; };
+  systemdUser = import (config.lib.neg.path "lib/systemd-user.nix") { inherit lib; };
 in
 with lib;
 mkIf (config.lib.neg.enabled "web") {
@@ -14,7 +13,7 @@ mkIf (config.lib.neg.enabled "web") {
     let
       preset = systemdUser.mkUnitFromPresets { };
       serverScript = pkgs.writeText "surfingkeys-server.py" (
-        builtins.readFile (self + "/packages/local-bin/bin/surfingkeys-server")
+        builtins.readFile (config.lib.neg.path "packages/local-bin/bin/surfingkeys-server")
       );
     in
     {
@@ -35,7 +34,7 @@ mkIf (config.lib.neg.enabled "web") {
   systemd.user.services.surfingkeys-extension-patch =
     let
       patchScript = pkgs.writeShellScript "surfingkeys-extension-patch" (
-        builtins.readFile (self + "/packages/local-bin/bin/surfingkeys-extension-patch")
+        builtins.readFile (config.lib.neg.path "packages/local-bin/bin/surfingkeys-extension-patch")
       );
     in
     {

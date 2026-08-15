@@ -25,12 +25,12 @@ in
   config = lib.mkIf (cfg.enable or false) {
     # Sops secrets for Spotify credentials
     sops.secrets."spotify-username" = {
-      sopsFile = ../../../secrets/home/spotify.sops.yaml;
+      sopsFile = config.lib.neg.path "secrets/home/spotify.sops.yaml";
       owner = "neg";
       key = "username";
     };
     sops.secrets."spotify-password" = {
-      sopsFile = ../../../secrets/home/spotify.sops.yaml;
+      sopsFile = config.lib.neg.path "secrets/home/spotify.sops.yaml";
       owner = "neg";
       key = "password";
     };

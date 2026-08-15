@@ -1,10 +1,11 @@
 {
   neg,
+  config,
   ...
 }:
 let
-  animDir = ../../../../files/gui/hypr/animations;
-  lockDir = ../../../../files/gui/hypr/hyprlock;
+  animDir = config.lib.neg.path "files/gui/hypr/animations";
+  lockDir = config.lib.neg.path "files/gui/hypr/hyprlock";
 
   mkFiles =
     destDir: sourceDir: files:
