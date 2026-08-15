@@ -6,12 +6,12 @@ as a NixOS module plus a helper CLI.
 
 ## Why Vaultix
 
-| Aspect | `sops-nix` only | `vaultix` + `sops-nix` | | --- | --- | --- | | Encryption format | Any
-backend (Age/GPG) | Age only, matching NixOS secrets best practices | | Recipient scoping | Manual
-per-secret | Central `vaultix.configure` block distributes to nodes and extra Age recipients | |
-Host bootstrap | Manual copy/decrypt | `vaultix` CLI (`vault edit`, `vault renc`) re-encrypts per
-host and ensures files land in the right path during evaluation | | Module availability |
-Home-manager friendly | NixOS module (best used together with HM flakes) |
+| Aspect              | `sops-nix` only       | `vaultix` + `sops-nix`                                                                                                     |
+| ------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Encryption format   | Any backend (Age/GPG) | Age only, matching NixOS secrets best practices                                                                            |
+| Recipient scoping   | Manual per-secret     | Central `vaultix.configure` block distributes to nodes and extra Age recipients                                            |
+| Host bootstrap      | Manual copy/decrypt   | `vaultix` CLI (`vault edit`, `vault renc`) re-encrypts per host and ensures files land in the right path during evaluation |
+| Module availability | Home-manager friendly | NixOS module (best used together with HM flakes)                                                                           |
 
 ### Advantages
 
