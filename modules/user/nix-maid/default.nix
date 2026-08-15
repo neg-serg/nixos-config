@@ -4,62 +4,19 @@
   lib,
   ...
 }:
+let
+  entries = builtins.readDir ./.;
+in
 {
-  imports = [
-    inputs.nix-maid.nixosModules.default # user configuration framework (nix-maid)
-
-    # Core & GUI
-    ./gui/theme.nix
-    ./gui/xdg.nix
-    ./gui/qt.nix
-    ./gui/quickshell.nix
-    ./hyprland/main.nix
-
-    # Applications (GUI/TUI)
-    ./apps/mpv
-    ./apps/gui-apps.nix
-    ./apps/vicinae.nix
-    ./apps/omnirouter.nix
-    ./apps/dsh.nix
-    ./apps/dsh-tui-ru.nix
-
-    ./apps/transmission.nix
-
-    # CLI & Shell Environment
-    ./cli
-
-    # System & Services
-    ./sys/secrets.nix
-    ./sys/user-services.nix
-    ./sys/services-manual.nix
-    ./sys/gpg.nix
-    ./sys/enchant.nix
-    ./sys/distros.nix
-    ./sys/dev.nix
-    ./sys/vdirsyncer.nix
-    ./sys/khal.nix
-    ./sys/autoclick.nix
-    ./sys/mail.nix
-    ./sys/misc.nix
-    ./sys/wallpaper-sync.nix
-
-    # Web & Browsing
-    ./web/browsing.nix
-
-    ./web/vivaldi.nix
-    ./web/aria.nix
-    ./web/yt-dlp.nix
-
-    # Fun & Games
-    ./fun/nethack.nix
-    ./fun/oss-games.nix
-    ./fun/openmw.nix
-
-    # Media & Audio
-    ./sys/media.nix
-    ./sys/pipewire.nix
-    ./apps/supercollider.nix
-  ];
+  imports =
+    [ inputs.nix-maid.nixosModules.default ] # user configuration framework (nix-maid)
+    ++ (
+      # Each subdomain (apps, cli, fun, gui, hyprland, sys, web) owns its
+      # own default.nix; mutt-conf/ and scripts/ are data directories.
+      builtins.attrNames entries
+      |> builtins.filter (n: n != "default.nix" && n != "mutt-conf" && n != "scripts" && (entries.${n} == "directory" || lib.hasSuffix ".nix" n))
+      |> builtins.map (n: ./. + "/${n}")
+    );
 
   users.users.neg.maid = { };
 
