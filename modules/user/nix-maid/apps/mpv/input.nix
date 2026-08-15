@@ -50,6 +50,32 @@
         Alt+2 apply-profile ai-anime4k
         Alt+I vf toggle vapoursynth=~~/vs/ai/realesrgan.vpy:buffered-frames=3:concurrent-frames=1
         Alt+U run "/bin/sh" "-c" "~/.local/bin/ai-upscale-video \"$path\""
+
+        # --- Russian layout duplicates (ЙЦУКЕН) ------------------------------------
+        # mpv matches keys by the text the active layout produces, so latin-letter
+        # binds break under the ru layout. These are the Cyrillic equivalents.
+        # Reference table: docs/howto/hotkeys-ru-layout.ru.md
+        з cycle pause; script-binding uosc/flash-pause-indicator           # p
+        ш script-message-to uosc flash-top-bar                             # i
+        к add sub-pos -1                                                   # r
+        е add sub-pos +1                                                   # t
+        м cycle sub-visibility 1                                           # v
+        А cycle fullscreen 1                                               # F
+        д seek +5; script-binding uosc/flash-timeline                      # l
+        р seek -5; script-binding uosc/flash-timeline                      # h
+        Д seek +60; script-binding uosc/flash-timeline                     # L
+        Р seek -60; script-binding uosc/flash-timeline                     # H
+        ь no-osd cycle mute; script-binding uosc/flash-volume              # m
+        Ф cycle audio 1                                                    # A
+        К cycle_values window-scale 2 0.5 1                                # R
+        о cycle sub                                                        # j
+        ы cycle sub                                                        # s
+        Ctrl+р multiply speed 1/1.1                                        # Ctrl+h
+        Ctrl+д multiply speed 1.1                                          # Ctrl+l
+        Ctrl+Р set speed 1.0                                               # Ctrl+H
+        Alt+ш vf toggle vapoursynth=~~/vs/ai/realesrgan.vpy:buffered-frames=3:concurrent-frames=1   # Alt+I
+        Alt+г run "/bin/sh" "-c" "~/.local/bin/ai-upscale-video \"$path\""                          # Alt+U
+        # `>`/`<` (uosc next/prev) do not exist in the ru layout — left unbound there.
       '';
     }
   );
