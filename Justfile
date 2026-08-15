@@ -161,6 +161,13 @@ codebase:
 update:
     nix flake update
 
+# Regenerate hosts/odin/unbound-hosts.nix from its sources
+# (unbound-local.txt + files/sources/malw-hosts.txt)
+unbound-hosts:
+    repo_root="$(git rev-parse --show-toplevel)"; \
+    "$repo_root/packages/local-bin/scripts/gen-unbound-hosts" "$repo_root"; \
+    nix fmt
+
 hooks-enable:
     git config core.hooksPath .githooks
 
