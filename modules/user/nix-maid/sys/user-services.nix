@@ -15,8 +15,7 @@ lib.mkIf (cfg.enable or false) {
     mpdas =
       lib.mkIf
         (
-          (config.lib.neg.enabled "media.audio.mpd")
-          && builtins.pathExists (config.lib.neg.path "secrets/home/mpdas/neg.rc")
+          (config.lib.neg.enabled "media.audio.mpd") && config.lib.neg.pathExists "secrets/home/mpdas/neg.rc"
         )
         {
           description = "MPD AudioScrobbler (Last.fm)";

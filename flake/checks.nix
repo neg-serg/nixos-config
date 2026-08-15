@@ -34,6 +34,8 @@ let
     timeZone = "UTC";
     filteredSource = self;
     iosevkaNeg = { };
+    # Repo root as a real path literal — same as flake/nixos.nix specialArgs.
+    repoRoot = ../.;
     # Real helpers (lib/neg-helpers.nix) — their home/user config outputs are
     # inert here because evalModules runs with _module.check = false.
     neg = import ../lib/neg-helpers.nix;
