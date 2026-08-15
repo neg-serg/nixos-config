@@ -6,3 +6,4 @@ __pycache__/
 packages/target/
 .omo/
 files/shell/zsh/.zcompdump
+viz/
