@@ -31,5 +31,6 @@ python3Packages.buildPythonApplication rec {
     license = licenses.unlicense;
     platforms = platforms.linux;
     mainProgram = "ppinfo";
+    maintainers = [ ];
   };
 }

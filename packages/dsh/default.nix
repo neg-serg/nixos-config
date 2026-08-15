@@ -51,5 +51,6 @@ buildNpmPackage {
     license = licenses.mit;
     platforms = platforms.linux;
     mainProgram = "dsh";
+    maintainers = [ ];
   };
 }

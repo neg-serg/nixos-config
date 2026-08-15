@@ -17,5 +17,6 @@ stdenv.mkDerivation {
     description = "Vicinae extension for wl wallpaper daemon — browse and switch wallpapers";
     license = licenses.mit;
     platforms = platforms.linux;
+    maintainers = [ ];
   };
 }

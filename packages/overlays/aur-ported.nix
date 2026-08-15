@@ -27,6 +27,7 @@ final: _: {
       license = licenses.mit;
       mainProgram = "ghgrab";
       platforms = [ "x86_64-linux" ];
+      maintainers = [ ];
     };
   };
 
@@ -55,6 +56,7 @@ final: _: {
       license = licenses.mit;
       mainProgram = "lazytail";
       platforms = [ "x86_64-linux" ];
+      maintainers = [ ];
     };
   };
 
@@ -83,6 +85,7 @@ final: _: {
       license = licenses.mit;
       mainProgram = "reddix";
       platforms = [ "x86_64-linux" ];
+      maintainers = [ ];
     };
   };
 
@@ -111,6 +114,7 @@ final: _: {
       license = licenses.asl20;
       mainProgram = "repeater";
       platforms = [ "x86_64-linux" ];
+      maintainers = [ ];
     };
   };
 
@@ -141,6 +145,7 @@ final: _: {
       license = licenses.asl20;
       mainProgram = "resterm";
       platforms = [ "x86_64-linux" ];
+      maintainers = [ ];
     };
   };
 
@@ -169,6 +174,7 @@ final: _: {
       license = licenses.mit;
       mainProgram = "simutil";
       platforms = [ "x86_64-linux" ];
+      maintainers = [ ];
     };
   };
 
@@ -197,6 +203,7 @@ final: _: {
       license = licenses.mit;
       mainProgram = "strace-tui";
       platforms = [ "x86_64-linux" ];
+      maintainers = [ ];
     };
   };
 
@@ -227,6 +234,7 @@ final: _: {
       license = licenses.agpl3Only;
       mainProgram = "v2raya";
       platforms = [ "x86_64-linux" ];
+      maintainers = [ ];
     };
   };
 
@@ -255,6 +263,7 @@ final: _: {
       license = licenses.mit;
       mainProgram = "watchtower";
       platforms = [ "x86_64-linux" ];
+      maintainers = [ ];
     };
   };
 
@@ -285,6 +294,7 @@ final: _: {
       license = licenses.asl20;
       mainProgram = "witr";
       platforms = [ "x86_64-linux" ];
+      maintainers = [ ];
     };
   };
 
