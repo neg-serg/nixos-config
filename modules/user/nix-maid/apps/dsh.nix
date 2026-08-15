@@ -8,6 +8,13 @@ let
   user = config.users.main.name or "neg";
   userData = lib.attrByPath [ "users" "users" user ] { } config;
   homeDir = lib.attrByPath [ "home" ] "/home/${user}" userData;
+  # Wrap dsh so it loads DEEPSEEK_API_KEY from the sops secret itself, rather
+  # than relying on shell init — works even from a terminal opened before the
+  # secret was wired (a shell only sources .zshenv at startup).
+  dshWrapped = pkgs.writeShellScriptBin "dsh" ''
+    export DEEPSEEK_API_KEY="''${DEEPSEEK_API_KEY:-$(cat /run/secrets/deepseek-api 2>/dev/null)}"
+    exec ${pkgs.neg.dsh}/bin/dsh "$@"
+  '';
 in
 {
   # DeepSeek Harness (dsh) — agent harness, everything is a plugin.
@@ -29,7 +36,7 @@ in
 
   # Install the dsh CLI into the environment (PATH).
   environment.systemPackages = [
-    pkgs.neg.dsh # DeepSeek Harness agent CLI (dsh)
+    dshWrapped # DeepSeek Harness agent CLI (dsh) — wrapped to load the DeepSeek API key
     pkgs.pnpm # pnpm package manager (used by `dsh plugin --profile <name> add`)
   ];
 }
