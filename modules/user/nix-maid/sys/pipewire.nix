@@ -8,7 +8,7 @@
 let
   cfg = config.features.media.audio.core;
   rnnoiseEnabled = config.hardware.audio.rnnoise.enable or false;
-  filesRoot = ../../../../files;
+  filesRoot = config.lib.neg.path "files";
 
   rnnoiseConf = builtins.toJSON {
     "context.modules" = [

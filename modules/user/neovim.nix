@@ -7,7 +7,7 @@
 }:
 let
   devEnabled = config.lib.neg.enabled "dev";
-  nvimConf = ../../files/nvim;
+  nvimConf = config.lib.neg.path "files/nvim";
 in
 lib.mkIf devEnabled (
   lib.mkMerge [
@@ -102,8 +102,8 @@ lib.mkIf devEnabled (
     }
     (neg.mkHomeFiles {
       ".config/nvim".source = neg.linkImpure nvimConf;
-      ".config/vale/.vale.ini".source = ./../../files/vale/.vale.ini; # Vale prose linter config
-      ".local/share/vale/styles".source = ./../../files/vale/styles; # Google prose style rules
+      ".config/vale/.vale.ini".source = config.lib.neg.path "files/vale/.vale.ini"; # Vale prose linter config
+      ".local/share/vale/styles".source = config.lib.neg.path "files/vale/styles"; # Google prose style rules
     })
   ]
 )

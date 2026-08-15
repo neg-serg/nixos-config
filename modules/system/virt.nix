@@ -69,7 +69,7 @@ in
       ];
       script = ''
         if ! virsh dominfo RDPWindows >/dev/null 2>&1; then
-          virsh define ${./../../files/virt/RDPWindows.xml}
+          virsh define ${config.lib.neg.path "files/virt/RDPWindows.xml"}
           virsh autostart RDPWindows
         fi
       '';

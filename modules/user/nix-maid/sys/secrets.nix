@@ -4,7 +4,7 @@
   ...
 }:
 let
-  secretsDir = ../../../../secrets/home;
+  secretsDir = config.lib.neg.path "secrets/home";
 in
 lib.mkMerge [
   {
