@@ -7,7 +7,7 @@
 }:
 let
   cfg = config.features.torrent;
-  filesRoot = ../../../../files;
+  filesRoot = config.lib.neg.path "files";
 
   transmissionPkg = pkgs.transmission_4; # Fast, easy and free BitTorrent client
   confDirNew = "${config.users.users.neg.home}/.config/transmission-daemon";
