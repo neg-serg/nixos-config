@@ -18,6 +18,12 @@ General guidance
 - For a quick orientation, `docs/codebase.md` is a generated repo map (modules, features, profiles, packages); regenerate with `just codebase` when structure changes.
 - For verified step-by-step change workflows (add module/flag/package/host/script/secret, docs, commit rules), see `docs/howto/agent-recipes.md`.
 
+Builds: substitute = false
+- This host is in a region where `cache.nixos.org` is unreliable (blocked/slow), so do NOT rely on binary substitution.
+- Always run nix build/eval commands with `--option substitute false` (build from source), e.g.:
+  `nix build .#nixosConfigurations.odin.config.system.build.toplevel --dry-run --option substitute false`
+- The user's own rebuild binding uses the same flag (`nh os switch /etc/nixos#odin --option substitute false`); keep that convention in any new bindings/scripts.
+
 Commit style
 - Use a bracketed scope prefix consistent with existing history, for example: `[media/audio] …`, `[hosts/odin] …`, `[dev/pkgs] …`, `[docs] …`.
 - Subjects must be in imperative mood, short and specific, without a trailing period.
