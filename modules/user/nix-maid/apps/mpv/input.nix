@@ -5,7 +5,7 @@
   ...
 }:
 {
-  config = lib.mkIf (config.features.gui.enable or false) (
+  config = lib.mkIf (config.lib.neg.enabled "gui") (
     neg.mkHomeFiles {
       ".config/mpv/input.conf".text = ''
         + add panscan +0.1

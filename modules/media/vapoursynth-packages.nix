@@ -5,8 +5,7 @@
   ...
 }:
 let
-  enabled =
-    (config.features.gui.enable or false) && (config.features.media.aiUpscale.enable or false);
+  enabled = (config.lib.neg.enabled "gui") && (config.lib.neg.enabled "media.aiUpscale");
   packages = [
     pkgs.vapoursynth # video processing engine used by upscale scripts
     pkgs.python3Packages.vapoursynth # Python bindings for scripting filters

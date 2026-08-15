@@ -5,7 +5,7 @@
 # and set as the active congestion control algorithm.
 { lib, config, ... }:
 {
-  config = lib.mkIf (config.features.net.bbrv3.enable or false) {
+  config = lib.mkIf (config.lib.neg.enabled "net.bbrv3") {
     boot.kernelModules = [ "tcp_bbr" ];
 
     boot.kernel.sysctl = {

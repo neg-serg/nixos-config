@@ -9,7 +9,7 @@
 }:
 let
   cfg = config.features.media.aiUpscale or { };
-  enabled = (config.features.gui.enable or false) && (cfg.enable or false);
+  enabled = (config.lib.neg.enabled "gui") && (cfg.enable or false);
   haveRealesrgan = pkgs ? realesrgan-ncnn-vulkan;
   haveFfmpeg = pkgs ? ffmpeg-full;
 in

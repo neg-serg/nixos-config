@@ -7,7 +7,7 @@
 }:
 
 {
-  config = lib.mkIf (config.features.web.enable && config.features.web.tools.enable) (
+  config = lib.mkIf (config.lib.neg.enabled "web" && config.lib.neg.enabled "web.tools") (
     lib.mkMerge [
       {
         environment.systemPackages = [ pkgs.yt-dlp ]; # Command-line program to download videos from YouTube and other sites

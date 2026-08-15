@@ -9,6 +9,6 @@
     environment.systemPackages = [
       pkgs.flatpak # runtime manager for sandboxed desktop apps
     ]
-    ++ (lib.optional (config.features.flatpak.builder.enable or false) pkgs.flatpak-builder);
+    ++ (lib.optional (config.lib.neg.enabled "flatpak.builder") pkgs.flatpak-builder);
   };
 }

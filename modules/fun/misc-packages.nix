@@ -8,7 +8,7 @@
   ...
 }:
 let
-  enabled = config.features.fun.enable or false;
+  enabled = config.lib.neg.enabled "fun";
   alureFixed = pkgs.alure.overrideAttrs (prev: {
     # patched to build with new CMake policy
     cmakeFlags = (prev.cmakeFlags or [ ]) ++ [ "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" ];
