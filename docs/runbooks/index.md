@@ -7,4 +7,5 @@ Operational docs for one-off tasks (password rotation, migrations) and recurring
 - Proxy (Xray / sing-box): [proxy.md](./proxy.md)
 - Unbound metrics/dashboards: [unbound-metrics.md](./unbound-metrics.md)
 - Vaultix migration: [vaultix-migration.md](./vaultix-migration.md)
+- **Repeatable repo audit**: [audit.md](./audit.md)
 - Script catalog: [scripts.md](./scripts.md)
