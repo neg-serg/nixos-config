@@ -1,5 +1,4 @@
 {
-  inputs,
   pkgs,
   lib,
   config,
@@ -8,9 +7,9 @@
 }:
 let
   # --- Config Sources ---
-  shellFiles = ../../../../files/shell;
-  kittyConf = ../../../../files/kitty;
-  dircolorsConfig = "${inputs.self}/files/shell/dircolors/dircolors";
+  shellFiles = config.lib.neg.path "files/shell";
+  kittyConf = config.lib.neg.path "files/kitty";
+  dircolorsConfig = config.lib.neg.path "files/shell/dircolors/dircolors";
 
   # --- Inputrc ---
   inputrc = ''
@@ -71,7 +70,7 @@ let
   '';
 
   # --- Aliae Config ---
-  aliaeConfig = import "${inputs.self}/lib/aliae.nix" {
+  aliaeConfig = import (config.lib.neg.path "lib/aliae.nix") {
     inherit lib pkgs;
     homeDir = config.users.users.neg.home;
   };

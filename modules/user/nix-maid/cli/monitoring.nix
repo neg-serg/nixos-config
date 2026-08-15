@@ -109,7 +109,7 @@ in
       # Btop Config
       ".config/btop/btop.conf".text = mkBtopConf btopSettings;
       ".config/btop/themes/midnight-ocean.theme".source =
-        ../../../../files/shell/btop/themes/midnight-ocean.theme;
+        config.lib.neg.path "files/shell/btop/themes/midnight-ocean.theme";
 
     })
   ];

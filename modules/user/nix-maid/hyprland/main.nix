@@ -11,9 +11,9 @@ let
 
   environment = import ./environment.nix { inherit lib pkgs; };
   services = import ./services.nix { inherit lib pkgs inputs; };
-  files = import ./files.nix { inherit lib neg; };
+  files = import ./files.nix { inherit lib neg config; };
 
-  hyprlandLuaText = builtins.readFile ../../../../files/gui/hypr/hyprland.lua;
+  hyprlandLuaText = builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprland.lua");
 in
 {
   # System-level Hyprland pieces (hyprglass overlay) — consolidated here from

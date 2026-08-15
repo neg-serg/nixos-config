@@ -8,7 +8,7 @@ let
   cfg = config.features.dev.python;
 
   # Shared package list — single source in lib/python-packages.nix
-  pythonLists = import ../../../lib/python-packages.nix { };
+  pythonLists = import (config.lib.neg.path "lib/python-packages.nix") { };
   myPythonPackages = pythonLists.myPythonPackages;
 
   pythonEnv = (pkgs.python3-lto or pkgs.python3).withPackages myPythonPackages; # High-level dynamically-typed programming language

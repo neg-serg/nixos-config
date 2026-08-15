@@ -12,5 +12,6 @@ lib.mkIf enabled {
     pkgs.obsidian # Knowledge base and note-taking application
   ];
 
-  users.users.neg.maid.file.home.".local/share/obsidian".source = ../../../files/obsidian-vault;
+  users.users.neg.maid.file.home.".local/share/obsidian".source =
+    config.lib.neg.path "files/obsidian-vault";
 }

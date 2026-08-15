@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  config,
   neg,
   ...
 }:
@@ -140,13 +141,13 @@ in
       text = lib.generators.toGitINI gitSettings;
     };
     ".config/git/ignore" = {
-      source = ../../../../files/git/ignore;
+      source = config.lib.neg.path "files/git/ignore";
     };
     ".config/git/hooks/pre-commit" = {
-      source = ../../../../files/git/hooks/pre-commit.sh;
+      source = config.lib.neg.path "files/git/hooks/pre-commit.sh";
     };
     ".config/git/hooks/commit-msg" = {
-      source = ../../../../files/git/hooks/commit-msg.sh;
+      source = config.lib.neg.path "files/git/hooks/commit-msg.sh";
     };
   };
 }

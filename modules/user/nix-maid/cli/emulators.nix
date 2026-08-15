@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.features;
-  filesRoot = ../../../../files;
+  filesRoot = config.lib.neg.path "files";
 in
 {
   config = lib.mkMerge [
@@ -21,7 +21,7 @@ in
 
     (neg.mkHomeFiles {
       # Dosbox Config
-      ".config/dosbox".source = ../../../../files/config/dosbox;
+      ".config/dosbox".source = config.lib.neg.path "files/config/dosbox";
 
       # WezTerm Config (Synced with Kitty)
       ".config/wezterm/wezterm.lua".text = ''
