@@ -16,13 +16,6 @@ in
 # Standard overlay pattern: merge top-level attributes
 (functions // tools // media // dev // gui // fixTinycc // aurPorted // disableChecks)
 // {
-  # Vicinae: enable browser native host for tab search integration
-  vicinae = finalPrev.vicinae.overrideAttrs (old: {
-    cmakeFlags =
-      builtins.filter (f: f != "-DINSTALL_BROWSER_NATIVE_HOST:STRING=OFF") (old.cmakeFlags or [ ])
-      ++ [ "-DINSTALL_BROWSER_NATIVE_HOST:STRING=ON" ];
-  });
-
   # Carla: vendored source tarball (GitHub fetch unreliable behind the proxy)
   carla = finalPrev.carla.overrideAttrs (_: {
     src = ./../files/sources/carla-2.5.10.tar.gz;
