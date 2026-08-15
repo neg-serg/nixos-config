@@ -14,3 +14,6 @@ isn't a step-by-step runbook.
 - Build performance analysis: [build-optimization.md](./build-optimization.md)
 
 - Options/modules reference: [modules.md](./modules.md)
+
+- Verified change workflows (add module / flag / package / host / script / secret):
+  [agent-recipes.md](./agent-recipes.md)
