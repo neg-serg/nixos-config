@@ -193,5 +193,50 @@ in
         wantedBy = [ "graphical-session.target" ];
       };
 
+    # Disable "UI Auto-hide" (Vivaldi 7.9+): toolbars (Tab Bar, Panel, Bookmarks
+    # Bar, Status Bar) slide out when the mouse hovers the window edge — reads as
+    # random "popups". Force the master switch and the per-toolbar flags off so
+    # nothing pops on hover; bars keep their manual visibility (e.g. tab bar stays
+    # hidden via vivaldi.tabs.visible). Same caveat as the css-mods service:
+    # Vivaldi rewrites Preferences from memory on exit, so re-apply at login.
+    systemd.user.services.vivaldi-auto-hide-pref =
+      let
+        prefScript = pkgs.writeText "vivaldi-auto-hide-pref.py" ''
+          import json, os, sys
+          prefs = os.path.expanduser("~/.config/vivaldi/Default/Preferences")
+          if not os.path.isfile(prefs):
+              sys.exit(0)
+          with open(prefs) as f:
+              p = json.load(f)
+          ah = p.setdefault("vivaldi", {}).setdefault("auto_hide", {})
+          target = {
+              "enabled": False,  # master switch — off = no hover popups
+              "panel": False,
+              "tab_bar": False,
+              "bookmarks_bar": False,
+              "status_bar": False,
+          }
+          changed = False
+          for k, v in target.items():
+              if ah.get(k) != v:
+                  ah[k] = v
+                  changed = True
+          if changed:
+              with open(prefs, "w") as f:
+                  json.dump(p, f, indent=1)
+              print("UI Auto-hide disabled:", target)
+        '';
+      in
+      {
+        description = "Disable Vivaldi UI Auto-hide (hover popups)";
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${lib.getExe' pkgs.python3 "python3"} ${prefScript}";
+        };
+        after = [ "graphical-session.target" ];
+        wants = [ "graphical-session.target" ];
+        wantedBy = [ "graphical-session.target" ];
+      };
+
   };
 }
