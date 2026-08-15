@@ -215,6 +215,7 @@ in
               "tab_bar": False,
               "bookmarks_bar": False,
               "status_bar": False,
+              "in_fullscreen": False,  # also off in fullscreen (address bar pops on hover otherwise)
           }
           changed = False
           for k, v in target.items():
