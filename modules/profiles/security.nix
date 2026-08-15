@@ -1,5 +1,5 @@
 ##
-# Module: system/profiles/security
+# Module: profiles/security
 # Purpose: Security-oriented feature toggle(s).
 # Key options: cfg = config.profiles.security.enable
 # Dependencies: Consumed by kernel params (e.g., page_poison).

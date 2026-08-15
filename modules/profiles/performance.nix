@@ -1,5 +1,5 @@
 ##
-# Module: system/profiles/performance
+# Module: profiles/performance
 # Purpose: Performance toggles influencing boot.kernelParams and related behavior.
 # Key options: cfg = config.profiles.performance.*
 # Dependencies: Consumed by kernel/params.nix.

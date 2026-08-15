@@ -1,5 +1,5 @@
 ##
-# Module: system/profiles/work
+# Module: profiles/work
 # Purpose: Desktop "work" profile — enable zswap and related memory tweaks suitable for interactive workloads.
 # Key options: profiles.work.enable
 # Dependencies: Relies on profiles.performance.zswap options.
