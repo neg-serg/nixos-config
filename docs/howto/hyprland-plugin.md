@@ -58,8 +58,8 @@ plugin propagates automatically once the system rebuild succeeds.
 - Quick health checks after any update:
   - `nix path-info .#legacyPackages.<system>.hyprlandPlugins.hy3` should print the store path that
     backs the plugin for that host's build (replace `<system>` with `x86_64-linux`, etc.).
-  - `grep plugin ~/.config/hypr/plugins.conf` should show the expected `libhy3.so` path exported by
-    `pkgs.hyprlandPlugins.hy3`.
+  - `grep plugin ~/.config/hypr/hyprland.conf` should show the expected `hy3`/`hyprglass` `.so` paths
+    exported by `pkgs.hyprlandPlugins.*` (the old `plugins.conf` was folded into `hyprland.conf`).
   - `Hyprland --version` output should match the Hyprland commit recorded in `flake.lock` to confirm
     the plugin and compositor were updated together.
 
