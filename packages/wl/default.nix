@@ -47,5 +47,6 @@ rustPlatform.buildRustPackage rec {
     license = licenses.gpl3Only;
     platforms = platforms.linux;
     mainProgram = "wl";
+    maintainers = [ ];
   };
 }

@@ -36,5 +36,6 @@ stdenv.mkDerivation rec {
     license = licenses.asl20;
     platforms = platforms.linux;
     mainProgram = "joern";
+    maintainers = [ ];
   };
 }
