@@ -1,5 +1,5 @@
 ##
-# Module: system/profiles/vm
+# Module: profiles/vm
 # Purpose: VM profile — simpler kernel/packages profile.
 # Key options: cfg = config.profiles.vm.enable
 # Dependencies: Affects boot.*; complements hosts/*/vm/*.nix.

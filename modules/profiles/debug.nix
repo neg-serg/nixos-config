@@ -1,5 +1,5 @@
 ##
-# Module: system/profiles/debug
+# Module: profiles/debug
 # Purpose: Optional debug/profiling toggles related to recent kernel features
 # - Memory allocation profiling (6.10+): CONFIG_MEM_ALLOC_PROFILING (+ boot param)
 # - perf data-type profiling helpers (6.8+): install tools, optional kernel BTF
