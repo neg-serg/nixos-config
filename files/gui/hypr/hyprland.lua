@@ -121,7 +121,11 @@ hl.config({
     dim_special = false,
   },
   input = {
+    -- Keyboard layouts: `us` MUST stay first. Binds are resolved against the FIRST
+    -- layout (input:resolve_binds_by_sym = false is the default), so `us,ru` keeps
+    -- every bind working in both layouts. Switching: M4+S.
     kb_layout = "us,ru", kb_variant = "", kb_model = "", kb_options = "", kb_rules = "",
+    resolve_binds_by_sym = false,
     follow_mouse = 1, sensitivity = 0, repeat_rate = 35, repeat_delay = 250,
     touchpad = { natural_scroll = true, disable_while_typing = true, clickfinger_behavior = true },
   },
