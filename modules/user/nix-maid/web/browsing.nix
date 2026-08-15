@@ -20,9 +20,6 @@ with lib;
       # Vivaldi CSS mod: hide tab bar + window control buttons (single-bar layout)
       ".config/vivaldi/css-mods/minimal-ui.css".source =
         config.lib.neg.path "files/vivaldi/minimal-ui.css";
-      # Tampermonkey userscript: hide DeepSeek Harness page footer rows (bottom double-bar)
-      ".local/share/dsh-userscripts/hide-dsh-footer.user.js".source =
-        config.lib.neg.path "files/vivaldi/hide-dsh-footer.user.js";
     })
   ];
 }
