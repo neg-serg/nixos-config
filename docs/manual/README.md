@@ -230,7 +230,9 @@ Keep this manifest updated whenever vendored sources change so that licensing re
 
 ## Hyprland: Source and Updates
 
-- The compositor (`pkgs.hyprland`) comes from nixpkgs (`modules/nix/hyprland.nix`); the dedicated
+- The compositor (`pkgs.hyprland`) comes from nixpkgs
+  (`modules/user/nix-maid/hyprland/overlay.nix`, consolidated from the former
+  `modules/nix/hyprland.nix`); the dedicated
   `hyprland` flake input was removed (it had no functional references).
 - `inputs.hy3` provides the hy3 plugin (`flake/lib.nix` hyprlandOverlay →
   `pkgs.hyprlandPlugins.hy3`).
