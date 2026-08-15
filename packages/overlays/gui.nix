@@ -36,7 +36,12 @@ in
         patches = (old.patches or [ ]) ++ [ ./hyprscratch-keepalive-fix.patch ];
       });
 
-  # Bump vicinae to latest stable (v0.23.1) — locked nixpkgs has v0.22.3
+  # vicinae: hold at v0.23.1 (re-enables experimental emacs keybinding — see
+  # commit fd7d7b19) with the QML Tab/Shift+Tab nav patch and the browser
+  # native-host flag. nixpkgs has since moved to v0.23.2, so the pin is a
+  # deliberate hold — re-evaluate before bumping. The cmake flag previously
+  # lived in a separate override in overlay.nix that silently shadowed this
+  # whole block (both built on finalPrev.vicinae and did not compose).
   vicinae =
     let
       src = prev.fetchFromGitHub {
@@ -65,5 +70,8 @@ in
         src = "${src}/src/typescript/extension-manager";
         hash = "sha256-pEgqFgvdz7Bcc+LznCI+KlD1XEfUuWFWjS24MJ7sx3k=";
       };
+      cmakeFlags =
+        builtins.filter (f: f != "-DINSTALL_BROWSER_NATIVE_HOST:STRING=OFF") (old.cmakeFlags or [ ])
+        ++ [ "-DINSTALL_BROWSER_NATIVE_HOST:STRING=ON" ];
     });
 }
