@@ -11,6 +11,9 @@ isn't a step-by-step runbook.
 
 - Swayimg hotkeys: [swayimg-hotkeys.md](./swayimg-hotkeys.md)
 
+- Hotkeys vs Russian keyboard layout — inventory & fix plan (RU):
+  [hotkeys-ru-layout.ru.md](./hotkeys-ru-layout.ru.md)
+
 - Build performance analysis (RU): [build-optimization.ru.md](./build-optimization.ru.md)
 
 - TidalCycles setup (RU): [tidal-cycles.ru.md](./tidal-cycles.ru.md)
