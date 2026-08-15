@@ -107,23 +107,9 @@ let
     domainFilter = mkDomainFilter allDomains;
     opts = import (self + "/lib/opts.nix") { inherit lib; };
 
-    neg = {
-      # Core structural helpers (no config dependency)
-      mkHomeFiles = files: {
-        users.users.neg.maid.file.home = files;
-      };
-      mkXdgText = path: text: {
-        home."${path}".text = text;
-      };
-      mkLocalBin = name: text: {
-        home.".local/bin/${name}" = {
-          inherit text;
-          executable = true;
-        };
-      };
-      linkImpure = x: x;
-
-    };
+    # Structural helpers — single source: lib/neg-helpers.nix
+    # (also imported by flake/checks.nix instead of stubs).
+    neg = import (self + "/lib/neg-helpers.nix");
   };
 
   mkHost =

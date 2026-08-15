@@ -18,7 +18,7 @@ let
 in
 {
   options.profiles.debug = {
-    enable = opts.mkEnableOption "Enable debug/profiling helpers (kernel memory allocation profiling, perf data-type tooling).";
+    enable = lib.mkEnableOption "Enable debug/profiling helpers (kernel memory allocation profiling, perf data-type tooling).";
 
     memAllocProfiling = {
       # Runtime activation via boot param (requires kernel built with CONFIG_MEM_ALLOC_PROFILING)
