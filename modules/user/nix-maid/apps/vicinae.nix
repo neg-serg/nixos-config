@@ -11,7 +11,7 @@ let
   enabled = guiEnabled && cfg.enable;
 
   iconTheme = config.features.gui.iconTheme or "kora-pgrey";
-  themeFileKitty = ./../../../../files/gui/vicinae-theme-kitty.toml;
+  themeFileKitty = config.lib.neg.path "files/gui/vicinae-theme-kitty.toml";
 
   # Vicinae merges settings.json over built-in defaults.
   # Only keys set here override the defaults.
@@ -210,7 +210,7 @@ let
     ];
   };
 
-  themeFile = ./../../../../files/gui/vicinae-theme.toml;
+  themeFile = config.lib.neg.path "files/gui/vicinae-theme.toml";
 
   # Nix-managed overrides — read-only, imported by the writable settings.json
   nixOverridesFile = pkgs.writeText "vicinae-nix-overrides.json" (builtins.toJSON vicinaeSettings);
