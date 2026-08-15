@@ -15,18 +15,24 @@ let
 
   hyprlandLuaText = builtins.readFile ../../../../files/gui/hypr/hyprland.lua;
 in
-lib.mkIf guiEnabled (
-  lib.mkMerge [
-    {
-      environment.systemPackages = services.packages;
+{
+  # System-level Hyprland pieces (hyprglass overlay) — consolidated here from
+  # modules/nix/hyprland.nix so the whole compositor stack lives in one domain.
+  imports = [ ./overlay.nix ];
 
-      systemd.user.targets = services.systemdTargets;
-      systemd.user.services = services.systemdServices;
-    }
+  config = lib.mkIf guiEnabled (
+    lib.mkMerge [
+      {
+        environment.systemPackages = services.packages;
 
-    (files.generateFileLinks {
-      hyprlandConfText = environment.hyprlandConf;
-      inherit hyprlandLuaText;
-    })
-  ]
-)
+        systemd.user.targets = services.systemdTargets;
+        systemd.user.services = services.systemdServices;
+      }
+
+      (files.generateFileLinks {
+        hyprlandConfText = environment.hyprlandConf;
+        inherit hyprlandLuaText;
+      })
+    ]
+  );
+}
