@@ -5,7 +5,7 @@
   ...
 }:
 let
-  systemdUser = import ../../../lib/systemd-user.nix { inherit lib; };
+  systemdUser = import ../../../../lib/systemd-user.nix { inherit lib; };
 in
 with lib;
 mkIf (config.features.gui.enable or false) (
