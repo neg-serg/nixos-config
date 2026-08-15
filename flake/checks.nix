@@ -13,6 +13,7 @@
 {
   nixpkgs,
   self,
+  inputs,
   mkTestHost,
   ...
 }:
@@ -21,24 +22,21 @@ let
   inherit (nixpkgs) lib;
 
   # Real specialArgs that the module tree needs for evalModules.
-  # We provide the minimal set — stubs where full values aren't needed.
+  # The dom-* checks evaluate the FULL module tree via modules/default.nix,
+  # so they need the real inputs (modules reference inputs.steam-config-nix,
+  # inputs.hyprscratch, ...) — only the structural extras are stubbed.
   mkStubArgs = domainFilter: {
     inherit domainFilter;
-    # Required by nix/settings.nix, modules/system/default.nix, etc.
-    inputs = {
+    inputs = inputs // {
       inherit self;
-      inherit nixpkgs;
     };
     locale = "C";
     timeZone = "UTC";
     filteredSource = self;
     iosevkaNeg = { };
-    neg = {
-      mkHomeFiles = _: { };
-      mkXdgText = _: _: { };
-      mkLocalBin = _: _: { };
-      linkImpure = x: x;
-    };
+    # Real helpers (lib/neg-helpers.nix) — their home/user config outputs are
+    # inert here because evalModules runs with _module.check = false.
+    neg = import ../lib/neg-helpers.nix;
   };
 
   mkModuleCheck =
@@ -68,13 +66,15 @@ in
   "mod-core" = mkModuleCheck "core" [ ../modules/core/default.nix ] (_: true);
 
   # ── Domain filter checks ─────────────────────────────────────────
-  # Validate that modules/default.nix works with the domain filter mechanism.
-  # These create INDEPENDENT eval trees for nix-eval-jobs to process in parallel.
+  # Validate that modules/default.nix (the actual filter consumer) works
+  # with both the all-domains and a restrictive filter (mirrors the
+  # odinDomains path in flake/nixos.nix).
 
-  "dom-all" = pkgs.runCommand "check-dom-all" { } ''
-    echo "modules/default.nix + all filter: OK"
-    touch $out
-  '';
+  "dom-all" = mkModuleCheck "dom-all" [ ../modules/default.nix ] (_: true);
+
+  "dom-restrictive" = mkModuleCheck "dom-restrictive" [ ../modules/default.nix ] (
+    name: name != "user" && name != "games"
+  );
 
   # ── NixOS test config checks ───────────────────────────────────────
   # Each evaluates a profile-specific NixOS configuration for "odin"
