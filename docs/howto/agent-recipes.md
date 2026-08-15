@@ -47,7 +47,7 @@ structure — feature flags, module domains, packages, overlay wiring.
    }
    ```
 
-1. Define the flag if it doesn't exist yet (recipe 2).
+1. Define the flag if it doesn't exist yet (recipe 3).
 
 1. Refresh docs: `just codebase`; update `OPTIONS.md` (manual, tracked) if options changed.
 
@@ -61,7 +61,38 @@ installs via `environment.systemPackages`.
 guard); scripts needed by systemd units should not `mkdir`/`touch`/`rm` in `ExecStart*` — prefer
 `neg.mkLocalBin` or a `writeShellScriptBin` wrapper (lint guard).
 
-## 2. Add a feature flag
+## 2. Reference repo files by root path (`config.lib.neg.path`)
+
+**Goal:** point at a file under `files/`, `secrets/`, `lib/`, or `packages/…` without
+`../../../../../` chains that break when a module moves.
+
+**Touch:** only the module that references the file.
+
+**Steps:**
+
+1. In the module, use `config.lib.neg.path "<repo-relative>"` wherever a path was built with `../`:
+
+   ```nix
+   { config, ... }:
+   {
+     environment.etc."greetd/quickshell".source = config.lib.neg.path "files/quickshell";
+     sops.secrets."x".sopsFile = config.lib.neg.path "secrets/home/x.sops.yaml";
+   }
+   ```
+
+   `path` resolves against `options.neg.repoRoot` (defaults to the flake `self` source, so it works
+   regardless of where the repo is checked out — also in `flake/checks.nix` stub args).
+
+1. Keep **sibling** imports relative (`../scripts/…`, `../mutt-conf`): `path` is for jumps to the
+   repo root only.
+
+1. Do **not** convert a `mkDerivation` `src` to `path` — a derivation input must stay a real path
+   (string breaks store-input tracking). Keep `src = ./relative/…` there.
+
+**Verify:** `nix build .#nixosConfigurations.odin.config.system.build.toplevel --dry-run
+--option substitute false` (a bad path fails evaluation).
+
+## 3. Add a feature flag
 
 **Touch:**
 
@@ -110,7 +141,7 @@ in `modules/features/dev.nix`, enabled in `hosts/odin/default.nix`.
 **Verify:** `rg "features.<domain>.<feature>" modules/ hosts/` shows definition, host/profile
 enablement, and consumer; `just codebase` lists the flag with its default and description.
 
-## 3. Add a package
+## 4. Add a package
 
 **Touch:**
 
@@ -154,7 +185,7 @@ enablement, and consumer; `just codebase` lists the flag with its default and de
 `npmInstallFlags = [ "--ignore-scripts" ]` + `--ignore-scripts` on rebuild; every `pkgs.*` list
 entry needs a `# comment`.
 
-## 4. Add a host
+## 5. Add a host
 
 **Touch:**
 
@@ -184,7 +215,7 @@ entry needs a `# comment`.
 `flake/nixos.nix`; `mkTestHost` (same file) is for A/B profile tests in `flake/checks.nix`, not for
 normal hosts.
 
-## 5. Add a `~/.local/bin` script (local-bin)
+## 6. Add a `~/.local/bin` script (local-bin)
 
 **Goal:** a small personal CLI available in `$PATH`.
 
@@ -210,7 +241,7 @@ normal hosts.
 instead; scripts meant for the system (not the user) belong in a package or `neg.mkLocalBin`, not
 local-bin.
 
-## 6. Add a sops secret
+## 7. Add a sops secret
 
 **Touch:** `secrets/<path>.sops.yaml` (or a raw `.sops` file) + `sops.secrets.*` in a module/host.
 
@@ -261,7 +292,7 @@ local-bin.
 **Gotchas:** never commit plaintext secrets; keep secret *references* out of modules where possible
 (root `AGENTS.md`); raw files get `format = "binary"`, yaml files get `key` — don't mix the two.
 
-## 7. Update docs
+## 8. Update docs
 
 - Cross-link new documents from `docs/index.md` (and `docs/howto/index.md` for how-tos) — required
   by `docs/AGENTS.md`.
@@ -272,7 +303,7 @@ local-bin.
 - Placement: `docs/manual/` — canonical user-facing workflows; `docs/howto/` — focused
   guides/reference; `docs/runbooks/` — operational steps.
 
-## 8. Verify & deploy
+## 9. Verify & deploy
 
 - `just fmt` — format everything (nixfmt, shfmt, black, mdformat, taplo)
 - `just lint` — full lint suite (statix, deadnix, ruff/black, shellcheck,
@@ -283,7 +314,7 @@ local-bin.
 - dry-run before touching the system:
   `nix build .#nixosConfigurations.<host>.config.system.build.toplevel`
 
-## 9. Commit
+## 10. Commit
 
 1. `git add` only the touched files.
 1. Subject: `[scope] imperative short summary` — ASCII only, no trailing period (commit-msg hook
