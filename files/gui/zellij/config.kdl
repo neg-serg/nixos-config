@@ -94,6 +94,12 @@ keybinds {
         bind "Alt k" { MoveFocus "up"; }
         bind "Alt l" { MoveFocus "right"; }
 
+        // --- Move focus, Russian layout (ЙЦУКЕН) ---
+        bind "Alt р" { MoveFocus "left"; }
+        bind "Alt о" { MoveFocus "down"; }
+        bind "Alt л" { MoveFocus "up"; }
+        bind "Alt д" { MoveFocus "right"; }
+
         // --- Mouse ---
         mouse {
             bind "LeftClick" { LeftClick; }
@@ -115,6 +121,11 @@ keybinds {
         bind "l" { Resize "right"; }
         bind "Enter" { SwitchToMode "normal"; }
         bind "Escape" { SwitchToMode "normal"; }
+        // Russian layout (ЙЦУКЕН)
+        bind "р" { Resize "left"; }
+        bind "о" { Resize "down"; }
+        bind "л" { Resize "up"; }
+        bind "д" { Resize "right"; }
     }
 
     // --- Tab mode ---
@@ -128,6 +139,11 @@ keybinds {
         bind "Tab" { GoToNextTab; }
         bind "Left" { GoToPreviousTab; }
         bind "Right" { GoToNextTab; }
+        // Russian layout (ЙЦУКЕН)
+        bind "д" { GoToNextTab; }
+        bind "р" { GoToPreviousTab; }
+        bind "т" { NewTab; SwitchToMode "normal"; }
+        bind "к" { SwitchToMode "rename-tab"; }
     }
 
     // --- Scroll mode ---
@@ -138,6 +154,9 @@ keybinds {
         bind "Ctrl b" { PageScrollUp; }
         bind "Escape" { SwitchToMode "normal"; }
         bind "Enter" { SwitchToMode "normal"; }
+        // Russian layout (ЙЦУКЕН)
+        bind "о" { ScrollDown; }
+        bind "л" { ScrollUp; }
     }
 
     // --- Session mode ---
