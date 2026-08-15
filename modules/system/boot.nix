@@ -9,10 +9,8 @@
   ...
 }:
 {
-  imports = [
-    ./boot/pkgs.nix # Nix package manager
-    ./boot/autofdo.nix
-  ];
+  # Sub-modules (pkgs, autofdo) are imported by boot/default.nix — the
+  # readDir entry for this directory — so each file is imported exactly once.
   boot = {
     # Full kexec/kdump support — enables prepare-kexec.service for systemctl kexec
     # Protected by kernel.kexec_load_disabled=0 (kexec enabled, but gated by CAP_SYS_BOOT)
