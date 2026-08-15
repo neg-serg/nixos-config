@@ -3,29 +3,9 @@
   ...
 }:
 let
-  # Replicating logic from modules/dev/python/pkgs.nix
-  myPythonPackages =
-    ps: with ps; [
-      # Core
-      annoy
-      beautifulsoup4
-      colored
-      docopt
-      fonttools
-      mutagen
-      numpy
-      orjson
-      pillow
-      psutil
-      requests
-      tabulate
-      # Tools
-      dbus-python
-      fontforge
-
-      pynvim
-    ];
-  pythonEnv = pkgs.python3-lto.withPackages myPythonPackages;
+  # Shared package list — single source in lib/python-packages.nix
+  pythonLists = import ../../lib/python-packages.nix { };
+  pythonEnv = pkgs.python3-lto.withPackages pythonLists.myPythonPackages;
 in
 pkgs.mkShell {
   nativeBuildInputs = [
