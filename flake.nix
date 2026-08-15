@@ -13,12 +13,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    # NB: the declared branch is nixos-26.05 (stable, deliberate — commit
+    # e16f4269 reverted the nixpkgs-weekly experiment). If flake.lock drifts
+    # (e.g. pins a weekly tarball), re-align with:
+    #   nix flake lock --update-input nixpkgs
     nix-flatpak = {
       url = "github:gmodena/nix-flatpak";
-    };
-    hyprland = {
-      url = "github:hyprwm/Hyprland/v0.55.4";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     hy3 = {
       url = "github:outfoxxed/hy3";
@@ -30,7 +30,12 @@
       url = "github:neg-serg/wl";
       flake = false;
     };
-    xdg-desktop-portal-hyprland.follows = "hyprland/xdph";
+    # xdph used to follow the (now removed) hyprland input; pinned here to the
+    # same rev the hyprland flake carried, so the portal version is unchanged.
+    xdg-desktop-portal-hyprland = {
+      url = "github:hyprwm/xdg-desktop-portal-hyprland/08d99f727944dd15e4740090305e31c5fb92a50a";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     iosevka-neg = {
       url = "github:neg-serg/iosevka-neg";
