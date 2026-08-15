@@ -1,6 +1,7 @@
 {
   lib,
   neg,
+  inputs,
   config,
   ...
 }:
@@ -8,7 +9,9 @@
   options.neg = {
     repoRoot = lib.mkOption {
       type = lib.types.str;
-      default = "/etc/nixos";
+      # flake `self` coerces to its source path; avoids the hardcoded
+      # /etc/nixos default and follows the repo wherever it is checked out.
+      default = "${inputs.self}";
       description = "Path to the root of the configuration repository.";
     };
 
@@ -27,6 +30,11 @@
         path:
         (lib.attrByPath (lib.splitString "." path) { enable = false; } config.features).enable or false;
       gate = path: body: lib.mkIf (config.lib.neg.enabled path) body;
+
+      # Resolve a repo-root-relative path (e.g. "files/gui/theme.toml") to an
+      # absolute one. Replaces fragile ../../../ chains that break when a
+      # module moves; use this for files under files/ and secrets/.
+      path = p: config.neg.repoRoot + "/" + p;
     };
   };
 }
