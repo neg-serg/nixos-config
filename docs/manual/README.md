@@ -192,11 +192,9 @@ Use the same expectations regardless of whether you work under `modules/` or
 
 Keep this manifest updated whenever vendored sources change so that licensing remains clear.
 
-| Component | Source | Revision | License | Notes |
-|-----------|--------|----------|---------|-------| | kitty-kitten-search |
-[github.com/trygveaa/kitty-kitten-search](https://github.com/trygveaa/kitty-kitten-search) |
-`992c1f3d220dc3e1ae18a24b15fcaf47f4e61ff8` | *No license declared upstream* | Provides `search.py` /
-`scroll_mark.py` kittens for Kitty. Verify licensing before distributing binaries. |
+| Component           | Source                                                                                     | Revision                                   | License                        | Notes                                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------ | ------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| kitty-kitten-search | [github.com/trygveaa/kitty-kitten-search](https://github.com/trygveaa/kitty-kitten-search) | `992c1f3d220dc3e1ae18a24b15fcaf47f4e61ff8` | *No license declared upstream* | Provides `search.py` / `scroll_mark.py` kittens for Kitty. Verify licensing before distributing binaries. |
 
 ## Open Tasks
 

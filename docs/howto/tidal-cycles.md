@@ -11,11 +11,13 @@ flowchart LR
     C --> F["Dirt-Samples<br/>~170MB wav"]
 ```
 
-| Слой | Что | Порт | |---|---|---| | TidalCycles | Haskell DSL, паттерны ритма/звука | отправляет
-OSC на :57120 | | tidal-ghci | GHCi с предзагруженным Tidal | — | | SuperDirt |
-SuperCollider-синтезатор, загружает сэмплы | слушает OSC :57120 | | scsynth | Аудиосервер
-SuperCollider | OSC :57110, аудио через JACK | | PipeWire JACK | Низколатентная аудиоподсистема |
-квант 128 (2.6ms) |
+| Слой          | Что                                        | Порт                         |
+| ------------- | ------------------------------------------ | ---------------------------- |
+| TidalCycles   | Haskell DSL, паттерны ритма/звука          | отправляет OSC на :57120     |
+| tidal-ghci    | GHCi с предзагруженным Tidal               | —                            |
+| SuperDirt     | SuperCollider-синтезатор, загружает сэмплы | слушает OSC :57120           |
+| scsynth       | Аудиосервер SuperCollider                  | OSC :57110, аудио через JACK |
+| PipeWire JACK | Низколатентная аудиоподсистема             | квант 128 (2.6ms)            |
 
 ## Быстрый старт
 
@@ -39,9 +41,12 @@ just tidal          # открывает nvim для кодинга
 
 ## Клавиши в nvim
 
-| Клавиша | Действие | Контекст | |---|---|---| | `Ctrl+Enter` | Запустить Tidal + SuperDirt |
-`.tidal` файл | | `Ctrl+Shift+Enter` | Остановить Tidal | `.tidal` файл | | `Alt+Enter` | Отправить
-строку в Tidal | `.tidal` файл | | `Ctrl+Enter` | Запустить GHCi | из `just tidal` |
+| Клавиша            | Действие                    | Контекст        |
+| ------------------ | --------------------------- | --------------- |
+| `Ctrl+Enter`       | Запустить Tidal + SuperDirt | `.tidal` файл   |
+| `Ctrl+Shift+Enter` | Остановить Tidal            | `.tidal` файл   |
+| `Alt+Enter`        | Отправить строку в Tidal    | `.tidal` файл   |
+| `Ctrl+Enter`       | Запустить GHCi              | из `just tidal` |
 
 ## Как это устроено (детали реализации)
 
@@ -323,14 +328,16 @@ systemctl --user enable --now tidal.service
 
 ## Файлы
 
-| Путь | Назначение | |---|---| | `~/.config/SuperCollider/superdirt_startup.scd` | Конфигурация SC
-сервера (1M буферов) | | `~/.config/SuperCollider/boot_noop.scd` | Минимальная загрузка сервера | |
-`~/.config/tidal/BootTidal.hs` | Импорты и настройки GHCi | |
-`~/.local/share/SuperCollider/downloaded-quarks/SuperDirt/` | Классы SuperDirt (Quark) | |
-`~/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples/` | Банк сэмплов (~170MB) | |
-`/run/current-system/sw/bin/tidal-ghci` | GHCi враппер | |
-`/etc/nixos/modules/user/nix-maid/apps/supercollider.nix` | Модуль NixOS | |
-`/etc/nixos/docs/howto/tidal-cycles.md` | Этот документ |
+| Путь                                                           | Назначение                           |
+| -------------------------------------------------------------- | ------------------------------------ |
+| `~/.config/SuperCollider/superdirt_startup.scd`                | Конфигурация SC сервера (1M буферов) |
+| `~/.config/SuperCollider/boot_noop.scd`                        | Минимальная загрузка сервера         |
+| `~/.config/tidal/BootTidal.hs`                                 | Импорты и настройки GHCi             |
+| `~/.local/share/SuperCollider/downloaded-quarks/SuperDirt/`    | Классы SuperDirt (Quark)             |
+| `~/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples/` | Банк сэмплов (~170MB)                |
+| `/run/current-system/sw/bin/tidal-ghci`                        | GHCi враппер                         |
+| `/etc/nixos/modules/user/nix-maid/apps/supercollider.nix`      | Модуль NixOS                         |
+| `/etc/nixos/docs/howto/tidal-cycles.md`                        | Этот документ                        |
 
 ## Ссылки
 

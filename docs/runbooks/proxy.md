@@ -43,15 +43,18 @@ configured nodes (Hysteria2 + VLESS).
 Xray was the original tunneling solution. When its hardcoded server became unreachable, sing-box was
 added as a more flexible alternative that can pull fresh node lists from subscription URLs and use
 SOPS-encrypted fallback nodes. Both are kept because Xray can still be restored if the server comes
-back, and it handles nix-daemon's proxy env on boot. | Aspect | Xray (systemd) | sing-box (proxy
-CLI) | |---|---|---| | Management | NixOS module `modules/system/net/proxy.nix` |
-`~/.local/bin/proxy` script | | Config | Static (`~/.config/sing-box-tun/config.json`) | Dynamic
-(`~/.config/sing-box-trojan/config.json`) | | Start | Manual (`systemctl start xray.service`) |
-Autostart via `sing-box-proxy` user service; `proxy on` / `proxy refresh` for manual control | |
-Port 10808 | `ExecStartPre` kills existing holder via `fuser -k` | `proxy on` stops Xray first | |
-Off behavior | — | `proxy off` restarts Xray | | Logs | `journalctl -u xray.service` |
-`/tmp/sing-box-trojan.log` | | Dashboard | None | `http://127.0.0.1:9090` (secret: `neg`) | |
-Purpose | Boot-time proxy for nix-daemon | Flexible proxy with auto-refreshing nodes |
+back, and it handles nix-daemon's proxy env on boot.
+
+| Aspect       | Xray (systemd)                                      | sing-box (proxy CLI)                                                                         |
+| ------------ | --------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Management   | NixOS module `modules/system/net/proxy.nix`         | `~/.local/bin/proxy` script                                                                  |
+| Config       | Static (`~/.config/sing-box-tun/config.json`)       | Dynamic (`~/.config/sing-box-trojan/config.json`)                                            |
+| Start        | Manual (`systemctl start xray.service`)             | Autostart via `sing-box-proxy` user service; `proxy on` / `proxy refresh` for manual control |
+| Port 10808   | `ExecStartPre` kills existing holder via `fuser -k` | `proxy on` stops Xray first                                                                  |
+| Off behavior | —                                                   | `proxy off` restarts Xray                                                                    |
+| Logs         | `journalctl -u xray.service`                        | `/tmp/sing-box-trojan.log`                                                                   |
+| Dashboard    | None                                                | `http://127.0.0.1:9090` (secret: `neg`)                                                      |
+| Purpose      | Boot-time proxy for nix-daemon                      | Flexible proxy with auto-refreshing nodes                                                    |
 
 ## proxy CLI
 
@@ -125,14 +128,13 @@ proxy status
 
 **Possible causes:**
 
-| Symptom | Likely cause | Fix | |---|---|---| | Xray is running (hardcoded server is dead) | Xray
-was started manually but its server is unreachable | `proxy on` to switch to sing-box | | Neither
-Xray nor sing-box is running | No proxy active (e.g. `proxy off` was run) | `proxy on` | | sing-box
-is running but internet still fails | All nodes are stale | `proxy refresh` to fetch fresh nodes | |
-`Connection refused` on 10808 | Nothing is listening | Start a proxy | |
-`curl --noproxy '*' -s https://example.com` fails but `proxy status` shows RUNNING | sing-box nodes
-are all dead; or no fallback + no subscriptions available | `proxy refresh` and check the log at
-`/tmp/sing-box-trojan.log` |
+| Symptom                                                                            | Likely cause                                                             | Fix                                                             |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| Xray is running (hardcoded server is dead)                                         | Xray was started manually but its server is unreachable                  | `proxy on` to switch to sing-box                                |
+| Neither Xray nor sing-box is running                                               | No proxy active (e.g. `proxy off` was run)                               | `proxy on`                                                      |
+| sing-box is running but internet still fails                                       | All nodes are stale                                                      | `proxy refresh` to fetch fresh nodes                            |
+| `Connection refused` on 10808                                                      | Nothing is listening                                                     | Start a proxy                                                   |
+| `curl --noproxy '*' -s https://example.com` fails but `proxy status` shows RUNNING | sing-box nodes are all dead; or no fallback + no subscriptions available | `proxy refresh` and check the log at `/tmp/sing-box-trojan.log` |
 
 ### Verifying the proxy works
 

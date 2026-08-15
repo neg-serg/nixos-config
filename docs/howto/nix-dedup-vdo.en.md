@@ -54,12 +54,10 @@ RAM/CPU cost. The absolute numbers also provide a rough upper bound for possible
 
 ## November 2025 results
 
-| Run | Borg flags | Original size | Logical unique data | Repo size on disk | Savings | | --- |
----------- | ------------- | ------------------- | ----------------- | ------- | | Dedup only |
-`--compression none --chunker-params fixed,4096` | 176 302 987 003 B (≈164.19 GiB) |
-122 781 869 773 B (≈114.35 GiB) | 122 781 869 773 B | ≈49.85 GiB saved (≈30.4 %) | | Dedup + LZ4 |
-`--compression lz4 --chunker-params fixed,4096` | same as above | 67 008 764 776 B (≈62.41 GiB) |
-89 704 670 309 B compressed → 67 008 764 776 B stored | ≈101.79 GiB saved (≈62.0 %) |
+| Run         | Borg flags                                       | Original size                   | Logical unique data             | Repo size on disk                                     | Savings                     |
+| ----------- | ------------------------------------------------ | ------------------------------- | ------------------------------- | ----------------------------------------------------- | --------------------------- |
+| Dedup only  | `--compression none --chunker-params fixed,4096` | 176 302 987 003 B (≈164.19 GiB) | 122 781 869 773 B (≈114.35 GiB) | 122 781 869 773 B                                     | ≈49.85 GiB saved (≈30.4 %)  |
+| Dedup + LZ4 | `--compression lz4 --chunker-params fixed,4096`  | same as above                   | 67 008 764 776 B (≈62.41 GiB)   | 89 704 670 309 B compressed → 67 008 764 776 B stored | ≈101.79 GiB saved (≈62.0 %) |
 
 Interpretation:
 
