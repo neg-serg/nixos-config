@@ -17,9 +17,7 @@ let
   # the host but never read. NB: `or` after an attrpath only covers *missing*
   # attributes, so null must be guarded explicitly (browsers.${null} is an
   # eval error, not a lookup miss).
-  browser =
-    if (cfg.default or null) == null then { }
-    else (browsers.${cfg.default} or { });
+  browser = if (cfg.default or null) == null then { } else (browsers.${cfg.default} or { });
 in
 {
   config = {

@@ -87,7 +87,7 @@ lint:
     fi
     if git ls-files -- '*.py' >/dev/null 2>&1; then \
       ruff check -- .; \
-      black --check --line-length 79 --extend-exclude '(secrets/home/crypted|modules/user/gui/kitty/conf/tab_bar.py|modules/user/gui/kitty/conf/scroll_mark.py|modules/user/gui/kitty/conf/search.py)' .; \
+      black --check --line-length 79 --extend-exclude '(files/kitty|files/art/fun-art)' .; \
     fi
     # TOML syntax/style
     if command -v taplo >/dev/null 2>&1; then taplo lint; else echo "taplo not found — skipping TOML lint"; fi
@@ -154,7 +154,8 @@ docs-modules:
 # Regenerate the codebase map (docs/codebase.md) for agents/quick orientation
 codebase:
     repo_root="$(git rev-parse --show-toplevel)"; \
-    "$repo_root/packages/local-bin/bin/gen-codebase" "$repo_root"
+    "$repo_root/packages/local-bin/bin/gen-codebase" "$repo_root"; \
+    nix fmt # normalize markdown (mdformat) so the artifact is fmt-stable
 
 hooks-enable:
     git config core.hooksPath .githooks
