@@ -43,6 +43,13 @@ lib.mkMerge [
               key = "client_secret";
               owner = "neg";
             };
+        "deepseek-api" = lib.mkIf (builtins.pathExists "${secretsDir}/deepseek-api.sops.yaml") {
+          format = "yaml";
+          sopsFile = "${secretsDir}/deepseek-api.sops.yaml";
+          key = "DEEPSEEK_API_KEY";
+          mode = "0400";
+          owner = "neg";
+        };
       };
     };
 
