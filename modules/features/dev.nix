@@ -31,22 +31,6 @@ with lib;
 
     unreal = {
       enable = mkBool "enable Unreal Engine 5 tooling" false;
-      root = mkOption {
-        type = types.nullOr types.str;
-        default = null;
-        description = ''Checkout directory for Unreal Engine sources. Defaults to "~/games/UnrealEngine".'';
-        example = "/mnt/storage/UnrealEngine";
-      };
-      repo = mkOption {
-        type = types.str;
-        default = "git@github.com:EpicGames/UnrealEngine.git";
-        description = "Git URL used by ue5-sync (requires EpicGames/UnrealEngine access).";
-      };
-      branch = mkOption {
-        type = types.str;
-        default = "5.4";
-        description = "Branch or tag to sync from the Unreal Engine repository.";
-      };
       useSteamRun = mkOption {
         type = types.bool;
         default = true;
