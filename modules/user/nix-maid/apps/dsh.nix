@@ -24,6 +24,13 @@ in
     description = "DeepSeek Harness (dsh) — agent harness Web UI";
     after = [ "network.target" ];
     wantedBy = [ "default.target" ];
+    environment = {
+      # The Landlock sandbox (landlock-run) execs wrapped commands via
+      # execvp, which needs the system PATH. systemd's default user-service
+      # PATH lacks /run/current-system/sw/bin, so sandboxed tool calls fail
+      # with "landlock-run: exec failed: No such file or directory".
+      PATH = lib.mkForce "/run/current-system/sw/bin:/run/wrappers/bin:/usr/local/bin:/usr/bin:/bin";
+    };
     serviceConfig = {
       Type = "simple";
       WorkingDirectory = homeDir;
