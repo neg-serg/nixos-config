@@ -1,0 +1,15 @@
+/* Minimal UI — hide tab bar and window control buttons (Vivaldi 8.x CSS mod).
+ * Loaded from the css_ui_mods_directory (see modules/user/nix-maid/web/vivaldi.nix).
+ * Restores the single-bar layout: only the bottom address bar stays visible.
+ */
+
+/* Window control buttons (CSD minimize/maximize/close) */
+.window-buttongroup {
+  display: none !important;
+}
+
+/* Tab bar — hides the top strip (the "second navbar"); window controls live
+ * inside the tab bar, so this removes them as well. */
+#browser .tabbar-wrapper {
+  display: none !important;
+}
