@@ -1,17 +1,18 @@
 {
   lib,
   neg,
-  inputs,
+  repoRoot,
   config,
   ...
 }:
 {
   options.neg = {
     repoRoot = lib.mkOption {
-      type = lib.types.str;
-      # flake `self` coerces to its source path; avoids the hardcoded
-      # /etc/nixos default and follows the repo wherever it is checked out.
-      default = "${inputs.self}";
+      type = lib.types.path;
+      # Path literal for the repo root, injected via specialArgs from
+      # flake/nixos.nix (real path, not a string — string paths are not
+      # tracked in derivation closures and can be garbage-collected).
+      default = repoRoot;
       description = "Path to the root of the configuration repository.";
     };
 
@@ -32,9 +33,19 @@
       gate = path: body: lib.mkIf (config.lib.neg.enabled path) body;
 
       # Resolve a repo-root-relative path (e.g. "files/gui/theme.toml") to an
-      # absolute one. Replaces fragile ../../../ chains that break when a
-      # module moves; use this for files under files/ and secrets/.
-      path = p: config.neg.repoRoot + "/" + p;
+      # absolute path. repoRoot is a real path (not a string), so the result
+      # carries Nix path context: when used in a derivation or home file it is
+      # copied into the store and tracked as a closure dependency — the same
+      # behavior as old relative `./../../` references. Do NOT return a plain
+      # string here: strings are not added to derivation closures and their
+      # files can be garbage-collected away.
+      #
+      # NB: keep the leading slash inside the same string operand —
+      # `path + "/"` normalizes the trailing slash away and the join breaks.
+      path = p: config.neg.repoRoot + ("/" + p);
+
+      # Existence check for optional repo files (no eval error when missing).
+      pathExists = p: builtins.pathExists (config.neg.repoRoot + ("/" + p));
     };
   };
 }
