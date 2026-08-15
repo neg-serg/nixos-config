@@ -19,3 +19,11 @@
 #browser #header {
   display: none !important;
 }
+
+/* No second bar at the bottom either: status bar and bookmarks bar hidden,
+ * so the address bar is the only chrome row. */
+#browser .toolbar-statusbar,
+#browser .toolbar-bookmarksbar,
+#browser .bookmarks-bar {
+  display: none !important;
+}
