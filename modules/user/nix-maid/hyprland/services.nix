@@ -1,8 +1,32 @@
 {
   lib,
   pkgs,
+  inputs,
   ...
 }:
+let
+  # Hyprland window list via vicinae (moved here from modules/user/session/hyprland.nix)
+  hyprWinList = pkgs.writeShellApplication {
+    name = "hypr-win-list"; # Hyprland window list via vicinae
+    runtimeInputs = [
+      pkgs.python3 # Python interpreter
+      pkgs.wl-clipboard # clipboard manager for Wayland
+      pkgs.hyprland # dynamic tiling Wayland compositor
+    ];
+    text =
+      let
+        tpl = builtins.readFile (
+          inputs.self # flake self-reference
+          + "/modules/user/nix-maid/scripts/hypr/hypr-win-list.py" # hypr-win-list script
+        );
+      in
+      ''
+                     exec python3 <<'PY'
+        ${tpl}
+        PY
+      '';
+  };
+in
 {
   packages = [
     pkgs.hypridle # idle daemon (triggers DPMS off for OLED safety)
@@ -10,6 +34,13 @@
     pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
     pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
     pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
+
+    pkgs.hyprcursor # modern cursor theme format for Hyprland
+    pkgs.hyprpicker # color picker for Wayland/Hyprland
+    pkgs.hyprprop # Hyprland property helper
+    pkgs.hyprutils # assorted Hyprland utilities
+    inputs.raise.defaultPackage.${pkgs.stdenv.hostPlatform.system} # run-or-raise for Hyprland
+    hyprWinList # Hyprland window list via vicinae
 
     pkgs.hyprscratch # sashetophizika/hyprscratch with event-listener keep-alive fix
 

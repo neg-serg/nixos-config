@@ -13,10 +13,12 @@ with the Hyprland compositor without hopping across multiple files.
 
 ## nixpkgs Overlay
 
-- `modules/nix/hyprland.nix` injects an overlay that rewires `pkgs.hyprland`,
-  `pkgs.xdg-desktop-portal-hyprland`, and `pkgs.hyprlandPlugins.hy3` so the rest of the
-  configuration consumes the flake-pinned builds without touching `inputs.*` directly
-  (`modules/nix/hyprland.nix`:1-13).
+- `modules/user/nix-maid/hyprland/overlay.nix` (consolidated from the former
+  `modules/nix/hyprland.nix`) adds the `hyprglass` decoration plugin to `pkgs.hyprlandPlugins`,
+  gated behind `features.gui.enable` so headless hosts skip the `pkgs.hyprland` evaluation.
+- The flake-pinned builds are wired in `flake/lib.nix` `hyprlandOverlay`: it routes
+  `pkgs.xdg-desktop-portal-hyprland` (pinned input) and `pkgs.hyprlandPlugins.hy3` (`inputs.hy3`)
+  so the rest of the configuration consumes them without touching `inputs.*` directly.
 - Because everything flows through `pkgs`, Home-Manager modules just reference
   `pkgs.hyprlandPlugins.hy3` and stay agnostic of how the plugin was produced.
 
@@ -28,22 +30,25 @@ with the Hyprland compositor without hopping across multiple files.
 
 ## Home Configuration Wiring
 
-- `modules/user/nix-maid/hyprland/main.nix` builds `~/.config/hypr/plugins.conf` dynamically and
-  injects `plugin = ${pkgs.hyprlandPlugins.hy3}/lib/libhy3.so` so Hyprland loads hy3 on every
-  graphical login. Hyprsplit support piggybacks on the same helper when that feature flag is on
-  (`modules/user/nix-maid/hyprland/main.nix`:38-116).
-- The same module also writes the `permission = ..., plugin, allow` stanza directly into
-  `hyprland.conf`, ensuring hy3 can register without triggering the ecosystem permission guard.
-- For wlroots screencopy hardening, `modules/user/nix-maid/hyprland/files.nix` keeps a dedicated
-  `permissions.conf` that includes both the hy3 and hyprsplit plugin paths (if enabled) alongside
-  grim/hyprlock permissions (`modules/user/nix-maid/hyprland/files.nix`:12-38).
+- Everything Hyprland lives under `modules/user/nix-maid/hyprland/` (one domain):
+  `main.nix` assembles `environment.nix` (the `hyprland.conf` text: `plugin = hy3/hyprglass`
+  lines plus `source` of the lua config), `files.nix` (home-file links: `hyprland.conf`,
+  `hyprland.lua`, `hyprlock.conf`, `hypridle.conf`, animations), and `services.nix` (systemd
+  user services + the Hyprland-related package set, incl. the session packages formerly in
+  `modules/user/session/hyprland.nix`).
+- `files.nix` also writes the `permission = ..., plugin, allow` stanza into `hyprland.conf`,
+  ensuring hy3 can register without triggering the ecosystem permission guard, plus the wlroots
+  screencopy hardening permissions for grim/hyprlock.
 
 ## Updating Hyprland + hy3
 
-1. Run `nix flake update hyprland hy3` to bump both pins (`README.md`:27-39).
+1. Hyprland itself bumps with nixpkgs (`nix flake lock --update-input nixpkgs`); refresh the
+   companion pins with `nix flake update hy3 xdg-desktop-portal-hyprland` (the dedicated
+   `hyprland` flake input was removed).
 1. Rebuild with `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.
-1. Optional: add `--update-input hyprland --update-input hy3` to `system.autoUpgrade` if you want
-   unattended bumps; otherwise keep the updates manual to review ABI churn (same README section).
+1. Optional: add `--update-input hy3 --update-input xdg-desktop-portal-hyprland` to
+   `system.autoUpgrade` if you want unattended bumps; otherwise keep the updates manual to review
+   ABI churn.
 
 Because the overlay flows through `pkgs`, no Home-Manager changes are needed when updating; the new
 plugin propagates automatically once the system rebuild succeeds.
