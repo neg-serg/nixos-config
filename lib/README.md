@@ -29,9 +29,15 @@ To reference a file by its repo-root-relative path instead of fragile `../../../
 }
 ```
 
-- `path "files/gui/vicinae-theme.toml"` → absolute path to that file (resolved against
-  `options.neg.repoRoot`, which defaults to the flake `self` source).
-- Use it for **repo-root** targets only (`files/`, `secrets/`, `lib/`, `packages/…`). Sibling
+- `path "files/gui/vicinae-theme.toml"` → a real path to that file (resolved against
+  `options.neg.repoRoot`, a path literal injected via specialArgs from `flake/nixos.nix`).
+  Because the result is a path (not a string), Nix copies the file into the store and tracks it
+  as a closure dependency — the same behavior as the old relative `./../../` references. Do not
+  replace `path` with a plain string: strings are not added to derivation closures and their
+  files can be garbage-collected.
+- `pathExists "…"` — like `builtins.pathExists`, but repo-root-relative (no error when missing);
+  use it for optional files.
+- Use `path` for **repo-root** targets only (`files/`, `secrets/`, `lib/`, `packages/…`). Sibling
   imports within one area (e.g. `../scripts/`) stay relative.
 - Derivation `src` in `mkDerivation` must remain a real path (string breaks input tracking);
   keep `src = ./relative/…` there.
