@@ -29,18 +29,35 @@ in
         patches = (old.patches or [ ]) ++ [ ./hyprscratch-keepalive-fix.patch ];
       });
 
-  # vicinae: enable browser native host for tab search integration. The version
-  # comes from nixpkgs (0.23.2). The earlier v0.23.1 pin + QML Tab/Shift+Tab
-  # patch were dropped: the pin was never live before (shadowed by a second
-  # override in overlay.nix) and downgraded the package — the running system
-  # was on 0.23.2 without the patch. Re-port the Tab patch on top of the
-  # nixpkgs version if the feature is wanted.
-  vicinae = prev.vicinae.overrideAttrs (old: {
-    # Tab/Shift+Tab navigate the item list (dmenu/rofi style) + Ctrl+C dismiss —
-    # QML SearchBar patch, ported to v0.23.2 (packages/vicinae-tab-qml.patch).
-    patches = (old.patches or [ ]) ++ [ ./../vicinae-tab-qml.patch ];
-    cmakeFlags =
-      builtins.filter (f: f != "-DINSTALL_BROWSER_NATIVE_HOST:STRING=OFF") (old.cmakeFlags or [ ])
-      ++ [ "-DINSTALL_BROWSER_NATIVE_HOST:STRING=ON" ];
-  });
+  # vicinae — MANUALLY PINNED: version and behavior are controlled here, not by
+  # nixpkgs. nixpkgs updates will NOT touch this package. To bump: update
+  # version/src hash (+ apiDeps/extensionManagerDeps) and re-verify the Tab
+  # patch applies (git clone --branch v<X> ... && patch -p1 --dry-run).
+  vicinae =
+    let
+      src = prev.fetchFromGitHub {
+        owner = "vicinaehq";
+        repo = "vicinae";
+        tag = "v0.23.2";
+        hash = "sha256-/5fGvMWlLlyd5ibK7y1dqIK1MTpLABj3v1M0r/VArww=";
+      };
+    in
+    prev.vicinae.overrideAttrs (old: {
+      version = "0.23.2";
+      inherit src;
+      # Tab/Shift+Tab navigate the item list (dmenu/rofi style) + Ctrl+C
+      # dismiss — QML SearchBar patch, ported to v0.23.2.
+      patches = (old.patches or [ ]) ++ [ ./../vicinae-tab-qml.patch ];
+      apiDeps = prev.fetchNpmDeps {
+        src = "${src}/src/typescript/api";
+        hash = "sha256-4FEaBDJK9abcgz+vptuL4wQ8zhp+wpLbbR4Y79BVhEg=";
+      };
+      extensionManagerDeps = prev.fetchNpmDeps {
+        src = "${src}/src/typescript/extension-manager";
+        hash = "sha256-pEgqFgvdz7Bcc+LznCI+KlD1XEfUuWFWjS24MJ7sx3k=";
+      };
+      cmakeFlags =
+        builtins.filter (f: f != "-DINSTALL_BROWSER_NATIVE_HOST:STRING=OFF") (old.cmakeFlags or [ ])
+        ++ [ "-DINSTALL_BROWSER_NATIVE_HOST:STRING=ON" ];
+    });
 }
