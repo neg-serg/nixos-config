@@ -143,9 +143,9 @@ lib.mkMerge [
       can_quit = True
     '';
 
-    ".config/rmpc".source = ../../../../files/rmpc;
+    ".config/rmpc".source = config.lib.neg.path "files/rmpc";
 
-    ".config/swayimg".source = ../../../../files/gui/swayimg;
+    ".config/swayimg".source = config.lib.neg.path "files/gui/swayimg";
 
     ".config/ncpamixer.conf".text = ''
       theme = "c0r73x"
@@ -202,15 +202,15 @@ lib.mkMerge [
   })
   {
     sops.secrets."lastfm/rescrobbled" = {
-      sopsFile = ../../../../secrets/home/lastfm-rescrobbled.sops;
+      sopsFile = config.lib.neg.path "secrets/home/lastfm-rescrobbled.sops";
       format = "binary";
       owner = "neg";
     };
     # Rescrobbled config sourced from SOPS above.
   }
-  (lib.mkIf (builtins.pathExists ../../../../secrets/home/mpdas/neg.rc) {
+  (lib.mkIf (builtins.pathExists (config.lib.neg.path "secrets/home/mpdas/neg.rc")) {
     sops.secrets."mpdas_negrc" = {
-      sopsFile = ../../../../secrets/home/mpdas/neg.rc;
+      sopsFile = config.lib.neg.path "secrets/home/mpdas/neg.rc";
       format = "binary";
       owner = "neg";
     };

@@ -5,8 +5,7 @@
   ...
 }:
 let
-  repoRoot = inputs.self;
-  caches = import ../../lib/caches.nix;
+  caches = import (config.lib.neg.path "lib/caches.nix");
 in
 {
   sops.age = {
@@ -20,7 +19,7 @@ in
   sops.useTmpfs = true;
 
   sops.secrets."github-netrc" = {
-    sopsFile = repoRoot + "/secrets/github-netrc.sops.yaml";
+    sopsFile = config.lib.neg.path "secrets/github-netrc.sops.yaml";
     owner = config.users.main.name or "neg";
     mode = "0600";
   };

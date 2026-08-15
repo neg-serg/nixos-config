@@ -78,9 +78,9 @@ lib.mkMerge [
       }
     '';
 
-    ".config/fastfetch/skull".text = builtins.readFile ../../../../files/fastfetch/skull;
+    ".config/fastfetch/skull".text = builtins.readFile (config.lib.neg.path "files/fastfetch/skull");
 
-    ".config/amfora".source = ../../../../files/config/amfora;
+    ".config/amfora".source = config.lib.neg.path "files/config/amfora";
 
     ".config/tealdeer/config.toml".text = ''
       [style.description]
