@@ -17,5 +17,6 @@ stdenv.mkDerivation {
     description = "Vicinae extension for hyprwhspr dictation control";
     license = licenses.mit;
     platforms = platforms.linux;
+    maintainers = [ ];
   };
 }

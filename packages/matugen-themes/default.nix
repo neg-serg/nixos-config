@@ -33,5 +33,6 @@ stdenvNoCC.mkDerivation rec {
     homepage = "https://github.com/InioX/matugen-themes";
     license = licenses.mit;
     platforms = platforms.all;
+    maintainers = [ ];
   };
 }

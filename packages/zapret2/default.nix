@@ -19,7 +19,8 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "bol-van";
     repo = "zapret";
-    rev = "master";
+    # Pinned (was floating master); hash verified to match this rev
+    rev = "87e058624c72863db53bdaf7fb6f16576dddb6ab";
     hash = "sha256-fwwfEEH0fE4mRapN2Q3Xc7QGAmBM1un1P0tdDzmJnRk=";
   };
 
@@ -61,5 +62,6 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/bol-van/zapret";
     license = licenses.gpl3Only;
     platforms = platforms.linux;
+    maintainers = [ ];
   };
 }

@@ -34,5 +34,6 @@ stdenv.mkDerivation {
     license = licenses.mit;
     platforms = platforms.unix;
     mainProgram = "albumdetails";
+    maintainers = [ ];
   };
 }
