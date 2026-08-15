@@ -1,5 +1,15 @@
 # Ghostty config — ported from kitty for feature parity
 # vim:ft=ini
+#
+# ⚠️ NOT IN ACTIVE USE — the ghostty package is not installed on this host
+# (kitty is the terminal; see modules/user/nix-maid/cli/shells.nix).
+# Kept as a migration reference only.
+#
+# ⚠️ RU-layout caveat: ghostty has known bugs with non-Latin layouts where even
+# Ctrl+letter shortcuts break (ghostty-org/ghostty#3513, #3584 — sends wrong
+# CSI-u sequences under the Russian layout). Do NOT switch to ghostty before a
+# version with W3C key-code based bindings (#7320). See
+# docs/howto/hotkeys-ru-layout.ru.md.
 
 # ── Font ──────────────────────────────────────────────────────────────
 font-family = Iosevka Medium
