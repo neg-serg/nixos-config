@@ -1,17 +1,14 @@
-{ pkgs, ... }:
 {
-  imports = [
-    ./chat.nix
-    ./clipboard.nix
-    ./greetd.nix
-    ./media.nix
-    ./hyprwhspr.nix
-    ./qt.nix
-    ./screenshot.nix
-    ./terminal.nix
-    ./theme.nix
-    ./utils.nix
-  ];
+  pkgs,
+  lib,
+  ...
+}:
+{
+  imports =
+    builtins.readDir ./.
+    |> builtins.attrNames
+    |> builtins.filter (n: n != "default.nix" && lib.hasSuffix ".nix" n)
+    |> builtins.map (n: ./. + "/${n}");
 
   programs.hyprland = {
     enable = true;
