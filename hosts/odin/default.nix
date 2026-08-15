@@ -1,11 +1,19 @@
-{ pkgs, config, ... }:
 {
-  imports = [
-    ./hardware.nix
-    ./networking.nix
-    ./services.nix
-    ./virtualisation/lxc.nix
-  ];
+  pkgs,
+  config,
+  lib,
+  ...
+}:
+let
+  entries = builtins.readDir ./.;
+in
+{
+  # unbound-hosts.nix is generated data (a list), imported by services.nix —
+  # not a module, so it stays out of the auto-import.
+  imports =
+    builtins.attrNames entries
+    |> builtins.filter (n: n != "default.nix" && n != "unbound-hosts.nix" && (entries.${n} == "directory" || lib.hasSuffix ".nix" n))
+    |> builtins.map (n: ./. + "/${n}");
   system.preserveFlake = false;
 
   # Composable profiles: order matters, last wins on conflicts
