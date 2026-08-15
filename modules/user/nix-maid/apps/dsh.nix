@@ -30,5 +30,6 @@ in
   # Install the dsh CLI into the environment (PATH).
   environment.systemPackages = [
     pkgs.neg.dsh # DeepSeek Harness agent CLI (dsh)
+    pkgs.pnpm # pnpm package manager (used by `dsh plugin --profile <name> add`)
   ];
 }
