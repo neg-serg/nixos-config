@@ -7,8 +7,8 @@
 }:
 let
   inherit (config.users.users.neg) home;
-  webEnabled = config.features.web.enable or false;
-  mediaEnabled = config.features.media.audio.apps.enable or false;
+  webEnabled = config.lib.neg.enabled "web";
+  mediaEnabled = config.lib.neg.enabled "media.audio.apps";
 
   # Helper to generate INI (Flameshot, Aria2 often uses similar key=val)
 
@@ -29,7 +29,7 @@ let
 in
 {
   config = lib.mkMerge [
-    (lib.mkIf (webEnabled && config.features.web.tools.enable or false) (
+    (lib.mkIf (webEnabled && config.lib.neg.enabled "web.tools") (
       lib.mkMerge [
         {
           systemd.user.services.aria2 = {

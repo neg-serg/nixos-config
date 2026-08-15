@@ -5,11 +5,11 @@
   ...
 }:
 let
-  wifiEnabled = config.profiles.network.wifi.enable || (config.features.net.wifi.enable or false);
+  wifiEnabled = config.profiles.network.wifi.enable || (config.lib.neg.enabled "net.wifi");
 in
 {
   environment.systemPackages = lib.unique (
-    (lib.optionals (config.features.hardware.bluetooth.enable or false) [
+    (lib.optionals (config.lib.neg.enabled "hardware.bluetooth") [
       # -- Bluetooth --
       pkgs.bluez-tools # command line bluetooth manager
       pkgs.bluetui # TUI bluetooth client

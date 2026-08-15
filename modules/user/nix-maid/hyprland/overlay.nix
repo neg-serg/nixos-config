@@ -6,7 +6,7 @@
 {
   # Route Hyprland and its portal to the flake-pinned versions
   # Gated behind features.gui.enable to avoid pkgs.hyprland evaluation on headless hosts
-  config = lib.mkIf config.features.gui.enable {
+  config = lib.mkIf (config.lib.neg.enabled "gui") {
     nixpkgs.overlays = [
       # Hyprland overlays disabled — nixpkgs 0.55.4 is stable and compatible with hyprlock/hypridle
       # inputs.hyprland.overlays.hyprland-packages  # disabled: hyprutils 0.14.0 breaks hyprlock/hypridle

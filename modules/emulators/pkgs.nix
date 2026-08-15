@@ -5,13 +5,13 @@
   ...
 }:
 let
-  funEnabled = config.features.fun.enable or false;
+  funEnabled = config.lib.neg.enabled "fun";
   retroarchFull = config.features.emulators.retroarch.full or false;
   retroarchAvailable = builtins.hasAttr "retroarch-full" pkgs;
   retroarchPkg =
     if retroarchFull && retroarchAvailable then pkgs."retroarch-full" else pkgs.retroarch; # Multi-platform emulator frontend for libretro cores
-  retroarchEnabled = config.features.emulators.retroarch.enable or false;
-  extraEnabled = config.features.emulators.extra.enable or false;
+  retroarchEnabled = config.lib.neg.enabled "emulators.retroarch";
+  extraEnabled = config.lib.neg.enabled "emulators.extra";
 
   extraPackages = [
     pkgs.dosbox-staging # modernized DOSBox fork with better latency

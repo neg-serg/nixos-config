@@ -13,5 +13,5 @@
     pkgs.update-resolv-conf # apply pushed DNS options to resolv.conf
     pkgs.sing-box # universal proxy platform
   ]
-  ++ lib.optional (config.features.apps.throne.enable or false) pkgs.throne;
+  ++ lib.optional (config.lib.neg.enabled "apps.throne") pkgs.throne;
 }

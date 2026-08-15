@@ -25,7 +25,7 @@ let
   };
 in
 {
-  config = lib.mkIf (config.features.gui.enable or false) (
+  config = lib.mkIf (config.lib.neg.enabled "gui") (
     neg.mkHomeFiles {
       ".config/mpv/shaders/FSRCNNX_x2_8-0-4-1.glsl".source = fsrcnnx;
       ".config/mpv/shaders/KrigBilateral.glsl".source = krig;

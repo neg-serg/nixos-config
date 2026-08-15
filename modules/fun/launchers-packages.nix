@@ -8,7 +8,7 @@
   ...
 }:
 let
-  enabled = (config.features.fun.enable or false) && (config.features.gui.enable or false);
+  enabled = (config.lib.neg.enabled "fun") && (config.lib.neg.enabled "gui");
   packages = [
     pkgs.protontricks # Winetricks wrapper for Proton
     pkgs.protonup-ng # install/update Proton-GE builds

@@ -7,7 +7,7 @@
   ...
 }:
 let
-  guiEnabled = config.features.gui.enable or false;
+  guiEnabled = config.lib.neg.enabled "gui";
 
   environment = import ./environment.nix { inherit lib pkgs; };
   services = import ./services.nix { inherit lib pkgs inputs; };

@@ -15,7 +15,7 @@ lib.mkIf (cfg.enable or false) {
     mpdas =
       lib.mkIf
         (
-          (config.features.media.audio.mpd.enable or false)
+          (config.lib.neg.enabled "media.audio.mpd")
           && builtins.pathExists ../../../../secrets/home/mpdas/neg.rc
         )
         {
@@ -119,7 +119,7 @@ lib.mkIf (cfg.enable or false) {
     # ollama service (which binds the same 11434 port and serves the same
     # store). Models live on the zero pool, never on the system disk.
     "local-ai" =
-      lib.mkIf ((config.features.llm.enable or false) && !(config.services.ollama.enable or false))
+      lib.mkIf ((config.lib.neg.enabled "llm") && !(config.services.ollama.enable or false))
         {
           description = "Local AI (Ollama)";
           serviceConfig = {

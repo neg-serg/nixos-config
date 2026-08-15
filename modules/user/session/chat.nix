@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.features.web.chat or { };
-  proxyEnabled = config.features.net.proxy.enable or false;
+  proxyEnabled = config.lib.neg.enabled "net.proxy";
 in
 lib.mkIf (cfg.enable or true) {
   environment.systemPackages = [

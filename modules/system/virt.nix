@@ -13,12 +13,12 @@ in
       "video"
       "render"
     ]
-    ++ lib.optional (config.features.virt.docker.enable or false) "docker";
+    ++ lib.optional (config.lib.neg.enabled "virt.docker") "docker";
 
     virtualisation = {
       containers.enable = true;
 
-      libvirtd = lib.mkIf (config.features.virt.libvirtd.enable or false) {
+      libvirtd = lib.mkIf (config.lib.neg.enabled "virt.libvirtd") {
         enable = true;
         firewallBackend = "nftables";
         qemu = {
@@ -29,7 +29,7 @@ in
         };
       };
     }
-    // lib.optionalAttrs (config.features.virt.docker.enable or false) {
+    // lib.optionalAttrs (config.lib.neg.enabled "virt.docker") {
       podman = {
         enable = true;
         dockerCompat = lib.mkDefault true;
@@ -52,30 +52,28 @@ in
     systemd.services.libvirtd.serviceConfig.LoadCredentialEncrypted = lib.mkForce [ "" ];
 
     # RDPWindows VM — auto-defined on boot via systemd oneshot
-    systemd.services."virsh-define-RDPWindows" =
-      lib.mkIf (config.features.virt.libvirtd.enable or false)
-        {
-          description = "Define RDPWindows libvirt domain from XML";
-          after = [ "libvirtd.service" ];
-          wants = [ "libvirtd.service" ];
-          wantedBy = [ "multi-user.target" ];
-          unitConfig.ConditionPathExists = "/var/lib/libvirt/images/RDPWindows.qcow2";
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = true;
-            StateDirectory = "libvirt/images libvirt/iso";
-          };
-          path = [
-            pkgs.libvirt
-            pkgs.qemu_kvm # KVM virtual machines
-          ];
-          script = ''
-            if ! virsh dominfo RDPWindows >/dev/null 2>&1; then
-              virsh define ${./../../files/virt/RDPWindows.xml}
-              virsh autostart RDPWindows
-            fi
-          '';
-        };
+    systemd.services."virsh-define-RDPWindows" = lib.mkIf (config.lib.neg.enabled "virt.libvirtd") {
+      description = "Define RDPWindows libvirt domain from XML";
+      after = [ "libvirtd.service" ];
+      wants = [ "libvirtd.service" ];
+      wantedBy = [ "multi-user.target" ];
+      unitConfig.ConditionPathExists = "/var/lib/libvirt/images/RDPWindows.qcow2";
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        StateDirectory = "libvirt/images libvirt/iso";
+      };
+      path = [
+        pkgs.libvirt
+        pkgs.qemu_kvm # KVM virtual machines
+      ];
+      script = ''
+        if ! virsh dominfo RDPWindows >/dev/null 2>&1; then
+          virsh define ${./../../files/virt/RDPWindows.xml}
+          virsh autostart RDPWindows
+        fi
+      '';
+    };
 
   };
 }

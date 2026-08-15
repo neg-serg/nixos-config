@@ -45,7 +45,7 @@ in
           # when features.games.steamProxy is enabled (re-injects the proxy
           # stripped above).
         ]
-        ++ lib.optionals config.features.games.steamProxy.enable [
+        ++ lib.optionals (config.lib.neg.enabled "games.steamProxy") [
           "--setenv"
           "LD_PRELOAD"
           "${pkgs.proxychains}/lib/libproxychains4.so"
@@ -115,18 +115,20 @@ in
     # features.games.steamProxy is enabled, the launcher above is wrapped with
     # proxychains LD_PRELOAD so all outbound TCP goes through the local SOCKS5
     # proxy. Env proxies are stripped inside to avoid double-routing.
-    environment.etc."proxychains/proxychains.conf" = lib.mkIf config.features.games.steamProxy.enable {
-      text = ''
-        strict_chain
-        proxy_dns
-        remote_dns_subnet 224
-        tcp_read_time_out 15000
-        tcp_connect_time_out 8000
-        localnet 127.0.0.0/255.0.0.0
-        [ProxyList]
-        socks5 127.0.0.1 10808
-      '';
-    };
+    environment.etc."proxychains/proxychains.conf" =
+      lib.mkIf (config.lib.neg.enabled "games.steamProxy")
+        {
+          text = ''
+            strict_chain
+            proxy_dns
+            remote_dns_subnet 224
+            tcp_read_time_out 15000
+            tcp_connect_time_out 8000
+            localnet 127.0.0.0/255.0.0.0
+            [ProxyList]
+            socks5 127.0.0.1 10808
+          '';
+        };
 
     environment.systemPackages = [
       pkgs.protontricks # winetricks-like helper tailored for Steam Proton

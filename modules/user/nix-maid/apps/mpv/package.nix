@@ -42,7 +42,7 @@ let
   };
 in
 {
-  config = lib.mkIf (config.features.gui.enable or false) (
+  config = lib.mkIf (config.lib.neg.enabled "gui") (
     lib.mkMerge [
       {
         # Install Package

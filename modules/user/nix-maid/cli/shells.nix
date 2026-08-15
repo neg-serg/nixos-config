@@ -153,7 +153,7 @@ in
           fi
         ''
         + (
-          if config.features.cli.broot.enable then
+          if config.lib.neg.enabled "cli.broot" then
             ''
               eval "$(${pkgs.broot}/bin/broot --print-shell-function bash)"
             ''

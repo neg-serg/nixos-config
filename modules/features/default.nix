@@ -21,7 +21,7 @@ in
   # Apply profile defaults. Users can still override flags after this.
   config = mkMerge [
     # When dev-speed is enabled, prefer lean defaults for heavy subfeatures
-    (mkIf config.features.devSpeed.enable {
+    (mkIf (config.lib.neg.enabled "devSpeed") {
       features = {
         web = {
           tools.enable = mkDefault false;
@@ -33,14 +33,14 @@ in
       };
     })
     # If parent feature is disabled, default child toggles to false to avoid contradictions
-    (mkIf (!config.features.web.enable) {
+    (mkIf (!config.lib.neg.enabled "web") {
       # Parent off must force-disable children to avoid priority conflicts
       features.web = {
         tools.enable = mkForce false;
       };
     })
     # When a parent feature is disabled, force-disable children to avoid priority conflicts
-    (mkIf (!config.features.dev.enable) {
+    (mkIf (!config.lib.neg.enabled "dev") {
       features = {
         dev = {
           ai = {
@@ -53,16 +53,16 @@ in
     })
     (mkIf
       (
-        !config.features.dev.haskell.enable
-        || !config.features.dev.rust.enable
-        || !config.features.dev.cpp.enable
-        || !config.features.dev.java.enable
+        !config.lib.neg.enabled "dev.haskell"
+        || !config.lib.neg.enabled "dev.rust"
+        || !config.lib.neg.enabled "dev.cpp"
+        || !config.lib.neg.enabled "dev.java"
       )
       {
         # When dev language tooling is disabled, exclude their pnames from curated package lists
         # that honor features.excludePkgs via config.lib.neg.pkgsList.
         features.excludePkgs = mkAfter (
-          lib.optionals (!config.features.dev.haskell.enable) [
+          lib.optionals (!config.lib.neg.enabled "dev.haskell") [
             "ghc"
             "cabal-install"
             "stack"
@@ -73,7 +73,7 @@ in
             "hindent"
             "ghcid"
           ]
-          ++ lib.optionals (!config.features.dev.rust.enable) [
+          ++ lib.optionals (!config.lib.neg.enabled "dev.rust") [
             "rustup"
             "rust-analyzer"
             "cargo"
@@ -81,21 +81,21 @@ in
             "clippy"
             "rustfmt"
           ]
-          ++ lib.optionals (!config.features.dev.cpp.enable) [
+          ++ lib.optionals (!config.lib.neg.enabled "dev.cpp") [
             "gcc"
             "cmake"
             "ninja"
             "ccache"
             "lldb"
           ]
-          ++ lib.optionals (!config.features.dev.java.enable) [
+          ++ lib.optionals (!config.lib.neg.enabled "dev.java") [
             "jdk"
             "maven"
           ]
         );
       }
     )
-    (mkIf (!config.features.gui.enable) {
+    (mkIf (!config.lib.neg.enabled "gui") {
       features = {
         gui = {
           qt.enable = mkForce false;
@@ -103,7 +103,7 @@ in
         };
       };
     })
-    (mkIf (!config.features.mail.enable) {
+    (mkIf (!config.lib.neg.enabled "mail") {
       features.mail.vdirsyncer.enable = mkForce false;
     })
     # Consistency assertions for nested flags
@@ -126,7 +126,7 @@ in
           (assertParent gui.enable guiApps.winapps.enable
             "features.apps.winapps.enable requires features.gui.enable = true"
           )
-          (assertParent config.features.web.enable config.features.web.tools.enable
+          (assertParent (config.lib.neg.enabled "web") (config.lib.neg.enabled "web.tools")
             "features.web.* flags require features.web.enable = true (disable sub-flags or enable web)"
           )
           (assertParent dev.enable devAi.enable "features.dev.ai.enable requires features.dev.enable = true")

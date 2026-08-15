@@ -8,7 +8,7 @@
   ...
 }:
 let
-  enabled = config.features.text.manipulate.enable or false;
+  enabled = config.lib.neg.enabled "text.manipulate";
   packages = [
     pkgs.htmlq # jq-like for HTML
     pkgs.jc # convert command output to JSON/YAML

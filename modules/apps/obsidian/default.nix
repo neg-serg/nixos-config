@@ -5,7 +5,7 @@
   ...
 }:
 let
-  enabled = config.features.apps.obsidian.enable or false;
+  enabled = config.lib.neg.enabled "apps.obsidian";
 in
 lib.mkIf enabled {
   environment.systemPackages = [

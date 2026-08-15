@@ -12,10 +12,10 @@ let
 
   # Feature flags check
   quickshellEnabled =
-    config.features.gui.enable or false
-    && config.features.gui.qt.enable or false
-    && config.features.gui.quickshell.enable or false
-    && !(config.features.devSpeed.enable or false);
+    config.lib.neg.enabled "gui"
+    && config.lib.neg.enabled "gui.qt"
+    && config.lib.neg.enabled "gui.quickshell"
+    && !(config.lib.neg.enabled "devSpeed");
 
   # Quickshell package from flake input
   qsPkg = pkgs.quickshell; # Flexbile QtQuick based desktop shell toolkit
