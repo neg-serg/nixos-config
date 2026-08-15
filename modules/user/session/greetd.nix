@@ -92,9 +92,9 @@ in
       group = "greeter";
     };
     users.groups.greeter = { };
-    environment.systemPackages = [
-      inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
-    ];
+    # NB: quickshell for the greeter is NOT installed system-wide — the
+    # greeter runs it via an absolute path (exec-once above). The global
+    # `quickshell` binary comes from the nix-maid wrapper (single source).
     environment.etc."greetd/quickshell".source = ../../../files/quickshell;
     environment.etc."greetd/session-wrapper".source = pkgs.writeScript "session-wrapper" ''
       #!/bin/sh
