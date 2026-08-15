@@ -1,13 +1,6 @@
-inputs: _: prev:
+inputs: final: prev:
 let
-  callPkg =
-    path: extraArgs:
-    let
-      f = import path;
-      wantsInputs = builtins.hasAttr "inputs" (builtins.functionArgs f);
-      autoArgs = if wantsInputs then { inherit inputs; } else { };
-    in
-    prev.callPackage path (autoArgs // extraArgs);
+  callPkg = final.neg.functions.callPkg; # shared helper (functions.nix)
 in
 {
   hyprland-qtutils = prev.hyprland-qtutils.overrideAttrs (old: {
