@@ -6,15 +6,13 @@ excludes = [
   "flake.lock",
   "flake.nix",
   ".git/*",
-  "secrets/home/crypted/*",
-  "shell/.config/tmux/plugins/tpm/**",
-  "home/modules/misc/fun-art/*.sh",
-  "home/modules/user/local-bin/scripts/mpd-add.sh",
-  "home/modules/user/local-bin/scripts/pl.sh",
-  "home/modules/user/local-bin/scripts/swayimg-actions.sh",
-  "home/modules/user/gui/kitty/conf/scroll_mark.py",
-  "home/modules/user/gui/kitty/conf/search.py",
-  "home/modules/user/gui/kitty/conf/tab_bar.py",
+  # Vendored kitty kittens (scroll_mark/search/tab_bar/range_select + kittens/)
+  "files/kitty/**/*.py",
+  # ASCII-art scripts — shfmt/black would mangle the layout
+  "files/art/fun-art/*.sh",
+  "files/art/fun-art/zalgo.py",
+  # Personal Obsidian vault — not repo content, never format
+  "files/obsidian-vault/**",
   # Zsh-specific scripts that shfmt can't parse
   "packages/local-bin/bin/swayimg-actions.sh",
 ]
