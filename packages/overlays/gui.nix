@@ -36,6 +36,9 @@ in
   # was on 0.23.2 without the patch. Re-port the Tab patch on top of the
   # nixpkgs version if the feature is wanted.
   vicinae = prev.vicinae.overrideAttrs (old: {
+    # Tab/Shift+Tab navigate the item list (dmenu/rofi style) + Ctrl+C dismiss —
+    # QML SearchBar patch, ported to v0.23.2 (packages/vicinae-tab-qml.patch).
+    patches = (old.patches or [ ]) ++ [ ./../vicinae-tab-qml.patch ];
     cmakeFlags =
       builtins.filter (f: f != "-DINSTALL_BROWSER_NATIVE_HOST:STRING=OFF") (old.cmakeFlags or [ ])
       ++ [ "-DINSTALL_BROWSER_NATIVE_HOST:STRING=ON" ];
