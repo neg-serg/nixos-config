@@ -13,8 +13,8 @@ let
   # Assets below localize it to Russian: the translation map (i18n.json) and
   # the idempotent patcher (patch.mjs). gen.mjs regenerates the map against a
   # newer bundle when the plugin is upgraded.
-  i18nJson = ./dsh-tui-ru/i18n.json;
-  patcher = ./dsh-tui-ru/patch.mjs;
+  i18nJson = ./dsh-tui-ru-assets/i18n.json;
+  patcher = ./dsh-tui-ru-assets/patch.mjs;
 
   # Patch every installed dsh-tianshu-tui bundle under ~/.dsh/profiles.
   # Idempotent (marker file); safe to run as root from an activation script.
