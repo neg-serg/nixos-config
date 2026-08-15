@@ -65,6 +65,7 @@ in
       extraOpts = {
         "PasswordManagerEnabled" = false;
         "BuiltInNotificationsSettings" = 2; # Blocked
+        "DefaultPopupsSetting" = 2; # Block popup windows (window.open)
         "MetricsReportingEnabled" = false;
         "SafeBrowsingProtectionLevel" = 1; # Standard
         "SearchSuggestEnabled" = false;
@@ -122,6 +123,20 @@ in
           "gfbliohnnapiefjpjlpjnehglfpaknnc;https://clients2.google.com/service/update2/crx" # SurfingKeys (vim-like keybindings)
           "dhdgffkkebhmkfjojejmpbldmpobfkfo;https://clients2.google.com/service/update2/crx" # Tampermonkey (userscript manager)
         ];
+      };
+    };
+
+    # Block popup windows (window.open) and web notifications site-wide.
+    # The same settings exist under /etc/chromium via programs.chromium.extraOpts,
+    # but Vivaldi 8.x sometimes ignores that dir — duplicate them here where
+    # Vivaldi reliably reads policies. BuiltInNotificationsSettings is the current
+    # name, DefaultNotificationsSetting the older one; set both.
+    environment.etc."vivaldi/policies/managed/popups.json" = {
+      mode = "0444";
+      text = builtins.toJSON {
+        DefaultPopupsSetting = 2; # Block popup windows (window.open)
+        DefaultNotificationsSetting = 2; # Block web notifications (older name)
+        BuiltInNotificationsSettings = 2; # Block web notifications (current name)
       };
     };
 
