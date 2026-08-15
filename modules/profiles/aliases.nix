@@ -1,5 +1,5 @@
 ##
-# Module: system/profiles/aliases
+# Module: profiles/aliases
 # Purpose: Alias profiles.services.* → servicesProfiles.* for unified naming.
 # Key options: none (option redirection only).
 # Dependencies: lib.mkAliasOptionModule; affects modules referencing profiles.services.*
