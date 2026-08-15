@@ -65,6 +65,7 @@ local cls = {
   wine        = "^(com.usebottles.bottles)$",
   patchbay    = "^(zestbay|Carla2)$",
   daw         = "^(Renoise)$",
+  dw          = "^(org.nicotine_plus.Nicotine)$",
   keyboard    = "^(Bazecor|wootility-lekker|Vial|via)$",
   im          = "^(im.riot.Riot)$",
   remote      = "^(Vmware-view|xfreerdp|remmina|org.remmina.Remmina)$",
@@ -287,6 +288,7 @@ hl.bind(M1 .. "+e", hl.dsp.submap("special"))
 hl.define_submap("special", "reset", function()
   submap_resets()
   binde_reset("q", hl.dsp.exec_cmd('raise --match "class:regex=^Carla2$" --launch "carla"'))
+  binde_reset("d", hl.dsp.exec_cmd('raise --match "class:regex=^org\\.nicotine_plus\\.Nicotine$" --launch "nicotine"'))
   binde_reset(SH .. "+q", hl.dsp.exec_cmd('raise --match "class:regex=^Carla2$" --launch "carla"'))
   binde_reset(SH .. "+l", hl.dsp.exec_cmd("hyprctl switchxkblayout current 0 && hyprlock"))
   binde_reset("e", hl.dsp.window.float({ action = "toggle" }))
@@ -561,6 +563,7 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("vesktop")
   hl.exec_cmd("wl-clip-persist --clipboard regular")
   hl.exec_cmd("zsh -c 'pkill \"wl-paste --watch cliphist store\"; wl-paste --watch cliphist store'")
+  hl.exec_cmd("nicotine")
   hl.exec_cmd("systemctl --user start --no-block vicinae.service")
   hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
   hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
