@@ -55,7 +55,7 @@ configuration.
 ### Secrets (sops-nix / vaultix)
 
 - Secrets live under `secrets/` and are wired via sops-nix; vaultix migration docs now live in
-  `docs/runbooks/vaultix-migration.{md,ru.md}`.
+  `docs/runbooks/vaultix-migration.md`.
 - Age keys should reside in `~/.config/sops/age/keys.txt`.
 
 ### Systemd (User) Services
@@ -416,7 +416,7 @@ Notes:
 - A user service auto-selects the RNNoise source as the default input on login when enabled.
 - You can still manually choose sources in your desktop environment if you prefer.
 
-Russian version: see README.ru.md.
+Russian docs: `docs/howto/tidal-cycles.ru.md`, `docs/howto/build-optimization.ru.md`.
 
 ## AutoFDO (sample-based PGO)
 
@@ -459,8 +459,8 @@ scope.
 Additionally, a Markdown language policy is enforced:
 
 - English docs live in `*.md`.
-- Russian docs must live in `*.ru.md`. The pre-commit hook and CI check `lint-md-lang` will fail if
-  Cyrillic is present in non-`*.ru.md` files.
+- Russian docs must live in `*.ru.md`. `scripts/dev/check-markdown-language.sh` flags Cyrillic in
+  non-`*.ru.md` files (currently warn-only).
 
 ## Module Pattern & Option Helpers
 

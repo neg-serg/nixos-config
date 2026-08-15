@@ -4,9 +4,6 @@
   ...
 }:
 let
-  tidalGhci = pkgs.writeShellScriptBin "tidal-ghci" ''
-    exec ${pkgs.ghc.withPackages (ps: [ ps.tidal ])}/bin/ghci "$@" # Glasgow Haskell Compiler
-  '';
   optionalHaskellTools =
     lib.optionals (pkgs ? fourmolu) [ pkgs.fourmolu ] # haskell formatter
     ++ lib.optionals (pkgs ? hindent) [ pkgs.hindent ]; # alternative haskell formatter
@@ -20,7 +17,7 @@ pkgs.mkShell {
     pkgs.hlint # linter
     pkgs.ormolu # formatter
     pkgs.ghcid # fast GHCi reload loop
-    tidalGhci # TidalCycles GHCi wrapper
+    pkgs.tidal-ghci # TidalCycles GHCi wrapper (defined once in packages/overlay.nix)
     pkgs.haskellPackages.tidal # TidalCycles library
   ]
   ++ optionalHaskellTools;
