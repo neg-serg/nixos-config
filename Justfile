@@ -151,6 +151,11 @@ docs-modules:
     chmod +w docs/howto/modules.md
     echo "Generated docs/howto/modules.md"
 
+# Regenerate the codebase map (docs/codebase.md) for agents/quick orientation
+codebase:
+    repo_root="$(git rev-parse --show-toplevel)"; \
+    "$repo_root/packages/local-bin/bin/gen-codebase" "$repo_root"
+
 hooks-enable:
     git config core.hooksPath .githooks
 

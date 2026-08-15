@@ -1,0 +1,546 @@
+#!/usr/bin/env python3
+"""Generate docs/codebase.md — a compact, always-fresh map of this NixOS repo.
+
+Best-effort, dependency-free parser (python3 stdlib only) that walks the repo
+and emits a markdown overview for AI agents and quick human reference:
+
+  * repo layout (top-level dirs/files with purposes)
+  * hosts and the feature flags they enable
+  * module domains (modules/<domain>)
+  * feature flags (options.features.*, parsed from modules/features/*.nix)
+  * profiles and the mkDefault overrides they apply (modules/profiles/*.nix)
+  * local packages (packages/<name>/default.nix) and overlay wiring
+
+The output is a cache for agents: read it for orientation instead of grepping
+the whole tree, and regenerate whenever the structure changes.
+
+Usage:
+  gen-codebase [REPO_ROOT]   write docs/codebase.md under REPO_ROOT
+                             (default: git rev-parse --show-toplevel)
+  gen-codebase --stdout      print the document to stdout instead of writing
+
+Exit status: 0 on success, 1 on failure.
+"""
+
+from __future__ import annotations
+
+import re
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Small helpers
+# ---------------------------------------------------------------------------
+
+STR_RE = re.compile(r'"(?:\\.|[^"\\])*"|\'\'(?:\\.|[^\'\\])*?\'\'')
+
+
+def strip_strings(line: str) -> str:
+    """Replace string literals with "" so braces inside text are ignored."""
+    return STR_RE.sub('""', line)
+
+
+def attr_path(attrs: list[list[str]], key: str) -> list[str]:
+    """Full dotted path of a leaf: stacked block attrs + leaf key."""
+    parts = [p for d in range(1, len(attrs)) for p in attrs[d]]
+    return parts + key.split(".")
+
+
+def finish_option(p: dict) -> dict:
+    """Extract type/default/description from an mkOption body (best effort).
+
+    Only the body between the first `{` and the last `}` is considered, so an
+    option literally named `default` does not confuse the default-extraction.
+    """
+    text = p["text"]
+    start, end = text.find("{"), text.rfind("}")
+    body = text[start + 1 : end] if start != -1 and end > start else text
+    type_m = re.search(r"type\s*=\s*(?:types\.)?([A-Za-z0-9_.]+)", body)
+    default_m = re.search(r"default\s*=\s*([^;]+);", body)
+    desc_m = re.search(r'description\s*=\s*"((?:[^"\\]|\\.)*)"', body)
+    if desc_m is None:
+        desc_m = re.search(r"description\s*=\s*''(.*?)''", body, re.S)
+    default = default_m.group(1) if default_m else ""
+    return {
+        "path": p["path"],
+        "kind": p["kind"],
+        "desc": desc_m.group(1).strip() if desc_m else "",
+        "value": " ".join(default.split()) if default else "",
+        "type": type_m.group(1) if type_m else "",
+        "comment": "",
+    }
+
+
+def parse_leaves(path: Path) -> list[dict]:
+    """Parse a feature/profile .nix file, yielding leaves under an
+    `options.features.*` (features) or `features` (profiles) root block.
+
+    Recognized leaves:
+      * key = mkBool "desc" default;
+      * key = mkOption { ... };  (single- or multi-line)
+      * key = mkDefault value;   (profiles only)
+    """
+    text = path.read_text(encoding="utf-8")
+    lines = text.splitlines()
+
+    attrs: list[list[str]] = [[]]  # attrs[d] = attr parts of the block at depth d
+    depth = 0
+    active = False  # inside an options.features / features root block
+    pending: dict | None = None  # multi-line mkOption being collected
+    results: list[dict] = []
+
+    def update_depth(opens: int, closes: int) -> None:
+        nonlocal depth
+        depth += opens - closes
+        if depth < 0:  # defensive: unbalanced input
+            depth = 0
+        while depth < len(attrs) - 1:
+            attrs.pop()
+
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+
+        if pending is not None:
+            pending["text"] += "\n" + line
+            if line.rstrip().endswith("};"):
+                results.append(finish_option(pending))
+                pending = None
+            continue
+
+        code = strip_strings(line)
+        opens, closes = code.count("{"), code.count("}")
+
+        # -- leaves ---------------------------------------------------------
+        m = re.match(
+            r'([A-Za-z0-9_.-]+)\s*=\s*mkBool\s+"((?:[^"\\]|\\.)*)"\s+'
+            r"(true|false);",
+            line,
+        )
+        if m:
+            if active:
+                results.append(
+                    {
+                        "path": attr_path(attrs, m.group(1)),
+                        "kind": "bool",
+                        "desc": m.group(2),
+                        "value": m.group(3),
+                        "comment": "",
+                    }
+                )
+            update_depth(opens, closes)
+            continue
+
+        m = re.match(r"([A-Za-z0-9_.-]+)\s*=\s*(?:lib\.)?mkOption\s*\{", line)
+        if m:
+            if active:
+                if line.rstrip().endswith("};"):
+                    results.append(
+                        finish_option(
+                            {"path": attr_path(attrs, m.group(1)), "kind": "option",
+                             "text": line}
+                        )
+                    )
+                else:
+                    pending = {
+                        "path": attr_path(attrs, m.group(1)),
+                        "kind": "option",
+                        "text": line,
+                    }
+            # NB: no depth adjustment here — the mkOption body's braces are
+            # self-balancing (the closing `};` is consumed by the pending
+            # collector), so counting the opening `{` would corrupt the stack.
+            continue
+
+        m = re.match(
+            r"([A-Za-z0-9_.-]+)\s*=\s*mkDefault\s+([^;#]+);\s*(#.*)?$", line
+        )
+        if m:
+            if active:
+                results.append(
+                    {
+                        "path": attr_path(attrs, m.group(1)),
+                        "kind": "default",
+                        "desc": "",
+                        "value": m.group(2).strip(),
+                        "comment": m.group(3) or "",
+                    }
+                )
+            update_depth(opens, closes)
+            continue
+
+        # -- block openers / closers ----------------------------------------
+        m = re.match(r"([A-Za-z0-9_.-]+)\s*=\s*\{", code)
+        if m and opens:
+            key_parts = m.group(1).split(".")
+            if not active:
+                if key_parts[:2] == ["options", "features"] or key_parts == ["features"]:
+                    # A new root block: reset the stack so a file with several
+                    # options.features.* blocks (e.g. system.nix) parses cleanly.
+                    active = True
+                    attrs = [[]]
+                    attrs.append(key_parts)
+                    depth = 1
+                    update_depth(0, closes)
+                    continue
+            attrs.append(key_parts)
+            depth += 1
+            update_depth(0, closes)
+            continue
+
+        if closes:
+            update_depth(opens, closes)
+            if active and depth == 0:
+                active = False
+            continue
+
+    return results
+
+
+def norm_src(raw: str) -> str:
+    """Normalize an overlay source string: strip slashes and a leading
+    `packages/` prefix so both `packagesRoot + "/omp"` and
+    `inputs.self + "/packages/omp"` render as `omp`."""
+    src = raw.strip("/")
+    if src.startswith("packages/"):
+        src = src[len("packages/") :]
+    return src
+
+
+def extract_meta_description(text: str) -> str:
+    """Best-effort description from a package's meta block (usually the last
+    `meta =` occurrence, near the end of the file)."""
+    idx = text.rfind("meta =")
+    if idx == -1:
+        return ""
+    tail = text[idx:]
+    m = re.search(r'description\s*=\s*"((?:[^"\\]|\\.)*)"', tail)
+    if m:
+        return m.group(1)
+    m = re.search(r"description\s*=\s*''(.*?)''", tail, re.S)
+    if m:
+        return " ".join(m.group(1).split())
+    return ""
+
+
+# ---------------------------------------------------------------------------
+# Section builders
+# ---------------------------------------------------------------------------
+
+LAYOUT = {
+    "docs/": "Documentation hub (manual, howtos, runbooks)",
+    "files/": "Dotfiles, shell config, static user files",
+    "flake/": "Flake internals (nixos.nix, checks, devshells)",
+    "hosts/": "Per-host entry points (hosts/<host>/default.nix)",
+    "lib/": "Custom Nix library (mkLocalBin, mkHomeFiles, systemdUser, ...)",
+    "modules/": "Dendritic module tree (auto-importing domains)",
+    "packages/": "Local packages + overlays",
+    "scripts/": "Dev tooling (syntax checks, lint helpers)",
+    "secrets/": "sops-nix encrypted secrets",
+    "AGENTS.md": "Agent instructions / repo conventions",
+    "Justfile": "Task runner (`just <task>`)",
+    "OPTIONS.md": "features.* option reference",
+    "README.md": "Repo readme",
+    "flake.nix": "Flake entry point",
+    "treefmt.toml": "Formatting configuration",
+}
+
+
+def build_layout(root: Path) -> str:
+    out = ["## Repo layout", "", "| Path | Purpose |", "|------|----------|"]
+    for name, purpose in LAYOUT.items():
+        if (root / name).exists():
+            out.append(f"| `{name}` | {purpose} |")
+    return "\n".join(out)
+
+
+def build_hosts(root: Path) -> str:
+    out = ["## Hosts"]
+    hosts_dir = root / "hosts"
+    if not hosts_dir.is_dir():
+        return "\n".join(out + ["_(no hosts/ directory)_"])
+    for host in sorted(p for p in hosts_dir.iterdir() if p.is_dir()):
+        nix_files = sorted(host.rglob("*.nix"))
+        profiles = set()
+        flags = {}  # flag -> comment
+        for f in nix_files:
+            text = f.read_text(encoding="utf-8")
+            for m in re.finditer(
+                r"features\.profiles\s*=\s*\[([^\]]*)\]", text
+            ):
+                profiles.update(re.findall(r'"([^"]+)"', m.group(1)))
+            for m in re.finditer(
+                r"features\.([A-Za-z0-9_.]+)\s*=\s*(true|false)\s*;?\s*(#.*)?$",
+                text,
+                re.M,
+            ):
+                flags.setdefault(m.group(1), (m.group(2), m.group(3) or ""))
+        out.append(f"### {host.name}")
+        if profiles:
+            out.append(f"- profiles: {', '.join(sorted(profiles))}")
+        for flag, (value, comment) in sorted(flags.items()):
+            cmt = f" — {comment.lstrip('#').strip()}" if comment else ""
+            out.append(f"- `features.{flag} = {value}`{cmt}")
+        out.append("")
+    return "\n".join(out).rstrip()
+
+
+def build_modules(root: Path) -> str:
+    out = ["## Module domains (`modules/`)"]
+    mods = root / "modules"
+    if not mods.is_dir():
+        return "\n".join(out + ["_(no modules/ directory)_"])
+    for d in sorted(p for p in mods.iterdir() if p.is_dir()):
+        files = sorted(
+            p.name
+            for p in d.iterdir()
+            if p.is_file() and p.suffix == ".nix" and p.name != "default.nix"
+        )
+        subdirs = sorted(
+            p.name
+            for p in d.iterdir()
+            if p.is_dir() and not p.name.startswith(".")
+        )
+        out.append(f"### {d.name}")
+        out.append("- `default.nix` (auto-import entry)" if (d / "default.nix").exists() else "- _(no default.nix)_")
+        if files:
+            out.append("- files: " + ", ".join(f"`{f}`" for f in files))
+        if subdirs:
+            out.append("- subdirs: " + ", ".join(f"`{s}/`" for s in subdirs))
+        out.append("")
+    out.append(
+        "> User-level config lives under `modules/user/nix-maid/` "
+        "(`apps/`, `cli/`, `gui/`, `web/`, `sys/`, `fun/`). "
+        "See `modules/README.md` for the human-written domain reference."
+    )
+    return "\n".join(out)
+
+
+def build_features(root: Path) -> str:
+    out = ["## Feature flags (`options.features.*`)"]
+    out.append("")
+    out.append(
+        "Defined in `modules/features/*.nix` (auto-imported); "
+        "human-readable reference: `OPTIONS.md`."
+    )
+    feats_dir = root / "modules/features"
+    if not feats_dir.is_dir():
+        return "\n".join(out + ["_(no modules/features/ directory)_"])
+    by_domain: dict[str, list[str]] = {}
+    for f in sorted(feats_dir.glob("*.nix")):
+        if f.name == "default.nix":
+            continue
+        for leaf in parse_leaves(f):
+            parts = leaf["path"]  # e.g. [options, features, dev, ai, enable]
+            if parts[:2] != ["options", "features"]:
+                continue
+            display = "features." + ".".join(parts[2:])
+            domain = parts[2] if len(parts) > 2 else "misc"
+            if leaf["kind"] == "bool":
+                entry = (
+                    f"- `{display}` — default: `{leaf['value']}` — "
+                    f"{leaf['desc']}"
+                )
+            elif leaf["kind"] == "option":
+                extra = f" (type: `{leaf['type']}`)" if leaf["type"] else ""
+                entry = (
+                    f"- `{display}` — default: `{leaf['value']}`{extra}"
+                    + (f" — {leaf['desc']}" if leaf["desc"] else "")
+                )
+            else:
+                continue
+            by_domain.setdefault(domain, []).append(entry)
+    for domain in sorted(by_domain):
+        out.append(f"### {domain}")
+        out.extend(sorted(by_domain[domain]))
+        out.append("")
+    return "\n".join(out)
+
+
+def build_profiles(root: Path) -> str:
+    out = ["## Profiles (`modules/profiles/`)"]
+    out.append("")
+    out.append(
+        "Each profile applies `mkDefault` overrides when its name is in "
+        "`features.profiles` (host sets it; later profiles win)."
+    )
+    profs_dir = root / "modules/profiles"
+    if not profs_dir.is_dir():
+        return "\n".join(out + ["_(no modules/profiles/ directory)_"])
+    for f in sorted(profs_dir.glob("*.nix")):
+        if f.name == "default.nix":
+            continue
+        text = f.read_text(encoding="utf-8")
+        cond = re.search(r'builtins\.elem\s+"([^"]+)"', text)
+        name = cond.group(1) if cond else f.stem
+        leaves = parse_leaves(f)
+        if not leaves:
+            continue
+        out.append(f"### {name}")
+        for leaf in leaves:
+            display = ".".join(leaf["path"])  # features.dev.enable
+            cmt = f" {leaf['comment']}" if leaf["comment"] else ""
+            out.append(f"- `{display}` → `{leaf['value']}` (mkDefault){cmt}")
+        out.append("")
+    return "\n".join(out)
+
+
+def build_packages(root: Path) -> str:
+    out = ["## Local packages (`packages/`)"]
+    pkgs_dir = root / "packages"
+    if not pkgs_dir.is_dir():
+        return "\n".join(out + ["_(no packages/ directory)_"])
+    rows = []
+    for d in sorted(pkgs_dir.iterdir()):
+        if not d.is_dir() or d.name.startswith(".") or d.name == "target":
+            continue
+        nf = d / "default.nix"
+        if not nf.exists():
+            continue
+        text = nf.read_text(encoding="utf-8")
+        pname_m = re.search(r'\bpname\s*=\s*"([^"]+)"', text)
+        version_m = re.search(r'\bversion\s*=\s*"([^"]+)"', text)
+        name = pname_m.group(1) if pname_m else d.name
+        version = version_m.group(1) if version_m else ""
+        if "$" in version:  # nix interpolation spanning lines — unparseable
+            version = ""
+        desc = extract_meta_description(text)
+        cell = f"`{name}`" + (f" ({version})" if version else "")
+        rows.append((d.name, cell, desc))
+    if rows:
+        out.append("| Package dir | Package | Description |")
+        out.append("|-------------|---------|-------------|")
+        for dname, cell, desc in rows:
+            out.append(f"| `{dname}/` | {cell} | {desc} |")
+    out.append("")
+    out.append("### Overlay wiring (`packages/overlays/`)")
+    ov_dir = pkgs_dir / "overlays"
+    rows = []
+    if ov_dir.is_dir():
+        for f in sorted(ov_dir.glob("*.nix")):
+            text = f.read_text(encoding="utf-8")
+            # callPkg (packagesRoot + "/pkg")  or  callPkg (inputs.self + "/packages/pkg")
+            for m in re.finditer(
+                r'([A-Za-z0-9_-]+)\s*=\s*callPkg\s*\(\s*'
+                r'(?:packagesRoot|inputs\.self)\s*\+\s*"([^"]+)"',
+                text,
+            ):
+                rows.append((m.group(1), norm_src(m.group(2))))
+            # prev/final.callPackage (inputs.self + "/packages/pkg")
+            for m in re.finditer(
+                r'([A-Za-z0-9_-]+)\s*=\s*(?:prev|final)\.callPackage\s*\(\s*'
+                r'inputs\.self\s*\+\s*"([^"]+)"',
+                text,
+            ):
+                rows.append((m.group(1), norm_src(m.group(2))))
+            # prev/final.callPackage ../pkg  (relative to packages/overlays)
+            for m in re.finditer(
+                r"([A-Za-z0-9_-]+)\s*=\s*(?:prev|final)\.callPackage\s*"
+                r"(\.\./[\w./-]+)",
+                text,
+            ):
+                rows.append((m.group(1), m.group(2)[3:].strip("/")))
+    if rows:
+        out.append("| Attr | Source |")
+        out.append("|------|--------|")
+        for attr, src in sorted(set(rows)):
+            out.append(f"| `{attr}` | `{src}` |")
+    else:
+        out.append("_(none found)_")
+    return "\n".join(out)
+
+
+def build_pointers() -> str:
+    return "\n".join(
+        [
+            "## Pointers",
+            "",
+            "- `modules/README.md` — human-written module documentation",
+            "- `docs/index.md` — documentation hub (manual, howtos, runbooks)",
+            "- `OPTIONS.md` — features.* options reference",
+            "- `Justfile` — dev tasks (`just <task>`)",
+        ]
+    )
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+
+def repo_root(arg: str | None) -> Path:
+    if arg:
+        return Path(arg).resolve()
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return Path(out.stdout.strip()).resolve()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return Path(__file__).resolve().parents[2]
+
+
+def build_doc(root: Path) -> str:
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    return "\n".join(
+        [
+            "# Codebase Map",
+            "",
+            "> Auto-generated by `packages/local-bin/bin/gen-codebase` — do not",
+            "> edit by hand. Regenerate with `just codebase` (or run",
+            "> `gen-codebase`) whenever the structure changes.",
+            f"> Generated: {stamp}",
+            "",
+            "> Purpose: compact orientation map for AI agents and quick human",
+            "> reference. Read this first instead of grepping the whole tree.",
+            "",
+            build_layout(root),
+            "",
+            build_hosts(root),
+            "",
+            build_modules(root),
+            "",
+            build_features(root),
+            "",
+            build_profiles(root),
+            "",
+            build_packages(root),
+            "",
+            build_pointers(),
+            "",
+        ]
+    )
+
+
+def main(argv: list[str]) -> int:
+    arg = None
+    stdout_only = False
+    for a in argv[1:]:
+        if a == "--stdout":
+            stdout_only = True
+        else:
+            arg = a
+    root = repo_root(arg)
+    doc = build_doc(root)
+    if stdout_only:
+        sys.stdout.write(doc)
+        return 0
+    out_path = root / "docs" / "codebase.md"
+    try:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(doc, encoding="utf-8")
+    except OSError as e:
+        print(f"gen-codebase: cannot write {out_path}: {e}", file=sys.stderr)
+        return 1
+    print(f"gen-codebase: wrote {out_path}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
