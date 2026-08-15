@@ -14,5 +14,6 @@ rustPlatform.buildRustPackage rec {
     license = licenses.mit;
     mainProgram = "hypr-focus";
     platforms = platforms.linux;
+    maintainers = [ ];
   };
 }

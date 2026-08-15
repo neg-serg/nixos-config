@@ -17,5 +17,6 @@ stdenv.mkDerivation {
     description = "Vicinae extension for browsing wallhaven.cc wallpapers";
     license = licenses.mit;
     platforms = platforms.linux;
+    maintainers = [ ];
   };
 }

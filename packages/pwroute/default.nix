@@ -14,5 +14,6 @@ rustPlatform.buildRustPackage rec {
     license = licenses.mit;
     mainProgram = "pwroute";
     platforms = platforms.linux;
+    maintainers = [ ];
   };
 }

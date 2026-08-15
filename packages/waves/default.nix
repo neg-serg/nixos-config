@@ -38,5 +38,6 @@ buildGoModule rec {
     license = licenses.gpl3Only;
     mainProgram = "waves";
     platforms = platforms.unix;
+    maintainers = [ ];
   };
 }
