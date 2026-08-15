@@ -7,7 +7,6 @@
   hasJq = pkgs ? jq;
   hasUg = pkgs ? ugrep;
   hasErd = pkgs ? erdtree;
-  hasPrettyping = pkgs ? prettyping;
   hasDuf = pkgs ? duf;
   hasDust = pkgs ? dust;
   hasHandlr = pkgs ? handlr;
@@ -28,5 +27,4 @@
   hasKmon = pkgs ? kmon;
   hasFd = pkgs ? fd;
   hasMpc = pkgs ? mpc;
-  hasFlatpak = pkgs ? flatpak;
 }

@@ -10,7 +10,6 @@ Custom Nix library files, imported via `specialArgs.opts` / `lib/opts.nix` and d
 - `package-checks.nix` — package sanity checks wired into `aliae.nix`.
 - `quickshell-wrapper.nix` — Quickshell wrapper helpers (used by
   `modules/user/nix-maid/gui/quickshell.nix`).
-- `default.nix` — import facade.
 
 Runtime helpers (`mkHomeFiles`, `mkLocalBin`, `mkXdgText`, `systemdUser`, …) live on
 `config.lib.neg` (defined in `flake/nixos.nix` specialArgs + exposed via `modules/core/neg.nix`),
