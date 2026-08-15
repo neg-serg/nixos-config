@@ -6,7 +6,7 @@
 }:
 let
   repoRoot = inputs.self;
-  caches = import ./caches.data.nix;
+  caches = import ../../lib/caches.nix;
 in
 {
   sops.age = {
