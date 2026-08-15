@@ -8,7 +8,7 @@
   ...
 }:
 let
-  enabled = config.features.gui.enable or false;
+  enabled = config.lib.neg.enabled "gui";
   swayimgFirst = pkgs.writeShellScriptBin "swayimg-first" (
     let
       tpl = builtins.readFile ./swayimg-first.sh;

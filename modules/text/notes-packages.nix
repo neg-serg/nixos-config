@@ -8,7 +8,7 @@
   ...
 }:
 let
-  enabled = config.features.text.notes.enable or false;
+  enabled = config.lib.neg.enabled "text.notes";
   packages = [
     pkgs.zk # Zettelkasten CLI
   ];

@@ -8,7 +8,7 @@
   ...
 }:
 let
-  enabled = config.features.media.audio.apps.enable or false;
+  enabled = config.lib.neg.enabled "media.audio.apps";
   packages = [
     pkgs.ffmpeg # basic ffmpeg for playback
     pkgs.ffmpegthumbnailer # generate thumbnails for videos (runners/rofi)
@@ -23,7 +23,7 @@ in
     (lib.mkIf enabled {
       environment.systemPackages = lib.mkAfter packages;
     })
-    (lib.mkIf (config.features.media.webcam.enable or false) {
+    (lib.mkIf (config.lib.neg.enabled "media.webcam") {
 
       boot.extraModulePackages = [ config.boot.kernelPackages.v4l2loopback ];
       boot.kernelModules = [ "v4l2loopback" ];

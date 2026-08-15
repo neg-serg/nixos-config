@@ -6,13 +6,13 @@
   ...
 }:
 let
-  guiEnabled = config.features.gui.enable or false;
-  qtEnabled = config.features.gui.qt.enable or false;
+  guiEnabled = config.lib.neg.enabled "gui";
+  qtEnabled = config.lib.neg.enabled "gui.qt";
   quickshellEnabled =
     guiEnabled
     && qtEnabled
-    && (config.features.gui.quickshell.enable or false)
-    && (!(config.features.devSpeed.enable or false));
+    && (config.lib.neg.enabled "gui.quickshell")
+    && (!(config.lib.neg.enabled "devSpeed"));
   hostSystem = pkgs.stdenv.hostPlatform.system;
   rsmetrxPkg =
     if inputs ? rsmetrx then

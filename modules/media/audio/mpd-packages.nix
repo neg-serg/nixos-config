@@ -8,7 +8,7 @@
   ...
 }:
 let
-  enabled = config.features.media.audio.mpd.enable or false;
+  enabled = config.lib.neg.enabled "media.audio.mpd";
   packages = [
     pkgs.rmpc # minimal MPD CLI used in scripts/notifications
   ];

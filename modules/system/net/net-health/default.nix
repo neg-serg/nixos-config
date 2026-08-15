@@ -32,8 +32,8 @@ let
   systemctl = "${pkgs.systemd}/bin/systemctl";
   resolvectl = "${pkgs.systemd}/bin/resolvectl";
 
-  zapret2Enabled = config.features.net.zapret2.enable or false;
-  rknEnabled = config.features.net.rknDomains.enable or false;
+  zapret2Enabled = config.lib.neg.enabled "net.zapret2";
+  rknEnabled = config.lib.neg.enabled "net.rknDomains";
   adguardEnabled = config.services.adguardhome.enable or false;
 
   # No `set -e`: failing checks are a normal outcome here, only `set -u`.

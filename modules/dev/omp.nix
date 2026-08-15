@@ -6,9 +6,9 @@
 }:
 let
   enable =
-    (config.features.dev.enable or false)
-    && (config.features.dev.ai.enable or false)
-    && (config.features.dev.ai.omp.enable or false);
+    (config.lib.neg.enabled "dev")
+    && (config.lib.neg.enabled "dev.ai")
+    && (config.lib.neg.enabled "dev.ai.omp");
   ompWrapped = pkgs.writeShellScriptBin "omp" ''
     # Force DeepSeek models for all model roles regardless of OMP defaults/config.yml,
     # so the agent never falls back to a provider without an API key (e.g. cerebras,

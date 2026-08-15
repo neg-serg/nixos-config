@@ -4,9 +4,9 @@
   ...
 }:
 let
-  devSpeed = config.features.devSpeed.enable or false;
-  guiEnabled = config.features.gui.enable or false;
-  wifiEnabled = config.features.net.wifi.enable or false;
+  devSpeed = config.lib.neg.enabled "devSpeed";
+  guiEnabled = config.lib.neg.enabled "gui";
+  wifiEnabled = config.lib.neg.enabled "net.wifi";
   menuPkgs = if guiEnabled && !devSpeed && wifiEnabled then [ pkgs.iwmenu ] else [ ]; # Launcher-driven Wi-Fi manager for Linux
 in
 {

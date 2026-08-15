@@ -9,7 +9,7 @@ let
   systemdUser = import ../../../../lib/systemd-user.nix { inherit lib; };
 in
 with lib;
-mkIf (config.features.web.enable or false) {
+mkIf (config.lib.neg.enabled "web") {
   systemd.user.services.surfingkeys-server =
     let
       preset = systemdUser.mkUnitFromPresets { };

@@ -6,7 +6,7 @@
   ...
 }:
 let
-  devEnabled = config.features.dev.enable or false;
+  devEnabled = config.lib.neg.enabled "dev";
   nvimConf = ../../files/nvim;
 in
 lib.mkIf devEnabled (
