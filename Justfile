@@ -157,6 +157,10 @@ codebase:
     "$repo_root/packages/local-bin/bin/gen-codebase" "$repo_root"; \
     nix fmt # normalize markdown (mdformat) so the artifact is fmt-stable
 
+# Update the flake lock (all inputs)
+update:
+    nix flake update
+
 hooks-enable:
     git config core.hooksPath .githooks
 
