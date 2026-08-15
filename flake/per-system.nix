@@ -26,7 +26,12 @@ in
     runtimeInputs = [
       nixfmtPkg # nix formatter
       pkgs.black # python formatter
-      pkgs.python3Packages.mdformat # markdown formatter
+      # markdown formatter — with the mdformat-gfm plugin so GFM tables are
+      # preserved; core mdformat collapses table rows into one paragraph
+      (pkgs.python3.withPackages (ps: [
+        ps.mdformat
+        ps.mdformat-gfm
+      ]))
       pkgs.shfmt # shell script formatter
       pkgs.treefmt # unified formatting tool
     ];
