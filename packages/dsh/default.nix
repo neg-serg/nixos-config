@@ -2,6 +2,8 @@
   lib,
   fetchurl,
   python3,
+  makeWrapper,
+  nodejs,
   buildNpmPackage,
   runCommand,
 }:
@@ -29,7 +31,16 @@ buildNpmPackage {
 
   nativeBuildInputs = [
     python3 # node-gyp compiles native deps (node-pty) during npm rebuild
+    makeWrapper # rewrap the dsh launcher with node --expose-internals (HMR)
   ];
+
+  # The HMR plugin requires node --expose-internals, which the default wrapper
+  # omits. Rewrap the launcher the same way the dsh systemd service does.
+  postInstall = ''
+    rm -f $out/bin/dsh
+    makeWrapper ${lib.getExe nodejs} $out/bin/dsh \
+      --add-flags "--expose-internals $out/lib/node_modules/@deepseek-ai/dsh/lib/bin.js"
+  '';
 
   # Prefetched dependency tree; hash from `prefetch-npm-deps package-lock.json`
   npmDepsHash = "sha256-9Cx3OhIK3xuyd6o+HZhAs+2eGsIrys8fNdtRePd4GnQ=";
