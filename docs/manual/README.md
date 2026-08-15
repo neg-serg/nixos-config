@@ -230,26 +230,22 @@ Keep this manifest updated whenever vendored sources change so that licensing re
 - The overlay is applied in `flake/lib.nix` (`mkPkgs`); flake outputs for the custom packages are
   exposed via `packages/flake/custom-packages.nix` (e.g. `nix build .#omp`).
 
-## Hyprland: Single Source of Truth and Updates
+## Hyprland: Source and Updates
 
-- Source of truth: `inputs.hyprland` (compositor) is pinned to the v0.55.4 tag, `inputs.hy3` follows
-  the matching Hyprland release; `flake.lock` captures the exact commits.
-- The NixOS overlay routes `pkgs.hyprland`, `pkgs.xdg-desktop-portal-hyprland`, and
-  `pkgs.hyprlandPlugins.hy3` to those inputs, so modules can just use `pkgs.*`.
-- Supporting inputs stay in lockstep via `follows` (`hyprland-protocols`,
-  `xdg-desktop-portal-hyprland`, etc.); no manual portal wiring beyond
-  `programs.hyprland.portalPackage = pkgs.xdg-desktop-portal-hyprland`.
+- The compositor (`pkgs.hyprland`) comes from nixpkgs (`modules/nix/hyprland.nix`); the dedicated
+  `hyprland` flake input was removed (it had no functional references).
+- `inputs.hy3` provides the hy3 plugin (`flake/lib.nix` hyprlandOverlay →
+  `pkgs.hyprlandPlugins.hy3`).
+- `inputs.xdg-desktop-portal-hyprland` is pinned to the same rev the hyprland flake used to carry
+  (08d99f72); the overlay routes it as `pkgs.xdg-desktop-portal-hyprland`.
 - Do not add `xdg-desktop-portal-hyprland` to `xdg.portal.extraPortals` — the package already
   provides the portal service when set as `portalPackage`.
 
 How to update Hyprland (and hy3):
 
-1. Refresh the pins: `nix flake update hyprland hy3` (other Hyprland inputs follow automatically).
+1. Hyprland itself bumps with nixpkgs (`nix flake lock --update-input nixpkgs`).
+1. Refresh the companion pins: `nix flake update hy3 xdg-desktop-portal-hyprland`.
 1. Rebuild the system: `sudo nixos-rebuild switch --flake /etc/nixos#<host>`.
-
-Auto‑update (optional): if `system.autoUpgrade` with flakes is enabled, add
-`--update-input hyprland --update-input hy3` when you deliberately move to the next Hyprland
-release. We usually bump manually to keep ABI changes under control.
 
 ## Profiles
 
