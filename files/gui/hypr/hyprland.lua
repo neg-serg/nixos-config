@@ -183,7 +183,7 @@ hl.bind(M4 .. "+u", hl.dsp.exec_cmd("hyprscratch vpn 'kitty --class vpn -e tun s
 hl.bind(M4 .. "+" .. C .. "+p", hl.dsp.exec_cmd("hyprscratch mixer 'kitty --class mixer -e ncpamixer' special"))
 hl.bind(M4 .. "+" .. SH .. "+h", hl.dsp.exec_cmd("hyprscratch hide-all"))
 
--- --- App launchers (apps.conf) ---
+-- --- App launchers (ex-apps.conf; formerly ~/.config/hypr/bindings/apps.conf) ---
 hl.bind(M4 .. "+w", hl.dsp.exec_cmd('raise --match "class:regex=' .. m.browser .. '" --launch ' .. browser))
 hl.bind(M4 .. "+x", hl.dsp.exec_cmd('raise --match "class:regex=^term$" --launch "kitty --class term"'))
 hl.bind(M4 .. "+q", hl.dsp.exec_cmd('raise --match "class:regex=^nwim$" --launch "kitty --class nwim -e /home/neg/.local/bin/v"'))
@@ -218,6 +218,10 @@ hl.bind(M4 .. "+m", hl.dsp.exec_cmd("~/.local/bin/music-rename current"), { lock
 
 -- --- Misc (misc.conf) ---
 hl.bind(M1 .. "+g", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/wm/switch-windows"))
+
+-- hyprwhspr-rs dictation: hold ALT+` to talk (released fires on key up)
+hl.bind(M1 .. "+GRAVE", hl.dsp.exec_cmd("hyprwhspr-rs record start"))
+hl.bind(M1 .. "+GRAVE", hl.dsp.exec_cmd("hyprwhspr-rs record stop"), { release = true })
 hl.bind(M4 .. "+" .. SH .. "+m", hl.dsp.exec_cmd("~/.local/bin/main-menu"))
 hl.bind(M4 .. "+" .. SH .. "+p", hl.dsp.exec_cmd("~/.local/bin/hypr-shortcuts"))
 hl.bind(M4 .. "+" .. SH .. "+r", hl.dsp.exec_cmd('shot="$HOME/pic/shots/satty-$(date \'+%Y%m%d-%H.%M.%S\').png"; grim -l 0 "$shot" && pic-info "$shot"'))
