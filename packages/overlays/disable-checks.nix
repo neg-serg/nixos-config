@@ -86,7 +86,7 @@ _: _: finalPrev: {
   });
 
   # Disable flaky pylint tests (primer output diff, network-dependent)
-  # AUDIT: likely fixed in nixpkgs 26.05 — try removing (also duplicated in pythonPackagesExtensions below)
+  # AUDIT: likely fixed in nixpkgs 26.05 — try removing
   pylint = finalPrev.pylint.overrideAttrs (_old: {
     doCheck = false;
   });
@@ -96,10 +96,8 @@ _: _: finalPrev: {
   samba = finalPrev.samba.overrideAttrs (_old: {
     doCheck = false;
   });
-  # AUDIT: likely fixed in nixpkgs 26.05 — try removing
-  samba4 = finalPrev.samba4.overrideAttrs (_old: {
-    doCheck = false;
-  });
+  # (samba4 removed: it is a nixpkgs alias of samba, and allowAliases=false is
+  # set in flake/lib.nix, so finalPrev.samba4 was a latent eval error)
   # Disable flaky pytest-xdist tests
   pythonPackagesExtensions = (finalPrev.pythonPackagesExtensions or [ ]) ++ [
     (_python-final: python-prev: {
