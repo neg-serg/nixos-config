@@ -8,3 +8,8 @@
 ## Options Docs
 
 - [modules.md](./howto/modules.md) — generated via `just docs-modules` (not tracked)
+
+## Repo Map
+
+- [codebase.md](./codebase.md) — generated structural map (modules, features, profiles, packages);
+  regenerate with `just codebase`

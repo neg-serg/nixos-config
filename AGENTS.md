@@ -15,6 +15,7 @@ General guidance
 - Avoid drive-by refactors; mention unrelated issues separately instead of fixing them silently.
 - When changing behavior, prefer updating relevant docs under `docs/` or `docs/manual/` as needed.
 - For WireGuard/VPN host vs user-level setup, see `docs/manual/manual.ru.md` (section “WireGuard VPN (host / user)”) for prior research and patterns.
+- For a quick orientation, `docs/codebase.md` is a generated repo map (modules, features, profiles, packages); regenerate with `just codebase` when structure changes.
 
 Commit style
 - Use a bracketed scope prefix consistent with existing history, for example: `[media/audio] …`, `[hosts/odin] …`, `[dev/pkgs] …`, `[docs] …`.
