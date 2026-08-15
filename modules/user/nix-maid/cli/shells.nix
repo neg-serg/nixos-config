@@ -116,6 +116,8 @@ let
     elif [ -r "/etc/profiles/per-user/$USER/etc/profile.d/session-vars.sh" ]; then
       . "/etc/profiles/per-user/$USER/etc/profile.d/session-vars.sh"
     fi
+    # DEEPSEEK API key for dsh (from SOPS secret; keep any existing override)
+    export DEEPSEEK_API_KEY="''${DEEPSEEK_API_KEY:-$(cat /run/secrets/deepseek-api 2>/dev/null)}"
     export WORDCHARS='*/?_-.[]~&;!#$%^(){}<>~` '
     export KEYTIMEOUT=10
     export REPORTTIME=60
