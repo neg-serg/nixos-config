@@ -12,5 +12,5 @@ Guidelines
 - Match the existing split files (`hardware.nix`, `networking.nix`, `services.nix`, `extra.nix`,
   `virtualisation/`) and keep host glue light.
 - Do not embed secrets; pull them from `secrets/` or options.
-- Use feature toggles in `modules/features.nix` (or host profiles) rather than ad-hoc host hacks
+- Use feature toggles in `modules/features/` (or host profiles) rather than ad-hoc host hacks
   whenever possible.

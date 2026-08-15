@@ -11,7 +11,9 @@ isn't a step-by-step runbook.
 
 - Swayimg hotkeys: [swayimg-hotkeys.md](./swayimg-hotkeys.md)
 
-- Build performance analysis: [build-optimization.md](./build-optimization.md)
+- Build performance analysis (RU): [build-optimization.ru.md](./build-optimization.ru.md)
+
+- TidalCycles setup (RU): [tidal-cycles.ru.md](./tidal-cycles.ru.md)
 
 - Options/modules reference: [modules.md](./modules.md)
 
