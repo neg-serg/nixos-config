@@ -44,6 +44,7 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/PhilippeBekaert/hdspeconf";
     license = licenses.gpl3;
     platforms = platforms.linux;
+    mainProgram = "hdspeconf";
     maintainers = [ ];
   };
 }

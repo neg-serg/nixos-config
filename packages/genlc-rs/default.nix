@@ -34,5 +34,6 @@ rustPlatform.buildRustPackage {
     license = licenses.mit;
     mainProgram = "genlc";
     platforms = platforms.linux;
+    maintainers = [ ];
   };
 }

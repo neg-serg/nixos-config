@@ -55,5 +55,6 @@ pyPkgs.buildPythonApplication {
     license = licenses.mit;
     platforms = platforms.linux;
     mainProgram = "talktype";
+    maintainers = [ ];
   };
 }

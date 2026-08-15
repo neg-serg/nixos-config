@@ -34,5 +34,6 @@ stdenvNoCC.mkDerivation rec {
     homepage = "https://github.com/neg-serg/Flight-Plasma-Themes";
     license = licenses.gpl3Only;
     platforms = platforms.linux;
+    maintainers = [ ];
   };
 }

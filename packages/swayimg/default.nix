@@ -1,7 +1,7 @@
 {
   lib,
   stdenv,
-  fetchurl,
+  fetchFromGitHub,
   meson,
   ninja,
   pkg-config,
@@ -25,7 +25,6 @@
   libsixel,
   libraw,
   libdrm,
-  openexr,
   bash-completion,
   vulkan-headers,
   vulkan-loader,
@@ -37,10 +36,17 @@ stdenv.mkDerivation (_finalAttrs: {
   pname = "swayimg";
   version = "0-unstable-fork";
 
-  src = fetchurl {
-    url = "https://github.com/neg-serg/swayimg/archive/refs/heads/master.tar.gz";
-    hash = "sha256-1gioADzXI70kUq8u98Ajvp65SnqIoKVAHy3fJhuf8FQ=";
+  # Pinned to a commit (was floating master.tar.gz)
+  src = fetchFromGitHub {
+    owner = "neg-serg";
+    repo = "swayimg";
+    rev = "9fb73f6fad02cbe003db75b32f31a4ab4153e7d2";
+    hash = "sha256-DYt58kkGR+9Yu6neqJQYH2PRwt3dkWMDCfGsALR36jQ=";
   };
+
+  # upstream removed icon_128/256.png but kept the install rules —
+  # drop the dead install targets (packages/swayimg-meson-icons.patch)
+  patches = [ ./../swayimg-meson-icons.patch ];
 
   strictDeps = true;
 
@@ -80,7 +86,6 @@ stdenv.mkDerivation (_finalAttrs: {
     libwebp
     libxkbcommon
     luajit
-    openexr
     vulkan-headers
     vulkan-loader
     wayland
@@ -93,5 +98,6 @@ stdenv.mkDerivation (_finalAttrs: {
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
     mainProgram = "swayimg";
+    maintainers = [ ];
   };
 })

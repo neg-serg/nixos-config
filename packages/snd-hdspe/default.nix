@@ -63,5 +63,6 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/PhilippeBekaert/snd-hdspe";
     license = licenses.gpl3;
     platforms = platforms.linux;
+    maintainers = [ ];
   };
 }

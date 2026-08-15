@@ -16,5 +16,6 @@ rustPlatform.buildRustPackage rec {
     license = licenses.mit;
     mainProgram = "hwctl";
     platforms = platforms.linux;
+    maintainers = [ ];
   };
 }
