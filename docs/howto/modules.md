@@ -1279,28 +1279,6 @@ true
 
 - [/modules/features/hardware.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
 
-## features.input.warpd.enable
-
-Whether to enable enable warpd (modal keyboard-driven pointer control).
-
-*Type:* boolean
-
-*Default:*
-
-```nix
-false
-```
-
-*Example:*
-
-```nix
-true
-```
-
-*Declared by:*
-
-- [/modules/features/hardware.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/hardware.nix)
-
 ## features.llm.enable
 
 Whether to enable enable local LLM stack (Ollama, local-ai).

@@ -4,18 +4,6 @@ let
   callPkg = final.neg.functions.callPkg; # shared helper (functions.nix)
 in
 {
-  # warpd: nixpkgs 26.05 src hash is stale for v1.3.5 (upstream tag tarball
-  # changed) — re-pin to the actual fetched content.
-  warpd = prev.warpd.overrideAttrs (_: {
-    src = prev.fetchFromGitHub {
-      owner = "rvaiya";
-      repo = "warpd";
-      rev = "v1.3.5";
-      hash = "sha256-mXnw+7M4avvHizQt6rq8hX7FfhlNrrrLvndkmSpElA8=";
-      leaveDotGit = true;
-    };
-  });
-
   neg = (prev.neg or { }) // rec {
     albumdetails = callPkg (packagesRoot + "/albumdetails") { }; # Music album metadata CLI (used by music-rename script)
     brrtfetch = callPkg (packagesRoot + "/brrtfetch") { }; # Animated ASCII art GIF renderer alongside sysinfo output
