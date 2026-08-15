@@ -17,7 +17,6 @@
 [![Hyprland](https://img.shields.io/badge/Hyprland-Dynamic_Tiling-00D9FF?style=for-the-badge&logo=wayland&logoColor=white)](https://hyprland.org)
 [![Commits](https://img.shields.io/badge/commits-4000+-FF6B35?style=for-the-badge&logo=git&logoColor=white)](https://github.com/neg-serg/nixos-config/commits)
 [![Stars](https://img.shields.io/github/stars/neg-serg/nixos-config?style=for-the-badge&logo=github)](https://github.com/neg-serg/nixos-config/stargazers)
-[![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
 
 ---
 
@@ -50,7 +49,7 @@
 - 🚄 **Blazingly Fast Builds** - Optimized evaluation with module archiving
 - 🎮 **Gaming-First Design** - CPU isolation, low-latency optimizations, VRR support
 - 🔧 **Developer Paradise** - Multi-language support (Rust, C++, Haskell, Python), AI tools
-- 🎨 **Beautiful Hyprland** - 21 workspaces, 6 scratchpads, custom Quickshell panel
+- 🎨 **Beautiful Hyprland** - 20 workspaces, 7 scratchpads, custom Quickshell panel
 - 📦 **30 Custom Packages** - Tailored tools for productivity and performance
 - 🧩 **Modular Architecture** - 27 domain modules with feature flags, 403 Nix files
 - 🔄 **Continuous Integration** - Automated formatting, linting, and testing
@@ -111,7 +110,7 @@ graph TB
         C[modules/features]
         D[modules/cli]
         E[modules/dev]
-        F[modules/gui]
+        F[modules/user]
         G[modules/servers]
     end
     
@@ -172,7 +171,7 @@ flowchart LR
 <details open>
 <summary><h3>🎮 Performance & Gaming</h3></summary>
 
-- ⚡ **CPU Isolation** - Dedicated cores (0-3,16-19) for gaming
+- ⚡ **CPU Isolation** - Dedicated cores (1-3,16-19) for gaming
 - 🎯 **Custom Launch Scripts** - `game` (Rust): CPU isolation + gamescope presets
 - 🚀 **Low-Latency Optimizations** - Kernel parameters, scheduler tweaks
 - 🖥️ **VRR Support** - Variable Refresh Rate via Gamescope
@@ -181,7 +180,7 @@ flowchart LR
 > [!TIP]
 > **Steam Launch Options Example:**
 > ```bash
-> GAME_PIN_CPUSET=0-3,16-19 MANGOHUD=1 game-run gamescope -f --adaptive-sync -- %command%
+> GAME_PIN_CPUSET=1-3,16-19 MANGOHUD=1 game-run gamescope -f --adaptive-sync -- %command%
 > ```
 
 </details>
@@ -236,7 +235,7 @@ flowchart LR
 │       ├── hardware.nix
 │       ├── networking.nix
 │       └── services.nix
-├── 📂 modules/                       # 🧩 System modules (27 domains)
+├── 📂 modules/                       # 🧩 System modules (28 domains)
 │   ├── 📁 features/                  # ⚙️ Feature flags (14 files)
 │   │   ├── core.nix                 # Core feature options
 │   │   ├── gui.nix                  # GUI stack options
@@ -247,11 +246,12 @@ flowchart LR
 │   │   ├── dev.nix                  # Git, encoding, fetch
 │   │   └── ...
 │   ├── 📁 user/nix-maid/             # 👤 User configuration
-│   │   ├── 📁 hyprland/              # 🌊 Hyprland (5 modules)
+│   │   ├── 📁 hyprland/              # 🌊 Hyprland (4 modules)
 │   │   │   ├── main.nix
-│   │   │   ├── workspaces.nix      # 21 workspaces
-│   │   │   ├── scratchpads.nix     # 6 scratchpads
-│   │   │   └── ...
+│   │   │   ├── environment.nix
+│   │   │   ├── files.nix
+│   │   │   ├── services.nix
+│   │   │   └── ...                  # workspaces live in files/gui/hypr/hyprland.lua
 │   │   └── ...
 │   ├── 📁 servers/                   # 🖧 Server services
 │   └── ...
@@ -289,14 +289,14 @@ pie title Module Categories Distribution
 </div>
 
 <details>
-<summary><h3>🎯 Core Modules (16)</h3></summary>
+<summary><h3>🎯 Core Modules (22)</h3></summary>
 
 | Module | Description | Files |
 |--------|-------------|-------|
 | 🎛️ **args** | Module arguments & impurity | 1 |
-| ⚙️ **features** | Feature flags system | 15 |
-| 📚 **neg** | Custom library helpers | 1 |
-| 👥 **profiles** | Service profiles | 1 |
+| ⚙️ **features** | Feature flags system | 14 |
+| 📚 **neg** | Custom library helpers | 2 |
+| 👥 **profiles** | Service profiles | 5 |
 
 </details>
 
@@ -386,7 +386,7 @@ just hooks-enable
 ### 🔄 CI/CD Pipeline
 
 > [!IMPORTANT]
-> All changes are automatically validated via GitHub Actions
+> Changes are validated by the pre-commit hook (`just lint`) and `nix flake check -L`
 
 ```mermaid
 graph LR
@@ -429,7 +429,7 @@ graph TB
             B[Core 20-31]
         end
         subgraph "🎮 Gaming Cores ISOLATED (8 threads)"
-            C[Core 0-3]
+            C[Core 1-3]
             D[Core 16-19]
         end
     end
@@ -466,14 +466,14 @@ gamescope-hdr %command%
 > [!NOTE]
 > **Steam Launch Options Example (Competitive FPS):**
 > ```bash
-> GAME_PIN_CPUSET=0-3,16-19 MANGOHUD=1 game-run gamescope -f --adaptive-sync -- %command%
+> GAME_PIN_CPUSET=1-3,16-19 MANGOHUD=1 game-run gamescope -f --adaptive-sync -- %command%
 > ```
 
 ### 🎛️ Environment Variables
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
-| `GAME_PIN_CPUSET` | Override CPU cores | `0-3,16-19` |
+| `GAME_PIN_CPUSET` | Override CPU cores | `1-3,16-19` |
 | `GAME_RUN_USE_GAMEMODE` | Toggle gamemode | `0` or `1` |
 | `MANGOHUD` | Performance overlay | `1` |
 

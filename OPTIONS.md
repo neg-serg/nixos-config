@@ -54,7 +54,7 @@ and how profiles affect them. It also notes where the libretro allowlist lives a
 Unfree packages are allowed globally:
 
 - `flake/lib.nix` (`config.allowUnfree = true`) — applied to all system `pkgs`.
-- `flake/pkgs-config.nix` — nixpkgs config for the flake's own package builds.
+- `flake/lib.nix` (`mkPkgs`) — nixpkgs config for the flake's own package builds.
 
 The per-feature allowlist (`features.allowUnfree.*` + `features-data/`) was
 removed — it was never read by any module.
@@ -68,15 +68,15 @@ removed — it was never read by any module.
 
 ## Extra Arguments (flake extraSpecialArgs)
 
-These are passed from `flake.nix` into modules for convenience (camelCase):
+These are passed from `flake/nixos.nix` (`mkSpecialArgs`) into modules for convenience (camelCase):
 
 
 - `iosevkaNeg` — system package set from the custom Iosevka flake input. Used in
-  `modules/user/theme/default.nix`.
+  `modules/fonts/default.nix` and `modules/user/nix-maid/gui/theme.nix`.
 
 ## Ready‑Made Configurations
 
-- Full: `.#homeConfigurations.neg.activationPackage`
+- Full: `nix build .#nixosConfigurations.odin.config.system.build.toplevel`
 
 Switch examples:
 

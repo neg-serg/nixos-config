@@ -1,6 +1,8 @@
 inputs: _final: prev: {
-  # Shared helper functions under pkgs.neg.functions to DRY up overlay patterns
-  neg = (prev.neg or { }) // {
+  # Shared helper functions under pkgs.neg.functions to DRY up overlay patterns.
+  # neg sub-attributes are merged once in packages/overlay.nix — no
+  # `(prev.neg or {})` accumulation here (prev is the unmodified base).
+  neg = {
     functions = {
       # callPkg: callPackage with automatic `inputs` injection for packages
       # that declare an `inputs` argument (sniffed via functionArgs). Single
