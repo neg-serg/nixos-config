@@ -146,11 +146,10 @@ let
 
 in
 {
-  odin = mkHost "odin";
-}
-// {
-  # mkTestHost is consumed by flake/checks.nix (A/B test configs). flake.nix
-  # strips it from the nixosConfigurations output — flake-schemas requires a
-  # pure machine set there.
+  # Explicit contract: `configurations` is the pure machine set (flake-schemas
+  # friendly), `mkTestHost` is the A/B test builder consumed by flake/checks.nix.
+  configurations = {
+    odin = mkHost "odin";
+  };
   inherit mkTestHost;
 }
