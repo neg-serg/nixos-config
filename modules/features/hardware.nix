@@ -15,7 +15,6 @@ with lib;
     };
     input = {
       kanata.enable = mkBool "enable Kanata keyboard remapper (requires uinput module)" false;
-      warpd.enable = mkBool "enable warpd (modal keyboard-driven pointer control)" false;
     };
   };
 }
