@@ -4,7 +4,9 @@ Machine-specific configurations.
 
 ## Available Hosts
 
-| Host | Description | |------|-------------| | `odin` | Primary workstation |
+| Host   | Description         |
+| ------ | ------------------- |
+| `odin` | Primary workstation |
 
 ## Structure
 
@@ -18,5 +20,5 @@ Each host directory contains:
 ## Adding a Host
 
 1. Create `hosts/new-host/default.nix`
-1. Add to `flake.nix` in `nixosConfigurations`
+1. Register it in `flake/nixos.nix`: add `"new-host" = mkHost "new-host";` to the output set
 1. Build: `sudo nixos-rebuild switch --flake .#new-host`
