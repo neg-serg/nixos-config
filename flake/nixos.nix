@@ -103,6 +103,11 @@ let
       ;
     iosevkaNeg = inputs.iosevka-neg.packages.${linuxSystem};
 
+    # Repo root as a real path literal (not a string): used by
+    # config.lib.neg.path to copy individual repo files into the store with
+    # proper closure dependencies.
+    repoRoot = ../.;
+
     # Default: import all domains (full workstation).
     domainFilter = mkDomainFilter allDomains;
     opts = import (self + "/lib/opts.nix") { inherit lib; };

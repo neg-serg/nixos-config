@@ -208,7 +208,7 @@ lib.mkMerge [
     };
     # Rescrobbled config sourced from SOPS above.
   }
-  (lib.mkIf (builtins.pathExists (config.lib.neg.path "secrets/home/mpdas/neg.rc")) {
+  (lib.mkIf (config.lib.neg.pathExists "secrets/home/mpdas/neg.rc") {
     sops.secrets."mpdas_negrc" = {
       sopsFile = config.lib.neg.path "secrets/home/mpdas/neg.rc";
       format = "binary";
