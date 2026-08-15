@@ -1,12 +1,11 @@
-{ ... }:
 {
-  imports = [
-    ./localmodconfig.nix
-    ./params.nix
-    ./sysctl-mem-extras.nix
-    ./sysctl-net-extras.nix
-    ./sysctl-gaming.nix
-    ./sysctl-writeback.nix
-    ./sysctl.nix
-  ];
+  lib,
+  ...
+}:
+{
+  imports =
+    builtins.readDir ./.
+    |> builtins.attrNames
+    |> builtins.filter (n: n != "default.nix" && lib.hasSuffix ".nix" n)
+    |> builtins.map (n: ./. + "/${n}");
 }
