@@ -26,6 +26,8 @@ let
     close_on_focus_loss = true;
     activate_on_single_click = false;
     consider_preedit = true;
+    # Tab/Shift+Tab wrap around the item list ends (ListNavigation wrap toggle)
+    wrap_navigation = true;
 
     # telemetry + cache + encryption
     telemetry.system_info = false;
