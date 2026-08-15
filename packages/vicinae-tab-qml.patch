@@ -1,8 +1,16 @@
 diff --git a/src/server/src/qml/qml/SearchBar.qml b/src/server/src/qml/qml/SearchBar.qml
-index e505bbc..69106f3 100644
+index 3d9499b..dc1c34b 100644
 --- a/src/server/src/qml/qml/SearchBar.qml
 +++ b/src/server/src/qml/qml/SearchBar.qml
-@@ -211,16 +211,36 @@ Item {
+@@ -275,11 +275,33 @@ Item {
+                     }
+                 }
+                 Keys.onBacktabPressed: event => {
+-                    event.accepted = false;
++                    // Shift+Tab: navigate up the item list (dmenu/rofi style);
++                    // Tab (forward) is handled in Keys.onPressed.
++                    event.accepted = typeof commandStack.currentItem.moveUp === "function" && commandStack.currentItem.moveUp();
+                 }
                  Keys.onPressed: event => {
                      if (_handleEmacsEditing(event)) {
                          event.accepted = true;
@@ -29,13 +37,3 @@ index e505bbc..69106f3 100644
                      } else if (_handleNavigation(event)) {
                          event.accepted = true;
                      } else if (event.key === Qt.Key_Backspace && searchInput.text === "" && !event.isAutoRepeat && launcher.showBackButton && launcher.popOnBackspace) {
-                         launcher.goBack();
-                         event.accepted = true;
-                     } else if (event.key === Qt.Key_Space && event.modifiers === Qt.NoModifier && searchInput.text.length > 0 && launcher.commandViewHost?.tryAliasFastTrack()) {
-                         event.accepted = true;
-                     } else if (launcher.forwardKey(event.key, event.modifiers)) {
-                         if (launcher.compacted)
-                             launcher.expand();
-                         event.accepted = true;
-                    }
-                }
