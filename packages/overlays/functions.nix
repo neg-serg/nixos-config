@@ -1,7 +1,19 @@
-_inputs: _final: prev: {
+inputs: _final: prev: {
   # Shared helper functions under pkgs.neg.functions to DRY up overlay patterns
   neg = (prev.neg or { }) // {
     functions = {
+      # callPkg: callPackage with automatic `inputs` injection for packages
+      # that declare an `inputs` argument (sniffed via functionArgs). Single
+      # source of truth — tools.nix / gui.nix alias it instead of redefining.
+      callPkg =
+        path: extraArgs:
+        let
+          f = import path;
+          wantsInputs = builtins.hasAttr "inputs" (builtins.functionArgs f);
+          autoArgs = if wantsInputs then { inherit inputs; } else { };
+        in
+        prev.callPackage path (autoArgs // extraArgs);
+
       # Override the Python package scope with a function (self: super: { ... })
       # Usage in an overlay:
       #   python3Packages = pkgs.neg.functions.overridePyScope (self: super: {
