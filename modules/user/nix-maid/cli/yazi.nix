@@ -274,6 +274,69 @@ let
         ];
         desc = "Reveal file from clipboard";
       }
+      # --- Russian layout duplicates (ЙЦУКЕН) -------------------------------------
+      # yazi matches keys by the produced char; latin-letter binds break under the
+      # ru layout. Lowercase Cyrillic only (uppercase implies SHIFT, which the RU
+      # layout reports differently). Table: docs/howto/hotkeys-ru-layout.ru.md
+      {
+        run = "arrow next";
+        on = [ "о" ]; # j
+      }
+      {
+        run = "arrow prev";
+        on = [ "л" ]; # k
+      }
+      {
+        run = "leave";
+        on = [ "р" ]; # h
+      }
+      {
+        run = "enter";
+        on = [ "д" ]; # l
+      }
+      {
+        run = "arrow top";
+        on = [
+          "п"
+          "п"
+        ]; # g g
+      }
+      {
+        run = "yank --cut";
+        on = [ "в" ]; # d
+      }
+      {
+        run = "plugin save-file --args=overwrite";
+        on = [
+          "п"
+          "ы"
+        ]; # g s
+      }
+      {
+        run = "plugin save-file --args=input";
+        on = [
+          "п"
+          "я"
+        ]; # g z
+      }
+      {
+        run = ''shell -- ya emit cd "$(git rev-parse --show-toplevel)"'';
+        on = [
+          "п"
+          "к"
+        ]; # g r
+      }
+      {
+        run = "plugin smart-paste";
+        on = [ "з" ]; # p
+      }
+      {
+        run = "plugin paste-to-select";
+        on = [
+          "п"
+          "з"
+        ]; # g p
+      }
     ];
   };
 
