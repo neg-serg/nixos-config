@@ -284,11 +284,12 @@ Object.entries(ru2en).forEach(([ru, en]) => api.map(ru, en));
   буквенные тумблеры (`d n m c f`) под RU недоступны; принять или заменить.
 - **nethack / zsh vi-mode / satty**: не чиним (игры/краевые случаи), фиксируем как known issue.
 
-### P2 — ghostty (мёртвый конфиг)
+### P2 — ghostty ✅ (решение: оставить с пометкой)
 
-Пакет не установлен. Варианты: удалить `modules/user/nix-maid/cli/ghostty.nix` +
-`files/cli/ghostty/config` (мёртвый груз), либо оставить с комментарием «не использовать с RU
-до версии с W3C key-code биндами (#7320)». Решение за пользователем.
+Пакет не установлен (kitty — основной терминал). Решение принято: **оставить** как
+миграционный референс, с пометкой в шапке `files/cli/ghostty/config` и в модуле
+`modules/user/nix-maid/cli/ghostty.nix`: «не использовать с RU до версии с W3C key-code
+биндами (#7320)». Если ghostty когда-нибудь понадобится — пометку снять после проверки.
 
 ### P3 — системное (опционально)
 
@@ -308,10 +309,10 @@ Object.entries(ru2en).forEach(([ru, en]) => api.map(ru, en));
 | `files/gui/zellij/config.kdl` | P2: дубли `Alt+р/о/л/д`, resize/tab/scroll |
 | `modules/user/nix-maid/cli/yazi.nix` | P2: дубли навигации и кастомных биндов (строчные) |
 | `files/rmpc/config.ron` | P2: дубли global/navigation/queue (вкл. заглавные) |
+| `files/cli/ghostty/config`, `modules/user/nix-maid/cli/ghostty.nix` | P2: пометка «не использовать с RU» (конфиг оставлен как миграционный референс) |
 | `docs/howto/hotkeys-ru-layout.ru.md`, `docs/howto/index.md` | этот документ |
 
-Не тронуто (подтверждено, что не чинится конфигом): mutt, rustmission, btop; ghostty — решение
-за пользователем.
+Не тронуто (подтверждено, что не чинится конфигом): mutt, rustmission, btop.
 
 ## Порядок коммитов (стиль репо: `[scope] subject`)
 
