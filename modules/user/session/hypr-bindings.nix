@@ -23,7 +23,9 @@ let
     bind = $M4+$C, c, exec, raise --class "swayimg" --launch "swayimg ~/dw"
     bind = $M4+$S, c, exec, wl random ~/pic/wl
     bind = $M4+$C, v, exec, raise --class "Bazecor" --launch "bazecor"
-    bind = ALT, g, exec, vicinae toggle
+    # ALT+g intentionally NOT bound here — it lives in files/gui/hypr/hyprland.lua
+    # (M1+g → vicinae deeplink switch-windows); a duplicate binding here was
+    # shadowed by the lua config and caused confusion.
     bind = $M4, g, exec, raise --class "steam" --launch "steam"
     bind = $M4+$C, n, exec, raise --class "Obsidian" --launch "flatpak run md.obsidian.Obsidian"
 
