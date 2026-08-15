@@ -4,7 +4,9 @@ let
   callPkg = final.neg.functions.callPkg; # shared helper (functions.nix)
 in
 {
-  neg = (prev.neg or { }) // rec {
+  # neg sub-attributes are merged once in packages/overlay.nix — no
+  # `(prev.neg or {})` accumulation here (prev is the unmodified base).
+  neg = rec {
     albumdetails = callPkg (packagesRoot + "/albumdetails") { }; # Music album metadata CLI (used by music-rename script)
     brrtfetch = callPkg (packagesRoot + "/brrtfetch") { }; # Animated ASCII art GIF renderer alongside sysinfo output
     duf = callPkg (packagesRoot + "/duf") { }; # duf fork with --style plain, --no-header, --no-bars flags
@@ -16,8 +18,6 @@ in
     talktype = callPkg (packagesRoot + "/talktype") { }; # Push-to-talk voice typing tool (F9 to record, transcribe, paste)
     termeverything = callPkg (packagesRoot + "/termeverything") { }; # Run GUI windows inside your terminal (Wayland compositor → ANSI)
     zsh-native-syntax = callPkg (packagesRoot + "/zsh-native-syntax") { }; # Native Rust-based zsh syntax highlighting engine
-
-    "pretty-printer" = pretty_printer;
 
     # ncpamixer-wrapped removed — nix-maid manages config via ~/.config/ncpamixer.conf
   };
