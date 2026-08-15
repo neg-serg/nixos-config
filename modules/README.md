@@ -84,6 +84,20 @@ User config management — `apps/`, `cli/`, `gui/`, `web/`, `sys/`, `fun/`.
 1. That's it — the domain's `default.nix` auto-imports everything via `readDir`.
 1. For a new top-level domain, add it to `modules/default.nix`.
 
+## Import conventions
+
+- **Domains auto-import via `readDir`** (drop a `.nix` file = it is imported; no registration).
+  Single-file domains may skip `readDir` entirely — there are no siblings to import.
+- **`user/nix-maid` and `user/session` use explicit import lists** (`default.nix`) — import ordering
+  and mixed file/directory imports there are deliberate; add files to the list, not just to the
+  directory.
+- **Data files are not modules**: non-module nix data (cache lists, config data) lives in `lib/`
+  (e.g. `lib/caches.nix`), never in a module directory — so domain `readDir` stays clean without
+  exclusion lists.
+- **Flake-imported exceptions** (`modules/system/disabled-modules.nix`, imported by
+  `flake/nixos.nix` outside the domain filter) are excluded explicitly in the domain's `default.nix`
+  with a comment — keep such exceptions documented.
+
 ## Feature flags
 
 Enable/disable domains per host:
