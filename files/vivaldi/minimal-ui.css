@@ -13,3 +13,9 @@
 #browser .tabbar-wrapper {
   display: none !important;
 }
+
+/* Belt-and-braces: hide Vivaldi's whole top header area, so no title bar,
+ * tab strip, or window-control row can ever appear above the page. */
+#browser #header {
+  display: none !important;
+}
