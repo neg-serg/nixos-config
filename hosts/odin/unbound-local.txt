@@ -1,0 +1,9 @@
+# Hand-curated local Unbound local-data entries (merged into unbound-hosts.nix by
+# gen-unbound-hosts). Format: <host> <A|AAAA> <value>
+localhost A 127.0.0.1
+localhost AAAA ::1
+nfc-web.app A 127.0.0.1
+nfc-web.app AAAA ::1
+host.docker.internal A 192.168.125.157
+gateway.docker.internal A 192.168.125.157
+kubernetes.docker.internal A 127.0.0.1
