@@ -8,7 +8,7 @@
   ...
 }:
 let
-  enabled = config.features.text.read.enable or false;
+  enabled = config.lib.neg.enabled "text.read";
   packages = [
     pkgs.antiword # convert MS Word documents to text, PostScript and XML
     pkgs.epr # CLI Epub reader

@@ -14,10 +14,8 @@
     the base network module keeps iwd disabled elsewhere to avoid unnecessary units.
   '';
 
-  config =
-    lib.mkIf (config.profiles.network.wifi.enable || (config.features.net.wifi.enable or false))
-      {
-        # Base module hard-disables iwd to keep hosts wired-only by default; opt-in hosts force-enable it.
-        networking.wireless.iwd.enable = lib.mkForce true;
-      };
+  config = lib.mkIf (config.profiles.network.wifi.enable || (config.lib.neg.enabled "net.wifi")) {
+    # Base module hard-disables iwd to keep hosts wired-only by default; opt-in hosts force-enable it.
+    networking.wireless.iwd.enable = lib.mkForce true;
+  };
 }

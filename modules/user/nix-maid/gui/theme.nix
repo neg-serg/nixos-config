@@ -48,7 +48,7 @@ let
   cssContent = if gtkThemeName == "neg-gtk" then negGtkCss else "/* @import 'colors.css'; */";
 in
 {
-  config = lib.mkIf (config.features.gui.enable or false) (
+  config = lib.mkIf (config.lib.neg.enabled "gui") (
     lib.mkMerge [
       {
         # 1. Packages

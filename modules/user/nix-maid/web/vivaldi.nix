@@ -7,8 +7,8 @@
 with lib;
 let
   cfg = config.features.web.vivaldi;
-  webEnabled = config.features.web.enable or false;
-  guiEnabled = config.features.gui.enable or false;
+  webEnabled = config.lib.neg.enabled "web";
+  guiEnabled = config.lib.neg.enabled "gui";
 
   # Extension install strategy — ExtensionInstallForcelist (force-installed via
   # managed policy). The browser itself downloads and (re)installs SurfingKeys +

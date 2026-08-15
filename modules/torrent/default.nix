@@ -5,7 +5,7 @@
   ...
 }:
 let
-  enabled = config.features.torrent.enable or false;
+  enabled = config.lib.neg.enabled "torrent";
   packages = [
     pkgs.transmission_4 # primary BitTorrent client/daemon
     pkgs.rustmission # CLI Transmission client written in Rust

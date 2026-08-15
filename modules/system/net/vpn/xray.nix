@@ -5,5 +5,5 @@
   ...
 }:
 {
-  environment.systemPackages = lib.optional (config.features.apps.throne.enable or false) pkgs.throne;
+  environment.systemPackages = lib.optional (config.lib.neg.enabled "apps.throne") pkgs.throne;
 }

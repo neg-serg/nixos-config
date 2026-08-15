@@ -5,7 +5,7 @@
   ...
 }:
 let
-  devEnabled = config.features.dev.enable or false;
+  devEnabled = config.lib.neg.enabled "dev";
 
   devPackages = [
     pkgs.nix-tree # Interactive nix store dependency graph browser

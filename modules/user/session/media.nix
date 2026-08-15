@@ -5,7 +5,7 @@
   ...
 }:
 let
-  guiEnabled = config.features.gui.enable or false;
+  guiEnabled = config.lib.neg.enabled "gui";
   localBinPackages = [
     pkgs.alsa-utils # alsamixer/amixer fallback; direct ALSA control when PipeWire drifts
     pkgs.essentia-extractor # Essentia CLI; pro audio descriptors far beyond ffmpeg

@@ -95,7 +95,7 @@ lib.mkMerge [
         pkgs.mpdas # Audio Scrobbler client for MPD
         pkgs.mpdris2 # MPRIS 2 support for MPD
       ]
-      ++ lib.optionals (config.features.media.audio.spicetify.enable or false) [
+      ++ lib.optionals (config.lib.neg.enabled "media.audio.spicetify") [
         pkgs.spicetify-cli # Spotify customization tool
       ];
 
@@ -192,11 +192,9 @@ lib.mkMerge [
     '';
 
     # Spicetify Config (partial management)
-    ".config/spicetify/config-xpui.ini" =
-      lib.mkIf (config.features.media.audio.spicetify.enable or false)
-        {
-          text = lib.generators.toINI { } spiceSettings;
-        };
+    ".config/spicetify/config-xpui.ini" = lib.mkIf (config.lib.neg.enabled "media.audio.spicetify") {
+      text = lib.generators.toINI { } spiceSettings;
+    };
 
     # Rescrobbled Config (from SOPS)
     ".config/rescrobbled/config.toml".source = config.sops.secrets."lastfm/rescrobbled".path;
@@ -218,7 +216,7 @@ lib.mkMerge [
     };
     # mpdas service lives in sys/user-services.nix.
   })
-  (lib.mkIf (config.features.media.aiUpscale.enable or false) (
+  (lib.mkIf (config.lib.neg.enabled "media.aiUpscale") (
     neg.mkHomeFiles {
       ".local/bin/ai-upscale-video" = {
         executable = true;

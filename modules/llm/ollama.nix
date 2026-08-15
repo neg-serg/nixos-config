@@ -5,7 +5,7 @@
 }:
 let
   cfg = config.services.ollama;
-  enabled = config.features.llm.enable or false;
+  enabled = config.lib.neg.enabled "llm";
 in
 {
   config = lib.mkIf enabled {

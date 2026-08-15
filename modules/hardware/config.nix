@@ -42,7 +42,7 @@ in
 
       powerManagement.cpuFreqGovernor = "performance";
     }
-    (lib.mkIf (config.features.hardware.bluetooth.enable or false) {
+    (lib.mkIf (config.lib.neg.enabled "hardware.bluetooth") {
       hardware.bluetooth = {
         enable = true; # enable bluetooth
         powerOnBoot = false;

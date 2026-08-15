@@ -8,7 +8,7 @@ let
   inherit (config.users.users.neg) home;
 in
 {
-  config = lib.mkIf (config.features.gui.enable or false) (
+  config = lib.mkIf (config.lib.neg.enabled "gui") (
     lib.mkMerge [
       {
         environment.variables.MPV_HOME = "${home}/.config/mpv";

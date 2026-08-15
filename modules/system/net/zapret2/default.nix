@@ -24,7 +24,7 @@ let
   # youtube/google), else the static hostlist below.
   rknHostlist = "/var/lib/rkn/domains/domains_all.txt";
   hostlistArg =
-    if (config.features.net.rknDomains.enable or false) then
+    if (config.lib.neg.enabled "net.rknDomains") then
       "--hostlist=${rknHostlist}"
     else
       "--hostlist=/etc/zapret2/zapret-hosts-user.txt";
@@ -167,7 +167,7 @@ in
       after = [
         "network-online.target"
       ]
-      ++ lib.optionals (config.features.net.rknDomains.enable or false) [ "rkn-domains-fetch.service" ];
+      ++ lib.optionals (config.lib.neg.enabled "net.rknDomains") [ "rkn-domains-fetch.service" ];
       wants = [ "network-online.target" ];
       path = [ pkgs.nftables ];
       serviceConfig = {

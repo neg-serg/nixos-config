@@ -16,7 +16,7 @@ in
     |> builtins.attrNames
     |> builtins.filter (n: n != "default.nix" && !builtins.elem n excludes)
     |> builtins.map (n: ./. + "/${n}");
-  config = lib.mkIf (config.features.llm.enable or false) (
+  config = lib.mkIf (config.lib.neg.enabled "llm") (
     lib.mkMerge [
       {
         services.ollama = {
