@@ -71,7 +71,6 @@
   features.cli.broot.enable = true;
   features.hardware.usbAutomount.enable = true;
   features.input.kanata.enable = true; # Caps→Ctrl via kanata
-  features.input.warpd.enable = false; # warpd: disabled — X11 daemon leaks XWayland windows under Hyprland (floods vicinae/Alt+G window list); no hotkeys bound anyway
 
   # nixpkgs 26.05: service users need explicit isSystemUser + group.
   # Defined at host level because server modules gate behind mkIf cfg.enable,
