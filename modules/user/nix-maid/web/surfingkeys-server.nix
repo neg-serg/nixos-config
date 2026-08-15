@@ -6,7 +6,7 @@
   ...
 }:
 let
-  systemdUser = import ../../../lib/systemd-user.nix { inherit lib; };
+  systemdUser = import ../../../../lib/systemd-user.nix { inherit lib; };
 in
 with lib;
 mkIf (config.features.web.enable or false) {
