@@ -7,7 +7,7 @@
 }:
 let
   cfg = config.features.cli.broot;
-  brootRoot = ../../../../files/shell/broot;
+  brootRoot = config.lib.neg.path "files/shell/broot";
 in
 lib.mkIf (cfg.enable or false) (
   lib.mkMerge [

@@ -10,8 +10,8 @@
     neg.mkHomeFiles (
       let
         # Path to the source directories
-        binDir = ../../../../packages/local-bin/bin;
-        scriptsDir = ../../../../packages/local-bin/scripts;
+        binDir = config.lib.neg.path "packages/local-bin/bin";
+        scriptsDir = config.lib.neg.path "packages/local-bin/scripts";
 
         # Python library paths for special scripts
         sp = pkgs.python3.sitePackages; # High-level dynamically-typed programming language

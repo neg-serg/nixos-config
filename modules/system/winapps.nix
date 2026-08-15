@@ -10,7 +10,7 @@ let
   vmProfile = (config.profiles.vm or { enable = false; }).enable;
 
   # App configs from local files
-  appDir = ../../files/winapps/apps;
+  appDir = config.lib.neg.path "files/winapps/apps";
 
   parseAppInfo =
     name:

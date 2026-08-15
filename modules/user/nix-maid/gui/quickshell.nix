@@ -2,13 +2,12 @@
   pkgs,
   lib,
   config,
-  inputs,
   neg,
   ...
 }:
 let
   # Source path
-  quickshellSrc = ../../../../files/quickshell;
+  quickshellSrc = config.lib.neg.path "files/quickshell";
 
   # Feature flags check
   quickshellEnabled =
@@ -21,7 +20,7 @@ let
   qsPkg = pkgs.quickshell; # Flexbile QtQuick based desktop shell toolkit
 
   # Wrapper factory
-  mkQuickshellWrapper = import (inputs.self + "/lib/quickshell-wrapper.nix") {
+  mkQuickshellWrapper = import (config.lib.neg.path "lib/quickshell-wrapper.nix") {
     inherit lib pkgs;
   };
 

@@ -30,7 +30,7 @@ in
   # Password hash from SOPS (kept out of Nix store).
   # sops-nix with key="password_hash" extracts just the hash value from the YAML file.
   sops.secrets."user-password-hash" = {
-    sopsFile = ../../secrets/home/user-password-hash.sops.yaml;
+    sopsFile = config.lib.neg.path "secrets/home/user-password-hash.sops.yaml";
     format = "yaml";
     key = "password_hash";
     mode = "0400";
@@ -116,5 +116,7 @@ in
     pkgs.kanata # keyboard remapper (Caps→Ctrl, etc.)
     pkgs.podman # container management for distrobox (Docker-compatible)
   ];
-  environment.etc."zellij/config.kdl".text = builtins.readFile ./../../files/gui/zellij/config.kdl;
+  environment.etc."zellij/config.kdl".text = builtins.readFile (
+    config.lib.neg.path "files/gui/zellij/config.kdl"
+  );
 }
