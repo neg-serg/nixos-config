@@ -12,7 +12,12 @@ in
   # not a module, so it stays out of the auto-import.
   imports =
     builtins.attrNames entries
-    |> builtins.filter (n: n != "default.nix" && n != "unbound-hosts.nix" && (entries.${n} == "directory" || lib.hasSuffix ".nix" n))
+    |> builtins.filter (
+      n:
+      n != "default.nix"
+      && n != "unbound-hosts.nix"
+      && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
+    )
     |> builtins.map (n: ./. + "/${n}");
   system.preserveFlake = false;
 
