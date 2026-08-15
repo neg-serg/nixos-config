@@ -7,32 +7,9 @@
 let
   cfg = config.features.dev.python;
 
-  # Python with LTO optimizations (defined in overlay) and common packages
-  # used by repository scripts and local tools.
-  myPythonPackages =
-    ps: with ps; [
-      # Base utilities
-      colored
-      docopt
-      numpy
-      pillow
-      psutil
-      requests
-      tabulate
-
-      # Data and parsing
-      beautifulsoup4
-      orjson
-
-      # Tool integration
-      dbus-python
-      pynvim
-
-      # Media/Type related (used by local-bin)
-      fontforge
-      fonttools
-      mutagen
-    ];
+  # Shared package list — single source in lib/python-packages.nix
+  pythonLists = import ../../../../lib/python-packages.nix { };
+  myPythonPackages = pythonLists.myPythonPackages;
 
   pythonEnv = (pkgs.python3-lto or pkgs.python3).withPackages myPythonPackages; # High-level dynamically-typed programming language
 in
