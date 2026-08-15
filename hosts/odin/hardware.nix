@@ -116,7 +116,9 @@
     # amneziawg disabled — incompatible with certain kernel versions (ipv6_stub removed)
     extraModulePackages = lib.mkForce (
       let
-        snd-hdspe = pkgs.callPackage ../../packages/snd-hdspe {
+        # Wired through the overlay (packages/overlays/media.nix); the host
+        # kernel is passed here since a kernel module must match the boot kernel.
+        snd-hdspe = pkgs.snd-hdspe.override {
           kernel = config.boot.kernelPackages.kernel;
         };
       in
