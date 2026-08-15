@@ -1,21 +1,13 @@
-{ ... }:
 {
-  imports = [
-    ./asciinema.nix
-    ./broot.nix
-    ./emulators.nix
-    ./envs.nix
-    ./espanso.nix
-    ./ghostty.nix
-    ./git.nix
-    ./local-bin.nix
-    ./monitoring.nix
-    ./search.nix
-    ./shells.nix
-    ./tig.nix
-    ./utils.nix
-    ./yazi.nix
-  ];
+  lib,
+  ...
+}:
+{
+  imports =
+    builtins.readDir ./.
+    |> builtins.attrNames
+    |> builtins.filter (n: n != "default.nix" && lib.hasSuffix ".nix" n)
+    |> builtins.map (n: ./. + "/${n}");
 
   environment.systemPackages = [
 
