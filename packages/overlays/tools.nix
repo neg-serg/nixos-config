@@ -1,14 +1,7 @@
-inputs: _final: prev:
+inputs: final: prev:
 let
   packagesRoot = inputs.self + "/packages";
-  callPkg =
-    path: extraArgs:
-    let
-      f = import path;
-      wantsInputs = builtins.hasAttr "inputs" (builtins.functionArgs f);
-      autoArgs = if wantsInputs then { inherit inputs; } else { };
-    in
-    prev.callPackage path (autoArgs // extraArgs);
+  callPkg = final.neg.functions.callPkg; # shared helper (functions.nix)
 in
 {
   # warpd: nixpkgs 26.05 src hash is stale for v1.3.5 (upstream tag tarball
