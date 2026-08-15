@@ -4,10 +4,11 @@
 # Imports submodules for launchers, performance, and VR.
 { lib, ... }:
 {
-  imports = [
-    ./launchers.nix
-    ./performance.nix
-  ];
+  imports =
+    builtins.readDir ./.
+    |> builtins.attrNames
+    |> builtins.filter (n: n != "default.nix" && lib.hasSuffix ".nix" n)
+    |> builtins.map (n: ./. + "/${n}");
 
   options.profiles.games = {
     enable = lib.mkOption {
