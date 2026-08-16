@@ -78,6 +78,21 @@ in
     name: name != "user" && name != "games"
   );
 
+  # ── Unit checks (pure nix, eval-only) ──────────────────────────────
+  # lib/ru-keys.nix is the single source of truth for ЙЦУКЕН hotkey
+  # duplicates; these assertions pin the table and every generator.
+  "ru-keys" =
+    let
+      t = import ../lib/ru-keys-tests.nix { lib = nixpkgs.lib; };
+    in
+    if t.failures == [ ] then
+      pkgs.runCommand "check-ru-keys" { } ''
+        echo "check: ru-keys OK (${toString (builtins.length t.checks)} assertions)"
+        touch $out
+      ''
+    else
+      builtins.throw "ru-keys check failures: ${t.report}";
+
   # ── NixOS test config checks ───────────────────────────────────────
   # Each evaluates a profile-specific NixOS configuration for "odin"
   # via mkTestHost (threaded from flake.nix; stripped from the

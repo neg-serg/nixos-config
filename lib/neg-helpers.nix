@@ -22,4 +22,8 @@
 
   # Pass-through for impure values
   linkImpure = x: x;
+
+  # ЙЦУКЕН hotkey table + generators — single source of truth for Russian-layout
+  # duplicate binds (see lib/ru-keys.nix and docs/howto/hotkeys-ru-layout.ru.md).
+  ruKeys = import ./ru-keys.nix;
 }

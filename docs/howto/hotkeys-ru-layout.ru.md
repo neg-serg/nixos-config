@@ -303,16 +303,37 @@ Object.entries(ru2en).forEach(([ru, en]) => api.map(ru, en));
 | Файл | Изменение |
 |---|---|
 | `files/gui/hypr/hyprland.lua` | P0: комментарий про инварианты + явное `resolve_binds_by_sym = false` |
-| `files/kitty/key.conf` | P1: блок «Russian layout duplicates (ЙЦУКЕН)» — ~40 дублей `CYRILLIC_*` |
+| `files/kitty/key.conf` | P1: латинские бинды; RU-дубли **генерируются** и дописываются из `lib/ru-keys.nix` (см. «Генерация дублей») |
+| `modules/user/nix-maid/cli/shells.nix` | P1: данные `kittyRuBinds` + генерация `key.conf`; kitty-конфиг разворачивается пофайлово |
 | `modules/user/nix-maid/apps/mpv/input.nix` | P1: кириллические дубли (пауза/сик/fullscreen/mute/субтитры/апскейл) |
 | `files/surfingkeys.js` | P1: langmap-блок `ru2en` + `api.map` |
 | `files/gui/zellij/config.kdl` | P2: дубли `Alt+р/о/л/д`, resize/tab/scroll |
-| `modules/user/nix-maid/cli/yazi.nix` | P2: дубли навигации и кастомных биндов (строчные) |
+| `modules/user/nix-maid/cli/yazi.nix` | P2: дубли навигации и кастомных биндов — **генерируются** из `lib/ru-keys.nix` (`neg.ruKeys.mkRuKeys`) |
 | `files/rmpc/config.ron` | P2: дубли global/navigation/queue (вкл. заглавные) |
 | `files/cli/ghostty/config`, `modules/user/nix-maid/cli/ghostty.nix` | P2: пометка «не использовать с RU» (конфиг оставлен как миграционный референс) |
+| `lib/ru-keys.nix` | **новый**: таблица qwerty→йцукен + генераторы (`mkRuKeys`, `kittySeq`, `mkKittyLines`, `mkLangmap`) — единственный источник правды |
+| `lib/ru-keys-tests.nix`, `flake/checks.nix` | **новый**: чек `ru-keys` (полнота таблицы, биекция, golden для langmap/kitty-строк) |
 | `docs/howto/hotkeys-ru-layout.ru.md`, `docs/howto/index.md` | этот документ |
 
 Не тронуто (подтверждено, что не чинится конфигом): mutt, rustmission, btop.
+
+## Генерация дублей (refactor, `lib/ru-keys.nix`)
+
+Ручные кириллические дубли рассыпаются по конфигам и тихо рассинхронизируются с латинскими
+биндами. С `lib/ru-keys.nix` все дубли **генерируются** из одной таблицы (qwerty→йцукен):
+
+- модули получают её как `neg.ruKeys` (через `lib/neg-helpers.nix`, specialArgs);
+- `neg.ruKeys.mkRuKeys [ "j" ]` → `[ "о" ]` (yazi и аналоги со списками клавиш);
+- `neg.ruKeys.mkKittyLines [{ mod; keys; action; }]` → строки `map ctrl+shift+CYRILLIC_* …`
+  (kitty: данные `kittyRuBinds` в `modules/user/nix-maid/cli/shells.nix`);
+- `neg.ruKeys.mkLangmap` воспроизводит langmap neovim байт-в-байт (golden-тест).
+
+Правило: новые дубли руками не писать — добавлять бинд в данные и/или расширять генератор.
+Чек `nix eval .#checks.x86_64-linux.ru-keys` (и `nix flake check`) ловит рассинхрон таблицы.
+
+Остаток миграции (рукописные дубли → генераторы): zellij `config.kdl`, rmpc `config.ron`,
+swayimg `init.lua`, SurfingKeys `ru2en`, mpv `input.nix`, neovim langmap (сверка с
+`mkLangmap`).
 
 ## Порядок коммитов (стиль репо: `[scope] subject`)
 
