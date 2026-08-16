@@ -43,6 +43,10 @@ lib.mkMerge [
     servicesProfiles = {
       unbound.enable = true;
       adguardhome.enable = true;
+      # Local sshd, key-only auth (hardened profile). The dsh web agent has a
+      # dedicated key in ~/.ssh/agent/dsh-agent-key (authorized_keys entry
+      # restricted to localhost) so its SSH tools/terminal can reach the host.
+      openssh.enable = true;
       # Local DNS rewrites for LAN names
       adguardhome.rewrites = [
         {
@@ -190,6 +194,7 @@ lib.mkMerge [
     };
 
     networking.firewall.interfaces.br0.allowedTCPPorts = lib.mkAfter [
+      22 # sshd (key-only auth)
       80
       443
     ];
