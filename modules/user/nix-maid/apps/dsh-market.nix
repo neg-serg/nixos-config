@@ -371,9 +371,9 @@ body[data-ds-dark-theme] {
   --dsh-composer-card-max-width: calc(var(--dsh-chat-content-width) + 32px);
 }
 body {
-  --dsw-font-markdown-base: 400 15px/24px var(--dsw-font-family);
-  --dsw-font-markdown-base-font-size: 15px;
-  --dsw-font-markdown-base-line-height: 24px;
+  --dsw-font-markdown-base: 400 14px/22px var(--dsw-font-family);
+  --dsw-font-markdown-base-font-size: 14px;
+  --dsw-font-markdown-base-line-height: 22px;
 }
 
 /* -- terminal pass: flat, dense, squared -- */
@@ -383,16 +383,18 @@ body {
   gap: 10px;
 }
 
-/* user message: squared prompt line instead of a chat bubble */
+/* all message rows: full-width flat lines (no chat bubbles) */
 .gdEzaW_userRow {
   align-items: stretch;
 }
 .gdEzaW_bubble {
-  border-radius: 4px;
-  padding: 6px 12px;
-  font-size: 15px;
-  line-height: 24px;
-  border: 1px solid var(--dsw-alias-border-l1);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 2px 0;
+  max-width: 100%;
+  font-size: 14px;
+  line-height: 22px;
 }
 .gdEzaW_bubble::before {
   content: "❯ ";
@@ -406,8 +408,8 @@ body {
   border-radius: 4px;
   border-left: 3px solid var(--dsw-alias-brand-primary);
   padding: 30px 14px 12px;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: 12px;
+  line-height: 19px;
 }
 .ydkMvW_code::before {
   content: "❯";
@@ -433,6 +435,28 @@ body {
 /* composer seat: terminal input divider */
 [data-composer-seat] {
   border-top: 1px solid rgba(54, 123, 191, 0.4);
+}
+
+/* terminal input: block caret (blinks natively), green, 14px */
+.uV2eYG_input {
+  font-size: 14px;
+  caret-shape: block;
+  caret-color: #37b393;
+}
+
+/* terminal status readouts: turn status + dock band under the composer */
+.Md3f7G_turnStatus {
+  font-family: var(--ds-font-family-code);
+  font-size: 12px;
+  color: var(--dsw-alias-state-success-primary);
+}
+._7rgC5q_anchorDock {
+  background: rgba(4, 15, 28, 0.85);
+  border-top: 1px solid var(--dsw-alias-border-l1);
+  font-family: var(--ds-font-family-code);
+  font-size: 12px;
+  color: var(--dsw-alias-label-secondary);
+  padding: 2px 12px;
 }
 
 /* terminal-style selection */
