@@ -147,13 +147,13 @@ let
         PATCH="$PROFILE_DIR/cordis.patch.yml"
         if ! grep -q 'allowRestart' "$PATCH" 2>/dev/null; then
           cat > "$PATCH" <<'YAML'
-    # Managed by NixOS (modules/user/nix-maid/apps/dsh-market.nix) — do not edit.
-    # dsh web runs under systemd, so the market's one-click restart is disabled;
-    # the supervisor owns restarts.
-    - id: dsh-market
-      config:
-        allowRestart: false
-    YAML
+# Managed by NixOS (modules/user/nix-maid/apps/dsh-market.nix) — do not edit.
+# dsh web runs under systemd, so the market's one-click restart is disabled;
+# the supervisor owns restarts.
+- id: dsh-market
+  config:
+    allowRestart: false
+YAML
         fi
 
         # UI panels the user disabled in the web GUI (right-side
@@ -163,20 +163,20 @@ let
         if ! grep -q 'ui-dsh-aionui-panel' "$PATCH" 2>/dev/null; then
           cat >> "$PATCH" <<'YAML'
 
-    # Disabled UI panels — see dsh-market.nix (dsh web GUI declutter).
-    - id: ui-dsh-aionui-panel
-      disabled: true
-    - id: ui-task-board
-      disabled: true
-    - id: pet
-      disabled: true
-    - id: ui-skin-center
-      disabled: true
-    - id: dream-skin
-      disabled: true
-    - id: better-sidebar
-      disabled: true
-    YAML
+# Disabled UI panels — see dsh-market.nix (dsh web GUI declutter).
+- id: ui-dsh-aionui-panel
+  disabled: true
+- id: ui-task-board
+  disabled: true
+- id: pet
+  disabled: true
+- id: ui-skin-center
+  disabled: true
+- id: dream-skin
+  disabled: true
+- id: better-sidebar
+  disabled: true
+YAML
         fi
 
         # dsh-terminal-ui: wider chat column, Iosevka fonts, terminal-ish
@@ -437,10 +437,13 @@ body {
   border-top: 1px solid rgba(54, 123, 191, 0.4);
 }
 
-/* terminal input: block caret (blinks natively), green, 14px */
+/* terminal input: green bar caret (blinks natively), 14px.
+   Note: `caret-shape: block` was tried but Chromium renders it brokenly on
+   this auto-growing textarea (stray green blocks at wrong positions), so we
+   keep the standard bar caret and only tint it green. */
 .uV2eYG_input {
   font-size: 14px;
-  caret-shape: block;
+  caret-shape: auto;
   caret-color: #37b393;
 }
 
@@ -488,12 +491,12 @@ JS
         if ! grep -q 'terminal-ui' "$PATCH" 2>/dev/null; then
           cat >> "$PATCH" <<'YAML'
 
-    # dsh-terminal-ui - wider chat column, Iosevka, terminal-ish look
-    # (package lives in node_modules/dsh-terminal-ui, see dsh-market.nix).
-    - insert:
-        - id: terminal-ui
-          name: dsh-terminal-ui
-    YAML
+# dsh-terminal-ui - wider chat column, Iosevka, terminal-ish look
+# (package lives in node_modules/dsh-terminal-ui, see dsh-market.nix).
+- insert:
+    - id: terminal-ui
+      name: dsh-terminal-ui
+YAML
         fi
 
         if [ "$installed" = 1 ]; then
