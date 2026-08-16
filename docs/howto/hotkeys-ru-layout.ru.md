@@ -313,9 +313,29 @@ Object.entries(ru2en).forEach(([ru, en]) => api.map(ru, en));
 | `files/cli/ghostty/config`, `modules/user/nix-maid/cli/ghostty.nix` | P2: пометка «не использовать с RU» (конфиг оставлен как миграционный референс) |
 | `lib/ru-keys.nix` | **новый**: таблица qwerty→йцукен + генераторы (`mkRuKeys`, `kittySeq`, `mkKittyLines`, `mkLangmap`) — единственный источник правды |
 | `lib/ru-keys-tests.nix`, `flake/checks.nix` | **новый**: чек `ru-keys` (полнота таблицы, биекция, golden для langmap/kitty-строк) |
+| `modules/user/nix-maid/hyprland/ru-layout.nix` | **новый**: layout-daemon — раскладка по активному окну (us в kitty/mpv, ru в остальных) |
 | `docs/howto/hotkeys-ru-layout.ru.md`, `docs/howto/index.md` | этот документ |
 
-Не тронуто (подтверждено, что не чинится конфигом): mutt, rustmission, btop.
+«Не чинится конфигом» (mutt, rustmission, btop) теперь **чинится автоматически** layout-daemon'ом
+(см. «Layout-daemon») — конфиги этих программ не трогаем, раскладку им задаёт композитор.
+
+## Layout-daemon: раскладка по активному окну (`features.input.ruHotkeys`)
+
+Проблема существует только потому, что в kitty/mpv активна ru-раскладка в момент нажатия хоткея.
+Демон `ru-layout` (systemd-user, `hyprland-session.target`) следит за активным окном и переключает
+XKB-группу **на смене фокуса**:
+
+- классы из `features.input.ruHotkeys.usClasses` (по умолчанию `kitty`, `mpv`) → `us`;
+- всё остальное (браузер, чаты, …) → `ru` (typing-first).
+
+Так чинятся разом **все** TUI-программы и то, что конфигом не лечится: mutt, rustmission, btop,
+tig, broot, khal, zsh vi-mode, kitty-hints — им не нужны дубли, потому что раскладка уже us.
+Правила применяются только на смене окна: ручной `M4+S` внутри окна не откатывается, пока фокус
+не уйдёт. Индексы групп (`usLayoutIndex`/`ruLayoutIndex`) следуют инварианту `kb_layout = us,ru`.
+
+Включение: `features.input.ruHotkeys.enable = true` (на odin — включено).
+Проверка: `systemctl --user status ru-layout`; в kitty поднять `M4+S` → в соседнем окне раскладка
+сама вернётся на us, в браузере — на ru.
 
 ## Генерация дублей (refactor, `lib/ru-keys.nix`)
 
