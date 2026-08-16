@@ -4,6 +4,122 @@
   neg,
   ...
 }:
+let
+  # ЙЦУКЕН table + generators (lib/ru-keys.nix via specialArgs.neg) — the only
+  # source for Russian-layout duplicate binds in this file.
+  ruKeys = neg.ruKeys;
+
+  # Russian-layout duplicates for the latin binds above. Each entry mirrors a
+  # latin bind; the generator derives the Cyrillic key, so typos are impossible.
+  # `>`/`<` (uosc next/prev) do not exist in the ru layout — intentionally absent.
+  mpvRuBinds = [
+    {
+      key = "p";
+      command = "cycle pause; script-binding uosc/flash-pause-indicator";
+    }
+    {
+      key = "i";
+      command = "script-message-to uosc flash-top-bar";
+    }
+    {
+      key = "r";
+      command = "add sub-pos -1";
+    }
+    {
+      key = "t";
+      command = "add sub-pos +1";
+    }
+    {
+      key = "v";
+      command = "cycle sub-visibility 1";
+    }
+    {
+      key = "F";
+      command = "cycle fullscreen 1";
+    }
+    {
+      key = "l";
+      command = "seek +5; script-binding uosc/flash-timeline";
+    }
+    {
+      key = "h";
+      command = "seek -5; script-binding uosc/flash-timeline";
+    }
+    {
+      key = "L";
+      command = "seek +60; script-binding uosc/flash-timeline";
+    }
+    {
+      key = "H";
+      command = "seek -60; script-binding uosc/flash-timeline";
+    }
+    {
+      key = "m";
+      command = "no-osd cycle mute; script-binding uosc/flash-volume";
+    }
+    {
+      key = "A";
+      command = "cycle audio 1";
+    }
+    {
+      key = "R";
+      command = "cycle_values window-scale 2 0.5 1";
+    }
+    {
+      key = "j";
+      command = "cycle sub";
+    }
+    {
+      key = "s";
+      command = "cycle sub";
+    }
+    {
+      key = "Ctrl+h";
+      command = "multiply speed 1/1.1";
+    }
+    {
+      key = "Ctrl+l";
+      command = "multiply speed 1.1";
+    }
+    {
+      key = "Ctrl+H";
+      command = "set speed 1.0";
+    }
+    {
+      key = "Alt+I";
+      command = "vf toggle vapoursynth=~~/vs/ai/realesrgan.vpy:buffered-frames=3:concurrent-frames=1";
+    }
+    {
+      key = "Alt+U";
+      command = "run \"/bin/sh\" \"-c\" \"~/.local/bin/ai-upscale-video \\\"$path\\\"\"";
+    }
+  ];
+
+  # mpv key with a modifier prefix ("Ctrl+h") → the same physical key's Cyrillic
+  # counterpart ("Ctrl+р").
+  mpvRuKey =
+    key:
+    let
+      parts = lib.splitString "+" key;
+    in
+    if builtins.length parts == 1 then
+      ruKeys.toRu key
+    else
+      (lib.concatStringsSep "+" (lib.init parts)) + "+" + ruKeys.toRu (lib.last parts);
+
+  mpvRuBlock = ''
+    # --- Russian layout duplicates (ЙЦУКЕН) ------------------------------------
+    # GENERATED from lib/ru-keys.nix — do not edit by hand. Bind data lives in
+    # modules/user/nix-maid/apps/mpv/input.nix (mpvRuBinds).
+    # mpv matches keys by the text the active layout produces, so latin-letter
+    # binds break under the ru layout.
+    # Table: docs/howto/hotkeys-ru-layout.ru.md
+  ''
+  + lib.concatStringsSep "\n" (map (d: "${mpvRuKey d.key} ${d.command}  # ${d.key}") mpvRuBinds)
+  + ''
+    # `>`/`<` (uosc next/prev) do not exist in the ru layout — left unbound there.
+  '';
+in
 {
   config = lib.mkIf (config.lib.neg.enabled "gui") (
     neg.mkHomeFiles {
@@ -51,32 +167,8 @@
         Alt+I vf toggle vapoursynth=~~/vs/ai/realesrgan.vpy:buffered-frames=3:concurrent-frames=1
         Alt+U run "/bin/sh" "-c" "~/.local/bin/ai-upscale-video \"$path\""
 
-        # --- Russian layout duplicates (ЙЦУКЕН) ------------------------------------
-        # mpv matches keys by the text the active layout produces, so latin-letter
-        # binds break under the ru layout. These are the Cyrillic equivalents.
-        # Reference table: docs/howto/hotkeys-ru-layout.ru.md
-        з cycle pause; script-binding uosc/flash-pause-indicator           # p
-        ш script-message-to uosc flash-top-bar                             # i
-        к add sub-pos -1                                                   # r
-        е add sub-pos +1                                                   # t
-        м cycle sub-visibility 1                                           # v
-        А cycle fullscreen 1                                               # F
-        д seek +5; script-binding uosc/flash-timeline                      # l
-        р seek -5; script-binding uosc/flash-timeline                      # h
-        Д seek +60; script-binding uosc/flash-timeline                     # L
-        Р seek -60; script-binding uosc/flash-timeline                     # H
-        ь no-osd cycle mute; script-binding uosc/flash-volume              # m
-        Ф cycle audio 1                                                    # A
-        К cycle_values window-scale 2 0.5 1                                # R
-        о cycle sub                                                        # j
-        ы cycle sub                                                        # s
-        Ctrl+р multiply speed 1/1.1                                        # Ctrl+h
-        Ctrl+д multiply speed 1.1                                          # Ctrl+l
-        Ctrl+Р set speed 1.0                                               # Ctrl+H
-        Alt+ш vf toggle vapoursynth=~~/vs/ai/realesrgan.vpy:buffered-frames=3:concurrent-frames=1   # Alt+I
-        Alt+г run "/bin/sh" "-c" "~/.local/bin/ai-upscale-video \"$path\""                          # Alt+U
-        # `>`/`<` (uosc next/prev) do not exist in the ru layout — left unbound there.
-      '';
+      ''
+      + mpvRuBlock;
     }
   );
 }

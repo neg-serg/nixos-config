@@ -6,6 +6,142 @@
 }:
 let
   entries = builtins.readDir ./.;
+
+  # --- zellij: Russian-layout duplicate binds (ЙЦУКЕН) ------------------------
+  # GENERATED from lib/ru-keys.nix (single source of truth) — do not edit the
+  # generated chars. Latin binds live in files/gui/zellij/config.kdl with the
+  # zellijRuBinds.* markers; the daemon ru-layout already forces us in the
+  # terminal, so these duplicates only matter after a manual M4+S switch.
+  ruKeys = import ../../lib/ru-keys.nix;
+
+  zellijRuBinds = {
+    focus = [
+      {
+        mod = "Alt ";
+        key = "h";
+        action = "MoveFocus \"left\"";
+      }
+      {
+        mod = "Alt ";
+        key = "j";
+        action = "MoveFocus \"down\"";
+      }
+      {
+        mod = "Alt ";
+        key = "k";
+        action = "MoveFocus \"up\"";
+      }
+      {
+        mod = "Alt ";
+        key = "l";
+        action = "MoveFocus \"right\"";
+      }
+    ];
+    resize = [
+      {
+        mod = "";
+        key = "h";
+        action = "Resize \"left\"";
+      }
+      {
+        mod = "";
+        key = "j";
+        action = "Resize \"down\"";
+      }
+      {
+        mod = "";
+        key = "k";
+        action = "Resize \"up\"";
+      }
+      {
+        mod = "";
+        key = "l";
+        action = "Resize \"right\"";
+      }
+    ];
+    tab = [
+      {
+        mod = "";
+        key = "l";
+        action = "GoToNextTab";
+      }
+      {
+        mod = "";
+        key = "h";
+        action = "GoToPreviousTab";
+      }
+      {
+        mod = "";
+        key = "n";
+        action = "NewTab; SwitchToMode \"normal\"";
+      }
+      {
+        mod = "";
+        key = "r";
+        action = "SwitchToMode \"rename-tab\"";
+      }
+    ];
+    scroll = [
+      {
+        mod = "";
+        key = "j";
+        action = "ScrollDown";
+      }
+      {
+        mod = "";
+        key = "k";
+        action = "ScrollUp";
+      }
+    ];
+  };
+
+  # Generated blocks are indented to match the surrounding keybinds (8 spaces).
+  # Built with explicit strings: multi-line '' strings would strip the indent.
+  zellijRuBlock =
+    binds:
+    "        // Russian layout (ЙЦУКЕН) — GENERATED from lib/ru-keys.nix\n"
+    + "        // Table: docs/howto/hotkeys-ru-layout.ru.md\n"
+    + lib.concatStringsSep "\n" (
+      map (d: "        bind \"${d.mod}${ruKeys.toRu d.key}\" { ${d.action}; }") binds
+    );
+
+  zellijConfig = builtins.readFile (config.lib.neg.path "files/gui/zellij/config.kdl");
+  zellijText = lib.pipe zellijConfig [
+    (
+      s:
+      builtins.replaceStrings
+        [
+          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.focus), see hosts/odin/default.nix"
+        ]
+        [ (zellijRuBlock zellijRuBinds.focus) ]
+        s
+    )
+    (
+      s:
+      builtins.replaceStrings
+        [
+          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.resize), see hosts/odin/default.nix"
+        ]
+        [ (zellijRuBlock zellijRuBinds.resize) ]
+        s
+    )
+    (
+      s:
+      builtins.replaceStrings
+        [ "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.tab), see hosts/odin/default.nix" ]
+        [ (zellijRuBlock zellijRuBinds.tab) ]
+        s
+    )
+    (
+      s:
+      builtins.replaceStrings
+        [
+          "        // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.scroll), see hosts/odin/default.nix"
+        ]
+        [ (zellijRuBlock zellijRuBinds.scroll) ]
+        s
+    )
+  ];
 in
 {
   # unbound-hosts.nix is generated data (a list), imported by services.nix —
@@ -117,7 +253,5 @@ in
     pkgs.kanata # keyboard remapper (Caps→Ctrl, etc.)
     pkgs.podman # container management for distrobox (Docker-compatible)
   ];
-  environment.etc."zellij/config.kdl".text = builtins.readFile (
-    config.lib.neg.path "files/gui/zellij/config.kdl"
-  );
+  environment.etc."zellij/config.kdl".text = zellijText;
 }
