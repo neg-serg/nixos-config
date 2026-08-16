@@ -513,9 +513,7 @@ api.map(';pc', ':setProxyMode clear', 0, 'Proxy: clear (no control)');
 // (api.map rhs is a key sequence dispatched to the command handler, no DOM
 // key event is re-created, so this cannot loop).
 // Reference table: docs/howto/hotkeys-ru-layout.ru.md
-const ru2en = { 'й':'q','ц':'w','у':'e','к':'r','е':'t','н':'y','г':'u','ш':'i','щ':'o','з':'p',
-  'х':'[','ъ':']','ф':'a','ы':'s','в':'d','а':'f','п':'g','р':'h','о':'j','л':'k','д':'l',
-  'ж':';','э':"'",'я':'z','ч':'x','с':'c','м':'v','и':'b','т':'n','ь':'m','б':',','ю':'.' };
+// @GENERATED ru2en — see modules/user/nix-maid/web/browsing.nix (skRu2en)
 Object.entries(ru2en).forEach(([ru, en]) => api.map(ru, en));
 
 
