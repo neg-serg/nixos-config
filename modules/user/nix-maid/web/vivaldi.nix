@@ -44,7 +44,9 @@ let
     # Forcing it via --enable-features keeps the CSS mods active unconditionally.
     # --remote-debugging-port=9222: CDP endpoint for inspecting the browser's own
     # DOM (navbar/toolbars) while debugging usercss selectors. Loopback-only.
-    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VivaldiCssMods --disable-features=Vulkan,WaylandWpColorManagerV1 --remote-debugging-port=9222";
+    # --remote-allow-origins=*: CDP rejects WebSocket handshakes from unknown
+    # origins unless allowed; the debugger connects from a local script.
+    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VivaldiCssMods --disable-features=Vulkan,WaylandWpColorManagerV1 --remote-debugging-port=9222 --remote-allow-origins=*";
     proprietaryCodecs = false;
   };
 
@@ -91,10 +93,10 @@ in
         ];
 
         # Default font: Iosevka everywhere (matches system-wide fontconfig default)
-        "StandardFontFamily" = "Iosevka";
-        "SerifFontFamily" = "Iosevka";
-        "SansSerifFontFamily" = "Iosevka";
-        "FixedFontFamily" = "Iosevka";
+        "StandardFontFamily" = "Iosevka Proportional";
+        "SerifFontFamily" = "Iosevka Proportional";
+        "SansSerifFontFamily" = "Iosevka Proportional";
+        "FixedFontFamily" = "Iosevka Proportional";
         "DefaultFontSize" = 15;
         "DefaultFixedFontSize" = 13;
       };
@@ -107,10 +109,10 @@ in
     environment.etc."vivaldi/policies/managed/vivaldi-fonts.json" = {
       mode = "0444";
       text = builtins.toJSON {
-        StandardFontFamily = "Iosevka";
-        SerifFontFamily = "Iosevka";
-        SansSerifFontFamily = "Iosevka";
-        FixedFontFamily = "Iosevka";
+        StandardFontFamily = "Iosevka Proportional";
+        SerifFontFamily = "Iosevka Proportional";
+        SansSerifFontFamily = "Iosevka Proportional";
+        FixedFontFamily = "Iosevka Proportional";
         DefaultFontSize = 15;
         DefaultFixedFontSize = 13;
       };
@@ -158,7 +160,7 @@ in
       text = ''
         /* Override Vivaldi browser UI font on Linux — Iosevka, bigger and bolder */
         *, *:before, *:after {
-          font-family: "Iosevka" !important;
+          font-family: "Iosevka Proportional" !important;
           font-size: 15px !important;
           font-weight: 600 !important;
         }
