@@ -438,7 +438,7 @@ body {
 }
 
 /* terminal input: green bar caret (blinks natively), 14px.
-   Note: `caret-shape: block` was tried but Chromium renders it brokenly on
+   Note: "caret-shape: block" was tried but Chromium renders it brokenly on
    this auto-growing textarea (stray green blocks at wrong positions), so we
    keep the standard bar caret and only tint it green. */
 .uV2eYG_input {
