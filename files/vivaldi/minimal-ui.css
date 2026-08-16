@@ -27,3 +27,28 @@
 #browser .bookmarks-bar {
   display: none !important;
 }
+
+/* Right-side address bar buttons (QR, bookmark, panel toggle, extension
+ * icons) stay hidden until the mouse is over the address bar — the bar reads
+ * as a bare terminal prompt line; hover reveals the buttons.
+ * Width is collapsed to zero (not just opacity) so the reserved zone
+ * disappears too and the URL field stretches to the full bar width. */
+.toolbar-addressbar .create-qr-code,
+.toolbar-addressbar .BookmarkButton,
+.toolbar-addressbar .panel-clickoutside-ignore,
+.toolbar-addressbar .toolbar-extensions {
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  transition: width 0.15s ease, opacity 0.15s ease !important;
+}
+.toolbar-addressbar:hover .create-qr-code,
+.toolbar-addressbar:hover .BookmarkButton,
+.toolbar-addressbar:hover .panel-clickoutside-ignore,
+.toolbar-addressbar:hover .toolbar-extensions {
+  width: auto !important;
+  max-width: none !important;
+  opacity: 1 !important;
+}
