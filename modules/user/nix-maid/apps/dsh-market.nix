@@ -87,9 +87,26 @@ let
         print(f"dsh-market: {path} already up to date")
   '';
 
+  # The harness's own copy of the core @deepseek-ai package family. pnpm
+  # (the profile's workspace sets nodeLinker: hoisted) hoists the transitive
+  # @deepseek-ai deps of the third-party bundles into the profile's top-level
+  # node_modules. The loader then resolves core rows (system-prompt, tools,
+  # session, …) from THOSE copies while the preset machinery shipped inside
+  # the harness (agent-presets, dsh-persona, dsh-agent-loop) resolves its
+  # @deepseek-ai imports from the harness copy — two instances of dsh-scope
+  # with two different `Symbol("dsh.scope")` tags. createScope (harness copy)
+  # tags the standing mount's context, but SystemPrompt.section() reads the
+  # tag through the profile copy and sees an unscoped context, so every preset
+  # row lands in the GLOBAL prompt layer: "prompt section
+  # \"deployment:persona\" already registered", every resume retries at 100%
+  # CPU. Re-linking the profile's @deepseek-ai directory to the harness keeps
+  # exactly one instance per package; re-applied after every pnpm sync.
+  dshAiStore = "${pkgs.neg.dsh}/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai";
+
   # Idempotent: install the dshmarket plugin into the web profile when absent,
   # keep the profile's pnpm supply-chain policy sane (release cooldown
-  # exemptions + build-script allowlist), pin `allowRestart: false` in the
+  # exemptions + build-script allowlist), re-link the profile's @deepseek-ai
+  # copies to the harness (see dshAiStore), pin `allowRestart: false` in the
   # profile's cordis.patch.yml (dsh web runs under systemd, so the market's
   # detached-restart button must stay off — the supervisor owns restarts),
   # and restart the running web UI once on a fresh install so Settings →
@@ -117,10 +134,18 @@ let
         python3 ${pnpmPatch} "$PROFILE_DIR/pnpm-workspace.yaml" \
           || echo "dsh-market: pnpm policy re-patch failed" >&2
 
+        # Re-link the profile's @deepseek-ai to the harness's own copies so
+        # core rows and the preset machinery share one module instance per
+        # package (see dshAiStore). Do this AFTER any pnpm operation.
+        PROFILE_AI="$PROFILE_DIR/node_modules/@deepseek-ai"
+        if [ -d "$PROFILE_AI" ] && [ ! -L "$PROFILE_AI" ]; then
+          rm -rf "$PROFILE_AI"
+          ln -s "${dshAiStore}" "$PROFILE_AI"
+          echo "dsh-market: re-linked profile @deepseek-ai to the harness store"
+        fi
+
         PATCH="$PROFILE_DIR/cordis.patch.yml"
-        # Both rows are managed here: the market restart pin, and the roster-less
-        # workaround for the dsh 0.1.0-rc.6 preset-mount bug (see the patch body).
-        if ! grep -q 'allowRestart' "$PATCH" 2>/dev/null || ! grep -q 'agent-presets' "$PATCH" 2>/dev/null; then
+        if ! grep -q 'allowRestart' "$PATCH" 2>/dev/null; then
           cat > "$PATCH" <<'YAML'
     # Managed by NixOS (modules/user/nix-maid/apps/dsh-market.nix) — do not edit.
     # dsh web runs under systemd, so the market's one-click restart is disabled;
@@ -128,15 +153,6 @@ let
     - id: dsh-market
       config:
         allowRestart: false
-
-    # WORKAROUND: the shipped dsh 0.1.0-rc.6 agent presets (standard/minimal)
-    # fail to mount — the persona row collides with the global deployment
-    # persona ("prompt section deployment:persona is already registered") and
-    # every resume retry spins dsh at 100% CPU. Run roster-less (all sessions
-    # on the host composition) until the preset-mount bug is fixed upstream;
-    # drop this row once the fix lands.
-    - id: agent-presets
-      disabled: true
     YAML
         fi
 
