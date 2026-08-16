@@ -84,6 +84,7 @@ in
   features.cli.broot.enable = true;
   features.hardware.usbAutomount.enable = true;
   features.input.kanata.enable = true; # Caps→Ctrl via kanata
+  features.input.ruHotkeys.enable = true; # us layout in kitty/mpv on focus (RU hotkey fix)
 
   # nixpkgs 26.05: service users need explicit isSystemUser + group.
   # Defined at host level because server modules gate behind mkIf cfg.enable,
