@@ -209,26 +209,159 @@ let
 }
 JSON
           cat > "$TUI/lib/index.js" <<'JS'
-// dsh-terminal-ui host half: nothing to do on the server side.
-const inject = [];
-function apply(_ctx) {}
+// dsh-terminal-ui host half: serves the desktop wallpaper to the browser at
+// /terminal-ui/wallpaper so the client theme can use it as a background.
+// The served file follows the wl wallpaper daemon's current pick
+// (~/.cache/quickshell-wallpaper-path), falling back to a fixed path.
+import { readFileSync, existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+
+const inject = ["webServer"];
+
+const WALLPAPER_HINT = join(homedir(), ".cache/quickshell-wallpaper-path");
+const FALLBACK = "/home/neg/pic/wl/wallhaven-jek6kq.jpg";
+
+function resolveWallpaper() {
+  try {
+    const p = readFileSync(WALLPAPER_HINT, "utf8").trim();
+    if (p && existsSync(p)) return p;
+  } catch {
+    /* hint file missing or unreadable - fall through */
+  }
+  return existsSync(FALLBACK) ? FALLBACK : null;
+}
+
+function contentTypeOf(path) {
+  if (/\.png$/i.test(path)) return "image/png";
+  if (/\.webp$/i.test(path)) return "image/webp";
+  if (/\.gif$/i.test(path)) return "image/gif";
+  return "image/jpeg";
+}
+
+function apply(ctx) {
+  ctx.effect(() =>
+    ctx.webServer.register({
+      kind: "exact",
+      path: "/terminal-ui/wallpaper",
+      handler(_req, res) {
+        try {
+          const path = resolveWallpaper();
+          if (path === null) {
+            res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+            res.end("no wallpaper configured");
+            return;
+          }
+          const body = readFileSync(path);
+          res.writeHead(200, {
+            "content-type": contentTypeOf(path),
+            "content-length": body.length,
+            "cache-control": "public, max-age=3600",
+          });
+          res.end(body);
+        } catch (error) {
+          res.writeHead(500, { "content-type": "text/plain; charset=utf-8" });
+          res.end(String(error));
+        }
+      },
+    }),
+  );
+}
+
 export { apply, inject };
 JS
           cat > "$TUI/lib/client.js" <<'JS'
-// dsh-terminal-ui client half - wider chat column, Iosevka fonts, terminal-ish
-// typography. Injects one <style> element for the page lifetime; removed when
-// the plugin unmounts.
+// dsh-terminal-ui client half - neg theme (dark navy + deep blue accent),
+// translucent glass surfaces over the desktop wallpaper, Iosevka fonts,
+// wider chat column. Injects one <style> element for the page lifetime;
+// removed when the plugin unmounts.
 window.__ModuleLoader__.load({
   id: "dsh-terminal-ui",
   factory: (require) => {
     const inject = [];
 
-    // NOTE: `.wSkVaW_root` is the conversation-root class from
-    // @deepseek-ai/dsh-client-ui-conversation (CSS module hash). It is stable
-    // for a pinned dsh release; if the class stops matching after an upgrade,
-    // re-derive it from the served client bundle (grep for
-    // `--dsh-chat-content-width:748px`).
+    // Theme tokens are declared on `body` / `body[data-ds-dark-theme]`
+    // (see dsh-client-ui-theme). Re-declaring them on the same selectors in
+    // a later stylesheet wins the cascade; rgba values plus the wallpaper
+    // layer give the translucent glass look. Both light and dark slots get
+    // the neg palette, so the GUI keeps the neg look in either mode.
+    // `.wSkVaW_root` is the conversation-root class from
+    // @deepseek-ai/dsh-client-ui-conversation (CSS module hash) - stable for
+    // a pinned dsh release; re-derive from the served client bundle if it
+    // stops matching after an upgrade (grep for `--dsh-chat-content-width`).
     const CSS = `
+/* -- wallpaper + base -- */
+html {
+  background: #040f1c;
+}
+body {
+  background: transparent;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: url("/terminal-ui/wallpaper") center / cover no-repeat;
+}
+
+/* -- neg palette (translucent surfaces) -- */
+body,
+body[data-ds-dark-theme] {
+  --dsw-alias-bg-base: rgba(4, 15, 28, 0.74);
+  --dsw-alias-bg-layer-1: rgba(12, 28, 48, 0.68);
+  --dsw-alias-bg-layer-2: rgba(16, 35, 58, 0.62);
+  --dsw-alias-bg-layer-3: rgba(22, 45, 72, 0.56);
+  --dsw-alias-bg-overlay: rgba(12, 28, 48, 0.88);
+  --dsw-alias-border-l1: rgba(43, 68, 98, 0.5);
+  --dsw-alias-border-l2: rgba(28, 51, 78, 0.75);
+  --dsw-alias-border-l3: rgba(43, 68, 98, 0.6);
+  --dsw-alias-label-primary: #a4b3c6;
+  --dsw-alias-label-secondary: #6d839e;
+  --dsw-alias-label-tertiary: #5c7391;
+  --dsw-alias-brand-primary: #367bbf;
+  --dsw-alias-brand-text: #d1e5ff;
+  --dsw-alias-button-primary-fill: #005faf;
+  --dsw-alias-button-primary-hover: #367cb0;
+  --dsw-alias-button-primary-dimmed: rgba(16, 35, 58, 0.9);
+  --dsw-alias-button-elevated-fill: rgba(12, 28, 48, 0.8);
+  --dsw-alias-button-floating-fill: rgba(12, 28, 48, 0.8);
+  --dsw-alias-button-floating-hover: rgba(16, 35, 58, 0.85);
+  --dsw-alias-button-info-fill: #005faf;
+  --dsw-alias-button-info-hover: #367cb0;
+  --dsw-alias-state-success-primary: #37b393;
+  --dsw-alias-state-error-primary: #d86f96;
+  --dsw-alias-state-warn-primary: #c8a8ef;
+  --dsw-alias-state-business-primary: #367bbf;
+  --dsw-specific-sidebar-fill: rgba(4, 15, 28, 0.55);
+  --dsw-specific-sidebar-nav-item-active: rgba(16, 35, 58, 0.85);
+  --dsw-specific-sidebar-nav-item-hover: rgba(28, 51, 78, 0.7);
+  --dsw-specific-bubble: rgba(12, 28, 48, 0.6);
+  --dsw-specific-bubble-highlight: rgba(16, 35, 58, 0.65);
+  --dsw-specific-input-major: rgba(12, 28, 48, 0.7);
+  --dsw-specific-selector: rgba(16, 35, 58, 0.7);
+  --dsw-specific-menu: rgba(12, 28, 48, 0.9);
+  --dsw-alias-markdown-code-block: rgba(0, 0, 0, 0.35);
+  --dsw-alias-markdown-inline-code: rgba(16, 35, 58, 0.7);
+  --dsw-alias-scrollbar-bg-l1: rgba(12, 28, 48, 0.6);
+  --dsw-alias-scrollbar-bg-l2: rgba(16, 35, 58, 0.6);
+  --dsw-alias-scrollbar-hover-l1: rgba(28, 51, 78, 0.9);
+  --dsw-alias-scrollbar-hover-l2: rgba(43, 68, 98, 0.9);
+  --dsw-alias-interactive-bg-hover: rgba(255, 255, 255, 0.06);
+  --dsw-alias-interactive-bg-active: rgba(255, 255, 255, 0.1);
+}
+
+/* -- glass blur on the columns (data-pane stamped by dsh-web-ui-all) -- */
+[data-pane="conversation"],
+[data-pane="sidebar"],
+[class*="sidebarCol"],
+[class*="centerCol"],
+[class*="detailsCol"] {
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+}
+
+/* -- fonts + wider chat -- */
 :root {
   --dsw-font-family: "Iosevka", "Iosevka Medium", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --ds-font-family-code: "Iosevka", "Iosevka Medium", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
