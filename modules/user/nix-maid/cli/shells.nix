@@ -14,7 +14,7 @@ let
   # --- Kitty key.conf: generated Russian-layout duplicates ---
   # ЙЦУКЕН duplicate binds are GENERATED from lib/ru-keys.nix (single source of
   # truth). Each entry mirrors a latin bind from files/kitty/key.conf; the
-  # generator derives the CYRILLIC_* keysym names, so typos are impossible.
+  # generator derives the literal Cyrillic chars, so typos are impossible.
   # Table: docs/howto/hotkeys-ru-layout.ru.md
   kittyRuBinds = [
     {
@@ -248,9 +248,11 @@ let
     # --- Russian layout duplicates (ЙЦУКЕН) -----------------------------------------
     # GENERATED from lib/ru-keys.nix — do not edit by hand. Bind data lives in
     # modules/user/nix-maid/cli/shells.nix (kittyRuBinds).
-    # kitty matches shortcuts by the keysym of the ACTIVE layout, so under the ru
-    # layout every latin-letter shortcut breaks. These duplicates bind the same
-    # actions to the Cyrillic keysyms produced by the same physical keys.
+    # kitty matches shortcuts by the produced char of the ACTIVE layout, so under
+    # the ru layout every latin-letter shortcut breaks. These duplicates bind the
+    # same actions to the literal Cyrillic chars produced by the same physical
+    # keys (keysym NAMES are unusable: kitty resolves them via libxkbcommon,
+    # which is not loadable on this system).
     # Table: docs/howto/hotkeys-ru-layout.ru.md
   ''
   + builtins.concatStringsSep "\n" (neg.ruKeys.mkKittyLines kittyRuBinds)
