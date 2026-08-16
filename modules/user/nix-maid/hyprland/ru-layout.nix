@@ -21,9 +21,20 @@ let
   cfg = config.features.input.ruHotkeys or { };
   enabled = cfg.enable or false;
 
+  # Terminal windows are launched with custom kitty classes (see the
+  # M4+* scratch binds in files/gui/hypr/hyprland.lua) — keep this list in
+  # sync when adding one. `mpv` is a hotkey-heavy GUI.
   usClasses = lib.concatStringsSep " " (
     cfg.usClasses or [
-      "kitty"
+      "term"
+      "nwim"
+      "music"
+      "teardown"
+      "torrment"
+      "vpn"
+      "mixer"
+      "rebuild"
+      "mpd-add"
       "mpv"
     ]
   );
@@ -47,8 +58,10 @@ let
     ru_idx='${ruIdx}'
     poll_sec='${pollSec}'
 
+    # `hyprctl activewindow` lists the focused window with a TAB-indented
+    # "class:" line — match optional leading whitespace.
     focused_class() {
-      "$hyprctl_bin" activewindow 2>/dev/null | "$awk_bin" -F': ' '/^class:/ {print $2; exit}'
+      "$hyprctl_bin" activewindow 2>/dev/null | "$awk_bin" -F': ' '/^[ \t]*class:/ {print $2; exit}'
     }
 
     current=""
@@ -60,7 +73,11 @@ let
           *" $class "*) idx="$us_idx" ;;
           *) idx="$ru_idx" ;;
         esac
-        "$hyprctl_bin" switchxkblayout current "set $idx" 2>/dev/null || true
+        # switchxkblayout takes the layout INDEX directly as the command
+        # ("set" is not a keyword); `all` keeps every keyboard (kanata's
+        # virtual device included) on the same layout. Verified against
+        # Hyprland 0.55.4 (src/debug/HyprCtl.cpp switchXKBLayoutRequest).
+        "$hyprctl_bin" switchxkblayout all "$idx" 2>/dev/null || true
       fi
       "$sleep_bin" "$poll_sec"
     done
