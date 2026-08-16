@@ -9,6 +9,9 @@
 let
   cfg = config.features.cli.yazi;
   tomlFormat = pkgs.formats.toml { };
+  # ЙЦУКЕН table + generators (lib/ru-keys.nix via specialArgs.neg) — the only
+  # source for Russian-layout duplicate binds in this file.
+  ruKeys = neg.ruKeys;
 
   settings = {
     mgr = {
@@ -277,65 +280,67 @@ let
       # --- Russian layout duplicates (ЙЦУКЕН) -------------------------------------
       # yazi matches keys by the produced char; latin-letter binds break under the
       # ru layout. Lowercase Cyrillic only (uppercase implies SHIFT, which the RU
-      # layout reports differently). Table: docs/howto/hotkeys-ru-layout.ru.md
+      # layout reports differently). All duplicates are GENERATED from
+      # lib/ru-keys.nix (single source of truth) — do not hand-edit the chars.
+      # Table: docs/howto/hotkeys-ru-layout.ru.md
       {
         run = "arrow next";
-        on = [ "о" ]; # j
+        on = ruKeys.mkRuKeys [ "j" ];
       }
       {
         run = "arrow prev";
-        on = [ "л" ]; # k
+        on = ruKeys.mkRuKeys [ "k" ];
       }
       {
         run = "leave";
-        on = [ "р" ]; # h
+        on = ruKeys.mkRuKeys [ "h" ];
       }
       {
         run = "enter";
-        on = [ "д" ]; # l
+        on = ruKeys.mkRuKeys [ "l" ];
       }
       {
         run = "arrow top";
-        on = [
-          "п"
-          "п"
-        ]; # g g
+        on = ruKeys.mkRuKeys [
+          "g"
+          "g"
+        ];
       }
       {
         run = "yank --cut";
-        on = [ "в" ]; # d
+        on = ruKeys.mkRuKeys [ "d" ];
       }
       {
         run = "plugin save-file --args=overwrite";
-        on = [
-          "п"
-          "ы"
-        ]; # g s
+        on = ruKeys.mkRuKeys [
+          "g"
+          "s"
+        ];
       }
       {
         run = "plugin save-file --args=input";
-        on = [
-          "п"
-          "я"
-        ]; # g z
+        on = ruKeys.mkRuKeys [
+          "g"
+          "z"
+        ];
       }
       {
         run = ''shell -- ya emit cd "$(git rev-parse --show-toplevel)"'';
-        on = [
-          "п"
-          "к"
-        ]; # g r
+        on = ruKeys.mkRuKeys [
+          "g"
+          "r"
+        ];
       }
       {
         run = "plugin smart-paste";
-        on = [ "з" ]; # p
+        on = ruKeys.mkRuKeys [ "p" ];
       }
       {
         run = "plugin paste-to-select";
-        on = [
-          "п"
-          "з"
-        ]; # g p
+        on = ruKeys.mkRuKeys [
+          "g"
+          "p"
+        ];
       }
     ];
   };
