@@ -42,7 +42,9 @@ let
     # NOT a Preferences key — Vivaldi can drop the toggle on restart/upgrade and
     # then silently ignores css_ui_mods_directory (all usercss stops applying).
     # Forcing it via --enable-features keeps the CSS mods active unconditionally.
-    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VivaldiCssMods --disable-features=Vulkan,WaylandWpColorManagerV1";
+    # --remote-debugging-port=9222: CDP endpoint for inspecting the browser's own
+    # DOM (navbar/toolbars) while debugging usercss selectors. Loopback-only.
+    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VivaldiCssMods --disable-features=Vulkan,WaylandWpColorManagerV1 --remote-debugging-port=9222";
     proprietaryCodecs = false;
   };
 
