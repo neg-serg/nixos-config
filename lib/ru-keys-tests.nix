@@ -36,9 +36,6 @@ let
       (builtins.length (lib.unique (builtins.attrValues ru.latinToRu)))
       == (builtins.length (builtins.attrValues ru.latinToRu))
     ) "lowercase table values must be pairwise distinct")
-    (check (builtins.all (v: builtins.hasAttr v ru.kittyName) (
-      builtins.attrValues ru.latinToRu
-    )) "every produced char needs a kitty keysym name")
     (check (
       ru.toRu "1" == null
     ) "digits must have no ru counterpart (they are dropped or kept literal)")
@@ -85,24 +82,24 @@ let
       ] == [ "о" ]
     ) "mkRuKeys drops keys without counterpart")
 
-    # kittySeq: CYRILLIC_* names, digits literal, sequences joined with >.
-    (check (ru.kittySeq [ "v" ] == "CYRILLIC_EM") "kittySeq letter")
+    # kittySeq: LITERAL Cyrillic chars (kitty matches by char — keysym names
+    # need libxkbcommon which isn't loadable on this system), digits literal,
+    # sequences joined with >.
+    (check (ru.kittySeq [ "v" ] == "м") "kittySeq letter")
     (check (
       ru.kittySeq [
         "s"
         "f"
-      ] == "CYRILLIC_YERU>CYRILLIC_A"
+      ] == "ы>а"
     ) "kittySeq sequence")
     (check (
       ru.kittySeq [
         "a"
         "1"
-      ] == "CYRILLIC_EF>1"
+      ] == "ф>1"
     ) "kittySeq digit stays literal")
     (check (
-      ru.kittySeq [ "[" ] == "CYRILLIC_HA"
-      && ru.kittySeq [ "," ] == "CYRILLIC_BE"
-      && ru.kittySeq [ "`" ] == "CYRILLIC_IO"
+      ru.kittySeq [ "[" ] == "х" && ru.kittySeq [ "," ] == "б" && ru.kittySeq [ "`" ] == "ё"
     ) "kittySeq punctuation")
 
     # mkKittyLines: exact line shape used in files/kitty/key.conf.
@@ -113,7 +110,7 @@ let
           keys = [ "v" ];
           action = "paste_from_clipboard";
         }
-      ] == [ "map ctrl+shift+CYRILLIC_EM paste_from_clipboard  # v→м" ]
+      ] == [ "map ctrl+shift+м paste_from_clipboard  # v→м" ]
     ) "mkKittyLines single-key line")
     (check (
       ru.mkKittyLines [
@@ -125,7 +122,7 @@ let
           ];
           action = "neghints --program @";
         }
-      ] == [ "map ctrl+shift+CYRILLIC_YERU>CYRILLIC_A neghints --program @  # s→ы, f→а" ]
+      ] == [ "map ctrl+shift+ы>а neghints --program @  # s→ы, f→а" ]
     ) "mkKittyLines sequence line")
 
     # mkLangmap: byte-identical to the neovim langmapper.nvim output.

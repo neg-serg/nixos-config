@@ -90,47 +90,6 @@ let
     "~" = "Ë";
   };
 
-  # XKB keysym names kitty accepts (via xkb_keysym_from_name, case-insensitive),
-  # keyed by the PRODUCED char. Validated in kovidgoyal/kitty#2000. Chars
-  # without an entry (digits, ".") fall back to the literal char in kittySeq.
-  kittyName = {
-    "ё" = "CYRILLIC_IO";
-    "й" = "CYRILLIC_SHORTI";
-    "ц" = "CYRILLIC_TSE";
-    "у" = "CYRILLIC_U";
-    "к" = "CYRILLIC_KA";
-    "е" = "CYRILLIC_IE";
-    "н" = "CYRILLIC_EN";
-    "г" = "CYRILLIC_GHE";
-    "ш" = "CYRILLIC_SHA";
-    "щ" = "CYRILLIC_SHCHA";
-    "з" = "CYRILLIC_ZE";
-    "х" = "CYRILLIC_HA";
-    "ъ" = "CYRILLIC_HARDSIGN";
-    "ф" = "CYRILLIC_EF";
-    "ы" = "CYRILLIC_YERU";
-    "в" = "CYRILLIC_VE";
-    "а" = "CYRILLIC_A";
-    "п" = "CYRILLIC_PE";
-    "р" = "CYRILLIC_ER";
-    "о" = "CYRILLIC_O";
-    "л" = "CYRILLIC_EL";
-    "д" = "CYRILLIC_DE";
-    "ж" = "CYRILLIC_ZHE";
-    "э" = "CYRILLIC_E";
-    "я" = "CYRILLIC_YA";
-    "ч" = "CYRILLIC_CHE";
-    "с" = "CYRILLIC_ES";
-    "м" = "CYRILLIC_EM";
-    "и" = "CYRILLIC_I";
-    "т" = "CYRILLIC_TE";
-    "ь" = "CYRILLIC_SOFTSIGN";
-    "б" = "CYRILLIC_BE";
-    "ю" = "CYRILLIC_YU";
-    # "/" produces "." under ru; kitty's key name for it is "period".
-    "." = "period";
-  };
-
   # ru counterpart of a latin key, or null when the key has none (digits,
   # space, keys outside the table).
   toRu = k: latinToRu.${k} or latinToRuUpper.${k} or null;
@@ -140,9 +99,14 @@ let
   # sequences that keep digits, see kittySeq.
   mkRuKeys = keys: builtins.filter (k: k != null) (map toRu keys);
 
-  # kitty key-sequence: every latin key becomes its CYRILLIC_* keysym name;
-  # keys without a Cyrillic counterpart (digits) stay literal. Multi-key
-  # sequences join with ">".
+  # kitty key-sequence: every latin key becomes its LITERAL Cyrillic char —
+  # kitty matches by character (all its latin binds are literal chars too, e.g.
+  # `map kitty_mod+v`), so under ru the physical key produces the Cyrillic char
+  # and the dup binds match. Keys without a counterpart (digits) stay literal.
+  # Multi-key sequences join with ">".
+  # NB: keysym NAMES (Cyrillic_em) are NOT used: kitty resolves them via
+  # xkb_keysym_from_name, which on this system can't load libxkbcommon (no
+  # ld.so.cache) and the names are silently dropped as "unknown key".
   kittySeq =
     keys:
     builtins.concatStringsSep ">" (
@@ -151,7 +115,7 @@ let
         let
           r = toRu k;
         in
-        if r == null then k else kittyName.${r} or k
+        if r == null then k else r
       ) keys
     );
 
@@ -249,7 +213,6 @@ in
   inherit
     latinToRu
     latinToRuUpper
-    kittyName
     toRu
     mkRuKeys
     kittySeq
