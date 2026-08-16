@@ -118,7 +118,9 @@ let
           || echo "dsh-market: pnpm policy re-patch failed" >&2
 
         PATCH="$PROFILE_DIR/cordis.patch.yml"
-        if ! grep -q 'allowRestart' "$PATCH" 2>/dev/null; then
+        # Both rows are managed here: the market restart pin, and the roster-less
+        # workaround for the dsh 0.1.0-rc.6 preset-mount bug (see the patch body).
+        if ! grep -q 'allowRestart' "$PATCH" 2>/dev/null || ! grep -q 'agent-presets' "$PATCH" 2>/dev/null; then
           cat > "$PATCH" <<'YAML'
     # Managed by NixOS (modules/user/nix-maid/apps/dsh-market.nix) — do not edit.
     # dsh web runs under systemd, so the market's one-click restart is disabled;
@@ -126,6 +128,15 @@ let
     - id: dsh-market
       config:
         allowRestart: false
+
+    # WORKAROUND: the shipped dsh 0.1.0-rc.6 agent presets (standard/minimal)
+    # fail to mount — the persona row collides with the global deployment
+    # persona ("prompt section deployment:persona is already registered") and
+    # every resume retry spins dsh at 100% CPU. Run roster-less (all sessions
+    # on the host composition) until the preset-mount bug is fixed upstream;
+    # drop this row once the fix lands.
+    - id: agent-presets
+      disabled: true
     YAML
         fi
 
