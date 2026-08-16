@@ -347,6 +347,15 @@ lib.mkMerge [
 
     environment.variables.GAME_PIN_AUTO_LIMIT = "8"; # Limit auto-picked V-Cache CPU set size for game-run pinning
 
+    # The dsh web terminal (dsh-terminal-bash / better-sidebar) spawns
+    # /bin/bash as its fallback shell. That symlink is not managed by NixOS:
+    # a store GC of the old bash leaves it dangling and the web terminal
+    # dies with "execvp(3) failed: No such file or directory". Keep it
+    # pointed at the live system shell on every activation.
+    system.activationScripts.binBash = lib.stringAfter [ "users" ] ''
+      ln -sfn /run/current-system/sw/bin/bash /bin/bash
+    '';
+
     systemd = {
       # Ensure auxiliary data directories exist with correct ownership
       tmpfiles.rules = lib.mkAfter (
