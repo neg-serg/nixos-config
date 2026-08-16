@@ -351,9 +351,17 @@ tig, broot, khal, zsh vi-mode, kitty-hints — им не нужны дубли, 
 Правило: новые дубли руками не писать — добавлять бинд в данные и/или расширять генератор.
 Чек `nix eval .#checks.x86_64-linux.ru-keys` (и `nix flake check`) ловит рассинхрон таблицы.
 
-Остаток миграции (рукописные дубли → генераторы): zellij `config.kdl`, rmpc `config.ron`,
-swayimg `init.lua`, SurfingKeys `ru2en`, mpv `input.nix`, neovim langmap (сверка с
-`mkLangmap`).
+Состояние миграции (рукописные дубли → генераторы):
+
+- **готово**: kitty (`kittyRuBinds` в `shells.nix`), yazi (`mkRuKeys`), mpv (`mpvRuBinds`),
+  zellij (`zellijRuBinds` в `hosts/odin/default.nix`), rmpc (`rmpcRuBinds` в `sys/media.nix`),
+  SurfingKeys (`skRu2en` в `web/browsing.nix`); neovim langmap сверен с `mkLangmap` golden-тестом.
+- **осталось вручную**: swayimg `init.lua` — бинды это inline-lua-замыкания; генерация лишь
+  перенесла бы дублирование в данные без выигрыша. Дубли там работают и уже проверены.
+
+Заодно генерация исправила три старые ошибки рукописных дублей: rmpc-навигация `D` → `В`
+(было `в`), mpv `Alt+I`/`Alt+U` → `Alt+Ш`/`Alt+Г` (были строчные, не матчились под Shift);
+SurfingKeys получил недостающую клавишу `/` (`'.'→'/'`).
 
 ## Порядок коммитов (стиль репо: `[scope] subject`)
 

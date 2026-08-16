@@ -8,6 +8,200 @@
 let
   inherit (config.users.users.neg) home;
 
+  # --- rmpc: Russian-layout duplicate binds (ЙЦУКЕН) --------------------------
+  # GENERATED from lib/ru-keys.nix (neg.ruKeys) — single source of truth, do not
+  # edit the generated chars. Bind data lives below (rmpcRuBinds), the latin
+  # binds live in files/rmpc/config.ron (markers rmpcRuBinds.*). The daemon
+  # ru-layout (features.input.ruHotkeys) already forces us in the terminal, so
+  # these duplicates only matter after a manual M4+S switch inside the window.
+  ruKeys = neg.ruKeys;
+
+  rmpcRuBinds = {
+    global = [
+      {
+        key = "p";
+        action = "TogglePause";
+      }
+      {
+        key = "q";
+        action = "Quit";
+      }
+      {
+        key = "s";
+        action = "Stop";
+      }
+      {
+        key = "u";
+        action = "Update";
+      }
+      {
+        key = "w";
+        action = "ShowHelp";
+      }
+      {
+        key = "b";
+        action = "SeekBack";
+      }
+      {
+        key = "f";
+        action = "SeekForward";
+      }
+      {
+        key = "o";
+        action = "ShowOutputs";
+      }
+      {
+        key = "z";
+        action = "ToggleRepeat";
+      }
+      {
+        key = "r";
+        action = "ToggleRandom";
+      }
+      {
+        key = "y";
+        action = "ToggleSingle";
+      }
+      {
+        key = "L";
+        action = "ExternalCommand(command: [\"mpc\", \"clear\"])";
+      }
+      {
+        key = "O";
+        action = "ShowOutputs";
+      }
+      {
+        key = "P";
+        action = "PlaylistsTab";
+      }
+      {
+        key = "U";
+        action = "Rescan";
+      }
+      {
+        key = "R";
+        action = "ToggleConsume";
+      }
+    ];
+    navigation = [
+      {
+        key = "a";
+        action = "Select";
+      }
+      {
+        key = "A";
+        action = "AddAll";
+      }
+      {
+        key = "D";
+        action = "Delete";
+      }
+      {
+        key = "g";
+        action = "Top";
+      }
+      {
+        key = "G";
+        action = "Bottom";
+      }
+      {
+        key = "h";
+        action = "Left";
+      }
+      {
+        key = "i";
+        action = "FocusInput";
+      }
+      {
+        key = "j";
+        action = "Down";
+      }
+      {
+        key = "J";
+        action = "MoveDown";
+      }
+      {
+        key = "k";
+        action = "Up";
+      }
+      {
+        key = "K";
+        action = "MoveUp";
+      }
+      {
+        key = "l";
+        action = "Right";
+      }
+      {
+        key = "n";
+        action = "NextResult";
+      }
+      {
+        key = "N";
+        action = "PreviousResult";
+      }
+      {
+        key = "r";
+        action = "Rename";
+      }
+    ];
+    queue = [
+      {
+        key = "a";
+        action = "AddToPlaylist";
+      }
+      {
+        key = "C";
+        action = "DeleteAll";
+      }
+      {
+        key = "d";
+        action = "Delete";
+      }
+    ];
+  };
+
+  # Generated lines keep the 12-space indent of the surrounding RON entries.
+  rmpcRuLine = d: "            \"${ruKeys.toRu d.key}\": ${d.action}, // ${d.key}";
+
+  # The markers in files/rmpc/config.ron carry the section header; the
+  # generated block is just the bind lines (no trailing newline — the marker's
+  # own line break follows).
+  rmpcRuBlock = binds: lib.concatStringsSep "\n" (map rmpcRuLine binds);
+
+  # files/rmpc/config.ron carries marker comments (rmpcRuBinds.*) where the
+  # generated blocks are spliced in.
+  rmpcConfig = builtins.readFile (config.lib.neg.path "files/rmpc/config.ron");
+  rmpcText = lib.pipe rmpcConfig [
+    (
+      s:
+      builtins.replaceStrings
+        [
+          "            // Russian layout duplicates (ЙЦУКЕН) — GENERATED (rmpcRuBinds.global), see modules/user/nix-maid/sys/media.nix"
+        ]
+        [ (rmpcRuBlock rmpcRuBinds.global) ]
+        s
+    )
+    (
+      s:
+      builtins.replaceStrings
+        [
+          "            // Russian layout duplicates (ЙЦУКЕН) — GENERATED (rmpcRuBinds.navigation), see modules/user/nix-maid/sys/media.nix"
+        ]
+        [ (rmpcRuBlock rmpcRuBinds.navigation) ]
+        s
+    )
+    (
+      s:
+      builtins.replaceStrings
+        [
+          "            // Russian layout duplicates (ЙЦУКЕН) — GENERATED (rmpcRuBinds.queue), see modules/user/nix-maid/sys/media.nix"
+        ]
+        [ (rmpcRuBlock rmpcRuBinds.queue) ]
+        s
+    )
+  ];
+
   # --- Beets distrobox wrapper ---
   beetWrapper = pkgs.writeShellScriptBin "beet" ''
     set -euo pipefail
@@ -143,7 +337,10 @@ lib.mkMerge [
       can_quit = True
     '';
 
-    ".config/rmpc".source = config.lib.neg.path "files/rmpc";
+    # rmpc config: config.ron is GENERATED (RU duplicates spliced at the
+    # rmpcRuBinds.* markers), themes deployed as-is.
+    ".config/rmpc/config.ron".text = rmpcText;
+    ".config/rmpc/themes".source = config.lib.neg.path "files/rmpc/themes";
 
     ".config/swayimg".source = config.lib.neg.path "files/gui/swayimg";
 
