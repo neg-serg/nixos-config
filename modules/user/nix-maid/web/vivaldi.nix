@@ -37,7 +37,12 @@ let
     # --disable-features=WaylandWpColorManagerV1: Chromium's wp_color_manager_v1
     # protocol handshake with Hyprland cm=auto can fail on AMD, causing overbright
     # gamma and incorrect colors (vs Firefox which doesn't use this protocol).
-    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks --disable-features=Vulkan,WaylandWpColorManagerV1";
+    # VivaldiCssMods: the "Allow for using CSS modifications" experiment flag.
+    # It is a native runtime feature flag (vivaldi://experiments → getAllFeatureFlags),
+    # NOT a Preferences key — Vivaldi can drop the toggle on restart/upgrade and
+    # then silently ignores css_ui_mods_directory (all usercss stops applying).
+    # Forcing it via --enable-features keeps the CSS mods active unconditionally.
+    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VivaldiCssMods --disable-features=Vulkan,WaylandWpColorManagerV1";
     proprietaryCodecs = false;
   };
 
@@ -164,6 +169,11 @@ in
     # via the Preferences file is the declarative way (Settings → Appearance →
     # Custom UI Modifications would do the same). Vivaldi keeps user-set prefs,
     # so this oneshot only rewrites the file when the value is missing/wrong.
+    # Also re-asserts the Neg theme and the hidden panel bar: both are plain
+    # Preferences values that Vivaldi rewrites from memory on exit/restart and
+    # can drop (theme reset → grey/black-and-white UI; barVisible=true → the
+    # left panel reappears). Same caveat as the auto-hide service below:
+    # re-apply at login.
     systemd.user.services.vivaldi-css-mods-pref =
       let
         prefScript = pkgs.writeText "vivaldi-css-mods-pref.py" ''
@@ -173,17 +183,44 @@ in
               sys.exit(0)
           with open(prefs) as f:
               p = json.load(f)
+
+          neg_theme = "6265ce0d-0cec-40c1-8002-ef5c1f962c7a"
+          changed = False
+
           a = p.setdefault("vivaldi", {}).setdefault("appearance", {})
           target = os.path.expanduser("~/.config/vivaldi/css-mods")
           if a.get("css_ui_mods_directory") != target:
               a["css_ui_mods_directory"] = target
+              changed = True
+
+          # Neg dark theme must stay selected; if it was dropped, the browser
+          # chrome falls back to the default grey theme.
+          th = p.setdefault("vivaldi", {}).setdefault("themes", {})
+          if th.get("current") != neg_theme:
+              th["current"] = neg_theme
+              changed = True
+          if th.get("current_private") != neg_theme:
+              th["current_private"] = neg_theme
+              changed = True
+
+          # Hide the panel bar by default for new windows (was visible again
+          # after the pref reset).
+          wd = p.setdefault("vivaldi", {}).setdefault("panels", {}).setdefault("window_defaults", {})
+          if wd.get("barVisible") is not False:
+              wd["barVisible"] = False
+              changed = True
+          if wd.get("contentVisible") is not False:
+              wd["contentVisible"] = False
+              changed = True
+
+          if changed:
               with open(prefs, "w") as f:
                   json.dump(p, f, indent=1)
-              print("css_ui_mods_directory set to", target)
+              print("css_ui_mods_directory, Neg theme and hidden panel bar re-asserted")
         '';
       in
       {
-        description = "Point Vivaldi CSS mods at the profile mods folder";
+        description = "Point Vivaldi CSS mods at the profile mods folder; re-assert Neg theme and hidden panel";
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${lib.getExe' pkgs.python3 "python3"} ${prefScript}";
