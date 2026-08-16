@@ -179,6 +179,101 @@ let
     YAML
         fi
 
+        # dsh-terminal-ui: wider chat column, Iosevka fonts, terminal-ish
+        # typography. The package is a plain directory in the profile's
+        # node_modules (pnpm is intentionally not used — the @deepseek-ai
+        # store symlink makes pnpm writes fail with EROFS, see dshAiStore).
+        # Files are written only when missing, so local tweaks to client.js
+        # survive; the profile patch row is ensured the same way.
+        TUI="$PROFILE_DIR/node_modules/dsh-terminal-ui"
+        if [ ! -f "$TUI/package.json" ] || [ ! -f "$TUI/lib/client.js" ]; then
+          mkdir -p "$TUI/lib"
+          cat > "$TUI/package.json" <<'JSON'
+{
+  "name": "dsh-terminal-ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [],
+      "platform": "web"
+    }
+  }
+}
+JSON
+          cat > "$TUI/lib/index.js" <<'JS'
+// dsh-terminal-ui host half: nothing to do on the server side.
+const inject = [];
+function apply(_ctx) {}
+export { apply, inject };
+JS
+          cat > "$TUI/lib/client.js" <<'JS'
+// dsh-terminal-ui client half - wider chat column, Iosevka fonts, terminal-ish
+// typography. Injects one <style> element for the page lifetime; removed when
+// the plugin unmounts.
+window.__ModuleLoader__.load({
+  id: "dsh-terminal-ui",
+  factory: (require) => {
+    const inject = [];
+
+    // NOTE: `.wSkVaW_root` is the conversation-root class from
+    // @deepseek-ai/dsh-client-ui-conversation (CSS module hash). It is stable
+    // for a pinned dsh release; if the class stops matching after an upgrade,
+    // re-derive it from the served client bundle (grep for
+    // `--dsh-chat-content-width:748px`).
+    const CSS = `
+:root {
+  --dsw-font-family: "Iosevka", "Iosevka Medium", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --ds-font-family-code: "Iosevka", "Iosevka Medium", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+.wSkVaW_root {
+  --dsh-chat-content-width: min(1200px, calc(100vw - 240px));
+  --dsh-composer-card-max-width: calc(var(--dsh-chat-content-width) + 32px);
+}
+body {
+  --dsw-font-markdown-base: 400 15px/24px var(--dsw-font-family);
+  --dsw-font-markdown-base-font-size: 15px;
+  --dsw-font-markdown-base-line-height: 24px;
+}
+`;
+
+    function apply(ctx) {
+      ctx.effect(() => {
+        const style = document.createElement("style");
+        style.setAttribute("data-dsh-terminal-ui", "");
+        style.textContent = CSS;
+        document.head.appendChild(style);
+        return () => {
+          style.remove();
+        };
+      });
+    }
+
+    return { apply, inject };
+  },
+});
+JS
+        fi
+
+        # Ensure the profile patch carries the terminal-ui row (insert form).
+        if ! grep -q 'terminal-ui' "$PATCH" 2>/dev/null; then
+          cat >> "$PATCH" <<'YAML'
+
+    # dsh-terminal-ui - wider chat column, Iosevka, terminal-ish look
+    # (package lives in node_modules/dsh-terminal-ui, see dsh-market.nix).
+    - insert:
+        - id: terminal-ui
+          name: dsh-terminal-ui
+    YAML
+        fi
+
         if [ "$installed" = 1 ]; then
           export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
           systemctl --user restart dsh.service 2>/dev/null || true
