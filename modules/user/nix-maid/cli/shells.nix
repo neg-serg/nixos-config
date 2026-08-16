@@ -11,6 +11,254 @@ let
   kittyConf = config.lib.neg.path "files/kitty";
   dircolorsConfig = config.lib.neg.path "files/shell/dircolors/dircolors";
 
+  # --- Kitty key.conf: generated Russian-layout duplicates ---
+  # ЙЦУКЕН duplicate binds are GENERATED from lib/ru-keys.nix (single source of
+  # truth). Each entry mirrors a latin bind from files/kitty/key.conf; the
+  # generator derives the CYRILLIC_* keysym names, so typos are impossible.
+  # Table: docs/howto/hotkeys-ru-layout.ru.md
+  kittyRuBinds = [
+    {
+      mod = "ctrl+shift";
+      keys = [ "v" ];
+      action = "paste_from_clipboard";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "z" ];
+      action = "scroll_to_prompt -1";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "x" ];
+      action = "scroll_to_prompt 1";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "q" ];
+      action = "close_tab";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "w" ];
+      action = "close_window";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "," ];
+      action = "move_tab_backward";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "." ];
+      action = "move_tab_forward";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "b" ];
+      action = "move_window_backward";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "f" ];
+      action = "move_window_forward";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "`" ];
+      action = "move_window_to_top";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "]" ];
+      action = "next_window";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "[" ];
+      action = "previous_window";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "l" ];
+      action = "next_layout";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "p" ];
+      action = "kitten choose_files";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "u" ];
+      action = "kitten unicode_input";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "e" ];
+      action = "neghints --type=url";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "h" ];
+      action = "kitty_scrollback_nvim";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "o" ];
+      action = "kitty_scrollback_nvim --env KSB_OPEN_GF=1";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "t" ];
+      action = "set_tab_title";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [
+        "s"
+        "f"
+      ];
+      action = "neghints --program @";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [
+        "s"
+        "w"
+      ];
+      action = "neghints --type word --program @";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [
+        "s"
+        "l"
+      ];
+      action = "neghints --type line --program @";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [
+        "s"
+        "p"
+      ];
+      action = "neghints --type path --program @";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [
+        "s"
+        "h"
+      ];
+      action = "neghints --type hash --program @";
+    }
+    {
+      mod = "Ctrl";
+      keys = [
+        "s"
+        "w"
+      ];
+      action = "neghints --type word --program -";
+    }
+    {
+      mod = "Ctrl";
+      keys = [
+        "s"
+        "l"
+      ];
+      action = "neghints --type line --program -";
+    }
+    {
+      mod = "Ctrl";
+      keys = [
+        "s"
+        "p"
+      ];
+      action = "neghints --type path --program -";
+    }
+    {
+      mod = "Ctrl";
+      keys = [
+        "s"
+        "h"
+      ];
+      action = "neghints --type hash --program -";
+    }
+    {
+      mod = "Ctrl+alt";
+      keys = [ "s" ];
+      action = "kitty_scrollback_nvim --config screen";
+    }
+    {
+      mod = "alt";
+      keys = [ "n" ];
+      action = "new_tab";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [
+        "r"
+        "r"
+      ];
+      action = "load_config_file";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [
+        "r"
+        "e"
+      ];
+      action = "debug_config";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [
+        "a"
+        "1"
+      ];
+      action = "set_background_opacity 1";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [
+        "a"
+        "d"
+      ];
+      action = "set_background_opacity default";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [
+        "a"
+        "l"
+      ];
+      action = "set_background_opacity -0.1";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [
+        "a"
+        "m"
+      ];
+      action = "set_background_opacity +0.1";
+    }
+  ];
+
+  kittyRuBlock = ''
+    # --- Russian layout duplicates (ЙЦУКЕН) -----------------------------------------
+    # GENERATED from lib/ru-keys.nix — do not edit by hand. Bind data lives in
+    # modules/user/nix-maid/cli/shells.nix (kittyRuBinds).
+    # kitty matches shortcuts by the keysym of the ACTIVE layout, so under the ru
+    # layout every latin-letter shortcut breaks. These duplicates bind the same
+    # actions to the Cyrillic keysyms produced by the same physical keys.
+    # Table: docs/howto/hotkeys-ru-layout.ru.md
+  ''
+  + builtins.concatStringsSep "\n" (neg.ruKeys.mkKittyLines kittyRuBinds)
+  + "\n";
+
+  # key.conf = latin binds (files/kitty/key.conf) + generated RU duplicates.
+  kittyKeyConf = builtins.readFile "${kittyConf}/key.conf" + "\n" + kittyRuBlock;
+
   # --- Inputrc ---
   inputrc = ''
     set bell-style                 none
@@ -193,7 +441,20 @@ in
       ".config/f-sy-h".source = "${shellFiles}/f-sy-h";
       ".config/zsh-native-syntax".source = "${shellFiles}/zsh-native-syntax";
       # --- Terminal & Specific Shell Configs ---
-      ".config/kitty".source = kittyConf; # Kitty Config
+      # kitty dir deployed per-file: key.conf is GENERATED (latin binds from
+      # files/kitty/key.conf + RU duplicates from lib/ru-keys.nix), the rest is
+      # deployed as-is from files/kitty/.
+      ".config/kitty/key.conf".text = kittyKeyConf;
+      ".config/kitty/font.conf".source = "${kittyConf}/font.conf";
+      ".config/kitty/kittens".source = "${kittyConf}/kittens";
+      ".config/kitty/kitty.conf".source = "${kittyConf}/kitty.conf";
+      ".config/kitty/mouse.conf".source = "${kittyConf}/mouse.conf";
+      ".config/kitty/range_select.py".source = "${kittyConf}/range_select.py";
+      ".config/kitty/scroll_mark.py".source = "${kittyConf}/scroll_mark.py";
+      ".config/kitty/search.py".source = "${kittyConf}/search.py";
+      ".config/kitty/tab_bar.py".source = "${kittyConf}/tab_bar.py";
+      ".config/kitty/tab.conf".source = "${kittyConf}/tab.conf";
+      ".config/kitty/theme.conf".source = "${kittyConf}/theme.conf";
     })
   ];
 }
