@@ -66,24 +66,7 @@
             "y": ToggleSingle,
             "-":  VolumeDown,
             "=": VolumeUp,
-            // Russian layout duplicates (ЙЦУКЕН) — same physical keys as latin binds
-            // Table: docs/howto/hotkeys-ru-layout.ru.md
-            "з": TogglePause,      // p
-            "й": Quit,             // q
-            "ы": Stop,             // s
-            "г": Update,           // u
-            "ц": ShowHelp,         // w
-            "и": SeekBack,         // b
-            "а": SeekForward,      // f
-            "щ": ShowOutputs,      // o
-            "я": ToggleRepeat,     // z
-            "к": ToggleRandom,     // r
-            "н": ToggleSingle,     // y
-            "Д": ExternalCommand(command: ["mpc", "clear"]), // L
-            "Щ": ShowOutputs,      // O
-            "З": PlaylistsTab,     // P
-            "Г": Rescan,           // U
-            "К": ToggleConsume,    // R
+            // Russian layout duplicates (ЙЦУКЕН) — GENERATED (rmpcRuBinds.global), see modules/user/nix-maid/sys/media.nix
         },
         navigation: {
             "A": AddAll,
@@ -108,22 +91,7 @@
             "N": PreviousResult,
             "r": Rename,
             "<Space>": Add,
-            // Russian layout duplicates (ЙЦУКЕН)
-            "ф": Select,           // a
-            "Ф": AddAll,           // A
-            "в": Delete,           // D
-            "п": Top,              // g
-            "П": Bottom,           // G
-            "р": Left,             // h
-            "ш": FocusInput,       // i
-            "о": Down,             // j
-            "О": MoveDown,         // J
-            "л": Up,               // k
-            "Л": MoveUp,           // K
-            "д": Right,            // l
-            "т": NextResult,       // n
-            "Т": PreviousResult,   // N
-            "к": Rename,           // r
+            // Russian layout duplicates (ЙЦУКЕН) — GENERATED (rmpcRuBinds.navigation), see modules/user/nix-maid/sys/media.nix
         },
         queue: {
             "a": AddToPlaylist,
@@ -132,10 +100,7 @@
             "<C-s>": Save,
             "d": Delete,
             "<Space>": JumpToCurrent,
-            // Russian layout duplicates (ЙЦУКЕН)
-            "ф": AddToPlaylist,    // a
-            "С": DeleteAll,        // C
-            "в": Delete,           // d
+            // Russian layout duplicates (ЙЦУКЕН) — GENERATED (rmpcRuBinds.queue), see modules/user/nix-maid/sys/media.nix
         },
     ),
 )
