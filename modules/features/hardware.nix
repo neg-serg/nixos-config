@@ -21,8 +21,18 @@ with lib;
 
         usClasses = mkOption {
           type = types.listOf types.str;
+          # Terminal windows are launched with custom kitty classes (M4+* scratch
+          # binds in files/gui/hypr/hyprland.lua) — keep this list in sync.
           default = [
-            "kitty" # terminal: all TUIs get us, so bare-letter hotkeys work everywhere
+            "term" # plain shell (kitty --class term)
+            "nwim" # nvim wrapper (kitty --class nwim)
+            "music" # rmpc (M4+f)
+            "teardown" # btop (M4+d)
+            "torrment" # rustmission (M4+t)
+            "vpn" # tun status (M4+u)
+            "mixer" # ncpamixer (M4+C+p)
+            "rebuild" # nh os switch (M4+S+n)
+            "mpd-add" # rmpc spawns this class
             "mpv" # video player: no text input, vim-style keys
           ];
           description = ''
