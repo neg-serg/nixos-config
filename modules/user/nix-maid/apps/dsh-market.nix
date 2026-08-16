@@ -375,6 +375,71 @@ body {
   --dsw-font-markdown-base-font-size: 15px;
   --dsw-font-markdown-base-line-height: 24px;
 }
+
+/* -- terminal pass: flat, dense, squared -- */
+
+/* message flow: denser, like terminal scrollback */
+.Md3f7G_column {
+  gap: 10px;
+}
+
+/* user message: squared prompt line instead of a chat bubble */
+.gdEzaW_userRow {
+  align-items: stretch;
+}
+.gdEzaW_bubble {
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 15px;
+  line-height: 24px;
+  border: 1px solid var(--dsw-alias-border-l1);
+}
+.gdEzaW_bubble::before {
+  content: "❯ ";
+  color: var(--dsw-alias-state-success-primary);
+  font-weight: 600;
+}
+
+/* code blocks: terminal panes with a header strip */
+.ydkMvW_code {
+  position: relative;
+  border-radius: 4px;
+  border-left: 3px solid var(--dsw-alias-brand-primary);
+  padding: 30px 14px 12px;
+  font-size: 13px;
+  line-height: 20px;
+}
+.ydkMvW_code::before {
+  content: "❯";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 22px;
+  padding: 2px 10px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid var(--dsw-alias-border-l1);
+  color: var(--dsw-alias-state-success-primary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/* tool call rows: flat */
+.Md3f7G_callRow {
+  border-radius: 2px;
+}
+
+/* composer seat: terminal input divider */
+[data-composer-seat] {
+  border-top: 1px solid rgba(54, 123, 191, 0.4);
+}
+
+/* terminal-style selection */
+::selection {
+  background: rgba(54, 123, 191, 0.45);
+  color: #eaf3ff;
+}
 `;
 
     function apply(ctx) {
