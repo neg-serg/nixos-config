@@ -143,8 +143,18 @@ resolve_binds_by_sym = false,
 
 ### P1 — kitty (основной терминал, самый частый сценарий)
 
-**Файл:** `files/kitty/key.conf` — добавить блок «Russian layout duplicates (ЙЦУКЕН)» с
-кириллическими keysym-именами (валидны через `xkb_keysym_from_name`, регистр не важен):
+**Файл:** `files/kitty/key.conf` — блок «Russian layout duplicates (ЙЦУКЕН)» **генерируется**
+из `lib/ru-keys.nix` (`kittyRuBinds` в `shells.nix`) и использует **литеральные кириллические
+символы** (`map ctrl+shift+м …`) — ровно как латинские бинды kitty.
+
+> ⚠️ Исправление (2026-08): исходный план использовал keysym-имена `CYRILLIC_*` — на этой
+> системе они **не работают**: kitty резолвит их через `xkb_keysym_from_name`, а
+> `libxkbcommon` не загружается (нет ld-кэша), поэтому имена молча отбрасываются как
+> «unknown key» (регистр тоже важен: `Cyrillic_em`, а не `CYRILLIC_EM`). Литеральные
+> символы парсятся без либы и матчатся тем же механизмом, что и латинские бинды: событие
+> кириллического keysym несёт сам символ (подтверждено тестами kitty, `kitty_tests/keys.py`).
+
+Ниже — исторический пример (не применять как есть):
 
 ```
 # --- Russian layout duplicates (ЙЦУКЕН) ---
