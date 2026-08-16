@@ -1,5 +1,15 @@
 # AGENTS usage for this repo
 
+Communication language (hard rule)
+- The user (neg) cannot read Chinese at all. NEVER write anything to them in
+  Chinese — not in chat replies, not in dsh-ui components, not in commit
+  messages, not in any file they will read. Treat this as a hard rule.
+- The user's language is Russian. English is acceptable for technical terms,
+  code, and identifiers. When in doubt, write in Russian.
+- Note: the dsh web GUI itself may contain Chinese strings from plugins
+  (e.g. pet.json, dshmarket UI); that is app data, not something we write.
+  Do not copy those strings into replies for the user.
+
 Scope
 - This AGENTS.md applies to the entire `/etc/nixos` tree.
 - Prefer existing module structure (`modules/`, `hosts/`, `modules/user/nix-maid/`, etc.) and follow surrounding style.
