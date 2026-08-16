@@ -45,5 +45,6 @@ in
   environment.systemPackages = [
     dshWrapped # DeepSeek Harness agent CLI (dsh) — wrapped to load the DeepSeek API key
     pkgs.pnpm # pnpm package manager (used by `dsh plugin --profile <name> add`)
+    pkgs.gnumake # make — required by node-gyp when pnpm builds node-pty (SSH terminal) in the dsh web profile
   ];
 }
