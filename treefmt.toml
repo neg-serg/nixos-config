@@ -6,6 +6,8 @@ excludes = [
   "flake.lock",
   "flake.nix",
   ".git/*",
+  # Accidental nix store dump (nix/store/*.drv, .patch) — never source, gitignored
+  "nix/**",
   # Vendored kitty kittens (scroll_mark/search/tab_bar/range_select + kittens/)
   "files/kitty/**/*.py",
   # ASCII-art scripts — shfmt/black would mangle the layout
