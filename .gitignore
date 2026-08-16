@@ -1,5 +1,7 @@
 result
 nixos.qcow2
+# Accidental nix store dump (nix/store/*.drv, .patch) — never source
+nix/
 .direnv/
 __pycache__/
 .pi/
