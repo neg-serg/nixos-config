@@ -156,6 +156,29 @@ let
     YAML
         fi
 
+        # UI panels the user disabled in the web GUI (right-side
+        # Explorer/Preview/Files, Task Board, pet widget, skin center, dream
+        # skin, better sidebar). Kept declarative here so a rebuild or login
+        # re-asserts them; the rows are appended idempotently when missing.
+        if ! grep -q 'ui-dsh-aionui-panel' "$PATCH" 2>/dev/null; then
+          cat >> "$PATCH" <<'YAML'
+
+    # Disabled UI panels — see dsh-market.nix (dsh web GUI declutter).
+    - id: ui-dsh-aionui-panel
+      disabled: true
+    - id: ui-task-board
+      disabled: true
+    - id: pet
+      disabled: true
+    - id: ui-skin-center
+      disabled: true
+    - id: dream-skin
+      disabled: true
+    - id: better-sidebar
+      disabled: true
+    YAML
+        fi
+
         if [ "$installed" = 1 ]; then
           export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
           systemctl --user restart dsh.service 2>/dev/null || true
