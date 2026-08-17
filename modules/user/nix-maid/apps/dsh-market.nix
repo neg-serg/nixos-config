@@ -294,6 +294,16 @@ let
                 if isinstance(lst, list) and lst and lst[0] == first:
                     en[phase] = RU_PHRASES[phase]
                     changed = True
+        # The zh phrase block is stock Chinese ("正在蒸馏Fable 5…" etc.);
+        # replace it with the Russian phrases so the status line carries no
+        # Chinese characters in any locale.
+        zh = cfg.get("phrases", {}).get("zh")
+        if isinstance(zh, dict) and any(
+            isinstance(zh.get(k), list) and zh[k] and "\u4e00" <= zh[k][0][0] <= "\u9fff"
+            for k in ("thinking", "running", "long")
+        ):
+            cfg["phrases"]["zh"] = RU_PHRASES
+            changed = True
         if changed:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(cfg, f, ensure_ascii=False, indent=4)
