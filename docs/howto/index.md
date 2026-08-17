@@ -18,6 +18,8 @@ isn't a step-by-step runbook.
 
 - TidalCycles setup (RU): [tidal-cycles.ru.md](./tidal-cycles.ru.md)
 
+- Replacing GUI buttons with text commands (RU): [buttons-to-commands.ru.md](./buttons-to-commands.ru.md)
+
 - Options/modules reference: [modules.md](./modules.md)
 
 - Verified change workflows (add module / flag / package / host / script / secret):
