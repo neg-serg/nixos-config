@@ -29,7 +29,7 @@ bind = MODS, KEY, ACTION, ARGS
 
 ```
 bind = SUPER, Return, exec, kitty
-bind = SUPER, D, exec, rofi -show drun
+bind = SUPER, D, exec, ~/.local/bin/main-menu
 ```
 
 ### Window control:

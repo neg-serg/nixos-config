@@ -11,7 +11,7 @@ let
   enabled = config.lib.neg.enabled "media.audio.apps";
   packages = [
     pkgs.ffmpeg # basic ffmpeg for playback
-    pkgs.ffmpegthumbnailer # generate thumbnails for videos (runners/rofi)
+    pkgs.ffmpegthumbnailer # generate video thumbnails for previews
     pkgs.imagemagick # fallback convert/mogrify for pipelines
     pkgs.media-player-info # udev HW database for player IDs
     pkgs.mediainfo # inspect video/audio metadata quickly
