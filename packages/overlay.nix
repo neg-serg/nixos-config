@@ -29,16 +29,63 @@ in
     src = ./../files/sources/dpkg-1.23.7.tar.xz;
   });
 
-  # pffft: nixpkgs fetches the source from bitbucket.org, which is RKN-blocked
-  # here (DNS-poisoned, sandboxed fetches hang); vendor the release tarball.
-  # Needed by vcv-rack.
+  # pffft/fuzzysearchdatabase: bitbucket.org is RKN-blocked here
+  # (DNS-poisoned, sandboxed fetches hang). The attribute overrides below
+  # cover direct consumers of the pkgs.pffft / pkgs.fuzzysearchdatabase
+  # attributes; vcv-rack's own dep/ fetches are covered by the
+  # fetchFromBitbucket override further down (same vendored tarballs).
   pffft = finalPrev.pffft.overrideAttrs (_: {
     src = ./../files/sources/pffft-74d7261.tar.gz;
   });
 
-  # fuzzysearchdatabase: same bitbucket problem — also a vcv-rack dependency.
   fuzzysearchdatabase = finalPrev.fuzzysearchdatabase.overrideAttrs (_: {
     src = ./../files/sources/fuzzysearchdatabase-23122d1.tar.gz;
+  });
+
+  # vcv-rack vendors its dep/ libraries itself: its package.nix calls
+  # fetchFromBitbucket for fuzzysearchdatabase and pffft, so attribute
+  # overrides never reach it. Intercept fetchFromBitbucket for those two
+  # repos and serve the local tarballs instead (unpacked content verified
+  # byte-identical to the nixpkgs fetchzip hashes). Everything else falls
+  # through to the original.
+  fetchFromBitbucket =
+    args:
+    let
+      vendored = {
+        "jpommier/pffft" = ./../files/sources/pffft-74d7261.tar.gz;
+        "j_norberg/fuzzysearchdatabase" = ./../files/sources/fuzzysearchdatabase-23122d1.tar.gz;
+      };
+      key = "${args.owner or ""}/${args.repo or ""}";
+    in
+    if builtins.hasAttr key vendored then
+      finalPrev.stdenv.mkDerivation {
+        pname = "${args.repo or "vendored"}-vendored";
+        version = args.rev or args.tag or "local";
+        src = vendored.${key};
+        phases = [
+          "unpackPhase"
+          "installPhase"
+        ];
+        installPhase = ''
+          mkdir -p $out
+          cp -r ./. $out/
+        '';
+      }
+    else
+      finalPrev.fetchFromBitbucket args;
+
+  # vcv-rack's Makefile declares no dependency between the plugin sub-make
+  # and libRack.so, but nixpkgs passes "all plugins" to one parallel make —
+  # the plugin link can read libRack.so mid-write and fail with
+  # "file format not recognized" (flaky). Build `all` first, then plugins in
+  # postBuild (the same split nixpkgs already uses for the Darwin dist target).
+  vcv-rack = finalPrev.vcv-rack.overrideAttrs (old: {
+    makeFlags = builtins.filter (flag: flag != "plugins") (old.makeFlags or [ ]);
+    postBuild =
+      (old.postBuild or "")
+      + finalPrev.lib.optionalString (!finalPrev.stdenv.hostPlatform.isDarwin) ''
+        make plugins
+      '';
   });
 
   # GHCi with TidalCycles library preloaded — used by tidal.nvim
