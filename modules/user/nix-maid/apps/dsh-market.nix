@@ -28,8 +28,28 @@ let
 
     path = sys.argv[1]
 
-    EXCLUDES = ["dshmarket", "dsh-dream-skin", "@linxin666/*"]
-    ALLOW = {"cloudflared": "true", "cpu-features": "false", "ssh2": "true"}
+    EXCLUDES = [
+      "dshmarket"
+      "dsh-dream-skin"
+      "@linxin666/*"
+      "dsh-funnel"
+      "dsh-pathlink"
+      "dsh-file-upload"
+      "@0xsline/dsh-spotlight"
+      "dsh-plugin-vetting"
+      "dsh-plugin-recall"
+      "dsh-memento"
+      "dsh-startup-guard"
+      "dsh-free-search"
+    ]
+    ALLOW = {
+      "cloudflared": "true"
+      "cpu-features": "false"
+      "ssh2": "true"
+      "sharp": "true"
+      "tesseract.js": "true"
+      "gavel-review": "true"
+    }
 
     with open(path) as f:
         lines = f.read().splitlines(keepends=True)
@@ -125,9 +145,59 @@ let
             installed=0
             if ! grep -q '"dshmarket"' "$PROFILE_DIR/package.json" 2>/dev/null; then
               echo "dsh-market: installing dshmarket into the web profile..."
-              dsh plugin --profile web add dshmarket \
+              dsh plugin --profile web add dshmarket -w \
                 || { echo "dsh-market: install failed (offline? pnpm?) — will retry on next login" >&2; exit 0; }
               installed=1
+            fi
+
+            # Declarative plugin set — same ensure-if-missing pattern as
+            # dshmarket above. `-w` is required: the profile is a pnpm
+            # workspace root (packages: ['.']), and pnpm 11 refuses `add`
+            # from the root without it. allowBuilds entries for native deps
+            # (sharp/tesseract.js/gavel-review) live in pnpmPatch above, so
+            # fresh installs don't trip ERR_PNPM_IGNORED_BUILDS. Pairs are
+            # "package-name:install-spec" so scoped names (@0xsline/...) stay
+            # unambiguous.
+            for entry in \
+              "dsh-funnel:dsh-funnel" \
+              "dsh-pathlink:dsh-pathlink" \
+              "dsh-file-upload:dsh-file-upload" \
+              "@0xsline/dsh-spotlight:@0xsline/dsh-spotlight" \
+              "dsh-plugin-vetting:dsh-plugin-vetting@^0.5.6" \
+              "dsh-plugin-recall:dsh-plugin-recall" \
+              "dsh-memento:dsh-memento" \
+              "dsh-startup-guard:dsh-startup-guard" \
+              "dsh-free-search:dsh-free-search"; do
+              name="''${entry%%:*}"
+              spec="''${entry#*:}"
+              if ! grep -q "\"$name\"" "$PROFILE_DIR/package.json" 2>/dev/null; then
+                echo "dsh-market: installing $name into the web profile..."
+                if dsh plugin --profile web add "$spec" -w; then
+                  installed=1
+                else
+                  echo "dsh-market: install of $name failed — will retry on next login" >&2
+                fi
+              fi
+            done
+
+            # gavel-review (JohnXu22786/adversarial-review) is not on npm and
+            # ships no committed build — bootstrap a local clone + build, then
+            # link it like any other plugin. The clone at ~/src/gavel-review is
+            # the source of truth; only built when missing.
+            if ! grep -q '"gavel-review"' "$PROFILE_DIR/package.json" 2>/dev/null; then
+              GAVEL_DIR="$HOME/src/gavel-review"
+              if [ ! -d "$GAVEL_DIR/.git" ]; then
+                git clone --depth 1 https://github.com/JohnXu22786/adversarial-review "$GAVEL_DIR" 2>/dev/null \
+                  || echo "dsh-market: gavel-review clone failed" >&2
+              fi
+              if [ -d "$GAVEL_DIR" ] && [ ! -f "$GAVEL_DIR/lib/index.js" ]; then
+                (cd "$GAVEL_DIR" && npm install --no-audit --no-fund && npm run build) >/dev/null 2>&1 \
+                  || echo "dsh-market: gavel-review build failed" >&2
+              fi
+              if [ -f "$GAVEL_DIR/lib/index.js" ]; then
+                dsh plugin --profile web add "$GAVEL_DIR" -w && installed=1 \
+                  || echo "dsh-market: gavel-review install failed" >&2
+              fi
             fi
 
             # pnpm install may rewrite pnpm-workspace.yaml; re-apply the policy.
