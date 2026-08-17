@@ -226,29 +226,29 @@ let
             # palette is replaced, so manual color edits in config.json
             # survive.
             python3 - "$SR/config.json" "$SR/config.example.json" <<'PY'
-import json, sys
+    import json, sys
 
-RAINBOW = ["#ff5f6d", "#ffc371", "#ffdd55", "#7dff7d", "#5fd4ff", "#a78bfa", "#ff8adb"]
-PALETTE = ["#005faf", "#367CB0", "#6C7E96", "#287373", "#5E468C", "#914E89"]
+    RAINBOW = ["#ff5f6d", "#ffc371", "#ffdd55", "#7dff7d", "#5fd4ff", "#a78bfa", "#ff8adb"]
+    PALETTE = ["#005faf", "#367CB0", "#6C7E96", "#287373", "#5E468C", "#914E89"]
 
-def patch(path):
-    try:
-        with open(path, encoding="utf-8") as f:
-            cfg = json.load(f)
-    except (OSError, ValueError):
-        return
-    g = cfg.get("config", {}).get("gradient")
-    if not isinstance(g, dict) or g.get("colors") != RAINBOW:
-        return
-    g["colors"] = PALETTE
-    g["speed"] = 6
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(cfg, f, ensure_ascii=False, indent=4)
-        f.write("\n")
+    def patch(path):
+        try:
+            with open(path, encoding="utf-8") as f:
+                cfg = json.load(f)
+        except (OSError, ValueError):
+            return
+        g = cfg.get("config", {}).get("gradient")
+        if not isinstance(g, dict) or g.get("colors") != RAINBOW:
+            return
+        g["colors"] = PALETTE
+        g["speed"] = 6
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, ensure_ascii=False, indent=4)
+            f.write("\n")
 
-for p in sys.argv[1:]:
-    patch(p)
-PY
+    for p in sys.argv[1:]:
+        patch(p)
+    PY
 
             # Restore the parked @deepseek-ai symlink (discard whatever pnpm
             # materialized there while it was parked; the relink block below
