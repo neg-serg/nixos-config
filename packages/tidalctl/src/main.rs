@@ -251,7 +251,11 @@ fn start() -> Result<()> {
         .context("open engine log")?;
 
     println!("TidalCycles: booting engine...");
-    let mut child: Child = Command::new("sclang")
+    // Run sclang under pw-jack: PipeWire's JACK emulation is a libjack
+    // replacement (LD_LIBRARY_PATH), not a jackd daemon — without it scsynth
+    // fails to boot ("Cannot connect to server socket").
+    let mut child: Child = Command::new("pw-jack")
+        .arg("sclang")
         .args(["-l", conf.to_str().unwrap(), startup.to_str().unwrap()])
         .env("LD_LIBRARY_PATH", "/run/current-system/sw/lib")
         .stdout(Stdio::from(log_handle.try_clone().context("clone log")?))
