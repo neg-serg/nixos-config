@@ -29,7 +29,7 @@ let
 in
 {
   packages = [
-    pkgs.hypridle # idle daemon (triggers DPMS off for OLED safety)
+    pkgs.hypridle # idle daemon (locks to a fading black screen)
     pkgs.hyprlock # Hyprland's GPU-accelerated screen locking utility
     pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
     pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
@@ -144,7 +144,7 @@ in
       };
     };
 
-    # Hypridle — idle daemon (OLED safety: turns off display after 3 min)
+    # Hypridle — idle daemon (locks to a fading black screen after 2 min; no DPMS off)
     hypridle = {
       description = "Hyprland idle daemon";
       wantedBy = [ "hyprland-session.target" ];
