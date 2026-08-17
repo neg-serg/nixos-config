@@ -35,6 +35,7 @@ grep -q '#003b88' <<<"$cfg"   && ok "config: neg.nvim hint colors (#003b88)" || 
 grep -q 'Iosevka'  <<<"$cfg"  && ok "config: Iosevka fonts"                    || bad "config: Iosevka missing"
 grep -q 'font-size: 12px' <<<"$cfg" && ok "config: hint font 12px"               || bad "config: hint font not 12px"
 grep -q 'api.cmap'  <<<"$cfg"  && ok "config: api.cmap bindings"               || bad "config: api.cmap missing"
+grep -q '127\.0\.0\.1:3080' <<<"$cfg" && ok "config: dsh GUI (127.0.0.1:3080) blocklisted" || bad "config: dsh GUI blocklist missing"
 
 # 3. Extension patches (active version dir)
 if [ -z "$EXT" ]; then
