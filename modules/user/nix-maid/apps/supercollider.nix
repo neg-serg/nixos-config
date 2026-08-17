@@ -23,17 +23,19 @@ let
     s.options.numOutputBusChannels = 2;
     s.options.numInputBusChannels = 2;
     s.waitForBoot {
+      var userSamples = Platform.userHomeDir +/+ "src/music/tidal/samples";
       try {
         ~dirt = SuperDirt(2, s);
         // Explicit sample paths — do NOT rely on loadSoundFiles' default
         // "../../Dirt-Samples/*".resolveRelative (it resolves against the
         // document dir, which breaks once SuperDirt lives in the nix store).
-        var userSamples = Platform.userHomeDir +/+ "src/music/tidal/samples";
         File.mkdir(userSamples);
-        ~dirt.loadSoundFiles([
-          "${pkgs.neg.dirt-samples}/share/Dirt-Samples/",
-          userSamples +/+ ""
-        ]);
+        // loadSoundFiles expands the glob only for a plain String path,
+        // so the stock bank and the user samples dir get separate calls.
+        ~dirt.loadSoundFiles("${pkgs.neg.dirt-samples}/share/Dirt-Samples/*");
+        if(PathName(userSamples).folders.notEmpty) {
+          ~dirt.loadSoundFiles(userSamples +/+ "*")
+        };
         ~dirt.start(57120, 0 ! 12);
         "SUPERDIRT READY".postln;
       } { |err| ("SuperDirt ERROR: " ++ err.what).postln; };
