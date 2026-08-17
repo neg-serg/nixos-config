@@ -111,6 +111,7 @@ in
       # (profile's @deepseek-ai symlink points here, see dsh-market.nix)
       dsh-web-en = final.callPackage ./dsh/web-ui-en { dsh = final.neg.dsh; };
       zest = final.callPackage ./zest { }; # CLI for ZestBay plugin management (LV2 add/rm/list)
+      carlactl = final.callPackage ./carlactl { }; # console VST router via headless Carla (list/run/route)
     };
 
   # tmd-top: real-time per-IP network traffic monitor (TUI) — pinned textual 1.0.0
