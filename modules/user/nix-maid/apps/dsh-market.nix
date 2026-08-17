@@ -220,16 +220,63 @@ let
               cp "$SR/config.example.json" "$SR/config.json"
             fi
 
-            # Keep the turn-status gradient in line with the neg omp theme
-            # (muted blues/teals/purples, see ~/.config/zsh/neg.omp.json) —
-            # reproducible across plugin reinstalls. Only the stock rainbow
-            # palette is replaced, so manual color edits in config.json
-            # survive.
+            # Keep the turn-status gradient and phrase set in line with the
+            # neg look (muted blues/teals/purples from
+            # ~/.config/zsh/neg.omp.json, Russian status phrases) —
+            # reproducible across plugin reinstalls. Only stock values are
+            # replaced, so manual edits in config.json survive.
             python3 - "$SR/config.json" "$SR/config.example.json" <<'PY'
     import json, sys
 
     RAINBOW = ["#ff5f6d", "#ffc371", "#ffdd55", "#7dff7d", "#5fd4ff", "#a78bfa", "#ff8adb"]
     PALETTE = ["#005faf", "#367CB0", "#6C7E96", "#287373", "#5E468C", "#914E89"]
+
+    STOCK_EN_FIRST = {
+        "thinking": "Distilling Fable 5…",
+        "running": "Playing Wordle against itself…",
+        "long": "Thinking for 22 hours without answering…",
+    }
+    RU_PHRASES = {
+        "thinking": [
+            "Думаю…",
+            "Собираю контекст…",
+            "Читаю задачу…",
+            "Строю план…",
+            "Погружаюсь…",
+            "Разбираю вопрос…",
+            "Ищу подход…",
+            "Обдумываю…",
+            "Разогреваю нейроны…",
+            "Готовлю ответ…",
+            "Просыпаюсь…",
+            "Синхронизирую мысли…",
+        ],
+        "running": [
+            "Всё ещё думаю…",
+            "Копаю глубже…",
+            "Перебираю варианты…",
+            "Пишу код…",
+            "Проверяю гипотезы…",
+            "Листаю документацию…",
+            "Собираю выводы…",
+            "Довожу до ума…",
+            "Уточняю детали…",
+            "Работаю над этим…",
+            "Шлифую…",
+            "Не отвлекаюсь…",
+        ],
+        "long": [
+            "Это надолго…",
+            "Заварил чай…",
+            "Глубокое погружение…",
+            "Всё под контролем…",
+            "Ещё чуть-чуть…",
+            "Терпение…",
+            "Думаю о вечном…",
+            "Не сдаюсь…",
+            "Полный вперёд…",
+        ],
+    }
 
     def patch(path):
         try:
@@ -237,14 +284,23 @@ let
                 cfg = json.load(f)
         except (OSError, ValueError):
             return
+        changed = False
         g = cfg.get("config", {}).get("gradient")
-        if not isinstance(g, dict) or g.get("colors") != RAINBOW:
-            return
-        g["colors"] = PALETTE
-        g["speed"] = 6
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(cfg, f, ensure_ascii=False, indent=4)
-            f.write("\n")
+        if isinstance(g, dict) and g.get("colors") == RAINBOW:
+            g["colors"] = PALETTE
+            g["speed"] = 6
+            changed = True
+        en = cfg.get("phrases", {}).get("en")
+        if isinstance(en, dict):
+            for phase, first in STOCK_EN_FIRST.items():
+                lst = en.get(phase)
+                if isinstance(lst, list) and lst and lst[0] == first:
+                    en[phase] = RU_PHRASES[phase]
+                    changed = True
+        if changed:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(cfg, f, ensure_ascii=False, indent=4)
+                f.write("\n")
 
     for p in sys.argv[1:]:
         patch(p)
