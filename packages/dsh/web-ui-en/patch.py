@@ -102,6 +102,102 @@ CONV_REPL = [
 
 CJK = re.compile(r"[\u4e00-\u9fff]")
 
+# dsh-client-ui-primitives/lib/index.js: the shared UI kit hardcodes Chinese
+# default labels that render as text and tooltips (terminal-card pills
+# "运行中"/"已完成"/"无输出", copy buttons "复制"/"复制成功", collapse/expand
+# toggles, connection banner "连接已断开，正在重连…", search/glob result
+# banners "显示 N / 共 M", truncation notices, JSON view copy tooltips) when
+# callers don't pass their own locale-aware props. Rewrite them to English.
+PRIM_REPL = [
+    # DEFAULT_LABELS terminal-card pills
+    (
+        "signal: (signal) => `信号 ${signal}`",
+        "signal: (signal) => `Signal ${signal}`",
+    ),
+    (
+        "exitCode: (exitCode) => `退出码 ${exitCode}`",
+        "exitCode: (exitCode) => `Exit code ${exitCode}`",
+    ),
+    ('running: "运行中"', 'running: "Running"'),
+    ('failed: "失败"', 'failed: "Failed"'),
+    ('done: "已完成"', 'done: "Done"'),
+    ('copy: "复制"', 'copy: "Copy"'),
+    ('copied: "复制成功"', 'copied: "Copied"'),
+    ('noOutput: "无输出"', 'noOutput: "No output"'),
+    ('collapseAria: "收起输出"', 'collapseAria: "Collapse output"'),
+    ('collapse: "收起"', 'collapse: "Collapse"'),
+    (
+        "expandAria: (hidden) => `展开其余 ${hidden} 行输出`",
+        "expandAria: (hidden) => `Expand ${hidden} more output lines`",
+    ),
+    (
+        "expand: (hidden) => `… 其余 ${hidden} 行`",
+        "expand: (hidden) => `… ${hidden} more lines`",
+    ),
+    # component default props (tooltips)
+    ('copyLabel = "复制"', 'copyLabel = "Copy"'),
+    ('copiedLabel = "复制成功"', 'copiedLabel = "Copied"'),
+    (
+        'label = "连接已断开，正在重连…"',
+        'label = "Connection lost, reconnecting…"',
+    ),
+    # terminal output banner
+    (
+        "children: `显示 ${lines.length} / ${totalLines} 行`",
+        "children: `Showing ${lines.length} / ${totalLines} lines`",
+    ),
+    (
+        'children: copied ? "复制成功" : "复制"',
+        'children: copied ? "Copied" : "Copy"',
+    ),
+    (
+        '"aria-label": expanded ? "收起内容" : `展开其余 ${hidden} 行`',
+        '"aria-label": expanded ? "Collapse content" : `Expand ${hidden} more lines`',
+    ),
+    (
+        'children: expanded ? "收起" : `… 其余 ${hidden} 行`',
+        'children: expanded ? "Collapse" : `… ${hidden} more lines`',
+    ),
+    (
+        '"aria-label": expanded ? "收起差异" : `展开其余 ${hidden} 行差异`',
+        '"aria-label": expanded ? "Collapse diff" : `Expand ${hidden} more diff lines`',
+    ),
+    (
+        "const count = truncated ? `显示 ${shown} / 共 ${total}` : `${shown}`",
+        "const count = truncated ? `Showing ${shown} / ${total}` : `${shown}`",
+    ),
+    (
+        'return props.kind === "paths" ? `${count} 个路径` : `${count} 处匹配 · ${props.files.length} 个文件`',
+        'return props.kind === "paths" ? `${count} paths` : `${count} matches · ${props.files.length} files`',
+    ),
+    ('children: "无结果"', 'children: "No results"'),
+    (
+        '"aria-label": expanded ? "收起结果" : `展开其余 ${hidden} 行结果`',
+        '"aria-label": expanded ? "Collapse results" : `Expand ${hidden} more result lines`',
+    ),
+    ('children: "未找到结果"', 'children: "No results found"'),
+    ('children: "来源列表已截断"', 'children: "Source list truncated"'),
+    ('children: "内容已截断"', 'children: "Content truncated"'),
+    (
+        "return `… 已截断，共 ${total} 字符`",
+        "return `… truncated, ${total} chars`",
+    ),
+]
+
+# dsh-client-locale/lib/client.js: the language picker shows the zh locale
+# under its native name "中文". The GUI runs English; show the English name.
+LOCALE_REPL = [
+    ('label: "中文"', 'label: "Chinese"'),
+]
+
+# dsh-client-connection/lib/client.js: the fixture model catalog served when
+# no real model groups are configured (fixtureModelGroups) labels the
+# DeepSeek models in Chinese.
+CONN_REPL = [
+    ('description: "快速响应"', 'description: "Fast responses"'),
+    ('description: "复杂任务"', 'description: "Complex tasks"'),
+]
+
 
 def patch_bytes(
     data: bytes, table: list[tuple[str, str]]
@@ -203,6 +299,26 @@ def patch_commands(root: pathlib.Path) -> int:
     return 1
 
 
+def patch_simple(root: pathlib.Path, rel: str, table, name: str) -> int:
+    """Apply a literal replacement table to one bundle; report absent keys."""
+    p = root / rel
+    if not p.exists():
+        print(f"skip (absent): {rel}")
+        return 0
+    data = p.read_bytes()
+    new_data, missing = patch_bytes(data, table)
+    if new_data != data:
+        p.write_bytes(new_data)
+        print(f"patched: {rel} ({name})")
+        if missing:
+            print(
+                f"note: {len(missing)} {name} keys absent: {sorted(missing)}"
+            )
+        return 1
+    print(f"note: {rel} unchanged ({name}; keys absent: {missing})")
+    return 0
+
+
 def main() -> int:
     root = pathlib.Path(sys.argv[1])
     if not root.is_dir():
@@ -231,6 +347,18 @@ def main() -> int:
 
     patched += patch_conversation(root)
     patched += patch_commands(root)
+    patched += patch_simple(
+        root, "dsh-client-ui-primitives/lib/index.js", PRIM_REPL, "primitives"
+    )
+    patched += patch_simple(
+        root, "dsh-client-locale/lib/client.js", LOCALE_REPL, "locale"
+    )
+    patched += patch_simple(
+        root,
+        "dsh-client-connection/lib/client.js",
+        CONN_REPL,
+        "connection fixtures",
+    )
 
     # index.html: declare the page language explicitly as English
     if html.exists():
