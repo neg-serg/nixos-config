@@ -35,6 +35,8 @@ in
           "d /zero/ai 0755 root root -"
           "d /zero/ai/ollama 0770 ollama ollama -"
           "Z /zero/ai/ollama 0770 ollama ollama -"
+          # llama-server (qwen3-vl GGUF) model store — main user manages files
+          "d /zero/ai/llama 0755 ${config.users.main.name} ${config.users.main.name} -"
         ];
         users.users."${config.users.main.name}".extraGroups = lib.mkAfter [ "ollama" ];
       }

@@ -69,6 +69,19 @@ services.colibri = {
 };
 ```
 
+### llama-server (qwen3-vl vision, Vulkan/RADV)
+
+- Module: `modules/llm/llama-server.nix`
+- Engine: `pkgs.llama-cpp-vulkan`, GPU-backed (RX 9070 XT, RADV).
+- Role: local vision engine for the `vision-review` skill — images never leave the machine.
+- Model dir: `/zero/ai/llama` (qwen3-vl 30b/8b GGUF + mmproj) — on the `zero` ZFS pool,
+  never on system disks.
+- Deliberately not auto-started; start on demand:
+  ```bash
+  systemctl start llama-server          # 30b on 127.0.0.1:8080
+  /zero/ai/llama/start-llama-server.sh  # same, manual run (optional port/model args)
+  ```
+
 ### voxinput (voice → text)
 
 - Module: `modules/llm/pkgs.nix`
@@ -84,6 +97,7 @@ services.colibri = {
 ## Layout on disk
 
 - `/zero/ai/ollama` — Ollama model store (413 GB, exists)
+- `/zero/ai/llama` — llama-server (qwen3-vl) GGUF models (24 GB, exists)
 - `/zero/ai/glm52_i4` — colibrì int4 model (~370 GB, needs download)
 - `/zero/ai/localai` — LocalAI model dir (fallback path)
 
