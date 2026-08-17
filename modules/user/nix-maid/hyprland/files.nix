@@ -40,12 +40,8 @@ in
 
           # Colors from quickshell theme
           $textPrimary = rgba(203, 214, 229, 1.0)
-          $textSecondary = rgba(174, 185, 200, 0.8)
-          $textDim = rgba(174, 185, 200, 0.6)
           $surface = rgba(24, 28, 37, 0.95)
-          $accent = rgba(0, 111, 204, 1.0)
           $accentDim = rgba(0, 111, 204, 0.8)
-          $outline = rgba(59, 76, 92, 0.8)
           $success = rgba(14, 107, 77, 0.8)
           $error = rgba(255, 107, 129, 0.8)
           $warning = rgba(255, 200, 100, 0.8)
@@ -53,66 +49,40 @@ in
           general {
               hide_cursor = true
               ignore_empty_input = true
-              immediate_render = true
+              # No immediate_render: the desktop screenshot is gathered before the
+              # session locks, so the blackout fade starts from the live desktop
+              # (no black flash while the screenshot loads).
           }
 
           # Custom animations
+          # Fade duration = 100 ms × speed → fadeIn 30 ≈ 3 s gradual blackout,
+          # fadeOut 3 ≈ 300 ms snappy wake-up.
           animations {
               enabled = true
               bezier = smoothDots, 0.4, 0.0, 0.2, 1.0
               bezier = smoothFade, 0.25, 0.1, 0.25, 1.0
               animation = inputFieldDots, 1, 3, smoothDots
-              animation = fadeIn, 1, 4, smoothFade
+              animation = fadeIn, 1, 30, smoothFade
               animation = fadeOut, 1, 3, smoothFade
           }
 
-          # Background - screenshot blur (no external wallpaper needed)
+          # Background — solid black. The lock screen *is* the blackout: while the
+          # fadeIn animation runs, the frozen desktop screenshot is drawn under a
+          # black overlay whose alpha follows the fade progress, so the whole
+          # display gradually darkens to black and then stays pure black. The
+          # monitor itself is never powered off (no DPMS — avoids the DPMS
+          # wake-up bug). The fade animations keep screencopy enabled, which is
+          # what makes this transition possible.
           background {
               monitor =
-              path = screenshot
-              blur_passes = 3
-              blur_size = 8
-              brightness = 0.7
-              noise = 0.02
+              color = rgb(0, 0, 0)
           }
 
-          # Time
-          label {
-              monitor =
-              text = $TIME
-              color = $textPrimary
-              font_size = 96
-              font_family = $fontFamily
-              position = 0, 150
-              halign = center
-              valign = center
-          }
+          # No clock/date/greeting widgets — the lock screen is deliberately a
+          # plain black screen; the password field below fades in on input.
 
-          # Date
-          label {
-              monitor =
-              text = cmd[update:43200000] date +"%A, %d %B %Y"
-              color = $textSecondary
-              font_size = 24
-              font_family = $fontFamily
-              position = 0, 50
-              halign = center
-              valign = center
-          }
-
-          # Greeting
-          label {
-              monitor =
-              text = cmd[update:60000] echo "Good $(date +%H | awk '{if ($1 < 12) print "Morning"; else if ($1 < 18) print "Afternoon"; else print "Evening"}'), $USER"
-              color = $textSecondary
-              font_size = 20
-              font_family = $fontFamily
-              position = 0, -50
-              halign = center
-              valign = center
-          }
-
-          # Input field
+          # Input field — the only widget on the lock screen. fade_on_empty makes
+          # it invisible on the black screen; typing fades it back in.
           input-field {
               monitor =
               size = 300, 50
@@ -132,31 +102,22 @@ in
               check_color = $success
               fail_color = $error
               fail_text = <i>$FAIL <b>($ATTEMPTS)</b></i>
-              fail_timeout = 3000
+              # fail_timeout is not an input-field option in hyprlock 0.9.5
+              # (general:fail_timeout = 2000 ms applies instead)
               capslock_color = $warning
-              position = 0, -150
+              position = 0, 0
               halign = center
               valign = center
-          }
-
-          # Keyboard layout indicator
-          label {
-              monitor =
-              text = $LAYOUT
-              color = $textDim
-              font_size = 14
-              font_family = $fontFamily
-              position = 30, 30
-              halign = left
-              valign = bottom
           }
         '';
 
         ".config/hypr/hypridle.conf".text = ''
-          # Hypridle — OLED-friendly idle configuration
-          # 2 min idle → auto-lock
-          # 3 min idle → DPMS off (OLED pixels fully off)
-          # Any input wakes the display back to the lock screen
+          # Hypridle — idle configuration
+          # 2 min idle → auto-lock with the black fade-out lock screen
+          # (see hyprlock.conf). No DPMS off: the monitor stays powered and
+          # the lock screen itself is the blackout — avoids the DPMS
+          # wake-up bug. Wake: press any key (password field fades in)
+          # and type the password.
 
           general {
               lock_cmd = pidof hyprlock || hyprlock
@@ -165,12 +126,6 @@ in
           listener {
               timeout = 120
               on-timeout = pidof hyprlock || hyprlock
-          }
-
-          listener {
-              timeout = 180
-              on-timeout = hyprctl dispatch dpms off
-              on-resume = hyprctl dispatch dpms on
           }
         '';
 
