@@ -47,6 +47,8 @@ enum Commands {
     Monitor,
     /// Open the ZestBay patchbay (via distrobox Arch container)
     Patch,
+    /// Start the engine and open the demo jam scene in nvim
+    Demo,
 }
 
 fn home() -> Result<PathBuf> {
@@ -289,6 +291,32 @@ fn code() -> Result<()> {
     Ok(())
 }
 
+/// Start the engine (if needed) and open the demo jam scene.
+fn demo() -> Result<()> {
+    if !port_listening(OSC_PORT) {
+        start()?;
+    } else {
+        println!("Engine already running (OSC port {OSC_PORT} is open).");
+    }
+    let dir = ensure_workspace()?;
+    let scene = dir.join("demo.tidal");
+    if !scene.exists() {
+        bail!(
+            "demo scene not found: {} — run nixos-rebuild so nix-maid writes it",
+            scene.display()
+        );
+    }
+    println!("Opening demo jam: {}", scene.display());
+    let status = Command::new("nvim")
+        .arg(&scene)
+        .status()
+        .context("spawn nvim")?;
+    if !status.success() {
+        bail!("nvim exited with {status}");
+    }
+    Ok(())
+}
+
 fn new_file(name: String) -> Result<()> {
     let dir = ensure_workspace()?;
     let safe: String = name
@@ -407,5 +435,6 @@ fn main() -> Result<()> {
         Commands::Record => record(),
         Commands::Monitor => monitor(),
         Commands::Patch => patch(),
+        Commands::Demo => demo(),
     }
 }
