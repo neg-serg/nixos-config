@@ -15,7 +15,6 @@ not present yet, it falls back to pkill + detached relaunch.
 import base64
 import json
 import os
-import re
 import subprocess
 import sys
 
