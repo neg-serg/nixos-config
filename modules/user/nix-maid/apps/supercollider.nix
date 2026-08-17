@@ -127,10 +127,9 @@ let
     let octatonic = n "60 61 63 64 66 67 69 70" # sound "superhex" # gain 0.4
 
     -- ==== More theory-derived helpers =========================================
-    -- Messiaen mode 3 (2-1-1-2-1-1...) and whole-tone mode 1 — like octatonic,
-    -- other modes of limited transposition.
-    --   d1 $ mode3            d1 $ wholeTone
-    let mode3 = n "60 62 63 65 66 68 69" # sound "superhex" # gain 0.4
+    -- Messiaen mode 3 (2,1,1 repeat: C D Eb F G Ab Bb B — 9 tones) and
+    -- whole-tone mode 1.  d1 $ mode3   d1 $ wholeTone
+    let mode3 = n "60 62 63 65 66 68 69 71 72" # sound "superhex" # gain 0.4
     let wholeTone = n "60 62 64 66 68 70" # sound "superhex" # gain 0.4
 
     -- Carter metric modulation: tempo ratio.  d1 $ fast (modulate 4 6) $ sound "bd"
@@ -267,21 +266,25 @@ let
     let fNoise = n (fromString "60 63 61 64 62 65 63 60 62 66 64 61") # sound "superpiano" # gain 0.4
 
     -- ==== Perle cyclic sets ===============================================
-    -- Alternating interval cycles (mod 12), kept in the 60..71 register.
-    --   d1 $ perleCycle 2 3
-    let perleCycle a b = n (fromString (unwords (map show (scanl (\x i -> 60 + ((x - 60 + (if even i then a else b)) `mod` 12)) 60 [1..11])))) # sound "superhex" # gain 0.3
+    -- Alternating interval cycles (mod 12). (a,b)=(1,6) visits all 12 pitch
+    -- classes; (2,3) closes after 9.  d1 $ perle12 1 6
+    let perle12 a b = n (fromString (unwords (map show (take 12 (scanl (\x i -> if even i then (x+a) `mod` 12 else (x+b) `mod` 12) 60 [1..]))))) # sound "superhex" # gain 0.3
 
     -- ==== Hindemith: Series 1/2 ===========================================
-    -- Interval consonance rank (0=most consonant .. 6=tritone) and root side.
-    --   d1 $ fast 8 $ note (cat [60, 64, 67]) # sound "superpiano" # gain (fromIntegral (6 - hindemithRank 4) / 6)
-    let hindemithRank ic = if ic `mod` 12 == 0 then 0 else if ic `mod` 12 == 7 then 1 else if ic `mod` 12 == 4 then 2 else if ic `mod` 12 == 9 then 3 else if ic `mod` 12 == 2 then 4 else if ic `mod` 12 == 5 then 5 else 6
+    -- Interval consonance rank per Hindemith's Series 1:
+    -- P1/P8→P5→P4→M3/м6→м3/M6→M2/м7→м2/M7→тритон (0..7).
+    --   d1 $ note (cat [60, 64, 67]) # gain (fromIntegral (7 - hindemithRank 4) / 7)
+    let hindemithRank ic = let i = ic `mod` 12 in if i == 0 then 0 else if i == 7 then 1 else if i == 5 then 2 else if i == 4 || i == 8 then 3 else if i == 3 || i == 9 then 4 else if i == 2 || i == 10 then 5 else if i == 1 || i == 11 then 6 else 7
     let hindemithRoot ic = if hindemithRank ic <= 3 then "low" else "high"
 
-    -- ==== Forte: interval vector + pc normalization =======================
+    -- ==== Forte: interval vector + prime form ==============================
     --   print (icVector [0,1,4])   -- [1,0,1,1,0,0] for 3-3
-    --   print (pcCompact [7,11,2]) -- [0,4,9] transposed to 0
+    --   print (pcPrime [0,5,8])    -- [0,3,7] (major triad, not [0,5,8])
     let icVector pc = [ length [ (a - b) `mod` 12 | a <- pc, b <- pc, a > b, (a - b) `mod` 12 == ic ] | ic <- [1..6] ]
-    let pcCompact xs = let m = minimum xs in sort (map (\x -> (x - m) `mod` 12) xs)
+    let rot xs = [ drop i xs ++ take i xs | i <- [0 .. length xs - 1] ]
+    let span12 xs = (last xs - head xs) `mod` 12
+    let normalForm xs = let r = foldr1 (\a b -> if span12 a < span12 b then a else if span12 a > span12 b then b else if a < b then a else b) (rot (sort xs)) in map (\x -> (x - head r) `mod` 12) r
+    let pcPrime xs = let f = normalForm xs in let g = normalForm (map (\p -> (12 - p) `mod` 12) xs) in if f < g then f else g
 
     -- ==== Messiaen deshi-talas ============================================
     -- Named Indian rhythm cells as accent patterns.  d1 $ talaSound 1
@@ -306,19 +309,22 @@ let
     let holopova ps = fast (if ps !! 2 == 1 then 2 else 1) (note (cat [60, 62, 64, 65]) # sound "superpiano" # (if ps !! 0 == 1 then legato 0.9 else legato 0.3) # gain (if ps !! 1 == 1 then 0.8 else 0.5))
 
     -- ==== Bhatkhande thatas (raga scales) =================================
-    --   d1 $ that 3   -- Bhairav
-    let that 1 = n "60 62 64 65 67 69 71" # sound "superpiano" # gain 0.5
-        that 2 = n "60 62 63 65 67 68 71" # sound "superpiano" # gain 0.5
-        that 3 = n "60 61 63 64 66 67 70" # sound "superpiano" # gain 0.5
-        that 4 = n "60 61 63 65 66 68 70" # sound "superpiano" # gain 0.5
-        that 5 = n "60 62 63 65 67 69 70" # sound "superpiano" # gain 0.5
-        that 6 = n "60 61 63 64 66 67 69" # sound "superpiano" # gain 0.5
+    -- Only the scales that actually exist in Bhatkhande's 10-thata scheme:
+    --   1 Bilawal (major), 5 Kafi, 6 Bhairavi; plus named Bhairav.
+    --   d1 $ thatBhairav
+    let that 1 = n "60 62 64 65 67 69 71" # sound "superpiano" # gain 0.5   -- Bilawal
+        that 5 = n "60 62 63 65 67 69 70" # sound "superpiano" # gain 0.5   -- Kafi
+        that 6 = n "60 61 63 64 66 67 69" # sound "superpiano" # gain 0.5   -- Bhairavi
         that _ = n "60 62 64 65 67 69" # sound "superpiano" # gain 0.5
+    let thatBhairav = n "60 61 64 65 67 68 70" # sound "superpiano" # gain 0.5   -- C Db E F G Ab B
 
-    -- ==== Maqam ajnas (tetrachords, quarter-tones) ========================
-    -- Fractional semitones = quarter tones (24-TET).  d1 $ maqamBayati
+    -- ==== Maqam ajnas (tetrachords) =======================================
+    -- Bayati uses quarter-tones (fractional semitones, 24-TET).
+    -- Hijaz is DIATONIC with an augmented second — no quarter-tones:
+    --   C Db E F G Ab Bb C (1,3,1,2,1,2,2).
+    --   d1 $ maqamBayati   d1 $ maqamHijaz
     let maqamBayati = n "60 61.5 63 64 66 67.5 69 70" # sound "superhex" # gain 0.4
-    let maqamHijaz = n "60 61 63.5 64 66 67 69 70" # sound "superhex" # gain 0.4
+    let maqamHijaz = n "60 61 64 65 67 68 70" # sound "superhex" # gain 0.4
 
     -- ==== Gamelan slendro / pelog (microtonal tunings) ====================
     --   d1 $ slendro   d1 $ pelog
@@ -333,9 +339,29 @@ let
     let diffSet a b = [ x | x <- a, x `notElem` b ]
     let herma op = n (fromString (unwords (map show (map (+60) (op [0, 1, 4] [0, 3, 7]))))) # sound "superhex" # gain 0.3
 
-    -- ==== Taneev: movable counterpoint ====================================
-    -- Two voices at a fixed vertical interval.  d1 $ taneev 4
-    let taneev idx = stack [ n "60 62 64 65", n (fromString (unwords (map show (map (+idx) [60, 62, 64, 65])))) ] # sound "superpiano" # gain 0.5
+    -- ==== Counterpoint ====================================================
+    -- NB: this is PARALLEL doubling (organshine), NOT Taneev's invertible
+    -- counterpoint — renamed honestly.  d1 $ parallel5 4
+    let parallel5 idx = stack [ n "60 62 64 65", n (fromString (unwords (map show (map (+idx) [60, 62, 64, 65])))) ] # sound "superpiano" # gain 0.5
+    -- Real invertible counterpoint (Taneev): two voices, then register swap
+    --   d1 $ invertible [60, 62, 64, 65] [55, 57, 59, 60]
+    let midi xs = n (fromString (unwords (map show xs)))
+    let invertible a b = slow 8 $ cat [ stack [midi a, midi b], stack [midi b, midi (map (subtract 12) a)] ] # sound "superpiano"
+
+    -- ==== Harmony: progression / cadence / bass / melody ==================
+    -- Chord progression in C minor via mini-notation (i–iv–V7–i).
+    --   d1 $ progCminor
+    let progCminor = n (cat ["c4'minor", "f4'minor", "g4'dom7", "c4'minor"]) # sound "superpiano" # room 0.5 # size 0.8 # gain 0.6
+    -- Authentic cadence V7–I, layered at phrase end.
+    --   d2 $ slow 8 $ cadence
+    let cadence = n (cat ["g4'dom7", "c4'major"]) # sound "superpiano" # gain 0.7
+    -- Bass on progression roots (fixes the missing harmonic foundation).
+    --   d1 $ bassCminor
+    let bassCminor = n (cat ["c2", "f2", "g2", "c2"]) # sound "bass" # gain 0.8
+    -- Melodic arc: up then down (phrase shape), plus a motive with transposition.
+    --   d1 $ archMel      d1 $ motPhrase
+    let archMel = midi [60, 62, 64, 65, 67, 65, 64, 62] # sound "superpiano" # gain 0.5
+    let motPhrase = midi ([60, 64, 67, 64] ++ map (+5) [60, 64, 67, 64] ++ [60]) # sound "superpiano" # gain 0.5
 
     -- OSC params (pF, pI, pS, ...) come from Sound.Tidal.Params,
     -- re-exported by Sound.Tidal.Boot — no extra import needed.
@@ -388,7 +414,7 @@ let
     d1 $ randomEuclid 8
 
     -- 6. Bass: simple minor riff
-    d5 $ note (scale "minor" "c2 d2 e2 g2") # sound "bass" # gain 0.8
+    d5 $ note "c2 d2 e2 g2" # sound "bass" # gain 0.8
 
     -- 7. Ambient pad on a random minor chord (re-rolls every 4 cycles)
     d6 $ ambientPad
@@ -449,10 +475,10 @@ let
     d16 $ fNoise
 
     -- 21. Perle cyclic set (alternating +2/+3 semitones)
-    d7 $ perleCycle 2 3 # gain 0.4
+    d7 $ perle12 1 6 # gain 0.4
 
     -- 22. Hindemith: consonant triad, gain scaled by Series-1 rank
-    d8 $ note (cat [60, 64, 67]) # sound "superpiano" # gain (fromIntegral (6 - hindemithRank 4) / 6) # delay 0.3
+    d8 $ note (cat [60, 64, 67]) # sound "superpiano" # gain (fromIntegral (7 - hindemithRank 4) / 7) # delay 0.3
 
     -- 23. Messiaen deshi-tala 1 as a tabla accent
     d9 $ talaSound 1 # sound "tabla" # gain 0.5
@@ -464,7 +490,7 @@ let
     d11 $ holopova [1, 0, 1, 1, 0] # gain 0.5
 
     -- 26. Bhatkhande thata 3 (Bhairav) as a scale run
-    d12 $ slow 2 $ that 3 # gain 0.5
+    d12 $ slow 2 $ thatBhairav # gain 0.5
 
     -- 27. Maqam bayati (quarter-tones via fractional MIDI)
     d13 $ slow 2 $ maqamBayati # gain 0.4
@@ -476,7 +502,7 @@ let
     d15 $ herma unionSet # gain 0.4
 
     -- 30. Taneev movable counterpoint at interval 4
-    d16 $ taneev 4 # gain 0.5
+    d16 $ invertible [60, 62, 64, 65] [55, 57, 59, 60] # gain 0.5
 
     -- 22. Silence everything (hush: <leader>th)
     -- hush
