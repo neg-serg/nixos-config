@@ -39,7 +39,13 @@ if command -v node > /dev/null 2>&1; then
     ((js_count++)) || true
     # QML JavaScript modules start with `.pragma library` (Qt Quick directive),
     # which node does not parse; strip those lines before checking.
-    if ! output=$(sed '/^\.pragma/d' "$file" | node --check - 2>&1); then
+    # ESM files (top-level import/export, e.g. dsh plugin host halves) fail a
+    # plain CJS stdin check; pass --input-type=module when one is detected.
+    input_type=commonjs
+    if grep -qE '^(import|export)[[:space:]]' "$file"; then
+      input_type=module
+    fi
+    if ! output=$(sed '/^\.pragma/d' "$file" | node --input-type="$input_type" --check - 2>&1); then
       echo "ERROR: $file"
       echo "$output" | head -5
       echo ""
