@@ -34,13 +34,9 @@ let
     # --force-color-profile=srgb is needed for fullscreen: Hyprland direct_scanout
     # bypasses compositor color management (cm=auto), so the GPU outputs in native
     # display gamut.  sRGB clamp keeps colors consistent windowed ↔ fullscreen.
-    # NOTE: WaylandWpColorManagerV1 used to be disabled here too (wp_color_manager_v1
-    # handshake with Hyprland cm=auto can fail on AMD → overbright gamma), but disabling
-    # BOTH Vulkan and WaylandWpColorManagerV1 breaks the DevTools frontend: F12 opens an
-    # empty/hung window (verified 2026-08-17 — each flag alone is harmless, together they
-    # hang the devtools renderer and can crash the browser). So only Vulkan stays disabled
-    # (it is needed for the white-screen video overlay bug). If fullscreen gamma drift
-    # reappears, fix it via Hyprland color management instead of this flag.
+    # --disable-features=WaylandWpColorManagerV1: Chromium's wp_color_manager_v1
+    # protocol handshake with Hyprland cm=auto can fail on AMD, causing overbright
+    # gamma and incorrect colors (vs Firefox which doesn't use this protocol).
     # VivaldiCssMods: the "Allow for using CSS modifications" experiment flag.
     # It is a native runtime feature flag (vivaldi://experiments → getAllFeatureFlags),
     # NOT a Preferences key — Vivaldi can drop the toggle on restart/upgrade and
@@ -50,7 +46,7 @@ let
     # DOM (navbar/toolbars) while debugging usercss selectors. Loopback-only.
     # --remote-allow-origins=*: CDP rejects WebSocket handshakes from unknown
     # origins unless allowed; the debugger connects from a local script.
-    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VivaldiCssMods --disable-features=Vulkan --remote-debugging-port=9222 --remote-allow-origins=*";
+    commandLineArgs = "--ozone-platform-hint=wayland --force-color-profile=srgb --enable-features=UseSkiaRenderer,VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks,VivaldiCssMods --disable-features=Vulkan,WaylandWpColorManagerV1 --remote-debugging-port=9222 --remote-allow-origins=*";
     proprietaryCodecs = false;
   };
 
