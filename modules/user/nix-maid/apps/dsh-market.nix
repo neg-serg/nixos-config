@@ -11,10 +11,10 @@ let
 
   # Idempotent patcher for the profile's pnpm-workspace.yaml:
   #  - minimumReleaseAgeExclude: dsh plugins publish frequently; exempt them
-  #    from pnpm 11's default 24h release cooldown so dshmarket installs and
+  #    from pnpm 11's default 24h release cooldown so plugin installs and
   #    updates apply immediately (pnpm otherwise silently keeps the old
-  #    version and exits 0, which dshmarket reports as "still vX after the
-  #    update"). The list is rewritten wholesale (no duplicates, no
+  #    version and exits 0, which the plugin manager reports as "still vX
+  #    after the update"). The list is rewritten wholesale (no duplicates, no
   #    versioned leftovers) — everything else keeps the default policy.
   #  - allowBuilds: explicit decisions for packages with install scripts
   #    (ssh2: JS fallback is fine without the native binding; cpu-features
@@ -29,7 +29,6 @@ let
     path = sys.argv[1]
 
     EXCLUDES = [
-      "dshmarket",
       "dsh-dream-skin",
       "@linxin666/*",
       "dsh-funnel",
@@ -128,14 +127,14 @@ let
   # its nested scope dir to keep intra-scope and hoisted imports resolvable.
   dshAiStore = "${pkgs.neg.dsh-web-en}/node_modules/@deepseek-ai";
 
-  # Idempotent: install the dshmarket plugin into the web profile when absent,
-  # keep the profile's pnpm supply-chain policy sane (release cooldown
-  # exemptions + build-script allowlist), re-link the profile's @deepseek-ai
-  # copies to the harness (see dshAiStore), pin `allowRestart: false` in the
-  # profile's cordis.patch.yml (dsh web runs under systemd, so the market's
-  # detached-restart button must stay off — the supervisor owns restarts),
-  # and restart the running web UI once on a fresh install so Settings →
-  # Plugin Market appears without manual intervention.
+  # Idempotent: keep the profile's declarative plugin set installed (release
+  # cooldown exemptions + build-script allowlist in pnpm-workspace.yaml),
+  # re-link the profile's @deepseek-ai copies to the harness (see dshAiStore),
+  # apply the cordis.patch.yml overlays (disabled UI panels, terminal-ui,
+  # gui-tweaks, osm, dsh-prompt, web-runtime LAN pairing), and restart the
+  # running web UI once on a fresh install so new plugins activate.
+  # Note: the dshmarket plugin (Settings → Plugin Market) was removed on
+  # request; plugins are managed declaratively here instead.
   ensureMarket = pkgs.writeShellScript "dsh-market-ensure" ''
             set -eu
             export PATH=/run/current-system/sw/bin:$PATH
@@ -159,21 +158,14 @@ let
             fi
 
             installed=0
-            if ! grep -q '"dshmarket"' "$PROFILE_DIR/package.json" 2>/dev/null; then
-              echo "dsh-market: installing dshmarket into the web profile..."
-              dsh plugin --profile web add dshmarket -w \
-                || { echo "dsh-market: install failed (offline? pnpm?) — will retry on next login" >&2; exit 0; }
-              installed=1
-            fi
 
-            # Declarative plugin set — same ensure-if-missing pattern as
-            # dshmarket above. `-w` is required: the profile is a pnpm
-            # workspace root (packages: ['.']), and pnpm 11 refuses `add`
-            # from the root without it. allowBuilds entries for native deps
-            # (sharp/tesseract.js/gavel-review) live in pnpmPatch above, so
-            # fresh installs don't trip ERR_PNPM_IGNORED_BUILDS. Pairs are
-            # "package-name:install-spec" so scoped names (@0xsline/...) stay
-            # unambiguous.
+            # Declarative plugin set — ensure-if-missing pattern. `-w` is
+            # required: the profile is a pnpm workspace root (packages: ['.']),
+            # and pnpm 11 refuses `add` from the root without it. allowBuilds
+            # entries for native deps (sharp/tesseract.js/gavel-review) live in
+            # pnpmPatch above, so fresh installs don't trip
+            # ERR_PNPM_IGNORED_BUILDS. Pairs are "package-name:install-spec" so
+            # scoped names (@0xsline/...) stay unambiguous.
             for entry in \
               "dsh-funnel:dsh-funnel" \
               "dsh-pathlink:dsh-pathlink" \
@@ -338,16 +330,6 @@ let
             fi
 
             PATCH="$PROFILE_DIR/cordis.patch.yml"
-            if ! grep -q 'allowRestart' "$PATCH" 2>/dev/null; then
-              cat > "$PATCH" <<'YAML'
-    # Managed by NixOS (modules/user/nix-maid/apps/dsh-market.nix) — do not edit.
-    # dsh web runs under systemd, so the market's one-click restart is disabled;
-    # the supervisor owns restarts.
-    - id: dsh-market
-      config:
-        allowRestart: false
-    YAML
-            fi
 
             # UI panels the user disabled in the web GUI (right-side
             # Explorer/Preview/Files, Task Board, pet widget, skin center, dream
@@ -731,20 +713,19 @@ let
   '';
 in
 {
-  # Plugin market for dsh web: Settings → Plugin Market (browse the
-  # awesome-dsh-plugin catalog, one-click install/update/uninstall).
-  # Also owns the profile's pnpm supply-chain policy (release-cooldown
-  # exemptions for fast-publishing dsh plugins, build-script allowlist).
-  # Runs on every rebuild (as the user, so profile files stay user-owned)
-  # and on every login (recovery after manual plugin churn) — same pattern
-  # as dsh-tui-ru.
+  # Declarative dsh web profile management: ensures the plugin set,
+  # pnpm supply-chain policy (release-cooldown exemptions for
+  # fast-publishing dsh plugins, build-script allowlist) and the
+  # cordis.patch.yml overlays stay in place across rebuilds and manual
+  # plugin churn. Runs on every rebuild (as the user, so profile files stay
+  # user-owned) and on every login — same pattern as dsh-tui-ru.
   system.activationScripts.dshMarketEnsure = lib.stringAfter [ "users" ] ''
     ${lib.getExe' pkgs.util-linux "runuser"} -u ${user} -- env HOME=${homeDir} ${ensureMarket} || true
   '';
 
   systemd.user.services.dsh-market-ensure = {
     enable = true;
-    description = "dshmarket — ensure plugin market + pnpm policy in the dsh web profile";
+    description = "dsh-market — ensure declarative plugin set + pnpm policy in the dsh web profile";
     after = [ "network.target" ];
     before = [ "dsh.service" ];
     wantedBy = [ "default.target" ];
