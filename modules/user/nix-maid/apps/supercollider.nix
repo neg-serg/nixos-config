@@ -44,8 +44,8 @@ let
         if(PathName(userSamples).folders.notEmpty) {
           ~dirt.loadSoundFiles(userSamples +/+ "*")
         };
-        -- 16 orbits so Tidal d1..d16 all get a stream (start(port, 0 ! 16));
-        -- with 12 orbits, d13-d16 events are dropped by SuperDirt.
+        // 16 orbits so Tidal d1..d16 all get a stream (start(port, 0 ! 16));
+        // with 12 orbits, d13-d16 events are dropped by SuperDirt.
         ~dirt.start(57120, 0 ! 16);
         "SUPERDIRT READY".postln;
       } { |err| ("SuperDirt ERROR: " ++ err.what).postln; };
