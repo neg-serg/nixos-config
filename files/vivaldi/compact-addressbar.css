@@ -1,15 +1,22 @@
 /* Compact address bar — Vivaldi 8.x CSS mod
  * Loaded from the css_ui_mods_directory (see modules/user/nix-maid/web/vivaldi.nix).
+ * Navbar (address bar) text: Iosevka, 15px semibold — bigger and bolder than
+ * the stock 13px/400. Bar/input heights are bumped in step so the bolder text
+ * is not clipped.
  */
 .toolbar-addressbar {
-  height: 26px !important;
-  min-height: 26px !important;
+  height: 28px !important;
+  min-height: 28px !important;
   font-family: "Iosevka", ui-monospace, monospace !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
 }
 .toolbar-addressbar .ToolbarButton-Button,
 .toolbar-addressbar .button-icon,
 .toolbar-addressbar .button-toolbar {
   font-family: "Iosevka", ui-monospace, monospace !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
 }
 /* The input has its own base font-family rule (Cantarell); the inherited
  * toolbar value loses to it. Set the font directly so the focused input
@@ -18,13 +25,14 @@
 #urlFieldInput:focus,
 #urlFieldInput:active {
   font-family: "Iosevka", ui-monospace, monospace !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
 }
 #urlFieldInput {
-  height: 18px !important;
-  min-height: 18px !important;
+  height: 20px !important;
+  min-height: 20px !important;
   padding: 0 2px !important;
-  font-size: 13px !important;
 }
 .UrlBar-UrlFieldWrapper {
-  height: 18px !important;
+  height: 20px !important;
 }
