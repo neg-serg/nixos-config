@@ -1,0 +1,14 @@
+/* Vivaldi browser chrome font — Iosevka Proportional everywhere (Vivaldi 8.x CSS mod).
+ * Loaded from the css_ui_mods_directory (see modules/user/nix-maid/web/vivaldi.nix).
+ * Replaces the hardcoded Linux UI font-family in Vivaldi's common.css
+ * (Cantarell / Noto Sans) across the whole browser chrome: toolbars, menus,
+ * panels, settings, dialogs. 14px Medium — a bit smaller and lighter than the
+ * address bar (15px semibold in compact-addressbar.css).
+ * The address bar keeps its monospace Iosevka from compact-addressbar.css
+ * (its class selectors outrank this universal rule).
+ */
+*, *:before, *:after {
+  font-family: "Iosevka Proportional" !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
