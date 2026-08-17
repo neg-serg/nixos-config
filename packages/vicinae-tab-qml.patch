@@ -7,7 +7,7 @@ index 3d9499b..dc1c34b 100644
                  }
                  Keys.onBacktabPressed: event => {
 -                    event.accepted = false;
-+                    // Shift+Tab: navigate up the item list (dmenu/rofi style);
++                    // Shift+Tab: navigate up the item list (launcher-menu style);
 +                    // Tab (forward) is handled in Keys.onPressed.
 +                    event.accepted = typeof commandStack.currentItem.moveUp === "function" && commandStack.currentItem.moveUp();
                  }
@@ -15,7 +15,7 @@ index 3d9499b..dc1c34b 100644
                      if (_handleEmacsEditing(event)) {
                          event.accepted = true;
 +                    } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
-+                        // Tab/Shift+Tab navigate the item list (dmenu/rofi style).
++                        // Tab/Shift+Tab navigate the item list (launcher-menu style).
 +                        // Direct inline call mirrors Up/Down arrow handling.
 +                        const nav = typeof commandStack.currentItem.moveDown === "function";
 +                        if (nav && event.key === Qt.Key_Tab) {
