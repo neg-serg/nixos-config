@@ -137,6 +137,72 @@ def patch_conversation(root: pathlib.Path) -> int:
     return 0
 
 
+# Client-side slash commands injected into the commands plugin bundle
+# (dsh-client-ui-commands/lib/client.js). The host already exposes the
+# session.fork / session.create RPCs and the client sessions service has
+# fork()/open() — these contributions surface them as /fork and /new.
+COMMANDS_ANCHOR = "this.directory.resetConnected();\n\t\t\t\t});"
+COMMANDS_INSERT = (
+    "\n"
+    "\t\t\t\tthis.register({\n"
+    '\t\t\t\t\tname: "fork",\n'
+    '\t\t\t\t\tdescription: "Fork the current session into a new one",\n'
+    "\t\t\t\t\tavailable: () => true,\n"
+    "\t\t\t\t\tui: {\n"
+    "\t\t\t\t\t\toptions: async (session) => [ {\n"
+    '\t\t\t\t\t\t\tid: "fork",\n'
+    '\t\t\t\t\t\t\tlabel: "Fork session",\n'
+    '\t\t\t\t\t\t\tdetail: "New session carrying this conversation history"\n'
+    "\t\t\t\t\t\t} ],\n"
+    "\t\t\t\t\t\tonSelect: async (option, session) => {\n"
+    "\t\t\t\t\t\t\tconst result = await this.sessions.fork({ sessionId: session.sessionId });\n"
+    "\t\t\t\t\t\t\tif (result.ok) this.sessions.open(result.value.sessionId);\n"
+    "\t\t\t\t\t\t}\n"
+    "\t\t\t\t\t}\n"
+    "\t\t\t\t});\n"
+    "\t\t\t\tthis.register({\n"
+    '\t\t\t\t\tname: "new",\n'
+    '\t\t\t\t\tdescription: "Start a new blank session",\n'
+    "\t\t\t\t\tavailable: () => true,\n"
+    "\t\t\t\t\tui: {\n"
+    "\t\t\t\t\t\toptions: async (session) => [ {\n"
+    '\t\t\t\t\t\t\tid: "new",\n'
+    '\t\t\t\t\t\t\tlabel: "New session",\n'
+    '\t\t\t\t\t\t\tdetail: "Open a fresh blank conversation"\n'
+    "\t\t\t\t\t\t} ],\n"
+    "\t\t\t\t\t\tonSelect: async (option, session) => {\n"
+    "\t\t\t\t\t\t\tconst result = await this.sessions.create();\n"
+    "\t\t\t\t\t\t\tif (result.ok) this.sessions.open(result.value.sessionId);\n"
+    "\t\t\t\t\t\t}\n"
+    "\t\t\t\t\t}\n"
+    "\t\t\t\t});\n"
+    "\t\t\t"
+)
+
+
+def patch_commands(root: pathlib.Path) -> int:
+    """Add /fork and /new client-side slash commands to the commands bundle."""
+    cmd = root / "dsh-client-ui-commands" / "lib" / "client.js"
+    if not cmd.exists():
+        print(f"skip (absent): {cmd.relative_to(root)}")
+        return 0
+    data = cmd.read_bytes()
+    text = data.decode("utf-8")
+    if COMMANDS_INSERT.strip() in text:
+        print("note: commands bundle already patched")
+        return 0
+    if COMMANDS_ANCHOR not in text:
+        print(
+            "WARNING: commands anchor not found — /fork and /new not injected",
+            file=sys.stderr,
+        )
+        return 0
+    text = text.replace(COMMANDS_ANCHOR, COMMANDS_ANCHOR + COMMANDS_INSERT, 1)
+    cmd.write_bytes(text.encode("utf-8"))
+    print(f"patched: {cmd.relative_to(root)} (/fork, /new)")
+    return 1
+
+
 def main() -> int:
     root = pathlib.Path(sys.argv[1])
     if not root.is_dir():
@@ -164,6 +230,7 @@ def main() -> int:
         print(f"skip (absent): {bundle.relative_to(root)}")
 
     patched += patch_conversation(root)
+    patched += patch_commands(root)
 
     # index.html: declare the page language explicitly as English
     if html.exists():
