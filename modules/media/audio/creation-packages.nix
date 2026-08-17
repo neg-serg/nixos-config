@@ -27,6 +27,7 @@ let
     # zestbay moved to distrobox (CXX-Qt broken in Nix): `distrobox-enter arch-zestbay -- zestbay`
     pkgs.pw-audioshare # GTK4 PipeWire patchbay with auto-connect presets
     pkgs.neg.zest # CLI for ZestBay plugin management: zest list/add/rm/ls
+    pkgs.neg.carlactl # console VST router via headless Carla: carlactl list/run/route
     # -- Noise Processing --
     pkgs.noisetorch # PulseAudio/PipeWire microphone noise gate
     pkgs.rnnoise # WebRTC RNNoise denoiser CLI for mic chains

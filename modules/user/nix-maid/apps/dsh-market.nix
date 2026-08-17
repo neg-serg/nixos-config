@@ -422,7 +422,7 @@ let
               echo "dsh-preview: fork checkout missing at $PREVIEW_FORK — plugin not installed" >&2
             fi
 
-# Ensure the profile patch carries the dsh-preview row (insert form).
+            # Ensure the profile patch carries the dsh-preview row (insert form).
             if ! grep -q 'dsh-preview' "$PATCH" 2>/dev/null; then
               cat >> "$PATCH" <<'YAML'
 
