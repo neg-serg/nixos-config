@@ -21,4 +21,5 @@
   dsh = pkgs.neg.dsh;
 
   camillagui = pkgs.camillagui; # web GUI for CamillaDSP (backend + prebuilt React frontend)
+  ttf-code2000 = pkgs.ttf-code2000; # Code2000 shareware Unicode TrueType font
 }
