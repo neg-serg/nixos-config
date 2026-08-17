@@ -119,6 +119,40 @@ let
     -- definition needed.  d1 $ octatonic
     let octatonic = n "60 61 63 64 66 67 69 70" # sound "saw" # gain 0.4
 
+    -- ==== More theory-derived helpers =========================================
+    -- Messiaen mode 3 (2-1-1-2-1-1...) and whole-tone mode 1 — like octatonic,
+    -- other modes of limited transposition.
+    --   d1 $ mode3            d1 $ wholeTone
+    let mode3 = n "60 62 63 65 66 68 69" # sound "saw" # gain 0.4
+    let wholeTone = n "60 62 64 66 68 70" # sound "saw" # gain 0.4
+
+    -- Carter metric modulation: tempo ratio.  d1 $ fast (modulate 4 6) $ sound "bd"
+    let modulate oldD newD = fromIntegral oldD / fromIntegral newD
+
+    -- Glass additive process: figure grows by `step` notes each cycle.
+    --   d1 $ glassAdd 4 3     -- 1 bd, then 4, then 7 (arc by design)
+    let glassAdd maxN step = fastcat [ s (fromString (unwords (replicate n "bd"))) | n <- [1, 1+step .. maxN] ]
+
+    -- Messiaen interversion: palindromic permutation of a rhythmic cell.
+    --   d1 $ interversion "bd sn hh cp"
+    let interleave (x:xs) (y:ys) = x : y : interleave xs ys
+        interleave xs [] = xs
+        interleave [] ys = ys
+    let interversion nm = s (fromString (unwords (let (a, b) = splitAt (length ws `div` 2) ws in interleave (reverse a) b))) where ws = words nm
+
+    -- L-system (Cantor dust): fractal self-similar rhythm.  d1 $ lSystem 3
+    let lstep xs = concatMap (\x -> if x == "bd" then ["bd", "~", "bd"] else ["~", "~", "~"]) xs
+    let lSystem n = s (fromString (unwords (iterate lstep ["bd"] !! n)))
+
+    -- Wolfram elementary cellular automaton as a rhythm row.
+    --   d1 $ caRule 110 16    (rule 110 = Class 4 edge-of-chaos)
+    --   d1 $ caRule 30 16     (rule 30 = chaotic)
+    let cbit r l c rr = (r `div` (2 ^ (4*l + 2*c + rr))) `mod` 2
+    let cstep r xs = [ cbit r (xs !! ((i-1) `mod` length xs)) (xs !! i) (xs !! ((i+1) `mod` length xs)) | i <- [0 .. length xs - 1] ]
+    let cell 1 = "bd"
+        cell _ = "~"
+    let caRule rule n = s (fromString (unwords (map cell (take n (iterate (cstep rule) (1 : replicate (n-1) 0))))))
+
     -- OSC params (pF, pI, pS, ...) come from Sound.Tidal.Params,
     -- re-exported by Sound.Tidal.Boot — no extra import needed.
     -- Sending to an external synth:
@@ -193,6 +227,18 @@ let
     -- 9d. Gamelan colotomy: gong + kenong layered at nested speeds
     d11 $ slow 4 $ colotom 4 "gong"
     d12 $ slow 4 $ (0.5 <~) $ colotom 4 "kenong" # gain 0.8
+
+    -- 10. L-system (Cantor dust): fractal rhythm
+    d13 $ lSystem 3 # gain 0.6
+
+    -- 11. Wolfram CA rule 110: edge-of-chaos rhythm
+    d14 $ caRule 110 16 # sound "cp" # gain 0.5
+
+    -- 12. Messiaen interversion: palindromic cell permutation
+    d15 $ interversion "bd sn hh cp" # gain 0.7
+
+    -- 13. Glass additive process: 1 → 4 → 7 bd
+    d16 $ glassAdd 4 3 # gain 0.8
 
     -- 10. Silence everything (hush: <leader>th)
     -- hush
