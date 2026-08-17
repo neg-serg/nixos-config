@@ -45,7 +45,7 @@ in
     prev.vicinae.overrideAttrs (old: {
       version = "0.23.2";
       inherit src;
-      # Tab/Shift+Tab navigate the item list (dmenu/rofi style) + Ctrl+C
+      # Tab/Shift+Tab navigate the item list (launcher-menu style) + Ctrl+C
       # dismiss — QML SearchBar patch, ported to v0.23.2.
       patches = (old.patches or [ ]) ++ [ ./../vicinae-tab-qml.patch ];
       apiDeps = prev.fetchNpmDeps {
