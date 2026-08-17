@@ -10,6 +10,9 @@
 }:
 let
   cfg = config.features.media.audio.mpd or { enable = false; };
+  # LAN access: with features.media.audio.lanAccess enabled, MPD listens on
+  # all interfaces so LAN clients (mpc, mobile apps) can connect directly.
+  lanAccess = config.features.media.audio.lanAccess.enable or false;
   myUser = config.users.main.name or "neg";
   myUID = config.users.main.uid or 1000;
   myGroup =
@@ -43,7 +46,9 @@ in
 
       settings = {
         music_directory = "${myHome}/music";
-        bind_to_address = "127.0.0.1";
+        # "any" = all interfaces (LAN access); otherwise loopback only.
+        # The systemd socket unit follows this value (startWhenNeeded).
+        bind_to_address = if lanAccess then "any" else "127.0.0.1";
         port = 6600;
         log_file = "/dev/null";
         max_output_buffer_size = 131072;

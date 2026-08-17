@@ -2019,6 +2019,62 @@ true
 
 
 
+## features\.media\.audio\.lanAccess\.enable
+
+
+
+Whether to enable LAN audio access (MPD on all interfaces, PipeWire Pulse TCP 4713, RTP sink)\.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+false
+```
+
+
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+ - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
+
+
+## features\.media\.audio\.lanAccess\.rtp\.interface
+
+
+
+Network interface used by the PipeWire RTP sink for multicast output\.
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"net1"
+```
+
+*Declared by:*
+ - [/modules/features/media\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
+
+
 ## features\.media\.audio\.mpd\.enable
 
 
@@ -2196,6 +2252,38 @@ boolean
 
 ```nix
 true
+```
+
+
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+ - [/modules/features/network\.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/network.nix)
+
+
+
+## features\.net\.ceno\.enable
+
+
+
+Whether to enable enable Ceno/Ouinet P2P client (censorship-circumvention node, podman container)\.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+false
 ```
 
 
@@ -3064,8 +3152,6 @@ null
 
 
 ## features\.web\.tools\.enable
-
-
 
 Whether to enable enable web tools (aria2, yt-dlp, misc)\.
 
