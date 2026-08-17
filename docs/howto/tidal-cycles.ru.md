@@ -21,20 +21,27 @@ flowchart LR
 
 ## Быстрый старт
 
+Управление сессией — утилита `tidalctl` (пакет `pkgs.neg.tidalctl`, Rust):
+
 ```bash
-# Каждый раз:
-just tidal-start    # запускает SC сервер + SuperDirt (~0.2с до готовности OSC, ~2с до звука)
-just tidal          # открывает nvim для кодинга (создаёт ~/src/music/tidal при первом запуске)
+tidalctl start     # запустить движок (SC сервер + SuperDirt, ~2с до звука)
+tidalctl code      # открыть nvim в ~/src/music/tidal (создаёт при первом запуске)
+tidalctl status    # процессы, OSC-порты, аудиоподключения
+tidalctl stop      # остановить движок
+tidalctl new имя   # создать новый .tidal файл
+tidalctl record    # записать выход SuperDirt в ~/src/music/tidal/recordings/
+tidalctl monitor   # live-мониторинг PipeWire (pw-top)
+tidalctl patch     # патчбей ZestBay (distrobox)
 ```
 
 В nvim:
 
-- `Ctrl+Enter` — запустить GHCi
+- `Ctrl+Enter` — запустить GHCi (Tidal)
 - Написать паттерн: `d1 $ sound "bd sn"`
 - `Alt+Enter` — отправить строку в Tidal
 - Услышать kick и snare — всё работает.
 
-Остановка: `Ctrl+Shift+Enter` в nvim, или `just tidal-stop`.
+Остановка: `Ctrl+Shift+Enter` в nvim, или `tidalctl stop`.
 
 ## Клавиши в nvim
 
@@ -44,7 +51,7 @@ just tidal          # открывает nvim для кодинга (созда�
 | `Ctrl+Shift+Enter` | Остановить Tidal            | `.tidal` файл   |
 | `Alt+Enter`        | Отправить строку в Tidal    | `.tidal` файл   |
 
-> **Важно**: SuperDirt-движок запускается **только** через `just tidal-start` (отдельный
+> **Важно**: SuperDirt-движок запускается **только** через `tidalctl start` (отдельный
 > терминал) — tidal.nvim сам sclang не поднимает (без PipeWire-jack окружения scsynth падает
 > с «jack server is not running»). Tidal из nvim подключается к уже работающему SuperDirt.
 
@@ -54,7 +61,7 @@ just tidal          # открывает nvim для кодинга (созда�
 
 1. **`tidal-ghci`** — враппер `/run/current-system/sw/bin/tidal-ghci`. Запускает GHCi с пакетом
    Tidal, использует `BootTidal.hs` для автоимпорта.
-1. **`just tidal-start`** — пайплайн `echo 'команды' | sclang -l startup.scd`, который запускает
+1. **`tidalctl start`** — пайплайн `echo 'команды' | sclang -l startup.scd`, который запускает
    SuperDirt мгновенно.
 1. **`sclang -l ~/.config/SuperCollider/superdirt_startup.scd`** — загружает сервер SC с 1M буферов,
    256 wire buffers, 64K нод.
@@ -66,7 +73,7 @@ just tidal          # открывает nvim для кодинга (созда�
    `~/.local/share/SuperCollider/Extensions/` (наравне с SC3plugins). Ручная установка quark'а через
    `install-superdirt-quark` больше не нужна.
 1. **Свои сэмплы** — папка `~/src/music/tidal/samples/`: любая вложенная папка с wav становится
-   звуком (имя папки = имя звука). Создаётся `just tidal-start` автоматически.
+   звуком (имя папки = имя звука). Создаётся `tidalctl start` автоматически.
 
 ### Почему запуск мгновенный (0.2с)
 
@@ -204,10 +211,10 @@ d1 $ rarely (rev) $ sound "bd sn"
 
 ```bash
 # Посмотреть граф PipeWire
-just tidal-rt          # watch pw-top
+tidalctl monitor          # watch pw-top
 
 # Патчбей (соединить SuperDirt с выходами)
-just tidal-patch       # pw-audioshare — GUI матрица
+tidalctl patch       # pw-audioshare — GUI матрица
 
 # Ручная коммутация
 pw-link SuperDirt:out_0 "RME AIO Pro:playback_FL"
@@ -220,7 +227,7 @@ SuperDirt создаёт 12 орбит (моно-каналов). По умол�
 
 ```bash
 # Запись выхода SuperDirt в ~/src/music/tidal/recordings/ (имя с таймстампом)
-just tidal-record
+tidalctl record
 
 # Или вручную, в текущую директорию
 pw-record --target $(pw-link -o | grep SuperDirt | head -1 | awk '{print $1}') recording.wav
@@ -242,7 +249,7 @@ cp kick.wav snare.wav ~/src/music/tidal/samples/mykit/
 d1 $ sound "mykit"     -- или "mykick" / "mysnare" (имена файлов без расширения)
 ```
 
-Новые папки подхватываются после перезапуска движка (`just tidal-stop && just tidal-start`) или при
+Новые папки подхватываются после перезапуска движка (`tidalctl stop && tidalctl start`) или при
 старте. Стандартный банк Dirt-Samples (218 звуков) загружается всегда.
 
 ## MIDI
@@ -351,9 +358,9 @@ s.options.numBuffers = 1024 * 2048;  -- 2M буферов
 
 Держите три терминала:
 
-1. Окно с `just tidal-start` (логи SC)
-1. Окно с `just tidal` (nvim)
-1. Окно с `just tidal-rt` (мониторинг аудио)
+1. Окно с `tidalctl start` (логи SC)
+1. Окно с `tidalctl code` (nvim)
+1. Окно с `tidalctl monitor` (мониторинг аудио)
 
 ### Автозапуск при логине
 
