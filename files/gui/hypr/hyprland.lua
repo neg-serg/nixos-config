@@ -566,7 +566,7 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("vesktop")
   hl.exec_cmd("wl-clip-persist --clipboard regular")
   hl.exec_cmd("zsh -c 'pkill \"wl-paste --watch cliphist store\"; wl-paste --watch cliphist store'")
-  hl.exec_cmd("nicotine")
+  hl.exec_cmd("nicotine -s") -- start hidden (Soulseek client); summon via special-submap d
   hl.exec_cmd("systemctl --user start --no-block vicinae.service")
   hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
   hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME")
