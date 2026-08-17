@@ -13,35 +13,9 @@ let
   # SuperDirt and Vowel now come from nix packages (packages/superdirt,
   # packages/vowel) symlinked into SC's default extension dir below — the
   # manual `install-superdirt-quark` step is gone.
-
-  superdirtStartup = ''
-    s.options.numBuffers = 1024 * 1024;
-    s.options.memSize = 8192 * 64;
-    s.options.numWireBufs = 256;
-    s.options.maxNodes = 1024 * 64;
-    s.options.numOutputBusChannels = 2;
-    s.options.numInputBusChannels = 2;
-    s.waitForBoot {
-      var userSamples = Platform.userHomeDir +/+ "src/art/music/tidal/samples";
-      try {
-        ~dirt = SuperDirt(2, s);
-        // Explicit sample paths — do NOT rely on loadSoundFiles' default
-        // "../../Dirt-Samples/*".resolveRelative (it resolves against the
-        // document dir, which breaks once SuperDirt lives in the nix store).
-        File.mkdir(userSamples);
-        // loadSoundFiles expands the glob only for a plain String path,
-        // so the stock bank and the user samples dir get separate calls.
-        ~dirt.loadSoundFiles("${pkgs.neg.dirt-samples}/share/Dirt-Samples/*");
-        if(PathName(userSamples).folders.notEmpty) {
-          ~dirt.loadSoundFiles(userSamples +/+ "*")
-        };
-        // 16 orbits so Tidal d1..d16 all get a stream (start(port, 0 ! 16));
-        // with 12 orbits, d13-d16 events are dropped by SuperDirt.
-        ~dirt.start(57120, 0 ! 16);
-        "SUPERDIRT READY".postln;
-      } { |err| ("SuperDirt ERROR: " ++ err.what).postln; };
-    };
-  '';
+  # The startup script itself (superdirt_startup.scd) is NOT deployed here:
+  # it lives in the private ~/notes/music/supercollider and is symlinked by
+  # tidalctl, so the user can edit engine code and custom synths freely.
 
   bootNoop = ''
     s.options.numOutputBusChannels = 2;
@@ -64,11 +38,9 @@ in
       SC_PLUGIN_PATH = "${pkgs.supercolliderPlugins.sc3-plugins}/lib/SuperCollider/plugins";
     };
     environment.etc = {
-      "skel/.config/SuperCollider/superdirt_startup.scd".text = superdirtStartup;
       "skel/.config/SuperCollider/boot_noop.scd".text = bootNoop;
     };
     users.users.neg.maid.file.home = {
-      ".config/SuperCollider/superdirt_startup.scd".text = superdirtStartup;
       ".config/SuperCollider/boot_noop.scd".text = bootNoop;
       ".config/SuperCollider/sclang_conf.yaml".text = sclangConf;
       # SuperDirt classes from the nix package (replaces manual quark install)
@@ -80,6 +52,10 @@ in
       # SC3-Plugins классы (DynKlank, SwitchDelay, …) — нужны SuperDirt default-synths
       ".local/share/SuperCollider/Extensions/SC3plugins".source =
         "${pkgs.supercolliderPlugins.sc3-plugins}/share/SuperCollider/Extensions/SC3plugins";
+      # Dirt-Samples at a stable path — the notes startup script (which cannot
+      # interpolate nix store paths) loads samples from here.
+      ".local/share/SuperCollider/Dirt-Samples".source =
+        "${pkgs.neg.dirt-samples}/share/Dirt-Samples";
     };
   };
 }
