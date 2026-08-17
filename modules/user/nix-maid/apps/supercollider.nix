@@ -88,6 +88,7 @@ let
     -- Runtime strings must be parsed explicitly (mini-notation parses only at
     -- IsString coercion), hence `fromString` below.
     import Data.String (fromString)
+    import System.Random (mkStdGen, randomRs) -- for the Markov drum chain
 
     -- Schillinger resultant: attacks where either generator (periods a, b)
     -- lands, within a*b steps — pure-arithmetic rhythm generator, always a
@@ -192,9 +193,12 @@ let
     let xenakisDensity k = fast (fromIntegral k) (degradeBy 0.3 (s "bd"))
 
     -- ==== Markov 1st-order drums ==========================================
-    -- Weighted 0/1st-order-ish drum groove (re-rolls each cycle).
-    --   d1 $ markovDrums
-    let markovDrums = s (choose (concat [replicate 7 "bd", replicate 3 "sn", replicate 4 "hh"]))
+    -- True 1st-order Markov chain over bd/sn/hh with a transition matrix,
+    -- walked deterministically from a seed. Vary the seed for new grooves.
+    --   d1 $ markovGroove 16 42
+    let nextState :: String -> Double -> String; nextState st r = if st == fromString "bd" then (if r < 0.6 then "bd" else if r < 0.9 then "sn" else "hh") else if st == fromString "sn" then (if r < 0.4 then "bd" else if r < 0.6 then "sn" else "hh") else (if r < 0.3 then "bd" else if r < 0.5 then "sn" else "hh")
+    let markovSeq :: Int -> Int -> [String]; markovSeq n seed = reverse (snd (foldl (\(st, acc) r -> let st' = nextState st r in (st', st' : acc)) (fromString "bd", []) (take n (randomRs (0.0, 1.0) (mkStdGen seed)))))
+    let markovGroove n seed = s (fromString (unwords (markovSeq n seed)))
 
     -- ==== Messiaen: non-retrogradable rhythm + added values ===============
     -- Palindromic durations (symmetric around center).  d1 $ palindur
@@ -312,8 +316,8 @@ let
     -- 17. Xenakis Poisson density at tempo 6
     d12 $ xenakisDensity 6 # sound "bd" # gain 0.6
 
-    -- 18. Markov-ish drum groove
-    d13 $ markovDrums # gain 0.7
+    -- 18. Markov 1st-order drums (deterministic walk, seed 42)
+    d13 $ markovGroove 16 42 # gain 0.7
 
     -- 19. Messiaen palindur + added values
     d14 $ palindur # gain 0.5
