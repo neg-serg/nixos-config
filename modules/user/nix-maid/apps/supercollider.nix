@@ -69,18 +69,19 @@ let
         tab = sound "tabla"  -- tabla kit
 
     -- Rhythm phrases (paste into `sound`).
-    let fourOnFloor = "bd(4,8) sn(3,8) hh*8"
+    let fourOnFloor = "bd(4,8) sn(3,8) hh*8"  -- syncopated snare (3-of-8), not a backbeat
         techno      = "bd*2 sn(3,8) hh*4"
         halftime    = "bd(2,8) sn(2,8) hh*6"
         jungle      = "bd(3,8) sn(5,8) hh*6"
 
-    -- Random groove generator: re-chooses its phrase every cycle.
+    -- Random groove generator: one phrase per cycle via randcat (choose over
+    -- strings would be fine here too, but randcat keeps phrases intact).
     --   d1 $ randomGroove
-    let randomGroove = sound (choose ["bd*2 sn*3 hh*4", "bd(3,8) sn(5,8) hh(5,8)", "bd(5,8) hh*6", "bd(2,8) cp(3,8) hh*4"])
+    let randomGroove = randcat [ s "bd*2 sn*3 hh*4", s "bd(3,8) sn(5,8) hh(5,8)", s "bd(5,8) hh*6", s "bd(2,8) cp(3,8) hh*4" ]
 
-    -- Random euclidean kick/snare: `irand` re-rolls each cycle.
-    --   d1 $ randomEuclid 8
-    let randomEuclid steps = euclid (irand steps) steps $ sound "bd"
+    -- Random euclidean kick: `irand` re-rolls each cycle; k in [2, steps]
+    -- so we never get a dead (0-hit) cycle.  d1 $ randomEuclid 8
+    let randomEuclid steps = euclid (irand (steps-1) + 2) steps $ sound "bd"
 
     -- Ambient pad: random chord degree re-rolled each cycle (choose over scale
     -- degrees), not a fixed cat — the old comment claimed randomness that
@@ -117,7 +118,8 @@ let
     -- Reich phasing: the same 8-step pattern on two layers, one drifting via
     -- a slightly different tempo (Clapping Music / Piano Phase idiom).
     --   d1 $ phase8
-    --   d2 $ phase8 # speed 1.01    -- d2 slowly overtakes d1
+    --   d2 $ fast 1.01 $ phase8    -- d2 slowly overtakes d1 (Reich phasing;
+    --                                `speed` would change pitch, not timing)
     let phase8 = sound "bd*8"
 
     -- Messiaen mode 2 (octatonic) as semitone numbers from C4 — no scale
@@ -204,6 +206,54 @@ let
     let nextState :: String -> Double -> String; nextState st r = if st == fromString "bd" then (if r < 0.6 then "bd" else if r < 0.9 then "sn" else "hh") else if st == fromString "sn" then (if r < 0.4 then "bd" else if r < 0.6 then "sn" else "hh") else (if r < 0.3 then "bd" else if r < 0.5 then "sn" else "hh")
     let markovSeq :: Int -> Int -> [String]; markovSeq n seed = reverse (snd (foldl (\(st, acc) r -> let st' = nextState st r in (st', st' : acc)) (fromString "bd", []) (take n (randomRs (0.0, 1.0) (mkStdGen seed)))))
     let markovGroove n seed = s (fromString (unwords (markovSeq n seed)))
+
+    -- ==== Groove: swing / human timing / accents / fills ==================
+    -- (Tidal 1.10 removed `late`/`early`/`groove`; these replace them.)
+    -- Swing the whole kit at once:
+    let swingKit amt n ps = swingBy amt n (stack ps)
+    --   d1 $ swingKit (1/3) 4 [s "bd*4", s "sn(2,8)", s "hh*8"]
+    let shuffle = swingBy (1/3) 4
+    --   d1 $ shuffle $ s "bd sn hh*4"
+
+    -- Human timing: random micro-offset per event (rand is re-rolled per event)
+    let humanize j p = (rand * j) <~ p
+    --   d1 $ humanize 0.04 $ s "hh*8"
+    let liveHats = humanize 0.05 $ s "hh*8" # gain (0.35 + rand * 0.2)
+    let lazySnare = stack [s "bd*4", (0.02 <~) $ s "sn(2,8)"]
+
+    -- Per-step accent ladders (fastFromList, NOT cat — cat spans cycles)
+    let ladder gs p = p # gain (fastFromList gs)
+    --   d1 $ ladder [0.5,0.5,0.5,0.9,0.5,0.5,0.5,0.9] $ s "hh*8"
+    -- Euclidean accents: euclidFull keeps all hits, accents k of them
+    let accentEuclid k n amt p = euclidFull k n (p # gain amt) (p # gain 1)
+    --   d1 $ accentEuclid 3 8 1.4 (s "bd*8")
+
+    -- Fills / breaks
+    let fillEvery n o fill pat = every' n o (const fill) pat
+    --   d1 $ fillEvery 4 3 (snareRoll 8) $ s "bd*4 sn(2,8) hh*8"
+    let fillTail fill pat = within (0.75, 1) (const fill) pat
+    --   d1 $ every 4 (fillTail (s "sn*4" # gain 0.6)) $ s "bd*4 sn(2,8)"
+    let snareRoll n = s (fromString (unwords (replicate n "sn"))) # gain (fastFromList [ 0.3 + 0.1 * fromIntegral i | i <- [1..n] ])
+    let crashEvery n p = stack [p, every n (const (s "crash" # gain 0.7)) p]
+    let maybeFill prob fill pat = sometimesBy prob (const fill) pat
+    let breakBar = silence
+
+    -- Density build: 4 → 5 → 6 → 7 → 8 kicks over 5 cycles
+    let buildKick = fastcat [ s (fromString (unwords (replicate n "bd"))) | n <- [4,5,6,7,8] ]
+    --   d1 $ slow 5 $ buildKick
+    let rush n p = stack [p, every n (const (s "sn*8" # gain 0.5)) p]
+
+    -- ==== Fixes to earlier helpers ========================================
+    -- Tala with sam/khaali accents: beat 0 loud, vibhag starts louder, pulse soft
+    let talaPulse beats = fastFromList [ if i == 0 then 1 else if i `elem` scanl (+) 0 (init beats) then 0.8 else 0.55 | i <- [0 .. sum beats - 1] ]
+    --   d1 $ sound "tabla*16" # gain (talaPulse tintal)
+    -- Cellular automaton as development: each row = one cycle (not 256 hits)
+    let cbit r l c rr = (r `div` (2 ^ (4*l + 2*c + rr))) `mod` 2
+    let cstep r xs = [ cbit r (xs !! ((i-1) `mod` length xs)) (xs !! i) (xs !! ((i+1) `mod` length xs)) | i <- [0 .. length xs - 1] ]
+    let cell 1 = "bd"
+        cell _ = "~"
+    let caRows rule n = fastcat (map (s . fromString . unwords . map cell) (take n (iterate (cstep rule) (1 : replicate (n-1) 0))))
+    --   d1 $ caRows 110 16
 
     -- ==== Messiaen: non-retrogradable rhythm + added values ===============
     -- Palindromic durations (symmetric around center).  d1 $ palindur
