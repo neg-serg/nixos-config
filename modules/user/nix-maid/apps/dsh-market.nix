@@ -158,8 +158,9 @@ let
 
             # UI panels the user disabled in the web GUI (right-side
             # Explorer/Preview/Files, Task Board, pet widget, skin center, dream
-            # skin, better sidebar). Kept declarative here so a rebuild or login
-            # re-asserts them; the rows are appended idempotently when missing.
+            # skin, better sidebar, SSH panel). Kept declarative here so a
+            # rebuild or login re-asserts them; the rows are appended
+            # idempotently when missing.
             if ! grep -q 'ui-dsh-aionui-panel' "$PATCH" 2>/dev/null; then
               cat >> "$PATCH" <<'YAML'
 
@@ -175,6 +176,8 @@ let
     - id: dream-skin
       disabled: true
     - id: better-sidebar
+      disabled: true
+    - id: ssh
       disabled: true
     YAML
             fi
