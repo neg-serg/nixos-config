@@ -124,6 +124,16 @@ fn proc_alive(pid: i32) -> bool {
     PathBuf::from(format!("/proc/{pid}")).exists()
 }
 
+/// True once the engine log contains the marker printed by
+/// superdirt_startup.scd after SuperDirt finished loading samples.
+/// The OSC port alone is not a readiness signal: sclang binds 57120
+/// (its language port) immediately, long before SuperDirt is up.
+fn log_contains(needle: &str) -> bool {
+    fs::read_to_string(log_file().unwrap_or_default())
+        .map(|t| t.contains(needle))
+        .unwrap_or(false)
+}
+
 /// Check whether a UDP port is bound (0.0.0.0 or 127.0.0.1) by scanning
 /// /proc/net/udp{,6} — no extra deps, works without binding ourselves.
 fn port_listening(port: u16) -> bool {
@@ -265,10 +275,12 @@ fn start() -> Result<()> {
 
     fs::write(pid_file()?, child.id().to_string()).context("write pid file")?;
 
-    // Wait for SuperDirt to open the OSC port (usually <2s).
-    let deadline = Instant::now() + Duration::from_secs(15);
+    // Wait for SuperDirt to finish booting. The OSC port opens as soon as
+    // sclang starts, so wait for the "SUPERDIRT READY" marker in the log
+    // (sample loading takes ~30s for the full Dirt-Samples bank).
+    let deadline = Instant::now() + Duration::from_secs(120);
     while Instant::now() < deadline {
-        if port_listening(OSC_PORT) {
+        if log_contains("SUPERDIRT READY") {
             println!("SuperDirt ready — listening on UDP {OSC_PORT}.");
             println!("Open the editor:  tidalctl code");
             return Ok(());
@@ -276,11 +288,11 @@ fn start() -> Result<()> {
         if let Some(status) = child.try_wait().context("wait sclang")? {
             bail!("sclang exited early with {status} — see {}", log.display());
         }
-        thread::sleep(Duration::from_millis(200));
+        thread::sleep(Duration::from_millis(500));
     }
 
     bail!(
-        "engine did not open port {OSC_PORT} within 15s — see {}",
+        "engine did not become ready within 120s — see {}",
         log.display()
     );
 }
@@ -316,6 +328,7 @@ fn status() -> Result<()> {
     let style = Style::new();
     let engine_up = port_listening(OSC_PORT);
     let server_up = port_listening(SC_PORT);
+    let superdirt_ready = engine_up && log_contains("SUPERDIRT READY");
     let pid = read_pid()?;
     let scsynth_pids = find_scsynth_pids();
 
@@ -377,11 +390,17 @@ fn status() -> Result<()> {
         );
     }
 
-    if engine_up {
+    if superdirt_ready {
         row(
             "SuperDirt",
             true,
             style.green_bold(&format!("UDP {OSC_PORT} open")),
+        );
+    } else if engine_up {
+        row(
+            "SuperDirt",
+            false,
+            style.yellow_bold("loading samples… (UDP {OSC_PORT} open)"),
         );
     } else {
         row(
@@ -429,11 +448,16 @@ fn status() -> Result<()> {
         Err(_) => row("audio links", false, style.dim("(pw-link unavailable)")),
     }
 
-    if engine_up {
+    if superdirt_ready {
         println!(
             "\n{} Open the editor:  {}",
             style.green_bold("Ready."),
             style.bold("tidalctl code")
+        );
+    } else if engine_up {
+        println!(
+            "\n{} — samples still loading, try again shortly.",
+            style.yellow_bold("Starting up…")
         );
     } else {
         println!(
