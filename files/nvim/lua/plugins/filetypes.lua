@@ -120,18 +120,31 @@ return {
   {
     'grddavies/tidal.nvim',
     event = { 'BufRead *.tidal', 'BufNewFile *.tidal' },
+    config = function()
+      -- Bright TidalCycles highlighting (rainbow orbits, operators, params)
+      require('tidal-color').setup()
+    end,
     keys = {
-      { '<C-CR>', '<Cmd>TidalLaunch<CR>', desc = 'Launch Tidal (GHCi)', buffer = true },
+      -- Leader group (reliable in terminal emulators — Ctrl+Enter often
+      -- arrives as plain Enter in kitty/wezterm):
+      --   <leader>tl  launch Tidal,  <leader>tq  quit,  <leader>th  hush
+      --   <leader>ts  send line,     <leader>tb  send block, <leader>tz  silence
+      { '<leader>tl', function() require('tidal-actions').launch() end, desc = 'Launch Tidal (checks engine)', buffer = true },
+      { '<leader>tq', '<Cmd>TidalQuit<CR>', desc = 'Quit Tidal', buffer = true },
+      { '<C-CR>', function() require('tidal-actions').launch() end, desc = 'Launch Tidal (checks engine)', buffer = true },
       { '<C-S-CR>', '<Cmd>TidalQuit<CR>', desc = 'Quit Tidal', buffer = true },
-      -- Alt+Enter: send the current line. This is `api.send_line`, NOT the
-      -- (nonexistent) TidalSend command — the old binding did nothing.
+      -- Send current line: Alt+Enter or <leader>ts.
       {
         '<M-CR>',
-        function()
-          require('tidal').api.send_line()
-        end,
+        function() require('tidal-actions').send() end,
         desc = 'Send current line to Tidal',
         mode = 'n',
+        buffer = true,
+      },
+      {
+        '<leader>ts',
+        function() require('tidal-actions').send() end,
+        desc = 'Send current line to Tidal',
         buffer = true,
       },
       -- Alt+Enter in visual mode: send each non-empty selected line as its
@@ -140,17 +153,7 @@ return {
       -- compile. Sending line-by-line is the correct Tidal workflow.
       {
         '<M-CR>',
-        function()
-          local api = require('tidal').api
-          local first = vim.fn.line "'<"
-          local last = vim.fn.line "'>"
-          for l = first, last do
-            local text = vim.fn.getline(l):gsub('^%s+', ''):gsub('%s+$', '')
-            if text ~= '' then
-              api.send(text)
-            end
-          end
-        end,
+        function() require('tidal-actions').send_lines() end,
         desc = 'Send each selected line to Tidal',
         mode = 'x',
         buffer = true,
@@ -159,6 +162,14 @@ return {
       -- spanning multiple lines). Deliberately separate from Alt+Enter.
       {
         '<leader><CR>',
+        function()
+          require('tidal').api.send_block()
+        end,
+        desc = 'Send block (single multiline expression) to Tidal',
+        buffer = true,
+      },
+      {
+        '<leader>tb',
         function()
           require('tidal').api.send_block()
         end,
@@ -174,12 +185,24 @@ return {
         desc = 'Silence pattern',
         buffer = true,
       },
+      {
+        '<leader>tz',
+        function()
+          require('tidal').api.send_silence()
+        end,
+        desc = 'Silence pattern',
+        buffer = true,
+      },
       -- Hush everything
       {
         '<leader><Esc>',
-        function()
-          require('tidal.core.message').tidal.send_line('hush')
-        end,
+        function() require('tidal-actions').hush() end,
+        desc = 'Hush all patterns',
+        buffer = true,
+      },
+      {
+        '<leader>th',
+        function() require('tidal-actions').hush() end,
         desc = 'Hush all patterns',
         buffer = true,
       },
