@@ -417,7 +417,7 @@ Notes:
 - A user service auto-selects the RNNoise source as the default input on login when enabled.
 - You can still manually choose sources in your desktop environment if you prefer.
 
-Russian docs: `docs/howto/tidal-cycles.ru.md`, `docs/howto/build-optimization.ru.md`.
+Russian docs: `docs/howto/build-optimization.ru.md`. TidalCycles docs live in the private notes repo (~/notes/music/tidal/).
 
 ## AutoFDO (sample-based PGO)
 
