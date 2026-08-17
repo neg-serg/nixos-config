@@ -121,9 +121,68 @@ return {
     'grddavies/tidal.nvim',
     event = { 'BufRead *.tidal', 'BufNewFile *.tidal' },
     keys = {
-      { '<C-CR>', '<Cmd>TidalLaunch<CR>', ft = 'tidal', desc = 'Launch Tidal + SuperDirt' },
-      { '<C-S-CR>', '<Cmd>TidalQuit<CR>', ft = 'tidal', desc = 'Quit Tidal' },
-      { '<M-CR>', '<Cmd>TidalSend<CR>', ft = 'tidal', desc = 'Send line to Tidal' },
+      { '<C-CR>', '<Cmd>TidalLaunch<CR>', desc = 'Launch Tidal (GHCi)', buffer = true },
+      { '<C-S-CR>', '<Cmd>TidalQuit<CR>', desc = 'Quit Tidal', buffer = true },
+      -- Alt+Enter: send the current line. This is `api.send_line`, NOT the
+      -- (nonexistent) TidalSend command — the old binding did nothing.
+      {
+        '<M-CR>',
+        function()
+          require('tidal').api.send_line()
+        end,
+        desc = 'Send current line to Tidal',
+        mode = 'n',
+        buffer = true,
+      },
+      -- Alt+Enter in visual mode: send each non-empty selected line as its
+      -- own command. GHCi's `:{ ... :}` multiline block treats everything as
+      -- ONE expression, so several `d1 $ ...` lines in one block fail to
+      -- compile. Sending line-by-line is the correct Tidal workflow.
+      {
+        '<M-CR>',
+        function()
+          local api = require('tidal').api
+          local first = vim.fn.line "'<"
+          local last = vim.fn.line "'>"
+          for l = first, last do
+            local text = vim.fn.getline(l):gsub('^%s+', ''):gsub('%s+$', '')
+            if text ~= '' then
+              api.send(text)
+            end
+          end
+        end,
+        desc = 'Send each selected line to Tidal',
+        mode = 'x',
+        buffer = true,
+      },
+      -- Send a contiguous block as ONE expression (for a single pattern
+      -- spanning multiple lines). Deliberately separate from Alt+Enter.
+      {
+        '<leader><CR>',
+        function()
+          require('tidal').api.send_block()
+        end,
+        desc = 'Send block (single multiline expression) to Tidal',
+        buffer = true,
+      },
+      -- Silence the pattern under the cursor (d{count} silence)
+      {
+        '<leader>d',
+        function()
+          require('tidal').api.send_silence()
+        end,
+        desc = 'Silence pattern',
+        buffer = true,
+      },
+      -- Hush everything
+      {
+        '<leader><Esc>',
+        function()
+          require('tidal.core.message').tidal.send_line('hush')
+        end,
+        desc = 'Hush all patterns',
+        buffer = true,
+      },
     },
     opts = {
       boot = {
@@ -135,10 +194,20 @@ return {
         sclang = {
           -- Disabled: tidal.nvim launches sclang WITHOUT the PipeWire-jack
           -- LD_LIBRARY_PATH, so scsynth fails with "jack server is not
-          -- running". Start the engine via `just tidal-start` instead; Tidal
+          -- running". Start the engine via `tidalctl start` instead; Tidal
           -- connects to the already-running SuperDirt on :57120.
           enabled = false,
         },
+      },
+      -- Disable the plugin's default keymaps — we define our own above so
+      -- <M-CR> does not get claimed by the builtin send_block (multiline).
+      mappings = {
+        send_line = false,
+        send_visual = false,
+        send_block = false,
+        send_node = false,
+        send_silence = false,
+        send_hush = false,
       },
     },
   },
