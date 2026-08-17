@@ -133,8 +133,11 @@ return {
           file = vim.fn.expand '~/.config/tidal/BootTidal.hs',
         },
         sclang = {
-          enabled = true,
-          file = vim.fn.expand '~/.config/SuperCollider/superdirt_startup.scd',
+          -- Disabled: tidal.nvim launches sclang WITHOUT the PipeWire-jack
+          -- LD_LIBRARY_PATH, so scsynth fails with "jack server is not
+          -- running". Start the engine via `just tidal-start` instead; Tidal
+          -- connects to the already-running SuperDirt on :57120.
+          enabled = false,
         },
       },
     },
