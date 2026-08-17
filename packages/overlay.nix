@@ -45,8 +45,12 @@ in
   # stack on python312, see packages/tmd-top/default.nix
   tmd-top = final.callPackage ./tmd-top { };
 
-  # Code2000 shareware Unicode TrueType font (broad script coverage)
+  # Code200x Unicode font family by James Kass — Code2000 (BMP), Code2001
+  # (Plane 1 ancient scripts), Code2002 (Plane 2 rare CJK), Code20X3 (Plane 3 CJK Ext G/H)
   ttf-code2000 = final.callPackage ./ttf-code2000 { };
+  ttf-code2001 = final.callPackage ./ttf-code2001 { };
+  ttf-code2002 = final.callPackage ./ttf-code2002 { };
+  ttf-code20x3 = final.callPackage ./ttf-code20x3 { };
 
   # Python with LTO optimizations
   python3-lto = finalPrev.python3.override {
