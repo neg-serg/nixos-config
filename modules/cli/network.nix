@@ -9,6 +9,7 @@
     pkgs.speedtest-cli # internet speed test
     pkgs.urlscan # extract URLs from text blobs
     pkgs.whois # domain info lookup
+    pkgs.neg.oryx # TUI traffic sniffer using eBPF (run with sudo; needs BTF kernel)
 
     # Remote access
     pkgs.abduco # CLI session detach
