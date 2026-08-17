@@ -26,6 +26,9 @@ isn't a step-by-step runbook.
 
 - dsh-osm — OpenStreetMap tools + map card in dsh (RU): [dsh-osm.ru.md](./dsh-osm.ru.md)
 
+- dsh-status-rotator — live turn-status phrases instead of "Deep diving..." (RU):
+  [dsh-status-rotator.ru.md](./dsh-status-rotator.ru.md)
+
 - Options/modules reference: [modules.md](./modules.md)
 
 - Verified change workflows (add module / flag / package / host / script / secret):
