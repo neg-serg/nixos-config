@@ -122,6 +122,12 @@ Vim-навигация без модификаторов: `j k h l` (скрол�
 hint-букв ломается и конфигом не чинится (нужна US-раскладка для хинтов). То же касается
 `kitten hints --alphabet wersdfa` в kitty.
 
+Исключения по URL: `settings.blocklistPattern` полностью отключает SurfingKeys на
+dsh web GUI (`127.0.0.1:3080` / `localhost:3080` — там свои шорткаты и Tab-автокомплит),
+а также на `mail.google.com`, `docs.google.com`, `discord.com`, `app.slack.com`.
+Порт ограничен, чтобы другие loopback-страницы (например, `localhost:5173`) сохраняли
+SurfingKeys. Проверка: `check-surfingkeys`.
+
 ## План починки (по приоритетам)
 
 ### P0 — Hyprland: зафиксировать инварианты (без риска)
