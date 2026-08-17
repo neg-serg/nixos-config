@@ -52,6 +52,10 @@ in
       # Vivaldi CSS mod: hide tab bar + window control buttons (single-bar layout)
       ".config/vivaldi/css-mods/minimal-ui.css".source =
         config.lib.neg.path "files/vivaldi/minimal-ui.css";
+      # Vivaldi CSS mod: Iosevka Proportional across the whole browser chrome
+      # (replaces the old /etc/vivaldi/custom-ui/ mechanism — see vivaldi.nix)
+      ".config/vivaldi/css-mods/ui-font.css".source =
+        config.lib.neg.path "files/vivaldi/ui-font.css";
     })
   ];
 }
