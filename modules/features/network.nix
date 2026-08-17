@@ -20,6 +20,7 @@ with lib;
       zapret2.enable = mkBool "enable Zapret2 DPI bypass via nfqueue (requires zapret2 package)" false;
       rknDomains.enable = mkBool "enable RKN domain blocklist fetcher with daily timer" false;
       netHealth.enable = mkBool "enable periodic network/DNS/zapret2 health check with self-heal and ntfy push" false;
+      ceno.enable = mkBool "enable Ceno/Ouinet P2P client (censorship-circumvention node, podman container)" false;
       bbrv3.enable = mkBool "enable TCP BBRv3 congestion control (kernel >= 6.18)" true;
     };
 
