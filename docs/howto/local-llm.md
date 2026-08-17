@@ -88,6 +88,16 @@ services.colibri = {
 - Installed when `features.llm.enable` — voice-to-text via LocalAI/OpenAI-compatible endpoint +
   `dotool`/`uinput`.
 
+### pic-ocr (screenshot → text, engine choice)
+
+- Script: `packages/local-bin/bin/pic-ocr` (installed to `~/.local/bin`).
+- Two engines: classic **tesseract** (eng+rus, fast) and local **neural** OCR via Ollama's
+  `qwen3-vl:8b` (default; override with `PIC_OCR_NN_MODEL`). Neural images never leave the machine.
+- Usage: `pic-ocr [--engine=nn|tesseract|menu] IMAGE`; with no IMAGE it captures a region
+  (`slurp`). Result goes to the clipboard + `notify-send`.
+- Wired into the quickshell **ScreenshotToast**: after a Hyprland screenshot (`M4+SHIFT+R`,
+  `M4+SHIFT+CTRL+R`) the toast offers **OCR** (tesseract) and **OCR NN** (neural) buttons.
+
 ### local-ai user service (fallback)
 
 - `modules/user/nix-maid/sys/user-services.nix` — user-level Ollama fallback for hosts **without**

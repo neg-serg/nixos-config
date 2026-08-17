@@ -81,7 +81,7 @@ Item {
         WlrLayershell.margins { right: 24; bottom: 24 }
 
         implicitWidth: 460
-        implicitHeight: 440
+        implicitHeight: 520
 
         property int autoHideMs: 8000
         Timer {
@@ -127,7 +127,7 @@ Item {
                 // ── Large preview ───────────────────────────────────
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 300
+                    Layout.preferredHeight: 280
                     radius: 4
                     color: "#181C24"
                     border.width: 1
@@ -199,6 +199,40 @@ Item {
                         text: root.shotTs
                         font.family: "Iosevka"; font.pointSize: 11
                         color: "#6B718A"
+                    }
+                }
+
+                // ── OCR actions ─────────────────────────────────────
+                RowLayout {
+                    Layout.fillWidth: true; spacing: 6
+                    Repeater {
+                        model: [
+                            { icon: "text_fields",  label: "OCR",   action: function() { Quickshell.execDetached([root._home + "/.local/bin/pic-ocr", "--engine=tesseract", root.shotPath]); toast.hide(); } },
+                            { icon: "auto_awesome", label: "OCR NN", action: function() { Quickshell.execDetached([root._home + "/.local/bin/pic-ocr", "--engine=nn", root.shotPath]); toast.hide(); } }
+                        ]
+                        delegate: Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 36; radius: 6
+                            color: hh.hovered ? "#242A35" : "#181C24"
+                            border.width: 1; border.color: "#3B4C5C"
+                            RowLayout {
+                                id: btnRow
+                                anchors.centerIn: parent
+                                spacing: 5
+                                MaterialIcon {
+                                    icon: modelData.icon
+                                    size: 14
+                                    color: "#BFCAD0"
+                                }
+                                Text {
+                                    text: modelData.label
+                                    font.family: "Iosevka"; font.weight: Font.Medium; font.pointSize: 12
+                                    color: "#BFCAD0"
+                                }
+                            }
+                            HoverHandler { id: hh }
+                            TapHandler { onTapped: modelData.action() }
+                        }
                     }
                 }
 

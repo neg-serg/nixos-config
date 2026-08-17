@@ -1,0 +1,121 @@
+#!/bin/sh
+# pic-ocr: OCR an image and put the result into the clipboard.
+#
+# Engines:
+#   tesseract (default)  — classic, fast, eng+rus
+#   nn / neural          — local vision model via Ollama (qwen3-vl:8b by
+#                          default, override with PIC_OCR_NN_MODEL). Images
+#                          never leave the machine.
+#   menu                 — pick an engine with vicinae dmenu
+#
+# Usage:
+#   pic-ocr [IMAGE]                 # tesseract on IMAGE
+#   pic-ocr --engine=nn IMAGE       # neural OCR
+#   pic-ocr --menu IMAGE            # choose engine interactively
+#   pic-ocr                         # select a region with slurp first
+#   pic-ocr -h                      # help
+#
+# Result: copied to clipboard (wl-copy) + notify-send preview.
+# Dependencies: tesseract, wl-copy, slurp, grim, notify-send, curl, jq, magick.
+
+IFS=' 	
+'
+
+show_help() {
+  sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
+}
+
+engine="tesseract"
+image=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --engine=*) engine="${1#--engine=}"; shift ;;
+    -e)        engine="${2:-}"; shift 2 ;;
+    -n|--nn)   engine="nn"; shift ;;
+    -m|--menu) engine="menu"; shift ;;
+    -h|--help) show_help; exit 0 ;;
+    -*)        printf 'pic-ocr: unknown option: %s\n' "$1" >&2; show_help >&2; exit 1 ;;
+    *)         image="$1"; shift ;;
+  esac
+done
+
+# No image given → grab a region with slurp.
+if [ -z "$image" ]; then
+  geo="$(slurp 2>/dev/null)" || { printf 'pic-ocr: no region selected\n' >&2; exit 1; }
+  tmp="$(mktemp --suffix=.png)"
+  grim -g "$geo" "$tmp" || { rm -f "$tmp"; exit 1; }
+  image="$tmp"
+  trap 'rm -f "$tmp"' EXIT
+fi
+
+[ -f "$image" ] || { printf 'pic-ocr: no such file: %s\n' "$image" >&2; exit 1; }
+
+# ── Engine implementations ────────────────────────────────────────────────────
+
+ocr_tesseract() {
+  tesseract "$1" stdout -l eng+rus --psm 3 2>/dev/null
+}
+
+ocr_nn() {
+  model="${PIC_OCR_NN_MODEL:-qwen3-vl:8b}"
+  base_url="${PIC_OCR_OLLAMA_URL:-http://localhost:11434/v1}"
+  # Downscale + JPEG: vision models resize internally; smaller payload = faster.
+  b64="$(magick "$1" -resize '1600x1600>' -quality 85 jpg:- 2>/dev/null | base64 -w0)"
+  [ -n "$b64" ] || return 1
+  prompt="Transcribe all text from this image, preserving line breaks. Output only the recognized text, no commentary."
+  payload="$(jq -n \
+    --arg m "$model" \
+    --arg img "data:image/jpeg;base64,$b64" \
+    --arg p "$prompt" \
+    '{model:$m,messages:[{role:"user",content:[{type:"image_url",image_url:{url:$img}},{type:"text",text:$p}]}],stream:false}')"
+  curl -s --max-time 120 "$base_url/chat/completions" \
+    -H "Content-Type: application/json" -d "$payload" \
+    | jq -r '.choices[0].message.content // empty' 2>/dev/null
+}
+
+# ── Engine selection ──────────────────────────────────────────────────────────
+
+if [ "$engine" = "menu" ]; then
+  sel="$(printf '%s\n' "Tesseract (classic)" "Qwen3-VL 8B (neural)" \
+    | vicinae dmenu -p '⟬OCR⟭ ❯>' 2>/dev/null || true)"
+  case "$sel" in
+    *Tesseract*) engine="tesseract" ;;
+    *Qwen3*)     engine="nn" ;;
+    *)           exit 0 ;;
+  esac
+fi
+
+# ── Run ───────────────────────────────────────────────────────────────────────
+
+engine_name="$engine"
+case "$engine" in
+  tesseract|classic)
+    text="$(ocr_tesseract "$image")"
+    engine_name="tesseract"
+    ;;
+  nn|neural|ollama)
+    text="$(ocr_nn "$image")"
+    if [ -n "$text" ]; then
+      engine_name="${PIC_OCR_NN_MODEL:-qwen3-vl:8b} (local)"
+    else
+      # Ollama down or model missing → classic fallback, still useful.
+      text="$(ocr_tesseract "$image")"
+      engine_name="tesseract (nn fallback)"
+    fi
+    ;;
+  *)
+    printf 'pic-ocr: unknown engine: %s\n' "$engine" >&2
+    show_help >&2
+    exit 1
+    ;;
+esac
+
+if [ -z "$text" ]; then
+  notify-send -a pic-ocr -u critical "OCR" "No text recognized ($engine_name)"
+  exit 1
+fi
+
+printf '%s\n' "$text" | wl-copy
+preview="$(printf '%s' "$text" | tr '\n' ' ' | cut -c1-140)"
+notify-send -a pic-ocr "OCR ($engine_name)" "$preview"
