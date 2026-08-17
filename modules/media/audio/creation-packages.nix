@@ -62,10 +62,9 @@ in
         # distrobox-enter needs podman/docker on PATH; systemd-user may not
         # carry /run/current-system/sw/bin when the unit starts, which makes
         # distrobox fail with "Missing dependency: we need a container manager".
-        Environment = "PATH=/run/current-system/sw/bin:/home/neg/.nix-profile/bin:/usr/bin:/bin";
         # Without WAYLAND_DISPLAY Qt falls back to the offscreen platform: the
         # event loop runs but no window is ever shown (Hyprland socket wayland-1).
-        Environment = "WAYLAND_DISPLAY=wayland-1";
+        Environment = "PATH=/run/current-system/sw/bin:/home/neg/.nix-profile/bin:/usr/bin:/bin WAYLAND_DISPLAY=wayland-1";
         ExecStart = "${pkgs.distrobox}/bin/distrobox-enter arch-zestbay -- zestbay";
         Restart = "on-failure";
         RestartSec = 5;
