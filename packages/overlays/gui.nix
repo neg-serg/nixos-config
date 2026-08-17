@@ -20,6 +20,7 @@ in
   wl-switcher = prev.callPackage (inputs.self + "/packages/wl-switcher") { };
   wallhaven = prev.callPackage (inputs.self + "/packages/wallhaven") { };
   hyprwhspr = prev.callPackage (inputs.self + "/packages/hyprwhspr") { };
+  camillagui = callPkg (inputs.self + "/packages/camillagui") { }; # web GUI for CamillaDSP
 
   # hyprscratch: patched to exit after 5 event-listener failures
   # so systemd Restart=always can restart it with fresh Hyprland IPC env.
