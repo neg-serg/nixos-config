@@ -7,8 +7,9 @@ let
 in
 {
   # dsh-tui-ru-assets/, dsh-gui-tweaks-assets/, dsh-prompt-assets/,
-  # dsh-layout-slash-assets/ and dsh-osm/ are data (patch scripts, plugin
-  # bundles) consumed by their modules — not modules themselves.
+  # dsh-layout-slash-assets/, dsh-osm/ and dsh-web-en-assets/ are data (patch
+  # scripts, plugin bundles, translation maps) consumed by their modules — not
+  # modules themselves.
   imports =
     builtins.attrNames entries
     |> builtins.filter (
@@ -19,6 +20,7 @@ in
       && n != "dsh-prompt-assets"
       && n != "dsh-layout-slash-assets"
       && n != "dsh-osm"
+      && n != "dsh-web-en-assets"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
