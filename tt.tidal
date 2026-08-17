@@ -1,5 +1,0 @@
-d1 $ sound "bd sn"                  -- бочка + рабочий
-d1 $ sound "bd(3,8) sn(5,8)"        -- евклидовы ритмы, 3 против 5
-d2 $ sound "hh*4" # pan 0.5         -- хай-хэт вправо
-d1 $ sound "arpy" # room 0.5 # size 0.8   -- ревер
-d1 $ note "c d e f g a b" # sound "superpiano"
