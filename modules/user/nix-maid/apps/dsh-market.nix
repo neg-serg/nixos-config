@@ -142,6 +142,17 @@ let
             python3 ${pnpmPatch} "$PROFILE_DIR/pnpm-workspace.yaml" \
               || echo "dsh-market: pnpm policy patch failed" >&2
 
+            # pnpm cannot write nested node_modules through the @deepseek-ai
+            # store symlink (read-only /nix/store, see dshAiStore below), and
+            # any fresh `dsh plugin add` re-links the tree — park the symlink
+            # for the duration of the pnpm operations below and restore it
+            # after. The relink block further down then no-ops (or re-pins a
+            # stale target).
+            PROFILE_AI="$PROFILE_DIR/node_modules/@deepseek-ai"
+            if [ -L "$PROFILE_AI" ]; then
+              mv "$PROFILE_AI" "$PROFILE_AI.parked"
+            fi
+
             installed=0
             if ! grep -q '"dshmarket"' "$PROFILE_DIR/package.json" 2>/dev/null; then
               echo "dsh-market: installing dshmarket into the web profile..."
@@ -167,7 +178,8 @@ let
               "dsh-plugin-recall:dsh-plugin-recall" \
               "dsh-memento:dsh-memento" \
               "dsh-startup-guard:dsh-startup-guard" \
-              "dsh-free-search:dsh-free-search"; do
+              "dsh-free-search:dsh-free-search" \
+              "dsh-status-rotator:github:01Virex/dsh-status-rotator"; do
               name="''${entry%%:*}"
               spec="''${entry#*:}"
               if ! grep -q "\"$name\"" "$PROFILE_DIR/package.json" 2>/dev/null; then
@@ -198,6 +210,22 @@ let
                 dsh plugin --profile web add "$GAVEL_DIR" -w && installed=1 \
                   || echo "dsh-market: gavel-review install failed" >&2
               fi
+            fi
+
+            # dsh-status-rotator: seed the user-editable phrase config next to
+            # the package (the node half serves config.example.json as a
+            # fallback when this file is absent).
+            SR="$PROFILE_DIR/node_modules/dsh-status-rotator"
+            if [ -d "$SR" ] && [ ! -f "$SR/config.json" ]; then
+              cp "$SR/config.example.json" "$SR/config.json"
+            fi
+
+            # Restore the parked @deepseek-ai symlink (discard whatever pnpm
+            # materialized there while it was parked; the relink block below
+            # re-pins the profile to the harness store when needed).
+            if [ -e "$PROFILE_AI.parked" ]; then
+              rm -rf "$PROFILE_AI"
+              mv "$PROFILE_AI.parked" "$PROFILE_AI"
             fi
 
             # pnpm install may rewrite pnpm-workspace.yaml; re-apply the policy.
