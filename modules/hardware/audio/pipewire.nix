@@ -6,12 +6,17 @@
 }:
 let
   cfg = config.hardware.audio.rnnoise or { };
+  # LAN audio access (features.media.audio.lanAccess): Pulse-compatible TCP
+  # server on 4713 (other devices send audio here) + RTP multicast sink
+  # (this machine broadcasts audio to the LAN).
+  lan = config.features.media.audio.lanAccess or { enable = false; };
 in
 {
   options.hardware.audio.rnnoise.enable =
     lib.mkEnableOption "Enable RNNoise-based virtual microphone (PipeWire filter-chain).";
 
-  config = {
+  config = lib.mkMerge [
+    {
     # Default to enabled globally; hosts can override to false
     hardware.audio.rnnoise.enable = lib.mkDefault true;
 
@@ -198,5 +203,51 @@ in
       }
     );
 
-  };
+    }
+    # ------------------------------------------------------------------
+    # LAN audio access (features.media.audio.lanAccess.enable)
+    # ------------------------------------------------------------------
+    (lib.mkIf (lan.enable or false) {
+      services.pipewire.extraConfig = {
+        # Pulse-compatible TCP server: other devices can play audio through
+        # this machine (PULSE_SERVER=odin:4713 or PulseAudio-over-network).
+        # Keep the unix socket — it is the local default.
+        pipewire-pulse."20-network" = {
+          "pulse.properties"."server.address" = [
+            "unix:native"
+            "tcp:4713"
+          ];
+        };
+
+        # RTP multicast sink: a virtual Audio/Sink ("RTP LAN broadcast") that
+        # streams anything routed to it to 224.0.0.56:46000 (LAN multicast).
+        # Receivers, e.g. VLC: rtp://224.0.0.56:46000
+        pipewire."94-rtp-sink" = {
+          "context.modules" = [
+            {
+              name = "libpipewire-module-rtp-sink";
+              args = {
+                "local.ifname" = lan.rtp.interface;
+                "destination.ip" = "224.0.0.56";
+                "destination.port" = 46000;
+                "net.ttl" = 1; # local subnet only
+                "sess.name" = "Odin RTP stream";
+                "audio.format" = "S16BE";
+                "audio.rate" = 48000;
+                "audio.channels" = 2;
+                "stream.props" = {
+                  "node.name" = "rtp-sink";
+                  "node.description" = "RTP LAN broadcast";
+                  "media.class" = "Audio/Sink";
+                };
+              };
+            }
+          ];
+        };
+      };
+
+      # Pulse TCP server port (RTP multicast is outgoing UDP — no rule needed)
+      networking.firewall.allowedTCPPorts = lib.mkAfter [ 4713 ];
+    })
+  ];
 }
