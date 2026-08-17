@@ -15,9 +15,9 @@ Commands:
   carlactl projects [NAME]       list/saved .carxp projects, launch via fzf
 """
 import os
-import re
 import sys
 import glob
+import json
 import signal
 import subprocess
 import time
@@ -26,21 +26,30 @@ from pathlib import Path
 # --- locations (provided by the Nix wrapper) ---------------------------------
 CARLA_SHARE = os.environ.get("CARLA_SHARE_DIR", "")
 CARLA_LIB = os.environ.get("CARLA_LIB_DIR", "")
-DISCOVERY = os.path.join(CARLA_LIB, "carla-discovery-native")
 STDLIB = os.path.join(CARLA_LIB, "libcarla_standalone2.so")
 STATE = Path.home() / ".local/state/carlactl"
 PROJECTS = STATE / "projects"
 PIDFILE = STATE / "carla.pid"
 LOGFILE = STATE / "carla.log"
+CACHE = STATE / "plugins.json"
+CACHE_VERSION = 2  # bump when the cached plugin info format changes
 
 # Plugin format -> (scan root suffix, discovery type, glob pattern)
-# Scan roots are the aggregate dirs in /run/current-system/sw/lib and $HOME.
 FORMATS = {
     "vst3": ("vst3", "vst3", "*.vst3"),
     "vst2": ("vst", "vst2", "*.so"),
-    "lv2": ("lv2", "lv2", "*"),
+    "lv2": (
+        "lv2",
+        "lv2",
+        "*.lv2",
+    ),  # bundle dirs only (one dir = many plugins)
     "clap": ("clap", "clap", "*.clap"),
 }
+
+# Default scan: VST2/VST3 (Carla discovery supports these). LV2 is bundle-based
+# and CLAP is unsupported by carla-discovery-native; both stay opt-in via
+# '--format', with LV2 handled by ZestBay/zest for day-to-day use.
+DEFAULT_FORMATS = ("vst3", "vst2")
 
 # RME HDSPe AIO Pro output pairs (same mapping as pwroute).
 ROUTES = {
@@ -57,67 +66,98 @@ def sh(args, **kw):
 
 
 def scan_roots(fmt):
+    """Plugin dirs, mirroring environment.nix's makePluginPath search path."""
     suffix, _, _ = FORMATS[fmt]
-    roots = [f"/run/current-system/sw/lib/{suffix}"]
+    home = str(Path.home())
+    user = os.environ.get("USER", "neg")
+    roots = [
+        f"/run/current-system/sw/lib/{suffix}",
+        f"/etc/profiles/per-user/{user}/lib/{suffix}",
+        f"{home}/.local/state/nix/profile/lib/{suffix}",
+        f"{home}/.{suffix}",
+    ]
     if fmt == "vst2":
-        roots.append("/run/current-system/sw/lib/lxvst")
-    roots += [str(Path.home() / f".{suffix}"), str(Path.home() / f".{suffix}")]
+        roots += ["/run/current-system/sw/lib/lxvst", f"{home}/.lxvst"]
     return [r for r in dict.fromkeys(roots) if os.path.isdir(r)]
 
 
-def discover(fmt, path):
-    """Run carla-discovery-native and parse key::value output into a dict."""
-    if not os.path.exists(DISCOVERY):
-        return None
-    r = sh([DISCOVERY, FORMATS[fmt][1], path])
-    out = r.stdout + r.stderr
-    info = {}
-    for line in out.splitlines():
-        line = re.sub(r"\x1b\[[0-9;]*m", "", line)
-        # lines are "carla-discovery::<key>::<value>"
-        parts = line.split("::")
-        if len(parts) < 3:
-            continue
-        key, val = parts[1].strip(), parts[2].strip()
-        if val == "------------":
-            continue
-        info[key] = val
-    if "name" not in info:
-        return None
-    info["path"] = path
-    info["format"] = fmt
-    return info
+def _plugin_name(path, fmt):
+    """Derive a plugin name from its bundle/file name (fast, no discovery).
+
+    carla-discovery-native is slow on multi-plugin mega-bundles (lsp-plugins
+    enumerates ~100 plugins), so listing uses the filename instead. This is
+    exact for single-plugin bundles (Vital.vst3 -> Vital), which is what VST
+    routing cares about.
+    """
+    base = os.path.basename(path.rstrip("/"))
+    suffix = FORMATS[fmt][0]
+    if base.endswith(f".{suffix}"):
+        return base[: -len(f".{suffix}")]
+    if base.endswith(".so"):
+        return base[:-3]
+    return base
 
 
-def scan_plugins(formats=("vst3", "vst2", "lv2", "clap")):
-    """Yield plugin info dicts. Dedupe by (format, name)."""
+def scan_plugins(formats=DEFAULT_FORMATS):
+    """Yield plugin info dicts (filename-derived, fast). Dedupe by (format, name)."""
     seen = set()
     for fmt in formats:
         _, _, pattern = FORMATS[fmt]
         for root in scan_roots(fmt):
             hits = glob.glob(os.path.join(root, "**", pattern), recursive=True)
             for p in hits:
-                # vst2: only direct .so; vst3: bundle dir; lv2: manifest dir
                 if fmt == "vst2" and not p.endswith(".so"):
                     continue
                 if fmt == "vst3" and os.path.isfile(p):
                     continue
-                if fmt == "lv2":
-                    p = os.path.dirname(p) if p.endswith(".ttl") else p
-                info = discover(fmt, p)
-                if not info:
-                    continue
-                key = (fmt, info["name"])
+                name = _plugin_name(p, fmt)
+                key = (fmt, name)
                 if key in seen:
                     continue
                 seen.add(key)
-                yield info
+                yield {"format": fmt, "name": name, "path": p, "maker": ""}
 
 
-def list_plugins(formats=("vst3", "vst2", "lv2", "clap")):
-    return sorted(
+def _roots_fingerprint(formats):
+    roots = set()
+    for fmt in formats:
+        roots.update(scan_roots(fmt))
+    sig = []
+    for r in sorted(roots):
+        try:
+            sig.append([r, os.path.getmtime(r)])
+        except OSError:
+            pass
+    return sig
+
+
+def list_plugins(formats=DEFAULT_FORMATS, use_cache=True):
+    """Scan plugins, cached on the set+mtime of the scanned roots.
+
+    Scanning every VST2 in lsp-plugins.vst is slow (~100s of .so files), so we
+    persist results and only rescan when a plugin dir's mtime changes (e.g. a
+    system rebuild).
+    """
+    fp = _roots_fingerprint(formats)
+    if use_cache and CACHE.exists():
+        try:
+            data = json.loads(CACHE.read_text())
+            if data.get("v") == CACHE_VERSION and data.get("fp") == fp:
+                return data["plugins"]
+        except (OSError, ValueError, KeyError):
+            pass
+    plugins = sorted(
         scan_plugins(formats), key=lambda i: (i["format"], i["name"])
     )
+    if use_cache:
+        STATE.mkdir(parents=True, exist_ok=True)
+        try:
+            CACHE.write_text(
+                json.dumps({"v": CACHE_VERSION, "fp": fp, "plugins": plugins})
+            )
+        except OSError:
+            pass
+    return plugins
 
 
 # --- project generation (Carla C API) ---------------------------------------
@@ -133,8 +173,9 @@ def gen_project(ptype, plugin_path, name, out_path):
         "vst3": cb.PLUGIN_VST3,
         "vst2": cb.PLUGIN_VST2,
         "lv2": cb.PLUGIN_LV2,
-        "clap": cb.PLUGIN_INTERNAL,
     }
+    if ptype not in PLUGIN_TYPE:
+        return False, f"unsupported plugin type: {ptype}"
     host = cb.CarlaHostDLL(STDLIB, True)
     if not host.engine_init("JACK", "carlactl"):
         return False, "engine_init failed (is PipeWire running?)"
@@ -228,11 +269,7 @@ def fzf_pick(items, prompt):
 
 
 def cmd_list(args):
-    formats = (
-        tuple(args.format.split(","))
-        if args.format
-        else ("vst3", "vst2", "lv2", "clap")
-    )
+    formats = tuple(args.format.split(",")) if args.format else DEFAULT_FORMATS
     for p in list_plugins(formats):
         print(f"{p['format']}\t{p['name']}\t{p.get('maker','')}\t{p['path']}")
 
@@ -240,18 +277,38 @@ def cmd_list(args):
 def resolve_plugin(arg):
     """Resolve 'TYPE:NAME' or a filesystem path to a plugin info dict."""
     if arg and os.path.exists(arg):
-        for fmt in FORMATS:
-            info = discover(fmt, arg)
-            if info:
-                return info
-        return {"format": "vst3", "name": Path(arg).name, "path": arg}
+        fmt = "vst3"
+        for f in FORMATS:
+            if arg.endswith(f".{FORMATS[f][0]}") or (
+                f == "vst2" and arg.endswith(".so")
+            ):
+                fmt = f
+                break
+        return {
+            "format": fmt,
+            "name": _plugin_name(arg, fmt),
+            "path": arg,
+            "maker": "",
+        }
     fmt, _, name = (arg or "").partition(":")
-    for p in list_plugins():
-        if p["name"].lower() == name.lower() and (
-            not fmt or p["format"] == fmt
-        ):
-            return p
-        if not fmt and p["name"].lower() == name.lower():
+    # Fast path: most plugins live in their own bundle named after the plugin,
+    # so try <name>.<ext> directly.
+    if name:
+        for f in (fmt,) if fmt else tuple(FORMATS):
+            suffix, _, _ = FORMATS[f]
+            for root in scan_roots(f):
+                cand = os.path.join(root, f"{name}.{suffix}")
+                if os.path.exists(cand):
+                    return {
+                        "format": f,
+                        "name": name,
+                        "path": cand,
+                        "maker": "",
+                    }
+    # Fallback: full scan (cached).
+    formats = (fmt,) if fmt else DEFAULT_FORMATS
+    for p in list_plugins(formats):
+        if p["name"].lower() == name.lower():
             return p
     return None
 
@@ -312,8 +369,12 @@ def cmd_status(args):
 
 
 def hw_out(port):
-    """Find the RME output node name for a given playback port suffix."""
-    r = sh(["pw-link", "-o"])
+    """Find the RME output node name for a given playback port suffix.
+
+    RME playback_AUX* ports are sink (input) ports — they appear under
+    'pw-link -i', not -o.
+    """
+    r = sh(["pw-link", "-i"])
     for line in r.stdout.splitlines():
         line = line.strip()
         if line.endswith(port) and "alsa_output" in line:
@@ -331,12 +392,12 @@ def cmd_route(args):
         return 2
     left, rr = ROUTES.get(route, (None, None))
     # disconnect Carla audio-out first
-    sh(["pw-link", "-d", "Carla:output_FL", "-d", "Carla:output_FR"])
+    sh(["pw-link", "-d", "Carla:output_FL"])
+    sh(["pw-link", "-d", "Carla:output_FR"])
     if route == "none":
         print("Carla audio-out disconnected")
         return 0
     if route == "mix":
-        # connect to the shared sink node
         for ch, out in (("FL", left), ("FR", rr)):
             r = sh(["pw-link", f"Carla:output_{ch}", f"game-stereo:{out}"])
             if r.returncode != 0:
