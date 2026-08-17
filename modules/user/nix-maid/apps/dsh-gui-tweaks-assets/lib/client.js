@@ -17,6 +17,11 @@
 //      are re-expanded).
 //   3) The bash terminal output height cap (224px, internal scroll) is
 //      removed, so the whole command output is visible in the card.
+//   4) The composer input is focused by default: on tab/window focus
+//      (returning to the app), when a fresh editable composer mounts
+//      (initial load, workspace selection, session switch), and when its
+//      readonly/disabled state clears. Focus is never yanked away from an
+//      open modal dialog or from another field the user is typing in.
 //
 // All selectors use stable data attributes stamped by the upstream
 // components, so they survive bundle upgrades (unlike CSS-module hashes).
@@ -101,13 +106,67 @@ window.__ModuleLoader__.load({
       }
     `;
 
+    // ---- 4) composer input focused by default ----
+    // The stock app focuses the composer on session switch, but focus is lost
+    // when the browser tab/window is left and returned to, and can be missed
+    // while a session is busy. Re-assert focus on the editable composer
+    // textarea (never the read-only workspace-picker hero) when the tab
+    // becomes visible, the window regains focus, or a fresh editable composer
+    // mounts / becomes editable.
+    const COMPOSER_SELECTOR = '[data-composer-card] textarea[data-phase]';
+
+    function composerTextarea() {
+      for (const el of document.querySelectorAll(COMPOSER_SELECTOR)) {
+        if (el instanceof HTMLTextAreaElement && !el.disabled && !el.readOnly) return el;
+      }
+      return null;
+    }
+
+    function focusComposer() {
+      const composer = composerTextarea();
+      if (composer === null) return;
+      // An open modal (question dialog, settings, ...) owns the focus.
+      if (document.querySelector('[role="dialog"][aria-modal="true"], [data-question-key]') !== null) return;
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && active !== composer) {
+        const tag = active.tagName;
+        // Never yank focus out of another field the user is typing in.
+        if (tag === "INPUT" || tag === "TEXTAREA" || active.isContentEditable) return;
+      }
+      composer.focus({ preventScroll: true });
+    }
+
+    const seenComposers = new WeakSet();
+    function focusFreshComposer() {
+      const composer = composerTextarea();
+      if (composer === null || seenComposers.has(composer)) return;
+      seenComposers.add(composer);
+      focusComposer();
+    }
+
     function apply(ctx) {
       ctx.effect(() => {
         window.addEventListener("keydown", onQuestionKeyDown, true);
 
-        const observer = new MutationObserver(expandBashRows);
-        observer.observe(document.body, { childList: true, subtree: true });
+        const observer = new MutationObserver(() => {
+          expandBashRows();
+          focusFreshComposer();
+        });
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["readonly", "disabled"],
+        });
         expandBashRows(); // catch rows already mounted before the observer
+        focusFreshComposer(); // focus a composer mounted before the observer
+
+        const onVisibilityChange = () => {
+          if (!document.hidden) focusComposer();
+        };
+        const onWindowFocus = () => focusComposer();
+        document.addEventListener("visibilitychange", onVisibilityChange);
+        window.addEventListener("focus", onWindowFocus);
 
         const style = document.createElement("style");
         style.setAttribute("data-plugin", "dsh-gui-tweaks");
@@ -117,6 +176,8 @@ window.__ModuleLoader__.load({
         return () => {
           window.removeEventListener("keydown", onQuestionKeyDown, true);
           observer.disconnect();
+          document.removeEventListener("visibilitychange", onVisibilityChange);
+          window.removeEventListener("focus", onWindowFocus);
           style.remove();
         };
       });

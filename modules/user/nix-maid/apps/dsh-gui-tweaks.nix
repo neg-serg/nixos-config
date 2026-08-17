@@ -12,7 +12,9 @@ let
   # dsh-gui-tweaks: client-only GUI behavior tweaks for the dsh web profile —
   # 1) number-key answers in ask-user question dialogs, Enter confirms the
   # selection (clicks Next/Submit), 2) bash tool rows expand by default,
-  # 3) bash terminal output cap removed. The package is a
+  # 3) bash terminal output cap removed, 4) composer input focused by
+  # default (on tab/window focus, session switch, fresh composer mount). The
+  # package is a
   # plain directory in the profile node_modules (pnpm is intentionally not
   # used — the @deepseek-ai store symlink makes pnpm writes fail with EROFS,
   # see dsh-market.nix), registered through a profile patch insert row, same
@@ -36,8 +38,8 @@ let
       cat >> "$PATCH" <<'YAML'
 
 # dsh-gui-tweaks - number-key answers + Enter confirmation in question
-# dialogs, bash tool rows expanded by default, bash output uncapped
-# (module: dsh-gui-tweaks.nix).
+# dialogs, bash tool rows expanded by default, bash output uncapped,
+# composer input focused by default (module: dsh-gui-tweaks.nix).
 - insert:
     - id: gui-tweaks
       name: dsh-gui-tweaks
