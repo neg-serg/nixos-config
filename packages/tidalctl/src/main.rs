@@ -163,6 +163,51 @@ fn find_scsynth_pids() -> Vec<i32> {
     out
 }
 
+/// Process uptime in seconds: (now − boot_time) − starttime/CLK_TCK, derived
+/// from /proc/<pid>/stat field 22 and /proc/stat btime. None if unparseable.
+fn proc_uptime_secs(pid: i32) -> Option<u64> {
+    let stat = fs::read_to_string(format!("/proc/{pid}/stat")).ok()?;
+    // comm (field 2) may contain spaces and parens — split after the last ')'.
+    let close = stat.rfind(')')?;
+    let fields: Vec<&str> = stat[close + 1..].split_whitespace().collect();
+    // After "pid (comm)" the tokens restart at field 3 (state); starttime is
+    // field 22 → index 19.
+    let start_ticks: u64 = fields.get(19)?.parse().ok()?;
+    let btime: u64 = fs::read_to_string("/proc/stat")
+        .ok()?
+        .lines()
+        .find_map(|l| l.strip_prefix("btime "))
+        .and_then(|v| v.trim().parse().ok())?;
+    let clk_tck = unsafe { libc::sysconf(libc::_SC_CLK_TCK) };
+    if clk_tck <= 0 {
+        return None;
+    }
+    // Millisecond precision avoids the up-to-1s error of flooring start_ticks/clk_tck.
+    let start_ms = start_ticks as u128 * 1000 / clk_tck as u128;
+    let start = UNIX_EPOCH + Duration::from_secs(btime) + Duration::from_millis(start_ms as u64);
+    SystemTime::now()
+        .duration_since(start)
+        .ok()
+        .map(|d| d.as_secs())
+}
+
+/// Compact human uptime: "45s", "12m 34s", "2h 14m", "3d 5h".
+fn fmt_uptime(secs: u64) -> String {
+    let d = secs / 86400;
+    let h = (secs % 86400) / 3600;
+    let m = (secs % 3600) / 60;
+    let s = secs % 60;
+    if d > 0 {
+        format!("{d}d {h}h")
+    } else if h > 0 {
+        format!("{h}h {m}m")
+    } else if m > 0 {
+        format!("{m}m {s}s")
+    } else {
+        format!("{s}s")
+    }
+}
+
 /// Send SIGTERM, escalate to SIGKILL if the process does not exit in ~2s.
 fn terminate(pid: i32) {
     unsafe {
@@ -293,6 +338,21 @@ fn status() -> Result<()> {
         _ if engine_up => row("sclang", true, style.green_bold("running (pid unknown)")),
         _ => row("sclang", false, style.dim("not running")),
     }
+
+    // Engine uptime, derived from the sclang process start time.
+    let uptime = match pid {
+        Some(p) if proc_alive(p) => proc_uptime_secs(p).map(fmt_uptime),
+        _ => None,
+    };
+    let uptime_cell = if engine_up {
+        match uptime {
+            Some(up) => style.green_bold(&up),
+            None => style.dim("unknown"),
+        }
+    } else {
+        style.dim("—")
+    };
+    row("uptime", engine_up, uptime_cell);
 
     if scsynth_pids.is_empty() {
         row("scsynth", false, style.dim("not running"));
