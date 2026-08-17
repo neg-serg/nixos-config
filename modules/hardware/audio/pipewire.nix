@@ -231,6 +231,7 @@ in
                 "destination.ip" = "224.0.0.56";
                 "destination.port" = 46000;
                 "net.ttl" = 1; # local subnet only
+                "net.loop" = true; # also deliver to this machine (local testing)
                 "sess.name" = "Odin RTP stream";
                 "audio.format" = "S16BE";
                 "audio.rate" = 48000;
