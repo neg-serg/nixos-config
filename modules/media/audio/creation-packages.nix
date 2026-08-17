@@ -26,13 +26,43 @@ let
     pkgs.carla # Full-featured JACK/PipeWire patchbay + LV2/VST plugin host
     # zestbay moved to distrobox (CXX-Qt broken in Nix): `distrobox-enter arch-zestbay -- zestbay`
     pkgs.pw-audioshare # GTK4 PipeWire patchbay with auto-connect presets
+    pkgs.neg.zest # CLI for ZestBay plugin management: zest list/add/rm/ls
     # -- Noise Processing --
     pkgs.noisetorch # PulseAudio/PipeWire microphone noise gate
     pkgs.rnnoise # WebRTC RNNoise denoiser CLI for mic chains
+
+    # -- Pro Audio (from flake/devshells/pro-audio.nix; latency/quantum
+    #    settings intentionally NOT touched) --
+    pkgs.glicol-cli # audio DSL for generative compositions
+    pkgs.ocenaudio # lightweight waveform editor
+    pkgs.vital # spectral wavetable synth
+    pkgs.dexed # DX7-compatible FM synth
+    pkgs.stochas # probability-driven MIDI sequencer
+    pkgs.vcv-rack # modular synth platform
   ];
 in
 {
   config = lib.mkIf enabled {
     environment.systemPackages = lib.mkAfter packages;
+
+    # ZestBay (patchbay + LV2/CLAP/VST3 plugin host) autostart at login.
+    # Runs inside the arch distrobox container; keeps learned auto-connect
+    # rules and the plugin chain alive so no manual wiring is needed.
+    # Tray mode: Preferences → "start minimized" / "close to tray" (stored in
+    # ~/.config/zestbay/preferences.json).
+    systemd.user.services.zestbay = {
+      description = "ZestBay PipeWire patchbay and plugin host (distrobox)";
+      after = [
+        "pipewire.service"
+        "wireplumber.service"
+      ];
+      wantedBy = [ "graphical-session.target" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${pkgs.distrobox}/bin/distrobox-enter arch-zestbay -- zestbay";
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+    };
   };
 }
