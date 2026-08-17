@@ -13,26 +13,29 @@ let
   # 1) number-key answers in ask-user question dialogs, Enter confirms the
   # selection (clicks Next/Submit), 2) bash tool rows expand by default,
   # 3) bash terminal output cap removed, 4) composer input focused by
-  # default (on tab/window focus, session switch, fresh composer mount). The
-  # package is a
-  # plain directory in the profile node_modules (pnpm is intentionally not
-  # used — the @deepseek-ai store symlink makes pnpm writes fail with EROFS,
-  # see dsh-market.nix), registered through a profile patch insert row, same
-  # as dsh-terminal-ui. Files are written only when missing, so local tweaks
-  # to client.js survive; the patch row is appended idempotently.
-  assets = ./dsh-gui-tweaks-assets;
+  # default (on tab/window focus, session switch, fresh composer mount).
+  #
+  # Canonical source is the dsh-web-ui fork checkout (packages/dsh-gui-tweaks):
+  # the profile node_modules entry is a symlink into it, same pattern as
+  # dsh-terminal-ui in dsh-market.nix, so source edits apply on the next page
+  # refresh — no rebuild needed. If the fork checkout is missing the plugin is
+  # skipped with a warning (fresh machine before `git clone`).
+  forkPackage = "${homeDir}/src/1st-level/@projects/dsh-web-ui/packages/dsh-gui-tweaks";
 
   ensureTweaks = pkgs.writeShellScript "dsh-gui-tweaks-ensure" ''
     set -eu
     export PATH=/run/current-system/sw/bin:$PATH
     PROFILE_DIR="${homeDir}/.dsh/profiles/web"
     T="$PROFILE_DIR/node_modules/dsh-gui-tweaks"
-    mkdir -p "$T/lib"
-    for f in package.json lib/index.js lib/client.js; do
-      if [ ! -f "$T/$f" ]; then
-        cp "${assets}/$f" "$T/$f"
+    if [ -d "${forkPackage}" ]; then
+      # Replace a plain copy (from before the fork migration) with the symlink.
+      if [ ! -L "$T" ]; then
+        rm -rf -- "$T" 2>/dev/null || true
       fi
-    done
+      ln -sfn "${forkPackage}" "$T"
+    else
+      echo "dsh-gui-tweaks: fork checkout missing at ${forkPackage} — plugin not installed" >&2
+    fi
     PATCH="$PROFILE_DIR/cordis.patch.yml"
     if ! grep -q 'gui-tweaks' "$PATCH" 2>/dev/null; then
       cat >> "$PATCH" <<'YAML'
