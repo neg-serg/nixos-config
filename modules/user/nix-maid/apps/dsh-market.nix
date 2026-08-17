@@ -29,26 +29,26 @@ let
     path = sys.argv[1]
 
     EXCLUDES = [
-      "dshmarket"
-      "dsh-dream-skin"
-      "@linxin666/*"
-      "dsh-funnel"
-      "dsh-pathlink"
-      "dsh-file-upload"
-      "@0xsline/dsh-spotlight"
-      "dsh-plugin-vetting"
-      "dsh-plugin-recall"
-      "dsh-memento"
-      "dsh-startup-guard"
-      "dsh-free-search"
+      "dshmarket",
+      "dsh-dream-skin",
+      "@linxin666/*",
+      "dsh-funnel",
+      "dsh-pathlink",
+      "dsh-file-upload",
+      "@0xsline/dsh-spotlight",
+      "dsh-plugin-vetting",
+      "dsh-plugin-recall",
+      "dsh-memento",
+      "dsh-startup-guard",
+      "dsh-free-search",
     ]
     ALLOW = {
-      "cloudflared": "true"
-      "cpu-features": "false"
-      "ssh2": "true"
-      "sharp": "true"
-      "tesseract.js": "true"
-      "gavel-review": "true"
+      "cloudflared": "true",
+      "cpu-features": "false",
+      "ssh2": "true",
+      "sharp": "true",
+      "tesseract.js": "true",
+      "gavel-review": "true",
     }
 
     with open(path) as f:
