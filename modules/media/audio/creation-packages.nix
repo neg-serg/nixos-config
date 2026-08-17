@@ -34,7 +34,7 @@ let
     # -- Pro Audio (from flake/devshells/pro-audio.nix; latency/quantum
     #    settings intentionally NOT touched) --
     pkgs.glicol-cli # audio DSL for generative compositions
-    pkgs.ocenaudio # lightweight waveform editor
+    # pkgs.ocenaudio # lightweight waveform editor — commented: fails to build
     pkgs.vital # spectral wavetable synth
     pkgs.dexed # DX7-compatible FM synth
     pkgs.stochas # probability-driven MIDI sequencer
