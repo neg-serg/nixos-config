@@ -277,19 +277,19 @@ Example (host):
 Service override examples
 
 ```nix
-# MPD: change music dir/port and append an extra output
-{ lib, ... }: {
-  services.mpd = {
-    musicDirectory = "/srv/media/music";
-    network.port = 6601;
-    # Append to the module's extraConfig (types.lines supports mkAfter)
-    extraConfig = lib.mkAfter ''
-      audio_output {
-        type "alsa"
-        name "USB DAC"
-        device "hw:USB"
+# MPD: change music dir/port and add an extra output
+# (all options live under services.mpd.settings, see `man mpd.conf`)
+{ ... }: {
+  services.mpd.settings = {
+    music_directory = "/srv/media/music";
+    port = 6601;
+    audio_output = [
+      {
+        type = "alsa";
+        name = "USB DAC";
+        device = "hw:USB";
       }
-    '';
+    ];
   };
 }
 ```
