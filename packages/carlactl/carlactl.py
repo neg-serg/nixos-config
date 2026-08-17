@@ -18,7 +18,6 @@ import os
 import re
 import sys
 import glob
-import json
 import signal
 import subprocess
 import time
@@ -306,7 +305,7 @@ def cmd_status(args):
     else:
         print("Carla: not running")
     r = sh(["pw-link", "-l"])
-    lines = [l for l in r.stdout.splitlines() if "Carla:" in l]
+    lines = [ln for ln in r.stdout.splitlines() if "Carla:" in ln]
     print(
         "\n".join(lines) if lines else "  (no Carla ports in PipeWire graph)"
     )
@@ -330,7 +329,7 @@ def cmd_route(args):
             file=sys.stderr,
         )
         return 2
-    l, rr = ROUTES.get(route, (None, None))
+    left, rr = ROUTES.get(route, (None, None))
     # disconnect Carla audio-out first
     sh(["pw-link", "-d", "Carla:output_FL", "-d", "Carla:output_FR"])
     if route == "none":
@@ -338,7 +337,7 @@ def cmd_route(args):
         return 0
     if route == "mix":
         # connect to the shared sink node
-        for ch, out in (("FL", l), ("FR", rr)):
+        for ch, out in (("FL", left), ("FR", rr)):
             r = sh(["pw-link", f"Carla:output_{ch}", f"game-stereo:{out}"])
             if r.returncode != 0:
                 print(
@@ -347,13 +346,13 @@ def cmd_route(args):
                 )
         print("Carla audio-out -> game-stereo (shared mix)")
         return 0
-    node = hw_out(l)
+    node = hw_out(left)
     if not node:
         print("error: RME output not found in PipeWire graph", file=sys.stderr)
         return 1
-    for ch, out in (("FL", l), ("FR", rr)):
+    for ch, out in (("FL", left), ("FR", rr)):
         sh(["pw-link", f"Carla:output_{ch}", f"{node}:{out}"])
-    print(f"Carla audio-out -> {route} ({node}:{l}/{rr})")
+    print(f"Carla audio-out -> {route} ({node}:{left}/{rr})")
     return 0
 
 
