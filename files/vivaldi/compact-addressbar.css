@@ -36,3 +36,40 @@
 .UrlBar-UrlFieldWrapper {
   height: 20px !important;
 }
+
+/* The navbar must never show any edges: the window background behind the bar
+ * is black (the page above covers the rest, so only the bar's slivers show
+ * it), the address field fills the whole toolbar so no theme-background
+ * margins peek through as gray lines, and borders/outlines/shadows are
+ * stripped in every state (rest, hover, focus). The page-load progress bar
+ * (a visible line inside the field) is hidden too. */
+#browser {
+  background: #000 !important;
+}
+.toolbar-addressbar {
+  background: transparent !important;
+}
+.toolbar-addressbar .UrlBar-AddressField {
+  height: 28px !important;
+  min-height: 28px !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #000 !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+.toolbar-addressbar .UrlBar-UrlFieldWrapper,
+.toolbar-addressbar #urlFieldInput,
+.toolbar-addressbar #urlFieldInput:focus,
+.toolbar-addressbar #urlFieldInput:active,
+.toolbar-addressbar #urlFieldInput:hover {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+.toolbar-addressbar .pageload-indicator {
+  display: none !important;
+}
