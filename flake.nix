@@ -32,9 +32,11 @@
     };
     # Private personal wiki (notes) — hosts the TidalCycles live-coding
     # "journey" (BootTidal.hs helpers, demo/scratch scenes, docs). Kept out of
-    # the public nixos-pkgs repo on purpose.
+    # the public nixos-pkgs repo on purpose. Fetched over SSH: GitHub API
+    # returns 404 for this private repo's git-data endpoints (rate-limited IP),
+    # while git+ssh works with the host key.
     personal-wiki = {
-      url = "github:neg-serg/personal-wiki";
+      url = "git+ssh://git@github.com/neg-serg/personal-wiki";
       flake = false;
     };
     # xdph used to follow the (now removed) hyprland input; pinned here to the
