@@ -55,7 +55,9 @@ in
     pkgs.neg.duf # better df (fork with plain style support)
     pkgs.neg.talktype # push-to-talk voice typing (F9 record, transcribe, paste)
     pkgs.neg.termeverything # Wayland compositor that renders GUI windows in the terminal
+    pkgs.procs # modern 'ps' replacement
     pkgs.pwgen # password generator
+    pkgs.sd # intuitive find & replace CLI (sed replacement)
   ]
   ++ lib.optional (hishtoryPkg != null) hishtoryPkg; # sync shell history w/ encryption, better than zsh-histdb
 }
