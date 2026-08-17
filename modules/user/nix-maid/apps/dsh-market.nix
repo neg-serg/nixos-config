@@ -208,7 +208,11 @@ let
             # core rows and the preset machinery share one module instance per
             # package (see dshAiStore). Do this AFTER any pnpm operation.
             PROFILE_AI="$PROFILE_DIR/node_modules/@deepseek-ai"
-            if [ -d "$PROFILE_AI" ] && [ ! -L "$PROFILE_AI" ]; then
+            # Relink when pnpm recreated the dir (not a symlink) OR when the
+            # symlink points at a stale store path (e.g. a pre-patch build) —
+            # the profile must resolve the harness's own copies so core rows
+            # and the preset machinery share one module instance per package.
+            if [ -d "$PROFILE_AI" ] && { [ ! -L "$PROFILE_AI" ] || [ "$(readlink "$PROFILE_AI")" != "${dshAiStore}" ]; }; then
               rm -rf "$PROFILE_AI"
               ln -s "${dshAiStore}" "$PROFILE_AI"
               echo "dsh-market: re-linked profile @deepseek-ai to the harness store"
