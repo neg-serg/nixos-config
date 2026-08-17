@@ -18,7 +18,10 @@ isn't a step-by-step runbook.
 
 - TidalCycles setup (RU): [tidal-cycles.ru.md](./tidal-cycles.ru.md)
 
-- Replacing GUI buttons with text commands (RU): [buttons-to-commands.ru.md](./buttons-to-commands.ru.md)
+- Replacing GUI buttons with text commands (RU):
+  [buttons-to-commands.ru.md](./buttons-to-commands.ru.md)
+
+- dsh-osm — OpenStreetMap tools + map card in dsh (RU): [dsh-osm.ru.md](./dsh-osm.ru.md)
 
 - Options/modules reference: [modules.md](./modules.md)
 
