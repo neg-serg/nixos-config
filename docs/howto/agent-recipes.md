@@ -16,6 +16,10 @@ structure — feature flags, module domains, packages, overlay wiring.
   the `commit-msg` hook; scope examples: `[dev/pkgs]`, `[hosts/odin]`, `[docs]`).
 - The `pre-commit` hook runs the **full lint suite** inside `nix develop .#lint --command just lint`
   — slow on first run (builds the devshell). Run `just lint` locally before committing.
+- Shell syntax is guarded with `osh -n` (`scripts/dev/check-osh-syntax.sh`): every tracked shell
+  script must parse under Oils' bash-compatible parser. Runtime-only incompatibilities are NOT
+  caught by `-n` (e.g. bare assoc-array keys, `read -t` with a non-zero timeout) — keep those out
+  by convention; see the quoted-key fix in `files/art/fun-art/bonsai.sh`.
 - Hooks live in `.githooks/`; enable with `just hooks-enable`
   (`git config core.hooksPath .githooks`).
 
