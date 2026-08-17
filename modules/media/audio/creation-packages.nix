@@ -59,6 +59,10 @@ in
       wantedBy = [ "graphical-session.target" ];
       serviceConfig = {
         Type = "simple";
+        # distrobox-enter needs podman/docker on PATH; systemd-user may not
+        # carry /run/current-system/sw/bin when the unit starts, which makes
+        # distrobox fail with "Missing dependency: we need a container manager".
+        Environment = "PATH=/run/current-system/sw/bin:/home/neg/.nix-profile/bin:/usr/bin:/bin";
         ExecStart = "${pkgs.distrobox}/bin/distrobox-enter arch-zestbay -- zestbay";
         Restart = "on-failure";
         RestartSec = 5;
