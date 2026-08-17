@@ -127,7 +127,11 @@ return {
     },
     opts = {
       boot = {
-        tidal = { file = vim.fn.expand '~/.config/tidal/BootTidal.hs' },
+        tidal = {
+          -- Use the nix wrapper (ghc with tidal preloaded) instead of bare ghci
+          cmd = 'tidal-ghci',
+          file = vim.fn.expand '~/.config/tidal/BootTidal.hs',
+        },
         sclang = {
           enabled = true,
           file = vim.fn.expand '~/.config/SuperCollider/superdirt_startup.scd',
