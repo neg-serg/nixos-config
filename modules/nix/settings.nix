@@ -113,8 +113,9 @@ in
   systemd.services.fix-determinate-netrc = {
     description = "Copy sops-decrypted netrc to Determinate Nix path";
     wantedBy = [ "multi-user.target" ];
-    after = [ "sops-nix.service" ];
-    requires = [ "sops-nix.service" ];
+    # sops-nix on this host decrypts via activation script, not a systemd
+    # unit — requiring it would leave the copy service permanently dead.
+    after = [ "network.target" ];
     serviceConfig.Type = "oneshot";
     script = ''
       install -m 600 ${config.sops.secrets."github-netrc".path} /nix/var/determinate/netrc
