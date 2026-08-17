@@ -507,6 +507,30 @@ let
     YAML
             fi
 
+            # LAN phone pairing (dsh-remote-web-ui): dsh itself stays bound to
+            # loopback; a narrow LAN socket (systemd-socket-proxyd, see dsh.nix)
+            # forwards 192.168.2.87:3080 → 127.0.0.1:3080 so a phone on the
+            # local network can pair. The /api trust fence only accepts
+            # loopback + the derived LAN literals of an all-interfaces bind —
+            # here the bind stays 127.0.0.1, so the LAN authority the phone
+            # uses must be added to trustedHosts explicitly.
+            if ! grep -q 'web-runtime' "$PATCH" 2>/dev/null; then
+              cat >> "$PATCH" <<'YAML'
+
+    # LAN phone pairing - accept the LAN authority the dsh-lan-proxy socket
+    # serves (192.168.2.87:3080) in the /api browser-trust fence, while dsh
+    # itself keeps binding 127.0.0.1. The phone panel URL comes from the
+    # remote-web-ui `publicBaseUrl` setting (settings.yaml). The !!js value
+    # must stay QUOTED: an unquoted array literal makes the YAML parser read
+    # it as a flow collection and dsh fails to parse the overlay.
+    - id: web-runtime
+      config:
+        printUrl: true
+        surfaceContext: true
+        trustedHosts: !!js "[...(ctx.webStartup?.trustedHosts ?? []), '192.168.2.87']"
+    YAML
+            fi
+
             if [ "$installed" = 1 ]; then
               export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
               systemctl --user restart dsh.service 2>/dev/null || true
