@@ -274,7 +274,7 @@ fn status() -> Result<()> {
 
 fn ensure_workspace() -> Result<PathBuf> {
     let dir = home()?.join("src/art/music/tidal");
-    fs::create_dir_all(dir.join("samples")).context("create ~/src/music/tidal/samples")?;
+    fs::create_dir_all(dir.join("samples")).context("create ~/src/art/music/tidal/samples")?;
     fs::create_dir_all(dir.join("recordings")).context("create recordings dir")?;
     Ok(dir)
 }
