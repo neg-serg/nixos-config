@@ -190,9 +190,6 @@ let
     -- Poisson-like density: random hits, decaying gain, at tempo k.
     --   d1 $ xenakisDensity 4
     let xenakisDensity k = fast (fromIntegral k) (degradeBy 0.3 (s "bd"))
-    -- Limited aleatorism: fixed pitches, stochastic timing.
-    --   d1 $ aleatoric
-    let aleatoric = degradeBy 0.4 (fast 3 (note (cat [60, 62, 64, 65, 67, 69]) # sound "superpiano"))
 
     -- ==== Markov 1st-order drums ==========================================
     -- Weighted 0/1st-order-ish drum groove (re-rolls each cycle).
@@ -315,23 +312,20 @@ let
     -- 17. Xenakis Poisson density at tempo 6
     d12 $ xenakisDensity 6 # sound "bd" # gain 0.6
 
-    -- 18. Lutoslawski limited aleatorism: fixed pitches, ragged timing
-    d13 $ aleatoric
+    -- 18. Markov-ish drum groove
+    d13 $ markovDrums # gain 0.7
 
-    -- 19. Markov-ish drum groove
-    d14 $ markovDrums # gain 0.7
+    -- 19. Messiaen palindur + added values
+    d14 $ palindur # gain 0.5
+    d15 $ addedValue 4 # sound "hh" # gain 0.3
 
-    -- 20. Messiaen palindur + added values
-    d15 $ palindur # gain 0.5
-    d16 $ addedValue 4 # sound "hh" # gain 0.3
+    -- 20. 1/f (pink noise) fractal melody
+    d16 $ fNoise
 
-    -- 21. 1/f (pink noise) fractal melody
-    d6 $ fNoise
-
-    -- 22. Perle cyclic set (alternating +2/+3 semitones)
+    -- 21. Perle cyclic set (alternating +2/+3 semitones)
     d7 $ perleCycle 2 3 # gain 0.4
 
-    -- 10. Silence everything (hush: <leader>th)
+    -- 22. Silence everything (hush: <leader>th)
     -- hush
   '';
 in
