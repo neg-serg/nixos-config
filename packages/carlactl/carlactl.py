@@ -75,13 +75,14 @@ def discover(fmt, path):
     info = {}
     for line in out.splitlines():
         line = re.sub(r"\x1b\[[0-9;]*m", "", line)
-        if "::" not in line:
+        # lines are "carla-discovery::<key>::<value>"
+        parts = line.split("::")
+        if len(parts) < 3:
             continue
-        key, _, val = line.partition("::")
-        val = val.strip()
+        key, val = parts[1].strip(), parts[2].strip()
         if val == "------------":
             continue
-        info[key.split(".")[-1]] = val
+        info[key] = val
     if "name" not in info:
         return None
     info["path"] = path
