@@ -1136,17 +1136,17 @@
     "personal-wiki": {
       "flake": false,
       "locked": {
-        "lastModified": 1786963724,
-        "narHash": "sha256-9kfxMn8ecZzaSi7W1y+5VpBLdOU4/QYWHFKJzUHJzn0=",
-        "owner": "neg-serg",
-        "repo": "personal-wiki",
-        "rev": "b953d949d2d9c7a6c10f2ce895ec32fa7ccfd499",
-        "type": "github"
+        "lastModified": 1786974226,
+        "narHash": "sha256-ydKe1wVDE/NSHpn08xmDi5+VyxFtQ3Ca2UA4INQka/0=",
+        "ref": "refs/heads/master",
+        "rev": "a1bf1e279354c42688e9cc059a9e690e998e3bbe",
+        "revCount": 2780,
+        "type": "git",
+        "url": "ssh://git@github.com/neg-serg/personal-wiki"
       },
       "original": {
-        "owner": "neg-serg",
-        "repo": "personal-wiki",
-        "type": "github"
+        "type": "git",
+        "url": "ssh://git@github.com/neg-serg/personal-wiki"
       }
     },
     "pre-commit-hooks": {
