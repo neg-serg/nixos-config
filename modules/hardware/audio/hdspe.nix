@@ -61,8 +61,9 @@ let
     # every restart, and the sink appears a moment after wireplumber is up.
     # Without this wait, the pw-link calls below fail and the loopback stream
     # stays auto-linked to the analog pair (AUX0/1) → no sound on AES monitors.
+    # Pure bash matching (no grep) — the unit PATH only carries pipewire/coreutils.
     for _ in $(seq 1 40); do
-      if wpctl status 2>/dev/null | grep -q 'RME AIO Pro.*Pro'; then
+      if [[ "$(wpctl status 2>/dev/null)" == *"RME AIO Pro"* ]]; then
         break
       fi
       sleep 0.5
@@ -96,7 +97,7 @@ let
   pwrouteAesScript = pkgs.writeShellScript "pwroute-aes-wait" ''
     set -u
     for _ in $(seq 1 30); do
-      if wpctl status 2>/dev/null | grep -q 'RME AIO Pro.*Pro'; then
+      if [[ "$(wpctl status 2>/dev/null)" == *"RME AIO Pro"* ]]; then
         exec ${pkgs.pwroute}/bin/pwroute aes
       fi
       sleep 1
