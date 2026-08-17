@@ -406,15 +406,49 @@ d1 $ rarely (rev) $ sound "bd sn"
 # Посмотреть граф PipeWire
 tidalctl monitor          # watch pw-top
 
-# Патчбей (соединить SuperDirt с выходами)
-tidalctl patch       # pw-audioshare — GUI матрица
-
-# Ручная коммутация
-pw-link SuperDirt:out_0 "RME AIO Pro:playback_FL"
-pw-link SuperDirt:out_1 "RME AIO Pro:playback_FR"
+# Патчбей ZestBay (GUI в distrobox-контейнере arch-zestbay)
+tidalctl patch
 ```
 
 SuperDirt создаёт 12 орбит (моно-каналов). По умолчанию они микшируются в стереовыход.
+
+## Плагины (ZestBay)
+
+ZestBay — патчбей PipeWire **с хостингом плагинов** (LV2/CLAP/VST3): вставленные
+эффекты становятся узлами фильтрации в графе. Нативные Linux-плагины ставятся
+внутрь контейнера (хосту они не видны):
+
+```bash
+distrobox-enter arch-zestbay -- sudo pacman -Syu --noconfirm   # синхронизация БД
+distrobox-enter arch-zestbay -- sudo pacman -S --noconfirm lsp-plugins-lv2 calf dragonfly-reverb-lv2 zam-plugins-lv2
+```
+
+Установленный стартовый набор (~100 эффектов): LSP (эквалайзеры/компрессоры/ревербы),
+Calf (классический набор), Dragonfly (4 реверба), Zam (~25 шт.). Ещё в репозиториях:
+`cardinal-lv2` (VCV Rack как плагин). Плагины сканируются при старте ZestBay —
+после установки перезапусти `tidalctl patch`.
+
+Типовая цепочка: `SuperCollider:out_1 → <эффект>:in → <эффект>:out → RME playback_FL`
+(в ZestBay — drag-and-drop; правила автоподключения запоминаются, MIDI-learn для
+параметров встроен). VST3/CLAP (в т.ч. Windows-VST через yabridge) — отдельно, позже.
+
+### CLI: `zest` (пакет `pkgs.neg.zest`)
+
+Добавление/удаление плагинов из командной строки — без GUI. ZestBay
+перезапускается автоматически, изменения подхватываются:
+
+```bash
+zest list                     # все доступные LV2-плагины (имя + URI)
+zest ls                       # активные экземпляры (plugins.json)
+zest add urn:dragonfly:room   # добавить по URI (см. zest list)
+zest rm dragonfly             # удалить по фрагменту URI/имени
+zest status                   # запущен ли ZestBay
+```
+
+Пример: `zest add urn:dragonfly:room` → нода «Dragonfly Room Reverb» появляется
+в графе PipeWire как фильтр; дальше один раз соедини её в ZestBay (правило
+запомнится). Плагины сканируются при старте ZestBay — после `pacman -S` новых
+пакетов перезапусти его (`zestbay` user-сервис или `tidalctl patch`).
 
 ## Запись
 
