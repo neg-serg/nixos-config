@@ -62,10 +62,6 @@
     "`… 另有 ${sheetNames.length - sheets.length} 个 sheet 未读取（上限 ${maxSheets}）`": "`… ${sheetNames.length - sheets.length} more sheet(s) not read (limit ${maxSheets})`",
     "`… 已截断：每个 sheet 仅保留前 ${sheetRowLimit} 行，全簿共 ${totalRows} 行`": "`… truncated: kept the first ${sheetRowLimit} rows per sheet, ${totalRows} rows total`"
   },
-  "dsh-prompt/lib/client.js": {
-    "new Set([\"Message the agent\", \"给智能体发消息\"])": "new Set([\"Message the agent\"])",
-    "// Replaces the stock composer placeholder (\"Message the agent\" / \"给智能体发消息\")": "// Replaces the stock composer placeholder (\"Message the agent\")"
-  },
   "dsh-plugin-vetting/lib/rules.js": {
     ", noteZh: \"发起 fetch 网络请求\"": "",
     ", noteZh: \"包含 HTTP(S) URL 字面量\"": "",
