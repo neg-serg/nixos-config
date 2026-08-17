@@ -29,6 +29,18 @@ in
     src = ./../files/sources/dpkg-1.23.7.tar.xz;
   });
 
+  # pffft: nixpkgs fetches the source from bitbucket.org, which is RKN-blocked
+  # here (DNS-poisoned, sandboxed fetches hang); vendor the release tarball.
+  # Needed by vcv-rack.
+  pffft = finalPrev.pffft.overrideAttrs (_: {
+    src = ./../files/sources/pffft-74d7261.tar.gz;
+  });
+
+  # fuzzysearchdatabase: same bitbucket problem — also a vcv-rack dependency.
+  fuzzysearchdatabase = finalPrev.fuzzysearchdatabase.overrideAttrs (_: {
+    src = ./../files/sources/fuzzysearchdatabase-23122d1.tar.gz;
+  });
+
   # GHCi with TidalCycles library preloaded — used by tidal.nvim
   tidal-ghci = final.writeShellScriptBin "tidal-ghci" ''
     exec ${final.ghc.withPackages (ps: [ ps.tidal ])}/bin/ghci "$@" # TidalCycles GHCi wrapper
