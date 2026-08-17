@@ -70,7 +70,7 @@ REPL.sort(key=lambda kv: len(kv[0]), reverse=True)
 #    numbers ("{throughput} tok/s" -> "{throughput}/s", "{tps} tok/s" ->
 #    "{tps}/s"), and render the token counts as compact arrow icons +
 #    IN/OUT labels ("Input {input} tok · Output {output} tok" ->
-#    "IN ↓ {input} / OUT ↑ {output}").
+#    "IN {input} / OUT {output}").
 # The joins that build the status line filter empty segments so the removed
 # metric leaves no stray " | " separators behind.
 CONV_REPL = [
@@ -85,11 +85,11 @@ CONV_REPL = [
     ('"{tps} tok/s"', '"{tps}/s"'),  # message.tokensPerSecond (en + zh)
     (
         '"Input {input} tok · Output {output} tok"',
-        '"IN ↓ {input} / OUT ↑ {output}"',
+        '"IN {input} / OUT {output}"',
     ),  # en stats.tokens
     (
         '"输入 {input} tok · 输出 {output} tok"',
-        '"输入 ↓ {input} / 输出 ↑ {output}"',
+        '"输入 {input} / 输出 {output}"',
     ),  # zh stats.tokens
     # joins: drop the now-empty segments so no stray " | " separators remain
     ('groups.join(" | ")', 'groups.filter(Boolean).join(" | ")'),
