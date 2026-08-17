@@ -57,6 +57,17 @@ let
     done
     [ -n "$found" ] || exit 0
 
+    # Wait up to 20s for the RME sink: wireplumber recreates the ALSA node on
+    # every restart, and the sink appears a moment after wireplumber is up.
+    # Without this wait, the pw-link calls below fail and the loopback stream
+    # stays auto-linked to the analog pair (AUX0/1) → no sound on AES monitors.
+    for _ in $(seq 1 40); do
+      if wpctl status 2>/dev/null | grep -q 'RME AIO Pro.*Pro'; then
+        break
+      fi
+      sleep 0.5
+    done
+
     status="$(wpctl status 2>/dev/null || true)"
 
     # Find HDSPe hardware sink and game-stereo virtual sink
@@ -68,7 +79,11 @@ let
     # rules (rules.json "Game Stereo Playback") maintain the same mapping.
     if [ -n "$hdspe_sink_id" ] && [ -n "$game_sink_id" ]; then
       wpctl set-default "$game_sink_id" || true
-      # Connect virtual sink playback to HDSPe AES (AUX2/AUX3)
+      # WirePlumber auto-links new stereo streams to the RME's FIRST channels
+      # (AUX0/1 = analog). Drop those stray links so the loopback feeds only
+      # the AES pair, then connect virtual sink playback to HDSPe AES (AUX2/3).
+      pw-link -d playback.game-stereo:output_FL alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX0 2>/dev/null || true
+      pw-link -d playback.game-stereo:output_FR alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX1 2>/dev/null || true
       pw-link playback.game-stereo:output_FL alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX2 2>/dev/null || true
       pw-link playback.game-stereo:output_FR alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX3 2>/dev/null || true
     fi
@@ -157,7 +172,10 @@ in
         "pipewire.service"
       ];
       partOf = [ "wireplumber.service" ];
-      wantedBy = [ "graphical-session.target" ]; # don't block default.target/maid activation
+      # Re-run on every wireplumber start (session start AND mid-session
+      # restarts): wireplumber recreates the RME ALSA sink on restart, which
+      # destroys the pw-link AES routing and leaves the loopback on analog.
+      wantedBy = [ "wireplumber.service" ]; # don't block default.target/maid activation
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${hdspeDefaultScript}";
@@ -182,12 +200,20 @@ in
       ];
       requires = [ "wp-hdspe-default.service" ];
       partOf = [ "wireplumber.service" ];
-      wantedBy = [ "graphical-session.target" ]; # don't block default.target
+      wantedBy = [ "wireplumber.service" ]; # re-run whenever wireplumber restarts
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${pwrouteAesScript}";
-        # pwroute needs pw-cli and pw-link from PipeWire in PATH
-        Environment = "PATH=${config.services.pipewire.package}/bin";
+        # pwroute needs pw-cli/pw-link (pipewire); the wait loop needs
+        # seq/sleep (coreutils) and grep (gnugrep) — missing coreutils made
+        # the loop a no-op (`seq: command not found`) and pwroute never ran.
+        Environment = "PATH=${
+          lib.makeBinPath [
+            config.services.pipewire.package
+            pkgs.coreutils # seq/sleep for the RME sink wait loop
+            pkgs.gnugrep # grep for wpctl status parsing
+          ]
+        }";
       };
     };
   };
