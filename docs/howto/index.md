@@ -21,6 +21,9 @@ isn't a step-by-step runbook.
 - Replacing GUI buttons with text commands (RU):
   [buttons-to-commands.ru.md](./buttons-to-commands.ru.md)
 
+- Golden tool set — fast CLI replacements (rg/fd/bat/jq/...) and agent tool habits (RU):
+  [golden-tools.ru.md](./golden-tools.ru.md)
+
 - dsh-osm — OpenStreetMap tools + map card in dsh (RU): [dsh-osm.ru.md](./dsh-osm.ru.md)
 
 - Options/modules reference: [modules.md](./modules.md)
