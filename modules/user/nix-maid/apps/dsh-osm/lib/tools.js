@@ -260,7 +260,7 @@ async function fetchJson(url, { signal, timeoutMs, userAgent, method = 'GET', bo
 /** Whether a thrown error justifies trying the fallback geocoder. */
 function shouldFallback(error) {
   if (error instanceof OsmTransportError) return true
-  if (error instanceof OsmHttpError) return error.status === 429 || error.status >= 500
+  if (error instanceof OsmHttpError) return error.status === 404 || error.status === 429 || error.status >= 500
   return false
 }
 
