@@ -155,6 +155,8 @@
             helpColor = "00AAAA";
             helpColorBright = "55FF55";
           };
+          # Bootloader wallpaper — real image copied from ~/pic/wl/wallhaven-xep2dz.jpg
+          wallpapers = [ ../../files/boot-splash.jpg ];
           wallpaperStyle = "stretched";
           backdrop = "000000";
         };
