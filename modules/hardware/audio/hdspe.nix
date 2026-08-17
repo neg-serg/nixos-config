@@ -63,12 +63,14 @@ let
     hdspe_sink_id="$(echo "$status" | sed -n '/RME AIO Pro.*Pro/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
     game_sink_id="$(echo "$status" | sed -n '/game-stereo/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
 
-    # Route game-stereo → HDSPe AUX0/AUX1 and set game-stereo as default
+    # Route game-stereo → HDSPe AUX2/AUX3 (AES/EBU): the user's monitors are
+    # on AES, the analog RCA pair (AUX0/1) is unused. ZestBay's patchbay
+    # rules (rules.json "Game Stereo Playback") maintain the same mapping.
     if [ -n "$hdspe_sink_id" ] && [ -n "$game_sink_id" ]; then
       wpctl set-default "$game_sink_id" || true
-      # Connect virtual sink playback to HDSPe AUX0/AUX1
-      pw-link playback.game-stereo:output_FL alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX0 2>/dev/null || true
-      pw-link playback.game-stereo:output_FR alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX1 2>/dev/null || true
+      # Connect virtual sink playback to HDSPe AES (AUX2/AUX3)
+      pw-link playback.game-stereo:output_FL alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX2 2>/dev/null || true
+      pw-link playback.game-stereo:output_FR alsa_output.pci-0000_05_00.0.pro-output-0:playback_AUX3 2>/dev/null || true
     fi
   '';
 
