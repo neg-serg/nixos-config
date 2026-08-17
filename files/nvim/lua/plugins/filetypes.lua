@@ -120,7 +120,10 @@ return {
   {
     'grddavies/tidal.nvim',
     event = { 'BufRead *.tidal', 'BufNewFile *.tidal' },
-    config = function()
+    -- lazy.nvim runs config INSTEAD of auto-setup; we must call setup(opts)
+    -- ourselves, otherwise TidalLaunch/TidalQuit commands never get created.
+    config = function(_, opts)
+      require('tidal').setup(opts)
       -- Bright TidalCycles highlighting (rainbow orbits, operators, params)
       require('tidal-color').setup()
     end,
