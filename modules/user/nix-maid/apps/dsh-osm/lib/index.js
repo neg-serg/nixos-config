@@ -149,9 +149,12 @@ export function apply(ctx, config) {
     ctx.tools.register(tool)
   }
   ctx.skills.registerProvider(() => osmSkillProvider)
+  // NOTE: the webserver builds the prefix check as `${prefix}/`, so the
+  // prefix must NOT carry a trailing slash (a trailing slash yields `//`
+  // and subpaths never match).
   ctx.effect(() => ctx.webServer.register({
     kind: 'prefix',
-    path: '/osm/leaflet/',
+    path: '/osm/leaflet',
     handler: leafletHandler,
   }), 'dsh-osm.leaflet')
 }
