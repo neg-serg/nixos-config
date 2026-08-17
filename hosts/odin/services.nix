@@ -165,6 +165,10 @@ lib.mkMerge [
     # Disable RNNoise virtual mic for this host by default
     hardware.audio.rnnoise.enable = false;
 
+    # LAN audio access: MPD on all interfaces (port 6600), PipeWire Pulse
+    # TCP server (4713) + RTP multicast sink (224.0.0.56:46000 via net1)
+    features.media.audio.lanAccess.enable = true;
+
     # Quiet fan profile: load nct6775 and autogenerate fancontrol config
     hardware.cooling = {
       enable = true;
