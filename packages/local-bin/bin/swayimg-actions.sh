@@ -169,6 +169,9 @@ proc() { # mv/cp with remembered last dest
     dest="$(choose_dest "$cmd" "$file" || true)"
   fi
   [ -z "${dest}" ] && exit 0
+  # Ensure the destination exists (e.g. $HOME/trash/1st-level/pic on first use);
+  # the guard below still rejects invalid dests (plain file, unwritable path)
+  mkdir -p "$dest" 2>/dev/null || true
   if [ -d "$dest" ]; then
     # Avoid swayimg crash when current list ends after move: switch away first
     if [ "$cmd" = "mv" ]; then
