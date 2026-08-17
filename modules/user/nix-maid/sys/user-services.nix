@@ -11,33 +11,13 @@ lib.mkIf (cfg.enable or false) {
   # User systemd services
 
   systemd.user.services = {
-    # mpdas — Last.fm AudioScrobbler for MPD. Credentials from sops secret.
-    mpdas =
-      lib.mkIf
-        (
-          (config.lib.neg.enabled "media.audio.mpd") && config.lib.neg.pathExists "secrets/home/mpdas/neg.rc"
-        )
-        {
-          description = "MPD AudioScrobbler (Last.fm)";
-          # NOTE: deliberately NO after/wants on mpd.service here. In the user
-          # session that name resolves to the mpd package's config-less unit
-          # (`mpd --systemd`, no config file → "No configuration file found"),
-          # NOT the real system MPD (modules/servers/mpd). mpdas connects to the
-          # system MPD over TCP itself and reconnects on failure via
-          # Restart=on-failure below, so pulling in the user unit only produces
-          # failed-start noise on every mpdas restart.
-          after = [ "network-online.target" ];
-          serviceConfig = {
-            ExecStart = "${lib.getExe pkgs.mpdas} -c ${config.sops.secrets.mpdas_negrc.path}";
-            Environment = [
-              "MPD_HOST=127.0.0.1"
-              "MPD_PORT=6600"
-            ];
-            Restart = "on-failure";
-            RestartSec = 10;
-          };
-          wantedBy = [ "default.target" ];
-        };
+    # mpdas — Last.fm AudioScrobbler for MPD. REMOVED 2026-08: Last.fm now
+    # rejects its auth method (`auth.getMobileSession` with plaintext password)
+    # with error 11 "Access Denied - You cannot access this service", so the
+    # service can never authenticate and crash-looped (thousands of restarts,
+    # "[ERROR] Code: 11" every 10s). A working replacement (e.g. mpdscribble
+    # with a registered Last.fm API key + OAuth) can be wired up later; the
+    # sops secret secrets/home/mpdas/neg.rc is kept for that purpose.
 
     # Pic dirs notifier
     "pic-dirs" = {
