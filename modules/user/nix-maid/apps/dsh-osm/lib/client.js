@@ -19,7 +19,7 @@ window.__ModuleLoader__.load({
   id: "dsh-osm",
   factory: (require) => {
     const React = require("react");
-    const { useEffect, useRef, useState } = React;
+    const { useEffect, useMemo, useRef, useState } = React;
 
     const inject = ["slots"];
 
@@ -312,7 +312,10 @@ window.__ModuleLoader__.load({
       if (block.isError) {
         return React.createElement("div", { style: headerStyle }, "OSM · " + firstResultLine(block));
       }
-      const meta = narrowMeta(block.meta);
+      // Memoize the narrowed descriptor: `block` is referentially stable for a
+      // settled call, so MapFrame's [meta] effect initializes the map exactly
+      // once instead of on every parent re-render.
+      const meta = React.useMemo(() => narrowMeta(block.meta), [block]);
       if (meta === undefined) {
         return React.createElement("div", { style: headerStyle }, firstResultLine(block));
       }
