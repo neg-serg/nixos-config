@@ -40,6 +40,28 @@ buildNpmPackage {
     rm -f $out/bin/dsh
     makeWrapper ${lib.getExe nodejs} $out/bin/dsh \
       --add-flags "--expose-internals $out/lib/node_modules/@deepseek-ai/dsh/lib/bin.js"
+
+    # The model-facing file-search tool is backed by the packaged
+    # @vscode/ripgrep binary (never GNU grep), but upstream exposes it under
+    # the name "grep". Rename it to "rg" so the toolset advertises what it
+    # actually runs. The client bundles key their search-card rendering off
+    # the same name, so patch them in lockstep. Drop once upstream renames it.
+    search_pkg="$out/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai"
+    sed -i \
+      -e 's/name: "grep"/name: "rg"/' \
+      -e 's/name: "tool:grep"/name: "tool:rg"/' \
+      -e 's/Use the grep tool/Use the rg tool/' \
+      -e 's/runRipgrep(ctx, exec, "grep"/runRipgrep(ctx, exec, "rg"/' \
+      -e 's/"grep-results.txt"/"rg-results.txt"/' \
+      "$search_pkg/dsh-tool-fs-search/lib/index.js"
+    sed -i 's/key: "grep"/key: "rg"/' \
+      "$search_pkg/dsh-client-ui-tool/lib/client.js"
+    sed -i \
+      -e 's/case "grep":/case "rg":/' \
+      -e 's/if (name === "grep")/if (name === "rg")/' \
+      -e 's/toolTurn(67, "grep",/toolTurn(67, "rg",/' \
+      -e 's/title: `Grep /title: `Search /' \
+      "$search_pkg/dsh-client-connection/lib/client.js"
   '';
 
   # Prefetched dependency tree; hash from `prefetch-npm-deps package-lock.json`
