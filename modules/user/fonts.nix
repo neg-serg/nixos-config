@@ -7,5 +7,6 @@
     pkgs.noto-fonts # Google Noto multilingual fonts
     pkgs.noto-fonts-cjk-sans # CJK sans-serif fonts
     pkgs.noto-fonts-color-emoji # Color emoji fonts
+    pkgs.ttf-code2000 # Code2000 shareware Unicode font (broad script coverage)
   ];
 }
