@@ -19,4 +19,6 @@
   pw-audioshare = pkgs.pw-audioshare; # GTK4 PipeWire patchbay with auto-connect presets
   genlc = pkgs.genlc; # Genelec SAM loudspeaker CLI volume control via GLM USB adapter
   dsh = pkgs.neg.dsh;
+
+  camillagui = pkgs.camillagui; # web GUI for CamillaDSP (backend + prebuilt React frontend)
 }
