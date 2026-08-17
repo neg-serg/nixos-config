@@ -396,21 +396,11 @@ lib.mkMerge [
     # Rescrobbled Config (from SOPS)
     ".config/rescrobbled/config.toml".source = config.sops.secrets."lastfm/rescrobbled".path;
 
-    # GitHub .netrc for nix/git fetchers (authenticates to private repos,
-    # avoids GitHub API rate limits on `nix flake lock --update-input`).
-    ".netrc".source = config.sops.secrets."github-netrc".path;
-
   })
   {
     sops.secrets."lastfm/rescrobbled" = {
       sopsFile = config.lib.neg.path "secrets/home/lastfm-rescrobbled.sops";
       format = "binary";
-      owner = "neg";
-    };
-    sops.secrets."github-netrc" = {
-      sopsFile = config.lib.neg.path "secrets/github-netrc.sops.yaml";
-      format = "yaml";
-      key = "github-netrc";
       owner = "neg";
     };
     # Rescrobbled config sourced from SOPS above.
