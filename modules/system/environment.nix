@@ -13,6 +13,10 @@
     # This is using a rec (recursive) expression to set and access XDG_BIN_HOME within the expression
     # For more on rec expressions see https://nix.dev/tutorials/first-steps/nix-language#recursive-attribute-set-rec
     sessionVariables = {
+      # Put setuid wrappers (sudo, newuidmap, pkexec, …) first on PATH:
+      # podman/distrobox and sudo break otherwise ("must be owned by uid 0
+      # and have the setuid bit set", "newuidmap: Operation not permitted").
+      PATH = [ "/run/wrappers/bin" ];
       NIXOS_OZONE_WL = "1"; # Optional, hint Electron apps to use Wayland
       # Force wlroots to use the dGPU (RX 7900 XTX) instead of iGPU
       WLR_DRM_DEVICES = "/dev/dri/by-path/pci-0000:03:00.0-card";
