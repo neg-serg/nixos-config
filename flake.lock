@@ -1133,6 +1133,22 @@
         "type": "github"
       }
     },
+    "personal-wiki": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786963724,
+        "narHash": "sha256-9kfxMn8ecZzaSi7W1y+5VpBLdOU4/QYWHFKJzUHJzn0=",
+        "owner": "neg-serg",
+        "repo": "personal-wiki",
+        "rev": "b953d949d2d9c7a6c10f2ce895ec32fa7ccfd499",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neg-serg",
+        "repo": "personal-wiki",
+        "type": "github"
+      }
+    },
     "pre-commit-hooks": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -1209,6 +1225,7 @@
         "nix-maid": "nix-maid",
         "nix-src": "nix-src",
         "nixpkgs": "nixpkgs_4",
+        "personal-wiki": "personal-wiki",
         "quickshell": "quickshell",
         "raise": "raise",
         "rsmetrx": "rsmetrx",

@@ -16,7 +16,7 @@ isn't a step-by-step runbook.
 
 - Build performance analysis (RU): [build-optimization.ru.md](./build-optimization.ru.md)
 
-- TidalCycles setup (RU): [tidal-cycles.ru.md](./tidal-cycles.ru.md)
+- TidalCycles setup — moved to the private notes repo (~/notes/music/tidal/), kept out of the public tree on purpose
 
 - Replacing GUI buttons with text commands (RU):
   [buttons-to-commands.ru.md](./buttons-to-commands.ru.md)
