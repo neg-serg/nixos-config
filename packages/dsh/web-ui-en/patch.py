@@ -94,6 +94,10 @@ CONV_REPL = [
     # joins: drop the now-empty segments so no stray " | " separators remain
     ('groups.join(" | ")', 'groups.filter(Boolean).join(" | ")'),
     ('speeds.join(" · ")', 'speeds.filter(Boolean).join(" · ")'),
+    # render: the emptied turns/steps group still occupies a slot and gets its
+    # own separator span (and the next group its own) — that renders stray
+    # "|" glyphs and doubled separators. Filter empty groups before the map.
+    ("groups.map((group, i) =>", "groups.filter(Boolean).map((group, i) =>"),
 ]
 
 CJK = re.compile(r"[\u4e00-\u9fff]")
