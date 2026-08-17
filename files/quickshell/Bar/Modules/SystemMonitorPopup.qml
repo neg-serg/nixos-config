@@ -105,14 +105,50 @@ PanelOverlaySurface {
         onExited:{root._finalizeJournalEntries()}
     }
 
+    // journalctl --output=json serializes any message that contains control
+    // bytes (e.g. quickshell's ANSI color codes) as a decimal byte array, like
+    // "[27,91,51,50,109,32,32,73,78,70,79,...]". Decode it back into text so
+    // the dashboard and the clipboard copy stay readable instead of showing
+    // "27,91,51,..." garbage.
+    function _decodeJournalMessage(msg) {
+        if (!/^\[[0-9,\s]+\]$/.test(msg)) return msg;
+        var parts = msg.slice(1, -1).split(",");
+        var bytes = [];
+        for (var i = 0; i < parts.length; i++) {
+            var v = parseInt(parts[i], 10);
+            if (isNaN(v) || v < 0 || v > 255) return msg;
+            bytes.push(v);
+        }
+        var out = "";
+        var i2 = 0;
+        while (i2 < bytes.length) {
+            var b = bytes[i2];
+            if (b < 0x80) { out += String.fromCharCode(b); i2++; }
+            else if (b < 0xe0 && i2 + 1 < bytes.length) { out += String.fromCharCode(((b & 0x1f) << 6) | (bytes[i2 + 1] & 0x3f)); i2 += 2; }
+            else if (b < 0xf0 && i2 + 2 < bytes.length) { out += String.fromCharCode(((b & 0x0f) << 12) | ((bytes[i2 + 1] & 0x3f) << 6) | (bytes[i2 + 2] & 0x3f)); i2 += 3; }
+            else if (i2 + 3 < bytes.length) { out += String.fromCharCode(((b & 0x07) << 18) | ((bytes[i2 + 1] & 0x3f) << 12) | ((bytes[i2 + 2] & 0x3f) << 6) | (bytes[i2 + 3] & 0x3f)); i2 += 4; }
+            else { out += "\ufffd"; i2++; }
+        }
+        return out;
+    }
+
+    function _cleanJournalMessage(msg) {
+        var s = root._decodeJournalMessage(msg);
+        // Strip ANSI escape sequences (colorized logs) and stray control chars.
+        s = s.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "");
+        s = s.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, "");
+        return s;
+    }
+
     function _parseJournalLine(raw){var s=String(raw).trim();if(!s)return;var obj;try{obj=JSON.parse(s)}catch(e){return}
         var t=obj.__REALTIME_TIMESTAMP||"0";var d=new Date(parseInt(t.substring(0,13),10))
         var ts=("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)+":"+("0"+d.getSeconds()).slice(-2)
         var id=obj.SYSLOG_IDENTIFIER||obj._SYSTEMD_UNIT||obj._COMM||"?";if(id.length>0)root._pendingServices[id]=true
+        var msg=root._cleanJournalMessage(String(obj.MESSAGE||""))
         var p=parseInt(obj.PRIORITY,10);var lv="info"
         if(!isNaN(p)){if(p<=3)lv="error";else if(p===4)lv="warn";else if(p>=7)lv="debug"}
-        else{var ml=String(obj.MESSAGE||"").toLowerCase();if(ml.indexOf("error")>=0||ml.indexOf("fail")>=0||ml.indexOf("fatal")>=0)lv="error";else if(ml.indexOf("warn")>=0)lv="warn";else if(ml.indexOf("debug")>=0)lv="debug"}
-        var msg=String(obj.MESSAGE||"");root._pendingEntries.push({time:ts,level:lv,service:id,message:msg.length>200?msg.substring(0,200)+"...":msg})}
+        else{var ml=msg.toLowerCase();if(ml.indexOf("error")>=0||ml.indexOf("fail")>=0||ml.indexOf("fatal")>=0)lv="error";else if(ml.indexOf("warn")>=0)lv="warn";else if(ml.indexOf("debug")>=0)lv="debug"}
+        root._pendingEntries.push({time:ts,level:lv,service:id,message:msg.length>200?msg.substring(0,200)+"...":msg})}
 
     function _finalizeJournalEntries(){if(!root._pendingEntries||root._pendingEntries.length===0)return
         var e=0;for(var i=0;i<root._pendingEntries.length;i++){if(root._pendingEntries[i].level==="error")e++}
