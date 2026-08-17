@@ -27,4 +27,9 @@ runCommand "dsh-web-en-${dsh.version or "0.1.0-rc.6"}" {
   cp -a '${dsh}/lib/node_modules/@deepseek-ai/dsh/node_modules/.' "$out/node_modules/"
   chmod -R u+w "$out"
   python3 '${./patch.py}' "$out/node_modules/@deepseek-ai"
+  # Halve every px border-radius in the compiled bundles so the GUI reads
+  # less round (radii.py): user preference — "скругления в два раза менее
+  # круглыми". Covers @deepseek-ai bundles; fork plugins (dsh-terminal-ui
+  # et al.) ship their own radii untouched.
+  python3 '${./radii.py}' "$out/node_modules/@deepseek-ai"
 ''

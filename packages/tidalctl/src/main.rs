@@ -237,10 +237,138 @@ fn terminate(pid: i32) {
     }
 }
 
+/// Object id of the game-stereo sink from "wpctl status" (the line that
+/// carries both "game-stereo" and the "Audio/Sink" marker — the loopback
+/// stream "playback.game-stereo" is not a sink and must not match).
+fn game_stereo_sink_id() -> Result<String> {
+    let out = Command::new("wpctl")
+        .arg("status")
+        .output()
+        .context("run wpctl status")?;
+    let text = String::from_utf8_lossy(&out.stdout);
+    for line in text.lines() {
+        if line.contains("game-stereo") && line.contains("Audio/Sink") {
+            let id: String = line
+                .chars()
+                .skip_while(|c| !c.is_ascii_digit())
+                .take_while(|c| c.is_ascii_digit())
+                .collect();
+            if !id.is_empty() {
+                return Ok(id);
+            }
+        }
+    }
+    bail!("game-stereo sink not found in wpctl status");
+}
+
+/// Resolve a RME pro-audio port whose name ends with `suffix` (e.g.
+/// ":playback_AUX2" on the sink, ":capture_AUX0" on the source) from the live
+/// graph, instead of hardcoding the pci path. Retries briefly: WirePlumber
+/// can recreate nodes when the default sink changes, so ports may flicker.
+fn find_rme_port(suffix: &str) -> Result<String> {
+    for _ in 0..5 {
+        let out = Command::new("pw-link")
+            .arg("-l")
+            .output()
+            .context("run pw-link")?;
+        let text = String::from_utf8_lossy(&out.stdout);
+        if let Some(port) = text.lines().map(str::trim).find(|l| {
+            (l.starts_with("alsa_output.") || l.starts_with("alsa_input."))
+                && l.ends_with(suffix)
+        }) {
+            return Ok(port.to_string());
+        }
+        thread::sleep(Duration::from_millis(200));
+    }
+    bail!("RME port {suffix} not found");
+}
+
+/// Parse `pw-link -l` into the list of (source, destination) link pairs.
+fn current_links() -> Vec<(String, String)> {
+    let mut links = Vec::new();
+    if let Ok(out) = Command::new("pw-link").arg("-l").output() {
+        let text = String::from_utf8_lossy(&out.stdout);
+        let mut src: Option<&str> = None;
+        for line in text.lines() {
+            if let Some(dst) = line.strip_prefix("  |-> ") {
+                if let Some(s) = src {
+                    links.push((s.to_string(), dst.trim().to_string()));
+                }
+            } else if !line.trim().is_empty() {
+                src = Some(line.trim());
+            }
+        }
+    }
+    links
+}
+
+/// Create a pw-link connection unless it already exists (idempotent).
+fn link_ports(src: &str, dst: &str, existing: &[(String, String)]) {
+    if existing.iter().any(|(s, d)| s == src && d == dst) {
+        return;
+    }
+    let _ = Command::new("pw-link").args([src, dst]).output();
+}
+
+/// Re-assert the audio routes for a live-coding session: plain sound goes to
+/// the speakers (default sink = game-stereo, then game-stereo → RME AES) and
+/// the synth plugged into the RME analog input is heard on the same speakers
+/// (capture_AUX0/1 → playback_AUX2/3). WirePlumber restarts and device
+/// replugs drop these links, so `start` re-creates them. Idempotent and
+/// best-effort: a missing device only warns, never blocks the engine start.
+fn ensure_audio_routes(style: &Style) {
+    let warn = |msg: &str| println!("{} {}", style.yellow_bold("audio routes:"), msg);
+
+    // Default sink → game-stereo, so plain sound reaches the speakers.
+    match game_stereo_sink_id() {
+        Ok(id) => {
+            let _ = Command::new("wpctl").args(["set-default", &id]).output();
+        }
+        Err(_) => warn("game-stereo sink not found — default sink left unchanged"),
+    }
+
+    let (aes_l, aes_r) = match (find_rme_port(":playback_AUX2"), find_rme_port(":playback_AUX3")) {
+        (Ok(l), Ok(r)) => (l, r),
+        _ => {
+            warn("RME AES output not found — routes skipped");
+            return;
+        }
+    };
+
+    let existing = current_links();
+
+    // Drop WirePlumber's stray auto-links of game-stereo to the analog pair
+    // (a default sink's streams auto-link to the RME's first channels), then
+    // link the loopback to the AES pair where the monitors are.
+    for (src, dst) in &existing {
+        if src.starts_with("playback.game-stereo:output_")
+            && (dst.ends_with(":playback_AUX0") || dst.ends_with(":playback_AUX1"))
+        {
+            let _ = Command::new("pw-link").args(["-d", src, dst]).output();
+        }
+    }
+    link_ports("playback.game-stereo:output_FL", &aes_l, &existing);
+    link_ports("playback.game-stereo:output_FR", &aes_r, &existing);
+
+    // RME analog input (the synth) → AES, so key presses are heard on the
+    // speakers. Mirrors the ZestBay "RME input → RME AES" patchbay rule.
+    match (find_rme_port(":capture_AUX0"), find_rme_port(":capture_AUX1")) {
+        (Ok(in_l), Ok(in_r)) => {
+            link_ports(&in_l, &aes_l, &existing);
+            link_ports(&in_r, &aes_r, &existing);
+            println!("{} default → game-stereo → AES; synth input → AES", style.green_bold("audio routes:"));
+        }
+        _ => warn("RME analog input not found — synth route skipped"),
+    }
+}
+
 fn start() -> Result<()> {
     // Refuse to double-start: if the OSC port is already open, the engine is up.
     if port_listening(OSC_PORT) {
         println!("Engine is already running (OSC port {OSC_PORT} is open).");
+        // Routes may have been dropped by a WirePlumber restart — re-assert them.
+        let style = Style::new();
+        ensure_audio_routes(&style);
         return Ok(());
     }
 
@@ -264,6 +392,10 @@ fn start() -> Result<()> {
         .context("open engine log")?;
 
     println!("TidalCycles: booting engine...");
+    // Bring up the audio routes while the engine boots: plain sound → the
+    // speakers (default sink) and the synth input → the same speakers.
+    let style = Style::new();
+    ensure_audio_routes(&style);
     // Run sclang under pw-jack: PipeWire's JACK emulation is a libjack
     // replacement (LD_LIBRARY_PATH), not a jackd daemon — without it scsynth
     // fails to boot ("Cannot connect to server socket").
