@@ -14,6 +14,7 @@ in
     oryx = callPkg (packagesRoot + "/oryx") { }; # TUI for sniffing network traffic using eBPF (needs root + BTF kernel)
     omp = callPkg (packagesRoot + "/omp") { }; # Oh My Pi (omp) — AI coding agent with LSP, DAP, subagents
     hypr-focus = callPkg (packagesRoot + "/hypr-focus") { }; # Rust-based window focus CLI — set window class on focused Hyprland window
+    tidalctl = callPkg (packagesRoot + "/tidalctl") { }; # TidalCycles session controller — engine start/stop, editor, recording
     pretty_printer = callPkg (packagesRoot + "/pretty-printer") { }; # Pretty-printer library + CLI (ppinfo)
     rsmetrx = inputs.rsmetrx.packages.${prev.stdenv.hostPlatform.system}.default;
     talktype = callPkg (packagesRoot + "/talktype") { }; # Push-to-talk voice typing tool (F9 to record, transcribe, paste)
