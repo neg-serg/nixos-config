@@ -4,20 +4,11 @@
   lib,
   config,
   pkgs,
-  inputs,
   ...
 }:
 let
   cfg = config.features.media.audio.creation or { };
   enabled = cfg.enable or false;
-
-  # Tidal "journey" files (BootTidal.hs helpers, demo/scratch scenes, docs)
-  # live in the PRIVATE personal-wiki repo (~/notes) — not in public nixos-pkgs.
-  tidalDir = inputs.personal-wiki + "/music/tidal";
-
-  bootTidal = builtins.readFile (tidalDir + "/BootTidal.hs");
-  demoTidal = builtins.readFile (tidalDir + "/demo.tidal");
-  scratchTidal = builtins.readFile (tidalDir + "/scratch.tidal");
 
   # SuperDirt and Vowel now come from nix packages (packages/superdirt,
   # packages/vowel) symlinked into SC's default extension dir below — the
@@ -80,7 +71,6 @@ in
       ".config/SuperCollider/superdirt_startup.scd".text = superdirtStartup;
       ".config/SuperCollider/boot_noop.scd".text = bootNoop;
       ".config/SuperCollider/sclang_conf.yaml".text = sclangConf;
-      ".config/tidal/BootTidal.hs".text = bootTidal;
       # SuperDirt classes from the nix package (replaces manual quark install)
       ".local/share/SuperCollider/Extensions/SuperDirt".source =
         "${pkgs.neg.superdirt}/share/SuperCollider/extensions/SuperDirt";
@@ -90,9 +80,6 @@ in
       # SC3-Plugins классы (DynKlank, SwitchDelay, …) — нужны SuperDirt default-synths
       ".local/share/SuperCollider/Extensions/SC3plugins".source =
         "${pkgs.supercolliderPlugins.sc3-plugins}/share/SuperCollider/Extensions/SC3plugins";
-      # Tidal workspace: starter file + demo jam + user samples dir
-      "src/art/music/tidal/scratch.tidal".text = scratchTidal;
-      "src/art/music/tidal/demo.tidal".text = demoTidal;
     };
   };
 }

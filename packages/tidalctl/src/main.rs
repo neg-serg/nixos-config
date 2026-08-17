@@ -473,7 +473,53 @@ fn ensure_workspace() -> Result<PathBuf> {
     let dir = home()?.join("src/art/music/tidal");
     fs::create_dir_all(dir.join("samples")).context("create ~/src/art/music/tidal/samples")?;
     fs::create_dir_all(dir.join("recordings")).context("create recordings dir")?;
+    link_journey(&dir)?;
     Ok(dir)
+}
+
+/// Link the editable Tidal "journey" files to the private notes checkout
+/// (~/notes/music/tidal) so BootTidal.hs / demo.tidal / scratch.tidal are
+/// writable and git-versioned instead of read-only nix-store copies.
+fn link_journey(workspace: &std::path::Path) -> Result<()> {
+    use std::os::unix::fs::symlink;
+    let notes = home()?.join("notes/music/tidal");
+    let pairs = [
+        (workspace.join("demo.tidal"), notes.join("demo.tidal")),
+        (workspace.join("scratch.tidal"), notes.join("scratch.tidal")),
+        (
+            home()?.join(".config/tidal/BootTidal.hs"),
+            notes.join("BootTidal.hs"),
+        ),
+    ];
+    for (link, target) in pairs {
+        if !target.exists() {
+            bail!(
+                "notes journey file missing: {} — check the personal-wiki checkout",
+                target.display()
+            );
+        }
+        match fs::symlink_metadata(&link) {
+            Ok(meta) if meta.file_type().is_symlink() => {
+                let cur = fs::read_link(&link).unwrap_or_default();
+                if cur == target {
+                    continue; // already correct
+                }
+                fs::remove_file(&link).context("replace stale journey symlink")?;
+            }
+            Ok(_) => {
+                // A real file (user moved it) — leave it alone.
+                continue;
+            }
+            Err(_) => {}
+        }
+        if let Some(parent) = link.parent() {
+            fs::create_dir_all(parent).context("create journey parent dir")?;
+        }
+        symlink(&target, &link)
+            .with_context(|| format!("link {} -> {}", link.display(), target.display()))?;
+        println!("linked {} -> {}", link.display(), target.display());
+    }
+    Ok(())
 }
 
 fn code() -> Result<()> {
@@ -499,7 +545,7 @@ fn demo() -> Result<()> {
     let scene = dir.join("demo.tidal");
     if !scene.exists() {
         bail!(
-            "demo scene not found: {} — run nixos-rebuild so nix-maid writes it",
+            "demo scene not found: {} — run `tidalctl code` once to link the notes journey",
             scene.display()
         );
     }
