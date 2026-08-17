@@ -1532,11 +1532,11 @@
     "wl": {
       "flake": false,
       "locked": {
-        "lastModified": 1778551419,
-        "narHash": "sha256-mBDzV8110wdBDV/f+2FOKMZjGOkGwC0cKBudvuk/e/4=",
+        "lastModified": 1786952801,
+        "narHash": "sha256-ZFN3DOzAfjTc+AZ2f57VkGRC6Gd3Tl1tV5md7vDOxe4=",
         "owner": "neg-serg",
         "repo": "wl",
-        "rev": "6f2a3b0d3a582d69dc926c9ea1c621a7c63fa6fc",
+        "rev": "ca96012217311920bd1076da1cdcdb40f3125645",
         "type": "github"
       },
       "original": {
