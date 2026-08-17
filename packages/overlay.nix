@@ -107,6 +107,9 @@ in
       dirt-samples = final.callPackage ./dirt-samples { }; # audio sample library for SuperDirt
       vowel = final.callPackage ./vowel { }; # Vowel SC quark (formant tables) used by SuperDirt
       dsh = final.callPackage ./dsh { }; # DeepSeek Harness agent CLI (dsh)
+      # dsh web @deepseek-ai tree with hardcoded Chinese UI copy -> English
+      # (profile's @deepseek-ai symlink points here, see dsh-market.nix)
+      dsh-web-en = final.callPackage ./dsh/web-ui-en { dsh = final.neg.dsh; };
       zest = final.callPackage ./zest { }; # CLI for ZestBay plugin management (LV2 add/rm/list)
     };
 
