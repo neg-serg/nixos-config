@@ -6,6 +6,9 @@ Communication language (hard rule)
   messages, not in any file they will read. Treat this as a hard rule.
 - The user's language is Russian. English is acceptable for technical terms,
   code, and identifiers. When in doubt, write in Russian.
+- Code comments (in .hs/.scd/.tidal/.rs/nix/… source files) are written in
+  English; Russian is for chat replies, commit messages, docs, and UI copy.
+  (User requirement — musical code lives in the private ~/notes repo.)
 - Note: the dsh web GUI itself may contain Chinese strings from plugins
   (e.g. pet.json, dshmarket UI); that is app data, not something we write.
   Do not copy those strings into replies for the user.
