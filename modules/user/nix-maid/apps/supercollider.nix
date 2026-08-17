@@ -102,8 +102,8 @@ let
 
     -- Colotomy layer (gamelan): one hit at the start of each n-step cycle;
     -- layer several at different speeds for nested modular cycles.
-    --   d1 $ slow 4 $ colotom 4 "gong"             -- gong every 16 steps
-    --   d2 $ slow 4 $ (0.5 <~) $ colotom 4 "kenong" -- kenong, half-cycle off
+    --   d1 $ slow 4 $ colotom 4 "supergong"             -- gong every 16 steps
+    --   d2 $ slow 4 $ (0.5 <~) $ colotom 4 "supermandolin" -- kenong, half-cycle off
     let colotom n nm = s (fromString (unwords [ if i == 0 then nm else "~" | i <- [0 .. n - 1] ]))
 
     -- Weighted chord progression (Melodique-style: I, IV, V, vi attraction,
@@ -354,8 +354,8 @@ let
     d10 $ weightedChords
 
     -- 9d. Gamelan colotomy: gong + kenong layered at nested speeds
-    d11 $ slow 4 $ colotom 4 "gong"
-    d12 $ slow 4 $ (0.5 <~) $ colotom 4 "kenong" # gain 0.8
+    d11 $ slow 4 $ colotom 4 "supergong"
+    d12 $ slow 4 $ (0.5 <~) $ colotom 4 "supermandolin" # gain 0.8
 
     -- 10. L-system (Cantor dust): fractal rhythm
     d13 $ lSystem 3 # gain 0.6
