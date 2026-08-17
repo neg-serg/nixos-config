@@ -76,6 +76,9 @@ enum Commands {
     Start,
     /// Stop the engine
     Stop,
+    /// Restart the engine (stop + start) — applies edits to
+    /// superdirt_startup.scd / synths.scd
+    Restart,
     /// Show engine status: processes, OSC ports, audio links
     Status,
     /// Open the Tidal workspace in nvim (creates ~/src/art/music/tidal on first use)
@@ -478,17 +481,24 @@ fn ensure_workspace() -> Result<PathBuf> {
 }
 
 /// Link the editable Tidal "journey" files to the private notes checkout
-/// (~/notes/music/tidal) so BootTidal.hs / demo.tidal / scratch.tidal are
-/// writable and git-versioned instead of read-only nix-store copies.
+/// (~/notes/music/tidal + ~/notes/music/supercollider) so BootTidal.hs /
+/// demo.tidal / scratch.tidal / the SuperDirt startup are writable and
+/// git-versioned instead of read-only nix-store copies.
 fn link_journey(workspace: &std::path::Path) -> Result<()> {
     use std::os::unix::fs::symlink;
-    let notes = home()?.join("notes/music/tidal");
+    let home_dir = home()?;
+    let notes = home_dir.join("notes/music/tidal");
+    let sc_notes = home_dir.join("notes/music/supercollider");
     let pairs = [
         (workspace.join("demo.tidal"), notes.join("demo.tidal")),
         (workspace.join("scratch.tidal"), notes.join("scratch.tidal")),
         (
-            home()?.join(".config/tidal/BootTidal.hs"),
+            home_dir.join(".config/tidal/BootTidal.hs"),
             notes.join("BootTidal.hs"),
+        ),
+        (
+            home_dir.join(".config/SuperCollider/superdirt_startup.scd"),
+            sc_notes.join("superdirt_startup.scd"),
         ),
     ];
     for (link, target) in pairs {
@@ -678,6 +688,10 @@ fn main() -> Result<()> {
     match cli.command {
         Commands::Start => start(),
         Commands::Stop => stop(),
+        Commands::Restart => {
+            stop().ok();
+            start()
+        }
         Commands::Status => status(),
         Commands::Code => code(),
         Commands::New { name } => new_file(name),
