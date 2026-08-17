@@ -76,6 +76,7 @@
           + ":$HOME/.${format}";
         # *_PATH vars for audio plugin formats (NAME_PATH → lowercase dir)
         pluginPaths = lib.genAttrs [
+          "CLAP_PATH"
           "DSSI_PATH"
           "LADSPA_PATH"
           "LV2_PATH"

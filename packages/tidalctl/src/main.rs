@@ -273,8 +273,7 @@ fn find_rme_port(suffix: &str) -> Result<String> {
             .context("run pw-link")?;
         let text = String::from_utf8_lossy(&out.stdout);
         if let Some(port) = text.lines().map(str::trim).find(|l| {
-            (l.starts_with("alsa_output.") || l.starts_with("alsa_input."))
-                && l.ends_with(suffix)
+            (l.starts_with("alsa_output.") || l.starts_with("alsa_input.")) && l.ends_with(suffix)
         }) {
             return Ok(port.to_string());
         }
@@ -327,7 +326,10 @@ fn ensure_audio_routes(style: &Style) {
         Err(_) => warn("game-stereo sink not found — default sink left unchanged"),
     }
 
-    let (aes_l, aes_r) = match (find_rme_port(":playback_AUX2"), find_rme_port(":playback_AUX3")) {
+    let (aes_l, aes_r) = match (
+        find_rme_port(":playback_AUX2"),
+        find_rme_port(":playback_AUX3"),
+    ) {
         (Ok(l), Ok(r)) => (l, r),
         _ => {
             warn("RME AES output not found — routes skipped");
@@ -352,11 +354,17 @@ fn ensure_audio_routes(style: &Style) {
 
     // RME analog input (the synth) → AES, so key presses are heard on the
     // speakers. Mirrors the ZestBay "RME input → RME AES" patchbay rule.
-    match (find_rme_port(":capture_AUX0"), find_rme_port(":capture_AUX1")) {
+    match (
+        find_rme_port(":capture_AUX0"),
+        find_rme_port(":capture_AUX1"),
+    ) {
         (Ok(in_l), Ok(in_r)) => {
             link_ports(&in_l, &aes_l, &existing);
             link_ports(&in_r, &aes_r, &existing);
-            println!("{} default → game-stereo → AES; synth input → AES", style.green_bold("audio routes:"));
+            println!(
+                "{} default → game-stereo → AES; synth input → AES",
+                style.green_bold("audio routes:")
+            );
         }
         _ => warn("RME analog input not found — synth route skipped"),
     }
