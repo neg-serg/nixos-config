@@ -22,12 +22,9 @@ flowchart LR
 ## Быстрый старт
 
 ```bash
-# Одноразово (уже сделано при настройке):
-install-superdirt-quark   # установить SuperDirt из Codeberg
-
 # Каждый раз:
 just tidal-start    # запускает SC сервер + SuperDirt (~0.2с до готовности OSC, ~2с до звука)
-just tidal          # открывает nvim для кодинга
+just tidal          # открывает nvim для кодинга (создаёт ~/src/music/tidal при первом запуске)
 ```
 
 В nvim:
@@ -37,7 +34,7 @@ just tidal          # открывает nvim для кодинга
 - `Alt+Enter` — отправить строку в Tidal
 - Услышать kick и snare — всё работает.
 
-Остановка: `Ctrl+Shift+Enter` в nvim, или `just tidal-stop` (если добавить в Justfile).
+Остановка: `Ctrl+Shift+Enter` в nvim, или `just tidal-stop`.
 
 ## Клавиши в nvim
 
@@ -60,8 +57,13 @@ just tidal          # открывает nvim для кодинга
    256 wire buffers, 64K нод.
 1. **PipeWire JACK** — библиотека `libjack.so` из `pkgs.pipewire.jack` подменяет оригинальный JACK,
    направляя аудио в PipeWire. Квант 128 на 48kHz даёт задержку ~2.6ms.
-1. **Dirt-Samples** — Nix-деривация `pkgs.neg.dirt-samples` (~170MB), симлинк в
-   `~/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples/`.
+1. **Dirt-Samples** — Nix-деривация `pkgs.neg.dirt-samples` (~170MB); startup-скрипт указывает
+   `~dirt.loadSoundFiles` явный путь в nix store (никакой зависимости от `resolveRelative`/CWD).
+1. **SuperDirt и Vowel** — nix-пакеты `pkgs.neg.superdirt` и `pkgs.neg.vowel`, симлинки в
+   `~/.local/share/SuperCollider/Extensions/` (наравне с SC3plugins). Ручная установка quark'а через
+   `install-superdirt-quark` больше не нужна.
+1. **Свои сэмплы** — папка `~/src/music/tidal/samples/`: любая вложенная папка с wav становится
+   звуком (имя папки = имя звука). Создаётся `just tidal-start` автоматически.
 
 ### Почему запуск мгновенный (0.2с)
 
@@ -214,12 +216,31 @@ SuperDirt создаёт 12 орбит (моно-каналов). По умол�
 ## Запись
 
 ```bash
-# Запись выхода SuperDirt через pw-record
+# Запись выхода SuperDirt в ~/src/music/tidal/recordings/ (имя с таймстампом)
+just tidal-record
+
+# Или вручную, в текущую директорию
 pw-record --target $(pw-link -o | grep SuperDirt | head -1 | awk '{print $1}') recording.wav
 
 # Или запись системного выхода
 pw-record recording.wav
 ```
+
+## Свои сэмплы
+
+Любую папку с wav-файлами клади в `~/src/music/tidal/samples/` — имя папки станет именем звука:
+
+```bash
+mkdir -p ~/src/music/tidal/samples/mykit
+cp kick.wav snare.wav ~/src/music/tidal/samples/mykit/
+```
+
+```haskell
+d1 $ sound "mykit"     -- или "mykick" / "mysnare" (имена файлов без расширения)
+```
+
+Новые папки подхватываются после перезапуска движка (`just tidal-stop && just tidal-start`) или при
+старте. Стандартный банк Dirt-Samples (218 звуков) загружается всегда.
 
 ## MIDI
 
@@ -229,6 +250,15 @@ pw-record recording.wav
 import Sound.Tidal.MIDI.Output
 midi <- midiname "your-device"
 d1 $ midi $ note "c d e f" # sound "midi"
+```
+
+## OSC во внешние синтезаторы
+
+Параметры OSC (`pF`, `pI`, `pS`, …) доступны из `Sound.Tidal.Boot` без дополнительных импортов. Для
+управления внешним синтезатором (например, через sclang/другой OSC-приёмник):
+
+```haskell
+d1 $ sound "bd" # pF "myParam" 0.5
 ```
 
 ## Устранение неполадок
@@ -254,11 +284,17 @@ d1 $ midi $ note "c d e f" # sound "midi"
 ### SuperDirt не видит сэмплы
 
 ```bash
-ls ~/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples/
-# Должен показывать папки: 808, bd, sn, hh, bass, ...
+# Стандартный банк (nix store, путь задан в superdirt_startup.scd)
+ls /run/current-system/sw/share/ 2>/dev/null | grep -i dirt  # или:
+nix path-info /nix/store/*dirt-samples*/share/Dirt-Samples | head -1
+
+# Свои сэмплы
+ls ~/src/music/tidal/samples/
 ```
 
-Если пусто — переустановить: `install-superdirt-quark`
+Если стандартные сэмплы не загружаются — проверить, что startup-скрипт
+(`~/.config/SuperCollider/superdirt_startup.scd`) указывает на актуальный nix store путь
+`pkgs.neg.dirt-samples` (путь генерируется при пересборке).
 
 ### "ghci not found"
 
@@ -328,16 +364,21 @@ systemctl --user enable --now tidal.service
 
 ## Файлы
 
-| Путь                                                           | Назначение                           |
-| -------------------------------------------------------------- | ------------------------------------ |
-| `~/.config/SuperCollider/superdirt_startup.scd`                | Конфигурация SC сервера (1M буферов) |
-| `~/.config/SuperCollider/boot_noop.scd`                        | Минимальная загрузка сервера         |
-| `~/.config/tidal/BootTidal.hs`                                 | Импорты и настройки GHCi             |
-| `~/.local/share/SuperCollider/downloaded-quarks/SuperDirt/`    | Классы SuperDirt (Quark)             |
-| `~/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples/` | Банк сэмплов (~170MB)                |
-| `/run/current-system/sw/bin/tidal-ghci`                        | GHCi враппер                         |
-| `/etc/nixos/modules/user/nix-maid/apps/supercollider.nix`      | Модуль NixOS                         |
-| `/etc/nixos/docs/howto/tidal-cycles.md`                        | Этот документ                        |
+| Путь                                                      | Назначение                           |
+| --------------------------------------------------------- | ------------------------------------ |
+| `~/.config/SuperCollider/superdirt_startup.scd`           | Конфигурация SC сервера (1M буферов) |
+| `~/.config/SuperCollider/sclang_conf.yaml`                | Конфиг classpath (nix-maid)          |
+| `~/.config/SuperCollider/boot_noop.scd`                   | Минимальная загрузка сервера         |
+| `~/.config/tidal/BootTidal.hs`                            | Импорты и настройки GHCi             |
+| `~/.local/share/SuperCollider/Extensions/SuperDirt/`      | Классы SuperDirt (nix-пакет)         |
+| `~/.local/share/SuperCollider/Extensions/Vowel/`          | Формантные таблицы Vowel (nix-пакет) |
+| `~/.local/share/SuperCollider/Extensions/SC3plugins/`     | SC3-Plugins классы (nix-пакет)       |
+| `/nix/store/*dirt-samples*/share/Dirt-Samples/`           | Банк сэмплов (~170MB, nix store)     |
+| `~/src/music/tidal/samples/`                              | Свои сэмплы (имя папки = имя звука)  |
+| `~/src/music/tidal/`                                      | Рабочая директория для .tidal файлов |
+| `/run/current-system/sw/bin/tidal-ghci`                   | GHCi враппер                         |
+| `/etc/nixos/modules/user/nix-maid/apps/supercollider.nix` | Модуль NixOS                         |
+| `/etc/nixos/docs/howto/tidal-cycles.md`                   | Этот документ                        |
 
 ## Ссылки
 
