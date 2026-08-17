@@ -19,7 +19,7 @@ let
   # lost the extensions eventually: a running Vivaldi rewrites Preferences from
   # its in-memory state and purges orphaned extension dirs. Force-installed
   # extensions cannot be removed by the user (only disabled); DevTools stays
-  # available via DeveloperToolsAvailability=0 below.
+  # available via DeveloperToolsAvailability=1 below.
 
   # Vivaldi bundles its own libffmpeg.so with all codecs (proprietary browser).
   # nixpkgs proprietaryCodecs=true replaces it with an outdated chromium-codecs-ffmpeg-extra
@@ -83,7 +83,9 @@ in
         "BookmarkBarEnabled" = false;
         # Force-installed extensions (SurfingKeys/Tampermonkey) make DevTools
         # report "Your organization blocked DevTools on this page" — allow it.
-        "DeveloperToolsAvailability" = 0; # Allowed everywhere
+        # Chrome 114+ semantics: 0 = disallowed for force-installed extensions
+        # (default), 1 = allowed everywhere, 2 = disallowed everywhere.
+        "DeveloperToolsAvailability" = 1; # Allowed everywhere (incl. force-installed extensions)
         # Force-install SurfingKeys/Tampermonkey: Vivaldi downloads and
         # self-heals them on every startup (root fix for recurring
         # "extensions disappeared" — no profile file injection).
@@ -121,7 +123,7 @@ in
     environment.etc."vivaldi/policies/managed/devtools.json" = {
       mode = "0444";
       text = builtins.toJSON {
-        DeveloperToolsAvailability = 0; # Allowed everywhere (blocked by force-installed extensions otherwise)
+        DeveloperToolsAvailability = 1; # Allowed everywhere (incl. force-installed extensions)
       };
     };
 
