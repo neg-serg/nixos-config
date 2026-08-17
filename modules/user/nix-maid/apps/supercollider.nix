@@ -29,6 +29,23 @@ let
     excludeDefaultPaths: false
   '';
 
+  # SuperCollider runs as a pipewire-jack client (LD_LIBRARY_PATH above), but
+  # pipewire-jack does NOT auto-connect client ports and WirePlumber ignores
+  # JACK nodes (they carry no media.class) — so scsynth's out ports stay
+  # unlinked and Tidal is silent. This watcher links SuperCollider:out_1/2 →
+  # game-stereo (the hdspe module routes that sink to the RME AES pair)
+  # whenever the ports appear, surviving engine restarts.
+  supercolliderLinkScript = pkgs.writeShellScript "supercollider-link" ''
+    set -u
+    while true; do
+      if [[ "$(pw-link -o 2>/dev/null)" == *"SuperCollider:out_1"* ]]; then
+        pw-link SuperCollider:out_1 game-stereo:playback_FL 2>/dev/null || true
+        pw-link SuperCollider:out_2 game-stereo:playback_FR 2>/dev/null || true
+      fi
+      sleep 2
+    done
+  '';
+
 in
 {
   config = lib.mkIf enabled {
@@ -36,6 +53,27 @@ in
       LD_LIBRARY_PATH = [ "${pkgs.pipewire.jack}/lib" ];
       # Server-side SC3-Plugins UGens (.so) — scsynth ищет их через SC_PLUGIN_PATH
       SC_PLUGIN_PATH = "${pkgs.supercolliderPlugins.sc3-plugins}/lib/SuperCollider/plugins";
+    };
+
+    # Keep scsynth's JACK out ports linked to the game-stereo virtual sink.
+    systemd.user.services."supercollider-link" = {
+      description = "Link SuperCollider JACK out ports to game-stereo";
+      after = [
+        "pipewire.service"
+        "wireplumber.service"
+      ];
+      wantedBy = [ "graphical-session.target" ];
+      serviceConfig = {
+        Type = "simple";
+        Restart = "on-failure";
+        ExecStart = "${supercolliderLinkScript}";
+        Environment = "PATH=${
+          lib.makeBinPath [
+            config.services.pipewire.package # pw-link
+            pkgs.coreutils # sleep
+          ]
+        }";
+      };
     };
     environment.etc = {
       "skel/.config/SuperCollider/boot_noop.scd".text = bootNoop;
