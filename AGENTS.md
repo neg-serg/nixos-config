@@ -28,6 +28,25 @@ General guidance
 - For a quick orientation, `docs/codebase.md` is a generated repo map (modules, features, profiles, packages); regenerate with `just codebase` when structure changes.
 - For verified step-by-step change workflows (add module/flag/package/host/script/secret, docs, commit rules), see `docs/howto/agent-recipes.md`.
 
+Golden tool set (agent habits) — hard rules
+- Always prefer the fast modern replacements over legacy coreutils when working on this host.
+  They are installed system-wide; the full reference (rationale, config wiring, examples,
+  caveats) is `docs/howto/golden-tools.ru.md`.
+  - `rg` (ripgrep) or `ugrep` instead of `grep -r`; `rg --pcre2` covers PCRE-only patterns
+  - `fd` instead of `find`
+  - `bat` instead of `cat` for terminal peeks (the `read` tool stays primary for files)
+  - `jq` instead of `sed`/`awk` for JSON
+  - `eza` instead of `ls`, `dust`/`ncdu` instead of `du`, `duf` instead of `df`, `btop`
+    instead of `top`, `procs` instead of `ps`, `delta` instead of `diff` (git pager already wired)
+  - `sd` for simple search-and-replace, `zoxide` for `cd`, `fzf` for interactive selection,
+    `hyperfine` for benchmarking
+- DSH-native tools beat shell equivalents: use the `read`/`grep`/`glob` tools (ripgrep/fd-backed)
+  instead of spawning `cat`/`grep`/`find` in bash. Spawn bash only when a native tool cannot do
+  the job; when a pipeline is unavoidable, still prefer rg/fd/bat/jq over grep/find/cat/sed.
+- Keep legacy tools only when correctness/portability demands them: scripts meant for
+  non-NixOS/remote hosts, POSIX-only contexts, or flags with no rg/fd equivalent.
+  Gotcha: `rg -r` means *replace*, not recursive; recursive is the default.
+
 Builds: substitute = false
 - This host is in a region where `cache.nixos.org` is unreliable (blocked/slow), so do NOT rely on binary substitution.
 - Always run nix build/eval commands with `--option substitute false` (build from source), e.g.:
