@@ -2,7 +2,7 @@
 # Module: system/boot
 # Purpose: Bootloader (Limine/EFI), initrd modules, kexec.
 # Key options: none (uses config.boot.* directly).
-# Dependencies: pkgs (efibootmgr/efivar/os-prober).
+# Dependencies: pkgs (efibootmgr/efivar).
 {
   lib,
   config,
