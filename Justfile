@@ -227,20 +227,35 @@ profile-eval: flamegraph-eval
 
 # Launch SC server + SuperDirt in background (~5s until audio ready)
 tidal-start:
+     @mkdir -p ~/src/music/tidal/samples
      @echo "TidalCycles: booting engine..."
      @env LD_LIBRARY_PATH="/run/current-system/sw/lib" \
        sclang -l ~/.config/SuperCollider/sclang_conf.yaml \
          ~/.config/SuperCollider/superdirt_startup.scd &
      @echo "Engine booting — open nvim to code: just tidal"
 
-# Open nvim for Tidal coding
+# Open nvim for Tidal coding (creates the workspace dir on first use)
 tidal:
+    mkdir -p ~/src/music/tidal
     nvim ~/src/music/tidal/
 
 # Create new .tidal file
 tidal-new name:
     mkdir -p ~/src/music/tidal
     nvim ~/src/music/tidal/{{name}}.tidal
+
+# Stop the SuperDirt/SC engine (sclang + scsynth)
+tidal-stop:
+    @pkill -f 'sclang.*superdirt_startup' 2>/dev/null || true
+    @pkill -f 'scsynth' 2>/dev/null || true
+    @echo "TidalCycles: engine stopped"
+
+# Record SuperDirt output (all orbits mixed to stereo) to ~/src/music/tidal/
+tidal-record:
+    mkdir -p ~/src/music/tidal/recordings
+    @echo "Recording... Ctrl+C to stop (writes to ~/src/music/tidal/recordings/)"
+    pw-record --target $(pw-link -o | rg -i superdirt | head -1 | awk '{print $1}') \
+      ~/src/music/tidal/recordings/tidal-$(date +%Y%m%d-%H%M%S).wav
 
 # Open ZestBay patchbay (via distrobox Arch container)
 tidal-patch:
