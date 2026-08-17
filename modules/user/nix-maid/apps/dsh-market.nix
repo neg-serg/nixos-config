@@ -121,7 +121,12 @@ let
   # \"deployment:persona\" already registered", every resume retries at 100%
   # CPU. Re-linking the profile's @deepseek-ai directory to the harness keeps
   # exactly one instance per package; re-applied after every pnpm sync.
-  dshAiStore = "${pkgs.neg.dsh}/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai";
+  # Points at dsh-web-en — the same tree with the hardcoded Chinese UI copy
+  # in the compiled web bundle rewritten to English (packages/dsh/web-ui-en).
+  # dsh-web-en mirrors the harness node_modules layout (scope + hoisted deps
+  # under node_modules/), so the profile's @deepseek-ai symlink must target
+  # its nested scope dir to keep intra-scope and hoisted imports resolvable.
+  dshAiStore = "${pkgs.neg.dsh-web-en}/node_modules/@deepseek-ai";
 
   # Idempotent: install the dshmarket plugin into the web profile when absent,
   # keep the profile's pnpm supply-chain policy sane (release cooldown
