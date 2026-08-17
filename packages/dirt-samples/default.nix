@@ -24,7 +24,8 @@ stdenvNoCC.mkDerivation {
 
     # Place samples where SuperDirt expects them:
     #   $out/share/Dirt-Samples/
-    # Users symlink ~/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples -> here
+    # The Tidal startup script (~/.config/SuperCollider/superdirt_startup.scd)
+    # points ~dirt.loadSoundFiles at this path explicitly.
     mkdir -p "$out/share/Dirt-Samples"
 
     # Copy all sample directories (each is a sound name like "bd", "sn", "hh")
