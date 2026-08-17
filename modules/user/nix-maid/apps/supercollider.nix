@@ -36,7 +36,9 @@ let
         if(PathName(userSamples).folders.notEmpty) {
           ~dirt.loadSoundFiles(userSamples +/+ "*")
         };
-        ~dirt.start(57120, 0 ! 12);
+        -- 16 orbits so Tidal d1..d16 all get a stream (start(port, 0 ! 16));
+        -- with 12 orbits, d13-d16 events are dropped by SuperDirt.
+        ~dirt.start(57120, 0 ! 16);
         "SUPERDIRT READY".postln;
       } { |err| ("SuperDirt ERROR: " ++ err.what).postln; };
     };
@@ -131,8 +133,8 @@ let
     -- Carter metric modulation: tempo ratio.  d1 $ fast (modulate 4 6) $ sound "bd"
     let modulate oldD newD = fromIntegral oldD / fromIntegral newD
 
-    -- Glass additive process: figure grows by `step` notes each cycle.
-    --   d1 $ glassAdd 4 3     -- 1 bd, then 4, then 7 (arc by design)
+    -- Glass additive process: figure grows by `step` notes each cycle,
+    -- up to `maxN` notes.  d1 $ glassAdd 4 1  →  1, 2, 3, 4 bd
     let glassAdd maxN step = fastcat [ s (fromString (unwords (replicate n "bd"))) | n <- [1, 1+step .. maxN] ]
 
     -- Messiaen interversion: palindromic permutation of a rhythmic cell.
@@ -146,14 +148,15 @@ let
     let lstep xs = concatMap (\x -> if x == "bd" then ["bd", "~", "bd"] else ["~", "~", "~"]) xs
     let lSystem n = s (fromString (unwords (iterate lstep ["bd"] !! n)))
 
-    -- Wolfram elementary cellular automaton as a rhythm row.
-    --   d1 $ caRule 110 16    (rule 110 = Class 4 edge-of-chaos)
-    --   d1 $ caRule 30 16     (rule 30 = chaotic)
+    -- Wolfram elementary cellular automaton as a rhythm row: evolve one
+    -- row of n cells for n steps, keep only the LAST row (n hits per cycle,
+    -- not n²).  d1 $ caRule 110 16  (rule 110 = Class 4 edge-of-chaos)
     let cbit r l c rr = (r `div` (2 ^ (4*l + 2*c + rr))) `mod` 2
     let cstep r xs = [ cbit r (xs !! ((i-1) `mod` length xs)) (xs !! i) (xs !! ((i+1) `mod` length xs)) | i <- [0 .. length xs - 1] ]
     let cell 1 = "bd"
         cell _ = "~"
-    let caRule rule n = s (fromString (unwords (map cell (take n (iterate (cstep rule) (1 : replicate (n-1) 0))))))
+    let caRow r n = last (take n (iterate (cstep r) (1 : replicate (n-1) 0)))
+    let caRule rule n = s (fromString (unwords (map cell (caRow rule n))))
 
     -- ==== Serialism: Schoenberg 12-tone row ================================
     -- Prime form of a row as pitch-class list; operations P/R/I/RI + transposition.
@@ -213,8 +216,9 @@ let
     let fNoise = n (fromString "60 63 61 64 62 65 63 60 62 66 64 61") # sound "superpiano" # gain 0.4
 
     -- ==== Perle cyclic sets ===============================================
-    -- Alternating interval cycles (mod 12).  d1 $ perleCycle 2 3
-    let perleCycle a b = n (fromString (unwords (map show (scanl (\x i -> if even i then (x+a) `mod` 12 else (x+b) `mod` 12) 60 [1..11])))) # sound "superhex" # gain 0.3
+    -- Alternating interval cycles (mod 12), kept in the 60..71 register.
+    --   d1 $ perleCycle 2 3
+    let perleCycle a b = n (fromString (unwords (map show (scanl (\x i -> 60 + ((x - 60 + (if even i then a else b)) `mod` 12)) 60 [1..11])))) # sound "superhex" # gain 0.3
 
     -- ==== Hindemith: Series 1/2 ===========================================
     -- Interval consonance rank (0=most consonant .. 6=tritone) and root side.
@@ -240,10 +244,10 @@ let
 
     -- ==== Yavorsky: 18 modes (tritone-resolution cells) ===================
     --   d1 $ yavorsky 1
-    let yavorsky 1 = n "60 61 62 64 65 66 68 69"
-        yavorsky 2 = n "60 62 63 64 66 67 69 70"
-        yavorsky 3 = n "60 61 63 64 65 67 68 69"
-        yavorsky _ = n "60 62 64 65 67 69"
+    let yavorsky 1 = n "60 61 62 64 65 66 68 69" # sound "superhex" # gain 0.4
+        yavorsky 2 = n "60 62 63 64 66 67 69 70" # sound "superhex" # gain 0.4
+        yavorsky 3 = n "60 61 63 64 65 67 68 69" # sound "superhex" # gain 0.4
+        yavorsky _ = n "60 62 64 65 67 69" # sound "superhex" # gain 0.4
 
     -- ==== Kholopova: parametric complex ===================================
     -- [articulation, melody, rhythm, texture, writing] binary flags.
@@ -252,13 +256,13 @@ let
 
     -- ==== Bhatkhande thatas (raga scales) =================================
     --   d1 $ that 3   -- Bhairav
-    let that 1 = n "60 62 64 65 67 69 71"
-        that 2 = n "60 62 63 65 67 68 71"
-        that 3 = n "60 61 63 64 66 67 70"
-        that 4 = n "60 61 63 65 66 68 70"
-        that 5 = n "60 62 63 65 67 69 70"
-        that 6 = n "60 61 63 64 66 67 69"
-        that _ = n "60 62 64 65 67 69"
+    let that 1 = n "60 62 64 65 67 69 71" # sound "superpiano" # gain 0.5
+        that 2 = n "60 62 63 65 67 68 71" # sound "superpiano" # gain 0.5
+        that 3 = n "60 61 63 64 66 67 70" # sound "superpiano" # gain 0.5
+        that 4 = n "60 61 63 65 66 68 70" # sound "superpiano" # gain 0.5
+        that 5 = n "60 62 63 65 67 69 70" # sound "superpiano" # gain 0.5
+        that 6 = n "60 61 63 64 66 67 69" # sound "superpiano" # gain 0.5
+        that _ = n "60 62 64 65 67 69" # sound "superpiano" # gain 0.5
 
     -- ==== Maqam ajnas (tetrachords, quarter-tones) ========================
     -- Fractional semitones = quarter tones (24-TET).  d1 $ maqamBayati
@@ -367,7 +371,7 @@ let
     d15 $ interversion "bd sn hh cp" # gain 0.7
 
     -- 13. Glass additive process: 1 → 4 → 7 bd
-    d16 $ glassAdd 4 3 # gain 0.8
+    d16 $ glassAdd 4 1 # gain 0.8
 
     -- 14. Schoenberg 12-tone row (prime form) — serial melody
     --     try also: d8 $ row12 (retr (invert row))   (retrograde inversion)
