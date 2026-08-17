@@ -153,6 +153,67 @@ let
         cell _ = "~"
     let caRule rule n = s (fromString (unwords (map cell (take n (iterate (cstep rule) (1 : replicate (n-1) 0))))))
 
+    -- ==== Serialism: Schoenberg 12-tone row ================================
+    -- Prime form of a row as pitch-class list; operations P/R/I/RI + transposition.
+    --   d1 $ row12 row               -- prime form from C4
+    --   d1 $ row12 (transp 3 row)    -- transposed
+    --   d1 $ row12 (retr (invert row)) -- retrograde inversion
+    let row = [0, 11, 7, 1, 6, 2, 10, 3, 9, 4, 8, 5] :: [Int]
+    let transp t = map (\p -> (p + t) `mod` 12)
+    let invert = map (\p -> (12 - p) `mod` 12)
+    let retr = reverse
+    let row12 r = n (fromString (unwords (map show (map (+60) r)))) # sound "saw" # gain 0.4
+
+    -- ==== Indian talas (rhythmic cycles) ==================================
+    -- Clap-based tala cycles: tintal (16), keharwa (8), dadra (6), rupak (7).
+    --   d1 $ tala tintal # sound "bd"    -- one cycle per bar
+    let tala beats = s (fromString (unwords (replicate (sum beats) "bd")))
+        tintal = [4, 4, 4, 4]
+        keharwa = [4, 4]
+        dadra = [3, 3]
+        rupak = [3, 2, 2]
+
+    -- ==== Greek metrical feet =============================================
+    -- Short/long cells as ready-made patterns.
+    --   d1 $ fast 4 $ iambP      -- u-  (iamb)
+    --   d1 $ fast 4 $ trocheeP   -- -u
+    --   d1 $ fast 4 $ dactylP    -- -uu
+    --   d1 $ fast 4 $ anapestP   -- uu-
+    --   d1 $ fast 4 $ spondeeP   -- --
+    let iambP = s "~ bd"
+        trocheeP = s "bd ~"
+        dactylP = s "bd ~ ~"
+        anapestP = s "~ ~ bd"
+        spondeeP = s "bd bd"
+
+    -- ==== Xenakis & Lutoslawski ==========================================
+    -- Poisson-like density: random hits, decaying gain, at tempo k.
+    --   d1 $ xenakisDensity 4
+    let xenakisDensity k = fast (fromIntegral k) (degradeBy 0.3 (s "bd"))
+    -- Limited aleatorism: fixed pitches, stochastic timing.
+    --   d1 $ aleatoric
+    let aleatoric = degradeBy 0.4 (fast 3 (note (cat [60, 62, 64, 65, 67, 69]) # sound "superpiano"))
+
+    -- ==== Markov 1st-order drums ==========================================
+    -- Weighted 0/1st-order-ish drum groove (re-rolls each cycle).
+    --   d1 $ markovDrums
+    let markovDrums = s (choose (concat [replicate 7 "bd", replicate 3 "sn", replicate 4 "hh"]))
+
+    -- ==== Messiaen: non-retrogradable rhythm + added values ===============
+    -- Palindromic durations (symmetric around center).  d1 $ palindur
+    let palindur = s "bd ~ bd ~ bd"
+    -- Valeur ajoutée: small unit inserted into a regular pattern.
+    --   d1 $ addedValue 4     -- bd hh bd hh bd hh bd
+    let addedValue n = fastcat (concatMap (\i -> if i < n then [s "bd", s "hh"] else [s "bd"]) [1..n])
+
+    -- ==== 1/f noise melody (fractal) ======================================
+    -- Precomputed pink-noise-ish series.  d1 $ fNoise
+    let fNoise = n (fromString "60 63 61 64 62 65 63 60 62 66 64 61") # sound "superpiano" # gain 0.4
+
+    -- ==== Perle cyclic sets ===============================================
+    -- Alternating interval cycles (mod 12).  d1 $ perleCycle 2 3
+    let perleCycle a b = n (fromString (unwords (map show (scanl (\x i -> if even i then (x+a) `mod` 12 else (x+b) `mod` 12) 60 [1..11])))) # sound "saw" # gain 0.3
+
     -- OSC params (pF, pI, pS, ...) come from Sound.Tidal.Params,
     -- re-exported by Sound.Tidal.Boot — no extra import needed.
     -- Sending to an external synth:
@@ -239,6 +300,36 @@ let
 
     -- 13. Glass additive process: 1 → 4 → 7 bd
     d16 $ glassAdd 4 3 # gain 0.8
+
+    -- 14. Schoenberg 12-tone row (prime form) — serial melody
+    --     try also: d8 $ row12 (retr (invert row))   (retrograde inversion)
+    d8 $ row12 row # gain 0.5
+
+    -- 15. Indian tala: tintal (16-beat cycle) as an accent layer
+    d9 $ tala tintal # sound "tabla" # gain 0.6
+
+    -- 16. Greek metrical feet: iamb + trochee polyrhythm
+    d10 $ fast 8 $ iambP # sound "hh" # gain 0.4
+    d11 $ fast 8 $ trocheeP # sound "cp" # gain 0.4
+
+    -- 17. Xenakis Poisson density at tempo 6
+    d12 $ xenakisDensity 6 # sound "bd" # gain 0.6
+
+    -- 18. Lutoslawski limited aleatorism: fixed pitches, ragged timing
+    d13 $ aleatoric
+
+    -- 19. Markov-ish drum groove
+    d14 $ markovDrums # gain 0.7
+
+    -- 20. Messiaen palindur + added values
+    d15 $ palindur # gain 0.5
+    d16 $ addedValue 4 # sound "hh" # gain 0.3
+
+    -- 21. 1/f (pink noise) fractal melody
+    d6 $ fNoise
+
+    -- 22. Perle cyclic set (alternating +2/+3 semitones)
+    d7 $ perleCycle 2 3 # gain 0.4
 
     -- 10. Silence everything (hush: <leader>th)
     -- hush
