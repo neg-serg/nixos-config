@@ -194,7 +194,7 @@ let
         spondeeP = s "bd bd"
 
     -- ==== Xenakis & Lutoslawski ==========================================
-    -- Poisson-like density: random hits, decaying gain, at tempo k.
+    -- Poisson-like density: random hits at tempo k, ~30% dropped (degradeBy).
     --   d1 $ xenakisDensity 4
     let xenakisDensity k = fast (fromIntegral k) (degradeBy 0.3 (s "bd"))
 
@@ -398,14 +398,16 @@ let
     -- Send lines one by one (<M-CR>), each adds a layer.
     -- Start with drums, then bass, then chords, then melody.
 
-    -- 1. Kicks: euclidean pattern (3 hits per 8 steps)
+    -- 1. Kicks: euclidean groove (3 hits per 8 steps)
     d1 $ euclid 3 8 k
 
-    -- 2. Snare on the backbeat
-    d2 $ euclid 3 8 sn # delay 0.25
+    -- 2. Snare on beats 2 and 4 (real backbeat — NOT euclid 3 8, which
+    --    would double the kick; snare slightly late for human feel)
+    d2 $ (0.02 <~) $ s "sn(2,8)"
 
-    -- 3. Hi-hats: steady 8ths, panned
-    d3 $ euclid 4 8 hh # pan 0.5 # gain 0.5
+    -- 3. Hi-hats: quarters (euclid 4 8 = every 8th = quarters at 8 steps),
+    --    centered pan is default — pan 0.5 would be center, not panned
+    d3 $ s "hh(4,8)" # gain 0.5
 
     -- 4. Random groove generator (re-rolls every cycle!)
     d4 $ randomGroove # gain 0.7
@@ -422,8 +424,8 @@ let
     -- 8. Lead melody: arpeggio
     d7 $ note (arp "up" "c4'maj7") # sound "superpiano" # delay 0.3 # room 0.3
 
-    -- 9. Everything together — add swing
-    d1 $ swingBy (1/3) 4 $ euclid 3 8 k
+    -- 9. Everything together — swing the whole kit (not just the kick)
+    d1 $ swingKit (1/3) 4 [s "bd(3,8)", s "sn(2,8)", s "hh(4,8)"] # gain 0.8
 
     -- 9a. Schillinger resultant 3×2: palindrome rhythm
     d8 $ resultant 3 2 # gain 0.7
