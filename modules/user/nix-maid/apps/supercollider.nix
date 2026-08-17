@@ -82,9 +82,10 @@ let
     --   d1 $ randomEuclid 8
     let randomEuclid steps = euclid (irand steps) steps $ sound "bd"
 
-    -- Ambient pad on a random minor chord (re-rolls every 4 cycles).
-    --   d1 $ ambientPad
-    let ambientPad = note (scale "minor" (cat ["c4", "g4", "a4", "f4"])) # sound "superpiano" # room 0.5 # size 0.8 # gain 0.6
+    -- Ambient pad: random chord degree re-rolled each cycle (choose over scale
+    -- degrees), not a fixed cat — the old comment claimed randomness that
+    -- wasn't there.  d1 $ ambientPad
+    let ambientPad = note (scale "minor" (choose [0, 4, 5, 7])) # sound "superpiano" # room 0.5 # size 0.8 # gain 0.6
 
     -- ==== Generative helpers (algorithmic composition) ======================
     -- Runtime strings must be parsed explicitly (mini-notation parses only at
