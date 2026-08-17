@@ -8,18 +8,54 @@ import "../../Helpers/Color.js" as Color
 
 PanelOverlaySurface {
 
-    onVisibleChanged: {
-        if (visible) root._copyLogsToClipboard();
+    // Copy journal problems (error/warn entries) to the clipboard when the
+    // dashboard opens. Invoked by the capsule's opened() signal — the popup's
+    // own `visible` never toggles (the parent overlay window does), so we must
+    // not hook onVisibleChanged here. Retries briefly until journal data is
+    // collected, and aborts if the dashboard is dismissed first.
+    function copyProblemsToClipboard() {
+        root._wantCopy = true;
+        root._copyAttempts = 0;
+        copyRetryTimer.start();
     }
 
-    function _copyLogsToClipboard() {
+    function cancelPendingCopy() {
+        root._wantCopy = false;
+        root._copyAttempts = 0;
+        copyRetryTimer.stop();
+    }
+
+    function _doCopyProblems() {
         var entries = root.logEntries || [];
         var lines = [];
         for (var i = 0; i < entries.length; i++) {
             var e = entries[i];
-            lines.push("[" + e.time + "] " + e.service + ": " + e.message);
+            if (e.level === "error" || e.level === "warn") {
+                lines.push("[" + e.time + "] " + e.service + ": " + e.message);
+            }
         }
         if (lines.length > 0) Quickshell.clipboardText = lines.join("\n");
+    }
+
+    property bool _wantCopy: false
+    property int _copyAttempts: 0
+    Timer {
+        id: copyRetryTimer
+        interval: 200
+        repeat: true
+        onTriggered: {
+            if (!root._wantCopy) { root._copyAttempts = 0; stop(); return; }
+            if (root.journalReady && root.logEntries.length > 0) {
+                root._wantCopy = false;
+                root._copyAttempts = 0;
+                stop();
+                root._doCopyProblems();
+            } else if (++root._copyAttempts > 25) { // ~5s cap, then give up
+                root._wantCopy = false;
+                root._copyAttempts = 0;
+                stop();
+            }
+        }
     }
     id: root
 
