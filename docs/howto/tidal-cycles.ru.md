@@ -25,6 +25,7 @@ flowchart LR
 
 ```bash
 tidalctl start     # запустить движок (SC сервер + SuperDirt, ~2с до звука)
+tidalctl demo      # движок + открыть demo.tidal (многослойный джем)
 tidalctl code      # открыть nvim в ~/src/music/tidal (создаёт при первом запуске)
 tidalctl status    # процессы, OSC-порты, аудиоподключения
 tidalctl stop      # остановить движок
@@ -42,6 +43,40 @@ tidalctl patch     # патчбей ZestBay (distrobox)
 - Услышать kick и snare — всё работает.
 
 Остановка: `Ctrl+Shift+Enter` в nvim, или `tidalctl stop`.
+
+## Музыкальные хелперы (BootTidal.hs)
+
+Сокращения для инструментов (имена папок сэмплов):
+
+```haskell
+k    -- бочка (bd)          sn   -- рабочий (sn)
+hh   -- хай-хэт             cp   -- клэп
+bass -- бас-сэмплы          tab  -- табла
+```
+
+Ритмические фразы (вставляются в `sound`):
+
+```haskell
+d1 $ sound fourOnFloor   -- "bd(4,8) sn(3,8) hh*8"
+d1 $ sound techno        -- "bd*2 sn(3,8) hh*4"
+d1 $ sound halftime      -- "bd(2,8) sn(2,8) hh*6"
+d1 $ sound jungle        -- "bd(3,8) sn(5,8) hh*6"
+```
+
+Генераторы случайности (перевыбираются каждый цикл):
+
+```haskell
+d1 $ randomGroove        -- случайная фраза ударных
+d1 $ randomEuclid 8      -- случайный евклидов кик
+d6 $ ambientPad          -- эмбиент-пад на случайном минорном аккорде
+```
+
+## Демо-джем (tidalctl demo)
+
+`tidalctl demo` поднимает движок и открывает `~/src/music/tidal/demo.tidal` —
+многослойную сцену: отправляй строки сверху вниз (`Alt+Enter`), каждый слой
+добавляется поверх: кик → снейр → хэты → случайный грув → бас → пад → мелодия.
+В конце — `swingBy` и `hush`.
 
 ## Клавиши в nvim
 
