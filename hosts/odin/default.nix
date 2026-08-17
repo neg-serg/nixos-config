@@ -173,7 +173,7 @@ in
   };
   users.main.hashedPasswordFile = config.sops.secrets."user-password-hash".path;
 
-  # Console font (visible before plymouth and on tty1-6)
+  # Console font (visible during early boot and on tty1-6)
   console = {
     earlySetup = true;
     font = "${pkgs.terminus_font}/share/consolefonts/ter-124n.psf.gz";
@@ -246,7 +246,6 @@ in
     adguardhome = { };
     unbound = { };
   };
-  boot.plymouth.enable = false; # Plymouth removed — adds boot delay, splash not needed on this host
 
   environment.systemPackages = [
     pkgs.nodejs # Node.js — required by npx, MCP servers, git hooks

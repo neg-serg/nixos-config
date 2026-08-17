@@ -160,10 +160,6 @@
           wallpaperStyle = "stretched";
           backdrop = "000000";
         };
-        extraConfig = ''
-          # Show boot entries
-          DEFAULT_ENTRY=1
-        '';
       };
     };
 
