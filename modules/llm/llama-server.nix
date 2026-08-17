@@ -8,9 +8,9 @@ let
   enabled = config.lib.neg.enabled "llm";
   cfg = config.services.llama-server;
 
-  # Serve from the main user's home: models live in ~/ai-models (downloaded
-  # manually, not in the store — they are multi-GB and GC would not help).
-  home = config.users.users.${config.users.main.name}.home;
+  # Models live on the zero ZFS pool (downloaded manually, not in the store —
+  # they are multi-GB and GC would not help). Never on system disks.
+  modelDir = "/zero/ai/llama";
 
   modelFile =
     if cfg.model == "30b" then
@@ -51,7 +51,7 @@ in
       default = "30b";
       description = ''
         Which GGUF to serve: `30b` (qwen3-vl-30b-a3b, default) or `8b`
-        (qwen3-vl-8b). Files must exist in `~/ai-models/`.
+        (qwen3-vl-8b). Files must exist in `/zero/ai/llama/`.
       '';
     };
   };
@@ -73,8 +73,8 @@ in
         ExecStart = ''
           ${pkgs.llama-cpp-vulkan}/bin/llama-server \
             --device Vulkan0 \
-            -m ${home}/ai-models/${modelFile} \
-            --mmproj ${home}/ai-models/${mmprojFile} \
+            -m ${modelDir}/${modelFile} \
+            --mmproj ${modelDir}/${mmprojFile} \
             --port ${toString cfg.port} \
             --host 127.0.0.1 \
             -c 8192 \
