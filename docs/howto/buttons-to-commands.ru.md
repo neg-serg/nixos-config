@@ -95,8 +95,9 @@
 ## Шаг 2 (готово): Отправить / Стоп
 
 **Что это.** В правой части поля ввода — главная кнопка: «Отправить»
-(`aria-label="发送消息"`), а во время запуска — «Стоп» (`aria-label="停止生成"`,
-отдельная кнопка при прерываемом запуске субагента).
+(`aria-label="Send message"`), а во время запуска — «Стоп»
+(`aria-label="Stop generating"`, отдельная кнопка при прерываемом запуске
+субагента).
 
 **Замена.**
 - **Отправить** — уже дублируется **Enter** в поле ввода (Shift+Enter — новая
@@ -109,8 +110,8 @@
 CSS:
 
 ```css
-[data-composer-card] button[aria-label="发送消息"],
-[data-composer-card] button[aria-label="停止生成"] {
+[data-composer-card] button[aria-label="Send message"],
+[data-composer-card] button[aria-label="Stop generating"] {
   display: none;
 }
 ```
@@ -151,12 +152,12 @@ CSS:
 [class$="_actions"]`, чтобы не задеть кнопки копирования в блоках кода):
 
 ```css
-[data-time-hover-root] [class$="_actions"] [aria-label="复制"],
-[data-time-hover-root] [class$="_actions"] [aria-label="复制成功"],
-[data-time-hover-root] [class$="_actions"] [aria-label="在新对话中分支"],
-button[aria-label="编辑排队消息"],
-button[aria-label="删除排队消息"],
-button[aria-label="插话发送"] {
+[data-time-hover-root] [class$="_actions"] [aria-label="Copy"],
+[data-time-hover-root] [class$="_actions"] [aria-label="Copied"],
+[data-time-hover-root] [class$="_actions"] [aria-label="Branch into a new conversation"],
+button[aria-label="Edit queued message"],
+button[aria-label="Remove queued message"],
+button[aria-label="Steer queued message"] {
   display: none;
 }
 ```
@@ -166,7 +167,7 @@ button[aria-label="插话发送"] {
 
 ## Шаг 5 (готово): сайдбар — новый чат и переключение сессий
 
-**Что это.** Кнопки «新建会话» в сайдбаре (их две: бренд-слово и подписанная
+**Что это.** Кнопки «New session» в сайдбаре (их две: бренд-слово и подписанная
 кнопка с иконкой — обе вызывают `startSession`) и список сессий
 (`role="treeitem"` с `aria-selected`; строки папок воркспейсов — с
 `aria-expanded`, поэтому не путаются). Хоткеев не было.
@@ -179,7 +180,7 @@ button[aria-label="插话发送"] {
 | `Ctrl+Alt+N` | новый чат (быстрый хоткей) |
 | `Ctrl+Alt+J` | следующая сессия в списке сайдбара |
 | `Ctrl+Alt+K` | предыдущая сессия |
-| `Ctrl+Alt+W` | выбрать рабочую папку (когда поле ввода — триггер «选择工作区»; Enter в фокусе тоже работает из коробки) |
+| `Ctrl+Alt+W` | выбрать рабочую папку (когда поле ввода — триггер «Choose workspace»; Enter в фокусе тоже работает из коробки) |
 
 **Команда `/new` — как это устроено.** Слэш-команды dsh выполняются на хосте
 (`ctx.commands.register`), а «новый чат» — клиентское действие, поэтому хостовой
@@ -194,7 +195,7 @@ button[aria-label="插话发送"] {
 CSS:
 
 ```css
-button[aria-label="新建会话"] {
+button[aria-label="New session"] {
   display: none;
 }
 [data-source="local"] {
