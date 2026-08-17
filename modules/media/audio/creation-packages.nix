@@ -50,19 +50,22 @@ in
     # rules and the plugin chain alive so no manual wiring is needed.
     # Tray mode: Preferences → "start minimized" / "close to tray" (stored in
     # ~/.config/zestbay/preferences.json).
-    systemd.user.services.zestbay = {
-      description = "ZestBay PipeWire patchbay and plugin host (distrobox)";
-      after = [
-        "pipewire.service"
-        "wireplumber.service"
-      ];
-      wantedBy = [ "graphical-session.target" ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${pkgs.distrobox}/bin/distrobox-enter arch-zestbay -- zestbay";
-        Restart = "on-failure";
-        RestartSec = 5;
-      };
-    };
+    # --- COMMENTED OUT: arch-zestbay container was removed; the service would
+    # --- restart-fail in a loop. Recreate the container (and ZestBay install)
+    # --- before re-enabling. The `zest` CLI remains available.
+    # systemd.user.services.zestbay = {
+    #   description = "ZestBay PipeWire patchbay and plugin host (distrobox)";
+    #   after = [
+    #     "pipewire.service"
+    #     "wireplumber.service"
+    #   ];
+    #   wantedBy = [ "graphical-session.target" ];
+    #   serviceConfig = {
+    #     Type = "simple";
+    #     ExecStart = "${pkgs.distrobox}/bin/distrobox-enter arch-zestbay -- zestbay";
+    #     Restart = "on-failure";
+    #     RestartSec = 5;
+    #   };
+    # };
   };
 }
