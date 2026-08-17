@@ -21,6 +21,14 @@ in
     src = ./../files/sources/carla-2.5.10.tar.gz;
   });
 
+  # dpkg: nixpkgs fetches the source from git.launchpad.net (unreachable from
+  # this region); vendor the official Debian release tarball (has .dist-version,
+  # which get-version needs) instead. dpkg is needed by ocenaudio and
+  # cloudflare-warp to unpack .debs.
+  dpkg = finalPrev.dpkg.overrideAttrs (_: {
+    src = ./../files/sources/dpkg-1.23.7.tar.xz;
+  });
+
   # GHCi with TidalCycles library preloaded — used by tidal.nvim
   tidal-ghci = final.writeShellScriptBin "tidal-ghci" ''
     exec ${final.ghc.withPackages (ps: [ ps.tidal ])}/bin/ghci "$@" # TidalCycles GHCi wrapper
