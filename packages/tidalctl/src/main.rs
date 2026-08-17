@@ -6,6 +6,7 @@
 
 use std::env;
 use std::fs;
+use std::io::IsTerminal;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::thread;
@@ -18,6 +19,46 @@ const OSC_PORT: u16 = 57120;
 const SC_PORT: u16 = 57110;
 const STARTUP: &str = ".config/SuperCollider/superdirt_startup.scd";
 const SCLANG_CONF: &str = ".config/SuperCollider/sclang_conf.yaml";
+
+/// Minimal ANSI styling — no extra dependencies. Colors are emitted only when
+/// stdout is a terminal and NO_COLOR is unset; piped output stays plain.
+struct Style {
+    color: bool,
+}
+
+impl Style {
+    fn new() -> Self {
+        let color = std::io::stdout().is_terminal() && env::var_os("NO_COLOR").is_none();
+        Style { color }
+    }
+
+    fn paint(&self, code: &str, text: &str) -> String {
+        if self.color {
+            format!("\x1b[{code}m{text}\x1b[0m")
+        } else {
+            text.to_string()
+        }
+    }
+
+    fn bold(&self, text: &str) -> String {
+        self.paint("1", text)
+    }
+    fn dim(&self, text: &str) -> String {
+        self.paint("2", text)
+    }
+    fn green(&self, text: &str) -> String {
+        self.paint("32", text)
+    }
+    fn green_bold(&self, text: &str) -> String {
+        self.paint("1;32", text)
+    }
+    fn yellow_bold(&self, text: &str) -> String {
+        self.paint("1;33", text)
+    }
+    fn cyan_bold(&self, text: &str) -> String {
+        self.paint("1;36", text)
+    }
+}
 
 #[derive(Parser)]
 #[command(
@@ -223,34 +264,82 @@ fn stop() -> Result<()> {
 }
 
 fn status() -> Result<()> {
+    let style = Style::new();
     let engine_up = port_listening(OSC_PORT);
     let server_up = port_listening(SC_PORT);
     let pid = read_pid()?;
+    let scsynth_pids = find_scsynth_pids();
 
-    println!("TidalCycles engine status:");
-    println!(
-        "  sclang pid:      {}",
-        match pid {
-            Some(p) if proc_alive(p) => p.to_string(),
-            _ => "not running".into(),
-        }
-    );
-    println!(
-        "  scsynth:         {}",
-        if find_scsynth_pids().is_empty() {
-            "not running"
-        } else {
-            "running"
-        }
-    );
-    println!(
-        "  OSC :{OSC_PORT} (SuperDirt): {}",
-        if engine_up { "OPEN" } else { "closed" }
-    );
-    println!(
-        "  OSC :{SC_PORT} (scsynth):    {}",
-        if server_up { "OPEN" } else { "closed" }
-    );
+    let header = "TidalCycles engine status";
+    println!("{}", style.cyan_bold(header));
+    println!("{}", style.dim(&"─".repeat(header.chars().count())));
+
+    // One row per subsystem: aligned label, status dot, styled status text.
+    let row = |label: &str, ok: bool, status: String| {
+        println!(
+            "  {label:<12}{} {status}",
+            if ok {
+                style.green("●")
+            } else {
+                style.dim("○")
+            }
+        );
+    };
+
+    // sclang: prefer the recorded pid; if the engine is up but no pid was
+    // recorded (started outside tidalctl), say so instead of "not running".
+    match pid {
+        Some(p) if proc_alive(p) => row("sclang", true, style.green_bold(&p.to_string())),
+        _ if engine_up => row("sclang", true, style.green_bold("running (pid unknown)")),
+        _ => row("sclang", false, style.dim("not running")),
+    }
+
+    if scsynth_pids.is_empty() {
+        row("scsynth", false, style.dim("not running"));
+    } else {
+        let pids = scsynth_pids
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join(", ");
+        row(
+            "scsynth",
+            true,
+            format!(
+                "{} {}",
+                style.green_bold("running"),
+                style.dim(&format!("(pid {pids})"))
+            ),
+        );
+    }
+
+    if engine_up {
+        row(
+            "SuperDirt",
+            true,
+            style.green_bold(&format!("UDP {OSC_PORT} open")),
+        );
+    } else {
+        row(
+            "SuperDirt",
+            false,
+            style.dim(&format!("UDP {OSC_PORT} closed")),
+        );
+    }
+
+    if server_up {
+        row(
+            "scsynth",
+            true,
+            style.green_bold(&format!("UDP {SC_PORT} open")),
+        );
+    } else {
+        row(
+            "scsynth",
+            false,
+            style.dim(&format!("UDP {SC_PORT} closed")),
+        );
+    }
 
     match Command::new("pw-link").arg("-l").output() {
         Ok(out) => {
@@ -259,15 +348,35 @@ fn status() -> Result<()> {
                 .lines()
                 .filter(|l| l.contains("SuperCollider:out"))
                 .count();
-            println!("  audio links:     {linked} SuperCollider out ports linked");
+            if linked > 0 {
+                row(
+                    "audio links",
+                    true,
+                    style.green_bold(&format!("{linked} SuperCollider out ports linked")),
+                );
+            } else {
+                row(
+                    "audio links",
+                    false,
+                    style.dim("no SuperCollider out ports linked"),
+                );
+            }
         }
-        Err(_) => println!("  audio links:     (pw-link unavailable)"),
+        Err(_) => row("audio links", false, style.dim("(pw-link unavailable)")),
     }
 
     if engine_up {
-        println!("\nReady. Open the editor:  tidalctl code");
+        println!(
+            "\n{} Open the editor:  {}",
+            style.green_bold("Ready."),
+            style.bold("tidalctl code")
+        );
     } else {
-        println!("\nEngine is down. Start it:  tidalctl start");
+        println!(
+            "\n{} Start it:  {}",
+            style.yellow_bold("Engine is down."),
+            style.bold("tidalctl start")
+        );
     }
     Ok(())
 }
