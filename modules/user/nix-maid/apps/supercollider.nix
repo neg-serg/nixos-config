@@ -110,10 +110,11 @@ let
     --   d2 $ slow 4 $ (0.5 <~) $ colotom 4 "supermandolin" -- kenong, half-cycle off
     let colotom n nm = s (fromString (unwords [ if i == 0 then nm else "~" | i <- [0 .. n - 1] ]))
 
-    -- Weighted chord progression (Melodique-style: I, IV, V, vi attraction,
-    -- weights 4/3/2/2 — a 0th-order Markov choice over scale degrees,
-    -- re-rolls every cycle).  d1 $ weightedChords
-    let weightedChords = note (scale "minor" (choose [0, 0, 0, 0, 3, 3, 3, 4, 4, 5, 5])) # sound "superpiano" # room 0.4 # gain 0.7
+    -- Weighted chord progression in C minor: i, iv, v, VI with weights 4/3/2/2
+    -- (0th-order Markov over chords, re-rolled each cycle). NB: `scale` gives
+    -- single notes, not chords — use chord names via mini-notation instead.
+    --   d1 $ weightedChords
+    let weightedChords = n (cat (concatMap (\(c, w) -> replicate w c) [("c4'minor", 4), ("f4'minor", 3), ("g4'minor", 2), ("ab4'major", 2)])) # sound "superpiano" # room 0.4 # gain 0.7
 
     -- Reich phasing: the same 8-step pattern on two layers, one drifting via
     -- a slightly different tempo (Clapping Music / Piano Phase idiom).
@@ -261,9 +262,10 @@ let
     --   d1 $ addedValue 4     -- bd hh bd hh bd hh bd
     let addedValue n = fastcat (concatMap (\i -> if i < n then [s "bd", s "hh"] else [s "bd"]) [1..n])
 
-    -- ==== 1/f noise melody (fractal) ======================================
-    -- Precomputed pink-noise-ish series.  d1 $ fNoise
-    let fNoise = n (fromString "60 63 61 64 62 65 63 60 62 66 64 61") # sound "superpiano" # gain 0.4
+    -- ==== Noise melody ====================================================
+    -- NOT true 1/f — just a fixed chromatic-ish walk with small steps;
+    -- renamed honestly.  d1 $ noiseMel
+    let noiseMel = n (fromString "60 63 61 64 62 65 63 60 62 66 64 61") # sound "superpiano" # gain 0.4
 
     -- ==== Perle cyclic sets ===============================================
     -- Alternating interval cycles (mod 12). (a,b)=(1,6) visits all 12 pitch
@@ -304,9 +306,10 @@ let
         yavorsky _ = n "60 62 64 65 67 69" # sound "superhex" # gain 0.4
 
     -- ==== Kholopova: parametric complex ===================================
-    -- [articulation, melody, rhythm, texture, writing] binary flags.
+    -- [articulation, melody, rhythm, texture, writing] binary flags, all 5
+    -- used: legato/staccato, melodic contour, tempo, gain, pan.
     --   d1 $ holopova [1,0,1,1,0]
-    let holopova ps = fast (if ps !! 2 == 1 then 2 else 1) (note (cat [60, 62, 64, 65]) # sound "superpiano" # (if ps !! 0 == 1 then legato 0.9 else legato 0.3) # gain (if ps !! 1 == 1 then 0.8 else 0.5))
+    let holopova ps = fast (if ps !! 2 == 1 then 2 else 1) (note (if ps !! 1 == 1 then cat [60, 62, 64, 65] else cat [67, 64, 62, 60]) # sound "superpiano" # (if ps !! 0 == 1 then legato 0.9 else legato 0.3) # gain (if ps !! 3 == 1 then 0.7 else 0.5) # pan (if ps !! 4 == 1 then 0.3 else 0.7))
 
     -- ==== Bhatkhande thatas (raga scales) =================================
     -- Only the scales that actually exist in Bhatkhande's 10-thata scheme:
@@ -329,7 +332,8 @@ let
     -- ==== Gamelan slendro / pelog (microtonal tunings) ====================
     --   d1 $ slendro   d1 $ pelog
     let slendro = n "60 62.4 64.8 67.2 69.6" # sound "superhex" # gain 0.4
-    let pelog = n "60 61.3 63.4 66.1 67.9 70.8 73.2" # sound "superhex" # gain 0.4
+    -- pelog compressed to one octave (7 tones within 12 semitones)
+    let pelog = n "60 61.3 63.4 66.1 67.9 70.8 72" # sound "superhex" # gain 0.4
 
     -- ==== Xenakis: boolean algebra over pitch sets (Herma) ================
     -- Set ops as pure functions; herma applies one to two pc sets.
@@ -473,11 +477,14 @@ let
     d14 $ palindur # gain 0.5
     d15 $ addedValue 4 # sound "hh" # gain 0.3
 
-    -- 20. 1/f (pink noise) fractal melody
-    d16 $ fNoise
+    -- 20. Noise melody (fixed chromatic-ish walk)
+    d16 $ noiseMel
 
-    -- 21. Perle cyclic set (alternating +2/+3 semitones)
-    d7 $ perle12 1 6 # gain 0.4
+    -- 21. Harmonic foundation: i–iv–V7–i progression + cadence + bass roots.
+    --     (This replaces the perle12 line that used to kill the d7 arpeggio.)
+    d7 $ progCminor # gain 0.6
+    d8 $ slow 8 $ cadence # gain 0.6
+    d9 $ bassCminor # gain 0.8
 
     -- 22. Hindemith: consonant triad, gain scaled by Series-1 rank
     d8 $ note (cat [60, 64, 67]) # sound "superpiano" # gain (fromIntegral (7 - hindemithRank 4) / 7) # delay 0.3
