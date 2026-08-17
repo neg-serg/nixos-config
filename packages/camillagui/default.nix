@@ -12,16 +12,14 @@
 let
   # Runtime Python environment: backend needs aiohttp + websocket + yaml/json
   # (numpy/matplotlib are optional in the deps — pure-Python fallbacks are used).
-  pythonEnv = python3.withPackages (
-    ps: [
-      ps.aiohttp
-      ps.jsonschema
-      ps.pyyaml
-      ps.websocket-client
-      pycamilladsp
-      pycamilladsp-plot
-    ]
-  );
+  pythonEnv = python3.withPackages (ps: [
+    ps.aiohttp
+    ps.jsonschema
+    ps.pyyaml
+    ps.websocket-client
+    pycamilladsp
+    pycamilladsp-plot
+  ]);
 in
 stdenv.mkDerivation rec {
   pname = "camillagui";
