@@ -16,12 +16,15 @@ cd "$HYPR_DIR"
 
 echo "Checking Hyprland variable definitions..."
 
-# Collect all variable definitions ($name = value)
-defined_vars=$(grep -rhoE '^\$[a-zA-Z_][a-zA-Z0-9_]*\s*=' . 2> /dev/null \
+# Collect all variable definitions ($name = value).
+# Only hyprlang *.conf files are scanned: hyprland.lua is Lua, where any
+# $var appears inside shell command strings (exec_cmd), not as a hyprlang
+# variable, so it must not participate in this check.
+defined_vars=$(grep -rhoE --include='*.conf' '^\$[a-zA-Z_][a-zA-Z0-9_]*\s*=' . 2> /dev/null \
   | sed 's/\s*=$//' | sort -u || true)
 
 # Collect all variable usages ($name)
-used_vars=$(grep -rhoE '\$[a-zA-Z_][a-zA-Z0-9_]*' . 2> /dev/null \
+used_vars=$(grep -rhoE --include='*.conf' '\$[a-zA-Z_][a-zA-Z0-9_]*' . 2> /dev/null \
   | grep -v '^\$HOME' \
   | grep -v '^\$USER' \
   | grep -v '^\$XDG_' \
@@ -39,6 +42,22 @@ for var in $used_vars; do
         ;;
       '$TIME' | '$LAYOUT' | '$FAIL' | '$ATTEMPTS')
         # Hyprlock variables
+        ;;
+      '$wallbash_'*)
+        # HyDE/wallbash runtime colors — filled in by the wallbash engine
+        # from the active wallpaper in the HyDE hyprlock layout templates
+        # (Anurati, Arfan_on_Clouds, IBM_Plex, …); never defined statically
+        ;;
+      '$col_border_active_base' | '$LAYOUT_PATH' | '$resolve' | '$WEATHER_LOCATION')
+        # HyDE hyprlock template variables: $col_border_active_base is a
+        # wallbash color, $LAYOUT_PATH is set by the HyDE layout selector,
+        # $resolve.font=… is the HyDE font-resolver directive, and
+        # $WEATHER_LOCATION is a shell env var consumed by the $WEATHER_CMD
+        # curl call inside a cmd[] string
+        ;;
+      '$NAME')
+        # Shell environment variable from /etc/os-release used inside a
+        # cmd[] string (${PRETTY_NAME:-$NAME})
         ;;
       *)
         echo "WARNING: Variable $var used but not defined"
