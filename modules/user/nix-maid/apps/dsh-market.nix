@@ -179,6 +179,8 @@ let
       disabled: true
     - id: ssh
       disabled: true
+    - id: ui-git-graph
+      disabled: true
     YAML
             fi
 
