@@ -40,10 +40,13 @@ just tidal          # открывает nvim для кодинга (созда�
 
 | Клавиша            | Действие                    | Контекст        |
 | ------------------ | --------------------------- | --------------- |
-| `Ctrl+Enter`       | Запустить Tidal + SuperDirt | `.tidal` файл   |
+| `Ctrl+Enter`       | Запустить Tidal (GHCi)      | `.tidal` файл   |
 | `Ctrl+Shift+Enter` | Остановить Tidal            | `.tidal` файл   |
 | `Alt+Enter`        | Отправить строку в Tidal    | `.tidal` файл   |
-| `Ctrl+Enter`       | Запустить GHCi              | из `just tidal` |
+
+> **Важно**: SuperDirt-движок запускается **только** через `just tidal-start` (отдельный
+> терминал) — tidal.nvim сам sclang не поднимает (без PipeWire-jack окружения scsynth падает
+> с «jack server is not running»). Tidal из nvim подключается к уже работающему SuperDirt.
 
 ## Как это устроено (детали реализации)
 
