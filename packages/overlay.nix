@@ -40,6 +40,7 @@ in
       dirt-samples = final.callPackage ./dirt-samples { }; # audio sample library for SuperDirt
       vowel = final.callPackage ./vowel { }; # Vowel SC quark (formant tables) used by SuperDirt
       dsh = final.callPackage ./dsh { }; # DeepSeek Harness agent CLI (dsh)
+      zest = final.callPackage ./zest { }; # CLI for ZestBay plugin management (LV2 add/rm/list)
     };
 
   # tmd-top: real-time per-IP network traffic monitor (TUI) — pinned textual 1.0.0
