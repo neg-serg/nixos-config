@@ -151,23 +151,15 @@ in
       };
     };
 
-    # Browser UI font override via Vivaldi Custom UI Modifications.
-    # Managed policies above only affect webpage fonts, not the browser chrome.
-    # This CSS overrides the hardcoded Linux UI font-family in Vivaldi's common.css
-    # (Cantarell / Noto Sans → Iosevka).
-    # To activate: enable "Allow for using CSS modifications" in vivaldi://experiments,
-    # then set Settings → Appearance → Custom UI Modifications → /etc/vivaldi/custom-ui/
-    environment.etc."vivaldi/custom-ui/vivaldi-ui-font.css" = {
-      mode = "0444";
-      text = ''
-        /* Override Vivaldi browser UI font on Linux — Iosevka, bigger and bolder */
-        *, *:before, *:after {
-          font-family: "Iosevka Proportional" !important;
-          font-size: 15px !important;
-          font-weight: 600 !important;
-        }
-      '';
-    };
+    # Browser UI font override lives in the active CSS mods directory
+    # (~/.config/vivaldi/css-mods/ui-font.css → files/vivaldi/ui-font.css,
+    # symlinked in modules/user/nix-maid/web/browsing.nix). It sets
+    # Iosevka Proportional across the whole browser chrome (Vivaldi's common.css
+    # hardcodes Cantarell/Noto Sans for the Linux UI font; the * rule with
+    # !important outranks it). Previously this was /etc/vivaldi/custom-ui/
+    # (environment.etc, manual Settings activation) — but the oneshot below
+    # re-asserts css_ui_mods_directory to ~/.config/vivaldi/css-mods at login,
+    # so that directory was never active. One mechanism only now.
 
     # Point Vivaldi's CSS mods directory at the profile mods folder so the
     # compact address bar mod loads. The css_ui_mods_directory pref is empty by
