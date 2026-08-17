@@ -45,18 +45,26 @@
       "11-lan" = {
         matchConfig.Name = "net1";
         networkConfig = {
-          DHCP = "ipv4";
+          # Static LAN address (previously DHCP): stable for the phone remote
+          # panel — dsh-lan-proxy binds 192.168.2.87:3080 — and for br0 NAT.
+          # Keep .87 out of the router's DHCP pool (reserve it) to avoid a
+          # duplicate-address conflict.
+          Address = "192.168.2.87/24";
           KeepConfiguration = "yes";
         };
+        # Default route via the router, same metric the DHCP lease used
+        # (lowest wins → default route via 10G).
+        routes = [
+          {
+            Destination = "0.0.0.0/0";
+            Gateway = "192.168.2.1";
+            Metric = 10;
+          }
+        ];
         # net1 is optional (e.g. unplugged 10G), don't wait for it
         linkConfig = {
           RequiredForOnline = "no";
           ActivationPolicy = "always-up";
-        };
-        dhcpV4Config = {
-          UseDNS = false; # DNS pinned to local Unbound (127.0.0.1#5353); don't import router DNS
-          UseRoutes = true;
-          RouteMetric = 10; # lowest metric wins → default route via 10G
         };
       };
     };
