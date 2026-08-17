@@ -84,6 +84,38 @@ let
     --   d1 $ ambientPad
     let ambientPad = note (scale "minor" (cat ["c4", "g4", "a4", "f4"])) # sound "superpiano" # room 0.5 # size 0.8 # gain 0.6
 
+    -- ==== Generative helpers (algorithmic composition) ======================
+    -- Schillinger resultant: attacks where either generator (periods a, b)
+    -- lands, within a*b steps — pure-arithmetic rhythm generator, always a
+    -- palindrome.  d1 $ resultant 3 2  →  "bd ~ bd bd bd ~"
+    let resultant a b = s (unwords [ if i `mod` a == 0 || i `mod` b == 0 then "bd" else "~" | i <- [0 .. a * b - 1] ])
+
+    -- Xenakis sieve: one modulus m, hits where i mod m ∈ residues rs.
+    --   d1 $ sieve 12 [0,1]   →  octatonic pulse (residue classes {0,1} mod 12)
+    let sieve m rs = s (unwords [ if i `mod` m `elem` rs then "bd" else "~" | i <- [0 .. m - 1] ])
+
+    -- Colotomy layer (gamelan): one hit at the start of each n-step cycle;
+    -- layer several at different speeds for nested modular cycles.
+    --   d1 $ slow 4 $ colotom 4 "gong"             -- gong every 16 steps
+    --   d2 $ slow 4 $ (0.5 <~) $ colotom 4 "kenong" -- kenong, half-cycle off
+    let colotom n nm = s (unwords [ if i == 0 then nm else "~" | i <- [0 .. n - 1] ])
+
+    -- Weighted chord progression (Melodique-style: I, IV, V, vi attraction,
+    -- weights 4/3/2/2 — a 0th-order Markov choice, re-rolls every cycle).
+    --   d1 $ weightedChords
+    let weightedChords = note (choose (expand [("c4'maj7", 4), ("f4'maj7", 3), ("g4'maj7", 2), ("a4'min7", 2)])) # sound "superpiano" # room 0.4 # gain 0.7
+        expand ws = concatMap (\(c, w) -> replicate w c) ws
+
+    -- Reich phasing: the same 8-step pattern on two layers, one drifting via
+    -- a slightly different tempo (Clapping Music / Piano Phase idiom).
+    --   d1 $ phase8
+    --   d2 $ phase8 # speed 1.01    -- d2 slowly overtakes d1
+    let phase8 = sound "bd*8"
+
+    -- Messiaen mode 2 (octatonic) as explicit notes — no scale definition
+    -- needed.  d1 $ octatonic
+    let octatonic = note (cat ["c4", "db4", "eb4", "f4", "gb4", "ab4", "a4", "b4"]) # sound "saw" # gain 0.4
+
     -- OSC params (pF, pI, pS, ...) come from Sound.Tidal.Params,
     -- re-exported by Sound.Tidal.Boot — no extra import needed.
     -- Sending to an external synth:
@@ -106,8 +138,10 @@ let
     d1 $ sound "bd sn"
     d1 $ sound "bd(3,8) sn(5,8)" # gain 0.9
     d2 $ sound "hh*4" # pan 0.5
-    -- user samples: drop folders into ~/src/music/tidal/samples/,
+    -- user samples: drop folders into ~/src/art/music/tidal/samples/,
     -- then `d1 $ sound "myname"` (folder name = sound name)
+    -- generative helpers (defined in BootTidal.hs):
+    --   d1 $ resultant 3 2      d1 $ sieve 12 [0,1]      d1 $ weightedChords
   '';
 
   # Multi-layer jam scene: send lines top-to-bottom, each adds a layer.
@@ -143,6 +177,19 @@ let
 
     -- 9. Everything together — add swing
     d1 $ swingBy (1/3) 4 $ euclid 3 8 k
+
+    -- 9a. Schillinger resultant 3×2: palindrome rhythm
+    d8 $ resultant 3 2 # gain 0.7
+
+    -- 9b. Xenakis sieve: octatonic pulse (classes {0,1} mod 12)
+    d9 $ sieve 12 [0,1] # sound "hh" # gain 0.4
+
+    -- 9c. Weighted chord progression (I/IV/V/vi, Melodique-style)
+    d10 $ weightedChords
+
+    -- 9d. Gamelan colotomy: gong + kenong layered at nested speeds
+    d11 $ slow 4 $ colotom 4 "gong"
+    d12 $ slow 4 $ (0.5 <~) $ colotom 4 "kenong" # gain 0.8
 
     -- 10. Silence everything (hush: <leader>th)
     -- hush
