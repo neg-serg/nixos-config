@@ -218,8 +218,14 @@ OverlayToggleCapsule {
 
     overlayChildren: [
         SystemMonitorPopup {
+            id: monitorPopup
             screen: root.screen
             scaleHint: capsuleScale
         }
     ]
+
+    // Copy journal problems to clipboard each time the dashboard opens;
+    // cancel a pending copy if it is dismissed before data is ready.
+    onOpened: monitorPopup.copyProblemsToClipboard()
+    onDismissed: monitorPopup.cancelPendingCopy()
 }
