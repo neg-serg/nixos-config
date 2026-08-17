@@ -534,6 +534,12 @@ fn timestamp() -> String {
 }
 
 fn main() -> Result<()> {
+    // Rust ignores SIGPIPE by default, which makes `tidalctl status | head`
+    // panic on EPIPE instead of exiting quietly — restore the default so
+    // piped output behaves like any other CLI.
+    unsafe {
+        libc::signal(libc::SIGPIPE, libc::SIG_DFL);
+    }
     let cli = Cli::parse();
     match cli.command {
         Commands::Start => start(),
