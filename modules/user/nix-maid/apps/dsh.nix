@@ -18,7 +18,37 @@ let
 in
 {
   # DeepSeek Harness (dsh) — agent harness, everything is a plugin.
-  # Web UI served at http://127.0.0.1:3080 by default.
+  # Web UI: desktop at http://127.0.0.1:3080. For the phone remote panel
+  # (dsh-remote-web-ui) a narrow LAN socket (systemd-socket-proxyd) forwards
+  # 192.168.2.87:3080 → 127.0.0.1:3080, so dsh itself never binds anything
+  # wider than loopback. The firewall opens port 3080 ONLY on the LAN uplink
+  # (net1) — nothing else is exposed.
+  networking.firewall.interfaces.net1.allowedTCPPorts = [ 3080 ];
+
+  # LAN phone pairing socket: listens exactly on the LAN address. The /api
+  # trust fence accepts this authority via the web-runtime override in
+  # dsh-market.nix; the panel URL comes from the remote-web-ui
+  # `publicBaseUrl` setting (settings.yaml).
+  systemd.user.sockets.dsh-lan-proxy = {
+    enable = true;
+    description = "dsh LAN phone proxy socket (192.168.2.87:3080)";
+    wantedBy = [ "sockets.target" ];
+    socketConfig = {
+      ListenStream = "192.168.2.87:3080";
+    };
+  };
+
+  systemd.user.services.dsh-lan-proxy = {
+    enable = true;
+    description = "dsh LAN phone proxy — forwards 192.168.2.87:3080 to 127.0.0.1:3080";
+    after = [ "dsh.service" ];
+    wants = [ "dsh.service" ];
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "/run/current-system/sw/lib/systemd/systemd-socket-proxyd 127.0.0.1:3080";
+    };
+  };
+
   systemd.user.services.dsh = {
     enable = true;
     description = "DeepSeek Harness (dsh) — agent harness Web UI";
