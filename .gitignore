@@ -9,3 +9,37 @@ packages/target/
 .omo/
 files/shell/zsh/.zcompdump
 viz/
+
+# Binary/compressed blobs — don't let them sneak in accidentally
+*.xz
+*.gz
+*.tgz
+*.txz
+*.bz2
+*.tbz2
+*.zst
+*.lz4
+*.zip
+*.7z
+*.rar
+*.tar
+*.iso
+*.img
+*.qcow2
+*.dmg
+*.deb
+*.rpm
+*.apk
+*.whl
+*.jar
+*.exe
+*.msi
+*.dll
+*.so
+*.dylib
+*.o
+*.a
+*.bin
+# ...except deliberately vendored sources (packages/overlay.nix)
+!files/sources/
+!files/sources/**
