@@ -37,11 +37,11 @@ enum Commands {
     Stop,
     /// Show engine status: processes, OSC ports, audio links
     Status,
-    /// Open the Tidal workspace in nvim (creates ~/src/music/tidal on first use)
+    /// Open the Tidal workspace in nvim (creates ~/src/art/music/tidal on first use)
     Code,
     /// Create a new .tidal file and open it
     New { name: String },
-    /// Record SuperDirt output to ~/src/music/tidal/recordings/
+    /// Record SuperDirt output to ~/src/art/music/tidal/recordings/
     Record,
     /// Live PipeWire monitor (pw-top)
     Monitor,
@@ -273,7 +273,7 @@ fn status() -> Result<()> {
 }
 
 fn ensure_workspace() -> Result<PathBuf> {
-    let dir = home()?.join("src/music/tidal");
+    let dir = home()?.join("src/art/music/tidal");
     fs::create_dir_all(dir.join("samples")).context("create ~/src/music/tidal/samples")?;
     fs::create_dir_all(dir.join("recordings")).context("create recordings dir")?;
     Ok(dir)

@@ -23,7 +23,7 @@ let
     s.options.numOutputBusChannels = 2;
     s.options.numInputBusChannels = 2;
     s.waitForBoot {
-      var userSamples = Platform.userHomeDir +/+ "src/music/tidal/samples";
+      var userSamples = Platform.userHomeDir +/+ "src/art/music/tidal/samples";
       try {
         ~dirt = SuperDirt(2, s);
         // Explicit sample paths — do NOT rely on loadSoundFiles' default
@@ -174,8 +174,8 @@ in
       ".local/share/SuperCollider/Extensions/SC3plugins".source =
         "${pkgs.supercolliderPlugins.sc3-plugins}/share/SuperCollider/Extensions/SC3plugins";
       # Tidal workspace: starter file + demo jam + user samples dir
-      "src/music/tidal/scratch.tidal".text = scratchTidal;
-      "src/music/tidal/demo.tidal".text = demoTidal;
+      "src/art/music/tidal/scratch.tidal".text = scratchTidal;
+      "src/art/music/tidal/demo.tidal".text = demoTidal;
     };
   };
 }
