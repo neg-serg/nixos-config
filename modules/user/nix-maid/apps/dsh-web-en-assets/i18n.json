@@ -1,0 +1,89 @@
+{
+  "@0xsline/dsh-spotlight/lib/client.js": {
+    "\"^(?:settings?|设置)$\"": "\"^(?:settings?)$\"",
+    "\"^(?:plugins?|插件)$\"": "\"^(?:plugins?)$\"",
+    "\"^(?:new (?:chat|session|conversation)|新建(?:会话|对话|聊天))$\"": "\"^(?:new (?:chat|session|conversation))$\"",
+    "\"^(?:new (?:chat|session|conversation)|新建(?:会话|对话|聊天)|send message|发送消息|close|关闭(?:详情)?|commands?|命令)$\"": "\"^(?:new (?:chat|session|conversation)|send message|close|commands?)$\"",
+    "\"聚焦输入框\"": "\"Focus composer\"",
+    "\"新建会话\"": "\"New conversation\"",
+    "\"打开插件设置\"": "\"Open plugin settings\"",
+    "\"跳到会话开头\"": "\"Jump to start\"",
+    "\"跳到会话末尾\"": "\"Jump to end\"",
+    "\"输入\"": "\"composer\"",
+    "\"插件\"": "\"plugins\"",
+    "\"开头\"": "\"start\"",
+    "\"末尾\"": "\"end\"",
+    "\"界面操作 · UI action\"": "\"UI action\"",
+    "\"运行中\"": "\"Running\"",
+    "\"最近会话 · Recent session\"": "\"Recent session\"",
+    "\" · 已禁用\"": "\" · disabled\"",
+    "action: \"操作\"": "action: \"Action\"",
+    "command: \"命令\"": "command: \"Command\"",
+    "session: \"会话\"": "session: \"Session\"",
+    "plugin: \"插件\"": "plugin: \"Plugin\"",
+    "\"搜索操作、命令、会话或插件…\"": "\"Search actions, commands, sessions or plugins…\"",
+    "\"设置 Spotlight 快捷键\"": "\"Set Spotlight shortcut\"",
+    "\"恢复默认快捷键\"": "\"Reset to default shortcut\"",
+    "\"恢复默认\"": "\"Default\"",
+    "\"<kbd>↑↓</kbd> 选择&nbsp;&nbsp;<kbd>↵</kbd> 执行&nbsp;&nbsp;<kbd>esc</kbd> 关闭\"": "\"<kbd>↑↓</kbd> select&nbsp;&nbsp;<kbd>↵</kbd> run&nbsp;&nbsp;<kbd>esc</kbd> close\"",
+    "\"请按新快捷键…\"": "\"Press a new shortcut…\"",
+    "`快捷键 ${formatShortcut(shortcut, applePlatform)}`": "`Shortcut ${formatShortcut(shortcut, applePlatform)}`",
+    "\"没有匹配结果\"": "\"No matching results\"",
+    "`${matches.length} 个结果`": "`${matches.length} results`",
+    "\"打开 Spotlight 命令面板 · Open the Spotlight palette\"": "\"Open the Spotlight palette\"",
+    "\"打开 Spotlight\"": "\"Open Spotlight\""
+  },
+  "dsh-free-search/lib/client.js": {
+    "\"SearXNG · 元搜索\"": "\"SearXNG · Meta-search\"",
+    "\"访问官网 →\"": "\"Visit site →\"",
+    "\"获取 API Key →\"": "\"Get API key →\"",
+    "// secrets 字段标记哪些 key 已配置（值被脱敏，仅显示\"已配置\"）": "// secrets marks which keys are configured (values masked, showing \"configured\")",
+    "// 挂官方插槽 settings.plugin.item（设置 → 插件 → 可配置标签页）。": "// Mounts the official settings.plugin.item slot (Settings → Plugins → configurable tabs).",
+    "// 不依赖 dsh-web-ui：配置读写走自建 bridge（/api/dsh-free-search-settings）。": "// Does not depend on dsh-web-ui: config I/O goes through its own bridge (/api/dsh-free-search-settings)."
+  },
+  "dsh-plugin-vetting/lib/index.js": {
+    "const RISK_ZH = { SAFE: \"安全\", LOW: \"低危\", MEDIUM: \"中危\", HIGH: \"高危\", ALLOWED: \"白名单\" };": "const RISK_ZH = { SAFE: \"Safe\", LOW: \"Low\", MEDIUM: \"Medium\", HIGH: \"High\", ALLOWED: \"Allowlisted\" };",
+    "[${tag}/${zh}]": "[${tag}]",
+    "\" [REVIEW 需人工确认: dynamic code execution 动态代码执行]\"": "\" [REVIEW: dynamic code execution]\"",
+    "\"    (no malicious-pattern hits / 未发现恶意模式)\"": "\"    (no malicious-pattern hits)\"",
+    "`    suggest narrowing (not suspicion) / 建议收窄权限（非可疑）:`": "`    suggest narrowing (not suspicion):`",
+    "# Plugin vet — ${report.scanned} third-party plugin(s) scanned / 已扫描 ${report.scanned} 个第三方插件": "# Plugin vet — ${report.scanned} third-party plugin(s) scanned",
+    "（安全/低危/中危/高危）": " (safe/low/medium/high)",
+    " ${f.noteZh !== undefined ? `/ ${f.noteZh}` : \"\"}": ""
+  },
+  "dsh-plugin-vetting/lib/scan.js": {
+    "\"heuristic scan only: a clean result is not a security guarantee / 仅启发式扫描：干净结果不保证安全\"": "\"heuristic scan only: a clean result is not a security guarantee\"",
+    "\"runtime-dynamic code (downloaded then eval'd, remote modules) is NOT in scope — static scan cannot see it / 运行时动态加载的代码不在静态扫描范围\"": "\"runtime-dynamic code (downloaded then eval'd, remote modules) is NOT in scope — static scan cannot see it\"",
+    "\"official @deepseek-ai/* packages are exempt by name / 官方 @deepseek-ai/* 包按名豁免\"": "\"official @deepseek-ai/* packages are exempt by name\"",
+    "\"false-positive class: security plugins that intentionally reference secret paths / exfil hosts in their own rules will score HIGH; add them to the allowlist / 已知误报类：安全插件自身规则引用密钥路径/外传域名会得高分，可用 allowlist 处理\"": "\"false-positive class: security plugins that intentionally reference secret paths / exfil hosts in their own rules will score HIGH; add them to the allowlist\"",
+    "`${allowlist.size} package(s) allowlisted by config / ${allowlist.size} 个包已按配置白名单`": "`${allowlist.size} package(s) allowlisted by config`"
+  },
+  "dsh-file-upload/lib/convert.js": {
+    "`… 另有 ${sheetNames.length - sheets.length} 个 sheet 未读取（上限 ${maxSheets}）`": "`… ${sheetNames.length - sheets.length} more sheet(s) not read (limit ${maxSheets})`",
+    "`… 已截断：每个 sheet 仅保留前 ${sheetRowLimit} 行，全簿共 ${totalRows} 行`": "`… truncated: kept the first ${sheetRowLimit} rows per sheet, ${totalRows} rows total`"
+  },
+  "dsh-prompt/lib/client.js": {
+    "new Set([\"Message the agent\", \"给智能体发消息\"])": "new Set([\"Message the agent\"])",
+    "// Replaces the stock composer placeholder (\"Message the agent\" / \"给智能体发消息\")": "// Replaces the stock composer placeholder (\"Message the agent\")"
+  },
+  "dsh-plugin-vetting/lib/rules.js": {
+    ", noteZh: \"发起 fetch 网络请求\"": "",
+    ", noteZh: \"包含 HTTP(S) URL 字面量\"": "",
+    ", noteZh: \"打开原始 socket / 非 fetch 的 HTTP\"": "",
+    ", noteZh: \"引用已知外传/中继域名\"": "",
+    ", noteZh: \"硬编码 IPv4 地址\"": "",
+    ", noteZh: \"读取凭据类环境变量\"": "",
+    ", noteZh: \"触及凭据/密钥文件\"": "",
+    ", noteZh: \"读取进程环境(/proc/*/environ)\"": "",
+    ", noteZh: \"读取 harness 会话日志/存储\"": "",
+    ", noteZh: \"启动子进程\"": "",
+    ", noteZh: \"动态执行代码——静态扫描看不到其内容，需人工确认\"": "",
+    ", noteZh: \"大段 base64（可能是载荷）\"": "",
+    ", noteZh: \"持久化机制\"": "",
+    ", noteZh: \"生命周期脚本（install/prepare/prepublishOnly，git 依赖安装时也会执行）\"": "",
+    ", noteZh: \"混淆技术\"": "",
+    ", noteZh: \"以宽泛模式读取用户主目录/密钥目录——建议收窄到显式路径\"": "",
+    ", noteZh: \"用字符串拼接主目录/环境变量构造路径——建议显式 join\"": "",
+    ", noteZh: \"递归枚举主目录——建议限定目标\"": ""
+  }
+}
