@@ -45,6 +45,9 @@ in
   # stack on python312, see packages/tmd-top/default.nix
   tmd-top = final.callPackage ./tmd-top { };
 
+  # Code2000 shareware Unicode TrueType font (broad script coverage)
+  ttf-code2000 = final.callPackage ./ttf-code2000 { };
+
   # Python with LTO optimizations
   python3-lto = finalPrev.python3.override {
     packageOverrides = _pythonSelf: _pythonSuper: {
