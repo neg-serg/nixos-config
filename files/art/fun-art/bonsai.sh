@@ -258,7 +258,7 @@ init() {
   # fill grid full of spaces
   for ((row = 0; row < $rows; row++)); do
     for ((col = 0; col < $cols; col++)); do
-      grid[$row,$col]=' '
+      grid["$row,$col"]=' '
     done
   done
 
@@ -292,7 +292,12 @@ branch() {
   # check if the user is hitting q
   timeout=0.001
   [ $live = "false" ] && timeout=.0001
-  read -n 1 -t $timeout input
+  # osh does not implement read -t with a non-zero timeout (fatal OILS-ERR),
+  # so keep the timed q-poll bash-only; under osh the live "press q to quit"
+  # is unavailable (osh has no timed read at all).
+  if [ -n "${BASH_VERSION:-}" ]; then
+    read -n 1 -t $timeout input
+  fi
   [ "$input" = "q" ] && clean "quit"
 
   branches=$((branches + 1))
@@ -473,7 +478,7 @@ branch() {
     [ $life -lt 4 ] && char="${leafchar}"
 
     # put character in grid
-    grid[$y,$x]="${color}${char}${R}"
+    grid["$y,$x"]="${color}${char}${R}"
 
     # if live, print what we have so far and let the user see it
     if [ $live = true ]; then
@@ -496,7 +501,7 @@ print() {
       [ $live = true ] && echo -ne "\e[0;0H "
 
       # grab the character from our grid
-      line+="${grid[$row,$col]}"
+      line+="${grid["$row,$col"]}"
     done
 
     # add our message
