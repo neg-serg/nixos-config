@@ -26,11 +26,11 @@ flowchart LR
 ```bash
 tidalctl start     # запустить движок (SC сервер + SuperDirt, ~2с до звука)
 tidalctl demo      # движок + открыть demo.tidal (многослойный джем)
-tidalctl code      # открыть nvim в ~/src/music/tidal (создаёт при первом запуске)
+tidalctl code      # открыть nvim в ~/src/art/music/tidal (создаёт при первом запуске)
 tidalctl status    # процессы, OSC-порты, аудиоподключения
 tidalctl stop      # остановить движок
 tidalctl new имя   # создать новый .tidal файл
-tidalctl record    # записать выход SuperDirt в ~/src/music/tidal/recordings/
+tidalctl record    # записать выход SuperDirt в ~/src/art/music/tidal/recordings/
 tidalctl monitor   # live-мониторинг PipeWire (pw-top)
 tidalctl patch     # патчбей ZestBay (distrobox)
 ```
@@ -143,7 +143,7 @@ d6 $ ambientPad          -- эмбиент-пад на случайном мин
 1. **SuperDirt и Vowel** — nix-пакеты `pkgs.neg.superdirt` и `pkgs.neg.vowel`, симлинки в
    `~/.local/share/SuperCollider/Extensions/` (наравне с SC3plugins). Ручная установка quark'а через
    `install-superdirt-quark` больше не нужна.
-1. **Свои сэмплы** — папка `~/src/music/tidal/samples/`: любая вложенная папка с wav становится
+1. **Свои сэмплы** — папка `~/src/art/music/tidal/samples/`: любая вложенная папка с wav становится
    звуком (имя папки = имя звука). Создаётся `tidalctl start` автоматически.
 
 ### Почему запуск мгновенный (0.2с)
@@ -297,7 +297,7 @@ SuperDirt создаёт 12 орбит (моно-каналов). По умол�
 ## Запись
 
 ```bash
-# Запись выхода SuperDirt в ~/src/music/tidal/recordings/ (имя с таймстампом)
+# Запись выхода SuperDirt в ~/src/art/music/tidal/recordings/ (имя с таймстампом)
 tidalctl record
 
 # Или вручную, в текущую директорию
@@ -309,11 +309,11 @@ pw-record recording.wav
 
 ## Свои сэмплы
 
-Любую папку с wav-файлами клади в `~/src/music/tidal/samples/` — имя папки станет именем звука:
+Любую папку с wav-файлами клади в `~/src/art/music/tidal/samples/` — имя папки станет именем звука:
 
 ```bash
-mkdir -p ~/src/music/tidal/samples/mykit
-cp kick.wav snare.wav ~/src/music/tidal/samples/mykit/
+mkdir -p ~/src/art/music/tidal/samples/mykit
+cp kick.wav snare.wav ~/src/art/music/tidal/samples/mykit/
 ```
 
 ```haskell
@@ -370,7 +370,7 @@ ls /run/current-system/sw/share/ 2>/dev/null | grep -i dirt  # или:
 nix path-info /nix/store/*dirt-samples*/share/Dirt-Samples | head -1
 
 # Свои сэмплы
-ls ~/src/music/tidal/samples/
+ls ~/src/art/music/tidal/samples/
 ```
 
 Если стандартные сэмплы не загружаются — проверить, что startup-скрипт
@@ -415,7 +415,7 @@ s.options.numBuffers = 1024 * 2048;  -- 2M буферов
 
 ### Сохранение сессий
 
-`.tidal` файлы — это обычный код. Держите их в `~/src/music/tidal/` (...). Рекомендую git.
+`.tidal` файлы — это обычный код. Держите их в `~/src/art/music/tidal/` (...). Рекомендую git.
 
 ### Быстрый перезапуск
 
@@ -455,8 +455,8 @@ systemctl --user enable --now tidal.service
 | `~/.local/share/SuperCollider/Extensions/Vowel/`          | Формантные таблицы Vowel (nix-пакет) |
 | `~/.local/share/SuperCollider/Extensions/SC3plugins/`     | SC3-Plugins классы (nix-пакет)       |
 | `/nix/store/*dirt-samples*/share/Dirt-Samples/`           | Банк сэмплов (~170MB, nix store)     |
-| `~/src/music/tidal/samples/`                              | Свои сэмплы (имя папки = имя звука)  |
-| `~/src/music/tidal/`                                      | Рабочая директория для .tidal файлов |
+| `~/src/art/music/tidal/samples/`                              | Свои сэмплы (имя папки = имя звука)  |
+| `~/src/art/music/tidal/`                                      | Рабочая директория для .tidal файлов |
 | `/run/current-system/sw/bin/tidal-ghci`                   | GHCi враппер                         |
 | `/etc/nixos/modules/user/nix-maid/apps/supercollider.nix` | Модуль NixOS                         |
 | `/etc/nixos/docs/howto/tidal-cycles.md`                   | Этот документ                        |
