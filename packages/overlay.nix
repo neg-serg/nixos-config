@@ -41,6 +41,10 @@ in
       dsh = final.callPackage ./dsh { }; # DeepSeek Harness agent CLI (dsh)
     };
 
+  # tmd-top: real-time per-IP network traffic monitor (TUI) — pinned textual 1.0.0
+  # stack on python312, see packages/tmd-top/default.nix
+  tmd-top = final.callPackage ./tmd-top { };
+
   # Python with LTO optimizations
   python3-lto = finalPrev.python3.override {
     packageOverrides = _pythonSelf: _pythonSuper: {
