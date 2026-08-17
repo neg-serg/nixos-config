@@ -219,14 +219,21 @@ in
               wd["contentVisible"] = False
               changed = True
 
+          # DevTools UI theme: keep it dark like the browser chrome. The value
+          # inside devtools.preferences is a JSON-encoded string ("dark").
+          dt = p.setdefault("devtools", {}).setdefault("preferences", {})
+          if dt.get("uiTheme") != '"dark"':
+              dt["uiTheme"] = '"dark"'
+              changed = True
+
           if changed:
               with open(prefs, "w") as f:
                   json.dump(p, f, indent=1)
-              print("css_ui_mods_directory, Neg theme and hidden panel bar re-asserted")
+              print("css_ui_mods_directory, Neg theme, hidden panel bar and DevTools dark theme re-asserted")
         '';
       in
       {
-        description = "Point Vivaldi CSS mods at the profile mods folder; re-assert Neg theme and hidden panel";
+        description = "Point Vivaldi CSS mods at the profile mods folder; re-assert Neg theme, hidden panel and DevTools dark theme";
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${lib.getExe' pkgs.python3 "python3"} ${prefScript}";
