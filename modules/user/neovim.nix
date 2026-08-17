@@ -103,7 +103,7 @@ lib.mkIf devEnabled (
     (neg.mkHomeFiles {
       ".config/nvim".source = neg.linkImpure nvimConf;
       ".config/vale/.vale.ini".source = config.lib.neg.path "files/vale/.vale.ini"; # Vale prose linter config
-      ".local/share/vale/styles".source = config.lib.neg.path "files/vale/styles"; # Google prose style rules
+      ".local/share/vale/styles".source = config.lib.neg.path "files/vale/styles"; # Google prose style rules (styles/Google/)
     })
   ]
 )
