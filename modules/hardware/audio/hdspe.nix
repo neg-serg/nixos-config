@@ -72,6 +72,21 @@ let
     fi
   '';
 
+  # pwroute-aes with a startup race workaround: wireplumber creates the RME
+  # sink a moment after the session starts, and pwroute then fails with
+  # "RME AIO Pro sink not found" (a oneshot never retries). Wait up to 30s
+  # for the sink before routing to AES.
+  pwrouteAesScript = pkgs.writeShellScript "pwroute-aes-wait" ''
+    set -u
+    for _ in $(seq 1 30); do
+      if wpctl status 2>/dev/null | grep -q 'RME AIO Pro.*Pro'; then
+        exec ${pkgs.pwroute}/bin/pwroute aes
+      fi
+      sleep 1
+    done
+    exit 0
+  '';
+
   # pwroute: switch RME AIO Pro output between an/aes/spdif/phones
 
   # routing config for pwroute
@@ -168,7 +183,7 @@ in
       wantedBy = [ "graphical-session.target" ]; # don't block default.target
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${pkgs.pwroute}/bin/pwroute aes";
+        ExecStart = "${pwrouteAesScript}";
         # pwroute needs pw-cli and pw-link from PipeWire in PATH
         Environment = "PATH=${config.services.pipewire.package}/bin";
       };
