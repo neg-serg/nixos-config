@@ -188,6 +188,8 @@ in
   features.net.zapret2.enable = true; # Zapret2 DPI bypass (nfqws2)
   features.net.rknDomains.enable = true; # RKN blocklist -> zapret2 hostlist
   features.net.netHealth.enable = true; # Periodic net/DNS/zapret2 health check with self-heal + ntfy
+  features.net.ceno.enable = true; # Ceno/Ouinet P2P client (censorship-circumvention node)
+  features.virt.docker.enable = true; # Podman + docker-compat stack (for the Ceno/Ouinet container)
   features.virt.libvirtd.enable = true;
   features.apps.winapps.enable = true;
   features.apps.winapps.desktopApps = [
