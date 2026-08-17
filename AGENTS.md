@@ -40,7 +40,7 @@ Golden tool set (agent habits) — hard rules
     instead of `top`, `procs` instead of `ps`, `delta` instead of `diff` (git pager already wired)
   - `sd` for simple search-and-replace, `zoxide` for `cd`, `fzf` for interactive selection,
     `hyperfine` for benchmarking
-- DSH-native tools beat shell equivalents: use the `read`/`grep`/`glob` tools (ripgrep/fd-backed)
+- DSH-native tools beat shell equivalents: use the `read`/`rg`/`glob` tools (ripgrep/fd-backed)
   instead of spawning `cat`/`grep`/`find` in bash. Spawn bash only when a native tool cannot do
   the job; when a pipeline is unavoidable, still prefer rg/fd/bat/jq over grep/find/cat/sed.
 - Keep legacy tools only when correctness/portability demands them: scripts meant for
