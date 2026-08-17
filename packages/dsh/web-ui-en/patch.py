@@ -100,6 +100,42 @@ CONV_REPL = [
     ("groups.map((group, i) =>", "groups.filter(Boolean).map((group, i) =>"),
 ]
 
+# Think (reasoning) block: render the expanded body through MarkdownText so
+# thoughts get the same markdown/KaTeX/links/images treatment as message text
+# instead of raw pre-wrap text. The collapsed summary line stays plain text.
+REASONING_MARKDOWN_OLD = (
+    "\t\t\t\t\t\tclassName: ReasoningRow_module_css_default.thinkBody,\n"
+    "\t\t\t\t\t\tchildren: text\n"
+)
+REASONING_MARKDOWN_NEW = (
+    "\t\t\t\t\t\tclassName: ReasoningRow_module_css_default.thinkBody,\n"
+    "\t\t\t\t\t\tchildren: (0, react_jsx_runtime.jsx)"
+    "(_deepseek_ai_dsh_client_ui_primitives.MarkdownText, {\n"
+    "\t\t\t\t\t\t\ttext,\n"
+    "\t\t\t\t\t\t\tstreaming: running\n"
+    "\t\t\t\t\t\t})\n"
+)
+
+# Workspace image previews in the markdown renderer (dsh-client-ui-primitives):
+# absolute HTTP(S) images already render; any other scheme (data:, mailto:,
+# javascript:, file:) stays blocked; plain image sources — workspace paths,
+# relative paths, bare filenames — are rewritten to the /dsh-preview/ route
+# served by the dsh-preview host plugin, so `![name](path)` previews local
+# images in messages and thoughts.
+WORKSPACE_IMAGE_OLD = (
+    "function renderImage(url, alt, key) {\n"
+    "\tconst imageSrc = remoteImageUrl(sanitizeUrl(normalizeUri(url)));\n"
+)
+WORKSPACE_IMAGE_NEW = (
+    "function workspaceImageUrl(url) {\n"
+    '\tif (url === "" || /^[a-z][a-z0-9+.-]*:/i.test(url)) return void 0;\n'
+    '\treturn "/dsh-preview/" + url.replace(/^\\.\\//, "");\n'
+    "}\n"
+    "function renderImage(url, alt, key) {\n"
+    "\tconst raw = normalizeUri(url);\n"
+    "\tconst imageSrc = remoteImageUrl(sanitizeUrl(raw)) ?? workspaceImageUrl(raw);\n"
+)
+
 CJK = re.compile(r"[\u4e00-\u9fff]")
 
 # dsh-client-ui-primitives/lib/index.js: the shared UI kit hardcodes Chinese
@@ -319,6 +355,52 @@ def patch_simple(root: pathlib.Path, rel: str, table, name: str) -> int:
     return 0
 
 
+def patch_reasoning_markdown(root: pathlib.Path) -> int:
+    """Render the Think (reasoning) block body as markdown in the conversation bundle."""
+    conv = root / "dsh-client-ui-conversation" / "lib" / "client.js"
+    if not conv.exists():
+        print(f"skip (absent): {conv.relative_to(root)}")
+        return 0
+    text = conv.read_text(encoding="utf-8")
+    if REASONING_MARKDOWN_NEW in text:
+        print("note: reasoning markdown patch already applied")
+        return 0
+    if REASONING_MARKDOWN_OLD not in text:
+        print(
+            "WARNING: reasoning thinkBody anchor not found — "
+            "think markdown not injected",
+            file=sys.stderr,
+        )
+        return 0
+    text = text.replace(REASONING_MARKDOWN_OLD, REASONING_MARKDOWN_NEW, 1)
+    conv.write_text(text, encoding="utf-8")
+    print(f"patched: {conv.relative_to(root)} (think markdown)")
+    return 1
+
+
+def patch_workspace_images(root: pathlib.Path) -> int:
+    """Let markdown preview local image files via the /dsh-preview/ route."""
+    prim = root / "dsh-client-ui-primitives" / "lib" / "index.js"
+    if not prim.exists():
+        print(f"skip (absent): {prim.relative_to(root)}")
+        return 0
+    text = prim.read_text(encoding="utf-8")
+    if WORKSPACE_IMAGE_NEW in text:
+        print("note: workspace image patch already applied")
+        return 0
+    if WORKSPACE_IMAGE_OLD not in text:
+        print(
+            "WARNING: renderImage anchor not found — "
+            "workspace image previews not injected",
+            file=sys.stderr,
+        )
+        return 0
+    text = text.replace(WORKSPACE_IMAGE_OLD, WORKSPACE_IMAGE_NEW, 1)
+    prim.write_text(text, encoding="utf-8")
+    print(f"patched: {prim.relative_to(root)} (workspace image previews)")
+    return 1
+
+
 def main() -> int:
     root = pathlib.Path(sys.argv[1])
     if not root.is_dir():
@@ -347,9 +429,11 @@ def main() -> int:
 
     patched += patch_conversation(root)
     patched += patch_commands(root)
+    patched += patch_reasoning_markdown(root)
     patched += patch_simple(
         root, "dsh-client-ui-primitives/lib/index.js", PRIM_REPL, "primitives"
     )
+    patched += patch_workspace_images(root)
     patched += patch_simple(
         root, "dsh-client-locale/lib/client.js", LOCALE_REPL, "locale"
     )
