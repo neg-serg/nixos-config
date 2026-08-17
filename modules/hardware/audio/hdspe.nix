@@ -73,7 +73,10 @@ let
 
     # Find HDSPe hardware sink and game-stereo virtual sink
     hdspe_sink_id="$(echo "$status" | sed -n '/RME AIO Pro.*Pro/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
-    game_sink_id="$(echo "$status" | sed -n '/game-stereo/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
+    # Match the SINK line only: the loopback's stream "playback.game-stereo"
+    # appears earlier in wpctl status, and sed -q would grab its id (46) instead
+    # of the sink (47). Require the "Audio/Sink" marker on the same line.
+    game_sink_id="$(echo "$status" | sed -n '/game-stereo.*Audio\/Sink/{s/^[^0-9]*\([0-9]\+\).*/\1/p;q}')"
 
     # Route game-stereo → HDSPe AUX2/AUX3 (AES/EBU): the user's monitors are
     # on AES, the analog RCA pair (AUX0/1) is unused. ZestBay's patchbay
@@ -180,9 +183,12 @@ in
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${hdspeDefaultScript}";
+        # wpctl ships with wireplumber, NOT pipewire — without it the wait
+        # loop and sink parsing see empty output and routing never happens.
         Environment = "PATH=${
           lib.makeBinPath [
-            config.services.pipewire.package
+            config.services.pipewire.package # pw-link, pw-cli
+            config.services.pipewire.wireplumber.package # wpctl
             pkgs.alsa-utils # ALSA utilities (amixer, aplay, etc.)
             pkgs.gnused # GNU sed
             pkgs.coreutils # GNU core utilities
@@ -205,14 +211,15 @@ in
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${pwrouteAesScript}";
-        # pwroute needs pw-cli/pw-link (pipewire); the wait loop needs
-        # seq/sleep (coreutils) and grep (gnugrep) — missing coreutils made
-        # the loop a no-op (`seq: command not found`) and pwroute never ran.
+        # pwroute shells out to pw-link (pipewire); wpctl comes from
+        # wireplumber; seq/sleep (coreutils) drive the wait loop. Missing
+        # coreutils/wireplumber made the loop a silent no-op and pwroute
+        # never ran (`seq: command not found`, `wpctl: command not found`).
         Environment = "PATH=${
           lib.makeBinPath [
-            config.services.pipewire.package
+            config.services.pipewire.package # pw-link, pw-cli
+            config.services.pipewire.wireplumber.package # wpctl
             pkgs.coreutils # seq/sleep for the RME sink wait loop
-            pkgs.gnugrep # grep for wpctl status parsing
           ]
         }";
       };
