@@ -11,23 +11,9 @@ let
   cfg = config.features.media.audio.creation or { };
   enabled = cfg.enable or false;
 
-  installQuark =
-    pkgs.runCommand "install-superdirt-quark"
-      {
-        nativeBuildInputs = [ pkgs.makeWrapper ];
-      }
-      ''
-        mkdir -p $out/bin
-        cat > $out/bin/install-superdirt-quark << 'SCRIPT'
-        #!/bin/sh
-        set -eu
-        echo "Installing SuperDirt quark (one-time)..."
-        ${pkgs.supercollider}/bin/sclang << 'EOF'
-        try { Quarks.install("https://codeberg.org/musikinformatik/SuperDirt"); "OK".postln; } { |err| ("FAIL: " ++ err.what).postln; }; 0.exit;
-        EOF
-        SCRIPT
-        chmod +x $out/bin/install-superdirt-quark
-      '';
+  # SuperDirt and Vowel now come from nix packages (packages/superdirt,
+  # packages/vowel) symlinked into SC's default extension dir below — the
+  # manual `install-superdirt-quark` step is gone.
 
   superdirtStartup = ''
     s.options.numBuffers = 1024 * 1024;
@@ -39,7 +25,15 @@ let
     s.waitForBoot {
       try {
         ~dirt = SuperDirt(2, s);
-        ~dirt.loadSoundFiles;
+        // Explicit sample paths — do NOT rely on loadSoundFiles' default
+        // "../../Dirt-Samples/*".resolveRelative (it resolves against the
+        // document dir, which breaks once SuperDirt lives in the nix store).
+        var userSamples = Platform.userHomeDir +/+ "src/music/tidal/samples";
+        File.mkdir(userSamples);
+        ~dirt.loadSoundFiles([
+          "${pkgs.neg.dirt-samples}/share/Dirt-Samples/",
+          userSamples +/+ ""
+        ]);
         ~dirt.start(57120, 0 ! 12);
         "SUPERDIRT READY".postln;
       } { |err| ("SuperDirt ERROR: " ++ err.what).postln; };
@@ -60,6 +54,30 @@ let
     instance Tidally where tidal = tidalInst
     :set prompt "tidal> "
     :set prompt-cont ""
+    -- OSC params (pF, pI, pS, ...) come from Sound.Tidal.Params,
+    -- re-exported by Sound.Tidal.Boot — no extra import needed.
+    -- Sending to an external synth:
+    --   d1 $ sound "bd" # pF "myParam" 0.5
+  '';
+
+  # SC class library config: keep default paths (SCClassLibrary + user
+  # Extensions dir, where the nix SuperDirt/Vowel/SC3plugins symlinks live)
+  # and add no extra include paths.
+  sclangConf = ''
+    includePaths: []
+    excludePaths: []
+    postInlineWarnings: false
+    excludeDefaultPaths: false
+  '';
+
+  # Starter .tidal file for the tidal/ workspace dir.
+  scratchTidal = ''
+    -- TidalCycles scratch file — press <C-CR> to launch, <M-CR> to send a line
+    d1 $ sound "bd sn"
+    d1 $ sound "bd(3,8) sn(5,8)" # gain 0.9
+    d2 $ sound "hh*4" # pan 0.5
+    -- user samples: drop folders into ~/src/music/tidal/samples/,
+    -- then `d1 $ sound "myname"` (folder name = sound name)
   '';
 in
 {
@@ -69,7 +87,6 @@ in
       # Server-side SC3-Plugins UGens (.so) — scsynth ищет их через SC_PLUGIN_PATH
       SC_PLUGIN_PATH = "${pkgs.supercolliderPlugins.sc3-plugins}/lib/SuperCollider/plugins";
     };
-    environment.systemPackages = [ installQuark ];
     environment.etc = {
       "skel/.config/SuperCollider/superdirt_startup.scd".text = superdirtStartup;
       "skel/.config/SuperCollider/boot_noop.scd".text = bootNoop;
@@ -77,12 +94,19 @@ in
     users.users.neg.maid.file.home = {
       ".config/SuperCollider/superdirt_startup.scd".text = superdirtStartup;
       ".config/SuperCollider/boot_noop.scd".text = bootNoop;
+      ".config/SuperCollider/sclang_conf.yaml".text = sclangConf;
       ".config/tidal/BootTidal.hs".text = bootTidal;
-      ".local/share/SuperCollider/downloaded-quarks/Dirt-Samples".source =
-        "${pkgs.neg.dirt-samples}/share/Dirt-Samples";
+      # SuperDirt classes from the nix package (replaces manual quark install)
+      ".local/share/SuperCollider/Extensions/SuperDirt".source =
+        "${pkgs.neg.superdirt}/share/SuperCollider/extensions/SuperDirt";
+      # Vowel formant tables from the nix package (SuperDirt initVowels needs it)
+      ".local/share/SuperCollider/Extensions/Vowel".source =
+        "${pkgs.neg.vowel}/share/SuperCollider/extensions/Vowel";
       # SC3-Plugins классы (DynKlank, SwitchDelay, …) — нужны SuperDirt default-synths
       ".local/share/SuperCollider/Extensions/SC3plugins".source =
         "${pkgs.supercolliderPlugins.sc3-plugins}/share/SuperCollider/Extensions/SC3plugins";
+      # Tidal workspace: starter file + user samples dir (created via the file below)
+      "src/music/tidal/scratch.tidal".text = scratchTidal;
     };
   };
 }
