@@ -475,8 +475,11 @@ Object.entries(quickmarks).forEach(([key, site]) => {
 });
 
 // ========== Site-specific ==========
-
-settings.blocklistPattern = /mail\.google\.com|docs\.google\.com|discord\.com|app\.slack\.com/i;
+// dsh web GUI (127.0.0.1:3080) is blocklisted: normal-mode keys like d/x
+// (close tab) fire whenever the composer textarea isn't focused, and Tab
+// handling belongs to the GUI's own autocomplete. Everything else keeps
+// SurfingKeys.
+settings.blocklistPattern = /mail\.google\.com|docs\.google\.com|discord\.com|app\.slack\.com|127\.0\.0\.1|localhost/i;
 
 // ========== Image Download ==========
 api.mapkey('zi', 'Download image without dialog', function() {
