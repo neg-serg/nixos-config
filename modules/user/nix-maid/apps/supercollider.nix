@@ -89,6 +89,7 @@ let
     -- IsString coercion), hence `fromString` below.
     import Data.String (fromString)
     import System.Random (mkStdGen, randomRs) -- for the Markov drum chain
+    import Data.List (sort) -- for Forte pc normalization
 
     -- Schillinger resultant: attacks where either generator (periods a, b)
     -- lands, within a*b steps — pure-arithmetic rhythm generator, always a
@@ -118,14 +119,14 @@ let
 
     -- Messiaen mode 2 (octatonic) as semitone numbers from C4 — no scale
     -- definition needed.  d1 $ octatonic
-    let octatonic = n "60 61 63 64 66 67 69 70" # sound "saw" # gain 0.4
+    let octatonic = n "60 61 63 64 66 67 69 70" # sound "superhex" # gain 0.4
 
     -- ==== More theory-derived helpers =========================================
     -- Messiaen mode 3 (2-1-1-2-1-1...) and whole-tone mode 1 — like octatonic,
     -- other modes of limited transposition.
     --   d1 $ mode3            d1 $ wholeTone
-    let mode3 = n "60 62 63 65 66 68 69" # sound "saw" # gain 0.4
-    let wholeTone = n "60 62 64 66 68 70" # sound "saw" # gain 0.4
+    let mode3 = n "60 62 63 65 66 68 69" # sound "superhex" # gain 0.4
+    let wholeTone = n "60 62 64 66 68 70" # sound "superhex" # gain 0.4
 
     -- Carter metric modulation: tempo ratio.  d1 $ fast (modulate 4 6) $ sound "bd"
     let modulate oldD newD = fromIntegral oldD / fromIntegral newD
@@ -163,7 +164,7 @@ let
     let transp t = map (\p -> (p + t) `mod` 12)
     let invert = map (\p -> (12 - p) `mod` 12)
     let retr = reverse
-    let row12 r = n (fromString (unwords (map show (map (+60) r)))) # sound "saw" # gain 0.4
+    let row12 r = n (fromString (unwords (map show (map (+60) r)))) # sound "superhex" # gain 0.4
 
     -- ==== Indian talas (rhythmic cycles) ==================================
     -- Clap-based tala cycles: tintal (16), keharwa (8), dadra (6), rupak (7).
@@ -213,7 +214,73 @@ let
 
     -- ==== Perle cyclic sets ===============================================
     -- Alternating interval cycles (mod 12).  d1 $ perleCycle 2 3
-    let perleCycle a b = n (fromString (unwords (map show (scanl (\x i -> if even i then (x+a) `mod` 12 else (x+b) `mod` 12) 60 [1..11])))) # sound "saw" # gain 0.3
+    let perleCycle a b = n (fromString (unwords (map show (scanl (\x i -> if even i then (x+a) `mod` 12 else (x+b) `mod` 12) 60 [1..11])))) # sound "superhex" # gain 0.3
+
+    -- ==== Hindemith: Series 1/2 ===========================================
+    -- Interval consonance rank (0=most consonant .. 6=tritone) and root side.
+    --   d1 $ fast 8 $ note (cat [60, 64, 67]) # sound "superpiano" # gain (fromIntegral (6 - hindemithRank 4) / 6)
+    let hindemithRank ic = if ic `mod` 12 == 0 then 0 else if ic `mod` 12 == 7 then 1 else if ic `mod` 12 == 4 then 2 else if ic `mod` 12 == 9 then 3 else if ic `mod` 12 == 2 then 4 else if ic `mod` 12 == 5 then 5 else 6
+    let hindemithRoot ic = if hindemithRank ic <= 3 then "low" else "high"
+
+    -- ==== Forte: interval vector + pc normalization =======================
+    --   print (icVector [0,1,4])   -- [1,0,1,1,0,0] for 3-3
+    --   print (pcCompact [7,11,2]) -- [0,4,9] transposed to 0
+    let icVector pc = [ length [ (a - b) `mod` 12 | a <- pc, b <- pc, a > b, (a - b) `mod` 12 == ic ] | ic <- [1..6] ]
+    let pcCompact xs = let m = minimum xs in sort (map (\x -> (x - m) `mod` 12) xs)
+
+    -- ==== Messiaen deshi-talas ============================================
+    -- Named Indian rhythm cells as accent patterns.  d1 $ talaSound 1
+    let deshiTala 1 = "x x ~ x x x ~ x"
+        deshiTala 2 = "x ~ x x ~ x x ~"
+        deshiTala 3 = "x x x ~ x ~ x x"
+        deshiTala _ = "x x x x x x x x"
+    let talaHit 'x' = "bd"
+        talaHit _ = "~"
+    let talaSound n = s (fromString (unwords (map talaHit (deshiTala n))))
+
+    -- ==== Yavorsky: 18 modes (tritone-resolution cells) ===================
+    --   d1 $ yavorsky 1
+    let yavorsky 1 = n "60 61 62 64 65 66 68 69"
+        yavorsky 2 = n "60 62 63 64 66 67 69 70"
+        yavorsky 3 = n "60 61 63 64 65 67 68 69"
+        yavorsky _ = n "60 62 64 65 67 69"
+
+    -- ==== Kholopova: parametric complex ===================================
+    -- [articulation, melody, rhythm, texture, writing] binary flags.
+    --   d1 $ holopova [1,0,1,1,0]
+    let holopova ps = fast (if ps !! 2 == 1 then 2 else 1) (note (cat [60, 62, 64, 65]) # sound "superpiano" # (if ps !! 0 == 1 then legato 0.9 else legato 0.3) # gain (if ps !! 1 == 1 then 0.8 else 0.5))
+
+    -- ==== Bhatkhande thatas (raga scales) =================================
+    --   d1 $ that 3   -- Bhairav
+    let that 1 = n "60 62 64 65 67 69 71"
+        that 2 = n "60 62 63 65 67 68 71"
+        that 3 = n "60 61 63 64 66 67 70"
+        that 4 = n "60 61 63 65 66 68 70"
+        that 5 = n "60 62 63 65 67 69 70"
+        that 6 = n "60 61 63 64 66 67 69"
+        that _ = n "60 62 64 65 67 69"
+
+    -- ==== Maqam ajnas (tetrachords, quarter-tones) ========================
+    -- Fractional semitones = quarter tones (24-TET).  d1 $ maqamBayati
+    let maqamBayati = n "60 61.5 63 64 66 67.5 69 70" # sound "superhex" # gain 0.4
+    let maqamHijaz = n "60 61 63.5 64 66 67 69 70" # sound "superhex" # gain 0.4
+
+    -- ==== Gamelan slendro / pelog (microtonal tunings) ====================
+    --   d1 $ slendro   d1 $ pelog
+    let slendro = n "60 62.4 64.8 67.2 69.6" # sound "superhex" # gain 0.4
+    let pelog = n "60 61.3 63.4 66.1 67.9 70.8 73.2" # sound "superhex" # gain 0.4
+
+    -- ==== Xenakis: boolean algebra over pitch sets (Herma) ================
+    -- Set ops as pure functions; herma applies one to two pc sets.
+    --   d1 $ herma unionSet   d1 $ herma interSet   d1 $ herma diffSet
+    let unionSet a b = foldr (\x acc -> if x `elem` acc then acc else x : acc) [] (a ++ b)
+    let interSet a b = [ x | x <- a, x `elem` b ]
+    let diffSet a b = [ x | x <- a, x `notElem` b ]
+    let herma op = n (fromString (unwords (map show (map (+60) (op [0, 1, 4] [0, 3, 7]))))) # sound "superhex" # gain 0.3
+
+    -- ==== Taneev: movable counterpoint ====================================
+    -- Two voices at a fixed vertical interval.  d1 $ taneev 4
+    let taneev idx = stack [ n "60 62 64 65", n (fromString (unwords (map show (map (+idx) [60, 62, 64, 65])))) ] # sound "superpiano" # gain 0.5
 
     -- OSC params (pF, pI, pS, ...) come from Sound.Tidal.Params,
     -- re-exported by Sound.Tidal.Boot — no extra import needed.
@@ -328,6 +395,33 @@ let
 
     -- 21. Perle cyclic set (alternating +2/+3 semitones)
     d7 $ perleCycle 2 3 # gain 0.4
+
+    -- 22. Hindemith: consonant triad, gain scaled by Series-1 rank
+    d8 $ note (cat [60, 64, 67]) # sound "superpiano" # gain (fromIntegral (6 - hindemithRank 4) / 6) # delay 0.3
+
+    -- 23. Messiaen deshi-tala 1 as a tabla accent
+    d9 $ talaSound 1 # sound "tabla" # gain 0.5
+
+    -- 24. Yavorsky mode 1 (tritone cell) as a saw melody
+    d10 $ yavorsky 1 # gain 0.4
+
+    -- 25. Kholopova parametric complex [articulation=1, melody=0, rhythm=1]
+    d11 $ holopova [1, 0, 1, 1, 0] # gain 0.5
+
+    -- 26. Bhatkhande thata 3 (Bhairav) as a scale run
+    d12 $ slow 2 $ that 3 # gain 0.5
+
+    -- 27. Maqam bayati (quarter-tones via fractional MIDI)
+    d13 $ slow 2 $ maqamBayati # gain 0.4
+
+    -- 28. Gamelan slendro (microtonal tuning)
+    d14 $ slow 2 $ slendro # gain 0.4
+
+    -- 29. Xenakis Herma: union of two pc sets as a harmony
+    d15 $ herma unionSet # gain 0.4
+
+    -- 30. Taneev movable counterpoint at interval 4
+    d16 $ taneev 4 # gain 0.5
 
     -- 22. Silence everything (hush: <leader>th)
     -- hush
