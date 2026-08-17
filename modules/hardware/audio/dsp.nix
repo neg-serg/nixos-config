@@ -3,6 +3,7 @@
   environment.systemPackages = [
     pkgs.brutefir # digital convolution engine for audio processing
     pkgs.camilladsp # flexible audio DSP engine for HTTP control
+    pkgs.camillagui # web GUI for CamillaDSP (backend + prebuilt React frontend)
     pkgs.jamesdsp # audio effect processor for PipeWire and PulseAudio
     pkgs.lsp-plugins # Linux Studio Plugins collection
     pkgs.yabridge # modern and transparent VST bridge
