@@ -13,7 +13,9 @@ let
   # 1) number-key answers in ask-user question dialogs, Enter confirms the
   # selection (clicks Next/Submit), 2) bash tool rows expand by default,
   # 3) bash terminal output cap removed, 4) composer input focused by
-  # default (on tab/window focus, session switch, fresh composer mount).
+  # default (on tab/window focus, session switch, fresh composer mount),
+  # 5) todo_write calls render as a todo list card (status glyphs, counts,
+  # progress bar, result line) instead of the stock one-line summary row.
   #
   # Canonical source is the dsh-web-ui fork checkout (packages/dsh-gui-tweaks):
   # the profile node_modules entry is a symlink into it, same pattern as
@@ -42,7 +44,8 @@ let
 
 # dsh-gui-tweaks - number-key answers + Enter confirmation in question
 # dialogs, bash tool rows expanded by default, bash output uncapped,
-# composer input focused by default (module: dsh-gui-tweaks.nix).
+# composer input focused by default, todo_write rendered as a todo list
+# card (module: dsh-gui-tweaks.nix).
 - insert:
     - id: gui-tweaks
       name: dsh-gui-tweaks
