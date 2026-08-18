@@ -29,6 +29,22 @@ in
     src = ./../files/sources/dpkg-1.23.7.tar.xz;
   });
 
+  # ouch 0.8.1: "ignore invalid unix permissions and setuid bits from zip"
+  # (upstream PR #1007). The pinned nixpkgs-weekly still ships 0.8.0, which
+  # applies garbage Unix modes stored in bandcamp pre-order zips (e.g. 0o4032)
+  # literally — extracted files end up unreadable by the owner. ouch is the
+  # backend of the `se`/`pk` aliae aliases (lib/aliae.nix).
+  ouch = finalPrev.ouch.overrideAttrs (_: {
+    version = "0.8.1";
+    src = finalPrev.fetchFromGitHub {
+      owner = "ouch-org";
+      repo = "ouch";
+      rev = "0.8.1";
+      hash = "sha256-fxBalMi5xdLNBnd5VIdAYDIjbSBrOPrmpKlKW1DmbxQ=";
+    };
+    cargoHash = "sha256-kYef8Xsi1gO0V2yXHiTkPi2rFjECw3jjhADSMhhu5zg=";
+  });
+
   # pffft/fuzzysearchdatabase: bitbucket.org is RKN-blocked here
   # (DNS-poisoned, sandboxed fetches hang). The attribute overrides below
   # cover direct consumers of the pkgs.pffft / pkgs.fuzzysearchdatabase
