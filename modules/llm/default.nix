@@ -44,6 +44,7 @@ in
         system.activationScripts.ai-model-dirs = lib.stringAfter [ "users" ] ''
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/image
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/embeddings
+          install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/glm52_i4
         '';
         users.users."${config.users.main.name}".extraGroups = lib.mkAfter [ "ollama" ];
       }
