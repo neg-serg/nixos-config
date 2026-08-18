@@ -127,10 +127,17 @@ sd-cli -m /zero/ai/image/sd_xl_base_1.0.safetensors \
    --steps 20 --cfg-scale 6 --sampling-method euler \
    --backend diffusion=vulkan0,clip=cpu -v
 
-# FLUX.1-schnell (GGUF unet + separate encoders; cfg-scale 1, 4 steps)
-sd-cli --diffusion-model /zero/ai/image/flux1-schnell-q4_k.gguf --vae /zero/ai/image/ae.safetensors \
-   --clip_l /zero/ai/image/clip_l.safetensors --t5xxl /zero/ai/image/t5xxl_fp8_e4m3fn.safetensors \
-   -p "a lovely cat" --cfg-scale 1.0 --sampling-method euler --steps 4 -v --clip-on-cpu
+# FLUX.1-schnell (GGUF unet + separate encoders; cfg-scale 1, 4 steps).
+# t5xxl MUST be on CPU (fp8 4.9 GB + unet 6.4 GB overflows VRAM; the process dies
+# silently otherwise). FLUX VAE decode fits Vulkan (2 GB buffer) — no TAESD needed.
+# Verified: ~39 s end-to-end (mostly CPU t5xxl prompt encoding; sampling 2.5 s).
+sd-cli --diffusion-model /zero/ai/image/flux1-schnell-q4_k.gguf \
+   --vae /zero/ai/image/ae.safetensors \
+   --clip_l /zero/ai/image/clip_l.safetensors \
+   --t5xxl /zero/ai/image/t5xxl_fp8_e4m3fn.safetensors \
+   -p "a cute cat sitting on a windowsill, golden hour light" \
+   --cfg-scale 1.0 --sampling-method euler --steps 4 -v \
+   --backend "diffusion=vulkan0,clip=cpu,t5xxl=cpu"
 ```
 
 - GPU notes (verified on this host): q4_k GGUF ≈ 6.4 GB in VRAM; q8_0 ≈ 12 GB — only with a lighter
