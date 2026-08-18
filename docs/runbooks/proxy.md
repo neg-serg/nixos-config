@@ -14,9 +14,13 @@ network. Localhost port `10808` stays passwordless.
   (decrypted to `/run/secrets/proxy-lan`, declared in `modules/user/nix-maid/sys/secrets.nix`).
   The `proxy` script reads it when generating/refreshing the config; run `proxy refresh` (or
   restart `sing-box-proxy`) after changing the secret.
-- **Firewall:** the rule lives in `modules/system/net/firewall.nix` — nftables backend, input rule
-  `ip saddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 } tcp dport 10810 accept`. Only private
-  LAN sources can connect; the proxy is never reachable from the internet.
+- **Firewall:** the rule lives in `modules/system/net/firewall.nix` — `extraCommands`
+  appends three `iptables -A nixos-fw … tcp --dport 10810 -j nixos-fw-accept` rules for the
+  private ranges `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` (they run before the final drop
+  rule in the `nixos-fw` chain). Only private LAN sources can connect; the proxy is never
+  reachable from the internet. (The firewall stays on the iptables backend, which runs on the
+  nf_tables kernel via iptables-nft; `extraInputRules` is nftables-only in NixOS 26.05, and
+  switching the backend would blacklist `ip_tables` and risk podman/container networking.)
 - Use from another device:
   ```sh
   curl -x socks5://lan:<password>@192.168.2.87:10810 https://ifconfig.me
