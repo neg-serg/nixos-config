@@ -87,13 +87,19 @@ $ carlactl stop
 - Описание юнита: `modules/media/audio/creation-packages.nix`
   → `systemd.user.services.vital-standalone`.
 
-## MIDI (Tidal → Vital) — фундамент заложен
+## MIDI (Tidal → Vital)
 
-Управлять Vital из Tidal пока нельзя: на хосте не загружен ALSA-секвенсор (snd-seq).
-В конфиг добавлено:
+ALSA-секвенсор (`snd-seq`) не грузился из-за `security.lockKernelModules`
+(`kernel.modules_disabled=1` — после старта системы модули ядра вообще не
+загружаются, тихий EPERM). Решение:
 
-- `hosts/odin/hardware.nix` → `boot.kernelModules`: `snd-seq`, `snd-seq-midi`
-  (вступает в силу после пересборки + перезагрузки).
-- После ребута: `aconnect -l` должен показать MIDI-порты; дальше — MIDI-выход
-  SuperDirt (`superdirt_startup.scd`, живёт в ~/notes) → MIDI-вход Vital,
-  и паттерны Tidal через SuperDirt MIDI.
+- `hosts/odin/hardware.nix` → `boot.initrd.kernelModules`: `snd-seq`,
+  `snd-seq-midi` — грузятся в initrd, ДО блокировки (вступает в силу после
+  пересборки + перезагрузки).
+- MIDI-выход SuperDirt добавлен в `~/notes/music/supercollider/superdirt_startup.scd`
+  (`MIDIClient.init` + `~dirt.midiDevices`).
+- Алиас `vital = sound "midi" # midichan 0` — в `~/notes/music/tidal/BootTidal.hs`.
+
+После ребута: запустить Vital (юнит `vital-standalone`), затем движок
+(`tidalctl start`) и соединить: `aconnect "SuperCollider" "Vital"`.
+В Tidal: `d1 $ vital $ note "0 2 4 7"`
