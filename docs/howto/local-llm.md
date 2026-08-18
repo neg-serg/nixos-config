@@ -74,8 +74,8 @@ services.colibri = {
 - Module: `modules/llm/llama-server.nix`
 - Engine: `pkgs.llama-cpp-vulkan`, GPU-backed (RX 9070 XT, RADV).
 - Role: local vision engine for the `vision-review` skill — images never leave the machine.
-- Model dir: `/zero/ai/llama` (qwen3-vl 30b/8b GGUF + mmproj) — on the `zero` ZFS pool,
-  never on system disks.
+- Model dir: `/zero/ai/llama` (qwen3-vl 30b/8b GGUF + mmproj) — on the `zero` ZFS pool, never on
+  system disks.
 - Deliberately not auto-started; start on demand:
   ```bash
   systemctl start llama-server          # 30b on 127.0.0.1:8080
@@ -93,8 +93,8 @@ services.colibri = {
 - Script: `packages/local-bin/bin/pic-ocr` (installed to `~/.local/bin`).
 - Two engines: classic **tesseract** (eng+rus, fast) and local **neural** OCR via Ollama's
   `qwen3-vl:8b` (default; override with `PIC_OCR_NN_MODEL`). Neural images never leave the machine.
-- Usage: `pic-ocr [--engine=nn|tesseract|menu] IMAGE`; with no IMAGE it captures a region
-  (`slurp`). Result goes to the clipboard + `notify-send`.
+- Usage: `pic-ocr [--engine=nn|tesseract|menu] IMAGE`; with no IMAGE it captures a region (`slurp`).
+  Result goes to the clipboard + `notify-send`.
 - Wired into the quickshell **ScreenshotToast**: after a Hyprland screenshot (`M4+SHIFT+R`,
   `M4+SHIFT+CTRL+R`) the toast offers **OCR** (tesseract) and **OCR NN** (neural) buttons.
 
@@ -106,25 +106,28 @@ services.colibri = {
 
 ### stable-diffusion.cpp (text-to-image, Vulkan)
 
-- Package: `pkgs.stable-diffusion-cpp` overridden with `vulkanSupport = true` (RADV on the RX 9070 XT).
-  Binary renamed to `sd-img` to avoid collision with the Rust `sd` (sed replacement).
-- Role: fast local T2I without touching ComfyUI/ROCm — pure Vulkan, fits the "Vulkan-first" preference.
-- Model dir: `/zero/ai/image` — SDXL base checkpoint + VAE, FLUX.1-schnell (GGUF q4_k) + clip_l/t5xxl/ae.
-- Binary: `sd-img`. Examples:
+- Package: `pkgs.stable-diffusion-cpp` overridden with `vulkanSupport = true` (RADV on the RX 9070
+  XT). In this nixpkgs rev the binaries are `sd-cli`/`sd-server` (not `sd` — no conflict with the
+  Rust `sd` sed replacement).
+- Role: fast local T2I without touching ComfyUI/ROCm — pure Vulkan, fits the "Vulkan-first"
+  preference.
+- Model dir: `/zero/ai/image` — SDXL base checkpoint + VAE, FLUX.1-schnell (GGUF q4_k) +
+  clip_l/t5xxl/ae.
+- Binary: `sd-cli`. Examples:
 
 ```bash
 # SDXL (checkpoint carries its own text encoders)
-sd-img -m /zero/ai/image/sd_xl_base_1.0.safetensors --vae /zero/ai/image/sdxl_vae.safetensors \
+sd-cli -m /zero/ai/image/sd_xl_base_1.0.safetensors --vae /zero/ai/image/sdxl_vae.safetensors \
    -H 1024 -W 1024 -p "a lovely cat" -v
 
 # FLUX.1-schnell (GGUF unet + separate encoders; cfg-scale 1, 4 steps)
-sd-img --diffusion-model /zero/ai/image/flux1-schnell-q4_k.gguf --vae /zero/ai/image/ae.safetensors \
+sd-cli --diffusion-model /zero/ai/image/flux1-schnell-q4_k.gguf --vae /zero/ai/image/ae.safetensors \
    --clip_l /zero/ai/image/clip_l.safetensors --t5xxl /zero/ai/image/t5xxl_fp8_e4m3fn.safetensors \
    -p "a lovely cat" --cfg-scale 1.0 --sampling-method euler --steps 4 -v --clip-on-cpu
 ```
 
-- GPU notes: q4_k GGUF ≈ 6.4 GB in VRAM (fits 16 GB alongside the fp8 t5xxl); q8_0 ≈ 12 GB — only with a
-  lighter t5. FLUX needs `--cfg-scale 1.0`; SDXL default cfg ~6.
+- GPU notes: q4_k GGUF ≈ 6.4 GB in VRAM (fits 16 GB alongside the fp8 t5xxl); q8_0 ≈ 12 GB — only
+  with a lighter t5. FLUX needs `--cfg-scale 1.0`; SDXL default cfg ~6.
 
 ### Embeddings & reranker (RAG)
 
@@ -140,16 +143,19 @@ sd-img --diffusion-model /zero/ai/image/flux1-schnell-q4_k.gguf --vae /zero/ai/i
   qwen2.5-coder, qwen3-coder-next, deepcoder, devstral, qwq, gemma4, llama3.3 70b, qwen3.5 27b,
   qwen3-embedding, glm-ocr, abliterated variants, qwen3-vl/qwen2.5vl, …)
 - `/zero/ai/llama` — llama-server (qwen3-vl) GGUF models (24 GB, exists)
-- `/zero/ai/image` — stable-diffusion.cpp models: SDXL base + VAE, FLUX.1-schnell q4_k + encoders (created by tmpfiles)
-- `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by tmpfiles)
+- `/zero/ai/image` — stable-diffusion.cpp models: SDXL base + VAE, FLUX.1-schnell q4_k + encoders
+  (created by tmpfiles)
+- `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by
+  tmpfiles)
 - `/zero/ai/glm52_i4` — colibrì int4 model (~370 GB, needs download)
 - `/zero/ai/localai` — LocalAI model dir (fallback path)
 
 ## Status on odin
 
 - `features.llm.enable = true`, `services.colibri.enable = true`
-- Ollama: enabled; merged the orphaned 413 GB store (was nested under `/zero/ai/ollama/models/`) into
-  the active store — all 23 models now visible to `ollama list`, no re-download.
-- stable-diffusion.cpp: package added (Vulkan), models downloaded to `/zero/ai/image` (pending rebuild).
+- Ollama: enabled; merged the orphaned 413 GB store (was nested under `/zero/ai/ollama/models/`)
+  into the active store — all 23 models now visible to `ollama list`, no re-download.
+- stable-diffusion.cpp: package added (Vulkan), models downloaded to `/zero/ai/image` (pending
+  rebuild).
 - colibrì: engine installed; model not downloaded yet
 - Ports: 11434 (Ollama), 8000 (colibri serve, only if enabled)
