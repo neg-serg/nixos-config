@@ -18,6 +18,9 @@ isn't a step-by-step runbook.
 
 - TidalCycles setup — moved to the private notes repo (~/notes/music/tidal/), kept out of the public tree on purpose
 
+- carlactl — console VST router through headless Carla (list/run/route, fzf):
+  [carlactl.ru.md](./carlactl.ru.md)
+
 - Replacing GUI buttons with text commands (RU):
   [buttons-to-commands.ru.md](./buttons-to-commands.ru.md)
 
