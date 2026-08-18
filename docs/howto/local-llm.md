@@ -111,14 +111,21 @@ services.colibri = {
   Rust `sd` sed replacement).
 - Role: fast local T2I without touching ComfyUI/ROCm — pure Vulkan, fits the "Vulkan-first"
   preference.
-- Model dir: `/zero/ai/image` — SDXL base checkpoint + VAE, FLUX.1-schnell (GGUF q4_k) +
-  clip_l/t5xxl/ae.
-- Binary: `sd-cli`. Examples:
+- Model dir: `/zero/ai/image` — SDXL base checkpoint + VAE, TAESD decoder, FLUX.1-schnell (GGUF
+  q4_k) + clip_l/t5xxl/ae.
+- Binary: `sd-cli`. **Verified working recipe (RX 9070 XT, Vulkan)** — SDXL 1024×1024, 20 steps,
+  ~23 s/image:
 
 ```bash
-# SDXL (checkpoint carries its own text encoders)
-sd-cli -m /zero/ai/image/sd_xl_base_1.0.safetensors --vae /zero/ai/image/sdxl_vae.safetensors \
-   -H 1024 -W 1024 -p "a lovely cat" -v
+# SDXL — use --taesd! Full VAE decode needs a single >4 GB Vulkan buffer (RADV caps
+# maxMemoryAllocationSize at ~4 GiB → OOM), and CPU VAE decode is 170 s and yields blank output.
+# TAESD decodes in <1 s with real content. UNet runs on Vulkan (~1.2 it/s).
+sd-cli -m /zero/ai/image/sd_xl_base_1.0.safetensors \
+   --vae /zero/ai/image/sdxl_vae.safetensors \
+   --taesd /zero/ai/image/taesdxl.safetensors \
+   -H 1024 -W 1024 -p "a red apple on a wooden table" \
+   --steps 20 --cfg-scale 6 --sampling-method euler \
+   --backend diffusion=vulkan0,clip=cpu -v
 
 # FLUX.1-schnell (GGUF unet + separate encoders; cfg-scale 1, 4 steps)
 sd-cli --diffusion-model /zero/ai/image/flux1-schnell-q4_k.gguf --vae /zero/ai/image/ae.safetensors \
@@ -126,8 +133,10 @@ sd-cli --diffusion-model /zero/ai/image/flux1-schnell-q4_k.gguf --vae /zero/ai/i
    -p "a lovely cat" --cfg-scale 1.0 --sampling-method euler --steps 4 -v --clip-on-cpu
 ```
 
-- GPU notes: q4_k GGUF ≈ 6.4 GB in VRAM (fits 16 GB alongside the fp8 t5xxl); q8_0 ≈ 12 GB — only
-  with a lighter t5. FLUX needs `--cfg-scale 1.0`; SDXL default cfg ~6.
+- GPU notes (verified on this host): q4_k GGUF ≈ 6.4 GB in VRAM; q8_0 ≈ 12 GB — only with a lighter
+  t5. FLUX needs `--cfg-scale 1.0`; SDXL default cfg ~6. RADV caps a single Vulkan allocation at
+  ~4 GiB (`maxMemoryAllocationSize = 0xfffffffc`) — any component needing a bigger compute buffer
+  (full VAE decode = 8.5 GB) must go to CPU or use TAESD.
 
 ### Embeddings & reranker (RAG)
 
