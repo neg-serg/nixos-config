@@ -7,6 +7,8 @@ __pycache__/
 .pi/
 packages/target/
 .omo/
+# DSH web runtime uploads (voice recordings, images from chat)
+.dsh-uploads/
 files/shell/zsh/.zcompdump
 viz/
 
