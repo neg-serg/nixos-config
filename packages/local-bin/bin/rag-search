@@ -1,0 +1,441 @@
+#!/usr/bin/env python3
+# rag-search: локальный векторный поиск по заметкам (~/notes) — RAG поверх
+# qwen3-embedding (ollama) + bge-reranker-v2-m3 (llama.cpp) + qwen3:8b (ответы).
+#
+# Установка через nix-maid local-bin: packages/local-bin/bin → ~/.local/bin.
+# Данные индекса: ~/.local/share/rag-notes/ (sqlite + float32-векторы).
+# Ничего не уходит в сеть: ollama и llama.cpp работают локально.
+#
+# Команды:
+#   rag-search index              переиндексировать заметки (эмбеддинги батчами)
+#   rag-search search "запрос"    top-N результатов (косинус + реранкинг)
+#   rag-search search --llm "…"   ответ qwen3:8b по найденным фрагментам
+#   rag-search search -n 8 "…"    больше результатов
+#   rag-search status             состояние индекса и реранкера
+#   rag-search reranker stop      остановить фоновый реранкер
+#
+# Переменные окружения:
+#   RAG_NOTES_DIR    каталог заметок (по умолчанию ~/notes)
+#   RAG_INDEX_DIR    каталог индекса  (по умолчанию ~/.local/share/rag-notes)
+#   RAG_LLM_MODEL    модель для ответов (по умолчанию qwen3:8b)
+#   RAG_RERANK_MODEL путь к GGUF реранкера (по умолчанию /zero/ai/embeddings/...)
+
+import argparse
+import glob
+import json
+import os
+import re
+import shutil
+import signal
+import sqlite3
+import subprocess
+import sys
+import time
+
+import numpy as np
+import requests
+
+OLLAMA_URL = os.environ.get("RAG_OLLAMA_URL", "http://127.0.0.1:11434")
+EMBED_MODEL = os.environ.get("RAG_EMBED_MODEL", "qwen3-embedding")
+NOTES_DIR = os.environ.get("RAG_NOTES_DIR", os.path.expanduser("~/notes"))
+INDEX_DIR = os.environ.get("RAG_INDEX_DIR", os.path.expanduser("~/.local/share/rag-notes"))
+INDEX_DB = os.path.join(INDEX_DIR, "index.sqlite")
+RERANK_MODEL = os.environ.get(
+    "RAG_RERANK_MODEL", "/zero/ai/embeddings/bge-reranker-v2-m3-Q4_K_M.gguf"
+)
+RERANK_PORT = int(os.environ.get("RAG_RERANK_PORT", "8083"))
+LLM_MODEL = os.environ.get("RAG_LLM_MODEL", "qwen3:8b")
+RERANK_URL = f"http://127.0.0.1:{RERANK_PORT}"
+BATCH = 16          # embedding batch size
+RERANK_POOL = 20    # candidates passed to the reranker (bge ctx ~512 tok/doc, keep total < server ctx)
+VEC_DIM = 4096      # qwen3-embedding
+
+
+def log(msg):
+    print(msg, file=sys.stderr)
+
+
+def embed(texts, task_type):
+    """Embed a list of strings via ollama /api/embed (batched)."""
+    out = []
+    for i in range(0, len(texts), BATCH):
+        batch = texts[i : i + BATCH]
+        payload = {"model": EMBED_MODEL, "input": batch}
+        if task_type:
+            payload["task_type"] = task_type
+        r = requests.post(f"{OLLAMA_URL}/api/embed", json=payload, timeout=180)
+        r.raise_for_status()
+        out.extend(r.json()["embeddings"])
+    return np.asarray(out, dtype=np.float32)
+
+
+def chunk_markdown(text):
+    """Split markdown into sections by headings, then by paragraphs.
+
+    Code fences are never split. Each chunk keeps its heading line first.
+    Returns a list of (heading, content) tuples.
+    """
+    chunks = []
+    heading = None
+    buf = []
+    in_fence = False
+
+    def flush():
+        nonlocal buf
+        content = "\n".join(buf).strip()
+        if content:
+            chunks.append((heading or "", content))
+        buf = []
+
+    for raw in text.split("\n"):
+        line = raw.rstrip()
+        if line.strip().startswith("```"):
+            in_fence = not in_fence
+            buf.append(line)
+            continue
+        m = re.match(r"^(#{1,4})\s+(.+?)\s*#*\s*$", line)
+        if m and not in_fence:
+            flush()
+            heading = m.group(2)
+            buf.append(line)
+            continue
+        if not in_fence and buf and len("\n".join(buf)) > 2000 and not line.strip():
+            flush()
+            continue
+        buf.append(line)
+    flush()
+
+    # split oversized chunks at paragraph boundaries (never inside a fence)
+    final = []
+    for h, c in chunks:
+        if len(c) <= 3000:
+            final.append((h, c))
+            continue
+        parts = []
+        cur = []
+        fence = False
+        for para in c.split("\n\n"):
+            if para.strip().startswith("```"):
+                fence = not fence
+            if not fence and cur and len("\n\n".join(cur)) + len(para) > 2500:
+                parts.append("\n\n".join(cur))
+                cur = []
+            cur.append(para)
+        if cur:
+            parts.append("\n\n".join(cur))
+        final.extend((h, p) for p in parts)
+    return final
+
+
+SKIP_DIRS = {".git", ".github", ".claude", ".hooks", "node_modules", ".worktrees", ".specify"}
+
+
+def collect_files():
+    """Find indexable files under NOTES_DIR (*.md, *.txt).
+
+    Uses `git ls-files` (tracked + untracked-but-not-ignored) so the index
+    matches what the user actually keeps, skipping .worktrees duplicates and
+    dot-dirs. Falls back to a plain walk if git is unavailable.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", NOTES_DIR, "ls-files", "--cached", "--others", "--exclude-standard"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if out.returncode == 0:
+            files = []
+            for rel in out.stdout.splitlines():
+                parts = rel.split("/")
+                if not rel.endswith((".md", ".txt")):
+                    continue
+                if any(p in SKIP_DIRS for p in parts[:-1]):
+                    continue
+                p = os.path.join(NOTES_DIR, rel)
+                if os.path.isfile(p) and not os.path.islink(p):
+                    files.append(p)
+            if files:
+                return sorted(files)
+    except (OSError, subprocess.SubprocessError):
+        pass
+    files = []
+    for root, dirs, names in os.walk(NOTES_DIR):
+        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+        for name in names:
+            if name.endswith((".md", ".txt")):
+                p = os.path.join(root, name)
+                if os.path.isfile(p) and not os.path.islink(p):
+                    files.append(p)
+    return sorted(files)
+
+
+def db_connect():
+    os.makedirs(INDEX_DIR, exist_ok=True)
+    conn = sqlite3.connect(INDEX_DB)
+    conn.execute("PRAGMA journal_mode=WAL")
+    return conn
+
+
+def cmd_index(args):
+    files = collect_files()
+    if not files:
+        log(f"Нет файлов для индексации в {NOTES_DIR}")
+        return 1
+    chunks = []
+    for f in files:
+        try:
+            with open(f, encoding="utf-8", errors="replace") as fh:
+                text = fh.read()
+        except OSError as e:
+            log(f"пропуск {f}: {e}")
+            continue
+        rel = os.path.relpath(f, NOTES_DIR)
+        for heading, content in chunk_markdown(text):
+            chunks.append((rel, heading, content))
+    if not chunks:
+        log("Нет чанков")
+        return 1
+
+    t0 = time.time()
+    log(f"Эмбеддинг {len(chunks)} чанков ({len(files)} файлов)…")
+    vecs = embed([c[2] for c in chunks], task_type="retrieval.passage")
+
+    conn = db_connect()
+    conn.execute("DROP TABLE IF EXISTS chunks")
+    conn.execute("DROP TABLE IF EXISTS meta")
+    conn.execute(
+        """CREATE TABLE chunks(
+             id INTEGER PRIMARY KEY, path TEXT NOT NULL, heading TEXT,
+             content TEXT NOT NULL, vec BLOB NOT NULL)"""
+    )
+    conn.execute("CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT)")
+    conn.executemany(
+        "INSERT INTO chunks(path, heading, content, vec) VALUES (?,?,?,?)",
+        [(c[0], c[1], c[2], vecs[i].tobytes()) for i, c in enumerate(chunks)],
+    )
+    now = time.strftime("%Y-%m-%d %H:%M:%S")
+    conn.executemany(
+        "INSERT INTO meta(key, value) VALUES (?,?)",
+        [
+            ("embed_model", EMBED_MODEL),
+            ("chunks", str(len(chunks))),
+            ("files", str(len(files))),
+            ("built", now),
+        ],
+    )
+    conn.commit()
+    conn.close()
+    log(f"Готово: {len(chunks)} чанков из {len(files)} файлов, {time.time()-t0:.1f}с → {INDEX_DB}")
+
+
+def find_llama_server():
+    p = shutil.which("llama-server")
+    if p:
+        return p
+    hits = sorted(glob.glob("/nix/store/*llama-cpp*/bin/llama-server"))
+    return hits[-1] if hits else None
+
+
+def reranker_status():
+    try:
+        r = requests.get(f"{RERANK_URL}/health", timeout=3)
+        return r.status_code == 200 and r.json().get("status") == "ok"
+    except requests.RequestException:
+        return False
+
+
+def ensure_reranker():
+    """Start llama-server --rerank in the background if not running."""
+    if reranker_status():
+        return True
+    server = find_llama_server()
+    if not server or not os.path.exists(RERANK_MODEL):
+        return False
+    os.makedirs(INDEX_DIR, exist_ok=True)
+    logfile = open(os.path.join(INDEX_DIR, "reranker.log"), "ab")
+    subprocess.Popen(
+        [
+            server,
+            "--model", RERANK_MODEL,
+            "--rerank",
+            "--port", str(RERANK_PORT),
+            "--ctx-size", "8192",
+            "--no-webui",
+        ],
+        stdout=logfile, stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
+    for _ in range(30):
+        time.sleep(1)
+        if reranker_status():
+            return True
+    return False
+
+
+def rerank(query, docs):
+    if not docs:
+        return {}
+    try:
+        r = requests.post(
+            f"{RERANK_URL}/rerank",
+            json={"query": query, "documents": docs, "top_n": len(docs)},
+            timeout=120,
+        )
+        r.raise_for_status()
+        return {res["index"]: res["relevance_score"] for res in r.json()["results"]}
+    except requests.RequestException:
+        return {}
+
+
+def load_index():
+    conn = db_connect()
+    meta = dict(conn.execute("SELECT key, value FROM meta").fetchall())
+    if not meta:
+        conn.close()
+        return None, None, None
+    rows = conn.execute(
+        "SELECT id, path, heading, content, vec FROM chunks ORDER BY id"
+    ).fetchall()
+    conn.close()
+    vecs = np.frombuffer(b"".join(r[4] for r in rows), dtype=np.float32).reshape(-1, VEC_DIM)
+    return rows, vecs, meta
+
+
+def cmd_search(args):
+    query = args.query
+    rows, vecs, meta = load_index()
+    if rows is None:
+        log("Индекс пуст — сначала выполни: rag-search index")
+        return 1
+    qvec = embed([query], task_type="retrieval.query")[0]
+    norms = np.linalg.norm(vecs, axis=1)
+    sims = (vecs @ qvec) / np.maximum(norms * np.linalg.norm(qvec), 1e-9)
+    order = np.argsort(-sims)[: RERANK_POOL]
+
+    ranked = [(int(i), float(sims[i])) for i in order]
+    rrs = {}
+    if args.rerank and ensure_reranker():
+        # truncate docs for the reranker — bge context is ~512 tokens, and all
+        # docs share one server context window (500 chars ≈ 300 tokens each)
+        docs = [rows[i][3][:500] for i in order]
+        rrs = rerank(query, docs)
+        # rerank scores are keyed by position in `docs` — map back to chunk ids
+        rrs = {order[pos]: score for pos, score in rrs.items()}
+    if rrs:
+        ranked = sorted(ranked, key=lambda t: -rrs.get(t[0], -1e9))
+    ranked = ranked[: args.n]
+
+    print(f"Поиск «{query}» — {len(ranked)} результатов (модель эмбеддингов: {EMBED_MODEL}):\n")
+    for rank, (i, cos) in enumerate(ranked, 1):
+        path, heading, content = rows[i][1], rows[i][2], rows[i][3]
+        rr = rrs.get(i)
+        rr_s = f"  реранк: {rr:+.2f}" if rr is not None else ""
+        print(f"#{rank}  [косин. {cos:.3f}]{rr_s}  {path}" + (f"  ({heading})" if heading else ""))
+        snippet = content.replace("\n", " ").strip()
+        print(f"    …{snippet[:180]}…\n" if len(snippet) > 180 else f"    {snippet}\n")
+
+    if args.llm:
+        ctx = "\n\n---\n\n".join(
+            f"Файл: {rows[i][1]}" + (f", раздел: {rows[i][2]}" if rows[i][2] else "")
+            + f"\n{rows[i][3]}"
+            for (i, _) in ranked[:5]
+        )
+        system = (
+            "Ты — помощник, отвечающий по заметкам пользователя. Отвечай по-русски, "
+            "опираясь только на приведённые фрагменты. Если фрагментов недостаточно — "
+            "так и скажи. В конце перечисли источники (пути к файлам)."
+        )
+        payload = {
+            "model": LLM_MODEL,
+            "stream": True,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": f"Вопрос: {query}\n\nФрагменты заметок:\n{ctx}"},
+            ],
+        }
+        print(f"\n=== Ответ {LLM_MODEL} ===\n")
+        with requests.post(f"{OLLAMA_URL}/api/chat", json=payload, stream=True, timeout=300) as r:
+            r.raise_for_status()
+            for line in r.iter_lines():
+                if not line:
+                    continue
+                part = json.loads(line)
+                piece = part.get("message", {}).get("content", "")
+                if piece:
+                    print(piece, end="", flush=True)
+        print()
+    return 0
+
+
+def cmd_status(args):
+    conn = db_connect()
+    meta = dict(conn.execute("SELECT key, value FROM meta").fetchall())
+    n = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
+    conn.close()
+    print("Индекс:", INDEX_DB)
+    if meta:
+        print(f"  чанков: {meta.get('chunks')}, файлов: {meta.get('files')}, собран: {meta.get('built')}")
+        print(f"  модель: {meta.get('embed_model')}")
+    else:
+        print("  пуст — выполни `rag-search index`")
+    print(f"Каталог заметок: {NOTES_DIR}")
+    print(f"Реранкер: {'работает' if reranker_status() else 'не запущен'} ({RERANK_URL})")
+    print(f"Модель реранкера: {RERANK_MODEL} ({'есть' if os.path.exists(RERANK_MODEL) else 'НЕТ'})")
+    print(f"Ответы: {LLM_MODEL}")
+    return 0
+
+
+def cmd_reranker(args):
+    if args.action == "start":
+        if ensure_reranker():
+            print("Реранкер запущен")
+            return 0
+        print("Не удалось запустить реранкер (нет llama-server или модели)", file=sys.stderr)
+        return 1
+    if args.action == "stop":
+        try:
+            requests.post(f"{RERANK_URL}/shutdown", timeout=5)
+        except requests.RequestException:
+            pass
+        print("Реранкер остановлен (если был запущен)")
+        return 0
+    if args.action == "status":
+        print("работает" if reranker_status() else "не запущен")
+        return 0
+    return 2
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="rag-search",
+        description="Локальный векторный поиск по заметкам (qwen3-embedding + bge-reranker + qwen3).",
+    )
+    sub = parser.add_subparsers(dest="cmd")
+
+    p_index = sub.add_parser("index", help="переиндексировать заметки")
+    p_index.set_defaults(fn=cmd_index)
+
+    p_search = sub.add_parser("search", help="поиск по заметкам")
+    p_search.add_argument("query", help="поисковый запрос")
+    p_search.add_argument("-n", type=int, default=5, help="сколько результатов (по умолчанию 5)")
+    p_search.add_argument("--llm", action="store_true", help="дополнительно ответ qwen3 по найденному")
+    p_search.add_argument("--no-rerank", dest="rerank", action="store_false", default=True,
+                          help="без реранкинга (только косинус)")
+    p_search.set_defaults(fn=cmd_search)
+
+    p_status = sub.add_parser("status", help="состояние индекса и реранкера")
+    p_status.set_defaults(fn=cmd_status)
+
+    p_rr = sub.add_parser("reranker", help="управление фоновым реранкером")
+    p_rr.add_argument("action", choices=["start", "stop", "status"])
+    p_rr.set_defaults(fn=cmd_reranker)
+
+    args = parser.parse_args()
+    if not getattr(args, "fn", None):
+        parser.print_help()
+        return 2
+    # background reranker is lazily started by search when needed
+    return args.fn(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
