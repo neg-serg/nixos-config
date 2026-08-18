@@ -161,6 +161,21 @@ sd-cli --diffusion-model /zero/ai/image/flux1-schnell-q4_k.gguf \
   `llama-server --rerank` or used directly with llama.cpp's embedding CLI.
 - Both are multilingual (RU/EN); reranker should be the top-k filter before LLM context assembly.
 
+### rag-search (векторный поиск по заметкам)
+
+- CLI: `rag-search` (`~/.local/bin`, source in `packages/local-bin/bin/rag-search`).
+- Индекс: `~/.local/share/rag-notes/index.sqlite` (sqlite + float32-векторы, numpy cosine).
+- Пайплайн: чанкинг markdown → `qwen3-embedding` (ollama, батчами) → top-20 cosine → реранкинг
+  `bge-reranker-v2-m3` (llama-server `--rerank`, стартует сам при поиске, ctx 8192).
+- Ответы: `qwen3:8b` через ollama (`--llm`).
+
+```bash
+rag-search index                    # переиндексация (~227 файлов, ~2400 чанков, ~5 мин)
+rag-search search "как настроить tidal cycles" -n 5
+rag-search search --llm "вопрос"    # ответ по найденным фрагментам
+rag-search status                   # состояние индекса и реранкера
+```
+
 ## Layout on disk
 
 - `/zero/ai/ollama` — Ollama model store (437 GB, 23 models: qwen3 32b/235b-a22b, qwen3-coder 30b,
