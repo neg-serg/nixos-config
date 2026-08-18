@@ -169,6 +169,10 @@ lib.mkMerge [
     # TCP server (4713) + RTP multicast sink (224.0.0.56:46000 via net1)
     features.media.audio.lanAccess.enable = true;
 
+    # Local speech stack: Chatterbox TTS (:8000), Piper TTS (:8001), whisper.cpp STT (:8002).
+    # Assets in /zero/ai/speech/engines; whisper.cpp GPU via Vulkan, chatterbox via ROCm.
+    features.media.audio.speech.enable = true;
+
     # Quiet fan profile: load nct6775 and autogenerate fancontrol config
     hardware.cooling = {
       enable = true;
