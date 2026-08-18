@@ -114,14 +114,22 @@ lib.mkIf (cfg.enable or false) {
     # If no profile has been saved yet (first run), this will produce a "Profile
     # failed to load" message but does NOT fail the unit — status=0 is expected.
     # Save a profile named "neg" via the GUI or CLI to make this effective.
+    # Both the server and this applier SEGV if they enumerate i2c devices
+    # concurrently at session start, so wait for the server to settle, then
+    # retry a few times before giving up.
     openrgb-profile = {
       description = "Apply OpenRGB neg profile";
       after = [ "openrgb.service" ];
       requires = [ "openrgb.service" ];
+      startLimitIntervalSec = 120;
+      startLimitBurst = 6;
       serviceConfig = {
         Type = "oneshot";
+        ExecStartPre = "${pkgs.coreutils}/bin/sleep 10";
         ExecStart = "${lib.getExe pkgs.openrgb} -p %h/.config/openrgb/neg.orp";
         RemainAfterExit = false;
+        Restart = "on-failure";
+        RestartSec = 10;
       };
       wantedBy = [ "graphical-session.target" ];
     };
