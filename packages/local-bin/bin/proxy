@@ -80,10 +80,12 @@ if cfg.get("dns") != FINAL_DNS or cfg.get("route") != FINAL_ROUTE:
     cfg["route"] = FINAL_ROUTE
     changed = True
     print("  Config: DNS/route reset to final shape (client-side resolve)")
+lan_in = None
 for ib in cfg.get("inbounds", []):
     if ib.get("tag") == "in-lan":
+        lan_in = ib
         break
-else:
+if lan_in is None:
     lan = lan.strip()
     if not lan or ":" not in lan:
         print("  Config: LAN secret empty/invalid — skipping LAN inbound")
@@ -94,6 +96,17 @@ else:
                                 "users": [{"username": u, "password": p}]})
         changed = True
         print("  Config: added LAN inbound (0.0.0.0:10810)")
+else:
+    # The SOPS secret is the source of truth: sync username/password if the
+    # config drifted (e.g. after `sops set` + rebuild regenerated the secret).
+    lan = lan.strip()
+    if lan and ":" in lan:
+        u, p = lan.split(":", 1)
+        users = lan_in.get("users") or []
+        if not users or users[0].get("username") != u or users[0].get("password") != p:
+            lan_in["users"] = [{"username": u, "password": p}]
+            changed = True
+            print("  Config: synced LAN inbound credentials from secret")
 if changed:
     json.dump(cfg, open(cfg_path, "w"), indent=2)
     print("  Config: patched")
