@@ -6,15 +6,8 @@
 }:
 let
   enabled = config.lib.neg.enabled "llm";
-  # stable-diffusion.cpp (Vulkan) T2I on RX 9070 XT; binary renamed to sd-img
-  # to avoid colliding with the Rust `sd` (sed replacement, golden-tools).
-  sd-cpp = (pkgs.stable-diffusion-cpp.override { vulkanSupport = true; }).overrideAttrs (old: {
-    postInstall = (old.postInstall or "") + ''
-      if [ -e "$out/bin/sd" ] && [ ! -e "$out/bin/sd-img" ]; then
-        mv "$out/bin/sd" "$out/bin/sd-img"
-      fi
-    '';
-  });
+  # stable-diffusion.cpp (Vulkan) T2I on RX 9070 XT; CLI binary is `sd-cli`
+  sd-cpp = pkgs.stable-diffusion-cpp.override { vulkanSupport = true; };
 in
 {
   environment.systemPackages = lib.optionals enabled [
