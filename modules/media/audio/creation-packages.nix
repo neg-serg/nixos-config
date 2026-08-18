@@ -73,5 +73,23 @@ in
         RestartSec = 5;
       };
     };
+
+    # Vital standalone synth — on-demand: systemctl --user start vital-standalone.
+    # Runs under pw-jack (JACK via PipeWire); LIBGL_ALWAYS_SOFTWARE=1 avoids the
+    # black window on Wayland/XWayland (JUCE/OpenGL rendering). Not autostarted.
+    systemd.user.services.vital-standalone = {
+      description = "Vital standalone synthesizer (pw-jack, software GL)";
+      after = [
+        "pipewire.service"
+        "wireplumber.service"
+      ];
+      serviceConfig = {
+        Type = "simple";
+        Environment = "WAYLAND_DISPLAY=wayland-1 LIBGL_ALWAYS_SOFTWARE=1";
+        ExecStart = "${pkgs.pipewire.jack}/bin/pw-jack ${pkgs.vital}/bin/Vital";
+        Restart = "on-failure";
+        RestartSec = 3;
+      };
+    };
   };
 }
