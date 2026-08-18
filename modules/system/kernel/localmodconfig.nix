@@ -4,7 +4,7 @@ let
   baseKernel = pkgs.linuxPackages.kernel;
 
   # Kernel config = generated base + deliberate manual overlay
-  # (H-series notes in .pi/audit-2026-07-21.md), merged in pure Nix.
+  # (H-series notes from the Jul-2026 kernel audit), merged in pure Nix.
   # builtins.toFile returns a string, so build.nix's isPath-based auto-
   # detection of `config` would not run — pass the parsed config explicitly
   # (mirrors build.nix's readConfig: CONFIG_*=y|m → isModular/dev outputs).

@@ -17,6 +17,33 @@ Scope
 - This AGENTS.md applies to the entire `/etc/nixos` tree.
 - Prefer existing module structure (`modules/`, `hosts/`, `modules/user/nix-maid/`, etc.) and follow surrounding style.
 
+Quick Commands
+- Build & switch: `sudo nixos-rebuild switch --flake .#odin --option substitute false`
+- Quick switch: `nh os switch /etc/nixos#odin --option substitute false`
+- Build only: `nixos-rebuild build --flake .#odin --option substitute false`
+- Format all: `just fmt`
+- Full check: `just check` (runs `nix flake check -L`)
+- Update flake: `just update`
+- GC: `sudo nix-collect-garbage -d && nix-collect-garbage -d`
+
+Project Structure
+- `flake.nix` — entry point (NixOS + home-manager)
+- `modules/` — system modules (features/, cli/, dev/, servers/, ...)
+- `hosts/odin/` — host-specific config (services.nix, hardware.nix, networking.nix...)
+- `packages/` — custom overlays and packages
+- `secrets/` — SOPS-encrypted secrets
+- `files/` — config files (Hyprland, Quickshell panel, scripts)
+- `.agent/workflows/` — step-by-step change workflows (add module/package/secret/..., rebuild, theming)
+
+Feature Flags
+- Most components are controlled via feature flags in `modules/features/`:
+  ```nix
+  features.dev.ai.omp.enable = true;
+  features.cli.broot.enable = true;
+  ```
+- odin uses a restricted domain set (`odinDomains` in `flake/nixos.nix`); changes in excluded
+  domains (`llm`, `appimage`, `apps`) do not take effect on odin — warn the user before touching them.
+
 Nix style: `pkgs.*` lists
 - When adding items like `pkgs.<name>` to `environment.systemPackages` or other package lists, add a short comment after each entry describing what the package is/does, whenever it is not completely obvious.
   - Example: `pkgs.supercollider # SuperCollider IDE and audio engine`
@@ -58,6 +85,7 @@ Builds: substitute = false
 
 Commit style
 - Use a bracketed scope prefix consistent with existing history, for example: `[media/audio] …`, `[hosts/odin] …`, `[dev/pkgs] …`, `[docs] …`.
+- Common scopes: nixpkgs, flake/*, core/*, hosts/<hostname>, dev/*, cli/*, hardware/*, media/*, servers/*, modules/*, packages/*, docs, ci, refactor.
 - Subjects must be in imperative mood, short and specific, without a trailing period.
 - Examples:
   - `[media/audio] Add TidalCycles live-coding stack`
