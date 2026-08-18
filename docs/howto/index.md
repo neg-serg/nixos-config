@@ -37,6 +37,9 @@ isn't a step-by-step runbook.
 
 - Options/modules reference: [modules.md](./modules.md)
 
+- Local AI stack (Ollama store layout, llama-server vision, stable-diffusion.cpp T2I, RAG embeddings):
+  [local-llm.md](./local-llm.md)
+
 - Verified change workflows (add module / flag / package / host / script / secret):
   [agent-recipes.md](./agent-recipes.md)
 
