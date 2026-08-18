@@ -33,17 +33,66 @@ in
   # (upstream PR #1007). The pinned nixpkgs-weekly still ships 0.8.0, which
   # applies garbage Unix modes stored in bandcamp pre-order zips (e.g. 0o4032)
   # literally — extracted files end up unreadable by the owner. ouch is the
-  # backend of the `se`/`pk` aliae aliases (lib/aliae.nix).
-  ouch = finalPrev.ouch.overrideAttrs (_: {
+  # backend of the `se`/`pk` aliae aliases (lib/aliae.nix). MANUALLY PINNED:
+  # built via rustPlatform.buildRustPackage because overrideAttrs on the
+  # packaged 0.8.0 keeps the old cargoDeps/vendor-staging hash (new rust
+  # platform flow), which makes the fixed-output fetch fail.
+  ouch = finalPrev.rustPlatform.buildRustPackage rec {
+    pname = "ouch";
     version = "0.8.1";
     src = finalPrev.fetchFromGitHub {
       owner = "ouch-org";
       repo = "ouch";
-      rev = "0.8.1";
+      rev = version;
       hash = "sha256-fxBalMi5xdLNBnd5VIdAYDIjbSBrOPrmpKlKW1DmbxQ=";
     };
     cargoHash = "sha256-kYef8Xsi1gO0V2yXHiTkPi2rFjECw3jjhADSMhhu5zg=";
-  });
+    # 0.8.1 sanitizes the archive mode but still creates files with the
+    # (garbage) mode: for bandcamp zips (mode 0o4032, no S_IFMT) that yields
+    # 0o032 -> umask -> 0o010 and extraction fails with EACCES. Backport the
+    # upstream main fix (valid_unix_permissions): fall back to 0o644 when the
+    # zip mode carries no Unix file-type bits.
+    patches = [ ./overlays/ouch-valid-unix-perms.patch ];
+    nativeBuildInputs = [
+      finalPrev.cmake
+      finalPrev.installShellFiles
+      finalPrev.pkg-config
+      finalPrev.rustPlatform.bindgenHook
+    ];
+    nativeCheckInputs = [ finalPrev.git ];
+    buildInputs = [
+      finalPrev.bzip2
+      finalPrev.bzip3
+      finalPrev.xz
+      finalPrev.zlib
+      finalPrev.zstd
+    ];
+    buildNoDefaultFeatures = true;
+    buildFeatures = [
+      "use_zlib"
+      "use_zstd_thin"
+      "bzip3"
+      "zstd/pkg-config"
+    ];
+    postInstall = ''
+      installManPage artifacts/*.1
+      installShellCompletion artifacts/ouch.{bash,fish} --zsh artifacts/_ouch --nushell artifacts/ouch.nu
+    '';
+    env.OUCH_ARTIFACTS_FOLDER = "artifacts";
+    meta = {
+      description = "Command-line utility for easily compressing and decompressing files and directories";
+      homepage = "https://github.com/ouch-org/ouch";
+      changelog = "https://github.com/ouch-org/ouch/blob/${version}/CHANGELOG.md";
+      license = finalPrev.lib.licenses.mit;
+      maintainers = with finalPrev.lib.maintainers; [
+        psibi
+        krovuxdev
+        philocalyst
+      ];
+      platforms = finalPrev.lib.platforms.all;
+      mainProgram = "ouch";
+    };
+  };
 
   # pffft/fuzzysearchdatabase: bitbucket.org is RKN-blocked here
   # (DNS-poisoned, sandboxed fetches hang). The attribute overrides below
