@@ -1,0 +1,26 @@
+diff --git a/src/archive/zip.rs b/src/archive/zip.rs
+--- a/src/archive/zip.rs
++++ b/src/archive/zip.rs
+@@ -97,7 +97,7 @@
+                     #[cfg(unix)]
+                     let mut output_file = {
+                         use fs_err::os::unix::fs::OpenOptionsExt;
+-                        let mode = file.unix_mode().map(sanitize_archive_mode).unwrap_or(0o644);
++                        let mode = file.unix_mode().and_then(valid_unix_permissions).unwrap_or(0o644);
+                         fs::OpenOptions::new()
+                             .write(true)
+                             .create(true)
+@@ -333,6 +333,13 @@
+ }
+ 
+ #[cfg(unix)]
++/// A zip mode without Unix file-type bits isn't a real Unix mode, so its
++/// permissions are ignored. Backported from ouch main (valid_unix_permissions).
++fn valid_unix_permissions(mode: u32) -> Option<u32> {
++    (mode & 0o170000 != 0).then(|| sanitize_archive_mode(mode))
++}
++
++#[cfg(unix)]
+ fn unix_set_permissions<R: Read>(file_path: &Path, file: &ZipFile<'_, R>) -> Result<()> {
+     use std::fs::Permissions;
+ 
