@@ -182,8 +182,8 @@ in
     };
   };
 
-  config =
-    lib.mkIf enabled {
+  config = lib.mkMerge [
+    (lib.mkIf enabled {
       services.colibri = {
         arch = lib.mkDefault "native";
         modelDir = lib.mkDefault "/zero/ai/glm52_i4";
@@ -197,8 +197,8 @@ in
           MTP = "3";
         };
       };
-    }
-    // (lib.mkIf (enabled && cfg.enable) (
+    })
+    (lib.mkIf (enabled && cfg.enable) (
       let
         pkg = mkColibri { arch = cfg.arch; };
         env =
@@ -260,5 +260,6 @@ in
           }
         );
       }
-    ));
+    ))
+  ];
 }
