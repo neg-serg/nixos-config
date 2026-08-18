@@ -107,17 +107,18 @@ services.colibri = {
 ### stable-diffusion.cpp (text-to-image, Vulkan)
 
 - Package: `pkgs.stable-diffusion-cpp` overridden with `vulkanSupport = true` (RADV on the RX 9070 XT).
+  Binary renamed to `sd-img` to avoid collision with the Rust `sd` (sed replacement).
 - Role: fast local T2I without touching ComfyUI/ROCm — pure Vulkan, fits the "Vulkan-first" preference.
 - Model dir: `/zero/ai/image` — SDXL base checkpoint + VAE, FLUX.1-schnell (GGUF q4_k) + clip_l/t5xxl/ae.
-- Binary: `sd` (mainProgram). Examples:
+- Binary: `sd-img`. Examples:
 
 ```bash
 # SDXL (checkpoint carries its own text encoders)
-sd -m /zero/ai/image/sd_xl_base_1.0.safetensors --vae /zero/ai/image/sdxl_vae.safetensors \
+sd-img -m /zero/ai/image/sd_xl_base_1.0.safetensors --vae /zero/ai/image/sdxl_vae.safetensors \
    -H 1024 -W 1024 -p "a lovely cat" -v
 
 # FLUX.1-schnell (GGUF unet + separate encoders; cfg-scale 1, 4 steps)
-sd --diffusion-model /zero/ai/image/flux1-schnell-q4_k.gguf --vae /zero/ai/image/ae.safetensors \
+sd-img --diffusion-model /zero/ai/image/flux1-schnell-q4_k.gguf --vae /zero/ai/image/ae.safetensors \
    --clip_l /zero/ai/image/clip_l.safetensors --t5xxl /zero/ai/image/t5xxl_fp8_e4m3fn.safetensors \
    -p "a lovely cat" --cfg-scale 1.0 --sampling-method euler --steps 4 -v --clip-on-cpu
 ```
