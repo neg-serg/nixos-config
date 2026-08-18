@@ -6,14 +6,13 @@ unreachable.
 
 ## LAN access (sing-box only)
 
-The sing-box proxy also listens on **port `10810` on all interfaces** (`0.0.0.0`) with
-**username/password auth** — a password-protected copy of the same proxy for devices on the local
-network. Localhost port `10808` stays passwordless.
+The sing-box proxy also listens on **port `10810` on all interfaces** (`0.0.0.0`) — a copy of the
+same proxy for devices on the local network. Localhost port `10808` stays passwordless, and the
+LAN port is **passwordless too** (mirrors the local port; the firewall restricts it to private
+ranges). If auth is ever re-enabled, the SOPS secret `secrets/home/proxy-lan.sops.yaml` (decrypted
+to `/run/secrets/proxy-lan`) still carries the credentials and the script heal syncs them into the
+config.
 
-- Credentials: `lan:<password>` from the SOPS secret `secrets/home/proxy-lan.sops.yaml`
-  (decrypted to `/run/secrets/proxy-lan`, declared in `modules/user/nix-maid/sys/secrets.nix`).
-  The `proxy` script reads it when generating/refreshing the config; run `proxy refresh` (or
-  restart `sing-box-proxy`) after changing the secret.
 - **Firewall:** the rule lives in `modules/system/net/firewall.nix` — `extraCommands`
   appends three `iptables -A nixos-fw … tcp --dport 10810 -j nixos-fw-accept` rules for the
   private ranges `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` (they run before the final drop
@@ -23,7 +22,7 @@ network. Localhost port `10808` stays passwordless.
   switching the backend would blacklist `ip_tables` and risk podman/container networking.)
 - Use from another device:
   ```sh
-  curl -x socks5://lan:<password>@192.168.2.87:10810 https://ifconfig.me
+  curl -x socks5://192.168.2.87:10810 https://ifconfig.me
   ```
 - When Xray takes over port 10808 (`proxy off`), the LAN port 10810 disappears with sing-box.
 
