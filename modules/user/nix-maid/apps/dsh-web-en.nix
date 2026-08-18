@@ -22,11 +22,12 @@ let
   # Idempotent (per-bundle marker files); safe to re-run after plugin
   # re-installs. Also de-Chinese the pet name in ~/.dsh/pet.json (the pet
   # widget is disabled, but the stored name would render if ever re-enabled).
+  python3Path = lib.getExe pkgs.python3;
   runPatch = pkgs.writeShellScript "dsh-web-en-patch" ''
     set +e
     ${lib.getExe pkgs.nodejs} ${patcher} ${i18nJson} ${homeDir}/.dsh/profiles/web/node_modules \
       || echo "dsh-web-en: patch failed" >&2
-    python3 - "${homeDir}/.dsh/pet.json" <<'PY'
+    ${python3Path} - "${homeDir}/.dsh/pet.json" <<'PY'
     import json, sys
     path = sys.argv[1]
     try:
