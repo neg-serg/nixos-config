@@ -104,16 +104,51 @@ services.colibri = {
   the system `services.ollama` (it would conflict on port 11434). On `odin` the system service is
   enabled, so the user service stays off. Models also on `/zero/ai/ollama` / `/zero/ai/localai`.
 
+### stable-diffusion.cpp (text-to-image, Vulkan)
+
+- Package: `pkgs.stable-diffusion-cpp` overridden with `vulkanSupport = true` (RADV on the RX 9070 XT).
+- Role: fast local T2I without touching ComfyUI/ROCm — pure Vulkan, fits the "Vulkan-first" preference.
+- Model dir: `/zero/ai/image` — SDXL base checkpoint + VAE, FLUX.1-schnell (GGUF q4_k) + clip_l/t5xxl/ae.
+- Binary: `sd` (mainProgram). Examples:
+
+```bash
+# SDXL (checkpoint carries its own text encoders)
+sd -m /zero/ai/image/sd_xl_base_1.0.safetensors --vae /zero/ai/image/sdxl_vae.safetensors \
+   -H 1024 -W 1024 -p "a lovely cat" -v
+
+# FLUX.1-schnell (GGUF unet + separate encoders; cfg-scale 1, 4 steps)
+sd --diffusion-model /zero/ai/image/flux1-schnell-q4_k.gguf --vae /zero/ai/image/ae.safetensors \
+   --clip_l /zero/ai/image/clip_l.safetensors --t5xxl /zero/ai/image/t5xxl_fp8_e4m3fn.safetensors \
+   -p "a lovely cat" --cfg-scale 1.0 --sampling-method euler --steps 4 -v --clip-on-cpu
+```
+
+- GPU notes: q4_k GGUF ≈ 6.4 GB in VRAM (fits 16 GB alongside the fp8 t5xxl); q8_0 ≈ 12 GB — only with a
+  lighter t5. FLUX needs `--cfg-scale 1.0`; SDXL default cfg ~6.
+
+### Embeddings & reranker (RAG)
+
+- Embeddings: **qwen3-embedding** (already in the ollama store, Q4_K_M, 4096 dims) — use via
+  `ollama pull qwen3-embedding` + `POST /api/embed` or OpenAI-compatible `/v1/embeddings`.
+- Reranker: `bge-reranker-v2-m3-Q4_K_M.gguf` in `/zero/ai/embeddings` — served via llama.cpp
+  `llama-server --rerank` or used directly with llama.cpp's embedding CLI.
+- Both are multilingual (RU/EN); reranker should be the top-k filter before LLM context assembly.
+
 ## Layout on disk
 
-- `/zero/ai/ollama` — Ollama model store (413 GB, exists)
+- `/zero/ai/ollama` — Ollama model store (437 GB, 23 models: qwen3 32b/235b-a22b, qwen3-coder 30b,
+  qwen2.5-coder, qwen3-coder-next, deepcoder, devstral, qwq, gemma4, llama3.3 70b, qwen3.5 27b,
+  qwen3-embedding, glm-ocr, abliterated variants, qwen3-vl/qwen2.5vl, …)
 - `/zero/ai/llama` — llama-server (qwen3-vl) GGUF models (24 GB, exists)
+- `/zero/ai/image` — stable-diffusion.cpp models: SDXL base + VAE, FLUX.1-schnell q4_k + encoders (created by tmpfiles)
+- `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by tmpfiles)
 - `/zero/ai/glm52_i4` — colibrì int4 model (~370 GB, needs download)
 - `/zero/ai/localai` — LocalAI model dir (fallback path)
 
 ## Status on odin
 
 - `features.llm.enable = true`, `services.colibri.enable = true`
-- Ollama: enabled, serves existing 413 GB store
+- Ollama: enabled; merged the orphaned 413 GB store (was nested under `/zero/ai/ollama/models/`) into
+  the active store — all 23 models now visible to `ollama list`, no re-download.
+- stable-diffusion.cpp: package added (Vulkan), models downloaded to `/zero/ai/image` (pending rebuild).
 - colibrì: engine installed; model not downloaded yet
 - Ports: 11434 (Ollama), 8000 (colibri serve, only if enabled)
