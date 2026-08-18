@@ -13,7 +13,7 @@ let
     if g == null then mainUser else g;
 in
 {
-  imports = [ ];
+  imports = [ ./tpm-sudo.nix ];
   services.pcscd.enable = true; # pkcs support
   # nixpkgs' security.lockKernelModules (enabled below) auto-adds one kernel
   # module per fileSystem entry; our bind mounts use fsType = "none", which
