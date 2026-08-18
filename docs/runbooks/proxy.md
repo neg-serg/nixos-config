@@ -4,6 +4,25 @@ There are two tunneling systems that share port `10808` for local SOCKS5 proxy a
 explains how they coexist, how to use the `proxy` CLI, and how to troubleshoot when the internet is
 unreachable.
 
+## LAN access (sing-box only)
+
+The sing-box proxy also listens on **port `10810` on all interfaces** (`0.0.0.0`) with
+**username/password auth** — a password-protected copy of the same proxy for devices on the local
+network. Localhost port `10808` stays passwordless.
+
+- Credentials: `lan:<password>` from the SOPS secret `secrets/home/proxy-lan.sops.yaml`
+  (decrypted to `/run/secrets/proxy-lan`, declared in `modules/user/nix-maid/sys/secrets.nix`).
+  The `proxy` script reads it when generating/refreshing the config; run `proxy refresh` (or
+  restart `sing-box-proxy`) after changing the secret.
+- **Firewall:** the rule lives in `modules/system/net/firewall.nix` — nftables backend, input rule
+  `ip saddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 } tcp dport 10810 accept`. Only private
+  LAN sources can connect; the proxy is never reachable from the internet.
+- Use from another device:
+  ```sh
+  curl -x socks5://lan:<password>@192.168.2.87:10810 https://ifconfig.me
+  ```
+- When Xray takes over port 10808 (`proxy off`), the LAN port 10810 disappears with sing-box.
+
 ## Architecture
 
 ### Xray (systemd service)

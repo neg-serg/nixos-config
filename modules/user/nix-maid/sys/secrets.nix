@@ -27,6 +27,15 @@ lib.mkMerge [
           mode = "0400";
           owner = "neg";
         };
+        # LAN SOCKS5 proxy credentials (sing-box in-lan inbound, port 10810):
+        # "username:password", read by ~/.local/bin/proxy at config generation.
+        "proxy-lan" = lib.mkIf (builtins.pathExists "${secretsDir}/proxy-lan.sops.yaml") {
+          format = "yaml";
+          sopsFile = "${secretsDir}/proxy-lan.sops.yaml";
+          key = "credentials";
+          mode = "0400";
+          owner = "neg";
+        };
         "vdirsyncer_google_client_id" =
           lib.mkIf (builtins.pathExists "${secretsDir}/vdirsyncer/google.sops.yaml")
             {
