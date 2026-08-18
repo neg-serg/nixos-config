@@ -18,6 +18,17 @@ let
   ]);
 
   whisperCpp = pkgs.whisper-cpp.override { vulkanSupport = true; }; # GPU STT via Vulkan (RADV), gfx1201
+
+  # Chatterbox runs pip-installed torch ROCm wheels inside a venv; those wheels
+  # are manylinux ELFs and need nixpkgs' libstdc++/libzstd (not on NixOS default
+  # linker path). Declare the search path declaratively instead of hardcoding
+  # store paths in chatterbox.env. The venv python is nixpkgs python312 (in
+  # systemPackages, GC-safe) — uv-managed pythons are generic ELFs NixOS refuses
+  # to run without patchelf.
+  chatterboxLibPath = pkgs.lib.makeLibraryPath [
+    pkgs.stdenv.cc.cc.lib # libstdc++.so.6, libgomp.so.1
+    pkgs.zstd # libzstd.so.1
+  ];
 in
 {
   config = lib.mkIf enabled {
@@ -26,6 +37,7 @@ in
       whisperCpp # GPU STT (whisper-cli, Vulkan backend — whisper-server on :8002)
       pkgs.rocmPackages.rocm-smi # VRAM/GPU monitoring for the ROCm TTS stack (chatterbox)
       pkgs.ffmpeg # audio conversion for whisper-server (mp3/ogg → wav)
+      pkgs.python312 # base interpreter for the chatterbox venv (keeps it GC-safe; torch cp312 wheels)
     ];
 
     # User services (run as neg on login). Chatterbox needs the pip venv created
@@ -40,7 +52,7 @@ in
           Restart = "on-failure";
           RestartSec = 5;
           MemoryMax = "1G";
-          Environment = "PATH=${pkgs.piper}/bin:${pkgs.ffmpeg}/bin";
+          Environment = "PATH=${pkgs.piper-tts}/bin:${pkgs.ffmpeg}/bin";
           ExecStart = "${serverPy}/bin/python ${eng}/piper-server.py --port 8001 --voices-dir ${eng}/voices";
         };
       };
@@ -65,6 +77,7 @@ in
           Type = "simple";
           WorkingDirectory = "${eng}/chatterbox-server";
           EnvironmentFile = "${eng}/config/chatterbox.env";
+          Environment = "LD_LIBRARY_PATH=${chatterboxLibPath}"; # torch wheels need libstdc++/libzstd
           Restart = "on-failure";
           RestartSec = 10;
           MemoryMax = "16G";
