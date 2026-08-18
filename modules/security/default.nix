@@ -1,6 +1,7 @@
 {
   pkgs,
   config,
+  lib,
   ...
 }:
 let
@@ -14,6 +15,12 @@ in
 {
   imports = [ ];
   services.pcscd.enable = true; # pkcs support
+  # nixpkgs' security.lockKernelModules (enabled below) auto-adds one kernel
+  # module per fileSystem entry; our bind mounts use fsType = "none", which
+  # would be loaded as a (nonexistent) module at boot ("Failed to find module
+  # 'none'"). boot.kernelModules is an attrset-of-bool, so mkForce-ing this
+  # attr to false drops it from the final list without touching the mounts.
+  boot.kernelModules.none = lib.mkForce false;
   # Tell p11-kit to load/proxy opensc-pkcs11.so, providing all available slots
   # (PIN1 for authentication/decryption, PIN2 for signing).
   environment.etc."pkcs11/modules/opensc-pkcs11".text = ''
