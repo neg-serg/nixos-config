@@ -1,11 +1,18 @@
 #!/bin/sh
-# Restore wallpaper via wl, fallback to random if no previous session
+# Restore wallpaper via wl, fallback to random if no previous session.
+# The daemon must be owned by systemd (wl-daemon.service): a direct spawn
+# (wl init) orphans the process and makes the unit loop with
+# "wl-daemon уже запущен" at every restart. systemctl is the only spawner.
 set -euo pipefail
 
-if ! wl query >/dev/null 2>&1; then
-  wl init
+systemctl --user start wl-daemon.service 2>/dev/null || true
+
+# Wait for the daemon's IPC socket (the unit start is effectively async).
+i=0
+while [ "$i" -lt 10 ] && ! wl query >/dev/null 2>&1; do
   sleep 0.5
-fi
+  i=$((i + 1))
+done
 
 if ! wl restore 2>/dev/null; then
   wl random ~/pic/wl
