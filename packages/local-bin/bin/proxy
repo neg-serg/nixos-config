@@ -7,7 +7,6 @@ set -euo pipefail
 CONFIG="$HOME/.config/sing-box-trojan/config.json"
 LOG="/tmp/sing-box-trojan.log"
 SECRET="/run/secrets/proxy-fallback"
-LAN_SECRET="/run/secrets/proxy-lan"
 
 # ============================================================
 # load_fallback — прочитать fallback-ноды из sops
@@ -22,27 +21,15 @@ load_fallback() {
 }
 
 # ============================================================
-# lan_cfg — LAN SOCKS5 credentials "user:pass" from the SOPS
-# secret (empty → no LAN inbound). Port 10810 mirrors the local
-# 10808 proxy but requires password auth; the firewall allows it
-# only from the local network.
-# ============================================================
-lan_cfg() {
-    if [ -f "$LAN_SECRET" ]; then
-        cat "$LAN_SECRET" 2>/dev/null || true
-    fi
-}
-
-# ============================================================
 # lan_msg — one-line LAN access hint (best-effort; needs `ip`)
 # ============================================================
 lan_msg() {
     local ip
     ip=$(ip -4 -o addr show scope global 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -1)
     if [ -n "$ip" ]; then
-        echo "  LAN proxy: socks5://$ip:10810 (user: lan, pass: /run/secrets/proxy-lan, firewall: LAN only)"
+        echo "  LAN proxy: socks5://$ip:10810 (no auth, firewall: LAN only)"
     else
-        echo "  LAN proxy: 0.0.0.0:10810 (password auth, firewall: LAN only)"
+        echo "  LAN proxy: 0.0.0.0:10810 (no auth, firewall: LAN only)"
     fi
 }
 
@@ -61,9 +48,9 @@ bootstrap() {
         #  2. LAN inbound (0.0.0.0:10810 with password auth) when the LAN secret
         #     is present and the inbound is missing.
         echo "  Config exists — checking for missing DNS/LAN sections..."
-        python3 - "$CONFIG" "$(lan_cfg)" << 'PYEOF'
+        python3 - "$CONFIG" << 'PYEOF'
 import json, sys
-cfg_path, lan = sys.argv[1], sys.argv[2]
+cfg_path = sys.argv[1]
 cfg = json.load(open(cfg_path))
 changed = False
 FINAL_DNS = {"servers": [
@@ -86,27 +73,16 @@ for ib in cfg.get("inbounds", []):
         lan_in = ib
         break
 if lan_in is None:
-    lan = lan.strip()
-    if not lan or ":" not in lan:
-        print("  Config: LAN secret empty/invalid — skipping LAN inbound")
-    else:
-        u, p = lan.split(":", 1)
-        cfg["inbounds"].append({"type": "socks", "tag": "in-lan", "listen": "0.0.0.0",
-                                "listen_port": 10810,
-                                "users": [{"username": u, "password": p}]})
-        changed = True
-        print("  Config: added LAN inbound (0.0.0.0:10810)")
-else:
-    # The SOPS secret is the source of truth: sync username/password if the
-    # config drifted (e.g. after `sops set` + rebuild regenerated the secret).
-    lan = lan.strip()
-    if lan and ":" in lan:
-        u, p = lan.split(":", 1)
-        users = lan_in.get("users") or []
-        if not users or users[0].get("username") != u or users[0].get("password") != p:
-            lan_in["users"] = [{"username": u, "password": p}]
-            changed = True
-            print("  Config: synced LAN inbound credentials from secret")
+    cfg["inbounds"].append({"type": "socks", "tag": "in-lan", "listen": "0.0.0.0",
+                            "listen_port": 10810})
+    changed = True
+    print("  Config: added LAN inbound (0.0.0.0:10810, no auth)")
+elif lan_in.get("users"):
+    # LAN proxy is passwordless (mirrors the local port); strip any leftover
+    # users block from previous auth-enabled configs.
+    lan_in.pop("users", None)
+    changed = True
+    print("  Config: LAN inbound is passwordless (users removed)")
 if changed:
     json.dump(cfg, open(cfg_path, "w"), indent=2)
     print("  Config: patched")
@@ -122,8 +98,6 @@ PYEOF
     mkdir -p "$(dirname "$CONFIG")"
     export NODES_TEXT="$FALLBACK"
     export CFG_PATH="$CONFIG"
-    LAN_CFG="$(lan_cfg)"
-    export LAN_CFG
     python3 << 'PYEOF'
 import json, os, urllib.parse
 text = os.environ["NODES_TEXT"]
@@ -202,13 +176,11 @@ if tags:
     outbounds.append({"type": "urltest", "tag": "auto",
                       "outbounds": tags, "interval": "5m", "tolerance": 50})
 outbounds.append({"type": "direct", "tag": "direct"})
-inbounds = [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port": 10808}]
-lan = os.environ.get("LAN_CFG", "").strip()
-if lan and ":" in lan:
-    u, p = lan.split(":", 1)
-    inbounds.append({"type": "socks", "tag": "in-lan", "listen": "0.0.0.0",
-                     "listen_port": 10810,
-                     "users": [{"username": u, "password": p}]})
+inbounds = [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port": 10808},
+            # LAN copy of the proxy (firewall allows private ranges only).
+            # Passwordless — mirrors the local port so LAN clients need no
+            # credentials.
+            {"type": "socks", "tag": "in-lan", "listen": "0.0.0.0", "listen_port": 10810}]
 # DNS + route: with an empty "dns":{} sing-box 1.13 falls back to dns.google
 # over TLS and dials the IPv6 address first; on hosts without IPv6 every domain
 # lookup fails (~3s) and all domain-based traffic dies (IP-based traffic, e.g.
@@ -260,8 +232,6 @@ refresh() {
     fi
     export NODES_TEXT="$ALL"
     export CFG_PATH="$CONFIG"
-    LAN_CFG="$(lan_cfg)"
-    export LAN_CFG
     python3 << 'PYEOF'
 import json, os, urllib.parse
 text = os.environ["NODES_TEXT"]
@@ -340,13 +310,11 @@ if tags:
     outbounds.append({"type": "urltest", "tag": "auto",
                       "outbounds": tags, "interval": "5m", "tolerance": 50})
 outbounds.append({"type": "direct", "tag": "direct"})
-inbounds = [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port": 10808}]
-lan = os.environ.get("LAN_CFG", "").strip()
-if lan and ":" in lan:
-    u, p = lan.split(":", 1)
-    inbounds.append({"type": "socks", "tag": "in-lan", "listen": "0.0.0.0",
-                     "listen_port": 10810,
-                     "users": [{"username": u, "password": p}]})
+inbounds = [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port": 10808},
+            # LAN copy of the proxy (firewall allows private ranges only).
+            # Passwordless — mirrors the local port so LAN clients need no
+            # credentials.
+            {"type": "socks", "tag": "in-lan", "listen": "0.0.0.0", "listen_port": 10810}]
 # DNS + route: with an empty "dns":{} sing-box 1.13 falls back to dns.google
 # over TLS and dials the IPv6 address first; on hosts without IPv6 every domain
 # lookup fails (~3s) and all domain-based traffic dies (IP-based traffic, e.g.
