@@ -158,6 +158,19 @@ proxy status
 | sing-box is running but internet still fails                                       | All nodes are stale                                                      | `proxy refresh` to fetch fresh nodes                            |
 | `Connection refused` on 10808                                                      | Nothing is listening                                                     | Start a proxy                                                   |
 | `curl --noproxy '*' -s https://example.com` fails but `proxy status` shows RUNNING | sing-box nodes are all dead; or no fallback + no subscriptions available | `proxy refresh` and check the log at `/tmp/sing-box-trojan.log` |
+| Connections work (login OK) but **domain** traffic fails/slows down (`lookup <domain>: exchange4/6: dial tcp [2001:4860:4860::8888]:443 …` in the journal) | Node(s) resolve domains server-side with a broken resolver (default dns.google DoT, IPv6-only) | Config already routes via client-side resolve (see "DNS" below); run `proxy gen` + restart `sing-box-proxy` to re-heal |
+
+### DNS
+
+The generated config resolves every domain **on this host** before handing the node a plain IP:
+
+- DNS server `remote` — DoH `1.1.1.1` through the `auto` outbound (never leaks queries to the LAN
+  resolver, survives local DNS poisoning).
+- Route action `resolve` (`strategy: ipv4_only`) forces client-side resolution; the host has no
+  IPv6, and some nodes fail server-side resolution with the sing-box default DNS (dns.google DoT).
+- `route.default_domain_resolver: remote` covers any remaining dial-time resolution.
+- `proxy gen` (also the `ExecStartPre` of `sing-box-proxy`) heals an existing config back to this
+  shape, so an old/broken config self-repairs on restart.
 
 ### Verifying the proxy works
 
