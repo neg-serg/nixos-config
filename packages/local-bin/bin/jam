@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# jam — one command for the live-coding audio session:
+#   Vital standalone + SuperDirt engine + MIDI bridge (Tidal → Vital)
+#
+# Usage:
+#   jam          start the session (Vital + engine + MIDI bridge)
+#   jam stop     stop engine + Vital
+#   jam status   show what's running
+set -euo pipefail
+
+cmd="${1:-start}"
+BIN="$HOME/.local/bin"
+
+# Note: no grep -q in pipelines here — with pipefail, grep -q exits early,
+# the producer gets SIGPIPE and the pipeline is reported as failed.
+engine_up() {
+  [[ "$(tidalctl status 2>/dev/null)" == *"UDP 57120 open"* ]]
+}
+
+vital_up() {
+  pgrep -f '/bin/Vital' >/dev/null 2>&1
+}
+
+start_vital() {
+  if vital_up; then
+    echo "✓ Vital уже запущен"
+  else
+    echo "▶ Запускаю Vital..."
+    systemctl --user start vital-standalone
+    for i in 1 2 3 4 5 6 7 8 9 10; do
+      vital_up && break
+      sleep 1
+    done
+    vital_up && echo "✓ Vital готов" || echo "✗ Vital не запустился — systemctl --user status vital-standalone"
+  fi
+}
+
+start_engine() {
+  if engine_up; then
+    echo "✓ SuperDirt уже работает"
+  else
+    echo "▶ Запускаю SuperDirt (сэмплы грузятся ~1 мин)..."
+    tidalctl start
+    echo "✓ SuperDirt готов"
+  fi
+}
+
+bridge() {
+  if "$BIN/midi-bridge" >/dev/null 2>&1; then
+    echo "✓ MIDI: SuperCollider → Midi Through → Vital"
+  else
+    echo "⚠ MIDI-мост не поднялся — проверь, что движок запущен"
+  fi
+}
+
+show_status() {
+  echo "=== Vital ==="
+  vital_up && echo "  запущен" || echo "  не запущен (jam или systemctl --user start vital-standalone)"
+  echo "=== SuperDirt ==="
+  tidalctl status 2>&1 | head -4
+  echo "=== MIDI ==="
+  if [[ "$(aconnect -l 2>/dev/null)" == *"Connecting To: 14:0"* ]]; then
+    echo "  мост подключён"
+  else
+    echo "  мост НЕ подключён (jam)"
+  fi
+}
+
+case "$cmd" in
+  start|"")
+    start_vital
+    start_engine
+    bridge
+    echo
+    echo 'Готово. Играй в Tidal:  d1 $ vital $ note "0 2 4 7"'
+    ;;
+  stop)
+    echo "▶ Останавливаю..."
+    tidalctl stop 2>/dev/null || true
+    systemctl --user stop vital-standalone 2>/dev/null || true
+    echo "✓ Остановлено"
+    ;;
+  status)
+    show_status
+    ;;
+  *)
+    echo "usage: jam [start|stop|status]" >&2
+    exit 2
+    ;;
+esac
