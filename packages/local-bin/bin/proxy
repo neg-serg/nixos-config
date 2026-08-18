@@ -16,8 +16,11 @@ load_fallback() {
         cat "$SECRET"
         return
     fi
-    # Hardcoded fallback before SOPS is deployed
-    echo 'hysteria2://35415e5e-3666-4454-8c45-903af0fcddf4@85.120.228.208:47257?insecure=1&sni=www.bing.com'
+    # No hardcoded fallback: nodes come only from the SOPS secret
+    # (/run/secrets/proxy-fallback), so no live credentials ever land in
+    # the public repo. `proxy refresh` fetches subscription nodes even
+    # without the secret.
+    echo ""
 }
 
 # ============================================================
