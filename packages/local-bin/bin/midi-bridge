@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# midi-bridge — connect SuperCollider MIDI out -> Midi Through.
+# Vital (standalone) auto-subscribes to Midi Through, so this one link
+# completes the chain: Tidal -> SuperDirt -> SC out -> Midi Through -> Vital.
+set -euo pipefail
+
+sc=$(aconnect -l | awk '/^client [0-9]+: .SuperCollider./ {c=$2; sub(":","",c); print c; exit}')
+mt=$(aconnect -l | awk '/^client [0-9]+: .Midi Through./ {c=$2; sub(":","",c); print c; exit}')
+[ -z "$sc" ] && { echo "no SuperCollider MIDI client" >&2; exit 1; }
+[ -z "$mt" ] && { echo "no Midi Through" >&2; exit 1; }
+scp=$(aconnect -l | awk -v c="$sc" '$0 ~ "client " c ":" {inside=1} inside && /out0/ {print $1; exit}')
+mtp=$(aconnect -l | awk -v c="$mt" '$0 ~ "client " c ":" {inside=1} inside && /Midi Through Port-0/ {print $1; exit}')
+
+if aconnect "$sc:$scp" "$mt:$mtp" 2>/dev/null; then
+  echo "connected $sc:$scp -> $mt:$mtp"
+elif aconnect -l 2>/dev/null | grep -q "Connecting To: $mt:$mtp"; then
+  echo "already connected"
+else
+  echo "connect failed" >&2
+  exit 1
+fi
