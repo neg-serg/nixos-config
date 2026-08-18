@@ -15,7 +15,12 @@ let
   # 3) bash terminal output cap removed, 4) composer input focused by
   # default (on tab/window focus, session switch, fresh composer mount),
   # 5) todo_write calls render as a todo list card (status glyphs, counts,
-  # progress bar, result line) instead of the stock one-line summary row.
+  # progress bar, result line) instead of the stock one-line summary row,
+  # 6) ask_user_question calls render as a question card (questions, options,
+  # chosen answers highlighted) instead of the raw JSON result,
+  # 7) long expanded content bounded: assistant "Think" rows collapse by
+  # default (expand on click), markdown code blocks height-capped with an
+  # internal scrollbar.
   #
   # Canonical source is the dsh-web-ui fork checkout (packages/dsh-gui-tweaks):
   # the profile node_modules entry is a symlink into it, same pattern as
@@ -45,7 +50,8 @@ let
 # dsh-gui-tweaks - number-key answers + Enter confirmation in question
 # dialogs, bash tool rows expanded by default, bash output uncapped,
 # composer input focused by default, todo_write rendered as a todo list
-# card (module: dsh-gui-tweaks.nix).
+# card, ask_user_question rendered as a question card, Think rows collapsed
+# and code blocks height-capped (module: dsh-gui-tweaks.nix).
 - insert:
     - id: gui-tweaks
       name: dsh-gui-tweaks
