@@ -112,8 +112,6 @@
       "ec_sys"
       "asus_ec_sensors"
       "snd-hdspe" # RME HDSPe driver (replaces in-tree snd-hdspm)
-      "snd-seq" # ALSA sequencer core — MIDI (aconnect, Vital/SuperDirt MIDI)
-      "snd-seq-midi" # ALSA sequencer raw MIDI clients
     ];
     # amneziawg disabled — incompatible with certain kernel versions (ipv6_stub removed)
     extraModulePackages = lib.mkForce (
@@ -132,9 +130,17 @@
       ++ [ snd-hdspe ]
     );
 
-    # Load heavy GPU driver early in initrd to reduce userspace module-load time
+    # Load heavy GPU driver early in initrd to reduce userspace module-load time.
+    # snd-seq loads here too: security.lockKernelModules sets
+    # kernel.modules_disabled=1 during the real boot, after which NO module can
+    # be loaded (silent EPERM). The initrd runs before that lock, so ALSA MIDI
+    # (aconnect, Vital/SuperDirt MIDI) must come up here.
     initrd = {
-      kernelModules = [ "amdgpu" ];
+      kernelModules = [
+        "amdgpu"
+        "snd-seq" # ALSA sequencer core — MIDI (loaded pre-lock)
+        "snd-seq-midi" # ALSA sequencer raw MIDI clients
+      ];
       # Enable systemd in initrd; keep logs quiet for faster boot now
       systemd.enable = true;
       verbose = false;
