@@ -176,10 +176,14 @@
 
     # tpm/tpm_crb/tpm_tis and snd-hdspm already blacklisted in modules/system/kernel/params.nix
     blacklistedKernelModules = [
-      "tpm_tis_core"
       "8250"
       "serial8250"
       "thunderbolt" # No Thunderbolt hardware connected; probe times out (-110) at boot
+    ]
+    ++ lib.optionals (!(config.lib.neg.enabled "security.tpmSudo")) [
+      # TPM transport core; needed by fTPM for TPM-backed sudo
+      # (modules/security/tpm-sudo.nix).
+      "tpm_tis_core"
     ];
     # No separate initrd blacklist option; TPM modules are excluded from initrd
     # via modules/system/boot.nix when security.tpm2.enable = false
@@ -222,8 +226,10 @@
   # Swap on nvme0n1p2 (507G)
   swapDevices = [ { device = "/dev/nvme0n1p2"; } ];
 
-  # Disable TPM entirely on this host to remove tpmrm device wait
-  security.tpm2.enable = false;
+  # TPM is enabled via modules/security/tpm-sudo.nix when
+  # features.security.tpmSudo.enable = true. Historically hard-disabled here
+  # to remove the tpmrm device wait at boot — so leave it off unless TPM-backed
+  # sudo is on, and enable fTPM in UEFI/BIOS first.
 
   # NIC link renames
   systemd = {

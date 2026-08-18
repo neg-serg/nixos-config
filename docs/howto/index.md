@@ -39,3 +39,6 @@ isn't a step-by-step runbook.
 
 - Verified change workflows (add module / flag / package / host / script / secret):
   [agent-recipes.md](./agent-recipes.md)
+
+- Passwordless sudo via TPM (non-exportable SSH key + pam_ssh_agent_auth, no manual actions) (RU):
+  [tpm-sudo.ru.md](./tpm-sudo.ru.md)
