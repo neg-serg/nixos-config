@@ -89,6 +89,8 @@ $ carlactl stop
 - **Вся сессия одной командой: `jam`** (Vital + SuperDirt + MIDI-мост), `jam stop`,
   `jam status`. Скрипты: `packages/local-bin/bin/{jam,midi-bridge}` (nix-maid
   кладёт их в `~/.local/bin`).
+- Окно Vital открывается на отдельном воркспейсе 21 (𐍆:vital) — роут по классу
+  в `files/gui/hypr/hyprland.lua`.
 
 ## MIDI (Tidal → Vital)
 
