@@ -90,6 +90,11 @@ lib.mkIf (cfg.enable or false) {
     after = [ "graphical-session-pre.target" ];
     partOf = [ "graphical-session.target" ];
     wantedBy = [ "graphical-session.target" ];
+    # Cap restarts: systemd >= 254 defaults to unlimited retries, so a
+    # persistent start failure (e.g. single-instance lock held elsewhere)
+    # spams the journal forever. 10 tries / 60s then the unit goes failed.
+    startLimitIntervalSec = 60;
+    startLimitBurst = 10;
     serviceConfig = {
       Type = "simple";
       ExecStart = "${lib.getExe pkgs.wl}-daemon";
