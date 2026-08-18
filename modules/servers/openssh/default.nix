@@ -52,6 +52,11 @@ in
         PermitRootLogin = "no";
         UseDns = true;
 
+        # PidFile must live under /run/sshd (see RuntimeDirectory below):
+        # ProtectSystem=strict makes /run itself read-only, so the default
+        # /run/sshd.pid cannot be written ("Read-only file system" in logs).
+        PidFile = "/run/sshd/sshd.pid";
+
         # Hardening (ported from legacy Salt config: sshd-hardening.conf)
         X11Forwarding = false;
         MaxAuthTries = 3;
@@ -93,6 +98,8 @@ in
       ProtectSystem = "strict";
       PrivateTmp = true;
       NoNewPrivileges = true;
+      # Writable dir for PidFile (exempt from ProtectSystem=strict)
+      RuntimeDirectory = "sshd";
     };
   };
 }
