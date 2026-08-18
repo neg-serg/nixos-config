@@ -7,6 +7,7 @@ set -euo pipefail
 CONFIG="$HOME/.config/sing-box-trojan/config.json"
 LOG="/tmp/sing-box-trojan.log"
 SECRET="/run/secrets/proxy-fallback"
+LAN_SECRET="/run/secrets/proxy-lan"
 
 # ============================================================
 # load_fallback — прочитать fallback-ноды из sops
@@ -21,10 +22,60 @@ load_fallback() {
 }
 
 # ============================================================
+# lan_cfg — LAN SOCKS5 credentials "user:pass" from the SOPS
+# secret (empty → no LAN inbound). Port 10810 mirrors the local
+# 10808 proxy but requires password auth; the firewall allows it
+# only from the local network.
+# ============================================================
+lan_cfg() {
+    if [ -f "$LAN_SECRET" ]; then
+        cat "$LAN_SECRET" 2>/dev/null || true
+    fi
+}
+
+# ============================================================
+# lan_msg — one-line LAN access hint (best-effort; needs `ip`)
+# ============================================================
+lan_msg() {
+    local ip
+    ip=$(ip -4 -o addr show scope global 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -1)
+    if [ -n "$ip" ]; then
+        echo "  LAN proxy: socks5://$ip:10810 (user: lan, pass: /run/secrets/proxy-lan, firewall: LAN only)"
+    else
+        echo "  LAN proxy: 0.0.0.0:10810 (password auth, firewall: LAN only)"
+    fi
+}
+
+# ============================================================
 # bootstrap — создать конфиг с fallback-нодами если нет
 # ============================================================
 bootstrap() {
-    if [ -f "$CONFIG" ]; then return; fi
+    if [ -f "$CONFIG" ]; then
+        # Config already exists. Heal: add the LAN inbound (0.0.0.0:10810 with
+        # password auth) when the LAN secret is present and the inbound is missing.
+        if [ -f "$LAN_SECRET" ] && ! grep -q '"in-lan"' "$CONFIG"; then
+            echo "  Config exists but missing LAN inbound — patching..."
+            python3 - "$CONFIG" "$(lan_cfg)" << 'PYEOF'
+import json, sys
+cfg_path, lan = sys.argv[1], sys.argv[2]
+cfg = json.load(open(cfg_path))
+for ib in cfg.get("inbounds", []):
+    if ib.get("tag") == "in-lan":
+        sys.exit(0)
+lan = lan.strip()
+if not lan or ":" not in lan:
+    print("  Config: LAN secret empty/invalid — skipping LAN inbound")
+    sys.exit(0)
+u, p = lan.split(":", 1)
+cfg["inbounds"].append({"type": "socks", "tag": "in-lan", "listen": "0.0.0.0",
+                        "listen_port": 10810,
+                        "users": [{"username": u, "password": p}]})
+json.dump(cfg, open(cfg_path, "w"), indent=2)
+print("  Config: added LAN inbound (0.0.0.0:10810)")
+PYEOF
+        fi
+        return
+    fi
     FALLBACK=$(load_fallback)
     if [ -z "$FALLBACK" ]; then
         echo "  No fallback nodes (run 'proxy refresh' or create SOPS secret)"
@@ -34,6 +85,8 @@ bootstrap() {
     mkdir -p "$(dirname "$CONFIG")"
     export NODES_TEXT="$FALLBACK"
     export CFG_PATH="$CONFIG"
+    LAN_CFG="$(lan_cfg)"
+    export LAN_CFG
     python3 << 'PYEOF'
 import json, os, urllib.parse
 text = os.environ["NODES_TEXT"]
@@ -112,8 +165,15 @@ if tags:
     outbounds.append({"type": "urltest", "tag": "auto",
                       "outbounds": tags, "interval": "5m", "tolerance": 50})
 outbounds.append({"type": "direct", "tag": "direct"})
+inbounds = [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port": 10808}]
+lan = os.environ.get("LAN_CFG", "").strip()
+if lan and ":" in lan:
+    u, p = lan.split(":", 1)
+    inbounds.append({"type": "socks", "tag": "in-lan", "listen": "0.0.0.0",
+                     "listen_port": 10810,
+                     "users": [{"username": u, "password": p}]})
 cfg = {"log":{"level":"error"},"dns":{},
-       "inbounds":[{"type":"socks","tag":"in","listen":"127.0.0.1","listen_port":10808}],
+       "inbounds":inbounds,
        "outbounds":outbounds,
        "route":{"rules":[{"ip_is_private":True,"outbound":"direct"}],
                 "final":"auto","auto_detect_interface":True}}
@@ -150,6 +210,8 @@ refresh() {
     fi
     export NODES_TEXT="$ALL"
     export CFG_PATH="$CONFIG"
+    LAN_CFG="$(lan_cfg)"
+    export LAN_CFG
     python3 << 'PYEOF'
 import json, os, urllib.parse
 text = os.environ["NODES_TEXT"]
@@ -228,8 +290,15 @@ if tags:
     outbounds.append({"type": "urltest", "tag": "auto",
                       "outbounds": tags, "interval": "5m", "tolerance": 50})
 outbounds.append({"type": "direct", "tag": "direct"})
+inbounds = [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port": 10808}]
+lan = os.environ.get("LAN_CFG", "").strip()
+if lan and ":" in lan:
+    u, p = lan.split(":", 1)
+    inbounds.append({"type": "socks", "tag": "in-lan", "listen": "0.0.0.0",
+                     "listen_port": 10810,
+                     "users": [{"username": u, "password": p}]})
 cfg = {"log":{"level":"error"},"dns":{},
-       "inbounds":[{"type":"socks","tag":"in","listen":"127.0.0.1","listen_port":10808}],
+       "inbounds":inbounds,
        "outbounds":outbounds,
        "route":{"rules":[{"ip_is_private":True,"outbound":"direct"}],
                 "final":"auto","auto_detect_interface":True}}
@@ -264,6 +333,7 @@ start() {
         sleep 1
         if systemctl --user is-active --quiet sing-box-proxy.service 2>/dev/null; then
             echo "  Proxy on 127.0.0.1:10808 (systemd user service)"
+            lan_msg
             echo "  Dashboard: http://127.0.0.1:9090 (secret: neg)"
             return 0
         fi
@@ -276,6 +346,7 @@ start() {
     sleep 2
     if pgrep -f 'sing-box.*trojan' > /dev/null 2>&1; then
         echo "  Proxy on 127.0.0.1:10808"
+        lan_msg
         echo "  Dashboard: http://127.0.0.1:9090 (secret: neg)"
     else
         echo "  FAILED"
