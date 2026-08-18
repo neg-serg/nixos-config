@@ -86,6 +86,9 @@ $ carlactl stop
   чтобы не было чёрного окна на Wayland/XWayland).
 - Описание юнита: `modules/media/audio/creation-packages.nix`
   → `systemd.user.services.vital-standalone`.
+- **Вся сессия одной командой: `jam`** (Vital + SuperDirt + MIDI-мост), `jam stop`,
+  `jam status`. Скрипты: `packages/local-bin/bin/{jam,midi-bridge}` (nix-maid
+  кладёт их в `~/.local/bin`).
 
 ## MIDI (Tidal → Vital)
 
