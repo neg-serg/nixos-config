@@ -37,11 +37,14 @@ in
           "Z /zero/ai/ollama 0770 ollama ollama -"
           # llama-server (qwen3-vl GGUF) model store — main user manages files
           "d /zero/ai/llama 0755 ${config.users.main.name} ${config.users.main.name} -"
-          # stable-diffusion.cpp (Vulkan) image models — main user manages files
-          "d /zero/ai/image 0755 ${config.users.main.name} ${config.users.main.name} -"
-          # RAG embeddings & rerankers (GGUF, llama.cpp) — main user manages files
-          "d /zero/ai/embeddings 0755 ${config.users.main.name} ${config.users.main.name} -"
         ];
+        # tmpfiles refuses paths under /zero/ai: /zero is owned by neg, so the
+        # neg→root transition trips systemd's unsafe-path check and the rules
+        # are skipped silently. Create the dirs via activation instead.
+        system.activationScripts.ai-model-dirs = lib.stringAfter [ "users" ] ''
+          install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/image
+          install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/embeddings
+        '';
         users.users."${config.users.main.name}".extraGroups = lib.mkAfter [ "ollama" ];
       }
       (lib.mkIf cfg.enable {
