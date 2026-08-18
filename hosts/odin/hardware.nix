@@ -112,6 +112,8 @@
       "ec_sys"
       "asus_ec_sensors"
       "snd-hdspe" # RME HDSPe driver (replaces in-tree snd-hdspm)
+      "snd-seq" # ALSA sequencer core — MIDI (aconnect, Vital/SuperDirt MIDI)
+      "snd-seq-midi" # ALSA sequencer raw MIDI clients
     ];
     # amneziawg disabled — incompatible with certain kernel versions (ipv6_stub removed)
     extraModulePackages = lib.mkForce (
