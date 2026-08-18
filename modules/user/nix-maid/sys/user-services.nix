@@ -86,7 +86,8 @@ lib.mkIf (cfg.enable or false) {
         Type = "simple";
         ExecStartPre = "%h/.local/bin/proxy gen";
         Environment = [
-          "ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true"
+          # Config uses the modern DNS format (route.default_domain_resolver +
+          # client-side resolve action) — no deprecated DNS env vars needed.
           "PATH=/run/current-system/sw/bin:/run/current-system/sw/sbin"
         ];
         ExecStart = "${lib.getExe pkgs.sing-box} run -c %h/.config/sing-box-trojan/config.json";
