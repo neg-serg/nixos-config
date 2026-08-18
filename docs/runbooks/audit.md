@@ -4,7 +4,7 @@ Recurring maintenance audit of `/etc/nixos` — catches cruft, stale docs, dead 
 eval bugs before they bite. Run it periodically (or before a big refactor), then triage findings
 into the improvement plan.
 
-The previous full run: `.pi/audit-2026-07-21.md` (99 findings, 18 critical). The process below is
+The previous full run: `audit-2026-07-21.md` (99 findings, 18 critical; archived with the agent-workspace cleanup). The process below is
 what produced it; it is designed to be re-run as-is.
 
 ## When to run
@@ -19,7 +19,7 @@ what produced it; it is designed to be re-run as-is.
 
 - Record the current commit and system generation: `git rev-parse HEAD`,
   `readlink /nix/var/nix/profiles/system`.
-- Create a report file: `.pi/audit-YYYY-MM-DD.md` (agent workspace, gitignored) or
+- Create a report file: `audit-YYYY-MM-DD.md` (private agent workspace, gitignored) or
   `docs/audit/YYYY-MM-DD.md` if you want it versioned. Copy the previous report's structure.
 
 ### 2. Fan out 4 parallel zone audits (subagents)
@@ -86,4 +86,4 @@ Subagent claims are starting points, not truth. Spot-check every finding you pla
 ## Reference: the 4-zone audit was the basis of
 
 - The A/B/C/D refactoring plan (blocks A–D).
-- The `.pi/audit-2026-07-21.md` findings status table (what was fixed by the cleanup waves).
+- The `audit-2026-07-21.md` findings status table (what was fixed by the cleanup waves).
