@@ -65,6 +65,7 @@ local cls = {
   wine        = "^(com.usebottles.bottles)$",
   patchbay    = "^(zestbay|Carla2)$",
   daw         = "^(Renoise)$",
+  vital       = "^(Vital)$",
   dw          = "^(org.nicotine_plus.Nicotine)$",
   keyboard    = "^(Bazecor|wootility-lekker|Vial|via)$",
   im          = "^(im.riot.Riot)$",
@@ -346,6 +347,7 @@ local workspaces = {
   { id = 18, name = "𐍁:remote", layout = "scrolling" },
   { id = 19, name = "Ⲣ:notes",   layout = "scrolling" },
   { id = 20, name = "𐍅:winboat", layout = "scrolling" },
+  { id = 21, name = "𐍆:vital" }, -- Vital standalone synth
 }
 
 for _, w in ipairs(workspaces) do
@@ -479,6 +481,7 @@ local routes = {
   { class = cls.wine,        id = 12 },
   { class = cls.patchbay,    id = 13 },
   { class = cls.daw,         id = 14 },
+  { class = cls.vital,       id = 21 },
   { class = cls.dw,          id = 15 },
   { class = cls.keyboard,    id = 16 },
   { class = cls.im,          id = 17 },
