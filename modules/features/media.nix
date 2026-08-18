@@ -37,6 +37,7 @@ with lib;
           description = "Beets runtime mode: native (Nixpkgs) or distrobox (CachyOS container)";
         };
       };
+      speech.enable = mkBool "enable local speech stack (Chatterbox TTS :8000, Piper TTS :8001, whisper.cpp STT :8002)" false;
     };
     photo.enable = mkBool "enable photography workflow (darktable, rawtherapee, testdisk)" false;
     webcam.enable = mkBool "enable virtual webcam support (v4l2loopback)" false;
