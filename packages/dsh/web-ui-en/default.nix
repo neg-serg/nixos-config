@@ -32,4 +32,8 @@ runCommand "dsh-web-en-${dsh.version or "0.1.0-rc.6"}" {
   # Covers @deepseek-ai bundles; fork plugins (dsh-terminal-ui
   # et al.) ship their own radii untouched.
   python3 '${./radii.py}' "$out/node_modules/@deepseek-ai"
+  # Cap long chat code blocks with an internal scrollbar (codeblocks.py):
+  # user preference — "long listings do not expand to full height,
+  # scroll inside the block".
+  python3 '${./codeblocks.py}' "$out/node_modules/@deepseek-ai"
 ''
