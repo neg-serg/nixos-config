@@ -22,7 +22,7 @@ in
 {
   config = lib.mkIf enabled {
     environment.systemPackages = [
-      pkgs.piper # CPU TTS fallback (piper-server on :8001)
+      pkgs.piper-tts # CPU TTS fallback (piper-server on :8001) — note: pkgs.piper is a GTK mouse GUI!
       whisperCpp # GPU STT (whisper-cli, Vulkan backend — whisper-server on :8002)
       pkgs.rocmPackages.rocm-smi # VRAM/GPU monitoring for the ROCm TTS stack (chatterbox)
       pkgs.ffmpeg # audio conversion for whisper-server (mp3/ogg → wav)
