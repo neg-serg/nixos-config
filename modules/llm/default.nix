@@ -37,6 +37,10 @@ in
           "Z /zero/ai/ollama 0770 ollama ollama -"
           # llama-server (qwen3-vl GGUF) model store — main user manages files
           "d /zero/ai/llama 0755 ${config.users.main.name} ${config.users.main.name} -"
+          # stable-diffusion.cpp (Vulkan) image models — main user manages files
+          "d /zero/ai/image 0755 ${config.users.main.name} ${config.users.main.name} -"
+          # RAG embeddings & rerankers (GGUF, llama.cpp) — main user manages files
+          "d /zero/ai/embeddings 0755 ${config.users.main.name} ${config.users.main.name} -"
         ];
         users.users."${config.users.main.name}".extraGroups = lib.mkAfter [ "ollama" ];
       }
