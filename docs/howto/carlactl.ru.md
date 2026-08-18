@@ -96,10 +96,14 @@ ALSA-секвенсор (`snd-seq`) не грузился из-за `security.lo
 - `hosts/odin/hardware.nix` → `boot.initrd.kernelModules`: `snd-seq`,
   `snd-seq-midi` — грузятся в initrd, ДО блокировки (вступает в силу после
   пересборки + перезагрузки).
-- MIDI-выход SuperDirt добавлен в `~/notes/music/supercollider/superdirt_startup.scd`
-  (`MIDIClient.init` + `~dirt.midiDevices`).
-- Алиас `vital = sound "midi" # midichan 0` — в `~/notes/music/tidal/BootTidal.hs`.
+- MIDI-выход SuperDirt в `~/notes/music/supercollider/superdirt_startup.scd`:
+  `MIDIClient.init` + `~dirt.soundLibrary.addMIDI(\vital, ~midiOut)` + автозапуск
+  `~/.local/bin/midi-bridge`.
+- Алиас `vital = sound "vital"` — в `~/notes/music/tidal/BootTidal.hs`.
 
-После ребута: запустить Vital (юнит `vital-standalone`), затем движок
-(`tidalctl start`) и соединить: `aconnect "SuperCollider" "Vital"`.
-В Tidal: `d1 $ vital $ note "0 2 4 7"`
+После ребута: `systemctl --user start vital-standalone`, затем `tidalctl start` —
+мост `SuperCollider → Midi Through → Vital` подключается автоматически
+(скрипт `~/.local/bin/midi-bridge`, вызывается из superdirt_startup.scd).
+Vital подписан на Midi Through сам. В Tidal: `d1 $ vital $ note "0 2 4 7"`
+(звук `vital` зарегистрирован через `~dirt.soundLibrary.addMIDI`).
+Если мост не поднялся: `~/.local/bin/midi-bridge` вручную.
