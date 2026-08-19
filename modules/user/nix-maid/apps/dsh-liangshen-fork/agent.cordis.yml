@@ -333,3 +333,8 @@
 # dropped). Package resolves from the profile node_modules.
 - id: category-skill-reminder
   name: dsh-category-skill-reminder
+
+# TTSR: advisory correction rules on the agent's own output (agent plane,
+# needs agent/pre-step + message composition).
+- id: ttsr
+  name: dsh-ttsr
