@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
 import qs.Components
+import qs.Services
 
 // ScreenshotToast — screenshot feedback card with large preview, dunst-matched style.
 
@@ -41,6 +42,18 @@ Item {
             root.hideRequested = false;
             toast.visible = false;
             toast._hiding = false;
+        }
+    }
+
+    // Never show the toast over a game: hide it while a fullscreen window is
+    // on the active workspace or the active workspace is a hide-UI workspace
+    // (games). show() also refuses to open while hidden.
+    readonly property bool uiHidden: HyprlandWatcher.hideUi
+    onUiHiddenChanged: {
+        if (root.uiHidden) {
+            toast.visible = false;
+            toast._hiding = false;
+            autoHide.stop();
         }
     }
 
@@ -92,6 +105,7 @@ Item {
         }
 
         function show() {
+            if (root.uiHidden) return;
             slide.stop(); _hiding = false; visible = true;
             slide.from = 40; slide.to = 0; slide.start();
             autoHide.restart();
