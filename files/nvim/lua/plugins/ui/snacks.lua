@@ -10,7 +10,7 @@ return {
 
     return {
       bigfile = { enabled = true },
-      picker = { enabled = true }, -- snacks picker backends (buffers/commands/git/qf/...)
+      picker = { enabled = true, ui_select = true }, -- snacks owns vim.ui.select (dressing removed: archived)
       dashboard = {
           enabled = not has_args,
           preset = {
