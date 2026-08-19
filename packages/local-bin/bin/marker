@@ -17,6 +17,11 @@ do
 done
 export LD_LIBRARY_PATH
 
+# marker v2's surya VLM backend needs a llama-server binary (surya spawns it for
+# table/OCR VLM steps). Use the system llama-cpp-vulkan build (also used by the
+# llama-server vision service); override via LLAMA_CPP_BINARY if needed.
+export LLAMA_CPP_BINARY="${LLAMA_CPP_BINARY:-$(command -v llama-server 2>/dev/null || echo /nix/store/h5mqjv23cpk2301clipz8bfhdzr72rmi-llama-cpp-9190/bin/llama-server)}"
+
 if [ -d /zero/ai/ocr ]; then
   export HF_HOME="${HF_HOME:-/zero/ai/ocr}"
 fi
