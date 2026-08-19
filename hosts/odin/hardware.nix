@@ -72,6 +72,18 @@
     # Use LTS kernel (ZFS doesn't build with latest 7.x)
     kernelPackages = lib.mkDefault pkgs.linuxPackages;
 
+    # Backport of upstream 52f650963d88 ("drm/amdgpu: fix check in
+    # amdgpu_hmm_invalidate_gfx", first released in 6.18.42): during userptr
+    # BO alloc/free bo->vm_bo can be NULL, so the mmu notifier callback
+    # dereferences NULL and oopses the kernel (AMDGPU_GEM_USERPTR path).
+    # Wait on the VM root PD kept as bo->parent instead.
+    kernelPatches = [
+      {
+        name = "amdgpu-hmm-userptr-vm-bo-null";
+        patch = ../../files/patches/amdgpu-hmm-userptr-parent-fix.patch;
+      }
+    ];
+
     kernelParams = [
       "acpi_osi=!" # Fix ACPI compatibility on ASUS boards
       "acpi_osi=Linux" # Report Linux-compatible ACPI interface
