@@ -709,7 +709,235 @@ window.__ModuleLoader__.load({
         return CardFrame({ title: "Субагенты", badge: "Чтение…", badgeCls: "dw-badge-running" });
       }
       const text = resultText(block);
-      return CardFrame({ title: "Субагенты", badge: "Список", badgeCls: "dw-badge-muted", children: text ? h(LongText, { text }) : null });
+      if (text === null) return CardFrame({ title: "Субагенты", badge: "Пусто", badgeCls: "dw-badge-muted" });
+      const rows = [];
+      for (const line of text.split("\n")) {
+        const m = /^(\S+)\s+\[([^\]]+)\](.*?)(?:\s+—\s+(.*))?$/u.exec(line.trim());
+        if (m === null) continue;
+        const statusPart = m[2];
+        const tail = m[3] ?? "";
+        rows.push({
+          id: m[1],
+          status: /diagnostic:/u.test(statusPart) ? "diagnostic" : statusPart,
+          diagnostic: /diagnostic:\s*(\w+)/u.exec(statusPart)?.[1],
+          label: m[4] ?? "",
+          parent: /parent=(\S+)/u.exec(tail)?.[1],
+          depth: /depth=(\d+)/u.exec(tail)?.[1],
+        });
+      }
+      const statusMeta = {
+        running: ["Выполняется", "dw-badge-running"],
+        idle: ["Ожидает", "dw-badge-muted"],
+        ready: ["Готов", "dw-badge-done"],
+        diagnostic: ["Диагностика", "dw-badge-error"],
+      };
+      const body = rows.length === 0
+        ? h(LongText, { text })
+        : h(
+            "div",
+            { className: "dw-agent-table" },
+            rows.map((r, i) =>
+              h(
+                "div",
+                { key: i, className: "dw-agent-row" },
+                h("span", { className: "dw-chip dw-agent-id", title: r.id }, r.id),
+                (() => {
+                  const sm = statusMeta[r.status] ?? [r.status ?? "?", "dw-badge-muted"];
+                  return h("span", { className: "dw-badge " + sm[1] }, sm[0]);
+                })(),
+                h("span", { className: "dw-agent-label" }, r.label),
+                r.parent !== undefined ? h("span", { className: "dw-chip" }, "parent " + r.parent) : null,
+                r.depth !== undefined ? h("span", { className: "dw-chip" }, "d" + r.depth) : null
+              )
+            )
+          );
+      return CardFrame({ title: "Субагенты", badge: rows.length + " агент(ов)", badgeCls: "dw-badge-muted", children: body });
+    }
+
+    // ---------------------------------------------------------------------
+    // extra data cards: cordis_inspect / plugin_vet / gavel_review / memory
+    // ---------------------------------------------------------------------
+
+    /** The cordis_inspect_* tools render their value as pretty JSON text. */
+    function CordisInspectCard(props) {
+      const { block } = props;
+      if (!done(block)) {
+        return h("div", { className: "dw-inline" }, "Cordis · рендеринг…");
+      }
+      const text = resultText(block);
+      if (block.isError) {
+        return h("div", { className: "dw-inline" }, "Cordis · " + firstResultLine(block));
+      }
+      if (text !== null) {
+        try {
+          const value = JSON.parse(text);
+          return JsonTreeBody({ value, title: "Cordis" });
+        } catch {
+          /* not pure JSON — fall through to text */
+        }
+      }
+      return h("div", { className: "dw-inline" }, text !== null ? firstResultLine(block) : "Cordis");
+    }
+
+    function parseVetReport(text) {
+      const lines = String(text).split("\n");
+      const summary = { safe: 0, low: 0, medium: 0, high: 0 };
+      const m2 = /^safe=(\d+) low=(\d+) medium=(\d+) high=(\d+)/u.exec(lines[1] ?? "");
+      if (m2) {
+        summary.safe = Number(m2[1]);
+        summary.low = Number(m2[2]);
+        summary.medium = Number(m2[3]);
+        summary.high = Number(m2[4]);
+      }
+      const packages = [];
+      let cur = null;
+      for (const line of lines) {
+        const pkgM = /^\[(\w+)\] (\S+@\S+) \(score (\d+)\)(.*)$/u.exec(line);
+        if (pkgM) {
+          cur = { risk: pkgM[1], name: pkgM[2], score: Number(pkgM[3]), review: /REVIEW/u.test(pkgM[4] ?? ""), findings: [] };
+          packages.push(cur);
+        } else if (cur !== null && /^\s{4}- /u.test(line)) {
+          cur.findings.push(line.trim().replace(/^- /u, ""));
+        }
+      }
+      const warnings = lines.filter((l) => l.trim().startsWith(">")).map((l) => l.trim().slice(2));
+      return { summary, packages, warnings };
+    }
+
+    const VET_RISK_META = {
+      SAFE: ["SAFE", "dw-badge-done"],
+      LOW: ["LOW", "dw-badge-muted"],
+      MEDIUM: ["MEDIUM", "dw-badge-warn"],
+      HIGH: ["HIGH", "dw-badge-error"],
+      ALLOWED: ["ALLOWED", "dw-badge-muted"],
+    };
+
+    function PluginVetCard(props) {
+      const { block } = props;
+      if (!done(block)) {
+        return CardFrame({ title: "Аудит плагинов", badge: "Сканирование…", badgeCls: "dw-badge-running" });
+      }
+      const text = resultText(block);
+      if (block.isError) {
+        return CardFrame({ title: "Аудит плагинов", badge: "Ошибка", badgeCls: "dw-badge-error" });
+      }
+      if (text === null) return CardFrame({ title: "Аудит плагинов", badge: "Пусто", badgeCls: "dw-badge-muted" });
+      const report = parseVetReport(text);
+      const counts = report.summary;
+      const riskChips = [
+        ["safe", counts.safe, "dw-badge-done"],
+        ["low", counts.low, "dw-badge-muted"],
+        ["medium", counts.medium, "dw-badge-warn"],
+        ["high", counts.high, "dw-badge-error"],
+      ].filter((r) => r[1] > 0);
+      const children = [
+        h(
+          "div",
+          { className: "dw-head-chips" },
+          riskChips.length > 0
+            ? riskChips.map((r) => h("span", { key: r[0], className: "dw-badge " + r[2] }, r[0] + " " + r[1]))
+            : h("span", { className: "dw-vet-none" }, "подозрительных пакетов не найдено")
+        ),
+        report.packages.length > 0
+          ? h(
+              "div",
+              { className: "dw-vet-list" },
+              report.packages.map((p, i) => {
+                const meta = VET_RISK_META[p.risk] ?? ["?", "dw-badge-muted"];
+                return h(
+                  "div",
+                  { key: i, className: "dw-vet-pkg" },
+                  h("span", { className: "dw-badge " + meta[1] }, meta[0]),
+                  h("span", { className: "dw-vet-name", title: p.name }, p.name),
+                  h("span", { className: "dw-chip" }, "score " + p.score),
+                  p.review ? h("span", { className: "dw-chip dw-chip-review" }, "REVIEW") : null,
+                  p.findings.length > 0
+                    ? h(
+                        "div",
+                        { className: "dw-vet-findings" },
+                        p.findings.slice(0, 6).map((f, j) => h("div", { key: j, className: "dw-vet-f" }, "• " + f)),
+                        p.findings.length > 6 ? h("div", { className: "dw-vet-more" }, "… и ещё " + (p.findings.length - 6)) : null
+                      )
+                    : null
+                );
+              })
+            )
+          : null,
+        report.warnings.length > 0
+          ? h("div", { className: "dw-vet-warn" }, report.warnings.map((w, i) => h("div", { key: i }, "⚠ " + w)))
+          : null,
+      ];
+      return CardFrame({ title: "Аудит плагинов", badge: report.packages.length + " пакет(ов)", badgeCls: "dw-badge-muted", children });
+    }
+
+    /** Light markdown-ish renderer for the gavel review report. */
+    function renderMdLight(text) {
+      const out = [];
+      for (const line of text.split("\n")) {
+        const t = line.trim();
+        if (t === "") continue;
+        if (/^#{1,3}\s+/u.test(t)) out.push(h("div", { className: "dw-md-h" }, t.replace(/^#{1,3}\s+/u, "")));
+        else if (/^[-*]\s+/u.test(t)) out.push(h("div", { className: "dw-md-li" }, "• " + t.replace(/^[-*]\s+/u, "")));
+        else if (/^\d+\.\s+/u.test(t)) out.push(h("div", { className: "dw-md-li" }, t));
+        else out.push(h("div", { className: "dw-md-p" }, t));
+      }
+      return out;
+    }
+
+    function GavelCard(props) {
+      const { block } = props;
+      if (!done(block)) {
+        return CardFrame({ title: "Обзор кода", badge: "Проверка…", badgeCls: "dw-badge-running" });
+      }
+      const text = resultText(block);
+      if (block.isError) {
+        return CardFrame({ title: "Обзор кода", badge: "Ошибка", badgeCls: "dw-badge-error", children: text ? h(LongText, { text }) : null });
+      }
+      if (text === null) return CardFrame({ title: "Обзор кода", badge: "Пусто", badgeCls: "dw-badge-muted" });
+      // Drop the leading markdown # heading; render the rest lightly.
+      const body = text.replace(/^#\s+[^\n]*\n/u, "").trim();
+      return CardFrame({ title: "Обзор кода", badge: "Готово", badgeCls: "dw-badge-done", children: renderMdLight(body) });
+    }
+
+    function MemoryCard(props) {
+      const { block } = props;
+      if (!done(block)) {
+        return CardFrame({ title: "Память", badge: "…", badgeCls: "dw-badge-running" });
+      }
+      const text = resultText(block);
+      if (block.isError) {
+        return CardFrame({ title: "Память", badge: "Ошибка", badgeCls: "dw-badge-error", children: text ? h(LongText, { text }) : null });
+      }
+      if (text === null) return CardFrame({ title: "Память", badge: "Пусто", badgeCls: "dw-badge-muted" });
+      const entries = [];
+      for (const line of text.split("\n")) {
+        const m = /^- \[([^/\]]+)\/([^\]]+)\] (.*)$/u.exec(line.trim());
+        if (m) entries.push({ track: m[1], scope: m[2], text: m[3] });
+      }
+      if (entries.length === 0) {
+        return CardFrame({ title: "Память", badge: "Готово", badgeCls: "dw-badge-done", children: h(LongText, { text }) });
+      }
+      const rows = entries.map((e, i) =>
+        h(
+          "div",
+          { key: i, className: "dw-mem-item" },
+          h("span", { className: "dw-chip" }, e.track + "/" + e.scope),
+          h("span", { className: "dw-mem-text" }, e.text)
+        )
+      );
+      return CardFrame({ title: "Память", badge: entries.length + " записей", badgeCls: "dw-badge-muted", children: rows });
+    }
+
+    function MemoryRecallCard(props) {
+      const { block } = props;
+      if (!done(block)) {
+        return CardFrame({ title: "Воспоминание", badge: "…", badgeCls: "dw-badge-running" });
+      }
+      const text = resultText(block);
+      if (block.isError) {
+        return CardFrame({ title: "Воспоминание", badge: "Ошибка", badgeCls: "dw-badge-error" });
+      }
+      return CardFrame({ title: "Воспоминание", badge: "Готово", badgeCls: "dw-badge-done", children: text ? h(LongText, { text }) : null });
     }
 
     // ---------------------------------------------------------------------
@@ -997,6 +1225,40 @@ window.__ModuleLoader__.load({
         background: var(--dsw-alias-interactive-bg-hover-accent); color: inherit;
         border-radius: 2px; padding: 0 1px;
       }
+
+      .dw-head-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+      .dw-vet-list { display: flex; flex-direction: column; gap: 10px; }
+      .dw-vet-pkg {
+        border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; padding: 6px 10px;
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      }
+      .dw-vet-name { font-weight: 500; overflow-wrap: anywhere; min-width: 0; flex: 1 1 auto; }
+      .dw-vet-findings { flex: 1 1 100%; display: flex; flex-direction: column; gap: 2px; color: var(--dsw-alias-label-secondary); font-size: 12px; }
+      .dw-vet-f { line-height: 1.4; overflow-wrap: anywhere; }
+      .dw-vet-more { color: var(--dsw-alias-label-tertiary); }
+      .dw-vet-none { color: var(--dsw-alias-label-tertiary); }
+      .dw-vet-warn { margin-top: 8px; color: var(--dsw-alias-state-warn-primary); font-size: 12px; line-height: 1.4; }
+      .dw-chip-review { color: var(--dsw-alias-state-warn-primary); }
+      .dw-md-h { font-weight: 600; margin-top: 8px; }
+      .dw-md-h:first-child { margin-top: 0; }
+      .dw-md-li { padding-left: 6px; line-height: 1.45; overflow-wrap: anywhere; }
+      .dw-md-p { line-height: 1.45; overflow-wrap: anywhere; }
+      .dw-mem-item { display: flex; align-items: baseline; gap: 8px; line-height: 1.45; padding: 2px 0; }
+      .dw-mem-text { overflow-wrap: anywhere; min-width: 0; }
+      .dw-agent-table { display: flex; flex-direction: column; gap: 6px; }
+      .dw-agent-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      .dw-agent-id { max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+      .dw-agent-label { overflow-wrap: anywhere; min-width: 0; flex: 1 1 auto; color: var(--dsw-alias-label-secondary); }
+      .dw-activity {
+        display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+        margin: 4px auto 2px; max-width: 760px; font: var(--dsw-font-xs-13);
+      }
+      .dw-activity-label { color: var(--dsw-alias-label-tertiary); font-size: 11px; }
+      .dw-goal-rounds {
+        flex: none; font-family: var(--ds-font-family-code); font-size: 11px;
+        padding: 2px 7px; border-radius: 6px; background: var(--dsw-alias-bg-layer-3);
+        color: var(--dsw-alias-label-secondary); white-space: nowrap;
+      }
     `;
 
     // ---------------------------------------------------------------------
@@ -1016,6 +1278,13 @@ window.__ModuleLoader__.load({
       job_list: JobListCard,
       job_kill: JobKillCard,
       list_agents: ListAgentsCard,
+      cordis_inspect_list: CordisInspectCard,
+      cordis_inspect_query: CordisInspectCard,
+      cordis_inspect_self: CordisInspectCard,
+      plugin_vet: PluginVetCard,
+      gavel_review: GavelCard,
+      memory: MemoryCard,
+      memory_recall: MemoryRecallCard,
     };
 
     function apply(ctx) {
@@ -1033,6 +1302,94 @@ window.__ModuleLoader__.load({
       let boundSessionId = undefined;
       let unsubAny = null;
       let rafPending = false;
+
+      // ---- activity strip + GoalBar rounds (live, DOM-level) ----
+
+      function goalRoundsFrom(sessionId) {
+        try {
+          const projection = sessions.binding(sessionId)?.session.projections.faceOf("goal");
+          const snap = projection?.getSnapshot();
+          const goal = snap?.goal;
+          if (goal === null || goal === undefined || typeof goal !== "object") return null;
+          if (typeof goal.roundsStarted !== "number" || typeof goal.maxGoalRounds !== "number") return null;
+          return "раунды " + goal.roundsStarted + "/" + goal.maxGoalRounds;
+        } catch {
+          return null;
+        }
+      }
+
+      let lastActivityKey = null;
+
+      function renderActivityStrip() {
+        if (typeof document === "undefined") return;
+        const list = sessions.list.getSnapshot();
+        const sessionId = list.current;
+        if (sessionId === undefined) return;
+        const items = [];
+        const catalog = list.subagentsByParent?.[sessionId];
+        if (catalog && Array.isArray(catalog.entries)) {
+          const running = catalog.entries.filter((e) => e !== null && typeof e === "object" && e.kind === "child" && e.status === "running");
+          for (const e of running.slice(0, 3)) {
+            const label = typeof e.label === "string" && e.label.trim() !== "" ? e.label.trim() : String(e.id ?? "");
+            items.push({ cls: "dw-badge-running", text: "субагент: " + label });
+          }
+        }
+        const jobs = list.jobsBySession?.[sessionId];
+        if (Array.isArray(jobs)) {
+          const live = jobs.filter((j) => j !== null && typeof j === "object" && (j.status === "running" || j.status === "stopping"));
+          for (const j of live.slice(0, 3)) {
+            const label = typeof j.label === "string" && j.label.trim() !== "" ? j.label.trim() : String(j.id ?? "");
+            items.push({ cls: j.status === "stopping" ? "dw-badge-warn" : "dw-badge-running", text: "задача: " + label });
+          }
+        }
+        const rounds = goalRoundsFrom(sessionId);
+        if (rounds !== null) items.push({ cls: "dw-badge-muted", text: rounds });
+
+        const key = JSON.stringify(items);
+        if (key === lastActivityKey) return;
+        lastActivityKey = key;
+
+        const composer = document.querySelector("[data-composer-card]");
+        if (composer === null || composer.parentNode === null) return;
+        let strip = document.querySelector("[data-dw-activity]");
+        if (strip === null) {
+          strip = document.createElement("div");
+          strip.setAttribute("data-dw-activity", "1");
+          strip.className = "dw-activity";
+          composer.parentNode.insertBefore(strip, composer);
+        }
+        while (strip.firstChild) strip.removeChild(strip.firstChild);
+        if (items.length === 0) {
+          strip.style.display = "none";
+          return;
+        }
+        strip.style.display = "flex";
+        strip.appendChild(noticeEl("span", "dw-activity-label", "Сейчас:"));
+        for (const it of items) {
+          const badge = noticeEl("span", "dw-badge " + it.cls);
+          badge.appendChild(noticeEl("span", "dw-dot"));
+          badge.appendChild(document.createTextNode(it.text));
+          strip.appendChild(badge);
+        }
+      }
+
+      const handledGoalBars = new WeakSet();
+
+      function injectGoalRounds() {
+        if (typeof document === "undefined") return;
+        const list = sessions.list.getSnapshot();
+        const sessionId = list.current;
+        if (sessionId === undefined) return;
+        const bar = document.querySelector("[data-goal-bar]");
+        if (bar === null) return;
+        // React re-creates the bar on re-render: a fresh element is re-injected.
+        if (handledGoalBars.has(bar) || bar.querySelector(".dw-goal-rounds") !== null) return;
+        const rounds = goalRoundsFrom(sessionId);
+        if (rounds === null) return;
+        bar.appendChild(noticeEl("span", "dw-goal-rounds", rounds));
+        handledGoalBars.add(bar);
+      }
+
 
       function findNoticeRow(key) {
         if (key === undefined || key === null) return null;
@@ -1071,6 +1428,8 @@ window.__ModuleLoader__.load({
               row.style.display = "none";
               row.dataset.dwNoticeHandled = "1";
             }
+            renderActivityStrip();
+            injectGoalRounds();
           } catch (err) {
             // A transform failure must never break the page or the plugin.
             if (typeof console !== "undefined") console.debug("dsh-widgets notice transform:", err);

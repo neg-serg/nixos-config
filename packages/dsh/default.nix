@@ -62,6 +62,13 @@ buildNpmPackage {
       -e 's/toolTurn(67, "grep",/toolTurn(67, "rg",/' \
       -e 's/title: `Grep /title: `Search /' \
       "$search_pkg/dsh-client-connection/lib/client.js"
+
+    # dsh-widgets server patches (exact-string + count-asserted, fails the
+    # build loudly on dsh version drift): subagent model override param
+    # (delegate to deepseek-v4-flash etc. per call) + presentationMeta on the
+    # subagent / workflow / ralph tools so their persisted tool/result meta
+    # carries a structured descriptor (see packages/dsh/patch-widgets.py).
+    python3 ${./patch-widgets.py} "$search_pkg"
   '';
 
   # Prefetched dependency tree; hash from `prefetch-npm-deps package-lock.json`
