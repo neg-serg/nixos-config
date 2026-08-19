@@ -19,5 +19,5 @@ return {'kawre/leetcode.nvim',
         },
         opts={
             lang='python3',
-            picker='fzf-lua',
+            picker={provider='snacks-picker'},
         }}
