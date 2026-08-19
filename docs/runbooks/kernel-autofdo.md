@@ -9,8 +9,8 @@ production-collected profiles.
 > through `modules/system/kernel/localmodconfig.nix`, whose
 > `boot.kernelPackages = lib.mkOverride 40 …` outranks the module's `lib.mkForce` (priority 50), so
 > enabling `boot.kernel.autofdo.enable` does **not** currently switch the kernel to Clang — its
-> `AUTOFDO_CLANG y` patch also lands on a GCC build, where Kconfig drops it. The steps below describe
-> the target workflow; before the profile takes effect the module must be wired into the
+> `AUTOFDO_CLANG y` patch also lands on a GCC build, where Kconfig drops it. The steps below
+> describe the target workflow; before the profile takes effect the module must be wired into the
 > localmodconfig build (build the minimized kernel with `clang` + `AUTOFDO_CLANG` +
 > `CLANG_AUTOFDO_PROFILE`).
 
@@ -24,8 +24,8 @@ production-collected profiles.
 1. **Root for profiling**: kernel-space sampling requires root / `CAP_PERFMON`
    (`kernel.perf_event_paranoid=2` by default blocks non-root kernel profiling).
 1. **A representative workload**: the profile only helps workloads that behave like the recorded
-   one. AutoFDO is most beneficial for front-end-stall-bound workloads (compilation, JIT, databases),
-   not I/O- or memory-bound ones.
+   one. AutoFDO is most beneficial for front-end-stall-bound workloads (compilation, JIT,
+   databases), not I/O- or memory-bound ones.
 
 ## Workflow
 

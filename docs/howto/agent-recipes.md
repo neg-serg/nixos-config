@@ -18,8 +18,8 @@ structure — feature flags, module domains, packages, overlay wiring.
   — slow on first run (builds the devshell). Run `just lint` locally before committing.
 - Shell syntax is guarded with `osh -n` (`scripts/dev/check-osh-syntax.sh`): every tracked shell
   script must parse under Oils' bash-compatible parser. Runtime-only incompatibilities are NOT
-  caught by `-n` (e.g. bare assoc-array keys, `read -t` with a non-zero timeout) — keep those out
-  by convention; see the quoted-key fix in `files/art/fun-art/bonsai.sh`.
+  caught by `-n` (e.g. bare assoc-array keys, `read -t` with a non-zero timeout) — keep those out by
+  convention; see the quoted-key fix in `files/art/fun-art/bonsai.sh`.
 - Hooks live in `.githooks/`; enable with `just hooks-enable`
   (`git config core.hooksPath .githooks`).
 
@@ -93,8 +93,9 @@ guard); scripts needed by systemd units should not `mkdir`/`touch`/`rm` in `Exec
 1. Do **not** convert a `mkDerivation` `src` to `path` — a derivation input must stay a real path
    (string breaks store-input tracking). Keep `src = ./relative/…` there.
 
-**Verify:** `nix build .#nixosConfigurations.odin.config.system.build.toplevel --dry-run
---option substitute false` (a bad path fails evaluation).
+**Verify:**
+`nix build .#nixosConfigurations.odin.config.system.build.toplevel --dry-run --option substitute false`
+(a bad path fails evaluation).
 
 ## 3. Add a feature flag
 

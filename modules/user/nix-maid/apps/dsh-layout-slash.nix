@@ -21,30 +21,30 @@ let
   forkPackage = "${homeDir}/src/1st-level/@projects/dsh-web-ui/packages/dsh-layout-slash";
 
   ensure = pkgs.writeShellScript "dsh-layout-slash-ensure" ''
-    set -eu
-    export PATH=/run/current-system/sw/bin:$PATH
-    PROFILE_DIR="${homeDir}/.dsh/profiles/web"
-    T="$PROFILE_DIR/node_modules/dsh-layout-slash"
-    if [ -d "${forkPackage}" ]; then
-      # Replace a plain copy (from before the fork migration) with the symlink.
-      if [ ! -L "$T" ]; then
-        rm -rf -- "$T" 2>/dev/null || true
-      fi
-      ln -sfn "${forkPackage}" "$T"
-    else
-      echo "dsh-layout-slash: fork checkout missing at ${forkPackage} — plugin not installed" >&2
-    fi
-    PATCH="$PROFILE_DIR/cordis.patch.yml"
-    if ! grep -q 'dsh-layout-slash' "$PATCH" 2>/dev/null; then
-      cat >> "$PATCH" <<'YAML'
+        set -eu
+        export PATH=/run/current-system/sw/bin:$PATH
+        PROFILE_DIR="${homeDir}/.dsh/profiles/web"
+        T="$PROFILE_DIR/node_modules/dsh-layout-slash"
+        if [ -d "${forkPackage}" ]; then
+          # Replace a plain copy (from before the fork migration) with the symlink.
+          if [ ! -L "$T" ]; then
+            rm -rf -- "$T" 2>/dev/null || true
+          fi
+          ln -sfn "${forkPackage}" "$T"
+        else
+          echo "dsh-layout-slash: fork checkout missing at ${forkPackage} — plugin not installed" >&2
+        fi
+        PATCH="$PROFILE_DIR/cordis.patch.yml"
+        if ! grep -q 'dsh-layout-slash' "$PATCH" 2>/dev/null; then
+          cat >> "$PATCH" <<'YAML'
 
-# dsh-layout-slash - composer: a leading "." becomes "/" and the layout
-# switches to English (module: dsh-layout-slash.nix).
-- insert:
-    - id: layout-slash
-      name: dsh-layout-slash
-YAML
-    fi
+    # dsh-layout-slash - composer: a leading "." becomes "/" and the layout
+    # switches to English (module: dsh-layout-slash.nix).
+    - insert:
+        - id: layout-slash
+          name: dsh-layout-slash
+    YAML
+        fi
   '';
 in
 {
@@ -61,7 +61,10 @@ in
   systemd.user.services.dsh-layout-slash = {
     enable = true;
     description = "dsh-layout-slash — leading dot → slash + us layout in the dsh web composer";
-    after = [ "network.target" "dsh-market-ensure.service" ];
+    after = [
+      "network.target"
+      "dsh-market-ensure.service"
+    ];
     before = [ "dsh.service" ];
     wantedBy = [ "default.target" ];
     serviceConfig = {

@@ -18,24 +18,23 @@ let
     else
       "qwen3-vl-8b-instruct-q4_k_m.gguf";
   mmprojFile =
-    if cfg.model == "30b" then
-      "mmproj-qwen3-vl-30b-a3b-f16.gguf"
-    else
-      "mmproj-qwen3-vl-8b-f16.gguf";
+    if cfg.model == "30b" then "mmproj-qwen3-vl-30b-a3b-f16.gguf" else "mmproj-qwen3-vl-8b-f16.gguf";
 in
 {
   options.services.llama-server = {
     # Present by default when the llm feature is on; the unit is never
     # auto-started (no wantedBy) — start it manually when needed.
-    enable = (lib.mkEnableOption ''
-      llama-server — local vision engine for the vision-review skill
-      (qwen3-vl via llama.cpp, Vulkan/RADV backend).
+    enable =
+      (lib.mkEnableOption ''
+        llama-server — local vision engine for the vision-review skill
+        (qwen3-vl via llama.cpp, Vulkan/RADV backend).
 
-      Deliberately NOT started by any target: enable it manually with
-      `systemctl start llama-server` whenever you need image analysis.
-    '') // {
-      default = true;
-    };
+        Deliberately NOT started by any target: enable it manually with
+        `systemctl start llama-server` whenever you need image analysis.
+      '')
+      // {
+        default = true;
+      };
 
     port = lib.mkOption {
       type = lib.types.port;

@@ -122,8 +122,8 @@ services.colibri = {
   preference.
 - Model dir: `/zero/ai/image` — SDXL base checkpoint + VAE, TAESD decoder, FLUX.1-schnell (GGUF
   q4_k) + clip_l/t5xxl/ae.
-- Binary: `sd-cli`. **Verified working recipe (RX 9070 XT, Vulkan)** — SDXL 1024×1024, 20 steps,
-  ~23 s/image:
+- Binary: `sd-cli`. **Verified working recipe (RX 9070 XT, Vulkan)** — SDXL 1024×1024, 20 steps, ~23
+  s/image:
 
 ```bash
 # SDXL — use --taesd! Full VAE decode needs a single >4 GB Vulkan buffer (RADV caps
@@ -150,9 +150,9 @@ sd-cli --diffusion-model /zero/ai/image/flux1-schnell-q4_k.gguf \
 ```
 
 - GPU notes (verified on this host): q4_k GGUF ≈ 6.4 GB in VRAM; q8_0 ≈ 12 GB — only with a lighter
-  t5. FLUX needs `--cfg-scale 1.0`; SDXL default cfg ~6. RADV caps a single Vulkan allocation at
-  ~4 GiB (`maxMemoryAllocationSize = 0xfffffffc`) — any component needing a bigger compute buffer
-  (full VAE decode = 8.5 GB) must go to CPU or use TAESD.
+  t5. FLUX needs `--cfg-scale 1.0`; SDXL default cfg ~6. RADV caps a single Vulkan allocation at ~4
+  GiB (`maxMemoryAllocationSize = 0xfffffffc`) — any component needing a bigger compute buffer (full
+  VAE decode = 8.5 GB) must go to CPU or use TAESD.
 
 ### Embeddings & reranker (RAG)
 
