@@ -67,9 +67,26 @@ function compileRules(rules) {
   return out
 }
 
+function loadMentalModel(config) {
+  if (config && typeof config.mentalModel === 'string' && config.mentalModel !== '') {
+    return config.mentalModel
+  }
+  const p = fileURLToPath(new URL('mental-model.md', import.meta.url))
+  try {
+    if (existsSync(p)) {
+      const text = readFileSync(p, 'utf8').trim()
+      return text === '' ? '' : text
+    }
+  } catch (e) { /* no file */ }
+  return ''
+}
+
 export function apply(ctx, config) {
   const rules = compileRules((config && config.rules) || loadDefaultRules())
+  const mentalModel = loadMentalModel(config)
   const fired = new Map()
+  /** sessions that already received the mental-model background note */
+  const mentalGiven = new Set()
 
   function countFor(sid, ruleName) {
     let m = fired.get(sid)
@@ -88,8 +105,15 @@ export function apply(ctx, config) {
     if (decision.kind === 'reject') return decision
     const sid = agent && agent.session ? agent.session.id : 'default'
     const text = lastAssistantText(messages || decision.messages)
-    if (text === '') return decision
     const injections = []
+    if (mentalModel !== '' && !mentalGiven.has(sid)) {
+      mentalGiven.add(sid)
+      injections.push(createUserMessage({
+        content: [{ type: 'text', text: '<mental-model> Background knowledge (not a command): ' + mentalModel + '</mental-model>' }],
+        source: { kind: 'plugin', plugin: 'ttsr' },
+      }))
+    }
+    if (text === '') return injections.length > 0 ? { ...decision, messages: [...decision.messages, ...injections] } : decision
     for (const rule of rules) {
       if (countFor(sid, rule.name) >= rule.max) continue
       if (!rule.re.test(text)) continue
