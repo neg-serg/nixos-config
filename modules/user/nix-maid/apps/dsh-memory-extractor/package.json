@@ -1,0 +1,12 @@
+{
+  "name": "dsh-memory-extractor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Session-end memory extraction: fold a bounded transcript into memento as a draft-extract entry (LLM stage-one extraction is a documented TODO).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}

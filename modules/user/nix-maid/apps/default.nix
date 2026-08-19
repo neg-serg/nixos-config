@@ -29,6 +29,7 @@ in
       && n != "dsh-category-skill-reminder"
       && n != "dsh-boulder"
       && n != "dsh-hashline"
+      && n != "dsh-memory-extractor"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
