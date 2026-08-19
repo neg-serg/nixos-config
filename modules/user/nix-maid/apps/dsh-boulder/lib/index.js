@@ -194,9 +194,13 @@ export function apply(ctx, config) {
     void handleIdle(agent)
   })
 
-  ctx.on('agent/pre-step', function (payload) {
+  ctx.on('agent/pre-step', function (payload, next) {
     const agent = payload && payload.agent
     if (agent && agent.session) cancelCountdown(agent.session.id)
+    // agent/pre-step is a waterfall: every listener must call next() and
+    // return its result, or the whole pre-step chain resolves to undefined
+    // and downstream listeners crash on decision.kind (reading 'kind').
+    return next()
   })
 
   ctx.on('session/event', function (session, event) {
