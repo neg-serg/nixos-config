@@ -1,0 +1,16 @@
+[
+  {
+    "name": "no-vague-todo",
+    "condition": "TODO:\\s*fix later|TODO:\\s*refactor (?:later|someday)|FIXME:\\s*later",
+    "scope": "text",
+    "maxPerSession": 2,
+    "body": "You left a vague TODO marker. Fix it now instead of deferring: either implement the change or remove the marker and note the decision explicitly."
+  },
+  {
+    "name": "no-promise-without-action",
+    "condition": "I will (?:do|fix|implement|add|run|test|check) [^\\n]{3,60}\\.?\\s*$",
+    "scope": "text",
+    "maxPerSession": 2,
+    "body": "The message ends with a promise to act but no action followed. Issue the concrete tool call now or complete the task and give the final answer."
+  }
+]
