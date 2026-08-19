@@ -36,6 +36,7 @@ in
       && n != "dsh-ttsr"
       && n != "dsh-hub"
       && n != "dsh-ast-grep"
+      && n != "dsh-checkpoint"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
