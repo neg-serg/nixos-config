@@ -13,6 +13,7 @@ return {
   { import = "plugins.navigation" },
   { import = "plugins.panel" },
   { import = "plugins.performance" },
+  { import = "plugins.supercollider" },
   { import = "plugins.text" },
   { import = "plugins.tools" },
   { import = "plugins.ui" },
