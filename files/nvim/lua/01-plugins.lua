@@ -12,7 +12,7 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
-    lockfile = vim.fn.stdpath("state") .. "/lazy-lock.json",
+    lockfile = vim.fn.stdpath("config") .. "/lazy-lock.json", -- tracked in the repo so :Lazy sync updates it here
     spec = { { import = "plugins" } },
     defaults = { lazy = true },
     install = { colorscheme = { "neg" } },
