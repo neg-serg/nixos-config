@@ -21,6 +21,7 @@ in
       && n != "dsh-widgets"
       && n != "dsh-web-en-assets"
       && n != "dsh-liangshen-fork"
+      && n != "dsh-mode"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
