@@ -1,3 +1,3 @@
-name: LiangShen mode (fork)
-description: "Форк пресета LiangShen (anchored-standard), поддерживаемый в /etc/nixos: фаза 1 — минимальная поверхность (bash + str_replace_editor, одна строка персоны), после якоря — промоушен в Code Mode (PTC) с полным каталогом инструментов."
+name: neg
+description: "Пресет neg — форк LiangShen (anchored-standard), поддерживаемый в /etc/nixos: фаза 1 — минимальная поверхность (bash + str_replace_editor, одна строка персоны), после якоря — промоушен в Code Mode (PTC) с полным каталогом инструментов."
 order: 5
