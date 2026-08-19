@@ -8,6 +8,20 @@
 let
   devEnabled = config.lib.neg.enabled "dev";
   nvimConf = config.lib.neg.path "files/nvim";
+  # Deploy each top-level entry as its own symlink (quickshell pattern) instead
+  # of one dir symlink, so the config dir itself stays writable at runtime.
+  # lazy-lock.json is excluded: it is linked to the tracked repo file below so
+  # `:Lazy sync` updates the committed lockfile directly (lua/01-plugins.lua).
+  nvimSrcEntries = builtins.readDir nvimConf;
+  nvimSrcNames = builtins.filter (name: name != "lazy-lock.json") (builtins.attrNames nvimSrcEntries);
+  nvimHomeFiles = builtins.listToAttrs (
+    map (name: {
+      name = ".config/nvim/${name}";
+      value = {
+        source = "${nvimConf}/${name}";
+      };
+    }) nvimSrcNames
+  );
 in
 lib.mkIf devEnabled (
   lib.mkMerge [
@@ -109,10 +123,52 @@ lib.mkIf devEnabled (
         pkgs.lazygit # Git TUI used by Snacks.lazygit bindings
       ];
     }
-    (neg.mkHomeFiles {
-      ".config/nvim".source = neg.linkImpure nvimConf;
-      ".config/vale/.vale.ini".source = config.lib.neg.path "files/vale/.vale.ini"; # Vale prose linter config
-      ".local/share/vale/styles".source = config.lib.neg.path "files/vale/styles"; # Google prose style rules (styles/Google/)
-    })
+    (neg.mkHomeFiles (
+      nvimHomeFiles
+      // {
+        ".config/vale/.vale.ini".source = config.lib.neg.path "files/vale/.vale.ini"; # Vale prose linter config
+        ".local/share/vale/styles".source = config.lib.neg.path "files/vale/styles"; # Google prose style rules (styles/Google/)
+      }
+    ))
+    {
+      # Remove old nvim config symlinks before nix-maid activation deploys the
+      # per-entry symlink tree (the whole-dir symlink becomes a real dir).
+      systemd.user.services.nvim-cleanup-symlink = {
+        description = "Remove old nvim config symlinks before nix-maid activation";
+        before = [ "maid-activation.service" ];
+        wantedBy = [ "maid-activation.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = pkgs.writeShellScript "nvim-cleanup-symlink" ''
+            nvim_dir="$HOME/.config/nvim"
+            if [ -L "$nvim_dir" ]; then
+              rm -f "$nvim_dir" 2>/dev/null || true
+            elif [ -d "$nvim_dir" ]; then
+              find "$nvim_dir" -maxdepth 1 -type l -delete 2>/dev/null || true
+            fi
+            rm -rf "$HOME/.local/state/nix-maid/static/.config/nvim" 2>/dev/null || true
+          '';
+        };
+      };
+      # lazy-lock.json must stay writable at runtime: link it to the tracked
+      # repo file so `:Lazy sync` writes the committed lockfile in place.
+      systemd.user.services.nvim-lockfile-link = {
+        description = "Link writable lazy-lock.json into nvim config";
+        after = [ "maid-activation.service" ];
+        wantedBy = [ "maid-activation.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = pkgs.writeShellScript "nvim-lockfile-link" ''
+            lock="$HOME/.config/nvim/lazy-lock.json"
+            target="/etc/nixos/files/nvim/lazy-lock.json" # repo path = config.lib.neg.path "files/nvim/lazy-lock.json"
+            if [ -L "$lock" ] && [ "$(readlink "$lock")" = "$target" ]; then
+              exit 0
+            fi
+            rm -f "$lock" 2>/dev/null || true
+            ln -s "$target" "$lock"
+          '';
+        };
+      };
+    }
   ]
 )
