@@ -80,5 +80,8 @@ isn't a step-by-step runbook.
 - Отложенный порт сложных фич omp/omo (задание для сильных моделей) (RU):
   [agent-deferred.ru.md](./agent-deferred.ru.md)
 
+- **Порт omp/oh-my-opencode → DSH: итоговая сводка** (RU):
+  [agent-port-summary.ru.md](./agent-port-summary.ru.md)
+
 - Passwordless sudo via TPM (non-exportable SSH key + pam_ssh_agent_auth, no manual actions) (RU):
   [tpm-sudo.ru.md](./tpm-sudo.ru.md)
