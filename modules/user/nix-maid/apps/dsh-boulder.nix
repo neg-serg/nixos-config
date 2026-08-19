@@ -27,7 +27,7 @@ let
         P="$PROFILE_DIR/node_modules/dsh-boulder"
         mkdir -p "$P/lib"
         changed=0
-        for f in package.json lib/index.js; do
+        for f in package.json lib/index.js lib/client.js; do
           if [ ! -f "$P/$f" ]; then
             cp "${pkg}/$f" "$P/$f"
             changed=1
