@@ -43,8 +43,9 @@ ollama run qwen3:32b
   tok/s with warm cache + MTP.
 - Model dir: `/zero/ai/glm52_i4` (~370 GB, int4, pre-converted
   [mateogrgic/GLM-5.2-colibri-int4-with-int8-mtp](https://huggingface.co/mateogrgic/GLM-5.2-colibri-int4-with-int8-mtp),
-  357 GiB · 141 shards `out-*.safetensors` + 3 MTP shards + config/tokenizer). **Downloaded into
-  staging; moved to the model dir when the download finishes.**
+  357 GiB · 141 shards `out-*.safetensors` + 3 MTP shards + config/tokenizer). **Downloaded and
+  validated (149/149 files, byte-exact sizes, `coli info` OK) — staged in
+  `/zero/backup/.ai-staging/glm52_i4`, move to the model dir to activate.**
   `services.colibri.enable` (default on with `features.llm.enable`) installs the engine + `coli`
   CLI, but the serve unit stays off until the model exists.
 - Defaults: `arch = "native"`, `ramBudget = 45`, settings
@@ -186,8 +187,8 @@ rag-search status                   # состояние индекса и ре�
   (created by tmpfiles)
 - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by
   tmpfiles)
-- `/zero/ai/glm52_i4` — colibrì int4 model (~370 GB; download running, staged in
-  `/zero/backup/.ai-staging/glm52_i4`, moved here on completion)
+- `/zero/ai/glm52_i4` — colibrì int4 model (~370 GB; downloaded + validated, staged in
+  `/zero/backup/.ai-staging/glm52_i4`, awaiting move here)
 
 ## Status on odin
 
@@ -196,5 +197,6 @@ rag-search status                   # состояние индекса и ре�
   into the active store — all 23 models now visible to `ollama list`, no re-download.
 - stable-diffusion.cpp: package added (Vulkan), models in `/zero/ai/image`.
 - colibrì: module config fixed (`mkIf // mkIf` dropped the defaults → `coli` CLI never installed;
-  now `mkMerge`). CLI lands with the next rebuild; model downloading (~357 GiB, staged).
+  now `mkMerge`). CLI lands with the next rebuild; model downloaded + validated (staged in
+  `/zero/backup/.ai-staging/glm52_i4`, awaiting move to `/zero/ai/glm52_i4`).
 - Ports: 11434 (Ollama), 8000 (colibri serve, only if enabled)
