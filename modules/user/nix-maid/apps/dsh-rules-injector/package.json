@@ -1,0 +1,12 @@
+{
+  "name": "dsh-rules-injector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Inject repository rules (rules/*.md + AGENTS.md) as additional context when touching matching files (ported from oh-my-opencode rules-injector).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
