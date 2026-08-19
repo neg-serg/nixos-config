@@ -26,6 +26,7 @@
             "--bind='alt-d:change-prompt(Directories ❯ )+reload(fd . -t d)'"
             "--bind='alt-f:change-prompt(Files ❯ )+reload(fd . -t f)'"
             "--bind='ctrl-j:execute(v {+})+abort'"
+            "--bind='ctrl-n:down,ctrl-p:up,ctrl-f:page-down,ctrl-b:page-up,ctrl-a:beginning-of-line,ctrl-e:end-of-line' # emacs-style list navigation"
             "--bind='ctrl-space:select-all'"
             "--bind='ctrl-t:accept'"
             "--bind='ctrl-v:execute(v {+})'"

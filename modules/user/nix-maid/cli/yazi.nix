@@ -277,6 +277,38 @@ let
         ];
         desc = "Reveal file from clipboard";
       }
+      # --- Emacs-style navigation (additive; vi keys still work) ---
+      # Ctrl binds are layout-independent, so no RU duplicates are needed.
+      {
+        run = "arrow next";
+        on = [ "<C-n>" ];
+        desc = "Down (emacs C-n)";
+      }
+      {
+        run = "arrow prev";
+        on = [ "<C-p>" ];
+        desc = "Up (emacs C-p)";
+      }
+      {
+        run = "leave";
+        on = [ "<C-b>" ];
+        desc = "Parent directory (emacs C-b)";
+      }
+      {
+        run = "enter";
+        on = [ "<C-f>" ];
+        desc = "Open entry (emacs C-f)";
+      }
+      {
+        run = "arrow top";
+        on = [ "<C-a>" ];
+        desc = "First entry (emacs C-a)";
+      }
+      {
+        run = "arrow bottom";
+        on = [ "<C-e>" ];
+        desc = "Last entry (emacs C-e)";
+      }
       # --- Russian layout duplicates (ЙЦУКЕН) -------------------------------------
       # yazi matches keys by the produced char; latin-letter binds break under the
       # ru layout. Lowercase Cyrillic only (uppercase implies SHIFT, which the RU

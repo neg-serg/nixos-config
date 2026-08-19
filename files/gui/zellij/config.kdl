@@ -94,6 +94,12 @@ keybinds {
         bind "Alt k" { MoveFocus "up"; }
         bind "Alt l" { MoveFocus "right"; }
 
+        // --- Move focus (Alt + npfb, emacs-style; additive) ---
+        bind "Alt n" { MoveFocus "down"; }
+        bind "Alt p" { MoveFocus "up"; }
+        bind "Alt f" { MoveFocus "right"; }
+        bind "Alt b" { MoveFocus "left"; }
+
         // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.focus), see hosts/odin/default.nix
 
         // --- Mouse ---
@@ -140,6 +146,9 @@ keybinds {
         bind "k" { ScrollUp; }
         bind "Ctrl f" { PageScrollDown; }
         bind "Ctrl b" { PageScrollUp; }
+        // Emacs-style scroll (additive; j/k still work)
+        bind "n" { ScrollDown; }
+        bind "p" { ScrollUp; }
         bind "Escape" { SwitchToMode "normal"; }
         bind "Enter" { SwitchToMode "normal"; }
         // Russian layout (ЙЦУКЕН) — GENERATED (zellijRuBinds.scroll), see hosts/odin/default.nix

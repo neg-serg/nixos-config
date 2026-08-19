@@ -87,6 +87,13 @@
             "K": MoveUp,
             "k": Up,
             "l": Right,
+            // Emacs-style navigation (additive; vi keys above still work)
+            "<C-n>": Down,
+            "<C-p>": Up,
+            "<C-f>": Right,
+            "<C-b>": Left,
+            "<C-a>": Top,
+            "<C-e>": Bottom,
             "n": NextResult,
             "N": PreviousResult,
             "r": Rename,

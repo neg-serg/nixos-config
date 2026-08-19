@@ -242,6 +242,32 @@ let
       ];
       action = "set_background_opacity +0.1";
     }
+    # Emacs-style scrollback navigation (files/kitty/key.conf)
+    {
+      mod = "ctrl+shift";
+      keys = [ "n" ];
+      action = "scroll_line_down";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "p" ];
+      action = "scroll_line_up";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "f" ];
+      action = "scroll_page_down";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "b" ];
+      action = "scroll_page_up";
+    }
+    {
+      mod = "alt";
+      keys = [ "v" ];
+      action = "scroll_page_up";
+    }
   ];
 
   kittyRuBlock = ''

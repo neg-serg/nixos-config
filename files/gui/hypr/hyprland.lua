@@ -253,6 +253,37 @@ hl.bind(M4 .. "+" .. C .. "+d", dispatch("splitratio -0.1"), { repeating = true 
 hl.bind(M4 .. "+" .. C .. "+f", dispatch("splitratio +0.1"), { repeating = true })
 
 -- =====================================================================
+-- Emacs-style navigation (additive layer)
+-- =====================================================================
+-- Super+Alt acts as the "Meta" prefix so nothing collides with app-level
+-- Ctrl shortcuts or the existing vim-style M4+h/j/k/l binds.
+-- Mirrors Emacs/EXWM muscle memory:
+--   C-n/C-p/C-f/C-b  move focus down/up/right/left (like Emacs point moves)
+--   C-a/C-e          first/last workspace        (like beginning/end of line)
+--   C-o              other window                (like C-x o)
+--   C-<Tab>          switch window               (like C-x b switch-to-buffer)
+--   C-x              open vicinae command menu   (like M-x)
+--   C-1..C-9/C-0     jump to workspace 1..10     (like digit-argument)
+--   C-- / C-=        previous / next workspace
+local E = M4 .. "+" .. M1
+
+hl.bind(E .. "+n", dispatch("movefocus d"))
+hl.bind(E .. "+p", dispatch("movefocus u"))
+hl.bind(E .. "+f", dispatch("movefocus r"))
+hl.bind(E .. "+b", dispatch("movefocus l"))
+hl.bind(E .. "+a", hl.dsp.focus({ workspace = "1" }))
+hl.bind(E .. "+e", hl.dsp.focus({ workspace = "21" }))
+hl.bind(E .. "+o", hl.dsp.window.cycle_next({ next = true }))
+hl.bind(E .. "+Tab", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/wm/switch-windows"))
+hl.bind(E .. "+x", hl.dsp.exec_cmd(menu))
+for i = 1, 9 do
+  hl.bind(E .. "+" .. tostring(i), hl.dsp.focus({ workspace = tostring(i) }))
+end
+hl.bind(E .. "+0", hl.dsp.focus({ workspace = "10" }))
+hl.bind(E .. "+minus", hl.dsp.focus({ workspace = "previous" }))
+hl.bind(E .. "+equal", hl.dsp.focus({ workspace = "e+1" }))
+
+-- =====================================================================
 -- Submaps (bindings/_resets.conf and submap files)
 -- =====================================================================
 local function submap_resets()
