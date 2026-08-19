@@ -19,4 +19,7 @@ if ! mkdir -p "$U2NET_HOME" 2>/dev/null; then
   mkdir -p "$U2NET_HOME"
 fi
 
+# pip onnxruntime wheel needs system libstdc++/zlib on NixOS (same as music-ai tools)
+export LD_LIBRARY_PATH="/nix/store/1akz3d3l56rf8k4010vya5wf94c8qim7-gcc-15.2.0-lib/lib:/nix/store/1k5dpp8qqb9ad2kb3hl3a5jy08v04g7k-zlib-1.3.2/lib:${LD_LIBRARY_PATH:-}"
+
 exec "$HOME/src/music-ai/venv-rembg/bin/rembg" "$@"
