@@ -1,0 +1,12 @@
+{
+  "name": "dsh-mode",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Slash command /mode for dsh: list available agent presets or switch the default mode (agent-presets.default in settings).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
