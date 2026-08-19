@@ -89,10 +89,22 @@ export function apply(ctx, config) {
     }
   }
 
+  function pushToast(sid, message) {
+    // Best-effort server->client push; no-op when the connection service is not
+    // exposed here (the browser half also renders via window.__boulderToast).
+    try {
+      if (ctx.client && typeof ctx.client.emit === 'function') {
+        ctx.client.emit('boulder-toast', { sessionID: sid, message })
+      }
+    } catch (e) { /* ignore bridge failures */ }
+  }
+
   function startCountdown(agent, incomplete, total) {
     const sid = agent.session.id
     const s = getState(sid)
     s.countdownStartedAt = Date.now()
+    const remaining = total - incomplete
+    pushToast(sid, 'Resuming in ' + COUNTDOWN_SECONDS + 's... (' + remaining + ' tasks remaining)')
     s.countdownTimer = setTimeout(function () {
       s.countdownTimer = undefined
       void injectContinuation(agent, incomplete, total)
