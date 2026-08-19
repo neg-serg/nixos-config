@@ -13,15 +13,16 @@
     vnstat.enable = true;
   };
 
-  # Monitor ALL network interfaces instead of only the first suitable one:
-  # - Interface "*" adds every suitable interface found at daemon startup
-  #   (pseudo interfaces lo/sit0 are always excluded by vnstatd);
-  # - AlwaysAddNewInterfaces picks up new interfaces appearing at runtime
-  #   (VPN tunnels, docker bridges, ...).
+  # Monitor ALL network interfaces: with an empty Interface the daemon
+  # populates the database with every suitable interface found at startup
+  # (pseudo interfaces lo/sit0 are always excluded by vnstatd), and
+  # AlwaysAddNewInterfaces picks up new interfaces appearing at runtime
+  # (VPN tunnels, docker bridges, ...). Keeping Interface empty also lets
+  # the vnstat CLI auto-select the busiest interface (a "*" wildcard here
+  # would break bare `vnstat` invocations).
   # The config is passed explicitly with --config because the daemon
   # otherwise reads the uneditable config baked into the vnstat store path.
   environment.etc."vnstat.conf".text = ''
-    Interface "*"
     AlwaysAddNewInterfaces 1
   '';
 
