@@ -59,10 +59,9 @@ lib.mkIf devEnabled (
             "text/x-c++"
           ];
         })
-        # Search tools for fzf-lua and telescope
-        pkgs.ripgrep # project-wide search backend
-        pkgs.fd # fast file finder
-        pkgs.fzf # fuzzy finder binary (for fzf-lua)
+        # Search backends for fff/snacks pickers
+        pkgs.ripgrep # project-wide search backend (fff live grep, snacks)
+        pkgs.fd # fast file finder (snacks files picker)
 
         # LSP servers — via nixpkgs, not Mason (Mason binaries break on NixOS:
         # ELF binaries lack /lib64/ld-linux, npm shebangs lack /usr/bin/env)
@@ -98,6 +97,16 @@ lib.mkIf devEnabled (
         pkgs.luajit # Lua syntax checker (just lint)
         pkgs.qt6.qtdeclarative # qmlformat: QML syntax checker (just lint)
         pkgs.mypy # Optional static typing for Python (nvim-lint)
+
+        # DAP debug adapters (nvim-dap) + lazygit (Snacks.lazygit)
+        pkgs.lldb # LLDB with lldb-dap DAP adapter for Rust/C/C++ (nvim-dap)
+        pkgs.delve # Go DAP adapter (nvim-dap)
+        ((pkgs.python3.withPackages (ps: [ ps.debugpy ])).overrideAttrs (o: {
+          meta = (o.meta or { }) // {
+            priority = 1;
+          }; # wins PATH over plain python3 so `python3 -m debugpy.adapter` works
+        })) # Python DAP adapter (nvim-dap)
+        pkgs.lazygit # Git TUI used by Snacks.lazygit bindings
       ];
     }
     (neg.mkHomeFiles {
