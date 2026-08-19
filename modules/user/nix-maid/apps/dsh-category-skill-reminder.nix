@@ -21,34 +21,25 @@ let
   pkg = ./dsh-category-skill-reminder;
 
   ensure = pkgs.writeShellScript "dsh-category-skill-reminder-ensure" ''
-        set -eu
-        export PATH=/run/current-system/sw/bin:$PATH
-        PROFILE_DIR="${homeDir}/.dsh/profiles/web"
-        P="$PROFILE_DIR/node_modules/dsh-category-skill-reminder"
-        mkdir -p "$P/lib"
-        changed=0
-        for f in package.json lib/index.js; do
-          if [ ! -f "$P/$f" ]; then
-            cp "${pkg}/$f" "$P/$f"
-            changed=1
-          fi
-        done
-        PATCH="$PROFILE_DIR/cordis.patch.yml"
-        if ! grep -q 'dsh-category-skill-reminder' "$PATCH" 2>/dev/null; then
-          cat >> "$PATCH" <<'YAML'
-
-    # dsh-category-skill-reminder - nudge delegation with skills
-    # (module: dsh-category-skill-reminder.nix).
-    - insert:
-        - id: category-skill-reminder
-          name: dsh-category-skill-reminder
-    YAML
-          changed=1
-        fi
-        if [ "$changed" = 1 ]; then
-          export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-          ${pkgs.neg.dsh-restart}/bin/dsh-restart
-        fi
+    set -eu
+    export PATH=/run/current-system/sw/bin:$PATH
+    PROFILE_DIR="${homeDir}/.dsh/profiles/web"
+    P="$PROFILE_DIR/node_modules/dsh-category-skill-reminder"
+    mkdir -p "$P/lib"
+    changed=0
+    for f in package.json lib/index.js; do
+      if [ ! -f "$P/$f" ]; then
+        cp "${pkg}/$f" "$P/$f"
+        changed=1
+      fi
+    done
+    # NOTE: mounted in the AGENT plane (see dsh-liangshen-fork/agent.cordis.yml),
+    # where ctx.skills is available — no host-plane patch row (would double-fire
+    # without the skills catalog).
+    if [ "$changed" = 1 ]; then
+      export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+      ${pkgs.neg.dsh-restart}/bin/dsh-restart
+    fi
   '';
 in
 {

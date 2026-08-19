@@ -327,3 +327,9 @@
   config:
     fetch: false
     searchTimeoutMs: 60000
+
+# Category+Skill reminder runs in the AGENT plane, where ctx.skills is
+# available (the host-plane copy has no ctx.skills, so the catalog line was
+# dropped). Package resolves from the profile node_modules.
+- id: category-skill-reminder
+  name: dsh-category-skill-reminder
