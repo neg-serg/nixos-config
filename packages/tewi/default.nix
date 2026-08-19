@@ -45,6 +45,11 @@ pypi.buildPythonApplication rec {
     hash = "sha256-/lyyFKM5rb4ng7/EQag7xOhCLKW+JCsAFVEyl0ZVrfw=";
   };
 
+  # neg.nvim-style pure-dark theme: register a custom Textual theme (pure black
+  # background, blue accents, light blue-grey text) and make it the default;
+  # the "d" key still toggles between it and the built-in light theme.
+  patches = [ ./neg-theme.patch ];
+
   nativeBuildInputs = [
     pypi.setuptools
     pypi.wheel

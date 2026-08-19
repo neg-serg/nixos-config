@@ -1,0 +1,54 @@
+--- a/src/tewi/app.py	2026-08-19 08:29:48.788573365 +0300
++++ b/src/tewi/app.py	2026-08-19 08:29:48.789573357 +0300
+@@ -25,6 +25,29 @@
+ from textual.containers import Horizontal
+ from textual.reactive import reactive
+ from textual.widgets import ContentSwitcher
++from textual.theme import Theme
++
++# neg.nvim-style pure-dark theme (pure black bg, blue accents, light blue-grey text)
++NEG_THEME = Theme(
++    name="neg",
++    primary="#005faf",
++    secondary="#005f87",
++    accent="#367bbf",
++    success="#007a66",
++    warning="#c8a8ef",
++    error="#6b0f2a",
++    foreground="#d1e5ff",
++    background="#000000",
++    surface="#121212",
++    dark=True,
++    variables={
++        "panel": "#15181f",
++        "border": "#272727",
++        "boost": "#0d1824",
++        "text-muted": "#6c7e96",
++        "text-disabled": "#3c4754",
++    },
++)
+ 
+ from .config import (
+     TrackSetAction,
+@@ -170,6 +193,10 @@
+     ):
+         super().__init__()
+ 
++        # Register and activate the neg pure-dark theme (see NEG_THEME above)
++        self.register_theme(NEG_THEME)
++        self.theme = "neg"
++
+         logger.info(f"Initializing Tewi application v{version}")
+         logger.info(f"Client configuration: {client_type} at {host}:{port}")
+ 
+@@ -368,6 +395,10 @@
+         else:
+             self.post_message(Notification("Turtle Mode disabled"))
+ 
++    def action_toggle_dark(self) -> None:
++        """Toggle between the neg dark theme and the built-in light theme."""
++        self.theme = "textual-light" if self.current_theme.name == "neg" else "neg"
++
+     @log_time
+     def action_show_statistics(self) -> None:
+         self.push_screen(StatisticsDialog(self.client.stats()))
