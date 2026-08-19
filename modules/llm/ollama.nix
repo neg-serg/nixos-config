@@ -22,7 +22,9 @@ in
     systemd.services.ollama.environment = {
       HTTPS_PROXY = "socks5://127.0.0.1:10808";
       ALL_PROXY = "socks5://127.0.0.1:10808";
-      NO_PROXY = "127.0.0.1,localhost,0.0.0.0,::1";
+      # Cloudflare R2 (blob CDN) is NOT reachable through the socks5 proxy
+      # (sing-box: connection failures); blob downloads must go direct.
+      NO_PROXY = "127.0.0.1,localhost,0.0.0.0,::1,*.r2.cloudflarestorage.com,r2.cloudflarestorage.com";
     };
 
     networking.firewall.allowedTCPPorts = lib.mkIf cfg.enable (lib.mkAfter [ 11434 ]);
