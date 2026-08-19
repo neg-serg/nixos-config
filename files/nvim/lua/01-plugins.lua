@@ -12,7 +12,11 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
-    lockfile = vim.fn.stdpath("config") .. "/lazy-lock.json", -- tracked in the repo so :Lazy sync updates it here
+    -- Config dir is a read-only nix store link (~/.config/nvim), so the live
+    -- lock must live in state. The committed lazy-lock.json in the repo is a
+    -- pin snapshot: refresh it manually after :Lazy sync if you want to track
+    -- the latest versions (cp ~/.local/state/nvim/lazy-lock.json files/nvim/).
+    lockfile = vim.fn.stdpath("state") .. "/lazy-lock.json",
     spec = { { import = "plugins" } },
     defaults = { lazy = true },
     install = { colorscheme = { "neg" } },
