@@ -70,5 +70,9 @@ isn't a step-by-step runbook.
 - Фичи харнесса: бэклог (hashline, идеи хуков из oh-my-opencode) (RU):
   [agent-harness-features.ru.md](./agent-harness-features.ru.md)
 
+- Фичи харнесса: дизайны и план внедрения (recon DSH + дизайны субагентов) (RU):
+  [agent-harness-implementation.ru.md](./agent-harness-implementation.ru.md) — детали в
+  [designs/](./designs/) (dsh-recon, rules-hooks, hashline, memory-pipeline)
+
 - Passwordless sudo via TPM (non-exportable SSH key + pam_ssh_agent_auth, no manual actions) (RU):
   [tpm-sudo.ru.md](./tpm-sudo.ru.md)
