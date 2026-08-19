@@ -93,6 +93,65 @@ in
     else
       builtins.throw "ru-keys check failures: ${t.report}";
 
+  # ── fzf opts guards ────────────────────────────────────────────────
+  # fzf parses FZF_*_OPTS values as its own CLI options; a standalone '#'
+  # token silently truncates them (regression: commit 5cd4942a dropped all
+  # colors/binds). fzf-opts-guard pins the predicate, fzf-opts parses the
+  # real odin values with fzf itself.
+
+  "fzf-opts-guard" =
+    let
+      t = import ../lib/fzf-opts-tests.nix;
+    in
+    if t.failures == [ ] then
+      pkgs.runCommand "check-fzf-opts-guard" { } ''
+        echo "check: fzf-opts-guard OK (${toString (builtins.length t.checks)} assertions)"
+        touch $out
+      ''
+    else
+      builtins.throw "fzf-opts-guard check failures: ${t.report}";
+
+  "fzf-opts" =
+    let
+      vars = self.nixosConfigurations.odin.config.environment.variables;
+      fzfOpts = [
+        {
+          name = "FZF_DEFAULT_OPTS";
+          value = vars.FZF_DEFAULT_OPTS;
+        }
+        {
+          name = "FZF_CTRL_R_OPTS";
+          value = vars.FZF_CTRL_R_OPTS;
+        }
+        {
+          name = "FZF_CTRL_T_OPTS";
+          value = vars.FZF_CTRL_T_OPTS;
+        }
+      ];
+    in
+    pkgs.runCommand "check-fzf-opts"
+      {
+        nativeBuildInputs = [ pkgs.fzf ];
+      }
+      (
+        lib.concatMapStrings (o: ''
+          echo "check: fzf parses ${o.name}"
+          opts="$(cat ${pkgs.writeText "fzf-${o.name}" o.value})"
+          # 1) every option must be valid — an unknown/invalid option makes fzf exit != 0
+          printf 'probe\n' | FZF_DEFAULT_OPTS="$opts" fzf --filter=probe >/dev/null
+          # 2) a standalone '#' comment would silently eat the appended sentinel
+          #    (exit 0) — a clean string must reject it (exit != 0)
+          if printf 'probe\n' | FZF_DEFAULT_OPTS="$opts --no-such-fzf-sentinel-xyz" fzf --filter=probe >/dev/null 2>&1; then
+            echo "FAIL: ${o.name} contains a standalone '#' comment — fzf silently dropped the rest of the options" >&2
+            exit 1
+          fi
+          echo "check: fzf opts ${o.name} OK"
+        '') fzfOpts
+        + ''
+          touch $out
+        ''
+      );
+
   # ── NixOS test config checks ───────────────────────────────────────
   # Each evaluates a profile-specific NixOS configuration for "odin"
   # via mkTestHost (threaded from flake.nix; stripped from the
