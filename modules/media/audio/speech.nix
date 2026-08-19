@@ -38,6 +38,7 @@ in
       pkgs.rocmPackages.rocm-smi # VRAM/GPU monitoring for the ROCm TTS stack (chatterbox)
       pkgs.ffmpeg # audio conversion for whisper-server (mp3/ogg → wav)
       pkgs.python312 # base interpreter for the chatterbox venv (keeps it GC-safe; torch cp312 wheels)
+      pkgs.aubio # audio onset/beat/tempo analysis (aubioonset/aubiotrack CLIs) for music tools
     ];
 
     # User services (run as neg on login). Chatterbox needs the pip venv created
