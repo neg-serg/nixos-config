@@ -1,9 +1,10 @@
 #!/bin/sh
 # rembg: AI background removal with models kept on the ZFS pool (/zero/ai),
-# per the "all AI assets in /zero/ai/*" convention. Overrides the system rembg
-# binary (this ~/.local/bin entry precedes /run/current-system/sw/bin in PATH).
+# per the "all AI assets in /zero/ai/*" convention. Uses the pip venv at
+# ~/src/music-ai/venv-rembg (nixpkgs rembg fails to build: onnxruntime/libhwy
+# OOM-killed; see modules/media/ai-upscale-packages.nix).
 #
-# Models are downloaded on first use to $U2NET_HOME:
+# Models are downloaded on first use to $U2NET_HOME (/zero/ai/imgproc):
 #   - default: u2net (rembg i image.png)
 #   - better quality: birefnet-general (rembg i -m birefnet-general image.png)
 #
@@ -11,6 +12,11 @@
 set -eu
 
 export U2NET_HOME="${U2NET_HOME:-/zero/ai/imgproc}"
-mkdir -p "$U2NET_HOME"
+if ! mkdir -p "$U2NET_HOME" 2>/dev/null; then
+  # /zero/ai is root-owned until the next rebuild creates /zero/ai/imgproc;
+  # fall back to a user-writable dir so the tool still works.
+  export U2NET_HOME="$HOME/.local/share/rembg"
+  mkdir -p "$U2NET_HOME"
+fi
 
-exec rembg "$@"
+exec "$HOME/src/music-ai/venv-rembg/bin/rembg" "$@"
