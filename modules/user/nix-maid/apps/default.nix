@@ -30,6 +30,7 @@ in
       && n != "dsh-hashline"
       && n != "dsh-memory-extractor"
       && n != "dsh-debug"
+      && n != "dsh-secrets-masker"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
