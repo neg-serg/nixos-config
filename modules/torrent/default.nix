@@ -10,6 +10,7 @@ let
     pkgs.transmission_4 # primary BitTorrent client/daemon
     pkgs.rustmission # CLI Transmission client written in Rust
     pkgs.stig # TUI Transmission client with vi-style keybindings
+    pkgs.tewi # Text-based client for Transmission/qBittorrent/Deluge daemons
     pkgs.curl # HTTP helper for tracker scripts
     pkgs.jq # parse Transmission RPC JSON responses
   ];
