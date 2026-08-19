@@ -20,7 +20,8 @@ let
   # chosen answers highlighted) instead of the raw JSON result,
   # 7) long expanded content bounded: assistant "Think" rows collapse by
   # default (expand on click), markdown code blocks height-capped with an
-  # internal scrollbar.
+  # internal scrollbar, 8) sidebar logo row (brand + fold toggle) hidden in
+  # every state so the column starts at New Session.
   #
   # Canonical source is the dsh-web-ui fork checkout (packages/dsh-gui-tweaks):
   # the profile node_modules entry is a symlink into it, same pattern as
