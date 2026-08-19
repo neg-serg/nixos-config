@@ -1,0 +1,12 @@
+{
+  "name": "dsh-debug",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DAP debugging for dsh: one `debug` tool (launch/attach, breakpoints, stepping, stack/scopes/variables, evaluate, terminate) over gdb/lldb-dap/dlv/debugpy adapters (ported from omp).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
