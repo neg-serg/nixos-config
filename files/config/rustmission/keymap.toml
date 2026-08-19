@@ -33,6 +33,16 @@ keybindings = [
   { on = "k", action = "Up" },
   { on = "j", action = "Down" },
 
+  # Emacs (additive; vi keys above still work)
+  { modifier = "Ctrl", on = "n", action = "Down" },
+  { modifier = "Ctrl", on = "p", action = "Up" },
+  { modifier = "Ctrl", on = "f", action = "Right" },
+  { modifier = "Ctrl", on = "b", action = "Left" },
+  { modifier = "Ctrl", on = "a", action = "GoToBeginning" },
+  { modifier = "Ctrl", on = "e", action = "GoToEnd" },
+  { modifier = "Ctrl", on = "v", action = "ScrollPageDown" },
+  { modifier = "Alt", on = "v", action = "ScrollPageUp" },
+
   # Sorting
   { on = "H", action = "MoveToColumnLeft" },
   { on = "L", action = "MoveToColumnRight" },
