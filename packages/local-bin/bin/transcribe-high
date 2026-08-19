@@ -33,8 +33,14 @@ ffmpeg -y -loglevel error -i "$SRC" -ar 44100 -ac 1 "$WORK/input.wav"
 AUDIO="$WORK/input.wav"
 
 if [ "$DENOISE" = "1" ] && [ -x "$BASE/venv-denoise/bin/python" ]; then
-  echo "[transcribe-high] 2/5 деноиз (DeepFilterNet)"
-  "$BASE/venv-denoise/bin/python" -m df.enhance --input "$WORK/input.wav" --output "$WORK/denoised.wav" >/dev/null 2>&1 && AUDIO="$WORK/denoised.wav" || echo "  (деноиз пропущен — сбой)"
+  echo "[transcribe-high] 2/5 деноиз (noisereduce)"
+  "$BASE/venv-denoise/bin/python" - "$WORK/input.wav" "$WORK/denoised.wav" <<'PYEOF'
+import sys, noisereduce as nr, soundfile as sf
+data, rate = sf.read(sys.argv[1])
+clean = nr.reduce_noise(y=data, sr=rate)
+sf.write(sys.argv[2], clean, rate)
+PYEOF
+  [ -s "$WORK/denoised.wav" ] && AUDIO="$WORK/denoised.wav" || echo "  (деноиз пропущен — сбой)"
 else
   echo "[transcribe-high] 2/5 деноиз — пропущен (venv-denoise нет или --no-denoise)"
 fi
