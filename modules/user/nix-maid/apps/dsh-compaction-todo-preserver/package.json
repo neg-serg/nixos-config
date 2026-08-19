@@ -1,0 +1,12 @@
+{
+  "name": "dsh-compaction-todo-preserver",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Preserve the todo list across session compaction (re-append last todo/write snapshot on compaction/end).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
