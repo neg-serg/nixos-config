@@ -1,0 +1,12 @@
+{
+  "name": "dsh-category-skill-reminder",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Nudge to delegate via subagent with the right skills (load_skills) after several direct work-tool calls (ported from oh-my-opencode).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
