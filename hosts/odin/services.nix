@@ -281,7 +281,7 @@ lib.mkMerge [
         # servicesProfiles.openssh above, restrict forwarded destinations to
         # loopback so the hardened sshd cannot be used as a pivot into the LAN.
         openssh.extraConfig = ''
-          PermitOpen 127.0.0.1:* ::1:*
+          PermitOpen 127.0.0.1:* [::1]:*
         '';
 
         # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
