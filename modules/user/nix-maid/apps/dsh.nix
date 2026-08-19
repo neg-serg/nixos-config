@@ -15,6 +15,46 @@ let
     export DEEPSEEK_API_KEY="''${DEEPSEEK_API_KEY:-$(cat /run/secrets/deepseek-api 2>/dev/null)}"
     exec ${pkgs.neg.dsh}/bin/dsh "$@"
   '';
+
+  # dsh-watchdog: the web service can end up dead with a straggler node still
+  # holding port 3080 — plain 'systemctl --user restart' fails with "Failed to
+  # kill control group: Operation not permitted" whenever root processes (e.g.
+  # 'sudo nixos-rebuild' typed into a web terminal) sit in the service cgroup,
+  # and Restart=on-failure never fires for a unit stop. This timer-driven check
+  # brings the unit back: if it is not active, or it is active but port 3080 is
+  # dead, stragglers are killed and the service is (re)started via dsh-restart.
+  watchdogScript = pkgs.writeShellScript "dsh-watchdog" ''
+    export PATH=/run/current-system/sw/bin:/run/wrappers/bin:/usr/local/bin:/usr/bin:/bin
+    export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    state="$(systemctl --user is-active dsh.service 2>/dev/null || true)"
+    case "$state" in
+      active)
+        if curl -sS --max-time 5 -o /dev/null http://127.0.0.1:3080/; then
+          exit 0
+        fi
+        # Active but not serving: give a freshly started instance a minute to
+        # bind the port before forcing a restart.
+        entered="$(systemctl --user show -p ActiveEnterTimestamp --value dsh.service 2>/dev/null || true)"
+        if [ -n "$entered" ]; then
+          entered_ts="$(date -d "$entered" +%s 2>/dev/null || echo 0)"
+          if [ "$(( $(date +%s) - entered_ts ))" -lt 60 ]; then
+            exit 0
+          fi
+        fi
+        echo "dsh-watchdog: dsh.service active but port 3080 dead — restarting" >&2
+        exec ${pkgs.neg.dsh-restart}/bin/dsh-restart
+        ;;
+      activating|deactivating|reloading)
+        exit 0
+        ;;
+      *)
+        echo "dsh-watchdog: dsh.service is $state — cleaning stragglers and starting" >&2
+        pkill -f '/lib/bin\.js web' 2>/dev/null || true
+        sleep 1
+        systemctl --user start dsh.service 2>/dev/null || true
+        ;;
+    esac
+  '';
 in
 {
   # DeepSeek Harness (dsh) — agent harness, everything is a plugin.
@@ -54,6 +94,12 @@ in
     description = "DeepSeek Harness (dsh) — agent harness Web UI";
     after = [ "network.target" ];
     wantedBy = [ "default.target" ];
+    # A failed stop/start cycle (root processes in the cgroup, port 3080 held
+    # by a straggler) used to trip the default 5 starts / 10s limit and leave
+    # the unit failed — the dsh-watchdog timer then had nothing to restart.
+    # 10 tries / 60s gives the watchdog and the ensure scripts room to work.
+    startLimitIntervalSec = 60;
+    startLimitBurst = 10;
     environment = {
       # The Landlock sandbox (landlock-run) execs wrapped commands via
       # execvp, which needs the system PATH. systemd's default user-service
@@ -68,6 +114,28 @@ in
       ExecStart = "${lib.getExe pkgs.nodejs} --expose-internals ${pkgs.neg.dsh}/lib/node_modules/@deepseek-ai/dsh/lib/bin.js web";
       Restart = "on-failure";
       RestartSec = 3;
+    };
+  };
+
+  # Timer + oneshot: periodic health check for dsh.service (see watchdogScript).
+  systemd.user.services.dsh-watchdog = {
+    enable = true;
+    description = "dsh web watchdog — check dsh.service health, restart if dead";
+    after = [ "network.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = watchdogScript;
+    };
+  };
+
+  systemd.user.timers.dsh-watchdog = {
+    enable = true;
+    description = "dsh web watchdog — periodic health check of dsh.service";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "2min";
+      OnUnitActiveSec = "45s";
+      Persistent = true;
     };
   };
 
