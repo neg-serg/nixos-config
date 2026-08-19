@@ -1,0 +1,12 @@
+{
+  "name": "dsh-ast-grep",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Structural code search/rewrite via ast-grep (sg): AST-pattern search and rewrite with metavariables (ported from omp ast_grep).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
