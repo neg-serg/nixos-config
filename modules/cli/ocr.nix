@@ -4,7 +4,11 @@ let
   # Default tesseract ships eng only; rus needed for Russian text, osd for
   # orientation/script detection on scans.
   tesseract = pkgs.tesseract.override {
-    enableLanguages = [ "eng" "rus" "osd" ];
+    enableLanguages = [
+      "eng"
+      "rus"
+      "osd"
+    ];
   };
   # ocrmypdf bundles its own tesseract from the python package — pass the
   # same language set through so Russian PDFs work out of the box.

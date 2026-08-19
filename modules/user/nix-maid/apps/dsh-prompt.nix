@@ -21,30 +21,30 @@ let
   forkPackage = "${homeDir}/src/1st-level/@projects/dsh-web-ui/packages/dsh-prompt";
 
   ensurePrompt = pkgs.writeShellScript "dsh-prompt-ensure" ''
-    set -eu
-    export PATH=/run/current-system/sw/bin:$PATH
-    PROFILE_DIR="${homeDir}/.dsh/profiles/web"
-    T="$PROFILE_DIR/node_modules/dsh-prompt"
-    if [ -d "${forkPackage}" ]; then
-      # Replace a plain copy (from before the fork migration) with the symlink.
-      if [ ! -L "$T" ]; then
-        rm -rf -- "$T" 2>/dev/null || true
-      fi
-      ln -sfn "${forkPackage}" "$T"
-    else
-      echo "dsh-prompt: fork checkout missing at ${forkPackage} — plugin not installed" >&2
-    fi
-    PATCH="$PROFILE_DIR/cordis.patch.yml"
-    if ! grep -q 'dsh-prompt' "$PATCH" 2>/dev/null; then
-      cat >> "$PATCH" <<'YAML'
+        set -eu
+        export PATH=/run/current-system/sw/bin:$PATH
+        PROFILE_DIR="${homeDir}/.dsh/profiles/web"
+        T="$PROFILE_DIR/node_modules/dsh-prompt"
+        if [ -d "${forkPackage}" ]; then
+          # Replace a plain copy (from before the fork migration) with the symlink.
+          if [ ! -L "$T" ]; then
+            rm -rf -- "$T" 2>/dev/null || true
+          fi
+          ln -sfn "${forkPackage}" "$T"
+        else
+          echo "dsh-prompt: fork checkout missing at ${forkPackage} — plugin not installed" >&2
+        fi
+        PATCH="$PROFILE_DIR/cordis.patch.yml"
+        if ! grep -q 'dsh-prompt' "$PATCH" 2>/dev/null; then
+          cat >> "$PATCH" <<'YAML'
 
-# dsh-prompt - terminal-style composer placeholder (❯_ instead of the stock
-# "Message the agent") (module: dsh-prompt.nix).
-- insert:
-    - id: dsh-prompt
-      name: dsh-prompt
-YAML
-    fi
+    # dsh-prompt - terminal-style composer placeholder (❯_ instead of the stock
+    # "Message the agent") (module: dsh-prompt.nix).
+    - insert:
+        - id: dsh-prompt
+          name: dsh-prompt
+    YAML
+        fi
   '';
 in
 {
@@ -61,7 +61,10 @@ in
   systemd.user.services.dsh-prompt = {
     enable = true;
     description = "dsh-prompt — terminal-style composer placeholder in the dsh web profile";
-    after = [ "network.target" "dsh-market-ensure.service" ];
+    after = [
+      "network.target"
+      "dsh-market-ensure.service"
+    ];
     before = [ "dsh.service" ];
     wantedBy = [ "default.target" ];
     serviceConfig = {
