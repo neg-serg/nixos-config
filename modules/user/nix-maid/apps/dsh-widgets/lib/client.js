@@ -87,6 +87,15 @@ window.__ModuleLoader__.load({
       return { paddingLeft: depth * 14 };
     }
 
+    function safeCss(value) {
+      if (typeof value !== "string" || value === "") return "";
+      try {
+        return CSS.escape(value);
+      } catch {
+        return value.replace(/[^a-zA-Z0-9:_-]/g, "\\$&");
+      }
+    }
+
     // ---------------------------------------------------------------------
     // JSON tree
     // ---------------------------------------------------------------------
@@ -1319,6 +1328,7 @@ window.__ModuleLoader__.load({
       }
 
       let lastActivityKey = null;
+      const bashFirstSeen = new Map();
 
       function renderActivityStrip() {
         if (typeof document === "undefined") return;
@@ -1344,6 +1354,44 @@ window.__ModuleLoader__.load({
         }
         const rounds = goalRoundsFrom(sessionId);
         if (rounds !== null) items.push({ cls: "dw-badge-muted", text: rounds });
+
+        // ---- running bash calls (live "what's going in bash") ----
+        // The wire carries no streaming output: a bash row is "running" until
+        // tool/result settles. Detect those rows in the DOM (data-state +
+        // data-sample), recover the command from the chat projection by callId,
+        // and show `bash: <cmd> · Ns` ticking in the strip.
+        try {
+          const runningRows = document.querySelectorAll('[data-sample="bash"][data-state="running"]');
+          for (const row of runningRows) {
+            const callId = row.getAttribute("data-chat-call-id")
+              ?? row.closest("[data-chat-call-id]")?.getAttribute("data-chat-call-id")
+              ?? "";
+            if (callId === "") continue;
+            if (!bashFirstSeen.has(callId)) bashFirstSeen.set(callId, Date.now());
+            let cmd = "";
+            const chat = sessions.binding(sessionId)?.session.projections?.get("chat");
+            if (chat !== undefined && chat !== null && typeof chat.nodes === "object" && chat.nodes !== null) {
+              for (const node of chat.nodes.values()) {
+                const d = node?.data;
+                if (d !== null && typeof d === "object" && d.kind === "tool-call" && d.name === "bash" && String(d.callId) === callId) {
+                  if (typeof d.argsRaw === "string" && d.argsRaw.trim() !== "") cmd = d.argsRaw.trim();
+                  break;
+                }
+              }
+            }
+            const firstLine = cmd.split("\n")[0].trim();
+            const shown = firstLine.length > 70 ? firstLine.slice(0, 69) + "…" : firstLine;
+            const elapsed = Math.max(0, Math.round((Date.now() - bashFirstSeen.get(callId)) / 1000));
+            items.push({ cls: "dw-badge-running", text: "bash: " + (shown || "…") + " · " + elapsed + "с" });
+          }
+          // Prune timers for calls that settled or left the view.
+          for (const id of Array.from(bashFirstSeen.keys())) {
+            const still = document.querySelector('[data-sample="bash"][data-state="running"][data-chat-call-id="' + safeCss(id) + '"]');
+            if (still === null) bashFirstSeen.delete(id);
+          }
+        } catch {
+          /* a scan failure must never break the strip */
+        }
 
         const key = JSON.stringify(items);
         if (key === lastActivityKey) return;
@@ -1471,10 +1519,14 @@ window.__ModuleLoader__.load({
           rescan();
         });
         observer.observe(document.body, { childList: true, subtree: true });
+        // 1s tick: drives the live elapsed timers in the activity strip (running
+        // bash / subagents / jobs) and the GoalBar rounds chip.
+        const ticker = setInterval(rescan, 1000);
 
         return () => {
           style.remove();
           unsubList();
+          clearInterval(ticker);
           if (unsubAny !== null) {
             try { unsubAny(); } catch { /* ignore */ }
             unsubAny = null;
