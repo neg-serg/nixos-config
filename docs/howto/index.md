@@ -74,5 +74,11 @@ isn't a step-by-step runbook.
   [agent-harness-implementation.ru.md](./agent-harness-implementation.ru.md) — детали в
   [designs/](./designs/) (dsh-recon, rules-hooks, hashline, memory-pipeline)
 
+- Нишевые фичи omp: vibe / cleanse / export / secrets / tan — порт-заметки (RU):
+  [agent-misc-ports.ru.md](./agent-misc-ports.ru.md)
+
+- Отложенный порт сложных фич omp/omo (задание для сильных моделей) (RU):
+  [agent-deferred.ru.md](./agent-deferred.ru.md)
+
 - Passwordless sudo via TPM (non-exportable SSH key + pam_ssh_agent_auth, no manual actions) (RU):
   [tpm-sudo.ru.md](./tpm-sudo.ru.md)
