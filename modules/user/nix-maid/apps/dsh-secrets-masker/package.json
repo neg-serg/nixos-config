@@ -1,0 +1,12 @@
+{
+  "name": "dsh-secrets-masker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Redact API keys/tokens in tool-result text before the model sees it (tools/post-execute content masking; ported from omp secrets).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
