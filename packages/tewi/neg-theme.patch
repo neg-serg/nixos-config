@@ -1,6 +1,6 @@
---- a/src/tewi/app.py	2026-08-19 08:29:48.788573365 +0300
-+++ b/src/tewi/app.py	2026-08-19 08:29:48.789573357 +0300
-@@ -25,6 +25,29 @@
+--- a/src/tewi/app.py	2026-08-19 08:48:05.847792437 +0300
++++ b/src/tewi/app.py	2026-08-19 08:48:05.854792380 +0300
+@@ -25,6 +25,32 @@
  from textual.containers import Horizontal
  from textual.reactive import reactive
  from textual.widgets import ContentSwitcher
@@ -12,25 +12,28 @@
 +    primary="#005faf",
 +    secondary="#005f87",
 +    accent="#367bbf",
-+    success="#007a66",
++    success="#148787",
 +    warning="#c8a8ef",
-+    error="#6b0f2a",
++    error="#b03362",
 +    foreground="#d1e5ff",
 +    background="#000000",
 +    surface="#121212",
 +    dark=True,
 +    variables={
-+        "panel": "#15181f",
-+        "border": "#272727",
-+        "boost": "#0d1824",
-+        "text-muted": "#6c7e96",
-+        "text-disabled": "#3c4754",
++        "panel": "#0d1824",
++        "border": "#1d2433",
++        "boost": "#162b44",
++        "text": "#d1e5ff",
++        "text-muted": "#a5c1e6",
++        "text-disabled": "#7387a1",
++        "primary-darken-1": "#005faf",
++        "primary-darken-2": "#005faf",
 +    },
 +)
  
  from .config import (
      TrackSetAction,
-@@ -170,6 +193,10 @@
+@@ -170,6 +196,10 @@
      ):
          super().__init__()
  
@@ -41,7 +44,7 @@
          logger.info(f"Initializing Tewi application v{version}")
          logger.info(f"Client configuration: {client_type} at {host}:{port}")
  
-@@ -368,6 +395,10 @@
+@@ -368,6 +398,10 @@
          else:
              self.post_message(Notification("Turtle Mode disabled"))
  
