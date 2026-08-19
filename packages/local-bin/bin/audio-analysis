@@ -1,0 +1,63 @@
+#!/bin/sh
+# audio-analysis: Essentia key/beat analysis + CLAP zero-shot tagging + matchering mastering.
+# Subcommands:
+#   audio-analysis keybeat  input.wav        → key, tempo, beats
+#   audio-analysis tag      input.wav "txt1" "txt2"...  → CLAP zero-shot similarities
+#   audio-analysis master   input.wav ref.wav out.wav   → reference-based mastering
+set -eu
+
+BASE="$HOME/src/music-ai"
+TORCHLIB="$BASE/venv-analysis/lib/python3.12/site-packages/torch/lib"
+for lib in "$TORCHLIB" \
+  /nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib \
+  /nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib
+do
+  [ -d "$lib" ] && LD_LIBRARY_PATH="$lib:${LD_LIBRARY_PATH:-}"
+done
+export LD_LIBRARY_PATH
+
+CMD="${1:?usage: audio-analysis keybeat|tag|master ...}"
+shift
+case "$CMD" in
+  keybeat)
+    SRC="${1:?}"
+    "$BASE/venv-analysis/bin/python" -c "
+import essentia.standard as es, statistics
+audio = es.MonoLoader(filename='$SRC')()
+key = es.KeyExtractor()(audio)
+beats, _ = es.BeatTrackerMultiFeature()(audio)
+if len(beats) > 2:
+    ivals = [beats[i+1]-beats[i] for i in range(len(beats)-1)]
+    bpm = round(60/statistics.median(ivals), 1)
+else:
+    bpm = 0.0
+print(f'key: {key[0]} {key[1]} (conf {key[2]:.2f}) | ~{bpm} BPM | {len(beats)} beats')
+"
+    ;;
+  tag)
+    SRC="${1:?}"; shift
+    [ $# -ge 1 ] || { echo "usage: audio-analysis tag input.wav 'label'..."; exit 1; }
+    "$BASE/venv-analysis/bin/python" -c "
+import sys, json
+from laion_clap import CLAP_Module
+texts = sys.argv[2:]
+model = CLAP_Module(enable_fusion=False)
+model.load_ckpt()
+te = model.get_text_embedding(texts)
+ae = model.get_audio_embedding_from_filelist([sys.argv[1]]*len(texts))
+sims = (ae @ te.T)[0]
+for t, s in zip(texts, sims): print(f'  {s:.3f}  {t}')
+" "$SRC" "$@"
+    ;;
+  master)
+    SRC="${1:?}"; REF="${2:?}"; OUT="${3:?}"
+    "$BASE/venv-analysis/bin/python" -c "
+import sys, matchering as mg
+mg.process(target=sys.argv[1], reference=sys.argv[2], results=[mg.pcm16(sys.argv[3])])
+print('mastered:', sys.argv[3])
+" "$SRC" "$REF" "$OUT"
+    ;;
+  *)
+    echo "unknown subcommand: $CMD (keybeat|tag|master)"; exit 1
+    ;;
+esac

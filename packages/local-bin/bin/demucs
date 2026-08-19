@@ -1,0 +1,14 @@
+#!/bin/sh
+# demucs: music source separation (htdemucs_ft). Splits into vocals/drums/bass/other.
+# Usage: demucs [--two-stems vocals] input.wav [-o outdir]
+set -eu
+
+BASE="$HOME/src/music-ai"
+for lib in /nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib \
+  /nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib
+do
+  [ -d "$lib" ] && LD_LIBRARY_PATH="$lib:${LD_LIBRARY_PATH:-}"
+done
+export LD_LIBRARY_PATH
+
+exec "$BASE/venv-demucs/bin/python" -m demucs "$@"

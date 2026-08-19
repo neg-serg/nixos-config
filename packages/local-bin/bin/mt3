@@ -1,0 +1,30 @@
+#!/bin/sh
+# mt3: multi-instrument audio→MIDI transcription (mt3-infer, MR-MT3 PyTorch).
+# venv: ~/src/music-ai/venv-mt3; checkpoint auto-downloaded on first use.
+# Usage: mt3 input.wav [output.mid]
+set -eu
+
+BASE="$HOME/src/music-ai"
+TORCHLIB="$BASE/venv-mt3/lib/python3.12/site-packages/torch/lib"
+for lib in "$TORCHLIB" \
+  /nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib \
+  /nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib
+do
+  [ -d "$lib" ] && LD_LIBRARY_PATH="$lib:${LD_LIBRARY_PATH:-}"
+done
+export LD_LIBRARY_PATH
+
+SRC="${1:?usage: mt3 input.wav [output.mid]}"
+OUT="${2:-/tmp/mt3-out.mid}"
+
+"$BASE/venv-mt3/bin/python" -c "
+import sys
+from mt3_infer import transcribe
+from mt3_infer.utils.audio import load_audio
+from mt3_infer.utils.midi import count_notes
+audio, sr = load_audio('$SRC')
+midi = transcribe(audio, sr=sr, model='fast')
+print(f'notes: {count_notes(midi)}')
+midi.save('$OUT')
+print(f'saved: $OUT')
+"
