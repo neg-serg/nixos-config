@@ -1,0 +1,14 @@
+This is a fork of the dsh-liangshen agent preset, maintained declaratively in
+/etc/nixos (modules/user/nix-maid/apps/dsh-liangshen-fork) and synced into
+~/.dsh/.agent-presets/liangshen-fork on rebuild/login.
+
+Upstream provenance:
+- agent.cordis.yml is adapted from the DeepSeek Harness built-in Minimal and
+  Standard presets (MIT).
+- tool-bootstrap.mjs comes from https://github.com/xiaobright/dsh-anchored-standard
+  (MIT), with dsh-liangshen's two-stage isolation extension.
+- The upstream plugin is @linxin666/dsh-liangshen (MIT/Apache-2.0 mix, see
+  https://github.com/xiaobright/dsh-anchored-standard and the plugin README).
+
+The original DeepSeek copyright and MIT license notices are in the upstream
+repositories.
