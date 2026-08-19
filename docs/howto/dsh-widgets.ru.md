@@ -116,7 +116,8 @@ harness (rc.6), а `Session.append()` не умеет ставить марке�
 в сет не доходит до ридера, и каждый запуск `bash_live` снова пишет не-ignorable события.
 19.08.2026 от этого умерли три сессии (`session-1a5d8a15…`, `session-e8d372df…`,
 `session-f6daf551…`); отремонтированы вручную — событиям проставлен `"ignorable": true`
-(бэкапы — в `~/.dsh/repair-backups/bash-live-ignorable/`).
+(бэкапы — в `~/.dsh/repair-backups/bash-live-ignorable/`). После этого `dsh-selfheal` научили
+чинить такие логи автоматически (см. «Задача», п. 3) — ручной ремонт больше не нужен.
 
 ## Задача (TODO): починить `bash_live` по-настоящему
 
@@ -133,11 +134,14 @@ harness (rc.6), а `Session.append()` не умеет ставить марке�
    `append` принимал опцию `{ ignorable: true }` и плагин проставлял её для `tool/bash-live-*`.
 2. **Либо** выпилить `bash_live` совсем (клиентская карточка + серверный инструмент + флаг
    `enableBashLive`) и оставить живой показ bash только через activity-стрип (команда + таймер).
-3. **В любом случае** — научить `dsh-selfheal` авточинить такие логи: семантический фикс
-   «`tool/bash-live-*` без `ignorable` → проставить `ignorable: true`» (сейчас его `validateEvent`
-   эти типы не трогает, поэтому сдохшие сессии копятся до ручного ремонта). Код — fork-чекаут
-   `~/src/1st-level/@projects/dsh-web-ui/packages/dsh-selfheal/lib/repair-core.mjs` (модуль
-   `modules/user/nix-maid/apps/dsh-selfheal.nix`).
+3. ✅ **Сделано (19.08.2026):** `dsh-selfheal` теперь авточинит такие логи — семантический
+   фикс «`tool/bash-live-*` без `ignorable` → проставить `ignorable: true`» добавлен в
+   `validateEvent` / `validateAndFixLines` (fork-чекаут
+   `~/src/1st-level/@projects/dsh-web-ui/packages/dsh-selfheal/lib/repair-core.mjs`; модуль
+   `modules/user/nix-maid/apps/dsh-selfheal.nix`). Применяется при следующем рестарте dsh;
+   семантический проход чинит файлы через ~3 с после старта и далее каждые 15 мин
+   (в отчёте/логе selfheal теперь видно «semantic: N event(s) repaired (bash-live ignorable)»).
+   Пункты 1–2 (настоящая починка `bash_live`) остаются открытыми.
 
 Как воспроизводится/проверяется: включить `enableBashLive: true`, запустить в сессии
 `bash_live` с длинной командой, убедиться, что в `session.jsonl.zstd` события
