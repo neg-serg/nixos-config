@@ -1,5 +1,5 @@
---- a/src/tewi/app.py	2026-08-19 09:34:00.477369678 +0300
-+++ b/src/tewi/app.py	2026-08-19 09:34:00.483369628 +0300
+--- a/src/tewi/app.py	2026-08-19 09:50:18.955394503 +0300
++++ b/src/tewi/app.py	2026-08-19 09:50:18.962394434 +0300
 @@ -25,6 +25,33 @@
  from textual.containers import Horizontal
  from textual.reactive import reactive
@@ -9,26 +9,26 @@
 +# neg.nvim-style pure-dark theme (pure black bg, blue accents, light blue-grey text)
 +NEG_THEME = Theme(
 +    name="neg",
-+    primary="#005faf",
-+    secondary="#005f87",
-+    accent="#367bbf",
-+    success="#148787",
-+    warning="#c8a8ef",
-+    error="#b03362",
-+    foreground="#7387a1",
++    primary="#00508a",
++    secondary="#004a68",
++    accent="#2b6390",
++    success="#0d6b66",
++    warning="#8d7bab",
++    error="#7d2b49",
++    foreground="#5f7086",
 +    background="#000000",
 +    surface="#000000",
 +    dark=True,
 +    variables={
-+        "panel": "#0d1824",
-+        "border": "#1d2433",
-+        "boost": "#0d1824",
-+        "text": "#7387a1",
-+        "text-muted": "#56647a",
-+        "text-disabled": "#3d4754",
-+        "text-primary": "#d1e5ff",
-+        "primary-darken-1": "#005faf",
-+        "primary-darken-2": "#005faf",
++        "panel": "#0a1018",
++        "border": "#121a26",
++        "boost": "#0a1119",
++        "text": "#5f7086",
++        "text-muted": "#4d5c72",
++        "text-disabled": "#323d4a",
++        "text-primary": "#a9bed8",
++        "primary-darken-1": "#00508a",
++        "primary-darken-2": "#00508a",
 +    },
 +)
  
@@ -56,8 +56,8 @@
      @log_time
      def action_show_statistics(self) -> None:
          self.push_screen(StatisticsDialog(self.client.stats()))
---- a/src/tewi/app.tcss	2026-08-19 09:34:00.506369435 +0300
-+++ b/src/tewi/app.tcss	2026-08-19 09:34:00.507369427 +0300
+--- a/src/tewi/app.tcss	2026-08-19 09:50:18.984394219 +0300
++++ b/src/tewi/app.tcss	2026-08-19 09:50:18.984394219 +0300
 @@ -18,6 +18,13 @@
  
  /* COMMON */
