@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# ssh-tunnels — list active dsh-ssh tunnels.
+set -euo pipefail
+python3 - <<'PY'
+import json, sys, urllib.request
+req = urllib.request.Request(
+    'http://127.0.0.1:3080/api/dsh-ssh/tunnel',
+    data=json.dumps({'action': 'list'}).encode(),
+    method='POST', headers={'Content-Type': 'application/json'})
+try:
+    with urllib.request.urlopen(req, timeout=5) as r:
+        tunnels = json.load(r).get('tunnels', [])
+except Exception as e:
+    print(f'ssh-tunnels: cannot reach dsh web API: {e}', file=sys.stderr)
+    sys.exit(1)
+if not tunnels:
+    print('no active tunnels')
+    sys.exit(0)
+for t in tunnels:
+    print(f"{t['id']}  {t['alias']}  127.0.0.1:{t.get('localPort')} -> {t.get('remoteHost','127.0.0.1')}:{t.get('remotePort')}  [{t.get('state')}]")
+PY
