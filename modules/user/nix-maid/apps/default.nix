@@ -24,6 +24,7 @@ in
       && n != "dsh-mode"
       && n != "dsh-agent-usage-reminder"
       && n != "dsh-compaction-todo-preserver"
+      && n != "dsh-rules-injector"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
