@@ -15,7 +15,15 @@
 | `ralph`                   | статус (готово / блокировка / лимит раундов), «N раундов», summary / evidence / nextSteps / blocker |
 | `get_goal`/`create_goal`/`update_goal` | фаза цели, объектив, прогресс «раунды N/M», активация, баннер блокировки |
 | `job_output`/`job_list`/`job_kill` | статус задачи (из `[status: …]`), id, вывод |
-| `list_agents`             | заголовок «Субагенты» + список                                            |
+| `list_agents`             | таблица: id, статус-бейдж, label, parent/depth                            |
+| `cordis_inspect_list/query/self` | вывод (`JSON.stringify`) рендерится тем же JSON-деревом                    |
+| `plugin_vet`              | бейджи safe/low/medium/high, пакеты с риск-бейджами, score, findings, [REVIEW] |
+| `gavel_review`            | лёгкий markdown-рендер отчёта (заголовки/буллеты)                          |
+| `memory` / `memory_recall` | записи памяти (`- [track/scope] text`) списком с чипами                    |
+
+Плюс два живых DOM-элемента над композером: **activity-стрип** (бегущие субагенты + фоновые задачи +
+раунды цели из session-проекций `subagentsByParent` / `jobsBySession` / `goal`, обновляется по
+подписке) и чип **«раунды N/M»** прямо в GoalBar (завершённая цель/блокировка — баннером).
 
 Неверный JSON — это **карточка ошибки** (со строкой/столбцом), а не упавший вызов. Очень большой JSON
 обрезается на сервере с баннером «показан фрагмент». В TUI/headless работает текстовая сводка
@@ -65,22 +73,35 @@
 `content` (формат текста стабилен: `started subagent <id>`, `started background subagent task <id>`,
 `workflow "<name>" completed (N agents).\nReturn value:\n…` и т.д.).
 
+## Серверные патчи dsh (staged, применяются при пересборке dsh)
+
+`packages/dsh/patch-widgets.py` (вызывается в `postInstall` `packages/dsh/default.nix`, exact-string
+замены со счётчиком вхождений — при дрейфе версии dsh сборка падает громко):
+
+1. **`model`-параметр инструмента `subagent`** — модель ребёнка переопределяется на каждый вызов
+   (`subagent(..., model: "deepseek-v4-flash")`). Провайдер уже резолвит модель как
+   `request.agentOptions?.model ?? parent.options.model` (dsh-subagent), так что это чистый
+   pass-through. Проверено функционально: `agentOptions` в запросе к провайдеру = `{ model }`.
+2. **`presentationMeta` на `subagent` / `workflow` / `ralph`** — в `tool/result` meta кладётся
+   дескриптор `{ kind: "subagent"|"workflow"|"ralph", … }` (структурированные поля вместо парсинга
+   текста; карточки сегодня всё равно парсят текст — мета это путь к закалке и реплей-стабильности).
+
 ## Чего не хватало (список недостающих виджетов)
 
 Инвентаризация 54 model-facing инструментов этого деплоя: 20 имеют keyed toolview (stock:
 `bash`/`read`/`edit`/`write`/`rg`/`glob`/`web_search`/`web_fetch`/`todo_write`/`ask_user_question`/
 `skill`/`cordis_*`; кастомные: `osm_*` → Leaflet, `visualize` → iframe, `todo_write`/`ask_user_question`
-→ карточки `dsh-gui-tweaks`). **33 падают в generic**. Из них:
+→ карточки `dsh-gui-tweaks`). **33 падали в generic**; из них этим плагином покрыты:
+`subagent`, `subagent_fork`, `workflow`, `ralph`, `get_goal`, `create_goal`, `update_goal`,
+`job_output`, `job_list`, `job_kill`, `list_agents`, `cordis_inspect_list/query/self`, `plugin_vet`,
+`gavel_review`, `memory`, `memory_recall`.
 
-- Сделано этим плагином: `subagent`, `subagent_fork`, `workflow`, `ralph`, `get_goal`, `create_goal`,
-  `update_goal`, `job_output`, `job_list`, `job_kill`, `list_agents`.
-- Лучшие кандидаты на **JSON-дерево** (rich-структура показывается сырым текстом): `cordis_inspect_list`/
-  `cordis_inspect_query`/`cordis_inspect_self` (рендерят `JSON.stringify(value,null,2)`), `plugin_vet`,
-  `gavel_review`, `memory`/`memory_recall`.
+Осталось без карточек:
 - Тривиальные ack (смысла в карточке мало): `send_message`, `interrupt_agent`, `report`,
   `exit_plan_mode`, `structured_output`, `schedule_*`.
-- Остальное: `pwsh` (терминал), `read_image`, `str_replace_editor`, `read_document`, `describe_image`,
-  `free_search_test`, `platform_search`, `recall`.
+- Остальное: `pwsh` (терминал — generic уже рендерит terminal-view), `read_image`,
+  `str_replace_editor`, `read_document`, `describe_image`, `free_search_test`, `platform_search`,
+  `recall`.
 
 ## Как активировать и развивать
 
