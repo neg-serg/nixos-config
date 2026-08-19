@@ -18,8 +18,9 @@ in
     lib.mkMerge [
       (lib.mkIf (haveRealesrgan && haveFfmpeg) {
         environment.systemPackages = lib.mkAfter [
-          pkgs.realesrgan-ncnn-vulkan # GPU-accelerated ESRGAN upscaler (ncnn)
+          pkgs.realesrgan-ncnn-vulkan # GPU-accelerated ESRGAN upscaler (ncnn, Vulkan)
           pkgs.ffmpeg-full # ffmpeg build with Vulkan/CUDA needed for upscale scripts
+          pkgs.rembg # AI background removal (ONNX; models in /zero/ai/imgproc via ~/.local/bin wrapper)
         ];
       })
       (lib.mkIf (!(haveRealesrgan && haveFfmpeg)) {
