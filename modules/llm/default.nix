@@ -49,6 +49,10 @@ in
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/music
           # image processing models (rembg BiRefNet/u2net, upscalers) — main user manages files
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/imgproc
+          # 3D generation weights (TripoSR) — main user manages files
+          install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/3d
+          # whisperx STT/diarization models — main user manages files
+          install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/whisperx
         '';
         users.users."${config.users.main.name}".extraGroups = lib.mkAfter [ "ollama" ];
       }
