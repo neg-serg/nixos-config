@@ -64,17 +64,22 @@ const ADAPTERS = {
  * spawn surfaces ENOENT with the adapter id in the error path.
  */
 function resolveCommand(cmd) {
+  // nixpkgs vscode-js-debug exposes the binary as 'js-debug' (not
+  // 'js-debug-adapter' like VS Code's distribution)
+  const names = cmd === 'js-debug-adapter' ? ['js-debug', 'js-debug-adapter'] : [cmd]
   const roots = [
     (process.env.HOME || '') + '/.npm-global/bin',
     (process.env.HOME || '') + '/.local/bin',
     '/usr/local/bin',
     '/run/current-system/sw/bin',
   ]
-  for (const root of roots) {
-    const p = root + '/' + cmd
-    try {
-      if (existsSync(p)) return p
-    } catch (ex) { /* keep probing */ }
+  for (const name of names) {
+    for (const root of roots) {
+      const p = root + '/' + name
+      try {
+        if (existsSync(p)) return p
+      } catch (ex) { /* keep probing */ }
+    }
   }
   return cmd
 }
