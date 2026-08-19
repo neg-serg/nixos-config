@@ -173,6 +173,9 @@ lib.mkMerge [
     # Assets in /zero/ai/speech/engines; whisper.cpp GPU via Vulkan, chatterbox via ROCm.
     features.media.audio.speech.enable = true;
 
+    # AI image processing: realesrgan-ncnn-vulkan (upscale, Vulkan) + ffmpeg-full.
+    features.media.aiUpscale.enable = true;
+
     # Quiet fan profile: load nct6775 and autogenerate fancontrol config
     hardware.cooling = {
       enable = true;

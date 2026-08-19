@@ -1,0 +1,16 @@
+#!/bin/sh
+# rembg: AI background removal with models kept on the ZFS pool (/zero/ai),
+# per the "all AI assets in /zero/ai/*" convention. Overrides the system rembg
+# binary (this ~/.local/bin entry precedes /run/current-system/sw/bin in PATH).
+#
+# Models are downloaded on first use to $U2NET_HOME:
+#   - default: u2net (rembg i image.png)
+#   - better quality: birefnet-general (rembg i -m birefnet-general image.png)
+#
+# Usage: rembg i|p|s [options] <input> [output]
+set -eu
+
+export U2NET_HOME="${U2NET_HOME:-/zero/ai/imgproc}"
+mkdir -p "$U2NET_HOME"
+
+exec rembg "$@"
