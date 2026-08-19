@@ -69,6 +69,13 @@ buildNpmPackage {
     # subagent / workflow / ralph tools so their persisted tool/result meta
     # carries a structured descriptor (see packages/dsh/patch-widgets.py).
     python3 ${./patch-widgets.py} "$search_pkg"
+
+    # Drop the shipped `standard` agent preset from the roster: the user runs
+    # the neg preset (liangshen fork) by default (see
+    # modules/user/nix-maid/apps/dsh-liangshen-fork.nix) and asked for the
+    # standard entry to be removed from the picker. SHIPPED_PRESET_ROOT is
+    # this config dir, so removing the subdir hides the preset at discovery.
+    rm -rf "$out/lib/node_modules/@deepseek-ai/dsh/config/agent-presets/standard"
   '';
 
   # Prefetched dependency tree; hash from `prefetch-npm-deps package-lock.json`
