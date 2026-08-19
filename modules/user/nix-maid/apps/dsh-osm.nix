@@ -58,7 +58,7 @@ let
         fi
         if [ "$changed" = 1 ]; then
           export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-          systemctl --user restart dsh.service 2>/dev/null || true
+          ${pkgs.neg.dsh-restart}/bin/dsh-restart
         fi
   '';
 in
