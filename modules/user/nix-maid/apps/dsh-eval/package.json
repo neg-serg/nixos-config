@@ -1,0 +1,12 @@
+{
+  "name": "dsh-eval",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Persistent code kernels (Python/Bun): state survives across calls and subagents; reset clears; crashed kernel restarts clean (ported from omp eval).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
