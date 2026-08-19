@@ -64,6 +64,7 @@ return {
     end
     configure('cmake', {})
     configure('systemd_ls', {})
+  configure('qmlls', {}) -- Qt QML LSP; ships with qt6.qtdeclarative (already on PATH)
 
     configure('marksman', {})
 
