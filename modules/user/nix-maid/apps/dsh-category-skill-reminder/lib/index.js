@@ -55,21 +55,27 @@ export function apply(ctx, config) {
     s.pending = false
     s.shown = true
 
-    let skillsText = 'Каталог скиллов недоступен.'
+    let skillsText = ''
     try {
-      const snapshot = await ctx.skills.snapshot({ cwd: agent.session.header.cwd, signal })
-      const skills = snapshot.skills || []
-      const names = skills.map(function (x) { return x.name })
-      skillsText = names.length > 0
-        ? 'Доступные скиллы: ' + names.join(', ') + '. Передавай нужные через load_skills при делегировании.'
-        : 'Скиллов в каталоге нет.'
-    } catch (e) { /* snapshot failure — keep the generic nudge */ }
+      if (ctx.skills && typeof ctx.skills.snapshot === 'function') {
+        const snapshot = await ctx.skills.snapshot({
+          cwd: agent.session.header.cwd,
+          signal,
+          scope: agent,
+        })
+        const skills = snapshot.skills || []
+        const names = skills.map(function (x) { return x.name })
+        if (names.length > 0) {
+          skillsText = 'Доступные скиллы: ' + names.join(', ') + '. Передавай нужные через load_skills при делегировании.'
+        }
+      }
+    } catch (e) { /* skills unavailable — omit the catalog line */ }
 
     const text =
       '[Category+Skill Reminder] Ты делаешь много прямых правок без делегирования. ' +
       'Если работа повторяющаяся или широкая — делегируй через `subagent` (см. ' +
-      '.agent/workflows/delegate-task.md: TASK/EXPECTED OUTCOME/MUST DO/MUST NOT DO/CONTEXT). ' +
-      skillsText
+      '.agent/workflows/delegate-task.md: TASK/EXPECTED OUTCOME/MUST DO/MUST NOT DO/CONTEXT).' +
+      (skillsText ? ' ' + skillsText : '')
 
     return {
       ...decision,
