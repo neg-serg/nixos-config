@@ -23,6 +23,10 @@ Notes
 
 - Qt 6 `ShaderEffect` requires precompiled `.qsb` files (use `qsb --glsl "100es,120,150"`).
 - Run the shader build script from this directory (`~/.config/quickshell`).
+- Bar and notification layers auto-hide while the active workspace has a fullscreen window (games,
+  video) or is a designated hide-UI workspace (games workspace, id 4). Detection is client-based
+  (`HyprlandWatcher.hideUi` = `focusedFullscreen || onHideUiWorkspace`). The bar slides down with
+  the same easing used for its entrance animation, then unmaps its layer surfaces.
 
 Migration Log
 
