@@ -168,7 +168,19 @@ sd-cli --diffusion-model /zero/ai/image/flux1-schnell-q4_k.gguf \
 - Индекс: `~/.local/share/rag-notes/index.sqlite` (sqlite + float32-векторы, numpy cosine).
 - Пайплайн: чанкинг markdown → `qwen3-embedding` (ollama, батчами) → top-20 cosine → реранкинг
   `bge-reranker-v2-m3` (llama-server `--rerank`, стартует сам при поиске, ctx 8192).
-- Ответы: `qwen3:8b` через ollama (`--llm`).
+- Ответы: `--llm` через ollama; модель — env `RAG_LLM_MODEL` (default `qwen3.5:27b`,
+  прописан в modules/user/nix-maid/cli/envs.nix). Опции (все уже в ollama-сторе):
+
+| Модель | Размер | Роль |
+|---|---|---|
+| `qwen3.5:27b` | 17 ГБ | **default** — качество/скорость/RU баланс |
+| `gemma4:12b` | 7.6 ГБ | быстрая, целиком в VRAM |
+| `gemma4:26b` | 17 ГБ | качество Gemma 4 |
+| `qwen3:32b` | 20 ГБ | запасная, чуть старше |
+| `llama3.3:70b-instruct-q5_K_M` | 49 ГБ (CPU) | максимум качества, ~2-4 tok/s |
+| `qwen3:235b-a22b` | 142 ГБ (CPU/RAM MoE) | самый жирный, ~1 tok/s — на будущее |
+
+  Разовый переключатель: `RAG_LLM_MODEL=llama3.3:70b-instruct-q5_K_M rag-search search --llm "..."`
 
 ```bash
 rag-search index                    # переиндексация (~227 файлов, ~2400 чанков, ~5 мин)
