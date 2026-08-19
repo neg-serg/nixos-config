@@ -129,14 +129,23 @@ autolearn.md: критерии (процедура повторима, реша�
 приоритет; сначала ресёрч: как DSH хранит сессию (JSONL) и есть ли готовый рендер (web-ui).
 Минимальная версия: bash-скрипт/команда, собирающая JSONL в HTML с минимальным стилем.
 
-## 9. snapcompact — снапшот-компакция
+## 9. snapcompact — снапшот-компакция — 🔴 ОТЛОЖЕНО (ресёрч: события компакции есть)
+
+Ресёрч: DSH имеет `compaction/start|end|summary|prune` (KNOWN_SESSION_EVENT_TYPES). Однако
+полноценная снапшот-компакция = хирургия истории (как checkpoint/rewind, но на уровне компакции) —
+рискованно, требует глубокого вмешательства в dsh-compaction-\*. Безопасного v1 не видно; оставить в
+бэклоге до явного запроса.
 
 **Цель**: компакция со снапшотами контекста (omp snapcompact-*). Зависит от устройства компакции DSH
 (dsh-compaction-*) — сначала исследование, потом либо патч-плагин, либо отказ (риск поломки сессий).
 Приоритет низкий; план: 1) ресёрч dsh-compaction API; 2) прототип снапшот-фрейма в
 systemPrompt.section; 3) решение о внедрении.
 
-## 10. stt / tts — речевой стек (sherpa-onnx)
+## 10. stt / tts — ✅ ПОКРЫТО существующим стеком (speech.nix), порт omp НЕ нужен
+
+В репо уже есть полноценный речевой стек (`modules/media/audio/speech.nix`): piper-tts (TTS, :8001),
+whisper-cpp Vulkan (STT, :8002), chatterbox-tts (ROCm), cosyvoice/moshi в `/zero/ai/speech/engines`.
+Из omp stt/tts релевантна только UX-часть (endpointer, streaming-player) — как справочник, не порт.
 
 **Цель**: ASR (диктовка в сессию) и TTS (озвучка ответов) с русскими моделями — релевантно речевому
 требованию. Инфраструктуру omp (src/stt, src/tts: worker, endpointer, streaming-player, vocalizer)
