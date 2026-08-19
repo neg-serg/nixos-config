@@ -4,15 +4,26 @@
   ...
 }:
 let
-  # Wrap ugrep/ug to load the system-wide /etc/ugrep.conf via env var
-  # (--config flag triggers a security check in ugrep 7.8 that rejects
-  # root-owned config when running as non-root; the env var bypasses it.)
+  # Wrap ugrep/ug to load the system-wide /etc/ugrep.conf.
+  # ugrep 7.5 ignores the UGREP_CONFIG_FILE env var entirely (config is only
+  # read via --config or the default .ugrep), so pass --config explicitly.
+  # NOTE: when nixpkgs bumps ugrep to >= 7.8, --config is rejected for
+  # root-owned files when running as non-root — switch back to
+  # wrapProgram ... --set UGREP_CONFIG_FILE /etc/ugrep.conf then.
   ugrepWithConfig = pkgs.ugrep.overrideAttrs (old: {
     # Ultra fast grep with interactive query UI
-    nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
     postInstall = (old.postInstall or "") + ''
-      wrapProgram "$out/bin/ugrep" --set UGREP_CONFIG_FILE "/etc/ugrep.conf"
-      wrapProgram "$out/bin/ug" --set UGREP_CONFIG_FILE "/etc/ugrep.conf"
+      for exe in ugrep ug; do
+        real="$out/bin/.$exe-wrapped"
+        if [ ! -e "$real" ]; then
+          mv "$out/bin/$exe" "$real"
+        fi
+        cat > "$out/bin/$exe" <<EOF
+      #!${pkgs.stdenv.shell}
+      exec -a "\$0" "$real" --config=/etc/ugrep.conf "\$@"
+      EOF
+        chmod +x "$out/bin/$exe"
+      done
     '';
   });
   hishtoryPkg = pkgs.hishtory or null; # Your shell history: synced, queryable, and in context
