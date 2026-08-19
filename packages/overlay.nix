@@ -181,6 +181,27 @@ in
       # dsh web @deepseek-ai tree with hardcoded Chinese UI copy -> English
       # (profile's @deepseek-ai symlink points here, see dsh-market.nix)
       dsh-web-en = final.callPackage ./dsh/web-ui-en { dsh = final.neg.dsh; };
+      # dsh-restart: reliable restart of the dsh web user service. Plain
+      # 'systemctl --user restart' dies with "Failed to kill control group:
+      # Operation not permitted" when root processes (e.g. 'sudo nixos-rebuild'
+      # typed into a web terminal) sit in the service cgroup — the old node
+      # never frees port 3080, the start fails and the unit is left dead. This
+      # stops the unit, waits it out, kills straggler web processes and only
+      # then starts it again.
+      dsh-restart = final.writeShellScript "dsh-restart" ''
+        export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+        systemctl --user stop dsh.service 2>/dev/null || true
+        i=0
+        while [ "$i" -lt 30 ]; do
+          s="$(systemctl --user is-active dsh.service 2>/dev/null || true)"
+          [ "$s" = "inactive" ] || [ "$s" = "failed" ] && break
+          sleep 1
+          i=$((i + 1))
+        done
+        pkill -f '/lib/bin\.js web' 2>/dev/null || true
+        sleep 1
+        systemctl --user start dsh.service 2>/dev/null || true
+      '';
       zest = final.callPackage ./zest { }; # CLI for ZestBay plugin management (LV2 add/rm/list)
       carlactl = final.callPackage ./carlactl { }; # console VST router via headless Carla (list/run/route)
     };
