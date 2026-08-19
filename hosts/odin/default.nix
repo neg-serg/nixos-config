@@ -36,6 +36,27 @@ let
         key = "l";
         action = "MoveFocus \"right\"";
       }
+      # Emacs-style focus (Alt + npfb)
+      {
+        mod = "Alt ";
+        key = "n";
+        action = "MoveFocus \"down\"";
+      }
+      {
+        mod = "Alt ";
+        key = "p";
+        action = "MoveFocus \"up\"";
+      }
+      {
+        mod = "Alt ";
+        key = "f";
+        action = "MoveFocus \"right\"";
+      }
+      {
+        mod = "Alt ";
+        key = "b";
+        action = "MoveFocus \"left\"";
+      }
     ];
     resize = [
       {
@@ -90,6 +111,17 @@ let
       {
         mod = "";
         key = "k";
+        action = "ScrollUp";
+      }
+      # Emacs-style scroll (n/p)
+      {
+        mod = "";
+        key = "n";
+        action = "ScrollDown";
+      }
+      {
+        mod = "";
+        key = "p";
         action = "ScrollUp";
       }
     ];
