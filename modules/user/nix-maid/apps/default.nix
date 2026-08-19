@@ -22,11 +22,13 @@ in
       && n != "dsh-web-en-assets"
       && n != "dsh-liangshen-fork"
       && n != "dsh-mode"
+      && n != "dsh-mobile"
       && n != "dsh-agent-usage-reminder"
       && n != "dsh-compaction-todo-preserver"
       && n != "dsh-rules-injector"
       && n != "dsh-category-skill-reminder"
       && n != "dsh-boulder"
+      && n != "dsh-hashline"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
