@@ -94,6 +94,8 @@ lib.mkIf devEnabled (
         pkgs.yaml-language-server # YAML
         pkgs.nil # Nix (fast LSP with built-in nixpkgs docs)
         pkgs.docker-language-server # Dockerfile LSP
+        pkgs.cmake-language-server # CMake LSP
+        pkgs.systemd-lsp # Systemd unit LSP
         pkgs.rust-analyzer # Rust LSP (for rustaceanvim)
 
         # Formatters/linters (for conform.nvim and nvim-lint)
