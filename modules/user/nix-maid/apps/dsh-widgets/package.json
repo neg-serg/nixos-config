@@ -1,0 +1,22 @@
+{
+  "name": "dsh-widgets",
+  "version": "0.1.0",
+  "private": true,
+  "description": "General-purpose widgets for the dsh web profile: a `json` tool with a collapsible syntax-highlighted JSON tree card, plus readable cards for subagent / workflow / ralph / goal / jobs activity (host: lib/index.js, browser: lib/client.js).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./tools": "./lib/tools.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime"
+      ],
+      "platform": "web"
+    }
+  }
+}
