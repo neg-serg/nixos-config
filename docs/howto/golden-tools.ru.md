@@ -46,16 +46,16 @@ set»), а краткая версия для dsh лежит в скилле `~/
 
 - **rg**: `~/.config/ripgrep/ripgreprc` — `--no-heading --smart-case --follow --hidden` + исключения
   `.git/`, `node_modules/` и др. (nix-maid `cli/search.nix`). Для агентов `--no-heading` даёт
-  компактные строки `path:line:match`. Потоки: `--threads=32` (по умолчанию ripgrep берёт только
-  12 воркеров, на odin 16C/32T задействуются все 32).
+  компактные строки `path:line:match`. Потоки: `--threads=32` (по умолчанию ripgrep берёт только 12
+  воркеров, на odin 16C/32T задействуются все 32).
 - **bat**: `~/.config/bat/config` — тема `ansi`, без пагинации и рамок (удобно в пайпах).
 - **fzf**: `FZF_DEFAULT_COMMAND` уже построен на `fd` (`fd --type=f --hidden --exclude=.git`);
   превью файлов через `bat`, директорий через `eza --tree`.
 - **git**: pager = `delta` (nix-maid `cli/git.nix`), плюс `diff-so-fancy` для форматирования.
 - **ugrep**: системный `/etc/ugrep.conf` (цвета, `hidden`, `no-pager`, `jobs=32` и т.д.) —
-  `modules/cli/ugrep.nix`; обёртки `ugrep`/`ug` загружают его через `--config`
-  (в ugrep 7.5 переменная `UGREP_CONFIG_FILE` не работает) — `modules/cli/tools.nix`.
-  `jobs=32` включает все 32 потока вместо 12 воркеров по умолчанию.
+  `modules/cli/ugrep.nix`; обёртки `ugrep`/`ug` загружают его через `--config` (в ugrep 7.5
+  переменная `UGREP_CONFIG_FILE` не работает) — `modules/cli/tools.nix`. `jobs=32` включает все 32
+  потока вместо 12 воркеров по умолчанию.
 - **алиасы оболочки**: `ls`→`eza`, `cat`→`bat` (cross-shell через aliae, `lib/aliae.nix`);
   nix-алиасы в `environment.shellAliases` (`modules/cli/tools.nix`).
 
