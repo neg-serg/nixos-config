@@ -1,0 +1,47 @@
+/**
+ * dsh-widgets, host half.
+ *
+ * Registers the general-purpose `json` tool on `ctx.tools`: the model passes a
+ * raw JSON string and the tool validates it and projects a `{ kind: 'json-tree',
+ * value, … }` presentationMeta descriptor that the browser half renders as a
+ * collapsible, syntax-highlighted tree. No web route is needed — the tree is
+ * pure React over persisted meta, unlike dsh-osm's Leaflet assets.
+ *
+ * The browser half (`lib/client.js`) also renders the tool's result AND adds
+ * keyed toolviews for the agent-orchestration tools (subagent / workflow /
+ * ralph / goal / jobs) that otherwise fall back to the generic tool card. A
+ * client without it degrades to the tools' plain text results, so TUI and
+ * headless surfaces keep working unchanged.
+ *
+ * @module dsh-widgets
+ */
+
+import z from '@deepseek-ai/schemastery'
+import { createWidgetTools } from './tools.js'
+
+/** Cordis plugin name — must match the patch row / package name. */
+export const name = 'dsh-widgets'
+
+/** Required services: just the tool registry (the tree needs no web server). */
+export const inject = ['tools']
+
+/** Deployment configuration, validated by the Loader. */
+export const Config = z.object({
+  /** Hard cap on the raw JSON text argument (bytes). */
+  maxInputBytes: z.natural().default(2_000_000),
+  /** Cap on the persisted presentationMeta descriptor (bytes). */
+  maxMetaBytes: z.natural().default(256_000),
+})
+
+/**
+ * Register the widget tools.
+ * @param ctx - registrant context.
+ * @param config - validated deployment configuration.
+ */
+export function apply(ctx, config) {
+  for (const tool of createWidgetTools(config)) {
+    ctx.tools.register(tool)
+  }
+}
+
+export { jsonMetaFrom } from './tools.js'
