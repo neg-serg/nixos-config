@@ -118,6 +118,8 @@
         --glob=!_build/
         --glob=!tags
         --glob=!.pub-cache
+        # 16C/32T Ryzen: ripgrep defaults to 12 worker threads — use all 32.
+        --threads=32
       '';
     })
   ];
