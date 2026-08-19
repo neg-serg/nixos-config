@@ -342,9 +342,9 @@ return function()
       vim.cmd('Ex ' .. fn.fnameescape(cwd))
     end
     local function open_git_ui()
-      if has_mod('neogit') then return require('neogit').open() end
+      if has_mod('snacks') then return Snacks.lazygit() end
       if fn.exists(':Git') == 2 then return vim.cmd('Git') end
-      notify('No git UI found (neogit/fugitive not available)', vim.log.levels.WARN)
+      notify('No git UI found (lazygit/snacks not available)', vim.log.levels.WARN)
       dbg_push('git click: no UI')
     end
     local function open_diagnostics_list()
