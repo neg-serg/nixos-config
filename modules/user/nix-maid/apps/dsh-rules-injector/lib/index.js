@@ -17,6 +17,7 @@
 
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative, basename, sep } from 'node:path'
+import { createUserMessage } from '@deepseek-ai/dsh-llm'
 
 export const name = 'dsh-rules-injector'
 
@@ -139,10 +140,13 @@ export function apply(ctx, config = {}) {
       if (!matches(rulePath, rel)) continue
       seen.add(rulePath)
       try {
-        additions.push({
-          source: { kind: 'plugin', plugin: 'rules-injector' },
-          text: readFileSync(rulePath, 'utf8'),
-        })
+        // additionalContexts are MESSAGES: they enter the inbox and are appended
+        // as user/message, so they need role/content (a bare {source, text}
+        // shape yields content: null and crashes the LLM serializer).
+        additions.push(createUserMessage({
+          content: [{ type: 'text', text: readFileSync(rulePath, 'utf8') }],
+          source: { kind: 'plugin', plugin: 'rules-injector', form: 'instructions' },
+        }))
       } catch { /* unreadable rule — skip */ }
     }
     if (additions.length === 0) return downstream
