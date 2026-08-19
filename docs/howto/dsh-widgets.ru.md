@@ -82,13 +82,14 @@ content block»** с сырым JSON. Слота для этого нет, по�
 `content` (формат текста стабилен: `started subagent <id>`, `started background subagent task <id>`,
 `workflow "<name>" completed (N agents).\nReturn value:\n…` и т.д.).
 
-## Живой вывод bash (`bash_live`) — полностью через плагин, off by default
+## Живой вывод bash (`bash_live`) — полностью через плагин
 
-> **Статус:** инструмент выключен по умолчанию (флаг `enableBashLive` в конфиге деплоя
-> `dsh-widgets`, `false` дефолт). Починка готова (патч `Session.append` + флаг `ignorable` в
-> плагине — см. «Задача» ниже), но применяется при пересборке dsh: **до `nh os switch` + рестарта
-> `dsh.service` `bash_live` не включать и не использовать**. После пересборки можно включить
-> `enableBashLive: true` в deployment-конфиге плагина и перезапустить `dsh.service`.
+> **Статус:** включён в этом деплое (`enableBashLive: true` в строке `dsh-widgets` в
+> `cordis.patch.yml`; плагинный дефолт остаётся `false`, см. `lib/index.js`). Починка применена:
+> патч `Session.append` + флаг `ignorable` в плагине (см. «Задача» ниже), dsh пересобран
+> (generation 1186), `dsh.service` перезапущен. Проверено: конфиг доходит до плагина
+> (`dsh --profile web --dump-config`), `bash_live` регистрируется только при флаге,
+> `session.append(…, { ignorable: true })` кладёт маркер на конверт, ридер его принимает.
 
 Стоковый `bash` не стримит вывод (на проводе только `tool/call` → `tool/result`). Но плагин может
 обойти это без правки ядра: инструмент `bash_live` запускает команду через `ctx.shell.start` (живой
@@ -121,30 +122,34 @@ harness (rc.6), а `Session.append()` не умеет ставить марке�
 ## Задача: починить `bash_live` по-настоящему — ✅ закрыта (19.08.2026)
 
 Изначально задача была назначена сессии «Превью картинок в dsh-web» (плагин `dsh-preview`), но
-починку сделал агент прямо в этом репозитории. Осталось только пересобрать dsh, чтобы патч встал.
+починку сделал агент прямо в этом репозитории. Закрыта полностью: патч собран и применён, флаг
+включён в deployment-конфиге.
 
 1. ✅ **Сделано:** `Session.append()` теперь умеет ставить `ignorable: true` на конверт события.
    Серверный патч добавлен в `packages/dsh/patch-widgets.py` (правка `dsh-session/lib/index.js`:
-   `append(type, data, opts)` переносит `opts.ignorable === true` в envelope). Плагин
-   `dsh-widgets` (`lib/tools.js`) передаёт `{ ignorable: true }` для всех `tool/bash-live-*` —
-   события пишутся с маркером, ридер их пропускает, сессия не умирает. Мёртвый хак с
-   `KNOWN_SESSION_EVENT_TYPES.add()` удалён (он не работал из-за разных инстансов модуля).
-   Патч применяется при пересборке dsh (`postInstall` → `patch-widgets.py`).
-2. ❌ **Не нужно:** выпиливать `bash_live` — фича остаётся, теперь безопасная.
-3. ✅ **Сделано ранее:** `dsh-selfheal` авточинит логи, записанные до фикса (семантический фикс
+   `append(type, data, opts)` переносит `opts.ignorable === true` в envelope). Плагин `dsh-widgets`
+   (`lib/tools.js`) передаёт `{ ignorable: true }` для всех `tool/bash-live-*` — события пишутся с
+   маркером, ридер их пропускает, сессия не умирает. Мёртвый хак с `KNOWN_SESSION_EVENT_TYPES.add()`
+   удалён (он не работал из-за разных инстансов модуля). Патч применяется при пересборке dsh
+   (`postInstall` → `patch-widgets.py`).
+1. ❌ **Не нужно:** выпиливать `bash_live` — фича остаётся, теперь безопасная.
+1. ✅ **Сделано ранее:** `dsh-selfheal` авточинит логи, записанные до фикса (семантический фикс
    «`tool/bash-live-*` без `ignorable` → проставить `ignorable: true`» в `validateEvent` /
    `validateAndFixLines`; fork-чекаут
    `~/src/1st-level/@projects/dsh-web-ui/packages/dsh-selfheal/lib/repair-core.mjs`, модуль
-   `modules/user/nix-maid/apps/dsh-selfheal.nix`). В отчёте/логе selfheal видно
-   «semantic: N event(s) repaired (bash-live ignorable)».
+   `modules/user/nix-maid/apps/dsh-selfheal.nix`). В отчёте/логе selfheal видно «semantic: N
+   event(s) repaired (bash-live ignorable)».
 
-**До пересборки dsh** `bash_live` по-прежнему не включать и не использовать (текущий harness ещё
-без патча, а флаг `enableBashLive` по умолчанию `false`). После `nh os switch` и рестарта
-`dsh.service` — можно включать.
+**Применение:** патч встал в store при пересборке dsh (generation 1186); флаг
+`enableBashLive: true` добавлен в строку `dsh-widgets` в `cordis.patch.yml` (декларативно —
+`modules/user/nix-maid/apps/dsh-widgets.nix`, `ensureWidgets` пишет строку с конфигом для свежих
+профилей и мигрирует старые строки без конфига). Правки живут в репо; следующий `nh os switch`
+пере-проверит строку идемпотентно.
 
-Как проверить после пересборки: включить `enableBashLive: true`, запустить в сессии `bash_live` с
-длинной командой, убедиться, что в `session.jsonl.zstd` события `tool/bash-live-*` пишутся с
-`"ignorable": true`, и что сессия открывается/перезагружается без `SessionFormatUnsupportedError`.
+Финальная проверка в GUI: запустить в новой сессии `bash_live` с длинной командой, убедиться, что
+в `session.jsonl.zstd` события `tool/bash-live-*` пишутся с `"ignorable": true`, и что сессия
+открывается/перезагружается без `SessionFormatUnsupportedError`. Техническая часть проверена на
+модульном уровне (см. «Статус» выше); GUI-прогон — последний ручной шаг.
 
 ## Серверные патчи dsh (staged, применяются при пересборке dsh)
 
