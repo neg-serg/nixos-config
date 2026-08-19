@@ -1,5 +1,5 @@
---- a/src/tewi/app.py	2026-08-19 10:06:22.740392574 +0300
-+++ b/src/tewi/app.py	2026-08-19 10:06:22.755392438 +0300
+--- a/src/tewi/app.py	2026-08-19 09:50:18.955394503 +0300
++++ b/src/tewi/app.py	2026-08-19 09:50:18.962394434 +0300
 @@ -25,6 +25,33 @@
  from textual.containers import Horizontal
  from textual.reactive import reactive
@@ -9,26 +9,26 @@
 +# neg.nvim-style pure-dark theme (pure black bg, blue accents, light blue-grey text)
 +NEG_THEME = Theme(
 +    name="neg",
-+    primary="#4591B8",
-+    secondary="#576C8E",
-+    accent="#5CA8CC",
-+    success="#4C9B82",
-+    warning="#C9A96B",
-+    error="#B45846",
-+    foreground="#B8C8DC",
-+    background="#090A0C",
-+    surface="#0A0C10",
++    primary="#00508a",
++    secondary="#004a68",
++    accent="#2b6390",
++    success="#0d6b66",
++    warning="#8d7bab",
++    error="#7d2b49",
++    foreground="#5f7086",
++    background="#000000",
++    surface="#000000",
 +    dark=True,
 +    variables={
-+        "panel": "#0D1019",
-+        "border": "#1A2230",
-+        "boost": "#0D1019",
-+        "text": "#B8C8DC",
-+        "text-muted": "#707A86",
-+        "text-disabled": "#464C57",
-+        "text-primary": "#E8F1FA",
-+        "primary-darken-1": "#203A47",
-+        "primary-darken-2": "#203A47",
++        "panel": "#0a1018",
++        "border": "#121a26",
++        "boost": "#0a1119",
++        "text": "#5f7086",
++        "text-muted": "#4d5c72",
++        "text-disabled": "#323d4a",
++        "text-primary": "#a9bed8",
++        "primary-darken-1": "#00508a",
++        "primary-darken-2": "#00508a",
 +    },
 +)
  
@@ -56,8 +56,8 @@
      @log_time
      def action_show_statistics(self) -> None:
          self.push_screen(StatisticsDialog(self.client.stats()))
---- a/src/tewi/app.tcss	2026-08-19 10:06:22.778392228 +0300
-+++ b/src/tewi/app.tcss	2026-08-19 10:06:22.778392228 +0300
+--- a/src/tewi/app.tcss	2026-08-19 09:50:18.984394219 +0300
++++ b/src/tewi/app.tcss	2026-08-19 09:50:18.984394219 +0300
 @@ -18,6 +18,13 @@
  
  /* COMMON */
@@ -66,7 +66,7 @@
 +   background shows through (kitty blends it with the wallpaper at
 +   background_opacity < 1, which reads as grey). */
 +Screen {
-+    background: #090A0C;
++    background: #000000;
 +}
 +
  * {
