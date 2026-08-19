@@ -16,7 +16,11 @@ in
 # Standard overlay pattern: merge top-level attributes
 (functions // tools // media // dev // gui // fixTinycc // aurPorted // disableChecks)
 // {
-  # Carla: vendored source tarball (GitHub fetch unreliable behind the proxy)
+  # Carla: vendored source tarball (GitHub fetch unreliable behind the proxy).
+  # Vendored archives live in files/sources/ and are TRACKED in git (the
+  # relative-path pattern): flake builds are pure, so absolute store paths or
+  # builtins.storePath are forbidden — only relative references to tracked
+  # files work. Keep the tarball in git; do not switch to store paths.
   carla = finalPrev.carla.overrideAttrs (_: {
     src = ./../files/sources/carla-2.5.10.tar.gz;
   });
@@ -99,6 +103,8 @@ in
   # cover direct consumers of the pkgs.pffft / pkgs.fuzzysearchdatabase
   # attributes; vcv-rack's own dep/ fetches are covered by the
   # fetchFromBitbucket override further down (same vendored tarballs).
+  # (Tarballs are tracked in files/sources/ and referenced by relative path —
+  # see the carla note above.)
   pffft = finalPrev.pffft.overrideAttrs (_: {
     src = ./../files/sources/pffft-74d7261.tar.gz;
   });
@@ -183,6 +189,10 @@ in
   # stack on python312, see packages/tmd-top/default.nix
   tmd-top = final.callPackage ./tmd-top { };
 
+  # tewi: TUI client for Transmission/qBittorrent/Deluge daemons
+  # (python app, deps from nixpkgs + local geoip2fast, see packages/tewi/default.nix)
+  tewi = final.callPackage ./tewi { };
+
   # Code200x Unicode font family by James Kass — Code2000 (BMP), Code2001
   # (Plane 1 ancient scripts), Code2002 (Plane 2 rare CJK), Code20X3 (Plane 3 CJK Ext G/H)
   ttf-code2000 = final.callPackage ./ttf-code2000 { };
@@ -242,6 +252,19 @@ in
   # scoping to one arch cuts the ROCm build from many hours to a fraction.
   ollama-rocm = finalPrev.ollama-rocm.override {
     rocmPackages = finalPrev.rocmPackages.gfx1201;
+  };
+
+  # untangle 1.2.1 (debugpy dep for the nvim python host env): the upstream
+  # GitHub tag was re-pushed, so the archive no longer matches the hash pinned
+  # in nixpkgs 26.05 (fixed-output fetch fails with a hash mismatch every
+  # time). Vendor the current official archive instead (version still 1.2.1;
+  # relative-path pattern — see the carla note above).
+  python3 = finalPrev.python3.override {
+    packageOverrides = _pfinal: pprev: {
+      untangle = pprev.untangle.overrideAttrs (_: {
+        src = ./../files/sources/untangle-1.2.1.tar.gz;
+      });
+    };
   };
 
 }
