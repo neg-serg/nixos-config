@@ -38,6 +38,7 @@ in
     #   qwen3:32b                    (20GB)  — solid, slightly older gen
     #   llama3.3:70b-instruct-q5_K_M (49GB, CPU) — max quality, slow (~2-4 tok/s)
     #   qwen3:235b-a22b              (142GB, CPU/RAM MoE) — heaviest, ~1 tok/s (future)
+    #   qwen3.5:122b                  (76GB, 122B-A10B MoE Q4_K_M) — big new-gen, strong but slow (downloaded)
     # Per-run override: RAG_LLM_MODEL=<model> rag-search search --llm "..."
     RAG_LLM_MODEL = "qwen3.5:27b";
     __GL_VRR_ALLOWED = "1";
