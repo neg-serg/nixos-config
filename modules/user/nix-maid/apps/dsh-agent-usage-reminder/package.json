@@ -1,0 +1,12 @@
+{
+  "name": "dsh-agent-usage-reminder",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Nudge the model to delegate repetitive manual search/exploration to subagents (agent-usage-reminder; ported from oh-my-opencode ideas, pattern of repeat-tool-reminder).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
