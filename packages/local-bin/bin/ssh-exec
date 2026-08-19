@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# ssh-exec — run a command on a dsh-ssh host (default: localhost).
+# Usage: ssh-exec [alias] <command...>
+set -euo pipefail
+if [[ $# -lt 1 ]]; then
+  echo 'Usage: ssh-exec [alias] <command...>' >&2
+  exit 2
+fi
+if [[ $# -eq 1 ]]; then
+  alias="localhost"
+  command="$1"
+else
+  alias="$1"; shift
+  command="$*"
+fi
+python3 - "$alias" "$command" <<'PY'
+import json, sys, urllib.request
+alias, command = sys.argv[1], sys.argv[2]
+req = urllib.request.Request(
+    'http://127.0.0.1:3080/api/dsh-ssh/exec',
+    data=json.dumps({'alias': alias, 'command': command, 'timeoutMs': 60000}).encode(),
+    method='POST', headers={'Content-Type': 'application/json'})
+try:
+    with urllib.request.urlopen(req, timeout=90) as r:
+        res = json.load(r)['result']
+except urllib.error.HTTPError as e:
+    print(f'ssh-exec: HTTP {e.code} {e.read().decode()[:200]}', file=sys.stderr)
+    sys.exit(1)
+except Exception as e:
+    print(f'ssh-exec: cannot reach dsh web API: {e}', file=sys.stderr)
+    sys.exit(1)
+if res.get('stdout'):
+    sys.stdout.write(res['stdout'])
+if res.get('stderr'):
+    sys.stderr.write(res['stderr'])
+if res.get('timedOut'):
+    print('\n[timed out]', file=sys.stderr)
+    sys.exit(124)
+sys.exit(res.get('exitCode') or 0)
+PY
