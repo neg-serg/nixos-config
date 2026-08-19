@@ -64,7 +64,7 @@ return {
     end
     configure('cmake', {})
     configure('systemd_ls', {})
-  configure('qmlls', {}) -- Qt QML LSP; ships with qt6.qtdeclarative (already on PATH)
+    configure('qmlls', {}) -- Qt QML LSP; ships with qt6.qtdeclarative (already on PATH)
 
     configure('marksman', {})
 
@@ -96,11 +96,13 @@ return {
       },
     })
     configure('taplo', {})
-    configure('just_ls', {})
+    configure('just_ls', { cmd = { 'just-lsp' }, filetypes = { 'just' } })
     configure('autotools_ls', {})
     configure('dotls', {})
     configure('lemminx', {})
-    configure('nil', {})
+    -- nvim-lspconfig (this version) ships no builtin for nil/just_ls, so cmd
+  -- and filetypes must be explicit or the servers never start
+  configure('nil', { cmd = { 'nil' }, filetypes = { 'nix' } })
     configure('dockerls', {})
     -- (hls removed: haskell-language-server was never installed and would
     --  misfire on .tidal buffers, which tidal.nvim marks as filetype haskell)
