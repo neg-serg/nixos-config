@@ -18,55 +18,55 @@ log file either way so you can read them later via `tail -f ~/tmp/swayimg-action
 
 ## Viewer Mode
 
-| Key            | Script action                    | Effect                                                                                |
-| -------------- | -------------------------------- | ------------------------------------------------------------------------------------- |
-| `Ctrl+1`       | `wall-mono`                      | Convert the current image to two colors and send it to `swww` as the wallpaper.       |
-| `Ctrl+2`       | `wall-fill`                      | Scale/crop the image to fill the monitor (center crop) and set it as wallpaper.       |
-| `Ctrl+3`       | `wall-full`                      | Same as `wall-fill`; retained for muscle memory.                                      |
-| `Ctrl+4`       | `wall-tile`                      | Render a screen-sized tiled pattern from the image and set it as wallpaper.           |
-| `Ctrl+5`       | `wall-center`                    | Center the image on the wallpaper canvas with black borders.                          |
-| `Ctrl+w`       | `wall-cover`                     | Cover the monitor with the image (crop as needed) and set it as wallpaper.            |
-| `Ctrl+c`       | `cp`                             | Copy the file into a directory picked via the vicinae dmenu prompt.                   |
-| `c`            | (wl-copy)                        | Copy the absolute file path to the clipboard.                                         |
-| `s`            | `copyname`                       | Copy the absolute file path via wl-copy and show `pic-notify` when available.         |
-| `Ctrl+d`, `d`  | `mv … $HOME/trash/1st-level/pic` | Move the file into the staged trash folder.                                           |
-| `v`            | `mv`                             | Move the file into a directory selected via the vicinae dmenu prompt.                 |
-| `Ctrl+comma`   | `rotate-left`                    | Rotate the file 270° using ImageMagick (`mogrify`). Russian: `Ctrl+б`.                |
-| `Ctrl+Shift+,` | `rotate-ccw`                     | Rotate the file 90° counter-clockwise. Russian: `Ctrl+Shift+б`.                       |
-| `Ctrl+period`  | `rotate-right`                   | Rotate the file 90° clockwise. Russian: `Ctrl+ю`.                                     |
-| `Ctrl+slash`   | `rotate-180`                     | Rotate the file 180°. Russian: `Ctrl+.`.                                              |
-| `r`            | `repeat`                         | Replay the last `mv`/`cp` destination (uses the cached directory recorded by `proc`). |
-| `Shift+m`      | `range-mark`                     | Mark the current file as the start/end anchor for range operations.                   |
-| `Shift+r`      | `range-clear`                    | Drop the saved range anchor.                                                          |
-| `Shift+d`      | `range-trash`                    | Move every file between the mark and the current file into the staged trash.          |
-| `Shift+v`      | `range-mv`                       | Prompt for a directory and move the marked range there.                               |
-| `Shift+c`      | `range-cp`                       | Prompt for a directory and copy the marked range there.                               |
+| Key                         | Script action                    | Effect                                                                                                          |
+| --------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `Ctrl+1`                    | `wall-mono`                      | Convert the current image to two colors and send it to `swww` as the wallpaper.                                 |
+| `Ctrl+2`                    | `wall-fill`                      | Scale/crop the image to fill the monitor (center crop) and set it as wallpaper.                                 |
+| `Ctrl+3`                    | `wall-full`                      | Same as `wall-fill`; retained for muscle memory.                                                                |
+| `Ctrl+4`                    | `wall-tile`                      | Render a screen-sized tiled pattern from the image and set it as wallpaper.                                     |
+| `Ctrl+5`                    | `wall-center`                    | Center the image on the wallpaper canvas with black borders.                                                    |
+| `Ctrl+w`                    | `wall-cover`                     | Cover the monitor with the image (crop as needed) and set it as wallpaper.                                      |
+| `Ctrl+c`                    | `cp`                             | Copy the file into a directory picked via the vicinae dmenu prompt.                                             |
+| `c`                         | `copyname`                       | Copy the absolute path via wl-copy and show the `pic-notify` preview toast (same as screenshots); alias of `s`. |
+| `s`                         | `copyname`                       | Copy the absolute file path via wl-copy and show `pic-notify` when available.                                   |
+| `Ctrl+d`, `d`               | `mv … $HOME/trash/1st-level/pic` | Move the file into the staged trash folder.                                                                     |
+| `v`                         | `mv`                             | Move the file into a directory selected via the vicinae dmenu prompt.                                           |
+| `Ctrl+comma`                | `rotate-left`                    | Rotate the file 270° using ImageMagick (`mogrify`). Russian: `Ctrl+б`.                                          |
+| `Ctrl+Shift+,`              | `rotate-ccw`                     | Rotate the file 90° counter-clockwise. Russian: `Ctrl+Shift+б`.                                                 |
+| `Ctrl+Shift+period`         | `rotate-right`                   | Rotate the file 90° clockwise. Russian: `Ctrl+ю`.                                                               |
+| `Ctrl+slash`, `Ctrl+period` | `rotate-180`                     | Rotate the file 180°. Russian: `Ctrl+.`.                                                                        |
+| `r`                         | `repeat`                         | Replay the last `mv`/`cp` destination (uses the cached directory recorded by `proc`).                           |
+| `Shift+m`                   | `range-mark`                     | Mark the current file as the start/end anchor for range operations.                                             |
+| `Shift+r`                   | `range-clear`                    | Drop the saved range anchor.                                                                                    |
+| `Shift+d`                   | `range-trash`                    | Move every file between the mark and the current file into the staged trash.                                    |
+| `Shift+v`                   | `range-mv`                       | Prompt for a directory and move the marked range there.                                                         |
+| `Shift+c`                   | `range-cp`                       | Prompt for a directory and copy the marked range there.                                                         |
 
 ## Gallery Mode
 
-| Key            | Script action                    | Effect                                                                      |
-| -------------- | -------------------------------- | --------------------------------------------------------------------------- |
-| `c`            | (wl-copy)                        | Copy the highlighted file’s absolute path to the clipboard.                 |
-| `s`            | `copyname`                       | Copy the absolute path via wl-copy and show `pic-notify` when available.    |
-| `Ctrl+c`       | `cp`                             | Copy the highlighted file into a vicinae dmenu-selected directory.          |
-| `Ctrl+d`, `d`  | `mv … $HOME/trash/1st-level/pic` | Send the highlighted file to the staged trash.                              |
-| `r`            | `repeat`                         | Repeat the previous `mv`/`cp` to its cached destination.                    |
-| `v`            | `mv`                             | Move the highlighted file via a vicinae dmenu prompt.                       |
-| `Ctrl+comma`   | `rotate-left`                    | Rotate the highlighted file 270°. Russian: `Ctrl+б`.                        |
-| `Ctrl+Shift+,` | `rotate-ccw`                     | Rotate the highlighted file 90° counter-clockwise. Russian: `Ctrl+Shift+б`. |
-| `Ctrl+period`  | `rotate-right`                   | Rotate the highlighted file 90° clockwise. Russian: `Ctrl+ю`.               |
-| `Ctrl+slash`   | `rotate-180`                     | Rotate the highlighted file 180°. Russian: `Ctrl+.`.                        |
-| `Ctrl+1`       | `wall-mono`                      | Push the highlighted image to `swww` in monochrome mode.                    |
-| `Ctrl+2`       | `wall-fill`                      | Fill the monitor with the highlighted image and set it as wallpaper.        |
-| `Ctrl+3`       | `wall-full`                      | Alias for `wall-fill`.                                                      |
-| `Ctrl+4`       | `wall-tile`                      | Tile the highlighted image and set it as wallpaper.                         |
-| `Ctrl+5`       | `wall-center`                    | Center the highlighted image on the wallpaper canvas.                       |
-| `Ctrl+w`       | `wall-cover`                     | Cover the monitor with the highlighted image and set it as wallpaper.       |
-| `Shift+m`      | `range-mark`                     | Mark the current tile as the start/end anchor for range moves.              |
-| `Shift+r`      | `range-clear`                    | Drop the saved range anchor.                                                |
-| `Shift+d`      | `range-trash`                    | Move the marked range (inclusive) into the staged trash.                    |
-| `Shift+v`      | `range-mv`                       | Prompt for a directory and move the marked range there.                     |
-| `Shift+c`      | `range-cp`                       | Prompt for a directory and copy the marked range there.                     |
+| Key                         | Script action                    | Effect                                                                                                                 |
+| --------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `c`                         | `copyname`                       | Copy the highlighted file’s absolute path and show the `pic-notify` preview toast (same as screenshots); alias of `s`. |
+| `s`                         | `copyname`                       | Copy the absolute path via wl-copy and show `pic-notify` when available.                                               |
+| `Ctrl+c`                    | `cp`                             | Copy the highlighted file into a vicinae dmenu-selected directory.                                                     |
+| `Ctrl+d`, `d`               | `mv … $HOME/trash/1st-level/pic` | Send the highlighted file to the staged trash.                                                                         |
+| `r`                         | `repeat`                         | Repeat the previous `mv`/`cp` to its cached destination.                                                               |
+| `v`                         | `mv`                             | Move the highlighted file via a vicinae dmenu prompt.                                                                  |
+| `Ctrl+comma`                | `rotate-left`                    | Rotate the highlighted file 270°. Russian: `Ctrl+б`.                                                                   |
+| `Ctrl+Shift+,`              | `rotate-ccw`                     | Rotate the highlighted file 90° counter-clockwise. Russian: `Ctrl+Shift+б`.                                            |
+| `Ctrl+Shift+period`         | `rotate-right`                   | Rotate the highlighted file 90° clockwise. Russian: `Ctrl+ю`.                                                          |
+| `Ctrl+slash`, `Ctrl+period` | `rotate-180`                     | Rotate the highlighted file 180°. Russian: `Ctrl+.`.                                                                   |
+| `Ctrl+1`                    | `wall-mono`                      | Push the highlighted image to `swww` in monochrome mode.                                                               |
+| `Ctrl+2`                    | `wall-fill`                      | Fill the monitor with the highlighted image and set it as wallpaper.                                                   |
+| `Ctrl+3`                    | `wall-full`                      | Alias for `wall-fill`.                                                                                                 |
+| `Ctrl+4`                    | `wall-tile`                      | Tile the highlighted image and set it as wallpaper.                                                                    |
+| `Ctrl+5`                    | `wall-center`                    | Center the highlighted image on the wallpaper canvas.                                                                  |
+| `Ctrl+w`                    | `wall-cover`                     | Cover the monitor with the highlighted image and set it as wallpaper.                                                  |
+| `Shift+m`                   | `range-mark`                     | Mark the current tile as the start/end anchor for range moves.                                                         |
+| `Shift+r`                   | `range-clear`                    | Drop the saved range anchor.                                                                                           |
+| `Shift+d`                   | `range-trash`                    | Move the marked range (inclusive) into the staged trash.                                                               |
+| `Shift+v`                   | `range-mv`                       | Prompt for a directory and move the marked range there.                                                                |
+| `Shift+c`                   | `range-cp`                       | Prompt for a directory and copy the marked range there.                                                                |
 
 ## Slideshow Mode
 
@@ -89,14 +89,16 @@ log file either way so you can read them later via `tail -f ~/tmp/swayimg-action
 
 ### File Operations
 
-| Key       | Script action                    | Effect                                                                    |
-| --------- | -------------------------------- | ------------------------------------------------------------------------- |
-| `Ctrl+d`  | `mv … $HOME/trash/1st-level/pic` | Move the current slide into the staged trash folder.                      |
-| `Shift+m` | `range-mark`                     | Mark the slide as a range anchor (carried into other modes).              |
-| `Shift+r` | `range-clear`                    | Drop the saved range anchor.                                              |
-| `Shift+d` | `range-trash`                    | Move the inclusive range between the mark and the current slide to trash. |
-| `Shift+v` | `range-mv`                       | Prompt for a directory and move the marked range there.                   |
-| `Shift+c` | `range-cp`                       | Prompt for a directory and copy the marked range there.                   |
+| Key       | Script action                    | Effect                                                                     |
+| --------- | -------------------------------- | -------------------------------------------------------------------------- |
+| `c`       | `copyname`                       | Copy the slide path and show the `pic-notify` preview toast; alias of `s`. |
+| `s`       | `copyname`                       | Copy the slide path via wl-copy and show `pic-notify` when available.      |
+| `Ctrl+d`  | `mv … $HOME/trash/1st-level/pic` | Move the current slide into the staged trash folder.                       |
+| `Shift+m` | `range-mark`                     | Mark the slide as a range anchor (carried into other modes).               |
+| `Shift+r` | `range-clear`                    | Drop the saved range anchor.                                               |
+| `Shift+d` | `range-trash`                    | Move the inclusive range between the mark and the current slide to trash.  |
+| `Shift+v` | `range-mv`                       | Prompt for a directory and move the marked range there.                    |
+| `Shift+c` | `range-cp`                       | Prompt for a directory and copy the marked range there.                    |
 
 ### Notes
 
@@ -109,8 +111,10 @@ log file either way so you can read them later via `tail -f ~/tmp/swayimg-action
   gallery mapping.
 - **Last file**: `П` (Shift+п) opens the last file in both viewer and gallery, mirroring Latin `G`.
 - **Rotate keys**: all four directions now have Russian ЙЦУКЕН duplicates
-  (`Ctrl+б`/`Ctrl+Shift+б`/`Ctrl+ю`/`Ctrl+.`). `Ctrl+Shift+,` replaces the former `Ctrl+<` binding
-  for rotate-ccw.
+  (`Ctrl+б`/`Ctrl+Shift+б`/`Ctrl+ю`/`Ctrl+.`). `Ctrl+Shift+,` (keysym `less`) is bound to rotate-ccw
+  in viewer and gallery — it replaces the former `Ctrl+<` binding. Latin rotate-right lives on
+  `Ctrl+Shift+period` (keysym `greater`): the plain `Ctrl+period` keysym is shared with the Russian
+  `Ctrl+.` (the ЙЦУКЕН slash key produces the period keysym), so it now means rotate-180.
 - All file moves/copies are blocked on VCS directories by `_is_vcs_path` to keep repo trees intact.
 - Wallpaper helpers rely on `swww`. The script starts the daemon on demand and serializes calls via
   a lock directory so multiple instances do not collide.
