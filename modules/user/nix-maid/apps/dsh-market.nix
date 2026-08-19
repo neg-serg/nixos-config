@@ -87,6 +87,25 @@ let
             lines[j] = f"  {m.group(1)}: {ALLOW[m.group(1)]}\n"
             changed = True
         j += 1
+
+    # ---- drop duplicate keys (repeated gavel-review/sharp/tesseract.js) ----
+    k = i + 1
+    while k < len(lines) and (not lines[k].strip() or lines[k][0].isspace()):
+        k += 1
+    seen = set()
+    kept = []
+    for line in lines[i + 1 : k]:
+        m = re.match(r"^\s+(\S+):\s*\S+\s*", line)
+        if m:
+            if m.group(1) in seen:
+                changed = True
+                continue
+            seen.add(m.group(1))
+        kept.append(line)
+    if len(kept) != k - (i + 1):
+        lines[i + 1 : k] = kept
+        j = i + 1 + len(kept)
+
     known = {
         m.group(1)
         for line in lines[i + 1 : j]
@@ -343,7 +362,7 @@ let
 
             # UI panels the user disabled in the web GUI (right-side
             # Explorer/Preview/Files, Task Board, pet widget, skin center, dream
-            # skin, better sidebar, SSH panel). Kept declarative here so a
+            # skin, better sidebar). Kept declarative here so a
             # rebuild or login re-asserts them; the rows are appended
             # idempotently when missing.
             if ! grep -q 'ui-dsh-aionui-panel' "$PATCH" 2>/dev/null; then
@@ -361,8 +380,6 @@ let
     - id: dream-skin
       disabled: true
     - id: better-sidebar
-      disabled: true
-    - id: ssh
       disabled: true
     - id: ui-git-graph
       disabled: true
@@ -448,6 +465,54 @@ let
           name: dsh-preview
     YAML
             fi
+
+            # dsh-ssh: remote SSH ops — host connection pool, web PTY terminal
+            # (xterm.js), /ssh* slash commands and ssh_* agent tools. Canonical
+            # source is the dsh-web-ui fork checkout (packages/dsh-ssh):
+            # symlink into the profile, same pattern as dsh-terminal-ui, so
+            # source edits apply on the next page refresh. If the fork checkout
+            # is missing the plugin is skipped with a warning (fresh machine
+            # before 'git clone'). The ssh plugin row itself is inserted by the
+            # dsh-web-ui-all bundle patch; this block only re-declares the
+            # workspace dep and drops the old disable row (bec9992d).
+            SSH="$PROFILE_DIR/node_modules/@linxin666/dsh-ssh"
+            SSH_FORK="${homeDir}/src/1st-level/@projects/dsh-web-ui/packages/dsh-ssh"
+            if [ -d "$SSH_FORK" ]; then
+              # Declare the workspace dep so pnpm keeps the link on installs.
+              python3 - "$PROFILE_DIR/package.json" <<'PY'
+    import json, sys
+    p = sys.argv[1]
+    with open(p) as f:
+        pkg = json.load(f)
+    deps = pkg.setdefault("dependencies", {})
+    if deps.get("@linxin666/dsh-ssh") != "workspace:^0.1.16":
+        deps["@linxin666/dsh-ssh"] = "workspace:^0.1.16"
+        with open(p, "w") as f:
+            json.dump(pkg, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+    PY
+              mkdir -p "$PROFILE_DIR/node_modules/@linxin666"
+              # Replace a plain copy (from before the fork migration) with the symlink.
+              if [ ! -L "$SSH" ]; then
+                rm -rf -- "$SSH" 2>/dev/null || true
+              fi
+              ln -sfn "$SSH_FORK" "$SSH"
+            else
+              echo "dsh-ssh: fork checkout missing at $SSH_FORK — plugin not installed" >&2
+            fi
+
+            # Drop the old - id: ssh / disabled: true patch row (bec9992d)
+            # so the dsh-web-ui-all bundle row mounts the plugin again.
+            python3 - "$PATCH" <<'PY'
+    import re, sys
+    p = sys.argv[1]
+    with open(p) as f:
+        s = f.read()
+    new = re.sub(r"(?m)^\s*- id: ssh\s*\n\s*disabled: true\s*\n", "", s)
+    if new != s:
+        with open(p, "w") as f:
+            f.write(new)
+    PY
 
             # LAN phone pairing (dsh-remote-web-ui): dsh itself stays bound to
             # loopback; a narrow LAN socket (systemd-socket-proxyd, see dsh.nix)

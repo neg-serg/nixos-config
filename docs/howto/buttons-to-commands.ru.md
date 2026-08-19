@@ -227,20 +227,19 @@ button[aria-label="New session"] {
 
 ## Шаг 8 (готово): шапка и сайдбар → команды
 
-| Кнопка                      | Где                                   | Команда-замена                                                    | Как скрыта                    |
-| --------------------------- | ------------------------------------- | ----------------------------------------------------------------- | ----------------------------- |
-| Session log                 | шапка (`.nL4_yW_sessionLogButton`)    | `/export` — штатная команда `dsh-session-log-export` (тот же ZIP) | CSS                           |
-| `⬇ md` (экспорт в Markdown) | шапка (`.tui-export-btn`, фича скина) | `/export-md` (добавлена, см. ниже)                                | CSS                           |
-| SSH                         | сайдбар (`.mL8Uca_entry`)             | `ssh`/`ssh-hosts`/`ssh-cluster`/`ssh-tunnel`                      | плагин отключён (`- id: ssh`) |
-| Свернуть/развернуть сайдбар | сайдбар (`.hHd-Xa_toggle`)            | — (панель фиксирована)                                            | CSS                           |
-| Логотип DeepSeek            | сайдбар (`.hHd-Xa_brand`)             | — (новая сессия — `/new`, `Ctrl+Alt+N`)                           | CSS                           |
+| Кнопка                      | Где                                   | Команда-замена                                                    | Как скрыта                                      |
+| --------------------------- | ------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------- |
+| Session log                 | шапка (`.nL4_yW_sessionLogButton`)    | `/export` — штатная команда `dsh-session-log-export` (тот же ZIP) | CSS                                             |
+| `⬇ md` (экспорт в Markdown) | шапка (`.tui-export-btn`, фича скина) | `/export-md` (добавлена, см. ниже)                                | CSS                                             |
+| SSH                         | сайдбар (`.mL8Uca_entry`)             | `ssh`/`ssh-hosts`/`ssh-cluster`/`ssh-tunnel`                      | плагин включён (dsh-ssh), вход в сайдбаре виден |
+| Свернуть/развернуть сайдбар | сайдбар (`.hHd-Xa_toggle`)            | — (панель фиксирована)                                            | CSS                                             |
+| Логотип DeepSeek            | сайдбар (`.hHd-Xa_brand`)             | — (новая сессия — `/new`, `Ctrl+Alt+N`)                           | CSS                                             |
 
 Общий CSS-блок (в скине):
 
 ```css
 .nL4_yW_sessionLogButton,
 .tui-export-btn,
-.mL8Uca_entry,
 .hHd-Xa_toggle,
 .hHd-Xa_brand {
   display: none;
