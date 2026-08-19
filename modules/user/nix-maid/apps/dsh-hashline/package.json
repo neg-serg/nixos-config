@@ -1,0 +1,12 @@
+{
+  "name": "dsh-hashline",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hash-anchored file reads/edits for dsh: read_hashline tags every line with a LINE#ID content-hash anchor and hashline_edit applies replace/append/prepend ops with hash validation, rejecting stale reads (host: lib/index.js).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
