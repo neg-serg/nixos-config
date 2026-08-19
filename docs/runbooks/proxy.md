@@ -23,7 +23,7 @@ passwordless.
   blacklist `ip_tables` and risk podman/container networking.)
 - Use from another device:
   ```sh
-  curl -x socks5://neg:oneiroid@192.168.2.87:10810 https://ifconfig.me
+  curl -x socks5://<user>:<password>@192.168.2.87:10810 https://ifconfig.me
   ```
 - When Xray takes over port 10808 (`proxy off`), the LAN port 10810 disappears with sing-box.
 
