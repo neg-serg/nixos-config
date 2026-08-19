@@ -34,6 +34,12 @@ Item {
     signal keyboardLayoutEvent(string deviceName, string layoutName)
     signal focusedMonitorEvent()
 
+    // Fullscreen tracking: true while the focused workspace has a fullscreen
+    // window (games, video). Workspace-level, so alt-tab inside the same
+    // workspace keeps the UI hidden; refreshed via fullscreenDebounce.
+    property bool focusedFullscreen: false
+    readonly property int fullscreenDebounceMs: 150
+
     ProcessRunner {
         id: socketFeed
         cmd: root.available ? ["socat", "-u", "UNIX-CONNECT:" + root.socketPath, "-"] : ["true"]
@@ -87,11 +93,32 @@ Item {
         }
     }
 
+    ProcessRunner {
+        id: fullscreenProbe
+        cmd: ["hyprctl", "-j", "activeworkspace"]
+        env: root.hyprEnvObject
+        parseJson: true
+        autoStart: false
+        restartMode: "never"
+        onJson: obj => {
+            try {
+                root.focusedFullscreen = !!(obj && obj.hasfullscreen);
+            } catch (e) { console.warn("[HyprlandWatcher.fullscreen]", e) }
+        }
+    }
+
     Timer {
         id: workspaceDebounce
         interval: root.workspaceDebounceMs
         repeat: false
         onTriggered: root.refreshWorkspace()
+    }
+
+    Timer {
+        id: fullscreenDebounce
+        interval: root.fullscreenDebounceMs
+        repeat: false
+        onTriggered: root.refreshFullscreen()
     }
 
     function refreshWorkspace() {
@@ -109,6 +136,11 @@ Item {
         if (!devicesProbe.running) devicesProbe.start();
     }
 
+    function refreshFullscreen() {
+        if (!root.available) return;
+        if (!fullscreenProbe.running) fullscreenProbe.start();
+    }
+
     function _handleSocketLine(lineRaw) {
         const line = String(lineRaw || "").trim();
         if (!line) return;
@@ -117,6 +149,16 @@ Item {
         const eventName = line.substring(0, sep);
         const payload = line.substring(sep + 2);
         const key = eventName.toLowerCase();
+        // Re-probe fullscreen state on events that can change it.
+        if (key === "fullscreen" || key === "fullscreenv2"
+                || key === "overfullscreen" || key === "overfullscreenv2"
+                || key === "focusedmon" || key === "focusedmonv2"
+                || key === "activewindow" || key === "activewindowv2"
+                || key === "openwindow" || key === "closewindow"
+                || key === "movewindow" || key === "changefloatingmode"
+                || key === "workspace" || key === "workspacev2") {
+            fullscreenDebounce.restart();
+        }
         if (key === "workspacev2") {
             const parts = payload.split(",", 2);
             const idVal = parseInt(parts[0]);
@@ -170,6 +212,7 @@ Item {
             refreshWorkspace();
             refreshBinds();
             refreshDevices();
+            refreshFullscreen();
         }
     }
 }
