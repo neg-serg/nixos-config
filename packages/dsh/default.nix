@@ -76,6 +76,11 @@ buildNpmPackage {
     # standard entry to be removed from the picker. SHIPPED_PRESET_ROOT is
     # this config dir, so removing the subdir hides the preset at discovery.
     rm -rf "$out/lib/node_modules/@deepseek-ai/dsh/config/agent-presets/standard"
+
+    # The shipped preset.yml names/descriptions are Chinese (PTC 模式 / 极简模式
+    # / 创造模式); the user's de-Chinese rule covers UI copy, and the picker and
+    # /mode render these. Exact-match + count-asserted (see patch-preset-names.py).
+    python3 ${./patch-preset-names.py} "$out/lib/node_modules/@deepseek-ai/dsh"
   '';
 
   # Prefetched dependency tree; hash from `prefetch-npm-deps package-lock.json`
