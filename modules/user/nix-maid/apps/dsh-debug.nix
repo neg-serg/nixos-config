@@ -51,6 +51,11 @@ let
   '';
 in
 {
+  # js-debug-adapter binary for JS/TS debugging (nixpkgs vscode-js-debug).
+  environment.systemPackages = [
+    pkgs.vscode-js-debug # DAP JS/TS debugger adapter for dsh-debug
+  ];
+
   # Apply on every nixos-rebuild (as the user, so profile files stay
   # user-owned) — same pattern as dsh-market-ensure / dsh-osm.
   system.activationScripts.dshDebug = lib.stringAfter [ "users" "dshMarketEnsure" ] ''
