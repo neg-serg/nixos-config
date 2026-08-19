@@ -93,10 +93,11 @@ function astGrepTool() {
           ok: true,
           count: matches.length,
           matches: matches.slice(0, 200).map(function (m) {
+            const start = m.range && m.range.start || {}
             return {
               file: m.file || '',
-              line: m.line || m.range && m.range.start && m.range.start.line || 0,
-              column: m.column || m.range && m.range.start && m.range.start.column || 0,
+              line: (start.line !== undefined ? start.line : 0) + 1,
+              column: (start.column !== undefined ? start.column : 0) + 1,
               text: String(m.text || '').slice(0, 200),
             }
           }),
@@ -111,7 +112,10 @@ function astGrepTool() {
           let matches = []
           try { matches = JSON.parse(res.out) } catch (e) { matches = [] }
           return { ok: true, preview: true, count: matches.length,
-            sample: matches.slice(0, 5).map(function (m) { return (m.file || '') + ':' + (m.line || 0) }) }
+            sample: matches.slice(0, 5).map(function (m) {
+              const start = m.range && m.range.start || {}
+              return (m.file || '') + ':' + ((start.line !== undefined ? start.line : 0) + 1)
+            }) }
         }
         const sgArgs = buildArgs(args, ['run', '-p', pattern, '-r', String(args.rewrite), '-U'])
         const res = await runSg(sgArgs, args.timeout)
