@@ -1,6 +1,6 @@
---- a/src/tewi/app.py	2026-08-19 08:48:05.847792437 +0300
-+++ b/src/tewi/app.py	2026-08-19 08:48:05.854792380 +0300
-@@ -25,6 +25,32 @@
+--- a/src/tewi/app.py	2026-08-19 09:34:00.477369678 +0300
++++ b/src/tewi/app.py	2026-08-19 09:34:00.483369628 +0300
+@@ -25,6 +25,33 @@
  from textual.containers import Horizontal
  from textual.reactive import reactive
  from textual.widgets import ContentSwitcher
@@ -15,17 +15,18 @@
 +    success="#148787",
 +    warning="#c8a8ef",
 +    error="#b03362",
-+    foreground="#d1e5ff",
++    foreground="#7387a1",
 +    background="#000000",
-+    surface="#121212",
++    surface="#000000",
 +    dark=True,
 +    variables={
 +        "panel": "#0d1824",
 +        "border": "#1d2433",
-+        "boost": "#162b44",
-+        "text": "#d1e5ff",
-+        "text-muted": "#a5c1e6",
-+        "text-disabled": "#7387a1",
++        "boost": "#0d1824",
++        "text": "#7387a1",
++        "text-muted": "#56647a",
++        "text-disabled": "#3d4754",
++        "text-primary": "#d1e5ff",
 +        "primary-darken-1": "#005faf",
 +        "primary-darken-2": "#005faf",
 +    },
@@ -33,7 +34,7 @@
  
  from .config import (
      TrackSetAction,
-@@ -170,6 +196,10 @@
+@@ -170,6 +197,10 @@
      ):
          super().__init__()
  
@@ -44,7 +45,7 @@
          logger.info(f"Initializing Tewi application v{version}")
          logger.info(f"Client configuration: {client_type} at {host}:{port}")
  
-@@ -368,6 +398,10 @@
+@@ -368,6 +399,10 @@
          else:
              self.post_message(Notification("Turtle Mode disabled"))
  
@@ -55,3 +56,19 @@
      @log_time
      def action_show_statistics(self) -> None:
          self.push_screen(StatisticsDialog(self.client.stats()))
+--- a/src/tewi/app.tcss	2026-08-19 09:34:00.506369435 +0300
++++ b/src/tewi/app.tcss	2026-08-19 09:34:00.507369427 +0300
+@@ -18,6 +18,13 @@
+ 
+ /* COMMON */
+ 
++/* Force a solid pure-black app background: otherwise the terminal's native
++   background shows through (kitty blends it with the wallpaper at
++   background_opacity < 1, which reads as grey). */
++Screen {
++    background: #000000;
++}
++
+ * {
+     scrollbar-size-vertical: 1;
+ }
