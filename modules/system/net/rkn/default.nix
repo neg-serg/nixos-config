@@ -32,7 +32,7 @@ let
 
     : > "$BLOCKLIST_DIR/domains_all.tmp"
     for url in ${builtins.concatStringsSep " " blocklistUrls}; do
-      ${lib.getExe pkgs.curl} -fsSL --retry 3 --max-time 120 "$url" \
+      ${lib.getExe pkgs.curl} -fsSL --retry 3 --connect-timeout 5 --max-time 30 "$url" \
         | grep -E '^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}$' \
         | sort -u >> "$BLOCKLIST_DIR/domains_all.tmp"
     done
@@ -48,23 +48,24 @@ in
 
     systemd.services.rkn-domains-fetch = {
       description = "RKN domains fetcher";
-      # Run at boot so zapret2 (also wanted by multi-user.target) starts
-      # with a fresh list; Before is a no-op when zapret2 is not enabled.
-      wantedBy = [ "multi-user.target" ];
-      before = [ "zapret2.service" ];
-      # curl must resolve raw.githubusercontent.com — at boot DNS is not up
-      # yet, so wait for network-online (same as zapret2 does).
+      # Deliberately NOT a boot dependency: at boot raw.githubusercontent.com
+      # is unreachable without zapret2 (chicken-and-egg — this service feeds
+      # zapret2 its hostlist), so a boot-time run only burned ~7s of curl
+      # retries and failed, blocking multi-user.target. zapret2 starts with
+      # the last-known list from StateDirectory; the daily timer and the
+      # net-health self-heal refresh it and restart zapret2.
+      # curl must resolve raw.githubusercontent.com — wait for network-online
+      # (same as zapret2 does) for timer-triggered runs.
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${rknScript}";
-        # nfqws reads --hostlist only at start, so restart it to apply
-        # the refreshed list. `--no-block` is REQUIRED: a synchronous
-        # restart waits for zapret2 to start, but zapret2 has
-        # After=rkn-domains-fetch — a synchronous call deadlocks the boot.
-        # `|| true` — zapret2 may be disabled. Needs an explicit shell:
-        # ExecStart lines are split on whitespace, no `||`/`--` handling.
+        # nfqws reads --hostlist only at start, so restart it to apply the
+        # refreshed list. `--no-block` keeps timer-triggered runs from
+        # stalling on zapret2's start. `|| true` — zapret2 may be disabled.
+        # Needs an explicit shell: ExecStart lines are split on whitespace,
+        # no `||`/`--` handling.
         ExecStartPost = "${pkgs.bash}/bin/bash -c 'systemctl restart --no-block zapret2.service || true'";
         StateDirectory = "rkn/domains";
         Environment = "BLOCKLIST_DIR=/var/lib/rkn/domains";
