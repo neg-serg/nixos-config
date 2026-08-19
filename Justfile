@@ -229,15 +229,6 @@ profile-eval: flamegraph-eval
 
 
 
-# --- Android / Phone ---------------------------------------------------------
-
-# Connect the Android phone (adb): USB device, else WiFi (PHONE_IP / saved IP),
-# then mirror it with scrcpy
-# Usage: just phone [ip|usb]
-phone ip="":
-    bash packages/local-bin/bin/phone {{ip}}
-
-
 # --- TidalCycles Live Coding --------------------------------------------------
 # Engine, editor, recording and monitoring are handled by the `tidalctl` CLI
 # (packages/tidalctl): `tidalctl start|stop|status|code|new|record|monitor|patch`.
