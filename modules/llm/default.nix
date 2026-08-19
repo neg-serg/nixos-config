@@ -53,6 +53,8 @@ in
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/3d
           # whisperx STT/diarization models — main user manages files
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/whisperx
+          # OCR models (marker/surya) — main user manages files
+          install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/ocr
         '';
         users.users."${config.users.main.name}".extraGroups = lib.mkAfter [ "ollama" ];
       }
