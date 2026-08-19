@@ -1,0 +1,12 @@
+{
+  "name": "dsh-hub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Supervised long-running processes (REPLs, watchers, dev servers): start/send/wait/stop/list with buffered output (ported from omp hub).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
