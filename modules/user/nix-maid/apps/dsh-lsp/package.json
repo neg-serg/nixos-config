@@ -1,0 +1,12 @@
+{
+  "name": "dsh-lsp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Symbol-aware code intelligence via LSP: hover/definition/references/rename/code_actions over rust-analyzer, clangd, pyright, typescript-language-server (ported from omp lsp).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
