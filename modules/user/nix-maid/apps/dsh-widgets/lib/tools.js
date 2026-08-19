@@ -229,6 +229,9 @@ export function createBashLiveTool(ctx) {
     async execute(args, exec) {
       const command = String(args.command ?? '').trim()
       if (command === '') throw new Error('bash_live: command must not be empty')
+      if (args.timeoutMs !== undefined && (!Number.isFinite(args.timeoutMs) || args.timeoutMs <= 0)) {
+        throw new Error('bash_live: invalid timeoutMs: expected a positive number, got ' + JSON.stringify(args.timeoutMs))
+      }
 
       // Mirror the stock bash tool's request construction: sandbox policy +
       // session workspace root as the default cwd + the model's env.
@@ -269,6 +272,15 @@ export function createBashLiveTool(ctx) {
       let emitted = 0
       let truncated = false
       const proc = ctx.shell.start(spec)
+      // ctx.shell.start never arms the deadline timer (only the foreground
+      // run path does), so spec.timeoutMs alone would be dead weight. Own
+      // the documented timeout contract here: kill the process on expiry.
+      const timeoutTimer = typeof args.timeoutMs === 'number' && args.timeoutMs > 0
+        ? setTimeout(() => proc.kill(), args.timeoutMs)
+        : undefined
+      const disarmTimeout = () => {
+        if (timeoutTimer !== undefined) clearTimeout(timeoutTimer)
+      }
       try {
         while (true) {
           const read = proc.readOutput()
@@ -300,7 +312,9 @@ export function createBashLiveTool(ctx) {
           const room = MAX_OUTPUT_CHARS - output.length
           if (room > 0) output += tail.delta.slice(0, Math.max(0, room))
         }
+        disarmTimeout()
       } catch (error) {
+        disarmTimeout()
         append('tool/bash-live-end', { id: runId, status: 'killed', detail: String(error?.message ?? error) })
         throw error
       }
