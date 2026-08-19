@@ -1,10 +1,16 @@
 # Hash-Anchored File Editing (hashline) for DSH
 
-Sources read: /tmp/mintlify-md/api_tools_hashline-edit.md; /tmp/omo-repo/packages/omo-opencode/src/tools/hashline-edit/** and /tmp/omo-repo/packages/hashline-core/src/**; /nix/store/6f6a8cbpqzilf5lv4y6zd0gpkkm5y0mk-omp-17.3.4/share/omp/src/prompts/tools/read.md; DSH packages @deepseek-ai/dsh-tool-fs, dsh-fs, dsh-fs-local, dsh-fs-observation-policy, dsh-tools (rc.6 checkout).
+Sources read: /tmp/mintlify-md/api_tools_hashline-edit.md;
+/tmp/omo-repo/packages/omo-opencode/src/tools/hashline-edit/\*\* and
+/tmp/omo-repo/packages/hashline-core/src/\*\*;
+/nix/store/6f6a8cbpqzilf5lv4y6zd0gpkkm5y0mk-omp-17.3.4/share/omp/src/prompts/tools/read.md; DSH
+packages @deepseek-ai/dsh-tool-fs, dsh-fs, dsh-fs-local, dsh-fs-observation-policy, dsh-tools (rc.6
+checkout).
 
 ## 1. How {line}#{hash} tags integrate with DSH read output and edit validation
 
-**Current DSH read output.** `@deepseek-ai/dsh-tool-fs/lib/index.js` renders reads in `formatReadOutput` as an envelope:
+**Current DSH read output.** `@deepseek-ai/dsh-tool-fs/lib/index.js` renders reads in
+`formatReadOutput` as an envelope:
 
 ```
 <path>/abs/file.ts</path>
@@ -15,64 +21,115 @@ Sources read: /tmp/mintlify-md/api_tools_hashline-edit.md; /tmp/omo-repo/package
 </content>
 ```
 
-The JSON output schema is `{path, offset, lines:[{number,text}], totalLines}`; there is no hash field. Lines are windows (offset/limit), capped at 2000 lines / 2000 chars per line / 50 KiB, and streamed above 10 MiB.
+The JSON output schema is `{path, offset, lines:[{number,text}], totalLines}`; there is no hash
+field. Lines are windows (offset/limit), capped at 2000 lines / 2000 chars per line / 50 KiB, and
+streamed above 10 MiB.
 
-**Target read format.** Omo emits `{line}#{hash}|{content}` per line; edit anchors are `{line}#{hash}` only (never the `|content` suffix). DSH integration therefore needs one of two read surfaces:
+**Target read format.** Omo emits `{line}#{hash}|{content}` per line; edit anchors are
+`{line}#{hash}` only (never the `|content` suffix). DSH integration therefore needs one of two read
+surfaces:
 
-- **Minimal (recommended):** a fork plugin registers a new tool `read_hashline` that replicates DSH windowing (offset/limit/byte caps) and emits tags. The built-in `read` is untouched.
-- **Full:** patch `formatReadOutput` and the `read` output schema in `dsh-tool-fs` to add `hash` to each line object and render `42#VK|text`. This tags the tool the model already calls.
+- **Minimal (recommended):** a fork plugin registers a new tool `read_hashline` that replicates DSH
+  windowing (offset/limit/byte caps) and emits tags. The built-in `read` is untouched.
+- **Full:** patch `formatReadOutput` and the `read` output schema in `dsh-tool-fs` to add `hash` to
+  each line object and render `42#VK|text`. This tags the tool the model already calls.
 
-Why the minimal route exists as a separate tool name: `dsh-tools` `ToolLayer` uses `NamedEntries` whose insert throws on a duplicate name in the same scope (lib/index.js: “tool … is already registered”). `dsh-tool-fs` registers `read` globally, so a fork plugin cannot re-register `read` in the global scope; it can only add new names (or, later, shadow per-agent through `agent.ctx` registration).
+Why the minimal route exists as a separate tool name: `dsh-tools` `ToolLayer` uses `NamedEntries`
+whose insert throws on a duplicate name in the same scope (lib/index.js: “tool … is already
+registered”). `dsh-tool-fs` registers `read` globally, so a fork plugin cannot re-register `read` in
+the global scope; it can only add new names (or, later, shadow per-agent through `agent.ctx`
+registration).
 
-**Edit-side validation.** DSH’s current `edit` is literal `old_string` unique-match with a provider-side stale guard:
+**Edit-side validation.** DSH’s current `edit` is literal `old_string` unique-match with a
+provider-side stale guard:
 
-1. `fs/edit-intent` waterfall → `dsh-fs-observation-policy` returns `{version}` of the session’s last `fs/observed` record (throws `FS_NOT_OBSERVED` if the file was never read).
-2. `dsh-fs-local.editText` re-stats under a per-target lock and rejects when the version differs (`FS_STALE_VERSION`), then applies the literal replacement atomically.
+1. `fs/edit-intent` waterfall → `dsh-fs-observation-policy` returns `{version}` of the session’s
+   last `fs/observed` record (throws `FS_NOT_OBSERVED` if the file was never read).
+1. `dsh-fs-local.editText` re-stats under a per-target lock and rejects when the version differs
+   (`FS_STALE_VERSION`), then applies the literal replacement atomically.
 
 `hashline_edit` keeps that version CAS and adds hash validation *before* writing:
 
 - `read_hashline`/read emits `ctx.emit("fs/observed", target, {kind:"present", version}, exec)`.
-- `hashline_edit` resolves the target, calls `ctx.waterfall("fs/write-intent", …)` (returns `replaceIfVersion{version}` once observed), reads the current canonical text, validates every anchor hash against the current lines, applies the ops in memory, then calls `ctx.fs.writeText(target, newContent, intent, signal, sandboxPolicy)`. The provider re-checks the version inside its lock, closing the TOCTOU gap between the tool’s read and its write.
+- `hashline_edit` resolves the target, calls `ctx.waterfall("fs/write-intent", …)` (returns
+  `replaceIfVersion{version}` once observed), reads the current canonical text, validates every
+  anchor hash against the current lines, applies the ops in memory, then calls
+  `ctx.fs.writeText(target, newContent, intent, signal, sandboxPolicy)`. The provider re-checks the
+  version inside its lock, closing the TOCTOU gap between the tool’s read and its write.
 
-Hash mismatch and version CAS are complementary: hash mismatch gives the model *corrected tags* and a diff-like context; version CAS catches a race that happens between the tool’s validation read and its write.
+Hash mismatch and version CAS are complementary: hash mismatch gives the model *corrected tags* and
+a diff-like context; version CAS catches a race that happens between the tool’s validation read and
+its write.
 
 ## 2. Algorithm
 
 Per-line hash (from `hashline-core/src/hash-computation.ts`, `constants.ts`, `xxhash32.ts`):
 
-1. **Normalize content:** `line.replace(/\r/g,"").trimEnd()` (CR stripped, trailing whitespace removed; leading whitespace is significant).
-2. **Seed:** 0 when the line contains a Unicode letter/number (`/[\p{L}\p{N}]/u`); otherwise the 1-based line number. Blank/whitespace-only lines therefore hash position-dependently and stay distinguishable.
-3. **Hash:** xxHash32 over the UTF-8 bytes of the normalized line with that seed. Omo prefers the host runtime’s native xxHash32 and falls back to a pure-JS implementation.
-4. **Map to 2 chars:** `index = hash % 256`; the 16-symbol CID alphabet is `NIBBLE_STR = "ZPMQVRWSNKTXJBYH"`; the tag is `NIBBLE_STR[index >>> 4] + NIBBLE_STR[index & 0xf]`. 16×16 = 256, so each byte maps to one tag. A single tag collides at ~1/256; the line number in the anchor disambiguates.
+1. **Normalize content:** `line.replace(/\r/g,"").trimEnd()` (CR stripped, trailing whitespace
+   removed; leading whitespace is significant).
+1. **Seed:** 0 when the line contains a Unicode letter/number (`/[\p{L}\p{N}]/u`); otherwise the
+   1-based line number. Blank/whitespace-only lines therefore hash position-dependently and stay
+   distinguishable.
+1. **Hash:** xxHash32 over the UTF-8 bytes of the normalized line with that seed. Omo prefers the
+   host runtime’s native xxHash32 and falls back to a pure-JS implementation.
+1. **Map to 2 chars:** `index = hash % 256`; the 16-symbol CID alphabet is
+   `NIBBLE_STR = "ZPMQVRWSNKTXJBYH"`; the tag is
+   `NIBBLE_STR[index >>> 4] + NIBBLE_STR[index & 0xf]`. 16×16 = 256, so each byte maps to one tag. A
+   single tag collides at ~1/256; the line number in the anchor disambiguates.
 
 **Format:** read output `{line}#{hash}|{content}`; edit anchor `{line}#{hash}`.
 
 **Validation (`validation.ts`):**
 
-- `normalizeLineRef` trims, strips a leading `>>>`/`+`/`-`, collapses spaces around `#`, drops a `|content` suffix, then extracts an embedded `\d+#[ZPMQVRWSNKTXJBYH]{2}`. `parseLineRef` enforces `/^([0-9]+)#([ZPMQVRWSNKTXJBYH]{2})$/` and reports the expected format otherwise.
+- `normalizeLineRef` trims, strips a leading `>>>`/`+`/`-`, collapses spaces around `#`, drops a
+  `|content` suffix, then extracts an embedded `\d+#[ZPMQVRWSNKTXJBYH]{2}`. `parseLineRef` enforces
+  `/^([0-9]+)#([ZPMQVRWSNKTXJBYH]{2})$/` and reports the expected format otherwise.
 - Bounds check: `line < 1 || line > lines.length` → error with the file’s line count.
-- Hash check: recompute and compare. **Compatibility rule** `isCompatibleLineHash` accepts the modern hash *or* the legacy hash (same computation but `.replace(/\s+/g,"")` — whitespace-insensitive). That is the “autocorrect on shifts”: a line whose indentation changed still validates under its old tag.
-- All refs are validated against one snapshot before any mutation, then edits are ordered bottom-up (descending line number) so earlier line numbers stay valid, and overlapping replace ranges are rejected.
-- **Mismatch rejection:** collect every mismatch, throw `HashlineMismatchError` whose `remaps` maps `old "line#hash"` → `new "line#hash"`, and whose message shows ±2 context lines with the recomputed tags, marking changed lines with `>>>`. `suggestLineForHash` additionally finds a moved line whose content matches the supplied hash and proposes its current reference.
+- Hash check: recompute and compare. **Compatibility rule** `isCompatibleLineHash` accepts the
+  modern hash *or* the legacy hash (same computation but `.replace(/\s+/g,"")` —
+  whitespace-insensitive). That is the “autocorrect on shifts”: a line whose indentation changed
+  still validates under its old tag.
+- All refs are validated against one snapshot before any mutation, then edits are ordered bottom-up
+  (descending line number) so earlier line numbers stay valid, and overlapping replace ranges are
+  rejected.
+- **Mismatch rejection:** collect every mismatch, throw `HashlineMismatchError` whose `remaps` maps
+  `old "line#hash"` → `new "line#hash"`, and whose message shows ±2 context lines with the
+  recomputed tags, marking changed lines with `>>>`. `suggestLineForHash` additionally finds a moved
+  line whose content matches the supplied hash and proposes its current reference.
 
-**Content autocorrect (apply-time, from `autocorrect-replacement-lines.ts` / `edit-text-normalization.ts`):** strip `>>>`/hashline prefixes and `+` diff markers from inserted text; strip boundary-echo lines that duplicate adjacent surviving lines; restore leading indentation from the replaced line; expand a single merged line back to the original line count; preserve BOM and CRLF via `canonicalizeFileText/restoreFileText`. These do not move anchors — anchor shifts are surfaced as remaps, not silently guessed.
+**Content autocorrect (apply-time, from `autocorrect-replacement-lines.ts` /
+`edit-text-normalization.ts`):** strip `>>>`/hashline prefixes and `+` diff markers from inserted
+text; strip boundary-echo lines that duplicate adjacent surviving lines; restore leading indentation
+from the replaced line; expand a single merged line back to the original line count; preserve BOM
+and CRLF via `canonicalizeFileText/restoreFileText`. These do not move anchors — anchor shifts are
+surfaced as remaps, not silently guessed.
 
 ## 3. Feasibility verdict
 
-| Level | Verdict |
-| --- | --- |
+| Level                        | Verdict                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Client plugin (fork package) | **Recommended.** Registers `read_hashline` + `hashline_edit` as new tool names (no `read` conflict), reuses `ctx.fs`, `ctx.waterfall("fs/write-intent")`, `ctx.emit("fs/observed")`, and the `dsh-sandbox` escalation schema pattern. Lives in the `dsh-web-ui` fork under `packages/dsh-hashline/`, wired by the `TUI_FORK` symlink pattern; F5/hot-reload applies (per docs/howto/dsh-web-forks.ru.md). |
-| Fork patch (`dsh-tool-fs`) | Needed **only** to put tags inside the built-in `read`. That is a first-party upstream bundle shipped via the Nix `packages/dsh/web-ui-en` scope symlink; patching it means a build-time/scope-level override and re-doing it on upstream upgrades. Optional phase 2. |
-| Server patch | Not required for the edit tool. The only server-side change would again be the `read` render; same cost as the fork patch, worse for upgrades. |
+| Fork patch (`dsh-tool-fs`)   | Needed **only** to put tags inside the built-in `read`. That is a first-party upstream bundle shipped via the Nix `packages/dsh/web-ui-en` scope symlink; patching it means a build-time/scope-level override and re-doing it on upstream upgrades. Optional phase 2.                                                                                                                                     |
+| Server patch                 | Not required for the edit tool. The only server-side change would again be the `read` render; same cost as the fork patch, worse for upgrades.                                                                                                                                                                                                                                                            |
 
-**Effort.** MVP: 1.5–3 days — `read_hashline` windowing/tagging + `hashline_edit` (replace single/range, append, prepend; `lines` as string|string[]; hash validation + remap error; version CAS; LF/CRLF+BOM restore; sandbox fields). Full parity with omo (dedupe, full autocorrect suite, overlap diagnostics, rename/delete, formatter trigger, diff metadata card, per-agent `read` shadow, tests): 5–10 days.
+**Effort.** MVP: 1.5–3 days — `read_hashline` windowing/tagging + `hashline_edit` (replace
+single/range, append, prepend; `lines` as string|string[]; hash validation + remap error; version
+CAS; LF/CRLF+BOM restore; sandbox fields). Full parity with omo (dedupe, full autocorrect suite,
+overlap diagnostics, rename/delete, formatter trigger, diff metadata card, per-agent `read` shadow,
+tests): 5–10 days.
 
 **Minimal viable version.** One fork package with two tools:
 
-- `read_hashline`: `file_path`, `offset`, `limit` → bounded `{line}#{hash}|{content}` blocks + `fs/observed` present observation.
-- `hashline_edit`: `file_path`, `edits[{op:"replace"|"append"|"prepend", pos?, end?, lines}]`, optional sandbox escalation fields. Pipeline: resolve → write-intent → read canonical text → normalize edits → collect/validate refs (modern+legacy hash) → overlap check → bottom-up sort → apply → restore BOM/CRLF → `writeText` with `replaceIfVersion` → `fs/observed` new version → return updated-path confirmation (and diff meta).
+- `read_hashline`: `file_path`, `offset`, `limit` → bounded `{line}#{hash}|{content}` blocks +
+  `fs/observed` present observation.
+- `hashline_edit`: `file_path`, `edits[{op:"replace"|"append"|"prepend", pos?, end?, lines}]`,
+  optional sandbox escalation fields. Pipeline: resolve → write-intent → read canonical text →
+  normalize edits → collect/validate refs (modern+legacy hash) → overlap check → bottom-up sort →
+  apply → restore BOM/CRLF → `writeText` with `replaceIfVersion` → `fs/observed` new version →
+  return updated-path confirmation (and diff meta).
 
-Deferred until after MVP: tagging the built-in `read`, delete/rename, formatter triggers, full autocorrect, dedupe reporting.
+Deferred until after MVP: tagging the built-in `read`, delete/rename, formatter triggers, full
+autocorrect, dedupe reporting.
 
 ## 4. TypeScript prototype (tag generation + validation)
 
@@ -216,8 +273,11 @@ function suggestLineForHash(ref: string, lines: string[]): string | null {
 }
 ```
 
-The apply layer (normalize edits → collect refs → `validateLineRefs` → overlap check → bottom-up sort → splice) is lifted unchanged from `hashline-core/src/edit-operations.ts` and is not repeated here; the generation and validation above are the DSH-specific pieces.
+The apply layer (normalize edits → collect refs → `validateLineRefs` → overlap check → bottom-up
+sort → splice) is lifted unchanged from `hashline-core/src/edit-operations.ts` and is not repeated
+here; the generation and validation above are the DSH-specific pieces.
 
----
+______________________________________________________________________
 
-**Primary outputs.** This design is written to `/tmp/subagent-out/hashline.md`. No repo files were modified.
+**Primary outputs.** This design is written to `/tmp/subagent-out/hashline.md`. No repo files were
+modified.
