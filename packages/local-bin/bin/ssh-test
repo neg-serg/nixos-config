@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# ssh-test — test a dsh-ssh host connection (default: localhost).
+set -euo pipefail
+alias="${1:-localhost}"
+python3 - "$alias" <<'PY'
+import json, sys, urllib.request
+alias = sys.argv[1]
+req = urllib.request.Request(
+    'http://127.0.0.1:3080/api/dsh-ssh/test',
+    data=json.dumps({'alias': alias}).encode(),
+    method='POST', headers={'Content-Type': 'application/json'})
+try:
+    with urllib.request.urlopen(req, timeout=20) as r:
+        res = json.load(r)['result']
+except Exception as e:
+    print(f'ssh-test: cannot reach dsh web API: {e}', file=sys.stderr)
+    sys.exit(1)
+if res.get('ok'):
+    print(f"{alias}: OK ({res.get('latencyMs')} ms)")
+else:
+    print(f"{alias}: FAILED — {res.get('error')}", file=sys.stderr)
+    sys.exit(1)
+PY
