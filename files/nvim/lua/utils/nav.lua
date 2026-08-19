@@ -45,7 +45,7 @@ end
 -- opts fields:
 --   extensions     list  suffixes to try when path has no extension
 --   preferred_dirs list  relative dirs searched before cwd (no-slash names only)
---   fzf_fallback   bool  open fzf-lua picker when nothing found (default true)
+--   fzf_fallback   bool  open fff picker when nothing found (default true)
 function M.resolve_path(path, opts)
   opts = opts or {}
   local extensions    = opts.extensions    or {}
@@ -109,15 +109,12 @@ function M.resolve_path(path, opts)
     end
   end
 
-  -- 6. fzf-lua fallback: show a picker instead of erroring with E447.
+  -- 6. fff fallback: show a picker instead of erroring with E447.
   if opts.fzf_fallback ~= false then
-    local ok, fzf = pcall(require, 'fzf-lua')
-    if ok then
-      fzf.files({
-        query = vim.fn.fnamemodify(path, ':t'),
-        cwd   = M.project_root(buf_dir),
-      })
-    end
+    require('fff').find_files({
+      query = vim.fn.fnamemodify(path, ':t'),
+      cwd   = M.project_root(buf_dir),
+    })
   end
   return nil
 end

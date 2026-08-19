@@ -61,10 +61,9 @@ local function follow_import()
     local full     = imp.mod_path ~= '' and (base .. '/' .. imp.mod_path) or base
     local resolved = try_py_path(full)
     if resolved then nav.open_file(resolved); return end
-    -- fzf fallback: use the final module name component as query
+    -- fff fallback: use the final module name component as query
     local tail = imp.mod_path:match('[^/]+$') or 'init'
-    local ok, fzf = pcall(require, 'fzf-lua')
-    if ok then fzf.files({ query = tail, cwd = nav.project_root(base) }) end
+    require('fff').find_files({ query = tail, cwd = nav.project_root(base) })
     return
   end
 
@@ -78,8 +77,7 @@ local function follow_import()
   if resolved then
     nav.open_file(resolved)
   else
-    local ok, fzf = pcall(require, 'fzf-lua')
-    if ok then fzf.files({ query = imp.path:match('[^/]+$') or imp.path, cwd = nav.project_root() }) end
+    require('fff').find_files({ query = imp.path:match('[^/]+$') or imp.path, cwd = nav.project_root() })
   end
 end
 

@@ -4,7 +4,7 @@
 return {'obsidian-nvim/obsidian.nvim', version='*', ft='markdown',
         dependencies={
             'nvim-lua/plenary.nvim',
-            'ibhagwan/fzf-lua', -- picker backend for Obsidian commands
+            'folke/snacks.nvim', -- picker backend for Obsidian commands
         },
         config=function()
             local obsidian = require('obsidian')
@@ -14,7 +14,7 @@ return {'obsidian-nvim/obsidian.nvim', version='*', ft='markdown',
                 workspaces={
                     {name='notes', path='~/notes'},
                 },
-                picker={name='fzf-lua'},
+                picker={name='snacks.picker'},
                 open_notes_in='vsplit',
 
                 note_id_func=function(title)
@@ -56,9 +56,9 @@ return {'obsidian-nvim/obsidian.nvim', version='*', ft='markdown',
             end
 
             local function browse_media()
-                require('fzf-lua').files({
-                    cwd=vim.fn.expand('~/notes'),
-                    fd_opts='--type f -e png -e jpg -e jpeg -e gif -e svg -e webp -e mp4 -e webm -e pdf',
+                Snacks.picker.files({
+                    cwd = vim.fn.expand('~/notes'),
+                    ft = { 'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'mp4', 'webm', 'pdf' },
                 })
             end
 
