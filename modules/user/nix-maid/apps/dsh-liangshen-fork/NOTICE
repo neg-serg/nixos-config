@@ -1,6 +1,6 @@
 This is a fork of the dsh-liangshen agent preset, maintained declaratively in
 /etc/nixos (modules/user/nix-maid/apps/dsh-liangshen-fork) and synced into
-~/.dsh/.agent-presets/liangshen-fork on rebuild/login.
+~/.dsh/.agent-presets/neg on rebuild/login.
 
 Upstream provenance:
 - agent.cordis.yml is adapted from the DeepSeek Harness built-in Minimal and
