@@ -80,7 +80,7 @@ return function(ctx)
   local FT_ICON = {
     help={'','Help'}, quickfix={'','Quickfix'}, terminal={'','Terminal'}, prompt={'','Prompt'}, nofile={'','Scratch'},
     TelescopePrompt={'','Telescope'}, TelescopeResults={'','Telescope'},
-    fzf={'','FZF'}, ['fzf-lua']={'','FZF'}, ['fzf-checkmarks']={'','FZF'},
+    fff={'󰘬','FFF'},
     ['grug-far']={'󰈞','GrugFar'}, Spectre={'','Spectre'}, spectre_panel={'','Spectre'}, ['spectre-replace']={'','Spectre'},
     NvimTree={'','Explorer'}, ['neo-tree']={'','Neo-tree'}, Neotree={'','Neo-tree'}, ['neo-tree-popup']={'','Neo-tree'},
     oil={'','Oil'}, dirbuf={'','Dirbuf'}, lir={'','Lir'}, fern={'','Fern'}, chadtree={'','CHADTree'},
@@ -120,7 +120,7 @@ return function(ctx)
   local function build_special_list()
     local base = {
       'qf','help','man','lspinfo','checkhealth','undotree','tagbar','vista','which_key',
-      'TelescopePrompt','TelescopeResults','fzf','fzf%-lua','fzf%-checkmarks','grug%-far','Spectre','spectre_panel','spectre%-replace',
+      'TelescopePrompt','TelescopeResults','grug%-far','Spectre','spectre_panel','spectre%-replace',
       'NvimTree','neo%-tree','Neotree','neo%-tree%-popup','oil','dirbuf','lir','fern','chadtree','defx','ranger','vifm','minifiles','mf','vaffle','netrw','explore','dirvish','yazi',
       '^git.*','fugitive','fugitiveblame','DiffviewFiles','DiffviewFileHistory','gitcommit','gitrebase','gitconfig',
       'NeogitCommitMessage','NeogitStatus','gitgraph','gitstatus','lazygit','gitui',
@@ -789,7 +789,7 @@ return function(ctx)
       on_click = {
         callback = vim.schedule_wrap(function()
           dbg_push('click: size -> buffer fuzzy find')
-          if has_mod('fzf-lua') then require('fzf-lua').blines() end
+          if has_mod('snacks') then Snacks.picker.lines() end
         end),
         name = 'heirline_size_click',
       },

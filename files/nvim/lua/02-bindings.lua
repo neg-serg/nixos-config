@@ -67,11 +67,10 @@ local xk = require('03-xkeys').xk
 -- Splits: C-\ vertical, C-S-\ horizontal
 map('n', xk[[<C-\>]], '<Cmd>vsplit<CR>', {silent=true, desc = 'Vertical split'})
 map('n', xk[[<C-S-\>]], '<Cmd>split<CR>', {silent=true, desc = 'Horizontal split'})
--- Search/pickers: C-S-f live grep, C-S-p commands, M-Space buffers
-map('n', xk[[<C-S-f>]], function() require('fzf-lua').live_grep() end, {desc = 'Live grep'})
-map('n', xk[[<C-S-p>]], function() require('fzf-lua').commands() end, {desc = 'Command palette'})
-map('n', xk[[<M-Space>]], function() require('fzf-lua').buffers() end, {desc = 'Buffer picker'})
-map('n', xk[[<C-S-t>]], function() require('fzf-lua').tabs() end, {desc = 'Tab picker'})
+-- Search/pickers: C-S-f live grep (fff), C-S-p commands, M-Space buffers (snacks)
+map('n', xk[[<C-S-f>]], function() require('fff').live_grep() end, {desc = 'Live grep (fff)'})
+map('n', xk[[<C-S-p>]], function() Snacks.picker.commands() end, {desc = 'Command palette'})
+map('n', xk[[<M-Space>]], function() Snacks.picker.buffers() end, {desc = 'Buffer picker'})
 
 -- Terminal: C-/ toggle
 map({'n', 't'}, xk[[<C-/>]], function()
@@ -86,7 +85,7 @@ map('n', 'grn', function() return ':IncRename ' .. vim.fn.expand('<cword>') end,
 map('n', 'grr', vim.lsp.buf.references, { desc = 'LSP: references' })
 map('n', 'grt', vim.lsp.buf.type_definition, { desc = 'LSP: type definition' })
 map('n', 'grx', vim.lsp.codelens.run, { desc = 'LSP: run codelens' })
-map('n', 'gO', function() require('fzf-lua').lsp_document_symbols() end, { desc = 'LSP: document symbols' })
+map('n', 'gO', '<Cmd>Namu symbols<CR>', { desc = 'LSP: document symbols (namu)' })
 -- Insert mode: signature help
 map('i', '<C-S>', vim.lsp.buf.signature_help, { desc = 'LSP: signature help' })
 
@@ -94,7 +93,7 @@ map('i', '<C-S>', vim.lsp.buf.signature_help, { desc = 'LSP: signature help' })
 map('n', xk[[<C-S-r>]], function() return ':IncRename ' .. vim.fn.expand('<cword>') end,
   {expr=true, desc = 'Rename symbol'})
 map('n', xk[[<C-S-a>]], vim.lsp.buf.code_action, {desc = 'Code action'})
-map('n', xk[[<C-S-o>]], function() require('fzf-lua').lsp_document_symbols() end, {desc = 'Document symbols'})
+map('n', xk[[<C-S-o>]], '<Cmd>Namu symbols<CR>', {desc = 'Document symbols (namu)'})
 
 -- Diagnostics: C-. next, C-S-. prev, C-M-. list all
 map('n', xk[[<C-.>]], function() vim.diagnostic.jump({ count = 1 }) end, {desc = 'Next diagnostic'})
@@ -103,7 +102,17 @@ map('n', xk[[<C-M-.>]], '<Cmd>Trouble diagnostics toggle<CR>', {desc = 'Diagnost
 
 -- Git: C-S-q quick diff HEAD, C-M-q git status picker
 map('n', xk[[<C-S-q>]], '<Cmd>DiffviewOpen<CR>', {desc = 'Git diff'})
-map('n', xk[[<C-M-q>]], function() require('fzf-lua').git_status() end, {desc = 'Git status'})
+map('n', xk[[<C-M-q>]], function() Snacks.picker.git_status() end, {desc = 'Git status (snacks)'})
+map('n', '<C-b>', function() Snacks.picker.qflist() end, {desc = 'Quickfix picker (snacks)'})
+map('n', '<C-b>q', function() require('utils.fzf').qf_toggle() end, {desc = 'QF toggle'})
+map('n', '<C-b>d', function() require('utils.fzf').qf_clear() end, {desc = 'QF clear'})
+map('n', '<C-b>a', function()
+  vim.ui.input({ prompt = ':cdo ' }, function(cmd)
+    if cmd and cmd ~= '' then require('utils.fzf').apply_cmd_to_qf(cmd) end
+  end)
+end, {desc = 'Apply cmd to QF'})
+map('n', 'cd', function() Snacks.picker.zoxide() end, {desc = 'Zoxide dirs (snacks)'})
+map('n', '<leader>sh', function() Snacks.picker.help() end, {desc = 'Help tags (snacks)'})
 
 -- Buffer: C-S-w close, C-S-n next, C-S-i inlay hints toggle
 map('n', xk[[<C-S-w>]], '<Cmd>bd<CR>', {silent=true, desc = 'Close buffer'})

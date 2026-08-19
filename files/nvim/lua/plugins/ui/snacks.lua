@@ -10,6 +10,7 @@ return {
 
     return {
       bigfile = { enabled = true },
+      picker = { enabled = true }, -- snacks picker backends (buffers/commands/git/qf/...)
       dashboard = {
           enabled = not has_args,
           preset = {
