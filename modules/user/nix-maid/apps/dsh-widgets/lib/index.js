@@ -13,6 +13,10 @@
  * client without it degrades to the tools' plain text results, so TUI and
  * headless surfaces keep working unchanged.
  *
+ * The optional `bash_live` streaming tool (live terminal card in the chat)
+ * is registered only when the `enableBashLive` deployment flag is set; it is
+ * disabled by default.
+ *
  * @module dsh-widgets
  */
 
@@ -31,6 +35,12 @@ export const Config = z.object({
   maxInputBytes: z.natural().default(2_000_000),
   /** Cap on the persisted presentationMeta descriptor (bytes). */
   maxMetaBytes: z.natural().default(256_000),
+  /**
+   * Register the `bash_live` streaming tool. Off by default: it is buggy /
+   * noisy in practice and needs `ctx.shell`; flip to true in the deployment
+   * config to opt back in without touching the code.
+   */
+  enableBashLive: z.boolean().default(false),
 })
 
 /**
