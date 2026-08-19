@@ -1,0 +1,12 @@
+{
+  "name": "dsh-checkpoint",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Context checkpoint / soft rewind: replace intermediate exploration with a concise report (ported from omp checkpoint/rewind).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
