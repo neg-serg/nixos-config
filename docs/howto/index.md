@@ -36,6 +36,8 @@ isn't a step-by-step runbook.
 - dsh-status-rotator — live turn-status phrases instead of "Deep diving..." (RU):
   [dsh-status-rotator.ru.md](./dsh-status-rotator.ru.md)
 
+- dsh-ssh — SSH-операции, веб-терминал и localhost для агента (RU): [dsh-ssh.ru.md](./dsh-ssh.ru.md)
+
 - dsh web GUI — fork-vs-patch architecture after the "patches → forks" migration (RU):
   [dsh-web-forks.ru.md](./dsh-web-forks.ru.md)
 
