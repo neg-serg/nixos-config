@@ -16,11 +16,11 @@ return {
       require('nvim-treesitter.config').setup({
         ensure_installed = {
           'bash', 'c', 'cpp', 'cmake', 'css', 'dockerfile', 'dot',
-          'haskell', 'html', 'json', 'jsonc', 'lua', 'luadoc', 'make',
-          'markdown', 'markdown_inline', 'python', 'regex', 'rust', 'toml',
+          'go', 'haskell', 'html', 'json', 'jsonc', 'lua', 'luadoc', 'make',
+          'markdown', 'markdown_inline', 'nix', 'python', 'regex', 'rust', 'toml',
           'typescript', 'vim', 'vimdoc', 'yaml',
         },
-        auto_install = false,
+        auto_install = true, -- auto-install parsers for new filetypes so nothing is left unhighlighted
         highlight = { enable = true },
         incremental_selection = {
           enable = true,
