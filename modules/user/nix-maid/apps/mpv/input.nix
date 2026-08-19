@@ -93,6 +93,31 @@ let
       key = "Alt+U";
       command = "run \"/bin/sh\" \"-c\" \"~/.local/bin/ai-upscale-video \\\"$path\\\"\"";
     }
+    # Emacs-style seek/navigation (additive; vim h/l/L/H still work)
+    {
+      key = "Ctrl+b";
+      command = "seek -5; script-binding uosc/flash-timeline";
+    }
+    {
+      key = "Ctrl+f";
+      command = "seek +5; script-binding uosc/flash-timeline";
+    }
+    {
+      key = "Ctrl+n";
+      command = "playlist_next; script-binding uosc/flash-timeline";
+    }
+    {
+      key = "Ctrl+p";
+      command = "playlist_prev; script-binding uosc/flash-timeline";
+    }
+    {
+      key = "Ctrl+a";
+      command = "seek 0 absolute; script-binding uosc/flash-timeline";
+    }
+    {
+      key = "Ctrl+e";
+      command = "seek 100 absolute-percent; script-binding uosc/flash-timeline";
+    }
   ];
 
   # mpv key with a modifier prefix ("Ctrl+h") → the same physical key's Cyrillic
@@ -166,6 +191,14 @@ in
         Alt+2 apply-profile ai-anime4k
         Alt+I vf toggle vapoursynth=~~/vs/ai/realesrgan.vpy:buffered-frames=3:concurrent-frames=1
         Alt+U run "/bin/sh" "-c" "~/.local/bin/ai-upscale-video \"$path\""
+
+        # Emacs-style seek/navigation (additive; vim h/l/L/H still work)
+        Ctrl+b seek -5; script-binding uosc/flash-timeline
+        Ctrl+f seek +5; script-binding uosc/flash-timeline
+        Ctrl+n playlist_next; script-binding uosc/flash-timeline
+        Ctrl+p playlist_prev; script-binding uosc/flash-timeline
+        Ctrl+a seek 0 absolute; script-binding uosc/flash-timeline
+        Ctrl+e seek 100 absolute-percent; script-binding uosc/flash-timeline
 
       ''
       + mpvRuBlock;

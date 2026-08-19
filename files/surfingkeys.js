@@ -2118,3 +2118,20 @@ api.mapkey('zx', 'Close all tabs from same host', () => {
 api.mapkey('g,', 'Show current date and time', () => {
   api.Front.showBanner('Now: ' + new Date().toLocaleString());
 });
+
+// =====================================================================
+// Emacs-style navigation layer (additive — all vim keys above still work)
+// =====================================================================
+// C-n/C-p: scroll down/up; C-b: page up; C-v: page down; M-v: page up;
+// C-a/C-e: jump to top/bottom of the page; Alt-n/Alt-p: next/previous tab.
+// C-f (find), C-l (address bar), C-t/C-w/C-r are intentionally left to the
+// browser (they already match the emacs habits of find/buffer/tab control).
+api.mapkey('<C-n>', 'Scroll down (emacs C-n)', () => api.Scroll.down());
+api.mapkey('<C-p>', 'Scroll up (emacs C-p)', () => api.Scroll.up());
+api.mapkey('<C-b>', 'Scroll up a page (emacs C-b)', () => api.Scroll.pageUp());
+api.mapkey('<C-v>', 'Scroll down a page (emacs C-v)', () => api.Scroll.pageDown());
+api.mapkey('<M-v>', 'Scroll up a page (emacs M-v)', () => api.Scroll.pageUp());
+api.mapkey('<C-a>', 'Jump to top of page (emacs C-a)', () => api.Scroll.top());
+api.mapkey('<C-e>', 'Jump to bottom of page (emacs C-e)', () => api.Scroll.bottom());
+api.mapkey('<Alt-n>', 'Next tab (emacs C-x b analog)', () => api.tabs.next());
+api.mapkey('<Alt-p>', 'Previous tab (emacs C-x b analog)', () => api.tabs.prev());

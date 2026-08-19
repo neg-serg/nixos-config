@@ -102,6 +102,16 @@ underline = true
 
 
 [keybindings]
+# Emacs-style navigation (additive; the default vi-style keys are kept below).
+bind_movedown = ["Ctrl-N", "j"]
+bind_moveup = ["Ctrl-P", "k"]
+bind_moveleft = ["Ctrl-B", "h"]
+bind_moveright = ["Ctrl-F", "l"]
+bind_beginning = ["Ctrl-A", "g"]
+bind_end = ["Ctrl-E", "G"]
+bind_pgup = ["Alt-V", "Ctrl-U"]
+bind_pgdn = ["Ctrl-V", "Ctrl-D"]
+
 # If you have a non-US keyboard, use bind_tab1 through bind_tab0 to
 # setup the shift-number bindings: Eg, for US keyboards (the default):
 # bind_tab1 = "!"
