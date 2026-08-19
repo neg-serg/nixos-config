@@ -965,6 +965,7 @@ window.__ModuleLoader__.load({
     }
 
     const bashLiveDefinition = {
+      kind: "bash-live",
       target: "chat",
       match: (event) => {
         if (event.type === "tool/bash-live-start") {
