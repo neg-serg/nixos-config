@@ -4,8 +4,8 @@ Recurring maintenance audit of `/etc/nixos` — catches cruft, stale docs, dead 
 eval bugs before they bite. Run it periodically (or before a big refactor), then triage findings
 into the improvement plan.
 
-The previous full run: `audit-2026-07-21.md` (99 findings, 18 critical; archived with the agent-workspace cleanup). The process below is
-what produced it; it is designed to be re-run as-is.
+The previous full run: `audit-2026-07-21.md` (99 findings, 18 critical; archived with the
+agent-workspace cleanup). The process below is what produced it; it is designed to be re-run as-is.
 
 ## When to run
 

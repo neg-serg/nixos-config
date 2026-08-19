@@ -92,8 +92,7 @@ in
         "${pkgs.supercolliderPlugins.sc3-plugins}/share/SuperCollider/Extensions/SC3plugins";
       # Dirt-Samples at a stable path — the notes startup script (which cannot
       # interpolate nix store paths) loads samples from here.
-      ".local/share/SuperCollider/Dirt-Samples".source =
-        "${pkgs.neg.dirt-samples}/share/Dirt-Samples";
+      ".local/share/SuperCollider/Dirt-Samples".source = "${pkgs.neg.dirt-samples}/share/Dirt-Samples";
     };
   };
 }

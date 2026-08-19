@@ -450,8 +450,8 @@ Usage notes:
 
 - To broadcast a specific app to the LAN: `pw-link <app-output> rtp-sink` or set `rtp-sink` as the
   default sink (`wpctl status` to find its id).
-- Multicast loop is enabled (`net.loop`), so the stream can be tested on this machine too with
-  VLC: `rtp://224.0.0.56:46000`.
+- Multicast loop is enabled (`net.loop`), so the stream can be tested on this machine too with VLC:
+  `rtp://224.0.0.56:46000`.
 - RTP is outgoing UDP multicast — no firewall rule required; the 4713 TCP rule is added
   automatically when the flag is enabled.
 - Both services are unauthenticated — only enable on a trusted LAN.

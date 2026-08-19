@@ -1,4 +1,9 @@
-{ lib, runCommand, python3, dsh }:
+{
+  lib,
+  runCommand,
+  python3,
+  dsh,
+}:
 # Patched copy of the dsh web profile's @deepseek-ai package tree: the
 # compiled web bundle hardcodes a few Chinese UI strings (search/glob result
 # banners, terminal-card labels, truncation notices) that ignore the locale
@@ -15,25 +20,27 @@
 # flat scope-only copy lost that ancestor and every plugin failed to import
 # with ERR_MODULE_NOT_FOUND, crashing dsh at boot. The profile's
 # @deepseek-ai symlink points at `$out/node_modules/@deepseek-ai`.
-runCommand "dsh-web-en-${dsh.version or "0.1.0-rc.6"}" {
-  nativeBuildInputs = [ python3 ];
-  meta = {
-    description = "dsh web @deepseek-ai tree with hardcoded Chinese UI copy replaced by English";
-    license = lib.licenses.mit;
-    platforms = lib.platforms.linux;
-  };
-} ''
-  mkdir -p "$out/node_modules"
-  cp -a '${dsh}/lib/node_modules/@deepseek-ai/dsh/node_modules/.' "$out/node_modules/"
-  chmod -R u+w "$out"
-  python3 '${./patch.py}' "$out/node_modules/@deepseek-ai"
-  # Halve every px border-radius in the compiled bundles so the GUI reads
-  # less round (radii.py): user preference — "скругления в два раза менее
-  # круглыми". Covers @deepseek-ai bundles; fork plugins (dsh-terminal-ui
-  # et al.) ship their own radii untouched.
-  python3 '${./radii.py}' "$out/node_modules/@deepseek-ai"
-  # Cap long chat code blocks with an internal scrollbar (codeblocks.py):
-  # user preference — "длинные листинги не разворачиваются на всю высоту,
-  # внутри блока прокрутка".
-  python3 '${./codeblocks.py}' "$out/node_modules/@deepseek-ai"
-''
+runCommand "dsh-web-en-${dsh.version or "0.1.0-rc.6"}"
+  {
+    nativeBuildInputs = [ python3 ];
+    meta = {
+      description = "dsh web @deepseek-ai tree with hardcoded Chinese UI copy replaced by English";
+      license = lib.licenses.mit;
+      platforms = lib.platforms.linux;
+    };
+  }
+  ''
+    mkdir -p "$out/node_modules"
+    cp -a '${dsh}/lib/node_modules/@deepseek-ai/dsh/node_modules/.' "$out/node_modules/"
+    chmod -R u+w "$out"
+    python3 '${./patch.py}' "$out/node_modules/@deepseek-ai"
+    # Halve every px border-radius in the compiled bundles so the GUI reads
+    # less round (radii.py): user preference — "скругления в два раза менее
+    # круглыми". Covers @deepseek-ai bundles; fork plugins (dsh-terminal-ui
+    # et al.) ship their own radii untouched.
+    python3 '${./radii.py}' "$out/node_modules/@deepseek-ai"
+    # Cap long chat code blocks with an internal scrollbar (codeblocks.py):
+    # user preference — "длинные листинги не разворачиваются на всю высоту,
+    # внутри блока прокрутка".
+    python3 '${./codeblocks.py}' "$out/node_modules/@deepseek-ai"
+  ''

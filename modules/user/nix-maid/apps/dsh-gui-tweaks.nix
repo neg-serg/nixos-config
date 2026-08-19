@@ -30,33 +30,33 @@ let
   forkPackage = "${homeDir}/src/1st-level/@projects/dsh-web-ui/packages/dsh-gui-tweaks";
 
   ensureTweaks = pkgs.writeShellScript "dsh-gui-tweaks-ensure" ''
-    set -eu
-    export PATH=/run/current-system/sw/bin:$PATH
-    PROFILE_DIR="${homeDir}/.dsh/profiles/web"
-    T="$PROFILE_DIR/node_modules/dsh-gui-tweaks"
-    if [ -d "${forkPackage}" ]; then
-      # Replace a plain copy (from before the fork migration) with the symlink.
-      if [ ! -L "$T" ]; then
-        rm -rf -- "$T" 2>/dev/null || true
-      fi
-      ln -sfn "${forkPackage}" "$T"
-    else
-      echo "dsh-gui-tweaks: fork checkout missing at ${forkPackage} — plugin not installed" >&2
-    fi
-    PATCH="$PROFILE_DIR/cordis.patch.yml"
-    if ! grep -q 'gui-tweaks' "$PATCH" 2>/dev/null; then
-      cat >> "$PATCH" <<'YAML'
+        set -eu
+        export PATH=/run/current-system/sw/bin:$PATH
+        PROFILE_DIR="${homeDir}/.dsh/profiles/web"
+        T="$PROFILE_DIR/node_modules/dsh-gui-tweaks"
+        if [ -d "${forkPackage}" ]; then
+          # Replace a plain copy (from before the fork migration) with the symlink.
+          if [ ! -L "$T" ]; then
+            rm -rf -- "$T" 2>/dev/null || true
+          fi
+          ln -sfn "${forkPackage}" "$T"
+        else
+          echo "dsh-gui-tweaks: fork checkout missing at ${forkPackage} — plugin not installed" >&2
+        fi
+        PATCH="$PROFILE_DIR/cordis.patch.yml"
+        if ! grep -q 'gui-tweaks' "$PATCH" 2>/dev/null; then
+          cat >> "$PATCH" <<'YAML'
 
-# dsh-gui-tweaks - number-key answers + Enter confirmation in question
-# dialogs, bash tool rows expanded by default, bash output uncapped,
-# composer input focused by default, todo_write rendered as a todo list
-# card, ask_user_question rendered as a question card, Think rows collapsed
-# and code blocks height-capped (module: dsh-gui-tweaks.nix).
-- insert:
-    - id: gui-tweaks
-      name: dsh-gui-tweaks
-YAML
-    fi
+    # dsh-gui-tweaks - number-key answers + Enter confirmation in question
+    # dialogs, bash tool rows expanded by default, bash output uncapped,
+    # composer input focused by default, todo_write rendered as a todo list
+    # card, ask_user_question rendered as a question card, Think rows collapsed
+    # and code blocks height-capped (module: dsh-gui-tweaks.nix).
+    - insert:
+        - id: gui-tweaks
+          name: dsh-gui-tweaks
+    YAML
+        fi
   '';
 in
 {
@@ -73,7 +73,10 @@ in
   systemd.user.services.dsh-gui-tweaks = {
     enable = true;
     description = "dsh-gui-tweaks — ensure GUI behavior tweaks in the dsh web profile";
-    after = [ "network.target" "dsh-market-ensure.service" ];
+    after = [
+      "network.target"
+      "dsh-market-ensure.service"
+    ];
     before = [ "dsh.service" ];
     wantedBy = [ "default.target" ];
     serviceConfig = {
