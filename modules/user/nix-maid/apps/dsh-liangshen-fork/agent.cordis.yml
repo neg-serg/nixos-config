@@ -1,4 +1,4 @@
-# The `liangshen-fork` agent preset — a fork of the upstream `liangshen`
+# The `neg` agent preset — a fork of the upstream `liangshen`
 # (LiangShen mode) preset, maintained declaratively in /etc/nixos (see NOTICE
 # for upstream provenance and licenses). Behavior is identical to upstream:
 # phase 1 exposes the builtin Minimal preset's exact two tools (persistent
