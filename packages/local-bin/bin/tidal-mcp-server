@@ -1,0 +1,11 @@
+#!/bin/bash
+# tidal-cycles-mcp-server: MCP bridge LLM <-> TidalCycles.
+# File mode (default): patterns written to TIDAL_FILE, you trigger it in nvim/BootTidal.
+# Live mode:   TIDAL_USE_GHCI=true  (direct GHCi evaluation, needs SuperDirt running).
+# Usage: point your MCP client (Claude/Continue/Cursor) at this command.
+exec env \
+  TIDAL_FILE="${TIDAL_FILE:-$HOME/src/music/tidal/tidal-mcp-output.tidal}" \
+  TIDAL_USE_GHCI="${TIDAL_USE_GHCI:-false}" \
+  TIDAL_BOOT_PATH="${TIDAL_BOOT_PATH:-$HOME/notes/music/tidal/BootTidal.hs}" \
+  GHCI_PATH="${GHCI_PATH:-/run/current-system/sw/bin/tidal-ghci}" \
+  node "$HOME/src/music-ai/tidal-cycles-mcp-server/dist/index.js" "$@"
