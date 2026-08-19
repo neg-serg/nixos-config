@@ -86,31 +86,31 @@ content block»** с сырым JSON. Слота для этого нет, по�
 
 > **Статус:** включён в этом деплое (`enableBashLive: true` в строке `dsh-widgets` в
 > `cordis.patch.yml`; плагинный дефолт остаётся `false`, см. `lib/index.js`). Починка применена:
-> патч `Session.append` + флаг `ignorable` в плагине (см. «Задача» ниже), dsh пересобран
-> (generation 1186), `dsh.service` перезапущен. Проверено: конфиг доходит до плагина
+> патч `Session.append` + флаг `ignorable` в плагине (см. «Задача» ниже), dsh пересобран (generation
+> 1186), `dsh.service` перезапущен. Проверено: конфиг доходит до плагина
 > (`dsh --profile web --dump-config`), `bash_live` регистрируется только при флаге,
 > `session.append(…, { ignorable: true })` кладёт маркер на конверт, ридер его принимает.
 >
-> **Как пользоваться (важно):** пресет `neg` (anchored-tool-bootstrap) стартует сессию в фазе 1 —
-> на проводе только `bash` + `str_replace_editor`, после первого ответа/вызова — промоушен в
-> Code Mode: один инструмент `run_code` с SDK из **текущего** реестра инструментов. `bash_live`
-> живёт в этом реестре (включён флагом с 12:09 19.08.2026), поэтому доступен в **любой** сессии —
-> старой или новой — через `tools.bash_live` в run_code (диспатч `tool/code-dispatch-start` →
-> `bash_live`); на проводе как отдельный инструмент он не показывается ни в фазе 1, ни в Code Mode.
-> Проверено end-to-end (19.08.2026): свежая сессия, промоушен, `tools.bash_live({command})` →
-> события `tool/bash-live-start|output|end` с `"ignorable": true`, сессия переживает загрузку.
-> Сессии `session-1a5d8a15…`, `session-e8d372df…`, `session-f6daf551…` по формату живы
+> **Как пользоваться (важно):** пресет `neg` (anchored-tool-bootstrap) стартует сессию в фазе 1 — на
+> проводе только `bash` + `str_replace_editor`, после первого ответа/вызова — промоушен в Code Mode:
+> один инструмент `run_code` с SDK из **текущего** реестра инструментов. `bash_live` живёт в этом
+> реестре (включён флагом с 12:09 19.08.2026), поэтому доступен в **любой** сессии — старой или
+> новой — через `tools.bash_live` в run_code (диспатч `tool/code-dispatch-start` → `bash_live`); на
+> проводе как отдельный инструмент он не показывается ни в фазе 1, ни в Code Mode. Проверено
+> end-to-end (19.08.2026): свежая сессия, промоушен, `tools.bash_live({command})` → события
+> `tool/bash-live-start|output|end` с `"ignorable": true`, сессия переживает загрузку. Сессии
+> `session-1a5d8a15…`, `session-e8d372df…`, `session-f6daf551…` по формату живы
 > (`Session.fromRestore` + preflight `ok:true`); «смерть» `e8d372df` 12:17 — зависший LLM-ход на
 > `gavel_review`, не формат.
 >
 > **Клиентский фикс (19.08.2026, позже):** карточка «живой терминал» не рендерилась — у
 > `bashLiveDefinition` в `lib/client.js` не было поля `kind`. Рантайм строит ключ контекста через
-> `conversationContextKey(definition.kind, id)` (`${kind.length}:${kind}${id}`), и при `kind ===
-> undefined` любой пришедший `tool/bash-live-*` кидал `TypeError` внутри `acceptMatch` (ловился в
-> `[apiproxy] envelope listener threw` — стрим жил, карточки не было). Добавлено `kind: "bash-live"`
-> (в узел уже возвращался `kind: "bash-live"`, слот регистрируется с тем же ключом). Файл сервится
-> per-request без кэша — достаточно обновить страницу. Повторный прогон: события пишутся с
-> `"ignorable": true`, карточка фолдится и рендерится.
+> `conversationContextKey(definition.kind, id)` (`${kind.length}:${kind}${id}`), и при
+> `kind === undefined` любой пришедший `tool/bash-live-*` кидал `TypeError` внутри `acceptMatch`
+> (ловился в `[apiproxy] envelope listener threw` — стрим жил, карточки не было). Добавлено
+> `kind: "bash-live"` (в узел уже возвращался `kind: "bash-live"`, слот регистрируется с тем же
+> ключом). Файл сервится per-request без кэша — достаточно обновить страницу. Повторный прогон:
+> события пишутся с `"ignorable": true`, карточка фолдится и рендерится.
 
 Стоковый `bash` не стримит вывод (на проводе только `tool/call` → `tool/result`). Но плагин может
 обойти это без правки ядра: инструмент `bash_live` запускает команду через `ctx.shell.start` (живой
@@ -123,7 +123,9 @@ durable-канал, которым workflow-инструмент эмитит `t
 
 Ограничения: поток событий урезается до ~500 ивентов / 16 КБ на чанк (в лог не сваливается всё —
 полный вывод всегда в результате инструмента); для коротких команд обычный `bash` быстрее, поэтому
-`bash_live` описан как инструмент для долгих команд (сборки, установки, тесты, логи).
+`bash_live` описан как инструмент для долгих команд (сборки, установки, тесты, логи). `timeoutMs`
+работает: kill-таймер реализован в плагине (`proc.kill()`) — `ctx.shell.start` сам таймаут не
+ставит.
 
 Контракт персистентности: типы `tool/bash-live-*` — вне словаря `KNOWN_SESSION_EVENT_TYPES` текущего
 harness (rc.6), а `Session.append()` не умеет ставить маркер `ignorable` на событие (конверт
@@ -161,17 +163,17 @@ harness (rc.6), а `Session.append()` не умеет ставить марке�
    `modules/user/nix-maid/apps/dsh-selfheal.nix`). В отчёте/логе selfheal видно «semantic: N
    event(s) repaired (bash-live ignorable)».
 
-**Применение:** патч встал в store при пересборке dsh (generation 1186); флаг
-`enableBashLive: true` добавлен в строку `dsh-widgets` в `cordis.patch.yml` (декларативно —
+**Применение:** патч встал в store при пересборке dsh (generation 1186); флаг `enableBashLive: true`
+добавлен в строку `dsh-widgets` в `cordis.patch.yml` (декларативно —
 `modules/user/nix-maid/apps/dsh-widgets.nix`, `ensureWidgets` пишет строку с конфигом для свежих
 профилей и мигрирует старые строки без конфига). Правки живут в репо; следующий `nh os switch`
 пере-проверит строку идемпотентно.
 
-Финальная проверка в GUI — ✅ сделана (19.08.2026): `bash_live` прогнан в живой сессии,
-в `session.jsonl.zstd` события `tool/bash-live-*` пишутся с `"ignorable": true`, сессия
+Финальная проверка в GUI — ✅ сделана (19.08.2026): `bash_live` прогнан в живой сессии, в
+`session.jsonl.zstd` события `tool/bash-live-*` пишутся с `"ignorable": true`, сессия
 открывается/перезагружается без `SessionFormatUnsupportedError`, карточка фолдится в узел чата
-(после фикса `kind` в `bashLiveDefinition` — см. «Статус»). Техническая часть проверена на
-модульном уровне (см. «Статус» выше); клиентская часть проверена по коду рантайма
+(после фикса `kind` в `bashLiveDefinition` — см. «Статус»). Техническая часть проверена на модульном
+уровне (см. «Статус» выше); клиентская часть проверена по коду рантайма
 (`conversationContextKey`/`acceptMatch`/слот `conversation.chat.node`) и повторным прогоном
 инструмента.
 
