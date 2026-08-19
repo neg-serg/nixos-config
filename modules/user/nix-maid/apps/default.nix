@@ -23,6 +23,7 @@ in
       && n != "dsh-liangshen-fork"
       && n != "dsh-mode"
       && n != "dsh-agent-usage-reminder"
+      && n != "dsh-compaction-todo-preserver"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
