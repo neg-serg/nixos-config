@@ -17,6 +17,13 @@ export LD_LIBRARY_PATH
 SRC="${1:?usage: mt3 input.wav [output.mid]}"
 OUT="${2:-/tmp/mt3-out.mid}"
 
+# Checkpoint cache on the ZFS pool (per /zero/ai convention); fallback to ~/.cache
+export MT3_CHECKPOINT_DIR="${MT3_CHECKPOINT_DIR:-/zero/ai/music/mt3}"
+if ! mkdir -p "$MT3_CHECKPOINT_DIR" 2>/dev/null; then
+  export MT3_CHECKPOINT_DIR="$HOME/.cache/mt3"
+  mkdir -p "$MT3_CHECKPOINT_DIR"
+fi
+
 "$BASE/venv-mt3/bin/python" -c "
 import sys
 from mt3_infer import transcribe
