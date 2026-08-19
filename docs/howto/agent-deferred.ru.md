@@ -170,3 +170,23 @@ lsp/eval).
    (воркфлоу) → 8. export → 9. stt/tts → 10. snapcompact (после ресёрча).
 
 Каждая фича — отдельный коммит `[dev/ai] Add dsh-<name> ...` с функциональным тестом.
+
+## Закрытые дыры (дополнения к портам)
+
+- **dsh-debug `custom_request`** — сырые DAP-запросы (`command` + `arguments`) через активную
+  сессию; тест: `custom_request threads` вернул реальные потоки gdb. Коммит `8f08714b`.
+- **dsh-ttsr mental-models** — фоновое знание (`config.mentalModel` или `lib/mental-model.md`)
+  инжектится ОДИН раз на сессию как `<mental-model>`-нота (не команда). Тест: первая инъекция есть,
+  вторая — нет. Коммит `8f08714b`.
+
+## Остались НЕзакрытыми (честно, с причинами)
+
+- **advisor-рантайм** (peer-shadow надзиратель) — нужен LLM-доступ из плагина (нет в DSH); только
+  док.
+- **mid-stream TTSR** — DSH не даёт плагину прерывать поток LLM; наша версия инжектит между шагами.
+- **hashline теги во встроенном `read`** — требует форк `dsh-tool-fs` (phase 2).
+- **eval bun `let`/`const`** — node:vm не персистит lexical-блоки между вызовами; только
+  `var`/присваивание.
+- **LLM-шаг memory-extractor** — нет сервиса вызова модели у плагинов.
+- **collab / autoresearch / vibe-рантайм / computer / browser / hub-peer-IRC** — в бэклоге
+  (объём/безопасность).
