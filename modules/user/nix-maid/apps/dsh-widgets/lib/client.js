@@ -6,7 +6,19 @@
  *      persisted presentationMeta descriptor (replay-stable, no re-parse).
  *   2. subagent / subagent_fork / workflow / ralph / goal / jobs / list_agents —
  *      readable cards over the tool args + rendered result text, replacing the
- *      stock "Tool call" generic row that otherwise shows a raw JSON dump.
+ *      stock "Tool call" generic row that otherwise shows a raw JSON dump. The
+ *      subagent card shows the full prompt (collapsed by default), so a
+ *      delegated task reads as text, not as a JSON blob.
+ *
+ * Plus a DOM-level transform for the subagent settlement notice: when a
+ * background subagent settles, the parent session receives a user message with
+ * source.kind "subagent-settled" whose body re-emits the child's closing
+ * message. The stock UI renders that as a "context" row whose non-text blocks
+ * (reasoning / tool-call) fall back to "Unknown content block" JSON dumps.
+ * This transform replaces those rows with a readable card — status badge,
+ * short child id, and the closing message (text + collapsible reasoning /
+ * tool calls) — read straight from the live "chat" projection, then the stock
+ * row is hidden (React never sees the injected card).
  *
  * Everything renders with React.createElement + text nodes only — no
  * dangerouslySetInnerHTML (the JSON value comes from the model's own output and
@@ -21,7 +33,7 @@ window.__ModuleLoader__.load({
     const h = React.createElement;
     const { useState, useMemo } = React;
 
-    const inject = ["slots"];
+    const inject = ["slots", "sessions"];
 
     const MAX_DEPTH = 400;
     const CHILD_CAP = 100;
@@ -453,28 +465,52 @@ window.__ModuleLoader__.load({
     // agent-activity cards
     // ---------------------------------------------------------------------
 
+    function PromptToggle(props) {
+      const { prompt } = props;
+      const [open, setOpen] = useState(false);
+      if (typeof prompt !== "string" || prompt === "") return null;
+      return h(
+        "div",
+        { className: "dw-prompt" },
+        h(
+          "button",
+          { className: "dw-more", onClick: () => setOpen((o) => !o) },
+          open ? "Скрыть промпт ▴" : "Показать промпт ▾"
+        ),
+        h("span", { className: "dw-prompt-count" }, prompt.length + " симв."),
+        open ? h("pre", { className: "dw-out dw-prompt-text" }, prompt) : null
+      );
+    }
+
     function SubagentCard(props) {
       const { block } = props;
       const settled = done(block);
       const args = parseArgs(block);
       const description = typeof args?.description === "string" && args.description.trim() !== "" ? args.description.trim() : null;
       const background = args?.run_in_background === true;
+      const prompt = typeof args?.prompt === "string" && args.prompt.trim() !== "" ? args.prompt : null;
+      const chips = background ? ["фон"] : [];
+      const children = [];
+      const promptToggle = PromptToggle({ prompt });
+      if (promptToggle !== null) children.push(promptToggle);
       if (!settled) {
-        return CardFrame({ title: "Субагент", badge: "Выполняется", badgeCls: "dw-badge-running", label: description, chips: background ? ["фон"] : null });
+        return CardFrame({ title: "Субагент", badge: "Выполняется", badgeCls: "dw-badge-running", label: description, chips, children });
       }
       const text = resultText(block);
       if (block.isError) {
-        return CardFrame({ title: "Субагент", badge: "Ошибка", badgeCls: "dw-badge-error", label: description, children: text ? h(LongText, { text }) : null });
+        if (text !== null) children.push(h(LongText, { text }));
+        return CardFrame({ title: "Субагент", badge: "Ошибка", badgeCls: "dw-badge-error", label: description, chips, children });
       }
       if (text !== null && text.startsWith("started background subagent task ")) {
-        const jobId = text.slice("started background subagent task ".length).trim();
-        return CardFrame({ title: "Субагент", badge: "Фоновая задача", badgeCls: "dw-badge-muted", label: description, chips: jobId ? [jobId] : null });
+        chips.push(text.slice("started background subagent task ".length).trim());
+        return CardFrame({ title: "Субагент", badge: "Фоновая задача", badgeCls: "dw-badge-muted", label: description, chips, children });
       }
       if (text !== null && text.startsWith("started subagent ")) {
-        const id = text.slice("started subagent ".length).trim();
-        return CardFrame({ title: "Субагент", badge: "Запущен", badgeCls: "dw-badge-done", label: description, chips: id ? [id] : null });
+        chips.push(text.slice("started subagent ".length).trim());
+        return CardFrame({ title: "Субагент", badge: "Запущен", badgeCls: "dw-badge-done", label: description, chips, children });
       }
-      return CardFrame({ title: "Субагент", badge: "Готово", badgeCls: "dw-badge-done", label: description, children: text ? h(LongText, { text }) : null });
+      if (text !== null) children.push(h(LongText, { text }));
+      return CardFrame({ title: "Субагент", badge: "Готово", badgeCls: "dw-badge-done", label: description, chips, children });
     }
 
     function WorkflowCard(props) {
@@ -677,6 +713,156 @@ window.__ModuleLoader__.load({
     }
 
     // ---------------------------------------------------------------------
+    // subagent settlement notices ("unknown content block" fix)
+    // ---------------------------------------------------------------------
+    //
+    // When a background subagent settles, the parent session receives a user
+    // message with source.kind "subagent-settled". The stock UI projects it as
+    // a "context" chat node whose body re-emits the child's closing message;
+    // every non-text block (reasoning / tool-call) falls back to an
+    // "Unknown content block" JSON dump. There is no keyed slot for it, so
+    // this transform works at the DOM level, reading the notice data from the
+    // live "chat" projection (same store the chat view renders from):
+    //
+    //   1. find the stock row by its data-chat-flow-key;
+    //   2. build a readable card (badge + child id + closing message with
+    //      collapsible reasoning / tool calls) from the projection node;
+    //   3. insert the card before the row and hide the row.
+    //
+    // React never sees the injected card; when a re-render recreates the stock
+    // row, the observer re-applies the transform. All text goes through
+    // textContent — the blocks are the child model's own output (untrusted).
+
+    const NOTICE_STATUS_PATTERNS = [
+      { re: /failed before it finished/u, badge: "Упал", cls: "dw-badge-error" },
+      { re: /ended abnormally/u, badge: "Оборван", cls: "dw-badge-error" },
+      { re: /ran out of room/u, badge: "Лимит токенов", cls: "dw-badge-warn" },
+      { re: /was stopped before it finished/u, badge: "Остановлен", cls: "dw-badge-warn" },
+      { re: /declined the task/u, badge: "Отказ", cls: "dw-badge-muted" },
+      { re: /finished and will do no further work/u, badge: "Завершён", cls: "dw-badge-done" },
+    ];
+
+    function noticeStatus(summary) {
+      for (const p of NOTICE_STATUS_PATTERNS) {
+        if (p.re.test(summary)) return p;
+      }
+      return { badge: "Уведомление", cls: "dw-badge-muted" };
+    }
+
+    function noticeEl(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className !== undefined && className !== "") node.className = className;
+      if (text !== undefined && text !== null) node.textContent = text;
+      return node;
+    }
+
+    function shortId(id) {
+      if (typeof id !== "string" || id === "") return null;
+      return id.length <= 14 ? id : id.slice(0, 8) + "…" + id.slice(-4);
+    }
+
+    function capText(s, max) {
+      if (typeof s !== "string") return "";
+      return s.length > max ? s.slice(0, max) + "\n… (обрезано)" : s;
+    }
+
+    // One collapsible section: a toggle button plus a hidden <pre>.
+    function noticeCollapsible(title, text, cls, defaultOpen) {
+      const wrap = noticeEl("div", "dw-notice-collapsible");
+      const pre = noticeEl("pre", "dw-out " + cls, text);
+      pre.style.display = defaultOpen ? "block" : "none";
+      const btn = noticeEl("button", "dw-more dw-notice-toggle");
+      btn.textContent = (defaultOpen ? "▾" : "▸") + " " + title;
+      btn.addEventListener("click", () => {
+        const opening = pre.style.display === "none";
+        pre.style.display = opening ? "block" : "none";
+        btn.textContent = (opening ? "▾" : "▸") + " " + title;
+      });
+      wrap.appendChild(btn);
+      wrap.appendChild(pre);
+      return wrap;
+    }
+
+    function noticeBlock(b) {
+      if (b !== null && typeof b === "object" && b.type === "reasoning" && typeof b.text === "string") {
+        const short = b.text.length > 120 ? b.text.slice(0, 120) + "…" : b.text;
+        return noticeCollapsible("Размышления · " + short, b.text, "dw-notice-reason", b.text.length < 2500);
+      }
+      if (b !== null && typeof b === "object" && (b.type === "tool-call" || b.type === "tool-call-delta")) {
+        const name = typeof b.name === "string" ? b.name : "tool";
+        let argsText = "";
+        try {
+          argsText = JSON.stringify(b.arguments ?? b.input ?? {}, null, 1);
+        } catch {
+          argsText = String(b.arguments ?? "");
+        }
+        return noticeCollapsible("🛠 " + name, capText(argsText, 600), "dw-notice-tool", false);
+      }
+      if (b !== null && typeof b === "object" && (b.type === "tool-result" || b.type === "tool-result-delta")) {
+        let json;
+        try {
+          json = JSON.stringify({ result: b }, null, 1);
+        } catch {
+          json = String(b);
+        }
+        return noticeCollapsible("Результат вызова", capText(json, 600), "dw-notice-tool", false);
+      }
+      let json;
+      try {
+        json = JSON.stringify(b, null, 1);
+      } catch {
+        json = String(b);
+      }
+      return noticeCollapsible("Блок", capText(json, 600), "dw-notice-tool", false);
+    }
+
+    function buildNoticeCard(node) {
+      const data = node.data;
+      const source = data && typeof data.source === "object" && data.source !== null ? data.source : {};
+      const summary = typeof source.summary === "string" ? source.summary : "";
+      const st = noticeStatus(summary);
+      const sender = shortId(source.senderSessionId);
+      const content = Array.isArray(data.content) ? data.content : [];
+
+      const card = noticeEl("div", "dw-card dw-notice");
+      const head = noticeEl("div", "dw-head");
+      head.appendChild(noticeEl("span", "dw-title", "Субагент"));
+      const badge = noticeEl("span", "dw-badge " + st.cls);
+      badge.appendChild(noticeEl("span", "dw-dot"));
+      badge.appendChild(document.createTextNode(st.badge));
+      head.appendChild(badge);
+      if (sender !== null) head.appendChild(noticeEl("span", "dw-chip", sender));
+      if (summary !== "") head.appendChild(noticeEl("span", "dw-label", summary.replace(/^Background\s+/u, "")));
+      card.appendChild(head);
+
+      const body = noticeEl("div", "dw-body");
+      const texts = [];
+      const blocks = [];
+      for (const b of content) {
+        if (b !== null && typeof b === "object" && b.type === "text" && typeof b.text === "string") texts.push(b.text);
+        else if (b !== null && typeof b === "object") blocks.push(b);
+      }
+      // The first text block repeats the summary; the "Its closing message:"
+      // line is a label — drop both from the body.
+      let closingStart = texts.findIndex((t) => /closing message/i.test(t));
+      if (closingStart === -1) closingStart = texts.length > 1 ? 1 : texts.length;
+      const closingTexts = texts.slice(closingStart + 1);
+      if (closingTexts.length > 0 || blocks.length > 0) {
+        body.appendChild(noticeEl("div", "dw-ralph-h", "Заключительное сообщение"));
+        for (const t of closingTexts) {
+          body.appendChild(noticeEl("div", "dw-notice-para", t));
+        }
+        for (const b of blocks) {
+          body.appendChild(noticeBlock(b));
+        }
+      } else {
+        body.appendChild(noticeEl("div", "dw-notice-para", "Сообщения нет."));
+      }
+      card.appendChild(body);
+      return card;
+    }
+
+    // ---------------------------------------------------------------------
     // styles
     // ---------------------------------------------------------------------
 
@@ -742,6 +928,23 @@ window.__ModuleLoader__.load({
       .dw-ralph-e, .dw-ralph-n { line-height: 1.45; overflow-wrap: anywhere; padding-left: 4px; }
       .dw-err-msg { color: var(--dsw-alias-state-error-primary); font-family: var(--ds-font-family-code); font-size: 12px; overflow-wrap: anywhere; }
       .dw-err-pos { color: var(--dsw-alias-label-tertiary); font-size: 11px; margin-top: 4px; }
+
+      .dw-prompt { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      .dw-prompt-count { color: var(--dsw-alias-label-tertiary); font-size: 11px; }
+      .dw-prompt-text { max-height: 320px; overflow-y: auto; }
+
+      .dw-notice { margin: 4px 0; }
+      .dw-notice-para { line-height: 1.5; overflow-wrap: anywhere; color: var(--dsw-alias-label-secondary); }
+      .dw-notice-para + .dw-notice-para { margin-top: 6px; }
+      .dw-notice-collapsible { margin-top: 6px; }
+      .dw-notice-toggle { font-size: 12px; padding: 2px 4px; }
+      .dw-notice-reason {
+        color: var(--dsw-alias-label-secondary);
+        border-left: 2px solid var(--dsw-alias-border-l2);
+        padding-left: 10px;
+        font-style: italic;
+      }
+      .dw-notice-tool { max-height: 260px; overflow-y: auto; }
 
       .dw-tree-wrap { display: flex; flex-direction: column; }
       .dw-toolbar {
@@ -825,12 +1028,100 @@ window.__ModuleLoader__.load({
         }
       });
 
+      // ---- settlement-notice transform ----
+      const sessions = ctx.sessions;
+      let boundSessionId = undefined;
+      let unsubAny = null;
+      let rafPending = false;
+
+      function findNoticeRow(key) {
+        if (key === undefined || key === null) return null;
+        let safe;
+        try {
+          safe = CSS.escape(String(key));
+        } catch {
+          safe = String(key).replace(/[^a-zA-Z0-9:_-]/g, "\\$&");
+        }
+        return document.querySelector('[data-chat-flow-key="' + safe + '"]');
+      }
+
+      function rescan() {
+        if (rafPending) return;
+        rafPending = true;
+        requestAnimationFrame(() => {
+          rafPending = false;
+          try {
+            const list = sessions.list.getSnapshot();
+            const sessionId = list.current;
+            if (sessionId === undefined) return;
+            const binding = sessions.binding(sessionId);
+            const chat = binding?.session?.projections?.get("chat");
+            if (chat === undefined || chat === null || typeof chat.order !== "object" || chat.order === null) return;
+            for (const key of chat.order) {
+              const node = chat.nodes.get(key);
+              const data = node?.data;
+              if (data === undefined || data === null || data.kind !== "context") continue;
+              const source = data.source;
+              if (source === undefined || source === null || source.kind !== "subagent-settled") continue;
+              const row = findNoticeRow(key);
+              if (row === null || row.dataset.dwNoticeHandled === "1") continue;
+              const card = buildNoticeCard(node);
+              if (card === null) continue;
+              row.parentNode?.insertBefore(card, row);
+              row.style.display = "none";
+              row.dataset.dwNoticeHandled = "1";
+            }
+          } catch (err) {
+            // A transform failure must never break the page or the plugin.
+            if (typeof console !== "undefined") console.debug("dsh-widgets notice transform:", err);
+          }
+        });
+      }
+
+      function ensureBound() {
+        const list = sessions.list.getSnapshot();
+        const id = list.current;
+        if (id === boundSessionId) return;
+        if (unsubAny !== null) {
+          try { unsubAny(); } catch { /* ignore */ }
+          unsubAny = null;
+        }
+        boundSessionId = id;
+        if (id === undefined) return;
+        try {
+          const binding = sessions.binding(id);
+          const projections = binding?.session?.projections;
+          if (projections !== undefined && projections !== null) unsubAny = projections.subscribeAny(rescan);
+        } catch { /* ignore */ }
+      }
+
       ctx.effect(() => {
         const style = document.createElement("style");
         style.setAttribute("data-plugin", "dsh-widgets");
         style.textContent = DW_CSS;
         document.head.appendChild(style);
-        return () => style.remove();
+
+        ensureBound();
+        rescan();
+        const unsubList = sessions.list.subscribe(() => {
+          ensureBound();
+          rescan();
+        });
+        const observer = new MutationObserver(() => {
+          ensureBound();
+          rescan();
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        return () => {
+          style.remove();
+          unsubList();
+          if (unsubAny !== null) {
+            try { unsubAny(); } catch { /* ignore */ }
+            unsubAny = null;
+          }
+          observer.disconnect();
+        };
       });
     }
 
