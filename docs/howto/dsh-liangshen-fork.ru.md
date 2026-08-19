@@ -1,8 +1,10 @@
-# dsh-liangshen-fork — форк пресета LiangShen (anchored-standard)
+# neg — форк пресета LiangShen (anchored-standard)
 
 Собственный форк пресета **LiangShen mode** (двухфазный anchored-standard агент) для DeepSeek
 Harness, поддерживаемый декларативно в этом репозитории вместо стороннего плагина
 `@linxin666/dsh-liangshen` (чей patch-ряд был отмонтирован — префлайт перестал резолвить пакет).
+Идентификатор пресета — **`neg`** (переименован из `liangshen-fork` по запросу пользователя): пикер,
+сессии и дефолт ссылаются на `neg`.
 
 ## Что делает пресет
 
@@ -23,11 +25,18 @@ Harness, поддерживаемый декларативно в этом ре�
   порядок в пикере, `agent.cordis.yml` — композиция, `tool-bootstrap.mjs` — двухфазный бутстрап,
   `NOTICE` — происхождение и лицензии). Поведение идентично апстриму; правится здесь.
 - Модуль `modules/user/nix-maid/apps/dsh-liangshen-fork.nix` синкает файлы в
-  `~/.dsh/.agent-presets/liangshen-fork/` (корень discovery ростера) на каждом rebuild и логине.
-  Синк всегда принудительный — локальные правки в `~/.dsh/.agent-presets/` затираются; источник
-  истины — репозиторий. Директория исключена из авто-импорта модулей в `apps/default.nix`.
-- Пресет по умолчанию: `agent-presets.default: liangshen-fork` в `~/.dsh/settings.yaml` (читается
-  hot-reload, применяется к **новым** сессиям; рестарт dsh не нужен).
+  `~/.dsh/.agent-presets/neg/` (корень discovery ростера; id пресета — `neg`) на каждом rebuild и
+  логине. Синк всегда принудительный — локальные правки в `~/.dsh/.agent-presets/` затираются;
+  источник истины — репозиторий. Директория исключена из авто-импорта модулей в `apps/default.nix`.
+- Пресет по умолчанию: `agent-presets.default: neg` в `~/.dsh/settings.yaml` (читается hot-reload,
+  применяется к **новым** сессиям; рестарт dsh не нужен). Дублирующий фолбэк в конфиге ростера
+  (`- id: agent-presets / config.default` в `~/.dsh/profiles/web/cordis.patch.yml`, см.
+  `dsh-market.nix`) страхует на случай сброса settings.yaml.
+- Встроенный пресет `standard` удалён из сборки пакета dsh (`packages/dsh/default.nix` — postInstall
+  вырезает `config/agent-presets/standard`), поэтому в пикере его нет.
+- Оригинальный апстримный пресет `liangshen` (от отмонтированного плагина
+  `@linxin666/dsh-liangshen`) удаляется декларативно ensure-скриптом форка; левак плагина из
+  `~/.dsh/profiles/node_modules` вычищен.
 
 ## Изменение поведения
 
@@ -39,4 +48,4 @@ default») либо правкой `settings.yaml`.
 ## Удаление
 
 Убрать модуль и директорию, вернуть исключение в `apps/default.nix`, удалить
-`~/.dsh/.agent-presets/liangshen-fork/` и ключ `agent-presets.default` из `settings.yaml`.
+`~/.dsh/.agent-presets/neg/` и ключ `agent-presets.default` из `settings.yaml`.
