@@ -85,11 +85,10 @@ content block»** с сырым JSON. Слота для этого нет, по�
 ## Живой вывод bash (`bash_live`) — полностью через плагин, off by default
 
 > **Статус:** инструмент выключен по умолчанию (флаг `enableBashLive` в конфиге деплоя
-> `dsh-widgets`, `false` дефолт) — на практике с ним было больше проблем, чем пользы.
-> **Сейчас `bash_live` считается сломанным: не включать и не использовать** (см. «Задача»
-> ниже). Чтобы включить обратно без правки кода, выставьте `enableBashLive: true` в
-> deployment-конфиге плагина и перезапустите `dsh.service` — но только после того, как
-> задача починки закрыта.
+> `dsh-widgets`, `false` дефолт). Починка готова (патч `Session.append` + флаг `ignorable` в
+> плагине — см. «Задача» ниже), но применяется при пересборке dsh: **до `nh os switch` + рестарта
+> `dsh.service` `bash_live` не включать и не использовать**. После пересборки можно включить
+> `enableBashLive: true` в deployment-конфиге плагина и перезапустить `dsh.service`.
 
 Стоковый `bash` не стримит вывод (на проводе только `tool/call` → `tool/result`). Но плагин может
 обойти это без правки ядра: инструмент `bash_live` запускает команду через `ctx.shell.start` (живой
@@ -110,43 +109,42 @@ harness (rc.6), а `Session.append()` не умеет ставить марке�
 Ридер истории отказывается открывать лог с неизвестным не-ignorable событием
 (`SessionFormatUnsupportedError` → сессия выглядит «сдохшей»: не открывается, агент недоступен).
 
-Регистрация трёх типов в общем сете (`KNOWN_SESSION_EVENT_TYPES.add(type)` в `tools.js` при
-загрузке плагина) **на практике не защищает**: плагин и `dsh-session-persistence` грузят разные
-инстансы `@deepseek-ai/dsh-session` (профильные `node_modules` против harness), поэтому добавление
-в сет не доходит до ридера, и каждый запуск `bash_live` снова пишет не-ignorable события.
-19.08.2026 от этого умерли три сессии (`session-1a5d8a15…`, `session-e8d372df…`,
-`session-f6daf551…`); отремонтированы вручную — событиям проставлен `"ignorable": true`
-(бэкапы — в `~/.dsh/repair-backups/bash-live-ignorable/`). После этого `dsh-selfheal` научили
-чинить такие логи автоматически (см. «Задача», п. 3) — ручной ремонт больше не нужен.
+Регистрация трёх типов в общем сете (`KNOWN_SESSION_EVENT_TYPES.add(type)` в `tools.js` при загрузке
+плагина) **на практике не защищает**: плагин и `dsh-session-persistence` грузят разные инстансы
+`@deepseek-ai/dsh-session` (профильные `node_modules` против harness), поэтому добавление в сет не
+доходит до ридера, и каждый запуск `bash_live` снова пишет не-ignorable события. 19.08.2026 от этого
+умерли три сессии (`session-1a5d8a15…`, `session-e8d372df…`, `session-f6daf551…`); отремонтированы
+вручную — событиям проставлен `"ignorable": true` (бэкапы — в
+`~/.dsh/repair-backups/bash-live-ignorable/`). После этого `dsh-selfheal` научили чинить такие логи
+автоматически (см. «Задача», п. 3) — ручной ремонт больше не нужен.
 
-## Задача (TODO): починить `bash_live` по-настоящему
+## Задача: починить `bash_live` по-настоящему — ✅ закрыта (19.08.2026)
 
-Владелец задачи — сессия «Превью картинок в dsh-web» (плагин `dsh-preview`; задача назначена
-ей, промпт юзер отправляет сам). Пока задача не закрыта, `bash_live` **не использовать** — ни в
-этой сессии, ни в субагентах, иначе они снова застрянут/умрут.
+Изначально задача была назначена сессии «Превью картинок в dsh-web» (плагин `dsh-preview`), но
+починку сделал агент прямо в этом репозитории. Осталось только пересобрать dsh, чтобы патч встал.
 
-Что нужно сделать (любой из вариантов, лучше первый в связке с третьим):
+1. ✅ **Сделано:** `Session.append()` теперь умеет ставить `ignorable: true` на конверт события.
+   Серверный патч добавлен в `packages/dsh/patch-widgets.py` (правка `dsh-session/lib/index.js`:
+   `append(type, data, opts)` переносит `opts.ignorable === true` в envelope). Плагин
+   `dsh-widgets` (`lib/tools.js`) передаёт `{ ignorable: true }` для всех `tool/bash-live-*` —
+   события пишутся с маркером, ридер их пропускает, сессия не умирает. Мёртвый хак с
+   `KNOWN_SESSION_EVENT_TYPES.add()` удалён (он не работал из-за разных инстансов модуля).
+   Патч применяется при пересборке dsh (`postInstall` → `patch-widgets.py`).
+2. ❌ **Не нужно:** выпиливать `bash_live` — фича остаётся, теперь безопасная.
+3. ✅ **Сделано ранее:** `dsh-selfheal` авточинит логи, записанные до фикса (семантический фикс
+   «`tool/bash-live-*` без `ignorable` → проставить `ignorable: true`» в `validateEvent` /
+   `validateAndFixLines`; fork-чекаут
+   `~/src/1st-level/@projects/dsh-web-ui/packages/dsh-selfheal/lib/repair-core.mjs`, модуль
+   `modules/user/nix-maid/apps/dsh-selfheal.nix`). В отчёте/логе selfheal видно
+   «semantic: N event(s) repaired (bash-live ignorable)».
 
-1. **Научиться ставить `ignorable: true` на события.** `Session.append(type, data)` не принимает
-   флаг — нужно либо дождаться/продавить отложенную harness'ом поверхность регистрации
-   плагин-событий (см. комментарий в `dsh-session` у `KNOWN_SESSION_EVENT_TYPES`), либо патчить
-   `dsh-session` (`packages/dsh/patch-widgets.py` уже шьёт серверные патчи), чтобы
-   `append` принимал опцию `{ ignorable: true }` и плагин проставлял её для `tool/bash-live-*`.
-2. **Либо** выпилить `bash_live` совсем (клиентская карточка + серверный инструмент + флаг
-   `enableBashLive`) и оставить живой показ bash только через activity-стрип (команда + таймер).
-3. ✅ **Сделано (19.08.2026):** `dsh-selfheal` теперь авточинит такие логи — семантический
-   фикс «`tool/bash-live-*` без `ignorable` → проставить `ignorable: true`» добавлен в
-   `validateEvent` / `validateAndFixLines` (fork-чекаут
-   `~/src/1st-level/@projects/dsh-web-ui/packages/dsh-selfheal/lib/repair-core.mjs`; модуль
-   `modules/user/nix-maid/apps/dsh-selfheal.nix`). Применяется при следующем рестарте dsh;
-   семантический проход чинит файлы через ~3 с после старта и далее каждые 15 мин
-   (в отчёте/логе selfheal теперь видно «semantic: N event(s) repaired (bash-live ignorable)»).
-   Пункты 1–2 (настоящая починка `bash_live`) остаются открытыми.
+**До пересборки dsh** `bash_live` по-прежнему не включать и не использовать (текущий harness ещё
+без патча, а флаг `enableBashLive` по умолчанию `false`). После `nh os switch` и рестарта
+`dsh.service` — можно включать.
 
-Как воспроизводится/проверяется: включить `enableBashLive: true`, запустить в сессии
-`bash_live` с длинной командой, убедиться, что в `session.jsonl.zstd` события
-`tool/bash-live-*` пишутся с `"ignorable": true` (или типы реально попадают в сет ридера), и что
-сессия открывается/перезагружается без `SessionFormatUnsupportedError`.
+Как проверить после пересборки: включить `enableBashLive: true`, запустить в сессии `bash_live` с
+длинной командой, убедиться, что в `session.jsonl.zstd` события `tool/bash-live-*` пишутся с
+`"ignorable": true`, и что сессия открывается/перезагружается без `SessionFormatUnsupportedError`.
 
 ## Серверные патчи dsh (staged, применяются при пересборке dsh)
 

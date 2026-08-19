@@ -67,7 +67,9 @@ buildNpmPackage {
     # build loudly on dsh version drift): subagent model override param
     # (delegate to deepseek-v4-flash etc. per call) + presentationMeta on the
     # subagent / workflow / ralph tools so their persisted tool/result meta
-    # carries a structured descriptor (see packages/dsh/patch-widgets.py).
+    # carries a structured descriptor, and Session.append() accepts
+    # { ignorable: true } for plugin events (bash_live) so they stop killing
+    # sessions (see packages/dsh/patch-widgets.py).
     python3 ${./patch-widgets.py} "$search_pkg"
 
     # Drop the shipped `standard` agent preset from the roster: the user runs

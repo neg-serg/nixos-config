@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Patch dsh 0.1.0-rc.6 compiled tool bundles for dsh-widgets.
 
-Two additions, both staged server-side (they take effect after a dsh rebuild):
+Three additions, all staged server-side (they take effect after a dsh rebuild):
 
 1. dsh-tool-subagent: an optional `model` parameter on the subagent tool that
    is merged into the child's agentOptions. The subagent provider already
@@ -14,6 +14,14 @@ Two additions, both staged server-side (they take effect after a dsh rebuild):
    capable client renders a structured card from logged data (replay-stable)
    instead of regex-parsing the rendered text. The dsh-widgets client cards
    still parse text today; the meta is the hardening path.
+
+3. dsh-session `Session.append`: accept `{ ignorable: true }` in the surface
+   opts and carry it on the event envelope. rc.6 otherwise cannot mark plugin
+   events ignorable, and the history reader refuses logs with unknown
+   non-ignorable event types (SessionFormatUnsupportedError) — the
+   dsh-widgets `bash_live` stream events used to kill their session on every
+   run. dsh-widgets passes the option for `tool/bash-live-*` events; the
+   read side already accepts the envelope key.
 
 Exact-string replacements with count assertions: a failed match (wrong dsh
 version, formatting drift) fails the build loudly instead of silently producing
@@ -129,6 +137,33 @@ patch_file(
             "\t\t\t})\n"
             "\t\t},\n"
             "\t\tasync execute(args, exec) {",
+            1,
+        ),
+    ],
+)
+
+SESSION = "dsh-session/lib/index.js"
+patch_file(
+    SESSION,
+    [
+        # 3. Session.append: accept `{ ignorable: true }` in the surface opts
+        #    and carry it on the event envelope. rc.6 has no other way to mark
+        #    a plugin event ignorable, and the history reader refuses logs
+        #    containing unknown non-ignorable event types
+        #    (SessionFormatUnsupportedError) — dsh-widgets `bash_live` used to
+        #    kill its session on every run. The read side already validates the
+        #    envelope key (`case "ignorable": break`, value must be exactly
+        #    true), so this is the missing write-side half.
+        (
+            "\t\tconst surfaceMetadata = {\n"
+            "\t\t\t...surfaceOpts?.sourceEventSeqs === void 0 ? {} : { sourceEventSeqs: surfaceOpts.sourceEventSeqs },\n"
+            "\t\t\t...surfaceOpts?.surfaceOp === void 0 ? {} : { surfaceOp: surfaceOpts.surfaceOp }\n"
+            "\t\t};",
+            "\t\tconst surfaceMetadata = {\n"
+            "\t\t\t...surfaceOpts?.sourceEventSeqs === void 0 ? {} : { sourceEventSeqs: surfaceOpts.sourceEventSeqs },\n"
+            "\t\t\t...surfaceOpts?.surfaceOp === void 0 ? {} : { surfaceOp: surfaceOpts.surfaceOp },\n"
+            "\t\t\t...surfaceOpts?.ignorable === true ? { ignorable: true } : {}\n"
+            "\t\t};",
             1,
         ),
     ],

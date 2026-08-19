@@ -16,20 +16,18 @@
  */
 
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { KNOWN_SESSION_EVENT_TYPES } from '@deepseek-ai/dsh-session'
 
 // bash_live streams command output to the web GUI by appending purely
 // informational `tool/bash-live-*` events to the durable session log (the
 // full output always returns in the tool result). rc.6's Session.append()
 // cannot set the envelope's `ignorable` marker, and the harness defers the
-// out-of-repo plugin-event registration surface — so register the types on
-// the shared KNOWN_SESSION_EVENT_TYPES set (the same instance the
-// persistence reader checks) at plugin load. Without this, any session that
-// used bash_live is refused by the history reader
-// (SessionFormatUnsupportedError) and its history becomes unloadable.
-for (const type of ['tool/bash-live-start', 'tool/bash-live-output', 'tool/bash-live-end']) {
-  KNOWN_SESSION_EVENT_TYPES.add(type)
-}
+// out-of-repo plugin-event registration surface — so the events used to be
+// written non-ignorable and any session that used bash_live was refused by
+// the history reader (SessionFormatUnsupportedError). Fixed in two halves:
+// the staged harness patch makes `append(type, data, { ignorable: true })`
+// carry the marker on the envelope (packages/dsh/patch-widgets.py), and the
+// append helper below passes it for these events. dsh-selfheal additionally
+// auto-repairs logs written before the fix.
 
 const TOOL_NAME = 'json'
 
@@ -255,7 +253,10 @@ export function createBashLiveTool(ctx) {
       const append = (type, data) => {
         if (session !== undefined && session !== null && typeof session.append === 'function') {
           try {
-            session.append(type, data)
+            // The staged dsh-session patch (packages/dsh/patch-widgets.py)
+            // carries this option onto the event envelope as `ignorable: true`,
+            // which is what keeps the history reader from refusing the log.
+            session.append(type, data, { ignorable: true })
           } catch {
             /* a failed event must never break the tool */
           }
@@ -323,8 +324,9 @@ export function createBashLiveTool(ctx) {
 /**
  * Build the widget tools.
  * @param ctx - registrant context (needed by `bash_live` for ctx.shell).
- * @param config - { maxInputBytes, maxMetaBytes }.
- * @returns the tool definitions to register on ctx.tools.
+ * @param config - { maxInputBytes, maxMetaBytes, enableBashLive }.
+ * @returns the tool definitions to register on ctx.tools (`bash_live` only
+ * when `enableBashLive` is set).
  */
 export function createWidgetTools(ctx, config) {
   const { maxInputBytes, maxMetaBytes } = config
@@ -443,5 +445,9 @@ export function createWidgetTools(ctx, config) {
     },
   })
 
-  return [jsonTool, createBashLiveTool(ctx)]
+  const tools = [jsonTool]
+  if (config.enableBashLive) {
+    tools.push(createBashLiveTool(ctx))
+  }
+  return tools
 }
