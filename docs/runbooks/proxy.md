@@ -7,11 +7,12 @@ unreachable.
 ## LAN access (sing-box only)
 
 The sing-box proxy also listens on **port `10810` on all interfaces** (`0.0.0.0`) — a copy of the
-same proxy for devices on the local network. Localhost port `10808` stays passwordless, and the LAN
-port is **passwordless too** (mirrors the local port; the firewall restricts it to private ranges).
-If auth is ever re-enabled, the SOPS secret `secrets/home/proxy-lan.sops.yaml` (decrypted to
-`/run/secrets/proxy-lan`) still carries the credentials and the script heal syncs them into the
-config.
+same proxy for devices on the local network. Localhost port `10808` stays passwordless; the LAN port
+requires **username/password auth**: credentials come from the SOPS secret
+`secrets/home/proxy-lan.sops.yaml` (plaintext `user:pass`, decrypted to `/run/secrets/proxy-lan`)
+and are synced into the config's `in-lan` inbound `users` block by the `proxy` script at every
+`proxy on` / `proxy gen` / `proxy refresh`. If the secret is absent, the LAN inbound falls back to
+passwordless.
 
 - **Firewall:** the rule lives in `modules/system/net/firewall.nix` — `extraCommands` appends three
   `iptables -A nixos-fw … tcp --dport 10810 -j nixos-fw-accept` rules for the private ranges
@@ -22,7 +23,7 @@ config.
   blacklist `ip_tables` and risk podman/container networking.)
 - Use from another device:
   ```sh
-  curl -x socks5://192.168.2.87:10810 https://ifconfig.me
+  curl -x socks5://neg:oneiroid@192.168.2.87:10810 https://ifconfig.me
   ```
 - When Xray takes over port 10808 (`proxy off`), the LAN port 10810 disappears with sing-box.
 
