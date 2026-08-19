@@ -14,6 +14,8 @@
 
 export const name = 'dsh-memory-extractor'
 
+export const inject = ['memory']
+
 const MAX_CHARS = 4000
 const NL = String.fromCharCode(10)
 
