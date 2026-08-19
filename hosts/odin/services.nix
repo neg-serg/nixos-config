@@ -46,7 +46,11 @@ lib.mkMerge [
       # Local sshd, key-only auth (hardened profile). The dsh web agent has a
       # dedicated key in ~/.ssh/agent/dsh-agent-key (authorized_keys entry
       # restricted to localhost) so its SSH tools/terminal can reach the host.
+      # Allow TCP forwarding so the agent's ssh_tunnel can reach local
+      # services (databases, UIs); destinations are restricted to loopback
+      # only via PermitOpen below, so the hardened profile stays intact.
       openssh.enable = true;
+      openssh.allowTcpForwarding = true;
       # Local DNS rewrites for LAN names
       adguardhome.rewrites = [
         {
@@ -273,6 +277,13 @@ lib.mkMerge [
 
     services = lib.mkMerge [
       {
+        # dsh-ssh ssh_tunnel: with allowTcpForwarding enabled in
+        # servicesProfiles.openssh above, restrict forwarded destinations to
+        # loopback so the hardened sshd cannot be used as a pivot into the LAN.
+        openssh.extraConfig = ''
+          PermitOpen 127.0.0.1:* ::1:*
+        '';
+
         # Static host rewrites pushed into Unbound (served to AdGuard Home upstream)
         unbound.settings.server."local-data" = map (s: "\"${s}\"") unboundLocalData;
 
