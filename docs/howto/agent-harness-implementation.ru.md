@@ -24,21 +24,32 @@ DSH web — это Cordis-хост, собранный патч-файлами; 
 | `.agent/prompts/memory-extract.md`, `.agent/prompts/memory-consolidate.md` | готовые промпты (RU), извлечены из дизайна                                                                                                                                                                                                                                                             | ✅ в репо |
 | `designs/boulder.md`                                                       | boulder: поведенческая спецификация (countdown 2s, backoff 30s×2 max 5, пауза 5 мин, stagnation max 3, compaction guard 60s, полный список «когда НЕ вставлять»), интеграция (`packages/dsh-boulder/` в форке), skeleton: package.json + constants (точный текст) + index.ts (хост-логика) + client.ts | ✅ готов  |
 
-## Рекомендованный порядок внедрения (серверные плагины, пресет neg)
+## Статус внедрения (обновлено)
 
-1. **agent-usage-reminder** (S) — `agent/pre-step`, напоминание про специализированных агентов.
-1. **compaction-todo-preserver** (S) — `compaction/end` → пере-инжект live todo-списка
-   (`systemPrompt.section`/context — самый дешёвый вариант).
-1. **rules-injector** (M) — `tools/post-execute` на `read`: подъём `rules/*.md` от каталога файла
-   (как AGENTS.md discovery) + `additionalContexts`.
-1. **category-skill-reminder** (S–M) — напоминание скиллов под категорию делегирования (v0 можно
-   docs-only).
-1. **memory-extract/consolidate** — промпты готовы; интеграция: хук `session/disposed` /
-   `compaction/end` в `dsh-memento` (или плагин с `inject: ['memory','sessions']`), запись через
-   `ctx.memory.add` с approval-gate, SKILL.md в `<root>/.dsh/skills/<name>/`.
-1. **boulder** — по дизайну (ожидается); хук `agent/status` idle + `todo/write`-скан +
-   `agent.followup` с точным текстом CONTINUATION_PROMPT из `agent-guards.ru.md`.
-1. **hashline** — MVP клиентским форк-плагином; затем патч `dsh-tool-fs` для тегов встроенного read.
+Все 7 пунктов плана **реализованы** и закоммичены как серверные плагины в
+`modules/user/nix-maid/apps/` (паттерн dsh-osm: package.json + lib/index.js + ensure + patch-row):
+
+1. ✅ **dsh-agent-usage-reminder** — `tools/post-execute` + `additionalContexts`.
+1. ✅ **dsh-compaction-todo-preserver** — `session/event` compaction/start→end, пере-аппенд
+   `todo/write`.
+1. ✅ **dsh-rules-injector** — `tools/post-execute` на read: `rules/*.md` + корневой AGENTS.md
+   (frontmatter alwaysApply/glob, дедуп на сессию).
+1. ✅ **dsh-category-skill-reminder** — агент-плоскость (`dsh-liangshen-fork/agent.cordis.yml`),
+   каталог скиллов через `ctx.skills.snapshot`.
+1. ✅ **dsh-memory-extractor** — `session/end-seed`/`compaction/end` → draft-extract в memento;
+   **TODO**: LLM-шаг (нет сервиса вызова модели у плагинов в этой сборке DSH).
+1. ✅ **dsh-boulder** — `agent/status` idle + todo-проекция + `agent.steer` с CONTINUATION_PROMPT
+   (countdown 2s, backoff 5s×2, max 5, пауза 5 мин, stagnation 3, compaction guard 60s) +
+   toast-client.
+1. ✅ **dsh-hashline** — `read_hashline` + `hashline_edit` (FNV-1a → CID, валидация хэшей, атомарная
+   запись); протестирован функционально.
+
+Плюс: **dsh-debug** — DAP-отладка (gdb/lldb-dap/dlv/debugpy/js-debug-adapter, launch/attach,
+breakpoints/stepping/inspection/evaluate; протестирован на gdb). Ограничение: gdb 17.2 DAP отдаёт
+пустые `threads` после attach.
+
+Осталось: `vscode-js-debug` в systemPackages (вступит в силу после `nixos-rebuild switch`); hashline
+phase 2 (теги во встроенном `read` — патч `dsh-tool-fs`).
 
 ## Что уже в репо из этого порта
 
