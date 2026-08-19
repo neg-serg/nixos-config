@@ -413,6 +413,13 @@ const ACTIONS = {
     const b = resp.body || {}
     return { result: b.result || '', type: b.type || '', variablesReference: b.variablesReference || 0 }
   },
+  custom_request: async function (params) {
+    if (!active) throw new Error('debug: no active session')
+    if (!params.command) throw new Error('debug: custom_request needs command')
+    const args = params.arguments !== undefined ? params.arguments : {}
+    const resp = await active.client.request(String(params.command), args)
+    return { command: params.command, body: resp.body !== undefined ? resp.body : null, message: resp.message || '' }
+  },
   output: async function () {
     return { ok: true, note: 'output events are not buffered in v1' }
   },
@@ -447,6 +454,8 @@ function debugTool() {
       frame_id: { type: 'integer', description: 'Stack frame id for scopes/evaluate.' },
       variable_ref: { type: 'integer', description: 'Variables reference from scopes/variables.' },
       levels: { type: 'integer', description: 'Max stack frames.' },
+      command: { type: 'string', description: 'Raw DAP request command (custom_request).' },
+      arguments: { type: 'object', additionalProperties: true, description: 'Raw DAP request arguments (custom_request).' },
     },
     output: {
       schema: { type: 'object', additionalProperties: true },
