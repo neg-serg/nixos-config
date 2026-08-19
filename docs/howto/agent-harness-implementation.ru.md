@@ -48,8 +48,11 @@ DSH web — это Cordis-хост, собранный патч-файлами; 
 breakpoints/stepping/inspection/evaluate; протестирован на gdb). Ограничение: gdb 17.2 DAP отдаёт
 пустые `threads` после attach.
 
-Осталось: `vscode-js-debug` в systemPackages (вступит в силу после `nixos-rebuild switch`); hashline
-phase 2 (теги во встроенном `read` — патч `dsh-tool-fs`).
+Дополнения (закрытые дыры): dsh-debug `custom_request` (сырые DAP-запросы), dsh-ttsr mental-models
+(фоновое знание один раз на сессию).
+
+Осталось: `vscode-js-debug`/`bun`/`ast-grep` в systemPackages (вступят в силу после
+`nixos-rebuild switch`); hashline phase 2 (теги во встроенном `read` — патч `dsh-tool-fs`).
 
 ## Что уже в репо из этого порта
 
