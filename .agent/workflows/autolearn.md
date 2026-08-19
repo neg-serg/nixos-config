@@ -1,12 +1,13 @@
 ______________________________________________________________________
 
 ## description: Autolearn — promote repeated successful techniques into SKILL.md playbooks (ported from omp learn/manage_skill)
+
 ______________________________________________________________________
 
 # Autolearn
 
-After solving an insight that is likely to pay off again, promote it into a reusable skill.
-Not every fact — only repeatable procedures worth codifying.
+After solving an insight that is likely to pay off again, promote it into a reusable skill. Not
+every fact — only repeatable procedures worth codifying.
 
 ## Criteria (all must hold)
 
