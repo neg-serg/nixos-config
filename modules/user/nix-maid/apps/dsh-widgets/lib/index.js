@@ -22,8 +22,8 @@ import { createWidgetTools } from './tools.js'
 /** Cordis plugin name — must match the patch row / package name. */
 export const name = 'dsh-widgets'
 
-/** Required services: just the tool registry (the tree needs no web server). */
-export const inject = ['tools']
+/** Required services: tool registry, the shell seam (for `bash_live`). */
+export const inject = ['tools', 'shell']
 
 /** Deployment configuration, validated by the Loader. */
 export const Config = z.object({
@@ -39,7 +39,7 @@ export const Config = z.object({
  * @param config - validated deployment configuration.
  */
 export function apply(ctx, config) {
-  for (const tool of createWidgetTools(config)) {
+  for (const tool of createWidgetTools(ctx, config)) {
     ctx.tools.register(tool)
   }
 }
