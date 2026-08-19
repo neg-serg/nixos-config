@@ -47,6 +47,34 @@ const ADAPTERS = {
     extensions: ['.py'],
     launch: { request: 'launch', type: 'python' },
   },
+  'js-debug-adapter': {
+    command: 'js-debug-adapter',
+    args: [],
+    extensions: ['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx'],
+    launch: { request: 'launch', type: 'pwa-node', stopOnEntry: true },
+  },
+}
+
+/**
+ * Resolve an adapter command to an absolute path. Checks PATH, then common
+ * user-level locations (js-debug-adapter is not on npm; comes from nixpkgs
+ * vscode-js-debug or a VS Code install). Falls back to the bare name, so
+ * spawn surfaces ENOENT with the adapter id in the error path.
+ */
+function resolveCommand(cmd) {
+  const roots = [
+    (process.env.HOME || '') + '/.npm-global/bin',
+    (process.env.HOME || '') + '/.local/bin',
+    '/usr/local/bin',
+    '/run/current-system/sw/bin',
+  ]
+  for (const root of roots) {
+    const p = root + '/' + cmd
+    try {
+      if (existsSync(p)) return p
+    } catch (ex) { /* keep probing */ }
+  }
+  return cmd
 }
 
 const READONLY_ACTIONS = new Set([
@@ -163,17 +191,9 @@ async function openSession(params, exec) {
   if (!existsSync(resolved)) throw new Error('debug: program does not exist: ' + resolved)
   const adapterId = selectAdapter(resolved, params.adapter)
   const adapter = ADAPTERS[adapterId]
-  const client = new DapClient(adapter.command, adapter.args)
+  const client = new DapClient(resolveCommand(adapter.command), adapter.args)
   try {
-    await client.request('initialize', {
-      adapterID: adapterId,
-      clientID: 'dsh',
-      clientName: 'dsh-debug',
-      supportsVariableType: true,
-      supportsEvaluateForHovers: true,
-      supportsSetVariable: false,
-      supportsConfigurationDoneRequest: true,
-    })
+    await initializeClient(client, adapterId)
     const launchArgs = {}
     const base = adapter.launch || { request: 'launch' }
     Object.keys(base).forEach(function (k) { launchArgs[k] = base[k] })
@@ -193,6 +213,50 @@ async function openSession(params, exec) {
   }
   active = { client: client, adapterId: adapterId, program: resolved, threadId: undefined }
   return active
+}
+
+async function openAttach(params, exec) {
+  if (active) throw new Error('debug: a session is already active; terminate it first (action: terminate)')
+  const pid = params.pid
+  const host = params.host || '127.0.0.1'
+  const port = params.port
+  if (pid === undefined && port === undefined) {
+    throw new Error('debug: attach needs pid (local) or port (remote, optional host)')
+  }
+  // For remote (port) attach default to debugpy; for pid attach default to gdb.
+  const adapterId = port !== undefined ? 'debugpy' : (params.adapter || 'gdb')
+  const adapter = ADAPTERS[adapterId]
+  if (!adapter) throw new Error('debug: unknown adapter ' + adapterId)
+  const client = new DapClient(resolveCommand(adapter.command), adapter.args)
+  try {
+    await initializeClient(client, adapterId)
+    const attachArgs = { request: 'attach' }
+    if (pid !== undefined) attachArgs.pid = Number(pid)
+    if (port !== undefined) {
+      attachArgs.connect = { host: String(host), port: Number(port) }
+    }
+    const attachResponse = client.request('attach', attachArgs)
+    await client.request('configurationDone', {})
+    await attachResponse
+    await waitForStopped(client, 2000) // gdb reports threads after the stopped event
+  } catch (err) {
+    client.close()
+    throw err
+  }
+  active = { client: client, adapterId: adapterId, program: 'attach:' + (pid !== undefined ? 'pid ' + pid : host + ':' + port), threadId: undefined }
+  return active
+}
+
+async function initializeClient(client, adapterId) {
+  await client.request('initialize', {
+    adapterID: adapterId,
+    clientID: 'dsh',
+    clientName: 'dsh-debug',
+    supportsVariableType: true,
+    supportsEvaluateForHovers: true,
+    supportsSetVariable: false,
+    supportsConfigurationDoneRequest: true,
+  })
 }
 
 /** Wait (bounded) for a stopped event so the next inspection is valid. */
@@ -227,6 +291,10 @@ const ACTIONS = {
   launch: async function (params, exec) {
     const s = await openSession(params, exec)
     return { ok: true, adapter: s.adapterId, program: s.program }
+  },
+  attach: async function (params, exec) {
+    const s = await openAttach(params, exec)
+    return { ok: true, adapter: s.adapterId, target: s.program }
   },
   terminate: async function () {
     if (!active) throw new Error('debug: no active session')
@@ -357,14 +425,18 @@ function debugTool() {
       'One active session at a time. program is a target path, not a shell command. ' +
       'Flow: launch -> set_breakpoint (file, line) -> continue -> on stop inspect threads, stack_trace (frame_id), ' +
       'scopes (scope_id), variables (variable_ref) -> evaluate (expression, frame_id) -> terminate. ' +
-      'Adapters auto-selected by extension: gdb (c/cpp/rust), lldb-dap, dlv (go), debugpy (python). ' +
+      'Adapters auto-selected by extension: gdb (c/cpp/rust), lldb-dap, dlv (go), debugpy (python), ' +
+      'js-debug-adapter (js/ts; needs nixpkgs vscode-js-debug). attach: pid (gdb) or host+port (debugpy). ' +
       'Read-only actions: ' + READONLY_ACTIONS.size + ' of the ' + actionNames.length + ' actions need no execution.',
     parameters: {
       action: { type: 'string', required: true, description: 'One of: ' + actionEnum.join(', ') },
       program: { type: 'string', description: 'Debug target path (required for launch).' },
       args: { type: 'array', items: { type: 'string' }, description: 'Program arguments.' },
-      adapter: { type: 'string', description: 'Adapter id override: gdb | lldb-dap | dlv | debugpy.' },
+      adapter: { type: 'string', description: 'Adapter id override: gdb | lldb-dap | dlv | debugpy | js-debug-adapter.' },
       cwd: { type: 'string', description: 'Working directory for the debuggee.' },
+      pid: { type: 'integer', description: 'Process id for attach (local).' },
+      host: { type: 'string', description: 'Remote attach host (default 127.0.0.1).' },
+      port: { type: 'integer', description: 'Remote attach port (uses debugpy adapter).' },
       file: { type: 'string', description: 'Source file for breakpoints.' },
       line: { type: 'integer', description: 'Source line for breakpoints.' },
       condition: { type: 'string', description: 'Breakpoint condition.' },
