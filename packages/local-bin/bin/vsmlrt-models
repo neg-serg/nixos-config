@@ -1,0 +1,25 @@
+#!/bin/sh
+# vsmlrt-models: fetch vs-mlrt (vsncnn) ONNX models into /zero/ai (ZFS pool),
+# per the "all AI assets in /zero/ai/*" convention. Models are converted to
+# ncnn format by the plugin on first load.
+#
+# Usage: vsmlrt-models [version]   (default: v15.16)
+set -eu
+
+VERSION="${1:-v15.16}"
+DEST="${VSMLRT_MODELS:-/zero/ai/imgproc/vsmlrt-$VERSION}"
+URL="https://github.com/AmusementClub/vs-mlrt/releases/download/$VERSION/models.$VERSION.7z"
+TMP="$(mktemp -d)"
+
+echo "Downloading models $VERSION ..."
+curl -L --fail -o "$TMP/models.7z" "$URL"
+
+mkdir -p "$DEST"
+cd "$TMP"
+7z x -y -o"$DEST" models.7z >/dev/null
+rm -rf "$TMP"
+
+echo "Models installed to $DEST"
+echo "Example VS script (interpolation):"
+echo '  import vapoursynth as vs'
+echo "  core = vs.core; core.std.LoadPlugin(path=\"$DEST/../../lib/libvsncnn.so\")"
