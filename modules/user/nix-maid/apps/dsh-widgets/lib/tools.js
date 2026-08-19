@@ -359,6 +359,7 @@ export function createWidgetTools(ctx, config) {
           nodes: { type: 'integer', required: true },
           depth: { type: 'integer', required: true },
           path: { type: 'string', required: true },
+          expand: { type: 'integer' },
           error: {
             type: 'object',
             additionalProperties: false,
