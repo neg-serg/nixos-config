@@ -25,6 +25,7 @@ in
       && n != "dsh-agent-usage-reminder"
       && n != "dsh-compaction-todo-preserver"
       && n != "dsh-rules-injector"
+      && n != "dsh-category-skill-reminder"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
