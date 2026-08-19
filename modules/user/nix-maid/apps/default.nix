@@ -29,6 +29,7 @@ in
       && n != "dsh-boulder"
       && n != "dsh-hashline"
       && n != "dsh-memory-extractor"
+      && n != "dsh-debug"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
