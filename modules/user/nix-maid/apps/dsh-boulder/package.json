@@ -1,0 +1,12 @@
+{
+  "name": "dsh-boulder",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Todo-continuation enforcer (boulder): wake idle agents with incomplete todos and steer continuation (ported from oh-my-opencode todo-continuation-enforcer).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
