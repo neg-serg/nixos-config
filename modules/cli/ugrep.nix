@@ -22,5 +22,7 @@
     "no-ignore-files"
     "no-sort"
     ""
+    "# Use all 32 hardware threads (16C/32T): ugrep defaults to 12 workers."
+    "jobs=32"
   ];
 }
