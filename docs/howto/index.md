@@ -16,7 +16,8 @@ isn't a step-by-step runbook.
 
 - Build performance analysis (RU): [build-optimization.ru.md](./build-optimization.ru.md)
 
-- TidalCycles setup — moved to the private notes repo (~/notes/music/tidal/), kept out of the public tree on purpose
+- TidalCycles setup — moved to the private notes repo (~/notes/music/tidal/), kept out of the public
+  tree on purpose
 
 - carlactl — console VST router through headless Carla (list/run/route, fzf):
   [carlactl.ru.md](./carlactl.ru.md)
@@ -37,8 +38,8 @@ isn't a step-by-step runbook.
 
 - Options/modules reference: [modules.md](./modules.md)
 
-- Local AI stack (Ollama store layout, llama-server vision, stable-diffusion.cpp T2I, RAG embeddings):
-  [local-llm.md](./local-llm.md)
+- Local AI stack (Ollama store layout, llama-server vision, stable-diffusion.cpp T2I, RAG
+  embeddings): [local-llm.md](./local-llm.md)
 
 - Verified change workflows (add module / flag / package / host / script / secret):
   [agent-recipes.md](./agent-recipes.md)

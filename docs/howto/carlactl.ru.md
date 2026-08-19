@@ -1,33 +1,32 @@
 # carlactl — консольный роутер внешних VST через headless Carla
 
-`carlactl` запускает установленные VST-плагины (Vital, Dexed, Stochas и т.п.) в
-Carla в полностью неинтерактивном режиме и маршрутизирует их аудио-выходы в
-PipeWire-граф. Там, где нужен выбор (какой плагин, какой проект), используется
-fzf; всё остальное работает без GUI и без ввода.
+`carlactl` запускает установленные VST-плагины (Vital, Dexed, Stochas и т.п.) в Carla в полностью
+неинтерактивном режиме и маршрутизирует их аудио-выходы в PipeWire-граф. Там, где нужен выбор (какой
+плагин, какой проект), используется fzf; всё остальное работает без GUI и без ввода.
 
 ## Почему так устроено
 
-- Сборка Carla на этом хосте — **только JACK** (нет нативного PipeWire), а `jackd`
-  отсутствует: JACK эмулирует PipeWire. Поэтому всё запускается под `pw-jack` с
+- Сборка Carla на этом хосте — **только JACK** (нет нативного PipeWire), а `jackd` отсутствует: JACK
+  эмулирует PipeWire. Поэтому всё запускается под `pw-jack` с
   `LD_LIBRARY_PATH=/run/current-system/sw/lib` (тот же паттерн, что у `tidalctl`).
-- Headless-режим Carla (`carla -n`) **требует файл проекта .carxp**. Проект
-  генерируется программно через C-API Carla (`libcarla_standalone2.so`:
-  `engine_init` → `add_plugin` → `save_project`) — GUI не нужен вообще.
-- Плагины в NixOS изолированы в /nix/store; в `/run/current-system/sw/lib/{vst3,vst}`
-  они попадают автоматически через `environment.systemPackages` (см. `*_PATH` в
+- Headless-режим Carla (`carla -n`) **требует файл проекта .carxp**. Проект генерируется программно
+  через C-API Carla (`libcarla_standalone2.so`: `engine_init` → `add_plugin` → `save_project`) — GUI
+  не нужен вообще.
+- Плагины в NixOS изолированы в /nix/store; в `/run/current-system/sw/lib/{vst3,vst}` они попадают
+  автоматически через `environment.systemPackages` (см. `*_PATH` в
   `modules/system/environment.nix`).
 
 ## Команды
 
-| Команда | Что делает |
-| --- | --- |
+| Команда                              | Что делает                                               |
+| ------------------------------------ | -------------------------------------------------------- |
 | `carlactl list [--format vst3,vst2]` | список установленных плагинов (быстро, по именам файлов) |
-| `carlactl run vst3:Vital` | сгенерировать .carxp и запустить Carla headless |
-| `carlactl run` (без аргумента) | выбор плагина через fzf |
-| `carlactl stop` | остановить Carla |
-| `carlactl status` | pid + порты Carla в графе PipeWire |
-| `carlactl route [mix|an|aes|spdif|phones|none]` | куда слать аудио-выход (RME AUX-пары, как в pwroute) |
-| `carlactl projects [имя]` | сохранённые .carxp, запуск через fzf |
+| `carlactl run vst3:Vital`            | сгенерировать .carxp и запустить Carla headless          |
+| `carlactl run` (без аргумента)       | выбор плагина через fzf                                  |
+| `carlactl stop`                      | остановить Carla                                         |
+| `carlactl status`                    | pid + порты Carla в графе PipeWire                       |
+| \`carlactl route \[mix               | an                                                       |
+| `carlactl projects [имя]`            | сохранённые .carxp, запуск через fzf                     |
 
 Состояние: `~/.local/state/carlactl/` (pid, лог, проекты, кэш списка плагинов).
 
@@ -54,19 +53,16 @@ $ carlactl stop
 
 ## Тонкие моменты
 
-- **Формат плагина**: Carla грузит Linux VST2/VST3 (native-бридж). CLAP discovery
-  не поддерживается, LV2 обрабатывается по-другому (bundle = много плагинов) —
-  для LV2 используйте ZestBay/`zest`.
-- **MIDI**: Vital — синтезатор, ему нужен MIDI-вход. В текущей версии маршрутизация
-  MIDI-источника (SuperDirt/Tidal, железная клавиатура, Stochas) ещё не
-  реализована в `carlactl` — порты Carla можно соединить вручную через `pw-link`
-  (например `SuperCollider:midi-out → Carla:midi-in`).
-- **Скорость list**: mega-bundle lsp-plugins.vst3 содержит ~100 плагинов, поэтому
-  имена берутся из имён файлов, а не из discovery (быстро), плюс кэш по mtime
-  каталогов. После пересборки системы кэш инвалидируется сам.
-- **fzf и неинтерактив**: там, где нужен выбор, без аргумента и без TTY команда
-  завершается с понятной ошибкой — в скриптах всегда можно передать `vst3:Имя`
-  или путь.
+- **Формат плагина**: Carla грузит Linux VST2/VST3 (native-бридж). CLAP discovery не поддерживается,
+  LV2 обрабатывается по-другому (bundle = много плагинов) — для LV2 используйте ZestBay/`zest`.
+- **MIDI**: Vital — синтезатор, ему нужен MIDI-вход. В текущей версии маршрутизация MIDI-источника
+  (SuperDirt/Tidal, железная клавиатура, Stochas) ещё не реализована в `carlactl` — порты Carla
+  можно соединить вручную через `pw-link` (например `SuperCollider:midi-out → Carla:midi-in`).
+- **Скорость list**: mega-bundle lsp-plugins.vst3 содержит ~100 плагинов, поэтому имена берутся из
+  имён файлов, а не из discovery (быстро), плюс кэш по mtime каталогов. После пересборки системы кэш
+  инвалидируется сам.
+- **fzf и неинтерактив**: там, где нужен выбор, без аргумента и без TTY команда завершается с
+  понятной ошибкой — в скриптах всегда можно передать `vst3:Имя` или путь.
 
 ## Где что лежит
 
@@ -78,37 +74,33 @@ $ carlactl stop
 
 ## Vital standalone (звук сейчас, без Carla)
 
-Пока headless Carla не отдаёт MIDI-вход, звук проще получать standalone-приложением
-из того же пакета `pkgs.vital` (бинарь `Vital`): встроенная клавиатура, аудио
-авто-подключается (`Vital → game-stereo → RME`).
+Пока headless Carla не отдаёт MIDI-вход, звук проще получать standalone-приложением из того же
+пакета `pkgs.vital` (бинарь `Vital`): встроенная клавиатура, аудио авто-подключается
+(`Vital → game-stereo → RME`).
 
-- Юнит: `systemctl --user start vital-standalone` (pw-jack + `LIBGL_ALWAYS_SOFTWARE=1`,
-  чтобы не было чёрного окна на Wayland/XWayland).
-- Описание юнита: `modules/media/audio/creation-packages.nix`
-  → `systemd.user.services.vital-standalone`.
-- **Вся сессия одной командой: `jam`** (Vital + SuperDirt + MIDI-мост), `jam stop`,
-  `jam status`. Скрипты: `packages/local-bin/bin/{jam,midi-bridge}` (nix-maid
-  кладёт их в `~/.local/bin`).
-- Окно Vital открывается на отдельном воркспейсе 21 (𐍆:vital) — роут по классу
-  в `files/gui/hypr/hyprland.lua`.
+- Юнит: `systemctl --user start vital-standalone` (pw-jack + `LIBGL_ALWAYS_SOFTWARE=1`, чтобы не
+  было чёрного окна на Wayland/XWayland).
+- Описание юнита: `modules/media/audio/creation-packages.nix` →
+  `systemd.user.services.vital-standalone`.
+- **Вся сессия одной командой: `jam`** (Vital + SuperDirt + MIDI-мост), `jam stop`, `jam status`.
+  Скрипты: `packages/local-bin/bin/{jam,midi-bridge}` (nix-maid кладёт их в `~/.local/bin`).
+- Окно Vital открывается на отдельном воркспейсе 21 (𐍆:vital) — роут по классу в
+  `files/gui/hypr/hyprland.lua`.
 
 ## MIDI (Tidal → Vital)
 
 ALSA-секвенсор (`snd-seq`) не грузился из-за `security.lockKernelModules`
-(`kernel.modules_disabled=1` — после старта системы модули ядра вообще не
-загружаются, тихий EPERM). Решение:
+(`kernel.modules_disabled=1` — после старта системы модули ядра вообще не загружаются, тихий EPERM).
+Решение:
 
-- `hosts/odin/hardware.nix` → `boot.initrd.kernelModules`: `snd-seq`,
-  `snd-seq-midi` — грузятся в initrd, ДО блокировки (вступает в силу после
-  пересборки + перезагрузки).
-- MIDI-выход SuperDirt в `~/notes/music/supercollider/superdirt_startup.scd`:
-  `MIDIClient.init` + `~dirt.soundLibrary.addMIDI(\vital, ~midiOut)` + автозапуск
-  `~/.local/bin/midi-bridge`.
+- `hosts/odin/hardware.nix` → `boot.initrd.kernelModules`: `snd-seq`, `snd-seq-midi` — грузятся в
+  initrd, ДО блокировки (вступает в силу после пересборки + перезагрузки).
+- MIDI-выход SuperDirt в `~/notes/music/supercollider/superdirt_startup.scd`: `MIDIClient.init` +
+  `~dirt.soundLibrary.addMIDI(\vital, ~midiOut)` + автозапуск `~/.local/bin/midi-bridge`.
 - Алиас `vital = sound "vital"` — в `~/notes/music/tidal/BootTidal.hs`.
 
-После ребута: `systemctl --user start vital-standalone`, затем `tidalctl start` —
-мост `SuperCollider → Midi Through → Vital` подключается автоматически
-(скрипт `~/.local/bin/midi-bridge`, вызывается из superdirt_startup.scd).
-Vital подписан на Midi Through сам. В Tidal: `d1 $ vital $ note "0 2 4 7"`
-(звук `vital` зарегистрирован через `~dirt.soundLibrary.addMIDI`).
-Если мост не поднялся: `~/.local/bin/midi-bridge` вручную.
+После ребута: `systemctl --user start vital-standalone`, затем `tidalctl start` — мост
+`SuperCollider → Midi Through → Vital` подключается автоматически (скрипт
+`~/.local/bin/midi-bridge`, вызывается из superdirt_startup.scd). Vital подписан на Midi Through
+сам. В Tidal: `d1 $ vital $ note "0 2 4 7"` (звук `vital` зарегистрирован через
+`~dirt.soundLibrary.addMIDI`). Если мост не поднялся: `~/.local/bin/midi-bridge` вручную.

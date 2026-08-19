@@ -1,71 +1,60 @@
 # dsh web: форки вместо патчей — текущая архитектура
 
-Как устроено изменение dsh web GUI (профиль `~/.dsh/profiles/web`) после
-миграции «патчи → форки».
+Как устроено изменение dsh web GUI (профиль `~/.dsh/profiles/web`) после миграции «патчи → форки».
 
 ## Два механизма (было пять)
 
 ### 1. Свои плагины — форк-репозиторий (канонический источник)
 
-Все плагины, написанные под себя, живут в форке
-`~/src/1st-level/@projects/dsh-web-ui` (remote `fork` → `neg-serg/dsh-web-ui`,
-`upstream` → `zhu1090093659/dsh-web-ui`), в `packages/`:
+Все плагины, написанные под себя, живут в форке `~/src/1st-level/@projects/dsh-web-ui` (remote
+`fork` → `neg-serg/dsh-web-ui`, `upstream` → `zhu1090093659/dsh-web-ui`), в `packages/`:
 
-| Пакет | Что делает |
-|-------|-----------|
-| `dsh-terminal-ui` | тема neg (navy glass, Iosevka, широкая колонка) |
-| `dsh-gui-tweaks` | ответы цифрами в диалогах, разворот bash-строк, фокус композера, todo_write → todo-список, ask_user_question → карточка вопроса, мысли свёрнуты + код с ограничением высоты |
-| `dsh-prompt` | терминальный плейсхолдер `❯_` в композере |
-| `dsh-layout-slash` | ведущая `.` (ru-раскладка) → `/` + переключение на us |
-| `dsh-preview` | раздача картинок воркспейсов на `/dsh-preview/<path>` |
+| Пакет              | Что делает                                                                                                                                                                  |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dsh-terminal-ui`  | тема neg (navy glass, Iosevka, широкая колонка)                                                                                                                             |
+| `dsh-gui-tweaks`   | ответы цифрами в диалогах, разворот bash-строк, фокус композера, todo_write → todo-список, ask_user_question → карточка вопроса, мысли свёрнуты + код с ограничением высоты |
+| `dsh-prompt`       | терминальный плейсхолдер `❯_` в композере                                                                                                                                   |
+| `dsh-layout-slash` | ведущая `.` (ru-раскладка) → `/` + переключение на us                                                                                                                       |
+| `dsh-preview`      | раздача картинок воркспейсов на `/dsh-preview/<path>`                                                                                                                       |
 
-Подключение: профильная `node_modules/<name>` — это **симлинк** на пакет в
-форке (паттерн `TUI_FORK` из `dsh-market.nix`; для gui-tweaks/prompt/
-layout-slash — их модули в `modules/user/nix-maid/apps/`). Правка исходника
-в форке применяется обычным F5 — сервер отдаёт бандлы с диска, rev = sha1
-содержимого, `cache-control: no-cache`. Никаких пересборок.
+Подключение: профильная `node_modules/<name>` — это **симлинк** на пакет в форке (паттерн `TUI_FORK`
+из `dsh-market.nix`; для gui-tweaks/prompt/ layout-slash — их модули в
+`modules/user/nix-maid/apps/`). Правка исходника в форке применяется обычным F5 — сервер отдаёт
+бандлы с диска, rev = sha1 содержимого, `cache-control: no-cache`. Никаких пересборок.
 
-Если чекаут форка отсутствует (свежая машина до `git clone`), плагин
-пропускается с предупреждением — устаревшие копии в Nix не хранятся.
+Если чекаут форка отсутствует (свежая машина до `git clone`), плагин пропускается с предупреждением
+— устаревшие копии в Nix не хранятся.
 
 ### 2. Чужие бандлы — компактные строковые карты (намеренно)
 
-Четыре сторонних пакета (скомпилированный код, не наш) содержат китайские
-UI-строки, не подчиняющиеся локали:
+Четыре сторонних пакета (скомпилированный код, не наш) содержат китайские UI-строки, не
+подчиняющиеся локали:
 
-- `@0xsline/dsh-spotlight` (32 строки), `dsh-free-search` (6),
-  `dsh-plugin-vetting` ×3 файла (31), `dsh-file-upload` (2) — карта
-  `modules/user/nix-maid/apps/dsh-web-en-assets/i18n.json`,
+- `@0xsline/dsh-spotlight` (32 строки), `dsh-free-search` (6), `dsh-plugin-vetting` ×3 файла (31),
+  `dsh-file-upload` (2) — карта `modules/user/nix-maid/apps/dsh-web-en-assets/i18n.json`,
   применяется патчером `patch.mjs` (идемпотентно, с маркерами и `.orig`).
-- Базовый веб-бандл самого dsh — Nix-пакет
-  `packages/dsh/web-ui-en` (`patch.py` на build-time), профильный
-  `@deepseek-ai` симлинк указывает на него (`dshAiStore` в dsh-market.nix).
-- TUI-профиль (`~/.dsh/profiles/tui`) — `dsh-tui-ru` (те же patch.mjs +
-  карта; сотни строк).
+- Базовый веб-бандл самого dsh — Nix-пакет `packages/dsh/web-ui-en` (`patch.py` на build-time),
+  профильный `@deepseek-ai` симлинк указывает на него (`dshAiStore` в dsh-market.nix).
+- TUI-профиль (`~/.dsh/profiles/tui`) — `dsh-tui-ru` (те же patch.mjs + карта; сотни строк).
 
-**Почему не форки:** эти пакеты — чужой скомпилированный код с чужими
-зависимостями. Пример: `dsh-file-upload` весит 19 МБ (nested pdfjs-dist,
-mammoth, markitdown-node, read-excel-file) — вендор такого в свой репозиторий
-замораживает версии, тащит лицензии и зависимые деревья, а правка там — 2
-строки. Строковая карта толерантна к версиям (пропускает отсутствующие ключи)
-и не дублирует код. Это правильный инструмент для чужого кода; форки — для
-своего.
+**Почему не форки:** эти пакеты — чужой скомпилированный код с чужими зависимостями. Пример:
+`dsh-file-upload` весит 19 МБ (nested pdfjs-dist, mammoth, markitdown-node, read-excel-file) —
+вендор такого в свой репозиторий замораживает версии, тащит лицензии и зависимые деревья, а правка
+там — 2 строки. Строковая карта толерантна к версиям (пропускает отсутствующие ключи) и не дублирует
+код. Это правильный инструмент для чужого кода; форки — для своего.
 
 ## Как добавить свой плагин
 
 1. Создать пакет в форке: `packages/<name>/` с `package.json`
-   (`"dsh": { "client": { "inject": [], "platform": "web" } }`, exports
-   `.`/`./client`), `lib/index.js` (host-половина, `apply`+`inject`),
-   `lib/client.js` (браузерная, `window.__ModuleLoader__.load({ id, factory })`).
-2. В `/etc/nixos` — модуль вида gui-tweaks: ensure-скрипт делает
-   `ln -sfn <fork>/packages/<name>` в профиль + дописывает insert-строку в
-   `cordis.patch.yml`; активация + systemd user service.
-3. `git -C ~/src/1st-level/@projects/dsh-web-ui push fork` — чтобы пакет
-   доехал до остальных машин.
+   (`"dsh": { "client": { "inject": [], "platform": "web" } }`, exports `.`/`./client`),
+   `lib/index.js` (host-половина, `apply`+`inject`), `lib/client.js` (браузерная,
+   `window.__ModuleLoader__.load({ id, factory })`).
+1. В `/etc/nixos` — модуль вида gui-tweaks: ensure-скрипт делает `ln -sfn <fork>/packages/<name>` в
+   профиль + дописывает insert-строку в `cordis.patch.yml`; активация + systemd user service.
+1. `git -C ~/src/1st-level/@projects/dsh-web-ui push fork` — чтобы пакет доехал до остальных машин.
 
 ## Обновление форка за апстримом
 
-`git fetch upstream && git merge upstream/main` — свои пакеты не пересекаются
-с апстримом (их там нет), конфликты только если апстрим меняет общий код.
-Хеш-классы CSS-modules (например `_card_1b2ny_13`) привязаны к версии dsh —
-после апгрейда перевывести по grep в отданном бандле.
+`git fetch upstream && git merge upstream/main` — свои пакеты не пересекаются с апстримом (их там
+нет), конфликты только если апстрим меняет общий код. Хеш-классы CSS-modules (например
+`_card_1b2ny_13`) привязаны к версии dsh — после апгрейда перевывести по grep в отданном бандле.

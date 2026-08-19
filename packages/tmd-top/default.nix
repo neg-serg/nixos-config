@@ -82,26 +82,28 @@ let
   # (python-only; non-python entries like hooks/C libs are kept as-is).
   # nixpkgs' typing-extensions is replaced with the pinned 4.9.0 so the closure
   # does not end up with two versions of typing_extensions.
-  noCheck = pkg: let
-    # Replace nixpkgs' typing-extensions with the pinned 4.9.0 (avoids a
-    # closure with two typing_extensions versions), recurse into python deps,
-    # keep non-python entries (hooks/C libs) as-is.
-    fix =
-      d:
-      if d == pypi.typing-extensions then
-        typing-extensions
-      else if d ? overridePythonAttrs then
-        noCheck d
-      else
-        d;
-  in
-  pkg.overridePythonAttrs (old: {
-    doCheck = false;
-    nativeBuildInputs = map fix (old.nativeBuildInputs or [ ]);
-    build-system = map fix (old.build-system or [ ]);
-    dependencies = map fix (old.dependencies or [ ]);
-    propagatedBuildInputs = map fix (old.propagatedBuildInputs or [ ]);
-  });
+  noCheck =
+    pkg:
+    let
+      # Replace nixpkgs' typing-extensions with the pinned 4.9.0 (avoids a
+      # closure with two typing_extensions versions), recurse into python deps,
+      # keep non-python entries (hooks/C libs) as-is.
+      fix =
+        d:
+        if d == pypi.typing-extensions then
+          typing-extensions
+        else if d ? overridePythonAttrs then
+          noCheck d
+        else
+          d;
+    in
+    pkg.overridePythonAttrs (old: {
+      doCheck = false;
+      nativeBuildInputs = map fix (old.nativeBuildInputs or [ ]);
+      build-system = map fix (old.build-system or [ ]);
+      dependencies = map fix (old.dependencies or [ ]);
+      propagatedBuildInputs = map fix (old.propagatedBuildInputs or [ ]);
+    });
 
   # nixpkgs' aiohappyeyeballs folds its *docs* extras (furo/myst-parser/sphinx)
   # into build-system; keep only the real build backend and drop the doc output
@@ -114,8 +116,9 @@ let
 
   aiohttp = pypi.aiohttp.overridePythonAttrs (old: {
     doCheck = false;
-    dependencies =
-      map (d: if d == pypi.aiohappyeyeballs then aiohappyeyeballs else noCheck d) old.dependencies;
+    dependencies = map (
+      d: if d == pypi.aiohappyeyeballs then aiohappyeyeballs else noCheck d
+    ) old.dependencies;
   });
 
   # geoip2 4.8.0 wants maxminddb>=2.5.1,<3.0; nixpkgs ships 3.0.0, so pin 2.6.2.

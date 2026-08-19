@@ -28,36 +28,36 @@ let
   pkg = ./dsh-widgets;
 
   ensureWidgets = pkgs.writeShellScript "dsh-widgets-ensure" ''
-    set -eu
-    export PATH=/run/current-system/sw/bin:$PATH
-    PROFILE_DIR="${homeDir}/.dsh/profiles/web"
-    P="$PROFILE_DIR/node_modules/dsh-widgets"
-    mkdir -p "$P/lib"
-    changed=0
-    for f in \
-      package.json \
-      lib/index.js lib/tools.js lib/client.js
-    do
-      if [ ! -f "$P/$f" ]; then
-        cp "${pkg}/$f" "$P/$f"
-        changed=1
-      fi
-    done
-    PATCH="$PROFILE_DIR/cordis.patch.yml"
-    if ! grep -q 'dsh-widgets' "$PATCH" 2>/dev/null; then
-      cat >> "$PATCH" <<'YAML'
+        set -eu
+        export PATH=/run/current-system/sw/bin:$PATH
+        PROFILE_DIR="${homeDir}/.dsh/profiles/web"
+        P="$PROFILE_DIR/node_modules/dsh-widgets"
+        mkdir -p "$P/lib"
+        changed=0
+        for f in \
+          package.json \
+          lib/index.js lib/tools.js lib/client.js
+        do
+          if [ ! -f "$P/$f" ]; then
+            cp "${pkg}/$f" "$P/$f"
+            changed=1
+          fi
+        done
+        PATCH="$PROFILE_DIR/cordis.patch.yml"
+        if ! grep -q 'dsh-widgets' "$PATCH" 2>/dev/null; then
+          cat >> "$PATCH" <<'YAML'
 
-# dsh-widgets - json tool + JSON tree card, and subagent/workflow/ralph/goal/jobs cards (module: dsh-widgets.nix).
-- insert:
-    - id: widgets
-      name: dsh-widgets
-YAML
-      changed=1
-    fi
-    if [ "$changed" = 1 ]; then
-      export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-      systemctl --user restart dsh.service 2>/dev/null || true
-    fi
+    # dsh-widgets - json tool + JSON tree card, and subagent/workflow/ralph/goal/jobs cards (module: dsh-widgets.nix).
+    - insert:
+        - id: widgets
+          name: dsh-widgets
+    YAML
+          changed=1
+        fi
+        if [ "$changed" = 1 ]; then
+          export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+          systemctl --user restart dsh.service 2>/dev/null || true
+        fi
   '';
 in
 {

@@ -7,19 +7,19 @@ unreachable.
 ## LAN access (sing-box only)
 
 The sing-box proxy also listens on **port `10810` on all interfaces** (`0.0.0.0`) — a copy of the
-same proxy for devices on the local network. Localhost port `10808` stays passwordless, and the
-LAN port is **passwordless too** (mirrors the local port; the firewall restricts it to private
-ranges). If auth is ever re-enabled, the SOPS secret `secrets/home/proxy-lan.sops.yaml` (decrypted
-to `/run/secrets/proxy-lan`) still carries the credentials and the script heal syncs them into the
+same proxy for devices on the local network. Localhost port `10808` stays passwordless, and the LAN
+port is **passwordless too** (mirrors the local port; the firewall restricts it to private ranges).
+If auth is ever re-enabled, the SOPS secret `secrets/home/proxy-lan.sops.yaml` (decrypted to
+`/run/secrets/proxy-lan`) still carries the credentials and the script heal syncs them into the
 config.
 
-- **Firewall:** the rule lives in `modules/system/net/firewall.nix` — `extraCommands`
-  appends three `iptables -A nixos-fw … tcp --dport 10810 -j nixos-fw-accept` rules for the
-  private ranges `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` (they run before the final drop
-  rule in the `nixos-fw` chain). Only private LAN sources can connect; the proxy is never
-  reachable from the internet. (The firewall stays on the iptables backend, which runs on the
-  nf_tables kernel via iptables-nft; `extraInputRules` is nftables-only in NixOS 26.05, and
-  switching the backend would blacklist `ip_tables` and risk podman/container networking.)
+- **Firewall:** the rule lives in `modules/system/net/firewall.nix` — `extraCommands` appends three
+  `iptables -A nixos-fw … tcp --dport 10810 -j nixos-fw-accept` rules for the private ranges
+  `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` (they run before the final drop rule in the
+  `nixos-fw` chain). Only private LAN sources can connect; the proxy is never reachable from the
+  internet. (The firewall stays on the iptables backend, which runs on the nf_tables kernel via
+  iptables-nft; `extraInputRules` is nftables-only in NixOS 26.05, and switching the backend would
+  blacklist `ip_tables` and risk podman/container networking.)
 - Use from another device:
   ```sh
   curl -x socks5://192.168.2.87:10810 https://ifconfig.me
@@ -150,13 +150,13 @@ proxy status
 
 **Possible causes:**
 
-| Symptom                                                                            | Likely cause                                                             | Fix                                                             |
-| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------- |
-| Xray is running (hardcoded server is dead)                                         | Xray was started manually but its server is unreachable                  | `proxy on` to switch to sing-box                                |
-| Neither Xray nor sing-box is running                                               | No proxy active (e.g. `proxy off` was run)                               | `proxy on`                                                      |
-| sing-box is running but internet still fails                                       | All nodes are stale                                                      | `proxy refresh` to fetch fresh nodes                            |
-| `Connection refused` on 10808                                                      | Nothing is listening                                                     | Start a proxy                                                   |
-| `curl --noproxy '*' -s https://example.com` fails but `proxy status` shows RUNNING | sing-box nodes are all dead; or no fallback + no subscriptions available | `proxy refresh` and check the log at `/tmp/sing-box-trojan.log` |
+| Symptom                                                                                                                                                    | Likely cause                                                                                   | Fix                                                                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Xray is running (hardcoded server is dead)                                                                                                                 | Xray was started manually but its server is unreachable                                        | `proxy on` to switch to sing-box                                                                                       |
+| Neither Xray nor sing-box is running                                                                                                                       | No proxy active (e.g. `proxy off` was run)                                                     | `proxy on`                                                                                                             |
+| sing-box is running but internet still fails                                                                                                               | All nodes are stale                                                                            | `proxy refresh` to fetch fresh nodes                                                                                   |
+| `Connection refused` on 10808                                                                                                                              | Nothing is listening                                                                           | Start a proxy                                                                                                          |
+| `curl --noproxy '*' -s https://example.com` fails but `proxy status` shows RUNNING                                                                         | sing-box nodes are all dead; or no fallback + no subscriptions available                       | `proxy refresh` and check the log at `/tmp/sing-box-trojan.log`                                                        |
 | Connections work (login OK) but **domain** traffic fails/slows down (`lookup <domain>: exchange4/6: dial tcp [2001:4860:4860::8888]:443 …` in the journal) | Node(s) resolve domains server-side with a broken resolver (default dns.google DoT, IPv6-only) | Config already routes via client-side resolve (see "DNS" below); run `proxy gen` + restart `sing-box-proxy` to re-heal |
 
 ### DNS
