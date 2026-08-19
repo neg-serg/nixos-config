@@ -1,0 +1,12 @@
+{
+  "name": "dsh-ttsr",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Time-traveling stream rules: advisory correction injection on the agent's own output (agent plane; ported from omp hindsight/omfg-user).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}

@@ -33,6 +33,7 @@ in
       && n != "dsh-secrets-masker"
       && n != "dsh-lsp"
       && n != "dsh-eval"
+      && n != "dsh-ttsr"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
