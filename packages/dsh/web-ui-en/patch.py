@@ -234,6 +234,22 @@ CONN_REPL = [
     ('description: "复杂任务"', 'description: "Complex tasks"'),
 ]
 
+# dsh-client-ui-trajectory/lib/client.js: run_code dispatches nested tool calls
+# (tool/code-dispatch events); some sub-tools (e.g. platform_search) return
+# their result `content` as a plain string, while the trajectory ledger's
+# subtool renderer assumes an array of content blocks (summarizeResult /
+# detailResult call .filter()/.map() on it). A string content throws
+# "TypeError: node.content.filter is not a function", which crashes the
+# 'conversation.view' slot and blanks the conversation area after Inspect.
+# Normalize non-array content into a single text block at the source point
+# (childResult in the compiled bundle).
+TRAJECTORY_SUB_CONTENT_OLD = "content: data.content ?? []"
+TRAJECTORY_SUB_CONTENT_NEW = (
+    "content: Array.isArray(data.content) ? data.content : "
+    'typeof data.content === "string" && data.content !== "" ? '
+    '[{ type: "text", text: data.content }] : []'
+)
+
 
 def patch_bytes(
     data: bytes, table: list[tuple[str, str]]
@@ -401,6 +417,31 @@ def patch_workspace_images(root: pathlib.Path) -> int:
     return 1
 
 
+def patch_trajectory_subtool_content(root: pathlib.Path) -> int:
+    """Normalize run_code sub-tool result content in the trajectory bundle."""
+    traj = root / "dsh-client-ui-trajectory" / "lib" / "client.js"
+    if not traj.exists():
+        print(f"skip (absent): {traj.relative_to(root)}")
+        return 0
+    text = traj.read_text(encoding="utf-8")
+    if TRAJECTORY_SUB_CONTENT_NEW in text:
+        print("note: trajectory subtool content patch already applied")
+        return 0
+    if TRAJECTORY_SUB_CONTENT_OLD not in text:
+        print(
+            "WARNING: trajectory childResult anchor not found — "
+            "subtool string content not normalized",
+            file=sys.stderr,
+        )
+        return 0
+    text = text.replace(
+        TRAJECTORY_SUB_CONTENT_OLD, TRAJECTORY_SUB_CONTENT_NEW, 1
+    )
+    traj.write_text(text, encoding="utf-8")
+    print(f"patched: {traj.relative_to(root)} (subtool string content)")
+    return 1
+
+
 def main() -> int:
     root = pathlib.Path(sys.argv[1])
     if not root.is_dir():
@@ -434,6 +475,7 @@ def main() -> int:
         root, "dsh-client-ui-primitives/lib/index.js", PRIM_REPL, "primitives"
     )
     patched += patch_workspace_images(root)
+    patched += patch_trajectory_subtool_content(root)
     patched += patch_simple(
         root, "dsh-client-locale/lib/client.js", LOCALE_REPL, "locale"
     )
