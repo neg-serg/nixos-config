@@ -13,4 +13,6 @@ _inputs: _final: prev:
   # Python libs for the CamillaGUI backend (camilladsp / camilladsp_plot modules)
   pycamilladsp = prev.callPackage ../pycamilladsp { };
   pycamilladsp-plot = prev.callPackage ../pycamilladsp-plot { };
+  # VapourSynth NCNN (Vulkan) plugin: AI upscale/interp/denoise in VS (GPL-3)
+  vsncnn = prev.callPackage ../vsncnn { };
 }
