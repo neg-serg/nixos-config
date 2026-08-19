@@ -998,14 +998,28 @@ window.__ModuleLoader__.load({
       },
       buildViewNode: (context) => {
         if (context.start === void 0) return null;
+        // The runtime's ConversationNodeAssembler.buildNode REQUIRES the
+        // materialized node to carry target/anchorSeq/location/visibility
+        // (a missing target throws "returned target ... while building", and
+        // without visibility the node is dropped from the chat order), and
+        // the chat slot components read the rendered content from `data`.
+        // Keep this shape in lockstep with dsh-client-ui-workflow-run's
+        // workflowRunDefinition.buildViewNode.
         return {
           key: context.key,
           kind: "bash-live",
-          command: context.state.command,
-          output: context.state.output,
-          status: context.state.status,
-          detail: context.state.detail,
-          streamCapped: context.state.streamCapped,
+          id: context.id,
+          target: "chat",
+          anchorSeq: context.start.event.seq,
+          location: context.start.location,
+          visibility: "visible",
+          data: {
+            command: context.state.command,
+            output: context.state.output,
+            status: context.state.status,
+            detail: context.state.detail,
+            streamCapped: context.state.streamCapped,
+          },
         };
       },
     };
