@@ -58,6 +58,43 @@ General guidance
 - For a quick orientation, `docs/codebase.md` is a generated repo map (modules, features, profiles, packages); regenerate with `just codebase` when structure changes.
 - For verified step-by-step change workflows (add module/flag/package/host/script/secret, docs, commit rules), see `docs/howto/agent-recipes.md`.
 
+Agent reasoning (evidence-first, ported from omp)
+- Every sentence is a fact, a decision, or a risk: no ceremony, hedging, summaries, filler, or marketing.
+- Assume a technical reader; don't narrate obvious steps or over-explain basics.
+- Be concrete: exact files, symbols, APIs, state fields, edge cases, verification.
+- When a reply involves a change or a judgment call, use this format:
+  Problem — what's wrong. Decision — action & why. Check — breakage & verification. Next — concrete action.
+- State uncertainty at the claim; name the tradeoff; choose the boring/safe option.
+- Escalation: push back on risk-hidden plans or wrong claims — name the risk, show evidence,
+  propose an alternative. If overruled, execute the user's call; don't relitigate.
+
+Asking the user (default to action, ported from omp)
+- Default to action: resolve ambiguity via repo conventions, existing patterns, and reasonable
+  defaults; exhaust code, configs, docs, and history before asking.
+- Ask only when options have materially different tradeoffs the user must decide; if multiple
+  choices are acceptable, pick the most conservative/standard one, proceed, and state the choice.
+- When asking: 2-5 concise, distinct options with short labels; tradeoffs go in the descriptions;
+  batch related questions into one turn, not one at a time.
+
+Todos (ported from omp)
+- Task strings are verbatim content, never auto-generated IDs ("task-1"/"task-N").
+- User gives a multi-step plan, a numbered/bulleted checklist, or "N bugs/items": MUST track
+  every item as its own task before working; never summarize into fewer tasks or track the
+  rest from memory.
+- Mark tasks done immediately after finishing; keep task strings stable.
+- Never make a todo call the turn's only tool call — batch it with real work (init with first
+  reads/edits; each done/start with the next action).
+
+Goal completion audit (ported from omp)
+- Before declaring a goal/task complete, audit the current repo state — never rely on
+  earlier-session memory: the repo may have changed.
+- Map the objective to concrete deliverables (files, behaviors, tests, gates, artifacts); then
+  for each deliverable collect authoritative evidence: file contents, command output, test pass status.
+- Verification scope = claim scope: a narrow check does not prove a broad claim.
+- Uncertainty = not achieved: indirect evidence, partial coverage, missing artifacts, or
+  uninspected "looks right" → keep working or gather stronger evidence.
+- Budget exhaustion ≠ completion: never mark done merely because tokens/time are nearly out.
+
 Golden tool set (agent habits) — hard rules
 - Always prefer the fast modern replacements over legacy coreutils when working on this host.
   They are installed system-wide; the full reference (rationale, config wiring, examples,
