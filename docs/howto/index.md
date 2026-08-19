@@ -47,5 +47,26 @@ isn't a step-by-step runbook.
 - Verified change workflows (add module / flag / package / host / script / secret):
   [agent-recipes.md](./agent-recipes.md)
 
+- Agent-гарды: восстановление из циклов и остановок (порт из omp / oh-my-opencode) (RU):
+  [agent-guards.ru.md](./agent-guards.ru.md)
+
+- Категории намерений вместо имён моделей (порт из oh-my-opencode) (RU):
+  [agent-categories.ru.md](./agent-categories.ru.md)
+
+- Исследование omp / oh-my-opencode: что добыто и как менять план порта (RU):
+  [agent-port-research.ru.md](./agent-port-research.ru.md)
+
+- Advisor-паттерн: советник поверх агента (порт из omp) (RU):
+  [agent-advisor.ru.md](./agent-advisor.ru.md)
+
+- Память: двухстадийный конвейер extract → consolidate → SKILL.md (порт из omp) (RU):
+  [agent-memory-pipeline.ru.md](./agent-memory-pipeline.ru.md)
+
+- Контракт субагента: Role/Context/Plan/Coop/Completion + yield-протокол (порт из omp) (RU):
+  [subagent-contract.ru.md](./subagent-contract.ru.md)
+
+- Фичи харнесса: бэклог (hashline, идеи хуков из oh-my-opencode) (RU):
+  [agent-harness-features.ru.md](./agent-harness-features.ru.md)
+
 - Passwordless sudo via TPM (non-exportable SSH key + pam_ssh_agent_auth, no manual actions) (RU):
   [tpm-sudo.ru.md](./tpm-sudo.ru.md)
