@@ -36,6 +36,12 @@ diff:
     @files=$(find /nix/var/nix/profiles -maxdepth 1 -name "system-*-link" | sort -V | tail -n 2); \
     nix run nixpkgs#dix -- $files
 
+# Copy the live lazy.nvim lockfile (~/.local/state) into the repo snapshot.
+# Run after :Lazy sync in nvim; shows the diff, then commit manually.
+nvim-lock-sync:
+    cp "$HOME/.local/state/nvim/lazy-lock.json" files/nvim/lazy-lock.json
+    git diff --stat -- files/nvim/lazy-lock.json
+
 
 # --- Repo-wide workflows ---------------------------------------------------------
 fmt:
