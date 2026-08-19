@@ -431,6 +431,37 @@ let
     YAML
             fi
 
+            # dsh-session-archive: sidebar "Archive" panel — browse and reopen
+            # sessions archived via the Workspace browser (they are hidden
+            # from every grouping surface, so the GUI otherwise loses them).
+            # Canonical source is the dsh-web-ui fork checkout
+            # (packages/dsh-session-archive): symlink into the profile, same
+            # pattern as dsh-terminal-ui. If the fork checkout is missing the
+            # plugin is skipped with a warning (fresh machine before clone).
+            SA="$PROFILE_DIR/node_modules/dsh-session-archive"
+            SA_FORK="${homeDir}/src/1st-level/@projects/dsh-web-ui/packages/dsh-session-archive"
+            if [ -d "$SA_FORK" ]; then
+              # Replace a plain copy (from before the fork migration) with the symlink.
+              if [ ! -L "$SA" ]; then
+                rm -rf -- "$SA" 2>/dev/null || true
+              fi
+              ln -sfn "$SA_FORK" "$SA"
+            else
+              echo "dsh-session-archive: fork checkout missing at $SA_FORK — plugin not installed" >&2
+            fi
+
+            # Ensure the profile patch carries the session-archive row (insert form).
+            if ! grep -q 'dsh-session-archive' "$PATCH" 2>/dev/null; then
+              cat >> "$PATCH" <<'YAML'
+
+    # dsh-session-archive - sidebar Archive panel: reopen archived sessions
+    # (package lives in node_modules/dsh-session-archive, see dsh-market.nix).
+    - insert:
+        - id: dsh-session-archive
+          name: dsh-session-archive
+    YAML
+            fi
+
             # dsh-preview: serves image files from the user's workspaces, home
             # and tmp dirs to the browser at /dsh-preview/<path>. The markdown
             # renderer rewrites non-URL image sources to this route, so
