@@ -1,0 +1,7 @@
+#!/bin/bash
+# midi2tidal: polyphonic MIDI file → TidalCycles code (midi_to_tidalcycles).
+# Usage: midi2tidal [options] file.mid   (see --help for -q/-l/-a/-c/-j etc.)
+# LD_LIBRARY_PATH: numpy binary wheel needs libstdc++/libz on NixOS.
+exec env LD_LIBRARY_PATH="/nix/store/xxvi9cza3ffq02v8rhrmh39lqx325217-xgcc-15.3.0-lib/lib:/nix/store/78x9i5x1wpqw4kq0h39b8f35abcv156h-zlib-1.3.2/lib" \
+  "$HOME/src/music-ai/venv-midi2tidal/bin/python" \
+  "$HOME/src/music-ai/midi_to_tidalcycles/src/midi_to_tidalcycles.py" "$@"
