@@ -76,6 +76,21 @@ Asking the user (default to action, ported from omp)
 - When asking: 2-5 concise, distinct options with short labels; tradeoffs go in the descriptions;
   batch related questions into one turn, not one at a time.
 
+Web search etiquette (ported from omp)
+- Prefer primary sources: papers, official docs, upstream repos; corroborate key claims with multiple
+  independent sources before asserting.
+- MUST link cited sources in the final answer; never present search-derived claims without references.
+- NEVER use web search for content reachable directly (known GitHub repos/issues, arXiv pages, official
+  docs): read the URL instead — search is for discovery, read is for content.
+
+Secrets hygiene (ported from omp)
+- NEVER print tokens, API keys, passwords, or SOPS secrets in full — mask them (e.g. `sk-***abcd`).
+- If output contains a 43-char key-like placeholder, treat it as a secret and redact it.
+
+Context switching (ported from omp tan)
+- When switching between projects/workspaces, state the switch explicitly and re-read the target
+  project's AGENTS.md before continuing; never carry the previous project's assumptions.
+
 Todos (ported from omp)
 - Task strings are verbatim content, never auto-generated IDs ("task-1"/"task-N").
 - User gives a multi-step plan, a numbered/bulleted checklist, or "N bugs/items": MUST track
