@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# ssh-hosts — list dsh-ssh hosts (dsh web API on loopback).
+set -euo pipefail
+python3 - <<'PY'
+import json, sys, urllib.request
+try:
+    with urllib.request.urlopen('http://127.0.0.1:3080/api/dsh-ssh/hosts', timeout=5) as r:
+        hosts = json.load(r).get('hosts', [])
+except Exception as e:
+    print(f'ssh-hosts: cannot reach dsh web API: {e}', file=sys.stderr)
+    sys.exit(1)
+if not hosts:
+    print('no hosts configured')
+    sys.exit(0)
+w = max(len(h['alias']) for h in hosts)
+for h in hosts:
+    env = h.get('environment') or '-'
+    tags = ','.join(h.get('tags', [])) or '-'
+    print(f"{h['alias'].ljust(w)}  {h['host']}:{h.get('port', 22)}  user={h['user']}  auth={h.get('auth','?')}  env={env}  tags={tags}")
+PY
