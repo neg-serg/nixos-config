@@ -30,6 +30,9 @@ isn't a step-by-step runbook.
 
 - dsh-osm — OpenStreetMap tools + map card in dsh (RU): [dsh-osm.ru.md](./dsh-osm.ru.md)
 
+- dsh-liangshen-fork — форк пресета LiangShen (anchored-standard) как пресет по умолчанию (RU):
+  [dsh-liangshen-fork.ru.md](./dsh-liangshen-fork.ru.md)
+
 - dsh-status-rotator — live turn-status phrases instead of "Deep diving..." (RU):
   [dsh-status-rotator.ru.md](./dsh-status-rotator.ru.md)
 
