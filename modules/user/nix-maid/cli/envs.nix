@@ -30,6 +30,16 @@ in
 
     # Custom Env Vars (Global / Miscellaneous)
     CRAWL_DIR = "${dataHome}/crawl/";
+
+    # RAG answer model (rag-search --llm). Options (all already in the ollama store):
+    #   qwen3.5:27b                  (17GB)  — best quality/speed/RU balance (default)
+    #   gemma4:12b                   (7.6GB) — fast, fits 16GB VRAM fully
+    #   gemma4:26b                   (17GB)  — Gemma 4 quality, multilingual
+    #   qwen3:32b                    (20GB)  — solid, slightly older gen
+    #   llama3.3:70b-instruct-q5_K_M (49GB, CPU) — max quality, slow (~2-4 tok/s)
+    #   qwen3:235b-a22b              (142GB, CPU/RAM MoE) — heaviest, ~1 tok/s (future)
+    # Per-run override: RAG_LLM_MODEL=<model> rag-search search --llm "..."
+    RAG_LLM_MODEL = "qwen3.5:27b";
     __GL_VRR_ALLOWED = "1";
     GRIM_DEFAULT_DIR = "${homeDir}/pic/shots";
     LIBSEAT_BACKEND = "logind";
