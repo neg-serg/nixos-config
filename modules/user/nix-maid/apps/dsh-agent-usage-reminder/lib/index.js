@@ -10,6 +10,8 @@
  * cordis.patch.yml insert row, same as dsh-osm / dsh-gui-tweaks.
  */
 
+import { createUserMessage } from '@deepseek-ai/dsh-llm'
+
 export const name = 'dsh-agent-usage-reminder'
 
 const DEFAULTS = { maxReminders: 3 }
@@ -57,8 +59,14 @@ export function apply(ctx, config = {}) {
     }
 
     s.reminded += 1
+    // additionalContexts are MESSAGES (they are appended as user/message):
+    // a bare {source, text} shape yields content: null and crashes the LLM
+    // serializer with "reading 'some'" — build a real user message instead.
     const additionalContexts = [
-      { source: { kind: 'plugin', plugin: 'agent-usage-reminder' }, text: REMINDER_TEXT },
+      createUserMessage({
+        content: [{ type: 'text', text: REMINDER_TEXT }],
+        source: { kind: 'plugin', plugin: 'agent-usage-reminder', form: 'instructions' },
+      }),
       ...(downstream.additionalContexts ?? []),
     ]
     return { ...downstream, additionalContexts }
