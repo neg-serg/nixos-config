@@ -1,0 +1,33 @@
+#!/bin/sh
+# rave: neural audio VAE (acids-ircam RAVE v2) — encode/decode audio through a
+# trained model. Models in /zero/ai/music/rave (guitar_iil 48k, VCTK speech,
+# crozzoli ensemble).
+# Usage: rave <model.ts> <input.wav> <output.wav>
+set -eu
+
+BASE="$HOME/src/music-ai"
+TORCHLIB="$BASE/venv-rave/lib/python3.12/site-packages/torch/lib"
+for lib in "$TORCHLIB" \
+  /nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib \
+  /nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib
+do
+  [ -d "$lib" ] && LD_LIBRARY_PATH="$lib:${LD_LIBRARY_PATH:-}"
+done
+export LD_LIBRARY_PATH
+
+MODEL="${1:?usage: rave model.ts input.wav output.wav}"
+SRC="${2:?}"
+OUT="${3:?}"
+SR="${4:-48000}"   # model sample rate (guitar_iil/VCTK/crozzoli = 48000)
+
+"$BASE/venv-rave/bin/python" -c "
+import sys, torch, librosa, soundfile as sf
+m = torch.jit.load('$MODEL')
+x, sr = librosa.load('$SRC', sr=int('$SR'), mono=True)
+x = torch.tensor(x).unsqueeze(0).unsqueeze(0)
+with torch.no_grad():
+    z = m.encode(x)
+    y = m.decode(z)
+sf.write('$OUT', y[0,0].numpy(), int('$SR'))
+print(f'encoded z: {tuple(z.shape)} | wrote $OUT')
+"
