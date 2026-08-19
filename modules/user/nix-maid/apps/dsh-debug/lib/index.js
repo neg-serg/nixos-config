@@ -19,6 +19,8 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 
 export const name = 'dsh-debug'
 
+export const inject = ['tools']
+
 const CRLF = String.fromCharCode(13) + String.fromCharCode(10)
 
 /** Built-in DAP adapter table (mirror of omp dap/defaults.json, host-relevant subset). */
