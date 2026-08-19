@@ -17,26 +17,21 @@ Scope {
     readonly property bool disableBar: ((root.quickshell.env("QS_DISABLE_BAR") || "") === "1")
                                      || ((root.quickshell.env("QS_MINIMAL_UI") || "") === "1")
 
-    // Hide the whole shell UI (bar, notifications, toasts) while a fullscreen
-    // window (e.g. a game) is active on the focused workspace, so qs never
-    // overlaps the game.
-    readonly property bool gameFullscreen: HyprlandWatcher.focusedFullscreen
-
     Component.onCompleted: {
         root.quickshell.shell = root;
     }
 
     Loader {
         active: !root.disableBar
-        sourceComponent: Bar { id: bar; shell: root; visible: !root.gameFullscreen; }
+        sourceComponent: Bar { id: bar; shell: root; }
     }
     IdleInhibitor { id: idleInhibitor; }
     IPCHandlers { idleInhibitor: root.idleInhibitor; }
 
     // ── Notification system (quickshell — replaces dunst) ──────────────
 
-    Loader { source: "Notifications/NotificationOverlay.qml"; visible: !root.gameFullscreen }
-    Loader { source: "Notifications/NotificationCenter.qml"; visible: !root.gameFullscreen }
+    Loader { source: "Notifications/NotificationOverlay.qml" }
+    Loader { source: "Notifications/NotificationCenter.qml" }
 
     // IPC semaphores for notification bindings (touch to trigger)
     readonly property string _home: {
@@ -62,7 +57,6 @@ Scope {
     // ── Screenshot feedback toast (watches pic-notify trigger file) ──────
     Loader {
         id: screenshotToast
-        visible: !root.gameFullscreen
         source: "file://" + root.quickshell.env("HOME") + "/.config/quickshell/Widgets/ScreenshotToast.qml"
     }
 

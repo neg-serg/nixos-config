@@ -329,35 +329,87 @@ Scope {
                 readonly property bool monitorEnabled: (Settings.settings.barMonitors.includes(modelData.name)
                                                         || (Settings.settings.barMonitors.length === 0))
 
-                // --- Whole-bar slide-up entrance animation (clip reveal) ---
+                // --- Whole-bar slide animation (clip reveal / hide) ---
                 property real barSlideProgress: 1.0
                 property bool barSlideAnimating: false
                 property bool _barSlideInitDone: false
+                // True while the layer surfaces are unmapped (fully hidden).
+                property bool uiHidden: false
+                // Hide the bar on the games workspace and whenever the active
+                // workspace has a fullscreen window.
+                readonly property bool hideRequested: HyprlandWatcher.hideUi
+                property bool _hideAfterAnim: false
+                onHideRequestedChanged: monitorItem._syncHide()
+
                 NumberFadeBehavior {
                     id: barSlideAnim
                     target: monitorItem
                     property: "barSlideProgress"
                     duration: Theme.panelSlideMs || 350
                     easing.type: Theme.uiEasingStdOut || Easing.OutCubic
-                    onStopped: { monitorItem.barSlideAnimating = false }
+                    onStopped: {
+                        monitorItem.barSlideAnimating = false;
+                        if (monitorItem._hideAfterAnim) {
+                            monitorItem._hideAfterAnim = false;
+                            monitorItem.uiHidden = true;
+                        }
+                    }
                 }
                 Timer {
                     id: barSlideTimer
                     interval: Theme.panelSlideTimerTickMs
                     repeat: false
-                    onTriggered: {
+                    onTriggered: monitorItem._slideTo(0, 1)
+                }
+
+                // Slide out (then unmap on completion) or slide in (map first).
+                function _syncHide() {
+                    if (monitorItem.hideRequested) {
+                        if (monitorItem.uiHidden) return;
+                        monitorItem._hideAfterAnim = true;
+                        monitorItem._slideTo(monitorItem.barSlideProgress, 0);
+                    } else {
+                        if (monitorItem._hideAfterAnim) {
+                            // Cancelled a slide-out mid-way: reverse from the
+                            // current position instead of completing the hide.
+                            monitorItem._hideAfterAnim = false;
+                            monitorItem._slideTo(monitorItem.barSlideProgress, 1);
+                            return;
+                        }
+                        if (!monitorItem.uiHidden) return;
+                        monitorItem.uiHidden = false;
                         monitorItem.barSlideProgress = 0;
-                        monitorItem.barSlideAnimating = true;
-                        barSlideAnim.from = 0;
-                        barSlideAnim.to = 1;
-                        barSlideAnim.start();
+                        monitorItem._slideTo(0, 1);
                     }
                 }
+
+                function _slideTo(from, to) {
+                    monitorItem.barSlideAnimating = true;
+                    barSlideAnim.from = from;
+                    barSlideAnim.to = to;
+                    // Hiding is snappier than the entrance: shorter duration
+                    // and the quick easing, so the bar never feels like it
+                    // lingers while a game is starting.
+                    const hiding = to < from;
+                    barSlideAnim.duration = hiding
+                        ? Math.max(140, Math.round(Theme.panelSlideMs * 0.55))
+                        : Theme.panelSlideMs;
+                    barSlideAnim.easing.type = hiding
+                        ? (Theme.uiEasingQuick || Easing.OutCubic)
+                        : (Theme.uiEasingStdOut || Easing.OutCubic);
+                    barSlideAnim.start();
+                }
+
                 Component.onCompleted: {
-                    if (monitorEnabled && Theme.animationsEnabled) {
-                        _barSlideInitDone = true;
-                        barSlideProgress = 0;
-                        barSlideTimer.start();
+                    if (monitorEnabled) {
+                        if (monitorItem.hideRequested) {
+                            // Start hidden (games workspace / fullscreen).
+                            monitorItem.uiHidden = true;
+                        } else if (Theme.animationsEnabled) {
+                            _barSlideInitDone = true;
+                            barSlideProgress = 0;
+                            barSlideTimer.start();
+                        }
                     }
                 }
 
@@ -370,7 +422,7 @@ Scope {
                     anchors.bottom: true
                     anchors.left: true
                     anchors.right: true
-                    visible: monitorEnabled
+                    visible: monitorEnabled && !monitorItem.uiHidden
                     implicitHeight: reserveBackground.height
                     exclusionMode: ExclusionMode.Normal
                     exclusiveZone: barHeightPx
@@ -407,7 +459,7 @@ Scope {
                     anchors.bottom: true
                     anchors.left: true
                     anchors.right: true
-                    visible: monitorEnabled
+                    visible: monitorEnabled && !monitorItem.uiHidden
                     exclusionMode: ExclusionMode.Ignore
                     exclusiveZone: 0
                     property real s: Theme.scale(backdropPanel.screen)
@@ -465,7 +517,7 @@ Scope {
                     anchors.left: true
                     anchors.right: false
                     implicitWidth: leftPanel.screen ? Math.round(leftPanel.screen.width / 2) : 960
-                    visible: monitorEnabled
+                    visible: monitorEnabled && !monitorItem.uiHidden
                     implicitHeight: leftBarBackground.height
                     exclusionMode: ExclusionMode.Ignore
                     exclusiveZone: 0
@@ -730,7 +782,7 @@ Scope {
                     anchors.right: true
                     anchors.left: false
                     implicitWidth: rightPanel.screen ? Math.round(rightPanel.screen.width / 2) : 960
-                    visible: monitorEnabled
+                    visible: monitorEnabled && !monitorItem.uiHidden
                     implicitHeight: rightBarBackground.height
                     exclusionMode: ExclusionMode.Ignore
                     exclusiveZone: 0

@@ -5,6 +5,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
+import qs.Services
 
 // NotificationCenter — notification history sidebar.
 // Full-height panel on the right edge, displaces other surfaces.
@@ -28,7 +29,7 @@ PanelWindow {
     readonly property color _fg: NotifColors.fg
     readonly property color _accent: NotifColors.accent
 
-    visible: NotificationManager.showTrayNotifs
+    visible: NotificationManager.showTrayNotifs && !HyprlandWatcher.hideUi
 
     // ── Backdrop ────────────────────────────────────────────────────
     Rectangle {
@@ -37,11 +38,58 @@ PanelWindow {
     }
 
     // ── Escape + focus ──────────────────────────────────────────────
+    // Emacs-style list navigation (additive; mouse still works):
+    //   C-n/C-p move down/up, C-f/C-b page down/up, C-a/C-e first/last,
+    //   C-k or Enter discard the notification under the cursor.
     FocusScope {
         id: centerFocus
         anchors.fill: parent
         focus: root.visible
         Keys.onEscapePressed: NotificationManager.closeHistory()
+        Keys.onPressed: function(event) {
+            if (notifList.count === 0) return;
+
+            const ctrl = (event.modifiers & Qt.ControlModifier)
+                && !(event.modifiers & (Qt.ShiftModifier | Qt.AltModifier | Qt.MetaModifier));
+            let idx = notifList.currentIndex;
+            let target = -1;
+
+            if (ctrl) {
+                switch (event.key) {
+                case Qt.Key_N: target = idx < 0 ? 0 : Math.min(idx + 1, notifList.count - 1); break;
+                case Qt.Key_P: target = idx < 0 ? 0 : Math.max(idx - 1, 0); break;
+                case Qt.Key_F: target = idx < 0 ? 0 : Math.min(idx + 5, notifList.count - 1); break;
+                case Qt.Key_B: target = idx < 0 ? 0 : Math.max(idx - 5, 0); break;
+                case Qt.Key_A: target = 0; break;
+                case Qt.Key_E: target = notifList.count - 1; break;
+                case Qt.Key_K: {
+                    idx = idx < 0 ? 0 : idx;
+                    notifList.currentIndex = idx;
+                    notifList.positionViewAtIndex(idx, ListView.Center);
+                    const dismissed = notifList.model[idx];
+                    if (dismissed && dismissed.item && !dismissed.isHeader) dismissed.item.discard();
+                    event.accepted = true;
+                    return;
+                }
+                default: return;
+                }
+                if (target >= 0) {
+                    notifList.currentIndex = target;
+                    notifList.positionViewAtIndex(target, ListView.Center);
+                    event.accepted = true;
+                }
+                return;
+            }
+
+            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                const i = idx < 0 ? 0 : idx;
+                notifList.currentIndex = i;
+                notifList.positionViewAtIndex(i, ListView.Center);
+                const entry = notifList.model[i];
+                if (entry && entry.item && !entry.isHeader) entry.item.discard();
+                event.accepted = true;
+            }
+        }
     }
 
     // ── Content ─────────────────────────────────────────────────────
@@ -104,6 +152,16 @@ PanelWindow {
                     onClicked: {
                         if (!delegateRoot.isHeader) delegateRoot.item.discard();
                     }
+                }
+
+                // Keyboard-navigation highlight (emacs C-n/C-p …)
+                Rectangle {
+                    visible: delegateRoot.ListView.isCurrentItem
+                    anchors.fill: parent
+                    radius: 4
+                    color: root._accent
+                    opacity: 0.15
+                    z: 2
                 }
             }
         }

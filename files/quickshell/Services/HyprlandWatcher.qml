@@ -38,7 +38,16 @@ Item {
     // window (games, video). Workspace-level, so alt-tab inside the same
     // workspace keeps the UI hidden; refreshed via fullscreenDebounce.
     property bool focusedFullscreen: false
-    readonly property int fullscreenDebounceMs: 150
+    readonly property int fullscreenDebounceMs: 50
+
+    // Workspaces where the shell UI is always hidden, independent of
+    // fullscreen state. id 4 = "𐌸:games" (see hyprland.lua).
+    property var hideUiWorkspaceIds: [4]
+    readonly property bool onHideUiWorkspace: hideUiWorkspaceIds.indexOf(activeWorkspaceId) !== -1
+
+    // Hide the whole shell UI while a fullscreen window is on the active
+    // workspace, or while the active workspace is a hide-UI workspace.
+    readonly property bool hideUi: focusedFullscreen || onHideUiWorkspace
 
     ProcessRunner {
         id: socketFeed
@@ -60,6 +69,8 @@ Item {
             try {
                 if (typeof obj.id === "number") root.activeWorkspaceId = obj.id;
                 if (obj.name !== undefined) root.activeWorkspaceName = obj.name || "";
+                // Clients probe needs a fresh workspace id (startup race).
+                root.refreshFullscreen();
             } catch (e) { console.warn("[HyprlandWatcher.activeWs]", e) }
         }
     }
@@ -95,14 +106,28 @@ Item {
 
     ProcessRunner {
         id: fullscreenProbe
-        cmd: ["hyprctl", "-j", "activeworkspace"]
+        // Client-based check: workspace.hasfullscreen is unreliable for
+        // client-requested fullscreen (games, mpv), so scan clients for any
+        // fullscreen window on the active workspace instead.
+        cmd: ["hyprctl", "-j", "clients"]
         env: root.hyprEnvObject
         parseJson: true
         autoStart: false
         restartMode: "never"
-        onJson: obj => {
+        onJson: arr => {
             try {
-                root.focusedFullscreen = !!(obj && obj.hasfullscreen);
+                if (!Array.isArray(arr)) return;
+                const wsId = root.activeWorkspaceId;
+                let fullscreen = false;
+                for (const c of arr) {
+                    const w = c && c.workspace;
+                    const cws = (w && typeof w === "object") ? w.id : w;
+                    if (c.fullscreen && cws === wsId) {
+                        fullscreen = true;
+                        break;
+                    }
+                }
+                root.focusedFullscreen = fullscreen;
             } catch (e) { console.warn("[HyprlandWatcher.fullscreen]", e) }
         }
     }
