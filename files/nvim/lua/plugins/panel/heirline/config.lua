@@ -338,7 +338,7 @@ return function()
     local function open_file_browser_cwd()
       local cwd = window_cwd(statusline_win())
       if has_mod('yazi') then require('yazi').yazi(nil, cwd); return end
-      if has_mod('fzf-lua') then require('fzf-lua').files({ cwd = cwd }); return end
+      if has_mod('fff') then require('fff').find_files({ cwd = cwd }); return end
       vim.cmd('Ex ' .. fn.fnameescape(cwd))
     end
     local function open_git_ui()
