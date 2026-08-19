@@ -47,6 +47,8 @@ in
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/glm52_i4
           # music AI models (AMT weights, basic-pitch ONNX) — main user manages files
           install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/music
+          # image processing models (rembg BiRefNet/u2net, upscalers) — main user manages files
+          install -d -o ${config.users.main.name} -g ${config.users.main.name} -m 0755 /zero/ai/imgproc
         '';
         users.users."${config.users.main.name}".extraGroups = lib.mkAfter [ "ollama" ];
       }
