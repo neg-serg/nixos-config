@@ -31,9 +31,9 @@ window.__ModuleLoader__.load({
   factory: (require) => {
     const React = require("react");
     const h = React.createElement;
-    const { useState, useMemo } = React;
+    const { useState, useMemo, useEffect, useRef } = React;
 
-    const inject = ["slots", "sessions"];
+    const inject = ["slots", "sessions", "conversationEvents"];
 
     const MAX_DEPTH = 400;
     const CHILD_CAP = 100;
@@ -950,6 +950,121 @@ window.__ModuleLoader__.load({
     }
 
     // ---------------------------------------------------------------------
+    // live bash streaming (bash_live tool -> conversation chat node)
+    // ---------------------------------------------------------------------
+    //
+    // The `bash_live` tool (server) runs the command via ctx.shell.start and
+    // appends `tool/bash-live-start|output|end` events to the session. This
+    // definition folds those events into a durable "bash-live" chat node the
+    // same way dsh-client-ui-workflow-run folds tool-workflow/* events — the
+    // node renders a live terminal that appends chunks as they arrive.
+
+    function bashLiveId(data) {
+      if (data === null || typeof data !== "object" || data.id === undefined || data.id === null) return null;
+      return String(data.id);
+    }
+
+    const bashLiveDefinition = {
+      target: "chat",
+      match: (event) => {
+        if (event.type === "tool/bash-live-start") {
+          const id = bashLiveId(event.data);
+          return id === null ? null : { id, role: "start" };
+        }
+        if (event.type === "tool/bash-live-output" || event.type === "tool/bash-live-end") {
+          const id = bashLiveId(event.data);
+          return id === null ? null : { id, role: "update" };
+        }
+        return null;
+      },
+      start: (_context, match) => {
+        if (match.event.type !== "tool/bash-live-start") throw new Error("bash-live start requires tool/bash-live-start");
+        return {
+          command: typeof match.event.data?.command === "string" ? match.event.data.command : "",
+          output: "",
+          status: "running",
+        };
+      },
+      update: (context, match) => {
+        const data = match.event.data ?? {};
+        const state = { ...context.state, output: typeof context.state.output === "string" ? context.state.output : "" };
+        if (match.event.type === "tool/bash-live-output" && typeof data.chunk === "string") state.output += data.chunk;
+        if (match.event.type === "tool/bash-live-end") {
+          state.status = typeof data.status === "string" ? data.status : "completed";
+          if (typeof data.detail === "string") state.detail = data.detail;
+          if (data.streamCapped === true) state.streamCapped = true;
+        }
+        return state;
+      },
+      buildViewNode: (context) => {
+        if (context.start === void 0) return null;
+        return {
+          key: context.key,
+          kind: "bash-live",
+          command: context.state.command,
+          output: context.state.output,
+          status: context.state.status,
+          detail: context.state.detail,
+          streamCapped: context.state.streamCapped,
+        };
+      },
+    };
+
+    /** Live terminal node: command line + auto-scrolling output + status. */
+    function BashLiveNode(props) {
+      const { node } = props;
+      const data = node?.data;
+      if (data === null || typeof data !== "object") return null;
+      const running = data.status === "running" || data.status === undefined;
+      const outRef = useRef(null);
+      useEffect(() => {
+        const el = outRef.current;
+        if (el !== null) el.scrollTop = el.scrollHeight;
+      }, [data?.output]);
+      return h(
+        "div",
+        { className: "dw-card dw-bash-live", "data-state": running ? "running" : "ok" },
+        h(
+          "div",
+          { className: "dw-head" },
+          h("span", { className: "dw-title" }, "bash · live"),
+          running
+            ? h("span", { className: "dw-badge dw-badge-running" }, h("span", { className: "dw-dot" }), "Выполняется")
+            : h("span", { className: "dw-badge " + (data.status === "killed" ? "dw-badge-error" : "dw-badge-done") }, data.status === "killed" ? "Остановлен" : "Завершён"),
+          typeof data.detail === "string" && data.detail !== ""
+            ? h("span", { className: "dw-chip" }, data.detail)
+            : null
+        ),
+        typeof data.command === "string" && data.command !== ""
+          ? h("div", { className: "dw-bash-cmd" }, "$ " + data.command)
+          : null,
+        h("pre", { ref: outRef, className: "dw-out dw-bash-out" }, String(data.output ?? "")),
+        data.streamCapped === true
+          ? h("div", { className: "dw-truncated" }, "живой поток обрезан — полный вывод в результате инструмента")
+          : null
+      );
+    }
+
+    /** Toolview for the settled `bash_live` tool call row. */
+    function BashLiveCard(props) {
+      const { block } = props;
+      if (!done(block)) {
+        return h("div", { className: "dw-inline" }, "bash · live — рендеринг…");
+      }
+      const text = resultText(block);
+      const args = parseArgs(block);
+      const cmd = typeof args?.command === "string" && args.command.trim() !== "" ? args.command : null;
+      if (block.isError) {
+        return CardFrame({ title: "bash · live", badge: "Ошибка", badgeCls: "dw-badge-error", label: cmd, children: text ? h(LongText, { text }) : null });
+      }
+      const statusMatch = text ? /\[(exit code: \d+|killed by signal: [^\]]+)\]\s*$/u.exec(text) : null;
+      const badge = statusMatch !== null && /killed/u.test(statusMatch[1])
+        ? ["Остановлен", "dw-badge-error"]
+        : ["Завершён", "dw-badge-done"];
+      return CardFrame({ title: "bash · live", badge: badge[0], badgeCls: badge[1], label: cmd, children: text ? h(LongText, { text }) : null });
+    }
+
+    // ---------------------------------------------------------------------
     // subagent settlement notices ("unknown content block" fix)
     // ---------------------------------------------------------------------
     //
@@ -1268,6 +1383,13 @@ window.__ModuleLoader__.load({
         padding: 2px 7px; border-radius: 6px; background: var(--dsw-alias-bg-layer-3);
         color: var(--dsw-alias-label-secondary); white-space: nowrap;
       }
+      .dw-bash-live { margin: 4px 0; }
+      .dw-bash-cmd {
+        padding: 7px 12px; color: var(--dsw-alias-label-secondary);
+        font-family: var(--ds-font-family-code); font-size: 12px;
+        border-bottom: 1px solid var(--dsw-alias-border-l1); overflow-wrap: anywhere;
+      }
+      .dw-bash-out { max-height: 320px; overflow-y: auto; }
     `;
 
     // ---------------------------------------------------------------------
@@ -1294,6 +1416,7 @@ window.__ModuleLoader__.load({
       gavel_review: GavelCard,
       memory: MemoryCard,
       memory_recall: MemoryRecallCard,
+      bash_live: BashLiveCard,
     };
 
     function apply(ctx) {
@@ -1305,6 +1428,13 @@ window.__ModuleLoader__.load({
           );
         }
       });
+
+      // ---- live bash streaming node ----
+      ctx.conversationEvents.register(bashLiveDefinition);
+      ctx.slots.inject("conversation.chat.node", () => ctx.slots.register(
+        { name: "conversation.chat.node", key: "bash-live" },
+        BashLiveNode,
+      ));
 
       // ---- settlement-notice transform ----
       const sessions = ctx.sessions;
