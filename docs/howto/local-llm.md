@@ -43,11 +43,11 @@ ollama run qwen3:32b
   tok/s with warm cache + MTP.
 - Model dir: `/zero/ai/glm52_i4` (~370 GB, int4, pre-converted
   [mateogrgic/GLM-5.2-colibri-int4-with-int8-mtp](https://huggingface.co/mateogrgic/GLM-5.2-colibri-int4-with-int8-mtp),
-  357 GiB · 141 shards `out-*.safetensors` + 3 MTP shards + config/tokenizer). **Downloaded and
-  validated (149/149 files, byte-exact sizes, `coli info` OK) — staged in
-  `/zero/backup/.ai-staging/glm52_i4`, move to the model dir to activate.**
-  `services.colibri.enable` (default on with `features.llm.enable`) installs the engine + `coli`
-  CLI, but the serve unit stays off until the model exists.
+  357 GiB · 141 shards `out-*.safetensors` + 3 MTP shards + config/tokenizer). **Activated and
+  smoke-tested (2026-08-19): `coli run --model /zero/ai/glm52_i4 "Привет"` answers in Russian; cold
+  cache ~0.2 tok/s (expert hit 28%, expert-disk bound), RSS 19 GB.** `services.colibri.enable`
+  (default on with `features.llm.enable`) installs the engine + `coli` CLI; the serve unit stays off
+  unless enabled.
 - Defaults: `arch = "native"`, `ramBudget = 45`, settings
   `DIRECT=1 PIPE_WORKERS=16 PREFETCH=1 MTP=3`.
 
