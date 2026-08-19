@@ -369,6 +369,21 @@ let
     YAML
             fi
 
+            # @linxin666/dsh-liangshen (LiangShen agent-preset plugin) is
+            # unmounted — replaced by the neg preset (dsh-liangshen-fork.nix).
+            # The include row from the dsh-web-ui-all bundle patch no longer
+            # resolves; keep it disabled or dsh fails to boot with
+            # ERR_MODULE_NOT_FOUND (exit 1) and systemd restarts it in a loop.
+            if ! grep -qE '^\s*- id: liangshen$' "$PATCH" 2>/dev/null; then
+              cat >> "$PATCH" <<'YAML'
+
+    # @linxin666/dsh-liangshen — unmounted, replaced by the neg preset
+    # (see dsh-liangshen-fork.nix); the bundle include row no longer resolves.
+    - id: liangshen
+      disabled: true
+    YAML
+            fi
+
             # dsh-terminal-ui: wider chat column, Iosevka fonts, terminal-ish
             # typography. Canonical source is the dsh-web-ui fork checkout
             # (packages/dsh-terminal-ui): symlink into the profile so source
@@ -455,6 +470,23 @@ let
         printUrl: true
         surfaceContext: true
         trustedHosts: !!js "[...(ctx.webStartup?.trustedHosts ?? []), '192.168.2.87']"
+    YAML
+            fi
+
+            # neg (dsh-liangshen-fork): deployment-level default preset
+            # (fallback under the settings layer in settings.yaml). The
+            # shipped `standard` preset is removed from the dsh package build
+            # (packages/dsh/default.nix), so the base config default must not
+            # point at it — this row keeps `default` on the fork.
+            if ! grep -q 'default: neg' "$PATCH" 2>/dev/null; then
+              cat >> "$PATCH" <<'YAML'
+
+    # neg (dsh-liangshen-fork): default agent preset for new sessions
+    # (fallback under the settings layer; the shipped `standard` is removed
+    # from the dsh package build).
+    - id: agent-presets
+      config:
+        default: neg
     YAML
             fi
 
