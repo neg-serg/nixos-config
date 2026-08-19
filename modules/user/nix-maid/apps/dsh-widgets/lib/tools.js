@@ -16,6 +16,20 @@
  */
 
 import { defineTool } from '@deepseek-ai/dsh-tools'
+import { KNOWN_SESSION_EVENT_TYPES } from '@deepseek-ai/dsh-session'
+
+// bash_live streams command output to the web GUI by appending purely
+// informational `tool/bash-live-*` events to the durable session log (the
+// full output always returns in the tool result). rc.6's Session.append()
+// cannot set the envelope's `ignorable` marker, and the harness defers the
+// out-of-repo plugin-event registration surface — so register the types on
+// the shared KNOWN_SESSION_EVENT_TYPES set (the same instance the
+// persistence reader checks) at plugin load. Without this, any session that
+// used bash_live is refused by the history reader
+// (SessionFormatUnsupportedError) and its history becomes unloadable.
+for (const type of ['tool/bash-live-start', 'tool/bash-live-output', 'tool/bash-live-end']) {
+  KNOWN_SESSION_EVENT_TYPES.add(type)
+}
 
 const TOOL_NAME = 'json'
 
