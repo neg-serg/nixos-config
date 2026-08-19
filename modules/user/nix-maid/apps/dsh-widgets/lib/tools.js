@@ -156,11 +156,163 @@ function parseErrorInfo(error) {
 }
 
 /**
- * Build the `json` tool definition.
- * @param config - { maxInputBytes, maxMetaBytes }.
- * @returns the tool definition to register on ctx.tools.
+ * Build the `bash_live` tool: runs a shell command and streams its output to
+ * the web GUI live. Unlike the stock `bash` (which awaits the whole process
+ * and returns output only on settle), this tool launches the process through
+ * `ctx.shell.start`, polls incremental `readOutput()` deltas, and appends them
+ * to the session as `tool/bash-live-*` events (`session.append` — the same
+ * durable-event seam the workflow tool uses for its run panel). The client
+ * half of dsh-widgets folds those events into a live terminal chat node.
+ *
+ * The full streamed output is also returned in the tool result, so the model
+ * sees everything regardless of the live-stream event cap.
+ *
+ * @param ctx - registrant context carrying `ctx.shell` (and optionally
+ *   `sandboxPolicy` / `shellEnv` via ctx.get).
  */
-export function createWidgetTools(config) {
+export function createBashLiveTool(ctx) {
+  const POLL_MS = 120
+  const MAX_STREAM_EVENTS = 500
+  const MAX_OUTPUT_CHARS = 262_144
+
+  return defineTool({
+    name: 'bash_live',
+    description:
+      'Run a shell command and stream its output to the web GUI live — the user watches the output appear '
+      + 'in a terminal card while the command runs, not after it settles. Use for long-running commands '
+      + '(builds, installs, tests, logs) when live progress is useful; for quick commands the plain `bash` '
+      + 'tool is fine. The full output is still returned as the tool result.',
+    parameters: {
+      command: {
+        type: 'string',
+        required: true,
+        description: 'The shell command to run.',
+      },
+      workdir: {
+        type: 'string',
+        description: 'Working directory; defaults to the session workspace root.',
+      },
+      timeoutMs: {
+        type: 'integer',
+        description: 'Kill the command after this many milliseconds.',
+      },
+    },
+    output: {
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          status: { type: 'string', required: true, enum: ['completed', 'killed'] },
+          detail: { type: 'string', required: true },
+          output: { type: 'string', required: true },
+          streamCapped: { type: 'boolean' },
+        },
+      },
+      render: (_args, value) => [{
+        type: 'text',
+        text: `${value.output}${value.output.length > 0 && !value.output.endsWith('\n') ? '\n' : ''}[${value.detail}]${value.streamCapped === true ? '\n[live stream capped; this result holds the full output]' : ''}`,
+      }],
+    },
+    isConcurrencySafe: () => true,
+    async execute(args, exec) {
+      const command = String(args.command ?? '').trim()
+      if (command === '') throw new Error('bash_live: command must not be empty')
+
+      // Mirror the stock bash tool's request construction: sandbox policy +
+      // session workspace root as the default cwd + the model's env.
+      const sandboxPolicy = ctx.get('sandboxPolicy')?.resolve({
+        ...exec.agent ? { session: exec.agent.session } : {},
+      })
+      const session = exec.agent?.session
+      const shellEnv = ctx.get('shellEnv')
+      const workdir = typeof args.workdir === 'string' && args.workdir.trim() !== ''
+        ? args.workdir.trim()
+        : exec.agent?.session?.header?.cwd
+      const request = {
+        command,
+        ...workdir !== undefined ? { workdir } : {},
+        ...typeof args.timeoutMs === 'number' ? { timeoutMs: args.timeoutMs } : {},
+        ...shellEnv !== undefined && typeof shellEnv.collect === 'function' ? { dshEnv: shellEnv.collect(exec) } : {},
+        ...sandboxPolicy !== undefined ? { sandboxPolicy } : {},
+      }
+      const spec = ctx.shell.resolve({ ...request, signal: exec.signal })
+
+      const runId = 'bl-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6)
+      const append = (type, data) => {
+        if (session !== undefined && session !== null && typeof session.append === 'function') {
+          try {
+            session.append(type, data)
+          } catch {
+            /* a failed event must never break the tool */
+          }
+        }
+      }
+
+      append('tool/bash-live-start', { id: runId, command })
+
+      let output = ''
+      let emitted = 0
+      let truncated = false
+      const proc = ctx.shell.start(spec)
+      try {
+        while (true) {
+          const read = proc.readOutput()
+          if (read !== null && typeof read === 'object' && typeof read.delta === 'string' && read.delta !== '') {
+            if (output.length < MAX_OUTPUT_CHARS) {
+              const room = MAX_OUTPUT_CHARS - output.length
+              output += read.delta.length > room ? read.delta.slice(0, room) : read.delta
+              if (output.length >= MAX_OUTPUT_CHARS) truncated = true
+            }
+            if (emitted < MAX_STREAM_EVENTS) {
+              // Split oversized deltas so one event never bloats the session log.
+              let rest = read.delta
+              while (rest !== '' && emitted < MAX_STREAM_EVENTS) {
+                const chunk = rest.slice(0, 16_000)
+                rest = rest.slice(16_000)
+                emitted += 1
+                append('tool/bash-live-output', { id: runId, chunk })
+              }
+            }
+          }
+          const settled = await Promise.race([
+            proc.done.then(() => true).catch(() => true),
+            new Promise((resolve) => setTimeout(() => resolve(false), POLL_MS)),
+          ])
+          if (settled) break
+        }
+        const tail = proc.readOutput()
+        if (tail !== null && typeof tail === 'object' && typeof tail.delta === 'string' && tail.delta !== '') {
+          const room = MAX_OUTPUT_CHARS - output.length
+          if (room > 0) output += tail.delta.slice(0, Math.max(0, room))
+        }
+      } catch (error) {
+        append('tool/bash-live-end', { id: runId, status: 'killed', detail: String(error?.message ?? error) })
+        throw error
+      }
+
+      const status = proc.status === 'killed' ? 'killed' : 'completed'
+      const detail = status === 'killed'
+        ? `killed by signal: ${proc.signal ?? '?'}`
+        : `exit code: ${proc.exitCode ?? 0}`
+      const streamCapped = emitted >= MAX_STREAM_EVENTS
+      append('tool/bash-live-end', { id: runId, status, detail, ...(streamCapped ? { streamCapped: true } : {}) })
+      return { status, detail, output, ...(streamCapped ? { streamCapped: true } : {}) }
+    },
+    presentCall: () => ({ card: 'generic', title: 'bash · live', kind: 'other' }),
+    presentResult: (_args, result) => {
+      if (result.isError) return undefined
+      return { card: 'generic', title: 'bash · live' }
+    },
+  })
+}
+
+/**
+ * Build the widget tools.
+ * @param ctx - registrant context (needed by `bash_live` for ctx.shell).
+ * @param config - { maxInputBytes, maxMetaBytes }.
+ * @returns the tool definitions to register on ctx.tools.
+ */
+export function createWidgetTools(ctx, config) {
   const { maxInputBytes, maxMetaBytes } = config
 
   const jsonTool = defineTool({
@@ -276,5 +428,5 @@ export function createWidgetTools(config) {
     },
   })
 
-  return [jsonTool]
+  return [jsonTool, createBashLiveTool(ctx)]
 }
