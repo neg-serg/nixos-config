@@ -80,6 +80,7 @@ return {
       },
     })
     configure('ts_ls', {})
+  configure('eslint', {}) -- JS/TS linting; binary ships with vscode-langservers-extracted (already installed)
 
     -- vscode-langservers-extracted: cssls, html, jsonls
     configure('cssls', {})
