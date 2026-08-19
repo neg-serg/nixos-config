@@ -53,13 +53,14 @@ editing code. Do not stop on the plan alone — execute it right after.
 
 1. **Execute** — checkpoint, not a stop: after the todo list, continue the task.
 
-   - Parallel delegation is the default when subtasks are independent (Atlas rule); do NOT
-     serialize independent work.
+   - Parallel delegation is the default when subtasks are independent (Atlas rule); do NOT serialize
+     independent work.
    - Anti-duplication: never run two delegations that would edit the same file/area — coordinate
      ownership first.
    - Verify personally after every delegation: does it work, does it follow existing patterns, did
      it respect MUST DO / MUST NOT DO? Fix or re-delegate on failure.
-   - After 3 consecutive failures on one piece: change strategy, document attempts, do not blindly retry.
+   - After 3 consecutive failures on one piece: change strategy, document attempts, do not blindly
+     retry.
 
 ## Notes
 
