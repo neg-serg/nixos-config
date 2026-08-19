@@ -1,0 +1,36 @@
+#!/bin/sh
+# marker: PDF → Markdown conversion (marker-pdf v2, CPU-friendly, datalab-to).
+# Models (surya OCR/layout) cached in /zero/ai/ocr per the "all AI assets on
+# /zero/ai" convention; falls back to ~/.cache/huggingface until /zero/ai/ocr
+# exists (created by activationScripts at next rebuild).
+#
+# Usage:
+#   marker DIR            # convert all PDFs in a folder
+#   marker_single file.pdf --output_dir out/   # single file
+set -eu
+
+for lib in \
+  /nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib \
+  /nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib
+do
+  [ -d "$lib" ] && LD_LIBRARY_PATH="$lib:${LD_LIBRARY_PATH:-}"
+done
+export LD_LIBRARY_PATH
+
+if [ -d /zero/ai/ocr ]; then
+  export HF_HOME="${HF_HOME:-/zero/ai/ocr}"
+fi
+
+# models.datalab.to (fonts) is blocked from this region → route through the
+# sing-box socks5 proxy (same fix as ollama registry); localhost stays direct.
+export HTTPS_PROXY="socks5://127.0.0.1:10808"
+export ALL_PROXY="socks5://127.0.0.1:10808"
+export NO_PROXY="127.0.0.1,localhost"
+
+# marker v2 ships two CLIs: `marker` (folder batch) and `marker_single` (one file).
+BIN="$HOME/src/ai-tools/venv-marker/bin"
+if [ "${1:-}" = "marker_single" ]; then
+  shift
+  exec "$BIN/marker_single" "$@"
+fi
+exec "$BIN/marker" "$@"
