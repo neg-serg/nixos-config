@@ -10,7 +10,7 @@ in
 {
   imports =
     let
-      excludes = [ "open-webui.nix" ]; # disabled — not wired yet
+      excludes = [ ]; # open-webui.nix now enabled (port 11111, ollama backend)
     in
     builtins.readDir ./.
     |> builtins.attrNames
