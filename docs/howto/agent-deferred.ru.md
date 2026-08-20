@@ -217,13 +217,13 @@ lsp/eval).
   `class` персистят между вызовами ядра (проверено: `a=42`, `c=10`, `P=7`); повторное `let a = ...`
   → SyntaxError, как в REPL.
 - ~~LLM-шаг memory-extractor~~ — **ЗАКРЫТО**: плагин дергает ЛОКАЛЬНЫЙ Ollama
-  (`http://127.0.0.1:11434/api/chat`) на session/end-seed/compaction/end; JSON по memory-extract.md
-  пишется как `[extract]`, при сбое/нет сигнала — fallback на `[draft-extract]`. Конфиг
-  `{endpoint, model, timeoutMs, enabled}`; модель переключается в patch-row config плагина
-  (`cordis.patch.yml` → `config.model`). **Бенч 2026-08-20 (odin, RX 9070 XT 16GB)**:
-  `qwen3:8b-q8_0` 26s/52 tok/s — дефолт; `gemma4:12b` 47s; `deepseek-r1-distill-qwen:14b` 48s;
-  `qwen3dot5:latest` 6s, но зацикливается/не JSON — снят с дефолта; `qwen3.5:27b` не влезает в 16GB
-  VRAM (>300s).
+  (`http://127.0.0.1:11434/api/chat`) на session/end-seed/compaction/end; JSON по
+  memory-extract.ru.md пишется как `[extract]`, при сбое/нет сигнала — fallback на
+  `[draft-extract]`. Конфиг `{endpoint, model, timeoutMs, enabled}`; модель переключается в
+  patch-row config плагина (`cordis.patch.yml` → `config.model`). **Бенч 2026-08-20 (odin, RX 9070
+  XT 16GB)**: `qwen3:8b-q8_0` 26s/52 tok/s — дефолт; `gemma4:12b` 47s;
+  `deepseek-r1-distill-qwen:14b` 48s; `qwen3dot5:latest` 6s, но зацикливается/не JSON — снят с
+  дефолта; `qwen3.5:27b` не влезает в 16GB VRAM (>300s).
 - **collab / vibe-рантайм / autoresearch-runtime / computer / browser** — ресёрч «как делать»:
   `docs/howto/agent-backlog-research.ru.md` (vibe покрыт воркфлоу; autoresearch-runtime малый;
   browser/computer средние; collab — не начинать). hub-peer-IRC — бэклог (объём/безопасность).
