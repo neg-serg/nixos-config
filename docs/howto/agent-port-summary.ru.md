@@ -15,7 +15,7 @@
 | dsh-agent-usage-reminder      | подсказка делегировать при сериях ручных поисков                                                                        | ✅ живой                                                               | 4c56685f                     |
 | dsh-category-skill-reminder   | напоминание делегировать + скиллы (агент-плоскость)                                                                     | ✅ живой                                                               | 6170dcf7, 376a1c7f           |
 | dsh-compaction-todo-preserver | todo переживает компакцию (compaction/start→end)                                                                        | ✅                                                                     | b1eca24a                     |
-| dsh-memory-extractor          | session-end extract в memento: draft-транскрипт + LLM-шаг через локальный Ollama (JSON по memory-extract.md)               | ✅ draft + LLM `[extract]` (qwen3dot5) + fallback-сценарии             | 9145ff98, a20260e9, 699c47c0 |
+| dsh-memory-extractor          | session-end extract в memento: draft-транскрипт + LLM-шаг через локальный Ollama (JSON по memory-extract.md)               | ✅ draft + LLM `[extract]` (qwen3:8b-q8_0, бенч 5 моделей) + fallback  | 9145ff98, a20260e9, 699c47c0, 39614204 |
 | dsh-secrets-masker            | маскировка ключей в результатах тулов (43-char, sk-, ghp\_, ...)                                                        | ✅ unit                                                                | 1861761a                     |
 | dsh-lsp                       | LSP: hover/definition/references/rename/code_actions (rust-analyzer, clangd, pyright, tsserver)                         | ✅ pyright: hover/def/refs/rename; clangd (с compile_commands.json): def+hover | c1a70484                     |
 | dsh-eval                      | персистентные ядра Python/Bun (состояние между вызовами, reset)                                                         | ✅ py: x=41→42; bun: z=5→10                                            | a9828f46                     |
@@ -45,6 +45,8 @@
   stopped/threads в этой настройке — задокументированное ограничение); логика rules-injector
   (инжект+дедуп ✅), compaction-todo-preserver (re-append ✅), memory-extractor (draft ✅).
 - Вживую срабатывали: boulder (продолжения по todo), category-skill-reminder, TTSR-инъекции.
+- Бенч LLM-моделей для memory-extractor (odin, RX 9070 XT 16GB): qwen3:8b-q8_0 26s/52 tok/s —
+  дефолт; gemma4:12b 47s; deepseek-r1:14b 48s; qwen3dot5 зацикливается; qwen3.5:27b не влезает.
 
 ## 4. Что осталось (честно)
 
