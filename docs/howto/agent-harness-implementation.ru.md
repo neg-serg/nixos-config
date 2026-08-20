@@ -51,8 +51,8 @@ breakpoints/stepping/inspection/evaluate; протестирован на gdb). 
 Дополнения (закрытые дыры): dsh-debug `custom_request` (сырые DAP-запросы), dsh-ttsr mental-models
 (фоновое знание один раз на сессию).
 
-Осталось: hashline phase 2 (теги во встроенном `read` — патч `dsh-tool-fs`, отложено).
-Пакеты `vscode-js-debug`/`bun`/`ast-grep` уже в systemPackages (после rebuild — в PATH, проверено).
+Осталось: hashline phase 2 (теги во встроенном `read` — патч `dsh-tool-fs`, отложено). Пакеты
+`vscode-js-debug`/`bun`/`ast-grep` уже в systemPackages (после rebuild — в PATH, проверено).
 
 ## Что уже в репо из этого порта
 
