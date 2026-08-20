@@ -120,3 +120,20 @@ nixpkgs, стоит на odin):
   подмешивать шум/искажения ВО ВСЁ воспроизведение (mpd/ютуб). Если звук «захрипел» — останови
   движок (carlactl stop или Stop в окне Carla), синт уходит из микса, звук очищается.
   Используй carlactl play/stop для подключения по требованию.
+
+## Osmose (Expressive E) + MPE + Legend HZ (research 2026-08-21)
+
+- **Legend HZ**: omni + нативный MPE (мануал Synapse, раздел «5.1 MPE (MIDI Polyphonic Expression)»):
+  слушает ВСЕ каналы; переключатель «MPE Controller» — питч-бенд ±48 полутонов, master-канал 1,
+  Rise/Fall shaping для CC74/aftertouch. Источник: https://www.synapse-audio.com/legend/TheLegendManualHZ.pdf
+- **Osmose**: пресеты External MIDI Mode (Config menu, крутить Value Encoder 4 и нажать): `mpe`
+  (по умолчанию: ch1 master + ch2-15 по голосам), `classic keyboard` (всё на ch1 — для legacy-синтов),
+  `poly aftertouch`, `multi-channel`. Точная подстройка: Adjust menu → mode tab → «mono ch.» /
+  «mpe» (конечный канал) / «multi ch.». Источник: Osmose Manual 1.0, §3 EXTERNAL MIDI MODE.
+- **yabridge**: MIDI-паспхру прозрачный, каналы не нормализуются (в yabridge.toml нет MIDI-опций) —
+  MPE доходит до Windows-VST без изменений.
+- **Вывод**: для Legend HZ менять режим Osmose НЕ нужно — MPE работает напрямую (omni-приём).
+  «Странный звук» при первых тестах был из-за демо-режима плагина в общем миксе, а не из-за MPE.
+- **MIDI 2.0 (UMP)**: PipeWire 1.6.6 UMP поддерживает (порт «32 bit raw UMP»), но Osmose по USB
+  сейчас — класс MIDI 1.0 (bInterfaceProtocol 0), а VST-цепочка (yabridge/Carla) — MIDI 1.0.
+  UMP до плагина не доедет без конвертации; вопрос открыт (исследование в работе).
