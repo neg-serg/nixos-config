@@ -14,6 +14,9 @@ isn't a step-by-step runbook.
 - Hotkeys vs Russian keyboard layout — inventory & fix plan (RU):
   [hotkeys-ru-layout.ru.md](./hotkeys-ru-layout.ru.md)
 
+- Kanata — CapsLock-раскладка: статус и история (простая схема активна, caps-nav откачена до
+  отдельного эксперимента, RU): [kanata.ru.md](./kanata.ru.md)
+
 - Build performance analysis (RU): [build-optimization.ru.md](./build-optimization.ru.md)
 
 - TidalCycles setup — moved to the private notes repo (~/notes/music/tidal/), kept out of the public
