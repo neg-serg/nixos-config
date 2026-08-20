@@ -1,0 +1,29 @@
+#!/bin/sh
+# tts-clone: zero-shot TTS voice cloning via XTTS-v2 (RU/EN/17 langs, CPU).
+# Clones the voice from a reference recording and speaks new text.
+# Usage: tts-clone "ТЕКСТ" REFERENCE.wav OUT.wav [--lang ru]
+set -e
+[ -n "$1" ] && [ -n "$2" ] && [ -n "$3" ] || { echo "usage: tts-clone "ТЕКСТ" REFERENCE.wav OUT.wav [--lang ru]" >&2; exit 2; }
+TEXT="$1"; REF="$2"; OUT="$3"; LANG="ru"
+shift 3
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --lang) LANG="$2"; shift 2 ;;
+    *) echo "tts-clone: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+export LD_LIBRARY_PATH="/nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib:/nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib:/nix/store/13id30w3rvgj24nnz34f7qrncz48zd7l-zstd-1.5.7/lib:${LD_LIBRARY_PATH:-}"
+PY=~/src/music-ai/venv-xtts/bin/python
+TEXT="$TEXT" REF="$REF" OUT="$OUT" LANG="$LANG" "$PY" - <<'PYEOF'
+import os
+from TTS.api import TTS
+
+tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to("cpu")
+tts.tts_to_file(
+    text=os.environ["TEXT"],
+    speaker_wav=os.environ["REF"],
+    language=os.environ["LANG"],
+    file_path=os.environ["OUT"],
+)
+print("saved", os.environ["OUT"])
+PYEOF
