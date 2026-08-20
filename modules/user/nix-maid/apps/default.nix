@@ -46,6 +46,7 @@ in
       && n != "dsh-keyword-detector"
       && n != "dsh-plan-format-validator"
       && n != "dsh-task-resume-info"
+      && n != "dsh-delegate-task-retry"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
