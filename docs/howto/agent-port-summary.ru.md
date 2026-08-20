@@ -5,27 +5,27 @@
 
 ## 1. Плагины (все в `modules/user/nix-maid/apps/`, все в live-профиле)
 
-| Плагин                        | Что делает                                                                                                              | Тест                                                                   | Коммит                       |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------- |
-| dsh-debug                     | DAP-отладка: gdb/lldb-dap/dlv/debugpy/js-debug, launch/attach, breakpoints, stepping, inspect, evaluate, custom_request | ✅ gdb launch→bp→continue→stack→vars→terminate; attach; custom_request | 50213471, 968ab65a, 8f08714b |
-| dsh-hashline                  | read_hashline + hashline_edit (теги LINE#ID, отказ при расхождении хэша)                                                | ✅ gdb-тест-файл, read/edit/mismatch                                   | ba3105b4                     |
-| dsh-read-tags                 | LINE#ID-якоря в выводе встроенного read (phase 2; хэш как dsh-hashline)                                                | ✅ теги совпадают с read_hashline 4/4                                 | 04472acb                     |
-| dsh-boulder                   | todo-continuation: idle + незакрытые todo → steer с CONTINUATION_PROMPT (+ toast-клиент)                                | ✅ живой (срабатывал в сессиях)                                        | 3995f5f1, 027a80ee           |
-| dsh-rules-injector            | инжект rules/\*.md + AGENTS.md при touch файлов (alwaysApply/glob, дедуп)                                               | ✅                                                                     | dcbe0df7                     |
-| dsh-agent-usage-reminder      | подсказка делегировать при сериях ручных поисков                                                                        | ✅ живой                                                               | 4c56685f                     |
-| dsh-category-skill-reminder   | напоминание делегировать + скиллы (агент-плоскость)                                                                     | ✅ живой                                                               | 6170dcf7, 376a1c7f           |
-| dsh-compaction-todo-preserver | todo переживает компакцию (compaction/start→end)                                                                        | ✅                                                                     | b1eca24a                     |
-| dsh-memory-extractor          | session-end extract в memento: draft-транскрипт + LLM-шаг через локальный Ollama (JSON по memory-extract.md)               | ✅ draft + LLM `[extract]` (qwen3:8b-q8_0, бенч 5 моделей) + fallback  | 9145ff98, a20260e9, 699c47c0, 39614204 |
-| dsh-secrets-masker            | маскировка ключей в результатах тулов (43-char, sk-, ghp\_, ...)                                                        | ✅ unit                                                                | 1861761a                     |
-| dsh-lsp                       | LSP: hover/definition/references/rename/code_actions (rust-analyzer, clangd, pyright, tsserver)                         | ✅ pyright: hover/def/refs/rename; clangd (с compile_commands.json): def+hover | c1a70484                     |
-| dsh-eval                      | персистентные ядра Python/Bun (состояние между вызовами, reset)                                                         | ✅ py: x=41→42; bun: z=5→10                                            | a9828f46                     |
-| dsh-ttsr                      | правила-коррекции на выводе + mental-models (агент-плоскость)                                                           | ✅ TODO-правило; mental 1×/сессию                                      | e55c340e, 8f08714b           |
-| dsh-advisor                   | peer-shadow советник: локальный Ollama на agent/pre-step, одна реплика (не блокирует)                                    | ✅ дрейф от запроса пойман (2 инжекции в тесте)                        | 361057a2                     |
-| dsh-hub                       | супервизируемые процессы: start/send/wait/stop/list                                                                     | ✅ cat/sleep                                                           | 5b5a0b85                     |
-| dsh-ast-grep                  | структурный search/rewrite через ast-grep (1-based позиции)                                                             | ✅ реальный бинарь: search/rewrite                                     | 715c6e5e, 51a37f10           |
-| dsh-checkpoint                | checkpoint/rewind (soft): замена разведки на отчёт                                                                      | ✅                                                                     | 163735c6                     |
-| dsh-browser                   | CDP-тул browser: dedicated tabs, navigate/screenshot/extract/click/type (Vivaldi :9222, chromium :9223) | ✅ browser-WS: createTarget/attach/navigate/close на Vivaldi | 1ba679bc |
-| dsh-desktop                   | desktop: doctor/windows/screenshot (grim) + click/type/scroll (MCP computer-use-linux) | ✅ doctor+windows+grim на Hyprland | 23670c12 |
+| Плагин                        | Что делает                                                                                                              | Тест                                                                           | Коммит                                 |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------------------------- |
+| dsh-debug                     | DAP-отладка: gdb/lldb-dap/dlv/debugpy/js-debug, launch/attach, breakpoints, stepping, inspect, evaluate, custom_request | ✅ gdb launch→bp→continue→stack→vars→terminate; attach; custom_request         | 50213471, 968ab65a, 8f08714b           |
+| dsh-hashline                  | read_hashline + hashline_edit (теги LINE#ID, отказ при расхождении хэша)                                                | ✅ gdb-тест-файл, read/edit/mismatch                                           | ba3105b4                               |
+| dsh-read-tags                 | LINE#ID-якоря в выводе встроенного read (phase 2; хэш как dsh-hashline)                                                 | ✅ теги совпадают с read_hashline 4/4                                          | 04472acb                               |
+| dsh-boulder                   | todo-continuation: idle + незакрытые todo → steer с CONTINUATION_PROMPT (+ toast-клиент)                                | ✅ живой (срабатывал в сессиях)                                                | 3995f5f1, 027a80ee                     |
+| dsh-rules-injector            | инжект rules/\*.md + AGENTS.md при touch файлов (alwaysApply/glob, дедуп)                                               | ✅                                                                             | dcbe0df7                               |
+| dsh-agent-usage-reminder      | подсказка делегировать при сериях ручных поисков                                                                        | ✅ живой                                                                       | 4c56685f                               |
+| dsh-category-skill-reminder   | напоминание делегировать + скиллы (агент-плоскость)                                                                     | ✅ живой                                                                       | 6170dcf7, 376a1c7f                     |
+| dsh-compaction-todo-preserver | todo переживает компакцию (compaction/start→end)                                                                        | ✅                                                                             | b1eca24a                               |
+| dsh-memory-extractor          | session-end extract в memento: draft-транскрипт + LLM-шаг через локальный Ollama (JSON по memory-extract.md)            | ✅ draft + LLM `[extract]` (qwen3:8b-q8_0, бенч 5 моделей) + fallback          | 9145ff98, a20260e9, 699c47c0, 39614204 |
+| dsh-secrets-masker            | маскировка ключей в результатах тулов (43-char, sk-, ghp\_, ...)                                                        | ✅ unit                                                                        | 1861761a                               |
+| dsh-lsp                       | LSP: hover/definition/references/rename/code_actions (rust-analyzer, clangd, pyright, tsserver)                         | ✅ pyright: hover/def/refs/rename; clangd (с compile_commands.json): def+hover | c1a70484                               |
+| dsh-eval                      | персистентные ядра Python/Bun (состояние между вызовами, reset)                                                         | ✅ py: x=41→42; bun: z=5→10                                                    | a9828f46                               |
+| dsh-ttsr                      | правила-коррекции на выводе + mental-models (агент-плоскость)                                                           | ✅ TODO-правило; mental 1×/сессию                                              | e55c340e, 8f08714b                     |
+| dsh-advisor                   | peer-shadow советник: локальный Ollama на agent/pre-step, одна реплика (не блокирует)                                   | ✅ дрейф от запроса пойман (2 инжекции в тесте)                                | 361057a2                               |
+| dsh-hub                       | супервизируемые процессы: start/send/wait/stop/list                                                                     | ✅ cat/sleep                                                                   | 5b5a0b85                               |
+| dsh-ast-grep                  | структурный search/rewrite через ast-grep (1-based позиции)                                                             | ✅ реальный бинарь: search/rewrite                                             | 715c6e5e, 51a37f10                     |
+| dsh-checkpoint                | checkpoint/rewind (soft): замена разведки на отчёт                                                                      | ✅                                                                             | 163735c6                               |
+| dsh-browser                   | CDP-тул browser: dedicated tabs, navigate/screenshot/extract/click/type (Vivaldi :9222, chromium :9223)                 | ✅ browser-WS: createTarget/attach/navigate/close на Vivaldi                   | 1ba679bc                               |
+| dsh-desktop                   | desktop: doctor/windows/screenshot (grim) + click/type/scroll (MCP computer-use-linux)                                  | ✅ doctor+windows+grim на Hyprland                                             | 23670c12                               |
 
 ## 2. Доки и воркфлоу
 
@@ -35,8 +35,8 @@
   agent-misc-ports, agent-deferred (план + закрытые дыры + честные остатки), designs/ (5 дизайнов).
 - `.agent/workflows/`: plan-before-code, delegate-task, security-scan, notepads, vibe-director,
   codebase-cleanse, autolearn; `.agent/prompts/`: memory-extract, memory-consolidate;
-  `.agent/scripts/export-session.mjs` (JSONL.zstd → HTML); `.agent/scripts/ab-bench.mjs`
-  (A/B стенд промптов: пресеты × задачи + pairwise-жюри через локальный Ollama);
+  `.agent/scripts/export-session.mjs` (JSONL.zstd → HTML); `.agent/scripts/ab-bench.mjs` (A/B стенд
+  промптов: пресеты × задачи + pairwise-жюри через локальный Ollama);
   `.agent/scripts/code-review.mjs` (git diff → локальная модель → замечания);
   `.agent/scripts/ab-run.mjs` + `.agent/bench/` (runtime A/B: набор задач, отчёты в
   `~/.local/share/ab-bench/`); `agent-backlog-research.ru.md` (план: collab/browser/computer/vibe).
@@ -46,10 +46,10 @@
 - `dsh.service` active, **0 ошибок** в журнале текущего процесса.
 - **bun** и **ast-grep** теперь в системном PATH (`/run/current-system/sw/bin/`).
 - Реальные тесты после rebuild: `ast_grep` search/rewrite на rust-фикстуре ✅; `eval` python
-  (val=6.283) и bun (z=5→10, let/const/class персистят между вызовами: a=42) ✅; `lsp` pyright (hover/def/refs/rename) ✅ и clangd
-  (с compile_commands.json: definition+hover ✅); **js-debug** (socket-транспорт:
-  launch+terminate ✅; breakpoint/step — даже с bp до launch на живом скрипте не даёт
-  stopped/threads в этой настройке — задокументированное ограничение); логика rules-injector
+  (val=6.283) и bun (z=5→10, let/const/class персистят между вызовами: a=42) ✅; `lsp` pyright
+  (hover/def/refs/rename) ✅ и clangd (с compile_commands.json: definition+hover ✅); **js-debug**
+  (socket-транспорт: launch+terminate ✅; breakpoint/step — даже с bp до launch на живом скрипте не
+  даёт stopped/threads в этой настройке — задокументированное ограничение); логика rules-injector
   (инжект+дедуп ✅), compaction-todo-preserver (re-append ✅), memory-extractor (draft ✅).
 - Вживую срабатывали: boulder (продолжения по todo), category-skill-reminder, TTSR-инъекции.
 - Бенч LLM-моделей для memory-extractor (odin, RX 9070 XT 16GB): qwen3:8b-q8_0 26s/52 tok/s —
@@ -58,13 +58,13 @@
 ## 4. Что осталось (честно)
 
 - `systemctl --user restart dsh` — подхват последних правок (js-debug резолв, mental-models).
-- js-debug (JS/TS отладка): launch/terminate проверены (socket-транспорт); breakpoint/step
-  не дают stopped/threads даже с брейкпоинтом до launch на живом скрипте (setTimeout 6s) —
+- js-debug (JS/TS отладка): launch/terminate проверены (socket-транспорт); breakpoint/step не дают
+  stopped/threads даже с брейкпоинтом до launch на живом скрипте (setTimeout 6s) —
   задокументированное ограничение nixpkgs-сборки адаптера (ожидает полной VS Code-конфигурации:
   runtimeArgs/sourceMapPause/...; из коробки отдаёт только launch/terminate).
-- Не проверено живьём (нужны реальная сессия/тулчейн): lsp rust-analyzer (в песочнице rustup
-  без default-тулчейна; на хосте бинарь в PATH — нужен проект с Cargo.toml + тулчейном);
-  boulder toast (GUI-элемент, headless не проверить). Логика остальных — см. §3.
+- Не проверено живьём (нужны реальная сессия/тулчейн): lsp rust-analyzer (в песочнице rustup без
+  default-тулчейна; на хосте бинарь в PATH — нужен проект с Cargo.toml + тулчейном); boulder toast
+  (GUI-элемент, headless не проверить). Логика остальных — см. §3.
 - Не закрыто (в agent-deferred): mid-stream TTSR, collab/autoresearch/vibe-рантайм/computer/browser.
 
 ## 5. Уроки
@@ -76,5 +76,5 @@
 - node:vm не персистит let/const между вызовами — для ядра использовать var/присваивание.
 - pyright требует workspaceFolders в initialize, иначе «/<default workspace root>».
 - clangd без compile_commands.json почти нем (standalone-файл); с compile db работает (def+hover ✅).
-- js-debug из nixpkgs — headless-адаптер: без полной VS Code-конфигурации не отдаёт
-  threads/stopped; launch/terminate работают.
+- js-debug из nixpkgs — headless-адаптер: без полной VS Code-конфигурации не отдаёт threads/stopped;
+  launch/terminate работают.
