@@ -62,6 +62,14 @@ in
       # winpthreads: headers via CPATH (env), lib via -L in the 32/64BIT_FLAGS
       # make vars — both bridges-plugin and discovery expand them in the link
       # rule (LIBRARY_PATH never reaches the recipe env under nix make).
+      # Upstream bug (2.5.10 and main): OBJS_arch in bridges-plugin omits
+      # engine files that CarlaEnginePorts references (e.g.
+      # PatchbayGraph::reconfigureForCV) — insert the missing objects.
+      sed -i -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineGraph.cpp.arch.o \\' \
+        -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineOscSend.cpp.arch.o \\' \
+        -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineDummy.cpp.arch.o \\' \
+        -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineNative.cpp.arch.o \\' \
+        source/bridges-plugin/Makefile
       export CPATH=${final.winpthreads64}/include
       make -j"$NIX_BUILD_CORES" win64 \
         CC=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-gcc \
