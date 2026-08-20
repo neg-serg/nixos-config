@@ -59,29 +59,27 @@ in
       final.wineWow64Packages.stable # winegcc: jackbridge-wine DLLs
     ];
     preBuild = (old.preBuild or "") + ''
-      # winpthreads: headers via CPATH (env), lib via -L in the 32/64BIT_FLAGS
-      # make vars — both bridges-plugin and discovery expand them in the link
-      # rule (LIBRARY_PATH never reaches the recipe env under nix make).
-      # Upstream bug (2.5.10 and main): OBJS_arch in bridges-plugin omits
-      # engine files that CarlaEnginePorts references (e.g.
-      # PatchbayGraph::reconfigureForCV) — insert the missing objects.
+      # winpthreads: headers via CPATH env; -L injected into LINK_FLAGS by sed
+      # (a command-line make var would clobber the Makefile += flags, e.g.
+      # -DBUILD_BRIDGE_ALTERNATIVE_ARCH, and pull in unsupported plugin types).
+      # Upstream bug (2.5.10 + main): OBJS_arch omits CarlaEngineGraph.cpp
+      # (CarlaEnginePorts references PatchbayGraph::reconfigureForCV).
+      export CPATH=${final.winpthreads64}/include
       sed -i -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineGraph.cpp.arch.o \\' \
         -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineDummy.cpp.arch.o \\' \
-        -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineNative.cpp.arch.o \\' \
-        -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaPluginNative.cpp.arch.o \\' \
-        -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaPluginJack.cpp.arch.o \\' \
         source/bridges-plugin/Makefile
-      export CPATH=${final.winpthreads64}/include
+      sed -i 's#^LINK_FLAGS += -lpthread#LINK_FLAGS += -L${final.winpthreads64}/lib -lpthread#' \
+        source/discovery/Makefile source/bridges-plugin/Makefile
       make -j"$NIX_BUILD_CORES" win64 \
         CC=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-gcc \
-        CXX=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-g++ \
-        64BIT_FLAGS=-L${final.winpthreads64}/lib
+        CXX=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-g++
       make -j"$NIX_BUILD_CORES" wine64
+      sed -i 's#-L${final.winpthreads64}/lib#-L${final.winpthreads32}/lib#' \
+        source/discovery/Makefile source/bridges-plugin/Makefile
       export CPATH=${final.winpthreads32}/include
       make -j"$NIX_BUILD_CORES" win32 \
         CC=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-gcc \
-        CXX=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-g++ \
-        32BIT_FLAGS=-L${final.winpthreads32}/lib
+        CXX=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-g++
       make -j"$NIX_BUILD_CORES" wine32
     '';
   });
