@@ -13,6 +13,7 @@
     pkgs.shfmt # shell formatter
     pkgs.strace # trace syscalls
     pkgs.uv # Python package manager (uvx for MCP servers like qdrant, blender, wireshark, arxiv, serena)
+    pkgs.mojo # Mojo programming language (compiler, LSP, formatter; PyPI wheels repackaged)
   ]);
 
   # oh-my-openagent MCP plugin hardcodes /usr/bin/uvx for Python-based MCP servers
