@@ -15,7 +15,7 @@
 | dsh-agent-usage-reminder      | подсказка делегировать при сериях ручных поисков                                                                        | ✅ живой                                                               | 4c56685f                     |
 | dsh-category-skill-reminder   | напоминание делегировать + скиллы (агент-плоскость)                                                                     | ✅ живой                                                               | 6170dcf7, 376a1c7f           |
 | dsh-compaction-todo-preserver | todo переживает компакцию (compaction/start→end)                                                                        | ✅                                                                     | b1eca24a                     |
-| dsh-memory-extractor          | session-end draft-extract в memento (LLM-шаг = TODO)                                                                    | ✅                                                                     | 9145ff98, a20260e9           |
+| dsh-memory-extractor          | session-end extract в memento: draft-транскрипт + LLM-шаг через локальный Ollama (JSON по memory-extract.md)               | ✅ draft + LLM `[extract]` (qwen3dot5) + fallback-сценарии             | 9145ff98, a20260e9, 699c47c0 |
 | dsh-secrets-masker            | маскировка ключей в результатах тулов (43-char, sk-, ghp\_, ...)                                                        | ✅ unit                                                                | 1861761a                     |
 | dsh-lsp                       | LSP: hover/definition/references/rename/code_actions (rust-analyzer, clangd, pyright, tsserver)                         | ✅ pyright: hover/def/refs/rename; clangd (с compile_commands.json): def+hover | c1a70484                     |
 | dsh-eval                      | персистентные ядра Python/Bun (состояние между вызовами, reset)                                                         | ✅ py: x=41→42; bun: z=5→10                                            | a9828f46                     |
@@ -56,7 +56,7 @@
 - Не проверено живьём (нужны реальная сессия/тулчейн): lsp rust-analyzer (в песочнице rustup
   без default-тулчейна; на хосте бинарь в PATH — нужен проект с Cargo.toml + тулчейном);
   boulder toast (GUI-элемент, headless не проверить). Логика остальных — см. §3.
-- Не закрыто (в agent-deferred): advisor-рантайм, mid-stream TTSR, LLM-шаг memory-extractor,
+- Не закрыто (в agent-deferred): advisor-рантайм, mid-stream TTSR,
   collab/autoresearch/vibe-рантайм/computer/browser.
 
 ## 5. Уроки
