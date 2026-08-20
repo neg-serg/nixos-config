@@ -184,9 +184,13 @@ lsp/eval).
 - **advisor-рантайм** (peer-shadow надзиратель) — нужен LLM-доступ из плагина (нет в DSH); только
   док.
 - **mid-stream TTSR** — DSH не даёт плагину прерывать поток LLM; наша версия инжектит между шагами.
-- **hashline теги во встроенном `read`** — требует форк `dsh-tool-fs` (phase 2).
-- **eval bun `let`/`const`** — node:vm не персистит lexical-блоки между вызовами; только
-  `var`/присваивание.
+- ~~hashline теги во встроенном `read`~~ — **ЗАКРЫТО (phase 2)**: плагин `dsh-read-tags`
+  через `tools/post-execute` переписывает content встроенного `read` в `N#ID| text` (хэш
+  идентичен dsh-hashline, проверено 4/4), без форка `dsh-tool-fs`; композиция со
+  spill-policy сохранена (listener не prepend).
+- ~~eval bun `let`/`const`~~ — **ЗАКРЫТО**: на bun 1.3.13 и node v24 top-level `let`/`const`/
+  `class` персистят между вызовами ядра (проверено: `a=42`, `c=10`, `P=7`); повторное
+  `let a = ...` → SyntaxError, как в REPL.
 - **LLM-шаг memory-extractor** — нет сервиса вызова модели у плагинов.
 - **collab / autoresearch / vibe-рантайм / computer / browser / hub-peer-IRC** — в бэклоге
   (объём/безопасность).
