@@ -45,6 +45,11 @@ removed — it was never read by any module.
   the full table is `config.lib.neg.web.browsers` (currently only `vivaldi`).
 - **RetroArch full** (`features.emulators.retroarch.full`): use `retroarchFull` with extended
   (unfree) cores.
+- **Declarative Wine apps** (`features.wine.enable`): Wine runtime
+  (`wineWow64Packages.stable` + `winetricks`) and the `wineapps` CLI; per-app prefixes in
+  `~/.local/share/wineprefixes/<app>` (bind → `/gamez/main/wineprefixes`), registry at
+  `/etc/wineapps/apps.json`. Apps are declared in `features.wine.apps.<id>`
+  (installer/executable/winetricks/...); see the `wine-apps` DSH skill for the add/remove workflow.
 
 ## Extra Arguments (flake extraSpecialArgs)
 
