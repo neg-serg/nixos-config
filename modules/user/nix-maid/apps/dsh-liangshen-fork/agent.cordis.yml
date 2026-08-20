@@ -338,3 +338,8 @@
 # needs agent/pre-step + message composition).
 - id: ttsr
   name: dsh-ttsr
+
+# Advisor: peer-shadow quality advisor on agent/pre-step via local Ollama
+# (non-blocking; one short advice injected when the model has something to say).
+- id: advisor
+  name: dsh-advisor
