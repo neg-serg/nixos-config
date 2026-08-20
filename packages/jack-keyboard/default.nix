@@ -16,7 +16,7 @@ stdenv.mkDerivation {
     owner = "Stazed";
     repo = "jack-keyboard";
     rev = "c68bd8698179ae9a9f7c0e79bdf4fda9767c7537";
-    hash = "sha256-vxDHhEasegqa15qzN66hFBcI88mxkReGzPe7/z8IHGQ=";
+    hash = "sha256-juV3wkz2BEoBXKUOI3rLQQXC1WYX6ykKAOgnJDAv3rs=";
   };
 
   nativeBuildInputs = [
