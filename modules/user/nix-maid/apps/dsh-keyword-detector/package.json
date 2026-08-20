@@ -1,0 +1,9 @@
+{
+  "name": "dsh-keyword-detector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "dsh harness hook: detect trigger keywords in the latest user message and inject a mode/behaviour hint on the next pre-step (keyword-detector from oh-my-opencode backlog).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": { ".": "./lib/index.js", "./package.json": "./package.json" }
+}
