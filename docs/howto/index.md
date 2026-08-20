@@ -85,3 +85,6 @@ isn't a step-by-step runbook.
 
 - Passwordless sudo via TPM (non-exportable SSH key + pam_ssh_agent_auth, no manual actions) (RU):
   [tpm-sudo.ru.md](./tpm-sudo.ru.md)
+
+- Долгоиграющая цель (ongoing Goal): как развернуть, запустить и управлять (RU):
+  [ongoing-goal.ru.md](./ongoing-goal.ru.md)
