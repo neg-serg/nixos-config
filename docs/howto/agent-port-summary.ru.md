@@ -20,6 +20,7 @@
 | dsh-lsp                       | LSP: hover/definition/references/rename/code_actions (rust-analyzer, clangd, pyright, tsserver)                         | ✅ pyright: hover/def/refs/rename; clangd (с compile_commands.json): def+hover | c1a70484                     |
 | dsh-eval                      | персистентные ядра Python/Bun (состояние между вызовами, reset)                                                         | ✅ py: x=41→42; bun: z=5→10                                            | a9828f46                     |
 | dsh-ttsr                      | правила-коррекции на выводе + mental-models (агент-плоскость)                                                           | ✅ TODO-правило; mental 1×/сессию                                      | e55c340e, 8f08714b           |
+| dsh-advisor                   | peer-shadow советник: локальный Ollama на agent/pre-step, одна реплика (не блокирует)                                    | ✅ дрейф от запроса пойман (2 инжекции в тесте)                        | 361057a2                     |
 | dsh-hub                       | супервизируемые процессы: start/send/wait/stop/list                                                                     | ✅ cat/sleep                                                           | 5b5a0b85                     |
 | dsh-ast-grep                  | структурный search/rewrite через ast-grep (1-based позиции)                                                             | ✅ реальный бинарь: search/rewrite                                     | 715c6e5e, 51a37f10           |
 | dsh-checkpoint                | checkpoint/rewind (soft): замена разведки на отчёт                                                                      | ✅                                                                     | 163735c6                     |
@@ -58,8 +59,7 @@
 - Не проверено живьём (нужны реальная сессия/тулчейн): lsp rust-analyzer (в песочнице rustup
   без default-тулчейна; на хосте бинарь в PATH — нужен проект с Cargo.toml + тулчейном);
   boulder toast (GUI-элемент, headless не проверить). Логика остальных — см. §3.
-- Не закрыто (в agent-deferred): advisor-рантайм, mid-stream TTSR,
-  collab/autoresearch/vibe-рантайм/computer/browser.
+- Не закрыто (в agent-deferred): mid-stream TTSR, collab/autoresearch/vibe-рантайм/computer/browser.
 
 ## 5. Уроки
 
