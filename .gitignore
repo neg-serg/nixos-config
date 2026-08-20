@@ -9,6 +9,8 @@ packages/target/
 .omo/
 # DSH web runtime uploads (voice recordings, images from chat)
 .dsh-uploads/
+# Accidental curl cookie jar (curl -c in repo root)
+.cookie
 files/shell/zsh/.zcompdump
 viz/
 
