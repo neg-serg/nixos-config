@@ -68,3 +68,22 @@ nixpkgs, стоит на odin):
 
 - (2) 32-бит bridge под WoW64 wine 11 [unverified]; (3) yabridge + префикс wine 11 [unverified];
 - (4) сборка Carla-мостов в оверлее [unverified].
+## Установка VST-пакетов (проверено 2026-08-20, все в префикс `vstplugins`)
+
+- **ReaPlugs 2.36 x64** (Cockos): `wine reaplugs236_x64-install.exe /S` →
+  `drive_c/Program Files/VSTPlugins/ReaPlugs/` (10 VST2 dll).
+- **The Legend HZ 2.1.0** (Synapse): `wine Legend_HZ_2_1_Setup.exe /S` →
+  `Program Files/Steinberg/VSTPlugins/LegendHZ.dll` (VST2) +
+  `Program Files/Common Files/VST3/Synapse Audio/LegendHZ.vst3` (VST3) + AAX.
+- **kiloHearts Ultimate v2.4.6** (4.3 ГБ): InnoSetup — `/S` НЕ работает (exit 5),
+  нужен `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART` →
+  `Program Files/Common Files/VST3/kiloHearts/` (48 плагинов: Phase Plant, Snap Heap, kHs-модули).
+- После установки: `yabridgectl add <каталог с dll/vst3>` + `yabridgectl sync` + `carlactl list`.
+
+### Legend HZ: «запустите от администратора»
+- Плагин headless загружается нормально (yabridge init OK), сообщение идёт от
+  лицензионного слоя Synapse при открытии UI.
+- Причины: (1) тихий `/S` не создаёт `Program Files/Synapse Audio/The Legend HZ/`
+  (создать вручную); (2) без регистрации/кейгена плагин остаётся демо-режимом.
+- Valhalla-релизы из торрентов (`R2R/`, `R2RINNO.dll` в temp установщика) —
+  это крякнутые установщики, их не запускаем; кейгены/патчи тоже.
