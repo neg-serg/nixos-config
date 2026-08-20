@@ -41,6 +41,7 @@ in
       && n != "dsh-advisor"
       && n != "dsh-browser"
       && n != "dsh-desktop"
+      && n != "dsh-json-error-recovery"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");

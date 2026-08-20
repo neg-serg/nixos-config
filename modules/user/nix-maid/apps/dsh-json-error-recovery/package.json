@@ -1,0 +1,9 @@
+{
+  "name": "dsh-json-error-recovery",
+  "version": "0.1.0",
+  "private": true,
+  "description": "dsh harness hook: on tool errors from edit/write (JSON parse, hash mismatch, bad args) inject a short corrective reminder on the next pre-step.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": { ".": "./lib/index.js", "./package.json": "./package.json" }
+}
