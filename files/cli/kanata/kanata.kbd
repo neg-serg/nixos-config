@@ -4,6 +4,7 @@
 ;; CapsLock = Ctrl AND a navigation modifier at the same time:
 ;;   caps + h/j/k/l  -> left/down/up/right arrows (unmodded)
 ;;   caps + space    -> tab (unmodded)
+;;   caps + q        -> escape (unmodded)
 ;;   caps + w        -> F24 — the browser eats Ctrl+W before pages see it;
 ;;                      dsh web maps F24 to backward-kill-word (C-w alias)
 ;;   caps + anything else -> Ctrl+<key> unchanged (caps+c = Ctrl+C etc.)
@@ -14,14 +15,14 @@
 )
 
 (defsrc
-  caps h j k l spc w
+  caps h j k l spc w q
 )
 
 (deflayer base
   (multi lctl (layer-while-held nav))
-  h j k l spc w
+  h j k l spc w q
 )
 
 (deflayer nav
-  _ (unmod (lctl) left) (unmod (lctl) down) (unmod (lctl) up) (unmod (lctl) right) (unmod (lctl) tab) (unmod (lctl) f24)
+  _ (unmod (lctl) left) (unmod (lctl) down) (unmod (lctl) up) (unmod (lctl) right) (unmod (lctl) tab) (unmod (lctl) f24) (unmod (lctl) esc)
 )
