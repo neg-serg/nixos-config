@@ -26,25 +26,27 @@
 
 ## Рекомендация для odin (ПРОВЕРЕНО end-to-end 2026-08-20)
 
-**Carla wine bridge — НЕ использовать**: сборка мостов (`make win32/win64`) сломана
-апстримом в 2.5.10 и master: `OBJS_arch` неполон, make-переменные затирают флаги,
-winegcc требует multilib, mingw в nativeBuildInputs отравляет нативную сборку (CC/CXX).
-Вместо этого — **yabridge** (уже в nixpkgs, стоит на odin):
+**Carla wine bridge — НЕ использовать**: сборка мостов (`make win32/win64`) сломана апстримом в
+2.5.10 и master: `OBJS_arch` неполон, make-переменные затирают флаги, winegcc требует multilib,
+mingw в nativeBuildInputs отравляет нативную сборку (CC/CXX). Вместо этого — **yabridge** (уже в
+nixpkgs, стоит на odin):
 
 1. Префикс VST под wine 9.21 (yabridge host): `wineboot -u` из
    `/nix/store/...-wine-wow64-yabridge-9.21/bin/wineboot`.
-2. Windows-VST ставятся в префикс (например ReaPlugs 2.36 x64 — официально wine-tested,
+1. Windows-VST ставятся в префикс (например ReaPlugs 2.36 x64 — официально wine-tested,
    `/gamez/main/wineapps/reaplugs236_x64-install.exe /S`).
-3. `mkdir -p ~/.local/share/yabridge && ln -sf /run/current-system/sw/lib/libyabridge* ~/.local/share/yabridge/`
+1. `mkdir -p ~/.local/share/yabridge && ln -sf /run/current-system/sw/lib/libyabridge* ~/.local/share/yabridge/`
    → `yabridgectl add "<prefix>/drive_c/Program Files/VSTPlugins/<App>" && yabridgectl sync`.
-4. `carlactl list | grep -i rea` → `carlactl run vst2:reaeq-standalone` → headless Carla с плагином.
+1. `carlactl list | grep -i rea` → `carlactl run vst2:reaeq-standalone` → headless Carla с плагином.
 
 Фиксы в carlactl (коммит «Route yabridge plugins through carla frontend»):
-- yabridge-плагины генерируются через фронтенд-`.carxp` (`carla -n`), а не через in-process
-  C API — libyabridge падает в asio epoll_reactor при `add_plugin` (SIGSEGV).
+
+- yabridge-плагины генерируются через фронтенд-`.carxp` (`carla -n`), а не через in-process C API —
+  libyabridge падает в asio epoll_reactor при `add_plugin` (SIGSEGV).
 - `NIX_PROFILES` экспортируется в env запуска (nixpkgs-сборка yabridge ищет libs через него).
 
 Проверено: ReaEQ (ReaPlugs) → yabridge 5.1.1 → Carla headless → порты Carla:output_FL/FR в PipeWire.
+
 ## Ключевые источники
 
 - Carla wine bridge: https://github.com/falkTX/Carla (INSTALL.md:101–118, CarlaPluginBridge.cpp,
