@@ -204,6 +204,7 @@ in
       '';
       zest = final.callPackage ./zest { }; # CLI for ZestBay plugin management (LV2 add/rm/list)
       carlactl = final.callPackage ./carlactl { }; # console VST router via headless Carla (list/run/route)
+      wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
     };
 
   # tmd-top: real-time per-IP network traffic monitor (TUI) — pinned textual 1.0.0

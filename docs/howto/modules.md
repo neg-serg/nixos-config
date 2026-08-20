@@ -2217,3 +2217,169 @@ true
 *Declared by:*
 
 - [/modules/features/web.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/web.nix)
+
+## features.wine.enable
+
+Whether to enable enable Wine runtime (wineWow64Packages.stable + winetricks) and the declarative wine-app manager (wineapps CLI).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
+
+## features.wine.apps
+
+Declaratively managed Wine apps. Each attribute name is the app id; add an entry to install it, remove it to uninstall.
+
+*Type:* attribute set of (submodule)
+
+*Default:*
+
+```nix
+{ }
+```
+
+*Declared by:*
+
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
+
+## features.wine.apps.<name>.arch
+
+Wine architecture for the prefix (WINEARCH). Use win32 only for legacy 32-bit apps.
+
+*Type:* one of "win64", "win32"
+
+*Default:*
+
+```nix
+"win64"
+```
+
+*Declared by:*
+
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
+
+## features.wine.apps.<name>.comment
+
+Short human-readable description (shown in wineapps list and desktop entries).
+
+*Type:* string
+
+*Default:*
+
+```nix
+""
+```
+
+*Declared by:*
+
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
+
+## features.wine.apps.<name>.desktop
+
+Generate a .desktop launcher for the app (requires executable).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
+
+## features.wine.apps.<name>.executable
+
+Path to the app main executable relative to the prefix root (e.g. "drive_c/Program Files/App/app.exe"). Used by wineapps run and desktop launchers.
+
+*Type:* null or string
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
+
+## features.wine.apps.<name>.installArgs
+
+Arguments passed to the installer (InnoSetup silent default: /S).
+
+*Type:* string
+
+*Default:*
+
+```nix
+"/S"
+```
+
+*Declared by:*
+
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
+
+## features.wine.apps.<name>.installer
+
+Installer for the app: absolute path to an .exe/.msi on disk, or an http(s) URL. null = app was installed manually (wineapps only manages run/desktop).
+
+*Type:* null or string
+
+*Default:*
+
+```nix
+null
+```
+
+*Declared by:*
+
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
+
+## features.wine.apps.<name>.prefix
+
+Prefix name (directory under ~/.local/share/wineprefixes). Empty = use the app attribute name.
+
+*Type:* string
+
+*Default:*
+
+```nix
+""
+```
+
+*Declared by:*
+
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
+
+## features.wine.apps.<name>.winetricks
+
+winetricks verbs applied before running the installer, e.g. [ "corefonts" "vcrun2022" ].
+
+*Type:* list of string
+
+*Default:*
+
+```nix
+[ ]
+```
+
+*Declared by:*
+
+- [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)

@@ -13,6 +13,7 @@
  */
 
 import { spawn } from 'node:child_process'
+import { connect as netConnect } from 'node:net'
 import { extname, join, dirname, basename } from 'node:path'
 import { existsSync } from 'node:fs'
 import { defineTool } from '@deepseek-ai/dsh-tools'
@@ -51,7 +52,10 @@ const ADAPTERS = {
   },
   'js-debug-adapter': {
     command: 'js-debug-adapter',
-    args: [],
+    // nixpkgs vscode-js-debug is a socket-only DAP server (usage:
+    // dapDebugServer.js [port=8123]); our DapClient connects in socket mode.
+    args: ['8123', '127.0.0.1'], // listen on IPv4 (default is ::1 only)
+    socketPort: 8123,
     extensions: ['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx'],
     launch: { request: 'launch', type: 'pwa-node', stopOnEntry: true },
   },
@@ -89,25 +93,65 @@ const READONLY_ACTIONS = new Set([
   'loaded_sources', 'modules',
 ])
 
-/** Minimal DAP client over stdio with Content-Length framing. */
+/** Minimal DAP client (stdio or socket transport) with Content-Length framing. */
 class DapClient {
-  constructor(command, args) {
-    this.proc = spawn(command, args, { stdio: ['pipe', 'pipe', 'pipe'] })
+  constructor(command, args, socketPort) {
+    this.socket = null
+    this.ready = null
+    this.lastError = ''
+    const self = this
+    if (socketPort) {
+      // Socket mode: spawn the adapter (it listens), then connect with retry.
+      this.proc = spawn(command, args, { stdio: ['ignore', 'ignore', 'pipe'] })
+      this.ready = this._connectWithRetry(socketPort, 15, 200)
+    } else {
+      this.proc = spawn(command, args, { stdio: ['pipe', 'pipe', 'pipe'] })
+      this.proc.stdout.on('data', function (d) { self._onData(d) })
+    }
     this.buf = Buffer.alloc(0)
     this.nextSeq = 1
     this.pending = new Map()
     this.onEvent = null
-    this.lastError = ''
+    if (this.proc) {
+      this.proc.stderr.on('data', function (d) {
+        self.lastError = String(d).slice(0, 400)
+      })
+      this.proc.on('exit', function () {
+        const err = new Error('debug adapter exited: ' + self.lastError)
+        self.pending.forEach(function (p) { p.reject(err) })
+        self.pending.clear()
+      })
+    }
+  }
+
+  _connectWithRetry(port, attempts, delay) {
     const self = this
-    this.proc.stdout.on('data', function (d) { self._onData(d) })
-    this.proc.stderr.on('data', function (d) {
-      self.lastError = String(d).slice(0, 400)
+    return new Promise(function (resolve, reject) {
+      const tryOnce = function (n) {
+        const s = netConnect(port, '127.0.0.1')
+        const onErr = function (err) {
+          s.destroy()
+          if (n <= 0) reject(new Error('js-debug adapter connect failed: ' + String(err.message || err)))
+          else setTimeout(function () { tryOnce(n - 1) }, delay)
+        }
+        s.once('error', onErr)
+        s.once('connect', function () {
+          s.removeListener('error', onErr)
+          s.on('data', function (d) { self._onData(d) })
+          self.socket = s
+          resolve(s)
+        })
+      }
+      tryOnce(attempts)
     })
-    this.proc.on('exit', function () {
-      const err = new Error('debug adapter exited: ' + self.lastError)
-      self.pending.forEach(function (p) { p.reject(err) })
-      self.pending.clear()
-    })
+  }
+
+  write(payload) {
+    if (this.socket) {
+      this.socket.write(payload)
+    } else {
+      this.proc.stdin.write(payload)
+    }
   }
 
   _onData(d) {
@@ -148,25 +192,36 @@ class DapClient {
     }
   }
 
-  request(command, args) {
+  async request(command, args) {
+    if (this.ready) await this.ready
     const seq = this.nextSeq
     this.nextSeq += 1
     const body = JSON.stringify({ seq: seq, type: 'request', command: command, arguments: args || {} })
     const payload = 'Content-Length: ' + Buffer.byteLength(body) + CRLF + CRLF + body
     const self = this
     return new Promise(function (resolve, reject) {
-      self.pending.set(seq, { resolve: resolve, reject: reject })
-      self.proc.stdin.write(payload, function (err) {
-        if (err) {
+      const timer = setTimeout(function () {
+        if (self.pending.has(seq)) {
           self.pending.delete(seq)
-          reject(err)
+          reject(new Error('dap request timed out: ' + command))
         }
+      }, 30000)
+      self.pending.set(seq, {
+        resolve: function (v) { clearTimeout(timer); resolve(v) },
+        reject: function (e) { clearTimeout(timer); reject(e) },
       })
+      try {
+        self.write(payload)
+      } catch (e) {
+        self.pending.delete(seq)
+        clearTimeout(timer)
+        reject(e)
+      }
     })
   }
 
   close() {
-    try { this.proc.stdin.end() } catch (e) { /* ignore */ }
+    try { if (this.socket) this.socket.destroy(); else this.proc.stdin.end() } catch (e) { /* ignore */ }
     try { this.proc.kill('SIGTERM') } catch (e) { /* ignore */ }
   }
 }
@@ -198,7 +253,7 @@ async function openSession(params, exec) {
   if (!existsSync(resolved)) throw new Error('debug: program does not exist: ' + resolved)
   const adapterId = selectAdapter(resolved, params.adapter)
   const adapter = ADAPTERS[adapterId]
-  const client = new DapClient(resolveCommand(adapter.command), adapter.args)
+  const client = new DapClient(resolveCommand(adapter.command), adapter.args, adapter.socketPort)
   try {
     await initializeClient(client, adapterId)
     const launchArgs = {}
@@ -214,6 +269,7 @@ async function openSession(params, exec) {
     const launchResponse = client.request('launch', launchArgs)
     await client.request('configurationDone', {})
     await launchResponse
+    await waitForStopped(client, 3000) // stopOnEntry: let the stopped event land (js-debug)
   } catch (err) {
     client.close()
     throw err
@@ -234,7 +290,7 @@ async function openAttach(params, exec) {
   const adapterId = port !== undefined ? 'debugpy' : (params.adapter || 'gdb')
   const adapter = ADAPTERS[adapterId]
   if (!adapter) throw new Error('debug: unknown adapter ' + adapterId)
-  const client = new DapClient(resolveCommand(adapter.command), adapter.args)
+  const client = new DapClient(resolveCommand(adapter.command), adapter.args, adapter.socketPort)
   try {
     await initializeClient(client, adapterId)
     const attachArgs = { request: 'attach' }

@@ -231,6 +231,17 @@ in
     "cmd"
     "powershell"
   ];
+  # Declarative Wine apps — features.wine.apps.<id>; managed via the `wineapps`
+  # CLI (list/install/uninstall/run). Workflow: see the wine-apps DSH skill.
+  features.wine.enable = true;
+  features.wine.apps = {
+    # myapp = {
+    #   installer = "/gamez/main/wineapps/myapp-setup.exe"; # or https://...
+    #   executable = "drive_c/Program Files/MyApp/myapp.exe";
+    #   comment = "MyApp";
+    #   winetricks = [ "corefonts" ];
+    # };
+  };
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
   hardware.gpu.corectrl.enable = true;
   # Override default networkUnits: odin uses systemd-networkd, not NetworkManager
