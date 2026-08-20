@@ -65,7 +65,9 @@ in
       # (CV/plugin-type code is excluded by BUILD_BRIDGE_ALTERNATIVE_ARCH).
       export CPATH=${final.winpthreads64}/include
 
-      sed -i 's#^LINK_FLAGS += -lpthread#LINK_FLAGS += -L${final.winpthreads64}/lib -lpthread#' \
+      sed -i -e 's#^LINK_FLAGS += -lpthread#LINK_FLAGS += -L${final.winpthreads64}/lib -lpthread#' \
+        -e 's#^LINK_FLAGS += -pthread#LINK_FLAGS += -L${final.winpthreads64}/lib -pthread#' \
+        -e 's#^BUILD_CXX_FLAGS += -pthread#BUILD_CXX_FLAGS += -L${final.winpthreads64}/lib -pthread#' \
         source/discovery/Makefile source/bridges-plugin/Makefile
       make -j"$NIX_BUILD_CORES" win64 \
         CC=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-gcc \
