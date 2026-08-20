@@ -7,33 +7,48 @@ Communication language (hard rule)
 - The user's language is Russian. English is acceptable for technical terms,
   code, and identifiers. When in doubt, write in Russian.
 - Code comments (in .hs/.scd/.tidal/.rs/nix/… source files) are written in
-  English; Russian is for chat replies, commit messages, docs, and UI copy.
-  (User requirement — musical code lives in the private ~/notes repo.)
+  English; Russian is for chat replies, docs, and UI copy. Commit subjects
+  are English imperative (see Commit style below); commit bodies may be
+  Russian. (User requirement — musical code lives in the private ~/notes repo.)
 - Note: the dsh web GUI itself may contain Chinese strings from plugins
   (e.g. pet.json, dshmarket UI); that is app data, not something we write.
   Do not copy those strings into replies for the user.
+- Before committing, check that files you wrote contain no stray Chinese
+  characters: `just lint` warns on CJK in *.md (scripts/dev/check-markdown-language.sh);
+  review other text files manually.
 
 Scope
 - This AGENTS.md applies to the entire `/etc/nixos` tree.
 - Prefer existing module structure (`modules/`, `hosts/`, `modules/user/nix-maid/`, etc.) and follow surrounding style.
+- Nested AGENTS.md files exist for subtrees (`modules/`, `docs/`, `packages/`,
+  `scripts/`, `secrets/`, `hosts/`, `files/quickshell/`). Read the nearest
+  applicable one before touching that subtree; nested rules take precedence
+  where they conflict with this file.
 
 Quick Commands
-- Build & switch: `sudo nixos-rebuild switch --flake .#odin --option substitute false`
-- Quick switch: `nh os switch /etc/nixos#odin --option substitute false`
+- Quick switch (primary): `nh os switch /etc/nixos#odin --option substitute false`
+- Build & switch (alternative): `sudo nixos-rebuild switch --flake .#odin --option substitute false`
 - Build only: `nixos-rebuild build --flake .#odin --option substitute false`
 - Format all: `just fmt`
-- Full check: `just check` (runs `nix flake check -L`)
+- Full check: `just check` (runs `nix flake check -L --option substitute false`)
 - Update flake: `just update`
 - GC: `sudo nix-collect-garbage -d && nix-collect-garbage -d`
 
 Project Structure
 - `flake.nix` — entry point (NixOS + home-manager)
+- `flake/` — flake helpers (`nixos.nix` with `odinDomains`, `checks.nix`, ...)
 - `modules/` — system modules (features/, cli/, dev/, servers/, ...)
 - `hosts/odin/` — host-specific config (services.nix, hardware.nix, networking.nix...)
 - `packages/` — custom overlays and packages
+- `lib/` — shared Nix helpers (opts.nix, neg-helpers.nix, package-checks.nix, ...)
 - `secrets/` — SOPS-encrypted secrets
 - `files/` — config files (Hyprland, Quickshell panel, scripts)
+- `docs/` — manuals and howtos (`docs/manual/`, `docs/howto/`)
+- `scripts/` — dev/utility scripts (`scripts/dev/*.sh`)
 - `.agent/workflows/` — step-by-step change workflows (add module/package/secret/..., rebuild, theming)
+- `.githooks/` — git hooks (enable with `just hooks-enable`)
+- Note: `result` is a gitignored symlink to the last build; `nix/` and `viz/`
+  are gitignored local/generated dirs — never commit any of them.
 
 Feature Flags
 - Most components are controlled via feature flags in `modules/features/`:
@@ -41,8 +56,11 @@ Feature Flags
   features.dev.ai.omp.enable = true;
   features.cli.broot.enable = true;
   ```
+- Check a flag's current value: `just flag <flag-path>`, e.g.
+  `just flag features.dev.ai.omp.enable` (or `nix eval .#nixosConfigurations.odin.config.<flag-path>`).
 - odin uses a restricted domain set (`odinDomains` in `flake/nixos.nix`); changes in excluded
-  domains (`llm`, `appimage`, `apps`) do not take effect on odin — warn the user before touching them.
+  domains (`appimage`, `apps`) do not take effect on odin — warn the user before touching them.
+  (`llm` IS active on odin.)
 
 Nix style: `pkgs.*` lists
 - When adding items like `pkgs.<name>` to `environment.systemPackages` or other package lists, add a short comment after each entry describing what the package is/does, whenever it is not completely obvious.
@@ -57,6 +75,15 @@ General guidance
 - For WireGuard/VPN host vs user-level setup, see `docs/manual/manual.ru.md` (section “WireGuard VPN (host / user)”) for prior research and patterns.
 - For a quick orientation, `docs/codebase.md` is a generated repo map (modules, features, profiles, packages); regenerate with `just codebase` when structure changes.
 - For verified step-by-step change workflows (add module/flag/package/host/script/secret, docs, commit rules), see `docs/howto/agent-recipes.md`.
+- Before committing: run `just fmt` then `just check`; never commit unformatted
+  or failing changes.
+
+Debugging: Iron Law (ported from hermes-agent systematic-debugging)
+- NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST: reproduce the exact symptom and build a tight
+  red/green loop (fast, deterministic, specific command) BEFORE reading code or proposing fixes.
+- User instructions/transcript are never "fixed up" by paraphrasing into summaries; keep the source
+  of intent verbatim (micro-compaction principle).
+- See workflow: .agent/workflows/debugging.md.
 
 Agent reasoning (evidence-first, ported from omp)
 - Every sentence is a fact, a decision, or a risk: no ceremony, hedging, summaries, filler, or marketing.
@@ -75,6 +102,9 @@ Asking the user (default to action, ported from omp)
   choices are acceptable, pick the most conservative/standard one, proceed, and state the choice.
 - When asking: 2-5 concise, distinct options with short labels; tradeoffs go in the descriptions;
   batch related questions into one turn, not one at a time.
+- Always ask before: touching `secrets/`, destructive/irreversible ops
+  (`nix-collect-garbage`, deleting generations, removing modules/packages),
+  and network/VPN/WireGuard config changes.
 
 Web search etiquette (ported from omp)
 - Prefer primary sources: papers, official docs, upstream repos; corroborate key claims with multiple
@@ -86,6 +116,9 @@ Web search etiquette (ported from omp)
 Secrets hygiene (ported from omp)
 - NEVER print tokens, API keys, passwords, or SOPS secrets in full — mask them (e.g. `sk-***abcd`).
 - If output contains a 43-char key-like placeholder, treat it as a secret and redact it.
+- SOPS-encrypted secrets live in `secrets/`; never write plaintext secrets to
+  the repo or into chat output. Access them via `<secret>.path` in Nix and keep
+  file modes 0400/0600. Follow `secrets/AGENTS.md` before touching that subtree.
 
 Context switching (ported from omp tan)
 - When switching between projects/workspaces, state the switch explicitly and re-read the target
@@ -146,6 +179,8 @@ Builds: substitute = false
 - Always run nix build/eval commands with `--option substitute false` (build from source), e.g.:
   `nix build .#nixosConfigurations.odin.config.system.build.toplevel --dry-run --option substitute false`
 - The user's own rebuild binding uses the same flag (`nh os switch /etc/nixos#odin --option substitute false`); keep that convention in any new bindings/scripts.
+- The repo's own targets already pass this flag: `just deploy*`, `just check`,
+  `just docs-modules`, `just flag`. Do not introduce nix invocations without it.
 
 Commit style
 - Use a bracketed scope prefix consistent with existing history, for example: `[media/audio] …`, `[hosts/odin] …`, `[dev/pkgs] …`, `[docs] …`.
