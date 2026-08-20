@@ -197,9 +197,63 @@ def gen_project(ptype, plugin_path, name, out_path):
     return saved, None if saved else "save_project failed"
 
 
+def is_yabridge(plugin_path):
+    """True if the plugin binary is a yabridge wrapper (.so under a yabridge
+    dir). yabridge libs segfault the in-process Carla C API (asio epoll_reactor
+    in libyabridge), so those plugins use the frontend .carxp path instead."""
+    return "yabridge" in str(plugin_path)
+
+
+def gen_project_xml(ptype, plugin_path, name, out_path):
+    """Write a minimal one-plugin .carxp directly (frontend path).
+
+    Used for yabridge-wrapped Windows plugins: the carla frontend (carla -n)
+    loads them fine, while libcarla_standalone2 in-process add_plugin
+    segfaults inside libyabridge-vst2.so."""
+    type_map = {"vst2": "VST2", "vst3": "VST3", "lv2": "LV2"}
+    ptype_xml = type_map.get(ptype, ptype.upper())
+    xml = f"""<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CARLA-PROJECT>
+<CARLA-PROJECT VERSION='2.5'>
+ <EngineSettings>
+  <ForceStereo>false</ForceStereo>
+  <PreferPluginBridges>false</PreferPluginBridges>
+  <PreferUiBridges>true</PreferUiBridges>
+  <UIsAlwaysOnTop>true</UIsAlwaysOnTop>
+  <MaxParameters>200</MaxParameters>
+  <UIBridgesTimeout>4000</UIBridgesTimeout>
+ </EngineSettings>
+ <Transport>
+  <BeatsPerMinute>120</BeatsPerMinute>
+ </Transport>
+ <Plugin>
+  <Info>
+   <Type>{ptype_xml}</Type>
+   <Name>{name}</Name>
+   <Binary>{plugin_path}</Binary>
+   <Label>{name}</Label>
+  </Info>
+  <Data>
+   <Active>Yes</Active>
+  </Data>
+ </Plugin>
+</CARLA-PROJECT>
+"""
+    try:
+        out_path.write_text(xml)
+        return True, None
+    except OSError as exc:
+        return False, f"write failed: {exc}"
+
+
 def gen_env():
     env = os.environ.copy()
     env["LD_LIBRARY_PATH"] = "/run/current-system/sw/lib"
+    # yabridge (nixpkgs build) locates its libs through NIX_PROFILES.
+    env.setdefault(
+        "NIX_PROFILES",
+        "/run/current-system/sw /nix/var/nix/profiles/default /etc/profiles/per-user/neg /home/neg/.local/state/nix/profile",
+    )
     return env
 
 
@@ -337,7 +391,14 @@ def cmd_run(args):
 
     PROJECTS.mkdir(parents=True, exist_ok=True)
     out = PROJECTS / f"{info['name'].replace(' ', '_')}.carxp"
-    ok, err = gen_project(info["format"], info["path"], info["name"], str(out))
+    if is_yabridge(info["path"]):
+        ok, err = gen_project_xml(
+            info["format"], info["path"], info["name"], out
+        )
+    else:
+        ok, err = gen_project(
+            info["format"], info["path"], info["name"], str(out)
+        )
     if not ok:
         print(f"error: {err}", file=sys.stderr)
         return 1
