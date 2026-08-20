@@ -86,6 +86,15 @@ isn't a step-by-step runbook.
 - **Порт omp/oh-my-opencode → DSH: итоговая сводка** (RU):
   [agent-port-summary.ru.md](./agent-port-summary.ru.md)
 
+- Порт hermes-agent (Nous Research) и других похожих проектов: карта переносимого (RU):
+  [agent-port-hermes.ru.md](./agent-port-hermes.ru.md)
+
+- Micro-compaction: дизайн непрерывной компакции для DSH (порт из hermes-agent) (RU):
+  [agent-micro-compaction.ru.md](./agent-micro-compaction.ru.md)
+
+- Контракт авторинга скиллов SKILL.md (порт из hermes-agent) (RU):
+  [agent-skill-authoring.ru.md](./agent-skill-authoring.ru.md)
+
 - Passwordless sudo via TPM (non-exportable SSH key + pam_ssh_agent_auth, no manual actions) (RU):
   [tpm-sudo.ru.md](./tpm-sudo.ru.md)
 
