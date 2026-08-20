@@ -16,7 +16,7 @@
 | dsh-compaction-todo-preserver | todo переживает компакцию (compaction/start→end)                                                                        | ✅                                                                     | b1eca24a                     |
 | dsh-memory-extractor          | session-end draft-extract в memento (LLM-шаг = TODO)                                                                    | ✅                                                                     | 9145ff98, a20260e9           |
 | dsh-secrets-masker            | маскировка ключей в результатах тулов (43-char, sk-, ghp\_, ...)                                                        | ✅ unit                                                                | 1861761a                     |
-| dsh-lsp                       | LSP: hover/definition/references/rename/code_actions (rust-analyzer, clangd, pyright, tsserver)                         | ✅ pyright: hover/def/refs/rename                                      | c1a70484                     |
+| dsh-lsp                       | LSP: hover/definition/references/rename/code_actions (rust-analyzer, clangd, pyright, tsserver)                         | ✅ pyright: hover/def/refs/rename; clangd (с compile_commands.json): def+hover | c1a70484                     |
 | dsh-eval                      | персистентные ядра Python/Bun (состояние между вызовами, reset)                                                         | ✅ py: x=41→42; bun: z=5→10                                            | a9828f46                     |
 | dsh-ttsr                      | правила-коррекции на выводе + mental-models (агент-плоскость)                                                           | ✅ TODO-правило; mental 1×/сессию                                      | e55c340e, 8f08714b           |
 | dsh-hub                       | супервизируемые процессы: start/send/wait/stop/list                                                                     | ✅ cat/sleep                                                           | 5b5a0b85                     |
@@ -38,8 +38,9 @@
 - `dsh.service` active, **0 ошибок** в журнале текущего процесса.
 - **bun** и **ast-grep** теперь в системном PATH (`/run/current-system/sw/bin/`).
 - Реальные тесты после rebuild: `ast_grep` search/rewrite на rust-фикстуре ✅; `eval` python
-  (val=6.283) и bun (z=5→10) ✅; `lsp` pyright (hover/def/refs/rename) ✅; **js-debug**
-  (socket-транспорт: launch+terminate ✅; breakpoint/step — даже с bp до launch не даёт
+  (val=6.283) и bun (z=5→10) ✅; `lsp` pyright (hover/def/refs/rename) ✅ и clangd
+  (с compile_commands.json: definition+hover ✅); **js-debug** (socket-транспорт:
+  launch+terminate ✅; breakpoint/step — даже с bp до launch на живом скрипте не даёт
   stopped/threads в этой настройке — задокументированное ограничение); логика rules-injector
   (инжект+дедуп ✅), compaction-todo-preserver (re-append ✅), memory-extractor (draft ✅).
 - Вживую срабатывали: boulder (продолжения по todo), category-skill-reminder, TTSR-инъекции.
@@ -47,11 +48,13 @@
 ## 4. Что осталось (честно)
 
 - `systemctl --user restart dsh` — подхват последних правок (js-debug резолв, mental-models).
-- js-debug (JS/TS отладка): launch/terminate проверены (socket-транспорт); breakpoint/step —
-  проверить с брейкпоинтом ДО launch.
-- Не проверено живьём (нужны реальная сессия/тулчейн/триггеры): lsp rust-analyzer (в песочнице
-  rustup без default-тулчейна) и clangd (standalone-файл вне проекта); boulder toast;
-  rules-injector; compaction-todo-preserver; memory-extractor draft.
+- js-debug (JS/TS отладка): launch/terminate проверены (socket-транспорт); breakpoint/step
+  не дают stopped/threads даже с брейкпоинтом до launch на живом скрипте (setTimeout 6s) —
+  задокументированное ограничение nixpkgs-сборки адаптера (ожидает полной VS Code-конфигурации:
+  runtimeArgs/sourceMapPause/...; из коробки отдаёт только launch/terminate).
+- Не проверено живьём (нужны реальная сессия/тулчейн): lsp rust-analyzer (в песочнице rustup
+  без default-тулчейна; на хосте бинарь в PATH — нужен проект с Cargo.toml + тулчейном);
+  boulder toast (GUI-элемент, headless не проверить). Логика остальных — см. §3.
 - Не закрыто (в agent-deferred): advisor-рантайм, mid-stream TTSR, hashline-теги во встроенном read,
   eval bun let/const, LLM-шаг memory-extractor, collab/autoresearch/vibe-рантайм/computer/browser.
 
@@ -63,3 +66,6 @@
 - gdb DAP отвечает на launch только после configurationDone; threads после attach пустые (gdb 17.2).
 - node:vm не персистит let/const между вызовами — для ядра использовать var/присваивание.
 - pyright требует workspaceFolders в initialize, иначе «/<default workspace root>».
+- clangd без compile_commands.json почти нем (standalone-файл); с compile db работает (def+hover ✅).
+- js-debug из nixpkgs — headless-адаптер: без полной VS Code-конфигурации не отдаёт
+  threads/stopped; launch/terminate работают.
