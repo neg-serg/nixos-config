@@ -218,6 +218,8 @@ in
       wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
     };
 
+  jack-keyboard = final.callPackage ./jack-keyboard { }; # virtual MIDI keyboard for JACK/PipeWire synth hosts
+
   # tmd-top: real-time per-IP network traffic monitor (TUI) — pinned textual 1.0.0
   # stack on python312, see packages/tmd-top/default.nix
   tmd-top = final.callPackage ./tmd-top { };
