@@ -158,9 +158,10 @@ lsp/eval).
 
 - collab (live-сессии, relay, AES): высочайшая сложность, ниша — НЕ начинать без явного запроса;
   если когда-то — отдельный проект, не плагин.
-- ~~autoresearch (A/B стенд промптов)~~ — **прототип готов**: `.agent/scripts/ab-bench.mjs`
-  (пресеты × задачи → pairwise-жюри через локальный Ollama; демо: terse vs detailed 3:0).
-  Потом — CLI/веб-обвязка по желанию.
+- ~~autoresearch~~ — **готово**: `.agent/scripts/ab-bench.mjs` (пресеты × задачи →
+  pairwise-жюри через локальный Ollama) + `.agent/scripts/ab-run.mjs` (runtime: набор в
+  `.agent/bench/`, отчёты в `~/.local/share/ab-bench/`, summary.csv). Прогон 5 задач:
+  detailed 3:2 terse — зависимость от типа задач.
 - ~~локальное код-ревью~~ — **готово**: `.agent/scripts/code-review.mjs` (git diff → локальная
   модель → замечания; тест на ab-bench-диффе: 8 замечаний).
 - browser (CDP-паттерн) и computer (computer-use-linux, AT-SPI/Hyprland): план «как делать» —
