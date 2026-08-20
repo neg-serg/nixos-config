@@ -63,12 +63,12 @@ in
         CC=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-gcc \
         CXX=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-g++ \
         CPATH=${final.winpthreads64}/include \
-        LIBRARY_PATH=${final.winpthreads64}/lib
+        EXTRA_LINK_FLAGS=-L${final.winpthreads64}/lib
       make -j"$NIX_BUILD_CORES" win32 \
         CC=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-gcc \
         CXX=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-g++ \
         CPATH=${final.winpthreads32}/include \
-        LIBRARY_PATH=${final.winpthreads32}/lib
+        EXTRA_LINK_FLAGS=-L${final.winpthreads32}/lib
       make -j"$NIX_BUILD_CORES" wine64
       make -j"$NIX_BUILD_CORES" wine32
     '';
