@@ -52,7 +52,7 @@ let
         fi
         if [ "$changed" = 1 ]; then
           export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-          ${pkgs.neg.dsh-restart}/bin/dsh-restart
+          ${pkgs.neg.dsh-restart}
         fi
   '';
 in

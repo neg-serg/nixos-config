@@ -42,7 +42,7 @@ let
           fi
         fi
         echo "dsh-watchdog: dsh.service active but port 3080 dead — restarting" >&2
-        exec ${pkgs.neg.dsh-restart}/bin/dsh-restart
+        exec ${pkgs.neg.dsh-restart}
         ;;
       activating|deactivating|reloading)
         exit 0
