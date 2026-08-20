@@ -281,5 +281,46 @@ in
         wantedBy = [ "graphical-session.target" ];
       };
 
+    # Emacs keys in web pages (dsh web composer/terminal): unbind Ctrl+W from
+    # Vivaldi's "close tab" command so the key reaches the page (dsh-gui-tweaks
+    # binds it to backward-kill-word; xterm forwards it to zsh as C-w). Close
+    # tab stays available via Ctrl+F4. Same caveat as the services above:
+    # Vivaldi rewrites Preferences from memory on exit, so re-apply at login.
+    systemd.user.services.vivaldi-emacs-keys-pref =
+      let
+        prefScript = pkgs.writeText "vivaldi-emacs-keys-pref.py" ''
+          import json, os, sys
+          prefs = os.path.expanduser("~/.config/vivaldi/Default/Preferences")
+          if not os.path.isfile(prefs):
+              sys.exit(0)
+          with open(prefs) as f:
+              p = json.load(f)
+          acts = p.setdefault("vivaldi", {}).setdefault("actions", [{}])
+          if isinstance(acts, list):
+              if not acts:
+                  acts.append({})
+              act = acts[0]
+          else:
+              act = acts
+          close_tab = act.setdefault("COMMAND_CLOSE_TAB", {})
+          shortcuts = close_tab.get("shortcuts", [])
+          if "ctrl+w" in shortcuts:
+              close_tab["shortcuts"] = [s for s in shortcuts if s != "ctrl+w"]
+              with open(prefs, "w") as f:
+                  json.dump(p, f, indent=1)
+              print("Ctrl+W unbound from close-tab:", close_tab["shortcuts"])
+        '';
+      in
+      {
+        description = "Unbind Ctrl+W from Vivaldi close-tab (emacs keys in dsh web)";
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${lib.getExe' pkgs.python3 "python3"} ${prefScript}";
+        };
+        after = [ "graphical-session.target" ];
+        wants = [ "graphical-session.target" ];
+        wantedBy = [ "graphical-session.target" ];
+      };
+
   };
 }
