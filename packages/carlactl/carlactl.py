@@ -361,9 +361,22 @@ def resolve_plugin(arg):
                     }
     # Fallback: full scan (cached).
     formats = (fmt,) if fmt else DEFAULT_FORMATS
-    for p in list_plugins(formats):
+    plugins = list_plugins(formats)
+    for p in plugins:
         if p["name"].lower() == name.lower():
             return p
+
+    # Fuzzy: normalize spaces/dashes/underscores/case, then substring match.
+    # Lets "Legend HZ" find the "LegendHZ" entry (name comes from the file).
+    def norm(s):
+        return "".join(c for c in s.lower() if c.isalnum())
+
+    target = norm(name)
+    if target:
+        for p in plugins:
+            pn = norm(p["name"])
+            if target == pn or target in pn or pn in target:
+                return p
     return None
 
 
