@@ -2220,7 +2220,8 @@ true
 
 ## features.wine.enable
 
-Whether to enable enable Wine runtime (wineWow64Packages.stable + winetricks) and the declarative wine-app manager (wineapps CLI).
+Whether to enable enable Wine runtime (wineWow64Packages.stable + winetricks) and the declarative
+wine-app manager (wineapps CLI).
 
 *Type:* boolean
 
@@ -2242,7 +2243,8 @@ true
 
 ## features.wine.apps
 
-Declaratively managed Wine apps. Each attribute name is the app id; add an entry to install it, remove it to uninstall.
+Declaratively managed Wine apps. Each attribute name is the app id; add an entry to install it,
+remove it to uninstall.
 
 *Type:* attribute set of (submodule)
 
@@ -2306,7 +2308,8 @@ true
 
 ## features.wine.apps.<name>.executable
 
-Path to the app main executable relative to the prefix root (e.g. "drive_c/Program Files/App/app.exe"). Used by wineapps run and desktop launchers.
+Path to the app main executable relative to the prefix root (e.g. "drive_c/Program
+Files/App/app.exe"). Used by wineapps run and desktop launchers.
 
 *Type:* null or string
 
@@ -2338,7 +2341,8 @@ Arguments passed to the installer (InnoSetup silent default: /S).
 
 ## features.wine.apps.<name>.installer
 
-Installer for the app: absolute path to an .exe/.msi on disk, or an http(s) URL. null = app was installed manually (wineapps only manages run/desktop).
+Installer for the app: absolute path to an .exe/.msi on disk, or an http(s) URL. null = app was
+installed manually (wineapps only manages run/desktop).
 
 *Type:* null or string
 
