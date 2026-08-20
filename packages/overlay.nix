@@ -69,6 +69,9 @@ in
         -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineOscSend.cpp.arch.o \\' \
         -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineDummy.cpp.arch.o \\' \
         -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineNative.cpp.arch.o \\' \
+        -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaPluginNative.cpp.arch.o \\' \
+        -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaPluginJack.cpp.arch.o \\' \
+        -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaPluginSFZero.cpp.arch.o \\' \
         source/bridges-plugin/Makefile
       export CPATH=${final.winpthreads64}/include
       make -j"$NIX_BUILD_CORES" win64 \
