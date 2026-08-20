@@ -5,7 +5,7 @@
  * can lose track of pending work. On compaction/end we re-append the
  * snapshot taken at compaction/start.
  *
- * Design: /etc/nixos/docs/howto/designs/rules-hooks.md section 2.
+ * Design: /etc/nixos/docs/howto/designs/rules-hooks.ru.md section 2.
  * Mounted via the profile's cordis.patch.yml insert row, same as dsh-osm.
  */
 

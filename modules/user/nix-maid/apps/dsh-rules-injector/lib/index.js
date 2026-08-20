@@ -3,7 +3,7 @@
  * as additional context when the model touches matching files.
  *
  * Ported from oh-my-opencode rules-injector (see
- * /etc/nixos/docs/howto/designs/rules-hooks.md section 1). Delivery rides the
+ * /etc/nixos/docs/howto/designs/rules-hooks.ru.md section 1). Delivery rides the
  * post-execute decision's additionalContexts (source {kind:'plugin'}), same
  * mechanism as repeat-tool-reminder: advisory, never blocks or rewrites calls.
  *
