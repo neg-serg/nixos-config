@@ -59,17 +59,20 @@ in
       final.wineWow64Packages.stable # winegcc: jackbridge-wine DLLs
     ];
     preBuild = (old.preBuild or "") + ''
+      # win64: headers + library path must reach the compiler as ENV vars
+      # (Carla link rules for carla-discovery use only LINK_FLAGS, so a
+      # make-var -L is lost; LIBRARY_PATH is honored by the gcc driver).
+      export CPATH=${final.winpthreads64}/include
+      export LIBRARY_PATH=${final.winpthreads64}/lib
       make -j"$NIX_BUILD_CORES" win64 \
         CC=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-gcc \
-        CXX=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-g++ \
-        CPATH=${final.winpthreads64}/include \
-        EXTRA_LINK_FLAGS=-L${final.winpthreads64}/lib
+        CXX=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-g++
+      make -j"$NIX_BUILD_CORES" wine64
+      export CPATH=${final.winpthreads32}/include
+      export LIBRARY_PATH=${final.winpthreads32}/lib
       make -j"$NIX_BUILD_CORES" win32 \
         CC=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-gcc \
-        CXX=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-g++ \
-        CPATH=${final.winpthreads32}/include \
-        EXTRA_LINK_FLAGS=-L${final.winpthreads32}/lib
-      make -j"$NIX_BUILD_CORES" wine64
+        CXX=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-g++
       make -j"$NIX_BUILD_CORES" wine32
     '';
   });
