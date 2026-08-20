@@ -1,33 +1,17 @@
 ;; Kanata keyboard remapper
 ;; Docs: https://github.com/jtroo/kanata/blob/main/docs/config.adoc
 ;;
-;; CapsLock = Ctrl AND an instant navigation modifier:
-;;   caps + h/j/k/l    -> left/down/up/right arrows (instant, unmodded)
-;;   caps + space      -> tab
-;;   caps + q          -> escape
-;;   caps + w          -> F24 (the browser eats Ctrl+W before pages see it;
-;;                          dsh web maps F24 to backward-kill-word / C-w)
-;;   caps + backspace  -> Ctrl+H (backspace — home row)
-;;   caps + delete     -> Ctrl+K (kill-line in readline/dsh composer)
-;;   caps + enter      -> Ctrl+J (accept-line)
-;;   caps + anything else -> Ctrl+<key> unchanged (caps+c = Ctrl+C etc.)
-;; C-l stays on the physical Ctrl (caps+l is the right arrow).
 ;; All unmapped keys pass through unchanged.
+;; Add key codes to (defsrc) and corresponding actions to (deflayer).
 
 (defcfg
   process-unmapped-keys yes
 )
 
 (defsrc
-  caps h j k l spc w q bck del ret
+  caps
 )
 
 (deflayer base
-  (multi lctl (layer-while-held nav))
-  h j k l spc w q bck del ret
-)
-
-(deflayer nav
-  _ (unmod (lctl) left) (unmod (lctl) down) (unmod (lctl) up) (unmod (lctl) right) (unmod (lctl) tab) (unmod (lctl) f24) (unmod (lctl) esc)
-  h k j
+  lctl
 )
