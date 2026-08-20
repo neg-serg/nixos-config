@@ -246,6 +246,16 @@ in
       executable = "drive_c/Program Files/7-Zip/7zFM.exe";
       comment = "7-Zip";
     };
+    notepadpp = {
+      installer = "/gamez/main/wineapps/npp.8.9.7.Installer.x64.exe";
+      executable = "drive_c/Program Files/Notepad++/notepad++.exe";
+      comment = "Notepad++";
+    };
+    reaper = {
+      installer = "/gamez/main/wineapps/reaper711_x64-install.exe";
+      executable = "drive_c/Program Files/REAPER (x64)/reaper.exe";
+      comment = "REAPER";
+    };
   };
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
   hardware.gpu.corectrl.enable = true;
