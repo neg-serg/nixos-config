@@ -300,6 +300,12 @@ def main() -> int:
     sp.add_argument("apps", nargs="*")
     sp.set_defaults(func=cmd_install)
 
+    sp = sub.add_parser(
+        "sync", help="install every declared app that is not installed yet"
+    )
+    sp.add_argument("apps", nargs="*")
+    sp.set_defaults(func=cmd_install)
+
     sp = sub.add_parser("uninstall", help="remove app prefixes")
     sp.add_argument("apps", nargs="+")
     sp.set_defaults(func=cmd_uninstall)
