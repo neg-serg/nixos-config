@@ -1,6 +1,6 @@
 # Порт omp / oh-my-opencode → DSH: итоговая сводка
 
-Что получилось в результате всей работы: 18 server-плагинов DSH, доки, воркфлоу, промпты, плюс
+Что получилось в результате всей работы: 19 server-плагинов DSH, доки, воркфлоу, промпты, плюс
 проверка на живом хосте после `nixos-rebuild switch`.
 
 ## 1. Плагины (все в `modules/user/nix-maid/apps/`, все в live-профиле)
@@ -25,6 +25,7 @@
 | dsh-ast-grep                  | структурный search/rewrite через ast-grep (1-based позиции)                                                             | ✅ реальный бинарь: search/rewrite                                     | 715c6e5e, 51a37f10           |
 | dsh-checkpoint                | checkpoint/rewind (soft): замена разведки на отчёт                                                                      | ✅                                                                     | 163735c6                     |
 | dsh-browser                   | CDP-тул browser: dedicated tabs, navigate/screenshot/extract/click/type (Vivaldi :9222, chromium :9223) | ✅ browser-WS: createTarget/attach/navigate/close на Vivaldi | 1ba679bc |
+| dsh-desktop                   | desktop: doctor/windows/screenshot (grim) + click/type/scroll (MCP computer-use-linux) | ✅ doctor+windows+grim на Hyprland | 23670c12 |
 
 ## 2. Доки и воркфлоу
 
