@@ -129,6 +129,15 @@ Golden tool set (agent habits) — hard rules
   non-NixOS/remote hosts, POSIX-only contexts, or flags with no rg/fd equivalent.
   Gotcha: `rg -r` means *replace*, not recursive; recursive is the default.
 
+Automation: desktop over CDP where applicable
+- Prefer the `desktop` tool (computer-use-linux: real windows, AT-SPI semantic selectors,
+  grim screenshots → local vision) for HUMAN-LIKE GUI interaction — working an application or
+  a website as the user would (click/type/scroll by element name, read the actual screen).
+- Use the `browser` tool (CDP, dedicated headless tabs) only for PROGRAMMATIC page access:
+  DOM/text extraction, JS-driven checks, scraping structure, headless rendering — not for
+  GUI-style work. When a site must be operated like a user would, desktop wins.
+- Screenshots from either tool go through local VL models (qwen2.5vl) — data never leaves the host.
+
 Builds: substitute = false
 - This host is in a region where `cache.nixos.org` is unreliable (blocked/slow), so do NOT rely on binary substitution.
 - Always run nix build/eval commands with `--option substitute false` (build from source), e.g.:

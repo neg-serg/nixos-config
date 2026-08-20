@@ -98,7 +98,7 @@ async function evaluate(cdp, sessionId, expression) {
 
 const browserTool = defineTool({
   name: 'browser',
-  description: 'Control a dedicated CDP browser tab (headless chromium :9223 or Vivaldi :9222). Actions: list_targets, navigate(url), extract_text(), screenshot(), click(selector), type(selector, text), close_target(targetId). Works on a private tab only; user tabs are untouched.',
+  description: 'Control a dedicated CDP browser tab (headless chromium :9223 or Vivaldi :9222). Actions: list_targets, navigate(url), extract_text(), screenshot(), click(selector), type(selector, text), close_target(targetId). Works on a private tab only; user tabs are untouched. For human-like GUI interaction with a site prefer the desktop tool; browser is for programmatic DOM/JS access.',
   parameters: {
     action: { type: 'string', required: true, description: 'One of: list_targets, navigate, extract_text, screenshot, click, type, close_target' },
     url: { type: 'string', description: 'URL for navigate (http/https/data).' },
