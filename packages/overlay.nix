@@ -82,6 +82,9 @@ in
       final.wineWow64Packages.stable # winegcc: jackbridge-wine DLLs
     ];
     preBuild = (old.preBuild or "") + ''
+      # jackbridge-wine winegcc DLLs are skipped: winegcc -m32 needs multilib
+      # glibc headers (absent in nixpkgs) and the bridge links the static mingw
+      # jackbridge.win64e.a anyway.
       # winpthreads: headers via CPATH env; -L injected into LINK_FLAGS by sed
       # (a command-line make var would clobber the Makefile += flags, e.g.
       # -DBUILD_BRIDGE_ALTERNATIVE_ARCH, and pull in unsupported plugin types).
@@ -95,8 +98,6 @@ in
       make -j"$NIX_BUILD_CORES" win64 \
         CC=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-gcc \
         CXX=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-g++
-      unset CPATH # winegcc must not see the mingw winpthreads headers
-      make -j"$NIX_BUILD_CORES" wine64
       sed -i 's#-L${final.winpthreads64}/lib#-L${final.winpthreads32}/lib#; s#-L${final.winpthreads32}/lib#-L${final.winpthreads32}/lib -L${final.mcfgthreads32}/lib#' \
         source/discovery/Makefile source/bridges-plugin/Makefile
       sed -i -e 's#-L${final.winpthreads32}/lib -lpthread#-L${final.winpthreads32}/lib -lpthread -lmcfgthread#' \
@@ -106,8 +107,6 @@ in
       make -j"$NIX_BUILD_CORES" win32 \
         CC=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-gcc \
         CXX=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-g++
-      unset CPATH # winegcc must not see the mingw winpthreads headers
-      make -j"$NIX_BUILD_CORES" wine32
     '';
   });
 
