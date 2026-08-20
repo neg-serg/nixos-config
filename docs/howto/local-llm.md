@@ -44,7 +44,7 @@ ollama run qwen3:32b
 - Model dir: `/zero/ai/glm52_i4` (~370 GB, int4, pre-converted
   [mateogrgic/GLM-5.2-colibri-int4-with-int8-mtp](https://huggingface.co/mateogrgic/GLM-5.2-colibri-int4-with-int8-mtp),
   357 GiB · 141 shards `out-*.safetensors` + 3 MTP shards + config/tokenizer). **Activated and
-  smoke-tested (2026-08-19): `coli run --model /zero/ai/glm52_i4 "Привет"` answers in Russian; cold
+  smoke-tested (2026-08-19): `coli run --model /zero/ai/glm52_i4 "Privet"` answers in Russian; cold
   cache ~0.2 tok/s (expert hit 28%, expert-disk bound), RSS 19 GB.** `services.colibri.enable`
   (default on with `features.llm.enable`) installs the engine + `coli` CLI; the serve unit stays off
   unless enabled.
@@ -162,32 +162,32 @@ sd-cli --diffusion-model /zero/ai/image/flux1-schnell-q4_k.gguf \
   `llama-server --rerank` or used directly with llama.cpp's embedding CLI.
 - Both are multilingual (RU/EN); reranker should be the top-k filter before LLM context assembly.
 
-### rag-search (векторный поиск по заметкам)
+### rag-search (vector search over notes)
 
 - CLI: `rag-search` (`~/.local/bin`, source in `packages/local-bin/bin/rag-search`).
-- Индекс: `~/.local/share/rag-notes/index.sqlite` (sqlite + float32-векторы, numpy cosine).
-- Пайплайн: чанкинг markdown → `qwen3-embedding` (ollama, батчами) → top-20 cosine → реранкинг
-  `bge-reranker-v2-m3` (llama-server `--rerank`, стартует сам при поиске, ctx 8192).
-- Ответы: `--llm` через ollama; модель — env `RAG_LLM_MODEL` (default `qwen3.5:27b`, прописан в
-  modules/user/nix-maid/cli/envs.nix). Опции (все уже в ollama-сторе):
+- Index: `~/.local/share/rag-notes/index.sqlite` (sqlite + float32 vectors, numpy cosine).
+- Pipeline: markdown chunking → `qwen3-embedding` (ollama, batched) → top-20 cosine → reranking
+  `bge-reranker-v2-m3` (llama-server `--rerank`, starts on demand for search, ctx 8192).
+- Answers: `--llm` via ollama; model — env `RAG_LLM_MODEL` (default `qwen3.5:27b`, set in
+  modules/user/nix-maid/cli/envs.nix). Options (all already in the ollama store):
 
-| Модель                         | Размер                   | Роль                                          |
-| ------------------------------ | ------------------------ | --------------------------------------------- |
-| `qwen3.5:27b`                  | 17 ГБ                    | **default** — качество/скорость/RU баланс     |
-| `gemma4:12b`                   | 7.6 ГБ                   | быстрая, целиком в VRAM                       |
-| `gemma4:26b`                   | 17 ГБ                    | качество Gemma 4                              |
-| `qwen3:32b`                    | 20 ГБ                    | запасная, чуть старше                         |
-| `llama3.3:70b-instruct-q5_K_M` | 49 ГБ (CPU)              | максимум качества, ~2-4 tok/s                 |
-| `qwen3:235b-a22b`              | 142 ГБ (CPU/RAM MoE)     | самый жирный, ~1 tok/s — на будущее           |
-| `qwen3.5:122b`                 | 76 ГБ (122B-A10B MoE Q4) | большой нового поколения, ~2-4 tok/s (скачан) |
+| Model                          | Size                     | Role                                   |
+| ------------------------------ | ------------------------ | -------------------------------------- |
+| `qwen3.5:27b`                  | 17 GB                    | **default** — quality/speed/RU balance |
+| `gemma4:12b`                   | 7.6 GB                   | fast, fully in VRAM                    |
+| `gemma4:26b`                   | 17 GB                    | Gemma 4 quality                        |
+| `qwen3:32b`                    | 20 GB                    | fallback, slightly older               |
+| `llama3.3:70b-instruct-q5_K_M` | 49 GB (CPU)              | max quality, ~2-4 tok/s                |
+| `qwen3:235b-a22b`              | 142 GB (CPU/RAM MoE)     | heaviest, ~1 tok/s — for the future    |
+| `qwen3.5:122b`                 | 76 GB (122B-A10B MoE Q4) | big new-gen, ~2-4 tok/s (downloaded)   |
 
-Разовый переключатель: `RAG_LLM_MODEL=llama3.3:70b-instruct-q5_K_M rag-search search --llm "..."`
+One-off override: `RAG_LLM_MODEL=llama3.3:70b-instruct-q5_K_M rag-search search --llm "..."`
 
 ```bash
-rag-search index                    # переиндексация (~227 файлов, ~2400 чанков, ~5 мин)
-rag-search search "как настроить tidal cycles" -n 5
-rag-search search --llm "вопрос"    # ответ по найденным фрагментам
-rag-search status                   # состояние индекса и реранкера
+rag-search index                    # reindex (~227 files, ~2400 chunks, ~5 min)
+rag-search search "how to set up tidal cycles" -n 5
+rag-search search --llm "question" # answer from found fragments
+rag-search status                   # index and reranker state
 ```
 
 ## Layout on disk
