@@ -232,3 +232,19 @@ profile-eval: flamegraph-eval
 # --- TidalCycles Live Coding --------------------------------------------------
 # Engine, editor, recording and monitoring are handled by the `tidalctl` CLI
 # (packages/tidalctl): `tidalctl start|stop|status|code|new|record|monitor|patch`.
+
+# --- dsh-web-ui plugin bundles ------------------------------------------------
+# The dsh web profile serves each plugin's BUILT lib/ (node_modules are
+# workspace symlinks into ~/src/1st-level/@projects/dsh-web-ui), so src edits
+# only take effect after tsdown rebuilds lib/. The background watcher
+# (systemd user unit dsh-web-ui-watch, module sys/dsh-web-ui-build.nix) does
+# this automatically on save; these targets are the manual one-off and the
+# staleness check (what "fixed in src but old behavior" usually means).
+
+# Rebuild lib/ for every src-based dsh-web-ui plugin (tsdown, one by one)
+dsh-ui-build:
+    @cd ~/src/1st-level/@projects/dsh-web-ui &&     for cfg in packages/*/tsdown.config.ts; do       d=$(dirname "$cfg");       echo "== building $d";       (cd "$d" && ../../node_modules/.bin/tsdown) || exit 1;     done
+
+# List src-based plugins whose lib/ bundle is older than src (stale build)
+dsh-ui-stale:
+    @cd ~/src/1st-level/@projects/dsh-web-ui && stale=0;     for cfg in packages/*/tsdown.config.ts; do       d=$(dirname "$cfg");       if [ -f "$d/lib/client.js" ]; then art="$d/lib/client.js";       elif [ -f "$d/lib/index.js" ]; then art="$d/lib/index.js";       else echo "NO LIB: $d"; stale=1; continue; fi;       new=$(find "$d/src" -type f -newer "$art" 2>/dev/null | head -1);       if [ -n "$new" ]; then echo "STALE: $d"; stale=1; fi;     done;     [ "$stale" = "0" ] && echo "all plugin libs up to date"
