@@ -46,7 +46,9 @@ def prefix_root() -> Path:
     if env:
         return Path(env).expanduser()
     data = os.environ.get("XDG_DATA_HOME")
-    base = Path(data).expanduser() if data else Path.home() / ".local" / "share"
+    base = (
+        Path(data).expanduser() if data else Path.home() / ".local" / "share"
+    )
     return base / "wineprefixes"
 
 
@@ -91,7 +93,9 @@ def wait_wine(env: dict) -> None:
 
 def fetch_installer(installer: str, name: str):
     if re.match(r"https?://", installer):
-        cache_home = os.environ.get("XDG_CACHE_HOME") or str(Path.home() / ".cache")
+        cache_home = os.environ.get("XDG_CACHE_HOME") or str(
+            Path.home() / ".cache"
+        )
         cache = Path(cache_home) / "wineapps"
         cache.mkdir(parents=True, exist_ok=True)
         dest = cache / (name + "-" + Path(installer).name)
@@ -99,7 +103,9 @@ def fetch_installer(installer: str, name: str):
             print(f"{name}: downloading {installer}")
             try:
                 urllib.request.urlretrieve(installer, dest)
-            except Exception as exc:  # noqa: BLE001 - report any download failure
+            except (
+                Exception
+            ) as exc:  # noqa: BLE001 - report any download failure
                 print(f"error: download failed: {exc}", file=sys.stderr)
                 return None
         return dest
@@ -132,7 +138,9 @@ def install_one(app: dict) -> bool:
         print(f"{name}: winetricks {verb}")
         winetricks = os.environ.get("WINETRICKS", "winetricks")
         if run([winetricks, "-q", verb], env).returncode != 0:
-            print(f"error: winetricks {verb} failed for {name}", file=sys.stderr)
+            print(
+                f"error: winetricks {verb} failed for {name}", file=sys.stderr
+            )
             return False
         wait_wine(env)
 
@@ -143,7 +151,12 @@ def install_one(app: dict) -> bool:
             return False
         extra = shlex.split(app.get("installArgs") or "")
         if str(local).lower().endswith(".msi"):
-            cmd = [os.environ.get("WINE", "wine"), "msiexec", "/i", str(local)] + extra
+            cmd = [
+                os.environ.get("WINE", "wine"),
+                "msiexec",
+                "/i",
+                str(local),
+            ] + extra
         else:
             cmd = [os.environ.get("WINE", "wine"), str(local)] + extra
         print(f"{name}: running installer {local}")
@@ -180,7 +193,10 @@ def cmd_list(_args) -> int:
 def cmd_install(args) -> int:
     reg = load_registry()
     if not reg:
-        print("error: no apps declared (features.wine.apps is empty)", file=sys.stderr)
+        print(
+            "error: no apps declared (features.wine.apps is empty)",
+            file=sys.stderr,
+        )
         return 1
     names = args.apps or sorted(reg)
     code = 0
@@ -262,7 +278,11 @@ def cmd_status(_args) -> int:
     for name in sorted(reg):
         app = reg[name]
         prefix = app_prefix(app)
-        state = "installed" if is_installed(app, prefix, resolve_exe(app, prefix)) else "missing"
+        state = (
+            "installed"
+            if is_installed(app, prefix, resolve_exe(app, prefix))
+            else "missing"
+        )
         print(f"  {name}\t{state}\t{prefix}")
     return 0
 
@@ -274,7 +294,9 @@ def main() -> int:
     sp = sub.add_parser("list", help="show declared apps + install status")
     sp.set_defaults(func=cmd_list)
 
-    sp = sub.add_parser("install", help="ensure apps are installed (no args: all declared)")
+    sp = sub.add_parser(
+        "install", help="ensure apps are installed (no args: all declared)"
+    )
     sp.add_argument("apps", nargs="*")
     sp.set_defaults(func=cmd_install)
 

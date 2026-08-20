@@ -256,6 +256,14 @@ async function openSession(params, exec) {
   const client = new DapClient(resolveCommand(adapter.command), adapter.args, adapter.socketPort)
   try {
     await initializeClient(client, adapterId)
+    // Pre-set breakpoints BEFORE launch (required by js-debug for binding).
+    const preBps = Array.isArray(params.breakpoints) ? params.breakpoints : []
+    for (const bp of preBps) {
+      if (!bp.file || !bp.line) continue
+      const bpArgs = { source: { path: String(bp.file) }, breakpoints: [{ line: Number(bp.line) }] }
+      if (bp.condition) bpArgs.breakpoints[0].condition = String(bp.condition)
+      await client.request('setBreakpoints', bpArgs)
+    }
     const launchArgs = {}
     const base = adapter.launch || { request: 'launch' }
     Object.keys(base).forEach(function (k) { launchArgs[k] = base[k] })
@@ -501,6 +509,7 @@ function debugTool() {
     parameters: {
       action: { type: 'string', required: true, description: 'One of: ' + actionEnum.join(', ') },
       program: { type: 'string', description: 'Debug target path (required for launch).' },
+      breakpoints: { type: 'array', items: { type: 'object', additionalProperties: true }, description: 'Breakpoints to set BEFORE launch: [{file, line, condition?}].' },
       args: { type: 'array', items: { type: 'string' }, description: 'Program arguments.' },
       adapter: { type: 'string', description: 'Adapter id override: gdb | lldb-dap | dlv | debugpy | js-debug-adapter.' },
       cwd: { type: 'string', description: 'Working directory for the debuggee.' },
