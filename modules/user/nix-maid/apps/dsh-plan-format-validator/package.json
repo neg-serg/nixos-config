@@ -1,0 +1,9 @@
+{
+  "name": "dsh-plan-format-validator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "dsh harness hook: validate exit_plan_mode plan format before it reaches the user review (heading + sections + non-empty body).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": { ".": "./lib/index.js", "./package.json": "./package.json" }
+}
