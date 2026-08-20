@@ -1,14 +1,17 @@
 ;; Kanata keyboard remapper
 ;; Docs: https://github.com/jtroo/kanata/blob/main/docs/config.adoc
 ;;
-;; CapsLock = Ctrl with a time-split navigation layer:
-;;   QUICK caps+key           -> Ctrl+<key> unchanged (caps+h = Ctrl+H =
-;;                               backspace on the home row, caps+k = Ctrl+K
-;;                               kill-line, caps+c = Ctrl+C, ...)
-;;   HOLD caps (>200ms) + hjkl -> left/down/up/right arrows
-;;   caps + w / space / q     -> F24 / tab / esc ALWAYS (overrides, instant):
-;;                               the browser eats Ctrl+W before pages see it;
-;;                               dsh web maps F24 to backward-kill-word (C-w)
+;; CapsLock = Ctrl AND an instant navigation modifier:
+;;   caps + h/j/k/l    -> left/down/up/right arrows (instant, unmodded)
+;;   caps + space      -> tab
+;;   caps + q          -> escape
+;;   caps + w          -> F24 (the browser eats Ctrl+W before pages see it;
+;;                          dsh web maps F24 to backward-kill-word / C-w)
+;;   caps + backspace  -> Ctrl+H (backspace — home row)
+;;   caps + delete     -> Ctrl+K (kill-line in readline/dsh composer)
+;;   caps + enter      -> Ctrl+J (accept-line)
+;;   caps + anything else -> Ctrl+<key> unchanged (caps+c = Ctrl+C etc.)
+;; C-l stays on the physical Ctrl (caps+l is the right arrow).
 ;; All unmapped keys pass through unchanged.
 
 (defcfg
@@ -16,29 +19,15 @@
 )
 
 (defsrc
-  caps h j k l spc w q
-)
-
-(defalias
-  ctrlnav (tap-hold-tap-keys 200 200 lctl (layer-while-held nav)
-           (h j k l spc w q a b c d e f g i m n o p r s t u v x y z
-            0 1 2 3 4 5 6 7 8 9 ret bck del tab esc
-            up down left right home end pgup pgdn
-            - = [ ] ; ' , . / \ grave))
+  caps h j k l spc w q bck del ret
 )
 
 (deflayer base
-  @ctrlnav h j k l spc w q
+  (multi lctl (layer-while-held nav))
+  h j k l spc w q bck del ret
 )
 
 (deflayer nav
   _ (unmod (lctl) left) (unmod (lctl) down) (unmod (lctl) up) (unmod (lctl) right) (unmod (lctl) tab) (unmod (lctl) f24) (unmod (lctl) esc)
-)
-
-;; Instant combos that must not wait for the hold timeout (the browser eats
-;; the real Ctrl+W; Ctrl+Space/Ctrl+Q are unbound here):
-(defoverridesv2
-  (lctl w)   (f24) () ()
-  (lctl spc) (tab) () ()
-  (lctl q)   (esc) () ()
+  h k j
 )
