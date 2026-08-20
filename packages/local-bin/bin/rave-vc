@@ -1,0 +1,23 @@
+#!/bin/sh
+# rave-vc: RAVE voice conversion (encode with one model, decode with another).
+# Both models must be RAVE v2 with compatible latent dims.
+# Model dir: /zero/ai/music/rave (isis.ts / sol_ordinario.ts / VCTK.ts / guitar_* / crozzoli_*).
+# Usage:
+#   rave-vc INPUT.wav OUTPUT.wav [--src isis] [--tgt sol_ordinario]
+# Defaults: src=isis (vocal), tgt=sol_ordinario (vocal). Use --src/--tgt with
+# model basenames (without .ts) or full paths.
+set -e
+[ -n "$1" ] && [ -f "$1" ] || { echo "usage: rave-vc INPUT.wav OUTPUT.wav [--src MODEL] [--tgt MODEL]" >&2; exit 2; }
+IN="$1"; OUT="$2"; SRC="isis"; TGT="sol_ordinario"
+shift 2
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --src) SRC="$2"; shift 2 ;;
+    --tgt) TGT="$2"; shift 2 ;;
+    *) echo "rave-vc: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+case "$SRC" in */*) SRC_PATH="$SRC" ;; *) SRC_PATH="/zero/ai/music/rave/$SRC.ts" ;; esac
+case "$TGT" in */*) TGT_PATH="$TGT" ;; *) TGT_PATH="/zero/ai/music/rave/$TGT.ts" ;; esac
+export LD_LIBRARY_PATH="/nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib:/nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib:/nix/store/13id30w3rvgj24nnz34f7qrncz48zd7l-zstd-1.5.7/lib:${LD_LIBRARY_PATH:-}"
+exec ~/src/music-ai/venv-rave311/bin/python /zero/ai/music/rave-live/vc.py "$SRC_PATH" "$TGT_PATH" "$IN" "$OUT"
