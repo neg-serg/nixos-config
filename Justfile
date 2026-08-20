@@ -12,7 +12,8 @@ deploy host="odin":
       --out-link result \
       --option connect-timeout 60 \
       --option download-attempts 2 \
-      --option stalled-download-timeout 600
+      --option stalled-download-timeout 600 \
+      --option substitute false
 
     # Update system profile
     sudo nix-env -p /nix/var/nix/profiles/system --set $(readlink -f result)
@@ -21,11 +22,11 @@ deploy host="odin":
 
 # Deploy (Legacy/Slow) - keeps nh features like pretty print
 deploy-nh host="odin":
-    nh os switch . --hostname {{host}}
+    nh os switch . --hostname {{host}} --option substitute false
 
 # Deploy with maximum verbosity (logs + trace + verbose)
 deploy-debug host="odin":
-    nh os switch . --hostname {{host}} -L -t -v
+    nh os switch . --hostname {{host}} -L -t -v --option substitute false
 
 # Alias for deploy
 switch host="odin":
@@ -50,7 +51,7 @@ fmt:
 
 check:
     repo_root="$(git rev-parse --show-toplevel)"; \
-    nix flake check -L
+    nix flake check -L --option substitute false
 
 lint:
     set -eu
@@ -151,7 +152,7 @@ rustfmt:
 
 docs-modules:
     # Generate modules documentation (opt-in)
-    nix build .#docs-modules -o .result-docs
+    nix build .#docs-modules -o .result-docs --option substitute false
     mkdir -p docs/howto
     cp -f .result-docs/modules.md docs/howto/modules.md
     rm -f .result-docs
@@ -167,6 +168,10 @@ codebase:
 # Update the flake lock (all inputs)
 update:
     nix flake update
+
+# Eval one odin feature flag: just flag features.dev.ai.omp.enable
+flag flag-path="features.cli.broot.enable":
+    nix eval .#nixosConfigurations.odin.config.{{flag-path}} --option substitute false
 
 # Regenerate hosts/odin/unbound-hosts.nix from its sources
 # (unbound-local.txt + files/sources/malw-hosts.txt)
