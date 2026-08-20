@@ -27,18 +27,18 @@
 
 ### Оценка реализуемости (2026-08-20, факты из репо/стора)
 
-| Хук                                     | Seam в DSH                                                                    | Сложность | Рекомендация                                                    |
-| --------------------------------------- | ----------------------------------------------------------------------------- | --------- | --------------------------------------------------------------- |
-| notepad-write-guard                     | `tools/pre-execute` deny на write/edit по .agent/notepads/\*\*                | малая     | ✅ **реализован** (dsh-notepad-write-guard, 6/6 тестов)         |
-| plan-format-validator                   | `tools/pre-execute` deny на exit_plan_mode (заголовок + секции + тело)        | средняя   | ✅ **реализован** (dsh-plan-format-validator, 8/8 тестов)       |
-| task-resume-info                        | `session/event` session/end-seed + agent/pre-step инжект                      | средняя   | ✅ **реализован** (dsh-task-resume-info, 10/10 тестов)          |
-| delegate-task-retry                     | agent/pre-step + last tool error по subagent → инжект retry                    | средняя   | ✅ **реализован** (dsh-delegate-task-retry, 7/7 тестов)         |
-| edit/json-error-recovery                | agent/pre-step + last tool error → steer с подсказкой                         | малая     | ✅ **реализован** (dsh-json-error-recovery, 7/7 тестов)         |
-| preemptive-compaction                   | `compaction/start` / context-meter (JObwrW_trigger data-pct) + ctx.compaction | высокая   | 🟡 отложить (уже есть штатный лимит; риск двойной компакции)    |
-| anthropic-context-window-limit-recovery | agent/request-error (код переполнения) → steer                                | средняя   | 🟡 отложить (редко на local-моделях)                            |
-| atlas (мастер фоновых сессий)           | воркфлоу notepads.md + plan-before-code.md уже покрывают                      | —         | ✅ покрыто воркфлоу (не плагин)                                 |
-| unstable-agent-babysitter               | agent/status (idle-циклы) + boulder-механика                                  | средняя   | 🟡 отложить (пересекается с boulder)                            |
-| keyword-detector                        | agent/pre-step + last user text regex → hint                                  | малая     | ✅ **реализован** (dsh-keyword-detector, 7/7 тестов)            |
+| Хук                                     | Seam в DSH                                                                    | Сложность | Рекомендация                                                 |
+| --------------------------------------- | ----------------------------------------------------------------------------- | --------- | ------------------------------------------------------------ |
+| notepad-write-guard                     | `tools/pre-execute` deny на write/edit по .agent/notepads/\*\*                | малая     | ✅ **реализован** (dsh-notepad-write-guard, 6/6 тестов)      |
+| plan-format-validator                   | `tools/pre-execute` deny на exit_plan_mode (заголовок + секции + тело)        | средняя   | ✅ **реализован** (dsh-plan-format-validator, 8/8 тестов)    |
+| task-resume-info                        | `session/event` session/end-seed + agent/pre-step инжект                      | средняя   | ✅ **реализован** (dsh-task-resume-info, 10/10 тестов)       |
+| delegate-task-retry                     | agent/pre-step + last tool error по subagent → инжект retry                   | средняя   | ✅ **реализован** (dsh-delegate-task-retry, 7/7 тестов)      |
+| edit/json-error-recovery                | agent/pre-step + last tool error → steer с подсказкой                         | малая     | ✅ **реализован** (dsh-json-error-recovery, 7/7 тестов)      |
+| preemptive-compaction                   | `compaction/start` / context-meter (JObwrW_trigger data-pct) + ctx.compaction | высокая   | 🟡 отложить (уже есть штатный лимит; риск двойной компакции) |
+| anthropic-context-window-limit-recovery | agent/request-error (код переполнения) → steer                                | средняя   | 🟡 отложить (редко на local-моделях)                         |
+| atlas (мастер фоновых сессий)           | воркфлоу notepads.md + plan-before-code.md уже покрывают                      | —         | ✅ покрыто воркфлоу (не плагин)                              |
+| unstable-agent-babysitter               | agent/status (idle-циклы) + boulder-механика                                  | средняя   | 🟡 отложить (пересекается с boulder)                         |
+| keyword-detector                        | agent/pre-step + last user text regex → hint                                  | малая     | ✅ **реализован** (dsh-keyword-detector, 7/7 тестов)         |
 
 Итог: **реализованы** — notepad-write-guard, edit/json-error-recovery, keyword-detector (все малые,
 один рецепт: pre-step + инжект). **Покрыто воркфлоу** — atlas. **Отложить** — остальные (нет seam /
