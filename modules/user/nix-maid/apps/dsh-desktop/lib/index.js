@@ -117,7 +117,8 @@ const desktopTool = defineTool({
     'Linux desktop control (Hyprland), layered: native zero-daemon (hyprctl windows/focus/move/resize, '
     + 'grim screenshot, wtype type/press_key) plus computer-use-linux MCP for click/drag/scroll/state '
     + 'by pixel or semantic selector. CUL spawns per call and exits; no daemons are started. '
-    + 'Action selects the operation; backend auto/native/cul picks the layer.',
+    + 'Action selects the operation; backend auto/native/cul picks the layer. '
+    + 'Preferred for human-like GUI interaction (real windows, AT-SPI semantics, local vision); use browser (CDP) only for programmatic page access.',
   parameters: {
     action: {
       type: 'string',
