@@ -25,7 +25,10 @@ stdenv.mkDerivation {
   ];
 
   # Upstream CMakeLists pins a pre-3.5 minimum; modern CMake refuses it.
-  cmakeFlags = [ "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" ];
+  cmakeFlags = [
+    "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+    "-DLashEnable=OFF" # LASH session handler is dead; not in nixpkgs
+  ];
 
   buildInputs = [
     gtk2
