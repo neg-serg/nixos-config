@@ -10,7 +10,8 @@ let
   homeDir = lib.attrByPath [ "home" ] "/home/${user}" userData;
 
   # dsh-memory-extractor: session-end memory extraction into memento
-  # (draft-extract entries; LLM stage-one extraction is a documented TODO).
+  # (draft transcript + LLM stage-one extraction via local Ollama, model
+  # switchable through the patch-row config below).
   # Server plugin, host plane — same pattern as dsh-osm. The package is a
   # plain directory in the profile node_modules (pnpm is intentionally not
   # used — the @deepseek-ai store symlink makes pnpm writes fail with EROFS,
@@ -37,11 +38,15 @@ let
         if ! grep -q 'dsh-memory-extractor' "$PATCH" 2>/dev/null; then
           cat >> "$PATCH" <<'YAML'
 
-    # dsh-memory-extractor - session-end draft-extract into memento
+    # dsh-memory-extractor - session-end extract into memento (draft + local
+    # Ollama LLM step; model is switchable in the config below, e.g. gemma4:12b
+    # or deepseek-r1-distill-qwen:14b on this host).
     # (module: dsh-memory-extractor.nix).
     - insert:
         - id: memory-extractor
           name: dsh-memory-extractor
+          config:
+            model: qwen3:8b-q8_0
     YAML
           changed=1
         fi

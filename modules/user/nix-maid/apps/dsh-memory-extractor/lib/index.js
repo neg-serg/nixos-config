@@ -25,7 +25,9 @@ export const inject = ['memory']
 const MAX_CHARS = 4000
 const NL = String.fromCharCode(10)
 const DEFAULT_ENDPOINT = 'http://127.0.0.1:11434/api/chat'
-const DEFAULT_MODEL = 'qwen3dot5:latest'
+// Benchmarked 2026-08-20 on odin (RX 9070 XT 16GB): qwen3:8b-q8_0 = 26s wall / 52 tok/s,
+// best quality/effort balance; gemma4:12b 47s, r1:14b 48s; qwen3dot5 unreliable (loop).
+const DEFAULT_MODEL = 'qwen3:8b-q8_0'
 const DEFAULT_TIMEOUT = 45000
 const PROMPT_PATH = '/etc/nixos/.agent/prompts/memory-extract.md'
 

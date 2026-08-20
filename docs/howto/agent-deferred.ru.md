@@ -192,8 +192,12 @@ lsp/eval).
   `class` персистят между вызовами ядра (проверено: `a=42`, `c=10`, `P=7`); повторное
   `let a = ...` → SyntaxError, как в REPL.
 - ~~LLM-шаг memory-extractor~~ — **ЗАКРЫТО**: плагин дергает ЛОКАЛЬНЫЙ Ollama
-  (`http://127.0.0.1:11434/api/chat`, дефолт `qwen3dot5:latest`, конфиг `{endpoint, model,
-  timeoutMs, enabled}`) на session/end-seed/compaction/end; JSON по memory-extract.md пишется
-  как `[extract]`, при сбое/нет сигнала — fallback на `[draft-extract]`.
+  (`http://127.0.0.1:11434/api/chat`) на session/end-seed/compaction/end; JSON по
+  memory-extract.md пишется как `[extract]`, при сбое/нет сигнала — fallback на
+  `[draft-extract]`. Конфиг `{endpoint, model, timeoutMs, enabled}`; модель переключается
+  в patch-row config плагина (`cordis.patch.yml` → `config.model`).
+  **Бенч 2026-08-20 (odin, RX 9070 XT 16GB)**: `qwen3:8b-q8_0` 26s/52 tok/s — дефолт;
+  `gemma4:12b` 47s; `deepseek-r1-distill-qwen:14b` 48s; `qwen3dot5:latest` 6s, но
+  зацикливается/не JSON — снят с дефолта; `qwen3.5:27b` не влезает в 16GB VRAM (>300s).
 - **collab / autoresearch / vibe-рантайм / computer / browser / hub-peer-IRC** — в бэклоге
   (объём/безопасность).
