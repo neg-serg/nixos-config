@@ -164,9 +164,10 @@ lsp/eval).
   detailed 3:2 terse — зависимость от типа задач.
 - ~~локальное код-ревью~~ — **готово**: `.agent/scripts/code-review.mjs` (git diff → локальная
   модель → замечания; тест на ab-bench-диффе: 8 замечаний).
-- browser (CDP-паттерн) и computer (computer-use-linux, AT-SPI/Hyprland): план «как делать» —
-  `docs/howto/agent-backlog-research.ru.md`; приоритет browser → computer (оба средние, реализуемы
-  на локальном железе, vision — qwen2.5vl:7b).
+- ~~browser~~ — **реализован** (dsh-browser: CDP browser-WS паттерн, dedicated tabs; на Vivaldi
+  работают browser-level команды и Page.navigate; полная page-автоматизация — headless chromium
+  :9223 после rebuild). Остался: computer (computer-use-linux, AT-SPI/Hyprland) — план в
+  `docs/howto/agent-backlog-research.ru.md`.
 
 ## Порядок выполнения (рекомендуемый)
 
