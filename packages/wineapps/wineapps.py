@@ -252,7 +252,18 @@ def cmd_run(args) -> int:
         return 1
     env = wine_env(prefix)
     cmd = [os.environ.get("WINE", "wine"), str(exe)] + list(args.rest)
-    subprocess.Popen(cmd, env=env, cwd=str(prefix))
+    # Detach from the caller: GUI apps live as long as the user keeps them
+    # open, so the CLI must not hold stdout/stderr (a waiting pipe would hang
+    # any script that launched the app).
+    subprocess.Popen(
+        cmd,
+        env=env,
+        cwd=str(prefix),
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
     print(f"{name}: launched {exe}")
     return 0
 
