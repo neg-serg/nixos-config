@@ -1,0 +1,12 @@
+{
+  "name": "dsh-advisor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Peer-shadow quality advisor: local Ollama model watches the agent on pre-step and injects one short advice when it matters (agent plane, non-blocking).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
