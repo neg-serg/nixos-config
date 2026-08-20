@@ -53,7 +53,10 @@ in
     PULSE_COOKIE = "${configHome}/pulse/cookie";
     TERMINFO = "${dataHome}/terminfo";
     TERMINFO_DIRS = "${dataHome}/terminfo:/usr/share/terminfo";
-    WINEPREFIX = "${dataHome}/wineprefixes/default";
+    # WINEPREFIX is intentionally NOT set globally: a global WINEPREFIX overrides
+    # yabridge's per-plugin prefix auto-detection (Windows VSTs live in the
+    # vstplugins prefix) and makes them fail in GUI hosts with "The Wine host
+    # process has exited unexpectedly". wineapps sets WINEPREFIX per app itself.
     XAUTHORITY = "$XDG_RUNTIME_DIR/Xauthority";
     XINITRC = "${configHome}/xinit/xinitrc";
     XSERVERRC = "${configHome}/xinit/xserverrc";
