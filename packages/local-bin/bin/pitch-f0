@@ -1,0 +1,42 @@
+#!/bin/sh
+# pitch-f0: fundamental frequency tracking via torchcrepe (CPU, >10x realtime).
+# For TidalCycles / analysis: f0 curve + optional MIDI notes.
+# Usage: pitch-f0 FILE [--notes] [--hop MS] [--model tiny|full]
+# Output: "time_seconds f0_hz [midi_note]" per frame (10 ms hop default).
+set -e
+[ -n "$1" ] && [ -f "$1" ] || { echo "usage: pitch-f0 FILE [--notes]" >&2; exit 2; }
+export LD_LIBRARY_PATH="/nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib:/nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib:/nix/store/13id30w3rvgj24nnz34f7qrncz48zd7l-zstd-1.5.7/lib:${LD_LIBRARY_PATH:-}"
+PY=~/src/music-ai/venv-beat/bin/python
+"$PY" - "$@" <<'PYEOF'
+import sys, numpy as np, soundfile as sf, torch, torchcrepe
+
+args = sys.argv[1:]
+path = args[0]
+notes = "--notes" in args
+hop = 100
+for i, a in enumerate(args):
+    if a == "--hop" and i + 1 < len(args):
+        hop = int(args[i + 1])
+model = "tiny"
+for i, a in enumerate(args):
+    if a == "--model" and i + 1 < len(args):
+        model = args[i + 1]
+
+x, sr = sf.read(path, dtype="float32")
+if x.ndim > 1:
+    x = x.mean(axis=1)
+t = torch.from_numpy(x).unsqueeze(0)
+f0, conf = torchcrepe.predict(t, sr, hop_length=hop, fmin=50, fmax=2000,
+                              model=model, device="cpu", batch_size=128,
+                              return_periodicity=True)
+f0 = f0.numpy().squeeze(); conf = conf.numpy().squeeze()
+step = hop / sr
+for i in range(len(f0)):
+    if conf[i] < 0.5:
+        continue
+    if notes:
+        midi = 69 + 12 * np.log2(f0[i] / 440.0)
+        print(f"{i*step:.3f} {f0[i]:.1f} {midi:.1f}")
+    else:
+        print(f"{i*step:.3f} {f0[i]:.1f}")
+PYEOF
