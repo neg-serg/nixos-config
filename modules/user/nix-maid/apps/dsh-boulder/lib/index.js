@@ -4,7 +4,7 @@
  * Wakes an idle agent that still has incomplete todos and steers it to
  * continue (proceed without permission, mark done, do not stop). Ported from
  * oh-my-opencode todo-continuation-enforcer; design in
- * /etc/nixos/docs/howto/designs/boulder.md. Advisory drive: never edits todos
+ * /etc/nixos/docs/howto/designs/boulder.ru.md. Advisory drive: never edits todos
  * itself, only injects a system directive via agent.steer().
  *
  * v1 scope: host-side logic only (no countdown toast client). Backoff base

@@ -4,7 +4,7 @@
  * skills through load_skills.
  *
  * Ported from oh-my-opencode category-skill-reminder idea (see
- * /etc/nixos/docs/howto/designs/rules-hooks.md section 3). Delivery: one
+ * /etc/nixos/docs/howto/designs/rules-hooks.ru.md section 3). Delivery: one
  * synthetic user message injected before the next step (agent/pre-step),
  * same mechanism as dsh-tool-skill. Advisory only.
  */
