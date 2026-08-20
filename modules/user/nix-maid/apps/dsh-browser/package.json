@@ -1,0 +1,12 @@
+{
+  "name": "dsh-browser",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CDP browser control for dsh: navigate/screenshot/extract/click/type in dedicated tabs via Chrome DevTools Protocol (Vivaldi/chromium remote debugging).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
