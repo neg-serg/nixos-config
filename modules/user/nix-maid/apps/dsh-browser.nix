@@ -67,7 +67,7 @@ in
     serviceConfig = {
       Type = "simple";
       Restart = "on-failure";
-      ExecStart = ''${pkgs.chromium}/bin/chromium --headless=new --remote-debugging-port=9223 --remote-allow-origins=* --user-data-dir=%h/.cache/dsh-browser --no-first-run --no-default-browser-check'';
+      ExecStart = "${pkgs.chromium}/bin/chromium --headless=new --remote-debugging-port=9223 --remote-allow-origins=* --user-data-dir=%h/.cache/dsh-browser --no-first-run --no-default-browser-check";
     };
   };
 
