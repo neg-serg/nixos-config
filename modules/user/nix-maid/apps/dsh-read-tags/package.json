@@ -1,0 +1,12 @@
+{
+  "name": "dsh-read-tags",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tag every line the built-in read tool returns with a LINE#ID content-hash anchor (identical to dsh-hashline), so read output is hashline_edit-ready; post-execute listener, host: lib/index.js.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
