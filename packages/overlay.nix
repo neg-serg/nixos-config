@@ -21,8 +21,27 @@ in
   # relative-path pattern): flake builds are pure, so absolute store paths or
   # builtins.storePath are forbidden — only relative references to tracked
   # files work. Keep the tarball in git; do not switch to store paths.
-  carla = finalPrev.carla.overrideAttrs (_: {
+  # Carla: vendored tarball + Windows (wine) plugin bridges per INSTALL.md —
+  # carla-bridge-win{32,64}.exe, carla-discovery-win{32,64}.exe and
+  # jackbridge-wine{32,64}.dll (mingw-w64 cross gcc + winegcc). The bridges
+  # land in $out/lib/carla so headless carlactl can host Windows VSTs.
+  carla = finalPrev.carla.overrideAttrs (old: {
     src = ./../files/sources/carla-2.5.10.tar.gz;
+    nativeBuildInputs = old.nativeBuildInputs ++ [
+      final.pkgsCross.mingwW64.buildPackages.gcc # x86_64 mingw-w64: carla-bridge-win64.exe
+      final.pkgsCross.mingw32.buildPackages.gcc # i686 mingw-w64: carla-bridge-win32.exe
+      final.wineWow64Packages.stable # winegcc: jackbridge-wine DLLs
+    ];
+    preBuild = (old.preBuild or "") + ''
+      make -j"$NIX_BUILD_CORES" win64 \
+        CC=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-gcc \
+        CXX=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-g++
+      make -j"$NIX_BUILD_CORES" win32 \
+        CC=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-gcc \
+        CXX=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-g++
+      make -j"$NIX_BUILD_CORES" wine64
+      make -j"$NIX_BUILD_CORES" wine32
+    '';
   });
 
   # dpkg: nixpkgs fetches the source from git.launchpad.net (unreachable from
