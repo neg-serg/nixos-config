@@ -62,12 +62,9 @@ in
       # winpthreads: headers via CPATH env; -L injected into LINK_FLAGS by sed
       # (a command-line make var would clobber the Makefile += flags, e.g.
       # -DBUILD_BRIDGE_ALTERNATIVE_ARCH, and pull in unsupported plugin types).
-      # Upstream bug (2.5.10 + main): OBJS_arch omits CarlaEngineGraph.cpp
-      # (CarlaEnginePorts references PatchbayGraph::reconfigureForCV).
+      # (CV/plugin-type code is excluded by BUILD_BRIDGE_ALTERNATIVE_ARCH).
       export CPATH=${final.winpthreads64}/include
-      sed -i -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineGraph.cpp.arch.o \\' \
-        -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineDummy.cpp.arch.o \\' \
-        source/bridges-plugin/Makefile
+
       sed -i 's#^LINK_FLAGS += -lpthread#LINK_FLAGS += -L${final.winpthreads64}/lib -lpthread#' \
         source/discovery/Makefile source/bridges-plugin/Makefile
       make -j"$NIX_BUILD_CORES" win64 \
