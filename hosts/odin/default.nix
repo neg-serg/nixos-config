@@ -235,12 +235,17 @@ in
   # CLI (list/install/uninstall/run). Workflow: see the wine-apps DSH skill.
   features.wine.enable = true;
   features.wine.apps = {
-    # myapp = {
+    # Example: myapp = {
     #   installer = "/gamez/main/wineapps/myapp-setup.exe"; # or https://...
     #   executable = "drive_c/Program Files/MyApp/myapp.exe";
     #   comment = "MyApp";
     #   winetricks = [ "corefonts" ];
     # };
+    sevenzip = {
+      installer = "/gamez/main/wineapps/7z2602-x64.exe";
+      executable = "drive_c/Program Files/7-Zip/7zFM.exe";
+      comment = "7-Zip";
+    };
   };
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
   hardware.gpu.corectrl.enable = true;
