@@ -36,7 +36,8 @@
   `.agent/scripts/export-session.mjs` (JSONL.zstd → HTML); `.agent/scripts/ab-bench.mjs`
   (A/B стенд промптов: пресеты × задачи + pairwise-жюри через локальный Ollama);
   `.agent/scripts/code-review.mjs` (git diff → локальная модель → замечания);
-  `agent-backlog-research.ru.md` (план «как делать»: collab/browser/computer/vibe/autoresearch).
+  `.agent/scripts/ab-run.mjs` + `.agent/bench/` (runtime A/B: набор задач, отчёты в
+  `~/.local/share/ab-bench/`); `agent-backlog-research.ru.md` (план: collab/browser/computer/vibe).
 
 ## 3. Проверено на живом хосте (после rebuild)
 
