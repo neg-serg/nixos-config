@@ -166,8 +166,10 @@ lsp/eval).
   модель → замечания; тест на ab-bench-диффе: 8 замечаний).
 - ~~browser~~ — **реализован** (dsh-browser: CDP browser-WS паттерн, dedicated tabs; на Vivaldi
   работают browser-level команды и Page.navigate; полная page-автоматизация — headless chromium
-  :9223 после rebuild). Остался: computer (computer-use-linux, AT-SPI/Hyprland) — план в
-  `docs/howto/agent-backlog-research.ru.md`.
+  :9223 после rebuild).
+- ~~computer~~ — **реализован прототип** (dsh-desktop: computer-use-linux v0.4.9 prebuilt +
+  patchelf; doctor ✅, windows ✅ (hyprctl), screenshot ✅ (grim); click/type/scroll — MCP-мост,
+  только явный вызов; AT-SPI не включён — семантические селекторы ограничены).
 
 ## Порядок выполнения (рекомендуемый)
 
