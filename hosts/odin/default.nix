@@ -223,7 +223,6 @@ in
   features.net.ceno.enable = true; # Ceno/Ouinet P2P client (censorship-circumvention node)
   features.virt.docker.enable = true; # Podman + docker-compat stack (for the Ceno/Ouinet container)
   features.virt.libvirtd.enable = true;
-  features.dev.latex.enable = true; # TeX Live (pdflatex/xelatex, tikz, Cyrillic) — compile PDFs
   features.apps.winapps.enable = true;
   features.apps.winapps.desktopApps = [
     "excel"
