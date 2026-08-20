@@ -12,9 +12,12 @@ Commands:
   carlactl stop                  stop the running Carla
   carlactl status                engine pid, JACK ports, links
   carlactl route [mix|an|aes|spdif|phones|none]  route Carla audio-out
+  carlactl play [TYPE:NAME|PATH] launch in carla-jack-single (MIDI-capable),
+                                 auto-wire Osmose/RME MIDI + audio to game-stereo
   carlactl projects [NAME]       list/saved .carxp projects, launch via fzf
 """
 import os
+import re
 import sys
 import glob
 import json
@@ -424,6 +427,119 @@ def cmd_run(args):
     return 0
 
 
+def midi_client_id(name_pattern):
+    """Return the ALSA sequencer client id whose name contains name_pattern."""
+    try:
+        out = subprocess.run(
+            ["aconnect", "-l"], capture_output=True, text=True, timeout=10
+        ).stdout
+    except Exception:
+        return None
+    for line in out.splitlines():
+        if name_pattern.lower() in line.lower():
+            m = re.search(r"client (\d+):", line)
+            if m:
+                return int(m.group(1))
+    return None
+
+
+def pw_link(a, b):
+    subprocess.run(["pw-link", a, b], capture_output=True, timeout=10)
+
+
+def wait_events_in(timeout=60):
+    """Wait until the single-plugin host exposes its events-in MIDI port."""
+    for _ in range(timeout):
+        try:
+            out = subprocess.run(
+                ["pw-cli", "ls", "Port"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            ).stdout
+        except Exception:
+            return False
+        if "events-in" in out:
+            return True
+        time.sleep(1)
+    return False
+
+
+def cmd_play(args):
+    """Launch a plugin in carla-jack-single (single-plugin GUI host).
+
+    Unlike headless 'carla -n' this mode exposes the plugin's MIDI input as
+    'Carla:input_0' (events-in), so hardware controllers (Expressive E Osmose,
+    RME MIDI IN) can drive the synth. Audio is routed to game-stereo.
+    """
+    arg = args.plugin
+    if not arg:
+        items = [
+            f"{p['format']}\t{p['name']}\t{p.get('maker', '')}"
+            for p in list_plugins()
+        ]
+        pick = fzf_pick(items, "plugin")
+        if not pick:
+            print(
+                "error: no plugin given and not a TTY; use 'carlactl play vst3:Vital'",
+                file=sys.stderr,
+            )
+            return 2
+        fmt, name, _ = pick.split("\t")
+        info = resolve_plugin(f"{fmt}:{name}")
+    else:
+        info = resolve_plugin(arg)
+    if not info:
+        print(f"error: plugin not found: {arg}", file=sys.stderr)
+        return 1
+
+    PROJECTS.mkdir(parents=True, exist_ok=True)
+    out = PROJECTS / f"{info['name'].replace(' ', '_')}.carxp"
+    if is_yabridge(info["path"]):
+        ok, err = gen_project_xml(
+            info["format"], info["path"], info["name"], out
+        )
+    else:
+        ok, err = gen_project(
+            info["format"], info["path"], info["name"], str(out)
+        )
+    if not ok:
+        print(f"error: {err}", file=sys.stderr)
+        return 1
+
+    stop_carla()
+    time.sleep(0.5)
+    log = open(LOGFILE, "w")
+    proc = subprocess.Popen(
+        ["carla-jack-single", str(out)],
+        stdout=log,
+        stderr=subprocess.STDOUT,
+        env=gen_env(),
+        start_new_session=True,
+    )
+    PIDFILE.write_text(str(proc.pid))
+    print(
+        f"started carla-jack-single (pid {proc.pid}) with "
+        f"{info['format']}:{info['name']}"
+    )
+    print(f"project: {out}")
+
+    if not wait_events_in():
+        print("warn: events-in port did not appear in 60s", file=sys.stderr)
+        return 0
+    for pat in ("Osmose", "External MIDI"):
+        cid = midi_client_id(pat)
+        if cid is None:
+            print(f"warn: MIDI source '{pat}' not found in aconnect -l")
+            continue
+        pw_link(f"alsa:seq:default:client_{cid}:capture_0", "Carla:input_0")
+        print(f"MIDI: {pat} (client {cid}) -> Carla:input_0")
+    for ch, out_port in (("0", "playback_FL"), ("1", "playback_FR")):
+        pw_link(f"Carla:output_{ch}", f"game-stereo:{out_port}")
+    print("audio: Carla:output_0/1 -> game-stereo:playback_FL/FR")
+    return 0
+
+
 def cmd_stop(args):
     pid = stop_carla()
     print(f"stopped Carla (pid {pid})" if pid else "Carla not running")
@@ -534,6 +650,13 @@ def main():
     sp = sub.add_parser("run", help="launch a plugin in headless Carla")
     sp.add_argument("plugin", nargs="?", help="TYPE:NAME or path")
     sp.set_defaults(func=cmd_run)
+
+    sp = sub.add_parser(
+        "play",
+        help="launch in carla-jack-single (MIDI) and wire Osmose/RME + audio",
+    )
+    sp.add_argument("plugin", nargs="?", help="TYPE:NAME or path")
+    sp.set_defaults(func=cmd_play)
 
     sp = sub.add_parser("stop", help="stop Carla")
     sp.set_defaults(func=cmd_stop)
