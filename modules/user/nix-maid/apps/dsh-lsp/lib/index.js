@@ -105,16 +105,29 @@ class LspClient {
     }
   }
 
-  request(method, params) {
+  request(method, params, timeoutMs) {
     const id = this.nextId
     this.nextId += 1
     const body = JSON.stringify({ jsonrpc: '2.0', id: id, method: method, params: params || {} })
     const payload = 'Content-Length: ' + Buffer.byteLength(body) + CRLF + CRLF + body
     const self = this
     return new Promise(function (resolve, reject) {
-      self.pending.set(id, { resolve: resolve, reject: reject })
+      const timer = setTimeout(function () {
+        if (self.pending.has(id)) {
+          self.pending.delete(id)
+          reject(new Error('lsp request timed out: ' + method))
+        }
+      }, timeoutMs || 45000)
+      self.pending.set(id, {
+        resolve: function (v) { clearTimeout(timer); resolve(v) },
+        reject: function (e) { clearTimeout(timer); reject(e) },
+      })
       self.proc.stdin.write(payload, function (err) {
-        if (err) { self.pending.delete(id); reject(err) }
+        if (err) {
+          self.pending.delete(id)
+          clearTimeout(timer)
+          reject(err)
+        }
       })
     })
   }
@@ -149,15 +162,9 @@ async function openClient(adapterId, root) {
       clientInfo: { name: 'dsh' },
       rootUri: rootUri,
       workspaceFolders: [{ uri: rootUri, name: 'workspace' }],
-      capabilities: {
-        textDocument: {
-          hover: { contentFormat: ['markdown', 'plaintext'] },
-          definition: {},
-          references: {},
-          rename: { prepareSupport: true },
-          codeAction: { codeActionLiteralSupport: {} },
-        },
-      },
+      // Empty capabilities: strict servers (rust-analyzer) reject partial
+      // capability objects with missing required fields; empty is accepted.
+      capabilities: {},
     })
     client.notify('initialized', {})
   } catch (err) {
@@ -273,6 +280,8 @@ async function withClient(params, exec, fn) {
   if (!adapterId) throw new Error('lsp: no adapter for ' + resolved)
   const entry = await openClient(adapterId, root)
   await openDocument(entry, resolved)
+  // Let slow analyzers (rust-analyzer) finish loading before answering.
+  await new Promise(function (r) { setTimeout(r, 800) })
   const position = positionFor(resolved, params.line, params.symbol)
   return fn(entry.client, entry, resolved, position)
 }
