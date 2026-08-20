@@ -1,0 +1,9 @@
+{
+  "name": "dsh-delegate-task-retry",
+  "version": "0.1.0",
+  "private": true,
+  "description": "dsh harness hook: when a subagent/subagent_fork delegation fails (tool error), inject one corrective retry hint on the next pre-step (delegate-task-retry from oh-my-opencode backlog).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": { ".": "./lib/index.js", "./package.json": "./package.json" }
+}
