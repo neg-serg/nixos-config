@@ -28,6 +28,9 @@ with lib;
       core = mkBool "enable core Python development packages" true;
       tools = mkBool "enable Python tooling (LSP, utilities)" true;
     };
+    latex = {
+      enable = mkBool "enable TeX Live toolchain (pdflatex/xelatex, tikz, Cyrillic)" false;
+    };
 
     unreal = {
       enable = mkBool "enable Unreal Engine 5 tooling" false;
