@@ -24,6 +24,9 @@ stdenv.mkDerivation {
     pkg-config
   ];
 
+  # Upstream CMakeLists pins a pre-3.5 minimum; modern CMake refuses it.
+  cmakeFlags = [ "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" ];
+
   buildInputs = [
     gtk2
     jack2
