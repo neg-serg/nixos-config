@@ -36,6 +36,9 @@ window.__ModuleLoader__.load({
       }
     }
 
-    return { apply, inject: ['@deepseek-ai/dsh-client-runtime'] }
+    // The toast needs no cordis services; the inject must stay EMPTY. The old
+    // value (own package name) is not a service the client runtime provides,
+    // so the entry stayed pending and the whole web boot failed.
+    return { apply, inject: [] }
   },
 });
