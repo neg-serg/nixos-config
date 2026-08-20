@@ -9,6 +9,7 @@
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------- |
 | dsh-debug                     | DAP-отладка: gdb/lldb-dap/dlv/debugpy/js-debug, launch/attach, breakpoints, stepping, inspect, evaluate, custom_request | ✅ gdb launch→bp→continue→stack→vars→terminate; attach; custom_request | 50213471, 968ab65a, 8f08714b |
 | dsh-hashline                  | read_hashline + hashline_edit (теги LINE#ID, отказ при расхождении хэша)                                                | ✅ gdb-тест-файл, read/edit/mismatch                                   | ba3105b4                     |
+| dsh-read-tags                 | LINE#ID-якоря в выводе встроенного read (phase 2; хэш как dsh-hashline)                                                | ✅ теги совпадают с read_hashline 4/4                                 | 04472acb                     |
 | dsh-boulder                   | todo-continuation: idle + незакрытые todo → steer с CONTINUATION_PROMPT (+ toast-клиент)                                | ✅ живой (срабатывал в сессиях)                                        | 3995f5f1, 027a80ee           |
 | dsh-rules-injector            | инжект rules/\*.md + AGENTS.md при touch файлов (alwaysApply/glob, дедуп)                                               | ✅                                                                     | dcbe0df7                     |
 | dsh-agent-usage-reminder      | подсказка делегировать при сериях ручных поисков                                                                        | ✅ живой                                                               | 4c56685f                     |
@@ -38,7 +39,7 @@
 - `dsh.service` active, **0 ошибок** в журнале текущего процесса.
 - **bun** и **ast-grep** теперь в системном PATH (`/run/current-system/sw/bin/`).
 - Реальные тесты после rebuild: `ast_grep` search/rewrite на rust-фикстуре ✅; `eval` python
-  (val=6.283) и bun (z=5→10) ✅; `lsp` pyright (hover/def/refs/rename) ✅ и clangd
+  (val=6.283) и bun (z=5→10, let/const/class персистят между вызовами: a=42) ✅; `lsp` pyright (hover/def/refs/rename) ✅ и clangd
   (с compile_commands.json: definition+hover ✅); **js-debug** (socket-транспорт:
   launch+terminate ✅; breakpoint/step — даже с bp до launch на живом скрипте не даёт
   stopped/threads в этой настройке — задокументированное ограничение); логика rules-injector
@@ -55,8 +56,8 @@
 - Не проверено живьём (нужны реальная сессия/тулчейн): lsp rust-analyzer (в песочнице rustup
   без default-тулчейна; на хосте бинарь в PATH — нужен проект с Cargo.toml + тулчейном);
   boulder toast (GUI-элемент, headless не проверить). Логика остальных — см. §3.
-- Не закрыто (в agent-deferred): advisor-рантайм, mid-stream TTSR, hashline-теги во встроенном read,
-  eval bun let/const, LLM-шаг memory-extractor, collab/autoresearch/vibe-рантайм/computer/browser.
+- Не закрыто (в agent-deferred): advisor-рантайм, mid-stream TTSR, LLM-шаг memory-extractor,
+  collab/autoresearch/vibe-рантайм/computer/browser.
 
 ## 5. Уроки
 
