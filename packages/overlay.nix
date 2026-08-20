@@ -24,7 +24,7 @@ in
   # winpthreads for the Carla wine bridges: nixpkgs windows.pthreads restricts
   # meta.platforms to Windows, which fails the meta check on the Linux build
   # host; rebuild the same derivation (mingw-w64 winpthreads) unrestricted.
-  winpthreads64 = final.pkgsCross.mingwW64.buildPackages.stdenv.mkDerivation {
+  winpthreads64 = final.pkgsCross.mingwW64.stdenv.mkDerivation {
     pname = "mingw_w64-pthreads";
     version = "13.0.0";
     src = final.fetchurl {
@@ -35,7 +35,7 @@ in
     preConfigure = "cd mingw-w64-libraries/winpthreads";
     meta = { };
   };
-  winpthreads32 = final.pkgsCross.mingw32.buildPackages.stdenv.mkDerivation {
+  winpthreads32 = final.pkgsCross.mingw32.stdenv.mkDerivation {
     pname = "mingw_w64-pthreads";
     version = "13.0.0";
     src = final.fetchurl {
