@@ -1,0 +1,20 @@
+#!/bin/sh
+# song2midi: full-song transcription via Omnizart (per-model: chord, vocal, drum,
+# piano, bass, beat, music). Output: MIDI + CSV. CPU, ~10-30s per minute of audio.
+# For monophonic melody prefer basic-pitch / pitch-f0; Omnizart adds chords+drums.
+# Usage: song2midi FILE [--model chord] [-o OUTDIR]
+set -e
+[ -n "$1" ] && [ -f "$1" ] || { echo "usage: song2midi FILE [--model chord] [-o OUTDIR]" >&2; exit 2; }
+IN="$1"; shift
+MODEL="chord"
+OUT=/tmp/song2midi
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --model) MODEL="$2"; shift 2 ;;
+    -o) OUT="$2"; shift 2 ;;
+    *) echo "song2midi: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+export LD_LIBRARY_PATH="/nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib:/nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib:/nix/store/13id30w3rvgj24nnz34f7qrncz48zd7l-zstd-1.5.7/lib:${LD_LIBRARY_PATH:-}"
+mkdir -p "$OUT"
+exec ~/src/music-ai/venv-omnizart/bin/omnizart "$MODEL" transcribe "$IN" -o "$OUT"
