@@ -2,7 +2,7 @@
  * dsh-memory-extractor: session-end memory extraction for DSH memento.
  *
  * v2: hooks session/end-seed and compaction/end, folds a BOUNDED transcript,
- * and runs the stage-one LLM extraction (memory-extract.md) through the LOCAL
+ * and runs the stage-one LLM extraction (memory-extract.ru.md) through the LOCAL
  * Ollama endpoint (http://127.0.0.1:11434) — no plugin model service needed.
  * The parsed JSON (rollout_summary/raw_memory) is written to memento as an
  * '[extract]' agent/workspace entry; on any LLM failure the raw
@@ -15,7 +15,7 @@
  *   timeoutMs— default 45000
  *   enabled  — default true; false keeps the v1 draft-only behavior
  *
- * Design: /etc/nixos/docs/howto/designs/memory-pipeline.md.
+ * Design: /etc/nixos/docs/howto/designs/memory-pipeline.ru.md.
  */
 
 export const name = 'dsh-memory-extractor'
@@ -29,7 +29,7 @@ const DEFAULT_ENDPOINT = 'http://127.0.0.1:11434/api/chat'
 // best quality/effort balance; gemma4:12b 47s, r1:14b 48s; qwen3dot5 unreliable (loop).
 const DEFAULT_MODEL = 'qwen3:8b-q8_0'
 const DEFAULT_TIMEOUT = 45000
-const PROMPT_PATH = '/etc/nixos/.agent/prompts/memory-extract.md'
+const PROMPT_PATH = '/etc/nixos/.agent/prompts/memory-extract.ru.md'
 
 /** Compact built-in fallback when the prompt file is unavailable (same contract). */
 const FALLBACK_PROMPT = 'You are the stage-one memory extractor for a coding agent harness. Given a rollout transcript, return STRICT JSON only, no markdown, no prose: {\"rollout_summary\": \"string <=500 chars\", \"rollout_slug\": \"string|null\", \"raw_memory\": \"string\"}. raw_memory: markdown bullets \"- [slug] durable fact/decision/constraint/pitfall\". Keep: environment invariants, decisions with rationale, reproducible workflows, pitfalls and resolved failures, user corrections. Drop: chatter, noise, secrets NEVER. No durable signal -> empty summary/raw_memory and null slug.'

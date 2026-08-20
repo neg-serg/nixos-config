@@ -6,7 +6,7 @@
  * Pattern: @deepseek-ai/dsh-repeat-tool-reminder (tools/post-execute +
  * additionalContexts delivery; never blocks or rewrites calls). Idea ported
  * from oh-my-opencode "agent-usage-reminder" (see
- * /etc/nixos/docs/howto/designs/rules-hooks.md). Mounted via the profile's
+ * /etc/nixos/docs/howto/designs/rules-hooks.ru.md). Mounted via the profile's
  * cordis.patch.yml insert row, same as dsh-osm / dsh-gui-tweaks.
  */
 

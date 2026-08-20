@@ -16,10 +16,10 @@ web GUI, render an interactive map card automatically — you do not need to dra
 
 - **Coordinates** are WGS84. In `osm_route`, endpoints may be place names (the tool geocodes them)
   or `"lat, lon"` strings with a comma, e.g. `"55.7539, 37.6208"`.
-- **Geocoding quality**: use local-language names for best results ("Красная площадь" or "Red
-  Square" beat transliterations like "Krasnaya Ploshchad"). Geocoding tries Nominatim first and
-  automatically falls back to Photon (also OSM-based) when the public Nominatim instance is
-  unreachable or rate-limited, so results can differ slightly between the two.
+- **Geocoding quality**: use local-language names for best results ("München" or "Munich" beat ASCII
+  transliterations like "Munchen"). Geocoding tries Nominatim first and automatically falls back to
+  Photon (also OSM-based) when the public Nominatim instance is unreachable or rate-limited, so
+  results can differ slightly between the two.
 - `osm_geocode` returns several candidates; the first is usually the best. Use `countrycodes` to
   disambiguate (e.g. `ru` vs `de`) and `viewbox` `"lon1,lat1,lon2,lat2"` to bias a search toward a
   region.
