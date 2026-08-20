@@ -24,21 +24,39 @@
 - **agent-usage-reminder**: напоминает использовать специализированных агентов/инструменты.
 - **compaction-todo-preserver**: сохраняет todo-список через компакцию сессии.
 - **rules-injector**: инжектит правила (`rules/*.md` с glob-условиями и alwaysApply) при чтении.
-- **notepad-write-guard**: защищает notepad-файлы от случайных правок агента.
-- **plan-format-validator**: валидирует формат плана до исполнения.
-- **task-resume-info**: при возобновлении отменённой задачи вставляет контекст задачи.
-- **delegate-task-retry**: повтор неудачной делегации.
-- **edit/json-error-recovery**: ловит ошибки правок/JSON и вставляет корректирующее напоминание.
+
+### Оценка реализуемости (2026-08-20, факты из репо/стора)
+
+| Хук                                     | Seam в DSH                                                                                 | Сложность | Рекомендация                                                                   |
+| --------------------------------------- | ------------------------------------------------------------------------------------------ | --------- | ------------------------------------------------------------------------------ |
+| notepad-write-guard                     | `tools/post-execute` на write/edit (путь в .agent/notepads/\*\*) → отклонять/предупреждать | малая     | ✅ делать (защита от затирания непад-памяти субагентами)                       |
+| plan-format-validator                   | `tools/post-execute` на write плана + agent/pre-step ре-инжект                             | средняя   | 🟡 делать после notepad-guard (частично покрыт plan-before-code.md как промпт) |
+| task-resume-info                        | agent/pre-step + `session/event` (нет сигнала resume — нужен ресёрч)                       | средняя   | 🟡 отложить (нет явного resume-события)                                        |
+| delegate-task-retry                     | tools/post-execute на subagent при ошибке → steer                                          | средняя   | 🟡 отложить (subagent-ошибки редки; паттерн в delegate-task.md)                |
+| edit/json-error-recovery                | `tools/post-execute` на edit при ошибке JSON → steer с подсказкой                          | малая     | ✅ делать (частые потери агентов)                                              |
+| preemptive-compaction                   | `compaction/start` / context-meter (JObwrW_trigger data-pct) + ctx.compaction              | высокая   | 🟡 отложить (уже есть штатный лимит; риск двойной компакции)                   |
+| anthropic-context-window-limit-recovery | agent/request-error (код переполнения) → steer                                             | средняя   | 🟡 отложить (редко на local-моделях)                                           |
+| atlas (мастер фоновых сессий)           | воркфлоу notepads.md + plan-before-code.md уже покрывают                                   | —         | ✅ покрыто воркфлоу (не плагин)                                                |
+| unstable-agent-babysitter               | agent/status (idle-циклы) + boulder-механика                                               | средняя   | 🟡 отложить (пересекается с boulder)                                           |
+| keyword-detector                        | `session/event` turn/end + steer                                                           | малая     | ✅ делать (малый, полезен для авто-смены режима)                               |
+
+Итог: **делать сейчас** — notepad-write-guard, edit/json-error-recovery, keyword-detector (все
+малые, один рецепт). **Покрыто воркфлоу** — atlas. **Отложить** — остальные (нет seam / пересекаются
+/ риск двойной компакции).
 
 ### Крупные (уже частично портированы как промпты)
 
 - **todo-continuation-enforcer** (boulder): точный текст в `agent-guards.ru.md` п.6; механика
-  (countdown 2s, backoff 30s×2, max 5, пауза 5 мин) — для реализации.
-- **preemptive-compaction**: упреждающая компакция до лимита токенов.
-- **anthropic-context-window-limit-recovery**: восстановление после превышения окна контекста.
-- **atlas**: мастер boulder/background-сессий (оркестрация продолжений).
-- **unstable-agent-babysitter**: мониторинг нестабильного поведения агента между сессиями.
-- **keyword-detector**: триггеры по ключевым словам сообщений (смена режима и т.п.).
+  (countdown 2s, backoff 30s×2, max 5, пауза 5 мин) — ✅ реализован плагином dsh-boulder.
+- **preemptive-compaction**: упреждающая компакция до лимита токенов — 🟡 отложено (см. таблицу).
+- **anthropic-context-window-limit-recovery**: восстановление после превышения окна контекста — 🟡
+  отложено.
+- **atlas**: мастер boulder/background-сессий (оркестрация продолжений) — ✅ покрыто воркфлоу
+  notepads.md.
+- **unstable-agent-babysitter**: мониторинг нестабильного поведения агента между сессиями — 🟡
+  отложено.
+- **keyword-detector**: триггеры по ключевым словам сообщений (смена режима и т.п.) — ✅ к
+  реализации.
 
 ## 3. Прочее
 
