@@ -47,6 +47,29 @@ in
     meta = { };
   };
 
+  # i686 libstdc++ of the mingw cross gcc references mcfgthread symbols;
+  # nixpkgs windows.mcfgthreads has the same meta.platforms restriction, so
+  # rebuild it with the cross stdenv and unrestricted meta.
+  mcfgthreads32 = final.pkgsCross.mingw32.stdenv.mkDerivation {
+    pname = "mcfgthread";
+    version = "2.3.2";
+    src = final.fetchFromGitHub {
+      owner = "lhmouse";
+      repo = "mcfgthread";
+      tag = "v2.3-ga.2";
+      hash = "sha256-1gD2Cu2suvxopTxGN2RYSzise6bS8lpkrXLcdm9ZBLU=";
+    };
+    postPatch = ''
+      sed -z "s/Rules for tests.*//;s/'cpp'/'c'/g" -i meson.build
+    '';
+    nativeBuildInputs = [
+      (final.writeScriptBin "dlltool" "${final.pkgsCross.mingw32.stdenv.cc.targetPrefix}dlltool \"$@\"")
+      final.meson
+      final.ninja
+    ];
+    meta = { };
+  };
+
   # Carla: vendored tarball + Windows (wine) plugin bridges per INSTALL.md —
   # carla-bridge-win{32,64}.exe, carla-discovery-win{32,64}.exe and
   # jackbridge-wine{32,64}.dll (mingw-w64 cross gcc + winegcc). The bridges
@@ -74,7 +97,10 @@ in
         CXX=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-g++
       unset CPATH # winegcc must not see the mingw winpthreads headers
       make -j"$NIX_BUILD_CORES" wine64
-      sed -i 's#-L${final.winpthreads64}/lib#-L${final.winpthreads32}/lib#' \
+      sed -i 's#-L${final.winpthreads64}/lib#-L${final.winpthreads32}/lib#; s#-L${final.winpthreads32}/lib#-L${final.winpthreads32}/lib -L${final.mcfgthreads32}/lib#' \
+        source/discovery/Makefile source/bridges-plugin/Makefile
+      sed -i -e 's#-L${final.winpthreads32}/lib -lpthread#-L${final.winpthreads32}/lib -lpthread -lmcfgthread#' \
+        -e 's#-L${final.winpthreads32}/lib -pthread#-L${final.winpthreads32}/lib -pthread -lmcfgthread#' \
         source/discovery/Makefile source/bridges-plugin/Makefile
       export CPATH=${final.winpthreads32}/include
       make -j"$NIX_BUILD_CORES" win32 \
