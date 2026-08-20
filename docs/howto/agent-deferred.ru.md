@@ -171,10 +171,10 @@ lsp/eval).
   computer-use-linux v0.4.9 prebuilt + patchelf; **слои**: native zero-daemon (hyprctl windows/
   focused/focus/move/resize + grim screenshot + wtype type/press_key), CUL MCP per-call
   (click/drag/scroll/state/set_value/perform_action; spawn→kill, ничего не резидентное),
-  AT-SPI apps (list_apps; требует org.a11y.Bus). Все 16 actions + backend auto/native/cul;
+  AT-SPI apps (list_apps; org.a11y.Bus включён в NixOS: dbus-активация + user unit
+  at-spi-dbus-bus, см. dsh-desktop.nix). Все 16 actions + backend auto/native/cul;
   тесты: 29 мок + 36 live (node test.mjs [--live]). Ресурсы: native — мгновенные процессы,
-  CUL — 7.7 МБ бинарь только на время вызова. AT-SPI-семантика по-прежнему требует
-  поднятого org.a11y.Bus.
+  CUL — 7.7 МБ бинарь только на время вызова; a11y bus поднимается по требованию.
 
 ## Порядок выполнения (рекомендуемый)
 
