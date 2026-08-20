@@ -158,23 +158,23 @@ lsp/eval).
 
 - collab (live-сессии, relay, AES): высочайшая сложность, ниша — НЕ начинать без явного запроса;
   если когда-то — отдельный проект, не плагин.
-- ~~autoresearch~~ — **готово**: `.agent/scripts/ab-bench.mjs` (пресеты × задачи →
-  pairwise-жюри через локальный Ollama) + `.agent/scripts/ab-run.mjs` (runtime: набор в
-  `.agent/bench/`, отчёты в `~/.local/share/ab-bench/`, summary.csv). Прогон 5 задач:
-  detailed 3:2 terse — зависимость от типа задач.
+- ~~autoresearch~~ — **готово**: `.agent/scripts/ab-bench.mjs` (пресеты × задачи → pairwise-жюри
+  через локальный Ollama) + `.agent/scripts/ab-run.mjs` (runtime: набор в `.agent/bench/`, отчёты в
+  `~/.local/share/ab-bench/`, summary.csv). Прогон 5 задач: detailed 3:2 terse — зависимость от типа
+  задач.
 - ~~локальное код-ревью~~ — **готово**: `.agent/scripts/code-review.mjs` (git diff → локальная
   модель → замечания; тест на ab-bench-диффе: 8 замечаний).
 - ~~browser~~ — **реализован** (dsh-browser: CDP browser-WS паттерн, dedicated tabs; на Vivaldi
   работают browser-level команды и Page.navigate; полная page-автоматизация — headless chromium
   :9223 после rebuild).
-- ~~computer~~ — **расширен (2026-08-20, dsh-desktop v0.2)**:
-  computer-use-linux v0.4.9 prebuilt + patchelf; **слои**: native zero-daemon (hyprctl windows/
-  focused/focus/move/resize + grim screenshot + wtype type/press_key), CUL MCP per-call
-  (click/drag/scroll/state/set_value/perform_action; spawn→kill, ничего не резидентное),
-  AT-SPI apps (list_apps; org.a11y.Bus включён в NixOS: dbus-активация + user unit
-  at-spi-dbus-bus, см. dsh-desktop.nix). Все 16 actions + backend auto/native/cul;
-  тесты: 29 мок + 36 live (node test.mjs [--live]). Ресурсы: native — мгновенные процессы,
-  CUL — 7.7 МБ бинарь только на время вызова; a11y bus поднимается по требованию.
+- ~~computer~~ — **расширен (2026-08-20, dsh-desktop v0.2)**: computer-use-linux v0.4.9 prebuilt +
+  patchelf; **слои**: native zero-daemon (hyprctl windows/ focused/focus/move/resize + grim
+  screenshot + wtype type/press_key), CUL MCP per-call
+  (click/drag/scroll/state/set_value/perform_action; spawn→kill, ничего не резидентное), AT-SPI apps
+  (list_apps; org.a11y.Bus включён в NixOS: dbus-активация + user unit at-spi-dbus-bus, см.
+  dsh-desktop.nix). Все 16 actions + backend auto/native/cul; тесты: 29 мок + 36 live (node test.mjs
+  [--live]). Ресурсы: native — мгновенные процессы, CUL — 7.7 МБ бинарь только на время вызова; a11y
+  bus поднимается по требованию.
 
 ## Порядок выполнения (рекомендуемый)
 
@@ -197,24 +197,24 @@ lsp/eval).
 - ~~advisor-рантайм~~ — **ЗАКРЫТО**: плагин `dsh-advisor` (agent-plane, agent/pre-step) раз в
   `interval` шагов асинхронно спрашивает локальный Ollama (`qwen3:8b-q8_0`) про последние шаги и
   инжектит одну короткую реплику на следующем pre-step (не блокирует цикл; silence-фильтр,
-  inFlight-защита, max 5/сессию; конфиг `{endpoint, model, interval, timeoutMs, enabled}`).
-  Тест: ловит дрейф от запроса («Изменения в коде противоречат исходному запросу»).
+  inFlight-защита, max 5/сессию; конфиг `{endpoint, model, interval, timeoutMs, enabled}`). Тест:
+  ловит дрейф от запроса («Изменения в коде противоречат исходному запросу»).
 - **mid-stream TTSR** — DSH не даёт плагину прерывать поток LLM; наша версия инжектит между шагами.
-- ~~hashline теги во встроенном `read`~~ — **ЗАКРЫТО (phase 2)**: плагин `dsh-read-tags`
-  через `tools/post-execute` переписывает content встроенного `read` в `N#ID| text` (хэш
-  идентичен dsh-hashline, проверено 4/4), без форка `dsh-tool-fs`; композиция со
-  spill-policy сохранена (listener не prepend).
+- ~~hashline теги во встроенном `read`~~ — **ЗАКРЫТО (phase 2)**: плагин `dsh-read-tags` через
+  `tools/post-execute` переписывает content встроенного `read` в `N#ID| text` (хэш идентичен
+  dsh-hashline, проверено 4/4), без форка `dsh-tool-fs`; композиция со spill-policy сохранена
+  (listener не prepend).
 - ~~eval bun `let`/`const`~~ — **ЗАКРЫТО**: на bun 1.3.13 и node v24 top-level `let`/`const`/
-  `class` персистят между вызовами ядра (проверено: `a=42`, `c=10`, `P=7`); повторное
-  `let a = ...` → SyntaxError, как в REPL.
+  `class` персистят между вызовами ядра (проверено: `a=42`, `c=10`, `P=7`); повторное `let a = ...`
+  → SyntaxError, как в REPL.
 - ~~LLM-шаг memory-extractor~~ — **ЗАКРЫТО**: плагин дергает ЛОКАЛЬНЫЙ Ollama
-  (`http://127.0.0.1:11434/api/chat`) на session/end-seed/compaction/end; JSON по
-  memory-extract.md пишется как `[extract]`, при сбое/нет сигнала — fallback на
-  `[draft-extract]`. Конфиг `{endpoint, model, timeoutMs, enabled}`; модель переключается
-  в patch-row config плагина (`cordis.patch.yml` → `config.model`).
-  **Бенч 2026-08-20 (odin, RX 9070 XT 16GB)**: `qwen3:8b-q8_0` 26s/52 tok/s — дефолт;
-  `gemma4:12b` 47s; `deepseek-r1-distill-qwen:14b` 48s; `qwen3dot5:latest` 6s, но
-  зацикливается/не JSON — снят с дефолта; `qwen3.5:27b` не влезает в 16GB VRAM (>300s).
+  (`http://127.0.0.1:11434/api/chat`) на session/end-seed/compaction/end; JSON по memory-extract.md
+  пишется как `[extract]`, при сбое/нет сигнала — fallback на `[draft-extract]`. Конфиг
+  `{endpoint, model, timeoutMs, enabled}`; модель переключается в patch-row config плагина
+  (`cordis.patch.yml` → `config.model`). **Бенч 2026-08-20 (odin, RX 9070 XT 16GB)**:
+  `qwen3:8b-q8_0` 26s/52 tok/s — дефолт; `gemma4:12b` 47s; `deepseek-r1-distill-qwen:14b` 48s;
+  `qwen3dot5:latest` 6s, но зацикливается/не JSON — снят с дефолта; `qwen3.5:27b` не влезает в 16GB
+  VRAM (>300s).
 - **collab / vibe-рантайм / autoresearch-runtime / computer / browser** — ресёрч «как делать»:
   `docs/howto/agent-backlog-research.ru.md` (vibe покрыт воркфлоу; autoresearch-runtime малый;
   browser/computer средние; collab — не начинать). hub-peer-IRC — бэклог (объём/безопасность).
