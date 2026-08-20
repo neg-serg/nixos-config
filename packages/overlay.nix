@@ -107,6 +107,7 @@ in
       make -j"$NIX_BUILD_CORES" win32 \
         CC=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-gcc \
         CXX=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-g++
+      unset CPATH # the native build must see glibc headers, not mingw's
     '';
   });
 
