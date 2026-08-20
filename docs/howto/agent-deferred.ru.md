@@ -167,9 +167,14 @@ lsp/eval).
 - ~~browser~~ — **реализован** (dsh-browser: CDP browser-WS паттерн, dedicated tabs; на Vivaldi
   работают browser-level команды и Page.navigate; полная page-автоматизация — headless chromium
   :9223 после rebuild).
-- ~~computer~~ — **реализован прототип** (dsh-desktop: computer-use-linux v0.4.9 prebuilt +
-  patchelf; doctor ✅, windows ✅ (hyprctl), screenshot ✅ (grim); click/type/scroll — MCP-мост,
-  только явный вызов; AT-SPI не включён — семантические селекторы ограничены).
+- ~~computer~~ — **расширен (2026-08-20, dsh-desktop v0.2)**:
+  computer-use-linux v0.4.9 prebuilt + patchelf; **слои**: native zero-daemon (hyprctl windows/
+  focused/focus/move/resize + grim screenshot + wtype type/press_key), CUL MCP per-call
+  (click/drag/scroll/state/set_value/perform_action; spawn→kill, ничего не резидентное),
+  AT-SPI apps (list_apps; требует org.a11y.Bus). Все 16 actions + backend auto/native/cul;
+  тесты: 29 мок + 36 live (node test.mjs [--live]). Ресурсы: native — мгновенные процессы,
+  CUL — 7.7 МБ бинарь только на время вызова. AT-SPI-семантика по-прежнему требует
+  поднятого org.a11y.Bus.
 
 ## Порядок выполнения (рекомендуемый)
 
