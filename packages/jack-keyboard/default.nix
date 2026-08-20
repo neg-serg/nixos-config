@@ -30,6 +30,12 @@ stdenv.mkDerivation {
     "-DLashEnable=OFF" # LASH session handler is dead; not in nixpkgs
   ];
 
+  # 2022-era code trips modern -Werror=format-security / deprecations.
+  CFLAGS = [
+    "-Wno-error=format-security"
+    "-Wno-deprecated-declarations"
+  ];
+
   buildInputs = [
     gtk2
     jack2
