@@ -1,0 +1,48 @@
+#!/bin/sh
+# got-ocr: OCR an image with the local GOT-OCR-2.0 model (CPU, transformers venv).
+# Best for Chinese / mixed / complex-layout documents; for Russian text prefer
+# pic-ocr (tesseract eng+rus or qwen3-vl), GOT-OCR2 reads Cyrillic poorly.
+#
+# Usage:
+#   got-ocr IMAGE [--plain]    # --plain = raw text, default = formatted (LaTeX-ish)
+#
+# Prints recognized text to stdout. Model: /zero/ai/ocr/got-ocr2 (hub cache).
+
+set -e
+
+IMAGE=""
+PLAIN=""
+for a in "$@"; do
+  case "$a" in
+    --plain) PLAIN="1" ;;
+    -*) echo "got-ocr: unknown option $a" >&2; exit 2 ;;
+    *) IMAGE="$a" ;;
+  esac
+done
+
+if [ -z "$IMAGE" ] || [ ! -f "$IMAGE" ]; then
+  echo "got-ocr: usage: got-ocr IMAGE [--plain]" >&2
+  exit 2
+fi
+
+export LD_LIBRARY_PATH="/nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib:/nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib:${LD_LIBRARY_PATH:-}"
+PY=~/src/ai-tools/venv-got-ocr2/bin/python
+MODEL=/zero/ai/ocr/got-ocr2/hub/models--stepfun-ai--GOT-OCR-2.0-hf/snapshots/d3017ef2c2c1395888c8d635c5e0508bcb0ac78d
+
+"$PY" - "$IMAGE" "$MODEL" "$PLAIN" <<'PYEOF'
+import sys
+from PIL import Image
+from transformers import AutoProcessor, AutoModelForImageTextToText
+
+image_path, model_path, plain = sys.argv[1], sys.argv[2], sys.argv[3]
+processor = AutoProcessor.from_pretrained(model_path, trust_remote_code=True)
+model = AutoModelForImageTextToText.from_pretrained(
+    model_path, trust_remote_code=True, low_cpu_mem_usage=True
+)
+image = Image.open(image_path).convert("RGB")
+inputs = processor(images=image, text=None, format=not plain, return_tensors="pt")
+gen = model.generate(**inputs, max_new_tokens=512)
+text = processor.batch_decode(gen, skip_special_tokens=True)[0]
+idx = text.rfind("assistant")
+print(text[idx + 9:].strip() if idx >= 0 else text.strip())
+PYEOF
