@@ -45,6 +45,7 @@ in
       && n != "dsh-notepad-write-guard"
       && n != "dsh-keyword-detector"
       && n != "dsh-plan-format-validator"
+      && n != "dsh-task-resume-info"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
