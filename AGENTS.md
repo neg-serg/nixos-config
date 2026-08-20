@@ -137,6 +137,9 @@ Automation: desktop over CDP where applicable
   DOM/text extraction, JS-driven checks, scraping structure, headless rendering — not for
   GUI-style work. When a site must be operated like a user would, desktop wins.
 - Screenshots from either tool go through local VL models (qwen2.5vl) — data never leaves the host.
+- Downscale captures before vision: `magick shot.png -resize 1280x small.png` — full-res 4K
+  screenshots exceed the local VL context (4096 tokens). Both tools verified live end-to-end
+  (screenshot → vision reading of real windows / real web page).
 
 Builds: substitute = false
 - This host is in a region where `cache.nixos.org` is unreliable (blocked/slow), so do NOT rely on binary substitution.
