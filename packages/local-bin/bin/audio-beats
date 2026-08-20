@@ -1,0 +1,25 @@
+#!/bin/sh
+# audio-beats: tempo (BPM) + beat times from an audio file (madmom, offline).
+# For TidalCycles sync: feed the BPM into cps and use beats as cues.
+# Usage: audio-beats FILE
+# Output: "bpm <N>", then beat times in seconds, one per line.
+set -e
+[ -n "$1" ] && [ -f "$1" ] || { echo "usage: audio-beats FILE" >&2; exit 2; }
+export LD_LIBRARY_PATH="/nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib:/nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib:${LD_LIBRARY_PATH:-}"
+PY=~/src/music-ai/venv-beat/bin/python
+"$PY" - "$1" <<'PYEOF'
+import sys, collections, collections.abc
+collections.MutableSequence = collections.abc.MutableSequence
+import numpy as np
+from madmom.features.beats import RNNBeatProcessor, DBNBeatTrackingProcessor
+from madmom.features.tempo import TempoEstimationProcessor
+
+path = sys.argv[1]
+act = RNNBeatProcessor()(path)
+tempi = TempoEstimationProcessor(fps=100)(act)
+bpm = float(np.mean([t for t, _ in tempi[:2]])) if len(tempi) else 0.0
+beats = DBNBeatTrackingProcessor(fps=100)(act)
+print(f"bpm {bpm:.2f}")
+for b in beats:
+    print(f"{b:.3f}")
+PYEOF
