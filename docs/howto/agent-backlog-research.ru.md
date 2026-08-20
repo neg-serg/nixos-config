@@ -115,7 +115,7 @@ IM-мост (agentchat) — чужой стек; relay/AES — отдельны�
 | vibe-runtime | ✅ покрыто (воркфлоу + субагенты); опц. пресет с restrict | малый |
 | autoresearch-runtime | сделать: фоновый runner + отчёты поверх ab-bench.mjs | малый |
 | browser | сделать: browser-cdp (CDP) + тул + vision (qwen2.5vl:7b) | средний |
-| computer | ✅ **расширен (2026-08-20, v0.2)**: слои native (hyprctl/grim/wtype, zero-daemon) + CUL MCP (click/drag/scroll/state, per-call) + AT-SPI (apps); 36 live-тестов ✅. Недочёт: AT-SPI-семантика требует поднятого org.a11y.Bus | средний |
+| computer | ✅ **расширен (2026-08-20, v0.2)**: слои native (hyprctl/grim/wtype, zero-daemon) + CUL MCP (click/drag/scroll/state, per-call) + AT-SPI (apps; org.a11y.Bus включён в NixOS); 36 live-тестов ✅ | средний |
 | collab | НЕ начинать (локально покрыто; agentchat — чужой стек; relay — проект) | — |
 
 Безопасность везде: явный вызов, approval, allowlist, локальные VL-модели (скриншоты не
