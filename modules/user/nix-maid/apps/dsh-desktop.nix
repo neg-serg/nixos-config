@@ -31,7 +31,7 @@ let
         P="$PROFILE_DIR/node_modules/dsh-desktop"
         mkdir -p "$P/lib"
         changed=0
-        for f in package.json lib/index.js; do
+        for f in package.json lib/index.js lib/backends.js; do
           if [ ! -f "$P/$f" ]; then
             cp "${pkg}/$f" "$P/$f"
             changed=1

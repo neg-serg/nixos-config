@@ -1,12 +1,13 @@
 {
   "name": "dsh-desktop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Linux desktop control for dsh: doctor/windows/screenshot (grim) + click/type/scroll via computer-use-linux MCP bridge (Hyprland, explicit calls only).",
+  "description": "Linux desktop control for dsh: layered backends — native (hyprctl/grim/wtype, zero-daemon) + computer-use-linux MCP (click/drag/scroll/state, per-call) + AT-SPI (apps).",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
+    "./backends": "./lib/backends.js",
     "./package.json": "./package.json"
   }
 }
