@@ -16,13 +16,93 @@ in
 # Standard overlay pattern: merge top-level attributes
 (functions // tools // media // dev // gui // fixTinycc // aurPorted // disableChecks)
 // {
-  # Carla: vendored source tarball (GitHub fetch unreliable behind the proxy).
-  # Vendored archives live in files/sources/ and are TRACKED in git (the
-  # relative-path pattern): flake builds are pure, so absolute store paths or
-  # builtins.storePath are forbidden — only relative references to tracked
-  # files work. Keep the tarball in git; do not switch to store paths.
-  carla = finalPrev.carla.overrideAttrs (_: {
+  # winpthreads for the Carla wine bridges: nixpkgs windows.pthreads restricts
+  # meta.platforms to Windows, which fails the meta check on the Linux build
+  # host; rebuild the same derivation (mingw-w64 winpthreads) unrestricted.
+  winpthreads64 = final.pkgsCross.mingwW64.stdenv.mkDerivation {
+    pname = "mingw_w64-pthreads";
+    version = "13.0.0";
+    src = final.fetchurl {
+      url = "mirror://sourceforge/mingw-w64/mingw-w64-v13.0.0.tar.bz2";
+      hash = "sha256-Wv6CKvXE7b9n2q9F7sYdU49J7vaxlSTeZIl8a5WCjK8=";
+    };
+    configureFlags = [ "--enable-static" ];
+    preConfigure = "cd mingw-w64-libraries/winpthreads";
+    meta = { };
+  };
+  winpthreads32 = final.pkgsCross.mingw32.stdenv.mkDerivation {
+    pname = "mingw_w64-pthreads";
+    version = "13.0.0";
+    src = final.fetchurl {
+      url = "mirror://sourceforge/mingw-w64/mingw-w64-v13.0.0.tar.bz2";
+      hash = "sha256-Wv6CKvXE7b9n2q9F7sYdU49J7vaxlSTeZIl8a5WCjK8=";
+    };
+    configureFlags = [ "--enable-static" ];
+    preConfigure = "cd mingw-w64-libraries/winpthreads";
+    meta = { };
+  };
+
+  # i686 libstdc++ of the mingw cross gcc references mcfgthread symbols;
+  # nixpkgs windows.mcfgthreads has the same meta.platforms restriction, so
+  # rebuild it with the cross stdenv and unrestricted meta.
+  mcfgthreads32 = final.pkgsCross.mingw32.stdenv.mkDerivation {
+    pname = "mcfgthread";
+    version = "2.3.2";
+    src = final.fetchFromGitHub {
+      owner = "lhmouse";
+      repo = "mcfgthread";
+      tag = "v2.3-ga.2";
+      hash = "sha256-1gD2Cu2suvxopTxGN2RYSzise6bS8lpkrXLcdm9ZBLU=";
+    };
+    postPatch = ''
+      sed -z "s/Rules for tests.*//;s/'cpp'/'c'/g" -i meson.build
+    '';
+    nativeBuildInputs = [
+      (final.writeScriptBin "dlltool" "${final.pkgsCross.mingw32.stdenv.cc.targetPrefix}dlltool \"$@\"")
+      final.meson
+      final.ninja
+    ];
+    meta = { };
+  };
+
+  # Carla: vendored tarball + Windows (wine) plugin bridges per INSTALL.md —
+  # carla-bridge-win{32,64}.exe, carla-discovery-win{32,64}.exe and
+  # jackbridge-wine{32,64}.dll (mingw-w64 cross gcc + winegcc). The bridges
+  # land in $out/lib/carla so headless carlactl can host Windows VSTs.
+  carla = finalPrev.carla.overrideAttrs (old: {
     src = ./../files/sources/carla-2.5.10.tar.gz;
+    nativeBuildInputs = old.nativeBuildInputs;
+    # mingw-w64 gcc is NOT in nativeBuildInputs: its setup-hook overrides
+    # CC/CXX and poisons the native objects; the bridge targets below pass
+    # absolute CC/CXX paths instead.
+    preBuild = (old.preBuild or "") + ''
+      # jackbridge-wine winegcc DLLs are skipped: winegcc -m32 needs multilib
+      # glibc headers (absent in nixpkgs) and the bridge links the static mingw
+      # jackbridge.win64e.a anyway.
+      # winpthreads: headers via CPATH env; -L injected into LINK_FLAGS by sed
+      # (a command-line make var would clobber the Makefile += flags, e.g.
+      # -DBUILD_BRIDGE_ALTERNATIVE_ARCH, and pull in unsupported plugin types).
+      # (CV/plugin-type code is excluded by BUILD_BRIDGE_ALTERNATIVE_ARCH).
+      export CPATH=${final.winpthreads64}/include
+
+      sed -i -e 's#^LINK_FLAGS += -lpthread#LINK_FLAGS += -L${final.winpthreads64}/lib -lpthread#' \
+        -e 's#^LINK_FLAGS += -pthread#LINK_FLAGS += -L${final.winpthreads64}/lib -pthread#' \
+        -e 's#^BUILD_CXX_FLAGS += -pthread#BUILD_CXX_FLAGS += -L${final.winpthreads64}/lib -pthread#' \
+        source/discovery/Makefile source/bridges-plugin/Makefile
+      make -j"$NIX_BUILD_CORES" win64 \
+        CC=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-gcc \
+        CXX=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-g++
+      sed -i 's#-L${final.winpthreads64}/lib#-L${final.winpthreads32}/lib#; s#-L${final.winpthreads32}/lib#-L${final.winpthreads32}/lib -L${final.mcfgthreads32}/lib#' \
+        source/discovery/Makefile source/bridges-plugin/Makefile
+      sed -i -e 's#-L${final.winpthreads32}/lib -lpthread#-L${final.winpthreads32}/lib -lpthread -lmcfgthread#' \
+        -e 's#-L${final.winpthreads32}/lib -pthread#-L${final.winpthreads32}/lib -pthread -lmcfgthread#' \
+        source/discovery/Makefile source/bridges-plugin/Makefile
+      export CPATH=${final.winpthreads32}/include
+      make -j"$NIX_BUILD_CORES" win32 \
+        CC=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-gcc \
+        CXX=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-g++
+      unset CPATH # the native build must see glibc headers, not mingw's
+    '';
   });
 
   # dpkg: nixpkgs fetches the source from git.launchpad.net (unreachable from
