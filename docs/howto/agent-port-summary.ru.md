@@ -35,7 +35,8 @@
   codebase-cleanse, autolearn; `.agent/prompts/`: memory-extract, memory-consolidate;
   `.agent/scripts/export-session.mjs` (JSONL.zstd → HTML); `.agent/scripts/ab-bench.mjs`
   (A/B стенд промптов: пресеты × задачи + pairwise-жюри через локальный Ollama);
-  `.agent/scripts/code-review.mjs` (git diff → локальная модель → замечания).
+  `.agent/scripts/code-review.mjs` (git diff → локальная модель → замечания);
+  `agent-backlog-research.ru.md` (план «как делать»: collab/browser/computer/vibe/autoresearch).
 
 ## 3. Проверено на живом хосте (после rebuild)
 

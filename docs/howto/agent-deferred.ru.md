@@ -163,8 +163,9 @@ lsp/eval).
   Потом — CLI/веб-обвязка по желанию.
 - ~~локальное код-ревью~~ — **готово**: `.agent/scripts/code-review.mjs` (git diff → локальная
   модель → замечания; тест на ab-bench-диффе: 8 замечаний).
-- browser (Chromium/puppeteer) и computer (рабочий стол): высокая сложность + безопасность; в
-  бэклоге без плана до явного решения.
+- browser (CDP-паттерн) и computer (computer-use-linux, AT-SPI/Hyprland): план «как делать» —
+  `docs/howto/agent-backlog-research.ru.md`; приоритет browser → computer (оба средние, реализуемы
+  на локальном железе, vision — qwen2.5vl:7b).
 
 ## Порядок выполнения (рекомендуемый)
 
@@ -205,5 +206,6 @@ lsp/eval).
   **Бенч 2026-08-20 (odin, RX 9070 XT 16GB)**: `qwen3:8b-q8_0` 26s/52 tok/s — дефолт;
   `gemma4:12b` 47s; `deepseek-r1-distill-qwen:14b` 48s; `qwen3dot5:latest` 6s, но
   зацикливается/не JSON — снят с дефолта; `qwen3.5:27b` не влезает в 16GB VRAM (>300s).
-- **collab / autoresearch / vibe-рантайм / computer / browser / hub-peer-IRC** — в бэклоге
-  (объём/безопасность).
+- **collab / vibe-рантайм / autoresearch-runtime / computer / browser** — ресёрч «как делать»:
+  `docs/howto/agent-backlog-research.ru.md` (vibe покрыт воркфлоу; autoresearch-runtime малый;
+  browser/computer средние; collab — не начинать). hub-peer-IRC — бэклог (объём/безопасность).
