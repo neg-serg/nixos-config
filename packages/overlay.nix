@@ -65,6 +65,26 @@ in
     meta = { };
   };
 
+  mcfgthreads64 = final.pkgsCross.mingwW64.stdenv.mkDerivation {
+    pname = "mcfgthread";
+    version = "2.3.2";
+    src = final.fetchFromGitHub {
+      owner = "lhmouse";
+      repo = "mcfgthread";
+      tag = "v2.3-ga.2";
+      hash = "sha256-1gD2Cu2suvxopTxGN2RYSzise6bS8lpkrXLcdm9ZBLU=";
+    };
+    postPatch = ''
+      sed -z "s/Rules for tests.*//;s/'cpp'/'c'/g" -i meson.build
+    '';
+    nativeBuildInputs = [
+      (final.writeScriptBin "dlltool" "${final.pkgsCross.mingwW64.stdenv.cc.targetPrefix}dlltool \"$@\"")
+      final.meson
+      final.ninja
+    ];
+    meta = { };
+  };
+
   # Carla: vendored tarball + Windows (wine) plugin bridges per INSTALL.md —
   # carla-bridge-win{32,64}.exe, carla-discovery-win{32,64}.exe and
   # jackbridge-wine{32,64}.dll (mingw-w64 cross gcc + winegcc). The bridges
@@ -83,25 +103,23 @@ in
       # (a command-line make var would clobber the Makefile += flags, e.g.
       # -DBUILD_BRIDGE_ALTERNATIVE_ARCH, and pull in unsupported plugin types).
       # (CV/plugin-type code is excluded by BUILD_BRIDGE_ALTERNATIVE_ARCH).
-      export CPATH=${final.winpthreads64}/include
+      export CPATH=${final.winpthreads64}/include:${final.mcfgthreads64}/include
 
-      sed -i -e 's#^LINK_FLAGS += -lpthread#LINK_FLAGS += -L${final.winpthreads64}/lib -lpthread#' \
-        -e 's#^LINK_FLAGS += -pthread#LINK_FLAGS += -L${final.winpthreads64}/lib -pthread#' \
-        -e 's#^BUILD_CXX_FLAGS += -pthread#BUILD_CXX_FLAGS += -L${final.winpthreads64}/lib -pthread#' \
+      sed -i -e 's#^LINK_FLAGS += -lpthread#LINK_FLAGS += -L${final.winpthreads64}/lib -L${final.mcfgthreads64}/lib -lpthread -lmcfgthread#' \
+        -e 's#^LINK_FLAGS += -pthread#LINK_FLAGS += -L${final.winpthreads64}/lib -L${final.mcfgthreads64}/lib -pthread -lmcfgthread#' \
+        -e 's#^BUILD_CXX_FLAGS += -pthread#BUILD_CXX_FLAGS += -L${final.winpthreads64}/lib -L${final.mcfgthreads64}/lib -pthread -lmcfgthread#' \
         source/discovery/Makefile source/bridges-plugin/Makefile
       make -j"$NIX_BUILD_CORES" win64 \
         CC=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-gcc \
         CXX=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-g++
-      sed -i 's#-L${final.winpthreads64}/lib#-L${final.winpthreads32}/lib#; s#-L${final.winpthreads32}/lib#-L${final.winpthreads32}/lib -L${final.mcfgthreads32}/lib#' \
+      sed -i -e 's#-L${final.winpthreads64}/lib#-L${final.winpthreads32}/lib#g' \
+        -e 's#-L${final.mcfgthreads64}/lib#-L${final.mcfgthreads32}/lib#g' \
         source/discovery/Makefile source/bridges-plugin/Makefile
-      sed -i -e 's#-L${final.winpthreads32}/lib -lpthread#-L${final.winpthreads32}/lib -lpthread -lmcfgthread#' \
-        -e 's#-L${final.winpthreads32}/lib -pthread#-L${final.winpthreads32}/lib -pthread -lmcfgthread#' \
-        source/discovery/Makefile source/bridges-plugin/Makefile
-      export CPATH=${final.winpthreads32}/include
+      export CPATH=${final.winpthreads32}/include:${final.mcfgthreads32}/include
       make -j"$NIX_BUILD_CORES" win32 \
         CC=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-gcc \
         CXX=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-g++
-      unset CPATH # the native build must see glibc headers, not mingw's
+      unset CPATH # the native build must see glibc headers, not mingw's      unset CPATH # the native build must see glibc headers, not mingw's
     '';
   });
 
