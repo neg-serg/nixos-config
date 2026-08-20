@@ -54,6 +54,9 @@
 - Вживую срабатывали: boulder (продолжения по todo), category-skill-reminder, TTSR-инъекции.
 - Бенч LLM-моделей для memory-extractor (odin, RX 9070 XT 16GB): qwen3:8b-q8_0 26s/52 tok/s —
   дефолт; gemma4:12b 47s; deepseek-r1:14b 48s; qwen3dot5 зацикливается; qwen3.5:27b не влезает.
+- Реальное использование (2026-08-20): desktop screenshot→vision (опознаны реальные окна), browser
+  navigate на 127.0.0.1:3080→extract_text→screenshot→vision (опознан dsh web GUI) — обе цепочки ✅;
+  перед vision скриншот уменьшать до ~1280px (контекст VL 4096 токенов).
 
 ## 4. Что осталось (честно)
 
