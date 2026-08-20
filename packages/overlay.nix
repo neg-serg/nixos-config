@@ -66,7 +66,6 @@ in
       # engine files that CarlaEnginePorts references (e.g.
       # PatchbayGraph::reconfigureForCV) — insert the missing objects.
       sed -i -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineGraph.cpp.arch.o \\' \
-        -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineOscSend.cpp.arch.o \\' \
         -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineDummy.cpp.arch.o \\' \
         -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaEngineNative.cpp.arch.o \\' \
         -e '/CarlaStandalone.cpp.arch.o/i\$(OBJDIR)/CarlaPluginNative.cpp.arch.o \\' \
