@@ -38,6 +38,7 @@ in
       && n != "dsh-ast-grep"
       && n != "dsh-checkpoint"
       && n != "dsh-read-tags"
+      && n != "dsh-advisor"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
     |> builtins.map (n: ./. + "/${n}");
