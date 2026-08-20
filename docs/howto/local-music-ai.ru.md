@@ -63,6 +63,17 @@
 - `demucs` — htdemucs_ft, 4 стема (vocals/drums/bass/other), 1.4× realtime. Починен
   (2026-08-20: пакет был под python3.12, бинарник на 3.13 — переустановлен в дефолтный).
 
+## Транскрипция целой песни (аккорды/барабаны/вокал → MIDI)
+
+- `song2midi FILE [--model chord|vocal|drum|piano|bass|beat|music] [-o OUT]` — Omnizart:
+  аккорды, барабаны, вокальная мелодия, бас → MIDI+CSV. CPU ~10-30 с на минуту аудио.
+  Для монофонической мелодии быстрее basic-pitch/pitch-f0; Omnizart добавляет аккорды/барабаны.
+- venv: `venv-omnizart` (py3.11): madmom + pyaudio (из исходников, nix-portaudio) +
+  **TensorFlow 2.12** (2.21 несовместим с numpy 1.23, нужным madmom) + sitecustomize-патч
+  collections. Чекпоинты 381MB в site-packages/omnizart/checkpoints.
+- Важно: `omnizart transcribe` (без модели) — заглушка в 0.6.3; работает только по-модельно.
+- Проверено: C-Am-F-G → 12 нот (4 аккорда × 3), 2026-08-20.
+
 ## Биты и питч (для Tidal-синхрона)
 
 - `audio-beats FILE` — BPM + времена битов (madmom, оффлайн; веса CC BY-NC-SA — личное использование
