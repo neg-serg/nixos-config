@@ -1,0 +1,9 @@
+{
+  "name": "dsh-notepad-write-guard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "dsh harness hook: deny write/edit tools that target .agent/notepads/** (guard the notepad memory from accidental agent rewrites).",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": { ".": "./lib/index.js", "./package.json": "./package.json" }
+}
