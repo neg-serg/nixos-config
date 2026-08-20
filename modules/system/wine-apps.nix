@@ -15,6 +15,7 @@ let
   cfg = config.features.wine or { };
   enabled = cfg.enable or false;
   apps = cfg.apps or { };
+  mainUser = config.users.main.name or "neg";
 
   registry = builtins.toJSON (
     lib.mapAttrs (name: app: {
@@ -58,6 +59,14 @@ let
 in
 {
   config = lib.mkIf enabled {
+    # The prefix root is bind-mounted from /gamez/main/wineprefixes, which is
+    # created by the pool import as root — hand it to the main user so the
+    # wineapps CLI can create per-app prefixes without sudo.
+    systemd.tmpfiles.rules = [
+      "d /gamez/main/wineprefixes 0755 ${mainUser} ${mainUser} -"
+      "z /gamez/main/wineprefixes - ${mainUser} ${mainUser} -"
+    ];
+
     environment.systemPackages = [
       pkgs.wineWow64Packages.stable # Open-source implementation of the Windows API
       pkgs.winetricks # Wine prefix setup helper (verbs: corefonts, vcrun2022, ...)
