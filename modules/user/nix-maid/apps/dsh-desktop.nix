@@ -84,7 +84,10 @@ in
     serviceConfig = {
       Type = "dbus";
       BusName = "org.a11y.Bus";
-      ExecStart = "${pkgs.at-spi2-core}/libexec/at-spi-bus-launcher";
+      # --a11y=1 sets org.a11y.Status.IsEnabled=true on the bus at
+      # startup: without it GTK/Qt apps do not export accessibility trees
+      # and CUL list_apps returns an empty accessible_apps list.
+      ExecStart = "${pkgs.at-spi2-core}/libexec/at-spi-bus-launcher --a11y=1";
       Slice = "session.slice";
       TimeoutStopSec = 5;
     };
