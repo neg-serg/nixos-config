@@ -68,6 +68,28 @@ let
   '';
 in
 {
+  # AT-SPI accessibility bus (org.a11y.Bus): required for semantic selectors
+  # in dsh-desktop (CUL list_apps / get_app_state / click-by-name). The bus is
+  # D-Bus activated on demand — no resident daemon, near-zero idle cost.
+  # at-spi2-core ships the activation unit + the .service file; the
+  # consolidated dbus dir (modules/user/dbus.nix) picks up dbus.packages.
+  services.dbus.packages = [ pkgs.at-spi2-core ];
+  # user unit for dbus activation of org.a11y.Bus (SystemdService in the
+  # .service file points here); at-spi2-core ships the unit file, we just
+  # declare it so dbus-broker can start it on demand.
+  systemd.user.services."at-spi-dbus-bus" = {
+    enable = true;
+    description = "Accessibility services bus";
+    partOf = [ "graphical-session.target" ];
+    serviceConfig = {
+      Type = "dbus";
+      BusName = "org.a11y.Bus";
+      ExecStart = "${pkgs.at-spi2-core}/libexec/at-spi-bus-launcher";
+      Slice = "session.slice";
+      TimeoutStopSec = 5;
+    };
+  };
+
   # Apply on every nixos-rebuild (as the user, so profile files stay
   # user-owned) — same pattern as dsh-market-ensure / dsh-osm.
   system.activationScripts.dshDesktop = lib.stringAfter [ "users" "dshMarketEnsure" ] ''
