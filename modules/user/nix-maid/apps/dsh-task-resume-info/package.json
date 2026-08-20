@@ -1,0 +1,9 @@
+{
+  "name": "dsh-task-resume-info",
+  "version": "0.1.0",
+  "private": true,
+  "description": "dsh harness hook: on session resume/fork (session/end-seed) inject the pending task context (last todo list + recent user asks) into the next pre-step.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": { ".": "./lib/index.js", "./package.json": "./package.json" }
+}
