@@ -191,6 +191,9 @@ lsp/eval).
 - ~~eval bun `let`/`const`~~ — **ЗАКРЫТО**: на bun 1.3.13 и node v24 top-level `let`/`const`/
   `class` персистят между вызовами ядра (проверено: `a=42`, `c=10`, `P=7`); повторное
   `let a = ...` → SyntaxError, как в REPL.
-- **LLM-шаг memory-extractor** — нет сервиса вызова модели у плагинов.
+- ~~LLM-шаг memory-extractor~~ — **ЗАКРЫТО**: плагин дергает ЛОКАЛЬНЫЙ Ollama
+  (`http://127.0.0.1:11434/api/chat`, дефолт `qwen3dot5:latest`, конфиг `{endpoint, model,
+  timeoutMs, enabled}`) на session/end-seed/compaction/end; JSON по memory-extract.md пишется
+  как `[extract]`, при сбое/нет сигнала — fallback на `[draft-extract]`.
 - **collab / autoresearch / vibe-рантайм / computer / browser / hub-peer-IRC** — в бэклоге
   (объём/безопасность).
