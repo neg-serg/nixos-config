@@ -74,8 +74,10 @@
             "$HOME/.local/state/nix/profile/lib"
           ])
           + ":$HOME/.${format}";
-        # *_PATH vars for audio plugin formats (NAME_PATH → lowercase dir)
-        pluginPaths = lib.genAttrs [
+        # *_PATH vars for audio plugin formats (NAME_PATH → lowercase dir).
+        # mkDefault: user-specific *_PATH overrides (e.g. cli/envs.nix LV2_PATH)
+        # win; this system aggregation stays as the fallback for the rest.
+        pluginPaths = lib.mkDefault (lib.genAttrs [
           "CLAP_PATH"
           "DSSI_PATH"
           "LADSPA_PATH"
@@ -83,7 +85,7 @@
           "LXVST_PATH"
           "VST3_PATH"
           "VST_PATH"
-        ] (name: makePluginPath (lib.toLower (lib.removeSuffix "_PATH" name)));
+        ] (name: makePluginPath (lib.toLower (lib.removeSuffix "_PATH" name))));
       in
       {
         # Encourage Wayland backends where supported
