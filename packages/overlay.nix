@@ -21,6 +21,32 @@ in
   # relative-path pattern): flake builds are pure, so absolute store paths or
   # builtins.storePath are forbidden — only relative references to tracked
   # files work. Keep the tarball in git; do not switch to store paths.
+  # winpthreads for the Carla wine bridges: nixpkgs windows.pthreads restricts
+  # meta.platforms to Windows, which fails the meta check on the Linux build
+  # host; rebuild the same derivation (mingw-w64 winpthreads) unrestricted.
+  winpthreads64 = final.pkgsCross.mingwW64.buildPackages.stdenv.mkDerivation {
+    pname = "mingw_w64-pthreads";
+    version = "13.0.0";
+    src = final.fetchurl {
+      url = "mirror://sourceforge/mingw-w64/mingw-w64-v13.0.0.tar.bz2";
+      hash = "sha256-Wv6CKvXE7b9n2q9F7sYdU49J7vaxlSTeZIl8a5WCjK8=";
+    };
+    configureFlags = [ "--enable-static" ];
+    preConfigure = "cd mingw-w64-libraries/winpthreads";
+    meta = { };
+  };
+  winpthreads32 = final.pkgsCross.mingw32.buildPackages.stdenv.mkDerivation {
+    pname = "mingw_w64-pthreads";
+    version = "13.0.0";
+    src = final.fetchurl {
+      url = "mirror://sourceforge/mingw-w64/mingw-w64-v13.0.0.tar.bz2";
+      hash = "sha256-Wv6CKvXE7b9n2q9F7sYdU49J7vaxlSTeZIl8a5WCjK8=";
+    };
+    configureFlags = [ "--enable-static" ];
+    preConfigure = "cd mingw-w64-libraries/winpthreads";
+    meta = { };
+  };
+
   # Carla: vendored tarball + Windows (wine) plugin bridges per INSTALL.md —
   # carla-bridge-win{32,64}.exe, carla-discovery-win{32,64}.exe and
   # jackbridge-wine{32,64}.dll (mingw-w64 cross gcc + winegcc). The bridges
@@ -35,10 +61,14 @@ in
     preBuild = (old.preBuild or "") + ''
       make -j"$NIX_BUILD_CORES" win64 \
         CC=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-gcc \
-        CXX=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-g++
+        CXX=${final.pkgsCross.mingwW64.buildPackages.gcc}/bin/x86_64-w64-mingw32-g++ \
+        CPATH=${final.winpthreads64}/include \
+        LIBRARY_PATH=${final.winpthreads64}/lib
       make -j"$NIX_BUILD_CORES" win32 \
         CC=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-gcc \
-        CXX=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-g++
+        CXX=${final.pkgsCross.mingw32.buildPackages.gcc}/bin/i686-w64-mingw32-g++ \
+        CPATH=${final.winpthreads32}/include \
+        LIBRARY_PATH=${final.winpthreads32}/lib
       make -j"$NIX_BUILD_CORES" wine64
       make -j"$NIX_BUILD_CORES" wine32
     '';
