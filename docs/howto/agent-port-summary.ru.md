@@ -37,16 +37,19 @@
 
 - `dsh.service` active, **0 ошибок** в журнале текущего процесса.
 - **bun** и **ast-grep** теперь в системном PATH (`/run/current-system/sw/bin/`).
-- Реальные тесты после rebuild: `ast_grep` search/rewrite на rust-фикстуре ✅; `eval` bun (z=5 →
-  z=10) ✅. js-debug: бинарь nixpkgs называется `js-debug` — резолв починен, подхватится после
-  следующего рестарта dsh.
+- Реальные тесты после rebuild: `ast_grep` search/rewrite на rust-фикстуре ✅; `eval` python
+  (val=6.283) и bun (z=5→10) ✅; `lsp` pyright (hover/def/refs/rename) ✅; **js-debug**
+  (socket-транспорт: launch+terminate ✅; breakpoint/step-поток — нужен порядок «bp до launch»).
 - Вживую срабатывали: boulder (продолжения по todo), category-skill-reminder, TTSR-инъекции.
 
 ## 4. Что осталось (честно)
 
 - `systemctl --user restart dsh` — подхват последних правок (js-debug резолв, mental-models).
-- js-debug (JS/TS отладка): бинарь на месте, нужен рестарт; проверить
-  `debug(adapter: 'js-debug-adapter')`.
+- js-debug (JS/TS отладка): launch/terminate проверены (socket-транспорт); breakpoint/step —
+  проверить с брейкпоинтом ДО launch.
+- Не проверено живьём (нужны реальная сессия/тулчейн/триггеры): lsp rust-analyzer (в песочнице
+  rustup без default-тулчейна) и clangd (standalone-файл вне проекта); boulder toast;
+  rules-injector; compaction-todo-preserver; memory-extractor draft.
 - Не закрыто (в agent-deferred): advisor-рантайм, mid-stream TTSR, hashline-теги во встроенном read,
   eval bun let/const, LLM-шаг memory-extractor, collab/autoresearch/vibe-рантайм/computer/browser.
 
