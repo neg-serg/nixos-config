@@ -89,3 +89,27 @@ nixpkgs, стоит на odin):
   (2) без регистрации/кейгена плагин остаётся демо-режимом.
 - Valhalla-релизы из торрентов (`R2R/`, `R2RINNO.dll` в temp установщика) — это крякнутые
   установщики, их не запускаем; кейгены/патчи тоже.
+
+## «The Wine host process has exited unexpectedly» в GUI-хостах (исправлено)
+
+- **Симптом**: в Carla GUI (и любом десктопном хосте) yabridge-плагины падают с
+  «The Wine host process has exited unexpectedly»; в GUI-патчбее у плагина нет MIDI-порта.
+- **Причина**: `modules/user/nix-maid/cli/envs.nix` глобально задавал
+  `WINEPREFIX=~/.local/share/wineprefixes/default`. yabridge при установленной переменной
+  НЕ определяет префикс по пути плагина (README yabridge: WINEPREFIX overrides the Wine prefix
+  for all yabridge plugins) — винный хост стартовал в пустом `default`-префиксе и крашился.
+- **Фикс**: глобальный `WINEPREFIX` убран из `envs.nix` (коммит 8fa747a0); yabridge сам
+  находит префикс по расположению `.dll/.vst3` (`vstplugins`). Проверка: `bash -lc 'echo $WINEPREFIX'`
+  пуст. После пересборки десктопной сессии нужен релогин (старые процессы держат старый env).
+- **Red/green**: `WINEPREFIX=…/default carla -n LegendHZ.carxp` → «exited unexpectedly» (+45 c);
+  `WINEPREFIX=…/vstplugins` → `Finished initializing '…LegendHZ.vst3'`, хост жив.
+
+## Играемая цепочка: carla-jack-single + физическая клавиатура
+
+- Carla GUI (патчбей) НЕ отдаёт MIDI-порты плагинов наружу в этой сборке — для MIDI-входа
+  используем `carla-jack-single` (тот же `.carxp`): порт `Carla:LegendHZ:events-in`.
+- MIDI: `Midi-Bridge:External MIDI:HDSPe24048964 MIDI 1 (capture)` → `Carla:LegendHZ:events-in`
+  (физическая клавиатура, RME MIDI IN; мост строит сам PipeWire, a2jmidid не нужен).
+- Audio: `Carla:LegendHZ:output_1/2` → `game-stereo:playback_FL/FR` (game-stereo → RME playback_AUX2/3).
+- Команды: `pw-link "alsa:seq:default:client_16:capture_0" "Carla:input_0"`;
+  `pw-link "Carla:output_0" "game-stereo:playback_FL"` (имена — object.path, без префикса «LegendHZ:»).
