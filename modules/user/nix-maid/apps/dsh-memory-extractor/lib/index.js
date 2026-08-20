@@ -178,8 +178,8 @@ async function extractAndStore(ctx, opts) {
   }
 }
 
-export function apply(ctx) {
-  const config = (ctx && ctx.config) || {}
+export function apply(ctx, config) {
+  config = config || {}
   const endpoint = config.endpoint || DEFAULT_ENDPOINT
   const model = config.model || DEFAULT_MODEL
   const timeoutMs = config.timeoutMs || DEFAULT_TIMEOUT
