@@ -161,6 +161,8 @@ lsp/eval).
 - ~~autoresearch (A/B стенд промптов)~~ — **прототип готов**: `.agent/scripts/ab-bench.mjs`
   (пресеты × задачи → pairwise-жюри через локальный Ollama; демо: terse vs detailed 3:0).
   Потом — CLI/веб-обвязка по желанию.
+- ~~локальное код-ревью~~ — **готово**: `.agent/scripts/code-review.mjs` (git diff → локальная
+  модель → замечания; тест на ab-bench-диффе: 8 замечаний).
 - browser (Chromium/puppeteer) и computer (рабочий стол): высокая сложность + безопасность; в
   бэклоге без плана до явного решения.
 
