@@ -26,9 +26,14 @@ in
   });
 
   # a2jmidid: nixpkgs fetches from gitea.ladish.org (unresolvable from the
-  # build sandbox); vendor the GitHub mirror tarball (same tag 12).
+  # build sandbox); vendor the GitHub mirror tarball (same tag 12) + the
+  # siginfo submodule (needed by sigsegv.c/a2jmidid.c).
   a2jmidid = finalPrev.a2jmidid.overrideAttrs (old: {
     src = ./../files/sources/a2jmidid-12.tar.gz;
+    postUnpack = (old.postUnpack or "") + ''
+      mkdir -p "$sourceRoot/siginfo"
+      tar xzf ${./../files/sources/a2jmidid-siginfo.tar.gz} -C "$sourceRoot/siginfo" --strip-components=1
+    '';
   });
 
   # dpkg: nixpkgs fetches the source from git.launchpad.net (unreachable from
