@@ -12,7 +12,8 @@ let
   # dsh-gui-tweaks: client-only GUI behavior tweaks for the dsh web profile —
   # 1) number-key answers in ask-user question dialogs, Enter confirms the
   # selection (clicks Next/Submit), 2) bash tool rows expand by default,
-  # 3) bash terminal output cap removed, 4) composer input focused by
+  # 3) bash terminal output cap raised to min(60vh, 720px) with internal
+  # scroll (full output reachable, screen not eaten), 4) composer input focused by
   # default (on tab/window focus, session switch, fresh composer mount),
   # 5) todo_write calls render as a todo list card (status glyphs, counts,
   # progress bar, result line) instead of the stock one-line summary row,
@@ -49,7 +50,7 @@ let
           cat >> "$PATCH" <<'YAML'
 
     # dsh-gui-tweaks - number-key answers + Enter confirmation in question
-    # dialogs, bash tool rows expanded by default, bash output uncapped,
+    # dialogs, bash tool rows expanded by default, bash output bounded,
     # composer input focused by default, todo_write rendered as a todo list
     # card, ask_user_question rendered as a question card, Think rows collapsed
     # and code blocks height-capped (module: dsh-gui-tweaks.nix).
