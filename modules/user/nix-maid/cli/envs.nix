@@ -31,6 +31,9 @@ in
     # Custom Env Vars (Global / Miscellaneous)
     CRAWL_DIR = "${dataHome}/crawl/";
 
+    # LV2 plugin path: user plugins (~/.lv2: NAM neural amp modeler) + system dir
+    LV2_PATH = "${homeDir}/.lv2:/run/current-system/sw/lib/lv2";
+
     # RAG answer model (rag-search --llm). Options (all already in the ollama store):
     #   qwen3.5:27b                  (17GB)  — best quality/speed/RU balance (default)
     #   gemma4:12b                   (7.6GB) — fast, fits 16GB VRAM fully
