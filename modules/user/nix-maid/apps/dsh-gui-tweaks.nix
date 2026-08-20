@@ -22,7 +22,10 @@ let
   # 7) long expanded content bounded: assistant "Think" rows collapse by
   # default (expand on click), markdown code blocks height-capped with an
   # internal scrollbar, 8) sidebar logo row (brand + fold toggle) hidden in
-  # every state so the column starts at New Session.
+  # every state so the column starts at New Session,
+  # 9) composer (chat input) gets emacs-style editing keys (C-a/C-e line
+  # edges, C-k/C-u kill, C-y yank, C-p/C-n prompt history, M-f/M-b words,
+  # ...) on physical key codes, RU layout safe.
   #
   # Canonical source is the dsh-web-ui fork checkout (packages/dsh-gui-tweaks):
   # the profile node_modules entry is a symlink into it, same pattern as
