@@ -25,6 +25,12 @@ in
     src = ./../files/sources/carla-2.5.10.tar.gz;
   });
 
+  # a2jmidid: nixpkgs fetches from gitea.ladish.org (unresolvable from the
+  # build sandbox); vendor the GitHub mirror tarball (same tag 12).
+  a2jmidid = finalPrev.a2jmidid.overrideAttrs (old: {
+    src = ./../files/sources/a2jmidid-12.tar.gz;
+  });
+
   # dpkg: nixpkgs fetches the source from git.launchpad.net (unreachable from
   # this region); vendor the official Debian release tarball (has .dist-version,
   # which get-version needs) instead. dpkg is needed by ocenaudio and
