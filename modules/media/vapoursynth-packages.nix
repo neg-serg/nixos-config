@@ -29,10 +29,12 @@ let
   ];
   # VS >= R73 ignores the old VAPOURSYNTH_PLUGINPATH env var: plugins now
   # autoload from a config file (VAPOURSYNTH_CONF_PATH) with UserPluginDir /
-  # AutoloadUserPluginDir keys. Symlink every plugin dir into one root so a
-  # single UserPluginDir entry covers all of them (scanned recursively).
+  # AutoloadUserPluginDir keys. Symlink each plugin's .so files into one flat
+  # root so a single UserPluginDir entry covers all of them. NB: VS's
+  # autoloader does NOT recurse into symlinked directories (verified R73), so
+  # symlink the files, not the plugin dirs.
   pluginRoot = pkgs.runCommand "vapoursynth-plugin-root" { } (
-    "mkdir -p $out\n" + lib.concatMapStringsSep "\n" (p: "ln -s ${p.dir} $out/${p.name}") pluginDirs
+    "mkdir -p $out\n" + lib.concatMapStringsSep "\n" (p: "ln -s ${p.dir}/*.so $out/") pluginDirs
   );
   vsConf = pkgs.writeText "vapoursynth.conf" ''
     UserPluginDir = ${pluginRoot}
