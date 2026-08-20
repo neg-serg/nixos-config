@@ -33,7 +33,9 @@
   agent-misc-ports, agent-deferred (план + закрытые дыры + честные остатки), designs/ (5 дизайнов).
 - `.agent/workflows/`: plan-before-code, delegate-task, security-scan, notepads, vibe-director,
   codebase-cleanse, autolearn; `.agent/prompts/`: memory-extract, memory-consolidate;
-  `.agent/scripts/export-session.mjs` (JSONL.zstd → HTML).
+  `.agent/scripts/export-session.mjs` (JSONL.zstd → HTML); `.agent/scripts/ab-bench.mjs`
+  (A/B стенд промптов: пресеты × задачи + pairwise-жюри через локальный Ollama);
+  `.agent/scripts/code-review.mjs` (git diff → локальная модель → замечания).
 
 ## 3. Проверено на живом хосте (после rebuild)
 
