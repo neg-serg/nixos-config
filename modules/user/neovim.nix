@@ -45,6 +45,7 @@ lib.mkIf devEnabled (
 
       environment.systemPackages = [
         pkgs.neovim-remote # nvr: control neovim from external tools
+        pkgs.bun # bun runtime for ghost-text.nvim (Bunvim GhostText server)
         (pkgs.makeDesktopItem {
           name = "neovim";
           desktopName = "Neovim";
