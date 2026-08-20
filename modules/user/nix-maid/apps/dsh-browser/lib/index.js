@@ -63,6 +63,10 @@ class CdpClient {
     const { sessionId } = await this.send('Target.attachToTarget', { targetId, flatten: true })
     return { targetId, sessionId }
   }
+  async attachTarget(targetId) {
+    const { sessionId } = await this.send('Target.attachToTarget', { targetId, flatten: true })
+    return { targetId, sessionId }
+  }
   async closeTarget(targetId) {
     try { await this.send('Target.closeTarget', { targetId }) } catch {}
   }
@@ -119,10 +123,14 @@ const browserTool = defineTool({
     }
     const cdp = new CdpClient(await browserWsUrl(endpoint))
     try {
-      const { targetId, sessionId } = await cdp.createTarget(action === 'navigate' ? String(args.url) : 'about:blank')
+      // Reuse the caller's tab (targetId) or open a fresh dedicated one.
+      const { targetId, sessionId } = args.targetId
+        ? await cdp.attachTarget(String(args.targetId))
+        : await cdp.createTarget('about:blank')
+      await cdp.send('Page.enable', {}, sessionId)
       if (action === 'navigate') {
         await cdp.send('Page.navigate', { url: String(args.url) }, sessionId)
-        await new Promise((r) => setTimeout(r, 1200))
+        await new Promise((r) => setTimeout(r, 2000))
         return json({ targetId: targetId, url: String(args.url) })
       }
       if (action === 'extract_text') {
