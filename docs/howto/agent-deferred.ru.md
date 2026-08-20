@@ -134,17 +134,17 @@ autolearn.md: критерии (процедура повторима, реша�
 Ресёрч dsh-compaction в сторе дал точку расширения: **CompactionEngine — абстрактный сервис;
 провайдеры решают, когда компактить, субклассируя его** («providers decide when to compact and
 replace a history range with one summary node by subclassing CompactionEngine»). Замена диапазона
-одним summary-узлом + маркер `compactCheckpointSource` (kind=plugin, plugin=COMPACT_CHECKPOINT_MARKER)
-— это и есть снапшот-фрейм. События `compaction/start|end|summary` несут
-shadowedRange/shadowedSeqs/shadowedTokenCount — достаточно для снапшот-сводки. Значит безопасный v1
-виден: плагин `dsh-snapcompact` = подкласс CompactionEngine, который перед штатной компакцией
-пишет снапшот-фрейм и режет историю; риск поломки сессий снимается тем, что движок уже умеет
-заменять диапазон одним узлом.
+одним summary-узлом + маркер `compactCheckpointSource` (kind=plugin,
+plugin=COMPACT_CHECKPOINT_MARKER) — это и есть снапшот-фрейм. События `compaction/start|end|summary`
+несут shadowedRange/shadowedSeqs/shadowedTokenCount — достаточно для снапшот-сводки. Значит
+безопасный v1 виден: плагин `dsh-snapcompact` = подкласс CompactionEngine, который перед штатной
+компакцией пишет снапшот-фрейм и режет историю; риск поломки сессий снимается тем, что движок уже
+умеет заменять диапазон одним узлом.
 
-**Цель**: компакция со снапшотами контекста (omp snapcompact-*). План: 1) ✅ ресёрч API
+**Цель**: компакция со снапшотами контекста (omp snapcompact-\*). План: 1) ✅ ресёрч API
 (CompactionEngine subclass seam + compactCheckpointSource + summary-поля); 2) прототип
-`dsh-snapcompact` (подкласс, снапшот-фрейм, trigger-политика); 3) тест на живой сессии.
-Приоритет: средний (после мелочей харнесса).
+`dsh-snapcompact` (подкласс, снапшот-фрейм, trigger-политика); 3) тест на живой сессии. Приоритет:
+средний (после мелочей харнесса).
 
 ## 10. stt / tts — ✅ ПОКРЫТО существующим стеком (speech.nix), порт omp НЕ нужен
 
@@ -204,11 +204,11 @@ lsp/eval).
   инжектит одну короткую реплику на следующем pre-step (не блокирует цикл; silence-фильтр,
   inFlight-защита, max 5/сессию; конфиг `{endpoint, model, interval, timeoutMs, enabled}`). Тест:
   ловит дрейф от запроса («Изменения в коде противоречат исходному запросу»).
-- **mid-stream TTSR** — проверено (2026-08-20): dsh-ttsr работает на `agent/pre-step`
-  (инжект между шагами), а LLM-поток управляется AbortSignal — плагин может отменить текущий
-  запрос (`aborted`), но не может вставить правку в уже идущий стрим. Полный mid-stream
-  невозможен без форка `dsh-llm`/агент-лупа; текущая версия (инжект на следующем pre-step +
-  abort при жёстком нарушении) — максимум без форка.
+- **mid-stream TTSR** — проверено (2026-08-20): dsh-ttsr работает на `agent/pre-step` (инжект между
+  шагами), а LLM-поток управляется AbortSignal — плагин может отменить текущий запрос (`aborted`),
+  но не может вставить правку в уже идущий стрим. Полный mid-stream невозможен без форка
+  `dsh-llm`/агент-лупа; текущая версия (инжект на следующем pre-step + abort при жёстком нарушении)
+  — максимум без форка.
 - ~~hashline теги во встроенном `read`~~ — **ЗАКРЫТО (phase 2)**: плагин `dsh-read-tags` через
   `tools/post-execute` переписывает content встроенного `read` в `N#ID| text` (хэш идентичен
   dsh-hashline, проверено 4/4), без форка `dsh-tool-fs`; композиция со spill-policy сохранена
