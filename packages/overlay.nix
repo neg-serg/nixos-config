@@ -215,6 +215,7 @@ in
       '';
       zest = final.callPackage ./zest { }; # CLI for ZestBay plugin management (LV2 add/rm/list)
       carlactl = final.callPackage ./carlactl { }; # console VST router via headless Carla (list/run/route)
+      virtual-midi = final.callPackage ./virtual-midi { }; # user-space virtual ALSA seq MIDI ports (synth slots)
       wineapps = final.callPackage ./wineapps { }; # declarative Wine app manager (list/install/uninstall/run)
     };
 

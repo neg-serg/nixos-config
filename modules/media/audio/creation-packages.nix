@@ -94,5 +94,22 @@ in
         RestartSec = 3;
       };
     };
+    # virtual-midi — virtual ALSA seq MIDI ports for stable synth routing
+    # slots (SuperCollider connects to these instead of the hardware ports,
+    # avoiding loops through the Osmose and surviving unplugs).
+    systemd.user.services.virtual-midi = {
+      description = "Virtual ALSA sequencer MIDI ports (synth routing slots)";
+      after = [
+        "pipewire.service"
+        "wireplumber.service"
+      ];
+      wantedBy = [ "graphical-session.target" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${pkgs.neg.virtual-midi}/bin/virtual-midi 4";
+        Restart = "on-failure";
+        RestartSec = 3;
+      };
+    };
   };
 }
