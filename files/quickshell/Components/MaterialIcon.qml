@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Settings
+import "../Helpers/ScreenUtil.js" as ScreenUtil
 
 // Simple Material Symbols icon wrapper with sane defaults
 // Usage: MaterialIcon { icon: "play_arrow"; size: 16 * Theme.scale(screen) }
@@ -12,7 +13,7 @@ Text {
     // Optional screen for Theme.scale() callers
     property var screen: null
     // Pixel size; defaults to small text size scaled for the screen
-    property int size: Math.round(Theme.fontSizeSmall * Theme.scale(screen || Screen))
+    property int size: Math.round(Theme.fontSizeSmall * Theme.scale(ScreenUtil.screen(root)))
     // Rotation in degrees
     property real rotationAngle: 0
 

@@ -20,7 +20,13 @@ Item {
         watchChanges: true
         blockLoading: false
         onLoaded: root._onPathLoaded(text())
-        onFileChanged: reload()
+        property bool _reloadPending: false
+        onFileChanged: {
+            if (!pathFile._reloadPending) {
+                pathFile._reloadPending = true;
+                Qt.callLater(function() { pathFile._reloadPending = false; pathFile.reload(); });
+            }
+        }
         onLoadFailed: root.hasAccent = false
     }
 

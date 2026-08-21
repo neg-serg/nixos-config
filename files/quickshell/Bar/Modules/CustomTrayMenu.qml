@@ -8,6 +8,7 @@ import qs.Components
 import "../../Helpers/Color.js" as Color
 import "../../Helpers/Utils.js" as Utils
 import "../../Helpers/MenuUtils.js" as MenuUtils
+import "../../Helpers/ScreenUtil.js" as ScreenUtil
 
     PopupWindow {
         id: trayMenu
@@ -24,22 +25,28 @@ import "../../Helpers/MenuUtils.js" as MenuUtils
 
     anchor.item: anchorItem ? anchorItem : null
     anchor.rect.x: anchorX
-    anchor.rect.y: anchorY - Math.round(Theme.panelMenuAnchorYOffset * Theme.scale(Screen))
+    anchor.rect.y: anchorY - Math.round(Theme.panelMenuAnchorYOffset * Theme.scale(ScreenUtil.screen(trayMenu)))
 
     // Recursively destroy all open submenus in delegate tree
     function destroySubmenusRecursively(item) {
         if (!item || !item.contentItem) return;
-        var children = item.contentItem.children;
+        // Iterate a snapshot and collect submenus first: destroying children
+        // while iterating the live children list mutates the list being walked.
+        var children = item.contentItem.children.slice();
+        var submenus = [];
         for (var i = 0; i < children.length; ++i) {
             var child = children[i];
             if (child.subMenu) {
-                child.subMenu.hideMenu();
-                child.subMenu.destroy();
+                submenus.push(child.subMenu);
                 child.subMenu = null;
             }
             if (child.contentItem) {
                 destroySubmenusRecursively(child);
             }
+        }
+        for (var j = 0; j < submenus.length; ++j) {
+            submenus[j].hideMenu();
+            submenus[j].destroy();
         }
     }
 
@@ -51,7 +58,7 @@ import "../../Helpers/MenuUtils.js" as MenuUtils
         visible = true;
         searchField.text = "";
         Qt.callLater(() => {
-            trayMenu.anchor.updateAnchor();
+            if (trayMenu.anchor && trayMenu.anchor.item) trayMenu.anchor.updateAnchor();
             searchField.forceActiveFocus();
         })
     }
@@ -146,7 +153,7 @@ import "../../Helpers/MenuUtils.js" as MenuUtils
                                 }
                             }
                         }
-                        onTextChanged: listView.currentIndex = 0;
+                        onTextChanged: if (listView.currentIndex !== 0) listView.currentIndex = 0;
                     }
                 }
             }
@@ -173,7 +180,7 @@ import "../../Helpers/MenuUtils.js" as MenuUtils
                             return label.toLowerCase().indexOf(q) !== -1;
                         });
                     }
-                    onValuesChanged: listView.currentIndex = 0;
+                    onValuesChanged: if (listView.currentIndex !== 0) listView.currentIndex = 0;
                 }
 
                 delegate: Item {

@@ -23,7 +23,14 @@ Item {
         id: triggerFile
         path: root._triggerPath
         watchChanges: true
-        onFileChanged: { root.loadAndShow(); reload(); }
+        property bool _reloadPending: false
+        onFileChanged: {
+            root.loadAndShow();
+            if (!triggerFile._reloadPending) {
+                triggerFile._reloadPending = true;
+                Qt.callLater(function() { triggerFile._reloadPending = false; triggerFile.reload(); });
+            }
+        }
     }
 
     property string shotPath: ""
