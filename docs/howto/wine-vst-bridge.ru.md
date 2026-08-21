@@ -153,10 +153,16 @@ nixpkgs, стоит на odin):
 
 ## Синты: состав и переключение (2026-08-21)
 
-- **Windows (yabridge)**: Legend HZ (моно, MiniMoog-style), Phase Plant (kiloHearts,
-  полифонический модульный), + 48 модулей kiloHearts (FX).
+- **Windows (yabridge)**: Legend HZ (моно, MiniMoog-style), Phase Plant (kiloHearts, полифонический
+  модульный), + 48 модулей kiloHearts (FX).
 - **Нативные (Linux, без wine)**: Vital (wavetable), Dexed (FM/DX7), Surge XT (wavetable/VA,
   MPE-capable — добавлен fc4387ea/eaf74df1).
 - **Переключение**: `carlactl list` — что стоит; `carlactl play vst3:<имя>` — запустить в
   carla-jack-single и автоматически заруоутить (Osmose + RME MIDI → events-in, аудио → game-stereo);
   `carlactl stop` — остановить. carlactl play сам останавливает предыдущий движок (через PIDFILE).
+- **Несколько синтов одновременно (Tidal)**: `carlactl add vst3:<имя>` запускает доп. синт, не
+  останавливая остальные, и фокусирует Osmose/RME на нём; `carlactl map` назначает слоты
+  SuperCollider MIDI (out0..N) на запущенные синты по порядку: Tidal `s "synth1"` → первый синт,
+  `s "synth2"` → второй. Слотов 3 (SC MIDIOut ограничен ALSA-назначениями: RME + Osmose×2).
+  Важно: для seq-bridge MIDI портов pw-link работает только по АЛИАСАМ портов
+  (`Carla:<имя>:events-in`, `SuperCollider:outN`), не по object.path.
