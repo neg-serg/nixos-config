@@ -48,7 +48,7 @@ let
         args:
         if (args.url or "") == "https://www.reaper.fm/files/7.x/reaper773_linux_x86_64.tar.xz" then
           (pkgs.runCommand "reaper-src.tar.xz" { } ''
-            cp ${../../files/sources/reaper773_linux_x86_64.tar.xz} $out
+            cp ${../../../files/sources/reaper773_linux_x86_64.tar.xz} $out
           '')
         else
           pkgs.fetchurl args;
