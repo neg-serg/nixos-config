@@ -135,6 +135,15 @@ nixpkgs, стоит на odin):
   (конечный канал) / «multi ch.». Источник: Osmose Manual 1.0, §3 EXTERNAL MIDI MODE.
 - **yabridge**: MIDI-паспхру прозрачный, каналы не нормализуются (в yabridge.toml нет MIDI-опций) —
   MPE доходит до Windows-VST без изменений.
+- **yabridge per-plugin настройки (yabridge.toml)**: файл кладётся рядом с мостом —
+  `~/.vst3/yabridge/yabridge.toml` (или `~/.vst/yabridge/`, `~/.clap/yabridge/`), секции — glob по
+  путям .so/.vst3. Опции (README yabridge 5.1, https://github.com/robbert-vdh/yabridge):
+  `group` (общий процесс для связанных плагинов одного производителя, напр. FabFilter Pro-Q 3),
+  `disable_pipes`, `editor_disable_host_scaling` (HiDPI-редакторы VST3/CLAP при дробном скейле),
+  `editor_force_dnd` (только REAPER), `frame_rate` (по умолчанию 60), `hide_daw`, `vst3_prefer_32bit`.
+  **Для Legend HZ ничего из этого не нужно**: MPE-прозрачность не настраивается в yabridge,
+  «MPE CONTROLLER ±48 st» — это UI-переключатель внутри самого плагина (раздел 5.1 мануала Synapse),
+  а не опция моста.
 - **Вывод**: для Legend HZ менять режим Osmose НЕ нужно — MPE работает напрямую (omni-приём).
   «Грязный звук» при первых тестах был НЕ из-за MPE и не демо-режима, а из-за RME в роли
   resampling-фолловера (см. фикс про priority.driver выше).
