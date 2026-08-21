@@ -593,7 +593,11 @@ def cmd_play(args):
 
 
 def running_synth_events():
-    """Ordered [(plugin_name, events_in_object_path)] for running carla hosts."""
+    """Ordered [(plugin_name, events_in_alias)] for running carla hosts.
+
+    Uses the port.alias ("Carla:<plugin>:events-in"): object.path linking is
+    unreliable for seq-bridge MIDI ports ("failed to link ports: Success").
+    """
     try:
         out = subprocess.run(
             ["pw-cli", "ls", "Port"],
@@ -604,20 +608,18 @@ def running_synth_events():
     except Exception:
         return []
     res = []
-    cur = None
     for line in out.splitlines():
         s = line.strip()
-        if s.startswith("object.path"):
-            cur = s.split("=", 1)[1].strip().strip('"')
-        elif "events-in" in s and "port.name" in s:
-            name = s.split("=", 1)[1].strip().strip('"')
-            if name.endswith(":events-in"):
-                res.append((name[: -len(":events-in")], cur))
+        if "events-in" in s and "port.alias" in s:
+            alias = s.split("=", 1)[1].strip().strip('"')
+            if alias.startswith("Carla:") and alias.endswith(":events-in"):
+                name = alias[len("Carla:") : -len(":events-in")]
+                res.append((name, alias))
     return res
 
 
 def sc_midi_out_paths():
-    """Ordered object.paths of SuperCollider's MIDI out ports (out0, out1, ...)."""
+    """Ordered aliases of SuperCollider's MIDI out ports (out0, out1, ...)."""
     try:
         out = subprocess.run(
             ["pw-cli", "ls", "Port"],
@@ -628,17 +630,20 @@ def sc_midi_out_paths():
     except Exception:
         return []
     res = []
-    cur = None
     for line in out.splitlines():
         s = line.strip()
-        if s.startswith("object.path"):
-            cur = s.split("=", 1)[1].strip().strip('"')
-        elif "port.name" in s:
+        if "port.alias" in s:
             val = s.split("=", 1)[1].strip().strip('"')
-            if val.startswith("SuperCollider:out") and "capture" in val:
-                res.append((val, cur))
-    res.sort()
-    return [p for _, p in res]
+            if val.startswith("SuperCollider:out") and not val.startswith(
+                "SuperCollider:out_"
+            ):
+                res.append(val)
+    res.sort(
+        key=lambda v: int(
+            "".join(ch for ch in v.split(":")[1] if ch.isdigit()) or 0
+        )
+    )
+    return res
 
 
 def cmd_map(args):
