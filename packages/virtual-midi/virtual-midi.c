@@ -17,11 +17,13 @@ int main(int argc, char **argv) {
     for (int i = 0; i < n; i++) {
         char name[32];
         snprintf(name, sizeof name, "out%d", i);
+        // Write-only destination (like a MIDI output device port):
+        // SC's MIDIOut only accepts such ports (_SendMIDIOut fails
+        // "Wrong type" for read+write generic ports).
         int port = snd_seq_create_simple_port(
             seq, name,
-            SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_WRITE |
-                SND_SEQ_PORT_CAP_SUBS_READ | SND_SEQ_PORT_CAP_SUBS_WRITE,
-            SND_SEQ_PORT_TYPE_MIDI_GENERIC | SND_SEQ_PORT_TYPE_APPLICATION);
+            SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
+            SND_SEQ_PORT_TYPE_MIDI_GENERIC);
         if (port < 0) {
             fprintf(stderr, "virtual-midi: port %s failed\n", name);
             break;
