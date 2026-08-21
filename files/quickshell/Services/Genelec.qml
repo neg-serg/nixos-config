@@ -210,14 +210,8 @@ RowLayout {
     }
     Component.onCompleted: {
         available = true;
-        var f = new XMLHttpRequest();
-        f.open("GET", "file:///tmp/genlc-volume", false);
-        try { f.send(); } catch (e) {}
-        var v = parseFloat(f.responseText);
-        volume = isNaN(v) ? _lastSetVolume : v;
-        displayDb = volume;
-        pendingDb = volume;
-        _animDb = volume;
+        // Volume state is picked up by stateReader within 150 ms; the former
+        // synchronous XMLHttpRequest here blocked startup and was teardown-unsafe.
     }
 
 }

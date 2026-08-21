@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts 1.15
 import qs.Settings
 import qs.Components
+import "../Helpers/ScreenUtil.js" as ScreenUtil
 
 Rectangle {
     id: entry
@@ -117,7 +118,7 @@ required property var entryData
                 var globalPos = entry.mapToGlobal(0, 0);
                 var submenuWidth = Theme.panelSubmenuWidth;
                 var gap = Theme.panelSubmenuGap;
-                var openLeft = (globalPos.x + entry.width + submenuWidth > Screen.width);
+                var openLeft = (globalPos.x + entry.width + submenuWidth > ScreenUtil.width(entry));
                 var anchorX = openLeft ? -submenuWidth - gap : entry.width + gap;
                 entry.subMenu = submenuHostComponent.createObject(menuWindow, {
                     menu: entryData,

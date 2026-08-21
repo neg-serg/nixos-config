@@ -7,6 +7,7 @@ import qs.Settings
 import "../Helpers/Color.js" as Color
 import "../Helpers/Utils.js" as Utils
 import "../Helpers/MenuUtils.js" as MenuUtils
+import "../Helpers/ScreenUtil.js" as ScreenUtil
 
 PopupWindow {
     id: subMenu
@@ -23,7 +24,7 @@ PopupWindow {
     property real anchorY
     anchor.item: anchorItem ? anchorItem : null
     anchor.rect.x: anchorX
-    anchor.rect.y: anchorY - Math.round(Theme.panelMenuAnchorYOffset * Theme.scale(Screen))
+    anchor.rect.y: anchorY - Math.round(Theme.panelMenuAnchorYOffset * Theme.scale(ScreenUtil.screen(subMenu)))
 
     function showAt(item, x, y) {
         if (!item) return;
@@ -33,7 +34,7 @@ PopupWindow {
         visible = true;
         searchField.text = "";
         Qt.callLater(() => {
-            subMenu.anchor.updateAnchor();
+            if (subMenu.anchor && subMenu.anchor.item) subMenu.anchor.updateAnchor();
             searchField.forceActiveFocus();
         });
     }
@@ -119,7 +120,7 @@ PopupWindow {
                                 }
                             }
                         }
-                        onTextChanged: listView.currentIndex = 0
+                        onTextChanged: if (listView.currentIndex !== 0) listView.currentIndex = 0
                     }
                 }
             }
@@ -146,7 +147,7 @@ PopupWindow {
                             return label.toLowerCase().indexOf(q) !== -1;
                         });
                     }
-                    onValuesChanged: listView.currentIndex = 0
+                    onValuesChanged: if (listView.currentIndex !== 0) listView.currentIndex = 0
                 }
 
                 delegate: Item {

@@ -31,9 +31,15 @@ Item {
         id: dismissTrigger
         path: root._triggerPath
         watchChanges: true
+        property bool _reloadPending: false
         onFileChanged: {
-            root.dismissActive();
-            reload(); // reset watch for next trigger
+            if (dismissTrigger._reloadPending) return;
+            dismissTrigger._reloadPending = true;
+            Qt.callLater(function() {
+                dismissTrigger._reloadPending = false;
+                root.dismissActive();
+                dismissTrigger.reload(); // reset watch for next trigger
+            });
         }
         onLoadFailed: { /* file may not exist yet — fine */ }
     }

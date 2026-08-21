@@ -4,6 +4,7 @@ import qs.Components
 import "../Helpers/CapsuleMetrics.js" as Capsule
 import "../Helpers/WidgetBg.js" as WidgetBg
 import "../Helpers/Color.js" as ColorHelpers
+import "../Helpers/ScreenUtil.js" as ScreenUtil
 
 Rectangle {
     id: root
@@ -40,7 +41,7 @@ Rectangle {
     readonly property int _triangleWidth: Math.max(1, Math.round(capsuleScale * Theme.panelSeparatorWidthFactor * Math.max(1, Theme.uiBorderWidth) * 16))
     readonly property color _triangleFillColor: triangleColor.a > 0 ? triangleColor : _baseColor
 
-    readonly property real _scale: Theme.scale(screen || Screen)
+    readonly property real _scale: Theme.scale(ScreenUtil.screen(root))
     readonly property var _metrics: Capsule.metrics(Theme, _scale)
     readonly property var capsuleMetrics: _metrics
     readonly property real capsuleScale: _scale
