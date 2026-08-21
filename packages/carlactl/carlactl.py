@@ -238,6 +238,8 @@ def gen_project_xml(ptype, plugin_path, name, out_path):
   </Info>
   <Data>
    <Active>Yes</Active>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x3f9</Options>
   </Data>
  </Plugin>
 </CARLA-PROJECT>
