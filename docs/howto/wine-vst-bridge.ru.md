@@ -115,11 +115,14 @@ nixpkgs, стоит на odin):
 - Команды: `pw-link "alsa:seq:default:client_16:capture_0" "Carla:input_0"`;
   `pw-link "Carla:output_0" "game-stereo:playback_FL"` (имена — object.path, без префикса
   «LegendHZ:»).
-- **ВНИМАНИЕ**: пока движок Carla (carla-jack-single) запущен, синт подключён в общий микс
-  (game-stereo → AES). Legend HZ без валидной лицензии — демо-режим: может периодически
-  подмешивать шум/искажения ВО ВСЁ воспроизведение (mpd/ютуб). Если звук «захрипел» — останови
-  движок (carlactl stop или Stop в окне Carla), синт уходит из микса, звук очищается.
-  Используй carlactl play/stop для подключения по требованию.
+- **ВНИМАНИЕ (исправлено)**: при запуске Carla ВЕСЬ звук превращался в «кашу» не из-за
+  демо-режима Legend HZ, а из-за увода графа PipeWire на 44.1 kHz: Carla (JACK-клиент) переводил
+  граф на 44.1k, RME HDSPe (48k) становился resampling-«follower» и сыпал xrun'ы
+  (`snd_pcm_avail after recover: Broken pipe`) — от этого «хрипело» всё (mpd/ютуб), а CPU
+  pipewire залипал на ~95%.
+  **Фикс**: в `files/media/pipewire/pipewire.conf.d/clock-rate.conf` оставлена только
+  `default.clock.allowed-rates = [ 48000 ]` (коммит d3758472) — граф залочен на нативной частоте RME.
+  Временный аналог до пересборки: `pw-metadata -n settings 0 clock.force-rate 48000`.
 
 ## Osmose (Expressive E) + MPE + Legend HZ (research 2026-08-21)
 
