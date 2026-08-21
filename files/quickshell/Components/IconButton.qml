@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Settings
+import "../Helpers/ScreenUtil.js" as ScreenUtil
 
 MouseArea {
     id: root
@@ -7,7 +8,7 @@ MouseArea {
     enabled: true
     property bool hovering: false
     property var screen: null
-    property real size: Math.round(Theme.panelIconSize * Theme.scale(screen || Screen))
+    property real size: Math.round(Theme.panelIconSize * Theme.scale(ScreenUtil.screen(root)))
     // Rotation for the icon glyph (degrees).
     property real iconRotation: 0
     // Unified alias for API parity

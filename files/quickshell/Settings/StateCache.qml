@@ -20,7 +20,13 @@ Singleton {
         id: stateFileView
         path: stateFile
         watchChanges: true
-        onFileChanged: reload()
+        property bool _reloadPending: false
+        onFileChanged: {
+            if (!stateFileView._reloadPending) {
+                stateFileView._reloadPending = true;
+                Qt.callLater(function() { stateFileView._reloadPending = false; stateFileView.reload(); });
+            }
+        }
         onAdapterUpdated: writeAdapter()
         Component.onCompleted: function() {
             reload()

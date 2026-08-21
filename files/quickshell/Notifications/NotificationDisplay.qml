@@ -185,6 +185,7 @@ Item {
             }
 
             function finishDismiss() {
+                if (harness.backer) harness.backer.visualizer = null;
                 root.notifications = root.notifications.filter(function(h) { return h !== harness; });
                 harness.destroy();
             }

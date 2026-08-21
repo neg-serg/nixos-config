@@ -99,7 +99,13 @@ Singleton {
                 watchChanges: true
                 blockLoading: false
                 onLoaded: root._updateThemeManifest(text())
-                onFileChanged: reload()
+                property bool _reloadPending: false
+                onFileChanged: {
+                    if (!themeManifestWatcher._reloadPending) {
+                        themeManifestWatcher._reloadPending = true;
+                        Qt.callLater(function() { themeManifestWatcher._reloadPending = false; themeManifestWatcher.reload(); });
+                    }
+                }
                 onLoadFailed: root._updateThemeManifest("")
             }
         }
@@ -116,7 +122,13 @@ Singleton {
             watchChanges: true
             blockLoading: false
             onLoaded: root._handleThemePartLoaded(partFileName, text())
-            onFileChanged: reload()
+            property bool _reloadPending: false
+            onFileChanged: {
+                if (!themePartWatcherDelegate._reloadPending) {
+                    themePartWatcherDelegate._reloadPending = true;
+                    Qt.callLater(function() { themePartWatcherDelegate._reloadPending = false; themePartWatcherDelegate.reload(); });
+                }
+            }
             onLoadFailed: root._handleThemePartFailed(partFileName)
         }
     }
@@ -145,7 +157,13 @@ Singleton {
         id: themeFile
         path: Settings.themeFile
         watchChanges: true
-        onFileChanged: reload()
+        property bool _reloadPending: false
+        onFileChanged: {
+            if (!themeFile._reloadPending) {
+                themeFile._reloadPending = true;
+                Qt.callLater(function() { themeFile._reloadPending = false; themeFile.reload(); });
+            }
+        }
         // Theme/.theme.json is written exclusively by the theme-parts merge system
         // (_performThemeMerge → setText).  Do NOT call writeAdapter() here — the
         // JsonAdapter property var defaults are ({}) and would overwrite the merged

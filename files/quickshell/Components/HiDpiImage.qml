@@ -1,4 +1,5 @@
 import QtQuick
+import "../Helpers/ScreenUtil.js" as ScreenUtil
 
 // HiDpiImage — Image with auto-calculated sourceSize for crisp rendering
 // Usage: HiDpiImage { anchors.fill: parent; source: url; fillMode: Image.PreserveAspectCrop }
@@ -10,8 +11,8 @@ Image {
     mipmap: true
 
     sourceSize: Qt.size(
-        Math.round(width  * Screen.devicePixelRatio),
-        Math.round(height * Screen.devicePixelRatio)
+        Math.round(width  * ScreenUtil.dpr(root)),
+        Math.round(height * ScreenUtil.dpr(root))
     )
 }
 

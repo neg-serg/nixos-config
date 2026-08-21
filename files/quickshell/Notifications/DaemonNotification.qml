@@ -18,6 +18,10 @@ TrackedNotification {
     }
 
     function handleDismiss() {
+        // Base TrackedNotification behavior: mark the tracked object discarded
+        // so the manager removes it. The previous empty body left a dangling
+        // backer.visualizer until the next notification.
+        daemon.discard();
     }
 
     RetainableLock {

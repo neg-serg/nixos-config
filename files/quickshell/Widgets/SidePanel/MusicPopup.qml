@@ -5,6 +5,7 @@ import Quickshell.Wayland
 import qs.Components
 import qs.Settings
 import "../../Helpers/Utils.js" as Utils
+import "../../Helpers/ScreenUtil.js" as ScreenUtil
 
 Item {
     id: sidebarPopup
@@ -164,7 +165,7 @@ Item {
                 var ih = (musicWidget && musicWidget.implicitHeight > 0)
                          ? musicWidget.implicitHeight
                          : (Settings.settings.musicPopupHeight * scale);
-                const guardMax = Utils.clamp(Math.round(Screen.height * 0.7), 1, Screen.height);
+                const guardMax = Utils.clamp(Math.round(ScreenUtil.height(sidebarPopup) * 0.7), 1, ScreenUtil.height(sidebarPopup));
                 computedHeightPx = Utils.clamp(Math.round(ih), 1, guardMax);
             }
 
