@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# proxy — запуск/остановка/обновление Hysteria2 + VLESS Reality прокси
-# Usage: proxy [on|off|status|refresh]
+# proxy — запуск/остановка/обновление прокси sing-box (vless/hysteria2/ss/trojan)
+# Usage: proxy [on|off|status|refresh|gen]
 # Credentials: from /run/secrets/proxy-fallback (SOPS-encrypted)
+# refresh validates candidates (TCP scan + e2e probe) before writing the config,
+# so dead free-pool nodes never replace a working config.
 set -euo pipefail
 
 CONFIG="$HOME/.config/sing-box-trojan/config.json"
@@ -19,7 +21,7 @@ load_fallback() {
     fi
     # No hardcoded fallback: nodes come only from the SOPS secret
     # (/run/secrets/proxy-fallback), so no live credentials ever land in
-    # the public repo. `proxy refresh` fetches subscription nodes even
+    # the public repo. \`proxy refresh\` fetches subscription nodes even
     # without the secret.
     echo ""
 }
@@ -36,7 +38,7 @@ load_lan_auth() {
 }
 
 # ============================================================
-# lan_msg — one-line LAN access hint (best-effort; needs `ip`)
+# lan_msg — one-line LAN access hint (best-effort; needs \`ip\`)
 # ============================================================
 lan_msg() {
     local ip auth
@@ -54,6 +56,215 @@ lan_msg() {
 }
 
 # ============================================================
+# gen_cfg — единый python-генератор: парсит ноды из NODES_TEXT,
+# пишет конфиг (real-shape) в CFG_PATH. Поддерживает
+# vless (tls/reality), hysteria2, shadowsocks, trojan.
+# ============================================================
+gen_cfg() {
+    python3 << 'PYEOF'
+import base64, json, os, sys, urllib.parse
+
+text = os.environ["NODES_TEXT"]
+cfg_path = os.environ["CFG_PATH"]
+lan_auth = os.environ.get("LAN_AUTH", "")
+
+def b64dec(s):
+    try:
+        s = s + "=" * (-len(s) % 4)
+        return base64.urlsafe_b64decode(s).decode()
+    except Exception:
+        try:
+            return base64.b64decode(s).decode()
+        except Exception:
+            return ""
+
+def clean(s):
+    if not s: return {}
+    s = s.replace('&amp;', '&')
+    if '#' in s: s = s.split('#')[0]
+    return {k: v[0].split('#')[0] for k, v in urllib.parse.parse_qs(s).items()}
+
+def parse_line(line):
+    """Return an outbound dict or None."""
+    if line.startswith('hysteria2://'):
+        r = line.split('hysteria2://')[1]
+        a = r.split('@', 1)[1] if '@' in r else r
+        h = a.split('?')[0]; host = h.split(':')[0]
+        ps = h.split(':')[1] if ':' in h else '443'
+        port = int(ps.split('?')[0]) if ps.split('?')[0].isdigit() else 443
+        pwd = r.split('@')[0] if '@' in r else r.split('?')[0]
+        p = clean(a.split('?', 1)[1] if '?' in a else '')
+        ob = {"type": "hysteria2", "tag": "node", "server": host,
+              "server_port": port, "password": pwd,
+              "tls": {"enabled": True, "insecure": True,
+                      "server_name": p.get('sni', host)}}
+        if 'obfs' in p:
+            ob["obfs"] = {"type": p['obfs'], "password": p.get('obfs-password', '')}
+        return ob
+    if line.startswith('vless://'):
+        r = line.split('vless://')[1]
+        uuid = r.split('@')[0]
+        a = r.split('@', 1)[1] if '@' in r else r
+        hp = a.split('?')[0]
+        host = hp.rsplit(':', 1)[0]; port = int(hp.rsplit(':', 1)[1])
+        p = clean(a.split('?', 1)[1] if '?' in a else '')
+        ob = {"type": "vless", "tag": "node", "server": host,
+              "server_port": port, "uuid": uuid, "packet_encoding": "xudp"}
+        sec = p.get('security', '')
+        if sec in ('tls', 'reality', 'xtls'):
+            fp = p.get('fp', 'chrome')
+            if fp not in ('chrome','firefox','ios','android','edge','safari','360','random','randomized'):
+                fp = 'chrome'
+            tls = {"enabled": True, "server_name": p.get('sni', host),
+                   "utls": {"enabled": True, "fingerprint": fp}}
+            if sec == 'reality' and len(p.get('pbk', '')) >= 32:
+                tls["reality"] = {"enabled": True,
+                                  "public_key": p.get('pbk', ''),
+                                  "short_id": p.get('sid', '')}
+            ob["tls"] = tls
+        tp = p.get('type', '').lower()
+        if tp in ('xhttp', 'splithttp'):
+            return None
+        if tp == 'ws':
+            tr = {"type": "ws"}
+            if p.get('path'): tr["path"] = p['path']
+            if p.get('host'): tr["headers"] = {"Host": p['host']}
+            ob["transport"] = tr
+        elif tp == 'grpc':
+            tr = {"type": "grpc"}
+            if p.get('serviceName'): tr["service_name"] = p['serviceName']
+            ob["transport"] = tr
+        elif tp == 'httpupgrade':
+            tr = {"type": "httpupgrade"}
+            if p.get('host'): tr["host"] = p['host']
+            if p.get('path'): tr["path"] = p['path']
+            ob["transport"] = tr
+        elif tp == 'http':
+            tr = {"type": "http"}
+            if p.get('host'): tr["host"] = [p['host']]
+            if p.get('path'): tr["path"] = p['path']
+            ob["transport"] = tr
+        return ob
+    if line.startswith('ss://'):
+        r = line.split('ss://')[1]
+        if '@' in r:
+            ui, hp = r.split('@', 1)
+            if ':' not in ui:
+                dec = b64dec(ui)
+                if ':' not in dec: return None
+                method, password = dec.split(':', 1)
+            else:
+                method, password = ui.split(':', 1)
+        else:
+            dec = b64dec(r.split('#')[0])
+            if ':' not in dec or '@' not in dec: return None
+            method, rest = dec.split(':', 1)
+            password, hp = rest.rsplit('@', 1)
+        hp = hp.split('#')[0]
+        host = hp.rsplit(':', 1)[0]; port = int(hp.rsplit(':', 1)[1])
+        p = clean(r.split('?', 1)[1] if '?' in r else '')
+        if p.get('plugin'):
+            return None
+        return {"type": "shadowsocks", "tag": "node", "server": host,
+                "server_port": port, "method": method, "password": password}
+    if line.startswith('trojan://'):
+        r = line.split('trojan://')[1]
+        password = urllib.parse.unquote(r.split('@')[0])
+        a = r.split('@', 1)[1] if '@' in r else r
+        hp = a.split('?')[0]
+        host = hp.rsplit(':', 1)[0]; port = int(hp.rsplit(':', 1)[1])
+        p = clean(a.split('?', 1)[1] if '?' in a else '')
+        ob = {"type": "trojan", "tag": "node", "server": host,
+              "server_port": port, "password": password}
+        sec = p.get('security', 'tls')
+        if sec in ('tls', 'reality'):
+            fp = p.get('fp', 'chrome')
+            if fp not in ('chrome','firefox','ios','android','edge','safari','360','random','randomized'):
+                fp = 'chrome'
+            tls = {"enabled": True, "server_name": p.get('sni', host),
+                   "utls": {"enabled": True, "fingerprint": fp}}
+            if sec == 'reality' and len(p.get('pbk', '')) >= 32:
+                tls["reality"] = {"enabled": True,
+                                  "public_key": p.get('pbk', ''),
+                                  "short_id": p.get('sid', '')}
+            ob["tls"] = tls
+        tp = p.get('type', '').lower()
+        if tp in ('xhttp', 'splithttp'):
+            return None
+        if tp == 'ws':
+            tr = {"type": "ws"}
+            if p.get('path'): tr["path"] = p['path']
+            if p.get('host'): tr["headers"] = {"Host": p['host']}
+            ob["transport"] = tr
+        elif tp == 'grpc':
+            tr = {"type": "grpc"}
+            if p.get('serviceName'): tr["service_name"] = p['serviceName']
+            ob["transport"] = tr
+        elif tp == 'httpupgrade':
+            tr = {"type": "httpupgrade"}
+            if p.get('host'): tr["host"] = p['host']
+            if p.get('path'): tr["path"] = p['path']
+            ob["transport"] = tr
+        elif tp == 'http':
+            tr = {"type": "http"}
+            if p.get('host'): tr["host"] = [p['host']]
+            if p.get('path'): tr["path"] = p['path']
+            ob["transport"] = tr
+        return ob
+    return None
+
+outbounds = []
+seen = set()
+for line in text.strip().split('\n'):
+    line = line.strip()
+    if not line: continue
+    try:
+        ob = parse_line(line)
+        if ob is None: continue
+        key = (ob["server"].lower(), ob["server_port"])
+        if key in seen: continue
+        seen.add(key)
+        ob["tag"] = ob["type"][:2] + "-" + str(len(outbounds))
+        outbounds.append(ob)
+    except Exception:
+        continue
+
+if not outbounds:
+    print("  ERROR: no parseable nodes in NODES_TEXT")
+    sys.exit(1)
+
+tags = [o["tag"] for o in outbounds]
+outbounds.append({"type": "urltest", "tag": "auto",
+                  "outbounds": tags, "interval": "5m", "tolerance": 50})
+outbounds.append({"type": "direct", "tag": "direct"})
+
+in_lan = {"type": "socks", "tag": "in-lan", "listen": "0.0.0.0", "listen_port": 10810}
+if lan_auth:
+    u, p = lan_auth.split(":", 1)
+    in_lan["users"] = [{"username": u, "password": p}]
+inbounds = [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port": 10808},
+            in_lan]
+# DNS + route: client-side resolve via direct DoH. No "detour" on the DoH
+# server: detouring it via urltest deadlocks DNS at startup when no node is
+# selected yet, so every lookup times out.
+dns = {"servers": [{"tag": "remote", "type": "https", "server": "1.1.1.1",
+                    "server_port": 443}],
+       "strategy": "ipv4_only"}
+route = {"rules": [{"ip_is_private": True, "outbound": "direct"},
+                   {"action": "resolve", "server": "remote", "strategy": "ipv4_only"}],
+         "final": "auto", "auto_detect_interface": True,
+         "default_domain_resolver": "remote"}
+
+cfg = {"log": {"level": "error"}, "dns": dns, "inbounds": inbounds,
+       "outbounds": outbounds, "route": route}
+os.makedirs(os.path.dirname(cfg_path), exist_ok=True)
+with open(cfg_path, "w") as f:
+    json.dump(cfg, f, indent=2)
+print("  Config: " + str(len(tags)) + " outbounds + urltest")
+PYEOF
+}
+
+# ============================================================
 # bootstrap — создать конфиг с fallback-нодами если нет
 # ============================================================
 bootstrap() {
@@ -63,8 +274,9 @@ bootstrap() {
         #     back to dns.google DoT (IPv6) and every domain lookup failed on
         #     IPv6-less hosts (~3s per lookup, all domain traffic dead). The
         #     nodes also resolve domains server-side with a broken resolver, so
-        #     we resolve client-side via DoH through the tunnel (route action
-        #     "resolve") and send the node plain IPs.
+        #     we resolve client-side via direct DoH (route action "resolve")
+        #     and send the node plain IPs. The DoH server must NOT be detoured
+        #     through the urltest group (startup deadlock).
         #  2. LAN inbound (0.0.0.0:10810) with password auth when the LAN
         #     secret (/run/secrets/proxy-lan, "user:pass") is present; the
         #     users block is synced from it (and removed when it's absent).
@@ -77,7 +289,7 @@ cfg = json.load(open(cfg_path))
 changed = False
 FINAL_DNS = {"servers": [
               {"tag": "remote", "type": "https", "server": "1.1.1.1",
-               "server_port": 443, "detour": "auto"}],
+               "server_port": 443}],
              "strategy": "ipv4_only"}
 FINAL_ROUTE = {"rules": [
                 {"ip_is_private": True, "outbound": "direct"},
@@ -108,8 +320,6 @@ if lan_in is None:
     print("  Config: added LAN inbound (0.0.0.0:10810, "
           + ("password auth" if want_users else "no auth") + ")")
 elif lan_in.get("users") != want_users:
-    # Sync the users block with the secret: set it when the secret is
-    # present, strip it (passwordless) when the secret is gone.
     if want_users:
         lan_in["users"] = want_users
         changed = True
@@ -130,125 +340,251 @@ PYEOF
         return
     fi
     echo "  First run: creating config..."
-    mkdir -p "$(dirname "$CONFIG")"
     export NODES_TEXT="$FALLBACK"
     export CFG_PATH="$CONFIG"
     export LAN_AUTH="$(load_lan_auth)"
+    gen_cfg
+}
+
+# ============================================================
+# validate_nodes — python: TCP-scan + e2e-тест кандидатов,
+# печатает рабочие строки в stdout. Env: NODES_TEXT, E2E_CAP,
+# MIN_WORKING, VALIDATE_TMP (temp dir for throwaway configs).
+# ============================================================
+validate_nodes() {
     python3 << 'PYEOF'
-import json, os, urllib.parse
+import asyncio, base64, json, os, re, shutil, socket, subprocess, sys, time, urllib.parse
+
 text = os.environ["NODES_TEXT"]
-cfg_path = os.environ["CFG_PATH"]
-lan_auth = os.environ.get("LAN_AUTH", "")
-outbounds = []
+e2e_cap = int(os.environ.get("E2E_CAP", "60"))
+min_working = int(os.environ.get("MIN_WORKING", "3"))
+tmp = os.environ.get("VALIDATE_TMP", "/tmp/proxy-validate")
+os.makedirs(tmp, mode=0o700, exist_ok=True)
+
+if shutil.which("sing-box") is None:
+    print("  ERROR: sing-box not found in PATH"); sys.exit(1)
+
+def b64dec(s):
+    try:
+        s = s + "=" * (-len(s) % 4)
+        return base64.urlsafe_b64decode(s).decode()
+    except Exception:
+        try:
+            return base64.b64decode(s).decode()
+        except Exception:
+            return ""
+
 def clean(s):
     if not s: return {}
     s = s.replace('&amp;', '&')
     if '#' in s: s = s.split('#')[0]
     return {k: v[0].split('#')[0] for k, v in urllib.parse.parse_qs(s).items()}
+
+# Full outbound parser for probe configs (same rules as gen_cfg).
+def parse_outbound(line):
+    if line.startswith('ss://'):
+        r = line.split('ss://')[1]
+        if '@' in r:
+            ui, hp = r.split('@', 1)
+            if ':' not in ui:
+                dec = b64dec(ui)
+                if ':' not in dec: return None
+                method, password = dec.split(':', 1)
+            else:
+                method, password = ui.split(':', 1)
+        else:
+            dec = b64dec(r.split('#')[0])
+            if ':' not in dec or '@' not in dec: return None
+            method, rest = dec.split(':', 1)
+            password, hp = rest.rsplit('@', 1)
+        hp = hp.split('#')[0]
+        host = hp.rsplit(':', 1)[0]; port = int(hp.rsplit(':', 1)[1])
+        p = clean(r.split('?', 1)[1] if '?' in r else '')
+        if p.get('plugin'): return None
+        return {"type": "shadowsocks", "tag": "node", "server": host,
+                "server_port": port, "method": method, "password": password}
+    if line.startswith('trojan://'):
+        r = line.split('trojan://')[1]
+        password = urllib.parse.unquote(r.split('@')[0])
+        a = r.split('@', 1)[1] if '@' in r else r
+        hp = a.split('?')[0]
+        host = hp.rsplit(':', 1)[0]; port = int(hp.rsplit(':', 1)[1])
+        p = clean(a.split('?', 1)[1] if '?' in a else '')
+        ob = {"type": "trojan", "tag": "node", "server": host,
+              "server_port": port, "password": password}
+        sec = p.get('security', 'tls')
+        if sec in ('tls', 'reality'):
+            fp = p.get('fp', 'chrome')
+            if fp not in ('chrome','firefox','ios','android','edge','safari','360','random','randomized'):
+                fp = 'chrome'
+            tls = {"enabled": True, "server_name": p.get('sni', host),
+                   "utls": {"enabled": True, "fingerprint": fp}}
+            if sec == 'reality' and len(p.get('pbk', '')) >= 32:
+                tls["reality"] = {"enabled": True,
+                                  "public_key": p.get('pbk', ''),
+                                  "short_id": p.get('sid', '')}
+            ob["tls"] = tls
+        tp = p.get('type', '').lower()
+        if tp in ('xhttp', 'splithttp'): return None
+        if tp == 'ws':
+            tr = {"type": "ws"}
+            if p.get('path'): tr["path"] = p['path']
+            if p.get('host'): tr["headers"] = {"Host": p['host']}
+            ob["transport"] = tr
+        elif tp == 'grpc':
+            tr = {"type": "grpc"}
+            if p.get('serviceName'): tr["service_name"] = p['serviceName']
+            ob["transport"] = tr
+        elif tp == 'httpupgrade':
+            tr = {"type": "httpupgrade"}
+            if p.get('host'): tr["host"] = p['host']
+            if p.get('path'): tr["path"] = p['path']
+            ob["transport"] = tr
+        elif tp == 'http':
+            tr = {"type": "http"}
+            if p.get('host'): tr["host"] = [p['host']]
+            if p.get('path'): tr["path"] = p['path']
+            ob["transport"] = tr
+        return ob
+    return None
+
+# Lightweight parse: only need server/server_port for scan; full config
+# generation reuses gen_cfg for the final config.
+def parse_addr(line):
+    m = re.match(r"(?:vless|hysteria2|ss|trojan)://[^@]+@([^:?#]+):([0-9]+)", line)
+    if not m:
+        m2 = re.match(r"(?:ss|trojan)://[^/?#]+@([^:?#]+):([0-9]+)", line)
+        if not m2: return None
+        m = m2
+    return (m.group(1), int(m.group(2)))
+
+cands = {}
 for line in text.strip().split('\n'):
     line = line.strip()
     if not line: continue
     try:
-        if line.startswith('hysteria2://'):
-            r = line.split('hysteria2://')[1]
-            pwd = r.split('@')[0] if '@' in r else r.split('?')[0]
-            a = r.split('@', 1)[1] if '@' in r else r
-            h = a.split('?')[0]; host = h.split(':')[0]
-            ps = h.split(':')[1] if ':' in h else '443'
-            port = int(ps.split('?')[0]) if ps.split('?')[0].isdigit() else 443
-            p = clean(a.split('?', 1)[1] if '?' in a else '')
-            ob = {"type": "hysteria2", "tag": f"h2-{len(outbounds)}",
-                  "server": host, "server_port": port, "password": pwd,
-                  "tls": {"enabled": True, "insecure": True,
-                          "server_name": p.get('sni', host)}}
-            if 'obfs' in p:
-                ob["obfs"] = {"type": p['obfs'], "password": p.get('obfs-password', '')}
-            outbounds.append(ob)
-        elif line.startswith('vless://'):
-            r = line.split('vless://')[1]
-            uuid = r.split('@')[0]
-            a = r.split('@', 1)[1] if '@' in r else r
-            hp = a.split('?')[0]
-            host = hp.rsplit(':', 1)[0]; port = int(hp.rsplit(':', 1)[1])
-            p = clean(a.split('?', 1)[1] if '?' in a else '')
-            ob = {"type": "vless", "tag": f"vl-{len(outbounds)}",
-                  "server": host, "server_port": port, "uuid": uuid,
-                  "packet_encoding": "xudp"}
-            sec = p.get('security', '')
-            if sec in ('tls', 'reality', 'xtls'):
-                tls = {"enabled": True, "server_name": p.get('sni', host),
-                       "utls": {"enabled": True, "fingerprint": p.get('fp', 'chrome') if p.get('fp', 'chrome') in ['chrome','firefox','ios','android','edge','safari','360','random','randomized'] else 'chrome'}}
-                if sec == 'reality' and len(p.get('pbk', '')) >= 32:
-                    tls["reality"] = {"enabled": True,
-                                     "public_key": p.get('pbk', ''),
-                                     "short_id": p.get('sid', '')}
-                ob["tls"] = tls
-            tp = p.get('type', '').lower()
-            if tp in ('xhttp', 'splithttp'):
-                continue  # sing-box 1.13 has no xhttp transport
-            if tp == 'ws':
-                tr = {"type": "ws"}
-                if p.get('path'): tr["path"] = p['path']
-                if p.get('host'): tr["headers"] = {"Host": p['host']}
-                ob["transport"] = tr
-            elif tp == 'grpc':
-                tr = {"type": "grpc"}
-                if p.get('serviceName'): tr["service_name"] = p['serviceName']
-                ob["transport"] = tr
-            elif tp == 'httpupgrade':
-                tr = {"type": "httpupgrade"}
-                if p.get('host'): tr["host"] = p['host']
-                if p.get('path'): tr["path"] = p['path']
-                ob["transport"] = tr
-            elif tp == 'http':
-                tr = {"type": "http"}
-                if p.get('host'): tr["host"] = [p['host']]
-                if p.get('path'): tr["path"] = p['path']
-                ob["transport"] = tr
-            # tcp/raw/none → no transport
-            outbounds.append(ob)
-    except: pass
-tags = [o["tag"] for o in outbounds]
-if tags:
-    outbounds.append({"type": "urltest", "tag": "auto",
-                      "outbounds": tags, "interval": "5m", "tolerance": 50})
-outbounds.append({"type": "direct", "tag": "direct"})
-in_lan = {"type": "socks", "tag": "in-lan", "listen": "0.0.0.0", "listen_port": 10810}
-if lan_auth:
-    u, p = lan_auth.split(":", 1)
-    in_lan["users"] = [{"username": u, "password": p}]
-inbounds = [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port": 10808},
-            # LAN copy of the proxy (firewall allows private ranges only).
-            # Auth from the LAN secret (/run/secrets/proxy-lan, "user:pass");
-            # passwordless when the secret is absent.
-            in_lan]
-# DNS + route: with an empty "dns":{} sing-box 1.13 falls back to dns.google
-# over TLS and dials the IPv6 address first; on hosts without IPv6 every domain
-# lookup fails (~3s) and all domain-based traffic dies (IP-based traffic, e.g.
-# Telegram DCs, still works). The nodes also resolve domains server-side with a
-# broken resolver, so resolve client-side via DoH through the tunnel (route
-# action "resolve", ipv4_only) and hand the node plain IPs.
-cfg = {"log":{"level":"error"},
-       "dns":{"servers":[
-                {"tag":"remote","type":"https","server":"1.1.1.1",
-                 "server_port":443,"detour":"auto"}],
-              "strategy":"ipv4_only"},
-       "inbounds":inbounds,
-       "outbounds":outbounds,
-       "route":{"rules":[
-                  {"ip_is_private":True,"outbound":"direct"},
-                  {"action":"resolve","server":"remote","strategy":"ipv4_only"}],
-                "final":"auto","auto_detect_interface":True,
-                "default_domain_resolver":"remote"}}
-os.makedirs(os.path.dirname(cfg_path), exist_ok=True)
-with open(cfg_path,"w") as f:
-    json.dump(cfg, f, indent=2)
-print(f"  Config: {len(outbounds)-2} outbounds + urltest")
+        a = parse_addr(line)
+        if a: cands.setdefault(a, line)
+    except Exception:
+        continue
+
+if not cands:
+    print("  ERROR: no parseable candidates"); sys.exit(1)
+keys = sorted(cands)
+print("  Candidates: " + str(len(keys)))
+
+# --- TCP scan
+async def check(host, port, timeout=2.5):
+    try:
+        loop = asyncio.get_event_loop()
+        infos = await loop.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+        if not infos: return False
+        fam, typ, pro, _, sa = infos[0]
+        s = socket.socket(fam, typ, pro)
+        s.setblocking(False)
+        try:
+            await asyncio.wait_for(loop.sock_connect(s, sa), timeout)
+            return True
+        finally:
+            s.close()
+    except Exception:
+        return False
+
+async def scan():
+    sem = asyncio.Semaphore(300)
+    async def one(k):
+        async with sem:
+            return await check(k[0], k[1])
+    return await asyncio.gather(*[one(k) for k in keys])
+
+res = asyncio.run(scan())
+open_keys = [keys[i] for i, ok in enumerate(res) if ok]
+print("  TCP open: " + str(len(open_keys)) + "/" + str(len(keys)))
+if not open_keys:
+    print("  ERROR: no TCP-reachable nodes"); sys.exit(1)
+
+# --- e2e probe: single-node sing-box per open candidate, curl gstatic == 204
+candidates = [k for k in open_keys[:e2e_cap] if parse_outbound(cands[k]) is not None]
+print("  E2E probing up to " + str(len(candidates)) + " open nodes...")
+
+def probe_cfg(key, port, path):
+    ob = parse_outbound(cands[key])
+    if ob is None:
+        return None
+    cfg = {
+        "log": {"level": "error"},
+        "dns": {"servers": [{"tag": "remote", "type": "https",
+                             "server": "1.1.1.1", "server_port": 443}],
+                "strategy": "ipv4_only"},
+        "inbounds": [{"type": "socks", "tag": "in", "listen": "127.0.0.1",
+                      "listen_port": port}],
+        "outbounds": [ob, {"type": "direct", "tag": "direct"}],
+        "route": {"final": ob["tag"], "default_domain_resolver": "remote"},
+    }
+    with open(path, "w") as f:
+        json.dump(cfg, f, indent=2)
+    return True
+
+import concurrent.futures
+procs = {}
+BASE = 11300
+okmap = {}
+try:
+    for wave_start in range(0, len(candidates), 20):
+        wave = candidates[wave_start:wave_start + 20]
+        for j, key in enumerate(wave):
+            port = BASE + wave_start + j
+            path = tmp + "/probe-" + str(port) + ".json"
+            probe_cfg(key, port, path)
+            p = subprocess.Popen(["setsid", "sing-box", "run", "-c", path],
+                                 stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL,
+                                 start_new_session=True, close_fds=True)
+            procs[port] = p
+        time.sleep(8)
+        def probe(port):
+            try:
+                r = subprocess.run(
+                    ["curl", "-sS", "-o", "/dev/null", "-w", "%{http_code}",
+                     "--max-time", "12", "--socks5-hostname",
+                     "127.0.0.1:" + str(port),
+                     "https://www.gstatic.com/generate_204"],
+                    capture_output=True, text=True, timeout=15)
+                return r.stdout.strip() == "204"
+            except Exception:
+                return False
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as ex:
+            futs = {ex.submit(probe, BASE + wave_start + wave.index(k)): k for k in wave}
+            for fut in concurrent.futures.as_completed(futs):
+                okmap[futs[fut]] = fut.result()
+        for port, p in procs.items():
+            try: p.terminate()
+            except Exception: pass
+        time.sleep(1)
+        for port, p in procs.items():
+            try: p.kill()
+            except Exception: pass
+        procs.clear()
+        time.sleep(1)
+finally:
+    for port, p in procs.items():
+        try: p.kill()
+        except Exception: pass
+    subprocess.run(["pkill", "-f", "sing-box.*" + tmp], capture_output=True)
+
+work = [k for k in candidates if okmap.get(k)]
+print("  E2E working: " + str(len(work)))
+if len(work) < min_working:
+    print("  ERROR: only " + str(len(work)) + " working nodes (need >= "
+          + str(min_working) + "); keeping existing config")
+    sys.exit(1)
+for k in work:
+    print(cands[k])
 PYEOF
 }
 
 # ============================================================
-# refresh — скачать свежие ноды, обновить конфиг
+# refresh — скачать свежие ноды, проверить их, обновить конфиг
 # ============================================================
 refresh() {
     echo "  Fetching fresh nodes..."
@@ -256,11 +592,12 @@ refresh() {
     NEW_NODES=""
     for url in \
       "https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/protocols/vless.txt" \
-      "https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/everything.txt"; do
-        data=$(curl --noproxy '*' -sL --connect-timeout 5 --max-time 10 "$url" 2>/dev/null | \
-          grep -E '^(vless|hysteria2)://' | shuf | head -30 || true)
+      "https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/everything.txt" \
+      "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge.txt"; do
+        data=$(curl --noproxy '*' -sL --connect-timeout 6 --max-time 12 "$url" 2>/dev/null | \
+          grep -E '^(vless|hysteria2|ss|trojan)://' | shuf | head -60 || true)
         if [ -n "$data" ]; then
-            echo "    $(echo "$data" | wc -l) from $(basename $url)"
+            echo "    $(echo "$data" | wc -l) from $(basename "$url")"
             NEW_NODES="$NEW_NODES"$'\n'"$data"
         fi
     done
@@ -271,121 +608,25 @@ refresh() {
         echo "  ERROR: no fallback nodes and no subscription nodes available"
         exit 1
     fi
+
     export NODES_TEXT="$ALL"
+    export VALIDATE_TMP="$(mktemp -d /tmp/proxy-validate.XXXXXX)"
+    WORKING=$(validate_nodes) || { rc=$?; echo "$WORKING" | tail -4; rm -rf "$VALIDATE_TMP"; return $rc; }
+    WORKING_LINES=$(echo "$WORKING" | sed -n '/^[hvst]\(less\|ysteria2\|s\|rojan\):\/\//p')
+    COUNT=$(echo "$WORKING_LINES" | grep -c '://' || true)
+    rm -rf "$VALIDATE_TMP"
+
+    if [ -z "$WORKING_LINES" ]; then
+        echo "  ERROR: validation produced no working nodes; keeping existing config"
+        return 1
+    fi
+
+    echo "  Regenerating config with $COUNT validated nodes..."
+    export NODES_TEXT="$WORKING_LINES"
     export CFG_PATH="$CONFIG"
     export LAN_AUTH="$(load_lan_auth)"
-    python3 << 'PYEOF'
-import json, os, urllib.parse
-text = os.environ["NODES_TEXT"]
-cfg_path = os.environ["CFG_PATH"]
-lan_auth = os.environ.get("LAN_AUTH", "")
-outbounds = []
-def clean(s):
-    if not s: return {}
-    s = s.replace('&amp;', '&')
-    if '#' in s: s = s.split('#')[0]
-    return {k: v[0].split('#')[0] for k, v in urllib.parse.parse_qs(s).items()}
-for line in text.strip().split('\n'):
-    line = line.strip()
-    if not line: continue
-    try:
-        if line.startswith('hysteria2://'):
-            r = line.split('hysteria2://')[1]
-            pwd = r.split('@')[0] if '@' in r else r.split('?')[0]
-            a = r.split('@', 1)[1] if '@' in r else r
-            h = a.split('?')[0]; host = h.split(':')[0]
-            ps = h.split(':')[1] if ':' in h else '443'
-            port = int(ps.split('?')[0]) if ps.split('?')[0].isdigit() else 443
-            p = clean(a.split('?', 1)[1] if '?' in a else '')
-            ob = {"type": "hysteria2", "tag": f"h2-{len(outbounds)}",
-                  "server": host, "server_port": port, "password": pwd,
-                  "tls": {"enabled": True, "insecure": True,
-                          "server_name": p.get('sni', host)}}
-            if 'obfs' in p:
-                ob["obfs"] = {"type": p['obfs'], "password": p.get('obfs-password', '')}
-            outbounds.append(ob)
-        elif line.startswith('vless://'):
-            r = line.split('vless://')[1]
-            uuid = r.split('@')[0]
-            a = r.split('@', 1)[1] if '@' in r else r
-            hp = a.split('?')[0]
-            host = hp.rsplit(':', 1)[0]; port = int(hp.rsplit(':', 1)[1])
-            p = clean(a.split('?', 1)[1] if '?' in a else '')
-            ob = {"type": "vless", "tag": f"vl-{len(outbounds)}",
-                  "server": host, "server_port": port, "uuid": uuid,
-                  "packet_encoding": "xudp"}
-            sec = p.get('security', '')
-            if sec in ('tls', 'reality', 'xtls'):
-                tls = {"enabled": True, "server_name": p.get('sni', host),
-                       "utls": {"enabled": True, "fingerprint": p.get('fp', 'chrome') if p.get('fp', 'chrome') in ['chrome','firefox','ios','android','edge','safari','360','random','randomized'] else 'chrome'}}
-                if sec == 'reality' and len(p.get('pbk', '')) >= 32:
-                    tls["reality"] = {"enabled": True,
-                                     "public_key": p.get('pbk', ''),
-                                     "short_id": p.get('sid', '')}
-                ob["tls"] = tls
-            tp = p.get('type', '').lower()
-            if tp in ('xhttp', 'splithttp'):
-                continue  # sing-box 1.13 has no xhttp transport
-            if tp == 'ws':
-                tr = {"type": "ws"}
-                if p.get('path'): tr["path"] = p['path']
-                if p.get('host'): tr["headers"] = {"Host": p['host']}
-                ob["transport"] = tr
-            elif tp == 'grpc':
-                tr = {"type": "grpc"}
-                if p.get('serviceName'): tr["service_name"] = p['serviceName']
-                ob["transport"] = tr
-            elif tp == 'httpupgrade':
-                tr = {"type": "httpupgrade"}
-                if p.get('host'): tr["host"] = p['host']
-                if p.get('path'): tr["path"] = p['path']
-                ob["transport"] = tr
-            elif tp == 'http':
-                tr = {"type": "http"}
-                if p.get('host'): tr["host"] = [p['host']]
-                if p.get('path'): tr["path"] = p['path']
-                ob["transport"] = tr
-            # tcp/raw/none → no transport
-            outbounds.append(ob)
-    except: pass
-tags = [o["tag"] for o in outbounds]
-if tags:
-    outbounds.append({"type": "urltest", "tag": "auto",
-                      "outbounds": tags, "interval": "5m", "tolerance": 50})
-outbounds.append({"type": "direct", "tag": "direct"})
-in_lan = {"type": "socks", "tag": "in-lan", "listen": "0.0.0.0", "listen_port": 10810}
-if lan_auth:
-    u, p = lan_auth.split(":", 1)
-    in_lan["users"] = [{"username": u, "password": p}]
-inbounds = [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port": 10808},
-            # LAN copy of the proxy (firewall allows private ranges only).
-            # Auth from the LAN secret (/run/secrets/proxy-lan, "user:pass");
-            # passwordless when the secret is absent.
-            in_lan]
-# DNS + route: with an empty "dns":{} sing-box 1.13 falls back to dns.google
-# over TLS and dials the IPv6 address first; on hosts without IPv6 every domain
-# lookup fails (~3s) and all domain-based traffic dies (IP-based traffic, e.g.
-# Telegram DCs, still works). The nodes also resolve domains server-side with a
-# broken resolver, so resolve client-side via DoH through the tunnel (route
-# action "resolve", ipv4_only) and hand the node plain IPs.
-cfg = {"log":{"level":"error"},
-       "dns":{"servers":[
-                {"tag":"remote","type":"https","server":"1.1.1.1",
-                 "server_port":443,"detour":"auto"}],
-              "strategy":"ipv4_only"},
-       "inbounds":inbounds,
-       "outbounds":outbounds,
-       "route":{"rules":[
-                  {"ip_is_private":True,"outbound":"direct"},
-                  {"action":"resolve","server":"remote","strategy":"ipv4_only"}],
-                "final":"auto","auto_detect_interface":True,
-                "default_domain_resolver":"remote"}}
-os.makedirs(os.path.dirname(cfg_path), exist_ok=True)
-with open(cfg_path,"w") as f:
-    json.dump(cfg, f, indent=2)
-print(f"  Config: {len(outbounds)-2} outbounds + urltest")
-PYEOF
-    echo "  Config: $CONFIG regenerated"
+    gen_cfg
+    echo "  Config: $CONFIG regenerated (validated)"
     if systemctl --user is-active --quiet sing-box-proxy.service 2>/dev/null; then
         echo "  Restarting proxy service..."
         systemctl --user restart sing-box-proxy.service 2>/dev/null || start
@@ -448,7 +689,9 @@ stop() {
 # ============================================================
 # main
 # ============================================================
-case "${1:-status}" in
+CMD="status"
+[ $# -gt 0 ] && CMD="$1"
+case "$CMD" in
     on|start)    bootstrap; start ;;
     off|stop)    stop ;;
     refresh)     refresh ;;
@@ -459,7 +702,7 @@ case "${1:-status}" in
             ss -tlnp 2>/dev/null | grep -E '10808|10810' || true
         elif systemctl --user is-active --quiet sing-box-proxy.service 2>/dev/null \
             || pgrep -f 'sing-box.*trojan' > /dev/null 2>&1; then
-            echo "Proxy: RUNNING (Hysteria2 + VLESS Reality)"
+            echo "Proxy: RUNNING (vless/h2/ss/trojan pool)"
             ss -tlnp 2>/dev/null | grep -E '10808|10810' || true
         else
             echo "Proxy: STOPPED"
