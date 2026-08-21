@@ -1,42 +1,43 @@
 #!/usr/bin/env bash
-# synth — run-or-raise for a carla-hosted synth.
+# synth — run-or-raise / start for a carla-hosted synth (Hyprland-friendly).
 #
-# If the synth's Carla window exists, focus it (switch to its workspace).
-# Otherwise start it via carlactl play (wires Osmose/RME MIDI + audio +
-# Tidal slot) and move the window to the 'synth' workspace.
+# If the synth's engine is running (events-in port present): focus its window
+# if there is one, otherwise report it as running (headless).
+# If not running: start it headless via carlactl play (wires Osmose/RME MIDI
+# + audio + Tidal slot). Headless = stable (the Qt UI variant segfaults).
 #
-# Usage: synth <plugin>        e.g.  synth Surge_XT | synth vst3:LegendHZ
+# Usage: synth <plugin>        e.g.  synth Surge_XT | synth LegendHZ
 set -euo pipefail
 
 name="${1:?usage: synth <plugin>}"
-# strip the format prefix, normalize spaces to the .carxp project name
-project=$(printf '%s' "$name" | sed 's/^vst[23]://; s/  */_/g')
+plain=$(printf '%s' "$name" | sed 's/^vst[23]://; s/  */_/g')
+# the events-in port name uses spaces: "Surge XT:events-in"
+port_name="${plain//_/ }:events-in"
 
-find_win() {
-  hyprctl clients -j 2>/dev/null | jq -r --arg t "$project"     '.[] | select(.class=="carla" and (.title|contains($t))) | .address' | head -1
+engine_up() {
+  pw-cli ls Port 2>/dev/null | rg -qi "${port_name}"
 }
 
-win=$(find_win)
-if [ -n "$win" ]; then
-  ws=$(hyprctl clients -j 2>/dev/null | jq -r --arg a "$win" '.[] | select(.address==$a) | .workspace.name')
-  hyprctl dispatch focuswindow "address:$win" >/dev/null 2>&1 || true
-  echo "synth: raised $name (window on workspace $ws)"
+find_win() {
+  hyprctl clients -j 2>/dev/null | jq -r --arg t "$plain"     '.[] | select(.class=="carla" and (.title|contains($t))) | .address' | head -1
+}
+
+if engine_up; then
+  win=$(find_win)
+  if [ -n "$win" ]; then
+    hyprctl dispatch focuswindow "address:$win" >/dev/null 2>&1 || true
+    echo "synth: $name raised"
+  else
+    echo "synth: $name already running (headless)"
+  fi
   exit 0
 fi
 
-echo "synth: starting $name ..."
-carlactl play "$name"
+echo "synth: starting $name (headless) ..."
+carlactl play "vst3:$name"
 
-# wait for the window to appear, then move it to the synth workspace
-for _ in $(seq 1 40); do
-  win=$(find_win)
-  [ -n "$win" ] && break
+for _ in $(seq 1 60); do
+  engine_up && break
   sleep 1
 done
-if [ -n "$win" ]; then
-  hyprctl dispatch movewindow "workspace,name:synth,address:$win" >/dev/null 2>&1 || true
-  hyprctl dispatch focuswindow "address:$win" >/dev/null 2>&1 || true
-  echo "synth: $name ready (window on workspace synth)"
-else
-  echo "synth: started, but no window found (headless?)" >&2
-fi
+engine_up && echo "synth: $name ready (headless, wired)"   || echo "synth: FAILED to start $name" >&2
