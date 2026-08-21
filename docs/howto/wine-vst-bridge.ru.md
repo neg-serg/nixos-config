@@ -115,38 +115,48 @@ nixpkgs, стоит на odin):
 - Команды: `pw-link "alsa:seq:default:client_16:capture_0" "Carla:input_0"`;
   `pw-link "Carla:output_0" "game-stereo:playback_FL"` (имена — object.path, без префикса
   «LegendHZ:»).
-- **ВНИМАНИЕ (исправлено)**: при запуске Carla ВЕСЬ звук превращался в «кашу» не из-за
-  демо-режима Legend HZ, а из-за увода графа PipeWire на 44.1 kHz: Carla (JACK-клиент) переводил
-  граф на 44.1k, RME HDSPe (48k) становился resampling-«follower» и сыпал xrun'ы
-  (`snd_pcm_avail after recover: Broken pipe`) — от этого «хрипело» всё (mpd/ютуб), а CPU
-  pipewire залипал на ~95%.
-  **Фикс**: в `files/media/pipewire/pipewire.conf.d/clock-rate.conf` оставлена только
-  `default.clock.allowed-rates = [ 48000 ]` (коммит d3758472) — граф залочен на нативной частоте RME.
-  Временный аналог до пересборки: `pw-metadata -n settings 0 clock.force-rate 48000`.
+- **ВНИМАНИЕ (исправлено)**: при запуске Carla ВЕСЬ звук превращался в «кашу» не из-за демо-режима
+  Legend HZ, а из-за увода графа PipeWire на 44.1 kHz: Carla (JACK-клиент) переводил граф на 44.1k,
+  RME HDSPe (48k) становился resampling-«follower» и сыпал xrun'ы
+  (`snd_pcm_avail after recover: Broken pipe`) — от этого «хрипело» всё (mpd/ютуб), а CPU pipewire
+  залипал на ~95%. **Фикс**: в `files/media/pipewire/pipewire.conf.d/clock-rate.conf` оставлена
+  только `default.clock.allowed-rates = [ 48000 ]` (коммит d3758472) — граф залочен на нативной
+  частоте RME. Временный аналог до пересборки: `pw-metadata -n settings 0 clock.force-rate 48000`.
 
 ## Osmose (Expressive E) + MPE + Legend HZ (research 2026-08-21)
 
-- **Legend HZ**: omni + нативный MPE (мануал Synapse, раздел «5.1 MPE (MIDI Polyphonic Expression)»):
-  слушает ВСЕ каналы; переключатель «MPE Controller» — питч-бенд ±48 полутонов, master-канал 1,
-  Rise/Fall shaping для CC74/aftertouch. Источник: https://www.synapse-audio.com/legend/TheLegendManualHZ.pdf
-- **Osmose**: пресеты External MIDI Mode (Config menu, крутить Value Encoder 4 и нажать): `mpe`
-  (по умолчанию: ch1 master + ch2-15 по голосам), `classic keyboard` (всё на ch1 — для legacy-синтов),
-  `poly aftertouch`, `multi-channel`. Точная подстройка: Adjust menu → mode tab → «mono ch.» /
-  «mpe» (конечный канал) / «multi ch.». Источник: Osmose Manual 1.0, §3 EXTERNAL MIDI MODE.
+- **Legend HZ**: omni + нативный MPE (мануал Synapse, раздел «5.1 MPE (MIDI Polyphonic
+  Expression)»): слушает ВСЕ каналы; переключатель «MPE Controller» — питч-бенд ±48 полутонов,
+  master-канал 1, Rise/Fall shaping для CC74/aftertouch. Источник:
+  https://www.synapse-audio.com/legend/TheLegendManualHZ.pdf
+- **Osmose**: пресеты External MIDI Mode (Config menu, крутить Value Encoder 4 и нажать): `mpe` (по
+  умолчанию: ch1 master + ch2-15 по голосам), `classic keyboard` (всё на ch1 — для legacy-синтов),
+  `poly aftertouch`, `multi-channel`. Точная подстройка: Adjust menu → mode tab → «mono ch.» / «mpe»
+  (конечный канал) / «multi ch.». Источник: Osmose Manual 1.0, §3 EXTERNAL MIDI MODE.
 - **yabridge**: MIDI-паспхру прозрачный, каналы не нормализуются (в yabridge.toml нет MIDI-опций) —
   MPE доходит до Windows-VST без изменений.
 - **Вывод**: для Legend HZ менять режим Osmose НЕ нужно — MPE работает напрямую (omni-приём).
   «Грязный звук» при первых тестах был НЕ из-за MPE и не демо-режима, а из-за RME в роли
   resampling-фолловера (см. фикс про priority.driver выше).
-- **MPE CONTROLLER в Legend HZ** (секция 5.1 мануала): синт MPE-совместим «из коробки»
-  (слушает все каналы); переключатель MPE CONTROLLER в UI плагина дополнительно даёт:
-  Rise/Fall для CC74 (brightness) и aftertouch, питч-бенд ±48 полутонов, MPE master-канал 1
-  с глобальным бендом. Кривые: VELOCITY / TIMBRE (CC74) / ATOUCH.
-- **Sensitivity menu Osmose**: 4 вкладки — bending (бенд ±диапазон и стабилизация), pressure
-  (первая часть хода клавиши; «note on» = позиция, где клавиша реально триггерит ноту),
-  aftertouch (вторая часть хода), default sensitivity. Если клавиши «не реагируют» — снизить
-  порог note-on во вкладке pressure.
+- **MPE CONTROLLER в Legend HZ** (секция 5.1 мануала): синт MPE-совместим «из коробки» (слушает все
+  каналы); переключатель MPE CONTROLLER в UI плагина дополнительно даёт: Rise/Fall для CC74
+  (brightness) и aftertouch, питч-бенд ±48 полутонов, MPE master-канал 1 с глобальным бендом.
+  Кривые: VELOCITY / TIMBRE (CC74) / ATOUCH.
+- **Sensitivity menu Osmose**: 4 вкладки — bending (бенд ±диапазон и стабилизация), pressure (первая
+  часть хода клавиши; «note on» = позиция, где клавиша реально триггерит ноту), aftertouch (вторая
+  часть хода), default sensitivity. Если клавиши «не реагируют» — снизить порог note-on во вкладке
+  pressure.
 - **MIDI 2.0 (UMP)**: официальный ответ Expressive E (KB 162): Osmose НЕ поддерживает MIDI 2.0 —
-  «возможно в будущем, когда появится достаточно MIDI 2.0-оборудования», приоритет у MPE.
-  В мануале (v23.1.29c) MIDI 2.0 нет вообще. Вся выразительность (per-note bend, CC74,
-  aftertouch) уже идёт через MPE поверх MIDI 1.0 — для Legend HZ это то, что нужно.
+  «возможно в будущем, когда появится достаточно MIDI 2.0-оборудования», приоритет у MPE. В мануале
+  (v23.1.29c) MIDI 2.0 нет вообще. Вся выразительность (per-note bend, CC74, aftertouch) уже идёт
+  через MPE поверх MIDI 1.0 — для Legend HZ это то, что нужно.
+
+## Синты: состав и переключение (2026-08-21)
+
+- **Windows (yabridge)**: Legend HZ (моно, MiniMoog-style), Phase Plant (kiloHearts,
+  полифонический модульный), + 48 модулей kiloHearts (FX).
+- **Нативные (Linux, без wine)**: Vital (wavetable), Dexed (FM/DX7), Surge XT (wavetable/VA,
+  MPE-capable — добавлен fc4387ea/eaf74df1).
+- **Переключение**: `carlactl list` — что стоит; `carlactl play vst3:<имя>` — запустить в
+  carla-jack-single и автоматически заруоутить (Osmose + RME MIDI → events-in, аудио → game-stereo);
+  `carlactl stop` — остановить. carlactl play сам останавливает предыдущий движок (через PIDFILE).
