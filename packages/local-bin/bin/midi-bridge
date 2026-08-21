@@ -1,21 +1,42 @@
 #!/usr/bin/env bash
-# midi-bridge — connect SuperCollider MIDI out -> Midi Through.
-# Vital (standalone) auto-subscribes to Midi Through, so this one link
-# completes the chain: Tidal -> SuperDirt -> SC out -> Midi Through -> Vital.
+# midi-bridge — connect SuperCollider MIDI out to the active synth.
+#  1) carla-hosted synth (carlactl play): SC -> <plugin>:events-in (PipeWire),
+#     resolved dynamically because the events-in object.path index varies
+#     per plugin (Surge XT = Carla:input_2, Legend HZ = Carla:input_0).
+#  2) legacy Vital standalone: SC -> Midi Through (Vital auto-subscribes).
 set -euo pipefail
 
-sc=$(aconnect -l | awk '/^client [0-9]+: .SuperCollider./ {c=$2; sub(":","",c); print c; exit}')
-mt=$(aconnect -l | awk '/^client [0-9]+: .Midi Through./ {c=$2; sub(":","",c); print c; exit}')
-[ -z "$sc" ] && { echo "no SuperCollider MIDI client" >&2; exit 1; }
-[ -z "$mt" ] && { echo "no Midi Through" >&2; exit 1; }
-scp=$(aconnect -l | awk -v c="$sc" '$0 ~ "client " c ":" {inside=1} inside && /out0/ {print $1; exit}')
-mtp=$(aconnect -l | awk -v c="$mt" '$0 ~ "client " c ":" {inside=1} inside && /Midi Through Port-0/ {print $1; exit}')
+# helper: print the object.path that precedes a port.name matching $1
+pw_path_of() {
+  pw-cli ls Port 2>/dev/null | awk -v pat="$1" '
+    /object.path =/ {p=$3; gsub(/"/,"",p)}
+    $0 ~ pat {print p; exit}'
+}
 
-if aconnect "$sc:$scp" "$mt:$mtp" 2>/dev/null; then
-  echo "connected $sc:$scp -> $mt:$mtp"
-elif aconnect -l 2>/dev/null | grep -q "Connecting To: $mt:$mtp"; then
-  echo "already connected"
-else
-  echo "connect failed" >&2
-  exit 1
+sc=$(aconnect -l | awk '/^client [0-9]+: .SuperCollider./ {c=$2; sub(":","",c); print c; exit}')
+[ -z "$sc" ] && { echo "no SuperCollider MIDI client" >&2; exit 1; }
+
+# --- 1) carla synth events-in (primary path) ---
+events_target=$(pw_path_of 'events-in')
+if [ -n "$events_target" ]; then
+  sc_out=$(pw_path_of 'SuperCollider:out0 (capture)')
+  if [ -n "$sc_out" ]; then
+    if pw-link "$sc_out" "$events_target" 2>/dev/null; then
+      echo "connected SC MIDI -> $events_target"
+    elif pw-link -l 2>/dev/null | grep -q "$events_target"; then
+      echo "already connected: SC MIDI -> $events_target"
+    else
+      echo "SC MIDI connect failed ($sc_out -> $events_target)" >&2
+    fi
+  fi
+fi
+
+# --- 2) Vital standalone via Midi Through (legacy) ---
+mt=$(aconnect -l | awk '/^client [0-9]+: .Midi Through./ {c=$2; sub(":","",c); print c; exit}')
+if [ -n "$mt" ]; then
+  scp=$(aconnect -l | awk -v c="$sc" '$0 ~ "client " c ":" {inside=1} inside && /out0/ {print $1; exit}')
+  mtp=$(aconnect -l | awk -v c="$mt" '$0 ~ "client " c ":" {inside=1} inside && /Midi Through Port-0/ {print $1; exit}')
+  if [ -n "$scp" ] && [ -n "$mtp" ]; then
+    aconnect "$sc:$scp" "$mt:$mtp" 2>/dev/null || true
+  fi
 fi
