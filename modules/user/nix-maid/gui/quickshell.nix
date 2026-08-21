@@ -3,6 +3,7 @@
   lib,
   config,
   neg,
+  inputs,
   ...
 }:
 let
@@ -16,8 +17,9 @@ let
     && config.lib.neg.enabled "gui.quickshell"
     && !(config.lib.neg.enabled "devSpeed");
 
-  # Quickshell package from flake input
-  qsPkg = pkgs.quickshell; # Flexbile QtQuick based desktop shell toolkit
+  # Quickshell package from the pinned flake input (post-v0.3.0 crash fixes),
+  # same source the greeter already uses; nixpkgs' v0.3.0 tag lacks them.
+  qsPkg = inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   # Wrapper factory
   mkQuickshellWrapper = import (config.lib.neg.path "lib/quickshell-wrapper.nix") {
@@ -162,6 +164,10 @@ lib.mkIf quickshellEnabled (
         description = "Quickshell - QtQuick based shell for Wayland";
         documentation = [ "https://github.com/outfoxxed/quickshell" ];
         partOf = [ "hyprland-session.target" ];
+        unitConfig = {
+          StartLimitIntervalSec = 30;
+          StartLimitBurst = 5;
+        };
         after = [
           "graphical-session-pre.target"
           "pipewire.service"
@@ -172,7 +178,10 @@ lib.mkIf quickshellEnabled (
           ExecStartPre = "${quickshellPreStart}";
           ExecStart = "${lib.getExe quickshellWrapped} -p %h/.config/quickshell/shell.qml";
           Restart = "on-failure";
-          RestartSec = 1;
+          # A startup crash (~1-3 s cycle) previously looped forever: the default
+          # StartLimitBurst=5/10s never trips at this cadence (NRestarts hit 198).
+          # Back off and stop after 5 quick failures in 30 s.
+          RestartSec = 5;
           Environment = [
             "QML_XHR_ALLOW_FILE_WRITE=1"
             "PATH=/run/current-system/sw/bin:\${PATH}"
