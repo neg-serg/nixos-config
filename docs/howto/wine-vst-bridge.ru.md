@@ -157,7 +157,7 @@ nixpkgs, стоит на odin):
   модульный), + 48 модулей kiloHearts (FX).
 - **Нативные (Linux, без wine)**: Vital (wavetable), Dexed (FM/DX7), Surge XT (wavetable/VA,
   MPE-capable — добавлен fc4387ea/eaf74df1), Cardinal (модульный VCV-Rack-стиль, VST3),
-  Odin 2 (open-source VA, вдохновлён ARP Odyssey — VST3/CLAP/LV2).
+  Odyssey (VA, ARP Odyssey-стиль).
 - **Переключение**: `carlactl list` — что стоит; `carlactl play vst3:<имя>` — запустить в
   carla-jack-single и автоматически заруоутить (Osmose + RME MIDI → events-in, аудио → game-stereo);
   `carlactl stop` — остановить. carlactl play сам останавливает предыдущий движок (через PIDFILE).
