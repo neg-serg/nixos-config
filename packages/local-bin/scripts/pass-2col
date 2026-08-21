@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-store_dir="${PASSWORD_STORE_DIR:-$HOME/.password-store}"
+# Store lives at ~/.local/share/pass (gopass mount). PASSWORD_STORE_DIR is
+# declared in envs.nix but not imported into the hyprland/session env, so
+# fall back to the real path instead of the default ~/.password-store.
+store_dir="${PASSWORD_STORE_DIR:-$HOME/.local/share/pass}"
 [ -d "$store_dir" ] || exit 0
 
 # Collect entries: strip .gpg and leading ./, ignore .gpg-id files
