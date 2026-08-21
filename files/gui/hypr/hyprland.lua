@@ -174,6 +174,8 @@ hl.bind(M4 .. "+j", hl.dsp.exec_cmd("hyprctl dispatch movefocus d"))
 hl.bind(M4 .. "+k", hl.dsp.exec_cmd("hyprctl dispatch movefocus u"))
 hl.bind(M4 .. "+l", hl.dsp.exec_cmd("hyprctl dispatch movefocus r"))
 hl.bind(M4 .. "+Return", hl.dsp.exec_cmd("kitty"), { locked = true })
+-- pass-2col: pick a password/OTP entry from the pass store via vicinae dmenu
+hl.bind(M4 .. "+p", hl.dsp.exec_cmd("pass-2col"), { locked = true })
 hl.bind(M4 .. "+mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 hl.bind(M4 .. "+mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 hl.bind(M4 .. "+mouse:272", hl.dsp.window.drag(), { mouse = true })
