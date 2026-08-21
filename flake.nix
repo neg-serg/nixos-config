@@ -54,7 +54,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     quickshell = {
-      url = "github:quickshell-mirror/quickshell";
+      # Pinned after 2026-08-20: contains crash fixes missing from the v0.3.0
+      # tag shipped by nixpkgs (FileView/panelwindow UAF, ScriptModel reentrancy,
+      # ipc deregistration). Update with: nix flake lock --update-input quickshell
+      url = "github:quickshell-mirror/quickshell/9f807554e106f6b0670e60ead82b63f3c0c2ac26";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rsmetrx = {
