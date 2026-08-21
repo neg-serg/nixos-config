@@ -702,7 +702,13 @@ def cmd_add(args):
     if not wait_events_in():
         print("warn: events-in did not appear in 60s", file=sys.stderr)
         return 0
-    target = find_events_in_target()
+    target = None
+    for _name, _path in running_synth_events():
+        if _name == info["name"]:
+            target = _path
+            break
+    if not target:
+        target = find_events_in_target()
     if not target:
         print("warn: events-in target not found", file=sys.stderr)
         target = "Carla:input_0"
