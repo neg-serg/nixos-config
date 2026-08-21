@@ -41,6 +41,7 @@ let
     pkgs.vital # spectral wavetable synth
     pkgs.dexed # DX7-compatible FM synth
     pkgs.surge-xt # open-source wavetable/VA hybrid synth (VST3/CLAP/LV2) — MPE-capable
+    pkgs.reaper # DAW (Linux native) — portable config, scriptable via ReaScript/OSC
     pkgs.stochas # probability-driven MIDI sequencer
     pkgs.vcv-rack # modular synth platform
   ];
