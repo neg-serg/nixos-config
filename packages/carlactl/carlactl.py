@@ -619,11 +619,10 @@ def running_synth_events():
 
 
 def sc_midi_out_paths():
-    """Ordered aliases of the SC MIDI out ports for the synth slots.
+    """Ordered aliases of the SC MIDI out ports (the actual note path).
 
-    Prefers the virtual-midi ports ("virtual-midi:outN") — the stable ALSA
-    seq destinations the SuperDirt engine connects its MIDIOut to. Falls
-    back to the engine's own "SuperCollider:outN" ports.
+    The seq bridge captures every client output into 143:0 and re-exposes it
+    as "SuperCollider:outN (capture)" — that PipeWire port carries the notes.
     """
     try:
         out = subprocess.run(
@@ -639,17 +638,10 @@ def sc_midi_out_paths():
         s = line.strip()
         if "port.alias" in s:
             val = s.split("=", 1)[1].strip().strip('"')
-            if val.startswith("virtual-midi:out") and "(capture)" not in val:
+            if val.startswith("SuperCollider:out") and not val.startswith(
+                "SuperCollider:out_"
+            ):
                 res.append(val)
-    if not res:
-        for line in out.splitlines():
-            s = line.strip()
-            if "port.alias" in s:
-                val = s.split("=", 1)[1].strip().strip('"')
-                if val.startswith("SuperCollider:out") and not val.startswith(
-                    "SuperCollider:out_"
-                ):
-                    res.append(val)
     res.sort(
         key=lambda v: int(
             "".join(ch for ch in v.split(":")[1] if ch.isdigit()) or 0
