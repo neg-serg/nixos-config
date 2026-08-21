@@ -587,11 +587,147 @@ def cmd_play(args):
     for ch, out_port in (("0", "playback_FL"), ("1", "playback_FR")):
         pw_link(f"Carla:output_{ch}", f"game-stereo:{out_port}")
     print("audio: Carla:output_0/1 -> game-stereo:playback_FL/FR")
-    # Bridge SuperCollider MIDI (Tidal) to this synth if the engine is up,
-    # so 'carlactl play' works in either order (synth first or SC first).
-    bridge = Path.home() / ".local/bin/midi-bridge"
-    if bridge.exists():
-        subprocess.run([str(bridge)], capture_output=True, timeout=15)
+    # Assign SuperCollider MIDI slots (Tidal) to the running synths.
+    cmd_map(args)
+    return 0
+
+
+def running_synth_events():
+    """Ordered [(plugin_name, events_in_object_path)] for running carla hosts."""
+    try:
+        out = subprocess.run(
+            ["pw-cli", "ls", "Port"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        ).stdout
+    except Exception:
+        return []
+    res = []
+    cur = None
+    for line in out.splitlines():
+        s = line.strip()
+        if s.startswith("object.path"):
+            cur = s.split("=", 1)[1].strip().strip('"')
+        elif "events-in" in s and "port.name" in s:
+            name = s.split("=", 1)[1].strip().strip('"')
+            if name.endswith(":events-in"):
+                res.append((name[: -len(":events-in")], cur))
+    return res
+
+
+def sc_midi_out_paths():
+    """Ordered object.paths of SuperCollider's MIDI out ports (out0, out1, ...)."""
+    try:
+        out = subprocess.run(
+            ["pw-cli", "ls", "Port"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        ).stdout
+    except Exception:
+        return []
+    res = []
+    cur = None
+    for line in out.splitlines():
+        s = line.strip()
+        if s.startswith("object.path"):
+            cur = s.split("=", 1)[1].strip().strip('"')
+        elif "port.name" in s:
+            val = s.split("=", 1)[1].strip().strip('"')
+            if val.startswith("SuperCollider:out") and "capture" in val:
+                res.append((val, cur))
+    res.sort()
+    return [p for _, p in res]
+
+
+def cmd_map(args):
+    """Assign SuperCollider MIDI out_i -> the i-th running carla synth's events-in."""
+    synths = running_synth_events()
+    outs = sc_midi_out_paths()
+    if not synths:
+        print("map: no running carla synths")
+        return 1
+    for i, (name, path) in enumerate(synths):
+        if i < len(outs):
+            pw_link(outs[i], path)
+            print(f"map: synth{i + 1} = {name}  (SC out{i} -> {path})")
+        else:
+            print(f"map: synth{i + 1} = {name}  [no SC MIDI slot]")
+    if not outs:
+        print("map: no SuperCollider MIDI outs (engine not started?)")
+    return 0
+
+
+def cmd_add(args):
+    """Start another synth alongside the running ones and focus the controllers
+    (Osmose/RME) onto it. SC MIDI slots are reassigned via cmd_map."""
+    arg = args.plugin
+    if not arg:
+        print(
+            "error: 'carlactl add' needs a plugin (TYPE:NAME)", file=sys.stderr
+        )
+        return 2
+    info = resolve_plugin(arg)
+    if not info:
+        print(f"error: plugin not found: {arg}", file=sys.stderr)
+        return 1
+
+    PROJECTS.mkdir(parents=True, exist_ok=True)
+    out = PROJECTS / f"{info['name'].replace(' ', '_')}.carxp"
+    if is_yabridge(info["path"]):
+        ok, err = gen_project_xml(
+            info["format"], info["path"], info["name"], out
+        )
+    else:
+        ok, err = gen_project(
+            info["format"], info["path"], info["name"], str(out)
+        )
+    if not ok:
+        print(f"error: {err}", file=sys.stderr)
+        return 1
+
+    log = open(LOGFILE, "a")
+    proc = subprocess.Popen(
+        ["carla-jack-single", str(out)],
+        stdout=log,
+        stderr=subprocess.STDOUT,
+        env=gen_env(),
+        start_new_session=True,
+    )
+    print(
+        f"started carla-jack-single (pid {proc.pid}) with {info['format']}:{info['name']}"
+    )
+
+    if not wait_events_in():
+        print("warn: events-in did not appear in 60s", file=sys.stderr)
+        return 0
+    target = find_events_in_target()
+    if not target:
+        print("warn: events-in target not found", file=sys.stderr)
+        target = "Carla:input_0"
+    # focus controllers on the new synth: disconnect Osmose/RME from others
+    srcs = (
+        "alsa:seq:default:client_24:capture_0",
+        "alsa:seq:default:client_16:capture_0",
+    )
+    for _name, path in running_synth_events():
+        if path != target:
+            for src in srcs:
+                subprocess.run(
+                    ["pw-link", "-d", src, path], capture_output=True
+                )
+    for pat in ("Osmose", "External MIDI"):
+        cid = midi_client_id(pat)
+        if cid is None:
+            print(f"warn: MIDI source '{pat}' not found")
+            continue
+        pw_link(f"alsa:seq:default:client_{cid}:capture_0", target)
+        print(f"MIDI: {pat} -> {target}")
+    for ch, out_port in (("0", "playback_FL"), ("1", "playback_FR")):
+        pw_link(f"Carla:output_{ch}", f"game-stereo:{out_port}")
+    print("audio -> game-stereo")
+    cmd_map(args)
     return 0
 
 
@@ -712,6 +848,17 @@ def main():
     )
     sp.add_argument("plugin", nargs="?", help="TYPE:NAME or path")
     sp.set_defaults(func=cmd_play)
+
+    sp = sub.add_parser(
+        "add", help="start an additional synth alongside the running ones"
+    )
+    sp.add_argument("plugin", nargs="?", help="TYPE:NAME or path")
+    sp.set_defaults(func=cmd_add)
+
+    sp = sub.add_parser(
+        "map", help="assign SuperCollider MIDI slots to the running synths"
+    )
+    sp.set_defaults(func=cmd_map)
 
     sp = sub.add_parser("stop", help="stop Carla")
     sp.set_defaults(func=cmd_stop)
