@@ -587,6 +587,11 @@ def cmd_play(args):
     for ch, out_port in (("0", "playback_FL"), ("1", "playback_FR")):
         pw_link(f"Carla:output_{ch}", f"game-stereo:{out_port}")
     print("audio: Carla:output_0/1 -> game-stereo:playback_FL/FR")
+    # Bridge SuperCollider MIDI (Tidal) to this synth if the engine is up,
+    # so 'carlactl play' works in either order (synth first or SC first).
+    bridge = Path.home() / ".local/bin/midi-bridge"
+    if bridge.exists():
+        subprocess.run([str(bridge)], capture_output=True, timeout=15)
     return 0
 
 
