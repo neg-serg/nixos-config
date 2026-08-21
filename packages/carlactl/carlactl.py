@@ -465,12 +465,55 @@ def wait_events_in(timeout=60):
     return False
 
 
+def find_events_in_target():
+    """Return the object.path of the running host's events-in MIDI port.
+
+    The index varies per plugin (Legend HZ/Phase Plant -> Carla:input_0,
+    Surge XT -> Carla:input_2), so resolve it dynamically from pw-cli.
+    """
+    try:
+        out = subprocess.run(
+            ["pw-cli", "ls", "Port"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        ).stdout
+    except Exception:
+        return None
+    current = None
+    for line in out.splitlines():
+        s = line.strip()
+        if s.startswith("object.path"):
+            current = s.split("=", 1)[1].strip().strip('"')
+        elif "events-in" in s and "port.name" in s:
+            return current
+    return None
+
+
+def wait_carla_gone(timeout=20):
+    """Wait until no carla-jack-single process remains (previous host stopped)."""
+    for _ in range(timeout):
+        try:
+            r = subprocess.run(
+                ["pgrep", "-f", "carla-jack-single"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+        except Exception:
+            return False
+        if r.stdout.strip() == "":
+            return True
+        time.sleep(1)
+    return False
+
+
 def cmd_play(args):
     """Launch a plugin in carla-jack-single (single-plugin GUI host).
 
     Unlike headless 'carla -n' this mode exposes the plugin's MIDI input as
-    'Carla:input_0' (events-in), so hardware controllers (Expressive E Osmose,
-    RME MIDI IN) can drive the synth. Audio is routed to game-stereo.
+    '<plugin>:events-in', so hardware controllers (Expressive E Osmose, RME
+    MIDI IN) can drive the synth. Audio is routed to game-stereo.
     """
     arg = args.plugin
     if not arg:
@@ -508,7 +551,7 @@ def cmd_play(args):
         return 1
 
     stop_carla()
-    time.sleep(0.5)
+    wait_carla_gone()
     log = open(LOGFILE, "w")
     proc = subprocess.Popen(
         ["carla-jack-single", str(out)],
@@ -527,13 +570,20 @@ def cmd_play(args):
     if not wait_events_in():
         print("warn: events-in port did not appear in 60s", file=sys.stderr)
         return 0
+    target = find_events_in_target()
+    if not target:
+        print(
+            "warn: events-in target not found; using Carla:input_0",
+            file=sys.stderr,
+        )
+        target = "Carla:input_0"
     for pat in ("Osmose", "External MIDI"):
         cid = midi_client_id(pat)
         if cid is None:
             print(f"warn: MIDI source '{pat}' not found in aconnect -l")
             continue
-        pw_link(f"alsa:seq:default:client_{cid}:capture_0", "Carla:input_0")
-        print(f"MIDI: {pat} (client {cid}) -> Carla:input_0")
+        pw_link(f"alsa:seq:default:client_{cid}:capture_0", target)
+        print(f"MIDI: {pat} (client {cid}) -> {target}")
     for ch, out_port in (("0", "playback_FL"), ("1", "playback_FR")):
         pw_link(f"Carla:output_{ch}", f"game-stereo:{out_port}")
     print("audio: Carla:output_0/1 -> game-stereo:playback_FL/FR")
