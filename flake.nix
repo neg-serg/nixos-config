@@ -7,6 +7,9 @@
     determinate = {
       url = "github:DeterminateSystems/determinate/73b3bdb962a070aa088ac310e606ff760bcc0cf7";
       inputs.nix.follows = "nix-src";
+      # Determinate's own nixpkgs pins flakehub nixpkgs-weekly, which is
+      # unreachable from this host; follow the stable nixos-26.05 input instead.
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-src = {
       url = "github:DeterminateSystems/nix-src/b1123363e07a216333222d483cfe8e682b95d7c1";
