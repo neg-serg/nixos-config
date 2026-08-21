@@ -41,6 +41,8 @@ let
     pkgs.vital # spectral wavetable synth
     pkgs.dexed # DX7-compatible FM synth
     pkgs.surge-xt # open-source wavetable/VA hybrid synth (VST3/CLAP/LV2) — MPE-capable
+    pkgs.cardinal # modular VCV-Rack-style synth as a VST3/LV2 plugin (MPE-friendly)
+    pkgs.odyssey # open-source ARP Odyssey-style VA synth (VST3/LV2)
     (pkgs.reaper.override {
       # reaper.fm is blocked/slow from this host — vendor the binary tarball
       # in files/sources (fetched via the proxy).
