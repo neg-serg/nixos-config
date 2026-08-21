@@ -5,6 +5,7 @@ import qs.Settings
 import qs.Components
 // QML requires import qualifiers to start with an uppercase letter
 import "../Helpers/Url.js" as Url
+import "../Helpers/ScreenUtil.js" as ScreenUtil
 
 // TrayIcon — wrapper for system tray icons with HiDPI sizing and optional grayscale
 Item {
@@ -97,9 +98,9 @@ Item {
         // Request device-pixel-aligned backing texture for crisp rendering
         // Enforce a sensible minimum backing size to avoid tiny provider requests (e.g., 2x2)
         backer.sourceSize: (function(){
-            var wpx = Math.round(width  * Screen.devicePixelRatio);
-            var hpx = Math.round(height * Screen.devicePixelRatio);
-            var minPx = Math.max(12, Math.round(Theme.panelIconSizeSmall * Screen.devicePixelRatio));
+            var wpx = Math.round(width  * ScreenUtil.dpr(root));
+            var hpx = Math.round(height * ScreenUtil.dpr(root));
+            var minPx = Math.max(12, Math.round(Theme.panelIconSizeSmall * ScreenUtil.dpr(root)));
             return Qt.size(Math.max(minPx, wpx), Math.max(minPx, hpx));
         })()
         source: root.resolvedSource()

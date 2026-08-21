@@ -457,6 +457,23 @@ Item {
                                 property string _accentCss: (mediaControl.mediaAccentCss ? mediaControl.mediaAccentCss : Format.colorCss(Theme.accentPrimary, 1))
                                 property bool _accentReady: mediaControl.accentReady
                                 property int _accentVer: mediaControl.accentVersion
+                                // Cached time strings: re-rendering rich text on every
+                                // currentPosition tick (MPRIS/PipeWire churn) fed the
+                                // QQuickText::setText crash cascade. Refresh at 1 Hz only.
+                                property string _timeCur: ""
+                                property string _timeTot: ""
+                                Timer {
+                                    id: trackTimeTimer
+                                    interval: 1000
+                                    repeat: true
+                                    running: trackText.visible && MusicManager.hasPlayer
+                                    triggeredOnStart: true
+                                    onTriggered: {
+                                        trackText._timeCur = Format.fmtTime(MusicManager.currentPosition || 0);
+                                        trackText._timeTot = Format.fmtTime(Time.mprisToMs(MusicManager.trackLength || 0));
+                                    }
+                                }
+                                onTitlePartChanged: trackTimeTimer.restart()
                                 text: (function(){
                                     if (!trackText.titlePart) return "";
                                     const sepChar = (Settings.settings.mediaTitleSeparator || '—');
@@ -467,8 +484,8 @@ Item {
                                                         ? ("&#8201;" + Rich.sepSpan(trackText._accentCss, sepChar) + "&#8201;")
                                                         : ("&#8201;" + Rich.esc(sepChar) + "&#8201;");
                                                });
-                                    const cur = Format.fmtTime(MusicManager.currentPosition || 0);
-                                    const tot = Format.fmtTime(Time.mprisToMs(MusicManager.trackLength || 0));
+                                    const cur = trackText._timeCur;
+                                    const tot = trackText._timeTot;
                                     const bp = Rich.bracketPair(Settings.settings.timeBracketStyle || "square");
                                     if (trackText._accentReady) {
                                         return t

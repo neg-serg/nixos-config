@@ -106,11 +106,8 @@ Window {
                 return targetItem.screen.virtualGeometry;
             }
         }
-        if (typeof Screen !== "undefined") {
-            if (Screen.virtualGeometry) return Screen.virtualGeometry;
-            if (Screen.desktopAvailableRect) return Screen.desktopAvailableRect;
-            if (Screen.availableGeometry) return Screen.availableGeometry;
-        }
+        // Screen attached-property access removed (crash risk on null window
+        // screen); the Qt.application.screens fallback below is null-safe.
         if (Qt.application && Qt.application.screens && Qt.application.screens.length > 0) {
             var primaryScreen = Qt.application.screens[0];
             if (primaryScreen.virtualGeometry) return primaryScreen.virtualGeometry;

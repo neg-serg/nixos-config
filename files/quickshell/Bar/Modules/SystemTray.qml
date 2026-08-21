@@ -7,6 +7,7 @@ import qs.Components
 import qs.Services as Services
 import "../../Helpers/CapsuleMetrics.js" as CapsuleMetrics
 import "../../Helpers/Color.js" as Color
+import "../../Helpers/ScreenUtil.js" as ScreenUtil
 
 Row {
     id: root
@@ -42,7 +43,7 @@ Row {
     property var trayMenu
     // Collapse delay handled by TrayController service
     function dismissOverlayNow(reason = "programmatic") { trayOverlay.close(reason); }
-    readonly property real _scale: Theme.scale(root.screen || Screen)
+    readonly property real _scale: Theme.scale(ScreenUtil.screen(root))
     readonly property var capsuleMetrics: CapsuleMetrics.metrics(Theme, _scale)
     readonly property int capsuleInnerSize: capsuleMetrics.inner
     readonly property int panelHeightPx: Math.max(1, Math.round(Theme.panelHeight * _scale))
