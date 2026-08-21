@@ -40,7 +40,13 @@ Singleton {
         id: stateFileView
         path: root.stateFile
         watchChanges: true
-        onFileChanged: reload()
+        property bool _reloadPending: false
+        onFileChanged: {
+            if (!stateFileView._reloadPending) {
+                stateFileView._reloadPending = true;
+                Qt.callLater(function() { stateFileView._reloadPending = false; stateFileView.reload(); });
+            }
+        }
         onAdapterUpdated: writeAdapter()
         Component.onCompleted: function() {
             reload()
@@ -107,16 +113,9 @@ ICS_EOF"]);
     function _syncFromCalendar() {
         var path = _todayIcsPath();
         var fileText = "";
-        var reader = Qt.createQmlObject('import Quickshell.Io; FileView { path: "' + path.replace(/'/g, "\'") + '"; preload: false; printErrors: false }', root, "pillReader");
-        if (reader) { fileText = reader.text() || ""; reader.destroy(); }
-        if (fileText.indexOf("Pill") >= 0) {
-            // Calendar says pill was taken today — restore state if not already set
-            if (!_adapter.taken) {
-                _adapter.taken = true;
-                _adapter.takenAt = PillHistory.currentTimeStr();
-                stateFileView.writeAdapter();
-            }
-        }
+        var reader = Qt.createQmlObject('import Quickshell.Io; FileView { path: "' + path.replace(/'/g, "\'") + '"; preload: true; printErrors: false; onLoaded: function() { var t = this.text() || ""; if (t.indexOf("Pill") >= 0) { if (!_adapter.taken) { _adapter.taken = true; _adapter.takenAt = PillHistory.currentTimeStr(); stateFileView.writeAdapter(); } } this.destroy(); } }', root, "pillReader");
+        if (!reader) return;
+        // Result is applied in the onLoaded handler above.
     }
 
     function toggle() {

@@ -170,5 +170,7 @@ OverlayToggleCapsule {
         }
     }
 
-    Connections { target: Services.Weather; function onWeatherDataChanged() { weatherTip.text = root.tooltipText(); } }
+    // weatherTip.text stays bound to root.tooltipText(); the binding re-evaluates
+    // on weatherDataChanged. The previous handler overwrote the binding and
+    // re-triggered StyledTooltip.onTextChanged -> showNow on every update.
 }
