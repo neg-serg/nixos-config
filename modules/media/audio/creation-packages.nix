@@ -41,7 +41,11 @@ let
     pkgs.vital # spectral wavetable synth
     pkgs.dexed # DX7-compatible FM synth
     pkgs.surge-xt # open-source wavetable/VA hybrid synth (VST3/CLAP/LV2) — MPE-capable
-    pkgs.reaper # DAW (Linux native) — portable config, scriptable via ReaScript/OSC
+    (pkgs.reaper.override {
+      # ffmpeg_4-headless (4.4.8) pulls a source whose host answers an
+      # anti-bot page (Anubis) — use the current ffmpeg-headless instead.
+      "ffmpeg_4-headless" = pkgs.ffmpeg-headless;
+    }) # DAW (Linux native) — portable config, scriptable via ReaScript/OSC
     pkgs.stochas # probability-driven MIDI sequencer
     pkgs.vcv-rack # modular synth platform
   ];
