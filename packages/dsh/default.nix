@@ -8,11 +8,11 @@
   runCommand,
 }:
 let
-  version = "0.1.0-rc.6";
+  version = "0.1.1-rc.1";
 
   tarball = fetchurl {
     url = "https://registry.npmjs.org/@deepseek-ai/dsh/-/dsh-${version}.tgz";
-    hash = "sha256-G4qaCtPH/q7OR5JuC9N8oVHHzPqZeVOvpf0BJheE6tw=";
+    hash = "sha256-xYweNYQZyJB8u2rbQwZcPB6CQEJImrCtkX6V4KBBgFY=";
   };
 
   # Registry tarballs ship no lockfile; npm ci needs one.
@@ -86,7 +86,7 @@ buildNpmPackage {
   '';
 
   # Prefetched dependency tree; hash from `prefetch-npm-deps package-lock.json`
-  npmDepsHash = "sha256-9Cx3OhIK3xuyd6o+HZhAs+2eGsIrys8fNdtRePd4GnQ=";
+  npmDepsHash = "sha256-Msnyw7AstXPh8NSKfPMGfEpBZVydSqnnAbS3duEDi0A=";
 
   meta = with lib; {
     description = "DeepSeek Harness (dsh) — open-source agent harness, everything is a plugin";
