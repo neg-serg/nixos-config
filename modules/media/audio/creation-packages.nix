@@ -42,9 +42,20 @@ let
     pkgs.dexed # DX7-compatible FM synth
     pkgs.surge-xt # open-source wavetable/VA hybrid synth (VST3/CLAP/LV2) — MPE-capable
     (pkgs.reaper.override {
-      # ffmpeg_4-headless (4.4.8) pulls a source whose host answers an
-      # anti-bot page (Anubis) — use the current ffmpeg-headless instead.
-      "ffmpeg_4-headless" = pkgs.ffmpeg-headless;
+      # reaper.fm is blocked/slow from this host — vendor the binary tarball
+      # in files/sources (fetched via the proxy).
+      fetchurl =
+        args:
+        if (args.url or "") == "https://www.reaper.fm/files/7.x/reaper773_linux_x86_64.tar.xz" then
+          (pkgs.runCommand "reaper-src.tar.xz" { } ''
+            cp ${../../files/sources/reaper773_linux_x86_64.tar.xz} $out
+          '')
+        else
+          pkgs.fetchurl args;
+      # Skip ffmpeg (video import) and VLC: their sources are blocked or
+      # build for a long time from source; audio use does not need them.
+      "ffmpeg_4-headless" = null;
+      vlc = null;
     }) # DAW (Linux native) — portable config, scriptable via ReaScript/OSC
     pkgs.stochas # probability-driven MIDI sequencer
     pkgs.vcv-rack # modular synth platform
