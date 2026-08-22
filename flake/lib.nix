@@ -4,9 +4,11 @@ let
     system:
     (_: prev: {
       inherit (inputs.xdg-desktop-portal-hyprland.packages.${system}) xdg-desktop-portal-hyprland;
-      hyprlandPlugins = prev.hyprlandPlugins // {
-        hy3 = inputs.hy3.packages.${system}.hy3;
-      };
+      # NOTE: hy3 comes from nixpkgs 26.05 (0.55.0), built against the same
+      # Hyprland 0.55.4 the system ships. The github:outfoxxed/hy3 flake input
+      # tracks Hyprland 0.56+ and its .so fails to load here (undefined symbol
+      # IModeAlgorithm::getFSHandler), so we deliberately do NOT override it.
+      hyprlandPlugins = prev.hyprlandPlugins;
     });
 
   bintoolsBootstrapFix = _: prev: {
