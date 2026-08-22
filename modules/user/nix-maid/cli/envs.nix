@@ -30,6 +30,8 @@ in
 
     # Custom Env Vars (Global / Miscellaneous)
     CRAWL_DIR = "${dataHome}/crawl/";
+    # NLTK data dir (tokenizers/corpora) — XDG-compliant, under ~/.local/share
+    NLTK_DATA = "${dataHome}/nltk_data";
 
     # LV2 plugin path: user plugins (~/.lv2: NAM neural amp modeler) + system dir
     LV2_PATH = "${homeDir}/.lv2:/run/current-system/sw/lib/lv2";
