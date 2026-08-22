@@ -21,19 +21,37 @@ Singleton {
         path: settingsFile
         watchChanges: true
         property bool _reloadPending: false
+        property bool _loading: false
         onFileChanged: {
             if (!settingFileView._reloadPending) {
                 settingFileView._reloadPending = true;
-                Qt.callLater(function() { settingFileView._reloadPending = false; settingFileView.reload(); });
+                Qt.callLater(function () {
+                    settingFileView._reloadPending = false;
+                    settingFileView._reload();
+                });
             }
         }
-        onAdapterUpdated: writeAdapter()
-        Component.onCompleted: function() {
-            reload()
+        onAdapterUpdated: {
+            // A reload applying file changes must not write back to the file
+            // (that would trigger onFileChanged -> reload -> onAdapterUpdated loop).
+            if (settingFileView._loading) {
+                settingFileView._loading = false;
+                return;
+            }
+            writeAdapter();
         }
-        onLoadFailed: function(error) {
-            settingAdapter = {}
-            writeAdapter()
+        Component.onCompleted: function () {
+            _reload();
+        }
+        onLoadFailed: function (error) {
+            settingAdapter = {};
+            writeAdapter();
+            settingFileView._loading = false;
+        }
+        // Wrap reload() so adapter updates caused by it are not echoed back to disk.
+        function _reload() {
+            settingFileView._loading = true;
+            settingFileView.reload();
         }
         JsonAdapter {
             id: settingAdapter
@@ -63,6 +81,8 @@ Singleton {
             property int mediaIconPanelOverlayPaddingPx: 12
             property real mediaIconPanelOverlayWidthShare: 0.45
             property real mediaIconPanelOverlayBgOpacity: 0.65
+            // Separator shown between media track title and artist
+            property string mediaTitleSeparator: "—"
             // Weather button in bar
             property bool showWeatherInBar: true
             property bool reverseDayMonth: false
@@ -70,12 +90,12 @@ Singleton {
             property real fontSizeMultiplier: 1.0  // Font size multiplier (1.0 = normal, 1.2 = 20% larger, 0.8 = 20% smaller)
 
             // Media spectrum / CAVA
-            property int cavaBars:86
+            property int cavaBars: 86
             // CAVA tuning
-            property int cavaFramerate:24
+            property int cavaFramerate: 24
             property bool cavaMonstercat: false
-            property int cavaGravity:150000
-            property int cavaNoiseReduction:12
+            property int cavaGravity: 150000
+            property int cavaNoiseReduction: 12
             property bool spectrumUseGradient: false
             property bool spectrumMirror: false
             property bool showSpectrumTopHalf: false
@@ -87,19 +107,19 @@ Singleton {
 
             property string activeVisualizerProfile: "classic"
             property var visualizerProfiles: ({
-                classic: {
-                    cavaBars: 86,
-                    cavaFramerate: 24,
-                    cavaMonstercat: false,
-                    cavaGravity: 150000,
-                    cavaNoiseReduction: 12,
-                    spectrumFillOpacity: 0.35,
-                    spectrumHeightFactor: 1.2,
-                    spectrumOverlapFactor: 0.2,
-                    spectrumBarGap: 1.0,
-                    spectrumVerticalRaise: 0.75
-                }
-            })
+                    classic: {
+                        cavaBars: 86,
+                        cavaFramerate: 24,
+                        cavaMonstercat: false,
+                        cavaGravity: 150000,
+                        cavaNoiseReduction: 12,
+                        spectrumFillOpacity: 0.35,
+                        spectrumHeightFactor: 1.2,
+                        spectrumOverlapFactor: 0.2,
+                        spectrumBarGap: 1.0,
+                        spectrumVerticalRaise: 0.75
+                    }
+                })
 
             // Media time brackets styling
             property string timeBracketStyle: "round"
@@ -138,36 +158,53 @@ Singleton {
             property bool showIphoneVisualizer: false
 
             // Player selection priority
-            property var playerSelectionPriority: [
-                "mpdPlaying",
-                "anyPlaying",
-                "mpdRecent",
-                "recent",
-                "manual",
-                "first"
-            ]
+            property var playerSelectionPriority: ["mpdPlaying", "anyPlaying", "mpdRecent", "recent", "manual", "first"]
             property string playerSelectionPreset: "default"
 
             // Music popup sizing
-            property int musicPopupWidth:840     // logical px, scaled
-            property int musicPopupHeight:250    // logical px, scaled (used when content height unknown)
-            property int musicPopupPadding:12    // logical px, scaled (inner content padding)
-            property int musicPopupEdgeMargin:4  // logical px, scaled (distance from screen edge/panel)
+            property int musicPopupWidth: 840     // logical px, scaled
+            property int musicPopupHeight: 250    // logical px, scaled (used when content height unknown)
+            property int musicPopupPadding: 12    // logical px, scaled (inner content padding)
+            property int musicPopupEdgeMargin: 4  // logical px, scaled (distance from screen edge/panel)
 
-            property int networkPingIntervalMs:30000
+            property int networkPingIntervalMs: 30000
             property string networkPingTarget: "8.8.8.8"
             property string networkNoInternetColor: "#FF6E00"
             property string networkNoLinkColor: "#D81B60"
 
             // Panel layout: ordered widget identifiers per section
             property var panelLayout: ({
-                left: ["clock", "workspaces", "keyboard", "network", "weather"],
-                right: ["media", "mpdFlags", "sysmon", "pills", "systray", "microphone", "volume", "genelec"]
-            })
+                    left: ["clock", "workspaces", "keyboard", "network", "weather"],
+                    right: ["media", "mpdFlags", "sysmon", "pill", "systray", "microphone", "volume", "genelec"]
+                })
+
+            // Panel side edge margin in logical px; matches Theme.panelSideMargin when absent
+            property int panelSideMarginPx: 4
+
+            // System monitor capsule / monitor bar tuning
+            property bool showCpuMonitor: true        // Show CPU metric in the system monitor capsule
+            property bool showRamMonitor: true        // Show RAM metric
+            property bool showIoMonitor: true         // Show disk I/O metric
+            property bool showGpuMonitor: true        // Show GPU metric (when available)
+            property bool showTempMonitor: true       // Show CPU temperature metric
+            property bool showSwapMonitor: true       // Show swap metric (when active)
+            property bool systemMonitorHideIdle: true // Dim metrics that are below the idle threshold
+            property real systemMonitorIconScale: 0.85 // Icon scale factor inside the capsule
+            property real systemMonitorIdleThreshold: 0.03 // Idle cutoff (0..1) for dimming
+            property int systemMonitorSpacing: 3      // Gap between metric groups, logical px
+            property real systemMonitorWarnThreshold: 0.5 // Warn color threshold (0..1)
+            property real systemMonitorCritThreshold: 0.8 // Critical color threshold (0..1)
+            property real systemMonitorSwapShowThreshold: 0.4 // Minimum swap usage to show the swap metric
+            property int systemMonitorBarWidth: 3      // Per-metric vertical bar width, logical px
+            property int systemMonitorPollMs: 2000     // Poll interval for system metrics, ms
+            property real systemMonitorIoMaxMiBps: 500 // I/O full-scale normalization, MiB/s
 
             // Weather/geocoding API base URLs (configurable for proxies/firewalls)
             property string weatherApiBaseUrl: "https://api.open-meteo.com/v1"
             property string weatherGeocodingBaseUrl: "https://geocoding-api.open-meteo.com/v1"
+            // Direct coordinates as an alternative to city geocoding; (0,0) = geocode weatherCity
+            property real weatherLatitude: 0.0
+            property real weatherLongitude: 0.0
 
             // Pill tracker reminder deadline (HH:MM format)
             property string pillReminderDeadline: "12:00"
@@ -183,6 +220,4 @@ Singleton {
             property int genelecMaxVolume: -35
         }
     }
-
-    
 }
