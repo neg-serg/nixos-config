@@ -22,6 +22,7 @@ in
       && n != "dsh-web-en-assets"
       && n != "dsh-liangshen-fork"
       && n != "dsh-mode"
+      && n != "dsh-session-tools"
       && n != "dsh-agent-usage-reminder"
       && n != "dsh-compaction-todo-preserver"
       && n != "dsh-rules-injector"
