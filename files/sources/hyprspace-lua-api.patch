@@ -1,5 +1,5 @@
 diff --git a/src/main.cpp b/src/main.cpp
-index 9dd0286..a33fddb 100644
+index 9dd0286..decf3cc 100644
 --- a/src/main.cpp
 +++ b/src/main.cpp
 @@ -1,5 +1,7 @@
@@ -10,7 +10,20 @@ index 9dd0286..a33fddb 100644
  #include <hyprland/src/devices/IPointer.hpp>
  #include <hyprland/src/devices/IKeyboard.hpp>
  #include <hyprland/src/devices/ITouch.hpp>
-@@ -380,6 +382,31 @@ static SDispatchResult dispatchCloseOverview(std::string arg) {
+@@ -37,7 +39,11 @@ bool Config::hideTopLayers = false;
+ bool Config::hideOverlayLayers = false;
+ bool Config::drawActiveWorkspace = true;
+ bool Config::hideRealLayers = true;
+-bool Config::affectStrut = true;
++bool Config::affectStrut = false;  // default off: under the 0.55 Lua config
++// HyprlandAPI::getConfigValue returns nullptr (upstream #237), so the
++// plugin:overview:affectStrut option can never be read and layout
++// recalculations on open/close would always run (issue #156/#100/#148).
++// Turning the default off makes the overview draw-on-top only.
+ 
+ bool Config::overrideGaps = true;
+ int Config::gapsIn = 20;
+@@ -380,6 +386,31 @@ static SDispatchResult dispatchCloseOverview(std::string arg) {
      return SDispatchResult{};
  }
  
@@ -42,7 +55,7 @@ index 9dd0286..a33fddb 100644
  void* findFunctionBySymbol(HANDLE inHandle, const std::string func, const std::string sym) {
      // should return all functions
      auto funcSearch = HyprlandAPI::findFunctionsByName(inHandle, func);
-@@ -544,6 +571,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
+@@ -544,6 +575,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
      HyprlandAPI::addDispatcherV2(pHandle, "overview:toggle", ::dispatchToggleOverview);
      HyprlandAPI::addDispatcherV2(pHandle, "overview:open", ::dispatchOpenOverview);
      HyprlandAPI::addDispatcherV2(pHandle, "overview:close", ::dispatchCloseOverview);
