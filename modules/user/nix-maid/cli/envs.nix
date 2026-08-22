@@ -36,16 +36,18 @@ in
     # LV2 plugin path: user plugins (~/.lv2: NAM neural amp modeler) + system dir
     LV2_PATH = "${homeDir}/.lv2:/run/current-system/sw/lib/lv2";
 
-    # RAG answer model (rag-search --llm). Options (all already in the ollama store):
-    #   qwen3.5:27b                  (17GB)  — best quality/speed/RU balance (default)
-    #   gemma4:12b                   (7.6GB) — fast, fits 16GB VRAM fully
-    #   gemma4:26b                   (17GB)  — Gemma 4 quality, multilingual
-    #   qwen3:32b                    (20GB)  — solid, slightly older gen
-    #   llama3.3:70b-instruct-q5_K_M (49GB, CPU) — max quality, slow (~2-4 tok/s)
-    #   qwen3:235b-a22b              (142GB, CPU/RAM MoE) — heaviest, ~1 tok/s (future)
+    # RAG answer model (rag-search --llm). Options (all in the ollama store).
+    # 16GB VRAM (RX 9070 XT): models ≤ ~9GB run fully on GPU; ≥17GB spill to CPU.
+    #   qwen3:8b-q8_0                 (8.9GB) — fully on 16GB VRAM at 32k ctx, fast RU quality (default)
+    #   qwen3.5:27b                   (17GB)  — best RU quality, but >16GB → CPU offload, slow
+    #   gemma4:12b                    (7.6GB) — fast, fits 16GB VRAM fully
+    #   gemma4:26b                    (17GB)  — Gemma 4 quality, multilingual (offload)
+    #   qwen3:32b                     (20GB)  — solid, older gen (offload)
+    #   llama3.3:70b-instruct-q5_K_M  (49GB, CPU) — max quality, slow (~2-4 tok/s)
+    #   qwen3:235b-a22b               (142GB, CPU/RAM MoE) — heaviest, ~1 tok/s (future)
     #   qwen3.5:122b                  (76GB, 122B-A10B MoE Q4_K_M) — big new-gen, strong but slow (downloaded)
     # Per-run override: RAG_LLM_MODEL=<model> rag-search search --llm "..."
-    RAG_LLM_MODEL = "qwen3.5:27b";
+    RAG_LLM_MODEL = "qwen3:8b-q8_0";
     __GL_VRR_ALLOWED = "1";
     GRIM_DEFAULT_DIR = "${homeDir}/pic/shots";
     LIBSEAT_BACKEND = "logind";
