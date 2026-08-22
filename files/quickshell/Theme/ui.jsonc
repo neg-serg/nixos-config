@@ -11,7 +11,6 @@
     "anim": {
       "quickMs": 120,
       "rotateMs": 160,
-      "rippleMs": 320,
       "easing": {
         "quick": "OutQuad",
         "rotate": "OutCubic",
