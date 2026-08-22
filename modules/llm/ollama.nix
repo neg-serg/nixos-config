@@ -25,6 +25,16 @@ in
       # Cloudflare R2 (blob CDN) is NOT reachable through the socks5 proxy
       # (sing-box: connection failures); blob downloads must go direct.
       NO_PROXY = "127.0.0.1,localhost,0.0.0.0,::1,*.r2.cloudflarestorage.com,r2.cloudflarestorage.com";
+
+      # 16 GB VRAM (RX 9070 XT) tuning: keep one model resident, cap default
+      # context to 32k and quantize the KV cache to Q8_0 so qwen3:8b runs fully
+      # on GPU (≈11 GB) instead of spilling to CPU. OLLAMA_CONTEXT_LENGTH is a
+      # per-request default; a client can still pass a smaller num_ctx.
+      OLLAMA_NUM_PARALLEL = "1";
+      OLLAMA_MAX_LOADED_MODELS = "1";
+      OLLAMA_CONTEXT_LENGTH = "32768";
+      OLLAMA_KV_CACHE_TYPE = "q8_0";
+      OLLAMA_KEEP_ALIVE = "30m";
     };
 
     networking.firewall.allowedTCPPorts = lib.mkIf cfg.enable (lib.mkAfter [ 11434 ]);
