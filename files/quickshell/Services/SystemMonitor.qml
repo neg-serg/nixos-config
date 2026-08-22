@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import qs.Components
 import qs.Settings
+import qs.Services as Services
 
 /*!
  * SystemMonitor — singleton service that polls procfs/sysfs for system metrics.
@@ -59,52 +60,46 @@ Item {
         id: pollTimer
         interval: root._pollMs
         repeat: true
-        running: true
+        running: Services.WidgetRegistry.isVisible("sysmon")
         onTriggered: {
-            if (!cpuRamProbe.running) cpuRamProbe.start();
-            if (!swapProbe.running) swapProbe.start();
-            if (!ioProbe.running) ioProbe.start();
-            if (root._tempPath && !tempProbe.running) tempProbe.start();
-            if (root._gpuPath && !gpuProbe.running) gpuProbe.start();
+            if (!cpuRamProbe.running)
+                cpuRamProbe.start();
+            if (!swapProbe.running)
+                swapProbe.start();
+            if (!ioProbe.running)
+                ioProbe.start();
+            if (root._tempPath && !tempProbe.running)
+                tempProbe.start();
+            if (root._gpuPath && !gpuProbe.running)
+                gpuProbe.start();
         }
     }
 
     // ── One-time GPU path discovery (pick discrete GPU by largest VRAM) ──
     ProcessRunner {
         id: gpuDiscover
-        cmd: ["dash", "-c",
-            "best=''; bv=0;" +
-            "for d in /sys/class/drm/card[0-9]*/device; do " +
-            "  [ -f \"$d/gpu_busy_percent\" ] || continue;" +
-            "  v=$(cat \"$d/mem_info_vram_total\" 2>/dev/null) || v=0;" +
-            "  [ \"$v\" -gt \"$bv\" ] && bv=$v && best=$d;" +
-            "done;" +
-            "[ -n \"$best\" ] && echo \"$best/gpu_busy_percent\""]
+        cmd: ["dash", "-c", "best=''; bv=0;" + "for d in /sys/class/drm/card[0-9]*/device; do " + "  [ -f \"$d/gpu_busy_percent\" ] || continue;" + "  v=$(cat \"$d/mem_info_vram_total\" 2>/dev/null) || v=0;" + "  [ \"$v\" -gt \"$bv\" ] && bv=$v && best=$d;" + "done;" + "[ -n \"$best\" ] && echo \"$best/gpu_busy_percent\""]
         autoStart: true
         restartOnExit: false
-        onLine: (s) => {
+        onLine: s => {
             var p = String(s).trim();
-            if (p) { root._gpuPath = p; root.gpuAvailable = true; }
+            if (p) {
+                root._gpuPath = p;
+                root.gpuAvailable = true;
+            }
         }
     }
 
     // ── One-time temperature path discovery (k10temp/coretemp/zenpower via hwmon) ──
     ProcessRunner {
         id: tempDiscover
-        cmd: ["dash", "-c",
-            "for h in /sys/class/hwmon/hwmon*/; do " +
-            "  n=$(cat \"${h}name\" 2>/dev/null);" +
-            "  case $n in k10temp|coretemp|zenpower) " +
-            "    f=\"${h}temp1_input\";" +
-            "    [ -r \"$f\" ] && echo \"$f\" && exit;; esac;" +
-            "done;" +
-            "f=/sys/class/thermal/thermal_zone0/temp;" +
-            "[ -r \"$f\" ] && echo \"$f\""]
+        cmd: ["dash", "-c", "for h in /sys/class/hwmon/hwmon*/; do " + "  n=$(cat \"${h}name\" 2>/dev/null);" + "  case $n in k10temp|coretemp|zenpower) " + "    f=\"${h}temp1_input\";" + "    [ -r \"$f\" ] && echo \"$f\" && exit;; esac;" + "done;" + "f=/sys/class/thermal/thermal_zone0/temp;" + "[ -r \"$f\" ] && echo \"$f\""]
         autoStart: true
         restartOnExit: false
-        onLine: (s) => {
+        onLine: s => {
             var p = String(s).trim();
-            if (p) root._tempPath = p;
+            if (p)
+                root._tempPath = p;
         }
     }
 
@@ -113,12 +108,10 @@ Item {
     // then: "mem <totalKB> <availKB>"
     ProcessRunner {
         id: cpuRamProbe
-        cmd: ["dash", "-c",
-            "head -1 /proc/stat;" +
-            "awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} END{print \"mem\",t,a}' /proc/meminfo"]
-        autoStart: true
+        cmd: ["dash", "-c", "head -1 /proc/stat;" + "awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} END{print \"mem\",t,a}' /proc/meminfo"]
+        autoStart: Services.WidgetRegistry.isVisible("sysmon")
         restartOnExit: false
-        onLine: (s) => {
+        onLine: s => {
             try {
                 var line = String(s).trim();
                 if (line.indexOf("cpu ") === 0) {
@@ -130,11 +123,11 @@ Item {
                     root.ramTotalGiB = totalKB / 1048576;
                     var usedKB = totalKB - availKB;
                     root.ramUsedGiB = usedKB / 1048576;
-                    root.ramPercent = totalKB > 0
-                        ? Math.max(0, Math.min(1, usedKB / totalKB))
-                        : 0;
+                    root.ramPercent = totalKB > 0 ? Math.max(0, Math.min(1, usedKB / totalKB)) : 0;
                 }
-            } catch (e) { console.warn("[SystemMonitor.cpuRam]", e); }
+            } catch (e) {
+                console.warn("[SystemMonitor.cpuRam]", e);
+            }
         }
     }
 
@@ -142,23 +135,23 @@ Item {
     // Outputs: "swap <totalKB> <usedKB>" or "swap 0 0"
     ProcessRunner {
         id: swapProbe
-        cmd: ["dash", "-c",
-            "awk 'NR>1{t+=$3;u+=$4} END{print \"swap\",t+0,u+0}' /proc/swaps"]
-        autoStart: true
+        cmd: ["dash", "-c", "awk 'NR>1{t+=$3;u+=$4} END{print \"swap\",t+0,u+0}' /proc/swaps"]
+        autoStart: Services.WidgetRegistry.isVisible("sysmon")
         restartOnExit: false
-        onLine: (s) => {
+        onLine: s => {
             try {
                 var parts = String(s).trim().split(/\s+/);
-                if (parts[0] !== "swap") return;
+                if (parts[0] !== "swap")
+                    return;
                 var totalKB = parseInt(parts[1], 10) || 0;
                 var usedKB = parseInt(parts[2], 10) || 0;
                 root.swapAvailable = totalKB > 0;
                 root.swapTotalGiB = totalKB / 1048576;
                 root.swapUsedGiB = usedKB / 1048576;
-                root.swapPercent = totalKB > 0
-                    ? Math.max(0, Math.min(1, usedKB / totalKB))
-                    : 0;
-            } catch (e) { console.warn("[SystemMonitor.swap]", e); }
+                root.swapPercent = totalKB > 0 ? Math.max(0, Math.min(1, usedKB / totalKB)) : 0;
+            } catch (e) {
+                console.warn("[SystemMonitor.swap]", e);
+            }
         }
     }
 
@@ -166,14 +159,14 @@ Item {
     // Outputs: "io <totalReadSectors> <totalWriteSectors>"
     ProcessRunner {
         id: ioProbe
-        cmd: ["dash", "-c",
-            "awk '$3~/^(sd[a-z]|nvme[0-9]+n[0-9]+|vd[a-z])$/{r+=$6;w+=$10} END{print \"io\",r+0,w+0}' /proc/diskstats"]
-        autoStart: true
+        cmd: ["dash", "-c", "awk '$3~/^(sd[a-z]|nvme[0-9]+n[0-9]+|vd[a-z])$/{r+=$6;w+=$10} END{print \"io\",r+0,w+0}' /proc/diskstats"]
+        autoStart: Services.WidgetRegistry.isVisible("sysmon")
         restartOnExit: false
-        onLine: (s) => {
+        onLine: s => {
             try {
                 var parts = String(s).trim().split(/\s+/);
-                if (parts[0] !== "io") return;
+                if (parts[0] !== "io")
+                    return;
                 var totalRead = parseInt(parts[1], 10) || 0;
                 var totalWrite = parseInt(parts[2], 10) || 0;
                 var now = Date.now();
@@ -188,9 +181,14 @@ Item {
                         root.ioPercent = Math.max(0, Math.min(1, totalKiBps / root._ioMaxKiBps));
                     }
                 }
-                root._prevIo = { rd: totalRead, wr: totalWrite };
+                root._prevIo = {
+                    rd: totalRead,
+                    wr: totalWrite
+                };
                 root._prevIoTs = now;
-            } catch (e) { console.warn("[SystemMonitor.io]", e); }
+            } catch (e) {
+                console.warn("[SystemMonitor.io]", e);
+            }
         }
     }
 
@@ -200,12 +198,14 @@ Item {
         cmd: root._tempPath ? ["cat", root._tempPath] : []
         autoStart: false
         restartOnExit: false
-        onLine: (s) => {
+        onLine: s => {
             try {
                 var millideg = parseInt(String(s).trim(), 10) || 0;
                 root.cpuTempCelsius = millideg / 1000;
                 root.cpuTempPercent = Math.max(0, Math.min(1, (root.cpuTempCelsius - 30) / 70));
-            } catch (e) { console.warn("[SystemMonitor.temp]", e); }
+            } catch (e) {
+                console.warn("[SystemMonitor.temp]", e);
+            }
         }
     }
 
@@ -215,18 +215,21 @@ Item {
         cmd: root._gpuPath ? ["cat", root._gpuPath] : []
         autoStart: false
         restartOnExit: false
-        onLine: (s) => {
+        onLine: s => {
             try {
                 var val = parseInt(String(s).trim(), 10) || 0;
                 root.gpuPercent = Math.max(0, Math.min(1, val / 100));
-            } catch (e) { console.warn("[SystemMonitor.gpu]", e); }
+            } catch (e) {
+                console.warn("[SystemMonitor.gpu]", e);
+            }
         }
     }
 
     // ── CPU delta parser ──
     function _parseCpu(line) {
         var parts = line.split(/\s+/);
-        if (parts.length < 5) return;
+        if (parts.length < 5)
+            return;
         var user = parseInt(parts[1], 10) || 0;
         var nice = parseInt(parts[2], 10) || 0;
         var system = parseInt(parts[3], 10) || 0;
@@ -245,6 +248,9 @@ Item {
                 root.cpuPercent = Math.max(0, Math.min(1, (dTotal - dIdle) / dTotal));
             }
         }
-        _prevCpu = { total: total, idle: idleAll };
+        _prevCpu = {
+            total: total,
+            idle: idleAll
+        };
     }
 }
