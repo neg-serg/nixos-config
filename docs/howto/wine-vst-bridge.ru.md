@@ -137,13 +137,13 @@ nixpkgs, стоит на odin):
   MPE доходит до Windows-VST без изменений.
 - **yabridge per-plugin настройки (yabridge.toml)**: файл кладётся рядом с мостом —
   `~/.vst3/yabridge/yabridge.toml` (или `~/.vst/yabridge/`, `~/.clap/yabridge/`), секции — glob по
-  путям .so/.vst3. Опции (README yabridge 5.1, https://github.com/robbert-vdh/yabridge):
-  `group` (общий процесс для связанных плагинов одного производителя, напр. FabFilter Pro-Q 3),
+  путям .so/.vst3. Опции (README yabridge 5.1, https://github.com/robbert-vdh/yabridge): `group`
+  (общий процесс для связанных плагинов одного производителя, напр. FabFilter Pro-Q 3),
   `disable_pipes`, `editor_disable_host_scaling` (HiDPI-редакторы VST3/CLAP при дробном скейле),
-  `editor_force_dnd` (только REAPER), `frame_rate` (по умолчанию 60), `hide_daw`, `vst3_prefer_32bit`.
-  **Для Legend HZ ничего из этого не нужно**: MPE-прозрачность не настраивается в yabridge,
-  «MPE CONTROLLER ±48 st» — это UI-переключатель внутри самого плагина (раздел 5.1 мануала Synapse),
-  а не опция моста.
+  `editor_force_dnd` (только REAPER), `frame_rate` (по умолчанию 60), `hide_daw`,
+  `vst3_prefer_32bit`. **Для Legend HZ ничего из этого не нужно**: MPE-прозрачность не настраивается
+  в yabridge, «MPE CONTROLLER ±48 st» — это UI-переключатель внутри самого плагина (раздел 5.1
+  мануала Synapse), а не опция моста.
 - **Вывод**: для Legend HZ менять режим Osmose НЕ нужно — MPE работает напрямую (omni-приём).
   «Грязный звук» при первых тестах был НЕ из-за MPE и не демо-режима, а из-за RME в роли
   resampling-фолловера (см. фикс про priority.driver выше).
@@ -165,8 +165,8 @@ nixpkgs, стоит на odin):
 - **Windows (yabridge)**: Legend HZ (моно, MiniMoog-style), Phase Plant (kiloHearts, полифонический
   модульный), + 48 модулей kiloHearts (FX).
 - **Нативные (Linux, без wine)**: Vital (wavetable), Dexed (FM/DX7), Surge XT (wavetable/VA,
-  MPE-capable — добавлен fc4387ea/eaf74df1), Cardinal (модульный VCV-Rack-стиль, VST3),
-  Odyssey (VA, ARP Odyssey-стиль).
+  MPE-capable — добавлен fc4387ea/eaf74df1), Cardinal (модульный VCV-Rack-стиль, VST3), Odyssey (VA,
+  ARP Odyssey-стиль).
 - **Переключение**: `carlactl list` — что стоит; `carlactl play vst3:<имя>` — запустить в
   carla-jack-single и автоматически заруоутить (Osmose + RME MIDI → events-in, аудио → game-stereo);
   `carlactl stop` — остановить. carlactl play сам останавливает предыдущий движок (через PIDFILE).
