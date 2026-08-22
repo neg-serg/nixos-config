@@ -789,11 +789,7 @@ Singleton {
     property real panelSeamWidthRatio: val('panel.seamWidthRatio', 0.85)
     property int panelSeamMinPx: val('panel.seamMinPx', 8)
     // Panel seam appearance
-    property real panelSeamTaperTop: val('panel.seam.taperTop', 0.25)
-    property real panelSeamTaperBottom: val('panel.seam.taperBottom', 0.9)
     property real panelSeamOpacity: val('panel.seam.opacity', 0.5)
-    property real panelSeamGapOpacity: val('panel.seam.gapOpacity', 0.5)
-    property real panelSeamColorMixRatio: val('panel.seam.colorMixRatio', 0.45)
     // Panel tint overlay
     property color panelTintColor: val('panel.tint.color', "#ff2a36")
     property real panelTintAlpha: val('panel.tint.alpha', 0.75)
@@ -802,7 +798,6 @@ Singleton {
     property real panelTintFeatherBottom: val('panel.tint.featherBottom', 0)
     // Panel backdrop
     property color panelBackdropColor: val('panel.backdrop.color', "#000000")
-    property real panelBackdropOpacity: val('panel.backdrop.opacity', 1.0)
     property real panelSeparatorWidthFactor: val('panel.separatorWidthFactor', 1)
     // Panel icon sizing
     property int panelIconSize: val('panel.icons.iconSize', 24)
@@ -824,13 +819,10 @@ Singleton {
     property int tooltipBorderWidth: val('tooltip.borderWidth', 1)
     property int tooltipRadius: val('tooltip.radius', 0)
     property int tooltipFontPx: val('tooltip.fontPx', 14)
-    property real tooltipOpacity: val('tooltip.opacity', 0.98)
     property real tooltipSmallScaleRatio: val('tooltip.smallScaleRatio', 0.71)
     // Weather tokens
     // Header scale relative to Theme.fontSizeHeader
     property real weatherHeaderScale: val('weather.headerScale', 0.75)
-    // Card background opacity atop accentDarkStrong
-    property real weatherCardOpacity: val('weather.card.opacity', 0.85)
     // Optional horizontal center offset tweak
     property int weatherCenterOffset: val('weather.centerOffset', -2)
     // Pill indicator defaults
@@ -910,17 +902,8 @@ Singleton {
     property int sidePanelPopupSpacing: val('sidePanel.popup.spacing', 0)
     // Media dominant-accent sampler/logic (extract hardcoded tuning)
     property int mediaArtDebounceMs: val('media.artDebounceMs', 60)
-    property int mediaAccentSamplerPx: val('media.accent.samplerPx', 48)
     property int mediaAccentRetryMs: val('media.accent.retryMs', 120)
     property int mediaAccentRetryMax: val('media.accent.retryMax', 5)
-    // Strict pass thresholds
-    property int mediaAccentSatMin: val('media.accent.satMin', 10)
-    property int mediaAccentLumMin: val('media.accent.lumMin', 20)
-    property int mediaAccentLumMax: val('media.accent.lumMax', 235)
-    // Relaxed pass thresholds
-    property int mediaAccentSatRelax: val('media.accent.relaxed.satMin', 8)
-    property int mediaAccentLumRelaxMin: val('media.accent.relaxed.lumMin', 20)
-    property int mediaAccentLumRelaxMax: val('media.accent.relaxed.lumMax', 240)
     // Side-panel button hover rectangle visibility guard
     property real sidePanelButtonActiveVisibleMin: val('sidePanel.button.activeVisibleMin', 0.18)
     // Side-panel spacing medium
@@ -962,9 +945,6 @@ Singleton {
     property real sidePanelButtonHoverRadiusFactor: val('sidePanel.buttonHoverRadiusFactor', 0)
     // Side panel selector minimal width
     property int sidePanelSelectorMinWidth: val('sidePanel.selector.minWidth', 120)
-    property int sidePanelWeatherWidth: val('sidePanel.weather.width', 310)
-    property int sidePanelWeatherHeight: val('sidePanel.weather.height', 130)
-    property real sidePanelWeatherLeftColumnRatio: val('sidePanel.weather.leftColumnRatio', 0.32)
     property int uiIconSizeLarge: val('ui.iconSizeLarge', 28)
     // Overlay radius and larger corner
     property int panelOverlayRadius: val('panel.overlayRadius', 0)
@@ -1021,12 +1001,10 @@ Singleton {
     property bool networkCapsuleStacked: val('network.capsule.stacked', false)
     // VPN icon/layout tuning and accent mix
     property real vpnAccentSaturateBoost: val('vpn.accent.saturateBoost', 0.12)
-    property real vpnAccentLightenTowardWhite: val('vpn.accent.lightenTowardWhite', 0.20)
     property real vpnDesaturateAmount: val('vpn.desaturateAmount', 0.45)
     // UI animation timings
     property int uiAnimQuickMs: val('ui.anim.quickMs', 160)
     property int uiAnimRotateMs: val('ui.anim.rotateMs', 220)
-    property int uiAnimRippleMs: val('ui.anim.rippleMs', 420)
     // UI spinner
     property int uiSpinnerDurationMs: val('ui.spinner.durationMs', 1000)
     // Media album art fallback icon opacity
@@ -1048,32 +1026,7 @@ Singleton {
     property int uiEasingStdIn: easingType(val('ui.anim.easing.stdIn', 'InExpo'), 'InExpo')
     property int uiEasingInOut: easingType(val('ui.anim.easing.inOut', 'InOutCubic'), 'InOutCubic')
     // Calendar popup sizing
-    property int calendarWidth: val('calendar.size.width', 280)
-    property int calendarHeight: val('calendar.size.height', 320)
     property int calendarPopupMargin: val('calendar.popupMargin', 2)
-    property int calendarBorderWidth: val('calendar.borderWidth', 1)
-    property int calendarCellSize: val('calendar.cellSize', 28)
-    property int calendarHolidayDotSize: val('calendar.holidayDotSize', 3)
-    // Calendar explicit spacings/margins
-    property int calendarDowSpacing: val('calendar.dow.spacing', 0)
-    property int calendarDowSideMargin: val('calendar.dow.sideMargin', 0)
-    property int calendarGridSpacing: val('calendar.grid.spacing', 0)
-    // Calendar font sizes (logical px before per-screen scaling)
-    property int calendarTitleFontPx: val('calendar.font.titlePx', 18)
-    property int calendarDowFontPx: val('calendar.font.dowPx', 15)
-    property int calendarDayFontPx: val('calendar.font.dayPx', 24)
-    // Calendar DOW styles
-    property bool calendarDowItalic: val('calendar.dow.italic', true)
-    property bool calendarDowUnderline: val('calendar.dow.underline', true)
-    // Calendar shape factors
-    property real calendarCellRadiusFactor: val('calendar.cell.radiusFactor', 0)
-    property real calendarHolidayDotRadiusFactor: val('calendar.holidayDot.radiusFactor', 0)
-    // Calendar opacities
-    property real calendarTitleOpacity: val('calendar.opacity.title', 0.7)
-    property real calendarDowOpacity: val('calendar.opacity.dow', 0.9)
-    property real calendarOtherMonthDayOpacity: val('calendar.opacity.otherMonthDay', 0.3)
-    // Tunable factor for dark accent on calendar highlights (today/selected/hover)
-    property real calendarAccentDarken: val('calendar.accentDarken', 0.8)
     // Spectrum opacities
     property real spectrumFillOpacity: val('spectrum.fillOpacity', 0.35)
     property real spectrumPeakOpacity: val('spectrum.peakOpacity', 0.7)

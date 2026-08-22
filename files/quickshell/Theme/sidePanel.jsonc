@@ -16,11 +16,6 @@
     "spacingTight": 3,
     "spacingSmall": 2,
     "albumArtSize": 200,
-    "weather": {
-      "width": 440,
-      "height": 180,
-      "leftColumnRatio": 0.32
-    },
     "button": {
       "activeVisibleMin": 0.18
     },

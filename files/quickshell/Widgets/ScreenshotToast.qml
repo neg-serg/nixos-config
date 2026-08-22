@@ -5,6 +5,7 @@ import Quickshell.Wayland
 import Quickshell.Io
 import qs.Components
 import qs.Services
+import qs.Settings
 
 // ScreenshotToast — screenshot feedback card with large preview, dunst-matched style.
 
@@ -152,7 +153,7 @@ Item {
                     radius: 4
                     color: "#181C24"
                     border.width: 1
-                    border.color: "#3B4C5C"
+                    border.color: Theme.outline
 
                     Image {
                         anchors.fill: parent; anchors.margins: 3
@@ -166,7 +167,7 @@ Item {
                         anchors.centerIn: parent
                         icon: "photo_camera"
                         size: 44
-                        color: "#6B718A"
+                        color: Theme.textDisabled
                         visible: root.shotPath === ""
                     }
                     // Click preview to open
@@ -195,14 +196,14 @@ Item {
                                  + "  \u00B7  " + root.shotSizeHr
                                  + (root.shotDepth !== "" ? "  \u00B7  " + root.shotDepth : "")
                             font.family: "Iosevka"; font.pointSize: 12
-                            color: "#AEB9C8"
+                            color: Theme.textSecondary
                         }
                     }
 
                     MaterialIcon {
                         icon: "close"
                         size: 14
-                        color: "#6B718A"
+                        color: Theme.textDisabled
                         TapHandler { onTapped: toast.hide() }
                     }
                 }
@@ -213,13 +214,13 @@ Item {
                     Text {
                         text: root.shotPath ? root.shotPath.replace(root._home, "~") : ""
                         font.family: "Iosevka"; font.pointSize: 11
-                        color: "#6B718A"
+                        color: Theme.textDisabled
                         elide: Text.ElideMiddle; Layout.fillWidth: true
                     }
                     Text {
                         text: root.shotTs
                         font.family: "Iosevka"; font.pointSize: 11
-                        color: "#6B718A"
+                        color: Theme.textDisabled
                     }
                 }
 
@@ -234,8 +235,8 @@ Item {
                         delegate: Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 36; radius: 6
-                            color: hh.hovered ? "#242A35" : "#181C24"
-                            border.width: 1; border.color: "#3B4C5C"
+                            color: hh.hovered ? Theme.surfaceVariant : "#181C24"
+                            border.width: 1; border.color: Theme.outline
                             RowLayout {
                                 id: btnRow
                                 anchors.centerIn: parent
@@ -269,8 +270,8 @@ Item {
                         delegate: Rectangle {
                             Layout.preferredWidth: btnRow.implicitWidth + 20
                             Layout.preferredHeight: 36; radius: 6
-                            color: hh.hovered ? "#242A35" : "#181C24"
-                            border.width: 1; border.color: "#3B4C5C"
+                            color: hh.hovered ? Theme.surfaceVariant : "#181C24"
+                            border.width: 1; border.color: Theme.outline
                             RowLayout {
                                 id: btnRow
                                 anchors.centerIn: parent
