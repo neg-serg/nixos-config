@@ -8,7 +8,10 @@ import "../../Helpers/WorkspaceIcons.js" as WorkspaceIcons
 import Quickshell
 CenteredCapsuleRow {
     interactive: true
-    onClicked: Quickshell.execDetached(["vicinae"])
+    // Click toggles the hyprspace workspace overview (hyprland plugin).
+    // hyprctl dispatch takes a Lua expression in 0.55+; the plugin exposes a
+    // Lua API via our patch (hl.plugin.hyprspace.toggle_overview).
+    onClicked: Quickshell.execDetached(["hyprctl", "dispatch", "hl.plugin.hyprspace.toggle_overview()"])
     id: root
     property string wsName: "?"
     property int wsId: -1
