@@ -170,10 +170,12 @@ hl.bind(M4 .. "+Tab", hl.dsp.window.cycle_next({ next = true }))
 hl.bind(M4 .. "+c", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/clipboard/history"))
 hl.bind(M4 .. "+Escape", hl.dsp.window.close())
 hl.bind(M4 .. "+r", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
-hl.bind(M4 .. "+h", hl.dsp.exec_cmd("hyprctl dispatch movefocus l"))
-hl.bind(M4 .. "+j", hl.dsp.exec_cmd("hyprctl dispatch movefocus d"))
-hl.bind(M4 .. "+k", hl.dsp.exec_cmd("hyprctl dispatch movefocus u"))
-hl.bind(M4 .. "+l", hl.dsp.exec_cmd("hyprctl dispatch movefocus r"))
+-- hy3 Lua API: plain "hyprctl dispatch movefocus X" is broken under the
+-- 0.55 Lua config (upstream #14451), so use the plugin's Lua dispatchers.
+hl.bind(M4 .. "+h", hl.plugin.hy3.move_focus("l"))
+hl.bind(M4 .. "+j", hl.plugin.hy3.move_focus("d"))
+hl.bind(M4 .. "+k", hl.plugin.hy3.move_focus("u"))
+hl.bind(M4 .. "+l", hl.plugin.hy3.move_focus("r"))
 hl.bind(M4 .. "+Return", hl.dsp.exec_cmd("kitty"), { locked = true })
 -- pass-2col: pick a password/OTP entry from the pass store via vicinae dmenu
 hl.bind(M4 .. "+p", hl.dsp.exec_cmd("pass-2col"), { locked = true })
