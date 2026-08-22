@@ -114,7 +114,7 @@ autoload -Uz chpwd
 autoload -Uz zcompare
 autoload -Uz h
 zle_highlight=(region:bg=228 paste:none)
-zsh-defer _zpcompinit_custom
+_zpcompinit_custom   # run compinit eagerly so completion/fuzzy matchers init before widgets
 zsh-defer dircolors_init
 
 # vim: ft=zsh:nowrap

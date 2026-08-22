@@ -25,4 +25,4 @@ autoload -Uz compinit
 # Load (zsh will prefer compiled .zwc if present)
 source "${_fzf_cache_dir}/key-bindings.zsh" 2>/dev/null
 source "${_fzf_cache_dir}/completion.zsh"   2>/dev/null
-bindkey "^I" fzf-on-tab
+bindkey "^I" fzf-on-tab   # empty line -> fzf file picker; otherwise -> normal completion
