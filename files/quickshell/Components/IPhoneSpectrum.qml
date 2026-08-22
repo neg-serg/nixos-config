@@ -14,7 +14,7 @@ Item {
     // ── Target bar count (downsampled from CAVA's 86) ──
     property int targetBars: 26
     // ── Coloring: accent-driven gradient ──
-    property color accentColor: "#006FCC"
+    property color accentColor: Theme.accentPrimary
     property color gradientEnd: Qt.lighter(accentColor, 1.4)
     property real fillOpacity: 0.75
     // ── Bar shape ──

@@ -1,8 +1,7 @@
 {
   "vpn": {
     "accent": {
-      "saturateBoost": 0.12,
-      "lightenTowardWhite": 0.2
+      "saturateBoost": 0.12
     },
     "desaturateAmount": 0.45
   }
