@@ -162,7 +162,7 @@ local function dispatch(args) return hl.dsp.exec_cmd("hyprctl dispatch " .. args
 
 -- --- Top-level binds (bindings.conf) ---
 hl.bind(M4 .. "+S", hl.dsp.exec_cmd("hyprctl switchxkblayout current next"))
-hl.bind(M4 .. "+E", hl.plugin.hyprspace.toggle_overview()) -- hyprspace workspace overview
+hl.bind(M4 .. "+o", hl.plugin.hyprspace.toggle_overview()) -- hyprspace workspace overview (O = Overview)
 hl.bind(M1 .. "+Tab", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(M4 .. "+slash", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(M4 .. "+" .. C .. "+backslash", hl.dsp.window.resize({ x = 640, y = 480 }))
