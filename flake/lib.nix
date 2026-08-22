@@ -32,6 +32,21 @@ let
         ((import ../packages/overlay.nix) inputs)
         # External package flake (github:neg-serg/nixos-pkgs)
         inputs.neg-pkgs.overlays.default
+        # Last overlay wins: neg-pkgs defines python3-lto from prev.python3
+        # and drops the untangle src override, so re-apply the vendored-source
+        # fix here (upstream tag was re-pushed → hash mismatch otherwise).
+        (_final: prev: {
+          python3-lto = prev.python3.override {
+            packageOverrides = _pythonSelf: _pythonSuper: {
+              enableOptimizations = true;
+              enableLTO = true;
+              reproducibleBuild = false;
+              untangle = _pythonSuper.untangle.overrideAttrs (_: {
+                src = ../files/sources/untangle-1.2.1.tar.gz;
+              });
+            };
+          };
+        })
       ];
       config = {
         allowAliases = false;
