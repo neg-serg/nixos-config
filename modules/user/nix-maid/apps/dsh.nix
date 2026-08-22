@@ -106,6 +106,9 @@ in
       # PATH lacks /run/current-system/sw/bin, so sandboxed tool calls fail
       # with "landlock-run: exec failed: No such file or directory".
       PATH = lib.mkForce "/run/current-system/sw/bin:/run/wrappers/bin:/usr/local/bin:/usr/bin:/bin";
+      # llm-pi-ai provider "ollama-local" (openai-completions on 127.0.0.1:11434)
+      # needs a non-empty apiKey per the pi-ai adapter; ollama ignores the value.
+      OLLAMA_LOCAL_API_KEY = "ollama-local";
     };
     serviceConfig = {
       Type = "simple";
