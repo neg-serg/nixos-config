@@ -35,6 +35,8 @@ OverlayToggleCapsule {
     // Optional pill-tracker overlay: when enabled, the calendar also marks
     // which days the pill was taken, missed, is still pending, or had no data.
     property bool showPill: false
+    property var dayInfoLookup: ({})
+    property var pillLookup: ({})
     readonly property var pillHistory: Services.PillTracker.history
     readonly property string pillToday: Services.PillTracker.todayDate
     readonly property bool pillTakenToday: Services.PillTracker.taken
@@ -42,15 +44,63 @@ OverlayToggleCapsule {
     function updateAll() {
         holidays = []
         prodCal = ProdCal.getHolidays(currentYear, currentMonth)
-        Holidays.getHolidaysForMonth(currentYear, currentMonth, function(data) { holidays = data })
-        CalendarEvents.getEvents(currentYear, currentMonth, function(data) { calendarEvents = data })
+        Holidays.getHolidaysForMonth(currentYear, currentMonth, function(data) { holidays = data; refreshLookups() })
+        CalendarEvents.getEvents(currentYear, currentMonth, function(data) { calendarEvents = data; refreshLookups() })
+        refreshLookups()
     }
 
-    function pillStatusFor(year, month, day, today, history, takenToday) {
-        if (!root.showPill || !day) return null;
-        var m = String(month + 1).padStart(2, "0");
-        var d = String(day).padStart(2, "0");
-        var dateKey = year + "-" + m + "-" + d;
+    // Build per-month lookup caches so the 42 MonthGrid delegate cells perform
+    // O(1) reads instead of scanning root.holidays / root.prodCal /
+    // root.calendarEvents / pillHistory on every re-evaluation.
+    function refreshLookups() {
+        var newDayInfo = {}
+        var i, key
+        // Holidays are month/year-qualified; add them first so the merged array
+        // keeps the original order (holidays, then production, then events).
+        for (i = 0; i < holidays.length; i++) {
+            var h = holidays[i]
+            var d = new Date(h.date)
+            if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
+                key = d.getDate()
+                if (!newDayInfo[key]) newDayInfo[key] = []
+                newDayInfo[key].push(h)
+            }
+        }
+        for (i = 0; i < prodCal.length; i++) {
+            var pc = prodCal[i]
+            key = pc.day
+            if (key === undefined || key === null) continue
+            if (!newDayInfo[key]) newDayInfo[key] = []
+            newDayInfo[key].push({localName: pc.label, type: pc.type})
+        }
+        for (i = 0; i < calendarEvents.length; i++) {
+            var ce = calendarEvents[i]
+            key = ce.day
+            if (key === undefined || key === null) continue
+            if (!newDayInfo[key]) newDayInfo[key] = []
+            newDayInfo[key].push({localName: ce.title, type: "event", calendar: ce.calendar})
+        }
+        dayInfoLookup = newDayInfo
+
+        var newPill = {}
+        if (root.showPill) {
+            // The 42-cell grid can show leading/trailing cells from the previous
+            // and next months, so precompute statuses for all three months.
+            for (var offset = -1; offset <= 1; offset++) {
+                var ym = new Date(currentYear, currentMonth + offset, 1)
+                var py = ym.getFullYear()
+                var pm = ym.getMonth()
+                var pdays = new Date(py, pm + 1, 0).getDate()
+                for (var dd = 1; dd <= pdays; dd++) {
+                    var dateKey = String(py) + "-" + String(pm + 1).padStart(2, "0") + "-" + String(dd).padStart(2, "0")
+                    newPill[dateKey] = computePillStatus(dateKey, Services.PillTracker.todayDate, Services.PillTracker.history, Services.PillTracker.taken)
+                }
+            }
+        }
+        pillLookup = newPill
+    }
+
+    function computePillStatus(dateKey, today, history, takenToday) {
         if (history && Array.isArray(history)) {
             for (var i = 0; i < history.length; i++) {
                 if (history[i] && history[i].date === dateKey) {
@@ -61,6 +111,13 @@ OverlayToggleCapsule {
         if (dateKey === today) return takenToday ? "taken" : "pending";
         if (dateKey < today) return "nodata";
         return null;
+    }
+
+    function pillStatusFor(year, month, day, today, history, takenToday) {
+        if (!root.showPill || !day) return null;
+        var m = String(month + 1).padStart(2, "0");
+        var d = String(day).padStart(2, "0");
+        return computePillStatus(year + "-" + m + "-" + d, today, history, takenToday);
     }
 
     onOpened: {
@@ -77,6 +134,19 @@ OverlayToggleCapsule {
         repeat: true
         running: false
         onTriggered: CalendarEvents.refresh(root.currentYear, root.currentMonth)
+    }
+
+    // Rebuild the pill cache when the tracker's reactive props change, and when
+    // the pill overlay is toggled, so stale statuses never leak into the grid.
+    Connections {
+        target: Services.PillTracker
+        function onHistoryChanged() { refreshLookups() }
+        function onTodayDateChanged() { refreshLookups() }
+        function onTakenChanged() { refreshLookups() }
+    }
+    Connections {
+        target: root
+        function onShowPillChanged() { refreshLookups() }
     }
 
     overlayChildren: [
@@ -121,7 +191,7 @@ OverlayToggleCapsule {
                     MaterialIcon {
                         icon: "local_fire_department"
                         size: Math.round(14 * Theme.scale(root.screen))
-                        color: "#FF6D00"
+                        color: Theme.warning
                     }
                     Text {
                         text: Services.PillTracker.streak + (Services.PillTracker.streak === 1 ? " day" : " days")
@@ -169,8 +239,26 @@ OverlayToggleCapsule {
                         required property var model
                         property bool isToday: model.today
                         property bool isCurrentMonth: model.month===calendarGrid.month
-                        property var pillStatus: root.pillStatusFor(model.year, model.month, model.day, root.pillToday, root.pillHistory, root.pillTakenToday)
-                        property var holidayInfos: { var all=[]; for (var i=0;i<root.holidays.length;i++){var h=root.holidays[i];var d=new Date(h.date);if(d.getDate()===model.day&&d.getMonth()===model.month&&d.getFullYear()===model.year)all.push(h)} for(var j=0;j<root.prodCal.length;j++){var pc=root.prodCal[j];if(pc.day===model.day)all.push({localName:pc.label,type:pc.type})} for(var k=0;k<root.calendarEvents.length;k++){var ce=root.calendarEvents[k];if(ce.day===model.day)all.push({localName:ce.title,type:"event",calendar:ce.calendar})} return all }
+                        property var pillStatus: {
+                            if (!root.showPill) return null;
+                            var dateKey = String(model.year) + "-" + String(model.month + 1).padStart(2, "0") + "-" + String(model.day).padStart(2, "0");
+                            var v = root.pillLookup[dateKey];
+                            return v === undefined ? null : v;
+                        }
+                        property var holidayInfos: {
+                            var all = root.dayInfoLookup[model.day] || [];
+                            if (!isCurrentMonth) {
+                                // Holiday entries belong to the displayed month; strip
+                                // them from adjacent-month cells while keeping the
+                                // day-only production-calendar/event matches.
+                                var out = [];
+                                for (var i = 0; i < all.length; i++) {
+                                    if (!all[i].date) out.push(all[i]);
+                                }
+                                return out;
+                            }
+                            return all;
+                        }
                         property bool hasRealHoliday: { for(var n=0;n<holidayInfos.length;n++){if(holidayInfos[n].type!=="event")return true} return false }
                         property bool isHoliday: holidayInfos.length>0
                         property bool isWeekend: model.dayOfWeek===0||model.dayOfWeek===6
@@ -331,7 +419,7 @@ OverlayToggleCapsule {
 
                 Text {
                     Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter
-                    text: { var todayH=[]; for(var i=0;i<root.holidays.length;i++){var h=root.holidays[i];var d=new Date(h.date);if(d.getDate()===Time.date.getDate()&&d.getMonth()===Time.date.getMonth()&&d.getFullYear()===Time.date.getFullYear())todayH.push(h.localName||h.name)} for(var j=0;j<root.prodCal.length;j++){var pc=root.prodCal[j];if(pc.day===Time.date.getDate())todayH.push(pc.label)} return todayH.length>0?todayH.join(" · "):"" }
+                    text: { var todayInfos = root.dayInfoLookup[Time.date.getDate()] || []; var todayH=[]; for(var i=0;i<todayInfos.length;i++){ var ti=todayInfos[i]; if(typeof ti.calendar === "string")continue; if(ti.date){ var dd=new Date(ti.date); if(!(dd.getFullYear()===Time.date.getFullYear()&&dd.getMonth()===Time.date.getMonth()&&dd.getDate()===Time.date.getDate()))continue } todayH.push(ti.localName||ti.name) } return todayH.length>0?todayH.join(" · "):"" }
                     color: root.textWarm; opacity:0.6; font.family: Theme.fontFamily; font.pixelSize: Math.round(12*Theme.scale(root.screen)); font.italic:true }
             }
         }
