@@ -1,0 +1,12 @@
+{
+  "name": "dsh-session-tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Slash commands /rename, /status, /remember, /forget for dsh web sessions.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  }
+}
