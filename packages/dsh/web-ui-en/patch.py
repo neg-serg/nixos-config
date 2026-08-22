@@ -288,8 +288,8 @@ def patch_conversation(root: pathlib.Path) -> int:
 # Client-side slash commands injected into the commands plugin bundle
 # (dsh-client-ui-commands/lib/client.js). The host already exposes the
 # session.fork / session.create RPCs and the client sessions service has
-# fork()/open() — these contributions surface them as /fork, /new, /goto,
-# /model and /help.
+# fork()/open() — these contributions surface them as /fork, /new, /goto
+# and /help.
 COMMANDS_ANCHOR = "this.directory.resetConnected();\n\t\t\t\t});"
 COMMANDS_INSERT = (
     "\n"
@@ -341,35 +341,6 @@ COMMANDS_INSERT = (
     "\t\t\t\t\t}\n"
     "\t\t\t\t});\n"
     "\t\t\t\tthis.register({\n"
-    '\t\t\t\t\tname: "model",\n'
-    '\t\t\t\t\tdescription: "Switch the model of this session",\n'
-    "\t\t\t\t\tavailable: () => true,\n"
-    "\t\t\t\t\tui: {\n"
-    "\t\t\t\t\t\toptions: async (session) => {\n"
-    "\t\t\t\t\t\t\tconst api = this.sessions().manager.api;\n"
-    "\t\t\t\t\t\t\tconst result = await api.sessions.models({ sessionId: session.sessionId });\n"
-    '\t\t\t\t\t\t\tif (!result.ok) return [{ id: "", label: "models unavailable", detail: `${result.error?.code ?? ""} ${result.error?.message ?? ""}`.trim() }];\n'
-    "\t\t\t\t\t\t\tconst current = result.value.current;\n"
-    "\t\t\t\t\t\t\tconst out = [];\n"
-    "\t\t\t\t\t\t\tfor (const group of result.value.groups ?? []) {\n"
-    "\t\t\t\t\t\t\t\tfor (const m of group.models ?? []) {\n"
-    "\t\t\t\t\t\t\t\t\tconst isCur = current && current.provider === group.id && current.model === m.id;\n"
-    "\t\t\t\t\t\t\t\t\tout.push({ id: `${group.id}::${m.id}`, label: `${group.name ?? group.id} · ${m.name ?? m.id}`, detail: isCur ? `${m.id} (current)` : m.id });\n"
-    "\t\t\t\t\t\t\t\t}\n"
-    "\t\t\t\t\t\t\t}\n"
-    "\t\t\t\t\t\t\treturn out;\n"
-    "\t\t\t\t\t\t},\n"
-    "\t\t\t\t\t\tonSelect: async (option, session) => {\n"
-    "\t\t\t\t\t\t\tif (!option.id) return;\n"
-    '\t\t\t\t\t\t\tconst sep = option.id.indexOf("::");\n'
-    "\t\t\t\t\t\t\tconst provider = option.id.slice(0, sep);\n"
-    "\t\t\t\t\t\t\tconst model = option.id.slice(sep + 2);\n"
-    "\t\t\t\t\t\t\tconst result = await this.sessions().manager.api.sessions.selectModel({ sessionId: session.sessionId, provider, model });\n"
-    '\t\t\t\t\t\t\tif (!result.ok) throw new Error(`selectModel failed: ${result.error?.code ?? ""}: ${result.error?.message ?? ""}`);\n'
-    "\t\t\t\t\t\t}\n"
-    "\t\t\t\t\t}\n"
-    "\t\t\t\t});\n"
-    "\t\t\t\tthis.register({\n"
     '\t\t\t\t\tname: "help",\n'
     '\t\t\t\t\tdescription: "Browse all slash commands",\n'
     "\t\t\t\t\tavailable: () => true,\n"
@@ -399,7 +370,7 @@ COMMANDS_INSERT = (
 
 
 def patch_commands(root: pathlib.Path) -> int:
-    """Add /fork, /new, /goto, /model and /help client slash commands."""
+    """Add /fork, /new, /goto and /help client slash commands."""
     cmd = root / "dsh-client-ui-commands" / "lib" / "client.js"
     if not cmd.exists():
         print(f"skip (absent): {cmd.relative_to(root)}")
@@ -417,9 +388,7 @@ def patch_commands(root: pathlib.Path) -> int:
         return 0
     text = text.replace(COMMANDS_ANCHOR, COMMANDS_ANCHOR + COMMANDS_INSERT, 1)
     cmd.write_bytes(text.encode("utf-8"))
-    print(
-        f"patched: {cmd.relative_to(root)} (/fork, /new, /goto, /model, /help)"
-    )
+    print(f"patched: {cmd.relative_to(root)} (/fork, /new, /goto, /help)")
     return 1
 
 
