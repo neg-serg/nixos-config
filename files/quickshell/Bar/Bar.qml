@@ -694,7 +694,7 @@ Scope {
                             anchors.left: leftBarBackground.left
                             anchors.leftMargin: leftPanel.sideMargin
                             spacing: leftPanel.interWidgetSpacing
-                            ClockWidget { Layout.alignment: Qt.AlignVCenter; visible: WidgetRegistry.isVisible("clock") }
+                            ClockWidget { Layout.alignment: Qt.AlignVCenter; visible: WidgetRegistry.isVisible("clock"); screen: modelData }
                             WsIndicator {
                                 id: wsindicator
                                 visible: WidgetRegistry.isVisible("workspaces")
@@ -740,6 +740,7 @@ Scope {
                                 id: weatherButton
                                 visible: WidgetRegistry.isVisible("weather") && Settings.settings.showWeatherInBar === true
                                 Layout.alignment: Qt.AlignVCenter
+                                screen: modelData
                                 capsule.rightTriangleVisible: true
                                 capsule.rightTriangleWidthFactor: 0.75
                                 capsule.triangleHighlightEnabled: true
@@ -997,7 +998,7 @@ Scope {
                             }
                             LocalMods.PillCapsule {
                                 id: pillCapsule
-                                visible: WidgetRegistry.isVisible("pills")
+                                visible: WidgetRegistry.isVisible("pill")
                                 Layout.alignment: Qt.AlignVCenter
                                 screen: modelData
                             }
