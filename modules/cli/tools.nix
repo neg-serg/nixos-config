@@ -69,6 +69,9 @@ in
     pkgs.procs # modern 'ps' replacement
     pkgs.pwgen # password generator
     pkgs.sd # intuitive find & replace CLI (sed replacement)
+
+    # Python
+    (pkgs.python3.withPackages (ps: [ ps.pexpect ])) # python3 with pexpect for expect-style automation
   ]
   ++ lib.optional (hishtoryPkg != null) hishtoryPkg; # sync shell history w/ encryption, better than zsh-histdb
 }
