@@ -9,11 +9,6 @@
     "min": 0,
     "max": 5000
   },
-  "ui.anim.rippleMs": {
-    "type": "integer",
-    "min": 0,
-    "max": 10000
-  },
   "ui.spinner.durationMs": {
     "type": "integer",
     "min": 100,
@@ -83,11 +78,6 @@
     "type": "number",
     "min": 0.25,
     "max": 1.5
-  },
-  "weather.card.opacity": {
-    "type": "number",
-    "min": 0,
-    "max": 1
   },
   "weather.centerOffset": {
     "type": "integer",
@@ -194,11 +184,6 @@
     "min": 0,
     "max": 1
   },
-  "media.accent.samplerPx": {
-    "type": "integer",
-    "min": 8,
-    "max": 256
-  },
   "media.accent.retryMs": {
     "type": "integer",
     "min": 10,
@@ -208,36 +193,6 @@
     "type": "integer",
     "min": 0,
     "max": 20
-  },
-  "media.accent.satMin": {
-    "type": "integer",
-    "min": 0,
-    "max": 255
-  },
-  "media.accent.lumMin": {
-    "type": "integer",
-    "min": 0,
-    "max": 255
-  },
-  "media.accent.lumMax": {
-    "type": "integer",
-    "min": 0,
-    "max": 255
-  },
-  "media.accent.relaxed.satMin": {
-    "type": "integer",
-    "min": 0,
-    "max": 255
-  },
-  "media.accent.relaxed.lumMin": {
-    "type": "integer",
-    "min": 0,
-    "max": 255
-  },
-  "media.accent.relaxed.lumMax": {
-    "type": "integer",
-    "min": 0,
-    "max": 255
   },
   "sidePanel.button.activeVisibleMin": {
     "type": "number",
@@ -258,11 +213,6 @@
     "type": "integer",
     "min": 40,
     "max": 600
-  },
-  "sidePanel.weather.leftColumnRatio": {
-    "type": "number",
-    "min": 0.1,
-    "max": 0.8
   },
   "panel.menu.width": {
     "type": "integer",
@@ -419,80 +369,15 @@
     "min": 0,
     "max": 1
   },
-  "vpn.accent.lightenTowardWhite": {
-    "type": "number",
-    "min": 0,
-    "max": 1
-  },
   "vpn.desaturateAmount": {
     "type": "number",
     "min": 0,
     "max": 1
   },
-  "calendar.size.width": {
-    "type": "integer",
-    "min": 200,
-    "max": 800
-  },
-  "calendar.size.height": {
-    "type": "integer",
-    "min": 200,
-    "max": 800
-  },
   "calendar.popupMargin": {
     "type": "integer",
     "min": 0,
     "max": 32
-  },
-  "calendar.cellSize": {
-    "type": "integer",
-    "min": 16,
-    "max": 64
-  },
-  "calendar.font.titlePx": {
-    "type": "integer",
-    "min": 8,
-    "max": 64
-  },
-  "calendar.font.dowPx": {
-    "type": "integer",
-    "min": 6,
-    "max": 48
-  },
-  "calendar.font.dayPx": {
-    "type": "integer",
-    "min": 8,
-    "max": 64
-  },
-  "calendar.cell.radiusFactor": {
-    "type": "number",
-    "min": 0,
-    "max": 1
-  },
-  "calendar.holidayDot.radiusFactor": {
-    "type": "number",
-    "min": 0,
-    "max": 1
-  },
-  "calendar.opacity.title": {
-    "type": "number",
-    "min": 0,
-    "max": 1
-  },
-  "calendar.opacity.dow": {
-    "type": "number",
-    "min": 0,
-    "max": 1
-  },
-  "calendar.opacity.otherMonthDay": {
-    "type": "number",
-    "min": 0,
-    "max": 1
-  },
-  "calendar.accentDarken": {
-    "type": "number",
-    "min": 0,
-    "max": 1
   },
   "ws.icon.svgScale": {
     "type": "number",

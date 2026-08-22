@@ -101,7 +101,6 @@
     "borderWidth": 1,
     "radius": 2,
     "fontPx": 14,
-    "opacity": 0.98,
     "smallScaleRatio": 0.71
   },
   "sidePanel": {
@@ -121,11 +120,6 @@
     "spacingTight": 6,
     "spacingSmall": 4,
     "albumArtSize": 200,
-    "weather": {
-      "width": 440,
-      "height": 180,
-      "leftColumnRatio": 0.32
-    },
     "button": {
       "activeVisibleMin": 0.18
     },
@@ -143,7 +137,6 @@
     "anim": {
       "quickMs": 120,
       "rotateMs": 160,
-      "rippleMs": 320,
       "easing": {
         "quick": "OutQuad",
         "rotate": "OutCubic",
@@ -232,17 +225,8 @@
       "fallbackOpacity": 0.4
     },
     "accent": {
-      "samplerPx": 48,
       "retryMs": 120,
-      "retryMax": 5,
-      "satMin": 10,
-      "lumMin": 20,
-      "lumMax": 235,
-      "relaxed": {
-        "satMin": 8,
-        "lumMin": 20,
-        "lumMax": 240
-      }
+      "retryMax": 5
     }
   },
   "spectrum": {
@@ -258,52 +242,15 @@
     "rowSpacing": 2,
     "cellSpacing": 2,
     "sideMargin": 2,
-    "popupMargin": 2,
-    "borderWidth": 1,
-    "cellSize": 28,
-    "holidayDotSize": 3,
-    "font": {
-      "titlePx": 18,
-      "dowPx": 15,
-      "dayPx": 24
-    },
-    "opacity": {
-      "title": 0.7,
-      "dow": 0.9,
-      "otherMonthDay": 0.3
-    },
-    "dow": {
-      "spacing": 0,
-      "sideMargin": 0,
-      "italic": true,
-      "underline": true
-    },
-    "cell": {
-      "radiusFactor": 0.33
-    },
-    "holidayDot": {
-      "radiusFactor": 0.5
-    },
-    "grid": {
-      "spacing": 0
-    },
-    "size": {
-      "width": 280,
-      "height": 320
-    },
-    "accentDarken": 0.8
+    "popupMargin": 2
   },
   "weather": {
     "headerScale": 0.75,
-    "card": {
-      "opacity": 0.85
-    },
     "centerOffset": -2
   },
   "vpn": {
     "accent": {
-      "saturateBoost": 0.12,
-      "lightenTowardWhite": 0.2
+      "saturateBoost": 0.12
     },
     "desaturateAmount": 0.45
   },

@@ -19,17 +19,8 @@
       "fallbackOpacity": 0.4
     },
     "accent": {
-      "samplerPx": 48,
       "retryMs": 120,
-      "retryMax": 5,
-      "satMin": 10,
-      "lumMin": 20,
-      "lumMax": 235,
-      "relaxed": {
-        "satMin": 8,
-        "lumMin": 20,
-        "lumMax": 240
-      }
+      "retryMax": 5
     }
   }
 }
