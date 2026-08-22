@@ -9,9 +9,10 @@ let
   userData = lib.attrByPath [ "users" "users" user ] { } config;
   homeDir = lib.attrByPath [ "home" ] "/home/${user}" userData;
 
-  # dsh-category-skill-reminder: nudge to delegate via subagent with the
-  # right skills (load_skills) after several direct work-tool calls (server
-  # plugin, host plane — same pattern as dsh-osm). The package is a plain
+  # dsh-category-skill-reminder: nudge to delegate via subagent and load the
+  # matching skill (real `skill` tool) after several direct work-tool calls,
+  # fired only when the task overlaps a catalog skill (server plugin, host
+  # plane — same pattern as dsh-osm). The package is a plain
   # directory in the profile node_modules (pnpm is intentionally not used —
   # the @deepseek-ai store symlink makes pnpm writes fail with EROFS, see
   # dsh-market.nix), registered through a profile patch insert row. Files are
