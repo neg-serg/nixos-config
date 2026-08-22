@@ -37,6 +37,7 @@
     "\"SearXNG · 元搜索\"": "\"SearXNG · Meta-search\"",
     "\"访问官网 →\"": "\"Visit site →\"",
     "\"获取 API Key →\"": "\"Get API key →\"",
+    "\"切换搜索引擎 / Switch web search engine\"": "\"Switch web search engine\"",
     "// secrets 字段标记哪些 key 已配置（值被脱敏，仅显示\"已配置\"）": "// secrets marks which keys are configured (values masked, showing \"configured\")",
     "// 挂官方插槽 settings.plugin.item（设置 → 插件 → 可配置标签页）。": "// Mounts the official settings.plugin.item slot (Settings → Plugins → configurable tabs).",
     "// 不依赖 dsh-web-ui：配置读写走自建 bridge（/api/dsh-free-search-settings）。": "// Does not depend on dsh-web-ui: config I/O goes through its own bridge (/api/dsh-free-search-settings)."
