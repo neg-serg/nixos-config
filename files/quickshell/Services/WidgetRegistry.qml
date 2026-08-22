@@ -12,17 +12,21 @@ Singleton {
 
     // Default layout used when Settings.panelLayout is absent/invalid
     readonly property var _defaultLayout: ({
-        left: ["clock", "workspaces", "keyboard", "network", "weather"],
-        right: ["media", "mpdFlags", "sysmon", "pills", "systray", "microphone", "volume", "genelec"]
-    })
+            left: ["clock", "workspaces", "keyboard", "network", "weather"],
+            right: ["media", "mpdFlags", "sysmon", "pill", "systray", "microphone", "volume", "genelec"]
+        })
 
     // Resolved layout: Settings override or default
     readonly property var layout: {
         var pl = Settings.settings ? Settings.settings.panelLayout : undefined;
-        if (!pl || typeof pl !== 'object') return _defaultLayout;
+        if (!pl || typeof pl !== 'object')
+            return _defaultLayout;
         var left = (pl.left && Array.isArray(pl.left)) ? pl.left : _defaultLayout.left;
         var right = (pl.right && Array.isArray(pl.right)) ? pl.right : _defaultLayout.right;
-        return { left: left, right: right };
+        return {
+            left: left,
+            right: right
+        };
     }
 
     // Set of all widget IDs present in the layout (for quick visibility check).
@@ -32,7 +36,8 @@ Singleton {
         var all = (layout.left || []).concat(layout.right || []);
         for (var i = 0; i < all.length; i++) {
             var id = String(all[i]);
-            if (!seen[id]) seen[id] = true;
+            if (!seen[id])
+                seen[id] = true;
         }
         return seen;
     }
@@ -46,9 +51,11 @@ Singleton {
     // Widgets not in the section get index 9999 (pushed to end / hidden).
     function orderIndex(widgetId, section) {
         var list = (section === "left") ? layout.left : layout.right;
-        if (!list) return 9999;
+        if (!list)
+            return 9999;
         for (var i = 0; i < list.length; i++) {
-            if (list[i] === widgetId) return i;
+            if (list[i] === widgetId)
+                return i;
         }
         return 9999;
     }

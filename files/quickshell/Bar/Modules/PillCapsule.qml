@@ -9,11 +9,13 @@ OverlayToggleCapsule {
     readonly property real capsuleScale: capsule.capsuleScale
     readonly property int iconBox: capsule.capsuleInner
 
-    capsule.backgroundKey: "pills"
+    capsule.backgroundKey: "pill"
     capsule.centerContent: true
     capsule.cursorShape: Qt.PointingHandCursor
     capsule.implicitWidth: capsule.horizontalPadding * 2 + pillIcon.width
-    capsuleVisible: !Services.PillTracker.taken
+    // Keep the capsule visible even when the pill is taken so the user can
+    // reopen the history calendar (right-click) to see past taken/missed days.
+    capsuleVisible: true
     autoToggleOnTap: false
 
     MaterialIcon {
@@ -32,20 +34,25 @@ OverlayToggleCapsule {
             id: pulseAnimation
             running: Services.PillTracker.reminderActive && !(Settings.settings.reducedMotion)
             loops: Animation.Infinite
-            PropertyAnimation { to: 0.3; duration: 500; easing.type: Easing.InOutSine }
-            PropertyAnimation { to: 1.0; duration: 500; easing.type: Easing.InOutSine }
-            onRunningChanged: if (!running) pillIcon.opacity = 1.0
+            PropertyAnimation {
+                to: 0.3
+                duration: 500
+                easing.type: Easing.InOutSine
+            }
+            PropertyAnimation {
+                to: 1.0
+                duration: 500
+                easing.type: Easing.InOutSine
+            }
+            onRunningChanged: if (!running)
+                pillIcon.opacity = 1.0
         }
     }
 
     PanelTooltip {
         targetItem: pillIcon
-        text: Services.PillTracker.taken
-            ? "Taken at " + Services.PillTracker.takenAt
-            : Services.PillTracker.reminderActive
-                ? "Not taken yet!"
-                : "Not taken yet"
-        visibleWhen: capsule.hovered && !root.expanded
+        text: Services.PillTracker.taken ? "Taken at " + Services.PillTracker.takenAt : Services.PillTracker.reminderActive ? "Not taken yet!" : "Not taken yet"
+        visibleWhen: capsule.hovered && !pillCalendar.expanded
     }
 
     // Left-click: toggle pill state
@@ -65,9 +72,12 @@ OverlayToggleCapsule {
     }
 
     // Reuse the clock's calendar overlay; enable the pill history markers.
+    // Distinct layer namespace so the pill and clock calendars do not fight
+    // over the same qs-calendar layer if both are opened in the same session.
     Calendar {
         id: pillCalendar
         screen: root.screen
         showPill: true
+        overlayNamespace: "qs-calendar-pill"
     }
 }
