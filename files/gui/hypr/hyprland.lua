@@ -474,6 +474,10 @@ hl.window_rule({ name = "gaming-immediate", match = { class = "^(osu!|cs2)$" }, 
 -- Exclude kitty from hyprglass glass shader
 hl.window_rule({ name = "hgrm-term", match = { class = "^(kitty|term)$" }, tag = "hyprglass_disabled" })
 
+-- Stretch only the dedicated term workspace window to fill the monitor
+-- (kitty launched as class=term; plain kitty keeps its own size)
+hl.window_rule({ name = "term-fill", match = { class = "^(term)$" }, size = "100% 100%" })
+
 -- Fullscreen video/gpu-heavy apps: force immediate rendering for direct scanout
 hl.window_rule({ name = "video-immediate", match = { class = "^(mpv)$" }, immediate = true })
 hl.window_rule({ name = "gamescope-immediate", match = { class = "^(gamescope)$" }, immediate = true })
