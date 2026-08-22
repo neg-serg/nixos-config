@@ -21,22 +21,39 @@ Singleton {
         path: stateFile
         watchChanges: true
         property bool _reloadPending: false
+        property bool _loading: false
         onFileChanged: {
             if (!stateFileView._reloadPending) {
                 stateFileView._reloadPending = true;
-                Qt.callLater(function() { stateFileView._reloadPending = false; stateFileView.reload(); });
+                Qt.callLater(function () {
+                    stateFileView._reloadPending = false;
+                    stateFileView._reload();
+                });
             }
         }
-        onAdapterUpdated: writeAdapter()
-        Component.onCompleted: function() {
-            reload()
+        onAdapterUpdated: {
+            // A reload applying file changes must not write back to the file
+            // (that would trigger onFileChanged -> reload -> onAdapterUpdated loop).
+            if (stateFileView._loading) {
+                stateFileView._loading = false;
+                return;
+            }
+            writeAdapter();
         }
-        onLoadFailed: function(error) {
-            console.warn("[StateCache] load failed:", error, "— resetting to defaults")
-            stateAdapter.lastActivePlayers = []
-            stateAdapter.audioOffReminderLastShownAt = 0
-            stateAdapter.genelecVolume = -40
-            writeAdapter()
+        Component.onCompleted: function () {
+            _reload();
+        }
+        onLoadFailed: function (error) {
+            console.warn("[StateCache] load failed:", error, "— resetting to defaults");
+            stateAdapter.lastActivePlayers = [];
+            stateAdapter.audioOffReminderLastShownAt = 0;
+            stateAdapter.genelecVolume = -40;
+            writeAdapter();
+        }
+        // Wrap reload() so adapter updates caused by it are not echoed back to disk.
+        function _reload() {
+            stateFileView._loading = true;
+            stateFileView.reload();
         }
         JsonAdapter {
             id: stateAdapter

@@ -79,7 +79,7 @@ RowLayout {
         icon: root.muted || root.volume <= root.minVolume ? "volume_off" : root.volume >= -20 ? "volume_up" : "volume_down"
         size: Math.round(Theme.fontSizeSmall * 1.2); color: root.available ? Theme.accentPrimary : Theme.textDisabled
         Layout.alignment: Qt.AlignVCenter
-        MouseArea { anchors.fill: parent; onClicked: root.toggleMute() }
+        MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.toggleMute() }
     }
     Slider {
         id: volSlider
@@ -189,29 +189,44 @@ RowLayout {
         genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "set-volume", "--volume", dB + "dB"];
         genlcProc.start();
     }
-    // CLI sync — poll state file for external volume changes
-    ProcessRunner {
+    // CLI sync — watch the state file for external volume changes.
+    // FileView tracks /tmp/genlc-volume; genlc rewrites it in place, so the
+    // watcher fires on each write without per-interval subprocesses.
+    FileView {
         id: stateReader
-        cmd: ["/run/current-system/sw/bin/cat", "/tmp/genlc-volume"]
-        intervalMs: 150
-        autoStart: true
-        restartOnExit: false
-        onLine: function(line) {
-            if (root.busy || root._userInputActive) return;
-            var v = parseFloat(line);
-            if (!isNaN(v) && v !== root.displayDb && !volSlider.pressed) {
-                root._showSlider();
-                root.displayDb = v;
-                root.pendingDb = v;
-                root.volume = v;
-                root._animDb = v;
-            }
+        path: "/tmp/genlc-volume"
+        watchChanges: true
+        preload: true
+        printErrors: false
+        property bool _reloadPending: false
+        onFileChanged: {
+            if (stateReader._reloadPending) return;
+            stateReader._reloadPending = true;
+            Qt.callLater(function() {
+                stateReader._reloadPending = false;
+                stateReader.reload();
+            });
+        }
+        onLoaded: function() {
+            root._onGenlcFileChanged();
+        }
+    }
+    function _onGenlcFileChanged() {
+        if (root.busy || root._userInputActive) return;
+        var line = stateReader.text() || "";
+        var v = parseFloat(line);
+        if (!isNaN(v) && v !== root.displayDb && !volSlider.pressed) {
+            root._showSlider();
+            root.displayDb = v;
+            root.pendingDb = v;
+            root.volume = v;
+            root._animDb = v;
         }
     }
     Component.onCompleted: {
         available = true;
-        // Volume state is picked up by stateReader within 150 ms; the former
-        // synchronous XMLHttpRequest here blocked startup and was teardown-unsafe.
+        // Ensure the state file exists so FileView can watch it (genlc rewrites it in place).
+        Quickshell.execDetached(["touch", "/tmp/genlc-volume"]);
     }
 
 }
