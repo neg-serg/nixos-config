@@ -124,24 +124,22 @@ keeping the nix-daemon proxy env working.
 proxy refresh
 ```
 
-1. Fetches fresh nodes from subscription URLs (FastNodes vless/hysteria2 via
-   jsDelivr + V2RayAggregator ss/trojan via raw.githubusercontent; see
-   "Subscription refresh" below).
+1. Fetches fresh nodes from subscription URLs (FastNodes vless/hysteria2 via jsDelivr +
+   V2RayAggregator ss/trojan via raw.githubusercontent; see "Subscription refresh" below).
 1. Merges with any fallback nodes from the SOPS secret.
-1. **Validates candidates**: TCP-scans every unique host:port (asyncio, ~3s
-   timeout), then e2e-probes up to `E2E_CAP` (default 60) open nodes through a
-   throwaway sing-box instance each — a node counts as working only when
-   `curl` via its socks port returns `204` for
+1. **Validates candidates**: TCP-scans every unique host:port (asyncio, ~3s timeout), then
+   e2e-probes up to `E2E_CAP` (default 60) open nodes through a throwaway sing-box instance each — a
+   node counts as working only when `curl` via its socks port returns `204` for
    `https://www.gstatic.com/generate_204`.
-1. Regenerates `~/.config/sing-box-trojan/config.json` from the working subset
-   only (vless/hysteria2/shadowsocks/trojan all supported by the generator).
-1. If fewer than `MIN_WORKING` (default 3) nodes pass, **keeps the existing
-   config untouched** and exits with an error.
+1. Regenerates `~/.config/sing-box-trojan/config.json` from the working subset only
+   (vless/hysteria2/shadowsocks/trojan all supported by the generator).
+1. If fewer than `MIN_WORKING` (default 3) nodes pass, **keeps the existing config untouched** and
+   exits with an error.
 1. Restarts the sing-box service with the new config.
 
-Env knobs: `E2E_CAP`, `MIN_WORKING`. Free pools die fast, so a working
-config can degrade to dead nodes within days — re-run `proxy refresh` and it
-validates again instead of trusting the pool blindly.
+Env knobs: `E2E_CAP`, `MIN_WORKING`. Free pools die fast, so a working config can degrade to dead
+nodes within days — re-run `proxy refresh` and it validates again instead of trusting the pool
+blindly.
 
 ### Dashboard
 
@@ -177,9 +175,9 @@ proxy status
 
 The generated config resolves every domain **on this host** before handing the node a plain IP:
 
-- DNS server `remote` — DoH `1.1.1.1` dialed **directly, no `detour`**. Detouring the DoH
-  server via the `auto` urltest group deadlocks DNS at startup (no node selected yet → every
-  lookup times out), so the DoH connection must not ride the proxy.
+- DNS server `remote` — DoH `1.1.1.1` dialed **directly, no `detour`**. Detouring the DoH server via
+  the `auto` urltest group deadlocks DNS at startup (no node selected yet → every lookup times out),
+  so the DoH connection must not ride the proxy.
 - Route action `resolve` (`strategy: ipv4_only`) forces client-side resolution; the host has no
   IPv6, and some nodes fail server-side resolution with the sing-box default DNS (dns.google DoT).
 - `route.default_domain_resolver: remote` covers any remaining dial-time resolution.
@@ -239,14 +237,14 @@ Each URL is queried with a 12-second timeout; up to 60 random links per URL are 
 
 1. Merges them with any fallback nodes from the SOPS secret (fallback always included first).
 1. TCP-scans every unique host:port (asyncio) and e2e-probes the open ones through throwaway
-   sing-box instances (up to `E2E_CAP`, default 60) — a node counts as working only when
-   `curl` via its socks port returns `204` for `https://www.gstatic.com/generate_204`.
-1. Generates the sing-box config from the working subset only, under an `urltest` group
-   (`auto`) that re-probes every 5 minutes and routes to the lowest latency. The generator
-   supports vless (tls/reality), hysteria2, shadowsocks and trojan.
+   sing-box instances (up to `E2E_CAP`, default 60) — a node counts as working only when `curl` via
+   its socks port returns `204` for `https://www.gstatic.com/generate_204`.
+1. Generates the sing-box config from the working subset only, under an `urltest` group (`auto`)
+   that re-probes every 5 minutes and routes to the lowest latency. The generator supports vless
+   (tls/reality), hysteria2, shadowsocks and trojan.
 1. Private IPs are routed direct.
-1. If fewer than `MIN_WORKING` (default 3) nodes pass, keeps the existing config untouched
-   and exits with an error.
+1. If fewer than `MIN_WORKING` (default 3) nodes pass, keeps the existing config untouched and exits
+   with an error.
 
 If all URLs fail **and** there are no fallback nodes, the command errors out with:
 
@@ -254,7 +252,8 @@ If all URLs fail **and** there are no fallback nodes, the command errors out wit
 ERROR: no fallback nodes and no subscription nodes available
 ```
 
-The subscription URLs are publicly available repos (`rtwo2/FastNodes`, `mahdibland/V2RayAggregator`).
+The subscription URLs are publicly available repos (`rtwo2/FastNodes`,
+`mahdibland/V2RayAggregator`).
 
 ## Adding fallback nodes
 
