@@ -6,7 +6,6 @@ CapsuleButton 1.0 CapsuleButton.qml
 Cava 1.0 Cava.qml
 CenteredCapsuleRow 1.0 CenteredCapsuleRow.qml
 ColorFastInOutBehavior 1.0 ColorFastInOutBehavior.qml
-ColorRippleBehavior 1.0 ColorRippleBehavior.qml
 ConnectivityCapsule 1.0 ConnectivityCapsule.qml
 ConnectivityIconSlot 1.0 ConnectivityIconSlot.qml
 singleton ConnectivityState 1.0 ConnectivityState.qml

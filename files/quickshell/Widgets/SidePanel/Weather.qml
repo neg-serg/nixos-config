@@ -60,7 +60,6 @@ Rectangle {
                 else if(wcode>=71&&wcode<=77)drawSnow(ctx,w,h)
                 else if(wcode>=95&&wcode<=99){drawRain(ctx,w,h);drawStormBolt(ctx,w,h)}
             }
-            Timer { interval: 33; repeat: true; running: true; onTriggered: weatherDecor.requestPaint() }
 
             function drawClouds(ctx,w,h){ctx.fillStyle="rgba(170,187,204,0.85)";drawCloud(ctx,w*0.15,h*0.16,12);drawCloud(ctx,w*0.13,h*0.14,11);drawCloud(ctx,w*0.16,h*0.15,9)}
             function drawCloud(ctx,cx,cy,r){ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.arc(cx+r*0.7,cy-r*0.25,r*0.75,0,Math.PI*2);ctx.arc(cx+r*1.2,cy,r*0.7,0,Math.PI*2);ctx.arc(cx-r*0.6,cy+r*0.1,r*0.6,0,Math.PI*2);ctx.arc(cx+r*0.5,cy-r*0.5,r*0.55,0,Math.PI*2);ctx.fill()}
