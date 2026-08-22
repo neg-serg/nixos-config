@@ -1,6 +1,7 @@
+# fzf-on-tab: empty line -> interactive fzf file picker; otherwise -> normal zsh completion.
 local line=$BUFFER
 if [[ $line == "" ]]; then
     zle fzf-file-widget
 else
-    zle fzf-completion
+    zle expand-or-complete
 fi
