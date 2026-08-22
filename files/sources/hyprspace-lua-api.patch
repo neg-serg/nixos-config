@@ -1,0 +1,52 @@
+diff --git a/src/main.cpp b/src/main.cpp
+index 9dd0286..a33fddb 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -1,5 +1,7 @@
+ #include <hyprland/src/plugins/PluginSystem.hpp>
+ #include <hyprland/src/plugins/PluginAPI.hpp>
++#include <hyprland/src/config/lua/LuaBindings.hpp>
++#include <lua.hpp>
+ #include <hyprland/src/devices/IPointer.hpp>
+ #include <hyprland/src/devices/IKeyboard.hpp>
+ #include <hyprland/src/devices/ITouch.hpp>
+@@ -380,6 +382,31 @@ static SDispatchResult dispatchCloseOverview(std::string arg) {
+     return SDispatchResult{};
+ }
+ 
++// Lua API: hl.plugin.hyprspace.toggle_overview() - returns a dispatcher
++// closure usable with hl.bind(). Needed because Hyprland 0.55+ Lua configs
++// cannot invoke string dispatchers registered via addDispatcherV2
++// (hyprctl dispatch overview:toggle fails at the Lua eval layer).
++static int luaToggleOverview(lua_State* L) {
++    static constexpr const char* FN = "hl.plugin.hyprspace.toggle_overview";
++    const int count = lua_gettop(L);
++    if (count > 1)
++        return luaL_error(L, "%s: expected at most 1 argument, got %d", FN, count);
++    std::string arg;
++    if (count == 1) {
++        if (!lua_isstring(L, 1))
++            return luaL_error(L, "%s: argument must be a string", FN);
++        arg = lua_tostring(L, 1);
++    }
++    lua_pushstring(L, arg.c_str());
++    auto dspToggle = [](lua_State* L) -> int {
++        std::string a = lua_tostring(L, lua_upvalueindex(1));
++        dispatchToggleOverview(a);
++        return 0;
++    };
++    lua_pushcclosure(L, dspToggle, 1);
++    return 1;
++}
++
+ void* findFunctionBySymbol(HANDLE inHandle, const std::string func, const std::string sym) {
+     // should return all functions
+     auto funcSearch = HyprlandAPI::findFunctionsByName(inHandle, func);
+@@ -544,6 +571,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE inHandle) {
+     HyprlandAPI::addDispatcherV2(pHandle, "overview:toggle", ::dispatchToggleOverview);
+     HyprlandAPI::addDispatcherV2(pHandle, "overview:open", ::dispatchOpenOverview);
+     HyprlandAPI::addDispatcherV2(pHandle, "overview:close", ::dispatchCloseOverview);
++    HyprlandAPI::addLuaFunction(pHandle, "hyprspace", "toggle_overview", luaToggleOverview);
+ 
+     g_pRenderHook = Event::bus()->m_events.render.stage.listen([](eRenderStage stage) { onRender(stage); });
+ 
