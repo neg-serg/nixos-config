@@ -72,8 +72,16 @@
           '';
         };
 
+        # hyprspace: add a Lua API (hl.plugin.hyprspace.toggle_overview)
+        # because Hyprland 0.55+ Lua configs cannot call string dispatchers
+        # registered via addDispatcherV2 (hyprctl dispatch overview:toggle
+        # fails at the Lua eval layer; upstream #14451 still unfixed).
+        hyprspace = prev.hyprlandPlugins.hyprspace.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [ ./../../../../files/sources/hyprspace-lua-api.patch ];
+        });
+
         hyprlandPlugins = prev.hyprlandPlugins // {
-          inherit (final) hyprglass;
+          inherit (final) hyprglass hyprspace;
         };
       })
     ];
