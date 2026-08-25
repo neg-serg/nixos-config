@@ -67,14 +67,28 @@ let
     animation_fade_out=1
     tag_animation_direction=1
 
-    # --- Layout per tag (hyprland workspace semantics) ---
+    # --- Layout per tag — scroller everywhere (mango's scroll layout) ---
     tagrule=id:1, layout_name:scroller
-    tagrule=id:2, layout_name:tile
-    tagrule=id:4, layout_name:tile
-    tagrule=id:5, layout_name:tile
-    tagrule=id:7, layout_name:tile
-    tagrule=id:11, layout_name:tile
-    tagrule=id:14, layout_name:tile
+    tagrule=id:2, layout_name:scroller
+    tagrule=id:3, layout_name:scroller
+    tagrule=id:4, layout_name:scroller
+    tagrule=id:5, layout_name:scroller
+    tagrule=id:6, layout_name:scroller
+    tagrule=id:7, layout_name:scroller
+    tagrule=id:8, layout_name:scroller
+    tagrule=id:9, layout_name:scroller
+    tagrule=id:10, layout_name:scroller
+    tagrule=id:11, layout_name:scroller
+    tagrule=id:12, layout_name:scroller
+    tagrule=id:13, layout_name:scroller
+    tagrule=id:14, layout_name:scroller
+    tagrule=id:15, layout_name:scroller
+    tagrule=id:16, layout_name:scroller
+    tagrule=id:17, layout_name:scroller
+    tagrule=id:18, layout_name:scroller
+    tagrule=id:19, layout_name:scroller
+    tagrule=id:20, layout_name:scroller
+    tagrule=id:21, layout_name:scroller
 
     # --- Class routing (hyprland workspace routing) ---
     windowrule=appid:^([Vv]ivaldi-stable|[Vv]ivaldi)$,tags:2
