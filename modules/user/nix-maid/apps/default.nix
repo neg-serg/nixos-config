@@ -40,7 +40,6 @@ in
       && n != "dsh-checkpoint"
       && n != "dsh-read-tags"
       && n != "dsh-advisor"
-      && n != "dsh-browser"
       && n != "dsh-desktop"
       && n != "dsh-json-error-recovery"
       && n != "dsh-notepad-write-guard"
