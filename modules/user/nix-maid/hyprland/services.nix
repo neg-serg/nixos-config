@@ -33,6 +33,7 @@ in
     pkgs.hyprlock # Hyprland's GPU-accelerated screen locking utility
     pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
     pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
+    pkgs.wayback-x11 # X11 compatibility layer for wlroots/Xwayland
     pkgs.wl-clipboard # Command-line copy/paste utilities for Wayland
 
     pkgs.hyprcursor # modern cursor theme format for Hyprland
