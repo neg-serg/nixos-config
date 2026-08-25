@@ -8,6 +8,7 @@ script loudly instead of silently shipping Chinese again.
 
 Usage: patch-preset-names.py <dsh-package-root>
 """
+
 import pathlib
 import sys
 

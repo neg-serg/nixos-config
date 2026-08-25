@@ -12,6 +12,7 @@ Config lives in ~/.config/zestbay/ (shared host home). ZestBay is restarted
 after add/rm so it loads the change; if the zestbay systemd user service is
 not present yet, it falls back to pkill + detached relaunch.
 """
+
 import base64
 import json
 import os

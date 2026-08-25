@@ -16,6 +16,7 @@ Commands:
                                  auto-wire Osmose/RME MIDI + audio to game-stereo
   carlactl projects [NAME]       list/saved .carxp projects, launch via fzf
 """
+
 import os
 import re
 import sys
