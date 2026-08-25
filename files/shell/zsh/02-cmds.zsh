@@ -65,21 +65,6 @@ _exists docker && {
 }
 
 _exists broot && autoload -Uz br
-
 autoload zc
-
-# fastfetch: animated random-variant black-metal blizzard logo (kitty graphics protocol)
-# Each launch picks a random blizzard-*.webp and animates it via kitten icat.
-fastfetch() {
-  if command -v kitten >/dev/null 2>&1 && [ -t 1 ] && [ -d /etc/nixos/viz ]; then
-    local logo
-    logo=$(ls /etc/nixos/viz/blizzard-*.webp 2>/dev/null | shuf -n1)
-    if [ -n "$logo" ]; then
-      kitten icat -n --align left "$logo" | command fastfetch --raw - "$@"
-      return $?
-    fi
-  fi
-  command fastfetch "$@"
-}
 
 # vim: ft=zsh:nowrap
