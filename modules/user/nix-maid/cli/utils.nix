@@ -79,8 +79,6 @@ lib.mkMerge [
           }
         },
         "modules": [
-          { "type": "title", "format": "{1}@{2}", "color": { "user": "#53A6A6", "at": "#395573", "host": "1;#BF85CC" } },
-          { "type": "separator", "string": "─", "times": 45 },
           { "type": "os", "key": "", "format": "{3}" },
           { "type": "kernel", "key": "", "format": "{1} {2} ({4})" },
           { "type": "uptime", "key": "" },
