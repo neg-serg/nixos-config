@@ -227,3 +227,10 @@ lsp/eval).
   `docs/howto/agent-backlog-research.ru.md` (vibe покрыт воркфлоу; autoresearch-runtime малый;
   computer средний; browser снят (2026-08, CDP не используется); collab — не начинать). hub-peer-IRC
   — бэклог (объём/безопасность).
+
+## Не-плагиновые отложенные проблемы (конфиг odin)
+
+- **fastfetch: анимированный WebP-логотип (метель) выводится СЛИШКОМ МАЛЕНЬКИМ** при запуске
+  `fastfetch --logo-type kitty-icat --logo <blizzard-*.webp>` — картинка получается маленькой, не
+  устраивает. Нужно увеличить размер через `--logo-width` / `--logo-height` (или `logo.width/height`
+  в конфиге), чтобы череп с метелью занимал заметную часть рядом с инфо-колонкой.
