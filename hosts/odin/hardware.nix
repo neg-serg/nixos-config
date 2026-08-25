@@ -230,8 +230,9 @@
   # Avoid double compression for swap
   zramSwap.enable = false;
 
-  # Swap on nvme0n1p2 (507G)
-  swapDevices = [ { device = "/dev/nvme0n1p2"; } ];
+  # Swap on Samsung 9100 PRO (507G). by-uuid: nvmeN device names reordered
+  # between boots (was /dev/nvme0n1p2, now /dev/nvme1n1p2 after reboot).
+  swapDevices = [ { device = "/dev/disk/by-uuid/452a938c-0183-4aac-8bfd-ef67ee2a2d59"; } ];
 
   # TPM is enabled via modules/security/tpm-sudo.nix when
   # features.security.tpmSudo.enable = true. Historically hard-disabled here
