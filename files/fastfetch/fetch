@@ -1,0 +1,49 @@
+#!/bin/bash
+# fastfetch with animated black-metal blizzard logo.
+# Usage: fetch [ash|ember|ice|#RRGGBB] [--shader none|invert|rgb|invert:rgb] [--big] [args]
+#   no color    -> random variant; palette -> random from it; #RRGGBB -> generates custom color
+#   --shader    -> apply invert / rgb / invert:rgb (generates a cached shader variant)
+#   --big       -> larger logo box (and larger custom render)
+set -e
+LOGO_DIR="$HOME/.local/share/fastfetch/logos"
+mkdir -p "$LOGO_DIR"
+color=""; shader="none"; big=0; newargs=()
+while (( $# )); do
+  a="$1"; shift
+  case "$a" in
+    --big) big=1 ;;
+    --shader) shader="$1"; shift ;;
+    ash|ember|ice) color="$a" ;;
+    \#*) color="$a" ;;
+    *) newargs+=("$a") ;;
+  esac
+done
+logo=""
+if [ -n "$color" ] && [ "${color:0:1}" = "#" ]; then
+  key=$(echo "$color" | tr -d '#' | tr 'A-F' 'a-f')
+  suffix=""; [ "$shader" != "none" ] && suffix="-$shader"
+  logo="$LOGO_DIR/blizzard-custom-$key$suffix.webp"
+  if [ ! -f "$logo" ]; then
+    SZ="640x806"; [ "$big" = 1 ] && SZ="900x1130"
+    python3 "$HOME/.local/share/fastfetch/make_blizzard.py" --dither fs --color "$color" --size "$SZ" --shader "$shader" --out "$logo" >/dev/null 2>&1 || true
+  fi
+elif [ -n "$color" ]; then
+  if [ "$shader" != "none" ]; then
+    logo="$LOGO_DIR/blizzard-fs-$color-$shader.webp"
+    [ -f "$logo" ] || python3 "$HOME/.local/share/fastfetch/make_blizzard.py" --dither fs --palette "$color" --shader "$shader" --out "$logo" >/dev/null 2>&1 || true
+  else
+    logo=$(printf '%s\n' "$LOGO_DIR"/blizzard-*-"$color".webp 2>/dev/null | shuf -n1)
+  fi
+elif [ "$shader" != "none" ]; then
+  pal=$(printf '%s\n' ash ember ice | shuf -n1)
+  logo="$LOGO_DIR/blizzard-fs-$pal-$shader.webp"
+  [ -f "$logo" ] || python3 "$HOME/.local/share/fastfetch/make_blizzard.py" --dither fs --palette "$pal" --shader "$shader" --out "$logo" >/dev/null 2>&1 || true
+fi
+[ -z "$logo" ] && logo=$(printf '%s\n' "$LOGO_DIR"/blizzard-*.webp 2>/dev/null | shuf -n1)
+[ -z "$logo" ] && logo="$LOGO_DIR/blizzard-fs-ash.webp"
+W=29; H=36; [ "$big" = 1 ] && W=36; H=45
+if [ -t 1 ] && command -v kitten >/dev/null 2>&1; then
+  exec fastfetch --logo-type kitty-icat --logo "$logo" --logo-width "$W" --logo-height "$H" "${newargs[@]}"
+else
+  exec fastfetch "${newargs[@]}"
+fi
