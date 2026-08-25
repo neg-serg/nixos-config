@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.WindowManager
-import Quickshell.Wayland.Toplevel
+import Quickshell.Wayland
 
 // Wlr backend for the shell: reads workspace state from ext-workspace-v1
 // (mango implements it) and exposes the same interface as HyprlandWatcher.
