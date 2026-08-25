@@ -236,6 +236,7 @@ in
   features.wine.enable = true;
   features.wine.apps = { }; # Windows apps for the wineapps CLI; add only what you need
   features.gui.vicinae.manageConfig = true; # Nix-managed vicinae theme/settings (neg.nvim-style)
+  features.gui.mangowm.enable = true; # MangoWM compositor as an alternative to Hyprland
   hardware.gpu.corectrl.enable = true;
   # Override default networkUnits: odin uses systemd-networkd, not NetworkManager
   features.system.logTtys.networkUnits = [
