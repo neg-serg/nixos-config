@@ -117,5 +117,21 @@ zle_highlight=(region:bg=228 paste:none)
 _zpcompinit_custom   # run compinit eagerly so completion/fuzzy matchers init before widgets
 zsh-defer dircolors_init
 
+# fastfetch: animated random-variant black-metal blizzard logo (kitty graphics protocol)
+# Each launch picks a random blizzard-*.webp and animates it via kitten icat.
+# Defined here (directly sourced in .zshrc) so it is active on the first fastfetch,
+# unlike the deferred 02-cmds.zsh.
+fastfetch() {
+  if command -v kitten >/dev/null 2>&1 && [ -t 1 ] && [ -d /etc/nixos/viz ]; then
+    local logo
+    logo=$(ls /etc/nixos/viz/blizzard-*.webp 2>/dev/null | shuf -n1)
+    if [ -n "$logo" ]; then
+      kitten icat -n --align left "$logo" | command fastfetch --raw - "$@"
+      return $?
+    fi
+  fi
+  command fastfetch "$@"
+}
+
 # vim: ft=zsh:nowrap
 
