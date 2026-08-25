@@ -162,8 +162,8 @@ CenteredCapsuleRow {
     }
 
     onClicked: {
-        switchProc.cmd = ["hyprctl", "switchxkblayout", "current", "next"];
-        switchProc.start();
+        // Session-aware: hyprctl on Hyprland, mango IPC dispatch on MangoWM.
+        Services.HyprlandWatcher.switchKeyboardLayout();
     }
 
     Connections {

@@ -40,6 +40,7 @@ Scope {
         function onFocusedMonitorEvent() { root.focusedMonitorEvent(); }
     }
 
+    function switchKeyboardLayout() { if (backend) backend.switchKeyboardLayout(); }
     function refreshWorkspace() { if (backend) backend.refreshWorkspace(); }
     function refreshBinds() { if (backend) backend.refreshBinds(); }
     function refreshDevices() { if (backend) backend.refreshDevices(); }
