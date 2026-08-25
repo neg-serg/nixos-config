@@ -126,7 +126,7 @@ fastfetch() {
     local logo
     logo=$(ls /etc/nixos/viz/blizzard-*.webp 2>/dev/null | shuf -n1)
     if [ -n "$logo" ]; then
-      command fastfetch --logo-type kitty-icat --logo "$logo" "$@"
+      command fastfetch --logo-type kitty --logo "$logo" "$@"
       return $?
     fi
   fi
