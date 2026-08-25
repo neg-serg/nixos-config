@@ -8,18 +8,32 @@
       url = "github:DeterminateSystems/determinate/73b3bdb962a070aa088ac310e606ff760bcc0cf7";
       inputs.nix.follows = "nix-src";
       # Determinate's own nixpkgs pins flakehub nixpkgs-weekly, which is
-      # unreachable from this host; follow the stable nixos-26.05 input instead.
+      # unreachable from this host; follow the top-level nixpkgs input instead.
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-src = {
       url = "github:DeterminateSystems/nix-src/b1123363e07a216333222d483cfe8e682b95d7c1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    # NB: the declared branch is nixos-26.05 (stable, deliberate — commit
-    # e16f4269 reverted the nixpkgs-weekly experiment). If flake.lock drifts
-    # (e.g. pins a weekly tarball), re-align with:
+    # Moved to nixos-unstable (2026-08) for newer Hyprland/Sway/color-mgmt
+    # (ICC + HDR). Deliberate, even though it re-locks nixpkgs: the pin from
+    # nixos-26.05 (commit e16f4269, which reverted the weekly experiment) had
+    # a stable Hyprland 0.55.4; unstable tracks 0.56+ with HDR/color-management
+    # and keeps the compositor ecosystem in sync. Re-align drift with:
     #   nix flake lock --update-input nixpkgs
+    #
+    # Pinned to a concrete unstable HEAD rev because nix (in this repo/state)
+    # refuses to re-resolve the floating `nixos-unstable` ref from the lock's
+    # stale `nixos-25.11`/`nixos-26.05` originals (nix flake update/lock/
+    # --recreate-lock-file all leave it at the old rev). Bump this rev with
+    # `nix flake lock --update-input nixpkgs` once the ref resolution settles.
+    # Pinned to an OLDER well-cached nixos-unstable rev (2026-08-12, Hyprland
+    # 0.56.2) instead of the raw branch tip. The fresh tip (2c423e03, 08-22)
+    # is not yet a published channel release, so many packages aren't in
+    # cache.nixos.org and must build from source (flaky). This rev is a
+    # published channel release → packages substitute from cache. Later,
+    # bump with `nix flake lock --update-input nixpkgs`.
+    nixpkgs.url = "github:NixOS/nixpkgs/9f160d09877b6203da7a04528b014469441e1bd9";
     nix-flatpak = {
       url = "github:gmodena/nix-flatpak";
     };
