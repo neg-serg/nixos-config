@@ -207,21 +207,122 @@ let
     bind=NONE,Escape,setkeymode,default
     keymode=default
   '';
+  # start-mango: mango session launcher (mirrors the repo's hypr-start flow:
+  # import env into the user session, start the session target, exec mango).
+  startMango = pkgs.writeShellScriptBin "start-mango" ''
+    set -euo pipefail
+    LOG="/tmp/mango-start.log"
+    echo "Starting mango at $(date)" > "$LOG"
+    sleep 1
+    echo "Importing environment..." >> "$LOG"
+    dbus-update-activation-environment --systemd --all
+    systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME
+    systemctl --user start mango-session.target
+    echo "Executing mango..." >> "$LOG"
+    exec mango "$@"
+  '';
 in
 {
   config = lib.mkIf (config.lib.neg.enabled "gui" && cfg.enable) (
     lib.mkMerge [
       {
-        # MangoWM — dwl-based tiling Wayland compositor (wl-only branch: Vulkan
-        # renderer, ICC/HDR capable; no scenefx effects). A separate session/WM
-        # integration is not wired (odin uses greetd + autologin into Hyprland).
         environment.systemPackages = [
           pkgs.mango # MangoWM compositor (wl-only branch)
+          startMango # mango session launcher (env import + session target)
+          pkgs.swayidle # idle daemon (locks via swaylock after 2 min)
+          pkgs.swaylock # lock screen for the mango session
+          pkgs.waybar # status bar for the mango session
         ];
+
+        # Mango session target — mirrors hyprland-session.target so user
+        # services (waybar, swayidle, ...) start/stop with the session.
+        systemd.user.targets.mango-session = {
+          unitConfig = {
+            Description = "MangoWM compositor session";
+            Documentation = [ "man:systemd.special(7)" ];
+            BindsTo = [ "graphical-session.target" ];
+            Wants = [ "graphical-session-pre.target" ];
+            After = [ "graphical-session-pre.target" ];
+          };
+        };
+
+        systemd.user.services = {
+          swayidle = {
+            description = "MangoWM idle daemon (swayidle -> swaylock)";
+            wantedBy = [ "mango-session.target" ];
+            bindsTo = [ "mango-session.target" ];
+            after = [ "mango-session.target" ];
+            serviceConfig = {
+              ExecStart = "${pkgs.swayidle}/bin/swayidle -w timeout 120 '${pkgs.swaylock}/bin/swaylock -f'";
+              Restart = "on-failure";
+              RestartSec = "2";
+            };
+          };
+          swaylock-sleep = {
+            description = "Lock screen before sleep";
+            before = [ "sleep.target" ];
+            wantedBy = [ "sleep.target" ];
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = "${pkgs.swaylock}/bin/swaylock -f";
+            };
+          };
+          waybar = {
+            description = "Waybar status bar for MangoWM";
+            wantedBy = [ "mango-session.target" ];
+            bindsTo = [ "mango-session.target" ];
+            after = [ "mango-session.target" ];
+            serviceConfig = {
+              ExecStart = "${pkgs.waybar}/bin/waybar";
+              Restart = "on-failure";
+              RestartSec = "2";
+            };
+          };
+        };
       }
       (neg.mkHomeFiles {
         ".config/mango/config.conf".text = configConf;
         ".config/mango/Display-P3.icc".source = config.lib.neg.path "files/gui/mango/Display-P3.icc";
+        ".config/swaylock/config".text = ''
+          color=000000
+          ring-color=ffffff
+          inside-color=000000
+          key-hl-color=006FCC
+          bs-hl-color=FF6B81
+          line-color=00000000
+          separator-color=00000000
+          font=Iosevka
+          indicator-caps-lock
+        '';
+        ".config/waybar/config".text = ''
+          {
+            "layer": "top",
+            "height": 28,
+            "spacing": 8,
+            "modules-left": ["wlr/workspaces"],
+            "modules-center": ["clock"],
+            "modules-right": ["pulseaudio", "backlight", "network", "cpu", "memory", "tray"],
+            "wlr/workspaces": {
+              "format": "{name}",
+              "on-click": "activate"
+            },
+            "clock": { "format": "{:%H:%M}", "tooltip-format": "{:%a %d %b %Y}" },
+            "pulseaudio": { "format": "{volume}%", "on-click": "swayosd-client --output-volume mute-toggle" },
+            "backlight": { "format": "{percent}%" },
+            "network": { "format-wifi": "{essid}", "format-ethernet": "eth" },
+            "cpu": { "format": "CPU {usage}%" },
+            "memory": { "format": "RAM {}%" },
+            "tray": { "spacing": 6 }
+          }
+        '';
+        ".config/waybar/style.css".text = ''
+          * { font-family: Iosevka; font-size: 12px; }
+          window#waybar { background: rgba(24, 28, 37, 0.95); color: #CBD6E5; }
+          #workspaces button { color: #CBD6E5; background: transparent; border-radius: 4px; padding: 0 6px; }
+          #workspaces button.active { color: #181C25; background: #006FCC; }
+          #clock, #pulseaudio, #backlight, #network, #cpu, #memory, #tray { padding: 0 8px; }
+          #clock { font-weight: bold; }
+        '';
       })
     ]
   );
