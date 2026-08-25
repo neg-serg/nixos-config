@@ -18,6 +18,12 @@ python3.pkgs.buildPythonPackage rec {
   pyproject = true;
   build-system = [ python3.pkgs.setuptools ];
 
+  # The pythonMetadataCheckPhase queries importlib.metadata.version(pname), but
+  # this project's distribution is named "camilladsp" (not "pycamilladsp"), so
+  # the check raises PackageNotFoundError and breaks the build. The package
+  # builds and imports fine — only the over-strict name check fails.
+  dontCheckPythonMetadata = "1";
+
   dependencies = [
     python3.pkgs.pyyaml
     python3.pkgs.websocket-client
