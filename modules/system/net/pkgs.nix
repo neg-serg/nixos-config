@@ -47,7 +47,6 @@ in
     pkgs.cacert # Bundle of CA certificates for SSL/TLS verification
     pkgs.curlie # curl wrapper that adds HTTPie-like features
     pkgs.httpie # Modern, user-friendly command-line HTTP client
-    pkgs.httpstat # curl statistics visualizer
     pkgs.xh # Friendly and fast tool to send HTTP requests
 
     # -- IP / Routing --
