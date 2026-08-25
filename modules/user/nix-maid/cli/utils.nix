@@ -102,7 +102,7 @@ lib.mkMerge [
           { "type": "player", "key": "" },
           { "type": "users", "key": "" },
           { "type": "locale", "key": "" },
-          { "type": "command", "key": "", "text": "curl -s --max-time 4 'https://wttr.in/?format=%C+%t' 2>/dev/null || true" },
+          { "type": "weather", "key": "", "location": "St Petersburg", "timeout": 6 },
           { "type": "break" },
           { "type": "colors", "symbol": "circle", "paddingLeft": 0 }
         ]
