@@ -50,6 +50,13 @@ lib.mkMerge [
           "percent": {
             "type": 3
           },
+          "temp": {
+            "color": {
+              "green": "#6FBF9E",
+              "yellow": "#E0A23C",
+              "red": "#E35D54"
+            }
+          },
           "color": {
             "output": "#9FB4CC",
             "keys": "1;#477AB3",
