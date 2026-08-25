@@ -12,6 +12,9 @@ with lib;
       enable = mkBool "enable Vicinae (Wayland app runner + window switcher)" false;
       manageConfig = mkBool "let Nix manage vicinae theme/settings (disable for interactive config)" false;
     };
+    mangowm = {
+      enable = mkBool "enable MangoWM (dwl-based Wayland compositor, alternative to Hyprland)" false;
+    };
     iconTheme = lib.mkOption {
       type = types.str;
       default = "kora-pgrey";

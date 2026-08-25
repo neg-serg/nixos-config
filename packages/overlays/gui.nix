@@ -61,4 +61,18 @@ in
         builtins.filter (f: f != "-DINSTALL_BROWSER_NATIVE_HOST:STRING=OFF") (old.cmakeFlags or [ ])
         ++ [ "-DINSTALL_BROWSER_NATIVE_HOST:STRING=ON" ];
     });
+
+  # mango (MangoWM): wl-only branch (vendored 2026-08-24) — the only mango build
+  # where ICC/HDR actually render: it links wlroots_0_20 directly (no scenefx) and
+  # creates the renderer via wlr_renderer_autocreate, so the Vulkan renderer (the
+  # only one in wlroots 0.20 with output_color_transform = true) can be used.
+  # Trade-off: no scenefx effects (blur/shadow/rounding) in this branch — that's a
+  # build/branch choice, not a config toggle. 0.16.x releases and main have the
+  # icc=/hdr= rules but a GLES2 fx_renderer that never applies color transforms
+  # (see mangowm/mango#1287). Vendored tarball: GitHub fetch is unreliable behind
+  # the proxy (relative-path pattern, see carla in overlay.nix).
+  mango = prev.mango.overrideAttrs (_old: {
+    version = "nightly-wl-only-2026-08-24";
+    src = ./../../files/sources/mango-wl-only-2026-08-24.tar.gz;
+  });
 }
