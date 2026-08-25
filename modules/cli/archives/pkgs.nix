@@ -8,12 +8,13 @@
 
     pkgs.lbzip2 # parallel bzip2
     pkgs.p7zip # 7z x
-    pkgs.pzip # parallel zip archiver
-    pkgs.rapidgzip # fast gzip unarchiver
+    # pkgs.rapidgzip removed — fails on python 3.14 / setuptools 83
+    # (nasmcompiler.py calls UnixCCompiler.__init__ with 4 positional args)
     pkgs.unar # archive extractor with broad format support
     pkgs.unrar-wrapper # unrar
     pkgs.unzip # zip archive operations
     pkgs.xz # xz archiver
     pkgs.zip # zip archiver
+    pkgs.wayback # self-hosted web archiving toolkit (Internet Archive / archive.today / IPFS)
   ];
 }
