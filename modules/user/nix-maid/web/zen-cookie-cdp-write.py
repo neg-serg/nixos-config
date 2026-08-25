@@ -24,7 +24,6 @@ import urllib.error
 
 from websocket import create_connection, WebSocket
 
-
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 

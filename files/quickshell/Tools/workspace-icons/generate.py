@@ -4,6 +4,7 @@
 Parses Hyprland workspace definitions, tracks glyph metadata, exports SVGs
 from preferred fonts (Font Awesome 6 Pro + fallbacks) and writes a manifest consumed by QuickShell.
 """
+
 from __future__ import annotations
 
 import argparse

@@ -9,6 +9,7 @@ Description:
   editor's local directory (lcd) to the caller's current working directory.
   Intended to be used from a shell integration/alias.
 """
+
 import os
 import neovim
 
