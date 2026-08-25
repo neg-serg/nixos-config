@@ -78,8 +78,8 @@ nixpkgs, стоит на odin):
   `Program Files/Common Files/VST3/Synapse Audio/LegendHZ.vst3` (VST3) + AAX.
 - **kiloHearts Ultimate v2.4.6** (4.3 ГБ): InnoSetup — `/S` НЕ работает (exit 5), нужен
   `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART` → `Program Files/Common Files/VST3/kiloHearts/` (48
-  плагинов: Snap Heap, Disperser, Multipass, kHs-модули; Phase Plant удалён 2026-08-25
-  (не поднимался в yabridge — «failed to start wine host»-класс проблем, см. ниже).
+  плагинов: Snap Heap, Disperser, Multipass, kHs-модули; Phase Plant удалён 2026-08-25 (не
+  поднимался в yabridge — «failed to start wine host»-класс проблем, см. ниже).
 - После установки: `yabridgectl add <каталог с dll/vst3>` + `yabridgectl sync` + `carlactl list`.
 
 ### Legend HZ: «запустите от администратора»
@@ -166,11 +166,11 @@ nixpkgs, стоит на odin):
 - **Windows (yabridge)**: Legend HZ (моно, MiniMoog-style), + 48 модулей kiloHearts (FX: Snap Heap,
   Disperser, Multipass, kHs-…). Phase Plant удалён (2026-08-25) — не поднимался через yabridge.
 - **Нативные (Linux, без wine)**: Vital (wavetable), Dexed (FM/DX7), Surge XT (wavetable/VA,
-  MPE-capable — добавлен fc4387ea/eaf74df1), Cardinal (модульный VCV-Rack-стиль, VST3).
-  ВНИМАНИЕ: nixpkgs-пакет `odyssey` — это PostgreSQL pooler от Яндекса, НЕ синтезатор
-  (проверено 2026-08-21, `nix eval nixpkgs#odyssey.meta.description`). Настоящий open-source
-  ARP-Odyssey-стиль VA synth — Odin 2 (`pkgs.odin2`), но пользователь его не захотел — строка
-  `pkgs.odyssey` остаётся в конфиге как есть (осознанное решение, коммит-реверт ceba4734).
+  MPE-capable — добавлен fc4387ea/eaf74df1), Cardinal (модульный VCV-Rack-стиль, VST3). ВНИМАНИЕ:
+  nixpkgs-пакет `odyssey` — это PostgreSQL pooler от Яндекса, НЕ синтезатор (проверено 2026-08-21,
+  `nix eval nixpkgs#odyssey.meta.description`). Настоящий open-source ARP-Odyssey-стиль VA synth —
+  Odin 2 (`pkgs.odin2`), но пользователь его не захотел — строка `pkgs.odyssey` остаётся в конфиге
+  как есть (осознанное решение, коммит-реверт ceba4734).
 - **Переключение**: `carlactl list` — что стоит; `carlactl play vst3:<имя>` — запустить в
   carla-jack-single и автоматически заруоутить (Osmose + RME MIDI → events-in, аудио → game-stereo);
   `carlactl stop` — остановить. carlactl play сам останавливает предыдущий движок (через PIDFILE).
@@ -185,9 +185,9 @@ nixpkgs, стоит на odin):
 
 - **Пакет**: nixpkgs `vcv-rack` = **Rack Free 2.6.6** (`/run/current-system/sw/bin/Rack`). Движок
   бесплатный; платные модули привязываются к **аккаунту VCV** (email+пароль), серийников нет.
-- **Запуск**: `systemd-run --user --unit=rack --collect bash -lc 'export DISPLAY=:0
-  WAYLAND_DISPLAY=wayland-1 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/Xauthority;
-  Rack > /tmp/rack.log 2>&1'` (окно — XWayland, class GLFW-Application).
+- **Запуск**:
+  `systemd-run --user --unit=rack --collect bash -lc 'export DISPLAY=:0 WAYLAND_DISPLAY=wayland-1 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/Xauthority; Rack > /tmp/rack.log 2>&1'`
+  (окно — XWayland, class GLFW-Application).
 - **Вход в аккаунт (активация лицензии)**: меню-бар Rack компактный, слева (File/Edit/View/Engine/
   Library/Help). Клик по **Library** открывает диалог **«Register VCV account»** с полями Email,
   Password и кнопкой Log in — там вводится email+пароль от vcvrack.com, после чего Rack скачивает
@@ -195,36 +195,38 @@ nixpkgs, стоит на odin):
   только кликом с удержанием (`xdotool mousedown; sleep 0.4; xdotool mouseup`) и нестабильно
   переживает повторные клики — если меню «не открылось», повторить hold-click.
 - **Окно за экраном (1921,1 и т.п.)**: лечится lua-диспатчерами Hyprland (см. секцию ниже).
-- **Позиция окна** сохраняется в `~/.local/share/Rack2/settings.json` (windowX/Y — null по умолчанию;
-  окно ставит сам Hyprland).
+- **Позиция окна** сохраняется в `~/.local/share/Rack2/settings.json` (windowX/Y — null по
+  умолчанию; окно ставит сам Hyprland).
 
 ## Hyprland 0.55: lua-диспатчеры для окон (research 2026-08-21)
 
 Классические `bind =`/диспатчеры в lua-конфиге НЕ регистрируются — только `hl.dsp.*` через
-`hyprctl dispatch '<lua-expr>'`. Проверенные вызовы (для окна Rack, address из `hyprctl clients -j`):
+`hyprctl dispatch '<lua-expr>'`. Проверенные вызовы (для окна Rack, address из
+`hyprctl clients -j`):
 
 - `hl.dsp.window.move({ window = "address:0x…", workspace = 2 })` — на другой workspace;
-- `hl.dsp.window.float({ window = "address:0x…", action = "on" })` — включить floating
-  (обязательно перед move/resize: move на tile-окне игнорируется, «No floating window found»);
+- `hl.dsp.window.float({ window = "address:0x…", action = "on" })` — включить floating (обязательно
+  перед move/resize: move на tile-окне игнорируется, «No floating window found»);
 - `hl.dsp.window.resize({ window = "address:0x…", x = 1100, y = 750, relative = false })`;
 - `hl.dsp.window.move({ window = "address:0x…", x = 410, y = 165, relative = false })`;
-- `hl.dsp.window.fullscreen({ window = "address:0x…", action = "unset" })` — снять fullscreen
-  (иначе move/resize пишут «Window is fullscreen»; action: toggle/set/unset);
+- `hl.dsp.window.fullscreen({ window = "address:0x…", action = "unset" })` — снять fullscreen (иначе
+  move/resize пишут «Window is fullscreen»; action: toggle/set/unset);
 - `hl.dsp.focus({ window = "address:0x…" })` — фокус (переключает на workspace окна);
 - `hl.dsp.workspace.move({ id = 2, monitor = "DP-2" })` — переключение workspace.
 - Селекторы: `window = "address:0x…"`, `"class:…"`. Ошибка «expected a dispatcher» = имя/аргументы
   не из lua-API; «hl.focus: window not found» = неверный адрес.
-- grim: `grim -g 'X,Y WxH'` — логические координаты; `HYPRLAND_INSTANCE_SIGNATURE` после
-  перезапуска Hyprland надо брать заново: `export HYPRLAND_INSTANCE_SIGNATURE=$(ls /run/user/1000/hypr/ | head -1)`.
-- Клики/скриншоты: desktop tool click принимает **логические** координаты (курсор в `hyprctl
-  cursorpos` — физические, ×2 при scale 2.0). Для XWayland-окон надёжнее xdotool
+- grim: `grim -g 'X,Y WxH'` — логические координаты; `HYPRLAND_INSTANCE_SIGNATURE` после перезапуска
+  Hyprland надо брать заново:
+  `export HYPRLAND_INSTANCE_SIGNATURE=$(ls /run/user/1000/hypr/ | head -1)`.
+- Клики/скриншоты: desktop tool click принимает **логические** координаты (курсор в
+  `hyprctl cursorpos` — физические, ×2 при scale 2.0). Для XWayland-окон надёжнее xdotool
   (`DISPLAY=:0 xdotool mousemove --sync X Y; xdotool click 1`, координаты физические).
 
 ## Обслуживание: поколения системы и store (2026-08-21)
 
 - На odin накапливается ~200 поколений/неделю. Чистка с сохранением последних N:
   `printf 'qwe\n' | sudo -S nix-env -p /nix/var/nix/profiles/system --delete-generations 1054 1055 …`
-  (или `--delete-generations +50` для «оставить 50»), затем `sudo nix-collect-garbage`
-  (без -d, чтобы не снести оставленные поколения) — freed 8.3 GiB / 9281 path (2026-08-21).
-- Поколение, содержавшее odin2 (1237), оставлено пользователем — поэтому odin2 живёт в store;
-  GC его не вычистит, пока 1237 в профиле.
+  (или `--delete-generations +50` для «оставить 50»), затем `sudo nix-collect-garbage` (без -d,
+  чтобы не снести оставленные поколения) — freed 8.3 GiB / 9281 path (2026-08-21).
+- Поколение, содержавшее odin2 (1237), оставлено пользователем — поэтому odin2 живёт в store; GC его
+  не вычистит, пока 1237 в профиле.
