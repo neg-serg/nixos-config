@@ -25,7 +25,7 @@ in
           # RX 9070 XT (Navi 48, gfx1201) — native ROCm support, no override
           user = "ollama";
           group = "ollama";
-          models = "/zero/ai/ollama"; # existing 413G model store on the zero pool
+          modelsDir = "/zero/ai/ollama"; # existing 413G model store on the zero pool
         };
 
         # Recursively fix ownership of the existing model store for the ollama
