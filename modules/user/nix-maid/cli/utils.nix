@@ -32,48 +32,67 @@ lib.mkMerge [
           "padding": {
             "left": 4,
             "right": 4
+          },
+          "color": {
+            "1": "#395573",
+            "2": "#477AB3",
+            "3": "#6096BF",
+            "4": "#53A6A6"
           }
         },
         "display": {
-          "separator": " ",
+          "brightColor": true,
+          "separator": "  ",
           "size": {
             "maxPrefix": "TB"
           },
           "percent": {
-            "type": 1
+            "type": 3
           },
           "color": {
-            "output": "01;38;5;248",
-            "keys": "38;5;24;1"
+            "output": "#9FB4CC",
+            "keys": "1;#477AB3",
+            "separator": "#395573"
+          },
+          "bar": {
+            "char": {
+              "elapsed": "━",
+              "total": "─"
+            },
+            "width": 22,
+            "border": {
+              "left": " ",
+              "right": " "
+            },
+            "color": {
+              "elapsed": "#53A6A6",
+              "total": "#27303C"
+            }
           }
         },
         "modules": [
+          { "type": "title", "format": "{1}@{2}", "color": { "user": "#53A6A6", "at": "#395573", "host": "1;#BF85CC" } },
+          { "type": "separator", "string": "─", "times": 45 },
           { "type": "os", "key": "", "format": "{3}" },
           { "type": "kernel", "key": "", "format": "{1} {2} ({4})" },
           { "type": "uptime", "key": "" },
-          { "type": "wm", "key": "" },
-          { "type": "command", "key": "", "text": "(nix-store --query --requisites /run/current-system | wc -l | tr -d '\\n') && echo ' (nix; /run/current-system)'" },
-          { "type": "host", "key": "" },
-          { "type": "monitor", "key": "" },
-          { "type": "theme", "key": "" },
-          { "type": "icons", "key": "" },
-          { "type": "cursor", "key": "" },
+          { "type": "command", "key": "", "text": "n=$(timeout 3 nix-store --query --requisites /run/current-system 2>/dev/null | wc -l); [ $n -gt 0 ] 2>/dev/null && echo $n '(nix; /run/current-system)' || echo nix-store-busy" },
           { "type": "shell", "key": "" },
+          { "type": "wm", "key": "" },
           { "type": "terminal", "key": "" },
           { "type": "terminalfont", "key": "" },
-          { "type": "terminalsize", "key": "" },
-          { "type": "cpu", "key": "" },
-          { "type": "physicalmemory", "key": "" },
-          { "type": "board", "key": "" },
-          { "type": "bios", "key": "" },
-          { "type": "gpu", "key": "󰢮", "driverSpecific": true },
+          { "type": "cpu", "key": "", "temp": true },
+          { "type": "gpu", "key": "󰢮", "driverSpecific": true, "temp": true },
+          { "type": "memory", "key": "" },
+          { "type": "swap", "key": "󰄢" },
+          { "type": "disk", "key": "", "folders": ["/"] },
+          { "type": "disk", "key": "󰙃", "folders": ["/zero"] },
+          { "type": "localip", "key": "", "defaultRouteOnly": true },
           { "type": "vulkan", "key": "󰢮" },
-          { "type": "physicaldisk", "key": "" },
           { "type": "sound", "key": "" },
           { "type": "player", "key": "" },
-          { "type": "users", "key": "" },
-          { "type": "locale", "key": "" },
-          { "type": "weather", "key": "" }
+          { "type": "break" },
+          { "type": "colors", "symbol": "circle", "paddingLeft": 0 }
         ]
       }
     '';
