@@ -300,6 +300,15 @@ in
       untangle = pprev.untangle.overrideAttrs (_: {
         src = ./../files/sources/untangle-1.2.1.tar.gz;
       });
+      # distutils' own test suite fails under the nix builder with
+      # "RuntimeError: can't start new thread" (concurrent-thread tests). The
+      # package builds fine; disable check so builds are deterministic. Needed
+      # on this python3 instance too (the audio stack's scons/ffado/pipewire
+      # env uses it).
+      distutils = pprev.distutils.overrideAttrs (_o: {
+        doCheck = false;
+        checkPhase = "echo 'distutils tests disabled (can\\'t start new thread)'";
+      });
     };
   };
 
