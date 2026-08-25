@@ -44,8 +44,83 @@ let
               untangle = _pythonSuper.untangle.overrideAttrs (_: {
                 src = ../files/sources/untangle-1.2.1.tar.gz;
               });
+              distutils = _pythonSuper.distutils.overrideAttrs (_o: {
+                doCheck = false;
+              });
             };
           };
+        })
+        # onetbb's test suite is flaky under the nix builder (SIGABRT in
+        # concurrency tests: test_collaborative_call_once, test_concurrent_vector,
+        # test_task_arena ...). The library builds fine; only its tests crash
+        # intermittently, which fails the build. Disable check so it builds
+        # deterministically.
+        (_final: prev: {
+          onetbb = prev.onetbb.overrideAttrs (_old: {
+            doCheck = false;
+          });
+        })
+        # distutils' own test suite fails under the nix builder with
+        # "RuntimeError: can't start new thread" (concurrent-thread tests).
+        # scons (and others) pull python3Packages.distutils directly; force
+        # doCheck=false + a no-op checkPhase at the python3Packages package-set
+        # level so every consumer builds distutils without the failing tests.
+        (_final: prev: {
+          python3Packages = prev.python3Packages.overrideScope (
+            _pythonSelf: _pythonSuper: {
+              distutils = _pythonSuper.distutils.overrideAttrs (_o: {
+                doCheck = false;
+                checkPhase = "echo 'distutils tests disabled (can\\'t start new thread)'";
+              });
+            }
+          );
+        })
+        # pipewire builds FFADO (FireWire) and ROC support by default. FFADO
+        # pulls scons + a python3 env whose distutils tests fail with "can't
+        # start new thread" under the nix builder. Neither FFADO nor ROC
+        # streaming is needed on this host; disable both so pipewire builds
+        # without the ffado/roc/scons/distutils chain.
+        (_final: prev: {
+          pipewire = prev.pipewire.override {
+            ffadoSupport = false;
+            rocSupport = false;
+          };
+        })
+        # nixos-unstable (0.56) rewrote buildFHSEnv on lib.extendMkDerivation
+        # (fixed-point __functor: the argument may be a config set OR a function).
+        # The older wrappers in packages/overlay.nix and neg-serg/nixos-pkgs do
+        # `args: prev.buildFHSEnv (args // {...})`, which throws "expected a set
+        # but found a function" when called with the new function-style argument.
+        # Rebuild buildFHSEnv from the stock nixpkgs one (instead of the composed,
+        # wrapped one) and inject the /sbin/ldconfig Steam RT3 fix here.
+        #
+        # Applied last so it wins over both broken wrappers.
+        (_final: _prev: {
+          buildFHSEnv =
+            let
+              # Stock nixpkgs buildFHSEnv, but with allowUnfree so steam's FHS
+              # env (which includes the unfree steam-unwrapped) evaluates.
+              orig =
+                (import inputs.nixpkgs {
+                  inherit system;
+                  config.allowUnfree = true;
+                }).buildFHSEnv;
+              ldconfigFix = ''
+                if [ -L $out/usr/sbin/ldconfig ] && [ -f $out/usr/bin/ldconfig ]; then
+                  cp -f $out/usr/bin/ldconfig $out/usr/sbin/ldconfig
+                fi
+              '';
+            in
+            args:
+            orig (
+              if builtins.isFunction args then
+                (
+                  final:
+                  (args final) // { extraBuildCommands = ((args final).extraBuildCommands or "") + ldconfigFix; }
+                )
+              else
+                (args // { extraBuildCommands = (args.extraBuildCommands or "") + ldconfigFix; })
+            );
         })
       ];
       config = {
