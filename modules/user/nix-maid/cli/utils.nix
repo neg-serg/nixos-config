@@ -88,7 +88,7 @@ lib.mkMerge [
           { "type": "terminalfont", "key": "" },
           { "type": "terminalsize", "key": "" },
           { "type": "cpu", "key": "", "temp": true },
-          { "type": "gpu", "key": "󰢮", "driverSpecific": true, "temp": true },
+          { "type": "gpu", "key": "󰢮", "driverSpecific": true, "temp": true, "percent": { "type": 1 } },
           { "type": "memory", "key": "" },
           { "type": "board", "key": "" },
           { "type": "bios", "key": "" },
