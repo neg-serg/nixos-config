@@ -60,6 +60,8 @@ let
     gappiv=0
     gappoh=0
     gappov=0
+    # fullscreen tearing for games (0=off, 1=any window, 2=fullscreen only)
+    allow_tearing=2
     animations=1
     animation_type_open=slide
     animation_type_close=slide
@@ -108,6 +110,7 @@ let
     windowrule=appid:^(Obsidian)$,tags:19
 
     # --- Float rules ---
+    windowrule=tags:4, isfloating:1
     windowrule=appid:^swayimg$,isfloating:1
     windowrule=title:^(Open File|Select a File|Choose wallpaper|Open Folder|Save As|File Upload),isfloating:1
     windowrule=title:^.*Picture-in-Picture.*,isfloating:1
