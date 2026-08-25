@@ -145,6 +145,18 @@ Item {
         onTriggered: root.refreshFullscreen()
     }
 
+    // Cycle keyboard layout (used by the bar capsule click).
+    function switchKeyboardLayout() {
+        layoutSwitch.cmd = ["hyprctl", "switchxkblayout", "current", "next"];
+        layoutSwitch.start();
+    }
+
+    ProcessRunner {
+        id: layoutSwitch
+        cmd: ["true"]
+        restartMode: "never"
+    }
+
     function refreshWorkspace() {
         if (!root.available) return;
         if (!workspaceProbe.running) workspaceProbe.start();
