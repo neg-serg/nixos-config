@@ -32,14 +32,18 @@
     networks = {
       "10-lan-v2" = {
         matchConfig.Name = "net0";
-        # Try DHCP first to discover MikroTik's network
+        # BPI R4 Pro (new router): DHCP from its LAN (192.168.1.x); the
+        # static fallback keeps access to 192.168.1.1 even before DHCP is up.
         networkConfig.DHCP = "ipv4";
-        # Fallback: common MikroTik subnets if DHCP fails
+        # Keep system DNS (local unbound) — don't take DNS from the BPI yet
+        dhcpV4Config.UseDNS = false;
+        # Legacy MikroTik fallbacks, kept until the BPI migration is done
         address = [
+          "192.168.1.50/24"
           "10.0.2.140/27"
           "192.168.88.140/24"
         ];
-        # Don't block boot waiting for net0 (MikroTik may boot later)
+        # Don't block boot waiting for net0
         linkConfig.RequiredForOnline = "no";
       };
       "11-lan" = {
