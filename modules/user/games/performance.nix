@@ -83,6 +83,9 @@ in
         pkgs.stress-ng # CPU/RAM stress testing for stability verification
         pkgs.glmark2 # OpenGL benchmark for GPU stability/performance
         pkgs.vkmark # Vulkan benchmark for GPU stability/performance
+        pkgs.s-tui # terminal stress + monitoring UI with live graphs (OCCT-like)
+        pkgs.mprime # Prime95 CPU stress test (Mersenne torture)
+        pkgs.stressapptest # Google stressapptest — RAM/CPU stability test
         # gpu-oc: write AMD GPU overclock settings to pp_od_clk_voltage (root)
         # Usage: gpu-oc <sclk-offset> <vddgfx-offset>  (e.g. gpu-oc 150 -50)
         #        gpu-oc reset                          (reset to stock)
