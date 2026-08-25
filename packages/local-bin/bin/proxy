@@ -64,7 +64,17 @@ gen_cfg() {
     python3 << 'PYEOF'
 import base64, json, os, re, sys, urllib.parse
 
-text = os.environ["NODES_TEXT"]
+def load_nodes():
+    # Nodes come via NODES_FILE (path) when the list is big: exporting
+    # 1000+ nodes as one env var exceeds MAX_ARG_STRLEN (128 KiB) and
+    # breaks every exec with "Argument list too long".
+    nf = os.environ.get("NODES_FILE")
+    if nf:
+        with open(nf, "r") as f:
+            return f.read()
+    return os.environ["NODES_TEXT"]
+
+text = load_nodes()
 cfg_path = os.environ["CFG_PATH"]
 lan_auth = os.environ.get("LAN_AUTH", "")
 
@@ -246,7 +256,7 @@ for line in text.strip().split('\n'):
         continue
 
 if not outbounds:
-    print("  ERROR: no parseable nodes in NODES_TEXT")
+    print("  ERROR: no parseable nodes in node list")
     sys.exit(1)
 
 tags = [o["tag"] for o in outbounds]
@@ -356,7 +366,11 @@ PYEOF
         return
     fi
     echo "  First run: creating config..."
-    export NODES_TEXT="$FALLBACK"
+    TMPD=$(mktemp -d /tmp/proxy-bootstrap.XXXXXX)
+    trap 'rm -rf "$TMPD"' EXIT
+    printf '%s\n' "$FALLBACK" > "$TMPD/nodes.txt"
+    unset NODES_TEXT
+    export NODES_FILE="$TMPD/nodes.txt"
     export CFG_PATH="$CONFIG"
     export LAN_AUTH="$(load_lan_auth)"
     gen_cfg
@@ -364,14 +378,25 @@ PYEOF
 
 # ============================================================
 # validate_nodes — python: TCP-scan + e2e-тест кандидатов,
-# печатает рабочие строки в stdout. Env: NODES_TEXT, E2E_CAP,
-# MIN_WORKING, VALIDATE_TMP (temp dir for throwaway configs).
+# печатает рабочие строки в stdout. Env: NODES_FILE (path to node
+# list; preferred for big lists) or NODES_TEXT, E2E_CAP, MIN_WORKING,
+# VALIDATE_TMP (temp dir for throwaway configs).
 # ============================================================
 validate_nodes() {
     python3 << 'PYEOF'
 import asyncio, base64, json, os, re, shutil, socket, subprocess, sys, time, urllib.parse
 
-text = os.environ["NODES_TEXT"]
+# Nodes come via NODES_FILE (path) when the list is big: exporting
+# 1000+ nodes as one env var exceeds MAX_ARG_STRLEN (128 KiB) and
+# breaks every exec with "Argument list too long".
+def load_nodes():
+    nf = os.environ.get("NODES_FILE")
+    if nf:
+        with open(nf, "r") as f:
+            return f.read()
+    return os.environ["NODES_TEXT"]
+
+text = load_nodes()
 e2e_cap = int(os.environ.get("E2E_CAP", "60"))
 min_working = int(os.environ.get("MIN_WORKING", "3"))
 tmp = os.environ.get("VALIDATE_TMP", "/tmp/proxy-validate")
@@ -707,12 +732,18 @@ refresh() {
         exit 1
     fi
 
-    export NODES_TEXT="$ALL"
-    export VALIDATE_TMP="$(mktemp -d /tmp/proxy-validate.XXXXXX)"
-    WORKING=$(validate_nodes) || { rc=$?; echo "$WORKING" | tail -4; rm -rf "$VALIDATE_TMP"; return $rc; }
+    # Node lists (up to ~1200 lines) exceed the kernel's per-string exec
+    # limit (MAX_ARG_STRLEN, 128 KiB): exporting them as one env var made
+    # every exec fail with "Argument list too long". Pass them via file.
+    TMPD=$(mktemp -d /tmp/proxy-refresh.XXXXXX)
+    trap 'rm -rf "$TMPD"' EXIT
+    printf '%s\n' "$ALL" > "$TMPD/nodes.txt"
+    unset NODES_TEXT
+    export NODES_FILE="$TMPD/nodes.txt"
+    export VALIDATE_TMP="$TMPD/validate"
+    WORKING=$(validate_nodes) || { rc=$?; echo "$WORKING" | tail -4; return $rc; }
     WORKING_LINES=$(echo "$WORKING" | sed -n '/^[hvst]\(less\|ysteria2\|s\|rojan\):\/\//p')
     COUNT=$(echo "$WORKING_LINES" | grep -c '://' || true)
-    rm -rf "$VALIDATE_TMP"
 
     if [ -z "$WORKING_LINES" ]; then
         echo "  ERROR: validation produced no working nodes; keeping existing config"
@@ -720,7 +751,7 @@ refresh() {
     fi
 
     echo "  Regenerating config with $COUNT validated nodes..."
-    export NODES_TEXT="$WORKING_LINES"
+    printf '%s\n' "$WORKING_LINES" > "$TMPD/nodes.txt"
     export CFG_PATH="$CONFIG"
     export LAN_AUTH="$(load_lan_auth)"
     gen_cfg
