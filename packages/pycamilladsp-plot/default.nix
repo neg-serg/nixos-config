@@ -18,6 +18,10 @@ python3.pkgs.buildPythonPackage rec {
   pyproject = true;
   build-system = [ python3.pkgs.setuptools ];
 
+  # Same pythonMetadataCheckPhase failure as pycamilladsp: the distribution name
+  # differs from pname, so the metadata check raises PackageNotFoundError.
+  dontCheckPythonMetadata = "1";
+
   dependencies = [
     python3.pkgs.jsonschema
     python3.pkgs.pyyaml
