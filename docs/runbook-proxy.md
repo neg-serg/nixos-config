@@ -133,13 +133,15 @@ proxy refresh
    `https://www.gstatic.com/generate_204`.
 1. Regenerates `~/.config/sing-box-trojan/config.json` from the working subset only
    (vless/hysteria2/shadowsocks/trojan all supported by the generator).
-1. If fewer than `MIN_WORKING` (default 3) nodes pass, **keeps the existing config untouched** and
-   exits with an error.
+1. If **no** nodes pass, **keeps the existing config untouched** and exits with an error. If at
+   least one passes but fewer than `MIN_WORKING` (default 3), it proceeds with the verified subset
+   (with a warning) instead of leaving the user with nothing.
 1. Restarts the sing-box service with the new config.
 
-Env knobs: `E2E_CAP`, `MIN_WORKING`. Free pools die fast, so a working config can degrade to dead
-nodes within days — re-run `proxy refresh` and it validates again instead of trusting the pool
-blindly.
+Env knobs: `E2E_CAP`, `MIN_WORKING`, `NODE_SAMPLE` (default 400; per-URL random sample; at fetch,
+xhttp/splithttp links and ss-plugin links are filtered out as unsupported by stock sing-box). Free
+pools die fast, so a working config can degrade to dead nodes within days — re-run `proxy refresh`
+and it validates again instead of trusting the pool blindly.
 
 ### Dashboard
 
@@ -188,8 +190,9 @@ The generated config resolves every domain **on this host** before handing the n
 
 Free pools die fast and are mostly dead (TCP-open ≠ working tunnel, many accept connections but
 never proxy data). `proxy refresh` now validates every candidate (TCP scan + e2e probe, see
-"refresh" above) and refuses to clobber a working config when fewer than `MIN_WORKING` nodes pass —
-so when the proxy degrades again, just re-run `proxy refresh`.
+"refresh" above); it keeps the existing config untouched only when **no** node passes, and otherwise
+proceeds with the verified subset (warning if fewer than `MIN_WORKING`). When the proxy degrades,
+just re-run `proxy refresh`.
 
 ### Verifying the proxy works
 
@@ -233,7 +236,9 @@ When you run `proxy refresh`, the script fetches nodes from three subscription U
 - `https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge.txt` —
   ss/trojan (large aggregator, ~4.6k links)
 
-Each URL is queried with a 12-second timeout; up to 60 random links per URL are kept. The script:
+Each URL is queried with a 20-second timeout; up to `NODE_SAMPLE` (default 400) random links per URL
+are kept, and xhttp/splithttp (unsupported by stock sing-box) plus ss-plugin links are filtered out.
+The script:
 
 1. Merges them with any fallback nodes from the SOPS secret (fallback always included first).
 1. TCP-scans every unique host:port (asyncio) and e2e-probes the open ones through throwaway
@@ -243,8 +248,8 @@ Each URL is queried with a 12-second timeout; up to 60 random links per URL are 
    that re-probes every 5 minutes and routes to the lowest latency. The generator supports vless
    (tls/reality), hysteria2, shadowsocks and trojan.
 1. Private IPs are routed direct.
-1. If fewer than `MIN_WORKING` (default 3) nodes pass, keeps the existing config untouched and exits
-   with an error.
+1. If **no** nodes pass, keeps the existing config untouched and exits with an error; if fewer than
+   `MIN_WORKING` (default 3) pass, it proceeds with the verified subset and warns.
 
 If all URLs fail **and** there are no fallback nodes, the command errors out with:
 
