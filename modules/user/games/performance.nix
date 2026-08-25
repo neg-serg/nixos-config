@@ -45,47 +45,9 @@ in
         package = pkgs.gamescope; # SteamOS session compositing window manager
       };
 
-      gamemode = {
-        enable = true;
-        enableRenice = true;
-        settings = {
-          general = {
-            softrealtime = "on";
-            renice = -10;
-            reaper_freq = 5;
-            desiredgov = "performance";
-            inhibit_screensaver = 1;
-            ioprio = 0; # realtime I/O
-          };
-          gpu = {
-            apply_gpu_optimisations = 1;
-            gpu_device = 0;
-            amd_performance_level = "high";
-          };
-          custom = {
-            start = "${pkgs.writeShellScript "gamemode-start" ''
-              # GameMode start: GPU performance high, CPU governor performance
-              echo high | tee /sys/class/drm/card*/device/power_dpm_force_performance_level >/dev/null 2>&1 || true
-              # Disable NUMA balancing (page migration jitter not wanted during gaming)
-              echo 0 | tee /proc/sys/kernel/numa_balancing 2>/dev/null || true
-              # Set energy performance preference to performance
-              echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference 2>/dev/null || true
-              # Set energy performance bias to 0 (max performance)
-              echo 0 | tee /sys/devices/system/cpu/cpu*/power/energy_perf_bias 2>/dev/null || true
-            ''}";
-            end = "${pkgs.writeShellScript "gamemode-end" ''
-              # GameMode end: restore GPU power profile
-              echo auto | tee /sys/class/drm/card*/device/power_dpm_force_performance_level >/dev/null 2>&1 || true
-              # Restore NUMA balancing
-              echo 1 | tee /proc/sys/kernel/numa_balancing 2>/dev/null || true
-              # Restore energy performance preference to default
-              echo default | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference 2>/dev/null || true
-              # Restore energy performance bias to 6 (normal — balanced)
-              echo 6 | tee /sys/devices/system/cpu/cpu*/power/energy_perf_bias 2>/dev/null || true
-            ''}";
-          };
-        };
-      };
+      # gamemode removed — keeps failing to build on the unstable rev
+      # (its setuid wrapper + dependency chain fail; "1 dependency failed").
+      # Re-add once it builds on nixos-unstable.
     };
 
     # Systemd slice for game processes — CPU set scoped to gaming cores
@@ -114,7 +76,7 @@ in
     environment = {
 
       systemPackages = [
-        pkgs.mangohud # Vulkan/OpenGL overlay for FPS/frametime telemetry
+        # pkgs.mangohud removed — fails to build on the unstable rev
         pkgs.neg.game # Unified game launcher — CPU pinning, Gamescope, sessions
         pkgs.corectrl # GUI for AMD GPU overclocking and fan control
         pkgs.ryzenadj # AMD CPU overclocking (PBO, curve optimizer) via SMU
@@ -162,13 +124,6 @@ in
         io_write=1
         gamemode=1
       '';
-    };
-
-    security.wrappers.gamemode = {
-      owner = "root";
-      group = "root";
-      source = "${pkgs.gamemode}/bin/gamemoderun"; # Optimise Linux system performance on demand
-      capabilities = "cap_sys_ptrace,cap_sys_nice+pie";
     };
   };
 }
