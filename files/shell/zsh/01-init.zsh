@@ -122,9 +122,11 @@ zsh-defer dircolors_init
 # Defined here (directly sourced in .zshrc) so it is active on the first fastfetch,
 # unlike the deferred 02-cmds.zsh.
 fastfetch() {
-  if command -v kitten >/dev/null 2>&1 && [ -t 1 ] && [ -d /etc/nixos/viz ]; then
+  # assets in XDG_DATA_HOME/fastfetch/logos; glob via printf+shuf (no ls -> no eza clash)
+  if command -v kitten >/dev/null 2>&1 && [ -t 1 ]; then
     local logo
-    logo=$(ls /etc/nixos/viz/blizzard-*.webp 2>/dev/null | shuf -n1)
+    logo=$(printf '%s
+' "$XDG_DATA_HOME"/fastfetch/logos/blizzard-*.webp(N) 2>/dev/null | shuf -n1)
     if [ -n "$logo" ]; then
       command fastfetch --logo-type kitty-icat --logo "$logo" --logo-width 36 --logo-height 44 "$@"
       return $?
