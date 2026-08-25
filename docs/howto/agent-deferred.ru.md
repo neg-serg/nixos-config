@@ -169,9 +169,8 @@ lsp/eval).
   задач.
 - ~~локальное код-ревью~~ — **готово**: `.agent/scripts/code-review.mjs` (git diff → локальная
   модель → замечания; тест на ab-bench-диффе: 8 замечаний).
-- ~~browser~~ — **реализован** (dsh-browser: CDP browser-WS паттерн, dedicated tabs; на Vivaldi
-  работают browser-level команды и Page.navigate; полная page-автоматизация — headless chromium
-  :9223 после rebuild).
+- ~~browser~~ — **реализован и удалён (2026-08)**: dsh-browser + headless chromium убраны из конфига
+  — CDP не используется (AGENTS.md hard rule), автоматизация только через desktop.
 - ~~computer~~ — **расширен (2026-08-20, dsh-desktop v0.2)**: computer-use-linux v0.4.9 prebuilt +
   patchelf; **слои**: native zero-daemon (hyprctl windows/ focused/focus/move/resize + grim
   screenshot + wtype type/press_key), CUL MCP per-call
@@ -224,6 +223,7 @@ lsp/eval).
   XT 16GB)**: `qwen3:8b-q8_0` 26s/52 tok/s — дефолт; `gemma4:12b` 47s;
   `deepseek-r1-distill-qwen:14b` 48s; `qwen3dot5:latest` 6s, но зацикливается/не JSON — снят с
   дефолта; `qwen3.5:27b` не влезает в 16GB VRAM (>300s).
-- **collab / vibe-рантайм / autoresearch-runtime / computer / browser** — ресёрч «как делать»:
+- **collab / vibe-рантайм / autoresearch-runtime / computer** — ресёрч «как делать»:
   `docs/howto/agent-backlog-research.ru.md` (vibe покрыт воркфлоу; autoresearch-runtime малый;
-  browser/computer средние; collab — не начинать). hub-peer-IRC — бэклог (объём/безопасность).
+  computer средний; browser снят (2026-08, CDP не используется); collab — не начинать). hub-peer-IRC
+  — бэклог (объём/безопасность).

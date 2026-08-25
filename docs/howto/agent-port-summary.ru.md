@@ -1,7 +1,8 @@
 # Порт omp / oh-my-opencode → DSH: итоговая сводка
 
-Что получилось в результате всей работы: 19 server-плагинов DSH, доки, воркфлоу, промпты, плюс
-проверка на живом хосте после `nixos-rebuild switch`.
+Что получилось в результате всей работы: 18 server-плагинов DSH (dsh-browser с headless chromium
+удалён позже, 2026-08), доки, воркфлоу, промпты, плюс проверка на живом хосте после
+`nixos-rebuild switch`.
 
 ## 1. Плагины (все в `modules/user/nix-maid/apps/`, все в live-профиле)
 
@@ -24,7 +25,6 @@
 | dsh-hub                       | супервизируемые процессы: start/send/wait/stop/list                                                                     | ✅ cat/sleep                                                                   | 5b5a0b85                               |
 | dsh-ast-grep                  | структурный search/rewrite через ast-grep (1-based позиции)                                                             | ✅ реальный бинарь: search/rewrite                                             | 715c6e5e, 51a37f10                     |
 | dsh-checkpoint                | checkpoint/rewind (soft): замена разведки на отчёт                                                                      | ✅                                                                             | 163735c6                               |
-| dsh-browser                   | CDP-тул browser: dedicated tabs, navigate/screenshot/extract/click/type (Vivaldi :9222, chromium :9223)                 | ✅ browser-WS: createTarget/attach/navigate/close на Vivaldi                   | 1ba679bc                               |
 | dsh-desktop                   | desktop: doctor/windows/screenshot (grim) + click/type/scroll (MCP computer-use-linux)                                  | ✅ doctor+windows+grim на Hyprland                                             | 23670c12                               |
 
 ## 2. Доки и воркфлоу
@@ -54,8 +54,8 @@
 - Вживую срабатывали: boulder (продолжения по todo), category-skill-reminder, TTSR-инъекции.
 - Бенч LLM-моделей для memory-extractor (odin, RX 9070 XT 16GB): qwen3:8b-q8_0 26s/52 tok/s —
   дефолт; gemma4:12b 47s; deepseek-r1:14b 48s; qwen3dot5 зацикливается; qwen3.5:27b не влезает.
-- Реальное использование (2026-08-20): desktop screenshot→vision (опознаны реальные окна), browser
-  navigate на 127.0.0.1:3080→extract_text→screenshot→vision (опознан dsh web GUI) — обе цепочки ✅;
+- Реальное использование (2026-08-20): desktop screenshot→vision (опознаны реальные окна) ✅; browser
+  (dsh-browser / headless chromium) удалён в 2026-08 — CDP не используется (AGENTS.md hard rule);
   перед vision скриншот уменьшать до ~1280px (контекст VL 4096 токенов).
 
 ## 4. Что осталось (честно)
@@ -68,7 +68,7 @@
 - Не проверено живьём (нужны реальная сессия/тулчейн): lsp rust-analyzer (в песочнице rustup без
   default-тулчейна; на хосте бинарь в PATH — нужен проект с Cargo.toml + тулчейном); boulder toast
   (GUI-элемент, headless не проверить). Логика остальных — см. §3.
-- Не закрыто (в agent-deferred): mid-stream TTSR, collab/autoresearch/vibe-рантайм/computer/browser.
+- Не закрыто (в agent-deferred): mid-stream TTSR, collab/autoresearch/vibe-рантайм/computer.
 
 ## 5. Уроки
 

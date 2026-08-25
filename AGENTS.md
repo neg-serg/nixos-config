@@ -163,10 +163,9 @@ Golden tool set (agent habits) — hard rules
   Gotcha: `rg -r` means *replace*, not recursive; recursive is the default.
 
 Automation: desktop only, CDP is not used (hard rule)
-- CDP is not needed and is not used: the browser tool (CDP tabs of headless chromium :9223 / Vivaldi
-  :9222) must not be called at all — the user explicitly asked to record this. GUI interaction —
-  only through the `desktop` tool; do validation without CDP (e.g., a DOM stub in Node
-  instead of a headless browser).
+- CDP is not needed and is not used: headless chromium and dsh-browser were removed (2026-08); the
+  browser tool must not be called at all — GUI interaction only through the `desktop` tool; do
+  validation without CDP (e.g., a DOM stub in Node instead of a headless browser).
 - Prefer the `desktop` tool (computer-use-linux: real windows, AT-SPI semantic selectors,
   grim screenshots → local vision) for HUMAN-LIKE GUI interaction — working an application or
   a website as the user would (click/type/scroll by element name, read the actual screen).
