@@ -114,6 +114,7 @@ in
       fi
       case "$1" in
         *[Hh]yprland*) exec /run/current-system/sw/bin/start-hyprland > /tmp/hyprland-debug.log 2>&1 ;;
+        mango|start-mango) exec /run/current-system/sw/bin/start-mango > /tmp/mango-session.log 2>&1 ;;
         *) exec "$@" > /tmp/wayland-session.log 2>&1 ;;
       esac
     '';
