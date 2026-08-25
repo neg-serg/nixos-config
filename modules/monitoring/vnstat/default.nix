@@ -22,7 +22,10 @@
   # would break bare `vnstat` invocations).
   # The config is passed explicitly with --config because the daemon
   # otherwise reads the uneditable config baked into the vnstat store path.
-  environment.etc."vnstat.conf".text = ''
+  # mkForce: nixos-unstable's vnstat service module also defines
+  # environment.etc."vnstat.conf".source (generated from services.vnstat.settings),
+  # which conflicts with our .text definition.
+  environment.etc."vnstat.conf".text = lib.mkForce ''
     AlwaysAddNewInterfaces 1
   '';
 
