@@ -62,7 +62,7 @@ lan_msg() {
 # ============================================================
 gen_cfg() {
     python3 << 'PYEOF'
-import base64, json, os, sys, urllib.parse
+import base64, json, os, re, sys, urllib.parse
 
 text = os.environ["NODES_TEXT"]
 cfg_path = os.environ["CFG_PATH"]
@@ -83,6 +83,13 @@ def clean(s):
     s = s.replace('&amp;', '&')
     if '#' in s: s = s.split('#')[0]
     return {k: v[0].split('#')[0] for k, v in urllib.parse.parse_qs(s).items()}
+
+def hp_parse(hp):
+    """Split 'host:port[/path...]' -> (host, port) or None."""
+    m = re.match(r'^([^:?#/]+):([0-9]+)(?:[/?#].*)?$', hp)
+    if not m:
+        return None
+    return (m.group(1), int(m.group(2)))
 
 def parse_line(line):
     """Return an outbound dict or None."""
@@ -106,7 +113,9 @@ def parse_line(line):
         uuid = r.split('@')[0]
         a = r.split('@', 1)[1] if '@' in r else r
         hp = a.split('?')[0]
-        host = hp.rsplit(':', 1)[0]; port = int(hp.rsplit(':', 1)[1])
+        sp = hp_parse(hp)
+        if sp is None: return None
+        host, port = sp
         p = clean(a.split('?', 1)[1] if '?' in a else '')
         ob = {"type": "vless", "tag": "node", "server": host,
               "server_port": port, "uuid": uuid, "packet_encoding": "xudp"}
@@ -122,6 +131,9 @@ def parse_line(line):
                                   "public_key": p.get('pbk', ''),
                                   "short_id": p.get('sid', '')}
             ob["tls"] = tls
+        flow = p.get("flow", "")
+        if flow == "xtls-rprx-vision":
+            ob["flow"] = flow
         tp = p.get('type', '').lower()
         if tp in ('xhttp', 'splithttp'):
             return None
@@ -161,7 +173,9 @@ def parse_line(line):
             method, rest = dec.split(':', 1)
             password, hp = rest.rsplit('@', 1)
         hp = hp.split('#')[0]
-        host = hp.rsplit(':', 1)[0]; port = int(hp.rsplit(':', 1)[1])
+        sp = hp_parse(hp)
+        if sp is None: return None
+        host, port = sp
         p = clean(r.split('?', 1)[1] if '?' in r else '')
         if p.get('plugin'):
             return None
@@ -172,7 +186,9 @@ def parse_line(line):
         password = urllib.parse.unquote(r.split('@')[0])
         a = r.split('@', 1)[1] if '@' in r else r
         hp = a.split('?')[0]
-        host = hp.rsplit(':', 1)[0]; port = int(hp.rsplit(':', 1)[1])
+        sp = hp_parse(hp)
+        if sp is None: return None
+        host, port = sp
         p = clean(a.split('?', 1)[1] if '?' in a else '')
         ob = {"type": "trojan", "tag": "node", "server": host,
               "server_port": port, "password": password}
@@ -380,72 +396,150 @@ def clean(s):
     if '#' in s: s = s.split('#')[0]
     return {k: v[0].split('#')[0] for k, v in urllib.parse.parse_qs(s).items()}
 
+def hp_parse(hp):
+    """Split 'host:port[/path...]' -> (host, port) or None."""
+    m = re.match(r'^([^:?#/]+):([0-9]+)(?:[/?#].*)?$', hp)
+    if not m:
+        return None
+    return (m.group(1), int(m.group(2)))
+
 # Full outbound parser for probe configs (same rules as gen_cfg).
 def parse_outbound(line):
-    if line.startswith('ss://'):
-        r = line.split('ss://')[1]
-        if '@' in r:
-            ui, hp = r.split('@', 1)
-            if ':' not in ui:
-                dec = b64dec(ui)
-                if ':' not in dec: return None
-                method, password = dec.split(':', 1)
+    try:
+        if line.startswith('hysteria2://'):
+            r = line.split('hysteria2://')[1]
+            a = r.split('@', 1)[1] if '@' in r else r
+            h = a.split('?')[0]
+            sp = hp_parse(h)
+            if not sp: return None
+            host, port = sp
+            pwd = r.split('@')[0] if '@' in r else r.split('?')[0]
+            p = clean(a.split('?', 1)[1] if '?' in a else '')
+            ob = {"type": "hysteria2", "tag": "node", "server": host,
+                  "server_port": port, "password": pwd,
+                  "tls": {"enabled": True, "insecure": True,
+                          "server_name": p.get('sni', host)}}
+            if 'obfs' in p:
+                ob["obfs"] = {"type": p['obfs'], "password": p.get('obfs-password', '')}
+            return ob
+        if line.startswith('vless://'):
+            r = line.split('vless://')[1]
+            uuid = r.split('@')[0]
+            a = r.split('@', 1)[1] if '@' in r else r
+            hp = a.split('?')[0]
+            sp = hp_parse(hp)
+            if not sp: return None
+            host, port = sp
+            p = clean(a.split('?', 1)[1] if '?' in a else '')
+            ob = {"type": "vless", "tag": "node", "server": host,
+                  "server_port": port, "uuid": uuid, "packet_encoding": "xudp"}
+            sec = p.get('security', '')
+            if sec in ('tls', 'reality', 'xtls'):
+                fp = p.get('fp', 'chrome')
+                if fp not in ('chrome','firefox','ios','android','edge','safari','360','random','randomized'):
+                    fp = 'chrome'
+                tls = {"enabled": True, "server_name": p.get('sni', host),
+                       "utls": {"enabled": True, "fingerprint": fp}}
+                if sec == 'reality' and len(p.get('pbk', '')) >= 32:
+                    tls["reality"] = {"enabled": True,
+                                      "public_key": p.get('pbk', ''),
+                                      "short_id": p.get('sid', '')}
+                ob["tls"] = tls
+            flow = p.get("flow", "")
+            if flow == "xtls-rprx-vision":
+                ob["flow"] = flow
+            tp = p.get('type', '').lower()
+            if tp in ('xhttp', 'splithttp'): return None
+            if tp == 'ws':
+                tr = {"type": "ws"}
+                if p.get('path'): tr["path"] = p['path']
+                if p.get('host'): tr["headers"] = {"Host": p['host']}
+                ob["transport"] = tr
+            elif tp == 'grpc':
+                tr = {"type": "grpc"}
+                if p.get('serviceName'): tr["service_name"] = p['serviceName']
+                ob["transport"] = tr
+            elif tp == 'httpupgrade':
+                tr = {"type": "httpupgrade"}
+                if p.get('host'): tr["host"] = p['host']
+                if p.get('path'): tr["path"] = p['path']
+                ob["transport"] = tr
+            elif tp == 'http':
+                tr = {"type": "http"}
+                if p.get('host'): tr["host"] = [p['host']]
+                if p.get('path'): tr["path"] = p['path']
+                ob["transport"] = tr
+            return ob
+        if line.startswith('ss://'):
+            r = line.split('ss://')[1]
+            if '@' in r:
+                ui, hp = r.split('@', 1)
+                if ':' not in ui:
+                    dec = b64dec(ui)
+                    if ':' not in dec: return None
+                    method, password = dec.split(':', 1)
+                else:
+                    method, password = ui.split(':', 1)
             else:
-                method, password = ui.split(':', 1)
-        else:
-            dec = b64dec(r.split('#')[0])
-            if ':' not in dec or '@' not in dec: return None
-            method, rest = dec.split(':', 1)
-            password, hp = rest.rsplit('@', 1)
-        hp = hp.split('#')[0]
-        host = hp.rsplit(':', 1)[0]; port = int(hp.rsplit(':', 1)[1])
-        p = clean(r.split('?', 1)[1] if '?' in r else '')
-        if p.get('plugin'): return None
-        return {"type": "shadowsocks", "tag": "node", "server": host,
-                "server_port": port, "method": method, "password": password}
-    if line.startswith('trojan://'):
-        r = line.split('trojan://')[1]
-        password = urllib.parse.unquote(r.split('@')[0])
-        a = r.split('@', 1)[1] if '@' in r else r
-        hp = a.split('?')[0]
-        host = hp.rsplit(':', 1)[0]; port = int(hp.rsplit(':', 1)[1])
-        p = clean(a.split('?', 1)[1] if '?' in a else '')
-        ob = {"type": "trojan", "tag": "node", "server": host,
-              "server_port": port, "password": password}
-        sec = p.get('security', 'tls')
-        if sec in ('tls', 'reality'):
-            fp = p.get('fp', 'chrome')
-            if fp not in ('chrome','firefox','ios','android','edge','safari','360','random','randomized'):
-                fp = 'chrome'
-            tls = {"enabled": True, "server_name": p.get('sni', host),
-                   "utls": {"enabled": True, "fingerprint": fp}}
-            if sec == 'reality' and len(p.get('pbk', '')) >= 32:
-                tls["reality"] = {"enabled": True,
-                                  "public_key": p.get('pbk', ''),
-                                  "short_id": p.get('sid', '')}
-            ob["tls"] = tls
-        tp = p.get('type', '').lower()
-        if tp in ('xhttp', 'splithttp'): return None
-        if tp == 'ws':
-            tr = {"type": "ws"}
-            if p.get('path'): tr["path"] = p['path']
-            if p.get('host'): tr["headers"] = {"Host": p['host']}
-            ob["transport"] = tr
-        elif tp == 'grpc':
-            tr = {"type": "grpc"}
-            if p.get('serviceName'): tr["service_name"] = p['serviceName']
-            ob["transport"] = tr
-        elif tp == 'httpupgrade':
-            tr = {"type": "httpupgrade"}
-            if p.get('host'): tr["host"] = p['host']
-            if p.get('path'): tr["path"] = p['path']
-            ob["transport"] = tr
-        elif tp == 'http':
-            tr = {"type": "http"}
-            if p.get('host'): tr["host"] = [p['host']]
-            if p.get('path'): tr["path"] = p['path']
-            ob["transport"] = tr
-        return ob
+                dec = b64dec(r.split('#')[0])
+                if ':' not in dec or '@' not in dec: return None
+                method, rest = dec.split(':', 1)
+                password, hp = rest.rsplit('@', 1)
+            hp = hp.split('#')[0]
+            sp = hp_parse(hp)
+            if not sp: return None
+            host, port = sp
+            p = clean(r.split('?', 1)[1] if '?' in r else '')
+            if p.get('plugin'): return None
+            return {"type": "shadowsocks", "tag": "node", "server": host,
+                    "server_port": port, "method": method, "password": password}
+        if line.startswith('trojan://'):
+            r = line.split('trojan://')[1]
+            password = urllib.parse.unquote(r.split('@')[0])
+            a = r.split('@', 1)[1] if '@' in r else r
+            hp = a.split('?')[0]
+            sp = hp_parse(hp)
+            if not sp: return None
+            host, port = sp
+            p = clean(a.split('?', 1)[1] if '?' in a else '')
+            ob = {"type": "trojan", "tag": "node", "server": host,
+                  "server_port": port, "password": password}
+            sec = p.get('security', 'tls')
+            if sec in ('tls', 'reality'):
+                fp = p.get('fp', 'chrome')
+                if fp not in ('chrome','firefox','ios','android','edge','safari','360','random','randomized'):
+                    fp = 'chrome'
+                tls = {"enabled": True, "server_name": p.get('sni', host),
+                       "utls": {"enabled": True, "fingerprint": fp}}
+                if sec == 'reality' and len(p.get('pbk', '')) >= 32:
+                    tls["reality"] = {"enabled": True,
+                                      "public_key": p.get('pbk', ''),
+                                      "short_id": p.get('sid', '')}
+                ob["tls"] = tls
+            tp = p.get('type', '').lower()
+            if tp in ('xhttp', 'splithttp'): return None
+            if tp == 'ws':
+                tr = {"type": "ws"}
+                if p.get('path'): tr["path"] = p['path']
+                if p.get('host'): tr["headers"] = {"Host": p['host']}
+                ob["transport"] = tr
+            elif tp == 'grpc':
+                tr = {"type": "grpc"}
+                if p.get('serviceName'): tr["service_name"] = p['serviceName']
+                ob["transport"] = tr
+            elif tp == 'httpupgrade':
+                tr = {"type": "httpupgrade"}
+                if p.get('host'): tr["host"] = p['host']
+                if p.get('path'): tr["path"] = p['path']
+                ob["transport"] = tr
+            elif tp == 'http':
+                tr = {"type": "http"}
+                if p.get('host'): tr["host"] = [p['host']]
+                if p.get('path'): tr["path"] = p['path']
+                ob["transport"] = tr
+            return ob
+    except Exception:
+        return None
     return None
 
 # Lightweight parse: only need server/server_port for scan; full config
@@ -574,10 +668,12 @@ finally:
 
 work = [k for k in candidates if okmap.get(k)]
 print("  E2E working: " + str(len(work)))
-if len(work) < min_working:
-    print("  ERROR: only " + str(len(work)) + " working nodes (need >= "
-          + str(min_working) + "); keeping existing config")
+if len(work) == 0:
+    print("  ERROR: no working nodes; keeping existing config")
     sys.exit(1)
+if len(work) < min_working:
+    print("  Warning: only " + str(len(work)) + " working nodes (wanted >= "
+          + str(min_working) + "); proceeding with verified subset")
 for k in work:
     print(cands[k])
 PYEOF
@@ -594,8 +690,10 @@ refresh() {
       "https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/protocols/vless.txt" \
       "https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/everything.txt" \
       "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge.txt"; do
-        data=$(curl --noproxy '*' -sL --connect-timeout 6 --max-time 12 "$url" 2>/dev/null | \
-          grep -E '^(vless|hysteria2|ss|trojan)://' | shuf | head -60 || true)
+        data=$(curl --noproxy '*' -sL --connect-timeout 8 --max-time 20 "$url" 2>/dev/null | \
+          grep -E '^(vless|hysteria2|ss|trojan)://' | \
+          grep -vE '[?&](type=xhttp|type=splithttp|plugin=)' | \
+          shuf | head -"${NODE_SAMPLE:-400}" || true)
         if [ -n "$data" ]; then
             echo "    $(echo "$data" | wc -l) from $(basename "$url")"
             NEW_NODES="$NEW_NODES"$'\n'"$data"
