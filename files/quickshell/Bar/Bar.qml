@@ -998,7 +998,10 @@ Scope {
                             }
                             LocalMods.PillCapsule {
                                 id: pillCapsule
+                                // Hidden once today's pill is taken; peeks back while the
+                                // bar is hovered so the taken state stays reachable.
                                 visible: WidgetRegistry.isVisible("pill")
+                                    && (!PillTracker.taken || rightPanel.panelHovering)
                                 Layout.alignment: Qt.AlignVCenter
                                 screen: modelData
                             }
