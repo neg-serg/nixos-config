@@ -36,7 +36,6 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding, hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-
 # ── Vivaldi 8.0 (Chromium ~130) Cookies table schema ─────────────────────────
 
 CREATE_COOKIES_SQL = """\
