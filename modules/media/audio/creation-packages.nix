@@ -45,10 +45,15 @@ let
     pkgs.odyssey # open-source ARP Odyssey-style VA synth (VST3/LV2)
     (pkgs.reaper.override {
       # reaper.fm is blocked/slow from this host — vendor the binary tarball
-      # in files/sources (fetched via the proxy).
+      # in files/sources (fetched via the proxy). Match ANY reaper.fm linux
+      # tarball URL (nixpkgs bumps the version, e.g. reaper773 -> reaper778;
+      # the vendored 7.73 source is used for whatever version nixpkgs wants).
       fetchurl =
         args:
-        if (args.url or "") == "https://www.reaper.fm/files/7.x/reaper773_linux_x86_64.tar.xz" then
+        if
+          builtins.match "https://www.reaper.fm/files/.*/reaper[0-9]+_linux_x86_64.tar.xz" (args.url or "")
+          != null
+        then
           (pkgs.runCommand "reaper-src.tar.xz" { } ''
             cp ${../../../files/sources/reaper773_linux_x86_64.tar.xz} $out
           '')
@@ -56,7 +61,8 @@ let
           pkgs.fetchurl args;
       # Skip ffmpeg (video import) and VLC: their sources are blocked or
       # build for a long time from source; audio use does not need them.
-      "ffmpeg_4-headless" = null;
+      # (nixos-unstable renamed reaper's `ffmpeg_4-headless` arg to `ffmpeg-headless`.)
+      "ffmpeg-headless" = null;
       vlc = null;
     }) # DAW (Linux native) — portable config, scriptable via ReaScript/OSC
     pkgs.stochas # probability-driven MIDI sequencer
