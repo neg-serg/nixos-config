@@ -34,7 +34,7 @@ let
   # retrained with data augmentation — best measured accuracy + sustain pedal.
   robustCheckpoint = pkgs.fetchurl {
     url = "https://zenodo.org/api/records/10610212/files/high_resolution_MAESTRO_augmentations.pth/content";
-    sha256 = "sha256-w/qXMHJb9Kdi8cFLyAzVmG6s2gGwJvWkolJc1geHYUE=";
+    sha256 = "sha256-sg9yBTq8FbePaJsqiwTAoGUpyEZuiYuRWAOh2qIBG54=";
   };
 
   # Pure-python wheels vendored at build time (not in nixpkgs):
@@ -70,10 +70,13 @@ pkgs.stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p $out/bin $out/lib/midi-transcribe/hft/checkpoint/MAESTRO-V3
+    mkdir -p $out/bin $out/lib/midi-transcribe/hft/corpus \
+      $out/lib/midi-transcribe/hft/checkpoint/MAESTRO-V3
 
     # hFT model code + dataset config (training/eval/corpus scripts not shipped)
     cp -r ${hftSrc}/model $out/lib/midi-transcribe/hft/
+    # store source is read-only; sed -i needs a writable tree
+    chmod -R u+w $out/lib/midi-transcribe/hft/model
     cp ${hftSrc}/corpus/config.json $out/lib/midi-transcribe/hft/corpus/config.json
     cp ${hftSrc}/LICENSE $out/lib/midi-transcribe/hft/LICENSE
 
@@ -95,13 +98,28 @@ pkgs.stdenv.mkDerivation {
     for w in ${builtins.concatStringsSep " " wheels}; do
       unzip -q "$w" -d $out/lib/midi-transcribe/vendor
     done
+    # dead import in the vendored wheel (matplotlib only for the repo's own
+    # plotting); not in the python env, so drop it
+    sed -i '/^import matplotlib.pyplot as plt$/d' \
+      $out/lib/midi-transcribe/vendor/piano_transcription_inference/models.py
+    # PyTorch >= 2.6 defaults torch.load to weights_only=True, which rejects
+    # this legacy checkpoint (numpy globals); checkpoint is hash-pinned, so
+    # full unpickling is safe
+    sed -i 's/torch.load(checkpoint_path, map_location=device)/torch.load(checkpoint_path, map_location=device, weights_only=False)/' \
+      $out/lib/midi-transcribe/vendor/piano_transcription_inference/inference.py
+    # bytedance's 160 MB size heuristic is for its own download; our pinned
+    # checkpoint is 104 MB, so drop the size clause to skip the re-download
+    sed -i 's/if not os.path.exists(checkpoint_path) or os.path.getsize(checkpoint_path) < 1.6e8:/if not os.path.exists(checkpoint_path):/' \
+      $out/lib/midi-transcribe/vendor/piano_transcription_inference/inference.py
     cp -r ${./shim} $out/lib/midi-transcribe/shim
 
     install -m 0755 ${./transcribe.py} $out/lib/midi-transcribe/transcribe.py
 
     cat > $out/bin/midi-transcribe <<EOF
     #!${pkgs.bash}/bin/bash
-    exec ${pythonEnv}/bin/python $out/lib/midi-transcribe/transcribe.py "$@"
+    # \$@ escaped: stdenv evals installPhase inside runPhase (\$@ = phase name),
+    # a bare "$@" would bake the literal phase name into the wrapper.
+    exec ${pythonEnv}/bin/python $out/lib/midi-transcribe/transcribe.py "\$@"
     EOF
     chmod +x $out/bin/midi-transcribe
 
