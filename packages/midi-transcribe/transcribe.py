@@ -3,7 +3,8 @@
 
 Backends:
   RobustAMT (Zenodo 10610212) — bytedance high-resolution architecture
-    retrained with data augmentation; includes sustain-pedal events.
+    retrained with data augmentation (note CRNN only; the pinned checkpoint
+    has no separate pedal head).
   hFT-Transformer (ISMIR 2023, arXiv 2307.04305) — piano, log-mel input.
 
 Post-processing (all on by default, disable with --post ...):
@@ -353,8 +354,13 @@ def run_robust(y, out, args):
     from piano_transcription_inference import PianoTranscription, sample_rate
 
     print("loading RobustAMT checkpoint...", file=sys.stderr)
+    # The pinned RobustAMT checkpoint stores a flat state_dict of the note
+    # CRNN (no pedal head), so use that model_type instead of the default
+    # Note_pedal wrapper (which expects separate note/pedal sub-dicts).
     transcriptor = PianoTranscription(
-        device="cpu", checkpoint_path=ROBUST_CHECKPOINT
+        device="cpu",
+        checkpoint_path=ROBUST_CHECKPOINT,
+        model_type="Regress_onset_offset_frame_velocity_CRNN",
     )
     # The upstream package never calls .eval(): dropout stays active and the
     # transcription is non-deterministic. Fix it (dropout OFF = as evaluated).
@@ -375,7 +381,7 @@ def run_robust(y, out, args):
             "onset": float(p.get("onset_time", p.get("onset"))),
             "offset": float(p.get("offset_time", p.get("offset"))),
         }
-        for p in result.get("est_pedal_events", [])
+        for p in (result.get("est_pedal_events") or [])
     ]
     notes = postprocess(
         _to_common(raw), pedals, args.post, bpm=args.bpm, grid=args.grid
