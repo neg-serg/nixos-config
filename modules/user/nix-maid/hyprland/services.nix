@@ -83,6 +83,23 @@ in
       # Restart quickshell to reconnect Wayland protocols after hypr reload
       systemctl --user restart quickshell.service > /dev/null 2>&1 || true
     '')
+    # quickshell-restart script (clean panel restart; waits for the service to come up)
+    (pkgs.writeShellScriptBin "quickshell-restart" ''
+      set -euo pipefail
+      ${lib.getExe pkgs.libnotify} "Quickshell" "Restarting panel..."
+      systemctl --user restart quickshell.service
+      # Wait until the service is active again (up to ~15s), then report.
+      for i in $(seq 1 30); do
+        state=$(systemctl --user is-active quickshell.service 2>/dev/null || true)
+        [ "$state" = "active" ] && break
+        sleep 0.5
+      done
+      if [ "$(systemctl --user is-active quickshell.service 2>/dev/null)" = "active" ]; then
+        ${lib.getExe pkgs.libnotify} "Quickshell" "Panel restarted."
+      else
+        ${lib.getExe pkgs.libnotify} -u critical "Quickshell" "Restart failed — check 'systemctl --user status quickshell'."
+      fi
+    '')
     # hypr-start script (fixes race conditions)
     (pkgs.writeShellScriptBin "hypr-start" ''
       set -euo pipefail
