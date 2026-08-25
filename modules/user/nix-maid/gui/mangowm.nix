@@ -231,11 +231,10 @@ in
           startMango # mango session launcher (env import + session target)
           pkgs.swayidle # idle daemon (locks via swaylock after 2 min)
           pkgs.swaylock # lock screen for the mango session
-          pkgs.waybar # status bar for the mango session
         ];
 
         # Mango session target — mirrors hyprland-session.target so user
-        # services (waybar, swayidle, ...) start/stop with the session.
+        # services (quickshell-mango, swayidle, ...) start/stop with the session.
         systemd.user.targets.mango-session = {
           unitConfig = {
             Description = "MangoWM compositor session";
@@ -267,15 +266,16 @@ in
               ExecStart = "${pkgs.swaylock}/bin/swaylock -f";
             };
           };
-          waybar = {
-            description = "Waybar status bar for MangoWM";
+          quickshell-mango = {
+            description = "Quickshell panel for MangoWM";
             wantedBy = [ "mango-session.target" ];
             bindsTo = [ "mango-session.target" ];
             after = [ "mango-session.target" ];
             serviceConfig = {
-              ExecStart = "${pkgs.waybar}/bin/waybar";
+              ExecStart = "/run/current-system/sw/bin/quickshell -p %h/.config/quickshell/shell.qml";
+              Environment = [ "QS_SESSION=mango" ];
               Restart = "on-failure";
-              RestartSec = "2";
+              RestartSec = "5";
             };
           };
         };
@@ -293,35 +293,6 @@ in
           separator-color=00000000
           font=Iosevka
           indicator-caps-lock
-        '';
-        ".config/waybar/config".text = ''
-          {
-            "layer": "top",
-            "height": 28,
-            "spacing": 8,
-            "modules-left": ["wlr/workspaces"],
-            "modules-center": ["clock"],
-            "modules-right": ["pulseaudio", "backlight", "network", "cpu", "memory", "tray"],
-            "wlr/workspaces": {
-              "format": "{name}",
-              "on-click": "activate"
-            },
-            "clock": { "format": "{:%H:%M}", "tooltip-format": "{:%a %d %b %Y}" },
-            "pulseaudio": { "format": "{volume}%", "on-click": "swayosd-client --output-volume mute-toggle" },
-            "backlight": { "format": "{percent}%" },
-            "network": { "format-wifi": "{essid}", "format-ethernet": "eth" },
-            "cpu": { "format": "CPU {usage}%" },
-            "memory": { "format": "RAM {}%" },
-            "tray": { "spacing": 6 }
-          }
-        '';
-        ".config/waybar/style.css".text = ''
-          * { font-family: Iosevka; font-size: 12px; }
-          window#waybar { background: rgba(24, 28, 37, 0.95); color: #CBD6E5; }
-          #workspaces button { color: #CBD6E5; background: transparent; border-radius: 4px; padding: 0 6px; }
-          #workspaces button.active { color: #181C25; background: #006FCC; }
-          #clock, #pulseaudio, #backlight, #network, #cpu, #memory, #tray { padding: 0 8px; }
-          #clock { font-weight: bold; }
         '';
       })
     ]
