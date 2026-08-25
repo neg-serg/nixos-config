@@ -72,16 +72,12 @@
           '';
         };
 
-        # hyprspace: add a Lua API (hl.plugin.hyprspace.toggle_overview)
-        # because Hyprland 0.55+ Lua configs cannot call string dispatchers
-        # registered via addDispatcherV2 (hyprctl dispatch overview:toggle
-        # fails at the Lua eval layer; upstream #14451 still unfixed).
-        hyprspace = prev.hyprlandPlugins.hyprspace.overrideAttrs (old: {
-          patches = (old.patches or [ ]) ++ [ ./../../../../files/sources/hyprspace-lua-api.patch ];
-        });
-
         hyprlandPlugins = prev.hyprlandPlugins // {
-          inherit (final) hyprglass hyprspace;
+          # hy3 and hyprspace were removed for the nixos-unstable (Hyprland
+          # 0.56) migration — their 0.55 CCompositor/monitor API
+          # (getMonitorFromCursor/warpCursorTo/m_monitors) no longer compiles
+          # against 0.56, which moved monitor access into a State query system
+          # and made CCompositor a small class. Re-port them before re-exporting.
         };
       })
     ];

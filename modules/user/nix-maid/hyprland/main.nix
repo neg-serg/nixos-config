@@ -13,6 +13,10 @@ let
   services = import ./services.nix { inherit lib pkgs inputs; };
   files = import ./files.nix { inherit lib neg config; };
 
+  # hy3 and hyprspace were removed for the nixos-unstable (Hyprland 0.56)
+  # migration (their 0.55 CCompositor/monitor API no longer compiles).
+  # hyprland.lua no longer contains @HY3@/@HYPRSPACE@ placeholders, so no
+  # store-path injection is needed.
   hyprlandLuaText = builtins.readFile (config.lib.neg.path "files/gui/hypr/hyprland.lua");
 in
 {
