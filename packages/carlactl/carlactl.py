@@ -470,7 +470,7 @@ def wait_events_in(timeout=60):
 def find_events_in_target():
     """Return the object.path of the running host's events-in MIDI port.
 
-    The index varies per plugin (Legend HZ/Phase Plant -> Carla:input_0,
+    The index varies per plugin (Legend HZ -> Carla:input_0,
     Surge XT -> Carla:input_2), so resolve it dynamically from pw-cli.
     """
     try:
