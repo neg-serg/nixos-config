@@ -129,7 +129,7 @@ hermes подтверждает выбор дизайна. Новое: идея 
 - **session-librarian**: организация библиотеки сессий по промптам (find/rename/archive/prune),
   «сначала показать план, потом трогать». → идея для DSH (у нас recall + export-session.mjs).
 - **dogfood**: систематический QA веб-приложений через browser-тулсет с доказательствами. → ложится
-  на dsh-browser/desktop (AGENTS.md «desktop over CDP» уже есть).
+  на desktop (AGENTS.md «desktop only, CDP не используется»; dsh-browser удалён 2026-08).
 
 ### 7. Инженерные уроки
 
