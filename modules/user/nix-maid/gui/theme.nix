@@ -15,22 +15,24 @@ let
 
   gtkThemeName = config.features.gui.gtkTheme or "neg-gtk";
 
-  # Map neg-gtk to real flat-remix variant; other names are their own themes
+  # nixos-unstable removed the GTK2/murrine-based themes (flat-remix-gtk,
+  # flight-gtk-theme, andromeda-gtk-theme) — they were dropped upstream.
+  # Use the available modern GTK theme (adw-gtk3, "Adwaita-dark") as the
+  # migration default; Flat-Remix variants no longer build in unstable.
   realThemeName =
     {
-      "neg-gtk" = "Flat-Remix-GTK-Blue-Darkest";
-      "Flat-Remix-GTK-Blue-Darkest" = "Flat-Remix-GTK-Blue-Darkest";
+      "neg-gtk" = "Adwaita-dark";
+      "Flat-Remix-GTK-Blue-Darkest" = "Adwaita-dark";
     }
     .${gtkThemeName} or gtkThemeName;
 
   gtkThemePkg =
     {
-      "neg-gtk" = pkgs.flat-remix-gtk;
-      "Flat-Remix-GTK-Blue-Darkest" = pkgs.flat-remix-gtk;
-      "Flight-Dark-GTK" = pkgs.flight-gtk-theme;
-      "Andromeda" = pkgs.andromeda-gtk-theme;
+      "neg-gtk" = pkgs.adw-gtk3;
+      "Flat-Remix-GTK-Blue-Darkest" = pkgs.adw-gtk3;
+      "Adwaita-dark" = pkgs.adw-gtk3;
     }
-    .${gtkThemeName} or pkgs.flight-gtk-theme;
+    .${gtkThemeName} or pkgs.adw-gtk3;
 
   # GTK Settings — use the real theme name so GTK finds the theme directory
   gtkSettings = {
