@@ -101,3 +101,6 @@ isn't a step-by-step runbook.
 
 - Long-running goal (ongoing Goal): how to deploy, run and manage (RU):
   [ongoing-goal.ru.md](./ongoing-goal.ru.md)
+
+- Fastfetch: black-metal blizzard (animated logo, RU):
+  [fastfetch-blizzard.ru.md](./fastfetch-blizzard.ru.md)
