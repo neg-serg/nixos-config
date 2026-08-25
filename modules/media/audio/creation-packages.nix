@@ -28,6 +28,7 @@ let
     pkgs.pw-audioshare # GTK4 PipeWire patchbay with auto-connect presets
     pkgs.neg.zest # CLI for ZestBay plugin management: zest list/add/rm/ls
     pkgs.neg.carlactl # console VST router via headless Carla: carlactl list/run/route
+    pkgs.neg.midi-transcribe # audio->MIDI transcription: midi-transcribe <file.mp3> (hFT-Transformer, CPU)
     pkgs.jack-keyboard # virtual MIDI keyboard for JACK/PipeWire — plays into Carla/VST MIDI ports
     pkgs.a2jmidid # ALSA→JACK MIDI bridge (SuperCollider MIDIOut → PipeWire → Carla/VSTs)
     # -- Noise Processing --
