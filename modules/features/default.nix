@@ -100,6 +100,7 @@ in
         gui = {
           qt.enable = mkForce false;
           quickshell.enable = mkForce false;
+          mangowm.enable = mkForce false;
         };
       };
     })
@@ -122,6 +123,9 @@ in
           )
           (assertParent gui.enable gui.vicinae.enable
             "features.gui.vicinae.enable requires features.gui.enable = true"
+          )
+          (assertParent gui.enable gui.mangowm.enable
+            "features.gui.mangowm.enable requires features.gui.enable = true"
           )
           (assertParent gui.enable guiApps.winapps.enable
             "features.apps.winapps.enable requires features.gui.enable = true"
