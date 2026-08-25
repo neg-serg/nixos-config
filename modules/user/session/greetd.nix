@@ -105,9 +105,30 @@ in
       # If atomic KMS misbehaves on RDNA4, investigate before re-enabling
       # AQ_NO_ATOMIC — it silently disables HDR.
       # export AQ_NO_ATOMIC=1
-      exec /run/current-system/sw/bin/start-hyprland > /tmp/hyprland-debug.log 2>&1
+      # Session chosen in the greeter arrives as args (Exec= from
+      # /usr/share/wayland-sessions/*.desktop). No args = Hyprland (default).
+      # Hyprland always routes through start-hyprland (env + session target).
+      export PATH="/run/current-system/sw/bin:$PATH"
+      if [ "$#" -eq 0 ]; then
+        exec /run/current-system/sw/bin/start-hyprland > /tmp/hyprland-debug.log 2>&1
+      fi
+      case "$1" in
+        *[Hh]yprland*) exec /run/current-system/sw/bin/start-hyprland > /tmp/hyprland-debug.log 2>&1 ;;
+        *) exec "$@" > /tmp/wayland-session.log 2>&1 ;;
+      esac
     '';
+    # Expose wayland/x11 session .desktop files (hyprland, mango) so the
+    # greeter can list and switch sessions.
+    environment.pathsToLink = lib.mkAfter [
+      "/share/wayland-sessions"
+      "/share/xsessions"
+    ];
     systemd.tmpfiles.rules = lib.mkAfter [
+      # Greeter reads session .desktop files from /usr/share/wayland-sessions;
+      # point it at the system profile's merged share dir.
+      "d /usr/share 0755 root root -"
+      "L+ /usr/share/wayland-sessions - - - - /run/current-system/sw/share/wayland-sessions"
+      "L+ /usr/share/xsessions - - - - /run/current-system/sw/share/xsessions"
       "d /home/greeter 0710 greeter greeter -"
       "d /home/greeter/.cache 0775 greeter greeter -"
       "d /home/greeter/.config/quickshell 0755 greeter greeter -"
