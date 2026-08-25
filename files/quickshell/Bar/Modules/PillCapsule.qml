@@ -13,8 +13,8 @@ OverlayToggleCapsule {
     capsule.centerContent: true
     capsule.cursorShape: Qt.PointingHandCursor
     capsule.implicitWidth: capsule.horizontalPadding * 2 + pillIcon.width
-    // Keep the capsule visible even when the pill is taken so the user can
-    // reopen the history calendar (right-click) to see past taken/missed days.
+    // Capsule stays visible whenever the widget is shown; hiding when taken
+    // is handled by the bar's visibility binding (peek on panel hover).
     capsuleVisible: true
     autoToggleOnTap: false
 
