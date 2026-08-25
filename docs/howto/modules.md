@@ -862,6 +862,28 @@ Icon theme to apply system-wide (GTK + Qt).
 
 - [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.mangowm.enable
+
+Whether to enable enable MangoWM (dwl-based Wayland compositor, alternative to Hyprland).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
+
 ## features.gui.qt.enable
 
 Whether to enable enable Qt integrations for GUI (qt6ct, hyprland-qt-\*).
@@ -1456,6 +1478,29 @@ true
 
 - [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
 
+## features.media.audio.speech.enable
+
+Whether to enable enable local speech stack (Chatterbox TTS :8300, Piper TTS :8001, whisper.cpp STT
+:8002).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/media.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/media.nix)
+
 ## features.media.audio.spicetify.enable
 
 Whether to enable enable Spicetify (Spotify customization).
@@ -1763,6 +1808,28 @@ true
 *Declared by:*
 
 - [/modules/features/misc.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/misc.nix)
+
+## features.security.tpmSudo.enable
+
+Whether to enable TPM-backed passwordless sudo (tpm2-pkcs11 + pam_ssh_agent_auth).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/security.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/security.nix)
 
 ## features.system.logTtys.enable
 
@@ -2258,11 +2325,11 @@ remove it to uninstall.
 
 - [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
-## features.wine.apps.<name>.arch
+## features.wine.apps.\<name>.arch
 
 Wine architecture for the prefix (WINEARCH). Use win32 only for legacy 32-bit apps.
 
-*Type:* one of "win64", "win32"
+*Type:* one of “win64”, “win32”
 
 *Default:*
 
@@ -2274,9 +2341,9 @@ Wine architecture for the prefix (WINEARCH). Use win32 only for legacy 32-bit ap
 
 - [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
-## features.wine.apps.<name>.comment
+## features.wine.apps.\<name>.comment
 
-Short human-readable description (shown in wineapps list and desktop entries).
+Short human-readable description (shown in ‘wineapps list’ and desktop entries).
 
 *Type:* string
 
@@ -2290,9 +2357,9 @@ Short human-readable description (shown in wineapps list and desktop entries).
 
 - [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
-## features.wine.apps.<name>.desktop
+## features.wine.apps.\<name>.desktop
 
-Generate a .desktop launcher for the app (requires executable).
+Generate a .desktop launcher for the app (requires ‘executable’).
 
 *Type:* boolean
 
@@ -2306,10 +2373,10 @@ true
 
 - [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
-## features.wine.apps.<name>.executable
+## features.wine.apps.\<name>.executable
 
-Path to the app main executable relative to the prefix root (e.g. "drive_c/Program
-Files/App/app.exe"). Used by wineapps run and desktop launchers.
+Path to the app’s main executable relative to the prefix root (e.g. “drive_c/Program
+Files/App/app.exe”). Used by ‘wineapps run’ and desktop launchers.
 
 *Type:* null or string
 
@@ -2323,7 +2390,7 @@ null
 
 - [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
-## features.wine.apps.<name>.installArgs
+## features.wine.apps.\<name>.installArgs
 
 Arguments passed to the installer (InnoSetup silent default: /S).
 
@@ -2339,7 +2406,7 @@ Arguments passed to the installer (InnoSetup silent default: /S).
 
 - [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
-## features.wine.apps.<name>.installer
+## features.wine.apps.\<name>.installer
 
 Installer for the app: absolute path to an .exe/.msi on disk, or an http(s) URL. null = app was
 installed manually (wineapps only manages run/desktop).
@@ -2356,7 +2423,7 @@ null
 
 - [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
-## features.wine.apps.<name>.prefix
+## features.wine.apps.\<name>.prefix
 
 Prefix name (directory under ~/.local/share/wineprefixes). Empty = use the app attribute name.
 
@@ -2372,9 +2439,9 @@ Prefix name (directory under ~/.local/share/wineprefixes). Empty = use the app a
 
 - [/modules/features/wine.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/wine.nix)
 
-## features.wine.apps.<name>.winetricks
+## features.wine.apps.\<name>.winetricks
 
-winetricks verbs applied before running the installer, e.g. [ "corefonts" "vcrun2022" ].
+winetricks verbs applied before running the installer, e.g. [ “corefonts” “vcrun2022” ].
 
 *Type:* list of string
 
