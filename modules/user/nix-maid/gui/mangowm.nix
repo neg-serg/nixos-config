@@ -138,6 +138,8 @@ let
     bind=SUPER,S,switch_keyboard_layout
     bind=SUPER,o,toggleoverview
     bind=SUPER,c,spawn,vicinae deeplink vicinae://launch/clipboard/history
+    bind=SUPER+CTRL,r,spawn,quickshell-restart
+    # keybinds above stay alphabetical-ish; quickshell-restart = panel restart
 
     # apps (hyprland raise->launch becomes plain spawn; no run-or-raise in mango yet)
     bind=SUPER,w,spawn,vivaldi
