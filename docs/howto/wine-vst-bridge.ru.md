@@ -78,7 +78,8 @@ nixpkgs, стоит на odin):
   `Program Files/Common Files/VST3/Synapse Audio/LegendHZ.vst3` (VST3) + AAX.
 - **kiloHearts Ultimate v2.4.6** (4.3 ГБ): InnoSetup — `/S` НЕ работает (exit 5), нужен
   `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART` → `Program Files/Common Files/VST3/kiloHearts/` (48
-  плагинов: Phase Plant, Snap Heap, kHs-модули).
+  плагинов: Snap Heap, Disperser, Multipass, kHs-модули; Phase Plant удалён 2026-08-25
+  (не поднимался в yabridge — «failed to start wine host»-класс проблем, см. ниже).
 - После установки: `yabridgectl add <каталог с dll/vst3>` + `yabridgectl sync` + `carlactl list`.
 
 ### Legend HZ: «запустите от администратора»
@@ -162,8 +163,8 @@ nixpkgs, стоит на odin):
 
 ## Синты: состав и переключение (2026-08-21)
 
-- **Windows (yabridge)**: Legend HZ (моно, MiniMoog-style), Phase Plant (kiloHearts, полифонический
-  модульный), + 48 модулей kiloHearts (FX).
+- **Windows (yabridge)**: Legend HZ (моно, MiniMoog-style), + 48 модулей kiloHearts (FX: Snap Heap,
+  Disperser, Multipass, kHs-…). Phase Plant удалён (2026-08-25) — не поднимался через yabridge.
 - **Нативные (Linux, без wine)**: Vital (wavetable), Dexed (FM/DX7), Surge XT (wavetable/VA,
   MPE-capable — добавлен fc4387ea/eaf74df1), Cardinal (модульный VCV-Rack-стиль, VST3), Odyssey (VA,
   ARP Odyssey-стиль).
