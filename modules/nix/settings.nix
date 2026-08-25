@@ -67,9 +67,12 @@ in
       connect-timeout = 15;
       stalled-download-timeout = 120;
       http-connections = 12;
-      cores = 32; # all threads on 9950X3D per build, linking is single-threaded anyway
-      max-jobs = 2; # 2 parallel builds, ~30-35GB peak — fits 40GB MemoryMax
-      min-free = 8192; # MB reserved for ZFS ARC (~32GB) + 2 parallel builds (~35GB peak) on 64GB system
+      # Half threads per build: qtwebengine v8 jumbo units need ~1.3GB each,
+      # so 2 builds x 32 procs blew the 40G MemoryMax cap (memcg OOM 2026-08-24,
+      # failcnt 51k, RAM+swap 40G/42G both exhausted). 16 procs peaks ~20-30GB.
+      cores = 16;
+      max-jobs = 1; # serialize builds: 2 x 16 procs ≈ 41GB still exceeds the cap
+      min-free = 8192; # MB reserved for ZFS ARC (~32GB) + 1 parallel build (~20-30GB peak) on 64GB system
       build-poll-interval = 3; # seconds between polling for finished builds
       log-lines = 50; # lines of build output to show on failure
       max-silent-time = 3600; # 1h for slow npm/node_modules builds
