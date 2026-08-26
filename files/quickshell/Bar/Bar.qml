@@ -335,8 +335,8 @@ Scope {
                 property bool _barSlideInitDone: false
                 // True while the layer surfaces are unmapped (fully hidden).
                 property bool uiHidden: false
-                // Hide the bar on the games workspace and whenever the active
-                // workspace has a fullscreen window.
+                // Hide the bar only on the games (hide-UI) workspace — fullscreen
+                // windows elsewhere no longer hide it.
                 readonly property bool hideRequested: HyprlandWatcher.hideUi
                 property bool _hideAfterAnim: false
                 onHideRequestedChanged: monitorItem._syncHide()
@@ -362,12 +362,19 @@ Scope {
                     onTriggered: monitorItem._slideTo(0, 1)
                 }
 
-                // Slide out (then unmap on completion) or slide in (map first).
+                // Slide in (map first). Hiding is done as a plain unmap: the
+                // slide-out drives many live Translate.transforms and a live
+                // ShaderEffectSource, and unmapping the PanelLayer surfaces right
+                // after that animation crashed Qt (QQuickItemPrivate::dirty inside
+                // QQuickWindow::maybeUpdate). Snap-hide avoids the race entirely.
                 function _syncHide() {
                     if (monitorItem.hideRequested) {
                         if (monitorItem.uiHidden) return;
-                        monitorItem._hideAfterAnim = true;
-                        monitorItem._slideTo(monitorItem.barSlideProgress, 0);
+                        monitorItem._hideAfterAnim = false;
+                        barSlideAnim.stop();
+                        monitorItem.barSlideAnimating = false;
+                        monitorItem.barSlideProgress = 1.0;
+                        monitorItem.uiHidden = true;
                     } else {
                         if (monitorItem._hideAfterAnim) {
                             // Cancelled a slide-out mid-way: reverse from the
