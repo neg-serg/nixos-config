@@ -34,19 +34,22 @@ Item {
     signal focusedMonitorEvent()
 
     // Fullscreen tracking: true while the focused workspace has a fullscreen
-    // window (games, video). Workspace-level, so alt-tab inside the same
-    // workspace keeps the UI hidden; refreshed via fullscreenDebounce.
+    // window (games, video). Kept for diagnostics/other consumers; it no longer
+    // participates in hideUi (auto-hide is games-workspace-only).
     property bool focusedFullscreen: false
     readonly property int fullscreenDebounceMs: 50
 
-    // Workspaces where the shell UI is always hidden, independent of
-    // fullscreen state. id 4 = "𐌸:games" (see hyprland.lua).
+    // Workspaces where the shell UI is always hidden. id 4 = "𐌸:games"
+    // (see hyprland.lua). Auto-hide is intentionally limited to this workspace:
+    // fullscreen windows elsewhere (video, etc.) no longer hide the UI.
     property var hideUiWorkspaceIds: [4]
     readonly property bool onHideUiWorkspace: hideUiWorkspaceIds.indexOf(activeWorkspaceId) !== -1
 
-    // Hide the whole shell UI while a fullscreen window is on the active
-    // workspace, or while the active workspace is a hide-UI workspace.
-    readonly property bool hideUi: focusedFullscreen || onHideUiWorkspace
+    // Hide the whole shell UI only on the designated hide-UI (games)
+    // workspace. Fullscreen state is still tracked but does not trigger the
+    // hide: bar, notifications and screenshot-toast stay visible everywhere
+    // except the games workspace.
+    readonly property bool hideUi: onHideUiWorkspace
 
     ProcessRunner {
         id: socketFeed

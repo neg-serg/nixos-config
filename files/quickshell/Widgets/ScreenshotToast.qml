@@ -53,9 +53,9 @@ Item {
         }
     }
 
-    // Never show the toast over a game: hide it while a fullscreen window is
-    // on the active workspace or the active workspace is a hide-UI workspace
-    // (games). show() also refuses to open while hidden.
+    // Never show the toast over a game: hide it while the active workspace is
+    // the hide-UI (games) workspace. Fullscreen windows elsewhere no longer
+    // hide the toast. show() also refuses to open while hidden.
     readonly property bool uiHidden: HyprlandWatcher.hideUi
     onUiHiddenChanged: {
         if (root.uiHidden) {
