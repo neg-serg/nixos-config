@@ -118,6 +118,25 @@ in
         RestartSec = 3;
       };
     };
+
+    # VCV Rack standalone — on-demand: systemctl --user start rack.
+    # Runs under pw-jack (JACK via PipeWire) so it joins the same audio graph
+    # as Carla/SuperCollider/Vital and can be patched with Carla/helvum/pw-link.
+    # Not autostarted; WAYLAND_DISPLAY is required for the GLFW window on Hyprland.
+    systemd.user.services.rack = {
+      description = "VCV Rack modular synthesizer (pw-jack)";
+      after = [
+        "pipewire.service"
+        "wireplumber.service"
+      ];
+      serviceConfig = {
+        Type = "simple";
+        Environment = "WAYLAND_DISPLAY=wayland-1";
+        ExecStart = "${pkgs.pipewire.jack}/bin/pw-jack ${pkgs.vcv-rack}/bin/Rack";
+        Restart = "on-failure";
+        RestartSec = 3;
+      };
+    };
     # virtual-midi — virtual ALSA seq MIDI ports for stable synth routing
     # slots (SuperCollider connects to these instead of the hardware ports,
     # avoiding loops through the Osmose and surviving unplugs).
