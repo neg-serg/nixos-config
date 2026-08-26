@@ -11,7 +11,7 @@ in
 {
   config = lib.mkIf (cfg.enable or false) (
     neg.mkHomeFiles {
-      ".nethackrc".text = ''
+      ".config/nethack/config".text = ''
         OPTIONS=windowtype:curses
         OPTIONS=popup_dialog
         OPTIONS=splash_screen
