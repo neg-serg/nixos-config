@@ -166,8 +166,8 @@ nixpkgs, стоит на odin):
 - **Windows (yabridge)**: Legend HZ (моно, MiniMoog-style), + 48 модулей kiloHearts (FX: Snap Heap,
   Disperser, Multipass, kHs-…). Phase Plant удалён (2026-08-25) — не поднимался через yabridge.
 - **Нативные (Linux, без wine)**: Vital (wavetable), Dexed (FM/DX7), Surge XT (wavetable/VA,
-  MPE-capable — добавлен fc4387ea/eaf74df1). ВНИМАНИЕ:
-  nixpkgs-пакет `odyssey` — это PostgreSQL pooler от Яндекса, НЕ синтезатор (проверено 2026-08-21,
+  MPE-capable — добавлен fc4387ea/eaf74df1). ВНИМАНИЕ: nixpkgs-пакет `odyssey` — это PostgreSQL
+  pooler от Яндекса, НЕ синтезатор (проверено 2026-08-21,
   `nix eval nixpkgs#odyssey.meta.description`). Настоящий open-source ARP-Odyssey-стиль VA synth —
   Odin 2 (`pkgs.odin2`), но пользователь его не захотел — строка `pkgs.odyssey` остаётся в конфиге
   как есть (осознанное решение, коммит-реверт ceba4734).
