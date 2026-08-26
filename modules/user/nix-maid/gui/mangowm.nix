@@ -13,11 +13,11 @@ let
   # effects. HDR stays OFF in this session by design — run a separate HDR
   # session (e.g. Hyprland on another TTY) so it never degrades this one.
   configConf = ''
-    # --- Monitor: DP-2 3840x2160@240 scale 2 VRR; DP-1 disabled ---
-    monitorrule=name:DP-2, width:3840, height:2160, refresh:240, scale:2, vrr:1, x:0, y:0
+    # --- Monitor: DP-2 3840x2160@240 scale 2 VRR (ICC Display P3); DP-1 disabled ---
+    monitorrule=name:DP-2, width:3840, height:2160, refresh:240, scale:2, vrr:1, x:0, y:0, icc:/home/${
+      config.users.main.name or "neg"
+    }/.config/mango/Display-P3.icc
     monitorrule=name:DP-1, disable:1
-    # ICC: Display P3 (panel is 100% DCI-P3) — profile deployed to ~/.config/mango/Display-P3.icc
-    monitorrule=name:DP-2, icc:/home/${config.users.main.name or "neg"}/.config/mango/Display-P3.icc
 
     # --- Environment ---
     env=CLUTTER_BACKEND,wayland
