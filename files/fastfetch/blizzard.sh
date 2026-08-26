@@ -12,4 +12,7 @@ for d in $dithers; do
     python3 make_blizzard.py --dither "$d" --palette "$pal" --out "$HOME/.local/share/fastfetch/logos/blizzard-$d-$pal.webp"
   done
 done
-echo done; ls "$HOME/.local/share/fastfetch/logos/" | grep -c webp
+echo "done"
+shopt -s nullglob
+logos=("$HOME/.local/share/fastfetch/logos/"*.webp)
+echo "${#logos[@]}"
