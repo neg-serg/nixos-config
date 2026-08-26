@@ -808,6 +808,28 @@ true
 
 - [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
 
+## features.gui.atrium.enable
+
+Whether to enable enable atrium (Wayland multiseat display manager).
+
+*Type:* boolean
+
+*Default:*
+
+```nix
+false
+```
+
+*Example:*
+
+```nix
+true
+```
+
+*Declared by:*
+
+- [/modules/features/gui.nix](https://github.com/neg-serg/nixos/blob/master/modules/features/gui.nix)
+
 ## features.gui.gtkTheme
 
 GTK theme to apply system-wide.
