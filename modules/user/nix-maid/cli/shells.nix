@@ -108,9 +108,14 @@ let
       action = "kitty_scrollback_nvim --env KSB_OPEN_GF=1";
     }
     {
-      mod = "ctrl+shift";
+      mod = "ctrl+shift+alt";
       keys = [ "t" ];
       action = "set_tab_title";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [ "t" ];
+      action = "new_tab";
     }
     {
       mod = "ctrl+shift";
@@ -213,6 +218,14 @@ let
     {
       mod = "ctrl+shift";
       keys = [
+        "r"
+        "w"
+      ];
+      action = "start_resizing_window";
+    }
+    {
+      mod = "ctrl+shift";
+      keys = [
         "a"
         "1"
       ];
@@ -242,24 +255,26 @@ let
       ];
       action = "set_background_opacity +0.1";
     }
-    # Emacs-style scrollback navigation (files/kitty/key.conf)
+    # Emacs-style scrollback navigation (files/kitty/key.conf).
+    # Uses Ctrl+Alt (not Ctrl+Shift) so it does not collide with the kitty_mod
+    # (Ctrl+Shift) window-move / window-focus binds on b/f/p.
     {
-      mod = "ctrl+shift";
+      mod = "ctrl+alt";
       keys = [ "n" ];
       action = "scroll_line_down";
     }
     {
-      mod = "ctrl+shift";
+      mod = "ctrl+alt";
       keys = [ "p" ];
       action = "scroll_line_up";
     }
     {
-      mod = "ctrl+shift";
+      mod = "ctrl+alt";
       keys = [ "f" ];
       action = "scroll_page_down";
     }
     {
-      mod = "ctrl+shift";
+      mod = "ctrl+alt";
       keys = [ "b" ];
       action = "scroll_page_up";
     }
