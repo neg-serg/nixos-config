@@ -2,7 +2,8 @@
 
 > Статус: **реализовано** — P0 (Hyprland), P1 (kitty/mpv/SurfingKeys), P2 (zellij/yazi/rmpc); mutt и
 > rustmission конфигом **не чинятся** (подтверждено по исходникам — см. «Валидация»); btop/ghostty —
-> known issues. Все изменения аддитивны (US-раскладка не затронута).
+> known issues. RU-дубли аддитивны (US-раскладка не затронута); исключение — Emacs-слой прокрутки
+> kitty переведён с Ctrl+Shift на Ctrl+Alt, чтобы убрать конфликт с `kitty_mod+b/f/p`.
 
 ## TL;DR
 
@@ -97,7 +98,13 @@
 - `kitty_mod+grave` (move_window_to_top), `kitty_mod+l` (next_layout)
 - `kitty_mod+p/u/e/h/o` (hints / scrollback), `kitty_mod+s>f/w/l/p/h` (neghints)
 - `Ctrl+s>w/l/p/h` (neghints в stdout), `Ctrl+alt+s` (screen scrollback), `alt+n` (new_tab)
-- `kitty_mod+r>r` / `r>e`, `kitty_mod+a>1/d/l/m` (opacity), `kitty_mod+t` (title)
+- `kitty_mod+t` (new_tab — добавлен обратно, стандартный ctrl+shift+t), `kitty_mod+alt+t`
+  (set_tab_title — RU-дубль генерируется с `alt`, т.е. `ctrl+shift+alt+т`)
+- `kitty_mod+r>r` / `r>e` / `r>w`, `kitty_mod+a>1/d/l/m` (opacity)
+- `kitty_mod+/` (search) — **только US**: в RU `/`→`.` и конфликтует с `kitty_mod+.`
+  (move_tab_forward), недостижим как отдельный хоткей (аналогично `>`/`<`)
+- Emacs-слой прокрутки (`scroll_line_down/up`, `scroll_page_down/up`) переведён на
+  **Ctrl+Alt+n/p/f/b**, чтобы не конфликтовать с `kitty_mod+b/f/p` (Ctrl+Shift)
 - `mouse_map ctrl+shift+right` — не зависит от раскладки (модификаторы+кнопка) ✅
 
 Не ломаются: `insert`, `delete`, `escape`, `f2`, `backspace`, `equal/minus`, `ctrl+left/right`,
