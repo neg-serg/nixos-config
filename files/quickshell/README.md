@@ -23,11 +23,12 @@ Notes
 
 - Qt 6 `ShaderEffect` requires precompiled `.qsb` files (use `qsb --glsl "100es,120,150"`).
 - Run the shader build script from this directory (`~/.config/quickshell`).
-- Bar, notification and screenshot-toast layers auto-hide while the active workspace has a
-  fullscreen window (games, video) or is a designated hide-UI workspace (games workspace, id 4).
-  Detection is client-based (`HyprlandWatcher.hideUi` = `focusedFullscreen || onHideUiWorkspace`).
-  The bar slides down with the same easing used for its entrance animation, then unmaps its layer
-  surfaces.
+- Bar, notification and screenshot-toast layers auto-hide only on the designated hide-UI workspace
+  (games, id 4). Fullscreen windows elsewhere no longer hide the UI. Detection is client-based
+  (`HyprlandWatcher.hideUi` = `onHideUiWorkspace`). Hiding is a plain unmap (no slide): the
+  slide-out followed by the layer teardown crashed Qt (`QQuickItemPrivate::dirty` inside
+  `QQuickWindow::maybeUpdate`), so the bar snaps out on the games workspace and slides back in with
+  the entrance animation.
 
 Migration Log
 
