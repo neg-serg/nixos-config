@@ -21,6 +21,7 @@ in
   wallhaven = prev.callPackage (inputs.self + "/packages/wallhaven") { };
   hyprwhspr = prev.callPackage (inputs.self + "/packages/hyprwhspr") { };
   camillagui = callPkg (inputs.self + "/packages/camillagui") { }; # web GUI for CamillaDSP
+  atrium = callPkg (inputs.self + "/packages/atrium") { }; # Wayland multiseat display manager
 
   # hyprscratch: patched to exit after 5 event-listener failures
   # so systemd Restart=always can restart it with fresh Hyprland IPC env.
