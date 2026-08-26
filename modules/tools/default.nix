@@ -55,5 +55,18 @@ in
           });
       }
     )
+    (
+      final: prev:
+      if prev ? fastfetch-unwrapped then
+        {
+          fastfetch-unwrapped = prev.fastfetch-unwrapped.overrideAttrs (old: {
+            # Enable experimental Lua scripting in fastfetch format strings (2.64.0+).
+            buildInputs = (old.buildInputs or [ ]) ++ [ final.lua ];
+            cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DENABLE_LUA=ON" ];
+          });
+        }
+      else
+        { }
+    )
   ];
 }
