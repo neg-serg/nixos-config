@@ -69,6 +69,7 @@ in
     pkgs.procs # modern 'ps' replacement
     pkgs.pwgen # password generator
     pkgs.sd # intuitive find & replace CLI (sed replacement)
+    pkgs.wlrctl # command-line utility for miscellaneous wlroots Wayland extensions
 
     # Python
     (pkgs.python3.withPackages (ps: [ ps.pexpect ])) # python3 with pexpect for expect-style automation
