@@ -75,11 +75,9 @@ let
     tagrule=id:3, layout_name:scroller
     tagrule=id:4, layout_name:scroller
     tagrule=id:5, layout_name:scroller
-    tagrule=id:6, layout_name:scroller
     tagrule=id:7, layout_name:scroller
     tagrule=id:8, layout_name:scroller
     tagrule=id:9, layout_name:scroller
-    tagrule=id:10, layout_name:scroller
     tagrule=id:11, layout_name:scroller
     tagrule=id:12, layout_name:scroller
     tagrule=id:13, layout_name:scroller
@@ -91,8 +89,10 @@ let
     tagrule=id:19, layout_name:scroller
     tagrule=id:20, layout_name:scroller
     tagrule=id:21, layout_name:scroller
+    tagrule=id:22, layout_name:scroller
 
     # --- Class routing (hyprland workspace routing) ---
+    windowrule=appid:^term$,tags:1
     windowrule=appid:^([Vv]ivaldi-stable|[Vv]ivaldi)$,tags:2
     windowrule=appid:^nwim$,tags:3
     windowrule=appid:^(steam|Steam)$,tags:4
@@ -104,10 +104,14 @@ let
     windowrule=appid:^(com.usebottles.bottles)$,tags:12
     windowrule=appid:^(zestbay|Carla2)$,tags:13
     windowrule=appid:^Renoise$,tags:14
+    windowrule=appid:^Vital$,tags:21
+    windowrule=title:^(VCV Rack).*,tags:22
     windowrule=appid:^(org.nicotine_plus.Nicotine)$,tags:15
     windowrule=appid:^(Bazecor|Vial|via)$,tags:16
     windowrule=appid:^(im.riot.Riot)$,tags:17
+    windowrule=appid:^(Vmware-view|xfreerdp|remmina|org.remmina.Remmina)$,tags:18
     windowrule=appid:^(Obsidian)$,tags:19
+    windowrule=appid:^(winboat|WinBoat)$,tags:20
 
     # --- Float rules ---
     windowrule=tags:4, isfloating:1
@@ -159,7 +163,6 @@ let
     bind=SUPER,3,view,3,0
     bind=SUPER,4,view,4,0
     bind=SUPER,5,view,5,0
-    bind=SUPER,6,view,6,0
     bind=SUPER,7,view,7,0
     bind=SUPER,8,view,8,0
     bind=SUPER,9,view,9,0
@@ -168,7 +171,6 @@ let
     bind=SUPER+SHIFT,3,tag,3,0
     bind=SUPER+SHIFT,4,tag,4,0
     bind=SUPER+SHIFT,5,tag,5,0
-    bind=SUPER+SHIFT,6,tag,6,0
     bind=SUPER+SHIFT,7,tag,7,0
     bind=SUPER+SHIFT,8,tag,8,0
     bind=SUPER+SHIFT,9,tag,9,0
