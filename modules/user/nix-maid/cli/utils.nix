@@ -103,7 +103,7 @@ lib.mkMerge [
           { "type": "swap", "key": "󰄢" },
           { "type": "disk", "key": "", "folders": ["/"] },
           { "type": "disk", "key": "󰙃", "folders": ["/zero"] },
-          { "type": "zpool", "key": "󰙃" },
+          { "type": "zpool", "key": "" },
           { "type": "localip", "key": "", "defaultRouteOnly": true },
           { "type": "vulkan", "key": "󰢮" },
           { "type": "sound", "key": "" },
