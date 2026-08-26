@@ -291,10 +291,9 @@ hl.bind(E .. "+e", hl.dsp.focus({ workspace = "21" }))
 hl.bind(E .. "+o", hl.dsp.window.cycle_next({ next = true }))
 hl.bind(E .. "+Tab", hl.dsp.exec_cmd("vicinae deeplink vicinae://launch/wm/switch-windows"))
 hl.bind(E .. "+x", hl.dsp.exec_cmd(menu))
-for i = 1, 9 do
+for _, i in ipairs({ 1, 2, 3, 4, 5, 7, 8, 9 }) do
   hl.bind(E .. "+" .. tostring(i), hl.dsp.focus({ workspace = tostring(i) }))
 end
-hl.bind(E .. "+0", hl.dsp.focus({ workspace = "10" }))
 hl.bind(E .. "+minus", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(E .. "+equal", hl.dsp.focus({ workspace = "e+1" }))
 
@@ -378,11 +377,9 @@ local workspaces = {
   { id = 3,  name = "𐌲:dev",    layout = "scrolling" },
   { id = 4,  name = "𐌸:games" }, -- master (gaming)
   { id = 5,  name = "𐌳:doc",    layout = "scrolling" },
-  { id = 6,  name = "𐌴:draw",   layout = "scrolling" },
   { id = 7,  name = "𐌵:vid" },  -- master (media)
   { id = 8,  name = "𐌶:obs" },  -- master (media)
   { id = 9,  name = "𐌷:pic",    layout = "scrolling" },
-  { id = 10, name = "𐌹:sys",    layout = "scrolling" },
   { id = 11, name = "𐌺:vm",     layout = "scrolling" },
   { id = 12, name = "𐌻:wine" }, -- master (wine/games)
   { id = 13, name = "𐌼:patchbay", layout = "scrolling" },
@@ -394,6 +391,7 @@ local workspaces = {
   { id = 19, name = "Ⲣ:notes",   layout = "scrolling" },
   { id = 20, name = "𐍅:winboat", layout = "scrolling" },
   { id = 21, name = "𐍆:vital" }, -- Vital standalone synth
+  { id = 22, name = "𐍇:rack", layout = "scrolling" }, -- VCV Rack modular synth (GLFW)
 }
 
 for _, w in ipairs(workspaces) do
@@ -545,6 +543,10 @@ for _, r in ipairs(routes) do
   if r.float then rule.float = true end
   hl.window_rule(rule)
 end
+
+-- VCV Rack: WM_CLASS is the shared "GLFW-Application", so route by the
+-- stable title prefix "VCV Rack" (a class route would catch every GLFW app).
+hl.window_rule({ name = "route-rack", match = { title = "^VCV Rack" }, no_blur = true, workspace = "22" })
 
 -- =====================================================================
 -- Layer rules (rules.conf)
