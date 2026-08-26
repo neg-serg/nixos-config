@@ -22,6 +22,8 @@ modules/user/nix-maid/cli/fastfetch.nix в ~/.local/share/fastfetch/ и
     fetch --shader rgb               # хроматическое смещение (красный/голубой)
     fetch --shader invert            # негатив
     fetch --big --shader invert:rgb  # вместе
+    fetch --cover                   # обложка текущего трека как логотип
+    fetch -w 2                      # живой режим (обновление каждые 2 c)
 
 В zsh определена функция fastfetch, которая делегирует в fetch (лежит в
 01-init.zsh), поэтому fastfetch ... работает так же.
@@ -38,6 +40,10 @@ modules/user/nix-maid/cli/fastfetch.nix в ~/.local/share/fastfetch/ и
 
 Перегенерация пресетов: ~/.local/share/fastfetch/blizzard.sh fs (или без
 аргумента — все 6 дизерингов).
+
+Lua/QuickJS в format (эксперим., 2.64.0+) включается оверлеем
+(modules/tools/default.nix) — добавляет lua в fastfetch-unwrapped
+buildInputs + -DENABLE_LUA, чтобы работали lua:/qjs: спецификаторы.
 
 ## Референс
 
