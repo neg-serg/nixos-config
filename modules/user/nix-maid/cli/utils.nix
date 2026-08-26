@@ -12,7 +12,7 @@ lib.mkMerge [
   {
     environment.systemPackages = [
       pkgs.aliae # Shell alias manager
-      pkgs.fastfetch # System info tool (neofetch successor)
+      (pkgs.fastfetch.override { zfsSupport = true; }) # System info tool (neofetch successor; zfsSupport enables zpool module)
       pkgs.tealdeer # Fast tldr client
       pkgs.nxv # Find any version of any Nix package instantly
     ];
@@ -85,6 +85,7 @@ lib.mkMerge [
           { "type": "command", "key": "", "text": "n=$(timeout -k 1 3 nix-store --query --requisites /run/current-system 2>/dev/null | wc -l); [ $n -gt 0 ] 2>/dev/null && echo $n '(nix; /run/current-system)' || echo nix-store-busy" },
           { "type": "host", "key": "" },
           { "type": "monitor", "key": "" },
+          { "type": "brightness", "key": "🔆" },
           { "type": "theme", "key": "" },
           { "type": "icons", "key": "" },
           { "type": "cursor", "key": "" },
@@ -93,14 +94,16 @@ lib.mkMerge [
           { "type": "terminal", "key": "" },
           { "type": "terminalfont", "key": "" },
           { "type": "terminalsize", "key": "" },
-          { "type": "cpu", "key": "", "temp": true },
-          { "type": "gpu", "key": "󰢮", "driverSpecific": true, "temp": true, "percent": { "type": 1 } },
+          { "type": "cpu", "key": "", "temp": true, "format": "{name} ({march})" },
+          { "type": "gpu", "key": "󰢮", "driverSpecific": true, "temp": true, "percent": { "type": 1 }, "format": "{name} | PCIe {pcie-max-speed}" },
+          { "type": "codec", "key": "🎞" },
           { "type": "memory", "key": "" },
           { "type": "board", "key": "" },
           { "type": "bios", "key": "" },
           { "type": "swap", "key": "󰄢" },
           { "type": "disk", "key": "", "folders": ["/"] },
           { "type": "disk", "key": "󰙃", "folders": ["/zero"] },
+          { "type": "zpool", "key": "󰙃" },
           { "type": "localip", "key": "", "defaultRouteOnly": true },
           { "type": "vulkan", "key": "󰢮" },
           { "type": "sound", "key": "" },
