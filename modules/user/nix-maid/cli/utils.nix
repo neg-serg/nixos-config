@@ -30,8 +30,8 @@ lib.mkMerge [
         "logo": {
           "source": "$XDG_CONFIG_HOME/fastfetch/skull",
           "padding": {
-            "left": 4,
-            "right": 4
+            "left": 1,
+            "right": 2
           },
           "color": {
             "1": "#1a0b14",
