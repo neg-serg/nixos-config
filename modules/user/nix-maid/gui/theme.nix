@@ -97,7 +97,7 @@ in
         ".config/gtk-4.0/settings.ini".text = gtkIni;
         ".config/gtk-4.0/gtk.css".text = cssContent;
 
-        ".gtkrc-2.0".text = ''
+        ".config/gtk-2.0/gtkrc".text = ''
           gtk-theme-name="${realThemeName}"
           gtk-icon-theme-name="${iconTheme}"
           gtk-font-name="Iosevka 10"
