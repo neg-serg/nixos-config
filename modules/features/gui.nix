@@ -15,6 +15,9 @@ with lib;
     mangowm = {
       enable = mkBool "enable MangoWM (dwl-based Wayland compositor, alternative to Hyprland)" false;
     };
+    atrium = {
+      enable = mkBool "enable atrium (Wayland multiseat display manager)" false;
+    };
     iconTheme = lib.mkOption {
       type = types.str;
       default = "kora-pgrey";
