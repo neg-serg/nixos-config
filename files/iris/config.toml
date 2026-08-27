@@ -1,0 +1,27 @@
+# iris — compatibility config for odin's shell stack.
+#
+# What is rebinding and why:
+# - select = "ctrl+m"  — DISABLED: "ctrl+m" can never match (it is reserved for
+#   Enter), so iris never swallows Tab and plain zsh completion keeps ^I. Menu
+#   selection works via Up/Down + Enter, ghost text via Right.
+# - toggle-mode = "ctrl+g" — Ctrl+R belongs to zhist (history picker).
+# - navigate-closed = "shell" — Up/Down with the menu closed go to zsh, so
+#   up-line-or-beginning-search / down-line-or-beginning-search keep working.
+
+[core]
+version = 1
+shell = "zsh"
+navigate-closed = "shell"
+
+[keybindings]
+toggle-mode = "ctrl+g"
+toggle-menu = "shift+tab"
+select = "ctrl+m"
+navigate-up = "up"
+navigate-down = "down"
+navigate-right = "right"
+
+# NixOS owns updates — never self-update (the store binary is read-only anyway).
+[updater]
+check-on-startup = false
+auto-update = 0
