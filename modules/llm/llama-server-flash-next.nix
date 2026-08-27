@@ -63,28 +63,41 @@ in
           "render"
           "video"
         ];
-        # nproc is resolved at start time via bash; llama.cpp -t defaults would
-        # underuse the 9950X3D (32 threads) on the CPU-side expert compute.
-        ExecStart = ''
-          ${pkgs.bash}/bin/bash -c 'exec ${pkgs.llama-cpp-qwen4exp}/bin/llama-server \
-            --device Vulkan0 \
-            --model ${modelDir}/${modelFile} \
-            --host 127.0.0.1 \
-            --port ${toString cfg.port} \
-            --load-mode mmap \
-            --fit off \
-            --n-gpu-layers ${toString cfg.nGpuLayers} \
-            --ctx-size ${toString cfg.ctxSize} \
-            --threads "$(nproc)" \
-            --flash-attn off \
-            --cache-type-k f16 \
-            --cache-type-v f16 \
-            --cpu-moe \
-            -ot "blk\.[0-9]+\.ple_value=CPU,blk\.[0-9]+\.ple_key=CPU" \
-            --jinja \
-            --chat-template-kwargs "{\"reasoning_effort\":\"low\"}" \
-            --log-disable'
-        '';
+        # List form: NixOS escapes each element for the unit file, so systemd
+        # passes exact argv (no quote/backslash mangling). llama.cpp defaults to
+        # all cores when --threads is omitted.
+        ExecStart = [
+          "${pkgs.llama-cpp-qwen4exp-rocm}/bin/llama-server"
+          "--device"
+          "ROCm0"
+          "--model"
+          "${modelDir}/${modelFile}"
+          "--host"
+          "127.0.0.1"
+          "--port"
+          "${toString cfg.port}"
+          "--load-mode"
+          "mmap"
+          "--fit"
+          "off"
+          "--n-gpu-layers"
+          "${toString cfg.nGpuLayers}"
+          "--ctx-size"
+          "${toString cfg.ctxSize}"
+          "--flash-attn"
+          "off"
+          "--cache-type-k"
+          "f16"
+          "--cache-type-v"
+          "f16"
+          "--cpu-moe"
+          "-ot"
+          "blk\\.[0-9]+\\.ple_value=CPU,blk\\.[0-9]+\\.ple_key=CPU"
+          "--jinja"
+          "--chat-template-kwargs"
+          "{\"reasoning_effort\":\"low\"}"
+          "--log-disable"
+        ];
         Restart = "on-failure";
         RestartSec = 5;
       };
