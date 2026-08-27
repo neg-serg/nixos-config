@@ -46,6 +46,8 @@
   # ZRAM: zstd compressor (Zen 5 has hw-accelerated zstd, better ratio than lzo-rle)
   # SCX BPF scheduler — V-Cache CCD aware, replaces isolcpus
   features.optimization.enable = true;
+  # ROCm compute (amdkfd + clr/rocm-smi userspace); torch-rocm env via features.dev.ai.rocm
+  features.hardware.amdgpu.rocm.enable = true;
   zramSwap.algorithm = "zstd";
   profiles.performance.writeback.enable = true;
   # Safe memory extras: lower swappiness and raise max_map_count for heavy apps/games

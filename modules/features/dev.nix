@@ -6,6 +6,7 @@ with lib;
     ai = {
       enable = mkBool "enable AI tools (e.g., LM Studio)" true;
       omp.enable = mkBool "install Oh My Pi (omp) AI coding agent (fork of Pi)" false;
+      rocm.enable = mkBool "install PyTorch with ROCm (gfx1201) + torch-rocm CLI for GPU fine-tuning" false;
     };
     pkgs = {
       iac = mkBool "enable infrastructure-as-code tooling (Terraform, etc.)" true;
