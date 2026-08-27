@@ -1005,10 +1005,11 @@ Scope {
                             }
                             LocalMods.PillCapsule {
                                 id: pillCapsule
-                                // Hidden once today's pill is taken; peeks back while the
-                                // bar is hovered so the taken state stays reachable.
+                                // Shown only once the pill reminder is active (after the 12:00
+                                // deadline, until taken); peeks back while the bar is hovered so the
+                                // taken state stays reachable.
                                 visible: WidgetRegistry.isVisible("pill")
-                                    && (!PillTracker.taken || rightPanel.panelHovering)
+                                    && (PillTracker.reminderActive || (PillTracker.taken && rightPanel.panelHovering))
                                 Layout.alignment: Qt.AlignVCenter
                                 screen: modelData
                             }
