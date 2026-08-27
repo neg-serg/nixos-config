@@ -4,7 +4,7 @@
 # - select = "ctrl+m"  — DISABLED: "ctrl+m" can never match (it is reserved for
 #   Enter), so iris never swallows Tab and plain zsh completion keeps ^I. Menu
 #   selection works via Up/Down + Enter, ghost text via Right.
-# - toggle-mode = "ctrl+g" — Ctrl+R belongs to zhist (history picker).
+# - toggle-mode = "ctrl+r" — iris history mode (zhist hook disabled).
 # - navigate-closed = "shell" — Up/Down with the menu closed go to zsh, so
 #   up-line-or-beginning-search / down-line-or-beginning-search keep working.
 
@@ -14,7 +14,7 @@ shell = "zsh"
 navigate-closed = "shell"
 
 [keybindings]
-toggle-mode = "ctrl+g"
+toggle-mode = "ctrl+r"
 toggle-menu = "shift+tab"
 select = "ctrl+m"
 navigate-up = "up"
