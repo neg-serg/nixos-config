@@ -1,4 +1,4 @@
-_inputs: _final: prev:
+_inputs: final: prev:
 
 {
   swayimg = prev.callPackage ../swayimg { };
@@ -15,4 +15,15 @@ _inputs: _final: prev:
   pycamilladsp-plot = prev.callPackage ../pycamilladsp-plot { };
   # VapourSynth NCNN (Vulkan) plugin: AI upscale/interp/denoise in VS (GPL-3)
   vsncnn = prev.callPackage ../vsncnn { };
+  # SuperCollider third-party UGen plugins (server plugins + SC classes)
+  sc-plugin-farm = prev.callPackage ../sc-plugin-farm { }; # fake SC source root for building UGens
+  f0plugins = prev.callPackage ../f0plugins { scPluginFarm = final.sc-plugin-farm; }; # redFrik SC plugins: sound chips, rhythms, wavesets
+  steroids-ugens = prev.callPackage ../steroids-ugens { scPluginFarm = final.sc-plugin-farm; }; # SC Steroids UGens (SSinOscFB, TDemand)
+  super-bufrd = prev.callPackage ../super-bufrd { scPluginFarm = final.sc-plugin-farm; }; # subsample-accurate buffer-reading UGens
+  xplaybuf = prev.callPackage ../xplaybuf { scPluginFarm = final.sc-plugin-farm; }; # granular playback UGen with crossfade
+  mi-ugens = prev.callPackage ../mi-ugens { scPluginFarm = final.sc-plugin-farm; }; # Mutable Instruments eurorack modules as UGens
+  guttersynth-sc = prev.callPackage ../guttersynth-sc { scPluginFarm = final.sc-plugin-farm; }; # GutterSynth: coupled duffing oscillators through modal synthesis
+  my-ugens = prev.callPackage ../my-ugens { scPluginFarm = final.sc-plugin-farm; }; # sonoro1234 MyUGens: DWG instruments, Karplus, pitch tracking
+  timestretch = prev.callPackage ../timestretch { }; # TimeStretch SC quark: Ness Stretch extreme time stretch
+  pitchshiftpa = prev.callPackage ../pitchshiftpa { }; # PitchShiftPA SC quark: phase-aligned pitch/formant shifter
 }
