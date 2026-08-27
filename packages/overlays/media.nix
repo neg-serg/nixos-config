@@ -33,6 +33,7 @@ _inputs: final: prev:
   scmir = prev.callPackage ../scmir { }; # SCMIR: music IR analysis library + CLI tools
   atk-sc3 = prev.callPackage ../atk-sc3 { }; # Ambisonic Toolkit SC quark
   vstplugin = prev.callPackage ../vstplugin { scPluginFarm = final.sc-plugin-farm; }; # host VST2/VST3 in scsynth
+  flucoma = prev.callPackage ../flucoma { scPluginFarm = final.sc-plugin-farm; }; # FluCoMa: corpus manipulation UGens (57 plugins)
   # -- ATK dependency quarks --
   hilbert = prev.callPackage ../hilbert { }; # Hilbert transform utilities (ATK dep)
   pointview = prev.callPackage ../pointview { }; # spherical point visualization (ATK dep)
