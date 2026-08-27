@@ -26,3 +26,21 @@ navigate-right = "right"
 [updater]
 check-on-startup = false
 auto-update = 0
+
+# AI suggestions from the local ollama (127.0.0.1:11434, OpenAI-compatible).
+# qwen2.5-coder:7b-instruct-q6_K: warm latency 130-190 ms on the 9070 XT and
+# correct completions (benchmarked; llama3.2:1b is faster to load but answers
+# wrong). keep_alive keeps the model resident in VRAM between keystrokes —
+# without it ollama evicts the model and every request pays a ~1.5-2 s cold start.
+[ai]
+enabled = true
+provider = "ollama"
+debounce_ms = 120
+min_interval_ms = 250
+
+[ai.providers.ollama]
+inherited_from = "openai"
+endpoint = "http://127.0.0.1:11434/v1"
+model = "qwen2.5-coder:7b-instruct-q6_K"
+timeout_ms = 5000
+extra_request_body = { keep_alive = "30m" }
