@@ -75,6 +75,15 @@ in
         }";
       };
     };
+    # SuperDirtMixer keeps its presets in the quark's own presets/ folder
+    # ("../../presets/" resolved against the compiled class file path — with
+    # the per-subdir symlinks above that lands in the real user dir). Make it
+    # a writable dir and seed Default.json once (C copies only when missing /
+    # source newer — store mtime is epoch, so user edits are never clobbered).
+    systemd.user.tmpfiles.rules = [
+      "d %h/.local/share/SuperCollider/Extensions/SuperDirtMixer/presets 0755 - - -"
+      "C %h/.local/share/SuperCollider/Extensions/SuperDirtMixer/presets/Default.json 0644 - - - ${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/presets/Default.json"
+    ];
     environment.etc = {
       "skel/.config/SuperCollider/boot_noop.scd".text = bootNoop;
     };
@@ -90,6 +99,30 @@ in
       # SC3-Plugins classes (DynKlank, SwitchDelay, …) — needed by SuperDirt default-synths
       ".local/share/SuperCollider/Extensions/SC3plugins".source =
         "${pkgs.supercolliderPlugins.sc3-plugins}/share/SuperCollider/Extensions/SC3plugins";
+      # EQui — parametric EQ quark used by SuperDirtMixer (read-only code)
+      ".local/share/SuperCollider/Extensions/EQui".source =
+        "${pkgs.neg.equi}/share/SuperCollider/extensions/EQui";
+      # JSONlib — JSON en/decoder quark used by SuperDirtMixer (read-only code)
+      ".local/share/SuperCollider/Extensions/JSONlib".source =
+        "${pkgs.neg.jsonlib}/share/SuperCollider/extensions/JSONlib";
+      # SuperDirtMixer — graphical mixer UI for SuperDirt orbits. Subdirs are
+      # symlinked individually (NOT the whole quark) so that relative paths
+      # ("../../presets/", resolved by SC against the compiled class file
+      # path) stay inside the real user dir and preset files remain writable;
+      # the code itself is read-only in the store. The presets dir and its
+      # Default.json seed come from the systemd.user.tmpfiles.rules below.
+      ".local/share/SuperCollider/Extensions/SuperDirtMixer/classes".source =
+        "${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/classes";
+      ".local/share/SuperCollider/Extensions/SuperDirtMixer/synths".source =
+        "${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/synths";
+      ".local/share/SuperCollider/Extensions/SuperDirtMixer/HelpSource".source =
+        "${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/HelpSource";
+      ".local/share/SuperCollider/Extensions/SuperDirtMixer/assets".source =
+        "${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/assets";
+      ".local/share/SuperCollider/Extensions/SuperDirtMixer/tidal".source =
+        "${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/tidal";
+      ".local/share/SuperCollider/Extensions/SuperDirtMixer/SuperDirtMixer.quark".source =
+        "${pkgs.neg.superdirt-mixer}/share/SuperCollider/extensions/SuperDirtMixer/SuperDirtMixer.quark";
       # Dirt-Samples at a stable path — the notes startup script (which cannot
       # interpolate nix store paths) loads samples from here.
       ".local/share/SuperCollider/Dirt-Samples".source = "${pkgs.neg.dirt-samples}/share/Dirt-Samples";

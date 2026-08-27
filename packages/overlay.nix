@@ -186,6 +186,9 @@ in
       game = final.callPackage ./game { };
       joern = final.callPackage ./joern { }; # Open-source code analysis platform
       superdirt = final.callPackage ./superdirt { }; # SuperDirt SC quark for TidalCycles audio engine
+      superdirt-mixer = final.callPackage ./superdirt-mixer { }; # graphical mixer UI quark for SuperDirt orbits (gain/pan/reverb/EQ/compressor)
+      equi = final.callPackage ./equi { }; # EQui SC quark (parametric EQ) — SuperDirtMixer dependency
+      jsonlib = final.callPackage ./jsonlib { }; # JSONlib SC quark (JSON en/decoder) — SuperDirtMixer dependency
       dirt-samples = final.callPackage ./dirt-samples { }; # audio sample library for SuperDirt
       vowel = final.callPackage ./vowel { }; # Vowel SC quark (formant tables) used by SuperDirt
       dsh = final.callPackage ./dsh { }; # DeepSeek Harness agent CLI (dsh)
