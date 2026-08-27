@@ -42,6 +42,11 @@ navigate-right = "right"
 check-on-startup = false
 auto-update = 0
 
+# zoxide is installed and wired (Ctrl+Y); let iris also rank cd suggestions
+# by its frecency database, not just the current directory's children.
+[zoxide]
+extend-cd = true
+
 # AI suggestions from the local ollama (127.0.0.1:11434, OpenAI-compatible).
 # qwen2.5-coder:7b-instruct-q6_K: warm latency 130-190 ms on the 9070 XT and
 # correct completions (benchmarked; llama3.2:1b is faster to load but answers
