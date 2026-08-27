@@ -16,6 +16,10 @@ in
     sourceRoot = ".";
   });
 
+  # Qwen3.8-Flash-Next (qwen4exp arch) llama.cpp — experimental PR #27742
+  # Vulkan build (+ graph_max_nodes patch); serves llama-server-flash-next.
+  llama-cpp-qwen4exp = callPkg (packagesRoot + "/llama-cpp-qwen4exp") { };
+
   # neg sub-attributes are merged once in packages/overlay.nix — no
   # `(prev.neg or {})` accumulation here (prev is the unmodified base).
   neg = rec {
@@ -23,6 +27,7 @@ in
     brrtfetch = callPkg (packagesRoot + "/brrtfetch") { }; # Animated ASCII art GIF renderer alongside sysinfo output
     duf = callPkg (packagesRoot + "/duf") { }; # duf fork with --style plain, --no-header, --no-bars flags
     hwctl = callPkg (packagesRoot + "/hwctl") { }; # Hardware control CLI — CPU boost, V-Cache masks, Nuvoton fan control
+    iris = callPkg (packagesRoot + "/iris") { }; # IRIS — shell auto-completion that works like code editor's IntelliSense
     oryx = callPkg (packagesRoot + "/oryx") { }; # TUI for sniffing network traffic using eBPF (needs root + BTF kernel)
     omp = callPkg (packagesRoot + "/omp") { }; # Oh My Pi (omp) — AI coding agent with LSP, DAP, subagents
     hypr-focus = callPkg (packagesRoot + "/hypr-focus") { }; # Rust-based window focus CLI — set window class on focused Hyprland window
