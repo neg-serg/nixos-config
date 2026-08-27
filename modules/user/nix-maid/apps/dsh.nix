@@ -24,7 +24,7 @@ let
   # brings the unit back: if it is not active, or it is active but port 3080 is
   # dead, stragglers are killed and the service is (re)started via dsh-restart.
   watchdogScript = pkgs.writeShellScript "dsh-watchdog" ''
-    export PATH=/run/current-system/sw/bin:/run/wrappers/bin:/usr/local/bin:/usr/bin:/bin
+    export PATH=/run/wrappers/bin:/run/current-system/sw/bin:/usr/local/bin:/usr/bin:/bin
     export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
     state="$(systemctl --user is-active dsh.service 2>/dev/null || true)"
     case "$state" in
@@ -105,7 +105,11 @@ in
       # execvp, which needs the system PATH. systemd's default user-service
       # PATH lacks /run/current-system/sw/bin, so sandboxed tool calls fail
       # with "landlock-run: exec failed: No such file or directory".
-      PATH = lib.mkForce "/run/current-system/sw/bin:/run/wrappers/bin:/usr/local/bin:/usr/bin:/bin";
+      # /run/wrappers/bin MUST stay first: it holds the setuid sudo (and su,
+      # newuidmap, …) wrapper — putting sw/bin first makes `sudo` resolve to
+      # the non-setuid store binary ("must be owned by uid 0 and have the
+      # setuid bit set").
+      PATH = lib.mkForce "/run/wrappers/bin:/run/current-system/sw/bin:/usr/local/bin:/usr/bin:/bin";
       # llm-pi-ai provider "ollama-local" (openai-completions on 127.0.0.1:11434)
       # needs a non-empty apiKey per the pi-ai adapter; ollama ignores the value.
       OLLAMA_LOCAL_API_KEY = "ollama-local";
