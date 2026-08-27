@@ -26,4 +26,24 @@ _inputs: final: prev:
   my-ugens = prev.callPackage ../my-ugens { scPluginFarm = final.sc-plugin-farm; }; # sonoro1234 MyUGens: DWG instruments, Karplus, pitch tracking
   timestretch = prev.callPackage ../timestretch { }; # TimeStretch SC quark: Ness Stretch extreme time stretch
   pitchshiftpa = prev.callPackage ../pitchshiftpa { }; # PitchShiftPA SC quark: phase-aligned pitch/formant shifter
+  softcut-sc = prev.callPackage ../softcut-sc { scPluginFarm = final.sc-plugin-farm; }; # monome Softcut multi-voice looper as SC UGen
+  signalbox = prev.callPackage ../signalbox { }; # SignalBox SC quark: time/frequency-domain analysis tools
+  crucial-library = prev.callPackage ../crucial-library { }; # crucial-library SC quark: AbstractPlayer live-coding system
+  # -- analysis / spatial / VST hosting --
+  scmir = prev.callPackage ../scmir { }; # SCMIR: music IR analysis library + CLI tools
+  atk-sc3 = prev.callPackage ../atk-sc3 { }; # Ambisonic Toolkit SC quark
+  vstplugin = prev.callPackage ../vstplugin { scPluginFarm = final.sc-plugin-farm; }; # host VST2/VST3 in scsynth
+  # -- ATK dependency quarks --
+  hilbert = prev.callPackage ../hilbert { }; # Hilbert transform utilities (ATK dep)
+  pointview = prev.callPackage ../pointview { }; # spherical point visualization (ATK dep)
+  sphericaldesign = prev.callPackage ../sphericaldesign { }; # spherical design point sets (ATK dep)
+  filelog = prev.callPackage ../filelog { }; # file logging/player classes (ATK dep)
+  mathlib = prev.callPackage ../mathlib { }; # math classes, matrices (ATK dep)
+  wslib = prev.callPackage ../wslib { }; # lookahead patterns, DJ helpers (ATK dep)
+  # -- live coding quarks --
+  safetynet = prev.callPackage ../safetynet { }; # protect against dangerous audio signals
+  ddwplug = prev.callPackage ../ddwplug { }; # dynamic per-note synth patching
+  ddwchucklib = prev.callPackage ../ddwchucklib { }; # Chuck browser / advanced algorithmic composition
+  miscellaneous-lib = prev.callPackage ../miscellaneous-lib { }; # patterns, granulation, live coding utilities
+  ixiquarks = prev.callPackage ../ixiquarks { }; # GUI instruments/effects toolset
 }
