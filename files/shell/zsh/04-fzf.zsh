@@ -23,8 +23,10 @@ autoload -Uz compinit
 (( ${+_comps} )) || compinit -d "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
 
 # Load (zsh will prefer compiled .zwc if present)
+# NOTE: completion.zsh is intentionally NOT sourced: it binds ^I to
+# fzf-completion. fzf-on-tab below handles Tab itself (expand-or-complete +
+# fzf-path-insert for abbreviated paths), so fzf-completion is not needed.
 source "${_fzf_cache_dir}/key-bindings.zsh" 2>/dev/null
-source "${_fzf_cache_dir}/completion.zsh"   2>/dev/null
 
 # Fast candidate sources for fzf path completion (replaces the default fzf
 # walker, which would recursively walk huge roots like $HOME). fd with depth
@@ -44,9 +46,7 @@ _fzf_compgen_dir() {
     . "$1" 2>/dev/null
 }
 
-# Fast fuzzy completion (no TUI): fzf-on-tab resolves words whose parent dir
-# is missing via fzf-path-insert, which runs `fd | fzf --scheme=path --filter`
-# non-interactively and INSERTS the best match on Tab. The global
-# FZF_DEFAULT_OPTS --exact (search.nix) is stripped there; other fzf
-# invocations (Ctrl-T/Ctrl-R pickers) keep their opts untouched.
-bindkey "^I" fzf-on-tab   # empty line -> fzf file picker; path word -> insert best match; else normal completion
+# fzf-on-tab: Tab does normal completion, and words whose parent dir does
+# not exist (~/m/new, d/) are fuzzy-expanded to the real path (no symlinks:
+# fd -t d does not follow links). Empty line -> fzf file picker.
+bindkey "^I" fzf-on-tab
