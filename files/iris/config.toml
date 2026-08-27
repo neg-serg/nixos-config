@@ -7,7 +7,7 @@
 #   -> real path, no symlinks). Both behaviors live on one key.
 # - mode = "spec" — suggest from command specs + filegen + AI only; shell
 #   history junk (dsh persistent-bash entries) never becomes a ghost.
-# - toggle-mode = "ctrl+g" — Ctrl+R belongs to zhist (history picker);
+# - toggle-mode = "ctrl+g" — Ctrl+R is the fzf history picker (zhist removed);
 #   iris is currently disabled (05-iris.zsh hook off).
 # - navigate-up/down = "ctrl+p"/"ctrl+n" — emacs-style; with the menu closed
 #   they are forwarded to zsh, so the existing ^P/^N history-search bindings
