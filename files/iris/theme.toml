@@ -1,0 +1,22 @@
+# iris theme matching odin's UI palette (quickshell accent #006FCC,
+# kitty/p10k blue family). Fallback per-field to iris defaults for anything
+# not listed here.
+border = "#006FCC"
+accent = "#94E1F9"
+muted = "#3B4C5C"
+text = "#CBD6E5"
+text_sel = "#FFFFFF"
+key = "#006FCC"
+match = "#94E1F9"
+desc = "#AEB9C8"
+desc_sel = "#E4EBF4"
+sel_bg = "#242A35"
+sel_text = "#FFFFFF"
+scroll_info = "#006FCC"
+ghost_text = "#3B4C5C"
+sys = "#0A1218"
+sys_sel = "#006FCC"
+hist = "#0C141C"
+hist_sel = "#94E1F9"
+alias = "#101820"
+alias_sel = "#006FCC"
