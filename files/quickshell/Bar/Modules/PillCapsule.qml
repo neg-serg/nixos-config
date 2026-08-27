@@ -13,8 +13,8 @@ OverlayToggleCapsule {
     capsule.centerContent: true
     capsule.cursorShape: Qt.PointingHandCursor
     capsule.implicitWidth: capsule.horizontalPadding * 2 + pillIcon.width
-    // Capsule stays visible whenever the widget is shown; hiding when taken
-    // is handled by the bar's visibility binding (peek on panel hover).
+    // Visibility is handled by the bar: shown only while the reminder is
+    // active (after the 12:00 deadline, until taken); peeks on panel hover.
     capsuleVisible: true
     autoToggleOnTap: false
 
