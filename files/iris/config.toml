@@ -23,12 +23,12 @@ shell = "zsh"
 mode = "spec"
 navigate-closed = "shell"
 
-# Menu + ghost (mode 1): the Ctrl+R history picker needs the visible menu —
-# with ghost-only (2) the menu box is hidden even in history mode, so Ctrl+R
-# appears to do nothing at an empty prompt. Spec/AI suggestions render clean
-# (mode = "spec"), so the menu is not the junk list from before.
+# Menu without ghost text (mode 0): the Ctrl+R history picker needs the
+# visible menu, but no gray ghost after the cursor while typing (mode 2 hides
+# the menu, which makes Ctrl+R look dead). Selection: Ctrl+P/N + Enter;
+# Tab stays with fzf-on-tab (completion + ~/m/new).
 [ui]
-ghost-text = 1
+ghost-text = 0
 
 [keybindings]
 toggle-mode = "ctrl+r"
