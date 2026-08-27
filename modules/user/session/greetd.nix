@@ -108,7 +108,11 @@ in
       # Session chosen in the greeter arrives as args (Exec= from
       # /usr/share/wayland-sessions/*.desktop). No args = Hyprland (default).
       # Hyprland always routes through start-hyprland (env + session target).
-      export PATH="/run/current-system/sw/bin:$PATH"
+      # /run/wrappers/bin MUST stay first: it holds the setuid sudo (and su,
+      # newuidmap, …) wrapper — prepending only sw/bin makes `sudo` resolve to
+      # the non-setuid store binary ("must be owned by uid 0 and have the
+      # setuid bit set").
+      export PATH="/run/wrappers/bin:/run/current-system/sw/bin:$PATH"
       if [ "$#" -eq 0 ]; then
         exec /run/current-system/sw/bin/start-hyprland > /tmp/hyprland-debug.log 2>&1
       fi
