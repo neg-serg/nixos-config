@@ -1,8 +1,8 @@
-# fzf-on-tab: empty line -> interactive fzf file picker; otherwise:
-#   normal zsh completion (expand-or-complete) — unless the current path word
-#   cannot be completed normally because a MIDDLE component is abbreviated
-#   (parent dir does not exist, e.g. ~/m/new, d/). In that case fall back to
-#   fzf fuzzy path completion (~/m/new -> ~/music/new, d/ -> dw/ doc/).
+# fzf-on-tab: empty line -> interactive fzf file picker (Ctrl-T also works);
+#   otherwise Tab inserts a completion. A path word whose parent dir does not
+#   exist (~/m/new, d/) is resolved by fuzzy insertion of the best dir match
+#   (fzf-path-insert) instead of opening a picker; everything else keeps the
+#   normal expand-or-complete (which already inserts on Tab).
 local line=$BUFFER
 if [[ $line == "" ]]; then
     zle fzf-file-widget
@@ -28,5 +28,6 @@ fi
 if [[ -z $parent || -d $parent ]]; then
     zle expand-or-complete
 else
-    zle fzf-completion
+    autoload -Uz fzf-path-insert
+    fzf-path-insert "$cur" || zle expand-or-complete
 fi
