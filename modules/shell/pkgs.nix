@@ -7,5 +7,6 @@
     pkgs.nix-bash-completions # bash completion for Nix commands
     pkgs.nix-zsh-completions # zsh completion for Nix commands
     pkgs.oils-for-unix # new Unix shell with bash compatibility
+    pkgs.neg.zhist # smarter zsh history: dir/exit-status/duration per command + fzf picker (replaces native history file)
   ];
 }
