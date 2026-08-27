@@ -222,6 +222,13 @@ let
     dbus-update-activation-environment --systemd --all
     systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME
     systemctl --user start mango-session.target
+    # Pin the dGPU for wlroots: WLR_DRM_DEVICES is a colon-separated device
+    # list, so the by-path name (pci-0000:03:00.0-card contains colons) cannot
+    # be used as-is — wlroots would split it and find no GPU. Resolve it to
+    # the plain /dev/dri/cardN node.
+    if drmDev="$(readlink -f /dev/dri/by-path/pci-0000:03:00.0-card 2>/dev/null)"; then
+      export WLR_DRM_DEVICES="$drmDev"
+    fi
     echo "Executing mango..." >> "$LOG"
     exec mango "$@"
   '';
