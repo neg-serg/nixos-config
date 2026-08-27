@@ -65,6 +65,7 @@ in
         "${pkgs.softcut-sc}/lib/SuperCollider/plugins"
         "${pkgs.vstplugin}/share/SuperCollider/Extensions/VSTPlugin/plugins"
         "${pkgs.nn-ar}/lib/SuperCollider/plugins" # nn.ar: neural audio UGens (PyTorch)
+        "${pkgs.flucoma}/lib/SuperCollider/plugins" # FluCoMa: corpus manipulation UGens
         "${pkgs.neg.dwg-reverb}/lib/SuperCollider/plugins" # DWGReverb: virtual room reverb UGens
       ];
     };
@@ -204,6 +205,8 @@ in
       # nn.ar — neural audio UGens (PyTorch models loaded at runtime)
       ".local/share/SuperCollider/Extensions/nn.ar".source =
         "${pkgs.nn-ar}/share/SuperCollider/extensions/nn.ar";
+      ".local/share/SuperCollider/Extensions/FluCoMa".source =
+        "${pkgs.flucoma}/share/SuperCollider/extensions/FluCoMa";
     };
   };
 }

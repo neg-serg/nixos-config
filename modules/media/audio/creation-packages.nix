@@ -29,6 +29,7 @@ let
     pkgs.atk-sc3 # Ambisonic Toolkit — First Order Ambisonics soundfield tools (SC quark)
     pkgs.vstplugin # host VST2/VST3 plugins inside scsynth
     pkgs.nn-ar # nn.ar — neural audio UGens (PyTorch models in scsynth)
+    pkgs.flucoma # FluCoMa — corpus-based music toolkit (57 UGens: analysis, ML, transformation)
     pkgs.safetynet # SafetyNet SC quark — protect against dangerous audio signals
     pkgs.ddwplug # ddwPlug SC quark — dynamic per-note synth patching
     pkgs.miscellaneous-lib # miSCellaneous_lib SC quark — patterns, granulation, live coding

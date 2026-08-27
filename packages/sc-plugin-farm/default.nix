@@ -40,13 +40,20 @@ stdenv.mkDerivation {
   dontConfigure = true;
 
   installPhase = ''
-    mkdir -p $out/include $out/external_libraries
+    mkdir -p $out/include $out/common $out/external_libraries
     ln -s ${supercollider}/include/SuperCollider/plugin_interface $out/include/plugin_interface
     ln -s ${supercollider}/include/SuperCollider/common $out/include/common
     ln -s ${supercollider}/include/SuperCollider/common $out/common
     ln -s ${supercollider}/include/SuperCollider/SCVersion.txt $out/SCVersion.txt
     ln -s ${novaSimd} $out/external_libraries/nova-simd
     ln -s ${novaTt} $out/external_libraries/nova-tt
+    # SC_Reply.cpp - needed by flucoma's FLUID_SC_COPYREPLYADDR (compiles
+    # this SC source against the plugin headers)
+    cp ${../../files/sources/SC_Reply.cpp} $out/common/SC_Reply.cpp
+    cp ${../../files/sources/SC_ReplyImpl.hpp} $out/common/SC_ReplyImpl.hpp
+    cp ${../../files/sources/SC_Win32Utils.h} $out/common/SC_Win32Utils.h
+    cp ${../../files/sources/SC_Errors.h} $out/common/SC_Errors.h
+    cp ${../../files/sources/scsynthsend.h} $out/common/scsynthsend.h
   '';
 
   meta = with lib; {
