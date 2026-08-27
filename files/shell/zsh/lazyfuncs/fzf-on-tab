@@ -1,7 +1,32 @@
-# fzf-on-tab: empty line -> interactive fzf file picker; otherwise -> normal zsh completion.
+# fzf-on-tab: empty line -> interactive fzf file picker; otherwise:
+#   normal zsh completion (expand-or-complete) — unless the current path word
+#   cannot be completed normally because a MIDDLE component is abbreviated
+#   (parent dir does not exist, e.g. ~/m/new, d/). In that case fall back to
+#   fzf fuzzy path completion (~/m/new -> ~/music/new, d/ -> dw/ doc/).
 local line=$BUFFER
 if [[ $line == "" ]]; then
     zle fzf-file-widget
-else
+    return
+fi
+local stripped=${LBUFFER%%[[:space:]]##}
+local cur=${stripped[(w)-1]}
+if [[ $cur != */* ]]; then
     zle expand-or-complete
+    return
+fi
+local expanded
+if ! eval "expanded=$cur" 2>/dev/null; then
+    zle expand-or-complete
+    return
+fi
+local parent
+if [[ $cur == */ ]]; then
+    parent=$expanded          # word ends with '/': complete inside it
+else
+    parent=${expanded%/*}    # complete the last component under this dir
+fi
+if [[ -z $parent || -d $parent ]]; then
+    zle expand-or-complete
+else
+    zle fzf-completion
 fi
