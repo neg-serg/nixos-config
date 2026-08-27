@@ -17,6 +17,12 @@ buildGoModule rec {
   # Stdlib-only module (no go.sum entries) — no vendored dependencies.
   vendorHash = null;
 
+  # [odin] zhist clears FZF_DEFAULT_OPTS for deterministic rendering; inject
+  # the host's fzf palette (search.nix FZF_DEFAULT_OPTS colors) so the history
+  # picker matches the rest of the setup. Only --color flags, layout stays
+  # zhist's own (reverse, "Global> " prompt, its binds).
+  patches = [ ./zhist-odin-theme.patch ];
+
   ldflags = [
     "-s"
     "-w"
