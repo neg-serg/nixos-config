@@ -20,6 +20,12 @@ version = 1
 shell = "zsh"
 navigate-closed = "shell"
 
+# No suggestion dropdown — ghost text only (mode 2). The menu box is hidden,
+# the inline ghost suggestion stays, Tab inserts it, Shift+Tab temporarily
+# brings the menu back. 0 = off, 1 = menu + ghost, 2 = ghost only.
+[ui]
+ghost-text = 2
+
 [keybindings]
 toggle-mode = "ctrl+r"
 toggle-menu = "shift+tab"
