@@ -33,14 +33,12 @@ bindkey "^[OB" down-line-or-beginning-search
 bindkey "^p" up-line-or-beginning-search
 bindkey "^n" down-line-or-beginning-search
 
-bindkey " " magic-abbrev-expand
 bindkey . rationalise-dot
 bindkey "^xd" describe-key-briefly
 bindkey "^Z" fg-widget
 bindkey '^M' special-accept-line
 bindkey " "  magic-space
 bindkey ",." zleiab
-bindkey . rationalise-dot
 bindkey -M isearch . self-insert # without this, typing a . aborts incremental history search
 bindkey '^xm' inplace_mk_dirs # load the lookup subsystem if it's available on the system
 if (( $+commands[zoxide] )); then

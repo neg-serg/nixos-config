@@ -1,3 +1,10 @@
+# carapace: rich described completion for 300+ CLIs (git, docker, nix,
+# kubectl, gh, ...). Sourced after compinit (eager in 01-init) so compdef
+# and the _carapace completer wire up.
+if (( $+commands[carapace] )); then
+  source <(carapace _carapace zsh)
+fi
+
 zstyle ':acceptline:*' rehash true
 # allow one error for every three characters typed in approximate completer
 zstyle ':completion:*:approximate:' max-errors 'reply=( $((($#PREFIX+$#SUFFIX)/3 )) numeric )'
