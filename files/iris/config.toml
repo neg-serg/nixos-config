@@ -7,8 +7,8 @@
 #   -> real path, no symlinks). Both behaviors live on one key.
 # - mode = "spec" — suggest from command specs + filegen + AI only; shell
 #   history junk (dsh persistent-bash entries) never becomes a ghost.
-# - toggle-mode = "ctrl+g" — Ctrl+R is the fzf history picker (zhist removed);
-#   iris is currently disabled (05-iris.zsh hook off).
+# - toggle-mode = "ctrl+r" — Ctrl+R toggles iris into history mode, i.e. the
+#   history picker (zhist removed; fzf's own ^R is shadowed while iris runs).
 # - navigate-up/down = "ctrl+p"/"ctrl+n" — emacs-style; with the menu closed
 #   they are forwarded to zsh, so the existing ^P/^N history-search bindings
 #   keep working (menu open -> cycle iris ghost suggestion).
@@ -30,7 +30,7 @@ navigate-closed = "shell"
 ghost-text = 2
 
 [keybindings]
-toggle-mode = "ctrl+g"
+toggle-mode = "ctrl+r"
 toggle-menu = "shift+tab"
 select = "tab"
 navigate-up = "ctrl+p"
