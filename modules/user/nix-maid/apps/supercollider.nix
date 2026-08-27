@@ -62,6 +62,8 @@ in
         "${pkgs.mi-ugens}/lib/SuperCollider/plugins"
         "${pkgs.guttersynth-sc}/lib/SuperCollider/plugins"
         "${pkgs.my-ugens}/lib/SuperCollider/plugins"
+        "${pkgs.softcut-sc}/lib/SuperCollider/plugins"
+        "${pkgs.vstplugin}/share/SuperCollider/Extensions/VSTPlugin/plugins"
         "${pkgs.neg.dwg-reverb}/lib/SuperCollider/plugins" # DWGReverb: virtual room reverb UGens
       ];
     };
@@ -161,6 +163,43 @@ in
         "${pkgs.timestretch}/share/SuperCollider/extensions/TimeStretch";
       ".local/share/SuperCollider/Extensions/PitchShiftPA".source =
         "${pkgs.pitchshiftpa}/share/SuperCollider/extensions/PitchShiftPA";
+      ".local/share/SuperCollider/Extensions/Softcut".source =
+        "${pkgs.softcut-sc}/share/SuperCollider/extensions/Softcut";
+      ".local/share/SuperCollider/Extensions/SignalBox".source =
+        "${pkgs.signalbox}/share/SuperCollider/extensions/SignalBox";
+      ".local/share/SuperCollider/Extensions/crucial-library".source =
+        "${pkgs.crucial-library}/share/SuperCollider/extensions/crucial-library";
+      # analysis / spatial / VST
+      ".local/share/SuperCollider/Extensions/SCMIRExtensions".source =
+        "${pkgs.scmir}/share/SuperCollider/extensions/SCMIRExtensions";
+      ".local/share/SuperCollider/Extensions/atk-sc3".source =
+        "${pkgs.atk-sc3}/share/SuperCollider/extensions/atk-sc3";
+      ".local/share/SuperCollider/Extensions/VSTPlugin".source =
+        "${pkgs.vstplugin}/share/SuperCollider/Extensions/VSTPlugin";
+      # ATK dependency quarks
+      ".local/share/SuperCollider/Extensions/Hilbert".source =
+        "${pkgs.hilbert}/share/SuperCollider/extensions/Hilbert";
+      ".local/share/SuperCollider/Extensions/PointView".source =
+        "${pkgs.pointview}/share/SuperCollider/extensions/PointView";
+      ".local/share/SuperCollider/Extensions/SphericalDesign".source =
+        "${pkgs.sphericaldesign}/share/SuperCollider/extensions/SphericalDesign";
+      ".local/share/SuperCollider/Extensions/FileLog".source =
+        "${pkgs.filelog}/share/SuperCollider/extensions/FileLog";
+      ".local/share/SuperCollider/Extensions/MathLib".source =
+        "${pkgs.mathlib}/share/SuperCollider/extensions/MathLib";
+      ".local/share/SuperCollider/Extensions/wslib".source =
+        "${pkgs.wslib}/share/SuperCollider/extensions/wslib";
+      # live coding quarks
+      ".local/share/SuperCollider/Extensions/SafetyNet".source =
+        "${pkgs.safetynet}/share/SuperCollider/extensions/SafetyNet";
+      ".local/share/SuperCollider/Extensions/ddwPlug".source =
+        "${pkgs.ddwplug}/share/SuperCollider/extensions/ddwPlug";
+      ".local/share/SuperCollider/Extensions/ddwChucklib".source =
+        "${pkgs.ddwchucklib}/share/SuperCollider/extensions/ddwChucklib";
+      ".local/share/SuperCollider/Extensions/miSCellaneous_lib".source =
+        "${pkgs.miscellaneous-lib}/share/SuperCollider/extensions/miSCellaneous_lib";
+      ".local/share/SuperCollider/Extensions/ixiQuarks".source =
+        "${pkgs.ixiquarks}/share/SuperCollider/extensions/ixiQuarks";
     };
   };
 }

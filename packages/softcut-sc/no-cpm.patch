@@ -1,0 +1,29 @@
+--- a/CMakeLists.txt	2026-08-27 17:50:54.362070494 +0300
++++ b/CMakeLists.txt	2026-08-27 17:50:54.375070567 +0300
+@@ -14,24 +14,10 @@
+ # compile commands
+ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+ 
+-# Load cpm
+-include(cmake_modules/CPM.cmake)
+-
+ # Download softcut https://github.com/monome/softcut-lib, latest commit
+-CPMAddPackage("gh:monome/softcut-lib#main")
++add_subdirectory(softcut-lib/softcut-lib)
+ 
+-# If SC_PATH variable is not set, download supercollider source via CPM and set SC_PATH variable
+-# Download supercollider source and set the SC_PATH variable
+-if(NOT DEFINED SC_PATH)
+-  message(STATUS "SC_PATH not set, downloading SuperCollider source")
+-  CPMAddPackage(
+-    NAME SuperCollider
+-    GITHUB_REPOSITORY supercollider/supercollider
+-    GIT_TAG develop
+-    DOWNLOAD_ONLY TRUE
+-  )
+-  set(SC_PATH ${SuperCollider_SOURCE_DIR})
+-endif()
++# SC_PATH is set by the nix package; CPM fallback removed
+ 
+ # If install path is not set, set it to a platform specific default
+ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
