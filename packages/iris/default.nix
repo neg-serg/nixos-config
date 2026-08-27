@@ -5,17 +5,20 @@
 }:
 buildGoModule rec {
   pname = "iris";
-  version = "0.6.3";
+  # main (c86c0244): adds ghost-text = 2 (ghost text only, no suggestion menu)
+  # which v0.6.3 cannot do (its ghost-text is a plain bool and the menu always
+  # renders). Unreleased upstream; pinned for reproducibility.
+  version = "0.6.3-unstable-2026-08-27";
 
   src = fetchFromGitHub {
     owner = "versenilvis";
     repo = "iris";
-    rev = "v${version}";
-    hash = "sha256-+1FZgqViuQYZkhjxvbAg9l8vvazyA5RACyVRL7ubWHQ=";
+    rev = "c86c0244cf6b02eb8f27482313aaf946c175366e";
+    hash = "sha256-3WDH2nunFznhvw8P+UBxcuxGOcSerdyNDen/5seViQA=";
   };
 
   # Go module dependencies (charmbracelet lipgloss/glamour, cobra, modernc sqlite, ...).
-  vendorHash = "sha256-h3v9jXYmLJbllzqg+e4wOJZsQ5d+KEeeurTPCGhOlgI=";
+  vendorHash = "sha256-9GZn8xxdWGeAfTjJXj7VF4gyFpsyrNUDHlM+oCxiUAs=";
 
   # TestDetectCached_MidSessionFileCreation fails in the Nix sandbox: the
   # cache invalidation relies on directory mtime, but overlayfs doesn't bump
