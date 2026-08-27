@@ -50,3 +50,7 @@ _fzf_compgen_dir() {
 # not exist (~/m/new, d/) are fuzzy-expanded to the real path (no symlinks:
 # fd -t d does not follow links). Empty line -> fzf file picker.
 bindkey "^I" fzf-on-tab
+# No physical Tab? Ctrl+Space also triggers completion + ~/m/new expansion.
+# (^@ = NUL, what Ctrl+Space sends.) Trade-off: ^@ is set-mark-command in
+# emacs mode. Zero-conflict alternative: bindkey "^G" fzf-on-tab.
+bindkey "^@" fzf-on-tab
