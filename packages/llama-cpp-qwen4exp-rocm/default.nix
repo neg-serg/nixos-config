@@ -23,29 +23,30 @@ in
   llama-cpp = llama-cpp.override {
     rocmPackages = rocmPackages.gfx1201;
   };
-}).overrideAttrs (old: {
-  pname = "llama-cpp-qwen4exp-rocm";
-  # Numeric: nixpkgs' llama-cpp injects version into LLAMA_BUILD_NUMBER (C++ int).
-  version = "10656";
+}).overrideAttrs
+  (old: {
+    pname = "llama-cpp-qwen4exp-rocm";
+    # Numeric: nixpkgs' llama-cpp injects version into LLAMA_BUILD_NUMBER (C++ int).
+    version = "10656";
 
-  src = fetchFromGitHub {
-    owner = "unslothai";
-    repo = "llama.cpp";
-    inherit rev;
-    sha256 = "sha256-xcEfwle+bUHkYuZzfqVqXyi+ue3cvWsiuEbaaBDb0z4=";
-  };
+    src = fetchFromGitHub {
+      owner = "unslothai";
+      repo = "llama.cpp";
+      inherit rev;
+      sha256 = "sha256-xcEfwle+bUHkYuZzfqVqXyi+ue3cvWsiuEbaaBDb0z4=";
+    };
 
-  meta = old.meta // {
-    description = "llama.cpp with experimental Qwen3.8-Flash-Next (qwen4exp) support — PR #27742, ROCm (HIP) build";
-    longDescription = ''
-      Unmerged llama.cpp PR #27742 (unslothai/llama.cpp, branch
-      qwen4exp/qwen3.8-flash-next) built against the ROCm/HIP backend for the
-      RX 9070 XT (gfx1201). ROCm deps (hipblaslt/rocblas/...) scoped to gfx1201
-      only, so Tensile skips the other 9 GCN/RDNA archs. Serves
-      Qwen3.8-Flash-Next GGUFs; on this host ROCm compute is fast while the
-      Vulkan path is not.
-    '';
-    homepage = "https://github.com/ggml-org/llama.cpp/pull/27742";
-    license = lib.licenses.mit;
-  };
-})
+    meta = old.meta // {
+      description = "llama.cpp with experimental Qwen3.8-Flash-Next (qwen4exp) support — PR #27742, ROCm (HIP) build";
+      longDescription = ''
+        Unmerged llama.cpp PR #27742 (unslothai/llama.cpp, branch
+        qwen4exp/qwen3.8-flash-next) built against the ROCm/HIP backend for the
+        RX 9070 XT (gfx1201). ROCm deps (hipblaslt/rocblas/...) scoped to gfx1201
+        only, so Tensile skips the other 9 GCN/RDNA archs. Serves
+        Qwen3.8-Flash-Next GGUFs; on this host ROCm compute is fast while the
+        Vulkan path is not.
+      '';
+      homepage = "https://github.com/ggml-org/llama.cpp/pull/27742";
+      license = lib.licenses.mit;
+    };
+  })
