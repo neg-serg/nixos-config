@@ -482,6 +482,7 @@ in
       ".config/dircolors/dircolors".source = dircolorsConfig;
       ".config/zsh".source = zshConfigSource;
       ".config/iris/config.toml".source = "${irisConfig}/config.toml";
+      ".config/iris/theme.toml".source = "${irisConfig}/theme.toml";
       ".config/bash/oh-my-posh.bash".source = "${shellFiles}/bash/oh-my-posh.bash";
       ".config/f-sy-h".source = "${shellFiles}/f-sy-h";
       ".config/zsh-native-syntax".source = "${shellFiles}/zsh-native-syntax";

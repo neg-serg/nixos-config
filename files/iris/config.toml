@@ -1,17 +1,17 @@
 # iris — compatibility config for odin's shell stack.
 #
 # What is rebinding and why:
-# - select = "tab" — Tab inserts the top suggestion (commands, file paths).
-#   NOTE: iris consumes Tab even with the menu hidden, so native zsh
-#   completion on Tab is shadowed while iris runs; file paths are covered by
-#   iris's own file suggestions. Menu selection also works via Up/Down + Enter.
+# - select = "none" — Tab belongs to zsh: fzf-on-tab (04-fzf.zsh) does
+#   normal completion and fuzzy-expands abbreviated paths like ~/m/new to the
+#   real path (fd -t d, no symlinks). iris never sees Tab ("none" never
+#   matches any key). Accept the ghost suggestion with -> (navigate-right)
+#   or cycle with Ctrl+P/Ctrl+N and Enter.
 # - toggle-mode = "ctrl+r" — iris history mode (zhist hook disabled).
-# - navigate-up/down = "ctrl+p"/"ctrl+n" — emacs-style menu navigation.
-#   With the menu closed they are forwarded to zsh, so the existing ^P/^N
-#   up-line-or-beginning-search bindings keep working (menu open -> iris).
-# - navigate-right = "right" — iris only fires navigate-right on the arrow
-#   escape sequence (upstream limitation in v0.6.3), a ctrl+f binding would be
-#   dead; right arrow accepts ghost text / moves the cursor.
+# - navigate-up/down = "ctrl+p"/"ctrl+n" — emacs-style; with the menu closed
+#   they are forwarded to zsh, so the existing ^P/^N history-search bindings
+#   keep working (menu open -> cycle iris ghost suggestion).
+# - navigate-right = "right" — right arrow accepts ghost text (upstream only
+#   fires navigate-right on the arrow escape sequence; ctrl+f would be dead).
 # - navigate-closed = "shell" — nav keys with the menu closed go to zsh, so
 #   up-line-or-beginning-search / down-line-or-beginning-search keep working.
 
@@ -21,7 +21,7 @@ shell = "zsh"
 navigate-closed = "shell"
 
 # No suggestion dropdown — ghost text only (mode 2). The menu box is hidden,
-# the inline ghost suggestion stays, Tab inserts it, Shift+Tab temporarily
+# the inline ghost suggestion stays, -> accepts it, Shift+Tab temporarily
 # brings the menu back. 0 = off, 1 = menu + ghost, 2 = ghost only.
 [ui]
 ghost-text = 2
@@ -29,7 +29,7 @@ ghost-text = 2
 [keybindings]
 toggle-mode = "ctrl+r"
 toggle-menu = "shift+tab"
-select = "tab"
+select = "none"
 navigate-up = "ctrl+p"
 navigate-down = "ctrl+n"
 navigate-right = "right"
@@ -44,11 +44,12 @@ auto-update = 0
 # correct completions (benchmarked; llama3.2:1b is faster to load but answers
 # wrong). keep_alive keeps the model resident in VRAM between keystrokes —
 # without it ollama evicts the model and every request pays a ~1.5-2 s cold start.
+# debounce_ms = pause after typing stops before the AI ghost appears.
 [ai]
 enabled = true
 provider = "ollama"
-debounce_ms = 120
-min_interval_ms = 250
+debounce_ms = 400
+min_interval_ms = 600
 
 [ai.providers.ollama]
 inherited_from = "openai"
