@@ -13,6 +13,15 @@ let
     # -- Live Coding --
     pkgs.supercollider # SuperCollider IDE and audio engine
     pkgs.supercolliderPlugins.sc3-plugins # extra SuperCollider plugins (UGens)
+    pkgs.f0plugins # redFrik SC plugins: sound chips, euclidean rhythms, wavesets (UGens)
+    pkgs.steroids-ugens # SC Steroids UGens (SSinOscFB, TDemand)
+    pkgs.super-bufrd # subsample-accurate buffer-reading UGens (SuperBufRd & co)
+    pkgs.xplaybuf # granular playback UGen with crossfade
+    pkgs.mi-ugens # Mutable Instruments eurorack modules as UGens (Clouds, Rings, …)
+    pkgs.guttersynth-sc # GutterSynth UGen — coupled duffing oscillators through modal synthesis
+    pkgs.my-ugens # sonoro1234 MyUGens — DWG instruments, Karplus, pitch tracking, plucked strings
+    pkgs.timestretch # TimeStretch SC quark — Ness Stretch extreme time stretch
+    pkgs.pitchshiftpa # PitchShiftPA SC quark — phase-aligned pitch/formant shifter
     pkgs.haskellPackages.tidal # TidalCycles live coding environment (SuperCollider-based)
     pkgs.neg.superdirt # SuperDirt — TidalCycles audio engine (SC quark)
     pkgs.neg.dirt-samples # SuperDirt audio sample library

@@ -51,8 +51,19 @@ in
   config = lib.mkIf enabled {
     environment.sessionVariables = {
       LD_LIBRARY_PATH = [ "${pkgs.pipewire.jack}/lib" ];
-      # Server-side SC3-Plugins UGens (.so) — scsynth finds them via SC_PLUGIN_PATH
-      SC_PLUGIN_PATH = "${pkgs.supercolliderPlugins.sc3-plugins}/lib/SuperCollider/plugins";
+      # Server-side UGen plugins (.so) — scsynth finds them via SC_PLUGIN_PATH
+      # (colon-separated dir list: SC3-Plugins + the ported third-party plugins)
+      SC_PLUGIN_PATH = lib.concatStringsSep ":" [
+        "${pkgs.supercolliderPlugins.sc3-plugins}/lib/SuperCollider/plugins"
+        "${pkgs.f0plugins}/lib/SuperCollider/plugins"
+        "${pkgs.steroids-ugens}/lib/SuperCollider/plugins"
+        "${pkgs.super-bufrd}/lib/SuperCollider/plugins"
+        "${pkgs.xplaybuf}/lib/SuperCollider/plugins"
+        "${pkgs.mi-ugens}/lib/SuperCollider/plugins"
+        "${pkgs.guttersynth-sc}/lib/SuperCollider/plugins"
+        "${pkgs.my-ugens}/lib/SuperCollider/plugins"
+        "${pkgs.neg.dwg-reverb}/lib/SuperCollider/plugins" # DWGReverb: virtual room reverb UGens
+      ];
     };
 
     # Keep scsynth's JACK out ports linked to the game-stereo virtual sink.
@@ -126,6 +137,30 @@ in
       # Dirt-Samples at a stable path — the notes startup script (which cannot
       # interpolate nix store paths) loads samples from here.
       ".local/share/SuperCollider/Dirt-Samples".source = "${pkgs.neg.dirt-samples}/share/Dirt-Samples";
+      # Ported third-party UGen plugin classes (.sc files; the .so plugins are
+      # found via SC_PLUGIN_PATH above). Each package installs its own quark
+      # layout under share/SuperCollider/extensions/<QuarkName>/.
+      ".local/share/SuperCollider/Extensions/f0plugins".source =
+        "${pkgs.f0plugins}/share/SuperCollider/extensions/f0plugins";
+      ".local/share/SuperCollider/Extensions/Steroids".source =
+        "${pkgs.steroids-ugens}/share/SuperCollider/extensions/Steroids";
+      ".local/share/SuperCollider/Extensions/SuperBufRd".source =
+        "${pkgs.super-bufrd}/share/SuperCollider/extensions/SuperBufRd";
+      ".local/share/SuperCollider/Extensions/XPlayBuf".source =
+        "${pkgs.xplaybuf}/share/SuperCollider/extensions/XPlayBuf";
+      ".local/share/SuperCollider/Extensions/mi-UGens".source =
+        "${pkgs.mi-ugens}/share/SuperCollider/extensions/mi-UGens";
+      ".local/share/SuperCollider/Extensions/DWGReverb".source =
+        "${pkgs.neg.dwg-reverb}/share/SuperCollider/extensions/DWGReverb";
+      ".local/share/SuperCollider/Extensions/GutterSynth".source =
+        "${pkgs.guttersynth-sc}/share/SuperCollider/extensions/GutterSynth";
+      # MyUGens installs its classes under a shared Myplugins/ parent dir
+      ".local/share/SuperCollider/Extensions/Myplugins".source =
+        "${pkgs.my-ugens}/share/SuperCollider/Extensions/Myplugins";
+      ".local/share/SuperCollider/Extensions/TimeStretch".source =
+        "${pkgs.timestretch}/share/SuperCollider/extensions/TimeStretch";
+      ".local/share/SuperCollider/Extensions/PitchShiftPA".source =
+        "${pkgs.pitchshiftpa}/share/SuperCollider/extensions/PitchShiftPA";
     };
   };
 }
