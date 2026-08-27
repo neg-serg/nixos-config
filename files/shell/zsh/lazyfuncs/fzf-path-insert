@@ -7,9 +7,7 @@
 #
 # $1 = current word to complete (e.g. ~/m/new)
 local word=$1 expanded root leftover best
-if ! eval "expanded=$word" 2>/dev/null; then
-    return 1
-fi
+expanded=${~word}   # tilde expansion only (GLOB_SUBST off) — safer than eval
 # walk up to the nearest existing ancestor (same logic as fzf completion)
 root=$expanded
 while [[ -n $root && ! -d $root ]]; do
