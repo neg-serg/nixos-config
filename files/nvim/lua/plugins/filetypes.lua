@@ -131,33 +131,34 @@ return {
       -- Leader group (reliable in terminal emulators — Ctrl+Enter often
       -- arrives as plain Enter in kitty/wezterm):
       --   <leader>tl  launch Tidal,  <leader>tq  quit,  <leader>th  hush
-      --   <leader>ts  send line,     <leader>tb  send block, <leader>tz  silence
+      --   <leader>ts  send pattern, <leader>tb  send block,  <leader>tz  silence
       { '<leader>tl', function() require('tidal-actions').launch() end, desc = 'Launch Tidal (checks engine)', buffer = true },
       { '<leader>tq', '<Cmd>TidalQuit<CR>', desc = 'Quit Tidal', buffer = true },
       { '<C-CR>', function() require('tidal-actions').launch() end, desc = 'Launch Tidal (checks engine)', buffer = true },
       { '<C-S-CR>', '<Cmd>TidalQuit<CR>', desc = 'Quit Tidal', buffer = true },
-      -- Send current line: Alt+Enter or <leader>ts.
+      -- Send pattern: Alt+Enter or <leader>ts. Smart: a multi-line
+      -- expression (e.g. d1 $ stack [ ... ]) is sent as ONE :{ ... :} block;
+      -- several independent d1 $ ... statements are sent line-by-line.
       {
         '<M-CR>',
-        function() require('tidal-actions').send() end,
-        desc = 'Send current line to Tidal',
+        function() require('tidal-actions').send_smart() end,
+        desc = 'Send pattern (line or multi-line block) to Tidal',
         mode = 'n',
         buffer = true,
       },
       {
         '<leader>ts',
-        function() require('tidal-actions').send() end,
-        desc = 'Send current line to Tidal',
+        function() require('tidal-actions').send_smart() end,
+        desc = 'Send pattern (line or multi-line block) to Tidal',
         buffer = true,
       },
-      -- Alt+Enter in visual mode: send each non-empty selected line as its
-      -- own command. GHCi's `:{ ... :}` multiline block treats everything as
-      -- ONE expression, so several `d1 $ ...` lines in one block fail to
-      -- compile. Sending line-by-line is the correct Tidal workflow.
+      -- Alt+Enter in visual mode: same smart logic on the selection —
+      -- one multi-line expression goes as a single block, otherwise each
+      -- selected line is sent as its own command.
       {
         '<M-CR>',
-        function() require('tidal-actions').send_lines() end,
-        desc = 'Send each selected line to Tidal',
+        function() require('tidal-actions').send_smart() end,
+        desc = 'Send selection (line or multi-line block) to Tidal',
         mode = 'x',
         buffer = true,
       },
