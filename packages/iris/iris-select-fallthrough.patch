@@ -1,0 +1,42 @@
+--- a/root/wrapper.go
++++ b/root/wrapper.go
+@@ -1092,8 +1092,12 @@
+ 				}
+ 
+ 				if matched, consumed := config.MatchKey(inputSlice[i:], config.Get().Keybindings.SelectSuggestion); matched && config.Get().Keybindings.SelectSuggestion != "" {
++					// [odin] Accept when the menu has a suggestion; with no suggestion
++					// the key falls through to the shell, keeping its normal meaning
++					// (Tab: completion / fzf-on-tab ~/m/new, Ctrl+E: end-of-line).
++					// Menu visibility is the source of truth — ghost-text = 0 has no
++					// ghost text to check.
+ 					if overlay.IsVisible() {
+-						intercepted = true
+ 						selected := overlay.GetCurrentCmd()
+ 						if selected != "" {
+ 							activeModeMu.RLock()
+@@ -1107,21 +1111,21 @@
+ 									selected = s + " "
+ 								}
+ 							}
++							intercepted = true
+ 							bufferMu.Lock()
+ 							naiveBuffer = selected
+ 							replace := shell.ReplaceLine([]byte(selected), cursorOffset)
+ 							cursorOffset = 0
+ 							bufferMu.Unlock()
+ 							_, _ = ptmx.Write(replace)
+-
+ 							overlay.ClearGhostTextState()
+ 							userNavigated.Store(false)
+ 							writeStdout([]byte(overlay.Render()))
+ 						}
++						i += consumed - 1
++						continue
+ 					}
+-					// always consume the full binding atomically, even when the overlay is hidden
+-					i += consumed - 1
+-					continue
++					// no suggestion: do not consume, forward the key to the shell
+ 				}
+ 				if b == 0x0d || b == 0x0a { // enter
+ 					intercepted = true
