@@ -6,7 +6,13 @@
 #   completion on Tab is shadowed while iris runs; file paths are covered by
 #   iris's own file suggestions. Menu selection also works via Up/Down + Enter.
 # - toggle-mode = "ctrl+r" — iris history mode (zhist hook disabled).
-# - navigate-closed = "shell" — Up/Down with the menu closed go to zsh, so
+# - navigate-up/down = "ctrl+p"/"ctrl+n" — emacs-style menu navigation.
+#   With the menu closed they are forwarded to zsh, so the existing ^P/^N
+#   up-line-or-beginning-search bindings keep working (menu open -> iris).
+# - navigate-right = "right" — iris only fires navigate-right on the arrow
+#   escape sequence (upstream limitation in v0.6.3), a ctrl+f binding would be
+#   dead; right arrow accepts ghost text / moves the cursor.
+# - navigate-closed = "shell" — nav keys with the menu closed go to zsh, so
 #   up-line-or-beginning-search / down-line-or-beginning-search keep working.
 
 [core]
@@ -18,8 +24,8 @@ navigate-closed = "shell"
 toggle-mode = "ctrl+r"
 toggle-menu = "shift+tab"
 select = "tab"
-navigate-up = "up"
-navigate-down = "down"
+navigate-up = "ctrl+p"
+navigate-down = "ctrl+n"
 navigate-right = "right"
 
 # NixOS owns updates — never self-update (the store binary is read-only anyway).
