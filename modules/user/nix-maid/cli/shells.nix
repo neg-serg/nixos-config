@@ -9,6 +9,7 @@ let
   # --- Config Sources ---
   shellFiles = config.lib.neg.path "files/shell";
   kittyConf = config.lib.neg.path "files/kitty";
+  irisConfig = config.lib.neg.path "files/iris";
   dircolorsConfig = config.lib.neg.path "files/shell/dircolors/dircolors";
 
   # --- Kitty key.conf: generated Russian-layout duplicates ---
@@ -480,6 +481,7 @@ in
       ".config/aliae/config.yaml".text = aliaeConfig;
       ".config/dircolors/dircolors".source = dircolorsConfig;
       ".config/zsh".source = zshConfigSource;
+      ".config/iris/config.toml".source = "${irisConfig}/config.toml";
       ".config/bash/oh-my-posh.bash".source = "${shellFiles}/bash/oh-my-posh.bash";
       ".config/f-sy-h".source = "${shellFiles}/f-sy-h";
       ".config/zsh-native-syntax".source = "${shellFiles}/zsh-native-syntax";
