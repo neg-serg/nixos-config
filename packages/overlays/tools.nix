@@ -19,6 +19,9 @@ in
   # Qwen3.8-Flash-Next (qwen4exp arch) llama.cpp — experimental PR #27742
   # Vulkan build (+ graph_max_nodes patch); serves llama-server-flash-next.
   llama-cpp-qwen4exp = callPkg (packagesRoot + "/llama-cpp-qwen4exp") { };
+  # ROCm (HIP) twin — Vulkan/RADV llama.cpp is pathologically slow on this host
+  # (~0.2 tok/s for VRAM-resident models); ROCm is the working compute path.
+  llama-cpp-qwen4exp-rocm = callPkg (packagesRoot + "/llama-cpp-qwen4exp-rocm") { };
 
   # neg sub-attributes are merged once in packages/overlay.nix — no
   # `(prev.neg or {})` accumulation here (prev is the unmodified base).
@@ -37,7 +40,6 @@ in
     talktype = callPkg (packagesRoot + "/talktype") { }; # Push-to-talk voice typing tool (F9 to record, transcribe, paste)
     termeverything = callPkg (packagesRoot + "/termeverything") { }; # Run GUI windows inside your terminal (Wayland compositor → ANSI)
     zsh-native-syntax = callPkg (packagesRoot + "/zsh-native-syntax") { }; # Native Rust-based zsh syntax highlighting engine
-    zhist = callPkg (packagesRoot + "/zhist") { }; # Smarter zsh history: dir/exit-status/duration per command + fzf picker
 
     # ncpamixer-wrapped removed — nix-maid manages config via ~/.config/ncpamixer.conf
   };
