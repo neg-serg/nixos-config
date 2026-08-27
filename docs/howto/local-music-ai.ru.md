@@ -81,6 +81,18 @@
 - `pitch-f0 FILE [--notes] [--hop MS] [--model tiny|full]` — f0-кривая (torchcrepe, CPU ~14x
   realtime на tiny; --notes добавляет MIDI-ноты). Выход: `time f0 [midi]` на кадр.
 
+## Shabda — Freesound-паки для Tidal/Strudel
+
+- `shabda` — хелпер для [shabda.ndre.gr](https://shabda.ndre.gr) (банки Freesound,
+  лицензии CC0/BY/BY-NC, генерируются по имени на лету).
+  - `shabda` — открыть сайт в Vivaldi;
+  - `shabda 808` — открыть сайт + скопировать в буфер `!reslist "…/808.json…"` (Tidal);
+  - `shabda -s amen` — `samples('…?strudel=1')` (Strudel);
+  - `shabda -l amen` — только вывести строку (без браузера/буфера).
+- В nvim (.tidal): `<leader>tS` — ввести имя пака, строка `!reslist …` вставляется
+  в буфер и отправляется в Tidal (требует запущенного GHCi, <leader>tl).
+- Пример: `shabda -l 808` → `!reslist "https://shabda.ndre.gr/808.json?licenses=by,cc0,by-nc"`.
+
 ## Прочее
 
 - OCR: `got-ocr` (GOT-OCR-2.0, китайский/сложные документы) и `pic-ocr` (tesseract/qwen3-vl,
