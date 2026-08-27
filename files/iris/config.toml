@@ -23,11 +23,12 @@ shell = "zsh"
 mode = "spec"
 navigate-closed = "shell"
 
-# No suggestion dropdown — ghost text only (mode 2). The menu box is hidden,
-# the inline ghost suggestion stays, -> accepts it, Shift+Tab temporarily
-# brings the menu back. 0 = off, 1 = menu + ghost, 2 = ghost only.
+# Menu + ghost (mode 1): the Ctrl+R history picker needs the visible menu —
+# with ghost-only (2) the menu box is hidden even in history mode, so Ctrl+R
+# appears to do nothing at an empty prompt. Spec/AI suggestions render clean
+# (mode = "spec"), so the menu is not the junk list from before.
 [ui]
-ghost-text = 2
+ghost-text = 1
 
 [keybindings]
 toggle-mode = "ctrl+r"
