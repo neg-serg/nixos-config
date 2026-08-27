@@ -1,5 +1,5 @@
-# iris: shell auto-completion (IntelliSense-style suggestions) + history picker.
-# Tab/fzf-on-tab (04-fzf.zsh) handles completion and ~/m/new expansion; iris
-# provides the spec/AI menu (accepted with Ctrl+E or ->) and the Ctrl+R
-# history picker (toggle-mode = "ctrl+r", zhist removed).
-(( $+commands[iris] )) && eval "$(iris init zsh)"
+# iris: shell auto-completion (IntelliSense-style suggestions) + Ctrl+R history
+# picker. DISABLED (2026-08-27): pretty but behaves oddly in practice — Tab is
+# fzf-on-tab (04-fzf.zsh) and Ctrl+R falls back to fzf's history picker.
+# To re-enable: uncomment the line below.
+# (( $+commands[iris] )) && eval "$(iris init zsh)"
