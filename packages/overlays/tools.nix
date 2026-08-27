@@ -32,6 +32,7 @@ in
     talktype = callPkg (packagesRoot + "/talktype") { }; # Push-to-talk voice typing tool (F9 to record, transcribe, paste)
     termeverything = callPkg (packagesRoot + "/termeverything") { }; # Run GUI windows inside your terminal (Wayland compositor → ANSI)
     zsh-native-syntax = callPkg (packagesRoot + "/zsh-native-syntax") { }; # Native Rust-based zsh syntax highlighting engine
+    zhist = callPkg (packagesRoot + "/zhist") { }; # Smarter zsh history: dir/exit-status/duration per command + fzf picker
 
     # ncpamixer-wrapped removed — nix-maid manages config via ~/.config/ncpamixer.conf
   };
