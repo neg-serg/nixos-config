@@ -210,6 +210,15 @@ return {
         desc = 'Hush all patterns',
         buffer = true,
       },
+      -- Shabda Freesound packs: :TidalShabda 808 / amen ...
+      {
+        '<leader>tS',
+        function() vim.ui.input({ prompt = 'Shabda pack: ' }, function(p)
+          if p and p ~= '' then require('tidal-actions').shabda(p) end
+        end) end,
+        desc = 'Shabda: insert Freesound pack reslist and send',
+        buffer = true,
+      },
     },
     opts = {
       boot = {
