@@ -18,8 +18,6 @@
       # and have the setuid bit set", "newuidmap: Operation not permitted").
       PATH = [ "/run/wrappers/bin" ];
       NIXOS_OZONE_WL = "1"; # Optional, hint Electron apps to use Wayland
-      # Force wlroots to use the dGPU (RX 7900 XTX) instead of iGPU
-      WLR_DRM_DEVICES = "/dev/dri/by-path/pci-0000:03:00.0-card";
       # Restore Hyprland-specific XDG identifiers for compatibility
       XDG_CURRENT_DESKTOP = "Hyprland";
       XDG_SESSION_DESKTOP = "Hyprland";
