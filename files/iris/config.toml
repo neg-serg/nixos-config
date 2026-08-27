@@ -1,10 +1,10 @@
 # iris — compatibility config for odin's shell stack.
 #
 # What is rebinding and why:
-# - select = "tab" + [odin] patch: Tab inserts a pending ghost suggestion;
-#   with no suggestion it falls through to the shell, so Tab also does zsh
-#   completion and fzf-on-tab fuzzy expansion of abbreviated paths (~/m/new
-#   -> real path, no symlinks). Both behaviors live on one key.
+# - select = "ctrl+e" + [odin] patch: accepts the pending iris suggestion
+#   (Ctrl+E). With no suggestion pending it falls through to zsh, so Ctrl+E
+#   stays end-of-line. Tab is fully zsh's: fzf-on-tab completion + ~/m/new
+#   fuzzy expansion.
 # - mode = "spec" — suggest from command specs + filegen + AI only; shell
 #   history junk (dsh persistent-bash entries) never becomes a ghost.
 # - toggle-mode = "ctrl+r" — Ctrl+R toggles iris into history mode, i.e. the
@@ -33,7 +33,7 @@ ghost-text = 0
 [keybindings]
 toggle-mode = "ctrl+r"
 toggle-menu = "shift+tab"
-select = "tab"
+select = "ctrl+e"
 navigate-up = "ctrl+p"
 navigate-down = "ctrl+n"
 navigate-right = "right"
