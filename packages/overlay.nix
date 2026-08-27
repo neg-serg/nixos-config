@@ -330,4 +330,19 @@ in
     };
   };
 
+  # gsl 2.8: nixpkgs applies a macports patch (fix-linking) fetched from
+  # github.com/macports/... raw - that host is blocked/unreachable from this
+  # region, so the fixed-output fetch fails. The patch only affects the macOS
+  # libtool configure path; vendor the file and keep the rest of the
+  # derivation intact (relative-path pattern, see the carla note above).
+  gsl = finalPrev.gsl.overrideAttrs (_old: {
+    # Replace the upstream macports patch fetch (blocked host) with the
+    # vendored copy - same content, same extraPrefix.
+    patches = [
+      (finalPrev.runCommand "gsl-fix-linking.diff" { } ''
+        cp ${../files/sources/gsl-fix-linking.diff} $out
+      '')
+    ];
+  });
+
 }

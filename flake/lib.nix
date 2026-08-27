@@ -25,6 +25,9 @@ let
     system:
     import nixpkgs {
       inherit system;
+      # Allow only the proprietary VST2 SDK (needed by vstplugin, the
+      # SuperCollider VST host) — everything else stays unfree-blocked.
+      config.allowUnfreePredicate = pkg: (pkg.pname or "") == "vst2-sdk";
       overlays = [
         bintoolsBootstrapFix
         (hyprlandOverlay system)
