@@ -726,7 +726,7 @@ fn new_file(name: String) -> Result<()> {
     if !path.exists() {
         fs::write(
             &path,
-            "-- TidalCycles — press <C-CR> to launch, <M-CR> to send a line\n\
+            "-- TidalCycles — press <C-CR> to launch, <M-CR> to send a pattern (line or multi-line block)\n\
              d1 $ sound \"bd sn\"\n",
         )
         .with_context(|| format!("create {}", path.display()))?;

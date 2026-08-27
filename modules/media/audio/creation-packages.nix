@@ -22,6 +22,16 @@ let
     pkgs.my-ugens # sonoro1234 MyUGens — DWG instruments, Karplus, pitch tracking, plucked strings
     pkgs.timestretch # TimeStretch SC quark — Ness Stretch extreme time stretch
     pkgs.pitchshiftpa # PitchShiftPA SC quark — phase-aligned pitch/formant shifter
+    pkgs.softcut-sc # monome Softcut multi-voice looper as SC UGen
+    pkgs.signalbox # SignalBox SC quark — time/frequency-domain analysis tools
+    pkgs.crucial-library # crucial-library SC quark — AbstractPlayer live-coding system
+    pkgs.scmir # SCMIR — music IR analysis library (onsets, pitch, chroma) + CLI tools
+    pkgs.atk-sc3 # Ambisonic Toolkit — First Order Ambisonics soundfield tools (SC quark)
+    pkgs.vstplugin # host VST2/VST3 plugins inside scsynth
+    pkgs.safetynet # SafetyNet SC quark — protect against dangerous audio signals
+    pkgs.ddwplug # ddwPlug SC quark — dynamic per-note synth patching
+    pkgs.miscellaneous-lib # miSCellaneous_lib SC quark — patterns, granulation, live coding
+    pkgs.faust2sc # compile Faust DSP into SuperCollider UGens (faust2sc.py)
     pkgs.haskellPackages.tidal # TidalCycles live coding environment (SuperCollider-based)
     pkgs.neg.superdirt # SuperDirt — TidalCycles audio engine (SC quark)
     pkgs.neg.dirt-samples # SuperDirt audio sample library
