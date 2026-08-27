@@ -199,4 +199,35 @@ function M.hush()
   require('tidal.core.message').tidal.send_line('hush')
 end
 
+--- Insert a Shabda (https://shabda.ndre.gr) Freesound pack reslist into the
+--- current buffer and send it to Tidal.
+--- @param pack string pack name (e.g. "808", "amen")
+--- @param opts? {send: boolean|nil} send after insert (default true)
+function M.shabda(pack, opts)
+  opts = opts or {}
+  if pack == nil or pack == '' then
+    vim.notify('usage: :TidalShabda <pack>', vim.log.levels.WARN, { title = 'Shabda' })
+    return
+  end
+  local line = '!reslist "https://shabda.ndre.gr/'
+    .. pack
+    .. '.json?licenses=by,cc0,by-nc"'
+  -- insert below cursor
+  local row = vim.fn.line '.'
+  vim.api.nvim_buf_set_lines(0, row, row, false, { line })
+  if opts.send == false then
+    vim.notify('inserted: ' .. line, vim.log.levels.INFO, { title = 'Shabda' })
+    return
+  end
+  if not state.ghci then
+    vim.notify(
+      'Shabda-строка вставлена; Tidal не запущен — <leader>tl',
+      vim.log.levels.WARN,
+      { title = 'Shabda' }
+    )
+    return
+  end
+  require('tidal.core.message').tidal.send_line(line)
+end
+
 return M
