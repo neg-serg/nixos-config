@@ -1,0 +1,42 @@
+# fzf-path-insert: fuzzy-insert the best matching path for a word whose
+# parent dir does not exist (~/m/new -> /home/neg/music/new/, d/ -> ./dw/).
+# Non-interactive: runs fd + fzf --filter and inserts the top hit, so Tab
+# behaves like normal completion (insert) instead of opening a picker.
+# Dirs are tried first (navigation); if nothing matches, falls back to
+# files+dirs. Interactive picking stays available via Ctrl-T.
+#
+# $1 = current word to complete (e.g. ~/m/new)
+local word=$1 expanded root leftover best
+if ! eval "expanded=$word" 2>/dev/null; then
+    return 1
+fi
+# walk up to the nearest existing ancestor (same logic as fzf completion)
+root=$expanded
+while [[ -n $root && ! -d $root ]]; do
+    root=${root:h}
+done
+[[ -z $root ]] && root=.
+leftover=${expanded#"$root"}
+leftover=${leftover#/}
+
+local opts=${FZF_DEFAULT_OPTS// --exact/}
+opts=${opts//--exact /}
+
+# dirs first — the common navigation case
+if (( $+functions[_fzf_compgen_dir] )); then
+    best=$(_fzf_compgen_dir "$root" 2>/dev/null \
+        | FZF_DEFAULT_OPTS=$opts fzf --scheme=path --filter "$leftover" 2>/dev/null \
+        | head -1)
+fi
+# fallback: any path (files too)
+if [[ -z $best ]] && (( $+functions[_fzf_compgen_path] )); then
+    best=$(_fzf_compgen_path "$root" 2>/dev/null \
+        | FZF_DEFAULT_OPTS=$opts fzf --scheme=path --filter "$leftover" 2>/dev/null \
+        | head -1)
+fi
+[[ -n $best ]] || return 1
+
+# replace the current word in the buffer with the best match
+local prefix=${LBUFFER:0:${#LBUFFER}-${#word}}
+LBUFFER=$prefix${(q)best}
+return 0
