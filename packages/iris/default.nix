@@ -20,6 +20,11 @@ buildGoModule rec {
   # Go module dependencies (charmbracelet lipgloss/glamour, cobra, modernc sqlite, ...).
   vendorHash = "sha256-9GZn8xxdWGeAfTjJXj7VF4gyFpsyrNUDHlM+oCxiUAs=";
 
+  # [odin] Tab inserts a pending ghost suggestion; with no suggestion it falls
+  # through to the shell (zsh completion / fzf-on-tab path expansion). Upstream
+  # always consumes Tab, which makes ~/m/new-style expansion impossible.
+  patches = [ ./iris-tab-ghost.patch ];
+
   # TestDetectCached_MidSessionFileCreation fails in the Nix sandbox: the
   # cache invalidation relies on directory mtime, but overlayfs doesn't bump
   # it for a file created within the same second. All other tests pass.
