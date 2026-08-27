@@ -46,4 +46,6 @@ _inputs: final: prev:
   ddwchucklib = prev.callPackage ../ddwchucklib { }; # Chuck browser / advanced algorithmic composition
   miscellaneous-lib = prev.callPackage ../miscellaneous-lib { }; # patterns, granulation, live coding utilities
   ixiquarks = prev.callPackage ../ixiquarks { }; # GUI instruments/effects toolset
+  # -- neural audio --
+  nn-ar = prev.callPackage ../nn-ar { scPluginFarm = final.sc-plugin-farm; }; # nn.ar: PyTorch models in scsynth
 }

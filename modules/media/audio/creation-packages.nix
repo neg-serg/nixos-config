@@ -28,6 +28,7 @@ let
     pkgs.scmir # SCMIR — music IR analysis library (onsets, pitch, chroma) + CLI tools
     pkgs.atk-sc3 # Ambisonic Toolkit — First Order Ambisonics soundfield tools (SC quark)
     pkgs.vstplugin # host VST2/VST3 plugins inside scsynth
+    pkgs.nn-ar # nn.ar — neural audio UGens (PyTorch models in scsynth)
     pkgs.safetynet # SafetyNet SC quark — protect against dangerous audio signals
     pkgs.ddwplug # ddwPlug SC quark — dynamic per-note synth patching
     pkgs.miscellaneous-lib # miSCellaneous_lib SC quark — patterns, granulation, live coding

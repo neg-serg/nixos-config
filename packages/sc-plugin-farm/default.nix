@@ -22,6 +22,14 @@ let
     rev = "32a44ef83877cf74f92edeb46030023ff3c948a1";
     hash = "sha256-QGv/s2RQfPHg3T2swSJuWEg5O2KjLNsRGW+3rpUcGTo=";
   };
+  # nova-tt (thread priority helpers) — needed by nn.ar (and other plugins
+  # that include nova-tt/thread_priority.hpp).
+  novaTt = fetchFromGitHub {
+    owner = "supercollider";
+    repo = "nova-tt";
+    rev = "73860bb063511ff5e100b159bee64ce538ce8f12";
+    hash = "sha256-pm+sZhHgLQiQos0PqhoMO3AnBuE6ogJvc1V1NYGfJNk=";
+  };
 in
 stdenv.mkDerivation {
   pname = "sc-plugin-farm";
@@ -38,6 +46,7 @@ stdenv.mkDerivation {
     ln -s ${supercollider}/include/SuperCollider/common $out/common
     ln -s ${supercollider}/include/SuperCollider/SCVersion.txt $out/SCVersion.txt
     ln -s ${novaSimd} $out/external_libraries/nova-simd
+    ln -s ${novaTt} $out/external_libraries/nova-tt
   '';
 
   meta = with lib; {
