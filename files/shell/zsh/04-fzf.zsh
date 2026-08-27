@@ -8,11 +8,6 @@ else
   return 0
 fi
 
-# Empty trigger: fzf-completion fires on plain Tab (no '**' needed) so path
-# completion can match abbreviated middle components (~/m/new -> ~/music/new).
-# fzf-on-tab only routes path-like words here, so command completion is untouched.
-export FZF_COMPLETION_TRIGGER=''
-
 local _fzf_cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/fzf"
 [[ -d "$_fzf_cache_dir" ]] || mkdir -p -- "$_fzf_cache_dir"
 
@@ -49,16 +44,9 @@ _fzf_compgen_dir() {
     . "$1" 2>/dev/null
 }
 
-# completion.zsh routes its fzf invocation through _fzf_comprun when it is a
-# function (same hook fzf-tab uses). Our path completion depends on
-# --scheme=path prefix matching, which the global FZF_DEFAULT_OPTS disables
-# with --exact (e.g. search.nix). Strip --exact for these runs only;
-# every other fzf invocation keeps the global opts untouched.
-_fzf_comprun() {
-  shift                                  # drop the leading command-word argument
-  local opts=${FZF_DEFAULT_OPTS// --exact/}
-  opts=${opts//--exact /}
-  FZF_DEFAULT_OPTS=$opts fzf "$@"
-}
-
-bindkey "^I" fzf-on-tab   # empty line -> fzf file picker; path word -> fuzzy; else normal completion
+# Fast fuzzy completion (no TUI): fzf-on-tab resolves words whose parent dir
+# is missing via fzf-path-insert, which runs `fd | fzf --scheme=path --filter`
+# non-interactively and INSERTS the best match on Tab. The global
+# FZF_DEFAULT_OPTS --exact (search.nix) is stripped there; other fzf
+# invocations (Ctrl-T/Ctrl-R pickers) keep their opts untouched.
+bindkey "^I" fzf-on-tab   # empty line -> fzf file picker; path word -> insert best match; else normal completion
