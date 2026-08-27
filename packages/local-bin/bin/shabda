@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# shabda — Freesound pack browser for TidalCycles/Strudel.
+#
+# Shabda (https://shabda.ndre.gr) serves Freesound packs with permissive
+# licenses (CC0/BY/BY-NC) as ready-to-use sample banks. This helper opens it
+# in Vivaldi and/or generates the Tidal/Strudel line for a given pack.
+#
+# Usage:
+#   shabda                  open Shabda in the browser
+#   shabda <pack>           open Shabda + copy Tidal !reslist line for <pack>
+#   shabda -s <pack>        copy Strudel samples('...') line instead
+#   shabda -l <pack>        just print the Tidal line (no browser, no clipboard)
+#   shabda -a <pack>        add pack to the default samples.json list (append)
+#
+# Examples:
+#   shabda 808
+#   shabda -s amen
+set -euo pipefail
+
+BASE="https://shabda.ndre.gr"
+LICENSES="by,cc0,by-nc"
+STRUDEL=0
+LISTONLY=0
+APPEND=0
+
+while getopts "sla" opt; do
+  case "$opt" in
+    s) STRUDEL=1 ;;
+    l) LISTONLY=1 ;;
+    a) APPEND=1 ;;
+    *) echo "usage: $0 [-s|-l|-a] [pack]" >&2; exit 2 ;;
+  esac
+done
+shift $((OPTIND-1))
+
+PACK="${1:-}"
+
+# Open the browser first if no pack (or always — pack page is the picker)
+if [ "$PACK" = "" ]; then
+  vivaldi "$BASE" >/dev/null 2>&1 & disown
+  echo "Shabda opened in the browser: $BASE"
+  echo "Pick a pack there, then run:  shabda <pack>"
+  exit 0
+fi
+
+# Note: Shabda generates a bank on the fly for ANY pack name (it searches
+# Freesound), so there is no "not found" — e.g. 'shabda -l amen' works.
+# Build the Tidal/Strudel line. Tidal uses !reslist with a JSON endpoint;
+# Strudel uses samples('url?strudel=1').
+if [ "$STRUDEL" = "1" ]; then
+  LINE="samples('$BASE/$PACK.json?strudel=1&licenses=$LICENSES')"
+else
+  LINE="!reslist \"$BASE/$PACK.json?licenses=$LICENSES\""
+fi
+
+if [ "$APPEND" = "1" ]; then
+  # append to ~/notes/music/tidal/shabda-samples.json (create if missing)
+  OUT="$HOME/notes/music/tidal/shabda-samples.json"
+  mkdir -p "$(dirname "$OUT")"
+  if [ -f "$OUT" ] && grep -q "$PACK.json" "$OUT" 2>/dev/null; then
+    echo "already in $OUT"
+  else
+    printf '%s\n' "$LINE" >> "$OUT"
+    echo "appended to $OUT"
+  fi
+  exit 0
+fi
+
+if [ "$LISTONLY" = "1" ]; then
+  echo "$LINE"
+  exit 0
+fi
+
+# Copy to clipboard (wl-clipboard on Hyprland/Wayland) and open the browser
+if command -v wl-copy >/dev/null 2>&1; then
+  printf '%s' "$LINE" | wl-copy
+  echo "copied: $LINE"
+else
+  echo "$LINE"
+fi
+vivaldi "$BASE" >/dev/null 2>&1 & disown
+echo "Shabda opened (paste the copied line into Tidal/Strudel)."
