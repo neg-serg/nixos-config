@@ -189,6 +189,7 @@ in
       superdirt-mixer = final.callPackage ./superdirt-mixer { }; # graphical mixer UI quark for SuperDirt orbits (gain/pan/reverb/EQ/compressor)
       equi = final.callPackage ./equi { }; # EQui SC quark (parametric EQ) — SuperDirtMixer dependency
       jsonlib = final.callPackage ./jsonlib { }; # JSONlib SC quark (JSON en/decoder) — SuperDirtMixer dependency
+      dwg-reverb = final.callPackage ./dwg-reverb { }; # compiled SC UGen plugin: virtual room reverb (early reflections + FDN late reverb)
       dirt-samples = final.callPackage ./dirt-samples { }; # audio sample library for SuperDirt
       vowel = final.callPackage ./vowel { }; # Vowel SC quark (formant tables) used by SuperDirt
       dsh = final.callPackage ./dsh { }; # DeepSeek Harness agent CLI (dsh)
@@ -296,12 +297,11 @@ in
   # Scope llama.cpp's ROCm dependency closure to this host's GPU only
   # (gfx1201) — nixpkgs' base rocmPackages targets every GCN/RDNA arch, so
   # Tensile would generate kernels for all of them (hours of extra build).
-  llama-cpp-rocm =
-    finalPrev.llama-cpp-rocm.override {
-      llama-cpp = finalPrev.llama-cpp.override {
-        rocmPackages = finalPrev.rocmPackages.gfx1201;
-      };
+  llama-cpp-rocm = finalPrev.llama-cpp-rocm.override {
+    llama-cpp = finalPrev.llama-cpp.override {
+      rocmPackages = finalPrev.rocmPackages.gfx1201;
     };
+  };
 
   ollama-rocm = final.callPackage (inputs.self + "/packages/ollama-qwen38") {
     acceleration = "rocm";
