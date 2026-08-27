@@ -64,6 +64,7 @@ in
         "${pkgs.my-ugens}/lib/SuperCollider/plugins"
         "${pkgs.softcut-sc}/lib/SuperCollider/plugins"
         "${pkgs.vstplugin}/share/SuperCollider/Extensions/VSTPlugin/plugins"
+        "${pkgs.nn-ar}/lib/SuperCollider/plugins" # nn.ar: neural audio UGens (PyTorch)
         "${pkgs.neg.dwg-reverb}/lib/SuperCollider/plugins" # DWGReverb: virtual room reverb UGens
       ];
     };
@@ -200,6 +201,9 @@ in
         "${pkgs.miscellaneous-lib}/share/SuperCollider/extensions/miSCellaneous_lib";
       ".local/share/SuperCollider/Extensions/ixiQuarks".source =
         "${pkgs.ixiquarks}/share/SuperCollider/extensions/ixiQuarks";
+      # nn.ar — neural audio UGens (PyTorch models loaded at runtime)
+      ".local/share/SuperCollider/Extensions/nn.ar".source =
+        "${pkgs.nn-ar}/share/SuperCollider/extensions/nn.ar";
     };
   };
 }
