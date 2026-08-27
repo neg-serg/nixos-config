@@ -20,10 +20,11 @@ buildGoModule rec {
   # Go module dependencies (charmbracelet lipgloss/glamour, cobra, modernc sqlite, ...).
   vendorHash = "sha256-9GZn8xxdWGeAfTjJXj7VF4gyFpsyrNUDHlM+oCxiUAs=";
 
-  # [odin] Tab inserts a pending ghost suggestion; with no suggestion it falls
-  # through to the shell (zsh completion / fzf-on-tab path expansion). Upstream
-  # always consumes Tab, which makes ~/m/new-style expansion impossible.
-  patches = [ ./iris-tab-ghost.patch ];
+  # [odin] The accept key (Ctrl+E / Tab) inserts the menu's current suggestion
+  # when the menu is visible, otherwise falls through to the shell so the key
+  # keeps its normal meaning (Ctrl+E: end-of-line, Tab: fzf-on-tab / ~/m/new
+  # expansion). Upstream always consumes the key, even with a hidden menu.
+  patches = [ ./iris-select-fallthrough.patch ];
 
   # TestDetectCached_MidSessionFileCreation fails in the Nix sandbox: the
   # cache invalidation relies on directory mtime, but overlayfs doesn't bump
