@@ -1,4 +1,4 @@
-_inputs: _final: prev: {
+inputs: final: prev: {
   # bpftrace 0.25+ works with LLVM 22; use same version as the rest of the config
   bpftrace = prev.bpftrace.override { llvmPackages = prev.llvmPackages_22; };
   # Security: avoid insecure Mbed TLS 2 by aliasing to v3
@@ -18,5 +18,16 @@ _inputs: _final: prev: {
       find $out -name run.py -exec sed -i "s/NO_FILES = '(no files to check)'/NO_FILES = '(no files to check) '/" {} +
     '';
   });
+
+  # boost 1.79 libc++15 patch: boost.org now serves a 302 redirect (hash mismatch);
+  # vendored in packages/torch-rocm/.
+  boost179 = prev.boost179.overrideAttrs (old: {
+    patches =
+      builtins.filter (p: (builtins.match ".*libcpp15.*" (p.name or "")) == null) (old.patches or [ ])
+      ++ [ ./../torch-rocm/boost-libcpp15.patch ];
+  });
+
+  # ROCm PyTorch env (gfx1201). See packages/torch-rocm/default.nix.
+  torchRocmEnv = prev.callPackage ../torch-rocm { };
 
 }
