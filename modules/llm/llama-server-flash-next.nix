@@ -13,6 +13,29 @@ let
   # Unsloth UD-Q4_K_XL (111.3 GB, 4 shards) — best quality quant that still
   # runs on 16 GB VRAM + 60 GB RAM via mmap + ZFS ARC / NVMe offload.
   modelFile = "UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf";
+
+  # Launcher script: quoting inside a shell script is immune to systemd's
+  # ExecStart tokenizer (list values get written as separate ExecStart= lines,
+  # strings mangle backslashes/quotes — both break qwen4exp flags).
+  serverCmd = pkgs.writeShellScript "llama-server-flash-next" ''
+    exec ${pkgs.llama-cpp-qwen4exp-rocm}/bin/llama-server \
+      --device ROCm0 \
+      --model ${modelDir}/${modelFile} \
+      --host 127.0.0.1 \
+      --port ${toString cfg.port} \
+      --load-mode mmap \
+      --fit off \
+      --n-gpu-layers ${toString cfg.nGpuLayers} \
+      --ctx-size ${toString cfg.ctxSize} \
+      --flash-attn off \
+      --cache-type-k f16 \
+      --cache-type-v f16 \
+      --cpu-moe \
+      -ot 'blk\.[0-9]+\.ple_value=CPU,blk\.[0-9]+\.ple_key=CPU' \
+      --jinja \
+      --chat-template-kwargs '{"reasoning_effort":"low"}' \
+      --log-disable
+  '';
 in
 {
   options.services.llama-server-flash-next = {
@@ -22,7 +45,7 @@ in
       description = ''
         llama-server — Qwen3.8-Flash-Next (qwen4exp arch) served by a llama.cpp
         build from PR #27742 (unslothai branch, not merged upstream) via the
-        Vulkan (RADV) backend. Deliberately NOT started by any target: enable it
+        ROCm (HIP) backend. Deliberately NOT started by any target: enable it
         manually with `systemctl start llama-server-flash-next`.
       '';
     };
@@ -51,53 +74,19 @@ in
 
   config = lib.mkIf (enabled && cfg.enable) {
     systemd.services.llama-server-flash-next = {
-      description = "llama-server Vulkan — Qwen3.8-Flash-Next UD-Q4_K_XL (qwen4exp, PR #27742)";
+      description = "llama-server ROCm — Qwen3.8-Flash-Next UD-Q4_K_XL (qwen4exp, PR #27742)";
       # Manual start only, same as the vision llama-server.
       after = [ "network.target" ];
 
       serviceConfig = {
         Type = "simple";
         User = config.users.main.name;
-        # GPU access for the Vulkan (RADV) backend.
+        # GPU access for the ROCm (HIP) backend.
         SupplementaryGroups = [
           "render"
           "video"
         ];
-        # List form: NixOS escapes each element for the unit file, so systemd
-        # passes exact argv (no quote/backslash mangling). llama.cpp defaults to
-        # all cores when --threads is omitted.
-        ExecStart = [
-          "${pkgs.llama-cpp-qwen4exp-rocm}/bin/llama-server"
-          "--device"
-          "ROCm0"
-          "--model"
-          "${modelDir}/${modelFile}"
-          "--host"
-          "127.0.0.1"
-          "--port"
-          "${toString cfg.port}"
-          "--load-mode"
-          "mmap"
-          "--fit"
-          "off"
-          "--n-gpu-layers"
-          "${toString cfg.nGpuLayers}"
-          "--ctx-size"
-          "${toString cfg.ctxSize}"
-          "--flash-attn"
-          "off"
-          "--cache-type-k"
-          "f16"
-          "--cache-type-v"
-          "f16"
-          "--cpu-moe"
-          "-ot"
-          "blk\\.[0-9]+\\.ple_value=CPU,blk\\.[0-9]+\\.ple_key=CPU"
-          "--jinja"
-          "--chat-template-kwargs"
-          "{\"reasoning_effort\":\"low\"}"
-          "--log-disable"
-        ];
+        ExecStart = serverCmd;
         Restart = "on-failure";
         RestartSec = 5;
       };
