@@ -60,7 +60,9 @@ Scope {
         function onConnectionStateChanged() {
             if (mangoSock.connected) {
                 root.ipcConnected = true;
-                root._sendCmd("get keyboardlayout");
+                // Mango IPC serves one command per connection and closes it
+                // after a non-watch command, so only register the persistent
+                // watch here; it pushes the current layout as its first event.
                 root._sendCmd("watch keyboardlayout");
             } else {
                 root.ipcConnected = false;
@@ -77,7 +79,7 @@ Scope {
         repeat: true
         running: true
         onTriggered: {
-            if (!root.ipcConnected) findProc.start();
+            if (!root.ipcConnected) findProc.running = true;
         }
     }
 
@@ -116,9 +118,10 @@ Scope {
         if (root.ipcConnected) mangoSock.write(cmd + "\n");
     }
 
-    function _askLayout() {
-        if (root.ipcConnected) root._sendCmd("get keyboardlayout");
-    }
+    // No-op: "get keyboardlayout" would close the persistent watch
+    // connection (mango IPC is one command per connection); the watch stream
+    // already delivers the current layout as its first event and on every change.
+    function _askLayout() { }
 
     // Click-to-switch from the bar: route through mango IPC dispatch.
     function switchKeyboardLayout() {
