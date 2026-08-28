@@ -13,11 +13,16 @@ let
   # effects. HDR stays OFF in this session by design — run a separate HDR
   # session (e.g. Hyprland on another TTY) so it never degrades this one.
   configConf = ''
-    # --- Monitor: DP-2 3840x2160@240 scale 2 VRR (ICC Display P3); DP-1 disabled ---
-    monitorrule=name:DP-2, width:3840, height:2160, refresh:240, scale:2, vrr:1, x:0, y:0, icc:/home/${
-      config.users.main.name or "neg"
-    }/.config/mango/Display-P3.icc
+    # --- Monitor: DP-2 3840x2160@240 scale 2 VRR; DP-1 disabled ---
+    # Colors stay sRGB: the linear->P3 ICC output transform (wlroots 0.20
+    # scene path) shifts the whole desktop (brighter/oversaturated) for
+    # non-color-managed clients. Wide gamut lives in the gamescope HDR session.
+    monitorrule=name:DP-2, width:3840, height:2160, refresh:240, scale:2, vrr:1, x:0, y:0
     monitorrule=name:DP-1, disable:1
+
+    # --- Keyboard: us,ru like Hyprland (input.kb_layout). SUPER+S is bound to
+    # switch_keyboard_layout below; with a single layout that bind is a no-op. ---
+    xkb_rules_layout=us,ru
 
     # --- Environment ---
     env=CLUTTER_BACKEND,wayland
@@ -211,6 +216,70 @@ let
     bind=NONE,Escape,setkeymode,default
     keymode=default
   '';
+
+  # ru-layout daemon for MangoWM — mirrors modules/user/nix-maid/hyprland/ru-layout.nix
+  # (us in hotkey-heavy classes, ru elsewhere) but drives the mango IPC socket:
+  # `get focusing-client` for the focused appid, `dispatch switch_keyboard_layout,<idx>`
+  # to set the XKB group. Indexes are 1-based for mango (0 means "cycle").
+  ruHotkeys = config.features.input.ruHotkeys or { };
+  ruHotkeysEnabled = ruHotkeys.enable or false;
+  usClasses = lib.concatStringsSep " " (ruHotkeys.usClasses or [ ]);
+  ruUsIdx = toString ((ruHotkeys.usLayoutIndex or 0) + 1);
+  ruRuIdx = toString ((ruHotkeys.ruLayoutIndex or 1) + 1);
+  ruPollSec = ruHotkeys.pollSec or "0.5";
+
+  ruLayoutDaemon = pkgs.writeShellScript "mango-ru-layout-daemon" ''
+    # Per-window keyboard layout switching for MangoWM (mirror of
+    # modules/user/nix-maid/hyprland/ru-layout.nix, driven via the mango IPC
+    # socket instead of hyprctl). us for hotkey-heavy classes, ru otherwise.
+    set -u
+
+    socat_bin='${lib.getExe pkgs.socat}'
+    sed_bin='${lib.getExe pkgs.gnused}'
+    sleep_bin='${lib.getExe' pkgs.coreutils "sleep"}'
+    head_bin='${lib.getExe' pkgs.coreutils "head"}'
+
+    us_classes='${usClasses}'
+    us_idx='${ruUsIdx}'
+    ru_idx='${ruRuIdx}'
+    poll_sec='${ruPollSec}'
+
+    # Socket: mango exports MANGO_INSTANCE_SIGNATURE, but systemd user services
+    # do not inherit it, so fall back to the glob in $XDG_RUNTIME_DIR.
+    sock="''\${MANGO_INSTANCE_SIGNATURE:-}"
+    if [ -z "$sock" ] || [ ! -S "$sock" ]; then
+      sock="$(ls -1 "''\${XDG_RUNTIME_DIR:-/run/user/1000}"/mango-*.sock 2>/dev/null | "$head_bin" -1)"
+    fi
+    if [ -z "$sock" ]; then
+      echo "mango IPC socket not found" >&2
+      exit 1
+    fi
+
+    send() {
+      printf '%s\n' "$1" | "$socat_bin" - UNIX-CONNECT:"$sock" 2>/dev/null
+    }
+
+    # `get focusing-client` JSON has "appid":"term" or "appid":null (and an
+    # error object when nothing is focused) — extract the quoted appid, else empty.
+    focused_appid() {
+      send "get focusing-client" | "$sed_bin" -n 's/.*"appid":"\([^"]*\)".*/\1/p'
+    }
+
+    current=""
+    while :; do
+      appid="$(focused_appid)"
+      if [ "$appid" != "$current" ]; then
+        current="$appid"
+        case " $us_classes " in
+          *" $appid "*) idx="$us_idx" ;;
+          *) idx="$ru_idx" ;;
+        esac
+        send "dispatch switch_keyboard_layout,$idx" >/dev/null || true
+      fi
+      "$sleep_bin" "$poll_sec"
+    done
+  '';
+
   # start-mango: mango session launcher (mirrors the repo's hypr-start flow:
   # import env into the user session, start the session target, exec mango).
   startMango = pkgs.writeShellScriptBin "start-mango" ''
@@ -305,11 +374,25 @@ in
               RestartSec = "5";
             };
           };
+          # ru-layout-mango: per-window keyboard layout (us in hotkey-heavy
+          # apps, ru elsewhere) — mango IPC port of hyprland/ru-layout.nix,
+          # gated by the same features.input.ruHotkeys flag as the Hyprland one.
+          ru-layout-mango = lib.mkIf ruHotkeysEnabled {
+            description = "Per-window keyboard layout switching (us in hotkey-heavy apps)";
+            wantedBy = [ "mango-session.target" ];
+            bindsTo = [ "mango-session.target" ];
+            after = [ "mango-session.target" ];
+            serviceConfig = {
+              Type = "simple";
+              ExecStart = "${ruLayoutDaemon}";
+              Restart = "on-failure";
+              RestartSec = "2";
+            };
+          };
         };
       }
       (neg.mkHomeFiles {
         ".config/mango/config.conf".text = configConf;
-        ".config/mango/Display-P3.icc".source = config.lib.neg.path "files/gui/mango/Display-P3.icc";
         ".config/swaylock/config".text = ''
           color=000000
           ring-color=ffffff
