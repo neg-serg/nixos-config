@@ -118,12 +118,11 @@ in
       fi
       case "$1" in
         *[Hh]yprland*) exec /run/current-system/sw/bin/start-hyprland > /tmp/hyprland-debug.log 2>&1 ;;
-        mango|start-mango) exec /run/current-system/sw/bin/start-mango > /tmp/mango-session.log 2>&1 ;;
         *) exec "$@" > /tmp/wayland-session.log 2>&1 ;;
       esac
     '';
-    # Expose wayland/x11 session .desktop files (hyprland, mango) so the
-    # greeter can list and switch sessions.
+    # Expose wayland/x11 session .desktop files so the greeter can list and
+    # switch sessions (Hyprland; mango disabled).
     environment.pathsToLink = lib.mkAfter [
       "/share/wayland-sessions"
       "/share/xsessions"
