@@ -257,13 +257,8 @@ in
   # Host-specific feature toggles
   features.dev.ai.omp.enable = true; # Oh My Pi (omp) — AI coding agent fork with LSP, DAP, subagents
   features.llm.enable = true; # Local LLM stack: Ollama (ROCm, models on /zero/ai/ollama), colibri engine, voxinput
-  # colibrì OpenAI-compatible API server (GLM-5.2, model on /zero/ai/glm52_i4).
-  # Bind only to localhost; the service streams experts from disk on CPU.
-  # Ports: 8000=omnirouter, 8001=piper TTS, 8002=whisper STT — all taken.
-  services.colibri.serve = {
-    enable = true;
-    port = 8003;
-  };
+  # NOTE: colibri-serve deliberately NOT enabled (user's choice 2026-08-28):
+  # run manually when needed — see docs/howto/local-llm.md (colibrì section).
   features.cli.broot.enable = true;
   features.hardware.usbAutomount.enable = true;
   features.input.kanata.enable = true; # Caps→Ctrl via kanata
