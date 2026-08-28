@@ -61,10 +61,10 @@
 - `stems input.wav [-o OUT] [--single-stem vocals|instrumental]` — BS-RoFormer (viperx ep_317, sdr
   12.97) — лучше Demucs для выделения вокала. CPU, ~3× realtime.
 - `demucs` — htdemucs_ft, 4 стема (vocals/drums/bass/other), 1.4× realtime.
-- venv: `venv-demucs` (python 3.13): `pip install torch==2.8.0 --index-url …/whl/cpu` СНАЧАЛА
-  (иначе pip тянет CUDA-torch 2.13 + 2 ГБ nvidia-пакетов), затем
-  `pip install demucs audio-separator onnxruntime audioread librosa==0.10.2.post1 numpy`.
-  Пересоздан 2026-08-28 (был развалившийся: bin→3.14, пакеты в 3.12/3.13).
+- venv: `venv-demucs` (python 3.13): `pip install torch==2.8.0 --index-url …/whl/cpu` СНАЧАЛА (иначе
+  pip тянет CUDA-torch 2.13 + 2 ГБ nvidia-пакетов), затем
+  `pip install demucs audio-separator onnxruntime audioread librosa==0.10.2.post1 numpy`. Пересоздан
+  2026-08-28 (был развалившийся: bin→3.14, пакеты в 3.12/3.13).
 
 ## Транскрипция целой песни (аккорды/барабаны/вокал → MIDI)
 
@@ -86,14 +86,14 @@
 
 ## Shabda — Freesound-паки для Tidal/Strudel
 
-- `shabda` — хелпер для [shabda.ndre.gr](https://shabda.ndre.gr) (банки Freesound,
-  лицензии CC0/BY/BY-NC, генерируются по имени на лету).
+- `shabda` — хелпер для [shabda.ndre.gr](https://shabda.ndre.gr) (банки Freesound, лицензии
+  CC0/BY/BY-NC, генерируются по имени на лету).
   - `shabda` — открыть сайт в Vivaldi;
   - `shabda 808` — открыть сайт + скопировать в буфер `!reslist "…/808.json…"` (Tidal);
   - `shabda -s amen` — `samples('…?strudel=1')` (Strudel);
   - `shabda -l amen` — только вывести строку (без браузера/буфера).
-- В nvim (.tidal): `<leader>tS` — ввести имя пака, строка `!reslist …` вставляется
-  в буфер и отправляется в Tidal (требует запущенного GHCi, <leader>tl).
+- В nvim (.tidal): `<leader>tS` — ввести имя пака, строка `!reslist …` вставляется в буфер и
+  отправляется в Tidal (требует запущенного GHCi, <leader>tl).
 - Пример: `shabda -l 808` → `!reslist "https://shabda.ndre.gr/808.json?licenses=by,cc0,by-nc"`.
 
 ## Прочее
@@ -104,6 +104,6 @@
 - Транскрипция мелодии: `mt3 file.wav [out.mid]` (MR-MT3, чекпоинт `/zero/ai/music/mt3`);
   `basic-pitch OUTDIR file.wav --save-midi` (ONNX-бэкенд — TF saved_model битый на TF 2.21).
 - Генерация MIDI: `amt-generate -o out.mid -t 4` (Anticipatory Music Transformer, CPU).
-- Картинки: `rembg i in.png out.png` (u2net дефолт, модели в `/zero/ai/imgproc`; bria-rmbg
-  тоже есть); `triposr img.png --output-dir out` (картинка → 3D-меш OBJ, модель в `/zero/ai/3d`).
+- Картинки: `rembg i in.png out.png` (u2net дефолт, модели в `/zero/ai/imgproc`; bria-rmbg тоже
+  есть); `triposr img.png --output-dir out` (картинка → 3D-меш OBJ, модель в `/zero/ai/3d`).
 - Все обёртки в `packages/local-bin/bin/`; после изменений — `nh os switch`.
