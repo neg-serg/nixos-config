@@ -24,7 +24,7 @@ in
       pkgs.xdg-desktop-portal-gtk # GTK file picker portal backend (generic, works on any DE/WM)
       # wlroots screencopy portal backend — ScreenCast for the mango session
       # (xdg-desktop-portal-hyprland's backend requires a running Hyprland)
-      pkgs.xdg-desktop-portal-wlr
+      pkgs.xdg-desktop-portal-wlr # wlroots screencopy backend for ScreenCast (mango session)
     ];
     config = {
       common.default = [
