@@ -36,10 +36,17 @@
 - Обёртка: `~/src/music-ai/bin/amt-generate` → `bin/amt-run` (venv `venv-amt`), symlink в
   `~/.local/bin`.
 - Модель: Stanford CRFM Anticipatory Music Transformer (arXiv:2306.08620), 128M, чекпоинт
-  `music-small-100k` (fp32, 490 МБ) + baseline `music-small-ar-100k` — оба в
-  `~/src/music-ai/models/`.
-- Команда: `amt-generate -o out.mid -t 4`; top_p 0.97 с ретраями 0.95/0.92 (ассерт длительности).
-- Результат: `/tmp/amt-gen.mid` — 729 событий.
+  `music-small-100k` (fp32, 490 МБ) в `~/src/music-ai/models/`. AR-базлайн
+  (`music-small-ar-100k`) отключён по решению пользователя (2026-08-28).
+- Команда: `amt-generate -o out.mid -t 4 [-d auto|cpu|gpu]`; top_p 0.97 с ретраями
+  0.95/0.92 (ассерт длительности).
+- **GPU (2026-08-28)**: в `venv-amt` установлен torch 2.13.0+rocm7.1 (колесо
+  download.pytorch.org через socks-прокси, 5.8 ГБ + triton-rocm 3.7.1). Автодетект ROCm,
+  fp16 (RDNA4: fp32 ~115 мс/шаг vs fp16 ~6.5 мс/шаг). Патч `sample.py`: периодический
+  `torch.cuda.empty_cache()` — иначе HIPCachingAllocator забивает VRAM на растущих длинах
+  входов (OOM + падение до 1 it/s). Итог: 16s-пьеса ~30s вместо ~20 мин CPU.
+- Результат: 4 трека в `/zero/ai/music/renders/amt-20260828/` (16s×2, 8s, 24s),
+  см. карточку-плееры в чате; рендер fluidsynth + `TimGM6mb.sf2`.
 
 ### basic-pitch — полифоническая транскрипция
 
