@@ -899,6 +899,44 @@
         "type": "github"
       }
     },
+    "mediatek-mt7927-dkms": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787329668,
+        "narHash": "sha256-Xha4HBF6zuK+kxJ5d4pHTkJktH9WtpF/EYGN7Hv/S+I=",
+        "owner": "jetm",
+        "repo": "mediatek-mt7927-dkms",
+        "rev": "05614ebc5dec99daef52098ab25b18d53473a936",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jetm",
+        "repo": "mediatek-mt7927-dkms",
+        "type": "github"
+      }
+    },
+    "mt7927": {
+      "inputs": {
+        "mediatek-mt7927-dkms": "mediatek-mt7927-dkms",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787847256,
+        "narHash": "sha256-oAgBDq8/wGLD0ECRJcYGBymxd+NsUc6ytPy74vIc8IY=",
+        "owner": "cmspam",
+        "repo": "mt7927-nixos",
+        "rev": "2b6cd295d7c520f79bb490cdfe70fe8311de0c0e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cmspam",
+        "repo": "mt7927-nixos",
+        "rev": "2b6cd295d7c520f79bb490cdfe70fe8311de0c0e",
+        "type": "github"
+      }
+    },
     "naersk-package": {
       "inputs": {
         "fenix": "fenix",
@@ -1193,6 +1231,7 @@
         "hy3": "hy3",
         "hyprscratch": "hyprscratch",
         "iosevka-neg": "iosevka-neg",
+        "mt7927": "mt7927",
         "neg-pkgs": "neg-pkgs",
         "nix-flatpak": "nix-flatpak",
         "nix-maid": "nix-maid",
