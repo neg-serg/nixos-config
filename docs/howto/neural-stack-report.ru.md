@@ -10,6 +10,7 @@
 | -------------- | ----------------------------------------------- | ----------- | ----------------------------- |
 | `whisperx`     | STT + диаризация (faster-whisper, CPU)          | ✅ работает | ru-распознавание + диаризация |
 | `mt3`          | аудио → MIDI (MR-MT3, PyTorch)                  | ✅ работает | 171 нота из тестового wav     |
+| `midi-transcribe` | hFT-Transformer / RobustAMT (пианино)      | ✅ работает | CPU: `midi-transcribe`; **GPU (ROCm): `midi-transcribe-gpu`** — hFT 40s за ~11s вместо 20+ мин CPU (2026-08-29, venv-denoise + torch 2.13 rocm7.1) |
 | ~~`amt-generate`~~ | ~~генерация MIDI (Anticipatory Music Transformer)~~ | ❌ удалён | 2026-08-28, решение пользователя |
 | `audio-analysis` | анализ аудио | ⏳ не проверен | venv есть, прогон не делался |
 | `denoise`        | шумоподавление    | ⏳ не проверен | venv есть, прогон не делался |
