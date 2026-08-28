@@ -152,6 +152,32 @@ let
     bindsym --to-code Mod4+Shift+o exec ~/.local/bin/pl vol unmute
     bindsym --to-code Mod4+m exec ~/.local/bin/music-rename current
 
+    # --- Ported from Hyprland (binds that were missing in the sway port) ---
+    # Workspace prev on M4+slash (hyprland had both M1+Tab and M4+slash).
+    bindsym --to-code Mod4+slash workspace prev
+    # Password/OTP picker from the pass store (vicinae dmenu).
+    bindsym --to-code Mod4+p exec pass-2col
+    # Screen recording (wlroots-specific screenrec helper).
+    bindsym --to-code Mod4+Shift+v exec ~/.local/bin/screenrec screen
+    bindsym --to-code Mod4+Shift+Ctrl+v exec ~/.local/bin/screenrec area
+    # Music synths (Carla headless via local-bin/synth). M4+Shift+l is move
+    # right in sway (i3 convention), so LegendHZ moved to M4+Shift+Ctrl+l.
+    bindsym --to-code Mod4+Shift+s exec synth Surge_XT
+    bindsym --to-code Mod4+Shift+Ctrl+l exec synth LegendHZ
+    bindsym --to-code Mod4+Shift+t exec tidalctl demo
+    # vicinae command menu (app launcher, Alt+q like hyprland).
+    bindsym Mod1+q exec vicinae toggle
+    # vicinae window switcher (Alt+g).
+    bindsym Mod1+g exec vicinae deeplink vicinae://launch/wm/switch-windows
+    # vicinae-driven helper menu (music/clipboard/network actions).
+    bindsym --to-code Mod4+Shift+m exec ~/.local/bin/main-menu
+
+    # --- Floating windows (i3-style; was mouse-drag binds in hyprland) ---
+    # M4+drag moves/resizes floating windows; M4+space toggles floating.
+    floating_modifier $mod normal
+    bindsym --to-code Mod4+space floating toggle
+    bindsym --to-code Mod4+v layout toggle split
+
     # --- Lock (reset to us first, like Hyprland) ---
     # Lock: $mod+Shift+l is taken by "move right", so use $mod+Shift+Escape.
     bindsym --no-repeat $mod+Shift+Escape exec 'swaymsg input type:keyboard xkb_switch_layout 0; swaylock -f'
