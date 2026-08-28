@@ -125,11 +125,13 @@ proxy refresh
 ```
 
 1. Fetches fresh nodes from subscription URLs (FastNodes vless/hysteria2 via jsDelivr +
-   V2RayAggregator ss/trojan via raw.githubusercontent; see "Subscription refresh" below).
+   V2RayAggregator ss/trojan via raw.githubusercontent; see "Subscription refresh" below). Each URL
+   is fetched directly first, then retried through the running local proxy (10808) when the direct
+   fetch returns nothing (raw.githubusercontent is blocked for direct connections in this region).
 1. Merges with any fallback nodes from the SOPS secret.
 1. **Validates candidates**: TCP-scans every unique host:port (asyncio, ~3s timeout), then
-   e2e-probes up to `E2E_CAP` (default 60) open nodes through a throwaway sing-box instance each — a
-   node counts as working only when `curl` via its socks port returns `204` for
+   e2e-probes up to `E2E_CAP` (default 150) open nodes through a throwaway sing-box instance each —
+   a node counts as working only when `curl` via its socks port returns `204` for
    `https://www.gstatic.com/generate_204`.
 1. Regenerates `~/.config/sing-box-trojan/config.json` from the working subset only
    (vless/hysteria2/shadowsocks/trojan all supported by the generator).
@@ -236,13 +238,14 @@ When you run `proxy refresh`, the script fetches nodes from three subscription U
 - `https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge.txt` —
   ss/trojan (large aggregator, ~4.6k links)
 
-Each URL is queried with a 20-second timeout; up to `NODE_SAMPLE` (default 400) random links per URL
-are kept, and xhttp/splithttp (unsupported by stock sing-box) plus ss-plugin links are filtered out.
-The script:
+Each URL is queried directly with a 20-second timeout; when a direct fetch comes back empty and the
+local proxy is running, the URL is retried through `socks5h://127.0.0.1:10808` (25-second timeout).
+Up to `NODE_SAMPLE` (default 400) random links per URL are kept, and xhttp/splithttp (unsupported by
+stock sing-box) plus ss-plugin links are filtered out. The script:
 
 1. Merges them with any fallback nodes from the SOPS secret (fallback always included first).
 1. TCP-scans every unique host:port (asyncio) and e2e-probes the open ones through throwaway
-   sing-box instances (up to `E2E_CAP`, default 60) — a node counts as working only when `curl` via
+   sing-box instances (up to `E2E_CAP`, default 150) — a node counts as working only when `curl` via
    its socks port returns `204` for `https://www.gstatic.com/generate_204`.
 1. Generates the sing-box config from the working subset only, under an `urltest` group (`auto`)
    that re-probes every 5 minutes and routes to the lowest latency. The generator supports vless
