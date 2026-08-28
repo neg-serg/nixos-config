@@ -118,6 +118,7 @@ in
       fi
       case "$1" in
         *[Hh]yprland*) exec /run/current-system/sw/bin/start-hyprland > /tmp/hyprland-debug.log 2>&1 ;;
+        sway|swayfx|start-sway|start-swayfx) exec "$@" > /tmp/sway-session.log 2>&1 ;;
         *) exec "$@" > /tmp/wayland-session.log 2>&1 ;;
       esac
     '';
