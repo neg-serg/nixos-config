@@ -16,6 +16,9 @@ with lib;
     mangowm = {
       enable = mkBool "enable MangoWM (dwl-based Wayland compositor, alternative to Hyprland)" false;
     };
+    sway = {
+      enable = mkBool "enable Sway/SwayFX sessions (wlroots, 10-bit/HDR capable)" false;
+    };
     atrium = {
       enable = mkBool "enable atrium (Wayland multiseat display manager)" false;
     };
