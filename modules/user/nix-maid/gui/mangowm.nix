@@ -43,6 +43,10 @@ let
     env=XDG_SESSION_TYPE,wayland
 
     # --- Autostart (from hyprland.lua hyprland.start; quickshell stays Hyprland-only) ---
+    # Start the session target only now: the compositor socket is up, so
+    # services bound to mango-session.target (quickshell-mango, swayidle,
+    # wl-daemon, ru-layout-mango) connect on the first try instead of racing.
+    exec-once=systemctl --user start mango-session.target
     exec-once=systemctl --user start wl-daemon.service
     exec-once=wl-restore
     exec-once=kitty --single-instance --class term
@@ -281,7 +285,8 @@ let
   '';
 
   # start-mango: mango session launcher (mirrors the repo's hypr-start flow:
-  # import env into the user session, start the session target, exec mango).
+  # import env into the user session, exec mango). The mango-session.target is
+  # started from mango's exec-once, once the wayland socket is up.
   startMango = pkgs.writeShellScriptBin "start-mango" ''
     set -euo pipefail
     LOG="/tmp/mango-start.log"
@@ -290,7 +295,11 @@ let
     echo "Importing environment..." >> "$LOG"
     dbus-update-activation-environment --systemd --all
     systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE QT_XDG_DESKTOP_PORTAL QT_STYLE_OVERRIDE QT_QPA_PLATFORMTHEME
-    systemctl --user start mango-session.target
+    # greetd gives the session a minimal PATH; export the system profile so
+    # exec-once spawns (telegram-desktop, vesktop, wl-restore, ...) resolve.
+    export PATH="/run/current-system/sw/bin:/run/wrappers/bin:$PATH"
+    # mango-session.target is started from mango's exec-once (config.conf), not
+    # here: services must start only after the wayland socket accepts clients.
     # Pin the dGPU for wlroots: WLR_DRM_DEVICES is a colon-separated device
     # list, so the by-path name (pci-0000:03:00.0-card contains colons) cannot
     # be used as-is — wlroots would split it and find no GPU. Resolve it to
