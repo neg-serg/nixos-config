@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "Onsets and Frames MAESTRO note F1 0.905 OR 0.845 paper results table",
+  "Hawthorne 2018 onsets frames note F1 onset F1 frame F1 MAESTRO v1"
+ ],
+ "anysearch": [
+  {
+   "t": "Deep Composer Classification Using Symbolic Representation",
+   "u": "https://program.ismir2020.net/static/lbd/ISMIR2020-LBD-431-abstract.pdf",
+   "sn": "com ABSTRACT In this study, we train deep neural networks to classify composer on a symbolic domain. The model takes a two- channel two-dimensional input, i.e., onset and note acti- vations of time-pitch representation, which is converted from MIDI recordings and performs a single-label clas- sifica"
+  },
+  {
+   "t": "GitHub - DBraun/onsets-and-frames: A TensorFlow 2.1 implementation of Onsets and Frames (Hawthorne 2018)",
+   "u": "https://github.com/DBraun/onsets-and-frames",
+   "sn": "TensorFlow 2.1 Implementation of Onsets and Frames This is a TensorFlow 2.1 implementation of Google’s Onsets and Frames model, using the MAESTRO dataset for training and the Disklavier portion of the MAPS database for testing. The codebase was ported from Jong Wook Kim’s PyTorch implementation, whi"
+  },
+  {
+   "t": "Onsets and Velocities: Affordable Real-Time Piano ...",
+   "u": "https://www.eurasip.org/Proceedings/Eusipco/Eusipco2023/pdfs/0000151.pdf",
+   "sn": "de Abstract—Polyphonic Piano Transcription has recently expe- rienced substantial progress, driven by the use of sophisticated Deep Learning approaches and the introduction of new subtasks such as note onset, offset, velocity and pedal detection. This progress was coupled with an increased complexit"
+  },
+  {
+   "t": "The MAESTRO Dataset and Wave2Midi2Wave",
+   "u": "https://magenta.tensorflow.org/maestro-wave2midi2wave",
+   "sn": "1 ms to ~100 s), a process we call Wave2Midi2Wave. Here’s an excerpt of music composed by a Music Transformer model by Huang et al. trained on MIDI data transcribed from the piano audio in the dataset and then synthesized using a WaveNet model also trained using MAESTRO. We are making MAESTRO avail"
+  },
+  {
+   "t": "[Literature Review] Sound and Music Biases in Deep Music Transcription Models: A Systematic Analysis",
+   "u": "https://themoonlight.io/en/review/sound-and-music-biases-in-deep-music-transcription-models-a-systematic-analysis",
+   "sn": "[Literature Review] Sound and Music Biases in Deep Music Transcription Models: A Systematic Analysis This paper presents a systematic analysis of sound and musical biases in deep learning-based Automatic Music Transcription (AMT) models. While state-of-the-art AMT systems achieve high performance on"
+  },
+  {
+   "t": "Enabling Factorized Piano Music Modeling and Generation with the MAESTRO Dataset",
+   "u": "https://alphaxiv.org/audio/1810.12247",
+   "sn": "(converting audio to MIDI), symbolic generation (creating new MIDI sequences), and synthesis (converting MIDI back to audio). This factorization addresses a fundamental challenge in music generation - the need to model structure across six orders of magnitude in time, from microsecond-level audio sa"
+  },
+  {
+   "t": "Onsets and Frames: Dual-Objective Piano Transcription",
+   "u": "https://www.alphaxiv.org/audio/1710.11153v2",
+   "sn": "Submitted 05 Jun 2018 Onsets and Frames: Dual-Objective Piano Transcription Abstract We advance the state of the art in polyphonic piano music transcription by using a deep convolutional and recurrent neural network which is trained to jointly predict onsets and frames. Our model predicts pitch onse"
+  },
+  {
+   "t": "[Revue de papier] Sound and Music Biases in Deep Music Transcription Models: A Systematic Analysis",
+   "u": "https://themoonlight.io/fr/review/sound-and-music-biases-in-deep-music-transcription-models-a-systematic-analysis",
+   "sn": "[Revue de papier] Sound and Music Biases in Deep Music Transcription Models: A Systematic Analysis This paper presents a systematic analysis of sound and musical biases in deep learning-based Automatic Music Transcription (AMT) models. While state-of-the-art AMT systems achieve high performance on i"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "Deep Composer Classification Using Symbolic Representation",
+   "u": "https://program.ismir2020.net/static/lbd/ISMIR2020-LBD-431-abstract.pdf",
+   "sn": "com ABSTRACT In this study, we train deep neural networks to classify composer on a symbolic domain. The model takes a two- channel two-dimensional input, i.e., onset and note acti- vations of time-pitch representation, which is converted from MIDI recordings and performs a single-label clas- sifica"
+  },
+  {
+   "t": "GitHub - DBraun/onsets-and-frames: A TensorFlow 2.1 implementation of Onsets and Frames (Hawthorne 2018)",
+   "u": "https://github.com/DBraun/onsets-and-frames",
+   "sn": "TensorFlow 2.1 Implementation of Onsets and Frames This is a TensorFlow 2.1 implementation of Google’s Onsets and Frames model, using the MAESTRO dataset for training and the Disklavier portion of the MAPS database for testing. The codebase was ported from Jong Wook Kim’s PyTorch implementation, whi"
+  },
+  {
+   "t": "Onsets and Velocities: Affordable Real-Time Piano ...",
+   "u": "https://www.eurasip.org/Proceedings/Eusipco/Eusipco2023/pdfs/0000151.pdf",
+   "sn": "de Abstract—Polyphonic Piano Transcription has recently expe- rienced substantial progress, driven by the use of sophisticated Deep Learning approaches and the introduction of new subtasks such as note onset, offset, velocity and pedal detection. This progress was coupled with an increased complexit"
+  },
+  {
+   "t": "The MAESTRO Dataset and Wave2Midi2Wave",
+   "u": "https://magenta.tensorflow.org/maestro-wave2midi2wave",
+   "sn": "1 ms to ~100 s), a process we call Wave2Midi2Wave. Here’s an excerpt of music composed by a Music Transformer model by Huang et al. trained on MIDI data transcribed from the piano audio in the dataset and then synthesized using a WaveNet model also trained using MAESTRO. We are making MAESTRO avail"
+  },
+  {
+   "t": "[Literature Review] Sound and Music Biases in Deep Music Transcription Models: A Systematic Analysis",
+   "u": "https://themoonlight.io/en/review/sound-and-music-biases-in-deep-music-transcription-models-a-systematic-analysis",
+   "sn": "[Literature Review] Sound and Music Biases in Deep Music Transcription Models: A Systematic Analysis This paper presents a systematic analysis of sound and musical biases in deep learning-based Automatic Music Transcription (AMT) models. While state-of-the-art AMT systems achieve high performance on"
+  },
+  {
+   "t": "Enabling Factorized Piano Music Modeling and Generation with the MAESTRO Dataset",
+   "u": "https://alphaxiv.org/audio/1810.12247",
+   "sn": "(converting audio to MIDI), symbolic generation (creating new MIDI sequences), and synthesis (converting MIDI back to audio). This factorization addresses a fundamental challenge in music generation - the need to model structure across six orders of magnitude in time, from microsecond-level audio sa"
+  },
+  {
+   "t": "Onsets and Frames: Dual-Objective Piano Transcription",
+   "u": "https://www.alphaxiv.org/audio/1710.11153v2",
+   "sn": "Submitted 05 Jun 2018 Onsets and Frames: Dual-Objective Piano Transcription Abstract We advance the state of the art in polyphonic piano music transcription by using a deep convolutional and recurrent neural network which is trained to jointly predict onsets and frames. Our model predicts pitch onse"
+  },
+  {
+   "t": "[Revue de papier] Sound and Music Biases in Deep Music Transcription Models: A Systematic Analysis",
+   "u": "https://themoonlight.io/fr/review/sound-and-music-biases-in-deep-music-transcription-models-a-systematic-analysis",
+   "sn": "[Revue de papier] Sound and Music Biases in Deep Music Transcription Models: A Systematic Analysis This paper presents a systematic analysis of sound and musical biases in deep learning-based Automatic Music Transcription (AMT) models. While state-of-the-art AMT systems achieve high performance on i"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "Onsets and Frames: Dual-Objective Piano Transcription",
+   "u": "https://alphaxiv.org/abs/1710.11153",
+   "sn": "Ian Simon, Colin Raffel, Jesse Engel, Sageev Oore, Douglas Eck 2018-06-05 PDF Download Abstract We advance the state of the art in polyphonic piano music transcription by using a deep convolutional and recurrent neural network which is trained to jointly predict onsets and frames. Our model predicts"
+  },
+  {
+   "t": "Onsets and Frames: Dual-Objective Piano Transcription",
+   "u": "https://arxiv.org/abs/1710.11153v1",
+   "sn": "We use deep neural networks and propose a novel approach that predicts onsets and frames using both CNNs and LSTMs. This model predicts pitch onset events and then uses those predictions to condition framewise pitch predictions. During inference, we restrict the predictions from the framewise detect"
+  },
+  {
+   "t": "Enabling Factorized Piano Music Modeling and Generation with the MAESTRO Dataset",
+   "u": "https://arxiv.org/pdf/1810.12247",
+   "sn": "Fortunately, most music is also highly structured and can be represented as dis- crete note events played on musical instruments. Herein, we show that by using notes as an intermediate representation, we can train a suite of models capable of transcribing, composing, and synthesizing audio waveforms"
+  },
+  {
+   "t": "GitHub - DBraun/onsets-and-frames: A TensorFlow 2.1 implementation of Onsets and Frames (Hawthorne 2018)",
+   "u": "https://github.com/DBraun/onsets-and-frames",
+   "sn": "TensorFlow 2.1 Implementation of Onsets and Frames This is a TensorFlow 2.1 implementation of Google’s Onsets and Frames model, using the MAESTRO dataset for training and the Disklavier portion of the MAPS database for testing. The codebase was ported from Jong Wook Kim’s PyTorch implementation, whi"
+  },
+  {
+   "t": "Enabling Factorized Piano Music Modeling and Generation with the MAESTRO Dataset Quick Review",
+   "u": "https://liner.com/review/enabling-factorized-piano-music-modeling-and-generation-with-the-maestro",
+   "sn": "Quick review Enabling Factorized Piano Music Modeling and Generation with the MAESTRO Dataset Curtis Hawthorne Andriy Stasyuk and ICLR Oct 29, 2018 References 22 Cited by 471 Motivation & Objective Motivation & Objective Generating musical audio directly with neural networks is challenging due to th"
+  },
+  {
+   "t": "Transition-Aware: A More Robust Approach for Piano Transcription",
+   "u": "https://dafx2020.mdw.ac.at/proceedings/papers/DAFx20in21_paper_4.pdf",
+   "sn": "In 2019, Google Brain published a larger piano transcription dataset, MAESTRO. On this dataset, Onsets and Frames transcription approach proposed by Hawthorne achieved a stunning onset F1 score of 94.73%. Unlike the annotation method of Onsets and Frames, Transition-aware model presented in this pap"
+  },
+  {
+   "t": "ENABLING FACTORIZED PIANO MUSIC MODELING AND GENERATION WITH THE MAESTRO DATASET",
+   "u": "https://readkong.com/page/and-generation-with-the-maestro-dataset-2864185",
+   "sn": "correctly, please read the page content below Published as a conference paper at ICLR 2019 E NABLING FACTORIZED P IANO M USIC M ODELING AND G ENERATION WITH THE MAESTRO DATASET Curtis Hawthorne? , Andriy Stasyuk? , Adam Roberts? , Ian Simon? , Cheng-Zhi Anna Huang? , Sander Dieleman† , Erich Elsen?"
+  },
+  {
+   "t": "Onsets and Frames: Dual-Objective Piano Transcription",
+   "u": "https://magenta.tensorflow.org/onsets-frames",
+   "sn": "Onsets and Frames is our new model for automatic polyphonic piano music transcription. Using this model, we can convert raw recordings of solo piano performances into MIDI. For example, have you ever made a recording of yourself improvising at the piano and later wanted to know exactly what you pla"
+  }
+ ]
+}

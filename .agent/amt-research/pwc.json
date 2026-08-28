@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "paperswithcode music transcription on MAESTRO leaderboard note F1",
+  "MAESTRO v3 transcription leaderboard hFT-Transformer KaraTuner MT3 note F1"
+ ],
+ "anysearch": [
+  {
+   "t": "Scoring Time Intervals using Non-Hierarchical Transformer For Automatic Piano Transcription",
+   "u": "https://paperswithcode.co/paper/2404.09466",
+   "sn": "Paper · arXiv:2404.09466 · 15 April 2024 Scoring Time Intervals using Non-Hierarchical Transformer For Automatic Piano Transcription TL;DR A neural semi-CRF model using a transformer-based attention mechanism achieves state-of-the-art performance in event-based piano transcription by efficiently sco"
+  },
+  {
+   "t": "Paper page - Scoring Time Intervals using Non-Hierarchical Transformer For Automatic Piano Transcription",
+   "u": "https://paperswithcode.com/paper/scoring-intervals-using-non-hierarchical",
+   "sn": "Scoring Time Intervals using Non-Hierarchical Transformer For Automatic Piano Transcription Published on Apr 15, 2024 Abstract A neural semi-CRF model using a transformer-based attention mechanism achieves state-of-the-art performance in event-based piano transcription by efficiently scoring interva"
+  },
+  {
+   "t": "Papers with Code - Towards Efficient and Real-Time Piano Transcription Using Neural Autoregressive Models",
+   "u": "https://paperswithcode.com/paper/towards-efficient-and-real-time-piano",
+   "sn": "In recent years, advancements in neural network designs and the availability of large-scale labeled datasets have led to significant improvements in the accuracy of piano transcription models. However, most previous work focused on high-performance offline transcription, neglecting deliberate consid"
+  },
+  {
+   "t": "Sound and music biases in deep music transcription models: a systematic analysis",
+   "u": "https://link.springer.com/article/10.1186/s13636-025-00428-z",
+   "sn": "Abstract Automatic Music Transcription (AMT)—the task of converting music audio into note representations—has seen rapid progress, driven largely by deep learning systems. Due to the limited availability of richly annotated music datasets, much of the progress in AMT has been concentrated on classic"
+  },
+  {
+   "t": "SOTA Blending on Maestro (test) and PapersWithCode",
+   "u": "https://wizwand.com/sota/blending-on-maestro-test",
+   "sn": "Blending on Maestro (test) Evaluation Results Method Links 2026.04 2.708 71 89.9 0.943 12.4 2026.04 2.767 68.9 89.2 0.886 12.1 2026.04 3.139 - - - - 2026.04 6.221 55.7 82.4 1.606 13.3 2026.04 10.018 62.7 85.7 1.007 13.1 2026.04 11.614 63.9 77.6 3.72 29.7 2026.04 14.131 33 81.7 2.64"
+  },
+  {
+   "t": "Papers With Code Alternative: SOTA Leaderboards and Archived Data | CodeSOTA",
+   "u": "https://www.codesota.com/papers-with-code",
+   "sn": "Codesota · Papers with CodeA dispatch on the archived Meta registryIssue: April 22, 2026 Dispatch · April 2026 Papers With Code alternative: leaderboards after shutdown. Direct answer: Papers With Code was retired by Meta in July 2025. The old leaderboards are not maintained; use CodeSOTA for live S"
+  },
+  {
+   "t": "MulTTiPop: A Multitrack Transcription Dataset for Pop Music",
+   "u": "https://arxiv.org/html/2607.08756v2",
+   "sn": "To collect this dataset, we perform metadata-based matching on song segments from the Lakh MIDI and TheoryTab datasets, manually identify an anchor beat between the audio and MIDI, then use beat tracking on the audio and warp the MIDI to match its tempo and timing. We evaluate state-of-the-art autom"
+  },
+  {
+   "t": "Exploring Music Transcription with Multi-Modal Language Models",
+   "u": "https://towardsdatascience.com/exploring-music-transcription-with-multi-modal-language-models-af352105db56/",
+   "sn": "Exploring Music Transcription with Multi-Modal Language Models Using Qwen2-Audio to transcribe music into sheet music Automatic music transcription is the process of converting audio files like MP3 and WAV into sheet music, guitar tablature, and any format a musician may want to learn a song on the"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "Scoring Time Intervals using Non-Hierarchical Transformer For Automatic Piano Transcription",
+   "u": "https://paperswithcode.co/paper/2404.09466",
+   "sn": "Paper · arXiv:2404.09466 · 15 April 2024 Scoring Time Intervals using Non-Hierarchical Transformer For Automatic Piano Transcription TL;DR A neural semi-CRF model using a transformer-based attention mechanism achieves state-of-the-art performance in event-based piano transcription by efficiently sco"
+  },
+  {
+   "t": "Paper page - Scoring Time Intervals using Non-Hierarchical Transformer For Automatic Piano Transcription",
+   "u": "https://paperswithcode.com/paper/scoring-intervals-using-non-hierarchical",
+   "sn": "Scoring Time Intervals using Non-Hierarchical Transformer For Automatic Piano Transcription Published on Apr 15, 2024 Abstract A neural semi-CRF model using a transformer-based attention mechanism achieves state-of-the-art performance in event-based piano transcription by efficiently scoring interva"
+  },
+  {
+   "t": "Papers with Code - Towards Efficient and Real-Time Piano Transcription Using Neural Autoregressive Models",
+   "u": "https://paperswithcode.com/paper/towards-efficient-and-real-time-piano",
+   "sn": "In recent years, advancements in neural network designs and the availability of large-scale labeled datasets have led to significant improvements in the accuracy of piano transcription models. However, most previous work focused on high-performance offline transcription, neglecting deliberate consid"
+  },
+  {
+   "t": "Sound and music biases in deep music transcription models: a systematic analysis",
+   "u": "https://link.springer.com/article/10.1186/s13636-025-00428-z",
+   "sn": "Abstract Automatic Music Transcription (AMT)—the task of converting music audio into note representations—has seen rapid progress, driven largely by deep learning systems. Due to the limited availability of richly annotated music datasets, much of the progress in AMT has been concentrated on classic"
+  },
+  {
+   "t": "SOTA Blending on Maestro (test) and PapersWithCode",
+   "u": "https://wizwand.com/sota/blending-on-maestro-test",
+   "sn": "Blending on Maestro (test) Evaluation Results Method Links 2026.04 2.708 71 89.9 0.943 12.4 2026.04 2.767 68.9 89.2 0.886 12.1 2026.04 3.139 - - - - 2026.04 6.221 55.7 82.4 1.606 13.3 2026.04 10.018 62.7 85.7 1.007 13.1 2026.04 11.614 63.9 77.6 3.72 29.7 2026.04 14.131 33 81.7 2.64"
+  },
+  {
+   "t": "Papers With Code Alternative: SOTA Leaderboards and Archived Data | CodeSOTA",
+   "u": "https://www.codesota.com/papers-with-code",
+   "sn": "Codesota · Papers with CodeA dispatch on the archived Meta registryIssue: April 22, 2026 Dispatch · April 2026 Papers With Code alternative: leaderboards after shutdown. Direct answer: Papers With Code was retired by Meta in July 2025. The old leaderboards are not maintained; use CodeSOTA for live S"
+  },
+  {
+   "t": "MulTTiPop: A Multitrack Transcription Dataset for Pop Music",
+   "u": "https://arxiv.org/html/2607.08756v2",
+   "sn": "To collect this dataset, we perform metadata-based matching on song segments from the Lakh MIDI and TheoryTab datasets, manually identify an anchor beat between the audio and MIDI, then use beat tracking on the audio and warp the MIDI to match its tempo and timing. We evaluate state-of-the-art autom"
+  },
+  {
+   "t": "Exploring Music Transcription with Multi-Modal Language Models",
+   "u": "https://towardsdatascience.com/exploring-music-transcription-with-multi-modal-language-models-af352105db56/",
+   "sn": "Exploring Music Transcription with Multi-Modal Language Models Using Qwen2-Audio to transcribe music into sheet music Automatic music transcription is the process of converting audio files like MP3 and WAV into sheet music, guitar tablature, and any format a musician may want to learn a song on the"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/pdf/2603.27528v1",
+   "sn": "uk Abstract This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument tran- scription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both advances"
+  },
+  {
+   "t": "Automatic Piano Transcription with Hierarchical Frequency-Time Transformer",
+   "u": "https://ar5iv.labs.arxiv.org/html/2307.04305",
+   "sn": "In this work, we propose hFT-Transformer, which is an automatic music transcription method that uses a two-level hierarchical frequency-time Transformer architecture. The first hierarchy includes a convolutional block in the time axis, a Transformer encoder in the frequency axis, and a Transformer d"
+  },
+  {
+   "t": "Music Transcription on MAESTRO benchmark leaderboard",
+   "u": "https://sota2.com/research/sota/music-transcription-on-maestro",
+   "sn": "Music Transcription on MAESTRO 99.64PrecisionhFT-Transformer Evaluation Results Method Links hFT-TransformerParams=5.5M2026.05 99.64 — — — 95.44 97.44 TranskunParams=12.9M2026.05 99.53 — — — 97.16 98.32 SFT-CRNNParams=15M2026.05 99.16 — — — 97.46 98.36 HPPNet-spParams=1.2M2026.05 98.45"
+  },
+  {
+   "t": "Automatic Piano Transcription with Hierarchical Frequency-Time Transformer",
+   "u": "https://ismir2023program.ismir.net/static/posters/72.pdf",
+   "sn": "Automatic Piano Transcription with Hierarchical Frequency-Time Transformer Keisuke Toyama1, Taketo Akama2, Yukara Ikemiya3, Yuhta Takida3, Wei-Hsiang Liao3, Yuki Mitsufuji1,3 1Sony Group Corporation, 2Sony Computer Science Laboratories, 3Sony AI Introduction For automatic music transcription (AMT),"
+  },
+  {
+   "t": "2024:Polyphonic Transcription Results - MIREX Wiki",
+   "u": "https://music-ir.org/mirex/wiki/2024:Polyphonic_Transcription_Results",
+   "sn": "9081 hFT-Transformer PDF Two stacks of Transformers for Frequency and Time + regression onset&offset 0.9416 0.8359 average note onset F1 = average of note onset F1 on all three datasets holistic note F1 = average of note onset+offset+velocity on Maestro and SMD Detailed Results on Maestro Detailed"
+  },
+  {
+   "t": "Automatic Piano Transcription with Hierarchical Frequency-Time Transformer",
+   "u": "https://sotaverified.org/papers/automatic-piano-transcription-with",
+   "sn": "In this case, we may rely on the capability of self-attention mechanism in Transformers to capture these long-term dependencies in the frequency and time axes. In this work, we propose hFT-Transformer, which is an automatic music transcription method that uses a two-level hierarchical frequency-time"
+  },
+  {
+   "t": "Music Transcription research benchmarks",
+   "u": "https://sota2.com/research/task/music-transcription",
+   "sn": "Music Transcription Benchmarks Dataset NameSOTA methodMetricTrendResultsLast Updated MAESTRO HEAR challenge CREPE 0.391Onset FMS 8 Feb 26, 2026 MusicNet RSE 78.02APS 6 Feb 26, 2026 MAESTRO HEAR CREPE 0.391Onset FMS 5 Feb 26, 2026 MAESTRO hFT-Transformer 99.64Precision 5 May 19, 2026 GuitarSet MT3 89"
+  },
+  {
+   "t": "Music Transcription",
+   "u": "https://sotaverified.org/tasks/music-transcription",
+   "sn": "Music Transcription Music transcription is the task of converting an acoustic musical signal into some form of music notation. [...] 32 — Unverified 2 hFT-Transformer Onset F1 97.44 — Unverified 3 Kim et al. Onset F1 97.23 — Unverified 4 YourMT3+ (YPTF.MoE+M) noPS Onset F1 96.98 — Unverified 5 K"
+  }
+ ]
+}

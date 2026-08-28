@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "state of the art piano transcription 2025 model audio to MIDI open source",
+  "piano transcription 2024 2025 new model Hugging Face MAESTRO F1 diffusion transformer"
+ ],
+ "anysearch": [
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/abs/2603.27528",
+   "sn": "Several factors contribute to this gap: (1) lack of large openly available datasets for training and evaluation, (2) absence of commonly adopted benchmarks for comparing different methods, (3) limited incentives to attract researchers compared to other fields in AI, (4) lack of a common platform whe"
+  },
+  {
+   "t": "Aria-MIDI: A Dataset of Piano MIDI Files for Symbolic Music Modeling",
+   "u": "https://alphaxiv.org/abs/2504.15071",
+   "sn": "Symbolic Music Modeling Queen Mary University of London LB Louis Bradshaw SC Simon Colton Abstract We introduce an extensive new dataset of MIDI files, created by transcribing audio recordings of piano performances into their constituent notes. The data pipeline we use is multi-stage, employing a la"
+  },
+  {
+   "t": "Aria-MIDI: A Dataset of Piano MIDI Files for Symbolic Music Modeling",
+   "u": "https://arxiv.org/pdf/2504.15071",
+   "sn": "uk ABSTRACT We introduce an extensive new dataset of MIDI files, created by transcribing audio recordings of piano performances into their constituent notes. The data pipeline we use is multi-stage, employing a language model to autonomously crawl and score audio recordings from the internet based o"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "https://arxiv.org/abs/2503.01362",
+   "sn": "For audio-to-MIDI piano transcription, one may define the input and output of the Transformer as a sequence of raw audio features (e.g., mel and constant-Q spectrograms) and a sequence of note-on and note-off events sorted in time and pitch, respectively. The performance of this naive approach, howe"
+  },
+  {
+   "t": "Mirelo and Kyutai Open-Source MuScriptor, an Audio-to-MIDI Model That Transcribes Full Mixes",
+   "u": "https://vp-land.com/stories/mirelo-and-kyutai-open-source-muscriptor-an-audio-to-midi-model-that-transcribes-full-mixes",
+   "sn": "Mirelo and Kyutai Open-Source MuScriptor, an Audio-to-MIDI Model That Transcribes Full Mixes Mirelo AI and Kyutai open-sourced MuScriptor, an audio-to-MIDI model that takes a finished music mix and transcribes every instrument at once into separate MIDI tracks. Most audio-to-MIDI tools handle one s"
+  },
+  {
+   "t": "A Dataset of Piano MIDI Files forSymbolic Music Modeling",
+   "u": "https://arxiv.org/html/2504.15071v1",
+   "sn": "Aria-MIDI: A Dataset of Piano MIDI Files for Symbolic Music Modeling Abstract We introduce an extensive new dataset of MIDI files, created by transcribing audio recordings of piano performances into their constituent notes. The data pipeline we use is multi-stage, employing a language model to auton"
+  },
+  {
+   "t": "GitHub - EleutherAI/aria: Official repository for the paper: Scaling Self-Supervised Representation Learning for Symbolic Piano Performance (ISMIR 2025)",
+   "u": "https://github.com/EleutherAI/aria",
+   "sn": "Aria This repository contains training, inference, and evaluation code for the paper Scaling Self-Supervised Representation Learning for Symbolic Piano Performance (ISMIR 2025), as well as implementations of our real-time piano continuation demo. Aria is a pretrained autoregressive generative model"
+  },
+  {
+   "t": "Aria-MIDI: A Dataset of Piano MIDI Files for Symbolic Music Modeling",
+   "u": "https://pith.science/paper/2504.15071",
+   "sn": "The reading The paper introduces Aria-MIDI, a dataset of more than one million piano MIDI files, roughly 100,000 hours of transcribed audio, built by automatically crawling internet piano recordings, filtering them with a trained audio classifier, and transcribing them into MIDI. The authors claim t"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/abs/2603.27528",
+   "sn": "Several factors contribute to this gap: (1) lack of large openly available datasets for training and evaluation, (2) absence of commonly adopted benchmarks for comparing different methods, (3) limited incentives to attract researchers compared to other fields in AI, (4) lack of a common platform whe"
+  },
+  {
+   "t": "Aria-MIDI: A Dataset of Piano MIDI Files for Symbolic Music Modeling",
+   "u": "https://alphaxiv.org/abs/2504.15071",
+   "sn": "Symbolic Music Modeling Queen Mary University of London LB Louis Bradshaw SC Simon Colton Abstract We introduce an extensive new dataset of MIDI files, created by transcribing audio recordings of piano performances into their constituent notes. The data pipeline we use is multi-stage, employing a la"
+  },
+  {
+   "t": "Aria-MIDI: A Dataset of Piano MIDI Files for Symbolic Music Modeling",
+   "u": "https://arxiv.org/pdf/2504.15071",
+   "sn": "uk ABSTRACT We introduce an extensive new dataset of MIDI files, created by transcribing audio recordings of piano performances into their constituent notes. The data pipeline we use is multi-stage, employing a language model to autonomously crawl and score audio recordings from the internet based o"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "https://arxiv.org/abs/2503.01362",
+   "sn": "For audio-to-MIDI piano transcription, one may define the input and output of the Transformer as a sequence of raw audio features (e.g., mel and constant-Q spectrograms) and a sequence of note-on and note-off events sorted in time and pitch, respectively. The performance of this naive approach, howe"
+  },
+  {
+   "t": "Mirelo and Kyutai Open-Source MuScriptor, an Audio-to-MIDI Model That Transcribes Full Mixes",
+   "u": "https://vp-land.com/stories/mirelo-and-kyutai-open-source-muscriptor-an-audio-to-midi-model-that-transcribes-full-mixes",
+   "sn": "Mirelo and Kyutai Open-Source MuScriptor, an Audio-to-MIDI Model That Transcribes Full Mixes Mirelo AI and Kyutai open-sourced MuScriptor, an audio-to-MIDI model that takes a finished music mix and transcribes every instrument at once into separate MIDI tracks. Most audio-to-MIDI tools handle one s"
+  },
+  {
+   "t": "A Dataset of Piano MIDI Files forSymbolic Music Modeling",
+   "u": "https://arxiv.org/html/2504.15071v1",
+   "sn": "Aria-MIDI: A Dataset of Piano MIDI Files for Symbolic Music Modeling Abstract We introduce an extensive new dataset of MIDI files, created by transcribing audio recordings of piano performances into their constituent notes. The data pipeline we use is multi-stage, employing a language model to auton"
+  },
+  {
+   "t": "GitHub - EleutherAI/aria: Official repository for the paper: Scaling Self-Supervised Representation Learning for Symbolic Piano Performance (ISMIR 2025)",
+   "u": "https://github.com/EleutherAI/aria",
+   "sn": "Aria This repository contains training, inference, and evaluation code for the paper Scaling Self-Supervised Representation Learning for Symbolic Piano Performance (ISMIR 2025), as well as implementations of our real-time piano continuation demo. Aria is a pretrained autoregressive generative model"
+  },
+  {
+   "t": "Aria-MIDI: A Dataset of Piano MIDI Files for Symbolic Music Modeling",
+   "u": "https://pith.science/paper/2504.15071",
+   "sn": "The reading The paper introduces Aria-MIDI, a dataset of more than one million piano MIDI files, roughly 100,000 hours of transcribed audio, built by automatically crawling internet piano recordings, filtering them with a trained audio classifier, and transcribing them into MIDI. The authors claim t"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "Paper page - D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://huggingface.co/papers/2501.05068",
+   "sn": "In this paper, we focus on discrete diffusion model’s refinement capabilities and present a novel architecture for piano transcription. Our model utilizes Neighborhood Attention layers as the denoising module, gradually predicting the target high-resolution piano roll, conditioned on the finetuned f"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://pith.science/paper/2501.05068",
+   "sn": "The reading The paper tries to show that discrete denoising diffusion can act as a refinement module for piano transcription, not just a generator. The authors attach a lightweight Neighborhood Attention denoising decoder to a pretrained acoustic model, and let it iteratively correct a multi-state p"
+  },
+  {
+   "t": "Enabling Factorized Piano Music Modeling and Generation with the MAESTRO Dataset",
+   "u": "https://alphaxiv.org/audio/1810.12247",
+   "sn": "Dataset and Factorized Approach This research addresses the challenge of generating realistic piano music by introducing a factorized approach called Wave2Midi2Wave and a new large-scale dataset called MAESTRO. The work emerged from a collaboration between Google Brain and DeepMind researchers, bri"
+  },
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "arxiv://2402.01424",
+   "sn": "bib1)] and from the release of the MAESTRO dataset [[2](https://arxiv.org/html/2402.01424v1#bib.bib2)]. The Onsets and Frames architecture yielded a more than fifty percent increase in the note-onset F1-score, when trained and evaluated on the MAPS dataset [[3](https://arxiv.org/html/2402.01424v1#bi"
+  },
+  {
+   "t": "Exploring System Adaptations For Minimum Latency Real-Time Piano Transcription",
+   "u": "https://arxiv.org/pdf/2509.07586v1",
+   "sn": "at ABSTRACT Advances in neural network design and the availability of large-scale labeled datasets have driven major improve- ments in piano transcription. Existing approaches target either offline applications, with no restrictions on compu- tational demands, or online transcription, with delays of"
+  },
+  {
+   "t": "Score-Informed Transformer for Refining MIDI Velocity in Automatic Music Transcription",
+   "u": "https://arxiv.org/html/2508.07757v2",
+   "sn": "In practical scenarios, a music score with inaccurate velocities may be available alongside the performance audio (e.g., music education and free online archives), enabling the task of score-informed MIDI velocity estimation. In this work, we propose a modular, lightweight score-informed Transformer"
+  },
+  {
+   "t": "The MAESTRO Dataset and Wave2Midi2Wave",
+   "u": "https://magenta.tensorflow.org/maestro-wave2midi2wave",
+   "sn": "This new dataset enables us to train a suite of models capable of transcribing, composing, and synthesizing audio waveforms with coherent musical structure on timescales spanning six orders of magnitude (~0.1 ms to ~100 s), a process we call Wave2Midi2Wave. Here’s an excerpt of music composed by a"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "doi://10.48550/arxiv.2501.05068",
+   "sn": "Automatic Music Transcription, Discrete Diffusion, Music Information Retrieval ## I Introduction Piano transcription involves converting the acoustic signals of piano performances into individual notes. These notes are usually represented in a MIDI format, containing pitch information and the start"
+  }
+ ]
+}

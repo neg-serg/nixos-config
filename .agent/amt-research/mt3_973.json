@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "MT3 ICLR 2022 MAESTRO v3 \"0.973\" note F1 onsets and frames 0.905",
+  "MT3 paper table MAESTRO note F1 97.3 onset 97.5"
+ ],
+ "anysearch": [
+  {
+   "t": "Beyond Piano: Cross-Instrument MIDI Velocity Estimation via Differentiable SoundFont Proxies",
+   "u": "https://arxiv.org/html/2608.08985",
+   "sn": "recast target-instrument adaptation as predicting renderer-conditioned velocities whose rendering matches the dynamics of the performance audio. This adaptation can be driven by either differentiable synthesizers (Diff-Synth) or our proposed differentiable SoundFont proxies (Diff-SFProxy). We highli"
+  },
+  {
+   "t": "PianoCoRe: Combined and Refined Piano MIDI Dataset",
+   "u": "https://reference-global.com/article/10.5334/tismir.333?tab=figures-and-tables",
+   "sn": "Hours Sources Scores Alignments Metadata MAESTRO 43 – 1,276 199 R no no P (n)ASAP 16 222 1,067 92 R 100% beat/note P GiantMIDI 2,786 10,855 10,855 1,237 T no no S ATEPP 25 1,596 11,742 1,009 T 43.6% no P, Q† Aria‑MIDI 19,021‡ – 1,186,253 100,629 T no no S, P† PERiScoPe 82 2,738 46,473 3,784 R,"
+  },
+  {
+   "t": "Agogic: Performance-Timed Music Tokens for LLM-Native Text-to-Symbolic-Music Generation",
+   "u": "https://arxiv.org/html/2608.03999",
+   "sn": "The resulting ordering is clean and, we think, surprising: the representation, not the model’s size, is the binding variable for distributional fidelity. Scaling the backbone (0.8B27B) barely moves Fréchet Music Distance, whereas switching representation halves it. A performance-resolution stream we"
+  },
+  {
+   "t": "Technical Report - Musical Features for Automatic Music Transcription Evaluation",
+   "u": "https://ar5iv.labs.arxiv.org/html/2004.07171",
+   "sn": "The AMT output and target can also be represented as a list of notes. We notate them and respectively. They are lists of potentially different lengths and respectively. Each element of is a tuple where and are the start and end times, is the MIDI pitch, and is the original velocity of the note. Each"
+  },
+  {
+   "t": "Overleaf Example",
+   "u": "https://arxiv.org/pdf/2210.12648v2",
+   "sn": "Our Clarinet music retrieval system is designed to search piano MIDI files with high recall and speed. We design a novel melody extraction algorithm that improves recall results by more than 10%. We also implement 3 algorithms for retrieval-two self designed (RSA Note and RSA Time), and a modified v"
+  },
+  {
+   "t": "State of the Art of Quality Assessment of Facial Images",
+   "u": "https://arxiv.org/pdf/2211.08030",
+   "sn": "of the Art of Quality Assessment of Facial Images Version 1.2 11.11.2022 Johannes Merkle, Christian Rathgeb, Benjamin Tams, Dhay-Parn Lou, André Dörsch, Pawel Drozdowski secunet Security Networks AG Document history Version Date Editor Description 0.1 25.02.2022 D.-P. Lou, J. Merkle, C. Rathgeb “Exp"
+  },
+  {
+   "t": "Musical Features for Automatic Music Transcription Evaluation",
+   "u": "https://arxiv.org/pdf/2004.07171",
+   "sn": "They are lists of potentially different lengths ˆn and n respectively. Each element of N is a tuple (s, e, p, v) where s and e are the start and end times, p is the MIDI pitch, and v is the original velocity of the note. Each element of ˆN is a tuple (s, e, p) (same, without velocity, as it is often"
+  },
+  {
+   "t": "ROSCOE: A Suite of Metrics for Scoring Step-by-Step Reasoning",
+   "u": "https://arxiv.org/pdf/2212.07919",
+   "sn": "com ABSTRACT Large language models show improved downstream task performance when prompted to generate step-by-step reasoning to justify their final answers (Nye et al., 2021; Wei et al., 2022). These reasoning steps greatly improve model interpretability and verification, but objectively studying t"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "Beyond Piano: Cross-Instrument MIDI Velocity Estimation via Differentiable SoundFont Proxies",
+   "u": "https://arxiv.org/html/2608.08985",
+   "sn": "recast target-instrument adaptation as predicting renderer-conditioned velocities whose rendering matches the dynamics of the performance audio. This adaptation can be driven by either differentiable synthesizers (Diff-Synth) or our proposed differentiable SoundFont proxies (Diff-SFProxy). We highli"
+  },
+  {
+   "t": "PianoCoRe: Combined and Refined Piano MIDI Dataset",
+   "u": "https://reference-global.com/article/10.5334/tismir.333?tab=figures-and-tables",
+   "sn": "Hours Sources Scores Alignments Metadata MAESTRO 43 – 1,276 199 R no no P (n)ASAP 16 222 1,067 92 R 100% beat/note P GiantMIDI 2,786 10,855 10,855 1,237 T no no S ATEPP 25 1,596 11,742 1,009 T 43.6% no P, Q† Aria‑MIDI 19,021‡ – 1,186,253 100,629 T no no S, P† PERiScoPe 82 2,738 46,473 3,784 R,"
+  },
+  {
+   "t": "Agogic: Performance-Timed Music Tokens for LLM-Native Text-to-Symbolic-Music Generation",
+   "u": "https://arxiv.org/html/2608.03999",
+   "sn": "The resulting ordering is clean and, we think, surprising: the representation, not the model’s size, is the binding variable for distributional fidelity. Scaling the backbone (0.8B27B) barely moves Fréchet Music Distance, whereas switching representation halves it. A performance-resolution stream we"
+  },
+  {
+   "t": "Technical Report - Musical Features for Automatic Music Transcription Evaluation",
+   "u": "https://ar5iv.labs.arxiv.org/html/2004.07171",
+   "sn": "The AMT output and target can also be represented as a list of notes. We notate them and respectively. They are lists of potentially different lengths and respectively. Each element of is a tuple where and are the start and end times, is the MIDI pitch, and is the original velocity of the note. Each"
+  },
+  {
+   "t": "Overleaf Example",
+   "u": "https://arxiv.org/pdf/2210.12648v2",
+   "sn": "Our Clarinet music retrieval system is designed to search piano MIDI files with high recall and speed. We design a novel melody extraction algorithm that improves recall results by more than 10%. We also implement 3 algorithms for retrieval-two self designed (RSA Note and RSA Time), and a modified v"
+  },
+  {
+   "t": "State of the Art of Quality Assessment of Facial Images",
+   "u": "https://arxiv.org/pdf/2211.08030",
+   "sn": "of the Art of Quality Assessment of Facial Images Version 1.2 11.11.2022 Johannes Merkle, Christian Rathgeb, Benjamin Tams, Dhay-Parn Lou, André Dörsch, Pawel Drozdowski secunet Security Networks AG Document history Version Date Editor Description 0.1 25.02.2022 D.-P. Lou, J. Merkle, C. Rathgeb “Exp"
+  },
+  {
+   "t": "Musical Features for Automatic Music Transcription Evaluation",
+   "u": "https://arxiv.org/pdf/2004.07171",
+   "sn": "They are lists of potentially different lengths ˆn and n respectively. Each element of N is a tuple (s, e, p, v) where s and e are the start and end times, p is the MIDI pitch, and v is the original velocity of the note. Each element of ˆN is a tuple (s, e, p) (same, without velocity, as it is often"
+  },
+  {
+   "t": "ROSCOE: A Suite of Metrics for Scoring Step-by-Step Reasoning",
+   "u": "https://arxiv.org/pdf/2212.07919",
+   "sn": "com ABSTRACT Large language models show improved downstream task performance when prompted to generate step-by-step reasoning to justify their final answers (Nye et al., 2021; Wei et al., 2022). These reasoning steps greatly improve model interpretability and verification, but objectively studying t"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/pdf/2603.27528v1",
+   "sn": "uk Abstract This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument tran- scription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both advances"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://alphaxiv.org/overview/2111.03017",
+   "sn": "Transcription (AMT) has long been constrained by its focus on single-instrument scenarios, particularly solo piano performances. While this specialization has yielded impressive results for specific instruments, it fails to address the complexity of real-world music, where multiple instruments play"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://arxiv.org/html/2111.03017v4",
+   "sn": "MT3: Multi-Task Multitrack Music Transcription Abstract Automatic Music Transcription (AMT), inferring musical notes from raw audio, is a challenging task at the core of music understanding. Unlike Automatic Speech Recognition (ASR), which typically focuses on the words of a single speaker, AMT ofte"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription Quick Review",
+   "u": "https://liner.com/review/mt3-multitask-multitrack-music-transcription",
+   "sn": "Proposed method Proposed method Figure 2: Tokenization/detokenization, as described in Section 3.2. MIDI data (left, represented here as a multitrack “pianoroll”) can be tokenized into MIDI-like target tokens for training (right). Output tokens using the same vocabulary can be deterministically de"
+  },
+  {
+   "t": "MT3: MULTI-TASK MULTITRACK MUSIC TRANSCRIPTION",
+   "u": "https://openreview.net/pdf?id=iMSjopcOn0p",
+   "sn": "Ian Simon, Ethan Manilow†, Curtis Hawthorne, Jesse Engel Google Research, Brain Team ABSTRACT Automatic Music Transcription (AMT), inferring musical notes from raw audio, is a challenging task at the core of music understanding. Unlike Automatic Speech Recognition (ASR), which typically focuses on t"
+  },
+  {
+   "t": "Exploring Music Transcription with Multi-Modal Language Models",
+   "u": "https://towardsdatascience.com/exploring-music-transcription-with-multi-modal-language-models-af352105db56/",
+   "sn": "transcription is the process of converting audio files like MP3 and WAV into sheet music, guitar tablature, and any format a musician may want to learn a song on their instrument. We’ll go over the best current tools for doing this, which happen to be deep learning-based, and a novel approach for it"
+  },
+  {
+   "t": "Evaluation of a Piano Transcription Model on Guitar",
+   "u": "https://www.diva-portal.org/smash/get/diva2:1985701/FULLTEXT01.pdf",
+   "sn": "Utvärdering av en pianotranskriptionsmodell på gitarr iii Abstract Automatic Music Transcription (AMT) systems are typically trained on spe- cific instruments, raising questions about their ability to generalize across in- struments with differing acoustic properties and playing techniques. This stu"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://sotaverified.org/papers/mt3-multi-task-multitrack-music-transcription-1",
+   "sn": "MT3: Multi-Task Multitrack Music Transcription 2021-11-04ICLR 2022Code Available1· to hype Josh Gardner, Ian Simon, Ethan Manilow, Curtis Hawthorne, Jesse Engel Code Available — Be the first to reproduce this paper. Reproduce Code github.com/magenta/mt3 OfficialIn paperjax★ 1,686 github.com/"
+  }
+ ]
+}
