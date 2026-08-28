@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "Kong high-resolution piano transcription note F1 MAESTRO 2020 pedals onsets offsets",
+  "piano transcription 2010.01815 note F1 results table MAESTRO"
+ ],
+ "anysearch": [
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times",
+   "u": "https://arxiv.org/abs/2010.01815v2",
+   "sn": "In this article, we propose a high-resolution AMT system trained by regressing precise times of onsets and offsets. [...] In inference, we propose an algorithm to analytically calculate the precise onsets and offsets times of note and pedal events. We build both note and pedal transcription systems"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onset and Offset Times",
+   "u": "https://arxiv.org/abs/2010.01815?context=eess.AS",
+   "sn": "with Pedals by Regressing Onset and Offset Times View PDF HTML (experimental) Abstract:Automatic music transcription (AMT) is the task of transcribing audio recordings into symbolic representations. Recently, neural network-based methods have been applied to AMT, and have achieved state-of-the-art r"
+  },
+  {
+   "t": "High-Resolution Piano Transcription | PDF | Algorithms | Applied Mathematics",
+   "u": "https://scribd.com/document/715628329/High-resolution-Piano-Transcription-with-Pedals-by-Regressing-Precise-Onsets-and-Offsets-Times-v0-2",
+   "sn": "1 High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times Qiuqiang Kong, Bochen Li, Xuchen Song, Yuan Wan, Yuxuan Wang Abstract—Automatic music transcription (AMT) is the task of transcription [8], [9], [10] include using discriminative models, transcribing audio recor"
+  },
+  {
+   "t": "Transition-Aware: A More Robust Approach for Piano Transcription",
+   "u": "https://dafx2020.mdw.ac.at/proceedings/papers/DAFx20in21_paper_4.pdf",
+   "sn": "In 2019, Google Brain published a larger piano transcription dataset, MAESTRO. On this dataset, Onsets and Frames transcription approach proposed by Hawthorne achieved a stunning onset F1 score of 94.73%. Unlike the annotation method of Onsets and Frames, Transition-aware model presented in this pap"
+  },
+  {
+   "t": "GitHub - qiuqiangkong/piano_transcription",
+   "u": "https://github.com/qiuqiangkong/piano_transcription",
+   "sn": "Piano Transcription with Neural Networks This repository is a PyTorch implementation of piano transcription systems. The system takes audio as input and outputs onset, offset, frame, and velocity rolls. Users can train the system in less than 10 hours using a single RTX 4090 GPU. [...] json └── READ"
+  },
+  {
+   "t": "piano_transcription/README.md at kqq · qiuqiangkong/piano_transcription",
+   "u": "https://github.com/qiuqiangkong/piano_transcription/blob/kqq/README.md",
+   "sn": "File metadata and controls 115 lines (89 loc) · 4.47 KB Piano Transcription with Neural Networks This repository is a PyTorch implementation of piano transcription systems. The system takes audio as input and outputs onset, offset, frame, and velocity rolls. Users can train the system in less than 1"
+  },
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "https://zenodo.org/records/10610212",
+   "sn": "4 On the MAESTRO test set, we acheive a note onset of 96.6 F1 score, compared to 96.7 of Kong et al. Previous publications ([1], [2], [4]) train without any data augmentation as it has been shown to slightly hurt test set performance. We view this as plain overfitting and encourage future research"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "https://arxiv.org/pdf/2503.01362",
+   "sn": "For audio-to-MIDI piano transcription, one may define the input and output of the Transformer as a sequence of raw audio features (e.g., mel and constant-Q spectrograms) and a sequence of note-on and note-off events sorted in time and pitch, respectively. The performance of this naive approach, howe"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times",
+   "u": "https://arxiv.org/abs/2010.01815v2",
+   "sn": "In this article, we propose a high-resolution AMT system trained by regressing precise times of onsets and offsets. [...] In inference, we propose an algorithm to analytically calculate the precise onsets and offsets times of note and pedal events. We build both note and pedal transcription systems"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onset and Offset Times",
+   "u": "https://arxiv.org/abs/2010.01815?context=eess.AS",
+   "sn": "with Pedals by Regressing Onset and Offset Times View PDF HTML (experimental) Abstract:Automatic music transcription (AMT) is the task of transcribing audio recordings into symbolic representations. Recently, neural network-based methods have been applied to AMT, and have achieved state-of-the-art r"
+  },
+  {
+   "t": "High-Resolution Piano Transcription | PDF | Algorithms | Applied Mathematics",
+   "u": "https://scribd.com/document/715628329/High-resolution-Piano-Transcription-with-Pedals-by-Regressing-Precise-Onsets-and-Offsets-Times-v0-2",
+   "sn": "1 High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times Qiuqiang Kong, Bochen Li, Xuchen Song, Yuan Wan, Yuxuan Wang Abstract—Automatic music transcription (AMT) is the task of transcription [8], [9], [10] include using discriminative models, transcribing audio recor"
+  },
+  {
+   "t": "Transition-Aware: A More Robust Approach for Piano Transcription",
+   "u": "https://dafx2020.mdw.ac.at/proceedings/papers/DAFx20in21_paper_4.pdf",
+   "sn": "In 2019, Google Brain published a larger piano transcription dataset, MAESTRO. On this dataset, Onsets and Frames transcription approach proposed by Hawthorne achieved a stunning onset F1 score of 94.73%. Unlike the annotation method of Onsets and Frames, Transition-aware model presented in this pap"
+  },
+  {
+   "t": "GitHub - qiuqiangkong/piano_transcription",
+   "u": "https://github.com/qiuqiangkong/piano_transcription",
+   "sn": "Piano Transcription with Neural Networks This repository is a PyTorch implementation of piano transcription systems. The system takes audio as input and outputs onset, offset, frame, and velocity rolls. Users can train the system in less than 10 hours using a single RTX 4090 GPU. [...] json └── READ"
+  },
+  {
+   "t": "piano_transcription/README.md at kqq · qiuqiangkong/piano_transcription",
+   "u": "https://github.com/qiuqiangkong/piano_transcription/blob/kqq/README.md",
+   "sn": "File metadata and controls 115 lines (89 loc) · 4.47 KB Piano Transcription with Neural Networks This repository is a PyTorch implementation of piano transcription systems. The system takes audio as input and outputs onset, offset, frame, and velocity rolls. Users can train the system in less than 1"
+  },
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "https://zenodo.org/records/10610212",
+   "sn": "4 On the MAESTRO test set, we acheive a note onset of 96.6 F1 score, compared to 96.7 of Kong et al. Previous publications ([1], [2], [4]) train without any data augmentation as it has been shown to slightly hurt test set performance. We view this as plain overfitting and encourage future research"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "https://arxiv.org/pdf/2503.01362",
+   "sn": "For audio-to-MIDI piano transcription, one may define the input and output of the Transformer as a sequence of raw audio features (e.g., mel and constant-Q spectrograms) and a sequence of note-on and note-off events sorted in time and pitch, respectively. The performance of this naive approach, howe"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onset and Offset Times",
+   "u": "https://arxiv.org/pdf/2010.01815",
+   "sn": "Onset and Offset Times Qiuqiang Kong, Bochen Li, Xuchen Song, Yuan Wan, Yuxuan Wang Abstract—Automatic music transcription (AMT) is the task of transcribing audio recordings into symbolic representations. Recently, neural network-based methods have been applied to AMT, and have achieved state-of-the"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times",
+   "u": "https://arxiv.org/html/2010.01815v1",
+   "sn": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times Abstract Automatic music transcription (AMT) is the task of transcribing audio recordings into symbolic representations such as Musical Instrument Digital Interface (MIDI). Recently, neural networks based methods"
+  },
+  {
+   "t": "High-Resolution Piano Transcription with Pedals",
+   "u": "https://emergentmind.com/papers/2010.01815",
+   "sn": "The paper introduces a regression-based method to precisely model piano note onsets, offsets, and pedal events. It leverages convolutional layers and bidirectional GRUs on log mel spectrograms to outperform traditional frame-based techniques. The system achieves a 96.72% onset F1 score and 91.86% pe"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onset and Offset Times",
+   "u": "https://alphaxiv.org/abs/2010.01815",
+   "sn": "We show that our AMT system is robust to the misaligned onset and offset labels compared to previous systems. Our proposed system achieves an onset F1 of 96.72% on the MAESTRO dataset, outperforming previous onsets and frames system of 94.80%. Our system achieves a pedal onset F1 score of 91.86%, wh"
+  },
+  {
+   "t": "Enabling Factorized Piano Music Modeling and Generation with the MAESTRO Dataset Quick Review",
+   "u": "https://liner.com/review/enabling-factorized-piano-music-modeling-and-generation-with-the-maestro",
+   "sn": "that generates piano performance MIDI autoregressively, and (c) a piano transcription model that “encodes” piano performance audio as MIDI. We introduce Wave2Midi2Wave, a factorized approach combining a transcription model, a self-attention based music language model, and a MIDI-conditioned WaveNet"
+  },
+  {
+   "t": "The MAESTRO Dataset and Wave2Midi2Wave",
+   "u": "https://magenta.tensorflow.org/maestro-wave2midi2wave",
+   "sn": "composing, and synthesizing audio waveforms with coherent musical structure on timescales spanning six orders of magnitude (~0.1 ms to ~100 s), a process we call Wave2Midi2Wave. Here’s an excerpt of music composed by a Music Transformer model by Huang et al. trained on MIDI data transcribed from th"
+  },
+  {
+   "t": "Piano Transcription Algorithm Based on Self Attention Deep Learning Network | Wu",
+   "u": "https://informatica.si/index.php/informatica/article/view/7096/3729",
+   "sn": "time-series harmonic diagram, mel frequency cepstral coefficients Received: August 17, 2024 Music transcription is an important means to record and transmit music culture. However, the existing music transcription algorithms still have certain errors in practical applications. To address this proble"
+  },
+  {
+   "t": "piano_transcription/README.md at kqq · qiuqiangkong/piano_transcription",
+   "u": "https://github.com/qiuqiangkong/piano_transcription/blob/kqq/README.md",
+   "sn": "47 KB Piano Transcription with Neural Networks This repository is a PyTorch implementation of piano transcription systems. The system takes audio as input and outputs onset, offset, frame, and velocity rolls. Users can train the system in less than 10 hours using a single RTX 4090 GPU. [...] Or use"
+  }
+ ]
+}

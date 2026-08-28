@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "piano_transcription_inference ByteDance high-resolution piano transcription pedals note F1 MAESTRO",
+  "bytedance piano transcription inference note F1 0.986 MAESTRO v3 Kong"
+ ],
+ "anysearch": [
+  {
+   "t": "GitHub - bytedance/piano_transcription",
+   "u": "https://github.com/bytedance/piano_transcription",
+   "sn": "pip as follows: pip install piano_transcription_inference Then, execute the following commands to transcribe this audio. from piano_transcription_inference import PianoTranscription, sample_rate, load_audio # Load audio (audio, _) = load_audio('resources/cut_liszt.mp3', sr=sample_rate, mono=True)"
+  },
+  {
+   "t": "bytedance/piano-transcription – Replicate",
+   "u": "https://replicate.com/bytedance/piano-transcription/readme",
+   "sn": "Piano transcription Piano transcription is the task of transcribing piano recordings into MIDI files. This repo is the PyTorch implementation of our proposed high-resolution piano transcription system [1]. Demos Here is a demo of our piano transcription system: https://www.youtube.com/watch?v=5U-WL0"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times",
+   "u": "https://deep.ai/publication/high-resolution-piano-transcription-with-pedals-by-regressing-onsets-and-offsets-times",
+   "sn": "In addition, previous AMT systems are sensitive to the misaligned onsets and offsets labels of audio recordings. [...] In this article, we propose a high-resolution AMT system trained by regressing precise times of onsets and offsets. In inference, we propose an algorithm to analytically calculate t"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times",
+   "u": "https://arxiv.org/html/2010.01815v1",
+   "sn": "Recently, neural networks based methods have been applied to AMT, and have achieved state-of-the-art result. However, most of previous AMT systems predict the presence or absence of notes in the frames of audio recordings. The transcription resolution of those systems are limited to the hop size tim"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onset and Offset Times",
+   "u": "https://arxiv.org/abs/2010.01815?context=eess",
+   "sn": "with Pedals by Regressing Onset and Offset Times View PDF HTML (experimental) Abstract:Automatic music transcription (AMT) is the task of transcribing audio recordings into symbolic representations. Recently, neural network-based methods have been applied to AMT, and have achieved state-of-the-art r"
+  },
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "https://zenodo.org/records/10610212",
+   "sn": "Robust Automatic Piano Transcription Description This is a re-trained model of [1], using the data augmentation techniques described in our pending IEEE Signal Processing Letters publication “A Data-Driven Analysis of Robust Automatic Piano Transcription”. MAPS test set out-of-dataset evaluation: Mo"
+  },
+  {
+   "t": "ByteDance High-Resolution AMT System Achieves SOTA in Piano Note and Pedal Transcription",
+   "u": "https://syncedreview.com/2020/10/12/bytedance-high-resolution-amt-system-achieves-sota-in-piano-note-and-pedal-transcription/amp",
+   "sn": "In the recent paper High-Resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times, researchers from TikTok developer ByteDance introduce a high-resolution piano transcription system trained by regressing the precise onset and offset times of piano notes and pedals. The appro"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times",
+   "u": "https://zenodo.org/records/4034264",
+   "sn": "with Pedals by Regressing Onsets and Offsets Times Authors/Creators Qiuqiang Kong ** Description This is the trained model of our high-resolution piano transcription system [1]. Source code is available at: https://github.com/bytedance/piano_transcription [1] Qiuqiang Kong, Bochen Li, Xuchen Song,"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "GitHub - bytedance/piano_transcription",
+   "u": "https://github.com/bytedance/piano_transcription",
+   "sn": "pip as follows: pip install piano_transcription_inference Then, execute the following commands to transcribe this audio. from piano_transcription_inference import PianoTranscription, sample_rate, load_audio # Load audio (audio, _) = load_audio('resources/cut_liszt.mp3', sr=sample_rate, mono=True)"
+  },
+  {
+   "t": "bytedance/piano-transcription – Replicate",
+   "u": "https://replicate.com/bytedance/piano-transcription/readme",
+   "sn": "Piano transcription Piano transcription is the task of transcribing piano recordings into MIDI files. This repo is the PyTorch implementation of our proposed high-resolution piano transcription system [1]. Demos Here is a demo of our piano transcription system: https://www.youtube.com/watch?v=5U-WL0"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times",
+   "u": "https://deep.ai/publication/high-resolution-piano-transcription-with-pedals-by-regressing-onsets-and-offsets-times",
+   "sn": "In addition, previous AMT systems are sensitive to the misaligned onsets and offsets labels of audio recordings. [...] In this article, we propose a high-resolution AMT system trained by regressing precise times of onsets and offsets. In inference, we propose an algorithm to analytically calculate t"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times",
+   "u": "https://arxiv.org/html/2010.01815v1",
+   "sn": "Recently, neural networks based methods have been applied to AMT, and have achieved state-of-the-art result. However, most of previous AMT systems predict the presence or absence of notes in the frames of audio recordings. The transcription resolution of those systems are limited to the hop size tim"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onset and Offset Times",
+   "u": "https://arxiv.org/abs/2010.01815?context=eess",
+   "sn": "with Pedals by Regressing Onset and Offset Times View PDF HTML (experimental) Abstract:Automatic music transcription (AMT) is the task of transcribing audio recordings into symbolic representations. Recently, neural network-based methods have been applied to AMT, and have achieved state-of-the-art r"
+  },
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "https://zenodo.org/records/10610212",
+   "sn": "Robust Automatic Piano Transcription Description This is a re-trained model of [1], using the data augmentation techniques described in our pending IEEE Signal Processing Letters publication “A Data-Driven Analysis of Robust Automatic Piano Transcription”. MAPS test set out-of-dataset evaluation: Mo"
+  },
+  {
+   "t": "ByteDance High-Resolution AMT System Achieves SOTA in Piano Note and Pedal Transcription",
+   "u": "https://syncedreview.com/2020/10/12/bytedance-high-resolution-amt-system-achieves-sota-in-piano-note-and-pedal-transcription/amp",
+   "sn": "In the recent paper High-Resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times, researchers from TikTok developer ByteDance introduce a high-resolution piano transcription system trained by regressing the precise onset and offset times of piano notes and pedals. The appro"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times",
+   "u": "https://zenodo.org/records/4034264",
+   "sn": "with Pedals by Regressing Onsets and Offsets Times Authors/Creators Qiuqiang Kong ** Description This is the trained model of our high-resolution piano transcription system [1]. Source code is available at: https://github.com/bytedance/piano_transcription [1] Qiuqiang Kong, Bochen Li, Xuchen Song,"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "An audio-to-analysis pipeline with certified transcription for information-theoretic profiling of the piano repertoire",
+   "u": "https://arxiv.org/html/2605.06685v1",
+   "sn": "An audio-to-analysis pipeline with certified transcription for information-theoretic profiling of the piano repertoire (April 2026) Abstract We present an audio-to-analysis pipeline that produces composer-level information-theoretic profiles : reflecting compositional vocabulary as it emerges from a"
+  },
+  {
+   "t": "bytedance/piano_transcription | Repositories | There's An AI For That",
+   "u": "https://theresanaiforthat.com/company/bytedance/repository/piano_transcription",
+   "sn": "txt Piano transcription using pretrained model The easiest way is to transcribe a new piano recording is to install the piano_transcription_inference package: https://github.com/qiuqiangkong/piano_transcription_inference with pip as follows: pip install piano_transcription_inference Then, execute t"
+  },
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "https://zenodo.org/records/10610212",
+   "sn": "Robust Automatic Piano Transcription Description This is a re-trained model of [1], using the data augmentation techniques described in our pending IEEE Signal Processing Letters publication “A Data-Driven Analysis of Robust Automatic Piano Transcription”. MAPS test set out-of-dataset evaluation: Mo"
+  },
+  {
+   "t": "GitHub - qiuqiangkong/piano_transcription",
+   "u": "https://github.com/qiuqiangkong/piano_transcription",
+   "sn": "Piano Transcription with Neural Networks This repository is a PyTorch implementation of piano transcription systems. The system takes audio as input and outputs onset, offset, frame, and velocity rolls. Users can train the system in less than 10 hours using a single RTX 4090 GPU. [...] mkdir -p ./ch"
+  },
+  {
+   "t": "piano_transcription/README.md at kqq · qiuqiangkong/piano_transcription",
+   "u": "https://github.com/qiuqiangkong/piano_transcription/blob/kqq/README.md",
+   "sn": "47 KB Piano Transcription with Neural Networks This repository is a PyTorch implementation of piano transcription systems. The system takes audio as input and outputs onset, offset, frame, and velocity rolls. Users can train the system in less than 10 hours using a single RTX 4090 GPU. [...] mkdir -"
+  },
+  {
+   "t": "piano_transcription/evaluate.py at kqq · qiuqiangkong/piano_transcription",
+   "u": "https://github.com/qiuqiangkong/piano_transcription/blob/kqq/evaluate.py",
+   "sn": "evaluate.py from future import annotations import argparse from pathlib import Path import librosa import mir_eval import numpy as np import pretty_midi from inference import forward, write_midi from piano_transcription.utils import (load_maestro_meta, note_to_freq, parse_yaml) from train import get"
+  },
+  {
+   "t": "GitHub - bytedance/piano_transcription",
+   "u": "https://github.com/bytedance/piano_transcription",
+   "sn": "pip as follows: pip install piano_transcription_inference Then, execute the following commands to transcribe this audio. from piano_transcription_inference import PianoTranscription, sample_rate, load_audio # Load audio (audio, _) = load_audio('resources/cut_liszt.mp3', sr=sample_rate, mono=True)"
+  },
+  {
+   "t": "GitHub - qiuqiangkong/piano_transcription_inference",
+   "u": "https://github.com/qiuqiangkong/piano_transcription_inference",
+   "sn": "Piano transcription inference This toolbox is a piano transcription inference package that can be easily installed. Users can transcribe their favorite piano recordings to MIDI files after installation. To see how the piano transcription system is trained, please visit: https://github.com/bytedance/"
+  }
+ ]
+}

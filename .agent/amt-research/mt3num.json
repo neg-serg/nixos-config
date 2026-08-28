@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "MT3 transcription MAESTRO \"0.973\" note F1",
+  "MT3 Google \"97.3\" MAESTRO v3 note-level F1 benchmark"
+ ],
+ "anysearch": [
+  {
+   "t": "PianoCoRe: Combined and Refined Piano MIDI Dataset",
+   "u": "https://reference-global.com/article/10.5334/tismir.333?tab=figures-and-tables",
+   "sn": "Hours Sources Scores Alignments Metadata MAESTRO 43 – 1,276 199 R no no P (n)ASAP 16 222 1,067 92 R 100% beat/note P GiantMIDI 2,786 10,855 10,855 1,237 T no no S ATEPP 25 1,596 11,742 1,009 T 43.6% no P, Q† Aria‑MIDI 19,021‡ – 1,186,253 100,629 T no no S, P† PERiScoPe 82 2,738 46,473 3,784 R,"
+  },
+  {
+   "t": "Beyond Piano: Cross-Instrument MIDI Velocity Estimation via Differentiable SoundFont Proxies",
+   "u": "https://arxiv.org/html/2608.08985",
+   "sn": "recast target-instrument adaptation as predicting renderer-conditioned velocities whose rendering matches the dynamics of the performance audio. This adaptation can be driven by either differentiable synthesizers (Diff-Synth) or our proposed differentiable SoundFont proxies (Diff-SFProxy). We highli"
+  },
+  {
+   "t": "Clarinet: A Music Retrieval System",
+   "u": "https://arxiv.org/html/2210.12648v1",
+   "sn": "Our Clarinet music retrieval system is designed to search piano MIDI files with high recall and speed. We design a novel melody extraction algorithm that improves recall results by more than 10%. We also implement 3 algorithms for retrieval-two self designed (RSA Note and RSA Time), and a modified v"
+  },
+  {
+   "t": "EnjoyF1.com",
+   "u": "http://enjoyf1.com/news/202603/e4ews06.php",
+   "sn": "2026 Eurocup-4 Spanish Winter Championship Race 6 Pos. No. Driver Entrant / Car Laps Time Delay 1 81 Noah Monteiro Griffin Core 18 49’40.461 2 22 Vivek Kanthan Griffin Core 18 49’41.465 1.004 3 77 Andrej Petrović T-Code by Amtog 18 49’42.036 1.575 4 46 Nathaniel Tye Drivex 18 49’42.695 2.234 5"
+  },
+  {
+   "t": "Overleaf Example",
+   "u": "http://arxiv.org/pdf/2210.12648v1",
+   "sn": "Our Clarinet music retrieval system is designed to search piano MIDI files with high recall and speed. We design a novel melody extraction algorithm that improves recall results by more than 10%. We also implement 3 algorithms for retrieval-two self designed (RSA Note and RSA Time), and a modified v"
+  },
+  {
+   "t": "Vocal performance evaluation of the intelligent note recognition method based on deep learning",
+   "u": "https://preview-www.nature.com/articles/s41598-025-99357-2",
+   "sn": "Reports** 15**, Article number: 13927 (2025) 3056 Accesses 4 Citations 1 Altmetric Abstract This study aims to optimize the ability of note recognition and improve the accuracy of vocal performance evaluation. Firstly, the basic theory of music is analyzed. Secondly, the convolutional neural network"
+  },
+  {
+   "t": "F1 Las Vegas GP Live Commentary and Updates - FP2 | Race Center Live",
+   "u": "https://motorsport.com/live-timing/777366",
+   "sn": "825 17L 2Pit 2 Lando Norris McLaren +0.011 1:33.836 7L 4Pit 3 George Russell Mercedes +0.190 1:34.015 21L 2Pit 4 Carlos Sainz Ferrari +0.280 1:34.105 23L 2Pit 5 Charles Leclerc Ferrari +0.488 1:34.313 22L 2Pit 6 Pierre Gasly Alpine +0.826 1:34.651 23L 2Pit 7 Kevin Magnussen Haas +0.861 1"
+  },
+  {
+   "t": "Gene Set - mt3",
+   "u": "https://maayanlab.cloud/Harmonizome/gene_set/mt3/TISSUES+Text-mining+Tissue+Protein+Expression+Evidence+Scores+2025",
+   "sn": "mt3 Gene Set Genes 1000 proteins co-occuring with the tissue mt3 in abstracts of biomedical publications from the TISSUES Text-mining Tissue Protein Expression Evidence Scores 2025 dataset. [...] Symbol Name Standardized Value MT3 metallothionein 3 3.431 MT1E metallothionein 1E 3.143 MT1A me"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "PianoCoRe: Combined and Refined Piano MIDI Dataset",
+   "u": "https://reference-global.com/article/10.5334/tismir.333?tab=figures-and-tables",
+   "sn": "Hours Sources Scores Alignments Metadata MAESTRO 43 – 1,276 199 R no no P (n)ASAP 16 222 1,067 92 R 100% beat/note P GiantMIDI 2,786 10,855 10,855 1,237 T no no S ATEPP 25 1,596 11,742 1,009 T 43.6% no P, Q† Aria‑MIDI 19,021‡ – 1,186,253 100,629 T no no S, P† PERiScoPe 82 2,738 46,473 3,784 R,"
+  },
+  {
+   "t": "Beyond Piano: Cross-Instrument MIDI Velocity Estimation via Differentiable SoundFont Proxies",
+   "u": "https://arxiv.org/html/2608.08985",
+   "sn": "recast target-instrument adaptation as predicting renderer-conditioned velocities whose rendering matches the dynamics of the performance audio. This adaptation can be driven by either differentiable synthesizers (Diff-Synth) or our proposed differentiable SoundFont proxies (Diff-SFProxy). We highli"
+  },
+  {
+   "t": "Clarinet: A Music Retrieval System",
+   "u": "https://arxiv.org/html/2210.12648v1",
+   "sn": "Our Clarinet music retrieval system is designed to search piano MIDI files with high recall and speed. We design a novel melody extraction algorithm that improves recall results by more than 10%. We also implement 3 algorithms for retrieval-two self designed (RSA Note and RSA Time), and a modified v"
+  },
+  {
+   "t": "EnjoyF1.com",
+   "u": "http://enjoyf1.com/news/202603/e4ews06.php",
+   "sn": "2026 Eurocup-4 Spanish Winter Championship Race 6 Pos. No. Driver Entrant / Car Laps Time Delay 1 81 Noah Monteiro Griffin Core 18 49’40.461 2 22 Vivek Kanthan Griffin Core 18 49’41.465 1.004 3 77 Andrej Petrović T-Code by Amtog 18 49’42.036 1.575 4 46 Nathaniel Tye Drivex 18 49’42.695 2.234 5"
+  },
+  {
+   "t": "Overleaf Example",
+   "u": "http://arxiv.org/pdf/2210.12648v1",
+   "sn": "Our Clarinet music retrieval system is designed to search piano MIDI files with high recall and speed. We design a novel melody extraction algorithm that improves recall results by more than 10%. We also implement 3 algorithms for retrieval-two self designed (RSA Note and RSA Time), and a modified v"
+  },
+  {
+   "t": "Vocal performance evaluation of the intelligent note recognition method based on deep learning",
+   "u": "https://preview-www.nature.com/articles/s41598-025-99357-2",
+   "sn": "Reports** 15**, Article number: 13927 (2025) 3056 Accesses 4 Citations 1 Altmetric Abstract This study aims to optimize the ability of note recognition and improve the accuracy of vocal performance evaluation. Firstly, the basic theory of music is analyzed. Secondly, the convolutional neural network"
+  },
+  {
+   "t": "2020 Book AdvancesInBioinformaticsAndCom | PDF | Dna Sequencing | Biology",
+   "u": "https://www.scribd.com/document/541897286/2020-Book-AdvancesInBioinformaticsAndCom",
+   "sn": "22 views284 pages 2020 Book AdvancesInBioinformaticsAndCom 22 views284 pages 2020 Book AdvancesInBioinformaticsAndCom You are on page 1 284 ---"
+  },
+  {
+   "t": "F1 Las Vegas GP Live Commentary and Updates - FP2 | Race Center Live",
+   "u": "https://motorsport.com/live-timing/777366",
+   "sn": "825 17L 2Pit 2 Lando Norris McLaren +0.011 1:33.836 7L 4Pit 3 George Russell Mercedes +0.190 1:34.015 21L 2Pit 4 Carlos Sainz Ferrari +0.280 1:34.105 23L 2Pit 5 Charles Leclerc Ferrari +0.488 1:34.313 22L 2Pit 6 Pierre Gasly Alpine +0.826 1:34.651 23L 2Pit 7 Kevin Magnussen Haas +0.861 1"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "MATH Leaderboard | CodeSOTA",
+   "u": "https://codesota.com/benchmark/math",
+   "sn": "12,500 competition mathematics problems (5,000 test) from AMC, AIME, and other sources covering algebra, geometry, number theory, and more. Harder than GSM8K. Modern evaluations typically use the MATH-500 representative subset. § 01 · SOTA history Year over year. Not enough data to show trend. § 02"
+  },
+  {
+   "t": "AI Model Benchmarks — Live Comparison Tracker",
+   "u": "https://machinebrief.com/benchmarks",
+   "sn": "Full Model Comparison → Model Provider MMLU HumanEval MATH MT-Bench Arena ELO GPQA GPT-5 OpenAI 92.3 96.1 89.7 9.6 1380 68.2 Claude 4 Opus Anthropic 91.8 95.4 88.9 9.5 1372 67.8 Gemini 2.5 Pro Google 91.5 94.2 87.4 9.4 1365 66.9 DeepSeek R1 DeepSeek 90.8 92.8 97.3 9.1 1358 71.5 Claude 4 Sonnet A"
+  },
+  {
+   "t": "AI Model Benchmark Tracker 2026 — MMLU, HumanEval, MATH Scores",
+   "u": "https://gpt0x.com/research/ai-model-benchmark-tracker.html",
+   "sn": "Model Provider MMLU HumanEval MATH GSM8K Open Source o3 OpenAI 91.4% 92.8% 96.7% 97.2% No o4-mini OpenAI 89.5% 90.1% 93.4% 96.5% No GPT-4.5 OpenAI 90.8% 88.6% 80.4% 95.8% No GPT-4o OpenAI 88.7% 87.1% 76.6% 95.3% No GPT-4o mini OpenAI 82.0% 87.0% 70.2% 93.2% No GPT-4 Turbo OpenAI 86.4% 85.4% 73."
+  },
+  {
+   "t": "LadderSym: A Multimodal Interleaved Transformer for Music Practice Error Detection",
+   "u": "arxiv://2510.08580",
+   "sn": "1 Introduction Effective skill assessment accelerates human skill acquisition by providing targeted feedback (Sigrist et al., 2013). Music learners, in particular, benefit from tools that surface practice mistakes (Apaydınlı, 2019). Yet over 4 million U.S. K–12 students lack access to music educa"
+  },
+  {
+   "t": "AI Benchmark Scores by Vendor",
+   "u": "https://aichangewatch.com/benchmarks",
+   "sn": "As of 2026-08-02, AI Change Watch has recorded 786 published benchmark claims covering 119 models and 24 benchmarks, from 8 vendors’ own sources. By benchmark — every model, every claimant One row per model and the party that published its numbers; one column per benchmark. 76 of the 80 models here"
+  },
+  {
+   "t": "AI Intelligence per Dollar — Frontier Model Benchmark Efficiency (2020–2026) — Apiar Data",
+   "u": "https://apiardata.com/statistics/ai-model-benchmark-performance",
+   "sn": "in 2020) −83% real cost reduction since 2020 Data Period Model Composite Score MMLU (5-shot) HumanEval (pass@1) MATH Cost / 1M Output Tokens Intelligence-per-Dollar 2026-Q1 Claude Opus 4.6 (Anthropic) 95 90.5% 95% 91.5% $75.00 +3× 2026-Q1 Claude Sonnet 4.6 (Anthropic) 95.5 89.7% 92% 97.8% $15.00 +1"
+  },
+  {
+   "t": "Best Open Source LLM Leaderboard 2026 | Open Source Model Rankings and Tier List",
+   "u": "https://onyx.app/open-llm-leaderboard?:~:text=Table_title:%20Open%20Source%20Model%20Benchmark%20Scores%20Table_content:_%7C%20Params:%201T%20%7C%20MMLU:%2092.0%20%7C",
+   "sn": "Filter: DeepSeek R1 DeepSeek 671B 128K 84.0 71.5 83.3 1398 49.2 90.2 65.9 87.5 97.3 90.8 DeepSeek V3 DeepSeek 671B 128K 81.2 68.4 N/A 1359 38.8 N/A 49.2 N/A 94.0 88.5 DeepSeek V3.2 DeepSeek 685B 130K 85.0 79.9 N/A 1423 67.8 N/A 74.1 89.3 N/A 88.5 Gemma 3 27B Google 27B 128K 67.5 42.4"
+  },
+  {
+   "t": "Maestro: Reinforcement Learning to Orchestrate Hierarchical Model-Skill Ensembles",
+   "u": "https://alphaxiv.org/abs/2605.22177",
+   "sn": "In this paper, we present Maestro (Multimodal Agent for Expert-Skill Targeted Reinforced Orchestration), a Reinforcement Learning (RL)-driven orchestration framework that reframes heterogeneous multimodal tasks as a sequential decision-making process over a hierarchical model-skill registry. Rather"
+  }
+ ]
+}

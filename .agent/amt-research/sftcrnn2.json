@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "SFT-CRNN automatic music transcription paper 2025",
+  "SFT-CRNN piano transcription architecture sparse frequency time"
+ ],
+ "anysearch": [
+  {
+   "t": "A Distribution Matching Approach to Neural Piano Transcription with Optimal Transport",
+   "u": "https://arxiv.org/pdf/2605.17405",
+   "sn": "School of Engineering, Kyoto University, Japan 3Independent Researcher, Hong Kong, China ABSTRACT This paper describes a novel paradigm that formalizes auto- matic piano transcription (APT) as an optimal transport (OT) problem, not as a frame-level multi-label binary classification problem. Our meth"
+  },
+  {
+   "t": "Automated_Music_Transcription_Report.docx",
+   "u": "https://hajim.rochester.edu/ece/sites/zduan/teaching/ece408/projects/2025/SebastianXu_RitchieFarran_YongzhaoWu_AutomatedMusicTranscription_FinalReport.pdf",
+   "sn": "Historically, this process was done by hand and by trained individuals, but the need for automated transcription has become more and more prevalent in recent decades. To address the increasing needs for transcription, we have developed a machine learning model that uses a Convolution Neural Network"
+  },
+  {
+   "t": "Exploring Procedural Data Generation for Automatic Acoustic Guitar Fingerpicking Transcription",
+   "u": "https://arxiv.org/abs/2508.07987",
+   "sn": "This work investigates a procedural data generation pipeline as an alternative to real audio recordings for training transcription models. Our approach synthesizes training data through four stages: knowledge-based fingerpicking tablature composition, MIDI performance rendering, physical modeling us"
+  },
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge — Plain-Language Explanation",
+   "u": "https://gist.science/paper/2603.27528",
+   "sn": "Your job is to sit there, listen to the chaos, and write down a perfect sheet of music for every single instrument so that a computer could play it back exactly as it sounded. This is the challenge of Automatic Music Transcription (AMT). It’s like trying to un-mix a smoothie to figure out exactly ho"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "arxiv://2503.01362",
+   "sn": "1 Introduction Automatic music transcription (AMT) is a central topic in the field of music information retrieval (MIR), which refers to converting a music recording into a symbolic musical score (MusicXML format) or a piano-roll representation (MIDI format) [[1](https://arxiv.org/html/2503.01362"
+  },
+  {
+   "t": "Multi-Feature Fusion for Automatic Piano Transcription Based on Mel Cyclic and STFT Spectrograms",
+   "u": "https://mdpi.com/2079-9292/14/23/4720",
+   "sn": "/ Revised: 27 November 2025 / Accepted: 27 November 2025 / Published: 29 November 2025 Abstract Automatic piano transcription (APT) is a challenging problem in music information retrieval. In recent years, most APT approaches have been based on neural networks and have demonstrated higher performanc"
+  },
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/abs/2603.27528v1",
+   "sn": "Music Transcription: Results from the 2025 AMT Challenge View PDFHTML (experimental) Abstract:This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument transcription. Eight teams submitted valid solution"
+  },
+  {
+   "t": "JACIII Vol.29 p.152 (2025) | Fuji Technology Press: academic journal publisher",
+   "u": "https://fujipress.jp/jaciii/jc/jacii002900010152?lang=ja",
+   "sn": "Research Paper: Research on the Recognition of Piano-Playing Notes by a Music Transcription Algorithm *College of Art, Hebei Agricultural University No.289 Lingyusi Street, Baoding, Hebei 071000, China †Corresponding author **College of Music and Dance, Baoding University 71 East 3027 Road, Baoding,"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "A Distribution Matching Approach to Neural Piano Transcription with Optimal Transport",
+   "u": "https://arxiv.org/pdf/2605.17405",
+   "sn": "School of Engineering, Kyoto University, Japan 3Independent Researcher, Hong Kong, China ABSTRACT This paper describes a novel paradigm that formalizes auto- matic piano transcription (APT) as an optimal transport (OT) problem, not as a frame-level multi-label binary classification problem. Our meth"
+  },
+  {
+   "t": "Automated_Music_Transcription_Report.docx",
+   "u": "https://hajim.rochester.edu/ece/sites/zduan/teaching/ece408/projects/2025/SebastianXu_RitchieFarran_YongzhaoWu_AutomatedMusicTranscription_FinalReport.pdf",
+   "sn": "Historically, this process was done by hand and by trained individuals, but the need for automated transcription has become more and more prevalent in recent decades. To address the increasing needs for transcription, we have developed a machine learning model that uses a Convolution Neural Network"
+  },
+  {
+   "t": "Exploring Procedural Data Generation for Automatic Acoustic Guitar Fingerpicking Transcription",
+   "u": "https://arxiv.org/abs/2508.07987",
+   "sn": "This work investigates a procedural data generation pipeline as an alternative to real audio recordings for training transcription models. Our approach synthesizes training data through four stages: knowledge-based fingerpicking tablature composition, MIDI performance rendering, physical modeling us"
+  },
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge — Plain-Language Explanation",
+   "u": "https://gist.science/paper/2603.27528",
+   "sn": "Your job is to sit there, listen to the chaos, and write down a perfect sheet of music for every single instrument so that a computer could play it back exactly as it sounded. This is the challenge of Automatic Music Transcription (AMT). It’s like trying to un-mix a smoothie to figure out exactly ho"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "arxiv://2503.01362",
+   "sn": "1 Introduction Automatic music transcription (AMT) is a central topic in the field of music information retrieval (MIR), which refers to converting a music recording into a symbolic musical score (MusicXML format) or a piano-roll representation (MIDI format) [[1](https://arxiv.org/html/2503.01362"
+  },
+  {
+   "t": "Multi-Feature Fusion for Automatic Piano Transcription Based on Mel Cyclic and STFT Spectrograms",
+   "u": "https://mdpi.com/2079-9292/14/23/4720",
+   "sn": "/ Revised: 27 November 2025 / Accepted: 27 November 2025 / Published: 29 November 2025 Abstract Automatic piano transcription (APT) is a challenging problem in music information retrieval. In recent years, most APT approaches have been based on neural networks and have demonstrated higher performanc"
+  },
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/abs/2603.27528v1",
+   "sn": "Music Transcription: Results from the 2025 AMT Challenge View PDFHTML (experimental) Abstract:This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument transcription. Eight teams submitted valid solution"
+  },
+  {
+   "t": "JACIII Vol.29 p.152 (2025) | Fuji Technology Press: academic journal publisher",
+   "u": "https://fujipress.jp/jaciii/jc/jacii002900010152?lang=ja",
+   "sn": "Research Paper: Research on the Recognition of Piano-Playing Notes by a Music Transcription Algorithm *College of Art, Hebei Agricultural University No.289 Lingyusi Street, Baoding, Hebei 071000, China †Corresponding author **College of Music and Dance, Baoding University 71 East 3027 Road, Baoding,"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "A Distribution Matching Approach to Neural Piano Transcription with Optimal Transport",
+   "u": "https://arxiv.org/pdf/2605.17405",
+   "sn": "Our method learns to minimize the cost of trans- porting a predicted distribution of note events to the ground- truth distribution over time and frequency. The OT loss can thus accommodate temporal misalignment, leading to percep- tually relevant optimization. We also propose a convolutional recurre"
+  },
+  {
+   "t": "Improved Architecture for High-resolution Piano Transcription to Efficiently Capture Acoustic Characteristics of Music Signals",
+   "u": "https://arxiv.org/abs/2409.19614",
+   "sn": "Recently, drawing on advancements in speech recognition tasks, convolutional recurrent neural network (CRNN), which combines a CNN acoustic model with an RNN-based sequential model, has become popular for polyphonic piano transcription. Particularly, Kong et al. [kong2021high] proposed a high-resolu"
+  },
+  {
+   "t": "Multi-Feature Fusion for Automatic Piano Transcription Based on Mel Cyclic and STFT Spectrograms",
+   "u": "https://mdpi.com/2079-9292/14/23/4720",
+   "sn": "/ Revised: 27 November 2025 / Accepted: 27 November 2025 / Published: 29 November 2025 Abstract Automatic piano transcription (APT) is a challenging problem in music information retrieval. In recent years, most APT approaches have been based on neural networks and have demonstrated higher performanc"
+  },
+  {
+   "t": "SpectTrans: Joint Spectral–Temporal Modeling for Polyphonic Piano Transcription via Spectral Gating Networks",
+   "u": "https://mdpi.com/2079-9292/15/3/665",
+   "sn": "2026 / Published: 3 February 2026 Abstract Automatic Music Transcription (AMT) plays a fundamental role in Music Information Retrieval (MIR) by converting raw audio signals into symbolic representations such as MIDI or musical scores. Despite advances in deep learning, accurately transcribing piano"
+  },
+  {
+   "t": "Towards Efficient and Real-Time Piano Transcription Using Neural Autoregressive Models",
+   "u": "https://doi.org/10.48550/arxiv.2404.06818",
+   "sn": "Among others, the transcription of piano solo music has been the best-studied task because the note boundaries are well defined in time and it is relatively easy to obtain a large amount of training data with strongly labeled MIDI by synthesizing virtual piano sounds from MIDI data [[2](https://arxi"
+  },
+  {
+   "t": "Fine-Tuning MIDI-to-Audio Alignment using a Neural Network on Piano Roll and CQT Representations",
+   "u": "https://arxiv.org/pdf/2506.22237v1",
+   "sn": "de June 30, 2025 ABSTRACT In this paper, we present a neural network approach for synchronizing audio recordings of human piano performances with their corresponding loosely aligned MIDI files. The task is addressed using a Convolutional Recurrent Neural Network (CRNN) architecture, which effectivel"
+  },
+  {
+   "t": "[Literature Review] Piano Transcription by Hierarchical Language Modeling with Pretrained Roll-based Encoders",
+   "u": "https://themoonlight.io/en/review/piano-transcription-by-hierarchical-language-modeling-with-pretrained-roll-based-encoders",
+   "sn": "Review] Piano Transcription by Hierarchical Language Modeling with Pretrained Roll-based Encoders The paper titled “Piano Transcription by Hierarchical Language Modeling with Pretrained Roll-based Encoders” presents a novel approach for Automatic Music Transcription (AMT), specifically aimed at the"
+  },
+  {
+   "t": "Towards Efficient and Real-Time Piano Transcription Using Neural Autoregressive Models",
+   "u": "https://arxiv.org/html/2404.06818v1",
+   "sn": "To this end, we propose novel architectures for convolutional recurrent neural networks, redesigning an existing autoregressive piano transcription model. First, we extend the acoustic module by adding a frequency-conditioned FiLM layer to the CNN module to adapt the convolutional filters on the fre"
+  }
+ ]
+}

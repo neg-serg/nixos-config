@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "D3RM piano transcription github code repository weights release",
+  "D3RM discrete denoising diffusion piano transcription open source"
+ ],
+ "anysearch": [
+  {
+   "t": "GitHub - hanshounsu/d3rm",
+   "u": "https://github.com/hanshounsu/d3rm",
+   "sn": "D3RM : A Discrete Denoising Diffusion Refinement Model for Piano Transcription This is the source code of D3RM paper accepted in ICASSP 2025. Regarding the reproducement of the paper, please let me know your concerns and feel free to comment them in the Issues part. Installation git clone https:/"
+  },
+  {
+   "t": "A Discrete Denoising Diffusion Refinement Model for Piano Transcription This work was supported by the National Research Foundation of Korea (NRF) grant funded by the Korea government (MSIT) (No. RS-2023-NR077289, No. RS-2024-00358448) and Development of Broadcasting Monitoring Technology for the Settlement and Distribution of Literary Arts (No. RS-2023-00270043)",
+   "u": "https://arxiv.org/html/2501.05068v1",
+   "sn": "Our model utilizes Neighborhood Attention layers as the denoising module, gradually predicting the target high-resolution piano roll, conditioned on the finetuned features of a pretrained acoustic model. To further enhance refinement, we devise a novel strategy which applies distinct transition stat"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://arxiv.org/html/2501.05068",
+   "sn": "Automatic Music Transcription, Discrete Diffusion, Music Information Retrieval I Introduction Piano transcription involves converting the acoustic signals of piano performances into individual notes. These notes are usually represented in a MIDI format, containing pitch information and the start and"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "arxiv://2501.05068",
+   "sn": "Automatic Music Transcription, Discrete Diffusion, Music Information Retrieval ## I Introduction Piano transcription involves converting the acoustic signals of piano performances into individual notes. These notes are usually represented in a MIDI format, containing pitch information and the start"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://arcxiv.org/abs/2501.05068",
+   "sn": "models have been widely used in the generative domain due to their convincing performance in modeling complex data distributions. [...] Our code is available in https://github.com/hanshounsu/d3rm."
+  },
+  {
+   "t": "Paper page - D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://huggingface.co/papers/2501.05068",
+   "sn": "Attention layers as the denoising module, gradually predicting the target high-resolution piano roll, conditioned on the finetuned features of a pretrained acoustic model. To further enhance refinement, we devise a novel strategy which applies distinct transition states during training and inference"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://pure.kaist.ac.kr/en/publications/d3rm-a-discrete-denoising-diffusion-refinement-model-for-piano-tr",
+   "sn": "Abstract Diffusion models have been widely used in the generative domain due to their convincing performance in modeling complex data distributions. [...] Experiments on the MAESTRO dataset show that our approach outperforms previous diffusion-based piano transcription models and the baseline model"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://ui.adsabs.harvard.edu/abs/arXiv:2501.05068",
+   "sn": "In this paper, we focus on discrete diffusion model’s refinement capabilities and present a novel architecture for piano transcription. Our model utilizes Neighborhood Attention layers as the denoising module, gradually predicting the target high-resolution piano roll, conditioned on the finetuned f"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "GitHub - hanshounsu/d3rm",
+   "u": "https://github.com/hanshounsu/d3rm",
+   "sn": "D3RM : A Discrete Denoising Diffusion Refinement Model for Piano Transcription This is the source code of D3RM paper accepted in ICASSP 2025. Regarding the reproducement of the paper, please let me know your concerns and feel free to comment them in the Issues part. Installation git clone https:/"
+  },
+  {
+   "t": "A Discrete Denoising Diffusion Refinement Model for Piano Transcription This work was supported by the National Research Foundation of Korea (NRF) grant funded by the Korea government (MSIT) (No. RS-2023-NR077289, No. RS-2024-00358448) and Development of Broadcasting Monitoring Technology for the Settlement and Distribution of Literary Arts (No. RS-2023-00270043)",
+   "u": "https://arxiv.org/html/2501.05068v1",
+   "sn": "Our model utilizes Neighborhood Attention layers as the denoising module, gradually predicting the target high-resolution piano roll, conditioned on the finetuned features of a pretrained acoustic model. To further enhance refinement, we devise a novel strategy which applies distinct transition stat"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://arxiv.org/html/2501.05068",
+   "sn": "Automatic Music Transcription, Discrete Diffusion, Music Information Retrieval I Introduction Piano transcription involves converting the acoustic signals of piano performances into individual notes. These notes are usually represented in a MIDI format, containing pitch information and the start and"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "arxiv://2501.05068",
+   "sn": "Automatic Music Transcription, Discrete Diffusion, Music Information Retrieval ## I Introduction Piano transcription involves converting the acoustic signals of piano performances into individual notes. These notes are usually represented in a MIDI format, containing pitch information and the start"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://arcxiv.org/abs/2501.05068",
+   "sn": "models have been widely used in the generative domain due to their convincing performance in modeling complex data distributions. [...] Our code is available in https://github.com/hanshounsu/d3rm."
+  },
+  {
+   "t": "Paper page - D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://huggingface.co/papers/2501.05068",
+   "sn": "Attention layers as the denoising module, gradually predicting the target high-resolution piano roll, conditioned on the finetuned features of a pretrained acoustic model. To further enhance refinement, we devise a novel strategy which applies distinct transition states during training and inference"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://pure.kaist.ac.kr/en/publications/d3rm-a-discrete-denoising-diffusion-refinement-model-for-piano-tr",
+   "sn": "Abstract Diffusion models have been widely used in the generative domain due to their convincing performance in modeling complex data distributions. [...] Experiments on the MAESTRO dataset show that our approach outperforms previous diffusion-based piano transcription models and the baseline model"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://ui.adsabs.harvard.edu/abs/arXiv:2501.05068",
+   "sn": "In this paper, we focus on discrete diffusion model’s refinement capabilities and present a novel architecture for piano transcription. Our model utilizes Neighborhood Attention layers as the denoising module, gradually predicting the target high-resolution piano roll, conditioned on the finetuned f"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "GitHub - hanshounsu/d3rm",
+   "u": "https://github.com/hanshounsu/d3rm",
+   "sn": "D3RM : A Discrete Denoising Diffusion Refinement Model for Piano Transcription This is the source code of D3RM paper accepted in ICASSP 2025. Regarding the reproducement of the paper, please let me know your concerns and feel free to comment them in the Issues part. Installation git clone https:/"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "arxiv://2501.05068",
+   "sn": "Automatic Music Transcription, Discrete Diffusion, Music Information Retrieval ## I Introduction Piano transcription involves converting the acoustic signals of piano performances into individual notes. These notes are usually represented in a MIDI format, containing pitch information and the start"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://arxiv.org/html/2501.05068",
+   "sn": "Building on these foundings, we explore the potential of utilizing discrete diffusion models for piano transcription tasks for the first time. We hypothesize that the discrete denoising module not only predicts the states of each pixel in the piano roll gradually, but also refines the previously pre"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://wizwand.com/paper/68fa768a1e209131cea6d8da",
+   "sn": "In this paper, we focus on discrete diffusion model’s refinement capabilities and present a novel architecture for piano transcription. Our model utilizes Neighborhood Attention layers as the denoising module, gradually predicting the target high-resolution piano roll, conditioned on the finetuned f"
+  },
+  {
+   "t": "A Discrete Denoising Diffusion Refinement Model for Piano Transcription This work was supported by the National Research Foundation of Korea (NRF) grant funded by the Korea government (MSIT) (No. RS-2023-NR077289, No. RS-2024-00358448) and Development of Broadcasting Monitoring Technology for the Settlement and Distribution of Literary Arts (No. RS-2023-00270043)",
+   "u": "https://arxiv.org/html/2501.05068v2",
+   "sn": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription ††thanks: This work was supported by the National Research Foundation of Korea (NRF) grant funded by the Korea government (MSIT) (No. RS-2023-NR077289, No. RS-2024-00358448) and Development of Broadcasting Monitoring Techn"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://arcxiv.org/abs/2501.05068",
+   "sn": "In this paper, we focus on discrete diffusion model’s refinement capabilities and present a novel architecture for piano transcription. Our model utilizes Neighborhood Attention layers as the denoising module, gradually predicting the target high-resolution piano roll, conditioned on the finetuned f"
+  },
+  {
+   "t": "D3RM: A Discrete Denoising Diffusion Refinement Model for Piano Transcription",
+   "u": "https://pith.science/paper/2501.05068",
+   "sn": "The reading The paper tries to show that discrete denoising diffusion can act as a refinement module for piano transcription, not just a generator. The authors attach a lightweight Neighborhood Attention denoising decoder to a pretrained acoustic model, and let it iteratively correct a multi-state p"
+  },
+  {
+   "t": "Hounsu Kim",
+   "u": "https://catalyzex.com/author/Hounsu%20Kim",
+   "sn": "In this paper, we propose a discrete diffusion-based piano accompaniment generation model, D3PIA, leveraging local alignment between lead sheet and accompaniment in piano-roll representation. D3PIA incorporates Neighborhood Attention (NA) to both encode the lead sheet and condition it for predicting"
+  }
+ ]
+}

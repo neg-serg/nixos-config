@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "MT3 magenta github model weights download TF Hub checkpoint license",
+  "huggingface m-a-p/MT3 model weights MT3 port license"
+ ],
+ "anysearch": [
+  {
+   "t": "magenta/magenta/models/arbitrary_image_stylization/export_hub.py at main · magenta/magenta",
+   "u": "https://github.com/magenta/magenta/blob/main/magenta/models/arbitrary_image_stylization/export_hub.py",
+   "sn": "export_hub.py Copyright 2025 The Magenta Authors. Licensed under the Apache License, Version 2.0 (the “License”); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law o"
+  },
+  {
+   "t": "GitHub - magenta/mt3: MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://github.com/magenta/mt3",
+   "sn": "MT3: Multi-Task Multitrack Music Transcription MT3 is a multi-instrument automatic music transcription model that uses the T5X framework. This is not an officially supported Google product. Transcribe your own audio Use our colab notebook to transcribe audio files of your choosing. You can use a pre"
+  },
+  {
+   "t": "Magenta",
+   "u": "https://github.com/orgs/magenta/repositories",
+   "sn": "0 •9•84•0•4•Updated Apr 25, 2026Apr 25, 2026 MT3: Multi-Task Multitrack Music Transcription Python • Apache License 2.0 •217•1.7k•43•8•Updated Mar 9, 2026Mar 9, 2026 Demonstrations of Magenta Models Jupyter Notebook • Apache License 2.0 •428•1.3k•28•17•Updated Jan 6, 2026Jan 6, 2026 Magenta: Music a"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription | OpenTrain AI",
+   "u": "https://opentrain.ai/papers/mt3-multi-task-multitrack-music-transcription--arxiv-2111.03017",
+   "sn": "and benchmarks Freshness tier: cold MT3: Multi-Task Multitrack Music Transcription is the primary contribution described in this paper. [...] High Reproducibility: Moderate MT3: Multi-Task Multitrack Music Transcription 1,740 stars · 222 forks · Last push Jul 9, 2026 · Apache-2.0 license License CI"
+  },
+  {
+   "t": "GitHub - adarob/magenta: Magenta: Music and Art Generation with Machine Intelligence",
+   "u": "https://github.com/adarob/magenta",
+   "sn": "Primarily this involves developing new deep learning and reinforcement learning algorithms for generating songs, images, drawings, and other materials. But it’s also an exploration in building smart tools and interfaces that allow artists and musicians to extend (not replace!) their processes using"
+  },
+  {
+   "t": "GitHub - DavidPrimor/magenta: Magenta: Music and Art Generation with Machine Intelligence",
+   "u": "https://github.com/DavidPrimor/magenta",
+   "sn": "Primarily this involves developing new deep learning and reinforcement learning algorithms for generating songs, images, drawings, and other materials. But it’s also an exploration in building smart tools and interfaces that allow artists and musicians to extend (not replace!) their processes using"
+  },
+  {
+   "t": "magenta/magenta",
+   "u": "https://gitwtfhub.com/magenta/magenta",
+   "sn": "gitwtfhub wtf is magenta? magenta/magenta — explained in plain English Analysis updated 2026-05-18 ★ 19,779PythonAudience · researcherComplexity · 3/5LicenseSetup · hard Code map Detail Auto An interactive map of this repo’s files and how they connect — its source is parsed live in your browser. Cl"
+  },
+  {
+   "t": "mt3/README.md at e03242bdbb877c64677024adb3b9eb915d9929d6 · magenta/mt3",
+   "u": "https://github.com/magenta/mt3/blob/e03242bdbb877c64677024adb3b9eb915d9929d6/README.md",
+   "sn": "14 KB MT3: Multi-Task Multitrack Music Transcription MT3 is a multi-instrument automatic music transcription model that uses the T5X framework. This is not an officially supported Google product. Transcribe your own audio Try out Web Demo on Huggingface Spaces 🤗 Use our colab notebook to transcrib"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "magenta/magenta/models/arbitrary_image_stylization/export_hub.py at main · magenta/magenta",
+   "u": "https://github.com/magenta/magenta/blob/main/magenta/models/arbitrary_image_stylization/export_hub.py",
+   "sn": "export_hub.py Copyright 2025 The Magenta Authors. Licensed under the Apache License, Version 2.0 (the “License”); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law o"
+  },
+  {
+   "t": "GitHub - magenta/mt3: MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://github.com/magenta/mt3",
+   "sn": "MT3: Multi-Task Multitrack Music Transcription MT3 is a multi-instrument automatic music transcription model that uses the T5X framework. This is not an officially supported Google product. Transcribe your own audio Use our colab notebook to transcribe audio files of your choosing. You can use a pre"
+  },
+  {
+   "t": "Magenta",
+   "u": "https://github.com/orgs/magenta/repositories",
+   "sn": "0 •9•84•0•4•Updated Apr 25, 2026Apr 25, 2026 MT3: Multi-Task Multitrack Music Transcription Python • Apache License 2.0 •217•1.7k•43•8•Updated Mar 9, 2026Mar 9, 2026 Demonstrations of Magenta Models Jupyter Notebook • Apache License 2.0 •428•1.3k•28•17•Updated Jan 6, 2026Jan 6, 2026 Magenta: Music a"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription | OpenTrain AI",
+   "u": "https://opentrain.ai/papers/mt3-multi-task-multitrack-music-transcription--arxiv-2111.03017",
+   "sn": "and benchmarks Freshness tier: cold MT3: Multi-Task Multitrack Music Transcription is the primary contribution described in this paper. [...] High Reproducibility: Moderate MT3: Multi-Task Multitrack Music Transcription 1,740 stars · 222 forks · Last push Jul 9, 2026 · Apache-2.0 license License CI"
+  },
+  {
+   "t": "GitHub - adarob/magenta: Magenta: Music and Art Generation with Machine Intelligence",
+   "u": "https://github.com/adarob/magenta",
+   "sn": "Primarily this involves developing new deep learning and reinforcement learning algorithms for generating songs, images, drawings, and other materials. But it’s also an exploration in building smart tools and interfaces that allow artists and musicians to extend (not replace!) their processes using"
+  },
+  {
+   "t": "GitHub - DavidPrimor/magenta: Magenta: Music and Art Generation with Machine Intelligence",
+   "u": "https://github.com/DavidPrimor/magenta",
+   "sn": "Primarily this involves developing new deep learning and reinforcement learning algorithms for generating songs, images, drawings, and other materials. But it’s also an exploration in building smart tools and interfaces that allow artists and musicians to extend (not replace!) their processes using"
+  },
+  {
+   "t": "magenta/magenta",
+   "u": "https://gitwtfhub.com/magenta/magenta",
+   "sn": "gitwtfhub wtf is magenta? magenta/magenta — explained in plain English Analysis updated 2026-05-18 ★ 19,779PythonAudience · researcherComplexity · 3/5LicenseSetup · hard Code map Detail Auto An interactive map of this repo’s files and how they connect — its source is parsed live in your browser. Cl"
+  },
+  {
+   "t": "mt3/README.md at e03242bdbb877c64677024adb3b9eb915d9929d6 · magenta/mt3",
+   "u": "https://github.com/magenta/mt3/blob/e03242bdbb877c64677024adb3b9eb915d9929d6/README.md",
+   "sn": "14 KB MT3: Multi-Task Multitrack Music Transcription MT3 is a multi-instrument automatic music transcription model that uses the T5X framework. This is not an officially supported Google product. Transcribe your own audio Try out Web Demo on Huggingface Spaces 🤗 Use our colab notebook to transcrib"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "We Read the Licences on 2026 Open-Weight Models",
+   "u": "https://digitalapplied.com/blog/open-weight-model-licence-audit-2026",
+   "sn": "This open-weight model licence audit scores 30 models that were publicly described as “open,” “open-weight” or “open-source” in 2026 on the licence actually governing the weights — not on the press release or the launch tweet. We queried Hugging Face’s model API for every row, and wherever the tag s"
+  },
+  {
+   "t": "Licenses · Hugging Face",
+   "u": "https://huggingface.co/docs/hub/en/repositories-licenses",
+   "sn": "Licenses You are able to add a license to any repo that you create on the Hugging Face Hub to let other users know about the permissions that you want to attribute to your code or data. The license can be specified in your repository’s README.md file, known as a card on the Hub, in the card’s metada"
+  },
+  {
+   "t": "Which Open Models You Can Actually Use Commercially",
+   "u": "https://intelligibberish.com/articles/2026-08-16-which-open-models-can-you-use-commercially",
+   "sn": "A repository can publish every parameter, invite fine-tuning, and still bar commercial use outright, cap it at a user count, or gate the download behind approval. Across 46 repositories read from the Hugging Face API on 16 August 2026, three carry non-commercial-only terms, six require manual approv"
+  },
+  {
+   "t": "An Empirical Analysis of Machine Learning Model and Dataset Documentation, Supply Chain, and Licensing Challenges on Hugging Face",
+   "u": "https://arxiv.org/html/2502.04484v2",
+   "sn": "An Empirical Analysis of Machine Learning Model and Dataset Documentation, Supply Chain, and Licensing Challenges on Hugging Face Trevor Stalnaker OrcID: 0009-0005-6000-4227 Affiliation: William & Mary , Williamsburg, VA , USA email: twstalnaker@wm.edu Nathan Wintersgill OrcID: 0009-0006-2123-7412 A"
+  },
+  {
+   "t": "app.py · akhaliq/MT3 at main",
+   "u": "https://huggingface.co/spaces/akhaliq/MT3/blob/main/app.py",
+   "sn": "encoding_spec = note_sequences.NoteEncodingSpec self.inputs_length = 512 elif model_type == ‘mt3’: num_velocity_bins = 1 self.encoding_spec = note_sequences.NoteEncodingWithTiesSpec self.inputs_length = 256 else: raise ValueError(‘unknown model_type: %s’ % model_type) gin_files ="
+  },
+  {
+   "t": "Permissive-Washing in the Open AI Supply Chain: A Large-Scale Audit of License Integrity",
+   "u": "https://arxiv.org/pdf/2602.08816v1",
+   "sn": "ca Abstract Permissive licenses like MIT, Apache-2.0, and BSD-3-Clause domi- nate open-source AI, signaling that artifacts like models, datasets, and code can be freely used, modified, and redistributed. How- ever, these licenses carry mandatory requirements: include the full license text, provide a"
+  },
+  {
+   "t": "m-a-p (Multimodal Art Projection)",
+   "u": "https://huggingface.co/m-a-p",
+   "sn": "but not limited to pre-training paradigm of foundation models, large-scale data collection and processing, and the derived applciations on coding, reasoning and music creativity. The community is open to researchers keen on any relevant topic. Welcome to join us! Discord Channel Our Full Paper List"
+  },
+  {
+   "t": "A governance horizon for ethical-use constraints in open-weight AI models",
+   "u": "https://arxiv.org/pdf/2605.24383v1",
+   "sn": "edu; Abstract Ethical constraints on open-weight AI models are both a reflection of societal concerns and a foundation for AI governance policy. The constraints are expected to propagate to downstream derivatives while they are implemented as voluntary metadata disclosures that must be restated at e"
+  }
+ ]
+}

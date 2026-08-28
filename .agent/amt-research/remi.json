@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "REMI symbolic music representation MIDI tokenization not audio transcription",
+  "REMI Rubsheet piano MIDI infilling representation"
+ ],
+ "anysearch": [
+  {
+   "t": "YatingMusic/remi — heatdrop",
+   "u": "https://heatdrop.ai/repo/YatingMusic/remi",
+   "sn": "star history What it does REMI (REvamped MIDI-derived events) is a token representation that turns MIDI scores into discrete sequences with explicit metrical structure—beats, bars, tempo changes, and chord labels included. The authors train a Transformer-XL on this format to generate minute-long pop"
+  },
+  {
+   "t": "Score Transformer: Generating Musical Score from Note-level Representation",
+   "u": "https://dl.acm.org/doi/10.1145/3469877.3490612",
+   "sn": "particular, the combination of the Transformer model [25] and a token representation of music has been revealed to generate coherent and structural music [11,14]. However, the music representations used in prior studies were note-level (MIDI-equivalent); hence, their expressions were limited compare"
+  },
+  {
+   "t": "Tokenizations - MidiTok documentation",
+   "u": "https://miditok.readthedocs.io/en/v3.0.2/tokenizations.html",
+   "sn": "REMI(*args, kwargs)# Bases: MIDITokenizer REMI (Revamped MIDI) tokenizer. Introduced with the Pop Music Transformer (Huang and Yang), REMI represents notes as successions of Pitch, Velocity and Duration tokens, and time with Bar and Position tokens. A Bar token indicate that a new bar is beginning,"
+  },
+  {
+   "t": "MuseTok: Symbolic Music Tokenization for Generation and Semantic Understanding",
+   "u": "https://arxiv.org/html/2510.16273v1",
+   "sn": "MuseTok: Symbolic Music Tokenization for Generation and Semantic Understanding Abstract Discrete representation learning has shown promising results across various domains, including generation and understanding in image, speech and language. Inspired by these advances, we propose MuseTok, a tokeniz"
+  },
+  {
+   "t": "manoskary/miditok-REMI · Hugging Face",
+   "u": "https://huggingface.co/manoskary/miditok-REMI",
+   "sn": "MidiTok-REMI: BPE Tokenizer for Symbolic Music A Byte-Pair Encoding (BPE) tokenizer trained on REMI (REpresentation of MIdi) tokens for efficient symbolic music representation. This tokenizer combines the expressiveness of REMI encoding with the compression benefits of BPE, making it ideal for train"
+  },
+  {
+   "t": "Tokenizations - MidiTok's docs",
+   "u": "https://miditok.readthedocs.io/en/v3.0.5.post1/tokenizations.html",
+   "sn": "REMI(*args, kwargs)¶ Bases: MusicTokenizer REMI (Revamped MIDI) tokenizer. Introduced with the Pop Music Transformer (Huang and Yang), REMI represents notes as successions of Pitch, Velocity and Duration tokens, and time with Bar and Position tokens. A Bar token indicate that a new bar is beginning,"
+  },
+  {
+   "t": "[Symbolic-Music-Encoding]#1 Introduction & REMI review",
+   "u": "https://velog.io/@clayryu328/Symbolic-Music-Encoding1-Introduction",
+   "sn": "encoding methods in automatic music generation in symbolic music and consider ways to improve them Symbolic Music Encoding Symbolic Music(music as a language): Music Transformer, MuseNet, Pop Music Transformer, VirtuosoTune Encoding: the way music is converted into discrete tokens for language model"
+  },
+  {
+   "t": "Generating Piano Music with Transformers: A Comparative Study of Scale, Data, and Metrics",
+   "u": "https://arxiv.org/pdf/2511.07268v2",
+   "sn": "Ilyés-Kun∗ Nico Bremes∗ Cemhan Kaan Özaltan∗ Frederik Muthers∗ Jiayi Yuan† Abstract Although a variety of transformers have been proposed for symbolic music genera- tion in recent years, there is still little comprehensive study on how specific design choices affect the quality of the generated musi"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "YatingMusic/remi — heatdrop",
+   "u": "https://heatdrop.ai/repo/YatingMusic/remi",
+   "sn": "star history What it does REMI (REvamped MIDI-derived events) is a token representation that turns MIDI scores into discrete sequences with explicit metrical structure—beats, bars, tempo changes, and chord labels included. The authors train a Transformer-XL on this format to generate minute-long pop"
+  },
+  {
+   "t": "Score Transformer: Generating Musical Score from Note-level Representation",
+   "u": "https://dl.acm.org/doi/10.1145/3469877.3490612",
+   "sn": "particular, the combination of the Transformer model [25] and a token representation of music has been revealed to generate coherent and structural music [11,14]. However, the music representations used in prior studies were note-level (MIDI-equivalent); hence, their expressions were limited compare"
+  },
+  {
+   "t": "Tokenizations - MidiTok documentation",
+   "u": "https://miditok.readthedocs.io/en/v3.0.2/tokenizations.html",
+   "sn": "REMI(*args, kwargs)# Bases: MIDITokenizer REMI (Revamped MIDI) tokenizer. Introduced with the Pop Music Transformer (Huang and Yang), REMI represents notes as successions of Pitch, Velocity and Duration tokens, and time with Bar and Position tokens. A Bar token indicate that a new bar is beginning,"
+  },
+  {
+   "t": "MuseTok: Symbolic Music Tokenization for Generation and Semantic Understanding",
+   "u": "https://arxiv.org/html/2510.16273v1",
+   "sn": "MuseTok: Symbolic Music Tokenization for Generation and Semantic Understanding Abstract Discrete representation learning has shown promising results across various domains, including generation and understanding in image, speech and language. Inspired by these advances, we propose MuseTok, a tokeniz"
+  },
+  {
+   "t": "manoskary/miditok-REMI · Hugging Face",
+   "u": "https://huggingface.co/manoskary/miditok-REMI",
+   "sn": "MidiTok-REMI: BPE Tokenizer for Symbolic Music A Byte-Pair Encoding (BPE) tokenizer trained on REMI (REpresentation of MIdi) tokens for efficient symbolic music representation. This tokenizer combines the expressiveness of REMI encoding with the compression benefits of BPE, making it ideal for train"
+  },
+  {
+   "t": "Tokenizations - MidiTok's docs",
+   "u": "https://miditok.readthedocs.io/en/latest/tokenizations.html",
+   "sn": "REMI(*args, kwargs)¶ Bases: MusicTokenizer REMI (Revamped MIDI) tokenizer. Introduced with the Pop Music Transformer (Huang and Yang), REMI represents notes as successions of Pitch, Velocity and Duration tokens, and time with Bar and Position tokens. A Bar token indicate that a new bar is beginning,"
+  },
+  {
+   "t": "[Symbolic-Music-Encoding]#1 Introduction & REMI review",
+   "u": "https://velog.io/@clayryu328/Symbolic-Music-Encoding1-Introduction",
+   "sn": "encoding methods in automatic music generation in symbolic music and consider ways to improve them Symbolic Music Encoding Symbolic Music(music as a language): Music Transformer, MuseNet, Pop Music Transformer, VirtuosoTune Encoding: the way music is converted into discrete tokens for language model"
+  },
+  {
+   "t": "Generating Piano Music with Transformers: A Comparative Study of Scale, Data, and Metrics",
+   "u": "https://arxiv.org/pdf/2511.07268v2",
+   "sn": "Ilyés-Kun∗ Nico Bremes∗ Cemhan Kaan Özaltan∗ Frederik Muthers∗ Jiayi Yuan† Abstract Although a variety of transformers have been proposed for symbolic music genera- tion in recent years, there is still little comprehensive study on how specific design choices affect the quality of the generated musi"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "[Literature Review] Personalizable Long-Context Symbolic Music Infilling with MIDI-RWKV",
+   "u": "https://themoonlight.io/en/review/personalizable-long-context-symbolic-music-infilling-with-midi-rwkv",
+   "sn": "MIDI-RWKV uses the MidiTok library with the REMI encoding to represent multi-track MIDI data as sequences of tokens (tempo, pitch, velocity, duration, time signature, bar, position). To manage sequence length, Byte-Pair Encoding (BPE) is applied, augmenting the vocabulary from 663 to 16000 tokens. T"
+  },
+  {
+   "t": "Tokenizations — MidiTok 2.0.7 documentation",
+   "u": "https://miditok.readthedocs.io/en/v2.1.3/tokenizations.html",
+   "sn": "max_bar_embedding:int|None=None, params:str|Path=None) Bases: MIDITokenizer REMI, standing for Revamped MIDI and introduced with the Pop Music Transformer (Huang and Yang), is a tokenization that represents notes as successions of Pitch, Velocity and Duration tokens, and time with Bar and Position t"
+  },
+  {
+   "t": "GitHub - Spijkervet/remi: \"Pop Music Transformer: Beat-based Modeling and Generation of Expressive Pop Piano Compositions\", ACM Multimedia 2020",
+   "u": "https://github.com/Spijkervet/remi",
+   "sn": "REMI Authors: Yu-Siang Huang, Yi-Hsuan Yang Paper (arXiv) | Blog | Audio demo (Google Drive) | Online interactive demo REMI, which stands for REvamped MIDI-derived events, is a new event representation we propose for converting MIDI scores into text-like discrete tokens. Compared to the MIDI-like ev"
+  },
+  {
+   "t": "manoskary/musicbert · Hugging Face",
+   "u": "https://huggingface.co/manoskary/musicbert",
+   "sn": "musicbert Model Description MusicBERT large is a 24-layer BERT-style masked language model trained on REMI+BPE symbolic music sequences extracted from the GigaMIDI corpus. It is tailored for symbolic music understanding, fill-mask style infilling, and as a backbone for downstream generative tasks. C"
+  },
+  {
+   "t": "Tokenizations - MidiTok's docs",
+   "u": "https://miditok.readthedocs.io/en/latest/tokenizations.html",
+   "sn": "REMI(*args, kwargs)¶ Bases: MusicTokenizer REMI (Revamped MIDI) tokenizer. Introduced with the Pop Music Transformer (Huang and Yang), REMI represents notes as successions of Pitch, Velocity and Duration tokens, and time with Bar and Position tokens. A Bar token indicate that a new bar is beginning,"
+  },
+  {
+   "t": "MUSIB: Music Inpainting Benchmark",
+   "u": "https://relela.com/slides/MUSIB%20Music%20Inpainting%20Benchmark.pdf",
+   "sn": "Score Inpainting - Sub-task of Automated Music Generation that aims to infill incomplete musical pieces. - Easy interaction with the user: current ideas they want to join/extend Musical Score Inpainting Musical Score Inpainting Issues with Music Inpainting evaluation - Proposed methods lack of stand"
+  },
+  {
+   "t": "Tokenizations - MidiTok documentation",
+   "u": "https://miditok.readthedocs.io/en/v3.0.2/tokenizations.html",
+   "sn": "REMI(*args, kwargs)# Bases: MIDITokenizer REMI (Revamped MIDI) tokenizer. Introduced with the Pop Music Transformer (Huang and Yang), REMI represents notes as successions of Pitch, Velocity and Duration tokens, and time with Bar and Position tokens. A Bar token indicate that a new bar is beginning,"
+  },
+  {
+   "t": "YatingMusic/remi — heatdrop",
+   "u": "https://heatdrop.ai/repo/YatingMusic/remi",
+   "sn": "star history What it does REMI (REvamped MIDI-derived events) is a token representation that turns MIDI scores into discrete sequences with explicit metrical structure—beats, bars, tempo changes, and chord labels included. The authors train a Transformer-XL on this format to generate minute-long pop"
+  }
+ ]
+}

@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "streaming piano transcription consistent onset offset decoding sustain pedal 2503.01362 code",
+  "real-time piano transcription 2025 github weights"
+ ],
+ "anysearch": [
+  {
+   "t": "Multi-Task Multi-Frame Visual Piano Transcription",
+   "u": "https://arxiv.org/pdf/2608.03419",
+   "sn": "ABSTRACT Audio-based piano transcription performs well on onset, pitch, and velocity, but the sustain pedal lets sound per- sist long after key release, so audio systems predict pedal- extended offsets rather than physical key release. Yet ex- isting Visual Piano Transcription (VPT) systems focus on"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "arxiv://2503.01362",
+   "sn": "In this paper, we focus on streaming audio-to-MIDI AMT because it remains relatively unexplored unlike streaming automatic speech recognition (ASR) [[2](https://arxiv.org/html/2503.01362v1#bib.bib2), [3](https://arxiv.org/html/2503.01362v1#bib.bib3), [4](https://arxiv.org/html/2503.01362v1#bib.bib4)"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "https://ar5iv.labs.arxiv.org/html/2503.01362",
+   "sn": "Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection Abstract This paper describes a streaming audio-to-MIDI transcription method that can sequentially translate a piano recording into a sequence of note-on and note-off events. The sequence-to-sequence learning na"
+  },
+  {
+   "t": "GitHub - Yujia-Yan/Transkun: A simple yet effective Audio-to-Midi Automatic Piano Transcription system",
+   "u": "https://github.com/yujia-yan/transkun",
+   "sn": "g, those reported in the paper, see Model Cards Colab Notebook Colab Overview This system works as follows: A score tensor is computed from the input audio that scores every possible intervals for whether or not being an event. The score tensor computed in (1) is then decoded by the proposed semi-C"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "https://scirate.com/arxiv/2503.01362",
+   "sn": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection This paper describes a streaming audio-to-MIDI piano transcription approach that aims to sequentially translate a music signal into a sequence of note onset and offset events. The sequence-to-seq"
+  },
+  {
+   "t": "2024:Polyphonic Transcription - MIREX Wiki",
+   "u": "https://music-ir.org/mirex/w?oldid=13818&title=2024:Polyphonic_Transcription",
+   "sn": "Task Description The goal of piano transcription is to convert solo piano recordings into their symbolic representation, specifically the MIDI format. Participants must develop systems that can: Extract notes with correct onset, offset, pitch and MIDI velocity Extract sustain pedal (CC64) events, wh"
+  },
+  {
+   "t": "Multi-Task Multi-Frame Visual Piano Transcription",
+   "u": "https://prismix.dev/news/e840c176b488",
+   "sn": "When the sustain pedal is down, a note keeps sounding long after the key lifts, so audio systems predict pedal-extended offsets rather than the physical key release. The camera sees the key itself, including how hard it is struck. Prior visual systems, though, focus on onset from short windows, so o"
+  },
+  {
+   "t": "SpectTrans: Joint Spectral–Temporal Modeling for Polyphonic Piano Transcription via Spectral Gating Networks",
+   "u": "https://mdpi.com/2079-9292/15/3/665",
+   "sn": "2025 / Revised: 24 January 2026 / Accepted: 29 January 2026 / Published: 3 February 2026 Abstract Automatic Music Transcription (AMT) plays a fundamental role in Music Information Retrieval (MIR) by converting raw audio signals into symbolic representations such as MIDI or musical scores. Despite ad"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "Multi-Task Multi-Frame Visual Piano Transcription",
+   "u": "https://arxiv.org/pdf/2608.03419",
+   "sn": "ABSTRACT Audio-based piano transcription performs well on onset, pitch, and velocity, but the sustain pedal lets sound per- sist long after key release, so audio systems predict pedal- extended offsets rather than physical key release. Yet ex- isting Visual Piano Transcription (VPT) systems focus on"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "arxiv://2503.01362",
+   "sn": "In this paper, we focus on streaming audio-to-MIDI AMT because it remains relatively unexplored unlike streaming automatic speech recognition (ASR) [[2](https://arxiv.org/html/2503.01362v1#bib.bib2), [3](https://arxiv.org/html/2503.01362v1#bib.bib3), [4](https://arxiv.org/html/2503.01362v1#bib.bib4)"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "https://ar5iv.labs.arxiv.org/html/2503.01362",
+   "sn": "Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection Abstract This paper describes a streaming audio-to-MIDI transcription method that can sequentially translate a piano recording into a sequence of note-on and note-off events. The sequence-to-sequence learning na"
+  },
+  {
+   "t": "GitHub - Yujia-Yan/Transkun: A simple yet effective Audio-to-Midi Automatic Piano Transcription system",
+   "u": "https://github.com/yujia-yan/transkun",
+   "sn": "g, those reported in the paper, see Model Cards Colab Notebook Colab Overview This system works as follows: A score tensor is computed from the input audio that scores every possible intervals for whether or not being an event. The score tensor computed in (1) is then decoded by the proposed semi-C"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "https://scirate.com/arxiv/2503.01362",
+   "sn": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection This paper describes a streaming audio-to-MIDI piano transcription approach that aims to sequentially translate a music signal into a sequence of note onset and offset events. The sequence-to-seq"
+  },
+  {
+   "t": "2024:Polyphonic Transcription - MIREX Wiki",
+   "u": "https://music-ir.org/mirex/w?oldid=13818&title=2024:Polyphonic_Transcription",
+   "sn": "Task Description The goal of piano transcription is to convert solo piano recordings into their symbolic representation, specifically the MIDI format. Participants must develop systems that can: Extract notes with correct onset, offset, pitch and MIDI velocity Extract sustain pedal (CC64) events, wh"
+  },
+  {
+   "t": "Multi-Task Multi-Frame Visual Piano Transcription",
+   "u": "https://prismix.dev/news/e840c176b488",
+   "sn": "When the sustain pedal is down, a note keeps sounding long after the key lifts, so audio systems predict pedal-extended offsets rather than the physical key release. The camera sees the key itself, including how hard it is struck. Prior visual systems, though, focus on onset from short windows, so o"
+  },
+  {
+   "t": "SpectTrans: Joint Spectral–Temporal Modeling for Polyphonic Piano Transcription via Spectral Gating Networks",
+   "u": "https://mdpi.com/2079-9292/15/3/665",
+   "sn": "2025 / Revised: 24 January 2026 / Accepted: 29 January 2026 / Published: 3 February 2026 Abstract Automatic Music Transcription (AMT) plays a fundamental role in Music Information Retrieval (MIR) by converting raw audio signals into symbolic representations such as MIDI or musical scores. Despite ad"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "GitHub - BestofthebestinAI/aria: Official repository for the paper: Scaling Self-Supervised Representation Learning for Symbolic Piano Performance (ISMIR 2025)",
+   "u": "https://github.com/BestofthebestinAI/aria",
+   "sn": "Aria This repository contains training, inference, and evaluation code for the paper Scaling Self-Supervised Representation Learning for Symbolic Piano Performance (ISMIR 2025), as well as implementations of our real-time piano continuation demo. Aria is a pretrained autoregressive generative model"
+  },
+  {
+   "t": "GitHub - EleutherAI/aria: Official repository for the paper: Scaling Self-Supervised Representation Learning for Symbolic Piano Performance (ISMIR 2025)",
+   "u": "https://github.com/EleutherAI/aria",
+   "sn": "Aria This repository contains training, inference, and evaluation code for the paper Scaling Self-Supervised Representation Learning for Symbolic Piano Performance (ISMIR 2025), as well as implementations of our real-time piano continuation demo. Aria is a pretrained autoregressive generative model"
+  },
+  {
+   "t": "Exploring System Adaptations For Minimum Latency Real-Time Piano Transcription",
+   "u": "https://arxiv.org/pdf/2509.07586v1",
+   "sn": "However, most real-time musical applica- tions require latencies below 30 ms. In this work, we in- vestigate whether and how the current state-of-the-art on- line transcription model can be adapted for real-time pi- ano transcription. Specifically, we eliminate all non-causal processing, and reduce"
+  },
+  {
+   "t": "Exploring System Adaptations For Minimum Latency Real-Time Piano Transcription",
+   "u": "https://doi.org/10.48550/arxiv.2509.07586",
+   "sn": "Progress in automatic piano transcription has focused almost exclusively on offline methods, with only a few investigations attempting to solve this task online [[5](https://arxiv.org/html/2509.07586v1#bib.bib5), [6](https://arxiv.org/html/2509.07586v1#bib.bib6), [7](https://arxiv.org/html/2509.0758"
+  },
+  {
+   "t": "Efficient Transformer-Based Piano Transcription With Sparse Attention Mechanisms",
+   "u": "https://ui.adsabs.harvard.edu/abs/2025arXiv250909318W/abstract",
+   "sn": "Specifically, we introduce sliding-window self-attention mechanisms for both the encoder and decoder, and a hybrid global-local cross-attention mechanism that attends to various spans according to the MIDI token types. We also use a hierarchical pooling strategy between the encoder and decoder to fu"
+  },
+  {
+   "t": "GitHub - Yujia-Yan/Transkun: A simple yet effective Audio-to-Midi Automatic Piano Transcription system",
+   "u": "https://github.com/Yujia-Yan/Skipping-The-Frame-Level",
+   "sn": "Yujia Yan and Zhiyao Duan, Scoring intervals using non-hierarchical transformer for automatic piano transcription, in Proc. International Society for Music Information Retrieval Conference (ISMIR), 2024, Paper Yujia Yan, Frank Cwitkowitz, Zhiyao Duan, Skipping the Frame-Level: Event-Based Piano Tra"
+  },
+  {
+   "t": "Jan Schlüter",
+   "u": "https://catalyzex.com/author/Jan%20Schl%C3%BCter",
+   "sn": "Sep 09, 2025 Advances in neural network design and the availability of large-scale labeled datasets have driven major improvements in piano transcription. Existing approaches target either offline applications, with no restrictions on computational demands, or online transcription, with delays of 12"
+  },
+  {
+   "t": "Efficient Transformer-Based Piano Transcription With Sparse Attention Mechanisms",
+   "u": "https://arxiv.org/abs/2509.09318v1",
+   "sn": "To overcome this limitation, we propose an efficient architecture with sparse attention mechanisms. Specifically, we introduce sliding-window self-attention mechanisms for both the encoder and decoder, and a hybrid global-local cross-attention mechanism that attends to various spans according to the"
+  }
+ ]
+}
