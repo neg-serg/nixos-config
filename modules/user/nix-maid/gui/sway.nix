@@ -13,12 +13,16 @@ let
   swayConfig = ''
     # --- Monitor: DP-2 3840x2160@240 scale 2 VRR 10-bit; DP-1 disabled ---
     output DP-2 {
-      mode 3840x2160@240Hz
+      # Preferred mode is 3840x2160@239.99Hz; explicit @240Hz does not match and
+      # drops the whole output config ("Could not find config for output DP-2").
+      mode 3840x2160
       scale 2
       adaptive_sync on
       render_bit_depth 10
     }
     output DP-1 disable
+    # Wallpaper (swaybg reads this; change with: swaymsg output * bg <path> fill)
+    output * bg /home/${mainUser}/pic/wl/wallhaven-exjgj8.png fill
     # HDR (sway 1.12, experimental, needs WLR_RENDERER=vulkan + monitor HDR mode on):
     # output DP-2 hdr on
 
@@ -144,7 +148,8 @@ let
     bindsym $mod+m exec ~/.local/bin/music-rename current
 
     # --- Lock (reset to us first, like Hyprland) ---
-    bindsym $mod+Shift+l exec 'swaymsg input type:keyboard xkb_switch_layout 0; swaylock -f'
+    # Lock: $mod+Shift+l is taken by "move right", so use $mod+Shift+Escape.
+    bindsym $mod+Shift+Escape exec 'swaymsg input type:keyboard xkb_switch_layout 0; swaylock -f'
 
     # --- Screenshots ---
     bindsym $mod+Shift+r exec 'shot="$HOME/pic/shots/satty-$(date +%Y%m%d-%H.%M.%S).png"; grim -l 0 "$shot" && pic-info "$shot"'
