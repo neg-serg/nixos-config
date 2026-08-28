@@ -22,6 +22,9 @@ in
     extraPortals = [
       # Hyprland portal is provided via programs.hyprland.portalPackage
       pkgs.xdg-desktop-portal-gtk # GTK file picker portal backend (generic, works on any DE/WM)
+      # wlroots screencopy portal backend — ScreenCast for the mango session
+      # (xdg-desktop-portal-hyprland's backend requires a running Hyprland)
+      pkgs.xdg-desktop-portal-wlr
     ];
     config = {
       common.default = [
@@ -32,6 +35,14 @@ in
         "hyprland"
       ];
       hyprland."org.freedesktop.impl.portal.FileChooser" = [
+        "gtk"
+      ];
+      # Mango session: wlr portal for ScreenCast/ScreenShare (hyprland backend
+      # cannot work without a Hyprland instance), GTK for file pickers.
+      mango.default = [
+        "wlr"
+      ];
+      mango."org.freedesktop.impl.portal.FileChooser" = [
         "gtk"
       ];
     };
