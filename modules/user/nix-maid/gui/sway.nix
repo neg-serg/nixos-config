@@ -249,7 +249,7 @@ let
     [ $# -ge 2 ] || { echo "usage: sway-run-or-raise <class-regex> <launch...>" >&2; exit 1; }
     cls="$1"; shift
     jq_bin='${lib.getExe pkgs.jq}'
-    swaymsg_bin='${lib.getExe pkgs.sway}'
+    swaymsg_bin='${lib.getExe' pkgs.sway "swaymsg"}'
     id="$("$swaymsg_bin" -t get_tree 2>/dev/null | "$jq_bin" -r --arg cls "$cls" '
       [.. | objects | select((.app_id? // .class?) != null and ((.app_id? // .class?) | test($cls; "i"))) | .id][0] // empty
     ' 2>/dev/null || true)"
@@ -266,7 +266,7 @@ let
     [ $# -ge 2 ] || { echo "usage: sway-scratch <app-id-regex> <launch...>" >&2; exit 1; }
     cls="$1"; shift
     jq_bin='${lib.getExe pkgs.jq}'
-    swaymsg_bin='${lib.getExe pkgs.sway}'
+    swaymsg_bin='${lib.getExe' pkgs.sway "swaymsg"}'
     focused="$("$swaymsg_bin" -t get_tree 2>/dev/null | "$jq_bin" -r --arg cls "$cls" '
       .. | objects | select(.focused == true) | ((.app_id? // .class?) | test($cls; "i"))
     ' | head -1)"
@@ -296,7 +296,7 @@ let
   swayRuLayout = pkgs.writeShellScript "sway-ru-layout-daemon" ''
     set -u
     jq_bin='${lib.getExe pkgs.jq}'
-    swaymsg_bin='${lib.getExe pkgs.sway}'
+    swaymsg_bin='${lib.getExe' pkgs.sway "swaymsg"}'
     sleep_bin='${lib.getExe' pkgs.coreutils "sleep"}'
     us_classes='${usClasses}'
     us_idx='${ruUsIdx}'
