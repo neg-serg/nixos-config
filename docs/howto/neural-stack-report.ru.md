@@ -9,12 +9,15 @@
 | Инструмент     | Назначение                                      | Статус      | Проверено                     |
 | -------------- | ----------------------------------------------- | ----------- | ----------------------------- |
 | `whisperx`     | STT + диаризация (faster-whisper, CPU)          | ✅ работает | ru-распознавание + диаризация |
-| `mt3`          | аудио → MIDI (MR-MT3, PyTorch)                  | ✅ работает | 171 нота из тестового wav     |
+| `mt3`          | аудио → MIDI (MR-MT3, PyTorch)                  | ✅ работает | 171 нота; **GPU (ROCm): 11.2s vs 30.3s CPU** (40s трек, результат идентичен, 2026-08-29) |
 | `midi-transcribe` | hFT-Transformer / RobustAMT (пианино)      | ✅ работает | CPU: `midi-transcribe`; **GPU (ROCm): `midi-transcribe-gpu`** — hFT 40s за ~11s вместо 20+ мин CPU (2026-08-29, venv-denoise + torch 2.13 rocm7.1) |
 | ~~`amt-generate`~~ | ~~генерация MIDI (Anticipatory Music Transformer)~~ | ❌ удалён | 2026-08-28, решение пользователя |
 | `audio-analysis` | анализ аудио | ⏳ не проверен | venv есть, прогон не делался |
 | `denoise`        | шумоподавление    | ⏳ не проверен | venv есть, прогон не делался |
-| `groovae`        | groove-генерация (magenta) | ⏳ не проверен | venv есть, прогон не делался |
+| `groovae`        | groove-humanize (magenta GrooVAE) | ✅ работает | **GPU (ROCm)** 2026-08-29: драм-луп humanize (venv-groovae + torch rocm) |
+| `xtts-clone`    | клон голоса XTTS-v2 (zero-shot)     | ✅ работает | **GPU (ROCm)** 2026-08-29: синтез на GPU (venv-xtts + torch 2.8 rocm6.4; требует свободную VRAM — ollama её занимает) |
+| `rave`/`rave-vc` | нейро-VAE encode/decode + конверсия голоса | ✅ работает | **GPU (ROCm)** 2026-08-29: 10s аудио за ~10-13s (venv-rave311 + torch rocm; обёртка переведена с сломанного venv-rave) |
+| `demucs`        | разделение источников (htdemucs_ft) | ✅ работает | torch rocm установлен (venv-demucs, минус 2 ГБ nvidia); **GPU fp32 ≈ CPU** (9.7 vs 10.9s), fp16 ломается внутри — дефолт остаётся CPU |
 | `transcribe-high` | конвейер: деноиз→Demucs→basic-pitch→слияние | ✅ работает | проверен 2026-08-28 (см. детали); для чистых записей лучше `--no-denoise --no-stems` |
 | `basic-pitch`  | полифоническая транскрипция → MIDI              | ✅ работает | melody10s → MIDI (ONNX)       |
 | `rembg`        | удаление фона (u2net / bria-rmbg / birefnet)    | ✅ работает | u2net + bria                  |
