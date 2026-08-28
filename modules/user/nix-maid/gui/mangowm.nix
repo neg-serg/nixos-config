@@ -13,11 +13,15 @@ let
   # effects. HDR stays OFF in this session by design — run a separate HDR
   # session (e.g. Hyprland on another TTY) so it never degrades this one.
   configConf = ''
-    # --- Monitor: DP-2 3840x2160@240 scale 2 VRR; DP-1 disabled ---
-    # Colors stay sRGB: the linear->P3 ICC output transform (wlroots 0.20
-    # scene path) shifts the whole desktop (brighter/oversaturated) for
-    # non-color-managed clients. Wide gamut lives in the gamescope HDR session.
-    monitorrule=name:DP-2, width:3840, height:2160, refresh:240, scale:2, vrr:1, x:0, y:0
+    # --- Monitor: DP-2 3840x2160@240 scale 2 VRR (ICC Display P3); DP-1 disabled ---
+    # ICC: Display P3 wide gamut (D65, DCI-P3 primaries, sRGB transfer).
+    # The transform is applied to linear scene content by wlroots 0.20 (vulkan
+    # 3D LUT), so sRGB content passes through unchanged and wide-gamut content
+    # extends to the panel's P3 gamut. Profile regenerated with lcms2
+    # (files/gui/mango/generate-display-p3.sh).
+        monitorrule=name:DP-2, width:3840, height:2160, refresh:240, scale:2, vrr:1, x:0, y:0, icc:/home/${
+          config.users.main.name or "neg"
+        }/.config/mango/Display-P3.icc
     monitorrule=name:DP-1, disable:1
 
     # --- Keyboard: us,ru like Hyprland (input.kb_layout). SUPER+S is bound to
@@ -405,6 +409,7 @@ in
       }
       (neg.mkHomeFiles {
         ".config/mango/config.conf".text = configConf;
+        ".config/mango/Display-P3.icc".source = config.lib.neg.path "files/gui/mango/Display-P3.icc";
         ".config/swaylock/config".text = ''
           color=000000
           ring-color=ffffff
