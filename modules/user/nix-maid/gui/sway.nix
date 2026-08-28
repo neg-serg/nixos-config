@@ -38,7 +38,6 @@ let
     font pango:Iosevka 10
     gaps inner 0
     gaps outer 0
-    border pixel 1
     client.focused           #002859 #002859 #ffffff #002859 #002859
     client.focused_inactive  #002859 #002859 #888888 #002859 #002859
     client.unfocused         #002859 #002859 #888888 #002859 #002859
@@ -176,9 +175,9 @@ let
     include ~/.config/sway/config
     blur enable
     blur_xray enable
-    blur_radius 12
+    blur_radius 10
     corner_radius 8
-    shadow enable
+    shadows enable
     shadow_blur_radius 14
   '';
 
