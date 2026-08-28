@@ -451,22 +451,9 @@ in
               ExecStart = "${pkgs.swaylock}/bin/swaylock -f";
             };
           };
-          hyprpolkitagent = {
-            description = "Polkit authentication agent (Wayland)";
-            wantedBy = [ "mango-session.target" ];
-            bindsTo = [ "mango-session.target" ];
-            after = [ "mango-session.target" ];
-            serviceConfig = {
-              ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
-              Environment = [
-                "QT_QPA_PLATFORM=wayland"
-                "XDG_SESSION_TYPE=wayland"
-                "XDG_CURRENT_DESKTOP=mango"
-              ];
-              Restart = "on-failure";
-              RestartSec = "2s";
-            };
-          };
+          # Polkit agent: the hyprland module already declares hyprpolkitagent
+          # wanted by graphical-session.target, which mango-session.target binds
+          # to — no mango-specific unit needed (and two units would conflict).
           quickshell-mango = {
             description = "Quickshell panel for MangoWM";
             wantedBy = [ "mango-session.target" ];
