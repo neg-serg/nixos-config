@@ -1560,11 +1560,11 @@
     "wl": {
       "flake": false,
       "locked": {
-        "lastModified": 1786952801,
-        "narHash": "sha256-ZFN3DOzAfjTc+AZ2f57VkGRC6Gd3Tl1tV5md7vDOxe4=",
+        "lastModified": 1787951893,
+        "narHash": "sha256-pq/qagSTwlUD/mBGF0Hw0oSkvnxpkgVw9kjsJlDANDk=",
         "owner": "neg-serg",
         "repo": "wl",
-        "rev": "ca96012217311920bd1076da1cdcdb40f3125645",
+        "rev": "774bf4f43cb9a29b32d19b16506820850144f7c5",
         "type": "github"
       },
       "original": {
