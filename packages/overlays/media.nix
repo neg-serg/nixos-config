@@ -40,11 +40,9 @@ _inputs: final: prev:
   sphericaldesign = prev.callPackage ../sphericaldesign { }; # spherical design point sets (ATK dep)
   filelog = prev.callPackage ../filelog { }; # file logging/player classes (ATK dep)
   mathlib = prev.callPackage ../mathlib { }; # math classes, matrices (ATK dep)
-  wslib = prev.callPackage ../wslib { }; # lookahead patterns, DJ helpers (ATK dep)
   # -- live coding quarks --
   safetynet = prev.callPackage ../safetynet { }; # protect against dangerous audio signals
   ddwplug = prev.callPackage ../ddwplug { }; # dynamic per-note synth patching
-  ddwchucklib = prev.callPackage ../ddwchucklib { }; # Chuck browser / advanced algorithmic composition
   miscellaneous-lib = prev.callPackage ../miscellaneous-lib { }; # patterns, granulation, live coding utilities
   ixiquarks = prev.callPackage ../ixiquarks { }; # GUI instruments/effects toolset
   # -- neural audio --
