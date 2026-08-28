@@ -8,6 +8,7 @@ with lib;
       enable = mkBool "enable Quickshell (panel) at login" true;
     };
     hdr.enable = mkBool "enable HDR support (env vars for DXVK, Gamescope, Wine)" false;
+    hyprwhspr.enable = mkBool "enable hyprwhspr-rs (local whisper.cpp voice dictation for Hyprland)" false;
     vicinae = {
       enable = mkBool "enable Vicinae (Wayland app runner + window switcher)" false;
       manageConfig = mkBool "let Nix manage vicinae theme/settings (disable for interactive config)" false;
