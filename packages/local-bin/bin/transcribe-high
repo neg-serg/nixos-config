@@ -1,26 +1,29 @@
 #!/bin/bash
 # transcribe-high: точная транскрипция трека в MIDI (цена — время).
-# Конвейер: [деноиз DeepFilterNet] → Demucs (4 стема) → basic-pitch по каждому
-# стему (ONNX) → слияние MIDI → темп (madmom) → [опц. midi2tidal].
+# Конвейер: [деноиз noisereduce] → [Demucs 2/4 стема] → basic-pitch по каждому
+# стему (ONNX, низкие пороги 0.2/0.25) → слияние MIDI → темп (madmom) → [опц. midi2tidal].
 #
-# Идея: транскрипция по разделённым стемам даёт заметно чище ноты, чем по
-# полному миксу (нет наложений инструментов).
+# Проверено 2026-08-28 (Zinovia, фортепиано/эмбиент): для чистых записей
+# деноиз и стемы ВРЕДЯТ (685 → 170 нот) — используй --no-denoise --no-stems;
+# полная цепочка оправдана на плотных миксах с наложениями.
 #
-# Usage: transcribe-high input.mp3 [-o out.mid] [--tidal] [--no-denoise]
+# Usage: transcribe-high input.mp3 [-o out.mid] [--tidal] [--no-denoise] [--no-stems]
 set -euo pipefail
 
 BASE="$HOME/src/music-ai"
 GCCLIB=/nix/store/7vafhlh0lmcvi75jfyy09qwr4m3x1ks3-gcc-15.2.0-lib/lib
 ZLIB=/nix/store/483x61iy35irm4wr2b7dwzihljhp6da2-zlib-1.3.2/lib
-export LD_LIBRARY_PATH="$GCCLIB:$ZLIB:${LD_LIBRARY_PATH:-}"
+ZSTD=/nix/store/13id30w3rvgj24nnz34f7qrncz48zd7l-zstd-1.5.7/lib
+export LD_LIBRARY_PATH="$GCCLIB:$ZLIB:$ZSTD:${LD_LIBRARY_PATH:-}"
 
-SRC="${1:?usage: transcribe-high input.mp3 [-o out.mid] [--tidal] [--no-denoise]}"; shift
-OUT=""; TIDAL=0; DENOISE=1
+SRC="${1:?usage: transcribe-high input.mp3 [-o out.mid] [--tidal] [--no-denoise] [--no-stems]}"; shift
+OUT=""; TIDAL=0; DENOISE=1; STEMS=1
 while [ $# -gt 0 ]; do
   case "$1" in
     -o) OUT="$2"; shift 2;;
     --tidal) TIDAL=1; shift;;
     --no-denoise) DENOISE=0; shift;;
+    --no-stems) STEMS=0; shift;;
     *) echo "unknown arg: $1" >&2; exit 1;;
   esac
 done
@@ -42,42 +45,49 @@ sf.write(sys.argv[2], clean, rate)
 PYEOF
   [ -s "$WORK/denoised.wav" ] && AUDIO="$WORK/denoised.wav" || echo "  (деноиз пропущен — сбой)"
 else
-  echo "[transcribe-high] 2/5 деноиз — пропущен (venv-denoise нет или --no-denoise)"
+  echo "[transcribe-high] 2/5 деноиз — пропущен (--no-denoise или venv нет)"
 fi
 
-echo "[transcribe-high] 3/5 стемы (Demucs htdemucs_ft)"
-"$BASE/venv-demucs/bin/python" -m demucs --two-stems=vocals -o "$WORK/stems" "$AUDIO" >/dev/null 2>&1 || \
-"$BASE/venv-demucs/bin/python" -m demucs -o "$WORK/stems" "$AUDIO" >/dev/null 2>&1
-STEMS_DIR="$(find "$WORK/stems" -maxdepth 2 -type d -name 'htdemucs*' | head -1)"
-echo "  стемы: $STEMS_DIR"
+if [ "$STEMS" = "1" ]; then
+  echo "[transcribe-high] 3/5 стемы (Demucs htdemucs_ft)"
+  "$BASE/venv-demucs/bin/python" -m demucs --two-stems=vocals -o "$WORK/stems" "$AUDIO" >/dev/null 2>&1 || \
+  "$BASE/venv-demucs/bin/python" -m demucs -o "$WORK/stems" "$AUDIO" >/dev/null 2>&1
+  STEMS_DIR="$(find "$WORK/stems" -maxdepth 2 -type d -name 'htdemucs*' | head -1)"
+  echo "  стемы: $STEMS_DIR"
+  AUDIO_INPUTS=("$STEMS_DIR"/*/*.wav "$STEMS_DIR"/*.wav)
+else
+  echo "[transcribe-high] 3/5 стемы — пропущены (--no-stems)"
+  AUDIO_INPUTS=("$AUDIO")
+fi
 
-echo "[transcribe-high] 4/5 транскрипция стемов (basic-pitch ONNX)"
+echo "[transcribe-high] 4/5 транскрипция (basic-pitch ONNX, пороги 0.2/0.25)"
 mkdir -p "$WORK/bp"
 i=0
-for stem in "$STEMS_DIR"/*.wav; do
+for stem in "${AUDIO_INPUTS[@]}"; do
+  [ -f "$stem" ] || continue
   name="$(basename "$stem" .wav)"
-  "$BASE/venv-bp/bin/basic-pitch" --save-midi --model-serialization onnx "$WORK/bp" "$stem" >/dev/null 2>&1 || continue
-  mid="$(find "$WORK/bp" -name "*${name}*_basic_pitch.mid" | head -1)"
+  "$BASE/venv-bp/bin/basic-pitch" --save-midi --model-serialization onnx --onset-threshold 0.2 --frame-threshold 0.25 "$WORK/bp" "$stem" >/dev/null 2>&1 || continue
+  mid="$(find "$WORK/bp" -name "*_basic_pitch.mid" | head -1)"
   [ -n "$mid" ] && echo "  ✓ $name → $(basename "$mid")"
 done
 
 echo "[transcribe-high] слияние стемов в один MIDI"
 "$BASE/venv-midi2tidal/bin/python" - "$WORK/bp" "$OUT" <<'EOF'
 import sys, glob, os
-from midi import FileIO, Pattern, Track
+import midi
 bpdir, out = sys.argv[1], sys.argv[2]
 mids = sorted(glob.glob(os.path.join(bpdir, "*_basic_pitch.mid")))
 if not mids:
     print("  нет MIDI-выхода — стоп"); sys.exit(1)
-merged = Pattern()
+merged = midi.Pattern()
 for m in mids:
     try:
-        p = FileIO(m).read()
+        p = midi.read_midifile(m)
         for tr in p:
             merged.append(tr)
     except Exception as e:
         print(f"  пропуск {m}: {e}")
-FileIO(out, save_track_events=True).write(merged)
+midi.write_midifile(out, merged)
 print(f"  объединено {len(mids)} MIDI → {out}")
 EOF
 
@@ -100,7 +110,7 @@ echo "  темп: ~$BPM BPM (для midi2tidal --tempo)"
 
 if [ "$TIDAL" = "1" ]; then
   echo "[transcribe-high] конвертация в Tidal (midi2tidal)"
-  "$BASE/venv-midi2tidal/bin/python" "$BASE/midi_to_tidalcycles/midi2tidal.py" -H "$OUT" 2>/dev/null || \
+  "$BASE/venv-midi2tidal/bin/python" "$BASE/midi_to_tidalcycles/src/midi_to_tidalcycles.py" -H "$OUT" 2>/dev/null || \
   midi2tidal "$OUT" || true
 fi
 
