@@ -8,11 +8,13 @@
 
 | Инструмент     | Назначение                                      | Статус      | Проверено                     |
 | -------------- | ----------------------------------------------- | ----------- | ----------------------------- |
-| `whisperx`     | STT + диаризация (faster-whisper, CPU)          | ✅ работает | ru-распознавание + диаризация |
+| `whisperx`     | STT + диаризация (faster-whisper, CPU)          | ⚠️ STT ✓, align ✗ | 2026-08-29: распознавание ru ✓ («Привет! Это тест синтеза речи…»); **alignment/диаризация зависают** (регрессия — 19.08 работало; нужна отладка, вероятно версии torch/lightning) |
 | `mt3`          | аудио → MIDI (MR-MT3, PyTorch)                  | ✅ работает | 171 нота; **GPU (ROCm): 11.2s vs 30.3s CPU** (40s трек, результат идентичен, 2026-08-29) |
 | `midi-transcribe` | hFT-Transformer / RobustAMT (пианино)      | ✅ работает | CPU: `midi-transcribe`; **GPU (ROCm): `midi-transcribe-gpu`** — hFT 40s за ~11s вместо 20+ мин CPU (2026-08-29, venv-denoise + torch 2.13 rocm7.1) |
 | ~~`amt-generate`~~ | ~~генерация MIDI (Anticipatory Music Transformer)~~ | ❌ удалён | 2026-08-28, решение пользователя |
-| `audio-analysis` | анализ аудио | ⏳ не проверен | venv есть, прогон не делался |
+| `audio-analysis` | Essentia key/beat + CLAP-теги + мастеринг | ✅ работает | 2026-08-29: Zinovia → **B minor (conf 0.85), ~110 BPM**; CLAP: ambient 0.169. ROCm-torch в venv-analysis |
+| `pitch-f0`        | f0-трекинг (torchcrepe) | ✅ работает | 2026-08-29: 2164 фрейма, f0 49-50 Гц, CPU >10x realtime |
+| `got-ocr`         | OCR (GOT-OCR-2.0) | ✅ работает | 2026-08-29: венв починен (не было python), OCR картинки ~20s CPU |
 | `denoise`        | шумоподавление    | ⏳ не проверен | venv есть, прогон не делался |
 | `groovae`        | groove-humanize (magenta GrooVAE) | ✅ работает | **GPU (ROCm)** 2026-08-29: драм-луп humanize (venv-groovae + torch rocm) |
 | `xtts-clone`    | клон голоса XTTS-v2 (zero-shot)     | ✅ работает | **GPU (ROCm)** 2026-08-29: синтез на GPU (venv-xtts + torch 2.8 rocm6.4; требует свободную VRAM — ollama её занимает) |
