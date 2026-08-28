@@ -100,4 +100,10 @@
 
 - OCR: `got-ocr` (GOT-OCR-2.0, китайский/сложные документы) и `pic-ocr` (tesseract/qwen3-vl,
   русский).
+- STT: `whisperx FILE` — распознавание + диаризация (модель small, ru). Проверено 2026-08-28.
+- Транскрипция мелодии: `mt3 file.wav [out.mid]` (MR-MT3, чекпоинт `/zero/ai/music/mt3`);
+  `basic-pitch OUTDIR file.wav --save-midi` (ONNX-бэкенд — TF saved_model битый на TF 2.21).
+- Генерация MIDI: `amt-generate -o out.mid -t 4` (Anticipatory Music Transformer, CPU).
+- Картинки: `rembg i in.png out.png` (u2net дефолт, модели в `/zero/ai/imgproc`; bria-rmbg
+  тоже есть); `triposr img.png --output-dir out` (картинка → 3D-меш OBJ, модель в `/zero/ai/3d`).
 - Все обёртки в `packages/local-bin/bin/`; после изменений — `nh os switch`.
