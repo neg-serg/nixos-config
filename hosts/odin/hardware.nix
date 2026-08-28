@@ -121,6 +121,10 @@
       "ec_sys"
       "asus_ec_sensors"
       "snd-hdspe" # RME HDSPe driver (replaces in-tree snd-hdspm)
+      "hid-playstation" # PlayStation controllers (DS4, DualSense, Edge) — pre-loaded before lockKernelModules
+      "hid-sony" # Sony PS3 pads (Sixaxis/DS3) + PS Move
+      "hidp" # Bluetooth classic HID profile (BT mice/keyboards/gamepads)
+      "uhid" # Userspace HID — HID over GATT via bluez (modern BT gamepads)
     ];
     # amneziawg disabled — incompatible with certain kernel versions (ipv6_stub removed)
     extraModulePackages = lib.mkForce (
