@@ -1,0 +1,10 @@
+# NOTICE — dsh-fast agent preset
+
+Managed declaratively in /etc/nixos (modules/user/nix-maid/apps/dsh-fast/),
+synced to ~/.dsh/.agent-presets/fast by modules/user/nix-maid/apps/dsh-fast.nix
+(activation script + systemd user service). The repo copy is the source of
+truth; local edits under ~/.dsh/.agent-presets/fast are reverted on rebuild.
+
+Derived from the builtin `minimal` preset of the DeepSeek Harness
+(@deepseek-ai/dsh, Apache-2.0), extended with the web-search and ask-user
+tools already used by the `neg` preset (see dsh-liangshen-fork/).

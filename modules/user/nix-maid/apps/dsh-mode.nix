@@ -9,14 +9,19 @@ let
   userData = lib.attrByPath [ "users" "users" user ] { } config;
   homeDir = lib.attrByPath [ "home" ] "/home/${user}" userData;
 
-  # dsh-mode: slash command /mode for the dsh web GUI — list available agent
-  # presets or switch the default mode for new sessions. Server-only plugin
-  # (no browser half): the command surfaces in the chat input automatically
-  # once registered on the host 'commands' service. The default lives in the
-  # agent-presets settings namespace (hot-reloaded, no dsh restart needed).
-  # Files are written only when missing, so local tweaks survive; to re-apply
-  # a changed copy from this module, delete
-  # ~/.dsh/profiles/web/node_modules/dsh-mode and restart dsh.
+  # dsh-mode: slash commands for the dsh web GUI — /mode lists available agent
+  # presets or switches the default mode for new sessions, /fast and /smart
+  # switch the default to the lean `fast` preset (and reasoning effort low) or
+  # back to the full `neg` preset (effort high). Server-only plugin (no
+  # browser half): commands surface in the chat input automatically once
+  # registered on the host 'commands' service. The defaults live in the
+  # agent-presets / agent-default-model settings namespaces (hot-reloaded, no
+  # dsh restart needed for the settings themselves; the plugin code loads at
+  # dsh start).
+  # Files are copied when missing OR different from the repo copy (the repo is
+  # the source of truth, like dsh-liangshen-fork): local tweaks under
+  # node_modules/dsh-mode are reverted on rebuild. A changed copy restarts dsh
+  # so the new plugin code is loaded.
   pkg = ./dsh-mode;
 
   ensureMode = pkgs.writeShellScript "dsh-mode-ensure" ''
@@ -27,8 +32,8 @@ let
     mkdir -p "$P/lib"
     changed=0
     for f in package.json lib/index.js; do
-      if [ ! -f "$P/$f" ]; then
-        cp "${pkg}/$f" "$P/$f"
+      if [ ! -f "$P/$f" ] || ! cmp -s "${pkg}/$f" "$P/$f"; then
+        cp -f "${pkg}/$f" "$P/$f"
         changed=1
       fi
     done
