@@ -60,8 +60,11 @@
 
 - `stems input.wav [-o OUT] [--single-stem vocals|instrumental]` — BS-RoFormer (viperx ep_317, sdr
   12.97) — лучше Demucs для выделения вокала. CPU, ~3× realtime.
-- `demucs` — htdemucs_ft, 4 стема (vocals/drums/bass/other), 1.4× realtime. Починен (2026-08-20:
-  пакет был под python3.12, бинарник на 3.13 — переустановлен в дефолтный).
+- `demucs` — htdemucs_ft, 4 стема (vocals/drums/bass/other), 1.4× realtime.
+- venv: `venv-demucs` (python 3.13): `pip install torch==2.8.0 --index-url …/whl/cpu` СНАЧАЛА
+  (иначе pip тянет CUDA-torch 2.13 + 2 ГБ nvidia-пакетов), затем
+  `pip install demucs audio-separator onnxruntime audioread librosa==0.10.2.post1 numpy`.
+  Пересоздан 2026-08-28 (был развалившийся: bin→3.14, пакеты в 3.12/3.13).
 
 ## Транскрипция целой песни (аккорды/барабаны/вокал → MIDI)
 
