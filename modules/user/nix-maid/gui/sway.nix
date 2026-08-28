@@ -310,6 +310,13 @@ in
   config = lib.mkIf (config.lib.neg.enabled "gui" && cfg.enable) (
     lib.mkMerge [
       {
+        # Vulkan renderer system-wide: wlroots only applies color_profile icc
+        # (and 10-bit/HDR) with WLR_RENDERER=vulkan, so every way to start a
+        # session (greeter entry, TTY, user service) gets it. /etc/environment
+        # reaches PAM/greetd; sessionVariables covers login shells.
+        environment.variables.WLR_RENDERER = "vulkan";
+        environment.sessionVariables.WLR_RENDERER = "vulkan";
+
         environment.systemPackages = [
           pkgs.sway # Sway 1.12 Wayland compositor (wlroots, 10-bit/HDR capable)
           pkgs.swayfx # SwayFX — sway fork with blur/corners/shadows
