@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "Onsets and Frames ICML 2018 paper MAESTRO onset F1 96.5 note F1 84.5 results",
+  "\"Onsets and Frames\" MAESTRO \"onset F1\" \"note F1\" table"
+ ],
+ "anysearch": [
+  {
+   "t": "Onsets and Frames: Dual-Objective Piano Transcription",
+   "u": "https://www.alphaxiv.org/audio/1710.11153v2",
+   "sn": "Submitted 05 Jun 2018 Onsets and Frames: Dual-Objective Piano Transcription Abstract We advance the state of the art in polyphonic piano music transcription by using a deep convolutional and recurrent neural network which is trained to jointly predict onsets and frames. Our model predicts pitch onse"
+  },
+  {
+   "t": "Onsets and Frames: Dual-Objective Piano Transcription",
+   "u": "https://arxiv.org/abs/1710.11153v1",
+   "sn": "We use deep neural networks and propose a novel approach that predicts onsets and frames using both CNNs and LSTMs. This model predicts pitch onset events and then uses those predictions to condition framewise pitch predictions. During inference, we restrict the predictions from the framewise detect"
+  },
+  {
+   "t": "GitHub - DBraun/onsets-and-frames: A TensorFlow 2.1 implementation of Onsets and Frames (Hawthorne 2018)",
+   "u": "https://github.com/DBraun/onsets-and-frames",
+   "sn": "TensorFlow 2.1 Implementation of Onsets and Frames This is a TensorFlow 2.1 implementation of Google’s Onsets and Frames model, using the MAESTRO dataset for training and the Disklavier portion of the MAPS database for testing. The codebase was ported from Jong Wook Kim’s PyTorch implementation, whi"
+  },
+  {
+   "t": "Onsets and Frames: Dual-Objective Piano Transcription",
+   "u": "https://magenta.withgoogle.com/onsets-frames",
+   "sn": "Onsets and Frames is our new model for automatic polyphonic piano music transcription. Using this model, we can convert raw recordings of solo piano performances into MIDI. For example, have you ever made a recording of yourself improvising at the piano and later wanted to know exactly what you pla"
+  },
+  {
+   "t": "Towards Efficient and Real-Time Piano Transcription Using Neural Autoregressive Models",
+   "u": "arxiv://2404.06818",
+   "sn": "relatively easy to obtain a large amount of training data with strongly labeled MIDI by synthesizing virtual piano sounds from MIDI data [[2](https://arxiv.org/html/2404.06818v1#bib.bib2)] or by capturing MIDI data from piano performance actions on computer-controlled pianos such as the Disklavier ["
+  },
+  {
+   "t": "Enabling Factorized Piano Music Modeling and Generation with the MAESTRO Dataset Quick Review",
+   "u": "https://liner.com/review/enabling-factorized-piano-music-modeling-and-generation-with-the-maestro",
+   "sn": "and ICLR Oct 29, 2018 References 22 Cited by 471 Motivation & Objective Motivation & Objective Generating musical audio directly with neural networks is challenging due to the need for coherently modeling structure across varied timescales. Previous models struggled with generating long-term coheren"
+  },
+  {
+   "t": "Transition-Aware: A More Robust Approach for Piano Transcription",
+   "u": "https://dafx2020.mdw.ac.at/proceedings/papers/DAFx20in21_paper_4.pdf",
+   "sn": "In 2019, Google Brain published a larger piano transcription dataset, MAESTRO. On this dataset, Onsets and Frames transcription approach proposed by Hawthorne achieved a stunning onset F1 score of 94.73%. Unlike the annotation method of Onsets and Frames, Transition-aware model presented in this pap"
+  },
+  {
+   "t": "High-Resolution Piano Transcription | PDF | Algorithms | Applied Mathematics",
+   "u": "https://scribd.com/document/715628329/High-resolution-Piano-Transcription-with-Pedals-by-Regressing-Precise-Onsets-and-Offsets-Times-v0-2",
+   "sn": "The transcription resolution of those systems time domain method has been proposed for piano transcription are limited to the hop size time between adjacent frames. In in [13]. Non-negative matrix factorizations (NMFs) has been addition, previous AMT systems are sensitive to the misaligned proposed"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "Onsets and Frames: Dual-Objective Piano Transcription",
+   "u": "https://www.alphaxiv.org/audio/1710.11153v2",
+   "sn": "Submitted 05 Jun 2018 Onsets and Frames: Dual-Objective Piano Transcription Abstract We advance the state of the art in polyphonic piano music transcription by using a deep convolutional and recurrent neural network which is trained to jointly predict onsets and frames. Our model predicts pitch onse"
+  },
+  {
+   "t": "Onsets and Frames: Dual-Objective Piano Transcription",
+   "u": "https://arxiv.org/abs/1710.11153v1",
+   "sn": "We use deep neural networks and propose a novel approach that predicts onsets and frames using both CNNs and LSTMs. This model predicts pitch onset events and then uses those predictions to condition framewise pitch predictions. During inference, we restrict the predictions from the framewise detect"
+  },
+  {
+   "t": "GitHub - DBraun/onsets-and-frames: A TensorFlow 2.1 implementation of Onsets and Frames (Hawthorne 2018)",
+   "u": "https://github.com/DBraun/onsets-and-frames",
+   "sn": "TensorFlow 2.1 Implementation of Onsets and Frames This is a TensorFlow 2.1 implementation of Google’s Onsets and Frames model, using the MAESTRO dataset for training and the Disklavier portion of the MAPS database for testing. The codebase was ported from Jong Wook Kim’s PyTorch implementation, whi"
+  },
+  {
+   "t": "Onsets and Frames: Dual-Objective Piano Transcription",
+   "u": "https://magenta.withgoogle.com/onsets-frames",
+   "sn": "Onsets and Frames is our new model for automatic polyphonic piano music transcription. Using this model, we can convert raw recordings of solo piano performances into MIDI. For example, have you ever made a recording of yourself improvising at the piano and later wanted to know exactly what you pla"
+  },
+  {
+   "t": "Towards Efficient and Real-Time Piano Transcription Using Neural Autoregressive Models",
+   "u": "arxiv://2404.06818",
+   "sn": "relatively easy to obtain a large amount of training data with strongly labeled MIDI by synthesizing virtual piano sounds from MIDI data [[2](https://arxiv.org/html/2404.06818v1#bib.bib2)] or by capturing MIDI data from piano performance actions on computer-controlled pianos such as the Disklavier ["
+  },
+  {
+   "t": "Enabling Factorized Piano Music Modeling and Generation with the MAESTRO Dataset Quick Review",
+   "u": "https://liner.com/review/enabling-factorized-piano-music-modeling-and-generation-with-the-maestro",
+   "sn": "and ICLR Oct 29, 2018 References 22 Cited by 471 Motivation & Objective Motivation & Objective Generating musical audio directly with neural networks is challenging due to the need for coherently modeling structure across varied timescales. Previous models struggled with generating long-term coheren"
+  },
+  {
+   "t": "Transition-Aware: A More Robust Approach for Piano Transcription",
+   "u": "https://dafx2020.mdw.ac.at/proceedings/papers/DAFx20in21_paper_4.pdf",
+   "sn": "In 2019, Google Brain published a larger piano transcription dataset, MAESTRO. On this dataset, Onsets and Frames transcription approach proposed by Hawthorne achieved a stunning onset F1 score of 94.73%. Unlike the annotation method of Onsets and Frames, Transition-aware model presented in this pap"
+  },
+  {
+   "t": "High-Resolution Piano Transcription | PDF | Algorithms | Applied Mathematics",
+   "u": "https://scribd.com/document/715628329/High-resolution-Piano-Transcription-with-Pedals-by-Regressing-Precise-Onsets-and-Offsets-Times-v0-2",
+   "sn": "The transcription resolution of those systems time domain method has been proposed for piano transcription are limited to the hop size time between adjacent frames. In in [13]. Non-negative matrix factorizations (NMFs) has been addition, previous AMT systems are sensitive to the misaligned proposed"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "High-Resolution Piano Transcription | PDF | Algorithms | Applied Mathematics",
+   "u": "https://scribd.com/document/715628329/High-resolution-Piano-Transcription-with-Pedals-by-Regressing-Precise-Onsets-and-Offsets-Times-v0-2",
+   "sn": "The transcription resolution of those systems time domain method has been proposed for piano transcription are limited to the hop size time between adjacent frames. In in [13]. Non-negative matrix factorizations (NMFs) has been addition, previous AMT systems are sensitive to the misaligned proposed"
+  },
+  {
+   "t": "Towards Efficient and Real-Time Piano Transcription Using Neural Autoregressive Models",
+   "u": "https://arxiv.org/html/2404.06818v1",
+   "sn": "To this end, we propose novel architectures for convolutional recurrent neural networks, redesigning an existing autoregressive piano transcription model. First, we extend the acoustic module by adding a frequency-conditioned FiLM layer to the CNN module to adapt the convolutional filters on the fre"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times",
+   "u": "https://arxiv.org/html/2010.01815v2",
+   "sn": "In this article, we propose a high-resolution AMT system trained by regressing precise times of onsets and offsets. In inference, we propose an algorithm to analytically calculate the precise onsets and offsets times of note and pedal events. We build both note and pedal transcription systems with o"
+  },
+  {
+   "t": "Towards Efficient and Real-Time Piano Transcription Using Neural Autoregressive Models",
+   "u": "doi://10.48550/arxiv.2404.06818",
+   "sn": "relatively easy to obtain a large amount of training data with strongly labeled MIDI by synthesizing virtual piano sounds from MIDI data [[2](https://arxiv.org/html/2404.06818v1#bib.bib2)] or by capturing MIDI data from piano performance actions on computer-controlled pianos such as the Disklavier ["
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onset and Offset Times",
+   "u": "https://arxiv.org/html/2010.01815v3",
+   "sn": "Furthermore, there are limited researches on sustain pedal transcription on large-scale datasets. In this article, we propose a high-resolution AMT system trained by regressing precise onset and offset times of piano notes. At inference, we propose an algorithm to analytically calculate the precise"
+  },
+  {
+   "t": "KRAISLER: A Multi‑Track Dataset of Piano and Violin Duet Recordings for Music Information Retrieval Research | Transactions of the International Society for Music Information Retrieval",
+   "u": "https://transactions.ismir.net/articles/10.5334/tismir.338",
+   "sn": "Retrieval Research DATASET ARTICLE Hyemi Kim Jiyun Park Sein Lee Taegyun Kwon Sunjae Won Juhan Nam Abstract The piano plays a central role in classical music, both as a solo instrument and in ensemble settings, often accompanying melodic instruments such as the violin, cello, and flute. Recordings o"
+  },
+  {
+   "t": "A study of audio mixing methods for piano transcription in violin-piano ensembles",
+   "u": "https://ar5iv.labs.arxiv.org/html/2305.13758",
+   "sn": "We apply mixing methods that consider both harmonic and temporal characteristics of the audio. To create datasets for this study, we generated the PFVN-synth dataset, which contains 7 hours of violin-piano ensemble audio by rendering MIDI files and corresponding labels, and also collected unaccompan"
+  },
+  {
+   "t": "Sequence-to-Sequence Piano Transcription with Transformers",
+   "u": "https://ar5iv.labs.arxiv.org/html/2107.09142",
+   "sn": "Sequence-to-Sequence Piano Transcription with Transformers Abstract Automatic Music Transcription has seen significant progress in recent years by training custom deep neural networks on large datasets. However, these models have required extensive domain-specific design of network architectures, in"
+  }
+ ]
+}

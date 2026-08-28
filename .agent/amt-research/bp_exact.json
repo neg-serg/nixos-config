@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "basic-pitch note F1 0.895 MAESTRO v3 transcription Spotify results",
+  "basic-pitch MAESTRO note-level F1 89.5 percent transcription"
+ ],
+ "anysearch": [
+  {
+   "t": "README.md · spotify/basic-pitch at main",
+   "u": "https://huggingface.co/spotify/basic-pitch/blame/main/README.md",
+   "sn": "179 180 181 182 183 184 185 186 187 188 189 190 191 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 --- language: - en thumbnail: https://user-images.githubusercontent.com/213293/167478083-de988de2-9137-4325-8a5f-ceeb5123375"
+  },
+  {
+   "t": "2024:Polyphonic Transcription Results - MIREX Wiki",
+   "u": "https://music-ir.org/mirex/wiki/2024:Polyphonic_Transcription_Results",
+   "sn": "8465 Transkun V2 (Baseline 1) PDF ViT + Neural SemiCRF 0.9490 0.8764 Transkun V2 Aug (Baseline 2) PDF ViT + Neural SemiCRF + Data Augmentation 0.9648 0.9081 hFT-Transformer PDF Two stacks of Transformers for Frequency and Time + regression onset&offset 0.9416 0.8359 average note onset F1 = avera"
+  },
+  {
+   "t": "Ecosyste.ms: Awesome",
+   "u": "https://awesome.ecosyste.ms/projects/github.com%2Fspotify%2Fbasic-pitch",
+   "sn": "https://github.com/spotify/basic-pitch A lightweight yet powerful audio-to-MIDI converter with pitch bend detection https://github.com/spotify/basic-pitch audio lightweight machine-learning midi music pitch-detection polyphonic python transcription typescript Last synced: about 1 year ago JSON repre"
+  },
+  {
+   "t": "6 Best AI Music Transcription Tools (2026)",
+   "u": "https://pianolyze.com/blog/best-ai-music-transcription-tools",
+   "sn": "A model trained exclusively on piano will beat a general model on piano, and fail on guitar. Pick for your source material. Where it runs. On-device (browser or desktop) means your audio stays yours. Server-side means it doesn’t. What you get out. MIDI is the universal note format. MusicXML preserve"
+  },
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/pdf/2603.27528",
+   "sn": "uk Abstract This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument tran- scription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both advances"
+  },
+  {
+   "t": "@spotify/basic-pitch",
+   "u": "https://www.npmjs.com/package/@spotify/basic-pitch?activeTab=readme",
+   "sn": "1 • Public • Published Readme Code Beta 2 Dependencies 1 Dependents 2 Versions Basic Pitch is a Typescript and Python library for Automatic Music Transcription (AMT), using lightweight neural network developed by Spotify’s Audio Intelligence Lab. It’s small, easy-to-use, and npm install-able."
+  },
+  {
+   "t": "GitHub - andres-fr/iamusica_training: ONSETS&VELOCITIES real-time piano detection - PyTorch training [EUSIPCO2023]",
+   "u": "https://github.com/andres-fr/iamusica_training",
+   "sn": "0 -c anaconda # pip dependencies pip install coloredlogs==15.0.1 pip install mido==1.2.10 pip install mir-eval==0.7 pip install parse==1.19.0 # optional conda install matplotlib==3.7.1 -c conda-forge See the full requirements for a comprehensive description of the resulting environment. Data downloa"
+  },
+  {
+   "t": "GitHub - victoria-mckinney/basic-pitch: A lightweight yet powerful audio-to-MIDI converter with pitch bend detection",
+   "u": "https://github.com/victoria-mckinney/basic-pitch",
+   "sn": "Basic Pitch is a Python library for Automatic Music Transcription (AMT), using lightweight neural network developed by Spotify’s Audio Intelligence Lab. It’s small, easy-to-use, pip install-able and npm install-able via its sibling repo. Basic Pitch may be simple, but it’s is far from “basic”! basic"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "README.md · spotify/basic-pitch at main",
+   "u": "https://huggingface.co/spotify/basic-pitch/blame/main/README.md",
+   "sn": "179 180 181 182 183 184 185 186 187 188 189 190 191 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 --- language: - en thumbnail: https://user-images.githubusercontent.com/213293/167478083-de988de2-9137-4325-8a5f-ceeb5123375"
+  },
+  {
+   "t": "2024:Polyphonic Transcription Results - MIREX Wiki",
+   "u": "https://music-ir.org/mirex/wiki/2024:Polyphonic_Transcription_Results",
+   "sn": "8465 Transkun V2 (Baseline 1) PDF ViT + Neural SemiCRF 0.9490 0.8764 Transkun V2 Aug (Baseline 2) PDF ViT + Neural SemiCRF + Data Augmentation 0.9648 0.9081 hFT-Transformer PDF Two stacks of Transformers for Frequency and Time + regression onset&offset 0.9416 0.8359 average note onset F1 = avera"
+  },
+  {
+   "t": "Ecosyste.ms: Awesome",
+   "u": "https://awesome.ecosyste.ms/projects/github.com%2Fspotify%2Fbasic-pitch",
+   "sn": "https://github.com/spotify/basic-pitch A lightweight yet powerful audio-to-MIDI converter with pitch bend detection https://github.com/spotify/basic-pitch audio lightweight machine-learning midi music pitch-detection polyphonic python transcription typescript Last synced: about 1 year ago JSON repre"
+  },
+  {
+   "t": "6 Best AI Music Transcription Tools (2026)",
+   "u": "https://pianolyze.com/blog/best-ai-music-transcription-tools",
+   "sn": "A model trained exclusively on piano will beat a general model on piano, and fail on guitar. Pick for your source material. Where it runs. On-device (browser or desktop) means your audio stays yours. Server-side means it doesn’t. What you get out. MIDI is the universal note format. MusicXML preserve"
+  },
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/pdf/2603.27528",
+   "sn": "uk Abstract This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument tran- scription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both advances"
+  },
+  {
+   "t": "GitHub - andres-fr/iamusica_training: ONSETS&VELOCITIES real-time piano detection - PyTorch training [EUSIPCO2023]",
+   "u": "https://github.com/andres-fr/iamusica_training",
+   "sn": "0 -c anaconda # pip dependencies pip install coloredlogs==15.0.1 pip install mido==1.2.10 pip install mir-eval==0.7 pip install parse==1.19.0 # optional conda install matplotlib==3.7.1 -c conda-forge See the full requirements for a comprehensive description of the resulting environment. Data downloa"
+  },
+  {
+   "t": "GitHub - victoria-mckinney/basic-pitch: A lightweight yet powerful audio-to-MIDI converter with pitch bend detection",
+   "u": "https://github.com/victoria-mckinney/basic-pitch",
+   "sn": "Basic Pitch is a Python library for Automatic Music Transcription (AMT), using lightweight neural network developed by Spotify’s Audio Intelligence Lab. It’s small, easy-to-use, pip install-able and npm install-able via its sibling repo. Basic Pitch may be simple, but it’s is far from “basic”! basic"
+  },
+  {
+   "t": "spotify/basic-pitch · Hugging Face",
+   "u": "https://huggingface.co/spotify/basic-pitch",
+   "sn": "Basic Pitch is a Python library for Automatic Music Transcription (AMT), using lightweight neural network developed by Spotify’s Audio Intelligence Lab. It’s small, easy-to-use, pip install-able and npm install-able via its sibling repo. Basic Pitch may be simple, but it’s is far from “basic”! basic"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "https://zenodo.org/records/10610212",
+   "sn": "Robust Automatic Piano Transcription Description This is a re-trained model of [1], using the data augmentation techniques described in our pending IEEE Signal Processing Letters publication “A Data-Driven Analysis of Robust Automatic Piano Transcription”. MAPS test set out-of-dataset evaluation: Mo"
+  },
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "https://arxiv.org/html/2402.01424v1",
+   "sn": "adapting new neural network architectures, such as the Transformer and Perceiver, in order to yield more accurate systems. In this work, we study transcription systems from the perspective of their training data. By measuring their performance on out-of-distribution annotated piano data, we show how"
+  },
+  {
+   "t": "Towards Musically Informed Evaluation of Piano Transcription Models",
+   "u": "doi://10.48550/arxiv.2406.08454",
+   "sn": "The target output format can be a full symbolic score including quantized rhythm, time signature and pitch spelling information, or a mid-level physical MIDI(-like) representation, describing notes in terms of their onset and offset times, pitch and velocity [[1](https://arxiv.org/html/2406.08454v3#"
+  },
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "https://doi.org/10.48550/arxiv.2402.01424",
+   "sn": "In this work, we focus on AMT applied to piano, or automatic piano transcription (APT). APT has improved dramatically over the past decade. The two largest relative improvements in state-of-the-art accuracy were from a new architecture to jointly predict onsets and frames [[1](https://arxiv.org/html"
+  },
+  {
+   "t": "Unaligned Supervision for Automatic Music Transcription In-the-Wild",
+   "u": "https://arxiv.org/html/2204.13668v1",
+   "sn": "Unaligned Supervision for Automatic Music Transcription In-the-Wild Ben Maman Amit H. Bermano Abstract Multi-instrument Automatic Music Transcription (AMT), or the decoding of a musical recording into semantic musical content, is one of the holy grails of Music Information Retrieval. Current AMT app"
+  },
+  {
+   "t": "AEmotionStudio/basic-pitch-onnx-models · Hugging Face",
+   "u": "https://huggingface.co/AEmotionStudio/basic-pitch-onnx-models",
+   "sn": "Basic Pitch (ONNX) Mirror Vendored copy of Spotify’s Basic Pitch ICASSP 2022 polyphonic transcription model in ONNX format, re-hosted for use in the MAESTRO AI Workstation. What this model does Audio → MIDI polyphonic transcription for any pitched instrument: guitar, bass, vocals, synth, piano. Ligh"
+  },
+  {
+   "t": "Sound and music biases in deep music transcription models: a systematic analysis",
+   "u": "https://link.springer.com/article/10.1186/s13636-025-00428-z",
+   "sn": "We evaluate the performance of several state-of-the-art AMT systems on the MDS corpus using both traditional information-retrieval and musically informed performance metrics. Our extensive evaluation isolates and exposes varying degrees of performance degradation under specific distribution shifts."
+  },
+  {
+   "t": "Sound and Music Biases in Deep Music Transcription Models: A Systematic Analysis",
+   "u": "https://arxiv.org/pdf/2512.14602v1",
+   "sn": "at Abstract Automatic Music Transcription (AMT) — the task of converting music audio into note representations — has seen rapid progress, driven largely by deep learning systems. Due to the limited availability of richly annotated music datasets, much of the progress in AMT has been concentrated on"
+  }
+ ]
+}
