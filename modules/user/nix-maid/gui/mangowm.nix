@@ -81,6 +81,11 @@ let
     animation_fade_in=1
     animation_fade_out=1
     tag_animation_direction=1
+    # snappy durations (mango defaults are 500/400/300/300 ms — sluggish)
+    animation_duration_move=150
+    animation_duration_open=150
+    animation_duration_tag=120
+    animation_duration_close=120
 
     # --- Layout per tag — scroller everywhere (mango's scroll layout) ---
     tagrule=id:1, layout_name:scroller
@@ -158,17 +163,17 @@ let
     bind=SUPER+CTRL,r,spawn,quickshell-restart
     # keybinds above stay alphabetical-ish; quickshell-restart = panel restart
 
-    # apps (hyprland raise->launch becomes plain spawn; no run-or-raise in mango yet)
-    bind=SUPER,w,spawn,vivaldi
-    bind=SUPER,x,spawn,kitty --class term
-    bind=SUPER,q,spawn,kitty --class nwim -e /home/neg/.local/bin/v
-    bind=SUPER,b,spawn,~/.local/bin/pl video
-    bind=SUPER+CTRL,c,spawn,swayimg ~/dw
+    # apps (run-or-raise via mango-raise: focus by appid class, else launch)
+    bind=SUPER,w,spawn,mango-raise '^([Vv]ivaldi-stable|[Vv]ivaldi)$' vivaldi
+    bind=SUPER,x,spawn,mango-raise '^term$' kitty --class term
+    bind=SUPER,q,spawn,mango-raise '^nwim$' kitty --class nwim -e /home/neg/.local/bin/v
+    bind=SUPER,b,spawn,mango-raise '^mpv$' ~/.local/bin/pl video
+    bind=SUPER+CTRL,c,spawn,mango-raise '^swayimg$' swayimg ~/dw
     bind=SUPER+SHIFT,c,spawn,wl random ~/pic/wl
-    bind=SUPER,g,spawn,steam
-    bind=SUPER+CTRL,o,spawn,obs
-    bind=SUPER+CTRL,n,spawn,obsidian
-    bind=SUPER+CTRL,v,spawn,bazecor
+    bind=SUPER,g,spawn,mango-raise '^(steam|com\.valvesoftware\.Steam|steam_app.*|gamescope)$' steam
+    bind=SUPER+CTRL,o,spawn,mango-raise '^(obs|com\.obsproject\.Studio)$' obs
+    bind=SUPER+CTRL,n,spawn,mango-raise '^(Obsidian|md\.obsidian\.Obsidian)$' obsidian
+    bind=SUPER+CTRL,v,spawn,mango-raise '^[Bb]azecor$' bazecor
 
     # workspaces (tags)
     bind=SUPER,1,view,1,0
@@ -288,6 +293,47 @@ let
     done
   '';
 
+  # mango-raise: run-or-raise for MangoWM — focus an existing window whose
+  # appid matches a class regex via the mango IPC socket, otherwise launch the
+  # command. Mirrors the Hyprland `raise` helper (raise flake input).
+  mangoRaise = pkgs.writeShellScriptBin "mango-raise" ''
+    set -eu
+    if [ $# -lt 2 ]; then
+      echo "usage: mango-raise <class-regex> <launch...>" >&2
+      exit 1
+    fi
+    class="$1"
+    shift
+
+    socat_bin='${lib.getExe pkgs.socat}'
+    jq_bin='${lib.getExe pkgs.jq}'
+    head_bin='${lib.getExe' pkgs.coreutils "head"}'
+
+    sock="''${MANGO_INSTANCE_SIGNATURE:-}"
+    if [ -z "$sock" ] || [ ! -S "$sock" ]; then
+      sock="$(ls -1 "''${XDG_RUNTIME_DIR:-/run/user/1000}"/mango-*.sock 2>/dev/null | "$head_bin" -1)"
+    fi
+    if [ -z "$sock" ]; then
+      echo "mango IPC socket not found" >&2
+      exit 1
+    fi
+
+    send() {
+      printf '%s\n' "$1" | "$socat_bin" - UNIX-CONNECT:"$sock" 2>/dev/null || true
+    }
+
+    resp="$(send "get all-clients")"
+    id="$(printf '%s' "$resp" | "$jq_bin" -r --arg cls "$class" '
+      [.clients[] | select(.appid != null and (.appid | test($cls; "i"))) | .id][0] // empty
+    ' 2>/dev/null || true)"
+
+    if [ -n "$id" ]; then
+      send "dispatch client,$id,focusid" >/dev/null
+    else
+      nohup "$@" >/dev/null 2>&1 &
+    fi
+  '';
+
   # start-mango: mango session launcher (mirrors the repo's hypr-start flow:
   # import env into the user session, exec mango). The mango-session.target is
   # started from mango's exec-once, once the wayland socket is up.
@@ -338,6 +384,7 @@ in
         environment.systemPackages = [
           pkgs.mango # MangoWM compositor (wl-only branch)
           startMango # mango session launcher (env import + session target)
+          mangoRaise # run-or-raise for app binds (focus by appid class, else launch)
           pkgs.swayidle # idle daemon (locks via swaylock after 2 min)
           pkgs.swaylock # lock screen for the mango session
         ];
