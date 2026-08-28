@@ -229,6 +229,22 @@ let
     if drmDev="$(readlink -f /dev/dri/by-path/pci-0000:03:00.0-card 2>/dev/null)"; then
       export WLR_DRM_DEVICES="$drmDev"
     fi
+    # greetd starts the session on the same VT the greeter used, so the kernel
+    # never switches VTs and logind leaves the session inactive. wlroots aborts
+    # unless the session becomes active within 10s ("Timeout waiting session to
+    # become active"). Force a VT round-trip via logind (Seat.SwitchTo is
+    # allowed for local sessions without auth) so logind observes a console
+    # change and marks our session active.
+    vt="''${XDG_VTNR:-1}"
+    other=$([ "$vt" = 1 ] && echo 3 || echo 1)
+    if [ -n "''${XDG_SESSION_ID:-}" ]; then
+      for _ in 1 2 3 4 5; do
+        [ "$(/run/current-system/sw/bin/loginctl show-session "$XDG_SESSION_ID" -p Active --value 2>/dev/null)" = "yes" ] && break
+        /run/current-system/sw/bin/busctl --system call org.freedesktop.login1 /org/freedesktop/login1/seat/seat0 org.freedesktop.login1.Seat SwitchTo u "$other" 2>/dev/null || true
+        /run/current-system/sw/bin/busctl --system call org.freedesktop.login1 /org/freedesktop/login1/seat/seat0 org.freedesktop.login1.Seat SwitchTo u "$vt" 2>/dev/null || true
+        sleep 0.5
+      done
+    fi
     echo "Executing mango..." >> "$LOG"
     exec mango "$@"
   '';
