@@ -14,6 +14,7 @@
 | `audio-analysis` | анализ аудио | ⏳ не проверен | venv есть, прогон не делался |
 | `denoise`        | шумоподавление    | ⏳ не проверен | venv есть, прогон не делался |
 | `groovae`        | groove-генерация (magenta) | ⏳ не проверен | venv есть, прогон не делался |
+| `transcribe-high` | конвейер: деноиз→Demucs→basic-pitch→слияние | ✅ работает | проверен 2026-08-28 (см. детали); для чистых записей лучше `--no-denoise --no-stems` |
 | `basic-pitch`  | полифоническая транскрипция → MIDI              | ✅ работает | melody10s → MIDI (ONNX)       |
 | `rembg`        | удаление фона (u2net / bria-rmbg / birefnet)    | ✅ работает | u2net + bria                  |
 | `triposr`      | картинка → 3D-меш                               | ✅ работает | mesh.obj 7.2 МБ               |
