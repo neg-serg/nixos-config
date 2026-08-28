@@ -358,6 +358,14 @@ broot, khal, zsh vi-mode, kitty-hints — им не нужны дубли, по�
 `systemctl --user status ru-layout`; в kitty поднять `M4+S` → в соседнем окне раскладка сама
 вернётся на us, в браузере — на ru.
 
+### MangoWM (сессия mango)
+
+Тот же флаг включает сервис `ru-layout-mango` (`mango-session.target`) — порт демона на IPC-сокет
+mango (`get focusing-client` + `dispatch switch_keyboard_layout,<idx>`, индексы 1-базированные:
+1 = us, 2 = ru). Раскладка задаётся в `config.conf` ключом `xkb_rules_layout=us,ru` (инвариант
+`us,ru` тот же, что и в Hyprland); ручное переключение — `SUPER+S` (`switch_keyboard_layout`).
+Проверка: `systemctl --user status ru-layout-mango`.
+
 ## Генерация дублей (refactor, `lib/ru-keys.nix`)
 
 Ручные кириллические дубли рассыпаются по конфигам и тихо рассинхронизируются с латинскими биндами.
