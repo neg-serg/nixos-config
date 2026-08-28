@@ -22,4 +22,17 @@
     libinput.enable = true;
     ratbagd.enable = true;
   };
+
+  # swayosd OSD: volume/brightness overlays used by both Hyprland and MangoWM
+  # media binds (swayosd-client). Was invoked but never declared before.
+  environment.systemPackages = [ pkgs.swayosd ];
+  systemd.user.services.swayosd = {
+    description = "SwayOSD on-screen display daemon";
+    wantedBy = [ "graphical-session.target" ];
+    serviceConfig = {
+      ExecStart = "${lib.getExe' pkgs.swayosd "swayosd-server"}";
+      Restart = "on-failure";
+      RestartSec = "2s";
+    };
+  };
 }

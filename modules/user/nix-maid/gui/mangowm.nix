@@ -218,15 +218,44 @@ let
     bind=NONE,XF86AudioPause,spawn,playerctl play-pause
     bind=NONE,XF86MonBrightnessUp,spawn,swayosd-client --brightness +10
     bind=NONE,XF86MonBrightnessDown,spawn,swayosd-client --brightness -10
+    bind=NONE,XF86AudioMicMute,spawn,swayosd-client --input-volume mute-toggle
 
-    # resize keymode (SUPER+CTRL+backslash enters, Escape leaves)
+    # media controls (parity with hyprland.lua)
+    bind=SUPER+SHIFT,w,spawn,~/.local/bin/pl cmd play-pause
+    bind=SUPER,comma,spawn,~/.local/bin/pl cmd previous
+    bind=SUPER,period,spawn,~/.local/bin/pl cmd next
+    bind=SUPER+SHIFT,i,spawn,~/.local/bin/pl vol mute
+    bind=SUPER+SHIFT,o,spawn,~/.local/bin/pl vol unmute
+    bind=SUPER,m,spawn,~/.local/bin/music-rename current
+
+    # notifications / overlay (quickshell IPC, session-agnostic). SUPER+n is
+    # taken by switch_layout in mango, so the center lives on SUPER+space.
+    bind=SUPER,space,spawn,quickshell ipc call globalIPC toggleNotificationCenter
+    bind=SUPER+SHIFT,space,spawn,touch ~/.cache/quickshell/notif-close-all
+    bind=SUPER+SHIFT,k,spawn,touch ~/.cache/quickshell/dismiss-overlay
+    bind=SUPER+SHIFT,d,spawn,touch ~/.cache/quickshell/dismiss-overlay
+
+    # resize keymode (SUPER+CTRL+backslash enters; Escape/Return leave)
     bind=SUPER+CTRL,backslash,setkeymode,resize
     keymode=resize
     bind=NONE,Left,resizewin,-10,0
     bind=NONE,Right,resizewin,10,0
     bind=NONE,Up,resizewin,0,-10
     bind=NONE,Down,resizewin,0,10
+    bind=NONE,h,resizewin,-10,0
+    bind=NONE,l,resizewin,10,0
+    bind=NONE,k,resizewin,0,-10
+    bind=NONE,j,resizewin,0,10
+    bind=NONE,SHIFT+Left,resizewin,10,0
+    bind=NONE,SHIFT+Right,resizewin,-10,0
+    bind=NONE,SHIFT+Up,resizewin,0,10
+    bind=NONE,SHIFT+Down,resizewin,0,-10
+    bind=NONE,SHIFT+h,resizewin,10,0
+    bind=NONE,SHIFT+l,resizewin,-10,0
+    bind=NONE,SHIFT+k,resizewin,0,10
+    bind=NONE,SHIFT+j,resizewin,0,-10
     bind=NONE,Escape,setkeymode,default
+    bind=NONE,Return,setkeymode,default
     keymode=default
   '';
 
@@ -420,6 +449,22 @@ in
             serviceConfig = {
               Type = "oneshot";
               ExecStart = "${pkgs.swaylock}/bin/swaylock -f";
+            };
+          };
+          hyprpolkitagent = {
+            description = "Polkit authentication agent (Wayland)";
+            wantedBy = [ "mango-session.target" ];
+            bindsTo = [ "mango-session.target" ];
+            after = [ "mango-session.target" ];
+            serviceConfig = {
+              ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
+              Environment = [
+                "QT_QPA_PLATFORM=wayland"
+                "XDG_SESSION_TYPE=wayland"
+                "XDG_CURRENT_DESKTOP=mango"
+              ];
+              Restart = "on-failure";
+              RestartSec = "2s";
             };
           };
           quickshell-mango = {
