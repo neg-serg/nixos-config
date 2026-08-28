@@ -12,12 +12,15 @@ Scope {
     readonly property bool available: true
     property int activeWorkspaceId: -1
     property string activeWorkspaceName: ""
-    property string currentSubmap: "" // no keymode IPC on mango yet
+    property string currentSubmap: "" // from mango IPC "watch keymode"
     property var binds: [] // no bind IPC on mango
     property var keyboardDevices: []
     property string lastKeyboardDevice: "mango-keyboard"
     property string lastKeyboardLayout: ""
-    readonly property bool hideUi: false
+    // Workspaces where the shell UI is hidden. id 4 = games tag (mangowm.nix
+    // windowrule appid:^(steam|Steam)$,tags:4). Matches the Hyprland impl.
+    property var hideUiWorkspaceIds: [4]
+    readonly property bool hideUi: root.hideUiWorkspaceIds.indexOf(root.activeWorkspaceId) !== -1
     readonly property var hyprEnvObject: ""
 
     signal keyboardLayoutEvent(string deviceName, string layoutName)
@@ -64,6 +67,7 @@ Scope {
                 // after a non-watch command, so only register the persistent
                 // watch here; it pushes the current layout as its first event.
                 root._sendCmd("watch keyboardlayout");
+                root._sendCmd("watch keymode");
             } else {
                 root.ipcConnected = false;
                 root.foundSocketPath = "";
@@ -100,6 +104,9 @@ Scope {
     function _onIpcLine(line) {
         try {
             const obj = JSON.parse(line);
+            if (obj && obj.keymode) {
+                root.currentSubmap = String(obj.keymode);
+            }
             if (obj && obj.layout) {
                 const l = String(obj.layout);
                 root.lastKeyboardLayout = l;
