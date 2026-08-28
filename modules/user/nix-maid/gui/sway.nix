@@ -19,6 +19,9 @@ let
       scale 2
       adaptive_sync on
       render_bit_depth 10
+      # Display P3 ICC (D65, DCI-P3 primaries, sRGB transfer); needs the Vulkan
+      # renderer (start-sway sets WLR_RENDERER=vulkan); conflicts with hdr on.
+      color_profile icc /home/${mainUser}/.config/sway/Display-P3.icc
     }
     output DP-1 disable
     # Wallpaper (swaybg reads this; change with: swaymsg output * bg <path> fill)
@@ -314,8 +317,10 @@ in
           startSwayfx # swayfx session launcher
           swayRunOrRaise # run-or-raise for app binds (focus by app_id, else launch)
           swayScratch # scratchpad toggle helper
-          swayDesktop # greeter session entry
-          swayfxDesktop # greeter session entry
+          (lib.hiPrio swayDesktop) # greeter entry; wins over the sway package's own
+          # wayland-sessions/sway.desktop (Exec=sway) so the greeter starts the
+          # vulkan launcher (start-sway) — required for color_profile icc.
+          (lib.hiPrio swayfxDesktop) # greeter session entry
           pkgs.swayidle # idle daemon (locks via swaylock after 2 min)
           pkgs.swaylock # lock screen for the sway session
         ];
@@ -370,6 +375,9 @@ in
       (neg.mkHomeFiles {
         ".config/sway/config".text = swayConfig;
         ".config/swayfx/config".text = swayfxConfig;
+        # Shared with the mango profile (files/gui/mango/); deployed here so
+        # sway's `color_profile icc` can load it.
+        ".config/sway/Display-P3.icc".source = config.lib.neg.path "files/gui/mango/Display-P3.icc";
       })
     ]
   );
