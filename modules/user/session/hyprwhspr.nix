@@ -40,12 +40,14 @@ let
   '';
 in
 {
-  services.hyprwhspr-rs.enable = true;
+  config = lib.mkIf (config.lib.neg.enabled "gui.hyprwhspr") {
+    services.hyprwhspr-rs.enable = true;
 
-  systemd.tmpfiles.rules = [
-    "d ${homeDir}/.config/hyprwhspr-rs 0755 ${user} ${userGroup} -"
-    "L+ ${homeDir}/.config/hyprwhspr-rs/config.jsonc - ${user} ${userGroup} - ${hyprwhsprConfig}"
-    "d ${homeDir}/.local/share/hyprwhspr-rs/models 0755 ${user} ${userGroup} -"
-    "L+ ${homeDir}/.local/share/hyprwhspr-rs/models/ggml-small.bin - ${user} ${userGroup} - ${whisperModel}"
-  ];
+    systemd.tmpfiles.rules = [
+      "d ${homeDir}/.config/hyprwhspr-rs 0755 ${user} ${userGroup} -"
+      "L+ ${homeDir}/.config/hyprwhspr-rs/config.jsonc - ${user} ${userGroup} - ${hyprwhsprConfig}"
+      "d ${homeDir}/.local/share/hyprwhspr-rs/models 0755 ${user} ${userGroup} -"
+      "L+ ${homeDir}/.local/share/hyprwhspr-rs/models/ggml-small.bin - ${user} ${userGroup} - ${whisperModel}"
+    ];
+  };
 }
