@@ -175,7 +175,8 @@ lib.mkMerge [
 
     # Local speech stack: Chatterbox TTS (:8000), Piper TTS (:8001), whisper.cpp STT (:8002).
     # Assets in /zero/ai/speech/engines; whisper.cpp GPU via Vulkan, chatterbox via ROCm.
-    features.media.audio.speech.enable = true;
+    # Disabled on request (2026-08-28): local speech NN servers (STT/TTS) turned off.
+    features.media.audio.speech.enable = false;
 
     # AI image processing: realesrgan-ncnn-vulkan (upscale, Vulkan) + ffmpeg-full.
     features.media.aiUpscale.enable = true;
