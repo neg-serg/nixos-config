@@ -261,6 +261,7 @@ in
   # run manually when needed — see docs/howto/local-llm.md (colibrì section).
   features.cli.broot.enable = true;
   features.hardware.usbAutomount.enable = true;
+  features.hardware.bluetooth.enable = true; # BlueZ — BT audio + HID (gamepads/keyboards/mice), needs kernel BT_HIDP/UHID
   features.input.kanata.enable = true; # Caps→Ctrl via kanata
   features.input.ruHotkeys.enable = true; # us layout in kitty/mpv on focus (RU hotkey fix)
   # features.security.tpmSudo.enable = true; # TPM-backed passwordless sudo — flip AFTER enabling fTPM in UEFI/BIOS
