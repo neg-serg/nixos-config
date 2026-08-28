@@ -189,15 +189,11 @@ in
         "${pkgs.filelog}/share/SuperCollider/extensions/FileLog";
       ".local/share/SuperCollider/Extensions/MathLib".source =
         "${pkgs.mathlib}/share/SuperCollider/extensions/MathLib";
-      ".local/share/SuperCollider/Extensions/wslib".source =
-        "${pkgs.wslib}/share/SuperCollider/extensions/wslib";
       # live coding quarks
       ".local/share/SuperCollider/Extensions/SafetyNet".source =
         "${pkgs.safetynet}/share/SuperCollider/extensions/SafetyNet";
       ".local/share/SuperCollider/Extensions/ddwPlug".source =
         "${pkgs.ddwplug}/share/SuperCollider/extensions/ddwPlug";
-      ".local/share/SuperCollider/Extensions/ddwChucklib".source =
-        "${pkgs.ddwchucklib}/share/SuperCollider/extensions/ddwChucklib";
       ".local/share/SuperCollider/Extensions/miSCellaneous_lib".source =
         "${pkgs.miscellaneous-lib}/share/SuperCollider/extensions/miSCellaneous_lib";
       ".local/share/SuperCollider/Extensions/ixiQuarks".source =
