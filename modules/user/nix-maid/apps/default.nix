@@ -6,9 +6,10 @@ let
   entries = builtins.readDir ./.;
 in
 {
-  # dsh-tui-ru-assets/, dsh-osm/, dsh-widgets/, dsh-web-en-assets/ and
-  # dsh-liangshen-fork/ are data (patch scripts, plugin bundles, translation
-  # maps, agent presets) consumed by their modules — not modules themselves.
+  # dsh-tui-ru-assets/, dsh-osm/, dsh-widgets/, dsh-web-en-assets/,
+  # dsh-liangshen-fork/ and dsh-fast/ are data (patch scripts, plugin bundles,
+  # translation maps, agent presets) consumed by their modules — not modules
+  # themselves.
   # (dsh-gui-tweaks/prompt/layout-slash now live in the dsh-web-ui fork
   # checkout, see their modules.)
   imports =
@@ -21,6 +22,7 @@ in
       && n != "dsh-widgets"
       && n != "dsh-web-en-assets"
       && n != "dsh-liangshen-fork"
+      && n != "dsh-fast"
       && n != "dsh-mode"
       && n != "dsh-session-tools"
       && n != "dsh-agent-usage-reminder"

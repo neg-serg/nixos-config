@@ -1,0 +1,86 @@
+# The `fast` agent preset: a lean, low-token chat mode.
+#
+# Goal: think less and eat fewer tokens. Achieved by (a) a one-paragraph
+# persona that is the ENTIRE system prompt (`complete: true` suppresses every
+# other prompt section — workspace instructions, skill catalog, plan-mode
+# rules, runtime context snapshots, tool guidance), and (b) a minimal tool
+# catalog: persistent bash, str_replace_editor, web search, ask-user.
+#
+# Compared with `neg` this drops: agent-instructions (the workspace AGENTS.md),
+# the skill catalog, plan mode, goals, todos, compaction, delegation
+# (subagents / workflows / ralph), jobs, and the advisor / ttsr / reminder
+# stack. The low reasoning effort is switched separately by the `/fast` slash
+# command (agent-default-model.reasoningEffort), not by this file.
+#
+# Adapted from the builtin `minimal` preset, extended with the web-search and
+# ask-user tools already used by `neg`. Managed declaratively in /etc/nixos
+# (modules/user/nix-maid/apps/dsh-fast.nix); the roster hot-reads
+# ~/.dsh/.agent-presets/fast — no dsh restart is needed for the preset itself.
+#
+# Row-level notes follow the same plane/realm rules as `neg` and `minimal`.
+
+# The persona is the complete system prompt; no other section can add text.
+- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    text: |-
+      You are a fast, concise assistant.
+      Answer in the user's language (Russian unless asked otherwise).
+      Be brief and direct: give the answer, then stop. No long reasoning,
+      no ceremony, no filler, no over-explaining.
+      Use the tools only when they are actually needed.
+    complete: true
+    includeRuntimeContext: false
+
+# The PTY registry is an agent-owned service, so it lives in an entry-local
+# realm. The backend still consumes the host sandbox policy and subprocess
+# implementation, while the tool registers into this agent's scoped catalog.
+# This persistent `bash` replaces the Standard ephemeral shell for the whole
+# session (both tools register the name `bash`).
+- id: persistent-shell
+  name: cordis:group
+  group: true
+  isolate:
+    terminals: true
+  config:
+    - id: pty
+      name: '@deepseek-ai/dsh-terminal'
+
+    - id: terminal-bash
+      name: '@deepseek-ai/dsh-terminal-bash'
+      config:
+        timeoutMs: 300000
+
+    - id: persistent-bash
+      name: '@deepseek-ai/dsh-tool-bash-persistent'
+      config:
+        timeoutMs: 300000
+        description: |-
+          Run commands in a bash shell
+          * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
+          * You don't have access to the internet via this tool.
+          * You do have access to a mirror of common linux and python packages via apt and pip.
+          * State is persistent across command calls and discussions with the user.
+          * To inspect a particular line range of a file, e.g. lines 10-25, try 'sed -n 10,25p /path/to/the/file'.
+          * Please avoid commands that may produce a very large amount of output.
+          * Please run long lived commands in the background, e.g. 'sleep 10 &' or start a server in the background.
+
+# Minimal editor as a direct top-level row: it reuses the host's sandboxed
+# `ctx.fs` (same as `neg`), not a bare local filesystem.
+- id: str-replace-editor
+  name: '@deepseek-ai/dsh-tool-str-replace-editor'
+  config:
+    maxOutputChars: 16000
+
+# Web search for chat Q&A. The `web` service and its search provider
+# (dsh-free-search) stay in the host composition; only the model-facing tool
+# is per-session.
+- id: tool-web
+  name: '@deepseek-ai/dsh-tool-web'
+  config:
+    fetch: false
+    searchTimeoutMs: 60000
+
+# Clarification questions; consumer of the host `userQuestions` seam.
+- id: tool-ask-user
+  name: '@deepseek-ai/dsh-tool-ask-user'
