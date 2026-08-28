@@ -123,8 +123,17 @@ Scope {
     // already delivers the current layout as its first event and on every change.
     function _askLayout() { }
 
-    // Click-to-switch from the bar: route through mango IPC dispatch.
+    // Click-to-switch from the bar. Mango IPC is one command per connection
+    // and commands sent on a watch connection are silently dropped, so run the
+    // dispatch on a separate one-shot socat connection (SOCAT_BIN is injected
+    // into the quickshell service env by the mango module).
+    property string socatBin: Quickshell.env("SOCAT_BIN") || "socat"
+    Process {
+        id: dispatchProc
+        command: ["sh", "-c", "printf '%s\\n' \"$1\" | \"$2\" - UNIX-CONNECT:\"$3\"", "mango-ipc", "dispatch switch_keyboard_layout", root.socatBin, root.foundSocketPath]
+        running: false
+    }
     function switchKeyboardLayout() {
-        root._sendCmd("dispatch switch_keyboard_layout");
+        if (root.foundSocketPath.length > 0) dispatchProc.running = true;
     }
 }

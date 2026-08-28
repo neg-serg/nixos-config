@@ -378,7 +378,10 @@ in
             after = [ "mango-session.target" ];
             serviceConfig = {
               ExecStart = "/run/current-system/sw/bin/quickshell -p %h/.config/quickshell/shell.qml";
-              Environment = [ "QS_SESSION=mango" ];
+              Environment = [
+                "QS_SESSION=mango"
+                "SOCAT_BIN=${lib.getExe pkgs.socat}"
+              ];
               Restart = "on-failure";
               RestartSec = "5";
             };
