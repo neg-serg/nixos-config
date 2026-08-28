@@ -10,7 +10,10 @@
 | -------------- | ----------------------------------------------- | ----------- | ----------------------------- |
 | `whisperx`     | STT + диаризация (faster-whisper, CPU)          | ✅ работает | ru-распознавание + диаризация |
 | `mt3`          | аудио → MIDI (MR-MT3, PyTorch)                  | ✅ работает | 171 нота из тестового wav     |
-| `amt-generate` | генерация MIDI (Anticipatory Music Transformer) | ✅ работает | 729 событий, `-t 4`           |
+| ~~`amt-generate`~~ | ~~генерация MIDI (Anticipatory Music Transformer)~~ | ❌ удалён | 2026-08-28, решение пользователя |
+| `audio-analysis` | анализ аудио | ⏳ не проверен | venv есть, прогон не делался |
+| `denoise`        | шумоподавление    | ⏳ не проверен | venv есть, прогон не делался |
+| `groovae`        | groove-генерация (magenta) | ⏳ не проверен | venv есть, прогон не делался |
 | `basic-pitch`  | полифоническая транскрипция → MIDI              | ✅ работает | melody10s → MIDI (ONNX)       |
 | `rembg`        | удаление фона (u2net / bria-rmbg / birefnet)    | ✅ работает | u2net + bria                  |
 | `triposr`      | картинка → 3D-меш                               | ✅ работает | mesh.obj 7.2 МБ               |
@@ -31,22 +34,13 @@
 - Команда: `mt3 file.wav [out.mid]`; чекпоинт MR-MT3 в `/zero/ai/music/mt3/mr_mt3`.
 - Результат: `/tmp/mt3-out.mid` — 171 нота.
 
-### amt-generate — генерация MIDI
+### ~~amt-generate~~ — удалён (2026-08-28)
 
-- Обёртка: `~/src/music-ai/bin/amt-generate` → `bin/amt-run` (venv `venv-amt`), symlink в
-  `~/.local/bin`.
-- Модель: Stanford CRFM Anticipatory Music Transformer (arXiv:2306.08620), 128M, чекпоинт
-  `music-small-100k` (fp32, 490 МБ) в `~/src/music-ai/models/`. AR-базлайн
-  (`music-small-ar-100k`) отключён по решению пользователя (2026-08-28).
-- Команда: `amt-generate -o out.mid -t 4 [-d auto|cpu|gpu]`; top_p 0.97 с ретраями
-  0.95/0.92 (ассерт длительности).
-- **GPU (2026-08-28)**: в `venv-amt` установлен torch 2.13.0+rocm7.1 (колесо
-  download.pytorch.org через socks-прокси, 5.8 ГБ + triton-rocm 3.7.1). Автодетект ROCm,
-  fp16 (RDNA4: fp32 ~115 мс/шаг vs fp16 ~6.5 мс/шаг). Патч `sample.py`: периодический
-  `torch.cuda.empty_cache()` — иначе HIPCachingAllocator забивает VRAM на растущих длинах
-  входов (OOM + падение до 1 it/s). Итог: 16s-пьеса ~30s вместо ~20 мин CPU.
-- Результат: 4 трека в `/zero/ai/music/renders/amt-20260828/` (16s×2, 8s, 24s),
-  см. карточку-плееры в чате; рендер fluidsynth + `TimGM6mb.sf2`.
+Пользователь признал генерацию «хернёй»; удалены: обёртки `~/src/music-ai/bin/amt-*`,
+venv `venv-amt` (включая torch 2.13.0+rocm7.1), исходники `anticipation/`, модели
+`music-small-100k`/`music-small-ar-100k` (980 МБ), артефакты и колёса
+(`/zero/ai/music/renders/amt-20260828/`, `/zero/ai/music/tmp-dl/`), symlink в
+`~/.local/bin`.
 
 ### basic-pitch — полифоническая транскрипция
 
