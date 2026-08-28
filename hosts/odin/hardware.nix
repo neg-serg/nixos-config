@@ -82,6 +82,9 @@
     # (already-applied) hunk and exits non-zero. Do NOT re-add for kernels >= 6.18.42.
 
     kernelParams = [
+      # Runtime firmware search path — NixOS has no /lib/firmware; needed for
+      # MediaTek MT6639 BT firmware (mediatek/mt7927/BT_RAM_CODE_MT6639_2_1_hdr.bin)
+      "firmware_class.path=/run/booted-system/firmware"
       "acpi_osi=!" # Fix ACPI compatibility on ASUS boards
       "acpi_osi=Linux" # Report Linux-compatible ACPI interface
       # video=3840x2160@240 removed: simpledrm rejects custom modelines, causes "User-defined mode not supported"
@@ -127,7 +130,9 @@
       "uhid" # Userspace HID — HID over GATT via bluez (modern BT gamepads)
     ];
     # amneziawg disabled — incompatible with certain kernel versions (ipv6_stub removed)
-    extraModulePackages = lib.mkForce (
+    # Plain list (no mkForce): lets the mt7927 module append its out-of-tree
+    # mt76 package to boot.extraModulePackages (mkForce would drop it).
+    extraModulePackages = (
       let
         # Wired through the overlay (packages/overlays/media.nix); the host
         # kernel is passed here since a kernel module must match the boot kernel.
@@ -300,4 +305,24 @@
   # Skip unnecessary boot-time services (~1s saved)
   systemd.timers."fwupd-refresh".enable = false; # fwupdmgr refresh timer — manual refresh still works
   systemd.services.systemd-networkd-persistent-storage.enable = false; # declarative .link files handle naming
+
+  # MediaTek MT6639/MT7927 BT RAM code — not in linux-firmware yet (only
+  # WiFi blobs are); needed by the backported btmtk driver (btmtk_fw_get_filename
+  # requests mediatek/mt7927/BT_RAM_CODE_MT6639_2_1_hdr.bin for dev_id 0x6639).
+  # Blob extracted from ASUS driver DRV_WiFi_MTK_MT7925_MT7927_TP_W11_64_V5603998_20250709R
+  # (mtkwlan.dat) via jetm/mediatek-mt7927-dkms extract_firmware.py; sha256
+  # 669c5c99a0c59c85c1285d3d1b8b31915c2d31341a2244f4eddcbfd60ffbbc76.
+  hardware.firmware = lib.mkAfter [
+    # compressFirmware = false: the xz-compress wrapper (compressFirmwareXz)
+    # renames single-file packages with a hash prefix, which trips Nix's
+    # "output not allowed to refer" check; plain blob is found fine by the
+    # firmware loader.
+    (pkgs.runCommand "mt6639-bt-firmware" { compressFirmware = false; } ''
+      mkdir -p $out/lib/firmware/mediatek/mt7927
+      # Explicit dest name: the imported store path keeps a hash prefix in its
+      # basename, but the driver requests the plain filename.
+      cp ${../../files/firmware/mediatek/mt7927/BT_RAM_CODE_MT6639_2_1_hdr.bin} \
+        $out/lib/firmware/mediatek/mt7927/BT_RAM_CODE_MT6639_2_1_hdr.bin
+    '')
+  ];
 }

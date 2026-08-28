@@ -47,3 +47,5 @@ viz/
 # ...except deliberately vendored sources (packages/overlay.nix)
 !files/sources/
 !files/sources/**
+# ...and the MediaTek MT6639 BT firmware blob (needed by backported btmtk driver)
+!files/firmware/mediatek/mt7927/BT_RAM_CODE_MT6639_2_1_hdr.bin
