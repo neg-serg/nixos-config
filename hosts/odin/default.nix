@@ -2,6 +2,7 @@
   pkgs,
   config,
   lib,
+  inputs,
   ...
 }:
 let
@@ -178,7 +179,11 @@ in
 {
   # unbound-hosts.nix is generated data (a list), imported by services.nix —
   # not a module, so it stays out of the auto-import.
-  imports =
+  imports = [
+    # Out-of-tree MT7927/MT6639 WiFi (mt76/mt7925e) — see hardware flags below
+    inputs.mt7927.nixosModules.default
+  ]
+  ++ (
     builtins.attrNames entries
     |> builtins.filter (
       n:
@@ -186,7 +191,8 @@ in
       && n != "unbound-hosts.nix"
       && (entries.${n} == "directory" || lib.hasSuffix ".nix" n)
     )
-    |> builtins.map (n: ./. + "/${n}");
+    |> builtins.map (n: ./. + "/${n}")
+  );
   system.preserveFlake = false;
 
   # Composable profiles: order matters, last wins on conflicts
@@ -262,6 +268,14 @@ in
   features.cli.broot.enable = true;
   features.hardware.usbAutomount.enable = true;
   features.hardware.bluetooth.enable = true; # BlueZ — BT audio + HID (gamepads/keyboards/mice), needs kernel BT_HIDP/UHID
+  # MediaTek MT7927/MT6639 WiFi via out-of-tree mt76 (cmspam/mt7927-nixos).
+  # enableBluetooth = false: BT already handled in-tree (6.18 mt6639 backport).
+  hardware.mediatek-mt7927 = {
+    enable = true;
+    enableWifi = true;
+    enableBluetooth = false;
+    disableAspm = true;
+  };
   features.input.kanata.enable = true; # Caps→Ctrl via kanata
   features.input.ruHotkeys.enable = true; # us layout in kitty/mpv on focus (RU hotkey fix)
   # features.security.tpmSudo.enable = true; # TPM-backed passwordless sudo — flip AFTER enabling fTPM in UEFI/BIOS
