@@ -397,7 +397,7 @@ def load_nodes():
     return os.environ["NODES_TEXT"]
 
 text = load_nodes()
-e2e_cap = int(os.environ.get("E2E_CAP", "60"))
+e2e_cap = int(os.environ.get("E2E_CAP", "150"))
 min_working = int(os.environ.get("MIN_WORKING", "3"))
 tmp = os.environ.get("VALIDATE_TMP", "/tmp/proxy-validate")
 os.makedirs(tmp, mode=0o700, exist_ok=True)
@@ -719,6 +719,16 @@ refresh() {
           grep -E '^(vless|hysteria2|ss|trojan)://' | \
           grep -vE '[?&](type=xhttp|type=splithttp|plugin=)' | \
           shuf | head -"${NODE_SAMPLE:-400}" || true)
+        # raw.githubusercontent.com and some CDNs are blocked for direct
+        # connections in this region; retry through the running proxy (10808)
+        # when the direct fetch comes back empty.
+        if [ -z "$data" ] && pgrep -f 'sing-box.*config.json' > /dev/null 2>&1; then
+            data=$(curl -sL --connect-timeout 8 --max-time 25 \
+              --proxy socks5h://127.0.0.1:10808 "$url" 2>/dev/null | \
+              grep -E '^(vless|hysteria2|ss|trojan)://' | \
+              grep -vE '[?&](type=xhttp|type=splithttp|plugin=)' | \
+              shuf | head -"${NODE_SAMPLE:-400}" || true)
+        fi
         if [ -n "$data" ]; then
             echo "    $(echo "$data" | wc -l) from $(basename "$url")"
             NEW_NODES="$NEW_NODES"$'\n'"$data"
