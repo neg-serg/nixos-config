@@ -3,6 +3,17 @@
 let
   baseKernel = pkgs.linuxPackages.kernel;
 
+  # Backported MediaTek MT6639 (MT7927) Bluetooth support: odin's adapter
+  # (13d3:3588, ASUS ROG STRIX X870E-E) reports CHIPID=0x0000 and 6.18.y
+  # otherwise drives it as MT7922, failing with "hci0: Opcode 0x0c03
+  # failed: -16". Backport of upstream 28b7c5a6db74 (+ 81f971c6abec,
+  # 59c3ee19ca88). Patch: files/patches/mt6639-btmtk-6.18.patch.
+  kernelSrc = pkgs.applyPatches {
+    name = "linux-${baseKernel.version}-mt6639";
+    src = baseKernel.src;
+    patches = [ ../../../files/patches/mt6639-btmtk-6.18.patch ];
+  };
+
   # Kernel config = generated base + deliberate manual overlay
   # (H-series notes from the Jul-2026 kernel audit), merged in pure Nix.
   # builtins.toFile returns a string, so build.nix's isPath-based auto-
@@ -78,10 +89,10 @@ let
   minimalKernel = pkgs.linuxManualConfig {
     inherit (baseKernel)
       version
-      src
       modDirVersion
       features
       ;
+    src = kernelSrc;
     inherit configfile config;
     extraMakeFlags = [ "LOCALMODCONFIG_HASH=${configHash}" ];
     allowImportFromDerivation = false;
