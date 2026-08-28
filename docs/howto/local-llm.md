@@ -45,9 +45,9 @@ ollama run qwen3:32b
   [mateogrgic/GLM-5.2-colibri-int4-with-int8-mtp](https://huggingface.co/mateogrgic/GLM-5.2-colibri-int4-with-int8-mtp),
   357 GiB · 141 shards `out-*.safetensors` + 3 MTP shards + config/tokenizer). **Activated and
   smoke-tested (2026-08-19): `coli run --model /zero/ai/glm52_i4 "Privet"` answers in Russian; cold
-  cache ~0.2 tok/s (expert hit 28%, expert-disk bound), RSS 19 GB.** `services.colibri.enable`
-  (default on with `features.llm.enable`) installs the engine + `coli` CLI; the serve unit stays off
-  unless enabled.
+  cache ~0.2 tok/s (expert hit 28%, expert-disk bound), RSS 19 GB.** With `features.llm.enable`
+  the `modules/llm/colibri.nix` installs the engine + `coli` CLI; the serve unit
+  (`services.colibri.serve.enable`) stays off unless explicitly enabled.
 - Defaults: `arch = "native"`, `ramBudget = 45`, settings
   `DIRECT=1 PIPE_WORKERS=16 PREFETCH=1 MTP=3`.
 
@@ -200,16 +200,24 @@ rag-search status                   # index and reranker state
   (created by tmpfiles)
 - `/zero/ai/embeddings` — RAG reranker GGUF (bge-reranker-v2-m3), future embedding GGUFs (created by
   tmpfiles)
-- `/zero/ai/glm52_i4` — colibrì int4 model (~370 GB; downloaded + validated, staged in
-  `/zero/backup/.ai-staging/glm52_i4`, awaiting move here)
+- `/zero/ai/glm52_i4` — colibrì int4 model (~384 GB, 144 shards: out-00000..3.safetensors +
+  config.json; moved here 2026-08-20, staging dir is empty)
 
 ## Status on odin
 
-- `features.llm.enable = true`, `services.colibri.enable = true`
+- `features.llm.enable = true` (colibri CLI via `modules/llm/colibri.nix`; serve unit off by default)
 - Ollama: enabled; merged the orphaned 413 GB store (was nested under `/zero/ai/ollama/models/`)
   into the active store — all 23 models now visible to `ollama list`, no re-download.
 - stable-diffusion.cpp: package added (Vulkan), models in `/zero/ai/image`.
-- colibrì: module config fixed (`mkIf // mkIf` dropped the defaults → `coli` CLI never installed;
-  now `mkMerge`). CLI lands with the next rebuild; model downloaded + validated (staged in
-  `/zero/backup/.ai-staging/glm52_i4`, awaiting move to `/zero/ai/glm52_i4`).
-- Ports: 11434 (Ollama), 8000 (colibri serve, only if enabled)
+- colibrì: CLI `coli` installed and working (verified 2026-08-28: `coli info`, `coli doctor`,
+  chat, and the OpenAI-compatible API all pass). Model fully moved to `/zero/ai/glm52_i4`.
+- **colibri-serve is NOT auto-enabled** (user's choice): start it manually when needed —
+  port **8003** (8000=omnirouter, 8001=piper TTS, 8002=whisper STT are taken):
+  ```bash
+  COLI_MODEL=/zero/ai/glm52_i4 RAM_GB=45 DIRECT=1 PIPE_WORKERS=16 PREFETCH=1 MTP=3 \
+    coli serve --host 127.0.0.1 --port 8003 --model-id glm-5.2-colibri
+  ```
+  Then `curl http://127.0.0.1:8003/v1/chat/completions` (OpenAI-compatible). First request is
+  slow (~100 s / 40 tok, cold expert cache); with MTP + warm cache expect 0.8–1.6 tok/s.
+  To auto-start instead, set `services.colibri.serve.enable = true` (module ready).
+- Ports: 11434 (Ollama), 8000 (omnirouter), 8001 (piper TTS), 8002 (whisper STT), 8003 (colibri, manual)
