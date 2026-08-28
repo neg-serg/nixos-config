@@ -29,6 +29,8 @@
 | `basic-pitch`  | полифоническая транскрипция → MIDI              | ✅ работает | melody10s → MIDI (ONNX)       |
 | `rembg`        | удаление фона (u2net / bria-rmbg / birefnet)    | ✅ работает | u2net + bria                  |
 | `triposr`      | картинка → 3D-меш                               | ✅ работает | mesh.obj 7.2 МБ               |
+| `audio-analysis master` | мастеринг по референсу (matchering) | ✅ работает | 2026-08-29: Zinovia + DOOM-реф → **-13.3 → -9.8 dB** |
+| `vsmlrt-models` | ONNX-модели vs-mlrt (mpv-апскейл) | ⏳ качается | 812 МБ с GitHub (прокси добавлен в обёртку) → /zero/ai/imgproc/vsmlrt-v15.16 |
 
 ## Детали по инструментам
 
