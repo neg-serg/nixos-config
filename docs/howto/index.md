@@ -50,6 +50,9 @@ isn't a step-by-step runbook.
 - Local AI stack (Ollama store layout, llama-server vision, stable-diffusion.cpp T2I, RAG
   embeddings): [local-llm.md](./local-llm.md)
 
+- Neural tools test report on odin (whisperx/mt3/amt-generate/basic-pitch/rembg/triposr — status,
+  fixes, model paths) (RU): [neural-stack-report.ru.md](./neural-stack-report.ru.md)
+
 - Verified change workflows (add module / flag / package / host / script / secret):
   [agent-recipes.md](./agent-recipes.md)
 
