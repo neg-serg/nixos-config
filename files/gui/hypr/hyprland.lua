@@ -175,7 +175,9 @@ local menu    = "vicinae toggle"
 local function dispatch(args) return hl.dsp.exec_cmd("hyprctl dispatch " .. args) end
 
 -- --- Top-level binds (bindings.conf) ---
-hl.bind(M4 .. "+S", hl.dsp.exec_cmd("hyprctl switchxkblayout current next"))
+-- Use "all" (not "current"): kanata's virtual keyboard is the last active
+-- device, so "current" switches only it and the bar/typing layouts diverge.
+hl.bind(M4 .. "+S", hl.dsp.exec_cmd("hyprctl switchxkblayout all next"))
 hl.bind(M1 .. "+Tab", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(M4 .. "+slash", hl.dsp.focus({ workspace = "previous" }))
 hl.bind(M4 .. "+" .. C .. "+backslash", hl.dsp.window.resize({ x = 640, y = 480 }))
@@ -339,7 +341,7 @@ hl.define_submap("special", "reset", function()
   binde_reset("q", hl.dsp.exec_cmd('raise --match "class:regex=^Carla2$" --launch "carla"'))
   binde_reset("d", hl.dsp.exec_cmd('raise --match "class:regex=^org\\.nicotine_plus\\.Nicotine$" --launch "nicotine"'))
   binde_reset(SH .. "+q", hl.dsp.exec_cmd('raise --match "class:regex=^Carla2$" --launch "carla"'))
-  binde_reset(SH .. "+l", hl.dsp.exec_cmd("hyprctl switchxkblayout current 0 && hyprlock"))
+  binde_reset(SH .. "+l", hl.dsp.exec_cmd("hyprctl switchxkblayout all 0 && hyprlock"))
   binde_reset("e", hl.dsp.window.float({ action = "toggle" }))
   binde_reset("f", hl.dsp.window.fullscreen_state({ internal = 0, client = 3, action = "toggle" }))
   binde_reset("z", hl.dsp.window.fullscreen_state({ internal = 0, client = 3, action = "toggle" }))
