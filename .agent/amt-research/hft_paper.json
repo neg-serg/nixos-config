@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "hFT-Transformer MAESTRO note F1 \"0.949\" OR \"95.4\" ISMIR 2023",
+  "hFT-Transformer paper results note onset offset F1 MAESTRO v3 0.95"
+ ],
+ "anysearch": [
+  {
+   "t": "Detecting Music Performance Errors with Transformers",
+   "u": "https://par.nsf.gov/servlets/purl/10626351",
+   "sn": "edu Abstract Beginner musicians often struggle to identify specific er- rors in their performances, such as playing incorrect notes or rhythms. There are two limitations in existing tools for music error detection: (1) Existing approaches rely on auto- matic alignment; therefore, they are prone to e"
+  },
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "https://doi.org/10.48550/arxiv.2402.01424",
+   "sn": "APT has improved dramatically over the past decade. The two largest relative improvements in state-of-the-art accuracy were from a new architecture to jointly predict onsets and frames [[1](https://arxiv.org/html/2402.01424v1#bib.bib1)] and from the release of the MAESTRO dataset [[2](https://arxiv."
+  },
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "https://arxiv.org/pdf/2402.01424",
+   "sn": "In this work, we focus on AMT applied to piano, or automatic piano transcription (APT). APT has improved dramatically over the past decade. The two largest relative improvements in state-of-the-art accuracy were from a new architecture to jointly predict onsets and frames [1] and from the release of"
+  },
+  {
+   "t": "Detecting Music Performance Errors with Transformers",
+   "u": "https://arxiv.org/html/2501.02030v1",
+   "sn": "This model can be trained end-to-end to implicitly align and compare performance audio with music scores through latent space representations. To address (2), we present a novel data generation technique capable of creating large-scale synthetic music error datasets. Our approach achieves a 64.1% av"
+  },
+  {
+   "t": "Exploring System Adaptations For Minimum Latency Real-Time Piano Transcription",
+   "u": "https://arxiv.org/pdf/2509.07586v1",
+   "sn": "at ABSTRACT Advances in neural network design and the availability of large-scale labeled datasets have driven major improve- ments in piano transcription. Existing approaches target either offline applications, with no restrictions on compu- tational demands, or online transcription, with delays of"
+  },
+  {
+   "t": "Transactions of the International Society for Music Information Retrieval",
+   "u": "https://transactions.ismir.net/articles/10.5334/tismir.77/print",
+   "sn": "Introduction The analysis of historical music notation is a major research topic in the field of musicology. Often, a manual transcription of the source material into modern music notation is required to make the material accessible to a wider audience and facilitate musicological analyses. Manual t"
+  },
+  {
+   "t": "LadderSym: A Multimodal Interleaved Transformer for Music Practice Error Detection",
+   "u": "https://doi.org/10.48550/arxiv.2510.08580",
+   "sn": "music score, as illustrated in Figure 1, where the score may be provided in symbolic or audio form. Commercial apps for music education, such as Yousician (YousicianLtd., 2024) and Simply Piano (JoyTunes, 2024), are widely used with over 10 million downloads each. However, these systems offer only c"
+  },
+  {
+   "t": "Unaligned Supervision for Automatic Music Transcription In-the-Wild",
+   "u": "https://arxiv.org/html/2204.13668v1",
+   "sn": "Using this unaligned supervision scheme, complemented by pseudo-labels and pitch-shift augmentation, our method enables training on in-the-wild recordings with unprecedented accuracy and instrumental variety. Using only synthetic data and unaligned supervision, we report SOTA note-level accuracy of"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "Detecting Music Performance Errors with Transformers",
+   "u": "https://par.nsf.gov/servlets/purl/10626351",
+   "sn": "edu Abstract Beginner musicians often struggle to identify specific er- rors in their performances, such as playing incorrect notes or rhythms. There are two limitations in existing tools for music error detection: (1) Existing approaches rely on auto- matic alignment; therefore, they are prone to e"
+  },
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "https://doi.org/10.48550/arxiv.2402.01424",
+   "sn": "APT has improved dramatically over the past decade. The two largest relative improvements in state-of-the-art accuracy were from a new architecture to jointly predict onsets and frames [[1](https://arxiv.org/html/2402.01424v1#bib.bib1)] and from the release of the MAESTRO dataset [[2](https://arxiv."
+  },
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "https://arxiv.org/pdf/2402.01424",
+   "sn": "In this work, we focus on AMT applied to piano, or automatic piano transcription (APT). APT has improved dramatically over the past decade. The two largest relative improvements in state-of-the-art accuracy were from a new architecture to jointly predict onsets and frames [1] and from the release of"
+  },
+  {
+   "t": "Detecting Music Performance Errors with Transformers",
+   "u": "https://arxiv.org/html/2501.02030v1",
+   "sn": "This model can be trained end-to-end to implicitly align and compare performance audio with music scores through latent space representations. To address (2), we present a novel data generation technique capable of creating large-scale synthetic music error datasets. Our approach achieves a 64.1% av"
+  },
+  {
+   "t": "Exploring System Adaptations For Minimum Latency Real-Time Piano Transcription",
+   "u": "https://arxiv.org/pdf/2509.07586v1",
+   "sn": "at ABSTRACT Advances in neural network design and the availability of large-scale labeled datasets have driven major improve- ments in piano transcription. Existing approaches target either offline applications, with no restrictions on compu- tational demands, or online transcription, with delays of"
+  },
+  {
+   "t": "Transactions of the International Society for Music Information Retrieval",
+   "u": "https://transactions.ismir.net/articles/10.5334/tismir.77/print",
+   "sn": "Introduction The analysis of historical music notation is a major research topic in the field of musicology. Often, a manual transcription of the source material into modern music notation is required to make the material accessible to a wider audience and facilitate musicological analyses. Manual t"
+  },
+  {
+   "t": "LadderSym: A Multimodal Interleaved Transformer for Music Practice Error Detection",
+   "u": "https://doi.org/10.48550/arxiv.2510.08580",
+   "sn": "music score, as illustrated in Figure 1, where the score may be provided in symbolic or audio form. Commercial apps for music education, such as Yousician (YousicianLtd., 2024) and Simply Piano (JoyTunes, 2024), are widely used with over 10 million downloads each. However, these systems offer only c"
+  },
+  {
+   "t": "Unaligned Supervision for Automatic Music Transcription In-the-Wild",
+   "u": "https://arxiv.org/html/2204.13668v1",
+   "sn": "Using this unaligned supervision scheme, complemented by pseudo-labels and pitch-shift augmentation, our method enables training on in-the-wild recordings with unprecedented accuracy and instrumental variety. Using only synthetic data and unaligned supervision, we report SOTA note-level accuracy of"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "2024:Polyphonic Transcription Results - MIREX Wiki",
+   "u": "https://music-ir.org/mirex/wiki/2024:Polyphonic_Transcription_Results",
+   "sn": "9081 hFT-Transformer PDF Two stacks of Transformers for Frequency and Time + regression onset&offset 0.9416 0.8359 average note onset F1 = average of note onset F1 on all three datasets holistic note F1 = average of note onset+offset+velocity on Maestro and SMD Detailed Results on Maestro Detailed"
+  },
+  {
+   "t": "Automatic Piano Transcription with Hierarchical Frequency-Time Transformer",
+   "u": "https://arxiv.org/html/2307.04305",
+   "sn": "first hierarchy includes a convolutional block in the time axis, a Transformer encoder in the frequency axis, and a Transformer decoder that converts the dimension in the frequency axis. The output is then fed into the second hierarchy which consists of another Transformer encoder in the time axis."
+  },
+  {
+   "t": "arXiv:2307.04305v1 [cs.SD] 10 Jul 2023",
+   "u": "https://arxiv.org/pdf/2307.04305",
+   "sn": "archy includes a convolutional block in the time axis, a Transformer encoder in the frequency axis, and a Trans- former decoder that converts the dimension in the fre- quency axis. The output is then fed into the second hi- erarchy which consists of another Transformer encoder in the time axis. We e"
+  },
+  {
+   "t": "Automatic Piano Transcription with Hierarchical Frequency-Time Transformer",
+   "u": "https://arcxiv.org/abs/2307.04305",
+   "sn": "long-term spectral and temporal dependencies into account is essential for automatic piano transcription. [...] In this work, we propose hFT-Transformer, which is an automatic music transcription method that uses a two-level hierarchical frequency-time Transformer architecture. The first hierarchy i"
+  },
+  {
+   "t": "Automatic Piano Transcription with Hierarchical Frequency-Time Transformer",
+   "u": "https://ai.sony/publications/Automatic-Piano-Transcription-with-Hierarchical-Frequency-Time-Transformer",
+   "sn": "first hierarchy includes a convolutional block in the time axis, a Transformer encoder in the frequency axis, and a Transformer decoder that converts the dimension in the frequency axis. The output is then fed into the second hierarchy which consists of another Transformer encoder in the time axis."
+  },
+  {
+   "t": "Automatic Piano Transcription with Hierarchical Frequency-Time Transformer",
+   "u": "https://sotaverified.org/papers/automatic-piano-transcription-with",
+   "sn": "In this case, we may rely on the capability of self-attention mechanism in Transformers to capture these long-term dependencies in the frequency and time axes. [...] We evaluated our method with the widely used MAPS and MAESTRO v3.0.0 datasets, and it demonstrated state-of-the-art performance on all"
+  },
+  {
+   "t": "Music Transcription on MAESTRO benchmark leaderboard",
+   "u": "https://sota2.com/research/sota/music-transcription-on-maestro",
+   "sn": "64PrecisionhFT-Transformer Evaluation Results Method Links hFT-TransformerParams=5.5M2026.05 99.64 — — — 95.44 97.44 TranskunParams=12.9M2026.05 99.53 — — — 97.16 98.32 SFT-CRNNParams=15M2026.05 99.16 — — — 97.46 98.36 HPPNet-spParams=1.2M2026.05 98.45 — — — 95.95 97.18 Onsets & Frames"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "https://arxiv.org/pdf/2503.01362",
+   "sn": "The previous research in [5] applied auto-regressive convolutional recurrent neural network (CRNN) frame-by-frame for piano transcription. The auto-regressive CRNN model can be easily adapted for the online scenario [6]. But the transcription performance for note offsets still has significant room f"
+  }
+ ]
+}

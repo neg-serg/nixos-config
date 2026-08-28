@@ -1,0 +1,44 @@
+{
+ "mt3": [
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://alphaxiv.org/overview/2111.03017",
+   "sn": "Introduction Automatic Music Transcription (AMT) has long been constrained by its focus on single-instrument scenarios, particularly solo piano performances. While this specialization has yielded impressive results for specific instruments, it fails to address the complexity of real-world music, whe"
+  },
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/pdf/2603.27528v1",
+   "sn": "uk Abstract This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument tran- scription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both advances"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription Quick Review",
+   "u": "https://liner.com/review/mt3-multitask-multitrack-music-transcription",
+   "sn": "MT3 introduces a unified framework for multi-task multitrack music transcription by tokenizing musical events into a compact, flexible vocabulary for a sequence-to-sequence Transformer model. We assemble the largest known collection of six diverse multitrack AMT datasets and define consistent evalua"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://arxiv.org/html/2111.03017v4",
+   "sn": "MT3: Multi-Task Multitrack Music Transcription Abstract Automatic Music Transcription (AMT), inferring musical notes from raw audio, is a challenging task at the core of music understanding. Unlike Automatic Speech Recognition (ASR), which typically focuses on the words of a single speaker, AMT ofte"
+  },
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://researchgate.net/publication/403306988_Advancing_Multi-Instrument_Music_Transcription_Results_from_the_2025_AMT_Challenge",
+   "sn": "Abstract and Figures This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument transcription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both ad"
+  },
+  {
+   "t": "MuScriptor: Open Multi-Instrument Transcription",
+   "u": "https://emergentmind.com/topics/muscriptor",
+   "sn": "multi-instrument transcription that integrates synthetic pre-training, real-audio fine-tuning, and reinforcement learning to boost note detection and transcription quality. The decoder-only Transformer architecture leverages mel-spectrogram inputs and instrument-presence conditioning to offer contro"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://arxiv.gg/abs/2111.03017",
+   "sn": "Automatic Music Transcription (AMT), inferring musical notes from raw audio, is a challenging task at the core of music understanding. Unlike Automatic Speech Recognition (ASR), which typically focuses on the words of a single speaker, AMT often requires transcribing multiple instruments simultaneou"
+  },
+  {
+   "t": "MT3: Multi-Task Music Transcription",
+   "u": "https://emergentmind.com/papers/2111.03017",
+   "sn": "The paper introduces a unified sequence-to-sequence framework that converts audio spectrograms into accurate multitrack MIDI, leveraging a general-purpose Transformer model. The paper aggregates six diverse AMT datasets and establishes standardized, instrument-sensitive evaluation metrics, achieving"
+  }
+ ]
+}

@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "basic-pitch arXiv 2112.02439 note F1 MAESTRO v3 evaluation table lightweight",
+  "basic pitch instrument agnostic polyphonic note transcription multi-pitch estimation MAESTRO results"
+ ],
+ "anysearch": [
+  {
+   "t": "piano_transcription/evaluate.py at kqq · qiuqiangkong/piano_transcription",
+   "u": "https://github.com/qiuqiangkong/piano_transcription/blob/kqq/evaluate.py",
+   "sn": "import argparse from pathlib import Path import librosa import mir_eval import numpy as np import pretty_midi from inference import forward, write_midi from piano_transcription.utils import (load_maestro_meta, note_to_freq, parse_yaml) from train import get_model def evaluate(args) -> None: # Argume"
+  },
+  {
+   "t": "README.md · spotify/basic-pitch at main",
+   "u": "https://huggingface.co/spotify/basic-pitch/blame/main/README.md",
+   "sn": "174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 --- language: - en thumbnail: https://user-images.githubusercontent.com/213293/167478083-de988de2-9137-4"
+  },
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/pdf/2603.27528",
+   "sn": "uk Abstract This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument tran- scription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both advances"
+  },
+  {
+   "t": "Basic Pitch can turn your singing into a score",
+   "u": "https://www.popsci.com/technology/spotify-basic-pitch/",
+   "sn": "ML research and practices with domain knowledge about audio—understanding the fundamentals of how music works, like pitch, tone, tempo, the frequencies of different instruments, and more.” Bittner envisions that the tool can serve as a “starting point” transcription that artists can make in the mome"
+  },
+  {
+   "t": "GitHub - victoria-mckinney/basic-pitch: A lightweight yet powerful audio-to-MIDI converter with pitch bend detection",
+   "u": "https://github.com/victoria-mckinney/basic-pitch",
+   "sn": "Basic Pitch is a Python library for Automatic Music Transcription (AMT), using lightweight neural network developed by Spotify’s Audio Intelligence Lab. It’s small, easy-to-use, pip install-able and npm install-able via its sibling repo. Basic Pitch may be simple, but it’s is far from “basic”! basic"
+  },
+  {
+   "t": "Basic Pitch: A lightweight model for multi-pitch, note and pitch bend estimations in polyphonic music",
+   "u": "https://ressources.ircam.fr/en/media/x6cb24a_basic-pitch-a-lightweight-model-for-multi",
+   "sn": "Basic Pitch: A lightweight model for multi-pitch, note and pitch bend estimations in polyphonic music 0:00/0:00 “Basic-pitch” is a lightweight neural network for musical instrument transcription, which supports polyphonic outputs and generalizes to a wide variety of instruments (including vocals). I"
+  },
+  {
+   "t": "Spotify Research Open-Sources ‘Basic Pitch’: A Machine Learning Tool For Converting Audio Into MIDI",
+   "u": "https://www.reddit.com/r/machinelearningnews/comments/v9qnnr/spotify_research_opensources_basic_pitch_a/",
+   "sn": "Basic Pitch offers a number of advantages: 👉 Polyphonic + instrument-agnostic: Unlike most other note-detection algorithms, Basic Pitch can track multiple notes at a time and across various instruments, including piano, guitar, and ocarina. Many systems limit users to only monophonic output (one no"
+  },
+  {
+   "t": "basic-pitch/README.md at main · spotify/basic-pitch",
+   "u": "https://github.com/spotify/basic-pitch/blob/main/README.md?plain=1",
+   "sn": "md Basic Pitch is a Python library for Automatic Music Transcription (AMT), using lightweight neural network developed by Spotify’s Audio Intelligence Lab. It’s small, easy-to-use, pip install-able and npm install-able via its sibling repo. Basic Pitch may be simple, but it’s is far from “basic”"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "piano_transcription/evaluate.py at kqq · qiuqiangkong/piano_transcription",
+   "u": "https://github.com/qiuqiangkong/piano_transcription/blob/kqq/evaluate.py",
+   "sn": "import argparse from pathlib import Path import librosa import mir_eval import numpy as np import pretty_midi from inference import forward, write_midi from piano_transcription.utils import (load_maestro_meta, note_to_freq, parse_yaml) from train import get_model def evaluate(args) -> None: # Argume"
+  },
+  {
+   "t": "README.md · spotify/basic-pitch at main",
+   "u": "https://huggingface.co/spotify/basic-pitch/blame/main/README.md",
+   "sn": "174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 --- language: - en thumbnail: https://user-images.githubusercontent.com/213293/167478083-de988de2-9137-4"
+  },
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/pdf/2603.27528",
+   "sn": "uk Abstract This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument tran- scription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both advances"
+  },
+  {
+   "t": "GitHub - victoria-mckinney/basic-pitch: A lightweight yet powerful audio-to-MIDI converter with pitch bend detection",
+   "u": "https://github.com/victoria-mckinney/basic-pitch",
+   "sn": "Basic Pitch is a Python library for Automatic Music Transcription (AMT), using lightweight neural network developed by Spotify’s Audio Intelligence Lab. It’s small, easy-to-use, pip install-able and npm install-able via its sibling repo. Basic Pitch may be simple, but it’s is far from “basic”! basic"
+  },
+  {
+   "t": "Basic Pitch: A lightweight model for multi-pitch, note and pitch bend estimations in polyphonic music",
+   "u": "https://ressources.ircam.fr/en/media/x6cb24a_basic-pitch-a-lightweight-model-for-multi",
+   "sn": "Basic Pitch: A lightweight model for multi-pitch, note and pitch bend estimations in polyphonic music 0:00/0:00 “Basic-pitch” is a lightweight neural network for musical instrument transcription, which supports polyphonic outputs and generalizes to a wide variety of instruments (including vocals). I"
+  },
+  {
+   "t": "Spotify Research Open-Sources ‘Basic Pitch’: A Machine Learning Tool For Converting Audio Into MIDI",
+   "u": "https://www.reddit.com/r/machinelearningnews/comments/v9qnnr/spotify_research_opensources_basic_pitch_a/",
+   "sn": "Basic Pitch offers a number of advantages: 👉 Polyphonic + instrument-agnostic: Unlike most other note-detection algorithms, Basic Pitch can track multiple notes at a time and across various instruments, including piano, guitar, and ocarina. Many systems limit users to only monophonic output (one no"
+  },
+  {
+   "t": "basic-pitch/README.md at main · spotify/basic-pitch",
+   "u": "https://github.com/spotify/basic-pitch/blob/main/README.md?plain=1",
+   "sn": "md Basic Pitch is a Python library for Automatic Music Transcription (AMT), using lightweight neural network developed by Spotify’s Audio Intelligence Lab. It’s small, easy-to-use, pip install-able and npm install-able via its sibling repo. Basic Pitch may be simple, but it’s is far from “basic”"
+  },
+  {
+   "t": "MAESTRO dataset and benchmarks",
+   "u": "https://sota2.com/research/dataset/maestro",
+   "sn": "MAESTRO Benchmarks Task NameDataset NameSOTA ResultTrendResults Automatic Piano Transcription MAESTRO v3.0.0 (test) 93.48Note F1 Score (w/ Offset) 19 Packet Loss Concealment MAESTRO Solo Piano 50-minute file (single file per loss rate) 0pkt-NMSE 18 Piano Transcription MAESTRO 96.6Precision 14 Intege"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/pdf/2603.27528v1",
+   "sn": "uk Abstract This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument tran- scription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both advances"
+  },
+  {
+   "t": "README.md · spotify/basic-pitch at main",
+   "u": "https://huggingface.co/spotify/basic-pitch/blame/main/README.md",
+   "sn": "179 180 181 182 183 184 185 186 187 188 189 190 191 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 --- language: - en thumbnail: https://user-images.githubusercontent.com/213293/167478083-de988de2-9137-4325-8a5f-ceeb5123375"
+  },
+  {
+   "t": "AEmotionStudio/basic-pitch-onnx-models · Hugging Face",
+   "u": "https://huggingface.co/AEmotionStudio/basic-pitch-onnx-models",
+   "sn": "copy of Spotify’s Basic Pitch ICASSP 2022 polyphonic transcription model in ONNX format, re-hosted for use in the MAESTRO AI Workstation. What this model does Audio → MIDI polyphonic transcription for any pitched instrument: guitar, bass, vocals, synth, piano. Lightweight (~230 KB) and fast. Why ONN"
+  },
+  {
+   "t": "Omnizart: A General Toolbox for Automatic Music Transcription",
+   "u": "https://arxiv.org/html/2106.00497v1",
+   "sn": "II Background AMT has been the core challenge in MIR because of the multifaceted nature of musical signals. Typically, streams of musical notes performed with various instruments overlap with each other and then create diverse levels of information abstraction in music; such a characteristic complic"
+  },
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://researchgate.net/publication/403306988_Advancing_Multi-Instrument_Music_Transcription_Results_from_the_2025_AMT_Challenge",
+   "sn": "Abstract and Figures This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument transcription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both ad"
+  },
+  {
+   "t": "Lightweight Instrument-Agnostic AMT for Multipitch",
+   "u": "https://emergentmind.com/papers/2203.09893",
+   "sn": "The paper proposes a lightweight, instrument-agnostic model that uses harmonic stacking and a shallow architecture with 16,782 parameters for efficient polyphonic note transcription. The model achieves state-of-the-art multipitch estimation and note accuracy across multiple benchmarks, including Gui"
+  },
+  {
+   "t": "A Lightweight Instrument-Agnostic Model for Polyphonic Note Transcription and Multipitch Estimation",
+   "u": "https://ar5iv.labs.arxiv.org/html/2203.09893",
+   "sn": "A Lightweight Instrument-Agnostic Model for Polyphonic Note Transcription and Multipitch Estimation Abstract Automatic Music Transcription (AMT) has been recognized as a key enabling technology with a wide range of applications. Given the task’s complexity, best results have typically been reported"
+  },
+  {
+   "t": "basic-pitch/README.md at main · spotify/basic-pitch",
+   "u": "https://github.com/spotify/basic-pitch/blob/main/README.md?plain=1",
+   "sn": "basic-pitch is efficient and easy to use, and its multipitch support, its ability to generalize across instruments, and its note accuracy competes with much larger and more resource-hungry AMT systems. Provide a compatible audio file and basic-pitch will generate a MIDI file, complete with pitch ben"
+  }
+ ]
+}

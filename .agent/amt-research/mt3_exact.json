@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "MT3 note F1 0.973 MAESTRO transcription paper table results",
+  "MT3 transcription MAESTRO note onset offset velocity F1 numbers"
+ ],
+ "anysearch": [
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/pdf/2603.27528v1",
+   "sn": "uk Abstract This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument tran- scription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both advances"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://alphaxiv.org/overview/2111.03017",
+   "sn": "Introduction Automatic Music Transcription (AMT) has long been constrained by its focus on single-instrument scenarios, particularly solo piano performances. While this specialization has yielded impressive results for specific instruments, it fails to address the complexity of real-world music, whe"
+  },
+  {
+   "t": "2024:Polyphonic Transcription Results - MIREX Wiki",
+   "u": "https://music-ir.org/mirex/wiki/2024:Polyphonic_Transcription_Results",
+   "sn": "8465 Transkun V2 (Baseline 1) PDF ViT + Neural SemiCRF 0.9490 0.8764 Transkun V2 Aug (Baseline 2) PDF ViT + Neural SemiCRF + Data Augmentation 0.9648 0.9081 hFT-Transformer PDF Two stacks of Transformers for Frequency and Time + regression onset&offset 0.9416 0.8359 average note onset F1 = avera"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription Quick Review",
+   "u": "https://liner.com/review/mt3-multitask-multitrack-music-transcription",
+   "sn": "We assemble the largest known collection of six diverse multitrack AMT datasets and define consistent evaluation metrics, including a novel instrument-sensitive F1 score. MT3 achieves state-of-the-art transcription performance across all evaluated datasets, significantly improving results for low-re"
+  },
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://researchgate.net/publication/403306988_Advancing_Multi-Instrument_Music_Transcription_Results_from_the_2025_AMT_Challenge",
+   "sn": "Abstract and Figures This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument transcription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both ad"
+  },
+  {
+   "t": "MuScriptor: Open Multi-Instrument Transcription",
+   "u": "https://emergentmind.com/topics/muscriptor",
+   "sn": "The decoder-only Transformer architecture leverages mel-spectrogram inputs and instrument-presence conditioning to offer controllable, high-fidelity symbolic MIDI outputs. The staged training approach leads to significant performance gains over baselines, with improvements in onset, frame, offset, a"
+  },
+  {
+   "t": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://sotaverified.org/papers/yourmt3-multi-instrument-music-transcription",
+   "sn": "com/mimbres/yourmt3 OfficialIn papernone★ 212 Abstract Multi-instrument music transcription aims to convert polyphonic music recordings into musical scores assigned to each instrument. This task is challenging for modeling as it requires simultaneously identifying multiple instruments and transcribi"
+  },
+  {
+   "t": "Exploring Music Transcription with Multi-Modal Language Models",
+   "u": "https://towardsdatascience.com/exploring-music-transcription-with-multi-modal-language-models-af352105db56/",
+   "sn": "We’ll go over the best current tools for doing this, which happen to be deep learning-based, and a novel approach for it. Current state of the art The current state-of-the-art for this task comes from Magenta, an open-source research project developed by the now defunct (as of April 2023) Google Bra"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/pdf/2603.27528v1",
+   "sn": "uk Abstract This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument tran- scription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both advances"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://alphaxiv.org/overview/2111.03017",
+   "sn": "Introduction Automatic Music Transcription (AMT) has long been constrained by its focus on single-instrument scenarios, particularly solo piano performances. While this specialization has yielded impressive results for specific instruments, it fails to address the complexity of real-world music, whe"
+  },
+  {
+   "t": "2024:Polyphonic Transcription Results - MIREX Wiki",
+   "u": "https://music-ir.org/mirex/wiki/2024:Polyphonic_Transcription_Results",
+   "sn": "8465 Transkun V2 (Baseline 1) PDF ViT + Neural SemiCRF 0.9490 0.8764 Transkun V2 Aug (Baseline 2) PDF ViT + Neural SemiCRF + Data Augmentation 0.9648 0.9081 hFT-Transformer PDF Two stacks of Transformers for Frequency and Time + regression onset&offset 0.9416 0.8359 average note onset F1 = avera"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription Quick Review",
+   "u": "https://liner.com/review/mt3-multitask-multitrack-music-transcription",
+   "sn": "We assemble the largest known collection of six diverse multitrack AMT datasets and define consistent evaluation metrics, including a novel instrument-sensitive F1 score. MT3 achieves state-of-the-art transcription performance across all evaluated datasets, significantly improving results for low-re"
+  },
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://researchgate.net/publication/403306988_Advancing_Multi-Instrument_Music_Transcription_Results_from_the_2025_AMT_Challenge",
+   "sn": "Abstract and Figures This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument transcription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both ad"
+  },
+  {
+   "t": "MuScriptor: Open Multi-Instrument Transcription",
+   "u": "https://emergentmind.com/topics/muscriptor",
+   "sn": "The decoder-only Transformer architecture leverages mel-spectrogram inputs and instrument-presence conditioning to offer controllable, high-fidelity symbolic MIDI outputs. The staged training approach leads to significant performance gains over baselines, with improvements in onset, frame, offset, a"
+  },
+  {
+   "t": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://sotaverified.org/papers/yourmt3-multi-instrument-music-transcription",
+   "sn": "com/mimbres/yourmt3 OfficialIn papernone★ 212 Abstract Multi-instrument music transcription aims to convert polyphonic music recordings into musical scores assigned to each instrument. This task is challenging for modeling as it requires simultaneously identifying multiple instruments and transcribi"
+  },
+  {
+   "t": "Exploring Music Transcription with Multi-Modal Language Models",
+   "u": "https://towardsdatascience.com/exploring-music-transcription-with-multi-modal-language-models-af352105db56/",
+   "sn": "We’ll go over the best current tools for doing this, which happen to be deep learning-based, and a novel approach for it. Current state of the art The current state-of-the-art for this task comes from Magenta, an open-source research project developed by the now defunct (as of April 2023) Google Bra"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/pdf/2603.27528",
+   "sn": "uk Abstract This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument tran- scription. Eight teams submitted valid solutions; two outperformed the baseline MT3 model. The results highlight both advances"
+  },
+  {
+   "t": "Onsets and Velocities: Affordable Real-Time Piano ...",
+   "u": "https://www.eurasip.org/Proceedings/Eusipco/Eusipco2023/pdfs/0000151.pdf",
+   "sn": "In this work we focus on onset and ve- locity detection, showing that a substantially smaller and simpler convolutional approach, using lower temporal resolution (24ms), is still competitive: our proposed ONSETS&VELOCITIES (O&V) model achieves state-of-the-art performance on the MAESTRO dataset for"
+  },
+  {
+   "t": "2024:Polyphonic Transcription Results - MIREX Wiki",
+   "u": "https://music-ir.org/mirex/wiki/2024:Polyphonic_Transcription_Results",
+   "sn": "9081 hFT-Transformer PDF Two stacks of Transformers for Frequency and Time + regression onset&offset 0.9416 0.8359 average note onset F1 = average of note onset F1 on all three datasets holistic note F1 = average of note onset+offset+velocity on Maestro and SMD Detailed Results on Maestro Detailed"
+  },
+  {
+   "t": "Music Transcription with Transformers",
+   "u": "http://g.co/magenta/mt3",
+   "sn": "Transformers for Piano Transcription Most work in music transcription over the years has focused on transcribing piano recordings. As we mentioned above, many researchers have hand-designed neural network architectures based on the specifics of how piano notes sound. A great example of this is the O"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://alphaxiv.org/overview/2111.03017",
+   "sn": "Transcription (AMT) has long been constrained by its focus on single-instrument scenarios, particularly solo piano performances. While this specialization has yielded impressive results for specific instruments, it fails to address the complexity of real-world music, where multiple instruments play"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription Quick Review",
+   "u": "https://liner.com/review/mt3-multitask-multitrack-music-transcription",
+   "sn": "Dataset mixing during training (“mixture”), specifically, shows a large performance increase over single dataset training, especially for “low-resource” datasets like GuitarSet, MusicNet, and URMP. Percent increase over single-dataset training for Onset+Offset F1 is shown in the last row. RQ1: How d"
+  },
+  {
+   "t": "Piano Transcription by Hierarchical Language Modeling with Pretrained Roll-based Encoders",
+   "u": "https://pith.science/paper/2501.03038",
+   "sn": "The reading This paper proposes a hybrid piano transcription system: a pretrained frame-level piano-roll encoder is kept as the audio front end, but its final readout is replaced by a decoder-only language model that emits note events token by token. To make the token sequence tractable, the paper p"
+  },
+  {
+   "t": "Towards Musically Informed Evaluation of Piano Transcription Models",
+   "u": "https://doi.org/10.48550/arxiv.2406.08454",
+   "sn": "spelling information, or a mid-level physical MIDI(-like) representation, describing notes in terms of their onset and offset times, pitch and velocity [[1](https://arxiv.org/html/2406.08454v3#bib.bib1), [2](https://arxiv.org/html/2406.08454v3#bib.bib2), [3](https://arxiv.org/html/2406.08454v3#bib.b"
+  }
+ ]
+}

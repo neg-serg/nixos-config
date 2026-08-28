@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "YourMT3+ multi-instrument transcription open weights github MAESTRO",
+  "YourMT3 music transcription model instrument-wise encoding"
+ ],
+ "anysearch": [
+  {
+   "t": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://sotaverified.org/papers/yourmt3-multi-instrument-music-transcription",
+   "sn": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation 2024-07-05Code Available3· to hype Sungkyun Chang, Emmanouil Benetos, Holger Kirchhoff, Simon Dixon Code Available — Be the first to reproduce this paper. Reproduce Code"
+  },
+  {
+   "t": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://arxiv.org/html/2407.04822v1",
+   "sn": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation Abstract Multi-instrument music transcription aims to convert polyphonic music recordings into musical scores assigned to each instrument. This task is challenging for modeling"
+  },
+  {
+   "t": "mimbres/YourMT3 · Hugging Face",
+   "u": "https://huggingface.co/mimbres/YourMT3",
+   "sn": "(/mimbres) mimbres / YourMT3 We use this repository solely to host the model checkpoints of YourMT3+. For details on how to use the model, please refer to the official repository: https://github.com/mimbres/YourMT3. Downloads last month Downloads are not tracked for this model. How to track Inf"
+  },
+  {
+   "t": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "arxiv://2407.04822",
+   "sn": "(MIR), transformers, data augmentation, mixture of experts (MoE), music tokens ## 1 Introduction Automatic music transcription (AMT) [[1](https://arxiv.org/html/2407.04822v3#bib.bib1)] is a fundamental task in music information retrieval where the goal is to transform music audio input into a sequen"
+  },
+  {
+   "t": "app.py · mimbres/YourMT3 at main",
+   "u": "https://huggingface.co/spaces/mimbres/YourMT3/blob/main/app.py",
+   "sn": "precision = ‘16’ project = ‘2024’ if model_name == “YMT3+”: checkpoint = “notask_all_cross_v6_xk2_amp0811_gm_ext_plus_nops_b72@model.ckpt” args = [checkpoint, ‘-p’, project, ‘-pr’, precision] elif model_name == “YPTF+Single (noPS)”: checkpoint = “ptf_all_cross_rebal5_mirst_xk2_edr005_"
+  },
+  {
+   "t": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://alphaxiv.org/abs/2407.04822",
+   "sn": "Sungkyun Chang, Emmanouil Benetos, Holger Kirchhoff, Simon Dixon 2024-08-01 PDF Download Abstract Multi-instrument music transcription aims to convert polyphonic music recordings into musical scores assigned to each instrument. This task is challenging for modeling as it requires simultaneously iden"
+  },
+  {
+   "t": "Paper page - YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://huggingface.co/papers/2407.04822",
+   "sn": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation Published on Jul 5, 2024 Abstract YourMT3+ enhances multi-instrument music transcription using a hierarchical attention transformer and mixture of experts, improving upon existi"
+  },
+  {
+   "t": "Build a Production Guitar Transcription Model: Complete Guide",
+   "u": "https://claude.ai/public/artifacts/fc3ac10d-f21a-4934-baef-9ec59e4bd94c",
+   "sn": "YourMT3+ with its PerceiverTF encoder and Mixture of Experts achieves the best current multi-instrument transcription but still drops significantly on commercial mixes—the key breakthrough requires joint source separation and transcription combined with aggressive data augmentation to close this gap"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://sotaverified.org/papers/yourmt3-multi-instrument-music-transcription",
+   "sn": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation 2024-07-05Code Available3· to hype Sungkyun Chang, Emmanouil Benetos, Holger Kirchhoff, Simon Dixon Code Available — Be the first to reproduce this paper. Reproduce Code"
+  },
+  {
+   "t": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://arxiv.org/html/2407.04822v1",
+   "sn": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation Abstract Multi-instrument music transcription aims to convert polyphonic music recordings into musical scores assigned to each instrument. This task is challenging for modeling"
+  },
+  {
+   "t": "mimbres/YourMT3 · Hugging Face",
+   "u": "https://huggingface.co/mimbres/YourMT3",
+   "sn": "(/mimbres) mimbres / YourMT3 We use this repository solely to host the model checkpoints of YourMT3+. For details on how to use the model, please refer to the official repository: https://github.com/mimbres/YourMT3. Downloads last month Downloads are not tracked for this model. How to track Inf"
+  },
+  {
+   "t": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "arxiv://2407.04822",
+   "sn": "(MIR), transformers, data augmentation, mixture of experts (MoE), music tokens ## 1 Introduction Automatic music transcription (AMT) [[1](https://arxiv.org/html/2407.04822v3#bib.bib1)] is a fundamental task in music information retrieval where the goal is to transform music audio input into a sequen"
+  },
+  {
+   "t": "app.py · mimbres/YourMT3 at main",
+   "u": "https://huggingface.co/spaces/mimbres/YourMT3/blob/main/app.py",
+   "sn": "precision = ‘16’ project = ‘2024’ if model_name == “YMT3+”: checkpoint = “notask_all_cross_v6_xk2_amp0811_gm_ext_plus_nops_b72@model.ckpt” args = [checkpoint, ‘-p’, project, ‘-pr’, precision] elif model_name == “YPTF+Single (noPS)”: checkpoint = “ptf_all_cross_rebal5_mirst_xk2_edr005_"
+  },
+  {
+   "t": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://alphaxiv.org/abs/2407.04822",
+   "sn": "Sungkyun Chang, Emmanouil Benetos, Holger Kirchhoff, Simon Dixon 2024-08-01 PDF Download Abstract Multi-instrument music transcription aims to convert polyphonic music recordings into musical scores assigned to each instrument. This task is challenging for modeling as it requires simultaneously iden"
+  },
+  {
+   "t": "Paper page - YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://huggingface.co/papers/2407.04822",
+   "sn": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation Published on Jul 5, 2024 Abstract YourMT3+ enhances multi-instrument music transcription using a hierarchical attention transformer and mixture of experts, improving upon existi"
+  },
+  {
+   "t": "Build a Production Guitar Transcription Model: Complete Guide",
+   "u": "https://claude.ai/public/artifacts/fc3ac10d-f21a-4934-baef-9ec59e4bd94c",
+   "sn": "YourMT3+ with its PerceiverTF encoder and Mixture of Experts achieves the best current multi-instrument transcription but still drops significantly on commercial mixes—the key breakthrough requires joint source separation and transcription combined with aggressive data augmentation to close this gap"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://arxiv.org/abs/2407.04822",
+   "sn": "(MIR), transformers, data augmentation, mixture of experts (MoE), music tokens ## 1 Introduction Automatic music transcription (AMT) [[1](https://arxiv.org/html/2407.04822v3#bib.bib1)] is a fundamental task in music information retrieval where the goal is to transform music audio input into a sequen"
+  },
+  {
+   "t": "YourMT3+: Multi-Instrument Music Transcription with Enhanced Transformer Architectures and Cross-Dataset STEM Augmentation",
+   "u": "https://webspace.eecs.qmul.ac.uk/s.e.dixon/pub/2024/ChangEtAl-MLSP-2024.pdf",
+   "sn": "YOURMT3+: MULTI-INSTRUMENT MUSIC TRANSCRIPTION WITH ENHANCED TRANSFORMER ARCHITECTURES AND CROSS-DATASET STEM AUGMENTATION Sungkyun Chang⋆ Emmanouil Benetos⋆ Holger Kirchhoff † Simon Dixon⋆ ⋆Centre for Digital Music, Queen Mary University of London † Huawei trainable from scratch, is dubbed as YourM"
+  },
+  {
+   "t": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://alphaxiv.org/abs/2407.04822",
+   "sn": "This paper introduces YourMT3+, a suite of models for enhanced multi-instrument music transcription based on the recent language token decoding approach of MT3. We enhance its encoder by adopting a hierarchical attention transformer in the time-frequency domain and integrating a mixture of experts."
+  },
+  {
+   "t": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://chatpaper.com/chatpaper/paper/38328",
+   "sn": "The model leverages a time-frequency perceiver (PTF) encoder with spectral cross-attention, enabling efficient processing of high-resolution time-frequency representations. Unlike standard Transformers, the PTF encoder uses latent arrays to compress and process audio spectrograms through iterative a"
+  },
+  {
+   "t": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://sophon.at/papers/yourmt3-multi-instrument-music-transcription-with-enhanced-transformer",
+   "sn": "Abstract Multi-instrument music transcription aims to convert polyphonic music recordings into musical scores assigned to each instrument. This task is challenging for modeling as it requires simultaneously identifying multiple instruments and transcribing their pitch and precise timing, and the lac"
+  },
+  {
+   "t": "[論文評述] YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://themoonlight.io/tw/review/yourmt3-multi-instrument-music-transcription-with-enhanced-transformer-architectures-and-cross-dataset-stem-augmentation",
+   "sn": "Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation The paper titled “YourMT3+: Multi-Instrument Music Transcription with Enhanced Transformer Architectures and Cross-Dataset Stem Augmentation” advances the state of research in Automatic Music Transcriptio"
+  },
+  {
+   "t": "Build a Production Guitar Transcription Model: Complete Guide",
+   "u": "https://claude.ai/public/artifacts/fc3ac10d-f21a-4934-baef-9ec59e4bd94c",
+   "sn": "YourMT3+ is the best starting architecture The YourMT3+ model (MLSP 2024) represents the current state-of-the-art for multi-instrument transcription. Its key architectural improvements over the original MT3 include a PerceiverTF encoder with hierarchical spectral cross-attention, a Mixture of Expert"
+  },
+  {
+   "t": "Paper page - YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation",
+   "u": "https://huggingface.co/papers/2407.04822",
+   "sn": "YourMT3+: Multi-instrument Music Transcription with Enhanced Transformer Architectures and Cross-dataset Stem Augmentation Published on Jul 5, 2024 Abstract YourMT3+ enhances multi-instrument music transcription using a hierarchical attention transformer and mixture of experts, improving upon existi"
+  }
+ ]
+}

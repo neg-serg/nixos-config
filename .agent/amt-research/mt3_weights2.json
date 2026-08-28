@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "MT3 tfhub google magenta mt3 model weights tensorflow",
+  "magenta mt3 github release checkpoint download"
+ ],
+ "anysearch": [
+  {
+   "t": "GitHub - magenta/mt3: MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://github.com/magenta/mt3",
+   "sn": "MT3: Multi-Task Multitrack Music Transcription MT3 is a multi-instrument automatic music transcription model that uses the T5X framework. This is not an officially supported Google product. Transcribe your own audio Use our colab notebook to transcribe audio files of your choosing. You can use a pre"
+  },
+  {
+   "t": "app.py · akhaliq/MT3 at main",
+   "u": "https://huggingface.co/spaces/akhaliq/MT3/blob/main/app.py",
+   "sn": "system(“pip install gsutil”) os.system(“git clone –branch=main https://github.com/google-research/t5x”) os.system(“mv t5x t5x_tmp; mv t5x_tmp/* .; rm -r t5x_tmp”) os.system(“sed -i ‘s:jax[tpu]:jax:’ setup.py”) os.system(“python3 -m pip install -e .”) os.system(“git clone –br"
+  },
+  {
+   "t": "mt3/README.md at e03242bdbb877c64677024adb3b9eb915d9929d6 · magenta/mt3",
+   "u": "https://github.com/magenta/mt3/blob/e03242bdbb877c64677024adb3b9eb915d9929d6/README.md",
+   "sn": "14 KB MT3: Multi-Task Multitrack Music Transcription MT3 is a multi-instrument automatic music transcription model that uses the T5X framework. This is not an officially supported Google product. Transcribe your own audio Try out Web Demo on Huggingface Spaces 🤗 Use our colab notebook to transcrib"
+  },
+  {
+   "t": "Google-Magenta-Piano-Transformer-Colab/music_transcription_with_transformers.py at master · asigalov61/Google-Magenta-Piano-Transformer-Colab",
+   "u": "https://github.com/asigalov61/Google-Magenta-Piano-Transformer-Colab/blob/master/music_transcription_with_transformers.py",
+   "sn": "ipynb Music Transcription with Transformers This notebook is an interactive demo of a few music transcription models created by Google’s Magenta team. You can upload audio and have one of our models automatically transcribe it. The notebook supports two pre-trained models: the piano transcription"
+  },
+  {
+   "t": "The Song Search - DL",
+   "u": "https://expo.baulab.info/2022-Fall/PraveenKumarSridhar/final_review.html",
+   "sn": "Shazam, we hope to create a project that would be replicate the inner workings of Shazam and perform a retrieval task on musical data. The core of this IR system comes from finding efficient representations for songs and performing a retrieval task with the said representations. While trying to figu"
+  },
+  {
+   "t": "AI Guitar Transcription App: 2025 Technical Guide",
+   "u": "https://claude.ai/public/artifacts/f7f95a84-621e-4299-956e-47128267acab",
+   "sn": "Current state-of-the-art achieves 90% F1 on clean isolated guitar (GuitarSet benchmark) but drops to 10-50% on commercial mixes—a critical gap that separates research from production-ready products. The key bottlenecks are guitar-specific technique detection, string/fret disambiguation, and cross-do"
+  },
+  {
+   "t": "Exploring Music Transcription with Multi-Modal Language Models",
+   "u": "https://medium.com/data-science/exploring-music-transcription-with-multi-modal-language-models-af352105db56",
+   "sn": "Current state of the art The current state-of-the-art for this task comes from Magenta, an open-source research project developed by the now defunct (as of April 2023) Google Brain Team. They released a paper Sequence-to-Sequence Piano Transcription with Transformers in 2021 which used a T5-inspired"
+  },
+  {
+   "t": "Adding type suppressions for pyrefly · magenta/mt3@fa53e12",
+   "u": "https://github.com/magenta/mt3/commit/fa53e12321ac417d3baf01f43e6796a7d0775f55",
+   "sn": "line number Diff line number Diff line change @@ -1,4 +1,4 @@ 1 `` -# Copyright 2025 The MT3 Authors. `` 1 +# Copyright 2026 The MT3 Authors. 2 2 # 3 3 # Licensed under the Apache License, Version 2.0 (the \"License\"); 4 4 # you may not use this file except in compliance with the License"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "GitHub - magenta/mt3: MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://github.com/magenta/mt3",
+   "sn": "MT3: Multi-Task Multitrack Music Transcription MT3 is a multi-instrument automatic music transcription model that uses the T5X framework. This is not an officially supported Google product. Transcribe your own audio Use our colab notebook to transcribe audio files of your choosing. You can use a pre"
+  },
+  {
+   "t": "app.py · akhaliq/MT3 at main",
+   "u": "https://huggingface.co/spaces/akhaliq/MT3/blob/main/app.py",
+   "sn": "system(“pip install gsutil”) os.system(“git clone –branch=main https://github.com/google-research/t5x”) os.system(“mv t5x t5x_tmp; mv t5x_tmp/* .; rm -r t5x_tmp”) os.system(“sed -i ‘s:jax[tpu]:jax:’ setup.py”) os.system(“python3 -m pip install -e .”) os.system(“git clone –br"
+  },
+  {
+   "t": "mt3/README.md at e03242bdbb877c64677024adb3b9eb915d9929d6 · magenta/mt3",
+   "u": "https://github.com/magenta/mt3/blob/e03242bdbb877c64677024adb3b9eb915d9929d6/README.md",
+   "sn": "14 KB MT3: Multi-Task Multitrack Music Transcription MT3 is a multi-instrument automatic music transcription model that uses the T5X framework. This is not an officially supported Google product. Transcribe your own audio Try out Web Demo on Huggingface Spaces 🤗 Use our colab notebook to transcrib"
+  },
+  {
+   "t": "Google-Magenta-Piano-Transformer-Colab/music_transcription_with_transformers.py at master · asigalov61/Google-Magenta-Piano-Transformer-Colab",
+   "u": "https://github.com/asigalov61/Google-Magenta-Piano-Transformer-Colab/blob/master/music_transcription_with_transformers.py",
+   "sn": "ipynb Music Transcription with Transformers This notebook is an interactive demo of a few music transcription models created by Google’s Magenta team. You can upload audio and have one of our models automatically transcribe it. The notebook supports two pre-trained models: the piano transcription"
+  },
+  {
+   "t": "The Song Search - DL",
+   "u": "https://expo.baulab.info/2022-Fall/PraveenKumarSridhar/final_review.html",
+   "sn": "Shazam, we hope to create a project that would be replicate the inner workings of Shazam and perform a retrieval task on musical data. The core of this IR system comes from finding efficient representations for songs and performing a retrieval task with the said representations. While trying to figu"
+  },
+  {
+   "t": "AI Guitar Transcription App: 2025 Technical Guide",
+   "u": "https://claude.ai/public/artifacts/f7f95a84-621e-4299-956e-47128267acab",
+   "sn": "Current state-of-the-art achieves 90% F1 on clean isolated guitar (GuitarSet benchmark) but drops to 10-50% on commercial mixes—a critical gap that separates research from production-ready products. The key bottlenecks are guitar-specific technique detection, string/fret disambiguation, and cross-do"
+  },
+  {
+   "t": "Exploring Music Transcription with Multi-Modal Language Models",
+   "u": "https://medium.com/data-science/exploring-music-transcription-with-multi-modal-language-models-af352105db56",
+   "sn": "Current state of the art The current state-of-the-art for this task comes from Magenta, an open-source research project developed by the now defunct (as of April 2023) Google Brain Team. They released a paper Sequence-to-Sequence Piano Transcription with Transformers in 2021 which used a T5-inspired"
+  },
+  {
+   "t": "Adding type suppressions for pyrefly · magenta/mt3@fa53e12",
+   "u": "https://github.com/magenta/mt3/commit/fa53e12321ac417d3baf01f43e6796a7d0775f55",
+   "sn": "line number Diff line number Diff line change @@ -1,4 +1,4 @@ 1 `` -# Copyright 2025 The MT3 Authors. `` 1 +# Copyright 2026 The MT3 Authors. 2 2 # 3 3 # Licensed under the Apache License, Version 2.0 (the \"License\"); 4 4 # you may not use this file except in compliance with the License"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "mt3-infer",
+   "u": "https://pypi.org/project/mt3-infer/",
+   "sn": "Unified, inference-only toolkit for MT3 model family (Magenta MT3, MR-MT3, MT3-PyTorch, YourMT3) Project description MT3-Infer Production-ready, unified inference toolkit for the MT3 music transcription model family MT3-Infer provides a clean, framework-neutral API for running music transcription in"
+  },
+  {
+   "t": "GitHub - magenta/mt3: MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://github.com/magenta/mt3",
+   "sn": "MT3: Multi-Task Multitrack Music Transcription MT3 is a multi-instrument automatic music transcription model that uses the T5X framework. This is not an officially supported Google product. Transcribe your own audio Use our colab notebook to transcribe audio files of your choosing. You can use a pre"
+  },
+  {
+   "t": "app.py · akhaliq/MT3 at main",
+   "u": "https://huggingface.co/spaces/akhaliq/MT3/blob/main/app.py",
+   "sn": "system(“git clone –branch=main https://github.com/google-research/t5x”) os.system(“mv t5x t5x_tmp; mv t5x_tmp/* .; rm -r t5x_tmp”) os.system(“sed -i ‘s:jax[tpu]:jax:’ setup.py”) os.system(“python3 -m pip install -e .”) os.system(“git clone –branch=main https://github.com/magenta/mt3"
+  },
+  {
+   "t": "mt3/README.md at e03242bdbb877c64677024adb3b9eb915d9929d6 · magenta/mt3",
+   "u": "https://github.com/magenta/mt3/blob/e03242bdbb877c64677024adb3b9eb915d9929d6/README.md",
+   "sn": "14 KB MT3: Multi-Task Multitrack Music Transcription MT3 is a multi-instrument automatic music transcription model that uses the T5X framework. This is not an officially supported Google product. Transcribe your own audio Try out Web Demo on Huggingface Spaces 🤗 Use our colab notebook to transcrib"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription | OpenTrain AI",
+   "u": "https://opentrain.ai/papers/mt3-multi-task-multitrack-music-transcription--arxiv-2111.03017",
+   "sn": "Transcription 1,740 stars · 222 forks · Last push Jul 9, 2026 · Apache-2.0 license License CI Dependencies Docker Official implementation from Papers with Code · Repository link is mentioned in the paper metadata · Strong overlap with paper title keywords Why this implementation Confidence: high mag"
+  },
+  {
+   "t": "Step by Step Implementation of Music Transcription with Transformers",
+   "u": "https://blog.devgenius.io/step-by-step-implementation-of-music-transcription-with-transformers-88d298c1bdba",
+   "sn": "!apt-get update -qq && apt-get install -qq libfluidsynth3 build-essential libasound2-dev libjack-dev # install mt3 !git clone --branch=main https://github.com/magenta/mt3 ! mv mt3 mt3_tmp; mv mt3_tmp/* .; rm -r mt3_tmp !python3 -m pip install jax[cuda11_local] nest-asyncio pyfluidsynth==1.3.0 -e . -"
+  },
+  {
+   "t": "app.py · akhaliq/MT3 at 24f7fefb5d147c380365f9b536e0a85c6f348484",
+   "u": "https://huggingface.co/spaces/akhaliq/MT3/blob/24f7fefb5d147c380365f9b536e0a85c6f348484/app.py",
+   "sn": "7 kB import gradio as gr import os from pathlib import Path os.system(“midi_ddsp_download_model_weights”) os.system(“git clone –branch=main https://github.com/google-research/t5x”) os.system(“mv t5x t5x_tmp; mv t5x_tmp/* .; rm -r t5x_tmp”) os.system(“sed -i ‘s:jax[tpu]:jax:’ set"
+  },
+  {
+   "t": "MT3: Multi-Task Multitrack Music Transcription",
+   "u": "https://sotaverified.org/papers/mt3-multi-task-multitrack-music-transcription-1",
+   "sn": "MT3: Multi-Task Multitrack Music Transcription 2021-11-04ICLR 2022Code Available1· to hype Josh Gardner, Ian Simon, Ethan Manilow, Curtis Hawthorne, Jesse Engel Code Available — Be the first to reproduce this paper. Reproduce Code github.com/magenta/mt3 OfficialIn paperjax★ 1,686 github.com/"
+  }
+ ]
+}

@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "KaraTuner ByteDance music transcription model 2024 MAESTRO F1",
+  "KaraTuner 2410.13406 piano transcription benchmark note F1"
+ ],
+ "anysearch": [
+  {
+   "t": "ByteDance High-Resolution AMT System Achieves SOTA in Piano Note and Pedal Transcription",
+   "u": "https://medium.com/syncedreview/bytedance-high-resolution-amt-system-achieves-sota-in-piano-note-and-pedal-transcription-a0db1425d929",
+   "sn": "ByteDance High-Resolution AMT System Achieves SOTA in Piano Note and Pedal Transcription – Automatic music transcription (AMT) is the task of transcribing raw audio recordings into symbolic representations such as the Musical Instrument Digital Interface (MIDI) technical standard. The field presents"
+  },
+  {
+   "t": "KARATUNER: TOWARDS END TO END NATURAL PITCH CORRECTION FOR SINGING VOICE IN KARAOKE",
+   "u": "https://ella-granger.github.io/KaraTuner",
+   "sn": "VOICE IN KARAOKE Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. [...] In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve a"
+  },
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "https://zenodo.org/records/10610212",
+   "sn": "Robust Automatic Piano Transcription Description This is a re-trained model of [1], using the data augmentation techniques described in our pending IEEE Signal Processing Letters publication “A Data-Driven Analysis of Robust Automatic Piano Transcription”. MAPS test set out-of-dataset evaluation: Mo"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times",
+   "u": "https://deepai.org/publication/high-resolution-piano-transcription-with-pedals-by-regressing-onsets-and-offsets-times",
+   "sn": "In addition, previous AMT systems are sensitive to the misaligned onsets and offsets labels of audio recordings. [...] In this article, we propose a high-resolution AMT system trained by regressing precise times of onsets and offsets. In inference, we propose an algorithm to analytically calculate t"
+  },
+  {
+   "t": "MulTTiPop: The Real-World Multitrack Benchmark That Reveals How Far Music Transcription Still Has to Go / MulTTiPop：揭示自动音乐转录还有多远的多轨基准数据集 | Alan Hou",
+   "u": "https://alanhou.org/blog/arxiv-multtipop-a-multitrack-transcription-dataset-for",
+   "sn": "LG The Gap Automatic Music Transcription (AMT) has made impressive strides — models like MT3 and ByteDance’s system now handle piano, drums, and even full ensembles with decent accuracy. But here’s the dirty secret: nearly all evaluation happens on synthetic datasets (MAESTRO for piano, Slakh for sy"
+  },
+  {
+   "t": "Towards Robust Transcription: Exploring Noise Injection Strategies for Training Data Augmentation",
+   "u": "arxiv://2410.14122",
+   "sn": "1 Introduction Automatic Music Transcription (AMT) is a fundamental task in Music Information Retrieval (MIR), aiming to convert audio recordings into symbolic representations, such as the Musical Instrument Digital Interface (MIDI) format. As a foundational task in Music Information Retrieval (M"
+  },
+  {
+   "t": "Publications",
+   "u": "https://ella-granger.github.io/publications",
+   "sn": "In this paper we also propose a Transformer-based framework for note-level transcription of choral music. This framework bypasses the frame-level processing and directly produces a sequence of notes with associated timestamps. Trained on YouChorale, our proposed model achieves state-of-the-art perfo"
+  },
+  {
+   "t": "Towards Robust Transcription: Exploring Noise Injection Strategies for Training Data Augmentation",
+   "u": "https://arxiv.org/html/2410.14122v1",
+   "sn": "Training Data Augmentation Abstract Recent advancements in Automatic Piano Transcription (APT) have significantly improved system performance, but the impact of noisy environments on the system performance remains largely unexplored. This study investigates the impact of white noise at various Signa"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "ByteDance High-Resolution AMT System Achieves SOTA in Piano Note and Pedal Transcription",
+   "u": "https://medium.com/syncedreview/bytedance-high-resolution-amt-system-achieves-sota-in-piano-note-and-pedal-transcription-a0db1425d929",
+   "sn": "ByteDance High-Resolution AMT System Achieves SOTA in Piano Note and Pedal Transcription – Automatic music transcription (AMT) is the task of transcribing raw audio recordings into symbolic representations such as the Musical Instrument Digital Interface (MIDI) technical standard. The field presents"
+  },
+  {
+   "t": "KARATUNER: TOWARDS END TO END NATURAL PITCH CORRECTION FOR SINGING VOICE IN KARAOKE",
+   "u": "https://ella-granger.github.io/KaraTuner",
+   "sn": "VOICE IN KARAOKE Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. [...] In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve a"
+  },
+  {
+   "t": "A Data-Driven Analysis of Robust Automatic Piano Transcription",
+   "u": "https://zenodo.org/records/10610212",
+   "sn": "Robust Automatic Piano Transcription Description This is a re-trained model of [1], using the data augmentation techniques described in our pending IEEE Signal Processing Letters publication “A Data-Driven Analysis of Robust Automatic Piano Transcription”. MAPS test set out-of-dataset evaluation: Mo"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times",
+   "u": "https://deepai.org/publication/high-resolution-piano-transcription-with-pedals-by-regressing-onsets-and-offsets-times",
+   "sn": "In addition, previous AMT systems are sensitive to the misaligned onsets and offsets labels of audio recordings. [...] In this article, we propose a high-resolution AMT system trained by regressing precise times of onsets and offsets. In inference, we propose an algorithm to analytically calculate t"
+  },
+  {
+   "t": "MulTTiPop: The Real-World Multitrack Benchmark That Reveals How Far Music Transcription Still Has to Go / MulTTiPop：揭示自动音乐转录还有多远的多轨基准数据集 | Alan Hou",
+   "u": "https://alanhou.org/blog/arxiv-multtipop-a-multitrack-transcription-dataset-for",
+   "sn": "LG The Gap Automatic Music Transcription (AMT) has made impressive strides — models like MT3 and ByteDance’s system now handle piano, drums, and even full ensembles with decent accuracy. But here’s the dirty secret: nearly all evaluation happens on synthetic datasets (MAESTRO for piano, Slakh for sy"
+  },
+  {
+   "t": "Towards Robust Transcription: Exploring Noise Injection Strategies for Training Data Augmentation",
+   "u": "arxiv://2410.14122",
+   "sn": "1 Introduction Automatic Music Transcription (AMT) is a fundamental task in Music Information Retrieval (MIR), aiming to convert audio recordings into symbolic representations, such as the Musical Instrument Digital Interface (MIDI) format. As a foundational task in Music Information Retrieval (M"
+  },
+  {
+   "t": "Publications",
+   "u": "https://ella-granger.github.io/publications",
+   "sn": "In this paper we also propose a Transformer-based framework for note-level transcription of choral music. This framework bypasses the frame-level processing and directly produces a sequence of notes with associated timestamps. Trained on YouChorale, our proposed model achieves state-of-the-art perfo"
+  },
+  {
+   "t": "Towards Robust Transcription: Exploring Noise Injection Strategies for Training Data Augmentation",
+   "u": "https://arxiv.org/html/2410.14122v1",
+   "sn": "Training Data Augmentation Abstract Recent advancements in Automatic Piano Transcription (APT) have significantly improved system performance, but the impact of noisy environments on the system performance remains largely unexplored. This study investigates the impact of white noise at various Signa"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "KARATUNER: TOWARDS END TO END NATURAL PITCH CORRECTION FOR SINGING VOICE IN KARAOKE",
+   "u": "https://ella-granger.github.io/KaraTuner/",
+   "sn": "VOICE IN KARAOKE Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. [...] In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve a"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://arxiv.org/abs/2110.09121",
+   "sn": "in karaoke View PDF Abstract:An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. [...] In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curv"
+  },
+  {
+   "t": "KaraTuner: Towards End-to-End Natural Pitch Correction for Singing Voice in Karaoke",
+   "u": "https://ar5iv.labs.arxiv.org/html/2110.09121",
+   "sn": "In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve and resynthesizes the singing voice directly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure pit"
+  },
+  {
+   "t": "Publications",
+   "u": "https://ella-granger.github.io/publications",
+   "sn": "these challenges, in this paper we introduce YouChorale, a novel choral music dataset in a cappella setting curated from the Internet. YouChorale contains 496 real-world recordings in diverse acoustic configurations of choral music from over 100 composers as well as their MIDI scores. [...] In this"
+  },
+  {
+   "t": "2024:Polyphonic Transcription Results - MIREX Wiki",
+   "u": "https://music-ir.org/mirex/wiki/2024:Polyphonic_Transcription_Results",
+   "sn": "N/A N/A N/A N/A N/A N/A N/A N/A N/A offset derivations on MAPS deviates strongly from a Normal distribution, suggesting potential annotation issues N/A on pedals means that no pedal is included in the transcribed results Aug means the model is trained with data augmentation Detailed Results on M"
+  },
+  {
+   "t": "Piano Transcription on SMD benchmark leaderboard",
+   "u": "https://sota2.com/research/sota/piano-transcription-on-smd",
+   "sn": "Piano Transcription on SMD 98.2PrecisionDTW-BiP Evaluation Results Method Links DTW-BiPWindow Size=0.64s2026.06 98.2 — — — — — — 87.5 92.4 DTW-GreWindow Size=0.1s2026.06 98.1 — — — — — — 85.9 91.4 DTW-BiPWindow Size=0.1s2026.06 98.1 — — — — — — 86.9 92 DTW-BiPWindow Size=2s2026.06 97"
+  },
+  {
+   "t": "Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge",
+   "u": "https://arxiv.org/html/2603.27528v1",
+   "sn": "Music Advancing Multi-Instrument Music Transcription: Results from the 2025 AMT Challenge Abstract This paper presents the results of the 2025 Automatic Music Transcription (AMT) Challenge, an online competition to benchmark progress in multi-instrument transcription. Eight teams submitted valid sol"
+  },
+  {
+   "t": "Singing Voice Beautification with Pitch Correction and Expressiveness Enhancement",
+   "u": "https://linnk.ai/insight/music-and-audio-processing/singing-voice-beautification-with-pitch-correction-and-expressiveness-enhancement-G-fVpW2m",
+   "sn": "Core Concepts CONTUNER, a diffusion-based model, can efficiently beautify amateur singing voices by correcting pitch and enhancing expressiveness without requiring paired professional-amateur data. Abstract The paper proposes CONTUNER, a novel singing voice beautification (SVB) model that co"
+  }
+ ]
+}

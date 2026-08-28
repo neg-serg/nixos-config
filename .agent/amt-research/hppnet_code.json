@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "HPPNet github code piano transcription implementation",
+  "HPPNet piano transcription model weights download"
+ ],
+ "anysearch": [
+  {
+   "t": "GitHub - WX-Wei/HPPNet",
+   "u": "https://github.com/WX-Wei/HPPNet",
+   "sn": "PyTorch Implementation of HPPNet Piano Transcription Model This is a PyTorch implementation of HPPNet model, using the Maestro dataset v3 for training and the Disklavier portion of the MAPS database for testing. Instructions This project is quite resource-intensive; 32 GB or larger system memory and"
+  },
+  {
+   "t": "Score-Informed Transformer for Refining MIDI Velocity in Automatic Music Transcription",
+   "u": "https://arxiv.org/html/2508.07757v2",
+   "sn": "In this work, we propose a modular, lightweight score-informed Transformer correction module that refines the velocity estimates of Automatic Music Transcription (AMT) systems. We integrate the proposed module into multiple AMT systems (HPT, HPPNet, and DynEst). Trained exclusively on the MAESTRO tr"
+  },
+  {
+   "t": "Audio-to-Score Piano Transcription",
+   "u": "https://audio2score.github.io",
+   "sn": "Music transcription is the task of listening to a music performance and representing it as a musical score; this is a highly intelligent task that only trained experts can do. To transcribe music performances containing multiple tones, such as piano music, it is necessary to recognize complex combin"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "https://arxiv.org/pdf/2503.01362",
+   "sn": "For audio-to-MIDI piano transcription, one may define the input and output of the Transformer as a sequence of raw audio features (e.g., mel and constant-Q spectrograms) and a sequence of note-on and note-off events sorted in time and pitch, respectively. The performance of this naive approach, howe"
+  },
+  {
+   "t": "HPPNet: Modeling the Harmonic Structure and Pitch Invariance in Piano Transcription",
+   "u": "https://catalyzex.com/paper/hppnet-modeling-the-harmonic-structure-and",
+   "sn": "The sound of a piano note contains various overtones, and the pitch of a key does not change over time. To make full use of such latent information, we propose HPPNet that using the Harmonic Dilated Convolution to capture the harmonic structures and the Frequency Grouped Recurrent Neural Network to"
+  },
+  {
+   "t": "HPPNet: Modeling the Harmonic Structure and Pitch Invariance in Piano Transcription",
+   "u": "https://ar5iv.labs.arxiv.org/html/2208.14339",
+   "sn": "To make full use of such latent information, we propose HPPNet that using the Harmonic Dilated Convolution to capture the harmonic structures and the Frequency Grouped Recurrent Neural Network to model the pitch-invariance over time. Experimental results on the MAESTRO dataset show that our piano tr"
+  },
+  {
+   "t": "GitHub - BShakhovsky/PolyphonicPianoTranscription: Recurrent Neural Network for generating piano MIDI-files from audio (MP3, WAV, etc.)",
+   "u": "https://github.com/BShakhovsky/PolyphonicPianoTranscription",
+   "sn": "Automatic Polyphonic Piano Transcription with Recurrent Neural Networks IPython-notebook templates for neural network training and then using it to generate piano MIDI-files from audio (MP3, WAV, etc.). The accuracy will depend on the complexity of the song, and will obviously be higher for solo pi"
+  },
+  {
+   "t": "Piano Transcription by Hierarchical Language Modeling with Pretrained Roll-based Encoders",
+   "u": "https://pith.science/paper/2501.03038",
+   "sn": "The reading This paper proposes a hybrid piano transcription system: a pretrained frame-level piano-roll encoder is kept as the audio front end, but its final readout is replaced by a decoder-only language model that emits note events token by token. To make the token sequence tractable, the paper p"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "GitHub - WX-Wei/HPPNet",
+   "u": "https://github.com/WX-Wei/HPPNet",
+   "sn": "PyTorch Implementation of HPPNet Piano Transcription Model This is a PyTorch implementation of HPPNet model, using the Maestro dataset v3 for training and the Disklavier portion of the MAPS database for testing. Instructions This project is quite resource-intensive; 32 GB or larger system memory and"
+  },
+  {
+   "t": "Score-Informed Transformer for Refining MIDI Velocity in Automatic Music Transcription",
+   "u": "https://arxiv.org/html/2508.07757v2",
+   "sn": "In this work, we propose a modular, lightweight score-informed Transformer correction module that refines the velocity estimates of Automatic Music Transcription (AMT) systems. We integrate the proposed module into multiple AMT systems (HPT, HPPNet, and DynEst). Trained exclusively on the MAESTRO tr"
+  },
+  {
+   "t": "Audio-to-Score Piano Transcription",
+   "u": "https://audio2score.github.io",
+   "sn": "Music transcription is the task of listening to a music performance and representing it as a musical score; this is a highly intelligent task that only trained experts can do. To transcribe music performances containing multiple tones, such as piano music, it is necessary to recognize complex combin"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "https://arxiv.org/pdf/2503.01362",
+   "sn": "For audio-to-MIDI piano transcription, one may define the input and output of the Transformer as a sequence of raw audio features (e.g., mel and constant-Q spectrograms) and a sequence of note-on and note-off events sorted in time and pitch, respectively. The performance of this naive approach, howe"
+  },
+  {
+   "t": "HPPNet: Modeling the Harmonic Structure and Pitch Invariance in Piano Transcription",
+   "u": "https://catalyzex.com/paper/hppnet-modeling-the-harmonic-structure-and",
+   "sn": "The sound of a piano note contains various overtones, and the pitch of a key does not change over time. To make full use of such latent information, we propose HPPNet that using the Harmonic Dilated Convolution to capture the harmonic structures and the Frequency Grouped Recurrent Neural Network to"
+  },
+  {
+   "t": "HPPNet: Modeling the Harmonic Structure and Pitch Invariance in Piano Transcription",
+   "u": "https://ar5iv.labs.arxiv.org/html/2208.14339",
+   "sn": "To make full use of such latent information, we propose HPPNet that using the Harmonic Dilated Convolution to capture the harmonic structures and the Frequency Grouped Recurrent Neural Network to model the pitch-invariance over time. Experimental results on the MAESTRO dataset show that our piano tr"
+  },
+  {
+   "t": "GitHub - BShakhovsky/PolyphonicPianoTranscription: Recurrent Neural Network for generating piano MIDI-files from audio (MP3, WAV, etc.)",
+   "u": "https://github.com/BShakhovsky/PolyphonicPianoTranscription",
+   "sn": "Automatic Polyphonic Piano Transcription with Recurrent Neural Networks IPython-notebook templates for neural network training and then using it to generate piano MIDI-files from audio (MP3, WAV, etc.). The accuracy will depend on the complexity of the song, and will obviously be higher for solo pi"
+  },
+  {
+   "t": "Piano Transcription by Hierarchical Language Modeling with Pretrained Roll-based Encoders",
+   "u": "https://pith.science/paper/2501.03038",
+   "sn": "The reading This paper proposes a hybrid piano transcription system: a pretrained frame-level piano-roll encoder is kept as the audio front end, but its final readout is replaced by a decoder-only language model that emits note events token by token. To make the token sequence tractable, the paper p"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "GitHub - WX-Wei/HPPNet",
+   "u": "https://github.com/WX-Wei/HPPNet",
+   "sn": "PyTorch Implementation of HPPNet Piano Transcription Model This is a PyTorch implementation of HPPNet model, using the Maestro dataset v3 for training and the Disklavier portion of the MAPS database for testing. Instructions This project is quite resource-intensive; 32 GB or larger system memory and"
+  },
+  {
+   "t": "HPPNet: Modeling the Harmonic Structure and Pitch Invariance in Piano Transcription",
+   "u": "https://ar5iv.labs.arxiv.org/html/2208.14339",
+   "sn": "HPPNet: Modeling the Harmonic Structure and Pitch Invariance in Piano Transcription Abstract While neural network models are making significant progress in piano transcription, they are becoming more resource-consuming due to requiring larger model size and more computing power. In this paper, we at"
+  },
+  {
+   "t": "HPPNET: MODELING THE HARMONIC STRUCTURE ...",
+   "u": "https://archives.ismir.net/ismir2022/paper/000085.pdf",
+   "sn": "The sound of a pi- ano note contains various overtones, and the pitch of a key does not change over time. To make full use of such la- tent information, we propose HPPNet that using the Har- monic Dilated Convolution to capture the harmonic struc- tures and the Frequency Grouped Recurrent Neural Net"
+  },
+  {
+   "t": "Streaming Piano Transcription Based on Consistent Onset and Offset Decoding with Sustain Pedal Detection",
+   "u": "https://arxiv.org/pdf/2503.01362",
+   "sn": "to use the Transformer [7] by serializing the polyphonic information of the estimation target [8, 9]. AMT is essentially different with ASR in a sense that the onsets, durations, and pitches of musical notes should be estimated, while the temporal information of output tokens (e.g., words and charac"
+  },
+  {
+   "t": "Audio-to-Score Piano Transcription",
+   "u": "https://audio2score.github.io",
+   "sn": "Music transcription is the task of listening to a music performance and representing it as a musical score; this is a highly intelligent task that only trained experts can do. To transcribe music performances containing multiple tones, such as piano music, it is necessary to recognize complex combin"
+  },
+  {
+   "t": "HPPNet: Modeling the Harmonic Structure and Pitch Invariance in Piano Transcription",
+   "u": "https://catalyzex.com/paper/hppnet-modeling-the-harmonic-structure-and",
+   "sn": "In this paper, we attempt to apply more prior about piano to reduce model size and improve the transcription performance. The sound of a piano note contains various overtones, and the pitch of a key does not change over time. To make full use of such latent information, we propose HPPNet that using"
+  },
+  {
+   "t": "Piano Transcription by Hierarchical Language Modeling with Pretrained Roll-based Encoders",
+   "u": "https://pith.science/paper/2501.03038",
+   "sn": "The reading This paper proposes a hybrid piano transcription system: a pretrained frame-level piano-roll encoder is kept as the audio front end, but its final readout is replaced by a decoder-only language model that emits note events token by token. To make the token sequence tractable, the paper p"
+  },
+  {
+   "t": "HPPNet: Modeling the Harmonic Structure and Pitch Invariance in Piano Transcription",
+   "u": "https://arcxiv.org/abs/2208.14339",
+   "sn": "The sound of a piano note contains various overtones, and the pitch of a key does not change over time. To make full use of such latent information, we propose HPPNet that using the Harmonic Dilated Convolution to capture the harmonic structures and the Frequency Grouped Recurrent Neural Network to"
+  }
+ ]
+}

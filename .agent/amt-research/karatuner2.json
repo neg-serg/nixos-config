@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "KaraTuner music transcription ByteDance MAESTRO note F1 arXiv",
+  "KaraTuner automatic music transcription model flexible efficient"
+ ],
+ "anysearch": [
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://arxiv.org/abs/2110.09121v2",
+   "sn": "in karaoke View PDF Abstract:An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. [...] In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curv"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onset and Offset Times",
+   "u": "https://arxiv.org/abs/2010.01815",
+   "sn": "with Pedals by Regressing Onset and Offset Times View PDF HTML (experimental) Abstract:Automatic music transcription (AMT) is the task of transcribing audio recordings into symbolic representations. Recently, neural network-based methods have been applied to AMT, and have achieved state-of-the-art r"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times",
+   "u": "https://arxiv.org/abs/2010.01815v1",
+   "sn": "with Pedals by Regressing Onsets and Offsets Times View PDF HTML (experimental) Abstract:Automatic music transcription (AMT) is the task of transcribing audio recordings into symbolic representations such as Musical Instrument Digital Interface (MIDI). Recently, neural networks based methods have be"
+  },
+  {
+   "t": "KaraTuner: Towards End-to-End Natural Pitch Correction for Singing Voice in Karaoke",
+   "u": "https://ar5iv.labs.arxiv.org/html/2110.09121",
+   "sn": "Voice in Karaoke Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. However, designing these components with strategies often requires domain expertise and they are likely"
+  },
+  {
+   "t": "ByteDance High-Resolution AMT System Achieves SOTA in Piano Note and Pedal Transcription",
+   "u": "https://syncedreview.com/2020/10/12/bytedance-high-resolution-amt-system-achieves-sota-in-piano-note-and-pedal-transcription/amp",
+   "sn": "Automatic music transcription (AMT) is the task of transcribing raw audio recordings into symbolic representations such as the Musical Instrument Digital Interface (MIDI) technical standard. The field presents a variety of research challenges in signal processing and AI, as music signals often conta"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://arcxiv.org/abs/2110.09121",
+   "sn": "Tao Jiang, Peng Hu Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. [...] In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://ui.adsabs.harvard.edu/abs/arXiv:2110.09121",
+   "sn": "voice in karaoke Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. [...] In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve a"
+  },
+  {
+   "t": "MulTTiPop: The Real-World Multitrack Benchmark That Reveals How Far Music Transcription Still Has to Go / MulTTiPop：揭示自动音乐转录还有多远的多轨基准数据集 | Alan Hou",
+   "u": "https://alanhou.org/blog/arxiv-multtipop-a-multitrack-transcription-dataset-for",
+   "sn": "on synthetic/simple datasets does not predict real-world performance | v Assumption: Real multitrack MIDI + matching audio exists and can be aligned via metadata | v Method: Metadata matching across Lakh + TheoryTab -> manual anchor beat -> beat tracking + warp | v Evidence: Best model gets 38% Onse"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://arxiv.org/abs/2110.09121v2",
+   "sn": "in karaoke View PDF Abstract:An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. [...] In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curv"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onset and Offset Times",
+   "u": "https://arxiv.org/abs/2010.01815",
+   "sn": "with Pedals by Regressing Onset and Offset Times View PDF HTML (experimental) Abstract:Automatic music transcription (AMT) is the task of transcribing audio recordings into symbolic representations. Recently, neural network-based methods have been applied to AMT, and have achieved state-of-the-art r"
+  },
+  {
+   "t": "High-resolution Piano Transcription with Pedals by Regressing Onsets and Offsets Times",
+   "u": "https://arxiv.org/abs/2010.01815v1",
+   "sn": "with Pedals by Regressing Onsets and Offsets Times View PDF HTML (experimental) Abstract:Automatic music transcription (AMT) is the task of transcribing audio recordings into symbolic representations such as Musical Instrument Digital Interface (MIDI). Recently, neural networks based methods have be"
+  },
+  {
+   "t": "KaraTuner: Towards End-to-End Natural Pitch Correction for Singing Voice in Karaoke",
+   "u": "https://ar5iv.labs.arxiv.org/html/2110.09121",
+   "sn": "Voice in Karaoke Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. However, designing these components with strategies often requires domain expertise and they are likely"
+  },
+  {
+   "t": "ByteDance High-Resolution AMT System Achieves SOTA in Piano Note and Pedal Transcription",
+   "u": "https://syncedreview.com/2020/10/12/bytedance-high-resolution-amt-system-achieves-sota-in-piano-note-and-pedal-transcription/amp",
+   "sn": "Automatic music transcription (AMT) is the task of transcribing raw audio recordings into symbolic representations such as the Musical Instrument Digital Interface (MIDI) technical standard. The field presents a variety of research challenges in signal processing and AI, as music signals often conta"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://arcxiv.org/abs/2110.09121",
+   "sn": "Tao Jiang, Peng Hu Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. [...] In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://ui.adsabs.harvard.edu/abs/arXiv:2110.09121",
+   "sn": "voice in karaoke Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. [...] In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve a"
+  },
+  {
+   "t": "MulTTiPop: The Real-World Multitrack Benchmark That Reveals How Far Music Transcription Still Has to Go / MulTTiPop：揭示自动音乐转录还有多远的多轨基准数据集 | Alan Hou",
+   "u": "https://alanhou.org/blog/arxiv-multtipop-a-multitrack-transcription-dataset-for",
+   "sn": "on synthetic/simple datasets does not predict real-world performance | v Assumption: Real multitrack MIDI + matching audio exists and can be aligned via metadata | v Method: Metadata matching across Lakh + TheoryTab -> manual anchor beat -> beat tracking + warp | v Evidence: Best model gets 38% Onse"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://arxiv.org/pdf/2110.09121",
+   "sn": "edu Abstract An automatic pitch correction system typically includes sev- eral stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. However, design- ing these components with strategies often requires domain ex- pertise and they are likely to fail"
+  },
+  {
+   "t": "KaraTuner: Towards End-to-End Natural Pitch Correction for Singing Voice in Karaoke",
+   "u": "https://ar5iv.labs.arxiv.org/html/2110.09121",
+   "sn": "In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve and resynthesizes the singing voice directly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure pit"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://ui.adsabs.harvard.edu/abs/arXiv:2110.09121",
+   "sn": "In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve and resynthesizes the singing voice directly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure pit"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://catalyzex.com/paper/karatuner-towards-end-to-end-natural-pitch",
+   "sn": "in karaoke Oct 18, 2021 An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. [...] In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve"
+  },
+  {
+   "t": "KARATUNER: TOWARDS END TO END NATURAL PITCH CORRECTION FOR SINGING VOICE IN KARAOKE",
+   "u": "https://ella-granger.github.io/KaraTuner",
+   "sn": "VOICE IN KARAOKE Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. [...] In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve a"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://emergentmind.com/papers/2110.09121",
+   "sn": "In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve and resynthesizes the singing voice directly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure pit"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://arcxiv.org/abs/2110.09121",
+   "sn": "In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve and resynthesizes the singing voice directly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure pit"
+  },
+  {
+   "t": "KaraTuner: Towards End-to-End Natural Pitch Correction for Singing Voice in Karaoke",
+   "u": "https://isca-archive.org/interspeech_2022/zhuang22b_interspeech.html",
+   "sn": "Zhao, Tao Jiang, Peng Hu An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. [...] In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve an"
+  }
+ ]
+}

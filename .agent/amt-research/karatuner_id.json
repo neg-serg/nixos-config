@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "KaraTuner arXiv singing voice pitch correction karaoke ByteDance 2024",
+  "KaraTuner end-to-end natural pitch correction singing voice arXiv"
+ ],
+ "anysearch": [
+  {
+   "t": "KaraTuner: Towards End-to-End Natural Pitch Correction for Singing Voice in Karaoke",
+   "u": "https://ar5iv.labs.arxiv.org/html/2110.09121",
+   "sn": "KaraTuner: Towards End-to-End Natural Pitch Correction for Singing Voice in Karaoke Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. However, designing these components w"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://arcxiv.org/abs/2110.09121",
+   "sn": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke Xiaobin Zhuang, Huiran Yu, Weifeng Zhao, Tao Jiang, Peng Hu Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and"
+  },
+  {
+   "t": "Publications",
+   "u": "https://ella-granger.github.io/publications",
+   "sn": "YouChorale contains 496 real-world recordings in diverse acoustic configurations of choral music from over 100 composers as well as their MIDI scores. In this paper we also propose a Transformer-based framework for note-level transcription of choral music. This framework bypasses the frame-level pro"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://arxiv.org/pdf/2110.09121",
+   "sn": "In this pa- per, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve and resynthesizes the singing voice di- rectly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure"
+  },
+  {
+   "t": "Sitemap",
+   "u": "https://ella-granger.github.io/sitemap",
+   "sn": "that predicts pitch curve and resynthesizes the singing voice directly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure pitch accuracy, pitch naturalness, timbre consistency, and sound quality."
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://emergentmind.com/papers/2110.09121",
+   "sn": "In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve and resynthesizes the singing voice directly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure pit"
+  },
+  {
+   "t": "KARATUNER: TOWARDS END TO END NATURAL PITCH CORRECTION FOR SINGING VOICE IN KARAOKE",
+   "u": "https://ella-granger.github.io/KaraTuner",
+   "sn": "In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve and resynthesizes the singing voice directly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure pit"
+  },
+  {
+   "t": "PitchFlower: A flow-based neural audio codec with pitch controllability",
+   "u": "https://arxiv-vanity.com/papers/2510.25566",
+   "sn": "PitchFlower: A flow-based neural audio codec with pitch controllability Abstract We present PitchFlower, a flow-based neural audio codec with explicit pitch controllability. Our approach enforces disentanglement through a simple perturbation: during training, F0 contours are flattened and randomly s"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "KaraTuner: Towards End-to-End Natural Pitch Correction for Singing Voice in Karaoke",
+   "u": "https://ar5iv.labs.arxiv.org/html/2110.09121",
+   "sn": "KaraTuner: Towards End-to-End Natural Pitch Correction for Singing Voice in Karaoke Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. However, designing these components w"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://arcxiv.org/abs/2110.09121",
+   "sn": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke Xiaobin Zhuang, Huiran Yu, Weifeng Zhao, Tao Jiang, Peng Hu Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and"
+  },
+  {
+   "t": "Publications",
+   "u": "https://ella-granger.github.io/publications",
+   "sn": "YouChorale contains 496 real-world recordings in diverse acoustic configurations of choral music from over 100 composers as well as their MIDI scores. In this paper we also propose a Transformer-based framework for note-level transcription of choral music. This framework bypasses the frame-level pro"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://arxiv.org/pdf/2110.09121",
+   "sn": "In this pa- per, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve and resynthesizes the singing voice di- rectly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure"
+  },
+  {
+   "t": "Sitemap",
+   "u": "https://ella-granger.github.io/sitemap",
+   "sn": "that predicts pitch curve and resynthesizes the singing voice directly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure pitch accuracy, pitch naturalness, timbre consistency, and sound quality."
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://emergentmind.com/papers/2110.09121",
+   "sn": "In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve and resynthesizes the singing voice directly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure pit"
+  },
+  {
+   "t": "KARATUNER: TOWARDS END TO END NATURAL PITCH CORRECTION FOR SINGING VOICE IN KARAOKE",
+   "u": "https://ella-granger.github.io/KaraTuner",
+   "sn": "In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve and resynthesizes the singing voice directly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure pit"
+  },
+  {
+   "t": "PitchFlower: A flow-based neural audio codec with pitch controllability",
+   "u": "https://arxiv-vanity.com/papers/2510.25566",
+   "sn": "PitchFlower: A flow-based neural audio codec with pitch controllability Abstract We present PitchFlower, a flow-based neural audio codec with explicit pitch controllability. Our approach enforces disentanglement through a simple perturbation: during training, F0 contours are flattened and randomly s"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://arxiv.org/abs/2110.09121",
+   "sn": "In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve and resynthesizes the singing voice directly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure pit"
+  },
+  {
+   "t": "KaraTuner: Towards End-to-End Natural Pitch Correction for Singing Voice in Karaoke",
+   "u": "https://ar5iv.labs.arxiv.org/html/2110.09121",
+   "sn": "In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve and resynthesizes the singing voice directly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure pit"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://arcxiv.org/abs/2110.09121",
+   "sn": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke Xiaobin Zhuang, Huiran Yu, Weifeng Zhao, Tao Jiang, Peng Hu Abstract An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://ui.adsabs.harvard.edu/abs/arXiv:2110.09121",
+   "sn": "In this paper, we present KaraTuner, an end-to-end neural architecture that predicts pitch curve and resynthesizes the singing voice directly from the tuned pitch and vocal spectrum extracted from the original recordings. Several vital technical points have been introduced in KaraTuner to ensure pit"
+  },
+  {
+   "t": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke",
+   "u": "https://ella-granger.github.io/karatuner",
+   "sn": "KaraTuner: Towards end to end natural pitch correction for singing voice in karaoke Published in Interspeech 2022, Incheon, South Korea, 2022 Recommended citation: X. Zhuang, H. Yu, W. Zhao, T. Jiang, and P. Hu, KaraTuner: Towards end-to-end natural pitch correction for singing voice in karaoke, in"
+  },
+  {
+   "t": "Sitemap",
+   "u": "https://ella-granger.github.io/sitemap",
+   "sn": "Zhuang, Huiran Yu, Weifeng Zhao, Tao Jiang, Peng Hu Interspeech 2022, Incheon, South Korea, 2022 An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fade smoothing. However, designing these componen"
+  },
+  {
+   "t": "Publications",
+   "u": "https://ella-granger.github.io/publications",
+   "sn": "YouChorale contains 496 real-world recordings in diverse acoustic configurations of choral music from over 100 composers as well as their MIDI scores. In this paper we also propose a Transformer-based framework for note-level transcription of choral music. This framework bypasses the frame-level pro"
+  },
+  {
+   "t": "KaraTuner: Towards End-to-End Natural Pitch Correction for Singing Voice in Karaoke",
+   "u": "https://isca-archive.org/interspeech_2022/zhuang22b_interspeech.html",
+   "sn": "KaraTuner: Towards End-to-End Natural Pitch Correction for Singing Voice in Karaoke Xiaobin Zhuang, Huiran Yu, Weifeng Zhao, Tao Jiang, Peng Hu An automatic pitch correction system typically includes several stages, such as pitch extraction, deviation estimation, pitch shift processing, and cross-fa"
+  }
+ ]
+}

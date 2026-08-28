@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "SFT-CRNN piano transcription MAESTRO note F1 2025",
+  "SFT-CRNN music transcription model architecture sparse"
+ ],
+ "anysearch": [
+  {
+   "t": "A Distribution Matching Approach to Neural Piano Transcription with Optimal Transport",
+   "u": "https://arxiv.org/pdf/2605.17405",
+   "sn": "School of Engineering, Kyoto University, Japan 3Independent Researcher, Hong Kong, China ABSTRACT This paper describes a novel paradigm that formalizes auto- matic piano transcription (APT) as an optimal transport (OT) problem, not as a frame-level multi-label binary classification problem. Our meth"
+  },
+  {
+   "t": "Piano Transcription by Hierarchical Language Modeling with Pretrained Roll-based Encoders",
+   "u": "https://pith.science/paper/2501.03038",
+   "sn": "The reading This paper proposes a hybrid piano transcription system: a pretrained frame-level piano-roll encoder is kept as the audio front end, but its final readout is replaced by a decoder-only language model that emits note events token by token. To make the token sequence tractable, the paper p"
+  },
+  {
+   "t": "Piano Transcription Algorithm Based on Self Attention Deep Learning Network | Wu",
+   "u": "https://informatica.si/index.php/informatica/article/view/7096/3729",
+   "sn": "time-series harmonic diagram, mel frequency cepstral coefficients Received: August 17, 2024 Music transcription is an important means to record and transmit music culture. However, the existing music transcription algorithms still have certain errors in practical applications. To address this proble"
+  },
+  {
+   "t": "GitHub - bytedance/piano_transcription",
+   "u": "https://github.com/bytedance/piano_transcription?tab=readme-ov-file",
+   "sn": "History Piano transcription Piano transcription is the task of transcribing piano recordings into MIDI files. This repo is the PyTorch implementation of our proposed high-resolution piano transcription system [1]. Demos Here is"
+  },
+  {
+   "t": "Sound and music biases in deep music transcription models: a systematic analysis",
+   "u": "https://link.springer.com/article/10.1186/s13636-025-00428-z",
+   "sn": "Abstract Automatic Music Transcription (AMT)—the task of converting music audio into note representations—has seen rapid progress, driven largely by deep learning systems. Due to the limited availability of richly annotated music datasets, much of the progress in AMT has been concentrated on classic"
+  },
+  {
+   "t": "Exploring System Adaptations for Minimum Latency Real-Time Piano Transcription",
+   "u": "https://arxiv.org/html/2509.07586v1",
+   "sn": "Exploring System Adaptations for Minimum Latency Real-Time Piano Transcription Abstract Advances in neural network design and the availability of large-scale labeled datasets have driven major improvements in piano transcription. Existing approaches target either offline applications, with no restri"
+  },
+  {
+   "t": "Fine-Tuning MIDI-to-Audio Alignment using a Neural Network on Piano Roll and CQT Representations",
+   "u": "https://arxiv.org/pdf/2506.22237v1",
+   "sn": "de June 30, 2025 ABSTRACT In this paper, we present a neural network approach for synchronizing audio recordings of human piano performances with their corresponding loosely aligned MIDI files. The task is addressed using a Convolutional Recurrent Neural Network (CRNN) architecture, which effectivel"
+  },
+  {
+   "t": "2024:Polyphonic Transcription Results - MIREX Wiki",
+   "u": "https://music-ir.org/mirex/wiki/2024:Polyphonic_Transcription_Results",
+   "sn": "8465 Transkun V2 (Baseline 1) PDF ViT + Neural SemiCRF 0.9490 0.8764 Transkun V2 Aug (Baseline 2) PDF ViT + Neural SemiCRF + Data Augmentation 0.9648 0.9081 hFT-Transformer PDF Two stacks of Transformers for Frequency and Time + regression onset&offset 0.9416 0.8359 average note onset F1 = avera"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "A Distribution Matching Approach to Neural Piano Transcription with Optimal Transport",
+   "u": "https://arxiv.org/pdf/2605.17405",
+   "sn": "School of Engineering, Kyoto University, Japan 3Independent Researcher, Hong Kong, China ABSTRACT This paper describes a novel paradigm that formalizes auto- matic piano transcription (APT) as an optimal transport (OT) problem, not as a frame-level multi-label binary classification problem. Our meth"
+  },
+  {
+   "t": "Piano Transcription by Hierarchical Language Modeling with Pretrained Roll-based Encoders",
+   "u": "https://pith.science/paper/2501.03038",
+   "sn": "The reading This paper proposes a hybrid piano transcription system: a pretrained frame-level piano-roll encoder is kept as the audio front end, but its final readout is replaced by a decoder-only language model that emits note events token by token. To make the token sequence tractable, the paper p"
+  },
+  {
+   "t": "Piano Transcription Algorithm Based on Self Attention Deep Learning Network | Wu",
+   "u": "https://informatica.si/index.php/informatica/article/view/7096/3729",
+   "sn": "time-series harmonic diagram, mel frequency cepstral coefficients Received: August 17, 2024 Music transcription is an important means to record and transmit music culture. However, the existing music transcription algorithms still have certain errors in practical applications. To address this proble"
+  },
+  {
+   "t": "GitHub - bytedance/piano_transcription",
+   "u": "https://github.com/bytedance/piano_transcription?tab=readme-ov-file",
+   "sn": "History Piano transcription Piano transcription is the task of transcribing piano recordings into MIDI files. This repo is the PyTorch implementation of our proposed high-resolution piano transcription system [1]. Demos Here is"
+  },
+  {
+   "t": "Sound and music biases in deep music transcription models: a systematic analysis",
+   "u": "https://link.springer.com/article/10.1186/s13636-025-00428-z",
+   "sn": "Abstract Automatic Music Transcription (AMT)—the task of converting music audio into note representations—has seen rapid progress, driven largely by deep learning systems. Due to the limited availability of richly annotated music datasets, much of the progress in AMT has been concentrated on classic"
+  },
+  {
+   "t": "Exploring System Adaptations for Minimum Latency Real-Time Piano Transcription",
+   "u": "https://arxiv.org/html/2509.07586v1",
+   "sn": "Exploring System Adaptations for Minimum Latency Real-Time Piano Transcription Abstract Advances in neural network design and the availability of large-scale labeled datasets have driven major improvements in piano transcription. Existing approaches target either offline applications, with no restri"
+  },
+  {
+   "t": "Fine-Tuning MIDI-to-Audio Alignment using a Neural Network on Piano Roll and CQT Representations",
+   "u": "https://arxiv.org/pdf/2506.22237v1",
+   "sn": "de June 30, 2025 ABSTRACT In this paper, we present a neural network approach for synchronizing audio recordings of human piano performances with their corresponding loosely aligned MIDI files. The task is addressed using a Convolutional Recurrent Neural Network (CRNN) architecture, which effectivel"
+  },
+  {
+   "t": "2024:Polyphonic Transcription Results - MIREX Wiki",
+   "u": "https://music-ir.org/mirex/wiki/2024:Polyphonic_Transcription_Results",
+   "sn": "8465 Transkun V2 (Baseline 1) PDF ViT + Neural SemiCRF 0.9490 0.8764 Transkun V2 Aug (Baseline 2) PDF ViT + Neural SemiCRF + Data Augmentation 0.9648 0.9081 hFT-Transformer PDF Two stacks of Transformers for Frequency and Time + regression onset&offset 0.9416 0.8359 average note onset F1 = avera"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "A Distribution Matching Approach to Neural Piano Transcription with Optimal Transport",
+   "u": "https://arxiv.org/pdf/2605.17405",
+   "sn": "School of Engineering, Kyoto University, Japan 3Independent Researcher, Hong Kong, China ABSTRACT This paper describes a novel paradigm that formalizes auto- matic piano transcription (APT) as an optimal transport (OT) problem, not as a frame-level multi-label binary classification problem. Our meth"
+  },
+  {
+   "t": "Improved Architecture for High-resolution Piano Transcription to Efficiently Capture Acoustic Characteristics of Music Signals",
+   "u": "https://arxiv.org/abs/2409.19614",
+   "sn": "1 Introduction Automatic music transcription (AMT) has gained considerable research interest in the fields of music signal processing and music information retrieval (MIR) for several decades [benetos2018\\_Review]. The object of AMT is to convert acoustic musical signals into some form of musical"
+  },
+  {
+   "t": "Audio-to-score singing transcription based on a CRNN-HSMM hybrid model",
+   "u": "doi://10.1017/atsip.2021.4",
+   "sn": "I N T R O D U C T I O N The aim of automatic singing transcription (AST) is to estimate a human-readable musical score of singing voice from a given music signal. Since the melody line is usually the most salient part of music that influences the impression of a song, transcribed scores are useful f"
+  },
+  {
+   "t": "A Frequency-Structured Dilated Conformer Architecture for Full-Kit Automatic Drum Transcription",
+   "u": "https://mdpi.com/2076-3417/16/13/6746",
+   "sn": "8 June 2026 / Revised: 29 June 2026 / Accepted: 3 July 2026 / Published: 6 July 2026 Abstract Automatic Drum Transcription (ADT) remains challenging due to overlapping spectral content among drum instruments, dense transient activity, and the increased difficulty associated with fine-grained full-ki"
+  },
+  {
+   "t": "Audio-to-score singing transcription based on a CRNN-HSMM hybrid model",
+   "u": "https://nowpublishers.com/article/Details/SIP-171",
+   "sn": "I N T R O D U C T I O N The aim of automatic singing transcription (AST) is to estimate a human-readable musical score of singing voice from a given music signal. Since the melody line is usually the most salient part of music that influences the impression of a song, transcribed scores are useful f"
+  },
+  {
+   "t": "STRUM: A Spectral Transcription and Rhythm Understanding Model for End-to-End Generation of Playable Rhythm-Game Charts",
+   "u": "https://arxiv.org/html/2605.12135",
+   "sn": "Understanding Model for End-to-End Generation of Playable Rhythm-Game Charts (May 2026) Abstract We present STRUM (Spectral Transcription and Rhythm Understanding Model), an audio-to-chart pipeline that converts raw recordings into playable Clone Hero / YARG charts for drums, guitar, bass, vocals, a"
+  },
+  {
+   "t": "A Spectral Transcription and Rhythm Understanding Model forEnd-to-End Generation of Playable Rhythm-Game Charts",
+   "u": "https://arxiv.org/html/2605.12135v1",
+   "sn": "Model for End-to-End Generation of Playable Rhythm-Game Charts Joshua Opria May 2026 Abstract We present STRUM (Spectral Transcription and Rhythm Understanding Model), an audio-to-chart pipeline that converts raw recordings into playable Clone Hero / YARG charts for drums, guitar, bass, vocals, and"
+  },
+  {
+   "t": "Audio-to-Score Transcription using Pre-trained Features, Data Augmentation, and the New SheetSage-A2S Dataset",
+   "u": "https://arxiv.org/pdf/2608.06165v3",
+   "sn": "(A2S) systems primarily focus on classical music, and the application to popular music remains underexplored. This paper first presents the new SheetSage-A2S Dataset, which includes 61 hours of audio with **kern score encodings for 9,468 clips originating from 6,066 unique songs, the first of its ki"
+  }
+ ]
+}

@@ -1,0 +1,132 @@
+{
+ "queries": [
+  "bytedance piano_transcription github license non-commercial CC BY-NC",
+  "piano_transcription_inference license bytedance"
+ ],
+ "anysearch": [
+  {
+   "t": "bytedance/piano_transcription | Repositories | There's An AI For That",
+   "u": "https://theresanaiforthat.com/company/bytedance/repository/piano_transcription",
+   "sn": "v=5U-WL0QvKCg Environments This codebase is developed with Python 3.7 and PyTorch 1.4.0 (Should work with other versions, but not fully tested). Install dependencies: pip install -r requirements.txt Piano transcription using pretrained model The easiest way is to transcribe a new piano recording is"
+  },
+  {
+   "t": "GitHub - bytedance/piano_transcription",
+   "u": "https://github.com/bytedance/piano_transcription",
+   "sn": "v=5U-WL0QvKCg Demo and Docker image on Replicate Environments This codebase is developed with Python 3.7 and PyTorch 1.4.0 (Should work with other versions, but not fully tested). Install dependencies: pip install -r requirements.txt Piano transcription using pretrained model The easiest way is to"
+  },
+  {
+   "t": "piano-transcription-inference",
+   "u": "https://pypi.org/project/piano-transcription-inference",
+   "sn": "Piano transcription inference This toolbox is a piano transcription inference package that can be easily installed. Users can transcribe their favorite piano recordings to MIDI files after installation. To see how the piano transcription system is trained, please visit: https://github.com/bytedance/"
+  },
+  {
+   "t": "Genius-Society/piano_trans · Hugging Face",
+   "u": "https://huggingface.co/Genius-Society/piano_trans",
+   "sn": "other=art) Intro Qiuqiang Kong High-Resolution Piano Transcription System of ByteDance is an advanced music information retrieval tool specifically designed to automatically convert audio signals from piano performances into detailed sheet music with high accuracy. The system’s training model mirror"
+  },
+  {
+   "t": "GitHub - qiuqiangkong/music_transcription_MAPS",
+   "u": "https://github.com/qiuqiangkong/music_transcription_MAPS",
+   "sn": "Automatic music transcription (AMT) of polyphonic piano using deep neural network (Implemented using pytorch). News! Users are suggested to use our latest high-resolution piano transcription system: https://github.com/bytedance/piano_transcription Author: Qiuqiang Kong (qiuqiangkong@gmail.com) Summa"
+  },
+  {
+   "t": "GitHub - peterfei/piano_transcription_inference",
+   "u": "https://github.com/peterfei/piano_transcription_inference",
+   "sn": "peterfei/piano_transcription_inference Folders and files Folders and files Name Name Last commit message Last commit date ## Latest commit ## History Piano transcription inference This toolbox is a piano transcription inference package that can be easily ins"
+  },
+  {
+   "t": "GitHub - qiuqiangkong/piano_transcription_inference",
+   "u": "https://github.com/qiuqiangkong/piano_transcription_inference",
+   "sn": "Piano transcription inference This toolbox is a piano transcription inference package that can be easily installed. Users can transcribe their favorite piano recordings to MIDI files after installation. To see how the piano transcription system is trained, please visit: https://github.com/bytedance/"
+  },
+  {
+   "t": "piano_transcription_inference/README.md at master · qiuqiangkong/piano_transcription_inference",
+   "u": "https://github.com/qiuqiangkong/piano_transcription_inference/blob/master/README.md",
+   "sn": "34 KB Piano transcription inference This toolbox is a piano transcription inference package that can be easily installed. Users can transcribe their favorite piano recordings to MIDI files after installation. To see how the piano transcription system is trained, please visit: https://github.com/byte"
+  }
+ ],
+ "keenable": [
+  {
+   "t": "bytedance/piano_transcription | Repositories | There's An AI For That",
+   "u": "https://theresanaiforthat.com/company/bytedance/repository/piano_transcription",
+   "sn": "v=5U-WL0QvKCg Environments This codebase is developed with Python 3.7 and PyTorch 1.4.0 (Should work with other versions, but not fully tested). Install dependencies: pip install -r requirements.txt Piano transcription using pretrained model The easiest way is to transcribe a new piano recording is"
+  },
+  {
+   "t": "GitHub - bytedance/piano_transcription",
+   "u": "https://github.com/bytedance/piano_transcription",
+   "sn": "v=5U-WL0QvKCg Demo and Docker image on Replicate Environments This codebase is developed with Python 3.7 and PyTorch 1.4.0 (Should work with other versions, but not fully tested). Install dependencies: pip install -r requirements.txt Piano transcription using pretrained model The easiest way is to"
+  },
+  {
+   "t": "piano-transcription-inference",
+   "u": "https://pypi.org/project/piano-transcription-inference",
+   "sn": "Piano transcription inference This toolbox is a piano transcription inference package that can be easily installed. Users can transcribe their favorite piano recordings to MIDI files after installation. To see how the piano transcription system is trained, please visit: https://github.com/bytedance/"
+  },
+  {
+   "t": "Genius-Society/piano_trans · Hugging Face",
+   "u": "https://huggingface.co/Genius-Society/piano_trans",
+   "sn": "other=art) Intro Qiuqiang Kong High-Resolution Piano Transcription System of ByteDance is an advanced music information retrieval tool specifically designed to automatically convert audio signals from piano performances into detailed sheet music with high accuracy. The system’s training model mirror"
+  },
+  {
+   "t": "GitHub - qiuqiangkong/music_transcription_MAPS",
+   "u": "https://github.com/qiuqiangkong/music_transcription_MAPS",
+   "sn": "Automatic music transcription (AMT) of polyphonic piano using deep neural network (Implemented using pytorch). News! Users are suggested to use our latest high-resolution piano transcription system: https://github.com/bytedance/piano_transcription Author: Qiuqiang Kong (qiuqiangkong@gmail.com) Summa"
+  },
+  {
+   "t": "GitHub - peterfei/piano_transcription_inference",
+   "u": "https://github.com/peterfei/piano_transcription_inference",
+   "sn": "peterfei/piano_transcription_inference Folders and files Folders and files Name Name Last commit message Last commit date ## Latest commit ## History Piano transcription inference This toolbox is a piano transcription inference package that can be easily ins"
+  },
+  {
+   "t": "GitHub - qiuqiangkong/piano_transcription_inference",
+   "u": "https://github.com/qiuqiangkong/piano_transcription_inference",
+   "sn": "Piano transcription inference This toolbox is a piano transcription inference package that can be easily installed. Users can transcribe their favorite piano recordings to MIDI files after installation. To see how the piano transcription system is trained, please visit: https://github.com/bytedance/"
+  },
+  {
+   "t": "piano_transcription_inference/README.md at master · qiuqiangkong/piano_transcription_inference",
+   "u": "https://github.com/qiuqiangkong/piano_transcription_inference/blob/master/README.md",
+   "sn": "34 KB Piano transcription inference This toolbox is a piano transcription inference package that can be easily installed. Users can transcribe their favorite piano recordings to MIDI files after installation. To see how the piano transcription system is trained, please visit: https://github.com/byte"
+  }
+ ],
+ "anysearch_q2": [
+  {
+   "t": "bytedance/piano_transcription | Repositories | There's An AI For That",
+   "u": "https://theresanaiforthat.com/company/bytedance/repository/piano_transcription",
+   "sn": "from piano_transcription_inference import PianoTranscription, sample_rate, load_audio # Load audio (audio, _) = load_audio('resources/cut_liszt.mp3', sr=sample_rate, mono=True) # Transcriptor transcriptor = PianoTranscription(device='cuda') # 'cuda' | 'cpu' # Transcribe and write out to MIDI file tr"
+  },
+  {
+   "t": "GitHub - qiuqiangkong/piano_transcription_inference",
+   "u": "https://github.com/qiuqiangkong/piano_transcription_inference",
+   "sn": "Users can transcribe their favorite piano recordings to MIDI files after installation. To see how the piano transcription system is trained, please visit: https://github.com/bytedance/piano_transcription. Demos Here is a demo of our piano transcription system: https://www.youtube.com/watch?v=5U-WL0Q"
+  },
+  {
+   "t": "GitHub - peterfei/piano_transcription_inference",
+   "u": "https://github.com/peterfei/piano_transcription_inference",
+   "sn": "peterfei/piano_transcription_inference Folders and files Folders and files Name Name Last commit message Last commit date ## Latest commit ## History Piano transcription inference This toolbox is a piano transcription inference package that can be easily ins"
+  },
+  {
+   "t": "piano-transcription-inference",
+   "u": "https://pypi.org/project/piano-transcription-inference/",
+   "sn": "Users can transcribe their favorite piano recordings to MIDI files after installation. To see how the piano transcription system is trained, please visit: https://github.com/bytedance/piano_transcription. Demos Here is a demo of our piano transcription system: https://www.youtube.com/watch?v=5U-WL0Q"
+  },
+  {
+   "t": "GitHub - bytedance/piano_transcription",
+   "u": "https://github.com/bytedance/piano_transcription?tab=readme-ov-file",
+   "sn": "v=5U-WL0QvKCg Environments This codebase is developed with Python 3.7 and PyTorch 1.4.0 (Should work with other versions, but not fully tested). Install dependencies: pip install -r requirements.txt Piano transcription using pretrained model The easiest way is to transcribe a new piano recording is"
+  },
+  {
+   "t": "piano_transcription_inference/README.md at master · qiuqiangkong/piano_transcription_inference",
+   "u": "https://github.com/qiuqiangkong/piano_transcription_inference/blob/master/README.md",
+   "sn": "Users can transcribe their favorite piano recordings to MIDI files after installation. To see how the piano transcription system is trained, please visit: https://github.com/bytedance/piano_transcription. Demos Here is a demo of our piano transcription system: https://www.youtube.com/watch?v=5U-WL0Q"
+  },
+  {
+   "t": "piano_transcription/README.md at master · bytedance/piano_transcription",
+   "u": "https://github.com/bytedance/piano_transcription/blob/master/README.md",
+   "sn": "pip install piano_transcription_inference Then, execute the following commands to transcribe this audio. from piano_transcription_inference import PianoTranscription, sample_rate, load_audio # Load audio (audio, _) = load_audio('resources/cut_liszt.mp3', sr=sample_rate, mono=True) # Transcriptor tr"
+  },
+  {
+   "t": "2025: Poly Audio to Midi. Anything actually work yet?",
+   "u": "https://vi-control.net/community/threads/2025-poly-audio-to-midi-anything-actually-work-yet.159853/",
+   "sn": "1 via the command: pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 Then we navigate to a folder of your choice and download the Github repo via the command (or manually via your Internet browser and Windows): git clone https://github.com/bytedance/GiantMI"
+  }
+ ]
+}
