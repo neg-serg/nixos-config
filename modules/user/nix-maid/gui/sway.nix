@@ -67,21 +67,23 @@ let
     for_window [app_id="^teardown$"] move scratchpad
 
     # --- Layout switch: SUPER+S (same key as Hyprland/Mango) ---
-    bindsym $mod+s exec swaymsg input type:keyboard xkb_switch_layout next
+    # --no-repeat: holding $mod+s (>=250ms, repeat delay) would toggle the layout
+    # multiple times and end up back on the same layout (intermittent 'no switch').
+    bindsym --to-code --no-repeat Mod4+s exec swaymsg input type:keyboard xkb_switch_layout next
 
     # --- Window management ---
     bindsym $mod+Return exec sway-run-or-raise '^term$' kitty --single-instance --class term
     bindsym $mod+Escape kill
-    bindsym $mod+r fullscreen toggle
-    bindsym $mod+h focus left
-    bindsym $mod+j focus down
-    bindsym $mod+k focus up
-    bindsym $mod+l focus right
+    bindsym --to-code Mod4+r fullscreen toggle
+    bindsym --to-code Mod4+h focus left
+    bindsym --to-code Mod4+j focus down
+    bindsym --to-code Mod4+k focus up
+    bindsym --to-code Mod4+l focus right
     bindsym $mod+Tab focus next
-    bindsym $mod+Shift+h move left
-    bindsym $mod+Shift+j move down
-    bindsym $mod+Shift+k move up
-    bindsym $mod+Shift+l move right
+    bindsym --to-code Mod4+Shift+h move left
+    bindsym --to-code Mod4+Shift+j move down
+    bindsym --to-code Mod4+Shift+k move up
+    bindsym --to-code Mod4+Shift+l move right
     bindsym Mod1+Tab workspace prev
     bindsym $mod+button4 workspace prev
     bindsym $mod+button5 workspace next
@@ -91,17 +93,17 @@ let
     bindsym $mod+Ctrl+Right move container to workspace next
 
     # --- Apps (run-or-raise) ---
-    bindsym $mod+w exec sway-run-or-raise '^([Vv]ivaldi-stable|[Vv]ivaldi)$' vivaldi
-    bindsym $mod+x exec sway-run-or-raise '^term$' kitty --class term
-    bindsym $mod+q exec sway-run-or-raise '^nwim$' kitty --class nwim -e /home/\${mainUser}/.local/bin/v
-    bindsym $mod+b exec sway-run-or-raise '^mpv$' ~/.local/bin/pl video
-    bindsym $mod+Ctrl+c exec sway-run-or-raise '^swayimg$' swayimg ~/dw
-    bindsym $mod+Shift+c exec wl random ~/pic/wl
-    bindsym $mod+g exec sway-run-or-raise '^(steam|com\.valvesoftware\.Steam|steam_app.*|gamescope)$' steam
-    bindsym $mod+Ctrl+o exec sway-run-or-raise '^(obs|com\.obsproject\.Studio)$' obs
-    bindsym $mod+Ctrl+n exec sway-run-or-raise '^(Obsidian|md\.obsidian\.Obsidian)$' obsidian
-    bindsym $mod+Ctrl+v exec sway-run-or-raise '^[Bb]azecor$' bazecor
-    bindsym $mod+c exec vicinae deeplink vicinae://launch/clipboard/history
+    bindsym --to-code Mod4+w exec sway-run-or-raise '^([Vv]ivaldi-stable|[Vv]ivaldi)$' vivaldi
+    bindsym --to-code Mod4+x exec sway-run-or-raise '^term$' kitty --class term
+    bindsym --to-code Mod4+q exec sway-run-or-raise '^nwim$' kitty --class nwim -e /home/${mainUser}/.local/bin/v
+    bindsym --to-code Mod4+b exec sway-run-or-raise '^mpv$' ~/.local/bin/pl video
+    bindsym --to-code Mod4+Ctrl+c exec sway-run-or-raise '^swayimg$' swayimg ~/dw
+    bindsym --to-code Mod4+Shift+c exec wl random ~/pic/wl
+    bindsym --to-code Mod4+g exec sway-run-or-raise '^(steam|com\.valvesoftware\.Steam|steam_app.*|gamescope)$' steam
+    bindsym --to-code Mod4+Ctrl+o exec sway-run-or-raise '^(obs|com\.obsproject\.Studio)$' obs
+    bindsym --to-code Mod4+Ctrl+n exec sway-run-or-raise '^(Obsidian|md\.obsidian\.Obsidian)$' obsidian
+    bindsym --to-code Mod4+Ctrl+v exec sway-run-or-raise '^[Bb]azecor$' bazecor
+    bindsym --to-code Mod4+c exec vicinae deeplink vicinae://launch/clipboard/history
 
     # --- Workspaces ---
     bindsym $mod+1 workspace number 1
@@ -122,13 +124,13 @@ let
     bindsym $mod+Shift+9 move container to workspace number 9
 
     # --- Scratchpads ---
-    bindsym $mod+e exec sway-scratch '^org\.telegram\.desktop$' telegram-desktop
-    bindsym $mod+f exec sway-scratch '^music$' kitty --class music -e rmpc
-    bindsym $mod+Ctrl+p exec sway-scratch '^mixer$' kitty --class mixer -e ncpamixer
-    bindsym $mod+t exec sway-scratch '^torrment$' kitty --class torrment -e rustmission
-    bindsym $mod+u exec sway-scratch '^vpn$' kitty --class vpn -e tun status
-    bindsym $mod+Shift+n exec sway-scratch '^rebuild$' kitty --class rebuild -e nh os switch /etc/nixos#odin --option substitute false
-    bindsym $mod+d exec sway-scratch '^teardown$' kitty --class teardown -e btop
+    bindsym --to-code Mod4+e exec sway-scratch '^org\.telegram\.desktop$' telegram-desktop
+    bindsym --to-code Mod4+f exec sway-scratch '^music$' kitty --class music -e rmpc
+    bindsym --to-code Mod4+Ctrl+p exec sway-scratch '^mixer$' kitty --class mixer -e ncpamixer
+    bindsym --to-code Mod4+t exec sway-scratch '^torrment$' kitty --class torrment -e rustmission
+    bindsym --to-code Mod4+u exec sway-scratch '^vpn$' kitty --class vpn -e tun status
+    bindsym --to-code Mod4+Shift+n exec sway-scratch '^rebuild$' kitty --class rebuild -e nh os switch /etc/nixos#odin --option substitute false
+    bindsym --to-code Mod4+d exec sway-scratch '^teardown$' kitty --class teardown -e btop
 
     # --- Media keys ---
     bindsym XF86AudioNext exec 'genlc-media up; swayosd-client --output-volume +5'
@@ -140,16 +142,16 @@ let
     bindsym XF86AudioMicMute exec swayosd-client --input-volume mute-toggle
     bindsym XF86MonBrightnessUp exec swayosd-client --brightness +10
     bindsym XF86MonBrightnessDown exec swayosd-client --brightness -10
-    bindsym $mod+Shift+w exec ~/.local/bin/pl cmd play-pause
-    bindsym $mod+comma exec ~/.local/bin/pl cmd previous
-    bindsym $mod+period exec ~/.local/bin/pl cmd next
-    bindsym $mod+Shift+i exec ~/.local/bin/pl vol mute
-    bindsym $mod+Shift+o exec ~/.local/bin/pl vol unmute
-    bindsym $mod+m exec ~/.local/bin/music-rename current
+    bindsym --to-code Mod4+Shift+w exec ~/.local/bin/pl cmd play-pause
+    bindsym --to-code Mod4+comma exec ~/.local/bin/pl cmd previous
+    bindsym --to-code Mod4+period exec ~/.local/bin/pl cmd next
+    bindsym --to-code Mod4+Shift+i exec ~/.local/bin/pl vol mute
+    bindsym --to-code Mod4+Shift+o exec ~/.local/bin/pl vol unmute
+    bindsym --to-code Mod4+m exec ~/.local/bin/music-rename current
 
     # --- Lock (reset to us first, like Hyprland) ---
     # Lock: $mod+Shift+l is taken by "move right", so use $mod+Shift+Escape.
-    bindsym $mod+Shift+Escape exec 'swaymsg input type:keyboard xkb_switch_layout 0; swaylock -f'
+    bindsym --no-repeat $mod+Shift+Escape exec 'swaymsg input type:keyboard xkb_switch_layout 0; swaylock -f'
 
     # --- Screenshots ---
     bindsym $mod+Shift+r exec 'shot="$HOME/pic/shots/satty-$(date +%Y%m%d-%H.%M.%S).png"; grim -l 0 "$shot" && pic-info "$shot"'
@@ -161,10 +163,10 @@ let
       bindsym Right        resize grow width 10px
       bindsym Up           resize shrink height 10px
       bindsym Down         resize grow height 10px
-      bindsym h            resize shrink width 10px
-      bindsym l            resize grow width 10px
-      bindsym k            resize shrink height 10px
-      bindsym j            resize grow height 10px
+      bindsym --to-code h resize shrink width 10px
+      bindsym --to-code l resize grow width 10px
+      bindsym --to-code k resize shrink height 10px
+      bindsym --to-code j resize grow height 10px
       bindsym Shift+Left   resize grow width 10px
       bindsym Shift+Right  resize shrink width 10px
       bindsym Shift+Up     resize grow height 10px
@@ -172,7 +174,7 @@ let
       bindsym Return       mode "default"
       bindsym Escape       mode "default"
     }
-    bindsym $mod+Ctrl+backslash mode "resize"
+    bindsym --to-code Mod4+Ctrl+backslash mode "resize"
   '';
 
   # SwayFX: same config + eye candy (blur/corners/shadows).
