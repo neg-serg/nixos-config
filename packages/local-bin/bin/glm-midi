@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# glm-midi — send Genelec GLM MIDI control messages (GLM 5 MIDI interface) to
+# the Windows VM via rtpmidid (ALSA seq -> RTP-MIDI -> rtpMIDI in the VM ->
+# GLM software). CC map per VOL20toGenelecGLM/CONSTANTS.md:
+#   CC20 = absolute volume 0..127 (dB = value - 127)
+#   CC21/22 = volume +/- ; CC23 = mute ; CC24 = dim ; CC28 = power
+# GLM 5: Settings -> MIDI -> enable interface; Mute/Dim/Power act as toggles.
+set -euo pipefail
+
+usage() {
+  echo "usage: glm-midi {volume <0-127 | dB> | vol+ [n] | vol- [n] | mute | dim | power}" >&2
+  exit 1
+}
+[ $# -ge 1 ] || usage
+
+# find the rtpmidid ALSA sequencer output port (client named "GLM" — set via
+# --name GLM in the rtpmidid service; $2 = client name in aplaymidi -l).
+port=$(aplaymidi -l 2>/dev/null | awk '$1 ~ /^[0-9]+:[0-9]+$/ && $2 == "GLM" {print $1; exit}')
+if [ -z "$port" ]; then
+  echo "glm-midi: rtpmidid ALSA port not found — is the rtpmidid user service running?" >&2
+  echo "glm-midi: 'systemctl --user status rtpmidid' ; 'aplaymidi -l'" >&2
+  exit 1
+fi
+
+# one-CC .mid file: MThd(0,1,96) + MTrk(00 B0 cc val 00 FF 2F 00).
+# Bytes built via octal escapes (printf \x%02x would misparse as a hex escape).
+send_cc() {
+  local cc=$1 val=$2
+  printf 'MThd\0\0\0\6\0\0\0\1\0\140MTrk\0\0\0\10\0\260' > /tmp/glm-cc.mid
+  printf "\\$(printf '%03o' "$cc")" >> /tmp/glm-cc.mid
+  printf "\\$(printf '%03o' "$val")" >> /tmp/glm-cc.mid
+  printf '\0\377\57\0' >> /tmp/glm-cc.mid
+  aplaymidi -p "$port" /tmp/glm-cc.mid >/dev/null 2>&1
+  echo "glm-midi: CC$cc=$val -> $port"
+}
+
+case "$1" in
+  volume)
+    [ $# -ge 2 ] || usage
+    if [[ "$2" == *dB* ]] || [ "$2" -lt 0 ] 2>/dev/null; then
+      # dB input: -127..0 dB -> 0..127 (value = 127 + dB)
+      db=$2; db=${db%dB}
+      val=$((127 + db))
+      [ "$val" -lt 0 ] && val=0
+      [ "$val" -gt 127 ] && val=127
+    else
+      val=$2
+    fi
+    send_cc 20 "$val" ;;
+  vol+) n=${2:-1}; for _ in $(seq 1 "$n"); do send_cc 21 127; done ;;
+  vol-) n=${2:-1}; for _ in $(seq 1 "$n"); do send_cc 22 127; done ;;
+  mute)  send_cc 23 127 ;;  # toggle
+  dim)   send_cc 24 127 ;;  # toggle
+  power) send_cc 28 127 ;;  # toggle
+  *) usage ;;
+esac

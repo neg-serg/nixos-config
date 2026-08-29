@@ -227,6 +227,7 @@ in
   features.net.rknDomains.enable = true; # RKN blocklist -> zapret2 hostlist
   features.net.netHealth.enable = true; # Periodic net/DNS/zapret2 health check with self-heal + ntfy
   features.net.ceno.enable = true; # Ceno/Ouinet P2P client (censorship-circumvention node)
+  features.net.proxy.enable = true; # sing-box full-TUN proxy (tun on/off toggle, no autostart) + xray.service
   features.virt.docker.enable = true; # Podman + docker-compat stack (for the Ceno/Ouinet container)
   features.dev.ai.rocm.enable = true; # ROCm PyTorch (gfx1201) for GPU fine-tuning (kernel side: features.hardware.amdgpu.rocm)
   features.virt.libvirtd.enable = true;
