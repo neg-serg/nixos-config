@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# proxy — запуск/остановка/обновление прокси sing-box (vless/hysteria2/ss/trojan)
+# proxy — запуск/остановка/обновление прокси sing-box (vless/vmess/hysteria2/hysteria/tuic/ss/trojan/anytls)
 # Usage: proxy [on|off|status|refresh|gen]
 # Credentials: from /run/secrets/proxy-fallback (SOPS-encrypted)
 # refresh validates candidates (TCP scan + e2e probe) before writing the config,
@@ -58,7 +58,8 @@ lan_msg() {
 # ============================================================
 # gen_cfg — единый python-генератор: парсит ноды из NODES_TEXT,
 # пишет конфиг (real-shape) в CFG_PATH. Поддерживает
-# vless (tls/reality), hysteria2, shadowsocks, trojan.
+# vless (tls/reality), vmess, hysteria2/hy2, hysteria (v1), tuic,
+# shadowsocks, trojan, anytls.
 # ============================================================
 gen_cfg() {
     python3 << 'PYEOF'
@@ -89,10 +90,22 @@ def b64dec(s):
             return ""
 
 def clean(s):
+    """Parse a node URI query string without mangling '+' (parse_qs would
+    turn it into a space and break base64 params like reality pbk)."""
     if not s: return {}
     s = s.replace('&amp;', '&')
     if '#' in s: s = s.split('#')[0]
-    return {k: v[0].split('#')[0] for k, v in urllib.parse.parse_qs(s).items()}
+    out = {}
+    for kv in s.split('&'):
+        if not kv: continue
+        if '=' in kv:
+            k, v = kv.split('=', 1)
+            v = urllib.parse.unquote(v.split('#')[0])
+        else:
+            k, v = kv, ''
+        if k not in out:
+            out[k] = v
+    return out
 
 def hp_parse(hp):
     """Split 'host:port[/path...]' -> (host, port) or None."""
@@ -103,8 +116,8 @@ def hp_parse(hp):
 
 def parse_line(line):
     """Return an outbound dict or None."""
-    if line.startswith('hysteria2://'):
-        r = line.split('hysteria2://')[1]
+    if line.startswith('hysteria2://') or line.startswith('hy2://'):
+        r = line.split('://', 1)[1]
         a = r.split('@', 1)[1] if '@' in r else r
         h = a.split('?')[0]; host = h.split(':')[0]
         ps = h.split(':')[1] if ':' in h else '443'
@@ -138,7 +151,7 @@ def parse_line(line):
                    "utls": {"enabled": True, "fingerprint": fp}}
             if sec == 'reality' and len(p.get('pbk', '')) >= 32:
                 tls["reality"] = {"enabled": True,
-                                  "public_key": p.get('pbk', ''),
+                                  "public_key": p.get('pbk', '').replace('+', '-').replace('/', '_').rstrip('='),
                                   "short_id": p.get('sid', '')}
             ob["tls"] = tls
         flow = p.get("flow", "")
@@ -211,7 +224,7 @@ def parse_line(line):
                    "utls": {"enabled": True, "fingerprint": fp}}
             if sec == 'reality' and len(p.get('pbk', '')) >= 32:
                 tls["reality"] = {"enabled": True,
-                                  "public_key": p.get('pbk', ''),
+                                  "public_key": p.get('pbk', '').replace('+', '-').replace('/', '_').rstrip('='),
                                   "short_id": p.get('sid', '')}
             ob["tls"] = tls
         tp = p.get('type', '').lower()
@@ -237,6 +250,133 @@ def parse_line(line):
             if p.get('path'): tr["path"] = p['path']
             ob["transport"] = tr
         return ob
+    if line.startswith('vmess://'):
+        try:
+            j = json.loads(b64dec(line.split('vmess://')[1].split('#')[0]))
+        except Exception:
+            return None
+        host = str(j.get('add', ''))
+        if not host: return None
+        try: port = int(j.get('port', 0))
+        except Exception: return None
+        if not port: return None
+        ob = {"type": "vmess", "tag": "node", "server": host,
+              "server_port": port, "uuid": str(j.get('id', '')),
+              "security": str(j.get('scy', 'auto') or 'auto'),
+              "alter_id": int(j.get('aid', 0) or 0)}
+        if ob["security"] not in ("auto", "aes-128-gcm", "chacha20-poly1305",
+                                  "none", "zero"):
+            ob["security"] = "auto"
+        sec = j.get('tls', '')
+        if sec in ('tls', 'reality', 'xtls'):
+            fp = j.get('fp', 'chrome')
+            if fp not in ('chrome', 'firefox', 'ios', 'android', 'edge',
+                          'safari', '360', 'random', 'randomized'):
+                fp = 'chrome'
+            tls = {"enabled": True, "server_name": j.get('sni', host),
+                   "utls": {"enabled": True, "fingerprint": fp}}
+            if sec == 'reality' and len(str(j.get('pbk', ''))) >= 32:
+                tls["reality"] = {"enabled": True,
+                                  "public_key": str(j.get('pbk', '')),
+                                  "short_id": str(j.get('sid', ''))}
+            alpn = j.get('alpn', '')
+            if alpn:
+                tls["alpn"] = [x for x in str(alpn).split(',') if x]
+            ob["tls"] = tls
+        net = j.get('net', 'tcp')
+        host_h = j.get('host', '')
+        path = j.get('path', '')
+        if net == 'ws':
+            tr = {"type": "ws"}
+            if path: tr["path"] = path
+            if host_h: tr["headers"] = {"Host": host_h}
+            ob["transport"] = tr
+        elif net == 'grpc':
+            tr = {"type": "grpc"}
+            sn = path.split('?')[0]
+            if sn.startswith('/'): sn = sn[1:]
+            if sn: tr["service_name"] = sn
+            if host_h: tr["authority"] = host_h
+            ob["transport"] = tr
+        elif net == 'httpupgrade':
+            tr = {"type": "httpupgrade"}
+            if host_h: tr["host"] = host_h
+            if path: tr["path"] = path
+            ob["transport"] = tr
+        elif net in ('h2', 'http'):
+            tr = {"type": "http"}
+            if host_h: tr["host"] = [host_h]
+            if path: tr["path"] = path
+            ob["transport"] = tr
+        elif net in ('xhttp', 'splithttp'):
+            return None
+        elif net == 'tcp' and j.get('type') == 'http':
+            tr = {"type": "http"}
+            if host_h: tr["host"] = [host_h]
+            if path: tr["path"] = path
+            ob["transport"] = tr
+        return ob
+    if line.startswith('tuic://'):
+        r = line.split('tuic://')[1]
+        cred = r.split('@')[0]
+        if ':' not in cred: return None
+        uuid, password = cred.split(':', 1)
+        a = r.split('@', 1)[1] if '@' in r else r
+        sp = hp_parse(a.split('?')[0])
+        if not sp: return None
+        host, port = sp
+        p = clean(a.split('?', 1)[1] if '?' in a else '')
+        tls = {"enabled": True, "server_name": p.get('sni', host)}
+        if p.get('allow_insecure', '0') in ('1', 'true', 'yes'):
+            tls["insecure"] = True
+        if p.get('alpn'):
+            tls["alpn"] = [x for x in p['alpn'].split(',') if x]
+        ob = {"type": "tuic", "tag": "node", "server": host,
+              "server_port": port, "uuid": urllib.parse.unquote(uuid),
+              "password": urllib.parse.unquote(password),
+              "congestion_control": p.get('congestion_control', 'bbr'),
+              "udp_relay_mode": p.get('udp_relay_mode', 'native'),
+              "tls": tls}
+        return ob
+    if line.startswith('hysteria://'):
+        r = line.split('hysteria://')[1]
+        sp = hp_parse(r.split('?')[0])
+        if not sp: return None
+        host, port = sp
+        p = clean(r.split('?', 1)[1] if '?' in r else '')
+        ob = {"type": "hysteria", "tag": "node", "server": host,
+              "server_port": port}
+        if p.get('auth'):
+            ob["auth_str"] = urllib.parse.unquote(p['auth'])
+        if p.get('up'):
+            try: ob["up_mbps"] = int(float(p['up']))
+            except Exception: pass
+        if p.get('down'):
+            try: ob["down_mbps"] = int(float(p['down']))
+            except Exception: pass
+        if p.get('obfs'):
+            ob["obfs"] = p['obfs']
+        tls = {"enabled": True,
+               "insecure": p.get('insecure', '1') not in ('0', 'false', 'no'),
+               "server_name": p.get('sni', p.get('server_name', host))}
+        if p.get('alpn'):
+            tls["alpn"] = [x for x in p['alpn'].split(',') if x]
+        ob["tls"] = tls
+        return ob
+    if line.startswith('anytls://'):
+        r = line.split('anytls://')[1]
+        password = urllib.parse.unquote(r.split('@')[0])
+        a = r.split('@', 1)[1] if '@' in r else r
+        sp = hp_parse(a.split('?')[0])
+        if not sp: return None
+        host, port = sp
+        p = clean(a.split('?', 1)[1] if '?' in a else '')
+        tls = {"enabled": True, "server_name": p.get('sni', host)}
+        if p.get('insecure', '0') in ('1', 'true', 'yes'):
+            tls["insecure"] = True
+        ob = {"type": "anytls", "tag": "node", "server": host,
+              "server_port": port, "password": password, "tls": tls}
+        return ob
     return None
 
 outbounds = []
@@ -247,7 +387,10 @@ for line in text.strip().split('\n'):
     try:
         ob = parse_line(line)
         if ob is None: continue
-        key = (ob["server"].lower(), ob["server_port"])
+        # Dedup by server:port + canonical line, so distinct nodes sharing
+        # one host:port (common in free pools) are all kept.
+        canon = line.split('#')[0].strip()
+        key = (ob["server"].lower(), ob["server_port"], canon)
         if key in seen: continue
         seen.add(key)
         ob["tag"] = ob["type"][:2] + "-" + str(len(outbounds))
@@ -416,10 +559,22 @@ def b64dec(s):
             return ""
 
 def clean(s):
+    """Parse a node URI query string without mangling '+' (parse_qs would
+    turn it into a space and break base64 params like reality pbk)."""
     if not s: return {}
     s = s.replace('&amp;', '&')
     if '#' in s: s = s.split('#')[0]
-    return {k: v[0].split('#')[0] for k, v in urllib.parse.parse_qs(s).items()}
+    out = {}
+    for kv in s.split('&'):
+        if not kv: continue
+        if '=' in kv:
+            k, v = kv.split('=', 1)
+            v = urllib.parse.unquote(v.split('#')[0])
+        else:
+            k, v = kv, ''
+        if k not in out:
+            out[k] = v
+    return out
 
 def hp_parse(hp):
     """Split 'host:port[/path...]' -> (host, port) or None."""
@@ -431,8 +586,8 @@ def hp_parse(hp):
 # Full outbound parser for probe configs (same rules as gen_cfg).
 def parse_outbound(line):
     try:
-        if line.startswith('hysteria2://'):
-            r = line.split('hysteria2://')[1]
+        if line.startswith('hysteria2://') or line.startswith('hy2://'):
+            r = line.split('://', 1)[1]
             a = r.split('@', 1)[1] if '@' in r else r
             h = a.split('?')[0]
             sp = hp_parse(h)
@@ -467,7 +622,7 @@ def parse_outbound(line):
                        "utls": {"enabled": True, "fingerprint": fp}}
                 if sec == 'reality' and len(p.get('pbk', '')) >= 32:
                     tls["reality"] = {"enabled": True,
-                                      "public_key": p.get('pbk', ''),
+                                      "public_key": p.get('pbk', '').replace('+', '-').replace('/', '_').rstrip('='),
                                       "short_id": p.get('sid', '')}
                 ob["tls"] = tls
             flow = p.get("flow", "")
@@ -538,7 +693,7 @@ def parse_outbound(line):
                        "utls": {"enabled": True, "fingerprint": fp}}
                 if sec == 'reality' and len(p.get('pbk', '')) >= 32:
                     tls["reality"] = {"enabled": True,
-                                      "public_key": p.get('pbk', ''),
+                                      "public_key": p.get('pbk', '').replace('+', '-').replace('/', '_').rstrip('='),
                                       "short_id": p.get('sid', '')}
                 ob["tls"] = tls
             tp = p.get('type', '').lower()
@@ -562,6 +717,132 @@ def parse_outbound(line):
                 if p.get('host'): tr["host"] = [p['host']]
                 if p.get('path'): tr["path"] = p['path']
                 ob["transport"] = tr
+        if line.startswith('vmess://'):
+            try:
+                j = json.loads(b64dec(line.split('vmess://')[1].split('#')[0]))
+            except Exception:
+                return None
+            host = str(j.get('add', ''))
+            if not host: return None
+            try: port = int(j.get('port', 0))
+            except Exception: return None
+            if not port: return None
+            ob = {"type": "vmess", "tag": "node", "server": host,
+                  "server_port": port, "uuid": str(j.get('id', '')),
+                  "security": str(j.get('scy', 'auto') or 'auto'),
+                  "alter_id": int(j.get('aid', 0) or 0)}
+            if ob["security"] not in ("auto", "aes-128-gcm", "chacha20-poly1305",
+                                      "none", "zero"):
+                ob["security"] = "auto"
+            sec = j.get('tls', '')
+            if sec in ('tls', 'reality', 'xtls'):
+                fp = j.get('fp', 'chrome')
+                if fp not in ('chrome', 'firefox', 'ios', 'android', 'edge',
+                              'safari', '360', 'random', 'randomized'):
+                    fp = 'chrome'
+                tls = {"enabled": True, "server_name": j.get('sni', host),
+                       "utls": {"enabled": True, "fingerprint": fp}}
+                if sec == 'reality' and len(str(j.get('pbk', ''))) >= 32:
+                    tls["reality"] = {"enabled": True,
+                                      "public_key": str(j.get('pbk', '')),
+                                      "short_id": str(j.get('sid', ''))}
+                alpn = j.get('alpn', '')
+                if alpn:
+                    tls["alpn"] = [x for x in str(alpn).split(',') if x]
+                ob["tls"] = tls
+            net = j.get('net', 'tcp')
+            host_h = j.get('host', '')
+            path = j.get('path', '')
+            if net == 'ws':
+                tr = {"type": "ws"}
+                if path: tr["path"] = path
+                if host_h: tr["headers"] = {"Host": host_h}
+                ob["transport"] = tr
+            elif net == 'grpc':
+                tr = {"type": "grpc"}
+                sn = path.split('?')[0]
+                if sn.startswith('/'): sn = sn[1:]
+                if sn: tr["service_name"] = sn
+                if host_h: tr["authority"] = host_h
+                ob["transport"] = tr
+            elif net == 'httpupgrade':
+                tr = {"type": "httpupgrade"}
+                if host_h: tr["host"] = host_h
+                if path: tr["path"] = path
+                ob["transport"] = tr
+            elif net in ('h2', 'http'):
+                tr = {"type": "http"}
+                if host_h: tr["host"] = [host_h]
+                if path: tr["path"] = path
+                ob["transport"] = tr
+            elif net in ('xhttp', 'splithttp'):
+                return None
+            elif net == 'tcp' and j.get('type') == 'http':
+                tr = {"type": "http"}
+                if host_h: tr["host"] = [host_h]
+                if path: tr["path"] = path
+                ob["transport"] = tr
+            return ob
+        if line.startswith('tuic://'):
+            r = line.split('tuic://')[1]
+            cred = r.split('@')[0]
+            if ':' not in cred: return None
+            uuid, password = cred.split(':', 1)
+            a = r.split('@', 1)[1] if '@' in r else r
+            sp = hp_parse(a.split('?')[0])
+            if not sp: return None
+            host, port = sp
+            p = clean(a.split('?', 1)[1] if '?' in a else '')
+            tls = {"enabled": True, "server_name": p.get('sni', host)}
+            if p.get('allow_insecure', '0') in ('1', 'true', 'yes'):
+                tls["insecure"] = True
+            if p.get('alpn'):
+                tls["alpn"] = [x for x in p['alpn'].split(',') if x]
+            ob = {"type": "tuic", "tag": "node", "server": host,
+                  "server_port": port, "uuid": urllib.parse.unquote(uuid),
+                  "password": urllib.parse.unquote(password),
+                  "congestion_control": p.get('congestion_control', 'bbr'),
+                  "udp_relay_mode": p.get('udp_relay_mode', 'native'),
+                  "tls": tls}
+            return ob
+        if line.startswith('hysteria://'):
+            r = line.split('hysteria://')[1]
+            sp = hp_parse(r.split('?')[0])
+            if not sp: return None
+            host, port = sp
+            p = clean(r.split('?', 1)[1] if '?' in r else '')
+            ob = {"type": "hysteria", "tag": "node", "server": host,
+                  "server_port": port}
+            if p.get('auth'):
+                ob["auth_str"] = urllib.parse.unquote(p['auth'])
+            if p.get('up'):
+                try: ob["up_mbps"] = int(float(p['up']))
+                except Exception: pass
+            if p.get('down'):
+                try: ob["down_mbps"] = int(float(p['down']))
+                except Exception: pass
+            if p.get('obfs'):
+                ob["obfs"] = p['obfs']
+            tls = {"enabled": True,
+                   "insecure": p.get('insecure', '1') not in ('0', 'false', 'no'),
+                   "server_name": p.get('sni', p.get('server_name', host))}
+            if p.get('alpn'):
+                tls["alpn"] = [x for x in p['alpn'].split(',') if x]
+            ob["tls"] = tls
+            return ob
+        if line.startswith('anytls://'):
+            r = line.split('anytls://')[1]
+            password = urllib.parse.unquote(r.split('@')[0])
+            a = r.split('@', 1)[1] if '@' in r else r
+            sp = hp_parse(a.split('?')[0])
+            if not sp: return None
+            host, port = sp
+            p = clean(a.split('?', 1)[1] if '?' in a else '')
+            tls = {"enabled": True, "server_name": p.get('sni', host)}
+            if p.get('insecure', '0') in ('1', 'true', 'yes'):
+                tls["insecure"] = True
+            ob = {"type": "anytls", "tag": "node", "server": host,
+                  "server_port": port, "password": password, "tls": tls}
             return ob
     except Exception:
         return None
@@ -570,12 +851,15 @@ def parse_outbound(line):
 # Lightweight parse: only need server/server_port for scan; full config
 # generation reuses gen_cfg for the final config.
 def parse_addr(line):
-    m = re.match(r"(?:vless|hysteria2|ss|trojan)://[^@]+@([^:?#]+):([0-9]+)", line)
-    if not m:
-        m2 = re.match(r"(?:ss|trojan)://[^/?#]+@([^:?#]+):([0-9]+)", line)
-        if not m2: return None
-        m = m2
-    return (m.group(1), int(m.group(2)))
+    """Return (host, port, proto) for the TCP/UDP scan, or None."""
+    m = re.match(r"(vless|vmess|ss|trojan|anytls)://[^@]+@([^:?#/]+):([0-9]+)", line)
+    if m: return (m.group(2), int(m.group(3)), m.group(1))
+    m = re.match(r"(hysteria2|hy2|tuic)://[^@]+@([^:?#/]+):([0-9]+)", line)
+    if m: return (m.group(2), int(m.group(3)), m.group(1))
+    # hysteria v1 carries auth in the query string (no user@ part)
+    m = re.match(r"hysteria://([^:?#/]+):([0-9]+)", line)
+    if m: return (m.group(1), int(m.group(2)), "hysteria")
+    return None
 
 cands = {}
 for line in text.strip().split('\n'):
@@ -583,7 +867,7 @@ for line in text.strip().split('\n'):
     if not line: continue
     try:
         a = parse_addr(line)
-        if a: cands.setdefault(a, line)
+        if a: cands.setdefault((a[0], a[1], a[2]), (a[2], line))
     except Exception:
         continue
 
@@ -591,6 +875,15 @@ if not cands:
     print("  ERROR: no parseable candidates"); sys.exit(1)
 keys = sorted(cands)
 print("  Candidates: " + str(len(keys)))
+
+# UDP-based protocols (hysteria/hysteria2/tuic) have no TCP listener on the
+# proxy port: a TCP connect would mark every such node dead. Skip the scan
+# for them and let the e2e probe decide.
+UDP_PROTOCOLS = {"hysteria", "hysteria2", "hy2", "tuic"}
+tcp_keys = [k for k in keys if cands[k][0] not in UDP_PROTOCOLS]
+udp_keys = [k for k in keys if cands[k][0] in UDP_PROTOCOLS]
+print("  TCP-scan: " + str(len(tcp_keys)) + " tcp, " + str(len(udp_keys))
+      + " udp (skipped)")
 
 # --- TCP scan
 async def check(host, port, timeout=2.5):
@@ -614,20 +907,21 @@ async def scan():
     async def one(k):
         async with sem:
             return await check(k[0], k[1])
-    return await asyncio.gather(*[one(k) for k in keys])
+    return await asyncio.gather(*[one(k) for k in tcp_keys])
 
 res = asyncio.run(scan())
-open_keys = [keys[i] for i, ok in enumerate(res) if ok]
-print("  TCP open: " + str(len(open_keys)) + "/" + str(len(keys)))
+open_keys = [tcp_keys[i] for i, ok in enumerate(res) if ok] + udp_keys
+print("  TCP open: " + str(len(open_keys)) + "/" + str(len(keys))
+      + " (udp auto-included)")
 if not open_keys:
-    print("  ERROR: no TCP-reachable nodes"); sys.exit(1)
+    print("  ERROR: no reachable nodes"); sys.exit(1)
 
 # --- e2e probe: single-node sing-box per open candidate, curl gstatic == 204
-candidates = [k for k in open_keys[:e2e_cap] if parse_outbound(cands[k]) is not None]
+candidates = [k for k in open_keys[:e2e_cap] if parse_outbound(cands[k][1]) is not None]
 print("  E2E probing up to " + str(len(candidates)) + " open nodes...")
 
 def probe_cfg(key, port, path):
-    ob = parse_outbound(cands[key])
+    ob = parse_outbound(cands[key][1])
     if ob is None:
         return None
     cfg = {
@@ -662,16 +956,33 @@ try:
             procs[port] = p
         time.sleep(8)
         def probe(port):
-            try:
-                r = subprocess.run(
-                    ["curl", "-sS", "-o", "/dev/null", "-w", "%{http_code}",
-                     "--max-time", "12", "--socks5-hostname",
-                     "127.0.0.1:" + str(port),
-                     "https://www.gstatic.com/generate_204"],
-                    capture_output=True, text=True, timeout=15)
-                return r.stdout.strip() == "204"
-            except Exception:
-                return False
+            # 1) relay-only check via an IP literal (no DNS in the path):
+            #    http://1.1.1.1 answers 301 through a working tunnel.
+            # 2) fallbacks: remote-DNS checks through the node (socks5h).
+            #    A node counts as working if any probe succeeds, so nodes
+            #    whose server-side DNS is broken still pass (global DNS in
+            #    the final config does not depend on a single node).
+            for args in (
+                ["curl", "-sS", "-o", "/dev/null", "-w", "%{http_code}",
+                 "--max-time", "6", "--socks5", "127.0.0.1:" + str(port),
+                 "http://1.1.1.1"],
+                ["curl", "-sS", "-o", "/dev/null", "-w", "%{http_code}",
+                 "--max-time", "8", "--socks5-hostname",
+                 "127.0.0.1:" + str(port),
+                 "https://cp.cloudflare.com/generate_204"],
+                ["curl", "-sS", "-o", "/dev/null", "-w", "%{http_code}",
+                 "--max-time", "8", "--socks5-hostname",
+                 "127.0.0.1:" + str(port),
+                 "https://www.gstatic.com/generate_204"],
+            ):
+                try:
+                    r = subprocess.run(args, capture_output=True, text=True,
+                                       timeout=15)
+                    if r.stdout.strip() in ("204", "301", "302", "200", "403"):
+                        return True
+                except Exception:
+                    continue
+            return False
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as ex:
             futs = {ex.submit(probe, BASE + wave_start + wave.index(k)): k for k in wave}
             for fut in concurrent.futures.as_completed(futs):
@@ -700,7 +1011,7 @@ if len(work) < min_working:
     print("  Warning: only " + str(len(work)) + " working nodes (wanted >= "
           + str(min_working) + "); proceeding with verified subset")
 for k in work:
-    print(cands[k])
+    print(cands[k][1])
 PYEOF
 }
 
@@ -714,9 +1025,11 @@ refresh() {
     for url in \
       "https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/protocols/vless.txt" \
       "https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/everything.txt" \
-      "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge.txt"; do
+      "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge.txt" \
+      "https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/Eternity.txt" \
+      "https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub"; do
         data=$(curl --noproxy '*' -sL --connect-timeout 8 --max-time 20 "$url" 2>/dev/null | \
-          grep -E '^(vless|hysteria2|ss|trojan)://' | \
+          grep -E '^(vless|vmess|hysteria2|hy2|hysteria|tuic|ss|trojan|anytls)://' | \
           grep -vE '[?&](type=xhttp|type=splithttp|plugin=)' | \
           shuf | head -"${NODE_SAMPLE:-400}" || true)
         # raw.githubusercontent.com and some CDNs are blocked for direct
@@ -725,7 +1038,7 @@ refresh() {
         if [ -z "$data" ] && pgrep -f 'sing-box.*config.json' > /dev/null 2>&1; then
             data=$(curl -sL --connect-timeout 8 --max-time 25 \
               --proxy socks5h://127.0.0.1:10808 "$url" 2>/dev/null | \
-              grep -E '^(vless|hysteria2|ss|trojan)://' | \
+              grep -E '^(vless|vmess|hysteria2|hy2|hysteria|tuic|ss|trojan|anytls)://' | \
               grep -vE '[?&](type=xhttp|type=splithttp|plugin=)' | \
               shuf | head -"${NODE_SAMPLE:-400}" || true)
         fi
@@ -752,7 +1065,7 @@ refresh() {
     export NODES_FILE="$TMPD/nodes.txt"
     export VALIDATE_TMP="$TMPD/validate"
     WORKING=$(validate_nodes) || { rc=$?; echo "$WORKING" | tail -4; return $rc; }
-    WORKING_LINES=$(echo "$WORKING" | sed -n '/^[hvst]\(less\|ysteria2\|s\|rojan\):\/\//p')
+    WORKING_LINES=$(echo "$WORKING" | grep -E '^(vless|vmess|hysteria2|hy2|hysteria|tuic|ss|trojan|anytls)://' || true)
     COUNT=$(echo "$WORKING_LINES" | grep -c '://' || true)
 
     if [ -z "$WORKING_LINES" ]; then
@@ -841,7 +1154,7 @@ case "$CMD" in
             ss -tlnp 2>/dev/null | grep -E '10808|10810' || true
         elif systemctl --user is-active --quiet sing-box-proxy.service 2>/dev/null \
             || pgrep -f 'sing-box.*trojan' > /dev/null 2>&1; then
-            echo "Proxy: RUNNING (vless/h2/ss/trojan pool)"
+            echo "Proxy: RUNNING (vless/vmess/h2/hysteria/tuic/ss/trojan/anytls pool)"
             ss -tlnp 2>/dev/null | grep -E '10808|10810' || true
         else
             echo "Proxy: STOPPED"

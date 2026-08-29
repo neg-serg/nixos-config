@@ -51,7 +51,7 @@ explicitly (e.g. via `proxychains`) or not at all.
 
 A separate sing-box instance managed entirely by the `~/.local/bin/proxy` script. Uses **dynamically
 generated** config at `~/.config/sing-box-trojan/config.json` with multiple auto-fetched or manually
-configured nodes (Hysteria2 + VLESS).
+configured nodes (vless/vmess/hysteria2/hysteria/tuic/ss/trojan/anytls).
 
 - Autostarts at login via the `sing-box-proxy` systemd **user** service
   (`systemctl --user status sing-box-proxy`). Manual `proxy on` / `proxy refresh` still work and
@@ -92,7 +92,7 @@ proxy status
 Shows whether sing-box and/or Xray are currently running. Example output:
 
 ```
-Proxy: RUNNING (Hysteria2 + VLESS Reality)
+Proxy: RUNNING (vless/vmess/h2/hysteria/tuic/ss/trojan/anytls pool)
 tcp   LISTEN 0  4096  127.0.0.1:10808  0.0.0.0:*   users:(("sing-box",pid=1234,fd=9))
 Xray: STOPPED
 ```
@@ -124,15 +124,18 @@ keeping the nix-daemon proxy env working.
 proxy refresh
 ```
 
-1. Fetches fresh nodes from subscription URLs (FastNodes vless/hysteria2 via jsDelivr +
-   V2RayAggregator ss/trojan via raw.githubusercontent; see "Subscription refresh" below). Each URL
-   is fetched directly first, then retried through the running local proxy (10808) when the direct
-   fetch returns nothing (raw.githubusercontent is blocked for direct connections in this region).
+1. Fetches fresh nodes from subscription URLs (FastNodes, V2RayAggregator, ShadowsocksAggregator,
+   Pawdroid; see "Subscription refresh" below) supporting vless/vmess/hysteria2/hy2/hysteria/tuic/
+   ss/trojan/anytls links. Each URL is fetched directly first, then retried through the running
+   local proxy (10808) when the direct fetch returns nothing (raw.githubusercontent is blocked for
+   direct connections in this region).
 1. Merges with any fallback nodes from the SOPS secret.
-1. **Validates candidates**: TCP-scans every unique host:port (asyncio, ~3s timeout), then
-   e2e-probes up to `E2E_CAP` (default 150) open nodes through a throwaway sing-box instance each —
-   a node counts as working only when `curl` via its socks port returns `204` for
-   `https://www.gstatic.com/generate_204`.
+1. **Validates candidates**: TCP-scans every unique host:port (asyncio, ~3s timeout); UDP-based
+   protocols (hysteria/hysteria2/tuic) skip the scan because their proxy port has no TCP listener.
+   Then e2e-probes up to `E2E_CAP` (default 150) candidates through a throwaway sing-box instance
+   each. A node counts as working when any probe succeeds: an IP-literal relay check
+   (`http://1.1.1.1` via `--socks5`, no DNS in the path) or a remote-DNS `204` check
+   (`https://cp.cloudflare.com/generate_204`, `https://www.gstatic.com/generate_204`).
 1. Regenerates `~/.config/sing-box-trojan/config.json` from the working subset only
    (vless/hysteria2/shadowsocks/trojan all supported by the generator).
 1. If **no** nodes pass, **keeps the existing config untouched** and exits with an error. If at
@@ -231,25 +234,30 @@ systemctl --user status sing-box-proxy
 
 ## Subscription refresh
 
-When you run `proxy refresh`, the script fetches nodes from three subscription URLs:
+When you run `proxy refresh`, the script fetches nodes from five subscription URLs:
 
 - `https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/protocols/vless.txt` — VLESS/Hysteria2
 - `https://cdn.jsdelivr.net/gh/rtwo2/FastNodes@main/sub/everything.txt` — VLESS/Hysteria2
 - `https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge.txt` —
-  ss/trojan (large aggregator, ~4.6k links)
+  ss/trojan/vmess (large aggregator, ~4.6k links)
+- `https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/Eternity.txt` —
+  ss/trojan/vmess
+- `https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub` — mixed protocols
 
 Each URL is queried directly with a 20-second timeout; when a direct fetch comes back empty and the
 local proxy is running, the URL is retried through `socks5h://127.0.0.1:10808` (25-second timeout).
 Up to `NODE_SAMPLE` (default 400) random links per URL are kept, and xhttp/splithttp (unsupported by
-stock sing-box) plus ss-plugin links are filtered out. The script:
+sing-box 1.13) plus ss-plugin links are filtered out. The script:
 
 1. Merges them with any fallback nodes from the SOPS secret (fallback always included first).
-1. TCP-scans every unique host:port (asyncio) and e2e-probes the open ones through throwaway
-   sing-box instances (up to `E2E_CAP`, default 150) — a node counts as working only when `curl` via
-   its socks port returns `204` for `https://www.gstatic.com/generate_204`.
+1. TCP-scans every unique host:port (asyncio); UDP-based protocols (hysteria/hysteria2/tuic) skip
+   the scan and go straight to e2e. E2e-probes candidates through throwaway sing-box instances (up
+   to `E2E_CAP`, default 150) — a node counts as working when any probe succeeds: an IP-literal
+   relay check (`http://1.1.1.1` via `--socks5`, no DNS in the path) or a remote-DNS `204` check
+   (`https://cp.cloudflare.com/generate_204`, `https://www.gstatic.com/generate_204`).
 1. Generates the sing-box config from the working subset only, under an `urltest` group (`auto`)
    that re-probes every 5 minutes and routes to the lowest latency. The generator supports vless
-   (tls/reality), hysteria2, shadowsocks and trojan.
+   (tls/reality), vmess, hysteria2/hy2, hysteria (v1), tuic, shadowsocks, trojan and anytls.
 1. Private IPs are routed direct.
 1. If **no** nodes pass, keeps the existing config untouched and exits with an error; if fewer than
    `MIN_WORKING` (default 3) pass, it proceeds with the verified subset and warns.
@@ -279,7 +287,8 @@ hysteria2://password@host:443?insecure=1&sni=sni.example.com&obfs=salamander&obf
 vless://uuid@host:443?security=reality&sni=www.google.com&pbk=...&sid=...&fp=chrome
 ```
 
-Supported protocols: `hysteria2://` and `vless://`.
+Supported protocols: `vless://`, `vmess://`, `hysteria2://`/`hy2://`, `hysteria://`, `tuic://`,
+`ss://`, `trojan://`, `anytls://`.
 
 ### Updating the secret
 
