@@ -40,6 +40,11 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [ cmake ];
 
+  # Local-only build (substitute=false) on Zen 5 — -march=native is safe and
+  # speeds up the DSP-heavy MI modules (Clouds, Rings, Plaits). Realtime
+  # audio: no -ffast-math (NaN/denormal semantics must stay IEEE-754).
+  env.NIX_CFLAGS_COMPILE = "-march=native";
+
   cmakeFlags = [
     "-DSC_PATH=${scPluginFarm}"
   ];

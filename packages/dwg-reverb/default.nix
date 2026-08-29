@@ -38,7 +38,9 @@ stdenv.mkDerivation {
     # SC server plugin headers: SC_PlugIn.h / FFT_UGens.h live in the
     # supercollider package's include/SuperCollider tree (same layout the
     # nixpkgs sc3-plugins build uses). nova-simd provides the SIMD helpers.
-    g++ -shared -fPIC -std=c++17 -O2 -DNOVA_SIMD \
+    # Realtime UGen: -O3 + -march=native (Zen 5). No -ffast-math — audio
+    # correctness (NaN/denormal semantics) matters more than raw FLOPs.
+    g++ -shared -fPIC -std=c++17 -O3 -march=native -DNOVA_SIMD \
       -I${supercollider}/include/SuperCollider/plugin_interface \
       -I${supercollider}/include/SuperCollider/common \
       -I${supercollider}/include/SuperCollider \
