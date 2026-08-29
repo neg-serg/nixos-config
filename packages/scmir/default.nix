@@ -9,6 +9,7 @@
   lib,
   stdenv,
   gsl,
+  openblas,
   fetchFromGitHub,
 }:
 stdenv.mkDerivation rec {
@@ -22,19 +23,27 @@ stdenv.mkDerivation rec {
     hash = "sha256-EcZ8yhxqAEkODyLscJf4MY4yEg7BFqvCEFF57wqwmpI=";
   };
 
-  buildInputs = [ gsl ];
+  buildInputs = [
+    gsl
+    openblas # drop-in BLAS for gslcblas — multithreaded, AVX-512 on Zen 5
+  ];
+
+  # Offline batch analysis tools (not realtime audio) — safe to enable
+  # fast-math and loop autoparallelism; -march=native targets Zen 5 (AVX-512).
+  # OpenBLAS replaces the reference gslcblas for multithreaded matrix ops.
+  cxxOpts = "-O3 -march=native -ffast-math -ftree-parallelize-loops=16 -floop-parallelize-all";
 
   buildPhase = ''
     runHook preBuild
     mkdir -p scmirexec
-    g++ -O2 Source/noveltycurve/noveltycurve.cpp -o scmirexec/noveltycurve
-    g++ -O2 Source/similaritymatrix/similarity.cpp -o scmirexec/similaritymatrix
-    g++ -O2 -std=gnu++14 Source/NeuralNet/ffnet.cpp Source/NeuralNet/main.cpp -o scmirexec/NeuralNet
-    g++ -O2 -std=gnu++14 Source/hmm/dhmm.cpp Source/hmm/main.cpp -o scmirexec/hmm \
-      -L${gsl}/lib -lgsl -lgslcblas -lm
-    g++ -O2 -std=gnu++14 -Wno-error=format-security Source/gmm/gmr.cpp Source/gmm/Macros.cpp \
+    g++ $cxxOpts Source/noveltycurve/noveltycurve.cpp -o scmirexec/noveltycurve
+    g++ $cxxOpts Source/similaritymatrix/similarity.cpp -o scmirexec/similaritymatrix
+    g++ $cxxOpts -std=gnu++14 Source/NeuralNet/ffnet.cpp Source/NeuralNet/main.cpp -o scmirexec/NeuralNet
+    g++ $cxxOpts -std=gnu++14 Source/hmm/dhmm.cpp Source/hmm/main.cpp -o scmirexec/hmm \
+      -L${gsl}/lib -lgsl -L${openblas}/lib -lopenblas -lm
+    g++ $cxxOpts -std=gnu++14 -Wno-error=format-security Source/gmm/gmr.cpp Source/gmm/Macros.cpp \
       Source/gmm/Matrix.cpp Source/gmm/Vector.cpp Source/gmm/main.cpp -o scmirexec/gmm \
-      -L${gsl}/lib -lgsl -lgslcblas -lm
+      -L${gsl}/lib -lgsl -L${openblas}/lib -lopenblas -lm
     runHook postBuild
   '';
 
