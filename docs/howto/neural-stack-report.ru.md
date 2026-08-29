@@ -33,6 +33,7 @@
 | `vsmlrt-models`           | ONNX-модели vs-mlrt (mpv-апскейл)                   | ✅ работает       | 2026-08-29: скачаны и распакованы (cugan/dpir/RealESRGANv2/rife/waifu2x, 883 МБ)                                                                                                 |
 | `seed-vc`                 | zero-shot конверсия голоса (ByteDance SOTA)         | ✅ работает       | 2026-08-29: venv-seedvc + torch 2.13 rocm; чекпоинты офлайн (hf-mirror, 1.8 ГБ); тест test_ru → ru_ref, RTF 2.7; обёртка `seed-vc`                                              |
 | `rvc`                     | конверсия голоса с обучением (стандарт индустрии)   | 🚧 готов          | 2026-08-29: venv-rvc (torch rocm, numpy<2, gradio-патч), hubert/rmvpe (370 МБ), CLI `infer/cli.py` на ROCm грузится; нужна обученная модель                                 |
+| SC-ревербы (mdugens/portedplugins/sc-faust) | PlateReverb, Fverb, jpverb (Faust) | ✅ собрано        | 2026-08-29: 3 nix-пакета (CMake/scPluginFarm + release-binary), грузятся в scsynth; в SC_PLUGIN_PATH/Extensions после `nh os switch`                                      |
 
 ## Детали по инструментам
 

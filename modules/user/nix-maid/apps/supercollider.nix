@@ -67,6 +67,9 @@ in
         "${pkgs.nn-ar}/lib/SuperCollider/plugins" # nn.ar: neural audio UGens (PyTorch)
         "${pkgs.flucoma}/lib/SuperCollider/plugins" # FluCoMa: corpus manipulation UGens
         "${pkgs.neg.dwg-reverb}/lib/SuperCollider/plugins" # DWGReverb: virtual room reverb UGens
+        "${pkgs.mdugens}/lib/SuperCollider/plugins" # MDUGens: TPTFilter/SOSBank UGens (PlateReverb etc.)
+        "${pkgs.portedplugins}/lib/SuperCollider/plugins" # portedplugins: VA filters, Fverb reverb
+        "${pkgs.sc-faust}/lib/SuperCollider/plugins" # sc_faust: Faust JIT compiler UGen
       ];
     };
 
@@ -156,6 +159,12 @@ in
         "${pkgs.mi-ugens}/share/SuperCollider/extensions/mi-UGens";
       ".local/share/SuperCollider/Extensions/DWGReverb".source =
         "${pkgs.neg.dwg-reverb}/share/SuperCollider/extensions/DWGReverb";
+      ".local/share/SuperCollider/Extensions/mdugens".source =
+        "${pkgs.mdugens}/share/SuperCollider/extensions/mdugens";
+      ".local/share/SuperCollider/Extensions/portedplugins".source =
+        "${pkgs.portedplugins}/share/SuperCollider/extensions/portedplugins";
+      ".local/share/SuperCollider/Extensions/sc_faust".source =
+        "${pkgs.sc-faust}/share/SuperCollider/extensions/sc_faust";
       ".local/share/SuperCollider/Extensions/GutterSynth".source =
         "${pkgs.guttersynth-sc}/share/SuperCollider/extensions/GutterSynth";
       # MyUGens installs its classes under a shared Myplugins/ parent dir
