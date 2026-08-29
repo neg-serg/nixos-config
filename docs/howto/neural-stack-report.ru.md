@@ -30,7 +30,9 @@
 | `rembg`                   | удаление фона (u2net / bria-rmbg / birefnet)        | ✅ работает       | u2net + bria                                                                                                                                                                      |
 | `triposr`                 | картинка → 3D-меш                                   | ✅ работает       | mesh.obj 7.2 МБ                                                                                                                                                                   |
 | `audio-analysis master`   | мастеринг по референсу (matchering)                 | ✅ работает       | 2026-08-29: Zinovia + DOOM-реф → **-13.3 → -9.8 dB**                                                                                                                              |
-| `vsmlrt-models`           | ONNX-модели vs-mlrt (mpv-апскейл)                   | ⏳ качается       | 812 МБ с GitHub (прокси добавлен в обёртку) → /zero/ai/imgproc/vsmlrt-v15.16                                                                                                      |
+| `vsmlrt-models`           | ONNX-модели vs-mlrt (mpv-апскейл)                   | ✅ работает       | 2026-08-29: скачаны и распакованы (cugan/dpir/RealESRGANv2/rife/waifu2x, 883 МБ)                                                                                                 |
+| `seed-vc`                 | zero-shot конверсия голоса (ByteDance SOTA)         | ✅ работает       | 2026-08-29: venv-seedvc + torch 2.13 rocm; чекпоинты офлайн (hf-mirror, 1.8 ГБ); тест test_ru → ru_ref, RTF 2.7; обёртка `seed-vc`                                              |
+| `rvc`                     | конверсия голоса с обучением (стандарт индустрии)   | 🚧 готов          | 2026-08-29: venv-rvc (torch rocm, numpy<2, gradio-патч), hubert/rmvpe (370 МБ), CLI `infer/cli.py` на ROCm грузится; нужна обученная модель                                 |
 
 ## Детали по инструментам
 
