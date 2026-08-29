@@ -14,7 +14,6 @@ return {
     { "<leader>.",  function() require("fff").find_files() end, desc = "Frecent files (fff frecency)" },
     -- scoped finds
     { "gz",         function() require("fff").find_files({ cwd = vim.fn.expand("%:p:h") }) end, desc = "Find in dir" },
-    { "E",          function() require("fff").find_files({ cwd = require("utils.fzf").project_root() }) end, desc = "Project root find" },
     { "<leader>l",  function() require("fff").find_files({ cwd = vim.fn.expand("%:p:h") }) end, desc = "Files in current dir" },
     { "<leader>L",  function() require("fff").find_files({ cwd = require("utils.fzf").project_root() }) end, desc = "Files in project root" },
     -- grep
