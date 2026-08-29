@@ -49,7 +49,7 @@
 - 🚄 **Blazingly Fast Builds** - Optimized evaluation with module archiving
 - 🎮 **Gaming-First Design** - CPU isolation, low-latency optimizations, VRR support
 - 🔧 **Developer Paradise** - Multi-language support (Rust, C++, Haskell, Python), AI tools
-- 🎨 **Beautiful Hyprland** - 20 workspaces, 7 scratchpads, custom Quickshell panel
+- 🎨 **Beautiful Hyprland** - 19 workspaces, 7 scratchpads, custom Quickshell panel
 - 📦 **30 Custom Packages** - Tailored tools for productivity and performance
 - 🧩 **Modular Architecture** - 27 domain modules with feature flags, 403 Nix files
 - 🔄 **Continuous Integration** - Automated formatting, linting, and testing
@@ -207,7 +207,7 @@ flowchart LR
 
 - 🎨 **Hyprland** - Dynamic tiling Wayland compositor
 
-- 📐 **21 Workspaces** - Semantic routing (term, web, dev, games, etc.)
+- 📐 **19 Workspaces** - Semantic routing (term, web, dev, games, etc.)
 - 💾 **6 Scratchpads** - Telegram, Discord, Music, Torrents, System, Mixer
 - 🎛️ **Quickshell Panel** - Custom status bar with system info
 
@@ -481,7 +481,7 @@ gamescope-hdr %command%
 
 ## 🌐 Hyprland Configuration
 
-### 📐 21 Workspaces
+### 📐 19 Workspaces
 
 <div align="center">
 
@@ -492,22 +492,20 @@ gamescope-hdr %command%
 | 3 | 𐌲:dev | 🔧 | Development |
 | 4 | 𐌸:games | 🎮 | Gaming |
 | 5 | 𐌳:doc | 📄 | Documents |
-| 6 | 𐌴:draw | 🎨 | Graphics |
-| 7 | 𐌵:vid | 📹 | Video |
-| 8 | 𐌶:obs | 🎥 | OBS Studio |
-| 9 | 𐌷:pic | 🖼️ | Pictures |
-| 10 | 𐌹:sys | ⚙️ | System |
-| 11 | 𐌺:vm | 💿 | Virtual Machines |
-| 12 | 𐌻:wine | 🍷 | Wine/Proton |
-| 13 | 𐌼:patchbay | 🎚️ | Audio Patchbay |
-| 14 | 𐌽:daw | 🎹 | DAW |
-| 15 | 𐌾:dw | 📊 | Data/DWM |
-| 16 | 𐌿:keyboard | ⌨️ | Keyboard tools |
-| 17 | 𐍀:im | 💬 | Instant Messaging |
-| 18 | 𐍁:remote | 🖥️ | Remote Desktop |
-| 19 | Ⲣ:notes | 📝 | Notes |
-| 20 | 𐍅:winboat | 🪟 | Windows VM (floating) |
-| 21 | 𐍇:antigravity | 🤖 | AI IDE |
+| 6 | 𐌵:vid | 📹 | Video |
+| 7 | 𐌶:obs | 🎥 | OBS Studio |
+| 8 | 𐌷:pic | 🖼️ | Pictures |
+| 9 | 𐌺:vm | 💿 | Virtual Machines |
+| 10 | 𐌻:wine | 🍷 | Wine/Proton |
+| 11 | 𐌼:patchbay | 🎚️ | Audio Patchbay |
+| 12 | 𐌽:daw | 🎹 | DAW |
+| 13 | 𐌾:dw | 📊 | Data/DWM |
+| 14 | 𐌿:keyboard | ⌨️ | Keyboard tools |
+| 15 | 𐍀:im | 💬 | Instant Messaging |
+| 16 | 𐍁:remote | 🖥️ | Remote Desktop |
+| 17 | Ⲣ:notes | 📝 | Notes |
+| 18 | 𐍆:vital | 🎛️ | Vital synth |
+| 19 | 𐍇:rack | 🧩 | VCV Rack |
 
 </div>
 
