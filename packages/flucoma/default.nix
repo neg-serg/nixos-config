@@ -77,6 +77,12 @@ stdenv.mkDerivation rec {
   ];
   buildInputs = [ boost ];
 
+  # Local-only build (substitute=false). x86-64-v3 = AVX2/FMA/BMI2: HISSTools
+  # FFT only implements zip/unzip for up to 256-bit vectors, so -march=native
+  # (AVX-512 on Zen 5) fails to compile. v3 still beats the generic baseline.
+  # Realtime audio: no -ffast-math (NaN/denormal semantics must stay IEEE-754).
+  env.NIX_CFLAGS_COMPILE = "-march=x86-64-v3";
+
   # boost >=1.69 has header-only system; FindBoost can't satisfy the
   # COMPONENTS system requirement -> drop it (thread is what is linked).
   postPatch = ''
