@@ -1,0 +1,12 @@
+# Verb overrides for broot sessions launched from inside Neovim
+# (9999years/broot.nvim). Loaded via --conf after conf.toml, so enter
+# opens the file in the SAME Neovim instance (outcmd -> ex-command)
+# instead of spawning a nested $EDITOR in the terminal buffer.
+
+[[verbs]]
+key = "enter"
+invocation = "edit"
+shortcut = "e"
+apply_to = "file"
+external = "broot.nvim edit +{line} {file}"
+from_shell = true
