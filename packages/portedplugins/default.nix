@@ -16,11 +16,12 @@ stdenv.mkDerivation rec {
   version = "unstable-2025-02-06";
 
   # GitHub is blocked on this host — source archived locally.
-  src = /zero/ai/music/sc-src/portedplugins.tar.gz;
+  # In-repo copies so pure evaluation works (absolute paths outside the flake are forbidden).
+  src = ./portedplugins.tar.gz;
 
   # CMakeLists downloads CPM.cmake from GitHub at configure time; vendor it
   # from the locally staged copy (GitHub is blocked on this host).
-  cpm = /zero/ai/music/sc-src/CPM_0.36.0.cmake;
+  cpm = ./CPM_0.36.0.cmake;
 
   nativeBuildInputs = [ cmake ];
 
