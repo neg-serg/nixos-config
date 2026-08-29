@@ -107,3 +107,6 @@ isn't a step-by-step runbook.
 
 - Fastfetch: black-metal blizzard (animated logo, RU):
   [fastfetch-blizzard.ru.md](./fastfetch-blizzard.ru.md)
+
+- Dockur Windows VM on odin: GLM USB passthrough, host alias, VM proxy chain (RU):
+  [windows-vm-dockur.ru.md](./windows-vm-dockur.ru.md)

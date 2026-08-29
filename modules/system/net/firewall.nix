@@ -13,6 +13,16 @@
       iptables -A nixos-fw -s 10.0.0.0/8 -p tcp --dport 10810 -j nixos-fw-accept
       iptables -A nixos-fw -s 172.16.0.0/12 -p tcp --dport 10810 -j nixos-fw-accept
       iptables -A nixos-fw -s 192.168.0.0/16 -p tcp --dport 10810 -j nixos-fw-accept
+      # 10811: auth-less SOCKS for the dockur Windows VM (in-lan-vm inbound,
+      # host alias 192.168.2.88) — same private-range restriction as 10810.
+      iptables -A nixos-fw -s 10.0.0.0/8 -p tcp --dport 10811 -j nixos-fw-accept
+      iptables -A nixos-fw -s 172.16.0.0/12 -p tcp --dport 10811 -j nixos-fw-accept
+      iptables -A nixos-fw -s 192.168.0.0/16 -p tcp --dport 10811 -j nixos-fw-accept
+      # 10812: auth-less HTTP CONNECT for the Windows VM system proxy
+      # (WinINET doesn't support SOCKS; GLM and other GUI apps use WinINET).
+      iptables -A nixos-fw -s 10.0.0.0/8 -p tcp --dport 10812 -j nixos-fw-accept
+      iptables -A nixos-fw -s 172.16.0.0/12 -p tcp --dport 10812 -j nixos-fw-accept
+      iptables -A nixos-fw -s 192.168.0.0/16 -p tcp --dport 10812 -j nixos-fw-accept
     '';
   };
 
