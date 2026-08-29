@@ -6,31 +6,31 @@
 
 ## Сводная таблица
 
-| Инструмент     | Назначение                                      | Статус      | Проверено                     |
-| -------------- | ----------------------------------------------- | ----------- | ----------------------------- |
-| `whisperx`     | STT + диаризация (faster-whisper, CPU)          | ⚠️ STT ✓, align ✗ | 2026-08-29: распознавание ru ✓ («Привет! Это тест синтеза речи…»); **alignment/диаризация зависают** (регрессия — 19.08 работало; нужна отладка, вероятно версии torch/lightning) |
-| `mt3`          | аудио → MIDI (MR-MT3, PyTorch)                  | ✅ работает | 171 нота; **GPU (ROCm): 11.2s vs 30.3s CPU** (40s трек, результат идентичен, 2026-08-29) |
-| `midi-transcribe` | hFT-Transformer / RobustAMT (пианино)      | ✅ работает | CPU: `midi-transcribe`; **GPU (ROCm): `midi-transcribe-gpu`** — hFT 40s за ~11s вместо 20+ мин CPU (2026-08-29, venv-denoise + torch 2.13 rocm7.1) |
-| ~~`amt-generate`~~ | ~~генерация MIDI (Anticipatory Music Transformer)~~ | ❌ удалён | 2026-08-28, решение пользователя |
-| `audio-analysis` | Essentia key/beat + CLAP-теги + мастеринг | ✅ работает | 2026-08-29: Zinovia → **B minor (conf 0.85), ~110 BPM**; CLAP: ambient 0.169. ROCm-torch в venv-analysis |
-| `pitch-f0`        | f0-трекинг (torchcrepe) | ✅ работает | 2026-08-29: 2164 фрейма, f0 49-50 Гц, CPU >10x realtime |
-| `got-ocr`         | OCR (GOT-OCR-2.0) | ✅ работает | 2026-08-29: венв починен (не было python), OCR картинки ~20s CPU |
-| `denoise`        | шумоподавление    | ✅ работает | внутри transcribe-high (noisereduce), 2026-08-28 |
-| `song2midi`      | Omnizart (аккорды/вокал/бас/барабаны) | ✅ работает | 2026-08-29: аккорды 15s за ~30s (TF/CPU) |
-| `stems`          | BS-RoFormer выделение вокала | ✅ работает | 2026-08-29: **GPU авто + fp16: 16s vs 64s** (×4) на 40s |
-| `audio-beats`    | BPM/биты (madmom) | ✅ работает | 2026-08-29: 82 BPM на Zinovia-сегменте |
-| `midi2tidal`     | MIDI → Tidal-код  | ✅ работает | 2026-08-29: паттерн из zinovia_best (полифония 6) |
-| `transcribe-high --tidal` | пайплайн + Tidal-код | ✅ работает | 2026-08-29: темп 109.1 BPM, паттерн сгенерирован |
-| `groovae`        | groove-humanize (magenta GrooVAE) | ✅ работает | **GPU (ROCm)** 2026-08-29: драм-луп humanize (venv-groovae + torch rocm) |
-| `xtts-clone`    | клон голоса XTTS-v2 (zero-shot)     | ✅ работает | **GPU (ROCm)** 2026-08-29: синтез на GPU (venv-xtts + torch 2.8 rocm6.4; требует свободную VRAM — ollama её занимает) |
-| `rave`/`rave-vc` | нейро-VAE encode/decode + конверсия голоса | ✅ работает | **GPU (ROCm)** 2026-08-29: 10s аудио за ~10-13s (venv-rave311 + torch rocm; обёртка переведена с сломанного venv-rave) |
-| `demucs`        | разделение источников (htdemucs_ft) | ✅ работает | torch rocm установлен (venv-demucs, минус 2 ГБ nvidia); **GPU fp32 ≈ CPU** (9.7 vs 10.9s), fp16 ломается внутри — дефолт остаётся CPU |
-| `transcribe-high` | конвейер: деноиз→Demucs→basic-pitch→слияние | ✅ работает | проверен 2026-08-28 (см. детали); для чистых записей лучше `--no-denoise --no-stems` |
-| `basic-pitch`  | полифоническая транскрипция → MIDI              | ✅ работает | melody10s → MIDI (ONNX)       |
-| `rembg`        | удаление фона (u2net / bria-rmbg / birefnet)    | ✅ работает | u2net + bria                  |
-| `triposr`      | картинка → 3D-меш                               | ✅ работает | mesh.obj 7.2 МБ               |
-| `audio-analysis master` | мастеринг по референсу (matchering) | ✅ работает | 2026-08-29: Zinovia + DOOM-реф → **-13.3 → -9.8 dB** |
-| `vsmlrt-models` | ONNX-модели vs-mlrt (mpv-апскейл) | ⏳ качается | 812 МБ с GitHub (прокси добавлен в обёртку) → /zero/ai/imgproc/vsmlrt-v15.16 |
+| Инструмент                | Назначение                                          | Статус            | Проверено                                                                                                                                                                         |
+| ------------------------- | --------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `whisperx`                | STT + диаризация (faster-whisper, CPU)              | ⚠️ STT ✓, align ✗ | 2026-08-29: распознавание ru ✓ («Привет! Это тест синтеза речи…»); **alignment/диаризация зависают** (регрессия — 19.08 работало; нужна отладка, вероятно версии torch/lightning) |
+| `mt3`                     | аудио → MIDI (MR-MT3, PyTorch)                      | ✅ работает       | 171 нота; **GPU (ROCm): 11.2s vs 30.3s CPU** (40s трек, результат идентичен, 2026-08-29)                                                                                          |
+| `midi-transcribe`         | hFT-Transformer / RobustAMT (пианино)               | ✅ работает       | CPU: `midi-transcribe`; **GPU (ROCm): `midi-transcribe-gpu`** — hFT 40s за ~11s вместо 20+ мин CPU (2026-08-29, venv-denoise + torch 2.13 rocm7.1)                                |
+| ~~`amt-generate`~~        | ~~генерация MIDI (Anticipatory Music Transformer)~~ | ❌ удалён         | 2026-08-28, решение пользователя                                                                                                                                                  |
+| `audio-analysis`          | Essentia key/beat + CLAP-теги + мастеринг           | ✅ работает       | 2026-08-29: Zinovia → **B minor (conf 0.85), ~110 BPM**; CLAP: ambient 0.169. ROCm-torch в venv-analysis                                                                          |
+| `pitch-f0`                | f0-трекинг (torchcrepe)                             | ✅ работает       | 2026-08-29: 2164 фрейма, f0 49-50 Гц, CPU >10x realtime                                                                                                                           |
+| `got-ocr`                 | OCR (GOT-OCR-2.0)                                   | ✅ работает       | 2026-08-29: венв починен (не было python), OCR картинки ~20s CPU                                                                                                                  |
+| `denoise`                 | шумоподавление                                      | ✅ работает       | внутри transcribe-high (noisereduce), 2026-08-28                                                                                                                                  |
+| `song2midi`               | Omnizart (аккорды/вокал/бас/барабаны)               | ✅ работает       | 2026-08-29: аккорды 15s за ~30s (TF/CPU)                                                                                                                                          |
+| `stems`                   | BS-RoFormer выделение вокала                        | ✅ работает       | 2026-08-29: **GPU авто + fp16: 16s vs 64s** (×4) на 40s                                                                                                                           |
+| `audio-beats`             | BPM/биты (madmom)                                   | ✅ работает       | 2026-08-29: 82 BPM на Zinovia-сегменте                                                                                                                                            |
+| `midi2tidal`              | MIDI → Tidal-код                                    | ✅ работает       | 2026-08-29: паттерн из zinovia_best (полифония 6)                                                                                                                                 |
+| `transcribe-high --tidal` | пайплайн + Tidal-код                                | ✅ работает       | 2026-08-29: темп 109.1 BPM, паттерн сгенерирован                                                                                                                                  |
+| `groovae`                 | groove-humanize (magenta GrooVAE)                   | ✅ работает       | **GPU (ROCm)** 2026-08-29: драм-луп humanize (venv-groovae + torch rocm)                                                                                                          |
+| `xtts-clone`              | клон голоса XTTS-v2 (zero-shot)                     | ✅ работает       | **GPU (ROCm)** 2026-08-29: синтез на GPU (venv-xtts + torch 2.8 rocm6.4; требует свободную VRAM — ollama её занимает)                                                             |
+| `rave`/`rave-vc`          | нейро-VAE encode/decode + конверсия голоса          | ✅ работает       | **GPU (ROCm)** 2026-08-29: 10s аудио за ~10-13s (venv-rave311 + torch rocm; обёртка переведена с сломанного venv-rave)                                                            |
+| `demucs`                  | разделение источников (htdemucs_ft)                 | ✅ работает       | torch rocm установлен (venv-demucs, минус 2 ГБ nvidia); **GPU fp32 ≈ CPU** (9.7 vs 10.9s), fp16 ломается внутри — дефолт остаётся CPU                                             |
+| `transcribe-high`         | конвейер: деноиз→Demucs→basic-pitch→слияние         | ✅ работает       | проверен 2026-08-28 (см. детали); для чистых записей лучше `--no-denoise --no-stems`                                                                                              |
+| `basic-pitch`             | полифоническая транскрипция → MIDI                  | ✅ работает       | melody10s → MIDI (ONNX)                                                                                                                                                           |
+| `rembg`                   | удаление фона (u2net / bria-rmbg / birefnet)        | ✅ работает       | u2net + bria                                                                                                                                                                      |
+| `triposr`                 | картинка → 3D-меш                                   | ✅ работает       | mesh.obj 7.2 МБ                                                                                                                                                                   |
+| `audio-analysis master`   | мастеринг по референсу (matchering)                 | ✅ работает       | 2026-08-29: Zinovia + DOOM-реф → **-13.3 → -9.8 dB**                                                                                                                              |
+| `vsmlrt-models`           | ONNX-модели vs-mlrt (mpv-апскейл)                   | ⏳ качается       | 812 МБ с GitHub (прокси добавлен в обёртку) → /zero/ai/imgproc/vsmlrt-v15.16                                                                                                      |
 
 ## Детали по инструментам
 
@@ -50,11 +50,10 @@
 
 ### ~~amt-generate~~ — удалён (2026-08-28)
 
-Пользователь признал генерацию «хернёй»; удалены: обёртки `~/src/music-ai/bin/amt-*`,
-venv `venv-amt` (включая torch 2.13.0+rocm7.1), исходники `anticipation/`, модели
+Пользователь признал генерацию «хернёй»; удалены: обёртки `~/src/music-ai/bin/amt-*`, venv
+`venv-amt` (включая torch 2.13.0+rocm7.1), исходники `anticipation/`, модели
 `music-small-100k`/`music-small-ar-100k` (980 МБ), артефакты и колёса
-(`/zero/ai/music/renders/amt-20260828/`, `/zero/ai/music/tmp-dl/`), symlink в
-`~/.local/bin`.
+(`/zero/ai/music/renders/amt-20260828/`, `/zero/ai/music/tmp-dl/`), symlink в `~/.local/bin`.
 
 ### basic-pitch — полифоническая транскрипция
 
