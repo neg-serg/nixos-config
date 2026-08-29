@@ -276,6 +276,11 @@
     # Dygma Defy
     SUBSYSTEM=="usb", ATTR{idVendor}=="35ef", ATTR{idProduct}=="0108", MODE="0666"
 
+    # Genelec GLM USB adapter (Gnet Adapter): 0666 so the dockur Windows VM's
+    # QEMU (user-namespaced container, root -> host nobody) can open the node
+    # for usb-host passthrough. Default 0644 root:root blocks it with EPERM.
+    SUBSYSTEM=="usb", ATTR{idVendor}=="1781", ATTR{idProduct}=="0e39", MODE="0666"
+
     # Speed up NVMe boot: skip blkid probing for ZFS member partitions.
     # ZFS has its own label system — udev's blkid scan is wasted time
     # (saves ~1-2s per ZFS disk on boot).

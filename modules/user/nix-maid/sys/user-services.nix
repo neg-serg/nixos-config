@@ -97,6 +97,21 @@ lib.mkIf (cfg.enable or false) {
       wantedBy = [ "default.target" ];
     };
 
+    # rtpmidid — RTP-MIDI (AppleMIDI) daemon: exposes ALSA sequencer ports over
+    # the network. Linux MIDI (Tidal/SC/glm-midi) reaches the dockur Windows VM's
+    # rtpMIDI -> Genelec GLM MIDI control (see docs/howto/windows-vm-dockur.ru.md).
+    rtpmidid = {
+      description = "RTP MIDI (AppleMIDI) daemon";
+      after = [ "pipewire.service" ];
+      wants = [ "pipewire.service" ];
+      serviceConfig = {
+        ExecStart = "${lib.getExe pkgs.neg.rtpmidid} --name GLM";
+        Restart = "on-failure";
+        RestartSec = 3;
+      };
+      wantedBy = [ "default.target" ];
+    };
+
     # OpenRGB daemon — starts the SDK server so clients (profile service, GUI) can connect.
     # The profile is NOT loaded on daemon startup (it may not exist yet); the
     # openrgb-profile oneshot applies the saved "neg" profile after the server is ready.
