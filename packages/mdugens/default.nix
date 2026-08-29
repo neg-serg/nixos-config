@@ -16,7 +16,8 @@ stdenv.mkDerivation rec {
   version = "unstable-2025-02-12";
 
   # GitHub is blocked on this host — source archived locally.
-  src = /zero/ai/music/sc-src/mdugens.tar.gz;
+  # In-repo copy so pure evaluation works (absolute paths outside the flake are forbidden).
+  src = ./mdugens.tar.gz;
 
   nativeBuildInputs = [ cmake ];
 

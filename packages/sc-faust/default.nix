@@ -20,14 +20,27 @@ stdenvNoCC.mkDerivation rec {
   # GitHub is blocked on this host — release archive staged locally.
   # Upstream release: sc_faust-0.1.2-linux-x86-64.zip (119 MB .so, statically
   # linked libfaustwithllvm + faustlibs).
-  src = /zero/ai/music/sc-src/sc_faust.zip;
+  # In-repo copy so pure evaluation works (absolute paths outside the flake are forbidden).
+  src = ./sc_faust.zip;
 
-  nativeBuildInputs = [ unzip patchelf ];
-  buildInputs = [ zlib ncurses ];
+  nativeBuildInputs = [
+    unzip
+    patchelf
+  ];
+  buildInputs = [
+    zlib
+    ncurses
+  ];
   # The release .so is a prebuilt binary with no rpath — point it at the nix
   # store libs it needs (libz, libtinfo, libstdc++ from the stdenv cc).
   postFixup = ''
-    patchelf --set-rpath "${lib.makeLibraryPath [ zlib ncurses stdenv.cc.cc.lib ]}" \
+    patchelf --set-rpath "${
+      lib.makeLibraryPath [
+        zlib
+        ncurses
+        stdenv.cc.cc.lib
+      ]
+    }" \
       "$out/lib/SuperCollider/plugins/sc_faust.so"
   '';
 
