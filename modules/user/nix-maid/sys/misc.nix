@@ -34,7 +34,7 @@ in
 {
   config = lib.mkMerge [
     (lib.mkIf (cfg.apps.winapps.enable or false) {
-      # Winboat (Bottles/Wine)
+      # Windows apps (Bottles/Wine)
       environment.systemPackages = [
         pkgs.bottles # Run Windows software on Linux with Bottles
         pkgs.wineWow64Packages.stable # Open-source implementation of the Windows API

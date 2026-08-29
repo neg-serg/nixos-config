@@ -34,12 +34,6 @@
       ],
       "fontPattern": "Font Awesome 6 Pro"
     },
-    "draw": {
-      "codepoints": [
-        "U+F03E"
-      ],
-      "fontPattern": "Font Awesome 6 Pro"
-    },
     "vid": {
       "codepoints": [
         "U+F008"
@@ -55,12 +49,6 @@
     "pic": {
       "codepoints": [
         "U+F03E"
-      ],
-      "fontPattern": "Font Awesome 6 Pro"
-    },
-    "sys": {
-      "codepoints": [
-        "U+F0AD"
       ],
       "fontPattern": "Font Awesome 6 Pro"
     },
@@ -115,12 +103,6 @@
     "notes": {
       "codepoints": [
         "U+E202"
-      ],
-      "fontPattern": "Font Awesome 6 Pro"
-    },
-    "winboat": {
-      "codepoints": [
-        "U+F21A"
       ],
       "fontPattern": "Font Awesome 6 Pro"
     }
