@@ -412,7 +412,14 @@ if lan_auth:
     u, p = lan_auth.split(":", 1)
     in_lan["users"] = [{"username": u, "password": p}]
 inbounds = [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port": 10808},
-            in_lan]
+            in_lan,
+            # Auth-less LAN SOCKS for the dockur Windows VM (firewall: LAN
+            # only, reachable at the 192.168.2.88 alias). Chromium cannot
+            # authenticate SOCKS5, hence the unauthenticated inbound.
+            {"type": "socks", "tag": "in-lan-vm", "listen": "0.0.0.0", "listen_port": 10811},
+            # Auth-less LAN HTTP CONNECT for the Windows VM system proxy
+            # (WinINET/Qt apps like GLM cannot use SOCKS5 directly).
+            {"type": "http", "tag": "in-lan-vm-http", "listen": "0.0.0.0", "listen_port": 10812}]
 # DNS + route: client-side resolve via direct DoH. No "detour" on the DoH
 # server: detouring it via urltest deadlocks DNS at startup when no node is
 # selected yet, so every lookup times out.

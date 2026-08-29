@@ -53,7 +53,13 @@
           # panel — dsh-lan-proxy binds 192.168.2.87:3080 — and for br0 NAT.
           # Keep .87 out of the router's DHCP pool (reserve it) to avoid a
           # duplicate-address conflict.
-          Address = "192.168.2.87/24";
+          # Alias .88: the dockur Windows VM's DHCP lease collides with the
+          # host's .87, so the VM reaches the host's sing-box through this
+          # alias (auth-less in-lan-vm inbound, port 10811, LAN-only).
+          Address = [
+            "192.168.2.87/24"
+            "192.168.2.88/24"
+          ];
           KeepConfiguration = "yes";
         };
         # Default route via the router, same metric the DHCP lease used
