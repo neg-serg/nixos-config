@@ -24,6 +24,9 @@ _inputs: final: prev:
   mi-ugens = prev.callPackage ../mi-ugens { scPluginFarm = final.sc-plugin-farm; }; # Mutable Instruments eurorack modules as UGens
   guttersynth-sc = prev.callPackage ../guttersynth-sc { scPluginFarm = final.sc-plugin-farm; }; # GutterSynth: coupled duffing oscillators through modal synthesis
   my-ugens = prev.callPackage ../my-ugens { scPluginFarm = final.sc-plugin-farm; }; # sonoro1234 MyUGens: DWG instruments, Karplus, pitch tracking
+  mdugens = prev.callPackage ../mdugens { scPluginFarm = final.sc-plugin-farm; }; # MDUGens: TPT SVF filters, SOSBank, PlateReverb/Phaser/Chorus FX
+  portedplugins = prev.callPackage ../portedplugins { scPluginFarm = final.sc-plugin-farm; }; # portedplugins: VA filters, drum synths, Fverb reverb
+  sc-faust = prev.callPackage ../sc-faust { }; # sc_faust: JIT-compile Faust DSP in scsynth (incl. jpverb)
   timestretch = prev.callPackage ../timestretch { }; # TimeStretch SC quark: Ness Stretch extreme time stretch
   pitchshiftpa = prev.callPackage ../pitchshiftpa { }; # PitchShiftPA SC quark: phase-aligned pitch/formant shifter
   softcut-sc = prev.callPackage ../softcut-sc { scPluginFarm = final.sc-plugin-farm; }; # monome Softcut multi-voice looper as SC UGen
