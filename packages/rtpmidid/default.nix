@@ -1,4 +1,12 @@
-{ lib, stdenv, fetchFromGitHub, cmake, pkg-config, alsa-lib, avahi }:
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  cmake,
+  pkg-config,
+  alsa-lib,
+  avahi,
+}:
 
 stdenv.mkDerivation {
   pname = "rtpmidid";
@@ -11,8 +19,14 @@ stdenv.mkDerivation {
     hash = "sha256-BHMl0e6ptHh75rVvojtxBs54mU540CwGp4H1CSDwQH4=";
   };
 
-  nativeBuildInputs = [ cmake pkg-config ];
-  buildInputs = [ alsa-lib avahi ];
+  nativeBuildInputs = [
+    cmake
+    pkg-config
+  ];
+  buildInputs = [
+    alsa-lib
+    avahi
+  ];
 
   cmakeFlags = [
     "-DENABLE_TESTS=OFF"

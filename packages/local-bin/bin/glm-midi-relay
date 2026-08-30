@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+"""glm-midi-relay — one-way MIDI relay to the dockur Windows VM.
+
+Topology constraint: the VM shares the host IP (192.168.2.87 via pasta), so
+bidirectional UDP (RTP-MIDI) handshakes die on the host->VM reply path. The
+only reliable host->VM channel is a connection the VM *initiates* (outbound
+TCP through passt works, replies flow back — same as the .88:10812 proxy).
+
+Design:
+  - the VM-side bridge (oem/glm-midi-bridge.ps1) connects OUT to :9003
+  - local glm-midi connects to 127.0.0.1:9004 and writes one raw MIDI packet
+  - this relay forwards each local packet into the current VM connection
+"""
+import socket
+import threading
+
+VM_PORT = 9003    # VM bridge connects here (0.0.0.0, inbound from LAN)
+LOCAL_PORT = 9004  # glm-midi sends here (loopback only)
+
+vm = None
+lock = threading.Lock()
+
+
+def vm_loop():
+    global vm
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind(("0.0.0.0", VM_PORT))
+    s.listen(1)
+    while True:
+        c, _ = s.accept()
+        with lock:
+            vm = c  # a new VM connection replaces the previous one
+
+
+def main():
+    global vm  # main() assigns vm = None below; without this Python treats vm as a local -> UnboundLocalError on read
+    threading.Thread(target=vm_loop, daemon=True).start()
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind(("127.0.0.1", LOCAL_PORT))
+    s.listen(1)
+    while True:
+        c, _ = s.accept()
+        try:
+            data = c.recv(64)
+            c.close()
+            with lock:
+                t = vm
+            if t is None:
+                continue  # no VM bridge connected yet — drop the packet
+            try:
+                t.sendall(data)
+            except OSError:
+                with lock:
+                    if vm is t:
+                        vm = None
+        except OSError:
+            pass
+
+
+if __name__ == "__main__":
+    main()
