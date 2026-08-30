@@ -282,7 +282,10 @@
     SUBSYSTEM=="usb", ATTR{idVendor}=="1781", ATTR{idProduct}=="0e39", MODE="0666"
     # Bind usbhid to the GLM adapter so a /dev/hidraw node exists (genlc's
     # hidraw backend needs it; the adapter does not auto-bind to usbhid).
-    ACTION=="add", SUBSYSTEM=="usb", DEVTYPE=="usb_interface", ATTRS{idVendor}=="1781", ATTRS{idProduct}=="0e39", RUN+="/bin/sh -c 'echo %k > /sys/bus/usb/drivers/usbhid/bind'"
+    # NB: no DEVTYPE key — udevadm verify rejects it as an invalid match key.
+    # ATTRS{idVendor}/ATTRS{idProduct} match the usb_interface event via its
+    # parent chain; the device event's bind attempt is a harmless no-op.
+    ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="1781", ATTRS{idProduct}=="0e39", RUN+="/bin/sh -c 'echo %k > /sys/bus/usb/drivers/usbhid/bind'"
 
     # Speed up NVMe boot: skip blkid probing for ZFS member partitions.
     # ZFS has its own label system — udev's blkid scan is wasted time
