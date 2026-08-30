@@ -112,6 +112,19 @@ lib.mkIf (cfg.enable or false) {
       wantedBy = [ "default.target" ];
     };
 
+    # glm-osc — OSC bridge for Genelec SAM monitors (volume/mute/power/status
+    # via Python genlc over the GLM USB adapter, no official GLM required).
+    # Listen: UDP 127.0.0.1:9000; map in docs/howto/windows-vm-dockur.ru.md.
+    glm-osc = {
+      description = "OSC bridge for Genelec SAM monitors";
+      serviceConfig = {
+        ExecStart = "${pkgs.glm-osc}/bin/glm-osc-server";
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+      wantedBy = [ "default.target" ];
+    };
+
     # glm-midi-relay — one-way MIDI relay to the dockur Windows VM: the VM's
     # bridge (oem/glm-midi-bridge.ps1) connects OUT to :9003 (VM-initiated TCP
     # is the only bidirectional host<->VM channel under the same-IP pasta
