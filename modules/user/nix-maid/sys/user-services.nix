@@ -105,7 +105,21 @@ lib.mkIf (cfg.enable or false) {
       after = [ "pipewire.service" ];
       wants = [ "pipewire.service" ];
       serviceConfig = {
-        ExecStart = "${lib.getExe pkgs.neg.rtpmidid} --name GLM";
+        ExecStart = "${lib.getExe pkgs.neg.rtpmidid} --ini ${config.lib.neg.path "files/rtpmidid/config.ini"}";
+        Restart = "on-failure";
+        RestartSec = 3;
+      };
+      wantedBy = [ "default.target" ];
+    };
+
+    # glm-midi-relay — one-way MIDI relay to the dockur Windows VM: the VM's
+    # bridge (oem/glm-midi-bridge.ps1) connects OUT to :9003 (VM-initiated TCP
+    # is the only bidirectional host<->VM channel under the same-IP pasta
+    # topology, unlike RTP-MIDI UDP); local glm-midi feeds 127.0.0.1:9004.
+    glm-midi-relay = {
+      description = "MIDI relay to the dockur Windows VM";
+      serviceConfig = {
+        ExecStart = "%h/.local/bin/glm-midi-relay";
         Restart = "on-failure";
         RestartSec = 3;
       };
