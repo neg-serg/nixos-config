@@ -189,3 +189,34 @@ Tidal/SuperCollider: вызывать `glm-midi` из кода (SC: `SystemCmd("
 - `packages/dockur-windows/oem/glm-midi-bridge.ps1` — мост в VM
 - `packages/local-bin/bin/proxy` — inbound'ы `in-lan-vm` (SOCKS 10811) и `in-lan-vm-http` (HTTP
   10812\)
+
+## Альтернатива GLM: OSC-мост glm-osc (адаптер на хосте)
+
+С 2026-08-30 повседневное управление мониторами идёт БЕЗ официального GLM:
+USB-адаптер (1781:0e39) живёт на хосте, сервис `glm-osc` (Python genlc +
+python-osc) слушает UDP 127.0.0.1:9000 и крутит мониторы по OSC. VM с GLM
+нужна только для калибровки (см. ниже).
+
+OSC-карта:
+```
+/glm/volume <dB>          # абсолютная громкость
+/glm/volume/ratio <0..1>  # как линейное отношение
+/glm/volume/up|down <dB>  # относительно (stateful)
+/glm/mute <0|1> | /glm/mute/toggle
+/glm/power <1|0|2> | /glm/power/toggle   # 2 = toggle
+/glm/led <green|red|yellow|off> [pulse]
+/glm/status | /glm/discover   # ответ в /glm/status/reply и /glm/discover/reply
+```
+
+Пример из Tidal/SuperCollider: `NetAddr("127.0.0.1", 9000).sendMsg("/glm/volume", -20)`;
+из Tidal через `osc`-паттерны (`Sound.Tidal.OSC`). Состояние (последняя громкость,
+mute, power) хранится в `~/.local/state/glm-osc-state.json`.
+
+Важно:
+- **Не запускать GLM (VM) и glm-osc одновременно** — адаптер single-master.
+- genlc НЕ умеет dim и выбор входа (0x0D/0x40) — только volume/mute/power/LED/status.
+- Калибровка и выбор входа: поднять VM (адаптер уходит в проброс), сделать в GLM,
+  Store settings (калибровка хранится В МОНИТОРАХ), выключить VM — адаптер
+  вернётся хосту, управление снова через glm-osc.
+- udev: hardware.nix биндит usbhid к адаптеру (иначе нет /dev/hidraw и genlc
+  не видит устройство).
