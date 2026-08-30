@@ -6,6 +6,16 @@
 }:
 let
   cfg = config.features.gui;
+
+  # podman pasta --config-net copies ALL host net1 addresses (incl. the .88
+  # alias) into the dockur container netns, shadowing the host alias and
+  # breaking the VM's proxy path (.88:10812). Remove the shadow after the
+  # container starts; idempotent when the address is absent.
+  ensureVmProxyAlias = pkgs.writeShellScript "ensure-vm-proxy-alias" ''
+    if ${lib.getExe pkgs.podman} container exists windows 2>/dev/null; then
+      ${lib.getExe pkgs.podman} exec windows ip addr del 192.168.2.88/24 dev net1 2>/dev/null || true
+    fi
+  '';
 in
 lib.mkIf (cfg.enable or false) {
   # User systemd services
@@ -132,11 +142,26 @@ lib.mkIf (cfg.enable or false) {
     glm-midi-relay = {
       description = "MIDI relay to the dockur Windows VM";
       serviceConfig = {
-        ExecStart = "%h/.local/bin/glm-midi-relay";
+        # Script shebang is /usr/bin/env python3, which is not in the minimal
+        # user-service PATH — call the interpreter explicitly.
+        ExecStart = "${lib.getExe pkgs.python3} %h/.local/bin/glm-midi-relay";
         Restart = "on-failure";
         RestartSec = 3;
       };
       wantedBy = [ "default.target" ];
+    };
+
+    # ensure-vm-proxy-alias — one-shot cleanup for the dockur Windows VM's
+    # network: podman pasta --config-net copies the host's .88 alias into the
+    # container netns, shadowing it, so the VM's proxy (.88:10812) dies inside
+    # the container. Re-applied on a short timer (container is started
+    # manually, not as a systemd unit).
+    ensure-vm-proxy-alias = {
+      description = "Remove host .88 alias from dockur container netns";
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = ensureVmProxyAlias;
+      };
     };
 
     # OpenRGB daemon — starts the SDK server so clients (profile service, GUI) can connect.
@@ -215,5 +240,17 @@ lib.mkIf (cfg.enable or false) {
       wantedBy = [ "graphical-session.target" ];
     };
 
+  };
+
+  # Self-healing timer for ensure-vm-proxy-alias: the dockur container is
+  # started manually, so re-check periodically (cheap, idempotent).
+  systemd.user.timers.ensure-vm-proxy-alias = {
+    description = "Periodic VM proxy alias cleanup";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "20s";
+      OnUnitActiveSec = "30s";
+      Unit = "ensure-vm-proxy-alias.service";
+    };
   };
 }
