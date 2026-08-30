@@ -118,14 +118,18 @@ in
           # the lock screen itself is the blackout — avoids the DPMS
           # wake-up bug. Wake: press any key (password field fades in)
           # and type the password.
+          #
+          # Absolute paths are required: the hypridle user service runs with a
+          # minimal PATH (coreutils only), so bare pidof/hyprlock resolve to
+          # "command not found" and the screen never locks.
 
           general {
-              lock_cmd = pidof hyprlock || hyprlock
+              lock_cmd = /run/current-system/sw/bin/pidof hyprlock || /run/current-system/sw/bin/hyprlock
           }
 
           listener {
               timeout = 120
-              on-timeout = pidof hyprlock || hyprlock
+              on-timeout = /run/current-system/sw/bin/pidof hyprlock || /run/current-system/sw/bin/hyprlock
           }
         '';
 
