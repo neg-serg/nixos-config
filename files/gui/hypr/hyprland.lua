@@ -597,6 +597,10 @@ hl.layer_rule({ name = "slide-up-mon", match = { namespace = "qs-monitor" }, ani
 -- Autostart (autostart.conf / env.conf) -- NixOS-appropriate
 -- =====================================================================
 hl.on("hyprland.start", function()
+  -- Restart the session target chain: import env, clean stale portals and
+  -- stop/start hyprland-session.target so quickshell, hypridle, hyprscratch
+  -- and ru-layout come back after a Hyprland (re)start.
+  hl.exec_cmd("hypr-start")
   -- hyprglass config was tied to the 0.55 plugin; until 0.56 re-port (see
   -- the plugin-load note above) these options do not exist, so disable them
   -- rather than raise unknown-option errors at startup.
