@@ -99,6 +99,9 @@ Singleton {
             property bool spectrumUseGradient: false
             property bool spectrumMirror: false
             property bool showSpectrumTopHalf: false
+            // Show audio level (volume/mic/Genelec dB) when the cursor hovers
+            // the capsule — delayed reveal via the existing pill/tooltip timers
+            property bool showVolumeOnHover: true
             property real spectrumFillOpacity: 0.35
             property real spectrumHeightFactor: 1.2
             property real spectrumOverlapFactor: 0.2

@@ -58,6 +58,7 @@
     "showMediaVisualizer": false,
     "showIphoneVisualizer": false,
     "showSpectrumTopHalf": false,
+    "showVolumeOnHover": true,
     "showWeatherInBar": true,
     "spectrumBarGap": 1,
     "spectrumFillOpacity": 0.35,
