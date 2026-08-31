@@ -154,13 +154,9 @@ RowLayout {
     function changeVolume(delta) {
         var d = Number(delta) || 0;
         if (midiMode) {
-            // VM-side GLM: the host cannot set absolute dB, so send relative CC
-            // steps (glm-midi vol+/vol-). One step per wheel tick; GLM's real
-            // step per CC21/22 message is unknown host-side, so the local
-            // display is an estimate.
-            if (d > 0) _sendMidi(["/home/neg/.local/bin/glm-midi", "vol+"]);
-            else if (d < 0) _sendMidi(["/home/neg/.local/bin/glm-midi", "vol-"]);
-            volume = clamp(volume + (d > 0 ? 1 : -1));
+            // VM-side GLM: set absolute dB (CC20) so the display stays in
+            // sync with what GLM actually applies.
+            setVolume(volume + d);
             return;
         }
         var newVol = volume + d;
@@ -208,8 +204,9 @@ RowLayout {
     function _sendToHardware(dB) {
         if (busy) return;
         if (midiMode) {
-            // Absolute dB over MIDI (CC20); VM-side GLM applies it directly.
-            _sendMidi(["/home/neg/.local/bin/glm-midi", "volume", dB + "dB"]);
+            // Absolute dB over MIDI (CC20, 1 dB resolution): round so the CC
+            // value stays an integer (glm-midi takes whole dB only).
+            _sendMidi(["/home/neg/.local/bin/glm-midi", "volume", Math.round(dB) + "dB"]);
             return;
         }
         busy = true;

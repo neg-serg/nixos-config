@@ -18,6 +18,7 @@
     "debugNetwork": false,
     "enableWedgeClipShader": true,
     "fontSizeMultiplier": 1,
+    "genelecMaxVolume": -20,
     "hideSystemTrayCapsule": true,
     "ignoredPlayers": [],
     "mediaIconBorderless": false,
