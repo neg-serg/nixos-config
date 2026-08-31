@@ -81,7 +81,6 @@ return function(ctx)
     help={'','Help'}, quickfix={'','Quickfix'}, terminal={'','Terminal'}, prompt={'','Prompt'}, nofile={'','Scratch'},
     fff={'󰘬','FFF'},
     ['grug-far']={'󰈞','GrugFar'},
-    yazi={'','Yazi'},
     DiffviewFiles={'','Diffview'}, DiffviewFileHistory={'','Diffview'},
     gitcommit={'','Commit'}, gitrebase={'','Rebase'}, gitconfig={'','Git Config'},
     lazy={'󰒲','Lazy'}, notify={'','Notify'}, noice={'','Noice'},
@@ -103,7 +102,7 @@ return function(ctx)
     local base = {
       'qf','help','man','lspinfo','checkhealth','undotree','tagbar','vista','which_key',
       'TelescopePrompt','TelescopeResults','grug%-far','Spectre','spectre_panel','spectre%-replace',
-      'NvimTree','neo%-tree','Neotree','neo%-tree%-popup','oil','dirbuf','lir','fern','chadtree','defx','ranger','vifm','minifiles','mf','vaffle','netrw','explore','dirvish','yazi',
+      'NvimTree','neo%-tree','Neotree','neo%-tree%-popup','oil','dirbuf','lir','fern','chadtree','defx','ranger','vifm','minifiles','mf','vaffle','netrw','explore','dirvish',
       '^git.*','fugitive','fugitiveblame','DiffviewFiles','DiffviewFileHistory','gitcommit','gitrebase','gitconfig',
       'NeogitCommitMessage','NeogitStatus','gitgraph','gitstatus','lazygit','gitui',
       'lazy','mason','notify','noice','noice%-log','noice%-history','toggleterm','Floaterm','FTerm','termwrapper',
