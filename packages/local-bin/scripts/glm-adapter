@@ -23,7 +23,7 @@ PID=0e39
 CT=windows
 STATE=/tmp/genlc-volume
 GENLC=/run/current-system/sw/bin/genlc
-GREEN=$'e[32m'; RED=$'e[31m'; YELLOW=$'e[33m'; NC=$'e[0m'
+GREEN=$'\e[32m'; RED=$'\e[31m'; YELLOW=$'\e[33m'; NC=$'\e[0m'
 DO_GLM=0
 ARGS=()
 for a in "$@"; do
@@ -97,11 +97,17 @@ cmd_status() {
   echo ""
   verify_chain
   echo ""
-  echo "--- host genlc diagnostics ---"
-  if [ -x /etc/nixos/packages/local-bin/scripts/genlc-diagnose ]; then
-    /etc/nixos/packages/local-bin/scripts/genlc-diagnose 2>/dev/null | tail -15 || true
-  else
-    echo "  (genlc-diagnose not found)"
+  # genlc-diagnose only makes sense when the adapter is physically on the host
+  # (a genlc failure with the adapter inside the VM is expected, not a bug).
+  if host_present && ! host_genlc_ok && { [ "$(vm_running)" != 1 ] || [ "$(qemu_usb)" -lt 1 ]; }; then
+    echo "--- host genlc diagnostics (adapter on host but genlc fails) ---"
+    if [ -x /etc/nixos/packages/local-bin/scripts/genlc-diagnose ]; then
+      /etc/nixos/packages/local-bin/scripts/genlc-diagnose 2>/dev/null | tail -15 || true
+    else
+      echo "  (genlc-diagnose not found)"
+    fi
+  elif host_present && host_genlc_ok; then
+    ok "host genlc works — no diagnostics needed"
   fi
 }
 
