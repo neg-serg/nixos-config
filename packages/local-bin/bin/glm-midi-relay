@@ -11,9 +11,11 @@ Design:
   - local glm-midi connects to 127.0.0.1:9004 and writes one raw MIDI packet
   - this relay forwards each local packet into the current VM connection
 """
+import os
 import socket
 import sys
 import threading
+import time
 
 VM_PORT = 9003    # VM bridge connects here (0.0.0.0, inbound from LAN)
 LOCAL_PORT = 9004  # glm-midi sends here (loopback only)
@@ -48,6 +50,12 @@ def main():
     vs.listen(1)
     s.listen(1)
     threading.Thread(target=vm_loop, args=(vs,), daemon=True).start()
+    # Optional logging: set GLM_RELAY_LOG=/path to record every forwarded
+    # packet (timestamp, source, hex) so the wheel path is observable.
+    logf = None
+    log_path = os.environ.get("GLM_RELAY_LOG", "")
+    if log_path:
+        logf = open(log_path, "a", buffering=1)
     while True:
         c, _ = s.accept()
         try:
@@ -61,6 +69,8 @@ def main():
                 if not chunk:
                     break
                 data += chunk
+            if logf:
+                logf.write(f"{time.time():.3f} from={c.getpeername()!r} msg={data.hex()}\n")
             c.close()
             with lock:
                 t = vm
