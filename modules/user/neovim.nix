@@ -74,8 +74,8 @@ lib.mkIf devEnabled (
             "text/x-c++"
           ];
         })
-        # Search backends for fff/snacks pickers
-        pkgs.ripgrep # project-wide search backend (fff live grep, snacks)
+        # Search backends for snacks pickers
+        pkgs.ripgrep # project-wide search backend (snacks grep)
         pkgs.fd # fast file finder (snacks files picker)
 
         # LSP servers — via nixpkgs, not Mason (Mason binaries break on NixOS:

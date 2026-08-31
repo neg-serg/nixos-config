@@ -67,8 +67,8 @@ local xk = require('03-xkeys').xk
 -- Splits: C-\ vertical, C-S-\ horizontal
 map('n', xk[[<C-\>]], '<Cmd>vsplit<CR>', {silent=true, desc = 'Vertical split'})
 map('n', xk[[<C-S-\>]], '<Cmd>split<CR>', {silent=true, desc = 'Horizontal split'})
--- Search/pickers: C-S-f live grep (fff), C-S-p commands, M-Space buffers (snacks)
-map('n', xk[[<C-S-f>]], function() require('fff').live_grep() end, {desc = 'Live grep (fff)'})
+-- Search/pickers: C-S-f live grep (snacks), C-S-p commands, M-Space buffers (snacks)
+map('n', xk[[<C-S-f>]], function() Snacks.picker.grep() end, {desc = 'Live grep (snacks)'})
 map('n', xk[[<C-S-p>]], function() Snacks.picker.commands() end, {desc = 'Command palette'})
 map('n', xk[[<M-Space>]], function() Snacks.picker.buffers() end, {desc = 'Buffer picker'})
 

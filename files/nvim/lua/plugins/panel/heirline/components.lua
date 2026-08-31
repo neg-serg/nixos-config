@@ -79,7 +79,6 @@ return function(ctx)
   -- ── Special types (icons) ─────────────────────────────────────────────────
   local FT_ICON = {
     help={'','Help'}, quickfix={'','Quickfix'}, terminal={'','Terminal'}, prompt={'','Prompt'}, nofile={'','Scratch'},
-    fff={'󰘬','FFF'},
     ['grug-far']={'󰈞','GrugFar'},
     DiffviewFiles={'','Diffview'}, DiffviewFileHistory={'','Diffview'},
     gitcommit={'','Commit'}, gitrebase={'','Rebase'}, gitconfig={'','Git Config'},
