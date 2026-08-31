@@ -60,7 +60,7 @@ RowLayout {
 
     // ---- Normalized 0..1 for slider ----
     readonly property real sliderPos: (displayDb - minVolume) / (maxVolume - minVolume)
-    function sliderToDb(pos) { return +(minVolume + pos * (maxVolume - minVolume)).toFixed(1); }
+    function sliderToDb(pos) { return Math.round(minVolume + pos * (maxVolume - minVolume)); }
 
     // ---- UI ----
     property real pendingDb: -40
@@ -135,21 +135,21 @@ RowLayout {
     }
     Text {
         id: volLabel
-        text: root.muted ? "MUTED" : "<font color='" + Theme.accentPrimary + "'>-</font>" + Math.abs(root.volume).toFixed(1).padStart(4,"0") + "<font color='" + Theme.accentPrimary + "'>dB</font>"
+        text: root.muted ? "MUTED" : "<font color='" + Theme.accentPrimary + "'>-</font>" + Math.abs(root.volume).toFixed(0).padStart(3,"0") + "<font color='" + Theme.accentPrimary + "'>dB</font>"
         font { family: Theme.fontFamily; pixelSize: Math.round(Theme.fontSizeSmall * 1.05); weight: Font.DemiBold; italic: true }
         color: Theme.textSecondary
         Layout.alignment: Qt.AlignVCenter
     }
 
 
-    function clamp(v) { return v < minVolume ? minVolume : v > maxVolume ? maxVolume : v; }
+    // Whole dB only: GLM CC20 is integer (dB = value - 127), so clamp rounds.
+    function clamp(v) { var c = v < minVolume ? minVolume : v > maxVolume ? maxVolume : v; return Math.round(c); }
 
     // ---- Hardware send coalescing ----
     // GLM's MIDI input drops or delays messages that arrive in quick
-    // succession (a burst of step/vol+ pairs lands off-target; measured:
-    // 5 vol+ in 12 ms -> only 1 applied, steps < 400 ms apart unreliable).
-    // Wheel/slider changes update the display instantly but commit the final
-    // absolute target once input settles, with >= _minSendGapMs between sends.
+    // succession. Wheel/slider changes update the display instantly but
+    // commit the final absolute target once input settles, with
+    // >= _minSendGapMs between sends.
     property bool _wheelPending: false
     property real _lastSendMs: 0
     readonly property int _minSendGapMs: 400
@@ -174,17 +174,11 @@ RowLayout {
         }
     }
     // One-shot CC20 anchor: when the MIDI path becomes active, set the
-    // absolute target in GLM once (step for .5 values) so relative C21/C22
-    // steps build on the real position. No periodic re-sync: idle volume
-    // must not move on its own.
+    // absolute target in GLM once. Whole dB only — CC20 is integer.
+    // No periodic re-sync: idle volume must not move on its own.
     function _anchorVolume() {
         if (busy || !midiMode) return;
-        var base = Math.floor(volume);
-        var rem = volume - base;
-        if (rem >= 0.499)
-            _sendMidi(["/home/neg/.local/bin/glm-midi", "step", base + "dB"]);
-        else
-            _sendMidi(["/home/neg/.local/bin/glm-midi", "volume", base + "dB"]);
+        _sendMidi(["/home/neg/.local/bin/glm-midi", "volume", volume + "dB"]);
     }
     // Self-heal: 400 ms after the last widget commit, re-anchor CC20 once so
     // a dropped relative step is corrected. Not periodic — the timer is only

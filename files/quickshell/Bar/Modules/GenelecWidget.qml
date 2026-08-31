@@ -10,8 +10,9 @@ import "." as LocalMods
 /*!
  * Genelec hardware volume widget — controls Genelec SAM monitors via GLM adapter.
  *
- * Displays current dB value. Scroll wheel adjusts by ±_serviceStep() (0.5 dB).
- * Volume is capped at genelecMaxVolume (default -35 dB).
+ * Displays current dB value. Scroll wheel adjusts by ±_serviceStep() (1 dB).
+ * Whole dB only (GLM CC20 is integer). Volume is capped at
+ * genelecMaxVolume (default -35 dB).
  */
 LocalMods.AudioEndpointTile {
     id: root
@@ -30,7 +31,7 @@ LocalMods.AudioEndpointTile {
     tooltipTitle: "Genelec SAM"
     tooltipValue: (function() {
         if (!Services.Genelec) return "N/A";
-        var v = Services.Genelec.volume;
+        var v = Math.round(Services.Genelec.volume);
         return v + " dB" + (Services.Genelec.maxVolume >= -30 ? "" : " (cap " + Services.Genelec.maxVolume + " dB)");
     })()
     tooltipHints: [
@@ -82,7 +83,7 @@ LocalMods.AudioEndpointTile {
                 onMoved: { Services.Genelec.setVolumeDb(Services.Genelec.minVolume + value * (Services.Genelec.maxVolume - Services.Genelec.minVolume)); }
             }
             Text {
-                text: Math.abs(Services.Genelec.volume).toFixed(1) + "dB"
+                text: Math.abs(Services.Genelec.volume).toFixed(0) + "dB"
                 color: Theme.textSecondary
                 font.pixelSize: Math.round(Theme.fontSizeSmall * 0.9)
             }
@@ -99,14 +100,14 @@ LocalMods.AudioEndpointTile {
         var t = (srv.volume - srv.minVolume) / (srv.maxVolume - srv.minVolume);
         var normalized = Math.max(0, 100 * Math.pow(t, 0.4));
         root.updateFrom(Math.max(0, normalized), srv.muted);
-        // Update the label to show actual dB
-        pill.text = srv.volume + " dB";
+        // Update the label to show actual dB (whole dB only)
+        pill.text = Math.round(srv.volume) + " dB";
     }
 
     function _serviceStep() {
-        // Override: Genelec uses dB steps, not percentage
-        // Convert our scroll direction to dB delta
-        return 0.5;
+        // Override: Genelec uses whole-dB steps (GLM CC20 is integer),
+        // not percentage. Convert our scroll direction to a dB delta.
+        return 1;
     }
 
     function invokeChange(direction) {
