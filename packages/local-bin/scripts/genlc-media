@@ -36,18 +36,15 @@ case "${1:-}" in
     fi
     capped=$(awk "BEGIN { c=$target; if (c > -20.0) c=-20.0; if (c < -95.0) c=-95.0; printf \"%.1f\", c }")
 
-    # Write state instantly — QML picks up via stateReader, display updates immediately
-    echo "$capped" > "$STATE"
-
     if [ "$MODE" = "vm" ]; then
-      # VM path: delegate to glm-vol — the exact same absolute send the widget
-      # commits (CC20 base, +vol+ for .5 targets, state write). Keyboard and
-      # mouse wheel now produce identical wire behavior. Absolute path:
-      # keybinding envs (sway/hyprland exec) don't have ~/.local/bin in PATH
-      # (bare glm-midi was 'command not found' — silently never reached GLM).
+      # VM path: glm-vol reads the previous state, sends relative C21/C22
+      # steps and writes the new state (display sync via FileView). The
+      # periodic CC20 re-anchor is done by the quickshell widget.
       /home/neg/.local/bin/glm-vol "$capped" >/dev/null 2>&1 || true
     else
       # Host path: genlc set-volume (0.5 dB), batched by debounce.
+      # Write state first — QML picks up via stateReader, display updates.
+      echo "$capped" > "$STATE"
       [ -f "$DEBOUNCE_PID" ] && kill "$(cat "$DEBOUNCE_PID")" 2>/dev/null || true
       (
         sleep 0.06

@@ -150,6 +150,10 @@ RowLayout {
     property bool _wheelPending: false
     property real _lastSendMs: 0
     readonly property int _minSendGapMs: 400
+    // Relative-control bookkeeping: _lastSentDb is where GLM should be after
+    // the last relative (C21/C22) send; the periodic anchor re-syncs CC20.
+    property real _lastSentDb: -40
+    property real _lastAnchorDb: -40
     Timer {
         id: wheelCommitTimer
         interval: 150
@@ -166,6 +170,26 @@ RowLayout {
             wheelCommitTimer.interval = 150;
             root._wheelPending = false;
             root._commitAndSend(root.pendingDb);
+        }
+    }
+    // Periodic CC20 re-anchor: every 600 ms set the absolute target in GLM
+    // (step for .5 values) so relative-step drops don't accumulate drift.
+    Timer {
+        id: anchorTimer
+        interval: 600
+        repeat: true
+        running: midiMode
+        onTriggered: {
+            if (root.busy) return;
+            if (root.volume === root._lastAnchorDb) return;
+            var base = Math.floor(root.volume);
+            var rem = root.volume - base;
+            if (rem >= 0.499)
+                root._sendMidi(["/home/neg/.local/bin/glm-midi", "step", base + "dB"]);
+            else
+                root._sendMidi(["/home/neg/.local/bin/glm-midi", "volume", base + "dB"]);
+            root._lastAnchorDb = root.volume;
+            root._lastSentDb = root.volume;
         }
     }
     function _queueCommit(dB) {
@@ -257,15 +281,16 @@ RowLayout {
     function _sendToHardware(dB) {
         if (busy) return;
         if (midiMode) {
-            // CC20 is 1 dB resolution; GLM's vol+ steps 0.5 dB. For a .5
-            // target, send the whole-dB base via CC20 then one vol+ (glm-midi
-            // step), so GLM lands exactly on the displayed value.
-            var base = Math.floor(dB);
-            var rem = dB - base;
-            if (rem >= 0.499)
-                _sendMidi(["/home/neg/.local/bin/glm-midi", "step", base + "dB"]);
-            else
-                _sendMidi(["/home/neg/.local/bin/glm-midi", "volume", base + "dB"]);
+            // Relative control: C21 (vol+) / C22 (vol-) for the delta from the
+            // last sent value. GLM's periodic CC20 re-anchor (anchorTimer)
+            // snaps it back to the target, so dropped steps self-heal.
+            var delta = dB - root._lastSentDb;
+            var steps = Math.round(delta / 0.5);
+            if (steps > 0)
+                _sendMidi(["/home/neg/.local/bin/glm-midi", "vol+", steps]);
+            else if (steps < 0)
+                _sendMidi(["/home/neg/.local/bin/glm-midi", "vol-", -steps]);
+            root._lastSentDb = dB;
             return;
         }
         busy = true;
@@ -352,6 +377,7 @@ RowLayout {
             root.pendingDb = v;
             root.volume = v;
             root._animDb = v;
+            root._lastSentDb = v; // keyboard/glm-vol sent v; next wheel delta builds from it
         }
     }
     Component.onCompleted: {
