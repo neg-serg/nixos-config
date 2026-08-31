@@ -61,9 +61,9 @@ local function follow_import()
     local full     = imp.mod_path ~= '' and (base .. '/' .. imp.mod_path) or base
     local resolved = try_py_path(full)
     if resolved then nav.open_file(resolved); return end
-    -- fff fallback: use the final module name component as query
+    -- Picker fallback: use the final module name component as search
     local tail = imp.mod_path:match('[^/]+$') or 'init'
-    require('fff').find_files({ query = tail, cwd = nav.project_root(base) })
+    Snacks.picker.files({ search = tail, cwd = nav.project_root(base) })
     return
   end
 
@@ -77,7 +77,7 @@ local function follow_import()
   if resolved then
     nav.open_file(resolved)
   else
-    require('fff').find_files({ query = imp.path:match('[^/]+$') or imp.path, cwd = nav.project_root() })
+    Snacks.picker.files({ search = imp.path:match('[^/]+$') or imp.path, cwd = nav.project_root() })
   end
 end
 
