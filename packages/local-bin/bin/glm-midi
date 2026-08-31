@@ -10,7 +10,7 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: glm-midi {volume <0-127 | dB> | step <dB> | mute | dim | power}" >&2
+  echo "usage: glm-midi {volume <0-127 | dB> | mute | dim | power}" >&2
   exit 1
 }
 [ $# -ge 1 ] || usage
@@ -33,8 +33,9 @@ case "$1" in
   volume)
     [ $# -ge 2 ] || usage
     if [[ "$2" == *dB* ]] || [ "$2" -lt 0 ] 2>/dev/null; then
-      # dB input: -127..0 dB -> 0..127 (value = 127 + dB)
+      # dB input: -127..0 dB -> 0..127 (value = 127 + dB). Whole dB only.
       db=$2; db=${db%dB}
+      db=$(awk -v d="$db" 'BEGIN { printf "%.0f", d + (d < 0 ? -0.5 : 0.5) }')
       val=$((127 + db))
       [ "$val" -lt 0 ] && val=0
       [ "$val" -gt 127 ] && val=127
@@ -46,21 +47,9 @@ case "$1" in
       [ "$val" -gt 107 ] && val=107
     fi
     send_cc 20 "$val" ;;
-  step)
-    # Base dB (CC20, whole) then one vol+ (0.5) after a short delay so GLM
-    # applies the absolute value first — lands exactly on base+0.5 dB.
-    [ $# -ge 2 ] || usage
-    db=$2; db=${db%dB}
-    val=$((127 + db))
-    [ "$val" -lt 0 ] && val=0
-    [ "$val" -gt 107 ] && val=107
-    send_cc 20 "$val"
-    sleep 0.15
-    send_cc 21 127
-    ;;
-  # Volume is CC20-only: the widget sends the absolute value (volume/step)
-  # on MIDI activation and 400 ms after the last change. No relative
-  # C21/C22 vol+/vol- commands — removed by request.
+  # Volume is CC20-only, whole dB: the widget sends the absolute value on
+  # MIDI activation and 400 ms after the last change. No relative C21/C22
+  # vol+/vol- and no step (+0.5) hack — removed by request.
   mute)  send_cc 23 127 ;;  # toggle
   dim)   send_cc 24 127 ;;  # toggle
   power) send_cc 28 127 ;;  # toggle
