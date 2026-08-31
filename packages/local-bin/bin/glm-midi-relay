@@ -12,6 +12,7 @@ Design:
   - this relay forwards each local packet into the current VM connection
 """
 import socket
+import sys
 import threading
 
 VM_PORT = 9003    # VM bridge connects here (0.0.0.0, inbound from LAN)
@@ -21,25 +22,32 @@ vm = None
 lock = threading.Lock()
 
 
-def vm_loop():
+def vm_loop(vs):
     global vm
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind(("0.0.0.0", VM_PORT))
-    s.listen(1)
     while True:
-        c, _ = s.accept()
+        c, _ = vs.accept()
         with lock:
             vm = c  # a new VM connection replaces the previous one
 
 
 def main():
     global vm  # main() assigns vm = None below; without this Python treats vm as a local -> UnboundLocalError on read
-    threading.Thread(target=vm_loop, daemon=True).start()
+    vs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    vs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind(("127.0.0.1", LOCAL_PORT))
+    # Bind both sockets before starting any thread: a failed bind then exits
+    # cleanly instead of triggering Python's stderr-lock fatal error at
+    # interpreter shutdown (daemon thread printing a traceback -> SIGABRT).
+    try:
+        vs.bind(("0.0.0.0", VM_PORT))
+        s.bind(("127.0.0.1", LOCAL_PORT))
+    except OSError as e:
+        print(f"glm-midi-relay: bind failed: {e}", file=sys.stderr)
+        sys.exit(1)
+    vs.listen(1)
     s.listen(1)
+    threading.Thread(target=vm_loop, args=(vs,), daemon=True).start()
     while True:
         c, _ = s.accept()
         try:
