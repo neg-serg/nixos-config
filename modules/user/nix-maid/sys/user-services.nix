@@ -161,7 +161,12 @@ lib.mkIf (cfg.enable or false) {
         Type = "oneshot";
         # bash explicitly: the user-service environment has no PATH, so the
         # script's #!/usr/bin/env bash shebang would fail (status 127).
+        # The default NixOS user-service PATH has only coreutils/grep/sed —
+        # the script also needs awk/podman/docker/genlc/lsusb/ss/sudo.
         ExecStart = "${lib.getExe pkgs.bash} %h/.local/bin/glm-adapter attach";
+        Environment = [
+          "PATH=/run/wrappers/bin:/run/current-system/sw/bin:/home/neg/.local/bin:/usr/bin:/bin"
+        ];
       };
     };
 
