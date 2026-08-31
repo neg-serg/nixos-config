@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.Settings
 import qs.Components
 import qs.Services as Services
+import "../../Helpers/Color.js" as Color
 import "." as LocalMods
 
 /*!
