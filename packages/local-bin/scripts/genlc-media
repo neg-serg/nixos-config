@@ -23,15 +23,18 @@ case "${1:-}" in
     current=-40.0
     [ -f "$STATE" ] && current=$(cat "$STATE" 2>/dev/null || echo -40.0) || true
 
-    # Snap the state to the nearest 0.5 dB — both modes use 0.5 granularity.
-    current=$(awk "BEGIN { printf \"%.1f\", int($current * 2 + ($current < 0 ? -0.5 : 0.5)) / 2 }")
+    # Snap to the nearest 0.5 dB, then hard-clamp to the safe range [-95,-20].
+    # The clamp is applied to BOTH the current state and the target so a stale
+    # state (e.g. GLM session restore above -20, or drift while the relay was
+    # down) can never push the monitors louder than -20 dB.
+    current=$(awk "BEGIN { c=$current; printf \"%.1f\", int(c * 2 + (c < 0 ? -0.5 : 0.5)) / 2 }")
+    current=$(awk "BEGIN { c=$current; if (c > -20.0) c=-20.0; if (c < -95.0) c=-95.0; printf \"%.1f\", c }")
     if [ "$1" = "up" ]; then
       target=$(awk "BEGIN { printf \"%.1f\", $current + $STEP_DB }")
-      capped=$(awk "BEGIN { printf \"%.1f\", ($target > -20.0) ? -20.0 : $target }")
     else
       target=$(awk "BEGIN { printf \"%.1f\", $current - $STEP_DB }")
-      capped=$(awk "BEGIN { printf \"%.1f\", ($target < -95.0) ? -95.0 : $target }")
     fi
+    capped=$(awk "BEGIN { c=$target; if (c > -20.0) c=-20.0; if (c < -95.0) c=-95.0; printf \"%.1f\", c }")
 
     # Write state instantly — QML picks up via stateReader, display updates immediately
     echo "$capped" > "$STATE"
