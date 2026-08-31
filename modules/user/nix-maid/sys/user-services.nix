@@ -245,6 +245,25 @@ lib.mkIf (cfg.enable or false) {
           wantedBy = [ "default.target" ];
         };
 
+    # glm-sync — read the ACTUAL GLM volume from the dockur VM screen (local
+    # vision model qwen3-vl:8b) and write it to /tmp/genlc-volume so the
+    # quickshell Genelec widget matches reality. GLM is the source of truth;
+    # the widget's FileView picks up the state file. Driven by the glm-sync
+    # timer (every 5s); no-op when the VM is off.
+    glm-sync = {
+      description = "Sync quickshell Genelec widget to actual GLM volume";
+      serviceConfig = {
+        Type = "oneshot";
+        # bash explicitly: the user-service PATH is minimal; the script also
+        # needs docker/magick/base64/jq/curl from the system PATH.
+        ExecStart = "${lib.getExe pkgs.bash} %h/.local/bin/glm-sync";
+        Environment = [
+          "PATH=/run/current-system/sw/bin:/home/neg/.local/bin:/usr/bin:/bin"
+        ];
+      };
+      wantedBy = [ "default.target" ];
+    };
+
     # Udiskie (Automounter)
     udiskie = {
       description = "Udiskie automounter";
@@ -284,6 +303,18 @@ lib.mkIf (cfg.enable or false) {
       OnBootSec = "30s";
       OnUnitActiveSec = "60s";
       Unit = "glm-adapter-auto.service";
+    };
+  };
+
+  # Periodic GLM readback: keep the quickshell Genelec widget in sync with the
+  # actual GLM volume (VL OCR of the VM screen every 5s while the VM runs).
+  systemd.user.timers.glm-sync = {
+    description = "Periodic GLM volume readback sync";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "15s";
+      OnUnitActiveSec = "5s";
+      Unit = "glm-sync.service";
     };
   };
 }
