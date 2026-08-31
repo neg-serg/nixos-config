@@ -58,10 +58,12 @@ case "$1" in
     sleep 0.15
     send_cc 21 127
     ;;
-  # Space relative steps: GLM drops rapid vol+/vol- bursts (measured:
-  # 5 vol+ in 12 ms -> only 1 applied). 250 ms between individual steps.
-  vol+) n=${2:-1}; for _ in $(seq 1 "$n"); do send_cc 21 127; sleep 0.25; done ;;
-  vol-) n=${2:-1}; for _ in $(seq 1 "$n"); do send_cc 22 127; sleep 0.25; done ;;
+  # Space relative steps BETWEEN sends only (no trailing sleep): a single
+  # step must return immediately or held keyboard keys feel sluggish. GLM
+  # drops rapid relative bursts, but the widget's 400 ms CC20 anchor
+  # re-syncs the absolute so dropped steps self-heal.
+  vol+) n=${2:-1}; i=0; for _ in $(seq 1 "$n"); do send_cc 21 127; i=$((i+1)); [ "$i" -lt "$n" ] && sleep 0.25; done ;;
+  vol-) n=${2:-1}; i=0; for _ in $(seq 1 "$n"); do send_cc 22 127; i=$((i+1)); [ "$i" -lt "$n" ] && sleep 0.25; done ;;
   mute)  send_cc 23 127 ;;  # toggle
   dim)   send_cc 24 127 ;;  # toggle
   power) send_cc 28 127 ;;  # toggle
