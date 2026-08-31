@@ -189,6 +189,18 @@ RowLayout {
             _sendMidi(["/home/neg/.local/bin/glm-midi", "volume", base + "dB"]);
         _lastSentDb = volume;
     }
+    // Self-heal: 400 ms after the last widget commit, re-anchor CC20 once so
+    // a dropped relative step is corrected. Not periodic — the timer is only
+    // re-armed by a new commit, so idle GLM receives nothing.
+    Timer {
+        id: selfHealTimer
+        interval: 400
+        repeat: false
+        onTriggered: {
+            if (root.busy) { root.selfHealTimer.restart(); return; }
+            root._anchorVolume();
+        }
+    }
     function _queueCommit(dB) {
         var target = clamp(Number(dB));
         root.displayDb = target;
@@ -210,8 +222,12 @@ RowLayout {
         // scrolling (the wheel path bypasses genlc-media, the only other
         // writer). The FileView above watches this file; the value equals
         // displayDb, so the reload is a display no-op.
-        if (midiMode)
+        if (midiMode) {
             Quickshell.execDetached(["/bin/sh", "-c", "echo " + clamped + " > /tmp/genlc-volume"]);
+            // Re-arm the one-shot self-heal anchor after every commit so a
+            // final CC20 lands 400 ms after input settles (never periodically).
+            selfHealTimer.restart();
+        }
     }
     function setVolume(dB) {
         var clamped = clamp(Number(dB));
