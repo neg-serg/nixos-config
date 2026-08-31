@@ -71,7 +71,7 @@
 | espanso                       | `ALT+SPACE` — без букв; триггеры `:date` — текст                                             | ✅                      | `modules/user/nix-maid/cli/espanso.nix`                                       |
 | vicinae                       | бинды `Ctrl+буква` (Qt fallback)                                                             | ✅ (проверить руками)   | `modules/user/nix-maid/apps/vicinae.nix`                                      |
 | kitty                         | `kitty_mod+буква` (Ctrl+Shift), `Ctrl+s>l/p/h`, `kitty_mod+,/.`/grave/`[`/`]`, `Alt+n` и пр. | ❌                      | `files/kitty/key.conf`                                                        |
-| mpv                           | `p i r t v f l h L H m j s A`, `Ctrl+h/l/H`, `Alt+I/U`, `>`/`<` (в RU их вообще нет)         | ❌                      | `modules/user/nix-maid/apps/mpv/input.nix`                                    |
+| mpv                           | `p i r t v f l h L H m j s A`, `Ctrl+h/l/H`, `Alt+I/U`, `>`/`<` (RU-дубли Ю/Б)               | ✅ (починено)           | `modules/user/nix-maid/apps/mpv/input.nix`                                    |
 | SurfingKeys (Vivaldi)         | vim-клавиши `j k h l t d u w o e b v s H L F J+,`; **набор hint-букв** (`asdfghjkl`) тоже    | ❌                      | `files/surfingkeys.js`                                                        |
 | zellij                        | `Alt+h/j/k/l`; в режимах resize/tab/scroll: `h j k l n r`                                    | ✅ (починено)           | `files/gui/zellij/config.kdl`                                                 |
 | mutt                          | `j k g G R u gg`, макросы с буквами; стрелки работают                                        | ❌ (не чинится)         | `modules/user/nix-maid/mutt-conf/04-bindings.mutt`                            |
@@ -114,10 +114,10 @@
 
 Ломаются: `p` (пауза), `i` (топбар), `r/t` (субтитры), `v` (видимость субтитров), `F` (fullscreen),
 `l/h/L/H` (сик), `m` (mute), `A` (аудиодорожка), `R` (window-scale), `j/s` (субтитры),
-`Alt+I`/`Alt+U` (AI-апскейл), `>`/`<` (next/prev) — в RU-раскладке символов `>` и `<` нет вовсе, так
-что эти бинды недостижимы и их нужно переназначить. `Ctrl+h/l/H` (speed) — тоже ломаются (это
-шорткаты mpv, а не управляющие байты терминала). `space`, `0/9`, `WHEEL_*`, `Alt+0/1/2`,
-`Ctrl+enter` — не зависят от раскладки ✅.
+`Alt+I`/`Alt+U` (AI-апскейл), `>`/`<` (next/prev) — RU-дубли: `Ю`/`Б` (в ЙЦУКЕН `Shift+period` даёт
+`Ю`, `Shift+comma` — `Б`; символов `>`/`<` в раскладке нет, но физические клавиши те же).
+`Ctrl+h/l/H` (speed) — тоже ломаются (это шорткаты mpv, а не управляющие байты терминала). `space`,
+`0/9`, `WHEEL_*`, `Alt+0/1/2`, `Ctrl+enter` — не зависят от раскладки ✅.
 
 ### Конкретика по SurfingKeys (`files/surfingkeys.js`)
 
@@ -242,9 +242,8 @@ Alt+ш vf toggle vapoursynth=~~/vs/ai/realesrgan.vpy:buffered-frames=3:concurren
 Alt+г run "/bin/sh" "-c" "~/.local/bin/ai-upscale-video \"$path\""                          # Alt+U
 ```
 
-`>`/`<` (next/prev) — в RU недостижимы: вариант (а) оставить как есть (переключение мышью / из
-плейлиста), (б) добавить дубли на `Ю`/`Б` (shift+`.`/`,`). `Alt+0/1/2` — цифры в RU те же, дубли не
-нужны.
+`>`/`<` (next/prev) — RU-дубли на `Ю`/`Б` добавлены (в ЙЦУКЕН shift+`.`/`,` дают `Ю`/`Б`).
+`Alt+0/1/2` — цифры в RU те же, дубли не нужны.
 
 **Проверка:** `mpv --input-test` под RU (имя нажатой клавиши), затем `p`/`l`/`h`/`F`/`Alt+I`.
 
@@ -450,8 +449,9 @@ mpv `Alt+I`/`Alt+U` → `Alt+Ш`/`Alt+Г` (были строчные, не ма�
 | k         | л   | Cyrillic_el       |                   |        |                   |
 | l         | д   | Cyrillic_de       |                   |        |                   |
 
-В RU-раскладке символов `>`, `<`, `~` нет (в us они на своих местах), поэтому бинды на них
-недостижимы — только переназначение.
+В RU-раскладке символов `>`, `<`, `~` нет (в us они на своих местах): прямые бинды на `>`/`<`
+недостижимы, поэтому для mpv добавлены дубли на `Ю`/`Б` (те же физические клавиши); `~` — только
+переназначение.
 
 ## Ссылки
 
