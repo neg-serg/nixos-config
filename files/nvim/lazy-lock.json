@@ -68,6 +68,5 @@
   "vimtex": { "branch": "master", "commit": "b652447a39eeb180ea103d6b39efe84e7cf74117" },
   "volt": { "branch": "main", "commit": "620de1321f275ec9d80028c68d1b88b409c0c8b1" },
   "websocket.nvim": { "branch": "main", "commit": "5bf3935923ef1c81cbf75451138918fd4832c428" },
-  "which-key.nvim": { "branch": "main", "commit": "3aab2147e74890957785941f0c1ad87d0a44c15a" },
-  "yazi.nvim": { "branch": "main", "commit": "9d06b04cd333d2157af558fb86e0c83424aeceb8" }
+  "which-key.nvim": { "branch": "main", "commit": "3aab2147e74890957785941f0c1ad87d0a44c15a" }
 }
