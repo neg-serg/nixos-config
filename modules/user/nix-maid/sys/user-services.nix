@@ -151,6 +151,18 @@ lib.mkIf (cfg.enable or false) {
       wantedBy = [ "default.target" ];
     };
 
+    # glm-adapter-auto — self-heal the GLM adapter placement: if the dockur
+    # VM is running but the adapter got stuck on the host (usbhid bound), move
+    # it back into the VM (NOPASSWD via glm-adapter-priv). Idempotent no-op
+    # when the adapter is already inside the VM or the VM is stopped.
+    glm-adapter-auto = {
+      description = "Auto-attach the GLM adapter to the dockur VM when needed";
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "%h/.local/bin/glm-adapter attach";
+      };
+    };
+
     # ensure-vm-proxy-alias — one-shot cleanup for the dockur Windows VM's
     # network: podman pasta --config-net copies the host's .88 alias into the
     # container netns, shadowing it, so the VM's proxy (.88:10812) dies inside
@@ -251,6 +263,18 @@ lib.mkIf (cfg.enable or false) {
       OnBootSec = "20s";
       OnUnitActiveSec = "30s";
       Unit = "ensure-vm-proxy-alias.service";
+    };
+  };
+
+  # Self-healing timer for glm-adapter-auto: keep the adapter inside the VM
+  # whenever the VM runs (cheap idempotent check every 60s).
+  systemd.user.timers.glm-adapter-auto = {
+    description = "Periodic GLM adapter placement check";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "30s";
+      OnUnitActiveSec = "60s";
+      Unit = "glm-adapter-auto.service";
     };
   };
 }
