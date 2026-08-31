@@ -9,7 +9,7 @@ import "." as LocalMods
 /*!
  * Genelec hardware volume widget — controls Genelec SAM monitors via GLM adapter.
  *
- * Displays current dB value. Scroll wheel adjusts by ±displayStep (2.5 dB).
+ * Displays current dB value. Scroll wheel adjusts by ±_serviceStep() (0.5 dB).
  * Volume is capped at genelecMaxVolume (default -35 dB).
  */
 LocalMods.AudioEndpointTile {
@@ -38,7 +38,7 @@ LocalMods.AudioEndpointTile {
         "Hardware volume via GLM adapter.",
         "Cap: " + (Services.Genelec ? Services.Genelec.maxVolume + " dB" : "N/A"),
         "Raise cap: set genelecMaxVolume in Settings.json",
-        "Scroll: ±2.5 dB",
+        "Scroll: ±" + _serviceStep() + " dB",
         "Mode: " + (Services.Genelec && Services.Genelec.midiMode ? "VM MIDI bridge" : "host GLM adapter")
     ]
     enableAdvancedToggle: false
