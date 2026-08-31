@@ -85,11 +85,6 @@ let
     }
     {
       mod = "ctrl+shift";
-      keys = [ "p" ];
-      action = "kitten choose_files";
-    }
-    {
-      mod = "ctrl+shift";
       keys = [ "u" ];
       action = "kitten unicode_input";
     }
