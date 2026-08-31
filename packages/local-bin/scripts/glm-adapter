@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+# glm-adapter — locate the Genelec GLM USB adapter (Gnet 1781:0e39), move it
+# between the host and the dockur Windows VM, and verify the control chain.
+#
+# Why: the adapter is passed through to the VM via QEMU usb-host while the VM
+# runs. After VM stop/start cycles (or physical replugs) it can end up on the
+# host (usbhid bound) while the VM still expects it, or vice versa. GLM inside
+# the VM then shows the monitors as OFFLINE and volume control dies.
+#
+# Usage:
+#   glm-adapter status             # where is the adapter + chain state
+#   glm-adapter attach             # move the adapter into the VM (default)
+#   glm-adapter host               # move the adapter back to the host
+#   glm-adapter verify             # check the control chain only
+#   glm-adapter <cmd> --glm        # also OCR-check the GLM window inside the VM
+#
+# Privileged unbind/bind calls use sudo — run `sudo -v` first to cache the
+# credentials, or run interactively.
+set -euo pipefail
+
+VID=1781
+PID=0e39
+CT=windows
+STATE=/tmp/genlc-volume
+GENLC=/run/current-system/sw/bin/genlc
+GREEN=$'e[32m'; RED=$'e[31m'; YELLOW=$'e[33m'; NC=$'e[0m'
+DO_GLM=0
+ARGS=()
+for a in "$@"; do
+  if [ "$a" = "--glm" ]; then DO_GLM=1; else ARGS+=("$a"); fi
+done
+set -- "${ARGS[@]}"
+
+ok()   { echo -e "  ${GREEN}ok${NC}   $1"; }
+warn() { echo -e "  ${YELLOW}!!${NC}  $1"; }
+fail() { echo -e "  ${RED}xx${NC}   $1"; }
+
+vm_running() { podman ps --format '{{.Names}} {{.Status}}' 2>/dev/null | awk '$1=="windows" && $2=="Up" {print 1; exit}'; }
+qemu_usb()   { docker exec -i "$CT" sh -c 'printf "info usb\n" | timeout 4 nc -N -U /run/shm/monitor.sock' 2>/dev/null | grep -c 'Gnet Adapter'; }
+host_present(){ lsusb 2>/dev/null | grep -q "$VID:$PID"; }
+host_genlc_ok(){ timeout 10 "$GENLC" discover >/dev/null 2>&1; }
+
+adapter_dev() {
+  for d in /sys/bus/usb/devices/*/idVendor; do
+    [ "$(cat "$d" 2>/dev/null)" = "$VID" ] || continue
+    dev=${d%/idVendor}
+    [ "$(cat "$dev/idProduct" 2>/dev/null)" = "$PID" ] || continue
+    echo "$dev"; return 0
+  done
+  return 1
+}
+
+priv() {
+  if [ "$(id -u)" = 0 ]; then "$@"; else sudo "$@"; fi
+}
+
+check_glm_vm() {
+  # Best-effort: screendump the VM and OCR the GLM window for OFFLINE.
+  command -v magick >/dev/null 2>&1 || { warn "magick missing — skipping GLM screen check"; return; }
+  command -v tesseract >/dev/null 2>&1 || { warn "tesseract missing — skipping GLM screen check"; return; }
+  [ "$(vm_running)" = 1 ] || { warn "VM not running — skipping GLM screen check"; return; }
+  timeout 10 docker exec -i "$CT" sh -c 'printf "screendump /dev/shm/q.ppm\n" | timeout 5 nc -N -U /run/shm/monitor.sock' >/dev/null 2>&1
+  sleep 2
+  docker exec "$CT" sh -c 'cat /dev/shm/q.ppm' > /tmp/glm-adapter-shot.ppm 2>/dev/null || true
+  docker exec "$CT" sh -c 'rm -f /dev/shm/q.ppm' 2>/dev/null || true
+  magick /tmp/glm-adapter-shot.ppm -resize 1600x\> /tmp/glm-adapter-shot.png 2>/dev/null || true
+  tesseract /tmp/glm-adapter-shot.png /tmp/glm-adapter-shot -l eng 2>/dev/null || true
+  if [ ! -s /tmp/glm-adapter-shot.txt ]; then
+    warn "could not OCR the VM screen (GLM may be behind another window)"
+  elif grep -q -i 'offline' /tmp/glm-adapter-shot.txt 2>/dev/null; then
+    fail "GLM in the VM shows OFFLINE — click Reconnect in GLM (or replug the adapter)"
+  else
+    ok "no OFFLINE detected on the VM screen (GLM online?)"
+    grep -o -E '\-?[0-9]+(\.[0-9]+)? ?dB' /tmp/glm-adapter-shot.txt 2>/dev/null | head -3 | sed 's/^/       GLM dB: /' || true
+  fi
+}
+
+verify_chain() {
+  echo "--- control chain ---"
+  if ss -tln 2>/dev/null | grep -q ':9003 '; then ok "relay listening :9003 (glm-midi-relay)"; else warn "relay not listening on :9003"; fi
+  if ss -tln 2>/dev/null | grep -q ':9004 '; then ok "relay listening :9004 (glm-midi)"; else warn "relay not listening on :9004"; fi
+  if ss -tn 2>/dev/null | grep -q ':9003 '; then ok "VM bridge connected to :9003"; else warn "VM bridge NOT connected (check Windows autostart)"; fi
+  if [ -f "$STATE" ]; then echo "       state: $(cat "$STATE") dB (quickshell display)"; else warn "no state file $STATE"; fi
+  if [ "$DO_GLM" = 1 ]; then check_glm_vm; fi
+}
+
+cmd_status() {
+  echo "=== GLM adapter location ==="
+  if host_present; then echo "  host: adapter present on host USB"; else echo "  host: no adapter on host USB"; fi
+  if host_genlc_ok; then ok "host genlc: adapter usable"; else fail "host genlc: adapter NOT usable"; fi
+  if [ "$(vm_running)" = 1 ]; then
+    n=$(qemu_usb)
+    if [ "$n" -ge 1 ]; then ok "VM: adapter attached ($n)"; else fail "VM: adapter NOT attached"; fi
+  else
+    echo "  VM: not running (adapter should be on the host)"
+  fi
+  echo ""
+  verify_chain
+  echo ""
+  echo "--- host genlc diagnostics ---"
+  if [ -x /etc/nixos/packages/local-bin/scripts/genlc-diagnose ]; then
+    /etc/nixos/packages/local-bin/scripts/genlc-diagnose 2>/dev/null | tail -15 || true
+  else
+    echo "  (genlc-diagnose not found)"
+  fi
+}
+
+cmd_attach() {
+  if [ "$(vm_running)" != 1 ]; then
+    fail "VM '$CT' is not running — start it first: docker start windows"
+    return 1
+  fi
+  echo "=== attaching adapter to the VM ==="
+  if [ "$(qemu_usb)" -ge 1 ] && ! host_genlc_ok; then
+    ok "adapter already inside the VM"
+    verify_chain
+    return 0
+  fi
+  dev=$(adapter_dev || true)
+  if [ -z "$dev" ]; then
+    fail "adapter not found on the host USB — is it plugged in?"
+    return 1
+  fi
+  # Unbind every usbhid interface so QEMU can re-claim the device via usbfs.
+  for i in "$dev":1.*; do
+    [ -e "$i" ] || continue
+    iface=${i##*/}
+    if [ -e "$i/driver" ]; then
+      warn "unbinding $iface from $(basename "$(readlink "$i/driver")")"
+      priv sh -c "echo $iface > /sys/bus/usb/drivers/usbhid/unbind" 2>/dev/null || true
+    fi
+  done
+  sleep 4
+  if [ "$(qemu_usb)" -ge 1 ]; then
+    ok "adapter attached to the VM"
+  else
+    fail "QEMU did not re-claim the adapter — replug it and retry"
+    return 1
+  fi
+  if host_genlc_ok; then
+    warn "host genlc still sees the adapter (dual claim?)"
+  else
+    ok "host genlc no longer sees the adapter (expected)"
+  fi
+  verify_chain
+}
+
+cmd_host() {
+  echo "=== moving adapter to the host ==="
+  dev=$(adapter_dev || true)
+  if [ -n "$dev" ]; then
+    for i in "$dev":1.*; do
+      [ -e "$i" ] || continue
+      iface=${i##*/}
+      if [ -L "$i/driver" ] && readlink "$i/driver" | grep -q usbfs; then
+        warn "unbinding $iface from usbfs"
+        priv sh -c "echo $iface > /sys/bus/usb/drivers/usbfs/unbind" 2>/dev/null || true
+      fi
+    done
+    sleep 2
+    for i in "$dev":1.*; do
+      [ -e "$i" ] || continue
+      iface=${i##*/}
+      if [ -e "$i" ] && [ ! -L "$i/driver" ]; then
+        warn "binding $iface to usbhid"
+        priv sh -c "echo $iface > /sys/bus/usb/drivers/usbhid/bind" 2>/dev/null || true
+      fi
+    done
+  fi
+  sleep 2
+  if host_genlc_ok; then ok "host genlc: adapter usable"; else fail "host genlc: adapter NOT usable"; fi
+}
+
+cmd_verify() { verify_chain; }
+
+case "${1:-attach}" in
+  status) cmd_status ;;
+  attach) cmd_attach ;;
+  host|detach) cmd_host ;;
+  verify) cmd_verify ;;
+  *) echo "usage: $0 {status|attach|host|verify} [--glm]" >&2; exit 1 ;;
+esac
