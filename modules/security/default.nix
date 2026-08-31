@@ -112,7 +112,7 @@ in
         }
       ];
       services = {
-        hyprlock.u2fAuth = false;
+        # hyprlock PAM service removed with hyprlock (temporarily disabled, 2026-08-31)
         login.u2fAuth = false;
 
         sudo.u2fAuth = false;

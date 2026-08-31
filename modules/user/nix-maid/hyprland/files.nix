@@ -113,24 +113,10 @@ in
 
         ".config/hypr/hypridle.conf".text = ''
           # Hypridle — idle configuration
-          # 2 min idle → auto-lock with the black fade-out lock screen
-          # (see hyprlock.conf). No DPMS off: the monitor stays powered and
-          # the lock screen itself is the blackout — avoids the DPMS
-          # wake-up bug. Wake: press any key (password field fades in)
-          # and type the password.
-          #
-          # Absolute paths are required: the hypridle user service runs with a
-          # minimal PATH (coreutils only), so bare pidof/hyprlock resolve to
-          # "command not found" and the screen never locks.
-
-          general {
-              lock_cmd = /run/current-system/sw/bin/pidof hyprlock || /run/current-system/sw/bin/hyprlock
-          }
-
-          listener {
-              timeout = 120
-              on-timeout = /run/current-system/sw/bin/pidof hyprlock || /run/current-system/sw/bin/hyprlock
-          }
+          # Idle locking temporarily disabled (2026-08-31): hyprlock removed.
+          # No DPMS off: the monitor stays powered (avoids the DPMS wake-up bug).
+          # Restore the auto-lock by re-adding the lock_cmd + 120 s listener from
+          # git history together with the hyprlock package.
         '';
 
         # Hyprscratch config: Telegram scratchpad (name without dots — togglespecialworkspace breaks on '.')
