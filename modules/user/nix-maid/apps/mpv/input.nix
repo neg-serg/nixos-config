@@ -11,7 +11,7 @@ let
 
   # Russian-layout duplicates for the latin binds above. Each entry mirrors a
   # latin bind; the generator derives the Cyrillic key, so typos are impossible.
-  # `>`/`<` (uosc next/prev) do not exist in the ru layout — intentionally absent.
+  # `>`/`<` (uosc next/prev) — ru counterparts are Ю/Б (Shift+period/comma in ru).
   mpvRuBinds = [
     {
       key = "p";
@@ -118,6 +118,14 @@ let
       key = "Ctrl+e";
       command = "seek 100 absolute-percent; script-binding uosc/flash-timeline";
     }
+    {
+      key = ">";
+      command = "script-binding uosc/next; script-message-to uosc flash-elements top_bar,timeline";
+    }
+    {
+      key = "<";
+      command = "script-binding uosc/prev; script-message-to uosc flash-elements top_bar,timeline";
+    }
   ];
 
   # mpv key with a modifier prefix ("Ctrl+h") → the same physical key's Cyrillic
@@ -140,10 +148,7 @@ let
     # binds break under the ru layout.
     # Table: docs/howto/hotkeys-ru-layout.ru.md
   ''
-  + lib.concatStringsSep "\n" (map (d: "${mpvRuKey d.key} ${d.command}  # ${d.key}") mpvRuBinds)
-  + ''
-    # `>`/`<` (uosc next/prev) do not exist in the ru layout — left unbound there.
-  '';
+  + lib.concatStringsSep "\n" (map (d: "${mpvRuKey d.key} ${d.command}  # ${d.key}") mpvRuBinds);
 in
 {
   config = lib.mkIf (config.lib.neg.enabled "gui") (
