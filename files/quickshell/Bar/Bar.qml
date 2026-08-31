@@ -1072,7 +1072,7 @@ Scope {
                                 Layout.alignment: Qt.AlignVCenter
                                 panelHovering: rightPanel.panelHovering
                             }
-                            Genelec {
+                            GenelecWidget {
                                 id: widgetsGenelec
                                 visible: true
                                 Layout.alignment: Qt.AlignVCenter
