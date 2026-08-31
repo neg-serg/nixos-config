@@ -10,7 +10,7 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: glm-midi {volume <0-127 | dB> | vol+ [n] | vol- [n] | mute | dim | power}" >&2
+  echo "usage: glm-midi {volume <0-127 | dB> | step <dB> | vol+ [n] | vol- [n] | mute | dim | power}" >&2
   exit 1
 }
 [ $# -ge 1 ] || usage
