@@ -30,7 +30,7 @@ AudioEndpointCapsule {
         id: tooltip
         text: root._tooltipText
         targetItem: root.pill
-        visibleWhen: root.containsMouse && !(root.enableAdvancedToggle && root.advancedSelector && root.advancedSelector.visible)
+        visibleWhen: root.containsMouse && root.showOnHover && !(root.enableAdvancedToggle && root.advancedSelector && root.advancedSelector.visible)
     }
 
     onClicked: {
