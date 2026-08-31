@@ -153,10 +153,8 @@ RowLayout {
     property bool _wheelPending: false
     property real _lastSendMs: 0
     readonly property int _minSendGapMs: 400
-    // Relative-control bookkeeping: _lastSentDb is where GLM should be after
-    // the last relative (C21/C22) send. CC20 is anchored once when the MIDI
-    // path becomes active (quickshell start with the VM running).
-    property real _lastSentDb: -40
+    // No relative C21/C22 steps: volume is set only by absolute CC20
+    // (anchored once on MIDI activation, then 400 ms after each change).
     Timer {
         id: wheelCommitTimer
         interval: 150
@@ -187,7 +185,6 @@ RowLayout {
             _sendMidi(["/home/neg/.local/bin/glm-midi", "step", base + "dB"]);
         else
             _sendMidi(["/home/neg/.local/bin/glm-midi", "volume", base + "dB"]);
-        _lastSentDb = volume;
     }
     // Self-heal: 400 ms after the last widget commit, re-anchor CC20 once so
     // a dropped relative step is corrected. Not periodic — the timer is only
@@ -294,16 +291,8 @@ RowLayout {
     function _sendToHardware(dB) {
         if (busy) return;
         if (midiMode) {
-            // Relative control: C21 (vol+) / C22 (vol-) for the delta from the
-            // last sent value. CC20 is anchored once on MIDI activation; no
-            // periodic re-anchor, so idle volume stays put.
-            var delta = dB - root._lastSentDb;
-            var steps = Math.round(delta / 0.5);
-            if (steps > 0)
-                _sendMidi(["/home/neg/.local/bin/glm-midi", "vol+", steps]);
-            else if (steps < 0)
-                _sendMidi(["/home/neg/.local/bin/glm-midi", "vol-", -steps]);
-            root._lastSentDb = dB;
+            // CC20 only: the one-shot selfHealTimer sends the absolute target
+            // 400 ms after the last commit; nothing is sent here directly.
             return;
         }
         busy = true;
