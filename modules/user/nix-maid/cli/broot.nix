@@ -19,7 +19,6 @@ lib.mkIf (cfg.enable or false) (
       ".config/broot/conf.hjson".source = "${brootRoot}/conf.hjson";
       ".config/broot/conf.toml".source = "${brootRoot}/conf.toml";
       ".config/broot/to_stdout.hjson".source = "${brootRoot}/to_stdout.hjson";
-      ".config/broot/nvim.toml".source = "${brootRoot}/nvim.toml";
       ".config/broot/launcher".source = "${brootRoot}/launcher";
     })
   ]
