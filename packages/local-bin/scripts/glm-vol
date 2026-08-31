@@ -7,7 +7,7 @@
 # 400 ms after the change (self-heal). No relative C21/C22 steps — CC20 only.
 #
 # Usage:
-#   glm-vol -43.5        absolute target (dB, optional 'dB' suffix)
+#   glm-vol -43         absolute target, whole dB (optional 'dB' suffix)
 #   glm-vol read         print the last known target (state file)
 set -euo pipefail
 
@@ -24,7 +24,7 @@ case "$1" in
 esac
 
 t=$1; t=${t%dB}
-# Validate and clamp to the same range the widget uses ([-95, -20]).
-clamped=$(awk -v t="$t" 'BEGIN { if (t < -95) t = -95; if (t > -20) t = -20; printf "%.1f", t }')
+# Validate, round to whole dB and clamp to the widget range ([-95, -20]).
+clamped=$(awk -v t="$t" 'BEGIN { t = t + (t < 0 ? -0.5 : 0.5); if (t < -95) t = -95; if (t > -20) t = -20; printf "%.0f", t }')
 echo "$clamped" > "$STATE"   # the widget sends the absolute CC20 to GLM
 echo "glm-vol: requested $clamped dB (widget sends CC20)" >&2
