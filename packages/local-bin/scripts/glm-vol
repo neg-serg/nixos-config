@@ -29,8 +29,8 @@ t=$1; t=${t%dB}
 # Validate and clamp to the same range the widget uses ([-95, -20]).
 clamped=$(awk -v t="$t" 'BEGIN { if (t < -95) t = -95; if (t > -20) t = -20; printf "%.1f", t }')
 # Relative control: send the delta as C21 (vol+) / C22 (vol-) steps from the
-# previous state value. GLM's absolute re-anchor (CC20) is handled by the
-# quickshell widget's periodic anchor timer.
+# previous state value. GLM's absolute re-anchor (CC20) is sent once by the
+# quickshell widget when the MIDI path activates (no periodic re-anchor).
 current=$(cat "$STATE" 2>/dev/null || echo "-40")
 delta=$(awk -v t="$clamped" -v c="$current" 'BEGIN { printf "%.3f", t - c }')
 steps=$(awk -v d="$delta" 'BEGIN { s = int(d / 0.5 + (d >= 0 ? 0.5 : -0.5)); print s }')
