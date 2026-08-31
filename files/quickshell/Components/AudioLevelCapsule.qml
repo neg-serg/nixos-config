@@ -21,6 +21,11 @@ LocalComponents.WidgetCapsule {
     // Used by the Genelec widget during debugging; default preserves the
     // standard hover/show behavior for all other volume widgets.
     property bool alwaysShow: false
+    // Reveal the level pill when the cursor hovers the capsule. Uses the same
+    // delayed-reveal timer as the tooltip (volumePillShowDelayMs waits, then
+    // shows). Toggle: Settings.json "showVolumeOnHover" (default true, applies
+    // to all audio-level capsules: volume, microphone, Genelec).
+    property bool showOnHover: Settings.settings ? Settings.settings.showVolumeOnHover !== false : true
     property string offReminderStateKey: ""
     readonly property int effectiveOffReminderCooldownMs: {
         const raw = Settings.settings ? Number(Settings.settings.audioOffReminderCooldownMs) : -1;
@@ -252,6 +257,7 @@ LocalComponents.WidgetCapsule {
             }
             onEntered: {
                 root.containsMouse = true;
+                if (!root.showOnHover) return;
                 pillIndicator.autoHide = false;
                 pillIndicator.showDelayed();
             }
