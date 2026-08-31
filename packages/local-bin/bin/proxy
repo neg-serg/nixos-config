@@ -11,6 +11,27 @@ LOG="/tmp/sing-box-trojan.log"
 SECRET="/run/secrets/proxy-fallback"
 LAN_SECRET="/run/secrets/proxy-lan"
 
+# --- output helpers ----------------------------------------------------
+# All human-facing messages go to stderr so stdout stays machine-clean
+# (refresh pipes validate_nodes output; only node URIs may hit stdout).
+# Colors are enabled only when stderr is a tty and NO_COLOR is unset.
+if [ -t 2 ] && [ -z "${NO_COLOR:-}" ]; then
+    _c_reset=$(tput sgr0 2>/dev/null || true)
+    _c_bold=$(tput bold 2>/dev/null || true)
+    _c_dim=$(tput dim 2>/dev/null || true)
+    _c_green=$(tput setaf 2 2>/dev/null || true)
+    _c_yellow=$(tput setaf 3 2>/dev/null || true)
+    _c_red=$(tput setaf 1 2>/dev/null || true)
+    _c_cyan=$(tput setaf 6 2>/dev/null || true)
+else
+    _c_reset= _c_bold= _c_dim= _c_green= _c_yellow= _c_red= _c_cyan=
+fi
+say()  { printf '%s::%s %s\n' "$_c_dim" "$_c_reset" "$*" >&2; }
+ok()   { printf '%s✓%s %s\n' "$_c_green" "$_c_reset" "$*" >&2; }
+warn() { printf '%s!%s %s\n' "$_c_yellow" "$_c_reset" "$*" >&2; }
+fail() { printf '%s✗%s %s\n' "$_c_red" "$_c_reset" "$*" >&2; }
+step() { printf '%s== %s%s ==%s\n' "$_c_bold" "$_c_cyan" "$*" "$_c_reset" >&2; }
+
 # ============================================================
 # load_fallback — прочитать fallback-ноды из sops
 # ============================================================
@@ -49,9 +70,9 @@ lan_msg() {
         auth="no auth"
     fi
     if [ -n "$ip" ]; then
-        echo "  LAN proxy: socks5://$ip:10810 ($auth, firewall: LAN only)"
+        say "LAN proxy: socks5://$ip:10810 ($auth, LAN only)"
     else
-        echo "  LAN proxy: 0.0.0.0:10810 ($auth, firewall: LAN only)"
+        say "LAN proxy: 0.0.0.0:10810 ($auth, LAN only)"
     fi
 }
 
@@ -64,6 +85,9 @@ lan_msg() {
 gen_cfg() {
     python3 << 'PYEOF'
 import base64, json, os, re, sys, urllib.parse
+
+def log(msg):
+    print(msg, file=sys.stderr, flush=True)
 
 def load_nodes():
     # Nodes come via NODES_FILE (path) when the list is big: exporting
@@ -399,7 +423,7 @@ for line in text.strip().split('\n'):
         continue
 
 if not outbounds:
-    print("  ERROR: no parseable nodes in node list")
+    log("✗ ERROR: no parseable nodes in node list")
     sys.exit(1)
 
 tags = [o["tag"] for o in outbounds]
@@ -436,7 +460,7 @@ cfg = {"log": {"level": "error"}, "dns": dns, "inbounds": inbounds,
 os.makedirs(os.path.dirname(cfg_path), exist_ok=True)
 with open(cfg_path, "w") as f:
     json.dump(cfg, f, indent=2)
-print("  Config: " + str(len(tags)) + " outbounds + urltest")
+log("✓ Config: " + str(len(tags)) + " outbounds + urltest")
 PYEOF
 }
 
@@ -456,12 +480,15 @@ bootstrap() {
         #  2. LAN inbound (0.0.0.0:10810) with password auth when the LAN
         #     secret (/run/secrets/proxy-lan, "user:pass") is present; the
         #     users block is synced from it (and removed when it's absent).
-        echo "  Config exists — checking for missing DNS/LAN sections..."
+        say "Config exists — checking DNS/LAN sections..."
         python3 - "$CONFIG" "$(load_lan_auth)" << 'PYEOF'
 import json, sys
 cfg_path = sys.argv[1]
 lan_auth = sys.argv[2] if len(sys.argv) > 2 else ""
 cfg = json.load(open(cfg_path))
+
+def log(m):
+    sys.stderr.write(m + "\n")
 changed = False
 FINAL_DNS = {"servers": [
               {"tag": "remote", "type": "https", "server": "1.1.1.1",
@@ -476,7 +503,7 @@ if cfg.get("dns") != FINAL_DNS or cfg.get("route") != FINAL_ROUTE:
     cfg["dns"] = FINAL_DNS
     cfg["route"] = FINAL_ROUTE
     changed = True
-    print("  Config: DNS/route reset to final shape (client-side resolve)")
+    log(":: Config: DNS/route reset to final shape (client-side resolve)")
 want_users = None
 if lan_auth:
     u, p = lan_auth.split(":", 1)
@@ -493,29 +520,29 @@ if lan_in is None:
         ib["users"] = want_users
     cfg["inbounds"].append(ib)
     changed = True
-    print("  Config: added LAN inbound (0.0.0.0:10810, "
-          + ("password auth" if want_users else "no auth") + ")")
+    log(":: Config: added LAN inbound (0.0.0.0:10810, "
+        + ("password auth" if want_users else "no auth") + ")")
 elif lan_in.get("users") != want_users:
     if want_users:
         lan_in["users"] = want_users
         changed = True
-        print("  Config: LAN inbound credentials synced from secret")
+        log(":: Config: LAN inbound credentials synced from secret")
     else:
         lan_in.pop("users", None)
         changed = True
-        print("  Config: LAN inbound is passwordless (users removed)")
+        log(":: Config: LAN inbound is passwordless (users removed)")
 if changed:
     json.dump(cfg, open(cfg_path, "w"), indent=2)
-    print("  Config: patched")
+    log(":: Config: patched")
 PYEOF
         return
     fi
     FALLBACK=$(load_fallback)
     if [ -z "$FALLBACK" ]; then
-        echo "  No fallback nodes (run 'proxy refresh' or create SOPS secret)"
+        warn "No fallback nodes — run 'proxy refresh' or create the SOPS secret"
         return
     fi
-    echo "  First run: creating config..."
+    say "First run: creating config..."
     TMPD=$(mktemp -d /tmp/proxy-bootstrap.XXXXXX)
     trap 'rm -rf "$TMPD"' EXIT
     printf '%s\n' "$FALLBACK" > "$TMPD/nodes.txt"
@@ -538,6 +565,18 @@ validate_nodes() {
     python3 << 'PYEOF'
 import asyncio, base64, json, os, re, shutil, socket, subprocess, sys, time, urllib.parse
 
+def log(msg):
+    print(msg, file=sys.stderr, flush=True)
+
+def progress(msg, final=False):
+    # Live single-line progress on a tty (\r), plain lines otherwise.
+    if sys.stderr.isatty():
+        sys.stderr.write(("\n" if final else "\r") + msg)
+        sys.stderr.flush()
+    elif msg:
+        sys.stderr.write(msg + "\n")
+        sys.stderr.flush()
+
 # Nodes come via NODES_FILE (path) when the list is big: exporting
 # 1000+ nodes as one env var exceeds MAX_ARG_STRLEN (128 KiB) and
 # breaks every exec with "Argument list too long".
@@ -555,7 +594,7 @@ tmp = os.environ.get("VALIDATE_TMP", "/tmp/proxy-validate")
 os.makedirs(tmp, mode=0o700, exist_ok=True)
 
 if shutil.which("sing-box") is None:
-    print("  ERROR: sing-box not found in PATH"); sys.exit(1)
+    log("✗ ERROR: sing-box not found in PATH"); sys.exit(1)
 
 def b64dec(s):
     try:
@@ -881,9 +920,9 @@ for line in text.strip().split('\n'):
         continue
 
 if not cands:
-    print("  ERROR: no parseable candidates"); sys.exit(1)
+    log("✗ ERROR: no parseable candidates"); sys.exit(1)
 keys = sorted(cands)
-print("  Candidates: " + str(len(keys)))
+log(":: candidates: " + str(len(keys)))
 
 # UDP-based protocols (hysteria/hysteria2/tuic) have no TCP listener on the
 # proxy port: a TCP connect would mark every such node dead. Skip the scan
@@ -891,8 +930,8 @@ print("  Candidates: " + str(len(keys)))
 UDP_PROTOCOLS = {"hysteria", "hysteria2", "hy2", "tuic"}
 tcp_keys = [k for k in keys if cands[k][0] not in UDP_PROTOCOLS]
 udp_keys = [k for k in keys if cands[k][0] in UDP_PROTOCOLS]
-print("  TCP-scan: " + str(len(tcp_keys)) + " tcp, " + str(len(udp_keys))
-      + " udp (skipped)")
+log(":: tcp-scan: " + str(len(tcp_keys)) + " tcp, " + str(len(udp_keys))
+    + " udp (skipped)")
 
 # --- TCP scan
 async def check(host, port, timeout=2.5):
@@ -920,17 +959,17 @@ async def scan():
 
 res = asyncio.run(scan())
 open_keys = [tcp_keys[i] for i, ok in enumerate(res) if ok] + udp_keys
-print("  TCP open: " + str(len(open_keys)) + "/" + str(len(keys))
-      + " (udp auto-included)")
+log(":: tcp open: " + str(len(open_keys)) + "/" + str(len(keys))
+    + " (udp auto-included)")
 if not open_keys:
-    print("  ERROR: no reachable nodes"); sys.exit(1)
+    log("✗ ERROR: no reachable nodes"); sys.exit(1)
 
 # --- e2e probe: single-node sing-box per open candidate; relay checks
 # --- (1.1.1.1 / generate_204) + throughput check (MIN_SPEED B/s on 2 MB)
 import random
 random.shuffle(open_keys)  # fair e2e sample across all sources, not first-N sorted hosts
 candidates = [k for k in open_keys[:e2e_cap] if parse_outbound(cands[k][1]) is not None]
-print("  E2E probing up to " + str(len(candidates)) + " open nodes...")
+log(":: e2e: probing up to " + str(len(candidates)) + " open nodes (relay + throughput)...")
 
 def probe_cfg(key, port, path):
     ob = parse_outbound(cands[key][1])
@@ -954,6 +993,9 @@ import concurrent.futures
 procs = {}
 BASE = 11300
 okmap = {}
+probed = 0
+working = 0
+t0 = time.monotonic()
 try:
     for wave_start in range(0, len(candidates), 20):
         wave = candidates[wave_start:wave_start + 20]
@@ -1017,6 +1059,13 @@ try:
             futs = {ex.submit(probe, BASE + wave_start + wave.index(k)): k for k in wave}
             for fut in concurrent.futures.as_completed(futs):
                 okmap[futs[fut]] = fut.result()
+                probed += 1
+                if okmap[futs[fut]]:
+                    working += 1
+                progress("  e2e: %d/%d probed, %d relay+speed OK (%ds)"
+                         % (probed, len(candidates), working,
+                            time.monotonic() - t0))
+        progress("", final=True)
         for port, p in procs.items():
             try: p.terminate()
             except Exception: pass
@@ -1033,15 +1082,15 @@ finally:
     subprocess.run(["pkill", "-f", "sing-box.*" + tmp], capture_output=True)
 
 work = [k for k in candidates if okmap.get(k)]
-print("  E2E working: " + str(len(work)))
+log("✓ e2e working: " + str(len(work)) + "/" + str(len(candidates)))
 if len(work) == 0:
-    print("  ERROR: no working nodes; keeping existing config")
+    log("✗ ERROR: no working nodes; keeping existing config")
     sys.exit(1)
 if len(work) < min_working:
-    print("  Warning: only " + str(len(work)) + " working nodes (wanted >= "
-          + str(min_working) + "); proceeding with verified subset")
+    log("! only " + str(len(work)) + " working nodes (wanted >= "
+        + str(min_working) + "); proceeding with verified subset")
 for k in work:
-    print(cands[k][1])
+    print(cands[k][1])  # stdout: machine-readable node URIs for refresh
 PYEOF
 }
 
@@ -1068,7 +1117,8 @@ fetch_sub() {
 }
 
 refresh() {
-    echo "  Fetching fresh nodes..."
+    step "proxy refresh"
+    say "Fetching fresh nodes..."
     FALLBACK=$(load_fallback)
     NEW_NODES=""
     for url in \
@@ -1081,15 +1131,17 @@ refresh() {
       "https://raw.githubusercontent.com/vless-reality/vless-reality.github.io/refs/heads/main/.github/links/v2.txt"; do
         data=$(fetch_sub "$url")
         if [ -n "$data" ]; then
-            echo "    $(echo "$data" | wc -l) from $(basename "$url")"
+            ok "$(echo "$data" | wc -l) nodes from $(basename "$url")"
             NEW_NODES="$NEW_NODES"$'\n'"$data"
+        else
+            warn "no nodes from $(basename "$url")"
         fi
     done
 
     ALL="$FALLBACK"
     [ -n "$NEW_NODES" ] && ALL="$FALLBACK"$'\n'"$NEW_NODES"
     if [ -z "$ALL" ]; then
-        echo "  ERROR: no fallback nodes and no subscription nodes available"
+        fail "no fallback nodes and no subscription nodes available"
         exit 1
     fi
 
@@ -1102,23 +1154,31 @@ refresh() {
     unset NODES_TEXT
     export NODES_FILE="$TMPD/nodes.txt"
     export VALIDATE_TMP="$TMPD/validate"
-    WORKING=$(validate_nodes) || { rc=$?; echo "$WORKING" | tail -4; return $rc; }
+    say "Validating candidates (relay + throughput, ~1-3 min)..."
+    ERRLOG=$(mktemp)
+    if ! WORKING=$(validate_nodes 2>"$ERRLOG"); then
+        rc=$?
+        tail -6 "$ERRLOG" >&2 || true
+        rm -f "$ERRLOG"
+        return $rc
+    fi
+    rm -f "$ERRLOG"
     WORKING_LINES=$(echo "$WORKING" | grep -E '^(vless|vmess|hysteria2|hy2|hysteria|tuic|ss|trojan|anytls)://' || true)
     COUNT=$(echo "$WORKING_LINES" | grep -c '://' || true)
 
     if [ -z "$WORKING_LINES" ]; then
-        echo "  ERROR: validation produced no working nodes; keeping existing config"
+        fail "validation produced no working nodes — keeping existing config"
         return 1
     fi
 
-    echo "  Regenerating config with $COUNT validated nodes..."
+    say "Regenerating config with $COUNT validated nodes..."
     printf '%s\n' "$WORKING_LINES" > "$TMPD/nodes.txt"
     export CFG_PATH="$CONFIG"
     export LAN_AUTH="$(load_lan_auth)"
     gen_cfg
-    echo "  Config: $CONFIG regenerated (validated)"
+    ok "Config regenerated: $CONFIG ($COUNT nodes)"
     if systemctl --user is-active --quiet sing-box-proxy.service 2>/dev/null; then
-        echo "  Restarting proxy service..."
+        say "Restarting proxy service..."
         systemctl --user restart sing-box-proxy.service 2>/dev/null || start
     else
         start
@@ -1130,20 +1190,20 @@ refresh() {
 # ============================================================
 start() {
     if systemctl is-active --quiet xray.service 2>/dev/null; then
-        echo "  Stopping xray..."
+        say "Stopping xray..."
         if ! sudo -n systemctl stop xray.service 2>/dev/null; then
             # xray runs as neg — pkill works without root; systemd then marks the unit inactive
             pkill -f 'xray.*config.json' 2>/dev/null || true
-            echo "  (no passwordless sudo — xray stopped via pkill)"
+            warn "no passwordless sudo — xray stopped via pkill"
         fi
     fi
     # Preferred: run under the systemd user service (autostarts at login, survives reboot).
     if systemctl --user start sing-box-proxy.service 2>/dev/null; then
         sleep 1
         if systemctl --user is-active --quiet sing-box-proxy.service 2>/dev/null; then
-            echo "  Proxy on 127.0.0.1:10808 (systemd user service)"
+            ok "Proxy on 127.0.0.1:10808 (systemd user service)"
             lan_msg
-            echo "  Dashboard: http://127.0.0.1:9090 (secret: neg)"
+            say "Dashboard: http://127.0.0.1:9090 (secret: neg)"
             return 0
         fi
     fi
@@ -1153,11 +1213,11 @@ start() {
     nohup sing-box run -c "$CONFIG" > "$LOG" 2>&1 &
     sleep 2
     if pgrep -f 'sing-box.*trojan' > /dev/null 2>&1; then
-        echo "  Proxy on 127.0.0.1:10808"
+        ok "Proxy on 127.0.0.1:10808"
         lan_msg
-        echo "  Dashboard: http://127.0.0.1:9090 (secret: neg)"
+        say "Dashboard: http://127.0.0.1:9090 (secret: neg)"
     else
-        echo "  FAILED"
+        fail "proxy failed to start"
         tail -3 "$LOG" 2>/dev/null || true
         return 1
     fi
@@ -1169,11 +1229,11 @@ stop() {
         pkill -f 'sing-box.*trojan' 2>/dev/null || true
     fi
     if ! systemctl is-active --quiet xray.service 2>/dev/null; then
-        echo "  Restoring xray..."
+        say "Restoring xray..."
         sudo -n systemctl start xray.service 2>/dev/null \
-            || echo "  (no passwordless sudo — run: sudo systemctl start xray.service)"
+            || warn "no passwordless sudo — run: sudo systemctl start xray.service"
     fi
-    echo "  Proxy off"
+    ok "Proxy off"
 }
 
 # ============================================================
@@ -1187,21 +1247,49 @@ case "$CMD" in
     refresh)     refresh ;;
     gen|bootstrap) bootstrap ;;
     status)
+        # --- proxy state ---
         if systemctl --user is-failed --quiet sing-box-proxy.service 2>/dev/null; then
-            echo "Proxy: FAILED (see: journalctl --user -u sing-box-proxy)"
-            ss -tlnp 2>/dev/null | grep -E '10808|10810' || true
+            state="FAILED"; state_c=$_c_red
         elif systemctl --user is-active --quiet sing-box-proxy.service 2>/dev/null \
             || pgrep -f 'sing-box.*trojan' > /dev/null 2>&1; then
-            echo "Proxy: RUNNING (vless/vmess/h2/hysteria/tuic/ss/trojan/anytls pool)"
-            ss -tlnp 2>/dev/null | grep -E '10808|10810' || true
+            state="RUNNING"; state_c=$_c_green
         else
-            echo "Proxy: STOPPED"
+            state="STOPPED"; state_c=$_c_yellow
+        fi
+        echo "${_c_bold}${_c_cyan}== proxy status ==${_c_reset}"
+        printf '%-10s %s%s%s\n' "Service:" "$state_c" "$state" "$_c_reset"
+        ports=$(ss -tlnp 2>/dev/null | grep -E '10808|10810|10811|10812' \
+            | awk '{print $4}' | sed 's/.*://' | sort -un | tr '\n' ' ' | sed 's/ $//') || true
+        [ -n "$ports" ] && echo "Listeners: $ports"
+        if [ -f "$CONFIG" ]; then
+            n=$(jq -r '[.outbounds[] | select(.type != "urltest" and .type != "direct")] | length' \
+                "$CONFIG" 2>/dev/null || echo "?")
+            age=$(stat -c '%y' "$CONFIG" 2>/dev/null | cut -d. -f1)
+            echo "Nodes:     $n outbounds (config: $age)"
+        fi
+        if [ "$state" = "RUNNING" ]; then
+            r=$(curl -sS -m 6 -o /dev/null -w '%{http_code}|%{time_total}' \
+                --socks5-hostname 127.0.0.1:10808 https://www.gstatic.com/generate_204 \
+                2>/dev/null || echo "000|0")
+            code=${r%%|*}; t=${r##*|}
+            if [ "$code" = "204" ]; then
+                printf '%-10s %sOK%s in %ss\n' "Upstream:" "$_c_green" "$_c_reset" "$t"
+            else
+                printf '%-10s %sFAIL%s (code %s)\n' "Upstream:" "$_c_red" "$_c_reset" "$code"
+            fi
+            spid=$(pgrep -f 'sing-box run -c /home/neg/.config' | head -1) || true
+            if [ -n "$spid" ]; then
+                node=$(ss -tnp 2>/dev/null | grep "pid=$spid" \
+                    | grep -vE '127.0.0.1|192.168|1.1.1.1' | awk '{print $3}' \
+                    | sed 's/:[0-9]*$//' | head -1) || true
+                [ -n "$node" ] && echo "Active:    $node (urltest pick)" || true
+            fi
         fi
         if systemctl is-active --quiet xray.service 2>/dev/null; then
-            echo "Xray: RUNNING"
+            echo "Xray:      RUNNING"
         else
-            echo "Xray: STOPPED"
+            echo "Xray:      stopped"
         fi
         ;;
-    *) echo "Usage: $0 {on|off|status|refresh|gen}"; exit 1 ;;
+    *) fail "unknown command: $CMD"; echo "Usage: $0 {on|off|status|refresh|gen}" >&2; exit 1 ;;
 esac
