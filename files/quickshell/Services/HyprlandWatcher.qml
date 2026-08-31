@@ -28,7 +28,6 @@ Scope {
     readonly property var keyboardDevices: backend ? backend.keyboardDevices : []
     readonly property string lastKeyboardDevice: backend ? backend.lastKeyboardDevice : ""
     readonly property string lastKeyboardLayout: backend ? backend.lastKeyboardLayout : ""
-    readonly property bool hideUi: backend ? backend.hideUi : false
     readonly property var hyprEnvObject: backend ? backend.hyprEnvObject : ""
 
     signal keyboardLayoutEvent(string deviceName, string layoutName)
@@ -44,5 +43,4 @@ Scope {
     function refreshWorkspace() { if (backend) backend.refreshWorkspace(); }
     function refreshBinds() { if (backend) backend.refreshBinds(); }
     function refreshDevices() { if (backend) backend.refreshDevices(); }
-    function refreshFullscreen() { if (backend) backend.refreshFullscreen(); }
 }

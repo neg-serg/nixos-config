@@ -53,18 +53,6 @@ Item {
         }
     }
 
-    // Never show the toast over a game: hide it while the active workspace is
-    // the hide-UI (games) workspace. Fullscreen windows elsewhere no longer
-    // hide the toast. show() also refuses to open while hidden.
-    readonly property bool uiHidden: HyprlandWatcher.hideUi
-    onUiHiddenChanged: {
-        if (root.uiHidden) {
-            toast.visible = false;
-            toast._hiding = false;
-            autoHide.stop();
-        }
-    }
-
     function loadAndShow() {
         var xhr = new XMLHttpRequest();
         xhr.open("GET", root._dataUrl);
@@ -113,7 +101,6 @@ Item {
         }
 
         function show() {
-            if (root.uiHidden) return;
             slide.stop(); _hiding = false; visible = true;
             slide.from = 40; slide.to = 0; slide.start();
             autoHide.restart();

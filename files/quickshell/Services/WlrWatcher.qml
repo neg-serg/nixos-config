@@ -17,10 +17,6 @@ Scope {
     property var keyboardDevices: []
     property string lastKeyboardDevice: "mango-keyboard"
     property string lastKeyboardLayout: ""
-    // Workspaces where the shell UI is hidden. id 4 = games tag (mangowm.nix
-    // windowrule appid:^(steam|Steam)$,tags:4). Matches the Hyprland impl.
-    property var hideUiWorkspaceIds: [4]
-    readonly property bool hideUi: root.hideUiWorkspaceIds.indexOf(root.activeWorkspaceId) !== -1
     readonly property var hyprEnvObject: ""
 
     signal keyboardLayoutEvent(string deviceName, string layoutName)
@@ -42,7 +38,6 @@ Scope {
     function refreshWorkspace() { _sync(); }
     function refreshBinds() { }
     function refreshDevices() { root._askLayout(); }
-    function refreshFullscreen() { }
 
     // --- keyboard layout (MangoWM IPC) ---
     property string foundSocketPath: ""
