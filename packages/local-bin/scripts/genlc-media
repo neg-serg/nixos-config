@@ -44,7 +44,7 @@ case "${1:-}" in
       # CC21/22 (vol+/-) step 0.5 dB (verified against GLM 5.2). To keep 0.5 dB
       # granularity AND stay in sync, set the whole-dB base via CC20, then add
       # one vol+ for a .5 remainder — each press re-syncs the absolute value.
-      read -r base ishalf <<< "$(awk -v t=\"$capped\" 'BEGIN { b=int(t); if (t<0 && t!=b) b-=1; r=t-b; printf "%d %s", b, (r>=0.499 ? "half" : "whole") }')"
+      read -r base ishalf <<< "$(awk -v t="$capped" 'BEGIN { b=int(t); if (t<0 && t!=b) b-=1; r=t-b; printf "%d %s", b, (r>=0.499 ? "half" : "whole") }')"
       glm-midi volume "${base}dB" >/dev/null 2>&1 || true
       [ "$ishalf" = "half" ] && glm-midi vol+ >/dev/null 2>&1 || true
     else
