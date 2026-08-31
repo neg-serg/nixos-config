@@ -204,9 +204,15 @@ RowLayout {
     function _sendToHardware(dB) {
         if (busy) return;
         if (midiMode) {
-            // Absolute dB over MIDI (CC20, 1 dB resolution): round so the CC
-            // value stays an integer (glm-midi takes whole dB only).
-            _sendMidi(["/home/neg/.local/bin/glm-midi", "volume", Math.round(dB) + "dB"]);
+            // CC20 is 1 dB resolution; GLM's vol+ steps 0.5 dB. For a .5
+            // target, send the whole-dB base via CC20 then one vol+ (glm-midi
+            // step), so GLM lands exactly on the displayed value.
+            var base = Math.floor(dB);
+            var rem = dB - base;
+            if (rem >= 0.499)
+                _sendMidi(["/home/neg/.local/bin/glm-midi", "step", base + "dB"]);
+            else
+                _sendMidi(["/home/neg/.local/bin/glm-midi", "volume", base + "dB"]);
             return;
         }
         busy = true;

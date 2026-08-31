@@ -46,6 +46,18 @@ case "$1" in
       [ "$val" -gt 107 ] && val=107
     fi
     send_cc 20 "$val" ;;
+  step)
+    # Base dB (CC20, whole) then one vol+ (0.5) after a short delay so GLM
+    # applies the absolute value first — lands exactly on base+0.5 dB.
+    [ $# -ge 2 ] || usage
+    db=$2; db=${db%dB}
+    val=$((127 + db))
+    [ "$val" -lt 0 ] && val=0
+    [ "$val" -gt 107 ] && val=107
+    send_cc 20 "$val"
+    sleep 0.15
+    send_cc 21 127
+    ;;
   vol+) n=${2:-1}; for _ in $(seq 1 "$n"); do send_cc 21 127; done ;;
   vol-) n=${2:-1}; for _ in $(seq 1 "$n"); do send_cc 22 127; done ;;
   mute)  send_cc 23 127 ;;  # toggle
