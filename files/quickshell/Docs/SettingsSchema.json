@@ -15,6 +15,7 @@
     "useFahrenheit": { "type": "boolean", "default": false, "description": "Use Fahrenheit temperatures" },
     "showMediaInBar": { "type": "boolean", "default": false, "description": "Show media block in bar" },
     "showWeatherInBar": { "type": "boolean", "default": false, "description": "Show weather button in bar" },
+    "showVolumeOnHover": { "type": "boolean", "default": true, "description": "Show volume/level on cursor hover over audio capsules (volume, microphone, Genelec); delayed reveal via existing pill/tooltip timers" },
     
     "reverseDayMonth": { "type": "boolean", "default": false, "description": "Flip day and month order" },
     "use12HourClock": { "type": "boolean", "default": false, "description": "12-hour time format" },
