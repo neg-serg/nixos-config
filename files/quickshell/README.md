@@ -23,18 +23,16 @@ Notes
 
 - Qt 6 `ShaderEffect` requires precompiled `.qsb` files (use `qsb --glsl "100es,120,150"`).
 - Run the shader build script from this directory (`~/.config/quickshell`).
-- Bar, notification and screenshot-toast layers auto-hide only on the designated hide-UI workspace
-  (games, id 4). Fullscreen windows elsewhere no longer hide the UI. Detection is client-based
-  (`HyprlandWatcher.hideUi` = `onHideUiWorkspace`). Hiding is a plain unmap (no slide): the
-  slide-out followed by the layer teardown crashed Qt (`QQuickItemPrivate::dirty` inside
-  `QQuickWindow::maybeUpdate`), so the bar snaps out on the games workspace and slides back in with
-  the entrance animation. The unmap is also deferred one event-loop turn (Bar.qml `_syncHide`):
-  `hideUi` flips synchronously inside a Hyprland socket Process handler, and the same emission
-  keeps evaluating bindings (WsIndicator label text) — unmapping the PanelLayer windows mid-cascade
-  crashed Qt the same way.
+- The bar, notifications and screenshot-toast stay always visible. The games-workspace auto-hide
+  (workspace id 4) was removed (2026-08-31): it proved fragile (Qt crashes on layer unmap) and the
+  panel is expected to show on every workspace, including games.
 
 Migration Log
 
+- 2026-08: Games-workspace auto-hide of the shell UI removed. `HyprlandWatcher.hideUi`,
+  `hideUiWorkspaceIds` watcher props, the bar `_syncHide`/`uiHidden` machinery, the notification
+  gating and the screenshot-toast `uiHidden` gate are gone; bar, notifications and toast are always
+  visible. Delete any local overrides referencing `hideUi`.
 - 2025-11: Decorative separators were removed across the bar, menus, and docs. Delete any local
   overrides such as `mediaTitleSeparator`, `panel.menu.separatorHeight`, `panel.sepOvershoot`, and
   every `ui.separator.*` token in custom `Settings.json`/`Theme/.theme.json`. Use spacing/padding

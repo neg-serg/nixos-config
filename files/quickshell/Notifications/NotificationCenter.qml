@@ -29,7 +29,7 @@ PanelWindow {
     readonly property color _fg: NotifColors.fg
     readonly property color _accent: NotifColors.accent
 
-    visible: NotificationManager.showTrayNotifs && !HyprlandWatcher.hideUi
+    visible: NotificationManager.showTrayNotifs
 
     // ── Backdrop ────────────────────────────────────────────────────
     Rectangle {
