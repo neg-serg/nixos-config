@@ -10,7 +10,7 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: glm-midi {volume <0-127 | dB> | step <dB> | vol+ [n] | vol- [n] | mute | dim | power}" >&2
+  echo "usage: glm-midi {volume <0-127 | dB> | step <dB> | mute | dim | power}" >&2
   exit 1
 }
 [ $# -ge 1 ] || usage
@@ -58,13 +58,9 @@ case "$1" in
     sleep 0.15
     send_cc 21 127
     ;;
-  # Space relative steps BETWEEN sends only (no trailing sleep): a single
-  # step must return immediately or held keyboard keys feel sluggish. GLM
-  # drops rapid relative bursts; the widget anchors CC20 on MIDI activation
-  # and 400 ms after the last change (self-heal), so spacing steps is what
-  # keeps them from being dropped.
-  vol+) n=${2:-1}; i=0; for _ in $(seq 1 "$n"); do send_cc 21 127; i=$((i+1)); [ "$i" -lt "$n" ] && sleep 0.25; done ;;
-  vol-) n=${2:-1}; i=0; for _ in $(seq 1 "$n"); do send_cc 22 127; i=$((i+1)); [ "$i" -lt "$n" ] && sleep 0.25; done ;;
+  # Volume is CC20-only: the widget sends the absolute value (volume/step)
+  # on MIDI activation and 400 ms after the last change. No relative
+  # C21/C22 vol+/vol- commands — removed by request.
   mute)  send_cc 23 127 ;;  # toggle
   dim)   send_cc 24 127 ;;  # toggle
   power) send_cc 28 127 ;;  # toggle
