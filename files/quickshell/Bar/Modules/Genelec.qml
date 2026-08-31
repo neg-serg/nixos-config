@@ -21,7 +21,7 @@ LocalMods.AudioEndpointTile {
     levelProperty: "volume"
     mutedProperty: "muted"
     changeMethod: "changeVolume"
-    wheelEnabled: Services.Genelec ? Services.Genelec.available : false
+    wheelEnabled: Services.Genelec ? (Services.Genelec.available || Services.Genelec.midiMode) : false
     offReminderStateKey: ""
     toggleOnClick: false
     tooltipTitle: "Genelec SAM"
@@ -34,7 +34,8 @@ LocalMods.AudioEndpointTile {
         "Hardware volume via GLM adapter.",
         "Cap: " + (Services.Genelec ? Services.Genelec.maxVolume + " dB" : "N/A"),
         "Raise cap: set genelecMaxVolume in Settings.json",
-        "Scroll: ±2.5 dB"
+        "Scroll: ±2.5 dB",
+        "Mode: " + (Services.Genelec && Services.Genelec.midiMode ? "VM MIDI bridge" : "host GLM adapter")
     ]
     enableAdvancedToggle: false
     autoHideWhenMuted: false
@@ -108,7 +109,7 @@ LocalMods.AudioEndpointTile {
     }
 
     function _maybeHandle(prop) {
-        if (prop === "volume" || prop === "muted" || prop === "maxVolume" || prop === "available") {
+        if (prop === "volume" || prop === "muted" || prop === "maxVolume" || prop === "available" || prop === "midiMode") {
             refreshFromService();
         }
     }
@@ -122,6 +123,7 @@ LocalMods.AudioEndpointTile {
         function onMutedChanged() { root._maybeHandle("muted"); }
         function onMaxVolumeChanged() { root._maybeHandle("maxVolume"); }
         function onAvailableChanged() { root._maybeHandle("available"); }
+        function onMidiModeChanged() { root._maybeHandle("midiMode"); }
     }
 
 
