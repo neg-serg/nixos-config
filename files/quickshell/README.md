@@ -28,7 +28,10 @@ Notes
   (`HyprlandWatcher.hideUi` = `onHideUiWorkspace`). Hiding is a plain unmap (no slide): the
   slide-out followed by the layer teardown crashed Qt (`QQuickItemPrivate::dirty` inside
   `QQuickWindow::maybeUpdate`), so the bar snaps out on the games workspace and slides back in with
-  the entrance animation.
+  the entrance animation. The unmap is also deferred one event-loop turn (Bar.qml `_syncHide`):
+  `hideUi` flips synchronously inside a Hyprland socket Process handler, and the same emission
+  keeps evaluating bindings (WsIndicator label text) — unmapping the PanelLayer windows mid-cascade
+  crashed Qt the same way.
 
 Migration Log
 
