@@ -404,7 +404,7 @@ if not outbounds:
 
 tags = [o["tag"] for o in outbounds]
 outbounds.append({"type": "urltest", "tag": "auto",
-                  "outbounds": tags, "interval": "5m", "tolerance": 50})
+                  "outbounds": tags, "interval": "1m", "tolerance": 50})
 outbounds.append({"type": "direct", "tag": "direct"})
 
 in_lan = {"type": "socks", "tag": "in-lan", "listen": "0.0.0.0", "listen_port": 10810}
@@ -530,7 +530,9 @@ PYEOF
 # validate_nodes — python: TCP-scan + e2e-тест кандидатов,
 # печатает рабочие строки в stdout. Env: NODES_FILE (path to node
 # list; preferred for big lists) or NODES_TEXT, E2E_CAP, MIN_WORKING,
-# VALIDATE_TMP (temp dir for throwaway configs).
+# MIN_SPEED/SPEED_BYTES/SPEED_TIMEOUT (throughput gate, default 100 KB/s
+# on 2 MB via speed.cloudflare.com), VALIDATE_TMP (temp dir for
+# throwaway configs).
 # ============================================================
 validate_nodes() {
     python3 << 'PYEOF'
@@ -923,7 +925,8 @@ print("  TCP open: " + str(len(open_keys)) + "/" + str(len(keys))
 if not open_keys:
     print("  ERROR: no reachable nodes"); sys.exit(1)
 
-# --- e2e probe: single-node sing-box per open candidate, curl gstatic == 204
+# --- e2e probe: single-node sing-box per open candidate; relay checks
+# --- (1.1.1.1 / generate_204) + throughput check (MIN_SPEED B/s on 2 MB)
 import random
 random.shuffle(open_keys)  # fair e2e sample across all sources, not first-N sorted hosts
 candidates = [k for k in open_keys[:e2e_cap] if parse_outbound(cands[k][1]) is not None]
@@ -964,13 +967,18 @@ try:
                                  start_new_session=True, close_fds=True)
             procs[port] = p
         time.sleep(8)
+        min_speed = int(os.environ.get("MIN_SPEED", "100000"))  # B/s
+        speed_bytes = int(os.environ.get("SPEED_BYTES", "2000000"))
+        speed_timeout = int(os.environ.get("SPEED_TIMEOUT", "12"))
         def probe(port):
-            # 1) relay-only check via an IP literal (no DNS in the path):
-            #    http://1.1.1.1 answers 301 through a working tunnel.
-            # 2) fallbacks: remote-DNS checks through the node (socks5h).
-            #    A node counts as working if any probe succeeds, so nodes
-            #    whose server-side DNS is broken still pass (global DNS in
-            #    the final config does not depend on a single node).
+            # 1) relay-only checks: an IP literal (no DNS in the path) plus
+            #    remote-DNS generate_204 endpoints. Any success means the
+            #    tunnel relays TCP; nodes whose server-side DNS is broken
+            #    still pass (global DNS in the final config is client-side).
+            # 2) throughput check: the free pool is full of nodes that relay
+            #    small 204s fast but cap bulk downloads at ~1 KB/s, so a node
+            #    must also sustain >= MIN_SPEED B/s on a real download.
+            relay_ok = False
             for args in (
                 ["curl", "-sS", "-o", "/dev/null", "-w", "%{http_code}",
                  "--max-time", "6", "--socks5", "127.0.0.1:" + str(port),
@@ -988,10 +996,23 @@ try:
                     r = subprocess.run(args, capture_output=True, text=True,
                                        timeout=15)
                     if r.stdout.strip() in ("204", "301", "302", "200", "403"):
-                        return True
+                        relay_ok = True
+                        break
                 except Exception:
                     continue
-            return False
+            if not relay_ok:
+                return False
+            try:
+                r = subprocess.run(
+                    ["curl", "-sS", "-o", "/dev/null", "-w", "%{speed_download}",
+                     "--max-time", str(speed_timeout), "--socks5-hostname",
+                     "127.0.0.1:" + str(port),
+                     "https://speed.cloudflare.com/__down?bytes=" + str(speed_bytes)],
+                    capture_output=True, text=True, timeout=speed_timeout + 5)
+                speed = float(r.stdout.strip() or "0")
+                return speed >= min_speed
+            except Exception:
+                return False
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as ex:
             futs = {ex.submit(probe, BASE + wave_start + wave.index(k)): k for k in wave}
             for fut in concurrent.futures.as_completed(futs):
