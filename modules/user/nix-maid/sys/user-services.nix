@@ -159,7 +159,9 @@ lib.mkIf (cfg.enable or false) {
       description = "Auto-attach the GLM adapter to the dockur VM when needed";
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "%h/.local/bin/glm-adapter attach";
+        # bash explicitly: the user-service environment has no PATH, so the
+        # script's #!/usr/bin/env bash shebang would fail (status 127).
+        ExecStart = "${lib.getExe pkgs.bash} %h/.local/bin/glm-adapter attach";
       };
     };
 
