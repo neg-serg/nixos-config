@@ -94,8 +94,11 @@ LocalMods.AudioEndpointTile {
     function refreshFromService() {
         if (!Services.Genelec) return;
         const srv = Services.Genelec;
-        // Map dB range to 0-100 for the capsule display
-        var normalized = ((srv.volume - srv.minVolume) / (srv.maxVolume - srv.minVolume)) * 100;
+        // Map dB range to 0-100 for the capsule display, compressed so the
+        // "loud = green" zone starts earlier: -40 dB reads as firmly green,
+        // pink (Theme lowColor) only near the very quiet end.
+        var t = (srv.volume - srv.minVolume) / (srv.maxVolume - srv.minVolume);
+        var normalized = Math.max(0, 100 * Math.pow(t, 0.4));
         root.updateFrom(Math.max(0, normalized), srv.muted);
         // Update the label to show actual dB
         pill.text = srv.volume + " dB";
