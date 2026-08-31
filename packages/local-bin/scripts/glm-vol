@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# glm-vol — control Genelec GLM volume from the command line.
+#
+# Sends the same MIDI sequence the quickshell widget would send in midiMode
+# (glm-midi -> relay :9004 -> VM bridge -> loopMIDI -> GLM) AND syncs the
+# quickshell widget display by writing the state file /tmp/genlc-volume,
+# which the widget's FileView watches. Absolute values only — GLM has no
+# readback, so relative steps would desync the widget display.
+#
+# Usage:
+#   glm-vol -43.5        absolute target (dB, optional 'dB' suffix)
+#   glm-vol read         print the last known target (state file)
+set -euo pipefail
+
+GLM=/home/neg/.local/bin/glm-midi
+STATE=/tmp/genlc-volume
+
+usage() { echo "usage: glm-vol {<dB> | read}" >&2; exit 1; }
+[ $# -ge 1 ] || usage
+
+case "$1" in
+  read|current)
+    cat "$STATE" 2>/dev/null || echo "-40"
+    exit 0
+    ;;
+esac
+
+t=$1; t=${t%dB}
+# Validate and clamp to the same range the widget uses ([-95, -20]).
+clamped=$(awk -v t="$t" 'BEGIN { if (t < -95) t = -95; if (t > -20) t = -20; printf "%.1f", t }')
+# Whole-dB base for the step/volume command (floor for negatives).
+base=$(awk -v t="$clamped" 'BEGIN { b = int(t); if (t < 0 && t != b) b -= 1; print b }')
+rem=$(awk -v t="$clamped" -v b="$base" 'BEGIN { printf "%.3f", t - b }')
+is_half=$(awk -v r="$rem" 'BEGIN { print (r >= 0.499) ? 1 : 0 }')
+
+if [ "$is_half" = 1 ]; then
+  "$GLM" step "${base}dB"    # CC20(base) + vol+ -> base+0.5 dB
+else
+  "$GLM" volume "${base}dB"  # single CC20
+fi
+echo "$clamped" > "$STATE"   # sync the quickshell widget display
+echo "glm-vol: $clamped dB" >&2
