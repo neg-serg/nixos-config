@@ -281,9 +281,16 @@ RowLayout {
     function _sendToHardware(dB) {
         if (busy) return;
         if (midiMode) {
-            // No direct sends: volume is set ONLY by the periodic CC20 anchor
-            // (anchorTimer, every 400 ms) so GLM always lands exactly on the
-            // widget target and relative +/- bursts are gone.
+            // Relative control: C21 (vol+) / C22 (vol-) for the delta from the
+            // last sent value. GLM's periodic CC20 re-anchor (anchorTimer)
+            // snaps it back to the target, so dropped steps self-heal.
+            var delta = dB - root._lastSentDb;
+            var steps = Math.round(delta / 0.5);
+            if (steps > 0)
+                _sendMidi(["/home/neg/.local/bin/glm-midi", "vol+", steps]);
+            else if (steps < 0)
+                _sendMidi(["/home/neg/.local/bin/glm-midi", "vol-", -steps]);
+            root._lastSentDb = dB;
             return;
         }
         busy = true;
@@ -370,7 +377,9 @@ RowLayout {
             root.pendingDb = v;
             root.volume = v;
             root._animDb = v;
-            // No direct send — the periodic CC20 anchor sets GLM.
+            // Same send path as the wheel: relative C21/C22 (+ anchor).
+            // genlc-media only writes the target, so keyboard and wheel
+            // share one code path through quickshell.
             if (!root.busy) root._commitAndSend(v);
         }
     }
