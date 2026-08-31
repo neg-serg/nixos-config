@@ -45,12 +45,15 @@ case "${1:-}" in
       # granularity AND stay in sync, set the whole-dB base via CC20, then add
       # one vol+ for a .5 remainder — each press re-syncs the absolute value.
       read -r base ishalf <<< "$(awk -v t="$capped" 'BEGIN { b=int(t); if (t<0 && t!=b) b-=1; r=t-b; printf "%d %s", b, (r>=0.499 ? "half" : "whole") }')"
-      glm-midi volume "${base}dB" >/dev/null 2>&1 || true
+      # Absolute path: keybinding envs (sway/hyprland exec) don't have
+      # ~/.local/bin in PATH — bare glm-midi was 'command not found', so the
+      # keyboard path silently never reached GLM while the state/display moved.
+      /home/neg/.local/bin/glm-midi volume "${base}dB" >/dev/null 2>&1 || true
       if [ "$ishalf" = "half" ]; then
         # Let GLM apply the absolute CC20 before the relative +0.5 step, so the
         # vol+ is not lost (GLM-side timing) — keeps state and GLM in sync.
         sleep 0.15
-        glm-midi vol+ >/dev/null 2>&1 || true
+        /home/neg/.local/bin/glm-midi vol+ >/dev/null 2>&1 || true
       fi
     else
       # Host path: genlc set-volume (0.5 dB), batched by debounce.
@@ -64,7 +67,7 @@ case "${1:-}" in
     ;;
   mute)
     if [ "$MODE" = "vm" ]; then
-      glm-midi mute >/dev/null 2>&1 || true
+      /home/neg/.local/bin/glm-midi mute >/dev/null 2>&1 || true
     else
       genlc set-volume --volume -95dB 2>/dev/null &
     fi
