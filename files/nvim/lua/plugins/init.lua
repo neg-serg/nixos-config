@@ -5,7 +5,6 @@ return {
   { import = "plugins.debug" },
   { import = "plugins.dev" },
   { import = "plugins.edit" },
-  { import = "plugins.fff" },
   { import = "plugins.files" },
   { import = "plugins.filetypes" },
   { import = "plugins.integration" },

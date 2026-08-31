@@ -1,4 +1,4 @@
--- fff-based picker helpers (fff replaced fzf-lua as the file finder).
+-- Shared picker/qf helpers (quickfix toggles, project root). Pickers live in snacks.
 local M = {}
 
 M.ignore_patterns = {

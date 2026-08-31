@@ -1,6 +1,6 @@
 -- gf for Lua files: resolve require('module.name') to its source file.
 -- Searches runtimepath lua/ directories (covers both config modules and plugins),
--- then falls back to fff if nothing found.
+-- then falls back to a picker if nothing found.
 
 local nav = require('utils.nav')
 local uv  = vim.uv
@@ -33,9 +33,9 @@ local function follow_require()
     end
   end
 
-  -- fff fallback: use the last path component as the search query.
+  -- Picker fallback: use the last path component as the search query.
   local tail = mod_path:match('[^/]+$') or mod_path
-  require('fff').find_files({ query = tail, cwd = nav.project_root() })
+  Snacks.picker.files({ search = tail, cwd = nav.project_root() })
 end
 
 vim.keymap.set('n', 'gf', follow_require, { buffer = true, desc = "Follow require() to source" })

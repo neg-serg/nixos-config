@@ -40,12 +40,12 @@ function M.open_url(url)
 end
 
 -- Resolve a file path with a prioritised search chain.
--- Returns the absolute path when found, or nil after opening the fzf picker.
+-- Returns the absolute path when found, or nil after opening the picker.
 --
 -- opts fields:
 --   extensions     list  suffixes to try when path has no extension
 --   preferred_dirs list  relative dirs searched before cwd (no-slash names only)
---   fzf_fallback   bool  open fff picker when nothing found (default true)
+--   fzf_fallback   bool  open snacks picker when nothing found (default true)
 function M.resolve_path(path, opts)
   opts = opts or {}
   local extensions    = opts.extensions    or {}
@@ -109,11 +109,11 @@ function M.resolve_path(path, opts)
     end
   end
 
-  -- 6. fff fallback: show a picker instead of erroring with E447.
+  -- 6. Picker fallback: show a picker instead of erroring with E447.
   if opts.fzf_fallback ~= false then
-    require('fff').find_files({
-      query = vim.fn.fnamemodify(path, ':t'),
-      cwd   = M.project_root(buf_dir),
+    Snacks.picker.files({
+      search = vim.fn.fnamemodify(path, ':t'),
+      cwd    = M.project_root(buf_dir),
     })
   end
   return nil
