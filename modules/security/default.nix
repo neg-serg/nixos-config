@@ -175,6 +175,10 @@ in
               options = [ "NOPASSWD" ];
             }
             {
+              command = "/run/current-system/sw/bin/glm-adapter-priv";
+              options = [ "NOPASSWD" ];
+            }
+            {
               command = "/run/current-system/sw/bin/systemctl stop xray.service";
               options = [ "NOPASSWD" ];
             }
