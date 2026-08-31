@@ -38,7 +38,7 @@ return {'obsidian-nvim/obsidian.nvim', version='*', ft='markdown',
 
                 link={style='wiki', prepend_note_path=true},
                 attachments={folder=''},
-                ui={enable=false}, -- render-markdown.nvim handles rendering
+                ui={enable=false}, -- fk_markdown.nvim handles rendering
                 daily_notes={
                     folder='',
                     date_format='%Y-%m-%d',
