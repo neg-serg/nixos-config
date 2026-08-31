@@ -16,8 +16,6 @@ import "." as LocalMods
 LocalMods.AudioEndpointTile {
     id: root
     settingsKey: "genelec"
-    // Debugging: keep the current monitor volume visible at all times.
-    alwaysShow: true
     iconOff: "volume_off"
     iconLow: "volume_down"
     iconHigh: "speaker" // Use speaker icon for hardware monitors
