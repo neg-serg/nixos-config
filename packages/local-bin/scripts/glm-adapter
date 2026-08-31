@@ -23,6 +23,7 @@ PID=0e39
 CT=windows
 STATE=/tmp/genlc-volume
 GENLC=/run/current-system/sw/bin/genlc
+PRIV=/run/current-system/sw/bin/glm-adapter-priv
 GREEN=$'\e[32m'; RED=$'\e[31m'; YELLOW=$'\e[33m'; NC=$'\e[0m'
 DO_GLM=0
 ARGS=()
@@ -48,10 +49,6 @@ adapter_dev() {
     echo "$dev"; return 0
   done
   return 1
-}
-
-priv() {
-  if [ "$(id -u)" = 0 ]; then "$@"; else sudo "$@"; fi
 }
 
 check_glm_vm() {
@@ -127,15 +124,9 @@ cmd_attach() {
     fail "adapter not found on the host USB — is it plugged in?"
     return 1
   fi
-  # Unbind every usbhid interface so QEMU can re-claim the device via usbfs.
-  for i in "$dev":1.*; do
-    [ -e "$i" ] || continue
-    iface=${i##*/}
-    if [ -e "$i/driver" ]; then
-      warn "unbinding $iface from $(basename "$(readlink "$i/driver")")"
-      priv sh -c "echo $iface > /sys/bus/usb/drivers/usbhid/unbind" 2>/dev/null || true
-    fi
-  done
+  # Unbind usbhid so QEMU re-claims the device via usbfs (NOPASSWD helper).
+  warn "unbinding usbhid from the adapter (QEMU will re-claim)"
+  sudo "$PRIV" to-vm 2>/dev/null || true
   sleep 4
   if [ "$(qemu_usb)" -ge 1 ]; then
     ok "adapter attached to the VM"
@@ -153,27 +144,14 @@ cmd_attach() {
 
 cmd_host() {
   echo "=== moving adapter to the host ==="
-  dev=$(adapter_dev || true)
-  if [ -n "$dev" ]; then
-    for i in "$dev":1.*; do
-      [ -e "$i" ] || continue
-      iface=${i##*/}
-      if [ -L "$i/driver" ] && readlink "$i/driver" | grep -q usbfs; then
-        warn "unbinding $iface from usbfs"
-        priv sh -c "echo $iface > /sys/bus/usb/drivers/usbfs/unbind" 2>/dev/null || true
-      fi
-    done
-    sleep 2
-    for i in "$dev":1.*; do
-      [ -e "$i" ] || continue
-      iface=${i##*/}
-      if [ -e "$i" ] && [ ! -L "$i/driver" ]; then
-        warn "binding $iface to usbhid"
-        priv sh -c "echo $iface > /sys/bus/usb/drivers/usbhid/bind" 2>/dev/null || true
-      fi
-    done
+  if host_present || [ "$(qemu_usb)" -ge 1 ]; then
+    # Release from QEMU (usbfs), then bind usbhid for host genlc control.
+    warn "releasing from QEMU and binding usbhid"
+    sudo "$PRIV" to-host 2>/dev/null || true
+  else
+    warn "adapter not found on the host USB"
   fi
-  sleep 2
+  sleep 3
   if host_genlc_ok; then ok "host genlc: adapter usable"; else fail "host genlc: adapter NOT usable"; fi
 }
 
