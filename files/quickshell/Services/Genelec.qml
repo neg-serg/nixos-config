@@ -339,7 +339,11 @@ RowLayout {
         }
     }
     function _onGenlcFileChanged() {
-        if (root.busy || root._userInputActive) return;
+        // Block only while a wheel debounce is in flight (_wheelPending) or a
+        // send is running — NOT for the full _userInputActive window: keyboard
+        // (genlc-media) and sync writes must reach the display as soon as the
+        // wheel settles, otherwise the widget freezes at the last wheel value.
+        if (root.busy || root._wheelPending) return;
         var line = stateReader.text() || "";
         var v = parseFloat(line);
         if (!isNaN(v) && v !== root.displayDb && !volSlider.pressed) {
