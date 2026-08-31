@@ -139,12 +139,50 @@ RowLayout {
 
 
     function clamp(v) { return v < minVolume ? minVolume : v > maxVolume ? maxVolume : v; }
-    function setVolume(dB) {
+
+    // ---- Hardware send coalescing ----
+    // GLM's MIDI input drops or delays messages that arrive in quick
+    // succession (a burst of step/vol+ pairs lands off-target; measured:
+    // 5 vol+ in 12 ms -> only 1 applied, steps < 400 ms apart unreliable).
+    // Wheel/slider changes update the display instantly but commit the final
+    // absolute target once input settles, with >= _minSendGapMs between sends.
+    property bool _wheelPending: false
+    property real _lastSendMs: 0
+    readonly property int _minSendGapMs: 400
+    Timer {
+        id: wheelCommitTimer
+        interval: 150
+        repeat: false
+        onTriggered: {
+            if (!root._wheelPending) return;
+            if (root.busy) { wheelCommitTimer.start(); return; }
+            var wait = root._lastSendMs + root._minSendGapMs - Date.now();
+            if (wait > 0) {
+                wheelCommitTimer.interval = Math.max(50, wait);
+                wheelCommitTimer.start();
+                return;
+            }
+            wheelCommitTimer.interval = 150;
+            root._wheelPending = false;
+            root._commitAndSend(root.pendingDb);
+        }
+    }
+    function _queueCommit(dB) {
+        var target = clamp(Number(dB));
+        root.displayDb = target;
+        root.pendingDb = target;
+        root.volume = target;
+        root._wheelPending = true;
+        root._userInputActive = true;
+        root._lastRequestMs = Date.now();
+        wheelCommitTimer.start();
+    }
+    function _commitAndSend(dB) {
         var clamped = clamp(Number(dB));
-        if (clamped === volume && !busy) return;
         volume = clamped;
         displayDb = clamped; // keep the slider in sync in midiMode too
         muted = false;
+        _lastSendMs = Date.now();
         _sendToHardware(clamped);
         // Persist the target so /tmp/genlc-volume is never stale after wheel
         // scrolling (the wheel path bypasses genlc-media, the only other
@@ -153,17 +191,24 @@ RowLayout {
         if (midiMode)
             Quickshell.execDetached(["/bin/sh", "-c", "echo " + clamped + " > /tmp/genlc-volume"]);
     }
+    function setVolume(dB) {
+        var clamped = clamp(Number(dB));
+        if (clamped === volume && !busy) return;
+        _commitAndSend(clamped);
+    }
 
     function setVolumeDb(dB) {
+        if (midiMode) { _queueCommit(dB); return; }
         setVolume(dB);
     }
 
     function changeVolume(delta) {
         var d = Number(delta) || 0;
         if (midiMode) {
-            // VM-side GLM: set absolute dB (CC20) so the display stays in
-            // sync with what GLM actually applies.
-            setVolume(volume + d);
+            // VM-side GLM: update the display immediately per wheel notch,
+            // defer the hardware send to wheelCommitTimer so a fast scroll
+            // reaches GLM as one final absolute message instead of a burst.
+            _queueCommit(volume + d);
             return;
         }
         var newVol = volume + d;
