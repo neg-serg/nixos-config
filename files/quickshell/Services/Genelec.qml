@@ -172,11 +172,11 @@ RowLayout {
             root._commitAndSend(root.pendingDb);
         }
     }
-    // Periodic CC20 re-anchor: every 1.5 s set the absolute target in GLM
+    // Periodic CC20 re-anchor: every 400 ms set the absolute target in GLM
     // (step for .5 values) so relative-step drops don't accumulate drift.
     Timer {
         id: anchorTimer
-        interval: 1500
+        interval: 400
         repeat: true
         running: midiMode
         onTriggered: {
