@@ -40,21 +40,12 @@ case "${1:-}" in
     echo "$capped" > "$STATE"
 
     if [ "$MODE" = "vm" ]; then
-      # VM-side GLM: CC20 absolute volume has 1 dB resolution (dB = value-127),
-      # CC21/22 (vol+/-) step 0.5 dB (verified against GLM 5.2). To keep 0.5 dB
-      # granularity AND stay in sync, set the whole-dB base via CC20, then add
-      # one vol+ for a .5 remainder — each press re-syncs the absolute value.
-      read -r base ishalf <<< "$(awk -v t="$capped" 'BEGIN { b=int(t); if (t<0 && t!=b) b-=1; r=t-b; printf "%d %s", b, (r>=0.499 ? "half" : "whole") }')"
-      # Absolute path: keybinding envs (sway/hyprland exec) don't have
-      # ~/.local/bin in PATH — bare glm-midi was 'command not found', so the
-      # keyboard path silently never reached GLM while the state/display moved.
-      /home/neg/.local/bin/glm-midi volume "${base}dB" >/dev/null 2>&1 || true
-      if [ "$ishalf" = "half" ]; then
-        # Let GLM apply the absolute CC20 before the relative +0.5 step, so the
-        # vol+ is not lost (GLM-side timing) — keeps state and GLM in sync.
-        sleep 0.15
-        /home/neg/.local/bin/glm-midi vol+ >/dev/null 2>&1 || true
-      fi
+      # VM path: delegate to glm-vol — the exact same absolute send the widget
+      # commits (CC20 base, +vol+ for .5 targets, state write). Keyboard and
+      # mouse wheel now produce identical wire behavior. Absolute path:
+      # keybinding envs (sway/hyprland exec) don't have ~/.local/bin in PATH
+      # (bare glm-midi was 'command not found' — silently never reached GLM).
+      /home/neg/.local/bin/glm-vol "$capped" >/dev/null 2>&1 || true
     else
       # Host path: genlc set-volume (0.5 dB), batched by debounce.
       [ -f "$DEBOUNCE_PID" ] && kill "$(cat "$DEBOUNCE_PID")" 2>/dev/null || true
