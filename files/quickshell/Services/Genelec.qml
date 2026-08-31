@@ -146,6 +146,12 @@ RowLayout {
         displayDb = clamped; // keep the slider in sync in midiMode too
         muted = false;
         _sendToHardware(clamped);
+        // Persist the target so /tmp/genlc-volume is never stale after wheel
+        // scrolling (the wheel path bypasses genlc-media, the only other
+        // writer). The FileView above watches this file; the value equals
+        // displayDb, so the reload is a display no-op.
+        if (midiMode)
+            Quickshell.execDetached(["/bin/sh", "-c", "echo " + clamped + " > /tmp/genlc-volume"]);
     }
 
     function setVolumeDb(dB) {

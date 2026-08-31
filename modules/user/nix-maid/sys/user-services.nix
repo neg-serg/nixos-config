@@ -147,6 +147,8 @@ lib.mkIf (cfg.enable or false) {
         ExecStart = "${lib.getExe pkgs.python3} %h/.local/bin/glm-midi-relay";
         Restart = "on-failure";
         RestartSec = 3;
+        # Log every forwarded packet (what the wheel sends) to /tmp/glm-relay.log.
+        Environment = [ "GLM_RELAY_LOG=/tmp/glm-relay.log" ];
       };
       wantedBy = [ "default.target" ];
     };
