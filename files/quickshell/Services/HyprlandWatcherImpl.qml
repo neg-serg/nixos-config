@@ -33,24 +33,6 @@ Item {
     signal keyboardLayoutEvent(string deviceName, string layoutName)
     signal focusedMonitorEvent()
 
-    // Fullscreen tracking: true while the focused workspace has a fullscreen
-    // window (games, video). Kept for diagnostics/other consumers; it no longer
-    // participates in hideUi (auto-hide is games-workspace-only).
-    property bool focusedFullscreen: false
-    readonly property int fullscreenDebounceMs: 50
-
-    // Workspaces where the shell UI is always hidden. id 4 = "𐌸:games"
-    // (see hyprland.lua). Auto-hide is intentionally limited to this workspace:
-    // fullscreen windows elsewhere (video, etc.) no longer hide the UI.
-    property var hideUiWorkspaceIds: [4]
-    readonly property bool onHideUiWorkspace: hideUiWorkspaceIds.indexOf(activeWorkspaceId) !== -1
-
-    // Hide the whole shell UI only on the designated hide-UI (games)
-    // workspace. Fullscreen state is still tracked but does not trigger the
-    // hide: bar, notifications and screenshot-toast stay visible everywhere
-    // except the games workspace.
-    readonly property bool hideUi: onHideUiWorkspace
-
     ProcessRunner {
         id: socketFeed
         cmd: root.available ? ["socat", "-u", "UNIX-CONNECT:" + root.socketPath, "-"] : ["true"]
@@ -71,8 +53,6 @@ Item {
             try {
                 if (typeof obj.id === "number") root.activeWorkspaceId = obj.id;
                 if (obj.name !== undefined) root.activeWorkspaceName = obj.name || "";
-                // Clients probe needs a fresh workspace id (startup race).
-                root.refreshFullscreen();
             } catch (e) { console.warn("[HyprlandWatcher.activeWs]", e) }
         }
     }
@@ -106,46 +86,11 @@ Item {
         }
     }
 
-    ProcessRunner {
-        id: fullscreenProbe
-        // Client-based check: workspace.hasfullscreen is unreliable for
-        // client-requested fullscreen (games, mpv), so scan clients for any
-        // fullscreen window on the active workspace instead.
-        cmd: ["hyprctl", "-j", "clients"]
-        env: root.hyprEnvObject
-        parseJson: true
-        autoStart: false
-        restartMode: "never"
-        onJson: arr => {
-            try {
-                if (!Array.isArray(arr)) return;
-                const wsId = root.activeWorkspaceId;
-                let fullscreen = false;
-                for (const c of arr) {
-                    const w = c && c.workspace;
-                    const cws = (w && typeof w === "object") ? w.id : w;
-                    if (c.fullscreen && cws === wsId) {
-                        fullscreen = true;
-                        break;
-                    }
-                }
-                root.focusedFullscreen = fullscreen;
-            } catch (e) { console.warn("[HyprlandWatcher.fullscreen]", e) }
-        }
-    }
-
     Timer {
         id: workspaceDebounce
         interval: root.workspaceDebounceMs
         repeat: false
         onTriggered: root.refreshWorkspace()
-    }
-
-    Timer {
-        id: fullscreenDebounce
-        interval: root.fullscreenDebounceMs
-        repeat: false
-        onTriggered: root.refreshFullscreen()
     }
 
     // Cycle keyboard layout (used by the bar capsule click).
@@ -175,11 +120,6 @@ Item {
         if (!devicesProbe.running) devicesProbe.start();
     }
 
-    function refreshFullscreen() {
-        if (!root.available) return;
-        if (!fullscreenProbe.running) fullscreenProbe.start();
-    }
-
     function _handleSocketLine(lineRaw) {
         const line = String(lineRaw || "").trim();
         if (!line) return;
@@ -188,16 +128,6 @@ Item {
         const eventName = line.substring(0, sep);
         const payload = line.substring(sep + 2);
         const key = eventName.toLowerCase();
-        // Re-probe fullscreen state on events that can change it.
-        if (key === "fullscreen" || key === "fullscreenv2"
-                || key === "overfullscreen" || key === "overfullscreenv2"
-                || key === "focusedmon" || key === "focusedmonv2"
-                || key === "activewindow" || key === "activewindowv2"
-                || key === "openwindow" || key === "closewindow"
-                || key === "movewindow" || key === "changefloatingmode"
-                || key === "workspace" || key === "workspacev2") {
-            fullscreenDebounce.restart();
-        }
         if (key === "workspacev2") {
             const parts = payload.split(",", 2);
             const idVal = parseInt(parts[0]);
@@ -251,7 +181,6 @@ Item {
             refreshWorkspace();
             refreshBinds();
             refreshDevices();
-            refreshFullscreen();
         }
     }
 }

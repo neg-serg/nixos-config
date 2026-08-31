@@ -36,7 +36,7 @@ PanelWindow {
     // Only map the window while there are notifications to show; an always-on
     // transparent overlay at the topmost layer eats clicks over its whole area
     // even when empty (2026-08-07: clicks stopped reaching windows).
-    visible: !HyprlandWatcher.hideUi && display.contentMaskHeight > 0
+    visible: display.contentMaskHeight > 0
     // Restrict input to the actual card stack (bottom strip), not the full
     // 620x800 window. Region coords are window-local.
     mask: Region {
