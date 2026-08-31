@@ -30,7 +30,7 @@ in
 {
   packages = [
     pkgs.hypridle # idle daemon (locks to a fading black screen)
-    pkgs.hyprlock # Hyprland's GPU-accelerated screen locking utility
+    # pkgs.hyprlock — temporarily removed (2026-08-31); re-add to restore the lock screen
     pkgs.hyprpolkitagent # Polkit authentication agent for Hyprland
     pkgs.wayvnc # VNC server for wlroots-based Wayland compositors
     pkgs.wayback-x11 # X11 compatibility layer for wlroots/Xwayland
@@ -175,17 +175,8 @@ in
       };
     };
 
-    # Lock screen before system sleep (lid close / systemctl suspend)
-    hyprlock-sleep = {
-      description = "Lock screen before sleep";
-      before = [ "sleep.target" ];
-      wantedBy = [ "sleep.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = "${lib.getExe' pkgs.hyprlock "hyprlock"} --immediate";
-        Environment = "HYPRLAND_INSTANCE_SIGNATURE";
-      };
-    };
+    # hyprlock-sleep service temporarily disabled (2026-08-31): no lock before sleep.
+    # Restore together with the hyprlock package: oneshot ExecStart hyprlock --immediate on sleep.target.
 
     # Hyprland Polkit Agent
     hyprpolkitagent = {
