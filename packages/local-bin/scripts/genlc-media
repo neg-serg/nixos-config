@@ -23,32 +23,29 @@ case "${1:-}" in
     current=-40.0
     [ -f "$STATE" ] && current=$(cat "$STATE" 2>/dev/null || echo -40.0) || true
 
-    if [ "$MODE" = "vm" ]; then
-      # VM-side GLM: CC20 sets absolute volume with 1 dB resolution
-      # (dB = value - 127, verified against GLM 5.2), so step by whole dB and
-      # send the exact target — the state file then always matches what GLM
-      # actually applies, keeping the quickshell display in sync.
-      cur=$(awk "BEGIN { printf \"%d\", int($current) }")
-      if [ "$1" = "up" ]; then
-        target=$((cur + 1))
-        [ "$target" -gt -20 ] && target=-20
-      else
-        target=$((cur - 1))
-        [ "$target" -lt -95 ] && target=-95
-      fi
-      echo "$target" > "$STATE"
-      glm-midi volume "${target}dB" >/dev/null 2>&1 || true
+    # Snap the state to the nearest 0.5 dB — both modes use 0.5 granularity.
+    current=$(awk "BEGIN { printf \"%.1f\", int($current * 2 + ($current < 0 ? -0.5 : 0.5)) / 2 }")
+    if [ "$1" = "up" ]; then
+      target=$(awk "BEGIN { printf \"%.1f\", $current + $STEP_DB }")
+      capped=$(awk "BEGIN { printf \"%.1f\", ($target > -20.0) ? -20.0 : $target }")
     else
-      # Host path: 0.5 dB steps via genlc (batched by debounce).
-      current=$(awk "BEGIN { printf \"%.1f\", int($current * 2 + ($current < 0 ? -0.5 : 0.5)) / 2 }")
-      if [ "$1" = "up" ]; then
-        target=$(awk "BEGIN { printf \"%.1f\", $current + $STEP_DB }")
-        capped=$(awk "BEGIN { printf \"%.1f\", ($target > -20.0) ? -20.0 : $target }")
-      else
-        target=$(awk "BEGIN { printf \"%.1f\", $current - $STEP_DB }")
-        capped=$(awk "BEGIN { printf \"%.1f\", ($target < -95.0) ? -95.0 : $target }")
-      fi
-      echo "$capped" > "$STATE"
+      target=$(awk "BEGIN { printf \"%.1f\", $current - $STEP_DB }")
+      capped=$(awk "BEGIN { printf \"%.1f\", ($target < -95.0) ? -95.0 : $target }")
+    fi
+
+    # Write state instantly — QML picks up via stateReader, display updates immediately
+    echo "$capped" > "$STATE"
+
+    if [ "$MODE" = "vm" ]; then
+      # VM-side GLM: CC20 absolute volume has 1 dB resolution (dB = value-127),
+      # CC21/22 (vol+/-) step 0.5 dB (verified against GLM 5.2). To keep 0.5 dB
+      # granularity AND stay in sync, set the whole-dB base via CC20, then add
+      # one vol+ for a .5 remainder — each press re-syncs the absolute value.
+      read -r base ishalf <<< "$(awk -v t=\"$capped\" 'BEGIN { b=int(t); if (t<0 && t!=b) b-=1; r=t-b; printf "%d %s", b, (r>=0.499 ? "half" : "whole") }')"
+      glm-midi volume "${base}dB" >/dev/null 2>&1 || true
+      [ "$ishalf" = "half" ] && glm-midi vol+ >/dev/null 2>&1 || true
+    else
+      # Host path: genlc set-volume (0.5 dB), batched by debounce.
       [ -f "$DEBOUNCE_PID" ] && kill "$(cat "$DEBOUNCE_PID")" 2>/dev/null || true
       (
         sleep 0.06
