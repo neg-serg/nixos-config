@@ -33,8 +33,15 @@ RowLayout {
     property real volume: -40
     property bool muted: false
     property real preMuteVolume: -40
-    property bool available: false
     property bool busy: false
+    // Host GLM path: genlc can reach the GLM adapter on the host (dockur VM off).
+    property bool adapterOnHost: true
+    // VM GLM path: the adapter is inside the dockur VM, so control goes over
+    // the MIDI bridge (glm-midi -> relay :9004 -> VM bridge -> loopMIDI -> GLM).
+    readonly property bool midiMode: !adapterOnHost
+    // Last result of the host genlc path. available = usable via either path.
+    property bool genlcOk: true
+    property bool available: adapterOnHost ? genlcOk : true
     property bool _userInputActive: false  // blocks stateReader overwrite during user interaction
     property bool _sliderVisible: false     // auto-hide when idle
     property bool _sliderExpanded: false    // width collapse after opacity
@@ -145,7 +152,18 @@ RowLayout {
     }
 
     function changeVolume(delta) {
-        var newVol = volume + (Number(delta) || 0);
+        var d = Number(delta) || 0;
+        if (midiMode) {
+            // VM-side GLM: the host cannot set absolute dB, so send relative CC
+            // steps (glm-midi vol+/vol-). One step per wheel tick; GLM's real
+            // step per CC21/22 message is unknown host-side, so the local
+            // display is an estimate.
+            if (d > 0) _sendMidi(["/home/neg/.local/bin/glm-midi", "vol+"]);
+            else if (d < 0) _sendMidi(["/home/neg/.local/bin/glm-midi", "vol-"]);
+            volume = clamp(volume + (d > 0 ? 1 : -1));
+            return;
+        }
+        var newVol = volume + d;
         _requestVolume(newVol);
         setVolume(newVol);
     }
@@ -159,6 +177,11 @@ RowLayout {
 
     function toggleMute() {
         root._showSlider();
+        if (midiMode) {
+            _sendMidi(["/home/neg/.local/bin/glm-midi", "mute"]);
+            muted = !muted;
+            return;
+        }
         if (muted) {
             setVolume(preMuteVolume);
             muted = false;
@@ -178,15 +201,63 @@ RowLayout {
         onStarted: {}
         onExited: function(code, status) {
             root.busy = false;
-            root.available = code === 0;
+            root.genlcOk = code === 0;
         }
     }
 
     function _sendToHardware(dB) {
         if (busy) return;
+        if (midiMode) {
+            // Absolute dB over MIDI (CC20); VM-side GLM applies it directly.
+            _sendMidi(["/home/neg/.local/bin/glm-midi", "volume", dB + "dB"]);
+            return;
+        }
         busy = true;
         _lastSetVolume = dB;
         genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "set-volume", "--volume", dB + "dB"];
+        genlcProc.start();
+    }
+
+    // MIDI bridge path (dockur VM running): one-shot glm-midi invocations.
+    ProcessRunner {
+        id: midiProc
+        autoStart: false
+        restartOnExit: false
+        onExited: function(code, status) { root.busy = false; }
+    }
+    function _sendMidi(args) {
+        if (busy) return;
+        busy = true;
+        midiProc.cmd = args;
+        midiProc.start();
+    }
+
+    // Adapter placement probe: genlc discover succeeds only when the adapter
+    // is on the host (VM off). Poll to follow VM start/stop.
+    ProcessRunner {
+        id: probeProc
+        autoStart: false
+        restartOnExit: false
+        onExited: function(code, status) { root.adapterOnHost = code === 0; }
+    }
+    Timer {
+        id: adapterProbeTimer
+        interval: 5000
+        repeat: true
+        running: true
+        onTriggered: {
+            if (!probeProc.running) {
+                probeProc.cmd = ["/run/current-system/sw/bin/genlc", "discover"];
+                probeProc.start();
+            }
+        }
+    }
+
+    function _sendMute() {
+        if (busy) return;
+        if (midiMode) { _sendMidi(["/home/neg/.local/bin/glm-midi", "mute"]); return; }
+        busy = true;
+        genlcProc.cmd = ["/run/current-system/sw/bin/genlc", "mute"];
         genlcProc.start();
     }
     // CLI sync — watch the state file for external volume changes.
@@ -224,9 +295,12 @@ RowLayout {
         }
     }
     Component.onCompleted: {
-        available = true;
+        genlcOk = true;
         // Ensure the state file exists so FileView can watch it (genlc rewrites it in place).
         Quickshell.execDetached(["touch", "/tmp/genlc-volume"]);
+        // Initial adapter probe (the Timer handles the follow-ups).
+        probeProc.cmd = ["/run/current-system/sw/bin/genlc", "discover"];
+        probeProc.start();
     }
 
 }
