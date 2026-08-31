@@ -1,7 +1,7 @@
 # glm-midi-bridge.ps1 - one-way MIDI bridge for the dockur VM.
 # Connects OUT to the host relay 192.168.2.88:9003 (TCP), receives raw MIDI
-# messages (3 bytes: status CC value) and sends them to the rtpMIDI MIDI out
-# port -> GLM software (Settings -> MIDI -> rtpMIDI port).
+# messages (3 bytes: status CC value) and sends them to the loopMIDI/rtpMIDI
+# MIDI out port -> GLM software (Settings -> MIDI -> that port).
 # The VM initiates the connection because host->VM UDP (RTP-MIDI) replies die
 # on the same-IP pasta topology; outbound TCP works (like the .88:10812 proxy).
 # Run:  powershell -ExecutionPolicy Bypass -File C:\OEM\glm-midi-bridge.ps1
@@ -24,7 +24,9 @@ function Find-RtpMidiOut {
     try {
       $rc = [GM]::midiOutGetDevCaps($i, $c, 128)
       if ($rc -eq 0) {
-        $name = [System.Runtime.InteropServices.Marshal]::PtrToStringUni([IntPtr]::Add($c, 8), 32)
+        # winmm returns device names as single-byte ANSI on this system
+        # (PtrToStringUni yields mojibake), so read them as ANSI.
+        $name = [System.Runtime.InteropServices.Marshal]::PtrToStringAnsi([IntPtr]::Add($c, 8), 32)
         if ($name -match 'loopMIDI|rtpMIDI') { return $i }
       }
     } finally {
@@ -35,11 +37,11 @@ function Find-RtpMidiOut {
 }
 
 $dev = Find-RtpMidiOut
-if ($dev -lt 0) { Write-Host "rtpMIDI out device not found - is rtpMIDI installed?"; exit 1 }
+if ($dev -lt 0) { Write-Host "MIDI out device not found - is loopMIDI/rtpMIDI running with a port created?"; exit 1 }
 $h = [IntPtr]::Zero
 $rc = [GM]::midiOutOpen([ref]$h, $dev, [IntPtr]::Zero, [IntPtr]::Zero, 0)
 if ($rc -ne 0) { Write-Host "midiOutOpen failed: $rc"; exit 1 }
-Write-Host "bridge: host 192.168.2.88:9003 -> rtpMIDI device $dev (reconnecting...)"
+Write-Host "bridge: host 192.168.2.88:9003 -> MIDI device $dev (reconnecting...)"
 
 while ($true) {
   $c = $null
