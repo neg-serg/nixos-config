@@ -81,7 +81,10 @@ back, and it handles nix-daemon's proxy env on boot.
 
 ## proxy CLI
 
-The `proxy` script controls the sing-box instance.
+The `proxy` script controls the sing-box instance. Human-facing output goes to **stderr** (progress,
+colors when stderr is a tty, `NO_COLOR` respected); stdout stays machine-clean — `validate_nodes`
+prints only the validated node URIs on stdout. `proxy status` is the exception and prints its
+dashboard to stdout.
 
 ### status
 
@@ -89,12 +92,18 @@ The `proxy` script controls the sing-box instance.
 proxy status
 ```
 
-Shows whether sing-box and/or Xray are currently running. Example output:
+One-screen dashboard: service state, listening ports, outbound count and config age, a live upstream
+check through the proxy, and (best-effort) the currently selected node. Example output (colors when
+stderr is a tty):
 
 ```
-Proxy: RUNNING (vless/vmess/h2/hysteria/tuic/ss/trojan/anytls pool)
-tcp   LISTEN 0  4096  127.0.0.1:10808  0.0.0.0:*   users:(("sing-box",pid=1234,fd=9))
-Xray: STOPPED
+== proxy status ==
+Service:   RUNNING
+Listeners: 10808 10810 10811 10812
+Nodes:     6 outbounds (config: 2026-09-01 00:55:15)
+Upstream:  OK in 0.32s
+Active:    52.76.37.112 (urltest pick)
+Xray:      stopped
 ```
 
 ### on
@@ -133,9 +142,11 @@ proxy refresh
 1. **Validates candidates**: TCP-scans every unique host:port (asyncio, ~3s timeout); UDP-based
    protocols (hysteria/hysteria2/tuic) skip the scan because their proxy port has no TCP listener.
    Then e2e-probes up to `E2E_CAP` (default 150) candidates through a throwaway sing-box instance
-   each. A node counts as working when any probe succeeds: an IP-literal relay check
-   (`http://1.1.1.1` via `--socks5`, no DNS in the path) or a remote-DNS `204` check
-   (`https://cp.cloudflare.com/generate_204`, `https://www.gstatic.com/generate_204`).
+   each. A node counts as working when a relay check succeeds (an IP-literal `http://1.1.1.1` via
+   `--socks5`, no DNS in the path, or a remote-DNS `204` from
+   `https://cp.cloudflare.com/generate_204` / `https://www.gstatic.com/generate_204`) **and** it
+   sustains at least `MIN_SPEED` (default 100 KB/s) on a 2 MB download from `speed.cloudflare.com` —
+   latency-only probes admit bandwidth-capped nodes (~1 KB/s) that make sites and Telegram unusable.
 1. Regenerates `~/.config/sing-box-trojan/config.json` from the working subset only
    (vless/hysteria2/shadowsocks/trojan all supported by the generator).
 1. If **no** nodes pass, **keeps the existing config untouched** and exits with an error. If at
@@ -143,10 +154,12 @@ proxy refresh
    (with a warning) instead of leaving the user with nothing.
 1. Restarts the sing-box service with the new config.
 
-Env knobs: `E2E_CAP`, `MIN_WORKING`, `NODE_SAMPLE` (default 400; per-URL random sample; at fetch,
-xhttp/splithttp links and ss-plugin links are filtered out as unsupported by stock sing-box). Free
-pools die fast, so a working config can degrade to dead nodes within days — re-run `proxy refresh`
-and it validates again instead of trusting the pool blindly.
+Env knobs: `E2E_CAP`, `MIN_WORKING`, `MIN_SPEED` (default 100000 B/s), `SPEED_BYTES` (default
+2000000), `SPEED_TIMEOUT` (default 12s), `NODE_SAMPLE` (default 400; per-URL random sample; at
+fetch, xhttp/splithttp links and ss-plugin links are filtered out as unsupported by stock sing-box).
+The urltest group re-probes every 1m so a dying node is abandoned within a minute. Free pools die
+fast, so a working config can degrade to dead nodes within days — re-run `proxy refresh` and it
+validates again instead of trusting the pool blindly.
 
 ### Dashboard
 
