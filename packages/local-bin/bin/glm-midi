@@ -60,8 +60,8 @@ case "$1" in
     ;;
   # Space relative steps BETWEEN sends only (no trailing sleep): a single
   # step must return immediately or held keyboard keys feel sluggish. GLM
-  # drops rapid relative bursts, but the widget's 400 ms CC20 anchor
-  # re-syncs the absolute so dropped steps self-heal.
+  # drops rapid relative bursts; the widget anchors CC20 once on MIDI
+  # activation, so spacing steps is what keeps them from being dropped.
   vol+) n=${2:-1}; i=0; for _ in $(seq 1 "$n"); do send_cc 21 127; i=$((i+1)); [ "$i" -lt "$n" ] && sleep 0.25; done ;;
   vol-) n=${2:-1}; i=0; for _ in $(seq 1 "$n"); do send_cc 22 127; i=$((i+1)); [ "$i" -lt "$n" ] && sleep 0.25; done ;;
   mute)  send_cc 23 127 ;;  # toggle

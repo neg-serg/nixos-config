@@ -40,6 +40,9 @@ RowLayout {
     // VM GLM path: the adapter is inside the dockur VM, so control goes over
     // the MIDI bridge (glm-midi -> relay :9004 -> VM bridge -> loopMIDI -> GLM).
     readonly property bool midiMode: !adapterOnHost
+    // Anchor CC20 once when the MIDI path becomes active (quickshell start
+    // with the VM running, or the VM starting later). No periodic re-anchor.
+    onMidiModeChanged: { if (midiMode) root._anchorVolume(); }
     // Last result of the host genlc path. available = usable via either path.
     property bool genlcOk: true
     property bool available: adapterOnHost ? genlcOk : true
@@ -151,9 +154,9 @@ RowLayout {
     property real _lastSendMs: 0
     readonly property int _minSendGapMs: 400
     // Relative-control bookkeeping: _lastSentDb is where GLM should be after
-    // the last relative (C21/C22) send; the periodic anchor re-syncs CC20.
+    // the last relative (C21/C22) send. CC20 is anchored once when the MIDI
+    // path becomes active (quickshell start with the VM running).
     property real _lastSentDb: -40
-    property real _lastAnchorDb: -40
     Timer {
         id: wheelCommitTimer
         interval: 150
@@ -172,25 +175,19 @@ RowLayout {
             root._commitAndSend(root.pendingDb);
         }
     }
-    // Periodic CC20 re-anchor: every 400 ms set the absolute target in GLM
-    // (step for .5 values) so relative-step drops don't accumulate drift.
-    Timer {
-        id: anchorTimer
-        interval: 400
-        repeat: true
-        running: midiMode
-        onTriggered: {
-            if (root.busy) return;
-            if (root.volume === root._lastAnchorDb) return;
-            var base = Math.floor(root.volume);
-            var rem = root.volume - base;
-            if (rem >= 0.499)
-                root._sendMidi(["/home/neg/.local/bin/glm-midi", "step", base + "dB"]);
-            else
-                root._sendMidi(["/home/neg/.local/bin/glm-midi", "volume", base + "dB"]);
-            root._lastAnchorDb = root.volume;
-            root._lastSentDb = root.volume;
-        }
+    // One-shot CC20 anchor: when the MIDI path becomes active, set the
+    // absolute target in GLM once (step for .5 values) so relative C21/C22
+    // steps build on the real position. No periodic re-sync: idle volume
+    // must not move on its own.
+    function _anchorVolume() {
+        if (busy || !midiMode) return;
+        var base = Math.floor(volume);
+        var rem = volume - base;
+        if (rem >= 0.499)
+            _sendMidi(["/home/neg/.local/bin/glm-midi", "step", base + "dB"]);
+        else
+            _sendMidi(["/home/neg/.local/bin/glm-midi", "volume", base + "dB"]);
+        _lastSentDb = volume;
     }
     function _queueCommit(dB) {
         var target = clamp(Number(dB));
@@ -282,8 +279,8 @@ RowLayout {
         if (busy) return;
         if (midiMode) {
             // Relative control: C21 (vol+) / C22 (vol-) for the delta from the
-            // last sent value. GLM's periodic CC20 re-anchor (anchorTimer)
-            // snaps it back to the target, so dropped steps self-heal.
+            // last sent value. CC20 is anchored once on MIDI activation; no
+            // periodic re-anchor, so idle volume stays put.
             var delta = dB - root._lastSentDb;
             var steps = Math.round(delta / 0.5);
             if (steps > 0)
@@ -366,8 +363,7 @@ RowLayout {
     function _onGenlcFileChanged() {
         // Block only while a wheel debounce is in flight (_wheelPending) — a
         // busy send must NOT drop the keyboard's update: apply the display
-        // always and send when free; the 400 ms CC20 anchor catches up
-        // otherwise.
+        // always and send when free.
         if (root._wheelPending) return;
         var line = stateReader.text() || "";
         var v = parseFloat(line);
@@ -377,7 +373,7 @@ RowLayout {
             root.pendingDb = v;
             root.volume = v;
             root._animDb = v;
-            // Same send path as the wheel: relative C21/C22 (+ anchor).
+            // Same send path as the wheel: relative C21/C22.
             // genlc-media only writes the target, so keyboard and wheel
             // share one code path through quickshell.
             if (!root.busy) root._commitAndSend(v);
