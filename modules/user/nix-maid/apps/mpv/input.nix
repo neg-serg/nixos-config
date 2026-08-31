@@ -148,7 +148,8 @@ let
     # binds break under the ru layout.
     # Table: docs/howto/hotkeys-ru-layout.ru.md
   ''
-  + lib.concatStringsSep "\n" (map (d: "${mpvRuKey d.key} ${d.command}  # ${d.key}") mpvRuBinds);
+  + lib.concatStringsSep "\n" (map (d: "${mpvRuKey d.key} ${d.command}  # ${d.key}") mpvRuBinds)
+  + "\n";
 in
 {
   config = lib.mkIf (config.lib.neg.enabled "gui") (
