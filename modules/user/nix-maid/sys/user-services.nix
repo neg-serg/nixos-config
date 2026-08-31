@@ -287,6 +287,31 @@ lib.mkIf (cfg.enable or false) {
     };
   };
 
+  # rme-route-all: link every playback stream to the RME AES outputs
+  # (AUX2/AUX3 = monitor path). pwroute only routes game-stereo; WirePlumber
+  # doesn't auto-link streams to the pro-audio RME sink, so MPD et al. go
+  # silent. Run on a short timer (idempotent).
+  systemd.user.services.rme-route-all = {
+    description = "Link all playback streams to RME AES outputs";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${lib.getExe pkgs.bash} %h/.local/bin/rme-route-all";
+      Environment = [
+        "PATH=/run/current-system/sw/bin:/home/neg/.local/bin:/usr/bin:/bin"
+      ];
+    };
+  };
+
+  systemd.user.timers.rme-route-all = {
+    description = "Periodic RME AES stream routing";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "10s";
+      OnUnitActiveSec = "5s";
+      Unit = "rme-route-all.service";
+    };
+  };
+
   # Restart quickshell when its config is redeployed: nh os switch restarts
   # the shell BEFORE nix-maid activation updates the config symlinks, so the
   # running shell keeps the OLD code until manually restarted. Watching the
