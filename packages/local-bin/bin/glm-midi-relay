@@ -43,7 +43,16 @@ def main():
     while True:
         c, _ = s.accept()
         try:
-            data = c.recv(64)
+            # Protocol is one 3-byte CC message per connection (status CC val).
+            # recv(64) can return after the first byte when the sender writes
+            # the bytes separately (bash printf per byte), so loop until a
+            # full message is read — otherwise the bridge gets a truncated CC.
+            data = b""
+            while len(data) < 3:
+                chunk = c.recv(3 - len(data))
+                if not chunk:
+                    break
+                data += chunk
             c.close()
             with lock:
                 t = vm
