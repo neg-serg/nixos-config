@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# rme-route-all — link every playback stream (FL/FR) to the RME AES outputs
+# (AUX2/AUX3 = the Genelec monitor path). pwroute only routes the game-stereo
+# stream and WirePlumber does not auto-link streams to the pro-audio RME sink,
+# so MPD and other players end up unlinked (silent). Idempotent; safe to run
+# on a short timer.
+set -euo pipefail
+
+SINK="alsa_output.pci-0000_05_00.0.pro-output-0"
+
+# while-read keeps port names with spaces (e.g. "Music Player Daemon:output_FL")
+pw-link -o 2>/dev/null | while IFS= read -r out; do
+  case "$out" in
+    *:output_FL) pw-link "$out" "$SINK:playback_AUX2" 2>/dev/null || true ;;
+    *:output_FR) pw-link "$out" "$SINK:playback_AUX3" 2>/dev/null || true ;;
+  esac
+done
