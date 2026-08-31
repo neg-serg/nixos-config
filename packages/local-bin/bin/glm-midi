@@ -35,7 +35,7 @@ case "$1" in
     if [[ "$2" == *dB* ]] || [ "$2" -lt 0 ] 2>/dev/null; then
       # dB input: -127..0 dB -> 0..127 (value = 127 + dB). Whole dB only.
       db=$2; db=${db%dB}
-      db=$(awk -v d="$db" 'BEGIN { printf "%.0f", d + (d < 0 ? -0.5 : 0.5) }')
+      db=$(awk -v d="$db" 'BEGIN { printf "%.0f", d }')
       val=$((127 + db))
       [ "$val" -lt 0 ] && val=0
       [ "$val" -gt 127 ] && val=127
