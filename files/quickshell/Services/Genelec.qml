@@ -131,7 +131,7 @@ RowLayout {
     }
     Text {
         id: volLabel
-        text: root.muted ? "MUTED" : "<font color='" + Theme.accentPrimary + "'>-</font>" + Math.abs(root._animDb).toFixed(1).padStart(4,"0") + "<font color='" + Theme.accentPrimary + "'>dB</font>"
+        text: root.muted ? "MUTED" : "<font color='" + Theme.accentPrimary + "'>-</font>" + Math.abs(root.volume).toFixed(1).padStart(4,"0") + "<font color='" + Theme.accentPrimary + "'>dB</font>"
         font { family: Theme.fontFamily; pixelSize: Math.round(Theme.fontSizeSmall * 1.05); weight: Font.DemiBold; italic: true }
         color: Theme.textSecondary
         Layout.alignment: Qt.AlignVCenter
@@ -143,6 +143,7 @@ RowLayout {
         var clamped = clamp(Number(dB));
         if (clamped === volume && !busy) return;
         volume = clamped;
+        displayDb = clamped; // keep the slider in sync in midiMode too
         muted = false;
         _sendToHardware(clamped);
     }
