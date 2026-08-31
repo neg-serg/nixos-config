@@ -457,8 +457,12 @@ hl.window_rule({ name = "vpn-scratchpad", match = { class = "^(vpn)$" }, float =
 hl.window_rule({ name = "rebuild-scratchpad", match = { class = m.rebuild_scratchpad }, float = true, size = "monitor_w-16 monitor_h*0.5", move = "8 8", no_dim = true })
 
 -- Wine / Steam
-hl.window_rule({ name = "wine-exe", match = { title = ".*\\.exe" }, immediate = true, tag = "wine-exe" })
-hl.window_rule({ name = "steam-app-generic", match = { class = m.steam_app }, immediate = true, no_shadow = true, tag = "steam-app" })
+-- Note: new windows map onto whichever workspace is visible; when a scratchpad
+-- (special workspace) is open they land INSIDE it. Game windows are pinned to
+-- their own workspace (4 = games, 10 = wine) so they can never be swallowed by
+-- a scratchpad.
+hl.window_rule({ name = "wine-exe", match = { title = ".*\\.exe" }, immediate = true, tag = "wine-exe", workspace = "10" })
+hl.window_rule({ name = "steam-app-generic", match = { class = m.steam_app }, immediate = true, no_shadow = true, tag = "steam-app", workspace = "4" })
 for _, app in ipairs({
   "1659040", -- hitman 3
   "1144200", -- ready or not
@@ -475,7 +479,7 @@ for _, app in ipairs({
   hl.window_rule({ name = "steam-" .. app, match = { class = "^(steam_app_" .. app .. ")$" }, immediate = true })
 end
 hl.window_rule({ name = "soulstone-survivors", match = { class = "^(steam_app_2066020)$" }, render_unfocused = true, no_blur = true })
-hl.window_rule({ name = "gaming-immediate", match = { class = "^(osu!|cs2)$" }, immediate = true })
+hl.window_rule({ name = "gaming-immediate", match = { class = "^(osu!|cs2)$" }, immediate = true, workspace = "4" })
 -- Exclude kitty from hyprglass glass shader
 hl.window_rule({ name = "hgrm-term", match = { class = "^(kitty|term)$" }, tag = "hyprglass_disabled" })
 
@@ -485,7 +489,7 @@ hl.window_rule({ name = "term-fill", match = { class = "^(term)$" }, size = "100
 
 -- Fullscreen video/gpu-heavy apps: force immediate rendering for direct scanout
 hl.window_rule({ name = "video-immediate", match = { class = "^(mpv)$" }, immediate = true })
-hl.window_rule({ name = "gamescope-immediate", match = { class = "^(gamescope)$" }, immediate = true })
+hl.window_rule({ name = "gamescope-immediate", match = { class = "^(gamescope)$" }, immediate = true, workspace = "4" })
 
 -- Float all windows on the games workspace (id 4) — games don't tile well
 hl.window_rule({ name = "games-float", match = { workspace = "4" }, float = true })
