@@ -178,6 +178,13 @@ in
               command = "/run/current-system/sw/bin/glm-adapter-priv";
               options = [ "NOPASSWD" ];
             }
+            # nh os switch: activation runs wrapped in `sudo env <vars> ...`
+            # (nix build --profile and <toplevel>/bin/switch-to-configuration).
+            # `env *` NOPASSWD lets nh rebuild without a password prompt.
+            {
+              command = "/run/current-system/sw/bin/env *";
+              options = [ "NOPASSWD" ];
+            }
             {
               command = "/run/current-system/sw/bin/systemctl stop xray.service";
               options = [ "NOPASSWD" ];
