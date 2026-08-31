@@ -36,7 +36,7 @@ ok()   { echo -e "  ${GREEN}ok${NC}   $1"; }
 warn() { echo -e "  ${YELLOW}!!${NC}  $1"; }
 fail() { echo -e "  ${RED}xx${NC}   $1"; }
 
-vm_running() { podman ps --format '{{.Names}} {{.Status}}' 2>/dev/null | awk '$1=="windows" && $2=="Up" {print 1; exit}'; }
+vm_running() { timeout 10 podman ps --format '{{.Names}} {{.Status}}' 2>/dev/null | awk '$1=="windows" && $2=="Up" {print 1; exit}'; }
 qemu_usb()   { docker exec -i "$CT" sh -c 'printf "info usb\n" | timeout 4 nc -N -U /run/shm/monitor.sock' 2>/dev/null | grep -c 'Gnet Adapter'; }
 host_present(){ lsusb 2>/dev/null | grep -q "$VID:$PID"; }
 host_genlc_ok(){ timeout 10 "$GENLC" discover >/dev/null 2>&1; }
