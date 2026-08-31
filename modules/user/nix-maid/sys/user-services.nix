@@ -317,4 +317,17 @@ lib.mkIf (cfg.enable or false) {
       Unit = "glm-sync.service";
     };
   };
+
+  # Restart quickshell when its config is redeployed: nh os switch restarts
+  # the shell BEFORE nix-maid activation updates the config symlinks, so the
+  # running shell keeps the OLD code until manually restarted. Watching the
+  # shell.qml symlink catches the flip and reloads the new config.
+  systemd.user.paths.quickshell-config = {
+    description = "Restart quickshell when its config changes";
+    wantedBy = [ "paths.target" ];
+    pathConfig = {
+      PathChanged = "/home/neg/.config/quickshell/shell.qml";
+      Unit = "quickshell.service";
+    };
+  };
 }
