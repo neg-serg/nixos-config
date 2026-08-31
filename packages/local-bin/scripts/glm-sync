@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# glm-sync — read the ACTUAL GLM volume from the dockur VM screen (lightweight
+# tesseract OCR, no vision model) and write it to /tmp/genlc-volume so the
+# quickshell Genelec widget matches reality. GLM in the VM restores its own
+# saved volume on restart, which desyncs the host display without this.
+#
+# Usage: glm-sync          # read + write the state file (prints the value)
+#        glm-sync --check  # read only, print the value, don't write
+set -euo pipefail
+
+CT=windows
+STATE=/tmp/genlc-volume
+
+shot() {
+  timeout 10 docker exec -i "$CT" sh -c 'printf "screendump /dev/shm/q.ppm\n" | timeout 5 nc -N -U /run/shm/monitor.sock' >/dev/null 2>&1
+  sleep 2
+  docker exec "$CT" sh -c 'cat /dev/shm/q.ppm' > /tmp/glm-sync.ppm 2>/dev/null || return 1
+  docker exec "$CT" sh -c 'rm -f /dev/shm/q.ppm' 2>/dev/null || true
+  # Aspect-preserving scale; the GLM volume text sits top-left of the window.
+  magick /tmp/glm-sync.ppm -resize 1600x\> -crop 700x200+100+30 -resize 300% -colorspace Gray -normalize /tmp/glm-sync.png 2>/dev/null || return 1
+}
+
+read_volume() {
+  tesseract /tmp/glm-sync.png /tmp/glm-sync-ocr -l eng --psm 6 2>/dev/null || true
+  grep -o -E '\-?[0-9]+(\.[0-9]+)? ?dB' /tmp/glm-sync-ocr.txt 2>/dev/null | head -1 | sed 's/ *dB//' || true
+}
+
+shot || { echo "glm-sync: could not capture the VM screen" >&2; exit 1; }
+val=$(read_volume)
+case "$val" in
+  -[0-9]*|-[0-9]*.[0-9]*) ;;
+  *) echo "glm-sync: no readable dB value (GLM window not visible?)" >&2; exit 1 ;;
+esac
+if [ "${1:-}" = "--check" ]; then
+  echo "$val"
+else
+  echo "$val" > "$STATE"
+  echo "synced: $val dB"
+fi

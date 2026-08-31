@@ -38,8 +38,12 @@ case "$1" in
       val=$((127 + db))
       [ "$val" -lt 0 ] && val=0
       [ "$val" -gt 127 ] && val=127
+      # Safety cap: never louder than -20 dB (CC20 <= 107). Guards against a
+      # stale/corrupt host state file pushing the monitors near maximum.
+      [ "$val" -gt 107 ] && val=107
     else
       val=$2
+      [ "$val" -gt 107 ] && val=107
     fi
     send_cc 20 "$val" ;;
   vol+) n=${2:-1}; for _ in $(seq 1 "$n"); do send_cc 21 127; done ;;
