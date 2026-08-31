@@ -58,8 +58,10 @@ case "$1" in
     sleep 0.15
     send_cc 21 127
     ;;
-  vol+) n=${2:-1}; for _ in $(seq 1 "$n"); do send_cc 21 127; done ;;
-  vol-) n=${2:-1}; for _ in $(seq 1 "$n"); do send_cc 22 127; done ;;
+  # Space relative steps: GLM drops rapid vol+/vol- bursts (measured:
+  # 5 vol+ in 12 ms -> only 1 applied). 250 ms between individual steps.
+  vol+) n=${2:-1}; for _ in $(seq 1 "$n"); do send_cc 21 127; sleep 0.25; done ;;
+  vol-) n=${2:-1}; for _ in $(seq 1 "$n"); do send_cc 22 127; sleep 0.25; done ;;
   mute)  send_cc 23 127 ;;  # toggle
   dim)   send_cc 24 127 ;;  # toggle
   power) send_cc 28 127 ;;  # toggle
