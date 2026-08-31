@@ -46,7 +46,12 @@ case "${1:-}" in
       # one vol+ for a .5 remainder — each press re-syncs the absolute value.
       read -r base ishalf <<< "$(awk -v t="$capped" 'BEGIN { b=int(t); if (t<0 && t!=b) b-=1; r=t-b; printf "%d %s", b, (r>=0.499 ? "half" : "whole") }')"
       glm-midi volume "${base}dB" >/dev/null 2>&1 || true
-      [ "$ishalf" = "half" ] && glm-midi vol+ >/dev/null 2>&1 || true
+      if [ "$ishalf" = "half" ]; then
+        # Let GLM apply the absolute CC20 before the relative +0.5 step, so the
+        # vol+ is not lost (GLM-side timing) — keeps state and GLM in sync.
+        sleep 0.15
+        glm-midi vol+ >/dev/null 2>&1 || true
+      fi
     else
       # Host path: genlc set-volume (0.5 dB), batched by debounce.
       [ -f "$DEBOUNCE_PID" ] && kill "$(cat "$DEBOUNCE_PID")" 2>/dev/null || true
