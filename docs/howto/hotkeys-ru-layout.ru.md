@@ -182,7 +182,6 @@ map ctrl+shift+CYRILLIC_IO      move_window_to_top          # kitty_mod+`  (`→
 map ctrl+shift+CYRILLIC_HARDSIGN next_window                # kitty_mod+]  (]→ъ)
 map ctrl+shift+CYRILLIC_HA      previous_window             # kitty_mod+[  ([→х)
 map ctrl+shift+CYRILLIC_DE      next_layout                 # kitty_mod+l  (l→д)
-map ctrl+shift+CYRILLIC_ZE      kitten choose_files         # kitty_mod+p  (p→з)
 map ctrl+shift+CYRILLIC_GHE     kitten unicode_input        # kitty_mod+u  (u→г)
 map ctrl+shift+CYRILLIC_U       neghints --type=url         # kitty_mod+e  (e→у)
 map ctrl+shift+CYRILLIC_ER      kitty_scrollback_nvim       # kitty_mod+h  (h→р)
