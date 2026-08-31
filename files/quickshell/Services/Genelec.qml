@@ -364,20 +364,23 @@ RowLayout {
         }
     }
     function _onGenlcFileChanged() {
-        // Block only while a wheel debounce is in flight (_wheelPending) or a
-        // send is running — NOT for the full _userInputActive window: keyboard
-        // (genlc-media) writes must reach the display as soon as the wheel
-        // settles, otherwise the widget freezes at the last wheel value.
-        if (root.busy || root._wheelPending) return;
+        // Block only while a wheel debounce is in flight (_wheelPending) — a
+        // busy send must NOT drop the keyboard's update: apply the display
+        // always and send when free; the 400 ms CC20 anchor catches up
+        // otherwise.
+        if (root._wheelPending) return;
         var line = stateReader.text() || "";
         var v = parseFloat(line);
         if (!isNaN(v) && v !== root.displayDb && !volSlider.pressed) {
             root._showSlider();
-            // Same send path as the wheel: relative C21/C22 + the periodic
-            // CC20 anchor. genlc-media only writes the target to the state
-            // file, so keyboard and wheel share one code path.
-            root._commitAndSend(v);
+            root.displayDb = v;
+            root.pendingDb = v;
+            root.volume = v;
             root._animDb = v;
+            // Same send path as the wheel: relative C21/C22 (+ anchor).
+            // genlc-media only writes the target, so keyboard and wheel
+            // share one code path through quickshell.
+            if (!root.busy) root._commitAndSend(v);
         }
     }
     Component.onCompleted: {
