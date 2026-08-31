@@ -17,6 +17,10 @@ LocalComponents.WidgetCapsule {
     property bool autoHideWhenMuted: false
     property bool panelHovering: false
     property bool wheelEnabled: true
+    // Keep the pill (icon + text) permanently visible instead of auto-hiding.
+    // Used by the Genelec widget during debugging; default preserves the
+    // standard hover/show behavior for all other volume widgets.
+    property bool alwaysShow: false
     property string offReminderStateKey: ""
     readonly property int effectiveOffReminderCooldownMs: {
         const raw = Settings.settings ? Number(Settings.settings.audioOffReminderCooldownMs) : -1;
@@ -218,9 +222,15 @@ LocalComponents.WidgetCapsule {
         iconTextColor: Theme.background
         textColor: Theme.textPrimary
         collapsedIconColor: levelColorFor(level)
-        autoHide: true
+        autoHide: !root.alwaysShow
         autoHidePauseMs: Theme.volumePillAutoHidePauseMs
         showDelayMs: Theme.volumePillShowDelayMs
+        Component.onCompleted: {
+            if (root.alwaysShow) {
+                root.pill.autoHide = false;
+                root.pill.show();
+            }
+        }
     }
 
     Item {
@@ -247,8 +257,10 @@ LocalComponents.WidgetCapsule {
             }
             onExited: {
                 root.containsMouse = false;
-                pillIndicator.autoHide = true;
-                pillIndicator.hide();
+                if (!root.alwaysShow) {
+                    pillIndicator.autoHide = true;
+                    pillIndicator.hide();
+                }
             }
             onWheel: wheel => {
                 if (!root.wheelEnabled || wheel.angleDelta.y === 0)
