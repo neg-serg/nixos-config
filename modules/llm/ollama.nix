@@ -30,11 +30,16 @@ in
       # context to 32k and quantize the KV cache to Q8_0 so qwen3:8b runs fully
       # on GPU (≈11 GB) instead of spilling to CPU. OLLAMA_CONTEXT_LENGTH is a
       # per-request default; a client can still pass a smaller num_ctx.
+      # Keep-alive is short (5m): the ~11 GB vision model must not sit in VRAM
+      # for long, or Proton games (UE5 titles at 4K+Lumen easily need 6+ GB) get
+      # pushed into GTT/system memory and stutter hard. 5m keeps back-to-back
+      # chat/vision responses warm while freeing VRAM minutes after the last use.
+      # Manual escape hatch: `ollama stop qwen3:8b-q8_0` before gaming.
       OLLAMA_NUM_PARALLEL = "1";
       OLLAMA_MAX_LOADED_MODELS = "1";
       OLLAMA_CONTEXT_LENGTH = "32768";
       OLLAMA_KV_CACHE_TYPE = "q8_0";
-      OLLAMA_KEEP_ALIVE = "30m";
+      OLLAMA_KEEP_ALIVE = "5m";
     };
 
     networking.firewall.allowedTCPPorts = lib.mkIf cfg.enable (lib.mkAfter [ 11434 ]);
